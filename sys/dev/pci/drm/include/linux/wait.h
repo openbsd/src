@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.13 2025/06/04 13:00:50 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.14 2025/06/06 13:13:46 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -100,6 +100,32 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 	mtx_leave(&head->lock);
 }
 
+#define __wait_event_intr(wqh, condition, prio)				\
+({									\
+	long __ret = 0;							\
+	struct wait_queue_entry __wq_entry;				\
+									\
+	init_wait_entry(&__wq_entry, 0);				\
+	do {								\
+		int __error, __wait;					\
+									\
+		KASSERT(!cold);						\
+									\
+		prepare_to_wait(&wqh, &__wq_entry, prio);		\
+									\
+		__wait = !(condition);					\
+									\
+		__error = sleep_finish(INFSLP, __wait);			\
+									\
+		if (__error == ERESTART || __error == EINTR) {		\
+			__ret = -ERESTARTSYS;				\
+			break;						\
+		}							\
+	} while (!(condition));						\
+	finish_wait(&wqh, &__wq_entry);					\
+	__ret;								\
+})
+
 #define __wait_event_intr_timeout(wqh, condition, timo, prio)		\
 ({									\
 	long __ret = timo;						\
@@ -118,7 +144,7 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 									\
 		__wait = !(condition);					\
 									\
-		__error = sleep_finish(nsecs, __wait);	\
+		__error = sleep_finish(nsecs, __wait);			\
 		if ((timo) > 0)						\
 			__ret = deadline - jiffies;			\
 									\
@@ -141,14 +167,14 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 #define wait_event(wqh, condition) 		\
 do {						\
 	if (!(condition))			\
-		__wait_event_intr_timeout(wqh, condition, 0, 0); \
+		__wait_event_intr(wqh, condition, 0); \
 } while (0)
 
 #define wait_event_killable(wqh, condition) 		\
 ({						\
 	int __ret = 0;				\
 	if (!(condition))			\
-		__ret = __wait_event_intr_timeout(wqh, condition, 0, PCATCH); \
+		__ret = __wait_event_intr(wqh, condition, PCATCH); \
 	__ret;					\
 })
 
@@ -156,7 +182,7 @@ do {						\
 ({						\
 	int __ret = 0;				\
 	if (!(condition))			\
-		__ret = __wait_event_intr_timeout(wqh, condition, 0, PCATCH); \
+		__ret = __wait_event_intr(wqh, condition, PCATCH); \
 	__ret;					\
 })
 
