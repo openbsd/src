@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.69 2025/06/03 08:42:15 kenjiro Exp $ */
+/* $OpenBSD: e_aes.c,v 1.70 2025/06/06 07:41:01 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -2032,7 +2032,14 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	CCM128_CONTEXT *ccm = &cctx->ccm;
 
 	/* If not set up, return error */
-	if (!cctx->iv_set && !cctx->key_set)
+	if (!cctx->key_set)
+		return -1;
+
+	/* EVP_*Final() doesn't return any data */
+	if (in == NULL && out != NULL)
+		return 0;
+
+	if (!cctx->iv_set)
 		return -1;
 	if (!ctx->encrypt && !cctx->tag_set)
 		return -1;
@@ -2051,9 +2058,7 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		CRYPTO_ccm128_aad(ccm, in, len);
 		return len;
 	}
-	/* EVP_*Final() doesn't return any data */
-	if (!in)
-		return 0;
+
 	/* If not set length yet do it */
 	if (!cctx->len_set) {
 		if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L, len))
