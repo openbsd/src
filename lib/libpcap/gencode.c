@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.67 2024/09/15 07:14:58 jsg Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.68 2025/06/06 00:04:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -768,9 +768,11 @@ init_linktype(int type)
 		off_nl = 12;
 		return;
 
-	case DLT_USBPCAP:
-		/* FALLTHROUGH */
 	case DLT_RAW:
+		off_linktype = 0;
+		off_nl = 0;
+		return;
+	case DLT_USBPCAP:
 		off_linktype = -1;
 		off_nl = 0;
 		return;
@@ -910,6 +912,38 @@ gen_linktype(int proto)
 		return (gen_cmp(0, BPF_W, (bpf_int32)v));
 		break;
 	}
+	case DLT_RAW: {
+		struct slist *s0, *s1;
+		int ipv;
+
+		switch (proto) {
+		case ETHERTYPE_IP:
+			ipv = 4;
+			break;
+		case ETHERTYPE_IPV6:
+			ipv = 6;
+			break;
+		default:
+			return gen_false();
+		}
+
+		/* A = p[X+off_linktype] */
+		s0 = new_stmt(BPF_LD|BPF_ABS|BPF_B);
+		s0->s.k = off_linktype;
+
+		/* A = A >> 4 */
+		s1 = new_stmt(BPF_ALU|BPF_RSH|BPF_K);
+		s1->s.k = 4;
+		sappend(s0, s1);
+
+		/* if (A == ipv) ... */
+		b0 = new_block(JMP(BPF_JEQ));
+		b0->stmts = s0;
+		b0->s.k = ipv;
+
+		return (b0);
+	}
+
 	case DLT_PFLOG:
 		if (proto == ETHERTYPE_IP)
 			return (gen_cmp(offsetof(struct pfloghdr, af), BPF_B,
