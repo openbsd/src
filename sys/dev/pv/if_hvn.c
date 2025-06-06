@@ -258,8 +258,15 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_qstart = hvn_start;
 	ifp->if_softc = sc;
 
-	ifp->if_capabilities = IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-	    IFCAP_CSUM_TCPv6;
+	ifp->if_capabilities = IFCAP_CSUM_IPv4;
+#if 0
+	/*
+	 * TCP checksum offload is broken on newer Windows versions.  Test this
+	 * feature on Windows Server 2022, Windows 11 Pro or newer, before
+	 * re-enabling it.
+	 */
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_TCPv6;
+#endif
 	if (sc->sc_ndisver > NDIS_VERSION_6_30)
 		ifp->if_capabilities |= IFCAP_CSUM_UDPv4 | IFCAP_CSUM_UDPv6;
 
