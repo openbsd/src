@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbhid.3,v 1.23 2022/03/31 17:27:18 naddy Exp $
+.\"	$OpenBSD: usbhid.3,v 1.24 2025/06/06 21:38:27 schwarze Exp $
 .\"	$NetBSD: usbhid.3,v 1.5 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt USBHID 3
 .Os
 .Sh NAME
@@ -49,6 +49,7 @@
 .Nm hid_set_data
 .Nd USB HID access routines
 .Sh SYNOPSIS
+.Lb libusbhid
 .In usbhid.h
 .Ft report_desc_t
 .Fn hid_get_report_desc "int file"
@@ -112,31 +113,33 @@ The data is copied into an internal structure which can be accessed with
 When the report descriptor is no longer needed, it should be freed by calling
 .Fn hid_dispose_report_desc .
 The type
-.Fa report_desc_t
+.Vt report_desc_t
 is opaque and should be used when calling the parsing functions.
 .Fn hid_get_report_desc
 and
 .Fn hid_use_report_desc
 return
-.Fa NULL
+.Dv NULL
 on failure.
 .Ss DESCRIPTOR PARSING FUNCTIONS
 To parse the report descriptor, the
 .Fn hid_start_parse
 function should be called with a report descriptor and a set that
 describes which items are interesting.
-The set is obtained by or-ing together values
-.Fa (1 << k)
+The
+.Fa kindset
+is obtained by OR'ing together values
+.Pq 1 << Va k
 where
-.Fa k
+.Va k
 is an item of type
-.Fa hid_kind_t .
+.Vt hid_kind_t .
 The desired report ID, or \-1
 to obtain items of all report IDs,
 is given by
 .Fa id .
 The function returns
-.Fa NULL
+.Dv NULL
 if the initialization fails, otherwise an opaque value to be used
 in subsequent calls.
 After parsing the
@@ -153,7 +156,7 @@ The struct pointed to by
 .Fa h
 will be filled with the relevant data for the item.
 The definition of
-.Fa hid_item_t
+.Vt hid_item_t
 can be found in
 .In usbhid.h
 and the meaning of the components in the USB HID documentation.
@@ -196,7 +199,7 @@ must be parsed, this is done by calling
 .Fn hid_start
 with the name of the table.
 Passing
-.Fa NULL
+.Dv NULL
 to this function will cause it to use the default table.
 A return value of \-1 indicates that an error has occurred, and
 .Va errno
