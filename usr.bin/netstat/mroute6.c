@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.26 2025/05/20 00:08:28 bluhm Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.27 2025/06/06 20:37:06 jan Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -194,31 +194,31 @@ mrt6_stats(void)
 		return;
 	}
 
-	printf("multicast forwarding:\n");
+	printf("ip6 multicast forwarding:\n");
 	printf("\t%llu multicast forwarding cache lookup%s\n",
 	    mrt6stat.mrt6s_mfc_lookups, plural(mrt6stat.mrt6s_mfc_lookups));
 	printf("\t%llu multicast forwarding cache miss%s\n",
 	    mrt6stat.mrt6s_mfc_misses, plurales(mrt6stat.mrt6s_mfc_misses));
 	printf("\t%llu upcall%s to mrouted\n",
 	    mrt6stat.mrt6s_upcalls, plural(mrt6stat.mrt6s_upcalls));
-	printf("\t%llu upcall queue overflow%s\n",
-	    mrt6stat.mrt6s_upq_ovflw, plural(mrt6stat.mrt6s_upq_ovflw));
-	printf("\t%llu upcall%s dropped due to full socket buffer\n",
-	    mrt6stat.mrt6s_upq_sockfull, plural(mrt6stat.mrt6s_upq_sockfull));
-	printf("\t%llu cache cleanup%s\n",
-	    mrt6stat.mrt6s_cache_cleanups, plural(mrt6stat.mrt6s_cache_cleanups));
 	printf("\t%llu datagram%s with no route for origin\n",
 	    mrt6stat.mrt6s_no_route, plural(mrt6stat.mrt6s_no_route));
-	printf("\t%llu datagram%s arrived with bad tunneling\n",
+	printf("\t%llu datagram%s with malformed tunnel options\n",
 	    mrt6stat.mrt6s_bad_tunnel, plural(mrt6stat.mrt6s_bad_tunnel));
 	printf("\t%llu datagram%s could not be tunneled\n",
 	    mrt6stat.mrt6s_cant_tunnel, plural(mrt6stat.mrt6s_cant_tunnel));
 	printf("\t%llu datagram%s arrived on wrong interface\n",
 	    mrt6stat.mrt6s_wrong_if, plural(mrt6stat.mrt6s_wrong_if));
-	printf("\t%llu datagram%s selectively dropped\n",
+	printf("\t%llu datagram%s dropped due to upcall queue overflow\n",
+	    mrt6stat.mrt6s_upq_ovflw, plural(mrt6stat.mrt6s_upq_ovflw));
+	printf("\t%llu datagram%s cleaned up by the cache\n",
+	    mrt6stat.mrt6s_cache_cleanups, plural(mrt6stat.mrt6s_cache_cleanups));
+	printf("\t%llu datagram%s dropped selectively by ratelimiter\n",
 	    mrt6stat.mrt6s_drop_sel, plural(mrt6stat.mrt6s_drop_sel));
 	printf("\t%llu datagram%s dropped due to queue overflow\n",
 	    mrt6stat.mrt6s_q_overflow, plural(mrt6stat.mrt6s_q_overflow));
 	printf("\t%llu datagram%s dropped for being too large\n",
 	    mrt6stat.mrt6s_pkt2large, plural(mrt6stat.mrt6s_pkt2large));
+	printf("\t%llu datagram%s dropped due to full socket buffer\n",
+	    mrt6stat.mrt6s_upq_sockfull, plural(mrt6stat.mrt6s_upq_sockfull));
 }
