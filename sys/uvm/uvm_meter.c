@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.52 2025/02/25 11:29:17 mpi Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.53 2025/06/06 11:19:00 claudio Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -249,39 +249,38 @@ uvm_total(struct vmtotal *totalp)
 void
 uvmexp_read(struct uvmexp *uexp)
 {
-		uint64_t counters[exp_ncounters], scratch[exp_ncounters];
+	uint64_t counters[exp_ncounters], scratch[exp_ncounters];
 
-		memcpy(uexp, &uvmexp, sizeof(*uexp));
+	memcpy(uexp, &uvmexp, sizeof(*uexp));
 
-		counters_read(uvmexp_counters, counters, exp_ncounters,
-		    scratch);
+	counters_read(uvmexp_counters, counters, exp_ncounters, scratch);
 
-		/* stat counters */
-		uexp->faults = (int)counters[faults];
-		uexp->pageins = (int)counters[pageins];
+	/* stat counters */
+	uexp->faults = (int)counters[faults];
+	uexp->pageins = (int)counters[pageins];
 
-		/* fault subcounters */
-		uexp->fltnoram = (int)counters[flt_noram];
-		uexp->fltnoanon = (int)counters[flt_noanon];
-		uexp->fltnoamap = (int)counters[flt_noamap];
-		uexp->fltpgwait = (int)counters[flt_pgwait];
-		uexp->fltpgrele = (int)counters[flt_pgrele];
-		uexp->fltrelck = (int)counters[flt_relck];
-		uexp->fltnorelck = (int)counters[flt_norelck];
-		uexp->fltanget = (int)counters[flt_anget];
-		uexp->fltanretry = (int)counters[flt_anretry];
-		uexp->fltamcopy = (int)counters[flt_amcopy];
-		uexp->fltnamap = (int)counters[flt_namap];
-		uexp->fltnomap = (int)counters[flt_nomap];
-		uexp->fltlget = (int)counters[flt_lget];
-		uexp->fltget = (int)counters[flt_get];
-		uexp->flt_anon = (int)counters[flt_anon];
-		uexp->flt_acow = (int)counters[flt_acow];
-		uexp->flt_obj = (int)counters[flt_obj];
-		uexp->flt_prcopy = (int)counters[flt_prcopy];
-		uexp->flt_przero = (int)counters[flt_przero];
-		uexp->fltup = (int)counters[flt_up];
-		uexp->fltnoup = (int)counters[flt_noup];
+	/* fault subcounters */
+	uexp->fltnoram = (int)counters[flt_noram];
+	uexp->fltnoanon = (int)counters[flt_noanon];
+	uexp->fltnoamap = (int)counters[flt_noamap];
+	uexp->fltpgwait = (int)counters[flt_pgwait];
+	uexp->fltpgrele = (int)counters[flt_pgrele];
+	uexp->fltrelck = (int)counters[flt_relck];
+	uexp->fltnorelck = (int)counters[flt_norelck];
+	uexp->fltanget = (int)counters[flt_anget];
+	uexp->fltanretry = (int)counters[flt_anretry];
+	uexp->fltamcopy = (int)counters[flt_amcopy];
+	uexp->fltnamap = (int)counters[flt_namap];
+	uexp->fltnomap = (int)counters[flt_nomap];
+	uexp->fltlget = (int)counters[flt_lget];
+	uexp->fltget = (int)counters[flt_get];
+	uexp->flt_anon = (int)counters[flt_anon];
+	uexp->flt_acow = (int)counters[flt_acow];
+	uexp->flt_obj = (int)counters[flt_obj];
+	uexp->flt_prcopy = (int)counters[flt_prcopy];
+	uexp->flt_przero = (int)counters[flt_przero];
+	uexp->fltup = (int)counters[flt_up];
+	uexp->fltnoup = (int)counters[flt_noup];
 }
 
 #ifdef DDB
