@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.21 2019/08/11 15:48:08 deraadt Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.22 2025/06/06 21:53:13 schwarze Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.13 2003/08/07 16:44:37 agc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getprocs.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt KVM_GETPROCS 3
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Nm kvm_getenvv
 .Nd access user process state
 .Sh SYNOPSIS
+.Lb libkvm
 .In sys/param.h
 .In sys/sysctl.h
 .In kvm.h

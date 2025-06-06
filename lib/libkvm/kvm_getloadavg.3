@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getloadavg.3,v 1.11 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: kvm_getloadavg.3,v 1.12 2025/06/06 21:53:13 schwarze Exp $
 .\"	$NetBSD: kvm_getloadavg.3,v 1.2 1996/03/18 22:33:26 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -30,13 +30,14 @@
 .\"
 .\"     @(#)kvm_getloadavg.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt KVM_GETLOADAVG 3
 .Os
 .Sh NAME
 .Nm kvm_getloadavg
 .Nd get load average of the system
 .Sh SYNOPSIS
+.Lb libkvm
 .In sys/resource.h
 .In kvm.h
 .Ft int

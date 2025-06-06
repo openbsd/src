@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_dump.3,v 1.13 2023/01/04 10:59:34 jsg Exp $
+.\"	$OpenBSD: kvm_dump.3,v 1.14 2025/06/06 21:53:13 schwarze Exp $
 .\"	$NetBSD: kvm_dump.3,v 1.1 1996/03/18 21:11:12 leo Exp $
 .\"
 .\" Copyright (c) 1996 Leo Weppelman
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 4 2023 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt KVM_DUMP_MKHEADER 3
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Nm kvm_dump_inval
 .Nd crash dump support functions
 .Sh SYNOPSIS
+.Lb libkvm
 .In kvm.h
 .Ft int
 .Fn kvm_dump_mkheader "kvm_t *kd" "off_t dump_off"

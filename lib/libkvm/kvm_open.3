@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_open.3,v 1.18 2015/04/04 18:53:18 jca Exp $
+.\"	$OpenBSD: kvm_open.3,v 1.19 2025/06/06 21:53:13 schwarze Exp $
 .\"	$NetBSD: kvm_open.3,v 1.2 1996/03/18 22:33:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_open.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 4 2015 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt KVM_OPEN 3
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Nm kvm_close
 .Nd initialize kernel virtual memory access
 .Sh SYNOPSIS
+.Lb libkvm
 .In fcntl.h
 .In kvm.h
 .Ft kvm_t *
