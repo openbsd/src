@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.103 2025/06/04 12:37:00 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.104 2025/06/06 13:13:37 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -52,18 +52,8 @@
 struct	inpcbtable	divb6table;
 struct	cpumem		*div6counters;
 
-#ifndef DIVERT_SENDSPACE
-#define DIVERT_SENDSPACE	(65536 + 100)
-#endif
 u_int   divert6_sendspace = DIVERT_SENDSPACE;	/* [a] */
-#ifndef DIVERT_RECVSPACE
-#define DIVERT_RECVSPACE	(65536 + 100)
-#endif
 u_int   divert6_recvspace = DIVERT_RECVSPACE;	/* [a] */
-
-#ifndef DIVERTHASHSIZE
-#define DIVERTHASHSIZE	128
-#endif
 
 const struct sysctl_bounded_args divert6ctl_vars[] = {
 	{ DIVERT6CTL_RECVSPACE, &divert6_recvspace, 0, SB_MAX },
@@ -81,15 +71,13 @@ const struct pr_usrreqs divert6_usrreqs = {
 	.pru_peeraddr	= in6_peeraddr,
 };
 
-int divb6hashsize = DIVERTHASHSIZE;
-
 int	divert6_output(struct inpcb *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 
 void
 divert6_init(void)
 {
-	in_pcbinit(&divb6table, divb6hashsize);
+	in_pcbinit(&divb6table, DIVERT_HASHSIZE);
 	div6counters = counters_alloc(divs_ncounters);
 }
 
