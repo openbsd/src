@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ossaudio.3,v 1.12 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: ossaudio.3,v 1.13 2025/06/06 20:52:27 schwarze Exp $
 .\"	$NetBSD: ossaudio.3,v 1.12 2001/05/19 17:23:39 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,13 +28,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: June 6 2025 $
 .Dt OSSAUDIO 3
 .Os
 .Sh NAME
 .Nm ossaudio
 .Nd OSS audio emulation
 .Sh SYNOPSIS
+.Lb libossaudio
 .In soundcard.h
 .Sh DESCRIPTION
 The
@@ -42,9 +43,12 @@ The
 library provides an emulation of the OSS (Linux) audio
 interface.
 .Pp
-Use the native interface for new programs and the emulation
+Use the native
+.Xr sioctl_open 3
+interface for new programs and the emulation
 library only for porting programs.
 .Sh SEE ALSO
+.Xr sioctl_open 3 ,
 .Xr audio 4
 .Sh HISTORY
 The
