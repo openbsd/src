@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.475 2025/06/04 13:29:11 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.476 2025/06/06 12:58:57 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -410,6 +410,9 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 	case KERN_MALLOCSTATS:
 		return (sysctl_malloc(name, namelen, oldp, oldlenp,
 		    newp, newlen, p));
+	case KERN_CPTIME2:
+		return (sysctl_cptime2(name, namelen, oldp, oldlenp,
+		    newp, newlen));
 	case KERN_POOL:
 		return (sysctl_dopool(name, namelen, oldp, oldlenp));
 #if NAUDIO > 0
@@ -422,6 +425,9 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 		return (sysctl_video(name, namelen, oldp, oldlenp,
 		    newp, newlen));
 #endif
+	case KERN_CPUSTATS:
+		return (sysctl_cpustats(name, namelen, oldp, oldlenp,
+		    newp, newlen));
 	default:
 		break;
 	}
@@ -490,9 +496,6 @@ kern_sysctl_dirs_locked(int top_name, int *name, u_int namelen,
 #endif
 	case KERN_TIMECOUNTER:
 		return (sysctl_tc(name, namelen, oldp, oldlenp, newp, newlen));
-	case KERN_CPTIME2:
-		return (sysctl_cptime2(name, namelen, oldp, oldlenp,
-		    newp, newlen));
 #ifdef WITNESS
 	case KERN_WITNESSWATCH:
 		return witness_sysctl_watch(oldp, oldlenp, newp, newlen);
@@ -500,9 +503,6 @@ kern_sysctl_dirs_locked(int top_name, int *name, u_int namelen,
 		return witness_sysctl(name, namelen, oldp, oldlenp,
 		    newp, newlen);
 #endif
-	case KERN_CPUSTATS:
-		return (sysctl_cpustats(name, namelen, oldp, oldlenp,
-		    newp, newlen));
 	case KERN_CLOCKINTR:
 		return sysctl_clockintr(name, namelen, oldp, oldlenp, newp,
 		    newlen);
@@ -632,6 +632,33 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (ENXIO);
 		return (sysctl_rdint(oldp, oldlenp, newp, mp->msg_bufs));
 	}
+	case KERN_CPTIME:
+	{
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *ci;
+		long cp_time[CPUSTATES];
+		int i, n = 0;
+
+		memset(cp_time, 0, sizeof(cp_time));
+
+		CPU_INFO_FOREACH(cii, ci) {
+			uint64_t ci_cp_time[CPUSTATES];
+
+			if (!cpu_is_online(ci))
+				continue;
+
+			n++;
+			sysctl_ci_cp_time(ci, ci_cp_time);
+			for (i = 0; i < CPUSTATES; i++)
+				cp_time[i] += ci_cp_time[i];
+		}
+
+		for (i = 0; i < CPUSTATES; i++)
+			cp_time[i] /= n;
+
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &cp_time,
+		    sizeof(cp_time)));
+	}
 	case KERN_POOL_DEBUG: {
 		extern int pool_debug;
 		int oldval, newval;
@@ -714,33 +741,6 @@ kern_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (newp && !error)
 			domainnamelen = newlen;
 		return (error);
-	case KERN_CPTIME:
-	{
-		CPU_INFO_ITERATOR cii;
-		struct cpu_info *ci;
-		long cp_time[CPUSTATES];
-		int i, n = 0;
-
-		memset(cp_time, 0, sizeof(cp_time));
-
-		CPU_INFO_FOREACH(cii, ci) {
-			uint64_t ci_cp_time[CPUSTATES];
-
-			if (!cpu_is_online(ci))
-				continue;
-
-			n++;
-			sysctl_ci_cp_time(ci, ci_cp_time);
-			for (i = 0; i < CPUSTATES; i++)
-				cp_time[i] += ci_cp_time[i];
-		}
-
-		for (i = 0; i < CPUSTATES; i++)
-			cp_time[i] /= n;
-
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cp_time,
-		    sizeof(cp_time)));
-	}
 	case KERN_NCHSTATS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &nchstats,
 		    sizeof(struct nchstats)));
