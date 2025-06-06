@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.77 2024/10/25 08:08:24 mpi Exp $ */
+/* $OpenBSD: cpu.h,v 1.78 2025/06/06 00:07:56 deraadt Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -208,8 +208,8 @@ struct cpu_info {
 	u_long ci_idepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 
-#if defined(MULTIPROCESSOR)
 	volatile u_long ci_flags;	/* flags; see below */
+#if defined(MULTIPROCESSOR)
 	volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
 #ifdef GPROF
