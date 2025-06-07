@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.14 2024/05/24 15:10:27 ratchov Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.15 2025/06/07 09:51:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2024 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt SIOCTL_OPEN 3
 .Os
 .Sh NAME
@@ -25,9 +25,11 @@
 .Nm sioctl_setval ,
 .Nm sioctl_nfds ,
 .Nm sioctl_pollfd ,
+.Nm sioctl_revents ,
 .Nm sioctl_eof
 .Nd interface to audio parameters
 .Sh SYNOPSIS
+.Lb libsndio
 .Fd #include <sndio.h>
 .Ft struct sioctl_hdl *
 .Fo sioctl_open
