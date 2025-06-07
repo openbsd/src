@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.252 2025/04/25 12:47:37 mvs Exp $
+#	$OpenBSD: files.i386,v 1.253 2025/06/07 15:11:12 kettenis Exp $
 #
 # new style config file for i386 architecture
 #
@@ -376,6 +376,7 @@ file	arch/i386/i386/acpi_machdep.c		acpi
 file	arch/i386/i386/acpi_wakecode.S		acpi & !small_kernel
 file	dev/acpi/acpi_x86.c			acpi & suspend & !small_kernel
 file	dev/acpi/acpi_apm.c			acpi
+file	dev/acpi/acpicpu_x86.c			acpicpu needs-flag
 
 #
 # IPMI

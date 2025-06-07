@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.62 2025/02/02 15:52:20 patrick Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.63 2025/06/07 15:11:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -350,6 +350,27 @@ struct acpi_madt_x2apic_nmi {
 	uint32_t	apic_proc_uid;
 	uint8_t		local_x2apic_lint;
 	uint8_t		reserved[3];
+} __packed;
+
+struct acpi_madt_gicc {
+	uint8_t		apic_type;
+#define ACPI_MADT_GICC		11
+	uint8_t		length;
+	uint16_t	reserved1;
+	uint32_t	gic_id;
+	uint32_t	acpi_proc_uid;
+	uint32_t	flags;
+	uint32_t	parking_protocol_version;
+	uint32_t	performance_interrupt;
+	uint64_t	parked_address;
+	uint64_t	base_address;
+	uint64_t	gicv_base_address;
+	uint64_t	gich_base_address;
+	uint32_t	maintenance_interrupt;
+	uint64_t	gicr_base_address;
+	uint64_t	mpidr;
+	uint8_t		efficiency_class;
+	uint8_t		reserved2[3];
 } __packed;
 
 #define ACPI_MADT_OEM_RSVD	128

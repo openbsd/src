@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.95 2024/10/22 21:50:02 jsg Exp $ */
+/* $OpenBSD: acpicpu_x86.c,v 1.1 2025/06/07 15:11:12 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.294 2025/04/21 21:11:04 mglocker Exp $
+# $OpenBSD: GENERIC,v 1.295 2025/06/07 15:11:12 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -42,6 +42,7 @@ acpi0		at mainbus?
 acpiac*		at acpi?
 acpibat*	at acpi?
 acpibtn*	at acpi?
+acpicpu*	at acpi?
 acpiec*		at acpi?
 acpige*		at acpi?
 acpimcfg*	at acpi?

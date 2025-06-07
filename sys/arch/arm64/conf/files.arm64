@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.73 2025/04/25 12:48:48 mvs Exp $
+# $OpenBSD: files.arm64,v 1.74 2025/06/07 15:11:12 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -268,6 +268,7 @@ include "dev/acpi/files.acpi"
 
 attach	acpi at fdt with acpi_fdt
 file	arch/arm64/arm64/acpi_machdep.c		acpi_fdt
+file	arch/arm64/dev/acpicpu.c		acpicpu
 
 define	acpiiort {}
 device	acpiiort: acpiiort
