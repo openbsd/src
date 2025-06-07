@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.56 2022/05/30 10:31:59 op Exp $
+.\" $OpenBSD: sio_open.3,v 1.57 2025/06/07 09:53:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 30 2022 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nm SIO_BPS
 .Nd sndio interface to audio devices
 .Sh SYNOPSIS
+.Lb libsndio
 .In sndio.h
 .Ft "struct sio_hdl *"
 .Fn sio_open "const char *name" "unsigned int mode" "int nbio_flag"
