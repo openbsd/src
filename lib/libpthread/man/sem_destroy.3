@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_destroy.3,v 1.7 2023/02/11 21:13:56 jmc Exp $
+.\" $OpenBSD: sem_destroy.3,v 1.8 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,13 +28,14 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_destroy.3,v 1.9 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: February 11 2023 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt SEM_DESTROY 3
 .Os
 .Sh NAME
 .Nm sem_destroy
 .Nd destroy an unnamed semaphore
 .Sh SYNOPSIS
+.Lb libpthread
 .In semaphore.h
 .Ft int
 .Fn sem_destroy "sem_t *sem"

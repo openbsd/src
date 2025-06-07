@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_schedparam.3,v 1.6 2015/11/10 23:48:18 jmc Exp $
+.\" $OpenBSD: pthread_schedparam.3,v 1.7 2025/06/07 00:16:52 schwarze Exp $
 .\" Copyright (C) 2000 Jason Evans <jasone@freebsd.org>.
 .\" All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/pthread_schedparam.3,v 1.4 2001/07/15 07:53:27 dd Exp $
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_SETSCHEDPARAM 3
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nm pthread_getschedparam
 .Nd thread scheduling parameter manipulation
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_setschedparam "pthread_t thread" "int policy" "const struct sched_param *param"

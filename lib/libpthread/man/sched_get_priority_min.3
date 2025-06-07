@@ -1,4 +1,4 @@
-.\" $OpenBSD: sched_get_priority_min.3,v 1.2 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sched_get_priority_min.3,v 1.3 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Federico G. Schwindt <fgsch@openbsd.org>
 .\"
@@ -16,7 +16,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt SCHED_GET_PRIORITY_MIN 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm sched_get_priority_min
 .Nd get priority limits
 .Sh SYNOPSIS
+.Lb libpthread
 .In sched.h
 .Ft int
 .Fn sched_get_priority_max "int policy"

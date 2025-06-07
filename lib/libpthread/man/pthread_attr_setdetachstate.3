@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_setdetachstate.3,v 1.10 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_attr_setdetachstate.3,v 1.11 2025/06/07 00:16:52 schwarze Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_ATTR_SETDETACHSTATE 3
 .Os
 .Sh NAME
@@ -11,6 +11,7 @@
 .Nm pthread_attr_getdetachstate
 .Nd set and get detachstate attribute
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_attr_setdetachstate "pthread_attr_t *attr" "int detachstate"

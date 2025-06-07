@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_getconcurrency.3,v 1.4 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_getconcurrency.3,v 1.5 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Sergey Osokin <osa@FreeBSD.org.ru>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/pthread_getconcurrency.3,v 1.2 2003/05/24 19:50:43 ru Exp $
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_GETCONCURRENCY 3
 .Os
 .Sh NAME
@@ -33,6 +33,7 @@
 .Nm pthread_setconcurrency
 .Nd get or set level of concurrency
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_getconcurrency void

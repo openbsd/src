@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_getvalue.3,v 1.6 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sem_getvalue.3,v 1.7 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,13 +28,14 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_getvalue.3,v 1.9 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt SEM_GETVALUE 3
 .Os
 .Sh NAME
 .Nm sem_getvalue
 .Nd get the value of a semaphore
 .Sh SYNOPSIS
+.Lb libpthread
 .In semaphore.h
 .Ft int
 .Fn sem_getvalue "sem_t *sem" "int *sval"

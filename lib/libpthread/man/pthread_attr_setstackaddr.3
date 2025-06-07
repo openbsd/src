@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.13 2022/07/17 09:53:40 jsg Exp $
+.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.14 2025/06/07 00:16:52 schwarze Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: July 17 2022 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_ATTR_SETSTACKADDR 3
 .Os
 .Sh NAME
@@ -11,6 +11,7 @@
 .Nm pthread_attr_getstackaddr
 .Nd set and get stackaddr attribute
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_attr_setstackaddr "pthread_attr_t *attr" "void *stackaddr"

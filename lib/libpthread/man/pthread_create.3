@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_create.3,v 1.16 2016/03/30 06:58:06 jmc Exp $
+.\" $OpenBSD: pthread_create.3,v 1.17 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -32,13 +32,14 @@
 .\"
 .\" $FreeBSD: pthread_create.3,v 1.8 1999/08/28 00:03:04 peter Exp $
 .\"
-.Dd $Mdocdate: March 30 2016 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_CREATE 3
 .Os
 .Sh NAME
 .Nm pthread_create
 .Nd create a new thread
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_create "pthread_t *thread" "const pthread_attr_t *attr" "void *(*start_routine)(void *)" "void *arg"

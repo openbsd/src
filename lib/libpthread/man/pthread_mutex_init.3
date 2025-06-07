@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_mutex_init.3,v 1.14 2014/01/03 16:24:06 jmc Exp $
+.\" $OpenBSD: pthread_mutex_init.3,v 1.15 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -29,13 +29,14 @@
 .\"
 .\" $FreeBSD: pthread_mutex_init.3,v 1.6 1999/08/28 00:03:07 peter Exp $
 .\"
-.Dd $Mdocdate: January 3 2014 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_MUTEX_INIT 3
 .Os
 .Sh NAME
 .Nm pthread_mutex_init
 .Nd create a mutex
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_mutex_init "pthread_mutex_t *mutex" "const pthread_mutexattr_t *attr"

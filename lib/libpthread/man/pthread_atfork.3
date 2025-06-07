@@ -1,14 +1,15 @@
-.\"	$OpenBSD: pthread_atfork.3,v 1.12 2015/05/15 18:47:53 jmc Exp $
+.\"	$OpenBSD: pthread_atfork.3,v 1.13 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" David Leonard <d@openbsd.org>, 1999. Public domain.
 .\"
-.Dd $Mdocdate: May 15 2015 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_ATFORK 3
 .Os
 .Sh NAME
 .Nm pthread_atfork
 .Nd specify handler functions to call when the process forks
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_atfork "void (*prepare)(void)" "void (*parent)(void)" "void (*child)(void)"

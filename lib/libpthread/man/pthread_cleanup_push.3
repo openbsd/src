@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_cleanup_push.3,v 1.7 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_cleanup_push.3,v 1.8 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -29,13 +29,14 @@
 .\"
 .\" $FreeBSD: pthread_cleanup_push.3,v 1.5 1999/08/28 00:03:02 peter Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_CLEANUP_PUSH 3
 .Os
 .Sh NAME
 .Nm pthread_cleanup_push
 .Nd add a cleanup function for thread exit
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft void
 .Fn pthread_cleanup_push "void (*cleanup_routine)(void *)" "void *arg"

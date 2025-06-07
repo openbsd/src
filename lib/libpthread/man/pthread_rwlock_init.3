@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_init.3,v 1.8 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_rwlock_init.3,v 1.9 2025/06/07 00:16:52 schwarze Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,13 +25,14 @@
 .\"
 .\" $FreeBSD: pthread_rwlock_init.3,v 1.2 1999/08/28 00:03:09 peter Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_RWLOCK_INIT 3
 .Os
 .Sh NAME
 .Nm pthread_rwlock_init
 .Nd initialize a read/write lock
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_rwlock_init "pthread_rwlock_t *lock" "const pthread_rwlockattr_t *attr"

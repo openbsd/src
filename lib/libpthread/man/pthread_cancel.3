@@ -1,15 +1,16 @@
-.\" $OpenBSD: pthread_cancel.3,v 1.13 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_cancel.3,v 1.14 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\"
 .\"  David Leonard, 1999. Public Domain.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_CANCEL 3
 .Os
 .Sh NAME
 .Nm pthread_cancel
 .Nd cancel execution of a thread
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_cancel "pthread_t thread"

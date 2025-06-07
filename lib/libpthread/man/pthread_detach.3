@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_detach.3,v 1.12 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_detach.3,v 1.13 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 1996-1998 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -32,13 +32,14 @@
 .\"
 .\" $FreeBSD: pthread_detach.3,v 1.5 1999/08/28 00:03:05 peter Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_DETACH 3
 .Os
 .Sh NAME
 .Nm pthread_detach
 .Nd detach a thread
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_detach "pthread_t thread"

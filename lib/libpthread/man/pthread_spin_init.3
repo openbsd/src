@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pthread_spin_init.3,v 1.3 2020/04/06 00:01:08 pirofti Exp $
+.\"	$OpenBSD: pthread_spin_init.3,v 1.4 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Paul Irofti <paul@irofti.net>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 6 2020 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_SPIN_INIT 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm pthread_spin_destroy
 .Nd initialize and destroy a spinlock object
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Ft int
 .Fn pthread_spin_init "pthread_spinlock_t *lock" "int pshared"

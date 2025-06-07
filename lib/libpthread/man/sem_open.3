@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_open.3,v 1.12 2023/02/11 21:13:56 jmc Exp $
+.\" $OpenBSD: sem_open.3,v 1.13 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2023 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt SEM_OPEN 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm sem_unlink
 .Nd open and close named semaphores
 .Sh SYNOPSIS
+.Lb libpthread
 .In semaphore.h
 .Ft sem_t *
 .Fn sem_open "const char *name" "int oflag" "..."

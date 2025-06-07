@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_once.3,v 1.15 2015/09/14 13:08:01 schwarze Exp $
+.\" $OpenBSD: pthread_once.3,v 1.16 2025/06/07 00:16:52 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -32,13 +32,14 @@
 .\"
 .\" $FreeBSD: pthread_once.3,v 1.5 1999/08/28 00:03:09 peter Exp $
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PTHREAD_ONCE 3
 .Os
 .Sh NAME
 .Nm pthread_once
 .Nd dynamic package initialization
 .Sh SYNOPSIS
+.Lb libpthread
 .In pthread.h
 .Vt pthread_once_t once_control No = Dv PTHREAD_ONCE_INIT ;
 .Ft int
