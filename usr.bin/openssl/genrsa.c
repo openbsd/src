@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.22 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: genrsa.c,v 1.23 2025/06/07 08:33:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,7 +108,8 @@ set_public_exponent(int argc, char **argv, int *argsused)
 	return (0);
 }
 
-static const EVP_CIPHER *get_cipher_by_name(char *name)
+static const EVP_CIPHER *
+get_cipher_by_name(char *name)
 {
 	if (name == NULL || strcmp(name, "") == 0)
 		return (NULL);

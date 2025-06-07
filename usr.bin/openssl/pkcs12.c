@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.29 2024/12/26 14:10:48 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.30 2025/06/07 08:33:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -152,7 +152,8 @@ pkcs12_opt_passarg(char *arg)
 	return (0);
 }
 
-static const EVP_CIPHER *get_cipher_by_name(char *name)
+static const EVP_CIPHER *
+get_cipher_by_name(char *name)
 {
 	if (name == NULL || strcmp(name, "") == 0)
 		return (NULL);
