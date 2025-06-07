@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.20 2023/04/14 15:27:13 tb Exp $ */
+/* $OpenBSD: smime.c,v 1.21 2025/06/07 08:28:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -271,7 +271,7 @@ static const struct option smime_options[] = {
 	},
 	{
 		.name = "aes256",
-		.desc = "Encrypt PEM output with CBC AES",
+		.desc = "Encrypt PEM output with CBC AES (default)",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = smime_opt_cipher,
 	},
@@ -313,7 +313,7 @@ static const struct option smime_options[] = {
 #ifndef OPENSSL_NO_RC2
 	{
 		.name = "rc2-40",
-		.desc = "Encrypt with RC2-40 (default)",
+		.desc = "Encrypt with RC2-40",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = smime_opt_cipher,
 	},
@@ -825,14 +825,8 @@ smime_main(int argc, char **argv)
 	}
 
 	if (cfg.operation == SMIME_ENCRYPT) {
-		if (cfg.cipher == NULL) {
-#ifndef OPENSSL_NO_RC2
-			cfg.cipher = EVP_rc2_40_cbc();
-#else
-			BIO_printf(bio_err, "No cipher selected\n");
-			goto end;
-#endif
-		}
+		if (cfg.cipher == NULL)
+			cfg.cipher = EVP_aes_256_cbc();
 		if ((encerts = sk_X509_new_null()) == NULL)
 			goto end;
 		while (*args != NULL) {
