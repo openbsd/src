@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_loop.3,v 1.5 2023/04/27 16:10:11 schwarze Exp $
+.\" $OpenBSD: event_base_loop.3,v 1.6 2025/06/07 20:50:40 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2023 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt EVENT_BASE_LOOP 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm event_dispatch
 .Nd run an event loop
 .Sh SYNOPSIS
+.Lb libevent
 .In event.h
 .Ft int
 .Fn event_base_loop "struct event_base *base" "int flags"

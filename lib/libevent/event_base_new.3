@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_new.3,v 1.6 2023/04/28 17:31:58 schwarze Exp $
+.\" $OpenBSD: event_base_new.3,v 1.7 2025/06/07 20:50:40 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2023 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt EVENT_BASE_NEW 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm event_base_free
 .Nd event_base structure initialization
 .Sh SYNOPSIS
+.Lb libevent
 .In event.h
 .Ft "struct event_base *"
 .Fn event_base_new void
