@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evbuffer_new.3,v 1.14 2018/07/26 12:50:04 rob Exp $
+.\"	$OpenBSD: evbuffer_new.3,v 1.15 2025/06/07 20:37:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 26 2018 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt EVBUFFER_NEW 3
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm EVBUFFER_DATA
 .Nd libevent utility API for buffered input/output
 .Sh SYNOPSIS
+.Lb libevent
 .In event.h
 .Ft "struct evbuffer *"
 .Fn "evbuffer_new" "void"
