@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.16 2022/08/29 02:01:18 jsg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.17 2025/06/07 07:52:17 aoyama Exp $	*/
 
 /* Public Domain */
 
@@ -14,8 +14,9 @@ void		atomic_setbits_int(volatile unsigned int *, unsigned int);
 void		atomic_clearbits_int(volatile unsigned int *, unsigned int);
 unsigned int	atomic_add_int_nv_mp(volatile unsigned int *, unsigned int);
 unsigned int	atomic_sub_int_nv_mp(volatile unsigned int *, unsigned int);
-unsigned int	atomic_cas_uint_mp(unsigned int *, unsigned int, unsigned int);
-unsigned int	atomic_swap_uint_mp(unsigned int *, unsigned int);
+unsigned int	atomic_cas_uint_mp(volatile unsigned int *, unsigned int,
+		     unsigned int);
+unsigned int	atomic_swap_uint_mp(volatile unsigned int *, unsigned int);
 
 #define	atomic_add_int_nv	atomic_add_int_nv_mp
 #define	atomic_sub_int_nv	atomic_sub_int_nv_mp
@@ -80,7 +81,7 @@ atomic_sub_int_nv_sp(volatile unsigned int *uip, unsigned int v)
 }
 
 static inline unsigned int
-atomic_cas_uint_sp(unsigned int *p, unsigned int o, unsigned int n)
+atomic_cas_uint_sp(volatile unsigned int *p, unsigned int o, unsigned int n)
 {
 	u_int psr;
 	unsigned int ov;
@@ -96,7 +97,7 @@ atomic_cas_uint_sp(unsigned int *p, unsigned int o, unsigned int n)
 }
 
 static inline unsigned int
-atomic_swap_uint_sp(unsigned int *p, unsigned int v)
+atomic_swap_uint_sp(volatile unsigned int *p, unsigned int v)
 {
 	u_int psr;
 	unsigned int ov;
