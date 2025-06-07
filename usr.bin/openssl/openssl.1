@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.166 2025/05/24 12:52:01 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.167 2025/06/07 08:29:20 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: May 24 2025 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1091,7 +1091,7 @@ The encryption algorithm to use.
 128-, 192-, or 256-bit AES, 128-, 192-, or 256-bit CAMELLIA,
 DES (56 bits), triple DES (168 bits),
 or 40-, 64-, or 128-bit RC2, respectively;
-if not specified, triple DES is
+if not specified, 256-bit AES is
 used.
 Only used with
 .Fl encrypt
@@ -5098,7 +5098,7 @@ The remaining options are as follows:
 The encryption algorithm to use.
 128-, 192-, or 256-bit AES, DES (56 bits), triple DES (168 bits),
 or 40-, 64-, or 128-bit RC2, respectively;
-if not specified, 40-bit RC2 is
+if not specified, 256-bit AES is
 used.
 Only used with
 .Fl encrypt .
