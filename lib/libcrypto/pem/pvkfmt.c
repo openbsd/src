@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.30 2025/06/07 09:32:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -803,8 +803,8 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 
  err:
 	EVP_CIPHER_CTX_free(cctx);
-	if (enctmp && saltlen)
-		free(enctmp);
+	free(enctmp);
+
 	return ret;
 }
 
