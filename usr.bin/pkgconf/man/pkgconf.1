@@ -7,7 +7,7 @@
 .\" This software is provided 'as is' and without any warranty, express or
 .\" implied.  In no event shall the authors be liable for any damages arising
 .\" from the use of this software.
-.Dd $Mdocdate: June 3 2025 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -18,15 +18,122 @@
 .Op Ar options
 .Ar module ...
 .Sh DESCRIPTION
+The
 .Nm
-is a program which helps to configure compiler and linker flags for
-development libraries.
-This allows build systems to detect other dependencies and use them with the
-system toolchain.
+program retrieves configuration information related to the
+.Ar module
+arguments from
+.Xr pc 5
+files installed on the system and prints parts of the retrieved
+information depending on the specified
+.Ar options .
+The most common use is printing the compiler and linker flags needed
+to build software that uses the libraries given by the
+.Ar module
+arguments.
 .Pp
 The
+.Xr pc 5
+files are searched for along a path constructed from the
+.Fl -with-path
+option, the
+.Ev PKG_CONFIG_PATH
+and
+.Ev PKG_CONFIG_LIBDIR
+environment variables, and some compiled-in default directories.
+The
+.Ar module
+arguments correspond to the file names, but without the
+.Pa .pc
+filename extension.
+.Pp
+Several of the
 .Ar options
-are as follows:
+cause immediate exit.
+If multiple of these options are given, only the option with the
+highest priority takes effect and those with lower priority are
+silently ignored.
+These options are, ordered by descending priority:
+.Bl -enum
+.It
+No-module options:
+.Fl -relocate ,
+.Fl -dump-personality ,
+.Fl -about ,
+.Fl -version ,
+.Fl -help ,
+.Fl -atleast-pkgconfig-version ,
+.Fl -list-all ,
+and
+.Fl -list-package-names :
+These options cause all arguments to be ignored.
+.It
+Argument-only options:
+.Fl -atleast-version ,
+.Fl -exact-version ,
+and
+.Fl -max-version :
+These options only inspect modules explicitly specified on the
+command line and do not look at dependencies.
+.It
+Limited-output options:
+.Fl -validate ,
+.Fl -license ,
+.Fl -uninstalled ,
+and
+.Fl -env :
+These options perform dependency resolution, but exit after printing
+the information requested by the highest-priority option,
+ignoring other output options that may have been specified.
+.El
+.Pp
+Several other options require at least one
+.Ar module
+argument, produce output, do not cause early exit, can be combined
+with each other, but override and disable all
+.Fl -cflags
+and
+.Fl -libs
+options:
+.Bl -enum
+.It
+Single-module output options:
+.Fl -path ,
+.Fl -print-variables ,
+.Fl -variable :
+If any of these options is specified, only the first
+.Ar module
+argument is used, all other arguments are silently ignored,
+and no dependency resolution is attempted.
+.It
+Depth-one output options:
+.Fl -print-provides ,
+.Fl -modversion ,
+.Fl -print-requires ,
+and
+.Fl -print-requires-private :
+If any of these options is specified, only modules
+explicitly specified on the command line are inspected
+and no dependency resolution is attempted.
+.It
+General output options:
+.Fl -simulate ,
+.Fl -digraph ,
+.Fl -solution ,
+.Fl -fragment-tree :
+These options do not limit dependency resolution.
+.El
+.Pp
+The most important output options
+.Fl -cflags
+and
+.Fl -libs
+can be combined with each other, but are overridden and ignored if
+any of the options listed above are specified.
+.Pp
+The complete list of
+.Ar options
+is as follows:
 .Bl -tag -width indent
 .It Fl -about
 Print the version number, the Copyright notice, and the license of the
@@ -38,11 +145,22 @@ Exit with error if the requested
 .Ar version
 number is greater than the version number of the
 .Nm
-program.
+program, or with success otherwise.
+Most other options and all command line arguments are ignored.
 .It Fl -atleast-version Ns = Ns Ar version
+Check the
+.Ar module
+arguments in the given order.
+Exit with error as soon as a
+.Ar module
+does not exist, and exit with success as soon as the version number of a
+.Ar module
+is greater than or equal to the requested
+.Ar version
+number.
 Exit with error if the version number of each
 .Ar module
-is less than the specified
+is less than the requested
 .Ar version
 number.
 .It Fl -cflags , Fl -cflags-only-I , Fl -cflags-only-other
@@ -88,6 +206,20 @@ Disables the
 feature.
 .It Fl -dont-relocate-paths
 Disables the path relocation feature.
+.It Fl -dump-personality
+Print some default settings to standard output, in particular
+the default module search path that is used when
+.Ev PKG_CONFIG_LIBDIR
+is not defined, the default list of include paths that are filtered out when
+.Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH
+is not defined,
+and the default list of library paths that are filtered out when
+.Ev PKG_CONFIG_SYSTEM_LIBRARY_PATH
+is not defined, and exit.
+Most other options and all command line arguments are ignored.
+This option is only available if the preprocessor macro
+.Dv PKGCONF_LITE
+was not defined during compilation.
 .It Fl -env Ns = Ns Ar varname
 Print the requested values as variable declarations in a similar format as the
 .Xr env 1
@@ -104,9 +236,19 @@ and the compiled-in default directories.
 Print all error, warning, and debugging messages to standard output
 instead of to standard error output.
 .It Fl -exact-version Ns = Ns Ar version
-Exit with error if no
+Check the
 .Ar module
-has exactly the specified
+arguments in the given order.
+Exit with error as soon as a
+.Ar module
+does not exist, and exit with success as soon as the version number of a
+.Ar module
+is exactly the requested
+.Ar version
+number.
+Exit with error if the version number of each
+.Ar module
+differs from the requested
 .Ar version
 number.
 .It Fl -exists
@@ -120,6 +262,9 @@ to exit and report success or failure before all arguments have been inspected.
 .It Fl -fragment-filter Ns = Ns Ar types
 Filter the fragment lists for the specified
 .Ar types .
+.It Fl -help
+Print a usage summary on standard output and exit.
+Most other options and all command line arguments are ignored.
 .It Fl -ignore-conflicts
 Ignore
 .Sq Conflicts
@@ -152,6 +297,7 @@ and the
 property.
 This option implies
 .Fl -print-errors .
+All command line arguments are ignored.
 .It Fl -list-package-names
 Perform the same search as
 .Fl -list-all ,
@@ -160,12 +306,13 @@ but only print the basename of each
 file without the extension, not the module name and the description.
 This option implies
 .Fl -print-errors .
+All command line arguments are ignored.
 .It Fl -log-file Ns = Ns Ar file
 Set the name of the output
 .Ar file
 where information about selected modules is logged,
 both about those selected by arguments and as dependencies.
-For each selected module, one line is printed to standard output,
+For each selected module, one line is printed,
 containing the basename of the
 .Xr pc 5
 file without the extension, optionally an operator and version number
@@ -178,9 +325,19 @@ is instead taken from the
 environment variable, and if that is not provided either,
 this kind of logging is disabled.
 .It Fl -max-version Ns = Ns Ar version
+Check the
+.Ar module
+arguments in the given order.
+Exit with error as soon as a
+.Ar module
+does not exist, and exit with success as soon as the version number of a
+.Ar module
+is less than or equal to the requested
+.Ar version
+number.
 Exit with error if the version number of each
 .Ar module
-is greater than the specified
+is greater than the requested
 .Ar version
 number.
 .It Fl -maximum-traverse-depth Ns = Ns Ar depth
@@ -347,6 +504,13 @@ Dumps a series of trees denoting pkgconf's resolver state.
 This option is only available if the preprocessor macro
 .Dv PKGCONF_LITE
 was not defined during compilation.
+.It Fl -solution
+Print the names of the modules requested with
+.Ar module
+arguments and their dependencies to standard output.
+This option is only available if the preprocessor macro
+.Dv PKGCONF_LITE
+was not defined during compilation.
 .It Fl -static
 Compute a deeper dependency graph and use compiler/linker flags intended for
 static linking.
@@ -414,7 +578,16 @@ Second supplementary colon-separated list of include paths filtered out
 in the same way as
 .Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH .
 .It Ev DESTDIR
-If set to PKG_CONFIG_SYSROOT_DIR, assume that PKG_CONFIG_FDO_SYSROOT_RULES is set.
+If set to the same value as
+.Ev PKG_CONFIG_SYSROOT_DIR ,
+behave in the same way as if
+.Ev PKG_CONFIG_FDO_SYSROOT_RULES
+is set.
+If
+.Ev PKG_CONFIG_SYSROOT_DIR
+is not set or set to a different value,
+.Ev DESTDIR
+is ignored.
 .It Ev LIBRARY_PATH
 Supplementary colon-separated list of library paths filtered out
 in the same way as
@@ -423,6 +596,14 @@ in the same way as
 Fourth supplementary colon-separated list of include paths filtered out
 in the same way as
 .Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH .
+.It Ev PKG_CONFIG_ALLOW_SYSTEM_CFLAGS
+If set, this variable has the same effect as the
+.Fl -keep-system-cflags
+option.
+.It Ev PKG_CONFIG_ALLOW_SYSTEM_LIBS
+If set, this variable has the same effect as the
+.Fl -keep-system-libs
+option.
 .It Ev PKG_CONFIG_DEBUG_SPEW
 If set, override and disable the
 .Fl -silence-errors
@@ -515,6 +696,8 @@ beginning with the prefix variable in a given
 .Xr pc 5
 file.
 Useful for cross compilation.
+The value of this environment variable is also copied into the global variable
+.Va pc_sysrootdir .
 .It Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH
 Colon-separated list of include paths that are filtered out
 and not printed by the
