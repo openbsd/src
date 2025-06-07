@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.155 2025/04/30 13:50:50 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.156 2025/06/07 10:23:21 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2414,8 +2414,8 @@ tlsext_randomize_build_order(SSL *s)
 	free(s->tlsext_build_order);
 	s->tlsext_build_order_len = 0;
 
-	if ((s->tlsext_build_order = calloc(sizeof(*s->tlsext_build_order),
-	    N_TLS_EXTENSIONS)) == NULL)
+	if ((s->tlsext_build_order = calloc(N_TLS_EXTENSIONS,
+	    sizeof(*s->tlsext_build_order))) == NULL)
 		return 0;
 	s->tlsext_build_order_len = N_TLS_EXTENSIONS;
 
@@ -2443,8 +2443,8 @@ tlsext_linearize_build_order(SSL *s)
 	free(s->tlsext_build_order);
 	s->tlsext_build_order_len = 0;
 
-	if ((s->tlsext_build_order = calloc(sizeof(*s->tlsext_build_order),
-	    N_TLS_EXTENSIONS)) == NULL)
+	if ((s->tlsext_build_order = calloc(N_TLS_EXTENSIONS,
+	    sizeof(*s->tlsext_build_order))) == NULL)
 		return 0;
 	s->tlsext_build_order_len = N_TLS_EXTENSIONS;
 
