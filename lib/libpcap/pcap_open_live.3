@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap_open_live.3,v 1.5 2025/01/16 04:02:08 dlg Exp $
+.\"	$OpenBSD: pcap_open_live.3,v 1.6 2025/06/07 09:56:51 schwarze Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: January 16 2025 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
@@ -84,6 +84,7 @@
 .Nm pcap_offline_filter
 .Nd Packet Capture library
 .Sh SYNOPSIS
+.Lb libpcap
 .In pcap.h
 .Ft "pcap_t *"
 .Fn pcap_open_live "const char *source" "int snaplen" "int promisc" "int to_ms" "char *errbuf"
