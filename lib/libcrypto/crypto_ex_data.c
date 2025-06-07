@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_ex_data.c,v 1.4 2024/08/03 07:45:26 tb Exp $ */
+/* $OpenBSD: crypto_ex_data.c,v 1.5 2025/06/07 04:37:01 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -52,7 +52,7 @@ crypto_ex_data_classes_init(void)
 		return 1;
 
 	if ((classes_new = calloc(CRYPTO_EX_INDEX__COUNT,
-	    sizeof(struct crypto_ex_data_index))) == NULL)
+	    sizeof(*classes_new))) == NULL)
 		return 0;
 
 	CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
