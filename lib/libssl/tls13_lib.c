@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.77 2024/01/27 14:23:51 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.78 2025/06/07 10:25:12 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -538,7 +538,7 @@ tls13_ctx_new(int mode, SSL *ssl)
 {
 	struct tls13_ctx *ctx = NULL;
 
-	if ((ctx = calloc(sizeof(struct tls13_ctx), 1)) == NULL)
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
 		goto err;
 
 	ctx->hs = &ssl->s3->hs;
