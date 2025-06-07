@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.37 2025/05/10 05:25:43 tb Exp $ */
+/* $OpenBSD: cms.c,v 1.38 2025/06/07 08:24:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -493,7 +493,7 @@ static const struct option cms_options[] = {
 	},
 	{
 		.name = "aes256",
-		.desc = "Encrypt PEM output with CBC AES",
+		.desc = "Encrypt PEM output with CBC AES (default)",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = cms_opt_cipher,
 	},
@@ -527,7 +527,7 @@ static const struct option cms_options[] = {
 	},
 	{
 		.name = "des3",
-		.desc = "Encrypt with triple DES (default)",
+		.desc = "Encrypt with triple DES",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = cms_opt_cipher,
 	},
@@ -1309,14 +1309,8 @@ cms_main(int argc, char **argv)
 	}
 
 	if (cfg.operation == SMIME_ENCRYPT) {
-		if (cfg.cipher == NULL) {
-#ifndef OPENSSL_NO_DES
-			cfg.cipher = EVP_des_ede3_cbc();
-#else
-			BIO_printf(bio_err, "No cipher selected\n");
-			goto end;
-#endif
-		}
+		if (cfg.cipher == NULL)
+			cfg.cipher = EVP_aes_256_cbc();
 		if (cfg.secret_key != NULL &&
 		    cfg.secret_keyid == NULL) {
 			BIO_printf(bio_err, "No secret key id\n");
