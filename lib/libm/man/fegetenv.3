@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fegetenv.3,v 1.4 2018/03/16 16:58:26 schwarze Exp $
+.\"	$OpenBSD: fegetenv.3,v 1.5 2025/06/07 10:33:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt FEGETENV 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm feupdateenv
 .Nd manage floating-point environment
 .Sh SYNOPSIS
+.Lb libm
 .In fenv.h
 .Ft int
 .Fn fegetenv "fenv_t *envp"

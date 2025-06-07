@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sincos.3,v 1.2 2021/06/29 14:47:34 schwarze Exp $
+.\"	$OpenBSD: sincos.3,v 1.3 2025/06/07 10:33:06 schwarze Exp $
 .\" Copyright (c) 2011 Steven G. Kargl.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\"
 .\" $FreeBSD: head/lib/msun/man/sincos.3 319047 2017-05-28 06:13:38Z mmel $
 .\"
-.Dd $Mdocdate: June 29 2021 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt SINCOS 3
 .Os
 .Sh NAME
@@ -33,6 +33,7 @@
 .Nm sincosl
 .Nd sine and cosine functions
 .Sh SYNOPSIS
+.Lb libm
 .In math.h
 .Ft void
 .Fn sincos "double x" "double *s" "double *c"

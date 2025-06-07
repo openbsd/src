@@ -1,4 +1,4 @@
-.\"	$OpenBSD: copysign.3,v 1.4 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: copysign.3,v 1.5 2025/06/07 10:33:06 schwarze Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt COPYSIGN 3
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm copysignl
 .Nd copy sign
 .Sh SYNOPSIS
+.Lb libm
 .In math.h
 .Ft double
 .Fn copysign "double x" "double y"

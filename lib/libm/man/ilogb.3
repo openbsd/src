@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ilogb.3,v 1.8 2020/10/31 15:14:39 kettenis Exp $
+.\"	$OpenBSD: ilogb.3,v 1.9 2025/06/07 10:33:06 schwarze Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: October 31 2020 $
+.Dd $Mdocdate: June 7 2025 $
 .Dt ILOGB 3
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm ilogbl
 .Nd extract exponent
 .Sh SYNOPSIS
+.Lb libm
 .In math.h
 .Ft int
 .Fn ilogb "double x"
