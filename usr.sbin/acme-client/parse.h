@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.h,v 1.15 2020/09/14 16:00:17 florian Exp $ */
+/*	$OpenBSD: parse.h,v 1.16 2025/06/08 23:53:19 florian Exp $ */
 /*
  * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
@@ -36,6 +36,7 @@ struct authority_c {
 	TAILQ_ENTRY(authority_c)	 entry;
 	char				*name;
 	char				*api;
+	int				 insecure;
 	char				*account;
 	enum keytype			 keytype;
 	char				*contact;

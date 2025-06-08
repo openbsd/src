@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.39 2025/06/08 22:54:15 florian Exp $ */
+/*	$Id: netproc.c,v 1.40 2025/06/08 23:53:19 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -689,7 +689,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 		goto out;
 	}
 
-	if (http_init() == -1) {
+	if (http_init(authority->insecure) == -1) {
 		warn("http_init");
 		goto out;
 	}

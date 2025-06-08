@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2022/12/15 08:06:13 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.46 2025/06/08 23:53:19 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -106,6 +106,7 @@ typedef struct {
 %token	INCLUDE
 %token	ERROR
 %token	RSA ECDSA
+%token	INSECURE
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.string>	string
@@ -239,6 +240,9 @@ authorityoptsl	: API URL STRING {
 			if ((s = strdup($2)) == NULL)
 				err(EXIT_FAILURE, "strdup");
 			auth->contact = s;
+		}
+		| INSECURE {
+			auth->insecure = 1;
 		}
 		;
 
@@ -467,6 +471,7 @@ lookup(char *s)
 		{"ecdsa",		ECDSA},
 		{"full",		FULL},
 		{"include",		INCLUDE},
+		{"insecure",		INSECURE},
 		{"key",			KEY},
 		{"name",		NAME},
 		{"names",		NAMES},
@@ -1054,6 +1059,8 @@ print_config(struct acme_conf *xconf)
 		if (a->account != NULL)
 			printf("\taccount key \"%s\" %s\n", a->account,
 			    kt2txt(a->keytype));
+		if (a->insecure)
+			printf("\tinsecure\n");
 		printf("}\n\n");
 	}
 	TAILQ_FOREACH(d, &xconf->domain_list, entry) {

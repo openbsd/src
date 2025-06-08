@@ -1,4 +1,4 @@
-/*	$Id: http.h,v 1.9 2025/06/08 22:54:15 florian Exp $ */
+/*	$Id: http.h,v 1.10 2025/06/08 23:53:19 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,7 +52,7 @@ struct	httpget {
 	size_t		 bodypartsz; /* size of bodypart */
 };
 
-int		 http_init(void);
+int		 http_init(int);
 
 /* Convenience functions. */
 struct httpget	*http_get(const struct source *, size_t,

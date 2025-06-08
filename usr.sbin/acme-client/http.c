@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.33 2025/06/08 22:54:15 florian Exp $ */
+/*	$Id: http.c,v 1.34 2025/06/08 23:53:19 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,7 +95,7 @@ dotlswrite(const void *buf, size_t sz, const struct http *http)
 }
 
 int
-http_init(void)
+http_init(int insecure)
 {
 	if (tlscfg != NULL)
 		return 0;
@@ -109,6 +109,10 @@ http_init(void)
 	if (tls_config_set_ca_file(tlscfg, tls_default_ca_cert_file()) == -1) {
 		warn("tls_config_set_ca_file: %s", tls_config_error(tlscfg));
 		goto err;
+	}
+	if (insecure) {
+		tls_config_insecure_noverifycert(tlscfg);
+		tls_config_insecure_noverifyname(tlscfg);
 	}
 
 	return 0;
