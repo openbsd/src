@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/06/25 21:33:23 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2025/06/08 00:52:17 florian Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -54,7 +54,7 @@ REGRESS_TARGETS +=	run-regress-acme
 run-regress-acme: etc/acme-client.conf httpd-start
 	${SUDO} /usr/sbin/acme-client \
 	    -f ${.OBJDIR}/etc/acme-client.conf \
-	    -A -D -v ${DOMAIN}
+	    -v ${DOMAIN}
 	${SUDO} /usr/sbin/acme-client \
 	    -f ${.OBJDIR}/etc/acme-client.conf \
 	    -r -v ${DOMAIN}
