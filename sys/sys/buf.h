@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.117 2025/05/17 10:13:40 jsg Exp $	*/
+/*	$OpenBSD: buf.h,v 1.118 2025/06/08 06:23:43 rsadowski Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -284,6 +284,7 @@ int	buf_dealloc_mem(struct buf *);
 void	buf_fix_mapping(struct buf *, vsize_t);
 void	buf_alloc_pages(struct buf *, vsize_t);
 void	buf_free_pages(struct buf *);
+int	buf_realloc_pages(struct buf *, struct uvm_constraint_range *, int);
 
 void	minphys(struct buf *bp);
 int	physio(void (*strategy)(struct buf *), dev_t dev, int flags,

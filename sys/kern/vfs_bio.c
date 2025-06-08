@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.215 2025/05/19 10:10:13 jsg Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.216 2025/06/08 06:23:43 rsadowski Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -56,9 +56,6 @@
 #include <sys/specdev.h>
 #include <sys/tracepoint.h>
 #include <uvm/uvm_extern.h>
-
-/* XXX Should really be in buf.h, but for uvm_constraint_range.. */
-int	buf_realloc_pages(struct buf *, struct uvm_constraint_range *, int);
 
 struct uvm_constraint_range high_constraint;
 int fliphigh;
