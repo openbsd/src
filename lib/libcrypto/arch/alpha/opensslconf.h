@@ -83,65 +83,10 @@
 #define DES_PTR
 #endif
 
-/* This helps C compiler generate the correct code for multiple functional
- * units.  It reduces register dependencies at the expense of 2 more
- * registers */
-#ifndef DES_RISC1
-#undef DES_RISC1
-#endif
-
-#ifndef DES_RISC2
-#define DES_RISC2
-#endif
-
-#if defined(DES_RISC1) && defined(DES_RISC2)
-YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
-#endif
-
 /* Unroll the inner loop, this sometimes helps, sometimes hinders.
  * Very much CPU dependent */
 #ifndef DES_UNROLL
 #undef DES_UNROLL
-#endif
-
-/* These default values were supplied by
- * Peter Gutman <pgut001@cs.auckland.ac.nz>
- * They are only used if nothing else has been defined */
-#if !defined(DES_PTR) && !defined(DES_RISC1) && !defined(DES_RISC2) && !defined(DES_UNROLL)
-/* Special defines which change the way the code is built depending on the
-   CPU and OS.  For SGI machines you can use _MIPS_SZLONG (32 or 64) to find
-   even newer MIPS CPU's, but at the moment one size fits all for
-   optimization options.  Older Sparc's work better with only UNROLL, but
-   there's no way to tell at compile time what it is you're running on */
- 
-#if defined( sun )		/* Newer Sparc's */
-#  define DES_PTR
-#  define DES_RISC1
-#  define DES_UNROLL
-#elif defined( __ultrix )	/* Older MIPS */
-#  define DES_PTR
-#  define DES_RISC2
-#  define DES_UNROLL
-#elif defined( __osf1__ )	/* Alpha */
-#  define DES_PTR
-#  define DES_RISC2
-#elif defined ( _AIX )		/* RS6000 */
-  /* Unknown */
-#elif defined( __hpux )		/* HP-PA */
-  /* Unknown */
-#elif defined( __aux )		/* 68K */
-  /* Unknown */
-#elif defined( __dgux )		/* 88K (but P6 in latest boxes) */
-#  define DES_UNROLL
-#elif defined( __sgi )		/* Newer MIPS */
-#  define DES_PTR
-#  define DES_RISC2
-#  define DES_UNROLL
-#elif defined(i386) || defined(__i386__)	/* x86 boxes, should be gcc */
-#  define DES_PTR
-#  define DES_RISC1
-#  define DES_UNROLL
-#endif /* Systems-specific speed defines */
 #endif
 
 #endif /* DES_DEFAULT_OPTIONS */
