@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.48 2025/05/24 07:51:21 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.49 2025/06/08 07:38:42 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -82,28 +82,6 @@ gcm_init_4bit(u128 Htable[16], uint64_t H[2])
 			Hi[j].lo = V.lo ^ Htable[j].lo;
 		}
 	}
-
-#if defined(GHASH_ASM) && (defined(__arm__) || defined(__arm))
-	/*
-	 * ARM assembler expects specific dword order in Htable.
-	 */
-	{
-		int j;
-#if BYTE_ORDER == LITTLE_ENDIAN
-		for (j = 0; j < 16; ++j) {
-			V = Htable[j];
-			Htable[j].hi = V.lo;
-			Htable[j].lo = V.hi;
-		}
-#else /* BIG_ENDIAN */
-		for (j = 0; j < 16; ++j) {
-			V = Htable[j];
-			Htable[j].hi = V.lo << 32|V.lo >> 32;
-			Htable[j].lo = V.hi << 32|V.hi >> 32;
-		}
-#endif
-	}
-#endif
 }
 
 #ifndef GHASH_ASM
