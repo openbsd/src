@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.49 2025/06/08 07:38:42 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.50 2025/06/08 07:49:45 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -77,7 +77,7 @@ gcm_init_4bit(u128 Htable[16], uint64_t H[2])
 	for (i = 2; i < 16; i <<= 1) {
 		u128 *Hi = Htable + i;
 		int   j;
-		for (V = *Hi, j = 1; j < i; ++j) {
+		for (V = *Hi, j = 1; j < i; j++) {
 			Hi[j].hi = V.hi ^ Htable[j].hi;
 			Hi[j].lo = V.lo ^ Htable[j].lo;
 		}
@@ -338,14 +338,14 @@ CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv, size_t len)
 		uint64_t len0 = len;
 
 		while (len >= 16) {
-			for (i = 0; i < 16; ++i)
+			for (i = 0; i < 16; i++)
 				ctx->Yi.c[i] ^= iv[i];
 			gcm_mul(ctx, ctx->Yi.u);
 			iv += 16;
 			len -= 16;
 		}
-		if (len) {
-			for (i = 0; i < len; ++i)
+		if (len > 0) {
+			for (i = 0; i < len; i++)
 				ctx->Yi.c[i] ^= iv[i];
 			gcm_mul(ctx, ctx->Yi.u);
 		}
@@ -358,8 +358,7 @@ CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv, size_t len)
 	}
 
 	(*ctx->block)(ctx->Yi.c, ctx->EK0.c, ctx->key);
-	++ctr;
-	ctx->Yi.d[3] = htobe32(ctr);
+	ctx->Yi.d[3] = htobe32(++ctr);
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_setiv);
 
@@ -398,7 +397,7 @@ CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad, size_t len)
 	}
 	if (len > 0) {
 		n = (unsigned int)len;
-		for (i = 0; i < len; ++i)
+		for (i = 0; i < len; i++)
 			ctx->Xi.c[i] ^= aad[i];
 	}
 	ctx->ares = n;
@@ -430,7 +429,7 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
 
 	n = ctx->mres;
 
-	for (i = 0; i < len; ++i) {
+	for (i = 0; i < len; i++) {
 		if (n == 0) {
 			ctx->block(ctx->Yi.c, ctx->EKi.c, ctx->key);
 			ctx->Yi.d[3] = htobe32(++ctr);
@@ -471,7 +470,7 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx, const unsigned char *in,
 
 	n = ctx->mres;
 
-	for (i = 0; i < len; ++i) {
+	for (i = 0; i < len; i++) {
 		if (n == 0) {
 			ctx->block(ctx->Yi.c, ctx->EKi.c, ctx->key);
 			ctx->Yi.d[3] = htobe32(++ctr);
