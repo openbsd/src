@@ -57,18 +57,6 @@
 #if defined(HEADER_BN_H) && !defined(CONFIG_HEADER_BN_H)
 #define CONFIG_HEADER_BN_H
 #undef BN_LLONG
-
-/* Should we define BN_DIV2W here? */
-
-/* Only one for the following should be defined */
-/* The prime number generation stuff may not work when
- * EIGHT_BIT but I don't care since I've only used this mode
- * for debugging the bignum libraries */
-#define SIXTY_FOUR_BIT_LONG
-#undef SIXTY_FOUR_BIT
-#undef THIRTY_TWO_BIT
-#undef SIXTEEN_BIT
-#undef EIGHT_BIT
 #endif
 
 #if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
