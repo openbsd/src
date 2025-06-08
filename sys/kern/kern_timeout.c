@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.107 2025/06/03 00:20:31 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.108 2025/06/08 09:10:53 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -360,8 +360,21 @@ timeout_add(struct timeout *new, int to_ticks)
 static inline int
 timeout_add_ticks(struct timeout *to, uint64_t to_ticks)
 {
-	if (to_ticks > INT_MAX)
+	/*
+	 * XXX to_ticks is added to the current ticks value, but
+	 * timeouts are run in the next clock interrupt after ticks
+	 * is incremented. however, the deadline comparison in
+	 * softclock_process_tick_timeout will fire a timeout if it's
+	 * deadline is at the current ticks value. eg, a to_ticks
+	 * value of 1 plus the current ticks value will fire in the
+	 * next interupt, which will be too early. add 1 here to
+	 * ensure the requested time has elapsed.
+	 */
+
+	if (to_ticks >= INT_MAX)
 		to_ticks = INT_MAX;
+	else
+		to_ticks++;
 
 	return timeout_add(to, (int)to_ticks);
 }
