@@ -30,6 +30,9 @@ my %internal = (
 	BN_MASK2 BN_MASK2h BN_MASK2h1 BN_MASK2l
 	BN_TBIT BN_ULLONG
     )],
+    conf => [qw(
+	conf_st conf_method_st
+    )],
     evp => [qw(
 	ASN1_PKEY_CTRL_CMS_ENVELOPE ASN1_PKEY_CTRL_CMS_RI_TYPE
 	ASN1_PKEY_CTRL_CMS_SIGN
@@ -236,6 +239,7 @@ try_again:
 	# Uninteresting lines.
 
 	if (/^\s*$/ ||
+	    /^DECLARE_LHASH_OF\(\w+\);$/ ||
 	    /^DECLARE_STACK_OF\(\w+\)$/ ||
 	    /^DECLARE_PKCS12_STACK_OF\(\w+\)$/ ||
 	    /^TYPEDEF_D2I2D_OF\(\w+\);$/ ||
@@ -288,7 +292,7 @@ try_again:
 			print "D- $line\n" if $verbose;
 			next;
 		}
-		if ($id =~ /^(?:ASN1|BIO|BN|EVP|X509(?:V3)?)_[FR]_\w+$/) {
+		if ($id =~ /^(?:ASN1|BIO|BN|CONF|EVP|X509(?:V3)?)_[FR]_\w+$/) {
 			print "D- $line\n" if $verbose;
 			next;
 		}
