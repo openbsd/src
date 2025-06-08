@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_get_version.3,v 1.9 2021/04/15 16:13:22 tb Exp $
+.\" $OpenBSD: SSL_get_version.3,v 1.10 2025/06/08 22:49:42 schwarze Exp $
 .\" full merge up to: OpenSSL e417070c Jun 8 11:37:06 2016 -0400
 .\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
@@ -49,21 +49,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 15 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_GET_VERSION 3
 .Os
 .Sh NAME
 .Nm SSL_get_version ,
 .Nm SSL_is_dtls ,
 .Nm SSL_version
-.\" The following are intentionally undocumented because
-.\" - the longer term plan is to remove them
-.\" - nothing appears to be using them in the wild
-.\" - and they have the wrong namespace prefix
-.\" Nm TLS1_get_version
-.\" Nm TLS1_get_client_version
 .Nd get the protocol information of a connection
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft const char *
 .Fn SSL_get_version "const SSL *ssl"
