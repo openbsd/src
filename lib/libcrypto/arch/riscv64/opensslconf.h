@@ -79,12 +79,6 @@
 #if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
 #define CONFIG_HEADER_DES_LOCL_H
 #ifndef DES_DEFAULT_OPTIONS
-/* the following is tweaked from a config script, that is why it is a
- * protected undef/define */
-#ifndef DES_PTR
-#undef DES_PTR
-#endif
-
 /* Unroll the inner loop, this sometimes helps, sometimes hinders.
  * Very much CPU dependent */
 #ifndef DES_UNROLL
