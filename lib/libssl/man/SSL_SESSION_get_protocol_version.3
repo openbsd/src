@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_SESSION_get_protocol_version.3,v 1.2 2018/03/24 00:55:37 schwarze Exp $
+.\" $OpenBSD: SSL_SESSION_get_protocol_version.3,v 1.3 2025/06/08 22:52:00 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by TJ Saunders <tj@castaglia.org>
@@ -48,13 +48,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 24 2018 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_SESSION_GET_PROTOCOL_VERSION 3
 .Os
 .Sh NAME
 .Nm SSL_SESSION_get_protocol_version
 .Nd get the session protocol version
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft int
 .Fo SSL_SESSION_get_protocol_version

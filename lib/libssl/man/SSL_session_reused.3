@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_session_reused.3,v 1.6 2019/06/12 09:36:30 schwarze Exp $
+.\"	$OpenBSD: SSL_session_reused.3,v 1.7 2025/06/08 22:52:00 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,13 +48,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 12 2019 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_SESSION_REUSED 3
 .Os
 .Sh NAME
 .Nm SSL_session_reused
 .Nd query whether a reused session was negotiated during handshake
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft int
 .Fn SSL_session_reused "SSL *ssl"

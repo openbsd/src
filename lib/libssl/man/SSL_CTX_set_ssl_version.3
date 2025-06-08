@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_ssl_version.3,v 1.5 2021/05/11 19:48:56 tb Exp $
+.\"	$OpenBSD: SSL_CTX_set_ssl_version.3,v 1.6 2025/06/08 22:52:00 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 11 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_CTX_SET_SSL_VERSION 3
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@
 .Nm SSL_get_ssl_method
 .Nd choose a new TLS/SSL method
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft int
 .Fn SSL_CTX_set_ssl_version "SSL_CTX *ctx" "const SSL_METHOD *method"

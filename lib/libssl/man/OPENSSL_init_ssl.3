@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_init_ssl.3,v 1.4 2019/06/14 13:41:31 schwarze Exp $
+.\" $OpenBSD: OPENSSL_init_ssl.3,v 1.5 2025/06/08 22:52:00 schwarze Exp $
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,13 +13,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt OPENSSL_INIT_SSL 3
 .Os
 .Sh NAME
 .Nm OPENSSL_init_ssl
 .Nd initialise the crypto and ssl libraries
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft int
 .Fo OPENSSL_init_ssl

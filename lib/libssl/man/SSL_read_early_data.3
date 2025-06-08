@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_read_early_data.3,v 1.4 2021/11/26 13:48:22 jsg Exp $
+.\" $OpenBSD: SSL_read_early_data.3,v 1.5 2025/06/08 22:52:00 schwarze Exp $
 .\" content checked up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_READ_EARLY_DATA 3
 .Os
 .Sh NAME
@@ -30,6 +30,7 @@
 .Nm SSL_get_early_data_status
 .Nd transmit application data during the handshake
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft int
 .Fo SSL_CTX_set_max_early_data

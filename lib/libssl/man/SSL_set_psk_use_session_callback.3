@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_set_psk_use_session_callback.3,v 1.1 2021/09/14 14:30:57 schwarze Exp $
+.\" $OpenBSD: SSL_set_psk_use_session_callback.3,v 1.2 2025/06/08 22:52:00 schwarze Exp $
 .\" OpenSSL man3/SSL_CTX_set_psk_client_callback.pod
 .\" checked up to 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_SET_PSK_USE_SESSION_CALLBACK 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm SSL_psk_use_session_cb_func
 .Nd set TLS pre-shared key client callback
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft typedef int
 .Fo (*SSL_psk_use_session_cb_func)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_quiet_shutdown.3,v 1.6 2020/03/30 10:28:59 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_set_quiet_shutdown.3,v 1.7 2025/06/08 22:52:00 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 30 2020 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_CTX_SET_QUIET_SHUTDOWN 3
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@
 .Nm SSL_get_quiet_shutdown
 .Nd manipulate shutdown behaviour
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft void
 .Fn SSL_CTX_set_quiet_shutdown "SSL_CTX *ctx" "int mode"

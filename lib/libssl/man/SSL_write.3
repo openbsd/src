@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_write.3,v 1.7 2021/10/24 15:10:13 schwarze Exp $
+.\" $OpenBSD: SSL_write.3,v 1.8 2025/06/08 22:52:00 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" partial merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 24 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_WRITE 3
 .Os
 .Sh NAME
@@ -59,6 +59,7 @@
 .Nm SSL_write
 .Nd write bytes to a TLS connection
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft int
 .Fn SSL_write_ex "SSL *ssl" "const void *buf" "size_t num" "size_t *written"

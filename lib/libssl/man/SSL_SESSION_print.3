@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_SESSION_print.3,v 1.4 2019/06/12 09:36:30 schwarze Exp $
+.\" $OpenBSD: SSL_SESSION_print.3,v 1.5 2025/06/08 22:52:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2019 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_SESSION_PRINT 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm SSL_SESSION_print_fp
 .Nd print some properties of an SSL_SESSION object
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft int
 .Fo SSL_SESSION_print

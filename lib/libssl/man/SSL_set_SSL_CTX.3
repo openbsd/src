@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_set_SSL_CTX.3,v 1.4 2022/07/13 22:05:53 schwarze Exp $
+.\" $OpenBSD: SSL_set_SSL_CTX.3,v 1.5 2025/06/08 22:52:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2022 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_SET_SSL_CTX 3
 .Os
 .Sh NAME
 .Nm SSL_set_SSL_CTX
 .Nd modify an SSL connection object to use another context
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft SSL_CTX *
 .Fo SSL_set_SSL_CTX

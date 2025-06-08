@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_SESSION_new.3,v 1.9 2021/09/14 14:08:15 schwarze Exp $
+.\" $OpenBSD: SSL_SESSION_new.3,v 1.10 2025/06/08 22:52:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_SESSION_NEW 3
 .Os
 .Sh NAME
 .Nm SSL_SESSION_new
 .Nd construct a new SSL_SESSION object
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft SSL_SESSION *
 .Fn SSL_SESSION_new void

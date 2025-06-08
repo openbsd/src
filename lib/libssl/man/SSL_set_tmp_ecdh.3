@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_set_tmp_ecdh.3,v 1.6 2021/11/30 15:58:08 jsing Exp $
+.\"	$OpenBSD: SSL_set_tmp_ecdh.3,v 1.7 2025/06/08 22:52:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_SET_TMP_ECDH 3
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Nm SSL_CTX_set_tmp_ecdh_callback
 .Nd select a curve for ECDH ephemeral key exchange
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft long
 .Fo SSL_set_tmp_ecdh

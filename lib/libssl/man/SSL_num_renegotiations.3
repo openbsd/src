@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_num_renegotiations.3,v 1.5 2019/06/12 09:36:30 schwarze Exp $
+.\" $OpenBSD: SSL_num_renegotiations.3,v 1.6 2025/06/08 22:52:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2019 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_NUM_RENEGOTIATIONS 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm SSL_total_renegotiations
 .Nd renegotiation counters
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft long
 .Fo SSL_num_renegotiations

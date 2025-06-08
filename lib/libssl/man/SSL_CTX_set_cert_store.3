@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_set_cert_store.3,v 1.8 2024/08/03 04:53:01 tb Exp $
+.\"	$OpenBSD: SSL_CTX_set_cert_store.3,v 1.9 2025/06/08 22:52:00 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 3 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_CTX_SET_CERT_STORE 3
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@
 .Nm SSL_CTX_get_cert_store
 .Nd manipulate X509 certificate verification storage
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft void
 .Fn SSL_CTX_set_cert_store "SSL_CTX *ctx" "X509_STORE *store"

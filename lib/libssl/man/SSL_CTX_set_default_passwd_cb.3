@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.9 2023/09/19 09:40:35 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.10 2025/06/08 22:52:00 schwarze Exp $
 .\" full merge up to: OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\" selective merge up to: OpenSSL 18bad535 Apr 9 15:13:55 2019 +0100
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_CTX_SET_DEFAULT_PASSWD_CB 3
 .Os
 .Sh NAME
@@ -77,6 +77,7 @@
 .Nm SSL_CTX_get_default_passwd_cb_userdata
 .Nd set or get passwd callback for encrypted PEM file handling
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft void
 .Fn SSL_CTX_set_default_passwd_cb "SSL_CTX *ctx" "pem_password_cb *cb"

@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_get_shared_ciphers.3,v 1.5 2021/01/09 10:50:02 tb Exp $
+.\" $OpenBSD: SSL_get_shared_ciphers.3,v 1.6 2025/06/08 22:52:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 9 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_GET_SHARED_CIPHERS 3
 .Os
 .Sh NAME
 .Nm SSL_get_shared_ciphers
 .Nd ciphers supported by both client and server
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft char *
 .Fo SSL_get_shared_ciphers

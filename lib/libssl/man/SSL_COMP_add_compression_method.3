@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_COMP_add_compression_method.3,v 1.7 2024/08/31 10:51:48 tb Exp $
+.\" $OpenBSD: SSL_COMP_add_compression_method.3,v 1.8 2025/06/08 22:52:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 31 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SSL_COMP_ADD_COMPRESSION_METHOD 3
 .Os
 .Sh NAME
 .Nm SSL_COMP_get_compression_methods
 .Nd handle SSL/TLS integrated compression methods
 .Sh SYNOPSIS
+.Lb libssl libcrypto
 .In openssl/ssl.h
 .Ft STACK_OF(SSL_COMP) *
 .Fn SSL_COMP_get_compression_methods void
