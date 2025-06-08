@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_check_ca.3,v 1.7 2022/05/10 19:44:29 tb Exp $
+.\"	$OpenBSD: X509_check_ca.3,v 1.8 2025/06/08 22:40:30 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Victor B. Wagner <vitus@cryptocom.ru>.
@@ -48,13 +48,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 10 2022 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_CHECK_CA 3
 .Os
 .Sh NAME
 .Nm X509_check_ca
 .Nd check whether a certificate is a CA certificate
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft int
 .Fo X509_check_ca

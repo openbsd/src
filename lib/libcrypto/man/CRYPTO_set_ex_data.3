@@ -1,4 +1,4 @@
-.\" $OpenBSD: CRYPTO_set_ex_data.3,v 1.15 2023/09/18 14:49:43 schwarze Exp $
+.\" $OpenBSD: CRYPTO_set_ex_data.3,v 1.16 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt CRYPTO_SET_EX_DATA 3
 .Os
 .Sh NAME
@@ -28,6 +28,7 @@
 .Nm CRYPTO_free_ex_data
 .Nd low-level functions for application specific data
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/crypto.h
 .Ft int
 .Fo CRYPTO_get_ex_new_index

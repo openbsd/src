@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_SIG_new.3,v 1.5 2021/10/27 11:24:47 schwarze Exp $
+.\"	$OpenBSD: X509_SIG_new.3,v 1.6 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_SIG_NEW 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm X509_SIG_free
 .Nd PKCS#7 digest information
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_SIG *
 .Fn X509_SIG_new void

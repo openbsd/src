@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_new.3,v 1.16 2024/12/06 14:27:49 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_new.3,v 1.17 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_PKEY_CTX_NEW 3
 .Os
 .Sh NAME
@@ -75,6 +75,7 @@
 .Nm EVP_PKEY_CTX_free
 .Nd public key algorithm context functions
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft EVP_PKEY_CTX *
 .Fo EVP_PKEY_CTX_new

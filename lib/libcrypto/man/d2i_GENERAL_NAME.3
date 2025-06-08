@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_GENERAL_NAME.3,v 1.4 2018/03/22 21:08:22 schwarze Exp $
+.\"	$OpenBSD: d2i_GENERAL_NAME.3,v 1.5 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt D2I_GENERAL_NAME 3
 .Os
 .Sh NAME
@@ -28,6 +28,7 @@
 .Nm i2d_OTHERNAME
 .Nd decode and encode names for use in X.509 extensions
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft GENERAL_NAME *
 .Fo d2i_GENERAL_NAME

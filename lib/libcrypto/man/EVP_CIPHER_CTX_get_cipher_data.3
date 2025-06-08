@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_CIPHER_CTX_get_cipher_data.3,v 1.3 2023/08/26 15:12:04 schwarze Exp $
+.\" $OpenBSD: EVP_CIPHER_CTX_get_cipher_data.3,v 1.4 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 26 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_CIPHER_CTX_GET_CIPHER_DATA 3
 .Os
 .Sh NAME
@@ -74,6 +74,7 @@
 .Nm EVP_CIPHER_CTX_buf_noconst
 .Nd inspect and modify EVP_CIPHER_CTX objects
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft void *
 .Fo EVP_CIPHER_CTX_get_cipher_data

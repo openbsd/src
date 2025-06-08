@@ -1,4 +1,4 @@
-.\" $OpenBSD: IPAddressRange_new.3,v 1.9 2023/10/03 09:58:06 tb Exp $
+.\" $OpenBSD: IPAddressRange_new.3,v 1.10 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 3 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt IPADDRESSRANGE_NEW 3
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Nm i2d_IPAddressFamily
 .Nd RFC 3779 IP address prefixes and ranges
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft "IPAddressRange *"
 .Fn IPAddressRange_new void

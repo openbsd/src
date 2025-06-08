@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.5 2024/09/02 07:54:21 tb Exp $
+.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.6 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2024 Job Snijders <job@openbsd.org>
 .\" Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt CMS_SIGNED_ADD1_ATTR 3
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nm CMS_unsigned_get_attr_count
 .Nd change signed and unsigned attributes of a CMS SignerInfo object
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/cms.h
 .Ft int
 .Fo CMS_signed_add1_attr

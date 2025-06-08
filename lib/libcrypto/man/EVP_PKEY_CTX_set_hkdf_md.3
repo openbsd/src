@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_set_hkdf_md.3,v 1.4 2024/07/10 07:57:37 tb Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_set_hkdf_md.3,v 1.5 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
 .\" This file was written by Alessandro Ghedini <alessandro@ghedini.me>,
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 10 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_PKEY_CTX_SET_HKDF_MD 3
 .Os
 .Sh NAME
@@ -60,6 +60,7 @@
 .Nm EVP_PKEY_CTX_hkdf_mode
 .Nd HMAC-based Extract-and-Expand key derivation algorithm
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .In openssl/kdf.h
 .Ft int

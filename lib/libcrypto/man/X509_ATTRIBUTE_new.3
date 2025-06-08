@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_ATTRIBUTE_new.3,v 1.18 2024/09/02 07:57:27 tb Exp $
+.\" $OpenBSD: X509_ATTRIBUTE_new.3,v 1.19 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_ATTRIBUTE_NEW 3
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .\" The type is called "Attribute" with capital "A", not "attribute".
 .Nd generic X.501 Attribute
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_ATTRIBUTE *
 .Fn X509_ATTRIBUTE_new void

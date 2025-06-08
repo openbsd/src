@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASRange_new.3,v 1.8 2023/10/11 12:06:11 tb Exp $
+.\" $OpenBSD: ASRange_new.3,v 1.9 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 11 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt ASRANGE_NEW 3
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Nm i2d_ASIdentifierChoice
 .Nd RFC 3779 autonomous system identifiers and ranges
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft "ASRange *"
 .Fn ASRange_new void

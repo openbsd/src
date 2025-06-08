@@ -1,4 +1,4 @@
-.\" $OpenBSD: lh_new.3,v 1.13 2024/03/05 22:15:29 tb Exp $
+.\" $OpenBSD: lh_new.3,v 1.14 2025/06/08 22:40:30 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL doc/crypto/lhash.pod 1bc74519 May 20 08:11:46 2016 -0400
 .\" selective merge up to:
@@ -118,7 +118,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 5 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt LH_NEW 3
 .Os
 .Sh NAME
@@ -137,6 +137,7 @@
 .Nm lh_strhash
 .Nd dynamic hash table
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/lhash.h
 .Fn DECLARE_LHASH_OF <type>
 .Ft LHASH *

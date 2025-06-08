@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_parse_dump.3,v 1.3 2021/12/09 18:52:09 schwarze Exp $
+.\" $OpenBSD: ASN1_parse_dump.3,v 1.4 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 9 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt ASN1_PARSE_DUMP 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm ASN1_parse
 .Nd parse BER and print information about it
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/asn1.h
 .Ft int
 .Fo ASN1_parse_dump

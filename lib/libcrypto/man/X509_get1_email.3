@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get1_email.3,v 1.1 2019/08/23 12:23:39 schwarze Exp $
+.\" $OpenBSD: X509_get1_email.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2019 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_GET1_EMAIL 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm X509_email_free
 .Nd utilities for stacks of strings
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Vt typedef char *OPENSSL_STRING ;
 .Ft STACK_OF(OPENSSL_STRING) *

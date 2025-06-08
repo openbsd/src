@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_CIPHER_do_all.3,v 1.3 2024/03/14 23:54:55 tb Exp $
+.\" $OpenBSD: EVP_CIPHER_do_all.3,v 1.4 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2023,2024 Theo Buehler <tb@openbsd.org>
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_CIPHER_DO_ALL 3
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Nm OBJ_NAME_do_all_sorted
 .Nd iterate over lookup tables for ciphers and digests
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft void
 .Fo EVP_CIPHER_do_all

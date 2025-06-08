@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_mbstring_copy.3,v 1.6 2022/02/21 00:22:03 jsg Exp $
+.\" $OpenBSD: ASN1_mbstring_copy.3,v 1.7 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 21 2022 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt ASN1_MBSTRING_COPY 3
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Nm ASN1_tag2bit
 .Nd copy a multibyte string into an ASN.1 string object
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/asn1.h
 .Ft int
 .Fo ASN1_mbstring_copy

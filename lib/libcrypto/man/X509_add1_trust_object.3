@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_add1_trust_object.3,v 1.4 2024/09/02 08:04:32 tb Exp $
+.\" $OpenBSD: X509_add1_trust_object.3,v 1.5 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_ADD1_TRUST_OBJECT 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm X509_reject_clear
 .Nd mark an X.509 certificate as intended for a specific purpose
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft int
 .Fo X509_add1_trust_object

@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.16 2025/03/08 17:02:59 tb Exp $
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.17 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 8 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_OBJECT_GET0_X509 3
 .Os
 .Sh NAME
@@ -28,6 +28,7 @@
 .Nm X509_OBJECT_retrieve_match
 .Nd certificate, CRL, private key, and string wrapper for certificate stores
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509_vfy.h
 .Ft X509_LOOKUP_TYPE
 .Fo X509_OBJECT_get_type

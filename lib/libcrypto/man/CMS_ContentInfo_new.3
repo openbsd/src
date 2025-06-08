@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_ContentInfo_new.3,v 1.4 2024/01/22 14:00:13 tb Exp $
+.\" $OpenBSD: CMS_ContentInfo_new.3,v 1.5 2025/06/08 22:40:29 schwarze Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 22 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt CMS_CONTENTINFO_NEW 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm CMS_ReceiptRequest_free
 .Nd Cryptographic Message Syntax data structures
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/cms.h
 .Ft CMS_ContentInfo *
 .Fn CMS_ContentInfo_new void

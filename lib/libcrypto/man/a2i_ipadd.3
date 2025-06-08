@@ -1,4 +1,4 @@
-.\" $OpenBSD: a2i_ipadd.3,v 1.1 2024/12/27 15:30:17 schwarze Exp $
+.\" $OpenBSD: a2i_ipadd.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2024 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt A2I_IPADD 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm a2i_IPADDRESS_NC
 .Nd parse Internet Protocol addresses into ASN.1 OCTET STRINGs for X.509
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft int
 .Fo a2i_ipadd

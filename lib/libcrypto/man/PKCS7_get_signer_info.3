@@ -1,4 +1,4 @@
-.\" $OpenBSD: PKCS7_get_signer_info.3,v 1.1 2020/06/10 11:43:08 schwarze Exp $
+.\" $OpenBSD: PKCS7_get_signer_info.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2020 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt PKCS7_GET_SIGNER_INFO 3
 .Os
 .Sh NAME
 .Nm PKCS7_get_signer_info
 .Nd retrieve signerInfos from a SignedData object
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/pkcs7.h
 .Ft STACK_OF(PKCS7_SIGNER_INFO) *
 .Fn PKCS7_get_signer_info "PKCS7 *p7"

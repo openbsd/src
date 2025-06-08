@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMAC_Init.3,v 1.9 2024/11/12 00:42:28 schwarze Exp $
+.\" $OpenBSD: CMAC_Init.3,v 1.10 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt CMAC_INIT 3
 .Os
 .Sh NAME
@@ -28,6 +28,7 @@
 .Nm CMAC_CTX_free
 .Nd Cipher-based message authentication code
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/cmac.h
 .Ft CMAC_CTX *
 .Fn CMAC_CTX_new void

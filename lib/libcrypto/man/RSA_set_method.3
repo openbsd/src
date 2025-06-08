@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_set_method.3,v 1.18 2023/11/19 10:34:26 tb Exp $
+.\"	$OpenBSD: RSA_set_method.3,v 1.19 2025/06/08 22:40:30 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 19 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt RSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -63,6 +63,7 @@
 .Nm RSA_new_method
 .Nd select RSA method
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/rsa.h
 .Ft void
 .Fo RSA_set_default_method

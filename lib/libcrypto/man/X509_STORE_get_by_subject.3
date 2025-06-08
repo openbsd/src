@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.6 2024/05/12 05:08:59 tb Exp $
+.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.7 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2021, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_STORE_GET_BY_SUBJECT 3
 .Os
 .Sh NAME
@@ -28,6 +28,7 @@
 .Nm X509_STORE_get1_crls
 .Nd retrieve objects from a certificate store
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509_vfy.h
 .Ft int
 .Fo X509_STORE_CTX_get_by_subject

@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_X509_CRL.3,v 1.10 2025/03/15 15:17:41 tb Exp $
+.\" $OpenBSD: d2i_X509_CRL.3,v 1.11 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 15 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt D2I_X509_CRL 3
 .Os
 .Sh NAME
@@ -30,6 +30,7 @@
 .Nm i2d_X509_REVOKED
 .Nd decode and encode X.509 certificate revocation lists
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_CRL *
 .Fo d2i_X509_CRL

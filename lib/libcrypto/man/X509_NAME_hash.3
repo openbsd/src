@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_NAME_hash.3,v 1.4 2025/04/17 14:58:09 tb Exp $
+.\" $OpenBSD: X509_NAME_hash.3,v 1.5 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 17 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_NAME_HASH 3
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .\" The type is called "Name" with capital "N", not "name".
 .Nd calculate SHA-1 or MD5 hashes of X.501 Name objects
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft unsigned long
 .Fn X509_NAME_hash "X509_NAME *name"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKCS12_SAFEBAG_new.3,v 1.4 2019/06/06 01:06:58 schwarze Exp $
+.\"	$OpenBSD: PKCS12_SAFEBAG_new.3,v 1.5 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt PKCS12_SAFEBAG_NEW 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm PKCS12_BAGS_free
 .Nd PKCS#12 container for one piece of information
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/pkcs12.h
 .Ft PKCS12_SAFEBAG *
 .Fn PKCS12_SAFEBAG_new void

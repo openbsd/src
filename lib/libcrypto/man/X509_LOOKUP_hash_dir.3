@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.13 2024/09/02 07:20:21 tb Exp $
+.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.14 2025/06/08 22:40:30 schwarze Exp $
 .\" full merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 2 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_LOOKUP_HASH_DIR 3
 .Os
 .Sh NAME
@@ -76,6 +76,7 @@
 .Nm X509_LOOKUP_mem
 .Nd certificate lookup methods
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509_vfy.h
 .Ft const X509_LOOKUP_METHOD *
 .Fn X509_LOOKUP_hash_dir void

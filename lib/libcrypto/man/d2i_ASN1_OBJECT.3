@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_ASN1_OBJECT.3,v 1.15 2025/03/14 21:32:15 tb Exp $
+.\" $OpenBSD: d2i_ASN1_OBJECT.3,v 1.16 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2017, 2022, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt D2I_ASN1_OBJECT 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm OBJ_length
 .Nd decode and encode ASN.1 object identifiers
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/asn1.h
 .Ft ASN1_OBJECT *
 .Fo d2i_ASN1_OBJECT

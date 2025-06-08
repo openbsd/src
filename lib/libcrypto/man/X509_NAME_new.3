@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_NAME_new.3,v 1.9 2021/07/20 17:31:32 schwarze Exp $
+.\" $OpenBSD: X509_NAME_new.3,v 1.10 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_NAME_NEW 3
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .\" The type in called "Name" with capital "N", not "name".
 .Nd X.501 Name object
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_NAME *
 .Fn X509_NAME_new void

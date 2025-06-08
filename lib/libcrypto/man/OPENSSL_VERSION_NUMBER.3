@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.13 2023/11/16 20:17:04 schwarze Exp $
+.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.14 2025/06/08 22:40:30 schwarze Exp $
 .\" full merge up to: OpenSSL 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
 .\" This file is a derived work.
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt OPENSSL_VERSION_NUMBER 3
 .Os
 .Sh NAME
@@ -82,6 +82,7 @@
 .Nm SSLeay_version
 .Nd get OpenSSL version number
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/opensslv.h
 .Fd #define OPENSSL_VERSION_NUMBER 0x020000000L
 .Fd #define LIBRESSL_VERSION_NUMBER 0x02nnnn00fL

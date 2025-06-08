@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_sm4_cbc.3,v 1.2 2023/11/16 20:27:43 schwarze Exp $
+.\" $OpenBSD: EVP_sm4_cbc.3,v 1.3 2025/06/08 22:40:30 schwarze Exp $
 .\" full merge up to: OpenSSL 87103969 Oct 1 14:11:57 2018 -0700
 .\"
 .\" Copyright (c) 2017 Ribose Inc
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_SM4_CBC 3
 .Os
 .Sh NAME
@@ -30,6 +30,7 @@
 .Nm EVP_sm4_ctr
 .Nd EVP SM4 cipher
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft const EVP_CIPHER *
 .Fn EVP_sm4_cbc void

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.20 2024/02/13 12:38:43 job Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.21 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@
 .Nm i2d_ASN1_TIME
 .Nd decode and encode ASN1_STRING objects
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/asn1.h
 .Ft ASN1_OCTET_STRING *
 .Fo d2i_ASN1_OCTET_STRING

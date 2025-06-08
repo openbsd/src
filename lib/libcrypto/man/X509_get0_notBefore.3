@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get0_notBefore.3,v 1.7 2024/03/05 18:30:40 tb Exp $
+.\" $OpenBSD: X509_get0_notBefore.3,v 1.8 2025/06/08 22:40:30 schwarze Exp $
 .\" content checked up to: OpenSSL 27b138e9 May 19 00:16:38 2017 +0000
 .\"
 .\" Copyright (c) 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 5 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_GET0_NOTBEFORE 3
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Nm X509_CRL_set_nextUpdate
 .Nd get and set certificate and CRL validity dates
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft const ASN1_TIME *
 .Fo X509_get0_notBefore

@@ -1,4 +1,4 @@
-.\" $OpenBSD: EXTENDED_KEY_USAGE_new.3,v 1.6 2021/10/27 11:24:47 schwarze Exp $
+.\" $OpenBSD: EXTENDED_KEY_USAGE_new.3,v 1.7 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EXTENDED_KEY_USAGE_NEW 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm EXTENDED_KEY_USAGE_free
 .Nd X.509 key usage restrictions
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft EXTENDED_KEY_USAGE
 .Fn EXTENDED_KEY_USAGE_new void

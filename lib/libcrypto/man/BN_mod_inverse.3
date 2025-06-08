@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_mod_inverse.3,v 1.13 2023/10/21 13:53:43 schwarze Exp $
+.\"	$OpenBSD: BN_mod_inverse.3,v 1.14 2025/06/08 22:40:29 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,13 +48,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 21 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt BN_MOD_INVERSE 3
 .Os
 .Sh NAME
 .Nm BN_mod_inverse
 .Nd compute inverse modulo m
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/bn.h
 .Ft BIGNUM *
 .Fo BN_mod_inverse

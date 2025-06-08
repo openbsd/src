@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_INFO_new.3,v 1.3 2021/10/19 10:39:33 schwarze Exp $
+.\" $OpenBSD: X509_INFO_new.3,v 1.4 2025/06/08 22:40:30 schwarze Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 19 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_INFO_NEW 3
 .Os
 .Sh NAME
@@ -21,6 +21,7 @@
 .Nm X509_INFO_free
 .Nd X.509 certificate wrapper object
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_INFO *
 .Fn X509_INFO_new void

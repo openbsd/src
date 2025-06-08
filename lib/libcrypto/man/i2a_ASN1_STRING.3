@@ -1,4 +1,4 @@
-.\" $OpenBSD: i2a_ASN1_STRING.3,v 1.5 2024/12/27 15:30:17 schwarze Exp $
+.\" $OpenBSD: i2a_ASN1_STRING.3,v 1.6 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt I2A_ASN1_STRING 3
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Nm a2i_ASN1_ENUMERATED
 .Nd hexadecimal dump of an ASN.1 string
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/asn1.h
 .Ft int
 .Fo i2a_ASN1_STRING

@@ -1,4 +1,4 @@
-.\" $OpenBSD: STACK_OF.3,v 1.5 2021/10/24 13:10:46 schwarze Exp $
+.\" $OpenBSD: STACK_OF.3,v 1.6 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt STACK_OF 3
 .Os
 .Sh NAME
 .Nm STACK_OF
 .Nd variable-sized arrays of pointers, called OpenSSL stacks
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/safestack.h
 .Fn STACK_OF type
 .Sh DESCRIPTION

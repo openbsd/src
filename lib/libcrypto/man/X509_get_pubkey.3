@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get_pubkey.3,v 1.13 2022/03/31 17:27:17 naddy Exp $
+.\" $OpenBSD: X509_get_pubkey.3,v 1.14 2025/06/08 22:40:30 schwarze Exp $
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_GET_PUBKEY 3
 .Os
 .Sh NAME
@@ -81,6 +81,7 @@
 .Nm X509_REQ_extract_key
 .Nd get or set certificate or certificate request public key
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft EVP_PKEY *
 .Fo X509_get_pubkey

@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_datagram.3,v 1.3 2023/04/28 16:49:00 schwarze Exp $
+.\" $OpenBSD: BIO_s_datagram.3,v 1.4 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt BIO_S_DATAGRAM 3
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .\" They are almost unused, and OpenBSD does not appear to support them.
 .Nd datagram socket BIO
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/bio.h
 .Ft const BIO_METHOD *
 .Fn BIO_s_datagram void

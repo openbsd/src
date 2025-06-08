@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_new.3,v 1.12 2024/09/06 07:48:20 tb Exp $
+.\" $OpenBSD: X509_LOOKUP_new.3,v 1.13 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 6 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_LOOKUP_NEW 3
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .\" and because it doesn't do much in the first place.
 .Nd certificate lookup object
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509_vfy.h
 .Ft void
 .Fn X509_LOOKUP_free "X509_LOOKUP *lookup"

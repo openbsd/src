@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR_remove_state.3,v 1.7 2020/03/28 22:40:58 schwarze Exp $
+.\"	$OpenBSD: ERR_remove_state.3,v 1.8 2025/06/08 22:40:29 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 28 2020 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt ERR_REMOVE_STATE 3
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@
 .Nm ERR_remove_state
 .Nd free a thread's OpenSSL error queue
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/err.h
 .Ft void
 .Fo ERR_remove_thread_state

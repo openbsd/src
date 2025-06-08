@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_new.3,v 1.10 2023/11/19 21:13:47 tb Exp $
+.\" $OpenBSD: ENGINE_new.3,v 1.11 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 19 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt ENGINE_NEW 3
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nm ENGINE_cleanup
 .Nd ENGINE stub functions
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/engine.h
 .Ft ENGINE *
 .Fn ENGINE_new void

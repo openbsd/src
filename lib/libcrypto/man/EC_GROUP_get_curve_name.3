@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_get_curve_name.3,v 1.2 2025/04/26 05:31:27 tb Exp $
+.\" $OpenBSD: EC_GROUP_get_curve_name.3,v 1.3 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 26 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EC_GROUP_GET_CURVE_NAME 3
 .Os
 .Sh NAME
@@ -32,6 +32,7 @@
 .Vt EC_GROUP
 and related objects
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/ec.h
 .Ft int
 .Fo EC_GROUP_get_curve_name

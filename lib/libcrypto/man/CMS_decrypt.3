@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_decrypt.3,v 1.8 2019/11/02 15:39:46 schwarze Exp $
+.\" $OpenBSD: CMS_decrypt.3,v 1.9 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2019 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt CMS_DECRYPT 3
 .Os
 .Sh NAME
@@ -74,6 +74,7 @@
 .Nm CMS_decrypt_set1_key
 .Nd decrypt content from a CMS EnvelopedData structure
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/cms.h
 .Ft int
 .Fo CMS_decrypt

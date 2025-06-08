@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_CRL_new.3,v 1.14 2024/03/06 02:34:14 tb Exp $
+.\" $OpenBSD: X509_CRL_new.3,v 1.15 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016, 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 6 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_CRL_NEW 3
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Nm X509_CRL_INFO_free
 .Nd X.509 certificate revocation lists
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_CRL *
 .Fn X509_CRL_new void

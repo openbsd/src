@@ -1,4 +1,4 @@
-.\" $OpenBSD: ECDH_compute_key.3,v 1.4 2025/04/25 20:04:09 tb Exp $
+.\" $OpenBSD: ECDH_compute_key.3,v 1.5 2025/06/08 22:40:29 schwarze Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt ECDH_COMPUTE_KEY 3
 .Os
 .Sh NAME
@@ -21,6 +21,7 @@
 .Nm ECDH_size
 .Nd Elliptic Curve Diffie-Hellman key exchange
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/ec.h
 .Ft int
 .Fo ECDH_compute_key

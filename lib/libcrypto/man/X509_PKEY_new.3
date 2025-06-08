@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_PKEY_new.3,v 1.1 2021/10/19 10:39:33 schwarze Exp $
+.\" $OpenBSD: X509_PKEY_new.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 19 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_PKEY_NEW 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm X509_PKEY_free
 .Nd X.509 private key wrapper object
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_PKEY *
 .Fn X509_PKEY_new void

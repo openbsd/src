@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.29 2023/04/30 19:40:23 tb Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.30 2025/06/08 22:40:30 schwarze Exp $
 .\" full merge up to: OpenSSL d33def66 Feb 9 14:17:13 2016 -0500
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 30 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_VERIFY_PARAM_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -95,6 +95,7 @@
 .Nm X509_VERIFY_PARAM_set1_ip_asc
 .Nd X509 verification parameters
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509_vfy.h
 .Ft const char *
 .Fo X509_VERIFY_PARAM_get0_name

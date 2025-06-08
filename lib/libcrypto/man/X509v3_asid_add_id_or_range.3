@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_asid_add_id_or_range.3,v 1.9 2023/09/30 18:16:44 tb Exp $
+.\" $OpenBSD: X509v3_asid_add_id_or_range.3,v 1.10 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509V3_ASID_ADD_ID_OR_RANGE 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm X509v3_asid_is_canonical
 .Nd RFC 3779 autonomous system identifier delegation extension
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft int
 .Fo X509v3_asid_add_id_or_range

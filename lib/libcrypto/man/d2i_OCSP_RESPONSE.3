@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_OCSP_RESPONSE.3,v 1.4 2021/03/12 05:18:00 jsg Exp $
+.\"	$OpenBSD: d2i_OCSP_RESPONSE.3,v 1.5 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt D2I_OCSP_RESPONSE 3
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Nm i2d_OCSP_CRLID
 .Nd decode and encode OCSP responses
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/ocsp.h
 .Ft OCSP_RESPONSE *
 .Fo d2i_OCSP_RESPONSE

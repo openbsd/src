@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_DSAPublicKey.3,v 1.14 2018/08/26 17:03:32 tb Exp $
+.\"	$OpenBSD: d2i_DSAPublicKey.3,v 1.15 2025/06/08 22:40:30 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 26 2018 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt D2I_DSAPUBLICKEY 3
 .Os
 .Sh NAME
@@ -78,6 +78,7 @@
 .Nm i2d_DSA_SIG
 .Nd decode and encode DSA keys
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/dsa.h
 .Ft DSA *
 .Fo d2i_DSAPublicKey

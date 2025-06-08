@@ -1,4 +1,4 @@
-.\" $OpenBSD: RSA_get0_key.3,v 1.8 2025/01/05 15:40:42 tb Exp $
+.\" $OpenBSD: RSA_get0_key.3,v 1.9 2025/06/08 22:40:30 schwarze Exp $
 .\" selective merge up to: OpenSSL 665d899f Aug 2 02:19:43 2017 +0800
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 5 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt RSA_GET0_KEY 3
 .Os
 .Sh NAME
@@ -88,6 +88,7 @@
 .Nm RSA_set_flags
 .Nd get and set data in an RSA object
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/rsa.h
 .Ft void
 .Fo RSA_get0_key

@@ -1,4 +1,4 @@
-.\" $OpenBSD: NAME_CONSTRAINTS_new.3,v 1.4 2020/09/17 08:50:05 schwarze Exp $
+.\" $OpenBSD: NAME_CONSTRAINTS_new.3,v 1.5 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2020 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt NAME_CONSTRAINTS_NEW 3
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .\" We probably need to deprecate it thoughtfully.
 .Nd X.509 CA name constraints extension
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft NAME_CONSTRAINTS *
 .Fn NAME_CONSTRAINTS_new void

@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_dump.3,v 1.5 2025/05/09 13:24:37 tb Exp $
+.\" $OpenBSD: BIO_dump.3,v 1.6 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt BIO_DUMP 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm BIO_dump_indent
 .Nd hexadecimal printout of arbitrary byte arrays
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/bio.h
 .Ft int
 .Fo BIO_dump

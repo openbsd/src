@@ -1,4 +1,4 @@
-.\" $OpenBSD: SMIME_text.3,v 1.1 2021/12/14 15:22:49 schwarze Exp $
+.\" $OpenBSD: SMIME_text.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 14 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt SMIME_TEXT 3
 .Os
 .Sh NAME
 .Nm SMIME_text
 .Nd remove text/plain MIME headers
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/asn1.h
 .Ft int
 .Fo SMIME_text

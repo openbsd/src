@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_zero.3,v 1.13 2023/04/30 19:23:54 tb Exp $
+.\" $OpenBSD: BN_zero.3,v 1.14 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL b713c4ff Jan 22 14:41:09 2018 -0500
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 30 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt BN_ZERO 3
 .Os
 .Sh NAME
@@ -78,6 +78,7 @@
 .Nm BN_get_word
 .Nd BIGNUM assignment operations
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/bn.h
 .Ft int
 .Fo BN_zero

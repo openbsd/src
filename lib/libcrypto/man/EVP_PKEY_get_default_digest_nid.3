@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_get_default_digest_nid.3,v 1.10 2024/12/06 12:51:13 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_get_default_digest_nid.3,v 1.11 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file is a derived work.
@@ -66,13 +66,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_PKEY_GET_DEFAULT_DIGEST_NID 3
 .Os
 .Sh NAME
 .Nm EVP_PKEY_get_default_digest_nid
 .Nd get default signature digest
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft int
 .Fo EVP_PKEY_get_default_digest_nid

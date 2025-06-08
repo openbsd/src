@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_KEY_METHOD_new.3,v 1.5 2025/04/25 19:57:12 tb Exp $
+.\" $OpenBSD: EC_KEY_METHOD_new.3,v 1.6 2025/06/08 22:40:29 schwarze Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EC_KEY_METHOD_NEW 3
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm EC_KEY_get_method
 .Nd custom EC_KEY implementations
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/ec.h
 .Ft EC_KEY_METHOD *
 .Fo EC_KEY_METHOD_new

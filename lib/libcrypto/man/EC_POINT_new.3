@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_new.3,v 1.19 2025/05/18 20:44:30 tb Exp $
+.\" $OpenBSD: EC_POINT_new.3,v 1.20 2025/06/08 22:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EC_POINT_NEW 3
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Nm EC_POINT_dup
 .Nd allocate, free and copy elliptic curve points
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/ec.h
 .Pp
 .Ft "EC_POINT *"

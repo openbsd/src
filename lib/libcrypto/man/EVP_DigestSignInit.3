@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestSignInit.3,v 1.15 2024/12/06 14:27:49 schwarze Exp $
+.\" $OpenBSD: EVP_DigestSignInit.3,v 1.16 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL 28428130 Apr 17 15:18:40 2018 +0200
 .\" selective merge up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_DIGESTSIGNINIT 3
 .Os
 .Sh NAME
@@ -60,6 +60,7 @@
 .Nm EVP_DigestSign
 .Nd EVP signing functions
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft int
 .Fo EVP_DigestSignInit

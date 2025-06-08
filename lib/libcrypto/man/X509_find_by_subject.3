@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_find_by_subject.3,v 1.1 2021/07/04 12:56:27 schwarze Exp $
+.\" $OpenBSD: X509_find_by_subject.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_FIND_BY_SUBJECT 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm X509_find_by_issuer_and_serial
 .Nd search an array of X.509 certificates
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509 *
 .Fo X509_find_by_subject

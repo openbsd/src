@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_set_tls1_prf_md.3,v 1.3 2025/04/17 14:58:09 tb Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_set_tls1_prf_md.3,v 1.4 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
 .\" This file was written by Dr Stephen Henson <steve@openssl.org>,
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 17 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_PKEY_CTX_SET_TLS1_PRF_MD 3
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@
 .Nm EVP_PKEY_CTX_add1_tls1_prf_seed
 .Nd TLS PRF key derivation algorithm
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .In openssl/kdf.h
 .Ft int

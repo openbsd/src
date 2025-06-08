@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_check_purpose.3,v 1.12 2024/09/02 08:04:32 tb Exp $
+.\" $OpenBSD: X509_check_purpose.3,v 1.13 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_CHECK_PURPOSE 3
 .Os
 .Sh NAME
 .Nm X509_check_purpose
 .Nd check intended usage of a public key
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft int
 .Fo X509_check_purpose

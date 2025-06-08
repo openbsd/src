@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_aes_128_ccm.3,v 1.5 2024/12/29 12:27:28 schwarze Exp $
+.\" $OpenBSD: EVP_aes_128_ccm.3,v 1.6 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL EVP_EncryptInit.pod 0874d7f2 Oct 11 13:13:47 2022 +0100
 .\" OpenSSL EVP_aes.pod a1ec85c1 Apr 21 10:49:12 2020 +0100
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 29 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_AES_128_CCM 3
 .Os
 .Sh NAME
@@ -76,6 +76,7 @@
 .Nm EVP_aes_256_ccm
 .Nd EVP AES cipher in Counter with CBC-MAC mode
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft const EVP_CIPHER *
 .Fn EVP_aes_128_ccm void

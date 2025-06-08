@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_validate_path.3,v 1.5 2023/09/30 19:07:38 tb Exp $
+.\" $OpenBSD: X509v3_addr_validate_path.3,v 1.6 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509V3_ADDR_VALIDATE_PATH 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm X509v3_asid_validate_resource_set
 .Nd RFC 3779 path validation for IP address and AS number delegation
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft int
 .Fn X509v3_addr_validate_path "X509_STORE_CTX *ctx"

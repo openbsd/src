@@ -1,4 +1,4 @@
-.\" $OpenBSD: RSA_security_bits.3,v 1.1 2022/07/13 17:32:16 schwarze Exp $
+.\" $OpenBSD: RSA_security_bits.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2022 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt RSA_SECURITY_BITS 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm BN_security_bits
 .Nd get security strength
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/rsa.h
 .Ft int
 .Fn RSA_security_bits "const RSA *rsa"

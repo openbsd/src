@@ -1,4 +1,4 @@
-.\" $OpenBSD: v2i_ASN1_BIT_STRING.3,v 1.1 2024/12/24 09:48:56 schwarze Exp $
+.\" $OpenBSD: v2i_ASN1_BIT_STRING.3,v 1.2 2025/06/08 22:40:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2024 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt V2I_ASN1_BIT_STRING 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm i2v_ASN1_BIT_STRING
 .Nd ASN.1 BIT STRING utility functions for certificate extensions
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft ASN1_BIT_STRING *
 .Fo v2i_ASN1_BIT_STRING

@@ -1,4 +1,4 @@
-.\" $OpenBSD: PKCS7_new.3,v 1.12 2020/06/10 11:43:08 schwarze Exp $
+.\" $OpenBSD: PKCS7_new.3,v 1.13 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2020 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt PKCS7_NEW 3
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nm PKCS7_ISSUER_AND_SERIAL_free
 .Nd PKCS#7 data structures
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/pkcs7.h
 .Ft PKCS7 *
 .Fn PKCS7_new void

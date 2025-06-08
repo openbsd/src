@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_sk_new.3,v 1.13 2024/03/04 09:47:34 tb Exp $
+.\" $OpenBSD: OPENSSL_sk_new.3,v 1.14 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 4 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt OPENSSL_SK_NEW 3
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Nm sk_zero
 .Nd variable-sized arrays of void pointers, called OpenSSL stacks
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/stack.h
 .Ft _STACK *
 .Fn sk_new_null void

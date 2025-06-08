@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_sm3.3,v 1.1 2019/08/25 17:08:20 schwarze Exp $
+.\" $OpenBSD: EVP_sm3.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\" full merge up to: OpenSSL 21ebd2fc Aug 24 20:38:04 2018 +0800
 .\"
 .\" This file was written by Jack Lloyd <jack.lloyd@ribose.com>
@@ -50,13 +50,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 25 2019 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_SM3 3
 .Os
 .Sh NAME
 .Nm EVP_sm3
 .Nd SM3 hash function for EVP
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft const EVP_MD *
 .Fn EVP_sm3 void

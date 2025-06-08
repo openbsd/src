@@ -1,4 +1,4 @@
-.\" $OpenBSD: X25519.3,v 1.7 2022/12/15 17:20:48 schwarze Exp $
+.\" $OpenBSD: X25519.3,v 1.8 2025/06/08 22:40:30 schwarze Exp $
 .\" contains some text from: BoringSSL curve25519.h, curve25519.c
 .\" content also checked up to: OpenSSL f929439f Mar 15 12:19:16 2018 +0000
 .\"
@@ -24,7 +24,7 @@
 .\" by Daniel J. Bernstein and others that are included in SUPERCOP
 .\" and that Adam Langley's BoringSSL implementation is based on.
 .\"
-.Dd $Mdocdate: December 15 2022 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X25519 3
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nm ED25519_verify
 .Nd Elliptic Curve Diffie-Hellman and signature primitives based on Curve25519
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/curve25519.h
 .Ft int
 .Fo X25519

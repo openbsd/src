@@ -1,4 +1,4 @@
-.\"	$OpenBSD: POLICYINFO_new.3,v 1.11 2023/05/14 08:03:57 tb Exp $
+.\"	$OpenBSD: POLICYINFO_new.3,v 1.12 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 14 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt POLICYINFO_NEW 3
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Nm POLICY_CONSTRAINTS_free
 .Nd X.509 certificate policies
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509v3.h
 .Ft POLICYINFO *
 .Fn POLICYINFO_new void

@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_ocspid_print.3,v 1.1 2021/08/06 21:45:55 schwarze Exp $
+.\" $OpenBSD: X509_ocspid_print.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 6 2021 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt X509_OCSPID_PRINT 3
 .Os
 .Sh NAME
 .Nm X509_ocspid_print
 .Nd pretty-print hashes of subject name and public key
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft int
 .Fo X509_ocspid_print

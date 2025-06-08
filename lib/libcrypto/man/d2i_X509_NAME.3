@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_X509_NAME.3,v 1.18 2025/03/14 21:32:15 tb Exp $
+.\" $OpenBSD: d2i_X509_NAME.3,v 1.19 2025/06/08 22:40:30 schwarze Exp $
 .\" checked up to:
 .\" OpenSSL crypto/d2i_X509_NAME 4692340e Jun 7 15:49:08 2016 -0400 and
 .\" OpenSSL man3/X509_NAME_get0_der 99d63d46 Oct 26 13:56:48 2016 -0400
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt D2I_X509_NAME 3
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .\" The type is called "Name" with capital "N", not "name".
 .Nd decode and encode X.501 Name objects
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_NAME *
 .Fo d2i_X509_NAME

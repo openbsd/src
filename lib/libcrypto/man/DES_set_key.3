@@ -1,4 +1,4 @@
-.\" $OpenBSD: DES_set_key.3,v 1.17 2024/05/24 19:18:07 tb Exp $
+.\" $OpenBSD: DES_set_key.3,v 1.18 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/DES_random_key 521738e9 Oct 5 14:58:30 2018 -0400
 .\"
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: May 24 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -151,6 +151,7 @@
 .Nm DES_crypt
 .Nd DES encryption
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/des.h
 .Ft void
 .Fo DES_random_key

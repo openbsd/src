@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_rc2_cbc.3,v 1.1 2024/12/08 17:41:23 schwarze Exp $
+.\" $OpenBSD: EVP_rc2_cbc.3,v 1.2 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2024 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_RC2_CBC 3
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Nm EVP_rc2_64_cbc
 .Nd Rivest Cipher 2 in the EVP framework
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft const EVP_CIPHER *
 .Fn EVP_rc2_cbc void

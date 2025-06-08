@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_SealInit.3,v 1.9 2023/11/16 20:27:43 schwarze Exp $
+.\"	$OpenBSD: EVP_SealInit.3,v 1.10 2025/06/08 22:40:29 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 16 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_SEALINIT 3
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@
 .Nm EVP_SealFinal
 .Nd EVP envelope encryption
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft int
 .Fo EVP_SealInit

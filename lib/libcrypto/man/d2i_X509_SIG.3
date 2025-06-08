@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_X509_SIG.3,v 1.10 2025/03/14 21:32:15 tb Exp $
+.\"	$OpenBSD: d2i_X509_SIG.3,v 1.11 2025/06/08 22:40:30 schwarze Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt D2I_X509_SIG 3
 .Os
 .Sh NAME
@@ -29,6 +29,7 @@
 .\" These functions are misnamed.
 .Nd decode and encode PKCS#7 digest information
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/x509.h
 .Ft X509_SIG *
 .Fo d2i_X509_SIG

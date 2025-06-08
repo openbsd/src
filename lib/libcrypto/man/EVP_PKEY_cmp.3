@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_cmp.3,v 1.15 2024/12/06 12:51:13 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_cmp.3,v 1.16 2025/06/08 22:40:29 schwarze Exp $
 .\" full merge up to: OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt EVP_PKEY_CMP 3
 .Os
 .Sh NAME
@@ -81,6 +81,7 @@
 .\" resulting in incomplete output without the public key parameters.
 .Nd public key parameter and comparison functions
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/evp.h
 .Ft int
 .Fo EVP_PKEY_missing_parameters

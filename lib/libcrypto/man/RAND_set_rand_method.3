@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RAND_set_rand_method.3,v 1.4 2018/03/21 09:03:49 schwarze Exp $
+.\"	$OpenBSD: RAND_set_rand_method.3,v 1.5 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Miod Vallat <miod@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt RAND_SET_RAND_METHOD 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm RAND_SSLeay
 .Nd select RAND method
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/rand.h
 .Ft int
 .Fo RAND_set_rand_method

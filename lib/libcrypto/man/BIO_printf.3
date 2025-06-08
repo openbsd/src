@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_printf.3,v 1.4 2024/03/02 09:18:28 tb Exp $
+.\"	$OpenBSD: BIO_printf.3,v 1.5 2025/06/08 22:40:29 schwarze Exp $
 .\"	OpenSSL 2ca2e917 Mon Mar 20 16:25:22 2017 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,13 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt BIO_PRINTF 3
 .Os
 .Sh NAME
 .Nm BIO_printf
 .Nd formatted output to a BIO
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/bio.h
 .Ft int
 .Fo BIO_printf

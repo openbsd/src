@@ -1,4 +1,4 @@
-.\" $OpenBSD: OBJ_find_sigid_algs.3,v 1.2 2024/01/31 08:02:53 tb Exp $
+.\" $OpenBSD: OBJ_find_sigid_algs.3,v 1.3 2025/06/08 22:40:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt OBJ_FIND_SIGID_ALGS 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm OBJ_find_sigid_by_algs
 .Nd signature algorithm mappings
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/objects.h
 .Ft int
 .Fo OBJ_find_sigid_algs
