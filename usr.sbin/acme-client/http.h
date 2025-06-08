@@ -1,4 +1,4 @@
-/*	$Id: http.h,v 1.8 2019/06/07 08:07:52 florian Exp $ */
+/*	$Id: http.h,v 1.9 2025/06/08 22:54:15 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,15 +23,6 @@ struct	source {
 };
 
 struct	http;
-
-/*
- * Write and read callbacks to allow HTTP and HTTPS.
- * Both of these return the number of bytes read (or written) or -1 on
- * failure.
- * 0 bytes read means that the connection has closed.
- */
-typedef	ssize_t (*writefp)(const void *, size_t, const struct http *);
-typedef	ssize_t (*readfp)(char *, size_t, const struct http *);
 
 /*
  * HTTP/S header pair.

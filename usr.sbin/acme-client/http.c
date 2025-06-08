@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.32 2022/12/14 18:32:26 florian Exp $ */
+/*	$Id: http.c,v 1.33 2025/06/08 22:54:15 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -59,34 +59,10 @@ struct	http {
 	struct source	   src;    /* endpoint (raw) host */
 	char		  *path;   /* path to request */
 	char		  *host;   /* name of endpoint host */
-	struct tls	  *ctx;    /* if TLS */
-	writefp		   writer; /* write function */
-	readfp		   reader; /* read function */
+	struct tls	  *ctx;    /* TLS context */
 };
 
 struct tls_config *tlscfg;
-
-static ssize_t
-dosysread(char *buf, size_t sz, const struct http *http)
-{
-	ssize_t	 rc;
-
-	rc = read(http->fd, buf, sz);
-	if (rc == -1)
-		warn("%s: read", http->src.ip);
-	return rc;
-}
-
-static ssize_t
-dosyswrite(const void *buf, size_t sz, const struct http *http)
-{
-	ssize_t	 rc;
-
-	rc = write(http->fd, buf, sz);
-	if (rc == -1)
-		warn("%s: write", http->src.ip);
-	return rc;
-}
 
 static ssize_t
 dotlsread(char *buf, size_t sz, const struct http *http)
@@ -151,7 +127,7 @@ http_read(char *buf, size_t sz, const struct http *http)
 
 	xfer = 0;
 	do {
-		if ((ssz = http->reader(buf, sz, http)) < 0)
+		if ((ssz = dotlsread(buf, sz, http)) < 0)
 			return -1;
 		if (ssz == 0)
 			break;
@@ -170,7 +146,7 @@ http_write(const char *buf, size_t sz, const struct http *http)
 
 	xfer = sz;
 	while (sz > 0) {
-		if ((ssz = http->writer(buf, sz, http)) < 0)
+		if ((ssz = dotlswrite(buf, sz, http)) < 0)
 			return -1;
 		sz -= ssz;
 		buf += (size_t)ssz;
@@ -290,17 +266,6 @@ again:
 		warn("strdup");
 		goto err;
 	}
-
-	/* If necessary, do our TLS setup. */
-
-	if (port != 443) {
-		http->writer = dosyswrite;
-		http->reader = dosysread;
-		return http;
-	}
-
-	http->writer = dotlswrite;
-	http->reader = dotlsread;
 
 	if ((http->ctx = tls_client()) == NULL) {
 		warn("tls_client");

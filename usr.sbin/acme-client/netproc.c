@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.38 2025/05/20 00:46:50 florian Exp $ */
+/*	$Id: netproc.c,v 1.39 2025/06/08 22:54:15 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -88,14 +88,8 @@ url2host(const char *host, short *port, char **path)
 			warn("strdup");
 			return NULL;
 		}
-	} else if (strncmp(host, "http://", 7) == 0) {
-		*port = 80;
-		if ((url = strdup(host + 7)) == NULL) {
-			warn("strdup");
-			return NULL;
-		}
 	} else {
-		warnx("%s: unknown schema", host);
+		warnx("%s: RFC 8555 requires https for the API server", host);
 		return NULL;
 	}
 
