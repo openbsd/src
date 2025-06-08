@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+# Copyright (c) 2021,2022,2023,2024,2025 Ingo Schwarze <schwarze@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -119,7 +119,7 @@ my %postponed = (
 
 my $MANW = 'man -M /usr/share/man -w';
 my $srcdir = '/usr/src/lib/libcrypto/man';
-my $hfile = '/usr/include/openssl';
+my $hfile = '/usr/include';
 
 my $in_cplusplus = 0;
 my $in_comment = 0;
@@ -136,6 +136,7 @@ if (defined $ARGV[0] && $ARGV[0] eq '-v') {
 	shift @ARGV;
 }
 $#ARGV == 0 or die "usage: $0 [-v] headername";
+$hfile .= "/openssl" unless $ARGV[0] eq 'tls';
 $hfile .= "/$ARGV[0].h";
 open my $in_fh, '<', $hfile or die "$hfile: $!";
 
