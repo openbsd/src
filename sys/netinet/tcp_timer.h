@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.26 2025/01/16 11:59:20 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.27 2025/06/08 17:06:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -164,8 +164,5 @@ extern int tcp_keepidle_sec;	/* [a] copy of above in seconds for sysctl */
 extern int tcp_keepintvl_sec;	/* [a] copy of above in seconds for sysctl */
 extern int tcp_ttl;		/* time to live for TCP segs */
 extern const int tcp_backoff[];
-
-void	tcp_timer_reaper(void *);
-
 #endif /* _KERNEL */
 #endif /* _NETINET_TCP_TIMER_H_ */

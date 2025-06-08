@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.169 2025/06/03 16:51:26 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.170 2025/06/08 17:06:19 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ struct inpcb {
 	u_int16_t inp_fport;		/* [t] foreign port */
 	u_int16_t inp_lport;		/* [t] local port */
 	struct	  socket *inp_socket;	/* [I] back pointer to socket */
-	caddr_t	  inp_ppcb;		/* pointer to per-protocol pcb */
+	caddr_t	  inp_ppcb;		/* [s] pointer to per-protocol pcb */
 	struct    route inp_route;	/* [s] cached route */
 	struct    refcnt inp_refcnt;	/* refcount PCB, delay memory free */
 	int	  inp_flags;		/* generic IP/datagram flags */

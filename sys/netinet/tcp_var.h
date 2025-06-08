@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.191 2025/05/07 14:10:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.192 2025/06/08 17:06:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -70,7 +70,6 @@ struct tcpqent {
 struct tcpcb {
 	struct tcpqehead t_segq;		/* sequencing queue */
 	struct timeout t_timer[TCPT_NTIMERS];	/* tcp timers */
-	struct timeout t_timer_reaper;	/* reaper is special, no refcnt */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	int	t_rxtcur;		/* current retransmit value */
