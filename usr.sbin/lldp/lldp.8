@@ -1,4 +1,4 @@
-.\" $OpenBSD: lldp.8,v 1.4 2025/05/16 04:26:43 kn Exp $
+.\" $OpenBSD: lldp.8,v 1.5 2025/06/08 08:21:30 bentley Exp $
 .\"
 .\" Copyright (c) 2025 David Gwynne<dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2025 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt LLDP 8
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl i Ar interface
 Limit the LLDP entries to those received on the specified
+.Ar interface .
 .It Fl s Ar socket
 Use
 .Ar socket
