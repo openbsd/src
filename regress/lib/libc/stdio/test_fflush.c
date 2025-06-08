@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_fflush.c,v 1.2 2025/05/25 05:35:13 yasuoka Exp $	*/
+/*	$OpenBSD: test_fflush.c,v 1.3 2025/06/08 08:53:53 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2025 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -38,6 +38,7 @@ void test_fflush_read3(void);
 void test_fflush_read4(void);
 void setupw(void);
 void test_fflush_read5(void);
+void test_fflush_read6(void);
 
 void
 setup(void)
@@ -290,6 +291,43 @@ test_fflush_read5(void)
 	r = fclose(fp);
 	assert(r == 0);
 }
+
+void
+test_fflush_read6(void)
+{
+	int	 r, c;
+	FILE	*fp;
+
+	setup();
+	fp = fopen(TMPFILENAME, "r");
+	assert(fp != NULL);
+
+	/*
+	 * https://pubs.opengroup.org/onlinepubs/9699919799/functions/fflush.html
+	 * .. any characters pushed back onto the stream by ungetc() or ungetwc()
+	 * that have not subsequently been read from the stream shall be discarded
+	 * (without further changing the file offset).
+	 */
+
+	assert(fgetc(fp) == 'H');
+	c = getc(fp);
+	ungetc(c, fp);	/* push back the character has been read */
+	r = fflush(fp);
+	assert(r == 0);
+	assert(getc(fp) == c);
+
+	fseek(fp, 0, SEEK_SET);
+	assert(fgetc(fp) == 'H');
+	c = getc(fp);
+	ungetc('X', fp); /* push back the character has not been read */
+	r = fflush(fp);
+	assert(r == 0);
+	assert(getc(fp) == 'l');
+
+	r = fclose(fp);
+	assert(r == 0);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -301,6 +339,7 @@ main(int argc, char *argv[])
 	test_fflush_read3();
 	test_fflush_read4();
 	test_fflush_read5();
+	test_fflush_read6();
 
 	exit(0);
 }
