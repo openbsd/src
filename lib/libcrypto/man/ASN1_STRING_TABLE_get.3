@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_STRING_TABLE_get.3,v 1.4 2023/12/21 21:23:37 tb Exp $
+.\" $OpenBSD: ASN1_STRING_TABLE_get.3,v 1.5 2025/06/08 22:37:23 schwarze Exp $
 .\" checked up to:
 .\" OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
 .\"
@@ -16,17 +16,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 21 2023 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt ASN1_STRING_TABLE_GET 3
 .Os
 .Sh NAME
-.\" .Nm ASN1_STRING_TABLE_add0 and
-.\" .Nm ASN1_STRING_TABLE_cleanup are intentionally undocumented
-.\" because they will be removed in the next major bump
 .\" .Dv STABLE_FLAGS_MALLOC is intentionally undocumented because it is unused
 .Nm ASN1_STRING_TABLE_get
 .Nd retrieve an entry from the global ASN.1 string table
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/asn1.h
 .Ft ASN1_STRING_TABLE *
 .Fo ASN1_STRING_TABLE_get

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_new.3,v 1.27 2024/12/27 15:30:17 schwarze Exp $
+.\"	$OpenBSD: ASN1_STRING_new.3,v 1.28 2025/06/08 22:37:23 schwarze Exp $
 .\"	OpenSSL 99d63d46 Tue Mar 24 07:52:24 2015 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2024 $
+.Dd $Mdocdate: June 8 2025 $
 .Dt ASN1_STRING_NEW 3
 .Os
 .Sh NAME
@@ -58,10 +58,9 @@
 .Nm ASN1_UTCTIME_free ,
 .Nm ASN1_TIME_new ,
 .Nm ASN1_TIME_free
-.\" deprecated aliases, intentionally undocumented: M_ASN1_IA5STRING_new,
-.\" M_ASN1_ENUMERATED_free, M_ASN1_INTEGER_free, M_ASN1_OCTET_STRING_free
 .Nd allocate and free ASN1_STRING objects
 .Sh SYNOPSIS
+.Lb libcrypto
 .In openssl/asn1.h
 .Ft ASN1_STRING *
 .Fn ASN1_STRING_new void
