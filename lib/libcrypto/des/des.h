@@ -1,4 +1,4 @@
-/* $OpenBSD: des.h,v 1.25 2025/06/09 14:37:49 tb Exp $ */
+/* $OpenBSD: des.h,v 1.26 2025/06/09 17:49:45 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/opensslconf.h>
 
 #ifndef DES_LONG
-/* XXX - typedef to int everywhere. */
+/* XXX - typedef to unsigned int everywhere. */
 #ifdef __i386__
 #define DES_LONG unsigned long
 #else
