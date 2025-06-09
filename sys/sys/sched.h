@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.76 2025/06/01 03:43:48 dlg Exp $	*/
+/*	$OpenBSD: sched.h,v 1.77 2025/06/09 10:57:46 claudio Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -159,6 +159,7 @@ void scheduler_start(void);
 void userret(struct proc *p);
 
 struct cpu_info;
+void sched_init(void);
 void sched_init_cpu(struct cpu_info *);
 void sched_idle(void *);
 void sched_exit(struct proc *);
@@ -188,7 +189,6 @@ void sched_stop_secondary_cpus(void);
 #define cpu_is_idle(ci)	((ci)->ci_schedstate.spc_whichqs == 0)
 int	cpu_is_online(struct cpu_info *);
 
-void sched_init_runqueues(void);
 void setrunqueue(struct cpu_info *, struct proc *, uint8_t);
 void remrunqueue(struct proc *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.110 2025/06/09 09:28:13 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.111 2025/06/09 10:57:46 claudio Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -72,6 +72,17 @@ int sched_smt;
  * Therefore no locking is necessary in cpu_switchto other than blocking
  * interrupts during the context switch.
  */
+
+/*
+ * sched_init() is called in main() before calling sched_init_cpu(curcpu()).
+ * Setup the bare minimum to allow things like setrunqueue() to work even
+ * before the scheduler is actually started.
+ */
+void
+sched_init(void)
+{
+	cpuset_add(&sched_all_cpus, curcpu());
+}
 
 /*
  * sched_init_cpu is called from main() for the boot cpu, then it's the
@@ -249,14 +260,6 @@ sched_toidle(void)
 		    idle->p_p->ps_pid);
 	cpu_switchto(NULL, idle);
 	panic("cpu_switchto returned");
-}
-
-/*
- * Run queue management.
- */
-void
-sched_init_runqueues(void)
-{
 }
 
 void
