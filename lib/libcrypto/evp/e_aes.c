@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.70 2025/06/06 07:41:01 tb Exp $ */
+/* $OpenBSD: e_aes.c,v 1.71 2025/06/09 14:28:34 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -115,7 +115,7 @@ void AES_xts_decrypt(const char *inp, char *out, size_t len,
 
 #if	defined(AES_ASM) &&				(  \
 	((defined(__i386)	|| defined(__i386__)	|| \
-	  defined(_M_IX86)) && defined(OPENSSL_IA32_SSE2))|| \
+	  defined(_M_IX86)))|| \
 	defined(__x86_64)	|| defined(__x86_64__)	|| \
 	defined(_M_AMD64)	|| defined(_M_X64)	|| \
 	defined(__INTEL__)				)

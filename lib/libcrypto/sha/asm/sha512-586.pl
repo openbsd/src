@@ -38,8 +38,7 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],"sha512-586.pl",$ARGV[$#ARGV] eq "386");
 
-$sse2=0;
-for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+$sse2=1;
 
 &external_label("OPENSSL_ia32cap_P") if ($sse2);
 

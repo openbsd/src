@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.50 2025/06/08 07:49:45 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.51 2025/06/09 14:28:34 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -259,7 +259,6 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 	ctx->H.u[1] = be64toh(ctx->H.u[1]);
 
 # if	defined(GHASH_ASM_X86_OR_64)
-#  if	!defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
 	/* check FXSR and PCLMULQDQ bits */
 	if ((crypto_cpu_caps_ia32() & (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) ==
 	    (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) {
@@ -268,14 +267,9 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 		ctx->ghash = gcm_ghash_clmul;
 		return;
 	}
-#  endif
 	gcm_init_4bit(ctx->Htable, ctx->H.u);
 #  if	defined(GHASH_ASM_X86)			/* x86 only */
-#   if	defined(OPENSSL_IA32_SSE2)
-	if (crypto_cpu_caps_ia32() & CPUCAP_MASK_SSE) {	/* check SSE bit */
-#   else
 	if (crypto_cpu_caps_ia32() & CPUCAP_MASK_MMX) {	/* check MMX bit */
-#   endif
 		ctx->gmult = gcm_gmult_4bit_mmx;
 		ctx->ghash = gcm_ghash_4bit_mmx;
 	} else {
