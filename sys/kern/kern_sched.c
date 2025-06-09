@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.111 2025/06/09 10:57:46 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.112 2025/06/09 11:11:03 claudio Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -54,6 +54,7 @@ uint64_t sched_stolen;		/* Times we stole proc from other cpus */
 uint64_t sched_choose;		/* Times we chose a cpu */
 uint64_t sched_wasidle;		/* Times we came out of idle */
 
+/* Only schedule processes on sibling CPU threads when true. */
 int sched_smt;
 
 /*
@@ -114,12 +115,6 @@ sched_init_cpu(struct cpu_info *ci)
 	 * structures.
 	 */
 	cpuset_init_cpu(ci);
-
-#ifdef __HAVE_CPU_TOPOLOGY
-	if (!sched_smt && ci->ci_smt_id > 0)
-		return;
-#endif
-	cpuset_add(&sched_all_cpus, ci);
 }
 
 void
@@ -151,23 +146,30 @@ sched_idle(void *v)
 
 	KERNEL_UNLOCK();
 
-	spc = &ci->ci_schedstate;
-
 	/*
-	 * First time we enter here, we're not supposed to idle,
-	 * just go away for a while.
+	 * The idle thread is setup in fork1(). When the CPU hatches we
+	 * enter here for the first time. The CPU is now ready to take
+	 * work and so add it to sched_all_cpus when appropriate.
+	 * After that just go away and properly reenter once idle.
 	 */
-	SCHED_LOCK();
-	p->p_stat = SSLEEP;
-	p->p_cpu = ci;
-	atomic_setbits_int(&p->p_flag, P_CPUPEG);
-	mi_switch();
+#ifdef __HAVE_CPU_TOPOLOGY
+	if (sched_smt || ci->ci_smt_id == 0)
+		cpuset_add(&sched_all_cpus, ci);
+#else
+	cpuset_add(&sched_all_cpus, ci);
+#endif
+	spc = &ci->ci_schedstate;
 
 	KASSERT(ci == curcpu());
 	KASSERT(curproc == spc->spc_idleproc);
+	KASSERT(p->p_cpu == ci);
+
+	SCHED_LOCK();
+	p->p_stat = SSLEEP;
+	mi_switch();
 
 	while (1) {
-		while (!cpu_is_idle(curcpu())) {
+		while (spc->spc_whichqs != 0) {
 			struct proc *dead;
 
 			SCHED_LOCK();

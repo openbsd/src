@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.272 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.273 2025/06/09 11:11:03 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -488,10 +488,16 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	pr->ps_acflag = AFORK;
 	atomic_clearbits_int(&pr->ps_flags, PS_EMBRYO);
 
-	if ((flags & FORK_IDLE) == 0)
-		fork_thread_start(p, curp, flags);
-	else
+	/*
+	 * Idle threads are just assigned to the CPU but not added
+	 * to any runqueue.
+	 */
+	if ((flags & FORK_IDLE)) {
 		p->p_cpu = arg;
+		/* for consistency mark idle procs as pegged */
+		atomic_setbits_int(&p->p_flag, P_CPUPEG);
+	} else
+		fork_thread_start(p, curp, flags);
 
 	free(newptstat, M_SUBPROC, sizeof(*newptstat));
 
