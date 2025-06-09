@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.109 2025/06/03 00:20:31 dlg Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.110 2025/06/09 09:28:13 claudio Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -412,10 +412,10 @@ sched_choosecpu_fork(struct proc *parent, int flags)
 		}
 	}
 
-	return (choice);
-#else
-	return (curcpu());
+	if (choice != NULL)
+		return (choice);
 #endif
+	return (curcpu());
 }
 
 struct cpu_info *
@@ -476,10 +476,10 @@ sched_choosecpu(struct proc *p)
 	else
 		sched_nomigrations++;
 
-	return (choice);
-#else
-	return (curcpu());
+	if (choice != NULL)
+		return (choice);
 #endif
+	return (curcpu());
 }
 
 /*
