@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.308 2025/04/25 19:57:12 tb Exp $
+# $OpenBSD: Makefile,v 1.309 2025/06/09 12:43:53 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -216,7 +216,6 @@ MAN=	\
 	IPAddressRange_new.3 \
 	MD5.3 \
 	NAME_CONSTRAINTS_new.3 \
-	OBJ_NAME_add.3 \
 	OBJ_create.3 \
 	OBJ_find_sigid_algs.3 \
 	OBJ_nid2obj.3 \
@@ -232,7 +231,6 @@ MAN=	\
 	OPENSSL_cleanse.3 \
 	OPENSSL_config.3 \
 	OPENSSL_init_crypto.3 \
-	OPENSSL_load_builtin_modules.3 \
 	OPENSSL_malloc.3 \
 	OPENSSL_sk_new.3 \
 	OpenSSL_add_all_algorithms.3 \

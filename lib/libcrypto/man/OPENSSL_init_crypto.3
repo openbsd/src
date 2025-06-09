@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_init_crypto.3,v 1.6 2025/06/08 22:40:30 schwarze Exp $
+.\" $OpenBSD: OPENSSL_init_crypto.3,v 1.7 2025/06/09 12:43:53 schwarze Exp $
 .\" Copyright (c) 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 9 2025 $
 .Dt OPENSSL_INIT_CRYPTO 3
 .Os
 .Sh NAME
@@ -55,10 +55,7 @@ If
 is called before any other crypto or ssl functions, the crypto
 library is initialised by allocating various internal resources,
 in particular calling
-.Xr ERR_load_crypto_strings 3 ,
-.Xr OpenSSL_add_all_ciphers 3 ,
-and
-.Xr OpenSSL_add_all_digests 3 .
+.Xr ERR_load_crypto_strings 3 .
 .Pp
 The following
 .Fa options
@@ -93,7 +90,6 @@ is intended to return 1 on success or 0 on error.
 .Sh SEE ALSO
 .Xr CONF_modules_load_file 3 ,
 .Xr OPENSSL_config 3 ,
-.Xr OPENSSL_load_builtin_modules 3 ,
 .Xr openssl.cnf 5
 .Sh HISTORY
 .Fn OPENSSL_init
