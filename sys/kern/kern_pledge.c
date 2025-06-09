@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.324 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.325 2025/06/09 05:58:28 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1481,6 +1481,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		case IPV6_PORTRANGE:
 		case IPV6_RECVPKTINFO:
 		case IPV6_RECVDSTPORT:
+		case IPV6_RECVTCLASS:
 		case IPV6_V6ONLY:
 			return (0);
 		case IPV6_MULTICAST_IF:
