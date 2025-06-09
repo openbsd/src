@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.101 2025/06/01 17:44:00 volker Exp $
+#	$OpenBSD: airport,v 1.102 2025/06/09 17:02:08 fcambus Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1570,6 +1570,7 @@ SKP:Skopje, Republic of North Macedonia
 SKS:Jojens, Vojens Lufthavn, Denmark
 SLA:Salta International, Argentina
 SLC:Salt Lake City International, Utah, USA
+SLD:Sliac, Slovakia
 SLK:Adirondack, Saranac Lake, New York, USA
 SLN:Salina Municipal, Kansas, USA
 SLP:San Luis Potosi, Mexico
