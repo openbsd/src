@@ -1,9 +1,4 @@
 #include <openssl/opensslfeatures.h>
-/* crypto/opensslconf.h.in */
-
-#if defined(HEADER_CRYPTO_LOCAL_H) && !defined(OPENSSLDIR)
-#define OPENSSLDIR "/etc/ssl"
-#endif
 
 #undef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
@@ -17,26 +12,7 @@
 #endif
 #endif
 
-#if defined(HEADER_IDEA_H) && !defined(IDEA_INT)
-#define IDEA_INT unsigned int
-#endif
-
-#if defined(HEADER_RC2_H) && !defined(RC2_INT)
-/* I need to put in a mod for the alpha - eay */
-#define RC2_INT unsigned int
-#endif
-
 #if defined(HEADER_RC4_H)
-#if !defined(RC4_INT)
-/* using int types make the structure larger but make the code faster
- * on most boxes I have tested - up to %20 faster. */
-/*
- * I don't know what does "most" mean, but declaring "int" is a must on:
- * - Intel P6 because partial register stalls are very expensive;
- * - elder Alpha because it lacks byte load/store instructions;
- */
-#define RC4_INT unsigned int
-#endif
 #if !defined(RC4_CHUNK)
 /*
  * This enables code handling data aligned at natural CPU word

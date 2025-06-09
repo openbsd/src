@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_local.h,v 1.5 2025/05/24 07:23:14 jsing Exp $ */
+/* $OpenBSD: crypto_local.h,v 1.6 2025/06/09 14:37:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,10 @@
 
 #ifdef  __cplusplus
 extern "C" {
+#endif
+
+#ifndef OPENSSLDIR
+#define OPENSSLDIR "/etc/ssl"
 #endif
 
 #define X509_CERT_AREA		OPENSSLDIR

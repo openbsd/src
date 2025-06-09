@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2.h,v 1.13 2025/01/25 17:59:44 tb Exp $ */
+/* $OpenBSD: rc2.h,v 1.14 2025/06/09 14:37:49 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,12 @@
 #ifndef HEADER_RC2_H
 #define HEADER_RC2_H
 
-#include <openssl/opensslconf.h> /* OPENSSL_NO_RC2, RC2_INT */
+#include <openssl/opensslconf.h> /* OPENSSL_NO_RC2 */
+
+#ifndef RC2_INT
+/* XXX - typedef */
+#define RC2_INT unsigned int
+#endif
 
 #define RC2_ENCRYPT	1
 #define RC2_DECRYPT	0
