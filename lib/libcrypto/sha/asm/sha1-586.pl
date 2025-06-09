@@ -107,10 +107,7 @@ require "x86asm.pl";
 $xmm=$ymm=0;
 for (@ARGV) { $xmm=1 if (/-DOPENSSL_IA32_SSE2/); }
 
-$ymm=1 if ($xmm &&
-		`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
-			=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
-		$1>=2.19);	# first version supporting AVX
+$ymm=1 if $xmm;
 
 &external_label("OPENSSL_ia32cap_P") if ($xmm);
 
