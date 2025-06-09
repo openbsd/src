@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1212 2025/05/30 13:08:07 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1213 2025/06/09 20:34:08 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -8093,7 +8093,9 @@ done:
 			st->if_index_out = ifp->if_index;
 	}
 
- out:
+#ifdef INET6
+out:
+#endif /* INET6 */
 	*m0 = pd.m;
 
 	pf_state_unref(st);
