@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.5 2025/06/04 12:47:59 tb Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.6 2025/06/09 18:43:01 dv Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -43,14 +43,6 @@ init_emulated_hw(struct vmop_create_params *vcp, int child_cdrom,
 }
 
 void
-restore_emulated_hw(struct vm_create_params *vcp, int fd, int *child_taps,
-    int child_disks[][VM_MAX_BASE_PER_DISK], int child_cdrom)
-{
-	fatalx("%s: unimplemented", __func__);
-	/* NOTREACHED */
-}
-
-void
 pause_vm_md(struct vmd_vm *vm)
 {
 	fatalx("%s: unimplemented", __func__);
@@ -62,22 +54,6 @@ unpause_vm_md(struct vmd_vm *vm)
 {
 	fatalx("%s: unimplemented", __func__);
 	/* NOTREACHED */
-}
-
-int
-dump_devs(int fd)
-{
-	fatalx("%s: unimplemented", __func__);
-	/* NOTREACHED */
-	return (-1);
-}
-
-int
-dump_send_header(int fd)
-{
-	fatalx("%s: unimplemented", __func__);
-	/* NOTREACHED */
-	return (-1);
 }
 
 void *

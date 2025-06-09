@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.77 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.78 2025/06/09 18:43:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -258,7 +258,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	/*
 	 * From here onward, all failures need cleanup and use goto fail
 	 */
-	if (!(vm->vm_state & VM_STATE_RECEIVED) && vm->vm_kernel == -1) {
+	if (vm->vm_kernel == -1) {
 		if (vm->vm_kernel_path != NULL) {
 			/* Open external kernel for child */
 			kernfd = open(vm->vm_kernel_path, O_RDONLY | O_CLOEXEC);
@@ -455,14 +455,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	/* Send VM information */
 	/* XXX check proc_compose_imsg return values */
-	if (vm->vm_state & VM_STATE_RECEIVED)
-		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_RECEIVE_VM_REQUEST, vm->vm_vmid, fd, vmc,
-		    sizeof(struct vmop_create_params));
-	else
-		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, vm->vm_kernel,
-		    vmc, sizeof(*vmc));
+	proc_compose_imsg(ps, PROC_VMM, -1, IMSG_VMDOP_START_VM_REQUEST,
+	    vm->vm_vmid, vm->vm_kernel, vmc, sizeof(*vmc));
 
 	if (strlen(vmc->vmc_cdrom))
 		proc_compose_imsg(ps, PROC_VMM, -1,
@@ -490,9 +484,8 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    vm->vm_vmid, dup(tapfds[i]), &var, sizeof(var));
 	}
 
-	if (!(vm->vm_state & VM_STATE_RECEIVED))
-		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd, NULL, 0);
+	proc_compose_imsg(ps, PROC_VMM, -1, IMSG_VMDOP_START_VM_END,
+	    vm->vm_vmid, fd, NULL, 0);
 
 	free(tapfds);
 

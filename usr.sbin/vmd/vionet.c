@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.23 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.24 2025/06/09 18:43:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -158,34 +158,6 @@ vionet_main(int fd, int fd_vmm)
 	close_fd(fd_vmm);
 	if (pledge("stdio", NULL) == -1)
 		fatal("pledge2");
-
-	/* If we're restoring hardware, re-initialize virtqueue hva's. */
-	if (vm.vm_state & VM_STATE_RECEIVED) {
-		struct virtio_vq_info *vq_info;
-		void *hva = NULL;
-
-		vq_info = &dev.vionet.vq[TXQ];
-		if (vq_info->q_gpa != 0) {
-			log_debug("%s: restoring TX virtqueue for gpa 0x%llx",
-			    __func__, vq_info->q_gpa);
-			hva = hvaddr_mem(vq_info->q_gpa,
-			    vring_size(VIONET_QUEUE_SIZE));
-			if (hva == NULL)
-				fatalx("%s: hva == NULL", __func__);
-			vq_info->q_hva = hva;
-		}
-
-		vq_info = &dev.vionet.vq[RXQ];
-		if (vq_info->q_gpa != 0) {
-			log_debug("%s: restoring RX virtqueue for gpa 0x%llx",
-			    __func__, vq_info->q_gpa);
-			hva = hvaddr_mem(vq_info->q_gpa,
-			    vring_size(VIONET_QUEUE_SIZE));
-			if (hva == NULL)
-				fatalx("%s: hva == NULL", __func__);
-			vq_info->q_hva = hva;
-		}
-	}
 
 	/* Initialize our packet injection pipe. */
 	if (pipe2(pipe_inject, O_NONBLOCK) == -1) {
@@ -1015,14 +987,6 @@ handle_sync_io(int fd, short event, void *arg)
 		imsg_free(&imsg);
 
 		switch (msg.type) {
-		case VIODEV_MSG_DUMP:
-			/* Dump device */
-			n = atomicio(vwrite, dev->sync_fd, dev, sizeof(*dev));
-			if (n != sizeof(*dev)) {
-				log_warnx("%s: failed to dump vionet device",
-				    __func__);
-				break;
-			}
 		case VIODEV_MSG_IO_READ:
 			/* Read IO: make sure to send a reply */
 			msg.data = handle_io_read(&msg, dev, &intr);

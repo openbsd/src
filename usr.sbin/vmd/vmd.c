@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.166 2025/06/04 12:47:59 tb Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.167 2025/06/09 18:43:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -54,7 +54,6 @@ int	 vmd_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_agentx(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_priv(int, struct privsep_proc *, struct imsg *);
-int	 vmd_check_vmh(struct vm_dump_header *);
 
 int	 vm_instance(struct privsep *, struct vmd_vm **,
 	    struct vmop_create_params *, uid_t);
@@ -92,18 +91,15 @@ int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
-	int				 res = 0, ret = 0, cmd = 0, verbose;
-	int				 ifd;
+	int				 res = 0, cmd = 0, verbose;
 	unsigned int			 v = 0, flags;
 	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
 	struct vmop_result		 vmr;
-	struct vm_dump_header		 vmh;
 	struct vmd_vm			*vm = NULL;
 	char				*str = NULL;
 	uint32_t			 peer_id, type, vm_id = 0;
 	struct control_sock		*rcs;
-	size_t				 i;
 
 	peer_id = imsg_get_id(imsg);
 	type = imsg_get_type(imsg);
@@ -251,95 +247,6 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		proc_compose_imsg(ps, PROC_VMM, -1, type, vm->vm_peerid, -1,
 		    &vid, sizeof(vid));
 		break;
-	case IMSG_VMDOP_SEND_VM_REQUEST:
-		vmop_id_read(imsg, &vid);
-		vm_id = vid.vid_id;
-		ifd = imsg_get_fd(imsg);
-		if (vid.vid_id == 0) {
-			if ((vm = vm_getbyname(vid.vid_name)) == NULL) {
-				res = ENOENT;
-				cmd = IMSG_VMDOP_SEND_VM_RESPONSE;
-				close(ifd);
-				break;
-			} else {
-				vid.vid_id = vm->vm_vmid;
-			}
-		} else if ((vm = vm_getbyvmid(vid.vid_id)) == NULL) {
-			res = ENOENT;
-			cmd = IMSG_VMDOP_SEND_VM_RESPONSE;
-			close(ifd);
-			break;
-		}
-		vmr.vmr_id = vid.vid_id;
-		log_debug("%s: sending fd to vmm", __func__);
-		proc_compose_imsg(ps, PROC_VMM, -1, type, peer_id, ifd, &vid,
-		    sizeof(vid));
-		break;
-	case IMSG_VMDOP_RECEIVE_VM_REQUEST:
-		vmop_id_read(imsg, &vid);
-		ifd = imsg_get_fd(imsg);
-		if (ifd == -1) {
-			log_warnx("%s: invalid fd", __func__);
-			return (-1);
-		}
-		if (atomicio(read, ifd, &vmh, sizeof(vmh)) != sizeof(vmh)) {
-			log_warnx("%s: error reading vmh from received vm",
-			    __func__);
-			res = EIO;
-			close(ifd);
-			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-			break;
-		}
-
-		if (vmd_check_vmh(&vmh)) {
-			res = ENOENT;
-			close(ifd);
-			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-			break;
-		}
-		if (atomicio(read, ifd, &vmc, sizeof(vmc)) != sizeof(vmc)) {
-			log_warnx("%s: error reading vmc from received vm",
-			    __func__);
-			res = EIO;
-			close(ifd);
-			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-			break;
-		}
-
-		/* vm_create_params was read from an untrusted source. Scrub. */
-		vmc.vmc_params.vcp_name[sizeof(vmc.vmc_params.vcp_name) - 1] =
-		    '\0';
-		for (i = 0; i < nitems(vmc.vmc_disks); i++)
-			vmc.vmc_disks[i][sizeof(vmc.vmc_disks[i]) - 1] = '\0';
-		for (i = 0; i < nitems(vmc.vmc_ifnames); i++)
-			vmc.vmc_ifnames[i][sizeof(vmc.vmc_ifnames[i]) - 1]
-			    = '\0';
-		for (i = 0; i < nitems(vmc.vmc_ifswitch); i++)
-			vmc.vmc_ifswitch[i][sizeof(vmc.vmc_ifswitch[i]) - 1]
-			    = '\0';
-		for (i = 0; i < nitems(vmc.vmc_ifgroup); i++)
-			vmc.vmc_ifgroup[i][sizeof(vmc.vmc_ifgroup[i]) - 1]
-			    = '\0';
-		vmc.vmc_instance[sizeof(vmc.vmc_instance) - 1] = '\0';
-
-		strlcpy(vmc.vmc_params.vcp_name, vid.vid_name,
-		    sizeof(vmc.vmc_params.vcp_name));
-		vmc.vmc_params.vcp_id = 0;
-
-		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_owner.uid);
-		if (ret != 0) {
-			res = errno;
-			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-			close(ifd);
-		} else {
-			vm->vm_state |= VM_STATE_RECEIVED;
-			config_setvm(ps, vm, peer_id, vmc.vmc_owner.uid);
-			log_debug("%s: sending fd to vmm", __func__);
-			proc_compose_imsg(ps, PROC_VMM, -1,
-			    IMSG_VMDOP_RECEIVE_VM_END, vm->vm_vmid, ifd,
-			    NULL, 0);
-		}
-		break;
 	case IMSG_VMDOP_DONE:
 		control_reset(&ps->ps_csock);
 		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
@@ -461,28 +368,6 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				break;
 			/* Mark VM as shutting down */
 			vm->vm_state |= VM_STATE_SHUTDOWN;
-		}
-		break;
-	case IMSG_VMDOP_SEND_VM_RESPONSE:
-		vmop_result_read(imsg, &vmr);
-		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
-			break;
-		if (!vmr.vmr_result) {
-			log_info("%s: sent vm %d successfully.",
-			    vm->vm_params.vmc_params.vcp_name,
-			    vm->vm_vmid);
-			vm_terminate(vm, __func__);
-		}
-
-		/* Send a response if a control client is waiting for it */
-		if (peer_id != (uint32_t)-1) {
-			/* the error is meaningless for deferred responses */
-			vmr.vmr_result = 0;
-
-			if (proc_compose_imsg(ps, PROC_CONTROL, -1,
-			    IMSG_VMDOP_SEND_VM_RESPONSE, peer_id, -1, &vmr,
-			    sizeof(vmr)) == -1)
-				return (-1);
 		}
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_EVENT:
@@ -1150,8 +1035,7 @@ vm_stop(struct vmd_vm *vm, int keeptty, const char *caller)
 	    __func__, ps->ps_title[privsep_process], caller,
 	    vm->vm_vmid, keeptty ? ", keeping tty open" : "");
 
-	vm->vm_state &= ~(VM_STATE_RECEIVED | VM_STATE_RUNNING
-	    | VM_STATE_SHUTDOWN);
+	vm->vm_state &= ~(VM_STATE_RUNNING | VM_STATE_SHUTDOWN);
 
 	if (vm->vm_iev.ibuf.fd != -1) {
 		event_del(&vm->vm_iev.ev);

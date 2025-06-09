@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.93 2025/05/31 00:38:56 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.94 2025/06/09 18:43:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -288,84 +288,6 @@ vm_start_complete(struct imsg *imsg, int *ret, int autoconnect)
 	}
 
 	return (1);
-}
-
-void
-send_vm(uint32_t id, const char *name)
-{
-	struct vmop_id vid;
-	int fds[2], readn, writen;
-	long pagesz;
-	char *buf;
-
-	pagesz = getpagesize();
-	buf = malloc(pagesz);
-	if (buf == NULL)
-		errx(1, "%s: memory allocation failure", __func__);
-
-	memset(&vid, 0, sizeof(vid));
-	vid.vid_id = id;
-	if (name != NULL)
-		strlcpy(vid.vid_name, name, sizeof(vid.vid_name));
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) == -1) {
-		warnx("%s: socketpair creation failed", __func__);
-	} else {
-		imsg_compose(ibuf, IMSG_VMDOP_SEND_VM_REQUEST, 0, 0, fds[0],
-				&vid, sizeof(vid));
-		imsgbuf_flush(ibuf);
-		while (1) {
-			readn = atomicio(read, fds[1], buf, pagesz);
-			if (!readn)
-				break;
-			writen = atomicio(vwrite, STDOUT_FILENO, buf,
-					readn);
-			if (writen != readn)
-				break;
-		}
-		if (vid.vid_id)
-			warnx("sent vm %d successfully", vid.vid_id);
-		else
-			warnx("sent vm %s successfully", vid.vid_name);
-	}
-
-	free(buf);
-}
-
-void
-vm_receive(uint32_t id, const char *name)
-{
-	struct vmop_id vid;
-	int fds[2], readn, writen;
-	long pagesz;
-	char *buf;
-
-	pagesz = getpagesize();
-	buf = malloc(pagesz);
-	if (buf == NULL)
-		errx(1, "%s: memory allocation failure", __func__);
-
-	memset(&vid, 0, sizeof(vid));
-	if (name != NULL)
-		strlcpy(vid.vid_name, name, sizeof(vid.vid_name));
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) == -1) {
-		warnx("%s: socketpair creation failed", __func__);
-	} else {
-		imsg_compose(ibuf, IMSG_VMDOP_RECEIVE_VM_REQUEST, 0, 0, fds[0],
-		    &vid, sizeof(vid));
-		imsgbuf_flush(ibuf);
-		while (1) {
-			readn = atomicio(read, STDIN_FILENO, buf, pagesz);
-			if (!readn) {
-				close(fds[1]);
-				break;
-			}
-			writen = atomicio(vwrite, fds[1], buf, readn);
-			if (writen != readn)
-				break;
-		}
-	}
-
-	free(buf);
 }
 
 void

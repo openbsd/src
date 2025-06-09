@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.131 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.132 2025/06/09 18:43:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -100,7 +100,6 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	struct vm_terminate_params vtp;
 	struct vmop_id		 vid;
 	struct vmop_result	 vmr;
-	struct vmop_create_params vmc;
 	struct vmop_addr_result  var;
 	uint32_t		 id = 0, vm_id, type;
 	pid_t			 pid, vm_pid = 0;
@@ -249,43 +248,6 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		imsg_compose_event(&vm->vm_iev, type, -1, pid,
 		    imsg_get_fd(imsg), &vid, sizeof(vid));
-		break;
-	case IMSG_VMDOP_SEND_VM_REQUEST:
-		vmop_id_read(imsg, &vid);
-		id = vid.vid_id;
-		if ((vm = vm_getbyvmid(id)) == NULL) {
-			res = ENOENT;
-			close(imsg_get_fd(imsg));	/* XXX */
-			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-			break;
-		}
-		imsg_compose_event(&vm->vm_iev, type, -1, pid,
-		    imsg_get_fd(imsg), &vid, sizeof(vid));
-		break;
-	case IMSG_VMDOP_RECEIVE_VM_REQUEST:
-		vmop_create_params_read(imsg, &vmc);
-		if (vm_register(ps, &vmc, &vm, vm_id, vmc.vmc_owner.uid) != 0) {
-			res = errno;
-			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-			break;
-		}
-		vm->vm_tty = imsg_get_fd(imsg);
-		vm->vm_state |= VM_STATE_RECEIVED;
-		vm->vm_state |= VM_STATE_PAUSED;
-		break;
-	case IMSG_VMDOP_RECEIVE_VM_END:
-		if ((vm = vm_getbyvmid(vm_id)) == NULL) {
-			res = ENOENT;
-			close(imsg_get_fd(imsg));	/* XXX */
-			cmd = IMSG_VMDOP_START_VM_RESPONSE;
-			break;
-		}
-		vm->vm_receive_fd = imsg_get_fd(imsg);
-		res = vmm_start_vm(imsg, &id, &pid);
-		/* Check if the ID can be mapped correctly */
-		if ((id = vm_id2vmid(id, NULL)) == 0)
-			res = ENOENT;
-		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
 	case IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE:
 		vmop_addr_result_read(imsg, &var);
@@ -523,7 +485,6 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 		case IMSG_VMDOP_VM_REBOOT:
 			vm->vm_state &= ~VM_STATE_SHUTDOWN;
 			break;
-		case IMSG_VMDOP_SEND_VM_RESPONSE:
 		case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 		case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 			for (i = 0; i < nitems(procs); i++) {
@@ -644,12 +605,11 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 	}
 	vcp = &vm->vm_params.vmc_params;
 
-	if (!(vm->vm_state & VM_STATE_RECEIVED)) {
-		if ((vm->vm_tty = imsg_get_fd(imsg)) == -1) {
-			log_warnx("%s: can't get tty", __func__);
-			goto err;
-		}
+	if ((vm->vm_tty = imsg_get_fd(imsg)) == -1) {
+		log_warnx("%s: can't get tty", __func__);
+		goto err;
 	}
+
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC, fds)
 	    == -1)

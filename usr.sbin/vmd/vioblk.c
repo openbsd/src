@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.22 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.23 2025/06/09 18:43:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -154,10 +154,6 @@ vioblk_main(int fd, int fd_vmm)
 	vioblk->capacity = szp / 512;
 	log_debug("%s: initialized vioblk%d with %s image (capacity=%lld)",
 	    __func__, vioblk->idx, disk_type(type), vioblk->capacity);
-
-	/* If we're restoring hardware, reinitialize the virtqueue hva. */
-	if (vm.vm_state & VM_STATE_RECEIVED)
-		vioblk_update_qa(vioblk);
 
 	/* Initialize libevent so we can start wiring event handlers. */
 	event_init();
@@ -540,14 +536,6 @@ handle_sync_io(int fd, short event, void *arg)
 		imsg_free(&imsg);
 
 		switch (msg.type) {
-		case VIODEV_MSG_DUMP:
-			/* Dump device */
-			n = atomicio(vwrite, dev->sync_fd, dev, sizeof(*dev));
-			if (n != sizeof(*dev)) {
-				log_warnx("%s: failed to dump vioblk device",
-				    __func__);
-				break;
-			}
 		case VIODEV_MSG_IO_READ:
 			/* Read IO: make sure to send a reply */
 			msg.data = handle_io_read(&msg, dev, &intr);

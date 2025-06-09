@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.41 2025/05/31 00:38:56 dv Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.42 2025/06/09 18:43:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -36,8 +36,6 @@ enum actions {
 	CMD_WAITFOR,
 	CMD_PAUSE,
 	CMD_UNPAUSE,
-	CMD_SEND,
-	CMD_RECEIVE,
 };
 
 struct ctl_command;

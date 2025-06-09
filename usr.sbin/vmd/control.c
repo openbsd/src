@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.50 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: control.c,v 1.51 2025/06/09 18:43:01 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -93,7 +93,6 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (type) {
 	case IMSG_VMDOP_START_VM_RESPONSE:
 	case IMSG_VMDOP_PAUSE_VM_RESPONSE:
-	case IMSG_VMDOP_SEND_VM_RESPONSE:
 	case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 	case IMSG_VMDOP_GET_INFO_VM_DATA:
 	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
@@ -438,8 +437,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			    peer_id, -1, &v, sizeof(v)))
 				goto fail;
 			break;
-		case IMSG_VMDOP_RECEIVE_VM_REQUEST:
-		case IMSG_VMDOP_SEND_VM_REQUEST:
 		case IMSG_CTL_RESET:
 		case IMSG_VMDOP_LOAD:
 		case IMSG_VMDOP_RELOAD:
