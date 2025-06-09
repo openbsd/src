@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.122 2025/06/02 18:49:04 claudio Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.123 2025/06/09 19:27:59 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -2384,7 +2384,7 @@ void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	pv_entry_t pv;
+	pv_entry_t pv, freepvs = NULL;
 	int64_t data, clear, set;
 
 	if (prot & PROT_WRITE)
@@ -2464,11 +2464,9 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			}
 			atomic_dec_long(&pv->pv_pmap->pm_stats.resident_count);
 
-			/* free the pv */
 			firstpv->pv_next = pv->pv_next;
-			mtx_leave(&pg->mdpage.pvmtx);
-			pool_put(&pv_pool, pv);
-			mtx_enter(&pg->mdpage.pvmtx);
+			pv->pv_next = freepvs;
+			freepvs = pv;
 		}
 
 		pv = firstpv;
@@ -2498,6 +2496,11 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		}
 		dcache_flush_page(pa);
 		mtx_leave(&pg->mdpage.pvmtx);
+
+		while ((pv = freepvs) != NULL) {
+			freepvs = pv->pv_next;
+			pool_put(&pv_pool, pv);
+		}
 	}
 	/* We should really only flush the pages we demapped. */
 }
