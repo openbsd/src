@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.36 2024/06/27 16:39:31 florian Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.37 2025/06/10 06:33:16 dlg Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: June 27 2024 $
+.Dd $Mdocdate: June 10 2025 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -120,8 +120,7 @@ file to refresh its memory about what leases have been assigned.
 .Pp
 When
 .Nm
-starts up, it
-identifies all network interfaces in all routing domains,
+starts up, it identifies all network interfaces,
 eliminating non-broadcast interfaces if possible,
 and listens for DHCP broadcasts on each interface.
 The names of the network interfaces on which
@@ -130,17 +129,6 @@ should listen for broadcasts may also be specified on the command line
 on systems where
 .Nm
 is unable to identify non-broadcast interfaces.
-.Pp
-.Nm
-normally runs in routing domain 0.
-In order to run in another
-.Xr rdomain 4 ,
-.Nm
-needs to be started with a list of interfaces
-which share the same routing domain,
-which allows
-.Nm
-to set its own routing domain accordingly.
 .Pp
 DHCP traffic always bypasses IPsec.
 Otherwise there could be situations when a server has an IPsec SA for the
@@ -471,7 +459,6 @@ DHCPD lease file.
 .El
 .Sh SEE ALSO
 .Xr pf 4 ,
-.Xr rdomain 4 ,
 .Xr dhcpd.conf 5 ,
 .Xr dhcpd.leases 5 ,
 .Xr dhcpleased 8 ,
