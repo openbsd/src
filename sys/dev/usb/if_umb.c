@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.62 2025/06/10 08:29:57 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.63 2025/06/10 12:50:42 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -359,6 +359,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	int	 altnum;
 	int	 s;
 	struct ifnet *ifp;
+	int	 maxpktlen;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_ctrl_ifaceno = uaa->ifaceno;
@@ -461,10 +462,17 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 				    MBIM_CTRLMSG_MAXLEN);
 				/* cont. anyway */
 			}
-			sc->sc_maxpktlen = UGETW(md->wMaxSegmentSize);
-			DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, cap=0x%x\n",
-			    DEVNAM(sc), sc->sc_ctrl_len, sc->sc_maxpktlen,
-			    md->bmNetworkCapabilities);
+			maxpktlen = UGETW(md->wMaxSegmentSize);
+			if (maxpktlen > 0 && maxpktlen <= INT32_MAX) {
+				sc->sc_maxpktlen = maxpktlen;
+				DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, "
+				    "cap=0x%x\n", DEVNAM(sc), sc->sc_ctrl_len,
+				    sc->sc_maxpktlen,
+				    md->bmNetworkCapabilities);
+			} else {
+				DPRINTFN(2, "%s: max segment size %d out of "
+				    "range\n", DEVNAM(sc), maxpktlen);
+			}
 			break;
 		default:
 			break;
@@ -709,8 +717,10 @@ umb_ncm_setup(struct umb_softc *sc)
 	USETW(req.wLength, sizeof (np));
 	if (usbd_do_request(sc->sc_udev, &req, &np) == USBD_NORMAL_COMPLETION &&
 	    UGETW(np.wLength) == sizeof (np)) {
-		sc->sc_rx_bufsz = UGETDW(np.dwNtbInMaxSize);
-		sc->sc_tx_bufsz = UGETDW(np.dwNtbOutMaxSize);
+		sc->sc_rx_bufsz = MIN(UGETDW(np.dwNtbInMaxSize),
+		    (uint32_t)sc->sc_maxpktlen);
+		sc->sc_tx_bufsz = MIN(UGETDW(np.dwNtbOutMaxSize),
+		    (uint32_t)sc->sc_maxpktlen);
 		sc->sc_maxdgram = UGETW(np.wNtbOutMaxDatagrams);
 		sc->sc_align = UGETW(np.wNdpOutAlignment);
 		sc->sc_ndp_div = UGETW(np.wNdpOutDivisor);
