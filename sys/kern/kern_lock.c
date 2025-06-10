@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.78 2025/05/31 10:24:50 dlg Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.79 2025/06/10 08:56:21 mpi Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -37,6 +37,8 @@
 int __mp_lock_spinout = INT_MAX;
 #endif /* MP_LOCKDEBUG */
 
+extern int ncpusfound;
+
 /*
  * Min & max numbers of "busy cycles" to waste before trying again to
  * acquire a contended lock using an atomic operation.
@@ -50,7 +52,7 @@ int __mp_lock_spinout = INT_MAX;
  * enough to reduce (ideally avoid) cache line contention.
  */
 #define CPU_MIN_BUSY_CYCLES	1
-#define CPU_MAX_BUSY_CYCLES	64
+#define CPU_MAX_BUSY_CYCLES	ncpusfound
 
 #ifdef MULTIPROCESSOR
 
