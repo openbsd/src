@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.178 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.179 2025/06/10 13:43:25 claudio Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2124,21 +2124,21 @@ ttsetwater(struct tty *tp)
  * Returns true if at least one thread is runnable/running.
  */
 static int
-process_sum(struct process *pr, fixpt_t *estcpup)
+process_sum(struct process *pr, fixpt_t *pctcpup)
 {
 	struct proc *p;
-	fixpt_t estcpu;
+	fixpt_t pctcpu;
 	int ret;
 
 	ret = 0;
-	estcpu = 0;
+	pctcpu = 0;
 	TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 		if (p->p_stat == SRUN || p->p_stat == SONPROC)
 			ret = 1;
-		estcpu += p->p_pctcpu;
+		pctcpu += p->p_pctcpu;
 	}
 
-	*estcpup = estcpu;
+	*pctcpup = pctcpu;
 	return (ret);
 }
 
