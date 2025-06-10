@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_main.3,v 1.7 2020/05/25 16:33:03 jmc Exp $
+.\" $OpenBSD: fuse_main.3,v 1.8 2025/06/10 12:55:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -15,13 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 25 2020 $
+.Dd $Mdocdate: June 10 2025 $
 .Dt FUSE_MAIN 3
 .Os
 .Sh NAME
 .Nm fuse_main
 .Nd FUSE helper function
 .Sh SYNOPSIS
+.Lb libfuse
 .In fuse.h
 .Ft int
 .Fn fuse_main "int argc" "char **argv" "const struct fuse_operations *ops" \

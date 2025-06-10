@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_parse_cmdline.3,v 1.1 2018/11/28 21:19:11 mpi Exp $
+.\" $OpenBSD: fuse_parse_cmdline.3,v 1.2 2025/06/10 12:55:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2018 $
+.Dd $Mdocdate: June 10 2025 $
 .Dt FUSE_PARSE_CMDLINE 3
 .Os
 .Sh NAME
 .Nm fuse_parse_cmdline
 .Nd FUSE helper function to parse command line arguments
 .Sh SYNOPSIS
+.Lb libfuse
 .In fuse.h
 .Ft int
 .Fn fuse_parse_cmdline "struct fuse_args *args" "char **mp" \

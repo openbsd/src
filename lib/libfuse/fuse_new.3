@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_new.3,v 1.7 2022/03/31 17:27:17 naddy Exp $
+.\" $OpenBSD: fuse_new.3,v 1.8 2025/06/10 12:55:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -15,13 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 10 2025 $
 .Dt FUSE_NEW 3
 .Os
 .Sh NAME
 .Nm fuse_new
 .Nd FUSE implementation routine to initialise the FUSE connection
 .Sh SYNOPSIS
+.Lb libfuse
 .In fuse.h
 .Ft struct fuse *
 .Fn fuse_new "struct fuse_chan *fc" "struct fuse_args *args" \

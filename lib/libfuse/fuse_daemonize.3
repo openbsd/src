@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_daemonize.3,v 1.4 2025/03/09 08:14:15 jmc Exp $
+.\" $OpenBSD: fuse_daemonize.3,v 1.5 2025/06/10 12:55:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 9 2025 $
+.Dd $Mdocdate: June 10 2025 $
 .Dt FUSE_DAEMONIZE 3
 .Os
 .Sh NAME
 .Nm fuse_daemonize
 .Nd run in the background
 .Sh SYNOPSIS
+.Lb libfuse
 .In fuse.h
 .Ft int
 .Fn fuse_daemonize "int foreground"
