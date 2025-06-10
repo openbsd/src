@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf_memory.3,v 1.2 2019/06/20 16:15:22 deraadt Exp $
+.\" $Id: elf_memory.3,v 1.3 2025/06/10 17:19:45 schwarze Exp $
 .\"
 .Dd June 28, 2006
 .Dt ELF_MEMORY 3
@@ -29,9 +29,8 @@
 .Sh NAME
 .Nm elf_memory
 .Nd process an ELF or ar(1) archive mapped into memory
-.Sh LIBRARY
-.Lb libelf
 .Sh SYNOPSIS
+.Lb libelf
 .In libelf.h
 .Ft "Elf *"
 .Fn elf_memory "char *image" "size_t size"

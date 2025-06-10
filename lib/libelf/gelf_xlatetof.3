@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: gelf_xlatetof.3,v 1.1 2019/02/01 05:27:38 jsg Exp $
+.\" $Id: gelf_xlatetof.3,v 1.2 2025/06/10 17:19:45 schwarze Exp $
 .\"
 .Dd October 11, 2018
 .Dt GELF_XLATETOF 3
@@ -31,9 +31,8 @@
 .Nm elf64_xlate ,
 .Nm gelf_xlate
 .Nd translate data between files and memory
-.Sh LIBRARY
-.Lb libelf
 .Sh SYNOPSIS
+.Lb libelf
 .In libelf.h
 .Ft "Elf_Data *"
 .Fn elf32_xlatetof "Elf_Data *dst" "Elf_Data *src" "unsigned int file_encoding"

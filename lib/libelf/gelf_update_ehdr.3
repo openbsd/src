@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: gelf_update_ehdr.3,v 1.1 2019/02/01 05:27:38 jsg Exp $
+.\" $Id: gelf_update_ehdr.3,v 1.2 2025/06/10 17:19:45 schwarze Exp $
 .\"
 .Dd August 27, 2006
 .Dt GELF_UPDATE_EHDR 3
@@ -31,9 +31,8 @@
 .Nm gelf_update_phdr ,
 .Nm gelf_update_shdr
 .Nd update underlying ELF data structures
-.Sh LIBRARY
-.Lb libelf
 .Sh SYNOPSIS
+.Lb libelf
 .In gelf.h
 .Ft int
 .Fn gelf_update_ehdr "Elf *elf" "GElf_Ehdr *ehdr"

@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf_rand.3,v 1.1 2019/02/01 05:27:37 jsg Exp $
+.\" $Id: elf_rand.3,v 1.2 2025/06/10 17:19:45 schwarze Exp $
 .\"
 .Dd June 17, 2006
 .Dt ELF_RAND 3
@@ -29,9 +29,8 @@
 .Sh NAME
 .Nm elf_rand
 .Nd provide sequential access to the next archive member
-.Sh LIBRARY
-.Lb libelf
 .Sh SYNOPSIS
+.Lb libelf
 .In libelf.h
 .Ft off_t
 .Fn elf_rand "Elf *archive" "off_t offset"

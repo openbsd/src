@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf_getdata.3,v 1.2 2020/05/18 06:46:23 jsg Exp $
+.\" $Id: elf_getdata.3,v 1.3 2025/06/10 17:19:45 schwarze Exp $
 .\"
 .Dd April 22, 2019
 .Dt ELF_GETDATA 3
@@ -31,9 +31,8 @@
 .Nm elf_newdata ,
 .Nm elf_rawdata
 .Nd iterate through or allocate section data
-.Sh LIBRARY
-.Lb libelf
 .Sh SYNOPSIS
+.Lb libelf
 .In libelf.h
 .Ft "Elf_Data *"
 .Fn elf_getdata "Elf_Scn *scn" "Elf_Data *data"

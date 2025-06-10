@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf_getident.3,v 1.1 2019/02/01 05:27:37 jsg Exp $
+.\" $Id: elf_getident.3,v 1.2 2025/06/10 17:19:45 schwarze Exp $
 .\"
 .Dd July 3, 2006
 .Dt ELF_GETIDENT 3
@@ -29,9 +29,8 @@
 .Sh NAME
 .Nm elf_getident
 .Nd return the initial bytes of a file
-.Sh LIBRARY
-.Lb libelf
 .Sh SYNOPSIS
+.Lb libelf
 .In libelf.h
 .Ft char *
 .Fn elf_getident "Elf *elf" "size_t *sz"
