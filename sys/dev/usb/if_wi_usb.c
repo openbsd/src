@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.78 2024/10/06 01:28:39 jsg Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.79 2025/06/10 13:32:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1610,7 +1610,7 @@ void
 wi_usb_start_thread(void *arg)
 {
 	struct wi_usb_softc	*sc = arg;
-	kthread_create (wi_usb_thread, arg, NULL, sc->wi_usb_dev.dv_xname);
+	kthread_create(wi_usb_thread, arg, NULL, sc->wi_usb_dev.dv_xname);
 }
 
 void
