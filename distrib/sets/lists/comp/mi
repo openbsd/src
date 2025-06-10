@@ -1980,7 +1980,6 @@
 ./usr/share/man/man3/MD5.3
 ./usr/share/man/man3/MD5Init.3
 ./usr/share/man/man3/NAME_CONSTRAINTS_new.3
-./usr/share/man/man3/OBJ_NAME_add.3
 ./usr/share/man/man3/OBJ_create.3
 ./usr/share/man/man3/OBJ_find_sigid_algs.3
 ./usr/share/man/man3/OBJ_nid2obj.3
@@ -1997,7 +1996,6 @@
 ./usr/share/man/man3/OPENSSL_config.3
 ./usr/share/man/man3/OPENSSL_init_crypto.3
 ./usr/share/man/man3/OPENSSL_init_ssl.3
-./usr/share/man/man3/OPENSSL_load_builtin_modules.3
 ./usr/share/man/man3/OPENSSL_malloc.3
 ./usr/share/man/man3/OPENSSL_sk_new.3
 ./usr/share/man/man3/OpenSSL_add_all_algorithms.3
