@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.61 2025/06/05 08:22:25 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.62 2025/06/10 08:29:57 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -2407,9 +2407,8 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 	struct ncm_pointer16_dgram *dgram16;
 	struct ncm_pointer32_dgram *dgram32;
 	uint32_t hsig, psig;
-	int	 blen;
-	int	 ptrlen, ptroff, dgentryoff;
-	uint32_t doff, dlen;
+	uint32_t ptrlen, dgentryoff;
+	uint64_t blen, ptroff, doff, dlen;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 
@@ -2453,15 +2452,17 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 		goto fail;
 	}
 	if (blen != 0 && len < blen) {
-		DPRINTF("%s: bad NTB len (%d) for %d bytes of data\n",
+		DPRINTF("%s: bad NTB len (%llu) for %d bytes of data\n",
 		    DEVNAM(sc), blen, len);
 		goto fail;
 	}
 
+	if (len < ptroff)
+		goto toosmall;
 	ptr16 = (struct ncm_pointer16 *)(buf + ptroff);
 	psig = UGETDW(ptr16->dwSignature);
 	ptrlen = UGETW(ptr16->wLength);
-	if (len < ptrlen + ptroff)
+	if ((uint64_t)len < (uint64_t)ptrlen + ptroff)
 		goto toosmall;
 	if (!MBIM_NCM_NTH16_ISISG(psig) && !MBIM_NCM_NTH32_ISISG(psig)) {
 		DPRINTF("%s: unsupported NCM pointer signature (0x%08x)\n",
@@ -2508,16 +2509,16 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 		/* Terminating zero entry */
 		if (dlen == 0 || doff == 0)
 			break;
-		if (len < dlen + doff) {
+		if ((uint64_t)len < dlen + doff) {
 			/* Skip giant datagram but continue processing */
-			DPRINTF("%s: datagram too large (%d @ off %d)\n",
+			DPRINTF("%s: datagram too large (%llu @ off %llu)\n",
 			    DEVNAM(sc), dlen, doff);
 			continue;
 		}
 
 		dp = buf + doff;
-		DPRINTFN(3, "%s: decap %d bytes\n", DEVNAM(sc), dlen);
-		m = m_devget(dp, dlen, sizeof(uint32_t));
+		DPRINTFN(3, "%s: decap %llu bytes\n", DEVNAM(sc), dlen);
+		m = m_devget(dp, (int)dlen, sizeof(uint32_t));
 		if (m == NULL) {
 			ifp->if_iqdrops++;
 			continue;
