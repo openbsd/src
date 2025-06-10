@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.34 2025/06/08 23:53:19 florian Exp $ */
+/*	$Id: http.c,v 1.35 2025/06/10 16:00:28 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -303,26 +303,26 @@ http_open(const struct http *http, int headreq, const void *p, size_t psz)
 		if (headreq)
 			c = asprintf(&req,
 			    "HEAD %s HTTP/1.0\r\n"
-			    "Host: %s\r\n"
+			    "Host: %s:%d\r\n"
 			    "User-Agent: OpenBSD-acme-client\r\n"
 			    "\r\n",
-			    http->path, http->host);
+			    http->path, http->host, http->port);
 		else
 			c = asprintf(&req,
 			    "GET %s HTTP/1.0\r\n"
-			    "Host: %s\r\n"
+			    "Host: %s:%d\r\n"
 			    "User-Agent: OpenBSD-acme-client\r\n"
 			    "\r\n",
-			    http->path, http->host);
+			    http->path, http->host, http->port);
 	} else {
 		c = asprintf(&req,
 		    "POST %s HTTP/1.0\r\n"
-		    "Host: %s\r\n"
+		    "Host: %s:%d\r\n"
 		    "Content-Length: %zu\r\n"
 		    "Content-Type: application/jose+json\r\n"
 		    "User-Agent: OpenBSD-acme-client\r\n"
 		    "\r\n",
-		    http->path, http->host, psz);
+		    http->path, http->host, http->port, psz);
 	}
 
 	if (c == -1) {

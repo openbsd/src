@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.40 2025/06/08 23:53:19 florian Exp $ */
+/*	$Id: netproc.c,v 1.41 2025/06/10 16:00:28 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -104,6 +105,21 @@ url2host(const char *host, short *port, char **path)
 		warn("strdup");
 		free(url);
 		return NULL;
+	}
+
+	/* extract port */
+	if ((ep = strchr(url, ':')) != NULL) {
+		const char *errstr;
+
+		*ep = '\0';
+		*port = strtonum(ep + 1, 1, USHRT_MAX, &errstr);
+		if (errstr != NULL) {
+			warn("port is %s: %s", errstr, ep + 1);
+			free(*path);
+			*path = NULL;
+			free(url);
+			return NULL;
+		}
 	}
 
 	return url;
