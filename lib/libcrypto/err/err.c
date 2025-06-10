@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.77 2025/06/02 12:18:21 jsg Exp $ */
+/* $OpenBSD: err.c,v 1.78 2025/06/10 08:53:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -824,7 +824,7 @@ err_clear_last_constant_time(int clear)
 
 	es = ERR_get_state();
 	if (es == NULL)
-        	return;
+		return;
 
 	top = es->top;
 
