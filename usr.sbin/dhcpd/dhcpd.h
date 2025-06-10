@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.72 2025/05/31 07:47:45 dlg Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.73 2025/06/10 06:29:53 dlg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -443,7 +443,7 @@ ssize_t receive_packet(struct interface_info *, unsigned char *, size_t,
 extern struct interface_info *interfaces;
 extern struct protocol *protocols;
 extern struct dhcpd_timeout *timeouts;
-void discover_interfaces(int *);
+void discover_interfaces(void);
 void dispatch(void);
 int locate_network(struct packet *);
 void got_one(struct protocol *);
