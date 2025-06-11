@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_init.c,v 1.25 2025/05/24 07:41:14 jsing Exp $ */
+/*	$OpenBSD: crypto_init.c,v 1.26 2025/06/11 07:41:12 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -57,6 +57,10 @@ openssl_init_crypto_constructor(void)
 	crypto_cpu_caps_init();
 }
 
+/*
+ * This is used by various configure scripts to check availability of libcrypto,
+ * so we need to keep it.
+ */
 void
 OPENSSL_init(void)
 {
