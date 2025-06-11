@@ -13,34 +13,12 @@
 
 #include "WebAssemblyUtilities.h"
 #include "WebAssemblyMachineFunctionInfo.h"
+#include "WebAssemblyTargetMachine.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/IR/Function.h"
 #include "llvm/MC/MCContext.h"
 using namespace llvm;
-
-// Exception handling & setjmp-longjmp handling related options. These are
-// defined here to be shared between WebAssembly and its subdirectories.
-
-// Emscripten's asm.js-style exception handling
-cl::opt<bool> WebAssembly::WasmEnableEmEH(
-    "enable-emscripten-cxx-exceptions",
-    cl::desc("WebAssembly Emscripten-style exception handling"),
-    cl::init(false));
-// Emscripten's asm.js-style setjmp/longjmp handling
-cl::opt<bool> WebAssembly::WasmEnableEmSjLj(
-    "enable-emscripten-sjlj",
-    cl::desc("WebAssembly Emscripten-style setjmp/longjmp handling"),
-    cl::init(false));
-// Exception handling using wasm EH instructions
-cl::opt<bool>
-    WebAssembly::WasmEnableEH("wasm-enable-eh",
-                              cl::desc("WebAssembly exception handling"),
-                              cl::init(false));
-// setjmp/longjmp handling using wasm EH instrutions
-cl::opt<bool>
-    WebAssembly::WasmEnableSjLj("wasm-enable-sjlj",
-                                cl::desc("WebAssembly setjmp/longjmp handling"),
-                                cl::init(false));
 
 // Function names in libc++abi and libunwind
 const char *const WebAssembly::CxaBeginCatchFn = "__cxa_begin_catch";
@@ -130,8 +108,9 @@ MCSymbolWasm *WebAssembly::getOrCreateFunctionTableSymbol(
     if (!Sym->isFunctionTable())
       Ctx.reportError(SMLoc(), "symbol is not a wasm funcref table");
   } else {
+    bool is64 = Subtarget && Subtarget->getTargetTriple().isArch64Bit();
     Sym = cast<MCSymbolWasm>(Ctx.getOrCreateSymbol(Name));
-    Sym->setFunctionTable();
+    Sym->setFunctionTable(is64);
     // The default function table is synthesized by the linker.
     Sym->setUndefined();
   }
@@ -156,7 +135,7 @@ MCSymbolWasm *WebAssembly::getOrCreateFuncrefCallTableSymbol(
     Sym->setWeak(true);
 
     wasm::WasmLimits Limits = {0, 1, 1};
-    wasm::WasmTableType TableType = {wasm::WASM_TYPE_FUNCREF, Limits};
+    wasm::WasmTableType TableType = {wasm::ValType::FUNCREF, Limits};
     Sym->setType(wasm::WASM_SYMBOL_TYPE_TABLE);
     Sym->setTableType(TableType);
   }
@@ -197,7 +176,21 @@ unsigned WebAssembly::getCopyOpcodeForRegClass(const TargetRegisterClass *RC) {
     return WebAssembly::COPY_FUNCREF;
   case WebAssembly::EXTERNREFRegClassID:
     return WebAssembly::COPY_EXTERNREF;
+  case WebAssembly::EXNREFRegClassID:
+    return WebAssembly::COPY_EXNREF;
   default:
     llvm_unreachable("Unexpected register class");
   }
+}
+
+bool WebAssembly::canLowerMultivalueReturn(
+    const WebAssemblySubtarget *Subtarget) {
+  const auto &TM = static_cast<const WebAssemblyTargetMachine &>(
+      Subtarget->getTargetLowering()->getTargetMachine());
+  return Subtarget->hasMultivalue() && TM.usesMultivalueABI();
+}
+
+bool WebAssembly::canLowerReturn(size_t ResultSize,
+                                 const WebAssemblySubtarget *Subtarget) {
+  return ResultSize <= 1 || canLowerMultivalueReturn(Subtarget);
 }

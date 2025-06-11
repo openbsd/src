@@ -33,12 +33,6 @@ namespace WebAssembly {
 bool isChild(const MachineInstr &MI, const WebAssemblyFunctionInfo &MFI);
 bool mayThrow(const MachineInstr &MI);
 
-// Exception handling / setjmp-longjmp handling command-line options
-extern cl::opt<bool> WasmEnableEmEH;   // asm.js-style EH
-extern cl::opt<bool> WasmEnableEmSjLj; // asm.js-style SjLJ
-extern cl::opt<bool> WasmEnableEH;     // EH using Wasm EH instructions
-extern cl::opt<bool> WasmEnableSjLj;   // SjLj using Wasm EH instructions
-
 // Exception-related function names
 extern const char *const ClangCallTerminateFn;
 extern const char *const CxaBeginCatchFn;
@@ -68,6 +62,16 @@ MachineInstr *findCatch(MachineBasicBlock *EHPad);
 
 /// Returns the appropriate copy opcode for the given register class.
 unsigned getCopyOpcodeForRegClass(const TargetRegisterClass *RC);
+
+/// Returns true if multivalue returns of a function can be lowered directly,
+/// i.e., not indirectly via a pointer parameter that points to the value in
+/// memory.
+bool canLowerMultivalueReturn(const WebAssemblySubtarget *Subtarget);
+
+/// Returns true if the function's return value(s) can be lowered directly,
+/// i.e., not indirectly via a pointer parameter that points to the value in
+/// memory.
+bool canLowerReturn(size_t ResultSize, const WebAssemblySubtarget *Subtarget);
 
 } // end namespace WebAssembly
 
