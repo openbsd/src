@@ -48,7 +48,7 @@ namespace {
 /// information provided by this pass is optional and not required by the
 /// aformentioned intrinsic to function.
 class StackMapLiveness : public MachineFunctionPass {
-  const TargetRegisterInfo *TRI;
+  const TargetRegisterInfo *TRI = nullptr;
   LivePhysRegs LiveRegs;
 
 public:
@@ -126,8 +126,7 @@ bool StackMapLiveness::calculateLiveness(MachineFunction &MF) {
   for (auto &MBB : MF) {
     LLVM_DEBUG(dbgs() << "****** BB " << MBB.getName() << " ******\n");
     LiveRegs.init(*TRI);
-    // FIXME: This should probably be addLiveOuts().
-    LiveRegs.addLiveOutsNoPristines(MBB);
+    LiveRegs.addLiveOuts(MBB);
     bool HasStackMap = false;
     // Reverse iterate over all instructions and add the current live register
     // set to an instruction if we encounter a patchpoint instruction.

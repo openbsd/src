@@ -29,6 +29,7 @@
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <optional>
@@ -84,8 +85,11 @@ static bool replaceConditionalBranchesOnConstant(Instruction *II,
     if (Target && Target != Other) {
       BasicBlock *Source = BI->getParent();
       Other->removePredecessor(Source);
+
+      Instruction *NewBI = BranchInst::Create(Target, Source);
+      NewBI->setDebugLoc(BI->getDebugLoc());
       BI->eraseFromParent();
-      BranchInst::Create(Target, Source);
+
       if (DTU)
         DTU->applyUpdates({{DominatorTree::Delete, Source, Other}});
       if (pred_empty(Other))
@@ -102,7 +106,7 @@ static bool lowerConstantIntrinsics(Function &F, const TargetLibraryInfo &TLI,
     DTU.emplace(DT, DomTreeUpdater::UpdateStrategy::Lazy);
 
   bool HasDeadBlocks = false;
-  const auto &DL = F.getParent()->getDataLayout();
+  const auto &DL = F.getDataLayout();
   SmallVector<WeakTrackingVH, 8> Worklist;
 
   ReversePostOrderTraversal<Function *> RPOT(&F);
@@ -136,10 +140,12 @@ static bool lowerConstantIntrinsics(Function &F, const TargetLibraryInfo &TLI,
       continue;
     case Intrinsic::is_constant:
       NewValue = lowerIsConstantIntrinsic(II);
+      LLVM_DEBUG(dbgs() << "Folding " << *II << " to " << *NewValue << "\n");
       IsConstantIntrinsicsHandled++;
       break;
     case Intrinsic::objectsize:
       NewValue = lowerObjectSizeCall(II, DL, &TLI, true);
+      LLVM_DEBUG(dbgs() << "Folding " << *II << " to " << *NewValue << "\n");
       ObjectSizeIntrinsicsHandled++;
       break;
     }

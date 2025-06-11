@@ -28,15 +28,16 @@
 #include "X86Subtarget.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/TargetParser/Triple.h"
 
 using namespace llvm;
 
@@ -77,7 +78,7 @@ bool X86ReturnThunks::runOnMachineFunction(MachineFunction &MF) {
         Rets.push_back(&Term);
 
   bool IndCS =
-      MF.getMMI().getModule()->getModuleFlag("indirect_branch_cs_prefix");
+      MF.getFunction().getParent()->getModuleFlag("indirect_branch_cs_prefix");
   const MCInstrDesc &CS = ST.getInstrInfo()->get(X86::CS_PREFIX);
   const MCInstrDesc &JMP = ST.getInstrInfo()->get(X86::TAILJMPd);
 

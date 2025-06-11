@@ -98,9 +98,8 @@ static void TrackDefUses(MachineInstr *MI, RegisterSet &Defs, RegisterSet &Uses,
 
   auto InsertUsesDefs = [&](RegList &Regs, RegisterSet &UsesDefs) {
     for (unsigned Reg : Regs)
-      for (MCSubRegIterator Subreg(Reg, TRI, /*IncludeSelf=*/true);
-           Subreg.isValid(); ++Subreg)
-        UsesDefs.insert(*Subreg);
+      for (MCPhysReg Subreg : TRI->subregs_inclusive(Reg))
+        UsesDefs.insert(Subreg);
   };
 
   InsertUsesDefs(LocalDefs, Defs);
@@ -270,7 +269,8 @@ bool Thumb2ITBlock::InsertITInstructions(MachineBasicBlock &MBB) {
     MIB.addImm(Mask);
 
     // Last instruction in IT block kills ITSTATE.
-    LastITMI->findRegisterUseOperand(ARM::ITSTATE)->setIsKill();
+    LastITMI->findRegisterUseOperand(ARM::ITSTATE, /*TRI=*/nullptr)
+        ->setIsKill();
 
     // Finalize the bundle.
     finalizeBundle(MBB, InsertPos.getInstrIterator(),

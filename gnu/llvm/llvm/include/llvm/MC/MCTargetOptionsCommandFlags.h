@@ -29,11 +29,15 @@ std::optional<bool> getExplicitRelaxAll();
 
 bool getIncrementalLinkerCompatible();
 
+bool getFDPIC();
+
 int getDwarfVersion();
 
 bool getDwarf64();
 
 EmitDwarfUnwindType getEmitDwarfUnwind();
+
+bool getEmitCompactUnwindNonCanonical();
 
 bool getShowMCInst();
 
@@ -44,6 +48,14 @@ bool getNoWarn();
 bool getNoDeprecatedWarn();
 
 bool getNoTypeCheck();
+
+bool getSaveTempLabels();
+
+bool getCrel();
+
+bool getX86RelaxRelocations();
+
+bool getX86Sse2Avx();
 
 std::string getABIName();
 

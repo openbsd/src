@@ -35,7 +35,7 @@ enum PartialMappingIdx {
   PMI_Min = PMI_GPR,
 };
 
-RegisterBankInfo::PartialMapping PartMappings[]{
+const RegisterBankInfo::PartialMapping PartMappings[]{
     // GPR Partial Mapping
     {0, 32, GPRRegBank},
     // SPR Partial Mapping
@@ -72,7 +72,7 @@ enum ValueMappingIdx {
   DPR3OpsIdx = 7,
 };
 
-RegisterBankInfo::ValueMapping ValueMappings[] = {
+const RegisterBankInfo::ValueMapping ValueMappings[] = {
     // invalid
     {nullptr, 0},
     // 3 ops in GPRs
@@ -89,8 +89,9 @@ RegisterBankInfo::ValueMapping ValueMappings[] = {
     {&PartMappings[PMI_DPR - PMI_Min], 1}};
 
 #ifndef NDEBUG
-static bool checkValueMapping(const RegisterBankInfo::ValueMapping &VM,
-                              RegisterBankInfo::PartialMapping *BreakDown) {
+static bool
+checkValueMapping(const RegisterBankInfo::ValueMapping &VM,
+                  const RegisterBankInfo::PartialMapping *BreakDown) {
   return VM.NumBreakDowns == 1 && VM.BreakDown == BreakDown;
 }
 
@@ -155,14 +156,10 @@ ARMRegisterBankInfo::ARMRegisterBankInfo(const TargetRegisterInfo &TRI) {
            "Subclass not added?");
     assert(RBGPR.covers(*TRI.getRegClass(ARM::tcGPRRegClassID)) &&
            "Subclass not added?");
-    assert(RBGPR.covers(*TRI.getRegClass(ARM::GPRnoip_and_tcGPRRegClassID)) &&
-           "Subclass not added?");
-    assert(RBGPR.covers(*TRI.getRegClass(
-               ARM::tGPREven_and_GPRnoip_and_tcGPRRegClassID)) &&
-           "Subclass not added?");
     assert(RBGPR.covers(*TRI.getRegClass(ARM::tGPROdd_and_tcGPRRegClassID)) &&
            "Subclass not added?");
-    assert(RBGPR.getSize() == 32 && "GPRs should hold up to 32-bit");
+    assert(getMaximumSize(RBGPR.getID()) == 32 &&
+           "GPRs should hold up to 32-bit");
 
 #ifndef NDEBUG
     ARM::checkPartialMappings();
@@ -186,16 +183,16 @@ ARMRegisterBankInfo::getRegBankFromRegClass(const TargetRegisterClass &RC,
   case GPRnoip_and_GPRnopcRegClassID:
   case rGPRRegClassID:
   case GPRspRegClassID:
-  case GPRnoip_and_tcGPRRegClassID:
   case tcGPRRegClassID:
+  case tcGPRnotr12RegClassID:
   case tGPRRegClassID:
   case tGPREvenRegClassID:
   case tGPROddRegClassID:
   case tGPR_and_tGPREvenRegClassID:
   case tGPR_and_tGPROddRegClassID:
   case tGPREven_and_tcGPRRegClassID:
-  case tGPREven_and_GPRnoip_and_tcGPRRegClassID:
   case tGPROdd_and_tcGPRRegClassID:
+  case tGPREven_and_tcGPRnotr12RegClassID:
     return getRegBank(ARM::GPRRegBankID);
   case HPRRegClassID:
   case SPR_8RegClassID:
@@ -467,6 +464,15 @@ ARMRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     OperandsMapping = getOperandsMapping(OperandBanks);
     break;
   }
+  case G_GET_FPENV:
+  case G_SET_FPENV:
+  case G_GET_FPMODE:
+    OperandsMapping =
+        getOperandsMapping({&ARM::ValueMappings[ARM::GPR3OpsIdx], nullptr});
+    break;
+  case G_RESET_FPENV:
+    OperandsMapping = getOperandsMapping({nullptr});
+    break;
   default:
     return getInvalidInstructionMapping();
   }

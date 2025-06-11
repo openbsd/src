@@ -13,20 +13,35 @@
 
 #ifndef LLVM_LIB_TARGET_AMDGPU_AMDGPUPALMETADATA_H
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPUPALMETADATA_H
+#include "AMDGPUDelayedMCExpr.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/BinaryFormat/MsgPackDocument.h"
+#include "llvm/MC/MCContext.h"
 
 namespace llvm {
 
-class MachineFunction;
 class Module;
 class StringRef;
 
 class AMDGPUPALMetadata {
+public:
+  using RegisterExprMap = DenseMap<unsigned, const MCExpr *>;
+
+private:
   unsigned BlobType = 0;
   msgpack::Document MsgPackDoc;
   msgpack::DocNode Registers;
   msgpack::DocNode HwStages;
   msgpack::DocNode ShaderFunctions;
+  bool VersionChecked = false;
+  msgpack::DocNode Version;
+  // From PAL version >= 3.0
+  msgpack::DocNode ComputeRegisters;
+  msgpack::DocNode GraphicsRegisters;
+
+  DelayedMCExprs DelayedExprs;
+  RegisterExprMap REM;
+  bool ResolvedAll = true;
 
 public:
   // Read the amdgpu.pal.metadata supplied by the frontend, ready for
@@ -41,10 +56,12 @@ public:
   // Set the rsrc1 register in the metadata for a particular shader stage.
   // In fact this ORs the value into any previous setting of the register.
   void setRsrc1(unsigned CC, unsigned Val);
+  void setRsrc1(unsigned CC, const MCExpr *Val, MCContext &Ctx);
 
   // Set the rsrc2 register in the metadata for a particular shader stage.
   // In fact this ORs the value into any previous setting of the register.
   void setRsrc2(unsigned CC, unsigned Val);
+  void setRsrc2(unsigned CC, const MCExpr *Val, MCContext &Ctx);
 
   // Set the SPI_PS_INPUT_ENA register in the metadata.
   // In fact this ORs the value into any previous setting of the register.
@@ -60,6 +77,7 @@ public:
   // Set a register in the metadata.
   // In fact this ORs the value into any previous setting of the register.
   void setRegister(unsigned Reg, unsigned Val);
+  void setRegister(unsigned Reg, const MCExpr *Val, MCContext &Ctx);
 
   // Set the entry point name for one shader.
   void setEntryPoint(unsigned CC, StringRef Name);
@@ -68,36 +86,42 @@ public:
   // record for logging etc; wave dispatch actually uses the rsrc1 register for
   // the shader stage to determine the number of vgprs to allocate.
   void setNumUsedVgprs(unsigned CC, unsigned Val);
+  void setNumUsedVgprs(unsigned CC, const MCExpr *Val, MCContext &Ctx);
 
   // Set the number of used agprs in the metadata. This is an optional advisory
   // record for logging etc;
   void setNumUsedAgprs(unsigned CC, unsigned Val);
+  void setNumUsedAgprs(unsigned CC, const MCExpr *Val);
 
   // Set the number of used sgprs in the metadata. This is an optional advisory
   // record for logging etc; wave dispatch actually uses the rsrc1 register for
   // the shader stage to determine the number of sgprs to allocate.
   void setNumUsedSgprs(unsigned CC, unsigned Val);
+  void setNumUsedSgprs(unsigned CC, const MCExpr *Val, MCContext &Ctx);
 
   // Set the scratch size in the metadata.
   void setScratchSize(unsigned CC, unsigned Val);
+  void setScratchSize(unsigned CC, const MCExpr *Val, MCContext &Ctx);
 
   // Set the stack frame size of a function in the metadata.
-  void setFunctionScratchSize(const MachineFunction &MF, unsigned Val);
+  void setFunctionScratchSize(StringRef FnName, unsigned Val);
 
   // Set the amount of LDS used in bytes in the metadata. This is an optional
   // advisory record for logging etc; wave dispatch actually uses the rsrc1
   // register for the shader stage to determine the amount of LDS to allocate.
-  void setFunctionLdsSize(const MachineFunction &MF, unsigned Val);
+  void setFunctionLdsSize(StringRef FnName, unsigned Val);
 
   // Set the number of used vgprs in the metadata. This is an optional advisory
   // record for logging etc; wave dispatch actually uses the rsrc1 register for
   // the shader stage to determine the number of vgprs to allocate.
-  void setFunctionNumUsedVgprs(const MachineFunction &MF, unsigned Val);
+  void setFunctionNumUsedVgprs(StringRef FnName, unsigned Val);
+  void setFunctionNumUsedVgprs(StringRef FnName, const MCExpr *Val);
 
   // Set the number of used sgprs in the metadata. This is an optional advisory
   // record for logging etc; wave dispatch actually uses the rsrc1 register for
   // the shader stage to determine the number of sgprs to allocate.
-  void setFunctionNumUsedSgprs(const MachineFunction &MF, unsigned Val);
+  void setFunctionNumUsedSgprs(StringRef FnName, unsigned Val);
+  void setFunctionNumUsedSgprs(StringRef FnName, const MCExpr *Val);
 
   // Set the hardware register bit in PAL metadata to enable wave32 on the
   // shader of the given calling convention.
@@ -129,8 +153,32 @@ public:
   // Set legacy PAL metadata format.
   void setLegacy();
 
+  unsigned getPALMajorVersion();
+  unsigned getPALMinorVersion();
+
+  void setHwStage(unsigned CC, StringRef field, unsigned Val);
+  void setHwStage(unsigned CC, StringRef field, bool Val);
+  void setHwStage(unsigned CC, StringRef field, msgpack::Type Type,
+                  const MCExpr *Val);
+
+  void setComputeRegisters(StringRef field, unsigned Val);
+  void setComputeRegisters(StringRef field, bool Val);
+
+  // If the field does not exist will return nullptr rather than creating a new
+  // entry (which is the behaviour of the other functions).
+  msgpack::DocNode *refComputeRegister(StringRef field);
+  bool checkComputeRegisters(StringRef field, unsigned Val);
+  bool checkComputeRegisters(StringRef field, bool Val);
+
+  void setGraphicsRegisters(StringRef field, unsigned Val);
+  void setGraphicsRegisters(StringRef field, bool Val);
+  void setGraphicsRegisters(StringRef field1, StringRef field2, unsigned Val);
+  void setGraphicsRegisters(StringRef field1, StringRef field2, bool Val);
+
   // Erase all PAL metadata.
   void reset();
+
+  bool resolvedAllMCExpr();
 
 private:
   // Return whether the blob type is legacy PAL metadata.
@@ -151,9 +199,28 @@ private:
   // Get (create if necessary) a function in the shader functions map.
   msgpack::MapDocNode getShaderFunction(StringRef Name);
 
+  // Reference (create if necessary) the node for the compute_registers map.
+  msgpack::DocNode &refComputeRegisters();
+
+  // Get (create if necessary) the .compute_registers entry.
+  msgpack::MapDocNode getComputeRegisters();
+
+  // Reference (create if necessary) the node for the graphics registers map.
+  msgpack::DocNode &refGraphicsRegisters();
+
+  // Get (create if necessary) the .graphics_registers entry.
+  msgpack::MapDocNode getGraphicsRegisters();
+
+  // Reference (create if necessary) the node for the hardware_stages map.
+  msgpack::DocNode &refHwStage();
+
   // Get (create if necessary) the .hardware_stages entry for the given calling
   // convention.
   msgpack::MapDocNode getHwStage(unsigned CC);
+
+  // Get the PAL version major (idx 0) or minor (idx 1). This is an internal
+  // helper for the public wrapper functions that request Major or Minor
+  unsigned getPALVersion(unsigned idx);
 
   bool setFromLegacyBlob(StringRef Blob);
   bool setFromMsgPackBlob(StringRef Blob);

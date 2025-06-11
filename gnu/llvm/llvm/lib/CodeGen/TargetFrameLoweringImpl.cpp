@@ -17,7 +17,6 @@
 #include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/Attributes.h"
-#include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -60,6 +59,20 @@ TargetFrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
   return StackOffset::getFixed(MFI.getObjectOffset(FI) + MFI.getStackSize() -
                                getOffsetOfLocalArea() +
                                MFI.getOffsetAdjustment());
+}
+
+/// Returns the offset from the stack pointer to the slot of the specified
+/// index. This function serves to provide a comparable offset from a single
+/// reference point (the value of the stack-pointer at function entry) that can
+/// be used for analysis. This is the default implementation using
+/// MachineFrameInfo offsets.
+StackOffset
+TargetFrameLowering::getFrameIndexReferenceFromSP(const MachineFunction &MF,
+                                                  int FI) const {
+  // To display the true offset from SP, we need to subtract the offset to the
+  // local area from MFI's ObjectOffset.
+  return StackOffset::getFixed(MF.getFrameInfo().getObjectOffset(FI) -
+                               getOffsetOfLocalArea());
 }
 
 bool TargetFrameLowering::needsFrameIndexResolution(
@@ -129,16 +142,6 @@ void TargetFrameLowering::determineCalleeSaves(MachineFunction &MF,
     if (CallsUnwindInit || MRI.isPhysRegModified(Reg))
       SavedRegs.set(Reg);
   }
-}
-
-unsigned TargetFrameLowering::getStackAlignmentSkew(
-    const MachineFunction &MF) const {
-  // When HHVM function is called, the stack is skewed as the return address
-  // is removed from the stack before we enter the function.
-  if (LLVM_UNLIKELY(MF.getFunction().getCallingConv() == CallingConv::HHVM))
-    return MF.getTarget().getAllocaPointerSize();
-
-  return 0;
 }
 
 bool TargetFrameLowering::allocateScavengingFrameIndexesNearIncomingSP(

@@ -142,6 +142,9 @@ bool RegUsageInfoCollector::runOnMachineFunction(MachineFunction &MF) {
     RegMask[Reg / 32] &= ~(1u << Reg % 32);
   };
 
+  // Don't include $noreg in any regmasks.
+  SetRegAsDefined(MCRegister::NoRegister);
+
   // Some targets can clobber registers "inside" a call, typically in
   // linker-generated code.
   for (const MCPhysReg Reg : TRI->getIntraCallClobberedRegs(&MF))
@@ -208,8 +211,8 @@ computeCalleeSavedRegs(BitVector &SavedRegs, MachineFunction &MF) {
     MCPhysReg Reg = CSRegs[i];
     if (SavedRegs.test(Reg)) {
       // Save subregisters
-      for (MCSubRegIterator SR(Reg, &TRI); SR.isValid(); ++SR)
-        SavedRegs.set(*SR);
+      for (MCPhysReg SR : TRI.subregs(Reg))
+        SavedRegs.set(SR);
     }
   }
 }

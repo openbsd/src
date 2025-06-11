@@ -31,8 +31,7 @@
 
 #include "llvm/Transforms/Utils/CanonicalizeAliases.h"
 #include "llvm/IR/Constants.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
+#include "llvm/IR/Module.h"
 
 using namespace llvm;
 

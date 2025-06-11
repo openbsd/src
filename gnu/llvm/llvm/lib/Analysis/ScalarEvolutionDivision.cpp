@@ -21,7 +21,7 @@
 
 namespace llvm {
 class Type;
-}
+} // namespace llvm
 
 using namespace llvm;
 
@@ -124,6 +124,10 @@ void SCEVDivision::visitConstant(const SCEVConstant *Numerator) {
     Remainder = SE.getConstant(RemainderVal);
     return;
   }
+}
+
+void SCEVDivision::visitVScale(const SCEVVScale *Numerator) {
+  return cannotDivide(Numerator);
 }
 
 void SCEVDivision::visitAddRecExpr(const SCEVAddRecExpr *Numerator) {

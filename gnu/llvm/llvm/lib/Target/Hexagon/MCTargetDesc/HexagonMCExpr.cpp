@@ -25,9 +25,9 @@ HexagonMCExpr *HexagonMCExpr::create(MCExpr const *Expr, MCContext &Ctx) {
 }
 
 bool HexagonMCExpr::evaluateAsRelocatableImpl(MCValue &Res,
-                                              MCAsmLayout const *Layout,
+                                              const MCAssembler *Asm,
                                               MCFixup const *Fixup) const {
-  return Expr->evaluateAsRelocatable(Res, Layout, Fixup);
+  return Expr->evaluateAsRelocatable(Res, Asm, Fixup);
 }
 
 void HexagonMCExpr::visitUsedExpr(MCStreamer &Streamer) const {
@@ -97,10 +97,6 @@ bool HexagonMCExpr::mustNotExtend() const { return MustNotExtend; }
 bool HexagonMCExpr::s27_2_reloc() const { return S27_2_reloc; }
 void HexagonMCExpr::setS27_2_reloc(bool Val) {
   S27_2_reloc = Val;
-}
-
-bool HexagonMCExpr::classof(MCExpr const *E) {
-  return E->getKind() == MCExpr::Target;
 }
 
 HexagonMCExpr::HexagonMCExpr(MCExpr const *Expr)

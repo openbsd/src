@@ -23,6 +23,9 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Config/llvm-config.h"
+#include "llvm/IR/AttributeMask.h"
+#include "llvm/IR/ConstantRange.h"
+#include "llvm/IR/ConstantRangeList.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Type.h"
@@ -164,6 +167,68 @@ Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind,
   return Attribute(PA);
 }
 
+Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind,
+                         const ConstantRange &CR) {
+  assert(Attribute::isConstantRangeAttrKind(Kind) &&
+         "Not a ConstantRange attribute");
+  LLVMContextImpl *pImpl = Context.pImpl;
+  FoldingSetNodeID ID;
+  ID.AddInteger(Kind);
+  CR.getLower().Profile(ID);
+  CR.getUpper().Profile(ID);
+
+  void *InsertPoint;
+  AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
+
+  if (!PA) {
+    // If we didn't find any existing attributes of the same shape then create a
+    // new one and insert it.
+    PA = new (pImpl->ConstantRangeAttributeAlloc.Allocate())
+        ConstantRangeAttributeImpl(Kind, CR);
+    pImpl->AttrsSet.InsertNode(PA, InsertPoint);
+  }
+
+  // Return the Attribute that we found or created.
+  return Attribute(PA);
+}
+
+Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind,
+                         ArrayRef<ConstantRange> Val) {
+  assert(Attribute::isConstantRangeListAttrKind(Kind) &&
+         "Not a ConstantRangeList attribute");
+  LLVMContextImpl *pImpl = Context.pImpl;
+  FoldingSetNodeID ID;
+  ID.AddInteger(Kind);
+  ID.AddInteger(Val.size());
+  for (auto &CR : Val) {
+    CR.getLower().Profile(ID);
+    CR.getUpper().Profile(ID);
+  }
+
+  void *InsertPoint;
+  AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
+
+  if (!PA) {
+    // If we didn't find any existing attributes of the same shape then create a
+    // new one and insert it.
+    // ConstantRangeListAttributeImpl is a dynamically sized class and cannot
+    // use SpecificBumpPtrAllocator. Instead, we use normal Alloc for
+    // allocation and record the allocated pointer in
+    // `ConstantRangeListAttributes`. LLVMContext destructor will call the
+    // destructor of the allocated pointer explicitly.
+    void *Mem = pImpl->Alloc.Allocate(
+        ConstantRangeListAttributeImpl::totalSizeToAlloc(Val),
+        alignof(ConstantRangeListAttributeImpl));
+    PA = new (Mem) ConstantRangeListAttributeImpl(Kind, Val);
+    pImpl->AttrsSet.InsertNode(PA, InsertPoint);
+    pImpl->ConstantRangeListAttributes.push_back(
+        reinterpret_cast<ConstantRangeListAttributeImpl *>(PA));
+  }
+
+  // Return the Attribute that we found or created.
+  return Attribute(PA);
+}
+
 Attribute Attribute::getWithAlignment(LLVMContext &Context, Align A) {
   assert(A <= llvm::Value::MaximumAlignment && "Alignment too large.");
   return get(Context, Alignment, A.value());
@@ -214,6 +279,11 @@ Attribute Attribute::getWithUWTableKind(LLVMContext &Context,
 Attribute Attribute::getWithMemoryEffects(LLVMContext &Context,
                                           MemoryEffects ME) {
   return get(Context, Memory, ME.toIntValue());
+}
+
+Attribute Attribute::getWithNoFPClass(LLVMContext &Context,
+                                      FPClassTest ClassMask) {
+  return get(Context, NoFPClass, ClassMask);
 }
 
 Attribute
@@ -281,9 +351,18 @@ bool Attribute::isTypeAttribute() const {
   return pImpl && pImpl->isTypeAttribute();
 }
 
+bool Attribute::isConstantRangeAttribute() const {
+  return pImpl && pImpl->isConstantRangeAttribute();
+}
+
+bool Attribute::isConstantRangeListAttribute() const {
+  return pImpl && pImpl->isConstantRangeListAttribute();
+}
+
 Attribute::AttrKind Attribute::getKindAsEnum() const {
   if (!pImpl) return None;
-  assert((isEnumAttribute() || isIntAttribute() || isTypeAttribute()) &&
+  assert((isEnumAttribute() || isIntAttribute() || isTypeAttribute() ||
+          isConstantRangeAttribute() || isConstantRangeListAttribute()) &&
          "Invalid attribute type to get the kind as an enum!");
   return pImpl->getKindAsEnum();
 }
@@ -323,6 +402,17 @@ Type *Attribute::getValueAsType() const {
   return pImpl->getValueAsType();
 }
 
+const ConstantRange &Attribute::getValueAsConstantRange() const {
+  assert(isConstantRangeAttribute() &&
+         "Invalid attribute type to get the value as a ConstantRange!");
+  return pImpl->getValueAsConstantRange();
+}
+
+ArrayRef<ConstantRange> Attribute::getValueAsConstantRangeList() const {
+  assert(isConstantRangeListAttribute() &&
+         "Invalid attribute type to get the value as a ConstantRangeList!");
+  return pImpl->getValueAsConstantRangeList();
+}
 
 bool Attribute::hasAttribute(AttrKind Kind) const {
   return (pImpl && pImpl->hasAttribute(Kind)) || (!pImpl && Kind == None);
@@ -394,6 +484,24 @@ MemoryEffects Attribute::getMemoryEffects() const {
   assert(hasAttribute(Attribute::Memory) &&
          "Can only call getMemoryEffects() on memory attribute");
   return MemoryEffects::createFromIntValue(pImpl->getValueAsInt());
+}
+
+FPClassTest Attribute::getNoFPClass() const {
+  assert(hasAttribute(Attribute::NoFPClass) &&
+         "Can only call getNoFPClass() on nofpclass attribute");
+  return static_cast<FPClassTest>(pImpl->getValueAsInt());
+}
+
+const ConstantRange &Attribute::getRange() const {
+  assert(hasAttribute(Attribute::Range) &&
+         "Trying to get range args from non-range attribute");
+  return pImpl->getValueAsConstantRange();
+}
+
+ArrayRef<ConstantRange> Attribute::getInitializes() const {
+  assert(hasAttribute(Attribute::Initializes) &&
+         "Trying to get initializes attr from non-ConstantRangeList attribute");
+  return pImpl->getValueAsConstantRangeList();
 }
 
 static const char *getModRefStr(ModRefInfo MR) {
@@ -472,13 +580,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
 
   if (hasAttribute(Attribute::UWTable)) {
     UWTableKind Kind = getUWTableKind();
-    if (Kind != UWTableKind::None) {
-      return Kind == UWTableKind::Default
-                 ? "uwtable"
-                 : ("uwtable(" +
-                    Twine(Kind == UWTableKind::Sync ? "sync" : "async") + ")")
-                       .str();
-    }
+    assert(Kind != UWTableKind::None && "uwtable attribute should not be none");
+    return Kind == UWTableKind::Default ? "uwtable" : "uwtable(sync)";
   }
 
   if (hasAttribute(Attribute::AllocKind)) {
@@ -511,7 +614,7 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
 
     // Print access kind for "other" as the default access kind. This way it
     // will apply to any new location kinds that get split out of "other".
-    ModRefInfo OtherMR = ME.getModRef(MemoryEffects::Other);
+    ModRefInfo OtherMR = ME.getModRef(IRMemLocation::Other);
     if (OtherMR != ModRefInfo::NoModRef || ME.getModRef() == OtherMR) {
       First = false;
       OS << getModRefStr(OtherMR);
@@ -527,17 +630,47 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
       First = false;
 
       switch (Loc) {
-      case MemoryEffects::ArgMem:
+      case IRMemLocation::ArgMem:
         OS << "argmem: ";
         break;
-      case MemoryEffects::InaccessibleMem:
+      case IRMemLocation::InaccessibleMem:
         OS << "inaccessiblemem: ";
         break;
-      case MemoryEffects::Other:
+      case IRMemLocation::Other:
         llvm_unreachable("This is represented as the default access kind");
       }
       OS << getModRefStr(MR);
     }
+    OS << ")";
+    OS.flush();
+    return Result;
+  }
+
+  if (hasAttribute(Attribute::NoFPClass)) {
+    std::string Result = "nofpclass";
+    raw_string_ostream OS(Result);
+    OS << getNoFPClass();
+    return Result;
+  }
+
+  if (hasAttribute(Attribute::Range)) {
+    std::string Result;
+    raw_string_ostream OS(Result);
+    const ConstantRange &CR = getValueAsConstantRange();
+    OS << "range(";
+    OS << "i" << CR.getBitWidth() << " ";
+    OS << CR.getLower() << ", " << CR.getUpper();
+    OS << ")";
+    OS.flush();
+    return Result;
+  }
+
+  if (hasAttribute(Attribute::Initializes)) {
+    std::string Result;
+    raw_string_ostream OS(Result);
+    ConstantRangeList CRL = getInitializes();
+    OS << "initializes(";
+    CRL.print(OS);
     OS << ")";
     OS.flush();
     return Result;
@@ -632,7 +765,8 @@ bool AttributeImpl::hasAttribute(StringRef Kind) const {
 }
 
 Attribute::AttrKind AttributeImpl::getKindAsEnum() const {
-  assert(isEnumAttribute() || isIntAttribute() || isTypeAttribute());
+  assert(isEnumAttribute() || isIntAttribute() || isTypeAttribute() ||
+         isConstantRangeAttribute() || isConstantRangeListAttribute());
   return static_cast<const EnumAttributeImpl *>(this)->getEnumKind();
 }
 
@@ -661,6 +795,18 @@ Type *AttributeImpl::getValueAsType() const {
   return static_cast<const TypeAttributeImpl *>(this)->getTypeValue();
 }
 
+const ConstantRange &AttributeImpl::getValueAsConstantRange() const {
+  assert(isConstantRangeAttribute());
+  return static_cast<const ConstantRangeAttributeImpl *>(this)
+      ->getConstantRangeValue();
+}
+
+ArrayRef<ConstantRange> AttributeImpl::getValueAsConstantRangeList() const {
+  assert(isConstantRangeListAttribute());
+  return static_cast<const ConstantRangeListAttributeImpl *>(this)
+      ->getConstantRangeListValue();
+}
+
 bool AttributeImpl::operator<(const AttributeImpl &AI) const {
   if (this == &AI)
     return false;
@@ -674,6 +820,9 @@ bool AttributeImpl::operator<(const AttributeImpl &AI) const {
       return getKindAsEnum() < AI.getKindAsEnum();
     assert(!AI.isEnumAttribute() && "Non-unique attribute");
     assert(!AI.isTypeAttribute() && "Comparison of types would be unstable");
+    assert(!AI.isConstantRangeAttribute() && "Unclear how to compare ranges");
+    assert(!AI.isConstantRangeListAttribute() &&
+           "Unclear how to compare range list");
     // TODO: Is this actually needed?
     assert(AI.isIntAttribute() && "Only possibility left");
     return getValueAsInt() < AI.getValueAsInt();
@@ -838,6 +987,10 @@ AllocFnKind AttributeSet::getAllocKind() const {
 
 MemoryEffects AttributeSet::getMemoryEffects() const {
   return SetNode ? SetNode->getMemoryEffects() : MemoryEffects::unknown();
+}
+
+FPClassTest AttributeSet::getNoFPClass() const {
+  return SetNode ? SetNode->getNoFPClass() : fcNone;
 }
 
 std::string AttributeSet::getAsString(bool InAttrGrp) const {
@@ -1022,6 +1175,12 @@ MemoryEffects AttributeSetNode::getMemoryEffects() const {
   if (auto A = findEnumAttribute(Attribute::Memory))
     return A->getMemoryEffects();
   return MemoryEffects::unknown();
+}
+
+FPClassTest AttributeSetNode::getNoFPClass() const {
+  if (auto A = findEnumAttribute(Attribute::NoFPClass))
+    return A->getNoFPClass();
+  return fcNone;
 }
 
 std::string AttributeSetNode::getAsString(bool InAttrGrp) const {
@@ -1439,6 +1598,13 @@ AttributeList::addDereferenceableOrNullParamAttr(LLVMContext &C, unsigned Index,
   return addParamAttributes(C, Index, B);
 }
 
+AttributeList AttributeList::addRangeRetAttr(LLVMContext &C,
+                                             const ConstantRange &CR) const {
+  AttrBuilder B(C);
+  B.addRangeAttr(CR);
+  return addRetAttributes(C, B);
+}
+
 AttributeList AttributeList::addAllocSizeParamAttr(
     LLVMContext &C, unsigned Index, unsigned ElemSizeArg,
     const std::optional<unsigned> &NumElemsArg) {
@@ -1558,6 +1724,14 @@ uint64_t AttributeList::getRetDereferenceableOrNullBytes() const {
 uint64_t
 AttributeList::getParamDereferenceableOrNullBytes(unsigned Index) const {
   return getParamAttrs(Index).getDereferenceableOrNullBytes();
+}
+
+FPClassTest AttributeList::getRetNoFPClass() const {
+  return getRetAttrs().getNoFPClass();
+}
+
+FPClassTest AttributeList::getParamNoFPClass(unsigned Index) const {
+  return getParamAttrs(Index).getNoFPClass();
 }
 
 UWTableKind AttributeList::getUWTableKind() const {
@@ -1803,6 +1977,13 @@ AttrBuilder &AttrBuilder::addMemoryAttr(MemoryEffects ME) {
   return addRawIntAttr(Attribute::Memory, ME.toIntValue());
 }
 
+AttrBuilder &AttrBuilder::addNoFPClassAttr(FPClassTest Mask) {
+  if (Mask == fcNone)
+    return *this;
+
+  return addRawIntAttr(Attribute::NoFPClass, Mask);
+}
+
 AttrBuilder &AttrBuilder::addAllocKindAttr(AllocFnKind Kind) {
   return addRawIntAttr(Attribute::AllocKind, static_cast<uint64_t>(Kind));
 }
@@ -1835,6 +2016,25 @@ AttrBuilder &AttrBuilder::addPreallocatedAttr(Type *Ty) {
 
 AttrBuilder &AttrBuilder::addInAllocaAttr(Type *Ty) {
   return addTypeAttr(Attribute::InAlloca, Ty);
+}
+
+AttrBuilder &AttrBuilder::addConstantRangeAttr(Attribute::AttrKind Kind,
+                                               const ConstantRange &CR) {
+  return addAttribute(Attribute::get(Ctx, Kind, CR));
+}
+
+AttrBuilder &AttrBuilder::addRangeAttr(const ConstantRange &CR) {
+  return addConstantRangeAttr(Attribute::Range, CR);
+}
+
+AttrBuilder &
+AttrBuilder::addConstantRangeListAttr(Attribute::AttrKind Kind,
+                                      ArrayRef<ConstantRange> Val) {
+  return addAttribute(Attribute::get(Ctx, Kind, Val));
+}
+
+AttrBuilder &AttrBuilder::addInitializesAttr(const ConstantRangeList &CRL) {
+  return addConstantRangeListAttr(Attribute::Initializes, CRL.rangesRef());
 }
 
 AttrBuilder &AttrBuilder::merge(const AttrBuilder &B) {
@@ -1885,6 +2085,16 @@ bool AttrBuilder::operator==(const AttrBuilder &B) const {
 // AttributeFuncs Function Defintions
 //===----------------------------------------------------------------------===//
 
+/// Returns true if this is a type legal for the 'nofpclass' attribute. This
+/// follows the same type rules as FPMathOperator.
+///
+/// TODO: Consider relaxing to any FP type struct fields.
+bool AttributeFuncs::isNoFPClassCompatibleType(Type *Ty) {
+  while (ArrayType *ArrTy = dyn_cast<ArrayType>(Ty))
+    Ty = ArrTy->getElementType();
+  return Ty->isFPOrFPVectorTy();
+}
+
 /// Which attributes cannot be applied to a type.
 AttributeMask AttributeFuncs::typeIncompatible(Type *Ty,
                                                AttributeSafetyKind ASK) {
@@ -1898,6 +2108,12 @@ AttributeMask AttributeFuncs::typeIncompatible(Type *Ty,
       Incompatible.addAttribute(Attribute::SExt).addAttribute(Attribute::ZExt);
   }
 
+  if (!Ty->isIntOrIntVectorTy()) {
+    // Attributes that only apply to integers or vector of integers.
+    if (ASK & ASK_SAFE_TO_DROP)
+      Incompatible.addAttribute(Attribute::Range);
+  }
+
   if (!Ty->isPointerTy()) {
     // Attributes that only apply to pointers.
     if (ASK & ASK_SAFE_TO_DROP)
@@ -1907,7 +2123,10 @@ AttributeMask AttributeFuncs::typeIncompatible(Type *Ty,
           .addAttribute(Attribute::ReadNone)
           .addAttribute(Attribute::ReadOnly)
           .addAttribute(Attribute::Dereferenceable)
-          .addAttribute(Attribute::DereferenceableOrNull);
+          .addAttribute(Attribute::DereferenceableOrNull)
+          .addAttribute(Attribute::Writable)
+          .addAttribute(Attribute::DeadOnUnwind)
+          .addAttribute(Attribute::Initializes);
     if (ASK & ASK_UNSAFE_TO_DROP)
       Incompatible.addAttribute(Attribute::Nest)
           .addAttribute(Attribute::SwiftError)
@@ -1924,6 +2143,11 @@ AttributeMask AttributeFuncs::typeIncompatible(Type *Ty,
   if (!Ty->isPtrOrPtrVectorTy()) {
     if (ASK & ASK_SAFE_TO_DROP)
       Incompatible.addAttribute(Attribute::Alignment);
+  }
+
+  if (ASK & ASK_SAFE_TO_DROP) {
+    if (!isNoFPClassCompatibleType(Ty))
+      Incompatible.addAttribute(Attribute::NoFPClass);
   }
 
   // Some attributes can apply to all "values" but there are no `void` values.
@@ -1943,10 +2167,57 @@ AttributeMask AttributeFuncs::getUBImplyingAttributes() {
   return AM;
 }
 
+/// Callees with dynamic denormal modes are compatible with any caller mode.
+static bool denormModeCompatible(DenormalMode CallerMode,
+                                 DenormalMode CalleeMode) {
+  if (CallerMode == CalleeMode || CalleeMode == DenormalMode::getDynamic())
+    return true;
+
+  // If they don't exactly match, it's OK if the mismatched component is
+  // dynamic.
+  if (CalleeMode.Input == CallerMode.Input &&
+      CalleeMode.Output == DenormalMode::Dynamic)
+    return true;
+
+  if (CalleeMode.Output == CallerMode.Output &&
+      CalleeMode.Input == DenormalMode::Dynamic)
+    return true;
+  return false;
+}
+
+static bool checkDenormMode(const Function &Caller, const Function &Callee) {
+  DenormalMode CallerMode = Caller.getDenormalModeRaw();
+  DenormalMode CalleeMode = Callee.getDenormalModeRaw();
+
+  if (denormModeCompatible(CallerMode, CalleeMode)) {
+    DenormalMode CallerModeF32 = Caller.getDenormalModeF32Raw();
+    DenormalMode CalleeModeF32 = Callee.getDenormalModeF32Raw();
+    if (CallerModeF32 == DenormalMode::getInvalid())
+      CallerModeF32 = CallerMode;
+    if (CalleeModeF32 == DenormalMode::getInvalid())
+      CalleeModeF32 = CalleeMode;
+    return denormModeCompatible(CallerModeF32, CalleeModeF32);
+  }
+
+  return false;
+}
+
+static bool checkStrictFP(const Function &Caller, const Function &Callee) {
+  // Do not inline strictfp function into non-strictfp one. It would require
+  // conversion of all FP operations in host function to constrained intrinsics.
+  return !Callee.getAttributes().hasFnAttr(Attribute::StrictFP) ||
+         Caller.getAttributes().hasFnAttr(Attribute::StrictFP);
+}
+
 template<typename AttrClass>
 static bool isEqual(const Function &Caller, const Function &Callee) {
   return Caller.getFnAttribute(AttrClass::getKind()) ==
          Callee.getFnAttribute(AttrClass::getKind());
+}
+
+static bool isEqual(const Function &Caller, const Function &Callee,
+                    const StringRef &AttrName) {
+  return Caller.getFnAttribute(AttrName) == Callee.getFnAttribute(AttrName);
 }
 
 /// Compute the logical AND of the attributes of the caller and the
@@ -2090,7 +2361,7 @@ struct StrBoolAttr {
   static bool isSet(const Function &Fn,
                     StringRef Kind) {
     auto A = Fn.getFnAttribute(Kind);
-    return A.getValueAsString().equals("true");
+    return A.getValueAsString() == "true";
   }
 
   static void set(Function &Fn,

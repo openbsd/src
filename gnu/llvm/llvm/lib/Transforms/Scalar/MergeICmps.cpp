@@ -42,6 +42,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/MergeICmps.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Analysis/DomTreeUpdater.h"
 #include "llvm/Analysis/GlobalsModRef.h"
 #include "llvm/Analysis/Loads.h"
@@ -49,6 +50,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/Pass.h"
@@ -72,7 +74,7 @@ namespace {
 struct BCEAtom {
   BCEAtom() = default;
   BCEAtom(GetElementPtrInst *GEP, LoadInst *LoadI, int BaseId, APInt Offset)
-      : GEP(GEP), LoadI(LoadI), BaseId(BaseId), Offset(Offset) {}
+      : GEP(GEP), LoadI(LoadI), BaseId(BaseId), Offset(std::move(Offset)) {}
 
   BCEAtom(const BCEAtom &) = delete;
   BCEAtom &operator=(const BCEAtom &) = delete;
@@ -149,7 +151,7 @@ BCEAtom visitICmpLoadOperand(Value *const Val, BaseIdentifier &BaseId) {
     LLVM_DEBUG(dbgs() << "from non-zero AddressSpace\n");
     return {};
   }
-  const auto &DL = LoadI->getModule()->getDataLayout();
+  const auto &DL = LoadI->getDataLayout();
   if (!isDereferenceablePointer(Addr, LoadI->getType(), DL)) {
     LLVM_DEBUG(dbgs() << "not dereferenceable\n");
     // We need to make sure that we can do comparison in any order, so we
@@ -157,7 +159,7 @@ BCEAtom visitICmpLoadOperand(Value *const Val, BaseIdentifier &BaseId) {
     return {};
   }
 
-  APInt Offset = APInt(DL.getPointerTypeSizeInBits(Addr->getType()), 0);
+  APInt Offset = APInt(DL.getIndexTypeSizeInBits(Addr->getType()), 0);
   Value *Base = Addr;
   auto *GEP = dyn_cast<GetElementPtrInst>(Addr);
   if (GEP) {
@@ -273,7 +275,7 @@ void BCECmpBlock::split(BasicBlock *NewParent, AliasAnalysis &AA) const {
 
   // Do the actual spliting.
   for (Instruction *Inst : reverse(OtherInsts))
-    Inst->moveBefore(*NewParent, NewParent->begin());
+    Inst->moveBeforePreserving(*NewParent, NewParent->begin());
 }
 
 bool BCECmpBlock::canSplit(AliasAnalysis &AA) const {
@@ -323,7 +325,7 @@ std::optional<BCECmp> visitICmp(const ICmpInst *const CmpI,
   auto Rhs = visitICmpLoadOperand(CmpI->getOperand(1), BaseId);
   if (!Rhs.BaseId)
     return std::nullopt;
-  const auto &DL = CmpI->getModule()->getDataLayout();
+  const auto &DL = CmpI->getDataLayout();
   return BCECmp(std::move(Lhs), std::move(Rhs),
                 DL.getTypeSizeInBits(CmpI->getOperand(0)->getType()), CmpI);
 }
@@ -639,10 +641,11 @@ static BasicBlock *mergeComparisons(ArrayRef<BCECmpBlock> Comparisons,
 
   if (Comparisons.size() == 1) {
     LLVM_DEBUG(dbgs() << "Only one comparison, updating branches\n");
-    Value *const LhsLoad =
-        Builder.CreateLoad(FirstCmp.Lhs().LoadI->getType(), Lhs);
-    Value *const RhsLoad =
-        Builder.CreateLoad(FirstCmp.Rhs().LoadI->getType(), Rhs);
+    // Use clone to keep the metadata
+    Instruction *const LhsLoad = Builder.Insert(FirstCmp.Lhs().LoadI->clone());
+    Instruction *const RhsLoad = Builder.Insert(FirstCmp.Rhs().LoadI->clone());
+    LhsLoad->replaceUsesOfWith(LhsLoad->getOperand(0), Lhs);
+    RhsLoad->replaceUsesOfWith(RhsLoad->getOperand(0), Rhs);
     // There are no blocks to merge, just do the comparison.
     IsEqual = Builder.CreateICmpEQ(LhsLoad, RhsLoad);
   } else {
@@ -655,7 +658,7 @@ static BasicBlock *mergeComparisons(ArrayRef<BCECmpBlock> Comparisons,
     unsigned IntBits = TLI.getIntSize();
 
     // Create memcmp() == 0.
-    const auto &DL = Phi.getModule()->getDataLayout();
+    const auto &DL = Phi.getDataLayout();
     Value *const MemCmpCall = emitMemCmp(
         Lhs, Rhs,
         ConstantInt::get(Builder.getIntNTy(SizeTBits), TotalSizeBits / 8),

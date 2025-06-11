@@ -47,9 +47,14 @@ namespace llvm {
 
 static unsigned RDFCount = 0;
 
-static cl::opt<unsigned> RDFLimit("rdf-limit",
-    cl::init(std::numeric_limits<unsigned>::max()));
-static cl::opt<bool> RDFDump("rdf-dump", cl::init(false));
+static cl::opt<unsigned>
+    RDFLimit("hexagon-rdf-limit",
+             cl::init(std::numeric_limits<unsigned>::max()));
+
+extern cl::opt<unsigned> RDFFuncBlockLimit;
+
+static cl::opt<bool> RDFDump("hexagon-rdf-dump", cl::Hidden);
+static cl::opt<bool> RDFTrackReserved("hexagon-rdf-track-reserved", cl::Hidden);
 
 namespace {
 
@@ -58,7 +63,7 @@ namespace {
     HexagonRDFOpt() : MachineFunctionPass(ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<MachineDominatorTree>();
+      AU.addRequired<MachineDominatorTreeWrapperPass>();
       AU.addRequired<MachineDominanceFrontier>();
       AU.setPreservesAll();
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -104,7 +109,7 @@ char HexagonRDFOpt::ID = 0;
 
 INITIALIZE_PASS_BEGIN(HexagonRDFOpt, "hexagon-rdf-opt",
       "Hexagon RDF optimizations", false, false)
-INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(MachineDominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(MachineDominanceFrontier)
 INITIALIZE_PASS_END(HexagonRDFOpt, "hexagon-rdf-opt",
       "Hexagon RDF optimizations", false, false)
@@ -283,13 +288,21 @@ bool HexagonRDFOpt::runOnMachineFunction(MachineFunction &MF) {
   if (skipFunction(MF.getFunction()))
     return false;
 
+  // Perform RDF optimizations only if number of basic blocks in the
+  // function is less than the limit
+  if (MF.size() > RDFFuncBlockLimit) {
+    if (RDFDump)
+      dbgs() << "Skipping " << getPassName() << ": too many basic blocks\n";
+    return false;
+  }
+
   if (RDFLimit.getPosition()) {
     if (RDFCount >= RDFLimit)
       return false;
     RDFCount++;
   }
 
-  MDT = &getAnalysis<MachineDominatorTree>();
+  MDT = &getAnalysis<MachineDominatorTreeWrapperPass>().getDomTree();
   const auto &MDF = getAnalysis<MachineDominanceFrontier>();
   const auto &HII = *MF.getSubtarget<HexagonSubtarget>().getInstrInfo();
   const auto &HRI = *MF.getSubtarget<HexagonSubtarget>().getRegisterInfo();
@@ -303,7 +316,11 @@ bool HexagonRDFOpt::runOnMachineFunction(MachineFunction &MF) {
   // Dead phi nodes are necessary for copy propagation: we can add a use
   // of a register in a block where it would need a phi node, but which
   // was dead (and removed) during the graph build time.
-  G.build(BuildOptions::KeepDeadPhis);
+  DataFlowGraph::Config Cfg;
+  Cfg.Options = RDFTrackReserved
+                    ? BuildOptions::KeepDeadPhis
+                    : BuildOptions::KeepDeadPhis | BuildOptions::OmitReserved;
+  G.build(Cfg);
 
   if (RDFDump)
     dbgs() << "Starting copy propagation on: " << MF.getName() << '\n'
@@ -320,8 +337,10 @@ bool HexagonRDFOpt::runOnMachineFunction(MachineFunction &MF) {
   Changed |= DCE.run();
 
   if (Changed) {
-    if (RDFDump)
-      dbgs() << "Starting liveness recomputation on: " << MF.getName() << '\n';
+    if (RDFDump) {
+      dbgs() << "Starting liveness recomputation on: " << MF.getName() << '\n'
+             << PrintNode<FuncNode*>(G.getFunc(), G) << '\n';
+    }
     Liveness LV(*MRI, G);
     LV.trace(RDFDump);
     LV.computeLiveIns();

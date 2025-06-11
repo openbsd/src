@@ -14,45 +14,29 @@
 #ifndef LLVM_IR_REPLACECONSTANT_H
 #define LLVM_IR_REPLACECONSTANT_H
 
-#include <map>
-#include <vector>
-
 namespace llvm {
 
-class ConstantExpr;
-class Instruction;
-class Use;
-template <typename PtrType> class SmallPtrSetImpl;
+template <typename T> class ArrayRef;
+class Constant;
+class Function;
 
-/// The given instruction \p I contains given constant expression \p CE as one
-/// of its operands, possibly nested within constant expression trees. Convert
-/// all reachable paths from contant expression operands of \p I to \p CE into
-/// corresponding instructions, insert them before \p I, update operands of \p I
-/// accordingly, and if required, return all such converted instructions at
-/// \p Insts.
-void convertConstantExprsToInstructions(
-    Instruction *I, ConstantExpr *CE,
-    SmallPtrSetImpl<Instruction *> *Insts = nullptr);
-
-/// The given instruction \p I contains constant expression CE within the
-/// constant expression trees of it`s constant expression operands, and
-/// \p CEPaths holds all the reachable paths (to CE) from such constant
-/// expression trees of \p I. Convert constant expressions within these paths
-/// into corresponding instructions, insert them before \p I, update operands of
-/// \p I accordingly, and if required, return all such converted instructions at
-/// \p Insts.
-void convertConstantExprsToInstructions(
-    Instruction *I,
-    std::map<Use *, std::vector<std::vector<ConstantExpr *>>> &CEPaths,
-    SmallPtrSetImpl<Instruction *> *Insts = nullptr);
-
-/// Given an instruction \p I which uses given constant expression \p CE as
-/// operand, either directly or nested within other constant expressions, return
-/// all reachable paths from the constant expression operands of \p I to \p CE,
-/// and return collected paths at \p CEPaths.
-void collectConstantExprPaths(
-    Instruction *I, ConstantExpr *CE,
-    std::map<Use *, std::vector<std::vector<ConstantExpr *>>> &CEPaths);
+/// Replace constant expressions users of the given constants with
+/// instructions. Return whether anything was changed.
+///
+/// Passing RestrictToFunc will restrict the constant replacement
+/// to the passed in functions scope, as opposed to the replacements
+/// occurring at module scope.
+///
+/// RemoveDeadConstants by default will remove all dead constants as
+/// the final step of the function after replacement, when passed
+/// false it will skip this final step.
+///
+/// If \p IncludeSelf is enabled, also convert the passed constants themselves
+/// to instructions, rather than only their users.
+bool convertUsersOfConstantsToInstructions(ArrayRef<Constant *> Consts,
+                                           Function *RestrictToFunc = nullptr,
+                                           bool RemoveDeadConstants = true,
+                                           bool IncludeSelf = false);
 
 } // end namespace llvm
 

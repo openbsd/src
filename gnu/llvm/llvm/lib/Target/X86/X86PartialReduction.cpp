@@ -33,8 +33,8 @@ using namespace llvm;
 namespace {
 
 class X86PartialReduction : public FunctionPass {
-  const DataLayout *DL;
-  const X86Subtarget *ST;
+  const DataLayout *DL = nullptr;
+  const X86Subtarget *ST = nullptr;
 
 public:
   static char ID; // Pass identification, replacement for typeid.
@@ -508,7 +508,7 @@ bool X86PartialReduction::runOnFunction(Function &F) {
   auto &TM = TPC->getTM<X86TargetMachine>();
   ST = TM.getSubtargetImpl(F);
 
-  DL = &F.getParent()->getDataLayout();
+  DL = &F.getDataLayout();
 
   bool MadeChange = false;
   for (auto &BB : F) {

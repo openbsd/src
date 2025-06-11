@@ -21,9 +21,9 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileUtilities.h"
-#include "llvm/Support/Host.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/TargetParser/Host.h"
 #include <memory>
 using namespace llvm;
 
@@ -142,7 +142,7 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
 
   for (unsigned i = 1, e = Filenames.size(); i != e; ++i) {
     std::unique_ptr<Module> M = parseInputFile(Filenames[i], Context);
-    if (!M.get())
+    if (!M)
       return true;
 
     outs() << "Linking in input file: '" << Filenames[i] << "'\n";

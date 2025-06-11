@@ -13,7 +13,6 @@
 
 #include "llvm/CodeGen/MIRParser/MIRParser.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/AsmParser/SlotMapping.h"
@@ -22,6 +21,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
@@ -98,13 +98,15 @@ public:
   /// Create an empty function with the given name.
   Function *createDummyFunction(StringRef Name, Module &M);
 
-  bool parseMachineFunctions(Module &M, MachineModuleInfo &MMI);
+  bool parseMachineFunctions(Module &M, MachineModuleInfo &MMI,
+                             ModuleAnalysisManager *FAM = nullptr);
 
   /// Parse the machine function in the current YAML document.
   ///
   ///
   /// Return true if an error occurred.
-  bool parseMachineFunction(Module &M, MachineModuleInfo &MMI);
+  bool parseMachineFunction(Module &M, MachineModuleInfo &MMI,
+                            ModuleAnalysisManager *FAM);
 
   /// Initialize the machine function to the state that's described in the MIR
   /// file.
@@ -130,6 +132,16 @@ public:
                                 const yaml::StringValue &RegisterSource,
                                 bool IsRestored, int FrameIdx);
 
+  struct VarExprLoc {
+    DILocalVariable *DIVar = nullptr;
+    DIExpression *DIExpr = nullptr;
+    DILocation *DILoc = nullptr;
+  };
+
+  std::optional<VarExprLoc> parseVarExprLoc(PerFunctionMIParsingState &PFS,
+                                            const yaml::StringValue &VarStr,
+                                            const yaml::StringValue &ExprStr,
+                                            const yaml::StringValue &LocStr);
   template <typename T>
   bool parseStackObjectsDebugInfo(PerFunctionMIParsingState &PFS,
                                   const T &Object,
@@ -266,13 +278,14 @@ MIRParserImpl::parseIRModule(DataLayoutCallbackTy DataLayoutCallback) {
   return M;
 }
 
-bool MIRParserImpl::parseMachineFunctions(Module &M, MachineModuleInfo &MMI) {
+bool MIRParserImpl::parseMachineFunctions(Module &M, MachineModuleInfo &MMI,
+                                          ModuleAnalysisManager *MAM) {
   if (NoMIRDocuments)
     return false;
 
   // Parse the machine functions.
   do {
-    if (parseMachineFunction(M, MMI))
+    if (parseMachineFunction(M, MMI, MAM))
       return true;
     In.nextDocument();
   } while (In.setCurrentDocument());
@@ -294,7 +307,8 @@ Function *MIRParserImpl::createDummyFunction(StringRef Name, Module &M) {
   return F;
 }
 
-bool MIRParserImpl::parseMachineFunction(Module &M, MachineModuleInfo &MMI) {
+bool MIRParserImpl::parseMachineFunction(Module &M, MachineModuleInfo &MMI,
+                                         ModuleAnalysisManager *MAM) {
   // Parse the yaml.
   yaml::MachineFunction YamlMF;
   yaml::EmptyContext Ctx;
@@ -318,14 +332,28 @@ bool MIRParserImpl::parseMachineFunction(Module &M, MachineModuleInfo &MMI) {
                    "' isn't defined in the provided LLVM IR");
     }
   }
-  if (MMI.getMachineFunction(*F) != nullptr)
-    return error(Twine("redefinition of machine function '") + FunctionName +
-                 "'");
 
-  // Create the MachineFunction.
-  MachineFunction &MF = MMI.getOrCreateMachineFunction(*F);
-  if (initializeMachineFunction(YamlMF, MF))
-    return true;
+  if (!MAM) {
+    if (MMI.getMachineFunction(*F) != nullptr)
+      return error(Twine("redefinition of machine function '") + FunctionName +
+                   "'");
+
+    // Create the MachineFunction.
+    MachineFunction &MF = MMI.getOrCreateMachineFunction(*F);
+    if (initializeMachineFunction(YamlMF, MF))
+      return true;
+  } else {
+    auto &FAM =
+        MAM->getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+    if (FAM.getCachedResult<MachineFunctionAnalysis>(*F))
+      return error(Twine("redefinition of machine function '") + FunctionName +
+                   "'");
+
+    // Create the MachineFunction.
+    MachineFunction &MF = FAM.getResult<MachineFunctionAnalysis>(*F).getMF();
+    if (initializeMachineFunction(YamlMF, MF))
+      return true;
+  }
 
   return false;
 }
@@ -392,7 +420,7 @@ bool MIRParserImpl::initializeCallSiteInfo(
   MachineFunction &MF = PFS.MF;
   SMDiagnostic Error;
   const LLVMTargetMachine &TM = MF.getTarget();
-  for (auto YamlCSInfo : YamlMF.CallSitesInfo) {
+  for (auto &YamlCSInfo : YamlMF.CallSitesInfo) {
     yaml::CallSiteInfo::MachineInstrLoc MILoc = YamlCSInfo.CallLocation;
     if (MILoc.BlockNum >= MF.size())
       return error(Twine(MF.getName()) +
@@ -416,11 +444,11 @@ bool MIRParserImpl::initializeCallSiteInfo(
       Register Reg;
       if (parseNamedRegisterReference(PFS, Reg, ArgRegPair.Reg.Value, Error))
         return error(Error, ArgRegPair.Reg.SourceRange);
-      CSInfo.emplace_back(Reg, ArgRegPair.ArgNo);
+      CSInfo.ArgRegPairs.emplace_back(Reg, ArgRegPair.ArgNo);
     }
 
     if (TM.Options.EmitCallSiteInfo)
-      MF.addCallArgsForwardingRegs(&*CallI, std::move(CSInfo));
+      MF.addCallSiteInfo(&*CallI, std::move(CSInfo));
   }
 
   if (YamlMF.CallSitesInfo.size() && !TM.Options.EmitCallSiteInfo)
@@ -468,6 +496,7 @@ MIRParserImpl::initializeMachineFunction(const yaml::MachineFunction &YamlMF,
   MF.setHasEHCatchret(YamlMF.HasEHCatchret);
   MF.setHasEHScopes(YamlMF.HasEHScopes);
   MF.setHasEHFunclets(YamlMF.HasEHFunclets);
+  MF.setIsOutlined(YamlMF.IsOutlined);
 
   if (YamlMF.Legalized)
     MF.getProperties().set(MachineFunctionProperties::Property::Legalized);
@@ -564,7 +593,7 @@ MIRParserImpl::initializeMachineFunction(const yaml::MachineFunction &YamlMF,
   // FIXME: This is a temporary workaround until the reserved registers can be
   // serialized.
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  MRI.freezeReservedRegs(MF);
+  MRI.freezeReservedRegs();
 
   computeFunctionProperties(MF);
 
@@ -597,7 +626,7 @@ bool MIRParserImpl::parseRegisterInfo(PerFunctionMIParsingState &PFS,
                        Twine(VReg.ID.Value) + "'");
     Info.Explicit = true;
 
-    if (StringRef(VReg.Class.Value).equals("_")) {
+    if (VReg.Class.Value == "_") {
       Info.Kind = VRegInfo::GENERIC;
       Info.D.RegBank = nullptr;
     } else {
@@ -750,6 +779,7 @@ bool MIRParserImpl::initializeFrameInfo(PerFunctionMIParsingState &PFS,
   MFI.setHasVAStart(YamlMFI.HasVAStart);
   MFI.setHasMustTailInVarArgFunc(YamlMFI.HasMustTailInVarArgFunc);
   MFI.setHasTailCall(YamlMFI.HasTailCall);
+  MFI.setCalleeSavedInfoValid(YamlMFI.IsCalleeSavedInfoValid);
   MFI.setLocalFrameSize(YamlMFI.LocalFrameSize);
   if (!YamlMFI.SavePoint.Value.empty()) {
     MachineBasicBlock *MBB = nullptr;
@@ -790,6 +820,24 @@ bool MIRParserImpl::initializeFrameInfo(PerFunctionMIParsingState &PFS,
       return true;
     if (parseStackObjectsDebugInfo(PFS, Object, ObjectIdx))
       return true;
+  }
+
+  for (const auto &Object : YamlMF.EntryValueObjects) {
+    SMDiagnostic Error;
+    Register Reg;
+    if (parseNamedRegisterReference(PFS, Reg, Object.EntryValueRegister.Value,
+                                    Error))
+      return error(Error, Object.EntryValueRegister.SourceRange);
+    if (!Reg.isPhysical())
+      return error(Object.EntryValueRegister.SourceRange.Start,
+                   "Expected physical register for entry value field");
+    std::optional<VarExprLoc> MaybeInfo = parseVarExprLoc(
+        PFS, Object.DebugVar, Object.DebugExpr, Object.DebugLoc);
+    if (!MaybeInfo)
+      return true;
+    if (MaybeInfo->DIVar || MaybeInfo->DIExpr || MaybeInfo->DILoc)
+      PFS.MF.setVariableDbgInfo(MaybeInfo->DIVar, MaybeInfo->DIExpr,
+                                Reg.asMCReg(), MaybeInfo->DILoc);
   }
 
   // Initialize the ordinary frame objects.
@@ -887,26 +935,37 @@ static bool typecheckMDNode(T *&Result, MDNode *Node,
   return false;
 }
 
-template <typename T>
-bool MIRParserImpl::parseStackObjectsDebugInfo(PerFunctionMIParsingState &PFS,
-    const T &Object, int FrameIdx) {
-  // Debug information can only be attached to stack objects; Fixed stack
-  // objects aren't supported.
-  MDNode *Var = nullptr, *Expr = nullptr, *Loc = nullptr;
-  if (parseMDNode(PFS, Var, Object.DebugVar) ||
-      parseMDNode(PFS, Expr, Object.DebugExpr) ||
-      parseMDNode(PFS, Loc, Object.DebugLoc))
-    return true;
-  if (!Var && !Expr && !Loc)
-    return false;
+std::optional<MIRParserImpl::VarExprLoc> MIRParserImpl::parseVarExprLoc(
+    PerFunctionMIParsingState &PFS, const yaml::StringValue &VarStr,
+    const yaml::StringValue &ExprStr, const yaml::StringValue &LocStr) {
+  MDNode *Var = nullptr;
+  MDNode *Expr = nullptr;
+  MDNode *Loc = nullptr;
+  if (parseMDNode(PFS, Var, VarStr) || parseMDNode(PFS, Expr, ExprStr) ||
+      parseMDNode(PFS, Loc, LocStr))
+    return std::nullopt;
   DILocalVariable *DIVar = nullptr;
   DIExpression *DIExpr = nullptr;
   DILocation *DILoc = nullptr;
-  if (typecheckMDNode(DIVar, Var, Object.DebugVar, "DILocalVariable", *this) ||
-      typecheckMDNode(DIExpr, Expr, Object.DebugExpr, "DIExpression", *this) ||
-      typecheckMDNode(DILoc, Loc, Object.DebugLoc, "DILocation", *this))
+  if (typecheckMDNode(DIVar, Var, VarStr, "DILocalVariable", *this) ||
+      typecheckMDNode(DIExpr, Expr, ExprStr, "DIExpression", *this) ||
+      typecheckMDNode(DILoc, Loc, LocStr, "DILocation", *this))
+    return std::nullopt;
+  return VarExprLoc{DIVar, DIExpr, DILoc};
+}
+
+template <typename T>
+bool MIRParserImpl::parseStackObjectsDebugInfo(PerFunctionMIParsingState &PFS,
+                                               const T &Object, int FrameIdx) {
+  std::optional<VarExprLoc> MaybeInfo =
+      parseVarExprLoc(PFS, Object.DebugVar, Object.DebugExpr, Object.DebugLoc);
+  if (!MaybeInfo)
     return true;
-  PFS.MF.setVariableDbgInfo(DIVar, DIExpr, FrameIdx, DILoc);
+  // Debug information can only be attached to stack objects; Fixed stack
+  // objects aren't supported.
+  if (MaybeInfo->DIVar || MaybeInfo->DIExpr || MaybeInfo->DILoc)
+    PFS.MF.setVariableDbgInfo(MaybeInfo->DIVar, MaybeInfo->DIExpr, FrameIdx,
+                              MaybeInfo->DILoc);
   return false;
 }
 
@@ -1060,6 +1119,11 @@ MIRParser::parseIRModule(DataLayoutCallbackTy DataLayoutCallback) {
 
 bool MIRParser::parseMachineFunctions(Module &M, MachineModuleInfo &MMI) {
   return Impl->parseMachineFunctions(M, MMI);
+}
+
+bool MIRParser::parseMachineFunctions(Module &M, ModuleAnalysisManager &MAM) {
+  auto &MMI = MAM.getResult<MachineModuleAnalysis>(M).getMMI();
+  return Impl->parseMachineFunctions(M, MMI, &MAM);
 }
 
 std::unique_ptr<MIRParser> llvm::createMIRParserFromFile(

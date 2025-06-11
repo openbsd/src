@@ -20,7 +20,6 @@
 #include "ARMISelLowering.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMSelectionDAGInfo.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
@@ -32,6 +31,8 @@
 #include "llvm/MC/MCSchedule.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/TargetParser/Triple.h"
+#include <bitset>
 #include <memory>
 #include <string>
 
@@ -48,43 +49,9 @@ class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
   enum ARMProcFamilyEnum {
     Others,
-
-    CortexA12,
-    CortexA15,
-    CortexA17,
-    CortexA32,
-    CortexA35,
-    CortexA5,
-    CortexA53,
-    CortexA55,
-    CortexA57,
-    CortexA7,
-    CortexA72,
-    CortexA73,
-    CortexA75,
-    CortexA76,
-    CortexA77,
-    CortexA78,
-    CortexA78C,
-    CortexA710,
-    CortexA8,
-    CortexA9,
-    CortexM3,
-    CortexM7,
-    CortexR4,
-    CortexR4F,
-    CortexR5,
-    CortexR52,
-    CortexR7,
-    CortexX1,
-    CortexX1C,
-    Exynos,
-    Krait,
-    Kryo,
-    NeoverseN1,
-    NeoverseN2,
-    NeoverseV1,
-    Swift
+#define ARM_PROCESSOR_FAMILY(ENUM) ENUM,
+#include "llvm/TargetParser/ARMTargetParserDef.inc"
+#undef ARM_PROCESSOR_FAMILY
   };
   enum ARMProcClassEnum {
     None,
@@ -94,42 +61,9 @@ protected:
     RClass
   };
   enum ARMArchEnum {
-    ARMv4,
-    ARMv4t,
-    ARMv5,
-    ARMv5t,
-    ARMv5te,
-    ARMv5tej,
-    ARMv6,
-    ARMv6k,
-    ARMv6kz,
-    ARMv6m,
-    ARMv6sm,
-    ARMv6t2,
-    ARMv7a,
-    ARMv7em,
-    ARMv7m,
-    ARMv7r,
-    ARMv7ve,
-    ARMv81a,
-    ARMv82a,
-    ARMv83a,
-    ARMv84a,
-    ARMv85a,
-    ARMv86a,
-    ARMv87a,
-    ARMv88a,
-    ARMv89a,
-    ARMv8a,
-    ARMv8mBaseline,
-    ARMv8mMainline,
-    ARMv8r,
-    ARMv81mMainline,
-    ARMv9a,
-    ARMv91a,
-    ARMv92a,
-    ARMv93a,
-    ARMv94a,
+#define ARM_ARCHITECTURE(ENUM) ENUM,
+#include "llvm/TargetParser/ARMTargetParserDef.inc"
+#undef ARM_ARCHITECTURE
   };
 
 public:
@@ -198,7 +132,7 @@ protected:
   /// operand cycle returned by the itinerary data for pre-ISel operands.
   int PreISelOperandLatencyAdjustment = 2;
 
-  /// What alignment is preferred for loop bodies, in log2(bytes).
+  /// What alignment is preferred for loop bodies and functions, in log2(bytes).
   unsigned PrefLoopLogAlignment = 0;
 
   /// The cost factor for MVE instructions, representing the multiple beats an
@@ -275,6 +209,13 @@ public:
     return &InstrInfo->getRegisterInfo();
   }
 
+  /// The correct instructions have been implemented to initialize undef
+  /// registers, therefore the ARM Architecture is supported by the Init Undef
+  /// Pass. This will return true as the pass needs to be supported for all
+  /// types of instructions. The pass will then perform more checks to ensure it
+  /// should be applying the Pseudo Instructions.
+  bool supportsInitUndef() const override { return true; }
+
   const CallLowering *getCallLowering() const override;
   InstructionSelector *getInstructionSelector() const override;
   const LegalizerInfo *getLegalizerInfo() const override;
@@ -304,8 +245,6 @@ public:
 #define GET_SUBTARGETINFO_MACRO(ATTRIBUTE, DEFAULT, GETTER)                    \
   bool GETTER() const { return ATTRIBUTE; }
 #include "ARMGenSubtargetInfo.inc"
-
-  void computeIssueWidth();
 
   /// @{
   /// These functions are obsolete, please consider adding subtarget features
@@ -348,7 +287,7 @@ public:
   bool useSjLjEH() const { return UseSjLjEH; }
   bool hasBaseDSP() const {
     if (isThumb())
-      return hasDSP();
+      return hasThumb2() && hasDSP();
     else
       return hasV5TEOps();
   }
@@ -386,12 +325,15 @@ public:
   }
   bool isTargetGNUAEABI() const {
     return (TargetTriple.getEnvironment() == Triple::GNUEABI ||
-            TargetTriple.getEnvironment() == Triple::GNUEABIHF) &&
+            TargetTriple.getEnvironment() == Triple::GNUEABIT64 ||
+            TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
+            TargetTriple.getEnvironment() == Triple::GNUEABIHFT64) &&
            !isTargetDarwin() && !isTargetWindows();
   }
   bool isTargetMuslAEABI() const {
     return (TargetTriple.getEnvironment() == Triple::MuslEABI ||
-            TargetTriple.getEnvironment() == Triple::MuslEABIHF) &&
+            TargetTriple.getEnvironment() == Triple::MuslEABIHF ||
+            TargetTriple.getEnvironment() == Triple::OpenHOS) &&
            !isTargetDarwin() && !isTargetWindows();
   }
 
@@ -402,6 +344,10 @@ public:
   }
 
   bool isTargetHardFloat() const;
+
+  bool isReadTPSoft() const {
+    return !(isReadTPTPIDRURW() || isReadTPTPIDRURO() || isReadTPTPIDRPRW());
+  }
 
   bool isTargetAndroid() const { return TargetTriple.isAndroid(); }
 
@@ -494,6 +440,11 @@ public:
   /// stack frame on entry to the function and which must be maintained by every
   /// function for this subtarget.
   Align getStackAlignment() const { return stackAlignment; }
+
+  // Returns the required alignment for LDRD/STRD instructions
+  Align getDualLoadStoreAlignment() const {
+    return Align(hasV7Ops() || allowsUnalignedMem() ? 4 : 8);
+  }
 
   unsigned getMaxInterleaveFactor() const { return MaxInterleaveFactor; }
 

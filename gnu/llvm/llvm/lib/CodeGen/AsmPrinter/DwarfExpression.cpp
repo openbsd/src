@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/Register.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 
@@ -117,10 +118,10 @@ bool DwarfExpression::addMachineReg(const TargetRegisterInfo &TRI,
 
   // Walk up the super-register chain until we find a valid number.
   // For example, EAX on x86_64 is a 32-bit fragment of RAX with offset 0.
-  for (MCSuperRegIterator SR(MachineReg, &TRI); SR.isValid(); ++SR) {
-    Reg = TRI.getDwarfRegNum(*SR, false);
+  for (MCPhysReg SR : TRI.superregs(MachineReg)) {
+    Reg = TRI.getDwarfRegNum(SR, false);
     if (Reg >= 0) {
-      unsigned Idx = TRI.getSubRegIndex(*SR, MachineReg);
+      unsigned Idx = TRI.getSubRegIndex(SR, MachineReg);
       unsigned Size = TRI.getSubRegIdxSize(Idx);
       unsigned RegOffset = TRI.getSubRegIdxOffset(Idx);
       DwarfRegs.push_back(Register::createRegister(Reg, "super-register"));
@@ -142,11 +143,11 @@ bool DwarfExpression::addMachineReg(const TargetRegisterInfo &TRI,
   // this doesn't find a combination of subregisters that fully cover
   // the register (even though one may exist).
   SmallBitVector Coverage(RegSize, false);
-  for (MCSubRegIterator SR(MachineReg, &TRI); SR.isValid(); ++SR) {
-    unsigned Idx = TRI.getSubRegIndex(MachineReg, *SR);
+  for (MCPhysReg SR : TRI.subregs(MachineReg)) {
+    unsigned Idx = TRI.getSubRegIndex(MachineReg, SR);
     unsigned Size = TRI.getSubRegIdxSize(Idx);
     unsigned Offset = TRI.getSubRegIdxOffset(Idx);
-    Reg = TRI.getDwarfRegNum(*SR, false);
+    Reg = TRI.getDwarfRegNum(SR, false);
     if (Reg < 0)
       continue;
 
@@ -414,6 +415,7 @@ void DwarfExpression::beginEntryValueExpression(
 
   SavedLocationKind = LocationKind;
   LocationKind = Register;
+  LocationFlags |= EntryValue;
   IsEmittingEntryValue = true;
   enableTemporaryBuffer();
 }
@@ -545,6 +547,41 @@ bool DwarfExpression::addExpression(
       LocationKind = Unknown;
       return true;
     }
+    case dwarf::DW_OP_LLVM_extract_bits_sext:
+    case dwarf::DW_OP_LLVM_extract_bits_zext: {
+      unsigned SizeInBits = Op->getArg(1);
+      unsigned BitOffset = Op->getArg(0);
+
+      // If we have a memory location then dereference to get the value, though
+      // we have to make sure we don't dereference any bytes past the end of the
+      // object.
+      if (isMemoryLocation()) {
+        emitOp(dwarf::DW_OP_deref_size);
+        emitUnsigned(alignTo(BitOffset + SizeInBits, 8) / 8);
+      }
+
+      // Extract the bits by a shift left (to shift out the bits after what we
+      // want to extract) followed by shift right (to shift the bits to position
+      // 0 and also sign/zero extend). These operations are done in the DWARF
+      // "generic type" whose size is the size of a pointer.
+      unsigned PtrSizeInBytes = CU.getAsmPrinter()->MAI->getCodePointerSize();
+      unsigned LeftShift = PtrSizeInBytes * 8 - (SizeInBits + BitOffset);
+      unsigned RightShift = LeftShift + BitOffset;
+      if (LeftShift) {
+        emitOp(dwarf::DW_OP_constu);
+        emitUnsigned(LeftShift);
+        emitOp(dwarf::DW_OP_shl);
+      }
+      emitOp(dwarf::DW_OP_constu);
+      emitUnsigned(RightShift);
+      emitOp(OpNum == dwarf::DW_OP_LLVM_extract_bits_sext ? dwarf::DW_OP_shra
+                                                          : dwarf::DW_OP_shr);
+
+      // The value is now at the top of the stack, so set the location to
+      // implicit so that we get a stack_value at the end.
+      LocationKind = Implicit;
+      break;
+    }
     case dwarf::DW_OP_plus_uconst:
       assert(!isRegisterLocation());
       emitOp(dwarf::DW_OP_plus_uconst);
@@ -566,6 +603,12 @@ bool DwarfExpression::addExpression(
     case dwarf::DW_OP_dup:
     case dwarf::DW_OP_push_object_address:
     case dwarf::DW_OP_over:
+    case dwarf::DW_OP_eq:
+    case dwarf::DW_OP_ne:
+    case dwarf::DW_OP_gt:
+    case dwarf::DW_OP_ge:
+    case dwarf::DW_OP_lt:
+    case dwarf::DW_OP_le:
       emitOp(OpNum);
       break;
     case dwarf::DW_OP_deref:

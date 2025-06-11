@@ -9,17 +9,23 @@ add_llvm_component_library(LLVMCore
   Comdat.cpp
   ConstantFold.cpp
   ConstantRange.cpp
+  ConstantRangeList.cpp
   Constants.cpp
+  ConvergenceVerifier.cpp
   Core.cpp
+  CycleInfo.cpp
   DIBuilder.cpp
   DataLayout.cpp
   DebugInfo.cpp
   DebugInfoMetadata.cpp
+  DIExpressionOptimizer.cpp
+  DebugProgramInstruction.cpp
   DebugLoc.cpp
   DiagnosticHandler.cpp
   DiagnosticInfo.cpp
   DiagnosticPrinter.cpp
   Dominators.cpp
+  EHPersonalities.cpp
   FPEnv.cpp
   Function.cpp
   GCStrategy.cpp
@@ -37,6 +43,7 @@ add_llvm_component_library(LLVMCore
   LLVMRemarkStreamer.cpp
   LegacyPassManager.cpp
   MDBuilder.cpp
+  MemoryModelRelaxationAnnotations.cpp
   Mangler.cpp
   Metadata.cpp
   Module.cpp
@@ -65,6 +72,8 @@ add_llvm_component_library(LLVMCore
   ValueSymbolTable.cpp
   VectorBuilder.cpp
   Verifier.cpp
+  VFABIDemangler.cpp
+  RuntimeLibcalls.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/IR
@@ -77,6 +86,7 @@ add_llvm_component_library(LLVMCore
 
   LINK_COMPONENTS
   BinaryFormat
+  Demangle
   Remarks
   Support
   TargetParser

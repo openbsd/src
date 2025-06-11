@@ -21,10 +21,10 @@
 #include "llvm/Object/BuildID.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/ProfileData/MemProf.h"
-#include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
 #include <memory>
+#include <random>
 
 namespace llvm {
 
@@ -41,26 +41,49 @@ public:
 private:
   bool Sparse;
   StringMap<ProfilingData> FunctionData;
+  /// The maximum length of a single temporal profile trace.
+  uint64_t MaxTemporalProfTraceLength;
+  /// The maximum number of stored temporal profile traces.
+  uint64_t TemporalProfTraceReservoirSize;
+  /// The total number of temporal profile traces seen.
+  uint64_t TemporalProfTraceStreamSize = 0;
+  /// The list of temporal profile traces.
+  SmallVector<TemporalProfTraceTy> TemporalProfTraces;
+  std::mt19937 RNG;
 
-  // A map to hold memprof data per function. The lower 64 bits obtained from
-  // the md5 hash of the function name is used to index into the map.
-  llvm::MapVector<GlobalValue::GUID, memprof::IndexedMemProfRecord>
-      MemProfRecordData;
-  // A map to hold frame id to frame mappings. The mappings are used to
-  // convert IndexedMemProfRecord to MemProfRecords with frame information
-  // inline.
-  llvm::MapVector<memprof::FrameId, memprof::Frame> MemProfFrameData;
+  // The MemProf data.
+  memprof::IndexedMemProfData MemProfData;
 
   // List of binary ids.
   std::vector<llvm::object::BuildID> BinaryIds;
+
+  // Read the vtable names from raw instr profile reader.
+  StringSet<> VTableNames;
 
   // An enum describing the attributes of the profile.
   InstrProfKind ProfileKind = InstrProfKind::Unknown;
   // Use raw pointer here for the incomplete type object.
   InstrProfRecordWriterTrait *InfoObj;
 
+  // Temporary support for writing the previous version of the format, to enable
+  // some forward compatibility. Currently this suppresses the writing of the
+  // new vtable names section and header fields.
+  // TODO: Consider enabling this with future version changes as well, to ease
+  // deployment of newer versions of llvm-profdata.
+  bool WritePrevVersion = false;
+
+  // The MemProf version we should write.
+  memprof::IndexedVersion MemProfVersionRequested;
+
+  // Whether to serialize the full schema.
+  bool MemProfFullSchema;
+
 public:
-  InstrProfWriter(bool Sparse = false);
+  InstrProfWriter(
+      bool Sparse = false, uint64_t TemporalProfTraceReservoirSize = 0,
+      uint64_t MaxTemporalProfTraceLength = 0, bool WritePrevVersion = false,
+      memprof::IndexedVersion MemProfVersionRequested = memprof::Version0,
+      bool MemProfFullSchema = false);
   ~InstrProfWriter();
 
   StringMap<ProfilingData> &getProfileData() { return FunctionData; }
@@ -73,6 +96,12 @@ public:
   void addRecord(NamedInstrProfRecord &&I, function_ref<void(Error)> Warn) {
     addRecord(std::move(I), 1, Warn);
   }
+  void addVTableName(StringRef VTableName) { VTableNames.insert(VTableName); }
+
+  /// Add \p SrcTraces using reservoir sampling where \p SrcStreamSize is the
+  /// total number of temporal profiling traces the source has seen.
+  void addTemporalProfileTraces(SmallVectorImpl<TemporalProfTraceTy> &SrcTraces,
+                                uint64_t SrcStreamSize);
 
   /// Add a memprof record for a function identified by its \p Id.
   void addMemProfRecord(const GlobalValue::GUID Id,
@@ -82,6 +111,12 @@ public:
   /// \p FrameId.
   bool addMemProfFrame(const memprof::FrameId, const memprof::Frame &F,
                        function_ref<void(Error)> Warn);
+
+  /// Add a call stack identified by the hash of the contents of the call stack
+  /// in \p CallStack.
+  bool addMemProfCallStack(const memprof::CallStackId CSId,
+                           const llvm::SmallVector<memprof::FrameId> &CallStack,
+                           function_ref<void(Error)> Warn);
 
   // Add a binary id to the binary ids list.
   void addBinaryIds(ArrayRef<llvm::object::BuildID> BIs);
@@ -93,8 +128,15 @@ public:
   /// Write the profile to \c OS
   Error write(raw_fd_ostream &OS);
 
+  /// Write the profile to a string output stream \c OS
+  Error write(raw_string_ostream &OS);
+
   /// Write the profile in text format to \c OS
   Error writeText(raw_fd_ostream &OS);
+
+  /// Write temporal profile trace data to the header in text format to \c OS
+  void writeTextTemporalProfTraceData(raw_fd_ostream &OS,
+                                      InstrProfSymtab &Symtab);
 
   Error validateRecord(const InstrProfRecord &Func);
 
@@ -145,9 +187,17 @@ public:
 
   InstrProfKind getProfileKind() const { return ProfileKind; }
 
-  // Internal interface for testing purpose only.
-  void setValueProfDataEndianness(support::endianness Endianness);
+  bool hasSingleByteCoverage() const {
+    return static_cast<bool>(ProfileKind & InstrProfKind::SingleByteCoverage);
+  }
+
+  // Internal interfaces for testing purpose only.
+  void setValueProfDataEndianness(llvm::endianness Endianness);
   void setOutputSparse(bool Sparse);
+  void setMemProfVersionRequested(memprof::IndexedVersion Version) {
+    MemProfVersionRequested = Version;
+  }
+  void setMemProfFullSchema(bool Full) { MemProfFullSchema = Full; }
   // Compute the overlap b/w this object and Other. Program level result is
   // stored in Overlap and function level result is stored in FuncLevelOverlap.
   void overlapRecord(NamedInstrProfRecord &&Other, OverlapStats &Overlap,
@@ -158,8 +208,19 @@ private:
   void addRecord(StringRef Name, uint64_t Hash, InstrProfRecord &&I,
                  uint64_t Weight, function_ref<void(Error)> Warn);
   bool shouldEncodeData(const ProfilingData &PD);
+  /// Add \p Trace using reservoir sampling.
+  void addTemporalProfileTrace(TemporalProfTraceTy Trace);
 
   Error writeImpl(ProfOStream &OS);
+
+  // Writes known header fields and reserves space for fields whose value are
+  // known only after payloads are written. Returns the start byte offset for
+  // back patching.
+  uint64_t writeHeader(const IndexedInstrProf::Header &header,
+                       const bool WritePrevVersion, ProfOStream &OS);
+
+  // Writes compressed vtable names to profiles.
+  Error writeVTableNames(ProfOStream &OS);
 };
 
 } // end namespace llvm

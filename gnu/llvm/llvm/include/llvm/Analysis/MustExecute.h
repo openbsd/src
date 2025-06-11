@@ -25,8 +25,8 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/Analysis/EHPersonalities.h"
 #include "llvm/Analysis/InstructionPrecedenceTracking.h"
+#include "llvm/IR/EHPersonalities.h"
 #include "llvm/IR/PassManager.h"
 
 namespace llvm {
@@ -547,6 +547,7 @@ class MustExecutePrinterPass : public PassInfoMixin<MustExecutePrinterPass> {
 public:
   MustExecutePrinterPass(raw_ostream &OS) : OS(OS) {}
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
 };
 
 class MustBeExecutedContextPrinterPass
@@ -556,6 +557,7 @@ class MustBeExecutedContextPrinterPass
 public:
   MustBeExecutedContextPrinterPass(raw_ostream &OS) : OS(OS) {}
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
+  static bool isRequired() { return true; }
 };
 
 } // namespace llvm

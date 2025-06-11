@@ -107,6 +107,50 @@ enum EdgeKind_aarch64 : Edge::Kind {
   ///     out-of-range error will be returned.
   Branch26PCRel,
 
+  /// A 14-bit PC-relative test and branch.
+  ///
+  /// Represents a PC-relative test and branch to a target within +/-32Kb. The
+  /// target must be 32-bit aligned.
+  ///
+  /// Fixup expression:
+  ///   Fixup <- (Target - Fixup + Addend) >> 2 : int14
+  ///
+  /// Notes:
+  ///   The '14' in the name refers to the number operand bits and follows the
+  /// naming convention used by the corresponding ELF relocation.
+  /// Since the low two bits must be zero (because of the 32-bit alignment of
+  /// the target) the operand is effectively a signed 16-bit number.
+  ///
+  ///
+  /// Errors:
+  ///   - The result of the unshifted part of the fixup expression must be
+  ///     32-bit aligned otherwise an alignment error will be returned.
+  ///   - The result of the fixup expression must fit into an int14 otherwise an
+  ///     out-of-range error will be returned.
+  TestAndBranch14PCRel,
+
+  /// A 19-bit PC-relative conditional branch.
+  ///
+  /// Represents a PC-relative conditional branch to a target within +/-1Mb. The
+  /// target must be 32-bit aligned.
+  ///
+  /// Fixup expression:
+  ///   Fixup <- (Target - Fixup + Addend) >> 2 : int19
+  ///
+  /// Notes:
+  ///   The '19' in the name refers to the number operand bits and follows the
+  /// naming convention used by the corresponding ELF relocation.
+  /// Since the low two bits must be zero (because of the 32-bit alignment of
+  /// the target) the operand is effectively a signed 21-bit number.
+  ///
+  ///
+  /// Errors:
+  ///   - The result of the unshifted part of the fixup expression must be
+  ///     32-bit aligned otherwise an alignment error will be returned.
+  ///   - The result of the fixup expression must fit into an int19 otherwise an
+  ///     out-of-range error will be returned.
+  CondBranch19PCRel,
+
   /// A 16-bit slice of the target address (which slice depends on the
   /// instruction at the fixup location).
   ///
@@ -127,14 +171,35 @@ enum EdgeKind_aarch64 : Edge::Kind {
   ///
   /// Fixup expression:
   ///
-  ///   Fixup <- (Target - Fixup) >> 2 : int19
+  ///   Fixup <- (Target - Fixup + Addend) >> 2 : int19
+  ///
+  /// Notes:
+  ///   The '19' in the name refers to the number operand bits and follows the
+  /// naming convention used by the corresponding ELF relocation.
+  /// Since the low two bits must be zero (because of the 32-bit alignment of
+  /// the target) the operand is effectively a signed 21-bit number.
+  ///
   ///
   /// Errors:
   ///   - The result of the unshifted part of the fixup expression must be
   ///     32-bit aligned otherwise an alignment error will be returned.
-  ///   - The result of the fixup expression must fit into an an int19 or an
+  ///   - The result of the fixup expression must fit into an int19 or an
   ///     out-of-range error will be returned.
   LDRLiteral19,
+
+  /// The signed 21-bit delta from the fixup to the target.
+  ///
+  /// Fixup expression:
+  ///
+  ///   Fixup <- Target - Fixup + Addend : int21
+  ///
+  /// Notes:
+  ///   For ADR fixups.
+  ///
+  /// Errors:
+  ///   - The result of the fixup expression must fit into an int21 otherwise an
+  ///     out-of-range error will be returned.
+  ADRLiteral21,
 
   /// The signed 21-bit delta from the fixup page to the page containing the
   /// target.
@@ -299,6 +364,31 @@ inline bool isLoadStoreImm12(uint32_t Instr) {
   return (Instr & LoadStoreImm12Mask) == 0x39000000;
 }
 
+inline bool isTestAndBranchImm14(uint32_t Instr) {
+  constexpr uint32_t TestAndBranchImm14Mask = 0x7e000000;
+  return (Instr & TestAndBranchImm14Mask) == 0x36000000;
+}
+
+inline bool isCondBranchImm19(uint32_t Instr) {
+  constexpr uint32_t CondBranchImm19Mask = 0xfe000000;
+  return (Instr & CondBranchImm19Mask) == 0x54000000;
+}
+
+inline bool isCompAndBranchImm19(uint32_t Instr) {
+  constexpr uint32_t CompAndBranchImm19Mask = 0x7e000000;
+  return (Instr & CompAndBranchImm19Mask) == 0x34000000;
+}
+
+inline bool isADR(uint32_t Instr) {
+  constexpr uint32_t ADRMask = 0x9f000000;
+  return (Instr & ADRMask) == 0x10000000;
+}
+
+inline bool isLDRLiteral(uint32_t Instr) {
+  constexpr uint32_t LDRLitMask = 0x3b000000;
+  return (Instr & LDRLitMask) == 0x18000000;
+}
+
 // Returns the amount the address operand of LD/ST (imm12)
 // should be shifted right by.
 //
@@ -416,16 +506,63 @@ inline Error applyFixup(LinkGraph &G, Block &B, const Edge &E) {
   }
   case LDRLiteral19: {
     assert((FixupAddress.getValue() & 0x3) == 0 && "LDR is not 32-bit aligned");
-    assert(E.getAddend() == 0 && "LDRLiteral19 with non-zero addend");
     uint32_t RawInstr = *(ulittle32_t *)FixupPtr;
-    assert(RawInstr == 0x58000010 && "RawInstr isn't a 64-bit LDR literal");
-    int64_t Delta = E.getTarget().getAddress() - FixupAddress;
+    assert(isLDRLiteral(RawInstr) && "RawInstr is not an LDR Literal");
+    int64_t Delta = E.getTarget().getAddress() + E.getAddend() - FixupAddress;
     if (Delta & 0x3)
       return make_error<JITLinkError>("LDR literal target is not 32-bit "
                                       "aligned");
-    if (Delta < -(1 << 20) || Delta > ((1 << 20) - 1))
+    if (!isInt<21>(Delta))
       return makeTargetOutOfRangeError(G, B, E);
-
+    uint32_t EncodedImm = ((static_cast<uint32_t>(Delta) >> 2) & 0x7ffff) << 5;
+    uint32_t FixedInstr = RawInstr | EncodedImm;
+    *(ulittle32_t *)FixupPtr = FixedInstr;
+    break;
+  }
+  case ADRLiteral21: {
+    assert((FixupAddress.getValue() & 0x3) == 0 && "ADR is not 32-bit aligned");
+    uint32_t RawInstr = *(ulittle32_t *)FixupPtr;
+    assert(isADR(RawInstr) && "RawInstr is not an ADR");
+    int64_t Delta = E.getTarget().getAddress() + E.getAddend() - FixupAddress;
+    if (!isInt<21>(Delta))
+      return makeTargetOutOfRangeError(G, B, E);
+    auto UDelta = static_cast<uint32_t>(Delta);
+    uint32_t EncodedImmHi = ((UDelta >> 2) & 0x7ffff) << 5;
+    uint32_t EncodedImmLo = (UDelta & 0x3) << 29;
+    uint32_t FixedInstr = RawInstr | EncodedImmHi | EncodedImmLo;
+    *(ulittle32_t *)FixupPtr = FixedInstr;
+    break;
+  }
+  case TestAndBranch14PCRel: {
+    assert((FixupAddress.getValue() & 0x3) == 0 &&
+           "Test and branch is not 32-bit aligned");
+    uint32_t RawInstr = *(ulittle32_t *)FixupPtr;
+    assert(isTestAndBranchImm14(RawInstr) &&
+           "RawInstr is not a test and branch");
+    int64_t Delta = E.getTarget().getAddress() + E.getAddend() - FixupAddress;
+    if (Delta & 0x3)
+      return make_error<JITLinkError>(
+          "Test and branch literal target is not 32-bit aligned");
+    if (!isInt<16>(Delta))
+      return makeTargetOutOfRangeError(G, B, E);
+    uint32_t EncodedImm = ((static_cast<uint32_t>(Delta) >> 2) & 0x3fff) << 5;
+    uint32_t FixedInstr = RawInstr | EncodedImm;
+    *(ulittle32_t *)FixupPtr = FixedInstr;
+    break;
+  }
+  case CondBranch19PCRel: {
+    assert((FixupAddress.getValue() & 0x3) == 0 &&
+           "Conditional branch is not 32-bit aligned");
+    uint32_t RawInstr = *(ulittle32_t *)FixupPtr;
+    assert((isCondBranchImm19(RawInstr) || isCompAndBranchImm19(RawInstr)) &&
+           "RawInstr is not a conditional branch");
+    int64_t Delta = E.getTarget().getAddress() + E.getAddend() - FixupAddress;
+    if (Delta & 0x3)
+      return make_error<JITLinkError>(
+          "Conditional branch literal target is not 32-bit "
+          "aligned");
+    if (!isInt<21>(Delta))
+      return makeTargetOutOfRangeError(G, B, E);
     uint32_t EncodedImm = ((static_cast<uint32_t>(Delta) >> 2) & 0x7ffff) << 5;
     uint32_t FixedInstr = RawInstr | EncodedImm;
     *(ulittle32_t *)FixupPtr = FixedInstr;
@@ -491,7 +628,7 @@ extern const char NullPointerContent[PointerSize];
 extern const char PointerJumpStubContent[12];
 
 /// Creates a new pointer block in the given section and returns an
-/// Anonymous symobl pointing to it.
+/// Anonymous symbol pointing to it.
 ///
 /// If InitialTarget is given then an Pointer64 relocation will be added to the
 /// block pointing at InitialTarget.
@@ -519,7 +656,7 @@ inline Symbol &createAnonymousPointer(LinkGraph &G, Section &PointerSection,
 inline Block &createPointerJumpStubBlock(LinkGraph &G, Section &StubSection,
                                          Symbol &PointerSymbol) {
   auto &B = G.createContentBlock(StubSection, PointerJumpStubContent,
-                                 orc::ExecutorAddr(~uint64_t(11)), 1, 0);
+                                 orc::ExecutorAddr(~uint64_t(11)), 4, 0);
   B.addEdge(Page21, 0, PointerSymbol, 0);
   B.addEdge(PageOffset12, 4, PointerSymbol, 0);
   return B;

@@ -44,6 +44,7 @@
 #ifndef LLVM_ADT_HASHING_H
 #define LLVM_ADT_HASHING_H
 
+#include "llvm/Config/abi-breaking.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SwapByteOrder.h"
@@ -126,23 +127,6 @@ hash_code hash_value(const std::basic_string<T> &arg);
 /// Compute a hash_code for a standard string.
 template <typename T> hash_code hash_value(const std::optional<T> &arg);
 
-/// Override the execution seed with a fixed value.
-///
-/// This hashing library uses a per-execution seed designed to change on each
-/// run with high probability in order to ensure that the hash codes are not
-/// attackable and to ensure that output which is intended to be stable does
-/// not rely on the particulars of the hash codes produced.
-///
-/// That said, there are use cases where it is important to be able to
-/// reproduce *exactly* a specific behavior. To that end, we provide a function
-/// which will forcibly set the seed to a fixed value. This must be done at the
-/// start of the program, before any hashes are computed. Also, it cannot be
-/// undone. This makes it thread-hostile and very hard to use outside of
-/// immediately on start of a simple program designed for reproducible
-/// behavior.
-void set_fixed_execution_hash_seed(uint64_t fixed_value);
-
-
 // All of the implementation details of actually computing the various hash
 // code values are held within this namespace. These routines are included in
 // the header file mainly to allow inlining and constant propagation.
@@ -219,29 +203,30 @@ inline uint64_t hash_17to32_bytes(const char *s, size_t len, uint64_t seed) {
   uint64_t b = fetch64(s + 8);
   uint64_t c = fetch64(s + len - 8) * k2;
   uint64_t d = fetch64(s + len - 16) * k0;
-  return hash_16_bytes(rotate(a - b, 43) + rotate(c ^ seed, 30) + d,
-                       a + rotate(b ^ k3, 20) - c + len + seed);
+  return hash_16_bytes(llvm::rotr<uint64_t>(a - b, 43) +
+                           llvm::rotr<uint64_t>(c ^ seed, 30) + d,
+                       a + llvm::rotr<uint64_t>(b ^ k3, 20) - c + len + seed);
 }
 
 inline uint64_t hash_33to64_bytes(const char *s, size_t len, uint64_t seed) {
   uint64_t z = fetch64(s + 24);
   uint64_t a = fetch64(s) + (len + fetch64(s + len - 16)) * k0;
-  uint64_t b = rotate(a + z, 52);
-  uint64_t c = rotate(a, 37);
+  uint64_t b = llvm::rotr<uint64_t>(a + z, 52);
+  uint64_t c = llvm::rotr<uint64_t>(a, 37);
   a += fetch64(s + 8);
-  c += rotate(a, 7);
+  c += llvm::rotr<uint64_t>(a, 7);
   a += fetch64(s + 16);
   uint64_t vf = a + z;
-  uint64_t vs = b + rotate(a, 31) + c;
+  uint64_t vs = b + llvm::rotr<uint64_t>(a, 31) + c;
   a = fetch64(s + 16) + fetch64(s + len - 32);
   z = fetch64(s + len - 8);
-  b = rotate(a + z, 52);
-  c = rotate(a, 37);
+  b = llvm::rotr<uint64_t>(a + z, 52);
+  c = llvm::rotr<uint64_t>(a, 37);
   a += fetch64(s + len - 24);
-  c += rotate(a, 7);
+  c += llvm::rotr<uint64_t>(a, 7);
   a += fetch64(s + len - 16);
   uint64_t wf = a + z;
-  uint64_t ws = b + rotate(a, 31) + c;
+  uint64_t ws = b + llvm::rotr<uint64_t>(a, 31) + c;
   uint64_t r = shift_mix((vf + ws) * k2 + (wf + vs) * k0);
   return shift_mix((seed ^ (r * k0)) + vs) * k2;
 }
@@ -271,9 +256,13 @@ struct hash_state {
   /// seed and the first 64-byte chunk.
   /// This effectively performs the initial mix.
   static hash_state create(const char *s, uint64_t seed) {
-    hash_state state = {
-      0, seed, hash_16_bytes(seed, k1), rotate(seed ^ k1, 49),
-      seed * k1, shift_mix(seed), 0 };
+    hash_state state = {0,
+                        seed,
+                        hash_16_bytes(seed, k1),
+                        llvm::rotr<uint64_t>(seed ^ k1, 49),
+                        seed * k1,
+                        shift_mix(seed),
+                        0};
     state.h6 = hash_16_bytes(state.h4, state.h5);
     state.mix(s);
     return state;
@@ -284,10 +273,10 @@ struct hash_state {
   static void mix_32_bytes(const char *s, uint64_t &a, uint64_t &b) {
     a += fetch64(s);
     uint64_t c = fetch64(s + 24);
-    b = rotate(b + a + c, 21);
+    b = llvm::rotr<uint64_t>(b + a + c, 21);
     uint64_t d = a;
     a += fetch64(s + 8) + fetch64(s + 16);
-    b += rotate(a, 44) + d;
+    b += llvm::rotr<uint64_t>(a, 44) + d;
     a += c;
   }
 
@@ -295,11 +284,11 @@ struct hash_state {
   /// We mix all 64 bytes even when the chunk length is smaller, but we
   /// record the actual length.
   void mix(const char *s) {
-    h0 = rotate(h0 + h1 + h3 + fetch64(s + 8), 37) * k1;
-    h1 = rotate(h1 + h4 + fetch64(s + 48), 42) * k1;
+    h0 = llvm::rotr<uint64_t>(h0 + h1 + h3 + fetch64(s + 8), 37) * k1;
+    h1 = llvm::rotr<uint64_t>(h1 + h4 + fetch64(s + 48), 42) * k1;
     h0 ^= h6;
     h1 += h3 + fetch64(s + 40);
-    h2 = rotate(h2 + h5, 33) * k1;
+    h2 = llvm::rotr<uint64_t>(h2 + h5, 33) * k1;
     h3 = h4 * k1;
     h4 = h0 + h5;
     mix_32_bytes(s, h3, h4);
@@ -317,24 +306,20 @@ struct hash_state {
   }
 };
 
-
-/// A global, fixed seed-override variable.
-///
-/// This variable can be set using the \see llvm::set_fixed_execution_seed
-/// function. See that function for details. Do not, under any circumstances,
-/// set or read this variable.
-extern uint64_t fixed_seed_override;
-
+/// In LLVM_ENABLE_ABI_BREAKING_CHECKS builds, the seed is non-deterministic
+/// per process (address of a function in LLVMSupport) to prevent having users
+/// depend on the particular hash values. On platforms without ASLR, this is
+/// still likely non-deterministic per build.
 inline uint64_t get_execution_seed() {
-  // FIXME: This needs to be a per-execution seed. This is just a placeholder
-  // implementation. Switching to a per-execution seed is likely to flush out
-  // instability bugs and so will happen as its own commit.
-  //
-  // However, if there is a fixed seed override set the first time this is
-  // called, return that instead of the per-execution seed.
-  const uint64_t seed_prime = 0xff51afd7ed558ccdULL;
-  static uint64_t seed = fixed_seed_override ? fixed_seed_override : seed_prime;
-  return seed;
+  // Work around x86-64 negative offset folding for old Clang -fno-pic
+  // https://reviews.llvm.org/D93931
+#if LLVM_ENABLE_ABI_BREAKING_CHECKS &&                                         \
+    (!defined(__clang__) || __clang_major__ > 11)
+  return static_cast<uint64_t>(
+      reinterpret_cast<uintptr_t>(&install_fatal_error_handler));
+#else
+  return 0xff51afd7ed558ccdULL;
+#endif
 }
 
 
@@ -672,10 +657,24 @@ template <typename T> hash_code hash_value(const std::optional<T> &arg) {
 template <> struct DenseMapInfo<hash_code, void> {
   static inline hash_code getEmptyKey() { return hash_code(-1); }
   static inline hash_code getTombstoneKey() { return hash_code(-2); }
-  static unsigned getHashValue(hash_code val) { return val; }
+  static unsigned getHashValue(hash_code val) {
+    return static_cast<unsigned>(size_t(val));
+  }
   static bool isEqual(hash_code LHS, hash_code RHS) { return LHS == RHS; }
 };
 
 } // namespace llvm
+
+/// Implement std::hash so that hash_code can be used in STL containers.
+namespace std {
+
+template<>
+struct hash<llvm::hash_code> {
+  size_t operator()(llvm::hash_code const& Val) const {
+    return Val;
+  }
+};
+
+} // namespace std;
 
 #endif

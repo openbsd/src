@@ -58,11 +58,11 @@ createAArch64WinCOFFObjectWriter(const Triple &TheTriple);
 
 MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
                                                  formatted_raw_ostream &OS,
-                                                 MCInstPrinter *InstPrint,
-                                                 bool isVerboseAsm);
+                                                 MCInstPrinter *InstPrint);
 
 namespace AArch64_MC {
 void initLLVMToCVRegMapping(MCRegisterInfo *MRI);
+bool isHForm(const MCInst &MI, const MCInstrInfo *MCII);
 bool isQForm(const MCInst &MI, const MCInstrInfo *MCII);
 bool isFpOrNEON(const MCInst &MI, const MCInstrInfo *MCII);
 }

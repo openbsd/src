@@ -52,7 +52,7 @@ static_library("Commands") {
     "CommandObjectQuit.cpp",
     "CommandObjectRegexCommand.cpp",
     "CommandObjectRegister.cpp",
-    "CommandObjectScript.cpp",
+    "CommandObjectScripting.cpp",
     "CommandObjectSession.cpp",
     "CommandObjectSettings.cpp",
     "CommandObjectSource.cpp",
@@ -66,6 +66,7 @@ static_library("Commands") {
     "CommandObjectWatchpoint.cpp",
     "CommandObjectWatchpointCommand.cpp",
     "CommandOptionArgumentTable.cpp",
+    "CommandOptionsProcessAttach.cpp",
     "CommandOptionsProcessLaunch.cpp",
   ]
 }

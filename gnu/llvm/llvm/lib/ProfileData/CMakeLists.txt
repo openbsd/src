@@ -4,12 +4,16 @@ add_llvm_component_library(LLVMProfileData
   InstrProfCorrelator.cpp
   InstrProfReader.cpp
   InstrProfWriter.cpp
+  ItaniumManglingCanonicalizer.cpp
   MemProf.cpp
+  MemProfReader.cpp
+  PGOCtxProfReader.cpp
+  PGOCtxProfWriter.cpp
   ProfileSummaryBuilder.cpp
   SampleProf.cpp
   SampleProfReader.cpp
   SampleProfWriter.cpp
-  RawMemProfReader.cpp
+  SymbolRemappingReader.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/ProfileData
@@ -18,6 +22,7 @@ add_llvm_component_library(LLVMProfileData
   intrinsics_gen
 
   LINK_COMPONENTS
+  BitstreamReader
   Core
   Object
   Support

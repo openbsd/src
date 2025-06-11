@@ -17,8 +17,6 @@
 #include "SIProgramInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 
-struct amd_kernel_code_t;
-
 namespace llvm {
 
 class AMDGPUMachineFunction;
@@ -28,17 +26,16 @@ class MCCodeEmitter;
 class MCOperand;
 
 namespace AMDGPU {
+struct MCKernelDescriptor;
+struct AMDGPUMCKernelCodeT;
 namespace HSAMD {
 class MetadataStreamer;
 }
 } // namespace AMDGPU
 
-namespace amdhsa {
-struct kernel_descriptor_t;
-}
-
 class AMDGPUAsmPrinter final : public AsmPrinter {
 private:
+  unsigned CodeObjectVersion;
   void initializeTargetID(const Module &M);
 
   AMDGPUResourceUsageAnalysis *ResourceUsage;
@@ -52,7 +49,8 @@ private:
   uint64_t getFunctionCodeSize(const MachineFunction &MF) const;
 
   void getSIProgramInfo(SIProgramInfo &Out, const MachineFunction &MF);
-  void getAmdKernelCode(amd_kernel_code_t &Out, const SIProgramInfo &KernelInfo,
+  void getAmdKernelCode(AMDGPU::AMDGPUMCKernelCodeT &Out,
+                        const SIProgramInfo &KernelInfo,
                         const MachineFunction &MF) const;
 
   /// Emit register usage information so that the GPU driver
@@ -67,18 +65,24 @@ private:
                                   uint32_t TotalNumVGPR, uint32_t NumSGPR,
                                   uint64_t ScratchSize, uint64_t CodeSize,
                                   const AMDGPUMachineFunction *MFI);
+  void emitCommonFunctionComments(const MCExpr *NumVGPR, const MCExpr *NumAGPR,
+                                  const MCExpr *TotalNumVGPR,
+                                  const MCExpr *NumSGPR,
+                                  const MCExpr *ScratchSize, uint64_t CodeSize,
+                                  const AMDGPUMachineFunction *MFI);
   void emitResourceUsageRemarks(const MachineFunction &MF,
                                 const SIProgramInfo &CurrentProgramInfo,
                                 bool isModuleEntryFunction, bool hasMAIInsts);
 
-  uint16_t getAmdhsaKernelCodeProperties(
-      const MachineFunction &MF) const;
+  const MCExpr *getAmdhsaKernelCodeProperties(const MachineFunction &MF) const;
 
-  amdhsa::kernel_descriptor_t getAmdhsaKernelDescriptor(
-      const MachineFunction &MF,
-      const SIProgramInfo &PI) const;
+  AMDGPU::MCKernelDescriptor
+  getAmdhsaKernelDescriptor(const MachineFunction &MF,
+                            const SIProgramInfo &PI) const;
 
   void initTargetStreamer(Module &M);
+
+  SmallString<128> getMCExprStr(const MCExpr *Value);
 
 public:
   explicit AMDGPUAsmPrinter(TargetMachine &TM,
@@ -90,6 +94,7 @@ public:
 
   AMDGPUTargetStreamer* getTargetStreamer() const;
 
+  bool doInitialization(Module &M) override;
   bool doFinalization(Module &M) override;
   bool runOnMachineFunction(MachineFunction &MF) override;
 
@@ -114,6 +119,8 @@ public:
 
   void emitFunctionBodyEnd() override;
 
+  void emitImplicitDef(const MachineInstr *MI) const override;
+
   void emitFunctionEntryLabel() override;
 
   void emitBasicBlockStart(const MachineBasicBlock &MBB) override;
@@ -123,9 +130,6 @@ public:
   void emitStartOfAsmFile(Module &M) override;
 
   void emitEndOfAsmFile(Module &M) override;
-
-  bool isBlockOnlyReachableByFallthrough(
-    const MachineBasicBlock *MBB) const override;
 
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                        const char *ExtraCode, raw_ostream &O) override;

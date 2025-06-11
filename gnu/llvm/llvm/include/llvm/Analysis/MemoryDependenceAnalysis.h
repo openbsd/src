@@ -18,6 +18,7 @@
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerSumType.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/PredIteratorCache.h"
@@ -27,7 +28,6 @@
 
 namespace llvm {
 
-class AAResults;
 class AssumptionCache;
 class BatchAAResults;
 class DominatorTree;
@@ -208,11 +208,11 @@ class NonLocalDepEntry {
   MemDepResult Result;
 
 public:
-  NonLocalDepEntry(BasicBlock *bb, MemDepResult result)
-      : BB(bb), Result(result) {}
+  NonLocalDepEntry(BasicBlock *BB, MemDepResult Result)
+      : BB(BB), Result(Result) {}
 
   // This is used for searches.
-  NonLocalDepEntry(BasicBlock *bb) : BB(bb) {}
+  NonLocalDepEntry(BasicBlock *BB) : BB(BB) {}
 
   // BB is the sort key, it can't be changed.
   BasicBlock *getBB() const { return BB; }
@@ -233,8 +233,8 @@ class NonLocalDepResult {
   Value *Address;
 
 public:
-  NonLocalDepResult(BasicBlock *bb, MemDepResult result, Value *address)
-      : Entry(bb, result), Address(address) {}
+  NonLocalDepResult(BasicBlock *BB, MemDepResult Result, Value *Address)
+      : Entry(BB, Result), Address(Address) {}
 
   // BB is the sort key, it can't be changed.
   BasicBlock *getBB() const { return Entry.getBB(); }
@@ -356,6 +356,7 @@ private:
   const TargetLibraryInfo &TLI;
   DominatorTree &DT;
   PredIteratorCache PredCache;
+  EarliestEscapeInfo EII;
 
   unsigned DefaultBlockScanLimit;
 
@@ -367,7 +368,7 @@ public:
   MemoryDependenceResults(AAResults &AA, AssumptionCache &AC,
                           const TargetLibraryInfo &TLI, DominatorTree &DT,
                           unsigned DefaultBlockScanLimit)
-      : AA(AA), AC(AC), TLI(TLI), DT(DT),
+      : AA(AA), AC(AC), TLI(TLI), DT(DT), EII(DT),
         DefaultBlockScanLimit(DefaultBlockScanLimit) {}
 
   /// Handle invalidation in the new PM.

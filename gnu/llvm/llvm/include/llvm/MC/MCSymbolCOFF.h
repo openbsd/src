@@ -9,7 +9,9 @@
 #ifndef LLVM_MC_MCSYMBOLCOFF_H
 #define LLVM_MC_MCSYMBOLCOFF_H
 
+#include "llvm/BinaryFormat/COFF.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolTableEntry.h"
 #include <cstdint>
 
 namespace llvm {
@@ -22,12 +24,13 @@ class MCSymbolCOFF : public MCSymbol {
     SF_ClassMask = 0x00FF,
     SF_ClassShift = 0,
 
-    SF_WeakExternal = 0x0100,
-    SF_SafeSEH = 0x0200,
+    SF_SafeSEH = 0x0100,
+    SF_WeakExternalCharacteristicsMask = 0x0E00,
+    SF_WeakExternalCharacteristicsShift = 9,
   };
 
 public:
-  MCSymbolCOFF(const StringMapEntry<bool> *Name, bool isTemporary)
+  MCSymbolCOFF(const MCSymbolTableEntry *Name, bool isTemporary)
       : MCSymbol(SymbolKindCOFF, Name, isTemporary) {}
 
   uint16_t getType() const {
@@ -44,11 +47,16 @@ public:
     modifyFlags(StorageClass << SF_ClassShift, SF_ClassMask);
   }
 
-  bool isWeakExternal() const {
-    return getFlags() & SF_WeakExternal;
+  COFF::WeakExternalCharacteristics getWeakExternalCharacteristics() const {
+    return static_cast<COFF::WeakExternalCharacteristics>((getFlags() & SF_WeakExternalCharacteristicsMask) >>
+           SF_WeakExternalCharacteristicsShift);
   }
-  void setIsWeakExternal() const {
-    modifyFlags(SF_WeakExternal, SF_WeakExternal);
+  void setWeakExternalCharacteristics(COFF::WeakExternalCharacteristics Characteristics) const {
+    modifyFlags(Characteristics << SF_WeakExternalCharacteristicsShift,
+                SF_WeakExternalCharacteristicsMask);
+  }
+  void setIsWeakExternal(bool WeakExt) const {
+    IsWeakExternal = WeakExt;
   }
 
   bool isSafeSEH() const {

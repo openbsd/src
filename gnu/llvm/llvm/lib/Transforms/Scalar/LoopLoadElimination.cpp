@@ -46,13 +46,10 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils.h"
 #include "llvm/Transforms/Utils/LoopSimplify.h"
 #include "llvm/Transforms/Utils/LoopVersioning.h"
@@ -91,14 +88,15 @@ struct StoreToLoadForwardingCandidate {
   StoreToLoadForwardingCandidate(LoadInst *Load, StoreInst *Store)
       : Load(Load), Store(Store) {}
 
-  /// Return true if the dependence from the store to the load has a
-  /// distance of one.  E.g. A[i+1] = A[i]
+  /// Return true if the dependence from the store to the load has an
+  /// absolute distance of one.
+  /// E.g. A[i+1] = A[i] (or A[i-1] = A[i] for descending loop)
   bool isDependenceDistanceOfOne(PredicatedScalarEvolution &PSE,
                                  Loop *L) const {
     Value *LoadPtr = Load->getPointerOperand();
     Value *StorePtr = Store->getPointerOperand();
     Type *LoadType = getLoadStoreType(Load);
-    auto &DL = Load->getParent()->getModule()->getDataLayout();
+    auto &DL = Load->getDataLayout();
 
     assert(LoadPtr->getType()->getPointerAddressSpace() ==
                StorePtr->getType()->getPointerAddressSpace() &&
@@ -106,11 +104,19 @@ struct StoreToLoadForwardingCandidate {
                DL.getTypeSizeInBits(getLoadStoreType(Store)) &&
            "Should be a known dependence");
 
-    // Currently we only support accesses with unit stride.  FIXME: we should be
-    // able to handle non unit stirde as well as long as the stride is equal to
-    // the dependence distance.
-    if (getPtrStride(PSE, LoadType, LoadPtr, L).value_or(0) != 1 ||
-        getPtrStride(PSE, LoadType, StorePtr, L).value_or(0) != 1)
+    int64_t StrideLoad = getPtrStride(PSE, LoadType, LoadPtr, L).value_or(0);
+    int64_t StrideStore = getPtrStride(PSE, LoadType, StorePtr, L).value_or(0);
+    if (!StrideLoad || !StrideStore || StrideLoad != StrideStore)
+      return false;
+
+    // TODO: This check for stride values other than 1 and -1 can be eliminated.
+    // However, doing so may cause the LoopAccessAnalysis to overcompensate,
+    // generating numerous non-wrap runtime checks that may undermine the
+    // benefits of load elimination. To safely implement support for non-unit
+    // strides, we would need to ensure either that the processed case does not
+    // require these additional checks, or improve the LAA to handle them more
+    // efficiently, or potentially both.
+    if (std::abs(StrideLoad) != 1)
       return false;
 
     unsigned TypeByteSize = DL.getTypeAllocSize(const_cast<Type *>(LoadType));
@@ -120,10 +126,12 @@ struct StoreToLoadForwardingCandidate {
 
     // We don't need to check non-wrapping here because forward/backward
     // dependence wouldn't be valid if these weren't monotonic accesses.
-    auto *Dist = cast<SCEVConstant>(
+    auto *Dist = dyn_cast<SCEVConstant>(
         PSE.getSE()->getMinusSCEV(StorePtrSCEV, LoadPtrSCEV));
+    if (!Dist)
+      return false;
     const APInt &Val = Dist->getAPInt();
-    return Val == TypeByteSize;
+    return Val == TypeByteSize * StrideLoad;
   }
 
   Value *getLoadPtr() const { return Load->getPointerOperand(); }
@@ -175,7 +183,8 @@ public:
   findStoreToLoadDependences(const LoopAccessInfo &LAI) {
     std::forward_list<StoreToLoadForwardingCandidate> Candidates;
 
-    const auto *Deps = LAI.getDepChecker().getDependences();
+    const auto &DepChecker = LAI.getDepChecker();
+    const auto *Deps = DepChecker.getDependences();
     if (!Deps)
       return Candidates;
 
@@ -186,10 +195,11 @@ public:
     SmallPtrSet<Instruction *, 4> LoadsWithUnknownDepedence;
 
     for (const auto &Dep : *Deps) {
-      Instruction *Source = Dep.getSource(LAI);
-      Instruction *Destination = Dep.getDestination(LAI);
+      Instruction *Source = Dep.getSource(DepChecker);
+      Instruction *Destination = Dep.getDestination(DepChecker);
 
-      if (Dep.Type == MemoryDepChecker::Dependence::Unknown) {
+      if (Dep.Type == MemoryDepChecker::Dependence::Unknown ||
+          Dep.Type == MemoryDepChecker::Dependence::IndirectUnsafe) {
         if (isa<LoadInst>(Source))
           LoadsWithUnknownDepedence.insert(Source);
         if (isa<LoadInst>(Destination))
@@ -215,7 +225,7 @@ public:
       // Only propagate if the stored values are bit/pointer castable.
       if (!CastInst::isBitOrNoopPointerCastable(
               getLoadStoreType(Store), getLoadStoreType(Load),
-              Store->getParent()->getModule()->getDataLayout()))
+              Store->getDataLayout()))
         continue;
 
       Candidates.emplace_front(Load, Store);
@@ -342,19 +352,20 @@ public:
     // ld0.
 
     LoadInst *LastLoad =
-        std::max_element(Candidates.begin(), Candidates.end(),
-                         [&](const StoreToLoadForwardingCandidate &A,
-                             const StoreToLoadForwardingCandidate &B) {
-                           return getInstrIndex(A.Load) < getInstrIndex(B.Load);
-                         })
+        llvm::max_element(Candidates,
+                          [&](const StoreToLoadForwardingCandidate &A,
+                              const StoreToLoadForwardingCandidate &B) {
+                            return getInstrIndex(A.Load) <
+                                   getInstrIndex(B.Load);
+                          })
             ->Load;
     StoreInst *FirstStore =
-        std::min_element(Candidates.begin(), Candidates.end(),
-                         [&](const StoreToLoadForwardingCandidate &A,
-                             const StoreToLoadForwardingCandidate &B) {
-                           return getInstrIndex(A.Store) <
-                                  getInstrIndex(B.Store);
-                         })
+        llvm::min_element(Candidates,
+                          [&](const StoreToLoadForwardingCandidate &A,
+                              const StoreToLoadForwardingCandidate &B) {
+                            return getInstrIndex(A.Store) <
+                                   getInstrIndex(B.Store);
+                          })
             ->Store;
 
     // We're looking for stores after the first forwarding store until the end
@@ -433,30 +444,42 @@ public:
     assert(PH && "Preheader should exist!");
     Value *InitialPtr = SEE.expandCodeFor(PtrSCEV->getStart(), Ptr->getType(),
                                           PH->getTerminator());
-    Value *Initial = new LoadInst(
-        Cand.Load->getType(), InitialPtr, "load_initial",
-        /* isVolatile */ false, Cand.Load->getAlign(), PH->getTerminator());
+    Value *Initial =
+        new LoadInst(Cand.Load->getType(), InitialPtr, "load_initial",
+                     /* isVolatile */ false, Cand.Load->getAlign(),
+                     PH->getTerminator()->getIterator());
+    // We don't give any debug location to Initial, because it is inserted
+    // into the loop's preheader. A debug location inside the loop will cause
+    // a misleading stepping when debugging. The test update-debugloc-store
+    // -forwarded.ll checks this.
 
-    PHINode *PHI = PHINode::Create(Initial->getType(), 2, "store_forwarded",
-                                   &L->getHeader()->front());
+    PHINode *PHI = PHINode::Create(Initial->getType(), 2, "store_forwarded");
+    PHI->insertBefore(L->getHeader()->begin());
     PHI->addIncoming(Initial, PH);
 
     Type *LoadType = Initial->getType();
     Type *StoreType = Cand.Store->getValueOperand()->getType();
-    auto &DL = Cand.Load->getParent()->getModule()->getDataLayout();
+    auto &DL = Cand.Load->getDataLayout();
     (void)DL;
 
     assert(DL.getTypeSizeInBits(LoadType) == DL.getTypeSizeInBits(StoreType) &&
            "The type sizes should match!");
 
     Value *StoreValue = Cand.Store->getValueOperand();
-    if (LoadType != StoreType)
-      StoreValue = CastInst::CreateBitOrPointerCast(
-          StoreValue, LoadType, "store_forward_cast", Cand.Store);
+    if (LoadType != StoreType) {
+      StoreValue = CastInst::CreateBitOrPointerCast(StoreValue, LoadType,
+                                                    "store_forward_cast",
+                                                    Cand.Store->getIterator());
+      // Because it casts the old `load` value and is used by the new `phi`
+      // which replaces the old `load`, we give the `load`'s debug location
+      // to it.
+      cast<Instruction>(StoreValue)->setDebugLoc(Cand.Load->getDebugLoc());
+    }
 
     PHI->addIncoming(StoreValue, L->getLoopLatch());
 
     Cand.Load->replaceAllUsesWith(PHI);
+    PHI->setDebugLoc(Cand.Load->getDebugLoc());
   }
 
   /// Top-level driver for each loop: find store->load forwarding
@@ -594,7 +617,7 @@ public:
 
     // Next, propagate the value stored by the store to the users of the load.
     // Also for the first iteration, generate the initial value of the load.
-    SCEVExpander SEE(*PSE.getSE(), L->getHeader()->getModule()->getDataLayout(),
+    SCEVExpander SEE(*PSE.getSE(), L->getHeader()->getDataLayout(),
                      "storeforward");
     for (const auto &Cand : Candidates)
       propagateStoredValueToLoadUsers(Cand, SEE);
@@ -658,70 +681,6 @@ static bool eliminateLoadsAcrossLoops(Function &F, LoopInfo &LI,
   return Changed;
 }
 
-namespace {
-
-/// The pass.  Most of the work is delegated to the per-loop
-/// LoadEliminationForLoop class.
-class LoopLoadElimination : public FunctionPass {
-public:
-  static char ID;
-
-  LoopLoadElimination() : FunctionPass(ID) {
-    initializeLoopLoadEliminationPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool runOnFunction(Function &F) override {
-    if (skipFunction(F))
-      return false;
-
-    auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-    auto &LAIs = getAnalysis<LoopAccessLegacyAnalysis>().getLAIs();
-    auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    auto *PSI = &getAnalysis<ProfileSummaryInfoWrapperPass>().getPSI();
-    auto *BFI = (PSI && PSI->hasProfileSummary()) ?
-                &getAnalysis<LazyBlockFrequencyInfoPass>().getBFI() :
-                nullptr;
-    auto *SE = &getAnalysis<ScalarEvolutionWrapperPass>().getSE();
-
-    // Process each loop nest in the function.
-    return eliminateLoadsAcrossLoops(F, LI, DT, BFI, PSI, SE, /*AC*/ nullptr,
-                                     LAIs);
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequiredID(LoopSimplifyID);
-    AU.addRequired<LoopInfoWrapperPass>();
-    AU.addPreserved<LoopInfoWrapperPass>();
-    AU.addRequired<LoopAccessLegacyAnalysis>();
-    AU.addRequired<ScalarEvolutionWrapperPass>();
-    AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addPreserved<DominatorTreeWrapperPass>();
-    AU.addPreserved<GlobalsAAWrapperPass>();
-    AU.addRequired<ProfileSummaryInfoWrapperPass>();
-    LazyBlockFrequencyInfoPass::getLazyBFIAnalysisUsage(AU);
-  }
-};
-
-} // end anonymous namespace
-
-char LoopLoadElimination::ID;
-
-static const char LLE_name[] = "Loop Load Elimination";
-
-INITIALIZE_PASS_BEGIN(LoopLoadElimination, LLE_OPTION, LLE_name, false, false)
-INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(LoopAccessLegacyAnalysis)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(ScalarEvolutionWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
-INITIALIZE_PASS_DEPENDENCY(ProfileSummaryInfoWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(LazyBlockFrequencyInfoPass)
-INITIALIZE_PASS_END(LoopLoadElimination, LLE_OPTION, LLE_name, false, false)
-
-FunctionPass *llvm::createLoopLoadEliminationPass() {
-  return new LoopLoadElimination();
-}
-
 PreservedAnalyses LoopLoadEliminationPass::run(Function &F,
                                                FunctionAnalysisManager &AM) {
   auto &LI = AM.getResult<LoopAnalysis>(F);
@@ -744,5 +703,7 @@ PreservedAnalyses LoopLoadEliminationPass::run(Function &F,
     return PreservedAnalyses::all();
 
   PreservedAnalyses PA;
+  PA.preserve<DominatorTreeAnalysis>();
+  PA.preserve<LoopAnalysis>();
   return PA;
 }

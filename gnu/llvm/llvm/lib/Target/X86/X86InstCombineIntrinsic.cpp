@@ -21,30 +21,31 @@
 #include <optional>
 
 using namespace llvm;
+using namespace llvm::PatternMatch;
 
 #define DEBUG_TYPE "x86tti"
 
 /// Return a constant boolean vector that has true elements in all positions
 /// where the input constant data vector has an element with the sign bit set.
-static Constant *getNegativeIsTrueBoolVec(Constant *V) {
+static Constant *getNegativeIsTrueBoolVec(Constant *V, const DataLayout &DL) {
   VectorType *IntTy = VectorType::getInteger(cast<VectorType>(V->getType()));
   V = ConstantExpr::getBitCast(V, IntTy);
-  V = ConstantExpr::getICmp(CmpInst::ICMP_SGT, Constant::getNullValue(IntTy),
-                            V);
+  V = ConstantFoldCompareInstOperands(CmpInst::ICMP_SGT,
+                                      Constant::getNullValue(IntTy), V, DL);
+  assert(V && "Vector must be foldable");
   return V;
 }
 
 /// Convert the x86 XMM integer vector mask to a vector of bools based on
 /// each element's most significant bit (the sign bit).
-static Value *getBoolVecFromMask(Value *Mask) {
+static Value *getBoolVecFromMask(Value *Mask, const DataLayout &DL) {
   // Fold Constant Mask.
   if (auto *ConstantMask = dyn_cast<ConstantDataVector>(Mask))
-    return getNegativeIsTrueBoolVec(ConstantMask);
+    return getNegativeIsTrueBoolVec(ConstantMask, DL);
 
   // Mask was extended from a boolean vector.
   Value *ExtMask;
-  if (PatternMatch::match(
-          Mask, PatternMatch::m_SExt(PatternMatch::m_Value(ExtMask))) &&
+  if (match(Mask, m_SExt(m_Value(ExtMask))) &&
       ExtMask->getType()->isIntOrIntVectorTy(1))
     return ExtMask;
 
@@ -65,7 +66,7 @@ static Instruction *simplifyX86MaskedLoad(IntrinsicInst &II, InstCombiner &IC) {
 
   // The mask is constant or extended from a bool vector. Convert this x86
   // intrinsic to the LLVM intrinsic to allow target-independent optimizations.
-  if (Value *BoolMask = getBoolVecFromMask(Mask)) {
+  if (Value *BoolMask = getBoolVecFromMask(Mask, IC.getDataLayout())) {
     // First, cast the x86 intrinsic scalar pointer to a vector pointer to match
     // the LLVM intrinsic definition for the pointer argument.
     unsigned AddrSpace = cast<PointerType>(Ptr->getType())->getAddressSpace();
@@ -102,7 +103,7 @@ static bool simplifyX86MaskedStore(IntrinsicInst &II, InstCombiner &IC) {
 
   // The mask is constant or extended from a bool vector. Convert this x86
   // intrinsic to the LLVM intrinsic to allow target-independent optimizations.
-  if (Value *BoolMask = getBoolVecFromMask(Mask)) {
+  if (Value *BoolMask = getBoolVecFromMask(Mask, IC.getDataLayout())) {
     unsigned AddrSpace = cast<PointerType>(Ptr->getType())->getAddressSpace();
     PointerType *VecPtrTy = PointerType::get(Vec->getType(), AddrSpace);
     Value *PtrCast = IC.Builder.CreateBitCast(Ptr, VecPtrTy, "castvec");
@@ -212,7 +213,7 @@ static Value *simplifyX86immShift(const IntrinsicInst &II,
   if (IsImm) {
     assert(AmtVT->isIntegerTy(32) && "Unexpected shift-by-immediate type");
     KnownBits KnownAmtBits =
-        llvm::computeKnownBits(Amt, II.getModule()->getDataLayout());
+        llvm::computeKnownBits(Amt, II.getDataLayout());
     if (KnownAmtBits.getMaxValue().ult(BitWidth)) {
       Amt = Builder.CreateZExtOrTrunc(Amt, SVT);
       Amt = Builder.CreateVectorSplat(VWidth, Amt);
@@ -236,9 +237,9 @@ static Value *simplifyX86immShift(const IntrinsicInst &II,
     APInt DemandedLower = APInt::getOneBitSet(NumAmtElts, 0);
     APInt DemandedUpper = APInt::getBitsSet(NumAmtElts, 1, NumAmtElts / 2);
     KnownBits KnownLowerBits = llvm::computeKnownBits(
-        Amt, DemandedLower, II.getModule()->getDataLayout());
+        Amt, DemandedLower, II.getDataLayout());
     KnownBits KnownUpperBits = llvm::computeKnownBits(
-        Amt, DemandedUpper, II.getModule()->getDataLayout());
+        Amt, DemandedUpper, II.getDataLayout());
     if (KnownLowerBits.getMaxValue().ult(BitWidth) &&
         (DemandedUpper.isZero() || KnownUpperBits.isZero())) {
       SmallVector<int, 16> ZeroSplat(VWidth, 0);
@@ -356,7 +357,7 @@ static Value *simplifyX86varShift(const IntrinsicInst &II,
   // If the shift amount is guaranteed to be in-range we can replace it with a
   // generic shift.
   KnownBits KnownAmt =
-      llvm::computeKnownBits(Amt, II.getModule()->getDataLayout());
+      llvm::computeKnownBits(Amt, II.getDataLayout());
   if (KnownAmt.getMaxValue().ult(BitWidth)) {
     return (LogicalShift ? (ShiftLeft ? Builder.CreateShl(Vec, Amt)
                                       : Builder.CreateLShr(Vec, Amt))
@@ -501,6 +502,118 @@ static Value *simplifyX86pack(IntrinsicInst &II,
   return Builder.CreateTrunc(Shuffle, ResTy);
 }
 
+static Value *simplifyX86pmulh(IntrinsicInst &II,
+                               InstCombiner::BuilderTy &Builder, bool IsSigned,
+                               bool IsRounding) {
+  Value *Arg0 = II.getArgOperand(0);
+  Value *Arg1 = II.getArgOperand(1);
+  auto *ResTy = cast<FixedVectorType>(II.getType());
+  auto *ArgTy = cast<FixedVectorType>(Arg0->getType());
+  assert(ArgTy == ResTy && ResTy->getScalarSizeInBits() == 16 &&
+         "Unexpected PMULH types");
+  assert((!IsRounding || IsSigned) && "PMULHRS instruction must be signed");
+
+  // Multiply by undef -> zero (NOT undef!) as other arg could still be zero.
+  if (isa<UndefValue>(Arg0) || isa<UndefValue>(Arg1))
+    return ConstantAggregateZero::get(ResTy);
+
+  // Multiply by zero.
+  if (isa<ConstantAggregateZero>(Arg0) || isa<ConstantAggregateZero>(Arg1))
+    return ConstantAggregateZero::get(ResTy);
+
+  // Multiply by one.
+  if (!IsRounding) {
+    if (match(Arg0, m_One()))
+      return IsSigned ? Builder.CreateAShr(Arg1, 15)
+                      : ConstantAggregateZero::get(ResTy);
+    if (match(Arg1, m_One()))
+      return IsSigned ? Builder.CreateAShr(Arg0, 15)
+                      : ConstantAggregateZero::get(ResTy);
+  }
+
+  // Constant folding.
+  if (!isa<Constant>(Arg0) || !isa<Constant>(Arg1))
+    return nullptr;
+
+  // Extend to twice the width and multiply.
+  auto Cast =
+      IsSigned ? Instruction::CastOps::SExt : Instruction::CastOps::ZExt;
+  auto *ExtTy = FixedVectorType::getExtendedElementVectorType(ArgTy);
+  Value *LHS = Builder.CreateCast(Cast, Arg0, ExtTy);
+  Value *RHS = Builder.CreateCast(Cast, Arg1, ExtTy);
+  Value *Mul = Builder.CreateMul(LHS, RHS);
+
+  if (IsRounding) {
+    // PMULHRSW: truncate to vXi18 of the most significant bits, add one and
+    // extract bits[16:1].
+    auto *RndEltTy = IntegerType::get(ExtTy->getContext(), 18);
+    auto *RndTy = FixedVectorType::get(RndEltTy, ExtTy);
+    Mul = Builder.CreateLShr(Mul, 14);
+    Mul = Builder.CreateTrunc(Mul, RndTy);
+    Mul = Builder.CreateAdd(Mul, ConstantInt::get(RndTy, 1));
+    Mul = Builder.CreateLShr(Mul, 1);
+  } else {
+    // PMULH/PMULHU: extract the vXi16 most significant bits.
+    Mul = Builder.CreateLShr(Mul, 16);
+  }
+
+  return Builder.CreateTrunc(Mul, ResTy);
+}
+
+static Value *simplifyX86pmadd(IntrinsicInst &II,
+                               InstCombiner::BuilderTy &Builder,
+                               bool IsPMADDWD) {
+  Value *Arg0 = II.getArgOperand(0);
+  Value *Arg1 = II.getArgOperand(1);
+  auto *ResTy = cast<FixedVectorType>(II.getType());
+  [[maybe_unused]] auto *ArgTy = cast<FixedVectorType>(Arg0->getType());
+
+  unsigned NumDstElts = ResTy->getNumElements();
+  assert(ArgTy->getNumElements() == (2 * NumDstElts) &&
+         ResTy->getScalarSizeInBits() == (2 * ArgTy->getScalarSizeInBits()) &&
+         "Unexpected PMADD types");
+
+  // Multiply by undef -> zero (NOT undef!) as other arg could still be zero.
+  if (isa<UndefValue>(Arg0) || isa<UndefValue>(Arg1))
+    return ConstantAggregateZero::get(ResTy);
+
+  // Multiply by zero.
+  if (isa<ConstantAggregateZero>(Arg0) || isa<ConstantAggregateZero>(Arg1))
+    return ConstantAggregateZero::get(ResTy);
+
+  // Constant folding.
+  if (!isa<Constant>(Arg0) || !isa<Constant>(Arg1))
+    return nullptr;
+
+  // Split Lo/Hi elements pairs, extend and add together.
+  // PMADDWD(X,Y) =
+  // add(mul(sext(lhs[0]),sext(rhs[0])),mul(sext(lhs[1]),sext(rhs[1])))
+  // PMADDUBSW(X,Y) =
+  // sadd_sat(mul(zext(lhs[0]),sext(rhs[0])),mul(zext(lhs[1]),sext(rhs[1])))
+  SmallVector<int> LoMask, HiMask;
+  for (unsigned I = 0; I != NumDstElts; ++I) {
+    LoMask.push_back(2 * I + 0);
+    HiMask.push_back(2 * I + 1);
+  }
+
+  auto *LHSLo = Builder.CreateShuffleVector(Arg0, LoMask);
+  auto *LHSHi = Builder.CreateShuffleVector(Arg0, HiMask);
+  auto *RHSLo = Builder.CreateShuffleVector(Arg1, LoMask);
+  auto *RHSHi = Builder.CreateShuffleVector(Arg1, HiMask);
+
+  auto LHSCast =
+      IsPMADDWD ? Instruction::CastOps::SExt : Instruction::CastOps::ZExt;
+  LHSLo = Builder.CreateCast(LHSCast, LHSLo, ResTy);
+  LHSHi = Builder.CreateCast(LHSCast, LHSHi, ResTy);
+  RHSLo = Builder.CreateCast(Instruction::CastOps::SExt, RHSLo, ResTy);
+  RHSHi = Builder.CreateCast(Instruction::CastOps::SExt, RHSHi, ResTy);
+  Value *Lo = Builder.CreateMul(LHSLo, RHSLo);
+  Value *Hi = Builder.CreateMul(LHSHi, RHSHi);
+  return IsPMADDWD
+             ? Builder.CreateAdd(Lo, Hi)
+             : Builder.CreateIntrinsic(ResTy, Intrinsic::sadd_sat, {Lo, Hi});
+}
+
 static Value *simplifyX86movmsk(const IntrinsicInst &II,
                                 InstCombiner::BuilderTy &Builder) {
   Value *Arg = II.getArgOperand(0);
@@ -542,7 +655,7 @@ static Value *simplifyX86addcarry(const IntrinsicInst &II,
          "Unexpected types for x86 addcarry");
 
   // If carry-in is zero, this is just an unsigned add with overflow.
-  if (match(CarryIn, PatternMatch::m_ZeroInt())) {
+  if (match(CarryIn, m_ZeroInt())) {
     Value *UAdd = Builder.CreateIntrinsic(Intrinsic::uadd_with_overflow, OpTy,
                                           {Op1, Op2});
     // The types have to be adjusted to match the x86 call types.
@@ -555,6 +668,1074 @@ static Value *simplifyX86addcarry(const IntrinsicInst &II,
   }
 
   return nullptr;
+}
+
+static Value *simplifyTernarylogic(const IntrinsicInst &II,
+                                   InstCombiner::BuilderTy &Builder) {
+
+  auto *ArgImm = dyn_cast<ConstantInt>(II.getArgOperand(3));
+  if (!ArgImm || ArgImm->getValue().uge(256))
+    return nullptr;
+
+  Value *ArgA = II.getArgOperand(0);
+  Value *ArgB = II.getArgOperand(1);
+  Value *ArgC = II.getArgOperand(2);
+
+  Type *Ty = II.getType();
+
+  auto Or = [&](auto Lhs, auto Rhs) -> std::pair<Value *, uint8_t> {
+    return {Builder.CreateOr(Lhs.first, Rhs.first), Lhs.second | Rhs.second};
+  };
+  auto Xor = [&](auto Lhs, auto Rhs) -> std::pair<Value *, uint8_t> {
+    return {Builder.CreateXor(Lhs.first, Rhs.first), Lhs.second ^ Rhs.second};
+  };
+  auto And = [&](auto Lhs, auto Rhs) -> std::pair<Value *, uint8_t> {
+    return {Builder.CreateAnd(Lhs.first, Rhs.first), Lhs.second & Rhs.second};
+  };
+  auto Not = [&](auto V) -> std::pair<Value *, uint8_t> {
+    return {Builder.CreateNot(V.first), ~V.second};
+  };
+  auto Nor = [&](auto Lhs, auto Rhs) { return Not(Or(Lhs, Rhs)); };
+  auto Xnor = [&](auto Lhs, auto Rhs) { return Not(Xor(Lhs, Rhs)); };
+  auto Nand = [&](auto Lhs, auto Rhs) { return Not(And(Lhs, Rhs)); };
+
+  bool AIsConst = match(ArgA, m_ImmConstant());
+  bool BIsConst = match(ArgB, m_ImmConstant());
+  bool CIsConst = match(ArgC, m_ImmConstant());
+
+  bool ABIsConst = AIsConst && BIsConst;
+  bool ACIsConst = AIsConst && CIsConst;
+  bool BCIsConst = BIsConst && CIsConst;
+  bool ABCIsConst = AIsConst && BIsConst && CIsConst;
+
+  // Use for verification. Its a big table. Its difficult to go from Imm ->
+  // logic ops, but easy to verify that a set of logic ops is correct. We track
+  // the logic ops through the second value in the pair. At the end it should
+  // equal Imm.
+  std::pair<Value *, uint8_t> A = {ArgA, 0xf0};
+  std::pair<Value *, uint8_t> B = {ArgB, 0xcc};
+  std::pair<Value *, uint8_t> C = {ArgC, 0xaa};
+  std::pair<Value *, uint8_t> Res = {nullptr, 0};
+
+  // Currently we only handle cases that convert directly to another instruction
+  // or cases where all the ops are constant.  This is because we don't properly
+  // handle creating ternary ops in the backend, so splitting them here may
+  // cause regressions. As the backend improves, uncomment more cases.
+
+  uint8_t Imm = ArgImm->getValue().getZExtValue();
+  switch (Imm) {
+  case 0x0:
+    Res = {Constant::getNullValue(Ty), 0};
+    break;
+  case 0x1:
+    if (ABCIsConst)
+      Res = Nor(Or(A, B), C);
+    break;
+  case 0x2:
+    if (ABCIsConst)
+      Res = And(Nor(A, B), C);
+    break;
+  case 0x3:
+    if (ABIsConst)
+      Res = Nor(A, B);
+    break;
+  case 0x4:
+    if (ABCIsConst)
+      Res = And(Nor(A, C), B);
+    break;
+  case 0x5:
+    if (ACIsConst)
+      Res = Nor(A, C);
+    break;
+  case 0x6:
+    if (ABCIsConst)
+      Res = Nor(A, Xnor(B, C));
+    break;
+  case 0x7:
+    if (ABCIsConst)
+      Res = Nor(A, And(B, C));
+    break;
+  case 0x8:
+    if (ABCIsConst)
+      Res = Nor(A, Nand(B, C));
+    break;
+  case 0x9:
+    if (ABCIsConst)
+      Res = Nor(A, Xor(B, C));
+    break;
+  case 0xa:
+    if (ACIsConst)
+      Res = Nor(A, Not(C));
+    break;
+  case 0xb:
+    if (ABCIsConst)
+      Res = Nor(A, Nor(C, Not(B)));
+    break;
+  case 0xc:
+    if (ABIsConst)
+      Res = Nor(A, Not(B));
+    break;
+  case 0xd:
+    if (ABCIsConst)
+      Res = Nor(A, Nor(B, Not(C)));
+    break;
+  case 0xe:
+    if (ABCIsConst)
+      Res = Nor(A, Nor(B, C));
+    break;
+  case 0xf:
+    Res = Not(A);
+    break;
+  case 0x10:
+    if (ABCIsConst)
+      Res = And(A, Nor(B, C));
+    break;
+  case 0x11:
+    if (BCIsConst)
+      Res = Nor(B, C);
+    break;
+  case 0x12:
+    if (ABCIsConst)
+      Res = Nor(Xnor(A, C), B);
+    break;
+  case 0x13:
+    if (ABCIsConst)
+      Res = Nor(And(A, C), B);
+    break;
+  case 0x14:
+    if (ABCIsConst)
+      Res = Nor(Xnor(A, B), C);
+    break;
+  case 0x15:
+    if (ABCIsConst)
+      Res = Nor(And(A, B), C);
+    break;
+  case 0x16:
+    if (ABCIsConst)
+      Res = Xor(Xor(A, B), And(Nand(A, B), C));
+    break;
+  case 0x17:
+    if (ABCIsConst)
+      Res = Xor(Or(A, B), Or(Xnor(A, B), C));
+    break;
+  case 0x18:
+    if (ABCIsConst)
+      Res = Nor(Xnor(A, B), Xnor(A, C));
+    break;
+  case 0x19:
+    if (ABCIsConst)
+      Res = And(Nand(A, B), Xnor(B, C));
+    break;
+  case 0x1a:
+    if (ABCIsConst)
+      Res = Xor(A, Or(And(A, B), C));
+    break;
+  case 0x1b:
+    if (ABCIsConst)
+      Res = Xor(A, Or(Xnor(A, B), C));
+    break;
+  case 0x1c:
+    if (ABCIsConst)
+      Res = Xor(A, Or(And(A, C), B));
+    break;
+  case 0x1d:
+    if (ABCIsConst)
+      Res = Xor(A, Or(Xnor(A, C), B));
+    break;
+  case 0x1e:
+    if (ABCIsConst)
+      Res = Xor(A, Or(B, C));
+    break;
+  case 0x1f:
+    if (ABCIsConst)
+      Res = Nand(A, Or(B, C));
+    break;
+  case 0x20:
+    if (ABCIsConst)
+      Res = Nor(Nand(A, C), B);
+    break;
+  case 0x21:
+    if (ABCIsConst)
+      Res = Nor(Xor(A, C), B);
+    break;
+  case 0x22:
+    if (BCIsConst)
+      Res = Nor(B, Not(C));
+    break;
+  case 0x23:
+    if (ABCIsConst)
+      Res = Nor(B, Nor(C, Not(A)));
+    break;
+  case 0x24:
+    if (ABCIsConst)
+      Res = Nor(Xnor(A, B), Xor(A, C));
+    break;
+  case 0x25:
+    if (ABCIsConst)
+      Res = Xor(A, Nand(Nand(A, B), C));
+    break;
+  case 0x26:
+    if (ABCIsConst)
+      Res = And(Nand(A, B), Xor(B, C));
+    break;
+  case 0x27:
+    if (ABCIsConst)
+      Res = Xor(Or(Xnor(A, B), C), B);
+    break;
+  case 0x28:
+    if (ABCIsConst)
+      Res = And(Xor(A, B), C);
+    break;
+  case 0x29:
+    if (ABCIsConst)
+      Res = Xor(Xor(A, B), Nor(And(A, B), C));
+    break;
+  case 0x2a:
+    if (ABCIsConst)
+      Res = And(Nand(A, B), C);
+    break;
+  case 0x2b:
+    if (ABCIsConst)
+      Res = Xor(Or(Xnor(A, B), Xor(A, C)), A);
+    break;
+  case 0x2c:
+    if (ABCIsConst)
+      Res = Nor(Xnor(A, B), Nor(B, C));
+    break;
+  case 0x2d:
+    if (ABCIsConst)
+      Res = Xor(A, Or(B, Not(C)));
+    break;
+  case 0x2e:
+    if (ABCIsConst)
+      Res = Xor(A, Or(Xor(A, C), B));
+    break;
+  case 0x2f:
+    if (ABCIsConst)
+      Res = Nand(A, Or(B, Not(C)));
+    break;
+  case 0x30:
+    if (ABIsConst)
+      Res = Nor(B, Not(A));
+    break;
+  case 0x31:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, Not(C)), B);
+    break;
+  case 0x32:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, C), B);
+    break;
+  case 0x33:
+    Res = Not(B);
+    break;
+  case 0x34:
+    if (ABCIsConst)
+      Res = And(Xor(A, B), Nand(B, C));
+    break;
+  case 0x35:
+    if (ABCIsConst)
+      Res = Xor(B, Or(A, Xnor(B, C)));
+    break;
+  case 0x36:
+    if (ABCIsConst)
+      Res = Xor(Or(A, C), B);
+    break;
+  case 0x37:
+    if (ABCIsConst)
+      Res = Nand(Or(A, C), B);
+    break;
+  case 0x38:
+    if (ABCIsConst)
+      Res = Nor(Xnor(A, B), Nor(A, C));
+    break;
+  case 0x39:
+    if (ABCIsConst)
+      Res = Xor(Or(A, Not(C)), B);
+    break;
+  case 0x3a:
+    if (ABCIsConst)
+      Res = Xor(B, Or(A, Xor(B, C)));
+    break;
+  case 0x3b:
+    if (ABCIsConst)
+      Res = Nand(Or(A, Not(C)), B);
+    break;
+  case 0x3c:
+    Res = Xor(A, B);
+    break;
+  case 0x3d:
+    if (ABCIsConst)
+      Res = Xor(A, Or(Nor(A, C), B));
+    break;
+  case 0x3e:
+    if (ABCIsConst)
+      Res = Xor(A, Or(Nor(A, Not(C)), B));
+    break;
+  case 0x3f:
+    if (ABIsConst)
+      Res = Nand(A, B);
+    break;
+  case 0x40:
+    if (ABCIsConst)
+      Res = Nor(Nand(A, B), C);
+    break;
+  case 0x41:
+    if (ABCIsConst)
+      Res = Nor(Xor(A, B), C);
+    break;
+  case 0x42:
+    if (ABCIsConst)
+      Res = Nor(Xor(A, B), Xnor(A, C));
+    break;
+  case 0x43:
+    if (ABCIsConst)
+      Res = Xor(A, Nand(Nand(A, C), B));
+    break;
+  case 0x44:
+    if (BCIsConst)
+      Res = Nor(C, Not(B));
+    break;
+  case 0x45:
+    if (ABCIsConst)
+      Res = Nor(Nor(B, Not(A)), C);
+    break;
+  case 0x46:
+    if (ABCIsConst)
+      Res = Xor(Or(And(A, C), B), C);
+    break;
+  case 0x47:
+    if (ABCIsConst)
+      Res = Xor(Or(Xnor(A, C), B), C);
+    break;
+  case 0x48:
+    if (ABCIsConst)
+      Res = And(Xor(A, C), B);
+    break;
+  case 0x49:
+    if (ABCIsConst)
+      Res = Xor(Or(Xnor(A, B), And(A, C)), C);
+    break;
+  case 0x4a:
+    if (ABCIsConst)
+      Res = Nor(Xnor(A, C), Nor(B, C));
+    break;
+  case 0x4b:
+    if (ABCIsConst)
+      Res = Xor(A, Or(C, Not(B)));
+    break;
+  case 0x4c:
+    if (ABCIsConst)
+      Res = And(Nand(A, C), B);
+    break;
+  case 0x4d:
+    if (ABCIsConst)
+      Res = Xor(Or(Xor(A, B), Xnor(A, C)), A);
+    break;
+  case 0x4e:
+    if (ABCIsConst)
+      Res = Xor(A, Or(Xor(A, B), C));
+    break;
+  case 0x4f:
+    if (ABCIsConst)
+      Res = Nand(A, Nand(B, Not(C)));
+    break;
+  case 0x50:
+    if (ACIsConst)
+      Res = Nor(C, Not(A));
+    break;
+  case 0x51:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, Not(B)), C);
+    break;
+  case 0x52:
+    if (ABCIsConst)
+      Res = And(Xor(A, C), Nand(B, C));
+    break;
+  case 0x53:
+    if (ABCIsConst)
+      Res = Xor(Or(Xnor(B, C), A), C);
+    break;
+  case 0x54:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, B), C);
+    break;
+  case 0x55:
+    Res = Not(C);
+    break;
+  case 0x56:
+    if (ABCIsConst)
+      Res = Xor(Or(A, B), C);
+    break;
+  case 0x57:
+    if (ABCIsConst)
+      Res = Nand(Or(A, B), C);
+    break;
+  case 0x58:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, B), Xnor(A, C));
+    break;
+  case 0x59:
+    if (ABCIsConst)
+      Res = Xor(Or(A, Not(B)), C);
+    break;
+  case 0x5a:
+    Res = Xor(A, C);
+    break;
+  case 0x5b:
+    if (ABCIsConst)
+      Res = Xor(A, Or(Nor(A, B), C));
+    break;
+  case 0x5c:
+    if (ABCIsConst)
+      Res = Xor(Or(Xor(B, C), A), C);
+    break;
+  case 0x5d:
+    if (ABCIsConst)
+      Res = Nand(Or(A, Not(B)), C);
+    break;
+  case 0x5e:
+    if (ABCIsConst)
+      Res = Xor(A, Or(Nor(A, Not(B)), C));
+    break;
+  case 0x5f:
+    if (ACIsConst)
+      Res = Nand(A, C);
+    break;
+  case 0x60:
+    if (ABCIsConst)
+      Res = And(A, Xor(B, C));
+    break;
+  case 0x61:
+    if (ABCIsConst)
+      Res = Xor(Or(Xnor(A, B), And(B, C)), C);
+    break;
+  case 0x62:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, C), Xnor(B, C));
+    break;
+  case 0x63:
+    if (ABCIsConst)
+      Res = Xor(B, Or(C, Not(A)));
+    break;
+  case 0x64:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, B), Xnor(B, C));
+    break;
+  case 0x65:
+    if (ABCIsConst)
+      Res = Xor(Or(B, Not(A)), C);
+    break;
+  case 0x66:
+    Res = Xor(B, C);
+    break;
+  case 0x67:
+    if (ABCIsConst)
+      Res = Or(Nor(A, B), Xor(B, C));
+    break;
+  case 0x68:
+    if (ABCIsConst)
+      Res = Xor(Xor(A, B), Nor(Nor(A, B), C));
+    break;
+  case 0x69:
+    if (ABCIsConst)
+      Res = Xor(Xnor(A, B), C);
+    break;
+  case 0x6a:
+    if (ABCIsConst)
+      Res = Xor(And(A, B), C);
+    break;
+  case 0x6b:
+    if (ABCIsConst)
+      Res = Or(Nor(A, B), Xor(Xnor(A, B), C));
+    break;
+  case 0x6c:
+    if (ABCIsConst)
+      Res = Xor(And(A, C), B);
+    break;
+  case 0x6d:
+    if (ABCIsConst)
+      Res = Xor(Or(Xnor(A, B), Nor(A, C)), C);
+    break;
+  case 0x6e:
+    if (ABCIsConst)
+      Res = Or(Nor(A, Not(B)), Xor(B, C));
+    break;
+  case 0x6f:
+    if (ABCIsConst)
+      Res = Nand(A, Xnor(B, C));
+    break;
+  case 0x70:
+    if (ABCIsConst)
+      Res = And(A, Nand(B, C));
+    break;
+  case 0x71:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xor(A, B), Xor(A, C)), A);
+    break;
+  case 0x72:
+    if (ABCIsConst)
+      Res = Xor(Or(Xor(A, B), C), B);
+    break;
+  case 0x73:
+    if (ABCIsConst)
+      Res = Nand(Nand(A, Not(C)), B);
+    break;
+  case 0x74:
+    if (ABCIsConst)
+      Res = Xor(Or(Xor(A, C), B), C);
+    break;
+  case 0x75:
+    if (ABCIsConst)
+      Res = Nand(Nand(A, Not(B)), C);
+    break;
+  case 0x76:
+    if (ABCIsConst)
+      Res = Xor(B, Or(Nor(B, Not(A)), C));
+    break;
+  case 0x77:
+    if (BCIsConst)
+      Res = Nand(B, C);
+    break;
+  case 0x78:
+    if (ABCIsConst)
+      Res = Xor(A, And(B, C));
+    break;
+  case 0x79:
+    if (ABCIsConst)
+      Res = Xor(Or(Xnor(A, B), Nor(B, C)), C);
+    break;
+  case 0x7a:
+    if (ABCIsConst)
+      Res = Or(Xor(A, C), Nor(B, Not(A)));
+    break;
+  case 0x7b:
+    if (ABCIsConst)
+      Res = Nand(Xnor(A, C), B);
+    break;
+  case 0x7c:
+    if (ABCIsConst)
+      Res = Or(Xor(A, B), Nor(C, Not(A)));
+    break;
+  case 0x7d:
+    if (ABCIsConst)
+      Res = Nand(Xnor(A, B), C);
+    break;
+  case 0x7e:
+    if (ABCIsConst)
+      Res = Or(Xor(A, B), Xor(A, C));
+    break;
+  case 0x7f:
+    if (ABCIsConst)
+      Res = Nand(And(A, B), C);
+    break;
+  case 0x80:
+    if (ABCIsConst)
+      Res = And(And(A, B), C);
+    break;
+  case 0x81:
+    if (ABCIsConst)
+      Res = Nor(Xor(A, B), Xor(A, C));
+    break;
+  case 0x82:
+    if (ABCIsConst)
+      Res = And(Xnor(A, B), C);
+    break;
+  case 0x83:
+    if (ABCIsConst)
+      Res = Nor(Xor(A, B), Nor(C, Not(A)));
+    break;
+  case 0x84:
+    if (ABCIsConst)
+      Res = And(Xnor(A, C), B);
+    break;
+  case 0x85:
+    if (ABCIsConst)
+      Res = Nor(Xor(A, C), Nor(B, Not(A)));
+    break;
+  case 0x86:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xnor(A, B), Nor(B, C)), C);
+    break;
+  case 0x87:
+    if (ABCIsConst)
+      Res = Xor(A, Nand(B, C));
+    break;
+  case 0x88:
+    Res = And(B, C);
+    break;
+  case 0x89:
+    if (ABCIsConst)
+      Res = Xor(B, Nor(Nor(B, Not(A)), C));
+    break;
+  case 0x8a:
+    if (ABCIsConst)
+      Res = And(Nand(A, Not(B)), C);
+    break;
+  case 0x8b:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xor(A, C), B), C);
+    break;
+  case 0x8c:
+    if (ABCIsConst)
+      Res = And(Nand(A, Not(C)), B);
+    break;
+  case 0x8d:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xor(A, B), C), B);
+    break;
+  case 0x8e:
+    if (ABCIsConst)
+      Res = Xor(Or(Xor(A, B), Xor(A, C)), A);
+    break;
+  case 0x8f:
+    if (ABCIsConst)
+      Res = Nand(A, Nand(B, C));
+    break;
+  case 0x90:
+    if (ABCIsConst)
+      Res = And(A, Xnor(B, C));
+    break;
+  case 0x91:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, Not(B)), Xor(B, C));
+    break;
+  case 0x92:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xnor(A, B), Nor(A, C)), C);
+    break;
+  case 0x93:
+    if (ABCIsConst)
+      Res = Xor(Nand(A, C), B);
+    break;
+  case 0x94:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, B), Xor(Xnor(A, B), C));
+    break;
+  case 0x95:
+    if (ABCIsConst)
+      Res = Xor(Nand(A, B), C);
+    break;
+  case 0x96:
+    if (ABCIsConst)
+      Res = Xor(Xor(A, B), C);
+    break;
+  case 0x97:
+    if (ABCIsConst)
+      Res = Xor(Xor(A, B), Or(Nor(A, B), C));
+    break;
+  case 0x98:
+    if (ABCIsConst)
+      Res = Nor(Nor(A, B), Xor(B, C));
+    break;
+  case 0x99:
+    if (BCIsConst)
+      Res = Xnor(B, C);
+    break;
+  case 0x9a:
+    if (ABCIsConst)
+      Res = Xor(Nor(B, Not(A)), C);
+    break;
+  case 0x9b:
+    if (ABCIsConst)
+      Res = Or(Nor(A, B), Xnor(B, C));
+    break;
+  case 0x9c:
+    if (ABCIsConst)
+      Res = Xor(B, Nor(C, Not(A)));
+    break;
+  case 0x9d:
+    if (ABCIsConst)
+      Res = Or(Nor(A, C), Xnor(B, C));
+    break;
+  case 0x9e:
+    if (ABCIsConst)
+      Res = Xor(And(Xor(A, B), Nand(B, C)), C);
+    break;
+  case 0x9f:
+    if (ABCIsConst)
+      Res = Nand(A, Xor(B, C));
+    break;
+  case 0xa0:
+    Res = And(A, C);
+    break;
+  case 0xa1:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(Nor(A, Not(B)), C));
+    break;
+  case 0xa2:
+    if (ABCIsConst)
+      Res = And(Or(A, Not(B)), C);
+    break;
+  case 0xa3:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xor(B, C), A), C);
+    break;
+  case 0xa4:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(Nor(A, B), C));
+    break;
+  case 0xa5:
+    if (ACIsConst)
+      Res = Xnor(A, C);
+    break;
+  case 0xa6:
+    if (ABCIsConst)
+      Res = Xor(Nor(A, Not(B)), C);
+    break;
+  case 0xa7:
+    if (ABCIsConst)
+      Res = Or(Nor(A, B), Xnor(A, C));
+    break;
+  case 0xa8:
+    if (ABCIsConst)
+      Res = And(Or(A, B), C);
+    break;
+  case 0xa9:
+    if (ABCIsConst)
+      Res = Xor(Nor(A, B), C);
+    break;
+  case 0xaa:
+    Res = C;
+    break;
+  case 0xab:
+    if (ABCIsConst)
+      Res = Or(Nor(A, B), C);
+    break;
+  case 0xac:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xnor(B, C), A), C);
+    break;
+  case 0xad:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, C), And(B, C));
+    break;
+  case 0xae:
+    if (ABCIsConst)
+      Res = Or(Nor(A, Not(B)), C);
+    break;
+  case 0xaf:
+    if (ACIsConst)
+      Res = Or(C, Not(A));
+    break;
+  case 0xb0:
+    if (ABCIsConst)
+      Res = And(A, Nand(B, Not(C)));
+    break;
+  case 0xb1:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(Xor(A, B), C));
+    break;
+  case 0xb2:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xor(A, B), Xnor(A, C)), A);
+    break;
+  case 0xb3:
+    if (ABCIsConst)
+      Res = Nand(Nand(A, C), B);
+    break;
+  case 0xb4:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(C, Not(B)));
+    break;
+  case 0xb5:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, C), Nor(B, C));
+    break;
+  case 0xb6:
+    if (ABCIsConst)
+      Res = Xor(And(Xor(A, B), Nand(A, C)), C);
+    break;
+  case 0xb7:
+    if (ABCIsConst)
+      Res = Nand(Xor(A, C), B);
+    break;
+  case 0xb8:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xnor(A, C), B), C);
+    break;
+  case 0xb9:
+    if (ABCIsConst)
+      Res = Xor(Nor(And(A, C), B), C);
+    break;
+  case 0xba:
+    if (ABCIsConst)
+      Res = Or(Nor(B, Not(A)), C);
+    break;
+  case 0xbb:
+    if (BCIsConst)
+      Res = Or(C, Not(B));
+    break;
+  case 0xbc:
+    if (ABCIsConst)
+      Res = Xor(A, And(Nand(A, C), B));
+    break;
+  case 0xbd:
+    if (ABCIsConst)
+      Res = Or(Xor(A, B), Xnor(A, C));
+    break;
+  case 0xbe:
+    if (ABCIsConst)
+      Res = Or(Xor(A, B), C);
+    break;
+  case 0xbf:
+    if (ABCIsConst)
+      Res = Or(Nand(A, B), C);
+    break;
+  case 0xc0:
+    Res = And(A, B);
+    break;
+  case 0xc1:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(Nor(A, Not(C)), B));
+    break;
+  case 0xc2:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(Nor(A, C), B));
+    break;
+  case 0xc3:
+    if (ABIsConst)
+      Res = Xnor(A, B);
+    break;
+  case 0xc4:
+    if (ABCIsConst)
+      Res = And(Or(A, Not(C)), B);
+    break;
+  case 0xc5:
+    if (ABCIsConst)
+      Res = Xor(B, Nor(A, Xor(B, C)));
+    break;
+  case 0xc6:
+    if (ABCIsConst)
+      Res = Xor(Nor(A, Not(C)), B);
+    break;
+  case 0xc7:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, B), Nor(A, C));
+    break;
+  case 0xc8:
+    if (ABCIsConst)
+      Res = And(Or(A, C), B);
+    break;
+  case 0xc9:
+    if (ABCIsConst)
+      Res = Xor(Nor(A, C), B);
+    break;
+  case 0xca:
+    if (ABCIsConst)
+      Res = Xor(B, Nor(A, Xnor(B, C)));
+    break;
+  case 0xcb:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, B), And(B, C));
+    break;
+  case 0xcc:
+    Res = B;
+    break;
+  case 0xcd:
+    if (ABCIsConst)
+      Res = Or(Nor(A, C), B);
+    break;
+  case 0xce:
+    if (ABCIsConst)
+      Res = Or(Nor(A, Not(C)), B);
+    break;
+  case 0xcf:
+    if (ABIsConst)
+      Res = Or(B, Not(A));
+    break;
+  case 0xd0:
+    if (ABCIsConst)
+      Res = And(A, Or(B, Not(C)));
+    break;
+  case 0xd1:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(Xor(A, C), B));
+    break;
+  case 0xd2:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(B, Not(C)));
+    break;
+  case 0xd3:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, B), Nor(B, C));
+    break;
+  case 0xd4:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xnor(A, B), Xor(A, C)), A);
+    break;
+  case 0xd5:
+    if (ABCIsConst)
+      Res = Nand(Nand(A, B), C);
+    break;
+  case 0xd6:
+    if (ABCIsConst)
+      Res = Xor(Xor(A, B), Or(And(A, B), C));
+    break;
+  case 0xd7:
+    if (ABCIsConst)
+      Res = Nand(Xor(A, B), C);
+    break;
+  case 0xd8:
+    if (ABCIsConst)
+      Res = Xor(Nor(Xnor(A, B), C), B);
+    break;
+  case 0xd9:
+    if (ABCIsConst)
+      Res = Or(And(A, B), Xnor(B, C));
+    break;
+  case 0xda:
+    if (ABCIsConst)
+      Res = Xor(A, And(Nand(A, B), C));
+    break;
+  case 0xdb:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, B), Xor(A, C));
+    break;
+  case 0xdc:
+    if (ABCIsConst)
+      Res = Or(B, Nor(C, Not(A)));
+    break;
+  case 0xdd:
+    if (BCIsConst)
+      Res = Or(B, Not(C));
+    break;
+  case 0xde:
+    if (ABCIsConst)
+      Res = Or(Xor(A, C), B);
+    break;
+  case 0xdf:
+    if (ABCIsConst)
+      Res = Or(Nand(A, C), B);
+    break;
+  case 0xe0:
+    if (ABCIsConst)
+      Res = And(A, Or(B, C));
+    break;
+  case 0xe1:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(B, C));
+    break;
+  case 0xe2:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(Xnor(A, C), B));
+    break;
+  case 0xe3:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(And(A, C), B));
+    break;
+  case 0xe4:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(Xnor(A, B), C));
+    break;
+  case 0xe5:
+    if (ABCIsConst)
+      Res = Xor(A, Nor(And(A, B), C));
+    break;
+  case 0xe6:
+    if (ABCIsConst)
+      Res = Or(And(A, B), Xor(B, C));
+    break;
+  case 0xe7:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, B), Xnor(A, C));
+    break;
+  case 0xe8:
+    if (ABCIsConst)
+      Res = Xor(Or(A, B), Nor(Xnor(A, B), C));
+    break;
+  case 0xe9:
+    if (ABCIsConst)
+      Res = Xor(Xor(A, B), Nand(Nand(A, B), C));
+    break;
+  case 0xea:
+    if (ABCIsConst)
+      Res = Or(And(A, B), C);
+    break;
+  case 0xeb:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, B), C);
+    break;
+  case 0xec:
+    if (ABCIsConst)
+      Res = Or(And(A, C), B);
+    break;
+  case 0xed:
+    if (ABCIsConst)
+      Res = Or(Xnor(A, C), B);
+    break;
+  case 0xee:
+    Res = Or(B, C);
+    break;
+  case 0xef:
+    if (ABCIsConst)
+      Res = Nand(A, Nor(B, C));
+    break;
+  case 0xf0:
+    Res = A;
+    break;
+  case 0xf1:
+    if (ABCIsConst)
+      Res = Or(A, Nor(B, C));
+    break;
+  case 0xf2:
+    if (ABCIsConst)
+      Res = Or(A, Nor(B, Not(C)));
+    break;
+  case 0xf3:
+    if (ABIsConst)
+      Res = Or(A, Not(B));
+    break;
+  case 0xf4:
+    if (ABCIsConst)
+      Res = Or(A, Nor(C, Not(B)));
+    break;
+  case 0xf5:
+    if (ACIsConst)
+      Res = Or(A, Not(C));
+    break;
+  case 0xf6:
+    if (ABCIsConst)
+      Res = Or(A, Xor(B, C));
+    break;
+  case 0xf7:
+    if (ABCIsConst)
+      Res = Or(A, Nand(B, C));
+    break;
+  case 0xf8:
+    if (ABCIsConst)
+      Res = Or(A, And(B, C));
+    break;
+  case 0xf9:
+    if (ABCIsConst)
+      Res = Or(A, Xnor(B, C));
+    break;
+  case 0xfa:
+    Res = Or(A, C);
+    break;
+  case 0xfb:
+    if (ABCIsConst)
+      Res = Nand(Nor(A, C), B);
+    break;
+  case 0xfc:
+    Res = Or(A, B);
+    break;
+  case 0xfd:
+    if (ABCIsConst)
+      Res = Nand(Nor(A, B), C);
+    break;
+  case 0xfe:
+    if (ABCIsConst)
+      Res = Or(Or(A, B), C);
+    break;
+  case 0xff:
+    Res = {Constant::getAllOnesValue(Ty), 0xff};
+    break;
+  }
+
+  assert((Res.first == nullptr || Res.second == Imm) &&
+         "Simplification of ternary logic does not verify!");
+  return Res.first;
 }
 
 static Value *simplifyX86insertps(const IntrinsicInst &II,
@@ -923,6 +2104,42 @@ static Value *simplifyX86vpermv(const IntrinsicInst &II,
 
   auto V1 = II.getArgOperand(0);
   return Builder.CreateShuffleVector(V1, ArrayRef(Indexes, Size));
+}
+
+/// Attempt to convert vpermi2/vpermt2 to shufflevector if the mask is constant.
+static Value *simplifyX86vpermv3(const IntrinsicInst &II,
+                                 InstCombiner::BuilderTy &Builder) {
+  auto *V = dyn_cast<Constant>(II.getArgOperand(1));
+  if (!V)
+    return nullptr;
+
+  auto *VecTy = cast<FixedVectorType>(II.getType());
+  unsigned Size = VecTy->getNumElements();
+  assert((Size == 2 || Size == 4 || Size == 8 || Size == 16 || Size == 32 ||
+          Size == 64) &&
+         "Unexpected shuffle mask size");
+
+  // Construct a shuffle mask from constant integers or UNDEFs.
+  int Indexes[64];
+
+  for (unsigned I = 0; I < Size; ++I) {
+    Constant *COp = V->getAggregateElement(I);
+    if (!COp || (!isa<UndefValue>(COp) && !isa<ConstantInt>(COp)))
+      return nullptr;
+
+    if (isa<UndefValue>(COp)) {
+      Indexes[I] = -1;
+      continue;
+    }
+
+    uint32_t Index = cast<ConstantInt>(COp)->getZExtValue();
+    Index &= (2 * Size) - 1;
+    Indexes[I] = Index;
+  }
+
+  auto V1 = II.getArgOperand(0);
+  auto V2 = II.getArgOperand(2);
+  return Builder.CreateShuffleVector(V1, V2, ArrayRef(Indexes, Size));
 }
 
 std::optional<Instruction *>
@@ -1409,6 +2626,46 @@ X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
     }
     break;
 
+  case Intrinsic::x86_sse2_pmulh_w:
+  case Intrinsic::x86_avx2_pmulh_w:
+  case Intrinsic::x86_avx512_pmulh_w_512:
+    if (Value *V = simplifyX86pmulh(II, IC.Builder, true, false)) {
+      return IC.replaceInstUsesWith(II, V);
+    }
+    break;
+
+  case Intrinsic::x86_sse2_pmulhu_w:
+  case Intrinsic::x86_avx2_pmulhu_w:
+  case Intrinsic::x86_avx512_pmulhu_w_512:
+    if (Value *V = simplifyX86pmulh(II, IC.Builder, false, false)) {
+      return IC.replaceInstUsesWith(II, V);
+    }
+    break;
+
+  case Intrinsic::x86_ssse3_pmul_hr_sw_128:
+  case Intrinsic::x86_avx2_pmul_hr_sw:
+  case Intrinsic::x86_avx512_pmul_hr_sw_512:
+    if (Value *V = simplifyX86pmulh(II, IC.Builder, true, true)) {
+      return IC.replaceInstUsesWith(II, V);
+    }
+    break;
+
+  case Intrinsic::x86_sse2_pmadd_wd:
+  case Intrinsic::x86_avx2_pmadd_wd:
+  case Intrinsic::x86_avx512_pmaddw_d_512:
+    if (Value *V = simplifyX86pmadd(II, IC.Builder, true)) {
+      return IC.replaceInstUsesWith(II, V);
+    }
+    break;
+
+  case Intrinsic::x86_ssse3_pmadd_ub_sw_128:
+  case Intrinsic::x86_avx2_pmadd_ub_sw:
+  case Intrinsic::x86_avx512_pmaddubs_w_512:
+    if (Value *V = simplifyX86pmadd(II, IC.Builder, false)) {
+      return IC.replaceInstUsesWith(II, V);
+    }
+    break;
+
   case Intrinsic::x86_pclmulqdq:
   case Intrinsic::x86_pclmulqdq_256:
   case Intrinsic::x86_pclmulqdq_512: {
@@ -1620,25 +2877,58 @@ X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
 
     // Constant Mask - select 1st/2nd argument lane based on top bit of mask.
     if (auto *ConstantMask = dyn_cast<ConstantDataVector>(Mask)) {
-      Constant *NewSelector = getNegativeIsTrueBoolVec(ConstantMask);
+      Constant *NewSelector =
+          getNegativeIsTrueBoolVec(ConstantMask, IC.getDataLayout());
       return SelectInst::Create(NewSelector, Op1, Op0, "blendv");
+    }
+
+    Mask = InstCombiner::peekThroughBitcast(Mask);
+
+    // Peek through a one-use shuffle - VectorCombine should have simplified
+    // this for cases where we're splitting wider vectors to use blendv
+    // intrinsics.
+    Value *MaskSrc = nullptr;
+    ArrayRef<int> ShuffleMask;
+    if (match(Mask, m_OneUse(m_Shuffle(m_Value(MaskSrc), m_Undef(),
+                                       m_Mask(ShuffleMask))))) {
+      // Bail if the shuffle was irregular or contains undefs.
+      int NumElts = cast<FixedVectorType>(MaskSrc->getType())->getNumElements();
+      if (NumElts < (int)ShuffleMask.size() || !isPowerOf2_32(NumElts) ||
+          any_of(ShuffleMask,
+                 [NumElts](int M) { return M < 0 || M >= NumElts; }))
+        break;
+      Mask = InstCombiner::peekThroughBitcast(MaskSrc);
     }
 
     // Convert to a vector select if we can bypass casts and find a boolean
     // vector condition value.
     Value *BoolVec;
-    Mask = InstCombiner::peekThroughBitcast(Mask);
-    if (match(Mask, PatternMatch::m_SExt(PatternMatch::m_Value(BoolVec))) &&
+    if (match(Mask, m_SExt(m_Value(BoolVec))) &&
         BoolVec->getType()->isVectorTy() &&
         BoolVec->getType()->getScalarSizeInBits() == 1) {
-      assert(Mask->getType()->getPrimitiveSizeInBits() ==
-                 II.getType()->getPrimitiveSizeInBits() &&
+      auto *MaskTy = cast<FixedVectorType>(Mask->getType());
+      auto *OpTy = cast<FixedVectorType>(II.getType());
+      unsigned NumMaskElts = MaskTy->getNumElements();
+      unsigned NumOperandElts = OpTy->getNumElements();
+
+      // If we peeked through a shuffle, reapply the shuffle to the bool vector.
+      if (MaskSrc) {
+        unsigned NumMaskSrcElts =
+            cast<FixedVectorType>(MaskSrc->getType())->getNumElements();
+        NumMaskElts = (ShuffleMask.size() * NumMaskElts) / NumMaskSrcElts;
+        // Multiple mask bits maps to the same operand element - bail out.
+        if (NumMaskElts > NumOperandElts)
+          break;
+        SmallVector<int> ScaledMask;
+        if (!llvm::scaleShuffleMaskElts(NumMaskElts, ShuffleMask, ScaledMask))
+          break;
+        BoolVec = IC.Builder.CreateShuffleVector(BoolVec, ScaledMask);
+        MaskTy = FixedVectorType::get(MaskTy->getElementType(), NumMaskElts);
+      }
+      assert(MaskTy->getPrimitiveSizeInBits() ==
+                 OpTy->getPrimitiveSizeInBits() &&
              "Not expecting mask and operands with different sizes");
 
-      unsigned NumMaskElts =
-          cast<FixedVectorType>(Mask->getType())->getNumElements();
-      unsigned NumOperandElts =
-          cast<FixedVectorType>(II.getType())->getNumElements();
       if (NumMaskElts == NumOperandElts) {
         return SelectInst::Create(BoolVec, Op1, Op0);
       }
@@ -1646,8 +2936,8 @@ X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
       // If the mask has less elements than the operands, each mask bit maps to
       // multiple elements of the operands. Bitcast back and forth.
       if (NumMaskElts < NumOperandElts) {
-        Value *CastOp0 = IC.Builder.CreateBitCast(Op0, Mask->getType());
-        Value *CastOp1 = IC.Builder.CreateBitCast(Op1, Mask->getType());
+        Value *CastOp0 = IC.Builder.CreateBitCast(Op0, MaskTy);
+        Value *CastOp1 = IC.Builder.CreateBitCast(Op1, MaskTy);
         Value *Sel = IC.Builder.CreateSelect(BoolVec, CastOp1, CastOp0);
         return new BitCastInst(Sel, II.getType());
       }
@@ -1694,6 +2984,29 @@ X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
     }
     break;
 
+  case Intrinsic::x86_avx512_vpermi2var_d_128:
+  case Intrinsic::x86_avx512_vpermi2var_d_256:
+  case Intrinsic::x86_avx512_vpermi2var_d_512:
+  case Intrinsic::x86_avx512_vpermi2var_hi_128: 
+  case Intrinsic::x86_avx512_vpermi2var_hi_256: 
+  case Intrinsic::x86_avx512_vpermi2var_hi_512: 
+  case Intrinsic::x86_avx512_vpermi2var_pd_128: 
+  case Intrinsic::x86_avx512_vpermi2var_pd_256: 
+  case Intrinsic::x86_avx512_vpermi2var_pd_512: 
+  case Intrinsic::x86_avx512_vpermi2var_ps_128: 
+  case Intrinsic::x86_avx512_vpermi2var_ps_256: 
+  case Intrinsic::x86_avx512_vpermi2var_ps_512: 
+  case Intrinsic::x86_avx512_vpermi2var_q_128:
+  case Intrinsic::x86_avx512_vpermi2var_q_256:
+  case Intrinsic::x86_avx512_vpermi2var_q_512:
+  case Intrinsic::x86_avx512_vpermi2var_qi_128:
+  case Intrinsic::x86_avx512_vpermi2var_qi_256:
+  case Intrinsic::x86_avx512_vpermi2var_qi_512:
+    if (Value *V = simplifyX86vpermv3(II, IC.Builder)) {
+      return IC.replaceInstUsesWith(II, V);
+    }
+    break;
+
   case Intrinsic::x86_avx_maskload_ps:
   case Intrinsic::x86_avx_maskload_pd:
   case Intrinsic::x86_avx_maskload_ps_256:
@@ -1728,6 +3041,16 @@ X86TTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
     }
     break;
 
+  case Intrinsic::x86_avx512_pternlog_d_128:
+  case Intrinsic::x86_avx512_pternlog_d_256:
+  case Intrinsic::x86_avx512_pternlog_d_512:
+  case Intrinsic::x86_avx512_pternlog_q_128:
+  case Intrinsic::x86_avx512_pternlog_q_256:
+  case Intrinsic::x86_avx512_pternlog_q_512:
+    if (Value *V = simplifyTernarylogic(II, IC.Builder)) {
+      return IC.replaceInstUsesWith(II, V);
+    }
+    break;
   default:
     break;
   }
@@ -1948,6 +3271,21 @@ std::optional<Value *> X86TTIImpl::simplifyDemandedVectorEltsIntrinsic(
     break;
   }
 
+  case Intrinsic::x86_sse2_pmulh_w:
+  case Intrinsic::x86_avx2_pmulh_w:
+  case Intrinsic::x86_avx512_pmulh_w_512:
+  case Intrinsic::x86_sse2_pmulhu_w:
+  case Intrinsic::x86_avx2_pmulhu_w:
+  case Intrinsic::x86_avx512_pmulhu_w_512:
+  case Intrinsic::x86_ssse3_pmul_hr_sw_128:
+  case Intrinsic::x86_avx2_pmul_hr_sw:
+  case Intrinsic::x86_avx512_pmul_hr_sw_512: {
+    simplifyAndSetOp(&II, 0, DemandedElts, UndefElts);
+    simplifyAndSetOp(&II, 1, DemandedElts, UndefElts2);
+    // NOTE: mulh(undef,undef) != undef.
+    break;
+  }
+
   case Intrinsic::x86_sse2_packssdw_128:
   case Intrinsic::x86_sse2_packsswb_128:
   case Intrinsic::x86_sse2_packuswb_128:
@@ -1996,6 +3334,25 @@ std::optional<Value *> X86TTIImpl::simplifyDemandedVectorEltsIntrinsic(
         UndefElts |= LaneElts;
       }
     }
+    break;
+  }
+
+  case Intrinsic::x86_sse2_pmadd_wd:
+  case Intrinsic::x86_avx2_pmadd_wd:
+  case Intrinsic::x86_avx512_pmaddw_d_512:
+  case Intrinsic::x86_ssse3_pmadd_ub_sw_128:
+  case Intrinsic::x86_avx2_pmadd_ub_sw:
+  case Intrinsic::x86_avx512_pmaddubs_w_512: {
+    // PMADD - demand both src elements that map to each dst element.
+    auto *ArgTy = II.getArgOperand(0)->getType();
+    unsigned InnerVWidth = cast<FixedVectorType>(ArgTy)->getNumElements();
+    assert((VWidth * 2) == InnerVWidth && "Unexpected input size");
+    APInt OpDemandedElts = APIntOps::ScaleBitMask(DemandedElts, InnerVWidth);
+    APInt Op0UndefElts(InnerVWidth, 0);
+    APInt Op1UndefElts(InnerVWidth, 0);
+    simplifyAndSetOp(&II, 0, OpDemandedElts, Op0UndefElts);
+    simplifyAndSetOp(&II, 1, OpDemandedElts, Op1UndefElts);
+    // NOTE: madd(undef,undef) != undef.
     break;
   }
 

@@ -29,19 +29,13 @@
 using namespace llvm;
 
 namespace llvm {
-void initializeGenericToNVVMPass(PassRegistry &);
+void initializeGenericToNVVMLegacyPassPass(PassRegistry &);
 }
 
 namespace {
-class GenericToNVVM : public ModulePass {
+class GenericToNVVM {
 public:
-  static char ID;
-
-  GenericToNVVM() : ModulePass(ID) {}
-
-  bool runOnModule(Module &M) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {}
+  bool runOnModule(Module &M);
 
 private:
   Value *remapConstant(Module *M, Function *F, Constant *C,
@@ -59,15 +53,6 @@ private:
 };
 } // end namespace
 
-char GenericToNVVM::ID = 0;
-
-ModulePass *llvm::createGenericToNVVMPass() { return new GenericToNVVM(); }
-
-INITIALIZE_PASS(
-    GenericToNVVM, "generic-to-nvvm",
-    "Ensure that the global variables are in the global address space", false,
-    false)
-
 bool GenericToNVVM::runOnModule(Module &M) {
   // Create a clone of each global variable that has the default address space.
   // The clone is created with the global address space  specifier, and the pair
@@ -77,7 +62,7 @@ bool GenericToNVVM::runOnModule(Module &M) {
   for (GlobalVariable &GV : llvm::make_early_inc_range(M.globals())) {
     if (GV.getType()->getAddressSpace() == llvm::ADDRESS_SPACE_GENERIC &&
         !llvm::isTexture(GV) && !llvm::isSurface(GV) && !llvm::isSampler(GV) &&
-        !GV.getName().startswith("llvm.")) {
+        !GV.getName().starts_with("llvm.")) {
       GlobalVariable *NewGV = new GlobalVariable(
           M, GV.getValueType(), GV.isConstant(), GV.getLinkage(),
           GV.hasInitializer() ? GV.getInitializer() : nullptr, "", &GV,
@@ -251,14 +236,6 @@ Value *GenericToNVVM::remapConstantExpr(Module *M, Function *F, ConstantExpr *C,
   // the converted operands.
   unsigned Opcode = C->getOpcode();
   switch (Opcode) {
-  case Instruction::ICmp:
-    // CompareConstantExpr (icmp)
-    return Builder.CreateICmp(CmpInst::Predicate(C->getPredicate()),
-                              NewOperands[0], NewOperands[1]);
-  case Instruction::FCmp:
-    // CompareConstantExpr (fcmp)
-    llvm_unreachable("Address space conversion should have no effect "
-                     "on float point CompareConstantExpr (fcmp)!");
   case Instruction::ExtractElement:
     // ExtractElementConstantExpr
     return Builder.CreateExtractElement(NewOperands[0], NewOperands[1]);
@@ -292,4 +269,35 @@ Value *GenericToNVVM::remapConstantExpr(Module *M, Function *F, ConstantExpr *C,
     }
     llvm_unreachable("GenericToNVVM encountered an unsupported ConstantExpr");
   }
+}
+
+namespace {
+class GenericToNVVMLegacyPass : public ModulePass {
+public:
+  static char ID;
+
+  GenericToNVVMLegacyPass() : ModulePass(ID) {}
+
+  bool runOnModule(Module &M) override;
+};
+} // namespace
+
+char GenericToNVVMLegacyPass::ID = 0;
+
+ModulePass *llvm::createGenericToNVVMLegacyPass() {
+  return new GenericToNVVMLegacyPass();
+}
+
+INITIALIZE_PASS(
+    GenericToNVVMLegacyPass, "generic-to-nvvm",
+    "Ensure that the global variables are in the global address space", false,
+    false)
+
+bool GenericToNVVMLegacyPass::runOnModule(Module &M) {
+  return GenericToNVVM().runOnModule(M);
+}
+
+PreservedAnalyses GenericToNVVMPass::run(Module &M, ModuleAnalysisManager &AM) {
+  return GenericToNVVM().runOnModule(M) ? PreservedAnalyses::none()
+                                        : PreservedAnalyses::all();
 }

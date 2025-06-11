@@ -136,9 +136,14 @@ Value *InstCombinerImpl::reassociateShiftAmtsOfTwoSameDirectionShifts(
 
   assert(IdenticalShOpcodes && "Should not get here with different shifts.");
 
-  // All good, we can do this fold.
-  NewShAmt = ConstantExpr::getZExtOrBitCast(NewShAmt, X->getType());
+  if (NewShAmt->getType() != X->getType()) {
+    NewShAmt = ConstantFoldCastOperand(Instruction::ZExt, NewShAmt,
+                                       X->getType(), SQ.DL);
+    if (!NewShAmt)
+      return nullptr;
+  }
 
+  // All good, we can do this fold.
   BinaryOperator *NewShift = BinaryOperator::Create(ShiftOpcode, X, NewShAmt);
 
   // The flags can only be propagated if there wasn't a trunc.
@@ -211,7 +216,7 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
   // ((1 << MaskShAmt) - 1)
   auto MaskA = m_Add(m_Shl(m_One(), m_Value(MaskShAmt)), m_AllOnes());
   // (~(-1 << maskNbits))
-  auto MaskB = m_Xor(m_Shl(m_AllOnes(), m_Value(MaskShAmt)), m_AllOnes());
+  auto MaskB = m_Not(m_Shl(m_AllOnes(), m_Value(MaskShAmt)));
   // (-1 l>> MaskShAmt)
   auto MaskC = m_LShr(m_AllOnes(), m_Value(MaskShAmt));
   // ((-1 << MaskShAmt) l>> MaskShAmt)
@@ -245,11 +250,18 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
     SumOfShAmts = Constant::replaceUndefsWith(
         SumOfShAmts, ConstantInt::get(SumOfShAmts->getType()->getScalarType(),
                                       ExtendedTy->getScalarSizeInBits()));
-    auto *ExtendedSumOfShAmts = ConstantExpr::getZExt(SumOfShAmts, ExtendedTy);
+    auto *ExtendedSumOfShAmts = ConstantFoldCastOperand(
+        Instruction::ZExt, SumOfShAmts, ExtendedTy, Q.DL);
+    if (!ExtendedSumOfShAmts)
+      return nullptr;
+
     // And compute the mask as usual: ~(-1 << (SumOfShAmts))
     auto *ExtendedAllOnes = ConstantExpr::getAllOnesValue(ExtendedTy);
-    auto *ExtendedInvertedMask =
-        ConstantExpr::getShl(ExtendedAllOnes, ExtendedSumOfShAmts);
+    Constant *ExtendedInvertedMask = ConstantFoldBinaryOpOperands(
+        Instruction::Shl, ExtendedAllOnes, ExtendedSumOfShAmts, Q.DL);
+    if (!ExtendedInvertedMask)
+      return nullptr;
+
     NewMask = ConstantExpr::getNot(ExtendedInvertedMask);
   } else if (match(Masked, m_c_And(m_CombineOr(MaskC, MaskD), m_Value(X))) ||
              match(Masked, m_Shr(m_Shl(m_Value(X), m_Value(MaskShAmt)),
@@ -278,16 +290,22 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
     ShAmtsDiff = Constant::replaceUndefsWith(
         ShAmtsDiff, ConstantInt::get(ShAmtsDiff->getType()->getScalarType(),
                                      -WidestTyBitWidth));
-    auto *ExtendedNumHighBitsToClear = ConstantExpr::getZExt(
+    auto *ExtendedNumHighBitsToClear = ConstantFoldCastOperand(
+        Instruction::ZExt,
         ConstantExpr::getSub(ConstantInt::get(ShAmtsDiff->getType(),
                                               WidestTyBitWidth,
                                               /*isSigned=*/false),
                              ShAmtsDiff),
-        ExtendedTy);
+        ExtendedTy, Q.DL);
+    if (!ExtendedNumHighBitsToClear)
+      return nullptr;
+
     // And compute the mask as usual: (-1 l>> (NumHighBitsToClear))
     auto *ExtendedAllOnes = ConstantExpr::getAllOnesValue(ExtendedTy);
-    NewMask =
-        ConstantExpr::getLShr(ExtendedAllOnes, ExtendedNumHighBitsToClear);
+    NewMask = ConstantFoldBinaryOpOperands(Instruction::LShr, ExtendedAllOnes,
+                                           ExtendedNumHighBitsToClear, Q.DL);
+    if (!NewMask)
+      return nullptr;
   } else
     return nullptr; // Don't know anything about this pattern.
 
@@ -322,15 +340,20 @@ dropRedundantMaskingOfLeftShiftInput(BinaryOperator *OuterShift,
   return BinaryOperator::Create(Instruction::And, NewShift, NewMask);
 }
 
-/// If we have a shift-by-constant of a bitwise logic op that itself has a
-/// shift-by-constant operand with identical opcode, we may be able to convert
-/// that into 2 independent shifts followed by the logic op. This eliminates a
-/// a use of an intermediate value (reduces dependency chain).
-static Instruction *foldShiftOfShiftedLogic(BinaryOperator &I,
+/// If we have a shift-by-constant of a bin op (bitwise logic op or add/sub w/
+/// shl) that itself has a shift-by-constant operand with identical opcode, we
+/// may be able to convert that into 2 independent shifts followed by the logic
+/// op. This eliminates a use of an intermediate value (reduces dependency
+/// chain).
+static Instruction *foldShiftOfShiftedBinOp(BinaryOperator &I,
                                             InstCombiner::BuilderTy &Builder) {
   assert(I.isShift() && "Expected a shift as input");
-  auto *LogicInst = dyn_cast<BinaryOperator>(I.getOperand(0));
-  if (!LogicInst || !LogicInst->isBitwiseLogicOp() || !LogicInst->hasOneUse())
+  auto *BinInst = dyn_cast<BinaryOperator>(I.getOperand(0));
+  if (!BinInst ||
+      (!BinInst->isBitwiseLogicOp() &&
+       BinInst->getOpcode() != Instruction::Add &&
+       BinInst->getOpcode() != Instruction::Sub) ||
+      !BinInst->hasOneUse())
     return nullptr;
 
   Constant *C0, *C1;
@@ -338,33 +361,45 @@ static Instruction *foldShiftOfShiftedLogic(BinaryOperator &I,
     return nullptr;
 
   Instruction::BinaryOps ShiftOpcode = I.getOpcode();
+  // Transform for add/sub only works with shl.
+  if ((BinInst->getOpcode() == Instruction::Add ||
+       BinInst->getOpcode() == Instruction::Sub) &&
+      ShiftOpcode != Instruction::Shl)
+    return nullptr;
+
   Type *Ty = I.getType();
 
-  // Find a matching one-use shift by constant. The fold is not valid if the sum
+  // Find a matching shift by constant. The fold is not valid if the sum
   // of the shift values equals or exceeds bitwidth.
-  // TODO: Remove the one-use check if the other logic operand (Y) is constant.
   Value *X, *Y;
-  auto matchFirstShift = [&](Value *V) {
-    APInt Threshold(Ty->getScalarSizeInBits(), Ty->getScalarSizeInBits());
-    return match(V,
-                 m_OneUse(m_BinOp(ShiftOpcode, m_Value(X), m_Constant(C0)))) &&
+  auto matchFirstShift = [&](Value *V, Value *W) {
+    unsigned Size = Ty->getScalarSizeInBits();
+    APInt Threshold(Size, Size);
+    return match(V, m_BinOp(ShiftOpcode, m_Value(X), m_Constant(C0))) &&
+           (V->hasOneUse() || match(W, m_ImmConstant())) &&
            match(ConstantExpr::getAdd(C0, C1),
                  m_SpecificInt_ICMP(ICmpInst::ICMP_ULT, Threshold));
   };
 
-  // Logic ops are commutative, so check each operand for a match.
-  if (matchFirstShift(LogicInst->getOperand(0)))
-    Y = LogicInst->getOperand(1);
-  else if (matchFirstShift(LogicInst->getOperand(1)))
-    Y = LogicInst->getOperand(0);
-  else
+  // Logic ops and Add are commutative, so check each operand for a match. Sub
+  // is not so we cannot reoder if we match operand(1) and need to keep the
+  // operands in their original positions.
+  bool FirstShiftIsOp1 = false;
+  if (matchFirstShift(BinInst->getOperand(0), BinInst->getOperand(1)))
+    Y = BinInst->getOperand(1);
+  else if (matchFirstShift(BinInst->getOperand(1), BinInst->getOperand(0))) {
+    Y = BinInst->getOperand(0);
+    FirstShiftIsOp1 = BinInst->getOpcode() == Instruction::Sub;
+  } else
     return nullptr;
 
-  // shift (logic (shift X, C0), Y), C1 -> logic (shift X, C0+C1), (shift Y, C1)
+  // shift (binop (shift X, C0), Y), C1 -> binop (shift X, C0+C1), (shift Y, C1)
   Constant *ShiftSumC = ConstantExpr::getAdd(C0, C1);
   Value *NewShift1 = Builder.CreateBinOp(ShiftOpcode, X, ShiftSumC);
   Value *NewShift2 = Builder.CreateBinOp(ShiftOpcode, Y, C1);
-  return BinaryOperator::Create(LogicInst->getOpcode(), NewShift1, NewShift2);
+  Value *Op1 = FirstShiftIsOp1 ? NewShift2 : NewShift1;
+  Value *Op2 = FirstShiftIsOp1 ? NewShift1 : NewShift2;
+  return BinaryOperator::Create(BinInst->getOpcode(), Op1, Op2);
 }
 
 Instruction *InstCombinerImpl::commonShiftTransforms(BinaryOperator &I) {
@@ -405,9 +440,16 @@ Instruction *InstCombinerImpl::commonShiftTransforms(BinaryOperator &I) {
   Value *A;
   Constant *C, *C1;
   if (match(Op0, m_Constant(C)) &&
-      match(Op1, m_NUWAdd(m_Value(A), m_Constant(C1)))) {
+      match(Op1, m_NUWAddLike(m_Value(A), m_Constant(C1)))) {
     Value *NewC = Builder.CreateBinOp(I.getOpcode(), C, C1);
-    return BinaryOperator::Create(I.getOpcode(), NewC, A);
+    BinaryOperator *NewShiftOp = BinaryOperator::Create(I.getOpcode(), NewC, A);
+    if (I.getOpcode() == Instruction::Shl) {
+      NewShiftOp->setHasNoSignedWrap(I.hasNoSignedWrap());
+      NewShiftOp->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
+    } else {
+      NewShiftOp->setIsExact(I.isExact());
+    }
+    return NewShiftOp;
   }
 
   unsigned BitWidth = Ty->getScalarSizeInBits();
@@ -463,8 +505,11 @@ Instruction *InstCombinerImpl::commonShiftTransforms(BinaryOperator &I) {
     return replaceOperand(I, 1, Rem);
   }
 
-  if (Instruction *Logic = foldShiftOfShiftedLogic(I, Builder))
+  if (Instruction *Logic = foldShiftOfShiftedBinOp(I, Builder))
     return Logic;
+
+  if (match(Op1, m_Or(m_Value(), m_SpecificInt(BitWidth - 1))))
+    return replaceOperand(I, 1, ConstantInt::get(Ty, BitWidth - 1));
 
   return nullptr;
 }
@@ -525,8 +570,8 @@ static bool canEvaluateShiftedShift(unsigned OuterShAmt, bool IsOuterShl,
 /// this succeeds, getShiftedValue() will be called to produce the value.
 static bool canEvaluateShifted(Value *V, unsigned NumBits, bool IsLeftShift,
                                InstCombinerImpl &IC, Instruction *CxtI) {
-  // We can always evaluate constants shifted.
-  if (isa<Constant>(V))
+  // We can always evaluate immediate constants.
+  if (match(V, m_ImmConstant()))
     return true;
 
   Instruction *I = dyn_cast<Instruction>(V);
@@ -570,8 +615,7 @@ static bool canEvaluateShifted(Value *V, unsigned NumBits, bool IsLeftShift,
     const APInt *MulConst;
     // We can fold (shr (mul X, -(1 << C)), C) -> (and (neg X), C`)
     return !IsLeftShift && match(I->getOperand(1), m_APInt(MulConst)) &&
-           MulConst->isNegatedPowerOf2() &&
-           MulConst->countTrailingZeros() == NumBits;
+           MulConst->isNegatedPowerOf2() && MulConst->countr_zero() == NumBits;
   }
   }
 }
@@ -690,13 +734,13 @@ static Value *getShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
   case Instruction::Mul: {
     assert(!isLeftShift && "Unexpected shift direction!");
     auto *Neg = BinaryOperator::CreateNeg(I->getOperand(0));
-    IC.InsertNewInstWith(Neg, *I);
+    IC.InsertNewInstWith(Neg, I->getIterator());
     unsigned TypeWidth = I->getType()->getScalarSizeInBits();
     APInt Mask = APInt::getLowBitsSet(TypeWidth, TypeWidth - NumBits);
     auto *And = BinaryOperator::CreateAnd(Neg,
                                           ConstantInt::get(I->getType(), Mask));
     And->takeName(I);
-    return IC.InsertNewInstWith(And, *I);
+    return IC.InsertNewInstWith(And, I->getIterator());
   }
   }
 }
@@ -726,18 +770,27 @@ Instruction *InstCombinerImpl::FoldShiftByConstant(Value *Op0, Constant *C1,
   // (C2 >> X) >> C1 --> (C2 >> C1) >> X
   Constant *C2;
   Value *X;
-  if (match(Op0, m_BinOp(I.getOpcode(), m_Constant(C2), m_Value(X))))
-    return BinaryOperator::Create(
-        I.getOpcode(), Builder.CreateBinOp(I.getOpcode(), C2, C1), X);
-
   bool IsLeftShift = I.getOpcode() == Instruction::Shl;
+  if (match(Op0, m_BinOp(I.getOpcode(), m_ImmConstant(C2), m_Value(X)))) {
+    Instruction *R = BinaryOperator::Create(
+        I.getOpcode(), Builder.CreateBinOp(I.getOpcode(), C2, C1), X);
+    BinaryOperator *BO0 = cast<BinaryOperator>(Op0);
+    if (IsLeftShift) {
+      R->setHasNoUnsignedWrap(I.hasNoUnsignedWrap() &&
+                              BO0->hasNoUnsignedWrap());
+      R->setHasNoSignedWrap(I.hasNoSignedWrap() && BO0->hasNoSignedWrap());
+    } else
+      R->setIsExact(I.isExact() && BO0->isExact());
+    return R;
+  }
+
   Type *Ty = I.getType();
   unsigned TypeBits = Ty->getScalarSizeInBits();
 
   // (X / +DivC) >> (Width - 1) --> ext (X <= -DivC)
   // (X / -DivC) >> (Width - 1) --> ext (X >= +DivC)
   const APInt *DivC;
-  if (!IsLeftShift && match(C1, m_SpecificIntAllowUndef(TypeBits - 1)) &&
+  if (!IsLeftShift && match(C1, m_SpecificIntAllowPoison(TypeBits - 1)) &&
       match(Op0, m_SDiv(m_Value(X), m_APInt(DivC))) && !DivC->isZero() &&
       !DivC->isMinSignedValue()) {
     Constant *NegDivC = ConstantInt::get(Ty, -(*DivC));
@@ -900,11 +953,67 @@ Instruction *InstCombinerImpl::foldLShrOverflowBit(BinaryOperator &I) {
   // Replace the uses of the original add with a zext of the
   // NarrowAdd's result. Note that all users at this stage are known to
   // be ShAmt-sized truncs, or the lshr itself.
-  if (!Add->hasOneUse())
+  if (!Add->hasOneUse()) {
     replaceInstUsesWith(*AddInst, Builder.CreateZExt(NarrowAdd, Ty));
+    eraseInstFromFunction(*AddInst);
+  }
 
   // Replace the LShr with a zext of the overflow check.
   return new ZExtInst(Overflow, Ty);
+}
+
+// Try to set nuw/nsw flags on shl or exact flag on lshr/ashr using knownbits.
+static bool setShiftFlags(BinaryOperator &I, const SimplifyQuery &Q) {
+  assert(I.isShift() && "Expected a shift as input");
+  // We already have all the flags.
+  if (I.getOpcode() == Instruction::Shl) {
+    if (I.hasNoUnsignedWrap() && I.hasNoSignedWrap())
+      return false;
+  } else {
+    if (I.isExact())
+      return false;
+
+    // shr (shl X, Y), Y
+    if (match(I.getOperand(0), m_Shl(m_Value(), m_Specific(I.getOperand(1))))) {
+      I.setIsExact();
+      return true;
+    }
+  }
+
+  // Compute what we know about shift count.
+  KnownBits KnownCnt = computeKnownBits(I.getOperand(1), /* Depth */ 0, Q);
+  unsigned BitWidth = KnownCnt.getBitWidth();
+  // Since shift produces a poison value if RHS is equal to or larger than the
+  // bit width, we can safely assume that RHS is less than the bit width.
+  uint64_t MaxCnt = KnownCnt.getMaxValue().getLimitedValue(BitWidth - 1);
+
+  KnownBits KnownAmt = computeKnownBits(I.getOperand(0), /* Depth */ 0, Q);
+  bool Changed = false;
+
+  if (I.getOpcode() == Instruction::Shl) {
+    // If we have as many leading zeros than maximum shift cnt we have nuw.
+    if (!I.hasNoUnsignedWrap() && MaxCnt <= KnownAmt.countMinLeadingZeros()) {
+      I.setHasNoUnsignedWrap();
+      Changed = true;
+    }
+    // If we have more sign bits than maximum shift cnt we have nsw.
+    if (!I.hasNoSignedWrap()) {
+      if (MaxCnt < KnownAmt.countMinSignBits() ||
+          MaxCnt < ComputeNumSignBits(I.getOperand(0), Q.DL, /*Depth*/ 0, Q.AC,
+                                      Q.CxtI, Q.DT)) {
+        I.setHasNoSignedWrap();
+        Changed = true;
+      }
+    }
+    return Changed;
+  }
+
+  // If we have at least as many trailing zeros as maximum count then we have
+  // exact.
+  Changed = MaxCnt <= KnownAmt.countMinTrailingZeros();
+  I.setIsExact(Changed);
+
+  return Changed;
 }
 
 Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
@@ -955,7 +1064,11 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
         // If C1 < C: (X >>?,exact C1) << C --> X << (C - C1)
         Constant *ShiftDiff = ConstantInt::get(Ty, ShAmtC - ShrAmt);
         auto *NewShl = BinaryOperator::CreateShl(X, ShiftDiff);
-        NewShl->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
+        NewShl->setHasNoUnsignedWrap(
+            I.hasNoUnsignedWrap() ||
+            (ShrAmt &&
+             cast<Instruction>(Op0)->getOpcode() == Instruction::LShr &&
+             I.hasNoSignedWrap()));
         NewShl->setHasNoSignedWrap(I.hasNoSignedWrap());
         return NewShl;
       }
@@ -976,7 +1089,11 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
         // If C1 < C: (X >>? C1) << C --> (X << (C - C1)) & (-1 << C)
         Constant *ShiftDiff = ConstantInt::get(Ty, ShAmtC - ShrAmt);
         auto *NewShl = BinaryOperator::CreateShl(X, ShiftDiff);
-        NewShl->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
+        NewShl->setHasNoUnsignedWrap(
+            I.hasNoUnsignedWrap() ||
+            (ShrAmt &&
+             cast<Instruction>(Op0)->getOpcode() == Instruction::LShr &&
+             I.hasNoSignedWrap()));
         NewShl->setHasNoSignedWrap(I.hasNoSignedWrap());
         Builder.Insert(NewShl);
         APInt Mask(APInt::getHighBitsSet(BitWidth, BitWidth - ShAmtC));
@@ -1013,14 +1130,6 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
       Value *Trunc = Builder.CreateTrunc(NewShift, Ty, "tr.sh.diff");
       APInt Mask(APInt::getHighBitsSet(BitWidth, BitWidth - ShAmtC));
       return BinaryOperator::CreateAnd(Trunc, ConstantInt::get(Ty, Mask));
-    }
-
-    if (match(Op0, m_Shl(m_Value(X), m_APInt(C1))) && C1->ult(BitWidth)) {
-      unsigned AmtSum = ShAmtC + C1->getZExtValue();
-      // Oversized shifts are simplified to zero in InstSimplify.
-      if (AmtSum < BitWidth)
-        // (X << C1) << C2 --> X << (C1 + C2)
-        return BinaryOperator::CreateShl(X, ConstantInt::get(Ty, AmtSum));
     }
 
     // If we have an opposite shift by the same amount, we may be able to
@@ -1077,7 +1186,11 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
         // X & (CC << C)
         Value *M = Builder.CreateAnd(X, ConstantInt::get(Ty, CC->shl(*C)),
                                      X->getName() + ".mask");
-        return BinaryOperator::Create(Op0BO->getOpcode(), M, YS);
+        auto *NewOp = BinaryOperator::Create(Op0BO->getOpcode(), M, YS);
+        if (auto *Disjoint = dyn_cast<PossiblyDisjointInst>(Op0BO);
+            Disjoint && Disjoint->isDisjoint())
+          cast<PossiblyDisjointInst>(NewOp)->setIsDisjoint(true);
+        return NewOp;
       }
     }
 
@@ -1087,21 +1200,10 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
       Value *NewShift = Builder.CreateShl(X, Op1);
       return BinaryOperator::CreateSub(NewLHS, NewShift);
     }
-
-    // If the shifted-out value is known-zero, then this is a NUW shift.
-    if (!I.hasNoUnsignedWrap() &&
-        MaskedValueIsZero(Op0, APInt::getHighBitsSet(BitWidth, ShAmtC), 0,
-                          &I)) {
-      I.setHasNoUnsignedWrap();
-      return &I;
-    }
-
-    // If the shifted-out value is all signbits, then this is a NSW shift.
-    if (!I.hasNoSignedWrap() && ComputeNumSignBits(Op0, 0, &I) > ShAmtC) {
-      I.setHasNoSignedWrap();
-      return &I;
-    }
   }
+
+  if (setShiftFlags(I, Q))
+    return &I;
 
   // Transform  (x >> y) << y  to  x & (-1 << y)
   // Valid for any type of right-shift.
@@ -1112,17 +1214,23 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
     return BinaryOperator::CreateAnd(Mask, X);
   }
 
+  // Transform  (-1 >> y) << y  to -1 << y
+  if (match(Op0, m_LShr(m_AllOnes(), m_Specific(Op1)))) {
+    Constant *AllOnes = ConstantInt::getAllOnesValue(Ty);
+    return BinaryOperator::CreateShl(AllOnes, Op1);
+  }
+
   Constant *C1;
-  if (match(Op1, m_Constant(C1))) {
+  if (match(Op1, m_ImmConstant(C1))) {
     Constant *C2;
     Value *X;
     // (X * C2) << C1 --> X * (C2 << C1)
-    if (match(Op0, m_Mul(m_Value(X), m_Constant(C2))))
-      return BinaryOperator::CreateMul(X, ConstantExpr::getShl(C2, C1));
+    if (match(Op0, m_Mul(m_Value(X), m_ImmConstant(C2))))
+      return BinaryOperator::CreateMul(X, Builder.CreateShl(C2, C1));
 
     // shl (zext i1 X), C1 --> select (X, 1 << C1, 0)
     if (match(Op0, m_ZExt(m_Value(X))) && X->getType()->isIntOrIntVectorTy(1)) {
-      auto *NewC = ConstantExpr::getShl(ConstantInt::get(Ty, 1), C1);
+      auto *NewC = Builder.CreateShl(ConstantInt::get(Ty, 1), C1);
       return SelectInst::Create(X, NewC, ConstantInt::getNullValue(Ty));
     }
   }
@@ -1133,13 +1241,12 @@ Instruction *InstCombinerImpl::visitShl(BinaryOperator &I) {
       return BinaryOperator::CreateLShr(
           ConstantInt::get(Ty, APInt::getSignMask(BitWidth)), X);
 
-    // The only way to shift out the 1 is with an over-shift, so that would
-    // be poison with or without "nuw". Undef is excluded because (undef << X)
-    // is not undef (it is zero).
-    Constant *ConstantOne = cast<Constant>(Op0);
-    if (!I.hasNoUnsignedWrap() && !ConstantOne->containsUndefElement()) {
-      I.setHasNoUnsignedWrap();
-      return &I;
+    // Canonicalize "extract lowest set bit" using cttz to and-with-negate:
+    // 1 << (cttz X) --> -X & X
+    if (match(Op1,
+              m_OneUse(m_Intrinsic<Intrinsic::cttz>(m_Value(X), m_Value())))) {
+      Value *NegX = Builder.CreateNeg(X, "neg");
+      return BinaryOperator::CreateAnd(NegX, X);
     }
   }
 
@@ -1165,8 +1272,73 @@ Instruction *InstCombinerImpl::visitLShr(BinaryOperator &I) {
 
   // (iN (~X) u>> (N - 1)) --> zext (X > -1)
   if (match(Op0, m_OneUse(m_Not(m_Value(X)))) &&
-      match(Op1, m_SpecificIntAllowUndef(BitWidth - 1)))
+      match(Op1, m_SpecificIntAllowPoison(BitWidth - 1)))
     return new ZExtInst(Builder.CreateIsNotNeg(X, "isnotneg"), Ty);
+
+  // ((X << nuw Z) sub nuw Y) >>u exact Z --> X sub nuw (Y >>u exact Z)
+  Value *Y;
+  if (I.isExact() &&
+      match(Op0, m_OneUse(m_NUWSub(m_NUWShl(m_Value(X), m_Specific(Op1)),
+                                   m_Value(Y))))) {
+    Value *NewLshr = Builder.CreateLShr(Y, Op1, "", /*isExact=*/true);
+    auto *NewSub = BinaryOperator::CreateNUWSub(X, NewLshr);
+    NewSub->setHasNoSignedWrap(
+        cast<OverflowingBinaryOperator>(Op0)->hasNoSignedWrap());
+    return NewSub;
+  }
+
+  // Fold (X + Y) / 2 --> (X & Y) iff (X u<= 1) && (Y u<= 1)
+  if (match(Op0, m_Add(m_Value(X), m_Value(Y))) && match(Op1, m_One()) &&
+      computeKnownBits(X, /*Depth=*/0, &I).countMaxActiveBits() <= 1 &&
+      computeKnownBits(Y, /*Depth=*/0, &I).countMaxActiveBits() <= 1)
+    return BinaryOperator::CreateAnd(X, Y);
+
+  // (sub nuw X, (Y << nuw Z)) >>u exact Z --> (X >>u exact Z) sub nuw Y
+  if (I.isExact() &&
+      match(Op0, m_OneUse(m_NUWSub(m_Value(X),
+                                   m_NUWShl(m_Value(Y), m_Specific(Op1)))))) {
+    Value *NewLshr = Builder.CreateLShr(X, Op1, "", /*isExact=*/true);
+    auto *NewSub = BinaryOperator::CreateNUWSub(NewLshr, Y);
+    NewSub->setHasNoSignedWrap(
+        cast<OverflowingBinaryOperator>(Op0)->hasNoSignedWrap());
+    return NewSub;
+  }
+
+  auto isSuitableBinOpcode = [](Instruction::BinaryOps BinOpcode) {
+    switch (BinOpcode) {
+    default:
+      return false;
+    case Instruction::Add:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor:
+      // Sub is handled separately.
+      return true;
+    }
+  };
+
+  // If both the binop and the shift are nuw, then:
+  // ((X << nuw Z) binop nuw Y) >>u Z --> X binop nuw (Y >>u Z)
+  if (match(Op0, m_OneUse(m_c_BinOp(m_NUWShl(m_Value(X), m_Specific(Op1)),
+                                    m_Value(Y))))) {
+    BinaryOperator *Op0OB = cast<BinaryOperator>(Op0);
+    if (isSuitableBinOpcode(Op0OB->getOpcode())) {
+      if (auto *OBO = dyn_cast<OverflowingBinaryOperator>(Op0);
+          !OBO || OBO->hasNoUnsignedWrap()) {
+        Value *NewLshr = Builder.CreateLShr(
+            Y, Op1, "", I.isExact() && Op0OB->getOpcode() != Instruction::And);
+        auto *NewBinOp = BinaryOperator::Create(Op0OB->getOpcode(), NewLshr, X);
+        if (OBO) {
+          NewBinOp->setHasNoUnsignedWrap(true);
+          NewBinOp->setHasNoSignedWrap(OBO->hasNoSignedWrap());
+        } else if (auto *Disjoint = dyn_cast<PossiblyDisjointInst>(Op0)) {
+          cast<PossiblyDisjointInst>(NewBinOp)->setIsDisjoint(
+              Disjoint->isDisjoint());
+        }
+        return NewBinOp;
+      }
+    }
+  }
 
   if (match(Op1, m_APInt(C))) {
     unsigned ShAmtC = C->getZExtValue();
@@ -1184,7 +1356,6 @@ Instruction *InstCombinerImpl::visitLShr(BinaryOperator &I) {
       return new ZExtInst(Cmp, Ty);
     }
 
-    Value *X;
     const APInt *C1;
     if (match(Op0, m_Shl(m_Value(X), m_APInt(C1))) && C1->ult(BitWidth)) {
       if (C1->ult(ShAmtC)) {
@@ -1206,9 +1377,10 @@ Instruction *InstCombinerImpl::visitLShr(BinaryOperator &I) {
         unsigned ShlAmtC = C1->getZExtValue();
         Constant *ShiftDiff = ConstantInt::get(Ty, ShlAmtC - ShAmtC);
         if (cast<BinaryOperator>(Op0)->hasNoUnsignedWrap()) {
-          // (X <<nuw C1) >>u C --> X <<nuw (C1 - C)
+          // (X <<nuw C1) >>u C --> X <<nuw/nsw (C1 - C)
           auto *NewShl = BinaryOperator::CreateShl(X, ShiftDiff);
           NewShl->setHasNoUnsignedWrap(true);
+          NewShl->setHasNoSignedWrap(ShAmtC > 0);
           return NewShl;
         }
         if (Op0->hasOneUse()) {
@@ -1228,7 +1400,6 @@ Instruction *InstCombinerImpl::visitLShr(BinaryOperator &I) {
     // ((X << C) + Y) >>u C --> (X + (Y >>u C)) & (-1 >>u C)
     // TODO: Consolidate with the more general transform that starts from shl
     //       (the shifts are in the opposite order).
-    Value *Y;
     if (match(Op0,
               m_OneUse(m_c_Add(m_OneUse(m_Shl(m_Value(X), m_Specific(Op1))),
                                m_Value(Y))))) {
@@ -1294,14 +1465,6 @@ Instruction *InstCombinerImpl::visitLShr(BinaryOperator &I) {
       }
     }
 
-    // (X >>u C1) >>u C --> X >>u (C1 + C)
-    if (match(Op0, m_LShr(m_Value(X), m_APInt(C1)))) {
-      // Oversized shifts are simplified to zero in InstSimplify.
-      unsigned AmtSum = ShAmtC + C1->getZExtValue();
-      if (AmtSum < BitWidth)
-        return BinaryOperator::CreateLShr(X, ConstantInt::get(Ty, AmtSum));
-    }
-
     Instruction *TruncSrc;
     if (match(Op0, m_OneUse(m_Trunc(m_Instruction(TruncSrc)))) &&
         match(TruncSrc, m_LShr(m_Value(X), m_APInt(C1)))) {
@@ -1327,13 +1490,24 @@ Instruction *InstCombinerImpl::visitLShr(BinaryOperator &I) {
 
     const APInt *MulC;
     if (match(Op0, m_NUWMul(m_Value(X), m_APInt(MulC)))) {
-      // Look for a "splat" mul pattern - it replicates bits across each half of
-      // a value, so a right shift is just a mask of the low bits:
-      // lshr i[2N] (mul nuw X, (2^N)+1), N --> and iN X, (2^N)-1
-      // TODO: Generalize to allow more than just half-width shifts?
-      if (BitWidth > 2 && ShAmtC * 2 == BitWidth && (*MulC - 1).isPowerOf2() &&
-          MulC->logBase2() == ShAmtC)
-        return BinaryOperator::CreateAnd(X, ConstantInt::get(Ty, *MulC - 2));
+      if (BitWidth > 2 && (*MulC - 1).isPowerOf2() &&
+          MulC->logBase2() == ShAmtC) {
+        // Look for a "splat" mul pattern - it replicates bits across each half
+        // of a value, so a right shift simplifies back to just X:
+        // lshr i[2N] (mul nuw X, (2^N)+1), N --> X
+        if (ShAmtC * 2 == BitWidth)
+          return replaceInstUsesWith(I, X);
+
+        // lshr (mul nuw (X, 2^N + 1)), N -> add nuw (X, lshr(X, N))
+        if (Op0->hasOneUse()) {
+          auto *NewAdd = BinaryOperator::CreateNUWAdd(
+              X, Builder.CreateLShr(X, ConstantInt::get(Ty, ShAmtC), "",
+                                    I.isExact()));
+          NewAdd->setHasNoSignedWrap(
+              cast<OverflowingBinaryOperator>(Op0)->hasNoSignedWrap());
+          return NewAdd;
+        }
+      }
 
       // The one-use check is not strictly necessary, but codegen may not be
       // able to invert the transform and perf may suffer with an extra mul
@@ -1341,14 +1515,25 @@ Instruction *InstCombinerImpl::visitLShr(BinaryOperator &I) {
       if (Op0->hasOneUse()) {
         APInt NewMulC = MulC->lshr(ShAmtC);
         // if c is divisible by (1 << ShAmtC):
-        // lshr (mul nuw x, MulC), ShAmtC -> mul nuw x, (MulC >> ShAmtC)
+        // lshr (mul nuw x, MulC), ShAmtC -> mul nuw nsw x, (MulC >> ShAmtC)
         if (MulC->eq(NewMulC.shl(ShAmtC))) {
           auto *NewMul =
               BinaryOperator::CreateNUWMul(X, ConstantInt::get(Ty, NewMulC));
-          BinaryOperator *OrigMul = cast<BinaryOperator>(Op0);
-          NewMul->setHasNoSignedWrap(OrigMul->hasNoSignedWrap());
+          assert(ShAmtC != 0 &&
+                 "lshr X, 0 should be handled by simplifyLShrInst.");
+          NewMul->setHasNoSignedWrap(true);
           return NewMul;
         }
+      }
+    }
+
+    // lshr (mul nsw (X, 2^N + 1)), N -> add nsw (X, lshr(X, N))
+    if (match(Op0, m_OneUse(m_NSWMul(m_Value(X), m_APInt(MulC))))) {
+      if (BitWidth > 2 && (*MulC - 1).isPowerOf2() &&
+          MulC->logBase2() == ShAmtC) {
+        return BinaryOperator::CreateNSWAdd(
+            X, Builder.CreateLShr(X, ConstantInt::get(Ty, ShAmtC), "",
+                                  I.isExact()));
       }
     }
 
@@ -1385,20 +1570,23 @@ Instruction *InstCombinerImpl::visitLShr(BinaryOperator &I) {
       Value *And = Builder.CreateAnd(BoolX, BoolY);
       return new ZExtInst(And, Ty);
     }
-
-    // If the shifted-out value is known-zero, then this is an exact shift.
-    if (!I.isExact() &&
-        MaskedValueIsZero(Op0, APInt::getLowBitsSet(BitWidth, ShAmtC), 0, &I)) {
-      I.setIsExact();
-      return &I;
-    }
   }
+
+  const SimplifyQuery Q = SQ.getWithInstruction(&I);
+  if (setShiftFlags(I, Q))
+    return &I;
 
   // Transform  (x << y) >> y  to  x & (-1 >> y)
   if (match(Op0, m_OneUse(m_Shl(m_Value(X), m_Specific(Op1))))) {
     Constant *AllOnes = ConstantInt::getAllOnesValue(Ty);
     Value *Mask = Builder.CreateLShr(AllOnes, Op1);
     return BinaryOperator::CreateAnd(Mask, X);
+  }
+
+  // Transform  (-1 << y) >> y  to -1 >> y
+  if (match(Op0, m_Shl(m_AllOnes(), m_Specific(Op1)))) {
+    Constant *AllOnes = ConstantInt::getAllOnesValue(Ty);
+    return BinaryOperator::CreateLShr(AllOnes, Op1);
   }
 
   if (Instruction *Overflow = foldLShrOverflowBit(I))
@@ -1553,21 +1741,33 @@ Instruction *InstCombinerImpl::visitAShr(BinaryOperator &I) {
         return new SExtInst(Builder.CreateICmpSLT(X, Y), Ty);
     }
 
-    // If the shifted-out value is known-zero, then this is an exact shift.
-    if (!I.isExact() &&
-        MaskedValueIsZero(Op0, APInt::getLowBitsSet(BitWidth, ShAmt), 0, &I)) {
-      I.setIsExact();
-      return &I;
+    const APInt *MulC;
+    if (match(Op0, m_OneUse(m_NSWMul(m_Value(X), m_APInt(MulC)))) &&
+        (BitWidth > 2 && (*MulC - 1).isPowerOf2() &&
+         MulC->logBase2() == ShAmt &&
+         (ShAmt < BitWidth - 1))) /* Minus 1 for the sign bit */ {
+
+      // ashr (mul nsw (X, 2^N + 1)), N -> add nsw (X, ashr(X, N))
+      auto *NewAdd = BinaryOperator::CreateNSWAdd(
+          X,
+          Builder.CreateAShr(X, ConstantInt::get(Ty, ShAmt), "", I.isExact()));
+      NewAdd->setHasNoUnsignedWrap(
+          cast<OverflowingBinaryOperator>(Op0)->hasNoUnsignedWrap());
+      return NewAdd;
     }
   }
+
+  const SimplifyQuery Q = SQ.getWithInstruction(&I);
+  if (setShiftFlags(I, Q))
+    return &I;
 
   // Prefer `-(x & 1)` over `(x << (bitwidth(x)-1)) a>> (bitwidth(x)-1)`
   // as the pattern to splat the lowest bit.
   // FIXME: iff X is already masked, we don't need the one-use check.
   Value *X;
-  if (match(Op1, m_SpecificIntAllowUndef(BitWidth - 1)) &&
+  if (match(Op1, m_SpecificIntAllowPoison(BitWidth - 1)) &&
       match(Op0, m_OneUse(m_Shl(m_Value(X),
-                                m_SpecificIntAllowUndef(BitWidth - 1))))) {
+                                m_SpecificIntAllowPoison(BitWidth - 1))))) {
     Constant *Mask = ConstantInt::get(Ty, 1);
     // Retain the knowledge about the ignored lanes.
     Mask = Constant::mergeUndefsWith(

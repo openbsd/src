@@ -11,14 +11,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/JITLink/ELF_aarch64.h"
-#include "EHFrameSupportImpl.h"
-#include "ELFLinkGraphBuilder.h"
-#include "JITLinkGeneric.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/ExecutionEngine/JITLink/DWARFRecordSectionSplitter.h"
 #include "llvm/ExecutionEngine/JITLink/aarch64.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Support/Endian.h"
+
+#include "DefineExternalSectionStartAndEndSymbols.h"
+#include "EHFrameSupportImpl.h"
+#include "ELFLinkGraphBuilder.h"
+#include "JITLinkGeneric.h"
 
 #define DEBUG_TYPE "jitlink"
 
@@ -47,6 +49,8 @@ class ELFLinkGraphBuilder_aarch64 : public ELFLinkGraphBuilder<ELFT> {
 private:
   enum ELFAArch64RelocationKind : Edge::Kind {
     ELFCall26 = Edge::FirstRelocation,
+    ELFLdrLo19,
+    ELFAdrLo21,
     ELFAdrPage21,
     ELFAddAbs12,
     ELFLdSt8Abs12,
@@ -58,6 +62,9 @@ private:
     ELFMovwAbsG1,
     ELFMovwAbsG2,
     ELFMovwAbsG3,
+    ELFTstBr14,
+    ELFCondBr19,
+    ELFAbs32,
     ELFAbs64,
     ELFPrel32,
     ELFPrel64,
@@ -76,6 +83,10 @@ private:
     case ELF::R_AARCH64_CALL26:
     case ELF::R_AARCH64_JUMP26:
       return ELFCall26;
+    case ELF::R_AARCH64_LD_PREL_LO19:
+      return ELFLdrLo19;
+    case ELF::R_AARCH64_ADR_PREL_LO21:
+      return ELFAdrLo21;
     case ELF::R_AARCH64_ADR_PREL_PG_HI21:
       return ELFAdrPage21;
     case ELF::R_AARCH64_ADD_ABS_LO12_NC:
@@ -98,6 +109,12 @@ private:
       return ELFMovwAbsG2;
     case ELF::R_AARCH64_MOVW_UABS_G3:
       return ELFMovwAbsG3;
+    case ELF::R_AARCH64_TSTBR14:
+      return ELFTstBr14;
+    case ELF::R_AARCH64_CONDBR19:
+      return ELFCondBr19;
+    case ELF::R_AARCH64_ABS32:
+      return ELFAbs32;
     case ELF::R_AARCH64_ABS64:
       return ELFAbs64;
     case ELF::R_AARCH64_PREL32:
@@ -175,6 +192,24 @@ private:
     switch (*RelocKind) {
     case ELFCall26: {
       Kind = aarch64::Branch26PCRel;
+      break;
+    }
+    case ELFLdrLo19: {
+      uint32_t Instr = *(const ulittle32_t *)FixupContent;
+      if (!aarch64::isLDRLiteral(Instr))
+        return make_error<JITLinkError>(
+            "R_AARCH64_LDR_PREL_LO19 target is not an LDR Literal instruction");
+
+      Kind = aarch64::LDRLiteral19;
+      break;
+    }
+    case ELFAdrLo21: {
+      uint32_t Instr = *(const ulittle32_t *)FixupContent;
+      if (!aarch64::isADR(Instr))
+        return make_error<JITLinkError>(
+            "R_AARCH64_ADR_PREL_LO21 target is not an ADR instruction");
+
+      Kind = aarch64::ADRLiteral21;
       break;
     }
     case ELFAdrPage21: {
@@ -284,6 +319,29 @@ private:
       Kind = aarch64::MoveWide16;
       break;
     }
+    case ELFTstBr14: {
+      uint32_t Instr = *(const ulittle32_t *)FixupContent;
+      if (!aarch64::isTestAndBranchImm14(Instr))
+        return make_error<JITLinkError>("R_AARCH64_TSTBR14 target is not a "
+                                        "test and branch instruction");
+
+      Kind = aarch64::TestAndBranch14PCRel;
+      break;
+    }
+    case ELFCondBr19: {
+      uint32_t Instr = *(const ulittle32_t *)FixupContent;
+      if (!aarch64::isCondBranchImm19(Instr) &&
+          !aarch64::isCompAndBranchImm19(Instr))
+        return make_error<JITLinkError>("R_AARCH64_CONDBR19 target is not a "
+                                        "conditional branch instruction");
+
+      Kind = aarch64::CondBranch19PCRel;
+      break;
+    }
+    case ELFAbs32: {
+      Kind = aarch64::Pointer32;
+      break;
+    }
     case ELFAbs64: {
       Kind = aarch64::Pointer64;
       break;
@@ -357,6 +415,8 @@ private:
       return "ELFMovwAbsG2";
     case ELFMovwAbsG3:
       return "ELFMovwAbsG3";
+    case ELFAbs32:
+      return "ELFAbs32";
     case ELFAbs64:
       return "ELFAbs64";
     case ELFPrel32:
@@ -382,9 +442,10 @@ private:
 
 public:
   ELFLinkGraphBuilder_aarch64(StringRef FileName,
-                              const object::ELFFile<ELFT> &Obj, const Triple T)
-      : ELFLinkGraphBuilder<ELFT>(Obj, std::move(T), FileName,
-                                  aarch64::getEdgeKindName) {}
+                              const object::ELFFile<ELFT> &Obj, Triple TT,
+                              SubtargetFeatures Features)
+      : ELFLinkGraphBuilder<ELFT>(Obj, std::move(TT), std::move(Features),
+                                  FileName, aarch64::getEdgeKindName) {}
 };
 
 // TLS Info Builder.
@@ -532,13 +593,17 @@ createLinkGraphFromELFObject_aarch64(MemoryBufferRef ObjectBuffer) {
   if (!ELFObj)
     return ELFObj.takeError();
 
+  auto Features = (*ELFObj)->getFeatures();
+  if (!Features)
+    return Features.takeError();
+
   assert((*ELFObj)->getArch() == Triple::aarch64 &&
          "Only AArch64 (little endian) is supported for now");
 
   auto &ELFObjFile = cast<object::ELFObjectFile<object::ELF64LE>>(**ELFObj);
-  return ELFLinkGraphBuilder_aarch64<object::ELF64LE>((*ELFObj)->getFileName(),
-                                                      ELFObjFile.getELFFile(),
-                                                      (*ELFObj)->makeTriple())
+  return ELFLinkGraphBuilder_aarch64<object::ELF64LE>(
+             (*ELFObj)->getFileName(), ELFObjFile.getELFFile(),
+             (*ELFObj)->makeTriple(), std::move(*Features))
       .buildGraph();
 }
 
@@ -547,7 +612,7 @@ void link_ELF_aarch64(std::unique_ptr<LinkGraph> G,
   PassConfiguration Config;
   const Triple &TT = G->getTargetTriple();
   if (Ctx->shouldAddDefaultTargetPasses(TT)) {
-    // Add eh-frame passses.
+    // Add eh-frame passes.
     Config.PrePrunePasses.push_back(DWARFRecordSectionSplitter(".eh_frame"));
     Config.PrePrunePasses.push_back(EHFrameEdgeFixer(
         ".eh_frame", 8, aarch64::Pointer32, aarch64::Pointer64,
@@ -559,6 +624,11 @@ void link_ELF_aarch64(std::unique_ptr<LinkGraph> G,
       Config.PrePrunePasses.push_back(std::move(MarkLive));
     else
       Config.PrePrunePasses.push_back(markAllSymbolsLive);
+
+    // Resolve any external section start / end symbols.
+    Config.PostAllocationPasses.push_back(
+        createDefineExternalSectionStartAndEndSymbolsPass(
+            identifyELFSectionStartAndEndSymbols));
 
     // Add an in-place GOT/TLS/Stubs build pass.
     Config.PostPrunePasses.push_back(buildTables_ELF_aarch64);

@@ -1,28 +1,50 @@
-add_subdirectory(GlobalISel)
+# Basic utilities which is the strict minimum needed to build
+# llvm-min-tblgen.
+add_subdirectory(Basic)
+# Common utilities are all of the reusable components and helper
+# code needed by the backends.
+add_subdirectory(Common)
 
 set(LLVM_LINK_COMPONENTS Support)
+
+# llvm-min-tablegen only contains a subset of backends necessary to
+# build llvm/include. It must not depend on TableGenCommon, as
+# TableGenCommon depends on this already to generate things such as
+# ValueType definitions.
+add_tablegen(llvm-min-tblgen LLVM_HEADERS
+  TableGen.cpp
+  ARMTargetDefEmitter.cpp
+  Attributes.cpp
+  DirectiveEmitter.cpp
+  IntrinsicEmitter.cpp
+  RISCVTargetDefEmitter.cpp
+  VTEmitter.cpp
+  $<TARGET_OBJECTS:obj.LLVMTableGenBasic>
+
+  PARTIAL_SOURCES_INTENDED
+  )
+
+set(LLVM_LINK_COMPONENTS
+  CodeGenTypes
+  Support
+  )
 
 add_tablegen(llvm-tblgen LLVM
   DESTINATION "${LLVM_TOOLS_INSTALL_DIR}"
   EXPORT LLVM
+  ARMTargetDefEmitter.cpp
   AsmMatcherEmitter.cpp
   AsmWriterEmitter.cpp
-  AsmWriterInst.cpp
   Attributes.cpp
   CallingConvEmitter.cpp
   CodeEmitterGen.cpp
-  CodeGenDAGPatterns.cpp
-  CodeGenHwModes.cpp
-  CodeGenInstruction.cpp
   CodeGenMapTable.cpp
-  CodeGenRegisters.cpp
-  CodeGenSchedule.cpp
-  CodeGenTarget.cpp
+  CompressInstEmitter.cpp
+  CTagsEmitter.cpp
   DAGISelEmitter.cpp
   DAGISelMatcherEmitter.cpp
   DAGISelMatcherGen.cpp
   DAGISelMatcherOpt.cpp
-  DAGISelMatcher.cpp
   DecoderEmitter.cpp
   DFAEmitter.cpp
   DFAPacketizerEmitter.cpp
@@ -31,36 +53,32 @@ add_tablegen(llvm-tblgen LLVM
   DXILEmitter.cpp
   ExegesisEmitter.cpp
   FastISelEmitter.cpp
-  GICombinerEmitter.cpp
+  GlobalISelCombinerEmitter.cpp
   GlobalISelEmitter.cpp
-  InfoByHwMode.cpp
-  InstrInfoEmitter.cpp
   InstrDocsEmitter.cpp
+  InstrInfoEmitter.cpp
   IntrinsicEmitter.cpp
-  OptEmitter.cpp
+  MacroFusionPredicatorEmitter.cpp
   OptParserEmitter.cpp
   OptRSTEmitter.cpp
-  PredicateExpander.cpp
   PseudoLoweringEmitter.cpp
-  CompressInstEmitter.cpp
   RegisterBankEmitter.cpp
   RegisterInfoEmitter.cpp
   RISCVTargetDefEmitter.cpp
-  SDNodeProperties.cpp
   SearchableTableEmitter.cpp
   SubtargetEmitter.cpp
-  SubtargetFeatureInfo.cpp
   TableGen.cpp
-  Types.cpp
-  VarLenCodeEmitterGen.cpp
+  VTEmitter.cpp
+  WebAssemblyDisassemblerEmitter.cpp
+  X86InstrMappingEmitter.cpp
   X86DisassemblerTables.cpp
-  X86EVEX2VEXTablesEmitter.cpp
   X86FoldTablesEmitter.cpp
   X86MnemonicTables.cpp
   X86ModRMFilters.cpp
   X86RecognizableInstr.cpp
-  WebAssemblyDisassemblerEmitter.cpp
-  CTagsEmitter.cpp
+  $<TARGET_OBJECTS:obj.LLVMTableGenBasic>
+  $<TARGET_OBJECTS:obj.LLVMTableGenCommon>
+
+  DEPENDS
+  intrinsics_gen # via llvm-min-tablegen
   )
-target_link_libraries(llvm-tblgen PRIVATE LLVMTableGenGlobalISel)
-set_target_properties(llvm-tblgen PROPERTIES FOLDER "Tablegenning")

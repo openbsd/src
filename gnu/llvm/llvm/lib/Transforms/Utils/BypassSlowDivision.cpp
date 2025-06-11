@@ -202,7 +202,7 @@ bool FastDivInsertionTask::isHashLikeValue(Value *V, VisitedSetTy &Visited) {
     ConstantInt *C = dyn_cast<ConstantInt>(Op1);
     if (!C && isa<BitCastInst>(Op1))
       C = dyn_cast<ConstantInt>(cast<BitCastInst>(Op1)->getOperand(0));
-    return C && C->getValue().getMinSignedBits() > BypassType->getBitWidth();
+    return C && C->getValue().getSignificantBits() > BypassType->getBitWidth();
   }
   case Instruction::PHI:
     // Stop IR traversal in case of a crazy input code. This limits recursion
@@ -233,7 +233,7 @@ ValueRange FastDivInsertionTask::getValueRange(Value *V,
   assert(LongLen > ShortLen && "Value type must be wider than BypassType");
   unsigned HiBits = LongLen - ShortLen;
 
-  const DataLayout &DL = SlowDivOrRem->getModule()->getDataLayout();
+  const DataLayout &DL = SlowDivOrRem->getDataLayout();
   KnownBits Known(LongLen);
 
   computeKnownBits(V, Known, DL);

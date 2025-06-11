@@ -54,10 +54,10 @@ public:
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
-    AU.addRequired<LiveIntervals>();
-    AU.addPreserved<LiveIntervals>();
-    AU.addRequired<SlotIndexes>();
-    AU.addPreserved<SlotIndexes>();
+    AU.addRequired<LiveIntervalsWrapperPass>();
+    AU.addPreserved<LiveIntervalsWrapperPass>();
+    AU.addRequired<SlotIndexesWrapperPass>();
+    AU.addPreserved<SlotIndexesWrapperPass>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
@@ -101,9 +101,9 @@ private:
                        const SmallVectorImpl<LiveInterval*> &Intervals) const;
 
 
-  LiveIntervals *LIS;
-  MachineRegisterInfo *MRI;
-  const TargetInstrInfo *TII;
+  LiveIntervals *LIS = nullptr;
+  MachineRegisterInfo *MRI = nullptr;
+  const TargetInstrInfo *TII = nullptr;
 };
 
 } // end anonymous namespace
@@ -114,8 +114,8 @@ char &llvm::RenameIndependentSubregsID = RenameIndependentSubregs::ID;
 
 INITIALIZE_PASS_BEGIN(RenameIndependentSubregs, DEBUG_TYPE,
                       "Rename Independent Subregisters", false, false)
-INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
-INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
+INITIALIZE_PASS_DEPENDENCY(SlotIndexesWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(LiveIntervalsWrapperPass)
 INITIALIZE_PASS_END(RenameIndependentSubregs, DEBUG_TYPE,
                     "Rename Independent Subregisters", false, false)
 
@@ -249,7 +249,7 @@ void RenameIndependentSubregs::rewriteOperands(const IntEqClasses &Classes,
       /// Undef use operands are not tracked in the equivalence class,
       /// but need to be updated if they are tied; take care to only
       /// update the tied operand.
-      unsigned OperandNo = MI->getOperandNo(&MO);
+      unsigned OperandNo = MO.getOperandNo();
       unsigned TiedIdx = MI->findTiedOperandIdx(OperandNo);
       MI->getOperand(TiedIdx).setReg(VReg);
 
@@ -334,9 +334,16 @@ void RenameIndependentSubregs::computeMainRangesFixFlags(
                                                DebugLoc(), MCDesc, Reg);
           SlotIndex DefIdx = LIS->InsertMachineInstrInMaps(*ImpDef);
           SlotIndex RegDefIdx = DefIdx.getRegSlot();
+          LaneBitmask Mask = MRI->getMaxLaneMaskForVReg(Reg);
           for (LiveInterval::SubRange &SR : LI.subranges()) {
+            Mask = Mask & ~SR.LaneMask;
             VNInfo *SRVNI = SR.getNextValue(RegDefIdx, Allocator);
             SR.addSegment(LiveRange::Segment(RegDefIdx, PredEnd, SRVNI));
+          }
+
+          if (!Mask.none()) {
+            LiveInterval::SubRange *SR = LI.createSubRange(Allocator, Mask);
+            SR->createDeadDef(RegDefIdx, Allocator);
           }
         }
       }
@@ -383,7 +390,7 @@ bool RenameIndependentSubregs::runOnMachineFunction(MachineFunction &MF) {
   LLVM_DEBUG(dbgs() << "Renaming independent subregister live ranges in "
                     << MF.getName() << '\n');
 
-  LIS = &getAnalysis<LiveIntervals>();
+  LIS = &getAnalysis<LiveIntervalsWrapperPass>().getLIS();
   TII = MF.getSubtarget().getInstrInfo();
 
   // Iterate over all vregs. Note that we query getNumVirtRegs() the newly

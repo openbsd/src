@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a model runner using Tensorflow C APIs, allowing the
+// This file implements a model runner using TFLite, allowing the
 // loading of a model from a command line option.
 //
 //===----------------------------------------------------------------------===//
@@ -23,6 +23,7 @@
 #include "llvm/Analysis/Utils/TFUtils.h"
 #include "llvm/Analysis/Utils/TrainingLogger.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 
@@ -165,7 +166,6 @@ private:
   bool isLogging() const { return !!Logger; }
   std::unique_ptr<MLInlineAdvice> getMandatoryAdviceImpl(CallBase &CB) override;
 
-  std::function<bool(CallBase &)> GetDefaultAdvice;
   const bool IsDoingInference;
   std::unique_ptr<TrainingLogger> Logger;
 
@@ -254,7 +254,6 @@ private:
 };
 
 static const std::vector<TensorSpec> TrainingOnlyFeatures{
-    TensorSpec::createSpec<int64_t>(TFFeedPrefix + "inlining_default", {1}),
     TensorSpec::createSpec<float>(TFFeedPrefix + "discount", {1}),
     TensorSpec::createSpec<float>(TFFeedPrefix + "reward", {1}),
     TensorSpec::createSpec<int32_t>(TFFeedPrefix + "step_type", {1})};
@@ -280,10 +279,10 @@ TrainingLogger::TrainingLogger(StringRef LogFileName,
     append_range(FT, MUTR->extraOutputsForLoggingSpecs());
 
   DefaultDecisionPos = FT.size();
-  FT.push_back(TensorSpec::createSpec<int64_t>(DefaultDecisionName, {1}));
+  FT.push_back(DefaultDecisionSpec);
 
   DecisionPos = FT.size();
-  FT.push_back(TensorSpec::createSpec<int64_t>(DecisionName, {1}));
+  FT.push_back(InlineDecisionSpec);
   std::error_code EC;
   auto OS = std::make_unique<raw_fd_ostream>(TrainingLog, EC);
   if (EC)
@@ -331,8 +330,7 @@ DevelopmentModeMLInlineAdvisor::DevelopmentModeMLInlineAdvisor(
     std::unique_ptr<MLModelRunner> ModelRunner,
     std::function<bool(CallBase &)> GetDefaultAdvice,
     std::unique_ptr<TrainingLogger> Logger)
-    : MLInlineAdvisor(M, MAM, std::move(ModelRunner)),
-      GetDefaultAdvice(GetDefaultAdvice),
+    : MLInlineAdvisor(M, MAM, std::move(ModelRunner), GetDefaultAdvice),
       IsDoingInference(isa<ModelUnderTrainingRunner>(getModelRunner())),
       Logger(std::move(Logger)),
       InitialNativeSize(isLogging() ? getTotalSizeEstimate() : 0),

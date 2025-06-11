@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Transforms/PassBuilder.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
@@ -66,7 +67,7 @@ LLVMErrorRef LLVMRunPasses(LLVMModuleRef M, const char *Passes,
   PB.crossRegisterProxies(LAM, FAM, CGAM, MAM);
 
   StandardInstrumentations SI(Mod->getContext(), Debug, VerifyEach);
-  SI.registerCallbacks(PIC, &FAM);
+  SI.registerCallbacks(PIC, &MAM);
   ModulePassManager MPM;
   if (VerifyEach) {
     MPM.addPass(VerifierPass());
@@ -137,6 +138,11 @@ void LLVMPassBuilderOptionsSetCallGraphProfile(
 void LLVMPassBuilderOptionsSetMergeFunctions(LLVMPassBuilderOptionsRef Options,
                                              LLVMBool MergeFunctions) {
   unwrap(Options)->PTO.MergeFunctions = MergeFunctions;
+}
+
+void LLVMPassBuilderOptionsSetInlinerThreshold(
+    LLVMPassBuilderOptionsRef Options, int Threshold) {
+  unwrap(Options)->PTO.InlinerThreshold = Threshold;
 }
 
 void LLVMDisposePassBuilderOptions(LLVMPassBuilderOptionsRef Options) {

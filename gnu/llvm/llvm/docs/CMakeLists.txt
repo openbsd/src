@@ -87,6 +87,7 @@ if (LLVM_ENABLE_DOXYGEN)
     COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxygen.cfg
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating llvm doxygen documentation." VERBATIM)
+  set_target_properties(doxygen-llvm PROPERTIES FOLDER "LLVM/Docs")
 
   if (LLVM_BUILD_DOCS)
     add_dependencies(doxygen doxygen-llvm)
@@ -131,11 +132,7 @@ if( NOT uses_ocaml LESS 0 AND LLVM_ENABLE_OCAMLDOC )
         ocaml_llvm_irreader
         ocaml_llvm_linker
         ocaml_llvm_target
-        ocaml_llvm_ipo
-        ocaml_llvm_passmgr_builder
-        ocaml_llvm_scalar_opts
         ocaml_llvm_transform_utils
-        ocaml_llvm_vectorize
       )
 
   foreach(llvm_target ${LLVM_TARGETS_TO_BUILD})

@@ -405,7 +405,7 @@ static bool splitLoopBound(Loop &L, DominatorTree &DT, LoopInfo &LI,
                      : SE.getUMinExpr(NewBoundSCEV, SplitBoundSCEV);
 
   SCEVExpander Expander(
-      SE, L.getHeader()->getParent()->getParent()->getDataLayout(), "split");
+      SE, L.getHeader()->getDataLayout(), "split");
   Instruction *InsertPt = SplitLoopPH->getTerminator();
   Value *NewBoundValue =
       Expander.expandCodeFor(NewBoundSCEV, NewBoundSCEV->getType(), InsertPt);
@@ -430,7 +430,7 @@ static bool splitLoopBound(Loop &L, DominatorTree &DT, LoopInfo &LI,
     ExitingCond.BI->setSuccessor(1, PostLoopPreHeader);
 
   // Update phi node in exit block of post-loop.
-  Builder.SetInsertPoint(&PostLoopPreHeader->front());
+  Builder.SetInsertPoint(PostLoopPreHeader, PostLoopPreHeader->begin());
   for (PHINode &PN : PostLoop->getExitBlock()->phis()) {
     for (auto i : seq<int>(0, PN.getNumOperands())) {
       // Check incoming block is pre-loop's exiting block.

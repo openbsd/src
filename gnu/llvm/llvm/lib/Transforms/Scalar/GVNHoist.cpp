@@ -62,13 +62,10 @@
 #include "llvm/IR/Use.h"
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
@@ -240,18 +237,6 @@ public:
   const VNtoInsns &getLoadVNTable() const { return VNtoCallsLoads; }
   const VNtoInsns &getStoreVNTable() const { return VNtoCallsStores; }
 };
-
-static void combineKnownMetadata(Instruction *ReplInst, Instruction *I) {
-  static const unsigned KnownIDs[] = {LLVMContext::MD_tbaa,
-                                      LLVMContext::MD_alias_scope,
-                                      LLVMContext::MD_noalias,
-                                      LLVMContext::MD_range,
-                                      LLVMContext::MD_fpmath,
-                                      LLVMContext::MD_invariant_load,
-                                      LLVMContext::MD_invariant_group,
-                                      LLVMContext::MD_access_group};
-  combineMetadata(ReplInst, I, KnownIDs, true);
-}
 
 // This pass hoists common computations across branches sharing common
 // dominator. The primary goal is to reduce the code size, and in some
@@ -519,39 +504,6 @@ private:
   std::pair<unsigned, unsigned> hoistExpressions(Function &F);
 };
 
-class GVNHoistLegacyPass : public FunctionPass {
-public:
-  static char ID;
-
-  GVNHoistLegacyPass() : FunctionPass(ID) {
-    initializeGVNHoistLegacyPassPass(*PassRegistry::getPassRegistry());
-  }
-
-  bool runOnFunction(Function &F) override {
-    if (skipFunction(F))
-      return false;
-    auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    auto &PDT = getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
-    auto &AA = getAnalysis<AAResultsWrapperPass>().getAAResults();
-    auto &MD = getAnalysis<MemoryDependenceWrapperPass>().getMemDep();
-    auto &MSSA = getAnalysis<MemorySSAWrapperPass>().getMSSA();
-
-    GVNHoist G(&DT, &PDT, &AA, &MD, &MSSA);
-    return G.run(F);
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<PostDominatorTreeWrapperPass>();
-    AU.addRequired<AAResultsWrapperPass>();
-    AU.addRequired<MemoryDependenceWrapperPass>();
-    AU.addRequired<MemorySSAWrapperPass>();
-    AU.addPreserved<DominatorTreeWrapperPass>();
-    AU.addPreserved<MemorySSAWrapperPass>();
-    AU.addPreserved<GlobalsAAWrapperPass>();
-  }
-};
-
 bool GVNHoist::run(Function &F) {
   NumFuncArgs = F.arg_size();
   VN.setDomTree(DT);
@@ -808,15 +760,20 @@ bool GVNHoist::valueAnticipable(CHIArgs C, Instruction *TI) const {
 void GVNHoist::checkSafety(CHIArgs C, BasicBlock *BB, GVNHoist::InsKind K,
                            SmallVectorImpl<CHIArg> &Safe) {
   int NumBBsOnAllPaths = MaxNumberOfBBSInPath;
+  const Instruction *T = BB->getTerminator();
   for (auto CHI : C) {
     Instruction *Insn = CHI.I;
     if (!Insn) // No instruction was inserted in this CHI.
+      continue;
+    // If the Terminator is some kind of "exotic terminator" that produces a
+    // value (such as InvokeInst, CallBrInst, or CatchSwitchInst) which the CHI
+    // uses, it is not safe to hoist the use above the def.
+    if (!T->use_empty() && is_contained(Insn->operands(), cast<const Value>(T)))
       continue;
     if (K == InsKind::Scalar) {
       if (safeToHoistScalar(BB, Insn->getParent(), NumBBsOnAllPaths))
         Safe.push_back(CHI);
     } else {
-      auto *T = BB->getTerminator();
       if (MemoryUseOrDef *UD = MSSA->getMemoryAccess(Insn))
         if (safeToHoistLdSt(T, Insn, UD, K, NumBBsOnAllPaths))
           Safe.push_back(CHI);
@@ -982,6 +939,14 @@ void GVNHoist::makeGepsAvailable(Instruction *Repl, BasicBlock *HoistPt,
       OtherGep = cast<GetElementPtrInst>(
           cast<StoreInst>(OtherInst)->getPointerOperand());
     ClonedGep->andIRFlags(OtherGep);
+
+    // Merge debug locations of GEPs, because the hoisted GEP replaces those
+    // in branches. When cloning, ClonedGep preserves the debug location of
+    // Gepd, so Gep is skipped to avoid merging it twice.
+    if (OtherGep != Gep) {
+      ClonedGep->applyMergedLocation(ClonedGep->getDebugLoc(),
+                                     OtherGep->getDebugLoc());
+    }
   }
 
   // Replace uses of Gep with ClonedGep in Repl.
@@ -1019,8 +984,8 @@ unsigned GVNHoist::rauw(const SmallVecInsn &Candidates, Instruction *Repl,
         MSSAUpdater->removeMemoryAccess(OldMA);
       }
 
+      combineMetadataForCSE(Repl, I, true);
       Repl->andIRFlags(I);
-      combineKnownMetadata(Repl, I);
       I->replaceAllUsesWith(Repl);
       // Also invalidate the Alias Analysis cache.
       MD->removeInstruction(I);
@@ -1251,17 +1216,3 @@ PreservedAnalyses GVNHoistPass::run(Function &F, FunctionAnalysisManager &AM) {
   PA.preserve<MemorySSAAnalysis>();
   return PA;
 }
-
-char GVNHoistLegacyPass::ID = 0;
-
-INITIALIZE_PASS_BEGIN(GVNHoistLegacyPass, "gvn-hoist",
-                      "Early GVN Hoisting of Expressions", false, false)
-INITIALIZE_PASS_DEPENDENCY(MemoryDependenceWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(MemorySSAWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(PostDominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
-INITIALIZE_PASS_END(GVNHoistLegacyPass, "gvn-hoist",
-                    "Early GVN Hoisting of Expressions", false, false)
-
-FunctionPass *llvm::createGVNHoistPass() { return new GVNHoistLegacyPass(); }

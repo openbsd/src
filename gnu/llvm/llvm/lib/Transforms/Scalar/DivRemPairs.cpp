@@ -21,10 +21,7 @@
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/PatternMatch.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/DebugCounter.h"
-#include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BypassSlowDivision.h"
 #include <optional>
 
@@ -218,6 +215,7 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
       RemInst = RealRem;
       // And replace the original instruction with the new one.
       OrigRemInst->replaceAllUsesWith(RealRem);
+      RealRem->setDebugLoc(OrigRemInst->getDebugLoc());
       OrigRemInst->eraseFromParent();
       NumRecomposed++;
       // Note that we have left ((X / Y) * Y) around.
@@ -369,7 +367,13 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
       if (!DivDominates)
         DivInst->moveBefore(RemInst);
       Mul->insertAfter(RemInst);
+      Mul->setDebugLoc(RemInst->getDebugLoc());
       Sub->insertAfter(Mul);
+      Sub->setDebugLoc(RemInst->getDebugLoc());
+
+      // If DivInst has the exact flag, remove it. Otherwise this optimization
+      // may replace a well-defined value 'X % Y' with poison.
+      DivInst->dropPoisonGeneratingFlags();
 
       // If X can be undef, X should be frozen first.
       // For example, let's assume that Y = 1 & X = undef:
@@ -380,16 +384,19 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
       //   %mul = mul %div, 1   // %mul = undef
       //   %rem = sub %x, %mul  // %rem = undef - undef = undef
       // If X is not frozen, %rem becomes undef after transformation.
-      // TODO: We need a undef-specific checking function in ValueTracking
-      if (!isGuaranteedNotToBeUndefOrPoison(X, nullptr, DivInst, &DT)) {
-        auto *FrX = new FreezeInst(X, X->getName() + ".frozen", DivInst);
+      if (!isGuaranteedNotToBeUndef(X, nullptr, DivInst, &DT)) {
+        auto *FrX =
+            new FreezeInst(X, X->getName() + ".frozen", DivInst->getIterator());
+        FrX->setDebugLoc(DivInst->getDebugLoc());
         DivInst->setOperand(0, FrX);
         Sub->setOperand(0, FrX);
       }
       // Same for Y. If X = 1 and Y = (undef | 1), %rem in src is either 1 or 0,
       // but %rem in tgt can be one of many integer values.
-      if (!isGuaranteedNotToBeUndefOrPoison(Y, nullptr, DivInst, &DT)) {
-        auto *FrY = new FreezeInst(Y, Y->getName() + ".frozen", DivInst);
+      if (!isGuaranteedNotToBeUndef(Y, nullptr, DivInst, &DT)) {
+        auto *FrY =
+            new FreezeInst(Y, Y->getName() + ".frozen", DivInst->getIterator());
+        FrY->setDebugLoc(DivInst->getDebugLoc());
         DivInst->setOperand(1, FrY);
         Mul->setOperand(1, FrY);
       }
@@ -412,44 +419,6 @@ static bool optimizeDivRem(Function &F, const TargetTransformInfo &TTI,
 }
 
 // Pass manager boilerplate below here.
-
-namespace {
-struct DivRemPairsLegacyPass : public FunctionPass {
-  static char ID;
-  DivRemPairsLegacyPass() : FunctionPass(ID) {
-    initializeDivRemPairsLegacyPassPass(*PassRegistry::getPassRegistry());
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<TargetTransformInfoWrapperPass>();
-    AU.setPreservesCFG();
-    AU.addPreserved<DominatorTreeWrapperPass>();
-    AU.addPreserved<GlobalsAAWrapperPass>();
-    FunctionPass::getAnalysisUsage(AU);
-  }
-
-  bool runOnFunction(Function &F) override {
-    if (skipFunction(F))
-      return false;
-    auto &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
-    auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    return optimizeDivRem(F, TTI, DT);
-  }
-};
-} // namespace
-
-char DivRemPairsLegacyPass::ID = 0;
-INITIALIZE_PASS_BEGIN(DivRemPairsLegacyPass, "div-rem-pairs",
-                      "Hoist/decompose integer division and remainder", false,
-                      false)
-INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_END(DivRemPairsLegacyPass, "div-rem-pairs",
-                    "Hoist/decompose integer division and remainder", false,
-                    false)
-FunctionPass *llvm::createDivRemPairsPass() {
-  return new DivRemPairsLegacyPass();
-}
 
 PreservedAnalyses DivRemPairsPass::run(Function &F,
                                        FunctionAnalysisManager &FAM) {

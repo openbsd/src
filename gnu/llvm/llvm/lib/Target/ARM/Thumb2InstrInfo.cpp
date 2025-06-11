@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstBuilder.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -261,10 +262,8 @@ void Thumb2InstrInfo::expandLoadStackGuard(
     return;
   }
 
-  const GlobalValue *GV =
-      cast<GlobalValue>((*MI->memoperands_begin())->getValue());
-
-  if (MF.getSubtarget<ARMSubtarget>().isGVInGOT(GV))
+  const auto *GV = cast<GlobalValue>((*MI->memoperands_begin())->getValue());
+  if (MF.getSubtarget<ARMSubtarget>().isTargetELF() && !GV->isDSOLocal())
     expandLoadStackGuardBase(MI, ARM::t2LDRLIT_ga_pcrel, ARM::t2LDRi12);
   else if (MF.getTarget().isPositionIndependent())
     expandLoadStackGuardBase(MI, ARM::t2MOV_ga_pcrel, ARM::t2LDRi12);
@@ -286,6 +285,25 @@ MachineInstr *Thumb2InstrInfo::commuteInstructionImpl(MachineInstr &MI,
       return nullptr;
   }
   return ARMBaseInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
+}
+
+bool Thumb2InstrInfo::isSchedulingBoundary(const MachineInstr &MI,
+                                           const MachineBasicBlock *MBB,
+                                           const MachineFunction &MF) const {
+  // BTI clearing instructions shall not take part in scheduling regions as
+  // they must stay in their intended place. Although PAC isn't BTI clearing,
+  // it can be transformed into PACBTI after the pre-RA Machine Scheduling
+  // has taken place, so its movement must also be restricted.
+  switch (MI.getOpcode()) {
+  case ARM::t2BTI:
+  case ARM::t2PAC:
+  case ARM::t2PACBTI:
+  case ARM::t2SG:
+    return true;
+  default:
+    break;
+  }
+  return ARMBaseInstrInfo::isSchedulingBoundary(MI, MBB, MF);
 }
 
 void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
@@ -398,8 +416,8 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
     } else {
       // Use one T2 instruction to reduce NumBytes
       // FIXME: Move this to ARMAddressingModes.h?
-      unsigned RotAmt = countLeadingZeros(ThisVal);
-      ThisVal = ThisVal & ARM_AM::rotr32(0xff000000U, RotAmt);
+      unsigned RotAmt = llvm::countl_zero(ThisVal);
+      ThisVal = ThisVal & llvm::rotr<uint32_t>(0xff000000U, RotAmt);
       NumBytes &= ~ThisVal;
       assert(ARM_AM::getT2SOImmVal(ThisVal) != -1 &&
              "Bit extraction didn't work?");
@@ -554,7 +572,7 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
 
     Register PredReg;
     if (Offset == 0 && getInstrPredicate(MI, PredReg) == ARMCC::AL &&
-        !MI.definesRegister(ARM::CPSR)) {
+        !MI.definesRegister(ARM::CPSR, /*TRI=*/nullptr)) {
       // Turn it into a move.
       MI.setDesc(TII.get(ARM::tMOVr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
@@ -603,8 +621,8 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
 
     // Otherwise, extract 8 adjacent bits from the immediate into this
     // t2ADDri/t2SUBri.
-    unsigned RotAmt = countLeadingZeros<unsigned>(Offset);
-    unsigned ThisImmVal = Offset & ARM_AM::rotr32(0xff000000U, RotAmt);
+    unsigned RotAmt = llvm::countl_zero<unsigned>(Offset);
+    unsigned ThisImmVal = Offset & llvm::rotr<uint32_t>(0xff000000U, RotAmt);
 
     // We will handle these bits from offset, clear them.
     Offset &= ~ThisImmVal;

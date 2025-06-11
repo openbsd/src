@@ -30,16 +30,12 @@ namespace llvm {
 
 class MipsDAGToDAGISel : public SelectionDAGISel {
 public:
-  static char ID;
-
   MipsDAGToDAGISel() = delete;
 
-  explicit MipsDAGToDAGISel(MipsTargetMachine &TM, CodeGenOpt::Level OL)
-      : SelectionDAGISel(ID, TM, OL), Subtarget(nullptr) {}
+  explicit MipsDAGToDAGISel(MipsTargetMachine &TM, CodeGenOptLevel OL)
+      : SelectionDAGISel(TM, OL), Subtarget(nullptr) {}
 
   bool runOnMachineFunction(MachineFunction &MF) override;
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
 
 protected:
   SDNode *getGlobalBaseReg();
@@ -124,6 +120,9 @@ private:
   /// starting at bit zero.
   virtual bool selectVSplatMaskR(SDValue N, SDValue &Imm) const;
 
+  /// Select constant vector splats whose value is 1.
+  virtual bool selectVSplatImmEq1(SDValue N) const;
+
   /// Convert vector addition with vector subtraction if that allows to encode
   /// constant as an immediate and thus avoid extra 'ldi' instruction.
   /// add X, <-1, -1...> --> sub X, <1, 1...>
@@ -141,8 +140,16 @@ private:
   virtual void processFunctionAfterISel(MachineFunction &MF) = 0;
 
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                    unsigned ConstraintID,
+                                    InlineAsm::ConstraintCode ConstraintID,
                                     std::vector<SDValue> &OutOps) override;
+  bool isUnneededShiftMask(SDNode *N, unsigned ShAmtBits) const;
+};
+
+class MipsDAGToDAGISelLegacy : public SelectionDAGISelLegacy {
+public:
+  static char ID;
+  MipsDAGToDAGISelLegacy(std::unique_ptr<SelectionDAGISel> S);
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 }
 

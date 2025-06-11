@@ -64,8 +64,7 @@ static LLVM_THREAD_LOCAL PrettyStackTraceEntry *PrettyStackTraceHead = nullptr;
 // the current thread". If the user happens to overflow an 'unsigned' with
 // SIGINFO requests, it's possible that some threads will stop responding to it,
 // but the program won't crash.
-static volatile std::atomic<unsigned> GlobalSigInfoGenerationCounter =
-    ATOMIC_VAR_INIT(1);
+static volatile std::atomic<unsigned> GlobalSigInfoGenerationCounter = 1;
 static LLVM_THREAD_LOCAL unsigned ThreadLocalSigInfoGenerationCounter = 0;
 
 namespace llvm {
@@ -144,10 +143,9 @@ static void setCrashLogMessage(const char *msg) {
 
 #ifdef __APPLE__
 using CrashHandlerString = SmallString<2048>;
-using CrashHandlerStringStorage =
-    std::aligned_storage<sizeof(CrashHandlerString),
-                         alignof(CrashHandlerString)>::type;
-static CrashHandlerStringStorage crashHandlerStringStorage;
+using CrashHandlerStringStorage = std::byte[sizeof(CrashHandlerString)];
+alignas(CrashHandlerString) static CrashHandlerStringStorage
+    crashHandlerStringStorage;
 #endif
 
 /// This callback is run if a fatal signal is delivered to the process, it

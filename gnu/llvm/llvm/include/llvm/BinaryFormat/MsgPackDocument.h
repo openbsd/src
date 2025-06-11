@@ -124,6 +124,11 @@ public:
     return Raw;
   }
 
+  MemoryBufferRef getBinary() const {
+    assert(getKind() == Type::Binary);
+    return MemoryBufferRef(Raw, "");
+  }
+
   /// Get an ArrayDocNode for an array node. If Convert, convert the node to an
   /// array node if necessary.
   ArrayDocNode &getArray(bool Convert = false) {
@@ -201,6 +206,7 @@ public:
   /// that restriction.
   DocNode &operator=(const char *Val) { return *this = StringRef(Val); }
   DocNode &operator=(StringRef Val);
+  DocNode &operator=(MemoryBufferRef Val);
   DocNode &operator=(bool Val);
   DocNode &operator=(int Val);
   DocNode &operator=(unsigned Val);
@@ -368,10 +374,21 @@ public:
     return getNode(StringRef(V), Copy);
   }
 
+  /// Create a Binary node associated with this Document. If !Copy, the passed
+  /// buffer must remain valid for the lifetime of the Document.
+  DocNode getNode(MemoryBufferRef V, bool Copy = false) {
+    auto Raw = V.getBuffer();
+    if (Copy)
+      Raw = addString(Raw);
+    auto N = DocNode(&KindAndDocs[size_t(Type::Binary)]);
+    N.Raw = Raw;
+    return N;
+  }
+
   /// Create an empty Map node associated with this Document.
   MapDocNode getMapNode() {
     auto N = DocNode(&KindAndDocs[size_t(Type::Map)]);
-    Maps.push_back(std::unique_ptr<DocNode::MapTy>(new DocNode::MapTy));
+    Maps.push_back(std::make_unique<DocNode::MapTy>());
     N.Map = Maps.back().get();
     return N.getMap();
   }
@@ -379,7 +396,7 @@ public:
   /// Create an empty Array node associated with this Document.
   ArrayDocNode getArrayNode() {
     auto N = DocNode(&KindAndDocs[size_t(Type::Array)]);
-    Arrays.push_back(std::unique_ptr<DocNode::ArrayTy>(new DocNode::ArrayTy));
+    Arrays.push_back(std::make_unique<DocNode::ArrayTy>());
     N.Array = Arrays.back().get();
     return N.getArray();
   }

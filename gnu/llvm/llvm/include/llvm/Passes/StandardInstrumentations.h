@@ -18,6 +18,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/StringSet.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/OptBisect.h"
 #include "llvm/IR/PassTimingInfo.h"
@@ -33,6 +35,7 @@ namespace llvm {
 
 class Module;
 class Function;
+class MachineFunction;
 class PassInstrumentationCallbacks;
 
 /// Instrumentation to print IR before/after passes.
@@ -46,22 +49,42 @@ public:
   void registerCallbacks(PassInstrumentationCallbacks &PIC);
 
 private:
+  struct PassRunDescriptor {
+    const Module *M;
+    const std::string DumpIRFilename;
+    const std::string IRName;
+    const StringRef PassID;
+
+    PassRunDescriptor(const Module *M, std::string DumpIRFilename,
+                      std::string IRName, const StringRef PassID)
+        : M{M}, DumpIRFilename{DumpIRFilename}, IRName{IRName}, PassID(PassID) {
+    }
+  };
+
   void printBeforePass(StringRef PassID, Any IR);
   void printAfterPass(StringRef PassID, Any IR);
   void printAfterPassInvalidated(StringRef PassID);
 
   bool shouldPrintBeforePass(StringRef PassID);
   bool shouldPrintAfterPass(StringRef PassID);
+  bool shouldPrintBeforeCurrentPassNumber();
+  bool shouldPrintAfterCurrentPassNumber();
+  bool shouldPrintPassNumbers();
+  bool shouldPrintBeforeSomePassNumber();
+  bool shouldPrintAfterSomePassNumber();
 
-  using PrintModuleDesc = std::tuple<const Module *, std::string, StringRef>;
-
-  void pushModuleDesc(StringRef PassID, Any IR);
-  PrintModuleDesc popModuleDesc(StringRef PassID);
+  void pushPassRunDescriptor(StringRef PassID, Any IR,
+                             std::string &DumpIRFilename);
+  PassRunDescriptor popPassRunDescriptor(StringRef PassID);
+  std::string fetchDumpFilename(StringRef PassId, Any IR);
 
   PassInstrumentationCallbacks *PIC;
-  /// Stack of Module description, enough to print the module after a given
+  /// Stack of Pass Run descriptions, enough to print the IR unit after a given
   /// pass.
-  SmallVector<PrintModuleDesc, 2> ModuleDescStack;
+  SmallVector<PassRunDescriptor, 2> PassRunDescriptorStack;
+
+  /// Used for print-at-pass-number
+  unsigned CurrentPassNumber = 0;
 };
 
 class OptNoneInstrumentation {
@@ -152,9 +175,8 @@ public:
   SmallVector<StringRef, 8> PassStack;
 #endif
 
-  static cl::opt<bool> VerifyPreservedCFG;
   void registerCallbacks(PassInstrumentationCallbacks &PIC,
-                         FunctionAnalysisManager &FAM);
+                         ModuleAnalysisManager &MAM);
 };
 
 // Base class for classes that report changes to the IR.
@@ -297,6 +319,11 @@ public:
     B.print(SS, nullptr, true, true);
   }
 
+  BlockDataT(const MachineBasicBlock &B) : Label(B.getName().str()), Data(B) {
+    raw_string_ostream SS(Body);
+    B.print(SS);
+  }
+
   bool operator==(const BlockDataT &That) const { return Body == That.Body; }
   bool operator!=(const BlockDataT &That) const { return Body != That.Body; }
 
@@ -348,6 +375,7 @@ protected:
 class EmptyData {
 public:
   EmptyData(const BasicBlock &) {}
+  EmptyData(const MachineBasicBlock &) {}
 };
 
 // The data saved for comparing functions.
@@ -389,7 +417,8 @@ public:
 
 protected:
   // Generate the data for \p F into \p Data.
-  static bool generateFunctionData(IRDataT<T> &Data, const Function &F);
+  template <typename FunctionT>
+  static bool generateFunctionData(IRDataT<T> &Data, const FunctionT &F);
 
   const IRDataT<T> &Before;
   const IRDataT<T> &After;
@@ -432,7 +461,8 @@ class VerifyInstrumentation {
 
 public:
   VerifyInstrumentation(bool DebugLogging) : DebugLogging(DebugLogging) {}
-  void registerCallbacks(PassInstrumentationCallbacks &PIC);
+  void registerCallbacks(PassInstrumentationCallbacks &PIC,
+                         ModuleAnalysisManager *MAM);
 };
 
 /// This class implements --time-trace functionality for new pass manager.
@@ -459,6 +489,7 @@ class DCData {
 public:
   // Fill the map with the transitions from basic block \p B.
   DCData(const BasicBlock &B);
+  DCData(const MachineBasicBlock &B);
 
   // Return an iterator to the names of the successor blocks.
   StringMap<std::string>::const_iterator begin() const {
@@ -575,7 +606,7 @@ public:
   // Register all the standard instrumentation callbacks. If \p FAM is nullptr
   // then PreservedCFGChecker is not enabled.
   void registerCallbacks(PassInstrumentationCallbacks &PIC,
-                         FunctionAnalysisManager *FAM = nullptr);
+                         ModuleAnalysisManager *MAM = nullptr);
 
   TimePassesHandler &getTimePasses() { return TimePasses; }
 };

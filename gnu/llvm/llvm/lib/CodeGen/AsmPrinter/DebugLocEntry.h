@@ -126,7 +126,7 @@ public:
       : Expression(Expr), ValueLocEntries(Locs.begin(), Locs.end()),
         IsVariadic(IsVariadic) {
 #ifndef NDEBUG
-    assert(cast<DIExpression>(Expr)->isValid() ||
+    assert(Expr->isValid() ||
            !any_of(Locs, [](auto LE) { return LE.isLocation(); }));
     if (!IsVariadic) {
       assert(ValueLocEntries.size() == 1);
@@ -238,10 +238,10 @@ public:
     if (Values.size() == 1)
       return;
     llvm::sort(Values);
-    Values.erase(std::unique(Values.begin(), Values.end(),
-                             [](const DbgValueLoc &A, const DbgValueLoc &B) {
-                               return A.getExpression() == B.getExpression();
-                             }),
+    Values.erase(llvm::unique(Values,
+                              [](const DbgValueLoc &A, const DbgValueLoc &B) {
+                                return A.getExpression() == B.getExpression();
+                              }),
                  Values.end());
   }
 

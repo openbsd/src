@@ -12,12 +12,14 @@
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SlotIndexes.h"
@@ -78,10 +80,11 @@ MCSymbol *MachineBasicBlock::getSymbol() const {
       }
       CachedMCSymbol = Ctx.getOrCreateSymbol(MF->getName() + Suffix);
     } else {
-      const StringRef Prefix = Ctx.getAsmInfo()->getPrivateLabelPrefix();
-      CachedMCSymbol = Ctx.getOrCreateSymbol(Twine(Prefix) + "BB" +
-                                             Twine(MF->getFunctionNumber()) +
-                                             "_" + Twine(getNumber()));
+      // If the block occurs as label in inline assembly, parsing the assembly
+      // needs an actual label name => set AlwaysEmit in these cases.
+      CachedMCSymbol = Ctx.createBlockSymbol(
+          "BB" + Twine(MF->getFunctionNumber()) + "_" + Twine(getNumber()),
+          /*AlwaysEmit=*/hasLabelMustBeEmitted());
     }
   }
   return CachedMCSymbol;
@@ -102,10 +105,9 @@ MCSymbol *MachineBasicBlock::getEndSymbol() const {
   if (!CachedEndMCSymbol) {
     const MachineFunction *MF = getParent();
     MCContext &Ctx = MF->getContext();
-    auto Prefix = Ctx.getAsmInfo()->getPrivateLabelPrefix();
-    CachedEndMCSymbol = Ctx.getOrCreateSymbol(Twine(Prefix) + "BB_END" +
-                                              Twine(MF->getFunctionNumber()) +
-                                              "_" + Twine(getNumber()));
+    CachedEndMCSymbol = Ctx.createBlockSymbol(
+        "BB_END" + Twine(MF->getFunctionNumber()) + "_" + Twine(getNumber()),
+        /*AlwaysEmit=*/false);
   }
   return CachedEndMCSymbol;
 }
@@ -221,13 +223,13 @@ MachineBasicBlock::SkipPHIsAndLabels(MachineBasicBlock::iterator I) {
 
 MachineBasicBlock::iterator
 MachineBasicBlock::SkipPHIsLabelsAndDebug(MachineBasicBlock::iterator I,
-                                          bool SkipPseudoOp) {
+                                          Register Reg, bool SkipPseudoOp) {
   const TargetInstrInfo *TII = getParent()->getSubtarget().getInstrInfo();
 
   iterator E = end();
   while (I != E && (I->isPHI() || I->isPosition() || I->isDebugInstr() ||
                     (SkipPseudoOp && I->isPseudoProbe()) ||
-                    TII->isBasicBlockPrologue(*I)))
+                    TII->isBasicBlockPrologue(*I, Reg)))
     ++I;
   // FIXME: This needs to change if we wish to bundle labels / dbg_values
   // inside the bundle.
@@ -311,6 +313,12 @@ bool MachineBasicBlock::isLegalToHoistInto() const {
   if (isReturnBlock() || hasEHPadSuccessor() || mayHaveInlineAsmBr())
     return false;
   return true;
+}
+
+bool MachineBasicBlock::hasName() const {
+  if (const BasicBlock *LBB = getBasicBlock())
+    return LBB->hasName();
+  return false;
 }
 
 StringRef MachineBasicBlock::getName() const {
@@ -565,7 +573,14 @@ void MachineBasicBlock::printName(raw_ostream &os, unsigned printNameFlags,
     }
     if (getBBID().has_value()) {
       os << (hasAttributes ? ", " : " (");
-      os << "bb_id " << *getBBID();
+      os << "bb_id " << getBBID()->BaseID;
+      if (getBBID()->CloneID != 0)
+        os << " " << getBBID()->CloneID;
+      hasAttributes = true;
+    }
+    if (CallFrameSize != 0) {
+      os << (hasAttributes ? ", " : " (");
+      os << "call-frame-size " << CallFrameSize;
       hasAttributes = true;
     }
   }
@@ -662,6 +677,15 @@ void MachineBasicBlock::moveBefore(MachineBasicBlock *NewAfter) {
 
 void MachineBasicBlock::moveAfter(MachineBasicBlock *NewBefore) {
   getParent()->splice(++NewBefore->getIterator(), getIterator());
+}
+
+static int findJumpTableIndex(const MachineBasicBlock &MBB) {
+  MachineBasicBlock::const_iterator TerminatorI = MBB.getFirstTerminator();
+  if (TerminatorI == MBB.end())
+    return -1;
+  const MachineInstr &Terminator = *TerminatorI;
+  const TargetInstrInfo *TII = MBB.getParent()->getSubtarget().getInstrInfo();
+  return TII->getJumpTableIndex(Terminator);
 }
 
 void MachineBasicBlock::updateTerminator(
@@ -870,7 +894,7 @@ void MachineBasicBlock::replaceSuccessor(MachineBasicBlock *Old,
   removeSuccessor(OldI);
 }
 
-void MachineBasicBlock::copySuccessor(MachineBasicBlock *Orig,
+void MachineBasicBlock::copySuccessor(const MachineBasicBlock *Orig,
                                       succ_iterator I) {
   if (!Orig->Probs.empty())
     addSuccessor(*I, Orig->getSuccProbability(I));
@@ -944,6 +968,10 @@ const MachineBasicBlock *MachineBasicBlock::getSingleSuccessor() const {
   return Successors.size() == 1 ? Successors[0] : nullptr;
 }
 
+const MachineBasicBlock *MachineBasicBlock::getSinglePredecessor() const {
+  return Predecessors.size() == 1 ? Predecessors[0] : nullptr;
+}
+
 MachineBasicBlock *MachineBasicBlock::getFallThrough(bool JumpToFallThrough) {
   MachineFunction::iterator Fallthrough = getIterator();
   ++Fallthrough;
@@ -975,8 +1003,8 @@ MachineBasicBlock *MachineBasicBlock::getFallThrough(bool JumpToFallThrough) {
 
   // If there is some explicit branch to the fallthrough block, it can obviously
   // reach, even though the branch should get folded to fall through implicitly.
-  if (!JumpToFallThrough && (MachineFunction::iterator(TBB) == Fallthrough ||
-                           MachineFunction::iterator(FBB) == Fallthrough))
+  if (JumpToFallThrough && (MachineFunction::iterator(TBB) == Fallthrough ||
+                            MachineFunction::iterator(FBB) == Fallthrough))
     return &*Fallthrough;
 
   // If it's an unconditional branch to some block not the fall through, it
@@ -1033,24 +1061,118 @@ MachineBasicBlock *MachineBasicBlock::splitAt(MachineInstr &MI,
   return SplitBB;
 }
 
+// Returns `true` if there are possibly other users of the jump table at
+// `JumpTableIndex` except for the ones in `IgnoreMBB`.
+static bool jumpTableHasOtherUses(const MachineFunction &MF,
+                                  const MachineBasicBlock &IgnoreMBB,
+                                  int JumpTableIndex) {
+  assert(JumpTableIndex >= 0 && "need valid index");
+  const MachineJumpTableInfo &MJTI = *MF.getJumpTableInfo();
+  const MachineJumpTableEntry &MJTE = MJTI.getJumpTables()[JumpTableIndex];
+  // Take any basic block from the table; every user of the jump table must
+  // show up in the predecessor list.
+  const MachineBasicBlock *MBB = nullptr;
+  for (MachineBasicBlock *B : MJTE.MBBs) {
+    if (B != nullptr) {
+      MBB = B;
+      break;
+    }
+  }
+  if (MBB == nullptr)
+    return true; // can't rule out other users if there isn't any block.
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+  SmallVector<MachineOperand, 4> Cond;
+  for (MachineBasicBlock *Pred : MBB->predecessors()) {
+    if (Pred == &IgnoreMBB)
+      continue;
+    MachineBasicBlock *DummyT = nullptr;
+    MachineBasicBlock *DummyF = nullptr;
+    Cond.clear();
+    if (!TII.analyzeBranch(*Pred, DummyT, DummyF, Cond,
+                           /*AllowModify=*/false)) {
+      // analyzable direct jump
+      continue;
+    }
+    int PredJTI = findJumpTableIndex(*Pred);
+    if (PredJTI >= 0) {
+      if (PredJTI == JumpTableIndex)
+        return true;
+      continue;
+    }
+    // Be conservative for unanalyzable jumps.
+    return true;
+  }
+  return false;
+}
+
+class SlotIndexUpdateDelegate : public MachineFunction::Delegate {
+private:
+  MachineFunction &MF;
+  SlotIndexes *Indexes;
+  SmallSetVector<MachineInstr *, 2> Insertions;
+
+public:
+  SlotIndexUpdateDelegate(MachineFunction &MF, SlotIndexes *Indexes)
+      : MF(MF), Indexes(Indexes) {
+    MF.setDelegate(this);
+  }
+
+  ~SlotIndexUpdateDelegate() {
+    MF.resetDelegate(this);
+    for (auto MI : Insertions)
+      Indexes->insertMachineInstrInMaps(*MI);
+  }
+
+  void MF_HandleInsertion(MachineInstr &MI) override {
+    // This is called before MI is inserted into block so defer index update.
+    if (Indexes)
+      Insertions.insert(&MI);
+  }
+
+  void MF_HandleRemoval(MachineInstr &MI) override {
+    if (Indexes && !Insertions.remove(&MI))
+      Indexes->removeMachineInstrFromMaps(MI);
+  }
+};
+
+#define GET_RESULT(RESULT, GETTER, INFIX)                                      \
+  [MF, P, MFAM]() {                                                            \
+    if (P) {                                                                   \
+      auto *Wrapper = P->getAnalysisIfAvailable<RESULT##INFIX##WrapperPass>(); \
+      return Wrapper ? &Wrapper->GETTER() : nullptr;                           \
+    }                                                                          \
+    return MFAM->getCachedResult<RESULT##Analysis>(*MF);                       \
+  }()
+
 MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
-    MachineBasicBlock *Succ, Pass &P,
+    MachineBasicBlock *Succ, Pass *P, MachineFunctionAnalysisManager *MFAM,
     std::vector<SparseBitVector<>> *LiveInSets) {
+  assert((P || MFAM) && "Need a way to get analysis results!");
   if (!canSplitCriticalEdge(Succ))
     return nullptr;
 
   MachineFunction *MF = getParent();
   MachineBasicBlock *PrevFallthrough = getNextNode();
-  DebugLoc DL;  // FIXME: this is nowhere
 
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
+  NMBB->setCallFrameSize(Succ->getCallFrameSize());
+
+  // Is there an indirect jump with jump table?
+  bool ChangedIndirectJump = false;
+  int JTI = findJumpTableIndex(*this);
+  if (JTI >= 0) {
+    MachineJumpTableInfo &MJTI = *MF->getJumpTableInfo();
+    MJTI.ReplaceMBBInJumpTable(JTI, Succ, NMBB);
+    ChangedIndirectJump = true;
+  }
+
   MF->insert(std::next(MachineFunction::iterator(this)), NMBB);
   LLVM_DEBUG(dbgs() << "Splitting critical edge: " << printMBBReference(*this)
                     << " -- " << printMBBReference(*NMBB) << " -- "
                     << printMBBReference(*Succ) << '\n');
 
-  LiveIntervals *LIS = P.getAnalysisIfAvailable<LiveIntervals>();
-  SlotIndexes *Indexes = P.getAnalysisIfAvailable<SlotIndexes>();
+  LiveIntervals *LIS = GET_RESULT(LiveIntervals, getLIS, );
+  SlotIndexes *Indexes = GET_RESULT(SlotIndexes, getSI, );
   if (LIS)
     LIS->insertMBBInMaps(NMBB);
   else if (Indexes)
@@ -1059,16 +1181,15 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
   // On some targets like Mips, branches may kill virtual registers. Make sure
   // that LiveVariables is properly updated after updateTerminator replaces the
   // terminators.
-  LiveVariables *LV = P.getAnalysisIfAvailable<LiveVariables>();
+  LiveVariables *LV = GET_RESULT(LiveVariables, getLV, );
 
   // Collect a list of virtual registers killed by the terminators.
   SmallVector<Register, 4> KilledRegs;
   if (LV)
     for (MachineInstr &MI :
          llvm::make_range(getFirstInstrTerminator(), instr_end())) {
-      for (MachineOperand &MO : MI.operands()) {
-        if (!MO.isReg() || MO.getReg() == 0 || !MO.isUse() || !MO.isKill() ||
-            MO.isUndef())
+      for (MachineOperand &MO : MI.all_uses()) {
+        if (MO.getReg() == 0 || !MO.isKill() || MO.isUndef())
           continue;
         Register Reg = MO.getReg();
         if (Reg.isPhysical() || LV->getVarInfo(Reg).removeKill(MI)) {
@@ -1096,49 +1217,32 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
 
   ReplaceUsesOfBlockWith(Succ, NMBB);
 
-  // If updateTerminator() removes instructions, we need to remove them from
-  // SlotIndexes.
-  SmallVector<MachineInstr*, 4> Terminators;
-  if (Indexes) {
-    for (MachineInstr &MI :
-         llvm::make_range(getFirstInstrTerminator(), instr_end()))
-      Terminators.push_back(&MI);
-  }
-
   // Since we replaced all uses of Succ with NMBB, that should also be treated
   // as the fallthrough successor
   if (Succ == PrevFallthrough)
     PrevFallthrough = NMBB;
-  updateTerminator(PrevFallthrough);
 
-  if (Indexes) {
-    SmallVector<MachineInstr*, 4> NewTerminators;
-    for (MachineInstr &MI :
-         llvm::make_range(getFirstInstrTerminator(), instr_end()))
-      NewTerminators.push_back(&MI);
-
-    for (MachineInstr *Terminator : Terminators) {
-      if (!is_contained(NewTerminators, Terminator))
-        Indexes->removeMachineInstrFromMaps(*Terminator);
-    }
+  if (!ChangedIndirectJump) {
+    SlotIndexUpdateDelegate SlotUpdater(*MF, Indexes);
+    updateTerminator(PrevFallthrough);
   }
 
   // Insert unconditional "jump Succ" instruction in NMBB if necessary.
   NMBB->addSuccessor(Succ);
   if (!NMBB->isLayoutSuccessor(Succ)) {
+    SlotIndexUpdateDelegate SlotUpdater(*MF, Indexes);
     SmallVector<MachineOperand, 4> Cond;
     const TargetInstrInfo *TII = getParent()->getSubtarget().getInstrInfo();
-    TII->insertBranch(*NMBB, Succ, nullptr, Cond, DL);
 
-    if (Indexes) {
-      for (MachineInstr &MI : NMBB->instrs()) {
-        // Some instructions may have been moved to NMBB by updateTerminator(),
-        // so we first remove any instruction that already has an index.
-        if (Indexes->hasIndex(MI))
-          Indexes->removeMachineInstrFromMaps(MI);
-        Indexes->insertMachineInstrInMaps(MI);
-      }
-    }
+    // In original 'this' BB, there must be a branch instruction targeting at
+    // Succ. We can not find it out since currently getBranchDestBlock was not
+    // implemented for all targets. However, if the merged DL has column or line
+    // number, the scope and non-zero column and line number is same with that
+    // branch instruction so we can safely use it.
+    DebugLoc DL, MergedDL = findBranchDebugLoc();
+    if (MergedDL && (MergedDL.getLine() || MergedDL.getCol()))
+      DL = MergedDL;
+    TII->insertBranch(*NMBB, Succ, nullptr, Cond, DL);
   }
 
   // Fix PHI nodes in Succ so they refer to NMBB instead of this.
@@ -1203,6 +1307,8 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
           assert(VNI &&
                  "PHI sources should be live out of their predecessors.");
           LI.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
+          for (auto &SR : LI.subranges())
+            SR.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
         }
       }
     }
@@ -1222,8 +1328,16 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
         VNInfo *VNI = LI.getVNInfoAt(PrevIndex);
         assert(VNI && "LiveInterval should have VNInfo where it is live.");
         LI.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
+        // Update subranges with live values
+        for (auto &SR : LI.subranges()) {
+          VNInfo *VNI = SR.getVNInfoAt(PrevIndex);
+          if (VNI)
+            SR.addSegment(LiveInterval::Segment(StartIndex, EndIndex, VNI));
+        }
       } else if (!isLiveOut && !isLastMBB) {
         LI.removeSegment(StartIndex, EndIndex);
+        for (auto &SR : LI.subranges())
+          SR.removeSegment(StartIndex, EndIndex);
       }
     }
 
@@ -1232,24 +1346,23 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
     LIS->repairIntervalsInRange(this, getFirstTerminator(), end(), UsedRegs);
   }
 
-  if (MachineDominatorTree *MDT =
-          P.getAnalysisIfAvailable<MachineDominatorTree>())
+  if (auto *MDT = GET_RESULT(MachineDominatorTree, getDomTree, ))
     MDT->recordSplitCriticalEdge(this, Succ, NMBB);
 
-  if (MachineLoopInfo *MLI = P.getAnalysisIfAvailable<MachineLoopInfo>())
+  if (MachineLoopInfo *MLI = GET_RESULT(MachineLoop, getLI, Info))
     if (MachineLoop *TIL = MLI->getLoopFor(this)) {
       // If one or the other blocks were not in a loop, the new block is not
       // either, and thus LI doesn't need to be updated.
       if (MachineLoop *DestLoop = MLI->getLoopFor(Succ)) {
         if (TIL == DestLoop) {
           // Both in the same loop, the NMBB joins loop.
-          DestLoop->addBasicBlockToLoop(NMBB, MLI->getBase());
+          DestLoop->addBasicBlockToLoop(NMBB, *MLI);
         } else if (TIL->contains(DestLoop)) {
           // Edge from an outer loop to an inner loop.  Add to the outer loop.
-          TIL->addBasicBlockToLoop(NMBB, MLI->getBase());
+          TIL->addBasicBlockToLoop(NMBB, *MLI);
         } else if (DestLoop->contains(TIL)) {
           // Edge from an inner loop to an outer loop.  Add to the outer loop.
-          DestLoop->addBasicBlockToLoop(NMBB, MLI->getBase());
+          DestLoop->addBasicBlockToLoop(NMBB, *MLI);
         } else {
           // Edge from two loops with no containment relation.  Because these
           // are natural loops, we know that the destination block must be the
@@ -1258,7 +1371,7 @@ MachineBasicBlock *MachineBasicBlock::SplitCriticalEdge(
           assert(DestLoop->getHeader() == Succ &&
                  "Should not create irreducible loops!");
           if (MachineLoop *P = DestLoop->getParentLoop())
-            P->addBasicBlockToLoop(NMBB, MLI->getBase());
+            P->addBasicBlockToLoop(NMBB, *MLI);
         }
       }
     }
@@ -1284,8 +1397,13 @@ bool MachineBasicBlock::canSplitCriticalEdge(
   if (MF->getTarget().requiresStructuredCFG())
     return false;
 
+  // Do we have an Indirect jump with a jumptable that we can rewrite?
+  int JTI = findJumpTableIndex(*this);
+  if (JTI >= 0 && !jumpTableHasOtherUses(*MF, *this, JTI))
+    return true;
+
   // We may need to update this's terminator, but we can't do that if
-  // analyzeBranch fails. If this uses a jump table, we won't touch it.
+  // analyzeBranch fails.
   const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
@@ -1371,10 +1489,9 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
 
     // Scan the operands of this machine instruction, replacing any uses of Old
     // with New.
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      if (I->getOperand(i).isMBB() &&
-          I->getOperand(i).getMBB() == Old)
-        I->getOperand(i).setMBB(New);
+    for (MachineOperand &MO : I->operands())
+      if (MO.isMBB() && MO.getMBB() == Old)
+        MO.setMBB(New);
   }
 
   // Update the successor information.
@@ -1391,7 +1508,7 @@ void MachineBasicBlock::replacePhiUsesWith(MachineBasicBlock *Old,
     }
 }
 
-/// Find the next valid DebugLoc starting at MBBI, skipping any DBG_VALUE
+/// Find the next valid DebugLoc starting at MBBI, skipping any debug
 /// instructions.  Return UnknownLoc if there is none.
 DebugLoc
 MachineBasicBlock::findDebugLoc(instr_iterator MBBI) {
@@ -1403,6 +1520,8 @@ MachineBasicBlock::findDebugLoc(instr_iterator MBBI) {
 }
 
 DebugLoc MachineBasicBlock::rfindDebugLoc(reverse_instr_iterator MBBI) {
+  if (MBBI == instr_rend())
+    return findDebugLoc(instr_begin());
   // Skip debug declarations, we don't want a DebugLoc from them.
   MBBI = skipDebugInstructionsBackward(MBBI, instr_rbegin());
   if (!MBBI->isDebugInstr())
@@ -1410,13 +1529,15 @@ DebugLoc MachineBasicBlock::rfindDebugLoc(reverse_instr_iterator MBBI) {
   return {};
 }
 
-/// Find the previous valid DebugLoc preceding MBBI, skipping and DBG_VALUE
+/// Find the previous valid DebugLoc preceding MBBI, skipping any debug
 /// instructions.  Return UnknownLoc if there is none.
 DebugLoc MachineBasicBlock::findPrevDebugLoc(instr_iterator MBBI) {
-  if (MBBI == instr_begin()) return {};
+  if (MBBI == instr_begin())
+    return {};
   // Skip debug instructions, we don't want a DebugLoc from them.
   MBBI = prev_nodbg(MBBI, instr_begin());
-  if (!MBBI->isDebugInstr()) return MBBI->getDebugLoc();
+  if (!MBBI->isDebugInstr())
+    return MBBI->getDebugLoc();
   return {};
 }
 
@@ -1621,6 +1742,12 @@ void MachineBasicBlock::clearLiveIns() {
   LiveIns.clear();
 }
 
+void MachineBasicBlock::clearLiveIns(
+    std::vector<RegisterMaskPair> &OldLiveIns) {
+  assert(OldLiveIns.empty() && "Vector must be empty");
+  std::swap(LiveIns, OldLiveIns);
+}
+
 MachineBasicBlock::livein_iterator MachineBasicBlock::livein_begin() const {
   assert(getParent()->getProperties().hasProperty(
       MachineFunctionProperties::Property::TracksLiveness) &&
@@ -1653,11 +1780,6 @@ bool MachineBasicBlock::sizeWithoutDebugLargerThan(unsigned Limit) const {
       return true;
   }
   return false;
-}
-
-unsigned MachineBasicBlock::getBBIDOrNumber() const {
-  uint8_t BBAddrMapVersion = getParent()->getContext().getBBAddrMapVersion();
-  return BBAddrMapVersion < 2 ? getNumber() : *getBBID();
 }
 
 const MBBSectionID MBBSectionID::ColdSectionID(MBBSectionID::SectionType::Cold);

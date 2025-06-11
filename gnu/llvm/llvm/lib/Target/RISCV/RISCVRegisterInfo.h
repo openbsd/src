@@ -1,4 +1,4 @@
-//===-- RISCVRegisterInfo.h - RISCV Register Information Impl ---*- C++ -*-===//
+//===-- RISCVRegisterInfo.h - RISC-V Register Information Impl --*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the RISCV implementation of the TargetRegisterInfo class.
+// This file contains the RISC-V implementation of the TargetRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -14,11 +14,44 @@
 #define LLVM_LIB_TARGET_RISCV_RISCVREGISTERINFO_H
 
 #include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/TargetParser/RISCVTargetParser.h"
 
 #define GET_REGINFO_HEADER
 #include "RISCVGenRegisterInfo.inc"
 
 namespace llvm {
+
+namespace RISCVRI {
+enum {
+  // The IsVRegClass value of this RegisterClass.
+  IsVRegClassShift = 0,
+  IsVRegClassShiftMask = 0b1 << IsVRegClassShift,
+  // The VLMul value of this RegisterClass. This value is valid iff IsVRegClass
+  // is true.
+  VLMulShift = IsVRegClassShift + 1,
+  VLMulShiftMask = 0b111 << VLMulShift,
+
+  // The NF value of this RegisterClass. This value is valid iff IsVRegClass is
+  // true.
+  NFShift = VLMulShift + 3,
+  NFShiftMask = 0b111 << NFShift,
+};
+
+/// \returns the IsVRegClass for the register class.
+static inline bool isVRegClass(uint64_t TSFlags) {
+  return TSFlags & IsVRegClassShiftMask >> IsVRegClassShift;
+}
+
+/// \returns the LMUL for the register class.
+static inline RISCVII::VLMUL getLMul(uint64_t TSFlags) {
+  return static_cast<RISCVII::VLMUL>((TSFlags & VLMulShiftMask) >> VLMulShift);
+}
+
+/// \returns the NF for the register class.
+static inline unsigned getNF(uint64_t TSFlags) {
+  return static_cast<unsigned>((TSFlags & NFShiftMask) >> NFShift) + 1;
+}
+} // namespace RISCVRI
 
 struct RISCVRegisterInfo : public RISCVGenRegisterInfo {
 
@@ -34,9 +67,6 @@ struct RISCVRegisterInfo : public RISCVGenRegisterInfo {
                         MCRegister PhysReg) const override;
 
   const uint32_t *getNoPreservedMask() const override;
-
-  bool hasReservedSpillSlot(const MachineFunction &MF, Register Reg,
-                            int &FrameIdx) const override;
 
   // Update DestReg to have the value SrcReg plus an offset.  This is
   // used during frame layout, and we may need to ensure that if we
@@ -99,7 +129,38 @@ struct RISCVRegisterInfo : public RISCVGenRegisterInfo {
                              SmallVectorImpl<MCPhysReg> &Hints,
                              const MachineFunction &MF, const VirtRegMap *VRM,
                              const LiveRegMatrix *Matrix) const override;
+
+  const TargetRegisterClass *
+  getLargestSuperClass(const TargetRegisterClass *RC) const override {
+    if (RISCV::VRM8RegClass.hasSubClassEq(RC))
+      return &RISCV::VRM8RegClass;
+    if (RISCV::VRM4RegClass.hasSubClassEq(RC))
+      return &RISCV::VRM4RegClass;
+    if (RISCV::VRM2RegClass.hasSubClassEq(RC))
+      return &RISCV::VRM2RegClass;
+    if (RISCV::VRRegClass.hasSubClassEq(RC))
+      return &RISCV::VRRegClass;
+    return RC;
+  }
+
+  bool doesRegClassHavePseudoInitUndef(
+      const TargetRegisterClass *RC) const override {
+    return isVRRegClass(RC);
+  }
+
+  static bool isVRRegClass(const TargetRegisterClass *RC) {
+    return RISCVRI::isVRegClass(RC->TSFlags) &&
+           RISCVRI::getNF(RC->TSFlags) == 1;
+  }
+
+  static bool isVRNRegClass(const TargetRegisterClass *RC) {
+    return RISCVRI::isVRegClass(RC->TSFlags) && RISCVRI::getNF(RC->TSFlags) > 1;
+  }
+
+  static bool isRVVRegClass(const TargetRegisterClass *RC) {
+    return RISCVRI::isVRegClass(RC->TSFlags);
+  }
 };
-}
+} // namespace llvm
 
 #endif

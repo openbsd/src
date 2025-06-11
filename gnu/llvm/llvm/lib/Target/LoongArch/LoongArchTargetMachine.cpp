@@ -13,12 +13,16 @@
 #include "LoongArchTargetMachine.h"
 #include "LoongArch.h"
 #include "LoongArchMachineFunctionInfo.h"
+#include "LoongArchTargetTransformInfo.h"
 #include "MCTargetDesc/LoongArchBaseInfo.h"
 #include "TargetInfo/LoongArchTargetInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/CodeGen.h"
+#include "llvm/Transforms/Scalar.h"
 #include <optional>
 
 using namespace llvm;
@@ -30,13 +34,27 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeLoongArchTarget() {
   RegisterTargetMachine<LoongArchTargetMachine> X(getTheLoongArch32Target());
   RegisterTargetMachine<LoongArchTargetMachine> Y(getTheLoongArch64Target());
   auto *PR = PassRegistry::getPassRegistry();
+  initializeLoongArchDeadRegisterDefinitionsPass(*PR);
+  initializeLoongArchOptWInstrsPass(*PR);
   initializeLoongArchPreRAExpandPseudoPass(*PR);
-  initializeLoongArchDAGToDAGISelPass(*PR);
+  initializeLoongArchDAGToDAGISelLegacyPass(*PR);
 }
+
+static cl::opt<bool> EnableLoongArchDeadRegisterElimination(
+    "loongarch-enable-dead-defs", cl::Hidden,
+    cl::desc("Enable the pass that removes dead"
+             " definitons and replaces stores to"
+             " them with stores to r0"),
+    cl::init(true));
+
+static cl::opt<bool>
+    EnableLoopDataPrefetch("loongarch-enable-loop-data-prefetch", cl::Hidden,
+                           cl::desc("Enable the loop data prefetch pass"),
+                           cl::init(false));
 
 static std::string computeDataLayout(const Triple &TT) {
   if (TT.isArch64Bit())
-    return "e-m:e-p:64:64-i64:64-i128:128-n64-S128";
+    return "e-m:e-p:64:64-i64:64-i128:128-n32:64-S128";
   assert(TT.isArch32Bit() && "only LA32 and LA64 are currently supported");
   return "e-m:e-p:32:32-i64:64-n32-S128";
 }
@@ -46,13 +64,33 @@ static Reloc::Model getEffectiveRelocModel(const Triple &TT,
   return RM.value_or(Reloc::Static);
 }
 
+static CodeModel::Model
+getEffectiveLoongArchCodeModel(const Triple &TT,
+                               std::optional<CodeModel::Model> CM) {
+  if (!CM)
+    return CodeModel::Small;
+
+  switch (*CM) {
+  case CodeModel::Small:
+    return *CM;
+  case CodeModel::Medium:
+  case CodeModel::Large:
+    if (!TT.isArch64Bit())
+      report_fatal_error("Medium/Large code model requires LA64");
+    return *CM;
+  default:
+    report_fatal_error(
+        "Only small, medium and large code models are allowed on LoongArch");
+  }
+}
+
 LoongArchTargetMachine::LoongArchTargetMachine(
     const Target &T, const Triple &TT, StringRef CPU, StringRef FS,
     const TargetOptions &Options, std::optional<Reloc::Model> RM,
-    std::optional<CodeModel::Model> CM, CodeGenOpt::Level OL, bool JIT)
+    std::optional<CodeModel::Model> CM, CodeGenOptLevel OL, bool JIT)
     : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options,
                         getEffectiveRelocModel(TT, RM),
-                        getEffectiveCodeModel(CM, CodeModel::Small), OL),
+                        getEffectiveLoongArchCodeModel(TT, CM), OL),
       TLOF(std::make_unique<TargetLoweringObjectFileELF>()) {
   initAsmInfo();
 }
@@ -113,10 +151,14 @@ public:
   }
 
   void addIRPasses() override;
+  void addCodeGenPrepare() override;
   bool addInstSelector() override;
   void addPreEmitPass() override;
   void addPreEmitPass2() override;
+  void addMachineSSAOptimization() override;
   void addPreRegAlloc() override;
+  bool addRegAssignAndRewriteFast() override;
+  bool addRegAssignAndRewriteOptimized() override;
 };
 } // end namespace
 
@@ -126,9 +168,21 @@ LoongArchTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 void LoongArchPassConfig::addIRPasses() {
-  addPass(createAtomicExpandPass());
+  // Run LoopDataPrefetch
+  //
+  // Run this before LSR to remove the multiplies involved in computing the
+  // pointer values N iterations ahead.
+  if (TM->getOptLevel() != CodeGenOptLevel::None && EnableLoopDataPrefetch)
+    addPass(createLoopDataPrefetchPass());
+  addPass(createAtomicExpandLegacyPass());
 
   TargetPassConfig::addIRPasses();
+}
+
+void LoongArchPassConfig::addCodeGenPrepare() {
+  if (getOptLevel() != CodeGenOptLevel::None)
+    addPass(createTypePromotionLegacyPass());
+  TargetPassConfig::addCodeGenPrepare();
 }
 
 bool LoongArchPassConfig::addInstSelector() {
@@ -137,15 +191,43 @@ bool LoongArchPassConfig::addInstSelector() {
   return false;
 }
 
+TargetTransformInfo
+LoongArchTargetMachine::getTargetTransformInfo(const Function &F) const {
+  return TargetTransformInfo(LoongArchTTIImpl(this, F));
+}
+
 void LoongArchPassConfig::addPreEmitPass() { addPass(&BranchRelaxationPassID); }
 
 void LoongArchPassConfig::addPreEmitPass2() {
+  addPass(createLoongArchExpandPseudoPass());
   // Schedule the expansion of AtomicPseudos at the last possible moment,
   // avoiding the possibility for other passes to break the requirements for
   // forward progress in the LL/SC block.
   addPass(createLoongArchExpandAtomicPseudoPass());
 }
 
+void LoongArchPassConfig::addMachineSSAOptimization() {
+  TargetPassConfig::addMachineSSAOptimization();
+
+  if (TM->getTargetTriple().isLoongArch64()) {
+    addPass(createLoongArchOptWInstrsPass());
+  }
+}
+
 void LoongArchPassConfig::addPreRegAlloc() {
   addPass(createLoongArchPreRAExpandPseudoPass());
+}
+
+bool LoongArchPassConfig::addRegAssignAndRewriteFast() {
+  if (TM->getOptLevel() != CodeGenOptLevel::None &&
+      EnableLoongArchDeadRegisterElimination)
+    addPass(createLoongArchDeadRegisterDefinitionsPass());
+  return TargetPassConfig::addRegAssignAndRewriteFast();
+}
+
+bool LoongArchPassConfig::addRegAssignAndRewriteOptimized() {
+  if (TM->getOptLevel() != CodeGenOptLevel::None &&
+      EnableLoongArchDeadRegisterElimination)
+    addPass(createLoongArchDeadRegisterDefinitionsPass());
+  return TargetPassConfig::addRegAssignAndRewriteOptimized();
 }

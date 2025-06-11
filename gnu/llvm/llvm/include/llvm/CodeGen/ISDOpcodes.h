@@ -83,6 +83,12 @@ enum NodeType {
   ExternalSymbol,
   BlockAddress,
 
+  /// A ptrauth constant.
+  /// ptr, key, addr-disc, disc
+  /// Note that the addr-disc can be a non-constant value, to allow representing
+  /// a constant global address signed using address-diversification, in code.
+  PtrAuthGlobalAddress,
+
   /// The address of the GOT
   GLOBAL_OFFSET_TABLE,
 
@@ -205,6 +211,7 @@ enum NodeType {
   /// CopyFromReg - This node indicates that the input value is a virtual or
   /// physical register that is defined outside of the scope of this
   /// SelectionDAG.  The register is available from the RegisterSDNode object.
+  /// Note that CopyFromReg is considered as also freezing the value.
   CopyFromReg,
 
   /// UNDEF - An undefined node.
@@ -263,9 +270,9 @@ enum NodeType {
   /// These nodes take two operands of the same value type, and produce two
   /// results.  The first result is the normal add or sub result, the second
   /// result is the carry flag result.
-  /// FIXME: These nodes are deprecated in favor of ADDCARRY and SUBCARRY.
+  /// FIXME: These nodes are deprecated in favor of UADDO_CARRY and USUBO_CARRY.
   /// They are kept around for now to provide a smooth transition path
-  /// toward the use of ADDCARRY/SUBCARRY and will eventually be removed.
+  /// toward the use of UADDO_CARRY/USUBO_CARRY and will eventually be removed.
   ADDC,
   SUBC,
 
@@ -297,11 +304,11 @@ enum NodeType {
   /// it, as the carry is a regular value rather than a glue, which allows
   /// further optimisation.
   ///
-  /// These opcodes are different from [US]{ADD,SUB}O in that ADDCARRY/SUBCARRY
-  /// consume and produce a carry/borrow, whereas [US]{ADD,SUB}O produce an
-  /// overflow.
-  ADDCARRY,
-  SUBCARRY,
+  /// These opcodes are different from [US]{ADD,SUB}O in that
+  /// U{ADD,SUB}O_CARRY consume and produce a carry/borrow, whereas
+  /// [US]{ADD,SUB}O produce an overflow.
+  UADDO_CARRY,
+  USUBO_CARRY,
 
   /// Carry-using overflow-aware nodes for multiple precision addition and
   /// subtraction. These nodes take three operands: The first two are normal lhs
@@ -411,8 +418,16 @@ enum NodeType {
   STRICT_FSQRT,
   STRICT_FPOW,
   STRICT_FPOWI,
+  STRICT_FLDEXP,
   STRICT_FSIN,
   STRICT_FCOS,
+  STRICT_FTAN,
+  STRICT_FASIN,
+  STRICT_FACOS,
+  STRICT_FATAN,
+  STRICT_FSINH,
+  STRICT_FCOSH,
+  STRICT_FTANH,
   STRICT_FEXP,
   STRICT_FEXP2,
   STRICT_FLOG,
@@ -571,6 +586,19 @@ enum NodeType {
   /// vector, but not the other way around.
   EXTRACT_SUBVECTOR,
 
+  /// VECTOR_DEINTERLEAVE(VEC1, VEC2) - Returns two vectors with all input and
+  /// output vectors having the same type. The first output contains the even
+  /// indices from CONCAT_VECTORS(VEC1, VEC2), with the second output
+  /// containing the odd indices. The relative order of elements within an
+  /// output match that of the concatenated input.
+  VECTOR_DEINTERLEAVE,
+
+  /// VECTOR_INTERLEAVE(VEC1, VEC2) - Returns two vectors with all input and
+  /// output vectors having the same type. The first output contains the
+  /// result of interleaving the low half of CONCAT_VECTORS(VEC1, VEC2), with
+  /// the second output containing the result of interleaving the high half.
+  VECTOR_INTERLEAVE,
+
   /// VECTOR_REVERSE(VECTOR) - Returns a vector, of the same type as VECTOR,
   /// whose elements are shuffled using the following algorithm:
   ///   RESULT[i] = VECTOR[VECTOR.ElementCount - 1 - i]
@@ -631,6 +659,14 @@ enum NodeType {
   /// non-constant operands.
   STEP_VECTOR,
 
+  /// VECTOR_COMPRESS(Vec, Mask, Passthru)
+  /// consecutively place vector elements based on mask
+  /// e.g., vec = {A, B, C, D} and mask = {1, 0, 1, 0}
+  ///         --> {A, C, ?, ?} where ? is undefined
+  /// If passthru is defined, ?s are replaced with elements from passthru.
+  /// If passthru is undef, ?s remain undefined.
+  VECTOR_COMPRESS,
+
   /// MULHU/MULHS - Multiply high - Multiply two integers of type iN,
   /// producing an unsigned/signed value of type i[2*N], then return the top
   /// part.
@@ -661,6 +697,12 @@ enum NodeType {
   SMAX,
   UMIN,
   UMAX,
+
+  /// [US]CMP - 3-way comparison of signed or unsigned integers. Returns -1, 0,
+  /// or 1 depending on whether Op0 <, ==, or > Op1. The operands can have type
+  /// different to the result.
+  SCMP,
+  UCMP,
 
   /// Bitwise operators - logical and, logical or, logical xor.
   AND,
@@ -739,7 +781,7 @@ enum NodeType {
   /// op #2 is a boolean indicating if there is an incoming carry. This
   /// operator checks the result of "LHS - RHS - Carry", and can be used to
   /// compare two wide integers:
-  /// (setcccarry lhshi rhshi (subcarry lhslo rhslo) cc).
+  /// (setcccarry lhshi rhshi (usubo_carry lhslo rhslo) cc).
   /// Only valid for integers.
   SETCCCARRY,
 
@@ -759,7 +801,10 @@ enum NodeType {
   /// into new bits.
   SIGN_EXTEND,
 
-  /// ZERO_EXTEND - Used for integer types, zeroing the new bits.
+  /// ZERO_EXTEND - Used for integer types, zeroing the new bits. Can carry
+  /// the NonNeg SDNodeFlag to indicate that the input is known to be
+  /// non-negative. If the flag is present and the input is negative, the result
+  /// is poison.
   ZERO_EXTEND,
 
   /// ANY_EXTEND - Used for integer types.  The high bits are undefined.
@@ -858,6 +903,7 @@ enum NodeType {
   ///  2 Round to +inf
   ///  3 Round to -inf
   ///  4 Round to nearest, ties to zero
+  ///  Other values are target dependent.
   /// Result is rounding mode and chain. Input is a chain.
   GET_ROUNDING,
 
@@ -903,9 +949,11 @@ enum NodeType {
   /// has native conversions.
   BF16_TO_FP,
   FP_TO_BF16,
+  STRICT_BF16_TO_FP,
+  STRICT_FP_TO_BF16,
 
   /// Perform various unary floating-point operations inspired by libm. For
-  /// FPOWI, the result is undefined if if the integer operand doesn't fit into
+  /// FPOWI, the result is undefined if the integer operand doesn't fit into
   /// sizeof(int).
   FNEG,
   FABS,
@@ -913,13 +961,29 @@ enum NodeType {
   FCBRT,
   FSIN,
   FCOS,
-  FPOWI,
+  FTAN,
+  FASIN,
+  FACOS,
+  FATAN,
+  FSINH,
+  FCOSH,
+  FTANH,
   FPOW,
+  FPOWI,
+  /// FLDEXP - ldexp, inspired by libm (op0 * 2**op1).
+  FLDEXP,
+
+  /// FFREXP - frexp, extract fractional and exponent component of a
+  /// floating-point value. Returns the two components as separate return
+  /// values.
+  FFREXP,
+
   FLOG,
   FLOG2,
   FLOG10,
   FEXP,
   FEXP2,
+  FEXP10,
   FCEIL,
   FTRUNC,
   FRINT,
@@ -942,21 +1006,64 @@ enum NodeType {
   FMINNUM,
   FMAXNUM,
 
-  /// FMINNUM_IEEE/FMAXNUM_IEEE - Perform floating-point minimum or maximum on
-  /// two values, following the IEEE-754 2008 definition. This differs from
-  /// FMINNUM/FMAXNUM in the handling of signaling NaNs. If one input is a
-  /// signaling NaN, returns a quiet NaN.
+  /// FMINNUM_IEEE/FMAXNUM_IEEE - Perform floating-point minimumNumber or
+  /// maximumNumber on two values, following IEEE-754 definitions. This differs
+  /// from FMINNUM/FMAXNUM in the handling of signaling NaNs, and signed zero.
+  ///
+  /// If one input is a signaling NaN, returns a quiet NaN. This matches
+  /// IEEE-754 2008's minnum/maxnum behavior for signaling NaNs (which differs
+  /// from 2019).
+  ///
+  /// These treat -0 as ordered less than +0, matching the behavior of IEEE-754
+  /// 2019's minimumNumber/maximumNumber.
   FMINNUM_IEEE,
   FMAXNUM_IEEE,
 
   /// FMINIMUM/FMAXIMUM - NaN-propagating minimum/maximum that also treat -0.0
   /// as less than 0.0. While FMINNUM_IEEE/FMAXNUM_IEEE follow IEEE 754-2008
-  /// semantics, FMINIMUM/FMAXIMUM follow IEEE 754-2018 draft semantics.
+  /// semantics, FMINIMUM/FMAXIMUM follow IEEE 754-2019 semantics.
   FMINIMUM,
   FMAXIMUM,
 
   /// FSINCOS - Compute both fsin and fcos as a single operation.
   FSINCOS,
+
+  /// Gets the current floating-point environment. The first operand is a token
+  /// chain. The results are FP environment, represented by an integer value,
+  /// and a token chain.
+  GET_FPENV,
+
+  /// Sets the current floating-point environment. The first operand is a token
+  /// chain, the second is FP environment, represented by an integer value. The
+  /// result is a token chain.
+  SET_FPENV,
+
+  /// Set floating-point environment to default state. The first operand and the
+  /// result are token chains.
+  RESET_FPENV,
+
+  /// Gets the current floating-point environment. The first operand is a token
+  /// chain, the second is a pointer to memory, where FP environment is stored
+  /// to. The result is a token chain.
+  GET_FPENV_MEM,
+
+  /// Sets the current floating point environment. The first operand is a token
+  /// chain, the second is a pointer to memory, where FP environment is loaded
+  /// from. The result is a token chain.
+  SET_FPENV_MEM,
+
+  /// Reads the current dynamic floating-point control modes. The operand is
+  /// a token chain.
+  GET_FPMODE,
+
+  /// Sets the current dynamic floating-point control modes. The first operand
+  /// is a token chain, the second is control modes set represented as integer
+  /// value.
+  SET_FPMODE,
+
+  /// Sets default dynamic floating-point control modes. The operand is a
+  /// token chain.
+  RESET_FPMODE,
 
   /// LOAD and STORE have token chains as their first operand, then the same
   /// operands as an LLVM load/store instruction, then an offset node that
@@ -988,6 +1095,10 @@ enum NodeType {
   /// BR_JT - Jumptable branch. The first operand is the chain, the second
   /// is the jumptable index, the last one is the jumptable entry index.
   BR_JT,
+
+  /// JUMP_TABLE_DEBUG_INFO - Jumptable debug info. The first operand is the
+  /// chain, the second is the jumptable index.
+  JUMP_TABLE_DEBUG_INFO,
 
   /// BRCOND - Conditional branch.  The first operand is the chain, the
   /// second is the condition, the third is the block to branch to if the
@@ -1110,6 +1221,12 @@ enum NodeType {
   /// The result is the content of the architecture-specific cycle
   /// counter-like register (or other high accuracy low latency clock source).
   READCYCLECOUNTER,
+
+  /// READSTEADYCOUNTER - This corresponds to the readfixedcounter intrinsic.
+  /// It has the same semantics as the READCYCLECOUNTER implementation except
+  /// that the result is the content of the architecture-specific fixed
+  /// frequency counter suitable for measuring elapsed time.
+  READSTEADYCOUNTER,
 
   /// HANDLENODE node - Used as a handle for various purposes.
   HANDLENODE,
@@ -1278,6 +1395,10 @@ enum NodeType {
   /// FMIN/FMAX nodes can have flags, for NaN/NoNaN variants.
   VECREDUCE_FMAX,
   VECREDUCE_FMIN,
+  /// FMINIMUM/FMAXIMUM nodes propatate NaNs and signed zeroes using the
+  /// llvm.minimum and llvm.maximum semantics.
+  VECREDUCE_FMAXIMUM,
+  VECREDUCE_FMINIMUM,
   /// Integer reductions may have a result type larger than the vector element
   /// type. However, the reduction is performed using the vector element type
   /// and the value in the top bits is unspecified.
@@ -1305,6 +1426,25 @@ enum NodeType {
 // Vector Predication
 #define BEGIN_REGISTER_VP_SDNODE(VPSDID, ...) VPSDID,
 #include "llvm/IR/VPIntrinsics.def"
+
+  // The `llvm.experimental.convergence.*` intrinsics.
+  CONVERGENCECTRL_ANCHOR,
+  CONVERGENCECTRL_ENTRY,
+  CONVERGENCECTRL_LOOP,
+  // This does not correspond to any convergence control intrinsic. It is used
+  // to glue a convergence control token to a convergent operation in the DAG,
+  // which is later translated to an implicit use in the MIR.
+  CONVERGENCECTRL_GLUE,
+
+  // Experimental vector histogram intrinsic
+  // Operands: Input Chain, Inc, Mask, Base, Index, Scale, ID
+  // Output: Output Chain
+  EXPERIMENTAL_VECTOR_HISTOGRAM,
+
+  // llvm.clear_cache intrinsic
+  // Operands: Input Chain, Start Addres, End Address
+  // Outputs: Output Chain
+  CLEAR_CACHE,
 
   /// BUILTIN_OP_END - This must be the last enum value in this list.
   /// The target-specific pre-isel opcode values start here.
@@ -1345,6 +1485,12 @@ std::optional<unsigned> getVPMaskIdx(unsigned Opcode);
 
 /// The operand position of the explicit vector length parameter.
 std::optional<unsigned> getVPExplicitVectorLengthIdx(unsigned Opcode);
+
+/// Translate this VP Opcode to its corresponding non-VP Opcode.
+std::optional<unsigned> getBaseOpcodeForVP(unsigned Opcode, bool hasFPExcept);
+
+/// Translate this non-VP Opcode to its corresponding VP Opcode.
+unsigned getVPForBaseOpcode(unsigned Opcode);
 
 //===--------------------------------------------------------------------===//
 /// MemIndexedMode enum - This enum defines the load / store indexed
@@ -1474,6 +1620,12 @@ inline bool isIntEqualitySetCC(CondCode Code) {
   return Code == SETEQ || Code == SETNE;
 }
 
+/// Return true if this is a setcc instruction that performs an equality
+/// comparison when used with floating point operands.
+inline bool isFPEqualitySetCC(CondCode Code) {
+  return Code == SETOEQ || Code == SETONE || Code == SETUEQ || Code == SETUNE;
+}
+
 /// Return true if the specified condition returns true if the two operands to
 /// the condition are equal. Note that if one of the two operands is a NaN,
 /// this value is meaningless.
@@ -1493,6 +1645,12 @@ CondCode getSetCCInverse(CondCode Operation, EVT Type);
 inline bool isExtOpcode(unsigned Opcode) {
   return Opcode == ISD::ANY_EXTEND || Opcode == ISD::ZERO_EXTEND ||
          Opcode == ISD::SIGN_EXTEND;
+}
+
+inline bool isExtVecInRegOpcode(unsigned Opcode) {
+  return Opcode == ISD::ANY_EXTEND_VECTOR_INREG ||
+         Opcode == ISD::ZERO_EXTEND_VECTOR_INREG ||
+         Opcode == ISD::SIGN_EXTEND_VECTOR_INREG;
 }
 
 namespace GlobalISel {

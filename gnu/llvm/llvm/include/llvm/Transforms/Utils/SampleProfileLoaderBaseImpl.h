@@ -18,9 +18,11 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -33,6 +35,7 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PseudoProbe.h"
 #include "llvm/ProfileData/SampleProf.h"
 #include "llvm/ProfileData/SampleProfReader.h"
 #include "llvm/Support/CommandLine.h"
@@ -45,6 +48,10 @@ namespace llvm {
 using namespace sampleprof;
 using namespace sampleprofutil;
 using ProfileCount = Function::ProfileCount;
+
+namespace vfs {
+class FileSystem;
+} // namespace vfs
 
 #define DEBUG_TYPE "sample-profile-impl"
 
@@ -75,14 +82,105 @@ template <> struct IRTraits<BasicBlock> {
 
 } // end namespace afdo_detail
 
+// This class serves sample counts correlation for SampleProfileLoader by
+// analyzing pseudo probes and their function descriptors injected by
+// SampleProfileProber.
+class PseudoProbeManager {
+  DenseMap<uint64_t, PseudoProbeDescriptor> GUIDToProbeDescMap;
+
+public:
+  PseudoProbeManager(const Module &M) {
+    if (NamedMDNode *FuncInfo =
+            M.getNamedMetadata(PseudoProbeDescMetadataName)) {
+      for (const auto *Operand : FuncInfo->operands()) {
+        const auto *MD = cast<MDNode>(Operand);
+        auto GUID = mdconst::dyn_extract<ConstantInt>(MD->getOperand(0))
+                        ->getZExtValue();
+        auto Hash = mdconst::dyn_extract<ConstantInt>(MD->getOperand(1))
+                        ->getZExtValue();
+        GUIDToProbeDescMap.try_emplace(GUID, PseudoProbeDescriptor(GUID, Hash));
+      }
+    }
+  }
+
+  const PseudoProbeDescriptor *getDesc(uint64_t GUID) const {
+    auto I = GUIDToProbeDescMap.find(GUID);
+    return I == GUIDToProbeDescMap.end() ? nullptr : &I->second;
+  }
+
+  const PseudoProbeDescriptor *getDesc(StringRef FProfileName) const {
+    return getDesc(Function::getGUID(FProfileName));
+  }
+
+  const PseudoProbeDescriptor *getDesc(const Function &F) const {
+    return getDesc(Function::getGUID(FunctionSamples::getCanonicalFnName(F)));
+  }
+
+  bool profileIsHashMismatched(const PseudoProbeDescriptor &FuncDesc,
+                               const FunctionSamples &Samples) const {
+    return FuncDesc.getFunctionHash() != Samples.getFunctionHash();
+  }
+
+  bool moduleIsProbed(const Module &M) const {
+    return M.getNamedMetadata(PseudoProbeDescMetadataName);
+  }
+
+  bool profileIsValid(const Function &F, const FunctionSamples &Samples) const {
+    const auto *Desc = getDesc(F);
+    bool IsAvailableExternallyLinkage =
+        GlobalValue::isAvailableExternallyLinkage(F.getLinkage());
+    // Always check the function attribute to determine checksum mismatch for
+    // `available_externally` functions even if their desc are available. This
+    // is because the desc is computed based on the original internal function
+    // and it's substituted by the `available_externally` function during link
+    // time. However, when unstable IR or ODR violation issue occurs, the
+    // definitions of the same function across different translation units could
+    // be different and result in different checksums. So we should use the
+    // state from the new (available_externally) function, which is saved in its
+    // attribute.
+    // TODO: If the function's profile only exists as nested inlinee profile in
+    // a different module, we don't have the attr mismatch state(unknown), we
+    // need to fix it later.
+    if (IsAvailableExternallyLinkage || !Desc)
+      return !F.hasFnAttribute("profile-checksum-mismatch");
+
+    return Desc && !profileIsHashMismatched(*Desc, Samples);
+  }
+};
+
+
+
 extern cl::opt<bool> SampleProfileUseProfi;
 
-template <typename BT> class SampleProfileLoaderBaseImpl {
+static inline bool skipProfileForFunction(const Function &F) {
+  return F.isDeclaration() || !F.hasFnAttribute("use-sample-profile");
+}
+
+static inline void
+buildTopDownFuncOrder(LazyCallGraph &CG,
+                      std::vector<Function *> &FunctionOrderList) {
+  CG.buildRefSCCs();
+  for (LazyCallGraph::RefSCC &RC : CG.postorder_ref_sccs()) {
+    for (LazyCallGraph::SCC &C : RC) {
+      for (LazyCallGraph::Node &N : C) {
+        Function &F = N.getFunction();
+        if (!skipProfileForFunction(F))
+          FunctionOrderList.push_back(&F);
+      }
+    }
+  }
+  std::reverse(FunctionOrderList.begin(), FunctionOrderList.end());
+}
+
+template <typename FT> class SampleProfileLoaderBaseImpl {
 public:
-  SampleProfileLoaderBaseImpl(std::string Name, std::string RemapName)
-      : Filename(Name), RemappingFilename(RemapName) {}
+  SampleProfileLoaderBaseImpl(std::string Name, std::string RemapName,
+                              IntrusiveRefCntPtr<vfs::FileSystem> FS)
+      : Filename(Name), RemappingFilename(RemapName), FS(std::move(FS)) {}
   void dump() { Reader->dump(); }
 
+  using NodeRef = typename GraphTraits<FT *>::NodeRef;
+  using BT = std::remove_pointer_t<NodeRef>;
   using InstructionT = typename afdo_detail::IRTraits<BT>::InstructionT;
   using BasicBlockT = typename afdo_detail::IRTraits<BT>::BasicBlockT;
   using BlockFrequencyInfoT =
@@ -131,6 +229,7 @@ protected:
   unsigned getFunctionLoc(FunctionT &Func);
   virtual ErrorOr<uint64_t> getInstWeight(const InstructionT &Inst);
   ErrorOr<uint64_t> getInstWeightImpl(const InstructionT &Inst);
+  virtual ErrorOr<uint64_t> getProbeWeight(const InstructionT &Inst);
   ErrorOr<uint64_t> getBlockWeight(const BasicBlockT *BB);
   mutable DenseMap<const DILocation *, const FunctionSamples *>
       DILocation2SampleMap;
@@ -206,6 +305,14 @@ protected:
   /// Profile reader object.
   std::unique_ptr<SampleProfileReader> Reader;
 
+  /// Synthetic samples created by duplicating the samples of inlined functions
+  /// from the original profile as if they were top level sample profiles.
+  /// Use std::map because insertion may happen while its content is referenced.
+  std::map<SampleContext, FunctionSamples> OutlineFunctionSamples;
+
+  // A pseudo probe helper to correlate the imported sample counts.
+  std::unique_ptr<PseudoProbeManager> ProbeManager;
+
   /// Samples collected for the body of this function.
   FunctionSamples *Samples = nullptr;
 
@@ -214,6 +321,9 @@ protected:
 
   /// Name of the profile remapping file to load.
   std::string RemappingFilename;
+
+  /// VirtualFileSystem to load profile files from.
+  IntrusiveRefCntPtr<vfs::FileSystem> FS;
 
   /// Profile Summary Info computed from sample profile.
   ProfileSummaryInfo *PSI = nullptr;
@@ -290,6 +400,8 @@ void SampleProfileLoaderBaseImpl<BT>::printBlockWeight(
 template <typename BT>
 ErrorOr<uint64_t>
 SampleProfileLoaderBaseImpl<BT>::getInstWeight(const InstructionT &Inst) {
+  if (FunctionSamples::ProfileIsProbeBased)
+    return getProbeWeight(Inst);
   return getInstWeightImpl(Inst);
 }
 
@@ -333,6 +445,65 @@ SampleProfileLoaderBaseImpl<BT>::getInstWeightImpl(const InstructionT &Inst) {
     LLVM_DEBUG(dbgs() << "    " << DLoc.getLine() << "." << Discriminator << ":"
                       << Inst << " (line offset: " << LineOffset << "."
                       << Discriminator << " - weight: " << R.get() << ")\n");
+  }
+  return R;
+}
+
+// Here use error_code to represent: 1) The dangling probe. 2) Ignore the weight
+// of non-probe instruction. So if all instructions of the BB give error_code,
+// tell the inference algorithm to infer the BB weight.
+template <typename BT>
+ErrorOr<uint64_t>
+SampleProfileLoaderBaseImpl<BT>::getProbeWeight(const InstructionT &Inst) {
+  assert(FunctionSamples::ProfileIsProbeBased &&
+         "Profile is not pseudo probe based");
+  std::optional<PseudoProbe> Probe = extractProbe(Inst);
+  // Ignore the non-probe instruction. If none of the instruction in the BB is
+  // probe, we choose to infer the BB's weight.
+  if (!Probe)
+    return std::error_code();
+
+  const FunctionSamples *FS = findFunctionSamples(Inst);
+  // If none of the instruction has FunctionSample, we choose to return zero
+  // value sample to indicate the BB is cold. This could happen when the
+  // instruction is from inlinee and no profile data is found.
+  // FIXME: This should not be affected by the source drift issue as 1) if the
+  // newly added function is top-level inliner, it won't match the CFG checksum
+  // in the function profile or 2) if it's the inlinee, the inlinee should have
+  // a profile, otherwise it wouldn't be inlined. For non-probe based profile,
+  // we can improve it by adding a switch for profile-sample-block-accurate for
+  // block level counts in the future.
+  if (!FS)
+    return 0;
+
+  auto R = FS->findSamplesAt(Probe->Id, Probe->Discriminator);
+  if (R) {
+    uint64_t Samples = R.get() * Probe->Factor;
+    bool FirstMark = CoverageTracker.markSamplesUsed(FS, Probe->Id, 0, Samples);
+    if (FirstMark) {
+      ORE->emit([&]() {
+        OptRemarkAnalysisT Remark(DEBUG_TYPE, "AppliedSamples", &Inst);
+        Remark << "Applied " << ore::NV("NumSamples", Samples);
+        Remark << " samples from profile (ProbeId=";
+        Remark << ore::NV("ProbeId", Probe->Id);
+        if (Probe->Discriminator) {
+          Remark << ".";
+          Remark << ore::NV("Discriminator", Probe->Discriminator);
+        }
+        Remark << ", Factor=";
+        Remark << ore::NV("Factor", Probe->Factor);
+        Remark << ", OriginalSamples=";
+        Remark << ore::NV("OriginalSamples", R.get());
+        Remark << ")";
+        return Remark;
+      });
+    }
+    LLVM_DEBUG({dbgs() << "    " << Probe->Id;
+      if (Probe->Discriminator)
+        dbgs() << "." << Probe->Discriminator;
+      dbgs() << ":" << Inst << " - weight: " << R.get()
+             << " - factor: " << format("%0.2f", Probe->Factor) << ")\n";});
+    return Samples;
   }
   return R;
 }
@@ -805,11 +976,11 @@ void SampleProfileLoaderBaseImpl<BT>::propagateWeights(FunctionT &F) {
   }
 }
 
-template <typename BT>
-void SampleProfileLoaderBaseImpl<BT>::applyProfi(
+template <typename FT>
+void SampleProfileLoaderBaseImpl<FT>::applyProfi(
     FunctionT &F, BlockEdgeMap &Successors, BlockWeightMap &SampleBlockWeights,
     BlockWeightMap &BlockWeights, EdgeWeightMap &EdgeWeights) {
-  auto Infer = SampleProfileInference<BT>(F, Successors, SampleBlockWeights);
+  auto Infer = SampleProfileInference<FT>(F, Successors, SampleBlockWeights);
   Infer.apply(BlockWeights, EdgeWeights);
 }
 
@@ -987,18 +1158,6 @@ unsigned SampleProfileLoaderBaseImpl<BT>::getFunctionLoc(FunctionT &F) {
           ": Function profile not used",
       DS_Warning));
   return 0;
-}
-
-template <typename BT>
-void SampleProfileLoaderBaseImpl<BT>::computeDominanceAndLoopInfo(
-    FunctionT &F) {
-  DT.reset(new DominatorTree);
-  DT->recalculate(F);
-
-  PDT.reset(new PostDominatorTree(F));
-
-  LI.reset(new LoopInfo);
-  LI->analyze(*DT);
 }
 
 #undef DEBUG_TYPE

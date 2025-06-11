@@ -36,7 +36,7 @@ namespace {
         std::hash<std::string> hasher;
         std::string hash = std::to_string(hasher((M->getName() + F.getName()).str()) % 4000);
         std::string cookiename = "__retguard_" + hash;
-        Type *cookietype = Type::getInt8PtrTy(M->getContext());
+        Type *cookietype = PointerType::getUnqual(M->getContext());
         GlobalVariable *cookie = dyn_cast_or_null<GlobalVariable>(
             M->getOrInsertGlobal(cookiename, cookietype));
         cookie->setInitializer(Constant::getNullValue(cookietype));

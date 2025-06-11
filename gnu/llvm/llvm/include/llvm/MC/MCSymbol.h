@@ -13,11 +13,11 @@
 #ifndef LLVM_MC_MCSYMBOL_H
 #define LLVM_MC_MCSYMBOL_H
 
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/StringMapEntry.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFragment.h"
+#include "llvm/MC/MCSymbolTableEntry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
@@ -62,7 +62,7 @@ protected:
     SymContentsTargetCommon, // Index stores the section index
   };
 
-  // Special sentinal value for the absolute pseudo fragment.
+  // Special sentinel value for the absolute pseudo fragment.
   static MCFragment *AbsolutePseudoFragment;
 
   /// If a symbol has a Fragment, the section is implied, so we only need
@@ -76,11 +76,11 @@ protected:
   ///
   /// If this is a fragment, then it gives the fragment this symbol's value is
   /// relative to, if any.
-  ///
-  /// For the 'HasName' integer, this is true if this symbol is named.
-  /// A named symbol will have a pointer to the name allocated in the bytes
-  /// immediately prior to the MCSymbol.
-  mutable PointerIntPair<MCFragment *, 1> FragmentAndHasName;
+  mutable MCFragment *Fragment = nullptr;
+
+  /// True if this symbol is named.  A named symbol will have a pointer to the
+  /// name allocated in the bytes immediately prior to the MCSymbol.
+  unsigned HasName : 1;
 
   /// IsTemporary - True if this is an assembler temporary label, which
   /// typically does not survive in the .o file's symbol table.  Usually
@@ -99,8 +99,11 @@ protected:
   /// uses binding instead of this bit.
   mutable unsigned IsExternal : 1;
 
-  /// This symbol is private extern.
+  /// Mach-O specific: This symbol is private extern.
   mutable unsigned IsPrivateExtern : 1;
+
+  /// This symbol is weak external.
+  mutable unsigned IsWeakExternal : 1;
 
   /// LLVM RTTI discriminator. This is actually a SymbolKind enumerator, but is
   /// unsigned to avoid sign extension and achieve better bitpacking with MSVC.
@@ -154,25 +157,24 @@ protected:
   /// system, the name is a pointer so isn't going to satisfy the 8 byte
   /// alignment of uint64_t.  Account for that here.
   using NameEntryStorageTy = union {
-    const StringMapEntry<bool> *NameEntry;
+    const MCSymbolTableEntry *NameEntry;
     uint64_t AlignmentPadding;
   };
 
-  MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
+  MCSymbol(SymbolKind Kind, const MCSymbolTableEntry *Name, bool isTemporary)
       : IsTemporary(isTemporary), IsRedefinable(false), IsUsed(false),
         IsRegistered(false), IsExternal(false), IsPrivateExtern(false),
-        Kind(Kind), IsUsedInReloc(false), SymbolContents(SymContentsUnset),
-        CommonAlignLog2(0), Flags(0) {
+        IsWeakExternal(false), Kind(Kind), IsUsedInReloc(false),
+        SymbolContents(SymContentsUnset), CommonAlignLog2(0), Flags(0) {
     Offset = 0;
-    FragmentAndHasName.setInt(!!Name);
+    HasName = !!Name;
     if (Name)
       getNameEntryPtr() = Name;
   }
 
   // Provide custom new/delete as we will only allocate space for a name
   // if we need one.
-  void *operator new(size_t s, const StringMapEntry<bool> *Name,
-                     MCContext &Ctx);
+  void *operator new(size_t s, const MCSymbolTableEntry *Name, MCContext &Ctx);
 
 private:
   void operator delete(void *);
@@ -186,12 +188,12 @@ private:
   }
 
   /// Get a reference to the name field.  Requires that we have a name
-  const StringMapEntry<bool> *&getNameEntryPtr() {
-    assert(FragmentAndHasName.getInt() && "Name is required");
+  const MCSymbolTableEntry *&getNameEntryPtr() {
+    assert(HasName && "Name is required");
     NameEntryStorageTy *Name = reinterpret_cast<NameEntryStorageTy *>(this);
     return (*(Name - 1)).NameEntry;
   }
-  const StringMapEntry<bool> *&getNameEntryPtr() const {
+  const MCSymbolTableEntry *&getNameEntryPtr() const {
     return const_cast<MCSymbol*>(this)->getNameEntryPtr();
   }
 
@@ -201,7 +203,7 @@ public:
 
   /// getName - Get the symbol name.
   StringRef getName() const {
-    if (!FragmentAndHasName.getInt())
+    if (!HasName)
       return StringRef();
 
     return getNameEntryPtr()->first();
@@ -272,11 +274,11 @@ public:
   /// Mark the symbol as defined in the fragment \p F.
   void setFragment(MCFragment *F) const {
     assert(!isVariable() && "Cannot set fragment of variable");
-    FragmentAndHasName.setPointer(F);
+    Fragment = F;
   }
 
   /// Mark the symbol as undefined.
-  void setUndefined() { FragmentAndHasName.setPointer(nullptr); }
+  void setUndefined() { Fragment = nullptr; }
 
   bool isELF() const { return Kind == SymbolKindELF; }
 
@@ -393,19 +395,20 @@ public:
   }
 
   MCFragment *getFragment(bool SetUsed = true) const {
-    MCFragment *Fragment = FragmentAndHasName.getPointer();
-    if (Fragment || !isVariable())
+    if (Fragment || !isVariable() || isWeakExternal())
       return Fragment;
+    // If the symbol is a non-weak alias, get information about
+    // the aliasee. (Don't try to resolve weak aliases.)
     Fragment = getVariableValue(SetUsed)->findAssociatedFragment();
-    FragmentAndHasName.setPointer(Fragment);
     return Fragment;
   }
 
+  // For ELF, use MCSymbolELF::setBinding instead.
   bool isExternal() const { return IsExternal; }
   void setExternal(bool Value) const { IsExternal = Value; }
 
-  bool isPrivateExtern() const { return IsPrivateExtern; }
-  void setPrivateExtern(bool Value) { IsPrivateExtern = Value; }
+  // COFF-specific
+  bool isWeakExternal() const { return IsWeakExternal; }
 
   /// print - Print the value to the stream \p OS.
   void print(raw_ostream &OS, const MCAsmInfo *MAI) const;

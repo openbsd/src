@@ -85,10 +85,10 @@ namespace {
       AU.setPreservesCFG();
       AU.addRequired<AAResultsWrapperPass>();
       AU.addRequired<TargetPassConfig>();
-      AU.addRequired<MachineDominatorTree>();
-      AU.addPreserved<MachineDominatorTree>();
-      AU.addRequired<MachineLoopInfo>();
-      AU.addPreserved<MachineLoopInfo>();
+      AU.addRequired<MachineDominatorTreeWrapperPass>();
+      AU.addPreserved<MachineDominatorTreeWrapperPass>();
+      AU.addRequired<MachineLoopInfoWrapperPass>();
+      AU.addPreserved<MachineLoopInfoWrapperPass>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -101,7 +101,7 @@ namespace {
 
   private:
     bool enablePostRAScheduler(
-        const TargetSubtargetInfo &ST, CodeGenOpt::Level OptLevel,
+        const TargetSubtargetInfo &ST, CodeGenOptLevel OptLevel,
         TargetSubtargetInfo::AntiDepBreakMode &Mode,
         TargetSubtargetInfo::RegClassVector &CriticalPathRCs) const;
   };
@@ -182,7 +182,7 @@ namespace {
 
   private:
     /// Apply each ScheduleDAGMutation step in order.
-    void postprocessDAG();
+    void postProcessDAG();
 
     void ReleaseSucc(SUnit *SU, SDep *SuccEdge);
     void ReleaseSuccessors(SUnit *SU);
@@ -260,8 +260,7 @@ LLVM_DUMP_METHOD void SchedulePostRATDList::dumpSchedule() const {
 #endif
 
 bool PostRAScheduler::enablePostRAScheduler(
-    const TargetSubtargetInfo &ST,
-    CodeGenOpt::Level OptLevel,
+    const TargetSubtargetInfo &ST, CodeGenOptLevel OptLevel,
     TargetSubtargetInfo::AntiDepBreakMode &Mode,
     TargetSubtargetInfo::RegClassVector &CriticalPathRCs) const {
   Mode = ST.getAntiDepBreakMode();
@@ -280,7 +279,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     return false;
 
   TII = Fn.getSubtarget().getInstrInfo();
-  MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
+  MachineLoopInfo &MLI = getAnalysis<MachineLoopInfoWrapperPass>().getLI();
   AliasAnalysis *AA = &getAnalysis<AAResultsWrapperPass>().getAAResults();
   TargetPassConfig *PassConfig = &getAnalysis<TargetPassConfig>();
 
@@ -407,7 +406,7 @@ void SchedulePostRATDList::schedule() {
     }
   }
 
-  postprocessDAG();
+  postProcessDAG();
 
   LLVM_DEBUG(dbgs() << "********** List Scheduling **********\n");
   LLVM_DEBUG(dump());
@@ -436,7 +435,7 @@ void SchedulePostRATDList::finishBlock() {
 }
 
 /// Apply each ScheduleDAGMutation step in order.
-void SchedulePostRATDList::postprocessDAG() {
+void SchedulePostRATDList::postProcessDAG() {
   for (auto &M : Mutations)
     M->apply(this);
 }
