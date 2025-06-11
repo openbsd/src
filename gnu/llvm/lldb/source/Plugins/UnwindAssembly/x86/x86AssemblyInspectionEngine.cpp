@@ -921,6 +921,9 @@ bool x86AssemblyInspectionEngine::GetNonCallSiteUnwindPlanFromAssembly(
   if (!m_register_map_initialized)
     return false;
 
+  if (m_disasm_context == nullptr)
+    return false;
+
   addr_t current_func_text_offset = 0;
   int current_sp_bytes_offset_from_fa = 0;
   bool is_aligned = false;
@@ -1580,6 +1583,9 @@ bool x86AssemblyInspectionEngine::FindFirstNonPrologueInstruction(
   offset = 0;
 
   if (!m_register_map_initialized)
+    return false;
+
+  if (m_disasm_context == nullptr)
     return false;
 
   while (offset < size) {

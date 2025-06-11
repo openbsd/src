@@ -63,9 +63,8 @@ static Status EnsureFDFlags(int fd, int flags) {
 // -----------------------------------------------------------------------------
 
 llvm::Expected<std::unique_ptr<NativeProcessProtocol>>
-NativeProcessOpenBSD::Factory::Launch(ProcessLaunchInfo &launch_info,
-                                     NativeDelegate &native_delegate,
-                                     MainLoop &mainloop) const {
+NativeProcessOpenBSD::Manager::Launch(ProcessLaunchInfo &launch_info,
+                                      NativeDelegate &native_delegate) {
   Log *log = GetLog(POSIXLog::Process);
 
   Status status;
@@ -103,7 +102,7 @@ NativeProcessOpenBSD::Factory::Launch(ProcessLaunchInfo &launch_info,
 
   std::unique_ptr<NativeProcessOpenBSD> process_up(new NativeProcessOpenBSD(
       pid, launch_info.GetPTY().ReleasePrimaryFileDescriptor(), native_delegate,
-      Info.GetArchitecture(), mainloop));
+      Info.GetArchitecture(), m_mainloop));
 
   status = process_up->ReinitializeThreads();
   if (status.Fail())
@@ -117,9 +116,8 @@ NativeProcessOpenBSD::Factory::Launch(ProcessLaunchInfo &launch_info,
 }
 
 llvm::Expected<std::unique_ptr<NativeProcessProtocol>>
-NativeProcessOpenBSD::Factory::Attach(
-    lldb::pid_t pid, NativeProcessProtocol::NativeDelegate &native_delegate,
-    MainLoop &mainloop) const {
+NativeProcessOpenBSD::Manager::Attach(
+    lldb::pid_t pid, NativeProcessProtocol::NativeDelegate &native_delegate) {
 
   Log *log = GetLog(POSIXLog::Process);
   LLDB_LOG(log, "pid = {0:x}", pid);
@@ -132,7 +130,7 @@ NativeProcessOpenBSD::Factory::Attach(
   }
 
   std::unique_ptr<NativeProcessOpenBSD> process_up(new NativeProcessOpenBSD(
-      pid, -1, native_delegate, Info.GetArchitecture(), mainloop));
+      pid, -1, native_delegate, Info.GetArchitecture(), m_mainloop));
 
   Status status = process_up->Attach();
   if (!status.Success())
@@ -142,7 +140,7 @@ NativeProcessOpenBSD::Factory::Attach(
 }
 
 NativeProcessOpenBSD::Extension
-NativeProcessOpenBSD::Factory::GetSupportedExtensions() const {
+NativeProcessOpenBSD::Manager::GetSupportedExtensions() const {
     return Extension::multiprocess | Extension::fork | Extension::vfork |
            Extension::pass_signals | Extension::auxv | Extension::libraries_svr4;
 }
@@ -155,8 +153,9 @@ NativeProcessOpenBSD::Factory::GetSupportedExtensions() const {
 NativeProcessOpenBSD::NativeProcessOpenBSD(::pid_t pid, int terminal_fd,
                                          NativeDelegate &delegate,
                                          const ArchSpec &arch,
-                                         MainLoop &mainloop)
-    : NativeProcessProtocol(pid, terminal_fd, delegate), m_arch(arch) {
+					 MainLoop &mainloop)
+    : NativeProcessProtocol(pid, terminal_fd, delegate), m_arch(arch),
+      m_main_loop(mainloop) {
   if (m_terminal_fd != -1) {
     Status status = EnsureFDFlags(m_terminal_fd, O_NONBLOCK);
     assert(status.Success());

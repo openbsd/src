@@ -43,9 +43,6 @@ public:
 
   lldb_private::DynamicLoader *GetDynamicLoader() override;
 
-  // Process Queries
-  bool WarnBeforeDetach() const override { return false; }
-
 protected:
   bool DoUpdateThreadList(lldb_private::ThreadList &old_thread_list,
 			  lldb_private::ThreadList &new_thread_list) override;
