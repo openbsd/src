@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.18 2022/10/20 20:40:57 kettenis Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.19 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -102,7 +102,7 @@ const int byt_sus_pins[] = {
 
 int	bytgpio_read_pin(void *, int);
 void	bytgpio_write_pin(void *, int, int);
-void	bytgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	bytgpio_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void	bytgpio_intr_enable(void *, int);
 void	bytgpio_intr_disable(void *, int);
 int	bytgpio_intr(void *);
@@ -234,7 +234,7 @@ bytgpio_write_pin(void *cookie, int pin, int value)
 }
 
 void
-bytgpio_intr_establish(void *cookie, int pin, int flags,
+bytgpio_intr_establish(void *cookie, int pin, int flags, int level,
     int (*func)(void *), void *arg)
 {
 	struct bytgpio_softc *sc = cookie;

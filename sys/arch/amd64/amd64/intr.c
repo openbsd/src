@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.62 2025/04/23 15:08:05 visa Exp $	*/
+/*	$OpenBSD: intr.c,v 1.63 2025/06/11 09:57:01 kettenis Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -710,6 +710,13 @@ intr_barrier(void *cookie)
 {
 	struct intrhand *ih = cookie;
 	sched_barrier(ih->ih_cpu);
+}
+
+void
+intr_set_wakeup(void *cookie)
+{
+	struct intrhand *ih = cookie;
+	ih->ih_flags |= IPL_WAKEUP;
 }
 
 #ifdef SUSPEND

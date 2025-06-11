@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.22 2023/07/08 02:43:02 jcs Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.23 2025/06/11 09:57:01 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -387,7 +387,7 @@ dwiic_i2c_intr_establish(void *cookie, void *ih, int level,
 
 		struct acpi_gpio *gpio = crs->gpio_int_node->gpio;
 		gpio->intr_establish(gpio->cookie, crs->gpio_int_pin,
-				     crs->gpio_int_flags, func, arg);
+		    crs->gpio_int_flags, level, func, arg);
 		return ih;
 	}
 

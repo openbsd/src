@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdgpio.c,v 1.10 2022/10/20 20:40:57 kettenis Exp $	*/
+/*	$OpenBSD: amdgpio.c,v 1.11 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -46,6 +46,7 @@
 struct amdgpio_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
+	int ih_wakeup;
 };
 
 struct amdgpio_pincfg {
@@ -91,7 +92,7 @@ const char *amdgpio_hids[] = {
 
 int	amdgpio_read_pin(void *, int);
 void	amdgpio_write_pin(void *, int, int);
-void	amdgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	amdgpio_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void	amdgpio_intr_enable(void *, int);
 void	amdgpio_intr_disable(void *, int);
 int	amdgpio_pin_intr(struct amdgpio_softc *, int);
@@ -258,7 +259,7 @@ amdgpio_write_pin(void *cookie, int pin, int value)
 }
 
 void
-amdgpio_intr_establish(void *cookie, int pin, int flags,
+amdgpio_intr_establish(void *cookie, int pin, int flags, int level,
     int (*func)(void *), void *arg)
 {
 	struct amdgpio_softc *sc = cookie;
@@ -268,6 +269,7 @@ amdgpio_intr_establish(void *cookie, int pin, int flags,
 
 	sc->sc_pin_ih[pin].ih_func = func;
 	sc->sc_pin_ih[pin].ih_arg = arg;
+	sc->sc_pin_ih[pin].ih_wakeup = level & IPL_WAKEUP;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, pin * 4);
 	reg &= ~(AMDGPIO_CONF_MASK | AMDGPIO_CONF_LEVEL |
@@ -280,6 +282,9 @@ amdgpio_intr_establish(void *cookie, int pin, int flags,
 		reg |= AMDGPIO_CONF_ACTBOTH;
 	reg |= (AMDGPIO_CONF_INT_MASK | AMDGPIO_CONF_INT_EN);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, pin * 4, reg);
+
+	if (sc->sc_pin_ih[pin].ih_wakeup)
+		intr_set_wakeup(sc->sc_ih);
 }
 
 void

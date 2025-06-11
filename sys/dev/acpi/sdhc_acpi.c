@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.23 2024/10/09 00:38:25 jsg Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.24 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -131,7 +131,8 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 		struct acpi_gpio *gpio = sc->sc_gpio_int_node->gpio;
 
 		gpio->intr_establish(gpio->cookie, sc->sc_gpio_int_pin,
-		    sc->sc_gpio_int_flags, sdhc_acpi_card_detect_intr, sc);
+		    sc->sc_gpio_int_flags, IPL_BIO,
+		    sdhc_acpi_card_detect_intr, sc);
 	}
 
 	sdhc_acpi_power_on(sc, sc->sc_node);

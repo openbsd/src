@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic.c,v 1.7 2024/10/02 21:21:32 kettenis Exp $	*/
+/*	$OpenBSD: qciic.c,v 1.8 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -335,7 +335,7 @@ qciic_i2c_intr_establish(void *cookie, void *ih, int level,
 
 		struct acpi_gpio *gpio = crs->gpio_int_node->gpio;
 		gpio->intr_establish(gpio->cookie, crs->gpio_int_pin,
-				     crs->gpio_int_flags, func, arg);
+				     crs->gpio_int_flags, level, func, arg);
 		return ih;
 	}
 

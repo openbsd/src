@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwgpio.c,v 1.8 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: dwgpio.c,v 1.9 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -90,7 +90,7 @@ const char *dwgpio_hids[] = {
 int	dwgpio_found_hid(struct aml_node *, void *);
 int	dwgpio_read_pin(void *, int);
 void	dwgpio_write_pin(void *, int, int);
-void	dwgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	dwgpio_intr_establish(void *, int, int, int, int (*)(void *), void *);
 int	dwgpio_intr(void *);
 
 int
@@ -228,7 +228,7 @@ dwgpio_write_pin(void *cookie, int pin, int val)
 }
 
 void
-dwgpio_intr_establish(void *cookie, int pin, int flags,
+dwgpio_intr_establish(void *cookie, int pin, int flags, int level,
     int (*func)(void *), void *arg)
 {
 	struct dwgpio_softc *sc = cookie;

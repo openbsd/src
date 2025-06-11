@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.448 2025/06/02 02:20:56 tedu Exp $ */
+/* $OpenBSD: acpi.c,v 1.449 2025/06/11 09:57:01 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -46,6 +46,8 @@
 #include <machine/apmvar.h>
 
 #include "wd.h"
+
+extern int cpu_suspended;
 
 #ifdef ACPI_DEBUG
 int	acpi_debug = 16;
@@ -911,6 +913,7 @@ intr_enable:
 int
 acpi_gpio_event(void *arg)
 {
+	struct acpi_softc *sc = acpi_softc;
 	struct acpi_gpio_event *ev = arg;
 	struct acpi_gpio *gpio = ev->node->gpio;
 
@@ -918,8 +921,15 @@ acpi_gpio_event(void *arg)
 		if(gpio->intr_disable)
 			gpio->intr_disable(gpio->cookie, ev->pin);
 	}
+
+	if (cpu_suspended) {
+		cpu_suspended = 0;
+		sc->sc_wakegpe = -3;
+	}
+
 	acpi_addtask(acpi_softc, acpi_gpio_event_task, ev, ev->pin);
 	acpi_wakeup(acpi_softc);
+
 	return 1;
 }
 
@@ -945,7 +955,8 @@ acpi_gpio_parse_events(int crsidx, union acpi_resource *crs, void *arg)
 			ev->tflags = crs->lr_gpio.tflags;
 			ev->pin = pin;
 			gpio->intr_establish(gpio->cookie, pin,
-			    crs->lr_gpio.tflags, acpi_gpio_event, ev);
+			    crs->lr_gpio.tflags, IPL_BIO | IPL_WAKEUP,
+			    acpi_gpio_event, ev);
 		}
 		break;
 	default:
@@ -2119,7 +2130,6 @@ acpi_powerdown_task(void *arg0, int dummy)
 int
 acpi_interrupt(void *arg)
 {
-	extern int cpu_suspended;
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
 	uint32_t processed = 0, idx, jdx;
 	uint16_t sts, en;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplgpio.c,v 1.6 2022/10/20 20:40:57 kettenis Exp $	*/
+/*	$OpenBSD: aplgpio.c,v 1.7 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -75,7 +75,7 @@ const char *aplgpio_hids[] = {
 
 int	aplgpio_read_pin(void *, int);
 void	aplgpio_write_pin(void *, int, int);
-void	aplgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	aplgpio_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void	aplgpio_intr_enable(void *, int);
 void	aplgpio_intr_disable(void *, int);
 int	aplgpio_intr(void *);
@@ -205,7 +205,7 @@ aplgpio_write_pin(void *cookie, int pin, int value)
 }
 
 void
-aplgpio_intr_establish(void *cookie, int pin, int flags,
+aplgpio_intr_establish(void *cookie, int pin, int flags, int level,
     int (*func)(void *), void *arg)
 {
 	struct aplgpio_softc *sc = cookie;

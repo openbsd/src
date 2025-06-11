@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.50 2024/06/02 11:08:41 kettenis Exp $ */
+/* $OpenBSD: amltypes.h,v 1.51 2025/06/11 09:57:01 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -369,7 +369,8 @@ struct acpi_gpio {
 	void	*cookie;
 	int	(*read_pin)(void *, int);
 	void	(*write_pin)(void *, int, int);
-	void	(*intr_establish)(void *, int, int, int (*)(void *), void *);
+	void	(*intr_establish)(void *, int, int, int,
+		    int (*)(void *), void *);
 	void	(*intr_enable)(void *, int);
 	void	(*intr_disable)(void *, int);
 };

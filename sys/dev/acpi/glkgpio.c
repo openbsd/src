@@ -1,4 +1,4 @@
-/*	$OpenBSD: glkgpio.c,v 1.7 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: glkgpio.c,v 1.8 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -75,7 +75,7 @@ const char *glkgpio_hids[] = {
 
 int	glkgpio_read_pin(void *, int);
 void	glkgpio_write_pin(void *, int, int);
-void	glkgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	glkgpio_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void	glkgpio_intr_enable(void *, int);
 void	glkgpio_intr_disable(void *, int);
 int	glkgpio_intr(void *);
@@ -205,7 +205,7 @@ glkgpio_write_pin(void *cookie, int pin, int value)
 }
 
 void
-glkgpio_intr_establish(void *cookie, int pin, int flags,
+glkgpio_intr_establish(void *cookie, int pin, int flags, int level,
     int (*func)(void *), void *arg)
 {
 	struct glkgpio_softc *sc = cookie;

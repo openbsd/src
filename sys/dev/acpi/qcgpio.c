@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.13 2024/12/22 21:55:20 mglocker Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.14 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -141,7 +141,7 @@ int	qcgpio_x1e80100_pin_map(struct qcgpio_softc *, int, bus_size_t *);
 
 int	qcgpio_read_pin(void *, int);
 void	qcgpio_write_pin(void *, int, int);
-void	qcgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	qcgpio_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void	qcgpio_intr_enable(void *, int);
 void	qcgpio_intr_disable(void *, int);
 int	qcgpio_intr(void *);
@@ -468,7 +468,7 @@ qcgpio_write_pin(void *cookie, int pin, int val)
 }
 
 void
-qcgpio_intr_establish(void *cookie, int pin, int flags,
+qcgpio_intr_establish(void *cookie, int pin, int flags, int level,
     int (*func)(void *), void *arg)
 {
 	struct qcgpio_softc *sc = cookie;

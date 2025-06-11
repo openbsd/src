@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.16 2024/08/18 11:10:10 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.17 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -463,7 +463,7 @@ struct pchgpio_match pchgpio_devices[] = {
 
 int	pchgpio_read_pin(void *, int);
 void	pchgpio_write_pin(void *, int, int);
-void	pchgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	pchgpio_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void	pchgpio_intr_enable(void *, int);
 void	pchgpio_intr_disable(void *, int);
 int	pchgpio_intr(void *);
@@ -640,7 +640,7 @@ pchgpio_write_pin(void *cookie, int pin, int value)
 }
 
 void
-pchgpio_intr_establish(void *cookie, int pin, int flags,
+pchgpio_intr_establish(void *cookie, int pin, int flags, int level,
     int (*func)(void *), void *arg)
 {
 	struct pchgpio_softc *sc = cookie;

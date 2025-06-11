@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.35 2025/04/23 15:08:05 visa Exp $	*/
+/*	$OpenBSD: intr.h,v 1.36 2025/06/11 09:57:01 kettenis Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -210,6 +210,7 @@ int intr_handler(struct intrframe *, struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
 void intr_printconfig(void);
 void intr_barrier(void *);
+void intr_set_wakeup(void *);
 void intr_enable_wakeup(void);
 void intr_disable_wakeup(void);
 

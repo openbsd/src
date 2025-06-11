@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_acpi.c,v 1.4 2025/05/28 07:04:27 tedu Exp $	*/
+/*	$OpenBSD: pckbc_acpi.c,v 1.5 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2024, 2025, Miodrag Vallat.
  *
@@ -290,8 +290,8 @@ pckbc_acpi_attach_kbd(struct device *parent, struct device *self, void *aux)
 			if (pasc->sc_nints == nitems(pasc->sc_ih))
 				break;
 			pasc->sc_ih[pasc->sc_nints] = acpi_intr_establish(
-			    aaa->aaa_irq[irq], aaa->aaa_irq_flags[irq], IPL_TTY,
-			    pckbcintr, pasc, self->dv_xname);
+			    aaa->aaa_irq[irq], aaa->aaa_irq_flags[irq],
+			    IPL_TTY, pckbcintr, pasc, self->dv_xname);
 			if (pasc->sc_ih[pasc->sc_nints] == NULL) {
 				printf("%s: can't establish interrupt %d\n",
 				    self->dv_xname, aaa->aaa_irq[irq]);
@@ -392,8 +392,8 @@ pckbc_acpi_attach_mouse(struct device *parent, struct device *self, void *aux)
 			if (pasc->sc_nints == nitems(pasc->sc_ih))
 				break;
 			pasc->sc_ih[pasc->sc_nints] = acpi_intr_establish(
-			    aaa->aaa_irq[irq], aaa->aaa_irq_flags[irq], IPL_TTY,
-			    pckbcintr, pasc, self->dv_xname);
+			    aaa->aaa_irq[irq], aaa->aaa_irq_flags[irq],
+			    IPL_TTY, pckbcintr, pasc, self->dv_xname);
 			if (pasc->sc_ih[pasc->sc_nints] == NULL) {
 				printf("%s: can't establish interrupt %d\n",
 				    self->dv_xname, aaa->aaa_irq[irq]);
@@ -433,7 +433,7 @@ pckbc_acpi_register_gpio_intrs(struct device *dev)
 		}
 		gpio->intr_establish(gpio->cookie,
 		    sc->sc_gpioint[irq].pin, sc->sc_gpioint[irq].flags,
-		    pckbc_acpi_gpio_intr_wrapper, sc);
+		    IPL_TTY, pckbc_acpi_gpio_intr_wrapper, sc);
 	}
 }
 

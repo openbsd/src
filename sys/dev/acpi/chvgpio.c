@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.13 2022/10/20 20:40:57 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.14 2025/06/11 09:57:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -145,7 +145,7 @@ const int chv_southeast_pins[] = {
 int	chvgpio_check_pin(struct chvgpio_softc *, int);
 int	chvgpio_read_pin(void *, int);
 void	chvgpio_write_pin(void *, int, int);
-void	chvgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	chvgpio_intr_establish(void *, int, int, int, int (*)(void *), void *);
 void	chvgpio_intr_enable(void *, int);
 void	chvgpio_intr_disable(void *, int);
 int	chvgpio_intr(void *);
@@ -291,7 +291,7 @@ chvgpio_write_pin(void *cookie, int pin, int value)
 }
 
 void
-chvgpio_intr_establish(void *cookie, int pin, int flags,
+chvgpio_intr_establish(void *cookie, int pin, int flags, int level,
     int (*func)(void *), void *arg)
 {
 	struct chvgpio_softc *sc = cookie;

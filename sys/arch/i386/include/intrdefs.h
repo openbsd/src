@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.19 2024/11/08 00:13:39 jsg Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.20 2025/06/11 09:57:01 kettenis Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _I386_INTRDEFS_H
@@ -72,6 +72,7 @@
 
 #define	IPL_MPFLOOR	IPL_TTY
 #define	IPL_MPSAFE	0x100
+#define	IPL_WAKEUP	0
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
