@@ -42,14 +42,14 @@ FunctionPass *createMipsPreLegalizeCombiner();
 FunctionPass *createMipsPostLegalizeCombiner(bool IsOptNone);
 FunctionPass *createMipsMulMulBugPass();
 
-InstructionSelector *createMipsInstructionSelector(const MipsTargetMachine &,
-                                                   MipsSubtarget &,
-                                                   MipsRegisterBankInfo &);
+InstructionSelector *
+createMipsInstructionSelector(const MipsTargetMachine &, const MipsSubtarget &,
+                              const MipsRegisterBankInfo &);
 
 void initializeMipsLoongson2FBTBFixPass(PassRegistry &);
 void initializeMicroMipsSizeReducePass(PassRegistry &);
 void initializeMipsBranchExpansionPass(PassRegistry &);
-void initializeMipsDAGToDAGISelPass(PassRegistry &);
+void initializeMipsDAGToDAGISelLegacyPass(PassRegistry &);
 void initializeMipsDelaySlotFillerPass(PassRegistry &);
 void initializeMipsMulMulBugFixPass(PassRegistry &);
 void initializeMipsPostLegalizerCombinerPass(PassRegistry &);

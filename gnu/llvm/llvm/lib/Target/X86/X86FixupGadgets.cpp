@@ -203,9 +203,6 @@ FixupGadgetsPass::isROPFriendly(MachineInstr &MI) const {
     case X86::ADD16ri_DB:
     case X86::ADD32ri_DB:
     case X86::ADD64ri32_DB:
-    case X86::ADD16ri8_DB:
-    case X86::ADD32ri8_DB:
-    case X86::ADD64ri8_DB:
       goto Handle_MRMXr;
     default:
       break;

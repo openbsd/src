@@ -23,6 +23,7 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetOptions.h"
@@ -248,31 +249,16 @@ void PPCReturnProtectorLowering::fillTempRegisters(
   // X11 is also the 'nest' param or environment pointer
   TempRegs.push_back(is64bit ? PPC::X11 : PPC::R11);
 
-  if (!F.isVarArg()) {
-    // We can use any of the caller saved unused arg registers
-    switch (F.arg_size()) {
-      case 0: // X3/R3 are used to return
-      case 1: // X4/R4 are used to return
-      case 2:
-        TempRegs.push_back(is64bit ? PPC::X5 : PPC::R5);
-        LLVM_FALLTHROUGH;
-      case 3:
-        TempRegs.push_back(is64bit ? PPC::X6 : PPC::R6);
-        LLVM_FALLTHROUGH;
-      case 4:
-        TempRegs.push_back(is64bit ? PPC::X7 : PPC::R7);
-        LLVM_FALLTHROUGH;
-      case 5:
-        TempRegs.push_back(is64bit ? PPC::X8 : PPC::R8);
-        LLVM_FALLTHROUGH;
-      case 6:
-        TempRegs.push_back(is64bit ? PPC::X9 : PPC::R9);
-        LLVM_FALLTHROUGH;
-      case 7:
-        TempRegs.push_back(is64bit ? PPC::X10 : PPC::R10);
-        LLVM_FALLTHROUGH;
-      default:
-        break;
-    }
+  // We can use any of the caller saved unused arg registers.
+  // X3/R3 and X4/R4 are used to return.
+  const MCPhysReg Args64[] = {PPC::X5, PPC::X6, PPC::X7,
+                              PPC::X8, PPC::X9, PPC::X10};
+  const MCPhysReg Args32[] = {PPC::R5, PPC::R6, PPC::R7,
+                              PPC::R8, PPC::R9, PPC::R10};
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+  for (int i = 0; i < 6; ++i) {
+    MCPhysReg Reg = is64bit ? Args64[i] : Args32[i];
+    if (!MRI.isLiveIn(Reg))
+      TempRegs.push_back(Reg);
   }
 }

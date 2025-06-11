@@ -306,7 +306,7 @@ void ReturnProtectorLowering::insertReturnProtectors(
   GlobalVariable *cookie =
       dyn_cast_or_null<GlobalVariable>(M->getGlobalVariable(
           Fn.getFnAttribute("ret-protector-cookie").getValueAsString(),
-          Type::getInt8PtrTy(M->getContext())));
+          PointerType::getUnqual(M->getContext())));
 
   if (!cookie)
     llvm_unreachable("Function needs return protector but no cookie assigned");
