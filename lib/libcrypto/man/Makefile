@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.309 2025/06/09 12:43:53 schwarze Exp $
+# $OpenBSD: Makefile,v 1.310 2025/06/11 23:21:08 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -291,11 +291,9 @@ MAN=	\
 	RSA_size.3 \
 	SHA1.3 \
 	SMIME_crlf_copy.3 \
-	SMIME_read_ASN1.3 \
 	SMIME_read_CMS.3 \
 	SMIME_read_PKCS7.3 \
 	SMIME_text.3 \
-	SMIME_write_ASN1.3 \
 	SMIME_write_CMS.3 \
 	SMIME_write_PKCS7.3 \
 	STACK_OF.3 \
