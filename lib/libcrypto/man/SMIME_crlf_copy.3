@@ -1,4 +1,4 @@
-.\" $OpenBSD: SMIME_crlf_copy.3,v 1.4 2025/06/08 22:30:52 schwarze Exp $
+.\" $OpenBSD: SMIME_crlf_copy.3,v 1.5 2025/06/11 13:48:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 11 2025 $
 .Dt SMIME_CRLF_COPY 3
 .Os
 .Sh NAME
@@ -81,7 +81,8 @@ is intended to return 1 on success or 0 on failure.
 .Xr BIO_push 3 ,
 .Xr BIO_read 3 ,
 .Xr SMIME_text 3 ,
-.Xr SMIME_write_ASN1 3
+.Xr SMIME_write_CMS 3 ,
+.Xr SMIME_write_PKCS7 3
 .Sh HISTORY
 .Fn SMIME_crlf_copy
 first appeared in OpenSSL 1.0.0 and has been available since
