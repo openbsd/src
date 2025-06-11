@@ -27,11 +27,6 @@
 #define BN_LLONG
 #endif
 
-#if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
-#define CONFIG_HEADER_BF_LOCL_H
-#undef BF_PTR
-#endif /* HEADER_BF_LOCL_H */
-
 #if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
 #define CONFIG_HEADER_DES_LOCL_H
 #ifndef DES_DEFAULT_OPTIONS

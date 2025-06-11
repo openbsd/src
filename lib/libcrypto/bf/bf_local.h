@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_local.h,v 1.3 2024/03/27 11:54:29 jsing Exp $ */
+/* $OpenBSD: bf_local.h,v 1.4 2025/06/11 04:08:16 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,10 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h> /* BF_PTR */
-
 #ifndef HEADER_BF_LOCL_H
 #define HEADER_BF_LOCL_H
+
+#include <openssl/opensslconf.h>
 
 /* NOTE - c is not incremented as per n2l */
 #define n2ln(c,l1,l2,n)	{ \
@@ -104,46 +104,6 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-/* This is actually a big endian algorithm, the most significant byte
- * is used to lookup array 0 */
-
-#if defined(BF_PTR)
-
-#ifndef BF_LONG_LOG2
-#define BF_LONG_LOG2  2       /* default to BF_LONG being 32 bits */
-#endif
-#define BF_M  (0xFF<<BF_LONG_LOG2)
-#define BF_0  (24-BF_LONG_LOG2)
-#define BF_1  (16-BF_LONG_LOG2)
-#define BF_2  ( 8-BF_LONG_LOG2)
-#define BF_3  BF_LONG_LOG2 /* left shift */
-
-/*
- * This is normally very good on RISC platforms where normally you
- * have to explicitly "multiply" array index by sizeof(BF_LONG)
- * in order to calculate the effective address. This implementation
- * excuses CPU from this extra work. Power[PC] uses should have most
- * fun as (R>>BF_i)&BF_M gets folded into a single instruction, namely
- * rlwinm. So let'em double-check if their compiler does it.
- */
-
-#define BF_ENC(LL,R,S,P) ( \
-	LL^=P, \
-	LL^= (((*(BF_LONG *)((unsigned char *)&(S[  0])+((R>>BF_0)&BF_M))+ \
-		*(BF_LONG *)((unsigned char *)&(S[256])+((R>>BF_1)&BF_M)))^ \
-		*(BF_LONG *)((unsigned char *)&(S[512])+((R>>BF_2)&BF_M)))+ \
-		*(BF_LONG *)((unsigned char *)&(S[768])+((R<<BF_3)&BF_M))) \
-	)
-#else
-
-/*
- * This is a *generic* version. Seem to perform best on platforms that
- * offer explicit support for extraction of 8-bit nibbles preferably
- * complemented with "multiplying" of array index by sizeof(BF_LONG).
- * For the moment of this writing the list comprises Alpha CPU featuring
- * extbl and s[48]addq instructions.
- */
-
 #define BF_ENC(LL,R,S,P) ( \
 	LL^=P, \
 	LL^=(((	S[       ((int)(R>>24)&0xff)] + \
@@ -151,6 +111,5 @@
 		S[0x0200+((int)(R>> 8)&0xff)])+ \
 		S[0x0300+((int)(R    )&0xff)])&0xffffffffL \
 	)
-#endif
 
 #endif
