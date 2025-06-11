@@ -1,4 +1,4 @@
-//===--- RISCV.cpp - RISCV Helpers for Tools --------------------*- C++ -*-===//
+//===--- RISCV.cpp - RISC-V Helpers for Tools -------------------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -15,9 +15,9 @@
 #include "clang/Driver/Options.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/Host.h"
-#include "llvm/Support/RISCVISAInfo.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/TargetParser/Host.h"
+#include "llvm/TargetParser/RISCVISAInfo.h"
 #include "llvm/TargetParser/RISCVTargetParser.h"
 
 using namespace clang::driver;
@@ -42,28 +42,43 @@ static bool getArchFeatures(const Driver &D, StringRef Arch,
     return false;
   }
 
-  (*ISAInfo)->toFeatures(
-      Features, [&Args](const Twine &Str) { return Args.MakeArgString(Str); },
-      /*AddAllExtensions=*/true);
+  for (const std::string &Str : (*ISAInfo)->toFeatures(/*AddAllExtension=*/true,
+                                                       /*IgnoreUnknown=*/false))
+    Features.push_back(Args.MakeArgString(Str));
+
+  if (EnableExperimentalExtensions)
+    Features.push_back(Args.MakeArgString("+experimental"));
+
   return true;
 }
 
 // Get features except standard extension feature
-static bool getRISCFeaturesFromMcpu(const llvm::Triple &Triple, StringRef Mcpu,
+static void getRISCFeaturesFromMcpu(const Driver &D, const Arg *A,
+                                    const llvm::Triple &Triple,
+                                    StringRef Mcpu,
                                     std::vector<StringRef> &Features) {
   bool Is64Bit = Triple.isRISCV64();
-  llvm::RISCV::CPUKind CPUKind = llvm::RISCV::parseCPUKind(Mcpu);
-  return llvm::RISCV::checkCPUKind(CPUKind, Is64Bit) &&
-         llvm::RISCV::getCPUFeaturesExceptStdExt(CPUKind, Features);
+  if (!llvm::RISCV::parseCPU(Mcpu, Is64Bit)) {
+    // Try inverting Is64Bit in case the CPU is valid, but for the wrong target.
+    if (llvm::RISCV::parseCPU(Mcpu, !Is64Bit))
+      D.Diag(clang::diag::err_drv_invalid_riscv_cpu_name_for_target)
+          << Mcpu << Is64Bit;
+    else
+      D.Diag(clang::diag::err_drv_unsupported_option_argument)
+          << A->getSpelling() << Mcpu;
+  }
 }
 
 void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                    const ArgList &Args,
                                    std::vector<StringRef> &Features) {
-  StringRef MArch = getRISCVArch(Args, Triple);
+  std::string MArch = getRISCVArch(Args, Triple);
 
   if (!getArchFeatures(D, MArch, Features, Args))
     return;
+
+  bool CPUFastScalarUnaligned = false;
+  bool CPUFastVectorUnaligned = false;
 
   // If users give march and mcpu, get std extension feature from MArch
   // and other features (ex. mirco architecture feature) from mcpu
@@ -71,9 +86,13 @@ void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     StringRef CPU = A->getValue();
     if (CPU == "native")
       CPU = llvm::sys::getHostCPUName();
-    if (!getRISCFeaturesFromMcpu(Triple, CPU, Features))
-      D.Diag(clang::diag::err_drv_unsupported_option_argument)
-          << A->getSpelling() << CPU;
+
+    getRISCFeaturesFromMcpu(D, A, Triple, CPU, Features);
+
+    if (llvm::RISCV::hasFastScalarUnalignedAccess(CPU))
+      CPUFastScalarUnaligned = true;
+    if (llvm::RISCV::hasFastVectorUnalignedAccess(CPU))
+      CPUFastVectorUnaligned = true;
   }
 
   // Handle features corresponding to "-ffixed-X" options
@@ -161,16 +180,44 @@ void riscv::getRISCVTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   }
 #endif
 
-  // GCC Compatibility: -mno-save-restore is default, unless -msave-restore is
-  // specified.
-  if (Args.hasFlag(options::OPT_msave_restore, options::OPT_mno_save_restore, false))
-    Features.push_back("+save-restore");
-  else
-    Features.push_back("-save-restore");
+  // If -mstrict-align, -mno-strict-align, -mscalar-strict-align, or
+  // -mno-scalar-strict-align is passed, use it. Otherwise, the
+  // unaligned-scalar-mem is enabled if the CPU supports it or the target is
+  // Android.
+  if (const Arg *A = Args.getLastArg(
+          options::OPT_mno_strict_align, options::OPT_mscalar_strict_align,
+          options::OPT_mstrict_align, options::OPT_mno_scalar_strict_align)) {
+    if (A->getOption().matches(options::OPT_mno_strict_align) ||
+        A->getOption().matches(options::OPT_mno_scalar_strict_align)) {
+      Features.push_back("+unaligned-scalar-mem");
+    } else {
+      Features.push_back("-unaligned-scalar-mem");
+    }
+  } else if (CPUFastScalarUnaligned || Triple.isAndroid()) {
+    Features.push_back("+unaligned-scalar-mem");
+  }
+
+  // If -mstrict-align, -mno-strict-align, -mvector-strict-align, or
+  // -mno-vector-strict-align is passed, use it. Otherwise, the
+  // unaligned-vector-mem is enabled if the CPU supports it or the target is
+  // Android.
+  if (const Arg *A = Args.getLastArg(
+          options::OPT_mno_strict_align, options::OPT_mvector_strict_align,
+          options::OPT_mstrict_align, options::OPT_mno_vector_strict_align)) {
+    if (A->getOption().matches(options::OPT_mno_strict_align) ||
+        A->getOption().matches(options::OPT_mno_vector_strict_align)) {
+      Features.push_back("+unaligned-vector-mem");
+    } else {
+      Features.push_back("-unaligned-vector-mem");
+    }
+  } else if (CPUFastVectorUnaligned || Triple.isAndroid()) {
+    Features.push_back("+unaligned-vector-mem");
+  }
 
   // Now add any that the user explicitly requested on the command line,
   // which may override the defaults.
-  handleTargetFeaturesGroup(Args, Features, options::OPT_m_riscv_Features_Group);
+  handleTargetFeaturesGroup(D, Triple, Args, Features,
+                            options::OPT_m_riscv_Features_Group);
 }
 
 StringRef riscv::getRISCVABI(const ArgList &Args, const llvm::Triple &Triple) {
@@ -206,15 +253,14 @@ StringRef riscv::getRISCVABI(const ArgList &Args, const llvm::Triple &Triple) {
   // rv32e -> ilp32e
   // rv32* -> ilp32
   // rv64g | rv64*d -> lp64d
+  // rv64e -> lp64e
   // rv64* -> lp64
-  StringRef Arch = getRISCVArch(Args, Triple);
+  std::string Arch = getRISCVArch(Args, Triple);
 
   auto ParseResult = llvm::RISCVISAInfo::parseArchString(
       Arch, /* EnableExperimentalExtension */ true);
-  if (!ParseResult)
-    // Ignore parsing error, just go 3rd step.
-    consumeError(ParseResult.takeError());
-  else
+  // Ignore parsing error, just go 3rd step.
+  if (!llvm::errorToBool(ParseResult.takeError()))
     return (*ParseResult)->computeDefaultABI();
 
   // 3. Choose a default based on the triple
@@ -235,8 +281,8 @@ StringRef riscv::getRISCVABI(const ArgList &Args, const llvm::Triple &Triple) {
   }
 }
 
-StringRef riscv::getRISCVArch(const llvm::opt::ArgList &Args,
-                              const llvm::Triple &Triple) {
+std::string riscv::getRISCVArch(const llvm::opt::ArgList &Args,
+                                const llvm::Triple &Triple) {
   assert(Triple.isRISCV() && "Unexpected triple");
 
   // GCC's logic around choosing a default `-march=` is complex. If GCC is not
@@ -272,17 +318,34 @@ StringRef riscv::getRISCVArch(const llvm::opt::ArgList &Args,
   // 2. Get march (isa string) based on `-mcpu=`
   if (const Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
     StringRef CPU = A->getValue();
-    if (CPU == "native")
+    if (CPU == "native") {
       CPU = llvm::sys::getHostCPUName();
+      // If the target cpu is unrecognized, use target features.
+      if (CPU.starts_with("generic")) {
+        auto FeatureMap = llvm::sys::getHostCPUFeatures();
+        // hwprobe may be unavailable on older Linux versions.
+        if (!FeatureMap.empty()) {
+          std::vector<std::string> Features;
+          for (auto &F : FeatureMap)
+            Features.push_back(((F.second ? "+" : "-") + F.first()).str());
+          auto ParseResult = llvm::RISCVISAInfo::parseFeatures(
+              Triple.isRISCV32() ? 32 : 64, Features);
+          if (ParseResult)
+            return (*ParseResult)->toString();
+        }
+      }
+    }
+
     StringRef MArch = llvm::RISCV::getMArchFromMcpu(CPU);
     // Bypass if target cpu's default march is empty.
     if (MArch != "")
-      return MArch;
+      return MArch.str();
   }
 
   // 3. Choose a default based on `-mabi=`
   //
   // ilp32e -> rv32e
+  // lp64e -> rv64e
   // ilp32 | ilp32f | ilp32d -> rv32imafdc
   // lp64 | lp64f | lp64d -> rv64imafdc
   if (const Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
@@ -290,10 +353,16 @@ StringRef riscv::getRISCVArch(const llvm::opt::ArgList &Args,
 
     if (MABI.equals_insensitive("ilp32e"))
       return "rv32e";
-    else if (MABI.startswith_insensitive("ilp32"))
+    else if (MABI.equals_insensitive("lp64e"))
+      return "rv64e";
+    else if (MABI.starts_with_insensitive("ilp32"))
       return "rv32imafdc";
-    else if (MABI.startswith_insensitive("lp64"))
+    else if (MABI.starts_with_insensitive("lp64")) {
+      if (Triple.isAndroid())
+        return "rv64imafdcv_zba_zbb_zbs";
+
       return "rv64imafdc";
+    }
   }
 
   // 4. Choose a default based on the triple
@@ -309,6 +378,8 @@ StringRef riscv::getRISCVArch(const llvm::opt::ArgList &Args,
   } else {
     if (Triple.getOS() == llvm::Triple::UnknownOS)
       return "rv64imac";
+    else if (Triple.isAndroid())
+      return "rv64imafdcv_zba_zbb_zbs";
     else
       return "rv64imafdc";
   }

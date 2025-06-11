@@ -14,7 +14,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Option/ArgList.h"
-#include "llvm/Support/Host.h"
+#include "llvm/TargetParser/Host.h"
 
 using namespace clang::driver;
 using namespace clang::driver::tools;
@@ -119,14 +119,21 @@ std::string x86::getX86TargetCPU(const Driver &D, const ArgList &Args,
 void x86::getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                const ArgList &Args,
                                std::vector<StringRef> &Features) {
+  // Claim and report unsupported -mabi=. Note: we don't support "sysv_abi" or
+  // "ms_abi" as default function attributes.
+  if (const Arg *A = Args.getLastArg(clang::driver::options::OPT_mabi_EQ)) {
+    StringRef DefaultAbi = Triple.isOSWindows() ? "ms" : "sysv";
+    if (A->getValue() != DefaultAbi)
+      D.Diag(diag::err_drv_unsupported_opt_for_target)
+          << A->getSpelling() << Triple.getTriple();
+  }
+
   // If -march=native, autodetect the feature list.
   if (const Arg *A = Args.getLastArg(clang::driver::options::OPT_march_EQ)) {
     if (StringRef(A->getValue()) == "native") {
-      llvm::StringMap<bool> HostFeatures;
-      if (llvm::sys::getHostCPUFeatures(HostFeatures))
-        for (auto &F : HostFeatures)
-          Features.push_back(
-              Args.MakeArgString((F.second ? "+" : "-") + F.first()));
+      for (auto &F : llvm::sys::getHostCPUFeatures())
+        Features.push_back(
+            Args.MakeArgString((F.second ? "+" : "-") + F.first()));
     }
   }
 
@@ -220,6 +227,27 @@ void x86::getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
         << D.getOpts().getOptionName(LVIOpt);
   }
 
+  for (const Arg *A : Args.filtered(options::OPT_m_x86_AVX10_Features_Group)) {
+    StringRef Name = A->getOption().getName();
+    A->claim();
+
+    // Skip over "-m".
+    assert(Name.starts_with("m") && "Invalid feature name.");
+    Name = Name.substr(1);
+
+    bool IsNegative = Name.consume_front("no-");
+
+#ifndef NDEBUG
+    assert(Name.starts_with("avx10.") && "Invalid AVX10 feature name.");
+    StringRef Version, Width;
+    std::tie(Version, Width) = Name.substr(6).split('-');
+    assert(Version == "1" && "Invalid AVX10 feature name.");
+    assert((Width == "256" || Width == "512") && "Invalid AVX10 feature name.");
+#endif
+
+    Features.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
+  }
+
   // Now add any that the user explicitly requested on the command line,
   // which may override the defaults.
   for (const Arg *A : Args.filtered(options::OPT_m_x86_Features_Group,
@@ -228,7 +256,7 @@ void x86::getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
     A->claim();
 
     // Skip over "-m".
-    assert(Name.startswith("m") && "Invalid feature name.");
+    assert(Name.starts_with("m") && "Invalid feature name.");
     Name = Name.substr(1);
 
     // Replace -mgeneral-regs-only with -x87, -mmx, -sse
@@ -237,7 +265,23 @@ void x86::getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
       continue;
     }
 
-    bool IsNegative = Name.startswith("no-");
+    bool IsNegative = Name.starts_with("no-");
+    if (A->getOption().matches(options::OPT_mapx_features_EQ) ||
+        A->getOption().matches(options::OPT_mno_apx_features_EQ)) {
+
+      for (StringRef Value : A->getValues()) {
+        if (Value == "egpr" || Value == "push2pop2" || Value == "ppx" ||
+            Value == "ndd" || Value == "ccmp" || Value == "nf" ||
+            Value == "cf" || Value == "zu") {
+          Features.push_back(
+              Args.MakeArgString((IsNegative ? "-" : "+") + Value));
+          continue;
+        }
+        D.Diag(clang::diag::err_drv_unsupported_option_argument)
+            << A->getSpelling() << Value;
+      }
+      continue;
+    }
     if (IsNegative)
       Name = Name.substr(3);
     Features.push_back(Args.MakeArgString((IsNegative ? "-" : "+") + Name));
@@ -257,5 +301,26 @@ void x86::getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
       D.Diag(diag::err_drv_unsupported_option_argument)
           << A->getSpelling() << Scope;
     }
+  }
+
+  // -mno-gather, -mno-scatter support
+  if (Args.hasArg(options::OPT_mno_gather))
+    Features.push_back("+prefer-no-gather");
+  if (Args.hasArg(options::OPT_mno_scatter))
+    Features.push_back("+prefer-no-scatter");
+  if (Args.hasArg(options::OPT_mapx_inline_asm_use_gpr32))
+    Features.push_back("+inline-asm-use-gpr32");
+
+  // Warn for removed 3dnow support
+  if (const Arg *A =
+          Args.getLastArg(options::OPT_m3dnowa, options::OPT_mno_3dnowa,
+                          options::OPT_mno_3dnow)) {
+    if (A->getOption().matches(options::OPT_m3dnowa))
+      D.Diag(diag::warn_drv_clang_unsupported) << A->getAsString(Args);
+  }
+  if (const Arg *A =
+          Args.getLastArg(options::OPT_m3dnow, options::OPT_mno_3dnow)) {
+    if (A->getOption().matches(options::OPT_m3dnow))
+      D.Diag(diag::warn_drv_clang_unsupported) << A->getAsString(Args);
   }
 }
