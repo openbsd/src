@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.203 2023/08/15 14:24:53 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.204 2025/06/11 14:52:50 jsg Exp $
 
 machine		i386
 maxusers	4
@@ -119,10 +119,10 @@ em*		at pci?			# Intel Pro/1000 ethernet
 re*		at pci?			# Realtek 8169/8169S/8110S
 #bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
 
-inphy*		at mii?			# Intel 82555 PHYs
-iophy*		at mii?			# Intel 82553 PHYs
+#inphy*		at mii?			# Intel 82555 PHYs
+#iophy*		at mii?			# Intel 82553 PHYs
 #icsphy*	at mii?			# ICS 1890 PHYs
-nsphy*		at mii?			# NS and compatible PHYs
+#nsphy*		at mii?			# NS and compatible PHYs
 nsphyter*	at mii?			# NS and compatible PHYs
 rlphy*		at mii?			# Realtek 8139 internal PHYs
 #mtdphy*	at mii?			# Myson MTD972 PHYs
