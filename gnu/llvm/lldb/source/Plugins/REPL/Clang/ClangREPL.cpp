@@ -15,8 +15,10 @@ using namespace lldb_private;
 
 LLDB_PLUGIN_DEFINE(ClangREPL)
 
+char ClangREPL::ID;
+
 ClangREPL::ClangREPL(lldb::LanguageType language, Target &target)
-    : REPL(eKindClang, target), m_language(language),
+    : llvm::RTTIExtends<ClangREPL, REPL>(target), m_language(language),
       m_implicit_expr_result_regex("\\$[0-9]+") {}
 
 ClangREPL::~ClangREPL() = default;
@@ -60,8 +62,9 @@ lldb::REPLSP ClangREPL::CreateInstance(Status &error,
 
 Status ClangREPL::DoInitialization() { return Status(); }
 
-ConstString ClangREPL::GetSourceFileBasename() {
-  return ConstString("repl.c");
+llvm::StringRef ClangREPL::GetSourceFileBasename() {
+  static constexpr llvm::StringLiteral g_repl("repl.c");
+  return g_repl;
 }
 
 const char *ClangREPL::GetAutoIndentCharacters() { return "  "; }
@@ -92,7 +95,9 @@ bool ClangREPL::PrintOneVariable(Debugger &debugger,
     if (m_implicit_expr_result_regex.Execute(var->GetName().GetStringRef()))
       return true;
   }
-  valobj_sp->Dump(*output_sp);
+  if (llvm::Error error = valobj_sp->Dump(*output_sp))
+    *output_sp << "error: " << toString(std::move(error));
+
   return true;
 }
 

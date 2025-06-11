@@ -112,6 +112,23 @@ private:
   static char ID;
 };
 
+/// A T-style log handler that multiplexes messages to two log handlers.
+class TeeLogHandler : public LogHandler {
+public:
+  TeeLogHandler(std::shared_ptr<LogHandler> first_log_handler,
+                std::shared_ptr<LogHandler> second_log_handler);
+
+  void Emit(llvm::StringRef message) override;
+
+  bool isA(const void *ClassID) const override { return ClassID == &ID; }
+  static bool classof(const LogHandler *obj) { return obj->isA(&ID); }
+
+private:
+  std::shared_ptr<LogHandler> m_first_log_handler;
+  std::shared_ptr<LogHandler> m_second_log_handler;
+  static char ID;
+};
+
 class Log final {
 public:
   /// The underlying type of all log channel enums. Declare them as:
@@ -232,6 +249,9 @@ public:
                          std::forward<Args>(args)...));
   }
 
+  void Formatf(llvm::StringRef file, llvm::StringRef function,
+               const char *format, ...) __attribute__((format(printf, 4, 5)));
+
   /// Prefer using LLDB_LOGF whenever possible.
   void Printf(const char *format, ...) __attribute__((format(printf, 2, 3)));
 
@@ -249,6 +269,8 @@ public:
 
   void VAPrintf(const char *format, va_list args);
   void VAError(const char *format, va_list args);
+  void VAFormatf(llvm::StringRef file, llvm::StringRef function,
+                 const char *format, va_list args);
 
 private:
   Channel &m_channel;
@@ -265,7 +287,7 @@ private:
 
   void WriteHeader(llvm::raw_ostream &OS, llvm::StringRef file,
                    llvm::StringRef function);
-  void WriteMessage(const std::string &message);
+  void WriteMessage(llvm::StringRef message);
 
   void Format(llvm::StringRef file, llvm::StringRef function,
               const llvm::formatv_object_base &payload);
@@ -345,7 +367,7 @@ template <typename Cat> Log *GetLog(Cat mask) {
   do {                                                                         \
     ::lldb_private::Log *log_private = (log);                                  \
     if (log_private)                                                           \
-      log_private->Printf(__VA_ARGS__);                                        \
+      log_private->Formatf(__FILE__, __func__, __VA_ARGS__);                   \
   } while (0)
 
 #define LLDB_LOGV(log, ...)                                                    \
@@ -368,6 +390,18 @@ template <typename Cat> Log *GetLog(Cat mask) {
       ::llvm::consumeError(::std::move(error_private));                        \
   } while (0)
 
-#endif // LLDB_UTILITY_LOG_H
+// Write message to the verbose log, if error is set. In the log
+// message refer to the error with {0}. Error is cleared regardless of
+// whether logging is enabled.
+#define LLDB_LOG_ERRORV(log, error, ...)                                       \
+  do {                                                                         \
+    ::lldb_private::Log *log_private = (log);                                  \
+    ::llvm::Error error_private = (error);                                     \
+    if (log_private && log_private->GetVerbose() && error_private) {           \
+      log_private->FormatError(::std::move(error_private), __FILE__, __func__, \
+                               __VA_ARGS__);                                   \
+    } else                                                                     \
+      ::llvm::consumeError(::std::move(error_private));                        \
+  } while (0)
 
-// TODO: Remove this and fix includes everywhere.
+#endif // LLDB_UTILITY_LOG_H

@@ -16,9 +16,10 @@
 
 #include "Utils.h"
 #include "lldb/Core/Address.h"
-#include "lldb/Core/StreamFile.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/ValueObjectRegister.h"
 #include "lldb/Core/ValueObjectVariable.h"
+#include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ExpressionVariable.h"
 #include "lldb/Expression/UserExpression.h"
 #include "lldb/Host/Host.h"
@@ -44,6 +45,7 @@
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBExpressionOptions.h"
+#include "lldb/API/SBFormat.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBSymbolContext.h"
 #include "lldb/API/SBThread.h"
@@ -600,7 +602,8 @@ SBValue SBFrame::FindValue(const char *name, ValueType value_type,
                 stop_if_block_is_inlined_function,
                 [frame](Variable *v) { return v->IsInScope(frame); },
                 &variable_list);
-          if (value_type == eValueTypeVariableGlobal) {
+          if (value_type == eValueTypeVariableGlobal 
+              || value_type == eValueTypeVariableStatic) {
             const bool get_file_globals = true;
             VariableList *frame_vars = frame->GetVariableList(get_file_globals,
                                                               nullptr);
@@ -706,24 +709,20 @@ SBThread SBFrame::GetThread() const {
 const char *SBFrame::Disassemble() const {
   LLDB_INSTRUMENT_VA(this);
 
-  const char *disassembly = nullptr;
   std::unique_lock<std::recursive_mutex> lock;
   ExecutionContext exe_ctx(m_opaque_sp.get(), lock);
-
-  StackFrame *frame = nullptr;
   Target *target = exe_ctx.GetTargetPtr();
   Process *process = exe_ctx.GetProcessPtr();
-  if (target && process) {
-    Process::StopLocker stop_locker;
-    if (stop_locker.TryLock(&process->GetRunLock())) {
-      frame = exe_ctx.GetFramePtr();
-      if (frame) {
-        disassembly = frame->Disassemble();
-      }
-    }
+  if (!target || !process)
+    return nullptr;
+
+  Process::StopLocker stop_locker;
+  if (stop_locker.TryLock(&process->GetRunLock())) {
+    if (auto *frame = exe_ctx.GetFramePtr())
+      return ConstString(frame->Disassemble()).GetCString();
   }
 
-  return disassembly;
+  return nullptr;
 }
 
 SBValueList SBFrame::GetVariables(bool arguments, bool locals, bool statics,
@@ -805,6 +804,7 @@ SBValueList SBFrame::GetVariables(const lldb::SBVariablesOptions &options) {
     if (stop_locker.TryLock(&process->GetRunLock())) {
       frame = exe_ctx.GetFramePtr();
       if (frame) {
+        Debugger &dbg = process->GetTarget().GetDebugger();
         VariableList *variable_list = nullptr;
         Status var_error;
         variable_list = frame->GetVariableList(true, &var_error);
@@ -813,7 +813,13 @@ SBValueList SBFrame::GetVariables(const lldb::SBVariablesOptions &options) {
         if (variable_list) {
           const size_t num_variables = variable_list->GetSize();
           if (num_variables) {
+            size_t num_produced = 0;
             for (const VariableSP &variable_sp : *variable_list) {
+              if (INTERRUPT_REQUESTED(dbg, 
+                    "Interrupted getting frame variables with {0} of {1} "
+                    "produced.", num_produced, num_variables))
+                return {};
+
               if (variable_sp) {
                 bool add_variable = false;
                 switch (variable_sp->GetScope()) {
@@ -857,6 +863,7 @@ SBValueList SBFrame::GetVariables(const lldb::SBVariablesOptions &options) {
                 }
               }
             }
+            num_produced++;
           }
         }
         if (recognized_arguments) {
@@ -941,6 +948,40 @@ SBValue SBFrame::FindRegister(const char *name) {
   return result;
 }
 
+SBError SBFrame::GetDescriptionWithFormat(const SBFormat &format,
+                                          SBStream &output) {
+  Stream &strm = output.ref();
+
+  std::unique_lock<std::recursive_mutex> lock;
+  ExecutionContext exe_ctx(m_opaque_sp.get(), lock);
+
+  StackFrame *frame = nullptr;
+  Target *target = exe_ctx.GetTargetPtr();
+  Process *process = exe_ctx.GetProcessPtr();
+  SBError error;
+
+  if (!format) {
+    error.SetErrorString("The provided SBFormat object is invalid");
+    return error;
+  }
+
+  if (target && process) {
+    Process::StopLocker stop_locker;
+    if (stop_locker.TryLock(&process->GetRunLock())) {
+      frame = exe_ctx.GetFramePtr();
+      if (frame &&
+          frame->DumpUsingFormat(strm, format.GetFormatEntrySP().get())) {
+        return error;
+      }
+    }
+  }
+  error.SetErrorStringWithFormat(
+      "It was not possible to generate a frame "
+      "description with the given format string '%s'",
+      format.GetFormatEntrySP()->string.c_str());
+  return error;
+}
+
 bool SBFrame::GetDescription(SBStream &description) {
   LLDB_INSTRUMENT_VA(this, description);
 
@@ -983,11 +1024,17 @@ SBValue SBFrame::EvaluateExpression(const char *expr) {
     options.SetFetchDynamicValue(fetch_dynamic_value);
     options.SetUnwindOnError(true);
     options.SetIgnoreBreakpoints(true);
-    if (target->GetLanguage() != eLanguageTypeUnknown)
-      options.SetLanguage(target->GetLanguage());
-    else
-      options.SetLanguage(frame->GetLanguage());
+    SourceLanguage language = target->GetLanguage();
+    if (!language)
+      language = frame->GetLanguage();
+    options.SetLanguage((SBSourceLanguageName)language.name, language.version);
     return EvaluateExpression(expr, options);
+  } else {
+    Status error;
+    error.SetErrorString("can't evaluate expressions when the "
+                           "process is running.");
+    ValueObjectSP error_val_sp = ValueObjectConstResult::Create(nullptr, error);
+    result.SetSP(error_val_sp, false);
   }
   return result;
 }
@@ -1006,10 +1053,12 @@ SBFrame::EvaluateExpression(const char *expr,
 
   StackFrame *frame = exe_ctx.GetFramePtr();
   Target *target = exe_ctx.GetTargetPtr();
-  if (target && target->GetLanguage() != eLanguageTypeUnknown)
-    options.SetLanguage(target->GetLanguage());
-  else if (frame)
-    options.SetLanguage(frame->GetLanguage());
+  SourceLanguage language;
+  if (target)
+    language = target->GetLanguage();
+  if (!language && frame)
+    language = frame->GetLanguage();
+  options.SetLanguage((SBSourceLanguageName)language.name, language.version);
   return EvaluateExpression(expr, options);
 }
 
@@ -1027,10 +1076,12 @@ SBValue SBFrame::EvaluateExpression(const char *expr,
   options.SetIgnoreBreakpoints(true);
   StackFrame *frame = exe_ctx.GetFramePtr();
   Target *target = exe_ctx.GetTargetPtr();
-  if (target && target->GetLanguage() != eLanguageTypeUnknown)
-    options.SetLanguage(target->GetLanguage());
-  else if (frame)
-    options.SetLanguage(frame->GetLanguage());
+  SourceLanguage language;
+  if (target)
+    language = target->GetLanguage();
+  if (!language && frame)
+    language = frame->GetLanguage();
+  options.SetLanguage((SBSourceLanguageName)language.name, language.version);
   return EvaluateExpression(expr, options);
 }
 
@@ -1050,7 +1101,6 @@ lldb::SBValue SBFrame::EvaluateExpression(const char *expr,
 
   std::unique_lock<std::recursive_mutex> lock;
   ExecutionContext exe_ctx(m_opaque_sp.get(), lock);
-
 
   StackFrame *frame = nullptr;
   Target *target = exe_ctx.GetTargetPtr();
@@ -1075,13 +1125,30 @@ lldb::SBValue SBFrame::EvaluateExpression(const char *expr,
         target->EvaluateExpression(expr, frame, expr_value_sp, options.ref());
         expr_result.SetSP(expr_value_sp, options.GetFetchDynamicValue());
       }
+    } else {
+      Status error;
+      error.SetErrorString("can't evaluate expressions when the "
+                           "process is running.");
+      expr_value_sp = ValueObjectConstResult::Create(nullptr, error);
+      expr_result.SetSP(expr_value_sp, false);
     }
+  } else {
+      Status error;
+      error.SetErrorString("sbframe object is not valid.");
+      expr_value_sp = ValueObjectConstResult::Create(nullptr, error);
+      expr_result.SetSP(expr_value_sp, false);
   }
 
-  LLDB_LOGF(expr_log,
-            "** [SBFrame::EvaluateExpression] Expression result is "
-            "%s, summary %s **",
-            expr_result.GetValue(), expr_result.GetSummary());
+  if (expr_result.GetError().Success())
+    LLDB_LOGF(expr_log,
+              "** [SBFrame::EvaluateExpression] Expression result is "
+              "%s, summary %s **",
+              expr_result.GetValue(), expr_result.GetSummary());
+  else
+    LLDB_LOGF(expr_log,
+              "** [SBFrame::EvaluateExpression] Expression evaluation failed: "
+              "%s **",
+              expr_result.GetError().GetCString());
 
   return expr_result;
 }
@@ -1155,7 +1222,7 @@ lldb::LanguageType SBFrame::GuessLanguage() const {
     if (stop_locker.TryLock(&process->GetRunLock())) {
       frame = exe_ctx.GetFramePtr();
       if (frame) {
-        return frame->GuessLanguage();
+        return frame->GuessLanguage().AsLanguageType();
       }
     }
   }

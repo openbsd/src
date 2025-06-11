@@ -20,11 +20,15 @@ function(lldb_tablegen)
   endif()
 
   set(LLVM_TARGET_DEFINITIONS ${LTG_SOURCE})
+
+  if (LLVM_USE_SANITIZER MATCHES ".*Address.*")
+    list(APPEND LTG_UNPARSED_ARGUMENTS -DLLDB_SANITIZED)
+  endif()
+
   tablegen(LLDB ${LTG_UNPARSED_ARGUMENTS})
 
   if(LTG_TARGET)
     add_public_tablegen_target(${LTG_TARGET})
-    set_target_properties( ${LTG_TARGET} PROPERTIES FOLDER "LLDB tablegenning")
     set_property(GLOBAL APPEND PROPERTY LLDB_TABLEGEN_TARGETS ${LTG_TARGET})
   endif()
 endfunction(lldb_tablegen)
@@ -37,12 +41,32 @@ function(add_lldb_library name)
   # only supported parameters to this macro are the optional
   # MODULE;SHARED;STATIC library type and source files
   cmake_parse_arguments(PARAM
-    "MODULE;SHARED;STATIC;OBJECT;PLUGIN;FRAMEWORK"
+    "MODULE;SHARED;STATIC;OBJECT;PLUGIN;FRAMEWORK;NO_INTERNAL_DEPENDENCIES;NO_PLUGIN_DEPENDENCIES"
     "INSTALL_PREFIX;ENTITLEMENTS"
     "EXTRA_CXXFLAGS;DEPENDS;LINK_LIBS;LINK_COMPONENTS;CLANG_LIBS"
     ${ARGN})
   llvm_process_sources(srcs ${PARAM_UNPARSED_ARGUMENTS})
   list(APPEND LLVM_LINK_COMPONENTS ${PARAM_LINK_COMPONENTS})
+
+  if(PARAM_NO_INTERNAL_DEPENDENCIES)
+    foreach(link_lib ${PARAM_LINK_LIBS})
+      if (link_lib MATCHES "^lldb")
+        message(FATAL_ERROR
+          "Library ${name} cannot depend on any other lldb libs "
+          "(Found ${link_lib} in LINK_LIBS)")
+      endif()
+    endforeach()
+  endif()
+
+  if(PARAM_NO_PLUGIN_DEPENDENCIES)
+    foreach(link_lib ${PARAM_LINK_LIBS})
+      if (link_lib MATCHES "^lldbPlugin")
+        message(FATAL_ERROR
+          "Library ${name} cannot depend on a plugin (Found ${link_lib} in "
+          "LINK_LIBS)")
+      endif()
+    endforeach()
+  endif()
 
   if(PARAM_PLUGIN)
     set_property(GLOBAL APPEND PROPERTY LLDB_PLUGINS ${name})
@@ -140,10 +164,17 @@ function(add_lldb_library name)
     get_property(parent_dir DIRECTORY PROPERTY PARENT_DIRECTORY)
     if(EXISTS ${parent_dir})
       get_filename_component(category ${parent_dir} NAME)
-      set_target_properties(${name} PROPERTIES FOLDER "lldb plugins/${category}")
+      set_target_properties(${name} PROPERTIES FOLDER "LLDB/Plugins/${category}")
     endif()
   else()
-    set_target_properties(${name} PROPERTIES FOLDER "lldb libraries")
+    set_target_properties(${name} PROPERTIES FOLDER "LLDB/Libraries")
+  endif()
+
+  # If we want to export all lldb symbols (i.e LLDB_EXPORT_ALL_SYMBOLS=ON), we
+  # need to use default visibility for all LLDB libraries even if a global
+  # `CMAKE_CXX_VISIBILITY_PRESET=hidden`is present.
+  if (LLDB_EXPORT_ALL_SYMBOLS)
+    set_target_properties(${name} PROPERTIES CXX_VISIBILITY_PRESET default)
   endif()
 endfunction(add_lldb_library)
 
@@ -176,7 +207,6 @@ function(add_lldb_executable name)
   else()
     target_link_libraries(${name} PRIVATE ${ARG_CLANG_LIBS})
   endif()
-  set_target_properties(${name} PROPERTIES FOLDER "lldb executables")
 
   if (ARG_BUILD_RPATH)
     set_target_properties(${name} PROPERTIES BUILD_RPATH "${ARG_BUILD_RPATH}")
@@ -246,10 +276,8 @@ function(lldb_add_to_buildtree_lldb_framework name subdir)
 
   # Create a custom target to remove the copy again from LLDB.framework in the
   # build tree.
-  # Intentionally use remove_directory because the target can be a either a
-  # file or directory and using remove_directory is harmless for files.
   add_custom_target(${name}-cleanup
-    COMMAND ${CMAKE_COMMAND} -E remove_directory ${copy_dest}
+    COMMAND ${CMAKE_COMMAND} -E remove ${copy_dest}
     COMMENT "Removing ${name} from LLDB.framework")
   add_dependencies(lldb-framework-cleanup
     ${name}-cleanup)
@@ -348,6 +376,25 @@ function(lldb_find_system_debugserver path)
       message(WARNING "System debugserver requested, but not found. "
                       "Candidates don't exist: ${path_shared}\n${path_private}")
     endif()
+  endif()
+endfunction()
+
+function(lldb_find_python_module module)
+  set(MODULE_FOUND PY_${module}_FOUND)
+  if (${MODULE_FOUND})
+    return()
+  endif()
+
+  execute_process(COMMAND "${Python3_EXECUTABLE}" "-c" "import ${module}"
+    RESULT_VARIABLE status
+    ERROR_QUIET)
+
+  if (status)
+    set(${MODULE_FOUND} OFF PARENT_SCOPE)
+    message(STATUS "Could NOT find Python module '${module}'")
+  else()
+    set(${MODULE_FOUND} ON PARENT_SCOPE)
+    message(STATUS "Found Python module '${module}'")
   endif()
 endfunction()
 

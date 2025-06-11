@@ -14,6 +14,8 @@
 #include "lldb/Utility/Environment.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/NameMatches.h"
+#include "lldb/Utility/StructuredData.h"
+#include <optional>
 #include <vector>
 
 namespace lldb_private {
@@ -86,6 +88,35 @@ public:
   Environment &GetEnvironment() { return m_environment; }
   const Environment &GetEnvironment() const { return m_environment; }
 
+  bool IsScriptedProcess() const;
+
+  lldb::ScriptedMetadataSP GetScriptedMetadata() const {
+    return m_scripted_metadata_sp;
+  }
+
+  void SetScriptedMetadata(lldb::ScriptedMetadataSP metadata_sp) {
+    m_scripted_metadata_sp = metadata_sp;
+  }
+
+  // Get and set the actual listener that will be used for the process events
+  lldb::ListenerSP GetListener() const { return m_listener_sp; }
+
+  void SetListener(const lldb::ListenerSP &listener_sp) {
+    m_listener_sp = listener_sp;
+  }
+
+  lldb::ListenerSP GetHijackListener() const { return m_hijack_listener_sp; }
+
+  void SetHijackListener(const lldb::ListenerSP &listener_sp) {
+    m_hijack_listener_sp = listener_sp;
+  }
+
+  lldb::ListenerSP GetShadowListener() const { return m_shadow_listener_sp; }
+
+  void SetShadowListener(const lldb::ListenerSP &listener_sp) {
+    m_shadow_listener_sp = listener_sp;
+  }
+
 protected:
   FileSpec m_executable;
   std::string m_arg0; // argv[0] if supported. If empty, then use m_executable.
@@ -97,6 +128,10 @@ protected:
   uint32_t m_gid = UINT32_MAX;
   ArchSpec m_arch;
   lldb::pid_t m_pid = LLDB_INVALID_PROCESS_ID;
+  lldb::ScriptedMetadataSP m_scripted_metadata_sp = nullptr;
+  lldb::ListenerSP m_listener_sp = nullptr;
+  lldb::ListenerSP m_hijack_listener_sp = nullptr;
+  lldb::ListenerSP m_shadow_listener_sp = nullptr;
 };
 
 // ProcessInstanceInfo
@@ -105,11 +140,15 @@ protected:
 // to that process.
 class ProcessInstanceInfo : public ProcessInfo {
 public:
+  struct timespec {
+    time_t tv_sec = 0;
+    long int tv_usec = 0;
+  };
+
   ProcessInstanceInfo() = default;
 
   ProcessInstanceInfo(const char *name, const ArchSpec &arch, lldb::pid_t pid)
-      : ProcessInfo(name, arch, pid), m_euid(UINT32_MAX), m_egid(UINT32_MAX),
-        m_parent_pid(LLDB_INVALID_PROCESS_ID) {}
+      : ProcessInfo(name, arch, pid) {}
 
   void Clear() {
     ProcessInfo::Clear();
@@ -138,6 +177,76 @@ public:
     return m_parent_pid != LLDB_INVALID_PROCESS_ID;
   }
 
+  lldb::pid_t GetProcessGroupID() const { return m_process_group_id; }
+
+  void SetProcessGroupID(lldb::pid_t pgrp) { m_process_group_id = pgrp; }
+
+  bool ProcessGroupIDIsValid() const {
+    return m_process_group_id != LLDB_INVALID_PROCESS_ID;
+  }
+
+  lldb::pid_t GetProcessSessionID() const { return m_process_session_id; }
+
+  void SetProcessSessionID(lldb::pid_t session) {
+    m_process_session_id = session;
+  }
+
+  bool ProcessSessionIDIsValid() const {
+    return m_process_session_id != LLDB_INVALID_PROCESS_ID;
+  }
+
+  struct timespec GetUserTime() const { return m_user_time; }
+
+  void SetUserTime(struct timespec utime) { m_user_time = utime; }
+
+  bool UserTimeIsValid() const {
+    return m_user_time.tv_sec > 0 || m_user_time.tv_usec > 0;
+  }
+
+  struct timespec GetSystemTime() const { return m_system_time; }
+
+  void SetSystemTime(struct timespec stime) { m_system_time = stime; }
+
+  bool SystemTimeIsValid() const {
+    return m_system_time.tv_sec > 0 || m_system_time.tv_usec > 0;
+  }
+
+  struct timespec GetCumulativeUserTime() const {
+    return m_cumulative_user_time;
+  }
+
+  void SetCumulativeUserTime(struct timespec cutime) {
+    m_cumulative_user_time = cutime;
+  }
+
+  bool CumulativeUserTimeIsValid() const {
+    return m_cumulative_user_time.tv_sec > 0 ||
+           m_cumulative_user_time.tv_usec > 0;
+  }
+
+  struct timespec GetCumulativeSystemTime() const {
+    return m_cumulative_system_time;
+  }
+
+  void SetCumulativeSystemTime(struct timespec cstime) {
+    m_cumulative_system_time = cstime;
+  }
+
+  bool CumulativeSystemTimeIsValid() const {
+    return m_cumulative_system_time.tv_sec > 0 ||
+           m_cumulative_system_time.tv_usec > 0;
+  }
+
+  std::optional<int8_t> GetPriorityValue() const { return m_priority_value; }
+
+  void SetPriorityValue(int8_t priority_value) {
+    m_priority_value = priority_value;
+  }
+
+  void SetIsZombie(bool is_zombie) { m_zombie = is_zombie; }
+
+  std::optional<bool> IsZombie() const { return m_zombie; }
+
   void Dump(Stream &s, UserIDResolver &resolver) const;
 
   static void DumpTableHeader(Stream &s, bool show_args, bool verbose);
@@ -149,9 +258,37 @@ protected:
   uint32_t m_euid = UINT32_MAX;
   uint32_t m_egid = UINT32_MAX;
   lldb::pid_t m_parent_pid = LLDB_INVALID_PROCESS_ID;
+  lldb::pid_t m_process_group_id = LLDB_INVALID_PROCESS_ID;
+  lldb::pid_t m_process_session_id = LLDB_INVALID_PROCESS_ID;
+  struct timespec m_user_time;
+  struct timespec m_system_time;
+  struct timespec m_cumulative_user_time;
+  struct timespec m_cumulative_system_time;
+  std::optional<int8_t> m_priority_value = std::nullopt;
+  std::optional<bool> m_zombie = std::nullopt;
 };
 
 typedef std::vector<ProcessInstanceInfo> ProcessInstanceInfoList;
+
+class ProcessInfoList {
+public:
+  ProcessInfoList(const ProcessInstanceInfoList &list) : m_list(list) {}
+
+  uint32_t GetSize() const { return m_list.size(); }
+
+  bool GetProcessInfoAtIndex(uint32_t idx, ProcessInstanceInfo &info) {
+    if (idx < m_list.size()) {
+      info = m_list[idx];
+      return true;
+    }
+    return false;
+  }
+
+  void Clear() { return m_list.clear(); }
+
+private:
+  ProcessInstanceInfoList m_list;
+};
 
 // ProcessInstanceInfoMatch
 //

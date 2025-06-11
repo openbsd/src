@@ -17,9 +17,9 @@
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/Module.h"
+#include "llvm/TargetParser/Triple.h"
 
 #include "Plugins/TypeSystem/Clang/TypeSystemClang.h"
 #include "lldb/Core/Module.h"
@@ -138,7 +138,7 @@ ClangFunctionCaller::CompileFunction(lldb::ThreadSP thread_to_use_sp,
         type_name = clang_qual_type.GetTypeName().AsCString("");
       } else {
         diagnostic_manager.Printf(
-            eDiagnosticSeverityError,
+            lldb::eSeverityError,
             "Could not determine type of input value %" PRIu64 ".",
             (uint64_t)i);
         return 1;
@@ -194,7 +194,7 @@ ClangFunctionCaller::CompileFunction(lldb::ThreadSP thread_to_use_sp,
     num_errors = clang_parser->Parse(diagnostic_manager);
     m_parser.reset(clang_parser);
   } else {
-    diagnostic_manager.PutString(eDiagnosticSeverityError,
+    diagnostic_manager.PutString(lldb::eSeverityError,
                                  "no process - unable to inject function");
     num_errors = 1;
   }
@@ -206,6 +206,8 @@ ClangFunctionCaller::CompileFunction(lldb::ThreadSP thread_to_use_sp,
 
   return num_errors;
 }
+
+char ClangFunctionCaller::ClangFunctionCallerHelper::ID;
 
 clang::ASTConsumer *
 ClangFunctionCaller::ClangFunctionCallerHelper::ASTTransformer(

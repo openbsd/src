@@ -6,11 +6,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
 
 #include "lldb/Breakpoint/Watchpoint.h"
-#include "lldb/Core/FileSpecList.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/DataFormatters/DataVisualization.h"
@@ -27,6 +28,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/FileSpec.h"
+#include "lldb/Utility/FileSpecList.h"
 #include "lldb/Utility/StreamString.h"
 #include "lldb/Utility/TildeExpressionResolver.h"
 
@@ -44,7 +46,7 @@ typedef void (*CompletionCallback)(CommandInterpreter &interpreter,
                                    lldb_private::SearchFilter *searcher);
 
 struct CommonCompletionElement {
-  uint32_t type;
+  uint64_t type;
   CompletionCallback callback;
 };
 
@@ -54,37 +56,43 @@ bool CommandCompletions::InvokeCommonCompletionCallbacks(
   bool handled = false;
 
   const CommonCompletionElement common_completions[] = {
-      {eSourceFileCompletion, CommandCompletions::SourceFiles},
-      {eDiskFileCompletion, CommandCompletions::DiskFiles},
-      {eDiskDirectoryCompletion, CommandCompletions::DiskDirectories},
-      {eSymbolCompletion, CommandCompletions::Symbols},
-      {eModuleCompletion, CommandCompletions::Modules},
-      {eModuleUUIDCompletion, CommandCompletions::ModuleUUIDs},
-      {eSettingsNameCompletion, CommandCompletions::SettingsNames},
-      {ePlatformPluginCompletion, CommandCompletions::PlatformPluginNames},
-      {eArchitectureCompletion, CommandCompletions::ArchitectureNames},
-      {eVariablePathCompletion, CommandCompletions::VariablePath},
-      {eRegisterCompletion, CommandCompletions::Registers},
-      {eBreakpointCompletion, CommandCompletions::Breakpoints},
-      {eProcessPluginCompletion, CommandCompletions::ProcessPluginNames},
-      {eDisassemblyFlavorCompletion, CommandCompletions::DisassemblyFlavors},
-      {eTypeLanguageCompletion, CommandCompletions::TypeLanguages},
-      {eFrameIndexCompletion, CommandCompletions::FrameIndexes},
-      {eStopHookIDCompletion, CommandCompletions::StopHookIDs},
-      {eThreadIndexCompletion, CommandCompletions::ThreadIndexes},
-      {eWatchPointIDCompletion, CommandCompletions::WatchPointIDs},
-      {eBreakpointNameCompletion, CommandCompletions::BreakpointNames},
-      {eProcessIDCompletion, CommandCompletions::ProcessIDs},
-      {eProcessNameCompletion, CommandCompletions::ProcessNames},
-      {eRemoteDiskFileCompletion, CommandCompletions::RemoteDiskFiles},
-      {eRemoteDiskDirectoryCompletion,
+      {lldb::eNoCompletion, nullptr},
+      {lldb::eSourceFileCompletion, CommandCompletions::SourceFiles},
+      {lldb::eDiskFileCompletion, CommandCompletions::DiskFiles},
+      {lldb::eDiskDirectoryCompletion, CommandCompletions::DiskDirectories},
+      {lldb::eSymbolCompletion, CommandCompletions::Symbols},
+      {lldb::eModuleCompletion, CommandCompletions::Modules},
+      {lldb::eModuleUUIDCompletion, CommandCompletions::ModuleUUIDs},
+      {lldb::eSettingsNameCompletion, CommandCompletions::SettingsNames},
+      {lldb::ePlatformPluginCompletion,
+       CommandCompletions::PlatformPluginNames},
+      {lldb::eArchitectureCompletion, CommandCompletions::ArchitectureNames},
+      {lldb::eVariablePathCompletion, CommandCompletions::VariablePath},
+      {lldb::eRegisterCompletion, CommandCompletions::Registers},
+      {lldb::eBreakpointCompletion, CommandCompletions::Breakpoints},
+      {lldb::eProcessPluginCompletion, CommandCompletions::ProcessPluginNames},
+      {lldb::eDisassemblyFlavorCompletion,
+       CommandCompletions::DisassemblyFlavors},
+      {lldb::eTypeLanguageCompletion, CommandCompletions::TypeLanguages},
+      {lldb::eFrameIndexCompletion, CommandCompletions::FrameIndexes},
+      {lldb::eStopHookIDCompletion, CommandCompletions::StopHookIDs},
+      {lldb::eThreadIndexCompletion, CommandCompletions::ThreadIndexes},
+      {lldb::eWatchpointIDCompletion, CommandCompletions::WatchPointIDs},
+      {lldb::eBreakpointNameCompletion, CommandCompletions::BreakpointNames},
+      {lldb::eProcessIDCompletion, CommandCompletions::ProcessIDs},
+      {lldb::eProcessNameCompletion, CommandCompletions::ProcessNames},
+      {lldb::eRemoteDiskFileCompletion, CommandCompletions::RemoteDiskFiles},
+      {lldb::eRemoteDiskDirectoryCompletion,
        CommandCompletions::RemoteDiskDirectories},
-      {eTypeCategoryNameCompletion, CommandCompletions::TypeCategoryNames},
-      {eNoCompletion, nullptr} // This one has to be last in the list.
+      {lldb::eTypeCategoryNameCompletion,
+       CommandCompletions::TypeCategoryNames},
+      {lldb::eThreadIDCompletion, CommandCompletions::ThreadIDs},
+      {lldb::eTerminatorCompletion,
+       nullptr} // This one has to be last in the list.
   };
 
   for (int i = 0;; i++) {
-    if (common_completions[i].type == eNoCompletion)
+    if (common_completions[i].type == lldb::eTerminatorCompletion)
       break;
     else if ((common_completions[i].type & completion_mask) ==
                  common_completions[i].type &&
@@ -220,18 +228,15 @@ public:
       function_options.include_inlines = true;
       context.module_sp->FindFunctions(m_regex, function_options, sc_list);
 
-      SymbolContext sc;
       // Now add the functions & symbols to the list - only add if unique:
-      for (uint32_t i = 0; i < sc_list.GetSize(); i++) {
-        if (sc_list.GetContextAtIndex(i, sc)) {
-          ConstString func_name = sc.GetFunctionName(Mangled::ePreferDemangled);
-          // Ensure that the function name matches the regex. This is more than
-          // a sanity check. It is possible that the demangled function name
-          // does not start with the prefix, for example when it's in an
-          // anonymous namespace.
-          if (!func_name.IsEmpty() && m_regex.Execute(func_name.GetStringRef()))
-            m_match_set.insert(func_name);
-        }
+      for (const SymbolContext &sc : sc_list) {
+        ConstString func_name = sc.GetFunctionName(Mangled::ePreferDemangled);
+        // Ensure that the function name matches the regex. This is more than
+        // a sanity check. It is possible that the demangled function name
+        // does not start with the prefix, for example when it's in an
+        // anonymous namespace.
+        if (!func_name.IsEmpty() && m_regex.Execute(func_name.GetStringRef()))
+          m_match_set.insert(func_name);
       }
     }
     return Searcher::eCallbackReturnContinue;
@@ -259,9 +264,25 @@ class ModuleCompleter : public Completer {
 public:
   ModuleCompleter(CommandInterpreter &interpreter, CompletionRequest &request)
       : Completer(interpreter, request) {
-    FileSpec partial_spec(m_request.GetCursorArgumentPrefix());
-    m_file_name = partial_spec.GetFilename().GetCString();
-    m_dir_name = partial_spec.GetDirectory().GetCString();
+    llvm::StringRef request_str = m_request.GetCursorArgumentPrefix();
+    // We can match the full path, or the file name only. The full match will be
+    // attempted always, the file name match only if the request does not
+    // contain a path separator.
+
+    // Preserve both the path as spelled by the user (used for completion) and
+    // the canonical version (used for matching).
+    m_spelled_path = request_str;
+    m_canonical_path = FileSpec(m_spelled_path).GetPath();
+    if (!m_spelled_path.empty() &&
+        llvm::sys::path::is_separator(m_spelled_path.back()) &&
+        !llvm::StringRef(m_canonical_path).ends_with(m_spelled_path.back())) {
+      m_canonical_path += m_spelled_path.back();
+    }
+
+    if (llvm::find_if(request_str, [](char c) {
+          return llvm::sys::path::is_separator(c);
+        }) == request_str.end())
+      m_file_name = request_str;
   }
 
   lldb::SearchDepth GetDepth() override { return lldb::eSearchDepthModule; }
@@ -270,22 +291,18 @@ public:
                                           SymbolContext &context,
                                           Address *addr) override {
     if (context.module_sp) {
-      const char *cur_file_name =
-          context.module_sp->GetFileSpec().GetFilename().GetCString();
-      const char *cur_dir_name =
-          context.module_sp->GetFileSpec().GetDirectory().GetCString();
+      // Attempt a full path match.
+      std::string cur_path = context.module_sp->GetFileSpec().GetPath();
+      llvm::StringRef cur_path_view = cur_path;
+      if (cur_path_view.consume_front(m_canonical_path))
+        m_request.AddCompletion((m_spelled_path + cur_path_view).str());
 
-      bool match = false;
-      if (m_file_name && cur_file_name &&
-          strstr(cur_file_name, m_file_name) == cur_file_name)
-        match = true;
-
-      if (match && m_dir_name && cur_dir_name &&
-          strstr(cur_dir_name, m_dir_name) != cur_dir_name)
-        match = false;
-
-      if (match) {
-        m_request.AddCompletion(cur_file_name);
+      // And a file name match.
+      if (m_file_name) {
+        llvm::StringRef cur_file_name =
+            context.module_sp->GetFileSpec().GetFilename().GetStringRef();
+        if (cur_file_name.starts_with(*m_file_name))
+          m_request.AddCompletion(cur_file_name);
       }
     }
     return Searcher::eCallbackReturnContinue;
@@ -294,8 +311,9 @@ public:
   void DoCompletion(SearchFilter *filter) override { filter->Search(*this); }
 
 private:
-  const char *m_file_name;
-  const char *m_dir_name;
+  std::optional<llvm::StringRef> m_file_name;
+  llvm::StringRef m_spelled_path;
+  std::string m_canonical_path;
 
   ModuleCompleter(const ModuleCompleter &) = delete;
   const ModuleCompleter &operator=(const ModuleCompleter &) = delete;
@@ -332,7 +350,7 @@ static void DiskFilesOrDirectories(const llvm::Twine &partial_name,
   llvm::StringRef SearchDir;
   llvm::StringRef PartialItem;
 
-  if (CompletionBuffer.startswith("~")) {
+  if (CompletionBuffer.starts_with("~")) {
     llvm::StringRef Buffer = CompletionBuffer;
     size_t FirstSep =
         Buffer.find_if([](char c) { return path::is_separator(c); });
@@ -380,6 +398,8 @@ static void DiskFilesOrDirectories(const llvm::Twine &partial_name,
       Storage.append(RemainderDir);
     }
     SearchDir = Storage;
+  } else if (CompletionBuffer == path::root_directory(CompletionBuffer)) {
+    SearchDir = CompletionBuffer;
   } else {
     SearchDir = path::parent_path(CompletionBuffer);
   }
@@ -389,9 +409,11 @@ static void DiskFilesOrDirectories(const llvm::Twine &partial_name,
   PartialItem = path::filename(CompletionBuffer);
 
   // path::filename() will return "." when the passed path ends with a
-  // directory separator. We have to filter those out, but only when the
-  // "." doesn't come from the completion request itself.
-  if (PartialItem == "." && path::is_separator(CompletionBuffer.back()))
+  // directory separator or the separator when passed the disk root directory.
+  // We have to filter those out, but only when the "." doesn't come from the
+  // completion request itself.
+  if ((PartialItem == "." || PartialItem == path::get_separator()) &&
+      path::is_separator(CompletionBuffer.back()))
     PartialItem = llvm::StringRef();
 
   if (SearchDir.empty()) {
@@ -417,7 +439,7 @@ static void DiskFilesOrDirectories(const llvm::Twine &partial_name,
     auto Name = path::filename(Entry.path());
 
     // Omit ".", ".."
-    if (Name == "." || Name == ".." || !Name.startswith(PartialItem))
+    if (Name == "." || Name == ".." || !Name.starts_with(PartialItem))
       continue;
 
     bool is_dir = Status->isDirectory();
@@ -601,11 +623,14 @@ void CommandCompletions::Registers(CommandInterpreter &interpreter,
                                    CompletionRequest &request,
                                    SearchFilter *searcher) {
   std::string reg_prefix;
-  if (request.GetCursorArgumentPrefix().startswith("$"))
+  if (request.GetCursorArgumentPrefix().starts_with("$"))
     reg_prefix = "$";
 
   RegisterContext *reg_ctx =
       interpreter.GetExecutionContext().GetRegisterContext();
+  if (!reg_ctx)
+    return;
+
   const size_t reg_num = reg_ctx->GetRegisterCount();
   for (size_t reg_idx = 0; reg_idx < reg_num; ++reg_idx) {
     const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoAtIndex(reg_idx);
@@ -721,10 +746,14 @@ void CommandCompletions::FrameIndexes(CommandInterpreter &interpreter,
     return;
 
   lldb::ThreadSP thread_sp = exe_ctx.GetThreadSP();
+  Debugger &dbg = interpreter.GetDebugger();
   const uint32_t frame_num = thread_sp->GetStackFrameCount();
   for (uint32_t i = 0; i < frame_num; ++i) {
     lldb::StackFrameSP frame_sp = thread_sp->GetStackFrameAtIndex(i);
     StreamString strm;
+    // Dumping frames can be slow, allow interruption.
+    if (INTERRUPT_REQUESTED(dbg, "Interrupted in frame completion"))
+      break;
     frame_sp->Dump(&strm, false, true);
     request.TryCompleteCurrentArg(std::to_string(i), strm.GetString());
   }
@@ -745,7 +774,7 @@ void CommandCompletions::StopHookIDs(CommandInterpreter &interpreter,
     // neater.
     strm.SetIndentLevel(11);
     const Target::StopHookSP stophook_sp = target_sp->GetStopHookAtIndex(idx);
-    stophook_sp->GetDescription(&strm, lldb::eDescriptionLevelInitial);
+    stophook_sp->GetDescription(strm, lldb::eDescriptionLevelInitial);
     request.TryCompleteCurrentArg(std::to_string(stophook_sp->GetID()),
                                   strm.GetString());
   }
@@ -793,6 +822,23 @@ void CommandCompletions::TypeCategoryNames(CommandInterpreter &interpreter,
                                       category_sp->GetDescription());
         return true;
       });
+}
+
+void CommandCompletions::ThreadIDs(CommandInterpreter &interpreter,
+                                   CompletionRequest &request,
+                                   SearchFilter *searcher) {
+  const ExecutionContext &exe_ctx = interpreter.GetExecutionContext();
+  if (!exe_ctx.HasProcessScope())
+    return;
+
+  ThreadList &threads = exe_ctx.GetProcessPtr()->GetThreadList();
+  lldb::ThreadSP thread_sp;
+  for (uint32_t idx = 0; (thread_sp = threads.GetThreadAtIndex(idx)); ++idx) {
+    StreamString strm;
+    thread_sp->GetStatus(strm, 0, 1, 1, true);
+    request.TryCompleteCurrentArg(std::to_string(thread_sp->GetID()),
+                                  strm.GetString());
+  }
 }
 
 void CommandCompletions::CompleteModifiableCmdPathArgs(

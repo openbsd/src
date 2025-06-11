@@ -88,7 +88,7 @@ public:
                               lldb::pid_t pid);
 
   /// Emit the given message to the operating system log.
-  static void SystemLog(llvm::StringRef message);
+  static void SystemLog(lldb::Severity severity, llvm::StringRef message);
 
   /// Get the process ID for the calling process.
   ///
@@ -236,8 +236,9 @@ public:
                                 bool run_in_shell = true,
                                 bool hide_stderr = false);
 
-  static bool OpenFileInExternalEditor(const FileSpec &file_spec,
-                                       uint32_t line_no);
+  static llvm::Error OpenFileInExternalEditor(llvm::StringRef editor,
+                                              const FileSpec &file_spec,
+                                              uint32_t line_no);
 
   /// Check if we're running in an interactive graphical session.
   ///

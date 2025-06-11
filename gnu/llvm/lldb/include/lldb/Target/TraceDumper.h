@@ -9,6 +9,7 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/TraceCursor.h"
 #include <optional>
+#include <stack>
 
 #ifndef LLDB_TARGET_TRACE_INSTRUCTION_DUMPER_H
 #define LLDB_TARGET_TRACE_INSTRUCTION_DUMPER_H
@@ -317,7 +318,7 @@ public:
     FunctionCall(const lldb::TraceCursorSP &cursor_sp,
                  const SymbolInfo &symbol_info);
 
-    /// Append a new traced segment to this funciton call.
+    /// Append a new traced segment to this function call.
     ///
     /// \param[in] cursor_sp
     ///   A cursor pointing to the first instruction of the new segment.

@@ -13,7 +13,6 @@
 #include <future>
 #include <sys/stat.h>
 
-#include "lldb/Core/StreamFile.h"
 #include "lldb/Host/Config.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/FileSystem.h"
@@ -540,9 +539,8 @@ bool GDBRemoteCommunication::DecompressPacket() {
       else if (m_compression_type == CompressionType::ZlibDeflate)
         scratchbuf_size = compression_decode_scratch_buffer_size (COMPRESSION_ZLIB);
       else if (m_compression_type == CompressionType::LZMA)
-        scratchbuf_size = compression_decode_scratch_buffer_size (COMPRESSION_LZMA);
-      else if (m_compression_type == CompressionType::LZFSE)
-        scratchbuf_size = compression_decode_scratch_buffer_size (COMPRESSION_LZFSE);
+        scratchbuf_size =
+            compression_decode_scratch_buffer_size(COMPRESSION_LZMA);
       if (scratchbuf_size > 0) {
         m_decompression_scratch = (void*) malloc (scratchbuf_size);
         m_decompression_scratch_type = m_compression_type;

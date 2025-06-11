@@ -90,8 +90,7 @@ void NativeThreadFreeBSD::SetStoppedBySignal(uint32_t signo,
     case SIGBUS:
     case SIGFPE:
     case SIGILL:
-      const auto reason = GetCrashReason(*info);
-      m_stop_description = GetCrashReasonString(reason, *info);
+      m_stop_description = GetCrashReasonString(*info);
       break;
     }
   }
@@ -315,6 +314,10 @@ NativeThreadFreeBSD::CopyWatchpointsFrom(NativeThreadFreeBSD &source) {
     m_hw_break_index_map = source.m_hw_break_index_map;
   }
   return s;
+}
+
+NativeProcessFreeBSD &NativeThreadFreeBSD::GetProcess() {
+  return static_cast<NativeProcessFreeBSD &>(m_process);
 }
 
 llvm::Expected<std::unique_ptr<llvm::MemoryBuffer>>

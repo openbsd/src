@@ -13,13 +13,19 @@
 
 #include "lldb/API/SBDefines.h"
 
+namespace lldb_private {
+class ScriptInterpreter;
+} // namespace lldb_private
+
 namespace lldb {
 
 class LLDB_API SBStream {
 public:
   SBStream();
 
+#ifndef SWIG
   SBStream(SBStream &&rhs);
+#endif
 
   ~SBStream();
 
@@ -35,7 +41,9 @@ public:
   // for the stream output whose length can be accessed using this accessor.
   size_t GetSize();
 
-  void Printf(const char *format, ...) __attribute__((format(printf, 2, 3)));
+#ifndef SWIG
+  __attribute__((format(printf, 2, 3))) void Printf(const char *format, ...);
+#endif
 
   void Print(const char *str);
 
@@ -45,7 +53,9 @@ public:
 
   void RedirectToFile(lldb::FileSP file);
 
+#ifndef SWIG
   void RedirectToFileHandle(FILE *fh, bool transfer_fh_ownership);
+#endif
 
   void RedirectToFileDescriptor(int fd, bool transfer_fh_ownership);
 
@@ -56,6 +66,8 @@ public:
 
 protected:
   friend class SBAddress;
+  friend class SBAddressRange;
+  friend class SBAddressRangeList;
   friend class SBBlock;
   friend class SBBreakpoint;
   friend class SBBreakpointLocation;
@@ -94,6 +106,8 @@ protected:
   friend class SBTypeMember;
   friend class SBValue;
   friend class SBWatchpoint;
+
+  friend class lldb_private::ScriptInterpreter;
 
   lldb_private::Stream *operator->();
 

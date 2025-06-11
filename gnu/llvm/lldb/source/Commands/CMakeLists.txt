@@ -2,7 +2,7 @@ lldb_tablegen(CommandOptions.inc -gen-lldb-option-defs
   SOURCE Options.td
   TARGET LLDBOptionsGen)
 
-add_lldb_library(lldbCommands
+add_lldb_library(lldbCommands NO_PLUGIN_DEPENDENCIES
   CommandCompletions.cpp
   CommandObjectApropos.cpp
   CommandObjectBreakpoint.cpp
@@ -26,7 +26,7 @@ add_lldb_library(lldbCommands
   CommandObjectQuit.cpp
   CommandObjectRegexCommand.cpp
   CommandObjectRegister.cpp
-  CommandObjectScript.cpp
+  CommandObjectScripting.cpp
   CommandObjectSession.cpp
   CommandObjectSettings.cpp
   CommandObjectSource.cpp
@@ -40,6 +40,7 @@ add_lldb_library(lldbCommands
   CommandObjectWatchpoint.cpp
   CommandObjectWatchpointCommand.cpp
   CommandOptionArgumentTable.cpp
+  CommandOptionsProcessAttach.cpp
   CommandOptionsProcessLaunch.cpp
 
   LINK_LIBS

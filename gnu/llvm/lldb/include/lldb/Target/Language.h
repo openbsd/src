@@ -26,6 +26,15 @@
 
 namespace lldb_private {
 
+class LanguageProperties : public Properties {
+public:
+  LanguageProperties();
+
+  static llvm::StringRef GetSettingName();
+
+  bool GetEnableFilterForLineBreakpoints() const;
+};
+
 class Language : public PluginInterface {
 public:
   class TypeScavenger {
@@ -160,6 +169,10 @@ public:
 
   virtual lldb::LanguageType GetLanguageType() const = 0;
 
+  // Implement this function to return the user-defined entry point name
+  // for the language.
+  virtual llvm::StringRef GetUserEntryPointName() const { return {}; }
+
   virtual bool IsTopLevelFunction(Function &function);
 
   virtual bool IsSourceFile(llvm::StringRef file_path) const = 0;
@@ -208,14 +221,21 @@ public:
   /// that the name actually belongs to this language.
   virtual bool SymbolNameFitsToLanguage(Mangled name) const { return false; }
 
-  // if an individual data formatter can apply to several types and cross a
-  // language boundary it makes sense for individual languages to want to
-  // customize the printing of values of that type by appending proper
-  // prefix/suffix information in language-specific ways
-  virtual bool GetFormatterPrefixSuffix(ValueObject &valobj,
-                                        ConstString type_hint,
-                                        std::string &prefix,
-                                        std::string &suffix);
+  /// An individual data formatter may apply to several types and cross language
+  /// boundaries. Each of those languages may want to customize the display of
+  /// values of said types by appending proper prefix/suffix information in
+  /// language-specific ways. This function returns that prefix and suffix.
+  ///
+  /// \param[in] type_hint
+  ///   A StringRef used to determine what the prefix and suffix should be. It
+  ///   is called a hint because some types may have multiple variants for which
+  ///   the prefix and/or suffix may vary.
+  ///
+  /// \return
+  ///   A std::pair<StringRef, StringRef>, the first being the prefix and the
+  ///   second being the suffix. They may be empty.
+  virtual std::pair<llvm::StringRef, llvm::StringRef>
+  GetFormatterPrefixSuffix(llvm::StringRef type_hint);
 
   // When looking up functions, we take a user provided string which may be a
   // partial match to the full demangled name and compare it to the actual
@@ -259,6 +279,10 @@ public:
       return demangled;
 
     return mangled.GetMangledName();
+  }
+
+  virtual ConstString GetDisplayDemangledName(Mangled mangled) const {
+    return mangled.GetDemangledName();
   }
 
   virtual void GetExceptionResolverDescription(bool catch_on, bool throw_on,
@@ -313,6 +337,8 @@ public:
   static LanguageSet GetLanguagesSupportingTypeSystemsForExpressions();
   static LanguageSet GetLanguagesSupportingREPLs();
 
+  static LanguageProperties &GetGlobalLanguageProperties();
+
   // Given a mangled function name, calculates some alternative manglings since
   // the compiler mangling may not line up with the symbol we are expecting.
   virtual std::vector<ConstString>
@@ -325,6 +351,33 @@ public:
                                        const SymbolContext &sym_ctx) const {
     return ConstString();
   }
+
+  virtual llvm::StringRef GetInstanceVariableName() { return {}; }
+
+  /// Returns true if this SymbolContext should be ignored when setting
+  /// breakpoints by line (number or regex). Helpful for languages that create
+  /// artificial functions without meaningful user code associated with them
+  /// (e.g. code that gets expanded in late compilation stages, like by
+  /// CoroSplitter).
+  virtual bool IgnoreForLineBreakpoints(const SymbolContext &) const {
+    return false;
+  }
+
+  /// Returns true if this Language supports exception breakpoints on throw via
+  /// a corresponding LanguageRuntime plugin.
+  virtual bool SupportsExceptionBreakpointsOnThrow() const { return false; }
+
+  /// Returns true if this Language supports exception breakpoints on catch via
+  /// a corresponding LanguageRuntime plugin.
+  virtual bool SupportsExceptionBreakpointsOnCatch() const { return false; }
+
+  /// Returns the keyword used for throw statements in this language, e.g.
+  /// Python uses \b raise. Defaults to \b throw.
+  virtual llvm::StringRef GetThrowKeyword() const { return "throw"; }
+
+  /// Returns the keyword used for catch statements in this language, e.g.
+  /// Python uses \b except. Defaults to \b catch.
+  virtual llvm::StringRef GetCatchKeyword() const { return "catch"; }
 
 protected:
   // Classes that inherit from Language can see and modify these

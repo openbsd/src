@@ -14,11 +14,12 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/lldb-types.h"
 
+#include "lldb/Core/AddressRangeListImpl.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
-#include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StructuredDataImpl.h"
+#include "lldb/Host/StreamFile.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -26,6 +27,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/Args.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/ProcessInfo.h"
 #include "lldb/Utility/State.h"
 #include "lldb/Utility/Stream.h"
@@ -38,6 +40,8 @@
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBMemoryRegionInfo.h"
 #include "lldb/API/SBMemoryRegionInfoList.h"
+#include "lldb/API/SBSaveCoreOptions.h"
+#include "lldb/API/SBScriptObject.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"
 #include "lldb/API/SBStructuredData.h"
@@ -76,7 +80,7 @@ SBProcess::~SBProcess() = default;
 const char *SBProcess::GetBroadcasterClassName() {
   LLDB_INSTRUMENT();
 
-  return Process::GetStaticBroadcasterClass().AsCString();
+  return ConstString(Process::GetStaticBroadcasterClass()).AsCString();
 }
 
 const char *SBProcess::GetPluginName() {
@@ -319,8 +323,8 @@ void SBProcess::ReportEventState(const SBEvent &event, FileSP out) const {
   if (process_sp) {
     StreamFile stream(out);
     const StateType event_state = SBProcess::GetStateFromEvent(event);
-    stream.Printf("Process %" PRIu64 " %s\n",
-        process_sp->GetID(), SBDebugger::StateAsCString(event_state));
+    stream.Printf("Process %" PRIu64 " %s\n", process_sp->GetID(),
+                  SBDebugger::StateAsCString(event_state));
   }
 }
 
@@ -376,7 +380,6 @@ bool SBProcess::SetSelectedThreadByIndexID(uint32_t index_id) {
         process_sp->GetTarget().GetAPIMutex());
     ret_val = process_sp->GetThreadList().SetSelectedThreadByIndexID(index_id);
   }
-
 
   return ret_val;
 }
@@ -466,6 +469,16 @@ SBEvent SBProcess::GetStopEventForStopID(uint32_t stop_id) {
   return sb_event;
 }
 
+void SBProcess::ForceScriptedState(StateType new_state) {
+  LLDB_INSTRUMENT_VA(this, new_state);
+
+  if (ProcessSP process_sp = GetSP()) {
+    std::lock_guard<std::recursive_mutex> guard(
+        process_sp->GetTarget().GetAPIMutex());
+    process_sp->ForceScriptedState(new_state);
+  }
+}
+
 StateType SBProcess::GetState() {
   LLDB_INSTRUMENT_VA(this);
 
@@ -497,14 +510,13 @@ int SBProcess::GetExitStatus() {
 const char *SBProcess::GetExitDescription() {
   LLDB_INSTRUMENT_VA(this);
 
-  const char *exit_desc = nullptr;
   ProcessSP process_sp(GetSP());
-  if (process_sp) {
-    std::lock_guard<std::recursive_mutex> guard(
-        process_sp->GetTarget().GetAPIMutex());
-    exit_desc = process_sp->GetExitDescription();
-  }
-  return exit_desc;
+  if (!process_sp)
+    return nullptr;
+
+  std::lock_guard<std::recursive_mutex> guard(
+      process_sp->GetTarget().GetAPIMutex());
+  return ConstString(process_sp->GetExitDescription()).GetCString();
 }
 
 lldb::pid_t SBProcess::GetProcessID() {
@@ -536,7 +548,6 @@ ByteOrder SBProcess::GetByteOrder() const {
   if (process_sp)
     byteOrder = process_sp->GetTarget().GetArchitecture().GetByteOrder();
 
-
   return byteOrder;
 }
 
@@ -547,7 +558,6 @@ uint32_t SBProcess::GetAddressByteSize() const {
   ProcessSP process_sp(GetSP());
   if (process_sp)
     size = process_sp->GetTarget().GetArchitecture().GetAddressByteSize();
-
 
   return size;
 }
@@ -737,7 +747,9 @@ SBProcess::GetRestartedReasonAtIndexFromEvent(const lldb::SBEvent &event,
                                               size_t idx) {
   LLDB_INSTRUMENT_VA(event, idx);
 
-  return Process::ProcessEventData::GetRestartedReasonAtIndex(event.get(), idx);
+  return ConstString(Process::ProcessEventData::GetRestartedReasonAtIndex(
+                         event.get(), idx))
+      .GetCString();
 }
 
 SBProcess SBProcess::GetProcessFromEvent(const SBEvent &event) {
@@ -769,8 +781,8 @@ SBProcess::GetStructuredDataFromEvent(const lldb::SBEvent &event) {
 bool SBProcess::EventIsProcessEvent(const SBEvent &event) {
   LLDB_INSTRUMENT_VA(event);
 
-  return (event.GetBroadcasterClass() == SBProcess::GetBroadcasterClass()) &&
-         !EventIsStructuredDataEvent(event);
+  return Process::ProcessEventData::GetEventDataFromEvent(event.get()) !=
+         nullptr;
 }
 
 bool SBProcess::EventIsStructuredDataEvent(const lldb::SBEvent &event) {
@@ -795,15 +807,69 @@ SBBroadcaster SBProcess::GetBroadcaster() const {
 const char *SBProcess::GetBroadcasterClass() {
   LLDB_INSTRUMENT();
 
-  return Process::GetStaticBroadcasterClass().AsCString();
+  return ConstString(Process::GetStaticBroadcasterClass()).AsCString();
+}
+
+lldb::SBAddressRangeList SBProcess::FindRangesInMemory(
+    const void *buf, uint64_t size, const SBAddressRangeList &ranges,
+    uint32_t alignment, uint32_t max_matches, SBError &error) {
+  LLDB_INSTRUMENT_VA(this, buf, size, ranges, alignment, max_matches, error);
+
+  lldb::SBAddressRangeList matches;
+
+  ProcessSP process_sp(GetSP());
+  if (!process_sp) {
+    error.SetErrorString("SBProcess is invalid");
+    return matches;
+  }
+  Process::StopLocker stop_locker;
+  if (!stop_locker.TryLock(&process_sp->GetRunLock())) {
+    error.SetErrorString("process is running");
+    return matches;
+  }
+  std::lock_guard<std::recursive_mutex> guard(
+      process_sp->GetTarget().GetAPIMutex());
+  matches.m_opaque_up->ref() = process_sp->FindRangesInMemory(
+      reinterpret_cast<const uint8_t *>(buf), size, ranges.ref().ref(),
+      alignment, max_matches, error.ref());
+  return matches;
+}
+
+lldb::addr_t SBProcess::FindInMemory(const void *buf, uint64_t size,
+                                     const SBAddressRange &range,
+                                     uint32_t alignment, SBError &error) {
+  LLDB_INSTRUMENT_VA(this, buf, size, range, alignment, error);
+
+  ProcessSP process_sp(GetSP());
+
+  if (!process_sp) {
+    error.SetErrorString("SBProcess is invalid");
+    return LLDB_INVALID_ADDRESS;
+  }
+
+  Process::StopLocker stop_locker;
+  if (!stop_locker.TryLock(&process_sp->GetRunLock())) {
+    error.SetErrorString("process is running");
+    return LLDB_INVALID_ADDRESS;
+  }
+
+  std::lock_guard<std::recursive_mutex> guard(
+      process_sp->GetTarget().GetAPIMutex());
+  return process_sp->FindInMemory(reinterpret_cast<const uint8_t *>(buf), size,
+                                  range.ref(), alignment, error.ref());
 }
 
 size_t SBProcess::ReadMemory(addr_t addr, void *dst, size_t dst_len,
                              SBError &sb_error) {
   LLDB_INSTRUMENT_VA(this, addr, dst, dst_len, sb_error);
 
-  size_t bytes_read = 0;
+  if (!dst) {
+    sb_error.SetErrorStringWithFormat(
+        "no buffer provided to read %zu bytes into", dst_len);
+    return 0;
+  }
 
+  size_t bytes_read = 0;
   ProcessSP process_sp(GetSP());
 
 
@@ -911,6 +977,14 @@ size_t SBProcess::WriteMemory(addr_t addr, const void *src, size_t src_len,
   return bytes_written;
 }
 
+void SBProcess::GetStatus(SBStream &status) {
+  LLDB_INSTRUMENT_VA(this, status);
+
+  ProcessSP process_sp(GetSP());
+  if (process_sp)
+    process_sp->GetStatus(status.ref());
+}
+
 bool SBProcess::GetDescription(SBStream &description) {
   LLDB_INSTRUMENT_VA(this, description);
 
@@ -967,7 +1041,12 @@ SBProcess::GetNumSupportedHardwareWatchpoints(lldb::SBError &sb_error) const {
   if (process_sp) {
     std::lock_guard<std::recursive_mutex> guard(
         process_sp->GetTarget().GetAPIMutex());
-    sb_error.SetError(process_sp->GetWatchpointSupportInfo(num));
+    std::optional<uint32_t> actual_num = process_sp->GetWatchpointSlotCount();
+    if (actual_num) {
+      num = *actual_num;
+    } else {
+      sb_error.SetErrorString("Unable to determine number of watchpoints");
+    }
   } else {
     sb_error.SetErrorString("SBProcess is invalid");
   }
@@ -1138,13 +1217,28 @@ bool SBProcess::IsInstrumentationRuntimePresent(
 
 lldb::SBError SBProcess::SaveCore(const char *file_name) {
   LLDB_INSTRUMENT_VA(this, file_name);
-  return SaveCore(file_name, "", SaveCoreStyle::eSaveCoreFull);
+  SBSaveCoreOptions options;
+  options.SetOutputFile(SBFileSpec(file_name));
+  options.SetStyle(SaveCoreStyle::eSaveCoreFull);
+  return SaveCore(options);
 }
 
 lldb::SBError SBProcess::SaveCore(const char *file_name,
                                   const char *flavor,
                                   SaveCoreStyle core_style) {
   LLDB_INSTRUMENT_VA(this, file_name, flavor, core_style);
+  SBSaveCoreOptions options;
+  options.SetOutputFile(SBFileSpec(file_name));
+  options.SetStyle(core_style);
+  SBError error = options.SetPluginName(flavor);
+  if (error.Fail())
+    return error;
+  return SaveCore(options);
+}
+
+lldb::SBError SBProcess::SaveCore(SBSaveCoreOptions &options) {
+
+  LLDB_INSTRUMENT_VA(this, options);
 
   lldb::SBError error;
   ProcessSP process_sp(GetSP());
@@ -1161,9 +1255,7 @@ lldb::SBError SBProcess::SaveCore(const char *file_name,
     return error;
   }
 
-  FileSpec core_file(file_name);
-  error.ref() = PluginManager::SaveCore(process_sp, core_file, core_style,
-                                        flavor);
+  error.ref() = PluginManager::SaveCore(process_sp, options.ref());
 
   return error;
 }
@@ -1221,6 +1313,109 @@ lldb::SBProcessInfo SBProcess::GetProcessInfo() {
   return sb_proc_info;
 }
 
+lldb::SBFileSpec SBProcess::GetCoreFile() {
+  LLDB_INSTRUMENT_VA(this);
+
+  ProcessSP process_sp(GetSP());
+  FileSpec core_file;
+  if (process_sp) {
+    core_file = process_sp->GetCoreFile();
+  }
+  return SBFileSpec(core_file);
+}
+
+addr_t SBProcess::GetAddressMask(AddressMaskType type,
+                                 AddressMaskRange addr_range) {
+  LLDB_INSTRUMENT_VA(this, type, addr_range);
+
+  if (ProcessSP process_sp = GetSP()) {
+    switch (type) {
+    case eAddressMaskTypeCode:
+      if (addr_range == eAddressMaskRangeHigh)
+        return process_sp->GetHighmemCodeAddressMask();
+      else
+        return process_sp->GetCodeAddressMask();
+    case eAddressMaskTypeData:
+      if (addr_range == eAddressMaskRangeHigh)
+        return process_sp->GetHighmemDataAddressMask();
+      else
+        return process_sp->GetDataAddressMask();
+    case eAddressMaskTypeAny:
+      if (addr_range == eAddressMaskRangeHigh)
+        return process_sp->GetHighmemDataAddressMask();
+      else
+        return process_sp->GetDataAddressMask();
+    }
+  }
+  return LLDB_INVALID_ADDRESS_MASK;
+}
+
+void SBProcess::SetAddressMask(AddressMaskType type, addr_t mask,
+                               AddressMaskRange addr_range) {
+  LLDB_INSTRUMENT_VA(this, type, mask, addr_range);
+
+  if (ProcessSP process_sp = GetSP()) {
+    switch (type) {
+    case eAddressMaskTypeCode:
+      if (addr_range == eAddressMaskRangeAll) {
+        process_sp->SetCodeAddressMask(mask);
+        process_sp->SetHighmemCodeAddressMask(mask);
+      } else if (addr_range == eAddressMaskRangeHigh) {
+        process_sp->SetHighmemCodeAddressMask(mask);
+      } else {
+        process_sp->SetCodeAddressMask(mask);
+      }
+      break;
+    case eAddressMaskTypeData:
+      if (addr_range == eAddressMaskRangeAll) {
+        process_sp->SetDataAddressMask(mask);
+        process_sp->SetHighmemDataAddressMask(mask);
+      } else if (addr_range == eAddressMaskRangeHigh) {
+        process_sp->SetHighmemDataAddressMask(mask);
+      } else {
+        process_sp->SetDataAddressMask(mask);
+      }
+      break;
+    case eAddressMaskTypeAll:
+      if (addr_range == eAddressMaskRangeAll) {
+        process_sp->SetCodeAddressMask(mask);
+        process_sp->SetDataAddressMask(mask);
+        process_sp->SetHighmemCodeAddressMask(mask);
+        process_sp->SetHighmemDataAddressMask(mask);
+      } else if (addr_range == eAddressMaskRangeHigh) {
+        process_sp->SetHighmemCodeAddressMask(mask);
+        process_sp->SetHighmemDataAddressMask(mask);
+      } else {
+        process_sp->SetCodeAddressMask(mask);
+        process_sp->SetDataAddressMask(mask);
+      }
+      break;
+    }
+  }
+}
+
+void SBProcess::SetAddressableBits(AddressMaskType type, uint32_t num_bits,
+                                   AddressMaskRange addr_range) {
+  LLDB_INSTRUMENT_VA(this, type, num_bits, addr_range);
+
+  SetAddressMask(type, AddressableBits::AddressableBitToMask(num_bits),
+                 addr_range);
+}
+
+addr_t SBProcess::FixAddress(addr_t addr, AddressMaskType type) {
+  LLDB_INSTRUMENT_VA(this, addr, type);
+
+  if (ProcessSP process_sp = GetSP()) {
+    if (type == eAddressMaskTypeAny)
+      return process_sp->FixAnyAddress(addr);
+    else if (type == eAddressMaskTypeData)
+      return process_sp->FixDataAddress(addr);
+    else if (type == eAddressMaskTypeCode)
+      return process_sp->FixCodeAddress(addr);
+  }
+  return addr;
+}
+
 lldb::addr_t SBProcess::AllocateMemory(size_t size, uint32_t permissions,
                                        lldb::SBError &sb_error) {
   LLDB_INSTRUMENT_VA(this, size, permissions, sb_error);
@@ -1261,4 +1456,12 @@ lldb::SBError SBProcess::DeallocateMemory(lldb::addr_t ptr) {
     sb_error.SetErrorString("SBProcess is invalid");
   }
   return sb_error;
+}
+
+lldb::SBScriptObject SBProcess::GetScriptedImplementation() {
+  LLDB_INSTRUMENT_VA(this);
+  ProcessSP process_sp(GetSP());
+  return lldb::SBScriptObject((process_sp) ? process_sp->GetImplementation()
+                                           : nullptr,
+                              eScriptLanguageDefault);
 }
