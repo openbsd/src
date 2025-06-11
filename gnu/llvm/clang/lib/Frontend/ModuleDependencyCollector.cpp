@@ -55,7 +55,8 @@ struct ModuleDependencyPPCallbacks : public PPCallbacks {
                           StringRef FileName, bool IsAngled,
                           CharSourceRange FilenameRange,
                           OptionalFileEntryRef File, StringRef SearchPath,
-                          StringRef RelativePath, const Module *Imported,
+                          StringRef RelativePath, const Module *SuggestedModule,
+                          bool ModuleImported,
                           SrcMgr::CharacteristicKind FileType) override {
     if (!File)
       return;
@@ -72,37 +73,12 @@ struct ModuleDependencyMMCallbacks : public ModuleMapCallbacks {
     if (llvm::sys::path::is_absolute(HeaderPath))
       Collector.addFile(HeaderPath);
   }
-  void moduleMapAddUmbrellaHeader(FileManager *FileMgr,
-                                  const FileEntry *Header) override {
-    StringRef HeaderFilename = Header->getName();
-    moduleMapAddHeader(HeaderFilename);
-    // The FileManager can find and cache the symbolic link for a framework
-    // header before its real path, this means a module can have some of its
-    // headers to use other paths. Although this is usually not a problem, it's
-    // inconsistent, and not collecting the original path header leads to
-    // umbrella clashes while rebuilding modules in the crash reproducer. For
-    // example:
-    //    ApplicationServices.framework/Frameworks/ImageIO.framework/ImageIO.h
-    // instead of:
-    //    ImageIO.framework/ImageIO.h
-    //
-    // FIXME: this shouldn't be necessary once we have FileName instances
-    // around instead of FileEntry ones. For now, make sure we collect all
-    // that we need for the reproducer to work correctly.
-    StringRef UmbreallDirFromHeader =
-        llvm::sys::path::parent_path(HeaderFilename);
-    StringRef UmbrellaDir = Header->getDir()->getName();
-    if (!UmbrellaDir.equals(UmbreallDirFromHeader)) {
-      SmallString<128> AltHeaderFilename;
-      llvm::sys::path::append(AltHeaderFilename, UmbrellaDir,
-                              llvm::sys::path::filename(HeaderFilename));
-      if (FileMgr->getFile(AltHeaderFilename))
-        moduleMapAddHeader(AltHeaderFilename);
-    }
+  void moduleMapAddUmbrellaHeader(FileEntryRef Header) override {
+    moduleMapAddHeader(Header.getNameAsRequested());
   }
 };
 
-}
+} // namespace
 
 void ModuleDependencyCollector::attachToASTReader(ASTReader &R) {
   R.addListener(
@@ -129,7 +105,7 @@ static bool isCaseSensitivePath(StringRef Path) {
   // already expects when sensitivity isn't setup.
   for (auto &C : Path)
     UpperDest.push_back(toUppercase(C));
-  if (!llvm::sys::fs::real_path(UpperDest, RealDest) && Path.equals(RealDest))
+  if (!llvm::sys::fs::real_path(UpperDest, RealDest) && Path == RealDest)
     return false;
   return true;
 }

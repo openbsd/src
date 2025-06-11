@@ -16,13 +16,16 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/Orc/ExecutionUtils.h"
+#include "llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h"
 
 #include <memory>
 
 namespace llvm {
 class Error;
 namespace orc {
+class JITTargetMachineBuilder;
 class LLJIT;
+class LLJITBuilder;
 class ThreadSafeContext;
 } // namespace orc
 } // namespace llvm
@@ -40,20 +43,27 @@ class IncrementalExecutor {
   llvm::DenseMap<const PartialTranslationUnit *, llvm::orc::ResourceTrackerSP>
       ResourceTrackers;
 
+protected:
+  IncrementalExecutor(llvm::orc::ThreadSafeContext &TSC);
+
 public:
   enum SymbolNameKind { IRName, LinkerName };
 
-  IncrementalExecutor(llvm::orc::ThreadSafeContext &TSC, llvm::Error &Err,
-                      const clang::TargetInfo &TI);
-  ~IncrementalExecutor();
+  IncrementalExecutor(llvm::orc::ThreadSafeContext &TSC,
+                      llvm::orc::LLJITBuilder &JITBuilder, llvm::Error &Err);
+  virtual ~IncrementalExecutor();
 
-  llvm::Error addModule(PartialTranslationUnit &PTU);
-  llvm::Error removeModule(PartialTranslationUnit &PTU);
-  llvm::Error runCtors() const;
-  llvm::Error cleanUp();
-  llvm::Expected<llvm::JITTargetAddress>
+  virtual llvm::Error addModule(PartialTranslationUnit &PTU);
+  virtual llvm::Error removeModule(PartialTranslationUnit &PTU);
+  virtual llvm::Error runCtors() const;
+  virtual llvm::Error cleanUp();
+  llvm::Expected<llvm::orc::ExecutorAddr>
   getSymbolAddress(llvm::StringRef Name, SymbolNameKind NameKind) const;
-  llvm::orc::LLJIT *getExecutionEngine() const { return Jit.get(); }
+
+  llvm::orc::LLJIT &GetExecutionEngine() { return *Jit; }
+
+  static llvm::Expected<std::unique_ptr<llvm::orc::LLJITBuilder>>
+  createDefaultJITBuilder(llvm::orc::JITTargetMachineBuilder JTMB);
 };
 
 } // end namespace clang

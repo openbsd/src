@@ -38,10 +38,10 @@ class CodeGenVTables {
   typedef VTableLayout::AddressPointsMapTy VTableAddressPointsMapTy;
 
   typedef std::pair<const CXXRecordDecl *, BaseSubobject> BaseSubobjectPairTy;
-  typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t> SubVTTIndiciesMapTy;
+  typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t> SubVTTIndicesMapTy;
 
-  /// SubVTTIndicies - Contains indices into the various sub-VTTs.
-  SubVTTIndiciesMapTy SubVTTIndicies;
+  /// SubVTTIndices - Contains indices into the various sub-VTTs.
+  SubVTTIndicesMapTy SubVTTIndices;
 
   typedef llvm::DenseMap<BaseSubobjectPairTy, uint64_t>
     SecondaryVirtualPointerIndicesMapTy;
@@ -74,16 +74,6 @@ class CodeGenVTables {
                             unsigned vtableAddressPoint,
                             bool vtableHasLocalLinkage,
                             bool isCompleteDtor) const;
-
-  /// Create a dso_local stub that will be used for a relative reference in the
-  /// relative vtable layout. This stub will just be a tail call to the original
-  /// function and propagate any function attributes from the original. If the
-  /// original function is already dso_local, the original is returned instead
-  /// and a stub is not created.
-  llvm::Function *
-  getOrCreateRelativeStub(llvm::Function *func,
-                          llvm::GlobalValue::LinkageTypes stubLinkage,
-                          bool isCompleteDtor) const;
 
   bool useRelativeLayout() const;
 

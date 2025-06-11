@@ -18,6 +18,8 @@
 #include "clang-c/Index.h"
 #include "clang-c/Platform.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/ExtractAPI/API.h"
 #include "clang/ExtractAPI/ExtractAPIVisitor.h"
@@ -34,21 +36,57 @@
 using namespace clang;
 using namespace clang::extractapi;
 
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(APISet, CXAPISet)
+namespace {
+struct LibClangExtractAPIVisitor
+    : ExtractAPIVisitor<LibClangExtractAPIVisitor> {
+  using Base = ExtractAPIVisitor<LibClangExtractAPIVisitor>;
 
-static void WalkupFromMostDerivedType(ExtractAPIVisitor &Visitor, Decl *D);
+  LibClangExtractAPIVisitor(ASTContext &Context, APISet &API)
+      : ExtractAPIVisitor<LibClangExtractAPIVisitor>(Context, API) {}
 
-template <typename DeclTy>
-static bool WalkupParentContext(DeclContext *Parent,
-                                ExtractAPIVisitor &Visitor) {
-  if (auto *D = dyn_cast<DeclTy>(Parent)) {
-    WalkupFromMostDerivedType(Visitor, D);
+  const RawComment *fetchRawCommentForDecl(const Decl *D) const {
+    if (const auto *Comment = Base::fetchRawCommentForDecl(D))
+      return Comment;
+
+    return Context.getRawCommentForAnyRedecl(D);
+  }
+
+  // We need to visit implementations as well to ensure that when a user clicks
+  // on a method defined only within the implementation that we can still
+  // provide a symbol graph for it.
+  bool VisitObjCImplementationDecl(const ObjCImplementationDecl *Decl) {
+    if (!shouldDeclBeIncluded(Decl))
+      return true;
+
+    auto *Interface = Decl->getClassInterface();
+
+    if (!VisitObjCInterfaceDecl(Interface))
+      return false;
+
+    SmallString<128> USR;
+    index::generateUSRForDecl(Interface, USR);
+
+    if (auto *InterfaceRecord = dyn_cast_if_present<ObjCInterfaceRecord>(
+            API.findRecordForUSR(USR))) {
+      recordObjCMethods(InterfaceRecord, Decl->methods());
+      recordObjCProperties(InterfaceRecord, Decl->properties());
+      recordObjCInstanceVariables(InterfaceRecord, Decl->ivars());
+    }
     return true;
   }
-  return false;
-}
+};
+} // namespace
 
-static void WalkupFromMostDerivedType(ExtractAPIVisitor &Visitor, Decl *D) {
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(APISet, CXAPISet)
+
+// Visits the Decl D and it's transitive DeclContexts recursively, starting from
+// the outer-most context. This is guaranteed to visit every Decl we need in the
+// right order to generate symbol graph information for D.
+static void WalkupFromMostDerivedType(LibClangExtractAPIVisitor &Visitor,
+                                      Decl *D) {
+  if (auto *Parent = D->getDeclContext())
+    WalkupFromMostDerivedType(Visitor, cast<Decl>(Parent));
+
   switch (D->getKind()) {
 #define ABSTRACT_DECL(DECL)
 #define DECL(CLASS, BASE)                                                      \
@@ -57,20 +95,12 @@ static void WalkupFromMostDerivedType(ExtractAPIVisitor &Visitor, Decl *D) {
     break;
 #include "clang/AST/DeclNodes.inc"
   }
-
-  for (auto *Parent = D->getDeclContext(); Parent != nullptr;
-       Parent = Parent->getParent()) {
-    if (WalkupParentContext<ObjCContainerDecl>(Parent, Visitor))
-      return;
-    if (WalkupParentContext<TagDecl>(Parent, Visitor))
-      return;
-  }
 }
 
 static CXString GenerateCXStringFromSymbolGraphData(llvm::json::Object Obj) {
   llvm::SmallString<0> BackingString;
   llvm::raw_svector_ostream OS(BackingString);
-  OS << Value(std::move(Obj));
+  OS << llvm::formatv("{0}", Value(std::move(Obj)));
   return cxstring::createDup(BackingString.str());
 }
 
@@ -84,8 +114,7 @@ enum CXErrorCode clang_createAPISet(CXTranslationUnit tu, CXAPISet *out_api) {
   auto Lang = Unit->getInputKind().getLanguage();
   APISet *API = new APISet(Ctx.getTargetInfo().getTriple(), Lang,
                            Unit->getMainFileName().str());
-  ExtractAPIVisitor Visitor(
-      Ctx, [](SourceLocation Loc) { return true; }, *API);
+  LibClangExtractAPIVisitor Visitor(Ctx, *API);
 
   for (auto It = Unit->top_level_begin(); It != Unit->top_level_end(); ++It) {
     Visitor.TraverseDecl(*It);
@@ -107,45 +136,50 @@ CXString clang_getSymbolGraphForUSR(const char *usr, CXAPISet api) {
 }
 
 CXString clang_getSymbolGraphForCursor(CXCursor cursor) {
+  cursor = clang_getCursorReferenced(cursor);
   CXCursorKind Kind = clang_getCursorKind(cursor);
-  if (clang_isDeclaration(Kind)) {
-    const Decl *D = cxcursor::getCursorDecl(cursor);
+  if (!clang_isDeclaration(Kind))
+    return cxstring::createNull();
 
-    if (!D)
-      return cxstring::createNull();
+  const Decl *D = cxcursor::getCursorDecl(cursor);
 
-    CXTranslationUnit TU = cxcursor::getCursorTU(cursor);
-    if (!TU)
-      return cxstring::createNull();
+  if (!D)
+    return cxstring::createNull();
 
-    ASTUnit *Unit = cxtu::getASTUnit(TU);
+  CXTranslationUnit TU = cxcursor::getCursorTU(cursor);
+  if (!TU)
+    return cxstring::createNull();
 
-    auto &Ctx = Unit->getASTContext();
-    auto Lang = Unit->getInputKind().getLanguage();
-    APISet API(Ctx.getTargetInfo().getTriple(), Lang,
-               Unit->getMainFileName().str());
-    ExtractAPIVisitor Visitor(
-        Ctx, [](SourceLocation Loc) { return true; }, API);
+  ASTUnit *Unit = cxtu::getASTUnit(TU);
 
-    SmallString<128> USR;
-    if (index::generateUSRForDecl(D, USR))
-      return cxstring::createNull();
+  auto &Ctx = Unit->getASTContext();
 
-    WalkupFromMostDerivedType(Visitor, const_cast<Decl *>(D));
-    auto *Record = API.findRecordForUSR(USR);
+  auto Lang = Unit->getInputKind().getLanguage();
+  APISet API(Ctx.getTargetInfo().getTriple(), Lang,
+             Unit->getMainFileName().str());
+  LibClangExtractAPIVisitor Visitor(Ctx, API);
 
-    if (!Record)
-      return cxstring::createNull();
+  const Decl *CanonicalDecl = D->getCanonicalDecl();
+  CanonicalDecl = CanonicalDecl ? CanonicalDecl : D;
 
-    for (const auto &Fragment : Record->Declaration.getFragments()) {
-      if (Fragment.Declaration)
-        WalkupFromMostDerivedType(Visitor,
-                                  const_cast<Decl *>(Fragment.Declaration));
-    }
+  SmallString<128> USR;
+  if (index::generateUSRForDecl(CanonicalDecl, USR))
+    return cxstring::createNull();
 
-    if (auto SGF = SymbolGraphSerializer::serializeSingleSymbolSGF(USR, API))
-      return GenerateCXStringFromSymbolGraphData(std::move(*SGF));
+  WalkupFromMostDerivedType(Visitor, const_cast<Decl *>(CanonicalDecl));
+  auto *Record = API.findRecordForUSR(USR);
+
+  if (!Record)
+    return cxstring::createNull();
+
+  for (const auto &Fragment : Record->Declaration.getFragments()) {
+    if (Fragment.Declaration)
+      WalkupFromMostDerivedType(Visitor,
+                                const_cast<Decl *>(Fragment.Declaration));
   }
+
+  if (auto SGF = SymbolGraphSerializer::serializeSingleSymbolSGF(USR, API))
+    return GenerateCXStringFromSymbolGraphData(std::move(*SGF));
 
   return cxstring::createNull();
 }

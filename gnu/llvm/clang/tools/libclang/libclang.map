@@ -418,6 +418,22 @@ LLVM_16 {
     clang_getSymbolGraphForUSR;
 };
 
+LLVM_17 {
+  global:
+    clang_CXXMethod_isExplicit;
+    clang_createIndexWithOptions;
+    clang_getBinaryOperatorKindSpelling;
+    clang_getCursorBinaryOperatorKind;
+    clang_getUnaryOperatorKindSpelling;
+    clang_getCursorUnaryOperatorKind;
+};
+
+LLVM_19 {
+  global:
+    clang_Cursor_getBinaryOpcode;
+    clang_Cursor_getBinaryOpcodeStr;
+};
+
 # Example of how to add a new symbol version entry.  If you do add a new symbol
 # version, please update the example to depend on the version you added.
 # LLVM_X {

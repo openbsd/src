@@ -10,13 +10,58 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Parse/Parser.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Parse/Parser.h"
 #include "clang/Parse/RAIIObjectsForParser.h"
 #include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Scope.h"
+
 using namespace clang;
+
+/// Parse the optional ("message") part of a deleted-function-body.
+StringLiteral *Parser::ParseCXXDeletedFunctionMessage() {
+  if (!Tok.is(tok::l_paren))
+    return nullptr;
+  StringLiteral *Message = nullptr;
+  BalancedDelimiterTracker BT{*this, tok::l_paren};
+  BT.consumeOpen();
+
+  if (isTokenStringLiteral()) {
+    ExprResult Res = ParseUnevaluatedStringLiteralExpression();
+    if (Res.isUsable()) {
+      Message = Res.getAs<StringLiteral>();
+      Diag(Message->getBeginLoc(), getLangOpts().CPlusPlus26
+                                       ? diag::warn_cxx23_delete_with_message
+                                       : diag::ext_delete_with_message)
+          << Message->getSourceRange();
+    }
+  } else {
+    Diag(Tok.getLocation(), diag::err_expected_string_literal)
+        << /*Source='in'*/ 0 << "'delete'";
+    SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
+  }
+
+  BT.consumeClose();
+  return Message;
+}
+
+/// If we've encountered '= delete' in a context where it is ill-formed, such
+/// as in the declaration of a non-function, also skip the ("message") part if
+/// it is present to avoid issuing further diagnostics.
+void Parser::SkipDeletedFunctionBody() {
+  if (!Tok.is(tok::l_paren))
+    return;
+
+  BalancedDelimiterTracker BT{*this, tok::l_paren};
+  BT.consumeOpen();
+
+  // Just skip to the end of the current declaration.
+  SkipUntil(tok::r_paren, tok::comma, StopAtSemi | StopBeforeMatch);
+  if (Tok.is(tok::r_paren))
+    BT.consumeClose();
+}
 
 /// ParseCXXInlineMethodDef - We parsed and verified that the specified
 /// Declarator is a well formed C++ inline method definition. Now lex its body
@@ -68,7 +113,8 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(
                       ? diag::warn_cxx98_compat_defaulted_deleted_function
                       : diag::ext_defaulted_deleted_function)
         << 1 /* deleted */;
-      Actions.SetDeclDeleted(FnD, KWLoc);
+      StringLiteral *Message = ParseCXXDeletedFunctionMessage();
+      Actions.SetDeclDeleted(FnD, KWLoc, Message);
       Delete = true;
       if (auto *DeclAsFunction = dyn_cast<FunctionDecl>(FnD)) {
         DeclAsFunction->setRangeEnd(KWEndLoc);
@@ -393,9 +439,10 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
         DefArgResult = ParseBraceInitializer();
       } else
         DefArgResult = ParseAssignmentExpression();
-      DefArgResult = Actions.CorrectDelayedTyposInExpr(DefArgResult);
+      DefArgResult = Actions.CorrectDelayedTyposInExpr(DefArgResult, Param);
       if (DefArgResult.isInvalid()) {
-        Actions.ActOnParamDefaultArgumentError(Param, EqualLoc);
+        Actions.ActOnParamDefaultArgumentError(Param, EqualLoc,
+                                               /*DefaultArg=*/nullptr);
       } else {
         if (Tok.isNot(tok::eof) || Tok.getEofData() != Param) {
           // The last two tokens are the terminator and the saved value of
@@ -419,14 +466,14 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
         ConsumeAnyToken();
     } else if (HasUnparsed) {
       assert(Param->hasInheritedDefaultArg());
-      const FunctionDecl *Old;
+      FunctionDecl *Old;
       if (const auto *FunTmpl = dyn_cast<FunctionTemplateDecl>(LM.Method))
         Old =
             cast<FunctionDecl>(FunTmpl->getTemplatedDecl())->getPreviousDecl();
       else
         Old = cast<FunctionDecl>(LM.Method)->getPreviousDecl();
       if (Old) {
-        ParmVarDecl *OldParam = const_cast<ParmVarDecl*>(Old->getParamDecl(I));
+        ParmVarDecl *OldParam = Old->getParamDecl(I);
         assert(!OldParam->hasUnparsedDefaultArg());
         if (OldParam->hasUninstantiatedDefaultArg())
           Param->setUninstantiatedDefaultArg(
@@ -464,11 +511,28 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
     //   and the end of the function-definition, member-declarator, or
     //   declarator.
     CXXMethodDecl *Method;
+    FunctionDecl *FunctionToPush;
     if (FunctionTemplateDecl *FunTmpl
           = dyn_cast<FunctionTemplateDecl>(LM.Method))
-      Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
+      FunctionToPush = FunTmpl->getTemplatedDecl();
     else
-      Method = dyn_cast<CXXMethodDecl>(LM.Method);
+      FunctionToPush = cast<FunctionDecl>(LM.Method);
+    Method = dyn_cast<CXXMethodDecl>(FunctionToPush);
+
+    // Push a function scope so that tryCaptureVariable() can properly visit
+    // function scopes involving function parameters that are referenced inside
+    // the noexcept specifier e.g. through a lambda expression.
+    // Example:
+    // struct X {
+    //   void ICE(int val) noexcept(noexcept([val]{}));
+    // };
+    // Setup the CurScope to match the function DeclContext - we have such
+    // assumption in IsInFnTryBlockHandler().
+    ParseScope FnScope(this, Scope::FnScope);
+    Sema::ContextRAII FnContext(Actions, FunctionToPush,
+                                /*NewThisContext=*/false);
+    Sema::FunctionScopeRAII PopFnContext(Actions);
+    Actions.PushFunctionScope();
 
     Sema::CXXThisScopeRAII ThisScope(
         Actions, Method ? Method->getParent() : nullptr,
@@ -556,6 +620,8 @@ void Parser::ParseLexedMethodDef(LexedMethod &LM) {
   // to be re-used for method bodies as well.
   ParseScope FnScope(this, Scope::FnScope | Scope::DeclScope |
                                Scope::CompoundStmtScope);
+  Sema::FPFeaturesStateRAII SaveFPFeatures(Actions);
+
   Actions.ActOnStartOfFunctionDef(getCurScope(), LM.D);
 
   if (Tok.is(tok::kw_try)) {
@@ -748,7 +814,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
       }
 
       ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, nullptr,
-                            nullptr, SourceLocation(), ParsedAttr::AS_GNU,
+                            nullptr, SourceLocation(), ParsedAttr::Form::GNU(),
                             nullptr);
 
       if (HasFunScope)
@@ -757,7 +823,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
       // If there are multiple decls, then the decl cannot be within the
       // function scope.
       ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, nullptr,
-                            nullptr, SourceLocation(), ParsedAttr::AS_GNU,
+                            nullptr, SourceLocation(), ParsedAttr::Form::GNU(),
                             nullptr);
     }
   } else {
@@ -836,6 +902,7 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
     case tok::annot_module_begin:
     case tok::annot_module_end:
     case tok::annot_module_include:
+    case tok::annot_repl_input_end:
       // Ran out of tokens.
       return false;
 
@@ -974,6 +1041,19 @@ bool Parser::ConsumeAndStoreFunctionPrologue(CachedTokens &Toks) {
       } else {
         break;
       }
+      // Pack indexing
+      if (Tok.is(tok::ellipsis) && NextToken().is(tok::l_square)) {
+        Toks.push_back(Tok);
+        SourceLocation OpenLoc = ConsumeToken();
+        Toks.push_back(Tok);
+        ConsumeBracket();
+        if (!ConsumeAndStoreUntil(tok::r_square, Toks, /*StopAtSemi=*/true)) {
+          Diag(Tok.getLocation(), diag::err_expected) << tok::r_square;
+          Diag(OpenLoc, diag::note_matching) << tok::l_square;
+          return true;
+        }
+      }
+
     } while (Tok.is(tok::coloncolon));
 
     if (Tok.is(tok::code_completion)) {
@@ -1242,6 +1322,7 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
     case tok::annot_module_begin:
     case tok::annot_module_end:
     case tok::annot_module_include:
+    case tok::annot_repl_input_end:
       // Ran out of tokens.
       return false;
 

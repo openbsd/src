@@ -37,7 +37,7 @@ private:
 
   // CUDA architectures for which we have raised an error in
   // CheckCudaVersionSupportsArch.
-  mutable std::bitset<(int)CudaArch::LAST> ArchsWithBadVersion;
+  mutable std::bitset<(int)OffloadArch::LAST> ArchsWithBadVersion;
 
 public:
   CudaInstallationDetector(const Driver &D, const llvm::Triple &HostTriple,
@@ -50,7 +50,7 @@ public:
   ///
   /// If either Version or Arch is unknown, does not emit an error.  Emits at
   /// most one error per Arch.
-  void CheckCudaVersionSupportsArch(CudaArch Arch) const;
+  void CheckCudaVersionSupportsArch(OffloadArch Arch) const;
 
   /// Check whether we detected a valid Cuda install.
   bool isValid() const { return IsValid; }
@@ -81,7 +81,7 @@ namespace tools {
 namespace NVPTX {
 
 // Run ptxas, the NVPTX assembler.
-class LLVM_LIBRARY_VISIBILITY Assembler : public Tool {
+class LLVM_LIBRARY_VISIBILITY Assembler final : public Tool {
 public:
   Assembler(const ToolChain &TC) : Tool("NVPTX::Assembler", "ptxas", TC) {}
 
@@ -108,9 +108,9 @@ public:
 };
 
 // Runs nvlink, which links GPU object files ("cubin" files) into a single file.
-class LLVM_LIBRARY_VISIBILITY Linker : public Tool {
+class LLVM_LIBRARY_VISIBILITY Linker final : public Tool {
 public:
-  Linker(const ToolChain &TC) : Tool("NVPTX::Linker", "fatbinary", TC) {}
+  Linker(const ToolChain &TC) : Tool("NVPTX::Linker", "nvlink", TC) {}
 
   bool hasIntegratedCPP() const override { return false; }
 
@@ -132,8 +132,8 @@ namespace toolchains {
 class LLVM_LIBRARY_VISIBILITY NVPTXToolChain : public ToolChain {
 public:
   NVPTXToolChain(const Driver &D, const llvm::Triple &Triple,
-                 const llvm::Triple &HostTriple,
-                 const llvm::opt::ArgList &Args);
+                 const llvm::Triple &HostTriple, const llvm::opt::ArgList &Args,
+                 bool Freestanding);
 
   NVPTXToolChain(const Driver &D, const llvm::Triple &Triple,
                  const llvm::opt::ArgList &Args);
@@ -141,6 +141,11 @@ public:
   llvm::opt::DerivedArgList *
   TranslateArgs(const llvm::opt::DerivedArgList &Args, StringRef BoundArch,
                 Action::OffloadKind DeviceOffloadKind) const override;
+
+  void
+  addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
+                        llvm::opt::ArgStringList &CC1Args,
+                        Action::OffloadKind DeviceOffloadKind) const override;
 
   // Never try to use the integrated assembler with CUDA; always fork out to
   // ptxas.
@@ -150,24 +155,33 @@ public:
   bool isPIEDefault(const llvm::opt::ArgList &Args) const override {
     return false;
   }
+  bool HasNativeLLVMSupport() const override { return true; }
   bool isPICDefaultForced() const override { return false; }
   bool SupportsProfiling() const override { return false; }
 
   bool IsMathErrnoDefault() const override { return false; }
 
   bool supportsDebugInfoOption(const llvm::opt::Arg *A) const override;
-  void adjustDebugInfoKind(codegenoptions::DebugInfoKind &DebugInfoKind,
+  void adjustDebugInfoKind(llvm::codegenoptions::DebugInfoKind &DebugInfoKind,
                            const llvm::opt::ArgList &Args) const override;
 
   // NVPTX supports only DWARF2.
   unsigned GetDefaultDwarfVersion() const override { return 2; }
   unsigned getMaxDwarfVersion() const override { return 2; }
 
+  /// Uses nvptx-arch tool to get arch of the system GPU. Will return error
+  /// if unable to find one.
+  virtual Expected<SmallVector<std::string>>
+  getSystemGPUArchs(const llvm::opt::ArgList &Args) const override;
+
   CudaInstallationDetector CudaInstallation;
 
 protected:
   Tool *buildAssembler() const override; // ptxas.
   Tool *buildLinker() const override;    // nvlink.
+
+private:
+  bool Freestanding = false;
 };
 
 class LLVM_LIBRARY_VISIBILITY CudaToolChain : public NVPTXToolChain {
@@ -178,6 +192,8 @@ public:
   const llvm::Triple *getAuxTriple() const override {
     return &HostTC.getTriple();
   }
+
+  bool HasNativeLLVMSupport() const override { return false; }
 
   std::string getInputFilename(const InputInfo &Input) const override;
 
@@ -214,11 +230,6 @@ public:
                      const llvm::opt::ArgList &Args) const override;
 
   const ToolChain &HostTC;
-
-  /// Uses nvptx-arch tool to get arch of the system GPU. Will return error
-  /// if unable to find one.
-  virtual Expected<SmallVector<std::string>>
-  getSystemGPUArchs(const llvm::opt::ArgList &Args) const override;
 
 protected:
   Tool *buildAssembler() const override; // ptxas

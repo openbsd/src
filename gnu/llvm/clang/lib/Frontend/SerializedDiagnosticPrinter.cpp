@@ -37,14 +37,12 @@ public:
   AbbreviationMap() {}
 
   void set(unsigned recordID, unsigned abbrevID) {
-    assert(Abbrevs.find(recordID) == Abbrevs.end()
-           && "Abbreviation already set.");
+    assert(!Abbrevs.contains(recordID) && "Abbreviation already set.");
     Abbrevs[recordID] = abbrevID;
   }
 
   unsigned get(unsigned recordID) {
-    assert(Abbrevs.find(recordID) != Abbrevs.end() &&
-           "Abbreviation not set.");
+    assert(Abbrevs.contains(recordID) && "Abbreviation not set.");
     return Abbrevs[recordID];
   }
 };
@@ -576,7 +574,7 @@ void SDiagsWriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
     SmallString<256> diagnostic;
     Info.FormatDiagnostic(diagnostic);
     getMetaDiags()->Report(
-        diag::warn_fe_serialized_diag_failure_during_finalisation)
+        diag::warn_fe_serialized_diag_failure_during_finalization)
         << diagnostic;
     return;
   }

@@ -13,9 +13,11 @@
 #include "clang/Frontend/TextDiagnostic.h"
 #include "clang/Testing/CommandLineArgs.h"
 #include "llvm/ADT/ScopeExit.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/VirtualFileSystem.h"
 
 #include "gtest/gtest.h"
+#include <string>
 
 namespace clang {
 namespace {
@@ -91,7 +93,9 @@ TestAST::TestAST(const TestInputs &In) {
     Argv.push_back(S.c_str());
   for (const auto &S : In.ExtraArgs)
     Argv.push_back(S.c_str());
-  std::string Filename = getFilenameForTesting(In.Language).str();
+  std::string Filename = In.FileName;
+  if (Filename.empty())
+    Filename = getFilenameForTesting(In.Language).str();
   Argv.push_back(Filename.c_str());
   Clang->setInvocation(std::make_unique<CompilerInvocation>());
   if (!CompilerInvocation::CreateFromArgs(Clang->getInvocation(), Argv,
@@ -103,6 +107,8 @@ TestAST::TestAST(const TestInputs &In) {
 
   // Set up a VFS with only the virtual file visible.
   auto VFS = llvm::makeIntrusiveRefCnt<llvm::vfs::InMemoryFileSystem>();
+  if (auto Err = VFS->setCurrentWorkingDirectory(In.WorkingDir))
+    ADD_FAILURE() << "Failed to setWD: " << Err.message();
   VFS->addFile(Filename, /*ModificationTime=*/0,
                llvm::MemoryBuffer::getMemBufferCopy(In.Code, Filename));
   for (const auto &Extra : In.ExtraFiles)

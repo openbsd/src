@@ -16,7 +16,7 @@
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/TargetParser.h"
+#include "llvm/TargetParser/TargetParser.h"
 
 #include <map>
 
@@ -26,7 +26,7 @@ namespace driver {
 namespace tools {
 namespace amdgpu {
 
-class LLVM_LIBRARY_VISIBILITY Linker : public Tool {
+class LLVM_LIBRARY_VISIBILITY Linker final : public Tool {
 public:
   Linker(const ToolChain &TC) : Tool("amdgpu::Linker", "ld.lld", TC) {}
   bool isLinkJob() const override { return true; }
@@ -64,11 +64,11 @@ public:
 
   bool IsMathErrnoDefault() const override { return false; }
   bool isCrossCompiling() const override { return true; }
-  bool isPICDefault() const override { return false; }
+  bool isPICDefault() const override { return true; }
   bool isPIEDefault(const llvm::opt::ArgList &Args) const override {
     return false;
   }
-  bool isPICDefaultForced() const override { return false; }
+  bool isPICDefaultForced() const override { return true; }
   bool SupportsProfiling() const override { return false; }
 
   llvm::opt::DerivedArgList *
@@ -97,9 +97,6 @@ public:
   /// Needed for translating LTO options.
   const char *getDefaultLinker() const override { return "ld.lld"; }
 
-  /// Should skip argument.
-  bool shouldSkipArgument(const llvm::opt::Arg *Arg) const;
-
   /// Uses amdgpu-arch tool to get arch of the system GPU. Will return error
   /// if unable to find one.
   virtual Expected<SmallVector<std::string>>
@@ -124,6 +121,9 @@ protected:
   /// Get GPU arch from -mcpu without checking.
   StringRef getGPUArch(const llvm::opt::ArgList &DriverArgs) const;
 
+  /// Common warning options shared by AMDGPU HIP, OpenCL and OpenMP toolchains.
+  /// Language specific warning options should go to derived classes.
+  void addClangWarningOptions(llvm::opt::ArgStringList &CC1Args) const override;
 };
 
 class LLVM_LIBRARY_VISIBILITY ROCMToolChain : public AMDGPUToolChain {
@@ -140,6 +140,9 @@ public:
   getCommonDeviceLibNames(const llvm::opt::ArgList &DriverArgs,
                           const std::string &GPUArch,
                           bool isOpenMP = false) const;
+  SanitizerMask getSupportedSanitizers() const override {
+    return SanitizerKind::Address;
+  }
 };
 
 } // end namespace toolchains

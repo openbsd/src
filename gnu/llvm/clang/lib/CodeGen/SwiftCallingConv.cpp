@@ -78,7 +78,7 @@ void SwiftAggLowering::addTypedData(QualType type, CharUnits begin) {
 
     QualType eltType = arrayType->getElementType();
     auto eltSize = CGM.getContext().getTypeSizeInChars(eltType);
-    for (uint64_t i = 0, e = arrayType->getSize().getZExtValue(); i != e; ++i) {
+    for (uint64_t i = 0, e = arrayType->getZExtSize(); i != e; ++i) {
       addTypedData(eltType, begin + i * eltSize);
     }
 
@@ -409,9 +409,10 @@ void SwiftAggLowering::splitVectorEntry(unsigned index) {
 
   CharUnits begin = Entries[index].Begin;
   for (unsigned i = 0; i != numElts; ++i) {
-    Entries[index].Type = eltTy;
-    Entries[index].Begin = begin;
-    Entries[index].End = begin + eltSize;
+    unsigned idx = index + i;
+    Entries[idx].Type = eltTy;
+    Entries[idx].Begin = begin;
+    Entries[idx].End = begin + eltSize;
     begin += eltSize;
   }
 }
@@ -728,7 +729,7 @@ void swiftcall::legalizeVectorType(CodeGenModule &CGM, CharUnits origVectorSize,
 
   // The largest size that we're still considering making subvectors of.
   // Always a power of 2.
-  unsigned logCandidateNumElts = llvm::findLastSet(numElts, llvm::ZB_Undefined);
+  unsigned logCandidateNumElts = llvm::Log2_32(numElts);
   unsigned candidateNumElts = 1U << logCandidateNumElts;
   assert(candidateNumElts <= numElts && candidateNumElts * 2 > numElts);
 

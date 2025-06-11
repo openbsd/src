@@ -22,13 +22,15 @@ typedef _Float16 __m512h_u __attribute__((__vector_size__(64), __aligned__(1)));
 
 /* Define the default attributes for the functions in this file. */
 #define __DEFAULT_FN_ATTRS512                                                  \
-  __attribute__((__always_inline__, __nodebug__, __target__("avx512fp16"),     \
-                 __min_vector_width__(512)))
+  __attribute__((__always_inline__, __nodebug__,                               \
+                 __target__("avx512fp16,evex512"), __min_vector_width__(512)))
 #define __DEFAULT_FN_ATTRS256                                                  \
-  __attribute__((__always_inline__, __nodebug__, __target__("avx512fp16"),     \
+  __attribute__((__always_inline__, __nodebug__,                               \
+                 __target__("avx512fp16,no-evex512"),                          \
                  __min_vector_width__(256)))
 #define __DEFAULT_FN_ATTRS128                                                  \
-  __attribute__((__always_inline__, __nodebug__, __target__("avx512fp16"),     \
+  __attribute__((__always_inline__, __nodebug__,                               \
+                 __target__("avx512fp16,no-evex512"),                          \
                  __min_vector_width__(128)))
 
 static __inline__ _Float16 __DEFAULT_FN_ATTRS512 _mm512_cvtsh_h(__m512h __a) {
@@ -94,8 +96,8 @@ _mm512_set_ph(_Float16 __h1, _Float16 __h2, _Float16 __h3, _Float16 __h4,
                 (h5), (h4), (h3), (h2), (h1))
 
 static __inline __m512h __DEFAULT_FN_ATTRS512
-_mm512_set1_pch(_Float16 _Complex h) {
-  return (__m512h)_mm512_set1_ps(__builtin_bit_cast(float, h));
+_mm512_set1_pch(_Float16 _Complex __h) {
+  return (__m512h)_mm512_set1_ps(__builtin_bit_cast(float, __h));
 }
 
 static __inline__ __m128 __DEFAULT_FN_ATTRS128 _mm_castph_ps(__m128h __a) {
@@ -192,22 +194,26 @@ _mm512_castph512_ph256(__m512h __a) {
 
 static __inline__ __m256h __DEFAULT_FN_ATTRS256
 _mm256_castph128_ph256(__m128h __a) {
-  return __builtin_shufflevector(__a, __a, 0, 1, 2, 3, 4, 5, 6, 7, -1, -1, -1,
-                                 -1, -1, -1, -1, -1);
+  return __builtin_shufflevector(__a, __builtin_nondeterministic_value(__a),
+                                  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 }
 
 static __inline__ __m512h __DEFAULT_FN_ATTRS512
 _mm512_castph128_ph512(__m128h __a) {
-  return __builtin_shufflevector(__a, __a, 0, 1, 2, 3, 4, 5, 6, 7, -1, -1, -1,
-                                 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                                 -1, -1, -1, -1, -1, -1, -1, -1, -1);
+  __m256h __b = __builtin_nondeterministic_value(__b);
+  return __builtin_shufflevector(
+      __builtin_shufflevector(__a, __builtin_nondeterministic_value(__a),
+                              0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+      __b, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+      20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31);
 }
 
 static __inline__ __m512h __DEFAULT_FN_ATTRS512
 _mm512_castph256_ph512(__m256h __a) {
-  return __builtin_shufflevector(__a, __a, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                                 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1,
-                                 -1, -1, -1, -1, -1, -1, -1, -1);
+  return __builtin_shufflevector(__a, __builtin_nondeterministic_value(__a), 0,
+                                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+                                 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                 27, 28, 29, 30, 31);
 }
 
 /// Constructs a 256-bit floating-point vector of [16 x half] from a
@@ -276,75 +282,75 @@ _mm512_zextph256_ph512(__m256h __a) {
 #define _mm_comi_sh(A, B, pred)                                                \
   _mm_comi_round_sh((A), (B), (pred), _MM_FROUND_CUR_DIRECTION)
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comieq_sh(__m128h A,
-                                                          __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_EQ_OS,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comieq_sh(__m128h __A,
+                                                          __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_EQ_OS,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comilt_sh(__m128h A,
-                                                          __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_LT_OS,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comilt_sh(__m128h __A,
+                                                          __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_LT_OS,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comile_sh(__m128h A,
-                                                          __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_LE_OS,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comile_sh(__m128h __A,
+                                                          __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_LE_OS,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comigt_sh(__m128h A,
-                                                          __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_GT_OS,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comigt_sh(__m128h __A,
+                                                          __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_GT_OS,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comige_sh(__m128h A,
-                                                          __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_GE_OS,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comige_sh(__m128h __A,
+                                                          __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_GE_OS,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comineq_sh(__m128h A,
-                                                           __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_NEQ_US,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_comineq_sh(__m128h __A,
+                                                           __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_NEQ_US,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomieq_sh(__m128h A,
-                                                           __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_EQ_OQ,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomieq_sh(__m128h __A,
+                                                           __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_EQ_OQ,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomilt_sh(__m128h A,
-                                                           __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_LT_OQ,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomilt_sh(__m128h __A,
+                                                           __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_LT_OQ,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomile_sh(__m128h A,
-                                                           __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_LE_OQ,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomile_sh(__m128h __A,
+                                                           __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_LE_OQ,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomigt_sh(__m128h A,
-                                                           __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_GT_OQ,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomigt_sh(__m128h __A,
+                                                           __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_GT_OQ,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomige_sh(__m128h A,
-                                                           __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_GE_OQ,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomige_sh(__m128h __A,
+                                                           __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_GE_OQ,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 
-static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomineq_sh(__m128h A,
-                                                            __m128h B) {
-  return __builtin_ia32_vcomish((__v8hf)A, (__v8hf)B, _CMP_NEQ_UQ,
+static __inline__ int __DEFAULT_FN_ATTRS128 _mm_ucomineq_sh(__m128h __A,
+                                                            __m128h __B) {
+  return __builtin_ia32_vcomish((__v8hf)__A, (__v8hf)__B, _CMP_NEQ_UQ,
                                 _MM_FROUND_CUR_DIRECTION);
 }
 

@@ -38,13 +38,12 @@ protected:
   CodeGenModule &CGM;
   llvm::Type *PipeROTy;
   llvm::Type *PipeWOTy;
-  llvm::PointerType *SamplerTy;
-  llvm::StringMap<llvm::PointerType *> CachedTys;
+  llvm::Type *SamplerTy;
 
   /// Structure for enqueued block information.
   struct EnqueuedBlockInfo {
     llvm::Function *InvokeFunc; /// Block invoke function.
-    llvm::Function *Kernel;     /// Enqueued block kernel.
+    llvm::Value *KernelHandle;  /// Enqueued block kernel reference.
     llvm::Value *BlockArg;      /// The first argument to enqueued block kernel.
     llvm::Type *BlockTy;        /// Type of the block argument.
   };
@@ -53,7 +52,7 @@ protected:
 
   virtual llvm::Type *getPipeType(const PipeType *T, StringRef Name,
                                   llvm::Type *&PipeTy);
-  llvm::PointerType *getPointerType(const Type *T, StringRef Name);
+  llvm::PointerType *getPointerType(const Type *T);
 
 public:
   CGOpenCLRuntime(CodeGenModule &CGM) : CGM(CGM),
@@ -70,7 +69,7 @@ public:
 
   virtual llvm::Type *getPipeType(const PipeType *T);
 
-  llvm::PointerType *getSamplerType(const Type *T);
+  llvm::Type *getSamplerType(const Type *T);
 
   // Returns a value which indicates the size in bytes of the pipe
   // element.

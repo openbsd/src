@@ -62,17 +62,44 @@ struct DepCollectorPPCallbacks : public PPCallbacks {
                                     /*IsMissing=*/false);
   }
 
+  void EmbedDirective(SourceLocation, StringRef, bool,
+                      OptionalFileEntryRef File,
+                      const LexEmbedParametersResult &) override {
+    assert(File && "expected to only be called when the file is found");
+    StringRef FileName =
+        llvm::sys::path::remove_leading_dotslash(File->getName());
+    DepCollector.maybeAddDependency(FileName,
+                                    /*FromModule*/ false,
+                                    /*IsSystem*/ false,
+                                    /*IsModuleFile*/ false,
+                                    /*IsMissing*/ false);
+  }
+
   void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
                           StringRef FileName, bool IsAngled,
                           CharSourceRange FilenameRange,
                           OptionalFileEntryRef File, StringRef SearchPath,
-                          StringRef RelativePath, const Module *Imported,
+                          StringRef RelativePath, const Module *SuggestedModule,
+                          bool ModuleImported,
                           SrcMgr::CharacteristicKind FileType) override {
     if (!File)
-      DepCollector.maybeAddDependency(FileName, /*FromModule*/false,
-                                     /*IsSystem*/false, /*IsModuleFile*/false,
-                                     /*IsMissing*/true);
+      DepCollector.maybeAddDependency(FileName, /*FromModule*/ false,
+                                      /*IsSystem*/ false,
+                                      /*IsModuleFile*/ false,
+                                      /*IsMissing*/ true);
     // Files that actually exist are handled by FileChanged.
+  }
+
+  void HasEmbed(SourceLocation, StringRef, bool,
+                OptionalFileEntryRef File) override {
+    if (!File)
+      return;
+    StringRef Filename =
+        llvm::sys::path::remove_leading_dotslash(File->getName());
+    DepCollector.maybeAddDependency(Filename,
+                                    /*FromModule=*/false, false,
+                                    /*IsModuleFile=*/false,
+                                    /*IsMissing=*/false);
   }
 
   void HasInclude(SourceLocation Loc, StringRef SpelledFilename, bool IsAngled,
@@ -97,13 +124,13 @@ struct DepCollectorMMCallbacks : public ModuleMapCallbacks {
   DependencyCollector &DepCollector;
   DepCollectorMMCallbacks(DependencyCollector &DC) : DepCollector(DC) {}
 
-  void moduleMapFileRead(SourceLocation Loc, const FileEntry &Entry,
+  void moduleMapFileRead(SourceLocation Loc, FileEntryRef Entry,
                          bool IsSystem) override {
     StringRef Filename = Entry.getName();
-    DepCollector.maybeAddDependency(Filename, /*FromModule*/false,
-                                    /*IsSystem*/IsSystem,
-                                    /*IsModuleFile*/false,
-                                    /*IsMissing*/false);
+    DepCollector.maybeAddDependency(Filename, /*FromModule*/ false,
+                                    /*IsSystem*/ IsSystem,
+                                    /*IsModuleFile*/ false,
+                                    /*IsMissing*/ false);
   }
 };
 
@@ -118,9 +145,9 @@ struct DepCollectorASTListener : public ASTReaderListener {
   }
   void visitModuleFile(StringRef Filename,
                        serialization::ModuleKind Kind) override {
-    DepCollector.maybeAddDependency(Filename, /*FromModule*/true,
-                                   /*IsSystem*/false, /*IsModuleFile*/true,
-                                   /*IsMissing*/false);
+    DepCollector.maybeAddDependency(Filename, /*FromModule*/ true,
+                                    /*IsSystem*/ false, /*IsModuleFile*/ true,
+                                    /*IsMissing*/ false);
   }
   bool visitInputFile(StringRef Filename, bool IsSystem,
                       bool IsOverridden, bool IsExplicitModule) override {
@@ -132,8 +159,9 @@ struct DepCollectorASTListener : public ASTReaderListener {
     if (auto FE = FileMgr.getOptionalFileRef(Filename))
       Filename = FE->getName();
 
-    DepCollector.maybeAddDependency(Filename, /*FromModule*/true, IsSystem,
-                                   /*IsModuleFile*/false, /*IsMissing*/false);
+    DepCollector.maybeAddDependency(Filename, /*FromModule*/ true, IsSystem,
+                                    /*IsModuleFile*/ false,
+                                    /*IsMissing*/ false);
     return true;
   }
 };

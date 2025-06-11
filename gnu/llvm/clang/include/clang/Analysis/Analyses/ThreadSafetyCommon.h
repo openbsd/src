@@ -330,9 +330,9 @@ public:
 
   bool shouldIgnore() const { return sexpr() == nullptr; }
 
-  bool isInvalid() const { return sexpr() && isa<til::Undefined>(sexpr()); }
+  bool isInvalid() const { return isa_and_nonnull<til::Undefined>(sexpr()); }
 
-  bool isUniversal() const { return sexpr() && isa<til::Wildcard>(sexpr()); }
+  bool isUniversal() const { return isa_and_nonnull<til::Wildcard>(sexpr()); }
 };
 
 // Translate clang::Expr to til::SExpr.
@@ -361,7 +361,7 @@ public:
     unsigned NumArgs = 0;
 
     // Function arguments
-    const Expr *const *FunArgs = nullptr;
+    llvm::PointerUnion<const Expr *const *, til::SExpr *> FunArgs = nullptr;
 
     // is Self referred to with -> or .?
     bool SelfArrow = false;
@@ -484,8 +484,6 @@ private:
     SMap.insert(std::make_pair(S, E));
   }
 
-  til::SExpr *getCurrentLVarDefinition(const ValueDecl *VD);
-
   til::SExpr *addStatement(til::SExpr *E, const Stmt *S,
                            const ValueDecl *VD = nullptr);
   til::SExpr *lookupVarDecl(const ValueDecl *VD);
@@ -529,8 +527,10 @@ private:
   BlockInfo *CurrentBlockInfo = nullptr;
 };
 
+#ifndef NDEBUG
 // Dump an SCFG to llvm::errs().
 void printSCFG(CFGWalker &Walker);
+#endif // NDEBUG
 
 } // namespace threadSafety
 } // namespace clang

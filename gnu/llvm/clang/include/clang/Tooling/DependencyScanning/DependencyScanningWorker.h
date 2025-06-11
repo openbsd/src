@@ -31,7 +31,7 @@ class DependencyScanningWorkerFilesystem;
 
 /// A command-line tool invocation that is part of building a TU.
 ///
-/// \see FullDependencies::Commands.
+/// \see TranslationUnitDeps::Commands.
 struct Command {
   std::string Executable;
   std::vector<std::string> Arguments;
@@ -56,7 +56,16 @@ public:
 
   virtual void handleModuleDependency(ModuleDeps MD) = 0;
 
+  virtual void handleDirectModuleDependency(ModuleID MD) = 0;
+
   virtual void handleContextHash(std::string Hash) = 0;
+};
+
+/// Dependency scanner callbacks that are used during scanning to influence the
+/// behaviour of the scan - for example, to customize the scanned invocations.
+class DependencyActionController {
+public:
+  virtual ~DependencyActionController();
 
   virtual std::string lookupModuleOutput(const ModuleID &ID,
                                          ModuleOutputKind Kind) = 0;
@@ -83,15 +92,15 @@ public:
   bool computeDependencies(StringRef WorkingDirectory,
                            const std::vector<std::string> &CommandLine,
                            DependencyConsumer &DepConsumer,
+                           DependencyActionController &Controller,
                            DiagnosticConsumer &DiagConsumer,
                            std::optional<StringRef> ModuleName = std::nullopt);
   /// \returns A \c StringError with the diagnostic output if clang errors
   /// occurred, success otherwise.
-  llvm::Error
-  computeDependencies(StringRef WorkingDirectory,
-                      const std::vector<std::string> &CommandLine,
-                      DependencyConsumer &Consumer,
-                      std::optional<StringRef> ModuleName = std::nullopt);
+  llvm::Error computeDependencies(
+      StringRef WorkingDirectory, const std::vector<std::string> &CommandLine,
+      DependencyConsumer &Consumer, DependencyActionController &Controller,
+      std::optional<StringRef> ModuleName = std::nullopt);
 
   bool shouldEagerLoadModules() const { return EagerLoadModules; }
 
@@ -107,7 +116,7 @@ private:
   llvm::IntrusiveRefCntPtr<DependencyScanningWorkerFilesystem> DepFS;
   ScanningOutputFormat Format;
   /// Whether to optimize the modules' command-line arguments.
-  bool OptimizeArgs;
+  ScanningOptimizations OptimizeArgs;
   /// Whether to set up command-lines to load PCM files eagerly.
   bool EagerLoadModules;
 };

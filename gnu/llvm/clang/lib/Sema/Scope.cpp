@@ -37,6 +37,7 @@ void Scope::setFlags(Scope *parent, unsigned flags) {
     FnParent       = parent->FnParent;
     BlockParent    = parent->BlockParent;
     TemplateParamParent = parent->TemplateParamParent;
+    DeclParent = parent->DeclParent;
     MSLastManglingParent = parent->MSLastManglingParent;
     MSCurManglingNumber = getMSLastManglingNumber();
     if ((Flags & (FnScope | ClassScope | BlockScope | TemplateParamScope |
@@ -52,6 +53,7 @@ void Scope::setFlags(Scope *parent, unsigned flags) {
     PrototypeIndex = 0;
     MSLastManglingParent = FnParent = BlockParent = nullptr;
     TemplateParamParent = nullptr;
+    DeclParent = nullptr;
     MSLastManglingNumber = 1;
     MSCurManglingNumber = 1;
   }
@@ -70,10 +72,13 @@ void Scope::setFlags(Scope *parent, unsigned flags) {
   if (flags & BlockScope)         BlockParent = this;
   if (flags & TemplateParamScope) TemplateParamParent = this;
 
-  // If this is a prototype scope, record that.
-  if (flags & FunctionPrototypeScope) PrototypeDepth++;
+  // If this is a prototype scope, record that. Lambdas have an extra prototype
+  // scope that doesn't add any depth.
+  if (flags & FunctionPrototypeScope && !(flags & LambdaScope))
+    PrototypeDepth++;
 
   if (flags & DeclScope) {
+    DeclParent = this;
     if (flags & FunctionPrototypeScope)
       ; // Prototype scopes are uninteresting.
     else if ((flags & ClassScope) && getParent()->isClassScope())
@@ -223,6 +228,12 @@ void Scope::dumpImpl(raw_ostream &OS) const {
       {CompoundStmtScope, "CompoundStmtScope"},
       {ClassInheritanceScope, "ClassInheritanceScope"},
       {CatchScope, "CatchScope"},
+      {ConditionVarScope, "ConditionVarScope"},
+      {OpenMPOrderClauseScope, "OpenMPOrderClauseScope"},
+      {LambdaScope, "LambdaScope"},
+      {OpenACCComputeConstructScope, "OpenACCComputeConstructScope"},
+      {TypeAliasScope, "TypeAliasScope"},
+      {FriendScope, "FriendScope"},
   };
 
   for (auto Info : FlagInfo) {

@@ -24,8 +24,6 @@ void HexagonTargetInfo::getTargetDefines(const LangOptions &Opts,
   Builder.defineMacro("__qdsp6__", "1");
   Builder.defineMacro("__hexagon__", "1");
 
-  Builder.defineMacro("__ELF__");
-
   // The macro __HVXDBL__ is deprecated.
   bool DefineHvxDbl = false;
 
@@ -239,6 +237,18 @@ static constexpr CPUSuffix Suffixes[] = {
     {{"hexagonv71"}, {"71"}}, {{"hexagonv71t"},  {"71t"}},
     {{"hexagonv73"}, {"73"}},
 };
+
+std::optional<unsigned> HexagonTargetInfo::getHexagonCPURev(StringRef Name) {
+  StringRef Arch = Name;
+  Arch.consume_front("hexagonv");
+  Arch.consume_back("t");
+
+  unsigned Val;
+  if (!Arch.getAsInteger(0, Val))
+    return Val;
+
+  return std::nullopt;
+}
 
 const char *HexagonTargetInfo::getHexagonCPUSuffix(StringRef Name) {
   const CPUSuffix *Item = llvm::find_if(

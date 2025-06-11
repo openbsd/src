@@ -16,8 +16,8 @@
 #include "OSTargets.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
-#include "llvm/ADT/Triple.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/TargetParser/Triple.h"
 #include <optional>
 
 namespace clang {
@@ -25,6 +25,7 @@ namespace targets {
 
 class LLVM_LIBRARY_VISIBILITY M68kTargetInfo : public TargetInfo {
   static const char *const GCCRegNames[];
+  static const TargetInfo::GCCRegAlias GCCRegAliases[];
 
   enum CPUKind {
     CK_Unknown,
@@ -35,6 +36,8 @@ class LLVM_LIBRARY_VISIBILITY M68kTargetInfo : public TargetInfo {
     CK_68040,
     CK_68060
   } CPU = CK_Unknown;
+
+  const TargetOptions &TargetOpts;
 
 public:
   M68kTargetInfo(const llvm::Triple &Triple, const TargetOptions &);
@@ -49,9 +52,14 @@ public:
   bool validateAsmConstraint(const char *&Name,
                              TargetInfo::ConstraintInfo &info) const override;
   std::optional<std::string> handleAsmEscapedChar(char EscChar) const override;
-  const char *getClobbers() const override;
+  std::string_view getClobbers() const override;
   BuiltinVaListKind getBuiltinVaListKind() const override;
   bool setCPU(const std::string &Name) override;
+  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override;
+
+  std::pair<unsigned, unsigned> hardwareInterferenceSizes() const override {
+    return std::make_pair(32, 32);
+  }
 };
 
 } // namespace targets

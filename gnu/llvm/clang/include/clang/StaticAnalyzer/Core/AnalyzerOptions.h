@@ -227,6 +227,7 @@ public:
   unsigned ShouldEmitErrorsOnInvalidConfigValue : 1;
   unsigned AnalyzeAll : 1;
   unsigned AnalyzerDisplayProgress : 1;
+  unsigned AnalyzerNoteAnalysisEntryPoints : 1;
 
   unsigned eagerlyAssumeBinOpBifurcation : 1;
 
@@ -260,9 +261,10 @@ public:
 #undef ANALYZER_OPTION
 #undef ANALYZER_OPTION_DEPENDS_ON_USER_MODE
 
-  // Create an array of all -analyzer-config command line options. Sort it in
-  // the constructor.
-  std::vector<llvm::StringLiteral> AnalyzerConfigCmdFlags = {
+  bool isUnknownAnalyzerConfig(llvm::StringRef Name) {
+    static std::vector<llvm::StringLiteral> AnalyzerConfigCmdFlags = []() {
+      // Create an array of all -analyzer-config command line options.
+      std::vector<llvm::StringLiteral> AnalyzerConfigCmdFlags = {
 #define ANALYZER_OPTION_DEPENDS_ON_USER_MODE(TYPE, NAME, CMDFLAG, DESC,        \
                                              SHALLOW_VAL, DEEP_VAL)            \
   ANALYZER_OPTION(TYPE, NAME, CMDFLAG, DESC, SHALLOW_VAL)
@@ -273,10 +275,11 @@ public:
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.def"
 #undef ANALYZER_OPTION
 #undef ANALYZER_OPTION_DEPENDS_ON_USER_MODE
-  };
-
-  bool isUnknownAnalyzerConfig(StringRef Name) const {
-    assert(llvm::is_sorted(AnalyzerConfigCmdFlags));
+      };
+      // FIXME: Sort this at compile-time when we get constexpr sort (C++20).
+      llvm::sort(AnalyzerConfigCmdFlags);
+      return AnalyzerConfigCmdFlags;
+    }();
 
     return !std::binary_search(AnalyzerConfigCmdFlags.begin(),
                                AnalyzerConfigCmdFlags.end(), Name);
@@ -289,12 +292,10 @@ public:
         ShowCheckerOptionDeveloperList(false), ShowEnabledCheckerList(false),
         ShowConfigOptionsList(false),
         ShouldEmitErrorsOnInvalidConfigValue(false), AnalyzeAll(false),
-        AnalyzerDisplayProgress(false), eagerlyAssumeBinOpBifurcation(false),
-        TrimGraph(false), visualizeExplodedGraphWithGraphViz(false),
-        UnoptimizedCFG(false), PrintStats(false), NoRetryExhausted(false),
-        AnalyzerWerror(false) {
-    llvm::sort(AnalyzerConfigCmdFlags);
-  }
+        AnalyzerDisplayProgress(false), AnalyzerNoteAnalysisEntryPoints(false),
+        eagerlyAssumeBinOpBifurcation(false), TrimGraph(false),
+        visualizeExplodedGraphWithGraphViz(false), UnoptimizedCFG(false),
+        PrintStats(false), NoRetryExhausted(false), AnalyzerWerror(false) {}
 
   /// Interprets an option's string value as a boolean. The "true" string is
   /// interpreted as true and the "false" string is interpreted as false.
@@ -409,8 +410,8 @@ AnalyzerOptions::getRegisteredCheckers(bool IncludeExperimental) {
   };
   std::vector<StringRef> Checkers;
   for (StringRef CheckerName : StaticAnalyzerCheckerNames) {
-    if (!CheckerName.startswith("debug.") &&
-        (IncludeExperimental || !CheckerName.startswith("alpha.")))
+    if (!CheckerName.starts_with("debug.") &&
+        (IncludeExperimental || !CheckerName.starts_with("alpha.")))
       Checkers.push_back(CheckerName);
   }
   return Checkers;
