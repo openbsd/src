@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2023/11/12 21:17:48 robert Exp $
+# $OpenBSD: Makefile,v 1.10 2025/06/11 17:46:33 robert Exp $
 
 PROG=	llvm-config
 BINDIR= /usr/bin
@@ -32,9 +32,10 @@ LLVM_LIBDEPS=	LLVM
 
 reconf:
 .for arch in ${NATIVE_ARCHS}
-	mkdir ${.CURDIR}/CMakeGen
-	cd ${.CURDIR}/CMakeGen && ${CMAKE} -DLLVM_TARGETS_TO_BUILD="${arch};AMDGPU" \
-		-DCMAKE_BUILD_TYPE=Release ${LLVMROOT}
+	mkdir -p ${.CURDIR}/CMakeGen
+	${CMAKE} -B ${.CURDIR}/CMakeGen -S ${LLVMROOT} -DLLVM_TARGETS_TO_BUILD="${arch};AMDGPU" \
+		-DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF \
+		-DCMAKE_BUILD_TYPE=Release
 	mv ${.CURDIR}/CMakeGen/tools/llvm-config/LibraryDependencies.inc ${.CURDIR}/LibraryDependencies.inc.${arch}
 	rm -rf ${.CURDIR}/CMakeGen
 .endfor

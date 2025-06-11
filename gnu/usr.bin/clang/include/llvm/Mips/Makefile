@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:36 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -65,7 +65,7 @@ MipsGenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 
 MipsGenPostLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/Mips/Mips.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
-		-combiners="MipsPostLegalizerCombinerHelper" \
+		-combiners="MipsPostLegalizerCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/Mips \
 		-o ${.TARGET} ${.ALLSRC}
 

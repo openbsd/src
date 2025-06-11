@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:37 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMPasses
 NOPROFILE=
@@ -6,7 +6,8 @@ NOPROFILE=
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Passes \
 		-I${LLVM_SRCS}/include/llvm/
 
-SRCS+=	OptimizationLevel.cpp \
+SRCS+=	CodeGenPassBuilder.cpp \
+	OptimizationLevel.cpp \
 	PassBuilder.cpp \
 	PassBuilderBindings.cpp \
 	PassBuilderPipelines.cpp \

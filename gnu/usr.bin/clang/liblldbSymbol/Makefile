@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:40 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbSymbol
 NOPIC=
@@ -13,6 +13,7 @@ SRCS=	ArmUnwindInfo.cpp \
 	CompilerDecl.cpp \
 	CompilerDeclContext.cpp \
 	CompilerType.cpp \
+	SaveCoreOptions.cpp \
 	DWARFCallFrameInfo.cpp \
 	DebugMacros.cpp \
 	DeclVendor.cpp \
@@ -20,7 +21,6 @@ SRCS=	ArmUnwindInfo.cpp \
 	Function.cpp \
 	LineEntry.cpp \
 	LineTable.cpp \
-	LocateSymbolFile.cpp \
 	ObjectContainer.cpp \
 	ObjectFile.cpp \
 	PostfixExpression.cpp \
@@ -28,6 +28,7 @@ SRCS=	ArmUnwindInfo.cpp \
 	SymbolContext.cpp \
 	SymbolFile.cpp \
 	SymbolFileOnDemand.cpp \
+	SymbolLocator.cpp \
 	SymbolVendor.cpp \
 	Symtab.cpp \
 	Type.cpp \

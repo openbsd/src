@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:39 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbCommands
 NOPIC=
@@ -29,7 +29,7 @@ SRCS=	CommandCompletions.cpp \
 	CommandObjectQuit.cpp \
 	CommandObjectRegexCommand.cpp \
 	CommandObjectRegister.cpp \
-	CommandObjectScript.cpp \
+	CommandObjectScripting.cpp \
 	CommandObjectSession.cpp \
 	CommandObjectSettings.cpp \
 	CommandObjectSource.cpp \
@@ -43,6 +43,7 @@ SRCS=	CommandCompletions.cpp \
 	CommandObjectWatchpoint.cpp \
 	CommandObjectWatchpointCommand.cpp \
 	CommandOptionArgumentTable.cpp \
+	CommandOptionsProcessAttach.cpp \
 	CommandOptionsProcessLaunch.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Commands

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:35 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2025/06/11 17:46:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ _DIAG=	AST \
 	CrossTU \
 	Driver \
 	Frontend \
+	InstallAPI \
 	Lex \
 	Parse \
 	Refactoring \
@@ -23,11 +24,15 @@ GEN=
 GEN+= Diagnostic${_comp}Kinds.inc
 .endfor
 
-GEN+=	DiagnosticGroups.inc \
+GEN+=	Builtins.inc \
+	BuiltinsBPF.inc \
+	BuiltinsRISCV.inc \
+	DiagnosticGroups.inc \
 	DiagnosticIndexName.inc \
 	AttrList.inc \
 	AttrSubMatchRulesList.inc \
 	AttrHasAttributeImpl.inc \
+	RegularKeywordAttrInfo.inc \
 	arm_neon.inc \
 	arm_fp16.inc \
 	arm_mve_builtins.inc \
@@ -38,13 +43,22 @@ GEN+=	DiagnosticGroups.inc \
 	arm_sve_builtin_cg.inc \
 	arm_sve_typeflags.inc \
 	arm_sve_sema_rangechecks.inc \
+	arm_sve_streaming_attrs.inc \
+	arm_sme_builtins.inc \
+	arm_sme_builtin_cg.inc \
+	arm_sme_sema_rangechecks.inc \
+	arm_sme_streaming_attrs.inc \
+	arm_sme_builtins_za_state.inc \
 	arm_cde_builtins.inc \
 	arm_cde_builtin_cg.inc \
 	arm_cde_builtin_sema.inc \
 	arm_cde_builtin_aliases.inc \
 	riscv_vector_builtins.inc \
 	riscv_vector_builtin_cg.inc \
-	riscv_vector_builtin_sema.inc
+	riscv_vector_builtin_sema.inc \
+	riscv_sifive_vector_builtins.inc \
+	riscv_sifive_vector_builtin_cg.inc \
+	riscv_sifive_vector_builtin_sema.inc
 
 all: ${GEN}
 
@@ -62,6 +76,18 @@ Diagnostic${_comp}Kinds.inc: ${CLANG_INC}/clang/Basic/Diagnostic.td
 
 .endfor
 
+Builtins.inc: ${CLANG_INC}/clang/Basic/Builtins.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-builtins \
+		-o ${.TARGET} ${.ALLSRC}
+
+BuiltinsBPF.inc: ${CLANG_INC}/clang/Basic/BuiltinsBPF.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-builtins \
+		-o ${.TARGET} ${.ALLSRC}
+
+BuiltinsRISCV.inc: ${CLANG_INC}/clang/Basic/BuiltinsRISCV.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-builtins \
+		-o ${.TARGET} ${.ALLSRC}
+
 DiagnosticGroups.inc: ${CLANG_INC}/clang/Basic/Diagnostic.td
 	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-clang-diag-groups \
 		-o ${.TARGET} ${.ALLSRC}
@@ -74,12 +100,24 @@ AttrList.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-list \
 		-o ${.TARGET} ${.ALLSRC}
 
+AttrLeftSideCanPrintList.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-can-print-left-list \
+		-o ${.TARGET} ${.ALLSRC}
+
+AttrLeftSideMustPrintList.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-must-print-left-list \
+		-o ${.TARGET} ${.ALLSRC}
+
 AttrSubMatchRulesList.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-subject-match-rule-list \
 		-o ${.TARGET} ${.ALLSRC}
 
 AttrHasAttributeImpl.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-has-attribute-impl \
+		-o ${.TARGET} ${.ALLSRC}
+
+RegularKeywordAttrInfo.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-regular-keyword-attr-info \
 		-o ${.TARGET} ${.ALLSRC}
 
 arm_neon.inc: ${CLANG_INC}/clang/Basic/arm_neon.td
@@ -122,6 +160,30 @@ arm_sve_sema_rangechecks.inc: ${CLANG_INC}/clang/Basic/arm_sve.td
 	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-sve-sema-rangechecks \
 		-o ${.TARGET} ${.ALLSRC}
 
+arm_sve_streaming_attrs.inc: ${CLANG_INC}/clang/Basic/arm_sve.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-sve-streaming-attrs \
+		-o ${.TARGET} ${.ALLSRC}
+
+arm_sme_builtins.inc: ${CLANG_INC}/clang/Basic/arm_sme.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-sme-builtins \
+		-o ${.TARGET} ${.ALLSRC}
+
+arm_sme_builtin_cg.inc: ${CLANG_INC}/clang/Basic/arm_sme.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-sme-builtin-codegen \
+		-o ${.TARGET} ${.ALLSRC}
+
+arm_sme_sema_rangechecks.inc: ${CLANG_INC}/clang/Basic/arm_sme.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-sme-sema-rangechecks \
+		-o ${.TARGET} ${.ALLSRC}
+
+arm_sme_streaming_attrs.inc: ${CLANG_INC}/clang/Basic/arm_sme.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-sme-streaming-attrs \
+		-o ${.TARGET} ${.ALLSRC}
+
+arm_sme_builtins_za_state.inc: ${CLANG_INC}/clang/Basic/arm_sme.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-sme-builtin-za-state \
+		-o ${.TARGET} ${.ALLSRC}
+
 arm_cde_builtins.inc: ${CLANG_INC}/clang/Basic/arm_cde.td
 	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-cde-builtin-def \
 		-o ${.TARGET} ${.ALLSRC}
@@ -148,6 +210,18 @@ riscv_vector_builtin_cg.inc: ${CLANG_INC}/clang/Basic/riscv_vector.td
 
 riscv_vector_builtin_sema.inc: ${CLANG_INC}/clang/Basic/riscv_vector.td
 	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-riscv-vector-builtin-sema \
+		-o ${.TARGET} ${.ALLSRC}
+
+riscv_sifive_vector_builtins.inc: ${CLANG_INC}/clang/Basic/riscv_sifive_vector.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-riscv-sifive-vector-builtins \
+		-o ${.TARGET} ${.ALLSRC}
+
+riscv_sifive_vector_builtin_cg.inc: ${CLANG_INC}/clang/Basic/riscv_sifive_vector.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-riscv-sifive-vector-builtin-codegen \
+		-o ${.TARGET} ${.ALLSRC}
+
+riscv_sifive_vector_builtin_sema.inc: ${CLANG_INC}/clang/Basic/riscv_sifive_vector.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-riscv-sifive-vector-builtin-sema \
 		-o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

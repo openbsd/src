@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.10 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMExecutionEngine
 NOPROFILE=
@@ -32,26 +32,39 @@ SRCS+=	DWARFRecordSectionSplitter.cpp \
 	MachOLinkGraphBuilder.cpp \
 	ExecutionEngineELF.cpp \
 	ELFLinkGraphBuilder.cpp \
+	ELF_aarch32.cpp \
 	ELF_aarch64.cpp \
 	ELF_i386.cpp \
 	ELF_loongarch.cpp \
+	ELF_ppc64.cpp \
 	ELF_riscv.cpp \
 	ELF_x86_64.cpp \
 	ExecutionEngineCOFF.cpp \
 	COFFDirectiveParser.cpp \
 	COFFLinkGraphBuilder.cpp \
 	COFF_x86_64.cpp \
+	aarch32.cpp \
 	aarch64.cpp \
 	i386.cpp \
 	loongarch.cpp \
+	ppc64.cpp \
 	riscv.cpp \
 	x86_64.cpp
 
 # MCJIT
 SRCS+=	MCJIT.cpp
 
+# Debugging
+SRCS+=	DebugInfoSupport.cpp \
+	DebuggerSupport.cpp \
+	DebuggerSupportPlugin.cpp \
+	LLJITUtilsCBindings.cpp \
+	PerfSupportPlugin.cpp \
+	VTuneSupportPlugin.cpp
+
 # OrcShared
 SRCS+=	AllocationActions.cpp \
+	ObjectFormats.cpp \
 	OrcError.cpp \
 	OrcRTBridge.cpp \
 	SimpleRemoteEPCUtils.cpp
@@ -59,6 +72,8 @@ SRCS+=	AllocationActions.cpp \
 # OrcTargetProcess
 SRCS+=	ExecutorSharedMemoryMapperService.cpp \
 	JITLoaderGDB.cpp \
+	JITLoaderPerf.cpp \
+	JITLoaderVTune.cpp \
 	OrcRTBootstrap.cpp \
 	RegisterEHFrames.cpp \
 	SimpleExecutorDylibManager.cpp \
@@ -73,7 +88,6 @@ SRCS+=	COFFVCRuntimeSupport.cpp \
 	CompileUtils.cpp \
 	ExecutionEngineCore.cpp \
 	DebugObjectManagerPlugin.cpp \
-	DebuggerSupportPlugin.cpp \
 	DebugUtils.cpp \
 	EPCDynamicLibrarySearchGenerator.cpp \
 	EPCDebugObjectRegistrar.cpp \
@@ -102,6 +116,7 @@ SRCS+=	COFFVCRuntimeSupport.cpp \
 	OrcABISupport.cpp \
 	OrcV2CBindings.cpp \
 	RTDyldObjectLinkingLayer.cpp \
+	SectCreate.cpp \
 	SimpleRemoteEPC.cpp \
 	Speculation.cpp \
 	SpeculateAnalyses.cpp \
@@ -138,6 +153,7 @@ ExecutionEngineELF.cpp:
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/JITLink
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/MCJIT
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/Orc
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/Orc/Debugging
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/Orc/Shared
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/Orc/TargetProcess
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/RuntimeDyld

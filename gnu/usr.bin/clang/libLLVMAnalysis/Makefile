@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2023/11/11 18:35:36 robert Exp $
+# $OpenBSD: Makefile,v 1.15 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMAnalysis
 NOPROFILE=
@@ -7,7 +7,6 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Analysis
 
 SRCS+=	AliasAnalysis.cpp \
 	AliasAnalysisEvaluator.cpp \
-	AliasAnalysisSummary.cpp \
 	AliasSetTracker.cpp \
 	AnalysisAnalysis.cpp \
 	AssumeBundleQueries.cpp \
@@ -37,11 +36,10 @@ SRCS+=	AliasAnalysis.cpp \
 	DependenceAnalysis.cpp \
 	DependenceGraphBuilder.cpp \
 	DevelopmentModeInlineAdvisor.cpp \
-	DivergenceAnalysis.cpp \
+	DomConditionCache.cpp \
 	DomPrinter.cpp \
 	DomTreeUpdater.cpp \
 	DominanceFrontier.cpp \
-	EHPersonalities.cpp \
 	FunctionPropertiesAnalysis.cpp \
 	GlobalsModRef.cpp \
 	GuardUtils.cpp \
@@ -58,13 +56,11 @@ SRCS+=	AliasAnalysis.cpp \
 	InstCount.cpp \
 	InstructionPrecedenceTracking.cpp \
 	InstructionSimplify.cpp \
-	Interval.cpp \
-	IntervalPartition.cpp \
+	InteractiveModelRunner.cpp \
 	LazyBranchProbabilityInfo.cpp \
 	LazyBlockFrequencyInfo.cpp \
 	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
-	LegacyDivergenceAnalysis.cpp \
 	Lint.cpp \
 	Loads.cpp \
 	Local.cpp \
@@ -76,7 +72,6 @@ SRCS+=	AliasAnalysis.cpp \
 	LoopInfo.cpp \
 	LoopPass.cpp \
 	MLInlineAdvisor.cpp \
-	MemDepPrinter.cpp \
 	MemDerefPrinter.cpp \
 	MemoryBuiltins.cpp \
 	MemoryDependenceAnalysis.cpp \
@@ -109,7 +104,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ScalarEvolutionNormalization.cpp \
 	StackLifetime.cpp \
 	StackSafetyAnalysis.cpp \
-	SyncDependenceAnalysis.cpp \
+	AnalysisStructuralHash.cpp \
 	SyntheticCountsUtils.cpp \
 	TFLiteUtils.cpp \
 	TargetLibraryInfo.cpp \
@@ -124,11 +119,13 @@ SRCS+=	AliasAnalysis.cpp \
 	ValueLattice.cpp \
 	ValueLatticeUtils.cpp \
 	ValueTracking.cpp \
-	VectorUtils.cpp \
-	VFABIDemangling.cpp
+	VectorUtils.cpp
 
 AnalysisAnalysis.cpp:
 	ln -s ${LLVM_SRCS}/lib/Analysis/Analysis.cpp $@
+
+AnalysisStructuralHash.cpp:
+	ln -s ${LLVM_SRCS}/lib/Analysis/StructuralHash.cpp $@
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Analysis
 

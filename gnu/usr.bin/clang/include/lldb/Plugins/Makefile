@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2023/11/11 18:35:35 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2025/06/11 17:46:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,8 @@ DEFS=	DynamicLoaderDarwinKernelProperties.inc \
 	JITLoaderGDBPropertiesEnum.inc \
 	ObjectFilePECOFFProperties.inc \
 	ObjectFilePECOFFPropertiesEnum.inc \
+	PlatformAndroidProperties.inc \
+	PlatformAndroidPropertiesEnum.inc \
 	PlatformMacOSXProperties.inc \
 	PlatformMacOSXPropertiesEnum.inc \
 	ProcessGDBRemoteProperties.inc \
@@ -61,6 +63,18 @@ ObjectFilePECOFFPropertiesEnum.inc: \
 	${LLDB_SRCS}/source/Plugins/ObjectFile/PECOFF/ObjectFilePECOFFProperties.td
 	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
 		-I${LLDB_SRCS}/source/Plugins/ObjectFile/PECOFF \
+		-o ${.TARGET} ${.ALLSRC}
+
+PlatformAndroidProperties.inc: \
+	${LLDB_SRCS}/source/Plugins/Platform/Android/PlatformAndroidProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-defs \
+		-I${LLDB_SRCS}/source/Plugins/Platform/Android \
+		-o ${.TARGET} ${.ALLSRC}
+
+PlatformAndroidPropertiesEnum.inc: \
+	${LLDB_SRCS}/source/Plugins/Platform/Android/PlatformAndroidProperties.td
+	${.OBJDIR}/../../../lldb-tblgen/lldb-tblgen -gen-lldb-property-enum-defs \
+		-I${LLDB_SRCS}/source/Plugins/Platform/Android \
 		-o ${.TARGET} ${.ALLSRC}
 
 PlatformMacOSXProperties.inc: \

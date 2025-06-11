@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.12 2025/06/11 17:46:33 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,8 @@ LDADD+=	-lcurses -ledit -lpanel
 .PATH: ${.CURDIR}/../../../llvm/lldb/source/Version
 .PATH:	${.CURDIR}/../../../llvm/lldb/tools/lldb-server
 
-LLVM_LIBDEPS=	clangAST \
+LLVM_LIBDEPS=	clangAPINotes \
+    clangAST \
     clangASTMatchers \
     clangAnalysis \
     clangBasic \

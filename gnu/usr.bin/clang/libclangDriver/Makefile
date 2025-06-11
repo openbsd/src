@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2025/06/11 17:46:33 robert Exp $
 
 LIB=	clangDriver
 NOPIC=
@@ -17,6 +17,7 @@ SRCS=	Action.cpp \
 	DriverOptions.cpp \
 	Job.cpp \
 	Multilib.cpp \
+	MultilibBuilder.cpp \
 	OffloadBundler.cpp \
 	OptionUtils.cpp \
 	Phases.cpp \
@@ -28,15 +29,12 @@ SRCS=	Action.cpp \
 
 # Driver/Toolchains
 SRCS+=	AIX.cpp \
-	Ananas.cpp \
 	AMDGPU.cpp \
 	AMDGPUOpenMP.cpp \
 	AVR.cpp \
 	BareMetal.cpp \
 	Clang.cpp \
-	CloudABI.cpp \
 	CommonArgs.cpp \
-	Contiki.cpp \
 	CrossWindows.cpp \
 	CSKYToolChain.cpp \
 	Cuda.cpp \
@@ -56,12 +54,11 @@ SRCS+=	AIX.cpp \
 	Linux.cpp \
 	MipsLinux.cpp \
 	MinGW.cpp \
-	Minix.cpp \
 	MSP430.cpp \
 	MSVC.cpp \
-	Myriad.cpp \
 	NaCl.cpp \
 	NetBSD.cpp \
+	OHOS.cpp \
 	OpenBSD.cpp \
 	PS4CPU.cpp \
 	RISCVToolchain.cpp \

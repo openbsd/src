@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:46 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbBreakpoint
 NOPIC=
@@ -23,13 +23,15 @@ SRCS=	Breakpoint.cpp \
 	BreakpointResolverName.cpp \
 	BreakpointResolverScripted.cpp \
 	BreakpointSite.cpp \
-	BreakpointSiteList.cpp \
 	Stoppoint.cpp \
 	StoppointCallbackContext.cpp \
 	StoppointSite.cpp \
+	StopPointSiteList.cpp \
 	Watchpoint.cpp \
+	WatchpointAlgorithms.cpp \
 	WatchpointList.cpp \
-	WatchpointOptions.cpp
+	WatchpointOptions.cpp \
+	WatchpointResource.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Breakpoint
 

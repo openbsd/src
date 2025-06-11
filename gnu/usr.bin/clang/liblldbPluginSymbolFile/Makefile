@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:39 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbPluginSymbolFile
 NOPIC=
@@ -9,11 +9,13 @@ NOPROFILE=
 # SymbolFile/Breakpad
 SRCS=	SymbolFileBreakpad.cpp
 
+# SymbolFile/CTF
+SRCS+=	SymbolFileCTF.cpp
+
 # SymbolFile/DWARF
 SRCS+=	AppleDWARFIndex.cpp \
 	DebugNamesDWARFIndex.cpp \
 	DIERef.cpp \
-	DWARFAbbreviationDeclaration.cpp \
 	DWARFASTParser.cpp \
 	DWARFASTParserClang.cpp \
 	DWARFAttribute.cpp \
@@ -21,7 +23,6 @@ SRCS+=	AppleDWARFIndex.cpp \
 	DWARFCompileUnit.cpp \
 	DWARFContext.cpp \
 	DWARFDataExtractor.cpp \
-	DWARFDebugAbbrev.cpp \
 	DWARFDebugAranges.cpp \
 	DWARFDebugArangeSet.cpp \
 	DWARFDebugInfo.cpp \
@@ -35,7 +36,6 @@ SRCS+=	AppleDWARFIndex.cpp \
 	DWARFIndex.cpp \
 	DWARFTypeUnit.cpp \
 	DWARFUnit.cpp \
-	HashedNameToDIE.cpp \
 	LogChannelDWARF.cpp \
 	ManualDWARFIndex.cpp \
 	NameToDIE.cpp \
@@ -43,6 +43,9 @@ SRCS+=	AppleDWARFIndex.cpp \
 	SymbolFileDWARFDwo.cpp \
 	SymbolFileDWARFDebugMap.cpp \
 	UniqueDWARFASTType.cpp
+
+# SymbolFile/JSON
+SRCS+=	SymbolFileJSON.cpp
 
 # SymbolFile/NativePDB
 SRCS+=	CodeViewRegisterMapping.cpp \
@@ -65,7 +68,9 @@ SRCS+=	PDBASTParser.cpp \
 SRCS+=	SymbolFileSymtab.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/Breakpad
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/CTF
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/DWARF
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/JSON
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/NativePDB
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/PDB
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/Symtab

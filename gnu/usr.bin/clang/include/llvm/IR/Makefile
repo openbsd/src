@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:36 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2025/06/11 17:46:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ DEFS=	Attributes.inc \
 	IntrinsicsR600.h \
 	IntrinsicsRISCV.h \
 	IntrinsicsS390.h \
+	IntrinsicsSPIRV.h \
 	IntrinsicsWebAssembly.h \
 	IntrinsicsX86.h \
 	IntrinsicsXCore.h \
@@ -124,6 +125,12 @@ IntrinsicsRISCV.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
 
 IntrinsicsS390.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-enums -intrinsic-prefix=s390 \
+		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
+		-I${LLVM_SRCS}/include \
+		-o ${.TARGET} ${.ALLSRC}
+
+IntrinsicsSPIRV.h: ${LLVM_SRCS}/include/llvm/IR/Intrinsics.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-intrinsic-enums -intrinsic-prefix=spv \
 		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2023/11/11 18:35:35 robert Exp $
+# $OpenBSD: Makefile,v 1.11 2025/06/11 17:46:32 robert Exp $
 
 PROG=	clang-tblgen
 NOMAN=
@@ -11,6 +11,7 @@ SRCS=	ASTTableGen.cpp \
 	ClangASTNodesEmitter.cpp \
 	ClangASTPropertiesEmitter.cpp \
 	ClangAttrEmitter.cpp \
+	ClangBuiltinsEmitter.cpp \
 	ClangCommentCommandInfoEmitter.cpp \
 	ClangCommentHTMLNamedCharacterReferenceEmitter.cpp \
 	ClangCommentHTMLTagsEmitter.cpp \

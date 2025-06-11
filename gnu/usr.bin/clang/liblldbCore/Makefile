@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:39 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbCore
 NOPIC=
@@ -8,6 +8,7 @@ NOPROFILE=
 
 SRCS=	Address.cpp \
 	AddressRange.cpp \
+	AddressRangeListImpl.cpp \
 	AddressResolver.cpp \
 	AddressResolverFileLine.cpp \
 	Communication.cpp \
@@ -18,10 +19,10 @@ SRCS=	Address.cpp \
 	Disassembler.cpp \
 	DumpDataExtractor.cpp \
 	DumpRegisterValue.cpp \
+	DumpRegisterInfo.cpp \
 	DynamicLoader.cpp \
 	EmulateInstruction.cpp \
 	FileLineResolver.cpp \
-	FileSpecList.cpp \
 	FormatEntity.cpp \
 	Highlighter.cpp \
 	IOHandler.cpp \
@@ -39,7 +40,6 @@ SRCS=	Address.cpp \
 	SourceLocationSpec.cpp \
 	SourceManager.cpp \
 	StreamAsynchronousIO.cpp \
-	StreamFile.cpp \
 	ThreadedCommunication.cpp \
 	UserSettingsController.cpp \
 	Value.cpp \
@@ -56,7 +56,8 @@ SRCS=	Address.cpp \
 	ValueObjectRegister.cpp \
 	ValueObjectSyntheticFilter.cpp \
 	ValueObjectUpdater.cpp \
-	ValueObjectVariable.cpp
+	ValueObjectVariable.cpp \
+	ValueObjectVTable.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Core
 

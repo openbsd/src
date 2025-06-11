@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2024/07/13 07:25:38 asou Exp $
+# $OpenBSD: Makefile,v 1.18 2025/06/11 17:46:33 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ CPPFLAGS+=	-I${.OBJDIR}/../include
 
 LLVM_LIBDEPS=	clangAST \
 		clangASTMatchers \
+		clangAPINotes \
 		clangAnalysis \
 		clangBasic \
 		clangBasicTargets \
@@ -63,9 +64,11 @@ LLVM_LIBDEPS=	clangAST \
 		lldbPluginObjectFile \
 		lldbPluginPlatform \
 		lldbPluginProcess \
+		lldbPluginRegisterTypeBuilder \
 		lldbPluginScriptInterpreter \
 		lldbPluginStructuredData \
 		lldbPluginSymbolFile \
+		lldbPluginSymbolLocator \
 		lldbPluginSymbolVendor \
 		lldbPluginSystemRuntime \
 		lldbPluginTypeSystem \

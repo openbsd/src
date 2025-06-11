@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2023/11/11 18:35:36 robert Exp $
+# $OpenBSD: Makefile,v 1.18 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMCodeGen
 NOPROFILE=
@@ -16,15 +16,16 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	BranchRelaxation.cpp \
 	BreakFalseDeps.cpp \
 	BasicBlockSections.cpp \
+	BasicBlockPathCloning.cpp \
 	BasicBlockSectionsProfileReader.cpp \
 	CalcSpillWeights.cpp \
+	CallBrPrepare.cpp \
 	CallingConvLower.cpp \
 	CFGuardLongjmp.cpp \
 	CFIFixup.cpp \
 	CFIInstrInserter.cpp \
 	CodeGen.cpp \
 	CodeGenCommonISel.cpp \
-	CodeGenPassBuilder.cpp \
 	CodeGenPrepare.cpp \
 	CommandFlags.cpp \
 	ComplexDeinterleavingPass.cpp \
@@ -48,6 +49,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	FinalizeISel.cpp \
 	FixupStatepointCallerSaved.cpp \
 	FuncletLayout.cpp \
+	GCEmptyBasicBlocks.cpp \
 	GCMetadata.cpp \
 	GCMetadataPrinter.cpp \
 	GCRootLowering.cpp \
@@ -56,12 +58,14 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	IfConversion.cpp \
 	ImplicitNullChecks.cpp \
 	IndirectBrExpandPass.cpp \
+	InitUndef.cpp \
 	InlineSpiller.cpp \
 	InterferenceCache.cpp \
 	InterleavedAccessPass.cpp \
 	InterleavedLoadCombinePass.cpp \
 	IntrinsicLowering.cpp \
 	JMCInstrumenter.cpp \
+	CodeGenKCFI.cpp \
 	LatencyPriorityQueue.cpp \
 	LazyMachineBlockFrequencyInfo.cpp \
 	LexicalScopes.cpp \
@@ -81,7 +85,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	LLVMTargetMachine.cpp \
 	LocalStackSlotAllocation.cpp \
 	LoopTraversal.cpp \
-	CodeGenLowLevelType.cpp \
+	LowLevelTypeUtils.cpp \
 	LowerEmuTLS.cpp \
 	MachineBasicBlock.cpp \
 	MachineBlockFrequencyInfo.cpp \
@@ -89,15 +93,18 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineBranchProbabilityInfo.cpp \
 	MachineCFGPrinter.cpp \
 	MachineCombiner.cpp \
+	MachineConvergenceVerifier.cpp \
 	MachineCopyPropagation.cpp \
 	MachineCSE.cpp \
 	MachineCheckDebugify.cpp \
 	MachineCycleAnalysis.cpp \
 	MachineDebugify.cpp \
+	MachineDomTreeUpdater.cpp \
 	MachineDominanceFrontier.cpp \
 	MachineDominators.cpp \
 	MachineFrameInfo.cpp \
 	MachineFunction.cpp \
+	MachineFunctionAnalysis.cpp \
 	MachineFunctionPass.cpp \
 	MachineFunctionPrinterPass.cpp \
 	MachineFunctionSplitter.cpp \
@@ -130,8 +137,8 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MIRFSDiscriminator.cpp \
 	MIRSampleProfile.cpp \
 	MIRYamlMapping.cpp \
-	MLRegallocEvictAdvisor.cpp \
-	MLRegallocPriorityAdvisor.cpp \
+	MLRegAllocEvictAdvisor.cpp \
+	MLRegAllocPriorityAdvisor.cpp \
 	ModuloSchedule.cpp \
 	MultiHazardRecognizer.cpp \
 	PatchableFunction.cpp \
@@ -141,7 +148,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MacroFusion.cpp \
 	NonRelocatableStringpool.cpp \
 	OptimizePHIs.cpp \
-	ParallelCG.cpp \
 	PeepholeOptimizer.cpp \
 	PHIElimination.cpp \
 	PHIEliminationUtils.cpp \
@@ -223,6 +229,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	VLIWMachineScheduler.cpp \
 	VirtRegMap.cpp \
 	WasmEHPrepare.cpp \
+	WindowScheduler.cpp \
 	WinEHPrepare.cpp \
 	XRayInstrumentation.cpp
 	
@@ -234,10 +241,10 @@ SRCS+=	LiveDebugValues.cpp \
 CodeGenAnalysis.cpp:
 	ln -s ${LLVM_SRCS}/lib/CodeGen/Analysis.cpp $@
 
-CodeGenLowLevelType.cpp:
-	ln -s ${LLVM_SRCS}/lib/CodeGen/LowLevelType.cpp $@
+CodeGenKCFI.cpp:
+	ln -s ${LLVM_SRCS}/lib/CodeGen/KCFI.cpp $@
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/CodeGen
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/CodeGen/LiveDebugValues
 
-CLEANFILES+= CodeGenAnalysis.cpp CodeGenLowLevelType.cpp
+CLEANFILES+= CodeGenAnalysis.cpp

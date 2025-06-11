@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbPluginDynamicLoader
 NOPIC=
@@ -6,6 +6,7 @@ NOPROFILE=
 
 .include <bsd.own.mk>
 SRCS=	DynamicLoaderDarwinKernel.cpp \
+	DynamicLoaderFreeBSDKernel.cpp \
 	DynamicLoaderMacOSXDYLD.cpp \
 	DynamicLoaderMacOS.cpp \
 	DynamicLoaderDarwin.cpp \
@@ -18,6 +19,7 @@ SRCS=	DynamicLoaderDarwinKernel.cpp \
 	DynamicLoaderWasmDYLD.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/DynamicLoader/Darwin-Kernel
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/DynamicLoader/FreeBSD-Kernel
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/DynamicLoader/MacOSX-DYLD
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/DynamicLoader/POSIX-DYLD
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/DynamicLoader/Static

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2023/11/11 18:35:37 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMGlobalISel
 NOPROFILE=
@@ -12,6 +12,8 @@ SRCS+=	CSEInfo.cpp \
 	GlobalISel.cpp \
 	Combiner.cpp \
 	CombinerHelper.cpp \
+	CombinerHelperVectorOps.cpp \
+	GIMatchTableExecutor.cpp \
 	GISelChangeObserver.cpp \
 	IRTranslator.cpp \
 	InlineAsmLowering.cpp \

@@ -1,8 +1,6 @@
+'\" t
 .\" Man page generated from reStructuredText.
 .
-.TH "LLVM-OBJCOPY" "1" "2021-08-29" "13" "LLVM"
-.SH NAME
-llvm-objcopy \- object copying and editing tool
 .
 .nr rst2man-indent-level 0
 .
@@ -30,6 +28,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
+.TH "LLVM-OBJCOPY" "1" "2024-12-23" "19" "LLVM"
+.SH NAME
+llvm-objcopy \- object copying and editing tool
 .SH SYNOPSIS
 .sp
 \fBllvm\-objcopy\fP [\fIoptions\fP] \fIinput\fP [\fIoutput\fP]
@@ -39,9 +40,9 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 usage, it makes a semantic copy of the input to the output. If any options are
 specified, the output may be modified along the way, e.g. by removing sections.
 .sp
-If no output file is specified, the input file is modified in\-place. If "\-" is
+If no output file is specified, the input file is modified in\-place. If \(dq\-\(dq is
 specified for the input file, the input is read from the program\(aqs standard
-input stream. If "\-" is specified for the output file, the output is written to
+input stream. If \(dq\-\(dq is specified for the output file, the output is written to
 the standard output stream of the program.
 .sp
 If the input is an archive, any requested operations will be applied to each
@@ -63,7 +64,7 @@ Add a .gnu_debuglink section for \fB<debug\-file>\fP to the output.
 .B \-\-add\-section <section=file>
 Add a section named \fB<section>\fP with the contents of \fB<file>\fP to the
 output. For ELF objects the section will be of type \fISHT_NOTE\fP, if the name
-starts with ".note". Otherwise, it will have type \fISHT_PROGBITS\fP\&. Can be
+starts with \(dq.note\(dq. Otherwise, it will have type \fISHT_PROGBITS\fP\&. Can be
 specified multiple times to add multiple sections.
 .sp
 For MachO objects, \fB<section>\fP must be formatted as
@@ -153,6 +154,13 @@ as extended POSIX regular expression patterns.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-\-remove\-symbol\-prefix <prefix>
+.UNINDENT
+.sp
+Remove \fB<prefix>\fP from the start of every symbol name. No\-op for symbols that do
+not start with \fB<prefix>\fP\&.
+.INDENT 0.0
+.TP
 .B \-\-remove\-section <section>, \-R
 Remove the specified section from the output. Can be specified multiple times
 to remove multiple sections simultaneously.
@@ -163,7 +171,7 @@ For MachO objects, \fB<section>\fP must be formatted as
 .INDENT 0.0
 .TP
 .B \-\-set\-section\-alignment <section>=<align>
-Set the alignment of section \fB<section>\fP to \fI<align>\(ga\fP\&. Can be specified
+Set the alignment of section \fB<section>\fP to \fB<align>\fP\&. Can be specified
 multiple times to update multiple sections.
 .UNINDENT
 .INDENT 0.0
@@ -174,8 +182,9 @@ specified \fB<flag>\fP values. Can be specified multiple times to update multipl
 sections.
 .sp
 Supported flag names are \fIalloc\fP, \fIload\fP, \fInoload\fP, \fIreadonly\fP, \fIexclude\fP,
-\fIdebug\fP, \fIcode\fP, \fIdata\fP, \fIrom\fP, \fIshare\fP, \fIcontents\fP, \fImerge\fP and \fIstrings\fP\&. Not
-all flags are meaningful for all object file formats.
+\fIdebug\fP, \fIcode\fP, \fIdata\fP, \fIrom\fP, \fIshare\fP, \fIcontents\fP, \fImerge\fP, \fIstrings\fP, and
+\fIlarge\fP\&. Not all flags are meaningful for all object file formats or target
+architectures.
 .sp
 For ELF objects, the flags have the following effects:
 .INDENT 7.0
@@ -197,6 +206,9 @@ section.
 .IP \(bu 2
 \fIcontents\fP = if the section has \fISHT_NOBITS\fP type, mark it as a \fISHT_PROGBITS\fP
 section.
+.IP \(bu 2
+\fIlarge\fP = add the \fISHF_X86_64_LARGE\fP on x86_64; rejected if the target
+architecture is not x86_64.
 .UNINDENT
 .sp
 For COFF objects, the flags have the following effects:
@@ -282,6 +294,13 @@ relocations. Also remove all debug sections.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-\-update\-section <name>=<file>
+Replace the contents of the section \fB<name>\fP with contents from the file
+\fB<file>\fP\&. If the section \fB<name>\fP is part of a segment, the new contents
+cannot be larger than the existing section.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-\-version, \-V
 Display the version of the \fBllvm\-objcopy\fP executable.
 .UNINDENT
@@ -293,9 +312,8 @@ section\-related flags. Incompatible with \-\-regex.
 .sp
 Wildcard syntax allows the following special symbols:
 .TS
-center;
-|l|l|l|.
-_
+box center;
+l|l|l.
 T{
 Character
 T}	T{
@@ -343,7 +361,6 @@ Negated character class
 T}	T{
 \fB[^a\-z]\fP
 T}
-_
 .TE
 .sp
 Additionally, starting a wildcard with \(aq!\(aq will prevent a match, even if
@@ -408,16 +425,29 @@ section references. Any invalid sh_link fields will be set to zero.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-\-change\-section\-lma \e*{+\-}<val>
+Shift LMA of non\-zero\-sized segments by \fB<val>\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-\-change\-start <incr>, \-\-adjust\-start
 Add \fB<incr>\fP to the program\(aqs start address. Can be specified multiple
 times, in which case the values will be applied cumulatively.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \-\-compress\-debug\-sections [<style>]
-Compress DWARF debug sections in the output, using the specified style.
-Supported styles are \fIzlib\-gnu\fP and \fIzlib\fP\&. Defaults to \fIzlib\fP if no style is
-specified.
+.B \-\-compress\-debug\-sections [<format>]
+Compress DWARF debug sections in the output, using the specified format.
+Supported formats are \fBzlib\fP and \fBzstd\fP\&. Use \fBzlib\fP if \fB<format>\fP is omitted.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-compress\-sections <section>=<format>
+Compress or decompress sections matched by \fB<section>\fP using the specified
+format. Supported formats are \fBzlib\fP and \fBzstd\fP\&. Specify \fBnone\fP for
+decompression. When a section is matched by multiple options, the last one
+wins. A wildcard \fB<section>\fP starting with \(aq!\(aq is disallowed.
+Sections within a segment cannot be (de)compressed.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -427,7 +457,7 @@ Decompress any compressed DWARF debug sections in the output.
 .INDENT 0.0
 .TP
 .B \-\-discard\-locals, \-X
-Remove local symbols starting with ".L" from the output.
+Remove local symbols starting with \(dq.L\(dq from the output.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -443,6 +473,12 @@ Extract the main partition from the output.
 .TP
 .B \-\-extract\-partition <name>
 Extract the named partition from the output.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-gap\-fill <value>
+For binary outputs, fill the gaps between sections with \fB<value>\fP instead
+of zero. The value must be an unsigned 8\-bit integer.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -472,14 +508,14 @@ Keep symbols of type \fISTT_FILE\fP, even if they would otherwise be stripped.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \-\-keep\-global\-symbol <symbol>
-Make all symbols local in the output, except for symbols with the name
+.B \-\-keep\-global\-symbol <symbol>, \-G
+Mark all symbols local in the output, except for symbols with the name
 \fB<symbol>\fP\&. Can be specified multiple times to ignore multiple symbols.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-\-keep\-global\-symbols <filename>
-Make all symbols local in the output, except for symbols named in the file
+Mark all symbols local in the output, except for symbols named in the file
 \fB<filename>\fP\&. In the file, each line represents a single symbol, with leading
 and trailing whitespace ignored, as is anything following a \(aq#\(aq. Can be
 specified multiple times to read names from multiple files.
@@ -507,7 +543,7 @@ specified multiple times to read names from multiple files.
 .INDENT 0.0
 .TP
 .B \-\-localize\-hidden
-Make all symbols with hidden or internal visibility local in the output.
+Mark all symbols with hidden or internal visibility local in the output.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -544,11 +580,22 @@ The default is \fIdefault\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-\-no\-verify\-note\-sections
+When adding note sections, do not verify if the section format is valid.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-\-output\-target <format>, \-O
 Write the output as the specified format. See \fI\%SUPPORTED FORMATS\fP for a list
 of valid \fB<format>\fP values. If unspecified, the output format is assumed to
 be the same as the value specified for \fI\%\-\-input\-target\fP or the input
 file\(aqs format if that option is also unspecified.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-pad\-to <address>
+For binary outputs, pad the output to the load address \fB<address>\fP using a value
+of zero or the value specified by \fI\%\-\-gap\-fill\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -575,9 +622,41 @@ supported flags. Can be specified multiple times to rename multiple sections.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \-\-set\-start\-addr <addr>
+.B \-\-set\-section\-type <section>=<type>
+Set the type of section \fB<section>\fP to the integer \fB<type>\fP\&. Can be
+specified multiple times to update multiple sections.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-set\-start <addr>
 Set the start address of the output to \fB<addr>\fP\&. Overrides any previously
 specified \fI\%\-\-change\-start\fP or \fI\%\-\-adjust\-start\fP options.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-set\-symbol\-visibility <symbol>=<visibility>
+Change the visibility of a symbol to the specified value.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-set\-symbols\-visibility <filename>=<visibility>
+Read a list of symbols from <filename> and change their visibility to the
+specified value. Visibility values: default, internal, hidden, protected.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-skip\-symbol <symbol>
+Do not change the parameters of symbol \fB<symbol>\fP when executing other
+options that can change the symbol\(aqs name, binding or visibility.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-skip\-symbols <filename>
+Do not change the parameters of symbols named in the file \fB<filename>\fP when
+executing other options that can change the symbol\(aqs name, binding or
+visibility. In the file, each line represents a single symbol, with leading
+and trailing whitespace ignored, as is anything following a \(aq#\(aq.
+Can be specified multiple times to read names from multiple files.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -613,8 +692,14 @@ values.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-\-verify\-note\-sections
+When adding note sections, verify if the section format is valid. On by
+default.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-\-weaken\-symbol <symbol>, \-W
-Mark any global symbol named \fB<symbol>\fP as a weak symbol in the output. Can
+Mark global symbols named \fB<symbol>\fP as weak symbols in the output. Can
 be specified multiple times to mark multiple symbols as weak.
 .UNINDENT
 .INDENT 0.0
@@ -635,6 +720,12 @@ Mark all defined global symbols as weak in the output.
 .TP
 .B \-\-keep\-undefined
 Keep undefined symbols, even if they would otherwise be stripped.
+.UNINDENT
+.SH COFF-SPECIFIC OPTIONS
+.INDENT 0.0
+.TP
+.B \-\-subsystem <name>[:<version>]
+Set the PE subsystem, and optionally subsystem version.
 .UNINDENT
 .SH SUPPORTED FORMATS
 .sp
@@ -690,10 +781,25 @@ options. For GNU \fBobjcopy\fP compatibility, the values are all bfdnames.
 \fIelf32\-sparc\fP
 .IP \(bu 2
 \fIelf32\-sparcel\fP
+.IP \(bu 2
+\fIelf32\-hexagon\fP
+.IP \(bu 2
+\fIelf32\-loongarch\fP
+.IP \(bu 2
+\fIelf64\-loongarch\fP
+.IP \(bu 2
+\fIelf64\-s390\fP
 .UNINDENT
 .sp
-Additionally, all targets except \fIbinary\fP and \fIihex\fP can have \fI\-freebsd\fP as a
-suffix.
+The following formats are suppoprted by \fBllvm\-objcopy\fP for the
+\fI\%\-\-output\-target\fP only:
+.INDENT 0.0
+.IP \(bu 2
+\fIsrec\fP
+.UNINDENT
+.sp
+Additionally, all targets except \fIbinary\fP, \fIihex\fP, and \fIsrec\fP can have
+\fI\-freebsd\fP as a suffix.
 .SH BINARY INPUT AND OUTPUT
 .sp
 If \fIbinary\fP is used as the value for \fI\%\-\-input\-target\fP, the input file
@@ -713,7 +819,7 @@ the address of the first loadable section in the output.
 Otherwise, it exits with code 0.
 .SH BUGS
 .sp
-To report bugs, please visit <\fI\%https://bugs.llvm.org/\fP>.
+To report bugs, please visit <\X'tty: link https://github.com/llvm/llvm-project/labels/tools:llvm-objcopy/strip/'\fI\%https://github.com/llvm/llvm\-project/labels/tools:llvm\-objcopy/strip/\fP\X'tty: link'>.
 .sp
 There is a known issue with \fI\%\-\-input\-target\fP and \fI\%\-\-target\fP
 causing only \fBbinary\fP and \fBihex\fP formats to have any effect. Other values
@@ -721,10 +827,10 @@ will be ignored and \fBllvm\-objcopy\fP will attempt to guess the input
 format.
 .SH SEE ALSO
 .sp
-\fBllvm\-strip(1)\fP
+\fB\fI\%llvm\-strip(1)\fP\fP
 .SH AUTHOR
 Maintained by the LLVM Team (https://llvm.org/).
 .SH COPYRIGHT
-2003-2021, LLVM Project
+2003-2024, LLVM Project
 .\" Generated by docutils manpage writer.
 .

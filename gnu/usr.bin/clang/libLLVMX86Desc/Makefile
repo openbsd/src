@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.9 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMX86Desc
 NOPROFILE=
@@ -9,7 +9,7 @@ SRCS+=	X86ATTInstPrinter.cpp \
 	X86IntelInstPrinter.cpp \
 	X86InstComments.cpp \
 	X86InstPrinterCommon.cpp \
-	X86InstrRelaxTables.cpp \
+	X86EncodingOptimization.cpp \
 	X86ShuffleDecode.cpp \
 	X86AsmBackend.cpp \
 	X86MCTargetDesc.cpp \

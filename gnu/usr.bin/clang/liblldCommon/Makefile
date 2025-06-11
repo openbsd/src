@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldCommon
 NOPROFILE=
@@ -9,6 +9,7 @@ CPPFLAGS+=	-I${LLD_SRCS}/include
 
 SRCS=	Args.cpp \
 	CommonLinkerContext.cpp \
+	DriverDispatcher.cpp \
 	DWARF.cpp \
 	ErrorHandler.cpp \
 	Filesystem.cpp \

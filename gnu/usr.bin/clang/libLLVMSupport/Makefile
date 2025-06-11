@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.15 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -20,10 +20,10 @@ SRCS+=	ABIBreak.cpp \
 	ARMAttributeParser.cpp \
 	ARMBuildAttrs.cpp \
 	ARMWinEH.cpp \
-	AddressRanges.cpp \
 	Allocator.cpp \
 	Atomic.cpp \
 	AutoConvert.cpp \
+	BalancedPartitioning.cpp \
 	Base64.cpp \
 	BinaryStreamError.cpp \
 	BinaryStreamReader.cpp \
@@ -43,10 +43,12 @@ SRCS+=	ABIBreak.cpp \
 	CommandLine.cpp \
 	Compression.cpp \
 	ConvertUTF.cpp \
+	ConvertEBCDIC.cpp \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
 	DAGDeltaAlgorithm.cpp \
 	DJB.cpp \
+	DynamicAPInt.cpp \
 	DataExtractor.cpp \
 	Debug.cpp \
 	DebugCounter.cpp \
@@ -58,28 +60,29 @@ SRCS+=	ABIBreak.cpp \
 	Errno.cpp \
 	SupportError.cpp \
 	ErrorHandling.cpp \
+	ExponentialBackoff.cpp \
 	ExtensibleRTTI.cpp \
 	FileCollector.cpp \
 	FileOutputBuffer.cpp \
+	FloatingPointMode.cpp \
 	FileUtilities.cpp \
 	FoldingSet.cpp \
 	FormatVariadic.cpp \
 	FormattedStream.cpp \
 	GlobPattern.cpp \
 	GraphWriter.cpp \
-	Hashing.cpp \
+	HexagonAttributeParser.cpp \
+	HexagonAttributes.cpp \
 	InitLLVM.cpp \
 	InstructionCost.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
-	ItaniumManglingCanonicalizer.cpp \
 	JSON.cpp \
 	KnownBits.cpp \
 	LEB128.cpp \
 	LineIterator.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
-	SupportLowLevelType.cpp \
 	MD5.cpp \
 	MSP430AttributeParser.cpp \
 	MSP430Attributes.cpp \
@@ -92,6 +95,7 @@ SRCS+=	ABIBreak.cpp \
 	NativeFormatting.cpp \
 	OptimizedStructLayout.cpp \
 	Optional.cpp \
+	PGOOptions.cpp \
 	Parallel.cpp \
 	Path.cpp \
 	PluginLoader.cpp \
@@ -100,7 +104,7 @@ SRCS+=	ABIBreak.cpp \
 	Program.cpp \
 	RISCVAttributeParser.cpp \
 	RISCVAttributes.cpp \
-	RISCVISAInfo.cpp \
+	RISCVISAUtils.cpp \
 	RWMutex.cpp \
 	RandomNumberGenerator.cpp \
 	Regex.cpp \
@@ -110,6 +114,8 @@ SRCS+=	ABIBreak.cpp \
 	ScopedPrinter.cpp \
 	Signals.cpp \
 	Signposts.cpp \
+	SipHash.cpp \
+	SlowDynamicAPInt.cpp \
 	SmallPtrSet.cpp \
 	SmallVector.cpp \
 	SourceMgr.cpp \
@@ -119,8 +125,8 @@ SRCS+=	ABIBreak.cpp \
 	StringMap.cpp \
 	StringRef.cpp \
 	StringSaver.cpp \
+	SuffixTreeNode.cpp \
 	SuffixTree.cpp \
-	SymbolRemappingReader.cpp \
 	SystemUtils.cpp \
 	TarWriter.cpp \
 	ThreadPool.cpp \
@@ -128,7 +134,6 @@ SRCS+=	ABIBreak.cpp \
 	TimeProfiler.cpp \
 	Timer.cpp \
 	ToolOutputFile.cpp \
-	TrigramIndex.cpp \
 	Twine.cpp \
 	TypeSize.cpp \
 	Unicode.cpp \
@@ -146,6 +151,7 @@ SRCS+=	ABIBreak.cpp \
 	circular_raw_ostream.cpp \
 	raw_os_ostream.cpp \
 	raw_ostream.cpp \
+	raw_socket_stream.cpp \
 	regcomp.c \
 	regerror.c \
 	regexec.c \
@@ -162,15 +168,12 @@ SRCS+=	blake3.c \
 SupportError.cpp:
 	ln -s ${LLVM_SRCS}/lib/Support/Error.cpp $@
 
-SupportLowLevelType.cpp:
-	ln -s ${LLVM_SRCS}/lib/Support/LowLevelType.cpp $@
-
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Support
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Support/BLAKE3
 
 install:
 	@# Nothing here so far ...
 
-CLEANFILES+= SupportError.cpp SupportLowLevelType.cpp
+CLEANFILES+= SupportError.cpp
 
 .include <bsd.lib.mk>

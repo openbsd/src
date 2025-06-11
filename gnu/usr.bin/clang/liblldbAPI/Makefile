@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:39 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbAPI
 NOPIC=
@@ -7,6 +7,8 @@ NOPROFILE=
 .include <bsd.own.mk>
 
 SRCS=	SBAddress.cpp \
+	SBAddressRange.cpp \
+	SBAddressRangeList.cpp \
 	SBAttachInfo.cpp \
 	SBBlock.cpp \
 	SBBreakpoint.cpp \
@@ -19,6 +21,7 @@ SRCS=	SBAddress.cpp \
 	SBCommandReturnObject.cpp \
 	SBCommunication.cpp \
 	SBCompileUnit.cpp \
+	SBSaveCoreOptions.cpp \
 	SBData.cpp \
 	SBDebugger.cpp \
 	SBDeclaration.cpp \
@@ -30,6 +33,7 @@ SRCS=	SBAddress.cpp \
 	SBFileSpec.cpp \
 	SBFile.cpp \
 	SBFileSpecList.cpp \
+	SBFormat.cpp \
 	SBFrame.cpp \
 	SBFunction.cpp \
 	SBHostOS.cpp \
@@ -46,11 +50,14 @@ SRCS=	SBAddress.cpp \
 	SBPlatform.cpp \
 	SBProcess.cpp \
 	SBProcessInfo.cpp \
+	SBProcessInfoList.cpp \
 	SBQueue.cpp \
 	SBQueueItem.cpp \
 	SBReproducer.cpp \
+	SBScriptObject.cpp \
 	SBSection.cpp \
 	SBSourceManager.cpp \
+	SBStatisticsOptions.cpp \
 	SBStream.cpp \
 	SBStringList.cpp \
 	SBStructuredData.cpp \
@@ -75,6 +82,7 @@ SRCS=	SBAddress.cpp \
 	SBValueList.cpp \
 	SBVariablesOptions.cpp \
 	SBWatchpoint.cpp \
+	SBWatchpointOptions.cpp \
 	SBUnixSignals.cpp \
 	SystemInitializerFull.cpp
 

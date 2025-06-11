@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2024/07/13 07:25:38 asou Exp $
+# $OpenBSD: Makefile,v 1.13 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
@@ -17,7 +17,6 @@ SRCS=	NativeProcessOpenBSD.cpp \
 # Process/POSIX
 SRCS+=	CrashReason.cpp \
 	NativeProcessELF.cpp \
-	ProcessMessage.cpp \
 	ProcessPOSIXLog.cpp
 
 # Process/gdb-remote
@@ -45,7 +44,6 @@ SRCS+=	AuxVector.cpp \
 	LinuxProcMaps.cpp \
 	LinuxSignals.cpp \
 	MemoryTagManagerAArch64MTE.cpp \
-	MipsLinuxSignals.cpp \
 	NativeProcessSoftwareSingleStep.cpp \
 	NativeRegisterContextDBReg_arm64.cpp \
 	NativeRegisterContextDBReg_x86.cpp \
@@ -85,6 +83,8 @@ SRCS+=	AuxVector.cpp \
 	RegisterContextPOSIX_x86.cpp \
 	RegisterContextThreadMemory.cpp \
 	RegisterContextWindows_i386.cpp \
+	RegisterFlagsDetector_arm64.cpp \
+	RegisterInfos_x86_64_with_base_shared.cpp \
 	RegisterContextWindows_x86_64.cpp \
 	RegisterInfoPOSIX_arm.cpp \
 	RegisterInfoPOSIX_arm64.cpp \
@@ -97,6 +97,7 @@ SRCS+=	AuxVector.cpp \
 # Process/elf-core
 SRCS+=	ProcessElfCore.cpp \
 	ThreadElfCore.cpp \
+	RegisterContextLinuxCore_x86_64.cpp \
 	RegisterContextPOSIXCore_arm.cpp \
 	RegisterContextPOSIXCore_arm64.cpp \
 	RegisterContextPOSIXCore_mips64.cpp \
@@ -104,6 +105,7 @@ SRCS+=	ProcessElfCore.cpp \
 	RegisterContextPOSIXCore_ppc64le.cpp \
 	RegisterContextPOSIXCore_s390x.cpp \
 	RegisterContextPOSIXCore_x86_64.cpp \
+	RegisterContextPOSIXCore_riscv64.cpp \
 	RegisterUtilities.cpp
 
 # Process/mach-core

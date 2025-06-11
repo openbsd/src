@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:36 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMAMDGPUCodeGen
 NOPROFILE=
@@ -15,11 +15,13 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUAtomicOptimizer.cpp \
 	AMDGPUAttributor.cpp \
 	AMDGPUCallLowering.cpp \
+	AMDGPUCodeGenPassBuilder.cpp \
 	AMDGPUCodeGenPrepare.cpp \
 	AMDGPUCombinerHelper.cpp \
 	AMDGPUCtorDtorLowering.cpp \
 	AMDGPUExportClustering.cpp \
 	AMDGPUFrameLowering.cpp \
+	AMDGPUGlobalISelDivergenceLowering.cpp \
 	AMDGPUGlobalISelUtils.cpp \
 	AMDGPUHSAMetadataStreamer.cpp \
 	AMDGPUInsertDelayAlu.cpp \
@@ -31,8 +33,9 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPULateCodeGenPrepare.cpp \
 	AMDGPULegalizerInfo.cpp \
 	AMDGPULibCalls.cpp \
+	AMDGPUImageIntrinsicOptimizer.cpp \
 	AMDGPULibFunc.cpp \
-	AMDGPULowerIntrinsics.cpp \
+	AMDGPULowerBufferFatPointers.cpp \
 	AMDGPULowerKernelArguments.cpp \
 	AMDGPULowerKernelAttributes.cpp \
 	AMDGPULowerModuleLDSPass.cpp \
@@ -42,6 +45,8 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUMacroFusion.cpp \
 	AMDGPUMCInstLower.cpp \
 	AMDGPUIGroupLP.cpp \
+	AMDGPUInsertSingleUseVDST.cpp \
+	AMDGPUMarkLastScratchLoad.cpp \
 	AMDGPUMIRFormatter.cpp \
 	AMDGPUOpenCLEnqueuedBlockLowering.cpp \
 	AMDGPUPerfHintAnalysis.cpp \
@@ -49,16 +54,16 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUPreLegalizerCombiner.cpp \
 	AMDGPUPrintfRuntimeBinding.cpp \
 	AMDGPUPromoteAlloca.cpp \
-	AMDGPUPropagateAttributes.cpp \
 	AMDGPUPromoteKernelArguments.cpp \
 	AMDGPURegBankCombiner.cpp \
+	AMDGPURegBankSelect.cpp \
 	AMDGPURegisterBankInfo.cpp \
-	AMDGPUReleaseVGPRs.cpp \
-	AMDGPUReplaceLDSUseWithPointer.cpp \
+	AMDGPURemoveIncompatibleFunctions.cpp \
 	AMDGPUResourceUsageAnalysis.cpp \
 	AMDGPURewriteOutArguments.cpp \
 	AMDGPURewriteUndefForPHI.cpp \
 	AMDGPUSetWavePriority.cpp \
+	AMDGPUSplitModule.cpp \
 	AMDGPUSubtarget.cpp \
 	AMDGPUTargetMachine.cpp \
 	AMDGPUTargetObjectFile.cpp \
@@ -74,11 +79,14 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	GCNMinRegStrategy.cpp \
 	GCNNSAReassign.cpp \
 	GCNPreRAOptimizations.cpp \
+	GCNPreRALongBranchReg.cpp \
 	GCNRegPressure.cpp \
+	GCNRewritePartialRegUses.cpp \
 	GCNSchedStrategy.cpp \
 	GCNVOPDUtils.cpp \
 	R600AsmPrinter.cpp \
 	R600ClauseMergePass.cpp \
+	R600CodeGenPassBuilder.cpp \
 	R600ControlFlowFinalizer.cpp \
 	R600EmitClauseMarkers.cpp \
 	R600ExpandSpecialInstrs.cpp \
@@ -110,11 +118,13 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	SILoadStoreOptimizer.cpp \
 	SILowerControlFlow.cpp \
 	SILowerI1Copies.cpp \
+	SILowerWWMCopies.cpp \
 	SILowerSGPRSpills.cpp \
 	SIMachineFunctionInfo.cpp \
 	SIMachineScheduler.cpp \
 	SIMemoryLegalizer.cpp \
 	SIModeRegister.cpp \
+	SIModeRegisterDefaults.cpp \
 	SIOptimizeExecMasking.cpp \
 	SIOptimizeExecMaskingPreRA.cpp \
 	SIOptimizeVGPRLiveRange.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.13 2025/06/11 17:46:33 robert Exp $
 
 LIB=	clangBasic
 NOPIC=
@@ -10,7 +10,8 @@ CPPFLAGS+=	-I${CLANG_SRCS}/lib/Basic/Targets
 
 .include <bsd.own.mk>
 
-SRCS=	Attributes.cpp \
+SRCS=	ASTSourceDescriptor.cpp \
+	Attributes.cpp \
 	Builtins.cpp \
 	CLWarnings.cpp \
 	CharInfo.cpp \
@@ -33,6 +34,7 @@ SRCS=	Attributes.cpp \
 	OpenCLOptions.cpp \
 	OpenMPKinds.cpp \
 	OperatorPrecedence.cpp \
+	ParsedAttrInfo.cpp \
 	ProfileList.cpp \
 	NoSanitizeList.cpp \
 	SanitizerSpecialCaseList.cpp \
@@ -40,6 +42,7 @@ SRCS=	Attributes.cpp \
 	Sarif.cpp \
 	SourceLocation.cpp \
 	SourceManager.cpp \
+	SourceMgrAdapter.cpp \
 	Stack.cpp \
 	TargetID.cpp \
 	TargetInfo.cpp \

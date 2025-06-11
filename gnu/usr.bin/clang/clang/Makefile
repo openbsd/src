@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.19 2023/11/11 18:35:35 robert Exp $
+# $OpenBSD: Makefile,v 1.20 2025/06/11 17:46:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -52,6 +52,8 @@ LLVM_LIBDEPS=	LLVM \
 		clangBasic \
 		clangExtractAPI \
 		clangSupport \
-		clangIndex
+		clangIndex \
+		clangAPINotes \
+		clangInstallAPI
 
 .include <bsd.prog.mk>

@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LLVM-PROFDATA" "1" "2023-10-21" "16" "LLVM"
+.TH "LLVM-PROFDATA" "1" "2024-12-23" "19" "LLVM"
 .SH NAME
 llvm-profdata \- Profile data tool
 .SH SYNOPSIS
@@ -45,6 +45,8 @@ data files.
 \fI\%show\fP
 .IP \(bu 2
 \fI\%overlap\fP
+.IP \(bu 2
+\fI\%order\fP
 .UNINDENT
 .SH MERGE
 .SS SYNOPSIS
@@ -197,6 +199,13 @@ sample\-based profile in extbinary format.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-\-convert\-sample\-profile\-layout=[nest|flat]
+Convert the merged profile into a profile with a new layout. Supported
+layout are \fBnest\fP (Nested profile, the input should be CS flat profile) and
+\fBflat\fP (Profile with nested inlinees flattened out).
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-\-supplement\-instr\-with\-sample=<file>
 Supplement an instrumentation profile with sample profile. The sample profile
 is the input of the flag. Output will be in instrumentation format (only works
@@ -227,8 +236,42 @@ profile.
 .TP
 .B \-\-debug\-info=<path>
 Specify the executable or \fB\&.dSYM\fP that contains debug info for the raw profile.
-When \fB\-debug\-info\-correlate\fP was used for instrumentation, use this option
-to correlate the raw profile.
+When \fB\-\-debug\-info\-correlate\fP or \fB\-\-profile\-correlate=debug\-info\fP was used
+for instrumentation, use this option to correlate the raw profile.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-binary\-file=<path>
+Specify the executable that contains profile data and profile name sections for
+the raw profile. When \fB\-profile\-correlate=binary\fP was used for
+instrumentation, use this option to correlate the raw profile.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-temporal\-profile\-trace\-reservoir\-size
+The maximum number of temporal profile traces to be stored in the output
+profile. If more traces are added, we will use reservoir sampling to select
+which traces to keep. Note that changing this value between different merge
+invocations on the same indexed profile could result in sample bias. The
+default value is 100.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-temporal\-profile\-max\-trace\-length
+The maximum number of functions in a single temporal profile trace. Longer
+traces will be truncated. The default value is 1000.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-function=<string>
+Only keep functions matching the regex in the output, all others are erased
+from the profile.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-no\-function=<string>
+Remove functions matching the regex from the profile. If both \-\-function and
+\-\-no\-function are specified and a function matches both, it is removed.
 .UNINDENT
 .SS EXAMPLES
 .SS Basic Usage
@@ -237,11 +280,9 @@ Merge three profiles:
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 llvm\-profdata merge foo.profdata bar.profdata baz.profdata \-output merged.profdata
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SS Weighted Input
@@ -250,11 +291,9 @@ The input file \fBfoo.profdata\fP is especially important, multiply its counts b
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 llvm\-profdata merge \-\-weighted\-input=10,foo.profdata bar.profdata baz.profdata \-\-output merged.profdata
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .sp
@@ -262,11 +301,9 @@ Exactly equivalent to the previous invocation (explicit form; useful for program
 .INDENT 0.0
 .INDENT 3.5
 .sp
-.nf
-.ft C
+.EX
 llvm\-profdata merge \-\-weighted\-input=10,foo.profdata \-\-weighted\-input=1,bar.profdata \-\-weighted\-input=1,baz.profdata \-\-output merged.profdata
-.ft P
-.fi
+.EE
 .UNINDENT
 .UNINDENT
 .SH SHOW
@@ -387,8 +424,9 @@ only meaningful for sample\-based profile in extbinary format.
 .TP
 .B \-\-debug\-info=<path>
 Specify the executable or \fB\&.dSYM\fP that contains debug info for the raw profile.
-When \fB\-debug\-info\-correlate\fP was used for instrumentation, use this option
-to show the correlated functions from the raw profile.
+When \fB\-\-debug\-info\-correlate\fP or \fB\-\-profile\-correlate=debug\-info\fP was used
+for instrumentation, use this option to show the correlated functions from the
+raw profile.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -454,6 +492,30 @@ By default, the value\-cutoff is set to max of unsigned long long.
 Only show overlap for the context sensitive profile counts. The default is to show
 non\-context sensitive profile counts.
 .UNINDENT
+.SH ORDER
+.SS SYNOPSIS
+.sp
+\fBllvm\-profdata order\fP [\fIoptions\fP] [\fIfilename\fP]
+.SS DESCRIPTION
+.sp
+\fBllvm\-profdata order\fP uses temporal profiling traces from a profile and
+finds a function order that reduces the number of page faults for those traces.
+This output can be directly passed to \fBlld\fP via \fB\-\-symbol\-ordering\-file=\fP
+for ELF or \fB\-order\-file\fP for Mach\-O. If the traces found in the profile are
+representative of the real world, then this order should improve startup
+performance.
+.SS OPTIONS
+.INDENT 0.0
+.TP
+.B \-\-help
+Print a summary of command line options.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-output=<output>, \-o
+Specify the output file name.  If \fIoutput\fP is \fB\-\fP or it isn\(aqt specified,
+then the output is sent to standard output.
+.UNINDENT
 .SH EXIT STATUS
 .sp
 \fBllvm\-profdata\fP returns 1 if the command is omitted or is invalid,
@@ -461,6 +523,6 @@ if it cannot read input files, or if there is a mismatch between their data.
 .SH AUTHOR
 Maintained by the LLVM Team (https://llvm.org/).
 .SH COPYRIGHT
-2003-2023, LLVM Project
+2003-2024, LLVM Project
 .\" Generated by docutils manpage writer.
 .

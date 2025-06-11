@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/11/11 18:35:40 robert Exp $
+# $OpenBSD: Makefile,v 1.7 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbTarget
 NOPIC=
@@ -31,6 +31,7 @@ SRCS=	ABI.cpp \
 	QueueList.cpp \
 	RegisterContext.cpp \
 	RegisterContextUnwind.cpp \
+	RegisterFlags.cpp \
 	RegisterNumber.cpp \
 	RemoteAwarePlatform.cpp \
 	SectionLoadHistory.cpp \
@@ -74,7 +75,8 @@ SRCS=	ABI.cpp \
 	TraceDumper.cpp \
 	UnixSignals.cpp \
 	UnwindAssembly.cpp \
-	UnwindLLDB.cpp
+	UnwindLLDB.cpp \
+	VerboseTrapFrameRecognizer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Target
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:40 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbUtility
 NOPIC=
@@ -6,10 +6,12 @@ NOPROFILE=
 
 .include <bsd.own.mk>
 
-SRCS=	ArchSpec.cpp \
+SRCS=	AddressableBits.cpp \
+	ArchSpec.cpp \
 	Args.cpp \
 	Baton.cpp \
 	Broadcaster.cpp \
+	Checksum.cpp \
 	CompletionRequest.cpp \
 	Connection.cpp \
 	ConstString.cpp \
@@ -19,8 +21,10 @@ SRCS=	ArchSpec.cpp \
 	DataExtractor.cpp \
 	Diagnostics.cpp \
 	Environment.cpp \
+	ErrorMessages.cpp \
 	Event.cpp \
 	FileSpec.cpp \
+	FileSpecList.cpp \
 	GDBRemote.cpp \
 	IOObject.cpp \
 	LLDBAssert.cpp \
@@ -54,7 +58,8 @@ SRCS=	ArchSpec.cpp \
 	UserIDResolver.cpp \
 	VASprintf.cpp \
 	VMRange.cpp \
-	XcodeSDK.cpp
+	XcodeSDK.cpp \
+	ZipFile.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Utility
 

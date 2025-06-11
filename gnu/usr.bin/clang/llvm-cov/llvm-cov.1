@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "LLVM-COV" "1" "2023-10-21" "16" "LLVM"
+.TH "LLVM-COV" "1" "2024-12-23" "19" "LLVM"
 .SH NAME
 llvm-cov \- emit coverage information
 .SH SYNOPSIS
@@ -241,6 +241,12 @@ The supported views are: \(dqcount\(dq, \(dqpercent\(dq.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-show\-mcdc
+Show modified condition/decision coverage (MC/DC) for each applicable boolean
+expression.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-show\-line\-counts
 Show the execution counts for each line. Defaults to true, unless another
 \fB\-show\fP option is used.
@@ -270,6 +276,12 @@ the character where the region starts. Defaults to false.
 Show the execution counts for each line if there is only one region on the
 line, but show the individual regions if there are multiple on the line.
 Defaults to false.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-show\-directory\-coverage
+Generate an index file in each directory that contains at least one source
+file with a top level index showing aggregates. Defaults to false.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -379,7 +391,11 @@ threshold.
 .B \-path\-equivalence=<from>,<to>
 Map the paths in the coverage data to local source file paths. This allows you
 to generate the coverage data on one machine, and then use llvm\-cov on a
-different machine where you have the same files on a different path.
+different machine where you have the same files on a different path. Multiple
+\fI\-path\-equivalence\fP arguments can be passed to specify different mappings. Each
+argument consists of a source path \fI<from>\fP and its corresponding local path \fI<to>\fP\&.
+The mappings are applied in the order they are specified. If multiple mappings can
+be applied to a single path, the first mapping encountered is used.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -392,18 +408,23 @@ low should be between 0\-100 and high > low.
 .INDENT 0.0
 .TP
 .B \-debuginfod
+Use debuginfod to look up coverage mapping for binary IDs present in the
+profile but not in any object given on the command line. Defaults to true if
+debuginfod is compiled in and configured via the DEBUGINFOD_URLS environment
+variable.
 .UNINDENT
-.sp
-Use debuginfod to look up coverage mapping for binary IDs present in the profile
-but not in any object given on the command line. Defaults to true if debuginfod
-is compiled in and configured via the DEBUGINFOD_URLS environment variable.
 .INDENT 0.0
 .TP
 .B \-debug\-file\-directory=<dir>
-.UNINDENT
-.sp
 Provides local directories to search for objects corresponding to binary IDs in
 the profile (as with debuginfod). Defaults to system build ID directories.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-check\-binary\-ids
+Fail if an object file cannot be found for a binary ID present in the profile,
+neither on the command line nor via binary ID lookup.
+.UNINDENT
 .SH REPORT COMMAND
 .SS SYNOPSIS
 .sp
@@ -449,6 +470,11 @@ Show statistics for all branch conditions. Defaults to true.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-show\-mcdc\-summary
+Show MC/DC statistics. Defaults to false.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-show\-functions
 Show coverage summaries for each function. Defaults to false.
 .UNINDENT
@@ -472,19 +498,23 @@ when binaries have been compiled with one of \fI\-fcoverage\-prefix\-map\fP
 .INDENT 0.0
 .TP
 .B \-debuginfod
-.UNINDENT
-.sp
 Attempt to look up coverage mapping from objects using debuginfod. This is
 attempted by default for binary IDs present in the profile but not provided on
 the command line, so long as debuginfod is compiled in and configured via
 DEBUGINFOD_URLS.
+.UNINDENT
 .INDENT 0.0
 .TP
 .B \-debug\-file\-directory=<dir>
-.UNINDENT
-.sp
 Provides a directory to search for objects corresponding to binary IDs in the
 profile.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-check\-binary\-ids
+Fail if an object file cannot be found for a binary ID present in the profile,
+neither on the command line nor via binary ID lookup.
+.UNINDENT
 .SH EXPORT COMMAND
 .SS SYNOPSIS
 .sp
@@ -532,23 +562,20 @@ format rather than text.
 .TP
 .B \-ignore\-filename\-regex=<PATTERN>
 Skip source code files with file paths that match the given regular expression.
-.INDENT 7.0
+.UNINDENT
+.INDENT 0.0
 .TP
 .B \-skip\-expansions
-.UNINDENT
-.sp
 Skip exporting macro expansion coverage data.
-.INDENT 7.0
+.UNINDENT
+.INDENT 0.0
 .TP
 .B \-skip\-functions
-.UNINDENT
-.sp
 Skip exporting per\-function coverage data.
-.INDENT 7.0
+.UNINDENT
+.INDENT 0.0
 .TP
 .B \-num\-threads=N, \-j=N
-.UNINDENT
-.sp
 Use N threads to export coverage data. When N=0, llvm\-cov auto\-detects an
 appropriate number of threads to use. This is the default.
 .UNINDENT
@@ -562,22 +589,46 @@ when binaries have been compiled with one of \fI\-fcoverage\-prefix\-map\fP
 .INDENT 0.0
 .TP
 .B \-debuginfod
-.UNINDENT
-.sp
 Attempt to look up coverage mapping from objects using debuginfod. This is
 attempted by default for binary IDs present in the profile but not provided on
 the command line, so long as debuginfod is compiled in and configured via
 DEBUGINFOD_URLS.
+.UNINDENT
 .INDENT 0.0
 .TP
 .B \-debug\-file\-directory=<dir>
-.UNINDENT
-.sp
 Provides a directory to search for objects corresponding to binary IDs in the
 profile.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-check\-binary\-ids
+Fail if an object file cannot be found for a binary ID present in the profile,
+neither on the command line nor via binary ID lookup.
+.UNINDENT
+.SH CONVERT-FOR-TESTING COMMAND
+.sp
+\fBWARNING:\fP
+.INDENT 0.0
+.INDENT 3.5
+This command is for the LLVM developers who are working on \fBllvm\-cov\fP only.
+.UNINDENT
+.UNINDENT
+.SS SYNOPSIS
+.sp
+\fBllvm\-cov convert\-for\-testing\fP \fIBIN\fP \-o \fIOUT\fP
+.SS DESCRIPTION
+.sp
+The \fBllvm\-cov convert\-for\-testing\fP command serves the purpose of
+testing \fIllvm\-cov\fP itself. It can extract all code coverage data from the
+binary \fIBIN\fP to the file \fIOUT\fP, thereby reducing the size of test files. The
+output file typically bears the \fB\&.covmapping\fP extension.
+.sp
+The \fB\&.covmapping\fP files can be read back by \fBllvm\-cov\fP just as
+ordinary binary files.
 .SH AUTHOR
 Maintained by the LLVM Team (https://llvm.org/).
 .SH COPYRIGHT
-2003-2023, LLVM Project
+2003-2024, LLVM Project
 .\" Generated by docutils manpage writer.
 .

@@ -18,9 +18,12 @@
 .include "../libLLVMBitstreamReader/Makefile"
 .include "../libLLVMCFGuard/Makefile"
 .include "../libLLVMCodeGen/Makefile"
+.include "../libLLVMCodeGenData/Makefile"
+.include "../libLLVMCodeGenTypes/Makefile"
 .include "../libLLVMCore/Makefile"
 .include "../libLLVMCoroutines/Makefile"
 .include "../libLLVMCoverage/Makefile"
+.include "../libLLVMDebugInfoBTF/Makefile"
 .include "../libLLVMDebugInfoCodeView/Makefile"
 .include "../libLLVMDebugInfoDWARF/Makefile"
 .include "../libLLVMDebugInfoMSF/Makefile"
@@ -28,10 +31,13 @@
 .include "../libLLVMDebuginfod/Makefile"
 .include "../libLLVMDemangle/Makefile"
 .include "../libLLVMExecutionEngine/Makefile"
+.include "../libLLVMFrontendDriver/Makefile"
 .include "../libLLVMFrontendHLSL/Makefile"
 .include "../libLLVMFrontendOpenACC/Makefile"
 .include "../libLLVMFrontendOpenMP/Makefile"
+.include "../libLLVMFrontendOffloading/Makefile"
 .include "../libLLVMGlobalISel/Makefile"
+.include "../libLLVMHipStdPar/Makefile"
 .include "../libLLVMIRReader/Makefile"
 .include "../libLLVMIRPrinter/Makefile"
 .include "../libLLVMInstCombine/Makefile"
@@ -85,3 +91,6 @@ includes:
 
 # Enable return protectors for libLLVM.so
 PICFLAG+= -fret-protector
+
+# Find GenVT.inc
+CPPFLAGS+= -I${.OBJDIR}/../llvm-tblgen

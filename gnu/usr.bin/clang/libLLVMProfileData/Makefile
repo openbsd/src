@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2023/11/11 18:35:37 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMProfileData
 NOPROFILE=
@@ -10,11 +10,15 @@ SRCS+=	GCOV.cpp \
 	InstrProfCorrelator.cpp \
 	InstrProfReader.cpp \
 	InstrProfWriter.cpp \
+	ItaniumManglingCanonicalizer.cpp \
 	MemProf.cpp \
+	MemProfReader.cpp \
+	PGOCtxProfReader.cpp \
+	PGOCtxProfWriter.cpp \
 	ProfileSummaryBuilder.cpp \
 	SampleProf.cpp \
 	SampleProfReader.cpp \
 	SampleProfWriter.cpp \
-	RawMemProfReader.cpp
+	SymbolRemappingReader.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ProfileData

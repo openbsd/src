@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.16 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMTransformUtils
 NOPROFILE=
@@ -24,8 +24,11 @@ SRCS+=	AddDiscriminators.cpp \
 	CodeLayout.cpp \
 	CodeMoverUtils.cpp \
 	CtorUtils.cpp \
+	CountVisits.cpp \
 	Debugify.cpp \
 	DemoteRegToStack.cpp \
+	DXILResource.cpp \
+	DXILUpgrade.cpp \
 	EntryExitInstrumenter.cpp \
 	EscapeEnumerator.cpp \
 	Evaluator.cpp \
@@ -43,6 +46,7 @@ SRCS+=	AddDiscriminators.cpp \
 	LCSSA.cpp \
 	LibCallsShrinkWrap.cpp \
 	TransformUtilsLocal.cpp \
+	LoopConstrainer.cpp \
 	LoopPeel.cpp \
 	LoopRotationUtils.cpp \
 	LoopSimplify.cpp \
@@ -64,6 +68,7 @@ SRCS+=	AddDiscriminators.cpp \
 	MetaRenamer.cpp \
 	MisExpect.cpp \
 	ModuleUtils.cpp \
+	MoveAutoInit.cpp \
 	NameAnonGlobals.cpp \
 	PredicateInfo.cpp \
 	PromoteMemoryToRegister.cpp \

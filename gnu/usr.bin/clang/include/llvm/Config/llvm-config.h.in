@@ -35,6 +35,9 @@
 /* Has gcc/MSVC atomic intrinsics */
 #define LLVM_HAS_ATOMICS 1
 
+/* LLVM name for the native target MCA init function, if available */
+/* #undef LLVM_NATIVE_TARGETMCA */
+
 /* Define if this is Unixish platform */
 #define LLVM_ON_UNIX 1
 
@@ -48,16 +51,16 @@
 #define LLVM_USE_PERF 0
 
 /* Major version of the LLVM API */
-#define LLVM_VERSION_MAJOR 16
+#define LLVM_VERSION_MAJOR 19
 
 /* Minor version of the LLVM API */
-#define LLVM_VERSION_MINOR 0
+#define LLVM_VERSION_MINOR 1
 
 /* Patch version of the LLVM API */
-#define LLVM_VERSION_PATCH 6
+#define LLVM_VERSION_PATCH 7
 
 /* LLVM version string */
-#define LLVM_VERSION_STRING "16.0.6"
+#define LLVM_VERSION_STRING "19.1.7"
 
 /* Whether LLVM records statistics for use with GetStatistics(),
  * PrintStatistics() or PrintStatisticsJSON()
@@ -79,11 +82,17 @@
 /* Define if zstd compression is available */
 #define LLVM_ENABLE_ZSTD 0
 
+/* Define if LLVM is using tflite */
+/* #undef LLVM_HAVE_TFLITE */
+
 /* Define to 1 if you have the <sysexits.h> header file. */
 #define HAVE_SYSEXITS_H 1
 
-/* Define if the xar_open() function is supported on this platform. */
-/* #undef LLVM_HAVE_LIBXAR */
+/* Define if building libLLVM shared library */
+#define LLVM_BUILD_LLVM_DYLIB
+
+/* Define if building LLVM with BUILD_SHARED_LIBS */
+/* #undef LLVM_BUILD_SHARED_LIBS */
 
 /* Define if building LLVM with LLVM_FORCE_USE_OLD_TOOLCHAIN_LIBS */
 /* #undef LLVM_FORCE_USE_OLD_TOOLCHAIN */
@@ -98,3 +107,5 @@
 /* Define if plugins enabled */
 /* #undef LLVM_ENABLE_PLUGINS */
 
+/* Define if logf128 is available */
+/* #undef LLVM_HAS_LOGF128 */

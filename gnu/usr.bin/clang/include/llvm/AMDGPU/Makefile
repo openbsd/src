@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2023/11/16 15:05:44 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2025/06/11 17:46:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -100,17 +100,17 @@ AMDGPUGenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPUGISel.td
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenPreLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPUGISel.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
-		-combiners="AMDGPUPreLegalizerCombinerHelper" \
+		-combiners="AMDGPUPreLegalizerCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenPostLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPUGISel.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
-		-combiners="AMDGPUPostLegalizerCombinerHelper" \
+		-combiners="AMDGPUPostLegalizerCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenRegBankGICombiner.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPUGISel.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
-		-combiners="AMDGPURegBankCombinerHelper" \
+		-combiners="AMDGPURegBankCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
 		-o ${.TARGET} ${.ALLSRC}
 

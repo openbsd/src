@@ -1,10 +1,13 @@
-# $OpenBSD: Makefile,v 1.3 2023/11/11 18:35:40 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2025/06/11 17:46:33 robert Exp $
 
 .include <bsd.own.mk>
 
 PROG=	llvm-objdump
 BINDIR=	/usr/bin
 LIBEXECDIR=/usr/libexec
+
+DRIVER_TEMPLATE=Yes
+DRIVER_NAME=	llvm_objdump
 
 SRCS=	llvm-objdump.cpp \
 	SourcePrinter.cpp \

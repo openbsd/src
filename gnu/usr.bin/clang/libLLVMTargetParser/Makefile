@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.2 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMTargetParser
 NOPROFILE=
@@ -11,7 +11,9 @@ SRCS+=	AArch64TargetParser.cpp \
 	CSKYTargetParser.cpp \
 	Host.cpp \
 	LoongArchTargetParser.cpp \
+	RISCVISAInfo.cpp \
 	RISCVTargetParser.cpp \
+	SubtargetFeature.cpp \
 	TargetParser.cpp \
 	Triple.cpp \
 	X86TargetParser.cpp

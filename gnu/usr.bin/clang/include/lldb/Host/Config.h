@@ -55,4 +55,6 @@
 
 /* #undef LLDB_GLOBAL_INIT_DIRECTORY */
 
+#define LLDB_BUG_REPORT_URL "https://github.com/llvm/llvm-project/issues/"
+
 #endif // #ifndef LLDB_HOST_CONFIG_H

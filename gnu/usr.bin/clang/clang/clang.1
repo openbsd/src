@@ -27,7 +27,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.TH "CLANG, CLANG++, CLANG-CPP" "1" "Oct 21, 2023" "16" "Clang"
+.TH "CLANG, CLANG++, CLANG-CPP" "1" "Dec 23, 2024" "19" "Clang"
 .SH NAME
 clang, clang++, clang-cpp \- the Clang C, C++, and Objective-C compiler
 .SH SYNOPSIS
@@ -88,7 +88,7 @@ an \(dqa.out\(dq, \(dq.dylib\(dq or \(dq.so\(dq file.
 .sp
 The Clang Static Analyzer is a tool that scans source code to try to find bugs
 through code analysis.  This tool uses many parts of Clang and is built into
-the same driver.  Please see <\fI\%https://clang\-analyzer.llvm.org\fP> for more details
+the same driver.  Please see <\X'tty: link https://clang-analyzer.llvm.org'\fI\%https://clang\-analyzer.llvm.org\fP\X'tty: link'> for more details
 on how to use the static analyzer.
 .SH OPTIONS
 .SS Stage Selection Options
@@ -322,21 +322,39 @@ ISO C++ 2020 with amendments and GNU extensions
 .UNINDENT
 .UNINDENT
 .nf
-\fBc++2b\fP
+\fBc++23\fP
 .fi
 .sp
 .INDENT 0.0
 .INDENT 3.5
-Working draft for ISO C++ 2023
+ISO C++ 2023 with amendments
 .UNINDENT
 .UNINDENT
 .nf
-\fBgnu++2b\fP
+\fBgnu++23\fP
 .fi
 .sp
 .INDENT 0.0
 .INDENT 3.5
-Working draft for ISO C++ 2023 with GNU extensions
+ISO C++ 2023 with amendments and GNU extensions
+.UNINDENT
+.UNINDENT
+.nf
+\fBc++2c\fP
+.fi
+.sp
+.INDENT 0.0
+.INDENT 3.5
+Working draft for C++2c
+.UNINDENT
+.UNINDENT
+.nf
+\fBgnu++2c\fP
+.fi
+.sp
+.INDENT 0.0
+.INDENT 3.5
+Working draft for C++2c with GNU extensions
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -480,7 +498,8 @@ Enable support for Microsoft extensions.
 .INDENT 0.0
 .TP
 .B \-fmsc\-version=
-Set _MSC_VER. Defaults to 1300 on Windows. Not set otherwise.
+Set \fB_MSC_VER\fP\&. When on Windows, this defaults to either the same value as
+the currently installed version of cl.exe, or \fB1933\fP\&. Not set otherwise.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -553,7 +572,7 @@ Specify the architecture to build for (all platforms).
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \-mmacosx\-version\-min=<version>
+.B \-mmacos\-version\-min=<version>
 When building for macOS, specify the minimum version supported by your
 application.
 .UNINDENT
@@ -577,11 +596,33 @@ Acts as an alias for \fI\%\-\-print\-supported\-cpus\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
+.B \-mcpu=help, \-mtune=help
+Acts as an alias for \fI\%\-\-print\-supported\-cpus\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
 .B \-march=<cpu>
 Specify that Clang should generate code for a specific processor family
 member and later.  For example, if you specify \-march=i486, the compiler is
 allowed to generate instructions that are valid on i486 and later processors,
 but which may not exist on earlier ones.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-print\-enabled\-extensions
+Prints the list of extensions that are enabled for the target specified by the
+combination of \fI\-\-target\fP, \fI\-march\fP, and \fI\-mcpu\fP values. Currently, this
+option is only supported on AArch64 and RISC\-V. On RISC\-V, this option also
+prints out the ISA string of enabled extensions.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-print\-supported\-extensions
+Prints the list of all extensions that are supported for every CPU target
+for an architecture (specified through \fB\-\-target=<architecture>\fP or
+\fI\%\-arch\fP \fB<architecture>\fP). If no target is specified, the system
+default target will be used. Currently, this option is only supported on
+AArch64 and RISC\-V.
 .UNINDENT
 .SS Code Generation Options
 .INDENT 0.0
@@ -604,7 +645,12 @@ make the program run faster).
 .sp
 \fI\%\-Ofast\fP Enables all the optimizations from \fI\%\-O3\fP along
 with other aggressive optimizations that may violate strict compliance with
-language standards.
+language standards. This is deprecated in Clang 19 and a warning is emitted
+that \fI\%\-O3\fP in combination with \fI\%\-ffast\-math\fP should be used
+instead if the request for non\-standard math behavior is intended. There
+is no timeline yet for removal; the aim is to discourage use of
+\fI\%\-Ofast\fP due to the surprising behavior of an optimization flag
+changing the observable behavior of correct code.
 .sp
 \fI\%\-Os\fP Like \fI\%\-O2\fP with extra optimizations to reduce code
 size.
@@ -683,8 +729,10 @@ the negation \fB\-fno\-eliminate\-unused\-debug\-types\fP can be used.
 .INDENT 0.0
 .TP
 .B \-fexceptions
-Enable generation of unwind information. This allows exceptions to be thrown
-through Clang compiled stack frames.  This is on by default in x86\-64.
+Allow exceptions to be thrown through Clang compiled stack frames (on many
+targets, this will enable unwind information for functions that might have
+an exception thrown through them). For most targets, this is enabled by
+default for C++.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -828,6 +876,16 @@ Save intermediate compilation results.
 Save internal code generation (LLVM) statistics to a file in the current
 directory (\fI\%\-save\-stats\fP/\(dq\-save\-stats=cwd\(dq) or the directory
 of the output file (\(dq\-save\-state=obj\(dq).
+.sp
+You can also use environment variables to control the statistics reporting.
+Setting \fBCC_PRINT_INTERNAL_STAT\fP to \fB1\fP enables the feature, the report
+goes to stdout in JSON format.
+.sp
+Setting \fBCC_PRINT_INTERNAL_STAT_FILE\fP to a file path makes it report
+statistics to the given file in the JSON format.
+.sp
+Note that \fB\-save\-stats\fP take precedence over \fBCC_PRINT_INTERNAL_STAT\fP
+and \fBCC_PRINT_INTERNAL_STAT_FILE\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -904,6 +962,22 @@ search compiler builtin include directories.
 .B \-nobuiltininc
 Do not search clang\(aqs builtin directory for include files.
 .UNINDENT
+.INDENT 0.0
+.TP
+.B \-fkeep\-system\-includes
+Usable only with \fI\%\-E\fP\&. Do not copy the preprocessed content of
+\(dqsystem\(dq headers to the output; instead, preserve the #include directive.
+This can greatly reduce the volume of text produced by \fI\%\-E\fP which
+can be helpful when trying to produce a \(dqsmall\(dq reproduceable test case.
+.sp
+This option does not guarantee reproduceability, however. If the including
+source defines preprocessor symbols that influence the behavior of system
+headers (for example, \fB_XOPEN_SOURCE\fP) the operation of \fI\%\-E\fP will
+remove that definition and thus can change the semantics of the included
+header. Also, using a different version of the system headers (especially a
+different version of the STL) may result in different behavior. Always verify
+the preprocessed file by compiling it separately.
+.UNINDENT
 .SH ENVIRONMENT
 .INDENT 0.0
 .TP
@@ -929,13 +1003,13 @@ only used when processing the appropriate language.
 .INDENT 0.0
 .TP
 .B MACOSX_DEPLOYMENT_TARGET
-If \fI\%\-mmacosx\-version\-min\fP is unspecified, the default deployment
+If \fI\%\-mmacos\-version\-min\fP is unspecified, the default deployment
 target is read from this environment variable. This option only affects
 Darwin targets.
 .UNINDENT
 .SH BUGS
 .sp
-To report bugs, please visit <\fI\%https://github.com/llvm/llvm\-project/issues/\fP>.  Most bug reports should
+To report bugs, please visit <\X'tty: link https://github.com/llvm/llvm-project/issues/'\fI\%https://github.com/llvm/llvm\-project/issues/\fP\X'tty: link'>.  Most bug reports should
 include preprocessed source files (use the \fI\%\-E\fP option) and the full
 output of the compiler, along with information to reproduce.
 .SH SEE ALSO
@@ -944,6 +1018,6 @@ output of the compiler, along with information to reproduce.
 .SH AUTHOR
 Maintained by the Clang / LLVM Team (<http://clang.llvm.org>)
 .SH COPYRIGHT
-2007-2023, The Clang Team
+2007-2024, The Clang Team
 .\" Generated by docutils manpage writer.
 .

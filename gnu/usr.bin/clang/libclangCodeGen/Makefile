@@ -1,14 +1,20 @@
-# $OpenBSD: Makefile,v 1.9 2023/11/11 18:35:38 robert Exp $
+# $OpenBSD: Makefile,v 1.10 2025/06/11 17:46:33 robert Exp $
 
 LIB=	clangCodeGen
 NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${CLANG_SRCS}/lib/CodeGen
+
+# Find GenVT.inc
+CPPFLAGS+=	-I${.OBJDIR}/../llvm-tblgen
 
 .include <bsd.own.mk>
 
-SRCS=	BackendUtil.cpp \
+SRCS=	ABIInfo.cpp \
+	ABIInfoImpl.cpp \
+	BackendUtil.cpp \
 	CGAtomic.cpp \
 	CGBlocks.cpp \
 	CGBuiltin.cpp \
@@ -41,6 +47,7 @@ SRCS=	BackendUtil.cpp \
 	CGOpenCLRuntime.cpp \
 	CGOpenMPRuntime.cpp \
 	CGOpenMPRuntimeGPU.cpp \
+	CGPointerAuth.cpp \
 	CGRecordLayoutBuilder.cpp \
 	CGStmt.cpp \
 	CGStmtOpenMP.cpp \
@@ -56,6 +63,7 @@ SRCS=	BackendUtil.cpp \
 	ConstantInitBuilder.cpp \
 	CoverageMappingGen.cpp \
 	ItaniumCXXABI.cpp \
+	LinkInModulesPass.cpp \
 	MacroPPCallbacks.cpp \
 	MicrosoftCXXABI.cpp \
 	ModuleBuilder.cpp \
@@ -66,7 +74,35 @@ SRCS=	BackendUtil.cpp \
 	TargetInfo.cpp \
 	VarBypassDetector.cpp
 
+# Targets
+SRCS+=	AArch64.cpp \
+	AMDGPU.cpp \
+	ARC.cpp \
+	ARM.cpp \
+	AVR.cpp \
+	BPF.cpp \
+	CSKY.cpp \
+	Hexagon.cpp \
+	Lanai.cpp \
+	LoongArch.cpp \
+	M68k.cpp \
+	MSP430.cpp \
+	Mips.cpp \
+	NVPTX.cpp \
+	PNaCl.cpp \
+	PPC.cpp \
+	RISCV.cpp \
+	SPIR.cpp \
+	Sparc.cpp \
+	SystemZ.cpp \
+	TCE.cpp \
+	VE.cpp \
+	WebAssembly.cpp \
+	X86.cpp \
+	XCore.cpp
+
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/CodeGen
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/CodeGen/Targets
 
 install:
 	@# Nothing here so far ...

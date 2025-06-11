@@ -14,12 +14,6 @@
 /* Default linker to use. */
 #define CLANG_DEFAULT_LINKER ""
 
-/* Default C/ObjC standard to use. */
-/* #undef CLANG_DEFAULT_STD_C */
-
-/* Default C++/ObjC++ standard to use. */
-/* #undef CLANG_DEFAULT_STD_CXX */
-
 /* Default C++ stdlib to use. */
 #define CLANG_DEFAULT_CXX_STDLIB ""
 
@@ -63,6 +57,12 @@
 /* Define if we have sys/resource.h (rlimits) */
 #define CLANG_HAVE_RLIMITS 1
 
+/* Define if we have dlfcn.h */
+#define CLANG_HAVE_DLFCN_H 1
+
+/* Define if dladdr() is available on this platform. */
+#define CLANG_HAVE_DLADDR 1
+
 /* Linker version detected at compile time. */
 /* #undef HOST_LINK_VERSION */
 
@@ -82,5 +82,8 @@
 
 /* Spawn a new process clang.exe for the CC1 tool invocation, when necessary */
 #define CLANG_SPAWN_CC1 0
+
+/* Whether CIR is built into Clang */
+#define CLANG_ENABLE_CIR 0
 
 #endif

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.14 2025/06/11 17:46:32 robert Exp $
 
 LIB=	LLVMInstrumentation
 NOPROFILE=
@@ -11,13 +11,18 @@ SRCS+=	AddressSanitizer.cpp \
 	ControlHeightReduction.cpp \
 	DataFlowSanitizer.cpp \
 	GCOVProfiling.cpp \
+	BlockCoverageInference.cpp \
 	MemProfiler.cpp \
 	MemorySanitizer.cpp \
+	NumericalStabilitySanitizer.cpp \
 	IndirectCallPromotion.cpp \
 	Instrumentation.cpp \
 	InstrOrderFile.cpp \
 	InstrProfiling.cpp \
-	KCFI.cpp \
+	InstrumentationKCFI.cpp \
+	LowerAllowCheckPass.cpp \
+	PGOCtxProfLowering.cpp \
+	PGOForceFunctionAttrs.cpp \
 	PGOInstrumentation.cpp \
 	PGOMemOPSizeOpt.cpp \
 	PoisonChecking.cpp \
@@ -26,6 +31,9 @@ SRCS+=	AddressSanitizer.cpp \
 	ValueProfileCollector.cpp \
 	ThreadSanitizer.cpp \
 	HWAddressSanitizer.cpp
+
+InstrumentationKCFI.cpp:
+	ln -s ${LLVM_SRCS}/lib/Transforms/Instrumentation/KCFI.cpp $@
 
 InstrumentationSanitizerBinaryMetadata.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Instrumentation/SanitizerBinaryMetadata.cpp $@

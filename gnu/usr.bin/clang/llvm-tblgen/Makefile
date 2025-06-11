@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2023/11/11 18:35:40 robert Exp $
+# $OpenBSD: Makefile,v 1.15 2025/06/11 17:46:33 robert Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
@@ -6,23 +6,16 @@ NOMAN=
 .include <bsd.own.mk>
 
 # TableGen
-SRCS=	AsmMatcherEmitter.cpp \
+SRCS=	ARMTargetDefEmitter.cpp \
+	AsmMatcherEmitter.cpp \
 	AsmWriterEmitter.cpp \
-	AsmWriterInst.cpp \
 	Attributes.cpp \
 	CTagsEmitter.cpp \
 	CallingConvEmitter.cpp \
 	CodeEmitterGen.cpp \
-	CodeGenDAGPatterns.cpp \
-	CodeGenHwModes.cpp \
-	CodeGenInstruction.cpp \
 	CodeGenMapTable.cpp \
-	CodeGenRegisters.cpp \
-	CodeGenSchedule.cpp \
-	CodeGenTarget.cpp \
 	CompressInstEmitter.cpp \
 	DAGISelEmitter.cpp \
-	DAGISelMatcher.cpp \
 	DAGISelMatcherEmitter.cpp \
 	DAGISelMatcherGen.cpp \
 	DAGISelMatcherOpt.cpp \
@@ -34,51 +27,81 @@ SRCS=	AsmMatcherEmitter.cpp \
 	DisassemblerEmitter.cpp \
 	ExegesisEmitter.cpp \
 	FastISelEmitter.cpp \
-	GICombinerEmitter.cpp \
+	GlobalISelCombinerEmitter.cpp \
 	GlobalISelEmitter.cpp \
-	InfoByHwMode.cpp \
 	InstrDocsEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
-	OptEmitter.cpp \
+	MacroFusionPredicatorEmitter.cpp \
 	OptParserEmitter.cpp \
 	OptRSTEmitter.cpp \
-	PredicateExpander.cpp \
 	PseudoLoweringEmitter.cpp \
 	RISCVTargetDefEmitter.cpp \
 	RegisterBankEmitter.cpp \
 	RegisterInfoEmitter.cpp \
-	SDNodeProperties.cpp \
 	SearchableTableEmitter.cpp \
 	SubtargetEmitter.cpp \
-	SubtargetFeatureInfo.cpp \
 	TableGen.cpp \
-	Types.cpp \
-	VarLenCodeEmitterGen.cpp \
+	VTEmitter.cpp \
 	WebAssemblyDisassemblerEmitter.cpp \
 	X86DisassemblerTables.cpp \
-	X86EVEX2VEXTablesEmitter.cpp \
+	X86InstrMappingEmitter.cpp \
 	X86FoldTablesEmitter.cpp \
 	X86MnemonicTables.cpp \
 	X86ModRMFilters.cpp \
 	X86RecognizableInstr.cpp
 
-# TableGen/GlobalISel
-SRCS+=	CodeExpander.cpp \
-	GIMatchDag.cpp \
-	GIMatchDagEdge.cpp \
-	GIMatchDagInstr.cpp \
-	GIMatchDagOperands.cpp \
-	GIMatchDagPredicate.cpp \
-	GIMatchDagPredicateDependencyEdge.cpp \
-	GIMatchTree.cpp
+# TableGen/Basic
+SRCS+=	CodeGenIntrinsics.cpp \
+	SDNodeProperties.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/llvm/utils/TableGen
-.PATH:	${.CURDIR}/../../../llvm/llvm/utils/TableGen/GlobalISel
+# TableGen/Common
+SRCS+=	AsmWriterInst.cpp \
+	CodeGenDAGPatterns.cpp \
+	CodeGenHwModes.cpp \
+	CodeGenInstAlias.cpp \
+	CodeGenInstruction.cpp \
+	CodeGenRegisters.cpp \
+	CodeGenSchedule.cpp \
+	CodeGenTarget.cpp \
+	DAGISelMatcher.cpp \
+	InfoByHwMode.cpp \
+	OptEmitter.cpp \
+	PredicateExpander.cpp \
+	SubtargetFeatureInfo.cpp \
+	Types.cpp \
+	VarLenCodeEmitterGen.cpp
+
+# TableGen/Common/GlobalISel
+SRCS+=	CodeExpander.cpp \
+	CombinerUtils.cpp \
+	CXXPredicates.cpp \
+	GlobalISelMatchTable.cpp \
+	GlobalISelMatchTableExecutorEmitter.cpp \
+	PatternParser.cpp \
+	Patterns.cpp
+
+CPPFLAGS+=	-I${.CURDIR}/../../../llvm/llvm/utils/TableGen
+
+.PATH:	${.CURDIR}/../../../llvm/llvm/utils/TableGen \
+	${.CURDIR}/../../../llvm/llvm/utils/TableGen/Basic \
+	${.CURDIR}/../../../llvm/llvm/utils/TableGen/Common \
+	${.CURDIR}/../../../llvm/llvm/utils/TableGen/Common/GlobalISel
 
 LLVM_LIBDEPS=	LLVMTableGen LLVMSupport
 
+CLEANFILES+=	llvm/CodeGen/GenVT.inc CodeGen llvm
+
+all: GenVT.inc
+
+GenVT.inc: ${.CURDIR}/../../../llvm/llvm/include/llvm/CodeGen/ValueTypes.td
+	ln -sf ${.OBJDIR} llvm
+	ln -sf ${.OBJDIR} llvm/CodeGen
+	${.OBJDIR}/../llvm-min-tblgen/llvm-min-tblgen -gen-vt \
+                -o llvm/CodeGen/${.TARGET} ${.ALLSRC}
+
 install:
-	@# Nothing here so far ...
+	${INSTALL} ${INSTALL_COPY} -m 444 llvm/CodeGen/GenVT.inc \
+		${DESTDIR}/usr/include/llvm/CodeGen/GenVT.inc
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2023/11/11 18:35:39 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2025/06/11 17:46:33 robert Exp $
 
 LIB=	lldbPluginLanguage
 NOPIC=
@@ -21,10 +21,13 @@ SRCS=	BlockPointer.cpp \
 	LibCxxMap.cpp \
 	LibCxxQueue.cpp \
 	LibCxxRangesRefView.cpp \
+	LibCxxSliceArray.cpp \
+	LibCxxProxyArray.cpp \
 	LibCxxSpan.cpp \
 	LibCxxTuple.cpp \
 	LibCxxUnorderedMap.cpp \
 	LibCxxVariant.cpp \
+	LibCxxValarray.cpp \
 	LibCxxVector.cpp \
 	LibStdcpp.cpp \
 	LibStdcppTuple.cpp \

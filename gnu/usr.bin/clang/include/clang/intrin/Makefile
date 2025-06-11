@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.27 2024/12/17 13:22:38 jca Exp $
+# $OpenBSD: Makefile,v 1.28 2025/06/11 17:46:32 robert Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			16
+LLVM_V=			19
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -24,16 +24,20 @@ HEADERS=	intrin.h \
 .if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "arm"
 GEN+=		arm_neon.h
 GEN+=		arm_fp16.h
+GEN+=		arm_sme.h
 GEN+=		arm_sve.h
 GEN+=		arm_bf16.h
 GEN+=		arm_mve.h
 GEN+=		arm_cde.h
+GEN+=		arm_vector_types.h
 HEADERS+=	arm_acle.h arm_cmse.h ${GEN}
 .elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 HEADERS+=	__wmmintrin_aes.h \
 		__wmmintrin_pclmul.h \
+		adcintrin.h \
 		adxintrin.h \
 		ammintrin.h \
+		amxcomplexintrin.h \
 		amxfp16intrin.h \
 		amxintrin.h \
 		avx2intrin.h \
@@ -42,12 +46,10 @@ HEADERS+=	__wmmintrin_aes.h \
 		avx512bwintrin.h \
 		avx512cdintrin.h \
 		avx512dqintrin.h \
-		avx512erintrin.h \
 		avx512fintrin.h \
 		avx512fp16intrin.h \
 		avx512ifmaintrin.h \
 		avx512ifmavlintrin.h \
-		avx512pfintrin.h \
 		avx512vbmi2intrin.h \
 		avx512vbmiintrin.h \
 		avx512vbmivlintrin.h \
@@ -68,6 +70,7 @@ HEADERS+=	__wmmintrin_aes.h \
 		avxifmaintrin.h \
 		avxintrin.h \
 		avxneconvertintrin.h \
+		avxvnniint16intrin.h \
 		avxvnniint8intrin.h \
 		avxvnniintrin.h \
 		bmi2intrin.h \
@@ -107,6 +110,7 @@ HEADERS+=	__wmmintrin_aes.h \
 		popcntintrin.h \
 		prfchiintrin.h \
 		prfchwintrin.h \
+		ptrauth.h \
 		ptwriteintrin.h \
 		raointintrin.h \
 		rdpruintrin.h \
@@ -114,12 +118,16 @@ HEADERS+=	__wmmintrin_aes.h \
 		rtmintrin.h \
 		serializeintrin.h \
 		sgxintrin.h \
+		sha512intrin.h \
 		shaintrin.h \
+		sm3intrin.h \
+		sm4intrin.h \
 		smmintrin.h \
 		tbmintrin.h \
 		tmmintrin.h \
 		tsxldtrkintrin.h \
 		uintrintrin.h \
+		usermsrintrin.h \
 		vaesintrin.h \
 		vpclmulqdqintrin.h \
 		waitpkgintrin.h \
@@ -139,7 +147,7 @@ HEADERS+=	altivec.h \
 		htmintrin.h \
 		htmxlintrin.h
 .elif ${MACHINE_ARCH} == "riscv64"
-GEN+=		riscv_vector.h
+GEN+=		riscv_bitmanip.h
 HEADERS+=	${GEN}
 .endif
 
@@ -164,6 +172,10 @@ arm_fp16.h: ${CLANG_INC}/clang/Basic/arm_fp16.td
 	${TBLGEN} -gen-arm-fp16 -I${CLANG_INC}/clang/Basic \
 	    -o ${.TARGET} ${.ALLSRC}
 
+arm_sme.h: ${CLANG_INC}/clang/Basic/arm_sme.td
+	${TBLGEN} -gen-arm-sme-header -I${CLANG_INC}/clang/Basic \
+	    -o ${.TARGET} ${.ALLSRC}
+
 arm_sve.h: ${CLANG_INC}/clang/Basic/arm_sve.td
 	${TBLGEN} -gen-arm-sve-header -I${CLANG_INC}/clang/Basic \
 	    -o ${.TARGET} ${.ALLSRC}
@@ -178,6 +190,10 @@ arm_mve.h: ${CLANG_INC}/clang/Basic/arm_mve.td
 
 arm_cde.h: ${CLANG_INC}/clang/Basic/arm_cde.td
 	${TBLGEN} -gen-arm-cde-header -I${CLANG_INC}/clang/Basic \
+	    -o ${.TARGET} ${.ALLSRC}
+
+arm_vector_types.h: ${CLANG_INC}/clang/Basic/arm_neon.td
+	${TBLGEN} -gen-arm-vector-type -I${CLANG_INC}/clang/Basic \
 	    -o ${.TARGET} ${.ALLSRC}
 
 riscv_vector.h: ${CLANG_INC}/clang/Basic/riscv_vector.td

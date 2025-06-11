@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2024/02/08 20:28:54 miod Exp $
+# $OpenBSD: Makefile,v 1.12 2025/06/11 17:46:33 robert Exp $
 
 LIB=	clangAST
 NOPIC=
@@ -24,6 +24,7 @@ SRCS=	APValue.cpp \
 	ASTTypeTraits.cpp \
 	AttrDocTable.cpp \
 	AttrImpl.cpp \
+	Availability.cpp \
 	Comment.cpp \
 	CommentBriefParser.cpp \
 	CommentCommandTraits.cpp \
@@ -65,6 +66,7 @@ SRCS=	APValue.cpp \
 	NSAPI.cpp \
 	ODRDiagsEmitter.cpp \
 	ODRHash.cpp \
+	OpenACCClause.cpp \
 	OpenMPClause.cpp \
 	OSLog.cpp \
 	ParentMap.cpp \
@@ -80,6 +82,7 @@ SRCS=	APValue.cpp \
 	StmtCXX.cpp \
 	StmtIterator.cpp \
 	StmtObjC.cpp \
+	StmtOpenACC.cpp \
 	StmtOpenMP.cpp \
 	StmtPrinter.cpp \
 	StmtProfile.cpp \
@@ -95,15 +98,17 @@ SRCS=	APValue.cpp \
 
 # Interp
 SRCS+=	ByteCodeEmitter.cpp \
-	ByteCodeExprGen.cpp \
-	ByteCodeGenError.cpp \
-	ByteCodeStmtGen.cpp \
+	Compiler.cpp \
 	Context.cpp \
 	Descriptor.cpp \
 	Disasm.cpp \
 	EvalEmitter.cpp \
 	Frame.cpp \
 	Function.cpp \
+	InterpBuiltin.cpp \
+	Floating.cpp \
+	EvaluationResult.cpp \
+	DynamicAllocator.cpp \
 	Interp.cpp \
 	InterpBlock.cpp \
 	InterpFrame.cpp \
@@ -114,7 +119,9 @@ SRCS+=	ByteCodeEmitter.cpp \
 	Program.cpp \
 	Record.cpp \
 	Source.cpp \
-	State.cpp
+	State.cpp \
+	MemberPointer.cpp \
+	InterpShared.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/AST
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/AST/Interp

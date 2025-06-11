@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2021/12/17 14:55:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2025/06/11 17:46:32 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -75,25 +75,25 @@ AArch64GenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 
 AArch64GenO0PreLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
-		-combiners="AArch64O0PreLegalizerCombinerHelper" \
+		-combiners="AArch64O0PreLegalizerCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 
 AArch64GenPreLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
-		-combiners="AArch64PreLegalizerCombinerHelper" \
+		-combiners="AArch64PreLegalizerCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 
 AArch64GenPostLegalizeGICombiner.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
-		-combiners="AArch64PostLegalizerCombinerHelper" \
+		-combiners="AArch64PostLegalizerCombiner" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 
 AArch64GenPostLegalizeGILowering.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
-		-combiners="AArch64PostLegalizerLoweringHelper" \
+		-combiners="AArch64PostLegalizerLowering" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 
