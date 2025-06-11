@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.93 2025/03/11 14:53:03 job Exp $ */
+/*	$OpenBSD: http.c,v 1.94 2025/06/11 16:12:22 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -137,6 +137,7 @@ struct http_connection {
 	int			fd;
 	int			chunked;
 	int			gzipped;
+	int			was_gzipped;
 	int			keep_alive;
 	short			events;
 	enum http_state		state;
@@ -799,6 +800,7 @@ http_inflate_advance(struct http_connection *conn)
 		/* all compressed data processed */
 		conn->gzipped = 0;
 		http_inflate_done(conn);
+		conn->was_gzipped = 1;
 
 		if (conn->iosz == 0) {
 			if (!conn->chunked) {
@@ -911,7 +913,14 @@ http_done(struct http_connection *conn, enum http_result res)
 	if (conn->gzipped) {
 		conn->gzipped = 0;
 		http_inflate_done(conn);
+		conn->was_gzipped = 1;
 	}
+
+	if (conn->was_gzipped)
+		conn->was_gzipped = 0;
+	else if (conn->totalsz > (1024 * 1024))
+		logx("%s: downloaded %zu bytes without HTTP "
+		    "compression", conn_info(conn), conn->totalsz);
 
 	conn->state = STATE_IDLE;
 	conn->idle_time = getmonotime() + HTTP_IDLE_TIMEOUT;
