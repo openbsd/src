@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.450 2025/06/03 16:51:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.451 2025/06/11 14:30:07 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -793,7 +793,8 @@ findpcb:
 					 * full-blown connection.
 					 */
 					in_pcbunref(inp);
-					inp = in_pcbref(sotoinpcb(so));
+					/* syn_cache_get() has refcounted inp */
+					inp = sotoinpcb(so);
 					tp = intotcpcb(inp);
 					if (tp == NULL)
 						goto badsyn;	/*XXX*/
@@ -3657,8 +3658,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (so == NULL)
 		goto resetandabort;
 	soassertlocked(so);
-	soref(so);
-	inp = sotoinpcb(so);
+	/* inpcb does refcount socket, both so and inp cannot go away */
+	inp = in_pcbref(sotoinpcb(so));
 	tp = intotcpcb(inp);
 
 #ifdef IPSEC
@@ -3778,9 +3779,10 @@ resetandabort:
 abort:
 	if (tp != NULL)
 		tp = tcp_drop(tp, ECONNABORTED);	/* destroys socket */
-	m_freem(m);
 	in_pcbsounlock(inp, so);
 	in_pcbsounlock(listeninp, listenso);
+	in_pcbunref(inp);
+	m_freem(m);
 	syn_cache_put(sc);
 	tcpstat_inc(tcps_sc_aborted);
 	return ((struct socket *)(-1));
