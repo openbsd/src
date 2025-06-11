@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_asn1.c,v 1.18 2024/07/08 16:23:27 beck Exp $ */
+/* $OpenBSD: pk7_asn1.c,v 1.19 2025/06/11 18:11:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -84,7 +84,6 @@ static const ASN1_ADB_TABLE PKCS7_adbtbl[] = {
 			.field_name = "d.data",
 			.item = &ASN1_OCTET_STRING_NDEF_it,
 		},
-	
 	},
 	{
 		.value = NID_pkcs7_signed,
@@ -95,7 +94,6 @@ static const ASN1_ADB_TABLE PKCS7_adbtbl[] = {
 			.field_name = "d.sign",
 			.item = &PKCS7_SIGNED_it,
 		},
-	
 	},
 	{
 		.value = NID_pkcs7_enveloped,
@@ -106,7 +104,6 @@ static const ASN1_ADB_TABLE PKCS7_adbtbl[] = {
 			.field_name = "d.enveloped",
 			.item = &PKCS7_ENVELOPE_it,
 		},
-	
 	},
 	{
 		.value = NID_pkcs7_signedAndEnveloped,
@@ -117,7 +114,6 @@ static const ASN1_ADB_TABLE PKCS7_adbtbl[] = {
 			.field_name = "d.signed_and_enveloped",
 			.item = &PKCS7_SIGN_ENVELOPE_it,
 		},
-	
 	},
 	{
 		.value = NID_pkcs7_digest,
@@ -128,7 +124,6 @@ static const ASN1_ADB_TABLE PKCS7_adbtbl[] = {
 			.field_name = "d.digest",
 			.item = &PKCS7_DIGEST_it,
 		},
-	
 	},
 	{
 		.value = NID_pkcs7_encrypted,
@@ -139,7 +134,6 @@ static const ASN1_ADB_TABLE PKCS7_adbtbl[] = {
 			.field_name = "d.encrypted",
 			.item = &PKCS7_ENCRYPT_it,
 		},
-	
 	},
 };
 
