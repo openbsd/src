@@ -19,6 +19,11 @@ namespace lld::elf {
 class InputFile;
 class SharedFile;
 
+struct ArmCmseEntryFunction {
+  Symbol *acleSeSym;
+  Symbol *sym;
+};
+
 // SymbolTable is a bucket of all known symbols, including defined,
 // undefined, or lazy symbols (the last one is symbols in archive
 // files whose archive members are not yet loaded).
@@ -52,6 +57,9 @@ public:
 
   void handleDynamicList();
 
+  Symbol *addUnusedUndefined(StringRef name,
+                             uint8_t binding = llvm::ELF::STB_GLOBAL);
+
   // Set of .so files to not link the same shared object file more than once.
   llvm::DenseMap<llvm::CachedHashStringRef, SharedFile *> soNames;
 
@@ -59,6 +67,18 @@ public:
   // same name, only one of them is linked, and the other is ignored. This map
   // is used to uniquify them.
   llvm::DenseMap<llvm::CachedHashStringRef, const InputFile *> comdatGroups;
+
+  // The Map of __acle_se_<sym>, <sym> pairs found in the input objects.
+  // Key is the <sym> name.
+  llvm::SmallMapVector<StringRef, ArmCmseEntryFunction, 1> cmseSymMap;
+
+  // Map of symbols defined in the Arm CMSE import library. The linker must
+  // preserve the addresses in the output objects.
+  llvm::StringMap<Defined *> cmseImportLib;
+
+  // True if <sym> from the input Arm CMSE import library is written to the
+  // output Arm CMSE import library.
+  llvm::StringMap<bool> inCMSEOutImpLib;
 
 private:
   SmallVector<Symbol *, 0> findByVersion(SymbolVersion ver);
@@ -71,13 +91,9 @@ private:
   void assignWildcardVersion(SymbolVersion ver, uint16_t versionId,
                              bool includeNonDefault);
 
-  // The order the global symbols are in is not defined. We can use an arbitrary
-  // order, but it has to be reproducible. That is true even when cross linking.
-  // The default hashing of StringRef produces different results on 32 and 64
-  // bit systems so we use a map to a vector. That is arbitrary, deterministic
-  // but a bit inefficient.
-  // FIXME: Experiment with passing in a custom hashing or sorting the symbols
-  // once symbol resolution is finished.
+  // Global symbols and a map from symbol name to the index. The order is not
+  // defined. We can use an arbitrary order, but it has to be deterministic even
+  // when cross linking.
   llvm::DenseMap<llvm::CachedHashStringRef, int> symMap;
   SmallVector<Symbol *, 0> symVector;
 

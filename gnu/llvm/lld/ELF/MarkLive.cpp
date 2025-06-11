@@ -85,13 +85,19 @@ static uint64_t getAddend(InputSectionBase &sec,
   return rel.r_addend;
 }
 
+// Currently, we assume all input CREL relocations have an explicit addend.
+template <class ELFT>
+static uint64_t getAddend(InputSectionBase &sec,
+                          const typename ELFT::Crel &rel) {
+  return rel.r_addend;
+}
+
 template <class ELFT>
 template <class RelTy>
 void MarkLive<ELFT>::resolveReloc(InputSectionBase &sec, RelTy &rel,
                                   bool fromFDE) {
-  Symbol &sym = sec.getFile<ELFT>()->getRelocTargetSym(rel);
-
   // If a symbol is referenced in a live section, it is used.
+  Symbol &sym = sec.file->getRelocTargetSym(rel);
   sym.used = true;
 
   if (auto *d = dyn_cast<Defined>(&sym)) {
@@ -174,8 +180,8 @@ static bool isReserved(InputSectionBase *sec) {
     // .init_array.N (https://github.com/rust-lang/rust/issues/92181) for a
     // while.
     StringRef s = sec->name;
-    return s == ".init" || s == ".fini" || s.startswith(".init_array") ||
-           s == ".jcr" || s.startswith(".ctors") || s.startswith(".dtors");
+    return s == ".init" || s == ".fini" || s.starts_with(".init_array") ||
+           s == ".jcr" || s.starts_with(".ctors") || s.starts_with(".dtors");
   }
 }
 
@@ -212,7 +218,7 @@ template <class ELFT> void MarkLive<ELFT>::run() {
   // Add GC root symbols.
 
   // Preserve externally-visible symbols if the symbols defined by this
-  // file can interrupt other ELF file's symbols at runtime.
+  // file can interpose other ELF file's symbols at runtime.
   for (Symbol *sym : symtab.getSymbols())
     if (sym->includeInDynsym() && sym->partition == partition)
       markSymbol(sym);
@@ -230,13 +236,18 @@ template <class ELFT> void MarkLive<ELFT>::run() {
     markSymbol(symtab.find(s));
   for (StringRef s : script->referencedSymbols)
     markSymbol(symtab.find(s));
+  for (auto [symName, _] : symtab.cmseSymMap) {
+    markSymbol(symtab.cmseSymMap[symName].sym);
+    markSymbol(symtab.cmseSymMap[symName].acleSeSym);
+  }
 
   // Mark .eh_frame sections as live because there are usually no relocations
   // that point to .eh_frames. Otherwise, the garbage collector would drop
   // all of them. We also want to preserve personality routines and LSDA
   // referenced by .eh_frame sections, so we scan them for that here.
   for (EhInputSection *eh : ctx.ehInputSections) {
-    const RelsOrRelas<ELFT> rels = eh->template relsOrRelas<ELFT>();
+    const RelsOrRelas<ELFT> rels =
+        eh->template relsOrRelas<ELFT>(/*supportsCrel=*/false);
     if (rels.areRelocsRel())
       scanEhFrameSection(*eh, rels.rels);
     else if (rels.relas.size())
@@ -273,8 +284,7 @@ template <class ELFT> void MarkLive<ELFT>::run() {
     //   collection.
     // - Groups members are retained or discarded as a unit.
     if (!(sec->flags & SHF_ALLOC)) {
-      bool isRel = sec->type == SHT_REL || sec->type == SHT_RELA;
-      if (!isRel && !sec->nextInSectionGroup) {
+      if (!isStaticRelSecType(sec->type) && !sec->nextInSectionGroup) {
         sec->markLive();
         for (InputSection *isec : sec->dependentSections)
           isec->markLive();
@@ -285,7 +295,7 @@ template <class ELFT> void MarkLive<ELFT>::run() {
     // script KEEP command.
     if (isReserved(sec) || script->shouldKeep(sec)) {
       enqueue(sec, 0);
-    } else if ((!config->zStartStopGC || sec->name.startswith("__libc_")) &&
+    } else if ((!config->zStartStopGC || sec->name.starts_with("__libc_")) &&
                isValidCIdentifier(sec->name)) {
       // As a workaround for glibc libc.a before 2.34
       // (https://sourceware.org/PR27492), retain __libc_atexit and similar
@@ -307,6 +317,8 @@ template <class ELFT> void MarkLive<ELFT>::mark() {
     for (const typename ELFT::Rel &rel : rels.rels)
       resolveReloc(sec, rel, false);
     for (const typename ELFT::Rela &rel : rels.relas)
+      resolveReloc(sec, rel, false);
+    for (const typename ELFT::Crel &rel : rels.crels)
       resolveReloc(sec, rel, false);
 
     for (InputSectionBase *isec : sec.dependentSections)

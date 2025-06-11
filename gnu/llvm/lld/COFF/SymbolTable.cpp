@@ -19,8 +19,8 @@
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/LTO/LTO.h"
-#include "llvm/Object/WindowsMachineFlag.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/TimeProfiler.h"
 #include "llvm/Support/raw_ostream.h"
 #include <utility>
 
@@ -32,6 +32,21 @@ StringRef ltrim1(StringRef s, const char *chars) {
   if (!s.empty() && strchr(chars, s[0]))
     return s.substr(1);
   return s;
+}
+
+static bool compatibleMachineType(COFFLinkerContext &ctx, MachineTypes mt) {
+  if (mt == IMAGE_FILE_MACHINE_UNKNOWN)
+    return true;
+  switch (ctx.config.machine) {
+  case ARM64:
+    return mt == ARM64 || mt == ARM64X;
+  case ARM64EC:
+    return COFF::isArm64EC(mt) || mt == AMD64;
+  case ARM64X:
+    return COFF::isAnyArm64(mt) || mt == AMD64;
+  default:
+    return ctx.config.machine == mt;
+  }
 }
 
 void SymbolTable::addFile(InputFile *file) {
@@ -46,6 +61,10 @@ void SymbolTable::addFile(InputFile *file) {
     if (auto *f = dyn_cast<ObjFile>(file)) {
       ctx.objFileInstances.push_back(f);
     } else if (auto *f = dyn_cast<BitcodeFile>(file)) {
+      if (ltoCompilationDone) {
+        error("LTO object file " + toString(file) + " linked in after "
+              "doing LTO compilation.");
+      }
       ctx.bitcodeFileInstances.push_back(f);
     } else if (auto *f = dyn_cast<ImportFile>(file)) {
       ctx.importFileInstances.push_back(f);
@@ -56,7 +75,7 @@ void SymbolTable::addFile(InputFile *file) {
   if (ctx.config.machine == IMAGE_FILE_MACHINE_UNKNOWN) {
     ctx.config.machine = mt;
     ctx.driver.addWinSysRootLibSearchPaths();
-  } else if (mt != IMAGE_FILE_MACHINE_UNKNOWN && ctx.config.machine != mt) {
+  } else if (!compatibleMachineType(ctx, mt)) {
     error(toString(file) + ": machine type " + machineToStr(mt) +
           " conflicts with " + machineToStr(ctx.config.machine));
     return;
@@ -302,7 +321,7 @@ void SymbolTable::loadMinGWSymbols() {
     }
 
     if (ctx.config.autoImport) {
-      if (name.startswith("__imp_"))
+      if (name.starts_with("__imp_"))
         continue;
       // If we have an undefined symbol, but we have a lazy symbol we could
       // load, load it.
@@ -318,7 +337,7 @@ void SymbolTable::loadMinGWSymbols() {
 }
 
 Defined *SymbolTable::impSymbol(StringRef name) {
-  if (name.startswith("__imp_"))
+  if (name.starts_with("__imp_"))
     return nullptr;
   return dyn_cast_or_null<Defined>(find(("__imp_" + name).str()));
 }
@@ -441,10 +460,12 @@ void SymbolTable::reportUnresolvable() {
     if (undef->getWeakAlias())
       continue;
     StringRef name = undef->getName();
-    if (name.startswith("__imp_")) {
+    if (name.starts_with("__imp_")) {
       Symbol *imp = find(name.substr(strlen("__imp_")));
-      if (imp && isa<Defined>(imp))
+      if (Defined *def = dyn_cast_or_null<Defined>(imp)) {
+        def->isUsedInRegularObj = true;
         continue;
+      }
     }
     if (name.contains("_PchSym_"))
       continue;
@@ -458,6 +479,7 @@ void SymbolTable::reportUnresolvable() {
 }
 
 void SymbolTable::resolveRemainingUndefines() {
+  llvm::TimeTraceScope timeScope("Resolve remaining undefined symbols");
   SmallPtrSet<Symbol *, 8> undefs;
   DenseMap<Symbol *, Symbol *> localImports;
 
@@ -489,7 +511,7 @@ void SymbolTable::resolveRemainingUndefines() {
 
     // If we can resolve a symbol by removing __imp_ prefix, do that.
     // This odd rule is for compatibility with MSVC linker.
-    if (name.startswith("__imp_")) {
+    if (name.starts_with("__imp_")) {
       Symbol *imp = find(name.substr(strlen("__imp_")));
       if (imp && isa<Defined>(imp)) {
         auto *d = cast<Defined>(imp);
@@ -538,6 +560,28 @@ std::pair<Symbol *, bool> SymbolTable::insert(StringRef name, InputFile *file) {
   if (!file || !isa<BitcodeFile>(file))
     result.first->isUsedInRegularObj = true;
   return result;
+}
+
+void SymbolTable::addEntryThunk(Symbol *from, Symbol *to) {
+  entryThunks.push_back({from, to});
+}
+
+void SymbolTable::initializeEntryThunks() {
+  for (auto it : entryThunks) {
+    auto *to = dyn_cast<Defined>(it.second);
+    if (!to)
+      continue;
+    auto *from = dyn_cast<DefinedRegular>(it.first);
+    // We need to be able to add padding to the function and fill it with an
+    // offset to its entry thunks. To ensure that padding the function is
+    // feasible, functions are required to be COMDAT symbols with no offset.
+    if (!from || !from->getChunk()->isCOMDAT() ||
+        cast<DefinedRegular>(from)->getValue()) {
+      error("non COMDAT symbol '" + from->getName() + "' in hybrid map");
+      continue;
+    }
+    from->getChunk()->setEntryThunk(to);
+  }
 }
 
 Symbol *SymbolTable::addUndefined(StringRef name, InputFile *f,
@@ -801,9 +845,9 @@ std::vector<Symbol *> SymbolTable::getSymsWithPrefix(StringRef prefix) {
   std::vector<Symbol *> syms;
   for (auto pair : symMap) {
     StringRef name = pair.first.val();
-    if (name.startswith(prefix) || name.startswith(prefix.drop_front()) ||
-        name.drop_front().startswith(prefix) ||
-        name.drop_front().startswith(prefix.drop_front())) {
+    if (name.starts_with(prefix) || name.starts_with(prefix.drop_front()) ||
+        name.drop_front().starts_with(prefix) ||
+        name.drop_front().starts_with(prefix.drop_front())) {
       syms.push_back(pair.second);
     }
   }
@@ -831,7 +875,7 @@ Symbol *SymbolTable::findMangle(StringRef name) {
   auto findByPrefix = [&syms](const Twine &t) -> Symbol * {
     std::string prefix = t.str();
     for (auto *s : syms)
-      if (s->getName().startswith(prefix))
+      if (s->getName().starts_with(prefix))
         return s;
     return nullptr;
   };
@@ -840,7 +884,7 @@ Symbol *SymbolTable::findMangle(StringRef name) {
   if (ctx.config.machine != I386)
     return findByPrefix("?" + name + "@@Y");
 
-  if (!name.startswith("_"))
+  if (!name.starts_with("_"))
     return nullptr;
   // Search for x86 stdcall function.
   if (Symbol *s = findByPrefix(name + "@"))
@@ -860,9 +904,11 @@ Symbol *SymbolTable::addUndefined(StringRef name) {
 }
 
 void SymbolTable::compileBitcodeFiles() {
+  ltoCompilationDone = true;
   if (ctx.bitcodeFileInstances.empty())
     return;
 
+  llvm::TimeTraceScope timeScope("Compile bitcode");
   ScopedTimer t(ctx.ltoTimer);
   lto.reset(new BitcodeCompiler(ctx));
   for (BitcodeFile *f : ctx.bitcodeFileInstances)
