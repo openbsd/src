@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.37 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.38 2025/06/12 23:35:33 jsg Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -579,27 +579,6 @@ isa_dmamem_unmap(struct device *isadev, int chan, caddr_t kva, size_t size)
 }
 
 int
-isa_dmamem_mmap(struct device *isadev, int chan, bus_addr_t addr,
-    bus_size_t size, int off, int prot, int flags)
-{
-	struct isa_softc *sc = (struct isa_softc *)isadev;
-	bus_dma_segment_t seg;
-
-	if (chan < 0 || chan > 7) {
-		panic("isa_dmamem_mmap: %s: bogus drq %d", sc->sc_dev.dv_xname,
-		    chan);
-	}
-
-	if (off < 0)
-		return (-1);
-
-	seg.ds_addr = addr;
-	seg.ds_len = size;
-
-	return (bus_dmamem_mmap(sc->sc_dmat, &seg, 1, off, prot, flags));
-}
-
-int
 isa_drq_isfree(struct device *isadev, int chan)
 {
 	struct isa_softc *sc = (struct isa_softc *)isadev;
@@ -659,19 +638,4 @@ isa_free(void *addr, int pool)
 	isa_dmamem_unmap(m->isadev, m->chan, kva, m->size);
 	isa_dmamem_free(m->isadev, m->chan, m->addr, m->size);
 	free(m, pool, 0);
-}
-
-paddr_t
-isa_mappage(void *mem, off_t off, int prot)
-{
-	struct isa_mem *m;
-
-	for(m = isa_mem_head; m && m->kva != (caddr_t)mem; m = m->next)
-		;
-	if (!m) {
-		printf("isa_mappage: mapping unallocated memory\n");
-		return -1;
-	}
-	return (isa_dmamem_mmap(m->isadev, m->chan, m->addr, m->size, off,
-	    prot, BUS_DMA_WAITOK));
 }
