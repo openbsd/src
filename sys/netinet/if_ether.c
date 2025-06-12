@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.272 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.273 2025/06/12 07:17:00 jsg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -901,6 +901,7 @@ out:
 	m_freem(m);
 }
 
+#ifdef NFSCLIENT
 /*
  * Send a RARP request for the ip address of the specified interface.
  * The request should be RFC 903-compliant.
@@ -940,7 +941,6 @@ revarprequest(struct ifnet *ifp)
 	ifp->if_output(ifp, m, &sa, NULL);
 }
 
-#ifdef NFSCLIENT
 /*
  * RARP for the ip address of the specified interface, but also
  * save the ip address of the server that sent the answer.
