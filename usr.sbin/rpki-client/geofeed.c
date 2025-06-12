@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.17 2024/11/12 09:23:07 tb Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.18 2025/06/12 18:17:54 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -80,6 +80,8 @@ geofeed_parse_geoip(struct geofeed *geofeed, char *cidr, char *loc)
 	geoip->ip->type = CERT_IP_ADDR;
 	geoip->ip->ip = *ipaddr;
 	geoip->ip->afi = afi;
+
+	free(ipaddr);
 
 	if ((geoip->loc = strdup(loc)) == NULL)
 		err(1, NULL);
