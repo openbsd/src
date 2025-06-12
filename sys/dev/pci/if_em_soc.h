@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_em_soc.h,v 1.2 2015/06/04 18:33:41 dms Exp $	*/
+/*	$OpenBSD: if_em_soc.h,v 1.3 2025/06/12 06:43:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -22,7 +22,6 @@ int em_attach_miibus(struct device *self);
 
 int gcu_miibus_readreg(struct em_hw *, int, int);
 void gcu_miibus_writereg(struct em_hw *, int, int, int);
-void gcu_miibus_statchg(struct device *);
 
 #define GCU_MAX_ATTEMPTS	64
 #define GCU_CMD_DELAY		50 /* microseconds */

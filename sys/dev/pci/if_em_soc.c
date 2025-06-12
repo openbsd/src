@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_em_soc.c,v 1.5 2016/01/07 04:37:53 dlg Exp $	*/
+/*	$OpenBSD: if_em_soc.c,v 1.6 2025/06/12 06:43:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -128,9 +128,4 @@ gcu_miibus_writereg(struct em_hw *hw, int phy, int reg, int val)
 		    DEVNAME(sc), phy, reg);
 		return;
 	}
-}
-
-void
-gcu_miibus_statchg(struct device *dev)
-{
 }
