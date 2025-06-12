@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2025/05/24 04:19:06 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.12 2025/06/12 23:51:33 bluhm Exp $
 
 SUBDIR +=	arp autoport
 SUBDIR +=	bindconnect broadcast_bind
@@ -9,7 +9,7 @@ SUBDIR +=	mcast
 SUBDIR +=	pmtu
 SUBDIR +=	recvmsg
 SUBDIR +=	sendsrcaddr
-SUBDIR +=	tcpthread
+SUBDIR +=	tcpstate tcpthread
 SUBDIR +=	udpthread
 
 .include <bsd.subdir.mk>
