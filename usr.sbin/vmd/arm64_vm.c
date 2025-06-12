@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.6 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.7 2025/06/12 21:04:37 dv Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -112,14 +112,6 @@ void
 vcpu_deassert_irq(uint32_t vm_id, uint32_t vcpu_id, int irq)
 {
 	fatalx("%s: unimplemented", __func__);
-}
-
-int
-vmd_check_vmh(struct vm_dump_header *vmh)
-{
-	fatalx("%s: unimplemented", __func__);
-	/* NOTREACHED */
-	return (-1);
 }
 
 int

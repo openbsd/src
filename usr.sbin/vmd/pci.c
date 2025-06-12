@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.36 2025/05/28 16:27:48 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.37 2025/06/12 21:04:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -413,28 +413,6 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	}
 }
 #endif /* __amd64__ */
-
-int
-pci_dump(int fd)
-{
-	log_debug("%s: sending pci", __func__);
-	if (atomicio(vwrite, fd, &pci, sizeof(pci)) != sizeof(pci)) {
-		log_warnx("%s: error writing pci to fd", __func__);
-		return (-1);
-	}
-	return (0);
-}
-
-int
-pci_restore(int fd)
-{
-	log_debug("%s: receiving pci", __func__);
-	if (atomicio(read, fd, &pci, sizeof(pci)) != sizeof(pci)) {
-		log_warnx("%s: error reading pci from fd", __func__);
-		return (-1);
-	}
-	return (0);
-}
 
 /*
  * Find the first PCI device based on PCI Subsystem ID

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.54 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.55 2025/06/12 21:04:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -340,9 +340,6 @@ void virtio_broadcast_imsg(struct vmd_vm *, uint16_t, void *, uint16_t);
 void virtio_stop(struct vmd_vm *);
 void virtio_start(struct vmd_vm *);
 void virtio_shutdown(struct vmd_vm *);
-int virtio_dump(int);
-int virtio_restore(int, struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK],
-    int *);
 const char *virtio_reg_name(uint8_t);
 uint32_t vring_size(uint32_t);
 int vm_device_pipe(struct virtio_dev *, void (*)(int, short, void *),
@@ -352,8 +349,6 @@ void virtio_assert_irq(struct virtio_dev *, int);
 void virtio_deassert_irq(struct virtio_dev *, int);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
-int viornd_dump(int);
-int viornd_restore(int, struct vmd_vm *);
 void viornd_update_qs(void);
 void viornd_update_qa(void);
 int viornd_notifyq(void);
@@ -364,23 +359,14 @@ int virtio_qcow2_init(struct virtio_backing *, off_t *, int*, size_t);
 int virtio_raw_create(const char *, uint64_t);
 int virtio_raw_init(struct virtio_backing *, off_t *, int*, size_t);
 
-int vioblk_dump(int);
-int vioblk_restore(int, struct vmd_vm *, int[][VM_MAX_BASE_PER_DISK]);
-
-int vionet_dump(int);
-int vionet_restore(int, struct vmd_vm *, int *);
 void vionet_set_hostmac(struct vmd_vm *, unsigned int, uint8_t *);
 
 int vmmci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
-int vmmci_dump(int);
-int vmmci_restore(int, uint32_t);
 int vmmci_ctl(unsigned int);
 void vmmci_ack(unsigned int);
 void vmmci_timeout(int, short, void *);
 
 const char *vioblk_cmd_name(uint32_t);
-int vioscsi_dump(int);
-int vioscsi_restore(int, struct vmd_vm *, int);
 
 /* dhcp.c */
 ssize_t dhcp_request(struct virtio_dev *, char *, size_t, char **);

@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.23 2024/07/09 09:31:37 dv Exp $ */
+/* $OpenBSD: i8259.c,v 1.24 2025/06/12 21:04:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -740,42 +740,4 @@ vcpu_exit_elcr(struct vm_run_params *vrp)
 	}
 
 	return (0xFF);
-}
-
-int
-i8259_dump(int fd)
-{
-	log_debug("%s: sending PIC", __func__);
-	if (atomicio(vwrite, fd, &pics, sizeof(pics)) != sizeof(pics)) {
-		log_warnx("%s: error writing PIC to fd", __func__);
-		return (-1);
-	}
-
-	log_debug("%s: sending ELCR", __func__);
-	if (atomicio(vwrite, fd, &elcr, sizeof(elcr)) != sizeof(elcr)) {
-		log_warnx("%s: error writing ELCR to fd", __func__);
-		return (-1);
-	}
-	return (0);
-}
-
-int
-i8259_restore(int fd)
-{
-	log_debug("%s: restoring PIC", __func__);
-	if (atomicio(read, fd, &pics, sizeof(pics)) != sizeof(pics)) {
-		log_warnx("%s: error reading PIC from fd", __func__);
-		return (-1);
-	}
-
-	log_debug("%s: restoring ELCR", __func__);
-	if (atomicio(read, fd, &elcr, sizeof(elcr)) != sizeof(elcr)) {
-		log_warnx("%s: error reading ELCR from fd", __func__);
-		return (-1);
-	}
-
-	if (pthread_mutex_init(&pic_mtx, NULL) != 0)
-		fatalx("unable to create pic mutex");
-
-	return (0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.h,v 1.10 2021/07/16 16:21:22 dv Exp $ */
+/* $OpenBSD: ns8250.h,v 1.11 2025/06/12 21:04:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -85,7 +85,5 @@ void vcpu_process_com_mcr(struct vm_exit *);
 void vcpu_process_com_iir(struct vm_exit *);
 void vcpu_process_com_msr(struct vm_exit *);
 void vcpu_process_com_scr(struct vm_exit *);
-int ns8250_dump(int);
-int ns8250_restore(int, int, uint32_t);
 void ns8250_stop(void);
 void ns8250_start(void);

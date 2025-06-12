@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.40 2024/07/10 09:27:33 dv Exp $ */
+/* $OpenBSD: ns8250.c,v 1.41 2025/06/12 21:04:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -623,58 +623,6 @@ vcpu_exit_com(struct vm_run_params *vrp)
 	mutex_unlock(&com1_dev.mutex);
 
 	return (intr);
-}
-
-int
-ns8250_dump(int fd)
-{
-	log_debug("%s: sending UART", __func__);
-	if (atomicio(vwrite, fd, &com1_dev.regs,
-	    sizeof(com1_dev.regs)) != sizeof(com1_dev.regs)) {
-		log_warnx("%s: error writing UART to fd", __func__);
-		return (-1);
-	}
-	return (0);
-}
-
-int
-ns8250_restore(int fd, int con_fd, uint32_t vmid)
-{
-	int ret;
-	log_debug("%s: receiving UART", __func__);
-	if (atomicio(read, fd, &com1_dev.regs,
-	    sizeof(com1_dev.regs)) != sizeof(com1_dev.regs)) {
-		log_warnx("%s: error reading UART from fd", __func__);
-		return (-1);
-	}
-
-	ret = pthread_mutex_init(&com1_dev.mutex, NULL);
-	if (ret) {
-		errno = ret;
-		fatal("could not initialize com1 mutex");
-	}
-	com1_dev.fd = con_fd;
-	com1_dev.irq = 4;
-	com1_dev.portid = NS8250_COM1;
-	com1_dev.vmid = vmid;
-	com1_dev.byte_out = 0;
-	com1_dev.regs.divlo = 1;
-	com1_dev.baudrate = 115200;
-	com1_dev.pause_ct = (com1_dev.baudrate / 8) / 1000 * 10;
-
-	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
-	    com_rcv_event, (void *)(intptr_t)vmid);
-
-	event_set(&com1_dev.wake, com1_dev.fd, EV_WRITE,
-	    com_rcv_event, (void *)(intptr_t)vmid);
-
-	timerclear(&com1_dev.rate_tv);
-	com1_dev.rate_tv.tv_usec = 10000;
-	evtimer_set(&com1_dev.rate, ratelimit, NULL);
-
-	vm_pipe_init(&dev_pipe, ns8250_pipe_dispatch);
-
-	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.29 2024/07/10 09:27:33 dv Exp $ */
+/* $OpenBSD: mc146818.c,v 1.30 2025/06/12 21:04:37 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -332,37 +332,6 @@ vcpu_exit_mc146818(struct vm_run_params *vrp)
 	}
 
 	return 0xFF;
-}
-
-int
-mc146818_dump(int fd)
-{
-	log_debug("%s: sending RTC", __func__);
-	if (atomicio(vwrite, fd, &rtc, sizeof(rtc)) != sizeof(rtc)) {
-		log_warnx("%s: error writing RTC to fd", __func__);
-		return (-1);
-	}
-	return (0);
-}
-
-int
-mc146818_restore(int fd, uint32_t vm_id)
-{
-	log_debug("%s: restoring RTC", __func__);
-	if (atomicio(read, fd, &rtc, sizeof(rtc)) != sizeof(rtc)) {
-		log_warnx("%s: error reading RTC from fd", __func__);
-		return (-1);
-	}
-	rtc.vm_id = vm_id;
-
-	memset(&rtc.sec, 0, sizeof(struct event));
-	memset(&rtc.per, 0, sizeof(struct event));
-	evtimer_set(&rtc.sec, rtc_fire1, NULL);
-	evtimer_set(&rtc.per, rtc_fireper, (void *)(intptr_t)rtc.vm_id);
-
-	vm_pipe_init(&dev_pipe, mc146818_pipe_dispatch);
-
-	return (0);
 }
 
 void

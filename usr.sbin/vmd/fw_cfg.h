@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.h,v 1.2 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: fw_cfg.h,v 1.3 2025/06/12 21:04:37 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -26,8 +26,6 @@
 #define	FW_CFG_IO_DMA_ADDR_LOW	0x518
 
 void	fw_cfg_init(struct vmop_create_params *);
-int	fw_cfg_dump(int);
-int	fw_cfg_restore(int);
 uint8_t	vcpu_exit_fw_cfg(struct vm_run_params *);
 uint8_t	vcpu_exit_fw_cfg_dma(struct vm_run_params *);
 void	fw_cfg_add_file(const char *, const void *, size_t);

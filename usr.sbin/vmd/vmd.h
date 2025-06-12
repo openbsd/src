@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.136 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.137 2025/06/12 21:04:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -247,23 +247,6 @@ struct vmop_create_params {
 	unsigned int		 vmc_insflags;
 };
 
-struct vm_dump_header_cpuid {
-	unsigned long code, leaf;
-	unsigned int a, b, c, d;
-};
-
-#define VM_DUMP_HEADER_CPUID_COUNT	5
-
-struct vm_dump_header {
-	uint8_t			 vmh_signature[12];
-#define VM_DUMP_SIGNATURE	 VMM_HV_SIGNATURE
-	uint8_t			 vmh_pad[3];
-	uint8_t			 vmh_version;
-#define VM_DUMP_VERSION		 7
-	struct			 vm_dump_header_cpuid
-	    vmh_cpuids[VM_DUMP_HEADER_CPUID_COUNT];
-} __packed;
-
 struct vmd_if {
 	char			*vif_name;
 	char			*vif_switch;
@@ -502,13 +485,9 @@ void	 create_memory_map(struct vm_create_params *);
 int	 load_firmware(struct vmd_vm *, struct vcpu_reg_state *);
 void	 init_emulated_hw(struct vmop_create_params *, int,
     int[][VM_MAX_BASE_PER_DISK], int *);
-void	 restore_emulated_hw(struct vm_create_params *vcp, int, int *,
-    int[][VM_MAX_BASE_PER_DISK], int);
 int	 vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
 void	 pause_vm_md(struct vmd_vm *);
 void	 unpause_vm_md(struct vmd_vm *);
-int	 dump_devs(int);
-int	 dump_send_header(int);
 void	*hvaddr_mem(paddr_t, size_t);
 struct vm_mem_range *
 	 find_gpa_range(struct vm_create_params *, paddr_t, size_t);
@@ -536,7 +515,6 @@ int 	 vcpu_intr(uint32_t, uint32_t, uint8_t);
 void	 vm_main(int, int);
 void	 mutex_lock(pthread_mutex_t *);
 void	 mutex_unlock(pthread_mutex_t *);
-int	 vmd_check_vmh(struct vm_dump_header *);
 void	 vm_pipe_init(struct vm_dev_pipe *, void (*)(int, short, void *));
 void	 vm_pipe_init2(struct vm_dev_pipe *, void (*)(int, short, void *),
 	    void *);

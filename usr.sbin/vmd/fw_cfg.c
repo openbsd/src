@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.10 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.11 2025/06/12 21:04:37 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -117,66 +117,6 @@ fw_cfg_init(struct vmop_create_params *vmc)
 		log_debug("%s: bootorder: %s", __func__, bootorder);
 		fw_cfg_add_file("bootorder", bootorder, strlen(bootorder) + 1);
 	}
-}
-
-int
-fw_cfg_dump(int fd)
-{
-	log_debug("%s: sending fw_cfg state", __func__);
-	if (atomicio(vwrite, fd, &fw_cfg_dma_addr,
-	    sizeof(fw_cfg_dma_addr)) != sizeof(fw_cfg_dma_addr)) {
-		log_warnx("%s: error writing fw_cfg to fd", __func__);
-		return -1;
-	}
-	if (atomicio(vwrite, fd, &fw_cfg_state.offset,
-	    sizeof(fw_cfg_state.offset)) != sizeof(fw_cfg_state.offset)) {
-		log_warnx("%s: error writing fw_cfg to fd", __func__);
-		return -1;
-	}
-	if (atomicio(vwrite, fd, &fw_cfg_state.size,
-	    sizeof(fw_cfg_state.size)) != sizeof(fw_cfg_state.size)) {
-		log_warnx("%s: error writing fw_cfg to fd", __func__);
-		return -1;
-	}
-	if (fw_cfg_state.size != 0)
-		if (atomicio(vwrite, fd, fw_cfg_state.data,
-		    fw_cfg_state.size) != fw_cfg_state.size) {
-			log_warnx("%s: error writing fw_cfg to fd", __func__);
-			return (-1);
-		}
-	return 0;
-}
-
-int
-fw_cfg_restore(int fd)
-{
-	log_debug("%s: receiving fw_cfg state", __func__);
-	if (atomicio(read, fd, &fw_cfg_dma_addr,
-	    sizeof(fw_cfg_dma_addr)) != sizeof(fw_cfg_dma_addr)) {
-		log_warnx("%s: error reading fw_cfg from fd", __func__);
-		return -1;
-	}
-	if (atomicio(read, fd, &fw_cfg_state.offset,
-	    sizeof(fw_cfg_state.offset)) != sizeof(fw_cfg_state.offset)) {
-		log_warnx("%s: error reading fw_cfg from fd", __func__);
-		return -1;
-	}
-	if (atomicio(read, fd, &fw_cfg_state.size,
-	    sizeof(fw_cfg_state.size)) != sizeof(fw_cfg_state.size)) {
-		log_warnx("%s: error reading fw_cfg from fd", __func__);
-		return -1;
-	}
-	fw_cfg_state.data = NULL;
-	if (fw_cfg_state.size != 0) {
-		if ((fw_cfg_state.data = malloc(fw_cfg_state.size)) == NULL)
-			fatal("%s", __func__);
-		if (atomicio(read, fd, fw_cfg_state.data,
-		    fw_cfg_state.size) != fw_cfg_state.size) {
-			log_warnx("%s: error reading fw_cfg from fd", __func__);
-			return -1;
-		}
-	}
-	return 0;
 }
 
 static void
