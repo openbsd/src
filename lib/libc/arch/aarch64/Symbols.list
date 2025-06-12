@@ -1,5 +1,4 @@
 __mcount
-__multf3
 _fpgetmask
 _fpgetround
 _fpgetsticky
