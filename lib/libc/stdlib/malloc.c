@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.298 2025/05/23 00:40:05 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.299 2025/06/12 16:07:09 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -31,7 +31,6 @@
 #include <sys/queue.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
-#include <uvm/uvmexp.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
