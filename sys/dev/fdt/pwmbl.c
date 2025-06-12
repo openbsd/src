@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmbl.c,v 1.8 2023/04/25 11:21:01 patrick Exp $	*/
+/*	$OpenBSD: pwmbl.c,v 1.9 2025/06/12 12:23:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -37,8 +37,8 @@ struct pwmbl_softc {
 	int			sc_pwm_len;
 	uint32_t		*sc_levels;	/* NULL if simple ramp */
 	int			sc_nlevels;
-	uint32_t		sc_max_level;
-	uint32_t		sc_def_level;
+	uint64_t		sc_max_level;
+	uint32_t		sc_def_idx;
 	struct pwm_state	sc_ps_saved;
 };
 
@@ -57,6 +57,7 @@ struct cfdriver pwmbl_cd = {
 	NULL, "pwmbl", DV_DULL
 };
 
+void	pwmbl_interpolate(struct pwmbl_softc *, uint32_t);
 int	pwmbl_get_brightness(void *, uint32_t *);
 int	pwmbl_set_brightness(void *, uint32_t);
 int	pwmbl_get_param(struct wsdisplay_param *);
@@ -76,6 +77,7 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 	struct pwmbl_softc *sc = (struct pwmbl_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	uint32_t *gpios;
+	uint32_t nsteps;
 	int len;
 
 	len = OF_getproplen(faa->fa_node, "pwms");
@@ -104,20 +106,24 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_levels, len);
 		sc->sc_nlevels = len / sizeof(uint32_t);
 		sc->sc_max_level = sc->sc_levels[sc->sc_nlevels - 1];
-		sc->sc_def_level = OF_getpropint(faa->fa_node,
+		nsteps = OF_getpropint(faa->fa_node,
+		    "num-interpolated-steps", 0);
+		if (nsteps > 0)
+			pwmbl_interpolate(sc, nsteps);
+		sc->sc_def_idx = OF_getpropint(faa->fa_node,
 		    "default-brightness-level", sc->sc_nlevels - 1);
-		if (sc->sc_def_level >= sc->sc_nlevels)
-			sc->sc_def_level = sc->sc_nlevels - 1;
-		sc->sc_def_level = sc->sc_levels[sc->sc_def_level];
+		if (sc->sc_def_idx >= sc->sc_nlevels)
+			sc->sc_def_idx = sc->sc_nlevels - 1;
 	} else {
 		/* No levels, assume a simple 0..255 ramp. */
 		sc->sc_nlevels = 256;
-		sc->sc_max_level = sc->sc_def_level = sc->sc_nlevels - 1;
+		sc->sc_max_level = sc->sc_nlevels - 1;
+		sc->sc_def_idx = sc->sc_nlevels - 1;
 	}
 
 	printf("\n");
 
-	pwmbl_set_brightness(sc, sc->sc_def_level);
+	pwmbl_set_brightness(sc, sc->sc_def_idx);
 
 	sc_pwmbl = sc;
 	ws_get_param = pwmbl_get_param;
@@ -147,51 +153,80 @@ pwmbl_activate(struct device *self, int act)
 	return 0;
 }
 
-int
-pwmbl_get_brightness(void *cookie, uint32_t *level)
+void
+pwmbl_interpolate(struct pwmbl_softc *sc, uint32_t nsteps)
 {
-	struct pwmbl_softc *sc = cookie;
-	struct pwm_state ps;
+	uint32_t *levels;
+	uint64_t delta;
+	uint32_t base;
+	int nlevels;
+	int i, j;
 
-	if (pwm_get_state(sc->sc_pwm, &ps))
-		return EINVAL;
-
-	*level = (ps.ps_pulse_width * sc->sc_max_level) / ps.ps_period;
-	return 0;
+	nlevels = (sc->sc_nlevels - 1) * nsteps + 1;
+	levels = mallocarray(nlevels, sizeof(uint32_t), M_DEVBUF, M_WAITOK);
+	for (i = 0; i < sc->sc_nlevels - 1; i++) {
+		delta = sc->sc_levels[i + 1] - sc->sc_levels[i];
+		base = sc->sc_levels[i];
+		for (j = 0; j < nsteps; j++)
+			levels[i * nsteps + j] = base + (j * delta) / nsteps;
+	}
+	levels[nlevels - 1] = sc->sc_levels[sc->sc_nlevels - 1];
+	free(sc->sc_levels, M_DEVBUF, sc->sc_nlevels * sizeof(uint32_t));
+	sc->sc_levels = levels;
+	sc->sc_nlevels = nlevels;
 }
 
 uint32_t
-pwmbl_find_brightness(struct pwmbl_softc *sc, uint32_t level)
+pwmbl_find_idx(struct pwmbl_softc *sc, uint32_t level)
 {
 	uint32_t mid;
-	int i;
+	int idx;
 
 	if (sc->sc_levels == NULL)
 		return level < sc->sc_nlevels ? level : sc->sc_nlevels - 1;
 
-	for (i = 0; i < sc->sc_nlevels - 1; i++) {
-		mid = (sc->sc_levels[i] + sc->sc_levels[i + 1]) / 2;
-		if (sc->sc_levels[i] <= level && level <= mid)
-			return sc->sc_levels[i];
-		if (mid < level && level <= sc->sc_levels[i + 1])
-			return sc->sc_levels[i + 1];
+	for (idx = 0; idx < sc->sc_nlevels - 1; idx++) {
+		mid = (sc->sc_levels[idx] + sc->sc_levels[idx + 1]) / 2;
+		if (sc->sc_levels[idx] <= level && level <= mid)
+			return idx;
+		if (mid < level && level <= sc->sc_levels[idx + 1])
+			return idx + 1;
 	}
 	if (level < sc->sc_levels[0])
-		return sc->sc_levels[0];
+		return 0;
 	else
-		return sc->sc_levels[i];
+		return idx;
 }
 
 int
-pwmbl_set_brightness(void *cookie, uint32_t level)
+pwmbl_get_brightness(void *cookie, uint32_t *idx)
 {
 	struct pwmbl_softc *sc = cookie;
 	struct pwm_state ps;
+	uint64_t level;
+
+	if (pwm_get_state(sc->sc_pwm, &ps))
+		return EINVAL;
+
+	level = (ps.ps_pulse_width * sc->sc_max_level) / ps.ps_period;
+	*idx = pwmbl_find_idx(sc, level);
+	return 0;
+}
+
+int
+pwmbl_set_brightness(void *cookie, uint32_t idx)
+{
+	struct pwmbl_softc *sc = cookie;
+	struct pwm_state ps;
+	uint64_t level;
 
 	if (pwm_init_state(sc->sc_pwm, &ps))
 		return EINVAL;
 
-	level = pwmbl_find_brightness(sc, level);
+	if (sc->sc_levels)
+		level = sc->sc_levels[idx];
+	else
+		level = idx;
 
 	ps.ps_enabled = 1;
 	ps.ps_pulse_width = (ps.ps_period * level) / sc->sc_max_level;
@@ -210,7 +245,7 @@ pwmbl_get_param(struct wsdisplay_param *dp)
 			return -1;
 
 		dp->min = 0;
-		dp->max = sc->sc_max_level;
+		dp->max = sc->sc_nlevels - 1;
 		dp->curval = level;
 		return 0;
 	default:
