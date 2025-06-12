@@ -2060,11 +2060,9 @@
 ./usr/share/man/man3/SHA1Init.3
 ./usr/share/man/man3/SHA256Init.3
 ./usr/share/man/man3/SMIME_crlf_copy.3
-./usr/share/man/man3/SMIME_read_ASN1.3
 ./usr/share/man/man3/SMIME_read_CMS.3
 ./usr/share/man/man3/SMIME_read_PKCS7.3
 ./usr/share/man/man3/SMIME_text.3
-./usr/share/man/man3/SMIME_write_ASN1.3
 ./usr/share/man/man3/SMIME_write_CMS.3
 ./usr/share/man/man3/SMIME_write_PKCS7.3
 ./usr/share/man/man3/SSL_CIPHER_get_name.3
