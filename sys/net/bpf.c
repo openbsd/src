@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.232 2025/03/04 01:01:25 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.233 2025/06/12 20:37:58 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1808,6 +1808,7 @@ bpfsdetach(void *p)
 	free(bp, M_DEVBUF, sizeof(*bp));
 }
 
+#ifndef SMALL_KERNEL
 int
 bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
@@ -1829,6 +1830,7 @@ bpf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	/* NOTREACHED */
 }
+#endif /* SMALL_KERNEL */
 
 struct bpf_d *
 bpfilter_lookup(int unit)

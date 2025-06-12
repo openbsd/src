@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.112 2025/06/09 11:11:03 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.113 2025/06/12 20:37:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -845,6 +845,7 @@ cpu_is_online(struct cpu_info *ci)
 
 #include <sys/sysctl.h>
 
+#ifndef SMALL_KERNEL
 int
 sysctl_hwsmt(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
@@ -873,5 +874,6 @@ sysctl_hwsmt(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 
 	return 0;
 }
+#endif /* SMALL_KERNEL */
 
-#endif
+#endif /* __HAVE_CPU_TOPOLOGY */

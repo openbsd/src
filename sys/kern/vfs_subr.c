@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.329 2025/04/27 00:58:55 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.330 2025/06/12 20:37:58 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1382,6 +1382,7 @@ printlockedvnodes(void)
 }
 #endif
 
+#ifndef SMALL_KERNEL
 /*
  * Top level filesystem related information gathering.
  */
@@ -1434,6 +1435,7 @@ vfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	return (EOPNOTSUPP);
 }
+#endif /* SMALL_KERNEL */
 
 /*
  * Check to see if a filesystem is mounted on a block device.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.86 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.87 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -676,6 +676,7 @@ igmp_sendpkt(struct ifnet *ifp, struct in_multi *inm, int type,
 	igmpstat_inc(igps_snd_reports);
 }
 
+#ifndef SMALL_KERNEL
 /*
  * Sysctl for igmp variables.
  */
@@ -714,3 +715,4 @@ igmp_sysctl_igmpstat(void *oldp, size_t *oldlenp, void *newp)
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    &igmpstat, sizeof(igmpstat)));
 }
+#endif /* SMALL_KERNEL */

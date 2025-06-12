@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.341 2025/06/03 16:51:26 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.342 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -157,11 +157,13 @@ const struct pr_usrreqs udp6_usrreqs = {
 };
 #endif
 
+#ifndef SMALL_KERNEL
 const struct sysctl_bounded_args udpctl_vars[] = {
 	{ UDPCTL_CHECKSUM, &udpcksum, 0, 1 },
 	{ UDPCTL_RECVSPACE, &udp_recvspace, 0, SB_MAX },
 	{ UDPCTL_SENDSPACE, &udp_sendspace, 0, SB_MAX },
 };
+#endif /* SMALL_KERNEL */
 
 struct	inpcbtable udbtable;
 #ifdef INET6
@@ -1265,6 +1267,7 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *addr,
 	return (udp_output(inp, m, addr, control));
 }
 
+#ifndef SMALL_KERNEL
 /*
  * Sysctl for udp variables.
  */
@@ -1342,3 +1345,4 @@ udp_sysctl_udpstat(void *oldp, size_t *oldlenp, void *newp)
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    &udpstat, sizeof(udpstat)));
 }
+#endif /* SMALL_KERNEL */

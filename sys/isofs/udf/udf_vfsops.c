@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.71 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.72 2025/06/12 20:37:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -93,7 +93,6 @@ const struct vfsops udf_vfsops = {
 	.vfs_fhtovp	= udf_fhtovp,
 	.vfs_vptofh	= udf_vptofh,
 	.vfs_init	= udf_init,
-	.vfs_sysctl	= udf_sysctl,
 	.vfs_checkexp	= udf_checkexp,
 };
 
@@ -736,13 +735,6 @@ udf_vptofh(struct vnode *vp, struct fid *fhp)
 	ifhp->ifid_ino = up->u_ino;
 
 	return (0);
-}
-
-int
-udf_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-	return (EINVAL);
 }
 
 int

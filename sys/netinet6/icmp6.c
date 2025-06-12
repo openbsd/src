@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.266 2025/05/27 07:52:49 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.267 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1761,6 +1761,7 @@ icmp6_mtudisc_timeout(struct rtentry *rt, u_int rtableid)
 	if_put(ifp);
 }
 
+#ifndef SMALL_KERNEL
 const struct sysctl_bounded_args icmpv6ctl_vars[] = {
 	{ ICMPV6CTL_ND6_DELAY, &nd6_delay, 0, INT_MAX },
 	{ ICMPV6CTL_ND6_UMAXTRIES, &nd6_umaxtries, 0, INT_MAX },
@@ -1828,3 +1829,4 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	return (error);
 }
+#endif /* SMALL_KERNEL */

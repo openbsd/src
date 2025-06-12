@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.408 2025/05/20 18:40:09 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.409 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ LIST_HEAD(, ipq) ipq;
 int	ip_maxqueue = 300;
 int	ip_frags = 0;
 
+#ifndef SMALL_KERNEL
 const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 	{ IPCTL_FORWARDING, &ip_forwarding, 0, 2 },
 	{ IPCTL_SENDREDIRECTS, &ip_sendredirects, 0, 1 },
@@ -131,6 +132,7 @@ const struct sysctl_bounded_args ipctl_vars[] = {
 	{ IPCTL_ARPTIMEOUT, &arpt_keep, 0, INT_MAX },
 	{ IPCTL_ARPDOWN, &arpt_down, 0, INT_MAX },
 };
+#endif /* SMALL_KERNEL */
 
 struct niqueue ipintrq = NIQUEUE_INITIALIZER(IPQ_MAXLEN, NETISR_IP);
 
@@ -1720,6 +1722,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 		rtfree(ro->ro_rt);
 }
 
+#ifndef SMALL_KERNEL
 int
 ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
@@ -1847,6 +1850,7 @@ ip_sysctl_ipstat(void *oldp, size_t *oldlenp, void *newp)
 
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &ipstat, sizeof(ipstat)));
 }
+#endif /* SMALL_KERNEL */
 
 void
 ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,

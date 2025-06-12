@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.192 2025/05/27 07:52:49 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.193 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -775,6 +775,7 @@ out:
 	return (error);
 }
 
+#ifndef SMALL_KERNEL
 int
 rip6_sysctl_rip6stat(void *oldp, size_t *oldplen, void *newp)
 {
@@ -804,3 +805,4 @@ rip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 	/* NOTREACHED */
 }
+#endif /* SMALL_KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.59 2025/03/04 01:13:37 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.60 2025/06/12 20:37:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -874,6 +874,7 @@ ifiq_process(void *arg)
 	if_input_process(ifiq->ifiq_if, &ml, ifiq->ifiq_idx);
 }
 
+#ifndef SMALL_KERNEL
 int
 net_ifiq_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, 
     void *newp, size_t newlen)
@@ -913,6 +914,7 @@ net_ifiq_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	return (error);
 }
+#endif /* SMALL_KERNEL */
 
 /*
  * priq implementation

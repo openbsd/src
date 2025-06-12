@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.108 2025/06/08 09:10:53 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.109 2025/06/12 20:37:58 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -919,6 +919,7 @@ timeout_adjust_ticks(int adj)
 }
 #endif
 
+#ifndef SMALL_KERNEL
 int
 timeout_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
@@ -930,6 +931,7 @@ timeout_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 
 	return sysctl_rdstruct(oldp, oldlenp, newp, &status, sizeof(status));
 }
+#endif /* SMALL_KERNEL */
 
 #ifdef DDB
 const char *db_kclock(int);

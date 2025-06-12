@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.69 2024/12/15 11:00:05 dlg Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.70 2025/06/12 20:37:58 deraadt Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ pffindproto(int family, int protocol, int type)
 	return (maybe);
 }
 
+#ifndef SMALL_KERNEL
 static int
 net_link_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
@@ -190,6 +191,7 @@ net_link_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	return (error);
 }
+#endif /* SMALL_KERNEL */
 
 int
 net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
@@ -210,6 +212,7 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	if (family == PF_UNSPEC)
 		return (0);
+#ifndef SMALL_KERNEL
 	if (family == PF_LINK)
 		return (net_link_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
@@ -220,22 +223,23 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	if (family == PF_BPF)
 		return (bpf_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
-#endif
+#endif /* NBPFILTER > 0 */
 #if NPFLOW > 0
 	if (family == PF_PFLOW)
 		return (pflow_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
-#endif
+#endif /* NPFLOW > 0 */
 #ifdef PIPEX
 	if (family == PF_PIPEX)
 		return (pipex_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
-#endif
+#endif /* PIPEX */
 #ifdef MPLS
 	if (family == PF_MPLS)
 		return (mpls_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
-#endif
+#endif /* MPLS */
+#endif /* SMALL_KERNEL */
 	dp = pffinddomain(family);
 	if (dp == NULL)
 		return (ENOPROTOOPT);

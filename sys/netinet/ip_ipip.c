@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.107 2025/05/14 14:32:15 mvs Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.108 2025/06/12 20:37:59 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -574,6 +574,7 @@ ipe4_input(struct mbuf **mp, struct tdb *tdb, int hlen, int proto,
 }
 #endif	/* IPSEC */
 
+#ifndef SMALL_KERNEL
 int
 ipip_sysctl_ipipstat(void *oldp, size_t *oldlenp, void *newp)
 {
@@ -606,3 +607,4 @@ ipip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	/* NOTREACHED */
 }
+#endif /* SMALL_KERNEL */

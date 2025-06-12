@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.249 2025/06/03 16:51:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.250 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -159,6 +159,7 @@ const struct pr_usrreqs tcp6_usrreqs = {
 };
 #endif
 
+#ifndef SMALL_KERNEL
 const struct sysctl_bounded_args tcpctl_vars[] = {
 	{ TCPCTL_KEEPINITTIME, &tcp_keepinit_sec, 1,
 	    3 * TCPTV_KEEPINIT / TCP_TIME(1) },
@@ -180,6 +181,7 @@ const struct sysctl_bounded_args tcpctl_vars[] = {
 	{ TCPCTL_ALWAYS_KEEPALIVE, &tcp_always_keepalive, 0, 1 },
 	{ TCPCTL_TSO, &tcp_do_tso, 0, 1 },
 };
+#endif /* SMALL_KERNEL */
 
 struct	inpcbtable tcbtable;
 #ifdef INET6
@@ -1264,6 +1266,7 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 	return copyout(&tir, oldp, sizeof(tir));
 }
 
+#ifndef SMALL_KERNEL
 int
 tcp_sysctl_tcpstat(void *oldp, size_t *oldlenp, void *newp)
 {
@@ -1554,6 +1557,7 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	/* NOTREACHED */
 }
+#endif /* SMALL_KERNEL */
 
 /*
  * Scale the send buffer so that inflight data is not accounted against

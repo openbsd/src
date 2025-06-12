@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.272 2025/05/27 07:52:49 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.273 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1472,6 +1472,7 @@ const struct sysctl_bounded_args ipv6ctl_vars[] = {
 	{ IPV6CTL_MAXDYNROUTES, &ip6_maxdynroutes, -1, 5 * 4096 },
 };
 
+#ifndef SMALL_KERNEL
 int
 ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 {
@@ -1488,6 +1489,7 @@ ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 
 	return (ret);
 }
+#endif /* SMALL_KERNEL */
 
 int
 ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
@@ -1511,13 +1513,14 @@ int
 ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	int oldval, error;
+	int error;
 
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPV6CTL_IFQUEUE)
 		return (ENOTDIR);
 
 	switch (name[0]) {
+#ifndef SMALL_KERNEL
 	case IPV6CTL_STATS:
 		return (ip6_sysctl_ip6stat(oldp, oldlenp, newp));
 #ifdef MROUTING
@@ -1555,22 +1558,24 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ip6intrq));
-	case IPV6CTL_SOIIKEY:
-		return (ip6_sysctl_soiikey(oldp, oldlenp, newp, newlen));
-	case IPV6CTL_MULTIPATH:
+	case IPV6CTL_MULTIPATH: {
 		NET_LOCK();
-		oldval = ip6_multipath;
+		int oldval = ip6_multipath;
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &ip6_multipath, 0, 1);
 		if (oldval != ip6_multipath)
 			atomic_inc_long(&rtgeneration);
 		NET_UNLOCK();
 		return (error);
+	    }
 	case IPV6CTL_FORWARDING:
 	case IPV6CTL_SENDREDIRECTS:
 		return (sysctl_bounded_arr(
 		    ipv6ctl_vars_unlocked, nitems(ipv6ctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));
+#endif /* SMALL_KERNEL */
+	case IPV6CTL_SOIIKEY:
+		return (ip6_sysctl_soiikey(oldp, oldlenp, newp, newlen));
 	default:
 		NET_LOCK();
 		error = sysctl_bounded_arr(ipv6ctl_vars, nitems(ipv6ctl_vars),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.154 2025/02/05 18:29:17 mvs Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.155 2025/06/12 20:37:58 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -620,6 +620,7 @@ kmeminit(void)
 #endif
 }
 
+#ifndef SMALL_KERNEL
 /*
  * Return kernel malloc statistics information.
  */
@@ -666,6 +667,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	/* NOTREACHED */
 }
+#endif /* SMALL_KERNEL */
 
 #if defined(DDB)
 

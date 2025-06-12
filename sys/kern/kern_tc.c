@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.83 2024/02/23 23:01:15 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.84 2025/06/12 20:37:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -789,6 +789,29 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	tc_update_timekeep();
 }
 
+/*
+ * Timecounters need to be updated every so often to prevent the hardware
+ * counter from overflowing.  Updating also recalculates the cached values
+ * used by the get*() family of functions, so their precision depends on
+ * the update frequency.
+ */
+static int tc_tick;
+
+void
+tc_ticktock(void)
+{
+	static int count;
+
+	if (++count < tc_tick)
+		return;
+	if (!mtx_enter_try(&windup_mtx))
+		return;
+	count = 0;
+	tc_windup(NULL, NULL, NULL);
+	mtx_leave(&windup_mtx);
+}
+
+#ifndef SMALL_KERNEL
 /* Report or change the active timecounter hardware. */
 int
 sysctl_tc_hardware(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
@@ -848,27 +871,33 @@ sysctl_tc_choice(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	return (error);
 }
 
+const struct sysctl_bounded_args tc_vars[] = {
+	{ KERN_TIMECOUNTER_TICK, &tc_tick, SYSCTL_INT_READONLY },
+	{ KERN_TIMECOUNTER_TIMESTEPWARNINGS, &timestepwarnings, 0, 1 },
+};
+
 /*
- * Timecounters need to be updated every so often to prevent the hardware
- * counter from overflowing.  Updating also recalculates the cached values
- * used by the get*() family of functions, so their precision depends on
- * the update frequency.
+ * Return timecounter-related information.
  */
-static int tc_tick;
-
-void
-tc_ticktock(void)
+int
+sysctl_tc(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
 {
-	static int count;
+	if (namelen != 1)
+		return (ENOTDIR);
 
-	if (++count < tc_tick)
-		return;
-	if (!mtx_enter_try(&windup_mtx))
-		return;
-	count = 0;
-	tc_windup(NULL, NULL, NULL);
-	mtx_leave(&windup_mtx);
+	switch (name[0]) {
+	case KERN_TIMECOUNTER_HARDWARE:
+		return (sysctl_tc_hardware(oldp, oldlenp, newp, newlen));
+	case KERN_TIMECOUNTER_CHOICE:
+		return (sysctl_tc_choice(oldp, oldlenp, newp, newlen));
+	default:
+		return (sysctl_bounded_arr(tc_vars, nitems(tc_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen));
+	}
+	/* NOTREACHED */
 }
+#endif /* SMALL_KERNEL */
 
 void
 inittimecounter(void)
@@ -897,33 +926,6 @@ inittimecounter(void)
 	/* warm up new timecounter (again) and get rolling. */
 	(void)timecounter->tc_get_timecount(timecounter);
 	(void)timecounter->tc_get_timecount(timecounter);
-}
-
-const struct sysctl_bounded_args tc_vars[] = {
-	{ KERN_TIMECOUNTER_TICK, &tc_tick, SYSCTL_INT_READONLY },
-	{ KERN_TIMECOUNTER_TIMESTEPWARNINGS, &timestepwarnings, 0, 1 },
-};
-
-/*
- * Return timecounter-related information.
- */
-int
-sysctl_tc(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
-{
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case KERN_TIMECOUNTER_HARDWARE:
-		return (sysctl_tc_hardware(oldp, oldlenp, newp, newlen));
-	case KERN_TIMECOUNTER_CHOICE:
-		return (sysctl_tc_choice(oldp, oldlenp, newp, newlen));
-	default:
-		return (sysctl_bounded_arr(tc_vars, nitems(tc_vars), name,
-		    namelen, oldp, oldlenp, newp, newlen));
-	}
-	/* NOTREACHED */
 }
 
 /*

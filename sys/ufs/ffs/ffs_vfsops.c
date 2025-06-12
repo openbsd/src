@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.199 2025/05/18 11:47:35 visa Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.200 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -84,7 +84,9 @@ const struct vfsops ffs_vfsops = {
 	.vfs_fhtovp	= ffs_fhtovp,
 	.vfs_vptofh	= ffs_vptofh,
 	.vfs_init	= ffs_init,
+#ifndef SMALL_KERNEL
 	.vfs_sysctl	= ffs_sysctl,
+#endif /* SMALL_KERNEL */
 	.vfs_checkexp	= ufs_check_export,
 };
 
@@ -1445,6 +1447,7 @@ ffs_init(struct vfsconf *vfsp)
 	return (ufs_init(vfsp));
 }
 
+#ifndef SMALL_KERNEL
 const struct sysctl_bounded_args ffs_vars[] = {
 #ifdef UFS_DIRHASH
 	{ FFS_DIRHASH_DIRSIZE, &ufs_mindirhashsize, 0, INT_MAX },
@@ -1463,3 +1466,4 @@ ffs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	return sysctl_bounded_arr(ffs_vars, nitems(ffs_vars), name,
 	    namelen, oldp, oldlenp, newp, newlen);
 }
+#endif /* SMALL_KERNEL */

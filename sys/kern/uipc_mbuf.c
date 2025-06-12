@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.296 2025/01/01 13:44:22 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.297 2025/06/12 20:37:58 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1852,6 +1852,7 @@ mq_set_maxlen(struct mbuf_queue *mq, u_int maxlen)
 	mtx_leave(&mq->mq_mtx);
 }
 
+#ifndef SMALL_KERNEL
 int
 sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct mbuf_queue *mq)
@@ -1879,3 +1880,4 @@ sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 	/* NOTREACHED */
 }
+#endif /* SMALL_KERNEL */

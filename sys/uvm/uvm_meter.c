@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.53 2025/06/06 11:19:00 claudio Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.54 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ void uvmexp_read(struct uvmexp *);
 
 char malloc_conf[16];
 
+#ifndef SMALL_KERNEL
 /*
  * uvm_sysctl: sysctl hook into UVM system.
  */
@@ -282,6 +283,7 @@ uvmexp_read(struct uvmexp *uexp)
 	uexp->fltup = (int)counters[flt_up];
 	uexp->fltnoup = (int)counters[flt_noup];
 }
+#endif /* SMALL_KERNEL */
 
 #ifdef DDB
 

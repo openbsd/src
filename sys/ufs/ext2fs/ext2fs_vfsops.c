@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.121 2024/09/04 07:54:53 mglocker Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.122 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ const struct vfsops ext2fs_vfsops = {
 	.vfs_fhtovp	= ext2fs_fhtovp,
 	.vfs_vptofh	= ext2fs_vptofh,
 	.vfs_init	= ext2fs_init,
-	.vfs_sysctl	= ext2fs_sysctl,
 	.vfs_checkexp	= ufs_check_export,
 };
 
@@ -1010,17 +1009,6 @@ ext2fs_vptofh(struct vnode *vp, struct fid *fhp)
 	ufhp->ufid_ino = ip->i_number;
 	ufhp->ufid_gen = ip->i_e2fs_gen;
 	return (0);
-}
-
-/*
- * no sysctl for ext2fs
- */
-
-int
-ext2fs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct proc *p)
-{
-	return (EOPNOTSUPP);
 }
 
 /*

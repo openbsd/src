@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.199 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.200 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ struct rttimer_queue ip_mtudisc_timeout_q;
 struct rttimer_queue icmp_redirect_timeout_q;
 struct cpumem *icmpcounters;
 
+#ifndef SMALL_KERNEL
 const struct sysctl_bounded_args icmpctl_vars[] =  {
 	{ ICMPCTL_MASKREPL, &icmpmaskrepl, 0, 1 },
 	{ ICMPCTL_BMCASTECHO, &icmpbmcastecho, 0, 1 },
@@ -136,7 +137,7 @@ const struct sysctl_bounded_args icmpctl_vars[] =  {
 	{ ICMPCTL_REDIRACCEPT, &icmp_rediraccept, 0, 1 },
 	{ ICMPCTL_TSTAMPREPL, &icmptstamprepl, 0, 1 },
 };
-
+#endif /* SMALL_KERNEL */
 
 void icmp_mtudisc_timeout(struct rtentry *, u_int);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
@@ -880,6 +881,7 @@ iptime(void)
 	return (htonl(t));
 }
 
+#ifndef SMALL_KERNEL
 int
 icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
@@ -936,6 +938,7 @@ icmp_sysctl_icmpstat(void *oldp, size_t *oldlenp, void *newp)
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    &icmpstat, sizeof(icmpstat)));
 }
+#endif /* SMALL_KERNEL */
 
 struct rtentry *
 icmp_mtudisc_clone(struct in_addr dst, u_int rtableid, int ipsec)

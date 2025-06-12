@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.179 2025/06/10 13:43:25 claudio Exp $	*/
+/*	$OpenBSD: tty.c,v 1.180 2025/06/12 20:37:58 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2436,6 +2436,7 @@ ttystats_init(struct itty **ttystats, int *ttycp, size_t *ttystatssiz)
 	*ttycp = ntty;
 }
 
+#ifndef SMALL_KERNEL
 /*
  * Return tty-related information.
  */
@@ -2478,6 +2479,7 @@ sysctl_tty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	/* NOTREACHED */
 }
+#endif
 
 void
 ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd)

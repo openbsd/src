@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.239 2025/05/21 09:33:48 mvs Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.240 2025/06/12 20:37:58 deraadt Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1454,6 +1454,7 @@ pool_walk(struct pool *pp, int full,
 }
 #endif
 
+#ifndef SMALL_KERNEL
 /*
  * We have three different sysctls.
  * kern.pool.npools - the number of pools.
@@ -1541,6 +1542,7 @@ sysctl_dopool(int *name, u_int namelen, char *oldp, size_t *oldlenp)
 
 	return (rv);
 }
+#endif /* SMALL_KERNEL */
 
 void
 pool_gc_sched(void *null)

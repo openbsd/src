@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.132 2024/10/30 06:16:27 jsg Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.133 2025/06/12 20:37:59 deraadt Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -101,7 +101,9 @@ const struct vfsops nfs_vfsops = {
 	.vfs_fhtovp	= nfs_fhtovp,
 	.vfs_vptofh	= nfs_vptofh,
 	.vfs_init	= nfs_vfs_init,
+#ifndef SMALL_KERNEL
 	.vfs_sysctl	= nfs_sysctl,
+#endif /* SMALL_KERNEL */
 	.vfs_checkexp	= nfs_checkexp,
 };
 
@@ -840,6 +842,7 @@ nfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	return (EOPNOTSUPP);
 }
 
+#ifndef SMALL_KERNEL
 /*
  * Do that sysctl thang...
  */
@@ -891,7 +894,7 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return EOPNOTSUPP;
 	}
 }
-
+#endif /* SMALL_KERNEL */
 
 /*
  * At this point, this should never happen
