@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.91 2024/05/24 06:02:58 jsg Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.92 2025/06/12 09:17:46 jsg Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -93,7 +93,6 @@
 int	vga_pci_match(struct device *, void *, void *);
 void	vga_pci_attach(struct device *, struct device *, void *);
 int	vga_pci_activate(struct device *, int);
-paddr_t	vga_pci_mmap(void* v, off_t off, int prot);
 
 #if !defined(SMALL_KERNEL) && NACPI > 0
 void	vga_save_state(struct vga_pci_softc *);
@@ -278,12 +277,6 @@ vga_pci_activate(struct device *self, int act)
 	}
 
 	return (rv);
-}
-
-paddr_t
-vga_pci_mmap(void *v, off_t off, int prot)
-{
-	return -1;
 }
 
 int
