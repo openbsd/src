@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.43 2025/06/12 06:31:24 tb Exp $ */
+/*	$Id: netproc.c,v 1.44 2025/06/12 15:46:28 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -369,7 +369,6 @@ sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
 
 		if (strcmp(type, "urn:ietf:params:acme:error:badNonce") != 0) {
 			free(type);
-			code = -1;
 			goto out;
 		}
 		free(type);
