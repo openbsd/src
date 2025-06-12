@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.41 2025/06/10 16:00:28 florian Exp $ */
+/*	$Id: netproc.c,v 1.42 2025/06/12 04:35:05 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -261,6 +261,7 @@ sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
 	struct httphead	*h;
 	ssize_t		 ssz;
 	long		 code;
+	int		 retry = 0;
 
 	if ((host = url2host(c->newnonce, &port, &path)) == NULL)
 		return -1;
@@ -289,6 +290,7 @@ sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
 	}
 	http_get_free(g);
 
+ again:
 	/*
 	 * Send the url, nonce and request payload to the acctproc.
 	 * This will create the proper JSON object we need.
@@ -347,6 +349,47 @@ sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
 	} else
 		memcpy(c->buf.buf, g->bodypart, c->buf.sz);
 
+	if (code == 400) {
+		struct jsmnn	*j;
+		char		*type;
+
+		j = json_parse(c->buf.buf, c->buf.sz);
+		if (j == NULL) {
+			code = -1;
+			goto out;
+		}
+
+		type = json_getstr(j, "type");
+		json_free(j);
+
+		if (type == NULL) {
+			code = -1;
+			goto out;
+		}
+
+		if (strcmp(type, "urn:ietf:params:acme:error:badNonce") != 0) {
+			free(type);
+			code = -1;
+			goto out;
+		}
+		free(type);
+
+		if (retry++ < RETRY_MAX) {
+			h = http_head_get("Replay-Nonce", g->head, g->headsz);
+			if (h == NULL) {
+				warnx("no replay nonce");
+				code = -1;
+				goto out;
+			} else  if ((nonce = strdup(h->val)) == NULL) {
+				warn("strdup");
+				code = -1;
+				goto out;
+			}
+			http_get_free(g);
+			goto again;
+		}
+	}
+ out:
 	if (loc != NULL) {
 		free(*loc);
 		*loc = NULL;
