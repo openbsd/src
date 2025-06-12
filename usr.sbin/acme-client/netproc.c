@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.42 2025/06/12 04:35:05 florian Exp $ */
+/*	$Id: netproc.c,v 1.43 2025/06/12 06:31:24 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -380,7 +380,7 @@ sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
 				warnx("no replay nonce");
 				code = -1;
 				goto out;
-			} else  if ((nonce = strdup(h->val)) == NULL) {
+			} else if ((nonce = strdup(h->val)) == NULL) {
 				warn("strdup");
 				code = -1;
 				goto out;
