@@ -1,4 +1,4 @@
-/*	$OpenBSD: test___freading.c,v 1.1 2025/05/25 00:20:54 yasuoka Exp $	*/
+/*	$OpenBSD: test___freading.c,v 1.2 2025/06/12 07:39:26 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2025 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -21,14 +21,31 @@
 #include <stdio_ext.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 /* we use assert() */
 #undef	NDEBUG
 
 #define	TMPFILENAME	"test___freading.tmp"
 
+void setup(void);
+
 void test___freading0(void);
 void test___freading1(void);
+void test___freading2(void);
+
+void
+setup(void)
+{
+	FILE	*fp;
+
+	/* common setup */
+	unlink(TMPFILENAME);
+	fp = fopen(TMPFILENAME, "w+");
+	assert(fp != NULL);
+	fputs("Hello world\n", fp);
+	fclose(fp);
+}
 
 void
 test___freading0(void)
@@ -75,11 +92,34 @@ test___freading1(void)
 	assert(r == 0);
 }
 
+void
+test___freading2(void)
+{
+	int	 r;
+	FILE	*fp;
+
+	/*
+	 * until v1.10 of fpurge.c mistakenly enables the writing buffer
+	 * without _SRD flag set.
+	 */
+	fp = fopen(TMPFILENAME, "r+");
+	assert(fp != NULL);
+	assert(fgetc(fp) == 'H');
+	fpurge(fp);
+	fseek(fp, 0, SEEK_CUR);
+	assert(fputc('X', fp) == 'X');
+	assert(__freading(fp) == 0);
+
+	r = fclose(fp);
+	assert(r == 0);
+}
+
 int
 main(int argc, char *argv[])
 {
 	test___freading0();
 	test___freading1();
+	test___freading2();
 
 	exit(0);
 }
