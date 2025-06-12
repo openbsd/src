@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.101 2025/06/01 03:43:48 dlg Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.102 2025/06/12 08:33:58 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -228,7 +228,7 @@ void
 schedcpu(void *unused)
 {
 	static struct timeout to = TIMEOUT_INITIALIZER(schedcpu, NULL);
-	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
+	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]), pctcpu;
 	struct proc *p;
 	unsigned int newcpu;
 
@@ -245,26 +245,29 @@ schedcpu(void *unused)
 		 */
 		if (p->p_stat == SSLEEP || p->p_stat == SSTOP)
 			p->p_slptime++;
-		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
+		pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
 		/*
 		 * If the process has slept the entire second,
 		 * stop recalculating its priority until it wakes up.
 		 */
-		if (p->p_slptime > 1)
+		if (p->p_slptime > 1) {
+			p->p_pctcpu = pctcpu;
 			continue;
+		}
 		SCHED_LOCK();
 		/*
 		 * p_pctcpu is only for diagnostic tools such as ps.
 		 */
 #if	(FSHIFT >= CCPU_SHIFT)
-		p->p_pctcpu += (stathz == 100)?
+		pctcpu += (stathz == 100)?
 			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
                 	100 * (((fixpt_t) p->p_cpticks)
 				<< (FSHIFT - CCPU_SHIFT)) / stathz;
 #else
-		p->p_pctcpu += ((FSCALE - ccpu) *
+		pctcpu += ((FSCALE - ccpu) *
 			(p->p_cpticks * FSCALE / stathz)) >> FSHIFT;
 #endif
+		p->p_pctcpu = pctcpu;
 		p->p_cpticks = 0;
 		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);
 		setpriority(p, newcpu, p->p_p->ps_nice);

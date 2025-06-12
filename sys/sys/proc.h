@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.391 2025/05/31 12:40:33 dlg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.392 2025/06/12 08:33:58 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -379,7 +379,7 @@ struct proc {
 	const volatile void *p_wchan;	/* [S] Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
 	const char *p_wmesg;		/* [S] Reason for sleep. */
-	fixpt_t	p_pctcpu;		/* [S] %cpu for this thread */
+	volatile fixpt_t p_pctcpu;	/* [a] %cpu for this thread */
 	u_int	p_slptime;		/* [S] Time since last blocked. */
 	struct	cpu_info * volatile p_cpu; /* [S] CPU we're running on. */
 
