@@ -1,6 +1,6 @@
-/*	$OpenBSD: dbm_dump.c,v 1.3 2024/05/14 00:31:48 schwarze Exp $ */
+/* $OpenBSD: dbm_dump.c,v 1.4 2025/06/12 17:49:42 schwarze Exp $ */
 /*
- * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2016, 2025 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,15 @@
 union ptr {
 	const char	*c;
 	const int32_t	*i;
+};
+
+/* Keep this array in sync with mansearch.c. */
+const char *const mansearch_keynames[MACRO_MAX] = {
+                        "Xr",   "Ar",   "Fa",   "Fl",   "Dv",   "Fn",
+        "Ic",   "Pa",   "Cm",   "Li",   "Em",   "Cd",   "Va",   "Ft",
+        "Tn",   "Er",   "Ev",   "Sy",   "Sh",   "In",   "Ss",   "Ox",
+        "An",   "Mt",   "St",   "Bx",   "At",   "Nx",   "Fx",   "Lk",
+        "Ms",   "Bsx",  "Dx",   "Rs",   "Vt",   "Lb"
 };
 
 static void		 dump(void);
@@ -163,19 +172,20 @@ static const char *
 dump_macro(union ptr p, int32_t im)
 {
 	union ptr	 page0, pagep;
-	const char	*val0, *valp;
+	const char	*kn, *val0, *valp;
 	int32_t		 i, nentries;
 
+	kn = mansearch_keynames[im];
 	nentries = be32toh(*p.i++);
-	printf("macro %02d entry count %d\n", im, nentries);
+	printf("macro %02d %s entry count %d\n", im, kn, nentries);
 	if (nentries == 0)
 		return p.c;
 	valp = val0 = dbm_get(p.i[0]);
 	pagep.i = page0.i = dbm_get(p.i[1]);
-	printf("=== MACRO %02d ===\n", im);
+	printf("=== MACRO %02d %s ===\n", im, kn);
 	for (i = 0; i < nentries; i++) {
 		pchk(dbm_get(*p.i++), &valp, "value", 0);
-		printf("macro %02d # ", im);
+		printf("macro %s # ", kn);
 		dump_str(&valp);
 		pchk(dbm_get(*p.i++), &pagep.c, "pages", 0);
 		while (*pagep.i++ != 0)
@@ -183,7 +193,7 @@ dump_macro(union ptr p, int32_t im)
 			    *(int32_t *)dbm_get(pagep.i[-1])) + 1);
 		printf("\n");
 	}
-	printf("=== END OF MACRO %02d ===\n", im);
+	printf("=== END OF MACRO %02d %s ===\n", im, kn);
 	pchk(val0, &p.c, "value0", 0);
 	pchk(page0.c, &valp, "page0", 3);
 	return pagep.c;
