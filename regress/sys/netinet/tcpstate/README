@@ -1,0 +1,3 @@
+These regress tests use a local and remote machine.  On remote
+machine inetd is providing services.  Local machine runs scapy to
+navigate the remote TCP stack through the TCP state diagram.
