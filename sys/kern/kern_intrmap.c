@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_intrmap.c,v 1.3 2020/06/23 01:40:03 dlg Exp $ */
+/* $OpenBSD: kern_intrmap.c,v 1.4 2025/06/13 09:48:45 jsg Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -220,114 +220,6 @@ intrmap_destroy(struct intrmap *im)
 	free(im, M_DEVBUF, sizeof(*im));
 }
 
-/*
- * Align the two ringmaps.
- *
- * e.g. 8 netisrs, rm0 contains 4 rings, rm1 contains 2 rings.
- *
- * Before:
- *
- * CPU      0  1  2  3   4  5  6  7
- * NIC_RX               n0 n1 n2 n3
- * NIC_TX        N0 N1
- *
- * After:
- *
- * CPU      0  1  2  3   4  5  6  7
- * NIC_RX               n0 n1 n2 n3
- * NIC_TX               N0 N1
- */
-void
-intrmap_align(const struct device *dv,
-    struct intrmap *im0, struct intrmap *im1)
-{
-	unsigned int unit = dv->dv_unit;
-
-	KASSERT(im0->im_cpus == im1->im_cpus);
-
-	if (im0->im_grid > im1->im_grid)
-		intrmap_set_grid(im1, unit, im0->im_grid);
-	else if (im0->im_grid < im1->im_grid)
-		intrmap_set_grid(im0, unit, im1->im_grid);
-}
-
-void
-intrmap_match(const struct device *dv,
-    struct intrmap *im0, struct intrmap *im1)
-{
-	unsigned int unit = dv->dv_unit;
-	const struct intrmap_cpus *ic;
-	unsigned int subset_grid, cnt, divisor, mod, offset, i;
-	struct intrmap *subset_im, *im;
-	unsigned int old_im0_grid, old_im1_grid;
-
-	KASSERT(im0->im_cpus == im1->im_cpus);
-	if (im0->im_grid == im1->im_grid)
-		return;
-
-	/* Save grid for later use */
-	old_im0_grid = im0->im_grid;
-	old_im1_grid = im1->im_grid;
-
-	intrmap_align(dv, im0, im1);
-
-	/*
-	 * Re-shuffle rings to get more even distribution.
-	 *
-	 * e.g. 12 netisrs, rm0 contains 4 rings, rm1 contains 2 rings.
-	 *
-	 * CPU       0  1  2  3   4  5  6  7   8  9 10 11
-	 *
-	 * NIC_RX   a0 a1 a2 a3  b0 b1 b2 b3  c0 c1 c2 c3
-	 * NIC_TX   A0 A1        B0 B1        C0 C1
-	 *
-	 * NIC_RX   d0 d1 d2 d3  e0 e1 e2 e3  f0 f1 f2 f3
-	 * NIC_TX         D0 D1        E0 E1        F0 F1
-	 */
-
-	if (im0->im_count >= (2 * old_im1_grid)) {
-		cnt = im0->im_count;
-		subset_grid = old_im1_grid;
-		subset_im = im1;
-		im = im0;
-	} else if (im1->im_count > (2 * old_im0_grid)) {
-		cnt = im1->im_count;
-		subset_grid = old_im0_grid;
-		subset_im = im0;
-		im = im1;
-	} else {
-		/* No space to shuffle. */
-		return;
-	}
-
-	ic = im0->im_cpus;
-
-	mod = cnt / subset_grid;
-	KASSERT(mod >= 2);
-	divisor = ic->ic_count / im->im_grid;
-	offset = ((unit / divisor) % mod) * subset_grid;
-
-	for (i = 0; i < subset_im->im_count; i++) {
-		subset_im->im_cpumap[i] += offset;
-		KASSERTMSG(subset_im->im_cpumap[i] < ic->ic_count,
-		    "match: invalid cpumap[%d] = %d, offset %d",
-		     i, subset_im->im_cpumap[i], offset);
-	}
-#ifdef DIAGNOSTIC
-	for (i = 0; i < subset_im->im_count; i++) {
-		unsigned int j;
-
-		for (j = 0; j < im->im_count; j++) {
-			if (im->im_cpumap[j] == subset_im->im_cpumap[i])
-				break;
-		}
-		KASSERTMSG(j < im->im_count,
-		    "subset cpumap[%u] = %u not found in superset",
-		     i, subset_im->im_cpumap[i]);
-	}
-#endif
-}
-
 unsigned int
 intrmap_count(const struct intrmap *im)
 {
@@ -344,18 +236,4 @@ intrmap_cpu(const struct intrmap *im, unsigned int ring)
 	KASSERTMSG(icpu < ic->ic_count, "invalid interrupt cpu %u for ring %u"
 	    " (intrmap %p)", icpu, ring, im);
 	return (ic->ic_cpumap[icpu]);
-}
-
-struct cpu_info *
-intrmap_one(const struct device *dv)
-{
-	unsigned int unit = dv->dv_unit;
-	struct intrmap_cpus *ic;
-	struct cpu_info *ci;
-
-	ic = intrmap_cpus_get();
-	ci = ic->ic_cpumap[unit % ic->ic_count];
-	intrmap_cpus_put(ic);
-
-	return (ci);
 }
