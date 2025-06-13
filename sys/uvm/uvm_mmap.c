@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.201 2025/05/20 07:02:20 mpi Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.202 2025/06/13 10:48:56 mpi Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1013,10 +1013,8 @@ uvm_mmapanon(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	if ((flags & MAP_FIXED) == 0 && size >= __LDPGSZ)
 		align = __LDPGSZ;
 	if ((flags & MAP_SHARED) == 0)
-		/* XXX: defer amap create */
 		uvmflag |= UVM_FLAG_COPYONW;
 	else
-		/* shared: create amap now */
 		uvmflag |= UVM_FLAG_OVERLAY;
 	if (flags & MAP_STACK)
 		uvmflag |= UVM_FLAG_STACK;
