@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.59 2025/06/13 07:14:01 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.60 2025/06/13 12:29:58 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -313,7 +313,7 @@ print_signature_path(const char *crl, const char *aia, const struct auth *a)
 {
 	if (crl != NULL)
 		printf("Signature path:           %s\n", crl);
-	if (a != NULL && a->cert != NULL && a->cert->mft != NULL)
+	if (a != NULL)
 		printf("                          %s\n", a->cert->mft);
 	if (aia != NULL)
 		printf("                          %s\n", aia);
@@ -321,8 +321,7 @@ print_signature_path(const char *crl, const char *aia, const struct auth *a)
 	for (; a != NULL; a = a->issuer) {
 		if (a->cert->crl != NULL)
 			printf("                          %s\n", a->cert->crl);
-		if (a->issuer != NULL && a->issuer->cert != NULL &&
-		    a->issuer->cert->mft != NULL)
+		if (a->issuer != NULL)
 			printf("                          %s\n",
 			    a->issuer->cert->mft);
 		if (a->cert->aia != NULL)
