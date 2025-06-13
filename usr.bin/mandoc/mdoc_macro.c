@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_macro.c,v 1.192 2025/06/13 13:18:51 schwarze Exp $ */
+/*	$OpenBSD: mdoc_macro.c,v 1.193 2025/06/13 14:23:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -87,7 +87,7 @@ static const struct mdoc_macro mdoc_macros[MDOC_MAX - MDOC_Dd] = {
 	{ in_line_eoln, 0 }, /* Fd */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Fl */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Fn */
-	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ft */
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* Ft */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* Ic */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* In */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED | MDOC_JOIN }, /* Li */
