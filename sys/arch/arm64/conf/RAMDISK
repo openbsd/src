@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.223 2025/04/21 21:11:04 mglocker Exp $
+# $OpenBSD: RAMDISK,v 1.224 2025/06/13 13:19:19 sf Exp $
 
 machine		arm64
 maxusers	4
@@ -104,7 +104,6 @@ virtio*		at fdt?
 virtio*		at pci?
 vio*		at virtio?
 vioblk*		at virtio?
-viomb*		at virtio?
 viornd*		at virtio?
 vioscsi*	at virtio?
 viogpu*		at virtio?

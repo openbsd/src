@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.44 2024/03/31 19:17:53 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.45 2025/06/13 13:19:19 sf Exp $
 
 machine		riscv64
 maxusers	4
@@ -73,7 +73,6 @@ virtio*		at pci?
 vio*		at virtio?	# Network
 vioblk*		at virtio?
 vioscsi*	at virtio?	# Disk (SCSI)
-#viomb*		at virtio?	# Memory Ballooning
 viornd*		at virtio?	# Random Source
 
 # simplebus0

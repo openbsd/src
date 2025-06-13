@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.133 2025/03/25 05:23:59 hastings Exp $
+#	$OpenBSD: RAMDISK,v 1.134 2025/06/13 13:19:19 sf Exp $
 
 machine		armv7 arm
 
@@ -222,7 +222,6 @@ pcagpio*	at iic?
 # virtio devices
 vioblk*		at virtio?
 vio*		at virtio?
-viomb*		at virtio?
 viornd*		at virtio?
 vioscsi*	at virtio?
 
