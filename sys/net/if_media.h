@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.45 2022/07/14 13:46:25 bluhm Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.46 2025/06/13 00:08:16 jsg Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -116,10 +116,6 @@ void	ifmedia_init(struct ifmedia *, uint64_t, ifm_change_cb_t,
 
 /* Add one supported medium to a struct ifmedia. */
 void	ifmedia_add(struct ifmedia *, uint64_t, int, void *);
-
-/* Add an array (of ifmedia_entry) media to a struct ifmedia. */
-void	ifmedia_list_add(struct ifmedia *, struct ifmedia_entry *,
-	    int);
 
 /* Set default media type on initialization. */
 void	ifmedia_set(struct ifmedia *, uint64_t);

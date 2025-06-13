@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.38 2022/08/12 16:42:54 bluhm Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.39 2025/06/13 00:08:16 jsg Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -155,20 +155,6 @@ ifmedia_add(struct ifmedia *ifm, uint64_t mword, int data, void *aux)
 	TAILQ_INSERT_TAIL(&ifm->ifm_list, entry, ifm_list);
 	ifm->ifm_nwords++;
 	mtx_leave(&ifmedia_mtx);
-}
-
-/*
- * Add an array of media configurations to the list of
- * supported media for a specific interface instance.
- */
-void
-ifmedia_list_add(struct ifmedia *ifm, struct ifmedia_entry *lp, int count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		ifmedia_add(ifm, lp[i].ifm_media, lp[i].ifm_data,
-		    lp[i].ifm_aux);
 }
 
 /*
