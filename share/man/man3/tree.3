@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.30 2019/05/10 13:13:14 florian Exp $
+.\"	$OpenBSD: tree.3,v 1.31 2025/06/13 18:34:00 schwarze Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -23,7 +23,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.Dd $Mdocdate: May 10 2019 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt SPLAY_INIT 3
 .Os
 .Sh NAME
@@ -77,29 +77,29 @@
 .Fn SPLAY_GENERATE "NAME" "TYPE" "FIELD" "CMP"
 .Fn SPLAY_ENTRY "TYPE"
 .Fn SPLAY_HEAD "HEADNAME" "TYPE"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_INITIALIZER "SPLAY_HEAD *head"
 .Fn SPLAY_ROOT "SPLAY_HEAD *head"
-.Ft "int"
+.Ft int
 .Fn SPLAY_EMPTY "SPLAY_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_NEXT "NAME" "SPLAY_HEAD *head" "struct TYPE *elm"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_MIN "NAME" "SPLAY_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_MAX "NAME" "SPLAY_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_FIND "NAME" "SPLAY_HEAD *head" "struct TYPE *elm"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_LEFT "struct TYPE *elm" "SPLAY_ENTRY NAME"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_RIGHT "struct TYPE *elm" "SPLAY_ENTRY NAME"
 .Fn SPLAY_FOREACH "VARNAME" "NAME" "SPLAY_HEAD *head"
 .Ft void
 .Fn SPLAY_INIT "SPLAY_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_INSERT "NAME" "SPLAY_HEAD *head" "struct TYPE *elm"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SPLAY_REMOVE "NAME" "SPLAY_HEAD *head" "struct TYPE *elm"
 .Pp
 .Fn RB_PROTOTYPE "NAME" "TYPE" "FIELD" "CMP"
@@ -109,27 +109,27 @@
 .Fn RB_ENTRY "TYPE"
 .Fn RB_HEAD "HEADNAME" "TYPE"
 .Fn RB_INITIALIZER "RB_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_ROOT "RB_HEAD *head"
-.Ft "int"
+.Ft int
 .Fn RB_EMPTY "RB_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_NEXT "NAME" "RB_HEAD *head" "struct TYPE *elm"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_PREV "NAME" "RB_HEAD *head" "struct TYPE *elm"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_MIN "NAME" "RB_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_MAX "NAME" "RB_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_FIND "NAME" "RB_HEAD *head" "struct TYPE *elm"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_NFIND "NAME" "RB_HEAD *head" "struct TYPE *elm"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_LEFT "struct TYPE *elm" "RB_ENTRY NAME"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_RIGHT "struct TYPE *elm" "RB_ENTRY NAME"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_PARENT "struct TYPE *elm" "RB_ENTRY NAME"
 .Fn RB_FOREACH "VARNAME" "NAME" "RB_HEAD *head"
 .Fn RB_FOREACH_SAFE "VARNAME" "NAME" "RB_HEAD *head" "TEMP_VARNAME"
@@ -137,9 +137,9 @@
 .Fn RB_FOREACH_REVERSE_SAFE "VARNAME" "NAME" "RB_HEAD *head" "TEMP_VARNAME"
 .Ft void
 .Fn RB_INIT "RB_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_INSERT "NAME" "RB_HEAD *head" "struct TYPE *elm"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn RB_REMOVE "NAME" "RB_HEAD *head" "struct TYPE *elm"
 .Sh DESCRIPTION
 These macros define data structures for different types of trees:

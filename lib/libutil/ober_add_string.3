@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_add_string.3,v 1.3 2025/06/06 22:01:40 schwarze Exp $
+.\" $OpenBSD: ober_add_string.3,v 1.4 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt OBER_ADD_STRING 3
 .Os
 .Sh NAME
@@ -39,44 +39,44 @@
 .Lb libutil
 .In sys/types.h
 .In ber.h
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_get_element" "unsigned int encoding"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_sequence" "struct ber_element *prev"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_set" "struct ber_element *prev"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_null" "struct ber_element *prev"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_eoc" "struct ber_element *prev"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_integer" "struct ber_element *prev" "long long val"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_enumerated" "struct ber_element *prev" "long long val"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_boolean" "struct ber_element *prev" "int bool"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_string" "struct ber_element *prev" "const char *string"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_nstring" "struct ber_element *prev" "const char *string" "size_t size"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fo "ober_add_ostring"
 .Fa "struct ber_element *prev"
 .Fa "struct ber_octetstring *ostring"
 .Fc
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fo "ober_add_bitstring"
 .Fa "struct ber_element *prev"
 .Fa "const void *buf"
 .Fa "size_t size"
 .Fc
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_oid" "struct ber_element *prev" "struct ber_oid *oid"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_noid" "struct ber_element *prev" "struct ber_oid *oid" "int n"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_add_oidstring" "struct ber_element *prev" "const char *string"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_printf_elements" "struct ber_element *prev" "char *format" "..."
 .Sh DESCRIPTION
 Intermediary storage of BER elements during encoding and decoding uses the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.43 2021/05/15 08:07:20 yasuoka Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.44 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: May 15 2021 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt M_TAG_GET 9
 .Os
 .Sh NAME
@@ -32,15 +32,15 @@
 .Nd a framework for generic packet attributes
 .Sh SYNOPSIS
 .In sys/mbuf.h
-.Ft "struct m_tag *"
+.Ft struct m_tag *
 .Fn m_tag_get "int type" "int len" "int flags"
-.Ft "struct m_tag *"
+.Ft struct m_tag *
 .Fn m_tag_find "struct mbuf *mbuf" "int type" "struct m_tag *tag"
 .Ft void
 .Fn m_tag_prepend "struct mbuf *mbuf" "struct m_tag *tag"
 .Ft void
 .Fn m_tag_delete "struct mbuf *mbuf" "struct m_tag *tag"
-.Ft "struct m_tag *"
+.Ft struct m_tag *
 .Fn m_tag_copy "struct m_tag *tag"
 .Ft void
 .Fn m_tag_delete_chain "struct mbuf *mbuf"
@@ -48,9 +48,9 @@
 .Fn m_tag_init "struct mbuf *mbuf"
 .Ft int
 .Fn m_tag_copy_chain "struct mbuf *mbuf" "struct mbuf *mbuf2"
-.Ft "struct m_tag *"
+.Ft struct m_tag *
 .Fn m_tag_first "struct mbuf *mbuf"
-.Ft "struct m_tag *"
+.Ft struct m_tag *
 .Fn m_tag_next "struct mbuf *mbuf" "struct m_tag *tag"
 .Sh DESCRIPTION
 These functions allow the manipulation of generic packet attributes.

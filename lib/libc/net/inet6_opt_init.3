@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_opt_init.3,v 1.8 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: inet6_opt_init.3,v 1.9 2025/06/13 18:34:00 schwarze Exp $
 .\"	$KAME: inet6_opt_init.3,v 1.7 2004/12/27 05:08:23 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt INET6_OPT_INIT 3
 .Os
 .\"
@@ -44,19 +44,19 @@
 .\"
 .Sh SYNOPSIS
 .In netinet/in.h
-.Ft "int"
+.Ft int
 .Fn inet6_opt_init "void *extbuf" "socklen_t extlen"
-.Ft "int"
+.Ft int
 .Fn inet6_opt_append "void *extbuf" "socklen_t extlen" "int offset" "u_int8_t type" "socklen_t len" "u_int8_t align" "void **databufp"
-.Ft "int"
+.Ft int
 .Fn inet6_opt_finish "void *extbuf" "socklen_t extlen" "int offset"
-.Ft "int"
+.Ft int
 .Fn inet6_opt_set_val "void *databuf" "int offset" "void *val" "socklen_t vallen"
-.Ft "int"
+.Ft int
 .Fn inet6_opt_next "void *extbuf" "socklen_t extlen" "int offset" "u_int8_t *typep" "socklen_t *lenp" "void **databufp"
-.Ft "int"
+.Ft int
 .Fn inet6_opt_find "void *extbuf" "socklen_t extlen" "int offset" "u_int8_t type" "socklen_t *lenp" "void **databufp"
-.Ft "int"
+.Ft int
 .Fn inet6_opt_get_val "void *databuf" "socklen_t offset" "void *val" "socklen_t vallen"
 .\"
 .Sh DESCRIPTION

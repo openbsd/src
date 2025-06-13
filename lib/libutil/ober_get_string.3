@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_get_string.3,v 1.7 2025/06/06 22:01:40 schwarze Exp $
+.\" $OpenBSD: ober_get_string.3,v 1.8 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt OBER_GET_STRING 3
 .Os
 .Sh NAME
@@ -35,29 +35,29 @@
 .Lb libutil
 .In sys/types.h
 .In ber.h
-.Ft "int"
+.Ft int
 .Fn "ober_get_null" "struct ber_element *root"
-.Ft "int"
+.Ft int
 .Fn "ober_get_eoc" "struct ber_element *root"
-.Ft "int"
+.Ft int
 .Fn "ober_get_integer" "struct ber_element *root" "long long *val"
-.Ft "int"
+.Ft int
 .Fn "ober_get_enumerated" "struct ber_element *root" "long long *val"
-.Ft "int"
+.Ft int
 .Fn "ober_get_boolean" "struct ber_element *root" "int *bool"
-.Ft "int"
+.Ft int
 .Fn "ober_get_string" "struct ber_element *root" "char **charbuf"
-.Ft "int"
+.Ft int
 .Fn "ober_get_nstring" "struct ber_element *root" "void **buf" "size_t *size"
-.Ft "int"
+.Ft int
 .Fn "ober_get_ostring" "struct ber_element *root" "struct ber_octetstring *ostring"
-.Ft "int"
+.Ft int
 .Fn "ober_get_bitstring" "struct ber_element *root" "void **buf" "size_t *size"
-.Ft "int"
+.Ft int
 .Fn "ober_get_oid" "struct ber_element *root" "struct ber_oid *oid"
 .Ft off_t
 .Fn "ober_getpos" "struct ber_element *elm"
-.Ft "int"
+.Ft int
 .Fn "ober_scanf_elements" "struct ber_element *root" "char *format" "..."
 .Sh DESCRIPTION
 Functions which take two arguments save the value contained in the

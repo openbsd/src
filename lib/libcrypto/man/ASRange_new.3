@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASRange_new.3,v 1.9 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: ASRange_new.3,v 1.10 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt ASRANGE_NEW 3
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Sh SYNOPSIS
 .Lb libcrypto
 .In openssl/x509v3.h
-.Ft "ASRange *"
+.Ft ASRange *
 .Fn ASRange_new void
 .Ft void
 .Fn ASRange_free "ASRange *asrange"
@@ -49,7 +49,7 @@
 .Fa "ASRange *asrange"
 .Fa "unsigned char **der_out"
 .Fc
-.Ft "ASIdOrRange *"
+.Ft ASIdOrRange *
 .Fn ASIdOrRange_new void
 .Ft void
 .Fn ASIdOrRange_free "ASIdOrRange *aor"
@@ -64,7 +64,7 @@
 .Fa "ASIdOrRange *aor"
 .Fa "unsigned char **der_out"
 .Fc
-.Ft "ASIdentifierChoice *"
+.Ft ASIdentifierChoice *
 .Fn ASIdentifierChoice_new void
 .Ft void
 .Fn ASIdentifierChoice_free "ASIdentifierChoice *aic"

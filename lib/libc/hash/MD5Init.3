@@ -16,9 +16,9 @@
 .\" If we meet some day, and you think this stuff is worth it, you
 .\" can buy me a beer in return. Poul-Henning Kamp
 .\"
-.\" 	$OpenBSD: MD5Init.3,v 1.3 2022/03/31 17:27:15 naddy Exp $
+.\" 	$OpenBSD: MD5Init.3,v 1.4 2025/06/13 18:34:00 schwarze Exp $
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt MD5INIT 3
 .Os
 .Sh NAME
@@ -45,13 +45,13 @@
 .Fn MD5Final "u_int8_t digest[MD5_DIGEST_LENGTH]" "MD5_CTX *context"
 .Ft void
 .Fn MD5Transform "u_int32_t state[4]" "u_int8_t block[MD5_BLOCK_LENGTH]"
-.Ft "char *"
+.Ft char *
 .Fn MD5End "MD5_CTX *context" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn MD5File "const char *filename" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn MD5FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
-.Ft "char *"
+.Ft char *
 .Fn MD5Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The MD5 functions calculate a 128-bit cryptographic checksum (digest)

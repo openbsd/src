@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SHA256Init.3,v 1.3 2019/12/04 19:01:49 jmc Exp $
+.\"	$OpenBSD: SHA256Init.3,v 1.4 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -20,7 +20,7 @@
 .\"
 .\" See http://www.nist.gov/sha/ for the detailed standard
 .\"
-.Dd $Mdocdate: December 4 2019 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt SHA256INIT 3
 .Os
 .Sh NAME
@@ -83,13 +83,13 @@
 .Fn SHA224Final "u_int8_t digest[SHA224_DIGEST_LENGTH]" "SHA2_CTX *context"
 .Ft void
 .Fn SHA224Transform "u_int32_t state[8]" "const u_int8_t buffer[SHA224_BLOCK_LENGTH]"
-.Ft "char *"
+.Ft char *
 .Fn SHA224End "SHA2_CTX *context" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA224File "const char *filename" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA224FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
-.Ft "char *"
+.Ft char *
 .Fn SHA224Data "const u_int8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA256Init "SHA2_CTX *context"
@@ -101,13 +101,13 @@
 .Fn SHA256Final "u_int8_t digest[SHA256_DIGEST_LENGTH]" "SHA2_CTX *context"
 .Ft void
 .Fn SHA256Transform "u_int32_t state[8]" "const u_int8_t buffer[SHA256_BLOCK_LENGTH]"
-.Ft "char *"
+.Ft char *
 .Fn SHA256End "SHA2_CTX *context" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA256File "const char *filename" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA256FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
-.Ft "char *"
+.Ft char *
 .Fn SHA256Data "const u_int8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA384Init "SHA2_CTX *context"
@@ -119,13 +119,13 @@
 .Fn SHA384Final "u_int8_t digest[SHA384_DIGEST_LENGTH]" "SHA2_CTX *context"
 .Ft void
 .Fn SHA384Transform "u_int64_t state[8]" "const u_int8_t buffer[SHA384_BLOCK_LENGTH]"
-.Ft "char *"
+.Ft char *
 .Fn SHA384End "SHA2_CTX *context" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA384File "const char *filename" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA384FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
-.Ft "char *"
+.Ft char *
 .Fn SHA384Data "const u_int8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA512Init "SHA2_CTX *context"
@@ -137,13 +137,13 @@
 .Fn SHA512Final "u_int8_t digest[SHA512_DIGEST_LENGTH]" "SHA2_CTX *context"
 .Ft void
 .Fn SHA512Transform "u_int64_t state[8]" "const u_int8_t buffer[SHA512_BLOCK_LENGTH]"
-.Ft "char *"
+.Ft char *
 .Fn SHA512End "SHA2_CTX *context" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA512File "const char *filename" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA512FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
-.Ft "char *"
+.Ft char *
 .Fn SHA512Data "const u_int8_t *data" "size_t len" "char *buf"
 .Ft void
 .Fn SHA512_256Init "SHA2_CTX *context"
@@ -155,13 +155,13 @@
 .Fn SHA512_256Final "u_int8_t digest[SHA512_256_DIGEST_LENGTH]" "SHA2_CTX *context"
 .Ft void
 .Fn SHA512_256Transform "u_int64_t state[8]" "const u_int8_t buffer[SHA512_256_BLOCK_LENGTH]"
-.Ft "char *"
+.Ft char *
 .Fn SHA512_256End "SHA2_CTX *context" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA512_256File "const char *filename" "char *buf"
-.Ft "char *"
+.Ft char *
 .Fn SHA512_256FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
-.Ft "char *"
+.Ft char *
 .Fn SHA512_256Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
 The SHA2 functions implement the NIST Secure Hash Standard,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rth_space.3,v 1.8 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: inet6_rth_space.3,v 1.9 2025/06/13 18:34:00 schwarze Exp $
 .\"	$KAME: inet6_rth_space.3,v 1.7 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt INET6_RTH_SPACE 3
 .Os
 .\"
@@ -45,7 +45,7 @@
 .In netinet/in.h
 .Ft socklen_t
 .Fn inet6_rth_space "int" "int"
-.Ft "void *"
+.Ft void *
 .Fn inet6_rth_init "void *" "socklen_t" "int" "int"
 .Ft int
 .Fn inet6_rth_add "void *" "const struct in6_addr *"
@@ -53,7 +53,7 @@
 .Fn inet6_rth_reverse "const void *" "void *"
 .Ft int
 .Fn inet6_rth_segments "const void *"
-.Ft "struct in6_addr *"
+.Ft struct in6_addr *
 .Fn inet6_rth_getaddr "const void *" "int"
 .\"
 .Sh DESCRIPTION

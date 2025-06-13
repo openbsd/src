@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_oid_cmp.3,v 1.6 2025/06/06 22:01:40 schwarze Exp $
+.\" $OpenBSD: ober_oid_cmp.3,v 1.7 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt OBER_OID_CMP 3
 .Os
 .Sh NAME
@@ -26,11 +26,11 @@
 .Lb libutil
 .In sys/types.h
 .In ber.h
-.Ft "int"
+.Ft int
 .Fn "ober_oid_cmp" "struct ber_oid *a" "struct ber_oid *b"
-.Ft "size_t"
+.Ft size_t
 .Fn "ober_oid2ber" "struct ber_oid *oid" "u_int8_t *buf" "size_t size"
-.Ft "int"
+.Ft int
 .Fn "ober_string2oid" "const char *string" "struct ber_oid *oid"
 .Sh DESCRIPTION
 Object Identifiers are commonly used in ASN.1-based protocols.

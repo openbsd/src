@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_check.3,v 1.4 2025/06/11 23:41:19 tb Exp $
+.\" $OpenBSD: EC_GROUP_check.3,v 1.5 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 11 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt EC_GROUP_CHECK 3
 .Os
 .Sh NAME
@@ -30,12 +30,12 @@ objects
 .Pp
 Deprecated:
 .Pp
-.Ft "int"
+.Ft int
 .Fo EC_GROUP_check_discriminant
 .Fa "const EC_GROUP *group"
 .Fa "BN_CTX *ctx"
 .Fc
-.Ft "int"
+.Ft int
 .Fo EC_GROUP_check
 .Fa "const EC_GROUP *group"
 .Fa "BN_CTX *ctx"

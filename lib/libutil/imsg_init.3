@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.45 2025/06/06 22:01:40 schwarze Exp $
+.\" $OpenBSD: imsg_init.3,v 1.46 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt IMSG_ADD 3
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@
 .Ft int
 .Fn imsg_compose_ibuf "struct imsgbuf *imsgbuf" "uint32_t type" \
     "uint32_t id" "pid_t pid" "struct ibuf *buf"
-.Ft "struct ibuf *"
+.Ft struct ibuf *
 .Fn imsg_create "struct imsgbuf *imsgbuf" "uint32_t type" "uint32_t id" \
     "pid_t pid" "size_t datalen"
 .Ft int

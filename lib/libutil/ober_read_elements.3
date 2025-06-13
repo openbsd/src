@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_read_elements.3,v 1.4 2025/06/06 22:01:40 schwarze Exp $
+.\" $OpenBSD: ober_read_elements.3,v 1.5 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt OBER_READ_ELEMENTS 3
 .Os
 .Sh NAME
@@ -29,20 +29,20 @@
 .Lb libutil
 .In sys/types.h
 .In ber.h
-.Ft "void"
+.Ft void
 .Fn "ober_set_readbuf" "struct ber *ber" "void *buf" "size_t len"
-.Ft "void"
+.Ft void
 .Fo "ober_set_application"
 .Fa "struct ber *ber"
 .Fa "unsigned int (*cb)(struct ber_element *)"
 .Fc
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_read_elements" "struct ber *ber" "struct ber_element *root"
-.Ft "ssize_t"
+.Ft ssize_t
 .Fn "ober_get_writebuf" "struct ber *ber" "void **buf"
-.Ft "ssize_t"
+.Ft ssize_t
 .Fn "ober_write_elements" "struct ber *ber" "struct ber_element *root"
-.Ft "void"
+.Ft void
 .Fn "ober_free" "struct ber *ber"
 .Sh DESCRIPTION
 The BER API provides a mechanism to read and write ASN.1 using the

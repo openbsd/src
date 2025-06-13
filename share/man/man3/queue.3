@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.70 2022/03/29 18:15:52 naddy Exp $
+.\"	$OpenBSD: queue.3,v 1.71 2025/06/13 18:34:00 schwarze Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: March 29 2022 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt SLIST_INIT 3
 .Os
 .Sh NAME
@@ -121,9 +121,9 @@
 .Fn SLIST_ENTRY "TYPE"
 .Fn SLIST_HEAD "HEADNAME" "TYPE"
 .Fn SLIST_HEAD_INITIALIZER "SLIST_HEAD head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SLIST_FIRST "SLIST_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SLIST_NEXT "struct TYPE *listelm" "FIELDNAME"
 .Ft int
 .Fn SLIST_EMPTY "SLIST_HEAD *head"
@@ -145,9 +145,9 @@
 .Fn LIST_ENTRY "TYPE"
 .Fn LIST_HEAD "HEADNAME" "TYPE"
 .Fn LIST_HEAD_INITIALIZER "LIST_HEAD head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn LIST_FIRST "LIST_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn LIST_NEXT "struct TYPE *listelm" "FIELDNAME"
 .Ft int
 .Fn LIST_EMPTY "LIST_HEAD *head"
@@ -169,9 +169,9 @@
 .Fn SIMPLEQ_ENTRY "TYPE"
 .Fn SIMPLEQ_HEAD "HEADNAME" "TYPE"
 .Fn SIMPLEQ_HEAD_INITIALIZER "SIMPLEQ_HEAD head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SIMPLEQ_FIRST "SIMPLEQ_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn SIMPLEQ_NEXT "struct TYPE *listelm" "FIELDNAME"
 .Ft int
 .Fn SIMPLEQ_EMPTY "SIMPLEQ_HEAD *head"
@@ -212,13 +212,13 @@
 .Fn TAILQ_ENTRY "TYPE"
 .Fn TAILQ_HEAD "HEADNAME" "TYPE"
 .Fn TAILQ_HEAD_INITIALIZER "TAILQ_HEAD head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn TAILQ_FIRST "TAILQ_HEAD *head"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn TAILQ_NEXT "struct TYPE *listelm" "FIELDNAME"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn TAILQ_LAST "TAILQ_HEAD *head" "HEADNAME"
-.Ft "struct TYPE *"
+.Ft struct TYPE *
 .Fn TAILQ_PREV "struct TYPE *listelm" "HEADNAME" "FIELDNAME"
 .Ft int
 .Fn TAILQ_EMPTY "TAILQ_HEAD *head"

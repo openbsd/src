@@ -9,9 +9,9 @@
 .\" of any kind. I shall in no event be liable for anything that happens
 .\" to anyone/anything when using this software.
 .\"
-.\"	$OpenBSD: rand48.3,v 1.21 2019/12/20 19:16:40 tb Exp $
+.\"	$OpenBSD: rand48.3,v 1.22 2025/06/13 18:34:00 schwarze Exp $
 .\"
-.Dd $Mdocdate: December 20 2019 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt DRAND48 3
 .Os
 .Sh NAME
@@ -46,9 +46,9 @@
 .Fn srand48 "long seed"
 .Ft void
 .Fn srand48_deterministic "long seed"
-.Ft "unsigned short *"
+.Ft unsigned short *
 .Fn seed48 "unsigned short xseed[3]"
-.Ft "unsigned short *"
+.Ft unsigned short *
 .Fn seed48_deterministic "unsigned short xseed[3]"
 .Ft void
 .Fn lcong48 "unsigned short p[7]"

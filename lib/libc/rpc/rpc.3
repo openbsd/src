@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.49 2022/01/01 02:44:22 jsg Exp $
+.\"	$OpenBSD: rpc.3,v 1.50 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\"   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\"   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 1 2022 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt CALLRPC 3
 .Os
 .Sh NAME
@@ -127,9 +127,9 @@
 .In rpc/rpc.h
 .Ft int
 .Fn callrpc "char *host" "u_long prognum" "u_long versnum" "u_long procnum" "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out"
-.Ft "enum clnt_stat"
+.Ft enum clnt_stat
 .Fn clnt_broadcast "u_long prognum" "u_long versnum" "u_long procnum" "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out" "resultproc_t eachresult"
-.Ft "enum clnt_stat"
+.Ft enum clnt_stat
 .Fn clnt_call "CLIENT *clnt" "u_long procnum" "xdrproc_t inproc" "char *in" "xdrproc_t outproc" "char *out" "struct timeval tout"
 .Ft int
 .Fn clnt_destroy "CLIENT *clnt"
@@ -167,7 +167,7 @@
 .Fn pmap_getmaps "struct sockaddr_in *addr"
 .Ft u_short
 .Fn pmap_getport "struct sockaddr_in *addr" "u_long prognum" "u_long versnum" "u_long protocol"
-.Ft "enum clnt_stat"
+.Ft enum clnt_stat
 .Fn pmap_rmtcall "struct sockaddr_in *" "u_long prog" "u_long vers" "u_long proc" "xdrproc_t inp" "char *in" "xdrproc_t outp" "char *out" "struct timeval tv" "u_long *portp"
 .Ft int
 .Fn pmap_set "u_long prognum" "u_long versnum" "u_int protocol" "int port"

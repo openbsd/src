@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_new.3,v 1.20 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: EC_POINT_new.3,v 1.21 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt EC_POINT_NEW 3
 .Os
 .Sh NAME
@@ -28,24 +28,24 @@
 .Lb libcrypto
 .In openssl/ec.h
 .Pp
-.Ft "EC_POINT *"
+.Ft EC_POINT *
 .Fo EC_POINT_new
 .Fa "const EC_GROUP *group"
 .Fc
-.Ft "void"
+.Ft void
 .Fo EC_POINT_free
 .Fa "EC_POINT *point"
 .Fc
-.Ft "void"
+.Ft void
 .Fo EC_POINT_clear_free
 .Fa "EC_POINT *point"
 .Fc
-.Ft "int"
+.Ft int
 .Fo EC_POINT_copy
 .Fa "EC_POINT *dst"
 .Fa "const EC_POINT *src"
 .Fc
-.Ft "EC_POINT *"
+.Ft EC_POINT *
 .Fo EC_POINT_dup
 .Fa "const EC_POINT *point"
 .Fa "const EC_GROUP *group"

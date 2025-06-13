@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_indextoname.3,v 1.16 2015/11/21 07:48:10 jmc Exp $
+.\"	$OpenBSD: if_indextoname.3,v 1.17 2025/06/13 18:34:00 schwarze Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     From: @(#)rcmd.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 21 2015 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt IF_NAMETOINDEX 3
 .Os
 .Sh NAME
@@ -41,13 +41,13 @@
 .In sys/types.h
 .In sys/socket.h
 .In net/if.h
-.Ft "unsigned int"
+.Ft unsigned int
 .Fn if_nametoindex "const char *ifname"
-.Ft "char *"
+.Ft char *
 .Fn if_indextoname "unsigned int ifindex" "char *ifname"
-.Ft "struct if_nameindex *"
+.Ft struct if_nameindex *
 .Fn if_nameindex "void"
-.Ft "void"
+.Ft void
 .Fn if_freenameindex "struct if_nameindex *ptr"
 .Sh DESCRIPTION
 These functions map interface indexes to interface names (such as

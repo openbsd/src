@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_set_header.3,v 1.5 2025/06/06 22:01:40 schwarze Exp $
+.\" $OpenBSD: ober_set_header.3,v 1.6 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt OBER_SET_HEADER 3
 .Os
 .Sh NAME
@@ -32,27 +32,27 @@
 .Lb libutil
 .In sys/types.h
 .In ber.h
-.Ft "void"
+.Ft void
 .Fn "ober_set_header" "struct ber_element *elm" "int class" "unsigned int type"
-.Ft "size_t"
+.Ft size_t
 .Fn "ober_calc_len" "struct ber_element *root"
-.Ft "void"
+.Ft void
 .Fo "ober_set_writecallback"
 .Fa "struct ber_element *elm"
 .Fa "void (*cb)(void *arg, size_t offs)"
 .Fa "void *arg"
 .Fc
-.Ft "void"
+.Ft void
 .Fn "ober_link_elements" "struct ber_element *prev" "struct ber_element *elm"
-.Ft "void"
+.Ft void
 .Fn "ober_replace_elements" "struct ber_element *prev" "struct ber_element *elm"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_dup" "struct ber_element *orig"
-.Ft "struct ber_element *"
+.Ft struct ber_element *
 .Fn "ober_unlink_elements" "struct ber_element *prev"
-.Ft "void"
+.Ft void
 .Fn "ober_free_element" "struct ber_element *root"
-.Ft "void"
+.Ft void
 .Fn "ober_free_elements" "struct ber_element *root"
 .Pp
 .Fd #define BER_TYPE_BOOLEAN			1

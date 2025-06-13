@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.19 2025/06/07 09:53:06 schwarze Exp $
+.\" $OpenBSD: mio_open.3,v 1.20 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt MIO_OPEN 3
 .Os
 .Sh NAME
@@ -30,21 +30,21 @@
 .Sh SYNOPSIS
 .Lb libsndio
 .In sndio.h
-.Ft "struct mio_hdl *"
+.Ft struct mio_hdl *
 .Fn mio_open "const char *name" "unsigned int mode" "int nbio_flag"
-.Ft "void"
+.Ft void
 .Fn mio_close "struct mio_hdl *hdl"
-.Ft "size_t"
+.Ft size_t
 .Fn mio_read "struct mio_hdl *hdl" "void *addr" "size_t nbytes"
-.Ft "size_t"
+.Ft size_t
 .Fn mio_write "struct mio_hdl *hdl" "const void *addr" "size_t nbytes"
-.Ft "int"
+.Ft int
 .Fn mio_nfds "struct mio_hdl *hdl"
-.Ft "int"
+.Ft int
 .Fn mio_pollfd "struct mio_hdl *hdl" "struct pollfd *pfd" "int events"
-.Ft "int"
+.Ft int
 .Fn mio_revents "struct mio_hdl *hdl" "struct pollfd *pfd"
-.Ft "int"
+.Ft int
 .Fn mio_eof "struct mio_hdl *hdl"
 .Sh DESCRIPTION
 The

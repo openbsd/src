@@ -1,4 +1,4 @@
-.\" $OpenBSD: ECDSA_SIG_new.3,v 1.23 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.24 2025/06/13 18:34:00 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\" selective merge up to: OpenSSL da4ea0cf Aug 5 16:13:24 2019 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@
 .Sh SYNOPSIS
 .Lb libcrypto
 .In openssl/ec.h
-.Ft ECDSA_SIG*
+.Ft ECDSA_SIG *
 .Fo ECDSA_SIG_new
 .Fa void
 .Fc
@@ -85,11 +85,11 @@
 .Fa "const BIGNUM **r"
 .Fa "const BIGNUM **s"
 .Fc
-.Ft "const BIGNUM *"
+.Ft const BIGNUM *
 .Fo ECDSA_SIG_get0_r
 .Fa "const ECDSA_SIG *sig"
 .Fc
-.Ft "const BIGNUM *"
+.Ft const BIGNUM *
 .Fo ECDSA_SIG_get0_s
 .Fa "const ECDSA_SIG *sig"
 .Fc
@@ -104,7 +104,7 @@
 .Fa "const ECDSA_SIG *sig_in"
 .Fa "unsigned char **der_out"
 .Fc
-.Ft ECDSA_SIG*
+.Ft ECDSA_SIG *
 .Fo d2i_ECDSA_SIG
 .Fa "ECDSA_SIG **sig_out"
 .Fa "const unsigned char **der_in"
@@ -132,7 +132,7 @@
 .Fa "int siglen"
 .Fa "EC_KEY *eckey"
 .Fc
-.Ft ECDSA_SIG*
+.Ft ECDSA_SIG *
 .Fo ECDSA_do_sign
 .Fa "const unsigned char *dgst"
 .Fa "int dgst_len"

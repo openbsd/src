@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_point2oct.3,v 1.5 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: EC_POINT_point2oct.3,v 1.6 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt EC_POINT_POINT2OCT 3
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ typedef enum {
 .Fa "size_t len"
 .Fa "BN_CTX *ctx"
 .Fc
-.Ft "BIGNUM *"
+.Ft BIGNUM *
 .Fo EC_POINT_point2bn
 .Fa "const EC_GROUP *group"
 .Fa "const EC_POINT *point"
@@ -62,21 +62,21 @@ typedef enum {
 .Fa "BIGNUM *bn"
 .Fa "BN_CTX *ctx"
 .Fc
-.Ft "EC_POINT *"
+.Ft EC_POINT *
 .Fo EC_POINT_bn2point
 .Fa "const EC_GROUP *group"
 .Fa "const BIGNUM *bn"
 .Fa "EC_POINT *point"
 .Fa "BN_CTX *ctx"
 .Fc
-.Ft "char *"
+.Ft char *
 .Fo EC_POINT_point2hex
 .Fa "const EC_GROUP *group"
 .Fa "const EC_POINT *point"
 .Fa "point_conversion_form_t form"
 .Fa "BN_CTX *ctx"
 .Fc
-.Ft "EC_POINT *"
+.Ft EC_POINT *
 .Fo EC_POINT_hex2point
 .Fa "const EC_GROUP *group"
 .Fa "const char *hex"

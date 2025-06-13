@@ -1,4 +1,4 @@
-.\" $OpenBSD: ibuf_add.3,v 1.11 2025/06/06 22:01:40 schwarze Exp $
+.\" $OpenBSD: ibuf_add.3,v 1.12 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
@@ -15,7 +15,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt IBUF_ADD 3
 .Os
 .Sh NAME
@@ -114,9 +114,9 @@
 .Fn ibuf_add_zero "struct ibuf *buf" "size_t len"
 .Ft void
 .Fn ibuf_close "struct msgbuf *msgbuf" "struct ibuf *buf"
-.Ft "void *"
+.Ft void *
 .Fn ibuf_data "struct ibuf *buf"
-.Ft "struct ibuf *"
+.Ft struct ibuf *
 .Fn ibuf_dynamic "size_t len" "size_t max"
 .Ft int
 .Fn ibuf_fd_avail "struct ibuf *buf"
@@ -150,19 +150,19 @@
 .Fn ibuf_get_n8 "struct ibuf *buf" "uint8_t *value"
 .Ft int
 .Fn ibuf_get_strbuf "struct ibuf *buf" "char *str" "size_t len"
-.Ft "char *"
+.Ft char *
 .Fn ibuf_get_string "struct ibuf *buf" "size_t len"
 .Ft size_t
 .Fn ibuf_left "const struct ibuf *buf"
-.Ft "struct ibuf *"
+.Ft struct ibuf *
 .Fn ibuf_open "size_t len"
 .Ft int
 .Fn ibuf_read "int fd" "struct msgbuf *msgbuf"
-.Ft "void *"
+.Ft void *
 .Fn ibuf_reserve "struct ibuf *buf" "size_t len"
 .Ft void
 .Fn ibuf_rewind "struct ibuf *buf"
-.Ft "void *"
+.Ft void *
 .Fn ibuf_seek "struct ibuf *buf" "size_t pos" "size_t len"
 .Ft int
 .Fn ibuf_set "struct ibuf *buf" "size_t pos" "const void *data" \
@@ -197,11 +197,11 @@
 .Fn msgbuf_concat "struct msgbuf *msgbuf" "struct ibufqueue *from"
 .Ft void
 .Fn msgbuf_free "struct msgbuf *msgbuf"
-.Ft "struct ibuf *"
+.Ft struct ibuf *
 .Fn msgbuf_get "struct msgbuf *msgbuf"
-.Ft "struct msgbuf *"
+.Ft struct msgbuf *
 .Fn msgbuf_new void
-.Ft "struct msgbuf *"
+.Ft struct msgbuf *
 .Fn msgbuf_new_reader "size_t hdrsz" \
     "struct ibuf *(*readhdr)(struct ibuf *, void *, int *)" "void *arg"
 .Ft uint32_t
@@ -216,9 +216,9 @@
 .Fn ibufq_flush "struct ibufqueue *bufq"
 .Ft void
 .Fn ibufq_free "struct ibufqueue *bufq"
-.Ft "struct ibufqueue *"
+.Ft struct ibufqueue *
 .Fn ibufq_new void
-.Ft "struct ibuf *"
+.Ft struct ibuf *
 .Fn ibufq_pop "struct ibufqueue *bufq"
 .Ft void
 .Fn ibufq_push "struct ibufqueue *bufq" "struct ibuf *buf"

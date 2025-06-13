@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.6 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: CMS_signed_add1_attr.3,v 1.7 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2024 Job Snijders <job@openbsd.org>
 .\" Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt CMS_SIGNED_ADD1_ATTR 3
 .Os
 .Sh NAME
@@ -73,19 +73,19 @@
 .Fa "const void *bytes"
 .Fa "int len"
 .Fc
-.Ft "X509_ATTRIBUTE *"
+.Ft X509_ATTRIBUTE *
 .Fo CMS_signed_delete_attr
 .Fa "CMS_SignerInfo *si"
 .Fa "int loc"
 .Fc
-.Ft "void *"
+.Ft void *
 .Fo CMS_signed_get0_data_by_OBJ
 .Fa "CMS_SignerInfo *si"
 .Fa "const ASN1_OBJECT *oid"
 .Fa "int start_after"
 .Fa "int type"
 .Fc
-.Ft "X509_ATTRIBUTE *"
+.Ft X509_ATTRIBUTE *
 .Fo CMS_signed_get_attr
 .Fa "const CMS_SignerInfo *si"
 .Fa "int loc"
@@ -135,19 +135,19 @@
 .Fa "const void *bytes"
 .Fa "int len"
 .Fc
-.Ft "X509_ATTRIBUTE *"
+.Ft X509_ATTRIBUTE *
 .Fo CMS_unsigned_delete_attr
 .Fa "CMS_SignerInfo *si"
 .Fa "int loc"
 .Fc
-.Ft "void *"
+.Ft void *
 .Fo CMS_unsigned_get0_data_by_OBJ
 .Fa "CMS_SignerInfo *si"
 .Fa "ASN1_OBJECT *oid"
 .Fa "int start_after"
 .Fa "int type"
 .Fc
-.Ft "X509_ATTRIBUTE *"
+.Ft X509_ATTRIBUTE *
 .Fo CMS_unsigned_get_attr
 .Fa "const CMS_SignerInfo *si"
 .Fa "int loc"

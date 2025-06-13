@@ -1,4 +1,4 @@
-.\" $OpenBSD: btree.3,v 1.5 2018/11/04 08:04:08 jmc Exp $
+.\" $OpenBSD: btree.3,v 1.6 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 4 2018 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt BTREE 3
 .Os
 .Sh NAME
@@ -46,55 +46,55 @@
 .Nd append-only prefix B+tree database library
 .Sh SYNOPSIS
 .In <btree.h>
-.Ft "struct btree *"
+.Ft struct btree *
 .Fn "btree_open_fd" "int fd" "unsigned int flags"
-.Ft "struct btree *"
+.Ft struct btree *
 .Fn "btree_open" "const char *path" "unsigned int flags" "mode_t mode"
-.Ft "void"
+.Ft void
 .Fn "btree_close" "struct btree *bt"
-.Ft "struct btree_txn *"
+.Ft struct btree_txn *
 .Fn "btree_txn_begin" "struct btree *bt" "int rdonly"
-.Ft "int"
+.Ft int
 .Fn "btree_txn_get" "struct btree *bt" "struct btree_txn *" "struct btval *key" "struct btval *data"
-.Ft "int"
+.Ft int
 .Fn "btree_txn_put" "struct btree *bt" "struct btree_txn *" "struct btval *key" "struct btval *data" "unsigned int flags"
-.Ft "int"
+.Ft int
 .Fn "btree_txn_del" "struct btree *bt" "struct btree_txn *" "struct btval *key" "struct btval *data"
-.Ft "int"
+.Ft int
 .Fn "btree_txn_commit" "struct btree_txn *txn"
-.Ft "void"
+.Ft void
 .Fn "btree_txn_abort" "struct btree_txn *txn"
-.Ft "int"
+.Ft int
 .Fn "btree_get" "struct btree *bt" "struct btval *key" "struct btval *data"
-.Ft "int"
+.Ft int
 .Fn "btree_put" "struct btree *bt" "struct btval *key" "struct btval *data" "unsigned flags"
-.Ft "int"
+.Ft int
 .Fn "btree_del" "struct btree *bt" "struct btval *key" "struct btval *data"
-.Ft "struct cursor *"
+.Ft struct cursor *
 .Fn "btree_txn_cursor_open" "struct btree *bt" "struct btree_txn *txn"
-.Ft "struct cursor *"
+.Ft struct cursor *
 .Fn "btree_cursor_open" "struct btree *bt"
-.Ft "void"
+.Ft void
 .Fn "btree_cursor_close" "struct cursor *cursor"
-.Ft "int"
+.Ft int
 .Fn "btree_cursor_get" "struct cursor *cursor" "struct btval *key" "struct btval *data" "enum cursor_op op"
-.Ft "struct btree_stat *"
+.Ft struct btree_stat *
 .Fn "btree_stat" "struct btree *bt"
-.Ft "int"
+.Ft int
 .Fn "btree_compact" "struct btree *bt"
-.Ft "int"
+.Ft int
 .Fn "btree_revert" "struct btree *bt"
-.Ft "int"
+.Ft int
 .Fn "btree_sync" "struct btree *bt"
-.Ft "void"
+.Ft void
 .Fn "btree_set_cache_size" "struct btree *bt" "unsigned int cache_size"
-.Ft "unsigned int"
+.Ft unsigned int
 .Fn "btree_get_flags" "struct btree *bt"
-.Ft "const char *"
+.Ft const char *
 .Fn "btree_get_path" "struct btree *bt"
-.Ft "int"
+.Ft int
 .Fn "btree_cmp" "struct btree *bt" "const struct btval *a" "const struct btval *b"
-.Ft "void"
+.Ft void
 .Fn "btval_reset" "struct btval *btv"
 .Sh DESCRIPTION
 The database is implemented as a modified prefix B+tree.

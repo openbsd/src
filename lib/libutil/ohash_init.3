@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.4 2025/06/06 22:01:40 schwarze Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.5 2025/06/13 18:34:00 schwarze Exp $
 .\" Copyright (c) 1999 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt OHASH_INIT 3
 .Os
 .Sh NAME
@@ -37,9 +37,9 @@
 .Fn ohash_init "struct ohash *h" "unsigned int size" "struct ohash_info *info"
 .Ft void
 .Fn ohash_delete "struct ohash *h"
-.Ft "unsigned int"
+.Ft unsigned int
 .Fn ohash_lookup_interval "struct ohash *h" "const char *start" "const char *end" "uint32_t hv"
-.Ft "unsigned int"
+.Ft unsigned int
 .Fn ohash_lookup_memory "struct ohash *h" "const char *k" "size_t s" "uint32_t hv"
 .Ft void *
 .Fn ohash_find "struct ohash *h" "unsigned int i"
@@ -51,7 +51,7 @@
 .Fn ohash_first "struct ohash *h" "unsigned int *i"
 .Ft void *
 .Fn ohash_next "struct ohash *h" "unsigned int *i"
-.Ft "unsigned int"
+.Ft unsigned int
 .Fn ohash_entries "struct ohash *h"
 .Sh DESCRIPTION
 These functions have been designed as a fast, extensible alternative to
@@ -101,7 +101,7 @@ field is only used by the utility function
 .Pp
 Each of these functions are called similarly to their standard counterpart,
 but with an extra
-.Ft void *
+.Fa "void *"
 parameter corresponding to the content of the field
 .Fa data ,
 which can be used to communicate specific information to the functions.

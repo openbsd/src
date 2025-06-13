@@ -1,4 +1,4 @@
-.\" $OpenBSD: wcstol.3,v 1.4 2015/09/10 15:53:26 schwarze Exp $
+.\" $OpenBSD: wcstol.3,v 1.5 2025/06/13 18:34:00 schwarze Exp $
 .\" $NetBSD: wcstol.3,v 1.2 2006/08/08 17:32:05 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/locale/wcstol.3,v 1.4 2002/11/29 17:35:09 ru Exp $
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt WCSTOL 3
 .Os
 .Sh NAME
@@ -40,11 +40,11 @@ long long, unsigned long long, intmax_t, or uintmax_t integer
 .In wchar.h
 .Ft long
 .Fn wcstol "const wchar_t * restrict nptr" "wchar_t ** restrict endptr" "int base"
-.Ft "unsigned long"
+.Ft unsigned long
 .Fn wcstoul "const wchar_t * restrict nptr" "wchar_t ** restrict endptr" "int base"
-.Ft "long long"
+.Ft long long
 .Fn wcstoll "const wchar_t * restrict nptr" "wchar_t ** restrict endptr" "int base"
-.Ft "unsigned long long"
+.Ft unsigned long long
 .Fn wcstoull "const wchar_t * restrict nptr" "wchar_t ** restrict endptr" "int base"
 .In inttypes.h
 .Ft intmax_t

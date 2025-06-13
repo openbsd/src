@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.47 2022/09/11 06:38:11 jmc Exp $
+.\"	$OpenBSD: ctime.3,v 1.48 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -22,23 +22,23 @@
 .In sys/types.h
 .In time.h
 .Vt extern char *tzname[2] ;
-.Ft "char *"
+.Ft char *
 .Fn ctime "const time_t *clock"
-.Ft "char *"
+.Ft char *
 .Fn ctime_r "const time_t *clock" "char *buf"
 .Ft double
 .Fn difftime "time_t time1" "time_t time0"
-.Ft "char *"
+.Ft char *
 .Fn asctime "const struct tm *tm"
-.Ft "char *"
+.Ft char *
 .Fn asctime_r "const struct tm *tm" "char *buf"
-.Ft "struct tm *"
+.Ft struct tm *
 .Fn localtime "const time_t *clock"
-.Ft "struct tm *"
+.Ft struct tm *
 .Fn localtime_r "const time_t *clock" "struct tm *result"
-.Ft "struct tm *"
+.Ft struct tm *
 .Fn gmtime "const time_t *clock"
-.Ft "struct tm *"
+.Ft struct tm *
 .Fn gmtime_r "const time_t *clock" "struct tm *result"
 .Ft time_t
 .Fn mktime "struct tm *tm"

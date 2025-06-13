@@ -1,4 +1,4 @@
-.\" $OpenBSD: IPAddressRange_new.3,v 1.10 2025/06/08 22:40:30 schwarze Exp $
+.\" $OpenBSD: IPAddressRange_new.3,v 1.11 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt IPADDRESSRANGE_NEW 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Lb libcrypto
 .In openssl/x509v3.h
-.Ft "IPAddressRange *"
+.Ft IPAddressRange *
 .Fn IPAddressRange_new void
 .Ft void
 .Fn IPAddressRange_free "IPAddressRange *range"
@@ -53,7 +53,7 @@
 .Fa "IPAddressRange *range"
 .Fa "unsigned char **der_out"
 .Fc
-.Ft "IPAddressOrRange *"
+.Ft IPAddressOrRange *
 .Fn IPAddressOrRange_new void
 .Ft void
 .Fn IPAddressOrRange_free "IPAddressOrRange *aor"
@@ -68,7 +68,7 @@
 .Fa "IPAddressOrRange *aor"
 .Fa "unsigned char **der_out"
 .Fc
-.Ft "IPAddressChoice *"
+.Ft IPAddressChoice *
 .Fn IPAddressChoice_new void
 .Ft void
 .Fn IPAddressChoice_free "IPAddressChoice *ac"
@@ -83,7 +83,7 @@
 .Fa "IPAddressChoice *ac"
 .Fa "unsigned char **der_out"
 .Fc
-.Ft "IPAddressFamily *"
+.Ft IPAddressFamily *
 .Fn IPAddressFamily_new void
 .Ft void
 .Fn IPAddressFamily_free "IPAddressFamily *af"

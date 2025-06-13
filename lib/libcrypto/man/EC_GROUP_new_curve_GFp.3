@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_new_curve_GFp.3,v 1.4 2025/06/08 22:40:29 schwarze Exp $
+.\" $OpenBSD: EC_GROUP_new_curve_GFp.3,v 1.5 2025/06/13 18:34:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt EC_GROUP_NEW_CURVE_GFP 3
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Lb libcrypto
 .In openssl/bn.h
 .In openssl/ec.h
-.Ft "EC_GROUP *"
+.Ft EC_GROUP *
 .Fo EC_GROUP_new_curve_GFp
 .Fa "const BIGNUM *p"
 .Fa "const BIGNUM *a"
@@ -65,7 +65,7 @@
 .Fa "const BIGNUM *order"
 .Fa "const BIGNUM *cofactor"
 .Fc
-.Ft "const EC_POINT *"
+.Ft const EC_POINT *
 .Fo EC_GROUP_get0_generator
 .Fa "const EC_GROUP *group"
 .Fc
