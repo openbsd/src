@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.42 2023/04/02 16:43:42 sthen Exp $
+ * $OpenBSD: calendar.music,v 1.43 2025/06/13 11:01:15 sthen Exp $
  */
 
 #ifndef _calendar_music_
@@ -127,7 +127,7 @@
 03/13	The Allman Brothers record their live album at the Fillmore East, 1971
 03/13	Cesar Cui dies in Smolensk, Russia, 1918
 03/14	Georg Philipp Telemann is born in Magdeburg, 1681
-03/15	Sly Stone born, 1944
+03/15	Sly Stone born in Denton, Texas, 1944
 03/15	Daevid Allen (Gong) dies, 2015
 03/16	Enrique Granados drowns in the English Channel, 1916
 03/17	Paul Kantner (Jefferson Airplane) is born in San Francisco, 1942
@@ -251,10 +251,12 @@
 06/08	Gordon Jacob dies, 1984
 06/09	Les Paul (Lester Polsfuss) is born in Waukesha, Wisconsin, 1915
 06/09	Carl Nielsen is born in Sortelung, Denmark, 1865
+06/09	Sly Stone dies in Granada Hills, Los Angeles, 2025
 06/10	Howlin' Wolf (Chester Burnett) is born in West Point, Mississippi, 1910
 06/10	Judy Garland is born, 1922
 06/10	Ernest Chausson dies in Limary, Seine-et-Oise, France, 1899
 06/11	Richard Strauss is born in Munich, Germany, 1864
+06/11	Brian Wilson (Beach Boys) dies, 2025
 06/12	John Ireland dies, 1962
 06/13	Carlos Chavez is born in Popotla, Mexico, 1899
 06/15	Harry Nilsson is born in Brooklyn, 1941
@@ -266,6 +268,7 @@
 06/17	Igor Stravinsky is born in Oranienbaum (now Lomonosov), Russia, 1882
 06/18	Paul McCartney born in Liverpool, England, 1942
 06/18	Richard Rogers is born in Long Island, New York, 1902
+06/20	Brian Wilson (Beach Boys) is born in Inglewood, California, 1942
 06/20	Jacques Offenbach is born in Cologne, Germany, 1819
 06/21	Columbia records announces the first mass production of LP's, 1948
 06/21	Nikolai Rimsky-Korsakov dies in Lyubensk, Russia, 1908
