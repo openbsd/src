@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcic_pci_machdep.c,v 1.5 2008/06/26 05:42:11 ray Exp $ */
+/*	$OpenBSD: pcic_pci_machdep.c,v 1.6 2025/06/13 13:38:41 jsg Exp $ */
 /*	$NetBSD: pcic_pci_machdep.c,v 1.1 1998/12/20 17:53:29 nathanw Exp $	*/
 
 /*
@@ -56,18 +56,4 @@ pcic_pci_machdep_pcic_intr_establish(struct pcic_softc *sc, int (*fct)(void *))
 	printf("%s: interrupting at irq %d\n", sc->dev.dv_xname, sc->irq);
 	return (isa_intr_establish(NULL, sc->irq, IST_EDGE, IPL_TTY,
 				   fct, sc, sc->dev.dv_xname));
-}
-
-void *
-pcic_pci_machdep_chip_intr_establish(pcmcia_chipset_handle_t pch,
-    struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg,
-    char *xname)
-{
-	return (pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname));
-}
-
-void
-pcic_pci_machdep_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
-{
-	pcic_isa_chip_intr_disestablish(pch, ih);
 }

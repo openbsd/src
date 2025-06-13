@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pcivar.h,v 1.6 2008/06/26 05:42:17 ray Exp $ */
+/*	$OpenBSD: i82365_pcivar.h,v 1.7 2025/06/13 13:38:40 jsg Exp $ */
 /*	$NetBSD: i82365_pcivar.h,v 1.2 2000/02/22 16:04:47 thorpej Exp $	*/
 
 /*
@@ -40,9 +40,3 @@ void *pcic_pci_machdep_intr_est(pci_chipset_tag_t);
 
 void *pcic_pci_machdep_pcic_intr_establish(struct pcic_softc *,
 					   int (*)(void *));
-
-void *pcic_pci_machdep_chip_intr_establish(pcmcia_chipset_handle_t,
-					   struct pcmcia_function *,
-					   int, int (*)(void *),
-					   void *, char *);
-void pcic_pci_machdep_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
