@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid6.c,v 1.73 2024/05/13 01:15:50 jsg Exp $ */
+/* $OpenBSD: softraid_raid6.c,v 1.74 2025/06/13 13:00:49 jsg Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -63,7 +63,6 @@ void	sr_raid6_xorp(void *, void *, int);
 void	sr_raid6_xorq(void *, void *, int, int);
 int	sr_raid6_addio(struct sr_workunit *wu, int, daddr_t, long,
 	    void *, int, int, void *, void *, int);
-int	sr_failio(struct sr_workunit *);
 
 void	gf_init(void);
 uint8_t gf_inv(uint8_t);
@@ -634,23 +633,6 @@ bad:
 	/* wu is unwound by sr_wu_put */
 	if (wu_r)
 		sr_scsi_wu_put(sd, wu_r);
-	return (1);
-}
-
-/* Handle failure I/O completion */
-int
-sr_failio(struct sr_workunit *wu)
-{
-	struct sr_discipline	*sd = wu->swu_dis;
-	struct sr_ccb		*ccb;
-
-	if (!(wu->swu_flags & SR_WUF_FAIL))
-		return (0);
-
-	/* Wu is a 'fake'.. don't do real I/O just intr */
-	TAILQ_INSERT_TAIL(&sd->sd_wu_pendq, wu, swu_link);
-	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link)
-		sr_raid6_intr(&ccb->ccb_buf);
 	return (1);
 }
 
