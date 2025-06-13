@@ -3034,6 +3034,7 @@
 ./usr/lib/clang/19/include/intrin.h
 ./usr/lib/clang/19/include/module.modulemap
 ./usr/lib/clang/19/include/riscv_bitmanip.h
+./usr/lib/clang/19/include/riscv_vector.h
 ./usr/lib/clang/19/include/stdalign.h
 ./usr/lib/clang/19/include/stdatomic.h
 ./usr/lib/clang/19/include/stdnoreturn.h
