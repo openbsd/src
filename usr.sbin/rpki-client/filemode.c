@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.58 2025/02/25 15:55:26 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.59 2025/06/13 07:14:01 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -501,7 +501,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		tal_print(tal);
 		break;
 	default:
-		printf("%s: unsupported file type\n", file);
+		errstr = "unsupported file type";
 		break;
 	}
 
