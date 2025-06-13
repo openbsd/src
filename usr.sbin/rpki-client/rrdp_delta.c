@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.14 2024/05/30 09:54:59 job Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.15 2025/06/13 06:20:27 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -133,14 +133,19 @@ start_publish_withdraw_elem(struct delta_xml *dxml, const char **attr,
 			if (hex_decode(attr[i + 1], hash, sizeof(hash)) == 0)
 				continue;
 		}
+		free(uri);
 		PARSE_FAIL(p, "parse failed - non conforming "
 		    "attribute '%s' found in publish/withdraw elem", attr[i]);
 	}
-	if (hasUri != 1)
+	if (hasUri != 1) {
+		free(uri);
 		PARSE_FAIL(p,
 		    "parse failed - incomplete publish/withdraw attributes");
-	if (withdraw && hasHash != 1)
+	}
+	if (withdraw && hasHash != 1) {
+		free(uri);
 		PARSE_FAIL(p, "parse failed - incomplete withdraw attributes");
+	}
 
 	if (withdraw)
 		pub = PUB_DEL;
