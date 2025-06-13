@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.154 2025/06/12 18:59:25 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.155 2025/06/13 07:08:12 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1077,7 +1077,7 @@ parse_worker(void *arg)
 
 	for (;;) {
 		pthread_mutex_lock(&globalq_mtx);
-		if (TAILQ_EMPTY(&globalq))
+		while (TAILQ_EMPTY(&globalq))
 			pthread_cond_wait(&globalq_cond, &globalq_mtx);
 		n = 0;
 		while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
@@ -1118,12 +1118,10 @@ parse_writer(void *arg)
 	for (;;) {
 		if (msgbuf_queuelen(myq) == 0) {
 			pthread_mutex_lock(&globalmsgq_mtx);
-			if (ibufq_queuelen(globalmsgq) == 0) {
+			while (ibufq_queuelen(globalmsgq) == 0)
 				pthread_cond_wait(&globalmsgq_cond, &globalmsgq_mtx);
-			} else {
-				/* enqueue messages to local msgbuf */
-				msgbuf_concat(myq, globalmsgq);
-			}
+			/* enqueue messages to local msgbuf */
+			msgbuf_concat(myq, globalmsgq);
 			pthread_mutex_unlock(&globalmsgq_mtx);
 		}
 
