@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.106 2024/05/24 06:02:57 jsg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.107 2025/06/13 10:26:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -345,10 +345,6 @@ void		vic_tick(void *);
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
 
 struct mbuf *vic_alloc_mbuf(struct vic_softc *, bus_dmamap_t, u_int);
-
-const struct pci_matchid vic_devices[] = {
-	{ PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_NET }
-};
 
 int
 vic_match(struct device *parent, void *match, void *aux)
