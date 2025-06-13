@@ -1,4 +1,4 @@
-.\" $OpenBSD: mdoc.7,v 1.190 2025/06/05 13:48:12 schwarze Exp $
+.\" $OpenBSD: mdoc.7,v 1.191 2025/06/13 16:17:49 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2021, 2024, 2025 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -223,9 +223,9 @@ For the second, function calls (sections 2, 3, 9):
 \&.Lb libname \e" unless the functions are in libc
 \&.In header.h
 \&.Vt extern const char *global;
-\&.Ft "char *"
+\&.Ft char *
 \&.Fn foo "const char *src"
-\&.Ft "char *"
+\&.Ft char *
 \&.Fn bar "const char *src"
 .Ed
 .Pp
