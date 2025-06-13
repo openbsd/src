@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.48 2021/11/28 19:26:03 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.49 2025/06/13 12:46:41 tb Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ emitload(FILE *fp)
 		    "\t${SYSTEM_LD_HEAD}\n"
 		    "\t${SYSTEM_LD} swap%s.o\n"
 		    "\t${SYSTEM_LD_TAIL}\n"
-		    "\trm -f %s.gdb\n"
+		    "\trm -f new%s.gdb\n"
 		    "\tmv -f new%s %s\n\n",
 		    swname, nm, nm, nm) < 0)
 			return (1);
