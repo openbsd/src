@@ -1,6 +1,6 @@
 .\" David Leonard, 1998. Placed in the public domain.
-.\" $OpenBSD: ndbm.3,v 1.20 2016/05/07 23:35:45 naddy Exp $
-.Dd $Mdocdate: May 7 2016 $
+.\" $OpenBSD: ndbm.3,v 1.21 2025/06/13 18:48:05 schwarze Exp $
+.Dd $Mdocdate: June 13 2025 $
 .Dt DBM_OPEN 3
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Fn dbm_firstkey "DBM *db"
 .Ft datum
 .Fn dbm_nextkey "DBM *db"
-.Ft "DBM *"
+.Ft DBM *
 .Fn dbm_open "const char *file" "int flags" "mode_t mode"
 .Ft int
 .Fn dbm_pagfno "DBM *db"
@@ -50,7 +50,7 @@ database access methods described in
 Each unique record in the database is a key/content pair,
 the components of which may be any arbitrary binary data.
 The key and the content data are described by the
-.Ft datum
+.Vt datum
 data structure:
 .Bd -literal -offset indent
 typedef struct {

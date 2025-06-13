@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_cancel.3,v 1.14 2025/06/07 00:16:52 schwarze Exp $
+.\" $OpenBSD: pthread_cancel.3,v 1.15 2025/06/13 18:48:06 schwarze Exp $
 .\"
 .\"
 .\"  David Leonard, 1999. Public Domain.
 .\"
-.Dd $Mdocdate: June 7 2025 $
+.Dd $Mdocdate: June 13 2025 $
 .Dt PTHREAD_CANCEL 3
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ is made available to any threads joining with the target.
 The symbolic constant
 .Dv PTHREAD_CANCELED
 expands to a constant expression of type
-.Ft "(void *)"
+.Pq Vt void *
 whose value matches no pointer to an object in memory nor the value
 .Dv NULL .
 .Sh RETURN VALUES
