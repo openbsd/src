@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.28 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.29 2025/06/13 17:11:09 jca Exp $
 
 .include <bsd.own.mk>
 
@@ -147,7 +147,8 @@ HEADERS+=	altivec.h \
 		htmintrin.h \
 		htmxlintrin.h
 .elif ${MACHINE_ARCH} == "riscv64"
-GEN+=		riscv_bitmanip.h
+HEADERS+=	riscv_bitmanip.h
+GEN+=		riscv_vector.h
 HEADERS+=	${GEN}
 .endif
 
