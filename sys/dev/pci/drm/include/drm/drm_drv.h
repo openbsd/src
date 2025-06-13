@@ -588,13 +588,6 @@ struct drm_dmamem {
 	LIST_ENTRY(drm_dmamem)	next;
 };
 
-typedef struct drm_dma_handle {
-	struct drm_dmamem *mem;
-	dma_addr_t busaddr;
-	void *vaddr;
-	size_t size;
-} drm_dma_handle_t;
-
 struct drm_dmamem	*drm_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
 			     int, bus_size_t, int, int);
 void			 drm_dmamem_free(bus_dma_tag_t, struct drm_dmamem *);
