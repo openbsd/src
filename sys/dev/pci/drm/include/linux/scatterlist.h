@@ -1,4 +1,4 @@
-/*	$OpenBSD: scatterlist.h,v 1.7 2024/01/06 09:33:08 kettenis Exp $	*/
+/*	$OpenBSD: scatterlist.h,v 1.8 2025/06/13 07:01:38 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -134,8 +134,5 @@ sg_set_page(struct scatterlist *sgl, struct vm_page *page,
 
 #define for_each_sgtable_page(st, iter, pgoffset) \
 	for_each_sg_page((st)->sgl, iter, (st)->orig_nents, pgoffset)
-
-size_t sg_copy_from_buffer(struct scatterlist *, unsigned int,
-    const void *, size_t);
 
 #endif

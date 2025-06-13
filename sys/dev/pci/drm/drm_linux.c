@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.125 2025/06/04 13:00:50 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.126 2025/06/13 07:01:37 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1167,13 +1167,6 @@ sg_free_table(struct sg_table *table)
 	    table->orig_nents * sizeof(struct scatterlist));
 	table->orig_nents = 0;
 	table->sgl = NULL;
-}
-
-size_t
-sg_copy_from_buffer(struct scatterlist *sgl, unsigned int nents,
-    const void *buf, size_t buflen)
-{
-	panic("%s", __func__);
 }
 
 int
