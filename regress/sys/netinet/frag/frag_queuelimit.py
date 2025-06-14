@@ -40,7 +40,7 @@ if child == 0:
 		time.sleep(0.001)
 	os._exit(0)
 
-ans=sniff(iface=LOCAL_IF, timeout=6, filter=
+ans=sniff(iface=LOCAL_IF, timeout=10, filter=
     "ip and src "+REMOTE_ADDR+" and dst "+LOCAL_ADDR+" and icmp")
 os.kill(child, 15)
 os.wait()
