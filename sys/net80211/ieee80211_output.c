@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.140 2024/09/01 03:09:00 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.141 2025/06/14 08:46:34 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1626,53 +1626,6 @@ ieee80211_output_ba_move_window(struct ieee80211com *ic,
 
 	ba->ba_winstart = (ssn & 0xfff);
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
-}
-
-/*
- * Move Tx BA window forward up to the first hole in the bitmap
- * or up to the specified SSN, whichever comes first.
- * After calling this function, frames before the start of the
- * potentially changed BA window should be discarded.
- */
-void
-ieee80211_output_ba_move_window_to_first_unacked(struct ieee80211com *ic,
-    struct ieee80211_node *ni, uint8_t tid, uint16_t ssn)
-{
-	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
-	uint16_t s = ba->ba_winstart;
-	uint64_t bitmap = ba->ba_bitmap;
-	int can_move_window = 0;
-
-	while (bitmap && SEQ_LT(s, ssn)) {
-		if ((bitmap & 1) == 0)
-			break;
-		s = (s + 1) % 0xfff;
-		bitmap >>= 1;
-		can_move_window = 1;
-	}
-
-	if (can_move_window)
-		ieee80211_output_ba_move_window(ic, ni, tid, s);
-}
-
-/* Record an ACK for a frame with a given SSN within the Tx BA window. */
-void
-ieee80211_output_ba_record_ack(struct ieee80211com *ic,
-    struct ieee80211_node *ni, uint8_t tid, uint16_t ssn)
-{
-	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
-	int i = 0;
-	uint16_t s = ba->ba_winstart;
-
-	KASSERT(!SEQ_LT(ssn, ba->ba_winstart));
-	KASSERT(!SEQ_LT(ba->ba_winend, ssn));
-
-	while (SEQ_LT(s, ssn)) {
-		s = (s + 1) % 0xfff;
-		i++;
-	}
-	if (i < ba->ba_winsize)
-		ba->ba_bitmap |= (1 << i);
 }
 
 /*-

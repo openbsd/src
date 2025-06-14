@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.49 2024/05/29 00:48:15 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.50 2025/06/14 08:46:34 jsg Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -184,10 +184,6 @@ extern	void ieee80211_addba_resp_accept(struct ieee80211com *,
 extern	void ieee80211_addba_resp_refuse(struct ieee80211com *,
 	    struct ieee80211_node *, uint8_t, uint16_t);
 extern	void ieee80211_output_ba_move_window(struct ieee80211com *,
-	    struct ieee80211_node *, uint8_t, uint16_t);
-extern	void ieee80211_output_ba_move_window_to_first_unacked(
-	    struct ieee80211com *, struct ieee80211_node *, uint8_t, uint16_t);
-extern	void ieee80211_output_ba_record_ack(struct ieee80211com *,
 	    struct ieee80211_node *, uint8_t, uint16_t);
 
 #endif /* _NET80211_IEEE80211_PROTO_H_ */
