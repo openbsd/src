@@ -1,7 +1,7 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.34 2025/06/14 07:50:37 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.35 2025/06/14 09:36:59 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
- * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2024, 2025 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,8 +20,8 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/ec.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/sha.h>
 
