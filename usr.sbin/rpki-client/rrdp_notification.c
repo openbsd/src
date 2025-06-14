@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.22 2025/06/13 12:34:14 tb Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.23 2025/06/14 09:12:04 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -137,7 +137,7 @@ delta_parse(struct rrdp_session *s, size_t idx, char **hash)
 
 	if (hash != NULL)
 		*hash = NULL;
-	if (idx < 0 || idx >= sizeof(s->deltas) / sizeof(s->deltas[0]))
+	if (idx >= sizeof(s->deltas) / sizeof(s->deltas[0]))
 		return 0;
 	if ((line = s->deltas[idx]) == NULL)
 		return 0;
