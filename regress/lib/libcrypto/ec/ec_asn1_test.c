@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.33 2025/05/04 05:00:03 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.34 2025/06/14 07:50:37 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -20,9 +20,10 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/ec.h>
 #include <openssl/err.h>
+#include <openssl/ec.h>
 #include <openssl/objects.h>
+#include <openssl/sha.h>
 
 #include "ec_local.h"
 
@@ -2348,6 +2349,197 @@ ec_group_check_private_keys(void)
 	return failed;
 }
 
+static void
+ec_group_sha1_bignum(BIGNUM *out, const BIGNUM *in)
+{
+	char md[SHA_DIGEST_LENGTH];
+	unsigned char *bin;
+	size_t bin_len;
+
+	if (BN_num_bytes(in) <= 0)
+		errx(1, "%s: invalid bignum", __func__);
+
+	bin_len = BN_num_bytes(in);
+	if ((bin = calloc(1, bin_len)) == NULL)
+		err(1, "calloc");
+	if (BN_bn2bin(in, bin) <= 0)
+		errx(1, "BN_bn2bin");
+
+	SHA1(bin, bin_len, md);
+	free(bin);
+
+	if (BN_bin2bn(md, sizeof(md), out) == NULL)
+		errx(1, "BN_bin2bn");
+}
+
+static int
+ec_group_check_seed(const EC_builtin_curve *curve, BN_CTX *ctx)
+{
+	EC_GROUP *group = NULL;
+	BIGNUM *p, *a, *b, *pow2, *r, *seed_bn, *w;
+	const unsigned char *seed;
+	size_t seed_len;
+	int i, g, h, s, t;
+	int failed = 1;
+
+	if ((group = EC_GROUP_new_by_curve_name(curve->nid)) == NULL)
+		errx(1, "EC_GROUP_new_by_curve_name");
+
+	BN_CTX_start(ctx);
+
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		errx(1, "p = BN_CTX_get()");
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		errx(1, "a = BN_CTX_get()");
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		errx(1, "b = BN_CTX_get()");
+	if ((r = BN_CTX_get(ctx)) == NULL)
+		errx(1, "r = BN_CTX_get()");
+	if ((pow2 = BN_CTX_get(ctx)) == NULL)
+		errx(1, "pow2 = BN_CTX_get()");
+	if ((seed_bn = BN_CTX_get(ctx)) == NULL)
+		errx(1, "seed_bn = BN_CTX_get()");
+	if ((w = BN_CTX_get(ctx)) == NULL)
+		errx(1, "w = BN_CTX_get()");
+
+	/*
+	 * If the curve has a seed, verify that its parameters a and b have
+	 * been selected using that seed, loosely following X9.62, F.3.4.b.
+	 * Otherwise there's nothing to do.
+	 */
+	if ((seed = EC_GROUP_get0_seed(group)) == NULL)
+		goto done;
+	seed_len = EC_GROUP_get_seed_len(group);
+
+	/*
+	 * This isn't a requirement but happens to be the case for NIST
+	 * curves - the only built-in curves that have a seed.
+	 */
+	if (seed_len != SHA_DIGEST_LENGTH) {
+		fprintf(stderr, "%s FAIL: unexpected seed length. "
+		    "want %d, got %zu\n", __func__, SHA_DIGEST_LENGTH, seed_len);
+		goto err;
+	}
+
+	/* Seed length in bits, per F.3.3.b. */
+	g = 8 * seed_len;
+
+	/*
+	 * Prepare to build the verifiably random element r of GFp by
+	 * concatenating the SHA-1 of modifications of the seed as a number.
+	 */
+	if (BN_bin2bn(seed, seed_len, seed_bn) == NULL)
+		errx(1, "BN_bin2bn");
+
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
+		errx(1, "EC_GROUP_get_curve");
+
+	t = BN_num_bits(p);	/* bit length needed. */
+	s = (t - 1) / 160;	/* number of SHA-1 fitting in bit length. */
+	h = t - 160 * s;	/* remaining number of bits in r. */
+
+	/*
+	 * Steps 1 - 3: compute hash of the seed and take h - 1 rightmost bits.
+	 */
+
+	ec_group_sha1_bignum(r, seed_bn);
+	BN_zero(pow2);
+	if (!BN_set_bit(pow2, h - 1))
+		errx(1, "BN_set_bit");
+	if (!BN_mod(r, r, pow2, ctx))
+		errx(1, "BN_nnmod");
+
+	/*
+	 * Steps 4 - 6: for i from 1 to s do Wi = SHA-1(SEED + i mod 2^g),
+	 * With W0 = r as already computed, let r = W0 || W1 || ... || Ws.
+	 */
+
+	BN_zero(pow2);
+	if (!BN_set_bit(pow2, g))
+		errx(1, "BN_set_bit");
+
+	for (i = 0; i < s; i++) {
+		/*
+		 * This is a bit silly since the seed isn't going to have all
+		 * its bits set, so BN_add_word(seed_bn, 1) would do, but for
+		 * the sake of correctness...
+		 */
+		if (!BN_mod_add(seed_bn, seed_bn, BN_value_one(), pow2, ctx))
+			errx(1, "BN_mod_add");
+
+		ec_group_sha1_bignum(w, seed_bn);
+
+		if (!BN_lshift(r, r, 8 * SHA_DIGEST_LENGTH))
+			errx(1, "BN_lshift");
+		if (!BN_add(r, r, w))
+			errx(1, "BN_add");
+	}
+
+	/*
+	 * Step 7: check that r * b^2 == a^3 (mod p)
+	 */
+
+	/* Compute r = r * b^2 (mod p). */
+	if (!BN_mod_sqr(b, b, p, ctx))
+		errx(1, "BN_mod_sqr");
+	if (!BN_mod_mul(r, r, b, p, ctx))
+		errx(1, "BN_mod_mul");
+
+	/* Compute a = a^3 (mod p). */
+	if (!BN_mod_sqr(b, a, p, ctx))
+		errx(1, "BN_mod_sqr");
+	if (!BN_mod_mul(a, a, b, p, ctx))
+		errx(1, "BN_mod_mul");
+
+	/*
+	 * XXX - this assumes that a, b, p >= 0, so the results are in [0, p).
+	 * This is currently enforced in the EC code.
+	 */
+	if (BN_cmp(r, a) != 0) {
+		fprintf(stderr, "FAIL: %s verification failed for %s\nr * b^2:\t",
+		    __func__, curve->comment);
+		BN_print_fp(stderr, r);
+		fprintf(stderr, "\na^3:\t\t");
+		BN_print_fp(stderr, a);
+		fprintf(stderr, "\n");
+		goto err;
+	}
+
+ done:
+	failed = 0;
+
+ err:
+	BN_CTX_end(ctx);
+	EC_GROUP_free(group);
+
+	return failed;
+}
+
+static int
+ec_group_check_seeds(void)
+{
+	BN_CTX *ctx = NULL;
+	EC_builtin_curve *all_curves = NULL;
+	size_t curve_id, ncurves;
+	int failed = 0;
+
+	if ((ctx = BN_CTX_new()) == NULL)
+		errx(1, "BN_CTX_new");
+
+	ncurves = EC_get_builtin_curves(NULL, 0);
+	if ((all_curves = calloc(ncurves, sizeof(*all_curves))) == NULL)
+		err(1, "calloc builtin curves");
+	EC_get_builtin_curves(all_curves, ncurves);
+
+	for (curve_id = 0; curve_id < ncurves; curve_id++)
+		failed |= ec_group_check_seed(&all_curves[curve_id], ctx);
+
+	free(all_curves);
+	BN_CTX_free(ctx);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -2359,6 +2551,7 @@ main(int argc, char **argv)
 	failed |= ec_group_roundtrip_builtin_curves();
 	failed |= ec_group_non_builtin_curves();
 	failed |= ec_group_check_private_keys();
+	failed |= ec_group_check_seeds();
 
 	return failed;
 }
