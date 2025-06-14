@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.62 2025/06/10 06:29:53 dlg Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.63 2025/06/14 12:45:39 kn Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -279,7 +279,7 @@ usage(void)
 	fprintf(stderr, " [-C changed_ip_table]\n");
 	fprintf(stderr, "\t[-c config-file] [-L leased_ip_table]");
 	fprintf(stderr, " [-l lease-file] [-u[bind_address]]\n");
-	fprintf(stderr, "\t[-Y synctarget] [-y synclisten] [if0 [... ifN]]\n");
+	fprintf(stderr, "\t[-Y synctarget] [-y synclisten] [interface ...]\n");
 	exit(1);
 }
 

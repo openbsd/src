@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.37 2025/06/10 06:33:16 dlg Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.38 2025/06/14 12:45:39 kn Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: June 10 2025 $
+.Dd $Mdocdate: June 14 2025 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@
 .Op Fl u Ns Op Ar bind_address
 .Op Fl Y Ar synctarget
 .Op Fl y Ar synclisten
-.Op Ar if0 Op Ar ... ifN
+.Op Ar interface ...
 .Ek
 .Sh DESCRIPTION
 .Nm
