@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.734 2025/05/09 03:12:36 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.735 2025/06/14 03:35:09 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1202,8 +1202,10 @@ if_detach(struct ifnet *ifp)
 	ifp->if_qstart = if_detached_qstart;
 
 	/* Wait until the start routines finished. */
-	ifq_barrier(&ifp->if_snd);
-	ifq_clr_oactive(&ifp->if_snd);
+	for (i = 0; i < ifp->if_nifqs; i++) {
+		ifq_barrier(ifp->if_ifqs[i]);
+		ifq_clr_oactive(ifp->if_ifqs[i]);
+	}
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
