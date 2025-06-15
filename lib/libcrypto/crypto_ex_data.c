@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_ex_data.c,v 1.5 2025/06/07 04:37:01 tb Exp $ */
+/* $OpenBSD: crypto_ex_data.c,v 1.6 2025/06/15 15:58:56 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -100,11 +100,10 @@ CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
 		goto err;
 
 	if ((class = classes[class_index]) == NULL) {
-		if ((new_class = calloc(1,
-		    sizeof(struct crypto_ex_data_class))) == NULL)
+		if ((new_class = calloc(1, sizeof(*new_class))) == NULL)
 			goto err;
 		if ((new_class->indexes = calloc(CRYPTO_EX_DATA_MAX_INDEX,
-                    sizeof(struct crypto_ex_data_index *))) == NULL)
+                    sizeof(*new_class->indexes))) == NULL)
 			goto err;
 		new_class->indexes_len = CRYPTO_EX_DATA_MAX_INDEX;
 		new_class->next_index = 1;
@@ -119,7 +118,7 @@ CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
 		class = classes[class_index];
 	}
 
-	if ((index = calloc(1, sizeof(struct crypto_ex_data_index))) == NULL)
+	if ((index = calloc(1, sizeof(*index))) == NULL)
 		goto err;
 
 	index->new_func = new_func;
@@ -200,12 +199,12 @@ crypto_ex_data_init(CRYPTO_EX_DATA *exdata)
 	if (exdata->sk != NULL)
 		goto err;
 
-	if ((ced = calloc(1, sizeof(struct crypto_ex_data))) == NULL)
+	if ((ced = calloc(1, sizeof(*ced))) == NULL)
 		goto err;
 
 	ced->class_index = -1;
 
-	if ((ced->slots = calloc(CRYPTO_EX_DATA_MAX_INDEX, sizeof(void *))) == NULL)
+	if ((ced->slots = calloc(CRYPTO_EX_DATA_MAX_INDEX, sizeof(*ced->slots))) == NULL)
 		goto err;
 	ced->slots_len = CRYPTO_EX_DATA_MAX_INDEX;
 
