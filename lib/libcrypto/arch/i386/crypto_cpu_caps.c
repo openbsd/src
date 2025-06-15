@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_cpu_caps.c,v 1.3 2024/11/12 13:14:57 jsing Exp $ */
+/*	$OpenBSD: crypto_cpu_caps.c,v 1.4 2025/06/15 14:18:31 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -19,10 +19,14 @@
 
 #include <openssl/crypto.h>
 
+#include "crypto_arch.h"
 #include "x86_arch.h"
 
 /* Legacy architecture specific capabilities, used by perlasm. */
 uint64_t OPENSSL_ia32cap_P;
+
+/* Machine dependent CPU capabilities. */
+uint64_t crypto_cpu_caps_i386;
 
 /* Machine independent CPU capabilities. */
 extern uint64_t crypto_cpu_caps;
@@ -92,8 +96,10 @@ crypto_cpu_caps_init(void)
 	if ((edx & IA32CAP_MASK0_SSE2) != 0)
 		caps |= CPUCAP_MASK_SSE2;
 
-	if ((ecx & IA32CAP_MASK1_AESNI) != 0)
+	if ((ecx & IA32CAP_MASK1_AESNI) != 0) {
 		caps |= CPUCAP_MASK_AESNI;
+		crypto_cpu_caps_i386 |= CRYPTO_CPU_CAPS_I386_AES;
+	}
 	if ((ecx & IA32CAP_MASK1_PCLMUL) != 0)
 		caps |= CPUCAP_MASK_PCLMUL;
 	if ((ecx & IA32CAP_MASK1_SSSE3) != 0)
