@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2025/06/08 00:52:17 florian Exp $
+# $OpenBSD: Makefile,v 1.4 2025/06/15 14:37:34 florian Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -14,26 +14,24 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# acme-client retrieves a certificate from letsencrypt.org.  For
-# that a domain must be registered and the local machine must be
-# reachable via this DNS name.
+# The following ports must be installed:
+#
+# pebble	small test server for RFC 8555 (ACME)
 
-DOMAIN ?=
-
-.if empty (DOMAIN)
+.if ! exists(/usr/local/bin/pebble)
 regress:
-	@echo This tests needs a domain reachable from letsencrypt.org.
-	@echo Set it with the DOMAIN variable.
+	@echo Install pebble package to run this regress.
 	@echo SKIPPED
 .endif
 
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog *.core y.tab.h ktrace.out
+	rm -f a.out [Ee]rrs mklog *.core y.tab.h ktrace.out pebble-config.json
+	rm -f pebble.out
 	rm -rf etc www
 
 etc/acme-client.conf: acme-client.conf
 	mkdir -p etc
-	sed 's,$${.OBJDIR},${.OBJDIR},;s,$${DOMAIN},${DOMAIN},'\
+	sed 's,$${.OBJDIR},${.OBJDIR},'\
 		${.CURDIR}/acme-client.conf >etc/acme-client.conf
 
 etc/httpd.conf: httpd.conf
@@ -50,19 +48,33 @@ httpd-start: etc/httpd.conf
 httpd-stop:
 	-${SUDO} pkill -xf "/usr/sbin/httpd -f ${.OBJDIR}/etc/httpd.conf"
 
+pebble-config.json:
+	sed 's,$${.CURDIR},${.CURDIR},'\
+		${.CURDIR}/pebble-config.json > pebble-config.json
+
+pebble-start: pebble-config.json
+	/usr/local/bin/pebble -config ${.OBJDIR}/pebble-config.json > \
+	    ${.OBJDIR}/pebble.out &
+	while ! $$(fgrep -q 'Root CA certificate available' \
+	    ${.OBJDIR}/pebble.out); do sleep .1; done
+
+pebble-stop:
+	pkill -xf "/usr/local/bin/pebble -config ${.OBJDIR}/pebble-config.json"
+
 REGRESS_TARGETS +=	run-regress-acme
-run-regress-acme: etc/acme-client.conf httpd-start
+run-regress-acme: etc/acme-client.conf httpd-start pebble-start
 	${SUDO} /usr/sbin/acme-client \
 	    -f ${.OBJDIR}/etc/acme-client.conf \
-	    -v ${DOMAIN}
+	    -v localhost
 	${SUDO} /usr/sbin/acme-client \
 	    -f ${.OBJDIR}/etc/acme-client.conf \
-	    -r -v ${DOMAIN}
+	    -r -v localhost
 
 REGRESS_TARGETS +=	run-regress-cleanup
 run-regress-cleanup:
 	${.MAKE} -C ${.CURDIR} httpd-stop
+	${.MAKE} -C ${.CURDIR} pebble-stop
 
-.PHONY: ${REGRESS_TARGETS} httpd-start httpd-stop
+.PHONY: ${REGRESS_TARGETS} httpd-start httpd-stop pebble-start pebble-stop
 
 .include <bsd.regress.mk>
