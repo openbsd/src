@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.56 2024/09/18 19:12:37 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.57 2025/06/15 09:44:57 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -72,7 +72,7 @@ def substitute_alert(want, got):
     return f"Expected alert description \"{want}\" " \
         + f"does not match received \"{got}\""
 
-# test-tls13-finished.py has 70 failing tests that expect a "decode_error"
+# test_tls13_finished.py has 70 failing tests that expect a "decode_error"
 # instead of the "decrypt_error" sent by tls13_server_finished_recv().
 # Both alerts appear to be reasonable in this context, so work around this
 # in the test instead of the library.
@@ -164,46 +164,46 @@ def generate_test_tls13_finished_args():
     return args
 
 tls13_tests = TestGroup("TLSv1.3 tests", [
-    Test("test-tls13-ccs.py"),
-    Test("test-tls13-conversation.py"),
-    Test("test-tls13-count-tickets.py"),
-    Test("test-tls13-empty-alert.py"),
-    Test("test-tls13-finished.py", generate_test_tls13_finished_args()),
-    Test("test-tls13-finished-plaintext.py"),
-    Test("test-tls13-hrr.py"),
-    Test("test-tls13-keyshare-omitted.py"),
-    Test("test-tls13-legacy-version.py"),
-    Test("test-tls13-nociphers.py"),
-    Test("test-tls13-record-padding.py"),
+    Test("test_tls13_ccs.py"),
+    Test("test_tls13_conversation.py"),
+    Test("test_tls13_count_tickets.py"),
+    Test("test_tls13_empty_alert.py"),
+    Test("test_tls13_finished.py", generate_test_tls13_finished_args()),
+    Test("test_tls13_finished_plaintext.py"),
+    Test("test_tls13_hrr.py"),
+    Test("test_tls13_keyshare_omitted.py"),
+    Test("test_tls13_legacy_version.py"),
+    Test("test_tls13_nociphers.py"),
+    Test("test_tls13_record_padding.py"),
     # Exclude QUIC transport parameters
-    Test("test-tls13-shuffled-extentions.py", [ "--exc", "57" ]),
-    Test("test-tls13-zero-content-type.py"),
+    Test("test_tls13_shuffled_extentions.py", [ "--exc", "57" ]),
+    Test("test_tls13_zero_content_type.py"),
 
     # The skipped tests fail due to a bug in BIO_gets() which masks the retry
     # signalled from an SSL_read() failure. Testing with httpd(8) shows we're
     # handling these corner cases correctly since tls13_record_layer.c -r1.47.
-    Test("test-tls13-zero-length-data.py", [
+    Test("test_tls13_zero_length_data.py", [
         "-e", "zero-length app data",
         "-e", "zero-length app data with large padding",
         "-e", "zero-length app data with padding",
     ]),
 
     # We don't currently handle NSTs
-    Test("test-tls13-connection-abort.py", ["-e", "After NewSessionTicket"]),
+    Test("test_tls13_connection_abort.py", ["-e", "After NewSessionTicket"]),
 ])
 
 # Tests that take a lot of time (> ~30s on an x280)
 tls13_slow_tests = TestGroup("slow TLSv1.3 tests", [
     # XXX: Investigate the occasional message
     # "Got shared secret with 1 most significant bytes equal to zero."
-    Test("test-tls13-dhe-shared-secret-padding.py", tls13_unsupported_ciphers),
+    Test("test_tls13_dhe_shared_secret_padding.py", tls13_unsupported_ciphers),
 
-    Test("test-tls13-invalid-ciphers.py"),
-    Test("test-tls13-serverhello-random.py", tls13_unsupported_ciphers),
+    Test("test_tls13_invalid_ciphers.py"),
+    Test("test_tls13_serverhello_random.py", tls13_unsupported_ciphers),
 
     # Mark two tests cases as xfail for now. The tests expect an arguably
     # correct decode_error while we send a decrypt_error (like fizz/boring).
-    Test("test-tls13-record-layer-limits.py", [
+    Test("test_tls13_record_layer_limits.py", [
         "-x", "max size payload (2**14) of Finished msg, with 16348 bytes of left padding, cipher TLS_AES_128_GCM_SHA256",
         "-X", substitute_alert("decode_error", "decrypt_error"),
         "-x", "max size payload (2**14) of Finished msg, with 16348 bytes of left padding, cipher TLS_CHACHA20_POLY1305_SHA256",
@@ -212,22 +212,22 @@ tls13_slow_tests = TestGroup("slow TLSv1.3 tests", [
     # We don't accept an empty ECPF extension since it must advertise the
     # uncompressed point format. Exclude this extension type from the test.
     Test(
-        "test-tls13-large-number-of-extensions.py",
+        "test_tls13_large_number_of_extensions.py",
         tls13_args = ["--exc", "11"],
     ),
 ])
 
 tls13_extra_cert_tests = TestGroup("TLSv1.3 certificate tests", [
     # need to set up client certs to run these
-    Test("test-tls13-certificate-request.py"),
-    Test("test-tls13-certificate-verify.py"),
-    Test("test-tls13-ecdsa-in-certificate-verify.py"),
-    Test("test-tls13-eddsa-in-certificate-verify.py"),
+    Test("test_tls13_certificate_request.py"),
+    Test("test_tls13_certificate_verify.py"),
+    Test("test_tls13_ecdsa_in_certificate_verify.py"),
+    Test("test_tls13_eddsa_in_certificate_verify.py"),
 
     # Test expects the server to have installed three certificates:
     # with P-256, P-384 and P-521 curve. Also SHA1+ECDSA is verified
     # to not work.
-    Test("test-tls13-ecdsa-support.py"),
+    Test("test_tls13_ecdsa_support.py"),
 ])
 
 tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
@@ -235,7 +235,7 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
     # With X25519, we accept weak peer public keys and fail when we actually
     # compute the keyshare.  Other tests seem to indicate that we could be
     # stricter about what keyshares we accept.
-    Test("test-tls13-crfg-curves.py", [
+    Test("test_tls13_crfg_curves.py", [
         '-e', 'all zero x448 key share',
         '-e', 'empty x448 key share',
         '-e', 'sanity x448 with compression ansiX962_compressed_char2',
@@ -245,7 +245,7 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
         '-e', 'too small x448 key share',
         '-e', 'x448 key share of "1"',
     ]),
-    Test("test-tls13-ecdhe-curves.py", [
+    Test("test_tls13_ecdhe_curves.py", [
         '-e', 'sanity - x448',
         '-e', 'x448 - key share from other curve',
         '-e', 'x448 - point at infinity',
@@ -258,21 +258,21 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
     # We have the logic corresponding to NSS's fix for CVE-2020-25648
     # https://hg.mozilla.org/projects/nss/rev/57bbefa793232586d27cee83e74411171e128361
     # so should not be affected by this issue.
-    Test("test-tls13-multiple-ccs-messages.py"),
+    Test("test_tls13_multiple_ccs_messages.py"),
 
     # https://github.com/openssl/openssl/issues/8369
-    Test("test-tls13-obsolete-curves.py"),
+    Test("test_tls13_obsolete_curves.py"),
 
     # 3 failing rsa_pss_pss tests
-    Test("test-tls13-rsa-signatures.py"),
+    Test("test_tls13_rsa_signatures.py"),
 
     # The failing tests all expect an ri extension.  What's up with that?
-    Test("test-tls13-version-negotiation.py"),
+    Test("test_tls13_version_negotiation.py"),
 ])
 
 tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     # Other test failures bugs in keyshare/tlsext negotiation?
-    Test("test-tls13-unrecognised-groups.py"),    # unexpected closure
+    Test("test_tls13_unrecognised_groups.py"),    # unexpected closure
 
     # 5 occasional failures:
     #   'app data split, conversation with KeyUpdate msg'
@@ -280,43 +280,43 @@ tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     #   'multiple KeyUpdate messages'
     #   'post-handshake KeyUpdate msg with update_not_request'
     #   'post-handshake KeyUpdate msg with update_request'
-    Test("test-tls13-keyupdate.py"),
+    Test("test_tls13_keyupdate.py"),
 
-    Test("test-tls13-symetric-ciphers.py"),       # unexpected message from peer
+    Test("test_tls13_symetric_ciphers.py"),       # unexpected message from peer
 
     # 6 tests fail: 'rsa_pkcs1_{md5,sha{1,224,256,384,512}} signature'
     # We send server hello, but the test expects handshake_failure
-    Test("test-tls13-pkcs-signature.py"),
+    Test("test_tls13_pkcs_signature.py"),
     # 8 tests fail: 'tls13 signature rsa_pss_{pss,rsae}_sha{256,384,512}
-    Test("test-tls13-rsapss-signatures.py"),
+    Test("test_tls13_rsapss_signatures.py"),
 ])
 
 tls13_unsupported_tests = TestGroup("TLSv1.3 tests for unsupported features", [
     # Tests for features we don't support
-    Test("test-tls13-0rtt-garbage.py"),
-    Test("test-tls13-ffdhe-groups.py"),
-    Test("test-tls13-ffdhe-sanity.py"),
-    Test("test-tls13-psk_dhe_ke.py"),
-    Test("test-tls13-psk_ke.py"),
+    Test("test_tls13_0rtt_garbage.py"),
+    Test("test_tls13_ffdhe_groups.py"),
+    Test("test_tls13_ffdhe_sanity.py"),
+    Test("test_tls13_psk_dhe_ke.py"),
+    Test("test_tls13_psk_ke.py"),
 
     # need server to react to HTTP GET for /keyupdate
-    Test("test-tls13-keyupdate-from-server.py"),
+    Test("test_tls13_keyupdate_from_server.py"),
 
     # needs an echo server
-    Test("test-tls13-lengths.py"),
+    Test("test_tls13_lengths.py"),
 
     # Weird test: tests servers that don't support 1.3
-    Test("test-tls13-non-support.py"),
+    Test("test_tls13_non_support.py"),
 
     # broken test script
     # UnboundLocalError: local variable 'cert' referenced before assignment
-    Test("test-tls13-post-handshake-auth.py"),
+    Test("test_tls13_post_handshake_auth.py"),
 
     # ExpectNewSessionTicket
-    Test("test-tls13-session-resumption.py"),
+    Test("test_tls13_session_resumption.py"),
 
     # Server must be configured to support only rsa_pss_rsae_sha512
-    Test("test-tls13-signature-algorithms.py"),
+    Test("test_tls13_signature_algorithms.py"),
 ])
 
 tls12_exclude_legacy_protocols = [
@@ -345,52 +345,52 @@ tls12_exclude_legacy_protocols = [
 
 tls12_tests = TestGroup("TLSv1.2 tests", [
     # Tests that pass as they are.
-    Test("test-aes-gcm-nonces.py"),
-    Test("test-connection-abort.py"),
-    Test("test-conversation.py"),
-    Test("test-cve-2016-2107.py"),
-    Test("test-cve-2016-6309.py"),
-    Test("test-dhe-rsa-key-exchange.py"),
-    Test("test-early-application-data.py"),
-    Test("test-empty-extensions.py"),
-    Test("test-extensions.py"),
-    Test("test-fuzzed-MAC.py"),
-    Test("test-fuzzed-ciphertext.py"),
-    Test("test-fuzzed-finished.py"),
-    Test("test-fuzzed-padding.py"),
-    Test("test-fuzzed-plaintext.py"), # fails once in a while
-    Test("test-hello-request-by-client.py"),
-    Test("test-invalid-cipher-suites.py"),
-    Test("test-invalid-content-type.py"),
-    Test("test-invalid-session-id.py"),
-    Test("test-invalid-version.py"),
-    Test("test-large-number-of-extensions.py"),
-    Test("test-lucky13.py"),
-    Test("test-message-skipping.py"),
-    Test("test-no-heartbeat.py"),
-    Test("test-record-layer-fragmentation.py"),
-    Test("test-sslv2-connection.py"),
-    Test("test-truncating-of-finished.py"),
-    Test("test-truncating-of-kRSA-client-key-exchange.py"),
-    Test("test-unsupported-curve-fallback.py"),
-    Test("test-version-numbers.py"),
-    Test("test-zero-length-data.py"),
+    Test("test_aes_gcm_nonces.py"),
+    Test("test_connection_abort.py"),
+    Test("test_conversation.py"),
+    Test("test_cve_2016_2107.py"),
+    Test("test_cve_2016_6309.py"),
+    Test("test_dhe_rsa_key_exchange.py"),
+    Test("test_early_application_data.py"),
+    Test("test_empty_extensions.py"),
+    Test("test_extensions.py"),
+    Test("test_fuzzed_MAC.py"),
+    Test("test_fuzzed_ciphertext.py"),
+    Test("test_fuzzed_finished.py"),
+    Test("test_fuzzed_padding.py"),
+    Test("test_fuzzed_plaintext.py"), # fails once in a while
+    Test("test_hello_request_by_client.py"),
+    Test("test_invalid_cipher_suites.py"),
+    Test("test_invalid_content_type.py"),
+    Test("test_invalid_session_id.py"),
+    Test("test_invalid_version.py"),
+    Test("test_large_number_of_extensions.py"),
+    Test("test_lucky13.py"),
+    Test("test_message_skipping.py"),
+    Test("test_no_heartbeat.py"),
+    Test("test_record_layer_fragmentation.py"),
+    Test("test_sslv2_connection.py"),
+    Test("test_truncating_of_finished.py"),
+    Test("test_truncating_of_kRSA_client_key_exchange.py"),
+    Test("test_unsupported_curve_fallback.py"),
+    Test("test_version_numbers.py"),
+    Test("test_zero_length_data.py"),
 
     # Tests that need tweaking for unsupported features and ciphers.
     Test(
-        "test-atypical-padding.py", [
+        "test_atypical_padding.py", [
             "-e", "sanity - encrypt then MAC",
             "-e", "2^14 bytes of AppData with 256 bytes of padding (SHA1 + Encrypt then MAC)",
         ]
     ),
     Test(
-        "test-ccs.py", [
+        "test_ccs.py", [
             "-x", "two bytes long CCS",
             "-X", substitute_alert("unexpected_message", "decode_error"),
         ]
     ),
     Test(
-        "test-dhe-rsa-key-exchange-signatures.py", [
+        "test_dhe_rsa_key_exchange_signatures.py", [
             "-e", "TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA sha224 signature",
             "-e", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256 sha224 signature",
             "-e", "TLS_DHE_RSA_WITH_AES_128_CBC_SHA sha224 signature",
@@ -398,14 +398,14 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
             "-e", "TLS_DHE_RSA_WITH_AES_256_CBC_SHA sha224 signature",
         ]
     ),
-    Test("test-dhe-rsa-key-exchange-with-bad-messages.py", [
+    Test("test_dhe_rsa_key_exchange_with_bad_messages.py", [
         "-x", "invalid dh_Yc value - missing",
         "-X", substitute_alert("decode_error", "illegal_parameter"),
     ]),
-    Test("test-dhe-key-share-random.py", tls12_exclude_legacy_protocols),
-    Test("test-export-ciphers-rejected.py", ["--min-ver", "TLSv1.2"]),
+    Test("test_dhe_key_share_random.py", tls12_exclude_legacy_protocols),
+    Test("test_export_ciphers_rejected.py", ["--min-ver", "TLSv1.2"]),
     Test(
-        "test-downgrade-protection.py",
+        "test_downgrade_protection.py",
         tls12_args = ["--server-max-protocol", "TLSv1.2"],
         tls13_args = [
             "--server-max-protocol", "TLSv1.3",
@@ -414,7 +414,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
         ]
     ),
     Test(
-        "test-fallback-scsv.py",
+        "test_fallback_scsv.py",
         tls13_args = [
             "--tls-1.3",
             "-e", "FALLBACK - hello TLSv1.1 - pos 0",
@@ -428,7 +428,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
         ]
     ),
 
-    Test("test-invalid-compression-methods.py", [
+    Test("test_invalid_compression_methods.py", [
         "-x", "invalid compression methods",
         "-X", substitute_alert("illegal_parameter", "decode_error"),
         "-x", "only deflate compression method",
@@ -437,134 +437,134 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
 
     # Skip extended_master_secret test. Since we don't support this
     # extension, we don't notice that it was dropped.
-    Test("test-renegotiation-changed-clienthello.py", [
+    Test("test_renegotiation_changed_clienthello.py", [
         "-e", "drop extended_master_secret in renegotiation",
     ]),
 
-    Test("test-sessionID-resumption.py", [
+    Test("test_sessionID_resumption.py", [
         "-x", "Client Hello too long session ID",
         "-X", substitute_alert("decode_error", "illegal_parameter"),
     ]),
 
     # Without --sig-algs-drop-ok, two tests fail since we do not currently
     # implement the signature_algorithms_cert extension (although we MUST).
-    Test("test-sig-algs-renegotiation-resumption.py", ["--sig-algs-drop-ok"]),
+    Test("test_sig_algs_renegotiation_resumption.py", ["--sig-algs-drop-ok"]),
 
-    Test("test-serverhello-random.py", args = tls12_exclude_legacy_protocols),
+    Test("test_serverhello_random.py", args = tls12_exclude_legacy_protocols),
 
-    Test("test-chacha20.py", [ "-e", "Chacha20 in TLS1.1" ]),
+    Test("test_chacha20.py", [ "-e", "Chacha20 in TLS1.1" ]),
 ])
 
 tls12_slow_tests = TestGroup("slow TLSv1.2 tests", [
-    Test("test-cve-2016-7054.py"),
-    Test("test-dhe-no-shared-secret-padding.py", tls12_exclude_legacy_protocols),
-    Test("test-ecdhe-padded-shared-secret.py", tls12_exclude_legacy_protocols),
-    Test("test-ecdhe-rsa-key-share-random.py", tls12_exclude_legacy_protocols),
+    Test("test_cve_2016_7054.py"),
+    Test("test_dhe_no_shared_secret_padding.py", tls12_exclude_legacy_protocols),
+    Test("test_ecdhe_padded_shared_secret.py", tls12_exclude_legacy_protocols),
+    Test("test_ecdhe_rsa_key_share_random.py", tls12_exclude_legacy_protocols),
     # Start at extension number 58 to avoid QUIC transport parameters (57)
-    Test("test-large-hello.py", [ "-m", "58" ]),
+    Test("test_large_hello.py", [ "-m", "58" ]),
 ])
 
 tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     # no shared cipher
-    Test("test-aesccm.py"),
+    Test("test_aesccm.py"),
     # need server to set up alpn
-    Test("test-alpn-negotiation.py"),
+    Test("test_alpn_negotiation.py"),
     # Failing on TLS_RSA_WITH_AES_128_CBC_SHA because server does not support it.
-    Test("test-bleichenbacher-timing-pregenerate.py"),
+    Test("test_bleichenbacher_timing_pregenerate.py"),
     # many tests fail due to unexpected server_name extension
-    Test("test-bleichenbacher-workaround.py"),
+    Test("test_bleichenbacher_workaround.py"),
 
     # need client key and cert plus extra server setup
-    Test("test-certificate-malformed.py"),
-    Test("test-certificate-request.py"),
-    Test("test-certificate-verify-malformed-sig.py"),
-    Test("test-certificate-verify-malformed.py"),
-    Test("test-certificate-verify.py"),
-    Test("test-ecdsa-in-certificate-verify.py"),
-    Test("test-eddsa-in-certificate-verify.py"),
-    Test("test-renegotiation-disabled-client-cert.py"),
-    Test("test-rsa-pss-sigs-on-certificate-verify.py"),
-    Test("test-rsa-sigs-on-certificate-verify.py"),
+    Test("test_certificate_malformed.py"),
+    Test("test_certificate_request.py"),
+    Test("test_certificate_verify_malformed_sig.py"),
+    Test("test_certificate_verify_malformed.py"),
+    Test("test_certificate_verify.py"),
+    Test("test_ecdsa_in_certificate_verify.py"),
+    Test("test_eddsa_in_certificate_verify.py"),
+    Test("test_renegotiation_disabled_client_cert.py"),
+    Test("test_rsa_pss_sigs_on_certificate_verify.py"),
+    Test("test_rsa_sigs_on_certificate_verify.py"),
 
     # test doesn't expect session ticket
-    Test("test-client-compatibility.py"),
+    Test("test_client_compatibility.py"),
     # abrupt closure
-    Test("test-client-hello-max-size.py"),
+    Test("test_client_hello_max_size.py"),
     # unknown signature algorithms
-    Test("test-clienthello-md5.py"),
+    Test("test_clienthello_md5.py"),
 
     # Tests expect an illegal_parameter or a decode_error alert.  Should be
     # added to ssl3_get_client_key_exchange on kex function failure.
-    Test("test-ecdhe-rsa-key-exchange-with-bad-messages.py"),
+    Test("test_ecdhe_rsa_key_exchange_with_bad_messages.py"),
 
     # We send a handshake_failure due to no shared ciphers while the
     # test expects to succeed.
-    Test("test-ecdhe-rsa-key-exchange.py"),
+    Test("test_ecdhe_rsa_key_exchange.py"),
 
     # no shared cipher
-    Test("test-ecdsa-sig-flexibility.py"),
+    Test("test_ecdsa_sig_flexibility.py"),
 
     # Tests expect SH but we send unexpected_message or handshake_failure
     #   'Application data inside Client Hello'
     #   'Application data inside Client Key Exchange'
     #   'Application data inside Finished'
-    Test("test-interleaved-application-data-and-fragmented-handshakes-in-renegotiation.py"),
+    Test("test_interleaved_application_data_and_fragmented_handshakes_in_renegotiation.py"),
     # Tests expect SH but we send handshake_failure
     #   'Application data before Change Cipher Spec'
     #   'Application data before Client Key Exchange'
     #   'Application data before Finished'
-    Test("test-interleaved-application-data-in-renegotiation.py"),
+    Test("test_interleaved_application_data_in_renegotiation.py"),
 
     # broken test script
     # TypeError: '<' not supported between instances of 'int' and 'NoneType'
-    Test("test-invalid-client-hello-w-record-overflow.py"),
+    Test("test_invalid_client_hello_w_record_overflow.py"),
 
     # Lots of failures. abrupt closure
-    Test("test-invalid-client-hello.py"),
+    Test("test_invalid_client_hello.py"),
 
     # abrupt closure
     # 'encrypted premaster set to all zero (n)' n in 256 384 512
-    Test("test-invalid-rsa-key-exchange-messages.py"),
+    Test("test_invalid_rsa_key_exchange_messages.py"),
 
     # test expects illegal_parameter, we send unrecognized_name (which seems
     # correct according to rfc 6066?)
-    Test("test-invalid-server-name-extension-resumption.py"),
+    Test("test_invalid_server_name_extension_resumption.py"),
     # let through some server names without sending an alert
     # again illegal_parameter vs unrecognized_name
-    Test("test-invalid-server-name-extension.py"),
+    Test("test_invalid_server_name_extension.py"),
 
     # 4 failures:
     #   'insecure (legacy) renegotiation with GET after 2nd handshake'
     #   'insecure (legacy) renegotiation with incomplete GET'
     #   'secure renegotiation with GET after 2nd handshake'
     #   'secure renegotiation with incomplete GET'
-    Test("test-legacy-renegotiation.py"),
+    Test("test_legacy_renegotiation.py"),
 
     # 1 failure (timeout): we don't send the unexpected_message alert
     # 'duplicate change cipher spec after Finished'
-    Test("test-message-duplication.py"),
+    Test("test_message_duplication.py"),
 
     # server should send status_request
-    Test("test-ocsp-stapling.py"),
+    Test("test_ocsp_stapling.py"),
 
     # unexpected closure
-    Test("test-openssl-3712.py"),
+    Test("test_openssl_3712.py"),
 
     # failed: 3 (expect an alert, we send AD)
     # 'try insecure (legacy) renegotiation with incomplete GET'
     # 'try secure renegotiation with GET after 2nd CH'
     # 'try secure renegotiation with incomplete GET'
-    Test("test-renegotiation-disabled.py"),
+    Test("test_renegotiation_disabled.py"),
 
     # 'resumption of safe session with NULL cipher'
     # 'resumption with cipher from old CH but not selected by server'
-    Test("test-resumption-with-wrong-ciphers.py"),
+    Test("test_resumption_with_wrong_ciphers.py"),
 
     # 'session resumption with empty session_id'
     # 'session resumption with random session_id'
     # 'session resumption with renegotiation'
     # AssertionError: Server did not send extension(s): session_ticket
-    Test("test-session-ticket-resumption.py"),
+    Test("test_session_ticket_resumption.py"),
 
     # 5 failures:
     #   'empty sigalgs'
@@ -572,7 +572,7 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     #   'rsa_pss_pss_sha256 only'
     #   'rsa_pss_pss_sha384 only'
     #   'rsa_pss_pss_sha512 only'
-    Test("test-sig-algs.py"),
+    Test("test_sig_algs.py"),
 
     # 13 failures:
     #   'duplicated n non-rsa schemes' for n in 202 2342 8119 23741 32744
@@ -581,51 +581,51 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     #   'tolerance 32758 methods with sig_alg_cert'
     #   'tolerance max 32744 number of methods with sig_alg_cert'
     #   'tolerance max (32760) number of methods'
-    Test("test-signature-algorithms.py"),
+    Test("test_signature_algorithms.py"),
 
     # times out
-    Test("test-ssl-death-alert.py"),
+    Test("test_ssl_death_alert.py"),
 
     # 17 pass, 13 fail. padding and truncation
-    Test("test-truncating-of-client-hello.py"),
+    Test("test_truncating_of_client_hello.py"),
 
     # x448 tests need disabling plus x25519 corner cases need sorting out
-    Test("test-x25519.py"),
+    Test("test_x25519.py"),
 
     # Needs TLS 1.0 or 1.1
-    Test("test-TLSv1_2-rejected-without-TLSv1_2.py"),
+    Test("test_TLSv1_2_rejected_without_TLSv1_2.py"),
 ])
 
 tls12_unsupported_tests = TestGroup("TLSv1.2 for unsupported features", [
     # protocol_version
-    Test("test-SSLv3-padding.py"),
+    Test("test_SSLv3_padding.py"),
     # we don't do RSA key exchanges
-    Test("test-bleichenbacher-timing.py"),
+    Test("test_bleichenbacher_timing.py"),
     # no encrypt-then-mac
-    Test("test-encrypt-then-mac-renegotiation.py"),
-    Test("test-encrypt-then-mac.py"),
+    Test("test_encrypt_then_mac_renegotiation.py"),
+    Test("test_encrypt_then_mac.py"),
     # no EME support
-    Test("test-extended-master-secret-extension-with-client-cert.py"),
-    Test("test-extended-master-secret-extension.py"),
+    Test("test_extended_master_secret_extension_with_client_cert.py"),
+    Test("test_extended_master_secret_extension.py"),
     # no ffdhe
-    Test("test-ffdhe-expected-params.py"),
-    Test("test-ffdhe-negotiation.py"),
+    Test("test_ffdhe_expected_params.py"),
+    Test("test_ffdhe_negotiation.py"),
     # record_size_limit/max_fragment_length extension (RFC 8449)
-    Test("test-record-size-limit.py"),
+    Test("test_record_size_limit.py"),
     # expects the server to send the heartbeat extension
-    Test("test-heartbeat.py"),
+    Test("test_heartbeat.py"),
     # needs an echo server
-    Test("test-lengths.py"),
+    Test("test_lengths.py"),
 ])
 
 # These tests take a ton of time to fail against an 1.3 server,
 # so don't run them against 1.3 pending further investigation.
 legacy_tests = TestGroup("Legacy protocol tests", [
-    Test("test-sslv2-force-cipher-3des.py"),
-    Test("test-sslv2-force-cipher-non3des.py"),
-    Test("test-sslv2-force-cipher.py"),
-    Test("test-sslv2-force-export-cipher.py"),
-    Test("test-sslv2hello-protocol.py"),
+    Test("test_sslv2_force_cipher_3des.py"),
+    Test("test_sslv2_force_cipher_non3des.py"),
+    Test("test_sslv2_force_cipher.py"),
+    Test("test_sslv2_force_export_cipher.py"),
+    Test("test_sslv2hello_protocol.py"),
 ])
 
 all_groups = [
