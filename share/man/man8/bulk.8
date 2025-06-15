@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bulk.8,v 1.10 2024/05/16 10:31:55 sthen Exp $
+.\"	$OpenBSD: bulk.8,v 1.11 2025/06/15 19:27:34 tb Exp $
 .\"
 .\"	Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 16 2024 $
+.Dd $Mdocdate: June 15 2025 $
 .Dt BULK 8
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ Assuming you are using a cluster of machines,
 this chroot should contain NFS exportable partitions for distfiles,
 plists, and packages (one single partition can be used for simplicity).
 A full setup currently requires in the order of 120GB for distfiles
-and 70GB for packages.
+and 80GB for packages.
 Expect these numbers to grow.
 150GB for each should last a few years.
 .Pp
