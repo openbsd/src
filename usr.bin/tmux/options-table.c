@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.192 2025/05/22 07:49:24 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.193 2025/06/15 22:24:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1053,7 +1053,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "copy-mode-position-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "#{mode-style}",
+	  .default_str = "#{E:mode-style}",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of position indicator in copy mode."
@@ -1062,7 +1062,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "copy-mode-selection-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "#{mode-style}",
+	  .default_str = "#{E:mode-style}",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of selection in copy mode."
