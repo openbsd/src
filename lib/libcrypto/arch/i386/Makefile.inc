@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.29 2025/06/09 14:28:33 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.30 2025/06/15 15:11:50 jsing Exp $
 
 # i386-specific libcrypto build rules
 
@@ -11,6 +11,8 @@ SRCS += crypto_cpu_caps.c
 CFLAGS+= -DAES_ASM
 SSLASM+= aes aes-586
 SSLASM+= aes aesni-x86
+SRCS += aes_i386.c
+
 # bn
 SSLASM+= bn bn-586
 SSLASM+= bn co-586
