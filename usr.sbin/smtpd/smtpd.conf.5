@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.275 2025/06/04 14:14:42 jrick Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.276 2025/06/15 07:56:14 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: June 4 2025 $
+.Dd $Mdocdate: June 15 2025 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -600,7 +600,10 @@ of one
 directive, receive the incoming message, put a copy into each
 matching envelope, and atomically save the envelopes to the mail
 spool for later processing by the respective dispatcher
-.Ar name .
+.Ar name
+which has to be declared beforehand with the
+.Ic action
+directive.
 .Pp
 The following matching options are supported and can all be negated:
 .Bl -tag -width Ds
