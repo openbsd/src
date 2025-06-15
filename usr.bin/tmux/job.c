@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.71 2025/05/12 10:16:42 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.72 2025/06/15 21:57:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -176,7 +176,8 @@ job_run(const char *cmd, int argc, char **argv, struct environ *e,
 		closefrom(STDERR_FILENO + 1);
 
 		if (cmd != NULL) {
-			setenv("SHELL", shell, 1);
+			if (flags & JOB_DEFAULTSHELL)
+				setenv("SHELL", shell, 1);
 			execl(shell, argv0, "-c", cmd, (char *)NULL);
 			fatal("execl failed");
 		} else {
