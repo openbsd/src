@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.102 2025/06/12 08:33:58 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.103 2025/06/16 09:55:47 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -64,6 +64,7 @@ void			schedcpu(void *);
 uint32_t		decay_aftersleep(uint32_t, uint32_t);
 
 extern struct cpuset sched_idle_cpus;
+extern struct cpuset sched_all_cpus;
 
 /*
  * constants for averages over 1, 5, and 15 minutes when sampling at
@@ -120,11 +121,12 @@ update_loadavg(void *unused)
 	static struct timeout to = TIMEOUT_INITIALIZER(update_loadavg, NULL);
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	u_int i, nrun = 0;
+	struct cpuset set;
+	u_int i, nrun;
 
+	cpuset_complement(&set, &sched_idle_cpus, &sched_all_cpus);
+	nrun = cpuset_cardinality(&set);
 	CPU_INFO_FOREACH(cii, ci) {
-		if (!cpuset_isset(&sched_idle_cpus, ci))
-			nrun++;
 		nrun += ci->ci_schedstate.spc_nrun;
 	}
 
