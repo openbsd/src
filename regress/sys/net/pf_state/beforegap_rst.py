@@ -27,7 +27,7 @@ ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 
 print("Send SYN packet, receive SYN+ACK")
 syn=TCP(sport=tport, dport='discard', flags='S', seq=1, window=(2**16)-1)
-synack=sr1(ip/syn, iface=LOCAL_IF, timeout=5)
+synack=sr1(ip/syn, timeout=5)
 if synack is None:
 	print("ERROR: no matching SYN+ACK packet received")
 	exit(1)
@@ -35,7 +35,7 @@ if synack is None:
 print("Send ACK packet to finish handshake.")
 ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=synack.seq+1)
-send(ip/ack, iface=LOCAL_IF)
+send(ip/ack)
 
 payload=b"abcdefgh01234567ABCDEFGH"
 
@@ -47,17 +47,15 @@ sniffer.filter = "src %s and tcp port %u and dst %s and tcp port %u " \
     "and tcp[tcpflags] = tcp-ack" % (ip.dst, syn.dport, ip.src, syn.sport)
 sniffer.start()
 time.sleep(1)
-send(ip/gap_after, iface=LOCAL_IF)
+send(ip/gap_after)
 sniffer.join(timeout=7)
 start_ack = sniffer.packet
 if start_ack is None:
 	print("ERROR: no matching ACK packet at start received")
 	exit(1)
-if start_ack.getlayer(TCP).seq != (synack.seq + 1) and \
-    start_ack.getlayer(TCP).ack != 2:
+if start_ack.seq != synack.seq+1 or start_ack.ack != 2:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d in start ack" %
-	    ((synack.seq + 1), 2,
-	    start_ack.getlayer(TCP).seq, start_ack.getlayer(TCP).ack))
+	    (synack.seq+1, 2, start_ack.seq, start_ack.ack))
 	exit(1)
 
 print("Send data before gap.")
@@ -68,28 +66,26 @@ sniffer.filter = "src %s and tcp port %u and dst %s and tcp port %u " \
     "and tcp[tcpflags] = tcp-ack" % (ip.dst, syn.dport, ip.src, syn.sport)
 sniffer.start()
 time.sleep(1)
-send(ip/gap_before, iface=LOCAL_IF)
+send(ip/gap_before)
 sniffer.join(timeout=7)
 gap_ack = sniffer.packet
 if gap_ack is None:
 	print("ERROR: no matching ACK packet at gap received")
 	exit(1)
-if gap_ack.getlayer(TCP).seq != (synack.seq + 1) and \
-    gap_ack.getlayer(TCP).ack != 10:
+if gap_ack.seq != synack.seq+1 or gap_ack.ack != 10:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d in gap ack" %
-	    ((synack.seq + 1), 10,
-	    gap_ack.getlayer(TCP).seq, gap_ack.getlayer(TCP).ack))
+	    (synack.seq+1, 10, gap_ack.seq, gap_ack.ack))
 	exit(1)
 
 print("Send reset before gap, data after gap has not been acknowleged.")
 gap_rst=TCP(sport=syn.sport, dport=syn.dport, flags='AR',
     seq=2+8, ack=synack.seq+1, window=(2**16)-1)
-send(ip/gap_rst, iface=LOCAL_IF)
+send(ip/gap_rst)
 
 print("Send new SYN packet to see if state is gone, receive SYN+ACK")
 new_syn=TCP(sport=tport, dport='discard', flags='S',
     seq=2**24+1, window=(2**16)-1)
-new_synack=sr1(ip/new_syn, iface=LOCAL_IF, timeout=5)
+new_synack=sr1(ip/new_syn, timeout=5)
 if new_synack is None:
 	print("ERROR: no new matching SYN+ACK packet received")
 	exit(1)
@@ -97,6 +93,6 @@ if new_synack is None:
 print("Send reset to cleanup the new connection")
 new_rst=TCP(sport=new_synack.dport, dport=new_synack.sport, flags='RA',
     seq=new_synack.ack, ack=new_synack.seq)
-send(ip/new_rst, iface=LOCAL_IF)
+send(ip/new_rst)
 
 exit(0)

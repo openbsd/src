@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2025/05/24 08:17:22 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.15 2025/06/16 13:14:53 bluhm Exp $
 
 # Copyright (c) 2016-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -113,13 +113,13 @@ PYTHON =	python3 -u ./
 PYTHON =	PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
 .endif
 
-REGRESS_TARGETS +=	run-challenge-ack
-run-challenge-ack: challenge_ack.py addr.py
-	${SUDO} ${PYTHON}challenge_ack.py
+.for t in challenge_ack beforegap_rst lessseq_fin negack_fin posack_fin
 
-REGRESS_TARGETS +=	run-beforegap-rst
-run-beforegap-rst: beforegap_rst.py addr.py
-	${SUDO} ${PYTHON}beforegap_rst.py
+REGRESS_TARGETS +=	run-$t
+run-$t: $t.py addr.py
+	${SUDO} ${PYTHON}$t.py
+
+.endfor
 
 .if ! empty(PF_ANCHOR:Mregress)
 REGRESS_CLEANUP +=	cleanup
