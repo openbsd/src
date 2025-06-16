@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.63 2025/06/10 12:50:42 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.64 2025/06/16 12:36:43 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -359,7 +359,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	int	 altnum;
 	int	 s;
 	struct ifnet *ifp;
-	int	 maxpktlen;
+	uint32_t maxpktlen;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_ctrl_ifaceno = uaa->ifaceno;
@@ -463,7 +463,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 				/* cont. anyway */
 			}
 			maxpktlen = UGETW(md->wMaxSegmentSize);
-			if (maxpktlen > 0 && maxpktlen <= INT32_MAX) {
+			if (maxpktlen > 0) {
 				sc->sc_maxpktlen = maxpktlen;
 				DPRINTFN(2, "%s: ctrl_len=%d, maxpktlen=%d, "
 				    "cap=0x%x\n", DEVNAM(sc), sc->sc_ctrl_len,
@@ -718,9 +718,9 @@ umb_ncm_setup(struct umb_softc *sc)
 	if (usbd_do_request(sc->sc_udev, &req, &np) == USBD_NORMAL_COMPLETION &&
 	    UGETW(np.wLength) == sizeof (np)) {
 		sc->sc_rx_bufsz = MIN(UGETDW(np.dwNtbInMaxSize),
-		    (uint32_t)sc->sc_maxpktlen);
+		    sc->sc_maxpktlen);
 		sc->sc_tx_bufsz = MIN(UGETDW(np.dwNtbOutMaxSize),
-		    (uint32_t)sc->sc_maxpktlen);
+		    sc->sc_maxpktlen);
 		sc->sc_maxdgram = UGETW(np.wNtbOutMaxDatagrams);
 		sc->sc_align = UGETW(np.wNdpOutAlignment);
 		sc->sc_ndp_div = UGETW(np.wNdpOutDivisor);
