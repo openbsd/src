@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.73 2025/06/16 14:31:52 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.74 2025/06/16 14:42:18 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -233,18 +233,6 @@ aesni_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		return 1;
 
 	aesni_ecb_encrypt(in, out, len, ctx->cipher_data, ctx->encrypt);
-
-	return 1;
-}
-
-static int
-aesni_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len)
-{
-	EVP_AES_KEY *eak = ctx->cipher_data;
-
-	CRYPTO_ofb128_encrypt(in, out, len, &eak->ks, ctx->iv, &ctx->num,
-	    (block128_f)aesni_encrypt);
 
 	return 1;
 }
@@ -553,19 +541,6 @@ EVP_aes_128_ecb(void)
 }
 LCRYPTO_ALIAS(EVP_aes_128_ecb);
 
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_128_ofb = {
-	.nid = NID_aes_128_ofb128,
-	.block_size = 1,
-	.key_len = 16,
-	.iv_len = 16,
-	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
-	.init = aes_init_key,
-	.do_cipher = aesni_ofb_cipher,
-	.ctx_size = sizeof(EVP_AES_KEY),
-};
-#endif
-
 static const EVP_CIPHER aes_128_ofb = {
 	.nid = NID_aes_128_ofb128,
 	.block_size = 1,
@@ -580,11 +555,7 @@ static const EVP_CIPHER aes_128_ofb = {
 const EVP_CIPHER *
 EVP_aes_128_ofb(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_128_ofb : &aes_128_ofb;
-#else
 	return &aes_128_ofb;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_128_ofb);
 
@@ -781,19 +752,6 @@ EVP_aes_192_ecb(void)
 }
 LCRYPTO_ALIAS(EVP_aes_192_ecb);
 
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_192_ofb = {
-	.nid = NID_aes_192_ofb128,
-	.block_size = 1,
-	.key_len = 24,
-	.iv_len = 16,
-	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
-	.init = aes_init_key,
-	.do_cipher = aesni_ofb_cipher,
-	.ctx_size = sizeof(EVP_AES_KEY),
-};
-#endif
-
 static const EVP_CIPHER aes_192_ofb = {
 	.nid = NID_aes_192_ofb128,
 	.block_size = 1,
@@ -808,11 +766,7 @@ static const EVP_CIPHER aes_192_ofb = {
 const EVP_CIPHER *
 EVP_aes_192_ofb(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_192_ofb : &aes_192_ofb;
-#else
 	return &aes_192_ofb;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_192_ofb);
 
@@ -1009,19 +963,6 @@ EVP_aes_256_ecb(void)
 }
 LCRYPTO_ALIAS(EVP_aes_256_ecb);
 
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_256_ofb = {
-	.nid = NID_aes_256_ofb128,
-	.block_size = 1,
-	.key_len = 32,
-	.iv_len = 16,
-	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
-	.init = aes_init_key,
-	.do_cipher = aesni_ofb_cipher,
-	.ctx_size = sizeof(EVP_AES_KEY),
-};
-#endif
-
 static const EVP_CIPHER aes_256_ofb = {
 	.nid = NID_aes_256_ofb128,
 	.block_size = 1,
@@ -1036,11 +977,7 @@ static const EVP_CIPHER aes_256_ofb = {
 const EVP_CIPHER *
 EVP_aes_256_ofb(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_256_ofb : &aes_256_ofb;
-#else
 	return &aes_256_ofb;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_256_ofb);
 
