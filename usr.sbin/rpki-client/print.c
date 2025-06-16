@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.60 2025/04/27 20:28:51 job Exp $ */
+/*	$OpenBSD: print.c,v 1.61 2025/06/16 14:50:56 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -426,7 +426,8 @@ crl_print(const struct crl *p)
 		rev = sk_X509_REVOKED_value(revlist, i);
 		serial = x509_convert_seqnum(__func__, "serial number",
 		    X509_REVOKED_get0_serialNumber(rev));
-		x509_get_time(X509_REVOKED_get0_revocationDate(rev), &t);
+		if (!x509_get_time(X509_REVOKED_get0_revocationDate(rev), &t))
+			errx(1, "x509_get_time() failed - malformed ASN.1?");
 		if (serial != NULL) {
 			if (outformats & FORMAT_JSON) {
 				json_do_object("cert", 1);
