@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.94 2025/06/11 16:12:22 job Exp $ */
+/*	$OpenBSD: http.c,v 1.95 2025/06/16 14:38:47 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -2166,6 +2166,9 @@ proc_http(char *bind_addr, int fd)
 				unsigned int id;
 				char *uri;
 				char *mod;
+
+				if (!ibuf_fd_avail(b))
+					errx(1, "expected fd not received");
 
 				io_read_buf(b, &id, sizeof(id));
 				io_read_str(b, &uri);
