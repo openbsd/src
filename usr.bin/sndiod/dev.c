@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.121 2025/06/16 06:19:02 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.122 2025/06/16 06:19:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -547,9 +547,7 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 	adata_t *idata, *enc_out, *resamp_out, *cmap_out;
 	void *odata;
 	int ocount, moffs;
-
 	int i, vol, offs, nch;
-
 
 	odata = (adata_t *)abuf_wgetblk(&s->sub.buf, &ocount);
 #ifdef DEBUG
