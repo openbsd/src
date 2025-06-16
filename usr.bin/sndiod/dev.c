@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.120 2025/06/16 06:18:18 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.121 2025/06/16 06:19:02 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -55,7 +55,6 @@ void dev_wakeup(struct dev *);
 
 void slot_ctlname(struct slot *, char *, size_t);
 void slot_del(struct slot *);
-void slot_setvol(struct slot *, unsigned int);
 void slot_ready(struct slot *);
 void slot_allocbufs(struct slot *);
 void slot_freebufs(struct slot *);
