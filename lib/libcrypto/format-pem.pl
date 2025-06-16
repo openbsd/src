@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: format-pem.pl,v 1.7 2024/11/01 11:19:13 sthen Exp $
+# $OpenBSD: format-pem.pl,v 1.8 2025/06/16 10:24:55 sthen Exp $
 #
 # Copyright (c) 2016 Stuart Henderson <sthen@openbsd.org>
 #
@@ -99,6 +99,7 @@ while(<>) {
 
 		my $verify = qx/openssl verify -CAfile $t $t 2>&1/;
 		if (not $verify =~ /^$t: OK$/) {
+			$verify =~ s,$t: ,,;
 			print STDERR "ERROR: '$subj' cannot be verified with libressl\n---\n$verify---\n";
 			$ca{$o}{$subj}{'valid'} = 0;
 		}
