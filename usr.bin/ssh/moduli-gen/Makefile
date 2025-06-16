@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2020/11/08 12:10:20 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.7 2025/06/16 09:09:42 dtucker Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ update-moduli:	${MODULI_PARTS}
 	( \
 		echo -n '#    $$Open'; echo 'BSD$$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
-		cat ${MODULI_PARTS} \
+		for i in ${MODULI_PARTS}; do head -100 $$i; done \
 	) > ${BSDSRCDIR}/etc/moduli
 
 clean:
