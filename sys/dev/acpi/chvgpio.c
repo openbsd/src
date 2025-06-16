@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.14 2025/06/11 09:57:01 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.15 2025/06/16 15:44:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -49,6 +49,7 @@
 struct chvgpio_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
+	int ih_ipl;
 };
 
 struct chvgpio_softc {
@@ -306,6 +307,7 @@ chvgpio_intr_establish(void *cookie, int pin, int flags, int level,
 
 	sc->sc_pin_ih[line].ih_func = func;
 	sc->sc_pin_ih[line].ih_arg = arg;
+	sc->sc_pin_ih[line].ih_ipl = level & ~IPL_WAKEUP;
 
 	reg = chvgpio_read_pad_cfg1(sc, pin);
 	reg &= ~CHVGPIO_PAD_CFG1_INTWAKECFG_MASK;
@@ -383,7 +385,7 @@ chvgpio_intr(void *arg)
 	struct chvgpio_softc *sc = arg;
 	uint32_t reg;
 	int rc = 0;
-	int line;
+	int line, s;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
 	    CHVGPIO_INTERRUPT_STATUS);
@@ -393,8 +395,11 @@ chvgpio_intr(void *arg)
 
 		bus_space_write_4(sc->sc_memt,sc->sc_memh,
 		    CHVGPIO_INTERRUPT_STATUS, 1 << line);
-		if (sc->sc_pin_ih[line].ih_func)
+		if (sc->sc_pin_ih[line].ih_func) {
+			s = splraise(sc->sc_pin_ih[line].ih_ipl);
 			sc->sc_pin_ih[line].ih_func(sc->sc_pin_ih[line].ih_arg);
+			splx(s);
+		}
 		rc = 1;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdgpio.c,v 1.11 2025/06/11 09:57:01 kettenis Exp $	*/
+/*	$OpenBSD: amdgpio.c,v 1.12 2025/06/16 15:44:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -46,6 +46,7 @@
 struct amdgpio_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
+	int ih_ipl;
 	int ih_wakeup;
 };
 
@@ -269,6 +270,7 @@ amdgpio_intr_establish(void *cookie, int pin, int flags, int level,
 
 	sc->sc_pin_ih[pin].ih_func = func;
 	sc->sc_pin_ih[pin].ih_arg = arg;
+	sc->sc_pin_ih[pin].ih_ipl = level & ~IPL_WAKEUP;
 	sc->sc_pin_ih[pin].ih_wakeup = level & IPL_WAKEUP;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, pin * 4);
@@ -317,12 +319,14 @@ int
 amdgpio_pin_intr(struct amdgpio_softc *sc, int pin)
 {
 	uint32_t reg;
-	int rc = 0;
+	int s, rc = 0;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, pin * 4);
 	if (reg & AMDGPIO_CONF_INT_STS) {
 		if (sc->sc_pin_ih[pin].ih_func) {
+			s = splraise(sc->sc_pin_ih[pin].ih_ipl);
 			sc->sc_pin_ih[pin].ih_func(sc->sc_pin_ih[pin].ih_arg);
+			splx(s);
 
 			/* Clear interrupt */
 			reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,

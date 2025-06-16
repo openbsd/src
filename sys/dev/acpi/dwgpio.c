@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwgpio.c,v 1.9 2025/06/11 09:57:01 kettenis Exp $	*/
+/*	$OpenBSD: dwgpio.c,v 1.10 2025/06/16 15:44:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -52,6 +52,7 @@
 struct dwgpio_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
+	int ih_ipl;
 };
 
 struct dwgpio_softc {
@@ -238,6 +239,7 @@ dwgpio_intr_establish(void *cookie, int pin, int flags, int level,
 
 	sc->sc_pin_ih[pin].ih_func = func;
 	sc->sc_pin_ih[pin].ih_arg = arg;
+	sc->sc_pin_ih[pin].ih_ipl = level & ~IPL_WAKEUP;
 
 	if ((flags & LR_GPIO_MODE) == LR_GPIO_EDGE)
 		HSET4(sc, GPIO_INTTYPE_LEVEL, 1 << pin);
@@ -258,14 +260,16 @@ dwgpio_intr(void *arg)
 {
 	struct dwgpio_softc *sc = arg;
 	uint32_t status;
-	int pin, handled = 0;
+	int pin, s, handled = 0;
 
 	status = HREAD4(sc, GPIO_INT_STATUS);
 	HWRITE4(sc, GPIO_PORTS_EOI, status);
 
 	for (pin = 0; pin < sc->sc_npins; pin++) {
 		if ((status & (1 << pin)) && sc->sc_pin_ih[pin].ih_func) {
+			s = splraise(sc->sc_pin_ih[pin].ih_ipl);
 			sc->sc_pin_ih[pin].ih_func(sc->sc_pin_ih[pin].ih_arg);
+			splx(s);
 			handled = 1;
 		}
 	}

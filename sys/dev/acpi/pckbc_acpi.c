@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_acpi.c,v 1.5 2025/06/11 09:57:01 kettenis Exp $	*/
+/*	$OpenBSD: pckbc_acpi.c,v 1.6 2025/06/16 15:44:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2024, 2025, Miodrag Vallat.
  *
@@ -107,7 +107,6 @@ void	pckbc_acpi_crs_walk(struct device *, struct aml_node *,
 int	pckbc_acpi_getgpioirqcount(int, union acpi_resource *, void *);
 int	pckbc_acpi_getgpioirqdata(int, union acpi_resource *, void *);
 void	pckbc_acpi_register_gpio_intrs(struct device *);
-int	pckbc_acpi_gpio_intr_wrapper(void *);
 
 int
 pckbc_acpi_match(struct device *parent, void *match, void *aux)
@@ -431,9 +430,8 @@ pckbc_acpi_register_gpio_intrs(struct device *dev)
 			    dev->dv_xname, sc->sc_gpioint[irq].pin);
 			continue;
 		}
-		gpio->intr_establish(gpio->cookie,
-		    sc->sc_gpioint[irq].pin, sc->sc_gpioint[irq].flags,
-		    IPL_TTY, pckbc_acpi_gpio_intr_wrapper, sc);
+		gpio->intr_establish(gpio->cookie, sc->sc_gpioint[irq].pin,
+		    sc->sc_gpioint[irq].flags, IPL_TTY, pckbcintr, sc);
 	}
 }
 
@@ -537,18 +535,4 @@ pckbc_acpi_getgpioirqdata(int crsidx, union acpi_resource *crs, void *arg)
 		break;
 	}
 	return 0;
-}
-
-/*
- * Wrapper for GPIO interrupts, to enforce IPL_TTY.
- */
-int
-pckbc_acpi_gpio_intr_wrapper(void *arg)
-{
-	int s, rv;
-
-	s = spltty();
-	rv = pckbcintr(arg);
-	splx(s);
-	return rv;
 }
