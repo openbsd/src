@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.41 2025/06/04 09:08:52 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.42 2025/06/16 13:56:11 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -371,6 +371,7 @@ imsg_create(struct imsgbuf *imsgbuf, uint32_t type, uint32_t id, pid_t pid,
 		return (NULL);
 	}
 
+	hdr.len = 0;
 	hdr.type = type;
 	hdr.peerid = id;
 	if ((hdr.pid = pid) == 0)
