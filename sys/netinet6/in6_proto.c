@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.128 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.129 2025/06/16 07:11:58 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ const struct protosw inet6sw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_ESP,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSYSCTL,
   .pr_input	= esp46_input,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreqs	= &rip6_usrreqs,

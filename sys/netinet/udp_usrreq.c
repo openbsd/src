@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.342 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.343 2025/06/16 07:11:58 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -212,6 +212,9 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 	} srcsa, dstsa;
 	struct ip6_hdr *ip6 = NULL;
 	u_int32_t ipsecflowinfo = 0;
+#ifdef IPSEC
+	int udpencap_port_local = atomic_load_int(&udpencap_port);
+#endif /* IPSEC */
 
 	udpstat_inc(udps_ipackets);
 
@@ -305,11 +308,12 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 	CLR(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT);
 
 #ifdef IPSEC
-	if (udpencap_enable && udpencap_port && atomic_load_int(&esp_enable) &&
+	if (atomic_load_int(&udpencap_enable) && udpencap_port_local &&
+	    atomic_load_int(&esp_enable) &&
 #if NPF > 0
 	    !(m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) &&
 #endif
-	    uh->uh_dport == htons(udpencap_port)) {
+	    uh->uh_dport == htons(udpencap_port_local)) {
 		u_int32_t spi;
 		int skip = iphlen + sizeof(struct udphdr);
 
@@ -909,12 +913,16 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 	if (ip) {
 		struct inpcb *inp;
 		struct socket *so = NULL;
+#ifdef IPSEC
+		int udpencap_port_local = atomic_load_int(&udpencap_port);
+#endif
 
 		uhp = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 #ifdef IPSEC
 		/* PMTU discovery for udpencap */
-		if (cmd == PRC_MSGSIZE && ip_mtudisc && udpencap_enable &&
-		    udpencap_port && uhp->uh_sport == htons(udpencap_port)) {
+		if (cmd == PRC_MSGSIZE && ip_mtudisc &&
+		    atomic_load_int(&udpencap_enable) && udpencap_port_local &&
+		    uhp->uh_sport == udpencap_port_local) {
 			udpencap_ctlinput(cmd, sa, rdomain, v);
 			return;
 		}

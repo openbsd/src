@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.102 2025/06/03 14:49:05 mvs Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.103 2025/06/16 07:11:58 mvs Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -51,6 +51,11 @@
 #include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 #ifdef ENCDEBUG
 #define DPRINTF(fmt, args...)						\
 	do {								\
@@ -62,8 +67,8 @@
 	do { } while (0)
 #endif
 
-int	udpencap_enable = 1;	/* enabled by default */
-int	udpencap_port = 4500;	/* triggers decapsulation */
+int	udpencap_enable = 1;	/* [a] enabled by default */
+int	udpencap_port = 4500;	/* [a] triggers decapsulation */
 
 /*
  * Loop over a tdb chain, taking into consideration protocol tunneling. The
@@ -417,8 +422,10 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		struct mbuf *mi;
 		struct udphdr *uh;
 		int iphlen;
+		int udpencap_port_local = atomic_load_int(&udpencap_port);
 
-		if (!udpencap_enable || !udpencap_port) {
+		if (!atomic_load_int(&udpencap_enable) ||
+		    !udpencap_port_local) {
 			error = ENXIO;
 			goto drop;
 		}
@@ -445,7 +452,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 			goto drop;
 		}
 		uh = (struct udphdr *)(mtod(mi, caddr_t) + roff);
-		uh->uh_sport = uh->uh_dport = htons(udpencap_port);
+		uh->uh_sport = uh->uh_dport = htons(udpencap_port_local);
 		if (tdb->tdb_udpencap_port)
 			uh->uh_dport = tdb->tdb_udpencap_port;
 

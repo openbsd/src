@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.268 2025/06/03 14:49:05 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.269 2025/06/16 07:11:58 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1287,7 +1287,7 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 #ifdef IPSEC
 		/* UDP encap has to be enabled and is only supported for ESP */
 		if (headers[SADB_X_EXT_UDPENCAP] &&
-		    (!udpencap_enable ||
+		    (!atomic_load_int(&udpencap_enable) ||
 		    smsg->sadb_msg_satype != SADB_SATYPE_ESP)) {
 			rval = EINVAL;
 			goto ret;
@@ -1462,7 +1462,7 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 #ifdef IPSEC
 		/* UDP encap has to be enabled and is only supported for ESP */
 		if (headers[SADB_X_EXT_UDPENCAP] &&
-		    (!udpencap_enable ||
+		    (!atomic_load_int(&udpencap_enable) ||
 		    smsg->sadb_msg_satype != SADB_SATYPE_ESP)) {
 			rval = EINVAL;
 			goto ret;

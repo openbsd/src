@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.217 2025/06/03 14:49:05 mvs Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.218 2025/06/16 07:11:58 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -124,12 +124,10 @@ int ipcomp_enable = 0;		/* [a] */
 
 const struct sysctl_bounded_args espctl_vars[] = {
 	{ESPCTL_ENABLE, &esp_enable, 0, 1},
-};
-
-const struct sysctl_bounded_args espctl_vars_locked[] = {
 	{ESPCTL_UDPENCAP_ENABLE, &udpencap_enable, 0, 1},
 	{ESPCTL_UDPENCAP_PORT, &udpencap_port, 0, 65535},
 };
+
 const struct sysctl_bounded_args ahctl_vars[] = {
 	{AHCTL_ENABLE, &ah_enable, 0, 1},
 };
@@ -718,8 +716,6 @@ int
 esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int error;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -727,16 +723,9 @@ esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	switch (name[0]) {
 	case ESPCTL_STATS:
 		return (esp_sysctl_espstat(oldp, oldlenp, newp));
-	case ESPCTL_ENABLE:
-		error = sysctl_bounded_arr(espctl_vars, nitems(espctl_vars),
-		    name, namelen, oldp, oldlenp, newp, newlen);
 	default:
-		NET_LOCK();
-		error = sysctl_bounded_arr(espctl_vars_locked,
-		    nitems(espctl_vars_locked),
-		    name, namelen, oldp, oldlenp, newp, newlen);
-		NET_UNLOCK();
-		return (error);
+		return (sysctl_bounded_arr(espctl_vars, nitems(espctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 }
 

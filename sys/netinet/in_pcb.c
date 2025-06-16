@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.315 2025/06/03 16:51:26 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.316 2025/06/16 07:11:58 mvs Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ in_baddynamic(u_int16_t port, u_int16_t proto)
 	case IPPROTO_UDP:
 #ifdef IPSEC
 		/* Cannot preset this as it is a sysctl */
-		if (port == udpencap_port)
+		if (port == atomic_load_int(&udpencap_port))
 			return (1);
 #endif
 		return (DP_ISSET(baddynamicports.udp, port));
