@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.282 2025/06/04 09:18:28 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.283 2025/06/16 14:44:45 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -732,6 +732,8 @@ rrdp_process(struct ibuf *b)
 		io_read_str(b, &uri);
 		io_read_str(b, &last_mod);
 		rrdp_http_fetch(id, uri, last_mod);
+		free(uri);
+		free(last_mod);
 		break;
 	case RRDP_SESSION:
 		s = rrdp_session_read(b);
