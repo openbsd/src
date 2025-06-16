@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.95 2025/06/16 14:38:47 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.96 2025/06/16 15:35:29 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1535,6 +1535,7 @@ http_read(struct http_connection *conn)
 		goto again;
 
 read_more:
+	assert(conn->bufpos < conn->bufsz);
 	s = tls_read(conn->tls, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
@@ -1759,6 +1760,7 @@ proxy_read(struct http_connection *conn)
 	char *buf;
 	int done;
 
+	assert(conn->bufpos < conn->bufsz);
 	s = read(conn->fd, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
@@ -1820,6 +1822,7 @@ proxy_write(struct http_connection *conn)
 
 	assert(conn->state == STATE_PROXY_REQUEST);
 
+	assert(conn->bufpos < conn->bufsz);
 	s = write(conn->fd, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
