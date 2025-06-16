@@ -61,4 +61,9 @@ if challenge_ack.seq != synack.seq+1:
 	    (challenge_ack.seq, synack.seq+1))
 	exit(1)
 
+print("Send reset to cleanup the connection")
+new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
+    seq=synack.ack, ack=synack.seq)
+send(ip/new_rst)
+
 exit(0)
