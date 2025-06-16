@@ -29,7 +29,7 @@ tport=os.getpid() & 0xffff
 
 print("Send SYN packet, receive SYN+ACK.")
 syn=TCP(sport=tport, dport='discard', flags='S', seq=1, window=(2**16)-1)
-synack=sr1(ip/syn, iface=LOCAL_IF, timeout=5)
+synack=sr1(ip/syn, timeout=5)
 if synack is None:
 	print("ERROR: No SYN+ACK from discard server received.")
 	exit(1)
@@ -51,7 +51,7 @@ time.sleep(1)
 print("Send FIN packet to close connection");
 send_fin=TCP(sport=synack.dport, dport=synack.sport, flags='FA',
     seq=2, ack=synack.seq+1, window=(2**16)-1)
-recv_ack=sr1(ip/send_fin, iface=LOCAL_IF)
+recv_ack=sr1(ip/send_fin, timeout=5)
 if recv_ack is None:
 	print("ERROR: No ACK for FIN from discard server received.")
 	exit(1)
@@ -77,7 +77,13 @@ if recv_fin.seq != synack.seq+1 or recv_fin.ack != 3:
 	    (synack.seq+1, 3, recv_fin.seq, recv_fin.ack))
 	exit(1)
 
-# peer is now in LAST_ACK state
+print("Check peer is in LASTACK state.")
+with os.popen("ssh "+REMOTE_ADDR+" netstat -vnp tcp") as netstat:
+	with open("netstat-lastack.log", 'w') as log:
+		for line in netstat:
+			if "%s.%d" % (FAKE_NET_ADDR, tport) in line:
+				print(line)
+				log.write(line)
 
 print("Send ACK for FIN packet to close connection");
 send_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',

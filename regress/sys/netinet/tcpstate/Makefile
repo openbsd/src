@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2025/06/12 23:48:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2025/06/16 21:58:19 bluhm Exp $
 
 # Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -80,13 +80,16 @@ addr.py: Makefile
 .for var in LOCAL REMOTE FAKE_NET
 	echo '${var}_ADDR = "${${var}_ADDR}"' >>$@.tmp
 .endfor
-	echo 'FAKE_NET = "${FAKE_NET}"' >>$@.tmp
+.for var in FAKE_NET REMOTE_SSH
+	echo '${var} = "${${var}}"' >>$@.tmp
+.endfor
 	mv $@.tmp $@
 
 # load the pf rules into the kernel of the REMOTE and LOCAL machine
 REGRESS_SETUP +=	stamp-pfctl
 stamp-pfctl: addr.py pf.conf
 	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} pfctl -a regress -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
 	    ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
 	@date >$@
@@ -103,11 +106,17 @@ REGRESS_TARGETS =
 TCP_SCRIPTS !!=	cd ${.CURDIR} && ls -1 tcp*.py
 
 .for t in ${TCP_SCRIPTS:R}
-
 REGRESS_TARGETS +=	run-$t
 run-$t: $t.py addr.py
 	${SUDO} ${PYTHON}$t.py
+.endfor
 
+.for t in CLOSING ESTABLISHED FIN_WAIT_1 FIN_WAIT_2 LAST_ACK
+REGRESS_TARGETS +=	run-netstat-${t:L:S/_//g}
+netstat-${t:L:S/_//g}.log:
+	${MAKE} -C ${.CURDIR} run-tcp_${t:L:S/_//g:C/[12]//}
+run-netstat-${t:L:S/_//g}: netstat-${t:L:S/_//g}.log
+	grep $t netstat-${t:L:S/_//g}.log
 .endfor
 
 .if ! empty(PF_ANCHOR:Mregress)
@@ -135,6 +144,7 @@ check-setup-local:
 .for ip in FAKE_NET FAKE_NET_ADDR
 	route -n get -inet ${${ip}} | grep -q 'flags: .*BLACKHOLE'  # ${ip}
 .endfor
+	${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 
 check-setup-remote:
 	@echo '\n======== $@ ========'

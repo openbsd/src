@@ -46,7 +46,7 @@ time.sleep(1)
 print("Send ACK packet to finish handshake, receive data.")
 ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=synack.seq+1, window=(2**16)-1)
-data=sr1(ip/ack)
+data=sr1(ip/ack, timeout=5)
 if data is None:
 	print("ERROR: No Data received from daytime server.")
 	exit(1)
@@ -63,7 +63,7 @@ tcplen = data.len - data.ihl * 4 - data.dataofs * 4
 print("Send ACK for Data packet");
 data_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=data.seq+tcplen, window=(2**16)-1)
-recv_fin=sr1(ip/data_ack)
+recv_fin=sr1(ip/data_ack, timeout=5)
 if recv_fin is None:
 	print("ERROR: No FIN received from daytime server.")
 	exit(1)
@@ -80,19 +80,33 @@ if recv_fin.seq != data.seq+tcplen or recv_fin.ack != 2:
 print("Wait for FIN and its retransmit.")
 sniffer.join(timeout=10)
 
+print("Check peer is in FINWAIT1 state.")
+with os.popen("ssh "+REMOTE_ADDR+" netstat -vnp tcp") as netstat:
+	with open("netstat-finwait1.log", 'w') as log:
+		for line in netstat:
+			if "%s.%d" % (FAKE_NET_ADDR, tport) in line:
+				print(line)
+				log.write(line)
+
 print("Send ACK for FIN packet to close connection");
 send_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=recv_fin.seq+1, window=(2**16)-1)
 send(ip/send_ack)
 
-# peer is now in FIN_WAIT_2 state
-
 time.sleep(2)
+
+print("Check peer is in FINWAIT2 state.")
+with os.popen("ssh "+REMOTE_ADDR+" netstat -vnp tcp") as netstat:
+	with open("netstat-finwait2.log", 'w') as log:
+		for line in netstat:
+			if "%s.%d" % (FAKE_NET_ADDR, tport) in line:
+				print(line)
+				log.write(line)
 
 print("Send FIN packet to close connection");
 send_fin=TCP(sport=synack.dport, dport=synack.sport, flags='FA',
     seq=2, ack=recv_fin.seq+1, window=(2**16)-1)
-recv_ack=sr1(ip/send_fin)
+recv_ack=sr1(ip/send_fin, timeout=5)
 if recv_ack is None:
 	print("ERROR: No ACK for FIN from daytime server received.")
 	exit(1)
