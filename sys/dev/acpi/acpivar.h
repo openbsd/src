@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.135 2025/05/24 14:51:52 tedu Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.136 2025/06/16 20:21:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -267,7 +267,6 @@ struct acpi_softc {
 	int			sc_state;
 	int			sc_wakeup;
 	int			sc_wakeups;
-	time_t			sc_resume_time;
 	struct acpiec_softc	*sc_ec;		/* XXX assume single EC */
 
 	struct acpi_ac_head	sc_ac;
@@ -379,7 +378,6 @@ int	acpi_record_event(struct acpi_softc *, u_int);
 void	acpi_addtask(struct acpi_softc *, void (*)(void *, int), void *, int);
 int	acpi_dotask(struct acpi_softc *);
 
-void	acpi_powerdown_task(void *, int);
 void	acpi_sleep_task(void *, int);
 
 /* Section 5.2.10.1: global lock acquire/release functions */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.41 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.42 2025/06/16 20:21:33 kettenis Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -34,9 +34,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/reboot.h>
 #include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/signalvar.h>
 #include <sys/syscallargs.h>
+#include <sys/task.h>
 
 int rebooting = 0;
 
@@ -71,6 +74,30 @@ reboot(int howto)
 
 	boot(howto);
 	/* NOTREACHED */
+}
+
+void
+do_powerdown(void *arg)
+{
+	extern int allowpowerdown;
+
+	if (allowpowerdown == 1) {
+		allowpowerdown = 0;
+		prsignal(initprocess, SIGUSR2);
+	}
+}
+
+struct task powerdown_task = TASK_INITIALIZER(do_powerdown, NULL);
+
+void
+powerbutton_event(void)
+{
+#ifdef SUSPEND
+	if (resuming())
+		return;
+#endif
+
+	task_add(systq, &powerdown_task);
 }
 
 #if !defined(NO_PROPOLICE) && !defined(_RET_PROTECTOR)

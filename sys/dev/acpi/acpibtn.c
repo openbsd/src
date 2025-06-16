@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.54 2024/09/21 19:06:06 deraadt Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.55 2025/06/16 20:21:33 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -230,7 +230,7 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 	    sc->sc_devnode->name);
 
 	/* Ignore button events if we're resuming. */
-	if (acpi_resuming(sc->sc_acpi))
+	if (resuming())
 		return (0);
 
 	switch (sc->sc_btn_type) {
@@ -291,8 +291,7 @@ sleep:
 			case 0:
 				break;
 			case 1:
-				acpi_addtask(sc->sc_acpi, acpi_powerdown_task,
-				    sc->sc_acpi, 0);
+				powerbutton_event();
 				break;
 #ifndef SMALL_KERNEL
 			case 2:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpisurface.c,v 1.3 2024/08/15 17:30:40 deraadt Exp $	*/
+/*	$OpenBSD: acpisurface.c,v 1.4 2025/06/16 20:21:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -106,8 +106,6 @@ surface_attach(struct device *parent, struct device *self, void *aux)
 int
 surface_hotkey(struct aml_node *node, int notify_type, void *arg)
 {
-	struct acpisurface_softc *sc = arg;
-
 	switch (notify_type) {
 	case SURFACE_ACCESSORY_REMOVED:
 		DPRINTF("%s: accessory removed\n", __func__);
@@ -135,8 +133,7 @@ surface_hotkey(struct aml_node *node, int notify_type, void *arg)
 		break;
 	case SURFACE_POWER_BUTTON_RELEASED:
 		DPRINTF("%s: power button released\n", __func__);
-		acpi_addtask(sc->sc_acpi, acpi_powerdown_task,
-		    sc->sc_acpi, 0);
+		powerbutton_event();
 		break;
 	case SURFACE_WINDOWS_KEY_PRESSED:
 		DPRINTF("%s: windows key pressed\n", __func__);

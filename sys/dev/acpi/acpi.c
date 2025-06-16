@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.449 2025/06/11 09:57:01 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.450 2025/06/16 20:21:33 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2008,12 +2008,6 @@ acpi_sleep_task(void *arg0, int sleepmode)
 
 #endif /* SMALL_KERNEL */
 
-int
-acpi_resuming(struct acpi_softc *sc)
-{
-	return (getuptime() < sc->sc_resume_time + 10);
-}
-
 void
 acpi_reset(void)
 {
@@ -2081,14 +2075,14 @@ acpi_pbtn_task(void *arg0, int dummy)
 	splx(s);
 
 	/* Ignore button events if we're resuming. */
-	if (acpi_resuming(sc))
+	if (resuming())
 		return;
 
 	switch (pwr_action) {
 	case 0:
 		break;
 	case 1:
-		acpi_addtask(sc, acpi_powerdown_task, sc, 0);
+		powerbutton_event();
 		break;
 #ifndef SMALL_KERNEL
 	case 2:
@@ -2114,17 +2108,6 @@ acpi_sbtn_task(void *arg0, int dummy)
 	acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
 	    en | ACPI_PM1_SLPBTN_EN);
 	splx(s);
-}
-
-void
-acpi_powerdown_task(void *arg0, int dummy)
-{
-	extern int allowpowerdown;
-
-	if (allowpowerdown == 1) {
-		allowpowerdown = 0;
-		prsignal(initprocess, SIGUSR2);
-	}
 }
 
 int

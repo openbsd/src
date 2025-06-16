@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.173 2025/06/03 00:20:31 dlg Exp $	*/
+/*	$OpenBSD: systm.h,v 1.174 2025/06/16 20:21:33 kettenis Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -383,6 +383,8 @@ void	consinit(void);
 void	cpu_startup(void);
 void	cpu_configure(void);
 void	diskconf(void);
+
+void	powerbutton_event(void);
 
 int nfs_mountroot(void);
 int dk_mountroot(void);

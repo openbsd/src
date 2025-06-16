@@ -1,4 +1,4 @@
-/*	$OpenBSD: dapmic.c,v 1.4 2022/10/12 13:39:50 kettenis Exp $	*/
+/*	$OpenBSD: dapmic.c,v 1.5 2025/06/16 20:21:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -90,7 +90,6 @@ struct dapmic_softc {
 	i2c_addr_t sc_addr;
 
 	int (*sc_ih)(void *);
-	struct task sc_task;
 
 	struct todr_chip_handle sc_todr;
 };
@@ -116,7 +115,6 @@ void	dapmic_reset_irq_mask(struct dapmic_softc *);
 void	dapmic_reset(void);
 void	dapmic_powerdown(void);
 int	dapmic_intr(void *);
-void	dapmic_shutdown_task(void *);
 
 int
 dapmic_match(struct device *parent, void *match, void *aux)
@@ -146,8 +144,6 @@ dapmic_attach(struct device *parent, struct device *self, void *aux)
 		cpuresetfn = dapmic_reset;
 	if (powerdownfn == NULL)
 		powerdownfn = dapmic_powerdown;
-
-	task_set(&sc->sc_task, dapmic_shutdown_task, sc);
 
 	/* Mask away events we don't care about */
 	dapmic_reg_write(sc, IRQ_MASK_A,
@@ -349,17 +345,6 @@ dapmic_powerdown(void)
 	dapmic_reg_write(sc, CONTROL_F, CONTROL_F_SHUTDOWN);
 }
 
-void
-dapmic_shutdown_task(void *arg)
-{
-	extern int allowpowerdown;
-
-	if (allowpowerdown == 1) {
-		allowpowerdown = 0;
-		prsignal(initprocess, SIGUSR2);
-	}
-}
-
 int
 dapmic_intr(void *arg)
 {
@@ -413,7 +398,7 @@ dapmic_intr(void *arg)
 	}
 
 	if (event_a & EVENT_A_E_nONKEY)
-		task_add(systq, &sc->sc_task);
+		powerbutton_event();
 
 	if (event_a | event_b | event_c | event_d)
 		return 1;

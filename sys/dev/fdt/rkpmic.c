@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.19 2025/05/12 01:18:35 jcs Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.20 2025/06/16 20:21:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -612,13 +612,9 @@ rkpmic_activate(struct device *self, int act)
 int
 rkpmic_intr(void *arg)
 {
-	extern int allowpowerdown;
 	struct rkpmic_softc *sc = arg;
 
-	if (allowpowerdown) {
-		allowpowerdown = 0;
-		prsignal(initprocess, SIGUSR2);
-	}
+	powerbutton_event();
 
 	rkpmic_reg_write(sc, RK809_PMIC_INT_STS0, 0xff);
 	return 1;

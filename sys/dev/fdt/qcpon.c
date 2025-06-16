@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpon.c,v 1.6 2025/01/03 14:14:49 kettenis Exp $	*/
+/*	$OpenBSD: qcpon.c,v 1.7 2025/06/16 20:21:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -44,14 +44,12 @@ struct qcpon_softc {
 
 	void			*sc_pwrkey_ih;
 	uint32_t		sc_last_sts;
-	struct task		sc_powerdown_task;
 };
 
 int	qcpon_match(struct device *, void *, void *);
 void	qcpon_attach(struct device *, struct device *, void *);
 
 int	qcpon_pwrkey_intr(void *);
-void	qcpon_powerdown_task(void *);
 
 const struct cfattach qcpon_ca = {
 	sizeof(struct qcpon_softc), qcpon_match, qcpon_attach
@@ -88,8 +86,6 @@ qcpon_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = saa->sa_tag;
 	sc->sc_sid = saa->sa_sid;
 	sc->sc_addr = reg[0];
-
-	task_set(&sc->sc_powerdown_task, qcpon_powerdown_task, sc);
 
 	printf("\n");
 
@@ -135,19 +131,8 @@ qcpon_pwrkey_intr(void *arg)
 	/* Ignore presses, handle releases. */
 	if ((sc->sc_last_sts & PON_PMK8350_KPDPWR_N_SET) &&
 	    (sts & PON_PMK8350_KPDPWR_N_SET) == 0)
-		task_add(systq, &sc->sc_powerdown_task);
+		powerbutton_event();
 
 	sc->sc_last_sts = sts;
 	return 1;
-}
-
-void
-qcpon_powerdown_task(void *arg)
-{
-	extern int allowpowerdown;
-
-	if (allowpowerdown == 1) {
-		allowpowerdown = 0;
-		prsignal(initprocess, SIGUSR2);
-	}
 }
