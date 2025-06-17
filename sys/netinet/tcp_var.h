@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.193 2025/06/17 01:35:07 dlg Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.194 2025/06/17 03:48:14 dlg Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -794,7 +794,7 @@ int	tcp_signature_apply(caddr_t, caddr_t, unsigned int);
 int	tcp_signature(struct tdb *, int, struct mbuf *, struct tcphdr *,
 	    int, int, char *);
 #endif /* TCP_SIGNATURE */
-void     tcp_set_iss_tsm(struct tcpcb *);
+void	 tcp_set_iss_tsm(struct tcpcb *);
 
 void	 syn_cache_unreach(const struct sockaddr *, const struct sockaddr *,
 	   struct tcphdr *, u_int);
