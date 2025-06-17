@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.192 2025/06/08 17:06:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.193 2025/06/17 01:35:07 dlg Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -640,20 +640,26 @@ extern struct cpumem *tcpcounters;
 static inline void
 tcpstat_inc(enum tcpstat_counters c)
 {
+	int s = splnet();
 	counters_inc(tcpcounters, c);
+	splx(s);
 }
 
 static inline void
 tcpstat_add(enum tcpstat_counters c, uint64_t v)
 {
+	int s = splnet();
 	counters_add(tcpcounters, c, v);
+	splx(s);
 }
 
 static inline void
 tcpstat_pkt(enum tcpstat_counters pcounter, enum tcpstat_counters bcounter,
     uint64_t v)
 {
+	int s = splnet();
 	counters_pkt(tcpcounters, pcounter, bcounter, v);
+	splx(s);
 }
 
 extern uint64_t tcp_starttime;
