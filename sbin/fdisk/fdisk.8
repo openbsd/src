@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.126 2025/05/28 03:55:41 jsg Exp $
+.\"	$OpenBSD: fdisk.8,v 1.127 2025/06/17 11:21:48 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2025 $
+.Dd $Mdocdate: June 17 2025 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -335,8 +335,19 @@ is specified a GPT partition table is initialized, including the
 protective MBR.
 .It Cm setpid Ar #
 Sets the identifier of the partition table entry.
-.It Cm edit Ar #
+.It Cm edit Ar # | Ar desc
 Edit an entry in the partition table.
+.Pp
+.Ar #
+(MBR or GPT) triggers interactive editing of the partition.
+.Pp
+.Ar desc
+(GPT only) immediately modifies the partition.
+.Ar desc
+is in the compact format supported by the
+.Fl R
+command line argument.
+.Pp
 The offset and size of the entry may be specified in CHS mode (MBR only),
 by using sector offsets and sizes, or by using
 the units

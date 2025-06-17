@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.180 2024/03/01 17:48:03 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.181 2025/06/17 11:21:48 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -269,6 +269,15 @@ Xedit(const char *args, struct mbr *mbr)
 	struct gpt_partition	 oldgg;
 	struct prt		 oldprt;
 	int			 pn;
+
+	if (gh.gh_sig == GPTSIGNATURE && strchr(args, ':')) {
+		if (GPT_recover_partition(args, "", "") == 0)
+			return CMD_DIRTY;	/* New UUID was generated. */
+		else {
+			printf("invalid description or insufficient space\n");
+			return CMD_CONT;
+		}
+	}
 
 	pn = parsepn(args);
 	if (pn == -1)
