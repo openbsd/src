@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.168 2025/06/03 10:59:42 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.169 2025/06/17 16:24:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -951,25 +951,21 @@ PRT_protected_uuid(const struct uuid *uuid)
 }
 
 void
-PRT_print_mbrmenu(char *lbuf, size_t lbuflen)
+PRT_print_mbrmenu(void)
 {
 #define	MBR_MENU_COLUMNS	4
 
 	printf("Choose from the following Partition id values:\n");
 	print_menu(mbr_item,  MBR_MENU_COLUMNS);
-
-	memset(lbuf, 0, lbuflen);	/* Just continue. */
 }
 
 void
-PRT_print_gptmenu(char *lbuf, size_t lbuflen)
+PRT_print_gptmenu(void)
 {
 #define	GPT_MENU_COLUMNS	4
 
 	printf("Choose from the following Partition id values:\n");
 	print_menu(gpt_item, GPT_MENU_COLUMNS);
-
-	memset(lbuf, 0, lbuflen);	/* Just continue. */
 }
 
 void
