@@ -220,6 +220,7 @@
 ./etc/rc.d/bgpd
 ./etc/rc.d/bgplgd
 ./etc/rc.d/bootparamd
+./etc/rc.d/bpflogd
 ./etc/rc.d/cron
 ./etc/rc.d/dhcp6leased
 ./etc/rc.d/dhcpd
