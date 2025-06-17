@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.43 2025/06/12 21:04:37 dv Exp $ */
+/* $OpenBSD: i8253.c,v 1.44 2025/06/17 16:01:41 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -176,11 +176,11 @@ vcpu_exit_i8253_misc(struct vm_run_params *vrp)
 		if (i8253_channel[2].mode == TIMER_INTTC) {
 			if (i8253_channel[2].state) {
 				set_return_data(vei, (1 << 5));
-				log_debug("%s: counter 2 fired, returning "
+				DPRINTF("%s: counter 2 fired, returning "
 				    "0x20", __func__);
 			} else {
 				set_return_data(vei, 0);
-				log_debug("%s: counter 2 clear, returning 0x0",
+				DPRINTF("%s: counter 2 clear, returning 0x0",
 				    __func__);
 			}
 		} else if (i8253_channel[2].mode == TIMER_SQWAVE) {
@@ -199,7 +199,7 @@ vcpu_exit_i8253_misc(struct vm_run_params *vrp)
 			}
 		}
 	} else {
-		log_debug("%s: discarding data written to PIT misc port",
+		DPRINTF("%s: discarding data written to PIT misc port",
 		    __func__);
 	}
 
