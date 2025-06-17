@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.450 2025/06/16 20:21:33 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.451 2025/06/17 13:01:11 krw Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2074,9 +2074,11 @@ acpi_pbtn_task(void *arg0, int dummy)
 	    en | ACPI_PM1_PWRBTN_EN);
 	splx(s);
 
+#ifdef SUSPEND
 	/* Ignore button events if we're resuming. */
 	if (resuming())
 		return;
+#endif	/* SUSPEND */
 
 	switch (pwr_action) {
 	case 0:
