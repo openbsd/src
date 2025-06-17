@@ -78,7 +78,7 @@ if recv_fin.seq != synack.seq+1 or recv_fin.ack != 3:
 	exit(1)
 
 print("Check peer is in LASTACK state.")
-with os.popen("ssh "+REMOTE_ADDR+" netstat -vnp tcp") as netstat:
+with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 	with open("netstat-lastack.log", 'w') as log:
 		for line in netstat:
 			if "%s.%d" % (FAKE_NET_ADDR, tport) in line:

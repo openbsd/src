@@ -81,7 +81,7 @@ print("Wait for FIN and its retransmit.")
 sniffer.join(timeout=10)
 
 print("Check peer is in FINWAIT1 state.")
-with os.popen("ssh "+REMOTE_ADDR+" netstat -vnp tcp") as netstat:
+with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 	with open("netstat-finwait1.log", 'w') as log:
 		for line in netstat:
 			if "%s.%d" % (FAKE_NET_ADDR, tport) in line:
@@ -96,7 +96,7 @@ send(ip/send_ack)
 time.sleep(2)
 
 print("Check peer is in FINWAIT2 state.")
-with os.popen("ssh "+REMOTE_ADDR+" netstat -vnp tcp") as netstat:
+with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 	with open("netstat-finwait2.log", 'w') as log:
 		for line in netstat:
 			if "%s.%d" % (FAKE_NET_ADDR, tport) in line:

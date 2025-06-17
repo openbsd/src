@@ -86,7 +86,7 @@ print("Wait for echo and its retransmit.")
 sniffer.join(timeout=10)
 
 print("Check peer is in ESTABLISHED state.")
-with os.popen("ssh "+REMOTE_ADDR+" netstat -vnp tcp") as netstat:
+with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 	with open("netstat-established.log", 'w') as log:
 		for line in netstat:
 			if "%s.%d" % (FAKE_NET_ADDR, tport) in line:
