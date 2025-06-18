@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.184 2025/04/17 17:23:17 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.185 2025/06/18 16:15:46 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -468,6 +468,7 @@ tcp_stats(char *name)
 	p(tcps_preddat, "\t%u correct data packet header prediction%s\n");
 	pes(tcps_pcbhashmiss, "\t%u PCB cache miss%s\n");
 	p1(tcps_noport, "\t%u dropped due to no socket\n");
+	p1(tcps_closing, "\t%u dropped as socket is closing\n");
 
 	p(tcps_ecn_accepts, "\t%u ECN connection%s accepted\n");
 	p(tcps_ecn_rcvece, "\t\t%u ECE packet%s received\n");

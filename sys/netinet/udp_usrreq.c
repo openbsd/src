@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.343 2025/06/16 07:11:58 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.344 2025/06/18 16:15:46 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -602,7 +602,6 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 		return IPPROTO_DONE;
 	}
 
-	KASSERT(sotoinpcb(inp->inp_socket) == inp);
 	soassertlocked_readonly(inp->inp_socket);
 
 #ifdef INET6

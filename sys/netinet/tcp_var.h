@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.194 2025/06/17 03:48:14 dlg Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.195 2025/06/18 16:15:46 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -392,6 +392,7 @@ struct	tcpstat {
 
 	u_int32_t tcps_pcbhashmiss;	/* input packets missing pcb hash */
 	u_int32_t tcps_noport;		/* no socket on port */
+	u_int32_t tcps_closing;		/* inpcb exists, socket is closing */
 	u_int32_t tcps_badsyn;		/* SYN packet with src==dst rcv'ed */
 	u_int32_t tcps_dropsyn;		/* SYN packet dropped */
 
@@ -582,6 +583,7 @@ enum tcpstat_counters {
 	tcps_preddat,
 	tcps_pcbhashmiss,
 	tcps_noport,
+	tcps_closing,
 	tcps_badsyn,
 	tcps_dropsyn,
 	tcps_rcvbadsig,

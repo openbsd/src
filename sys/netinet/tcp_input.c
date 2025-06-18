@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.452 2025/06/12 19:10:17 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.453 2025/06/18 16:15:46 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -661,10 +661,9 @@ findpcb:
 		so = in_pcbsolock(inp);
 	}
 	if (so == NULL) {
-		tcpstat_inc(tcps_noport);
+		tcpstat_inc(tcps_closing);
 		goto dropwithreset_ratelim;
 	}
-
 	KASSERT(sotoinpcb(inp->inp_socket) == inp);
 	KASSERT(intotcpcb(inp) == NULL || intotcpcb(inp)->t_inpcb == inp);
 	soassertlocked(inp->inp_socket);
