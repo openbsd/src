@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.h,v 1.28 2025/06/06 13:13:37 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.h,v 1.29 2025/06/18 17:45:07 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -67,8 +67,9 @@ divstat_inc(enum divstat_counters c)
 	counters_inc(divcounters, c);
 }
 
-extern struct	inpcbtable	divbtable;
-
+extern u_int divert_sendspace;
+extern u_int divert_recvspace;
+extern struct inpcbtable divbtable;
 extern const struct pr_usrreqs divert_usrreqs;
 
 void	 divert_init(void);

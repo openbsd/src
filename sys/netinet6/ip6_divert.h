@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.h,v 1.24 2025/06/04 12:37:00 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.h,v 1.25 2025/06/18 17:45:07 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -29,8 +29,8 @@
 
 #define	DIVERT6CTL_NAMES { \
 	{ 0, 0 }, \
-	{ "recvspace",	CTLTYPE_INT }, \
-	{ "sendspace",	CTLTYPE_INT }, \
+	{ NULL,	0 }, \
+	{ NULL,	0 }, \
 	{ "stats",	CTLTYPE_STRUCT } \
 }
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.104 2025/06/06 13:13:37 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.105 2025/06/18 17:45:07 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -51,14 +51,6 @@
 
 struct	inpcbtable	divb6table;
 struct	cpumem		*div6counters;
-
-u_int   divert6_sendspace = DIVERT_SENDSPACE;	/* [a] */
-u_int   divert6_recvspace = DIVERT_RECVSPACE;	/* [a] */
-
-const struct sysctl_bounded_args divert6ctl_vars[] = {
-	{ DIVERT6CTL_RECVSPACE, &divert6_recvspace, 0, SB_MAX },
-	{ DIVERT6CTL_SENDSPACE, &divert6_sendspace, 0, SB_MAX },
-};
 
 const struct pr_usrreqs divert6_usrreqs = {
 	.pru_attach	= divert6_attach,
@@ -267,8 +259,8 @@ divert6_attach(struct socket *so, int proto, int wait)
 	if ((so->so_state & SS_PRIV) == 0)
 		return EACCES;
 
-	error = soreserve(so, atomic_load_int(&divert6_sendspace),
-	    atomic_load_int(&divert6_recvspace));
+	error = soreserve(so, atomic_load_int(&divert_sendspace),
+	    atomic_load_int(&divert_recvspace));
 	if (error)
 		return (error);
 	error = in_pcballoc(so, &divb6table, wait);
@@ -304,9 +296,7 @@ divert6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (divert_sysctl_divstat(div6counters, oldp, oldlenp,
 		    newp));
 	default:
-		return (sysctl_bounded_arr(divert6ctl_vars,
-		    nitems(divert6ctl_vars), name, namelen, oldp, oldlenp,
-		    newp, newlen));
+		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
 }
