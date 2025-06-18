@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.778 2025/06/18 00:58:10 jcs Exp $
+$OpenBSD: usbdevs,v 1.779 2025/06/18 13:48:48 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2831,7 +2831,6 @@ product MACALLY MOUSE1		0x0101	mouse
 /* Marvell products */
 product MARVELL SHEEVAPLUG	0x9e8f	SheevaPlug
 product MARVELL2 TWL541U	0x1fab	TWL541U WLAN
-product MARVELL2 RTL8188EU	0x2045	RTL8188EU
 
 /* Matrix Orbital products */
 product MATRIXORB LCD_0100	0x0100	LCD
