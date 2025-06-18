@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.1 2020/05/26 11:55:10 aoyama Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.2 2025/06/18 15:05:53 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Miodrag Vallat
@@ -27,10 +27,6 @@
 #include <sys/mutex.h>
 
 #include <ddb/db_output.h>
-
-#ifdef MP_LOCKDEBUG
-extern int __mp_lock_spinout;	/* kern_lock.c */
-#endif /* MP_LOCKDEBUG */
 
 static inline int
 atomic_swap(volatile int *lockptr, int new)

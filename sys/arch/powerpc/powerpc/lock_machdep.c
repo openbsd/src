@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.12 2024/04/03 19:30:59 gkoehler Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.13 2025/06/18 15:05:53 jca Exp $	*/
 
 /*
  * Copyright (c) 2021 George Koehler <gkoehler@openbsd.org>
@@ -42,9 +42,6 @@
 #ifndef DDB
 #error "MP_LOCKDEBUG requires DDB"
 #endif
-
-/* CPU-dependent timing, needs this to be settable from ddb. */
-extern int __mp_lock_spinout;
 #endif
 
 static __inline void

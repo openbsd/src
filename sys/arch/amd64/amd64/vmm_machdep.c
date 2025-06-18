@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.57 2025/06/03 19:15:29 sf Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.58 2025/06/18 15:05:53 jca Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -48,7 +48,6 @@
 
 #ifdef MP_LOCKDEBUG
 #include <ddb/db_output.h>
-extern int __mp_lock_spinout;
 #endif /* MP_LOCKDEBUG */
 
 void *l1tf_flush_region;

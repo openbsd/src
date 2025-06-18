@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.178 2024/11/02 07:58:58 mpi Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.179 2025/06/18 15:05:53 jca Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3185,7 +3185,6 @@ pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
  */
 #ifdef MP_LOCKDEBUG
 #include <ddb/db_output.h>
-extern int __mp_lock_spinout;
 #endif
 
 volatile long tlb_shoot_wait __attribute__((section(".kudata")));
