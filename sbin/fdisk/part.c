@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.169 2025/06/17 16:24:55 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.170 2025/06/18 13:00:21 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -745,8 +745,8 @@ int			 mbr_item(const unsigned int);
 
 void			 print_menu(int (*)(const unsigned int),
     const unsigned int);
-int			 nth_menu_item(int (*)(const unsigned int),
-    const unsigned int, unsigned int);
+const struct menu_item	*nth_menu_item(int (*)(const unsigned int),
+    unsigned int);
 
 void
 chs_to_dp(const unsigned char prt_id, const struct chs *chs, uint8_t *dp_cyl,
@@ -885,46 +885,38 @@ mbr_item(const unsigned int item)
 void
 print_menu(int (*test)(const unsigned int), const unsigned int columns)
 {
-	int			 col, col0;
-	unsigned int		 count, i, j, rows;
+	const struct menu_item	 *mi;
+	unsigned int		  i, j, rows;
 
-	count = 0;
-	for (i = 0; i < nitems(menu_items); i++)
-		if (test(i) == 0)
-			count++;
-	rows = (count + columns - 1) / columns;
+	for (i = 0, j= 0; i < nitems(menu_items); i++)
+		j += test(i) == 0;
+	rows = (j + columns - 1) / columns;
 
-	col0 = -1;
 	for (i = 0; i < rows; i++) {
-		col0 = nth_menu_item(test, col0, 1);
-		printf("%02X %-15s", menu_items[col0].mi_menuid,
-		    menu_items[col0].mi_name);
-		for (j = 1; j < columns; j++) {
-			col = nth_menu_item(test, col0, j * rows);
-			if (col == -1)
+		for (j = 0; j < columns; j++) {
+			mi = nth_menu_item(test, i + j * rows);
+			if (mi == NULL)
 				break;
-			printf("%02X %-15s", menu_items[col].mi_menuid,
-			    menu_items[col].mi_name);
+			printf("%02X %-15s", mi->mi_menuid, mi->mi_name);
 		}
 		printf("\n");
 	}
 }
 
-int
-nth_menu_item(int (*test)(const unsigned int), const unsigned int last,
-    unsigned int n)
+const struct menu_item *
+nth_menu_item(int (*test)(const unsigned int), unsigned int n)
 {
 	unsigned int			i;
 
-	for (i = last + 1; i < nitems(menu_items); i++) {
+	for (i = 0; i < nitems(menu_items); i++) {
 		if (test(i) == 0) {
-			n--;
 			if (n == 0)
-				return i;
+				return &menu_items[i];
+			n--;
 		}
 	}
 
-	return -1;
+	return NULL;
 }
 
 int
