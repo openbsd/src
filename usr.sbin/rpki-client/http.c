@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.96 2025/06/16 15:35:29 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.97 2025/06/18 18:13:49 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -916,11 +916,10 @@ http_done(struct http_connection *conn, enum http_result res)
 		conn->was_gzipped = 1;
 	}
 
-	if (conn->was_gzipped)
-		conn->was_gzipped = 0;
-	else if (conn->totalsz > (1024 * 1024))
+	if (!conn->was_gzipped && conn->totalsz > (1024 * 1024))
 		logx("%s: downloaded %zu bytes without HTTP "
 		    "compression", conn_info(conn), conn->totalsz);
+	conn->was_gzipped = 0;
 
 	conn->state = STATE_IDLE;
 	conn->idle_time = getmonotime() + HTTP_IDLE_TIMEOUT;
