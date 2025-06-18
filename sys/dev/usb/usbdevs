@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.777 2025/05/23 03:04:43 kevlo Exp $
+$OpenBSD: usbdevs,v 1.778 2025/06/18 00:58:10 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -517,7 +517,7 @@ vendor TSUNAMI		0x1241	Tsunami
 vendor PHEENET		0x124a	Pheenet
 vendor RAPTORGAMING	0x1267	Raptor Gaming
 vendor TWINMOS		0x126f	TwinMOS
-vendor TENDA		0x1286	Tenda
+vendor MARVELL2		0x1286	Marvell
 vendor TESTO		0x128d	Testo AG
 vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
@@ -2830,6 +2830,8 @@ product MACALLY MOUSE1		0x0101	mouse
 
 /* Marvell products */
 product MARVELL SHEEVAPLUG	0x9e8f	SheevaPlug
+product MARVELL2 TWL541U	0x1fab	TWL541U WLAN
+product MARVELL2 RTL8188EU	0x2045	RTL8188EU
 
 /* Matrix Orbital products */
 product MATRIXORB LCD_0100	0x0100	LCD
@@ -4460,9 +4462,6 @@ product TEKRAM ZD1211_2		0x6630	ZD1211
 
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Microphone
-
-/* Tenda */
-product TENDA TWL541U		0x1fab	TWL541U WLAN
 
 /* Ten X Technology, Inc. */
 product TENX MISSILE		0x0202	Missile Launcher
