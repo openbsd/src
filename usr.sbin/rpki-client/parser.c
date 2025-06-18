@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.155 2025/06/13 07:08:12 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.156 2025/06/18 09:04:51 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -59,7 +59,7 @@ struct parse_repo {
 };
 
 static RB_HEAD(repo_tree, parse_repo)	repos = RB_INITIALIZER(&repos);
-static pthread_rwlock_t	 		repos_lk = PTHREAD_RWLOCK_INITIALIZER;
+static pthread_rwlock_t			repos_lk = PTHREAD_RWLOCK_INITIALIZER;
 
 static inline int
 repocmp(struct parse_repo *a, struct parse_repo *b)
