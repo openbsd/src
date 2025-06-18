@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.68 2022/01/20 14:18:10 naddy Exp $	*/
+/*	$OpenBSD: asr.c,v 1.69 2025/06/18 13:50:02 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -48,7 +48,7 @@ static struct asr_ctx *asr_ctx_create(void);
 static void asr_ctx_ref(struct asr_ctx *);
 static void asr_ctx_free(struct asr_ctx *);
 static int asr_ctx_add_searchdomain(struct asr_ctx *, const char *);
-static int asr_ctx_from_file(struct asr_ctx *, const char *);
+static int asr_ctx_from_fd(struct asr_ctx *, int);
 static int asr_ctx_from_string(struct asr_ctx *, const char *);
 static int asr_ctx_parse(struct asr_ctx *, const char *);
 static int asr_parse_nameserver(struct sockaddr *, const char *);
@@ -429,6 +429,7 @@ asr_check_reload(struct asr *asr)
 	struct stat	 st;
 	struct timespec	 ts;
 	pid_t		 pid;
+	int		 fd;
 
 	pid = getpid();
 	if (pid != asr->a_pid) {
@@ -444,14 +445,19 @@ asr_check_reload(struct asr *asr)
 	asr->a_rtime = ts.tv_sec;
 
 	DPRINT("asr: checking for update of \"%s\"\n", _PATH_RESCONF);
-	if (stat(_PATH_RESCONF, &st) == -1 ||
-	    asr->a_mtime == st.st_mtime ||
-	    (ac = asr_ctx_create()) == NULL)
+	fd = open(_PATH_RESCONF, O_RDONLY|O_CLOEXEC);
+	if (fd == -1)
 		return;
+	if (fstat(fd, &st) == -1 ||
+	    asr->a_mtime == st.st_mtime ||
+	    (ac = asr_ctx_create()) == NULL) {
+		close(fd);
+		return;
+	}
 	asr->a_mtime = st.st_mtime;
 
 	DPRINT("asr: reloading config file\n");
-	if (asr_ctx_from_file(ac, _PATH_RESCONF) == -1) {
+	if (asr_ctx_from_fd(ac, fd) == -1) {
 		asr_ctx_free(ac);
 		return;
 	}
@@ -732,17 +738,20 @@ asr_ctx_from_string(struct asr_ctx *ac, const char *str)
 
 /*
  * Setup the "ac" async context from the file at location "path".
+ * Takes control of fd, so must close() if it encounters error
  */
 static int
-asr_ctx_from_file(struct asr_ctx *ac, const char *path)
+asr_ctx_from_fd(struct asr_ctx *ac, int fd)
 {
 	FILE	*cf;
 	char	 buf[4096];
 	ssize_t	 r;
 
-	cf = fopen(path, "re");
-	if (cf == NULL)
+	cf = fdopen(fd, "r");
+	if (cf == NULL) {
+		close(fd);
 		return (-1);
+	}
 
 	r = fread(buf, 1, sizeof buf - 1, cf);
 	if (feof(cf) == 0) {
