@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.112 2024/10/22 22:21:25 jsg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.113 2025/06/18 01:02:13 jcs Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -326,6 +326,7 @@ static const struct urtwn_type {
 	URTWN_DEV_8188EU(DLINK,		DWA125D1),
 	URTWN_DEV_8188EU(EDIMAX,	EW7811UNV2),
 	URTWN_DEV_8188EU(ELECOM,	WDC150SU2M),
+	URTWN_DEV_8188EU(MARVELL2,	RTL8188EU),
 	URTWN_DEV_8188EU(MERCUSYS,	MW150USV2),
 	URTWN_DEV_8188EU(REALTEK,	RTL8188ETV),
 	URTWN_DEV_8188EU(REALTEK,	RTL8188EU),
