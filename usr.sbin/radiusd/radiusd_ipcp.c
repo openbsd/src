@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.23 2025/01/29 10:16:05 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.24 2025/06/19 09:24:49 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -180,6 +180,9 @@ struct assigned_ipv4
 		    struct in_addr);
 static struct assigned_ipv4
 		*ipcp_ipv4_find(struct module_ipcp *, struct in_addr);
+static struct assigned_ipv4
+		*ipcp_ipv4_check_valid(struct module_ipcp *,
+		    struct assigned_ipv4 *);
 static void	 ipcp_ipv4_delete(struct module_ipcp *,
 		    struct assigned_ipv4 *, const char *);
 static void	 ipcp_ipv4_release(struct module_ipcp *,
@@ -740,7 +743,7 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 	bool			 found = false;
 	char			 username[256], buf[128];
 	struct user		*user = NULL;
-	struct assigned_ipv4	*assigned = NULL, *assign;
+	struct assigned_ipv4	*assigned = NULL, *assign, *assignt;
 
 	ipcp_update_time(self);
 
@@ -788,8 +791,12 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 		}
 		if (self->user_max_sessions != 0) {
 			n = 0;
-			TAILQ_FOREACH(assign, &user->ipv4s, next)
-				n++;
+			TAILQ_FOREACH_SAFE(assign, &user->ipv4s, next, assignt){
+				assign = ipcp_ipv4_check_valid(self, assign);
+				if (assign != NULL)
+					n++;
+			}
+
 			if (n >= self->user_max_sessions) {
 				log_info("q=%u user=%s rejected: number of "
 				    "sessions per a user reached the limit(%d)",
@@ -1280,23 +1287,32 @@ struct assigned_ipv4 *
 ipcp_ipv4_find(struct module_ipcp *self, struct in_addr ina)
 {
 	struct assigned_ipv4	 key, *ret;
-	struct timespec		 dif;
 
 	key.ipv4 = ina;
 	ret = RB_FIND(assigned_ipv4_tree, &self->ipv4s, &key);
-	if (ret != NULL && ret->start.tv_sec == 0) {
+	ret = ipcp_ipv4_check_valid(self, ret);
+	return (ret);
+}
+
+struct assigned_ipv4 *
+ipcp_ipv4_check_valid(struct module_ipcp *self, struct assigned_ipv4 *ip)
+{
+	struct timespec		 dif;
+
+	if (ip != NULL && ip->start.tv_sec == 0) {
 		/* not yet assigned */
-		timespecsub(&self->uptime, &ret->authtime, &dif);
+		timespecsub(&self->uptime, &ip->authtime, &dif);
 		if (dif.tv_sec >= self->start_wait) {
 			/* assumed NAS finally didn't use the address */
-			TAILQ_REMOVE(&ret->user->ipv4s, ret, next);
-			RB_REMOVE(assigned_ipv4_tree, &self->ipv4s, ret);
-			free(ret);
-			ret = NULL;
+			TAILQ_REMOVE(&ip->user->ipv4s, ip, next);
+			RB_REMOVE(assigned_ipv4_tree, &self->ipv4s, ip);
+			free(ip);
 			self->nsessions--;
+			return (NULL);
 		}
 	}
-	return (ret);
+
+	return (ip);
 }
 
 void
