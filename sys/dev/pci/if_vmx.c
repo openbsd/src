@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.92 2025/03/05 06:51:25 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.93 2025/06/19 09:36:21 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -1050,6 +1050,7 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 	struct mbuf *m;
 	u_int prod, cons, next;
 	uint32_t rgen;
+	unsigned int done = 0;
 
 	prod = ring->prod;
 	cons = ring->cons;
@@ -1085,6 +1086,7 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 		cons = (letoh32(txcd->txc_word0) >> VMXNET3_TXC_EOPIDX_S) &
 		    VMXNET3_TXC_EOPIDX_M;
 		cons++;
+		done = 1;
 		cons %= NTXDESC;
 	} while (cons != prod);
 
@@ -1095,7 +1097,7 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 	comp_ring->gen = rgen;
 	ring->cons = cons;
 
-	if (ifq_is_oactive(ifq))
+	if (done && ifq_is_oactive(ifq))
 		ifq_restart(ifq);
 }
 
