@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.46 2025/05/23 11:50:21 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.47 2025/06/19 09:05:03 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -131,9 +131,7 @@ typedef void *ice_match_t;
 
 static const struct pci_matchid ice_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_SFP },
-#if 0 /* no hardware available for testing: */
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_QSFP },
-#endif
 };
 
 int
