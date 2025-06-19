@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.21 2025/04/27 16:22:33 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.22 2025/06/19 10:28:41 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -559,9 +559,6 @@ update_iface(uint32_t if_index)
 	int			 flags;
 	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
-	if (getifaddrs(&ifap) != 0)
-		fatal("getifaddrs");
-
 	if ((if_name = if_indextoname(if_index, ifnamebuf)) == NULL)
 		return;
 
@@ -570,6 +567,9 @@ update_iface(uint32_t if_index)
 
 	if (find_iface_conf(&frontend_conf->iface_list, if_name) == NULL)
 		return;
+
+	if (getifaddrs(&ifap) != 0)
+		fatal("getifaddrs");
 
 	memset(&ifinfo, 0, sizeof(ifinfo));
 	ifinfo.if_index = if_index;
