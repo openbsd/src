@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.160 2025/06/19 05:20:37 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.161 2025/06/19 06:20:23 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -880,6 +880,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		obj = X509_EXTENSION_get_object(ext);
 		assert(obj != NULL);
 
+		/* The switch is ordered following RFC 6487, section 4.8. */
 		switch (nid = OBJ_obj2nid(obj)) {
 		case NID_basic_constraints:
 			if (bc++ > 0)
@@ -909,18 +910,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			if (aia++ > 0)
 				goto dup;
 			break;
-		case NID_sbgp_ipAddrBlock:
-			if (ip++ > 0)
-				goto dup;
-			if (!sbgp_ipaddrblk(fn, cert, ext))
-				goto out;
-			break;
-		case NID_sbgp_autonomousSysNum:
-			if (as++ > 0)
-				goto dup;
-			if (!sbgp_assysnum(fn, cert, ext))
-				goto out;
-			break;
 		case NID_sinfo_access:
 			if (sia++ > 0)
 				goto dup;
@@ -935,6 +924,18 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			if (cp++ > 0)
 				goto dup;
 			if (!certificate_policies(fn, cert, ext))
+				goto out;
+			break;
+		case NID_sbgp_ipAddrBlock:
+			if (ip++ > 0)
+				goto dup;
+			if (!sbgp_ipaddrblk(fn, cert, ext))
+				goto out;
+			break;
+		case NID_sbgp_autonomousSysNum:
+			if (as++ > 0)
+				goto dup;
+			if (!sbgp_assysnum(fn, cert, ext))
 				goto out;
 			break;
 		default:
