@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-seqnum.c,v 1.1 2024/10/07 12:27:27 tb Exp $ */
+/*	$OpenBSD: test-seqnum.c,v 1.2 2025/06/19 08:21:56 job Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -26,6 +26,12 @@
 #include "extern.h"
 
 #define MAX_DER 25
+
+enum rtype
+rtype_from_file_extension(const char *fn)
+{
+	return RTYPE_INVALID;
+}
 
 static const struct seqnum {
 	const char *descr;

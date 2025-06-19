@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.106 2025/06/19 06:46:56 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.107 2025/06/19 08:21:56 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -646,6 +646,13 @@ x509_get_sia(X509 *x, const char *fn, char **out_sia)
 			size_t fnlen, plen;
 
 			if (filemode) {
+				if (rtype_from_file_extension(sia) !=
+				    rtype_from_file_extension(fn)) {
+					warnx("%s: SIA signedObject contains "
+					    "unexpected filename extension",
+					    fn);
+					goto out;
+				}
 				*out_sia = sia;
 				continue;
 			}
