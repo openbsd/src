@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.105 2024/12/03 14:51:09 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.106 2025/06/19 06:46:56 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -361,6 +361,11 @@ x509_get_purpose(X509 *x, const char *fn)
 
 	if ((ext_flags & EXFLAG_BCONS) != 0) {
 		warnx("%s: Basic Constraints ext in non-CA cert", fn);
+		goto out;
+	}
+
+	if ((ext_flags & (EXFLAG_SI | EXFLAG_SS)) != 0) {
+		warnx("%s: EE cert must not be self-issued or self-signed", fn);
 		goto out;
 	}
 
