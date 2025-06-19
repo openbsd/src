@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.108 2025/06/19 10:26:34 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.109 2025/06/19 15:52:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -506,6 +506,7 @@ x509_get_sia(X509 *x, const char *fn, char **out_sia)
 					warnx("%s: SIA signedObject contains "
 					    "unexpected filename extension",
 					    fn);
+					free(sia);
 					goto out;
 				}
 				*out_sia = sia;
