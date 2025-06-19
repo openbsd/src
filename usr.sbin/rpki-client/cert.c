@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.162 2025/06/19 06:47:57 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.163 2025/06/19 10:26:34 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include "extern.h"
 
+extern ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
 extern ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
 extern ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
@@ -737,6 +738,151 @@ cert_check_subject_and_issuer(const char *fn, const X509 *x)
 }
 
 /*
+ * Check the cert's purpose: the cA bit in basic constraints distinguishes
+ * between TA/CA and EE/BGPsec router and the key usage bits must match.
+ * TAs are self-signed, CAs not self-issued, EEs have no extended key usage,
+ * BGPsec router have id-kp-bgpsec-router OID.
+ */
+static enum cert_purpose
+cert_check_purpose(const char *fn, X509 *x)
+{
+	BASIC_CONSTRAINTS		*bc = NULL;
+	EXTENDED_KEY_USAGE		*eku = NULL;
+	const X509_EXTENSION		*ku;
+	int				 crit, ext_flags, i, is_ca, ku_idx;
+	enum cert_purpose		 purpose = CERT_PURPOSE_INVALID;
+
+	if (!x509_cache_extensions(x, fn))
+		goto out;
+
+	ext_flags = X509_get_extension_flags(x);
+
+	/* Key usage must be present and critical. KU bits are checked below. */
+	if ((ku_idx = X509_get_ext_by_NID(x, NID_key_usage, -1)) < 0) {
+		warnx("%s: RFC 6487, section 4.8.4: missing KeyUsage", fn);
+		goto out;
+	}
+	if ((ku = X509_get_ext(x, ku_idx)) == NULL) {
+		warnx("%s: RFC 6487, section 4.8.4: missing KeyUsage", fn);
+		goto out;
+	}
+	if (!X509_EXTENSION_get_critical(ku)) {
+		warnx("%s: RFC 6487, section 4.8.4: KeyUsage not critical", fn);
+		goto out;
+	}
+
+	/* This weird API can return 0, 1, 2, 4, 5 but can't error... */
+	if ((is_ca = X509_check_ca(x)) > 1) {
+		if (is_ca == 4)
+			warnx("%s: RFC 6487: sections 4.8.1 and 4.8.4: "
+			    "no basic constraints, but keyCertSign set", fn);
+		else
+			warnx("%s: unexpected legacy certificate", fn);
+		goto out;
+	}
+
+	if (is_ca) {
+		bc = X509_get_ext_d2i(x, NID_basic_constraints, &crit, NULL);
+		if (bc == NULL) {
+			if (crit != -1)
+				warnx("%s: RFC 6487 section 4.8.1: "
+				    "error parsing basic constraints", fn);
+			else
+				warnx("%s: RFC 6487 section 4.8.1: "
+				    "missing basic constraints", fn);
+			goto out;
+		}
+		if (crit != 1) {
+			warnx("%s: RFC 6487 section 4.8.1: Basic Constraints "
+			    "must be marked critical", fn);
+			goto out;
+		}
+		if (bc->pathlen != NULL) {
+			warnx("%s: RFC 6487 section 4.8.1: Path Length "
+			    "Constraint must be absent", fn);
+			goto out;
+		}
+
+		if (X509_get_key_usage(x) != (KU_KEY_CERT_SIGN | KU_CRL_SIGN)) {
+			warnx("%s: RFC 6487 section 4.8.4: key usage violation",
+			    fn);
+			goto out;
+		}
+
+		if (X509_get_extended_key_usage(x) != UINT32_MAX) {
+			warnx("%s: RFC 6487 section 4.8.5: EKU not allowed",
+			    fn);
+			goto out;
+		}
+
+		/*
+		 * EXFLAG_SI means that issuer and subject are identical.
+		 * EXFLAG_SS is SI plus the AKI is absent or matches the SKI.
+		 * Thus, exactly the trust anchors should have EXFLAG_SS set
+		 * and we should never see EXFLAG_SI without EXFLAG_SS.
+		 */
+		if ((ext_flags & EXFLAG_SS) != 0)
+			purpose = CERT_PURPOSE_TA;
+		else if ((ext_flags & EXFLAG_SI) == 0)
+			purpose = CERT_PURPOSE_CA;
+		else
+			warnx("%s: RFC 6487, section 4.8.3: "
+			    "self-issued cert with AKI-SKI mismatch", fn);
+		goto out;
+	}
+
+	if ((ext_flags & EXFLAG_BCONS) != 0) {
+		warnx("%s: Basic Constraints ext in non-CA cert", fn);
+		goto out;
+	}
+
+	if ((ext_flags & (EXFLAG_SI | EXFLAG_SS)) != 0) {
+		warnx("%s: EE cert must not be self-issued or self-signed", fn);
+		goto out;
+	}
+
+	if (X509_get_key_usage(x) != KU_DIGITAL_SIGNATURE) {
+		warnx("%s: RFC 6487 section 4.8.4: KU must be digitalSignature",
+		    fn);
+		goto out;
+	}
+
+	/*
+	 * EKU is only defined for BGPsec Router certs and must be absent from
+	 * EE certs.
+	 */
+	eku = X509_get_ext_d2i(x, NID_ext_key_usage, &crit, NULL);
+	if (eku == NULL) {
+		if (crit != -1)
+			warnx("%s: error parsing EKU", fn);
+		else
+			purpose = CERT_PURPOSE_EE; /* EKU absent */
+		goto out;
+	}
+	if (crit != 0) {
+		warnx("%s: EKU: extension must not be marked critical", fn);
+		goto out;
+	}
+
+	/*
+	 * Per RFC 8209, section 3.1.3.2 the id-kp-bgpsec-router OID must be
+	 * present and others are allowed, which we don't need to recognize.
+	 * This matches RFC 5280, section 4.2.1.12.
+	 */
+	for (i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
+		if (OBJ_cmp(bgpsec_oid, sk_ASN1_OBJECT_value(eku, i)) == 0) {
+			purpose = CERT_PURPOSE_BGPSEC_ROUTER;
+			break;
+		}
+	}
+
+ out:
+	BASIC_CONSTRAINTS_free(bc);
+	EXTENDED_KEY_USAGE_free(eku);
+	return purpose;
+}
+
+/*
  * Lightweight version of cert_parse_pre() for EE certs.
  * Parses the two RFC 3779 extensions, and performs some sanity checks.
  * Returns cert on success and NULL on failure.
@@ -766,7 +912,7 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 	 * Check issuance, basic constraints and (extended) key usage bits are
 	 * appropriate for an EE cert. Covers RFC 6487, 4.8.1, 4.8.4, 4.8.5.
 	 */
-	if ((cert->purpose = x509_get_purpose(x, fn)) != CERT_PURPOSE_EE) {
+	if ((cert->purpose = cert_check_purpose(fn, x)) != CERT_PURPOSE_EE) {
 		warnx("%s: expected EE cert, got %s", fn,
 		    purpose2str(cert->purpose));
 		goto out;
@@ -968,7 +1114,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 
 	/* Validation on required fields. */
-	cert->purpose = x509_get_purpose(x, fn);
+	cert->purpose = cert_check_purpose(fn, x);
 	switch (cert->purpose) {
 	case CERT_PURPOSE_TA:
 		/* XXX - caller should indicate if it expects TA or CA cert */
