@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.161 2025/06/19 06:20:23 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.162 2025/06/19 06:47:57 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -762,6 +762,10 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 	if (!x509_cache_extensions(x, fn))
 		goto out;
 
+	/*
+	 * Check issuance, basic constraints and (extended) key usage bits are
+	 * appropriate for an EE cert. Covers RFC 6487, 4.8.1, 4.8.4, 4.8.5.
+	 */
 	if ((cert->purpose = x509_get_purpose(x, fn)) != CERT_PURPOSE_EE) {
 		warnx("%s: expected EE cert, got %s", fn,
 		    purpose2str(cert->purpose));
