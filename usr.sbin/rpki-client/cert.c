@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.163 2025/06/19 10:26:34 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.164 2025/06/19 11:06:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -965,10 +965,10 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	const ASN1_BIT_STRING	*issuer_uid = NULL, *subject_uid = NULL;
 	ASN1_OBJECT		*obj;
 	EVP_PKEY		*pkey;
-	int			 nid, ip, as, sia, cp, crldp, aia, aki, ski,
-				 eku, bc, ku;
+	int			 nid, bc, ski, aki, ku, eku, crldp, aia, sia,
+				 cp, ip, as;
 
-	nid = ip = as = sia = cp = crldp = aia = aki = ski = eku = bc = ku = 0;
+	nid = bc = ski = aki = ku = eku = crldp = aia = sia = cp = ip = as = 0;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
