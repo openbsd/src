@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.17 2024/05/03 16:47:15 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.18 2025/06/19 20:16:34 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2024 $
+.Dd $Mdocdate: June 19 2025 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -440,12 +440,13 @@ exposes the audio device clock
 and allows audio device properties to be controlled
 through MIDI.
 .Pp
-A MIDI channel is assigned to each stream, and the volume
+A MIDI channel is assigned to each program, and the volume
 is changed using the standard volume controller (number 7).
 Similarly, when the audio client changes its volume,
 the same MIDI controller message is sent out; it can be used
 for instance for monitoring or as feedback for motorized
 faders.
+Multiple instances of the same program will share the same setting.
 .Pp
 The master volume can be changed using the standard master volume
 system exclusive message.

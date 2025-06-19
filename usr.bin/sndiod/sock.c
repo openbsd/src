@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.54 2025/06/16 06:18:18 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.55 2025/06/19 20:16:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -250,7 +250,7 @@ sock_slot_onvol(void *arg)
 	struct slot *s = f->slot;
 
 #ifdef DEBUG
-	logx(4, "slot%zu: onvol: vol -> %d", s - slot_array, s->vol);
+	logx(4, "slot%zu: onvol: vol -> %u", s - slot_array, s->app->vol);
 #endif
 	if (s->pstate != SOCK_START)
 		return;
@@ -1005,8 +1005,6 @@ sock_execmsg(struct sock *f)
 		f->rstate = SOCK_RMSG;
 		f->lastvol = ctl; /* dont trigger feedback message */
 		slot_setvol(s, ctl);
-		dev_midi_vol(s->opt->dev, s);
-		ctl_onval(CTL_SLOT_LEVEL, s, NULL, ctl);
 		break;
 	case AMSG_CTLSUB_OLD:
 	case AMSG_CTLSUB:
@@ -1187,17 +1185,17 @@ sock_buildmsg(struct sock *f)
 	/*
 	 * if volume changed build a SETVOL message
 	 */
-	if (f->pstate >= SOCK_START && f->slot->vol != f->lastvol) {
+	if (f->pstate >= SOCK_START && f->slot->app->vol != f->lastvol) {
 #ifdef DEBUG
 		logx(3, "sock %d: building SETVOL message, vol = %d", f->fd,
-		    f->slot->vol);
+		    f->slot->app->vol);
 #endif
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = htonl(AMSG_SETVOL);
-		f->wmsg.u.vol.ctl = htonl(f->slot->vol);
+		f->wmsg.u.vol.ctl = htonl(f->slot->app->vol);
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
-		f->lastvol = f->slot->vol;
+		f->lastvol = f->slot->app->vol;
 		return 1;
 	}
 

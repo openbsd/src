@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.122 2025/06/16 06:19:29 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.123 2025/06/19 20:16:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -78,7 +78,6 @@ unsigned int dev_sndnum = 0;
 
 struct ctlslot ctlslot_array[DEV_NCTLSLOT];
 struct slot slot_array[DEV_NSLOT];
-unsigned int slot_serial;		/* for slot allocation */
 
 /*
  * we support/need a single MTC clock source only
@@ -86,27 +85,6 @@ unsigned int slot_serial;		/* for slot allocation */
 struct mtc mtc_array[1] = {
 	{.dev = NULL, .tstate = MTC_STOP}
 };
-
-void
-slot_array_init(void)
-{
-	unsigned int i;
-
-	for (i = 0; i < DEV_NSLOT; i++) {
-		slot_array[i].unit = i;
-		slot_array[i].ops = NULL;
-		slot_array[i].vol = MIDI_MAXCTL;
-		slot_array[i].opt = NULL;
-		slot_array[i].serial = slot_serial++;
-		memset(slot_array[i].name, 0, SLOT_NAMEMAX);
-	}
-}
-
-void
-slot_ctlname(struct slot *s, char *name, size_t size)
-{
-	snprintf(name, size, "slot%zu", s - slot_array);
-}
 
 void
 zomb_onmove(void *arg)
@@ -298,16 +276,18 @@ mtc_midi_full(struct mtc *mtc)
 
 /*
  * send a volume change MIDI message
+ *
+ * XXX: rename to opt_midi_vol() and move to opt.c
  */
 void
-dev_midi_vol(struct dev *d, struct slot *s)
+dev_midi_vol(struct opt *o, struct app *a)
 {
 	unsigned char msg[3];
 
-	msg[0] = MIDI_CTL | (s - slot_array);
+	msg[0] = MIDI_CTL | (a - o->app_array);
 	msg[1] = MIDI_CTL_VOL;
-	msg[2] = s->vol;
-	dev_midi_send(d, msg, 3);
+	msg[2] = a->vol;
+	midi_send(o->midi, msg, sizeof(msg));
 }
 
 /*
@@ -352,9 +332,11 @@ dev_midi_master(struct dev *d)
 
 /*
  * send a sndiod-specific slot description MIDI message
+ *
+ * XXX: rename to opt_midi_appdesc() and move to opt.c
  */
 void
-dev_midi_slotdesc(struct dev *d, struct slot *s)
+dev_midi_slotdesc(struct opt *o, struct app *a)
 {
 	struct sysex x;
 
@@ -364,26 +346,26 @@ dev_midi_slotdesc(struct dev *d, struct slot *s)
 	x.dev = SYSEX_DEV_ANY;
 	x.id0 = SYSEX_AUCAT;
 	x.id1 = SYSEX_AUCAT_SLOTDESC;
-	if (s->opt != NULL && s->opt->dev == d)
-		slot_ctlname(s, (char *)x.u.slotdesc.name, SYSEX_NAMELEN);
-	x.u.slotdesc.chan = (s - slot_array);
+	strlcpy(x.u.slotdesc.name, a->name, SYSEX_NAMELEN);
+	x.u.slotdesc.chan = (a - o->app_array);
 	x.u.slotdesc.end = SYSEX_END;
-	dev_midi_send(d, (unsigned char *)&x, SYSEX_SIZE(slotdesc));
+	midi_send(o->midi, (unsigned char *)&x, SYSEX_SIZE(slotdesc));
 }
 
+/*
+ * XXX: rename to opt_midi_dump() and move to opt.c
+ */
 void
-dev_midi_dump(struct dev *d)
+dev_midi_dump(struct opt *o)
 {
 	struct sysex x;
-	struct slot *s;
+	struct app *a;
 	int i;
 
-	dev_midi_master(d);
-	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
-		if (s->opt != NULL && s->opt->dev != d)
-			continue;
-		dev_midi_slotdesc(d, s);
-		dev_midi_vol(d, s);
+	dev_midi_master(o->dev);
+	for (i = 0, a = o->app_array; i < OPT_NAPP; i++, a++) {
+		dev_midi_slotdesc(o, a);
+		dev_midi_vol(o, a);
 	}
 	x.start = SYSEX_START;
 	x.type = SYSEX_TYPE_EDU;
@@ -391,7 +373,7 @@ dev_midi_dump(struct dev *d)
 	x.id0 = SYSEX_AUCAT;
 	x.id1 = SYSEX_AUCAT_DUMPEND;
 	x.u.dumpend.end = SYSEX_END;
-	dev_midi_send(d, (unsigned char *)&x, SYSEX_SIZE(dumpend));
+	midi_send(o->midi, (unsigned char *)&x, SYSEX_SIZE(dumpend));
 }
 
 int
@@ -1523,98 +1505,30 @@ struct slot *
 slot_new(struct opt *opt, unsigned int id, char *who,
     struct slotops *ops, void *arg, int mode)
 {
-	char *p;
-	char name[SLOT_NAMEMAX];
-	char ctl_name[CTL_NAMEMAX];
-	unsigned int i, ser, bestser, bestidx;
-	struct slot *unit[DEV_NSLOT];
+	struct app *a;
 	struct slot *s;
+	int i;
+
+	a = opt_mkapp(opt, who);
+	if (a == NULL)
+		return NULL;
 
 	/*
-	 * create a ``valid'' control name (lowcase, remove [^a-z], truncate)
+	 * find a free slot and assign it the smallest possible unit number
 	 */
-	for (i = 0, p = who; ; p++) {
-		if (i == SLOT_NAMEMAX - 1 || *p == '\0') {
-			name[i] = '\0';
+	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
+		if (s->ops == NULL)
 			break;
-		} else if (*p >= 'A' && *p <= 'Z') {
-			name[i++] = *p + 'a' - 'A';
-		} else if (*p >= 'a' && *p <= 'z')
-			name[i++] = *p;
 	}
-	if (i == 0)
-		strlcpy(name, "noname", SLOT_NAMEMAX);
-
-	/*
-	 * build a unit-to-slot map for this name
-	 */
-	for (i = 0; i < DEV_NSLOT; i++)
-		unit[i] = NULL;
-	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
-		if (strcmp(s->name, name) == 0)
-			unit[s->unit] = s;
-	}
-
-	/*
-	 * find the free slot with the least unit number and same id
-	 */
-	for (i = 0; i < DEV_NSLOT; i++) {
-		s = unit[i];
-		if (s != NULL && s->ops == NULL && s->id == id)
-			goto found;
-	}
-
-	/*
-	 * find the free slot with the least unit number
-	 */
-	for (i = 0; i < DEV_NSLOT; i++) {
-		s = unit[i];
-		if (s != NULL && s->ops == NULL) {
-			s->id = id;
-			goto found;
-		}
-	}
-
-	/*
-	 * couldn't find a matching slot, pick oldest free slot
-	 * and set its name/unit
-	 */
-	bestser = 0;
-	bestidx = DEV_NSLOT;
-	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
-		if (s->ops != NULL)
-			continue;
-		ser = slot_serial - s->serial;
-		if (ser > bestser) {
-			bestser = ser;
-			bestidx = i;
-		}
-	}
-
-	if (bestidx == DEV_NSLOT) {
-		logx(1, "%s: out of sub-device slots", name);
+	if (i == DEV_NSLOT) {
+		logx(1, "%s: too many connections", a->name);
 		return NULL;
 	}
 
-	s = slot_array + bestidx;
-	ctl_del(CTL_SLOT_LEVEL, s, NULL);
-	s->vol = MIDI_MAXCTL;
-	strlcpy(s->name, name, SLOT_NAMEMAX);
-	s->serial = slot_serial++;
-	for (i = 0; unit[i] != NULL; i++)
-		; /* nothing */
-	s->unit = i;
-	s->id = id;
-	s->opt = opt;
-	slot_ctlname(s, ctl_name, CTL_NAMEMAX);
-	ctl_new(CTL_SLOT_LEVEL, s, NULL,
-	    CTL_NUM, "", "app", ctl_name, -1, "level",
-	    NULL, -1, 127, s->vol);
-
-found:
-	/* open device, this may change opt's device */
 	if (!opt_ref(opt))
 		return NULL;
+
+	s->app = a;
 	s->opt = opt;
 	s->ops = ops;
 	s->arg = arg;
@@ -1629,10 +1543,8 @@ found:
 	s->appbufsz = s->opt->dev->bufsz;
 	s->round = s->opt->dev->round;
 	s->rate = s->opt->dev->rate;
-	dev_midi_slotdesc(s->opt->dev, s);
-	dev_midi_vol(s->opt->dev, s);
 #ifdef DEBUG
-	logx(3, "slot%zu: %s/%s%u", s - slot_array, s->opt->name, s->name, s->unit);
+	logx(3, "slot%zu: %s/%s", s - slot_array, s->opt->name, s->app->name);
 #endif
 	return s;
 }
@@ -1660,66 +1572,21 @@ slot_del(struct slot *s)
 }
 
 /*
- * change the slot play volume; called either by the slot or by MIDI
+ * change the slot play volume; called by the client
  */
 void
 slot_setvol(struct slot *s, unsigned int vol)
 {
+	struct opt *o = s->opt;
+	struct app *a = s->app;
+
 #ifdef DEBUG
 	logx(3, "slot%zu: setting volume %u", s - slot_array, vol);
 #endif
-	s->vol = vol;
-	s->mix.vol = MIDI_TO_ADATA(s->vol);
-}
-
-/*
- * set device for this slot
- */
-void
-slot_setopt(struct slot *s, struct opt *o)
-{
-	struct opt *t;
-	struct dev *odev, *ndev;
-	struct ctl *c;
-
-	if (s->opt == NULL || s->opt == o)
-		return;
-
-	logx(2, "slot%zu: moving to opt %s", s - slot_array, o->name);
-
-	odev = s->opt->dev;
-	if (s->ops != NULL) {
-		ndev = opt_ref(o);
-		if (ndev == NULL)
-			return;
-
-		if (!dev_iscompat(odev, ndev)) {
-			opt_unref(o);
-			return;
-		}
-	}
-
-	if (s->pstate == SLOT_RUN || s->pstate == SLOT_STOP)
-		slot_detach(s);
-
-	t = s->opt;
-	s->opt = o;
-
-	c = ctl_find(CTL_SLOT_LEVEL, s, NULL);
-	ctl_update(c);
-
-	if (o->dev != t->dev) {
-		dev_midi_slotdesc(odev, s);
-		dev_midi_slotdesc(ndev, s);
-		dev_midi_vol(ndev, s);
-	}
-
-	if (s->pstate == SLOT_RUN || s->pstate == SLOT_STOP)
-		slot_attach(s);
-
-	if (s->ops != NULL) {
-		opt_unref(t);
-		return;
+	if (a->vol != vol) {
+		opt_appvol(o, a, vol);
+		dev_midi_vol(o, a);
+		ctl_onval(CTL_APP_LEVEL, o, a, vol);
 	}
 }
 
@@ -1775,7 +1642,7 @@ slot_attach(struct slot *s)
 	s->next = d->slot_list;
 	d->slot_list = s;
 	if (s->mode & MODE_PLAY) {
-		s->mix.vol = MIDI_TO_ADATA(s->vol);
+		s->mix.vol = MIDI_TO_ADATA(s->app->vol);
 		dev_mix_adjvol(d);
 	}
 }
@@ -2073,8 +1940,8 @@ ctlslot_visible(struct ctlslot *s, struct ctl *c)
 		return (s->opt->dev == c->u.any.arg0);
 	case CTL_OPT_DEV:
 		return (s->opt == c->u.any.arg0);
-	case CTL_SLOT_LEVEL:
-		return (s->opt->dev == c->u.slot_level.slot->opt->dev);
+	case CTL_APP_LEVEL:
+		return (s->opt == c->u.app_level.opt);
 	default:
 		return 0;
 	}
@@ -2146,9 +2013,9 @@ ctl_scope_fmt(char *buf, size_t size, struct ctl *c)
 	case CTL_DEV_MASTER:
 		return snprintf(buf, size, "dev_master:%s",
 		    c->u.dev_master.dev->name);
-	case CTL_SLOT_LEVEL:
-		return snprintf(buf, size, "slot_level:%s%u",
-		    c->u.slot_level.slot->name, c->u.slot_level.slot->unit);
+	case CTL_APP_LEVEL:
+		return snprintf(buf, size, "app_level:%s/%s",
+		    c->u.app_level.opt->name, c->u.app_level.app->name);
 	case CTL_OPT_DEV:
 		return snprintf(buf, size, "opt_dev:%s/%s",
 		    c->u.opt_dev.opt->name, c->u.opt_dev.dev->name);
@@ -2208,10 +2075,9 @@ ctl_setval(struct ctl *c, int val)
 		c->val_mask = ~0U;
 		c->curval = val;
 		return 1;
-	case CTL_SLOT_LEVEL:
-		slot_setvol(c->u.slot_level.slot, val);
-		// XXX change dev_midi_vol() into slot_midi_vol()
-		dev_midi_vol(c->u.slot_level.slot->opt->dev, c->u.slot_level.slot);
+	case CTL_APP_LEVEL:
+		opt_appvol(c->u.app_level.opt, c->u.app_level.app, val);
+		dev_midi_vol(c->u.app_level.opt, c->u.app_level.app);
 		c->val_mask = ~0U;
 		c->curval = val;
 		return 1;
@@ -2272,6 +2138,7 @@ ctl_new(int scope, void *arg0, void *arg1,
 		c->u.hw.addr = *(unsigned int *)arg1;
 		break;
 	case CTL_OPT_DEV:
+	case CTL_APP_LEVEL:
 		c->u.any.arg1 = arg1;
 		break;
 	default:
@@ -2337,6 +2204,7 @@ ctl_match(struct ctl *c, int scope, void *arg0, void *arg1)
 			return 0;
 		break;
 	case CTL_OPT_DEV:
+	case CTL_APP_LEVEL:
 		if (arg1 != NULL && c->u.any.arg1 != arg1)
 			return 0;
 		break;

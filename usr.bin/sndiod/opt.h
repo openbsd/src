@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.8 2024/04/22 10:42:04 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.9 2025/06/19 20:16:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,14 +18,25 @@
 #define OPT_H
 
 #define OPT_NMAX		16
+#define OPT_NAPP		8
 
 struct dev;
+
+struct app {
+#define APP_NAMEMAX	12
+	char name[APP_NAMEMAX];		/* name matching [a-z]+ */
+	unsigned int serial;		/* global unique number */
+	int vol;
+};
 
 struct opt {
 	struct opt *next;
 	struct dev *dev, *alt_first;
 	struct midi *midi;
 	struct mtc *mtc;	/* if set, MMC-controlled MTC source */
+
+	struct app app_array[OPT_NAPP];
+	unsigned int app_serial;
 
 	int num;
 #define OPT_NAMEMAX 11
@@ -40,6 +51,8 @@ struct opt {
 
 extern struct opt *opt_list;
 
+struct app *opt_mkapp(struct opt *o, char *who);
+void opt_appvol(struct opt *o, struct app *a, int vol);
 struct opt *opt_new(struct dev *, char *, int, int, int, int,
     int, int, int, unsigned int);
 void opt_del(struct opt *);

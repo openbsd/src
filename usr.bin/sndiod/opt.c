@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.13 2024/12/20 07:35:56 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.14 2025/06/19 20:16:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -36,6 +36,103 @@ struct midiops opt_midiops = {
 	opt_midi_exit
 };
 
+struct app *
+opt_mkapp(struct opt *o, char *who)
+{
+	char *p;
+	char name[APP_NAMEMAX];
+	unsigned int i, ser, bestser, bestidx, inuse;
+	struct app *a;
+	struct slot *s;
+
+	/*
+	 * create a valid control name (lowcase, remove [^a-z], truncate)
+	 */
+	for (i = 0, p = who; ; p++) {
+		if (i == APP_NAMEMAX - 1 || *p == '\0') {
+			name[i] = '\0';
+			break;
+		} else if (*p >= 'A' && *p <= 'Z') {
+			name[i++] = *p + 'a' - 'A';
+		} else if (*p >= 'a' && *p <= 'z')
+			name[i++] = *p;
+	}
+	if (i == 0)
+		strlcpy(name, "noname", APP_NAMEMAX);
+
+	/*
+	 * return the app with this name (if any)
+	 */
+	for (i = 0, a = o->app_array; i < OPT_NAPP; i++, a++) {
+		if (strcmp(a->name, name) == 0)
+			return a;
+	}
+
+	/*
+	 * build a bitmap of app structures currently in use
+	 */
+	inuse = 0;
+	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
+		if (s->app != NULL && s->ops != NULL)
+			inuse |= 1 << (s->app - o->app_array);
+	}
+
+	if (inuse == (1 << OPT_NAPP) - 1) {
+		logx(1, "%s: too many programs", name);
+		return NULL;
+	}
+
+	/*
+	 * recycle the oldest free structure
+	 */
+
+	o->app_serial++;
+	bestser = 0;
+	bestidx = OPT_NAPP;
+	for (i = 0, a = o->app_array; i < OPT_NAPP; i++, a++) {
+		if (inuse & (1 << i))
+			continue;
+		ser = o->app_serial - a->serial;
+		if (ser > bestser) {
+			bestser = ser;
+			bestidx = i;
+		}
+	}
+
+	a = o->app_array + bestidx;
+
+	ctl_del(CTL_APP_LEVEL, o, a);
+
+	strlcpy(a->name, name, sizeof(a->name));
+	a->serial = o->app_serial;
+	a->vol = MIDI_MAXCTL;
+	ctl_new(CTL_APP_LEVEL, o, a,
+	    CTL_NUM, "", "app", a->name, -1, "level",
+	    NULL, -1, 127, a->vol);
+	dev_midi_slotdesc(o, a);
+	dev_midi_vol(o, a);
+
+	return a;
+}
+
+void
+opt_appvol(struct opt *o, struct app *a, int vol)
+{
+	struct slot *s;
+	int i;
+
+	a->vol = vol;
+
+	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
+		if (s->app != a || s->opt != o)
+			continue;
+		s->mix.vol = MIDI_TO_ADATA(vol);
+#ifdef DEBUG
+		logx(3, "%s/%s: setting volume %u", o->name, a->name, vol);
+#endif
+	}
+}
+
 void
 opt_midi_imsg(void *arg, unsigned char *msg, int len)
 {
@@ -56,12 +153,10 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 
 	if ((msg[0] & MIDI_CMDMASK) == MIDI_CTL && msg[1] == MIDI_CTL_VOL) {
 		chan = msg[0] & MIDI_CHANMASK;
-		if (chan >= DEV_NSLOT)
+		if (chan >= OPT_NAPP)
 			return;
-		if (slot_array[chan].opt != o)
-			return;
-		slot_setvol(slot_array + chan, msg[2]);
-		ctl_onval(CTL_SLOT_LEVEL, slot_array + chan, NULL, msg[2]);
+		opt_appvol(o, o->app_array + chan, msg[2]);
+		ctl_onval(CTL_APP_LEVEL, o, o->app_array + chan, msg[2]);
 		return;
 	}
 	x = (struct sysex *)msg;
@@ -137,7 +232,7 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 			return;
 		if (len != SYSEX_SIZE(dumpreq))
 			return;
-		dev_midi_dump(o->dev);
+		dev_midi_dump(o);
 		break;
 	}
 }
@@ -389,15 +484,6 @@ opt_setdev(struct opt *o, struct dev *ndev)
 	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
 		if (s->opt != o)
 			continue;
-
-		if (ndev != odev) {
-			dev_midi_slotdesc(odev, s);
-			dev_midi_slotdesc(ndev, s);
-			dev_midi_vol(ndev, s);
-		}
-
-		c = ctl_find(CTL_SLOT_LEVEL, s, NULL);
-		ctl_update(c);
 
 		if (s->pstate == SLOT_RUN || s->pstate == SLOT_STOP) {
 			slot_initconv(s);

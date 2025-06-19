@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.47 2024/12/20 07:35:56 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.48 2025/06/19 20:16:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,7 +26,7 @@
 /*
  * preallocated audio clients
  */
-#define DEV_NSLOT	8
+#define DEV_NSLOT	32
 
 /*
  * preallocated control clients
@@ -101,12 +101,7 @@ struct slot {
 #define SLOT_STOP	4			/* draining */
 	int pstate;
 
-#define SLOT_NAMEMAX	8
-	char name[SLOT_NAMEMAX];		/* name matching [a-z]+ */
-	unsigned int unit;			/* instance of name */
-	unsigned int serial;			/* global unique number */
-	unsigned int vol;			/* current (midi) volume */
-	unsigned int id;			/* process id */
+	struct app *app;
 };
 
 /*
@@ -127,7 +122,7 @@ struct ctl {
 #define CTL_HW		0
 #define CTL_DEV_MASTER	1
 #define CTL_OPT_DEV	2
-#define CTL_SLOT_LEVEL	3
+#define CTL_APP_LEVEL	3
 	unsigned int scope;
 	union {
 		struct {
@@ -142,12 +137,9 @@ struct ctl {
 			struct dev *dev;
 		} dev_master;
 		struct {
-			struct slot *slot;
-		} slot_level;
-		struct {
-			struct slot *slot;
 			struct opt *opt;
-		} slot_opt;
+			struct app *app;
+		} app_level;
 		struct {
 			struct opt *opt;
 			struct dev *dev;
@@ -287,7 +279,6 @@ extern struct slot slot_array[DEV_NSLOT];
 extern struct ctlslot ctlslot_array[DEV_NCTLSLOT];
 extern struct mtc mtc_array[1];
 
-void slot_array_init(void);
 size_t chans_fmt(char *, size_t, int, int, int, int, int);
 int dev_open(struct dev *);
 void dev_close(struct dev *);
@@ -316,10 +307,10 @@ void dev_cycle(struct dev *);
  */
 void dev_master(struct dev *, unsigned int);
 void dev_midi_send(struct dev *, void *, int);
-void dev_midi_vol(struct dev *, struct slot *);
+void dev_midi_vol(struct opt *, struct app *);
 void dev_midi_master(struct dev *);
-void dev_midi_slotdesc(struct dev *, struct slot *);
-void dev_midi_dump(struct dev *);
+void dev_midi_slotdesc(struct opt *o, struct app *a);
+void dev_midi_dump(struct opt *o);
 
 void mtc_midi_qfr(struct mtc *, int);
 void mtc_midi_full(struct mtc *);
@@ -336,7 +327,6 @@ struct slot *slot_new(struct opt *, unsigned int, char *,
     struct slotops *, void *, int);
 void slot_del(struct slot *);
 void slot_setvol(struct slot *, unsigned int);
-void slot_setopt(struct slot *, struct opt *);
 void slot_start(struct slot *);
 void slot_stop(struct slot *, int);
 void slot_read(struct slot *);
