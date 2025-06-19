@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.13 2025/06/18 15:05:53 jca Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.14 2025/06/19 12:01:08 jca Exp $	*/
 
 /*
  * Copyright (c) 2021 George Koehler <gkoehler@openbsd.org>
@@ -51,7 +51,7 @@ __ppc_lock_spin(struct __ppc_lock *mpl)
 	while (mpl->mpl_cpu != NULL)
 		CPU_BUSY_CYCLE();
 #else
-	int nticks = __mp_lock_spinout;
+	long nticks = __mp_lock_spinout;
 
 	while (mpl->mpl_cpu != NULL && --nticks > 0)
 		CPU_BUSY_CYCLE();

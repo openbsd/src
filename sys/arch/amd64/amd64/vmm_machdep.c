@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.58 2025/06/18 15:05:53 jca Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.59 2025/06/19 12:01:08 jca Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -635,7 +635,7 @@ vmm_start(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 #ifdef MP_LOCKDEBUG
-	int nticks;
+	long nticks;
 #endif /* MP_LOCKDEBUG */
 #endif /* MULTIPROCESSOR */
 
@@ -695,7 +695,7 @@ vmm_stop(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 #ifdef MP_LOCKDEBUG
-	int nticks;
+	long nticks;
 #endif /* MP_LOCKDEBUG */
 #endif /* MULTIPROCESSOR */
 
@@ -868,7 +868,7 @@ static int
 vmx_remote_vmclear(struct cpu_info *ci, struct vcpu *vcpu)
 {
 #ifdef MP_LOCKDEBUG
-	int nticks = __mp_lock_spinout;
+	long nticks = __mp_lock_spinout;
 #endif /* MP_LOCKDEBUG */
 
 	rw_enter_write(&ci->ci_vmcs_lock);

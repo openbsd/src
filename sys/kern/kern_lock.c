@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.79 2025/06/10 08:56:21 mpi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.80 2025/06/19 12:01:08 jca Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -33,8 +33,11 @@
 #error "MP_LOCKDEBUG requires DDB"
 #endif
 
-/* CPU-dependent timing, this needs to be settable from ddb. */
-int __mp_lock_spinout = INT_MAX;
+/*
+ * CPU-dependent timing, this needs to be settable from ddb.
+ * Use a "long" to allow larger thresholds on fast 64 bits machines.
+ */
+long __mp_lock_spinout = 1L * INT_MAX;
 #endif /* MP_LOCKDEBUG */
 
 extern int ncpusfound;
@@ -124,7 +127,7 @@ __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 #ifdef MP_LOCKDEBUG
-	int nticks = __mp_lock_spinout;
+	long nticks = __mp_lock_spinout;
 #endif
 
 	spc->spc_spinning++;

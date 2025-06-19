@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.179 2025/06/18 15:05:53 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.180 2025/06/19 12:01:08 jca Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3208,7 +3208,7 @@ pmap_start_tlb_shoot(long wait, const char *func)
 
 	while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
 #ifdef MP_LOCKDEBUG
-		int nticks = __mp_lock_spinout;
+		long nticks = __mp_lock_spinout;
 #endif
 		while (tlb_shoot_wait != 0) {
 			CPU_BUSY_CYCLE();
@@ -3421,7 +3421,7 @@ void
 pmap_tlb_shootwait(void)
 {
 #ifdef MP_LOCKDEBUG
-	int nticks = __mp_lock_spinout;
+	long nticks = __mp_lock_spinout;
 #endif
 	while (tlb_shoot_wait != 0) {
 		CPU_BUSY_CYCLE();

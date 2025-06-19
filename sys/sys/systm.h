@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.175 2025/06/18 15:05:53 jca Exp $	*/
+/*	$OpenBSD: systm.h,v 1.176 2025/06/19 12:01:08 jca Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -108,7 +108,7 @@ extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 extern int nowake;		/* dead wakeup(9) channel */
 
 #ifdef MP_LOCKDEBUG
-extern int __mp_lock_spinout;
+extern long __mp_lock_spinout;
 #endif
 
 struct proc;

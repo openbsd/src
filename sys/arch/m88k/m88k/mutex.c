@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.2 2025/06/18 15:05:53 jca Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.3 2025/06/19 12:01:08 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Miodrag Vallat
@@ -52,7 +52,7 @@ mtx_enter(struct mutex *mtx)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 #ifdef MP_LOCKDEBUG
-	int nticks = __mp_lock_spinout;
+	long nticks = __mp_lock_spinout;
 #endif
 
 	WITNESS_CHECKORDER(MUTEX_LOCK_OBJECT(mtx),
