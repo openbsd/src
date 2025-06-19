@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.159 2025/06/04 09:18:28 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.160 2025/06/19 05:20:37 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -881,6 +881,34 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		assert(obj != NULL);
 
 		switch (nid = OBJ_obj2nid(obj)) {
+		case NID_basic_constraints:
+			if (bc++ > 0)
+				goto dup;
+			break;
+		case NID_subject_key_identifier:
+			if (ski++ > 0)
+				goto dup;
+			break;
+		case NID_authority_key_identifier:
+			if (aki++ > 0)
+				goto dup;
+			break;
+		case NID_key_usage:
+			if (ku++ > 0)
+				goto dup;
+			break;
+		case NID_ext_key_usage:
+			if (eku++ > 0)
+				goto dup;
+			break;
+		case NID_crl_distribution_points:
+			if (crldp++ > 0)
+				goto dup;
+			break;
+		case NID_info_access:
+			if (aia++ > 0)
+				goto dup;
+			break;
 		case NID_sbgp_ipAddrBlock:
 			if (ip++ > 0)
 				goto dup;
@@ -908,34 +936,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 				goto dup;
 			if (!certificate_policies(fn, cert, ext))
 				goto out;
-			break;
-		case NID_crl_distribution_points:
-			if (crldp++ > 0)
-				goto dup;
-			break;
-		case NID_info_access:
-			if (aia++ > 0)
-				goto dup;
-			break;
-		case NID_authority_key_identifier:
-			if (aki++ > 0)
-				goto dup;
-			break;
-		case NID_subject_key_identifier:
-			if (ski++ > 0)
-				goto dup;
-			break;
-		case NID_ext_key_usage:
-			if (eku++ > 0)
-				goto dup;
-			break;
-		case NID_basic_constraints:
-			if (bc++ > 0)
-				goto dup;
-			break;
-		case NID_key_usage:
-			if (ku++ > 0)
-				goto dup;
 			break;
 		default:
 			/* unexpected extensions warrant investigation */
