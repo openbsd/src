@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1001 2025/05/28 09:53:57 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1002 2025/06/20 13:31:59 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2025 $
+.Dd $Mdocdate: June 20 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5909,8 +5909,18 @@ or
 .Ql L:\&
 will loop over each session, window, pane or client and insert the format once
 for each.
-For windows and panes, two comma-separated formats may be given:
-the second is used for the current window or active pane.
+.Ql S:\& ,
+can take an optional sort argument
+.Ql /i\& ,
+.Ql /n\& ,
+.Ql /t\&
+to sort by index, name, or time; or
+.Ql /r\&
+to sort in reverse order. For example,
+.Ql S/nr:\&
+to sort sessions by name in reverse order.
+For each, two comma-separated formats may be given:
+the second is used for the current window, active pane, or active session.
 For example, to get a list of windows formatted like the status line:
 .Bd -literal -offset indent
 #{W:#{E:window-status-format} ,#{E:window-status-current-format} }
