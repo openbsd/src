@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.48 2025/06/20 09:27:49 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.49 2025/06/20 09:32:04 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -29160,7 +29160,7 @@ ice_txeof(struct ice_softc *sc, struct ice_tx_queue *txq)
 
 	//ixl_enable(sc, txr->txr_msix);
 
-	if (ifq_is_oactive(ifq))
+	if (done && ifq_is_oactive(ifq))
 		ifq_restart(ifq);
 
 	return (done);
