@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.39 2025/01/13 15:33:34 kirill Exp $ */
+/* $OpenBSD: ihidev.c,v 1.40 2025/06/20 22:00:49 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -367,8 +367,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		int cmdlen = 7;
 		int dataoff = 4;
 		int report_id = rreq->id;
-		int report_id_len = 1;
-		int report_len = rreq->len + 2;
+		int report_len = rreq->len + 2 + 1;
 		int d;
 		uint8_t *tmprep;
 
@@ -386,7 +385,6 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		if (report_id >= 15) {
 			cmd[dataoff++] = report_id;
 			report_id = 15;
-			report_id_len = 2;
 		} else
 			cmdlen--;
 
@@ -396,13 +394,12 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 		cmd[dataoff] = sc->hid_desc.wDataRegister >> 8;
 
 		/*
-		 * 7.2.2.2 - Response will be a 2-byte length value, the report
-		 * id with length determined above, and then the report.
-		 * Allocate rreq->len + 2 + 2 bytes, read into that temporary
+		 * 7.2.2.2 - Response will be a 2-byte length value,
+		 * the report id, and then the report.
+		 * Allocate rreq->len + 2 + 1 bytes, read into that temporary
 		 * buffer, and then copy only the report back out to
 		 * rreq->data.
 		 */
-		report_len += report_id_len;
 		tmprep = malloc(report_len, M_DEVBUF, M_WAITOK | M_ZERO);
 
 		/* type 3 id 8: 22 00 38 02 23 00 */
@@ -414,11 +411,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 			DPRINTF(("%s: response size %d != expected length %d\n",
 			    sc->sc_dev.dv_xname, d, report_len));
 
-		if (report_id_len == 2)
-			d = tmprep[2] | tmprep[3] << 8;
-		else
-			d = tmprep[2];
-
+		d = tmprep[2];
 		if (d != rreq->id) {
 			DPRINTF(("%s: response report id %d != %d\n",
 			    sc->sc_dev.dv_xname, d, rreq->id));
@@ -432,7 +425,7 @@ ihidev_hid_command(struct ihidev_softc *sc, int hidcmd, void *arg)
 			DPRINTF((" %.2x", tmprep[i]));
 		DPRINTF(("\n"));
 
-		memcpy(rreq->data, tmprep + 2 + report_id_len, rreq->len);
+		memcpy(rreq->data, tmprep + 2 + 1, rreq->len);
 		free(tmprep, M_DEVBUF, report_len);
 
 		break;
