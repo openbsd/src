@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.270 2024/07/11 12:55:33 bentley Exp $
+.\"	$OpenBSD: port-modules.5,v 1.271 2025/06/20 20:10:35 kn Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 11 2024 $
+.Dd $Mdocdate: June 20 2025 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -602,10 +602,9 @@ and
 .Ev RUN_DEPENDS .
 This module is used by ports installing gsettings schemas under
 .Pa ${PREFIX}/share/glib-2.0/schemas/ .
-It requires the following goo in the PLIST:
+PLIST must contain:
 .Bd -literal -offset indent
-@exec %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas >/dev/null
-@unexec-delete %D/bin/glib-compile-schemas %D/share/glib-2.0/schemas >/dev/null
+@tag glib-compile-schemas
 .Ed
 .It devel/gconf2
 A link from
