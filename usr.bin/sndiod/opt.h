@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.9 2025/06/19 20:16:34 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.10 2025/06/20 07:14:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,6 +53,9 @@ extern struct opt *opt_list;
 
 struct app *opt_mkapp(struct opt *o, char *who);
 void opt_appvol(struct opt *o, struct app *a, int vol);
+void opt_midi_vol(struct opt *, struct app *);
+void opt_midi_appdesc(struct opt *o, struct app *a);
+void opt_midi_dump(struct opt *o);
 struct opt *opt_new(struct dev *, char *, int, int, int, int,
     int, int, int, unsigned int);
 void opt_del(struct opt *);

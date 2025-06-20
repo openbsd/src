@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.14 2025/06/19 20:16:34 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.15 2025/06/20 07:14:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -109,8 +109,8 @@ opt_mkapp(struct opt *o, char *who)
 	ctl_new(CTL_APP_LEVEL, o, a,
 	    CTL_NUM, "", "app", a->name, -1, "level",
 	    NULL, -1, 127, a->vol);
-	dev_midi_slotdesc(o, a);
-	dev_midi_vol(o, a);
+	opt_midi_appdesc(o, a);
+	opt_midi_vol(o, a);
 
 	return a;
 }
@@ -232,7 +232,7 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 			return;
 		if (len != SYSEX_SIZE(dumpreq))
 			return;
-		dev_midi_dump(o);
+		opt_midi_dump(o);
 		break;
 	}
 }
@@ -249,6 +249,64 @@ opt_midi_exit(void *arg)
 	struct opt *o = arg;
 
 	logx(1, "%s: midi end point died", o->name);
+}
+
+/*
+ * send a volume change MIDI message
+ */
+void
+opt_midi_vol(struct opt *o, struct app *a)
+{
+	unsigned char msg[3];
+
+	msg[0] = MIDI_CTL | (a - o->app_array);
+	msg[1] = MIDI_CTL_VOL;
+	msg[2] = a->vol;
+	midi_send(o->midi, msg, sizeof(msg));
+}
+
+/*
+ * send a sndiod-specific slot description MIDI message
+ */
+void
+opt_midi_appdesc(struct opt *o, struct app *a)
+{
+	struct sysex x;
+
+	memset(&x, 0, sizeof(struct sysex));
+	x.start = SYSEX_START;
+	x.type = SYSEX_TYPE_EDU;
+	x.dev = SYSEX_DEV_ANY;
+	x.id0 = SYSEX_AUCAT;
+	x.id1 = SYSEX_AUCAT_SLOTDESC;
+	strlcpy(x.u.slotdesc.name, a->name, SYSEX_NAMELEN);
+	x.u.slotdesc.chan = (a - o->app_array);
+	x.u.slotdesc.end = SYSEX_END;
+	midi_send(o->midi, (unsigned char *)&x, SYSEX_SIZE(slotdesc));
+}
+
+/*
+ * send a MIDI dump: master volume, state of MIDI channels
+ */
+void
+opt_midi_dump(struct opt *o)
+{
+	struct sysex x;
+	struct app *a;
+	int i;
+
+	dev_midi_master(o->dev);
+	for (i = 0, a = o->app_array; i < OPT_NAPP; i++, a++) {
+		opt_midi_appdesc(o, a);
+		opt_midi_vol(o, a);
+	}
+	x.start = SYSEX_START;
+	x.type = SYSEX_TYPE_EDU;
+	x.dev = SYSEX_DEV_ANY;
+	x.id0 = SYSEX_AUCAT;
+	x.id1 = SYSEX_AUCAT_DUMPEND;
+	x.u.dumpend.end = SYSEX_END;
+	midi_send(o->midi, (unsigned char *)&x, SYSEX_SIZE(dumpend));
 }
 
 /*
