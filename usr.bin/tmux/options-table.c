@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.193 2025/06/15 22:24:51 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.194 2025/06/20 14:54:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1103,7 +1103,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .flags = OPTIONS_TABLE_IS_STYLE,
-	  .default_str = "bg=yellow,fg=black",
+	  .default_str = "noattr,bg=yellow,fg=black",
 	  .separator = ",",
 	  .text = "Style of indicators and highlighting in modes."
 	},

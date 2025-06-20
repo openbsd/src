@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.37 2025/05/22 07:43:38 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.38 2025/06/20 14:54:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -217,7 +217,9 @@ style_parse(struct style *sy, const struct grid_cell *base, const char *in)
 		} else if (strcasecmp(tmp, "none") == 0)
 			sy->gc.attr = 0;
 		else if (end > 2 && strncasecmp(tmp, "no", 2) == 0) {
-			if ((value = attributes_fromstring(tmp + 2)) == -1)
+			if (strcmp(tmp + 2, "attr") == 0)
+				value = 0xffff & ~GRID_ATTR_CHARSET;
+			else if ((value = attributes_fromstring(tmp + 2)) == -1)
 				goto error;
 			sy->gc.attr &= ~value;
 		} else if (end > 6 && strncasecmp(tmp, "width=", 6) == 0) {

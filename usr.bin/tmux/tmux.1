@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1002 2025/06/20 13:31:59 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1003 2025/06/20 14:54:33 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -6305,6 +6305,8 @@ and
 .Ic list=right-marker
 mark the text to be used to mark that text has been trimmed from the left or
 right of the list if there is not enough space.
+.It Ic noattr
+Do not copy attributes from the default style.
 .It Xo Ic push-default ,
 .Ic pop-default
 .Xc
