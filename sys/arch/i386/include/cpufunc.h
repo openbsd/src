@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.33 2020/09/13 11:53:16 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.34 2025/06/20 14:06:34 sf Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -227,6 +227,15 @@ rdtsc(void)
 
 	__asm volatile("rdtsc" : "=A" (tsc));
 	return (tsc);
+}
+
+static inline uint64_t
+rdtsc_lfence(void)
+{
+	uint64_t tsc;
+
+	__asm volatile("lfence; rdtsc" : "=A" (tsc));
+	return tsc;
 }
 
 static __inline void

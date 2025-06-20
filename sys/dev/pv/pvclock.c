@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.13 2025/03/31 15:40:22 sf Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.14 2025/06/20 14:06:34 sf Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -22,6 +22,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 #include <sys/timetc.h>
 
 #include <machine/cpu.h>
@@ -35,13 +36,65 @@
 #define	PMAP_NOCRYPT	0
 #endif
 
-uint pvclock_lastcount;
+#if defined(__amd64__)
+
+static inline uint64_t
+pvclock_atomic_load(volatile uint64_t *ptr)
+{
+	return *ptr;
+}
+
+static inline uint64_t
+pvclock_atomic_cas(volatile uint64_t *p, uint64_t e,
+    uint64_t n)
+{
+	return atomic_cas_ulong((volatile unsigned long *)p, e, n);
+}
+
+#elif defined(__i386__)
+
+/*
+ * We are running on virtualization. Therefore we can assume that we
+ * have cmpxchg8b, available on pentium and newer.
+ */
+static inline uint64_t
+pvclock_atomic_load(volatile uint64_t *ptr)
+{
+	uint64_t val;
+	__asm__ volatile ("movl %%ebx,%%eax; movl %%ecx, %%edx; "
+	    "lock cmpxchg8b %1" : "=&A" (val) : "m" (*ptr));
+	return val;
+}
+
+static inline uint64_t
+pvclock_atomic_cas(volatile uint64_t *p, uint64_t e,
+    uint64_t n)
+{
+	__asm volatile("lock cmpxchg8b %1" : "+A" (e), "+m" (*p)
+	: "b" ((uint32_t)n), "c" ((uint32_t)(n >> 32)));
+	return (e);
+}
+
+#else
+#error "pvclock: unsupported x86 architecture?"
+#endif
+
+
+uint64_t pvclock_lastcount;
+
+struct pvpage {
+	struct pvclock_time_info	ti;
+	struct pvclock_wall_clock	wc;
+};
 
 struct pvclock_softc {
 	struct device		 sc_dev;
-	void			*sc_time;
+	struct pvpage		*sc_page;
 	paddr_t			 sc_paddr;
 	struct timecounter	*sc_tc;
+	struct ksensordev	 sc_sensordev;
+	struct ksensor		 sc_sensor;
+	struct timeout		 sc_tick;
 };
 
 #define DEVNAME(_s)			((_s)->sc_dev.dv_xname)
@@ -50,12 +103,16 @@ int	 pvclock_match(struct device *, void *, void *);
 void	 pvclock_attach(struct device *, struct device *, void *);
 int	 pvclock_activate(struct device *, int);
 
+uint64_t pvclock_get(struct timecounter *);
 uint	 pvclock_get_timecount(struct timecounter *);
+void	 pvclock_tick_hook(struct device *);
 
 static inline uint32_t
 	 pvclock_read_begin(const struct pvclock_time_info *);
 static inline int
 	 pvclock_read_done(const struct pvclock_time_info *, uint32_t);
+static inline uint64_t
+	 pvclock_scale_delta(uint64_t, uint32_t, int);
 
 const struct cfattach pvclock_ca = {
 	sizeof(struct pvclock_softc),
@@ -123,28 +180,31 @@ void
 pvclock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pvclock_softc		*sc = (struct pvclock_softc *)self;
+	struct pv_attach_args		*pva = aux;
 	struct pvclock_time_info	*ti;
-	paddr_t			 	 pa;
+	paddr_t				 pa;
 	uint32_t			 version;
 	uint8_t				 flags;
 	struct vm_page			*page;
+	struct pvbus_hv                 *kvm;
 
 	page = uvm_pagealloc(NULL, 0, NULL, 0);
 	if (page == NULL)
 		goto err;
-	sc->sc_time = km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
-	if (sc->sc_time == NULL)
+	sc->sc_page = km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_nowait);
+	if (sc->sc_page == NULL)
 		goto err;
 
 	pa = VM_PAGE_TO_PHYS(page);
-	pmap_kenter_pa((vaddr_t)sc->sc_time, pa | PMAP_NOCRYPT,
+	pmap_kenter_pa((vaddr_t)sc->sc_page, pa | PMAP_NOCRYPT,
 		PROT_READ | PROT_WRITE);
-	memset(sc->sc_time, 0, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+	memset(sc->sc_page, 0, PAGE_SIZE);
 
 	wrmsr(KVM_MSR_SYSTEM_TIME, pa | PVCLOCK_SYSTEM_TIME_ENABLE);
 	sc->sc_paddr = pa;
 
-	ti = sc->sc_time;
+	ti = &sc->sc_page->ti;
 	do {
 		version = pvclock_read_begin(ti);
 		flags = ti->ti_flags;
@@ -167,6 +227,22 @@ pvclock_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	tc_init(sc->sc_tc);
+
+	/*
+	 * The openbsd vmm pvclock does not support the WALL_CLOCK msr,
+	 * therefore we look only for kvm.
+	 */
+	kvm = &pva->pva_hv[PVBUS_KVM];
+	if (kvm->hv_features & (1 << KVM_FEATURE_CLOCKSOURCE2)) {
+		strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+		    sizeof(sc->sc_sensordev.xname));
+		sc->sc_sensor.type = SENSOR_TIMEDELTA;
+		sc->sc_sensor.status = SENSOR_S_UNKNOWN;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
+		sensordev_install(&sc->sc_sensordev);
+
+		config_mountroot(self, pvclock_tick_hook);
+	}
 
 	printf("\n");
 	return;
@@ -211,8 +287,36 @@ pvclock_read_done(const struct pvclock_time_info *ti,
 	return (ti->ti_version == version);
 }
 
-uint
-pvclock_get_timecount(struct timecounter *tc)
+static inline uint64_t
+pvclock_scale_delta(uint64_t delta, uint32_t mul_frac, int shift)
+{
+	uint64_t lower, upper;
+
+	if (shift < 0)
+		delta >>= -shift;
+	else
+		delta <<= shift;
+
+	lower = ((uint64_t)mul_frac * ((uint32_t)delta)) >> 32;
+	upper = (uint64_t)mul_frac * (delta >> 32);
+	return lower + upper;
+}
+
+static uint64_t
+pvclock_cmp_last(uint64_t ctr)
+{
+	uint64_t last;
+
+	do {
+		last = pvclock_atomic_load(&pvclock_lastcount);
+		if (ctr < last)
+			return (last);
+	} while (pvclock_atomic_cas(&pvclock_lastcount, last, ctr) != last);
+	return (ctr);
+}
+
+uint64_t
+pvclock_get(struct timecounter *tc)
 {
 	struct pvclock_softc		*sc = tc->tc_priv;
 	struct pvclock_time_info	*ti;
@@ -220,8 +324,10 @@ pvclock_get_timecount(struct timecounter *tc)
 	uint32_t			 version, mul_frac;
 	int8_t				 shift;
 	uint8_t				 flags;
+	int				 s;
 
-	ti = sc->sc_time;
+	ti = &sc->sc_page->ti;
+	s = splhigh();
 	do {
 		version = pvclock_read_begin(ti);
 		system_time = ti->ti_system_time;
@@ -229,26 +335,63 @@ pvclock_get_timecount(struct timecounter *tc)
 		mul_frac = ti->ti_tsc_to_system_mul;
 		shift = ti->ti_tsc_shift;
 		flags = ti->ti_flags;
+		delta = rdtsc_lfence();
 	} while (!pvclock_read_done(ti, version));
+	splx(s);
 
 	/*
 	 * The algorithm is described in
-	 * linux/Documentation/virtual/kvm/msr.txt
+	 * linux/Documentation/virt/kvm/x86/msr.rst
 	 */
-	delta = rdtsc() - tsc_timestamp;
-	if (shift < 0)
-		delta >>= -shift;
+	if (delta > tsc_timestamp)
+		delta -= tsc_timestamp;
 	else
-		delta <<= shift;
-	ctr = ((delta * mul_frac) >> 32) + system_time;
+		delta = 0;
+	ctr = pvclock_scale_delta(delta, mul_frac, shift) + system_time;
 
 	if ((flags & PVCLOCK_FLAG_TSC_STABLE) != 0)
 		return (ctr);
 
-	if (ctr < pvclock_lastcount)
-		return (pvclock_lastcount);
+	return pvclock_cmp_last(ctr);
+}
 
-	atomic_swap_uint(&pvclock_lastcount, ctr);
+uint
+pvclock_get_timecount(struct timecounter *tc)
+{
+	return (pvclock_get(tc));
+}
 
-	return (ctr);
+void
+pvclock_tick(void *arg)
+{
+	struct pvclock_softc		*sc = arg;
+	struct timespec			 ts;
+	struct pvclock_wall_clock	*wc = &sc->sc_page->wc;
+	int64_t				 value;
+
+	wrmsr(KVM_MSR_WALL_CLOCK, sc->sc_paddr + offsetof(struct pvpage, wc));
+	while (wc->wc_version & 0x1)
+		virtio_membar_sync();
+	if (wc->wc_sec) {
+		nanotime(&ts);
+		value = TIMESPEC_TO_NSEC(&ts) -
+		    SEC_TO_NSEC(wc->wc_sec) - wc->wc_nsec -
+		    pvclock_get(&pvclock_timecounter);
+
+		TIMESPEC_TO_TIMEVAL(&sc->sc_sensor.tv, &ts);
+		sc->sc_sensor.value = value;
+		sc->sc_sensor.status = SENSOR_S_OK;
+	} else
+		sc->sc_sensor.status = SENSOR_S_UNKNOWN;
+
+	timeout_add_sec(&sc->sc_tick, 15);
+}
+
+void
+pvclock_tick_hook(struct device *self)
+{
+	struct pvclock_softc	*sc = (struct pvclock_softc *)self;
+
+	timeout_set(&sc->sc_tick, pvclock_tick, sc);
+	pvclock_tick(sc);
 }
