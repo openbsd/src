@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.156 2025/06/18 09:04:51 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.157 2025/06/20 05:00:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -50,6 +50,8 @@ static pthread_cond_t	 globalq_cond  = PTHREAD_COND_INITIALIZER;
 static struct ibufqueue	*globalmsgq;
 static pthread_mutex_t	 globalmsgq_mtx = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t	 globalmsgq_cond  = PTHREAD_COND_INITIALIZER;
+
+static volatile int	 quit;
 
 struct parse_repo {
 	RB_ENTRY(parse_repo)	 entry;
@@ -1075,9 +1077,9 @@ parse_worker(void *arg)
 	if ((myq = ibufq_new()) == NULL)
 		err(1, "ibufqueue_new");
 
-	for (;;) {
+	while (!quit) {
 		pthread_mutex_lock(&globalq_mtx);
-		while (TAILQ_EMPTY(&globalq))
+		while (TAILQ_EMPTY(&globalq) && !quit)
 			pthread_cond_wait(&globalq_cond, &globalq_mtx);
 		n = 0;
 		while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
@@ -1100,10 +1102,10 @@ parse_worker(void *arg)
 		}
 	}
 
-
 	X509_STORE_CTX_free(ctx);
 	BN_CTX_free(bn_ctx);
 	ibufq_free(myq);
+	return NULL;
 }
 
 static void *
@@ -1115,11 +1117,12 @@ parse_writer(void *arg)
 	if ((myq = msgbuf_new()) == NULL)
 		err(1, NULL);
 	pfd.fd = *(int *)arg;
-	for (;;) {
+	while (!quit) {
 		if (msgbuf_queuelen(myq) == 0) {
 			pthread_mutex_lock(&globalmsgq_mtx);
-			while (ibufq_queuelen(globalmsgq) == 0)
-				pthread_cond_wait(&globalmsgq_cond, &globalmsgq_mtx);
+			while (ibufq_queuelen(globalmsgq) == 0 && !quit)
+				pthread_cond_wait(&globalmsgq_cond,
+				    &globalmsgq_mtx);
 			/* enqueue messages to local msgbuf */
 			msgbuf_concat(myq, globalmsgq);
 			pthread_mutex_unlock(&globalmsgq_mtx);
@@ -1137,8 +1140,10 @@ parse_writer(void *arg)
 				errx(1, "poll: bad descriptor");
 
 			/* If the parent closes, return immediately. */
-			if ((pfd.revents & POLLHUP))
+			if ((pfd.revents & POLLHUP)) {
+				quit = 1;
 				break;
+			}
 
 			if (pfd.revents & POLLOUT) {
 				if (msgbuf_write(pfd.fd, myq) == -1) {
@@ -1152,6 +1157,7 @@ parse_writer(void *arg)
 		}
 	}
 
+	msgbuf_free(myq);
 	return NULL;
 }
 
@@ -1170,7 +1176,7 @@ proc_parser(int fd, int nthreads)
 	struct msgbuf	*inbufq;
 	struct entity	*entp;
 	struct ibuf	*b;
-	pthread_t	 wthread, dummy;
+	pthread_t	 writer, *workers;
 	int		 i;
 
 	/* Only allow access to the cache directory. */
@@ -1191,12 +1197,15 @@ proc_parser(int fd, int nthreads)
 	    NULL)
 		err(1, NULL);
 
-	pthread_create(&wthread, NULL, &parse_writer, &fd);
+	if ((workers = calloc(nthreads, sizeof(*workers))) == NULL)
+		err(1, NULL);
+
+	pthread_create(&writer, NULL, &parse_writer, &fd);
 	for (i = 0; i < nthreads; i++)
-		pthread_create(&dummy, NULL, &parse_worker, NULL);
+		pthread_create(&workers[i], NULL, &parse_worker, NULL);
 
 	pfd.fd = fd;
-	for (;;) {
+	while (!quit) {
 		pfd.events = POLLIN;
 		if (poll(&pfd, 1, INFTIM) == -1) {
 			if (errno == EINTR)
@@ -1207,8 +1216,10 @@ proc_parser(int fd, int nthreads)
 			errx(1, "poll: bad descriptor");
 
 		/* If the parent closes, return immediately. */
-		if ((pfd.revents & POLLHUP))
+		if ((pfd.revents & POLLHUP)) {
+			quit = 1;
 			break;
+		}
 
 		if ((pfd.revents & POLLIN)) {
 			switch (ibuf_read(fd, inbufq)) {
@@ -1243,12 +1254,24 @@ proc_parser(int fd, int nthreads)
 		}
 	}
 
+	/* signal all threads */
+	pthread_cond_broadcast(&globalq_cond);
+	pthread_cond_broadcast(&globalmsgq_cond);
+
 	pthread_mutex_lock(&globalq_mtx);
 	while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
 		TAILQ_REMOVE(&globalq, entp, entries);
 		entity_free(entp);
 	}
 	pthread_mutex_unlock(&globalq_mtx);
+
+	if (pthread_join(writer, NULL) != 0)
+		errx(1, "pthread_join writer");
+	for (i = 0; i < nthreads; i++) {
+		if (pthread_join(workers[i], NULL) != 0)
+			errx(1, "pthread_join worker %d", i);
+	}
+	free(workers);	/* karl marx */
 
 	auth_tree_free(&auths);
 	crl_tree_free(&crlt);
