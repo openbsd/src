@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.222 2025/01/16 16:35:01 bluhm Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.223 2025/06/20 14:34:34 bluhm Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -210,9 +210,9 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 	so = fp->f_data;
 	if (so->so_state & SS_YP)
 		return ENOTSOCK;
-	solock(so);
+	solock_shared(so);
 	error = solisten(so, SCARG(uap, backlog));
-	sounlock(so);
+	sounlock_shared(so);
 	FRELE(fp, p);
 	return (error);
 }
