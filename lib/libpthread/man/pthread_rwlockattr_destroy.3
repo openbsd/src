@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlockattr_destroy.3,v 1.11 2025/06/07 00:16:52 schwarze Exp $
+.\" $OpenBSD: pthread_rwlockattr_destroy.3,v 1.12 2025/06/20 12:57:56 job Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,12 +25,12 @@
 .\"
 .\" $FreeBSD: pthread_rwlockattr_destroy.3,v 1.3 1999/08/28 00:03:10 peter Exp $
 .\"
-.Dd $Mdocdate: June 7 2025 $
+.Dd $Mdocdate: June 20 2025 $
 .Dt PTHREAD_RWLOCKATTR_DESTROY 3
 .Os
 .Sh NAME
 .Nm pthread_rwlockattr_destroy
-.Nd destroy a read/write lock
+.Nd destroy a read/write lock attributes object
 .Sh SYNOPSIS
 .Lb libpthread
 .In pthread.h
@@ -39,7 +39,7 @@
 .Sh DESCRIPTION
 The
 .Fn pthread_rwlockattr_destroy
-function is used to destroy a read/write lock attribute object
+function is used to destroy a read/write lock attributes object
 previously created with
 .Fn pthread_rwlockattr_init .
 .Sh RETURN VALUES
