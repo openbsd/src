@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.226 2025/06/05 08:49:09 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.227 2025/06/20 13:54:59 bluhm Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -913,7 +913,7 @@ refcnt_take(struct refcnt *r)
 	u_int refs;
 
 	refs = atomic_inc_int_nv(&r->r_refs);
-	KASSERT(refs != 0);
+	KASSERT(refs > 1);
 	TRACEINDEX(refcnt, r->r_traceidx, r, refs - 1, +1);
 	(void)refs;
 }
