@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.170 2025/06/18 13:00:21 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.171 2025/06/20 12:06:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -1123,35 +1123,32 @@ PRT_uuid_to_menudflt(const struct uuid *uuid)
 	return dflt;
 }
 
-const char *
-PRT_menuid_to_guid(const int menuid)
-{
-	unsigned int		i;
-
-	for (i = 0; i < nitems(menu_items); i++) {
-		if (gpt_item(i) == 0 && menu_items[i].mi_menuid == menuid)
-			return menu_items[i].mi_guid;
-	}
-
-	return NULL;
-}
-
+/*
+ * Accept gt_desc, gt_guid, mi_name or mi_menuid and return the
+ * associated GUID. Or NULL if none found.
+ */
 const char *
 PRT_desc_to_guid(const char *desc)
 {
+	char			octet[3];
 	unsigned int		i;
+	int			menuid = -1;
 
 	for (i = 0; i < nitems(gpt_types); i++) {
-		if (gpt_types[i].gt_desc == NULL)
-			continue;
-		if (strcasecmp(gpt_types[i].gt_desc, desc) == 0)
+		if (gpt_types[i].gt_desc &&
+		    strcasecmp(gpt_types[i].gt_desc, desc) == 0)
 			return gpt_types[i].gt_guid;
 		if (strcasecmp(gpt_types[i].gt_guid, desc) == 0)
 			return gpt_types[i].gt_guid;
 	}
+
+	if (strlcpy(octet, desc, sizeof(octet)) < sizeof(octet))
+		menuid = hex_octet(octet);
+
 	for (i = 0; i < nitems(menu_items); i++) {
 		if (gpt_item(i) == 0 &&
-		    strcasecmp(menu_items[i].mi_name, desc) == 0)
+		    (strcasecmp(menu_items[i].mi_name, desc) == 0 ||
+		     menu_items[i].mi_menuid == menuid))
 			return menu_items[i].mi_guid;
 	}
 

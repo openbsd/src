@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.182 2025/06/17 16:24:55 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.183 2025/06/20 12:06:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -656,7 +656,7 @@ ask_uuid(const struct uuid *olduuid)
 			goto done;
 		}
 
-		guid = PRT_menuid_to_guid(hex_octet(lbuf));
+		guid = PRT_desc_to_guid(lbuf);
 		if (guid == NULL)
 			guid = lbuf;
 
