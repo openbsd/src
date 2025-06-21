@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.105 2025/06/18 17:45:07 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.106 2025/06/21 22:08:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -91,7 +91,7 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		goto fail;
 	if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 		/* m_pullup() has freed the mbuf, so just return. */
-		div6stat_inc(divs_errors);
+		divstat_inc(divs_errors);
 		return (ENOBUFS);
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -166,11 +166,11 @@ divert6_output(struct inpcb *inp, struct mbuf *m, struct mbuf *nam,
 		    IP_ALLOWBROADCAST | IP_RAWOUTPUT, NULL, NULL);
 	}
 
-	div6stat_inc(divs_opackets);
+	divstat_inc(divs_opackets);
 	return (error);
 
 fail:
-	div6stat_inc(divs_errors);
+	divstat_inc(divs_errors);
 	m_freem(m);
 	return (error ? error : EINVAL);
 }
@@ -182,11 +182,11 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	struct socket *so;
 	struct sockaddr_in6 sin6;
 
-	div6stat_inc(divs_ipackets);
+	divstat_inc(divs_ipackets);
 
 	if (m->m_len < sizeof(struct ip6_hdr) &&
 	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-		div6stat_inc(divs_errors);
+		divstat_inc(divs_errors);
 		goto bad;
 	}
 
@@ -199,7 +199,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	}
 	mtx_leave(&divb6table.inpt_mtx);
 	if (inp == NULL) {
-		div6stat_inc(divs_noport);
+		divstat_inc(divs_noport);
 		goto bad;
 	}
 
@@ -213,7 +213,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 
 		ifp = if_get(m->m_pkthdr.ph_ifidx);
 		if (ifp == NULL) {
-			div6stat_inc(divs_errors);
+			divstat_inc(divs_errors);
 			goto bad;
 		}
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
@@ -235,7 +235,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	mtx_enter(&so->so_rcv.sb_mtx);
 	if (sbappendaddr(&so->so_rcv, sin6tosa(&sin6), m, NULL) == 0) {
 		mtx_leave(&so->so_rcv.sb_mtx);
-		div6stat_inc(divs_fullsock);
+		divstat_inc(divs_fullsock);
 		goto bad;
 	}
 	mtx_leave(&so->so_rcv.sb_mtx);
@@ -278,25 +278,4 @@ divert6_send(struct socket *so, struct mbuf *m, struct mbuf *addr,
 
 	soassertlocked(so);
 	return (divert6_output(inp, m, addr, control));
-}
-
-/*
- * Sysctl for divert variables.
- */
-int
-divert6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen)
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return (ENOTDIR);
-
-	switch (name[0]) {
-	case DIVERT6CTL_STATS:
-		return (divert_sysctl_divstat(div6counters, oldp, oldlenp,
-		    newp));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }

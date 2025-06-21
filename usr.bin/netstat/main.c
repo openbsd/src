@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.124 2022/12/23 07:18:46 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.125 2025/06/21 22:08:44 bluhm Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -89,7 +89,6 @@ struct protox {
 
 struct protox ip6protox[] = {
 	{ ip6_stats,	"ip6", IPPROTO_IPV6 },
-	{ div6_stats,	"divert6", IPPROTO_DIVERT },
 	{ icmp6_stats,	"icmp6", 0 },
 	{ rip6_stats,	"rip6", 0 },
 	{ NULL,		NULL, 0 }

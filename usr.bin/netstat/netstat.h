@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.78 2024/05/18 07:10:16 jsg Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.79 2025/06/21 22:08:44 bluhm Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -112,7 +112,6 @@ void	rdomainpr(void);
 
 void	ip6_stats(char *);
 void	icmp6_stats(char *);
-void	div6_stats(char *);
 void	rip6_stats(char *);
 void	mroute6pr(void);
 void	mrt6_stats(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.58 2025/06/04 12:37:00 bluhm Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.59 2025/06/21 22:08:44 bluhm Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,11 +43,9 @@
 #include <netinet/icmp6.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#include <netinet/ip_divert.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/raw_ip6.h>
-#include <netinet6/ip6_divert.h>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -863,37 +861,6 @@ rip6_stats(char *name)
 		printf("\t%llu delivered\n", (unsigned long long)delivered);
 	p(rip6s_opackets, "\t%llu datagram%s output\n");
 #undef p
-}
-
-/*
- * Dump divert6 statistics structure.
- */
-void
-div6_stats(char *name)
-{
-	struct divstat div6stat;
-	int mib[] = { CTL_NET, PF_INET6, IPPROTO_DIVERT, DIVERT6CTL_STATS };
-	size_t len = sizeof(div6stat);
-
-	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    &div6stat, &len, NULL, 0) == -1) {
-		if (errno != ENOPROTOOPT)
-			warn("%s", name);
-		return;
-	}
-
-	printf("%s:\n", name);
-#define p(f, m) if (div6stat.f || sflag <= 1) \
-    printf(m, div6stat.f, plural(div6stat.f))
-#define p1(f, m) if (div6stat.f || sflag <= 1) \
-    printf(m, div6stat.f)
-	p(divs_ipackets, "\t%lu total packet%s received\n");
-	p1(divs_noport, "\t%lu dropped due to no socket\n");
-	p1(divs_fullsock, "\t%lu dropped due to full socket buffers\n");
-	p(divs_opackets, "\t%lu packet%s output\n");
-	p1(divs_errors, "\t%lu errors\n");
-#undef p
-#undef p1
 }
 
 /*

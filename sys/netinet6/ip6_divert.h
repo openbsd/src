@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.h,v 1.25 2025/06/18 17:45:07 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.h,v 1.26 2025/06/21 22:08:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -31,7 +31,7 @@
 	{ 0, 0 }, \
 	{ NULL,	0 }, \
 	{ NULL,	0 }, \
-	{ "stats",	CTLTYPE_STRUCT } \
+	{ NULL,	0 } \
 }
 
 #ifdef _KERNEL
@@ -39,21 +39,12 @@
 #include <sys/percpu.h>
 #include <netinet/ip_divert.h>
 
-extern struct cpumem *div6counters;
-
-static inline void
-div6stat_inc(enum divstat_counters c)
-{
-	counters_inc(div6counters, c);
-}
-
 extern struct	inpcbtable	divb6table;
 
 extern const struct pr_usrreqs divert6_usrreqs;
 
 void	 divert6_init(void);
 void	 divert6_packet(struct mbuf *, int, u_int16_t);
-int	 divert6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 divert6_attach(struct socket *, int, int);
 int	 divert6_send(struct socket *, struct mbuf *, struct mbuf *,
 	     struct mbuf *);

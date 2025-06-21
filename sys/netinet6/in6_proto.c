@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.130 2025/06/21 14:21:17 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.131 2025/06/21 22:08:44 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -302,7 +302,6 @@ const struct protosw inet6sw[] = {
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreqs	= &divert6_usrreqs,
   .pr_init	= divert6_init,
-  .pr_sysctl	= divert6_sysctl
 },
 #endif /* NPF > 0 */
 #if NETHERIP > 0

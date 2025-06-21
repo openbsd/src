@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.266 2025/06/03 09:57:57 jsg Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.267 2025/06/21 22:08:44 bluhm Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
-#include <netinet6/ip6_divert.h>
 
 #include <netmpls/mpls.h>
 
@@ -699,8 +698,7 @@ parse(char *string, int flags)
 				special |= HEX;
 
 			if ((mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMFC) ||
-			    (mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMIF) ||
-			    (mib[2] == IPPROTO_DIVERT && mib[3] == DIVERT6CTL_STATS)) {
+			    (mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMIF)) {
 				if (flags == 0)
 					return;
 				warnx("use netstat to view %s information",
@@ -2169,7 +2167,6 @@ sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 struct ctlname inet6name[] = CTL_IPV6PROTO_NAMES;
 struct ctlname ip6name[] = IPV6CTL_NAMES;
 struct ctlname icmp6name[] = ICMPV6CTL_NAMES;
-struct ctlname divert6name[] = DIVERT6CTL_NAMES;
 struct list inet6list = { inet6name, IPV6PROTO_MAXID };
 struct list inet6vars[] = {
 /*0*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
@@ -2250,7 +2247,7 @@ struct list inet6vars[] = {
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ divert6name, DIVERT6CTL_MAXID },
+	{ 0, 0 },
 };
 
 /*
