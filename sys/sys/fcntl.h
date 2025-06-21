@@ -106,6 +106,7 @@
 /* defined by POSIX Issue 7 */
 #define	O_CLOEXEC	0x10000		/* atomically set FD_CLOEXEC */
 #define	O_DIRECTORY	0x20000		/* fail if not a directory */
+#define	O_CLOFORK	0x40000		/* atomically set FD_CLOFORK */
 
 #ifdef _KERNEL
 /*
@@ -158,9 +159,13 @@
 #if __BSD_VISIBLE
 #define F_ISATTY	11		/* used by isatty(3) */
 #endif
+#if __POSIX_VISIBLE >= 202405
+#define	F_DUPFD_CLOFORK	12		/* duplicate with FD_CLOFORK set */
+#endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
 #define	FD_CLOEXEC	1		/* close-on-exec flag */
+#define	FD_CLOFORK	2		/* close-on-fork flag */
 
 /* record locking flags (F_GETLK, F_SETLK, F_SETLKW) */
 #define	F_RDLCK		1		/* shared or read lock */

@@ -79,6 +79,7 @@ typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 #define	SOCK_NONBLOCK_INHERIT	0x2000	/* inherit O_NONBLOCK from listener */
 #endif
 #define	SOCK_DNS		0x1000	/* set SS_DNS */
+#define	SOCK_CLOFORK		0x0800	/* set FD_CLOFORK */
 #endif /* __BSD_VISIBLE */
 
 /*
@@ -511,6 +512,7 @@ struct timespec;
 #define	MSG_NOSIGNAL		0x400	/* do not send SIGPIPE */
 #define	MSG_CMSG_CLOEXEC	0x800	/* set FD_CLOEXEC on received fds */
 #define	MSG_WAITFORONE		0x1000	/* nonblocking but wait for one msg */
+#define	MSG_CMSG_CLOFORK	0x2000	/* set FD_CLOFORK on received fds */
 
 /*
  * Header for ancillary data objects in msg_control buffer.

@@ -80,6 +80,7 @@ int dodup3(struct proc *, int, int, int, register_t *);
 
 #define DUPF_CLOEXEC	0x01
 #define DUPF_DUP2	0x02
+#define DUPF_CLOFORK	0x04
 
 struct pool file_pool;
 struct pool fdesc_pool;
@@ -336,7 +337,7 @@ sys_dup3(struct proc *p, void *v, register_t *retval)
 
 	if (SCARG(uap, from) == SCARG(uap, to))
 		return (EINVAL);
-	if (SCARG(uap, flags) & ~O_CLOEXEC)
+	if (SCARG(uap, flags) & ~(O_CLOEXEC | O_CLOFORK))
 		return (EINVAL);
 	return (dodup3(p, SCARG(uap, from), SCARG(uap, to),
 	    SCARG(uap, flags), retval));
@@ -388,6 +389,8 @@ restart:
 	dupflags = DUPF_DUP2;
 	if (flags & O_CLOEXEC)
 		dupflags |= DUPF_CLOEXEC;
+	if (flags & O_CLOFORK)
+		dupflags |= DUPF_CLOFORK;
 
 	/* No need for FRELE(), finishdup() uses current ref. */
 	return (finishdup(p, fp, old, new, retval, dupflags));
@@ -423,6 +426,7 @@ restart:
 
 	case F_DUPFD:
 	case F_DUPFD_CLOEXEC:
+	case F_DUPFD_CLOFORK:
 		newmin = (long)SCARG(uap, arg);
 		if ((u_int)newmin >= lim_cur(RLIMIT_NOFILE) ||
 		    (u_int)newmin >= atomic_load_int(&maxfiles)) {
@@ -444,6 +448,8 @@ restart:
 
 			if (SCARG(uap, cmd) == F_DUPFD_CLOEXEC)
 				dupflags |= DUPF_CLOEXEC;
+			else if (SCARG(uap, cmd) == F_DUPFD_CLOFORK)
+				dupflags |= DUPF_CLOFORK;
 
 			/* No need for FRELE(), finishdup() uses current ref. */
 			error = finishdup(p, fp, fd, i, retval, dupflags);
@@ -452,16 +458,17 @@ restart:
 
 	case F_GETFD:
 		fdplock(fdp);
-		*retval = fdp->fd_ofileflags[fd] & UF_EXCLOSE ? 1 : 0;
+		*retval =
+		    ((fdp->fd_ofileflags[fd] & UF_EXCLOSE) ? FD_CLOEXEC : 0) |
+		    ((fdp->fd_ofileflags[fd] & UF_FOCLOSE) ? FD_CLOFORK : 0);
 		fdpunlock(fdp);
 		break;
 
 	case F_SETFD:
 		fdplock(fdp);
-		if ((long)SCARG(uap, arg) & 1)
-			fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
-		else
-			fdp->fd_ofileflags[fd] &= ~UF_EXCLOSE;
+		fdp->fd_ofileflags[fd] =
+		    (((long)SCARG(uap, arg) & FD_CLOEXEC) ? UF_EXCLOSE : 0) |
+		    (((long)SCARG(uap, arg) & FD_CLOFORK) ? UF_FOCLOSE : 0);
 		fdpunlock(fdp);
 		break;
 
@@ -667,9 +674,12 @@ finishdup(struct proc *p, struct file *fp, int old, int new,
 	fdp->fd_ofiles[new] = fp;
 	mtx_leave(&fdp->fd_fplock);
 
-	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
+	fdp->fd_ofileflags[new] =
+	    fdp->fd_ofileflags[old] & ~(UF_EXCLOSE | UF_FOCLOSE);
 	if (dupflags & DUPF_CLOEXEC)
 		fdp->fd_ofileflags[new] |= UF_EXCLOSE;
+	if (dupflags & DUPF_CLOFORK)
+		fdp->fd_ofileflags[new] |= UF_FOCLOSE;
 	*retval = new;
 
 	if (oldfp != NULL) {
@@ -711,7 +721,7 @@ fdinsert(struct filedesc *fdp, int fd, int flags, struct file *fp)
 	fdp->fd_ofiles[fd] = fp;
 	mtx_leave(&fdp->fd_fplock);
 
-	fdp->fd_ofileflags[fd] |= (flags & UF_EXCLOSE);
+	fdp->fd_ofileflags[fd] |= (flags & (UF_EXCLOSE | UF_FOCLOSE));
 }
 
 void
@@ -1150,6 +1160,7 @@ fdcopy(struct process *pr)
 			 * their internal consistency, so close them here.
 			 */
 			if (fp->f_count >= FDUP_MAX_COUNT ||
+			    (fdp->fd_ofileflags[i] & UF_FOCLOSE) != 0 ||
 			    fp->f_type == DTYPE_KQUEUE) {
 				if (i < newfdp->fd_freefile)
 					newfdp->fd_freefile = i;
@@ -1407,8 +1418,9 @@ dupfdopen(struct proc *p, int indx, int mode)
 	fdp->fd_ofiles[indx] = wfp;
 	mtx_leave(&fdp->fd_fplock);
 
-	fdp->fd_ofileflags[indx] = (fdp->fd_ofileflags[indx] & UF_EXCLOSE) |
-	    (fdp->fd_ofileflags[dupfd] & ~UF_EXCLOSE);
+	fdp->fd_ofileflags[indx] =
+	    (fdp->fd_ofileflags[indx] & (UF_EXCLOSE | UF_FOCLOSE)) |
+	    (fdp->fd_ofileflags[dupfd] & ~(UF_EXCLOSE | UF_FOCLOSE));
 
 	return (0);
 }
