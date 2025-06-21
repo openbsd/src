@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2100 2025/05/26 03:37:34 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2101 2025/06/21 20:17:35 bluhm Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -14088,12 +14088,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "XXV710 SFP28",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_C_QSFP,
+	    "E810-C QSFP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_C_SFP,
+	    "E810-C SFP",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_QSFP,
-	    "E810 XXV QSFP",
+	    "E810-XXV QSFP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_SFP,
-	    "E810 XXV SFP",
+	    "E810-XXV SFP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM_2,
