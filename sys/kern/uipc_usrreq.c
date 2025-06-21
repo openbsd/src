@@ -1146,6 +1146,8 @@ restart:
 		fdp->fd_ofileflags[fds[i]] = (rp->flags & UF_PLEDGED);
 		if (flags & MSG_CMSG_CLOEXEC)
 			fdp->fd_ofileflags[fds[i]] |= UF_EXCLOSE;
+		if (flags & MSG_CMSG_CLOFORK)
+			fdp->fd_ofileflags[fds[i]] |= UF_FOCLOSE;
 
 		rp++;
 	}

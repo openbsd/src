@@ -115,6 +115,7 @@ struct filedesc0 {
  */
 #define	UF_EXCLOSE 	0x01		/* auto-close on exec */
 #define	UF_PLEDGED 	0x02		/* open after pledge(2) */
+#define	UF_FOCLOSE 	0x04		/* auto-close on fork */
 
 /*
  * Flags on the file descriptor table.
