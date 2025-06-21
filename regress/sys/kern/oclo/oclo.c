@@ -41,21 +41,64 @@
  * program that will verify everything is correctly honored after an exec.
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdbool.h>
-#include <err.h>
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/sysmacros.h>
-#include <sys/fork.h>
-#include <wait.h>
-#include <errno.h>
-#include <string.h>
-#include <limits.h>
-#include <libgen.h>
+#include <sys/wait.h>
+
+#include <netinet/in.h>
 #include <sys/socket.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define strerrorname_np(e) (sys_errlist[e])
+
+#ifndef FORK_NOSIGCHLD
+#define FORK_NOSIGCHLD 0x01
+#endif
+
+#ifndef FORK_WAITPID
+#define FORK_WAITPID   0x02
+#endif
+
+/*
+ * Simulate Solaris' forkx() with POSIX fork()
+ */
+static pid_t
+forkx(int flags)
+{
+	struct sigaction oldact, ign;
+	pid_t pid;
+
+	if ((flags & ~(FORK_NOSIGCHLD | FORK_WAITPID)) != 0) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	memset(&ign, 0, sizeof(ign));
+	if (flags & FORK_NOSIGCHLD)
+		ign.sa_handler = SIG_IGN;
+	sigemptyset(&ign.sa_mask);
+
+	sigaction(SIGCHLD, NULL, &oldact);
+	sigaction(SIGCHLD, &ign, NULL);
+
+	pid = fork();
+
+	sigaction(SIGCHLD, &oldact, NULL);
+
+	return pid;
+}
 
 /*
  * Verification program name.
@@ -89,8 +132,8 @@ typedef struct clo_rtdata {
 } clo_rtdata_t;
 
 static clo_rtdata_t *oclo_rtdata;
-size_t oclo_rtdata_nents = 0;
-size_t oclo_rtdata_next = 0;
+static size_t oclo_rtdata_nents = 0;
+static size_t oclo_rtdata_next = 0;
 static int oclo_nextfd = STDERR_FILENO + 1;
 
 static bool
@@ -261,14 +304,24 @@ oclo_fdup_common(const clo_create_t *c, int targ_flags, int cmd)
 	case F_DUPFD_CLOFORK:
 		dup = fcntl(fd, cmd, fd);
 		break;
+#ifdef F_DUP2FD
 	case F_DUP2FD:
+#endif
+#ifdef F_DUP2FD_CLOEXEC
 	case F_DUP2FD_CLOEXEC:
+#endif
+#ifdef F_DUP2FD_CLOFORK
 	case F_DUP2FD_CLOFORK:
+#endif
+#if defined(F_DUP2FD) || defined(F_DUP2FD_CLOEXEC) || defined(F_DUP2FD_CLOFORK)
 		dup = fcntl(fd, cmd, fd + 1);
 		break;
+#endif
+#ifdef F_DUP3FD
 	case F_DUP3FD:
-		dup = fcntl(fd, cmd, fd + 1, targ_flags);
+		dup = fcntl(fd, cmd | (targ_flags << F_DUP3FD_SHIFT), fd + 1);
 		break;
+#endif
 	default:
 		errx(EXIT_FAILURE, "TEST FAILURE: %s: internal error: "
 		    "unexpected fcntl cmd: 0x%x", c->clo_desc, cmd);
@@ -300,24 +353,31 @@ oclo_fdupfd_exec(const clo_create_t *c)
 	oclo_fdup_common(c, FD_CLOEXEC, F_DUPFD_CLOEXEC);
 }
 
+#ifdef F_DUP2FD
 static void
 oclo_fdup2fd(const clo_create_t *c)
 {
 	oclo_fdup_common(c, 0, F_DUP2FD);
 }
+#endif
 
+#ifdef F_DUP2FD_CLOFORK
 static void
 oclo_fdup2fd_fork(const clo_create_t *c)
 {
 	oclo_fdup_common(c, FD_CLOFORK, F_DUP2FD_CLOFORK);
 }
+#endif
 
+#ifdef F_DUP2FD_CLOEXEC
 static void
 oclo_fdup2fd_exec(const clo_create_t *c)
 {
 	oclo_fdup_common(c, FD_CLOEXEC, F_DUP2FD_CLOEXEC);
 }
+#endif
 
+#ifdef F_DUP3FD
 static void
 oclo_fdup3fd_none(const clo_create_t *c)
 {
@@ -341,6 +401,7 @@ oclo_fdup3fd_both(const clo_create_t *c)
 {
 	oclo_fdup_common(c, FD_CLOEXEC | FD_CLOFORK, F_DUP3FD);
 }
+#endif
 
 static void
 oclo_dup_common(const clo_create_t *c, int targ_flags, bool v3)
@@ -598,9 +659,14 @@ oclo_rights_common(const clo_create_t *c, int targ_flags)
 		    "data: expected 0x7777, found 0x%x", c->clo_desc, data);
 	}
 
-	if (msg.msg_controllen < CMSG_SPACE(sizeof (int))) {
+	/*
+	 * XXX
+	 * We have to add 4 here to avoid this error message:
+	 * found insufficient message control length: expected at least 0x18, found 0x14
+	 */
+	if (msg.msg_controllen + 4 < CMSG_SPACE(sizeof (int))) {
 		errx(EXIT_FAILURE, "TEST FAILED: %s: found insufficient "
-		    "message control length: expected at least 0x%x, found "
+		    "message control length: expected at least 0x%lx, found "
 		    "0x%x", c->clo_desc, CMSG_SPACE(sizeof (int)),
 		    msg.msg_controllen);
 	}
@@ -775,6 +841,7 @@ static const clo_create_t oclo_create[] = { {
 	.clo_flags = FD_CLOEXEC | FD_CLOFORK,
 	.clo_func = oclo_fdupfd_exec
 }, {
+#ifdef F_DUP2FD
 	.clo_desc = "fcntl(F_DUP2FD) none->none",
 	.clo_flags = 0,
 	.clo_func = oclo_fdup2fd
@@ -807,6 +874,8 @@ static const clo_create_t oclo_create[] = { {
 	.clo_flags = FD_CLOEXEC | FD_CLOFORK,
 	.clo_func = oclo_fdup2fd_fork
 }, {
+#endif
+#ifdef F_DUP2FD_CLOEXEC
 	.clo_desc = "fcntl(F_DUP2FD_CLOEXEC) none",
 	.clo_flags = 0,
 	.clo_func = oclo_fdup2fd_exec
@@ -823,6 +892,8 @@ static const clo_create_t oclo_create[] = { {
 	.clo_flags = FD_CLOEXEC | FD_CLOFORK,
 	.clo_func = oclo_fdup2fd_exec
 }, {
+#endif
+#ifdef F_DUP3FD
 	.clo_desc = "fcntl(F_DUP3FD) none->none",
 	.clo_flags = 0,
 	.clo_func = oclo_fdup3fd_none
@@ -888,6 +959,7 @@ static const clo_create_t oclo_create[] = { {
 	.clo_flags = FD_CLOEXEC | FD_CLOFORK,
 	.clo_func = oclo_fdup3fd_fork
 }, {
+#endif
 	.clo_desc = "dup2() none->none",
 	.clo_flags = 0,
 	.clo_func = oclo_dup2
@@ -1204,24 +1276,19 @@ oclo_child_reopen(void)
 static void
 oclo_exec(void)
 {
-	ssize_t ret;
 	char dir[PATH_MAX], file[PATH_MAX];
 	char **argv;
 
-	ret = readlink("/proc/self/path/a.out", dir, sizeof (dir));
-	if (ret < 0) {
-		err(EXIT_FAILURE, "TEST FAILED: failed to read our a.out path "
-		    "from /proc");
-	} else if (ret == 0) {
-		errx(EXIT_FAILURE, "TEST FAILED: reading /proc/self/path/a.out "
-		    "returned 0 bytes");
-	} else if (ret == sizeof (dir)) {
-		errx(EXIT_FAILURE, "TEST FAILED: Using /proc/self/path/a.out "
-		    "requires truncation");
-	}
+	/*
+	 * XXX
+	 * There's no way to get the full pathname to an executable in OpenBSD
+	 * so use the cwd here.
+	 */
+	if (getcwd(dir, sizeof(dir)) == NULL)
+		err(1, "getcwd");
 
-	if (snprintf(file, sizeof (file), "%s/%s", dirname(dir), OCLO_VERIFY) >=
-	    sizeof (file)) {
+	if (snprintf(file, sizeof (file), "%s/%s", dir, OCLO_VERIFY) >=
+	    (int)sizeof (file)) {
 		errx(EXIT_FAILURE, "TEST FAILED: cannot assemble exec path "
 		    "name: internal buffer overflow");
 	}
@@ -1262,7 +1329,7 @@ main(void)
 	 * Treat failure during this set up phase as a hard failure. There's no
 	 * reason to continue if we can't successfully create the FDs we expect.
 	 */
-	for (size_t i = 0; i < ARRAY_SIZE(oclo_create); i++) {
+	for (long unsigned int i = 0; i < nitems(oclo_create); i++) {
 		oclo_create[i].clo_func(&oclo_create[i]);
 	}
 
