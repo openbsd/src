@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.44 2022/02/06 00:29:02 jsg Exp $
+.\" $OpenBSD: pthreads.3,v 1.45 2025/06/21 08:10:02 job Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: February 6 2022 $
+.Dd $Mdocdate: June 21 2025 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -214,9 +214,9 @@ Attempt to acquire a read/write lock for writing without blocking.
 .It Fn pthread_rwlock_unlock
 Release a read/write lock.
 .It Fn pthread_rwlockattr_init
-Initialise a read/write lock.
+Initialise a read/write lock attributes object.
 .It Fn pthread_rwlockattr_destroy
-Destroy a read/write lock.
+Destroy a read/write lock attributes object.
 .It Fn pthread_rwlockattr_getpshared
 Get the process shared attribute.
 .It Fn pthread_rwlockattr_setpshared
