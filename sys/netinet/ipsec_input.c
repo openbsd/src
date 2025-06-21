@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.218 2025/06/16 07:11:58 mvs Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.219 2025/06/21 14:21:17 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -928,7 +928,8 @@ ipsec_set_mtu(struct tdb *tdbp, u_int32_t mtu)
 
 		/* Store adjusted MTU in tdb */
 		tdbp->tdb_mtu = mtu;
-		tdbp->tdb_mtutimeout = gettime() + ip_mtudisc_timeout;
+		tdbp->tdb_mtutimeout = gettime() +
+		    atomic_load_int(&ip_mtudisc_timeout);
 		DPRINTF("spi %08x mtu %d adjust %ld",
 		    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu, adjust);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.273 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.274 2025/06/21 14:21:17 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1547,14 +1547,21 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_MRTMFC:
 		return (EOPNOTSUPP);
 #endif
-	case IPV6CTL_MTUDISCTIMEOUT:
-		NET_LOCK();
+	case IPV6CTL_MTUDISCTIMEOUT: {
+		int oldval, newval;
+
+		oldval = newval = atomic_load_int(&ip6_mtudisc_timeout);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &ip6_mtudisc_timeout, 0, INT_MAX);
-		rt_timer_queue_change(&icmp6_mtudisc_timeout_q,
-		    ip6_mtudisc_timeout);
-		NET_UNLOCK();
+		    &newval, 0, INT_MAX);
+		if (error == 0 && oldval != newval) {
+			rw_enter_write(&ip_sysctl_lock);
+			atomic_store_int(&ip6_mtudisc_timeout, newval);
+			rt_timer_queue_change(&icmp6_mtudisc_timeout_q, newval);
+			rw_exit_write(&ip_sysctl_lock);
+		}
+
 		return (error);
+	}
 	case IPV6CTL_IFQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ip6intrq));

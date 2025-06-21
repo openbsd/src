@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.129 2025/06/16 07:11:58 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.130 2025/06/21 14:21:17 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -350,6 +350,11 @@ const struct domain inet6domain = {
 };
 
 /*
+ * Locks used to protect global variables in this file:
+ *	a	atomic operations
+ */
+
+/*
  * Internet configuration info
  */
 int	ip6_forwarding = 0;	/* [a] no forwarding unless sysctl to enable */
@@ -384,4 +389,4 @@ u_long	rip6_recvspace = RIPV6RCVQ;
 /* ICMPV6 parameters */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
 int	icmp6errppslim = 100;		/* 100pps */
-int	ip6_mtudisc_timeout = IPMTUDISCTIMEOUT;
+int	ip6_mtudisc_timeout = IPMTUDISCTIMEOUT;	/* [a] */

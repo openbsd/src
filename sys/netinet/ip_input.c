@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.409 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.410 2025/06/21 14:21:17 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ int	ip_sendredirects = 1;			/* [a] */
 int	ip_dosourceroute = 0;			/* [a] */
 int	ip_defttl = IPDEFTTL;
 int	ip_mtudisc = 1;
-int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
+int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;	/* [a] */
 int	ip_directedbcast = 0;			/* [a] */
 
 /* Protects `ipq' and `ip_frags'. */
@@ -1723,11 +1723,15 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 }
 
 #ifndef SMALL_KERNEL
+
+/* Temporary, to avoid sysctl_lock recursion. */
+struct rwlock ip_sysctl_lock = RWLOCK_INITIALIZER("ipslk");
+
 int
 ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	int oldval, error;
+	int oldval, newval, error;
 
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPCTL_IFQUEUE &&
@@ -1746,12 +1750,16 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		NET_UNLOCK();
 		return error;
 	case IPCTL_MTUDISCTIMEOUT:
-		NET_LOCK();
+		oldval = newval = atomic_load_int(&ip_mtudisc_timeout);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &ip_mtudisc_timeout, 0, INT_MAX);
-		rt_timer_queue_change(&ip_mtudisc_timeout_q,
-		    ip_mtudisc_timeout);
-		NET_UNLOCK();
+		    &newval, 0, INT_MAX);
+		if (error == 0 && oldval != newval) {
+			rw_enter_write(&ip_sysctl_lock);
+			atomic_store_int(&ip_mtudisc_timeout, newval);
+			rt_timer_queue_change(&ip_mtudisc_timeout_q, newval);
+			rw_exit_write(&ip_sysctl_lock);
+		}
+
 		return (error);
 #ifdef IPSEC
 	case IPCTL_ENCDEBUG:
