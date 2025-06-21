@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.60 2025/06/13 12:29:58 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.61 2025/06/21 15:46:01 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -643,7 +643,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			goto out;
 
 		if (verbose) {
-			if (!X509_print_fp(stdout, x509))
+			if (!X509_print_ex_fp(stdout, x509, XN_FLAG_COMPAT,
+			    X509V3_EXT_DUMP_UNKNOWN))
 				errx(1, "X509_print_fp");
 		}
 
