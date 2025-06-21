@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.109 2025/06/12 20:37:58 deraadt Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.110 2025/06/21 05:37:58 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -367,7 +367,7 @@ timeout_add_ticks(struct timeout *to, uint64_t to_ticks)
 	 * softclock_process_tick_timeout will fire a timeout if it's
 	 * deadline is at the current ticks value. eg, a to_ticks
 	 * value of 1 plus the current ticks value will fire in the
-	 * next interupt, which will be too early. add 1 here to
+	 * next interrupt, which will be too early. add 1 here to
 	 * ensure the requested time has elapsed.
 	 */
 
