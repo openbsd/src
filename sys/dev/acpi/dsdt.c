@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.274 2025/03/22 18:14:37 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.275 2025/06/22 11:19:00 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1753,6 +1753,7 @@ struct aml_scope *aml_pushscope(struct aml_scope *, struct aml_value *,
 struct aml_scope *aml_popscope(struct aml_scope *);
 
 void		aml_showstack(struct aml_scope *);
+struct aml_value *aml_tryconv(struct aml_value *, int, int);
 struct aml_value *aml_convert(struct aml_value *, int, int);
 
 int		aml_matchtest(int64_t, int64_t, int);
@@ -1766,6 +1767,8 @@ int		aml_ccrlen(int, union acpi_resource *, void *);
 
 void		aml_store(struct aml_scope *, struct aml_value *, int64_t,
     struct aml_value *);
+void		aml_rwfield(struct aml_value *, int, int, struct aml_value *,
+    int);
 
 /*
  * Reference Count functions
@@ -2022,7 +2025,7 @@ aml_hextoint(const char *str)
 }
 
 struct aml_value *
-aml_convert(struct aml_value *a, int ctype, int clen)
+aml_tryconv(struct aml_value *a, int ctype, int clen)
 {
 	struct aml_value *c = NULL;
 
@@ -2045,6 +2048,11 @@ aml_convert(struct aml_value *a, int ctype, int clen)
 			c = aml_allocvalue(AML_OBJTYPE_BUFFER, a->length,
 			    a->v_string);
 			break;
+		case AML_OBJTYPE_BUFFERFIELD:
+		case AML_OBJTYPE_FIELDUNIT:
+			c = aml_allocvalue(AML_OBJTYPE_BUFFER, 0, NULL);
+			aml_rwfield(a, 0, a->v_field.bitlen, c, ACPI_IOREAD);
+			break;
 		}
 		break;
 	case AML_OBJTYPE_INTEGER:
@@ -2061,6 +2069,13 @@ aml_convert(struct aml_value *a, int ctype, int clen)
 			break;
 		case AML_OBJTYPE_UNINITIALIZED:
 			c = aml_allocvalue(AML_OBJTYPE_INTEGER, 0, NULL);
+			break;
+		case AML_OBJTYPE_BUFFERFIELD:
+		case AML_OBJTYPE_FIELDUNIT:
+			if (a->v_field.bitlen > aml_intlen)
+				break;
+			c = aml_allocvalue(AML_OBJTYPE_INTEGER, 0, NULL);
+			aml_rwfield(a, 0, a->v_field.bitlen, c, ACPI_IOREAD);
 			break;
 		}
 		break;
@@ -2087,6 +2102,15 @@ aml_convert(struct aml_value *a, int ctype, int clen)
 		}
 		break;
 	}
+	return c;
+}
+
+struct aml_value *
+aml_convert(struct aml_value *a, int ctype, int clen)
+{
+	struct aml_value *c;
+
+	c = aml_tryconv(a, ctype, clen);
 	if (c == NULL) {
 #ifndef SMALL_KERNEL
 		aml_showvalue(a);
@@ -2099,7 +2123,25 @@ aml_convert(struct aml_value *a, int ctype, int clen)
 int
 aml_compare(struct aml_value *a1, struct aml_value *a2, int opcode)
 {
+	struct aml_value *cv;		/* value after conversion */
 	int rc = 0;
+
+	/*
+	 * Convert A1 to integer, string, or buffer.
+	 *
+	 * The possible conversions listed in Table 19.6 of the ACPI spec
+	 * imply that unless we already got one of the three supported types,
+	 * the conversion must be from field unit or buffer field. In both
+	 * cases, the rules (Table 19.7) state that we should convert to
+	 * integer if possible with buffer as a fallback.
+	 */
+	if (a1->type != AML_OBJTYPE_INTEGER && a1->type != AML_OBJTYPE_STRING
+	    && a1->type != AML_OBJTYPE_BUFFER) {
+		cv = aml_tryconv(a1, AML_OBJTYPE_INTEGER, -1);
+		if (cv == NULL)
+			cv = aml_convert(a1, AML_OBJTYPE_BUFFER, -1);
+		a1 = cv;
+	}
 
 	/* Convert A2 to type of A1 */
 	a2 = aml_convert(a2, a1->type, -1);
@@ -2126,6 +2168,14 @@ struct aml_value *
 aml_concat(struct aml_value *a1, struct aml_value *a2)
 {
 	struct aml_value *c = NULL;
+
+	/*
+	 * Make A1 an integer, string, or buffer. Unless we already got one
+	 * of these three types, convert to string.
+	 */
+	if (a1->type != AML_OBJTYPE_INTEGER && a1->type != AML_OBJTYPE_STRING
+	    && a1->type != AML_OBJTYPE_BUFFER)
+		a1 = aml_convert(a1, AML_OBJTYPE_STRING, -1);
 
 	/* Convert arg2 to type of arg1 */
 	a2 = aml_convert(a2, a1->type, -1);
@@ -2292,7 +2342,6 @@ void aml_rwgen(struct aml_value *, int, int, struct aml_value *, int, int);
 void aml_rwgpio(struct aml_value *, int, int, struct aml_value *, int, int);
 void aml_rwgsb(struct aml_value *, int, int, int, struct aml_value *, int, int);
 void aml_rwindexfield(struct aml_value *, struct aml_value *val, int);
-void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
 
 /* Get PCI address for opregion objects */
 int
