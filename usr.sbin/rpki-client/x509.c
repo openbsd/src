@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.109 2025/06/19 15:52:20 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.110 2025/06/22 17:00:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -198,7 +198,7 @@ x509_get_aki(X509 *x, const char *fn, char **aki)
 	dsz = os->length;
 
 	if (dsz != SHA_DIGEST_LENGTH) {
-		warnx("%s: RFC 6487 section 4.8.2: AKI: "
+		warnx("%s: RFC 6487 section 4.8.3: AKI: "
 		    "want %d bytes SHA1 hash, have %d bytes",
 		    fn, SHA_DIGEST_LENGTH, dsz);
 		goto out;
