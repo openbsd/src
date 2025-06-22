@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.478 2025/06/12 20:37:58 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.479 2025/06/22 11:34:40 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -611,25 +611,25 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &bt, sizeof bt));
 	}
 	case KERN_MBSTAT: {
-		uint64_t counters[MBSTAT_COUNT];
+		uint64_t counters[mbs_ncounters];
 		struct mbstat mbs;
 		unsigned int i;
 
 		memset(&mbs, 0, sizeof(mbs));
-		counters_read(mbstat, counters, MBSTAT_COUNT, NULL);
-		for (i = 0; i < MBSTAT_TYPES; i++)
+		counters_read(mbstat, counters, mbs_ncounters, NULL);
+		for (i = 0; i < MT_NTYPES; i++)
 			mbs.m_mtypes[i] = counters[i];
-
-		mbs.m_drops = counters[MBSTAT_DROPS];
-		mbs.m_wait = counters[MBSTAT_WAIT];
-		mbs.m_drain = counters[MBSTAT_DRAIN];
-		mbs.m_defrag_alloc = counters[MBSTAT_DEFRAG_ALLOC];
-		mbs.m_prepend_alloc = counters[MBSTAT_PREPEND_ALLOC];
-		mbs.m_pullup_alloc = counters[MBSTAT_PULLUP_ALLOC];
-		mbs.m_pullup_copy = counters[MBSTAT_PULLUP_COPY];
-		mbs.m_pulldown_alloc = counters[MBSTAT_PULLDOWN_ALLOC];
-		mbs.m_pulldown_copy = counters[MBSTAT_PULLDOWN_COPY];
-
+#define ASSIGN(name) do { mbs.m_##name = counters[mbs_##name]; } while (0)
+		ASSIGN(drops);
+		ASSIGN(wait);
+		ASSIGN(drain);
+		ASSIGN(defrag_alloc);
+		ASSIGN(prepend_alloc);
+		ASSIGN(pullup_alloc);
+		ASSIGN(pullup_copy);
+		ASSIGN(pulldown_alloc);
+		ASSIGN(pulldown_copy);
+#undef ASSIGN
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    &mbs, sizeof(mbs)));
 	}

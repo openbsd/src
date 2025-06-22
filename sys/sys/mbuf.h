@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.265 2024/11/05 13:15:13 jsg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.266 2025/06/22 11:34:40 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -361,17 +361,18 @@ u_int mextfree_register(void (*)(caddr_t, u_int, void *));
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000
 
-#define MBSTAT_TYPES		MT_NTYPES
-#define MBSTAT_DROPS		(MBSTAT_TYPES + 0)
-#define MBSTAT_WAIT		(MBSTAT_TYPES + 1)
-#define MBSTAT_DRAIN		(MBSTAT_TYPES + 2)
-#define MBSTAT_DEFRAG_ALLOC	(MBSTAT_TYPES + 3)
-#define MBSTAT_PREPEND_ALLOC	(MBSTAT_TYPES + 4)
-#define MBSTAT_PULLUP_ALLOC	(MBSTAT_TYPES + 5)
-#define MBSTAT_PULLUP_COPY	(MBSTAT_TYPES + 6)
-#define MBSTAT_PULLDOWN_ALLOC	(MBSTAT_TYPES + 7)
-#define MBSTAT_PULLDOWN_COPY	(MBSTAT_TYPES + 8)
-#define MBSTAT_COUNT		(MBSTAT_TYPES + 9)
+enum mbstat_counters {
+	mbs_drops = MT_NTYPES,
+	mbs_wait,
+	mbs_drain,
+	mbs_defrag_alloc,
+	mbs_prepend_alloc,
+	mbs_pullup_alloc,
+	mbs_pullup_copy,
+	mbs_pulldown_alloc,
+	mbs_pulldown_copy,
+	mbs_ncounters
+};
 
 /*
  * Mbuf statistics.
@@ -379,11 +380,10 @@ u_int mextfree_register(void (*)(caddr_t, u_int, void *));
  * pool headers (mbpool and mclpool).
  */
 struct mbstat {
-	u_long	m_drops;	/* times failed to find space */
-	u_long	m_wait;		/* times waited for space */
-	u_long	m_drain;	/* times drained protocols for space */
-	u_long	m_mtypes[MBSTAT_TYPES];
-				/* type specific mbuf allocations */
+	u_long	m_drops;		/* times failed to find space */
+	u_long	m_wait;			/* times waited for space */
+	u_long	m_drain;		/* times drained protocols for space */
+	u_long	m_mtypes[MT_NTYPES];	/* type specific mbuf allocations */
 	u_long	m_defrag_alloc;
 	u_long	m_prepend_alloc;
 	u_long	m_pullup_alloc;
@@ -464,6 +464,16 @@ m_freemp(struct mbuf **mp)
 
 	*mp = NULL;
 	return m_freem(m);
+}
+
+#include <sys/percpu.h>
+
+static inline void
+mbstat_inc(enum mbstat_counters c)
+{
+	int s = splnet();
+	counters_inc(mbstat, c);
+	splx(s);
 }
 
 /* Packet tag routines */

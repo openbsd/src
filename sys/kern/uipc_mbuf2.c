@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.48 2025/05/27 07:52:49 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.49 2025/06/22 11:34:40 bluhm Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -118,7 +118,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	if (len <= n->m_len - off) {
 		struct mbuf *mlast;
 
-		counters_inc(mbstat, MBSTAT_PULLDOWN_ALLOC);
+		mbstat_inc(mbs_pulldown_alloc);
 		o = m_dup1(n, off, n->m_len - off, M_DONTWAIT);
 		if (o == NULL) {
 			m_freem(m);
@@ -160,7 +160,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	 */
 	if ((off == 0 || offp) && m_trailingspace(n) >= tlen &&
 	    !sharedcluster) {
-		counters_inc(mbstat, MBSTAT_PULLDOWN_COPY);
+		mbstat_inc(mbs_pulldown_copy);
 		m_copydata(n->m_next, 0, tlen, mtod(n, caddr_t) + n->m_len);
 		n->m_len += tlen;
 		m_adj(n->m_next, tlen);
@@ -170,7 +170,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	    !sharedcluster && n->m_next->m_len >= tlen) {
 		n->m_next->m_data -= hlen;
 		n->m_next->m_len += hlen;
-		counters_inc(mbstat, MBSTAT_PULLDOWN_COPY);
+		mbstat_inc(mbs_pulldown_copy);
 		memcpy(mtod(n->m_next, caddr_t), mtod(n, caddr_t) + off, hlen);
 		n->m_len -= hlen;
 		n = n->m_next;
@@ -186,7 +186,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 		m_freem(m);
 		return (NULL);
 	}
-	counters_inc(mbstat, MBSTAT_PULLDOWN_ALLOC);
+	mbstat_inc(mbs_pulldown_alloc);
 	MGET(o, M_DONTWAIT, m->m_type);
 	if (o && len > MLEN) {
 		MCLGETL(o, M_DONTWAIT, len);
