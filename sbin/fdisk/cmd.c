@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.183 2025/06/20 12:06:07 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.184 2025/06/22 12:23:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -311,7 +311,7 @@ gsetpid(const int pn)
 
 	if (PRT_protected_uuid(&gp[pn].gp_type)) {
 		printf("can't edit partition type %s\n",
-		    PRT_uuid_to_desc(&gp[pn].gp_type));
+		    PRT_uuid_to_desc(&gp[pn].gp_type, 0));
 		return -1;
 	}
 
@@ -319,7 +319,7 @@ gsetpid(const int pn)
 	gp[pn].gp_type = *ask_uuid(&gp[pn].gp_type);
 	if (PRT_protected_uuid(&gp[pn].gp_type) && is_nil == 0) {
 		printf("can't change partition type to %s\n",
-		    PRT_uuid_to_desc(&gp[pn].gp_type));
+		    PRT_uuid_to_desc(&gp[pn].gp_type, 0));
 		return -1;
 	}
 
@@ -631,17 +631,10 @@ ask_uuid(const struct uuid *olduuid)
 	char			 lbuf[LINEBUFSZ];
 	static struct uuid	 uuid;
 	const char		*guid;
-	char			*dflt;
+	const char		*dflt;
 	uint32_t		 status;
 
-	dflt = PRT_uuid_to_menudflt(olduuid);
-	if (dflt == NULL) {
-		if (asprintf(&dflt, "00") == -1) {
-			warn("asprintf()");
-			goto done;
-		}
-	}
-
+	dflt = PRT_uuid_to_desc(olduuid, 1);	/* guid, menu id or "00". */
 	for (;;) {
 		printf("Partition id ('0' to disable) [01 - FF, <uuid>]: [%s] ",
 		    dflt);
@@ -668,6 +661,5 @@ ask_uuid(const struct uuid *olduuid)
 	}
 
  done:
-	free(dflt);
 	return &uuid;
 }

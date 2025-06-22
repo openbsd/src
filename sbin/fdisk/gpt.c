@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.103 2025/06/20 12:06:07 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.104 2025/06/22 12:23:08 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -567,7 +567,7 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 	size = units_size(units, (start > end) ? 0 : end - start + 1, &ut);
 
 	printf(" %3u: %-36s [%12lld: %12.0f%s]\n", pn,
-	    PRT_uuid_to_desc(&gp[pn].gp_type), start, size, ut->ut_abbr);
+	    PRT_uuid_to_desc(&gp[pn].gp_type, 0), start, size, ut->ut_abbr);
 
 	if (verbosity == VERBOSE) {
 		uuid_to_string(&gp[pn].gp_guid, &guidstr, &status);
