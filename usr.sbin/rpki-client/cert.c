@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.164 2025/06/19 11:06:48 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.165 2025/06/22 12:56:42 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1159,7 +1159,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		}
 		break;
 	case CERT_PURPOSE_EE:
-		warn("%s: unexpected EE cert", fn);
+		warnx("%s: unexpected EE cert", fn);
 		goto out;
 	default:
 		warnx("%s: x509_get_purpose failed in %s", fn, __func__);

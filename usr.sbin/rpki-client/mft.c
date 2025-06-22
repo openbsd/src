@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.122 2025/02/25 15:55:26 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.123 2025/06/22 12:56:42 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -352,11 +352,11 @@ mft_parse_econtent(const char *fn, struct mft *mft, const unsigned char *d,
 	}
 
 	if (!x509_get_time(mft_asn1->thisUpdate, &mft->thisupdate)) {
-		warn("%s: parsing manifest thisUpdate failed", fn);
+		warnx("%s: parsing manifest thisUpdate failed", fn);
 		goto out;
 	}
 	if (!x509_get_time(mft_asn1->nextUpdate, &mft->nextupdate)) {
-		warn("%s: parsing manifest nextUpdate failed", fn);
+		warnx("%s: parsing manifest nextUpdate failed", fn);
 		goto out;
 	}
 
