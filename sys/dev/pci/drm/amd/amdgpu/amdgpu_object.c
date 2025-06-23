@@ -56,7 +56,6 @@
 
 static void amdgpu_bo_destroy(struct ttm_buffer_object *tbo)
 {
-	struct amdgpu_device *adev = amdgpu_ttm_adev(tbo->bdev);
 	struct amdgpu_bo *bo = ttm_to_amdgpu_bo(tbo);
 
 	amdgpu_bo_kunmap(bo);
