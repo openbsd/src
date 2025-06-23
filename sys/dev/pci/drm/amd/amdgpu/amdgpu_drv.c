@@ -3403,6 +3403,7 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	adev->pdev = dev->pdev;
+	adev->flags = amdgpu_fix_asic_type(adev->pdev, adev->flags);
 
 	/* from amdgpu_pci_probe() */
 	if (amdgpu_aspm == -1 && !pcie_aspm_enabled(adev->pdev))
