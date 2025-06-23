@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.275 2025/06/23 09:16:32 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.276 2025/06/23 20:55:28 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1494,19 +1494,14 @@ ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 int
 ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
-	uint8_t oldkey[IP6_SOIIKEY_LEN];
 	int error;
 
 	error = suser(curproc);
 	if (error != 0)
 		return (error);
 
-	memcpy(oldkey, ip6_soiikey, sizeof(oldkey));
-
-	error = sysctl_struct(oldp, oldlenp, newp, newlen, ip6_soiikey,
-	    sizeof(ip6_soiikey));
-
-	return (error);
+	return (sysctl_struct(oldp, oldlenp, newp, newlen, ip6_soiikey,
+	    sizeof(ip6_soiikey)));
 }
 
 int
