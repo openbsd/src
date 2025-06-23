@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd_ipcp.8,v 1.6 2024/08/07 07:15:18 yasuoka Exp $
+.\"	$OpenBSD: radiusd_ipcp.8,v 1.7 2025/06/23 23:57:48 yasuoka Exp $
 .\"
 .\" Copyright (c) 2024 Internet Initiative Japan Inc.
 .\"
@@ -16,7 +16,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: August 7 2024 $
+.Dd $Mdocdate: June 23 2025 $
 .Dt RADIUSD_IPCP 8
 .Os
 .Sh NAME
@@ -84,6 +84,10 @@ When
 is specified,
 the value of the Session-Timeout attribute in Access-Accept is used for
 the timeout.
+When the value is specified in seconds and the Session-Timeout attribute is
+specified for a session,
+the Session-Timeout attribute value is used to disconnect the session in
+preference.
 Configure
 .Ic dae server
 to use this option.

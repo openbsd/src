@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.25 2025/06/23 05:21:15 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.26 2025/06/23 23:57:48 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -1186,11 +1186,12 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 		if (!self->no_session_timeout && (self->session_timeout > 0 ||
 		    assign->session_timeout > 0)) {
 			assign->timeout = assign->start;
-			if (self->session_timeout > 0)
-				assign->timeout.tv_sec += self->session_timeout;
-			else
+			/* prefer the value from the RADIUS attribute */
+			if (assign->session_timeout > 0)
 				assign->timeout.tv_sec +=
 				    assign->session_timeout;
+			else
+				assign->timeout.tv_sec += self->session_timeout;
 		}
 		assign->nas_ipv4 = nas_ipv4;
 		assign->nas_ipv6 = nas_ipv6;
