@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.45 2025/06/04 09:18:28 claudio Exp $ */
+/*	$OpenBSD: crl.c,v 1.46 2025/06/23 22:01:14 job Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -313,9 +313,11 @@ crl_get(struct crl_tree *crlt, const struct auth *a)
 	find.aki = a->cert->ski;
 	find.mftpath = a->cert->mft;
 
-	pthread_rwlock_rdlock(&crl_lk);
+	if (pthread_rwlock_rdlock(&crl_lk) != 0)
+		errx(1, "pthread_rwlock_rdlock");
 	crl = RB_FIND(crl_tree, crlt, &find);
-	pthread_rwlock_unlock(&crl_lk);
+	if (pthread_rwlock_unlock(&crl_lk) != 0)
+		errx(1, "pthread_rwlock_unlock");
 	return crl;
 }
 
@@ -324,9 +326,11 @@ crl_insert(struct crl_tree *crlt, struct crl *crl)
 {
 	int rv;
 
-	pthread_rwlock_wrlock(&crl_lk);
+	if (pthread_rwlock_wrlock(&crl_lk) != 0)
+		errx(1, "pthread_rwlock_wrlock");
 	rv = RB_INSERT(crl_tree, crlt, crl) == NULL;
-	pthread_rwlock_unlock(&crl_lk);
+	if (pthread_rwlock_unlock(&crl_lk) != 0)
+		errx(1, "pthread_rwlock_unlock");
 
 	return rv;
 }

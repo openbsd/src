@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.157 2025/06/20 05:00:01 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.158 2025/06/23 22:01:14 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -76,9 +76,11 @@ repo_get(unsigned int id)
 {
 	struct parse_repo needle = { .id = id }, *r;
 
-	pthread_rwlock_rdlock(&repos_lk);
+	if (pthread_rwlock_rdlock(&repos_lk) != 0)
+		errx(1, "pthread_rwlock_rdlock");
 	r = RB_FIND(repo_tree, &repos, &needle);
-	pthread_rwlock_unlock(&repos_lk);
+	if (pthread_rwlock_unlock(&repos_lk) != 0)
+		errx(1, "pthread_rwlock_unlock");
 	return r;
 }
 
@@ -97,10 +99,12 @@ repo_add(unsigned int id, char *path, char *validpath)
 		if ((rp->validpath = strdup(validpath)) == NULL)
 			err(1, NULL);
 
-	pthread_rwlock_wrlock(&repos_lk);
+	if (pthread_rwlock_wrlock(&repos_lk) != 0)
+		errx(1, "pthread_rwlock_wrlock");
 	if (RB_INSERT(repo_tree, &repos, rp) != NULL)
 		errx(1, "repository already added: id %d, %s", id, path);
-	pthread_rwlock_unlock(&repos_lk);
+	if (pthread_rwlock_unlock(&repos_lk) != 0)
+		errx(1, "pthread_rwlock_unlock");
 }
 
 /*
@@ -1078,7 +1082,8 @@ parse_worker(void *arg)
 		err(1, "ibufqueue_new");
 
 	while (!quit) {
-		pthread_mutex_lock(&globalq_mtx);
+		if (pthread_mutex_lock(&globalq_mtx) != 0)
+			errx(1, "pthread_mutex_lock");
 		while (TAILQ_EMPTY(&globalq) && !quit)
 			pthread_cond_wait(&globalq_cond, &globalq_mtx);
 		n = 0;
@@ -1088,17 +1093,23 @@ parse_worker(void *arg)
 			if (n++ > 16)
 				break;
 		}
-		pthread_mutex_unlock(&globalq_mtx);
-		if (n > 16)
-			pthread_cond_signal(&globalq_cond);
+		if (pthread_mutex_unlock(&globalq_mtx) != 0)
+			errx(1, "pthread_mutex_unlock");
+		if (n > 16) {
+			if (pthread_cond_signal(&globalq_cond) != 0)
+				errx(1, "pthread_cond_signal");
+		}
 
 		parse_entity(&q, myq, ctx, bn_ctx);
 
 		if (ibufq_queuelen(myq) > 0) {
-			pthread_mutex_lock(&globalmsgq_mtx);
+			if (pthread_mutex_lock(&globalmsgq_mtx) != 0)
+				errx(1, "pthread_mutex_lock");
 			ibufq_concat(globalmsgq, myq);
-			pthread_cond_signal(&globalmsgq_cond);
-			pthread_mutex_unlock(&globalmsgq_mtx);
+			if (pthread_cond_signal(&globalmsgq_cond) != 0)
+				errx(1, "pthread_cond_signal");
+			if (pthread_mutex_unlock(&globalmsgq_mtx) != 0)
+				errx(1, "pthread_mutex_unlock");
 		}
 	}
 
@@ -1119,13 +1130,15 @@ parse_writer(void *arg)
 	pfd.fd = *(int *)arg;
 	while (!quit) {
 		if (msgbuf_queuelen(myq) == 0) {
-			pthread_mutex_lock(&globalmsgq_mtx);
+			if (pthread_mutex_lock(&globalmsgq_mtx) != 0)
+				errx(1, "pthread_mutex_lock");
 			while (ibufq_queuelen(globalmsgq) == 0 && !quit)
 				pthread_cond_wait(&globalmsgq_cond,
 				    &globalmsgq_mtx);
 			/* enqueue messages to local msgbuf */
 			msgbuf_concat(myq, globalmsgq);
-			pthread_mutex_unlock(&globalmsgq_mtx);
+			if (pthread_mutex_unlock(&globalmsgq_mtx) != 0)
+				errx(1, "pthread_mutex_lock");
 		}
 
 		if (msgbuf_queuelen(myq) > 0) {
@@ -1200,9 +1213,12 @@ proc_parser(int fd, int nthreads)
 	if ((workers = calloc(nthreads, sizeof(*workers))) == NULL)
 		err(1, NULL);
 
-	pthread_create(&writer, NULL, &parse_writer, &fd);
-	for (i = 0; i < nthreads; i++)
-		pthread_create(&workers[i], NULL, &parse_worker, NULL);
+	if (pthread_create(&writer, NULL, &parse_writer, &fd) != 0)
+		errx(1, "pthread_create");
+	for (i = 0; i < nthreads; i++) {
+		if (pthread_create(&workers[i], NULL, &parse_worker, NULL) != 0)
+			errx(1, "pthread_create");
+	}
 
 	pfd.fd = fd;
 	while (!quit) {
@@ -1246,24 +1262,31 @@ proc_parser(int fd, int nthreads)
 				TAILQ_INSERT_TAIL(&myq, entp, entries);
 			}
 			if (!TAILQ_EMPTY(&myq)) {
-				pthread_mutex_lock(&globalq_mtx);
+				if (pthread_mutex_lock(&globalq_mtx) != 0)
+					errx(1, "pthread_mutex_lock");
 				TAILQ_CONCAT(&globalq, &myq, entries);
-				pthread_mutex_unlock(&globalq_mtx);
-				pthread_cond_signal(&globalq_cond);
+				if (pthread_mutex_unlock(&globalq_mtx) != 0)
+					errx(1, "pthread_mutex_unlock");
+				if (pthread_cond_signal(&globalq_cond) != 0)
+					errx(1, "pthread_cond_signal");
 			}
 		}
 	}
 
 	/* signal all threads */
-	pthread_cond_broadcast(&globalq_cond);
-	pthread_cond_broadcast(&globalmsgq_cond);
+	if (pthread_cond_broadcast(&globalq_cond) != 0)
+		errx(1, "pthread_cond_broadcast");
+	if (pthread_cond_broadcast(&globalmsgq_cond) != 0)
+		errx(1, "pthread_cond_broadcast");
 
-	pthread_mutex_lock(&globalq_mtx);
+	if (pthread_mutex_lock(&globalq_mtx) != 0)
+		errx(1, "pthread_mutex_lock");
 	while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
 		TAILQ_REMOVE(&globalq, entp, entries);
 		entity_free(entp);
 	}
-	pthread_mutex_unlock(&globalq_mtx);
+	if (pthread_mutex_unlock(&globalq_mtx) != 0)
+		errx(1, "pthread_mutex_unlock");
 
 	if (pthread_join(writer, NULL) != 0)
 		errx(1, "pthread_join writer");

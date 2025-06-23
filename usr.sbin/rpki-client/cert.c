@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.165 2025/06/22 12:56:42 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.166 2025/06/23 22:01:14 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1426,9 +1426,11 @@ auth_find(struct auth_tree *auths, int id)
 	c.certid = id;
 	a.cert = &c;
 
-	pthread_rwlock_rdlock(&cert_lk);
+	if (pthread_rwlock_rdlock(&cert_lk) != 0)
+		errx(1, "pthread_rwlock_rdlock");
 	f = RB_FIND(auth_tree, auths, &a);
-	pthread_rwlock_unlock(&cert_lk);
+	if (pthread_rwlock_unlock(&cert_lk) != 0)
+		errx(1, "pthread_rwlock_unlock");
 	return f;
 }
 
@@ -1442,7 +1444,8 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 	if (na == NULL)
 		err(1, NULL);
 
-	pthread_rwlock_wrlock(&cert_lk);
+	if (pthread_rwlock_wrlock(&cert_lk) != 0)
+		errx(1, "pthread_rwlock_wrlock");
 	if (issuer == NULL) {
 		cert->certid = cert->talid;
 	} else {
@@ -1464,16 +1467,17 @@ auth_insert(const char *fn, struct auth_tree *auths, struct cert *cert,
 	na->cert = cert;
 	na->any_inherits = x509_any_inherits(cert->x509);
 
-	if (RB_INSERT(auth_tree, auths, na) != NULL) {
-		pthread_rwlock_unlock(&cert_lk);
+	if (RB_INSERT(auth_tree, auths, na) != NULL)
 		errx(1, "auth tree corrupted");
-	}
-	pthread_rwlock_unlock(&cert_lk);
+
+	if (pthread_rwlock_unlock(&cert_lk) != 0)
+		errx(1, "pthread_rwlock_unlock");
 
 	return na;
 
  fail:
-	pthread_rwlock_unlock(&cert_lk);
+	if (pthread_rwlock_unlock(&cert_lk) != 0)
+		errx(1, "pthread_rwlock_unlock");
 	free(na);
 	return NULL;
 }
