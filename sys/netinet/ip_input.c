@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.412 2025/06/23 20:56:38 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.413 2025/06/23 20:59:25 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ int	ipmultipath = 0;			/* [a] */
 int	ip_sendredirects = 1;			/* [a] */
 int	ip_dosourceroute = 0;			/* [a] */
 int	ip_defttl = IPDEFTTL;
-int	ip_mtudisc = 1;
+int	ip_mtudisc = 1;				/* [a] */
 int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;	/* [a] */
 int	ip_directedbcast = 0;			/* [a] */
 
@@ -1743,12 +1743,18 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
 		    &ip_dosourceroute));
 	case IPCTL_MTUDISC:
-		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtudisc);
-		if (ip_mtudisc == 0)
+		oldval = newval = atomic_load_int(&ip_mtudisc);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &newval, 0, 1);
+		if (error == 0 && oldval != newval &&
+		    oldval == atomic_cas_uint(&ip_mtudisc, oldval, newval) &&
+		    newval == 0) {
+			NET_LOCK();
 			rt_timer_queue_flush(&ip_mtudisc_timeout_q);
-		NET_UNLOCK();
-		return error;
+			NET_UNLOCK();
+		}
+
+		return (error);
 	case IPCTL_MTUDISCTIMEOUT:
 		oldval = newval = atomic_load_int(&ip_mtudisc_timeout);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,

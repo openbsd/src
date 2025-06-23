@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.453 2025/06/18 16:15:46 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.454 2025/06/23 20:59:25 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2952,7 +2952,7 @@ tcp_mss(struct tcpcb *tp, int offer)
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
 		mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	} else if (tp->pf == AF_INET) {
-		if (ip_mtudisc)
+		if (atomic_load_int(&ip_mtudisc))
 			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	}
 #ifdef INET6
@@ -4284,7 +4284,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now,
 			ip->ip_tos = inp->inp_ip.ip_tos;
 
 		error = ip_output(m, sc->sc_ipopts, &sc->sc_route,
-		    (ip_mtudisc ? IP_MTUDISC : 0),  NULL,
+		    (atomic_load_int(&ip_mtudisc) ? IP_MTUDISC : 0),  NULL,
 		    inp ? &inp->inp_seclevel : NULL, 0);
 		break;
 #ifdef INET6

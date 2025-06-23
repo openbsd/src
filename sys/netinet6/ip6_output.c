@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.299 2025/05/14 14:32:15 mvs Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.300 2025/06/23 20:59:25 mvs Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -693,7 +693,7 @@ reroute:
 
 	if (dontfrag && tlen > ifp->if_mtu) {		/* case 2-b */
 #ifdef IPSEC
-		if (ip_mtudisc)
+		if (atomic_load_int(&ip_mtudisc))
 			ipsec_adjust_mtu(m, mtu);
 #endif
 		error = EMSGSIZE;
@@ -2836,7 +2836,8 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	struct ip6_hdr *ip6;
 	struct in6_addr dst;
 	u_int len;
-	int error, ifidx, tso = 0;
+	int ifidx, tso = 0, ip_mtudisc_local =  atomic_load_int(&ip_mtudisc);
+	int error;
 
 #if NPF > 0
 	/*
@@ -2870,7 +2871,7 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	/* Check if we are allowed to fragment */
 	dst = ip6->ip6_dst;
 	ifidx = m->m_pkthdr.ph_ifidx;
-	if (ip_mtudisc && tdb->tdb_mtu &&
+	if (ip_mtudisc_local && tdb->tdb_mtu &&
 	    len > tdb->tdb_mtu && tdb->tdb_mtutimeout > gettime()) {
 		int transportmode;
 
@@ -2889,7 +2890,7 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 		return EMSGSIZE;
 	}
 	/* propagate don't fragment for v6-over-v6 */
-	if (ip_mtudisc)
+	if (ip_mtudisc_local)
 		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
 
 	/*
@@ -2926,7 +2927,7 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	}
 	if (!error && tso)
 		tcpstat_inc(tcps_outswtso);
-	if (ip_mtudisc && error == EMSGSIZE)
+	if (ip_mtudisc_local && error == EMSGSIZE)
 		ip6_output_ipsec_pmtu_update(tdb, ro, &dst, ifidx, rtableid, 0);
 	return error;
 }

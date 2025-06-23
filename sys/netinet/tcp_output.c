@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.154 2025/04/21 09:54:53 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.155 2025/06/23 20:59:25 mvs Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1095,7 +1095,7 @@ send:
 		}
 		error = ip_output(m, tp->t_inpcb->inp_options,
 		    &tp->t_inpcb->inp_route,
-		    (ip_mtudisc ? IP_MTUDISC : 0), NULL,
+		    (atomic_load_int(&ip_mtudisc) ? IP_MTUDISC : 0), NULL,
 		    &tp->t_inpcb->inp_seclevel, 0);
 		break;
 #ifdef INET6

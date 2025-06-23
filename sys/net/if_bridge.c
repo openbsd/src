@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.374 2025/03/02 21:28:31 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.375 2025/06/23 20:59:25 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1640,7 +1640,8 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 
 			ip = mtod(m, struct ip *);
 			if ((af == AF_INET) &&
-			    ip_mtudisc && (ip->ip_off & htons(IP_DF)) &&
+			    atomic_load_int(&ip_mtudisc) &&
+			    (ip->ip_off & htons(IP_DF)) &&
 			    tdb->tdb_mtu && ntohs(ip->ip_len) > tdb->tdb_mtu &&
 			    tdb->tdb_mtutimeout > gettime()) {
 				bridge_send_icmp_err(ifp, eh, m,

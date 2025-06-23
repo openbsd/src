@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.212 2025/06/08 17:06:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.213 2025/06/23 20:59:25 mvs Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		ip->ip_tos = 0;
 		ip_output(m, NULL,
 		    tp ? &tp->t_inpcb->inp_route : NULL,
-		    ip_mtudisc ? IP_MTUDISC : 0, NULL,
+		    atomic_load_int(&ip_mtudisc) ? IP_MTUDISC : 0, NULL,
 		    tp ? &tp->t_inpcb->inp_seclevel : NULL, 0);
 		break;
 	}
@@ -744,7 +744,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		return;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_pcbrtchange, ip = NULL;
-	else if (cmd == PRC_MSGSIZE && ip_mtudisc && ip) {
+	else if (cmd == PRC_MSGSIZE && atomic_load_int(&ip_mtudisc) && ip) {
 		struct inpcb *inp;
 		struct socket *so = NULL;
 		struct tcpcb *tp = NULL;

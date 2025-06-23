@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.344 2025/06/18 16:15:46 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.345 2025/06/23 20:59:25 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -919,7 +919,7 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		uhp = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 #ifdef IPSEC
 		/* PMTU discovery for udpencap */
-		if (cmd == PRC_MSGSIZE && ip_mtudisc &&
+		if (cmd == PRC_MSGSIZE && atomic_load_int(&ip_mtudisc) &&
 		    atomic_load_int(&udpencap_enable) && udpencap_port_local &&
 		    uhp->uh_sport == udpencap_port_local) {
 			udpencap_ctlinput(cmd, sa, rdomain, v);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1215 2025/06/23 12:05:45 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1216 2025/06/23 20:59:25 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3325,7 +3325,7 @@ pf_build_tcp(const struct pf_rule *r, sa_family_t af,
 		h->ip_hl = sizeof(*h) >> 2;
 		h->ip_tos = IPTOS_LOWDELAY;
 		h->ip_len = htons(len);
-		h->ip_off = htons(ip_mtudisc ? IP_DF : 0);
+		h->ip_off = htons(atomic_load_int(&ip_mtudisc) ? IP_DF : 0);
 		h->ip_ttl = ttl ? ttl : ip_defttl;
 		h->ip_sum = 0;
 		h->ip_src.s_addr = saddr->v4.s_addr;

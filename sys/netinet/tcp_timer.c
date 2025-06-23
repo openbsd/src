@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.85 2025/06/08 17:06:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.86 2025/06/23 20:59:25 mvs Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ tcp_timer_rexmt(void *arg)
 	 * lots more sophisticated searching to find the right
 	 * value here...
 	 */
-	if (ip_mtudisc &&
+	if (atomic_load_int(&ip_mtudisc) &&
 	    TCPS_HAVEESTABLISHED(tp->t_state) &&
 	    tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
 		struct rtentry *rt = NULL;

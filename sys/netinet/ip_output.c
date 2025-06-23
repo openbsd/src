@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.409 2025/05/14 14:32:15 mvs Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.410 2025/06/23 20:59:25 mvs Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -445,7 +445,7 @@ reroute:
 	 */
 	if (ip->ip_off & htons(IP_DF)) {
 #ifdef IPSEC
-		if (ip_mtudisc)
+		if (atomic_load_int(&ip_mtudisc))
 			ipsec_adjust_mtu(m, ifp->if_mtu);
 #endif
 		error = EMSGSIZE;
@@ -583,7 +583,8 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	struct ip *ip;
 	struct in_addr dst;
 	u_int len;
-	int error, tso = 0;
+	int tso = 0, ip_mtudisc_local = atomic_load_int(&ip_mtudisc);
+	int error;
 
 #if NPF > 0
 	/*
@@ -616,7 +617,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 
 	/* Check if we are allowed to fragment */
 	dst = ip->ip_dst;
-	if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
+	if (ip_mtudisc_local && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
 	    len > tdb->tdb_mtu && tdb->tdb_mtutimeout > gettime()) {
 		ip_output_ipsec_pmtu_update(tdb, ro, dst, rtableid);
 		ipsec_adjust_mtu(m, tdb->tdb_mtu);
@@ -624,7 +625,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 		return EMSGSIZE;
 	}
 	/* propagate IP_DF for v4-over-v6 */
-	if (ip_mtudisc && ip->ip_off & htons(IP_DF))
+	if (ip_mtudisc_local && ip->ip_off & htons(IP_DF))
 		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
 
 	/*
@@ -661,7 +662,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	}
 	if (!error && tso)
 		tcpstat_inc(tcps_outswtso);
-	if (ip_mtudisc && error == EMSGSIZE)
+	if (ip_mtudisc_local && error == EMSGSIZE)
 		ip_output_ipsec_pmtu_update(tdb, ro, dst, rtableid);
 	return error;
 }
