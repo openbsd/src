@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2025/01/15 10:54:17 tb Exp $
+# $OpenBSD: Makefile,v 1.2 2025/06/23 07:26:52 tb Exp $
 
 .if ! exists(/usr/local/bin/eopenssl34)
 regress:
@@ -27,7 +27,7 @@ run-ldd-$p: ldd-$p.out
 	grep -q /usr/local/lib/eopenssl34/libcrypto.so ldd-$p.out
 	grep -q /usr/local/lib/eopenssl34/libssl.so ldd-$p.out
 	# check that $p is not linked with LibreSSL
-	! grep -v libc.so ldd-$p.out | grep /usr/lib/
+	! grep -v -e libc.so -e libpthread.so ldd-$p.out | grep /usr/lib/
 
 run-version-$p: $p-self.out
 	# check that runtime version is OpenSSL 3.4
