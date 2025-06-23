@@ -1,4 +1,4 @@
-/* $Id: npppd_radius.c,v 1.13 2024/07/12 15:54:11 yasuoka Exp $ */
+/* $Id: npppd_radius.c,v 1.14 2025/06/23 05:26:01 yasuoka Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -562,6 +562,11 @@ ppp_set_radius_attrs_for_authreq(npppd_ppp *_this,
 		    RADIUS_TYPE_CALLING_STATION_ID, _this->calling_number) != 0)
 			return 1;
 	}
+	/* RFC 2865 "5.5.  NAS-Port" */
+	if (radius_put_uint32_attr(radpkt, RADIUS_TYPE_NAS_PORT, _this->id)
+	    != 0)
+		goto fail;
+
 	return 0;
 fail:
 	return 1;
