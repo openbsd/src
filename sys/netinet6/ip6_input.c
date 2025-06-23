@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.274 2025/06/21 14:21:17 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.275 2025/06/23 09:16:32 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1566,15 +1566,19 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ip6intrq));
 	case IPV6CTL_MULTIPATH: {
-		NET_LOCK();
-		int oldval = ip6_multipath;
+		int oldval, newval;
+
+		oldval = newval = atomic_load_int(&ip6_multipath);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &ip6_multipath, 0, 1);
-		if (oldval != ip6_multipath)
+		    &newval, 0, 1);
+		if (error == 0 && oldval != newval) {
+			atomic_store_int(&ip6_multipath, newval);
+			membar_producer();
 			atomic_inc_long(&rtgeneration);
-		NET_UNLOCK();
+		}
+
 		return (error);
-	    }
+	}
 	case IPV6CTL_FORWARDING:
 	case IPV6CTL_SENDREDIRECTS:
 		return (sysctl_bounded_arr(

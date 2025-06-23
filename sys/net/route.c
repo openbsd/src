@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.444 2025/03/16 23:45:06 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.445 2025/06/23 09:16:32 mvs Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ route_cache(struct route *ro, const struct in_addr *dst,
 	    ro->ro_tableid == rtableid &&
 	    ro->ro_dstsa.sa_family == AF_INET &&
 	    ro->ro_dstsin.sin_addr.s_addr == dst->s_addr) {
-		if (src == NULL || !ipmultipath ||
+		if (src == NULL || !atomic_load_int(&ipmultipath) ||
 		    !ISSET(ro->ro_rt->rt_flags, RTF_MPATH) ||
 		    (ro->ro_srcin.s_addr != INADDR_ANY &&
 		    ro->ro_srcin.s_addr == src->s_addr)) {
@@ -272,7 +272,7 @@ route6_cache(struct route *ro, const struct in6_addr *dst,
 	    ro->ro_tableid == rtableid &&
 	    ro->ro_dstsa.sa_family == AF_INET6 &&
 	    IN6_ARE_ADDR_EQUAL(&ro->ro_dstsin6.sin6_addr, dst)) {
-		if (src == NULL || !ip6_multipath ||
+		if (src == NULL || !atomic_load_int(&ip6_multipath) ||
 		    !ISSET(ro->ro_rt->rt_flags, RTF_MPATH) ||
 		    (!IN6_IS_ADDR_UNSPECIFIED(&ro->ro_srcin6) &&
 		    IN6_ARE_ADDR_EQUAL(&ro->ro_srcin6, src))) {
@@ -426,7 +426,7 @@ rt_hash(struct rtentry *rt, const struct sockaddr *dst, uint32_t *src)
 	    {
 		const struct sockaddr_in *sin;
 
-		if (!ipmultipath)
+		if (!atomic_load_int(&ipmultipath))
 			return (-1);
 
 		sin = satosin_const(dst);
@@ -440,7 +440,7 @@ rt_hash(struct rtentry *rt, const struct sockaddr *dst, uint32_t *src)
 	    {
 		const struct sockaddr_in6 *sin6;
 
-		if (!ip6_multipath)
+		if (!atomic_load_int(&ip6_multipath))
 			return (-1);
 
 		sin6 = satosin6_const(dst);

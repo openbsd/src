@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.131 2025/06/21 22:08:44 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.132 2025/06/23 09:16:32 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ const struct domain inet6domain = {
  */
 int	ip6_forwarding = 0;	/* [a] no forwarding unless sysctl to enable */
 int	ip6_mforwarding = 0;	/* no multicast forwarding unless ... */
-int	ip6_multipath = 0;	/* no using multipath routes unless ... */
+int	ip6_multipath = 0;	/* [a] no using multipath routes unless ... */
 int	ip6_sendredirects = 1;	/* [a] */
 int	ip6_defhlim = IPV6_DEFHLIM;
 int	ip6_defmcasthlim = IPV6_DEFAULT_MULTICAST_HOPS;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.410 2025/06/21 14:21:17 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.411 2025/06/23 09:16:32 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -93,7 +93,7 @@
 /* values controllable via sysctl */
 int	ip_forwarding = 0;			/* [a] */
 int	ipmforwarding = 0;
-int	ipmultipath = 0;
+int	ipmultipath = 0;			/* [a] */
 int	ip_sendredirects = 1;			/* [a] */
 int	ip_dosourceroute = 0;			/* [a] */
 int	ip_defttl = IPDEFTTL;
@@ -1817,13 +1817,15 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EOPNOTSUPP);
 #endif
 	case IPCTL_MULTIPATH:
-		NET_LOCK();
-		oldval = ipmultipath;
+		oldval = newval = atomic_load_int(&ipmultipath);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &ipmultipath, 0, 1);
-		if (oldval != ipmultipath)
+		    &newval, 0, 1);
+		if (error == 0 && oldval != newval) {
+			atomic_store_int(&ipmultipath, newval);
+			membar_producer();
 			atomic_inc_long(&rtgeneration);
-		NET_UNLOCK();
+		}
+
 		return (error);
 	case IPCTL_FORWARDING:
 	case IPCTL_SENDREDIRECTS:

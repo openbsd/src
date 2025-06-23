@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1213 2025/06/09 20:34:08 benno Exp $ */
+/*	$OpenBSD: pf.c,v 1.1214 2025/06/23 09:16:32 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6501,7 +6501,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = addr->v4;
-		if (ipmultipath)
+		if (atomic_load_int(&ipmultipath))
 			check_mpath = 1;
 		break;
 #ifdef INET6
@@ -6516,7 +6516,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(*dst6);
 		dst6->sin6_addr = addr->v6;
-		if (ip6_multipath)
+		if (atomic_load_int(&ip6_multipath))
 			check_mpath = 1;
 		break;
 #endif /* INET6 */
