@@ -1,5 +1,5 @@
-.\"	$OpenBSD: zdump.8,v 1.6 2025/05/20 20:11:19 jmc Exp $
-.Dd $Mdocdate: May 20 2025 $
+.\"	$OpenBSD: zdump.8,v 1.7 2025/06/23 13:53:11 millert Exp $
+.Dd $Mdocdate: June 23 2025 $
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -65,6 +65,19 @@ Time discontinuities are found by sampling the results returned by localtime
 at twelve-hour intervals.
 This works in all real-world cases;
 one can construct artificial time zones for which this fails.
+.Pp
+In the output,
+.Dq UT
+denotes the value returned by
+.Xr gmtime 3 ,
+which uses UTC for modern time stamps and some other UT flavor for
+time stamps that predate the introduction of UTC.
+No attempt is currently made to have the output use
+.Dq UTC
+for newer and
+.Dq UT
+for older time stamps,
+partly because the exact date of the introduction of UTC is problematic.
 .\" @(#)zdump.8	8.1
 .Sh SEE ALSO
 .Xr ctime 3 ,

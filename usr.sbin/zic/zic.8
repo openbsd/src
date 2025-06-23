@@ -1,5 +1,5 @@
-.\"	$OpenBSD: zic.8,v 1.6 2024/09/18 17:05:50 millert Exp $
-.Dd $Mdocdate: September 18 2024 $
+.\"	$OpenBSD: zic.8,v 1.7 2025/06/23 13:53:11 millert Exp $
+.Dd $Mdocdate: June 23 2025 $
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -48,18 +48,46 @@ will act as if the input contained a link line of the form
 .Pp
 .Dl Link	timezone		posixrules
 .It Fl v
-Complain if a year that appears in a data file is outside the range
+Be more verbose, and complain about the following situations:
+.Pp
+The input data specifies a link to a link.
+.Pp
+A year that appears in a data file is outside the range
 of years representable by
 .Xr time 3
 values.
-Also complain if a time of 24:00
-(which cannot be handled by pre-1998 versions of
-.Nm zic )
-appears in the input.
+.Pp
+A time of 24:00 or more appears in the input.
+Pre-1998 versions of
+.Nm
+prohibit 24:00, and pre-2007 versions prohibit times greater than 24:00.
+.Pp
+A rule goes past the start or end of the month.
+Pre-2004 versions of
+.Nm
+prohibit this.
+.Pp
+The output file does not contain all the information about the
+long-term future of a zone, because the future cannot be summarized as
+an extended POSIX TZ string.
+For example, as of 2013 this problem
+occurs for Iran's daylight-saving rules for the predicted future, as
+these rules are based on the Iranian calendar, which cannot be
+represented.
+.Pp
+The output contains data that may not be handled properly by client
+code designed for older
+.Nm
+output formats.
+These compatibility issues affect only time stamps
+before 1970 or after the start of 2038.
+.Pp
+A time zone abbreviation has fewer than 3 characters.
+POSIX requires at least 3.
 .El
 .Pp
 Input lines are made up of fields.
-Fields are separated from one another by any number of whitespace characters.
+Fields are separated from one another by one or more whitespace characters.
 Leading and trailing whitespace on input lines is ignored.
 An unquoted sharp character (#) in the input introduces a comment which extends
 to the end of the line the sharp character appears on.
@@ -220,13 +248,13 @@ The name of the time zone.
 This is the name used in creating the time conversion information file for the
 zone.
 .It Cm GMTOFF
-The amount of time to add to UTC to get standard time in this zone.
+The amount of time to add to UT to get standard time in this zone.
 This field has the same format as the
 .Em AT
 and
 .Em SAVE
 fields of rule lines;
-begin the field with a minus sign if time must be subtracted from UTC.
+begin the field with a minus sign if time must be subtracted from UT.
 .It Cm RULES/SAVE
 The name of the rule(s) that apply in the time zone or,
 alternately, an amount of time to add to local standard time.
@@ -258,10 +286,10 @@ a slash
 .Pq \&/
 separates standard and daylight abbreviations.
 .It Cm UNTILYEAR [MONTH [DAY [TIME]]]
-The time at which the UTC offset or the rule(s) change for a location.
+The time at which the UT offset or the rule(s) change for a location.
 It is specified as a year, a month, a day, and a time of day.
 If this is specified,
-the time zone information is generated from the given UTC offset
+the time zone information is generated from the given UT offset
 and rule change until the time specified.
 The month, day, and time of day have the same format as the IN, ON, and AT
 fields of a rule; trailing fields can be omitted, and default to the
@@ -303,6 +331,9 @@ field is used as an alternate name for that zone.
 .Pp
 Except for continuation lines,
 lines may appear in any order in the input.
+However, the behavior is unspecified if multiple zone or link lines
+define the same name, or if the source of one link line is the target
+of another.
 .Pp
 Lines in the file that describes leap seconds have the following form:
 .Bd -literal -offset indent
@@ -356,10 +387,8 @@ Here is an extended example of
 input, intended to illustrate many of its features.
 .Bd -literal
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	Swiss	1940	only	-	Nov	2	0:00	1:00	S
-Rule	Swiss	1940	only	-	Dec	31	0:00	0	-
-Rule	Swiss	1941	1942	-	May	Sun>=1	2:00	1:00	S
-Rule	Swiss	1941	1942	-	Oct	Sun>=1	0:00	0
+Rule	Swiss	1941	1942	-	May	Mon>=1	1:00	1:00	S
+Rule	Swiss	1941	1942	-	Oct	Mon>=1	2:00	0	-
 
 Rule	EU	1977	1980	-	Apr	Sun>=1	1:00u	1:00	S
 Rule	EU	1977	only	-	Sep	lastSun	1:00u	0	-
@@ -368,31 +397,33 @@ Rule	EU	1979	1995	-	Sep	lastSun	1:00u	0	-
 Rule	EU	1981	max	-	Mar	lastSun	1:00u	1:00	S
 Rule	EU	1996	max	-	Oct	lastSun	1:00u	0	-
 
-# Zone	NAME	GMTOFF	RULES	FORMAT	UNTIL
-Zone	Europe/Zurich	0:34:08	-	LMT	1848 Sep 12
-		0:29:44	-	BMT	1894 Jun
-		1:00	Swiss	CE%sT	1981
-		1:00	EU	CE%sT
+# Zone	NAME		GMTOFF	RULES/SAVE	FORMAT	UNTIL
+Zone	Europe/Zurich	0:34:08	-		LMT	1853 Jul 16
+			0:29:46	-		BMT	1894 Jun
+			1:00	Swiss		CE%sT	1981
+			1:00	EU		CE%sT
 
 Link	Europe/Zurich	Switzerland
 .Ed
 .Pp
 In this example, the zone is named Europe/Zurich
 but it has an alias as Switzerland.
-Zurich was 34 minutes and 8 seconds west of GMT until 1848-09-12 at 00:00,
-when the offset changed to 29 minutes and 44 seconds.
+This example says that Zurich was 34 minutes and 8
+seconds west of UT until 1853-07-16 at 00:00, when the legal offset
+was changed to 7\(de\|26\(fm\|22.50\(sd; although this works out to
+0:29:45.50, the input format cannot represent fractional seconds so it
+is rounded here.
 After 1894-06-01 at 00:00 Swiss daylight saving rules
 (defined with lines beginning with "Rule Swiss") apply,
-and the GMT offset became one hour.
+and the UT offset became one hour.
 From 1981 to the present,
 EU daylight saving rules have applied,
 and the UTC offset has remained at one hour.
 .Pp
 In 1940, daylight saving time applied from
 November 2 at 00:00 to December 31 at 00:00.
-In 1941 and 1942, daylight saving time applied
-from the first Sunday in May at 02:00
-to the first Sunday in October at 00:00.
+In 1941 and 1942, daylight saving time applied from the first Monday
+in May at 01:00 to the first Monday in October at 02:00.
 The pre-1981 EU daylight-saving rules have no effect here,
 but are included for completeness.
 Since 1981,
@@ -427,9 +458,9 @@ If,
 for a particular zone,
 a clock advance caused by the start of daylight saving
 coincides with and is equal to
-a clock retreat caused by a change in UTC offset,
+a clock retreat caused by a change in UT offset,
 .Nm
-produces a single transition to daylight saving at the new UTC offset
+produces a single transition to daylight saving at the new UT offset
 (without any change in wall clock time).
 To get separate transitions
 use multiple zone continuation lines

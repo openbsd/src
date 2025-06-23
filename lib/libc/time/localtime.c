@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.69 2025/05/21 01:27:29 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.70 2025/06/23 13:53:11 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -62,6 +62,9 @@ static char		wildabbr[] = WILDABBR;
 
 static const char	gmt[] = "GMT";
 
+static const time_t time_t_min = LLONG_MIN;
+static const time_t time_t_max = LLONG_MAX;
+
 /*
 ** The DST rules to use if TZ has no rules and we can't load TZDEFRULES.
 ** We default to US rules as of 1999-08-17.
@@ -74,11 +77,11 @@ static const char	gmt[] = "GMT";
 #endif /* !defined TZDEFDST */
 
 struct ttinfo {				/* time type information */
-	int_fast32_t	tt_gmtoff;	/* UTC offset in seconds */
+	int_fast32_t	tt_gmtoff;	/* UT offset in seconds */
 	int		tt_isdst;	/* used to set tm_isdst */
 	int		tt_abbrind;	/* abbreviation list index */
 	int		tt_ttisstd;	/* TRUE if transition is std time */
-	int		tt_ttisgmt;	/* TRUE if transition is UTC */
+	int		tt_ttisgmt;	/* TRUE if transition is UT */
 };
 
 struct lsinfo {				/* leap second information */
@@ -297,7 +300,7 @@ differ_by_repeat(time_t t1, time_t t0)
 {
 	if (TYPE_BIT(time_t) - 1 < SECSPERREPEAT_BITS)
 		return 0;
-	return (int64_t)t1 - t0 == SECSPERREPEAT;
+	return t1 - t0 == SECSPERREPEAT;
 }
 
 static int
@@ -495,7 +498,7 @@ tzload(const char *name, struct state *sp, int doextend)
 		for (i = 0; i < nread; ++i)
 			up->buf[i] = p[i];
 		/*
-		** If this is a narrow integer time_t system, we're done.
+		** If this is a narrow time_t system, we're done.
 		*/
 		if (stored >= sizeof(time_t))
 			break;
@@ -602,8 +605,8 @@ getzname(const char *strp)
 {
 	char	c;
 
-	while ((c = *strp) != '\0' && !isdigit((unsigned char)c) && c != ',' && c != '-' &&
-	    c != '+')
+	while ((c = *strp) != '\0' && !isdigit((unsigned char)c) &&
+	    c != ',' && c != '-' && c != '+')
 		++strp;
 	return strp;
 }
@@ -770,7 +773,7 @@ getrule(const char *strp, struct rule *rulep)
 		** Time specified.
 		*/
 		++strp;
-		strp = getsecs(strp, &rulep->r_time);
+		strp = getoffset(strp, &rulep->r_time);
 	} else
 		rulep->r_time = 2 * SECSPERHOUR;	/* default = 2:00:00 */
 	return strp;
@@ -778,7 +781,7 @@ getrule(const char *strp, struct rule *rulep)
 
 /*
 ** Given the Epoch-relative time of January 1, 00:00:00 UTC, in a year, the
-** year, a rule, and the offset from UTC at the time that rule takes effect,
+** year, a rule, and the offset from UT at the time that rule takes effect,
 ** calculate the Epoch-relative time that rule takes effect.
 */
 
@@ -786,13 +789,10 @@ static time_t
 transtime(time_t janfirst, int year, const struct rule *rulep,
     int_fast32_t offset)
 {
-	int	leapyear;
-	time_t	value;
-	int	i;
-	int		d, m1, yy0, yy1, yy2, dow;
+	int	leapyear = isleap(year);
+	time_t	value = 0;
+	int	i, d, m1, yy0, yy1, yy2, dow;
 
-	value = 0;
-	leapyear = isleap(year);
 	switch (rulep->r_type) {
 
 	case JULIAN_DAY:
@@ -861,10 +861,10 @@ transtime(time_t janfirst, int year, const struct rule *rulep,
 	}
 
 	/*
-	** "value" is the Epoch-relative time of 00:00:00 UTC on the day in
+	** "value" is the Epoch-relative time of 00:00:00 UT on the day in
 	** question. To get the Epoch-relative time of the specified local
 	** time on that day, add the transition time and the current offset
-	** from UTC.
+	** from UT.
 	*/
 	return value + rulep->r_time + offset;
 }
@@ -877,8 +877,8 @@ transtime(time_t janfirst, int year, const struct rule *rulep,
 static int
 tzparse(const char *name, struct state *sp, int lastditch)
 {
-	const char *			stdname;
-	const char *			dstname;
+	const char *			stdname = name;
+	const char *			dstname = NULL;
 	size_t				stdlen;
 	size_t				dstlen;
 	int_fast32_t			stdoffset;
@@ -889,8 +889,6 @@ tzparse(const char *name, struct state *sp, int lastditch)
 	int			load_result;
 	static struct ttinfo		zttinfo;
 
-	dstname = NULL;
-	stdname = name;
 	if (lastditch) {
 		stdlen = strlen(name);	/* length of standard zone name */
 		name += stdlen;
@@ -943,7 +941,7 @@ tzparse(const char *name, struct state *sp, int lastditch)
 		if (*name == ',' || *name == ';') {
 			struct rule	start;
 			struct rule	end;
-			int		year;
+			int		year, yearlim;
 			time_t		janfirst;
 			time_t		starttime;
 			time_t		endtime;
@@ -971,35 +969,41 @@ tzparse(const char *name, struct state *sp, int lastditch)
 			atp = sp->ats;
 			typep = sp->types;
 			janfirst = 0;
-			sp->timecnt = 0;
-			for (year = EPOCH_YEAR;
-			    sp->timecnt + 2 <= TZ_MAX_TIMES;
-			    ++year) {
-			    	time_t	newfirst;
+			yearlim = EPOCH_YEAR + YEARSPERREPEAT;
+			for (year = EPOCH_YEAR; year < yearlim; year++) {
+			    	int_fast32_t yearsecs;
 
 				starttime = transtime(janfirst, year, &start,
 				    stdoffset);
 				endtime = transtime(janfirst, year, &end,
 				    dstoffset);
-				if (starttime > endtime) {
-					*atp++ = endtime;
-					*typep++ = 1;	/* DST ends */
-					*atp++ = starttime;
-					*typep++ = 0;	/* DST begins */
-				} else {
-					*atp++ = starttime;
-					*typep++ = 0;	/* DST begins */
-					*atp++ = endtime;
-					*typep++ = 1;	/* DST ends */
+				yearsecs = (year_lengths[isleap(year)]
+				    * SECSPERDAY);
+				if (starttime > endtime || (starttime < endtime
+				    && (endtime - starttime <
+				    (yearsecs + (stdoffset - dstoffset))))) {
+					if (&sp->ats[TZ_MAX_TIMES - 2] < atp)
+						break;
+					yearlim = year + YEARSPERREPEAT + 1;
+					if (starttime > endtime) {
+						*atp++ = endtime;
+						*typep++ = 1;	/* DST ends */
+						*atp++ = starttime;
+						*typep++ = 0;	/* DST begins */
+					} else {
+						*atp++ = starttime;
+						*typep++ = 0;	/* DST begins */
+						*atp++ = endtime;
+						*typep++ = 1;	/* DST ends */
+					}
 				}
-				sp->timecnt += 2;
-				newfirst = janfirst;
-				newfirst += year_lengths[isleap(year)] *
-				    SECSPERDAY;
-				if (newfirst <= janfirst)
+				if (time_t_max - janfirst < yearsecs)
 					break;
-				janfirst = newfirst;
+				janfirst += yearsecs;
 			}
+			sp->timecnt = atp - sp->ats;
+			if (!sp->timecnt)
+				sp->typecnt = 1;	/* Perpetual DST.  */
 		} else {
 			int_fast32_t	theirstdoffset;
 			int_fast32_t	theirdstoffset;
@@ -1231,22 +1235,15 @@ localsub(const time_t *timep, int_fast32_t offset, struct tm *tmp)
 	    (sp->goahead && t > sp->ats[sp->timecnt - 1])) {
 		time_t			newt = t;
 		time_t		seconds;
-		time_t		tcycles;
-		int_fast64_t	icycles;
+		time_t		years;
 
 		if (t < sp->ats[0])
 			seconds = sp->ats[0] - t;
 		else
 			seconds = t - sp->ats[sp->timecnt - 1];
 		--seconds;
-		tcycles = seconds / YEARSPERREPEAT / AVGSECSPERYEAR;
-		++tcycles;
-		icycles = tcycles;
-		if (tcycles - icycles >= 1 || icycles - tcycles >= 1)
-			return NULL;
-		seconds = icycles;
-		seconds *= YEARSPERREPEAT;
-		seconds *= AVGSECSPERYEAR;
+		years = (seconds / SECSPERREPEAT + 1) * YEARSPERREPEAT;
+		seconds = years * AVGSECSPERYEAR;
 		if (t < sp->ats[0])
 			newt += seconds;
 		else
@@ -1260,9 +1257,9 @@ localsub(const time_t *timep, int_fast32_t offset, struct tm *tmp)
 
 			newy = tmp->tm_year;
 			if (t < sp->ats[0])
-				newy -= icycles * YEARSPERREPEAT;
+				newy -= years;
 			else
-				newy += icycles * YEARSPERREPEAT;
+				newy += years;
 			tmp->tm_year = newy;
 			if (tmp->tm_year != newy)
 				return NULL;
@@ -1352,7 +1349,7 @@ gmtsub(const time_t *timep, int_fast32_t offset, struct tm *tmp)
 	result = timesub(timep, offset, gmtptr, tmp);
 	/*
 	** Could get fancy here and deliver something such as
-	** "UTC+xxxx" or "UTC-xxxx" if offset is non-zero,
+	** "UT+xxxx" or "UT-xxxx" if offset is non-zero,
 	** but this is no time for a treasure hunt.
 	*/
 	if (offset != 0)
@@ -1461,9 +1458,9 @@ timesub(const time_t *timep, int_fast32_t offset, const struct state *sp,
 		int	leapdays;
 
 		tdelta = tdays / DAYSPERLYEAR;
-		idelta = tdelta;
-		if (tdelta - idelta >= 1 || idelta - tdelta >= 1)
+		if (tdelta < INT_MIN || tdelta > INT_MAX)
 			return NULL;
+		idelta = tdelta;
 		if (idelta == 0)
 			idelta = (tdays < 0) ? -1 : 1;
 		newy = y;
@@ -1476,7 +1473,7 @@ timesub(const time_t *timep, int_fast32_t offset, const struct state *sp,
 		y = newy;
 	}
 
-	seconds = tdays * SECSPERDAY + 0.5;
+	seconds = tdays * SECSPERDAY;
 	tdays = seconds / SECSPERDAY;
 	rem += seconds - tdays * SECSPERDAY;
 
@@ -1747,14 +1744,14 @@ time2sub(struct tm *tmp,
 			dir = tmcomp(&mytm, &yourtm);
 		if (dir != 0) {
 			if (t == lo) {
-				++t;
-				if (t <= lo)
+				if (t == time_t_max)
 					return WRONG;
+				++t;
 				++lo;
 			} else if (t == hi) {
-				--t;
-				if (t >= hi)
+				if (t == time_t_min)
 					return WRONG;
+				--t;
 				--hi;
 			}
 			if (lo > hi)

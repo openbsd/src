@@ -1,5 +1,5 @@
-.\"	$OpenBSD: tzset.3,v 1.26 2022/10/04 13:33:57 millert Exp $
-.Dd $Mdocdate: October 4 2022 $
+.\"	$OpenBSD: tzset.3,v 1.27 2025/06/23 13:53:11 millert Exp $
+.Dd $Mdocdate: June 23 2025 $
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -29,7 +29,7 @@ the designations for standard and daylight saving time; see the description of
 .Ar std No and Ar dst
 below
 .It Vt timezone
-the number of seconds west of UTC
+the number of seconds west of the Prime Meridian
 .It Vt daylight
 0 if the time zone has never observed daylight saving time, otherwise
 non-zero
@@ -90,8 +90,11 @@ is always treated as a pathname.
 .Pp
 If
 .Ev TZ
-is set to the empty string, Coordinated Universal Time (UTC) is
-used (without leap second correction).
+is set to the empty string, Universal Time (UT) is used, with the abbreviation
+.Dq UTC
+and without leap second correction; please see
+.Xr ctime 3
+for more about UT, UTC, and leap seconds.
 .Pp
 When
 .Ev TZ
@@ -199,6 +202,10 @@ Each
 .Ar time
 field describes when, in current local time, the change to the other
 time is made.
+As an extension to POSIX, daylight saving is assumed to be in effect
+all year if it begins January 1 at 00:00 and ends December 31 at
+24:00 plus the difference between daylight saving and standard time,
+leaving no room for standard time in the calendar.
 .Pp
 The format of
 .Ar date
@@ -243,18 +250,56 @@ The
 .Ar time
 has the same format as
 .Ar offset
-except that no leading sign
+except that POSIX does not allow a leading sign
 .Po
 .Dq \&-
 or
 .Dq \&+
-.Pc
-is allowed.
+.Pc .
+As an extension to POSIX, the hours part of
+.Ar time
+can range from \-167 through 167; this allows for unusual rules such as
+.Dq the Saturday before the first Sunday of March .
 The default, if
 .Ar time
 is not given, is
 .Cm 02:00:00 .
 .El
+.Pp
+Here are some examples of
+.Ev TZ
+values that directly specify the time zone rules;
+they use some of the extensions to POSIX.
+.Bl -tag -width Ds
+.It EST5
+stands for US Eastern Standard Time (EST),
+5 hours behind UT, without daylight saving.
+.It FJT\-12FJST,M10.3.1/146,M1.3.4/75
+stands for Fiji Time (FJT) and Fiji Summer Time (FJST), 12 hours ahead
+of UT, springing forward on October's third Monday at
+146:00 (i.e., 02:00 on the first Sunday on or after October 21), and
+falling back on January's third Thursday at 75:00 (i.e., 03:00 on the
+first Sunday on or after January 18).
+.It IST\-2IDT,M3.4.4/26,M10.5.0
+stands for Israel Standard Time (IST) and Israel Daylight Time (IDT),
+2 hours ahead of UT, springing forward on March's fourth
+Tuesday at 26:00 (i.e., 02:00 on the first Friday on or after March
+23), and falling back on October's last Sunday at 02:00.
+.It WART4WARST,J1/0,J365/25
+stands for Western Argentina Summer Time (WARST), 3 hours behind UT.
+There is a dummy fall-back transition on December 31 at 25:00 daylight
+saving time (i.e., 24:00 standard time, equivalent to January 1 at
+00:00 standard time), and a simultaneous spring-forward transition on
+January 1 at 00:00 standard time, so daylight saving time is in effect
+all year and the initial
+.Dq WART
+is a placeholder.
+.It WGT3WGST,M3.5.0/\-2,M10.5.0/\-1
+stands for Western Greenland Time (WGT) and Western Greenland Summer
+Time (WGST), 3 hours behind UT, where clocks follow the EU rules of
+springing forward on March's last Sunday at 01:00 UT (\-02:00 local
+time) and falling back on October's last Sunday at 01:00 UT
+(\-01:00 local time).
 .Pp
 If no
 .Ar rule
@@ -267,7 +312,7 @@ format
 file
 .Cm posixrules
 in the system time conversion information directory are used, with the
-standard and daylight saving time offsets from UTC replaced by those
+standard and daylight saving time offsets from UT replaced by those
 specified by the
 .Ar offset
 values in
@@ -285,7 +330,7 @@ environment variable does not specify a
 .Xr tzfile 5
 format file
 and cannot be interpreted as a direct specification,
-UTC is used.
+UT is used.
 .Pp
 .Fn tzsetwall
 behaves identically to

@@ -1,4 +1,5 @@
-$OpenBSD: Theory,v 1.16 2012/09/13 11:14:20 millert Exp $
+$OpenBSD: Theory,v 1.17 2025/06/23 13:53:11 millert Exp $
+
 This file is in the public domain, so clarified as of
 2009-05-17 by Arthur David Olson.
 
@@ -13,16 +14,13 @@ This file is in the public domain, so clarified as of
 
 ----- Time and date functions -----
 
-These time and date functions are upwards compatible with POSIX,
+These time and date functions are upwards compatible with those of POSIX,
 an international standard for UNIX-like systems.
 As of this writing, the current edition of POSIX is:
 
-  Standard for Information technology
-  -- Portable Operating System Interface (POSIX (R))
-  -- System Interfaces
-  IEEE Std 1003.1, 2004 Edition
-  <http://www.opengroup.org/online-pubs?DOC=7999959899>
-  <http://www.opengroup.org/pubs/catalog/t041.htm>
+  The Open Group Base Specifications Issue 7
+  IEEE Std 1003.1, 2013 Edition
+  <http://pubs.opengroup.org/onlinepubs/9699919799/>
 
 POSIX has the following properties and limitations.
 
@@ -35,7 +33,7 @@ POSIX has the following properties and limitations.
 
 	The POSIX TZ string takes the following form:
 
-		stdoffset[dst[offset],date[/time],date[/time]]
+		stdoffset[dst[offset][,date[/time],date[/time]]]
 
 	where:
 
@@ -46,15 +44,17 @@ POSIX has the following properties and limitations.
 		in a quoted form like "<UTC+10>"; this allows
 		"+" and "-" in the names.
 	offset
-		is of the form `[-]hh:[mm[:ss]]' and specifies the
-		offset west of UTC.  The default DST offset is one hour
-		ahead of standard time.
+		is of the form '[+-]hh:[mm[:ss]]' and specifies the
+		offset west of UT.  'hh' may be a single digit; 0<=hh<=24.
+		The default DST offset is one hour ahead of standard time.
 	date[/time],date[/time]
 		specifies the beginning and end of DST.  If this is absent,
 		the system supplies its own rules for DST, and these can
 		differ from year to year; typically US DST rules are used.
 	time
-		takes the form `hh:[mm[:ss]]' and defaults to 02:00.
+		takes the form 'hh:[mm[:ss]]' and defaults to 02:00.
+		This is the same format as the offset, except that a
+		leading '+' or '-' is not allowed.
 	date
 		takes one of the following forms:
 		Jn (1<=n<=365)
@@ -64,8 +64,10 @@ POSIX has the following properties and limitations.
 		Mm.n.d (0[Sunday]<=d<=6[Saturday], 1<=n<=5, 1<=m<=12)
 			for the dth day of week n of month m of the year,
 			where week 1 is the first week in which day d appears,
-			and `5' stands for the last week in which day d appears
+			and '5' stands for the last week in which day d appears
 			(which may be either the 4th or 5th week).
+			Typically, this is the only useful form;
+			the n and Jn forms are rarely used.
 
 	Here is an example POSIX TZ string, for US Pacific time using rules
 	appropriate from 1987 through 2006:
@@ -95,6 +97,19 @@ POSIX has the following properties and limitations.
 	calls to off-peak hours.)
 
 *	POSIX requires that systems ignore leap seconds.
+
+*	The tz code attempts attempts to support all the time_t implementations
+	allowed by POSIX.  The time_t type represents a nonnegative count of
+	seconds since 1970-01-01 00:00:00 UTC, ignoring leap seconds.
+	In practice, time_t is usually a signed 64- or 32-bit integer; 32-bit
+	signed time_t values stop working after 2038-01-19 03:14:07 UTC, so
+	new implementations these days typically use a signed 64-bit integer.
+	Unsigned 32-bit integers are used on one or two platforms,
+	and 36-bit integers are also used occasionally.
+	Although earlier POSIX versions allowed time_t to be a
+	floating-point type, this was not supported by any practical
+	systems, and POSIX.1-2013 and the tz code both require time_t
+	to be an integer type.
 
 These are the extensions that have been made to the POSIX functions:
 
@@ -147,6 +162,8 @@ These are the extensions that have been made to the POSIX functions:
 	environment variable; portable applications should not, however, rely
 	on this behavior since it's not the way SVR2 systems behave.)
 
+*	Negative time_t values are supported, on systems where time_t is signed.
+
 *	These functions can account for leap seconds, thanks to Bradley White.
 
 Points of interest to folks with other systems:
@@ -156,7 +173,7 @@ Points of interest to folks with other systems:
 	On such hosts, the primary use of this package
 	is to update obsolete time zone rule tables.
 	To do this, you may need to compile the time zone compiler
-	`zic' supplied with this package instead of using the system `zic',
+	'zic' supplied with this package instead of using the system 'zic',
 	since the format of zic's input changed slightly in late 1994,
 	and many vendors still do not support the new input format.
 
@@ -174,7 +191,7 @@ Points of interest to folks with other systems:
 	but this functionality was removed in later versions of BSD.
 
 *	In SVR2, time conversion fails for near-minimum or near-maximum
-	time_t values when doing conversions for places that don't use UTC.
+	time_t values when doing conversions for places that don't use UT.
 	This package takes care to do these conversions correctly.
 
 The functions that are conditionally compiled if STD_INSPIRED is defined
@@ -201,7 +218,10 @@ data, the world is partitioned into regions whose clocks all agree
 about time stamps that occur after the somewhat-arbitrary cutoff point
 of the POSIX Epoch (1970-01-01 00:00:00 UTC).  For each such region,
 the database records all known clock transitions, and labels the region
-with a notable location.
+with a notable location.  Although 1970 is a somewhat-arbitrary
+cutoff, there are significant challenges to moving the cutoff earlier
+even by a decade or two, due to the wide variety of local practices
+before computer timekeeping became prevalent.
 
 Clock transitions before 1970 are recorded for each such location,
 because most POSIX-compatible systems support negative time stamps and
@@ -211,11 +231,133 @@ applications requiring accurate handling of all past times everywhere,
 as it would take far too much effort and guesswork to record all
 details of pre-1970 civil timekeeping.
 
-As noted in the README file, the tz database is not authoritative
-(particularly not for pre-1970 time stamps), and it surely has errors.
+
+----- Accuracy of the tz database -----
+
+The tz database is not authoritative, and it surely has errors.
 Corrections are welcome and encouraged.  Users requiring authoritative
 data should consult national standards bodies and the references cited
 in the database's comments.
+
+Errors in the tz database arise from many sources:
+
+ * The tz database predicts future time stamps, and current predictions
+   will be incorrect after future governments change the rules.
+   For example, if today someone schedules a meeting for 13:00 next
+   October 1, Casablanca time, and tomorrow Morocco changes its
+   daylight saving rules, software can mess up after the rule change
+   if it blithely relies on conversions made before the change.
+
+ * The pre-1970 data in this database cover only a tiny sliver of how
+   clocks actually behaved; the vast majority of the necessary
+   information was lost or never recorded.  Thousands more zones would
+   be needed if the tz database's scope were extended to cover even
+   just the known or guessed history of standard time; for example,
+   the current single entry for France would need to split into dozens
+   of entries, perhaps hundreds.
+
+ * Most of the pre-1970 data comes from unreliable sources, often
+   astrology books that lack citations and whose compilers evidently
+   invented entries when the true facts were unknown, without
+   reporting which entries were known and which were invented.
+   These books often contradict each other or give implausible entries,
+   and on the rare occasions when their old data are checked they are
+   typically found to be incorrect.
+
+ * For the UK the tz database relies on years of first-class work done by
+   Joseph Myers and others; see <http://www.polyomino.org.uk/british-time/>.
+   Other countries are not done nearly as well.
+
+ * Sometimes, different people in the same city would maintain clocks
+   that differed significantly.  Railway time was used by railroad
+   companies (which did not always agree with each other),
+   church-clock time was used for birth certificates, etc.
+   Often this was merely common practice, but sometimes it was set by law.
+   For example, from 1891 to 1911 the UT offset in France was legally
+   0:09:21 outside train stations and 0:04:21 inside.
+
+ * Although a named location in the tz database stands for the
+   containing region, its pre-1970 data entries are often accurate for
+   only a small subset of that region.  For example, Europe/London
+   stands for the United Kingdom, but its pre-1847 times are valid
+   only for locations that have London's exact meridian, and its 1847
+   transition to GMT is known to be valid only for the L&NW and the
+   Caledonian railways.
+
+ * The tz database does not record the earliest time for which a
+   zone's data is thereafter valid for every location in the region.
+   For example, Europe/London is valid for all locations in its
+   region after GMT was made the standard time, but the date of
+   standardization (1880-08-02) is not in the tz database, other than
+   in commentary.  For many zones the earliest time of validity is
+   unknown.
+
+ * The tz database does not record a region's boundaries, and in many
+   cases the boundaries are not known.  For example, the zone
+   America/Kentucky/Louisville represents a region around the city of
+   Louisville, the boundaries of which are unclear.
+
+ * Changes that are modeled as instantaneous transitions in the tz
+   database were often spread out over hours, days, or even decades.
+
+ * Even if the time is specified by law, locations sometimes
+   deliberately flout the law.
+
+ * Early timekeeping practices, even assuming perfect clocks, were
+   often not specified to the accuracy that the tz database requires.
+
+ * Sometimes historical timekeeping was specified more precisely
+   than what the tz database can handle.  For example, from 1909 to
+   1937 Netherlands clocks were legally UT+00:19:32.13, but the tz
+   database cannot represent the fractional second.
+
+ * Even when all the timestamp transitions recorded by the tz database
+   are correct, the tz rules that generate them may not faithfully
+   reflect the historical rules.  For example, from 1922 until World
+   War II the UK moved clocks forward the day following the third
+   Saturday in April unless that was Easter, in which case it moved
+   clocks forward the previous Sunday.  Because the tz database has no
+   way to specify Easter, these exceptional years are entered as
+   separate tz Rule lines, even though the legal rules did not change.
+
+ * The tz database models pre-standard time using the Gregorian
+   calendar and local mean time (LMT), but many people used other
+   calendars and other timescales.  For example, the Roman Empire used
+   the Julian calendar, and had 12 varying-length daytime hours with a
+   non-hour-based system at night.
+
+ * Early clocks were less reliable, and the data do not represent this
+   unreliability.
+
+ * As for leap seconds, civil time was not based on atomic time before
+   1972, and we don't know the history of earth's rotation accurately
+   enough to map SI seconds to historical solar time to more than
+   about one-hour accuracy.  See: Morrison LV, Stephenson FR.
+   Historical values of the Earth's clock error Delta T and the
+   calculation of eclipses. J Hist Astron. 2004;35:327-36
+   <http://adsabs.harvard.edu/full/2004JHA....35..327M>;
+   Historical values of the Earth's clock error. J Hist Astron. 2005;36:339
+   <http://adsabs.harvard.edu/full/2005JHA....36..339M>.
+
+ * The relationship between POSIX time (that is, UTC but ignoring leap
+   seconds) and UTC is not agreed upon after 1972.  Although the POSIX
+   clock officially stops during an inserted leap second, at least one
+   proposed standard has it jumping back a second instead; and in
+   practice POSIX clocks more typically either progress glacially during
+   a leap second, or are slightly slowed while near a leap second.
+
+ * The tz database does not represent how uncertain its information is.
+   Ideally it would contain information about when the data are
+   incomplete or dicey.  Partial temporal knowledge is a field of
+   active research, though, and it's not clear how to apply it here.
+
+In short, many, perhaps most, of the tz database's pre-1970 and future
+time stamps are either wrong or misleading.  Any attempt to pass the
+tz database off as the definition of time should be unacceptable to
+anybody who cares about the facts.  In particular, the tz database's
+LMT offsets should not be considered meaningful, and should not prompt
+creation of zones merely because two locations differ in LMT or
+transitioned to standard time at different dates.
 
 
 ----- Names of time zone rule files -----
@@ -252,74 +394,88 @@ one example.
 Names normally have the form AREA/LOCATION, where AREA is the name
 of a continent or ocean, and LOCATION is the name of a specific
 location within that region.  North and South America share the same
-area, `America'.  Typical names are `Africa/Cairo', `America/New_York',
-and `Pacific/Honolulu'.
+area, 'America'.  Typical names are 'Africa/Cairo', 'America/New_York',
+and 'Pacific/Honolulu'.
 
 Here are the general rules used for choosing location names,
 in decreasing order of importance:
 
 	Use only valid POSIX file name components (i.e., the parts of
-		names other than `/').  Within a file name component,
-		use only ASCII letters, `.', `-' and `_'.  Do not use
+		names other than '/').  Do not use the file name
+		components '.' and '..'.  Within a file name component,
+		use only ASCII letters, '.', '-' and '_'.  Do not use
 		digits, as that might create an ambiguity with POSIX
 		TZ strings.  A file name component must not exceed 14
-		characters or start with `-'.  E.g., prefer `Brunei'
-		to `Bandar_Seri_Begawan'.
-	Include at least one location per time zone rule set per country.
-		One such location is enough.  Use ISO 3166 (see the file
-		iso3166.tab) to help decide whether something is a country.
-		However, uninhabited ISO 3166 regions like Bouvet Island
+		characters or start with '-'.  E.g., prefer 'Brunei'
+		to 'Bandar_Seri_Begawan'.
+	A name must not be empty, or contain '//', or start or end with '/'.
+	Do not use names that differ only in case.  Although the reference
+		implementation is case-sensitive, some other implementations
+		are not, and they would mishandle names differing only in case.
+	If one name A is an initial prefix of another name AB (ignoring case),
+		then B must not start with '/', as a regular file cannot have
+		the same name as a directory in POSIX.  For example,
+		'America/New_York' precludes 'America/New_York/Bronx'.
+	Uninhabited regions like the North Pole and Bouvet Island
 		do not need locations, since local time is not defined there.
-	If all the clocks in a country's region have agreed since 1970,
+	There should typically be at least one name for each ISO 3166-1
+		officially assigned two-letter code for an inhabited country
+		or territory.
+	If all the clocks in a region have agreed since 1970,
 		don't bother to include more than one location
 		even if subregions' clocks disagreed before 1970.
 		Otherwise these tables would become annoyingly large.
 	If a name is ambiguous, use a less ambiguous alternative;
 		e.g. many cities are named San Jose and Georgetown, so
-		prefer `Costa_Rica' to `San_Jose' and `Guyana' to `Georgetown'.
+		prefer 'Costa_Rica' to 'San_Jose' and 'Guyana' to 'Georgetown'.
 	Keep locations compact.  Use cities or small islands, not countries
 		or regions, so that any future time zone changes do not split
-		locations into different time zones.  E.g. prefer `Paris'
-		to `France', since France has had multiple time zones.
-	Use mainstream English spelling, e.g. prefer `Rome' to `Roma', and
-		prefer `Athens' to the true name (which uses Greek letters).
+		locations into different time zones.  E.g. prefer 'Paris'
+		to 'France', since France has had multiple time zones.
+	Use mainstream English spelling, e.g. prefer 'Rome' to 'Roma', and
+		prefer 'Athens' to the true name (which uses Greek letters).
 		The POSIX file name restrictions encourage this rule.
-	Use the most populous among locations in a country's time zone,
-		e.g. prefer `Shanghai' to `Beijing'.  Among locations with
+	Use the most populous among locations in a zone,
+		e.g. prefer 'Shanghai' to 'Beijing'.  Among locations with
 		similar populations, pick the best-known location,
-		e.g. prefer `Rome' to `Milan'.
-	Use the singular form, e.g. prefer `Canary' to `Canaries'.
-	Omit common suffixes like `_Islands' and `_City', unless that
-		would lead to ambiguity.  E.g. prefer `Cayman' to
-		`Cayman_Islands' and `Guatemala' to `Guatemala_City',
-		but prefer `Mexico_City' to `Mexico' because the country
+		e.g. prefer 'Rome' to 'Milan'.
+	Use the singular form, e.g. prefer 'Canary' to 'Canaries'.
+	Omit common suffixes like '_Islands' and '_City', unless that
+		would lead to ambiguity.  E.g. prefer 'Cayman' to
+		'Cayman_Islands' and 'Guatemala' to 'Guatemala_City',
+		but prefer 'Mexico_City' to 'Mexico' because the country
 		of Mexico has several time zones.
-	Use `_' to represent a space.
-	Omit `.' from abbreviations in names, e.g. prefer `St_Helena'
-		to `St._Helena'.
+	Use '_' to represent a space.
+	Omit '.' from abbreviations in names, e.g. prefer 'St_Helena'
+		to 'St._Helena'.
 	Do not change established names if they only marginally
 		violate the above rules.  For example, don't change
-		the existing name `Rome' to `Milan' merely because
+		the existing name 'Rome' to 'Milan' merely because
 		Milan's population has grown to be somewhat greater
 		than Rome's.
-	If a name is changed, put its old spelling in the `backward' file.
+	If a name is changed, put its old spelling in the 'backward' file.
+		This means old spellings will continue to work.
 
-The file `zone.tab' lists the geographical locations used to name
-time zone rule files.  It is intended to be an exhaustive list
-of canonical names for geographic regions.
+The file 'zone.tab' lists geographical locations used to name time
+zone rule files.  It is intended to be an exhaustive list of names
+for geographic regions as described above; this is a subset of the
+names in the data.  Although a 'zone.tab' location's longitude
+corresponds to its LMT offset with one hour for every 15 degrees east
+longitude, this relationship is not exact.
 
 Older versions of this package used a different naming scheme,
 and these older names are still supported.
-See the file `backward' for most of these older names
-(e.g. `US/Eastern' instead of `America/New_York').
+See the file 'backward' for most of these older names
+(e.g. 'US/Eastern' instead of 'America/New_York');
+excluding 'backward' should not affect the other data.
 The other old-fashioned names still supported are
-`WET', `CET', `MET', and `EET' (see the file `europe').
+'WET', 'CET', 'MET', and 'EET' (see the file 'europe').
 
 
 ----- Time zone abbreviations -----
 
 When this package is installed, it generates time zone abbreviations
-like `EST' to be compatible with human tradition and POSIX.
+like 'EST' to be compatible with human tradition and POSIX.
 Here are the general rules used for choosing time zone abbreviations,
 in decreasing order of importance:
 
@@ -346,38 +502,40 @@ in decreasing order of importance:
 		letters.
 
 	Use abbreviations that are in common use among English-speakers,
-		e.g. `EST' for Eastern Standard Time in North America.
+		e.g. 'EST' for Eastern Standard Time in North America.
 		We assume that applications translate them to other languages
 		as part of the normal localization process; for example,
-		a French application might translate `EST' to `HNE'.
+		a French application might translate 'EST' to 'HNE'.
 
 	For zones whose times are taken from a city's longitude, use the
-		traditional xMT notation, e.g. `PMT' for Paris Mean Time.
-		The only name like this in current use is `GMT'.
+		traditional xMT notation, e.g. 'PMT' for Paris Mean Time.
+		The only name like this in current use is 'GMT'.
 
 	If there is no common English abbreviation, abbreviate the English
 		translation of the usual phrase used by native speakers.
 		If this is not available or is a phrase mentioning the country
-		(e.g. ``Cape Verde Time''), then:
+		(e.g. "Cape Verde Time"), then:
 
-		When a country has a single or principal time zone region,
-			append `T' to the country's ISO	code, e.g. `CVT' for
-			Cape Verde Time.  For summer time append `ST';
-			for double summer time append `DST'; etc.
-		When a country has multiple time zones, take the first three
-			letters of an English place name identifying each zone
-			and then append `T', `ST', etc. as before;
-			e.g. `VLAST' for VLAdivostok Summer Time.
+		When a country is identified with a single or principal zone,
+			append 'T' to the country's ISO	code, e.g. 'CVT' for
+			Cape Verde Time.  For summer time append 'ST';
+			for double summer time append 'DST'; etc.
+		Otherwise, take the first three letters of an English place
+			name identifying each zone and append 'T', 'ST', etc.
+			as before; e.g. 'VLAST' for VLAdivostok Summer Time.
 
-	Use UTC (with time zone abbreviation "zzz") for locations while
-		uninhabited.  The "zzz" mnemonic is that these locations are,
+	Use 'LMT' for local mean time of locations before the introduction
+		of standard time; see "Scope of the tz database".
+
+	Use UT (with time zone abbreviation 'zzz') for locations while
+		uninhabited.  The 'zzz' mnemonic is that these locations are,
 		in some sense, asleep.
 
 Application writers should note that these abbreviations are ambiguous
-in practice: e.g. `EST' has a different meaning in Australia than
+in practice: e.g. 'EST' has a different meaning in Australia than
 it does in the United States.  In new applications, it's often better
-to use numeric UTC offsets like `-0500' instead of time zone
-abbreviations like `EST'; this avoids the ambiguity.
+to use numeric UT offsets like '-0500' instead of time zone
+abbreviations like 'EST'; this avoids the ambiguity.
 
 
 ----- Calendrical issues -----
@@ -402,7 +560,7 @@ and (in Paris only) 1871-05-06 through 1871-05-23.
 Russia
 
 From Chris Carrier (1996-12-02):
-On 1929-10-01 the Soviet Union instituted an ``Eternal Calendar''
+On 1929-10-01 the Soviet Union instituted an "Eternal Calendar"
 with 30-day months plus 5 holidays, with a 5-day week.
 On 1931-12-01 it changed to a 6-day week; in 1934 it reverted to the
 Gregorian calendar while retaining the 6-day week; on 1940-06-27 it
@@ -588,7 +746,8 @@ Sources:
 
 Michael Allison and Robert Schmunk,
 "Technical Notes on Mars Solar Time as Adopted by the Mars24 Sunclock"
-<http://www.giss.nasa.gov/tools/mars24/help/notes.html> (2004-07-30).
+<http://www.giss.nasa.gov/tools/mars24/help/notes.html> (2012-08-08).
 
 Jia-Rui Chong, "Workdays Fit for a Martian", Los Angeles Times
+<http://articles.latimes.com/2004/jan/14/science/sci-marstime14>
 (2004-01-14), pp A1, A20-A21.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strftime.3,v 1.39 2024/04/29 13:34:19 naddy Exp $
+.\"	$OpenBSD: strftime.3,v 1.40 2025/06/23 13:53:11 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
 .\"
-.Dd $Mdocdate: April 29 2024 $
+.Dd $Mdocdate: June 23 2025 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -160,8 +160,8 @@ The range of
 seconds is (00\-60) instead of (00\-59) to allow for the periodic occurrence
 of leap seconds.
 .It Cm %s
-is replaced by the number of seconds since the Epoch, UTC (see
-.Xr mktime 3 ) .
+is replaced by the number of seconds since the Epoch (see
+.Xr ctime 3 ) .
 .It Cm \&%T
 is replaced by the time in the format
 .Dq Li %H:%M:%S .
@@ -206,7 +206,7 @@ is replaced by the year without century as a decimal number (00\-99).
 is replaced by the time zone name,
 or by the empty string if this is not determinable.
 .It Cm \&%z
-is replaced by the offset from UTC in the format
+is replaced by the offset from the Prime Meridian in the format
 .Dq Li +HHMM
 or
 .Dq Li -HHMM

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zdump.c,v 1.18 2025/05/21 01:27:29 millert Exp $ */
+/*	$OpenBSD: zdump.c,v 1.19 2025/06/23 13:53:11 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -38,6 +38,17 @@
 #define SECSPERDAY	(SECSPERHOUR * HOURSPERDAY)
 #define SECSPERNYEAR	(SECSPERDAY * DAYSPERNYEAR)
 #define SECSPERLYEAR	(SECSPERNYEAR + SECSPERDAY)
+#define SECSPER400YEARS	(SECSPERNYEAR * (intmax_t) (300 + 3)	\
+			 + SECSPERLYEAR * (intmax_t) (100 - 3))
+
+/*
+** True if SECSPER400YEARS is known to be representable as an
+** intmax_t.  It's OK that SECSPER400YEARS_FITS can in theory be false
+** even if SECSPER400YEARS is representable, because when that happens
+** the code merely runs a bit more slowly, and this slowness doesn't
+** occur on any practical platform.
+*/
+enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
 
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
@@ -230,7 +241,7 @@ main(int argc, char *argv[])
 		t = absolute_min_time;
 		if (!Vflag) {
 			show(argv[i], t, TRUE);
-			t += SECSPERHOUR * HOURSPERDAY;
+			t += SECSPERDAY;
 			show(argv[i], t, TRUE);
 		}
 		if (t < cutlotime)
@@ -241,9 +252,11 @@ main(int argc, char *argv[])
 			strlcpy(buf, abbr(&tm), sizeof buf);
 		}
 		for ( ; ; ) {
-			if (t >= cuthitime || t >= cuthitime - SECSPERHOUR * 12)
+			newt = (t < absolute_max_time - SECSPERDAY / 2
+				? t + SECSPERDAY / 2
+				: absolute_max_time);
+			if (cuthitime <= newt)
 				break;
-			newt = t + SECSPERHOUR * 12;
 			newtmp = localtime(&newt);
 			if (newtmp != NULL)
 				newtm = *newtmp;
@@ -264,9 +277,9 @@ main(int argc, char *argv[])
 		}
 		if (!Vflag) {
 			t = absolute_max_time;
-			t -= SECSPERHOUR * HOURSPERDAY;
+			t -= SECSPERDAY;
 			show(argv[i], t, TRUE);
-			t += SECSPERHOUR * HOURSPERDAY;
+			t += SECSPERDAY;
 			show(argv[i], t, TRUE);
 		}
 	}
@@ -281,28 +294,40 @@ main(int argc, char *argv[])
 static time_t
 yeartot(const intmax_t y)
 {
-	intmax_t	myy = EPOCH_YEAR;
-	int_fast32_t	seconds;
+	intmax_t	seconds, years, myy = EPOCH_YEAR;
 	time_t		t = 0;
 
-	while (myy != y) {
-		if (myy < y) {
+	while (myy < y) {
+		if (SECSPER400YEARS_FITS && 400 <= y - myy) {
+			intmax_t diff400 = (y - myy) / 400;
+			if (INTMAX_MAX / SECSPER400YEARS < diff400)
+				return absolute_max_time;
+			seconds = diff400 * SECSPER400YEARS;
+			years = diff400 * 400;
+                } else {
 			seconds = isleap(myy) ? SECSPERLYEAR : SECSPERNYEAR;
-			++myy;
-			if (t > absolute_max_time - seconds) {
-				t = absolute_max_time;
-				break;
-			}
-			t += seconds;
-		} else {
-			--myy;
-			seconds = isleap(myy) ? SECSPERLYEAR : SECSPERNYEAR;
-			if (t < absolute_min_time + seconds) {
-				t = absolute_min_time;
-				break;
-			}
-			t -= seconds;
+			years = 1;
 		}
+		myy += years;
+		if (t > absolute_max_time - seconds)
+			return absolute_max_time;
+		t += seconds;
+	}
+	while (y < myy) {
+		if (SECSPER400YEARS_FITS && y + 400 <= myy && myy < 0) {
+			intmax_t diff400 = (myy - y) / 400;
+			if (INTMAX_MAX / SECSPER400YEARS < diff400)
+				return absolute_min_time;
+			seconds = diff400 * SECSPER400YEARS;
+			years = diff400 * 400;
+		} else {
+			seconds = isleap(myy - 1) ? SECSPERLYEAR : SECSPERNYEAR;
+			years = 1;
+		}
+		myy -= years;
+		if (t < absolute_min_time + seconds)
+			return absolute_min_time;
+		t -= seconds;
 	}
 	return t;
 }
@@ -385,7 +410,7 @@ show(char *zone, time_t t, int v)
 			printf("%lld", t);
 		} else {
 			dumptime(tmp);
-			printf(" UTC");
+			printf(" UT");
 		}
 		printf(" = ");
 	}

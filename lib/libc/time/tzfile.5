@@ -1,5 +1,5 @@
-.\"	$OpenBSD: tzfile.5,v 1.15 2015/03/14 22:15:09 millert Exp $
-.Dd $Mdocdate: March 14 2015 $
+.\"	$OpenBSD: tzfile.5,v 1.16 2025/06/23 13:53:11 millert Exp $
+.Dd $Mdocdate: June 23 2025 $
 .Dt TZFILE 5
 .Os
 .Sh NAME
@@ -11,11 +11,9 @@ The time zone information files used by
 begin with the magic characters "TZif" to identify themselves as
 time zone information files,
 followed by a character identifying the version of the file's format
-(as of 2005, either an ASCII NUL or a '2')
+(as of 2013, either an ASCII NUL, a '2', or a '3')
 followed by fifteen bytes containing zeroes reserved for future use,
-followed by six four-byte values of type
-.Fa int
-written in a
+followed by six four-byte integer values written in
 .Dq big endian
 byte order
 .Po
@@ -25,7 +23,7 @@ These values are,
 in order:
 .Bl -tag -width "tzh_ttisgmtcnt"
 .It Fa tzh_ttisgmtcnt
-The number of UTC/local indicators stored in the file.
+The number of UT/local indicators stored in the file.
 .It Fa tzh_ttisstdcnt
 The number of standard/wall indicators stored in the file.
 .It Fa tzh_leapcnt
@@ -43,19 +41,16 @@ stored in the file.
 .Pp
 The above header is followed by
 .Fa tzh_timecnt
-four-byte values of type
-.Fa long ,
-sorted in ascending order.
+four-byte signed integer values sorted in ascending order.
 These values are written in
-.Dq standard
+.Dq big endian
 byte order.
 Each is used as a transition time
 .Pq as returned by Xr time 3
 at which the rules for computing local time change.
 Next come
 .Fa tzh_timecnt
-one-byte values of type
-.Fa unsigned char ;
+one-byte unsigned integer values;
 each one tells which of the different types of
 .Dq local time
 types
@@ -67,18 +62,15 @@ structures (with
 entries) that appears next in the file;
 these structures are defined as follows:
 .Bd -literal -offset indent
-.ta .5i +\w'unsigned int\0\0'u
 struct ttinfo {
-	long	tt_gmtoff;	/* UTC offset in seconds */
-	int	tt_isdst;	/* used to set tm_isdst */
-	int	tt_abbrind;	/* abbreviation list index */
+	int32_t	tt_gmtoff;	/* UTC offset in seconds */
+	unsigned char tt_isdst;	/* used to set tm_isdst */
+	unsigned char tt_abbrind; /* abbreviation list index */
 };
 .Ed
 .Pp
-Each structure is written as a four-byte value for
+Each structure is written as a four-byte signed integer value for
 .Fa tt_gmtoff
-of type
-.Fa long ,
 in
 .Dq big endian
 byte order, followed by a one-byte value for
@@ -87,7 +79,7 @@ and a one-byte value for
 .Fa tt_abbrind .
 In each structure,
 .Fa tt_gmtoff
-gives the number of seconds to be added to UTC,
+gives the number of seconds to be added to UT,
 .Fa tt_isdst
 tells whether
 .Fa tm_isdst
@@ -102,7 +94,9 @@ structure(s) in the file.
 .Pp
 Then there are
 .Fa tzh_leapcnt
-pairs of four-byte values, written in standard byte order;
+pairs of four-byte values, written in
+.Dq big endian
+byte order;
 the first value of each pair gives the time
 .Pq as returned by Xr time 3
 at which a leap second occurs;
@@ -121,9 +115,9 @@ time zone environment variables.
 .Pp
 Finally there are
 .Fa tzh_ttisgmtcnt
-UTC/local indicators, each stored as a one-byte value;
+UT/local indicators, each stored as a one-byte value;
 they tell whether the transition times associated with local time types
-were specified as UTC or local time,
+were specified as UT or local time,
 and are used when a time zone file is used in handling POSIX-style
 time zone environment variables.
 .Pp
@@ -148,7 +142,22 @@ POSIX-TZ-environment-variable-style string for use in handling instants
 after the last transition time stored in the file
 (with nothing between the newlines if there is no POSIX representation for
 such instants).
+.Pp
+For version-3-format time zone files, the POSIX-TZ-style string may
+use two minor extensions to the POSIX TZ format, as described in
+.Xr tzset 3 .
+First, the hours part of its transition times may be signed and range from
+\-167 through 167 instead of the POSIX-required unsigned values
+from 0 through 24.
+Second, DST is in effect all year if it starts
+January 1 at 00:00 and ends December 31 at 24:00 plus the difference
+between daylight saving and standard time.
+.Pp
+Future changes to the format may append additional data.
 .Sh SEE ALSO
-.Xr ctime 3
+.Xr ctime 3 ,
+.Xr tzset 3 ,
+.Xr zic 8 ,
+.Xr zdump 8
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson.
