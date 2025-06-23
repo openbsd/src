@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.50 2024/09/26 01:45:13 jsg Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.51 2025/06/23 16:49:39 bluhm Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ union {
 } hdr;
 
 static void setsegment(struct mem_segment_descriptor *, uint32_t,
-    size_t, int, int, int, int);
+    size_t, int, int, int, int, int);
 static int elf32_exec(gzFile, Elf32_Ehdr *, u_long *, int);
 static int elf64_exec(gzFile, Elf64_Ehdr *, u_long *, int);
 static size_t create_bios_memmap(struct vm_create_params *, bios_memmap_t *);
@@ -148,7 +148,7 @@ uint64_t pg_crypt = 0;
  */
 static void
 setsegment(struct mem_segment_descriptor *sd, uint32_t base, size_t limit,
-    int type, int dpl, int def32, int gran)
+    int type, int dpl, int def32, int gran, int lm)
 {
 	sd->sd_lolimit = (int)limit;
 	sd->sd_lobase = (int)base;
@@ -157,7 +157,7 @@ setsegment(struct mem_segment_descriptor *sd, uint32_t base, size_t limit,
 	sd->sd_p = 1;
 	sd->sd_hilimit = (int)limit >> 16;
 	sd->sd_avl = 0;
-	sd->sd_long = 0;
+	sd->sd_long = lm;
 	sd->sd_def32 = def32;
 	sd->sd_gran = gran;
 	sd->sd_hibase = (int)base >> 24;
@@ -185,11 +185,13 @@ push_gdt(void)
 	 * Create three segment descriptors:
 	 *
 	 * GDT[0] : null descriptor. "Created" via memset above.
-	 * GDT[1] (selector @ 0x8): Executable segment, for CS
+	 * GDT[1] (selector @ 0x8): Executable segment (compat mode), for CS
 	 * GDT[2] (selector @ 0x10): RW Data segment, for DS/ES/SS
+	 * GDT[3] (selector @ 0x18): Executable segment (long mode), for CS
 	 */
-	setsegment(&sd[1], 0, 0xffffffff, SDT_MEMERA, SEL_KPL, 1, 1);
-	setsegment(&sd[2], 0, 0xffffffff, SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&sd[1], 0, 0xffffffff, SDT_MEMERA, SEL_KPL, 1, 1, 0);
+	setsegment(&sd[2], 0, 0xffffffff, SDT_MEMRWA, SEL_KPL, 1, 1, 0);
+	setsegment(&sd[3], 0, 0xffffffff, SDT_MEMERA, SEL_KPL, 0, 1, 1);
 
 	write_mem(GDT_PAGE, gdtpage, PAGE_SIZE);
 	sev_register_encryption(GDT_PAGE, PAGE_SIZE);
