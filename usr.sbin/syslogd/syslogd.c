@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.284 2025/01/23 12:27:42 henning Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.285 2025/06/23 09:26:17 henning Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1168,6 +1168,8 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 	log_debug("Peer address and port %s", peername);
 	if ((p = malloc(sizeof(*p))) == NULL) {
 		log_warn("allocate peername \"%s\"", peername);
+		if (peername != hostname_unknown)
+			free(peername);
 		close(fd);
 		return;
 	}
@@ -1176,6 +1178,8 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 	    usetls ? tls_handshakecb : NULL, tcp_closecb, p)) == NULL) {
 		log_warn("bufferevent \"%s\"", peername);
 		free(p);
+		if (peername != hostname_unknown)
+			free(peername);
 		close(fd);
 		return;
 	}
@@ -1186,6 +1190,8 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 			    peername, tls_error(server_ctx));
 			bufferevent_free(p->p_bufev);
 			free(p);
+			if (peername != hostname_unknown)
+				free(peername);
 			close(fd);
 			return;
 		}
