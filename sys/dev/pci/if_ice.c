@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.50 2025/06/23 07:48:27 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.51 2025/06/23 08:03:22 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -139,8 +139,10 @@ const uint8_t ice_rc_version = 0;
 typedef void *ice_match_t;
 
 static const struct pci_matchid ice_devices[] = {
-	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_SFP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_C_QSFP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_C_SFP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_QSFP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_SFP },
 };
 
 int
@@ -969,12 +971,11 @@ ice_set_mac_type(struct ice_hw *hw)
 	switch (sc->sc_pid) {
 #if 0
 	case ICE_DEV_ID_E810C_BACKPLANE:
-	case ICE_DEV_ID_E810C_QSFP:
-	case ICE_DEV_ID_E810C_SFP:
 	case ICE_DEV_ID_E810_XXV_BACKPLANE:
-	case ICE_DEV_ID_E810_XXV_QSFP:
-	case ICE_DEV_ID_E810_XXV_SFP:
 #endif
+	case PCI_PRODUCT_INTEL_E810_C_QSFP:
+	case PCI_PRODUCT_INTEL_E810_C_SFP:
+	case PCI_PRODUCT_INTEL_E810_XXV_QSFP:
 	case PCI_PRODUCT_INTEL_E810_XXV_SFP:
 		hw->mac_type = ICE_MAC_E810;
 		break;
