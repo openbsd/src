@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.106 2025/06/21 22:08:44 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.107 2025/06/23 12:05:46 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -37,7 +37,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_divert.h>
-#include <netinet6/ip6_divert.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <netinet/icmp6.h>

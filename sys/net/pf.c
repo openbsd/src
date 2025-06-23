@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1214 2025/06/23 09:16:32 mvs Exp $ */
+/*	$OpenBSD: pf.c,v 1.1215 2025/06/23 12:05:45 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -84,7 +84,6 @@
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
-#include <netinet6/ip6_divert.h>
 #endif /* INET6 */
 
 #include <net/pfvar.h>

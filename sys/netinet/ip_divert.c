@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.105 2025/06/06 13:13:37 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.106 2025/06/23 12:05:46 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -313,8 +313,7 @@ divert_send(struct socket *so, struct mbuf *m, struct mbuf *addr,
 }
 
 int
-divert_sysctl_divstat(struct cpumem *cpucounters, void *oldp, size_t *oldlenp,
-    void *newp)
+divert_sysctl_divstat(void *oldp, size_t *oldlenp, void *newp)
 {
 	uint64_t counters[divs_ncounters];
 	struct divstat divstat;
@@ -323,7 +322,7 @@ divert_sysctl_divstat(struct cpumem *cpucounters, void *oldp, size_t *oldlenp,
 
 	CTASSERT(sizeof(divstat) == (nitems(counters) * sizeof(u_long)));
 	memset(&divstat, 0, sizeof divstat);
-	counters_read(cpucounters, counters, nitems(counters), NULL);
+	counters_read(divcounters, counters, nitems(counters), NULL);
 
 	for (i = 0; i < nitems(counters); i++)
 		words[i] = (u_long)counters[i];
@@ -345,8 +344,7 @@ divert_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (name[0]) {
 	case DIVERTCTL_STATS:
-		return (divert_sysctl_divstat(divcounters, oldp, oldlenp,
-		    newp));
+		return (divert_sysctl_divstat(oldp, oldlenp, newp));
 	default:
 		return (sysctl_bounded_arr(divertctl_vars,
 		    nitems(divertctl_vars), name, namelen, oldp, oldlenp,

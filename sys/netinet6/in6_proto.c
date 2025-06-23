@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.132 2025/06/23 09:16:32 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.133 2025/06/23 12:05:46 bluhm Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -106,7 +106,7 @@
 
 #include "pf.h"
 #if NPF > 0
-#include <netinet6/ip6_divert.h>
+#include <netinet/ip_divert.h>
 #endif
 
 #include "etherip.h"
