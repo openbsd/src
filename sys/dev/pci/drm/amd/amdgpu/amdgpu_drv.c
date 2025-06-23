@@ -3270,7 +3270,6 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	const struct pci_device_id *id_entry;
 	pcireg_t		 type;
-	int			 i;
 	uint8_t			 rmmio_bar;
 	paddr_t			 fb_aper;
 	pcireg_t		 addr, mask;
@@ -3635,8 +3634,6 @@ amdgpu_doswitch(void *v)
 {
 	struct rasops_info *ri = v;
 	struct amdgpu_device *adev = ri->ri_hw;
-	struct amdgpu_crtc *amdgpu_crtc;
-	int i, crtc;
 
 	rasops_show_screen(ri, adev->switchcookie, 0, NULL, NULL);
 	drm_fb_helper_restore_fbdev_mode_unlocked(adev_to_drm(adev)->fb_helper);
@@ -3704,7 +3701,7 @@ amdgpu_attachhook(struct device *self)
 	struct amdgpu_device *adev = (struct amdgpu_device *)self;
 	struct drm_device *dev = &adev->ddev;
 	struct pci_dev *pdev = adev->pdev;
-	int r, acpi_status;
+	int r;
 	struct rasops_info *ri = &adev->ro;
 	struct drm_fb_helper *fb_helper;
 	struct drm_framebuffer *fb;
@@ -3845,7 +3842,6 @@ int
 amdgpu_detach(struct device *self, int flags)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)self;
-	struct drm_device *dev = &adev->ddev;
 
 	if (adev == NULL)
 		return 0;
