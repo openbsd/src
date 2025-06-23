@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.49 2025/06/20 09:32:04 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.50 2025/06/23 07:48:27 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -84,6 +84,9 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 #include <netinet/udp.h>
 
 #define STRUCT_HACK_VAR_LEN
@@ -101,6 +104,12 @@
 
 #include "if_icereg.h"
 #include "if_icevar.h"
+
+/*
+ * Our network stack cannot handle packets greater than MAXMCLBYTES.
+ * This interface cannot handle packets greater than ICE_TSO_SIZE.
+ */
+CTASSERT(MAXMCLBYTES < ICE_TSO_SIZE);
 
 /**
  * @var ice_driver_version
@@ -13639,11 +13648,97 @@ ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-uint64_t
-ice_tx_setup_offload(struct mbuf *m0, struct ice_tx_queue *txq,
-    unsigned int prod)
+/**
+ * ice_tso_detect_sparse - detect TSO packets with too many segments
+ *
+ * Hardware only transmits packets with a maximum of 8 descriptors. For TSO
+ * packets, hardware needs to be able to build the split packets using 8 or
+ * fewer descriptors. Additionally, the header must be contained within at
+ * most 3 descriptors.
+ *
+ * To verify this, we walk the headers to find out how many descriptors the
+ * headers require (usually 1). Then we ensure that, for each TSO segment, its
+ * data plus the headers are contained within 8 or fewer descriptors.
+ */
+int
+ice_tso_detect_sparse(struct mbuf *m, struct ether_extracted *ext,
+    bus_dmamap_t map)
 {
-	struct ether_extracted ext;
+	int count, curseg, i, hlen, segsz, seglen, hdrs, maxsegs;
+	bus_dma_segment_t *segs;
+	uint64_t paylen, outlen, nsegs;
+
+	curseg = hdrs = 0;
+
+	hlen = ETHER_HDR_LEN + ext->iphlen + ext->tcphlen;
+	outlen = MIN(9668, MAX(64, m->m_pkthdr.ph_mss));
+	paylen = m->m_pkthdr.len - hlen;
+	nsegs = (paylen + outlen - 1) / outlen;
+
+	segs = map->dm_segs;
+
+	/* First, count the number of descriptors for the header.
+	 * Additionally, make sure it does not span more than 3 segments.
+	 */
+	i = 0;
+	curseg = segs[0].ds_len;
+	while (hlen > 0) {
+		hdrs++;
+		if (hdrs > ICE_MAX_TSO_HDR_SEGS)
+			return (1);
+		if (curseg == 0) {
+			i++;
+			if (i == nsegs)
+				return (1);
+
+			curseg = segs[i].ds_len;
+		}
+		seglen = MIN(curseg, hlen);
+		curseg -= seglen;
+		hlen -= seglen;
+	}
+
+	maxsegs = ICE_MAX_TX_SEGS - hdrs;
+
+	/* We must count the headers, in order to verify that they take up
+	 * 3 or fewer descriptors. However, we don't need to check the data
+	 * if the total segments is small.
+	 */
+	if (nsegs <= maxsegs)
+		return (0);
+
+	count = 0;
+
+	/* Now check the data to make sure that each TSO segment is made up of
+	 * no more than maxsegs descriptors. This ensures that hardware will
+	 * be capable of performing TSO offload.
+	 */
+	while (paylen > 0) {
+		segsz = m->m_pkthdr.ph_mss;
+		while (segsz > 0 && paylen != 0) {
+			count++;
+			if (count > maxsegs)
+				return (1);
+			if (curseg == 0) {
+				i++;
+				if (i == nsegs)
+					return (1);
+				curseg = segs[i].ds_len;
+			}
+			seglen = MIN(curseg, segsz);
+			segsz -= seglen;
+			curseg -= seglen;
+			paylen -= seglen;
+		}
+		count = 0;
+	}
+
+	return (0);
+}
+
+uint64_t
+ice_tx_setup_offload(struct mbuf *m0, struct ether_extracted *ext)
+{
 	uint64_t offload = 0, hlen;
 
 #if NVLAN > 0
@@ -13657,17 +13752,16 @@ ice_tx_setup_offload(struct mbuf *m0, struct ice_tx_queue *txq,
 	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT|M_TCP_TSO))
 		return offload;
 
-	ether_extract_headers(m0, &ext);
-	hlen = ext.iphlen;
+	hlen = ext->iphlen;
 
-	if (ext.ip4) {
+	if (ext->ip4) {
 		if (ISSET(m0->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT))
 			offload |= ICE_TX_DESC_CMD_IIPT_IPV4_CSUM <<
 			    ICE_TXD_QW1_CMD_S;
 		else
 			offload |= ICE_TX_DESC_CMD_IIPT_IPV4 <<
 			    ICE_TXD_QW1_CMD_S;
-	} else if (ext.ip6)
+	} else if (ext->ip6)
 		offload |= ICE_TX_DESC_CMD_IIPT_IPV6 << ICE_TXD_QW1_CMD_S;
 	else
 		return offload;
@@ -13677,13 +13771,13 @@ ice_tx_setup_offload(struct mbuf *m0, struct ice_tx_queue *txq,
 	offload |= ((hlen >> 2) << ICE_TX_DESC_LEN_IPLEN_S) <<
 	    ICE_TXD_QW1_OFFSET_S;
 
-	if (ext.tcp && ISSET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
+	if (ext->tcp && ISSET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
 		offload |= ICE_TX_DESC_CMD_L4T_EOFT_TCP << ICE_TXD_QW1_CMD_S;
-		offload |= ((uint64_t)(ext.tcphlen >> 2) <<
+		offload |= ((uint64_t)(ext->tcphlen >> 2) <<
 		    ICE_TX_DESC_LEN_L4_LEN_S) << ICE_TXD_QW1_OFFSET_S;
-	} else if (ext.udp && ISSET(m0->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
+	} else if (ext->udp && ISSET(m0->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
 		offload |= ICE_TX_DESC_CMD_L4T_EOFT_UDP << ICE_TXD_QW1_CMD_S;
-		offload |= ((uint64_t)(sizeof(*ext.udp) >> 2) <<
+		offload |= ((uint64_t)(sizeof(*ext->udp) >> 2) <<
 		    ICE_TX_DESC_LEN_L4_LEN_S) << ICE_TXD_QW1_OFFSET_S;
 	}
 
@@ -13709,6 +13803,36 @@ ice_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
 }
 
 void
+ice_set_tso_context(struct mbuf *m0, struct ice_tx_queue *txq,
+    unsigned int prod, struct ether_extracted *ext)
+{
+	struct ice_tx_desc *ring;
+	struct ice_tx_ctx_desc *txd;
+	uint64_t qword1 = 0, paylen, outlen;
+
+	/*
+	 * The MSS should not be set to a lower value than 64.
+	 */
+	outlen = MAX(64, m0->m_pkthdr.ph_mss);
+	paylen = m0->m_pkthdr.len - ETHER_HDR_LEN - ext->iphlen - ext->tcphlen;
+
+	ring = ICE_DMA_KVA(&txq->tx_desc_mem);
+	txd = (struct ice_tx_ctx_desc *)&ring[prod];
+
+	qword1 |= ICE_TX_DESC_DTYPE_CTX;
+	qword1 |= ICE_TX_CTX_DESC_TSO << ICE_TXD_CTX_QW1_CMD_S;
+	qword1 |= paylen << ICE_TXD_CTX_QW1_TSO_LEN_S;
+	qword1 |= outlen << ICE_TXD_CTX_QW1_MSS_S;
+
+	htolem32(&txd->tunneling_params, 0);
+	htolem16(&txd->l2tag2, 0);
+	htolem16(&txd->rsvd, 0);
+	htolem64(&txd->qw1, qword1);
+
+	tcpstat_add(tcps_outpkttso, (paylen + outlen - 1) / outlen);
+}
+
+void
 ice_start(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
@@ -13725,6 +13849,7 @@ ice_start(struct ifqueue *ifq)
 	uint64_t offload;
 	uint64_t paddr;
 	uint64_t seglen;
+	struct ether_extracted ext;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
@@ -13757,21 +13882,52 @@ ice_start(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
-		offload = ice_tx_setup_offload(m, txq, prod);
+		ether_extract_headers(m, &ext);
+		offload = ice_tx_setup_offload(m, &ext);
+
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			if (ext.tcp == NULL || m->m_pkthdr.ph_mss == 0 ||
+			    m->m_pkthdr.ph_mss > ICE_TXD_CTX_MAX_MSS) {
+				tcpstat_inc(tcps_outbadtso);
+				ifq->ifq_errors++;
+				m_freem(m);
+				continue;
+			}
+		}
 
 		txm = &txq->tx_map[prod];
 		map = txm->txm_map;
-#if 0
-		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
-			prod++;
-			prod &= mask;
-			free--;
-		}
-#endif
+
 		if (ice_load_mbuf(sc->sc_dmat, map, m) != 0) {
 			ifq->ifq_errors++;
 			m_freem(m);
 			continue;
+		}
+
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			if (ice_tso_detect_sparse(m, &ext, map)) {
+				bus_dmamap_unload(sc->sc_dmat, map);
+				if (m_defrag(m, M_DONTWAIT) != 0 ||
+				    bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+				    BUS_DMA_STREAMING | BUS_DMA_NOWAIT) != 0) {
+					tcpstat_inc(tcps_outbadtso);
+					ifq->ifq_errors++;
+					m_freem(m);
+					continue;
+				}
+				if (ice_tso_detect_sparse(m, &ext, map)) {
+					bus_dmamap_unload(sc->sc_dmat, map);
+					tcpstat_inc(tcps_outbadtso);
+					ifq->ifq_errors++;
+					m_freem(m);
+					continue;
+				}
+			}
+
+			ice_set_tso_context(m, txq, prod, &ext);
+			prod++;
+			prod &= mask;
+			free--;
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
@@ -29329,8 +29485,8 @@ ice_tx_queues_alloc(struct ice_softc *sc)
 
 		for (j = 0; j < sc->isc_ntxd[i]; j++) {
 			map = &txq->tx_map[j];
-			if (bus_dmamap_create(sc->sc_dmat, ICE_MAX_FRAME_SIZE,
-			    ICE_MAX_TX_SEGS, ICE_MAX_FRAME_SIZE, 0,
+			if (bus_dmamap_create(sc->sc_dmat, MAXMCLBYTES,
+			    ICE_MAX_TX_SEGS, ICE_MAX_DMA_SEG_SIZE, 0,
 			    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 			    &map->txm_map) != 0) {
 				printf("%s: could not allocate Tx DMA map\n",
@@ -30260,7 +30416,8 @@ ice_attach_hook(struct device *self)
 #endif
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
-	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
+	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6 |
+	    IFCAP_TSOv4 | IFCAP_TSOv6;
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
