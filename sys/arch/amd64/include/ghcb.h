@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.h,v 1.2 2025/05/28 07:59:05 bluhm Exp $	*/
+/*	$OpenBSD: ghcb.h,v 1.3 2025/06/23 11:33:39 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -18,6 +18,8 @@
 
 #ifndef _MACHINE_GHCB_H_
 #define _MACHINE_GHCB_H_
+
+#ifndef _LOCORE
 
 #include <machine/frame.h>
 
@@ -98,11 +100,14 @@ struct ghcb_sync {
 	int			sz_c;
 	int			sz_d;
 };
+#endif /* !_LOCORE */
 
 /* Definitions used with the MSR protocol */
 #define MSR_PROTO_CPUID_REQ	0x4
 #define MSR_PROTO_CPUID_RESP	0x5
 #define MSR_PROTO_TERMINATE	0x100
+
+#ifndef _LOCORE
 
 void	ghcb_clear(struct ghcb_sa *);
 int	ghcb_valbm_set(uint8_t *, int);
@@ -114,5 +119,7 @@ void	ghcb_sync_val(int, int, struct ghcb_sync *);
 void	ghcb_sync_out(struct trapframe *, uint64_t, uint64_t, uint64_t,
 	    struct ghcb_sa *, struct ghcb_sync *);
 void	ghcb_sync_in(struct trapframe *, struct ghcb_sa *, struct ghcb_sync *);
+
+#endif /* !_LOCORE */
 
 #endif /* !_MACHINE_GHCB_H_ */

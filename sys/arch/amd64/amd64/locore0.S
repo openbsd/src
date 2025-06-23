@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.27 2025/05/05 23:02:39 guenther Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.28 2025/06/23 11:33:39 bluhm Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -111,6 +111,9 @@
 #include <machine/param.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
+#include <machine/trap.h>
+#include <machine/ghcb.h>
+#include <machine/vmmvar.h>
 
 /*
  * override user-land alignment before including asm.h
@@ -192,6 +195,58 @@ bi_size_ok:
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
+
+	/*
+	 * Setup temporary #VC trap handler, in case we are running
+	 * on an AMD CPU in SEV-ES guest mode.  Will be reset by
+	 * init_x86_64().
+	 * We are setting up two handlers:
+	 *
+	 * 1) locore_vc_trap32:  Triggered when we are running in
+	 *    32-bit legacy mode.
+	 *
+	 * 2) locore_vc_trap64:  Triggered when we are running in
+	 *    32-bit compatibility mode.
+	 *
+	 * The latter one is used by vmd(8).
+	 */
+	movl	$RELOC(early_idt), %ecx
+	movl	$T_VC, %edx
+	leal	(%ecx, %edx, 8), %ecx		/* 32bit #VC IDT slot */
+
+	pushl	%cs				/* get current %cs */
+	popl	%ebx
+	shll	$16, %ebx
+
+	movl	$RELOC(locore_vc_trap32), %eax
+	andl	$0x0000ffff, %eax
+	orl	%ebx, %eax			/* use current %cs */
+	movl	%eax, (%ecx)
+
+	movl	$RELOC(locore_vc_trap32), %eax
+	andl	$0xffff0000, %eax
+	orl	$((0x80 | SDT_SYS386IGT) << 8), %eax
+	movl	%eax, 4(%ecx)
+
+	movl	$RELOC(early_idt), %ecx
+	movl	$(2 * T_VC), %edx
+	leal	(%ecx, %edx, 8), %ecx		/* 64bit #VC IDT slot */
+
+	movl	$RELOC(locore_vc_trap64), %eax
+	andl	$0x0000ffff, %eax
+	orl	$(GSEL(3, SEL_KPL) << 16), %eax
+	movl	%eax, (%ecx)
+
+	movl	$RELOC(locore_vc_trap64), %eax
+	andl	$0xffff0000, %eax
+	orl	$((0x80 | SDT_SYS386IGT) << 8), %eax
+	movl	%eax, 4(%ecx)
+	xorl	%eax, %eax
+	movl	%eax, 8(%ecx)
+	movl	%eax, 12(%ecx)
+
+	movl	$RELOC(idtlc), %eax
+	lidt	(%eax)
 
 	/* Reset debug control registers */
 	xorl	%eax,%eax
@@ -631,8 +686,14 @@ store_pte:
 	 */
 	movl	$MSR_EFER,%ecx
 	rdmsr
+	movl	%eax,%ebx
 	xorl	%eax,%eax	/* XXX */
 	orl	$(EFER_LME|EFER_SCE),%eax
+	/* If set, preserve LMA */
+	testl	$EFER_LMA,%ebx
+	jz	efer_nxe
+	orl	$EFER_LMA,%eax
+efer_nxe:
 	movl	RELOC((pg_nx + 4)), %ebx
 	cmpl	$0, %ebx
 	je	write_efer
@@ -745,6 +806,118 @@ longmode_hi:
 	call	init_x86_64
 	call	main
 
+vc_cpuid64:
+	shll	$30, %eax		/* requested register */
+	orl	$MSR_PROTO_CPUID_REQ, %eax
+	movl	%ebx, %edx		/* CPUID function */
+	movl	$MSR_SEV_GHCB, %ecx
+	wrmsr
+	rep vmmcall
+	rdmsr
+	ret
+
+	.globl	locore_vc_trap64
+locore_vc_trap64:
+	pushq	%rax
+	pushq	%rbx
+	pushq	%rcx
+	pushq	%rdx
+
+	cmpl	$SVM_VMEXIT_CPUID, 32(%rsp)
+	jne	.Lterminate64
+
+	movl	%eax, %ebx		/* save CPUID function */
+
+	movl	$0, %eax		/* request cpuid, get %eax */
+	call	vc_cpuid64
+	movq	%rdx, 24(%rsp)
+
+	movl	$1, %eax		/* get %ebx */
+	call	vc_cpuid64
+	movq	%rdx, 16(%rsp)
+
+	movl	$2, %eax		/* get %ecx */
+	call	vc_cpuid64
+	movq	%rdx, 8(%rsp)
+
+	movl	$3, %eax		/* get %edx */
+	call	vc_cpuid64
+	movq	%rdx, 0(%rsp)
+
+	popq	%rdx
+	popq	%rcx
+	popq	%rbx
+	popq	%rax
+	addq	$8, %rsp
+	addq	$2, (%rsp)
+	iretq
+
+.Lterminate64:
+	movl	$MSR_PROTO_TERMINATE, %eax
+	movl	$MSR_SEV_GHCB, %ecx
+	wrmsr
+	rep vmmcall
+.Lterm_loop64:
+	hlt
+	jmp	.Lterm_loop64
+
+	.code32
+vc_cpuid32:
+	shll	$30, %eax		/* requested register */
+	orl	$MSR_PROTO_CPUID_REQ, %eax
+	movl	%ebx, %edx		/* CPUID function */
+	movl	$MSR_SEV_GHCB, %ecx
+	wrmsr
+	rep vmmcall
+	rdmsr
+	ret
+
+	.globl	locore_vc_trap32
+locore_vc_trap32:
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+
+	cmpl	$SVM_VMEXIT_CPUID, 16(%esp)
+	jne	.Lterminate32
+
+	movl	%eax, %ebx		/* save CPUID function */
+
+	movl	$0, %eax		/* request cpuid, get %eax */
+	call	vc_cpuid32
+	movl	%edx, 12(%esp)
+
+	movl	$1, %eax		/* get %ebx */
+	call	vc_cpuid32
+	movl	%edx, 8(%esp)
+
+	movl	$2, %eax		/* get %ecx */
+	call	vc_cpuid32
+	movl	%edx, 4(%esp)
+
+	movl	$3, %eax		/* get %edx */
+	call	vc_cpuid32
+	movl	%edx, 0(%esp)
+
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
+	addl	$4, %esp
+	addl	$2, (%esp)
+	iret
+
+.Lterminate32:
+	movl	$MSR_PROTO_TERMINATE, %eax
+	movl	$MSR_SEV_GHCB, %ecx
+	wrmsr
+	rep vmmcall
+.Lterm_loop32:
+	hlt
+	jmp	.Lterm_loop32
+
+
 	.section .codepatch,"a"
 	.align	8, 0xcc
 	.globl codepatch_begin
@@ -757,6 +930,20 @@ codepatch_end:
 	.previous
 
 	.data
+	.globl	idtlc			/* temporary locore IDT */
+idtlc:
+	.word	early_idt_end-early_idt-1
+	.long	_RELOC(early_idt)
+	.align 64, 0xcc
+
+	.globl	early_idt
+early_idt:
+	.rept	NIDT
+	.quad	0x0000000000000000
+	.quad	0x0000000000000000
+	.endr
+early_idt_end:
+
 	.globl	gdt64
 gdt64:
 	.word	gdt64_end-gdt64_start-1
