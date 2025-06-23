@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.146 2025/05/18 03:18:36 jan Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.147 2025/06/23 20:56:38 mvs Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -77,6 +77,11 @@
 #include <netinet/igmp.h>
 #include <netinet/ip_mroute.h>
 
+/*
+ * Locks used to protect data:
+ *	I	immutable after creation
+ */
+
 /* #define MCAST_DEBUG */
 
 #ifdef MCAST_DEBUG
@@ -99,7 +104,7 @@ int mcast_debug = 1;
 struct socket	*ip_mrouter[RT_TABLEID_MAX + 1];
 struct rttimer_queue ip_mrouterq;
 uint64_t	 mrt_count[RT_TABLEID_MAX + 1];
-int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
+int		ip_mrtproto = IGMP_DVMRP;    /* [I] for netstat only */
 
 struct cpumem *mrtcounters;
 

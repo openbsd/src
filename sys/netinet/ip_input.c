@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.411 2025/06/23 09:16:32 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.412 2025/06/23 20:56:38 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -116,12 +116,12 @@ const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 	{ IPCTL_FORWARDING, &ip_forwarding, 0, 2 },
 	{ IPCTL_SENDREDIRECTS, &ip_sendredirects, 0, 1 },
 	{ IPCTL_DIRECTEDBCAST, &ip_directedbcast, 0, 1 },
-};
-
-const struct sysctl_bounded_args ipctl_vars[] = {
 #ifdef MROUTING
 	{ IPCTL_MRTPROTO, &ip_mrtproto, SYSCTL_INT_READONLY },
 #endif
+};
+
+const struct sysctl_bounded_args ipctl_vars[] = {
 	{ IPCTL_DEFTTL, &ip_defttl, 0, 255 },
 	{ IPCTL_IPPORT_FIRSTAUTO, &ipport_firstauto, 0, 65535 },
 	{ IPCTL_IPPORT_LASTAUTO, &ipport_lastauto, 0, 65535 },
@@ -1830,6 +1830,9 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_FORWARDING:
 	case IPCTL_SENDREDIRECTS:
 	case IPCTL_DIRECTEDBCAST:
+#ifdef MROUTING
+	case IPCTL_MRTPROTO:
+#endif
 		return (sysctl_bounded_arr(
 		    ipctl_vars_unlocked, nitems(ipctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));
