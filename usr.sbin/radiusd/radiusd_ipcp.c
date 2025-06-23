@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.24 2025/06/19 09:24:49 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.25 2025/06/23 05:21:15 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -87,6 +87,8 @@ struct assigned_ipv4 {
 	struct in_addr			 nas_ipv4;
 	struct in6_addr			 nas_ipv6;
 	char				 nas_id[256];
+	uint32_t			 nas_port;
+	char				 nas_port_id[256];
 	const char			*tun_type;
 	union {
 		struct sockaddr_in	 sin4;
@@ -775,6 +777,28 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 	if ((addr = TAILQ_FIRST(&self->addrs)) != NULL) {
 		/* The address assignment is configured */
 
+		struct in_addr		 nas_ipv4;
+		struct in6_addr		 nas_ipv6;
+		char			 nas_id[256];
+		uint32_t		 nas_port;
+		char			 nas_port_id[256];
+
+		memset(&nas_ipv4, 0, sizeof(nas_ipv4));
+		memset(&nas_ipv6, 0, sizeof(nas_ipv6));
+		memset(nas_id, 0, sizeof(nas_id));
+		memset(&nas_port, 0, sizeof(nas_port));
+		memset(nas_port_id, 0, sizeof(nas_port_id));
+
+		radius_get_ipv4_attr(radreq, RADIUS_TYPE_NAS_IP_ADDRESS,
+		    &nas_ipv4);
+		radius_get_ipv6_attr(radreq, RADIUS_TYPE_NAS_IPV6_ADDRESS,
+		    &nas_ipv6);
+		radius_get_string_attr(radreq, RADIUS_TYPE_NAS_IDENTIFIER,
+		    nas_id, sizeof(nas_id));
+		radius_get_uint32_attr(radreq, RADIUS_TYPE_NAS_PORT, &nas_port);
+		radius_get_string_attr(radreq, RADIUS_TYPE_NAS_PORT_ID,
+		    nas_port_id, sizeof(nas_port_id));
+
 		if ((user = ipcp_user_get(self, username)) == NULL) {
 			log_warn("%s: ipcp_user_get()", __func__);
 			goto fatal;
@@ -789,20 +813,41 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 				goto reject;
 			}
 		}
-		if (self->user_max_sessions != 0) {
-			n = 0;
-			TAILQ_FOREACH_SAFE(assign, &user->ipv4s, next, assignt){
-				assign = ipcp_ipv4_check_valid(self, assign);
-				if (assign != NULL)
-					n++;
-			}
 
-			if (n >= self->user_max_sessions) {
-				log_info("q=%u user=%s rejected: number of "
-				    "sessions per a user reached the limit(%d)",
-				    q_id, user->name, self->user_max_sessions);
-				goto reject;
+		n = 0;
+		TAILQ_FOREACH_SAFE(assign, &user->ipv4s, next, assignt) {
+			assign = ipcp_ipv4_check_valid(self, assign);
+			if (assign == NULL)
+				continue;
+			/*
+			 * This assigned IP is for the same NAS Port,
+			 * reuse it.
+			 */
+			if (assign->start.tv_sec == 0 &&
+			    memcmp(&assign->nas_ipv4, &nas_ipv4,
+			    sizeof(struct in_addr)) == 0 &&
+			    memcmp(&assign->nas_ipv6, &nas_ipv6,
+			    sizeof(struct in6_addr)) == 0 && memcmp(
+			    assign->nas_id, nas_id, sizeof(nas_id)) == 0 &&
+			    assign->nas_port == nas_port &&
+			    memcmp(assign->nas_port_id, nas_port_id,
+			    sizeof(nas_port_id)) == 0) {
+				addr4 = assign->ipv4;
+				assigned = assign;
+				assigned->authtime = self->uptime;
+				log_info("q=%u Reassign %s for %s", q_id,
+				    inet_ntop(AF_INET, &addr4, buf,
+				    sizeof(buf)), username);
+				goto reassign;
 			}
+			n++;
+		}
+		if (self->user_max_sessions != 0 &&
+		    n >= self->user_max_sessions) {
+			log_info("q=%u user=%s rejected: number of sessions "
+			    "per a user reached the limit(%d)", q_id,
+			    user->name, self->user_max_sessions);
+			goto reject;
 		}
 
 		msraserr = 716;
@@ -882,11 +927,12 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 		}
 		radius_set_ipv4_attr(radres, RADIUS_TYPE_FRAMED_IP_NETMASK,
 		    mask4);
+		log_info("q=%u Assign %s for %s", q_id,
+		    inet_ntop(AF_INET, &addr4, buf, sizeof(buf)), username);
+ reassign:
 		radius_del_attr_all(radres, RADIUS_TYPE_FRAMED_IP_ADDRESS);
 		radius_put_ipv4_attr(radres, RADIUS_TYPE_FRAMED_IP_ADDRESS,
 		    addr4);
-		log_info("q=%u Assign %s for %s", q_id,
-		    inet_ntop(AF_INET, &addr4, buf, sizeof(buf)), username);
 		if (radius_has_attr(radreq, RADIUS_TYPE_USER_PASSWORD))
 			strlcpy(assigned->auth_method, "PAP",
 			    sizeof(assigned->auth_method));
@@ -905,12 +951,12 @@ ipcp_resdeco(void *ctx, u_int q_id, const u_char *req, size_t reqlen,
 			strlcpy(assigned->auth_method, "EAP",
 			    sizeof(assigned->auth_method));
 
-		radius_get_ipv4_attr(radreq, RADIUS_TYPE_NAS_IP_ADDRESS,
-		    &assigned->nas_ipv4);
-		radius_get_ipv6_attr(radreq, RADIUS_TYPE_NAS_IPV6_ADDRESS,
-		    &assigned->nas_ipv6);
-		radius_get_string_attr(radreq, RADIUS_TYPE_NAS_IDENTIFIER,
-		    assigned->nas_id, sizeof(assigned->nas_id));
+		assigned->nas_ipv4 = nas_ipv4;
+		assigned->nas_ipv6 = nas_ipv6;
+		memcpy(assigned->nas_id, nas_id, sizeof(assign->nas_id));
+		assigned->nas_port = nas_port;
+		memcpy(assigned->nas_port_id, nas_port_id,
+		    sizeof(assign->nas_port_id));
 	}
 
 	if (self->name_server[0].s_addr != 0) {
