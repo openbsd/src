@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.24 2025/05/23 09:56:26 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.25 2025/06/24 10:59:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2178,7 +2178,7 @@ iavf_txeof(struct iavf_softc *sc, struct ifqueue *ifq)
 
 	//ixl_enable(sc, txr->txr_msix);
 
-	if (ifq_is_oactive(ifq))
+	if (done && ifq_is_oactive(ifq))
 		ifq_restart(ifq);
 
 	return (done);
