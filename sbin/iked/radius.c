@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.c,v 1.13 2024/09/15 11:08:50 yasuoka Exp $	*/
+/*	$OpenBSD: radius.c,v 1.14 2025/06/24 00:05:42 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -509,6 +509,8 @@ iked_radius_request_send(struct iked *env, void *ctx)
 void
 iked_radius_fill_attributes(struct iked_sa *sa, RADIUS_PACKET *pkt)
 {
+	char	port_id[16 + 1];
+
 	/* NAS Port Type = Virtual */
 	radius_put_uint32_attr(pkt,
 	    RADIUS_TYPE_NAS_PORT_TYPE, RADIUS_NAS_PORT_TYPE_VIRTUAL);
@@ -518,6 +520,10 @@ iked_radius_fill_attributes(struct iked_sa *sa, RADIUS_PACKET *pkt)
 	/* Tunnel Type = EAP */
 	radius_put_uint32_attr(pkt, RADIUS_TYPE_TUNNEL_TYPE,
 	    RADIUS_TUNNEL_TYPE_ESP);
+	/* NAS-Port-ID = ISPI */
+	snprintf(port_id, sizeof(port_id), "%016llx",
+	    (unsigned long long)sa->sa_hdr.sh_ispi);
+	radius_put_string_attr(pkt, RADIUS_TYPE_NAS_PORT_ID, port_id);
 
 	radius_put_string_attr(pkt, RADIUS_TYPE_CALLED_STATION_ID,
 	    print_addr(&sa->sa_local.addr));
