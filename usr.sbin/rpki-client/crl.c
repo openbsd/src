@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.46 2025/06/23 22:01:14 job Exp $ */
+/*	$OpenBSD: crl.c,v 1.47 2025/06/24 15:47:48 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -305,6 +305,7 @@ struct crl *
 crl_get(struct crl_tree *crlt, const struct auth *a)
 {
 	struct crl	find, *crl;
+	int		error;
 
 	/* XXX - this should be removed, but filemode relies on it. */
 	if (a == NULL)
@@ -313,24 +314,24 @@ crl_get(struct crl_tree *crlt, const struct auth *a)
 	find.aki = a->cert->ski;
 	find.mftpath = a->cert->mft;
 
-	if (pthread_rwlock_rdlock(&crl_lk) != 0)
-		errx(1, "pthread_rwlock_rdlock");
+	if ((error = pthread_rwlock_rdlock(&crl_lk)) != 0)
+		errx(1, "pthread_rwlock_rdlock: %s", strerror(error));
 	crl = RB_FIND(crl_tree, crlt, &find);
-	if (pthread_rwlock_unlock(&crl_lk) != 0)
-		errx(1, "pthread_rwlock_unlock");
+	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)
+		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
 	return crl;
 }
 
 int
 crl_insert(struct crl_tree *crlt, struct crl *crl)
 {
-	int rv;
+	int error, rv;
 
-	if (pthread_rwlock_wrlock(&crl_lk) != 0)
-		errx(1, "pthread_rwlock_wrlock");
+	if ((error = pthread_rwlock_wrlock(&crl_lk)) != 0)
+		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
 	rv = RB_INSERT(crl_tree, crlt, crl) == NULL;
-	if (pthread_rwlock_unlock(&crl_lk) != 0)
-		errx(1, "pthread_rwlock_unlock");
+	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)
+		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
 
 	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.159 2025/06/24 09:24:20 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.160 2025/06/24 15:47:48 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -75,12 +75,13 @@ static struct parse_repo *
 repo_get(unsigned int id)
 {
 	struct parse_repo needle = { .id = id }, *r;
+	int error;
 
-	if (pthread_rwlock_rdlock(&repos_lk) != 0)
-		errx(1, "pthread_rwlock_rdlock");
+	if ((error = pthread_rwlock_rdlock(&repos_lk)) != 0)
+		errx(1, "pthread_rwlock_rdlock: %s", strerror(error));
 	r = RB_FIND(repo_tree, &repos, &needle);
-	if (pthread_rwlock_unlock(&repos_lk) != 0)
-		errx(1, "pthread_rwlock_unlock");
+	if ((error = pthread_rwlock_unlock(&repos_lk)) != 0)
+		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
 	return r;
 }
 
@@ -88,6 +89,7 @@ static void
 repo_add(unsigned int id, char *path, char *validpath)
 {
 	struct parse_repo *rp;
+	int error;
 
 	if ((rp = calloc(1, sizeof(*rp))) == NULL)
 		err(1, NULL);
@@ -99,12 +101,12 @@ repo_add(unsigned int id, char *path, char *validpath)
 		if ((rp->validpath = strdup(validpath)) == NULL)
 			err(1, NULL);
 
-	if (pthread_rwlock_wrlock(&repos_lk) != 0)
-		errx(1, "pthread_rwlock_wrlock");
+	if ((error = pthread_rwlock_wrlock(&repos_lk)) != 0)
+		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
 	if (RB_INSERT(repo_tree, &repos, rp) != NULL)
 		errx(1, "repository already added: id %d, %s", id, path);
-	if (pthread_rwlock_unlock(&repos_lk) != 0)
-		errx(1, "pthread_rwlock_unlock");
+	if ((error = pthread_rwlock_unlock(&repos_lk)) != 0)
+		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
 }
 
 /*
@@ -1072,7 +1074,7 @@ parse_worker(void *arg)
 	struct ibufqueue *myq;
 	X509_STORE_CTX *ctx;
 	BN_CTX *bn_ctx;
-	int n;
+	int error, n;
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		err(1, "X509_STORE_CTX_new");
@@ -1082,10 +1084,14 @@ parse_worker(void *arg)
 		err(1, "ibufqueue_new");
 
 	while (!quit) {
-		if (pthread_mutex_lock(&globalq_mtx) != 0)
-			errx(1, "pthread_mutex_lock");
-		while (TAILQ_EMPTY(&globalq) && !quit)
-			pthread_cond_wait(&globalq_cond, &globalq_mtx);
+		if ((error = pthread_mutex_lock(&globalq_mtx)) != 0)
+			errx(1, "pthread_mutex_lock: %s", strerror(error));
+		while (TAILQ_EMPTY(&globalq) && !quit) {
+			error = pthread_cond_wait(&globalq_cond, &globalq_mtx);
+			if (error != 0)
+				errx(1, "pthread_cond_wait: %s",
+				    strerror(error));
+		}
 		n = 0;
 		while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
 			TAILQ_REMOVE(&globalq, entp, entries);
@@ -1093,23 +1099,30 @@ parse_worker(void *arg)
 			if (n++ > 16)
 				break;
 		}
-		if (pthread_mutex_unlock(&globalq_mtx) != 0)
-			errx(1, "pthread_mutex_unlock");
+		if ((error = pthread_mutex_unlock(&globalq_mtx)) != 0)
+			errx(1, "pthread_mutex_unlock: %s",
+			    strerror(error));
 		if (n > 16) {
-			if (pthread_cond_signal(&globalq_cond) != 0)
-				errx(1, "pthread_cond_signal");
+			if ((error = pthread_cond_signal(&globalq_cond)) != 0)
+				errx(1, "pthread_cond_signal: %s",
+				    strerror(error));
 		}
 
 		parse_entity(&q, myq, ctx, bn_ctx);
 
 		if (ibufq_queuelen(myq) > 0) {
-			if (pthread_mutex_lock(&globalmsgq_mtx) != 0)
-				errx(1, "pthread_mutex_lock");
+			if ((error = pthread_mutex_lock(&globalmsgq_mtx)) != 0)
+				errx(1, "pthread_mutex_lock: %s",
+				    strerror(error));
 			ibufq_concat(globalmsgq, myq);
-			if (pthread_cond_signal(&globalmsgq_cond) != 0)
-				errx(1, "pthread_cond_signal");
-			if (pthread_mutex_unlock(&globalmsgq_mtx) != 0)
-				errx(1, "pthread_mutex_unlock");
+			error = pthread_cond_signal(&globalmsgq_cond);
+			if (error != 0)
+				errx(1, "pthread_cond_signal: %s",
+				    strerror(error));
+			error = pthread_mutex_unlock(&globalmsgq_mtx);
+			if (error != 0)
+				errx(1, "pthread_mutex_unlock: %s",
+				    strerror(error));
 		}
 	}
 
@@ -1124,21 +1137,30 @@ parse_writer(void *arg)
 {
 	struct msgbuf *myq;
 	struct pollfd pfd;
+	int error;
 
 	if ((myq = msgbuf_new()) == NULL)
 		err(1, NULL);
 	pfd.fd = *(int *)arg;
 	while (!quit) {
 		if (msgbuf_queuelen(myq) == 0) {
-			if (pthread_mutex_lock(&globalmsgq_mtx) != 0)
-				errx(1, "pthread_mutex_lock");
-			while (ibufq_queuelen(globalmsgq) == 0 && !quit)
-				pthread_cond_wait(&globalmsgq_cond,
+			error = pthread_mutex_lock(&globalmsgq_mtx);
+			if (error != 0)
+				errx(1, "pthread_mutex_lock: %s",
+				    strerror(error));
+			while (ibufq_queuelen(globalmsgq) == 0 && !quit) {
+				error = pthread_cond_wait(&globalmsgq_cond,
 				    &globalmsgq_mtx);
+				if (error != 0)
+					errx(1, "pthread_cond_wait: %s",
+					    strerror(error));
+			}
 			/* enqueue messages to local msgbuf */
 			msgbuf_concat(myq, globalmsgq);
-			if (pthread_mutex_unlock(&globalmsgq_mtx) != 0)
-				errx(1, "pthread_mutex_lock");
+			error = pthread_mutex_unlock(&globalmsgq_mtx);
+			if (error != 0)
+				errx(1, "pthread_mutex_lock: %s",
+				    strerror(error));
 		}
 
 		if (msgbuf_queuelen(myq) > 0) {
@@ -1190,7 +1212,7 @@ proc_parser(int fd, int nthreads)
 	struct entity	*entp;
 	struct ibuf	*b;
 	pthread_t	 writer, *workers;
-	int		 i;
+	int		 error, i;
 
 	/* Only allow access to the cache directory. */
 	if (unveil(".", "r") == -1)
@@ -1213,11 +1235,12 @@ proc_parser(int fd, int nthreads)
 	if ((workers = calloc(nthreads, sizeof(*workers))) == NULL)
 		err(1, NULL);
 
-	if (pthread_create(&writer, NULL, &parse_writer, &fd) != 0)
-		errx(1, "pthread_create");
+	if ((error = pthread_create(&writer, NULL, &parse_writer, &fd)) != 0)
+		errx(1, "pthread_create: %s", strerror(error));
 	for (i = 0; i < nthreads; i++) {
-		if (pthread_create(&workers[i], NULL, &parse_worker, NULL) != 0)
-			errx(1, "pthread_create");
+		error = pthread_create(&workers[i], NULL, &parse_worker, NULL);
+		if (error != 0)
+			errx(1, "pthread_create: %s", strerror(error));
 	}
 
 	pfd.fd = fd;
@@ -1262,37 +1285,44 @@ proc_parser(int fd, int nthreads)
 				TAILQ_INSERT_TAIL(&myq, entp, entries);
 			}
 			if (!TAILQ_EMPTY(&myq)) {
-				if (pthread_mutex_lock(&globalq_mtx) != 0)
-					errx(1, "pthread_mutex_lock");
+				error = pthread_mutex_lock(&globalq_mtx);
+				if (error != 0)
+					errx(1, "pthread_mutex_lock: %s",
+					    strerror(error));
 				TAILQ_CONCAT(&globalq, &myq, entries);
-				if (pthread_cond_signal(&globalq_cond) != 0)
-					errx(1, "pthread_cond_signal");
-				if (pthread_mutex_unlock(&globalq_mtx) != 0)
-					errx(1, "pthread_mutex_unlock");
+				error = pthread_cond_signal(&globalq_cond);
+				if (error != 0)
+					errx(1, "pthread_cond_signal: %s",
+					    strerror(error));
+				error = pthread_mutex_unlock(&globalq_mtx);
+				if (error != 0)
+					errx(1, "pthread_mutex_unlock: %s",
+					    strerror(error));
 			}
 		}
 	}
 
 	/* signal all threads */
-	if (pthread_cond_broadcast(&globalq_cond) != 0)
-		errx(1, "pthread_cond_broadcast");
-	if (pthread_cond_broadcast(&globalmsgq_cond) != 0)
-		errx(1, "pthread_cond_broadcast");
+	if ((error = pthread_cond_broadcast(&globalq_cond)) != 0)
+		errx(1, "pthread_cond_broadcast: %s", strerror(error));
+	if ((error = pthread_cond_broadcast(&globalmsgq_cond)) != 0)
+		errx(1, "pthread_cond_broadcast: %s", strerror(error));
 
-	if (pthread_mutex_lock(&globalq_mtx) != 0)
-		errx(1, "pthread_mutex_lock");
+	if ((error = pthread_mutex_lock(&globalq_mtx)) != 0)
+		errx(1, "pthread_mutex_lock: %s", strerror(error));
 	while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
 		TAILQ_REMOVE(&globalq, entp, entries);
 		entity_free(entp);
 	}
-	if (pthread_mutex_unlock(&globalq_mtx) != 0)
-		errx(1, "pthread_mutex_unlock");
+	if ((error = pthread_mutex_unlock(&globalq_mtx)) != 0)
+		errx(1, "pthread_mutex_unlock: %s", strerror(error));
 
-	if (pthread_join(writer, NULL) != 0)
-		errx(1, "pthread_join writer");
+	if ((error = pthread_join(writer, NULL)) != 0)
+		errx(1, "pthread_join writer: %s", strerror(error));
 	for (i = 0; i < nthreads; i++) {
-		if (pthread_join(workers[i], NULL) != 0)
-			errx(1, "pthread_join worker %d", i);
+		if ((error = pthread_join(workers[i], NULL)) != 0)
+			errx(1, "pthread_join worker %d: %s",
+			    i, strerror(error));
 	}
 	free(workers);	/* karl marx */
 
