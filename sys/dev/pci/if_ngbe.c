@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngbe.c,v 1.6 2024/09/20 02:15:53 jsg Exp $	*/
+/*	$OpenBSD: if_ngbe.c,v 1.7 2025/06/24 11:04:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2015-2017 Beijing WangXun Technology Co., Ltd.
@@ -4461,6 +4461,7 @@ ngbe_txeof(struct tx_ring *txr)
 	struct ngbe_tx_buf *tx_buffer;
 	union ngbe_tx_desc *tx_desc;
 	unsigned int prod, cons, last;
+	int done = 0;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return;
@@ -4486,6 +4487,7 @@ ngbe_txeof(struct tx_ring *txr)
 		    0, tx_buffer->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(txr->txdma.dma_tag, tx_buffer->map);
 		m_freem(tx_buffer->m_head);
+		done = 1;
 
 		tx_buffer->m_head = NULL;
 		tx_buffer->eop_index = -1;
@@ -4505,7 +4507,7 @@ ngbe_txeof(struct tx_ring *txr)
 
 	txr->next_to_clean = cons;
 
-	if (ifq_is_oactive(ifq))
+	if (done && ifq_is_oactive(ifq))
 		ifq_restart(ifq);
 }
 
