@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.158 2025/06/23 22:01:14 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.159 2025/06/24 09:24:20 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1265,10 +1265,10 @@ proc_parser(int fd, int nthreads)
 				if (pthread_mutex_lock(&globalq_mtx) != 0)
 					errx(1, "pthread_mutex_lock");
 				TAILQ_CONCAT(&globalq, &myq, entries);
-				if (pthread_mutex_unlock(&globalq_mtx) != 0)
-					errx(1, "pthread_mutex_unlock");
 				if (pthread_cond_signal(&globalq_cond) != 0)
 					errx(1, "pthread_cond_signal");
+				if (pthread_mutex_unlock(&globalq_mtx) != 0)
+					errx(1, "pthread_mutex_unlock");
 			}
 		}
 	}
