@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.167 2025/06/24 04:55:14 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.168 2025/06/24 05:21:55 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1214,7 +1214,7 @@ cert_parse(const char *fn, struct cert *p)
 	}
 	return p;
 
-badcert:
+ badcert:
 	cert_free(p);
 	return NULL;
 }
