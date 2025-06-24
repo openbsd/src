@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.232 2025/05/21 08:46:42 djm Exp $ */
+/* $OpenBSD: netcat.c,v 1.233 2025/06/24 13:27:28 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1674,8 +1674,8 @@ process_tls_opt(char *s, int *flags)
 		{ "ciphers",		-1,			&tls_ciphers },
 		{ "clientcert",		TLS_CCERT,		NULL },
 		{ "muststaple",		TLS_MUSTSTAPLE,		NULL },
-		{ "noverify",		TLS_NOVERIFY,		NULL },
 		{ "noname",		TLS_NONAME,		NULL },
+		{ "noverify",		TLS_NOVERIFY,		NULL },
 		{ "protocols",		-1,			&tls_protocols },
 		{ NULL,			-1,			NULL },
 	};
