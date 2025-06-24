@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.29 2025/06/22 21:57:51 tedu Exp $ */
+/*	$OpenBSD: watch.c,v 1.30 2025/06/24 00:51:04 job Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -412,10 +412,9 @@ start_child()
 		err(1, "vfork");
 	if (child->pid == 0) {
 		close(fds[0]);
-		if (fds[1] != STDOUT_FILENO) {
-			dup2(fds[1], STDOUT_FILENO);
-			close(fds[1]);
-		}
+		dup2(fds[1], STDOUT_FILENO);
+		dup2(fds[1], STDERR_FILENO);
+		close(fds[1]);
 		if (xflag)
 			execvp(cmdv[0], cmdv);
 		else
@@ -541,11 +540,6 @@ kbd_command(int ch)
 	case ' ': /* Execute the command again. */
 		return (RSLT_UPDATE);
 
-	/*
-	 * XXX: redrawing with Control-l often is needed when the command
-	 * emitted things to stderr. The program ought to interleave stdout
-	 * and stderr.
-	 */
 	case ctrl('l'):
 		clear();
 		break;
