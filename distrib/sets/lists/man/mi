@@ -1681,6 +1681,7 @@
 ./usr/share/man/man4/i386/uha.4
 ./usr/share/man/man4/i386/wds.4
 ./usr/share/man/man4/i386/wdt.4
+./usr/share/man/man4/iasuskbd.4
 ./usr/share/man/man4/iatp.4
 ./usr/share/man/man4/iavf.4
 ./usr/share/man/man4/icc.4
