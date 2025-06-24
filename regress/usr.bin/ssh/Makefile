@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.137 2025/05/06 06:05:48 djm Exp $
+#	$OpenBSD: Makefile,v 1.138 2025/06/24 12:28:23 dtucker Exp $
 
 OPENSSL?=	yes
 
@@ -99,6 +99,7 @@ LTESTS= 	connect \
 		knownhosts-command \
 		agent-restrict \
 		hostbased \
+		password \
 		channel-timeout \
 		connection-timeout \
 		match-subsystem \
