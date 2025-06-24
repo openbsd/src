@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.37 2025/06/12 21:04:37 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.38 2025/06/24 22:01:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -199,7 +199,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 		intr_toggle_el(&current_vm, pci.pci_devices[*id].pd_irq, 1);
 	}
 
-	pci.pci_dev_ct ++;
+	pci.pci_dev_ct++;
 
 	return (0);
 }
@@ -303,7 +303,9 @@ void
 pci_handle_data_reg(struct vm_run_params *vrp)
 {
 	struct vm_exit *vei = vrp->vrp_exit;
-	uint8_t b, d, f, o, baridx, ofs, sz;
+	struct pci_dev *pd = NULL;
+	uint8_t b, d, f, o, baridx, cfgidx, ofs, sz;
+	uint32_t data = 0;
 	int ret;
 	pci_cs_fn_t csfunc;
 
@@ -326,9 +328,26 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	f = (pci.pci_addr_reg >> 8) & 0x7;
 	o = (pci.pci_addr_reg & 0xfc);
 
-	csfunc = pci.pci_devices[d].pd_csfunc;
+	if (d >= pci.pci_dev_ct) {
+		/* Device out of range. Return 0xFF's if a read. */
+		DPRINTF("%s: invalid pci device access (%u)", __func__, d);
+		if (vei->vei.vei_dir == VEI_DIR_IN)
+			set_return_data(vei, 0xFFFFFFFF);
+		return;
+	}
+	pd = &pci.pci_devices[d];
+
+	cfgidx = (o / 4);
+	if (cfgidx >= nitems(pd->pd_cfg_space)) {
+		DPRINTF("%s: out of range config space access", __func__);
+		if (vei->vei.vei_dir == VEI_DIR_IN)
+			set_return_data(vei, 0xFFFFFFFF);
+	}
+	baridx = cfgidx - 4;	/* baridx checked below */
+
+	csfunc = pd->pd_csfunc;
 	if (csfunc != NULL) {
-		ret = csfunc(vei->vei.vei_dir, (o / 4), &vei->vei.vei_data);
+		ret = csfunc(vei->vei.vei_dir, cfgidx, &vei->vei.vei_data);
 		if (ret)
 			log_warnx("cfg space access function failed for "
 			    "pci device %d", d);
@@ -336,7 +355,6 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 	}
 
 	/* No config space function, fallback to default simple r/w impl. */
-
 	o += ofs;
 
 	/*
@@ -357,8 +375,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 			 * o = 0x20 -> baridx = 4
 			 * o = 0x24 -> baridx = 5
 			 */
-			baridx = (o / 4) - 4;
-			if (baridx < pci.pci_devices[d].pd_bar_ct)
+			if (baridx < pd->pd_bar_ct)
 				vei->vei.vei_data = 0xfffff000;
 			else
 				vei->vei.vei_data = 0;
@@ -366,10 +383,8 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 
 		/* IOBAR registers must have bit 0 set */
 		if (o >= 0x10 && o <= 0x24) {
-			baridx = (o / 4) - 4;
-			if (baridx < pci.pci_devices[d].pd_bar_ct &&
-			    pci.pci_devices[d].pd_bartype[baridx] ==
-			    PCI_BAR_TYPE_IO)
+			if (baridx < pd->pd_bar_ct &&
+			    pd->pd_bartype[baridx] == PCI_BAR_TYPE_IO)
 				vei->vei.vei_data |= 1;
 		}
 
@@ -379,8 +394,7 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		 * writes and copy data to config space registers.
 		 */
 		if (o != PCI_EXROMADDR_0)
-			get_input_data(vei,
-			    &pci.pci_devices[d].pd_cfg_space[o / 4]);
+			get_input_data(vei, &pd->pd_cfg_space[cfgidx]);
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
@@ -391,22 +405,19 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		if (d > pci.pci_dev_ct || b > 0 || f > 0)
 			set_return_data(vei, 0xFFFFFFFF);
 		else {
+			data = pd->pd_cfg_space[cfgidx];
 			switch (sz) {
 			case 4:
-				set_return_data(vei,
-				    pci.pci_devices[d].pd_cfg_space[o / 4]);
+				set_return_data(vei, data);
 				break;
 			case 2:
 				if (ofs == 0)
-					set_return_data(vei, pci.pci_devices[d].
-					    pd_cfg_space[o / 4]);
+					set_return_data(vei, data);
 				else
-					set_return_data(vei, pci.pci_devices[d].
-					    pd_cfg_space[o / 4] >> 16);
+					set_return_data(vei, data >> 16);
 				break;
 			case 1:
-				set_return_data(vei, pci.pci_devices[d].
-				    pd_cfg_space[o / 4] >> (ofs * 8));
+				set_return_data(vei, data >> (ofs * 8));
 				break;
 			}
 		}
