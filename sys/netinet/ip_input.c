@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.413 2025/06/23 20:59:25 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.414 2025/06/24 18:05:51 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -119,14 +119,14 @@ const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 #ifdef MROUTING
 	{ IPCTL_MRTPROTO, &ip_mrtproto, SYSCTL_INT_READONLY },
 #endif
-};
-
-const struct sysctl_bounded_args ipctl_vars[] = {
-	{ IPCTL_DEFTTL, &ip_defttl, 0, 255 },
 	{ IPCTL_IPPORT_FIRSTAUTO, &ipport_firstauto, 0, 65535 },
 	{ IPCTL_IPPORT_LASTAUTO, &ipport_lastauto, 0, 65535 },
 	{ IPCTL_IPPORT_HIFIRSTAUTO, &ipport_hifirstauto, 0, 65535 },
 	{ IPCTL_IPPORT_HILASTAUTO, &ipport_hilastauto, 0, 65535 },
+};
+
+const struct sysctl_bounded_args ipctl_vars[] = {
+	{ IPCTL_DEFTTL, &ip_defttl, 0, 255 },
 	{ IPCTL_IPPORT_MAXQUEUE, &ip_maxqueue, 0, 10000 },
 	{ IPCTL_MFORWARDING, &ipmforwarding, 0, 1 },
 	{ IPCTL_ARPTIMEOUT, &arpt_keep, 0, INT_MAX },
@@ -1839,6 +1839,10 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #ifdef MROUTING
 	case IPCTL_MRTPROTO:
 #endif
+	case IPCTL_IPPORT_FIRSTAUTO:
+	case IPCTL_IPPORT_LASTAUTO:
+	case IPCTL_IPPORT_HIFIRSTAUTO:
+	case IPCTL_IPPORT_HILASTAUTO:
 		return (sysctl_bounded_arr(
 		    ipctl_vars_unlocked, nitems(ipctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));

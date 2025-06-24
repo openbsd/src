@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.316 2025/06/16 07:11:58 mvs Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.317 2025/06/24 18:05:51 mvs Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -101,6 +101,11 @@
 #include <net/toeplitz.h>
 #endif
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 const struct in_addr zeroin_addr;
 const union inpaddru zeroin46_addr;
 
@@ -108,10 +113,10 @@ const union inpaddru zeroin46_addr;
  * These configure the range of local port addresses assigned to
  * "unspecified" outgoing connections/packets/whatever.
  */
-int ipport_firstauto = IPPORT_RESERVED;
-int ipport_lastauto = IPPORT_USERRESERVED;
-int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;
-int ipport_hilastauto = IPPORT_HILASTAUTO;
+int ipport_firstauto = IPPORT_RESERVED;		/* [a] */
+int ipport_lastauto = IPPORT_USERRESERVED;	/* [a] */
+int ipport_hifirstauto = IPPORT_HIFIRSTAUTO;	/* [a] */
+int ipport_hilastauto = IPPORT_HILASTAUTO;	/* [a] */
 
 struct baddynamicports baddynamicports;
 struct baddynamicports rootonlyports;
@@ -450,16 +455,16 @@ in_pcbpickport(u_int16_t *lport, const void *laddr, int wild,
 	MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
 
 	if (inp->inp_flags & INP_HIGHPORT) {
-		first = ipport_hifirstauto;	/* sysctl */
-		last = ipport_hilastauto;
+		first = atomic_load_int(&ipport_hifirstauto);	/* sysctl */
+		last = atomic_load_int(&ipport_hilastauto);
 	} else if (inp->inp_flags & INP_LOWPORT) {
 		if (suser(p))
 			return (EACCES);
 		first = IPPORT_RESERVED-1; /* 1023 */
 		last = 600;		   /* not IPPORT_RESERVED/2 */
 	} else {
-		first = ipport_firstauto;	/* sysctl */
-		last = ipport_lastauto;
+		first = atomic_load_int(&ipport_firstauto);	/* sysctl */
+		last = atomic_load_int(&ipport_lastauto);
 	}
 	if (first < last) {
 		lower = first;
