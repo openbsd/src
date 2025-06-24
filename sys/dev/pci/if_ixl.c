@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.107 2025/05/22 06:41:20 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.108 2025/06/24 11:03:10 stsp Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3011,7 +3011,7 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 
 	//ixl_enable(sc, txr->txr_msix);
 
-	if (ifq_is_oactive(ifq))
+	if (done && ifq_is_oactive(ifq))
 		ifq_restart(ifq);
 
 	return (done);
