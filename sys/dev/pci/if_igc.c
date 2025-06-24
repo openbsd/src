@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.27 2024/08/11 01:02:10 dlg Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.28 2025/06/24 11:00:27 stsp Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -1119,7 +1119,7 @@ igc_txeof(struct igc_txring *txr)
 
 	txr->next_to_clean = cons;
 
-	if (ifq_is_oactive(ifq))
+	if (done && ifq_is_oactive(ifq))
 		ifq_restart(ifq);
 
 	return (done);
