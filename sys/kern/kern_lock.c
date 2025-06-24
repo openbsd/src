@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.80 2025/06/19 12:01:08 jca Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.81 2025/06/24 15:37:43 jca Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -250,6 +250,9 @@ mtx_enter(struct mutex *mtx)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	unsigned int i, ncycle = CPU_MIN_BUSY_CYCLES;
+#ifdef MP_LOCKDEBUG
+	long nticks = __mp_lock_spinout;
+#endif
 
 	WITNESS_CHECKORDER(MUTEX_LOCK_OBJECT(mtx),
 	    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
@@ -260,6 +263,13 @@ mtx_enter(struct mutex *mtx)
 			/* Busy loop with exponential backoff. */
 			for (i = ncycle; i > 0; i--)
 				CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+			if ((nticks -= ncycle) <= 0) {
+				db_printf("%s: %p lock spun out\n", __func__, mtx);
+				db_enter();
+				nticks = __mp_lock_spinout;
+			}
+#endif
 			if (ncycle < CPU_MAX_BUSY_CYCLES)
 				ncycle += ncycle;
 		} while (mtx->mtx_owner != NULL);
