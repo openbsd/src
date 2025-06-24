@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.166 2025/06/23 22:01:14 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.167 2025/06/24 04:55:14 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1008,6 +1008,10 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
+	/*
+	 * Disallowed for CA certs in RFC 5280, 4.1.2.8. Uniqueness of subjects
+	 * per RFC 6487, 4.5 makes them meaningless.
+	 */
 	X509_get0_uids(x, &issuer_uid, &subject_uid);
 	if (issuer_uid != NULL || subject_uid != NULL) {
 		warnx("%s: issuer or subject unique identifiers not allowed",
