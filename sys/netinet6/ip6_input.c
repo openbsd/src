@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.276 2025/06/23 20:55:28 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.277 2025/06/24 18:03:47 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1450,13 +1450,13 @@ extern int ip6_mrtproto;
 const struct sysctl_bounded_args ipv6ctl_vars_unlocked[] = {
 	{ IPV6CTL_FORWARDING, &ip6_forwarding, 0, 2 },
 	{ IPV6CTL_SENDREDIRECTS, &ip6_sendredirects, 0, 1 },
-};
-
-const struct sysctl_bounded_args ipv6ctl_vars[] = {
 	{ IPV6CTL_DAD_PENDING, &ip6_dad_pending, SYSCTL_INT_READONLY },
 #ifdef MROUTING
 	{ IPV6CTL_MRTPROTO, &ip6_mrtproto, SYSCTL_INT_READONLY },
 #endif
+};
+
+const struct sysctl_bounded_args ipv6ctl_vars[] = {
 	{ IPV6CTL_DEFHLIM, &ip6_defhlim, 0, 255 },
 	{ IPV6CTL_MAXFRAGPACKETS, &ip6_maxfragpackets, 0, 1000 },
 	{ IPV6CTL_LOG_INTERVAL, &ip6_log_interval, 0, INT_MAX },
@@ -1576,6 +1576,10 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	}
 	case IPV6CTL_FORWARDING:
 	case IPV6CTL_SENDREDIRECTS:
+	case IPV6CTL_DAD_PENDING:
+#ifdef MROUTING
+	case IPV6CTL_MRTPROTO:
+#endif
 		return (sysctl_bounded_arr(
 		    ipv6ctl_vars_unlocked, nitems(ipv6ctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));
