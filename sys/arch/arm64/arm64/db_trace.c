@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.17 2024/11/07 16:02:29 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.18 2025/06/24 21:33:39 kettenis Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@ void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
+	struct switchframe sf;
 	vaddr_t		frame, lastframe, lr, lastlr, sp;
 	char		c, *cp = modif;
 	db_expr_t	offset;
@@ -80,10 +81,12 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 				(*pr)("not found\n");
 				return;
 			}
-			frame = p->p_addr->u_pcb.pcb_tf->tf_x[29];
-			sp =  p->p_addr->u_pcb.pcb_tf->tf_sp;
-			lr =  p->p_addr->u_pcb.pcb_tf->tf_lr;
-			lastlr =  p->p_addr->u_pcb.pcb_tf->tf_elr;
+
+			sp = p->p_addr->u_pcb.pcb_sp;
+			db_read_bytes(sp, sizeof(sf), &sf);
+			frame = sf.sf_x29;
+			lr =  sf.sf_lr;
+			lastlr = 0;
 		} else {
 			sp = addr;
 			db_read_bytes(sp, sizeof(vaddr_t),
