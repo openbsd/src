@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.233 2025/06/24 13:27:28 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.234 2025/06/24 13:37:11 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -108,6 +108,7 @@ char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
 char	*tls_ciphers;				/* TLS ciphers */
 char	*tls_protocols;				/* TLS protocols */
+char	*tls_alpn;				/* TLS ALPN */
 FILE	*Zflag;					/* file to save peer cert */
 
 int recvcount, recvlimit;
@@ -533,6 +534,8 @@ main(int argc, char *argv[])
 		if (tls_config_set_protocols(tls_cfg, protocols) == -1)
 			errx(1, "%s", tls_config_error(tls_cfg));
 		if (tls_config_set_ciphers(tls_cfg, tls_ciphers) == -1)
+			errx(1, "%s", tls_config_error(tls_cfg));
+		if (tls_alpn != NULL && tls_config_set_alpn(tls_cfg, tls_alpn) == -1)
 			errx(1, "%s", tls_config_error(tls_cfg));
 		if (!lflag && (TLSopt & TLS_CCERT))
 			errx(1, "clientcert is only valid with -l");
@@ -1671,6 +1674,7 @@ process_tls_opt(char *s, int *flags)
 		int		 flag;
 		char		**value;
 	} *t, tlskeywords[] = {
+		{ "alpn",		-1,			&tls_alpn },
 		{ "ciphers",		-1,			&tls_ciphers },
 		{ "clientcert",		TLS_CCERT,		NULL },
 		{ "muststaple",		TLS_MUSTSTAPLE,		NULL },
@@ -1722,7 +1726,7 @@ void
 report_tls(struct tls *tls_ctx, char *host)
 {
 	time_t t;
-	const char *ocsp_url;
+	const char *alpn_proto, *ocsp_url;
 
 	fprintf(stderr, "TLS handshake negotiated %s/%s with host %s\n",
 	    tls_conn_version(tls_ctx), tls_conn_cipher(tls_ctx), host);
@@ -1774,6 +1778,8 @@ report_tls(struct tls *tls_ctx, char *host)
 		    tls_peer_ocsp_result(tls_ctx));
 		break;
 	}
+	if ((alpn_proto = tls_conn_alpn_selected(tls_ctx)) != NULL)
+		fprintf(stderr, "Application Layer Protocol: %s\n", alpn_proto);
 }
 
 void
