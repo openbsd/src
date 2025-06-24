@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.220 2025/05/22 10:50:10 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.221 2025/06/24 11:02:03 stsp Exp $	*/
 
 /******************************************************************************
 
@@ -2641,6 +2641,7 @@ ixgbe_txeof(struct ix_txring *txr)
 	unsigned int			 head, tail, last;
 	struct ixgbe_tx_buf		*tx_buffer;
 	struct ixgbe_legacy_tx_desc	*tx_desc;
+	int done = 0;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return FALSE;
@@ -2673,6 +2674,7 @@ ixgbe_txeof(struct ix_txring *txr)
 		tx_buffer->m_head = NULL;
 		tx_buffer->eop_index = -1;
 
+		done = 1;
 		tail = last + 1;
 		if (tail == sc->num_tx_desc)
 			tail = 0;
@@ -2691,7 +2693,7 @@ ixgbe_txeof(struct ix_txring *txr)
 
 	txr->next_to_clean = tail;
 
-	if (ifq_is_oactive(ifq))
+	if (done && ifq_is_oactive(ifq))
 		ifq_restart(ifq);
 
 	return TRUE;
