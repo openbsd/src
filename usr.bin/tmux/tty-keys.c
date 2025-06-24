@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.190 2025/03/30 22:01:55 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.191 2025/06/24 10:57:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1459,6 +1459,8 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 				tty_add_features(features, "margins", ",");
 			if (p[i] == 28)
 				tty_add_features(features, "rectfill", ",");
+			if (p[i] == 52)
+				tty_add_features(features, "clipboard", ",");
 		}
 		break;
 	}
