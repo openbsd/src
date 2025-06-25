@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.30 2025/06/24 00:51:04 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.31 2025/06/25 09:37:03 yasuoka Exp $ */
 /*
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -40,6 +40,7 @@
 #define DEFAULT_INTERVAL 1
 #define MAXLINE 300
 #define MAXCOLUMN 180
+#define TABSPACE 8
 
 typedef enum {
 	HIGHLIGHT_NONE,
@@ -105,7 +106,6 @@ struct event	  ev_timer;
 int display(BUFFER *, BUFFER *, highlight_mode_t);
 kbd_result_t kbd_command(int);
 void show_help(void);
-void untabify(wchar_t *, int);
 void on_signal(int, short, void *);
 void on_sigchild(int, short, void *);
 void timer(int, short, void *);
@@ -339,7 +339,10 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 		case HIGHLIGHT_CHAR:
 			move(screen_y, screen_x);
 			while (*p && screen_x < COLS) {
-				cw = wcwidth(*p);
+				if (*p == '\t')
+					cw = TABSPACE - (screen_x % TABSPACE);
+				else
+					cw = wcwidth(*p);
 				if (screen_x + cw >= COLS)
 					break;
 				if (*p == *pp) {
@@ -361,11 +364,11 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 						screen_x -= wcwidth(*p);
 					}
 					move(screen_y, screen_x);
+					cw = wcwidth(*p);
 				}
 				standout();
 
 				/* Print character itself.  */
-				cw = wcwidth(*p);
 				addwch(*p++);
 				pp++;
 				screen_x += cw;
@@ -715,34 +718,6 @@ show_help(void)
 			exit(1);
 		break;
 	}
-}
-
-void
-untabify(wchar_t *buf, int maxlen)
-{
-	int	 i, tabstop = 8, len, spaces, width = 0, maxcnt;
-	wchar_t *p = buf;
-
-	maxcnt = maxlen / sizeof(wchar_t);
-	while (*p && p - buf < maxcnt - 1) {
-		if (*p != L'\t') {
-			width += wcwidth(*p);
-			p++;
-		} else {
-			spaces = tabstop - (width % tabstop);
-			len = MINIMUM(maxcnt - (p + spaces - buf),
-			    (int)wcslen(p + 1) + 1);
-			if (len > 0)
-				memmove(p + spaces, p + 1,
-				    len * sizeof(wchar_t));
-			len = MINIMUM(spaces, maxcnt - 1 - (p - buf));
-			for (i = 0; i < len; i++)
-				p[i] = L' ';
-			p += len;
-			width += len;
-		}
-	}
-	*p = L'\0';
 }
 
 void
