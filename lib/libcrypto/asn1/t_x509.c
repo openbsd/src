@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.52 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.53 2025/06/25 18:28:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,9 +127,9 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 
 	ci = x->cert_info;
 	if (!(cflag & X509_FLAG_NO_HEADER)) {
-		if (BIO_write(bp, "Certificate:\n", 13) <= 0)
+		if (BIO_printf(bp, "Certificate:\n") <= 0)
 			goto err;
-		if (BIO_write(bp, "    Data:\n", 10) <= 0)
+		if (BIO_printf(bp, "    Data:\n") <= 0)
 			goto err;
 	}
 	if (!(cflag & X509_FLAG_NO_VERSION)) {
@@ -145,7 +145,7 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		}
 	}
 	if (!(cflag & X509_FLAG_NO_SERIAL)) {
-		if (BIO_write(bp, "        Serial Number:", 22) <= 0)
+		if (BIO_printf(bp, "        Serial Number:") <= 0)
 			goto err;
 
 		bs = X509_get_serialNumber(x);
@@ -196,21 +196,21 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		if (X509_NAME_print_ex(bp, X509_get_issuer_name(x),
 		    nmindent, nmflags) < (nmflags == X509_FLAG_COMPAT ? 1 : 0))
 			goto err;
-		if (BIO_write(bp, "\n", 1) <= 0)
+		if (BIO_printf(bp, "\n") <= 0)
 			goto err;
 	}
 	if (!(cflag & X509_FLAG_NO_VALIDITY)) {
-		if (BIO_write(bp, "        Validity\n", 17) <= 0)
+		if (BIO_printf(bp, "        Validity\n") <= 0)
 			goto err;
-		if (BIO_write(bp, "            Not Before: ", 24) <= 0)
+		if (BIO_printf(bp, "            Not Before: ") <= 0)
 			goto err;
 		if (!ASN1_TIME_print(bp, X509_get_notBefore(x)))
 			goto err;
-		if (BIO_write(bp, "\n            Not After : ", 25) <= 0)
+		if (BIO_printf(bp, "\n            Not After : ") <= 0)
 			goto err;
 		if (!ASN1_TIME_print(bp, X509_get_notAfter(x)))
 			goto err;
-		if (BIO_write(bp, "\n", 1) <= 0)
+		if (BIO_printf(bp, "\n") <= 0)
 			goto err;
 	}
 	if (!(cflag & X509_FLAG_NO_SUBJECT)) {
@@ -219,12 +219,11 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		if (X509_NAME_print_ex(bp, X509_get_subject_name(x),
 		    nmindent, nmflags) < (nmflags == X509_FLAG_COMPAT ? 1 : 0))
 			goto err;
-		if (BIO_write(bp, "\n", 1) <= 0)
+		if (BIO_printf(bp, "\n") <= 0)
 			goto err;
 	}
 	if (!(cflag & X509_FLAG_NO_PUBKEY)) {
-		if (BIO_write(bp, "        Subject Public Key Info:\n",
-		    33) <= 0)
+		if (BIO_printf(bp, "        Subject Public Key Info:\n") <= 0)
 			goto err;
 		if (BIO_printf(bp, "%12sPublic Key Algorithm: ", "") <= 0)
 			goto err;
@@ -325,7 +324,7 @@ X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
 	s = sig->data;
 	for (i = 0; i < n; i++) {
 		if ((i % 18) == 0) {
-			if (BIO_write(bp, "\n", 1) <= 0)
+			if (BIO_printf(bp, "\n") <= 0)
 				return 0;
 			if (BIO_indent(bp, indent, indent) <= 0)
 				return 0;
@@ -334,7 +333,7 @@ X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
 		    ((i + 1) == n) ? "" : ":") <= 0)
 			return 0;
 	}
-	if (BIO_write(bp, "\n", 1) != 1)
+	if (BIO_printf(bp, "\n") != 1)
 		return 0;
 
 	return 1;
@@ -375,7 +374,7 @@ ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 		return ASN1_UTCTIME_print(bp, tm);
 	if (tm->type == V_ASN1_GENERALIZEDTIME)
 		return ASN1_GENERALIZEDTIME_print(bp, tm);
-	BIO_write(bp, "Bad time value", 14);
+	BIO_printf(bp, "Bad time value");
 	return (0);
 }
 LCRYPTO_ALIAS(ASN1_TIME_print);
@@ -435,7 +434,7 @@ ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 		return (1);
 
  err:
-	BIO_write(bp, "Bad time value", 14);
+	BIO_printf(bp, "Bad time value");
 	return (0);
 }
 LCRYPTO_ALIAS(ASN1_GENERALIZEDTIME_print);
@@ -479,7 +478,7 @@ ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 		return (1);
 
  err:
-	BIO_write(bp, "Bad time value", 14);
+	BIO_printf(bp, "Bad time value");
 	return (0);
 }
 LCRYPTO_ALIAS(ASN1_UTCTIME_print);
