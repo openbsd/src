@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_ipcp.c,v 1.26 2025/06/23 23:57:48 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_ipcp.c,v 1.27 2025/06/25 11:38:21 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2024 Internet Initiative Japan Inc.
@@ -1204,8 +1204,6 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 		    &uval) == 0)
 			assign->tun_type = radius_tunnel_type_string(uval,
 			    NULL);
-		if (assign->tun_type == NULL)
-			assign->tun_type = "";
 
 		/*
 		 * Get "tunnel from" from Tunnel-Client-Endpoint or Calling-
@@ -1246,9 +1244,10 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 		log_info("q=%u Start seq=%u user=%s duration=%dsec "
 		    "session=%s tunnel=%s from=%s auth=%s ip=%s", q_id,
 		    assign->seq, assign->user->name, delay, assign->session_id,
-		    assign->tun_type, print_addr((struct sockaddr *)
-		    &assign->tun_client, buf1, sizeof(buf1)),
-		    assign->auth_method, inet_ntop(AF_INET, &addr4, buf,
+		    (assign->tun_type != NULL)? assign->tun_type : "",
+		    print_addr((struct sockaddr *)&assign->tun_client, buf1,
+		    sizeof(buf1)), assign->auth_method, inet_ntop(AF_INET,
+		    &addr4, buf,
 		    sizeof(buf)));
 	} else if (type == RADIUS_ACCT_STATUS_TYPE_STOP) {
 		memset(&stat, 0, sizeof(stat));
@@ -1284,8 +1283,9 @@ ipcp_accounting_request(void *ctx, u_int q_id, const u_char *pkt,
 		    "datain=%"PRIu64"bytes,%" PRIu32"packets dataout=%"PRIu64
 		    "bytes,%"PRIu32"packets cause=\"%s\"", q_id,
 		    assign->seq, assign->user->name, dur.tv_sec,
-		    assign->session_id, assign->tun_type, print_addr(
-		    (struct sockaddr *)&assign->tun_client, buf1, sizeof(buf1)),
+		    assign->session_id, (assign->tun_type != NULL)?
+		    assign->tun_type : "", print_addr((struct sockaddr *)
+		    &assign->tun_client, buf1, sizeof(buf1)),
 		    assign->auth_method, inet_ntop(AF_INET, &addr4, buf,
 		    sizeof(buf)), stat.ibytes, stat.ipackets, stat.obytes,
 		    stat.opackets, stat.cause);
@@ -1525,6 +1525,7 @@ ipcp_put_db(struct module_ipcp *self, struct assigned_ipv4 *assigned)
 	struct radiusd_ipcp_db_record
 				 record;
 
+	memset(&record, 0, sizeof(record));
 	strlcpy(keybuf, "ipv4/", sizeof(keybuf));
 	inet_ntop(AF_INET, &assigned->ipv4, keybuf + 5, sizeof(keybuf) - 5);
 	key.data = keybuf;
