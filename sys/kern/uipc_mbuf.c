@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.299 2025/06/22 11:34:40 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.300 2025/06/25 20:26:32 miod Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1802,18 +1802,6 @@ mq_delist(struct mbuf_queue *mq, struct mbuf_list *ml)
 	*ml = mq->mq_list;
 	ml_init(&mq->mq_list);
 	mtx_leave(&mq->mq_mtx);
-}
-
-struct mbuf *
-mq_dechain(struct mbuf_queue *mq)
-{
-	struct mbuf *m0;
-
-	mtx_enter(&mq->mq_mtx);
-	m0 = ml_dechain(&mq->mq_list);
-	mtx_leave(&mq->mq_mtx);
-
-	return (m0);
 }
 
 unsigned int

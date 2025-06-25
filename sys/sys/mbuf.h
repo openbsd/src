@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.266 2025/06/22 11:34:40 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.267 2025/06/25 20:26:32 miod Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -484,7 +484,6 @@ void	m_tag_delete_chain(struct mbuf *);
 struct m_tag *m_tag_find(struct mbuf *, int, struct m_tag *);
 struct m_tag *m_tag_copy(struct m_tag *, int);
 int	m_tag_copy_chain(struct mbuf *, struct mbuf *, int);
-void	m_tag_init(struct mbuf *);
 struct m_tag *m_tag_first(struct mbuf *);
 struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 
@@ -559,7 +558,6 @@ int			mq_enqueue(struct mbuf_queue *, struct mbuf *);
 struct mbuf *		mq_dequeue(struct mbuf_queue *);
 int			mq_enlist(struct mbuf_queue *, struct mbuf_list *);
 void			mq_delist(struct mbuf_queue *, struct mbuf_list *);
-struct mbuf *		mq_dechain(struct mbuf_queue *);
 unsigned int		mq_purge(struct mbuf_queue *);
 unsigned int		mq_hdatalen(struct mbuf_queue *);
 void			mq_set_maxlen(struct mbuf_queue *, u_int);

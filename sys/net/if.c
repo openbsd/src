@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.735 2025/06/14 03:35:09 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.736 2025/06/25 20:26:32 miod Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3636,33 +3636,12 @@ if_rxr_ioctl(struct if_rxrinfo *ifri, const char *name, u_int size,
  * Network stack input queues.
  */
 
-void
-niq_init(struct niqueue *niq, u_int maxlen, u_int isr)
-{
-	mq_init(&niq->ni_q, maxlen, IPL_NET);
-	niq->ni_isr = isr;
-}
-
 int
 niq_enqueue(struct niqueue *niq, struct mbuf *m)
 {
 	int rv;
 
 	rv = mq_enqueue(&niq->ni_q, m);
-	if (rv == 0)
-		schednetisr(niq->ni_isr);
-	else
-		if_congestion();
-
-	return (rv);
-}
-
-int
-niq_enlist(struct niqueue *niq, struct mbuf_list *ml)
-{
-	int rv;
-
-	rv = mq_enlist(&niq->ni_q, ml);
 	if (rv == 0)
 		schednetisr(niq->ni_isr);
 	else

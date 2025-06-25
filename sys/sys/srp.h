@@ -1,4 +1,4 @@
-/*	$OpenBSD: srp.h,v 1.15 2020/05/09 10:18:27 jca Exp $ */
+/*	$OpenBSD: srp.h,v 1.16 2025/06/25 20:26:32 miod Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -84,7 +84,6 @@ void		 srp_gc_init(struct srp_gc *, void (*)(void *, void *), void *);
 void		*srp_swap_locked(struct srp *, void *);
 void		 srp_update_locked(struct srp_gc *, struct srp *, void *);
 void		*srp_get_locked(struct srp *);
-void		 srp_gc_finalize(struct srp_gc *);
 
 void		 srp_init(struct srp *);
 

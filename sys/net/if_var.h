@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.137 2025/05/07 14:10:19 bluhm Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.138 2025/06/25 20:26:32 miod Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -319,12 +319,9 @@ struct	niqueue {
 #define NIQUEUE_INITIALIZER(_len, _isr) \
     { MBUF_QUEUE_INITIALIZER((_len), IPL_NET), (_isr) }
 
-void		niq_init(struct niqueue *, u_int, u_int);
 int		niq_enqueue(struct niqueue *, struct mbuf *);
-int		niq_enlist(struct niqueue *, struct mbuf_list *);
 
 #define niq_dequeue(_q)			mq_dequeue(&(_q)->ni_q)
-#define niq_dechain(_q)			mq_dechain(&(_q)->ni_q)
 #define niq_delist(_q, _ml)		mq_delist(&(_q)->ni_q, (_ml))
 #define niq_len(_q)			mq_len(&(_q)->ni_q)
 #define niq_drops(_q)			mq_drops(&(_q)->ni_q)

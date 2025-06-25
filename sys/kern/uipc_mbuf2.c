@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.49 2025/06/22 11:34:40 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.50 2025/06/25 20:26:32 miod Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -371,13 +371,6 @@ m_tag_copy_chain(struct mbuf *to, struct mbuf *from, int wait)
 		to->m_pkthdr.ph_tagsset |= t->m_tag_id;
 	}
 	return (0);
-}
-
-/* Initialize tags on an mbuf. */
-void
-m_tag_init(struct mbuf *m)
-{
-	SLIST_INIT(&m->m_pkthdr.ph_tags);
 }
 
 /* Get first tag in chain. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_srp.c,v 1.13 2020/12/06 19:18:30 cheloha Exp $ */
+/*	$OpenBSD: kern_srp.c,v 1.14 2025/06/25 20:26:32 miod Exp $ */
 
 /*
  * Copyright (c) 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -79,12 +79,6 @@ void *
 srp_get_locked(struct srp *srp)
 {
 	return (srp->ref);
-}
-
-void
-srp_gc_finalize(struct srp_gc *srp_gc)
-{
-	refcnt_finalize(&srp_gc->srp_gc_refcnt, "srpfini");
 }
 
 #ifdef MULTIPROCESSOR

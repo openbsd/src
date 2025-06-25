@@ -1,4 +1,4 @@
-/*	$OpenBSD: iosf.c,v 1.2 2024/06/26 01:40:49 jsg Exp $ */
+/*	$OpenBSD: iosf.c,v 1.3 2025/06/25 20:26:32 miod Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -163,6 +163,7 @@ iosf_mbi_mdr_modify(struct iosf_mbi *mbi, uint8_t port, uint8_t op,
 	mtx_leave(&iosf_mbi_mtx);
 }
 
+#ifdef nyetyet
 /*
  * linux compat api
  */
@@ -215,6 +216,7 @@ iosf_mbi_modify(uint8_t port, uint8_t opcode, uint32_t offset,
 
 	return (0);
 }
+#endif
 
 int
 iosf_mbi_available(void)
