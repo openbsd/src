@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.169 2025/06/24 15:47:48 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.170 2025/06/25 16:10:18 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1413,12 +1413,19 @@ void
 auth_tree_free(struct auth_tree *auths)
 {
 	struct auth	*auth, *tauth;
+	int error;
 
+	if ((error = pthread_rwlock_wrlock(&cert_lk)) != 0)
+		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
 	RB_FOREACH_SAFE(auth, auth_tree, auths, tauth) {
 		RB_REMOVE(auth_tree, auths, auth);
 		cert_free(auth->cert);
 		free(auth);
 	}
+	if ((error = pthread_rwlock_unlock(&cert_lk)) != 0)
+		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	if ((error = pthread_rwlock_destroy(&cert_lk)) != 0)
+		errx(1, "pthread_rwlock_destroy: %s", strerror(error));
 }
 
 struct auth *

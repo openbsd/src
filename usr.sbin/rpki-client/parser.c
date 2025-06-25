@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.160 2025/06/24 15:47:48 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.161 2025/06/25 16:10:18 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1196,6 +1196,26 @@ parse_writer(void *arg)
 	return NULL;
 }
 
+static void
+repo_tree_free(struct repo_tree *tree)
+{
+	struct parse_repo *repo, *trepo;
+	int error;
+
+	if ((error = pthread_rwlock_wrlock(&repos_lk)) != 0)
+		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
+	RB_FOREACH_SAFE(repo, repo_tree, tree, trepo) {
+		RB_REMOVE(repo_tree, tree, repo);
+		free(repo->path);
+		free(repo->validpath);
+		free(repo);
+	}
+	if ((error = pthread_rwlock_unlock(&repos_lk)) != 0)
+		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	if ((error = pthread_rwlock_destroy(&repos_lk)) != 0)
+		errx(1, "pthread_rwlock_destroy: %s", strerror(error));
+}
+
 /*
  * Process responsible for parsing and validating content.
  * All this process does is wait to be told about a file to parse, then
@@ -1326,8 +1346,18 @@ proc_parser(int fd, int nthreads)
 	}
 	free(workers);	/* karl marx */
 
+	if ((error = pthread_cond_destroy(&globalq_cond)) != 0)
+		errx(1, "pthread_cond_destroy: %s", strerror(error));
+	if ((error = pthread_mutex_destroy(&globalq_mtx)) != 0)
+		errx(1, "pthread_mutex_destroy: %s", strerror(error));
+	if ((error = pthread_cond_destroy(&globalmsgq_cond)) != 0)
+		errx(1, "pthread_cond_destroy: %s", strerror(error));
+	if ((error = pthread_mutex_destroy(&globalmsgq_mtx)) != 0)
+		errx(1, "pthread_mutex_destroy: %s", strerror(error));
+
 	auth_tree_free(&auths);
 	crl_tree_free(&crlt);
+	repo_tree_free(&repos);
 
 	msgbuf_free(inbufq);
 	ibufq_free(globalmsgq);

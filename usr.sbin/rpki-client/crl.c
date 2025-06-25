@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.47 2025/06/24 15:47:48 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.48 2025/06/25 16:10:18 job Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -351,9 +351,16 @@ void
 crl_tree_free(struct crl_tree *crlt)
 {
 	struct crl	*crl, *tcrl;
+	int error;
 
+	if ((error = pthread_rwlock_wrlock(&crl_lk)) != 0)
+		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
 	RB_FOREACH_SAFE(crl, crl_tree, crlt, tcrl) {
 		RB_REMOVE(crl_tree, crlt, crl);
 		crl_free(crl);
 	}
+	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)
+		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
+	if ((error = pthread_rwlock_destroy(&crl_lk)) != 0)
+		errx(1, "pthread_rwlock_destroy: %s", strerror(error));
 }
