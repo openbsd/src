@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.285 2025/06/23 09:26:17 henning Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.286 2025/06/25 09:43:23 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1174,6 +1174,8 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 		return;
 	}
 	p->p_fd = fd;
+	p->p_ctx = NULL;
+	p->p_peername = NULL;
 	if ((p->p_bufev = bufferevent_new(fd, tcp_readcb,
 	    usetls ? tls_handshakecb : NULL, tcp_closecb, p)) == NULL) {
 		log_warn("bufferevent \"%s\"", peername);
@@ -1183,7 +1185,6 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 		close(fd);
 		return;
 	}
-	p->p_ctx = NULL;
 	if (usetls) {
 		if (tls_accept_socket(server_ctx, &p->p_ctx, fd) == -1) {
 			log_warnx("tls_accept_socket \"%s\": %s",
@@ -1381,6 +1382,10 @@ tcp_closecb(struct bufferevent *bufev, short event, void *arg)
 	if (p->p_hostname != hostname_unknown)
 		free(p->p_hostname);
 	bufferevent_free(p->p_bufev);
+	if (p->p_ctx) {
+		tls_close(p->p_ctx);
+		tls_free(p->p_ctx);
+	}
 	close(p->p_fd);
 	free(p);
 }
