@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.110 2025/06/22 17:00:48 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.111 2025/06/25 16:24:44 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -970,7 +970,7 @@ x509_valid_seqnum(const char *fn, const char *descr, const ASN1_INTEGER *i)
  * Find the closest expiry moment by walking the chain of authorities.
  */
 time_t
-x509_find_expires(time_t notafter, struct auth *a, struct crl_tree *crlt)
+x509_find_expires(time_t notafter, struct auth *a, struct crl_tree *crls)
 {
 	struct crl	*crl;
 	time_t		 expires;
@@ -980,7 +980,7 @@ x509_find_expires(time_t notafter, struct auth *a, struct crl_tree *crlt)
 	for (; a != NULL; a = a->issuer) {
 		if (expires > a->cert->notafter)
 			expires = a->cert->notafter;
-		crl = crl_get(crlt, a);
+		crl = crl_get(crls, a);
 		if (crl != NULL && expires > crl->nextupdate)
 			expires = crl->nextupdate;
 	}

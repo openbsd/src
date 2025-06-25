@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.48 2025/06/25 16:10:18 job Exp $ */
+/*	$OpenBSD: crl.c,v 1.49 2025/06/25 16:24:44 job Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -302,7 +302,7 @@ RB_GENERATE_STATIC(crl_tree, crl, entry, crlcmp);
  * Find a CRL based on the auth SKI value and manifest path.
  */
 struct crl *
-crl_get(struct crl_tree *crlt, const struct auth *a)
+crl_get(struct crl_tree *crls, const struct auth *a)
 {
 	struct crl	find, *crl;
 	int		error;
@@ -316,20 +316,20 @@ crl_get(struct crl_tree *crlt, const struct auth *a)
 
 	if ((error = pthread_rwlock_rdlock(&crl_lk)) != 0)
 		errx(1, "pthread_rwlock_rdlock: %s", strerror(error));
-	crl = RB_FIND(crl_tree, crlt, &find);
+	crl = RB_FIND(crl_tree, crls, &find);
 	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)
 		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
 	return crl;
 }
 
 int
-crl_insert(struct crl_tree *crlt, struct crl *crl)
+crl_insert(struct crl_tree *crls, struct crl *crl)
 {
 	int error, rv;
 
 	if ((error = pthread_rwlock_wrlock(&crl_lk)) != 0)
 		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
-	rv = RB_INSERT(crl_tree, crlt, crl) == NULL;
+	rv = RB_INSERT(crl_tree, crls, crl) == NULL;
 	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)
 		errx(1, "pthread_rwlock_unlock: %s", strerror(error));
 
@@ -348,15 +348,15 @@ crl_free(struct crl *crl)
 }
 
 void
-crl_tree_free(struct crl_tree *crlt)
+crl_tree_free(struct crl_tree *crls)
 {
 	struct crl	*crl, *tcrl;
 	int error;
 
 	if ((error = pthread_rwlock_wrlock(&crl_lk)) != 0)
 		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));
-	RB_FOREACH_SAFE(crl, crl_tree, crlt, tcrl) {
-		RB_REMOVE(crl_tree, crlt, crl);
+	RB_FOREACH_SAFE(crl, crl_tree, crls, tcrl) {
+		RB_REMOVE(crl_tree, crls, crl);
 		crl_free(crl);
 	}
 	if ((error = pthread_rwlock_unlock(&crl_lk)) != 0)

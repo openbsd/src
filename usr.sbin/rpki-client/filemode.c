@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.61 2025/06/21 15:46:01 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.62 2025/06/25 16:24:44 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -43,7 +43,7 @@
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
-static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
+static struct crl_tree	 crls = RB_INITIALIZER(&crls);
 
 struct tal		*talobj[TALSZ_MAX];
 
@@ -117,7 +117,7 @@ parse_load_crl(char *uri)
 	}
 
 	crl = crl_parse(uri, f, flen);
-	if (crl != NULL && !crl_insert(&crlt, crl))
+	if (crl != NULL && !crl_insert(&crls, crl))
 		crl_free(crl);
 
 	free(f);
@@ -217,7 +217,7 @@ parse_load_certchain(char *uri)
 		cert = stack[i - 1];
 		uri = filestack[i - 1];
 
-		crl = crl_get(&crlt, a);
+		crl = crl_get(&crls, a);
 		if (!valid_x509(uri, ctx, cert->x509, a, crl, &errstr) ||
 		    !valid_cert(uri, a, cert)) {
 			if (errstr != NULL)
@@ -508,7 +508,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		x509_get_crl(x509, file, &crl_uri);
 		parse_load_crl(crl_uri);
 		a = parse_load_certchain(aia);
-		c = crl_get(&crlt, a);
+		c = crl_get(&crls, a);
 
 		if ((status = valid_x509(file, ctx, x509, a, c, &errstr))) {
 			switch (type) {
@@ -566,7 +566,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 	if (expires != NULL) {
 		if ((status && aia != NULL) || is_ta)
-			*expires = x509_find_expires(*notafter, a, &crlt);
+			*expires = x509_find_expires(*notafter, a, &crls);
 
 		switch (type) {
 		case RTYPE_ASPA:
@@ -803,7 +803,7 @@ proc_filemode(int fd)
 	}
 
 	auth_tree_free(&auths);
-	crl_tree_free(&crlt);
+	crl_tree_free(&crls);
 
 	X509_STORE_CTX_free(ctx);
 

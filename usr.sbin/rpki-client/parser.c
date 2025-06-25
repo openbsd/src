@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.161 2025/06/25 16:10:18 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.162 2025/06/25 16:24:44 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -42,7 +42,7 @@
 extern int certid;
 
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
-static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
+static struct crl_tree	 crls = RB_INITIALIZER(&crls);
 
 static struct entityq	 globalq = TAILQ_HEAD_INITIALIZER(globalq);
 static pthread_mutex_t	 globalq_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -198,7 +198,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 	a = find_issuer(file, entp->certid, roa->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
-	crl = crl_get(&crlt, a);
+	crl = crl_get(&crls, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
@@ -209,7 +209,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 
 	roa->talid = a->cert->talid;
 
-	roa->expires = x509_find_expires(roa->notafter, a, &crlt);
+	roa->expires = x509_find_expires(roa->notafter, a, &crls);
 
 	return roa;
 
@@ -240,7 +240,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 	a = find_issuer(file, entp->certid, spl->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
-	crl = crl_get(&crlt, a);
+	crl = crl_get(&crls, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
@@ -251,7 +251,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 
 	spl->talid = a->cert->talid;
 
-	spl->expires = x509_find_expires(spl->notafter, a, &crlt);
+	spl->expires = x509_find_expires(spl->notafter, a, &crls);
 
 	return spl;
 
@@ -562,7 +562,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
 
 	if (*mp != NULL) {
 		*crlmtime = crl->thisupdate;
-		if (crl_insert(&crlt, crl))
+		if (crl_insert(&crls, crl))
 			crl = NULL;
 	}
 	crl_free(crl);
@@ -596,7 +596,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
-	crl = crl_get(&crlt, a);
+	crl = crl_get(&crls, a);
 
 	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr) ||
 	    !valid_cert(file, a, cert)) {
@@ -755,7 +755,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 	a = find_issuer(file, entp->certid, gbr->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
-	crl = crl_get(&crlt, a);
+	crl = crl_get(&crls, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
@@ -794,7 +794,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 	a = find_issuer(file, entp->certid, aspa->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
-	crl = crl_get(&crlt, a);
+	crl = crl_get(&crls, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
@@ -805,7 +805,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 
 	aspa->talid = a->cert->talid;
 
-	aspa->expires = x509_find_expires(aspa->notafter, a, &crlt);
+	aspa->expires = x509_find_expires(aspa->notafter, a, &crls);
 
 	return aspa;
 
@@ -835,7 +835,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 	a = find_issuer(file, entp->certid, tak->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
-	crl = crl_get(&crlt, a);
+	crl = crl_get(&crls, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
@@ -1356,7 +1356,7 @@ proc_parser(int fd, int nthreads)
 		errx(1, "pthread_mutex_destroy: %s", strerror(error));
 
 	auth_tree_free(&auths);
-	crl_tree_free(&crlt);
+	crl_tree_free(&crls);
 	repo_tree_free(&repos);
 
 	msgbuf_free(inbufq);
