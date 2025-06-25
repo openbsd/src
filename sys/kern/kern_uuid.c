@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_uuid.c,v 1.2 2014/08/31 20:15:54 miod Exp $	*/
+/*	$OpenBSD: kern_uuid.c,v 1.3 2025/06/25 20:28:52 miod Exp $	*/
 /*	$NetBSD: kern_uuid.c,v 1.18 2011/11/19 22:51:25 tls Exp $	*/
 
 /*-
@@ -152,61 +152,6 @@ le32dec(const void *pp)
 	return (((unsigned)p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
 }
 
-static __inline void
-be16enc(void *pp, uint16_t u)
-{
-	uint8_t *p = (uint8_t *)pp;
-
-	p[0] = (u >> 8) & 0xff;
-	p[1] = u & 0xff;
-}
-
-static __inline void
-be32enc(void *pp, uint32_t u)
-{
-	uint8_t *p = (uint8_t *)pp;
-
-	p[0] = (u >> 24) & 0xff;
-	p[1] = (u >> 16) & 0xff;
-	p[2] = (u >> 8) & 0xff;
-	p[3] = u & 0xff;
-}
-
-static __inline void
-le16enc(void *pp, uint16_t u)
-{
-	uint8_t *p = (uint8_t *)pp;
-
-	p[0] = u & 0xff;
-	p[1] = (u >> 8) & 0xff;
-}
-
-static __inline void
-le32enc(void *pp, uint32_t u)
-{
-	uint8_t *p = (uint8_t *)pp;
-
-	p[0] = u & 0xff;
-	p[1] = (u >> 8) & 0xff;
-	p[2] = (u >> 16) & 0xff;
-	p[3] = (u >> 24) & 0xff;
-}
-
-void
-uuid_enc_le(void *buf, const struct uuid *uuid)
-{
-	uint8_t *p = buf;
-	int i;
-
-	le32enc(p, uuid->time_low);
-	le16enc(p + 4, uuid->time_mid);
-	le16enc(p + 6, uuid->time_hi_and_version);
-	p[8] = uuid->clock_seq_hi_and_reserved;
-	p[9] = uuid->clock_seq_low;
-	for (i = 0; i < _UUID_NODE_LEN; i++)
-		p[10 + i] = uuid->node[i];
-}
-
 void
 uuid_dec_le(const void *buf, struct uuid *uuid)
 {
@@ -220,21 +165,6 @@ uuid_dec_le(const void *buf, struct uuid *uuid)
 	uuid->clock_seq_low = p[9];
 	for (i = 0; i < _UUID_NODE_LEN; i++)
 		uuid->node[i] = p[10 + i];
-}
-
-void
-uuid_enc_be(void *buf, const struct uuid *uuid)
-{
-	uint8_t *p = buf;
-	int i;
-
-	be32enc(p, uuid->time_low);
-	be16enc(p + 4, uuid->time_mid);
-	be16enc(p + 6, uuid->time_hi_and_version);
-	p[8] = uuid->clock_seq_hi_and_reserved;
-	p[9] = uuid->clock_seq_low;
-	for (i = 0; i < _UUID_NODE_LEN; i++)
-		p[10 + i] = uuid->node[i];
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid.h,v 1.3 2014/08/31 09:36:39 miod Exp $	*/
+/*	$OpenBSD: uuid.h,v 1.4 2025/06/25 20:28:52 miod Exp $	*/
 /*	$NetBSD: uuid.h,v 1.5 2008/11/18 14:01:03 joerg Exp $	*/
 
 /*
@@ -63,8 +63,6 @@ int	uuid_snprintf(char *, size_t, const struct uuid *);
 int	uuid_printf(const struct uuid *);
 void	uuid_dec_be(const void *, struct uuid *);
 void	uuid_dec_le(const void *, struct uuid *);
-void	uuid_enc_be(void *, const struct uuid *);
-void	uuid_enc_le(void *, const struct uuid *);
 
 #else	/* _KERNEL */
 
