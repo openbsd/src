@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.147 2025/06/23 20:56:38 mvs Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.148 2025/06/25 10:33:53 mvs Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -524,10 +524,12 @@ mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 		msa.msa_len = *oldlenp;
 	}
 
+	NET_LOCK();
 	for (rtableid = 0; rtableid <= RT_TABLEID_MAX; rtableid++) {
 		rtable_walk(rtableid, AF_INET, NULL, mrt_rtwalk_mfcsysctl,
 		    &msa);
 	}
+	NET_UNLOCK();
 
 	if (msa.msa_minfos != NULL && msa.msa_needed > 0 &&
 	    (error = copyout(msa.msa_minfos, oldp, msa.msa_needed)) != 0) {

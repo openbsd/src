@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.414 2025/06/24 18:05:51 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.415 2025/06/25 10:33:53 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1804,10 +1804,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_MRTMFC:
 		if (newp)
 			return (EPERM);
-		NET_LOCK();
-		error = mrt_sysctl_mfc(oldp, oldlenp);
-		NET_UNLOCK();
-		return (error);
+		return (mrt_sysctl_mfc(oldp, oldlenp));
 	case IPCTL_MRTVIF:
 		if (newp)
 			return (EPERM);
