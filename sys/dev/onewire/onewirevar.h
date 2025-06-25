@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewirevar.h,v 1.7 2010/07/19 23:44:09 deraadt Exp $	*/
+/*	$OpenBSD: onewirevar.h,v 1.8 2025/06/25 20:28:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -43,11 +43,9 @@ int		onewire_lock(void *, int);
 void		onewire_unlock(void *);
 
 int		onewire_reset(void *);
-int		onewire_bit(void *, int);
 int		onewire_read_byte(void *);
 void		onewire_write_byte(void *, int);
 void		onewire_read_block(void *, void *, int);
-void		onewire_write_block(void *, const void *, int);
 int		onewire_triplet(void *, int);
 void		onewire_matchrom(void *, u_int64_t);
 int		onewire_search(void *, u_int64_t *, int, u_int64_t);

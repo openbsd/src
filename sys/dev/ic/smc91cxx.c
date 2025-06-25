@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.53 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.54 2025/06/25 20:28:09 miod Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -1137,30 +1137,6 @@ smc91cxx_disable(struct smc91cxx_softc *sc)
 		(*sc->sc_disable)(sc);
 		sc->sc_flags &= ~SMC_FLAGS_ENABLED;
 	}
-}
-
-int
-smc91cxx_detach(struct device *self, int flags)
-{
-	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	/* Succeed now if there's no work to do. */
-	if ((sc->sc_flags & SMC_FLAGS_ATTACHED) == 0)
-		return(0);
-
-	/* smc91cxx_disable() checks SMC_FLAGS_ENABLED */
-	smc91cxx_disable(sc);
-
-	/* smc91cxx_attach() never fails */
-
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
-	ether_ifdetach(ifp);
-	if_detach(ifp);
-
-	return (0);
 }
 
 u_int32_t

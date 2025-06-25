@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt.c,v 1.16 2025/05/12 08:16:00 tedu Exp $ */
+/*	$OpenBSD: lpt.c,v 1.17 2025/06/25 20:28:09 miod Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -135,16 +135,6 @@ lpt_attach_common(struct lpt_softc *sc)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, LPC_NINIT);
 
 	timeout_set(&sc->sc_wakeup_tmo, lptwakeup, sc);
-}
-
-void
-lpt_detach_common(struct lpt_softc *sc)
-{
-	timeout_del(&sc->sc_wakeup_tmo);
-	if (sc->sc_state != 0) {
-		sc->sc_state = 0;
-		wakeup(sc);
-	}
 }
 
 /*

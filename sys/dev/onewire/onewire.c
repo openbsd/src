@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.19 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.20 2025/06/25 20:28:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -202,15 +202,6 @@ onewire_reset(void *arg)
 }
 
 int
-onewire_bit(void *arg, int value)
-{
-	struct onewire_softc *sc = arg;
-	struct onewire_bus *bus = sc->sc_bus;
-
-	return (bus->bus_bit(bus->bus_cookie, value));
-}
-
-int
 onewire_read_byte(void *arg)
 {
 	struct onewire_softc *sc = arg;
@@ -253,20 +244,6 @@ onewire_read_block(void *arg, void *buf, int len)
 
 	while (len--)
 		*p++ = onewire_read_byte(arg);
-}
-
-void
-onewire_write_block(void *arg, const void *buf, int len)
-{
-	struct onewire_softc *sc = arg;
-	struct onewire_bus *bus = sc->sc_bus;
-	const u_int8_t *p = buf;
-
-	if (bus->bus_write_block != NULL)
-		return (bus->bus_write_block(bus->bus_cookie, buf, len));
-
-	while (len--)
-		onewire_write_byte(arg, *p++);
 }
 
 int

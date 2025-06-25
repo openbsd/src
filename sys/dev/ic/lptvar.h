@@ -1,4 +1,4 @@
-/*	$OpenBSD: lptvar.h,v 1.5 2025/05/12 08:16:00 tedu Exp $ */
+/*	$OpenBSD: lptvar.h,v 1.6 2025/06/25 20:28:09 miod Exp $ */
 /*	$NetBSD: lpt.c,v 1.42 1996/10/21 22:41:14 thorpej Exp $	*/
 
 /*
@@ -80,5 +80,4 @@ int	lptintr(void *);
 int	lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    bus_size_t, u_int8_t, u_int8_t);
 void	lpt_attach_common(struct lpt_softc *);
-void	lpt_detach_common(struct lpt_softc *);
 int	lpt_activate(struct device *, int);
