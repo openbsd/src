@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.166 2024/10/30 06:16:27 jsg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.167 2025/06/25 20:29:29 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -520,7 +520,6 @@ extern const int chrtoblktbl[];
 extern const int nchrtoblktbl;
 
 struct bdevsw *bdevsw_lookup(dev_t);
-struct cdevsw *cdevsw_lookup(dev_t);
 dev_t	chrtoblk(dev_t);
 dev_t	blktochr(dev_t);
 int	iskmemdev(dev_t);

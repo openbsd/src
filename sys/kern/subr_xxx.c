@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_xxx.c,v 1.17 2019/05/17 03:53:08 visa Exp $	*/
+/*	$OpenBSD: subr_xxx.c,v 1.18 2025/06/25 20:29:29 miod Exp $	*/
 /*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
 
 /*
@@ -109,12 +109,6 @@ struct bdevsw *
 bdevsw_lookup(dev_t dev)
 {
 	return (&bdevsw[major(dev)]);
-}
-
-struct cdevsw *
-cdevsw_lookup(dev_t dev)
-{
-	return (&cdevsw[major(dev)]);
 }
 
 /*
