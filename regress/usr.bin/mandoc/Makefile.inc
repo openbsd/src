@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.29 2020/07/30 21:32:19 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.30 2025/06/26 17:29:46 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -116,7 +116,7 @@ htmlval: ${_HTMLVALS}
 	${MANDOC} ${MOPTS} -Ios=OpenBSD -Tman ${.IMPSRC} > ${.TARGET}
 
 .in_man.mandoc_man:
-	${MANDOC} -man -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
+	${MANDOC} -man -Tascii ${.IMPSRC} > ${.TARGET}
 
 .in.mandoc_lint:
 	-${MANDOC} ${MOPTS} -Ios=OpenBSD -Tlint -Wall ${.IMPSRC} 2>&1 | \
