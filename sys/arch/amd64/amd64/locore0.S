@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.29 2025/06/26 12:17:27 bluhm Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.30 2025/06/26 12:38:35 bluhm Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -208,7 +208,8 @@ bi_size_ok:
 	 * 2) locore_vc_trap64:  Triggered when we are running in
 	 *    32-bit compatibility mode.
 	 *
-	 * The latter one is used by vmd(8).
+	 * The latter one is used by vmd(8) when direct kernel
+	 * launch is configured.
 	 */
 	movl	$RELOC(early_idt), %ecx
 	movl	$T_VC, %edx
@@ -814,6 +815,7 @@ vc_cpuid64:
 	rep vmmcall
 	rdmsr
 	ret
+	lfence
 
 	.globl	locore_vc_trap64
 locore_vc_trap64:
@@ -870,6 +872,7 @@ vc_cpuid32:
 	rep vmmcall
 	rdmsr
 	ret
+	lfence
 
 	.globl	locore_vc_trap32
 locore_vc_trap32:
