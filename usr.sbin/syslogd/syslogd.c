@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.286 2025/06/25 09:43:23 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.287 2025/06/26 19:10:13 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1176,7 +1176,8 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 	p->p_fd = fd;
 	p->p_ctx = NULL;
 	p->p_peername = NULL;
-	if ((p->p_bufev = bufferevent_new(fd, tcp_readcb,
+	if ((p->p_bufev = bufferevent_new(fd,
+	    usetls ? tls_handshakecb : tcp_readcb,
 	    usetls ? tls_handshakecb : NULL, tcp_closecb, p)) == NULL) {
 		log_warn("bufferevent \"%s\"", peername);
 		free(p);
@@ -1243,6 +1244,7 @@ tls_handshakecb(struct bufferevent *bufev, void *arg)
 	}
 
 	bufferevent_setcb(bufev, tcp_readcb, NULL, tcp_closecb, p);
+	tcp_readcb(bufev, arg);
 }
 
 /*
