@@ -1,5 +1,6 @@
-/*	$OpenBSD: watch.c,v 1.31 2025/06/25 09:37:03 yasuoka Exp $ */
+/*	$OpenBSD: watch.c,v 1.32 2025/06/26 21:34:45 job Exp $ */
 /*
+ * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
  * All rights reserved.
  *
@@ -20,6 +21,9 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+#include <sys/sysctl.h>
 #include <sys/wait.h>
 
 #include <curses.h>
@@ -74,9 +78,12 @@ int start_line = 0, start_column = 0;	/* display offset coordinates */
 int pause_on_error = 0;
 int paused = 0;
 int want_update;
+int show_rusage = 0;
+struct rusage prev_ru, ru;
 int last_exitcode = 0;
 time_t lastupdate;
 int xflag = 0;
+struct timespec prev_start, start, prev_stop, stop;
 
 #define	addwch(_x)	addnwstr(&(_x), 1);
 #define	WCWIDTH(_x)	((wcwidth((_x)) > 0)? wcwidth((_x)) : 1)
@@ -106,6 +113,7 @@ struct event	  ev_timer;
 int display(BUFFER *, BUFFER *, highlight_mode_t);
 kbd_result_t kbd_command(int);
 void show_help(void);
+void print_rusage(void);
 void on_signal(int, short, void *);
 void on_sigchild(int, short, void *);
 void timer(int, short, void *);
@@ -286,6 +294,11 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 
 	move(1, 1);
 
+	if (show_rusage) {
+		print_rusage();
+		return 1;
+	}
+
 	if (!prev || (cur == prev))
 		hm = HIGHLIGHT_NONE;
 
@@ -410,6 +423,10 @@ start_child()
 	if (pipe(fds) == -1)
 		err(1, "pipe()");
 
+	(void)memset(&ru, 0, sizeof(struct rusage));
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+
 	child->pid = vfork();
 	if (child->pid == -1)
 		err(1, "vfork");
@@ -472,13 +489,18 @@ on_sigchild(int sig, short event, void *arg)
 	int st;
 
 	do {
-		pid = waitpid(WAIT_ANY, &st, 0);
+		pid = wait4(WAIT_ANY, &st, 0, &ru);
 	} while (pid == -1 && errno == EINTR);
 	if (!running_child || running_child->pid != pid)
 		return;
 
 	/* Remember update time */
 	time(&lastupdate);
+	clock_gettime(CLOCK_MONOTONIC, &stop);
+	prev_start = start;
+	prev_stop = stop;
+
+	prev_ru = ru;
 
 	if (WIFEXITED(st))
 		last_exitcode = WEXITSTATUS(st);
@@ -531,6 +553,11 @@ kbd_result_t
 kbd_command(int ch)
 {
 	char buf[10];
+
+	if (show_rusage) {
+		show_rusage = 0;
+		return (RSLT_REDRAW);
+	}
 
 	switch (ch) {
 
@@ -633,6 +660,10 @@ kbd_command(int ch)
 			return (RSLT_REDRAW);
 		}
 
+	case 'r':
+		show_rusage = 1;
+		return (RSLT_REDRAW);
+
 	case 's':
 		move(1, 0);
 
@@ -701,6 +732,7 @@ show_help(void)
 	    "l              - highlight changed lines\n"
 	    "w              - highlight changed words\n"
 	    "p              - toggle pause / resume\n"
+	    "r              - show information about resource utilization\n"
 	    "s              - change the update interval\n"
 	    "h | ?          - show this message\n"
 	    "q              - quit\n\n");
@@ -718,6 +750,60 @@ show_help(void)
 			exit(1);
 		break;
 	}
+}
+
+void
+print_rusage(void)
+{
+	int hz;
+	long ticks;
+	int mib[2];
+	struct clockinfo clkinfo;
+	struct timespec elapsed;
+	size_t size;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CLOCKRATE;
+	size = sizeof(clkinfo);
+	if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) < 0)
+		err(1, "sysctl");
+	hz = clkinfo.hz;
+	ticks = hz * (prev_ru.ru_utime.tv_sec + prev_ru.ru_stime.tv_sec) +
+	    hz * (prev_ru.ru_utime.tv_usec + prev_ru.ru_stime.tv_usec)
+	    / 1000000;
+
+	timespecsub(&prev_stop, &prev_start, &elapsed);
+
+	printw("\n%7lld.%02ld  %s\n", (long long)elapsed.tv_sec,
+	    elapsed.tv_nsec / 10000000, "real");
+	printw("%7lld.%02ld  %s\n", (long long)prev_ru.ru_utime.tv_sec,
+	    prev_ru.ru_utime.tv_usec / 10000, "user");
+	printw("%7lld.%02ld  %s\n", (long long)prev_ru.ru_stime.tv_sec,
+	    prev_ru.ru_stime.tv_usec / 10000, "sys");
+
+	printw("%10ld  %s\n", prev_ru.ru_maxrss, "maximum resident set size");
+	printw("%10ld  %s\n", ticks ? prev_ru.ru_ixrss / ticks : 0,
+	    "average shared memory size");
+	printw("%10ld  %s\n", ticks ? prev_ru.ru_idrss / ticks : 0,
+	    "average unshared data size");
+	printw("%10ld  %s\n", ticks ? prev_ru.ru_isrss / ticks : 0,
+	    "average unshared stack size");
+	printw("%10ld  %s\n", prev_ru.ru_minflt, "minor page faults");
+	printw("%10ld  %s\n", prev_ru.ru_majflt, "major page faults");
+	printw("%10ld  %s\n", prev_ru.ru_nswap, "swaps");
+	printw("%10ld  %s\n", prev_ru.ru_inblock, "block input operations");
+	printw("%10ld  %s\n", prev_ru.ru_oublock, "block output operations");
+	printw("%10ld  %s\n", prev_ru.ru_msgsnd, "messages sent");
+	printw("%10ld  %s\n", prev_ru.ru_msgrcv, "messages received");
+	printw("%10ld  %s\n", prev_ru.ru_nsignals, "signals received");
+	printw("%10ld  %s\n", prev_ru.ru_nvcsw, "voluntary context switches");
+	printw("%10ld  %s\n", prev_ru.ru_nivcsw,
+	    "involuntary context switches");
+
+	standout();
+	printw("\nHit any key to continue.");
+	standend();
+	refresh();
 }
 
 void

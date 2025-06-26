@@ -1,4 +1,4 @@
-.\"	$OpenBSD: watch.1,v 1.13 2025/05/24 09:49:14 job Exp $
+.\"	$OpenBSD: watch.1,v 1.14 2025/06/26 21:34:45 job Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2014, 2016 Internet Initiative Japan Inc.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2025 $
+.Dd $Mdocdate: June 26 2025 $
 .Dt WATCH 1
 .Os
 .Sh NAME
@@ -96,6 +96,8 @@ Scroll up one line.
 Scroll right half a screen.
 .It Ic l
 Highlight changed lines.
+.It Ic r
+Display information about resource utilization.
 .It Ic s
 Change the update interval.
 .It Ic p
@@ -110,7 +112,8 @@ Quit
 .El
 .Sh SEE ALSO
 .Xr sh 1 ,
-.Xr execl 3
+.Xr execl 3 ,
+.Xr getrusage 2 
 .Sh HISTORY
 .Nm
 was first published in 1991 and has been available since
