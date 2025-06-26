@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.65 2024/12/28 00:00:32 aoyama Exp $ */
+/* $OpenBSD: disksubr.c,v 1.66 2025/06/26 20:27:37 miod Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -377,7 +377,7 @@ disklabel_bsd_to_om(struct disklabel *lp, struct sun_disklabel *sl)
 {
 	struct partition *npp;
 	struct sun_dkpart *spp;
-	int i, secpercyl;
+	int i;
 	u_short cksum, *sp1, *sp2;
 
 	if (lp->d_secsize != DEV_BSIZE || lp->d_nsectors == 0 ||
@@ -411,7 +411,6 @@ disklabel_bsd_to_om(struct disklabel *lp, struct sun_disklabel *sl)
 	}
 	sl->sl_magic = SUN_DKMAGIC;
 
-	secpercyl = sl->sl_nsectors * sl->sl_ntracks;
 	for (i = 0; i < SUNXPART; i++) {
 		spp = &sl->sl_xpart[i];
 		npp = &lp->d_partitions[i+8];
