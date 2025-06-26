@@ -18,4 +18,4 @@ DDEESSCCRRIIPPTTIIOONN
      macro test1 is gone:
      macro test2 still exists: testval ;
 
-OpenBSD                        February 6, 2019                        OpenBSD
+OpenBSD                        February 6, 2019                      DE-TAB(1)

@@ -10,4 +10,4 @@ SM-BADARG(1) - General Commands Manual
 **-f**&zwnj;*off* bad
 **-f** *bad* (on) bad**-f**&zwnj;*bad*(off)
 
-OpenBSD-July 4, 2017
+OpenBSD-July 4, 2017-SM-BADARG(1)

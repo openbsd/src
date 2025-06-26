@@ -42,4 +42,4 @@ op bracket
 quoted punctuation:
 **a** (**b** | **c**) **d**, *italic*.
 
-OpenBSD - July 4, 2017
+OpenBSD - July 4, 2017 - Ic-PUNCT(1)
