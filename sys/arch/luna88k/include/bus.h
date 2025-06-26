@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 2022/02/14 13:03:52 aoyama Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 2025/06/26 20:28:07 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -521,10 +521,8 @@ static __inline void __CONCAT(bus_space_copy_,BYTES)		\
 	    bus_size_t count);						\
 									\
 static __inline void							\
-__CONCAT(bus_space_copy_,BYTES)(t, h1, o1, h2, o2, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
+__CONCAT(bus_space_copy_,BYTES)(bus_space_tag_t t, bus_space_handle_t h1,\
+    bus_size_t o1, bus_space_handle_t h2, bus_size_t o2, bus_size_t c)	\
 {									\
 	bus_size_t o;							\
 									\

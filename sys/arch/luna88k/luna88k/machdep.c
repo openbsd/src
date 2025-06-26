@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.145 2025/05/18 02:12:58 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.146 2025/06/26 20:28:07 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -902,10 +902,7 @@ out:
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 #if 0
 	struct sys_sysarch_args	/* {
@@ -1143,8 +1140,7 @@ get_nvram_data(void)
 }
 
 char *
-nvram_by_symbol(symbol)
-	char *symbol;
+nvram_by_symbol(char *symbol)
 {
 	char *value;
 	int i;

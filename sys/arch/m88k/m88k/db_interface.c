@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.32 2024/11/07 16:02:29 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.33 2025/06/26 20:28:07 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -166,11 +166,7 @@ m88k_dmx_print(u_int t, u_int d, u_int a, u_int no)
 #endif	/* M88100 */
 
 void
-m88k_db_print_frame(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+m88k_db_print_frame(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct trapframe *s = (struct trapframe *)addr;
 	const char *name;
@@ -355,11 +351,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 }
 
 void
-m88k_db_registers(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+m88k_db_registers(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	m88k_db_print_frame((db_expr_t)&ddb_regs, TRUE, 0, modif);
 }
@@ -370,9 +362,7 @@ m88k_db_registers(addr, have_addr, count, modif)
  * invoke this function with a promoted struct reg!
  */
 void
-m88k_db_trap(type, frame)
-	int type;
-	struct trapframe *frame;
+m88k_db_trap(int type, struct trapframe *frame)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();
@@ -451,9 +441,7 @@ db_enter(void)
 
 /* breakpoint/watchpoint entry */
 int
-ddb_break_trap(type, eframe)
-	int type;
-	db_regs_t *eframe;
+ddb_break_trap(int type, db_regs_t *eframe)
 {
 	m88k_db_trap(type, (struct trapframe *)eframe);
 
@@ -472,9 +460,7 @@ ddb_break_trap(type, eframe)
 
 /* enter at splhigh */
 int
-ddb_entry_trap(level, eframe)
-	int level;
-	db_regs_t *eframe;
+ddb_entry_trap(int level, db_regs_t *eframe)
 {
 	m88k_db_trap(T_KDB_ENTRY, (struct trapframe *)eframe);
 
@@ -547,11 +533,7 @@ db_write_bytes(vaddr_t addr, size_t size, void *datap)
 
 /* display where all the cpus are stopped at */
 void
-m88k_db_where(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+m88k_db_where(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	const char *name;
 	db_expr_t offset;
@@ -576,11 +558,8 @@ m88k_db_where(addr, have_addr, count, modif)
  * searched. Otherwise, r31 of the current cpu is used.
  */
 void
-m88k_db_frame_search(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+m88k_db_frame_search(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif)
 {
 	if (have_addr)
 		addr &= ~3; /* round to word */

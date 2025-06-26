@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.17 2021/10/24 09:18:51 deraadt Exp $ */
+/* $OpenBSD: mainbus.c,v 1.18 2025/06/26 20:28:07 miod Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -79,9 +79,7 @@ struct cfdriver mainbus_cd = {
 };
 
 int
-mainbus_match(parent, cf, args)
-	struct device *parent;
-	void *cf, *args;
+mainbus_match(struct device *parent, void *cf, void *args)
 {
 	static int mainbus_matched;
 
@@ -92,9 +90,7 @@ mainbus_match(parent, cf, args)
 }
 
 void
-mainbus_attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+mainbus_attach(struct device *parent, struct device *self, void *args)
 {
 	int i;
 	extern int machtype;
@@ -121,9 +117,7 @@ mainbus_attach(parent, self, args)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	struct mainbus_attach_args *ma = aux;
 

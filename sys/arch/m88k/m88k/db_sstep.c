@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.8 2019/11/08 15:01:15 mpi Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.9 2025/06/26 20:28:07 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -169,8 +169,7 @@ db_set_single_step(db_regs_t *regs)
 }
 
 void
-db_clear_single_step(regs)
-	db_regs_t *regs;
+db_clear_single_step(db_regs_t *regs)
 {
 #ifdef M88110
 	if (CPU_IS88110) {

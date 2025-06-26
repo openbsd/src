@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2008/07/28 17:50:11 miod Exp $ */
+/*	$OpenBSD: process_machdep.c,v 1.5 2025/06/26 20:28:07 miod Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -70,9 +70,7 @@
 #include <sys/ptrace.h>
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 	bcopy((caddr_t)USER_REGS(p), (caddr_t)regs, sizeof(struct reg));
 	return (0);
@@ -81,9 +79,7 @@ process_read_regs(p, regs)
 #ifdef PTRACE
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct reg *procregs = (struct reg *)USER_REGS(p);
 	unsigned int psr = procregs->epsr;
@@ -98,9 +94,7 @@ process_write_regs(p, regs)
 /* process_sstep() is in trap.c */
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	struct reg *regs;
 
