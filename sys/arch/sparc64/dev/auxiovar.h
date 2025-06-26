@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxiovar.h,v 1.8 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: auxiovar.h,v 1.9 2025/06/26 20:39:34 miod Exp $	*/
 /*	$NetBSD: auxiovar.h,v 1.4 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -41,12 +41,7 @@ struct auxio_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_tag;
 	bus_space_handle_t	sc_led;
-	bus_space_handle_t	sc_pci;
-	bus_space_handle_t	sc_scsi;
-	bus_space_handle_t	sc_freq;
-	bus_space_handle_t	sc_temp;
 	int			sc_flags;
-#define	AUXIO_LEDONLY		0x1
 #define	AUXIO_EBUS		0x2
 #define	AUXIO_SBUS		0x4
 	struct blink_led	sc_blink;
