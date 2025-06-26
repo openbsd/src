@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.28 2025/06/23 11:33:39 bluhm Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.29 2025/06/26 12:17:27 bluhm Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -348,8 +348,9 @@ cont:
 	/* Are we in guest mode with SEV enabled? */
 	movl	$MSR_SEV_STATUS, %ecx
 	rdmsr
-	andl	$SEV_STAT_ENABLED, %eax
+	testl	$SEV_STAT_ENABLED, %eax
 	jz	.Lno_sev
+	movl	%eax, RELOC(cpu_sev_guestmode)	/* we are a SEV-* guest */
 
 	/* Determine C bit position */
 	movl	%ebx, %ecx	/* %ebx from previous cpuid */
@@ -391,8 +392,6 @@ cont:
 
 	andl	%eax, RELOC(pg_frame + 4)	/* apply mask */
 	andl	%eax, RELOC(pg_lgframe + 4)
-
-	movl	$0x1, RELOC(cpu_sev_guestmode)	/* we are a SEV guest */
 
 .Lno_sev:
 
