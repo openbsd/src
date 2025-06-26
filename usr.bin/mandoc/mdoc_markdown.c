@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_markdown.c,v 1.38 2025/01/20 00:52:00 schwarze Exp $ */
+/* $OpenBSD: mdoc_markdown.c,v 1.39 2025/06/26 16:59:35 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2018, 2020, 2025 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -290,6 +290,14 @@ markdown_mdoc(void *arg, const struct roff_meta *mdoc)
 	md_word(mdoc->os);
 	md_word("-");
 	md_word(mdoc->date);
+	md_word("-");
+	md_word(mdoc->title);
+	if (mdoc->msec != NULL) {
+		outflags &= ~MD_spc;
+		md_word("(");
+		md_word(mdoc->msec);
+		md_word(")");
+	}
 	putchar('\n');
 }
 

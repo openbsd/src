@@ -1,6 +1,6 @@
-/* $OpenBSD: mdoc_term.c,v 1.282 2023/11/13 19:13:00 schwarze Exp $ */
+/* $OpenBSD: mdoc_term.c,v 1.283 2025/06/26 16:59:35 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2012-2020, 2022 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010,2012-2020,2022,2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
@@ -439,37 +439,42 @@ print_mdoc_node(DECL_ARGS)
 static void
 print_mdoc_foot(struct termp *p, const struct roff_meta *meta)
 {
-	size_t sz;
+	char	*title;
+	size_t	 datelen, titlen;
+
+	assert(meta->title != NULL);
+	datelen = term_strlen(p, meta->date);
+	if (meta->msec == NULL)
+		title = mandoc_strdup(meta->title);
+	else
+		mandoc_asprintf(&title, "%s(%s)", meta->title, meta->msec);
+	titlen = term_strlen(p, title);
 
 	term_fontrepl(p, TERMFONT_NONE);
-
-	/*
-	 * Output the footer in new-groff style, that is, three columns
-	 * with the middle being the manual date and flanking columns
-	 * being the operating system:
-	 *
-	 * SYSTEM                  DATE                    SYSTEM
-	 */
-
 	term_vspace(p);
 
+	/* Bottom left corner: operating system. */
+
 	p->tcol->offset = 0;
-	sz = term_strlen(p, meta->date);
-	p->tcol->rmargin = p->maxrmargin > sz ?
-	    (p->maxrmargin + term_len(p, 1) - sz) / 2 : 0;
+	p->tcol->rmargin = p->maxrmargin > datelen ?
+	    (p->maxrmargin + term_len(p, 1) - datelen) / 2 : 0;
 	p->trailspace = 1;
 	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
 
 	term_word(p, meta->os);
 	term_flushln(p);
 
+	/* At the bottom in the middle: manual date. */
+
 	p->tcol->offset = p->tcol->rmargin;
-	sz = term_strlen(p, meta->os);
-	p->tcol->rmargin = p->maxrmargin > sz ? p->maxrmargin - sz : 0;
+	p->tcol->rmargin = p->maxrmargin > titlen ?
+	    p->maxrmargin - titlen : 0;
 	p->flags |= TERMP_NOSPACE;
 
 	term_word(p, meta->date);
 	term_flushln(p);
+
+	/* Bottom right corner: manual title and section. */
 
 	p->tcol->offset = p->tcol->rmargin;
 	p->tcol->rmargin = p->maxrmargin;
@@ -477,12 +482,12 @@ print_mdoc_foot(struct termp *p, const struct roff_meta *meta)
 	p->flags &= ~TERMP_NOBREAK;
 	p->flags |= TERMP_NOSPACE;
 
-	term_word(p, meta->os);
+	term_word(p, title);
 	term_flushln(p);
 
 	p->tcol->offset = 0;
-	p->tcol->rmargin = p->maxrmargin;
 	p->flags = 0;
+	free(title);
 }
 
 static void

@@ -1,6 +1,6 @@
-/* $OpenBSD: man_term.c,v 1.197 2023/11/13 19:13:00 schwarze Exp $ */
+/* $OpenBSD: man_term.c,v 1.198 2025/06/26 16:59:35 schwarze Exp $ */
 /*
- * Copyright (c) 2010-15,2017-20,2022-23 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2020,2022-23,2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1015,38 +1015,24 @@ print_man_foot(struct termp *p, const struct roff_meta *meta)
 	char			*title;
 	size_t			 datelen, titlen;
 
-	assert(meta->title);
-	assert(meta->msec);
-	assert(meta->date);
+	assert(meta->title != NULL);
+	assert(meta->msec != NULL);
 
 	term_fontrepl(p, TERMFONT_NONE);
-
 	if (meta->hasbody)
 		term_vspace(p);
 
-	/*
-	 * Temporary, undocumented option to imitate mdoc(7) output.
-	 * In the bottom right corner, use the operating system
-	 * instead of the title.
-	 */
-
-	if ( ! p->mdocstyle) {
-		mandoc_asprintf(&title, "%s(%s)",
-		    meta->title, meta->msec);
-	} else if (meta->os != NULL) {
-		title = mandoc_strdup(meta->os);
-	} else {
-		title = mandoc_strdup("");
-	}
 	datelen = term_strlen(p, meta->date);
+	mandoc_asprintf(&title, "%s(%s)", meta->title, meta->msec);
+	titlen = term_strlen(p, title);
 
 	/* Bottom left corner: operating system. */
 
-	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
-	p->trailspace = 1;
 	p->tcol->offset = 0;
 	p->tcol->rmargin = p->maxrmargin > datelen ?
 	    (p->maxrmargin + term_len(p, 1) - datelen) / 2 : 0;
+	p->trailspace = 1;
+	p->flags |= TERMP_NOSPACE | TERMP_NOBREAK;
 
 	if (meta->os)
 		term_word(p, meta->os);
@@ -1055,7 +1041,6 @@ print_man_foot(struct termp *p, const struct roff_meta *meta)
 	/* At the bottom in the middle: manual date. */
 
 	p->tcol->offset = p->tcol->rmargin;
-	titlen = term_strlen(p, title);
 	p->tcol->rmargin = p->maxrmargin > titlen ?
 	    p->maxrmargin - titlen : 0;
 	p->flags |= TERMP_NOSPACE;
@@ -1065,11 +1050,11 @@ print_man_foot(struct termp *p, const struct roff_meta *meta)
 
 	/* Bottom right corner: manual title and section. */
 
-	p->flags &= ~TERMP_NOBREAK;
-	p->flags |= TERMP_NOSPACE;
-	p->trailspace = 0;
 	p->tcol->offset = p->tcol->rmargin;
 	p->tcol->rmargin = p->maxrmargin;
+	p->trailspace = 0;
+	p->flags &= ~TERMP_NOBREAK;
+	p->flags |= TERMP_NOSPACE;
 
 	term_word(p, title);
 	term_flushln(p);
@@ -1084,7 +1069,6 @@ print_man_foot(struct termp *p, const struct roff_meta *meta)
 
         p->tcol->offset = 0;
         p->flags = 0;
-
 	free(title);
 }
 

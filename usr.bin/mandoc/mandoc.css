@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.41 2025/01/25 03:17:11 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.42 2025/06/26 16:59:35 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -73,7 +73,7 @@ div[role=doc-pagefooter] {
 .foot-left {	flex: 1; }
 .foot-date {	flex: 0 1 auto;
 		text-align: center; }
-.foot-os {	flex: 1;
+.foot-right {	flex: 1;
 		text-align: right; }
 
 /* Sections and paragraphs. */
