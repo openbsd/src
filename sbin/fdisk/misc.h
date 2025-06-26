@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.50 2023/03/25 20:34:28 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.51 2025/06/26 13:33:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,6 +30,8 @@ struct unit_type {
 #define	UNTRIMMED	0
 #define	TRIMMED		1
 #define	LINEBUFSZ	100
+
+extern int	verbosity;
 
 double		 units_size(const char *, const uint64_t,
     const struct unit_type **);

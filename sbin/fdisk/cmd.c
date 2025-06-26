@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.184 2025/06/22 12:23:08 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.185 2025/06/26 13:33:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -68,7 +68,7 @@ Xreinit(const char *args, struct mbr *mbr)
 
 	if (dogpt) {
 		GPT_init(GHANDGP);
-		GPT_print("s", TERSE);
+		GPT_print("s");
 	} else {
 		MBR_init(mbr);
 		MBR_print(mbr, "s");
@@ -306,8 +306,8 @@ gsetpid(const int pn)
 	int32_t			 is_nil;
 	uint32_t		 status;
 
-	GPT_print_parthdr(TERSE);
-	GPT_print_part(pn, "s", TERSE);
+	GPT_print_parthdr();
+	GPT_print_part(pn, "s");
 
 	if (PRT_protected_uuid(&gp[pn].gp_type)) {
 		printf("can't edit partition type %s\n",
@@ -416,7 +416,7 @@ int
 Xprint(const char *args, struct mbr *mbr)
 {
 	if (gh.gh_sig == GPTSIGNATURE)
-		GPT_print(args, VERBOSE);
+		GPT_print(args);
 	else if (MBR_valid_prt(mbr))
 		MBR_print(mbr, args);
 	else {

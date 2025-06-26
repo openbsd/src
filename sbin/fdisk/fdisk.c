@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.147 2025/05/23 00:20:02 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.148 2025/06/26 13:33:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -46,12 +46,13 @@
 #define	_PATH_MBR		_PATH_BOOTDIR "mbr"
 
 int			y_flag;
+int			verbosity = TERSE;
 
 void			parse_bootprt(const char *);
 void			get_default_dmbr(const char *);
-void			recover(const char *, struct mbr *, int);
-void			recover_disk_gpt(int);
-void			recover_file_gpt(FILE *, int);
+void			recover(const char *, struct mbr *);
+void			recover_disk_gpt(void);
+void			recover_file_gpt(FILE *);
 void			recover_file_mbr(FILE *, struct mbr *);
 
 static void
@@ -75,7 +76,6 @@ main(int argc, char *argv[])
 	const char		*errstr;
 	int			 ch;
 	int			 e_flag = 0, init = 0;
-	int			 verbosity = TERSE;
 	int			 oflags = O_RDONLY;
 
 	while ((ch = getopt(argc, argv, "Ab:c:ef:gh:il:Rs:uvy")) != -1) {
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 	if (oflags == O_RDONLY) {
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
-		USER_print_disk(verbosity);
+		USER_print_disk();
 		goto done;
 	}
 
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 
 	switch (init) {
 	case INIT_RECOVER:
-		recover(recoverfile, &mbr, verbosity);
+		recover(recoverfile, &mbr);
 		if (gh.gh_sig == GPTSIGNATURE) {
 			if (ask_yn("Do you wish to write recovered GPT?"))
 				Xwrite(NULL, &gmbr);
@@ -314,7 +314,7 @@ get_default_dmbr(const char *mbrfile)
 }
 
 void
-recover_disk_gpt(int verbosity)
+recover_disk_gpt(void)
 {
 	unsigned int recovered, pn;
 
@@ -334,7 +334,7 @@ recover_disk_gpt(int verbosity)
 	if (recovered == 0)
 		memset(&gh, 0, sizeof(gh));
 	else
-		GPT_print("s", verbosity);
+		GPT_print("s");
 }
 
 void
@@ -368,7 +368,7 @@ recover_file_mbr(FILE *fp, struct mbr *mbr)
 }
 
 void
-recover_file_gpt(FILE *fp, int verbosity)
+recover_file_gpt(FILE *fp)
 {
 	char			 l1[128], l2[LINEBUFSZ], l3[LINEBUFSZ];
 	char			*start, *line = NULL;
@@ -434,16 +434,16 @@ recover_file_gpt(FILE *fp, int verbosity)
 	if (recovered == 0)
 		memset(&gh, 0, sizeof(gh));
 	else
-		GPT_print("s", verbosity);
+		GPT_print("s");
 }
 
 void
-recover(const char *args, struct mbr *mbr, int verbosity)
+recover(const char *args, struct mbr *mbr)
 {
 	FILE			*fp;
 
 	if (args == NULL) {
-		recover_disk_gpt(verbosity);
+		recover_disk_gpt();
 		return;
 	}
 
@@ -451,7 +451,7 @@ recover(const char *args, struct mbr *mbr, int verbosity)
 	if (fp == NULL)
 		err(1, "fopen(%s)", args);
 
-	recover_file_gpt(fp, verbosity);
+	recover_file_gpt(fp);
 	if (gh.gh_sig != GPTSIGNATURE) {
 		rewind(fp);
 		recover_file_mbr(fp, mbr);

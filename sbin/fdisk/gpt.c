@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.104 2025/06/22 12:23:08 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.105 2025/06/26 13:33:44 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -471,7 +471,7 @@ GPT_read(const int which)
 }
 
 void
-GPT_print(const char *units, const int verbosity)
+GPT_print(const char *units)
 {
 	const struct unit_type	*ut;
 	const int		 secsize = dl.d_secsize;
@@ -534,16 +534,16 @@ GPT_print(const char *units, const int verbosity)
 		free(guidstr);
 	}
 
-	GPT_print_parthdr(verbosity);
+	GPT_print_parthdr();
 	for (pn = 0; pn < gh.gh_part_num; pn++) {
 		if (uuid_is_nil(&gp[pn].gp_type, NULL))
 			continue;
-		GPT_print_part(pn, units, verbosity);
+		GPT_print_part(pn, units);
 	}
 }
 
 void
-GPT_print_parthdr(const int verbosity)
+GPT_print_parthdr(void)
 {
 	printf("   #: type                                "
 	    " [       start:         size ]\n");
@@ -554,7 +554,7 @@ GPT_print_parthdr(const int verbosity)
 }
 
 void
-GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
+GPT_print_part(const unsigned int pn, const char *units)
 {
 	const struct unit_type	*ut;
 	char			*guidstr = NULL;

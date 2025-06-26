@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.85 2023/03/04 21:22:51 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.86 2025/06/26 13:33:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -113,7 +113,7 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 }
 
 void
-USER_print_disk(const int verbosity)
+USER_print_disk(void)
 {
 	struct mbr		mbr;
 	uint64_t		lba_self, lba_firstembr;
@@ -138,19 +138,19 @@ USER_print_disk(const int verbosity)
 					printf("\nSecondary GPT:\nNot Found\n");
 				}
 			} else if (verbosity == TERSE) {
-				GPT_print("s", verbosity);
+				GPT_print("s");
 				return;
 			} else {
 				printf("Primary GPT:\n");
 				GPT_read(PRIMARYGPT);
 				if (gh.gh_sig == GPTSIGNATURE)
-					GPT_print("s", verbosity);
+					GPT_print("s");
 				else
 					printf("\tNot Found\n");
 				printf("\nSecondary GPT:\n");
 				GPT_read(SECONDARYGPT);
 				if (gh.gh_sig == GPTSIGNATURE)
-					GPT_print("s", verbosity);
+					GPT_print("s");
 				else
 					printf("\tNot Found\n");
 			}
