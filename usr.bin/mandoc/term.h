@@ -1,4 +1,4 @@
-/* $OpenBSD: term.h,v 1.78 2022/08/16 17:44:53 schwarze Exp $ */
+/* $OpenBSD: term.h,v 1.79 2025/06/26 17:21:02 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015,2017,2019,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -75,7 +75,6 @@ struct	termp {
 	size_t		  trailspace;	/* See term_flushln(). */
 	size_t		  minbl;	/* Minimum blanks before next field. */
 	int		  synopsisonly; /* Print the synopsis only. */
-	int		  mdocstyle;	/* Imitate mdoc(7) output. */
 	int		  ti;		/* Temporary indent for one line. */
 	int		  skipvsp;	/* Vertical space to skip. */
 	int		  flags;

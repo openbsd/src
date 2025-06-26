@@ -1,4 +1,4 @@
-/* $OpenBSD: term_ascii.c,v 1.55 2023/11/13 19:13:00 schwarze Exp $ */
+/* $OpenBSD: term_ascii.c,v 1.56 2025/06/26 17:21:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -113,8 +113,6 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 		}
 	}
 
-	if (outopts->mdoc)
-		p->mdocstyle = 1;
 	if (outopts->indent)
 		p->defindent = outopts->indent;
 	if (outopts->width)

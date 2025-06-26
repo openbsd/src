@@ -1,4 +1,4 @@
-/* $OpenBSD: manpath.c,v 1.31 2021/11/05 18:03:00 schwarze Exp $ */
+/* $OpenBSD: manpath.c,v 1.32 2025/06/26 17:21:02 schwarze Exp $ */
 /*
  * Copyright (c) 2011,2014,2015,2017-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -220,7 +220,7 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 	    /* Token taking an optional argument. */
 	    "tag",
 	    /* Tokens not taking arguments. */
-	    "fragment", "mdoc", "noval", "toc"
+	    "fragment", "noval", "toc"
 	};
 	const size_t ntoks = sizeof(toks) / sizeof(toks[0]);
 
@@ -330,12 +330,9 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		conf->fragment = 1;
 		return 0;
 	case 10:
-		conf->mdoc = 1;
-		return 0;
-	case 11:
 		conf->noval = 1;
 		return 0;
-	case 12:
+	case 11:
 		conf->toc = 1;
 		return 0;
 	default:
