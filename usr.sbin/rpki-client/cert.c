@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.170 2025/06/25 16:10:18 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.171 2025/06/27 04:01:04 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1096,9 +1096,15 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			/* unexpected extensions warrant investigation */
 			{
 				char objn[64];
+
 				OBJ_obj2txt(objn, sizeof(objn), obj, 0);
+				if (X509_EXTENSION_get_critical(ext)) {
+					warnx("%s: unknown critical extension "
+					    "%s (NID %d)", fn, objn, nid);
+					goto out;
+				}
 				warnx("%s: ignoring %s (NID %d)",
-				    fn, objn, OBJ_obj2nid(obj));
+				    fn, objn, nid);
 			}
 			break;
 		}
