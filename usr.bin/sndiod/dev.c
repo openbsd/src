@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.124 2025/06/20 07:14:38 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.125 2025/06/27 06:41:52 jsg Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,7 +53,6 @@ void dev_del(struct dev *);
 unsigned int dev_roundof(struct dev *, unsigned int);
 void dev_wakeup(struct dev *);
 
-void slot_ctlname(struct slot *, char *, size_t);
 void slot_del(struct slot *);
 void slot_ready(struct slot *);
 void slot_allocbufs(struct slot *);
