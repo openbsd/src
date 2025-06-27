@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.718 2024/11/12 04:14:51 dlg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.719 2025/06/27 16:53:51 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -5976,11 +5976,6 @@ filteropts_to_rule(struct pf_rule *r, struct filter_opts *opts)
 	if (opts->marker & FOM_SETDELAY) {
 		r->delay = opts->delay;
 		r->rule_flag |= PFRULE_SETDELAY;
-	}
-	if (opts->marker & FOM_SETPRIO) {
-		r->set_prio[0] = opts->set_prio[0];
-		r->set_prio[1] = opts->set_prio[1];
-		r->scrub_flags |= PFSTATE_SETPRIO;
 	}
 	if (opts->marker & FOM_SETTOS) {
 		r->scrub_flags |= PFSTATE_SETTOS;
