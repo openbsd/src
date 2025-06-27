@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.9 2025/06/03 08:42:15 kenjiro Exp $ */
+/* $OpenBSD: aes.c,v 1.10 2025/06/27 17:10:45 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -56,6 +56,7 @@
 #include <openssl/modes.h>
 
 #include "crypto_arch.h"
+#include "crypto_internal.h"
 
 static const unsigned char aes_wrap_default_iv[] = {
 	0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6,
@@ -171,12 +172,58 @@ AES_cfb8_encrypt(const unsigned char *in, unsigned char *out, size_t length,
 LCRYPTO_ALIAS(AES_cfb8_encrypt);
 
 void
+aes_ctr32_encrypt_generic(const unsigned char *in, unsigned char *out,
+    size_t blocks, const AES_KEY *key, const unsigned char ivec[AES_BLOCK_SIZE])
+{
+	uint8_t iv[AES_BLOCK_SIZE], buf[AES_BLOCK_SIZE];
+	uint32_t ctr;
+	int i;
+
+	memcpy(iv, ivec, sizeof(iv));
+
+	ctr = crypto_load_be32toh(&iv[12]);
+
+	while (blocks > 0) {
+		crypto_store_htobe32(&iv[12], ctr);
+		aes_encrypt_internal(iv, buf, key);
+		ctr++;
+
+		for (i = 0; i < AES_BLOCK_SIZE; i++)
+			out[i] = in[i] ^ buf[i];
+
+		in += 16;
+		out += 16;
+		blocks--;
+	}
+}
+
+#ifdef HAVE_AES_CTR32_ENCRYPT_INTERNAL
+void aes_ctr32_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t blocks, const AES_KEY *key, const unsigned char ivec[AES_BLOCK_SIZE]);
+
+#else
+static inline void
+aes_ctr32_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t blocks, const AES_KEY *key, const unsigned char ivec[AES_BLOCK_SIZE])
+{
+	aes_ctr32_encrypt_generic(in, out, blocks, key, ivec);
+}
+#endif
+
+void
+aes_ctr32_encrypt_ctr128f(const unsigned char *in, unsigned char *out, size_t blocks,
+    const void *key, const unsigned char ivec[AES_BLOCK_SIZE])
+{
+	aes_ctr32_encrypt_internal(in, out, blocks, key, ivec);
+}
+
+void
 AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
     size_t length, const AES_KEY *key, unsigned char ivec[AES_BLOCK_SIZE],
     unsigned char ecount_buf[AES_BLOCK_SIZE], unsigned int *num)
 {
-	CRYPTO_ctr128_encrypt(in, out, length, key, ivec, ecount_buf, num,
-	    aes_encrypt_block128);
+	CRYPTO_ctr128_encrypt_ctr32(in, out, length, key, ivec, ecount_buf,
+	    num, aes_ctr32_encrypt_ctr128f);
 }
 LCRYPTO_ALIAS(AES_ctr128_encrypt);
 

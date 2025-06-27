@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_amd64.c,v 1.1 2025/06/15 15:11:50 jsing Exp $ */
+/* $OpenBSD: aes_amd64.c,v 1.2 2025/06/27 17:10:45 jsing Exp $ */
 /*
  * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
@@ -32,6 +32,9 @@ void aes_decrypt_generic(const unsigned char *in, unsigned char *out,
 void aes_cbc_encrypt_generic(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key, unsigned char *ivec, const int enc);
 
+void aes_ctr32_encrypt_generic(const unsigned char *in, unsigned char *out,
+    size_t blocks, const AES_KEY *key, const unsigned char ivec[AES_BLOCK_SIZE]);
+
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key);
 int aesni_set_decrypt_key(const unsigned char *userKey, int bits,
@@ -44,6 +47,9 @@ void aesni_decrypt(const unsigned char *in, unsigned char *out,
 
 void aesni_cbc_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key, unsigned char *ivec, const int enc);
+
+void aesni_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char *ivec);
 
 int
 aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
@@ -99,4 +105,16 @@ aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
 	}
 
 	aes_cbc_encrypt_generic(in, out, len, key, ivec, enc);
+}
+
+void
+aes_ctr32_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t blocks, const AES_KEY *key, const unsigned char ivec[AES_BLOCK_SIZE])
+{
+	if ((crypto_cpu_caps_amd64 & CRYPTO_CPU_CAPS_AMD64_AES) != 0) {
+		aesni_ctr32_encrypt_blocks(in, out, blocks, key, ivec);
+		return;
+	}
+
+	aes_ctr32_encrypt_generic(in, out, blocks, key, ivec);
 }
