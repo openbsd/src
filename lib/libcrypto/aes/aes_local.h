@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_local.h,v 1.5 2025/04/21 12:23:09 jsing Exp $ */
+/* $OpenBSD: aes_local.h,v 1.6 2025/06/27 16:43:54 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -59,10 +59,6 @@
 #include <string.h>
 
 __BEGIN_HIDDEN_DECLS
-
-#define MAXKC   (256/32)
-#define MAXKB   (256/8)
-#define MAXNR   14
 
 /* This controls loop-unrolling in aes_core.c */
 #undef FULL_UNROLL
