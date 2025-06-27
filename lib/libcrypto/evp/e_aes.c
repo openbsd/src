@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.76 2025/06/27 17:10:45 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.77 2025/06/27 17:26:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -61,6 +61,7 @@
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 
+#include "aes_local.h"
 #include "err_local.h"
 #include "evp_local.h"
 #include "modes_local.h"
@@ -79,7 +80,6 @@ typedef struct {
 	int taglen;
 	int iv_gen;		/* It is OK to generate IVs */
 	int tls_aad_len;	/* TLS AAD length */
-	ctr128_f ctr;
 } EVP_AES_GCM_CTX;
 
 typedef struct {
@@ -140,9 +140,6 @@ void aesni_decrypt(const unsigned char *in, unsigned char *out,
 void aesni_ecb_encrypt(const unsigned char *in, unsigned char *out,
     size_t length, const AES_KEY *key, int enc);
 
-void aesni_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
-    size_t blocks, const void *key, const unsigned char *ivec);
-
 void aesni_xts_encrypt(const unsigned char *in, unsigned char *out,
     size_t length, const AES_KEY *key1, const AES_KEY *key2,
     const unsigned char iv[16]);
@@ -168,41 +165,6 @@ aesni_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	aesni_ecb_encrypt(in, out, len, ctx->cipher_data, ctx->encrypt);
 
-	return 1;
-}
-
-static int
-aesni_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
-
-	if (!iv && !key)
-		return 1;
-	if (key) {
-		aesni_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks);
-		CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks,
-		    (block128_f)aesni_encrypt);
-		gctx->ctr = (ctr128_f)aesni_ctr32_encrypt_blocks;
-		/* If we have an iv can set it directly, otherwise use
-		 * saved IV.
-		 */
-		if (iv == NULL && gctx->iv_set)
-			iv = gctx->iv;
-		if (iv) {
-			CRYPTO_gcm128_setiv(&gctx->gcm, iv, gctx->ivlen);
-			gctx->iv_set = 1;
-		}
-		gctx->key_set = 1;
-	} else {
-		/* If key set use IV, otherwise copy */
-		if (gctx->key_set)
-			CRYPTO_gcm128_setiv(&gctx->gcm, iv, gctx->ivlen);
-		else
-			memcpy(gctx->iv, iv, gctx->ivlen);
-		gctx->iv_set = 1;
-		gctx->iv_gen = 0;
-	}
 	return 1;
 }
 
@@ -1028,15 +990,6 @@ aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	}
 }
 
-static ctr128_f
-aes_gcm_set_key(AES_KEY *aes_key, GCM128_CONTEXT *gcm_ctx,
-    const unsigned char *key, size_t key_len)
-{
-	AES_set_encrypt_key(key, key_len * 8, aes_key);
-	CRYPTO_gcm128_init(gcm_ctx, aes_key, (block128_f)AES_encrypt);
-	return NULL;
-}
-
 static int
 aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
@@ -1046,8 +999,8 @@ aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	if (!iv && !key)
 		return 1;
 	if (key) {
-		gctx->ctr = aes_gcm_set_key(&gctx->ks, &gctx->gcm,
-		    key, ctx->key_len);
+		AES_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks);
+		CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks, (block128_f)AES_encrypt);
 
 		/* If we have an iv can set it directly, otherwise use
 		 * saved IV.
@@ -1107,14 +1060,9 @@ aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	len -= EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
 	if (ctx->encrypt) {
 		/* Encrypt payload */
-		if (gctx->ctr) {
-			if (CRYPTO_gcm128_encrypt_ctr32(&gctx->gcm, in, out,
-			    len, gctx->ctr))
-				goto err;
-		} else {
-			if (CRYPTO_gcm128_encrypt(&gctx->gcm, in, out, len))
-				goto err;
-		}
+		if (CRYPTO_gcm128_encrypt_ctr32(&gctx->gcm, in, out, len,
+		    aes_ctr32_encrypt_ctr128f))
+			goto err;
 		out += len;
 
 		/* Finally write tag */
@@ -1122,14 +1070,10 @@ aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		rv = len + EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
 	} else {
 		/* Decrypt */
-		if (gctx->ctr) {
-			if (CRYPTO_gcm128_decrypt_ctr32(&gctx->gcm, in, out,
-			    len, gctx->ctr))
-				goto err;
-		} else {
-			if (CRYPTO_gcm128_decrypt(&gctx->gcm, in, out, len))
-				goto err;
-		}
+		if (CRYPTO_gcm128_decrypt_ctr32(&gctx->gcm, in, out, len,
+		    aes_ctr32_encrypt_ctr128f))
+			goto err;
+
 		/* Retrieve tag */
 		CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf, EVP_GCM_TLS_TAG_LEN);
 
@@ -1168,25 +1112,13 @@ aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			if (CRYPTO_gcm128_aad(&gctx->gcm, in, len))
 				return -1;
 		} else if (ctx->encrypt) {
-			if (gctx->ctr) {
-				if (CRYPTO_gcm128_encrypt_ctr32(&gctx->gcm,
-				    in, out, len, gctx->ctr))
-					return -1;
-			} else {
-				if (CRYPTO_gcm128_encrypt(&gctx->gcm,
-				    in, out, len))
-					return -1;
-			}
+			if (CRYPTO_gcm128_encrypt_ctr32(&gctx->gcm,
+			    in, out, len, aes_ctr32_encrypt_ctr128f))
+				return -1;
 		} else {
-			if (gctx->ctr) {
-				if (CRYPTO_gcm128_decrypt_ctr32(&gctx->gcm,
-				    in, out, len, gctx->ctr))
-					return -1;
-			} else {
-				if (CRYPTO_gcm128_decrypt(&gctx->gcm,
-				    in, out, len))
-					return -1;
-			}
+			if (CRYPTO_gcm128_decrypt_ctr32(&gctx->gcm,
+			    in, out, len, aes_ctr32_encrypt_ctr128f))
+				return -1;
 		}
 		return len;
 	} else {
@@ -1215,22 +1147,6 @@ aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
       EVP_CIPH_FLAG_CUSTOM_CIPHER | EVP_CIPH_ALWAYS_CALL_INIT | \
       EVP_CIPH_CTRL_INIT | EVP_CIPH_CUSTOM_COPY )
 
-
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_128_gcm = {
-	.nid = NID_aes_128_gcm,
-	.block_size = 1,
-	.key_len = 16,
-	.iv_len = 12,
-	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
-	.init = aesni_gcm_init_key,
-	.do_cipher = aes_gcm_cipher,
-	.cleanup = aes_gcm_cleanup,
-	.ctx_size = sizeof(EVP_AES_GCM_CTX),
-	.ctrl = aes_gcm_ctrl,
-};
-#endif
-
 static const EVP_CIPHER aes_128_gcm = {
 	.nid = NID_aes_128_gcm,
 	.block_size = 1,
@@ -1247,28 +1163,9 @@ static const EVP_CIPHER aes_128_gcm = {
 const EVP_CIPHER *
 EVP_aes_128_gcm(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_128_gcm : &aes_128_gcm;
-#else
 	return &aes_128_gcm;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_128_gcm);
-
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_192_gcm = {
-	.nid = NID_aes_192_gcm,
-	.block_size = 1,
-	.key_len = 24,
-	.iv_len = 12,
-	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
-	.init = aesni_gcm_init_key,
-	.do_cipher = aes_gcm_cipher,
-	.cleanup = aes_gcm_cleanup,
-	.ctx_size = sizeof(EVP_AES_GCM_CTX),
-	.ctrl = aes_gcm_ctrl,
-};
-#endif
 
 static const EVP_CIPHER aes_192_gcm = {
 	.nid = NID_aes_192_gcm,
@@ -1286,28 +1183,9 @@ static const EVP_CIPHER aes_192_gcm = {
 const EVP_CIPHER *
 EVP_aes_192_gcm(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_192_gcm : &aes_192_gcm;
-#else
 	return &aes_192_gcm;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_192_gcm);
-
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_256_gcm = {
-	.nid = NID_aes_256_gcm,
-	.block_size = 1,
-	.key_len = 32,
-	.iv_len = 12,
-	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
-	.init = aesni_gcm_init_key,
-	.do_cipher = aes_gcm_cipher,
-	.cleanup = aes_gcm_cleanup,
-	.ctx_size = sizeof(EVP_AES_GCM_CTX),
-	.ctrl = aes_gcm_ctrl,
-};
-#endif
 
 static const EVP_CIPHER aes_256_gcm = {
 	.nid = NID_aes_256_gcm,
@@ -1325,11 +1203,7 @@ static const EVP_CIPHER aes_256_gcm = {
 const EVP_CIPHER *
 EVP_aes_256_gcm(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_256_gcm : &aes_256_gcm;
-#else
 	return &aes_256_gcm;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_256_gcm);
 
@@ -1821,18 +1695,8 @@ aead_aes_gcm_init(EVP_AEAD_CTX *ctx, const unsigned char *key, size_t key_len,
 	if ((gcm_ctx = calloc(1, sizeof(struct aead_aes_gcm_ctx))) == NULL)
 		return 0;
 
-#ifdef AESNI_CAPABLE
-	if (AESNI_CAPABLE) {
-		aesni_set_encrypt_key(key, key_bits, &gcm_ctx->ks.ks);
-		CRYPTO_gcm128_init(&gcm_ctx->gcm, &gcm_ctx->ks.ks,
-		    (block128_f)aesni_encrypt);
-		gcm_ctx->ctr = (ctr128_f) aesni_ctr32_encrypt_blocks;
-	} else
-#endif
-	{
-		gcm_ctx->ctr = aes_gcm_set_key(&gcm_ctx->ks.ks, &gcm_ctx->gcm,
-		    key, key_len);
-	}
+	AES_set_encrypt_key(key, key_bits, &gcm_ctx->ks.ks);
+	CRYPTO_gcm128_init(&gcm_ctx->gcm, &gcm_ctx->ks.ks, (block128_f)AES_encrypt);
 	gcm_ctx->tag_len = tag_len;
 	ctx->aead_state = gcm_ctx;
 
@@ -1873,15 +1737,9 @@ aead_aes_gcm_seal(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 	if (ad_len > 0 && CRYPTO_gcm128_aad(&gcm, ad, ad_len))
 		return 0;
 
-	if (gcm_ctx->ctr) {
-		if (CRYPTO_gcm128_encrypt_ctr32(&gcm, in + bulk, out + bulk,
-		    in_len - bulk, gcm_ctx->ctr))
-			return 0;
-	} else {
-		if (CRYPTO_gcm128_encrypt(&gcm, in + bulk, out + bulk,
-		    in_len - bulk))
-			return 0;
-	}
+	if (CRYPTO_gcm128_encrypt_ctr32(&gcm, in + bulk, out + bulk,
+	    in_len - bulk, aes_ctr32_encrypt_ctr128f))
+		return 0;
 
 	CRYPTO_gcm128_tag(&gcm, out + in_len, gcm_ctx->tag_len);
 	*out_len = in_len + gcm_ctx->tag_len;
@@ -1924,15 +1782,9 @@ aead_aes_gcm_open(const EVP_AEAD_CTX *ctx, unsigned char *out, size_t *out_len,
 	if (CRYPTO_gcm128_aad(&gcm, ad, ad_len))
 		return 0;
 
-	if (gcm_ctx->ctr) {
-		if (CRYPTO_gcm128_decrypt_ctr32(&gcm, in + bulk, out + bulk,
-		    in_len - bulk - gcm_ctx->tag_len, gcm_ctx->ctr))
-			return 0;
-	} else {
-		if (CRYPTO_gcm128_decrypt(&gcm, in + bulk, out + bulk,
-		    in_len - bulk - gcm_ctx->tag_len))
-			return 0;
-	}
+	if (CRYPTO_gcm128_decrypt_ctr32(&gcm, in + bulk, out + bulk,
+	    in_len - bulk - gcm_ctx->tag_len, aes_ctr32_encrypt_ctr128f))
+		return 0;
 
 	CRYPTO_gcm128_tag(&gcm, tag, gcm_ctx->tag_len);
 	if (timingsafe_memcmp(tag, in + plaintext_len, gcm_ctx->tag_len) != 0) {

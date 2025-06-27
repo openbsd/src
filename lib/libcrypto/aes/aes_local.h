@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_local.h,v 1.6 2025/06/27 16:43:54 jsing Exp $ */
+/* $OpenBSD: aes_local.h,v 1.7 2025/06/27 17:26:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -62,6 +62,9 @@ __BEGIN_HIDDEN_DECLS
 
 /* This controls loop-unrolling in aes_core.c */
 #undef FULL_UNROLL
+
+void aes_ctr32_encrypt_ctr128f(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[AES_BLOCK_SIZE]);
 
 __END_HIDDEN_DECLS
 
