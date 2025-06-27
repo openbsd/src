@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.17 2024/02/25 22:33:09 guenther Exp $	*/
+/*	$OpenBSD: segments.h,v 1.18 2025/06/27 17:23:49 bluhm Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -151,6 +151,7 @@ struct region_descriptor {
 
 #ifdef _KERNEL
 extern struct gate_descriptor *idt;
+extern struct gate_descriptor early_idt[];
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void unsetgate(struct gate_descriptor *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.30 2025/06/26 12:38:35 bluhm Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.31 2025/06/27 17:23:49 bluhm Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -439,7 +439,9 @@ cont:
 #define PROC0_DMP2_OFF	(PROC0_DMP3_OFF + NDML3_ENTRIES * NBPG)
 #define TABLESIZE \
     ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES + \
-	NDML3_ENTRIES + NDML2_ENTRIES + 3) * NBPG)
+	NDML3_ENTRIES + NDML2_ENTRIES + 5) * NBPG)
+#define PROC0_GHCB_OFF	(TABLESIZE - 5 * NBPG)
+#define GHCB_SIZE	(2 * NBPG)
 
 #define fillkpt \
 	pushl	%ebp				;	/* save */ \
@@ -456,6 +458,17 @@ cont:
 	pushl	%ebp				;	/* save */ \
 	movl	RELOC((pg_nx + 4)), %ebp	;	/* NX bit? */ \
 	orl	RELOC((pg_crypt + 4)), %ebp	;	/* C bit? */ \
+1:	movl	%eax,(%ebx)			;	/* store phys addr */ \
+	movl	%ebp,4(%ebx)			;	/* upper 32 bits */ \
+	addl	$8,%ebx				;	/* next pte/pde */ \
+	addl	$NBPG,%eax			;	/* next phys page */ \
+	loop	1b				;	/* till finished */ \
+	popl	%ebp
+
+
+#define fillkpt_nx_nc \
+	pushl	%ebp				;	/* save */ \
+	movl	RELOC((pg_nx + 4)), %ebp	;	/* NX bit? */ \
 1:	movl	%eax,(%ebx)			;	/* store phys addr */ \
 	movl	%ebp,4(%ebx)			;	/* upper 32 bits */ \
 	addl	$8,%ebx				;	/* next pte/pde */ \
@@ -569,6 +582,19 @@ map_tables:
 	shrl	$PGSHIFT,%ecx
 	fillkpt_nx
 
+	/* When in SEV-ES guestmode, remap GHCB shared (ie. unencrypted) */
+	movl	RELOC(cpu_sev_guestmode),%eax
+	testl	$SEV_STAT_ES_ENABLED,%eax
+	jz	.Lnoghcb
+	pushl	%ebx			/* save current slot */
+	subl	$(5 << 3),%ebx		/* move back to slot of GHCB */
+	leal	(PROC0_GHCB_OFF)(%esi),%eax
+	orl	$(PG_V|PG_KW), %eax
+	movl	$(GHCB_SIZE>>PGSHIFT), %ecx
+	fillkpt_nx_nc
+	popl	%ebx			/* continue with slot saved above */
+
+.Lnoghcb:
 	/* Map ISA I/O mem (later atdevbase) RW, NX */
 	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx
@@ -778,6 +804,15 @@ longmode_hi:
 	addq	%rsi,%rdx
 	movq	%rdx,atdevbase(%rip)
 
+	/* Relocate GHCB. */
+	movq	cpu_sev_guestmode(%rip),%rax
+	testq	$SEV_STAT_ES_ENABLED,%rax
+	jz	.Lnoghcbreloc
+	movq	$(PROC0_GHCB_OFF+KERNBASE),%rdx
+	addq	%rsi,%rdx
+	movq	%rdx,ghcb_vaddr(%rip)
+
+.Lnoghcbreloc:
 	/* Record start of symbols */
 	movq	$__kernel_bss_end, ssym(%rip)
 
@@ -800,7 +835,7 @@ longmode_hi:
 	movw	%ax,%fs
 
 	leaq	TABLESIZE(%rsi),%rdi
-	subq	$(NBPG*3), %rdi
+	subq	$(NBPG*5), %rdi
 
 	/* XXX merge these */
 	call	init_x86_64

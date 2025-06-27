@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.107 2025/05/05 23:02:39 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.108 2025/06/27 17:23:49 bluhm Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -86,6 +86,8 @@
 #include <machine/fpu.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <machine/ghcb.h>
+#include <machine/vmmvar.h>
 #ifdef DDB
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
@@ -95,6 +97,7 @@
 
 int	upageflttrap(struct trapframe *, uint64_t);
 int	kpageflttrap(struct trapframe *, uint64_t);
+int	vctrap(struct trapframe *);
 void	kerntrap(struct trapframe *);
 void	usertrap(struct trapframe *);
 void	ast(struct trapframe *);
@@ -123,6 +126,7 @@ const char * const trap_type[] = {
 	"SSE FP exception",			/* 19 T_XMM */
 	"virtualization exception",		/* 20 T_VE */
 	"control protection exception",		/* 21 T_CP */
+	"VMM communication exception",		/* 29 T_VC */
 };
 const int	trap_types = nitems(trap_type);
 
@@ -297,6 +301,52 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 	return 1;
 }
 
+int
+vctrap(struct trapframe *frame)
+{
+	uint64_t	 sw_exitcode, sw_exitinfo1, sw_exitinfo2;
+	struct ghcb_sync syncout, syncin;
+	struct ghcb_sa	*ghcb;
+
+	intr_disable();
+
+	memset(&syncout, 0, sizeof(syncout));
+	memset(&syncin, 0, sizeof(syncin));
+
+	sw_exitcode = frame->tf_err;
+	sw_exitinfo1 = 0;
+	sw_exitinfo2 = 0;
+
+	switch (sw_exitcode) {
+	default:
+		panic("invalid exit code 0x%llx", sw_exitcode);
+	}
+
+	/* Always required */
+	ghcb_sync_val(GHCB_SW_EXITCODE, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO1, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO2, GHCB_SZ64, &syncout);
+
+	/* Sync out to GHCB */
+	ghcb = (struct ghcb_sa *)ghcb_vaddr;
+	ghcb_sync_out(frame, sw_exitcode, sw_exitinfo1, sw_exitinfo2, ghcb,
+	    &syncout);
+
+	/* Call hypervisor. */
+	vmgexit();
+
+	/* Verify response */
+	if (ghcb_verify_bm(ghcb->valid_bitmap, syncin.valid_bitmap)) {
+		ghcb_clear(ghcb);
+		panic("invalid hypervisor response");
+	}
+
+	/* Sync in from GHCB */
+	ghcb_sync_in(frame, ghcb, &syncin);
+
+	return 1;
+}
+
 
 /*
  * kerntrap(frame):
@@ -348,6 +398,11 @@ kerntrap(struct trapframe *frame)
 		else
 			return;
 #endif /* NISA > 0 */
+
+	case T_VC:
+		if (vctrap(frame))
+			return;
+		goto we_re_toast;
 	}
 }
 
@@ -427,6 +482,9 @@ usertrap(struct trapframe *frame)
 		code = (frame->tf_err & 0x7fff) < 4 ? ILL_BTCFI
 		    : ILL_BADSTK;
 		break;
+	case T_VC:
+		vctrap(frame);
+		goto out;
 
 	case T_PAGEFLT:			/* page fault */
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),

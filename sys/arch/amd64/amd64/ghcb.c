@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.c,v 1.1 2025/05/24 12:47:00 bluhm Exp $	*/
+/*	$OpenBSD: ghcb.c,v 1.2 2025/06/27 17:23:49 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -27,6 +27,9 @@ const uint64_t ghcb_sz_masks[] = {
     0x00000000000000ffULL, 0x000000000000ffffULL,
     0x00000000ffffffffULL, 0xffffffffffffffffULL
 };
+
+vaddr_t ghcb_vaddr;
+paddr_t ghcb_paddr;
 
 /*
  * ghcb_clear

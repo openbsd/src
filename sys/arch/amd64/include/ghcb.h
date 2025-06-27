@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.h,v 1.3 2025/06/23 11:33:39 bluhm Exp $	*/
+/*	$OpenBSD: ghcb.h,v 1.4 2025/06/27 17:23:49 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -108,6 +108,9 @@ struct ghcb_sync {
 #define MSR_PROTO_TERMINATE	0x100
 
 #ifndef _LOCORE
+
+extern vaddr_t ghcb_vaddr;
+extern paddr_t ghcb_paddr;
 
 void	ghcb_clear(struct ghcb_sa *);
 int	ghcb_valbm_set(uint8_t *, int);

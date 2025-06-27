@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.100 2025/04/23 15:08:05 visa Exp $	*/
+/*	$OpenBSD: vector.S,v 1.101 2025/06/27 17:23:49 bluhm Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -513,6 +513,15 @@ END(alltraps_kern)
 END(alltraps_kern_meltdown)
 KTEXT_PAGE_END
 
+/* #VC trap entry for early bootstrap */
+IDTVEC(vctrap_early)
+	pushq	$T_VC
+	TRAP_ENTRY_KERN		/* early #VC has to be in kernel mode */
+	cld
+	movq	%rsp, %rdi
+	call	vctrap
+	movq	$0,-8(%rsp)
+	INTRFASTEXIT
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
