@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icereg.h,v 1.2 2024/11/25 12:50:47 stsp Exp $	*/
+/*	$OpenBSD: if_icereg.h,v 1.3 2025/06/27 16:18:10 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13676,6 +13676,8 @@ enum ice_umbcast_dest_addr_types {
 
 /* for ice_32byte_rx_flex_desc.ptype_flexi_flags0 member */
 #define ICE_RX_FLEX_DESC_PTYPE_M	(0x3FF) /* 10-bits */
+#define ICE_RX_FLEX_DECS_PTYPE_MAC_IPV4_TCP 26
+#define ICE_RX_FLEX_DECS_PTYPE_MAC_IPV6_TCP 92
 
 enum ice_rx_flex_desc_flexi_flags0_bits { /* field is 6 bits long */
 	ICE_RX_FLEX_DESC_FLEXI_FLAGS0_S = 10,

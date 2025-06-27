@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.51 2025/06/23 08:03:22 jan Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.52 2025/06/27 16:18:10 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -29152,6 +29152,7 @@ ice_rxeof(struct ice_softc *sc, struct ice_rx_queue *rxq)
 	struct ice_rx_map *rxm;
 	bus_dmamap_t map;
 	unsigned int cons, prod;
+	struct mbuf_list mltcp = MBUF_LIST_INITIALIZER();
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint16_t status0, ptype;
@@ -29235,7 +29236,14 @@ ice_rxeof(struct ice_softc *sc, struct ice_rx_queue *rxq)
 				ICE_RX_FLEX_DESC_PTYPE_M;
 			ice_rx_checksum(m, status0, ptype);
 
-			ml_enqueue(&ml, m);
+#ifndef SMALL_KERNEL
+			if (ISSET(ifp->if_xflags, IFXF_LRO) &&
+			    (ptype == ICE_RX_FLEX_DECS_PTYPE_MAC_IPV4_TCP ||
+			     ptype == ICE_RX_FLEX_DECS_PTYPE_MAC_IPV6_TCP))
+				tcp_softlro_glue(&mltcp, m, ifp);
+			else
+#endif
+				ml_enqueue(&ml, m);
 
 			rxq->rxq_m_head = NULL;
 			rxq->rxq_m_tail = &rxq->rxq_m_head;
@@ -29248,8 +29256,15 @@ ice_rxeof(struct ice_softc *sc, struct ice_rx_queue *rxq)
 	} while (cons != prod);
 
 	if (done) {
+		int livelocked = 0;
+
 		rxq->rxq_cons = cons;
+		if (ifiq_input(ifiq, &mltcp))
+			livelocked = 1;
 		if (ifiq_input(ifiq, &ml))
+			livelocked = 1;
+
+		if (livelocked)
 			if_rxr_livelocked(&rxq->rxq_acct);
 		ice_rxfill(sc, rxq);
 	}
@@ -30419,6 +30434,11 @@ ice_attach_hook(struct device *self)
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
 	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6 |
 	    IFCAP_TSOv4 | IFCAP_TSOv6;
+	ifp->if_capabilities |= IFCAP_LRO;
+#if notyet
+	/* for now tcplro at ice(4) is default off */
+	ifp->if_xflags |= IFXF_LRO;
+#endif
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
