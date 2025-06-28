@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.h,v 1.7 2024/07/13 16:13:45 dv Exp $	*/
+/*	$OpenBSD: vmm.h,v 1.8 2025/06/28 13:02:27 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -19,7 +19,5 @@
 
 typedef uint8_t (*io_fn_t)(struct vm_run_params *);
 
-void vcpu_assert_pic_irq(uint32_t, uint32_t, int);
-void vcpu_deassert_pic_irq(uint32_t, uint32_t, int);
 void set_return_data(struct vm_exit *, uint32_t);
 void get_input_data(struct vm_exit *, uint32_t *);

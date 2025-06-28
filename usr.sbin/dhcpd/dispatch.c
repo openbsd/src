@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.50 2025/06/10 06:29:53 dlg Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.51 2025/06/28 13:02:27 jsg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -75,7 +75,6 @@ struct dhcpd_timeout *timeouts;
 static int interfaces_invalidated;
 
 static int interface_status(struct interface_info *ifinfo);
-int get_rdomain(char *);
 
 /* Use getifaddrs() to get a list of all the attached interfaces.
    For each interface that's of type INET and not the loopback interface,
