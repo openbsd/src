@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.27 2024/05/14 08:26:13 jsg Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.28 2025/06/28 11:34:21 miod Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -67,7 +67,6 @@ int ebus_debug = 0x0;
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>

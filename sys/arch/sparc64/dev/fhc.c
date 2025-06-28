@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.22 2024/03/29 21:29:33 miod Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.23 2025/06/28 11:34:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,6 @@
 
 #include <sparc64/dev/fhcreg.h>
 #include <sparc64/dev/fhcvar.h>
-#include <sparc64/dev/iommureg.h>
 
 struct cfdriver fhc_cd = {
 	NULL, "fhc", DV_DULL

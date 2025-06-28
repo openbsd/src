@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.71 2025/05/12 04:49:19 jsg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.72 2025/06/28 11:34:21 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -53,9 +53,6 @@
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
 #include <machine/trap.h>
-
-/* Grab interrupt map stuff (what is it doing there???) */
-#include <sparc64/dev/iommureg.h>
 
 /*
  * The following array is to used by locore.s to map interrupt packets

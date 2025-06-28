@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus_mainbus.c,v 1.13 2024/03/29 21:29:33 miod Exp $	*/
+/*	$OpenBSD: ebus_mainbus.c,v 1.14 2025/06/28 11:34:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -46,7 +46,6 @@ extern int ebus_debug;
 
 #include <dev/pci/pcivar.h>
 
-#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
 #include <sparc64/dev/pyrovar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.38 2024/03/29 21:29:33 miod Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.39 2025/06/28 11:34:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -46,7 +46,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
-#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/msivar.h>
 #include <sparc64/dev/pyrovar.h>

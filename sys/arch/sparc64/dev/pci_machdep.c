@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.52 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.53 2025/06/28 11:34:21 miod Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -59,7 +59,6 @@ int sparc_pci_debug = 0x0;
 
 #include <dev/ofw/ofw_pci.h>
 
-#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>

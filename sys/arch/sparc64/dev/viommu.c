@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.20 2021/05/16 15:10:19 deraadt Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.21 2025/06/28 11:34:21 miod Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/cache.h>
-#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/viommuvar.h>
 

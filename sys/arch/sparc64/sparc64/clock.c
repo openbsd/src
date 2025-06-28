@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.87 2024/04/08 20:05:51 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.88 2025/06/28 11:34:21 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -82,7 +82,6 @@
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
 
-#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 #include <sparc64/dev/ebusreg.h>

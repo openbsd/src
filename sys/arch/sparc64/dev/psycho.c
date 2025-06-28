@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.84 2024/03/29 21:29:33 miod Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.85 2025/06/28 11:34:21 miod Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
-#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>

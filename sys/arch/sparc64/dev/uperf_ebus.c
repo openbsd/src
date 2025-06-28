@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_ebus.c,v 1.9 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: uperf_ebus.c,v 1.10 2025/06/28 11:34:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -51,7 +51,6 @@
 #include <dev/sun/uperfio.h>
 #include <dev/sbus/uperf_sbusreg.h>
 #include <sparc64/dev/uperfvar.h>
-#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/psychoreg.h>
 
 struct uperf_ebus_softc {
