@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 2024/04/30 01:53:49 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.53 2025/06/28 04:21:15 kevlo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -139,6 +139,7 @@ rge*		at pci?		# Realtek 8125
 
 # Wireless network cards
 iwm*		at pci?		# Intel WiFi Link 7xxx
+iwx*		at pci?		# Intel WiFi Link 22xxx
 
 nvme*		at pci?		# NVMe controllers
 ahci*		at pci?		# AHCI SATA controllers
