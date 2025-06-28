@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.29 2024/05/14 08:26:13 jsg Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.30 2025/06/28 11:33:12 miod Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -98,9 +98,7 @@ typedef struct cnm_state {
 #endif
 #define cn_isconsole(d)	((d) == cn_tab->cn_dev)
 void cn_init_magic(cnm_state_t *cnm);
-void cn_destroy_magic(cnm_state_t *cnm);
 int cn_set_magic(char *magic);
-int cn_get_magic(char *magic, int len);
 /* This should be called for each byte read */
 #ifndef cn_check_magic
 #define cn_check_magic(d, k, s)                                         \
@@ -412,16 +410,6 @@ cn_init_magic(cnm_state_t *cnm)
 }
 
 /*
- * Destroy a cnm_state_t.
- */
-void
-cn_destroy_magic(cnm_state_t *cnm)
-{
-	cnm->cnm_state = 0;
-	cnm->cnm_magic = NULL;
-}
-
-/*
  * Translate a magic string to a state
  * machine table.
  */
@@ -476,45 +464,6 @@ cn_set_magic(char *magic)
 			break;
 		}
 	} 
-	return (EINVAL);
-}
-
-/*
- * Translate a state machine table back to
- * a magic string.
- */
-int 
-cn_get_magic(char *magic, int maglen) {
-	unsigned int i, c;
-	
-	for (i=0; i<CNS_LEN; i++) {
-		c = cn_magic[i];
-		/* Translate a character */
-		switch (CNS_MAGIC_VAL(c)) {
-		case CNC_BREAK:
-			*magic++ = 0x27;
-			*magic++ = 0x01;
-			break;
-		case 0:
-			*magic++ = 0x27;
-			*magic++ = 0x02;
-			break;
-		case 0x27:
-			*magic++ = 0x27;
-			*magic++ = 0x27;
-			break;
-		default:
-			*magic++ = (c&0x0ff);
-			break;
-		}
-		/* Now go to the next state */
-		i = CNS_MAGIC_NEXT(c);
-		if (i == CNS_TERM || i == 0) {
-			/* Either termination state or empty machine */
-			*magic++ = 0;
-			return (0);
-		}
-	}
 	return (EINVAL);
 }
 
