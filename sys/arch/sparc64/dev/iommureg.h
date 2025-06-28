@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.20 2022/02/21 10:20:51 jsg Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.21 2025/06/28 11:33:45 miod Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -145,37 +145,5 @@ struct iommu_strbuf {
 
 #define MAKEIOTTE(pa,w,c,s)	(((pa)&IOTTE_PAMASK)|((w)?IOTTE_W:0)|((c)?IOTTE_C:0)|((s)?IOTTE_STREAM:0)|(IOTTE_V|IOTTE_8K))
 #define IOTSBSLOT(va,sz)	((u_int)(((vaddr_t)(va))-(is->is_dvmabase))>>PGSHIFT)
-
-/*
- * interrupt map stuff.  this belongs elsewhere.
- */
-
-#define INTMAP_V	0x080000000LL	/* Interrupt valid (enabled) */
-#define INTMAP_TID	0x07c000000LL	/* UPA target ID mask */
-#define INTMAP_IGN	0x0000007c0LL	/* Interrupt group no (sbus only). */
-#define INTMAP_IGN_SHIFT	6
-#define INTMAP_INO	0x00000003fLL	/* Interrupt number */
-#define INTMAP_INR	(INTMAP_IGN|INTMAP_INO)
-#define INTMAP_SBUSSLOT	0x000000018LL	/* SBus slot # */
-#define INTMAP_PCIBUS	0x000000010LL	/* PCI bus number (A or B) */
-#define INTMAP_PCISLOT	0x00000000cLL	/* PCI slot # */
-#define INTMAP_PCIINT	0x000000003LL	/* PCI interrupt #A,#B,#C,#D */
-#define INTMAP_OBIO	0x000000020LL	/* Onboard device */
-#define INTMAP_LSHIFT	11		/* Encode level in vector */
-#define	INTLEVENCODE(x)	(((x)&0x0f)<<INTMAP_LSHIFT)
-#define INTLEV(x)	(((x)>>INTMAP_LSHIFT)&0x0f)
-#define INTVEC(x)	((x)&INTMAP_INR)
-#define INTSLOT(x)	(((x)>>3)&0x7)
-#define	INTPRI(x)	((x)&0x7)
-#define INTIGN(x)	((x)&INTMAP_IGN)
-#define	INTINO(x)	((x)&INTMAP_INO)
-#define INTTID_SHIFT	26
-#define INTTID(x)	(((x) & INTMAP_TID) >> INTTID_SHIFT)
-
-#define	INTPCI_MAXOBINO	0x16		/* maximum OBIO INO value for PCI */
-#define	INTPCIOBINOX(x)	((x)&0x1f)	/* OBIO ino index (for PCI machines) */
-#define	INTPCIINOX(x)	(((x)&0x1c)>>2)	/* PCI ino index */
-
-#define	INTCLR_IDLE	0
 
 #endif /* _SPARC64_DEV_IOMMUREG_H_ */

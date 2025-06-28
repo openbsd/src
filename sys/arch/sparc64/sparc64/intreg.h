@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.h,v 1.4 2024/03/29 21:16:01 miod Exp $	*/
+/*	$OpenBSD: intreg.h,v 1.5 2025/06/28 11:33:45 miod Exp $	*/
 /*	$NetBSD: intreg.h,v 1.4 2000/06/24 04:21:05 eeh Exp $ */
 
 /*
@@ -52,3 +52,35 @@
  *
  */
 #define MAXINTNUM	(1<<11)
+
+/*
+ * Interrupt map stuff.
+ */
+
+#define INTMAP_V	0x080000000LL	/* Interrupt valid (enabled) */
+#define INTMAP_TID	0x07c000000LL	/* UPA target ID mask */
+#define INTMAP_IGN	0x0000007c0LL	/* Interrupt group no (sbus only). */
+#define INTMAP_IGN_SHIFT	6
+#define INTMAP_INO	0x00000003fLL	/* Interrupt number */
+#define INTMAP_INR	(INTMAP_IGN|INTMAP_INO)
+#define INTMAP_SBUSSLOT	0x000000018LL	/* SBus slot # */
+#define INTMAP_PCIBUS	0x000000010LL	/* PCI bus number (A or B) */
+#define INTMAP_PCISLOT	0x00000000cLL	/* PCI slot # */
+#define INTMAP_PCIINT	0x000000003LL	/* PCI interrupt #A,#B,#C,#D */
+#define INTMAP_OBIO	0x000000020LL	/* Onboard device */
+#define INTMAP_LSHIFT	11		/* Encode level in vector */
+#define	INTLEVENCODE(x)	(((x)&0x0f)<<INTMAP_LSHIFT)
+#define INTLEV(x)	(((x)>>INTMAP_LSHIFT)&0x0f)
+#define INTVEC(x)	((x)&INTMAP_INR)
+#define INTSLOT(x)	(((x)>>3)&0x7)
+#define	INTPRI(x)	((x)&0x7)
+#define INTIGN(x)	((x)&INTMAP_IGN)
+#define	INTINO(x)	((x)&INTMAP_INO)
+#define INTTID_SHIFT	26
+#define INTTID(x)	(((x) & INTMAP_TID) >> INTTID_SHIFT)
+
+#define	INTPCI_MAXOBINO	0x16		/* maximum OBIO INO value for PCI */
+#define	INTPCIOBINOX(x)	((x)&0x1f)	/* OBIO ino index (for PCI machines) */
+#define	INTPCIINOX(x)	(((x)&0x1c)>>2)	/* PCI ino index */
+
+#define	INTCLR_IDLE	0
