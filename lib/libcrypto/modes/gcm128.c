@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.51 2025/06/09 14:28:34 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.52 2025/06/28 12:25:22 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -131,13 +131,6 @@ gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16])
 	Xi[1] = htobe64(Z.lo);
 }
 
-/*
- * Streamed gcm_mult_4bit, see CRYPTO_gcm128_[en|de]crypt for
- * details... Compiler-generated code doesn't seem to give any
- * performance improvement, at least not on x86[_64]. It's here
- * mostly as reference and a placeholder for possible future
- * non-trivial optimization[s]...
- */
 static void
 gcm_ghash_4bit(uint64_t Xi[2], const u128 Htable[16],
     const uint8_t *inp, size_t len)
