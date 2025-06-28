@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.171 2025/06/27 04:01:04 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.172 2025/06/28 08:27:09 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -872,9 +872,12 @@ cert_check_purpose(const char *fn, X509 *x)
 	for (i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
 		if (OBJ_cmp(bgpsec_oid, sk_ASN1_OBJECT_value(eku, i)) == 0) {
 			purpose = CERT_PURPOSE_BGPSEC_ROUTER;
-			break;
+			goto out;
 		}
 	}
+
+	warnx("%s: unknown certificate purpose", fn);
+	assert(purpose == CERT_PURPOSE_INVALID);
 
  out:
 	BASIC_CONSTRAINTS_free(bc);
@@ -913,6 +916,7 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 	 * appropriate for an EE cert. Covers RFC 6487, 4.8.1, 4.8.4, 4.8.5.
 	 */
 	if ((cert->purpose = cert_check_purpose(fn, x)) != CERT_PURPOSE_EE) {
+		/* XXX - double warning */
 		warnx("%s: expected EE cert, got %s", fn,
 		    purpose2str(cert->purpose));
 		goto out;
@@ -1022,6 +1026,13 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	if (!cert_check_subject_and_issuer(fn, x))
 		goto out;
 
+	/*
+	 * Check issuance, basic constraints and (extended) key usage bits are
+	 * appropriate for a resource cert. Covers RFC 6487 4.8.1, 4.8.4, 4.8.5.
+	 */
+	if ((cert->purpose = cert_check_purpose(fn, x)) == CERT_PURPOSE_INVALID)
+		goto out;
+
 	/* Look for X509v3 extensions. */
 	if ((extsz = X509_get_ext_count(x)) <= 0) {
 		warnx("%s: certificate without X.509v3 extensions", fn);
@@ -1124,7 +1135,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 
 	/* Validation on required fields. */
-	cert->purpose = cert_check_purpose(fn, x);
 	switch (cert->purpose) {
 	case CERT_PURPOSE_TA:
 		/* XXX - caller should indicate if it expects TA or CA cert */
