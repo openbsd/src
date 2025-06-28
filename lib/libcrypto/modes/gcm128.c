@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.53 2025/06/28 12:32:27 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.54 2025/06/28 12:39:10 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -55,7 +55,7 @@
 #include "crypto_internal.h"
 #include "modes_local.h"
 
-static void
+void
 gcm_init_4bit(u128 Htable[16], uint64_t H[2])
 {
 	u128 V;
@@ -196,35 +196,17 @@ gcm_ghash(GCM128_CONTEXT *ctx, const uint8_t *in, size_t len)
 	ctx->ghash(ctx->Xi.u, ctx->Htable, in, len);
 }
 
-#if	defined(GHASH_ASM) &&						\
-	(defined(__i386)	|| defined(__i386__)	||		\
-	 defined(__x86_64)	|| defined(__x86_64__)	||		\
-	 defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64))
-#include "x86_arch.h"
-#endif
+#ifdef HAVE_GCM128_INIT
+void gcm128_init(GCM128_CONTEXT *ctx);
 
-#if	defined(GHASH_ASM)
-# if	(defined(__i386)	|| defined(__i386__)	||		\
-	 defined(__x86_64)	|| defined(__x86_64__)	||		\
-	 defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64))
-#  define GHASH_ASM_X86_OR_64
-
-void gcm_init_clmul(u128 Htable[16], const uint64_t Xi[2]);
-void gcm_gmult_clmul(uint64_t Xi[2], const u128 Htable[16]);
-void gcm_ghash_clmul(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
-    size_t len);
-
-#  if	defined(__i386) || defined(__i386__) || defined(_M_IX86)
-#   define GHASH_ASM_X86
-void gcm_gmult_4bit_mmx(uint64_t Xi[2], const u128 Htable[16]);
-void gcm_ghash_4bit_mmx(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
-    size_t len);
-
-void gcm_gmult_4bit_x86(uint64_t Xi[2], const u128 Htable[16]);
-void gcm_ghash_4bit_x86(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
-    size_t len);
-#  endif
-# endif
+#else
+static void
+gcm128_init(GCM128_CONTEXT *ctx)
+{
+	gcm_init_4bit(ctx->Htable, ctx->H.u);
+	ctx->gmult = gcm_gmult_4bit;
+	ctx->ghash = gcm_ghash_4bit;
+}
 #endif
 
 void
@@ -240,33 +222,7 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 	ctx->H.u[0] = be64toh(ctx->H.u[0]);
 	ctx->H.u[1] = be64toh(ctx->H.u[1]);
 
-# if	defined(GHASH_ASM_X86_OR_64)
-	/* check FXSR and PCLMULQDQ bits */
-	if ((crypto_cpu_caps_ia32() & (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) ==
-	    (CPUCAP_MASK_FXSR | CPUCAP_MASK_PCLMUL)) {
-		gcm_init_clmul(ctx->Htable, ctx->H.u);
-		ctx->gmult = gcm_gmult_clmul;
-		ctx->ghash = gcm_ghash_clmul;
-		return;
-	}
-	gcm_init_4bit(ctx->Htable, ctx->H.u);
-#  if	defined(GHASH_ASM_X86)			/* x86 only */
-	if (crypto_cpu_caps_ia32() & CPUCAP_MASK_MMX) {	/* check MMX bit */
-		ctx->gmult = gcm_gmult_4bit_mmx;
-		ctx->ghash = gcm_ghash_4bit_mmx;
-	} else {
-		ctx->gmult = gcm_gmult_4bit_x86;
-		ctx->ghash = gcm_ghash_4bit_x86;
-	}
-#  else
-	ctx->gmult = gcm_gmult_4bit;
-	ctx->ghash = gcm_ghash_4bit;
-#  endif
-# else
-	gcm_init_4bit(ctx->Htable, ctx->H.u);
-	ctx->gmult = gcm_gmult_4bit;
-	ctx->ghash = gcm_ghash_4bit;
-# endif
+	gcm128_init(ctx);
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_init);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_arch.h,v 1.7 2025/06/28 12:21:46 jsing Exp $ */
+/*	$OpenBSD: crypto_arch.h,v 1.8 2025/06/28 12:39:10 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -39,6 +39,8 @@ extern uint64_t crypto_cpu_caps_i386;
 #define HAVE_AES_DECRYPT_INTERNAL
 #define HAVE_AES_CBC_ENCRYPT_INTERNAL
 #define HAVE_AES_CTR32_ENCRYPT_INTERNAL
+
+#define HAVE_GCM128_INIT
 
 #define HAVE_RC4_INTERNAL
 #define HAVE_RC4_SET_KEY_INTERNAL
