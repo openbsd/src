@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.26 2024/06/22 10:22:29 jsg Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.27 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -189,8 +189,7 @@ static const struct tbl pal_op_tbl[] = {
 static const char *pal_opname(int);
 
 static const char *
-pal_opname(op)
-	int op;
+pal_opname(int op)
 {
 	static char unk[11];
 	int i;
@@ -244,8 +243,7 @@ static const char **arit_opname[8] = {
 
 static __inline const char *arit_name(int);
 static __inline const char *
-arit_name(op)
-	int op;
+arit_name(int op)
 {
 	static char unk[32];
 	const char *name = NULL;
@@ -285,8 +283,7 @@ static const char *logical_c8[4] = {
 
 static __inline const char *logical_name(int);
 static __inline const char *
-logical_name(op)
-	int op;
+logical_name(int op)
 {
 	static char unk[32];
 	const char *name = NULL;
@@ -334,8 +331,7 @@ static const char *bitop_c67ab[4][4] = {
 
 static __inline const char *bitop_name(int);
 static __inline const char *
-bitop_name(op)
-	int op;
+bitop_name(int op)
 {
 	static char unk[32];
 	const char *name = NULL;
@@ -364,8 +360,7 @@ static const char *mul_opname[4] = {
 
 static __inline const char *mul_name(int);
 static __inline const char *
-mul_name(op)
-	int op;
+mul_name(int op)
 {
 	static char unk[32];
 	const char *name = NULL;
@@ -390,8 +385,7 @@ static const char *special_opname[8] = {
 
 static __inline const char *special_name(int);
 static __inline const char *
-special_name(op)
-	int op;
+special_name(int op)
 {
 	static char unk[32];
 	const char *name;
@@ -433,8 +427,7 @@ static const char *intmisc_opname_3x[16] = {
 
 static __inline const char *intmisc_name(int);
 static __inline const char *
-intmisc_name(op)
-	int op;
+intmisc_name(int op)
 {
 	static char unk[32];
 
@@ -455,10 +448,7 @@ intmisc_name(op)
 static const char *float_name(const struct tbl[], int, const char *type);
 
 static const char *
-float_name(tbl, op, type)
-	const struct tbl tbl[];
-	int op;
-	const char *type;
+float_name(const struct tbl tbl[], int op, const char *type)
 {
 	static char unk[32];
 	int i;
@@ -805,8 +795,7 @@ static int regnum[3];		/* which regs used in this inst */
 static const char *register_name(int);
 
 static const char *
-register_name(ireg)
-	int ireg;
+register_name(int ireg)
 {
 	int	i;
 

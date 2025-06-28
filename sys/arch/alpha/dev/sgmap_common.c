@@ -1,4 +1,4 @@
-/* $OpenBSD: sgmap_common.c,v 1.15 2019/05/13 21:27:59 mpi Exp $ */
+/* $OpenBSD: sgmap_common.c,v 1.16 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: sgmap_common.c,v 1.13 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -54,17 +54,9 @@ vaddr_t		alpha_sgmap_prefetch_spill_page_va;
 bus_addr_t	alpha_sgmap_prefetch_spill_page_pa;
 
 void
-alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
-    minptalign)
-	bus_dma_tag_t t;
-	struct alpha_sgmap *sgmap;
-	const char *name;
-	bus_addr_t wbase;
-	bus_addr_t sgvabase;
-	bus_size_t sgvasize;
-	size_t ptesize;
-	void *ptva;
-	bus_size_t minptalign;
+alpha_sgmap_init(bus_dma_tag_t t, struct alpha_sgmap *sgmap, const char *name,
+    bus_addr_t wbase, bus_addr_t sgvabase, bus_size_t sgvasize, size_t ptesize,
+    void *ptva, bus_size_t minptalign)
 {
 	bus_dma_segment_t seg;
 	size_t ptsize;
@@ -143,10 +135,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 }
 
 int
-alpha_sgmap_dmamap_setup(map, nsegments, flags)
-	bus_dmamap_t map;
-	int nsegments;
-	int flags;
+alpha_sgmap_dmamap_setup(bus_dmamap_t map, int nsegments, int flags)
 {
 	map->_dm_cookie = mallocarray(nsegments, sizeof(struct extent_region),
 	    M_DEVBUF, (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
@@ -156,15 +145,8 @@ alpha_sgmap_dmamap_setup(map, nsegments, flags)
 }
 
 int
-alpha_sgmap_dmamap_create(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+alpha_sgmap_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	bus_dmamap_t map;
 	int error;
@@ -186,16 +168,13 @@ alpha_sgmap_dmamap_create(t, size, nsegments, maxsegsz, boundary,
 }
 
 void
-alpha_sgmap_dmamap_teardown(map)
-	bus_dmamap_t map;
+alpha_sgmap_dmamap_teardown(bus_dmamap_t map)
 {
 	free(map->_dm_cookie, M_DEVBUF, map->_dm_cookiesize);
 }
 
 void
-alpha_sgmap_dmamap_destroy(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+alpha_sgmap_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	KASSERT(map->dm_mapsize == 0);
 

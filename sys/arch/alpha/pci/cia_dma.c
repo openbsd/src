@@ -1,4 +1,4 @@
-/* $OpenBSD: cia_dma.c,v 1.11 2014/06/14 23:11:20 jmatthew Exp $ */
+/* $OpenBSD: cia_dma.c,v 1.12 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: cia_dma.c,v 1.16 2000/06/29 08:58:46 mrg Exp $ */
 
 /*-
@@ -96,8 +96,7 @@ struct alpha_sgmap cia_pyxis_bug_sgmap;
 #define	CIA_PYXIS_BUG_SIZE	(2*1024*1024)
 
 void
-cia_dma_init(ccp)
-	struct cia_config *ccp;
+cia_dma_init(struct cia_config *ccp)
 {
 	bus_addr_t tbase;
 	bus_dma_tag_t t;
@@ -250,9 +249,7 @@ cia_dma_init(ccp)
  * INTERNAL USE ONLY!
  */
 bus_dma_tag_t
-cia_dma_get_tag(t, bustype)
-	bus_dma_tag_t t;
-	alpha_bus_t bustype;
+cia_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct cia_config *ccp = t->_cookie;
 
@@ -289,15 +286,8 @@ cia_dma_get_tag(t, bustype)
  * Create a CIA direct-mapped DMA map.
  */
 int
-cia_bus_dmamap_create_direct(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
+cia_bus_dmamap_create_direct(bus_dma_tag_t t, bus_size_t size, int nsegments,
+    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
 	struct cia_config *ccp = t->_cookie;
 	bus_dmamap_t map;
@@ -341,9 +331,7 @@ cia_bus_dmamap_create_direct(t, size, nsegments, maxsegsz, boundary,
  * Destroy a CIA direct-mapped DMA map.
  */
 void
-cia_bus_dmamap_destroy_direct(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+cia_bus_dmamap_destroy_direct(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	alpha_sgmap_dmamap_teardown(map);
 	_bus_dmamap_destroy(t, map);
@@ -353,13 +341,8 @@ cia_bus_dmamap_destroy_direct(t, map)
  * Load a CIA SGMAP-mapped DMA map with a linear buffer.
  */
 int
-cia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+cia_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 
@@ -375,11 +358,8 @@ cia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
  * Load a CIA SGMAP-mapped DMA map with an mbuf chain.
  */
 int
-cia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+cia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    struct mbuf *m, int flags)
 {
 	int error;
 
@@ -394,11 +374,8 @@ cia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
  * Load a CIA SGMAP-mapped DMA map with a uio.
  */
 int
-cia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+cia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    struct uio *uio, int flags)
 {
 	int error;
 
@@ -413,13 +390,8 @@ cia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
  * Load a CIA SGMAP-mapped DMA map with raw memory.
  */
 int
-cia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+cia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 
@@ -435,9 +407,7 @@ cia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
  * Unload a CIA DMA map.
  */
 void
-cia_bus_dmamap_unload_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+cia_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	/*
@@ -457,7 +427,7 @@ cia_bus_dmamap_unload_sgmap(t, map)
  * Flush the CIA scatter/gather TLB.
  */
 void
-cia_tlb_invalidate()
+cia_tlb_invalidate(void)
 {
 
 	alpha_mb();
@@ -469,7 +439,7 @@ cia_tlb_invalidate()
  * Flush the scatter/gather TLB on broken Pyxis chips.
  */
 void
-cia_broken_pyxis_tlb_invalidate()
+cia_broken_pyxis_tlb_invalidate(void)
 {
 	volatile u_int64_t dummy;
 	u_int32_t ctrl;

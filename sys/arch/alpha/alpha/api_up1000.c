@@ -1,4 +1,4 @@
-/*	$OpenBSD: api_up1000.c,v 1.12 2014/05/08 20:46:49 miod Exp $	*/
+/*	$OpenBSD: api_up1000.c,v 1.13 2025/06/28 16:04:09 miod Exp $	*/
 /* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -79,7 +79,7 @@ static void api_up1000_cons_init(void);
 static void api_up1000_device_register(struct device *, void *);
 
 void
-api_up1000_init()
+api_up1000_init(void)
 {
 
 	platform.family = "API UP1000";
@@ -95,7 +95,7 @@ api_up1000_init()
 }
 
 static void
-api_up1000_cons_init()
+api_up1000_cons_init(void)
 {
 	struct ctb *ctb;
 	struct irongate_config *icp;
@@ -156,9 +156,7 @@ api_up1000_cons_init()
 }
 
 static void
-api_up1000_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+api_up1000_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, scsiboot, ideboot, netboot;
 	static struct device *pcidev, *scsidev;

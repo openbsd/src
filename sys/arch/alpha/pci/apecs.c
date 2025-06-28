@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.23 2022/03/13 08:04:13 mpi Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.24 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*-
@@ -105,10 +105,7 @@ int apecsfound;
 struct apecs_config apecs_configuration;
 
 int
-apecsmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+apecsmatch(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -126,9 +123,7 @@ apecsmatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-apecs_init(acp, mallocsafe)
-	struct apecs_config *acp;
-	int mallocsafe;
+apecs_init(struct apecs_config *acp, int mallocsafe)
 {
 	acp->ac_comanche_pass2 =
 	    (REGVAL(COMANCHE_ED) & COMANCHE_ED_PASS2) != 0;
@@ -144,15 +139,6 @@ apecs_init(acp, mallocsafe)
 		/* don't do these twice since they set up extents */
 		apecs_bus_io_init(&acp->ac_iot, acp);
 		apecs_bus_mem_init(&acp->ac_memt, acp);
-
-#if 0
-		/*
-		 * We have two I/O windows and 3 MEM windows.
-		 */
-		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 2;
-		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 3;
-		alpha_bus_get_window = apecs_bus_get_window;
-#endif
 	}
 	acp->ac_mallocsafe = mallocsafe;
 
@@ -169,9 +155,7 @@ apecs_init(acp, mallocsafe)
 }
 
 void
-apecsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apecsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct apecs_config *acp;
 	struct pcibus_attach_args pba;
@@ -247,9 +231,7 @@ apecsattach(parent, self, aux)
 }
 
 int
-apecsprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+apecsprint(void *aux, const char *pnp)
 {
 	register struct pcibus_attach_args *pba = aux;
 
@@ -259,29 +241,3 @@ apecsprint(aux, pnp)
 	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
-
-#if 0
-int
-apecs_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
-{
-	struct apecs_config *acp = &apecs_configuration;
-	bus_space_tag_t st;
-
-	switch (type) {
-	case ALPHA_BUS_TYPE_PCI_IO:
-		st = &acp->ac_iot;
-		break;
-
-	case ALPHA_BUS_TYPE_PCI_MEM:
-		st = &acp->ac_memt;
-		break;
-
-	default:
-		panic("apecs_bus_get_window");
-	}
-
-	return (alpha_bus_space_get_window(st, window, abst));
-}
-#endif

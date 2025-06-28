@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_dma_3000_500.c,v 1.7 2017/10/29 08:50:43 mpi Exp $ */
+/* $OpenBSD: tc_dma_3000_500.c,v 1.8 2025/06/28 16:04:10 miod Exp $ */
 /* $NetBSD: tc_dma_3000_500.c,v 1.13 2001/07/19 06:40:03 thorpej Exp $ */
 
 /*-
@@ -78,8 +78,7 @@ struct alpha_bus_dma_tag tc_dmat_sgmap = {
 };
 
 void
-tc_dma_init_3000_500(nslots)
-	int nslots;
+tc_dma_init_3000_500(int nslots)
 {
 	int i;
 	struct alpha_bus_dma_tag *t;
@@ -111,8 +110,7 @@ tc_dma_init_3000_500(nslots)
  * Return the DMA tag for the given slot.
  */
 bus_dma_tag_t
-tc_dma_get_tag_3000_500(slot)
-	int slot;
+tc_dma_get_tag_3000_500(int slot)
 {
 	return &tc_dmat_sgmap;
 }
@@ -121,13 +119,8 @@ tc_dma_get_tag_3000_500(slot)
  * Load a TURBOchannel SGMAP-mapped DMA map with a linear buffer.
  */
 int
-tc_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+tc_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	return (tc_sgmap_load(t, map, buf, buflen, p, flags, t->_sgmap));
 }
@@ -136,11 +129,8 @@ tc_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
  * Load a TURBOchannel SGMAP-mapped DMA map with an mbuf chain.
  */
 int
-tc_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+tc_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
+    int flags)
 {
 	return (tc_sgmap_load_mbuf(t, map, m, flags, t->_sgmap));
 }
@@ -149,11 +139,8 @@ tc_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
  * Load a TURBOchannel SGMAP-mapped DMA map with a uio.
  */
 int
-tc_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+tc_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+    int flags)
 {
 	return (tc_sgmap_load_uio(t, map, uio, flags, t->_sgmap));
 }
@@ -162,13 +149,8 @@ tc_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
  * Load a TURBOchannel SGMAP-mapped DMA map with raw memory.
  */
 int
-tc_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+tc_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	return (tc_sgmap_load_raw(t, map, segs, nsegs, size, flags, t->_sgmap));
 }
@@ -177,9 +159,7 @@ tc_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
  * Unload a TURBOchannel SGMAP-mapped DMA map.
  */
 void
-tc_bus_dmamap_unload_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+tc_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	/*
 	 * Invalidate any SGMAP page table entries used by this

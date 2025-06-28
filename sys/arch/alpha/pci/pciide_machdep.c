@@ -1,4 +1,4 @@
-/* $OpenBSD: pciide_machdep.c,v 1.5 2012/12/05 23:20:10 deraadt Exp $ */
+/* $OpenBSD: pciide_machdep.c,v 1.6 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: pciide_machdep.c,v 1.2 1998/04/18 01:09:20 thorpej Exp $ */
 
 /*
@@ -54,12 +54,8 @@
 #include <dev/pci/pciidevar.h>
 
 void *
-pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func)(void *);
-	void *arg;
+pciide_machdep_compat_intr_establish(struct device *dev,
+    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 
@@ -68,9 +64,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 }
 
 void
-pciide_machdep_compat_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pciide_machdep_compat_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 	alpha_pciide_compat_intr_disestablish(pc, cookie);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn20aa.c,v 1.20 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: dec_kn20aa.c,v 1.21 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: dec_kn20aa.c,v 1.42 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -76,7 +76,7 @@ const struct alpha_variation_table dec_kn20aa_variations[] = {
 };
 
 void
-dec_kn20aa_init()
+dec_kn20aa_init(void)
 {
 	u_int64_t variation;
 
@@ -95,7 +95,7 @@ dec_kn20aa_init()
 }
 
 static void
-dec_kn20aa_cons_init()
+dec_kn20aa_cons_init(void)
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -156,9 +156,7 @@ dec_kn20aa_cons_init()
 }
 
 static void
-dec_kn20aa_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_kn20aa_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia.c,v 1.7 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: mcpcia.c,v 1.8 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: mcpcia.c,v 1.20 2007/03/04 05:59:11 christos Exp $ */
 
 /*-
@@ -115,9 +115,7 @@ struct cfdriver mcpcia_cd = {
 struct mcpcia_config mcpcia_console_configuration;
 
 int
-mcpciaprint(aux, pnp)
-       void *aux;
-       const char *pnp;
+mcpciaprint(void *aux, const char *pnp)
 {
        register struct pcibus_attach_args *pba = aux;
        /* only PCIs can attach to MCPCIA for now */
@@ -128,10 +126,7 @@ mcpciaprint(aux, pnp)
 }
 
 int
-mcpciamatch(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+mcpciamatch(struct device *parent, void *cf, void *aux)
 {
 	struct mcbus_dev_attach_args *ma = aux;
 
@@ -142,10 +137,7 @@ mcpciamatch(parent, cf, aux)
 }
 
 void
-mcpciaattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mcpciaattach(struct device *parent, struct device *self, void *aux)
 {
 	static int first = 1;
 	struct mcbus_dev_attach_args *ma = aux;
@@ -220,7 +212,7 @@ mcpciaattach(parent, self, aux)
 }
 
 void
-mcpcia_init()
+mcpcia_init(void)
 {
 	struct mcpcia_config *ccp = &mcpcia_console_configuration;
 	int i;
@@ -255,9 +247,7 @@ mcpcia_init()
 }
 
 void
-mcpcia_init0(ccp, mallocsafe)
-	struct mcpcia_config *ccp;
-	int mallocsafe;
+mcpcia_init0(struct mcpcia_config *ccp, int mallocsafe)
 {
 	u_int32_t ctl;
 	
@@ -315,7 +305,7 @@ mcpcia_init0(ccp, mallocsafe)
 }
 
 void
-mcpcia_config_cleanup()
+mcpcia_config_cleanup(void)
 {
 	volatile u_int32_t ctl;
 	struct mcpcia_softc *mcp;

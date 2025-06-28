@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.23 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.24 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -62,8 +62,7 @@ void    dec_axppci_33_intr_disestablish(void *, void *);
 #define	LCA_SIO_DEVICE	7	/* XXX */
 
 void
-pci_axppci_33_pickintr(lcp)
-	struct lca_config *lcp;
+pci_axppci_33_pickintr(struct lca_config *lcp)
 {
 	bus_space_tag_t iot = &lcp->lc_iot;
 	pci_chipset_tag_t pc = &lcp->lc_pc;
@@ -97,9 +96,7 @@ pci_axppci_33_pickintr(lcp)
 }
 
 int
-dec_axppci_33_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+dec_axppci_33_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -191,36 +188,27 @@ dec_axppci_33_intr_map(pa, ihp)
 }
 
 const char *
-dec_axppci_33_intr_string(lcv, ih)
-	void *lcv;
-	pci_intr_handle_t ih;
+dec_axppci_33_intr_string(void *lcv, pci_intr_handle_t ih)
 {
 	return sio_intr_string(NULL /*XXX*/, ih);
 }
 
 int
-dec_axppci_33_intr_line(lcv, ih)
-	void *lcv;
-	pci_intr_handle_t ih;
+dec_axppci_33_intr_line(void *lcv, pci_intr_handle_t ih)
 {
 	return sio_intr_line(NULL /*XXX*/, ih);
 }
 
 void *
-dec_axppci_33_intr_establish(lcv, ih, level, func, arg, name)
-	void *lcv, *arg;
-	pci_intr_handle_t ih;
-	int level;
-	int (*func)(void *);
-	const char *name;
+dec_axppci_33_intr_establish(void *lcv, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *name)
 {
 	return sio_intr_establish(NULL /*XXX*/, ih, IST_LEVEL, level, func,
 	    arg, name);
 }
 
 void
-dec_axppci_33_intr_disestablish(lcv, cookie)
-	void *lcv, *cookie;
+dec_axppci_33_intr_disestablish(void *lcv, void *cookie)
 {
 	sio_intr_disestablish(NULL /*XXX*/, cookie);
 }

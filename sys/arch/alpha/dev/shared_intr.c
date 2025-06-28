@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.22 2015/09/02 14:07:43 deraadt Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.23 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -44,8 +44,7 @@
 static const char *intr_typename(int);
 
 static const char *
-intr_typename(type)
-	int type;
+intr_typename(int type)
 {
 
 	switch (type) {
@@ -64,8 +63,7 @@ intr_typename(type)
 }
 
 struct alpha_shared_intr *
-alpha_shared_intr_alloc(n)
-	unsigned int n;
+alpha_shared_intr_alloc(unsigned int n)
 {
 	struct alpha_shared_intr *intr;
 	unsigned int i;
@@ -88,9 +86,7 @@ alpha_shared_intr_alloc(n)
 }
 
 int
-alpha_shared_intr_dispatch(intr, num)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
+alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 {
 	struct alpha_shared_intrhand *ih;
 	int rv, handled;
@@ -125,13 +121,8 @@ alpha_shared_intr_dispatch(intr, num)
 }
 
 void *
-alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	int type, level;
-	int (*fn)(void *);
-	void *arg;
-	const char *basename;
+alpha_shared_intr_establish(struct alpha_shared_intr *intr, unsigned int num,
+    int type, int level, int (*fn)(void *), void *arg, const char *basename)
 {
 	struct alpha_shared_intrhand *ih;
 
@@ -192,9 +183,7 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 }
 
 void
-alpha_shared_intr_disestablish(intr, cookie)
-	struct alpha_shared_intr *intr;
-	void *cookie;
+alpha_shared_intr_disestablish(struct alpha_shared_intr *intr, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int num = ih->ih_num;
@@ -209,18 +198,15 @@ alpha_shared_intr_disestablish(intr, cookie)
 }
 
 int
-alpha_shared_intr_get_sharetype(intr, num)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
+alpha_shared_intr_get_sharetype(struct alpha_shared_intr *intr,
+    unsigned int num)
 {
 
 	return (intr[num].intr_sharetype);
 }
 
 int
-alpha_shared_intr_isactive(intr, num)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
+alpha_shared_intr_isactive(struct alpha_shared_intr *intr, unsigned int num)
 {
 
 	return (!TAILQ_EMPTY(&intr[num].intr_q));
@@ -235,10 +221,8 @@ alpha_shared_intr_firstactive(struct alpha_shared_intr *intr, unsigned int num)
 }
 
 void
-alpha_shared_intr_set_dfltsharetype(intr, num, newdfltsharetype)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	int newdfltsharetype;
+alpha_shared_intr_set_dfltsharetype(struct alpha_shared_intr *intr,
+    unsigned int num, int newdfltsharetype)
 {
 
 #ifdef DIAGNOSTIC
@@ -251,10 +235,8 @@ alpha_shared_intr_set_dfltsharetype(intr, num, newdfltsharetype)
 }
 
 void
-alpha_shared_intr_set_maxstrays(intr, num, newmaxstrays)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	int newmaxstrays;
+alpha_shared_intr_set_maxstrays(struct alpha_shared_intr *intr,
+    unsigned int num, int newmaxstrays)
 {
 	int s = splhigh();
 	intr[num].intr_maxstrays = newmaxstrays;
@@ -263,9 +245,7 @@ alpha_shared_intr_set_maxstrays(intr, num, newmaxstrays)
 }
 
 void
-alpha_shared_intr_reset_strays(intr, num)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
+alpha_shared_intr_reset_strays(struct alpha_shared_intr *intr, unsigned int num)
 {
 
 	/*
@@ -276,10 +256,8 @@ alpha_shared_intr_reset_strays(intr, num)
 }
 
 void
-alpha_shared_intr_stray(intr, num, basename)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	const char *basename;
+alpha_shared_intr_stray(struct alpha_shared_intr *intr, unsigned int num,
+    const char *basename)
 {
 
 	intr[num].intr_nstrays++;
@@ -294,19 +272,15 @@ alpha_shared_intr_stray(intr, num, basename)
 }
 
 void
-alpha_shared_intr_set_private(intr, num, v)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
-	void *v;
+alpha_shared_intr_set_private(struct alpha_shared_intr *intr, unsigned int num,
+    void *v)
 {
 
 	intr[num].intr_private = v;
 }
 
 void *
-alpha_shared_intr_get_private(intr, num)
-	struct alpha_shared_intr *intr;
-	unsigned int num;
+alpha_shared_intr_get_private(struct alpha_shared_intr *intr, unsigned int num)
 {
 
 	return (intr[num].intr_private);

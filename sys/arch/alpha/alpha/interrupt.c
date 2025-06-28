@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.43 2025/04/28 13:27:20 visa Exp $ */
+/* $OpenBSD: interrupt.c,v 1.44 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -428,7 +428,7 @@ badaddr_read(void *addr, size_t size, void *rptr)
  *	Process pending software interrupts.
  */
 void
-dosoftint()
+dosoftint(void)
 {
 	u_int64_t n, i;
 

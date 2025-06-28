@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp_machdep.c,v 1.4 2008/06/26 05:42:08 ray Exp $	*/
+/*	$OpenBSD: isapnp_machdep.c,v 1.5 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: isapnp_machdep.c,v 1.3 1998/09/05 15:28:04 christos Exp $	*/
 
 /*-
@@ -61,8 +61,7 @@
  *	Map I/O regions used by PnP
  */
 int
-isapnp_map(sc)
-	struct isapnp_softc *sc;
+isapnp_map(struct isapnp_softc *sc)
 {
 	int error;
 
@@ -85,8 +84,7 @@ isapnp_map(sc)
  *	Unmap I/O regions used by PnP
  */
 void
-isapnp_unmap(sc)
-	struct isapnp_softc *sc;
+isapnp_unmap(struct isapnp_softc *sc)
 {
 
 	alpha_bus_space_unmap_noacct(sc->sc_iot, sc->sc_addr_ioh, 1);
@@ -100,8 +98,7 @@ isapnp_unmap(sc)
  *	NOTE: assumes the caller has filled in sc->sc_read_port!
  */
 int
-isapnp_map_readport(sc)
-	struct isapnp_softc *sc;
+isapnp_map_readport(struct isapnp_softc *sc)
 {
 #ifdef _KERNEL
 	int error;
@@ -127,8 +124,7 @@ isapnp_map_readport(sc)
  *	Pretend to unmap a previously mapped `read port'.
  */
 void
-isapnp_unmap_readport(sc)
-	struct isapnp_softc *sc;
+isapnp_unmap_readport(struct isapnp_softc *sc)
 {
 	/* Do nothing */
 }

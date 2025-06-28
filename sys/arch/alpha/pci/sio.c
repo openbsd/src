@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.41 2022/03/13 08:04:13 mpi Exp $	*/
+/*	$OpenBSD: sio.c,v 1.42 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -102,10 +102,7 @@ int	sio_eisa_intr_map(void *, u_int, eisa_intr_handle_t *);
 void	sio_bridge_callback(struct device *);
 
 int
-siomatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+siomatch(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -129,10 +126,7 @@ siomatch(parent, match, aux)
 }
 
 int
-pcebmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pcebmatch(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -144,9 +138,7 @@ pcebmatch(parent, match, aux)
 }
 
 void
-sioattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -180,8 +172,7 @@ sioactivate(struct device *self, int act)
 }
 
 void
-sio_bridge_callback(self)
-	struct device *self;
+sio_bridge_callback(struct device *self)
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
 	union sio_attach_args sa;
@@ -223,9 +214,7 @@ sio_bridge_callback(self)
 }
 
 int
-sioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+sioprint(void *aux, const char *pnp)
 {
         register union sio_attach_args *sa = aux;
 
@@ -235,17 +224,15 @@ sioprint(aux, pnp)
 }
 
 void
-sio_isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+sio_isa_attach_hook(struct device *parent, struct device *self,
+    struct isabus_attach_args *iba)
 {
 	/* Nothing to do. */
 }
 
 void
-sio_eisa_attach_hook(parent, self, eba)
-	struct device *parent, *self;
-	struct eisabus_attach_args *eba;
+sio_eisa_attach_hook(struct device *parent, struct device *self,
+    struct eisabus_attach_args *eba)
 {
 #if NEISA > 0
 	eisa_init(eba->eba_ec);
@@ -253,10 +240,7 @@ sio_eisa_attach_hook(parent, self, eba)
 }
 
 int
-sio_eisa_intr_map(v, irq, ihp)
-	void *v;
-	u_int irq;
-	eisa_intr_handle_t *ihp;
+sio_eisa_intr_map(void *v, u_int irq, eisa_intr_handle_t *ihp)
 {
 
 #define	ICU_LEN		16	/* number of ISA IRQs (XXX) */

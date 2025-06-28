@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.16 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.17 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -103,8 +103,7 @@ extern void	eb64plus_intr_enable(int irq);  /* pci_eb64plus_intr.S */
 extern void	eb64plus_intr_disable(int irq); /* pci_eb64plus_intr.S */
 
 void
-pci_eb64plus_pickintr(acp)
-	struct apecs_config *acp;
+pci_eb64plus_pickintr(struct apecs_config *acp)
 {
 	bus_space_tag_t iot = &acp->ac_iot;
 	pci_chipset_tag_t pc = &acp->ac_pc;
@@ -138,9 +137,7 @@ pci_eb64plus_pickintr(acp)
 }
 
 int     
-dec_eb64plus_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_eb64plus_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int buspin, line = pa->pa_intrline;
 
@@ -166,9 +163,7 @@ dec_eb64plus_intr_map(pa, ihp)
 }
 
 const char *
-dec_eb64plus_intr_string(acv, ih)
-	void *acv;
-	pci_intr_handle_t ih;
+dec_eb64plus_intr_string(void *acv, pci_intr_handle_t ih)
 {
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
@@ -179,13 +174,8 @@ dec_eb64plus_intr_string(acv, ih)
 }
 
 void *
-dec_eb64plus_intr_establish(acv, ih, level, func, arg, name)
-        void *acv;
-        pci_intr_handle_t ih;
-        int level;
-        int (*func)(void *);
-	void *arg;
-	const char *name;
+dec_eb64plus_intr_establish(void *acv, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *name)
 {
 	void *cookie;
 
@@ -205,8 +195,7 @@ dec_eb64plus_intr_establish(acv, ih, level, func, arg, name)
 }
 
 void
-dec_eb64plus_intr_disestablish(acv, cookie)
-        void *acv, *cookie;
+dec_eb64plus_intr_disestablish(void *acv, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
@@ -226,9 +215,7 @@ dec_eb64plus_intr_disestablish(acv, cookie)
 }
 
 void
-eb64plus_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+eb64plus_iointr(void *arg, unsigned long vec)
 {
 	int irq; 
 
@@ -247,8 +234,7 @@ eb64plus_iointr(arg, vec)
 u_int8_t eb64plus_intr_mask[3] = { 0xff, 0xff, 0xff };
 
 void
-eb64plus_intr_enable(irq)
-	int irq;
+eb64plus_intr_enable(int irq)
 {
 	int byte = (irq / 8), bit = (irq % 8);
 
@@ -262,8 +248,7 @@ eb64plus_intr_enable(irq)
 }
 
 void
-eb64plus_intr_disable(irq)
-	int irq;
+eb64plus_intr_disable(int irq)
 {
 	int byte = (irq / 8), bit = (irq % 8);
 

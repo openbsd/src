@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock.c,v 1.5 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: mcclock.c,v 1.6 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: mcclock.c,v 1.4 1996/10/13 02:59:41 christos Exp $	*/
 
 /*
@@ -55,9 +55,7 @@ const struct clockfns mcclock_clockfns = {
 	    (*(dev)->sc_busfns->mc_bf_read)(dev, reg)
 
 void
-mcclock_attach(sc, busfns)
-	struct mcclock_softc *sc;
-	const struct mcclock_busfns *busfns;
+mcclock_attach(struct mcclock_softc *sc, const struct mcclock_busfns *busfns)
 {
 
 	printf(": mc146818 or compatible");
@@ -71,8 +69,7 @@ mcclock_attach(sc, busfns)
 }
 
 void
-mcclock_init(dev)
-	struct device *dev;
+mcclock_init(struct device *dev)
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
 
@@ -85,10 +82,7 @@ mcclock_init(dev)
  * Get the time of day, based on the clock's value and/or the base value.
  */
 void
-mcclock_get(dev, base, ct)
-	struct device *dev;
-	time_t base;
-	struct clocktime *ct;
+mcclock_get(struct device *dev, time_t base, struct clocktime *ct)
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
 	mc_todregs regs;
@@ -111,9 +105,7 @@ mcclock_get(dev, base, ct)
  * Reset the TODR based on the time value.
  */
 void
-mcclock_set(dev, ct)
-	struct device *dev;
-	struct clocktime *ct;
+mcclock_set(struct device *dev, struct clocktime *ct)
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
 	mc_todregs regs;

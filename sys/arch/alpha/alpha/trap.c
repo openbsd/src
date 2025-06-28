@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.111 2024/01/11 19:16:26 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.112 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -124,7 +124,7 @@ void	printtrap(const unsigned long, const unsigned long, const unsigned long,
  * Initialize the trap vectors for the current processor.
  */
 void
-trap_init()
+trap_init(void)
 {
 
 	/*
@@ -202,9 +202,8 @@ printtrap(const unsigned long a0, const unsigned long a1,
  * Alpha architecture.
  */
 void
-trap(a0, a1, a2, entry, framep)
-	const unsigned long a0, a1, a2, entry;
-	struct trapframe *framep;
+trap(const unsigned long a0, const unsigned long a1, const unsigned long a2,
+    const unsigned long entry, struct trapframe *framep)
 {
 	struct proc *p;
 	int i;
@@ -568,8 +567,7 @@ syscall(u_int64_t code, struct trapframe *framep)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct proc *p = arg;
 	struct trapframe *framep = p->p_md.md_tf;
@@ -643,8 +641,7 @@ alpha_enable_fp(struct proc *p, int check)
  * This is relatively easy.
  */
 void
-ast(framep)
-	struct trapframe *framep;
+ast(struct trapframe *framep)
 {
 	struct proc *p = curproc;
 
@@ -694,9 +691,7 @@ static const int reg_to_framereg[32] = {
  * and fills in *ucodep with the code to be delivered.
  */
 int
-handle_opdec(p, ucodep)
-	struct proc *p;
-	u_int64_t *ucodep;
+handle_opdec(struct proc *p, u_int64_t *ucodep)
 {
 	alpha_instruction inst;
 	register_t *regptr, memaddr;

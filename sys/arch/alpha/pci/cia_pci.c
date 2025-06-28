@@ -1,4 +1,4 @@
-/* $OpenBSD: cia_pci.c,v 1.13 2015/10/30 07:51:49 miod Exp $ */
+/* $OpenBSD: cia_pci.c,v 1.14 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: cia_pci.c,v 1.25 2000/06/29 08:58:46 mrg Exp $ */
 
 /*
@@ -51,9 +51,7 @@ pcireg_t	cia_conf_read(void *, pcitag_t, int);
 void		cia_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-cia_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+cia_pci_init(pci_chipset_tag_t pc, void *v)
 {
 
 	pc->pc_conf_v = v;
@@ -67,35 +65,27 @@ cia_pci_init(pc, v)
 }
 
 void
-cia_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+cia_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
 {
 }
 
 int
-cia_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+cia_bus_maxdevs(void *cpv, int busno)
 {
 
 	return 32;
 }
 
 pcitag_t
-cia_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+cia_make_tag(void *cpv, int b, int d, int f)
 {
 
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
 void
-cia_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+cia_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)
@@ -113,10 +103,7 @@ cia_conf_size(void *cpv, pcitag_t tag)
 }
 
 pcireg_t
-cia_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+cia_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap, data;
@@ -211,11 +198,7 @@ cia_conf_read(cpv, tag, offset)
 }
 
 void
-cia_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+cia_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct cia_config *ccp = cpv;
 	pcireg_t *datap;

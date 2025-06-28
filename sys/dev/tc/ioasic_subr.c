@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioasic_subr.c,v 1.1 2002/05/02 22:56:06 miod Exp $	*/
+/*	$OpenBSD: ioasic_subr.c,v 1.2 2025/06/28 16:04:10 miod Exp $	*/
 /*	$NetBSD: ioasic_subr.c,v 1.3 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -37,9 +37,7 @@
 int     ioasicprint(void *, const char *);
 
 int
-ioasicprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ioasicprint(void *aux, const char *pnp)
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -50,9 +48,7 @@ ioasicprint(aux, pnp)
 }
 
 int
-ioasic_submatch(vcf, d)
-	void *vcf;
-	struct ioasicdev_attach_args *d;
+ioasic_submatch(void *vcf, struct ioasicdev_attach_args *d)
 {
 	struct cfdata *match = vcf;
 
@@ -61,10 +57,8 @@ ioasic_submatch(vcf, d)
 }
 
 void
-ioasic_attach_devs(sc, ioasic_devs, ioasic_ndevs)
-	struct ioasic_softc *sc;
-	struct ioasic_dev *ioasic_devs;
-	int ioasic_ndevs;
+ioasic_attach_devs(struct ioasic_softc *sc, struct ioasic_dev *ioasic_devs,
+    int ioasic_ndevs)
 {
 	struct ioasicdev_attach_args idev;
 	int i;

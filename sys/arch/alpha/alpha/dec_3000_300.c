@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_3000_300.c,v 1.14 2017/11/02 14:04:24 mpi Exp $ */
+/* $OpenBSD: dec_3000_300.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: dec_3000_300.c,v 1.30 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -71,7 +71,7 @@ const struct alpha_variation_table dec_3000_300_variations[] = {
 };
 
 void
-dec_3000_300_init()
+dec_3000_300_init(void)
 {
 	u_int64_t variation;
 
@@ -90,7 +90,7 @@ dec_3000_300_init()
 }
 
 static void
-dec_3000_300_cons_init()
+dec_3000_300_cons_init(void)
 {
 	struct ctb *ctb;
 
@@ -148,9 +148,7 @@ dec_3000_300_cons_init()
 }
 
 static void
-dec_3000_300_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_3000_300_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, scsiboot, netboot;
 	static struct device *scsidev;

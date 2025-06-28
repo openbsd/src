@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.38 2015/08/15 20:06:21 miod Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.39 2025/06/28 16:04:09 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -143,7 +143,7 @@ void		i82378_write_elcr(int, u_int8_t);
 bus_space_handle_t sio_ioh_elcr;
 
 int
-i82378_setup_elcr()
+i82378_setup_elcr(void)
 {
 	int device, maxndevs;
 	pcitag_t tag;
@@ -185,17 +185,14 @@ i82378_setup_elcr()
 }
 
 u_int8_t
-i82378_read_elcr(elcr)
-	int elcr;
+i82378_read_elcr(int elcr)
 {
 
 	return (bus_space_read_1(sio_iot, sio_ioh_elcr, elcr));
 }
 
 void
-i82378_write_elcr(elcr, val)
-	int elcr;
-	u_int8_t val;
+i82378_write_elcr(int elcr, u_int8_t val)
 {
 
 	bus_space_write_1(sio_iot, sio_ioh_elcr, elcr, val);
@@ -210,7 +207,7 @@ void		cy82c693_write_elcr(int, u_int8_t);
 const struct cy82c693_handle *sio_cy82c693_handle;
 
 int
-cy82c693_setup_elcr()
+cy82c693_setup_elcr(void)
 {
 	int device, maxndevs;
 	pcitag_t tag;
@@ -250,17 +247,14 @@ cy82c693_setup_elcr()
 }
 
 u_int8_t
-cy82c693_read_elcr(elcr)
-	int elcr;
+cy82c693_read_elcr(int elcr)
 {
 
 	return (cy82c693_read(sio_cy82c693_handle, CONFIG_ELCR1 + elcr));
 }
 
 void
-cy82c693_write_elcr(elcr, val)
-	int elcr;
-	u_int8_t val;
+cy82c693_write_elcr(int elcr, u_int8_t val)
 {
 
 	cy82c693_write(sio_cy82c693_handle, CONFIG_ELCR1 + elcr, val);
@@ -284,9 +278,7 @@ int (*sio_elcr_setup_funcs[])(void) = {
 /******************** Shared SIO/Cypress functions ********************/
 
 void
-sio_setirqstat(irq, enabled, type)
-	int irq, enabled;
-	int type;
+sio_setirqstat(int irq, int enabled, int type)
 {
 	u_int8_t ocw1[2], elcr[2];
 	int icu, bit;
@@ -339,9 +331,7 @@ sio_setirqstat(irq, enabled, type)
 }
 
 void
-sio_intr_setup(pc, iot)
-	pci_chipset_tag_t pc;
-	bus_space_tag_t iot;
+sio_intr_setup(pci_chipset_tag_t pc, bus_space_tag_t iot)
 {
 	int i;
 
@@ -422,7 +412,7 @@ sio_intr_setup(pc, iot)
 }
 
 void
-sio_intr_shutdown()
+sio_intr_shutdown(void)
 {
 #ifdef BROKEN_PROM_CONSOLE
 	if (sio_write_elcr == NULL)
@@ -439,9 +429,7 @@ sio_intr_shutdown()
 }
 
 const char *
-sio_intr_string(v, irq)
-	void *v;
-	int irq;
+sio_intr_string(void *v, int irq)
 {
 	static char irqstr[12];		/* 8 + 2 + NUL + sanity */
 
@@ -453,21 +441,14 @@ sio_intr_string(v, irq)
 }
 
 int
-sio_intr_line(v, irq)
-	void *v;
-	int irq;
+sio_intr_line(void *v, int irq)
 {
 	return (irq);
 }
 
 void *
-sio_intr_establish(v, irq, type, level, fn, arg, name)
-	void *v, *arg;
-        int irq;
-        int type;
-        int level;
-        int (*fn)(void *);
-	const char *name;
+sio_intr_establish(void *v, int irq, int type, int level, int (*fn)(void *),
+    void *arg, const char *name)
 {
 	void *cookie;
 
@@ -496,9 +477,7 @@ sio_intr_establish(v, irq, type, level, fn, arg, name)
 }
 
 void
-sio_intr_disestablish(v, cookie)
-	void *v;
-	void *cookie;
+sio_intr_disestablish(void *v, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	int s, ist, irq = ih->ih_num;
@@ -548,9 +527,7 @@ sio_intr_disestablish(v, cookie)
 }
 
 void
-sio_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+sio_iointr(void *arg, unsigned long vec)
 {
 	int irq;
 
@@ -578,11 +555,7 @@ sio_iointr(arg, vec)
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
 
 int
-sio_intr_alloc(v, mask, type, irq)
-	void *v;
-	int mask;
-	int type;
-	int *irq;
+sio_intr_alloc(void *v, int mask, int type, int *irq)
 {
 	int i, tmp, bestirq, count;
 	struct alpha_shared_intrhand **p, *q;
@@ -688,8 +661,7 @@ sio_intr_check(void *v, int irq, int type)
 }
 
 static void
-specific_eoi(irq)
-	int irq;
+specific_eoi(int irq)
 {
 	if (irq > 7) {
 		bus_space_write_1(sio_iot,

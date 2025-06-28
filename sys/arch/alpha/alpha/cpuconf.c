@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.14 2013/03/09 02:10:47 deraadt Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -200,7 +200,7 @@ platform_lookup(int systype)
 }
 
 void
-platform_not_configured()
+platform_not_configured(void)
 {
 	const struct cpuinit *c = platform_lookup(cputype);
 
@@ -212,7 +212,7 @@ platform_not_configured()
 }
 
 void
-platform_not_supported()
+platform_not_supported(void)
 {
 	const struct cpuinit *c = platform_lookup(cputype);
 

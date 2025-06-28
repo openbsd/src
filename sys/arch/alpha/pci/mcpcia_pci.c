@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia_pci.c,v 1.3 2012/12/05 23:20:10 deraadt Exp $ */
+/* $OpenBSD: mcpcia_pci.c,v 1.4 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: mcpcia_pci.c,v 1.5 2007/03/04 05:59:11 christos Exp $ */
 
 /*
@@ -55,9 +55,7 @@ pcireg_t mcpcia_conf_read(void *, pcitag_t, int);
 void	mcpcia_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-mcpcia_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+mcpcia_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
 	pc->pc_attach_hook = mcpcia_attach_hook;
@@ -70,24 +68,19 @@ mcpcia_pci_init(pc, v)
 }
 
 void
-mcpcia_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+mcpcia_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
 {
 }
 
 int
-mcpcia_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+mcpcia_bus_maxdevs(void *cpv, int busno)
 {
 	return (MCPCIA_MAXDEV);
 }
 
 pcitag_t
-mcpcia_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+mcpcia_make_tag(void *cpv, int b, int d, int f)
 {
 	pcitag_t tag;
 	tag = (b << 21) | (d << 16) | (f << 13);
@@ -95,10 +88,7 @@ mcpcia_make_tag(cpv, b, d, f)
 }
 
 void
-mcpcia_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+mcpcia_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 	if (bp != NULL)
 		*bp = (tag >> 21) & 0xff;
@@ -115,10 +105,7 @@ mcpcia_conf_size(void *cpv, pcitag_t tag)
 }
 
 pcireg_t
-mcpcia_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+mcpcia_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	struct mcpcia_config *ccp = cpv;
 	pcireg_t *dp, data = (pcireg_t) -1;
@@ -146,11 +133,7 @@ mcpcia_conf_read(cpv, tag, offset)
 }
 
 void
-mcpcia_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+mcpcia_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct mcpcia_config *ccp = cpv;
 	pcireg_t *dp;

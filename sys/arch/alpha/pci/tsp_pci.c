@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_pci.c,v 1.4 2010/12/04 17:06:31 miod Exp $ */
+/* $OpenBSD: tsp_pci.c,v 1.5 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: tsp_pci.c,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -61,9 +61,7 @@ pcireg_t	tsp_conf_read(void *, pcitag_t, int);
 void		tsp_conf_write(void *, pcitag_t, int, pcireg_t);
 
 void
-tsp_pci_init(pc, v)
-	pci_chipset_tag_t pc;
-	void *v;
+tsp_pci_init(pci_chipset_tag_t pc, void *v)
 {
 	pc->pc_conf_v = v;
 	pc->pc_attach_hook = tsp_attach_hook;
@@ -76,33 +74,25 @@ tsp_pci_init(pc, v)
 }
 
 void
-tsp_attach_hook(parent, self, pba)
-	struct device *parent, *self;
-	struct pcibus_attach_args *pba;
+tsp_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
 {
 }
 
 int
-tsp_bus_maxdevs(cpv, busno)
-	void *cpv;
-	int busno;
+tsp_bus_maxdevs(void *cpv, int busno)
 {
 	return 32;
 }
 
 pcitag_t
-tsp_make_tag(cpv, b, d, f)
-	void *cpv;
-	int b, d, f;
+tsp_make_tag(void *cpv, int b, int d, int f)
 {
 	return b << 16 | d << 11 | f << 8;
 }
 
 void
-tsp_decompose_tag(cpv, tag, bp, dp, fp)
-	void *cpv;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+tsp_decompose_tag(void *cpv, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 	if (bp != NULL)
 		*bp = (tag >> 16) & 0xff;
@@ -124,10 +114,7 @@ tsp_conf_size(void *cpv, pcitag_t tag)
  * no errors on unanswered probes.
  */
 pcireg_t
-tsp_conf_read(cpv, tag, offset)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
+tsp_conf_read(void *cpv, pcitag_t tag, int offset)
 {
 	pcireg_t *datap, data;
 	struct tsp_config *pcp = cpv;
@@ -140,11 +127,7 @@ tsp_conf_read(cpv, tag, offset)
 }
 
 void
-tsp_conf_write(cpv, tag, offset, data)
-	void *cpv;
-	pcitag_t tag;
-	int offset;
-	pcireg_t data;
+tsp_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	pcireg_t *datap;
 	struct tsp_config *pcp = cpv;

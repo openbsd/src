@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_eb64plus.c,v 1.9 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: dec_eb64plus.c,v 1.10 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: dec_eb64plus.c,v 1.25 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
@@ -76,7 +76,7 @@ const struct alpha_variation_table dec_eb64plus_variations[] = {
 };
 
 void
-dec_eb64plus_init()
+dec_eb64plus_init(void)
 {
 	u_int64_t variation;
 
@@ -95,7 +95,7 @@ dec_eb64plus_init()
 }
 
 static void
-dec_eb64plus_cons_init()
+dec_eb64plus_cons_init(void)
 {
 	struct ctb *ctb;
 	struct apecs_config *acp;
@@ -156,9 +156,7 @@ dec_eb64plus_cons_init()
 }
 
 static void
-dec_eb64plus_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_eb64plus_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

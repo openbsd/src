@@ -1,4 +1,4 @@
-/* $OpenBSD: mcbus.c,v 1.5 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: mcbus.c,v 1.6 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: mcbus.c,v 1.19 2007/03/04 05:59:11 christos Exp $ */
 
 /*
@@ -90,9 +90,7 @@ const int mcbus_mcpcia_probe_order[] = { 5, 4, 7, 6 };
 extern void mcpcia_config_cleanup (void);
 
 int
-mcbusprint(aux, cp)
-	void *aux;
-	const char *cp;
+mcbusprint(void *aux, const char *cp)
 {
 	struct mcbus_dev_attach_args *tap = aux;
 	printf(" mid %d: %s", tap->ma_mid,
@@ -101,10 +99,7 @@ mcbusprint(aux, cp)
 }
 
 int
-mcbussbm(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+mcbussbm(struct device *parent, void *cf, void *aux)
 {
 	struct mcbus_dev_attach_args *tap = aux;
 	struct cfdata *mcf = (struct cfdata *)cf;
@@ -118,10 +113,7 @@ mcbussbm(parent, cf, aux)
 }
 
 int
-mcbusmatch(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+mcbusmatch(struct device *parent, void *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -139,10 +131,7 @@ mcbusmatch(parent, cf, aux)
 }
 
 void
-mcbusattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mcbusattach(struct device *parent, struct device *self, void *aux)
 {
 	static const char *bcs[CPU_BCacheMask + 1] = {
 		"No", "1MB", "2MB", "4MB",
@@ -187,8 +176,7 @@ mcbusattach(parent, self, aux)
 }
 
 const char *
-mcbus_node_type_str(type)
-	u_int8_t type;
+mcbus_node_type_str(u_int8_t type)
 {
 	switch (type) {
 	case MCBUS_TYPE_RES:

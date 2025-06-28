@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.31 2023/09/17 14:50:50 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.32 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $	*/
 
 /*
@@ -122,9 +122,7 @@ rtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
 }
 
 void
-clockattach(dev, fns)
-	struct device *dev;
-	const struct clockfns *fns;
+clockattach(struct device *dev, const struct clockfns *fns)
 {
 
 	/*

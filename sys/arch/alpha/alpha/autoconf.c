@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.39 2022/09/02 20:06:55 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.40 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ unmap_startup(void)
  * called at boot time, configure all devices on system
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	parse_prom_bootdev();
 	softintr_init();
@@ -122,7 +122,7 @@ diskconf(void)
 }
 
 void
-parse_prom_bootdev()
+parse_prom_bootdev(void)
 {
 	static struct bootdev_data bd;
 	char *cp, *scp, *boot_fields[8];
@@ -180,8 +180,7 @@ parse_prom_bootdev()
 }
 
 int
-atoi(s)
-	char *s;
+atoi(char *s)
 {
 	int n, neg;
 
@@ -205,9 +204,7 @@ atoi(s)
 }
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	if (bootdev_data == NULL) {
 		/*

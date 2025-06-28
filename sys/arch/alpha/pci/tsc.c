@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.17 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: tsc.c,v 1.18 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -82,11 +82,6 @@ struct cfdriver tsp_cd = {
 
 static int tspprint(void *, const char *pnp);
 
-#if	0
-static int tsp_bus_get_window(int, int,
-	struct alpha_bus_space_translation *);
-#endif
-
 /* There can be only one */
 static int tscfound;
 
@@ -94,10 +89,7 @@ static int tscfound;
 int tsp_console_hose;
 
 int
-tscmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+tscmatch(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -111,9 +103,7 @@ tscmatch(parent, match, aux)
 }
 
 void
-tscattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tscattach(struct device *parent, struct device *self, void *aux)
 {
 	int i;
 	int nbus;
@@ -163,9 +153,7 @@ tscattach(parent, self, aux)
 }
 
 static int
-tscprint(aux, p)
-	void *aux;
-	const char *p;
+tscprint(void *aux, const char *p)
 {
 	struct tsp_attach_args *tsp = aux;
 
@@ -179,10 +167,7 @@ tscprint(aux, p)
 #define tsp() { Generate ctags(1) key. }
 
 int
-tspmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+tspmatch(struct device *parent, void *match, void *aux)
 {
 	struct tsp_attach_args *t = aux;
 
@@ -196,9 +181,7 @@ tspmatch(parent, match, aux)
 }
 
 void
-tspattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tspattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcibus_attach_args pba;
 	struct tsp_attach_args *t = aux;
@@ -235,9 +218,7 @@ tspattach(parent, self, aux)
 }
 
 struct tsp_config *
-tsp_init(mallocsafe, n)
-	int mallocsafe;
-	int n;	/* hose number */
+tsp_init(int mallocsafe, int n)	/* hose number */
 {
 	struct tsp_config *pcp;
 	int titan = cputype == ST_DEC_TITAN;
@@ -265,12 +246,6 @@ tsp_init(mallocsafe, n)
 	if (!pcp->pc_initted) {
 		tsp_bus_io_init(&pcp->pc_iot, pcp);
 		tsp_bus_mem_init(&pcp->pc_memt, pcp);
-#if 0
-		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 1;
-		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 1;
-
-		alpha_bus_get_window = tsp_bus_get_window;
-#endif 
 	}
 	pcp->pc_mallocsafe = mallocsafe;
 	tsp_pci_init(&pcp->pc_pc, pcp);
@@ -289,9 +264,7 @@ tsp_init(mallocsafe, n)
 }
 
 static int
-tspprint(aux, p)
-	void *aux;
-	const char *p;
+tspprint(void *aux, const char *p)
 {
 	register struct pcibus_attach_args *pci = aux;
 
@@ -300,37 +273,3 @@ tspprint(aux, p)
 	printf(" bus %d", pci->pba_bus);
 	return UNCONF;
 }
-
-#if 0
-static int
-tsp_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
-{
-	struct tsp_config *tsp = &tsp_configuration[tsp_console_hose];
-	bus_space_tag_t st;
-	int error;
-
-	switch (type) {
-	case ALPHA_BUS_TYPE_PCI_IO:
-		st = &tsp->pc_iot;
-		break;
-
-	case ALPHA_BUS_TYPE_PCI_MEM:
-		st = &tsp->pc_memt;
-		break;
-
-	default:
-		panic("tsp_bus_get_window");
-	}
-
-	error = alpha_bus_space_get_window(st, window, abst);
-	if (error)
-		return (error);
-
-	abst->abst_sys_start = TS_PHYSADDR(abst->abst_sys_start);
-	abst->abst_sys_end = TS_PHYSADDR(abst->abst_sys_end);
-
-	return (0);
-}
-#endif

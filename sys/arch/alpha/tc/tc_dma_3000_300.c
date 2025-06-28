@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_dma_3000_300.c,v 1.2 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: tc_dma_3000_300.c,v 1.3 2025/06/28 16:04:10 miod Exp $ */
 /* $NetBSD: tc_dma_3000_300.c,v 1.3 1997/09/02 13:20:29 thorpej Exp $ */
 
 /*-
@@ -41,8 +41,7 @@
  * Return the DMA tag for the given slot.
  */
 bus_dma_tag_t
-tc_dma_get_tag_3000_300(slot)
-	int slot;
+tc_dma_get_tag_3000_300(int slot)
 {
 	extern struct alpha_bus_dma_tag tc_dmat_direct;
 

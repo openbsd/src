@@ -1,4 +1,4 @@
-/* $OpenBSD: asc.c,v 1.26 2014/01/18 22:33:59 dlg Exp $ */
+/* $OpenBSD: asc.c,v 1.27 2025/06/28 16:04:10 miod Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,9 +74,7 @@ struct cfdriver asc_cd = {
  * Glue functions
  */
 u_char
-asc_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+asc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	u_char v;
@@ -88,14 +86,10 @@ asc_read_reg(sc, reg)
 }
 
 void
-asc_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+asc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
 	    reg * sizeof(u_int32_t), val);
 }
-

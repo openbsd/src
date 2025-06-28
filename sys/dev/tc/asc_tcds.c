@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tcds.c,v 1.9 2022/04/06 18:59:30 naddy Exp $ */
+/* $OpenBSD: asc_tcds.c,v 1.10 2025/06/28 16:04:10 miod Exp $ */
 /* $NetBSD: asc_tcds.c,v 1.5 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -114,9 +114,7 @@ struct ncr53c9x_glue asc_tcds_glue = {
 };
 
 int
-asc_tcds_match(parent, cf, aux)
-	struct device *parent;
-	void *cf, *aux;
+asc_tcds_match(struct device *parent, void *cf, void *aux)
 {
 
 	/* We always exist. */
@@ -129,9 +127,7 @@ asc_tcds_match(parent, cf, aux)
  * Attach this instance, and then all the sub-devices
  */
 void
-asc_tcds_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+asc_tcds_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcdsdev_attach_args *tcdsdev = aux;
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)self;
@@ -212,8 +208,7 @@ asc_tcds_attach(parent, self, aux)
 }
 
 void
-tcds_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
@@ -229,11 +224,8 @@ tcds_dma_reset(sc)
  * start a dma transfer or keep it going
  */
 int
-tcds_dma_setup(sc, addr, len, ispullup, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len, *dmasize;
-	int ispullup;				/* DMA into main memory */
+tcds_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+    int ispullup /* DMA into main memory */, size_t *dmasize)
 {
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 	struct tcds_slotconfig *tcds = asc->sc_tcds;
@@ -289,8 +281,7 @@ tcds_dma_setup(sc, addr, len, ispullup, dmasize)
 }
 
 void
-tcds_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
@@ -302,8 +293,7 @@ tcds_dma_go(sc)
 }
 
 void
-tcds_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_stop(struct ncr53c9x_softc *sc)
 {
 #if 0
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
@@ -322,8 +312,7 @@ tcds_dma_stop(sc)
  * return 1 if it was a DMA continue.
  */
 int
-tcds_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 	struct tcds_slotconfig *tcds = asc->sc_tcds;
@@ -449,8 +438,7 @@ tcds_dma_intr(sc)
  * Glue functions.
  */
 int
-tcds_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 	int x;
@@ -462,8 +450,7 @@ tcds_dma_isintr(sc)
 }
 
 int
-tcds_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+tcds_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 
@@ -471,8 +458,7 @@ tcds_dma_isactive(sc)
 }
 
 void
-tcds_clear_latched_intr(sc)
-	struct ncr53c9x_softc *sc;
+tcds_clear_latched_intr(struct ncr53c9x_softc *sc)
 {
 	struct asc_tcds_softc *asc = (struct asc_tcds_softc *)sc;
 

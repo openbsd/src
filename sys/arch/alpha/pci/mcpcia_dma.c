@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia_dma.c,v 1.5 2014/06/14 23:11:20 jmatthew Exp $ */
+/* $OpenBSD: mcpcia_dma.c,v 1.6 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: mcpcia_dma.c,v 1.15 2001/07/19 18:55:40 thorpej Exp $ */
 
 /*-
@@ -92,8 +92,7 @@ do {									\
 } while (0)
 
 void
-mcpcia_dma_init(ccp)
-	struct mcpcia_config *ccp;
+mcpcia_dma_init(struct mcpcia_config *ccp)
 {
 	bus_dma_tag_t t;
 
@@ -252,9 +251,7 @@ mcpcia_dma_init(ccp)
  * INTERNAL USE ONLY!
  */
 bus_dma_tag_t
-mcpcia_dma_get_tag(t, bustype)
-	bus_dma_tag_t t;
-	alpha_bus_t bustype;
+mcpcia_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 {
 	struct mcpcia_config *ccp = t->_cookie;
 
@@ -285,13 +282,8 @@ mcpcia_dma_get_tag(t, bustype)
  * Load a MCPCIA SGMAP-mapped DMA map with a linear buffer.
  */
 int
-mcpcia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+mcpcia_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 	struct mcpcia_config *ccp = t->_cookie;
@@ -307,11 +299,8 @@ mcpcia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
  * Load a MCPCIA SGMAP-mapped DMA map with an mbuf chain.
  */
 int
-mcpcia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+mcpcia_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    struct mbuf *m, int flags)
 {
 	int error;
 	struct mcpcia_config *ccp = t->_cookie;
@@ -326,11 +315,8 @@ mcpcia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
  * Load a MCPCIA SGMAP-mapped DMA map with a uio.
  */
 int
-mcpcia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+mcpcia_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    struct uio *uio, int flags)
 {
 	int error;
 	struct mcpcia_config *ccp = t->_cookie;
@@ -345,13 +331,8 @@ mcpcia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
  * Load a MCPCIA SGMAP-mapped DMA map with raw memory.
  */
 int
-mcpcia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+mcpcia_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 	struct mcpcia_config *ccp = t->_cookie;
@@ -367,9 +348,7 @@ mcpcia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
  * Unload a MCPCIA DMA map.
  */
 void
-mcpcia_bus_dmamap_unload_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+mcpcia_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct mcpcia_config *ccp = t->_cookie;
 

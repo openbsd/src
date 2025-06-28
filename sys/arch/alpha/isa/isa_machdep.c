@@ -1,4 +1,4 @@
-/* $OpenBSD: isa_machdep.c,v 1.14 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: isa_machdep.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: isa_machdep.c,v 1.12 1998/08/07 10:26:39 drochner Exp $ */
 
 /*
@@ -50,8 +50,7 @@
 #endif
 
 int
-isa_display_console(iot, memt)
-	bus_space_tag_t iot, memt;
+isa_display_console(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	int res = ENXIO;
 #if NVGA_ISA

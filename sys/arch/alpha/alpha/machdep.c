@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.204 2025/04/28 13:27:20 visa Exp $ */
+/* $OpenBSD: machdep.c,v 1.205 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -195,13 +195,12 @@ int	alpha_led_blink = 1;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];	/* low size bits overloaded */
 int	mem_cluster_cnt;
 
+/*
+ * Arguments are PFN of current level 1 page table, and bootinfo magic, pointer
+ * and version.
+ */
 void
-alpha_init(unused, ptb, bim, bip, biv)
-	u_long unused;
-	u_long ptb;		/* PFN of current level 1 page table */
-	u_long bim;		/* bootinfo magic */
-	u_long bip;		/* bootinfo pointer */
-	u_long biv;		/* bootinfo version */
+alpha_init(u_long unused, u_long ptb, u_long bim, u_long bip, u_long biv)
 {
 	extern char kernel_text[], _end[];
 	struct mddt *mddtp;
@@ -748,7 +747,7 @@ nobootinfo:
 }
 
 void
-consinit()
+consinit(void)
 {
 	/*
 	 * Everything related to console initialization is done
@@ -757,7 +756,7 @@ consinit()
 }
 
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 #if defined(DEBUG)
@@ -841,7 +840,7 @@ cpu_startup()
  * Retrieve the platform name from the DSR.
  */
 const char *
-alpha_dsr_sysname()
+alpha_dsr_sysname(void)
 {
 	struct dsrdb *dsr;
 	const char *sysname;
@@ -863,9 +862,8 @@ alpha_dsr_sysname()
  * returning the model string on match.
  */
 const char *
-alpha_variation_name(variation, avtp)
-	u_int64_t variation;
-	const struct alpha_variation_table *avtp;
+alpha_variation_name(u_int64_t variation,
+    const struct alpha_variation_table *avtp)
 {
 	int i;
 
@@ -879,7 +877,7 @@ alpha_variation_name(variation, avtp)
  * Generate a default platform name based for unknown system variations.
  */
 const char *
-alpha_unknown_sysname()
+alpha_unknown_sysname(void)
 {
 	static char s[128];		/* safe size */
 
@@ -889,7 +887,7 @@ alpha_unknown_sysname()
 }
 
 void
-identifycpu()
+identifycpu(void)
 {
 	char *s;
 	int slen;
@@ -1025,7 +1023,7 @@ long	dumplo = 0; 		/* blocks */
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
@@ -1041,7 +1039,7 @@ cpu_dumpsize()
  * cpu_dump_mempagecnt: calculate size of RAM (in pages) to be dumped.
  */
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	u_long i, n;
 
@@ -1055,7 +1053,7 @@ cpu_dump_mempagecnt()
  * cpu_dump: dump machine-dependent kernel core dump headers.
  */
 int
-cpu_dump()
+cpu_dump(void)
 {
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	char buf[dbtob(1)];
@@ -1136,7 +1134,7 @@ dumpconf(void)
 #define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
-dumpsys()
+dumpsys(void)
 {
 	u_long totalbytesleft, bytes, i, n, memcl;
 	u_long maddr;
@@ -1246,9 +1244,7 @@ err:
 }
 
 void
-frametoreg(framep, regp)
-	struct trapframe *framep;
-	struct reg *regp;
+frametoreg(struct trapframe *framep, struct reg *regp)
 {
 
 	regp->r_regs[R_V0] = framep->tf_regs[FRAME_V0];
@@ -1286,9 +1282,7 @@ frametoreg(framep, regp)
 }
 
 void
-regtoframe(regp, framep)
-	struct reg *regp;
-	struct trapframe *framep;
+regtoframe(struct reg *regp, struct trapframe *framep)
 {
 
 	framep->tf_regs[FRAME_V0] = regp->r_regs[R_V0];
@@ -1326,8 +1320,7 @@ regtoframe(regp, framep)
 }
 
 void
-printregs(regp)
-	struct reg *regp;
+printregs(struct reg *regp)
 {
 	int i;
 
@@ -1337,8 +1330,7 @@ printregs(regp)
 }
 
 void
-regdump(framep)
-	struct trapframe *framep;
+regdump(struct trapframe *framep)
 {
 	struct reg reg;
 
@@ -1711,7 +1703,7 @@ fpusave_proc(struct proc *p, int save)
 }
 
 int
-spl0()
+spl0(void)
 {
 
 	if (ssir) {
@@ -1726,8 +1718,7 @@ spl0()
  * Wait "n" microseconds.
  */
 void
-delay(n)
-	unsigned long n;
+delay(unsigned long n)
 {
 	unsigned long pcc0, pcc1, curcycle, cycles, usec;
 
@@ -1765,8 +1756,7 @@ delay(n)
 }
 
 int
-alpha_pa_access(pa)
-	u_long pa;
+alpha_pa_access(u_long pa)
 {
 	int i;
 
@@ -1793,8 +1783,7 @@ alpha_pa_access(pa)
 paddr_t alpha_XXX_dmamap_or;					/* XXX */
 								/* XXX */
 paddr_t								/* XXX */
-alpha_XXX_dmamap(v)						/* XXX */
-	vaddr_t v;						/* XXX */
+alpha_XXX_dmamap(vaddr_t v)					/* XXX */
 {								/* XXX */
 								/* XXX */
 	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */

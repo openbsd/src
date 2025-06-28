@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.15 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: mainbus.c,v 1.16 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: mainbus.c,v 1.27 1998/06/24 01:10:35 ross Exp $ */
 
 /*
@@ -55,10 +55,7 @@ struct cfdriver mainbus_cd = {
 int	mainbus_found;
 
 static int
-mbmatch(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+mbmatch(struct device *parent, void *cf, void *aux)
 {
 
 	if (mainbus_found)
@@ -68,10 +65,7 @@ mbmatch(parent, cf, aux)
 }
 
 static void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args ma;
 	struct pcs *pcsp;
@@ -102,9 +96,7 @@ mbattach(parent, self, aux)
 }
 
 static int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mbprint(void *aux, const char *pnp)
 {
 	struct mainbus_attach_args *ma = aux;
 

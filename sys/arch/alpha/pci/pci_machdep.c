@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.21 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.22 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
 
 /*
@@ -61,10 +61,8 @@
 struct alpha_pci_chipset *alpha_pci_chipset;
 
 void
-pci_display_console(iot, memt, pc, bus, device, function)
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
-	int bus, device, function;
+pci_display_console(bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 	pcireg_t id, class;

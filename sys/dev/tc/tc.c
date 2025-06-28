@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.21 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: tc.c,v 1.22 2025/06/28 16:04:10 miod Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -54,9 +54,7 @@ int	tc_checkslot(tc_addr_t, char *);
 void	tc_devinfo(const char *, char *, size_t);
 
 int
-tcmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+tcmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct tcbus_attach_args *tba = aux;
 	struct cfdata *cf = vcf;
@@ -68,10 +66,7 @@ tcmatch(parent, vcf, aux)
 }
 
 void
-tcattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tc_softc *sc = (struct tc_softc *)self;
 	struct tcbus_attach_args *tba = aux;
@@ -181,9 +176,7 @@ tcattach(parent, self, aux)
 }
 
 int
-tcprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+tcprint(void *aux, const char *pnp)
 {
 	struct tc_attach_args *ta = aux;
 	char devinfo[256];
@@ -198,9 +191,7 @@ tcprint(aux, pnp)
 }
 
 int
-tcsubmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+tcsubmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct tc_attach_args *d = aux;
 	struct cfdata *cf = vcf;
@@ -215,7 +206,6 @@ tcsubmatch(parent, vcf, aux)
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
-
 #define	NTC_ROMOFFS	2
 static tc_offset_t tc_slot_romoffs[NTC_ROMOFFS] = {
 	TC_SLOT_ROM,
@@ -223,9 +213,7 @@ static tc_offset_t tc_slot_romoffs[NTC_ROMOFFS] = {
 };
 
 int
-tc_checkslot(slotbase, namep)
-	tc_addr_t slotbase;
-	char *namep;
+tc_checkslot(tc_addr_t slotbase, char *namep)
 {
 	struct tc_rommap *romp;
 	int i, j;
@@ -263,12 +251,8 @@ tc_checkslot(slotbase, namep)
 }
 
 void
-tc_intr_establish(dev, cookie, level, handler, arg, name)
-	struct device *dev;
-	void *cookie, *arg;
-	int level;
-	int (*handler)(void *);
-	const char *name;
+tc_intr_establish(struct device *dev, void *cookie, int level,
+    int (*handler)(void *), void *arg, const char *name)
 {
 	struct tc_softc *sc = tc_cd.cd_devs[0];
 
@@ -276,10 +260,7 @@ tc_intr_establish(dev, cookie, level, handler, arg, name)
 }
 
 void
-tc_intr_disestablish(dev, cookie, name)
-	struct device *dev;
-	void *cookie;
-	const char *name;
+tc_intr_disestablish(struct device *dev, void *cookie, const char *name)
 {
 	struct tc_softc *sc = tc_cd.cd_devs[0];
 

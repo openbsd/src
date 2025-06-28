@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca.c,v 1.24 2022/03/13 08:04:13 mpi Exp $	*/
+/*	$OpenBSD: lca.c,v 1.25 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: lca.c,v 1.14 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*-
@@ -99,10 +99,6 @@ struct cfdriver lca_cd = {
 
 int	lcaprint(void *, const char *pnp);
 
-#if 0
-int	lca_bus_get_window(int, int,
-	    struct alpha_bus_space_translation *);
-#endif
 void	lca_machine_check(unsigned long, struct trapframe *, unsigned long,
 	    unsigned long);
 
@@ -111,10 +107,7 @@ int lcafound;
 struct lca_config lca_configuration;
 
 int
-lcamatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+lcamatch(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -132,9 +125,7 @@ lcamatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-lca_init(lcp, mallocsafe)
-	struct lca_config *lcp;
-	int mallocsafe;
+lca_init(struct lca_config *lcp, int mallocsafe)
 {
 
 	/*
@@ -149,15 +140,6 @@ lca_init(lcp, mallocsafe)
 		/* don't do these twice since they set up extents */
 		lca_bus_io_init(&lcp->lc_iot, lcp);
 		lca_bus_mem_init(&lcp->lc_memt, lcp);
-
-#if 0
-		/*
-		 * We have 1 I/O window and 3 MEM windows.
-		 */
-		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 1;
-		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 3;
-		alpha_bus_get_window = lca_bus_get_window;
-#endif
 	}
 	lcp->lc_mallocsafe = mallocsafe;
 
@@ -206,9 +188,7 @@ lca_init(lcp, mallocsafe)
 }
 
 void
-lcaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lcaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct lca_config *lcp;
 	struct pcibus_attach_args pba;
@@ -271,9 +251,7 @@ lcaattach(parent, self, aux)
 }
 
 int
-lcaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+lcaprint(void *aux, const char *pnp)
 {
 	register struct pcibus_attach_args *pba = aux;
 
@@ -283,32 +261,6 @@ lcaprint(aux, pnp)
 	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
-
-#if 0
-int
-lca_bus_get_window(type, window, abst)
-	int type, window;
-	struct alpha_bus_space_translation *abst;
-{
-	struct lca_config *lcp = &lca_configuration;
-	bus_space_tag_t st;
-
-	switch (type) {
-	case ALPHA_BUS_TYPE_PCI_IO:
-		st = &lcp->lc_iot;
-		break;
-
-	case ALPHA_BUS_TYPE_PCI_MEM:
-		st = &lcp->lc_memt;
-		break;
-
-	default:
-		panic("lca_bus_get_window");
-	}
-
-	return (alpha_bus_space_get_window(st, window, abst));
-}
-#endif
 
 void
 lca_machine_check(unsigned long mces, struct trapframe *framep,

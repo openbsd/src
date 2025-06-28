@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.19 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: tcasic.c,v 1.20 2025/06/28 16:04:10 miod Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -62,9 +62,7 @@ int	tcasicprint(void *, const char *);
 int	tcasicfound;
 
 int
-tcasicmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata, *aux;
+tcasicmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -79,10 +77,7 @@ tcasicmatch(parent, cfdata, aux)
 }
 
 void
-tcasicattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tcasicattach(struct device *parent, struct device *self, void *aux)
 {
 	struct tcbus_attach_args tba;
 	void (*intr_setup)(void);
@@ -168,9 +163,7 @@ tcasicactivate(struct device *self, int act)
 }
 
 int
-tcasicprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+tcasicprint(void *aux, const char *pnp)
 {
 
 	/* only TCs can attach to tcasics; easy. */
@@ -180,8 +173,7 @@ tcasicprint(aux, pnp)
 }
 
 int
-tc_fb_cnattach(tcaddr)
-	tc_addr_t tcaddr;
+tc_fb_cnattach(tc_addr_t tcaddr)
 {
 		return (ENXIO);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.29 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.30 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -73,8 +73,7 @@ void	kn20aa_enable_intr(int irq);
 void	kn20aa_disable_intr(int irq);
 
 void
-pci_kn20aa_pickintr(ccp)
-	struct cia_config *ccp;
+pci_kn20aa_pickintr(struct cia_config *ccp)
 {
 	int i;
 	bus_space_tag_t iot = &ccp->cc_iot;
@@ -103,9 +102,7 @@ pci_kn20aa_pickintr(ccp)
 }
 
 int     
-dec_kn20aa_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_kn20aa_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin = pa->pa_intrpin;
@@ -174,9 +171,7 @@ dec_kn20aa_intr_map(pa, ihp)
 }
 
 const char *
-dec_kn20aa_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_kn20aa_intr_string(void *ccv, pci_intr_handle_t ih)
 {
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
@@ -188,20 +183,14 @@ dec_kn20aa_intr_string(ccv, ih)
 }
 
 int
-dec_kn20aa_intr_line(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_kn20aa_intr_line(void *ccv, pci_intr_handle_t ih)
 {
 	return (ih);
 }
 
 void *
-dec_kn20aa_intr_establish(ccv, ih, level, func, arg, name)
-        void *ccv, *arg;
-        pci_intr_handle_t ih;
-        int level;
-        int (*func)(void *);
-	const char *name;
+dec_kn20aa_intr_establish(void *ccv, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *name)
 {           
 	void *cookie;
 
@@ -221,8 +210,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg, name)
 }
 
 void    
-dec_kn20aa_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+dec_kn20aa_intr_disestablish(void *ccv, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
@@ -241,9 +229,7 @@ dec_kn20aa_intr_disestablish(ccv, cookie)
 }
 
 void
-kn20aa_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+kn20aa_iointr(void *arg, unsigned long vec)
 {
 	int irq;
 
@@ -259,8 +245,7 @@ kn20aa_iointr(arg, vec)
 }
 
 void
-kn20aa_enable_intr(irq)
-	int irq;
+kn20aa_enable_intr(int irq)
 {
 
 	/*
@@ -275,8 +260,7 @@ kn20aa_enable_intr(irq)
 }
 
 void
-kn20aa_disable_intr(irq)
-	int irq;
+kn20aa_disable_intr(int irq)
 {
 
 	alpha_mb();

@@ -1,4 +1,4 @@
-/* $OpenBSD: mcclock_ioasic.c,v 1.7 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: mcclock_ioasic.c,v 1.8 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: mcclock_ioasic.c,v 1.9 2000/07/04 02:37:51 nisimura Exp $ */
 
 /*
@@ -66,9 +66,7 @@ const struct mcclock_busfns mcclock_ioasic_busfns = {
 };
 
 int
-mcclock_ioasic_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+mcclock_ioasic_match(struct device *parent, void *match, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -79,9 +77,7 @@ mcclock_ioasic_match(parent, match, aux)
 }
 
 void
-mcclock_ioasic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mcclock_ioasic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioasicdev_attach_args *ioasicdev = aux;
 	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)self;
@@ -92,9 +88,7 @@ mcclock_ioasic_attach(parent, self, aux)
 }
 
 void
-mcclock_ioasic_write(dev, reg, datum)
-	struct mcclock_softc *dev;
-	u_int reg, datum;
+mcclock_ioasic_write(struct mcclock_softc *dev, u_int reg, u_int datum)
 {
 	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)dev;
 
@@ -102,9 +96,7 @@ mcclock_ioasic_write(dev, reg, datum)
 }
 
 u_int
-mcclock_ioasic_read(dev, reg)
-	struct mcclock_softc *dev;
-	u_int reg;
+mcclock_ioasic_read(struct mcclock_softc *dev, u_int reg)
 {
 	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)dev;
 

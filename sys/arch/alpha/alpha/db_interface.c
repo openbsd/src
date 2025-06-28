@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.30 2024/11/07 16:02:29 miod Exp $ */
+/* $OpenBSD: db_interface.c,v 1.31 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -135,9 +135,8 @@ struct db_variable *db_eregs = db_regs + nitems(db_regs);
  * ddb_trap - field a kernel trap
  */
 int
-ddb_trap(a0, a1, a2, entry, regs)
-	unsigned long a0, a1, a2, entry;
-	db_regs_t *regs;
+ddb_trap(unsigned long a0, unsigned long a1, unsigned long a2,
+    unsigned long entry, db_regs_t *regs)
 {
 	struct cpu_info *ci = curcpu();
 	int s;
@@ -188,12 +187,9 @@ ddb_trap(a0, a1, a2, entry, regs)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, datap)
-	vaddr_t		addr;
-	register size_t	size;
-	register void	*datap;
+db_read_bytes(vaddr_t addr, size_t size, void *datap)
 {
-	register char	*data = datap, *src;
+	char *data = datap, *src;
 
 	src = (char *)addr;
 	while (size-- > 0)
@@ -204,12 +200,9 @@ db_read_bytes(addr, size, datap)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, datap)
-	vaddr_t		addr;
-	register size_t	size;
-	register void	*datap;
+db_write_bytes(vaddr_t addr, size_t size, void *datap)
 {
-	register char	*data = datap, *dst;
+	char *data = datap, *dst;
 
 	dst = (char *)addr;
 	while (size-- > 0)
@@ -218,7 +211,7 @@ db_write_bytes(addr, size, datap)
 }
 
 void
-db_enter()
+db_enter(void)
 {
 
 	__asm volatile("call_pal 0x81");		/* bugchk */
@@ -266,9 +259,7 @@ static int reg_to_frame[32] = {
 };
 
 u_long
-db_register_value(regs, regno)
-	db_regs_t *regs;
-	int regno;
+db_register_value(db_regs_t *regs, int regno)
 {
 
 	if (regno > 31 || regno < 0) {
@@ -400,10 +391,7 @@ db_inst_load(int ins)
 }
 
 vaddr_t
-db_branch_taken(ins, pc, regs)
-	int ins;
-	vaddr_t pc;
-	db_regs_t *regs;
+db_branch_taken(int ins, vaddr_t pc, db_regs_t *regs)
 {
 	long signed_immediate;
 	alpha_instruction insn;
@@ -456,8 +444,7 @@ db_branch_taken(ins, pc, regs)
  * Recursion and kernel stack space exhaustion will follow.
  */
 int
-db_valid_breakpoint(addr)
-	vaddr_t addr;
+db_valid_breakpoint(vaddr_t addr)
 {
 	const char *name;
 	db_expr_t offset;
@@ -469,9 +456,7 @@ db_valid_breakpoint(addr)
 }
 
 vaddr_t
-next_instr_address(pc, branch)
-	vaddr_t pc;
-	int branch;
+next_instr_address(vaddr_t pc, int branch)
 {
 	if (!branch)
 		return (pc + sizeof(int));
@@ -525,6 +510,6 @@ db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 #endif /* MULTIPROCESSOR */
 
 void
-db_machine_init()
+db_machine_init(void)
 {
 }

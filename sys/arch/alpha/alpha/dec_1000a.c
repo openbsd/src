@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_1000a.c,v 1.9 2017/04/30 13:04:49 mpi Exp $ */
+/* $OpenBSD: dec_1000a.c,v 1.10 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: dec_1000a.c,v 1.14 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*
@@ -114,7 +114,7 @@ const struct alpha_variation_table dec_1000a_variations[] = {
 };
 
 void
-_dec_1000a_init()
+_dec_1000a_init(void)
 {
 	u_int64_t variation;
 
@@ -142,7 +142,7 @@ _dec_1000a_init()
 }
 
 void
-dec_1000a_cons_init()
+dec_1000a_cons_init(void)
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -227,9 +227,7 @@ dec_1000a_cons_init()
 }
 
 void
-dec_1000a_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_1000a_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

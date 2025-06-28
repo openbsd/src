@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.27 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: cia.c,v 1.28 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -141,10 +141,7 @@ int	cia_bus_use_bwx = CIA_BUS_USE_BWX;
 int	cia_pyxis_force_bwx = CIA_PYXIS_FORCE_BWX;
 
 int
-ciamatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+ciamatch(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -162,9 +159,7 @@ ciamatch(parent, match, aux)
  * Set up the chipset's function pointers.
  */
 void
-cia_init(ccp, mallocsafe)
-	struct cia_config *ccp;
-	int mallocsafe;
+cia_init(struct cia_config *ccp, int mallocsafe)
 {
 	int pci_use_bwx = cia_pci_use_bwx;
 	int bus_use_bwx = cia_bus_use_bwx;
@@ -266,9 +261,7 @@ cia_init(ccp, mallocsafe)
 }
 
 void
-ciaattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ciaattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cia_config *ccp;
 	struct pcibus_attach_args pba;
@@ -415,9 +408,7 @@ ciaattach(parent, self, aux)
 }
 
 static int
-ciaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ciaprint(void *aux, const char *pnp)
 {
 	register struct pcibus_attach_args *pba = aux;
 
@@ -429,8 +420,7 @@ ciaprint(aux, pnp)
 }
 
 void
-cia_pyxis_intr_enable(irq, onoff)
-	int irq, onoff;
+cia_pyxis_intr_enable(int irq, int onoff)
 {
 	u_int64_t imask;
 	int s;

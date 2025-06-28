@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate.c,v 1.12 2022/03/13 08:04:13 mpi Exp $	*/
+/*	$OpenBSD: irongate.c,v 1.13 2025/06/28 16:04:09 miod Exp $	*/
 /* $NetBSD: irongate.c,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
@@ -67,11 +67,6 @@ struct cfdriver irongate_cd = {
 struct irongate_config irongate_configuration;
 int	irongate_found;
 
-#if 0
-int	irongate_bus_get_window(int, int,
-	    struct alpha_bus_space_translation *);
-#endif
-
 /*
  * Set up the chipset's function pointers.
  */
@@ -104,14 +99,6 @@ irongate_init(struct irongate_config *icp, int mallocsafe)
 		/* Don't do these twice, since they set up extents. */
 		irongate_bus_io_init(&icp->ic_iot, icp);
 		irongate_bus_mem_init(&icp->ic_memt, icp);
-
-#if 0
-		/* Only one each PCI I/O and MEM window. */
-		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 1;
-		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 1;
-		
-		alpha_bus_get_window = irongate_bus_get_window;
-#endif
 	}
 
 	icp->ic_initted = 1;
@@ -197,36 +184,3 @@ irongate_print(void *aux, const char *pnp)
 	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
-
-#if 0
-int
-irongate_bus_get_window(int type, int window,
-    struct alpha_bus_space_translation *abst)
-{
-	struct irongate_config *icp = &irongate_configuration;
-	bus_space_tag_t st;
-	int error;
-
-	switch (type) {
-	case ALPHA_BUS_TYPE_PCI_IO:
-		st = &icp->ic_iot;
-		break;
-
-	case ALPHA_BUS_TYPE_PCI_MEM:
-		st = &icp->ic_memt;
-		break;
-
-	default:
-		panic("irongate_bus_get_window");
-	}
-
-	error = alpha_bus_space_get_window(st, window, abst);
-	if (error)
-		return (error);
-
-	abst->abst_sys_start = IRONGATE_PHYSADDR(abst->abst_sys_start);
-	abst->abst_sys_end = IRONGATE_PHYSADDR(abst->abst_sys_end);
-
-	return (0);
-}
-#endif

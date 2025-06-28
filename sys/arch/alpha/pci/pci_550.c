@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.24 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: pci_550.c,v 1.25 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -123,8 +123,7 @@ void	dec_550_intr_enable(int irq);
 void	dec_550_intr_disable(int irq);
 
 void
-pci_550_pickintr(ccp)
-	struct cia_config *ccp;
+pci_550_pickintr(struct cia_config *ccp)
 {
 	bus_space_tag_t iot = &ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
@@ -166,9 +165,7 @@ pci_550_pickintr(ccp)
 }
 
 int     
-dec_550_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_550_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int buspin, line = pa->pa_intrline;
 
@@ -239,9 +236,7 @@ dec_550_intr_map(pa, ihp)
 }
 
 const char *
-dec_550_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_550_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -261,9 +256,7 @@ dec_550_intr_string(ccv, ih)
 }
 
 int
-dec_550_intr_line(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_550_intr_line(void *ccv, pci_intr_handle_t ih)
 {
 #if NSIO
 	if (DEC_550_LINE_IS_ISA(ih))
@@ -274,12 +267,8 @@ dec_550_intr_line(ccv, ih)
 }
 
 void *
-dec_550_intr_establish(ccv, ih, level, func, arg, name)
-	void *ccv, *arg;
-	pci_intr_handle_t ih;
-	int level;
-	int (*func)(void *);
-	const char *name;
+dec_550_intr_establish(void *ccv, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *name)
 {
 #if 0
 	struct cia_config *ccp = ccv;
@@ -308,8 +297,7 @@ dec_550_intr_establish(ccv, ih, level, func, arg, name)
 }
 
 void
-dec_550_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+dec_550_intr_disestablish(void *ccv, void *cookie)
 {
 	struct cia_config *ccp = ccv;
 	struct alpha_shared_intrhand *ih = cookie;
@@ -343,13 +331,8 @@ dec_550_intr_disestablish(ccv, cookie)
 }
 
 void *
-dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
-	void *v;
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func)(void *);
-	void *arg;
+dec_550_pciide_compat_intr_establish(void *v, struct device *dev,
+    struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie = NULL;
@@ -372,17 +355,13 @@ dec_550_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 }
 
 void
-dec_550_pciide_compat_intr_disestablish(v, cookie)
-	void *v;
-	void *cookie;
+dec_550_pciide_compat_intr_disestablish(void *v, void *cookie)
 {
 	sio_intr_disestablish(NULL, cookie);
 }
 
 void
-dec_550_iointr(arg, vec)
-	void *arg;
-	unsigned long vec;
+dec_550_iointr(void *arg, unsigned long vec)
 {
 	int irq; 
 
@@ -401,16 +380,14 @@ dec_550_iointr(arg, vec)
 }
 
 void
-dec_550_intr_enable(irq)
-	int irq;
+dec_550_intr_enable(int irq)
 {
 
 	cia_pyxis_intr_enable(irq + DEC_550_PCI_IRQ_BEGIN, 1);
 }
 
 void
-dec_550_intr_disable(irq)
-	int irq;
+dec_550_intr_disable(int irq)
 {
 
 	cia_pyxis_intr_enable(irq + DEC_550_PCI_IRQ_BEGIN, 0);

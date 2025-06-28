@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.14 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -96,7 +96,7 @@ static void dec_6600_print_syndrome(int, unsigned long);
 #endif
 
 void
-dec_6600_init()
+dec_6600_init(void)
 {
 
 	platform.family = "6600";
@@ -115,7 +115,7 @@ dec_6600_init()
 }
 
 static void
-dec_6600_cons_init()
+dec_6600_cons_init(void)
 {
 	struct ctb *ctb;
 	u_int64_t ctbslot;
@@ -184,9 +184,7 @@ dec_6600_cons_init()
 }
 
 static void
-dec_6600_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_6600_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *primarydev, *pcidev, *ctrlrdev;

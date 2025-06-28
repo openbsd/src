@@ -1,4 +1,4 @@
-/* $OpenBSD: mcmem.c,v 1.3 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: mcmem.c,v 1.4 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: mcmem.c,v 1.4 2002/10/02 04:06:38 thorpej Exp $ */
 
 /*
@@ -61,10 +61,7 @@ struct cfdriver mcmem_cd = {
 };
 
 int
-mcmemmatch(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+mcmemmatch(struct device *parent, void *cf, void *aux)
 {
 	struct mcbus_dev_attach_args *ta = aux;
 
@@ -75,10 +72,7 @@ mcmemmatch(parent, cf, aux)
 }
 
 void
-mcmemattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mcmemattach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 }

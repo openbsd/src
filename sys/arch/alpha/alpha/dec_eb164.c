@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_eb164.c,v 1.19 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: dec_eb164.c,v 1.20 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: dec_eb164.c,v 1.33 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -74,7 +74,7 @@ static void dec_eb164_cons_init(void);
 static void dec_eb164_device_register(struct device *, void *);
 
 void
-dec_eb164_init()
+dec_eb164_init(void)
 {
 
 	platform.family = "EB164";
@@ -90,7 +90,7 @@ dec_eb164_init()
 }
 
 static void
-dec_eb164_cons_init()
+dec_eb164_cons_init(void)
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -159,9 +159,7 @@ dec_eb164_cons_init()
 }
 
 static void
-dec_eb164_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_eb164_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;

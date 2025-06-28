@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.17 2023/02/06 11:16:22 miod Exp $ */
+/* $OpenBSD: prom.c,v 1.18 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -66,7 +66,7 @@ init_prom_interface(struct rpb *rpb)
 }
 
 void
-init_bootstrap_console()
+init_bootstrap_console(void)
 {
 	char buf[4];
 
@@ -182,7 +182,7 @@ prom_halt(int halt)
 }
 
 u_int64_t
-hwrpb_checksum()
+hwrpb_checksum(void)
 {
 	u_int64_t *p, sum;
 	int i;
@@ -196,7 +196,7 @@ hwrpb_checksum()
 }
 
 void
-hwrpb_primary_init()
+hwrpb_primary_init(void)
 {
 	struct pcs *p;
 
@@ -211,7 +211,7 @@ hwrpb_primary_init()
 }
 
 void
-hwrpb_restart_setup()
+hwrpb_restart_setup(void)
 {
 	struct pcs *p;
 

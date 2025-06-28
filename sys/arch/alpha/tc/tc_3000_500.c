@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.23 2024/08/25 19:57:33 miod Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.24 2025/06/28 16:04:10 miod Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -99,7 +99,7 @@ struct tcintr {
 u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
 
 void
-tc_3000_500_intr_setup()
+tc_3000_500_intr_setup(void)
 {
 	u_long i;
 
@@ -124,12 +124,8 @@ tc_3000_500_intr_setup()
 }
 
 void
-tc_3000_500_intr_establish(tcadev, cookie, level, func, arg, name)
-	struct device *tcadev;
-	void *cookie, *arg;
-	int level;
-	int (*func)(void *);
-	const char *name;
+tc_3000_500_intr_establish(struct device *tcadev, void *cookie, int level,
+   int (*func)(void *), void *arg, const char *name)
 {
 	u_long dev = (u_long)cookie;
 
@@ -152,10 +148,8 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg, name)
 }
 
 void
-tc_3000_500_intr_disestablish(tcadev, cookie, name)
-	struct device *tcadev;
-	void *cookie;
-	const char *name;
+tc_3000_500_intr_disestablish(struct device *tcadev, void *cookie,
+    const char *name)
 {
 	u_long dev = (u_long)cookie;
 
@@ -179,8 +173,7 @@ tc_3000_500_intr_disestablish(tcadev, cookie, name)
 }
 
 int
-tc_3000_500_intrnull(val)
-	void *val;
+tc_3000_500_intrnull(void *val)
 {
 
 	panic("tc_3000_500_intrnull: uncaught TC intr for cookie %ld",
@@ -188,9 +181,7 @@ tc_3000_500_intrnull(val)
 }
 
 void
-tc_3000_500_iointr(arg, vec)
-        void *arg;
-        unsigned long vec;
+tc_3000_500_iointr(void *arg, unsigned long vec)
 {
         u_int32_t ir;
 	int ifound;
@@ -272,8 +263,7 @@ tc_3000_500_iointr(arg, vec)
  * framebuffer as the output side of the console.
  */
 int
-tc_3000_500_fb_cnattach(turbo_slot)
-	u_int64_t turbo_slot;
+tc_3000_500_fb_cnattach(u_int64_t turbo_slot)
 {
 	u_int32_t output_slot;
 
@@ -306,9 +296,7 @@ tc_3000_500_fb_cnattach(turbo_slot)
  *	Set the PBS bits for devices on the TC.
  */
 void
-tc_3000_500_ioslot(slot, flags, set)
-	u_int32_t slot, flags;
-	int set;
+tc_3000_500_ioslot(u_int32_t slot, u_int32_t flags, int set)
 {
 	volatile u_int32_t *iosp;
 	u_int32_t ios;

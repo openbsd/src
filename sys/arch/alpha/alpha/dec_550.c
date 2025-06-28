@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_550.c,v 1.14 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: dec_550.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: dec_550.c,v 1.10 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -79,7 +79,7 @@ static void dec_550_device_register(struct device *, void *);
 static void dec_550_powerdown(void);
 
 void
-dec_550_init()
+dec_550_init(void)
 {
 
 	platform.family = "Digital Personal Workstation";
@@ -96,7 +96,7 @@ dec_550_init()
 }
 
 static void
-dec_550_cons_init()
+dec_550_cons_init(void)
 {
 	struct ctb *ctb;
 	struct cia_config *ccp;
@@ -157,9 +157,7 @@ dec_550_cons_init()
 }
 
 static void
-dec_550_device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+dec_550_device_register(struct device *dev, void *aux)
 {
 	static int found, initted, diskboot, netboot;
 	static struct device *pcidev, *ctrlrdev;
@@ -271,7 +269,7 @@ dec_550_device_register(dev, aux)
 }
 
 static void
-dec_550_powerdown()
+dec_550_powerdown(void)
 {
 
 	REGVAL(PYXIS_GPO) = DEC_550_PYXIS_GPO_POWERDOWN;

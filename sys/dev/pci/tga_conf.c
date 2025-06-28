@@ -1,4 +1,4 @@
-/* $OpenBSD: tga_conf.c,v 1.5 2002/04/01 11:26:32 matthieu Exp $ */
+/* $OpenBSD: tga_conf.c,v 1.6 2025/06/28 16:04:10 miod Exp $ */
 /* $NetBSD: tga_conf.c,v 1.5 2001/11/13 07:48:49 lukem Exp $ */
 
 /*
@@ -132,8 +132,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 #undef MB
 
 int
-tga_identify(dc)
-	struct tga_devconfig *dc;
+tga_identify(struct tga_devconfig *dc)
 {
 	int type;
 	int gder;
@@ -199,8 +198,7 @@ tga_identify(dc)
 }
 
 const struct tga_conf *
-tga_getconf(type)
-	int type;
+tga_getconf(int type)
 {
 
 	if (type >= 0 && type < TGA_TYPE_UNKNOWN)

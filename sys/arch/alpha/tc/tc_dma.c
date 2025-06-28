@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_dma.c,v 1.4 2009/02/01 14:34:02 miod Exp $ */
+/* $OpenBSD: tc_dma.c,v 1.5 2025/06/28 16:04:10 miod Exp $ */
 /* $NetBSD: tc_dma.c,v 1.10 2001/07/19 06:40:02 thorpej Exp $ */
 
 /*-
@@ -64,7 +64,7 @@ struct alpha_bus_dma_tag tc_dmat_direct = {
 };
 
 void
-tc_dma_init()
+tc_dma_init(void)
 {
 
 	/* XXX XXX BEGIN XXX XXX */

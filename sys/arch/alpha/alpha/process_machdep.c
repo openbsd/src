@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.13 2016/10/19 08:23:37 guenther Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.14 2025/06/28 16:04:09 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*-
@@ -95,9 +95,7 @@
 #define	process_fpframe(p)	(&(process_pcb(p)->pcb_fp))
 
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 
 	frametoreg(process_frame(p), regs);
@@ -107,9 +105,7 @@ process_read_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
 
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
@@ -122,9 +118,7 @@ process_read_fpregs(p, regs)
 #ifdef PTRACE
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 
 	regtoframe(regs, process_frame(p));
@@ -134,9 +128,7 @@ process_write_regs(p, regs)
 }
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	struct trapframe *frame = process_frame(p);
 
@@ -145,9 +137,7 @@ process_set_pc(p, addr)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc *p;
-	struct fpreg *regs;
+process_write_fpregs(struct proc *p, struct fpreg *regs)
 {
 
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000a.c,v 1.14 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: pci_1000a.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
 /* $NetBSD: pci_1000a.c,v 1.14 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -105,10 +105,8 @@ void dec_1000a_disable_intr(int irq);
 void pci_1000a_imi(void);
 
 void
-pci_1000a_pickintr(core, iot, memt, pc)
-	void *core;
-	bus_space_tag_t iot, memt;
-	pci_chipset_tag_t pc;
+pci_1000a_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
+    pci_chipset_tag_t pc)
 {
 	int i;
 
@@ -140,9 +138,7 @@ pci_1000a_pickintr(core, iot, memt, pc)
 }
 
 int     
-dec_1000a_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-        pci_intr_handle_t *ihp;
+dec_1000a_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
 	int buspin, line = pa->pa_intrline;
@@ -227,9 +223,7 @@ dec_1000a_intr_map(pa, ihp)
 }
 
 const char *
-dec_1000a_intr_string(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_1000a_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 	static const char irqmsg_fmt[] = "dec_1000a irq %ld";
         static char irqstr[sizeof irqmsg_fmt];
@@ -243,9 +237,7 @@ dec_1000a_intr_string(ccv, ih)
 }
 
 int
-dec_1000a_intr_line(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
+dec_1000a_intr_line(void *ccv, pci_intr_handle_t ih)
 {
 #if NSIO > 0
 	return sio_intr_line(NULL /*XXX*/, ih);
@@ -255,13 +247,8 @@ dec_1000a_intr_line(ccv, ih)
 }
 
 void *
-dec_1000a_intr_establish(ccv, ih, level, func, arg, name)
-        void *ccv;
-        pci_intr_handle_t ih;
-        int level;
-        int (*func)(void *);
-	void *arg;
-	const char *name;
+dec_1000a_intr_establish(void *ccv, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *name)
 {           
 	void *cookie;
 
@@ -281,8 +268,7 @@ dec_1000a_intr_establish(ccv, ih, level, func, arg, name)
 }
 
 void    
-dec_1000a_intr_disestablish(ccv, cookie)
-        void *ccv, *cookie;
+dec_1000a_intr_disestablish(void *ccv, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
@@ -302,9 +288,7 @@ dec_1000a_intr_disestablish(ccv, cookie)
 }
 
 void
-dec_1000a_iointr(framep, vec)
-	void *framep;
-	unsigned long vec;
+dec_1000a_iointr(void *framep, unsigned long vec)
 {
 	int irq;
 
@@ -331,8 +315,7 @@ dec_1000a_iointr(framep, vec)
  */
 
 void
-dec_1000a_enable_intr(irq)
-	int irq;
+dec_1000a_enable_intr(int irq)
 {
 	int imrval = IRQ2IMR(irq);
 	int i = imrval >= 16;
@@ -341,8 +324,7 @@ dec_1000a_enable_intr(irq)
 }
 
 void
-dec_1000a_disable_intr(irq)
-	int irq;
+dec_1000a_disable_intr(int irq)
 {
 	int imrval = IRQ2IMR(irq);
 	int i = imrval >= 16;
@@ -353,7 +335,7 @@ dec_1000a_disable_intr(irq)
  * Initialize mystery ICU
  */
 void
-pci_1000a_imi()
+pci_1000a_imi(void)
 {
 	IW(0, IR(0) & 1);
 	IW(1, IR(0) & 3);
