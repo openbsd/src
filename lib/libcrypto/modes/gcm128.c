@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.52 2025/06/28 12:25:22 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.53 2025/06/28 12:32:27 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -84,7 +84,12 @@ gcm_init_4bit(u128 Htable[16], uint64_t H[2])
 	}
 }
 
-#ifndef GHASH_ASM
+#ifdef GHASH_ASM
+void gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16]);
+void gcm_ghash_4bit(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
+    size_t len);
+
+#else
 static const uint16_t rem_4bit[16] = {
 	0x0000, 0x1c20, 0x3840, 0x2460, 0x7080, 0x6ca0, 0x48c0, 0x54e0,
 	0xe100, 0xfd20, 0xd940, 0xc560, 0x9180, 0x8da0, 0xa9c0, 0xb5e0,
@@ -177,22 +182,7 @@ gcm_ghash_4bit(uint64_t Xi[2], const u128 Htable[16],
 		Xi[1] = htobe64(Z.lo);
 	} while (inp += 16, len -= 16);
 }
-
-static inline void
-gcm_mul(GCM128_CONTEXT *ctx, uint64_t u[2])
-{
-	gcm_gmult_4bit(u, ctx->Htable);
-}
-
-static inline void
-gcm_ghash(GCM128_CONTEXT *ctx, const uint8_t *in, size_t len)
-{
-	gcm_ghash_4bit(ctx->Xi.u, ctx->Htable, in, len);
-}
-#else
-void gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16]);
-void gcm_ghash_4bit(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
-    size_t len);
+#endif
 
 static inline void
 gcm_mul(GCM128_CONTEXT *ctx, uint64_t u[2])
@@ -205,7 +195,6 @@ gcm_ghash(GCM128_CONTEXT *ctx, const uint8_t *in, size_t len)
 {
 	ctx->ghash(ctx->Xi.u, ctx->Htable, in, len);
 }
-#endif
 
 #if	defined(GHASH_ASM) &&						\
 	(defined(__i386)	|| defined(__i386__)	||		\
