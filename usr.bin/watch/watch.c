@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.32 2025/06/26 21:34:45 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.33 2025/06/28 22:02:58 tedu Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
@@ -544,6 +544,13 @@ child_input(int sig, short event, void *arg)
 		}
 		if (c == MAXCOLUMN)
 			continue;
+		if (wc == '\t') {
+			(*buf)[l][c++] = ' ';
+			while (c & 7 && c < MAXCOLUMN)
+				(*buf)[l][c++] = ' ';
+			continue;
+		}
+
 		(*buf)[l][c++] = wc;
 	}
 	display(buf, prev_buf, highlight_mode);
