@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.137 2025/06/12 21:04:37 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.138 2025/06/28 05:29:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -293,7 +293,6 @@ struct vmd_vm {
 	int			 vm_from_config;
 	struct imsgev		 vm_iev;
 	uid_t			 vm_uid;
-	int			 vm_receive_fd;
 	unsigned int		 vm_state;
 /* When set, VM is running now (PROC_PARENT only) */
 #define VM_STATE_RUNNING	0x01

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.167 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.168 2025/06/28 05:29:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1217,7 +1217,6 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vcp = &vmc->vmc_params;
 	vm->vm_pid = -1;
 	vm->vm_tty = -1;
-	vm->vm_receive_fd = -1;
 	vm->vm_kernel = -1;
 	vm->vm_state &= ~VM_STATE_PAUSED;
 
