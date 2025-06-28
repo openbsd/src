@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.h,v 1.5 2025/06/28 11:33:45 miod Exp $	*/
+/*	$OpenBSD: intreg.h,v 1.6 2025/06/28 11:34:01 miod Exp $	*/
 /*	$NetBSD: intreg.h,v 1.4 2000/06/24 04:21:05 eeh Exp $ */
 
 /*
@@ -78,9 +78,5 @@
 #define	INTINO(x)	((x)&INTMAP_INO)
 #define INTTID_SHIFT	26
 #define INTTID(x)	(((x) & INTMAP_TID) >> INTTID_SHIFT)
-
-#define	INTPCI_MAXOBINO	0x16		/* maximum OBIO INO value for PCI */
-#define	INTPCIOBINOX(x)	((x)&0x1f)	/* OBIO ino index (for PCI machines) */
-#define	INTPCIINOX(x)	(((x)&0x1c)>>2)	/* PCI ino index */
 
 #define	INTCLR_IDLE	0
