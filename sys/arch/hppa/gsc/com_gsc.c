@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.22 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.23 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -56,9 +56,7 @@ const struct cfattach com_gsc_ca = {
 };
 
 int
-com_gsc_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+com_gsc_probe(struct device *parent, void *match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -73,9 +71,7 @@ com_gsc_probe(parent, match, aux)
 }
 
 void
-com_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;

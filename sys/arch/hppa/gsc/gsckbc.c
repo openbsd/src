@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.22 2023/07/25 10:00:44 miod Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.23 2025/06/28 13:24:21 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -425,9 +425,7 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
  */
 
 int
-pckbc_wait_output(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+pckbc_wait_output(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	u_int i;
 
@@ -441,10 +439,7 @@ pckbc_wait_output(iot, ioh)
 }
 
 int
-pckbc_send_cmd(iot, ioh, val)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_char val;
+pckbc_send_cmd(bus_space_tag_t iot, bus_space_handle_t ioh, u_char val)
 {
 	if (!pckbc_wait_output(iot, ioh))
 		return (0);
@@ -455,11 +450,9 @@ pckbc_send_cmd(iot, ioh, val)
 
 /* XXX logic */
 int
-pckbc_poll_data1(iot, ioh, ioh_c, slot, checkaux)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh, ioh_c;
-	pckbc_slot_t slot;
-	int checkaux;	/* ignored on hppa */
+pckbc_poll_data1(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_space_handle_t ioh_c, pckbc_slot_t slot, int checkaux)
+    /* checkaux ignored on hppa */
 {
 	int i;
 	u_char stat;
@@ -476,19 +469,13 @@ pckbc_poll_data1(iot, ioh, ioh_c, slot, checkaux)
 }
 
 int
-pckbc_send_devcmd(t, slot, val)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-	u_char val;
+pckbc_send_devcmd(struct pckbc_internal *t, pckbc_slot_t slot, u_char val)
 {
 	return pckbc_send_cmd(t->t_iot, t->t_ioh_d, val);
 }
 
 int
-pckbc_submatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pckbc_submatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct pckbc_attach_args *pa = aux;
@@ -500,9 +487,7 @@ pckbc_submatch(parent, match, aux)
 }
 
 int
-pckbc_attach_slot(sc, slot)
-	struct pckbc_softc *sc;
-	pckbc_slot_t slot;
+pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = sc->id;
 	struct pckbc_attach_args pa;
@@ -524,9 +509,7 @@ pckbc_attach_slot(sc, slot)
 }
 
 int
-pckbcprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+pckbcprint(void *aux, const char *pnp)
 {
 #if 0	/* hppa having devices for each slot, this is barely useful */
 	struct pckbc_attach_args *pa = aux;
@@ -538,8 +521,7 @@ pckbcprint(aux, pnp)
 }
 
 void
-pckbc_init_slotdata(q)
-	struct pckbc_slotdata *q;
+pckbc_init_slotdata(struct pckbc_slotdata *q)
 {
 	int i;
 	TAILQ_INIT(&q->cmdqueue);
@@ -552,9 +534,7 @@ pckbc_init_slotdata(q)
 }
 
 void
-pckbc_flush(self, slot)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
+pckbc_flush(pckbc_tag_t self, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = self;
 
@@ -562,9 +542,7 @@ pckbc_flush(self, slot)
 }
 
 int
-pckbc_poll_data(self, slot)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
+pckbc_poll_data(pckbc_tag_t self, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = self;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
@@ -581,28 +559,20 @@ pckbc_poll_data(self, slot)
 }
 
 int
-pckbc_xt_translation(self, table)
-	pckbc_tag_t self;
-	int *table;
+pckbc_xt_translation(pckbc_tag_t self, int *table)
 {
 	/* Translation isn't supported... */
 	return (-1);
 }
 
 void
-pckbc_slot_enable(self, slot, on)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	int on;
+pckbc_slot_enable(pckbc_tag_t self, pckbc_slot_t slot, int on)
 {
 	/* can't enable slots here as they are different devices */
 }
 
 void
-pckbc_set_poll(self, slot, on)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	int on;
+pckbc_set_poll(pckbc_tag_t self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 
@@ -630,10 +600,8 @@ pckbc_set_poll(self, slot, on)
  * to be called at spltty()
  */
 void
-pckbc_poll_cmd1(t, slot, cmd)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-	struct pckbc_devcmd *cmd;
+pckbc_poll_cmd1(struct pckbc_internal *t, pckbc_slot_t slot,
+    struct pckbc_devcmd *cmd)
 {
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh = t->t_ioh_d;
@@ -704,13 +672,8 @@ pckbc_poll_cmd1(t, slot, cmd)
 
 /* for use in autoconfiguration */
 int
-pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	u_char *cmd;
-	int len, responselen;
-	u_char *respbuf;
-	int slow;
+pckbc_poll_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len,
+    int responselen, u_char *respbuf, int slow)
 {
 	struct pckbc_devcmd nc;
 
@@ -735,8 +698,7 @@ pckbc_poll_cmd(self, slot, cmd, len, responselen, respbuf, slow)
  * Clean up a command queue, throw away everything.
  */
 void
-pckbc_cleanqueue(q)
-	struct pckbc_slotdata *q;
+pckbc_cleanqueue(struct pckbc_slotdata *q)
 {
 	struct pckbc_devcmd *cmd;
 #ifdef PCKBCDEBUG
@@ -760,8 +722,7 @@ pckbc_cleanqueue(q)
  * XXX could be less invasive.
  */
 void
-pckbc_cleanup(self)
-	void *self;
+pckbc_cleanup(void *self)
 {
 	struct pckbc_internal *t = self;
 	int s;
@@ -790,9 +751,7 @@ pckbc_cleanup(self)
  * to be called at spltty()
  */
 void
-pckbc_start(t, slot)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
+pckbc_start(struct pckbc_internal *t, pckbc_slot_t slot)
 {
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	struct pckbc_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
@@ -828,10 +787,7 @@ pckbc_start(t, slot)
  * to be called at spltty()
  */
 int
-pckbc_cmdresponse(t, slot, data)
-	struct pckbc_internal *t;
-	pckbc_slot_t slot;
-	u_char data;
+pckbc_cmdresponse(struct pckbc_internal *t, pckbc_slot_t slot, u_char data)
 {
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
 	struct pckbc_devcmd *cmd = TAILQ_FIRST(&q->cmdqueue);
@@ -889,12 +845,8 @@ restart:
  * Put command into the device's command queue, return zero or errno.
  */
 int
-pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	u_char *cmd;
-	int len, responselen, sync;
-	u_char *respbuf;
+pckbc_enqueue_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len,
+    int responselen, int sync, u_char *respbuf)
 {
 	struct pckbc_internal *t = self;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
@@ -957,12 +909,8 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 }
 
 void
-pckbc_set_inputhandler(self, slot, func, arg, name)
-	pckbc_tag_t self;
-	pckbc_slot_t slot;
-	pckbc_inputfcn func;
-	void *arg;
-	char *name;
+pckbc_set_inputhandler(pckbc_tag_t self, pckbc_slot_t slot, pckbc_inputfcn func,
+    void *arg, char *name)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_softc *sc = t->t_sc;

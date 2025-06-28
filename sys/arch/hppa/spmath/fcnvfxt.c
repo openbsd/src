@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcnvfxt.c,v 1.9 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: fcnvfxt.c,v 1.10 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -24,10 +24,8 @@
  *  with truncated result
  */
 int
-sgl_to_sgl_fcnvfxt(srcptr, null, dstptr, status)
-	sgl_floating_point *srcptr, *null;
-	int *dstptr;
-	unsigned int *status;
+sgl_to_sgl_fcnvfxt(sgl_floating_point *srcptr, sgl_floating_point *null,
+    int *dstptr, unsigned int *status)
 {
 	register unsigned int src, temp;
 	register int src_exponent, result;
@@ -86,10 +84,8 @@ sgl_to_sgl_fcnvfxt(srcptr, null, dstptr, status)
  *  Single Floating-point to Double Fixed-point
  */
 int
-sgl_to_dbl_fcnvfxt(srcptr, null, dstptr, status)
-	sgl_floating_point *srcptr, *null;
-	dbl_integer *dstptr;
-	unsigned int *status;
+sgl_to_dbl_fcnvfxt(sgl_floating_point *srcptr, sgl_floating_point *null,
+    dbl_integer *dstptr, unsigned int *status)
 {
 	register int src_exponent, resultp1;
 	register unsigned int src, temp, resultp2;
@@ -159,10 +155,8 @@ sgl_to_dbl_fcnvfxt(srcptr, null, dstptr, status)
  *  Double Floating-point to Single Fixed-point
  */
 int
-dbl_to_sgl_fcnvfxt(srcptr, null, dstptr, status)
-	dbl_floating_point *srcptr, *null;
-	int *dstptr;
-	unsigned int *status;
+dbl_to_sgl_fcnvfxt(dbl_floating_point *srcptr, dbl_floating_point *null,
+    int *dstptr, unsigned int *status)
 {
 	register unsigned int srcp1, srcp2, tempp1, tempp2;
 	register int src_exponent, result;
@@ -222,10 +216,8 @@ dbl_to_sgl_fcnvfxt(srcptr, null, dstptr, status)
  *  Double Floating-point to Double Fixed-point
  */
 int
-dbl_to_dbl_fcnvfxt(srcptr, null, dstptr, status)
-	dbl_floating_point *srcptr, *null;
-	dbl_integer *dstptr;
-	unsigned int *status;
+dbl_to_dbl_fcnvfxt(dbl_floating_point *srcptr, dbl_floating_point *null,
+    dbl_integer *dstptr, unsigned int *status)
 {
 	register int src_exponent, resultp1;
 	register unsigned int srcp1, srcp2, tempp1, tempp2, resultp2;

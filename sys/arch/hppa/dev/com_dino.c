@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_dino.c,v 1.5 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: com_dino.c,v 1.6 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -66,9 +66,7 @@ const struct cfattach com_dino_ca = {
 };
 
 int
-com_dino_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+com_dino_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -81,9 +79,7 @@ com_dino_match(parent, match, aux)
 }
 
 void
-com_dino_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_dino_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_softc *sc = (void *)self;
 	struct confargs *ca = aux;

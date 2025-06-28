@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpys.c,v 1.7 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: mpys.c,v 1.8 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -17,9 +17,7 @@
 #include "md.h"
 
 void
-mpys(opnd1,opnd2,result)
-	int opnd1, opnd2;
-	struct mdsfu_register *result;
+mpys(int opnd1, int opnd2, struct mdsfu_register *result)
 {
 	s_xmpy(&opnd1,&opnd2,result);
 

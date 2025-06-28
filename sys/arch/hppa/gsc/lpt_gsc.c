@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.13 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.14 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -97,9 +97,7 @@ const struct cfattach lpt_gsc_ca = {
  *	3) Set the data and control ports to a value of 0
  */
 int
-lpt_gsc_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+lpt_gsc_probe(struct device *parent, void *match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
@@ -162,9 +160,7 @@ lpt_gsc_probe(parent, match, aux)
 }
 
 void
-lpt_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;

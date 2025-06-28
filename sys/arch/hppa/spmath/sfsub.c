@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfsub.c,v 1.6 2002/11/29 09:27:34 deraadt Exp $	*/
+/*	$OpenBSD: sfsub.c,v 1.7 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -21,9 +21,8 @@
  * Single_subtract: subtract two single precision values.
  */
 int
-sgl_fsub(leftptr, rightptr, dstptr, status)
-    sgl_floating_point *leftptr, *rightptr, *dstptr;
-    unsigned int *status;
+sgl_fsub(sgl_floating_point *leftptr, sgl_floating_point *rightptr,
+    sgl_floating_point *dstptr, unsigned int *status)
 {
     register unsigned int left, right, result, extent;
     register unsigned int signless_upper_left, signless_upper_right, save;

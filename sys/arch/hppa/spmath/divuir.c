@@ -1,4 +1,4 @@
-/*	$OpenBSD: divuir.c,v 1.6 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: divuir.c,v 1.7 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -17,9 +17,7 @@
 #include "md.h"
 
 void
-divuir(opnd1,opnd2,result)
-	unsigned int opnd1, opnd2;
-	struct mdsfu_register *result;
+divuir(unsigned int opnd1, unsigned int opnd2, struct mdsfu_register *result)
 {
 	/* get source operands, check divisor for zero */
 	if (opnd2 == 0) {

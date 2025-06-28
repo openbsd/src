@@ -1,4 +1,4 @@
-/*	$OpenBSD: wax.c,v 1.12 2024/05/22 14:25:47 jsg Exp $	*/
+/*	$OpenBSD: wax.c,v 1.13 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -52,10 +52,7 @@ struct cfdriver wax_cd = {
 };
 
 int
-waxmatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+waxmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 	struct cfdata *cf = cfdata;
@@ -70,10 +67,7 @@ waxmatch(parent, cfdata, aux)
 }
 
 void
-waxattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+waxattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct gsc_attach_args ga;

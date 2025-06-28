@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.91 2024/02/07 20:32:54 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.92 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1113,10 +1113,7 @@ const struct hppa_bus_dma_tag hppa_dmatag = {
 };
 
 int
-mbmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+mbmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct cfdata *cf = cfdata;
 
@@ -1128,10 +1125,7 @@ mbmatch(parent, cfdata, aux)
 }
 
 void
-mbattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	struct confargs nca;
@@ -1241,8 +1235,7 @@ mbattach(parent, self, aux)
  * Retrieve CPU #N HPA value
  */
 hppa_hpa_t
-cpu_gethpa(n)
-	int n;
+cpu_gethpa(int n)
 {
 	struct mainbus_softc *sc;
 
@@ -1252,9 +1245,7 @@ cpu_gethpa(n)
 }
 
 int
-mbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mbprint(void *aux, const char *pnp)
 {
 	struct confargs *ca = aux;
 
@@ -1274,9 +1265,7 @@ mbprint(aux, pnp)
 }
 
 int
-mbsubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+mbsubmatch(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
@@ -1295,4 +1284,3 @@ mbsubmatch(parent, match, aux)
 
 	return ret;
 }
-

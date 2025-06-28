@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.13 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: osiop_gsc.c,v 1.14 2025/06/28 13:24:21 miod Exp $	*/
 /*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*
@@ -88,9 +88,7 @@ const struct cfattach osiop_gsc_ca = {
 };
 
 int
-osiop_gsc_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+osiop_gsc_match(struct device *parent, void *match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -102,9 +100,7 @@ osiop_gsc_match(parent, match, aux)
 }
 
 void
-osiop_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+osiop_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct osiop_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;
@@ -155,8 +151,7 @@ osiop_gsc_attach(parent, self, aux)
  * interrupt handler
  */
 int
-osiop_gsc_intr(arg)
-	void *arg;
+osiop_gsc_intr(void *arg)
 {
 	struct osiop_softc *sc = arg;
 	u_int8_t istat;

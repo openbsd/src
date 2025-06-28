@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.31 2018/05/14 13:54:39 kettenis Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.32 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -54,10 +54,7 @@ struct cfdriver gsc_cd = {
 };
 
 int
-gscmatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+gscmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -65,10 +62,7 @@ gscmatch(parent, cfdata, aux)
 }
 
 void
-gscattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gscattach(struct device *parent, struct device *self, void *aux)
 {
 	struct gsc_softc *sc = (struct gsc_softc *)self;
 	struct gsc_attach_args *ga = aux;
@@ -112,9 +106,7 @@ gscattach(parent, self, aux)
 }
 
 int
-gscprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+gscprint(void *aux, const char *pnp)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -124,13 +116,8 @@ gscprint(aux, pnp)
 }
 
 void *
-gsc_intr_establish(sc, irq, pri, handler, arg, name)
-	struct gsc_softc *sc;
-	int pri;
-	int irq;
-	int (*handler)(void *v);
-	void *arg;
-	const char *name;
+gsc_intr_establish(struct gsc_softc *sc, int irq, int pri,
+    int (*handler)(void *v), void *arg, const char *name)
 {
 	void *iv;
 
@@ -147,9 +134,7 @@ gsc_intr_establish(sc, irq, pri, handler, arg, name)
 }
 
 void
-gsc_intr_disestablish(sc, v)
-	struct gsc_softc *sc;
-	void *v;
+gsc_intr_disestablish(struct gsc_softc *sc, void *v)
 {
 #if notyet
 	sc->sc_ic->imr &= ~(1 << irq);

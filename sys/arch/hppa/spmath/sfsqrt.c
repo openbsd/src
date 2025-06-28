@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfsqrt.c,v 1.8 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: sfsqrt.c,v 1.9 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -22,9 +22,8 @@
  */
 
 int
-sgl_fsqrt(srcptr, null, dstptr, status)
-	sgl_floating_point *srcptr, *null, *dstptr;
-	unsigned int *status;
+sgl_fsqrt(sgl_floating_point *srcptr, sgl_floating_point *null,
+    sgl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int src, result;
 	register int src_exponent, newbit, sum;

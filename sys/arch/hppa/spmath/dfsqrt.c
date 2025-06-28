@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfsqrt.c,v 1.8 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: dfsqrt.c,v 1.9 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -22,9 +22,8 @@
  */
 
 int
-dbl_fsqrt(srcptr, null, dstptr, status)
-	dbl_floating_point *srcptr, *null, *dstptr;
-	unsigned int *status;
+dbl_fsqrt(dbl_floating_point *srcptr, dbl_floating_point *null,
+    dbl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
 	register unsigned int newbitp1, newbitp2, sump1, sump2;

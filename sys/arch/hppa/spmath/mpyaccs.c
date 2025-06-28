@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpyaccs.c,v 1.6 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: mpyaccs.c,v 1.7 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -17,9 +17,7 @@
 #include "md.h"
 
 void
-mpyaccs(opnd1,opnd2,result)
-	int opnd1, opnd2;
-	struct mdsfu_register *result;
+mpyaccs(int opnd1, int opnd2, struct mdsfu_register *result)
 {
 	struct mdsfu_register temp;
 	int carry, sign;

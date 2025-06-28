@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfdiv.c,v 1.5 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: dfdiv.c,v 1.6 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -22,9 +22,8 @@
  */
 
 int
-dbl_fdiv(srcptr1,srcptr2,dstptr,status)
-	dbl_floating_point *srcptr1, *srcptr2, *dstptr;
-	unsigned int *status;
+dbl_fdiv(dbl_floating_point *srcptr1, dbl_floating_point *srcptr2,
+    dbl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int opnd1p1, opnd1p2, opnd2p1, opnd2p2;
 	register unsigned int opnd3p1, opnd3p2, resultp1, resultp2;

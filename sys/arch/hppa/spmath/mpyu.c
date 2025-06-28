@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpyu.c,v 1.6 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: mpyu.c,v 1.7 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -17,9 +17,7 @@
 #include "md.h"
 
 void
-mpyu(opnd1,opnd2,result)
-	unsigned int opnd1, opnd2;
-	struct mdsfu_register *result;
+mpyu(unsigned int opnd1, unsigned int opnd2, struct mdsfu_register *result)
 {
 	u_xmpy(&opnd1,&opnd2,result);
 

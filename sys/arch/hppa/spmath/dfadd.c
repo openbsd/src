@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfadd.c,v 1.7 2002/11/29 09:27:34 deraadt Exp $	*/
+/*	$OpenBSD: dfadd.c,v 1.8 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -21,9 +21,8 @@
  * Double_add: add two double precision values.
  */
 int
-dbl_fadd(leftptr, rightptr, dstptr, status)
-    dbl_floating_point *leftptr, *rightptr, *dstptr;
-    unsigned int *status;
+dbl_fadd(dbl_floating_point *leftptr, dbl_floating_point *rightptr,
+    dbl_floating_point *dstptr, unsigned int *status)
 {
     register unsigned int signless_upper_left, signless_upper_right, save;
     register unsigned int leftp1, leftp2, rightp1, rightp2, extent;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.15 2018/05/14 13:54:39 kettenis Exp $	*/
+/*	$OpenBSD: asp.c,v 1.16 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -121,10 +121,7 @@ struct cfdriver asp_cd = {
 };
 
 int
-aspmatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+aspmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
@@ -137,10 +134,7 @@ aspmatch(parent, cfdata, aux)
 }
 
 void
-aspattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+aspattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	volatile struct asp_trs *trs;

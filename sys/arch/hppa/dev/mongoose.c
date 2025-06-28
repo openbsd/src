@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.23 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.24 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -422,8 +422,7 @@ mg_isa_sr_4(void *v, bus_space_handle_t h, bus_size_t o, u_int32_t vv, bus_size_
 }
 
 int
-mgattach_common(sc)
-	struct mongoose_softc *sc;
+mgattach_common(struct mongoose_softc *sc)
 {
 	struct hppa_bus_space_tag *bt;
 	union mongoose_attach_args ea;
@@ -518,9 +517,7 @@ mgattach_common(sc)
 }
 
 int
-mgprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mgprint(void *aux, const char *pnp)
 {
 	union mongoose_attach_args *ea = aux;
 
@@ -531,10 +528,7 @@ mgprint(aux, pnp)
 }
 
 int
-mgmatch_gedoens(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+mgmatch_gedoens(struct device *parent, void *cfdata, void *aux)
 {
 	register struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
@@ -557,10 +551,7 @@ mgmatch_gedoens(parent, cfdata, aux)
 }
 
 void
-mgattach_gedoens(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mgattach_gedoens(struct device *parent, struct device *self, void *aux)
 {
 	register struct confargs *ca = aux;
 	register struct mongoose_softc *sc = (struct mongoose_softc *)self;

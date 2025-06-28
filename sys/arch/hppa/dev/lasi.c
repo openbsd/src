@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.23 2018/05/14 13:54:39 kettenis Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.24 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -76,10 +76,7 @@ void lasi_cold_hook(int on);
 void lasi_gsc_attach(struct device *self);
 
 int
-lasimatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+lasimatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
@@ -92,10 +89,7 @@ lasimatch(parent, cfdata, aux)
 }
 
 void
-lasiattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+lasiattach(struct device *parent, struct device *self, void *aux)
 {
 	struct lasi_softc *sc = (struct lasi_softc *)self;
 	struct confargs *ca = aux;
@@ -207,8 +201,7 @@ lasiattach(parent, self, aux)
 }
 
 void
-lasi_gsc_attach(self)
-	struct device *self;
+lasi_gsc_attach(struct device *self)
 {
 	struct lasi_softc *sc = (struct lasi_softc *)self;
 
@@ -216,8 +209,7 @@ lasi_gsc_attach(self)
 }
 
 void
-lasi_cold_hook(on)
-	int on;
+lasi_cold_hook(int on)
 {
 	struct lasi_softc *sc = lasi_cd.cd_devs[0];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.63 2022/09/02 20:06:55 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.64 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -103,8 +103,7 @@ void heartbeat(void *);
  * to ponder in even more.
  */
 void
-heartbeat(v)
-	void *v;
+heartbeat(void *v)
 {
 	static u_int hbcnt = 0, ocp_total, ocp_idle;
 	int toggle, cp_mask, cp_total, cp_idle;
@@ -344,8 +343,7 @@ const struct hppa_mod_info hppa_knownmods[] = {
 };
 
 const char *
-hppa_mod_info(type, sv)
-	int type, sv;
+hppa_mod_info(int type, int sv)
 {
 	const struct hppa_mod_info *mi;
 	static char fakeid[32];

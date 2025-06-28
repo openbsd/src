@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.42 2024/05/22 14:25:47 jsg Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.43 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -96,7 +96,7 @@ static int pdc_speeds[] = {
 #endif
 
 void
-pdc_init()
+pdc_init(void)
 {
 	static int kbd_iodc[IODC_MAXSIZE/sizeof(int)];
 	static int cn_iodc[IODC_MAXSIZE/sizeof(int)];
@@ -153,10 +153,7 @@ pdc_init()
 }
 
 int
-pdcmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+pdcmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
@@ -169,10 +166,7 @@ pdcmatch(parent, cfdata, aux)
 }
 
 void
-pdcattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+pdcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pdc_softc *sc = (struct pdc_softc *)self;
 
@@ -185,10 +179,7 @@ pdcattach(parent, self, aux)
 }
 
 int
-pdcopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pdcopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct pdc_softc *sc;
@@ -235,10 +226,7 @@ pdcopen(dev, flag, mode, p)
 }
 
 int
-pdcclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pdcclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -255,10 +243,7 @@ pdcclose(dev, flag, mode, p)
 }
 
 int
-pdcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pdcread(dev_t dev, struct uio *uio, int flag)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -272,10 +257,7 @@ pdcread(dev, uio, flag)
 }
 
 int
-pdcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pdcwrite(dev_t dev, struct uio *uio, int flag)
 {
 	int unit = minor(dev);
 	struct tty *tp;
@@ -289,12 +271,7 @@ pdcwrite(dev, uio, flag)
 }
 
 int
-pdcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pdcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = minor(dev);
 	int error;
@@ -316,17 +293,14 @@ pdcioctl(dev, cmd, data, flag, p)
 }
 
 int
-pdcparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+pdcparam(struct tty *tp, struct termios *t)
 {
 
 	return 0;
 }
 
 void
-pdcstart(tp)
-	struct tty *tp;
+pdcstart(struct tty *tp)
 {
 	int s;
 
@@ -344,9 +318,7 @@ pdcstart(tp)
 }
 
 int
-pdcstop(tp, flag)
-	struct tty *tp;
-	int flag;
+pdcstop(struct tty *tp, int flag)
 {
 	int s;
 
@@ -359,8 +331,7 @@ pdcstop(tp, flag)
 }
 
 void
-pdctimeout(v)
-	void *v;
+pdctimeout(void *v)
 {
 	struct pdc_softc *sc = v;
 	struct tty *tp = sc->sc_tty;
@@ -374,8 +345,7 @@ pdctimeout(v)
 }
 
 struct tty *
-pdctty(dev)
-	dev_t dev;
+pdctty(dev_t dev)
 {
 	int unit = minor(dev);
 	struct pdc_softc *sc;
@@ -387,9 +357,7 @@ pdctty(dev)
 }
 
 int
-pdccnlookc(dev, cp)
-	dev_t dev;
-	int *cp;
+pdccnlookc(dev_t dev, int *cp)
 {
 	int err, l;
 	int s = splhigh();
@@ -409,8 +377,7 @@ pdccnlookc(dev, cp)
 }
 
 int
-pdccngetc(dev)
-	dev_t dev;
+pdccngetc(dev_t dev)
 {
 	int c;
 
@@ -424,9 +391,7 @@ pdccngetc(dev)
 }
 
 void
-pdccnputc(dev, c)
-	dev_t dev;
-	int c;
+pdccnputc(dev_t dev, int c)
 {
 	register int err;
 	int s = splhigh();

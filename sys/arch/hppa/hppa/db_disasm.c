@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.24 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.25 2025/06/28 13:24:21 miod Exp $	*/
 
 /* TODO parse 64bit insns or rewrite */
 
@@ -1291,10 +1291,7 @@ iExInit(void)
 
 /* Add instructions */
 int
-addDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+addDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%%r%d,%%r%d,%%r%d",addDCond(Cond4(w)),
 		Rsa(w),Rsb(w),Rtc(w));
@@ -1303,10 +1300,7 @@ addDasm(i, ofs, w)
 
 /* Unit instructions */
 int
-unitDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+unitDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s", unitDCond(Cond4(w)));
 	if (Match("dcor") || Match("idcor"))
@@ -1318,10 +1312,7 @@ unitDasm(i, ofs, w)
 
 /* Immediate Arithmetic instructions */
 int
-iaDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+iaDasm(const struct inst *i, OFS ofs, int w)
 {
 	if (Match("addi"))
 		db_printf("%s\t%d,%%r%d,%%r%d",
@@ -1334,10 +1325,7 @@ iaDasm(i, ofs, w)
 
 /* Shift double instructions */
 int
-shdDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+shdDasm(const struct inst *i, OFS ofs, int w)
 {
 	if (Match("vshd"))
 		db_printf("%s\t%%r%d,%%r%d,%%r%d",
@@ -1350,10 +1338,7 @@ shdDasm(i, ofs, w)
 
 /* Extract instructions */
 int
-extrDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+extrDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%%r%d,%d,%d,%%r%d",
 	    edDCond(Cond(w)),Rsb(w),Imd5(w),32 - Rsc(w),Rta(w));
@@ -1363,10 +1348,7 @@ extrDasm(i, ofs, w)
 
 /* Variable extract instructions */
 int
-vextrDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+vextrDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%%r%d,%d,%%r%d",
 	    edDCond(Cond(w)),Rsb(w),32 - Rsc(w),Rta(w));
@@ -1376,10 +1358,7 @@ vextrDasm(i, ofs, w)
 
 /* Deposit instructions */
 int
-depDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+depDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%%r%d,%d,%d,%%r%d",
 	    edDCond(Cond(w)),Rsa(w),31 - Imd5(w),32 - Rsc(w),Rtb(w));
@@ -1389,10 +1368,7 @@ depDasm(i, ofs, w)
 
 /* Variable deposit instructions */
 int
-vdepDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+vdepDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%%r%d,%d,%%r%d",
 	    edDCond(Cond(w)),Rsa(w),32 - Rsc(w),Rtb(w));
@@ -1402,10 +1378,7 @@ vdepDasm(i, ofs, w)
 
 /* Deposit Immediate instructions */
 int
-depiDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+depiDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%d,%d,%d,%%r%d",
 	    edDCond(Cond(w)),Ima5(w),31 - Imd5(w),32 - Imc5A(w),Rtb(w));
@@ -1414,10 +1387,7 @@ depiDasm(i, ofs, w)
 
 /* Variable Deposit Immediate instructions */
 int
-vdepiDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+vdepiDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%d,%d,%%r%d",edDCond(Cond(w)),Ima5(w),32-Imc5A(w),Rtb(w));
 	return (1);
@@ -1429,8 +1399,7 @@ vdepiDasm(i, ofs, w)
  *---------------------------------------------------------------------------*/
 
 char *
-subDCond(cond)
-	u_int cond;
+subDCond(u_int cond)
 {
 	switch(cond) {
 	case EQZ:	return(",=");
@@ -1461,8 +1430,7 @@ subDCond(cond)
  *---------------------------------------------------------------------------*/
 
 char *
-addDCond(cond)
-	u_int cond;
+addDCond(u_int cond)
 {
 	switch(cond) {
 	case EQZ:	return(",=");
@@ -1487,8 +1455,7 @@ addDCond(cond)
 }
 
 char *
-unitDCond(cond)
-	u_int cond;
+unitDCond(u_int cond)
 {
 	switch(cond) {
 	case SHC:	return(",shc");
@@ -1509,8 +1476,7 @@ unitDCond(cond)
 }
 
 char *
-edDCond(cond)
-	u_int cond;
+edDCond(u_int cond)
 {
 	switch(cond) {
 	case XOD:	return(",od");
@@ -1535,10 +1501,7 @@ edDCond(cond)
 
 /* Load [modify] instructions */
 int
-ldDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+ldDasm(const struct inst *i, OFS ofs, int w)
 {
 	register int d = Disp(w);
 	char s[2];
@@ -1564,10 +1527,7 @@ ldDasm(i, ofs, w)
 
 /* Store [modify] instructions */
 int
-stDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+stDasm(const struct inst *i, OFS ofs, int w)
 {
 	register int d = Disp(w);
 	char s[2];
@@ -1592,10 +1552,7 @@ stDasm(i, ofs, w)
 
 /* Load indexed instructions */
 int
-ldxDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+ldxDasm(const struct inst *i, OFS ofs, int w)
 {
 	register const char *p;
 
@@ -1628,10 +1585,7 @@ ldxDasm(i, ofs, w)
 
 /* Store short displacement instructions */
 int
-stsDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+stsDasm(const struct inst *i, OFS ofs, int w)
 {
 	register const char *p;
 	if (Modify(w))
@@ -1653,10 +1607,7 @@ stsDasm(i, ofs, w)
 
 /* Store Bytes Instruction */
 int
-stbysDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+stbysDasm(const struct inst *i, OFS ofs, int w)
 {
 	register const char *p;
 	db_printf(ModBefore(w)? ",e":",b");
@@ -1678,10 +1629,7 @@ stbysDasm(i, ofs, w)
 
 /* Long Immediate instructions */
 int
-limmDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+limmDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("\tL'%X,%%r%d", Im21(w), Rtb(w));
 	return (1);
@@ -1690,10 +1638,7 @@ limmDasm(i, ofs, w)
 
 /* Branch and Link instruction(s) (Branch, too!!) */
 int
-blDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+blDasm(const struct inst *i, OFS ofs, int w)
 {
 	register OFS tgtofs = ofs + 8 + Bdisp(w);
 	register u_int link = Rtb(w);
@@ -1714,10 +1659,7 @@ blDasm(i, ofs, w)
 
 /* Branch Register instruction */
 int
-brDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+brDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%%r%d,%%r%d", Nu(w)?",n":"", Rsa(w), Rtb(w));
 	return (1);
@@ -1725,10 +1667,7 @@ brDasm(i, ofs, w)
 
 /* Dispatch instructions */
 int
-bvDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+bvDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("%s\t%%r%d(%%r%d)", Nu(w)?",n":"", Rsa(w), Rsb(w));
 	return (1);
@@ -1736,10 +1675,7 @@ bvDasm(i, ofs, w)
 
 /* Branch External instructions */
 int
-beDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+beDasm(const struct inst *i, OFS ofs, int w)
 {
 	register int d = Bdisp(w);
 	register const char *p;
@@ -1760,10 +1696,7 @@ beDasm(i, ofs, w)
 
 /* Compare/Add and Branch instructions */
 int
-cbDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+cbDasm(const struct inst *i, OFS ofs, int w)
 {
 	register OFS tgtofs = ofs + 8 + Cbdisp(w);
 
@@ -1780,10 +1713,7 @@ cbDasm(i, ofs, w)
 
 /* Compare/Add and Branch Immediate instructions */
 int
-cbiDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+cbiDasm(const struct inst *i, OFS ofs, int w)
 {
 	register OFS tgtofs = ofs + 8 + Cbdisp(w);
 
@@ -1800,10 +1730,7 @@ cbiDasm(i, ofs, w)
 
 /* Branch on Bit instructions */
 int
-bbDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+bbDasm(const struct inst *i, OFS ofs, int w)
 {
 	register OFS tgtofs = ofs + 8 + Cbdisp(w);
 	register const char *p;
@@ -1820,10 +1747,7 @@ bbDasm(i, ofs, w)
 
 /* Arithmetic instructions */
 int
-ariDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+ariDasm(const struct inst *i, OFS ofs, int w)
 {
 	if (Match("or") && Rsb(w) == 0 && Cond4(w) == NEV) {
 		if (Rsa(w) == 0 && Rtc(w) == 0)
@@ -1838,10 +1762,7 @@ ariDasm(i, ofs, w)
 
 /* System control operations */
 int
-scDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+scDasm(const struct inst *i, OFS ofs, int w)
 {
 	if (Match("mtctl")) {
 		if (Rtb(w) == 11)
@@ -1871,10 +1792,7 @@ scDasm(i, ofs, w)
 
 /* Instruction cache/tlb control instructions */
 int
-mmgtDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+mmgtDasm(const struct inst *i, OFS ofs, int w)
 {
 	if (Match("probe")) {
 		if (ProbeI(w)) {
@@ -1930,20 +1848,14 @@ mmgtDasm(i, ofs, w)
 
 /* break instruction */
 int
-brkDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+brkDasm(const struct inst *i, OFS ofs, int w)
 {
 	db_printf("\t%d,%d",Bi1(w),Bi2(w));
 	return (1);
 }
 
 int
-floatDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+floatDasm(const struct inst *i, OFS ofs, int w)
 {
 	register u_int op1, r1, fmt, t;
 	u_int op2, r2, dfmt;
@@ -2043,9 +1955,7 @@ floatDasm(i, ofs, w)
 }
 
 int
-fcoprDasm(w, op1, op2)
-	int w;
-	u_int op1, op2;
+fcoprDasm(int w, u_int op1, u_int op2)
 {
 	register u_int r1, r2, t, fmt, dfmt;
 	register char *p;
@@ -2124,10 +2034,7 @@ fcoprDasm(w, op1, op2)
 }
 
 int
-coprDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+coprDasm(const struct inst *i, OFS ofs, int w)
 {
 	register u_int uid = Uid(w);
 	register int load = 0;
@@ -2213,10 +2120,7 @@ coprDasm(i, ofs, w)
 }
 
 int
-lpkDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+lpkDasm(const struct inst *i, OFS ofs, int w)
 {
 	/*
 	 * Floating point STore Quad
@@ -2249,10 +2153,7 @@ lpkDasm(i, ofs, w)
 }
 
 int
-diagDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+diagDasm(const struct inst *i, OFS ofs, int w)
 {
 	if (0x0b0 == BitfR(w,19,8,_b198))	/* mtcpu */
 		db_printf("mtcpu\t%%r%d,%%dr%d", Rsa(w), Rtb(w));
@@ -2269,10 +2170,7 @@ diagDasm(i, ofs, w)
 }
 
 int
-fmpysubDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+fmpysubDasm(const struct inst *i, OFS ofs, int w)
 {
 	if (SinglePrec(w))
 		db_printf("SUB,SGL\t%%f%s,%%f%s,%%f%s,%%f%s,%%f%s",
@@ -2286,10 +2184,7 @@ fmpysubDasm(i, ofs, w)
 }
 
 int
-fmpyaddDasm(i, ofs, w)
-	const struct inst *i;
-	OFS ofs;
-	int w;
+fmpyaddDasm(const struct inst *i, OFS ofs, int w)
 {
 	register const char
 		*ms1 = SinglePrec(w) ? fsreg[Ms1(w)] : fdreg[Ms1(w)],

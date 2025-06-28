@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.30 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.31 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -96,9 +96,7 @@ void ie_gsc_memcopyout(struct ie_softc *sc, const void *p, int, size_t);
 
 
 void
-ie_gsc_reset(sc, what)
-	struct ie_softc *sc;
-	int what;
+ie_gsc_reset(struct ie_softc *sc, int what)
 {
 	volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 	int i;
@@ -141,8 +139,7 @@ ie_gsc_reset(sc, what)
 }
 
 void
-ie_gsc_attend(sc)
-	struct ie_softc *sc;
+ie_gsc_attend(struct ie_softc *sc)
 {
 	volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 
@@ -153,15 +150,12 @@ ie_gsc_attend(sc)
 }
 
 void
-ie_gsc_run(sc)
-	struct ie_softc *sc;
+ie_gsc_run(struct ie_softc *sc)
 {
 }
 
 void
-ie_gsc_port(sc, cmd)
-	struct ie_softc *sc;
-	u_int cmd;
+ie_gsc_port(struct ie_softc *sc, u_int cmd)
 {
 	switch (cmd) {
 	case IE_PORT_RESET:
@@ -195,9 +189,7 @@ ie_gsc_port(sc, cmd)
 
 #ifdef USELEDS
 int
-ie_gsc_intrhook(sc, where)
-	struct ie_softc *sc;
-	int where;
+ie_gsc_intrhook(struct ie_softc *sc, int where)
 {
 	switch (where) {
 	case IE_INTR_ENRCV:
@@ -216,9 +208,7 @@ ie_gsc_intrhook(sc, where)
 #endif
 
 u_int16_t
-ie_gsc_read16(sc, offset)
-	struct ie_softc *sc;
-	int offset;
+ie_gsc_read16(struct ie_softc *sc, int offset)
 {
 	volatile u_int16_t *addr = (volatile u_int16_t *)(sc->bh + offset);
 
@@ -227,10 +217,7 @@ ie_gsc_read16(sc, offset)
 }
 
 void
-ie_gsc_write16(sc, offset, v)
-	struct ie_softc *sc;
-	int offset;
-	u_int16_t v;
+ie_gsc_write16(struct ie_softc *sc, int offset, u_int16_t v)
 {
 	volatile u_int16_t *addr = (volatile u_int16_t *)(sc->bh + offset);
 
@@ -239,10 +226,7 @@ ie_gsc_write16(sc, offset, v)
 }
 
 void
-ie_gsc_write24(sc, offset, v)
-	struct ie_softc *sc;
-	int offset;
-	int v;
+ie_gsc_write24(struct ie_softc *sc, int offset, int v)
 {
 	volatile u_int16_t *addr = (volatile u_int16_t *)(sc->bh + offset);
 
@@ -253,31 +237,21 @@ ie_gsc_write24(sc, offset, v)
 }
 
 void
-ie_gsc_memcopyin(sc, p, offset, size)
-	struct ie_softc	*sc;
-	void *p;
-	int offset;
-	size_t size;
+ie_gsc_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
 	pdcache(0, sc->bh + offset, size);
 	bcopy ((void *)((u_long)sc->bh + offset), p, size);
 }
 
 void
-ie_gsc_memcopyout(sc, p, offset, size)
-	struct ie_softc	*sc;
-	const void *p;
-	int offset;
-	size_t size;
+ie_gsc_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
 	bcopy (p, (void *)((u_long)sc->bh + offset), size);
 	fdcache(0, sc->bh + offset, size);
 }
 
 int
-ie_gsc_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+ie_gsc_probe(struct device *parent, void *match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -290,9 +264,7 @@ ie_gsc_probe(parent, match, aux)
 }
 
 void
-ie_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ie_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
 	struct ie_softc *sc = (struct ie_softc *)self;

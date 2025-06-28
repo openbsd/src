@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.33 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: dino.c,v 1.34 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -135,10 +135,7 @@ struct cfdriver dino_cd = {
 };
 
 int
-dinomatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+dinomatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
@@ -1670,10 +1667,7 @@ dinoprint(void *aux, const char *pnp)
 }
 
 void
-dinoattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+dinoattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dino_softc *sc = (struct dino_softc *)self;
 	struct confargs *ca = (struct confargs *)aux;

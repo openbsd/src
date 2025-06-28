@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.270 2024/05/22 14:25:47 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.271 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -380,7 +380,7 @@ hppa_init(paddr_t start)
 }
 
 void
-cpuid()
+cpuid(void)
 {
 	/*
 	 * Ptrs to various tlb handlers, to be filled

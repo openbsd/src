@@ -1,4 +1,4 @@
-/*	$OpenBSD: frnd.c,v 1.9 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: frnd.c,v 1.10 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -25,9 +25,8 @@
  */
 
 int
-sgl_frnd(srcptr, null, dstptr, status)
-	sgl_floating_point *srcptr, *null, *dstptr;
-	unsigned int *status;
+sgl_frnd(sgl_floating_point *srcptr, sgl_floating_point *null,
+    sgl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int src, result;
 	register int src_exponent;
@@ -127,9 +126,8 @@ sgl_frnd(srcptr, null, dstptr, status)
  */
 
 int
-dbl_frnd(srcptr, null, dstptr, status)
-	dbl_floating_point *srcptr, *null, *dstptr;
-	unsigned int *status;
+dbl_frnd(dbl_floating_point *srcptr, dbl_floating_point *null,
+    dbl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
 	register int src_exponent;
@@ -228,9 +226,8 @@ dbl_frnd(srcptr, null, dstptr, status)
 }
 
 int
-quad_frnd(srcptr, null, dstptr, status)
-	quad_floating_point *srcptr, *null, *dstptr;
-	unsigned int *status;
+quad_frnd(quad_floating_point *srcptr, quad_floating_point *null,
+    quad_floating_point *dstptr, unsigned int *status)
 {
 	return(UNIMPLEMENTEDEXCEPTION);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsfr.c,v 1.5 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: divsfr.c,v 1.6 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -17,9 +17,7 @@
 #include "md.h"
 
 void
-divsfr(opnd1,opnd2,result)
-	int opnd1, opnd2;
-	struct mdsfu_register *result;
+divsfr(int opnd1, int opnd2, struct mdsfu_register *result)
 {
 	int sign, op1_sign;
 

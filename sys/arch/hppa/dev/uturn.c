@@ -1,4 +1,4 @@
-/*	$OpenBSD: uturn.c,v 1.8 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: uturn.c,v 1.9 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -63,10 +63,7 @@ struct cfdriver uturn_cd = {
 };
 
 int
-uturnmatch(parent, cfdata, aux)   
-	struct device *parent;
-	void *cfdata;
-	void *aux;
+uturnmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
@@ -84,10 +81,7 @@ uturnmatch(parent, cfdata, aux)
 }
 
 void
-uturnattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+uturnattach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux, nca;
 	struct uturn_softc *sc = (struct uturn_softc *)self;

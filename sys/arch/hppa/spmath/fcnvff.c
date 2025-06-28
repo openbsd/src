@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcnvff.c,v 1.8 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: fcnvff.c,v 1.9 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -23,10 +23,8 @@
  *  Single Floating-point to Double Floating-point
  */
 int
-sgl_to_dbl_fcnvff(srcptr, null, dstptr, status)
-	sgl_floating_point *srcptr, *null;
-	dbl_floating_point *dstptr;
-	unsigned int *status;
+sgl_to_dbl_fcnvff(sgl_floating_point *srcptr, sgl_floating_point *null,
+    dbl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int src, resultp1, resultp2;
 	register int src_exponent;
@@ -108,10 +106,8 @@ sgl_to_dbl_fcnvff(srcptr, null, dstptr, status)
  *  Double Floating-point to Single Floating-point
  */
 int
-dbl_to_sgl_fcnvff(srcptr, null, dstptr, status)
-	dbl_floating_point *srcptr, *null;
-	sgl_floating_point *dstptr;
-	unsigned int *status;
+dbl_to_sgl_fcnvff(dbl_floating_point *srcptr, dbl_floating_point *null,
+    sgl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int srcp1, srcp2, result;
 	register int src_exponent, dest_exponent, dest_mantissa;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfcmp.c,v 1.6 2002/09/20 19:26:59 mickey Exp $	*/
+/*	$OpenBSD: sfcmp.c,v 1.7 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -21,10 +21,9 @@
  * sgl_cmp: compare two values
  */
 int
-sgl_fcmp(leftptr, rightptr, cond, status)
-    sgl_floating_point *leftptr, *rightptr;
-    unsigned int cond; /* The predicate to be tested */
-    unsigned int *status;
+sgl_fcmp(sgl_floating_point *leftptr, sgl_floating_point *rightptr,
+    unsigned int cond, unsigned int *status)
+    /* cond is the predicate to be tested */
 {
     register unsigned int left, right;
     register int xorresult;

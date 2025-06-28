@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.41 2024/05/22 14:25:47 jsg Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.42 2025/06/28 13:24:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -110,9 +110,7 @@ void harmony_acc_tmo(void *);
 } while(0)
 
 int
-harmony_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+harmony_match(struct device *parent, void *match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t bh;
@@ -137,9 +135,7 @@ harmony_match(parent, match, aux)
 }
 
 void
-harmony_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+harmony_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct harmony_softc *sc = (struct harmony_softc *)self;
 	struct gsc_attach_args *ga = aux;
@@ -274,8 +270,7 @@ harmony_acc_tmo(void *v)
  * interrupt handler
  */
 int
-harmony_intr(vsc)
-	void *vsc;
+harmony_intr(void *vsc)
 {
 	struct harmony_softc *sc = vsc;
 	struct harmony_channel *c;

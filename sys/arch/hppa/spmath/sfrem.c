@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfrem.c,v 1.5 2002/05/07 22:19:30 mickey Exp $	*/
+/*	$OpenBSD: sfrem.c,v 1.6 2025/06/28 13:24:21 miod Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -21,9 +21,8 @@
  *  Single Precision Floating-point Remainder
  */
 int
-sgl_frem(srcptr1,srcptr2,dstptr,status)
-	sgl_floating_point *srcptr1, *srcptr2, *dstptr;
-	unsigned int *status;
+sgl_frem(sgl_floating_point *srcptr1, sgl_floating_point *srcptr2,
+    sgl_floating_point *dstptr, unsigned int *status)
 {
 	register unsigned int opnd1, opnd2, result;
 	register int opnd1_exponent, opnd2_exponent, dest_exponent, stepcount;
