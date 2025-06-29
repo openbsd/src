@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.90 2025/04/29 03:48:10 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.91 2025/06/29 16:22:05 tedu Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #include <grp.h>
 #include <kvm.h>
 #include <math.h>
-#include <nlist.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +55,7 @@
 #include "ps.h"
 
 extern kvm_t *kd;
-extern int needenv, needcomm, neednlist, commandonly;
+extern int needenv, needcomm, commandonly;
 
 int mbswprint(const char *, int, int);  /* utf8.c */
 

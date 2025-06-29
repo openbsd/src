@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.25 2025/04/29 03:48:10 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.26 2025/06/29 16:22:05 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@ extern VARENT *vhead;
 __BEGIN_DECLS
 void	 command(const struct pinfo *, VARENT *);
 void	 cputime(const struct pinfo *, VARENT *);
-int	 donlist(void);
+int	 getkernvars(void);
 void	 elapsed(const struct pinfo *, VARENT *);
 double	 getpcpu(const struct kinfo_proc *);
 double	 getpmem(const struct kinfo_proc *);

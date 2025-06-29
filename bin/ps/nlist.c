@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.22 2021/12/01 18:21:23 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.23 2025/06/29 16:22:05 tedu Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@ struct	nlist psnl[] = {
 };
 
 fixpt_t	ccpu;				/* kernel _ccpu variable */
-int	nlistread;			/* if nlist already read. */
 u_int	mempages;			/* number of pages of phys. memory */
 int	fscale;				/* kernel _fscale variable */
 int	maxslp;
@@ -69,14 +68,13 @@ extern kvm_t *kd;
 	kvm_read(kd, psnl[x].n_value, &v, sizeof v) != sizeof(v)
 
 int
-donlist(void)
+getkernvars(void)
 {
 	int64_t physmem;
 	int rval, mib[2];
 	size_t siz;
 
 	rval = 0;
-	nlistread = 1;
 
 	if (kd != NULL && !kvm_sysctl_only) {
 		if (kvm_nlist(kd, psnl)) {

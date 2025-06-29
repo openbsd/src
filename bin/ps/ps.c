@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.82 2025/04/29 03:45:27 tedu Exp $	*/
+/*	$OpenBSD: ps.c,v 1.83 2025/06/29 16:22:05 tedu Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 #include <fcntl.h>
 #include <kvm.h>
 #include <locale.h>
-#include <nlist.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -67,7 +66,7 @@ int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 int pagesize;
 
-int	needcomm, needenv, neednlist, commandonly;
+int	needcomm, needenv, commandonly;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
@@ -327,8 +326,7 @@ main(int argc, char *argv[])
 		Uflag = 1;
 	}
 
-	if (neednlist && !nlistread)
-		(void) donlist();
+	getkernvars();
 
 	/*
 	 * get proc list
@@ -437,8 +435,6 @@ scanvars(struct kinfo_proc *kp, size_t nentries)
 		totwidth += v->width + 1;	/* +1 for space */
 		if (v->flag & COMM)
 			needcomm = 1;
-		if (v->flag & NLIST)
-			neednlist = 1;
 	}
 	totwidth--;
 }
