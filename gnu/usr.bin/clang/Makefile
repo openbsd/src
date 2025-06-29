@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.28 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.29 2025/06/29 01:36:32 jmatthew Exp $
 
 .include <bsd.own.mk>
 
@@ -118,6 +118,8 @@ SUBDIR+=include/llvm-objdump
 SUBDIR+=llvm-objdump
 SUBDIR+=include/llvm-readobj
 SUBDIR+=llvm-readobj
+SUBDIR+=include/llvm-symbolizer
+SUBDIR+=llvm-symbolizer
 
 SUBDIR+=llvm-profdata
 SUBDIR+=llvm-cov
