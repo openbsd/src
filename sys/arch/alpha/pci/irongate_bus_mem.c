@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate_bus_mem.c,v 1.6 2008/06/26 05:42:08 ray Exp $	*/
+/*	$OpenBSD: irongate_bus_mem.c,v 1.7 2025/06/29 15:55:21 miod Exp $	*/
 /* $NetBSD: irongate_bus_mem.c,v 1.7 2001/04/17 21:52:00 thorpej Exp $ */
 
 /*-
@@ -50,9 +50,9 @@
 
 #define	CHIP_MEM_SYS_START(v)	IRONGATE_MEM_BASE
 
-/* 
- * AMD 751 core logic appears on EV6.  We require at least EV56 
- * support for the assembler to emit BWX opcodes. 
+/*
+ * AMD 751 core logic appears on EV6.  We require at least EV56
+ * support for the assembler to emit BWX opcodes.
  */
 __asm(".arch ev6");
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.22 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.23 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -100,12 +100,12 @@ pci_6600_pickintr(struct tsp_config *pcp)
 #endif
 	int i;
 
-        pc->pc_intr_v = pcp;
-        pc->pc_intr_map = dec_6600_intr_map;
-        pc->pc_intr_string = dec_6600_intr_string;
-        pc->pc_intr_line = dec_6600_intr_line;
-        pc->pc_intr_establish = dec_6600_intr_establish;
-        pc->pc_intr_disestablish = dec_6600_intr_disestablish;
+	pc->pc_intr_v = pcp;
+	pc->pc_intr_map = dec_6600_intr_map;
+	pc->pc_intr_string = dec_6600_intr_string;
+	pc->pc_intr_line = dec_6600_intr_line;
+	pc->pc_intr_establish = dec_6600_intr_establish;
+	pc->pc_intr_disestablish = dec_6600_intr_disestablish;
 	pc->pc_pciide_compat_intr_establish = NULL;
 
 	/*
@@ -129,7 +129,7 @@ pci_6600_pickintr(struct tsp_config *pcp)
 	}
 }
 
-int     
+int
 dec_6600_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int buspin, line = pa->pa_intrline;
@@ -206,7 +206,7 @@ dec_6600_intr_establish(void *acv, pci_intr_handle_t ih, int level,
 	if (DEC_6600_LINE_IS_ISA(ih))
 		return (sio_intr_establish(NULL /*XXX*/,
 		    DEC_6600_LINE_ISA_IRQ(ih), IST_LEVEL, level, func, arg,
-	            name));
+		    name));
 #endif
 
 	if (ih >= PCI_NIRQ)
@@ -243,7 +243,7 @@ dec_6600_intr_disestablish(void *acv, void *cookie)
 		return;
 	}
 #endif
- 
+
 	s = splhigh();
 
 	alpha_shared_intr_disestablish(dec_6600_pci_intr, cookie);
@@ -253,14 +253,14 @@ dec_6600_intr_disestablish(void *acv, void *cookie)
 		    IST_NONE);
 		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
- 
+
 	splx(s);
 }
 
 void
 dec_6600_iointr(void *arg, unsigned long vec)
 {
-	int irq; 
+	int irq;
 
 	irq = SCB_VECTOIDX(vec - 0x900);
 

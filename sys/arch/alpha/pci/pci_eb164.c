@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.29 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.30 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -96,7 +96,7 @@ void	*dec_eb164_pciide_compat_intr_establish(void *, struct device *,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
 void    dec_eb164_pciide_compat_intr_disestablish(void *, void *);
 
-#define	EB164_SIO_IRQ	4  
+#define	EB164_SIO_IRQ	4
 #define	EB164_MAX_IRQ	24
 #define	PCI_STRAY_MAX	5
 
@@ -116,12 +116,12 @@ pci_eb164_pickintr(struct cia_config *ccp)
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int i;
 
-        pc->pc_intr_v = ccp;
-        pc->pc_intr_map = dec_eb164_intr_map;
-        pc->pc_intr_string = dec_eb164_intr_string;
-        pc->pc_intr_line = dec_eb164_intr_line;
-        pc->pc_intr_establish = dec_eb164_intr_establish;
-        pc->pc_intr_disestablish = dec_eb164_intr_disestablish;
+	pc->pc_intr_v = ccp;
+	pc->pc_intr_map = dec_eb164_intr_map;
+	pc->pc_intr_string = dec_eb164_intr_string;
+	pc->pc_intr_line = dec_eb164_intr_line;
+	pc->pc_intr_establish = dec_eb164_intr_establish;
+	pc->pc_intr_disestablish = dec_eb164_intr_disestablish;
 
 	pc->pc_pciide_compat_intr_establish =
 	    dec_eb164_pciide_compat_intr_establish;
@@ -152,7 +152,7 @@ pci_eb164_pickintr(struct cia_config *ccp)
 #endif
 }
 
-int     
+int
 dec_eb164_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int buspin, line = pa->pa_intrline;
@@ -218,12 +218,12 @@ dec_eb164_intr_string(void *ccv, pci_intr_handle_t ih)
 #if 0
 	struct cia_config *ccp = ccv;
 #endif
-        static char irqstr[15];          /* 11 + 2 + NULL + sanity */
+	static char irqstr[15];	  /* 11 + 2 + NULL + sanity */
 
-        if (ih >= EB164_MAX_IRQ)
-                panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%lx", ih);
-        snprintf(irqstr, sizeof irqstr, "eb164 irq %ld", ih);
-        return (irqstr);
+	if (ih >= EB164_MAX_IRQ)
+		panic("dec_eb164_intr_string: bogus eb164 IRQ 0x%lx", ih);
+	snprintf(irqstr, sizeof irqstr, "eb164 irq %ld", ih);
+	return (irqstr);
 }
 
 int
@@ -264,7 +264,7 @@ dec_eb164_intr_disestablish(void *ccv, void *cookie)
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
 	int s;
- 
+
 	s = splhigh();
 
 	alpha_shared_intr_disestablish(eb164_pci_intr, cookie);
@@ -274,7 +274,7 @@ dec_eb164_intr_disestablish(void *ccv, void *cookie)
 		    IST_NONE);
 		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
- 
+
 	splx(s);
 }
 
@@ -313,7 +313,7 @@ dec_eb164_pciide_compat_intr_disestablish(void *v, void *cookie)
 void
 eb164_iointr(void *arg, unsigned long vec)
 {
-	int irq; 
+	int irq;
 
 	irq = SCB_VECTOIDX(vec - 0x900);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_kn300.c,v 1.9 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: pci_kn300.c,v 1.10 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pci_kn300.c,v 1.28 2005/12/11 12:16:17 christos Exp $ */
 
 /*
@@ -112,7 +112,7 @@ pci_kn300_pickintr(struct mcpcia_config *ccp, int first)
 	}
 }
 
-int     
+int
 dec_kn300_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
@@ -188,7 +188,7 @@ dec_kn300_intr_string(void *ccv, pci_intr_handle_t ih)
 void *
 dec_kn300_intr_establish(void *ccv, pci_intr_handle_t ih, int level,
     int (*func) (void *), void *arg, const char *name)
-{           
+{
 	struct mcpcia_config *ccp = ccv;
 	void *cookie;
 	int irq;
@@ -212,7 +212,7 @@ dec_kn300_intr_establish(void *ccv, pci_intr_handle_t ih, int level,
 	return (cookie);
 }
 
-void    
+void
 dec_kn300_intr_disestablish(void *ccv, void *cookie)
 {
 	panic("dec_kn300_intr_disestablish not implemented");

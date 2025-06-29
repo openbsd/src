@@ -1,4 +1,4 @@
-/* $OpenBSD: bus_dma.c,v 1.37 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: bus_dma.c,v 1.38 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: bus_dma.c,v 1.40 2000/07/17 04:47:56 thorpej Exp $ */
 
 /*-
@@ -435,7 +435,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags, paddr_t low, paddr_t high)
 {
 	paddr_t curaddr, lastaddr;
-	struct vm_page *m;    
+	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error, plaflag;
 

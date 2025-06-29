@@ -1,4 +1,4 @@
-/* $OpenBSD: mcmem.c,v 1.4 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: mcmem.c,v 1.5 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: mcmem.c,v 1.4 2002/10/02 04:06:38 thorpej Exp $ */
 
 /*
@@ -53,11 +53,11 @@ int	mcmemmatch (struct device *, void *, void *);
 void	mcmemattach (struct device *, struct device *, void *);
 
 const struct cfattach mcmem_ca = {
-        sizeof(struct device), mcmemmatch, mcmemattach
+	sizeof(struct device), mcmemmatch, mcmemattach
 };
 
 struct cfdriver mcmem_cd = {
-        NULL, "mcmem", DV_DULL,
+	NULL, "mcmem", DV_DULL,
 };
 
 int

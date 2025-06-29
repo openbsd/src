@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.13 2024/02/14 12:48:31 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.14 2025/06/29 15:55:21 miod Exp $
 
 # Copyright (c) 1994, 1995 Gordon W. Ross
 # Copyright (c) 1993 Adam Glass
@@ -125,7 +125,7 @@ export	ALPHA_KENTRY_MM
 export	ALPHA_KENTRY_IF
 export	ALPHA_KENTRY_UNA
 
-# errno values 
+# errno values
 export	ENAMETOOLONG
 export	EFAULT
 

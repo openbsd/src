@@ -1,4 +1,4 @@
-/* $OpenBSD: logout.h,v 1.3 2009/09/25 04:38:40 miod Exp $ */
+/* $OpenBSD: logout.h,v 1.4 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: logout.h,v 1.6 2005/12/11 12:16:16 christos Exp $ */
 
 /*
@@ -55,7 +55,7 @@
  */
 
 /*
- * Avanti (AlphaStation 200 and 400) Specific PALcode Exception Logout 
+ * Avanti (AlphaStation 200 and 400) Specific PALcode Exception Logout
  * Area Definitions
  */
 
@@ -108,7 +108,7 @@ typedef struct {
 	u_int64_t	paltemp[32];	/* PAL TEMP REGS.		*/
 	u_int64_t	exc_addr;	/* Address of excepting ins.	*/
 	u_int64_t	exc_sum;	/* Summary of arithmetic traps.	*/
-	u_int64_t	exc_mask;	/* Exception mask.		*/ 
+	u_int64_t	exc_mask;	/* Exception mask.		*/
 	u_int64_t	iccsr;
 	u_int64_t	pal_base;	/* Base address for PALcode.	*/
 	u_int64_t	hier;
@@ -210,7 +210,7 @@ typedef struct {
 	u_int64_t	paltemp[24];	/* PAL TEMP REGS.		*/
 	u_int64_t	exc_addr;	/* Address of excepting ins.	*/
 	u_int64_t	exc_sum;	/* Summary of arithmetic traps.	*/
-	u_int64_t	exc_mask;	/* Exception mask.		*/ 
+	u_int64_t	exc_mask;	/* Exception mask.		*/
 	u_int64_t	pal_base;	/* Base address for PALcode.	*/
 	u_int64_t	isr;		/* Interrupt Status Reg.	*/
 	u_int64_t	icsr;		/* CURRENT SETUP OF EV5 IBOX	*/
@@ -229,7 +229,7 @@ typedef struct {
 					 */
 	u_int64_t	va;		/* Effective VA of fault or miss. */
 	u_int64_t	mm_stat;	/*
-					 * Holds the reason for D-stream 
+					 * Holds the reason for D-stream
 					 * fault or D-cache parity errors
 					 */
 	u_int64_t	sc_addr;	/*
@@ -248,9 +248,9 @@ typedef struct {
 					 */
 	u_int64_t	fill_syndrome;	/* For correcting ECC errors.	  */
 	u_int64_t	ei_stat;	/*
-					 * Helps identify reason of any 
+					 * Helps identify reason of any
 					 * processor uncorrectable error
-					 * at its external interface.	  
+					 * at its external interface.
 					 */
 	u_int64_t	ld_lock;	/* Contents of EV5 LD_LOCK register*/
 } mc_uc_ev5;
@@ -268,9 +268,9 @@ typedef struct {
 					 */
 	u_int64_t	fill_syndrome;	/* For correcting ECC errors.	  */
 	u_int64_t	ei_stat;	/*
-					 * Helps identify reason of any 
+					 * Helps identify reason of any
 					 * processor uncorrectable error
-					 * at its external interface.	  
+					 * at its external interface.
 					 */
 	u_int64_t	isr;		/* Interrupt Status Reg. 	  */
 } mc_cc_ev5;

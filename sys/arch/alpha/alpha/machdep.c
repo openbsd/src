@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.205 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.206 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -281,7 +281,7 @@ alpha_init(u_long unused, u_long ptb, u_long bim, u_long bip, u_long biv)
 			/* booted dev not provided in bootinfo */
 			init_prom_interface((struct rpb *)
 			    ALPHA_PHYS_TO_K0SEG(bootinfo.hwrpb_phys));
-                	prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
+			prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
 			    sizeof bootinfo.booted_dev);
 			break;
 		}
@@ -323,7 +323,7 @@ nobootinfo:
 #endif
 
 	/*
-	 * Remember how many cycles there are per microsecond, 
+	 * Remember how many cycles there are per microsecond,
 	 * so that we can use delay().  Round up, for safety.
 	 */
 	cycles_per_usec = (hwrpb->rpb_cc_freq + 999999) / 1000000;
@@ -1534,9 +1534,9 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (securelevel > 0)
 			return (sysctl_int_lower(oldp, oldlenp, newp, newlen,
 			    &allowaperture));
-                else
-                        return (sysctl_int(oldp, oldlenp, newp, newlen,
-                            &allowaperture));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    &allowaperture));
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif

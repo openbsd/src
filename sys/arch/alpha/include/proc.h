@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.13 2017/04/13 03:52:25 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.14 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: proc.h,v 1.2 1995/03/24 15:01:36 cgd Exp $	*/
 
 /*
@@ -53,12 +53,12 @@ struct mdproc {
  *      A largely unused bit indicating the presence of FPU history.
  *      Cleared on exec. Set but not used by the fpu context switcher
  *      itself.
- * 
+ *
  * MDP_FP_C
  *      The architected FP Control word. It should forever begin at bit 1,
  *      as the bits are AARM specified and this way it doesn't need to be
  *      shifted.
- * 
+ *
  *      Until C99 there was never an IEEE 754 API, making most of the
  *      standard useless.  Because of overlapping AARM, OSF/1, NetBSD, and
  *      C99 API's, the use of the MDP_FP_C bits is defined variously in

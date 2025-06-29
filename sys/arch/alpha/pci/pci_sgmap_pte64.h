@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_sgmap_pte64.h,v 1.4 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: pci_sgmap_pte64.h,v 1.5 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pci_sgmap_pte64.h,v 1.2 1997/06/06 23:59:29 thorpej Exp $ */
 
 /*-
@@ -42,10 +42,10 @@
  * |                               | Page address | V |
  *
  * The page address is bits <n:13> of the physical address of the
- * page.  The V bit is set if the PTE holds a valid mapping. 
+ * page.  The V bit is set if the PTE holds a valid mapping.
  */
 #define SGPTE_PGADDR_SHIFT      12
-#define SGPTE_VALID             0x0000000000000001UL
+#define SGPTE_VALID		0x0000000000000001UL
 
 #include <alpha/dev/sgmapvar.h>
 #include <alpha/dev/sgmap_typedep.h>

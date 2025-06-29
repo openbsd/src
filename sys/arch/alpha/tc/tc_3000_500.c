@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.24 2025/06/28 16:04:10 miod Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.25 2025/06/29 15:55:22 miod Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -113,14 +113,14 @@ tc_3000_500_intr_setup(void)
 	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 
-        /*
+	/*
 	 * Set up interrupt handlers.
 	 */
-        for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
+	for (i = 0; i < TC_3000_500_NCOOKIES; i++) {
 		tc_3000_500_intr[i].tci_func = tc_3000_500_intrnull;
 		tc_3000_500_intr[i].tci_arg = (void *)i;
 		tc_3000_500_intr[i].tci_level = IPL_HIGH;
-        }
+	}
 }
 
 void
@@ -183,7 +183,7 @@ tc_3000_500_intrnull(void *val)
 void
 tc_3000_500_iointr(void *arg, unsigned long vec)
 {
-        u_int32_t ir;
+	u_int32_t ir;
 	int ifound;
 
 	do {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock_isa.c,v 1.10 2025/06/28 16:04:09 miod Exp $	*/
+/*	$OpenBSD: mcclock_isa.c,v 1.11 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: mcclock_isa.c,v 1.5 1996/12/05 01:39:29 cgd Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ void	mcclock_isa_attach(struct device *, struct device *, void *);
 
 const struct cfattach mcclock_isa_ca = {
 	sizeof (struct mcclock_isa_softc), mcclock_isa_match,
-	    mcclock_isa_attach, 
+	    mcclock_isa_attach,
 };
 
 void	mcclock_isa_write(struct mcclock_softc *, u_int, u_int);
@@ -68,11 +68,11 @@ mcclock_isa_match(struct device *parent, void *match, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
 
-        if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != 0x70) ||
-            /* (ia->ia_iosize != 0 && ia->ia_iosize != 0x2) || XXX isa.c */
-            ia->ia_maddr != MADDRUNK || ia->ia_msize != 0 ||
-            ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
-                return (0);
+	if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != 0x70) ||
+	    /* (ia->ia_iosize != 0 && ia->ia_iosize != 0x2) || XXX isa.c */
+	    ia->ia_maddr != MADDRUNK || ia->ia_msize != 0 ||
+	    ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
+		return (0);
 
 	if (bus_space_map(ia->ia_iot, 0x70, 0x2, 0, &ioh))
 		return (0);

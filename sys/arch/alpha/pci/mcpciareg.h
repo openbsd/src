@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpciareg.h,v 1.2 2024/09/06 10:54:08 jsg Exp $ */
+/* $OpenBSD: mcpciareg.h,v 1.3 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: mcpciareg.h,v 1.7 2006/05/17 21:32:59 drochner Exp $ */
 
 /*
@@ -79,31 +79,31 @@
  *
  * ------------------------------------------------------------
  * CPU to PCI Address Mapping for MCBUS-PCIy Bridge on MCBUS x:
- * ------------------------------------------------------------    
- * 
+ * ------------------------------------------------------------
+ *
  * CPU Address Range            PCI Address Range       PCI Address Space
  * ------------------------     ---------------------   ------------------------
  * (8+x)(8+y*2).0000.0000       0000.0000 - 00FF.FFFF   PCIy Sparse Memory Space
  * - (8+x)(8+y*2).1FFF.FFFF                              (fixed, lower 16MB)
- * 
+ *
  * (8+x)(8+y*2).2000.0000       0100.0000 - 07FF.FFFF   PCIy Sparse Memory Space
  * - (8+x)(8+y*2).FFFF.FFFF                              (variable, offset = 0)
- * 
+ *
  * (8+x)(9+y*2).0000.0000       0000.0000 - 7FFF.FFFF   PCIy Dense Memory Space
  * - (8+x)(9+y*2).7FFF.FFFF  or 8000.0000 - FFFF.FFFF      if HAE_DENSE_MEM = 1
- * 
+ *
  * (8+x)(9+y*2).8000.0000       0000.0000 - 0000.FFFF   PCIy Sparse IO Space
  * - (8+x)(9+y*2).801F.FFFF                              (fixed, lower 64K)
- * 
+ *
  * (8+x)(9+y*2).8020.0000       0001.0000 - 01FF.FFFF   PCIy Sparse IO Space
  * - (8+x)(9+y*2).BFFF.FFFF                              (variable, offset = 0)
- * 
+ *
  * (8+x)(9+y*2).C000.0000       0000.0000 - 0FFF.FFFF   PCIy Config Space (16MB)
  * - (8+x)(9+y*2).DFFF.FFFF
- * 
+ *
  * (8+x)(9+y*2).E000.0000               N/A             PCIy-Bridge CSR Space
  *							(8MB)
- * - (8+x)(9+y*2).EFFF.FFFF 
+ * - (8+x)(9+y*2).EFFF.FFFF
  *
  * (8+x)(9+y*2).F000.0000               N/A             Unused
  * - (8+x)(9+y*2).F000.3EFF
@@ -116,9 +116,9 @@
  *
  */
 
-/*                                                       
+/*
  * MC-PCI Bus Bridge CSRs
- *                           
+ *
  * Address Map Overview:
  *
  * Offset                Selected Space
@@ -126,13 +126,13 @@
  * 0x00000000            General config, control, diag, error logging regs.
  * 0x00001000            PCI Error Status
  * 0x00001300            PCI Scatter/Gather Regs.
- * 0x00001800            Scatter/Gather TLB Regs.        
+ * 0x00001800            Scatter/Gather TLB Regs.
  * 0x00004000            MDPA Error Status & Diagnostic Control
  * 0x00008000            MDPB Error Status & Diagnostic Control
  * 0x000E0000 -          Flash Rom Space --
  * 0x000FFFFF            offset address into PCI Dense Mem Space
  * 0x10003F00            Interrupt Acknowledge
- * 
+ *
  */
 
 
@@ -271,7 +271,7 @@
 
 struct mcpcia_iodsnap {
 	u_int64_t	base_addr;
-	u_int32_t	whami; 
+	u_int32_t	whami;
 	u_int32_t	rsvd0;
 	u_int32_t	pci_rev;
 	u_int32_t	cap_ctrl;
@@ -279,7 +279,7 @@ struct mcpcia_iodsnap {
 	u_int32_t	hae_io;
 	u_int32_t	int_ctl;
 	u_int32_t	int_reg;
-	u_int32_t	int_mask0; 
+	u_int32_t	int_mask0;
 	u_int32_t	int_mask1;
 	u_int32_t	mc_err0;
 	u_int32_t	mc_err1;
@@ -287,7 +287,7 @@ struct mcpcia_iodsnap {
 	u_int32_t	sys_env;
 	u_int32_t	pci_err1;
 	u_int32_t	mdpa_stat;
-	u_int32_t	mdpa_syn; 
+	u_int32_t	mdpa_syn;
 	u_int32_t	mdpb_stat;
 	u_int32_t	mdpb_syn;
 	u_int32_t	rsvd2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_tc.c,v 1.14 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.15 2025/06/29 15:55:22 miod Exp $	*/
 /*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ le_tc_attach(struct device *parent, struct device *self, void *aux)
 	 * baseboard implementation of a TC option card.
 	 */
 	lesc->sc_r1 = (struct lereg1 *)
-           TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->ta_addr + LE_OFFSET_LANCE)); 
+	   TC_DENSE_TO_SPARSE(TC_PHYS_TO_UNCACHED(d->ta_addr + LE_OFFSET_LANCE));
 	sc->sc_mem = (void *)(d->ta_addr + LE_OFFSET_RAM);
 
 	sc->sc_copytodesc = lance_copytobuf_contig;

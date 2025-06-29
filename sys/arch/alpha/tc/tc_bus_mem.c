@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_bus_mem.c,v 1.19 2025/06/28 16:04:10 miod Exp $ */
+/* $OpenBSD: tc_bus_mem.c,v 1.20 2025/06/29 15:55:22 miod Exp $ */
 /* $NetBSD: tc_bus_mem.c,v 1.25 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*
@@ -433,7 +433,7 @@ tc_mem_write_1(void *v, bus_space_handle_t memh, bus_size_t off, u_int8_t val)
 		p = (u_int8_t *)(memh + off);
 		*p = val;
 	}
-        alpha_mb();		/* XXX XXX XXX */
+	alpha_mb();		/* XXX XXX XXX */
 }
 
 inline void
@@ -459,7 +459,7 @@ tc_mem_write_2(void *v, bus_space_handle_t memh, bus_size_t off, u_int16_t val)
 		p = (u_int16_t *)(memh + off);
 		*p = val;
 	}
-        alpha_mb();		/* XXX XXX XXX */
+	alpha_mb();		/* XXX XXX XXX */
 }
 
 inline void
@@ -473,7 +473,7 @@ tc_mem_write_4(void *v, bus_space_handle_t memh, bus_size_t off, u_int32_t val)
 	else
 		p = (u_int32_t *)(memh + off);
 	*p = val;
-        alpha_mb();		/* XXX XXX XXX */
+	alpha_mb();		/* XXX XXX XXX */
 }
 
 inline void
@@ -486,7 +486,7 @@ tc_mem_write_8(void *v, bus_space_handle_t memh, bus_size_t off, u_int64_t val)
 
 	p = (u_int64_t *)(memh + off);
 	*p = val;
-        alpha_mb();		/* XXX XXX XXX */
+	alpha_mb();		/* XXX XXX XXX */
 }
 
 #define	tc_mem_write_multi_N(BYTES,TYPE)				\

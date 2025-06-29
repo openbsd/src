@@ -1,4 +1,4 @@
-/* $OpenBSD: mcbusreg.h,v 1.1 2007/03/16 21:22:27 robert Exp $ */
+/* $OpenBSD: mcbusreg.h,v 1.2 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: mcbusreg.h,v 1.3 1999/11/16 18:36:27 mjacob Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #define	MCBUS_IOSPACE		0x0000008000000000L
-#define MCBUS_GID_MASK          0x0000007000000000L
+#define MCBUS_GID_MASK		0x0000007000000000L
 #define	MCBUS_GID_SHIFT		36
 #define	MCBUS_MID_MASK		0x0000000E00000000L
 #define	MCBUS_MID_SHIFT		33
@@ -84,7 +84,7 @@
  */
 #define MCBUSCF_NLOCS 1
 #define MCBUSCF_MID 0
-#define MCBUSCF_MID_DEFAULT -1  
+#define MCBUSCF_MID_DEFAULT -1
 
 /* the MCPCIA bridge CSR addresses, offset zero, is a good thing to probe for */
 #define	MCPCIA_BRIDGE_ADDR(gid, mid)	\

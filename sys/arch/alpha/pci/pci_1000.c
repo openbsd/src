@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.13 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.14 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -111,12 +111,12 @@ pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 
 	if (bus_space_map(iot, 0x536, 2, 0, &another_mystery_icu_ioh))
 		panic("pci_1000_pickintr");
-        pc->pc_intr_v = core;
-        pc->pc_intr_map = dec_1000_intr_map;
-        pc->pc_intr_string = dec_1000_intr_string;
+	pc->pc_intr_v = core;
+	pc->pc_intr_map = dec_1000_intr_map;
+	pc->pc_intr_string = dec_1000_intr_string;
 	pc->pc_intr_line = dec_1000_intr_line;
-        pc->pc_intr_establish = dec_1000_intr_establish;
-        pc->pc_intr_disestablish = dec_1000_intr_disestablish;
+	pc->pc_intr_establish = dec_1000_intr_establish;
+	pc->pc_intr_disestablish = dec_1000_intr_disestablish;
 
 	pc->pc_pciide_compat_intr_establish = NULL;
 	pc->pc_pciide_compat_intr_disestablish = NULL;
@@ -134,7 +134,7 @@ pci_1000_pickintr(void *core, bus_space_tag_t iot, bus_space_tag_t memt,
 #endif
 }
 
-int     
+int
 dec_1000_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t bustag = pa->pa_intrtag;
@@ -182,13 +182,13 @@ const char *
 dec_1000_intr_string(void *ccv, pci_intr_handle_t ih)
 {
 	static const char irqmsg_fmt[] = "dec_1000 irq %ld";
-        static char irqstr[sizeof irqmsg_fmt];
+	static char irqstr[sizeof irqmsg_fmt];
 
-        if (ih >= PCI_NIRQ)
-                panic("dec_1000_intr_string: bogus dec_1000 IRQ 0x%lx", ih);
+	if (ih >= PCI_NIRQ)
+		panic("dec_1000_intr_string: bogus dec_1000 IRQ 0x%lx", ih);
 
-        snprintf(irqstr, sizeof irqstr, irqmsg_fmt, ih);
-        return (irqstr);
+	snprintf(irqstr, sizeof irqstr, irqmsg_fmt, ih);
+	return (irqstr);
 }
 
 int
@@ -204,11 +204,11 @@ dec_1000_intr_line(void *ccv, pci_intr_handle_t ih)
 void *
 dec_1000_intr_establish(void *ccv, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, const char *name)
-{           
+{
 	void *cookie;
 
-        if (ih >= PCI_NIRQ)
-                panic("dec_1000_intr_establish: IRQ too high, 0x%lx", ih);
+	if (ih >= PCI_NIRQ)
+		panic("dec_1000_intr_establish: IRQ too high, 0x%lx", ih);
 
 	cookie = alpha_shared_intr_establish(dec_1000_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, name);
@@ -221,7 +221,7 @@ dec_1000_intr_establish(void *ccv, pci_intr_handle_t ih, int level,
 	return (cookie);
 }
 
-void    
+void
 dec_1000_intr_disestablish(void *ccv, void *cookie)
 {
 	struct alpha_shared_intrhand *ih = cookie;

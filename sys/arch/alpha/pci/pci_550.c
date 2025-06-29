@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.25 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: pci_550.c,v 1.26 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -132,12 +132,12 @@ pci_550_pickintr(struct cia_config *ccp)
 #endif
 	int i;
 
-        pc->pc_intr_v = ccp;
-        pc->pc_intr_map = dec_550_intr_map;
-        pc->pc_intr_string = dec_550_intr_string;
-        pc->pc_intr_line = dec_550_intr_line;
-        pc->pc_intr_establish = dec_550_intr_establish;
-        pc->pc_intr_disestablish = dec_550_intr_disestablish;
+	pc->pc_intr_v = ccp;
+	pc->pc_intr_map = dec_550_intr_map;
+	pc->pc_intr_string = dec_550_intr_string;
+	pc->pc_intr_line = dec_550_intr_line;
+	pc->pc_intr_establish = dec_550_intr_establish;
+	pc->pc_intr_disestablish = dec_550_intr_disestablish;
 
 	pc->pc_pciide_compat_intr_establish =
 	    dec_550_pciide_compat_intr_establish;
@@ -164,7 +164,7 @@ pci_550_pickintr(struct cia_config *ccp)
 #endif
 }
 
-int     
+int
 dec_550_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int buspin, line = pa->pa_intrline;
@@ -316,7 +316,7 @@ dec_550_intr_disestablish(void *ccv, void *cookie)
 		return;
 	}
 #endif
- 
+
 	s = splhigh();
 
 	alpha_shared_intr_disestablish(dec_550_pci_intr, cookie);
@@ -326,7 +326,7 @@ dec_550_intr_disestablish(void *ccv, void *cookie)
 		    IST_NONE);
 		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
- 
+
 	splx(s);
 }
 
@@ -363,7 +363,7 @@ dec_550_pciide_compat_intr_disestablish(void *v, void *cookie)
 void
 dec_550_iointr(void *arg, unsigned long vec)
 {
-	int irq; 
+	int irq;
 
 	irq = SCB_VECTOIDX(vec - 0x900);
 

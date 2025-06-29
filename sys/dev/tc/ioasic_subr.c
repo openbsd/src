@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioasic_subr.c,v 1.2 2025/06/28 16:04:10 miod Exp $	*/
+/*	$OpenBSD: ioasic_subr.c,v 1.3 2025/06/29 15:55:22 miod Exp $	*/
 /*	$NetBSD: ioasic_subr.c,v 1.3 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -63,10 +63,10 @@ ioasic_attach_devs(struct ioasic_softc *sc, struct ioasic_dev *ioasic_devs,
 	struct ioasicdev_attach_args idev;
 	int i;
 
-        /*
+	/*
 	 * Try to configure each device.
 	 */
-        for (i = 0; i < ioasic_ndevs; i++) {
+	for (i = 0; i < ioasic_ndevs; i++) {
 		strncpy(idev.iada_modname, ioasic_devs[i].iad_modname,
 			TC_ROM_LLEN);
 		idev.iada_modname[TC_ROM_LLEN] = '\0';
@@ -74,7 +74,7 @@ ioasic_attach_devs(struct ioasic_softc *sc, struct ioasic_dev *ioasic_devs,
 		idev.iada_addr = sc->sc_base + ioasic_devs[i].iad_offset;
 		idev.iada_cookie = ioasic_devs[i].iad_cookie;
 
-                /* Tell the autoconfig machinery we've found the hardware. */
-                config_found(&sc->sc_dv, &idev, ioasicprint);
-        }
+		/* Tell the autoconfig machinery we've found the hardware. */
+		config_found(&sc->sc_dv, &idev, ioasicprint);
+	}
 }

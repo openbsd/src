@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.28 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: cia.c,v 1.29 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -393,7 +393,7 @@ ciaattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = &ccp->cc_iot;
 	pba.pba_memt = &ccp->cc_memt;
-	pba.pba_dmat = 
+	pba.pba_dmat =
 	    alphabus_dma_get_tag(&ccp->cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_domain = pci_ndomains++;

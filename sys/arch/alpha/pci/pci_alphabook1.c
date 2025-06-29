@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_alphabook1.c,v 1.5 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: pci_alphabook1.c,v 1.6 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pci_alphabook1.c,v 1.16 2012/02/06 02:14:15 matt Exp $ */
 
 /*-
@@ -160,7 +160,7 @@ dec_alphabook1_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		*ihp = 15;
 		return 0;
 	default:
-	        return 1;
+		return 1;
 	}
 }
 

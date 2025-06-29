@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.3 1996/10/30 22:39:27 niklas Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.4 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.1 1995/02/13 23:07:55 cgd Exp $	*/
 
 /*
@@ -32,4 +32,4 @@
  * machine/setjmp.h: machine dependent setjmp-related information.
  */
 
-#define _JBLEN  81              /* size, in longs, of a jmp_buf */
+#define _JBLEN  81		/* size, in longs, of a jmp_buf */

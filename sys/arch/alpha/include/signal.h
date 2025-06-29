@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.10 2016/05/10 18:39:42 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.11 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: signal.h,v 1.2 1995/02/16 03:08:08 cgd Exp $	*/
 
 /*
@@ -48,8 +48,8 @@ typedef int	sig_atomic_t;
  */
 struct  sigcontext {
 	long	sc_cookie;
-	long	sc_mask;                /* signal mask to restore XXX should be int */
-	long	sc_pc;                  /* pc to restore */
+	long	sc_mask;		/* signal mask to restore XXX should be int */
+	long	sc_pc;			/* pc to restore */
 	long	sc_ps;			/* ps to restore */
 	unsigned long sc_regs[32];	/* integer register set (see above) */
 #define	sc_sp	sc_regs[R_SP]

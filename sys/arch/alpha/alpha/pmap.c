@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.93 2025/06/02 18:49:04 claudio Exp $ */
+/* $OpenBSD: pmap.c,v 1.94 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -1008,8 +1008,8 @@ pmap_init(void)
 {
 
 #ifdef DEBUG
-        if (pmapdebug & PDB_FOLLOW)
-                printf("pmap_init()\n");
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_init()\n");
 #endif
 
 	/* initialize protection array */
@@ -2144,8 +2144,8 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-        s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
-        d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
+	s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
+	d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
 	memcpy(d, s, PAGE_SIZE);
 }
 
@@ -2629,7 +2629,7 @@ pmap_pv_dump(paddr_t pa)
 	printf("\n");
 }
 #endif
- 
+
 /*
  * vtophys:
  *
@@ -3349,7 +3349,7 @@ pmap_asn_alloc(pmap_t pmap, cpuid_t cpu_id)
 		 * ASN is still in the current generation; keep on using it.
 		 */
 #ifdef DEBUG
-		if (pmapdebug & PDB_ASN) 
+		if (pmapdebug & PDB_ASN)
 			printf("pmap_asn_alloc: same generation, keeping %u\n",
 			    pma->pma_asn);
 #endif

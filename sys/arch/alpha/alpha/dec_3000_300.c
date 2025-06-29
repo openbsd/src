@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_3000_300.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: dec_3000_300.c,v 1.16 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: dec_3000_300.c,v 1.30 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -241,7 +241,7 @@ dec_3000_300_device_register(struct device *dev, void *aux)
 	}
 
 	if (netboot) {
-                if (b->slot == 5 && strcmp(cd->cd_name, "le") == 0 &&
+		if (b->slot == 5 && strcmp(cd->cd_name, "le") == 0 &&
 		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "ioasic")
 		     == 0) {
 			/*
@@ -260,5 +260,5 @@ dec_3000_300_device_register(struct device *dev, void *aux)
 		/*
 		 * XXX GENERIC SUPPORT FOR TC NETWORK BOARDS
 		 */
-        }
+	}
 }

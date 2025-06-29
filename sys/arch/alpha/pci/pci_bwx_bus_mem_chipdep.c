@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.11 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: pci_bwx_bus_mem_chipdep.c,v 1.12 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $ */
 
 /*
@@ -73,7 +73,7 @@ int		__C(CHIP,_mem_subregion)(void *, bus_space_handle_t,
 /* allocation/deallocation */
 int		__C(CHIP,_mem_alloc)(void *, bus_addr_t, bus_addr_t,
 		    bus_size_t, bus_size_t, bus_addr_t, int, bus_addr_t *,
-                    bus_space_handle_t *);
+		    bus_space_handle_t *);
 void		__C(CHIP,_mem_free)(void *, bus_space_handle_t,
 		    bus_size_t);
 
@@ -289,7 +289,7 @@ __C(CHIP,_bus_mem_init)(bus_space_tag_t t, void *v)
 	    (caddr_t)CHIP_EXTENT_STORAGE(v),
 	    sizeof(CHIP_EXTENT_STORAGE(v)), EX_NOWAIT|EX_NOCOALESCE);
 
-        CHIP_MEM_EXTENT(v) = ex;
+	CHIP_MEM_EXTENT(v) = ex;
 }
 
 int
@@ -301,7 +301,7 @@ __C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize, int flags,
 #ifdef EXTENT_DEBUG
 	printf("mem: allocating 0x%lx to 0x%lx\n", memaddr,
 	    memaddr + memsize - 1);
-#endif  
+#endif
 	error = extent_alloc_region(CHIP_MEM_EXTENT(v), memaddr, memsize,
 	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 	if (error) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma_bounce.c,v 1.13 2019/05/13 21:27:59 mpi Exp $	*/
+/*	$OpenBSD: isadma_bounce.c,v 1.14 2025/06/29 15:55:21 miod Exp $	*/
 /* $NetBSD: isadma_bounce.c,v 1.3 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -264,7 +264,7 @@ isadma_bounce_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
  */
 int
 isadma_bounce_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
-    struct mbuf *m0, int flags)  
+    struct mbuf *m0, int flags)
 {
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
 	int error;

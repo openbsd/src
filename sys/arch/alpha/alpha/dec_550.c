@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_550.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: dec_550.c,v 1.16 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: dec_550.c,v 1.10 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -108,7 +108,7 @@ dec_550_cons_init(void)
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
-	case CTB_PRINTERPORT: 
+	case CTB_PRINTERPORT:
 		/* serial console ... */
 		/* XXX */
 		{

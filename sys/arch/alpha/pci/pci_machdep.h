@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.30 2016/05/04 14:30:00 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.31 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -69,11 +69,11 @@ struct alpha_pci_chipset {
 			    int, int (*)(void *), void *, const char *);
 	void		(*pc_intr_disestablish)(void *, void *);
 
-        /* alpha-specific */
-        void            *(*pc_pciide_compat_intr_establish)(void *,
-                            struct device *, struct pci_attach_args *, int,
-                            int (*)(void *), void *);
-	void            (*pc_pciide_compat_intr_disestablish)(void *,
+	/* alpha-specific */
+	void		*(*pc_pciide_compat_intr_establish)(void *,
+			    struct device *, struct pci_attach_args *, int,
+			    int (*)(void *), void *);
+	void		(*pc_pciide_compat_intr_disestablish)(void *,
 			    void *);
 	char 		*pc_name;	/* PCI chipset name */
 	vaddr_t		pc_mem;		/* PCI memory address */
@@ -127,12 +127,12 @@ void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
 #define alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)		\
     ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :		\
      (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),	\
-        (ch), (f), (a)))
+	(ch), (f), (a)))
 
 #define alpha_pciide_compat_intr_disestablish(c, cookie)		\
     do { if ((c)->pc_pciide_compat_intr_disestablish != NULL)		\
 	    ((c)->pc_pciide_compat_intr_disestablish)((c)->pc_conf_v,	\
-            (cookie)); } while (0)
+	    (cookie)); } while (0)
 
 #define	pci_dev_postattach(a, b)
 

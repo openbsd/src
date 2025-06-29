@@ -1,4 +1,4 @@
-/* $OpenBSD: db_disasm.c,v 1.27 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: db_disasm.c,v 1.28 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: db_disasm.c,v 1.8 2000/05/25 19:57:30 jhawk Exp $ */
 
 /* 
@@ -54,7 +54,7 @@
 #include <alpha/alpha/db_instruction.h>
 
 #include <machine/pal.h>
- 
+
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
@@ -223,13 +223,13 @@ static const char *arit_c0[8] = {
 	"addl", 0, "addq", 0, "addl/v", 0, "addq/v",
 };
 static const char *arit_c2[8] = {
-	"s4addl", "s8addl", "s4addq", "s8addq", 
+	"s4addl", "s8addl", "s4addq", "s8addq",
 };
 static const char *arit_c9[8] = {
-	"subl", 0, "subq", 0, "subl/v", 0, "subq/v", 
+	"subl", 0, "subq", 0, "subl/v", 0, "subq/v",
 };
 static const char *arit_cB[8] = {
-	"s4subl", "s8subl", "s4subq", "s8subq", 
+	"s4subl", "s8subl", "s4subq", "s8subq",
 };
 static const char *arit_cD[8] = {
 	0, "cmpult", "cmpeq", "cmpule", "cmplt", 0, "cmple",

@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.20 2025/06/28 16:04:10 miod Exp $ */
+/* $OpenBSD: tcasic.c,v 1.21 2025/06/29 15:55:22 miod Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -66,9 +66,9 @@ tcasicmatch(struct device *parent, void *cfdata, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-        /* Make sure that we're looking for a TurboChannel ASIC. */
-        if (strcmp(ma->ma_name, tcasic_cd.cd_name))
-                return (0);
+	/* Make sure that we're looking for a TurboChannel ASIC. */
+	if (strcmp(ma->ma_name, tcasic_cd.cd_name))
+		return (0);
 
 	if (tcasicfound)
 		return (0);

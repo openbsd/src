@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.51 2025/04/28 13:27:20 visa Exp $ */
+/* $OpenBSD: intr.h,v 1.52 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -90,7 +90,7 @@
 
 #define	SCB_NIOVECS	SCB_VECTOIDX(SCB_SIZE - SCB_IOVECBASE)
 
-struct scbvec { 
+struct scbvec {
 	void	(*scb_func)(void *, u_long);
 	void	*scb_arg;
 };

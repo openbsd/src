@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.27 2025/06/28 16:04:09 miod Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.28 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ pci_2100_a50_pickintr(struct apecs_config *acp)
 
 	/* XXX MAGIC NUMBER */
 	sioclass = pci_conf_read(pc, pci_make_tag(pc, 0, 7, 0), PCI_CLASS_REG);
-        sioII = (sioclass & 0xff) >= 3;
+	sioII = (sioclass & 0xff) >= 3;
 
 	if (!sioII)
 		printf("WARNING: SIO NOT SIO II... NO BETS...\n");
@@ -88,7 +88,7 @@ pci_2100_a50_pickintr(struct apecs_config *acp)
 	pc->pc_pciide_compat_intr_disestablish = NULL;
 
 #if NSIO
-        sio_intr_setup(pc, iot);
+	sio_intr_setup(pc, iot);
 #else
 	panic("pci_2100_a50_pickintr: no I/O interrupt handler (no sio)");
 #endif
@@ -174,7 +174,7 @@ dec_2100_a50_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	default:
 		printf("dec_2100_a50_intr_map: don't know how to setup %d/%d/%d\n",
 		    pa->pa_bus, pa->pa_device, pa->pa_function);
-                return 1;
+		return 1;
 	}
 
 	pirqreg = pci_conf_read(pc, pci_make_tag(pc, 0, APECS_SIO_DEVICE, 0),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_io_chipdep.c,v 1.10 2025/06/28 16:04:09 miod Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_io_chipdep.c,v 1.11 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: pcs_bus_io_common.c,v 1.14 1996/12/02 22:19:35 cgd Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ int		__C(CHIP,_io_subregion)(void *, bus_space_handle_t,
 /* allocation/deallocation */
 int		__C(CHIP,_io_alloc)(void *, bus_addr_t, bus_addr_t,
 		    bus_size_t, bus_size_t, bus_addr_t, int, bus_addr_t *,
-                    bus_space_handle_t *);
+		    bus_space_handle_t *);
 void		__C(CHIP,_io_free)(void *, bus_space_handle_t,
 		    bus_size_t);
 
@@ -320,8 +320,8 @@ __C(CHIP,_io_map)(void *v, bus_addr_t ioaddr, bus_size_t iosize, int flags,
 #ifdef EXTENT_DEBUG
 	printf("io: allocating 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
 #endif
-        error = extent_alloc_region(CHIP_IO_EXTENT(v), ioaddr, iosize,
-            EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+	error = extent_alloc_region(CHIP_IO_EXTENT(v), ioaddr, iosize,
+	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 	if (error) {
 #ifdef EXTENT_DEBUG
 		printf("io: allocation failed (%d)\n", error);
@@ -411,8 +411,8 @@ __C(CHIP,_io_unmap)(void *v, bus_space_handle_t ioh, bus_size_t iosize)
 #ifdef EXTENT_DEBUG
 	printf("io: freeing 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
 #endif
-        error = extent_free(CHIP_IO_EXTENT(v), ioaddr, iosize,
-            EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+	error = extent_free(CHIP_IO_EXTENT(v), ioaddr, iosize,
+	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 	if (error) {
 		printf("%s: WARNING: could not unmap 0x%lx-0x%lx (error %d)\n",
 		   __S(__C(CHIP,_io_unmap)), ioaddr, ioaddr + iosize - 1,
@@ -583,10 +583,10 @@ __C(CHIP,_io_write_1)(void *v, bus_space_handle_t ioh, bus_size_t off,
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-        nval = val << (8 * offset);
-        port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
-        *port = nval;
-        alpha_mb();
+	nval = val << (8 * offset);
+	port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+	*port = nval;
+	alpha_mb();
 }
 
 inline void
@@ -599,10 +599,10 @@ __C(CHIP,_io_write_2)(void *v, bus_space_handle_t ioh, bus_size_t off,
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-        nval = val << (8 * offset);
-        port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
-        *port = nval;
-        alpha_mb();
+	nval = val << (8 * offset);
+	port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+	*port = nval;
+	alpha_mb();
 }
 
 inline void
@@ -615,10 +615,10 @@ __C(CHIP,_io_write_4)(void *v, bus_space_handle_t ioh, bus_size_t off,
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
-        nval = val /*<< (8 * offset)*/;
-        port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
-        *port = nval;
-        alpha_mb();
+	nval = val /*<< (8 * offset)*/;
+	port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+	*port = nval;
+	alpha_mb();
 }
 
 inline void

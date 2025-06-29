@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.9 2025/06/28 16:04:09 miod Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.10 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ int		__C(CHIP,_mem_subregion)(void *, bus_space_handle_t,
 /* allocation/deallocation */
 int		__C(CHIP,_mem_alloc)(void *, bus_addr_t, bus_addr_t,
 		    bus_size_t, bus_size_t, bus_addr_t, int, bus_addr_t *,
-                    bus_space_handle_t *);
+		    bus_space_handle_t *);
 void		__C(CHIP,_mem_free)(void *, bus_space_handle_t,
 		    bus_size_t);
 
@@ -301,9 +301,9 @@ __C(CHIP,_bus_mem_init)(bus_space_tag_t t, void *v)
 #endif
 
 #ifdef EXTENT_DEBUG
-        extent_print(dex);
+	extent_print(dex);
 #endif
-        CHIP_D_MEM_EXTENT(v) = dex;
+	CHIP_D_MEM_EXTENT(v) = dex;
 
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	sex = extent_create(CHIP_EXTENT_SNAME(v), 0x0UL,
@@ -356,9 +356,9 @@ __C(CHIP,_bus_mem_init)(bus_space_tag_t t, void *v)
 #endif
 
 #ifdef EXTENT_DEBUG
-        extent_print(sex);
+	extent_print(sex);
 #endif
-        CHIP_S_MEM_EXTENT(v) = sex;
+	CHIP_S_MEM_EXTENT(v) = sex;
 }
 
 static int	__C(CHIP,_xlate_addr_to_dense_handle)(void *,
@@ -495,7 +495,7 @@ __C(CHIP,_mem_map)(void *v, bus_addr_t memaddr, bus_size_t memsize, int flags,
 	    memaddr + memsize - 1);
 	printf("mem: %s dense, %s sparse\n", mustd ? "need" : "want",
 	    musts ? "need" : "want");
-#endif  
+#endif
 	errord = extent_alloc_region(CHIP_D_MEM_EXTENT(v), memaddr, memsize,
 	    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
 	didd = (errord == 0);
@@ -776,8 +776,8 @@ __C(CHIP,_mem_read_8)(void *v, bus_space_handle_t memh, bus_size_t off)
 
 	alpha_mb();
 
-        if ((memh >> 63) != 0)
-                return (*(u_int64_t *)(memh + off));
+	if ((memh >> 63) != 0)
+		return (*(u_int64_t *)(memh + off));
 
 	/* XXX XXX XXX */
 	panic("%s not implemented", __S(__C(CHIP,_mem_read_8)));
@@ -833,7 +833,7 @@ __C(CHIP,_mem_write_1)(void *v, bus_space_handle_t memh, bus_size_t off,
 		port = (u_int32_t *)((tmpmemh << 5) | (0 << 3));
 		*port = nval;
 	}
-        alpha_mb();
+	alpha_mb();
 }
 
 inline void
@@ -849,11 +849,11 @@ __C(CHIP,_mem_write_2)(void *v, bus_space_handle_t memh, bus_size_t off,
 	else {
 		tmpmemh = memh + off;
 		offset = tmpmemh & 3;
-	        nval = val << (8 * offset);
-	        port = (u_int32_t *)((tmpmemh << 5) | (1 << 3));
-	        *port = nval;
+		nval = val << (8 * offset);
+		port = (u_int32_t *)((tmpmemh << 5) | (1 << 3));
+		*port = nval;
 	}
-        alpha_mb();
+	alpha_mb();
 }
 
 inline void
@@ -869,11 +869,11 @@ __C(CHIP,_mem_write_4)(void *v, bus_space_handle_t memh, bus_size_t off,
 	else {
 		tmpmemh = memh + off;
 		offset = tmpmemh & 3;
-	        nval = val /*<< (8 * offset)*/;
-	        port = (u_int32_t *)((tmpmemh << 5) | (3 << 3));
-	        *port = nval;
+		nval = val /*<< (8 * offset)*/;
+		port = (u_int32_t *)((tmpmemh << 5) | (3 << 3));
+		*port = nval;
 	}
-        alpha_mb();
+	alpha_mb();
 }
 
 inline void

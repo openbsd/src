@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_300.c,v 1.20 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: tc_3000_300.c,v 1.21 2025/06/29 15:55:22 miod Exp $ */
 /* $NetBSD: tc_3000_300.c,v 1.26 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -99,9 +99,9 @@ tc_3000_300_intr_setup(void)
 	 * Set up interrupt handlers.
 	 */
 	for (i = 0; i < TC_3000_300_NCOOKIES; i++) {
-                tc_3000_300_intr[i].tci_func = tc_3000_300_intrnull;
-                tc_3000_300_intr[i].tci_arg = (void *)i;
-                tc_3000_300_intr[i].tci_level = IPL_HIGH;
+		tc_3000_300_intr[i].tci_func = tc_3000_300_intrnull;
+		tc_3000_300_intr[i].tci_arg = (void *)i;
+		tc_3000_300_intr[i].tci_level = IPL_HIGH;
 	}
 }
 
@@ -235,7 +235,7 @@ tc_3000_300_iointr(void *arg, unsigned long vec)
 		    tcir & TC_3000_300_IR_CXTURBO);
 		CHECKINTR(TC_3000_300_DEV_IOASIC,
 		    (tcir & TC_3000_300_IR_IOASIC) &&
-	            (ioasicir & ~(IOASIC_INTR_300_OPT1|IOASIC_INTR_300_OPT0)));
+		    (ioasicir & ~(IOASIC_INTR_300_OPT1|IOASIC_INTR_300_OPT0)));
 		CHECKINTR(TC_3000_300_DEV_TCDS, tcir & TC_3000_300_IR_TCDS);
 		CHECKINTR(TC_3000_300_DEV_OPT1,
 		    ioasicir & IOASIC_INTR_300_OPT1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tc.c,v 1.14 2025/06/28 16:04:10 miod Exp $ */
+/* $OpenBSD: asc_tc.c,v 1.15 2025/06/29 15:55:22 miod Exp $ */
 /* $NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -72,16 +72,16 @@ int	asc_dma_isactive(struct ncr53c9x_softc *);
 void	asc_clear_latched_intr(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue asc_tc_glue = {
-        asc_read_reg,
-        asc_write_reg,
-        asc_dma_isintr,
-        asc_tc_reset,
-        asc_tc_intr,
-        asc_tc_setup,
-        asc_tc_go,
-        asc_tc_stop,
-        asc_dma_isactive,
-        asc_clear_latched_intr,
+	asc_read_reg,
+	asc_write_reg,
+	asc_dma_isintr,
+	asc_tc_reset,
+	asc_tc_intr,
+	asc_tc_setup,
+	asc_tc_go,
+	asc_tc_stop,
+	asc_dma_isactive,
+	asc_clear_latched_intr,
 };
 
 /*

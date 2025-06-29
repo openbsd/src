@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.11 2025/06/28 16:04:10 miod Exp $ */
+/* $OpenBSD: tcds.c,v 1.12 2025/06/29 15:55:22 miod Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -410,7 +410,7 @@ tcds_dma_enable(struct tcds_slotconfig *sc, int on)
 	cir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR);
 
 	/* XXX Clear/set IOSLOT/PBS bits. */
-	if (on) 
+	if (on)
 		TCDS_CIR_SET(cir, sc->sc_dmabits);
 	else
 		TCDS_CIR_CLR(cir, sc->sc_dmabits);
@@ -471,7 +471,7 @@ tcds_intr(void *arg)
 #undef CHECKINTR
 
 #ifdef DIAGNOSTIC
-	/* 
+	/*
 	 * Interrupts not currently handled, but would like to know if they
 	 * occur.
 	 *

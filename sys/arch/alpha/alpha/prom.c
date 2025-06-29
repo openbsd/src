@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.18 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: prom.c,v 1.19 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -97,7 +97,7 @@ prom_leave(void)
  * Remap char before passing off to prom.
  *
  * Prom only takes 32 bit addresses. Copy char somewhere prom can
- * find it. This routine will stop working after pmap_rid_of_console 
+ * find it. This routine will stop working after pmap_rid_of_console
  * is called in alpha_init. This is due to the hard coded address
  * of the console area.
  */

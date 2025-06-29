@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.48 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.49 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -151,7 +151,7 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)		/* nothing */
 #define	PMAP_TLB_SHOOTNOW()			/* nothing */
 #endif /* MULTIPROCESSOR */
- 
+
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 

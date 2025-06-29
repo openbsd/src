@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.42 2025/06/28 16:04:09 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.43 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ sioattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_memt = pa->pa_memt;
-        sc->sc_dmat = pa->pa_dmat;
+	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_haseisa = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
 
@@ -216,11 +216,11 @@ sio_bridge_callback(struct device *self)
 int
 sioprint(void *aux, const char *pnp)
 {
-        register union sio_attach_args *sa = aux;
+	register union sio_attach_args *sa = aux;
 
-        if (pnp)
-                printf("%s at %s", sa->sa_name, pnp);
-        return (UNCONF);
+	if (pnp)
+		printf("%s at %s", sa->sa_name, pnp);
+	return (UNCONF);
 }
 
 void

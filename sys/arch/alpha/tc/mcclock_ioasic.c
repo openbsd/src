@@ -1,4 +1,4 @@
-/* $OpenBSD: mcclock_ioasic.c,v 1.8 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: mcclock_ioasic.c,v 1.9 2025/06/29 15:55:22 miod Exp $ */
 /* $NetBSD: mcclock_ioasic.c,v 1.9 2000/07/04 02:37:51 nisimura Exp $ */
 
 /*
@@ -36,8 +36,8 @@
 #include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
-#include <dev/tc/tcvar.h> 
-#include <dev/tc/ioasicvar.h>                   /* XXX */
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>			/* XXX */
 
 struct mcclock_ioasic_clockdatum {
 	u_char	datum;
@@ -55,7 +55,7 @@ void	mcclock_ioasic_attach(struct device *, struct device *, void *);
 
 const struct cfattach mcclock_ioasic_ca = {
 	sizeof (struct mcclock_ioasic_softc), mcclock_ioasic_match,
-	    mcclock_ioasic_attach, 
+	    mcclock_ioasic_attach,
 };
 
 void	mcclock_ioasic_write(struct mcclock_softc *, u_int, u_int);

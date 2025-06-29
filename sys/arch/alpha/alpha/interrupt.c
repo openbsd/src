@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.44 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.45 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -184,7 +184,7 @@ scb_free(u_long vec)
 	    (vec & (SCB_VECSIZE - 1)) != 0)
 		panic("scb_free: bad vector 0x%lx", vec);
 
-	idx = SCB_VECTOIDX(vec - SCB_IOVECBASE); 
+	idx = SCB_VECTOIDX(vec - SCB_IOVECBASE);
 
 	if (scb_iovectab[idx].scb_func == scb_stray)
 		panic("scb_free: vector 0x%lx is empty", vec);
@@ -312,7 +312,7 @@ machine_check(unsigned long mces, struct trapframe *framep,
 
 	/* Processor correctable errors. */
 	if (mces & ALPHA_MCES_PCE)
-		printf("Warning: received processor correctable error.\n"); 
+		printf("Warning: received processor correctable error.\n");
 
 	/* Clear pending machine checks and correctable errors */
 	alpha_pal_wrmces(mces);

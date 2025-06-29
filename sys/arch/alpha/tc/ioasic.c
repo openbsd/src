@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.20 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: ioasic.c,v 1.21 2025/06/29 15:55:22 miod Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -161,7 +161,7 @@ ioasicattach(struct device *parent, struct device *self, void *aux)
 
 	ioasicfound = 1;
 
-	sc->sc_bst = ta->ta_memt; 
+	sc->sc_bst = ta->ta_memt;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,
 			0x400000, 0, &sc->sc_bsh)) {
 		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
@@ -235,8 +235,8 @@ ioasic_intr_establish(struct device *ioa, void *cookie, int level,
 		panic("ioasic_intr_establish: invalid cookie.");
 
 	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
-        imsk |= ioasic_devs[i].iad_intrbits;
-        bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
+	imsk |= ioasic_devs[i].iad_intrbits;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 }
 
 void
@@ -375,7 +375,7 @@ ioasic_led_blink(void *unused)
 			pattern = averunnable.ldavg[0] >> FSHIFT;
 		else {
 			pattern = led_pattern8[led_blink_state.patpos];
-			led_blink_state.patpos = 
+			led_blink_state.patpos =
 			    (led_blink_state.patpos + 1) % sizeof(led_pattern8);
 		}
 	}

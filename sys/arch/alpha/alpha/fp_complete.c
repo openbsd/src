@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.13 2023/01/31 15:18:51 deraadt Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.14 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -220,7 +220,7 @@ compare_eq(float64 a, float64 b)
 }
 /*
  * A note regarding the VAX FP ops.
- * 
+ *
  * The AARM gives us complete leeway to set or not set status flags on VAX
  * ops, but we do any subnorm, NaN and dirty zero fixups anyway, and we set
  * flags by IEEE rules.  Many ops are common to d/f/g and s/t source types.
@@ -275,7 +275,7 @@ cvt_gd(u_int32_t inst_bits, struct proc *p)
 
 	inst.bits = inst_bits;
 	stt(inst.float_detail.fb, &tfb, p);
-	(void) float64_to_float32(tfb.i); 
+	(void) float64_to_float32(tfb.i);
 	p->p_md.md_flags &= ~OPENBSD_FLAG_TO_FP_C(FP_X_IMP);
 	tfc.i = float64_add(tfb.i, (float64)0);
 	ldt(inst.float_detail.fc, &tfc, p);
@@ -341,7 +341,7 @@ fp_c_to_fpcr_1(u_int64_t fpcr, u_int64_t fp_c)
 	 * scrambled) bit numbers. Defining an internal unscrambled FP_C
 	 * wouldn't help much, because every user exception requires the
 	 * architected bit order in the sigcontext.
-	 * 
+	 *
 	 * Programs that fiddle with the fpcr exception bits (instead of fp_c)
 	 * will lose, because those bits can be and usually are subsetted;
 	 * the official home is in the fp_c. Furthermore, the kernel puts
@@ -424,7 +424,7 @@ float64_unk(float64 a, float64 b)
 	return 0;
 }
 
-/* 
+/*
  * The real function field encodings for IEEE and VAX FP instructions.
  *
  * Since there is only one operand type field, the cvtXX instructions
@@ -629,7 +629,7 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
 			sig = alpha_fp_complete_at(trigger_pc, p, ucode);
 			goto done;
 		}
-	} 
+	}
 	*ucode = a0;
 	if (!(a0 & 1))
 		return sig;
@@ -637,7 +637,7 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
  * At this point we are somewhere in the trap shadow of one or more instruc-
  * tions that have trapped with software completion specified.  We have a mask
  * of the registers written by trapping instructions.
- * 
+ *
  * Now step backwards through the trap shadow, clearing bits in the
  * destination write mask until the trigger instruction is found, and
  * interpret this one instruction in SW. If a SIGFPE is not required, back up

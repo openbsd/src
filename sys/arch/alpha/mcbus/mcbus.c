@@ -1,4 +1,4 @@
-/* $OpenBSD: mcbus.c,v 1.6 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: mcbus.c,v 1.7 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: mcbus.c,v 1.19 2007/03/04 05:59:11 christos Exp $ */
 
 /*
@@ -73,7 +73,7 @@ const struct cfattach mcbus_ca = {
 };
 
 struct cfdriver mcbus_cd = {
-        NULL, "mcbus", DV_DULL,
+	NULL, "mcbus", DV_DULL,
 };
 
 /*
@@ -105,7 +105,7 @@ mcbussbm(struct device *parent, void *cf, void *aux)
 	struct cfdata *mcf = (struct cfdata *)cf;
 
 	if (mcf->cf_loc[MCBUSCF_MID] != MCBUSCF_MID_DEFAULT &&
-	    mcf->cf_loc[MCBUSCF_MID] != tap->ma_mid) 
+	    mcf->cf_loc[MCBUSCF_MID] != tap->ma_mid)
 		return (0);
 
 

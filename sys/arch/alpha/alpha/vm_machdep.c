@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.54 2025/05/21 09:06:58 mpi Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.55 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -55,7 +55,7 @@ cpu_exit(struct proc *p)
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call 'func' with 'arg' as an argument.
  * For normal processes this is child_return(), which causes the

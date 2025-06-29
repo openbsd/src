@@ -1,4 +1,4 @@
-/* $OpenBSD: rpb.h,v 1.11 2009/09/30 19:30:52 miod Exp $ */
+/* $OpenBSD: rpb.h,v 1.12 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: rpb.h,v 1.38 2000/07/06 23:29:13 thorpej Exp $ */
 
 /*
@@ -191,7 +191,7 @@ struct rpb {
 	u_long		rpb_tbhint_off;		/*  88: */
 	u_int64_t	rpb_pcs_cnt;		/*  90: */
 	u_int64_t	rpb_pcs_size;		/*  98; pcs size in bytes */
-	u_long		rpb_pcs_off;		/*  A0: offset to pcs info */ 
+	u_long		rpb_pcs_off;		/*  A0: offset to pcs info */
 	u_int64_t	rpb_ctb_cnt;		/*  A8: console terminal */
 	u_int64_t	rpb_ctb_size;		/*  B0: ctb size in bytes */
 	u_long		rpb_ctb_off;		/*  B8: offset to ctb */
@@ -417,7 +417,7 @@ struct ctb_tt {
 #define	CTB_TURBOSLOT_TYPE_EISA		2	/* EISA */
 #define	CTB_TURBOSLOT_TYPE_PCI		3	/* PCI */
 
-/* 
+/*
  * CRD: Console Routine Descriptor
  */
 struct crd {

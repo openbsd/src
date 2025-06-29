@@ -1,4 +1,4 @@
-/* $OpenBSD: alpha_cpu.h,v 1.14 2023/04/13 19:39:50 miod Exp $ */
+/* $OpenBSD: alpha_cpu.h,v 1.15 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
 
 /*
@@ -114,7 +114,7 @@ struct alpha_pcb {
 /*
  * Interrupt Type Code Definitions [OSF/1 PALcode Specific]
  */
- 
+
 #define	ALPHA_INTR_XPROC	0	/* interprocessor interrupt */
 #define	ALPHA_INTR_CLOCK	1	/* clock interrupt */
 #define	ALPHA_INTR_ERROR	2	/* correctable error or mcheck */

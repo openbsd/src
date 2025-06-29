@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_bus_mem.c,v 1.5 2014/05/08 20:46:49 miod Exp $ */
+/* $OpenBSD: tsp_bus_mem.c,v 1.6 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: tsp_bus_mem.c,v 1.4 2000/06/26 19:46:25 thorpej Exp $ */
 
 /*-
@@ -56,11 +56,11 @@
 
 #define CHIP_MEM_SYS_START(v)    (((struct tsp_config *)(v))->pc_iobase)
 
-/* 
- * Tsunami core logic appears on EV6.  We require at least EV56          
+/*
+ * Tsunami core logic appears on EV6.  We require at least EV56
  * support for the assembler to emit BWX opcodes.
- */                                                                      
-__asm(".arch ev6");                                                      
+ */
+__asm(".arch ev6");
 
 #define	CHIP_EXTENT_NAME(v)	((struct tsp_config *)(v))->pc_mem_ex_name
 #define	CHIP_EXTENT_STORAGE(v)	((struct tsp_config *)(v))->pc_mem_ex_storage

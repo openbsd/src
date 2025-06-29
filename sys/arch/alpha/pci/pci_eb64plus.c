@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.17 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.18 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -109,11 +109,11 @@ pci_eb64plus_pickintr(struct apecs_config *acp)
 	pci_chipset_tag_t pc = &acp->ac_pc;
 	int i;
 
-        pc->pc_intr_v = acp;
-        pc->pc_intr_map = dec_eb64plus_intr_map;
-        pc->pc_intr_string = dec_eb64plus_intr_string;
-        pc->pc_intr_establish = dec_eb64plus_intr_establish;
-        pc->pc_intr_disestablish = dec_eb64plus_intr_disestablish;
+	pc->pc_intr_v = acp;
+	pc->pc_intr_map = dec_eb64plus_intr_map;
+	pc->pc_intr_string = dec_eb64plus_intr_string;
+	pc->pc_intr_establish = dec_eb64plus_intr_establish;
+	pc->pc_intr_disestablish = dec_eb64plus_intr_disestablish;
 
 	/* Not supported on the EB64+. */
 	pc->pc_pciide_compat_intr_establish = NULL;
@@ -136,7 +136,7 @@ pci_eb64plus_pickintr(struct apecs_config *acp)
 #endif
 }
 
-int     
+int
 dec_eb64plus_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int buspin, line = pa->pa_intrline;
@@ -165,12 +165,12 @@ dec_eb64plus_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 const char *
 dec_eb64plus_intr_string(void *acv, pci_intr_handle_t ih)
 {
-        static char irqstr[15];          /* 11 + 2 + NULL + sanity */
+	static char irqstr[15];	  /* 11 + 2 + NULL + sanity */
 
-        if (ih >= EB64PLUS_MAX_IRQ)
-                panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx", ih);
-        snprintf(irqstr, sizeof irqstr, "eb64+ irq %ld", ih);
-        return (irqstr);
+	if (ih >= EB64PLUS_MAX_IRQ)
+		panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx", ih);
+	snprintf(irqstr, sizeof irqstr, "eb64+ irq %ld", ih);
+	return (irqstr);
 }
 
 void *
@@ -200,7 +200,7 @@ dec_eb64plus_intr_disestablish(void *acv, void *cookie)
 	struct alpha_shared_intrhand *ih = cookie;
 	unsigned int irq = ih->ih_num;
 	int s;
- 
+
 	s = splhigh();
 
 	alpha_shared_intr_disestablish(eb64plus_pci_intr, cookie);
@@ -210,14 +210,14 @@ dec_eb64plus_intr_disestablish(void *acv, void *cookie)
 		    IST_NONE);
 		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
- 
+
 	splx(s);
 }
 
 void
 eb64plus_iointr(void *arg, unsigned long vec)
 {
-	int irq; 
+	int irq;
 
 	irq = SCB_VECTOIDX(vec - 0x900);
 

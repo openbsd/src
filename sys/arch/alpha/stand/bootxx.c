@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.11 2023/01/16 07:29:32 deraadt Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.12 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.4 1997/01/18 00:28:59 cgd Exp $	*/
 
 /*
@@ -54,15 +54,15 @@ open_dev(fd)
 
 	/*
 	 * XXX
-         * We don't know what device names look like yet,
-         * so we can't change them.
-         */
-        ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
-        devlen = ret.u.retval;
+	 * We don't know what device names look like yet,
+	 * so we can't change them.
+	 */
+	ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
+	devlen = ret.u.retval;
 
-        ret.bits = prom_open((u_int64_t)devname, devlen);
-        if (ret.u.status)
-                return 0;
+	ret.bits = prom_open((u_int64_t)devname, devlen);
+	if (ret.u.status)
+		return 0;
 
 	*fd = ret.u.retval;
 

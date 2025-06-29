@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.271 2022/01/02 23:14:26 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.272 2025/06/29 15:55:21 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -156,7 +156,7 @@ tcasic*	at	mainbus0
 
 # MCBUS bus support
 mcbus*	at	mainbus0
-mcmem*	at	mcbus? mid ? 
+mcmem*	at	mcbus? mid ?
 
 # TURBOchannel bus support
 tc*	at	tcasic?

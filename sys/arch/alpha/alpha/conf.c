@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.93 2023/02/06 11:16:22 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.94 2025/06/29 15:55:21 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ bdev_decl(fd);
 
 struct bdevsw	bdevsw[] =
 {
-	bdev_disk_init(NWD,wd),	        /* 0: ST506/ESDI/IDE disk */
+	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_notdef(),			/* 2: was: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
@@ -168,11 +168,11 @@ struct cdevsw	cdevsw[] =
 	cdev_pf_init(NPF, pf),		/* 35: packet filter */
 	cdev_disk_init(NWD,wd), 	/* 36: ST506/ESDI/IDE disk */
 	cdev_disk_init(NFD,fd),		/* 37: Floppy disk */
-        cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
+	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 39: Kernel symbols device */
 	cdev_spkr_init(NSPKR,spkr),	/* 40: PC speaker */
 	cdev_midi_init(NMIDI,midi),     /* 41: MIDI I/O */
-        cdev_notdef(),   		/* 42 was: sequencer I/O */
+	cdev_notdef(),   		/* 42 was: sequencer I/O */
 	cdev_notdef(),			/* 43 was: RAIDframe disk driver */
 	cdev_video_init(NVIDEO,video),	/* 44: generic video I/O */
 	cdev_usb_init(NUSB,usb),	/* 45: USB controller */

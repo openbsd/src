@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.15 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.16 2025/06/29 15:55:21 miod Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -130,7 +130,7 @@ dec_6600_cons_init(void)
 	tsp = tsp_init(0, tsp_console_hose);
 
 	switch (ctb->ctb_term_type) {
-	case CTB_PRINTERPORT: 
+	case CTB_PRINTERPORT:
 		/* serial console ... */
 		/* XXX */
 		{
@@ -287,7 +287,7 @@ dec_6600_device_register(struct device *dev, void *aux)
 
 		unit = periph->target * 100 + periph->lun;
 		if (b->unit != unit)
-                        return;
+			return;
 
 		/* we've found it! */
 		booted_device = dev;
