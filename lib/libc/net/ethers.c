@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.27 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.28 2025/06/29 00:33:46 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
@@ -42,7 +42,7 @@
 static char * _ether_aton(const char *, struct ether_addr *);
 
 char *
-ether_ntoa(struct ether_addr *e)
+ether_ntoa(const struct ether_addr *e)
 {
 	static char a[] = "xx:xx:xx:xx:xx:xx";
 

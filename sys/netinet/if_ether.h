@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.94 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.95 2025/06/29 00:33:46 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ u_int32_t ether_crc32_be(const u_int8_t *, size_t);
 #else /* _KERNEL */
 
 __BEGIN_DECLS
-char *ether_ntoa(struct ether_addr *);
+char *ether_ntoa(const struct ether_addr *);
 struct ether_addr *ether_aton(const char *);
 int ether_ntohost(char *, struct ether_addr *);
 int ether_hostton(const char *, struct ether_addr *);
