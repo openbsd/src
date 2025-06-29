@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.148 2025/06/26 13:33:44 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.149 2025/06/29 16:15:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -64,7 +64,7 @@ usage(void)
 	    "[-evy] [-A | -g | -i | -u] [-b blocks[@offset[:type]]]\n"
 	    "\t[-l blocks | -c cylinders -h heads -s sectors] [-f file] "
 	    "disk\n", __progname);
-	fprintf(stderr, "       %s -R [-y] disk [file]\n", __progname);
+	fprintf(stderr, "       %s -R [-evy] disk [file]\n", __progname);
 	exit(1);
 }
 
