@@ -1,5 +1,6 @@
 ./usr/bin/lldb
 ./usr/bin/lldb-server
+./usr/bin/llvm-addr2line
 ./usr/bin/llvm-config
 ./usr/bin/llvm-cov
 ./usr/bin/llvm-objcopy
@@ -7,6 +8,7 @@
 ./usr/bin/llvm-profdata
 ./usr/bin/llvm-readelf
 ./usr/bin/llvm-readobj
+./usr/bin/llvm-symbolizer
 ./usr/include/c++
 ./usr/include/c++/v1
 ./usr/include/c++/v1/__algorithm
@@ -3164,6 +3166,7 @@
 ./usr/share/man/man1/clang.1
 ./usr/share/man/man1/ld.lld.1
 ./usr/share/man/man1/lldb.1
+./usr/share/man/man1/llvm-addr2line.1
 ./usr/share/man/man1/llvm-config.1
 ./usr/share/man/man1/llvm-cov.1
 ./usr/share/man/man1/llvm-objcopy.1
@@ -3171,3 +3174,4 @@
 ./usr/share/man/man1/llvm-profdata.1
 ./usr/share/man/man1/llvm-readelf.1
 ./usr/share/man/man1/llvm-readobj.1
+./usr/share/man/man1/llvm-symbolizer.1

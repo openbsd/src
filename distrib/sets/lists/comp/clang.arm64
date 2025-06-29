@@ -1,5 +1,6 @@
 ./usr/bin/lldb
 ./usr/bin/lldb-server
+./usr/bin/llvm-addr2line
 ./usr/bin/llvm-config
 ./usr/bin/llvm-cov
 ./usr/bin/llvm-objcopy
@@ -7,6 +8,7 @@
 ./usr/bin/llvm-profdata
 ./usr/bin/llvm-readelf
 ./usr/bin/llvm-readobj
+./usr/bin/llvm-symbolizer
 ./usr/include/c++
 ./usr/include/c++/v1
 ./usr/include/c++/v1/__algorithm
@@ -1030,12 +1032,12 @@
 ./usr/include/llvm/ADT/SetOperations.h
 ./usr/include/llvm/ADT/SetVector.h
 ./usr/include/llvm/ADT/SlowDynamicAPInt.h
-./usr/include/llvm/ADT/SmallVectorExtras.h
 ./usr/include/llvm/ADT/SmallBitVector.h
 ./usr/include/llvm/ADT/SmallPtrSet.h
 ./usr/include/llvm/ADT/SmallSet.h
 ./usr/include/llvm/ADT/SmallString.h
 ./usr/include/llvm/ADT/SmallVector.h
+./usr/include/llvm/ADT/SmallVectorExtras.h
 ./usr/include/llvm/ADT/SparseBitVector.h
 ./usr/include/llvm/ADT/SparseMultiSet.h
 ./usr/include/llvm/ADT/SparseSet.h
@@ -1931,8 +1933,8 @@
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/MemoryFlags.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/ObjectFormats.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/OrcError.h
-./usr/include/llvm/ExecutionEngine/Orc/Shared/PerfSharedStructs.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/OrcRTBridge.h
+./usr/include/llvm/ExecutionEngine/Orc/Shared/PerfSharedStructs.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/SimplePackedSerialization.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/SimpleRemoteEPCUtils.h
 ./usr/include/llvm/ExecutionEngine/Orc/Shared/TargetProcessControlTypes.h
@@ -2701,9 +2703,9 @@
 ./usr/include/llvm/TargetParser/CSKYTargetParser.h
 ./usr/include/llvm/TargetParser/Host.h
 ./usr/include/llvm/TargetParser/LoongArchTargetParser.def
+./usr/include/llvm/TargetParser/LoongArchTargetParser.h
 ./usr/include/llvm/TargetParser/PPCTargetParser.def
 ./usr/include/llvm/TargetParser/RISCVISAInfo.h
-./usr/include/llvm/TargetParser/LoongArchTargetParser.h
 ./usr/include/llvm/TargetParser/RISCVTargetParser.h
 ./usr/include/llvm/TargetParser/SubtargetFeature.h
 ./usr/include/llvm/TargetParser/TargetParser.h
@@ -3064,6 +3066,7 @@
 ./usr/share/man/man1/clang.1
 ./usr/share/man/man1/ld.lld.1
 ./usr/share/man/man1/lldb.1
+./usr/share/man/man1/llvm-addr2line.1
 ./usr/share/man/man1/llvm-config.1
 ./usr/share/man/man1/llvm-cov.1
 ./usr/share/man/man1/llvm-objcopy.1
@@ -3071,3 +3074,4 @@
 ./usr/share/man/man1/llvm-profdata.1
 ./usr/share/man/man1/llvm-readelf.1
 ./usr/share/man/man1/llvm-readobj.1
+./usr/share/man/man1/llvm-symbolizer.1
