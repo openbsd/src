@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.190 2025/03/04 19:31:28 kettenis Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.191 2025/06/29 19:32:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1658,13 +1658,6 @@ iwx_write_prph(struct iwx_softc *sc, uint32_t addr, uint32_t val)
 {
 	iwx_nic_assert_locked(sc);
 	iwx_write_prph_unlocked(sc, addr, val);
-}
-
-void
-iwx_write_prph64(struct iwx_softc *sc, uint64_t addr, uint64_t val)
-{
-	iwx_write_prph(sc, (uint32_t)addr, val & 0xffffffff);
-	iwx_write_prph(sc, (uint32_t)addr + 4, val >> 32);
 }
 
 uint32_t

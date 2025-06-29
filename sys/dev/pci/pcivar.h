@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.80 2024/05/13 01:15:51 jsg Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.81 2025/06/29 19:32:08 miod Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -262,7 +262,6 @@ void pci_disable_legacy_vga(struct device *);
  * Vital Product Data (PCI 2.2)
  */
 int pci_vpd_read(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
-int pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
 
 /*
  * Helper functions for autoconfiguration.

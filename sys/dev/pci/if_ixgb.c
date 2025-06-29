@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.76 2023/11/10 15:51:20 bluhm Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.77 2025/06/29 19:32:08 miod Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1915,17 +1915,6 @@ void
 ixgb_disable_intr(struct ixgb_softc *sc)
 {
 	IXGB_WRITE_REG(&sc->hw, IMC, ~0);
-}
-
-void
-ixgb_write_pci_cfg(struct ixgb_hw *hw,
-		   uint32_t reg,
-		   uint16_t *value)
-{
-	struct pci_attach_args *pa = &((struct ixgb_osdep *)hw->back)->ixgb_pa;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	/* Should we do read/mask/write...?  16 vs 32 bit!!! */
-	pci_conf_write(pc, pa->pa_tag, reg, *value);
 }
 
 /**********************************************************************

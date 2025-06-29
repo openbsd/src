@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.h,v 1.4 2024/05/13 01:15:51 jsg Exp $ */ 
+/* $OpenBSD: ixgb_hw.h,v 1.5 2025/06/29 19:32:08 miod Exp $ */ 
 
 #ifndef _IXGB_HW_H_
 #define _IXGB_HW_H_
@@ -836,21 +836,11 @@ extern void ixgb_mc_addr_list_update(struct ixgb_hw *hw, uint8_t *mc_addr_list,
 				     uint32_t mc_addr_count, uint32_t pad);
 
 /* Vfta functions */
-extern void ixgb_write_vfta(struct ixgb_hw *hw, uint32_t offset,
-			    uint32_t value);
-
 extern void ixgb_clear_vfta(struct ixgb_hw *hw);
 
 /* Access functions to eeprom data */
 void ixgb_get_ee_mac_addr(struct ixgb_hw *hw, uint8_t *mac_addr);
-uint32_t ixgb_get_ee_pba_number(struct ixgb_hw *hw);
 uint16_t ixgb_get_ee_device_id(struct ixgb_hw *hw);
 boolean_t ixgb_get_eeprom_data(struct ixgb_hw *hw);
-uint16_t ixgb_get_eeprom_word(struct ixgb_hw *hw, uint16_t index);
-
-/* Everything else */
-void ixgb_led_on(struct ixgb_hw *hw);
-void ixgb_led_off(struct ixgb_hw *hw);
-void ixgb_write_pci_cfg(struct ixgb_hw *hw, uint32_t reg, uint16_t *value);
 
 #endif /* _IXGB_HW_H_ */

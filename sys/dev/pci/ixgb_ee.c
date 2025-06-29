@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_ee.c,v 1.10 2024/09/01 03:08:59 jsg Exp $ */
+/* $OpenBSD: ixgb_ee.c,v 1.11 2025/06/29 19:32:08 miod Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -531,27 +531,6 @@ ixgb_check_and_get_eeprom_data(struct ixgb_hw *hw)
 }
 
 /******************************************************************************
- * return a word from the eeprom
- *
- * hw - Struct containing variables accessed by shared code
- * index - Offset of eeprom word
- *
- * Returns:
- *          Word at indexed offset in eeprom, if valid, 0 otherwise.
- ******************************************************************************/
-uint16_t
-ixgb_get_eeprom_word(struct ixgb_hw *hw, uint16_t index)
-{
-
-	if((index < IXGB_EEPROM_SIZE) &&
-	   (ixgb_check_and_get_eeprom_data(hw) == TRUE)) {
-		return (hw->eeprom[index]);
-	}
-
-	return (0);
-}
-
-/******************************************************************************
  * return the mac address from EEPROM
  *
  * hw       - Struct containing variables accessed by shared code
@@ -573,25 +552,6 @@ ixgb_get_ee_mac_addr(struct ixgb_hw *hw, uint8_t *mac_addr)
 			DEBUGOUT2("mac(%d) = %.2X\n", i, mac_addr[i]);
 		}
 	}
-}
-
-
-/******************************************************************************
- * return the Printed Board Assembly number from EEPROM
- *
- * hw - Struct containing variables accessed by shared code
- *
- * Returns:
- *          PBA number if EEPROM contents are valid, 0 otherwise
- ******************************************************************************/
-uint32_t
-ixgb_get_ee_pba_number(struct ixgb_hw *hw)
-{
-	if(ixgb_check_and_get_eeprom_data(hw) == TRUE)
-		return (le16_to_cpu(hw->eeprom[EEPROM_PBA_1_2_REG])
-			| (le16_to_cpu(hw->eeprom[EEPROM_PBA_3_4_REG]) << 16));
-
-	return (0);
 }
 
 

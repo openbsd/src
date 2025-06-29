@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_hw.c,v 1.11 2024/05/24 06:02:58 jsg Exp $ */
+/* $OpenBSD: ixgb_hw.c,v 1.12 2025/06/29 19:32:08 miod Exp $ */
 
 /* ixgb_hw.c
  * Shared functions for accessing and configuring the adapter
@@ -613,20 +613,6 @@ ixgb_rar_set(struct ixgb_hw *hw, uint8_t *addr, uint32_t index)
 }
 
 /******************************************************************************
- * Writes a value to the specified offset in the VLAN filter table.
- *
- * hw - Struct containing variables accessed by shared code
- * offset - Offset in VLAN filer table to write
- * value - Value to write into VLAN filter table
- *****************************************************************************/
-void
-ixgb_write_vfta(struct ixgb_hw *hw, uint32_t offset, uint32_t value)
-{
-	IXGB_WRITE_REG_ARRAY(hw, VFTA, offset, value);
-	return;
-}
-
-/******************************************************************************
  * Clears the VLAN filer table
  *
  * hw - Struct containing variables accessed by shared code
@@ -1042,38 +1028,6 @@ ixgb_clear_hw_cntrs(struct ixgb_hw *hw)
 	temp_reg = IXGB_READ_REG(hw, XOFFRXC);
 	temp_reg = IXGB_READ_REG(hw, XOFFTXC);
 	temp_reg = IXGB_READ_REG(hw, RJC);
-	return;
-}
-
-/******************************************************************************
- * Turns on the software controllable LED
- *
- * hw - Struct containing variables accessed by shared code
- *****************************************************************************/
-void
-ixgb_led_on(struct ixgb_hw *hw)
-{
-	uint32_t ctrl0_reg = IXGB_READ_REG(hw, CTRL0);
-
-	/* To turn on the LED, clear software-definable pin 0 (SDP0). */
-	ctrl0_reg &= ~IXGB_CTRL0_SDP0;
-	IXGB_WRITE_REG(hw, CTRL0, ctrl0_reg);
-	return;
-}
-
-/******************************************************************************
- * Turns off the software controllable LED
- *
- * hw - Struct containing variables accessed by shared code
- *****************************************************************************/
-void
-ixgb_led_off(struct ixgb_hw *hw)
-{
-	uint32_t ctrl0_reg = IXGB_READ_REG(hw, CTRL0);
-
-	/* To turn off the LED, set software-definable pin 0 (SDP0). */
-	ctrl0_reg |= IXGB_CTRL0_SDP0;
-	IXGB_WRITE_REG(hw, CTRL0, ctrl0_reg);
 	return;
 }
 
