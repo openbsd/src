@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.85 2024/04/17 18:12:12 jca Exp $	*/
+/*	$OpenBSD: tar.c,v 1.86 2025/06/29 20:29:48 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -71,9 +71,9 @@ static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
 static int ull_oct(unsigned long long, char *, int, int);
-static int rd_xheader(ARCHD *arcn, int, off_t);
+static int rd_xheader(ARCHD *, int, off_t);
 #ifndef SMALL
-static int wr_xheader(ARCHD *, struct xheader *);
+static int wr_xheader(char *, HD_USTAR *, struct xheader *);
 #endif
 
 static uid_t uid_nobody;
@@ -1037,7 +1037,7 @@ xheader_free(struct xheader *xhdr)
 }
 
 static int
-wr_xheader(ARCHD *arcn, struct xheader *xhdr)
+wr_xheader(char *fname, HD_USTAR *fhd, struct xheader *xhdr)
 {
 	char hdblk[sizeof(HD_USTAR)];
 	HD_USTAR *hd;
@@ -1064,16 +1064,18 @@ wr_xheader(ARCHD *arcn, struct xheader *xhdr)
 	 * XXX dirname/basename portability (check return value?)
 	 */
 	(void)snprintf(buf, sizeof(buf), "%s/PaxHeaders.%ld/%s",
-	    dirname(arcn->name), (long)getpid(), basename(arcn->name));
+	    dirname(fname), (long)getpid(), basename(fname));
 	fieldcpy(hd->name, sizeof(hd->name), buf, sizeof(buf));
 
-	if (ul_oct(arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
-	    ull_oct(arcn->sb.st_mtime < 0 ? 0 : arcn->sb.st_mtime, hd->mtime,
-		sizeof(hd->mtime), 1) ||
-	    ul_oct(arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
-	    ul_oct(arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0))
-		return -1;
-
+	/*
+	 * Inherit mode, mtime and owner from the file the headers are for.
+	 * This will only be extracted as an actual file by implementations
+	 * that don't support pax format.
+	 */
+	memcpy(hd->mode, fhd->mode, sizeof(hd->mode));
+	memcpy(hd->mtime, fhd->mtime, sizeof(hd->mtime));
+	memcpy(hd->uid, fhd->uid, sizeof(hd->uid));
+	memcpy(hd->gid, fhd->gid, sizeof(hd->gid));
 	if (ul_oct(tar_chksm(hdblk, sizeof(HD_USTAR)), hd->chksum,
 	   sizeof(hd->chksum), 3))
 		return -1;
@@ -1337,7 +1339,7 @@ wr_ustar_or_pax(ARCHD *arcn, int ustar)
 	if (!SLIST_EMPTY(&xhdr)) {
 		int ret;
 
-		ret = wr_xheader(arcn, &xhdr);
+		ret = wr_xheader(arcn->name, hd, &xhdr);
 		xheader_free(&xhdr);
 		if (ret == -1)
 			return(-1);
