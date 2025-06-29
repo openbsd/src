@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1272 2025/05/20 02:00:14 kn Exp $
+#	$OpenBSD: install.sub,v 1.1273 2025/06/29 19:06:19 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -68,7 +68,7 @@ err_exit() {
 
 # Show usage of the installer script and exit.
 usage() {
-	err_exit "usage: ${0##*/} [-ax] [-f filename] [-m install | upgrade]"
+	err_exit "usage: ${0##*/} [-ax] [-f filename]"
 }
 
 # Wait for the ftp(1) process started in start_cgiinfo() to end and extract
@@ -3579,11 +3579,10 @@ UU=false
 MODE=
 PROGNAME=${0##*/}
 AI_RESPFILE=
-while getopts "af:m:x" opt; do
+while getopts "af:x" opt; do
 	case $opt in
 	a)	AI=true;;
 	f)	AI_RESPFILE=$OPTARG;;
-	m)	MODE=$OPTARG;;
 	x)	UU=true;;
 	*)	usage;;
 	esac
