@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.101 2025/06/27 17:23:49 bluhm Exp $	*/
+/*	$OpenBSD: vector.S,v 1.102 2025/06/29 09:31:47 bluhm Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -373,6 +373,41 @@ IDTVEC(trap14)
 	ZTRAP(T_VE)
 IDTVEC(trap15)
 	TRAP(T_CP)
+
+IDTVEC(trap1d)
+	/*
+	 * #VC is AMD CPU specific, thus we don't use any Intel Meltdown
+	 * workarounds.
+	 *
+	 * We handle #VC different from other traps, as we do not want
+	 * to re-enable interrupts.  #VC might happen during IRQ handling
+	 * before a specific hardware interrupt gets masked.  Re-enabling
+	 * interrupts in the trap handler might cause nested IRQs of
+	 * the same level.  Thus keep interrupts disabled.
+	 */
+	pushq	$T_VC
+	testb	$SEL_RPL,24(%rsp)
+	je	vctrap_kern
+	swapgs
+	FENCE_SWAPGS_MIS_TAKEN
+	movq	%rax,CPUVAR(SCRATCH)
+
+	/* #VC from userspace */
+	TRAP_ENTRY_USER
+	cld
+	SMAP_CLAC
+	/* shortcut to regular path, but with interrupts disabled */
+	jmp	recall_trap
+
+	/* #VC from kernspace */
+vctrap_kern:
+	FENCE_NO_SAFE_SMAP
+	TRAP_ENTRY_KERN
+	cld
+	SMAP_CLAC
+	/* shortcut to regular path, but with interrupts disabled */
+	jmp	.Lreal_kern_trap
+
 IDTVEC(trap1f)
 IDTVEC_ALIAS(trap16, trap1f)
 IDTVEC_ALIAS(trap17, trap1f)
@@ -381,7 +416,6 @@ IDTVEC_ALIAS(trap19, trap1f)
 IDTVEC_ALIAS(trap1a, trap1f)
 IDTVEC_ALIAS(trap1b, trap1f)
 IDTVEC_ALIAS(trap1c, trap1f)
-IDTVEC_ALIAS(trap1d, trap1f)
 IDTVEC_ALIAS(trap1e, trap1f)
 	/* 22 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
