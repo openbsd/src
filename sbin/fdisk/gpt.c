@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.105 2025/06/26 13:33:44 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.106 2025/06/29 10:26:35 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -58,6 +58,8 @@ int			  protective_mbr(const struct mbr *);
 int			  gpt_chk_mbr(struct dos_partition *, uint64_t);
 void			  string_to_name(const unsigned int, const char *);
 const char		 *name_to_string(const unsigned int);
+void			  print_free(const uint64_t, const uint64_t,
+    const char *);
 
 void
 string_to_name(const unsigned int pn, const char *ch)
@@ -306,6 +308,17 @@ get_partition_table(void)
 	return rslt;
 }
 
+void
+print_free(const uint64_t start, const uint64_t end, const char *units)
+{
+	float			 size;
+	const struct unit_type	*ut;
+
+	size = units_size(units, end - start + 1, &ut);
+	printf("%4s: Free%-32s [%12llu: %12.0f%s]\n", "", "", start, size,
+	    ut->ut_abbr);
+}
+
 int
 GPT_recover_partition(const char *line1, const char *line2, const char *line3)
 {
@@ -473,11 +486,13 @@ GPT_read(const int which)
 void
 GPT_print(const char *units)
 {
+	const struct gpt_partition * const *sgp;
 	const struct unit_type	*ut;
 	const int		 secsize = dl.d_secsize;
 	char			*guidstr = NULL;
 	double			 size;
-	unsigned int		 pn;
+	uint64_t		 bs, nextbs;
+	unsigned int		 i, pn;
 	uint32_t		 status;
 
 #ifdef	DEBUG
@@ -535,11 +550,22 @@ GPT_print(const char *units)
 	}
 
 	GPT_print_parthdr();
-	for (pn = 0; pn < gh.gh_part_num; pn++) {
-		if (uuid_is_nil(&gp[pn].gp_type, NULL))
-			continue;
-		GPT_print_part(pn, units);
+
+	sgp = sort_gpt();
+	bs = gh.gh_lba_start;
+	for (i = 0; sgp && sgp[i] != NULL; i++) {
+		for (pn = 0; pn < nitems(gp); pn++) {
+			if (&gp[pn] == sgp[i]) {
+				nextbs = gp[pn].gp_lba_start;
+				if (nextbs > bs)
+					print_free(bs, nextbs - 1, units);
+				GPT_print_part(pn, units);
+				bs = gp[pn].gp_lba_end + 1;
+			}
+		}
 	}
+	if (bs < gh.gh_lba_end)
+		print_free(bs, gh.gh_lba_end, units);
 }
 
 void
