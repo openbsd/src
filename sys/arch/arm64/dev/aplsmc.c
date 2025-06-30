@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.30 2025/06/16 20:21:33 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.31 2025/06/30 11:39:50 jsg Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -400,7 +400,6 @@ aplsmc_logmap(void *cookie, bus_addr_t addr)
 void
 aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 {
-	extern int allowpowerdown;
 #ifdef SUSPEND
 	extern int cpu_suspended;
 	uint32_t flt = 0;
