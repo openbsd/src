@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.174 2025/06/30 11:15:47 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.175 2025/06/30 14:20:26 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -832,7 +832,7 @@ cert_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		return cert_ee_sia(fn, cert, ext);
 	case CERT_PURPOSE_BGPSEC_ROUTER:
 		warnx("%s: RFC 8209, 3.1.3.3, SIA MUST be omitted from "
-		    "BGPSec router certs", fn);
+		    "BGPsec router certs", fn);
 		return 0;
 	default:
 		abort();

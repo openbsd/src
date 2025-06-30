@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.242 2025/06/30 11:06:48 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.243 2025/06/30 14:20:26 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -138,7 +138,7 @@ struct cert {
 	char		*aia; /* AIA (or NULL, for trust anchor) */
 	char		*aki; /* AKI (or NULL, for trust anchor) */
 	char		*ski; /* SKI */
-	enum cert_purpose	 purpose; /* BGPSec or CA */
+	enum cert_purpose	 purpose; /* EE, BGPsec, CA, or TA */
 	char		*pubkey; /* Subject Public Key Info */
 	X509		*x509; /* the cert */
 	time_t		 notbefore; /* cert's Not Before */
