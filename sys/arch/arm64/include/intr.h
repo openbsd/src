@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.24 2025/04/25 12:48:48 mvs Exp $ */
+/*	$OpenBSD: intr.h,v 1.25 2025/06/30 14:19:20 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -43,7 +43,6 @@
 
 /* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFT	1	/* soft interrupts */
 #define	IPL_SOFTCLOCK	2	/* soft clock interrupts */
 #define	IPL_SOFTNET	3	/* soft network interrupts */
 #define	IPL_SOFTTTY	4	/* soft terminal interrupts */
@@ -117,7 +116,6 @@ extern struct arm_intr_func arm_intr_func;
 #define	spllower(cpl)		(arm_intr_func.lower(cpl))
 #define	splx(cpl)		(arm_intr_func.x(cpl))
 
-#define	splsoft()	splraise(IPL_SOFT)
 #define	splsoftclock()	splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()	splraise(IPL_SOFTNET)
 #define	splsofttty()	splraise(IPL_SOFTTTY)
