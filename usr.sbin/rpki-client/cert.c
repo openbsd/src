@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.172 2025/06/28 08:27:09 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.173 2025/06/30 11:06:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -34,6 +34,7 @@ extern ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
 extern ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
 extern ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
+extern ASN1_OBJECT	*signedobj_oid;	/* 1.3.6.1.5.5.7.48.11 (signedObject) */
 extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
 
 int certid = TALSZ_MAX;
@@ -505,7 +506,7 @@ sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+cert_ca_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 {
 	AUTHORITY_INFO_ACCESS	*sia = NULL;
 	ACCESS_DESCRIPTION	*ad;
@@ -636,6 +637,125 @@ sbgp_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
  out:
 	AUTHORITY_INFO_ACCESS_free(sia);
 	return rc;
+}
+
+/*
+ * Parse "Subject Information Access" extension for an EE cert,
+ * RFC 6487, section 4.8.8.2 and RFC 8182, section 3.2.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+cert_ee_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+{
+	AUTHORITY_INFO_ACCESS	*sia = NULL;
+	ACCESS_DESCRIPTION	*ad;
+	ASN1_OBJECT		*oid;
+	char			*signedobj = NULL;
+	int			 i, rc = 0;
+
+	assert(cert->signedobj == NULL);
+
+	if (X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "extension not non-critical", fn);
+		goto out;
+	}
+
+	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: failed extension parse",
+		    fn);
+		goto out;
+	}
+
+	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(sia); i++) {
+		ad = sk_ACCESS_DESCRIPTION_value(sia, i);
+
+		oid = ad->method;
+
+		/*
+		 * XXX: RFC 6487 4.8.8.2 states that the accessMethod MUST be
+		 * signedObject. However, rpkiNotify accessMethods currently
+		 * exist in the wild. Consider removing this special case.
+		 * See also https://www.rfc-editor.org/errata/eid7239.
+		 */
+		if (OBJ_cmp(oid, notify_oid) == 0) {
+			if (verbose > 1)
+				warnx("%s: RFC 6487 section 4.8.8.2: SIA should"
+				    " not contain rpkiNotify accessMethod", fn);
+			continue;
+		} else if (OBJ_cmp(oid, signedobj_oid) == 0) {
+			if (!x509_location(fn, "SIA: signedObject",
+			    ad->location, &signedobj))
+				goto out;
+			if (cert->signedobj == NULL && strncasecmp(signedobj,
+			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
+				cert->signedobj = signedobj;
+				signedobj = NULL;
+				continue;
+			}
+			if (verbose)
+				warnx("%s: RFC 6487 section 4.8.8: SIA: "
+				    "ignoring location %s", fn, signedobj);
+			free(signedobj);
+			signedobj = NULL;
+		} else {
+			char buf[128];
+
+			OBJ_obj2txt(buf, sizeof(buf), oid, 0);
+			warnx("%s: RFC 6487 section 4.8.8.1: unexpected"
+			    " accessMethod: %s", fn, buf);
+			goto out;
+		}
+	}
+
+	if (cert->signedobj == NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: no signedObject", fn);
+		goto out;
+	}
+
+	if (filemode) {
+		if (rtype_from_file_extension(cert->signedobj) !=
+		    rtype_from_file_extension(fn)) {
+			warnx("%s: SIA signedObject contains unexpected "
+			    "filename extension", fn);
+			goto out;
+		}
+	} else {
+		const char *p = cert->signedobj + RSYNC_PROTO_LEN;
+		size_t fnlen, plen;
+
+		fnlen = strlen(fn);
+		plen = strlen(p);
+
+		if (fnlen < plen || strcmp(p, fn + fnlen - plen) != 0) {
+			warnx("%s: mismatch between pathname and SIA (%s)",
+			    fn, cert->signedobj);
+			goto out;
+		}
+	}
+
+	rc = 1;
+ out:
+	AUTHORITY_INFO_ACCESS_free(sia);
+	return rc;
+}
+
+static int
+cert_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+{
+	switch (cert->purpose) {
+	case CERT_PURPOSE_TA:
+	case CERT_PURPOSE_CA:
+		return cert_ca_sia(fn, cert, ext);
+	case CERT_PURPOSE_EE:
+		return cert_ee_sia(fn, cert, ext);
+	case CERT_PURPOSE_BGPSEC_ROUTER:
+		warnx("%s: RFC 8209, 3.1.3.3, SIA MUST be omitted from "
+		    "BGPSec router certs", fn);
+		return 0;
+	default:
+		abort();
+	}
 }
 
 /*
@@ -922,6 +1042,12 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 		goto out;
 	}
 
+	index = X509_get_ext_by_NID(x, NID_sinfo_access, -1);
+	if ((ext = X509_get_ext(x, index)) != NULL) {
+		if (!cert_sia(fn, cert, ext))
+			goto out;
+	}
+
 	index = X509_get_ext_by_NID(x, NID_sbgp_ipAddrBlock, -1);
 	if ((ext = X509_get_ext(x, index)) != NULL) {
 		if (!sbgp_ipaddrblk(fn, cert, ext))
@@ -1078,11 +1204,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		case NID_sinfo_access:
 			if (sia++ > 0)
 				goto dup;
-			/*
-			 * This will fail for BGPsec certs, but they must omit
-			 * this extension anyway (RFC 8209, section 3.1.3.3).
-			 */
-			if (!sbgp_sia(fn, cert, ext))
+			if (!cert_sia(fn, cert, ext))
 				goto out;
 			break;
 		case NID_certificate_policies:
@@ -1171,11 +1293,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 				    " cert", fn);
 				goto out;
 			}
-		}
-		if (sia) {
-			warnx("%s: unexpected SIA extension in BGPsec cert",
-			    fn);
-			goto out;
 		}
 		break;
 	case CERT_PURPOSE_EE:
@@ -1326,6 +1443,7 @@ cert_free(struct cert *p)
 	free(p->path);
 	free(p->mft);
 	free(p->notify);
+	free(p->signedobj);
 	free(p->ips);
 	free(p->ases);
 	free(p->aia);
