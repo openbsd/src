@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.308 2025/06/05 12:32:27 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.309 2025/06/30 19:52:19 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1700,7 +1700,7 @@ post_xx(POST_ARGS)
 		os = "OpenBSD";
 		break;
 	case MDOC_Ux:
-		os = "UNIX";
+		os = "Unix";
 		break;
 	default:
 		abort();
