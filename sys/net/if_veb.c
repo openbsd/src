@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.39 2025/06/29 13:48:34 jan Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.40 2025/06/30 13:01:10 jan Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -948,9 +948,6 @@ veb_ipsec_out(struct ifnet *ifp0, struct mbuf *m)
 static struct mbuf *
 veb_offload(struct ifnet *ifp, struct ifnet *ifp0, struct mbuf *m)
 {
-	struct ether_extracted ext;
-	int csum = 0;
-
 #if NVLAN > 0
 	if (ISSET(m->m_flags, M_VLANTAG) &&
 	    !ISSET(ifp0->if_capabilities, IFCAP_VLAN_HWTAGGING)) {
@@ -959,56 +956,14 @@ veb_offload(struct ifnet *ifp, struct ifnet *ifp0, struct mbuf *m)
 		 * support, inject one in software.
 		 */
 		m = vlan_inject(m, ETHERTYPE_VLAN, m->m_pkthdr.ether_vtag);
-		if (m == NULL)
-			goto drop;
-	}
-#endif
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT) &&
-	    !ISSET(ifp0->if_capabilities, IFCAP_CSUM_IPv4))
-		csum = 1;
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT) &&
-	    (!ISSET(ifp0->if_capabilities, IFCAP_CSUM_TCPv4) ||
-	     !ISSET(ifp0->if_capabilities, IFCAP_CSUM_TCPv6)))
-		csum = 1;
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT) &&
-	    (!ISSET(ifp0->if_capabilities, IFCAP_CSUM_UDPv4) ||
-	     !ISSET(ifp0->if_capabilities, IFCAP_CSUM_UDPv6)))
-		csum = 1;
-
-	if (csum) {
-		int adjlen;
-
-		ether_extract_headers(m, &ext);
-		if (ext.eh)
-			adjlen = sizeof *ext.eh;
-		else if (ext.evh)
-			adjlen = sizeof *ext.evh;
-		else
-			goto drop;
-
-		m_adj(m, adjlen);
-
-		if (ext.ip4) {
-			in_hdr_cksum_out(m, ifp0);
-			in_proto_cksum_out(m, ifp0);
-#ifdef INET6
-		} else if (ext.ip6) {
-			in6_proto_cksum_out(m, ifp0);
-#endif
+		if (m == NULL) {
+			counters_inc(ifp->if_counters, ifc_ierrors);
+			return NULL;
 		}
-		m = m_prepend(m, adjlen, 0);
-		if (m == NULL)
-			goto drop;
 	}
+#endif
 
 	return m;
-
- drop:
-	counters_inc(ifp->if_counters, ifc_ierrors);
-	return NULL;
 }
 
 static void
@@ -2425,15 +2380,7 @@ vport_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_qstart = vport_start;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
-
-	ifp->if_capabilities = 0;
-#if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
-
+	ifp->if_capabilities = IFCAP_VLAN_HWTAGGING;
 	ether_fakeaddr(ifp);
 
 	if_counters_alloc(ifp);
