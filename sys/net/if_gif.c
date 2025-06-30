@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.139 2025/03/02 21:28:31 bluhm Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.140 2025/06/30 12:43:22 mvs Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	ifp = &sc->sc_if;
 
 	sc->sc_df = htons(0);
-	sc->sc_ttl = ip_defttl;
+	sc->sc_ttl = atomic_load_int(&ip_defttl);
 	sc->sc_txhprio = IF_HDRPRIO_PAYLOAD;
 	sc->sc_rxhprio = IF_HDRPRIO_PAYLOAD;
 	sc->sc_ecn = ECN_ALLOWED;

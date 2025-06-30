@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.415 2025/06/25 10:33:53 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.416 2025/06/30 12:43:22 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ int	ipmforwarding = 0;
 int	ipmultipath = 0;			/* [a] */
 int	ip_sendredirects = 1;			/* [a] */
 int	ip_dosourceroute = 0;			/* [a] */
-int	ip_defttl = IPDEFTTL;
+int	ip_defttl = IPDEFTTL;			/* [a] */
 int	ip_mtudisc = 1;				/* [a] */
 int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;	/* [a] */
 int	ip_directedbcast = 0;			/* [a] */
@@ -119,6 +119,7 @@ const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 #ifdef MROUTING
 	{ IPCTL_MRTPROTO, &ip_mrtproto, SYSCTL_INT_READONLY },
 #endif
+	{ IPCTL_DEFTTL, &ip_defttl, 0, 255 },
 	{ IPCTL_IPPORT_FIRSTAUTO, &ipport_firstauto, 0, 65535 },
 	{ IPCTL_IPPORT_LASTAUTO, &ipport_lastauto, 0, 65535 },
 	{ IPCTL_IPPORT_HIFIRSTAUTO, &ipport_hifirstauto, 0, 65535 },
@@ -126,7 +127,6 @@ const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 };
 
 const struct sysctl_bounded_args ipctl_vars[] = {
-	{ IPCTL_DEFTTL, &ip_defttl, 0, 255 },
 	{ IPCTL_IPPORT_MAXQUEUE, &ip_maxqueue, 0, 10000 },
 	{ IPCTL_MFORWARDING, &ipmforwarding, 0, 1 },
 	{ IPCTL_ARPTIMEOUT, &arpt_keep, 0, INT_MAX },
@@ -1836,6 +1836,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #ifdef MROUTING
 	case IPCTL_MRTPROTO:
 #endif
+	case IPCTL_DEFTTL:
 	case IPCTL_IPPORT_FIRSTAUTO:
 	case IPCTL_IPPORT_LASTAUTO:
 	case IPCTL_IPPORT_HIFIRSTAUTO:

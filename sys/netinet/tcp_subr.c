@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.213 2025/06/23 20:59:25 mvs Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.214 2025/06/30 12:43:22 mvs Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 #endif /* INET6 */
 	case AF_INET:
 		ip->ip_len = htons(tlen);
-		ip->ip_ttl = ip_defttl;
+		ip->ip_ttl = atomic_load_int(&ip_defttl);
 		ip->ip_tos = 0;
 		ip_output(m, NULL,
 		    tp ? &tp->t_inpcb->inp_route : NULL,
@@ -469,7 +469,7 @@ tcp_newtcpcb(struct inpcb *inp, int wait)
 #endif
 	{
 		tp->pf = PF_INET;
-		inp->inp_ip.ip_ttl = ip_defttl;
+		inp->inp_ip.ip_ttl = atomic_load_int(&ip_defttl);
 	}
 
 	inp->inp_ppcb = (caddr_t)tp;

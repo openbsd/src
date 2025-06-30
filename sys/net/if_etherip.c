@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.57 2025/03/02 21:28:31 bluhm Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.58 2025/06/30 12:43:22 mvs Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -148,7 +148,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
 
-	sc->sc_ttl = ip_defttl;
+	sc->sc_ttl = atomic_load_int(&ip_defttl);
 	sc->sc_txhprio = IFQ_TOS2PRIO(IPTOS_PREC_ROUTINE); /* 0 */
 	sc->sc_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_df = htons(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.345 2025/06/23 20:59:25 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.346 2025/06/30 12:43:22 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1141,7 +1141,7 @@ udp_attach(struct socket *so, int proto, int wait)
 		sotoinpcb(so)->inp_ipv6.ip6_hlim = ip6_defhlim;
 	else
 #endif
-		sotoinpcb(so)->inp_ip.ip_ttl = ip_defttl;
+		sotoinpcb(so)->inp_ip.ip_ttl = atomic_load_int(&ip_defttl);
 	return 0;
 }
 

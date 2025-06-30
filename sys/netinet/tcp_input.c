@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.454 2025/06/23 20:59:25 mvs Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.455 2025/06/30 12:43:22 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4279,7 +4279,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now,
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		ip->ip_len = htons(tlen);
-		ip->ip_ttl = inp ? inp->inp_ip.ip_ttl : ip_defttl;
+		ip->ip_ttl = inp ?
+		    inp->inp_ip.ip_ttl : atomic_load_int(&ip_defttl);
 		if (inp != NULL)
 			ip->ip_tos = inp->inp_ip.ip_tos;
 

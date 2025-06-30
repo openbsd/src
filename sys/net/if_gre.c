@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.188 2025/06/05 04:30:49 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.189 2025/06/30 12:43:22 mvs Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -659,7 +659,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = gre_ioctl;
 	ifp->if_rtrequest = p2p_rtrequest;
 
-	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_ttl = atomic_load_int(&ip_defttl);
 	sc->sc_tunnel.t_txhprio = IF_HDRPRIO_PAYLOAD;
 	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
@@ -730,7 +730,7 @@ mgre_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = mgre_start;
 	ifp->if_ioctl = mgre_ioctl;
 
-	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_ttl = atomic_load_int(&ip_defttl);
 	sc->sc_tunnel.t_txhprio = IF_HDRPRIO_PAYLOAD;
 	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
@@ -784,7 +784,7 @@ egre_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ether_fakeaddr(ifp);
 
-	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_ttl = atomic_load_int(&ip_defttl);
 	sc->sc_tunnel.t_txhprio = 0;
 	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
@@ -919,7 +919,7 @@ eoip_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ether_fakeaddr(ifp);
 
-	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_ttl = atomic_load_int(&ip_defttl);
 	sc->sc_tunnel.t_txhprio = 0;
 	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
@@ -3098,7 +3098,8 @@ gre_keepalive_send(void *arg)
 	SipHash24_Update(&ctx, &gk->gk_random, sizeof(gk->gk_random));
 	SipHash24_Final(gk->gk_digest, &ctx);
 
-	ttl = sc->sc_tunnel.t_ttl == -1 ? ip_defttl : sc->sc_tunnel.t_ttl;
+	ttl = sc->sc_tunnel.t_ttl == -1 ?
+	    atomic_load_int(&ip_defttl) : sc->sc_tunnel.t_ttl;
 
 	m->m_pkthdr.pf.prio = sc->sc_if.if_llprio;
 	tos = gre_l3_tos(&sc->sc_tunnel, m, IFQ_PRIO2TOS(m->m_pkthdr.pf.prio));
@@ -4461,7 +4462,7 @@ erspan_clone_create(struct if_clone *ifc, int unit)
 	ether_fakeaddr(ifp);
 
 	sc->sc_tunnel.t_key = ~0;
-	sc->sc_tunnel.t_ttl = ip_defttl;
+	sc->sc_tunnel.t_ttl = atomic_load_int(&ip_defttl);
 	sc->sc_tunnel.t_txhprio = IF_HDRPRIO_PACKET; /* XXX */
 	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PAYLOAD;
 	sc->sc_tunnel.t_df = htons(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.108 2025/06/12 20:37:59 deraadt Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.109 2025/06/30 12:43:22 mvs Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -387,7 +387,7 @@ ipip_output(struct mbuf **mp, struct tdb *tdb)
 		ipo->ip_v = IPVERSION;
 		ipo->ip_hl = 5;
 		ipo->ip_len = htons(m->m_pkthdr.len);
-		ipo->ip_ttl = ip_defttl;
+		ipo->ip_ttl = atomic_load_int(&ip_defttl);
 		ipo->ip_sum = 0;
 		ipo->ip_src = tdb->tdb_src.sin.sin_addr;
 		ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;
