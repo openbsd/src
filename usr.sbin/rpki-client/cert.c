@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.173 2025/06/30 11:06:48 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.174 2025/06/30 11:15:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -32,6 +32,7 @@
 
 extern ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
 extern ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
+extern ASN1_OBJECT	*caissuers_oid;	/* 1.3.6.1.5.5.7.48.2 (caIssuers) */
 extern ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
 extern ASN1_OBJECT	*signedobj_oid;	/* 1.3.6.1.5.5.7.48.11 (signedObject) */
@@ -497,6 +498,86 @@ sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	rc = 1;
  out:
 	IPAddrBlocks_free(addrblk);
+	return rc;
+}
+
+/*
+ * Parse "Authority Information Access" extension for non-TA certs,
+ * RFC 6487, section 4.8.7.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+cert_aia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+{
+	AUTHORITY_INFO_ACCESS	*aia = NULL;
+	ACCESS_DESCRIPTION	*ad;
+	ASN1_OBJECT		*oid;
+	char			*caissuers = NULL;
+	int			 i, rc = 0;
+
+	assert(cert->aia == NULL);
+
+	if (cert->purpose == CERT_PURPOSE_TA) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA must be absent from "
+		    "a self-signed certificate", fn);
+		goto out;
+	}
+
+	if (X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA: "
+		    "extension not non-critical", fn);
+		goto out;
+	}
+
+	if ((aia = X509V3_EXT_d2i(ext)) == NULL) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA: failed extension parse",
+		    fn);
+		goto out;
+	}
+
+	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(aia); i++) {
+		ad = sk_ACCESS_DESCRIPTION_value(aia, i);
+
+		oid = ad->method;
+
+		if (OBJ_cmp(oid, caissuers_oid) == 0) {
+			if (!x509_location(fn, "AIA: caIssuers", ad->location,
+			    &caissuers))
+				goto out;
+			if (cert->aia == NULL && strncasecmp(caissuers,
+			    RSYNC_PROTO, RSYNC_PROTO_LEN) == 0) {
+				cert->aia = caissuers;
+				caissuers = NULL;
+				continue;
+			}
+			/*
+			 * XXX - unclear how to check "Other accessMethod URIs
+			 * referencing the same object MAY be included".
+			 */
+			if (verbose)
+				warnx("%s: RFC 6487 section 4.8.7: AIA: "
+				    "ignoring location %s", fn, caissuers);
+			free(caissuers);
+			caissuers = NULL;
+		} else {
+			char buf[128];
+
+			OBJ_obj2txt(buf, sizeof(buf), oid, 0);
+			warnx("%s: RFC 6487 section 4.8.7: unexpected"
+			    " accessMethod: %s", fn, buf);
+			goto out;
+		}
+	}
+
+	if (cert->aia == NULL) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA: expected caIssuers "
+		    "accessMethod with rsync protocol", fn);
+		goto out;
+	}
+
+	rc = 1;
+ out:
+	AUTHORITY_INFO_ACCESS_free(aia);
 	return rc;
 }
 
@@ -1200,6 +1281,8 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		case NID_info_access:
 			if (aia++ > 0)
 				goto dup;
+			if (!cert_aia(fn, cert, ext))
+				goto out;
 			break;
 		case NID_sinfo_access:
 			if (sia++ > 0)
@@ -1246,8 +1329,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	if (!x509_get_aki(x, fn, &cert->aki))
 		goto out;
 	if (!x509_get_ski(x, fn, &cert->ski))
-		goto out;
-	if (!x509_get_aia(x, fn, &cert->aia))
 		goto out;
 	if (!x509_get_crl(x, fn, &cert->crl))
 		goto out;

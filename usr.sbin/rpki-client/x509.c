@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.111 2025/06/25 16:24:44 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.112 2025/06/30 11:15:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -29,6 +29,7 @@
 #include "extern.h"
 
 ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
+ASN1_OBJECT	*caissuers_oid;	/* 1.3.6.1.5.5.7.48.2 (caIssuers) */
 ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
 ASN1_OBJECT	*signedobj_oid;	/* 1.3.6.1.5.5.7.48.11 (signedObject) */
@@ -53,6 +54,10 @@ static const struct {
 	{
 		.oid = "1.3.6.1.5.5.7.14.2",
 		.ptr = &certpol_oid,
+	},
+	{
+		.oid = "1.3.6.1.5.5.7.48.2",
+		.ptr = &caissuers_oid,
 	},
 	{
 		.oid = "1.3.6.1.5.5.7.48.5",
