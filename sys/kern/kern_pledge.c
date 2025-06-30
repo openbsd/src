@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.326 2025/06/29 11:24:10 jsg Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.327 2025/06/30 04:40:03 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1236,9 +1236,9 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		case DIOCXBEGIN:
 		case DIOCXCOMMIT:
 		case DIOCKILLSRCNODES:
-			if ((fp->f_type == DTYPE_VNODE) &&
-			    (vp->v_type == VCHR) &&
-			    (cdevsw[major(vp->v_rdev)].d_open == pfopen))
+			if (fp->f_type == DTYPE_VNODE &&
+			    vp->v_type == VCHR &&
+			    cdevsw[major(vp->v_rdev)].d_open == pfopen)
 				return (0);
 			break;
 		}
@@ -1253,11 +1253,11 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 				break;
 			if ((pledge & PLEDGE_WPATH) == 0)
 				break;
-			if (fp->f_type != DTYPE_VNODE || vp->v_type != VCHR)
-				break;
-			if (cdevsw[major(vp->v_rdev)].d_open != ptmopen)
-				break;
-			return (0);
+			if (fp->f_type == DTYPE_VNODE &&
+			    vp->v_type == VCHR &&
+			    cdevsw[major(vp->v_rdev)].d_open == ptmopen)
+				return (0);
+			break;
 		case TIOCUCNTL:		/* vmd */
 			if ((pledge & PLEDGE_RPATH) == 0)
 				break;
@@ -1339,9 +1339,9 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 
 #if NVMM > 0
 	if ((pledge & PLEDGE_VMM)) {
-		if ((fp->f_type == DTYPE_VNODE) &&
-		    (vp->v_type == VCHR) &&
-		    (cdevsw[major(vp->v_rdev)].d_open == vmmopen)) {
+		if (fp->f_type == DTYPE_VNODE &&
+		    vp->v_type == VCHR &&
+		    cdevsw[major(vp->v_rdev)].d_open == vmmopen) {
 			error = pledge_ioctl_vmm(p, com);
 			if (error == 0)
 				return 0;
@@ -1351,9 +1351,9 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 
 #if NPSP > 0
 	if ((pledge & PLEDGE_VMM)) {
-		if ((fp->f_type == DTYPE_VNODE) &&
-		    (vp->v_type == VCHR) &&
-		    (cdevsw[major(vp->v_rdev)].d_open == pspopen)) {
+		if (fp->f_type == DTYPE_VNODE &&
+		    vp->v_type == VCHR &&
+		    cdevsw[major(vp->v_rdev)].d_open == pspopen) {
 			error = pledge_ioctl_psp(p, com);
 			if (error == 0)
 				return (0);
