@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.121 2025/03/09 15:17:22 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.122 2025/07/01 06:35:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -178,6 +178,7 @@ DECLARE_STACK_OF(X509)
 #define	X509_FLAG_NO_SIGDUMP		(1L << 9)
 #define	X509_FLAG_NO_AUX		(1L << 10)
 #define	X509_FLAG_NO_ATTRIBUTES		(1L << 11)
+#define	X509_FLAG_NO_IDS		(1L << 12)
 
 /* Flags specific to X509_NAME_print_ex() */
 
