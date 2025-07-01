@@ -1,13 +1,14 @@
-mandoc: line.in:18:2: WARNING: skipping paragraph macro: br after br
-mandoc: line.in:24:2: WARNING: skipping paragraph macro: br after PP
-mandoc: line.in:26:2: WARNING: skipping paragraph macro: PP empty
-mandoc: line.in:29:2: WARNING: skipping paragraph macro: br before sp
-mandoc: line.in:33:2: WARNING: skipping paragraph macro: br after sp
-mandoc: line.in:36:2: WARNING: skipping paragraph macro: sp after PP
-mandoc: line.in:39:2: WARNING: skipping paragraph macro: sp after PP
-mandoc: line.in:47:2: WARNING: skipping paragraph macro: br before sp
-mandoc: line.in:51:2: WARNING: skipping paragraph macro: br after sp
-mandoc: line.in:54:1: WARNING: skipping paragraph macro: sp after PP
-mandoc: line.in:6:2: WARNING: skipping paragraph macro: sp after SH
-mandoc: line.in:85:2: WARNING: skipping paragraph macro: sp after SS
-mandoc: line.in:82:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: line.in:2:2: WARNING: skipping paragraph macro: br before first SH
+mandoc: line.in:19:2: WARNING: skipping paragraph macro: br after br
+mandoc: line.in:25:2: WARNING: skipping paragraph macro: br after PP
+mandoc: line.in:27:2: WARNING: skipping paragraph macro: PP empty
+mandoc: line.in:30:2: WARNING: skipping paragraph macro: br before sp
+mandoc: line.in:34:2: WARNING: skipping paragraph macro: br after sp
+mandoc: line.in:37:2: WARNING: skipping paragraph macro: sp after PP
+mandoc: line.in:40:2: WARNING: skipping paragraph macro: sp after PP
+mandoc: line.in:48:2: WARNING: skipping paragraph macro: br before sp
+mandoc: line.in:52:2: WARNING: skipping paragraph macro: br after sp
+mandoc: line.in:55:1: WARNING: skipping paragraph macro: sp after PP
+mandoc: line.in:7:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: line.in:86:2: WARNING: skipping paragraph macro: sp after SS
+mandoc: line.in:83:2: WARNING: skipping paragraph macro: sp after SH

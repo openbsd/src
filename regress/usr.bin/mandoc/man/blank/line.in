@@ -1,5 +1,6 @@
-.\" $OpenBSD: line.in,v 1.3 2017/07/04 14:53:24 schwarze Exp $
-.TH BLANK-LINE 1 "July 14, 2012"
+.\" $OpenBSD: line.in,v 1.4 2025/07/01 20:17:13 schwarze Exp $
+.br
+.TH BLANK-LINE 1 "July 1, 2025"
 .SH NAME
 blank-line \- handling of blank lines
 .SH DESCRIPTION
