@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.176 2025/07/01 19:09:30 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.177 2025/07/01 19:12:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1219,8 +1219,6 @@ struct cert *
 cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 {
 	struct cert		*cert;
-	X509_EXTENSION		*ext;
-	int			 index;
 
 	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
@@ -1233,36 +1231,13 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 	if (!cert_check_subject_and_issuer(fn, x))
 		goto out;
 
-	if (!x509_cache_extensions(x, fn))
+	if (!cert_parse_extensions(fn, cert, x))
 		goto out;
 
-	/*
-	 * Check issuance, basic constraints and (extended) key usage bits are
-	 * appropriate for an EE cert. Covers RFC 6487, 4.8.1, 4.8.4, 4.8.5.
-	 */
-	if ((cert->purpose = cert_check_purpose(fn, x)) != CERT_PURPOSE_EE) {
-		/* XXX - double warning */
+	if (cert->purpose != CERT_PURPOSE_EE) {
 		warnx("%s: expected EE cert, got %s", fn,
 		    purpose2str(cert->purpose));
 		goto out;
-	}
-
-	index = X509_get_ext_by_NID(x, NID_sinfo_access, -1);
-	if ((ext = X509_get_ext(x, index)) != NULL) {
-		if (!cert_sia(fn, cert, ext))
-			goto out;
-	}
-
-	index = X509_get_ext_by_NID(x, NID_sbgp_ipAddrBlock, -1);
-	if ((ext = X509_get_ext(x, index)) != NULL) {
-		if (!sbgp_ipaddrblk(fn, cert, ext))
-			goto out;
-	}
-
-	index = X509_get_ext_by_NID(x, NID_sbgp_autonomousSysNum, -1);
-	if ((ext = X509_get_ext(x, index)) != NULL) {
-		if (!sbgp_assysnum(fn, cert, ext))
-			goto out;
 	}
 
 	if (!X509_up_ref(x)) {
