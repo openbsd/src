@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.53 2025/06/25 18:28:47 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.54 2025/07/01 06:46:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,6 +105,28 @@ X509_print(BIO *bp, X509 *x)
 	return X509_print_ex(bp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
 }
 LCRYPTO_ALIAS(X509_print);
+
+static int
+x509_print_uids(BIO *bp, const X509 *x, int indent)
+{
+	const ASN1_BIT_STRING *issuerUID = NULL, *subjectUID = NULL;
+
+	X509_get0_uids(x, &issuerUID, &subjectUID);
+	if (issuerUID != NULL) {
+		if (BIO_printf(bp, "%*sIssuer Unique ID: ", indent, "") <= 0)
+			return 0;
+		if (!X509_signature_dump(bp, issuerUID, indent + 4))
+			return 0;
+	}
+	if (subjectUID != NULL) {
+		if (BIO_printf(bp, "%*sSubject Unique ID: ", indent, "") <= 0)
+			return 0;
+		if (!X509_signature_dump(bp, subjectUID, indent + 4))
+			return 0;
+	}
+
+	return 1;
+}
 
 int
 X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
@@ -240,6 +262,11 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 			EVP_PKEY_print_public(bp, pkey, 16, NULL);
 			EVP_PKEY_free(pkey);
 		}
+	}
+
+	if (!(cflag & X509_FLAG_NO_IDS)) {
+		if (!x509_print_uids(bp, x, 8))
+			goto err;
 	}
 
 	if (!(cflag & X509_FLAG_NO_EXTENSIONS))
