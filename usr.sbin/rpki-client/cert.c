@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.175 2025/06/30 14:20:26 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.176 2025/07/01 19:09:30 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1087,151 +1087,26 @@ cert_check_purpose(const char *fn, X509 *x)
 }
 
 /*
- * Lightweight version of cert_parse_pre() for EE certs.
- * Parses the two RFC 3779 extensions, and performs some sanity checks.
- * Returns cert on success and NULL on failure.
+ * Parse extensions in a resource certificate following RFC 6487, section 4.8.
+ *
+ * Check issuance, basic constraints, and key usage bits are consistent and
+ * determine what kind of cert we were passed: annoyingly, callers can't
+ * distinguish BGPsec router certs (a rare kind of EE cert) from CA certs,
+ * as they both are .cer files in a Manifest.
+ *
+ * Then walk the list of extensions, handle each one and ensure there are no
+ * duplicates. Store the relevant information in cert.
  */
-struct cert *
-cert_parse_ee_cert(const char *fn, int talid, X509 *x)
+
+static int
+cert_parse_extensions(const char *fn, struct cert *cert, X509 *x)
 {
-	struct cert		*cert;
-	X509_EXTENSION		*ext;
-	int			 index;
-
-	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
-		err(1, NULL);
-
-	if (X509_get_version(x) != 2) {
-		warnx("%s: RFC 6487 4.1: X.509 version must be v3", fn);
-		goto out;
-	}
-
-	if (!cert_check_subject_and_issuer(fn, x))
-		goto out;
-
-	if (!x509_cache_extensions(x, fn))
-		goto out;
-
-	/*
-	 * Check issuance, basic constraints and (extended) key usage bits are
-	 * appropriate for an EE cert. Covers RFC 6487, 4.8.1, 4.8.4, 4.8.5.
-	 */
-	if ((cert->purpose = cert_check_purpose(fn, x)) != CERT_PURPOSE_EE) {
-		/* XXX - double warning */
-		warnx("%s: expected EE cert, got %s", fn,
-		    purpose2str(cert->purpose));
-		goto out;
-	}
-
-	index = X509_get_ext_by_NID(x, NID_sinfo_access, -1);
-	if ((ext = X509_get_ext(x, index)) != NULL) {
-		if (!cert_sia(fn, cert, ext))
-			goto out;
-	}
-
-	index = X509_get_ext_by_NID(x, NID_sbgp_ipAddrBlock, -1);
-	if ((ext = X509_get_ext(x, index)) != NULL) {
-		if (!sbgp_ipaddrblk(fn, cert, ext))
-			goto out;
-	}
-
-	index = X509_get_ext_by_NID(x, NID_sbgp_autonomousSysNum, -1);
-	if ((ext = X509_get_ext(x, index)) != NULL) {
-		if (!sbgp_assysnum(fn, cert, ext))
-			goto out;
-	}
-
-	if (!X509_up_ref(x)) {
-		warnx("%s: X509_up_ref failed", fn);
-		goto out;
-	}
-
-	cert->x509 = x;
-	cert->talid = talid;
-
-	if (!constraints_validate(fn, cert))
-		goto out;
-
-	return cert;
-
- out:
-	cert_free(cert);
-	return NULL;
-}
-
-/*
- * Parse and partially validate an RPKI X509 certificate (either a trust
- * anchor or a certificate) as defined in RFC 6487.
- * Returns the parse results or NULL on failure.
- */
-struct cert *
-cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
-{
-	struct cert		*cert;
-	const unsigned char	*oder;
-	size_t			 j;
-	int			 i, extsz;
-	X509			*x = NULL;
-	X509_EXTENSION		*ext = NULL;
-	const ASN1_BIT_STRING	*issuer_uid = NULL, *subject_uid = NULL;
-	ASN1_OBJECT		*obj;
-	EVP_PKEY		*pkey;
-	int			 nid, bc, ski, aki, ku, eku, crldp, aia, sia,
-				 cp, ip, as;
+	X509_EXTENSION	*ext;
+	ASN1_OBJECT	*obj;
+	int		 extsz, i, nid;
+	int		 bc, ski, aki, ku, eku, crldp, aia, sia, cp, ip, as;
 
 	nid = bc = ski = aki = ku = eku = crldp = aia = sia = cp = ip = as = 0;
-
-	/* just fail for empty buffers, the warning was printed elsewhere */
-	if (der == NULL)
-		return NULL;
-
-	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
-		err(1, NULL);
-
-	oder = der;
-	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
-		warnx("%s: d2i_X509", fn);
-		goto out;
-	}
-	if (der != oder + len) {
-		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
-		goto out;
-	}
-
-	if (!x509_cache_extensions(x, fn))
-		goto out;
-
-	if (X509_get_version(x) != 2) {
-		warnx("%s: RFC 6487 4.1: X.509 version must be v3", fn);
-		goto out;
-	}
-
-	if ((nid = X509_get_signature_nid(x)) == NID_undef) {
-		warnx("%s: unknown signature type", fn);
-		goto out;
-	}
-	if (experimental && nid == NID_ecdsa_with_SHA256) {
-		if (verbose)
-			warnx("%s: P-256 support is experimental", fn);
-	} else if (nid != NID_sha256WithRSAEncryption) {
-		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
-		    fn, nid2str(nid), LN_sha256WithRSAEncryption);
-		goto out;
-	}
-
-	/*
-	 * Disallowed for CA certs in RFC 5280, 4.1.2.8. Uniqueness of subjects
-	 * per RFC 6487, 4.5 makes them meaningless.
-	 */
-	X509_get0_uids(x, &issuer_uid, &subject_uid);
-	if (issuer_uid != NULL || subject_uid != NULL) {
-		warnx("%s: issuer or subject unique identifiers not allowed",
-		    fn);
-		goto out;
-	}
-
-	if (!cert_check_subject_and_issuer(fn, x))
-		goto out;
 
 	/*
 	 * Check issuance, basic constraints and (extended) key usage bits are
@@ -1326,6 +1201,159 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		}
 	}
 
+	return 1;
+
+ dup:
+	warnx("%s: RFC 5280 section 4.2: duplicate extension: %s", fn,
+	    nid2str(nid));
+ out:
+	return 0;
+}
+
+/*
+ * Lightweight version of cert_parse_pre() for EE certs.
+ * Parses the two RFC 3779 extensions, and performs some sanity checks.
+ * Returns cert on success and NULL on failure.
+ */
+struct cert *
+cert_parse_ee_cert(const char *fn, int talid, X509 *x)
+{
+	struct cert		*cert;
+	X509_EXTENSION		*ext;
+	int			 index;
+
+	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
+		err(1, NULL);
+
+	if (X509_get_version(x) != 2) {
+		warnx("%s: RFC 6487 4.1: X.509 version must be v3", fn);
+		goto out;
+	}
+
+	if (!cert_check_subject_and_issuer(fn, x))
+		goto out;
+
+	if (!x509_cache_extensions(x, fn))
+		goto out;
+
+	/*
+	 * Check issuance, basic constraints and (extended) key usage bits are
+	 * appropriate for an EE cert. Covers RFC 6487, 4.8.1, 4.8.4, 4.8.5.
+	 */
+	if ((cert->purpose = cert_check_purpose(fn, x)) != CERT_PURPOSE_EE) {
+		/* XXX - double warning */
+		warnx("%s: expected EE cert, got %s", fn,
+		    purpose2str(cert->purpose));
+		goto out;
+	}
+
+	index = X509_get_ext_by_NID(x, NID_sinfo_access, -1);
+	if ((ext = X509_get_ext(x, index)) != NULL) {
+		if (!cert_sia(fn, cert, ext))
+			goto out;
+	}
+
+	index = X509_get_ext_by_NID(x, NID_sbgp_ipAddrBlock, -1);
+	if ((ext = X509_get_ext(x, index)) != NULL) {
+		if (!sbgp_ipaddrblk(fn, cert, ext))
+			goto out;
+	}
+
+	index = X509_get_ext_by_NID(x, NID_sbgp_autonomousSysNum, -1);
+	if ((ext = X509_get_ext(x, index)) != NULL) {
+		if (!sbgp_assysnum(fn, cert, ext))
+			goto out;
+	}
+
+	if (!X509_up_ref(x)) {
+		warnx("%s: X509_up_ref failed", fn);
+		goto out;
+	}
+
+	cert->x509 = x;
+	cert->talid = talid;
+
+	if (!constraints_validate(fn, cert))
+		goto out;
+
+	return cert;
+
+ out:
+	cert_free(cert);
+	return NULL;
+}
+
+/*
+ * Parse and partially validate an RPKI X509 certificate (either a trust
+ * anchor or a certificate) as defined in RFC 6487.
+ * Returns the parse results or NULL on failure.
+ */
+struct cert *
+cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
+{
+	struct cert		*cert;
+	const unsigned char	*oder;
+	size_t			 j;
+	X509			*x = NULL;
+	const ASN1_BIT_STRING	*issuer_uid = NULL, *subject_uid = NULL;
+	EVP_PKEY		*pkey;
+	int			 nid;
+
+	/* just fail for empty buffers, the warning was printed elsewhere */
+	if (der == NULL)
+		return NULL;
+
+	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
+		err(1, NULL);
+
+	oder = der;
+	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
+		warnx("%s: d2i_X509", fn);
+		goto out;
+	}
+	if (der != oder + len) {
+		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
+		goto out;
+	}
+
+	if (!x509_cache_extensions(x, fn))
+		goto out;
+
+	if (X509_get_version(x) != 2) {
+		warnx("%s: RFC 6487 4.1: X.509 version must be v3", fn);
+		goto out;
+	}
+
+	if ((nid = X509_get_signature_nid(x)) == NID_undef) {
+		warnx("%s: unknown signature type", fn);
+		goto out;
+	}
+	if (experimental && nid == NID_ecdsa_with_SHA256) {
+		if (verbose)
+			warnx("%s: P-256 support is experimental", fn);
+	} else if (nid != NID_sha256WithRSAEncryption) {
+		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
+		    fn, nid2str(nid), LN_sha256WithRSAEncryption);
+		goto out;
+	}
+
+	/*
+	 * Disallowed for CA certs in RFC 5280, 4.1.2.8. Uniqueness of subjects
+	 * per RFC 6487, 4.5 makes them meaningless.
+	 */
+	X509_get0_uids(x, &issuer_uid, &subject_uid);
+	if (issuer_uid != NULL || subject_uid != NULL) {
+		warnx("%s: issuer or subject unique identifiers not allowed",
+		    fn);
+		goto out;
+	}
+
+	if (!cert_check_subject_and_issuer(fn, x))
+		goto out;
+
+	if (!cert_parse_extensions(fn, cert, x))
+		goto out;
+
 	if (!x509_get_aki(x, fn, &cert->aki))
 		goto out;
 	if (!x509_get_ski(x, fn, &cert->ski))
@@ -1392,9 +1420,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	cert->x509 = x;
 	return cert;
 
- dup:
-	warnx("%s: RFC 5280 section 4.2: duplicate extension: %s", fn,
-	    nid2str(nid));
  out:
 	cert_free(cert);
 	X509_free(x);
