@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_term.c,v 1.283 2025/06/26 16:59:35 schwarze Exp $ */
+/* $OpenBSD: mdoc_term.c,v 1.284 2025/07/01 16:38:21 schwarze Exp $ */
 /*
  * Copyright (c) 2010,2012-2020,2022,2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1891,9 +1891,7 @@ termp_lk_pre(DECL_ARGS)
 	}
 
 	/* Link target. */
-	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, link->string);
-	term_fontpop(p);
 
 	/* Trailing punctuation. */
 	while (punct != NULL) {

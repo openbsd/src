@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_man.c,v 1.137 2025/01/24 22:36:51 schwarze Exp $ */
+/* $OpenBSD: mdoc_man.c,v 1.138 2025/07/01 16:38:21 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2021, 2025 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1614,9 +1614,7 @@ pre_lk(DECL_ARGS)
 	}
 
 	/* Link target. */
-	font_push('B');
 	print_word(link->string);
-	font_pop();
 
 	/* Trailing punctuation. */
 	while (punct != NULL) {
