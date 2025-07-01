@@ -24,6 +24,13 @@ two standard arguments:
 more arguments:
 4\.3BSD-Tahoe and *some additional words*
 
+second argument is unusual:
+4\.3BSD-Net/1
+4\.3BSD-Net/2
+4\.4BSD-Lite1
+4\.4BSD-Lite2
+4\.4BSD-Sccs
+
 end of test document
 
-OpenBSD - July 4, 2017 - BX-ARGS(1)
+OpenBSD - July 1, 2025 - BX-ARGS(1)
