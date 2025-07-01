@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.141 2025/05/16 01:29:27 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.142 2025/07/01 11:10:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1095,6 +1095,13 @@ cpu_identify(struct cpu_info *ci)
 
 	if (ID_AA64PFR0_DIT(id) >= ID_AA64PFR0_DIT_IMPL) {
 		printf("%sDIT", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64PFR0_AMU(id) >= ID_AA64PFR0_AMU_IMPL) {
+		printf("%sAMU", sep);
+		if (ID_AA64PFR0_AMU(id) >= ID_AA64PFR0_AMU_IMPL_V1P1)
+			printf("v1p1");
 		sep = ",";
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.42 2025/02/11 22:27:09 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.43 2025/07/01 11:10:36 dlg Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -706,6 +706,7 @@
 #define	ID_AA64PFR0_AMU(x)		((x) & ID_AA64PFR0_AMU_MASK)
 #define	 ID_AA64PFR0_AMU_NONE		(0x0ULL << ID_AA64PFR0_AMU_SHIFT)
 #define	 ID_AA64PFR0_AMU_IMPL		(0x1ULL << ID_AA64PFR0_AMU_SHIFT)
+#define	 ID_AA64PFR0_AMU_IMPL_V1P1	(0x2ULL << ID_AA64PFR0_AMU_SHIFT)
 #define	ID_AA64PFR0_DIT_SHIFT		48
 #define	ID_AA64PFR0_DIT_MASK		(0xfULL << ID_AA64PFR0_DIT_SHIFT)
 #define	ID_AA64PFR0_DIT(x)		((x) & ID_AA64PFR0_DIT_MASK)
