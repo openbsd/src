@@ -1,6 +1,6 @@
-/* $OpenBSD: man_validate.c,v 1.129 2023/10/24 20:30:49 schwarze Exp $ */
+/* $OpenBSD: man_validate.c,v 1.130 2025/07/01 20:06:13 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2012-2020, 2023 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2020, 2023, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -297,6 +297,14 @@ post_SH(CHKARGS)
 
 	nc = n->child;
 	switch (n->type) {
+	case ROFFT_BLOCK:
+		if ((nc = n->prev) != NULL && nc->tok == ROFF_br) {
+			mandoc_msg(MANDOCERR_PAR_SKIP, nc->line, nc->pos,
+			    "%s before first %s", roff_name[nc->tok],
+			    roff_name[n->tok]);
+			roff_node_delete(man, nc);
+		}
+		return;
 	case ROFFT_HEAD:
 		tag = NULL;
 		deroff(&tag, n);
