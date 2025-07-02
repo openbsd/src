@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.44 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: socket.2,v 1.45 2025/07/02 16:07:02 schwarze Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 2 2025 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -54,11 +54,11 @@ These families are defined in the include file
 The currently understood formats are:
 .Pp
 .Bl -tag -width "AF_INET6XXX" -offset indent -compact
-.It AF_UNIX
+.It Dv AF_UNIX
 UNIX internal protocols
-.It AF_INET
+.It Dv AF_INET
 Internet Protocol version 4 (IPv4) protocol family
-.It AF_INET6
+.It Dv AF_INET6
 Internet Protocol version 6 (IPv6) protocol family
 .El
 .Pp
@@ -68,10 +68,10 @@ which specifies the semantics of communication.
 Currently defined types are:
 .Pp
 .Bl -tag -width "SOCK_SEQPACKETXXX" -offset indent -compact
-.It SOCK_STREAM
-.It SOCK_DGRAM
-.It SOCK_RAW
-.It SOCK_SEQPACKET
+.It Dv SOCK_STREAM
+.It Dv SOCK_DGRAM
+.It Dv SOCK_RAW
+.It Dv SOCK_SEQPACKET
 .El
 .Pp
 A
@@ -101,11 +101,11 @@ Any combination of the following flags may additionally be used in the
 argument:
 .Pp
 .Bl -tag -width "SOCK_NONBLOCKX" -offset indent -compact
-.It SOCK_CLOEXEC
+.It Dv SOCK_CLOEXEC
 Set close-on-exec flag on the new descriptor.
-.It SOCK_NONBLOCK
+.It Dv SOCK_NONBLOCK
 Set non-blocking I/O mode on the new socket.
-.It SOCK_DNS
+.It Dv SOCK_DNS
 For domains
 .Dv AF_INET
 or
