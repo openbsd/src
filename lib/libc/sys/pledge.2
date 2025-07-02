@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.71 2025/03/06 06:39:57 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.72 2025/07/02 13:08:21 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 6 2025 $
+.Dd $Mdocdate: July 2 2025 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -333,16 +333,28 @@ domain:
 .Xr setsockopt 2 ,
 .Xr getsockopt 2
 .It Cm dns
-Subsequent to a successful
-.Xr open 2
-of
-.Pa /etc/resolv.conf ,
-a few system calls become able to allow DNS network transactions:
-.Pp
-.Xr sendto 2 ,
-.Xr recvfrom 2 ,
+Some low-level behaviours required by the DNS resolver
+.Xr res_init 3
+are permitted, such as opening
+.Pa /etc/resolv.conf 5
+and a few networking system calls:
 .Xr socket 2 ,
-.Xr connect 2
+.Xr connect 2 ,
+.Xr sendto 2 ,
+.Xr recvfrom 2 .
+To distinguish the
+.Cm dns
+promise from
+.Cm inet ,
+the libc DNS code opens sockets with the
+.Va SOCK_DNS
+flag which
+.Ox
+requires to communicate with
+.Dv AF_INET
+and
+.Dv AF_INET6
+at port 53.
 .It Cm getpw
 This allows read-only opening of files in
 .Pa /etc
