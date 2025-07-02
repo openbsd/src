@@ -1003,7 +1003,10 @@ int drm_dev_register(struct drm_device *dev, unsigned long flags)
 	if (!driver->load)
 		drm_mode_config_validate(dev);
 
+#ifdef notyet
+	/* drm softc not allocated by devm_drm_dev_alloc() */
 	WARN_ON(!dev->managed.final_kfree);
+#endif
 
 	if (drm_dev_needs_global_mutex(dev))
 		mutex_lock(&drm_global_mutex);
@@ -1467,7 +1470,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	drmm_add_final_kfree(dev, dev);
+	drmm_add_final_kfree(dev, NULL);
 
 	printf("\n");
 	return;
@@ -1482,6 +1485,8 @@ drm_detach(struct device *self, int flags)
 {
 	struct drm_softc *sc = (struct drm_softc *)self;
 	struct drm_device *dev = sc->sc_drm;
+
+	drm_dev_put(dev);
 
 	drm_refcnt--;
 	if (drm_refcnt == 0) {
