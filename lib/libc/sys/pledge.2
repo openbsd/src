@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.73 2025/07/02 15:42:13 schwarze Exp $
+.\" $OpenBSD: pledge.2,v 1.74 2025/07/02 15:56:32 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -236,7 +236,7 @@ As a result, all the expected functionalities of libc stdio work.
 .It Cm rpath
 A number of system calls are allowed which allow path traversal,
 reading
-.Va struct stat ,
+.Vt struct stat ,
 and opening files for read.
 .It Cm wpath
 Similar to
