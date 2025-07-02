@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.62 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.63 2025/07/02 06:36:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -628,7 +628,7 @@ LCRYPTO_ALIAS(EVP_PKEY_get0_hmac);
 
 #ifndef OPENSSL_NO_RSA
 RSA *
-EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
+EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
 {
 	if (pkey->type == EVP_PKEY_RSA || pkey->type == EVP_PKEY_RSA_PSS)
 		return pkey->pkey.rsa;
@@ -639,7 +639,7 @@ EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
 LCRYPTO_ALIAS(EVP_PKEY_get0_RSA);
 
 RSA *
-EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
+EVP_PKEY_get1_RSA(const EVP_PKEY *pkey)
 {
 	RSA *rsa;
 
@@ -665,7 +665,7 @@ LCRYPTO_ALIAS(EVP_PKEY_set1_RSA);
 
 #ifndef OPENSSL_NO_DSA
 DSA *
-EVP_PKEY_get0_DSA(EVP_PKEY *pkey)
+EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 {
 	if (pkey->type != EVP_PKEY_DSA) {
 		EVPerror(EVP_R_EXPECTING_A_DSA_KEY);
@@ -676,7 +676,7 @@ EVP_PKEY_get0_DSA(EVP_PKEY *pkey)
 LCRYPTO_ALIAS(EVP_PKEY_get0_DSA);
 
 DSA *
-EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
+EVP_PKEY_get1_DSA(const EVP_PKEY *pkey)
 {
 	DSA *dsa;
 
@@ -702,7 +702,7 @@ LCRYPTO_ALIAS(EVP_PKEY_set1_DSA);
 
 #ifndef OPENSSL_NO_EC
 EC_KEY *
-EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
+EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)
 {
 	if (pkey->type != EVP_PKEY_EC) {
 		EVPerror(EVP_R_EXPECTING_A_EC_KEY);
@@ -713,7 +713,7 @@ EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
 LCRYPTO_ALIAS(EVP_PKEY_get0_EC_KEY);
 
 EC_KEY *
-EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
+EVP_PKEY_get1_EC_KEY(const EVP_PKEY *pkey)
 {
 	EC_KEY *key;
 
@@ -740,7 +740,7 @@ LCRYPTO_ALIAS(EVP_PKEY_set1_EC_KEY);
 
 #ifndef OPENSSL_NO_DH
 DH *
-EVP_PKEY_get0_DH(EVP_PKEY *pkey)
+EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
 {
 	if (pkey->type != EVP_PKEY_DH) {
 		EVPerror(EVP_R_EXPECTING_A_DH_KEY);
@@ -751,7 +751,7 @@ EVP_PKEY_get0_DH(EVP_PKEY *pkey)
 LCRYPTO_ALIAS(EVP_PKEY_get0_DH);
 
 DH *
-EVP_PKEY_get1_DH(EVP_PKEY *pkey)
+EVP_PKEY_get1_DH(const EVP_PKEY *pkey)
 {
 	DH *dh;
 
