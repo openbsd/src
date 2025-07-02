@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.27 2025/06/30 02:53:26 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.28 2025/07/02 13:24:48 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ void	 maxrss(const struct pinfo *, VARENT *);
 void	 nlisterr(struct nlist *);
 void	 p_rssize(const struct pinfo *, VARENT *);
 void	 pagein(const struct pinfo *, VARENT *);
-void	 parsefmt(char *);
+int	 parsefmt(char *);
 void	 pcpu(const struct pinfo *, VARENT *);
 void	 pmem(const struct pinfo *, VARENT *);
 void	 pri(const struct pinfo *, VARENT *);

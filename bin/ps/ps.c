@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.83 2025/06/29 16:22:05 tedu Exp $	*/
+/*	$OpenBSD: ps.c,v 1.84 2025/07/02 13:24:48 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -60,7 +60,6 @@ extern char *__progname;
 
 struct varent *vhead;
 
-int	eval;			/* exit value */
 int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
@@ -100,7 +99,7 @@ main(int argc, char *argv[])
 	uid_t uid;
 	int all, ch, flag, i, fmt, lineno, nentries;
 	int prtheader, showthreads, wflag, kflag, what, Uflag, xflg;
-	int forest;
+	int forest, rval = 0;
 	char *nlistf, *memf, *swapf, *cols, errbuf[_POSIX2_LINE_MAX];
 
 	setlocale(LC_CTYPE, "");
@@ -157,7 +156,7 @@ main(int argc, char *argv[])
 			prtheader = ws.ws_row > 5 ? ws.ws_row : 22;
 			break;
 		case 'j':
-			parsefmt(jfmt);
+			rval |= parsefmt(jfmt);
 			fmt = 1;
 			jfmt[0] = '\0';
 			break;
@@ -168,7 +167,7 @@ main(int argc, char *argv[])
 			showkey();
 			exit(0);
 		case 'l':
-			parsefmt(lfmt);
+			rval |= parsefmt(lfmt);
 			fmt = 1;
 			lfmt[0] = '\0';
 			break;
@@ -182,14 +181,14 @@ main(int argc, char *argv[])
 			nlistf = optarg;
 			break;
 		case 'O':
-			parsefmt(o1);
-			parsefmt(optarg);
-			parsefmt(o2);
+			rval |= parsefmt(o1);
+			rval |= parsefmt(optarg);
+			rval |= parsefmt(o2);
 			o1[0] = o2[0] = '\0';
 			fmt = 1;
 			break;
 		case 'o':
-			parsefmt(optarg);
+			rval |= parsefmt(optarg);
 			fmt = 1;
 			break;
 		case 'p':
@@ -246,13 +245,13 @@ main(int argc, char *argv[])
 			break;
 		}
 		case 'u':
-			parsefmt(ufmt);
+			rval |= parsefmt(ufmt);
 			sortby = SORTCPU;
 			fmt = 1;
 			ufmt[0] = '\0';
 			break;
 		case 'v':
-			parsefmt(vfmt);
+			rval |= parsefmt(vfmt);
 			sortby = SORTMEM;
 			fmt = 1;
 			vfmt[0] = '\0';
@@ -315,9 +314,9 @@ main(int argc, char *argv[])
 
 	if (!fmt) {
 		if (showthreads)
-			parsefmt(tfmt);
+			rval |= parsefmt(tfmt);
 		else
-			parsefmt(dfmt);
+			rval |= parsefmt(dfmt);
 	}
 
 	/* XXX - should be cleaner */
@@ -326,7 +325,7 @@ main(int argc, char *argv[])
 		Uflag = 1;
 	}
 
-	getkernvars();
+	rval |= getkernvars();
 
 	/*
 	 * get proc list
@@ -400,7 +399,7 @@ main(int argc, char *argv[])
 			lineno = 0;
 		}
 	}
-	exit(eval);
+	exit(rval);
 }
 
 static void

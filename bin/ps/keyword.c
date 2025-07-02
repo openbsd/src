@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.57 2025/06/29 16:22:05 tedu Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.58 2025/07/02 13:24:48 deraadt Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -212,10 +212,11 @@ showkey(void)
 	(void) printf("\n");
 }
 
-void
+int
 parsefmt(char *p)
 {
 	static struct varent *vtail;
+	int rval = 0;
 
 #define	FMTSEP	" \t,\n"
 	while (p && *p) {
@@ -227,7 +228,12 @@ parsefmt(char *p)
 			/* void */;
 		if (!cp)
 			break;
-		if (!(v = findvar(cp)) || v->parsed == 1)
+		v = findvar(cp);
+		if (v == NULL) {
+			rval = 1;
+			continue;
+		}
+		if (v->parsed == 1)
 			continue;
 		v->parsed = 1;
 		if ((vent = malloc(sizeof(struct varent))) == NULL)
@@ -244,6 +250,7 @@ parsefmt(char *p)
 	}
 	if (!vhead)
 		errx(1, "no valid keywords");
+	return rval;
 }
 
 static VAR *
@@ -270,7 +277,6 @@ aliased:
 	}
 	if (!v) {
 		warnx("%s: keyword not found", p);
-		eval = 1;
 		return (NULL);
 	}
 	if (hp)
