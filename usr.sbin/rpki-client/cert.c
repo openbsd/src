@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.177 2025/07/01 19:12:08 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.178 2025/07/02 11:11:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1132,6 +1132,7 @@ cert_parse_extensions(const char *fn, struct cert *cert, X509 *x)
 		case NID_basic_constraints:
 			if (bc++ > 0)
 				goto dup;
+			/* handled in cert_check_purpose() */
 			break;
 		case NID_subject_key_identifier:
 			if (ski++ > 0)
@@ -1144,10 +1145,12 @@ cert_parse_extensions(const char *fn, struct cert *cert, X509 *x)
 		case NID_key_usage:
 			if (ku++ > 0)
 				goto dup;
+			/* handled in cert_check_purpose() */
 			break;
 		case NID_ext_key_usage:
 			if (eku++ > 0)
 				goto dup;
+			/* handled in cert_check_purpose() */
 			break;
 		case NID_crl_distribution_points:
 			if (crldp++ > 0)
