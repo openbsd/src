@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.91 2025/06/29 16:22:05 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.92 2025/07/02 13:25:05 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@ int mbswprint(const char *, int, int);  /* utf8.c */
 
 static char *cmdpart(char *);
 
-#define	min(a,b)	((a) < (b) ? (a) : (b))
+#define	MINIMUM(a,b)	((a) < (b) ? (a) : (b))
 
 static char *
 cmdpart(char *arg0)
@@ -229,7 +229,7 @@ logname(const struct pinfo *pi, VARENT *ve)
 
 	v = ve->var;
 	if (kp->p_login[0]) {
-		int n = min(v->width, LOGIN_NAME_MAX);
+		int n = MINIMUM(v->width, LOGIN_NAME_MAX);
 		mbswprint(kp->p_login, n, ve->next != NULL);
 		if (ve->next != NULL)
 			while (n++ < v->width)
