@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.378 2025/05/23 23:41:46 dlg Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.379 2025/07/02 14:50:05 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -724,47 +724,34 @@ m_getuio(struct mbuf **mp, int atomic, long space, struct uio *uio)
 {
 	struct mbuf *m, *top = NULL;
 	struct mbuf **nextp = &top;
-	u_long len, mlen;
-	size_t resid = uio->uio_resid;
+	u_long len, mlen, alen;
+	int align = atomic ? roundup(max_hdr, sizeof(long)) : 0;
 	int error;
 
 	do {
-		if (top == NULL) {
-			MGETHDR(m, M_WAIT, MT_DATA);
+		/* How much data we want to put in this mbuf? */
+		len = ulmin(uio->uio_resid, space);
+		/* How much space are we allocating for that data? */
+		alen = align + len;
+		if (top == NULL && alen <= MHLEN) {
+			m = m_gethdr(M_WAIT, MT_DATA);
 			mlen = MHLEN;
 		} else {
-			MGET(m, M_WAIT, MT_DATA);
-			mlen = MLEN;
+			m = m_clget(NULL, M_WAIT, ulmin(alen, MAXMCLBYTES));
+			mlen = m->m_ext.ext_size;
+			if (top != NULL)
+				m->m_flags &= ~M_PKTHDR;
 		}
+
 		/* chain mbuf together */
 		*nextp = m;
 		nextp = &m->m_next;
 
-		resid = ulmin(resid, space);
-		if (resid >= MINCLSIZE) {
-			MCLGETL(m, M_NOWAIT, ulmin(resid, MAXMCLBYTES));
-			if ((m->m_flags & M_EXT) == 0)
-				MCLGETL(m, M_NOWAIT, MCLBYTES);
-			if ((m->m_flags & M_EXT) == 0)
-				goto nopages;
-			mlen = m->m_ext.ext_size;
-			len = ulmin(mlen, resid);
-			/*
-			 * For datagram protocols, leave room
-			 * for protocol headers in first mbuf.
-			 */
-			if (atomic && m == top && len < mlen - max_hdr)
-				m->m_data += max_hdr;
-		} else {
-nopages:
-			len = ulmin(mlen, resid);
-			/*
-			 * For datagram protocols, leave room
-			 * for protocol headers in first mbuf.
-			 */
-			if (atomic && m == top && len < mlen - max_hdr)
-				m_align(m, len);
-		}
+		/* put the data at the end of the buffer */
+		if (len < mlen)
+			m_align(m, len);
+		else
+			len = mlen;
 
 		error = uiomove(mtod(m, caddr_t), len, uio);
 		if (error) {
@@ -773,14 +760,15 @@ nopages:
 		}
 
 		/* adjust counters */
-		resid = uio->uio_resid;
 		space -= len;
 		m->m_len = len;
 		top->m_pkthdr.len += len;
+		align = 0;
 
 		/* Is there more space and more data? */
-	} while (space > 0 && resid > 0);
+	} while (space > 0 && uio->uio_resid > 0);
 
+	KASSERT(top != NULL);
 	*mp = top;
 	return 0;
 }
