@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.44 2023/05/22 00:39:57 guenther Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.45 2025/07/02 14:51:31 kettenis Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -145,6 +145,8 @@ void
 fpu_kernel_enter(void)
 {
 	struct cpu_info *ci = curcpu();
+
+	splassert(IPL_NONE);
 
 	/* save curproc's FPU state if we haven't already */
 	if (ci->ci_pflags & CPUPF_USERXSTATE) {
