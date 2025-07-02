@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.379 2025/07/02 14:50:05 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.380 2025/07/02 16:44:40 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1751,21 +1751,22 @@ somove(struct socket *so, int wait)
 	    (so->so_options & SO_OOBINLINE)) {
 		struct mbuf *o = NULL;
 
+		mtx_leave(&sosp->so_snd.sb_mtx);
+		mtx_leave(&so->so_rcv.sb_mtx);
+
 		if (rcvstate & SS_RCVATMARK) {
 			o = m_get(wait, MT_DATA);
 			rcvstate &= ~SS_RCVATMARK;
 		} else if (oobmark) {
 			o = m_split(m, oobmark, wait);
 			if (o) {
-				mtx_leave(&sosp->so_snd.sb_mtx);
-				mtx_leave(&so->so_rcv.sb_mtx);
 				solock_shared(sosp);
 				error = pru_send(sosp, m, NULL, NULL);
 				sounlock_shared(sosp);
-				mtx_enter(&so->so_rcv.sb_mtx);
-				mtx_enter(&sosp->so_snd.sb_mtx);
 
 				if (error) {
+					mtx_enter(&so->so_rcv.sb_mtx);
+					mtx_enter(&sosp->so_snd.sb_mtx);
 					if (sosp->so_snd.sb_state &
 					    SS_CANTSENDMORE)
 						error = EPIPE;
@@ -1783,15 +1784,13 @@ somove(struct socket *so, int wait)
 			o->m_len = 1;
 			*mtod(o, caddr_t) = *mtod(m, caddr_t);
 
-			mtx_leave(&sosp->so_snd.sb_mtx);
-			mtx_leave(&so->so_rcv.sb_mtx);
 			solock_shared(sosp);
 			error = pru_sendoob(sosp, o, NULL, NULL);
 			sounlock_shared(sosp);
-			mtx_enter(&so->so_rcv.sb_mtx);
-			mtx_enter(&sosp->so_snd.sb_mtx);
 
 			if (error) {
+				mtx_enter(&so->so_rcv.sb_mtx);
+				mtx_enter(&sosp->so_snd.sb_mtx);
 				if (sosp->so_snd.sb_state & SS_CANTSENDMORE)
 					error = EPIPE;
 				m_freem(m);
@@ -1806,6 +1805,9 @@ somove(struct socket *so, int wait)
 			}
 			m_adj(m, 1);
 		}
+
+		mtx_enter(&so->so_rcv.sb_mtx);
+		mtx_enter(&sosp->so_snd.sb_mtx);
 	}
 
 	/* Append all remaining data to drain socket. */
