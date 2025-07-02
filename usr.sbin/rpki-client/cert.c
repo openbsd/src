@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.180 2025/07/02 11:23:25 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.181 2025/07/02 14:28:33 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -498,6 +498,52 @@ sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	rc = 1;
  out:
 	IPAddrBlocks_free(addrblk);
+	return rc;
+}
+
+static int
+cert_ski(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+{
+	ASN1_OCTET_STRING	*os = NULL;
+	unsigned char		 md[EVP_MAX_MD_SIZE];
+	unsigned int		 md_len = EVP_MAX_MD_SIZE;
+	int			 rc = 0;
+
+	assert(cert->ski == NULL);
+
+	if (X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.2: "
+		    "SKI: extension not non-critical", fn);
+		goto out;
+	}
+
+	if ((os = X509V3_EXT_d2i(ext)) == NULL) {
+		warnx("%s: RFC 6487 section 4.8.2: error parsing SKI", fn);
+		goto out;
+	}
+
+	if (!X509_pubkey_digest(cert->x509, EVP_sha1(), md, &md_len)) {
+		warnx("%s: X509_pubkey_digest", fn);
+		goto out;
+	}
+
+	if (os->length < 0 || md_len != (unsigned int)os->length) {
+		warnx("%s: RFC 6487 section 4.8.2: SKI: "
+		    "want %u bytes SHA1 hash, have %d bytes",
+		    fn, md_len, os->length);
+		goto out;
+	}
+
+	if (memcmp(os->data, md, md_len) != 0) {
+		warnx("%s: SKI does not match SHA1 hash of SPK", fn);
+		goto out;
+	}
+
+	cert->ski = hex_encode(md, md_len);
+
+	rc = 1;
+ out:
+	ASN1_OCTET_STRING_free(os);
 	return rc;
 }
 
@@ -1237,6 +1283,8 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 		case NID_subject_key_identifier:
 			if (ski++ > 0)
 				goto dup;
+			if (!cert_ski(fn, cert, ext))
+				goto out;
 			break;
 		case NID_authority_key_identifier:
 			if (aki++ > 0)
@@ -1441,8 +1489,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 
 	if (!x509_get_aki(x, fn, &cert->aki))
-		goto out;
-	if (!x509_get_ski(x, fn, &cert->ski))
 		goto out;
 	if (!x509_get_notbefore(x, fn, &cert->notbefore))
 		goto out;
