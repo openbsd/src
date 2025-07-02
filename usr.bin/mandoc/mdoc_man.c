@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_man.c,v 1.138 2025/07/01 16:38:21 schwarze Exp $ */
+/* $OpenBSD: mdoc_man.c,v 1.139 2025/07/02 19:57:41 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2021, 2025 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -492,6 +492,7 @@ print_offs(const char *v, int keywords)
 	const char	 *end;
 	int		  sz;
 
+	outflags &= ~MMAN_PP;
 	print_line(".RS", MMAN_Bk_susp);
 
 	/* Convert v into a number (of characters). */
