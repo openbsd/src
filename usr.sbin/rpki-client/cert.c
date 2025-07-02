@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.178 2025/07/02 11:11:39 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.179 2025/07/02 11:13:34 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -498,6 +498,105 @@ sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	rc = 1;
  out:
 	IPAddrBlocks_free(addrblk);
+	return rc;
+}
+
+/*
+ * Parse CRL distribution point per RFC 6487, section 4.8.6.
+ */
+static int
+cert_crldp(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+{
+	CRL_DIST_POINTS	*crldp = NULL;
+	DIST_POINT	*dp;
+	GENERAL_NAMES	*names;
+	GENERAL_NAME	*name;
+	int		 i, rc = 0;
+
+	assert(cert->crl == NULL);
+
+	if (cert->purpose == CERT_PURPOSE_TA) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL distribution point "
+		    "must be omitted from TA certificates", fn);
+		goto out;
+	}
+
+	if (X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL distribution point "
+		    "extension not non-critical", fn);
+		goto out;
+	}
+
+	if ((crldp = X509V3_EXT_d2i(ext)) == NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL distribution point: "
+		    "failed extension parse", fn);
+		goto out;
+	}
+
+	if (sk_DIST_POINT_num(crldp) != 1) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL distribution point: "
+		    "want 1 element, have %d", fn, sk_DIST_POINT_num(crldp));
+		goto out;
+	}
+
+	dp = sk_DIST_POINT_value(crldp, 0);
+	if (dp->CRLissuer != NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL CRLIssuer field"
+		    " disallowed", fn);
+		goto out;
+	}
+	if (dp->reasons != NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL Reasons field"
+		    " disallowed", fn);
+		goto out;
+	}
+	if (dp->distpoint == NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL: "
+		    "no distribution point name", fn);
+		goto out;
+	}
+	if (dp->distpoint->dpname != NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: nameRelativeToCRLIssuer"
+		    " disallowed", fn);
+		goto out;
+	}
+
+	/* Need to hardcode the alternative 0 due to missing macro or enum. */
+	if (dp->distpoint->type != 0) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL DistributionPointName:"
+		    " expected fullName, have %d", fn, dp->distpoint->type);
+		goto out;
+	}
+
+	names = dp->distpoint->name.fullname;
+	for (i = 0; i < sk_GENERAL_NAME_num(names); i++) {
+		char	*crl = NULL;
+
+		name = sk_GENERAL_NAME_value(names, i);
+
+		if (!x509_location(fn, "CRL distribution point", name, &crl))
+			goto out;
+
+		if (cert->crl == NULL && strncasecmp(crl, RSYNC_PROTO,
+		    RSYNC_PROTO_LEN) == 0) {
+			cert->crl = crl;
+			continue;
+		}
+		if (verbose)
+			warnx("%s: ignoring CRL distribution point %s",
+			    fn, crl);
+		free(crl);
+	}
+
+	if (cert->crl == NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: no rsync URI in "
+		    "CRL distribution point", fn);
+		goto out;
+	}
+
+	rc = 1;
+ out:
+	CRL_DIST_POINTS_free(crldp);
 	return rc;
 }
 
@@ -1155,6 +1254,8 @@ cert_parse_extensions(const char *fn, struct cert *cert, X509 *x)
 		case NID_crl_distribution_points:
 			if (crldp++ > 0)
 				goto dup;
+			if (!cert_crldp(fn, cert, ext))
+				goto out;
 			break;
 		case NID_info_access:
 			if (aia++ > 0)
@@ -1335,8 +1436,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	if (!x509_get_aki(x, fn, &cert->aki))
 		goto out;
 	if (!x509_get_ski(x, fn, &cert->ski))
-		goto out;
-	if (!x509_get_crl(x, fn, &cert->crl))
 		goto out;
 	if (!x509_get_notbefore(x, fn, &cert->notbefore))
 		goto out;
