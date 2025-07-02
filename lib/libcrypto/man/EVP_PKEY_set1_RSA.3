@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.26 2025/07/02 06:27:44 tb Exp $
+.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.27 2025/07/02 06:40:28 tb Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -127,35 +127,35 @@
 .Fc
 .Ft RSA *
 .Fo EVP_PKEY_get1_RSA
-.Fa "EVP_PKEY *pkey"
+.Fa "const EVP_PKEY *pkey"
 .Fc
 .Ft DSA *
 .Fo EVP_PKEY_get1_DSA
-.Fa "EVP_PKEY *pkey"
+.Fa "const EVP_PKEY *pkey"
 .Fc
 .Ft DH *
 .Fo EVP_PKEY_get1_DH
-.Fa "EVP_PKEY *pkey"
+.Fa "const EVP_PKEY *pkey"
 .Fc
 .Ft EC_KEY *
 .Fo EVP_PKEY_get1_EC_KEY
-.Fa "EVP_PKEY *pkey"
+.Fa "const EVP_PKEY *pkey"
 .Fc
 .Ft RSA *
 .Fo EVP_PKEY_get0_RSA
-.Fa "EVP_PKEY *pkey"
+.Fa "const EVP_PKEY *pkey"
 .Fc
 .Ft DSA *
 .Fo EVP_PKEY_get0_DSA
-.Fa "EVP_PKEY *pkey"
+.Fa "const EVP_PKEY *pkey"
 .Fc
 .Ft DH *
 .Fo EVP_PKEY_get0_DH
-.Fa "EVP_PKEY *pkey"
+.Fa "const EVP_PKEY *pkey"
 .Fc
 .Ft EC_KEY *
 .Fo EVP_PKEY_get0_EC_KEY
-.Fa "EVP_PKEY *pkey"
+.Fa "const EVP_PKEY *pkey"
 .Fc
 .Ft const unsigned char *
 .Fo EVP_PKEY_get0_hmac
