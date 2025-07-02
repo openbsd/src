@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.317 2025/06/24 18:05:51 mvs Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.318 2025/07/02 05:44:46 dlg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1051,8 +1051,7 @@ in_pcbselsrc(struct in_addr *insrc, const struct sockaddr_in *dstsock,
 	 * - preferred source address is set
 	 * - output interface is UP
 	 */
-	if (rt != NULL && !(rt->rt_flags & RTF_LLINFO) &&
-	    !(rt->rt_flags & RTF_HOST)) {
+	if (rt != NULL && ISSET(rt->rt_flags, RTF_GATEWAY)) {
 		ip4_source = rtable_getsource(rtableid, AF_INET);
 		if (ip4_source != NULL) {
 			struct ifaddr *ifa;

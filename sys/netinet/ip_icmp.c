@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.201 2025/06/20 05:08:07 dlg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.202 2025/07/02 05:44:46 dlg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -749,7 +749,7 @@ icmp_reflect(struct mbuf *m, struct mbuf **op, struct in_ifaddr *ia)
 		/* keep packet in the original virtual instance */
 		rt = rtalloc(sintosa(&sin), RT_RESOLVE, rtableid);
 		if (rtisvalid(rt) &&
-		    ISSET(rt->rt_flags, RTF_LLINFO|RTF_HOST)) {
+		    !ISSET(rt->rt_flags, RTF_GATEWAY)) {
 			ia = ifatoia(rt->rt_ifa);
 			ip_src = ia->ia_addr.sin_addr;
 		} else {

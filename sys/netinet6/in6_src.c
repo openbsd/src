@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.101 2025/05/20 05:51:43 bluhm Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.102 2025/07/02 05:44:46 dlg Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -204,8 +204,7 @@ in6_pcbselsrc(const struct in6_addr **in6src,
 	 * - preferred source address is set
 	 * - output interface is UP
 	 */
-	if (rt != NULL && !(rt->rt_flags & RTF_LLINFO) &&
-	    !(rt->rt_flags & RTF_HOST)) {
+	if (rt != NULL && ISSET(rt->rt_flags, RTF_GATEWAY)) {
 		ip6_source = rtable_getsource(rtableid, AF_INET6);
 		if (ip6_source != NULL) {
 			struct ifaddr *ifa;
