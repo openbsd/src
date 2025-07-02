@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.22 2024/05/16 09:30:03 kettenis Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.23 2025/07/02 14:36:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -154,7 +154,7 @@ void	_mtx_init_flags(struct mutex *, int, const char *, int,
 #if defined(_KERNEL) && defined(DDB)
 
 struct db_mutex {
-	struct cpu_info	*mtx_owner;
+	struct cpu_info	*volatile mtx_owner;
 	unsigned long	 mtx_intr_state;
 };
 
