@@ -2,5 +2,14 @@
 <div class="Bd-indent">indented paragraph
 <p class="Pp">nested paragraph</p>
 </div>
+regular text between displays
+<div class="Bd-indent">
+<p class="Pp">paragraph at the beginning of a display</p>
+</div>
+regular text between displays
+<p class="Pp"></p>
+<div class="Bd-indent">
+<p class="Pp">paragraph at the beginning of a display inside a paragraph</p>
+</div>
 regular text after display
 <br/>
