@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_cipher.c,v 1.27 2025/06/02 08:50:51 tb Exp $ */
+/* $OpenBSD: evp_cipher.c,v 1.28 2025/07/02 06:19:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -167,7 +167,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *engine,
 		}
 
 		if ((ctx->cipher->flags & EVP_CIPH_CTRL_INIT) != 0) {
-			if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL)) {
+			if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL) <= 0) {
 				EVPerror(EVP_R_INITIALIZATION_ERROR);
 				return 0;
 			}
