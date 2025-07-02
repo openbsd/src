@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.194 2025/06/20 14:54:33 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.195 2025/07/02 08:13:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -139,7 +139,7 @@ static const char *options_table_allow_passthrough_list[] = {
 		"#{T:window-status-format}" \
 		"#[pop-default]" \
 		"#[norange default]" \
-		"#{?window_end_flag,,#{window-status-separator}}" \
+		"#{?loop_last_flag,,#{window-status-separator}}" \
 	"," \
 		"#[range=window|#{window_index} list=focus " \
 			"#{?#{!=:#{E:window-status-current-style},default}," \
@@ -166,7 +166,7 @@ static const char *options_table_allow_passthrough_list[] = {
 		"#{T:window-status-current-format}" \
 		"#[pop-default]" \
 		"#[norange list=on default]" \
-		"#{?window_end_flag,,#{window-status-separator}}" \
+		"#{?loop_last_flag,,#{window-status-separator}}" \
 	"}" \
 	"#[nolist align=right range=right #{E:status-right-style}]" \
 	"#[push-default]" \

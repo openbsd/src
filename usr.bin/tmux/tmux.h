@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1263 2025/05/22 08:01:29 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1264 2025/07/02 08:13:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2256,6 +2256,7 @@ char		*paste_make_sample(struct paste_buffer *);
 #define FORMAT_FORCE 0x2
 #define FORMAT_NOJOBS 0x4
 #define FORMAT_VERBOSE 0x8
+#define FORMAT_LAST 0x10
 #define FORMAT_NONE 0
 #define FORMAT_PANE 0x80000000U
 #define FORMAT_WINDOW 0x40000000U
