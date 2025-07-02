@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.109 2025/06/30 13:27:28 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.110 2025/07/02 21:28:46 bluhm Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -310,7 +310,7 @@ vctrap(struct trapframe *frame)
 	struct ghcb_sync syncout, syncin;
 	struct ghcb_sa	*ghcb;
 
-	intr_disable();
+	KASSERT((read_rflags() & PSL_I) == 0);
 
 	memset(&syncout, 0, sizeof(syncout));
 	memset(&syncin, 0, sizeof(syncin));
@@ -319,6 +319,16 @@ vctrap(struct trapframe *frame)
 	sw_exitinfo1 = 0;
 	sw_exitinfo2 = 0;
 
+	/*
+	 * The #VC trap occurs when the guest (us) performs an
+	 * operation which requires sharing data with the host. In
+	 * order to ascertain which instruction caused the #VC,
+	 * examine the instruction by reading %rip, Then, sync the
+	 * appropriate values out (to the host), perform VMGEXIT
+	 * to request that the host handle the operation which
+	 * caused the #VC, then sync the returned values back in
+	 * (from the host).
+	 */
 	switch (sw_exitcode) {
 	case SVM_VMEXIT_CPUID:
 		ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncout);
