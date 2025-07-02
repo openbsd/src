@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.179 2025/07/02 11:13:34 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.180 2025/07/02 11:23:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1198,8 +1198,9 @@ cert_check_purpose(const char *fn, X509 *x)
  */
 
 static int
-cert_parse_extensions(const char *fn, struct cert *cert, X509 *x)
+cert_parse_extensions(const char *fn, struct cert *cert)
 {
+	X509		*x = cert->x509;
 	X509_EXTENSION	*ext;
 	ASN1_OBJECT	*obj;
 	int		 extsz, i, nid;
@@ -1327,6 +1328,14 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
+	if (!X509_up_ref(x)) {
+		warnx("%s: X509_up_ref failed", fn);
+		goto out;
+	}
+
+	cert->x509 = x;
+	cert->talid = talid;
+
 	if (X509_get_version(x) != 2) {
 		warnx("%s: RFC 6487 4.1: X.509 version must be v3", fn);
 		goto out;
@@ -1335,7 +1344,7 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 	if (!cert_check_subject_and_issuer(fn, x))
 		goto out;
 
-	if (!cert_parse_extensions(fn, cert, x))
+	if (!cert_parse_extensions(fn, cert))
 		goto out;
 
 	if (cert->purpose != CERT_PURPOSE_EE) {
@@ -1343,14 +1352,6 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 		    purpose2str(cert->purpose));
 		goto out;
 	}
-
-	if (!X509_up_ref(x)) {
-		warnx("%s: X509_up_ref failed", fn);
-		goto out;
-	}
-
-	cert->x509 = x;
-	cert->talid = talid;
 
 	if (!constraints_validate(fn, cert))
 		goto out;
@@ -1395,6 +1396,12 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
+	if (!X509_up_ref(x)) {
+		warnx("%s: X509_up_ref failed", fn);
+		goto out;
+	}
+	cert->x509 = x;
+
 	if (!x509_cache_extensions(x, fn))
 		goto out;
 
@@ -1430,7 +1437,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	if (!cert_check_subject_and_issuer(fn, x))
 		goto out;
 
-	if (!cert_parse_extensions(fn, cert, x))
+	if (!cert_parse_extensions(fn, cert))
 		goto out;
 
 	if (!x509_get_aki(x, fn, &cert->aki))
@@ -1494,7 +1501,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	cert->x509 = x;
+	X509_free(x);
 	return cert;
 
  out:
