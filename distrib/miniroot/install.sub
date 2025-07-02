@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1273 2025/06/29 19:06:19 kn Exp $
+#	$OpenBSD: install.sub,v 1.1274 2025/07/02 22:55:06 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3717,7 +3717,6 @@ Control-C, but this can leave your system in an inconsistent state.
 
 __EOT
 elif $UU; then
-	MODE=upgrade
 	check_unattendedupgrade || exit 1
 
 	start_watchdog

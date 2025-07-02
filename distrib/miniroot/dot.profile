@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.51 2023/02/20 01:55:41 kn Exp $
+#	$OpenBSD: dot.profile,v 1.52 2025/07/02 22:55:06 kn Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -96,8 +96,8 @@ if [[ -z $DONEPROFILE ]]; then
 
 Welcome to the $OBSD installation program.
 __EOT
-	# try unattended install
-	/autoinstall -x
+	# Try unattended upgrade, e.g. autoinstall(8) or sysupgrade(8).
+	/upgrade -ax
 
 	# Set timer to automatically start unattended installation or upgrade
 	# if netbooted or if a response file is found in / after a timeout,
