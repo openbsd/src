@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.181 2025/07/02 14:28:33 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.182 2025/07/02 14:30:00 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -544,6 +544,50 @@ cert_ski(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	rc = 1;
  out:
 	ASN1_OCTET_STRING_free(os);
+	return rc;
+}
+
+static int
+cert_aki(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+{
+	AUTHORITY_KEYID	*akid = NULL;
+	int		 rc = 0;
+
+	assert(cert->aki == NULL);
+
+	if (X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.3: "
+		    "AKI extension not non-critical", fn);
+		goto out;
+	}
+
+	if ((akid = X509V3_EXT_d2i(ext)) == NULL) {
+		warnx("%s: RFC 6487 section 4.8.3: error parsing AKI", fn);
+		goto out;
+	}
+	if (akid->issuer != NULL || akid->serial != NULL) {
+		warnx("%s: RFC 6487 section 4.8.3: AKI: authorityCertIssuer or "
+		    "authorityCertSerialNumber present", fn);
+		goto out;
+	}
+
+	if (akid->keyid == NULL || akid->keyid->data == NULL) {
+		warnx("%s: RFC 6487 section 4.8.3: AKI: Key Identifier missing",
+		    fn);
+		goto out;
+	}
+	if (akid->keyid->length != SHA_DIGEST_LENGTH) {
+		warnx("%s: RFC 6487 section 4.8.3: AKI: "
+		    "want %d bytes SHA1 hash, have %d bytes",
+		    fn, SHA_DIGEST_LENGTH, akid->keyid->length);
+		goto out;
+	}
+
+	cert->aki = hex_encode(akid->keyid->data, akid->keyid->length);
+
+	rc = 1;
+ out:
+	AUTHORITY_KEYID_free(akid);
 	return rc;
 }
 
@@ -1289,6 +1333,8 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 		case NID_authority_key_identifier:
 			if (aki++ > 0)
 				goto dup;
+			if (!cert_aki(fn, cert, ext))
+				goto out;
 			break;
 		case NID_key_usage:
 			if (ku++ > 0)
@@ -1488,8 +1534,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	if (!cert_parse_extensions(fn, cert))
 		goto out;
 
-	if (!x509_get_aki(x, fn, &cert->aki))
-		goto out;
 	if (!x509_get_notbefore(x, fn, &cert->notbefore))
 		goto out;
 	if (!x509_get_notafter(x, fn, &cert->notafter))
