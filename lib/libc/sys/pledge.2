@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.72 2025/07/02 13:08:21 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.73 2025/07/02 15:42:13 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -336,7 +336,7 @@ domain:
 Some low-level behaviours required by the DNS resolver
 .Xr res_init 3
 are permitted, such as opening
-.Pa /etc/resolv.conf 5
+.Xr resolv.conf 5
 and a few networking system calls:
 .Xr socket 2 ,
 .Xr connect 2 ,
@@ -347,7 +347,7 @@ To distinguish the
 promise from
 .Cm inet ,
 the libc DNS code opens sockets with the
-.Va SOCK_DNS
+.Dv SOCK_DNS
 flag which
 .Ox
 requires to communicate with
