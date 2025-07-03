@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.37 2019/01/12 00:16:03 jca Exp $
+# $OpenBSD: Makefile.inc,v 1.38 2025/07/03 18:01:38 tedu Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -20,12 +20,7 @@ MAN+=	\
 	pthread_cleanup_pop.3 \
 	pthread_cleanup_push.3 \
 	pthread_condattr_init.3 \
-	pthread_cond_broadcast.3 \
-	pthread_cond_destroy.3 \
 	pthread_cond_init.3 \
-	pthread_cond_signal.3 \
-	pthread_cond_timedwait.3 \
-	pthread_cond_wait.3 \
 	pthread_cancel.3 \
 	pthread_create.3 \
 	pthread_detach.3 \
