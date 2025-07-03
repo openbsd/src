@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.12 2023/07/23 11:16:36 kettenis Exp $ */
+/* $OpenBSD: exuart.c,v 1.13 2025/07/03 21:06:51 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -209,6 +209,7 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
 		printf(": console");
+		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 	}
 
 	printf("\n");
@@ -385,12 +386,22 @@ exuart_s5l_intr(void *arg)
 	struct exuart_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t utrstat;
+	u_int32_t utrstat, uerstat;
 
 	utrstat = bus_space_read_4(iot, ioh, EXUART_UTRSTAT);
+	uerstat = bus_space_read_4(iot, ioh, EXUART_UERSTAT);
 
 	if (sc->sc_tty == NULL)
 		return (0);
+
+#ifdef DDB
+	if (uerstat & EXUART_UERSTAT_BREAK) {
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+			if (db_console)
+				db_enter();
+		}
+	}
+#endif
 
 	if (utrstat & (EXUART_S5L_UTRSTAT_RXTHRESH |
 	    EXUART_S5L_UTRSTAT_RX_TIMEOUT))
