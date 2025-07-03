@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.41 2022/10/26 20:19:07 kn Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.42 2025/07/03 11:01:41 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -461,6 +461,7 @@ ce4231_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
 		p->precision = 8;
+		bits = FMT_PCM8 >> 5;
 		break;
 	default:
 		return (EINVAL);
