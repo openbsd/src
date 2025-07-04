@@ -20,6 +20,7 @@ _rusersd:*:32:
 _fingerd:*:33:
 _sshagnt:*:34:
 _x11:*:35:
+_fc-cache:*:36:
 utmp:*:45:
 _unwind:*:48:
 _traceroute:*:50:

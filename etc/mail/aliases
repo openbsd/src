@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.71 2025/05/02 09:46:00 dlg Exp $
+#	$OpenBSD: aliases,v 1.72 2025/07/04 04:31:41 bentley Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /usr/libexec/mail.local.
@@ -28,6 +28,7 @@ _dvmrpd: /dev/null
 _eigrpd: /dev/null
 _file: /dev/null
 _fingerd: /dev/null
+_fc-cache: /dev/null
 _ftp: /dev/null
 _hostapd: /dev/null
 _identd: /dev/null
