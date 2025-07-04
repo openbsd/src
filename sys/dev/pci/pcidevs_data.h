@@ -28212,6 +28212,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Nm9865",
 	},
 	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9900,
+	    "Nm9900",
+	},
+	{
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901,
 	    "Nm9901",
 	},
