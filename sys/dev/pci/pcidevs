@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2102 2025/07/04 04:29:15 tb Exp $
+$OpenBSD: pcidevs,v 1.2103 2025/07/04 04:34:06 tb Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7824,6 +7824,7 @@ product NETMOS NM9845		0x9845	Nm9845
 product NETMOS NM9865		0x9865	Nm9865
 product NETMOS NM9900		0x9900	Nm9900
 product NETMOS NM9901		0x9901	Nm9901
+product NETMOS NM9912		0x9901	Nm9912
 product NETMOS NM9922		0x9922	Nm9922
 
 /* Netoctave */
