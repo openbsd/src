@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.121 2024/11/09 10:23:06 miod Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.122 2025/07/04 04:31:48 tb Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1661,6 +1661,15 @@ const struct puc_device_description puc_devs[] = {
 		{ PUC_PORT_COM, 0x14, 0x0000 },
 		{ PUC_PORT_COM, 0x18, 0x0000 },
 		{ PUC_PORT_COM, 0x1c, 0x0000 },
+	    },
+	},
+
+	/* NetMos PCIe Peripheral Controller :UART part */
+	{   /* "NetMos NM9900 UART" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9900, 0xa000, 0x1000 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
