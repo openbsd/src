@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.182 2025/07/02 14:30:00 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.183 2025/07/04 16:22:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1106,23 +1106,70 @@ certificate_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 }
 
 static int
-cert_check_subject_and_issuer(const char *fn, const X509 *x)
+cert_check_sigalg(const char *fn, const struct cert *cert)
+{
+	int nid;
+
+	/*
+	 * XXX - This is the NID of the AlgorithmIdentifier of the Certificate.
+	 * Consider using X509_get0_tbs_sigalg() instead to inspect the one from
+	 * the TBSCertificate. We currently rely on X509_verify() (also called
+	 * from X509_verify_cert()) to ascertain that the two are identical
+	 * (RFC 5280, 4.1.1.2 and 4.1.2.3) - this check isn't documented.
+	 * Also, we ignore the parameters. Can/should we check these as well?
+	 */
+	if ((nid = X509_get_signature_nid(cert->x509)) == NID_undef) {
+		warnx("%s: unknown signature type", fn);
+		return 0;
+	}
+
+	if (nid == NID_sha256WithRSAEncryption)
+		return 1;
+	if (experimental && nid == NID_ecdsa_with_SHA256) {
+		if (verbose)
+			warnx("%s: P-256 support is experimental", fn);
+		return 1;
+	}
+
+	warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
+	    fn, nid2str(nid), LN_sha256WithRSAEncryption);
+	return 0;
+}
+
+static int
+cert_check_subject_and_issuer(const char *fn, const struct cert *cert)
 {
 	const X509_NAME *name;
 
-	if ((name = X509_get_subject_name(x)) == NULL) {
+	if ((name = X509_get_subject_name(cert->x509)) == NULL) {
 		warnx("%s: X509_get_subject_name", fn);
 		return 0;
 	}
 	if (!x509_valid_name(fn, "subject", name))
 		return 0;
 
-	if ((name = X509_get_issuer_name(x)) == NULL) {
+	if ((name = X509_get_issuer_name(cert->x509)) == NULL) {
 		warnx("%s: X509_get_issuer_name", fn);
 		return 0;
 	}
 	if (!x509_valid_name(fn, "issuer", name))
 		return 0;
+
+	return 1;
+}
+
+static int
+cert_check_validity_period(const char *fn, struct cert *cert)
+{
+	if (!x509_get_notbefore(cert->x509, fn, &cert->notbefore))
+		return 0;
+	if (!x509_get_notafter(cert->x509, fn, &cert->notafter))
+		return 0;
+
+	if (cert->notbefore >= cert->notafter) {
+		warnx("%s: RFC 6487, 4.6: notAfter precedes notBefore", fn);
+		return 0;
+	}
 
 	return 1;
 }
@@ -1400,6 +1447,8 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 		}
 	}
 
+	/* XXX - validate required fields. */
+
 	return 1;
 
  dup:
@@ -1409,37 +1458,81 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 	return 0;
 }
 
-/*
- * Lightweight version of cert_parse_pre() for EE certs.
- * Parses the two RFC 3779 extensions, and performs some sanity checks.
- * Returns cert on success and NULL on failure.
- */
-struct cert *
-cert_parse_ee_cert(const char *fn, int talid, X509 *x)
+static struct cert *
+cert_parse_internal(const char *fn, X509 *x)
 {
 	struct cert		*cert;
+	const ASN1_INTEGER	*serial;
+	const ASN1_BIT_STRING	*issuer_uid = NULL, *subject_uid = NULL;
 
-	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
+	if ((cert = calloc(1, sizeof(*cert))) == NULL)
 		err(1, NULL);
-
-	if (!X509_up_ref(x)) {
-		warnx("%s: X509_up_ref failed", fn);
-		goto out;
-	}
-
 	cert->x509 = x;
-	cert->talid = talid;
+
+	if (!x509_cache_extensions(x, fn))
+		goto out;
 
 	if (X509_get_version(x) != 2) {
 		warnx("%s: RFC 6487 4.1: X.509 version must be v3", fn);
 		goto out;
 	}
 
-	if (!cert_check_subject_and_issuer(fn, x))
+	if ((serial = X509_get0_serialNumber(x)) == NULL) {
+		warnx("%s: RFC 6487 4.2: missing serialNumber", fn);
 		goto out;
+	}
+	if (!x509_valid_seqnum(fn, "RFC 6487 4.2: serialNumber", serial))
+		goto out;
+
+	if (!cert_check_sigalg(fn, cert))
+		goto out;
+
+	if (!cert_check_subject_and_issuer(fn, cert))
+		goto out;
+
+	if (!cert_check_validity_period(fn, cert))
+		goto out;
+
+	/* XXX - add SPKI here. */
+
+	/*
+	 * Disallowed for CA certs in RFC 5280, 4.1.2.8. Uniqueness of subjects
+	 * per RFC 6487, 4.5 makes them meaningless.
+	 */
+	X509_get0_uids(x, &issuer_uid, &subject_uid);
+	if (issuer_uid != NULL || subject_uid != NULL) {
+		warnx("%s: issuer or subject unique identifiers not allowed",
+		    fn);
+		goto out;
+	}
 
 	if (!cert_parse_extensions(fn, cert))
 		goto out;
+
+	return cert;
+
+ out:
+	cert_free(cert);
+	return NULL;
+}
+
+/*
+ * Parse an EE cert extracted from a CMS signed object. Store all cert and
+ * extension data we need later in the returned struct cert.
+ * Check the cretificate's purpose and validate the TA constraints.
+ * Returns cert on success and NULL on failure.
+ */
+struct cert *
+cert_parse_ee_cert(const char *fn, int talid, X509 *x)
+{
+	struct cert		*cert = NULL;
+
+	if (!X509_up_ref(x))
+		goto out;
+
+	if ((cert = cert_parse_internal(fn, x)) == NULL)
+		goto out;
+	cert->talid = talid;
 
 	if (cert->purpose != CERT_PURPOSE_EE) {
 		warnx("%s: expected EE cert, got %s", fn,
@@ -1465,20 +1558,15 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 struct cert *
 cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 {
-	struct cert		*cert;
+	struct cert		*cert = NULL;
 	const unsigned char	*oder;
 	size_t			 j;
 	X509			*x = NULL;
-	const ASN1_BIT_STRING	*issuer_uid = NULL, *subject_uid = NULL;
 	EVP_PKEY		*pkey;
-	int			 nid;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
 		return NULL;
-
-	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
-		err(1, NULL);
 
 	oder = der;
 	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
@@ -1494,49 +1582,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		warnx("%s: X509_up_ref failed", fn);
 		goto out;
 	}
-	cert->x509 = x;
-
-	if (!x509_cache_extensions(x, fn))
-		goto out;
-
-	if (X509_get_version(x) != 2) {
-		warnx("%s: RFC 6487 4.1: X.509 version must be v3", fn);
-		goto out;
-	}
-
-	if ((nid = X509_get_signature_nid(x)) == NID_undef) {
-		warnx("%s: unknown signature type", fn);
-		goto out;
-	}
-	if (experimental && nid == NID_ecdsa_with_SHA256) {
-		if (verbose)
-			warnx("%s: P-256 support is experimental", fn);
-	} else if (nid != NID_sha256WithRSAEncryption) {
-		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
-		    fn, nid2str(nid), LN_sha256WithRSAEncryption);
-		goto out;
-	}
-
-	/*
-	 * Disallowed for CA certs in RFC 5280, 4.1.2.8. Uniqueness of subjects
-	 * per RFC 6487, 4.5 makes them meaningless.
-	 */
-	X509_get0_uids(x, &issuer_uid, &subject_uid);
-	if (issuer_uid != NULL || subject_uid != NULL) {
-		warnx("%s: issuer or subject unique identifiers not allowed",
-		    fn);
-		goto out;
-	}
-
-	if (!cert_check_subject_and_issuer(fn, x))
-		goto out;
-
-	if (!cert_parse_extensions(fn, cert))
-		goto out;
-
-	if (!x509_get_notbefore(x, fn, &cert->notbefore))
-		goto out;
-	if (!x509_get_notafter(x, fn, &cert->notafter))
+	if ((cert = cert_parse_internal(fn, x)) == NULL)
 		goto out;
 
 	/* Validation on required fields. */
