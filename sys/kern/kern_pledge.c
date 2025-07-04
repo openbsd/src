@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.327 2025/06/30 04:40:03 jsg Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.328 2025/07/04 04:24:37 tb Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1477,6 +1477,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 	case IPPROTO_IPV6:
 		switch (optname) {
 		case IPV6_TCLASS:
+		case IPV6_DONTFRAG:
 		case IPV6_UNICAST_HOPS:
 		case IPV6_MINHOPCOUNT:
 		case IPV6_RECVHOPLIMIT:
