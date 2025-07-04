@@ -1,4 +1,4 @@
-/* $OpenBSD: term_tab.c,v 1.5 2021/10/04 18:56:24 schwarze Exp $ */
+/* $OpenBSD: term_tab.c,v 1.6 2025/07/04 19:13:22 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -87,21 +87,6 @@ term_tab_set(const struct termp *p, const char *arg)
 	if (add && tl->n)
 		tl->t[tl->n] += tl->t[tl->n - 1];
 	tl->n++;
-}
-
-/*
- * Simplified version without a parser,
- * never incremental, never periodic, for use by tbl(7).
- */
-void
-term_tab_iset(size_t inc)
-{
-	if (tabs.a.n >= tabs.a.s) {
-		tabs.a.s += 8;
-		tabs.a.t = mandoc_reallocarray(tabs.a.t, tabs.a.s,
-		    sizeof(*tabs.a.t));
-	}
-	tabs.a.t[tabs.a.n++] = inc;
 }
 
 size_t
