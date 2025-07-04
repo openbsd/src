@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.110 2025/06/21 05:37:58 jsg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.111 2025/07/04 09:34:48 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -393,7 +393,7 @@ timeout_add_sec(struct timeout *to, int secs)
 
 /*
  * interpret the specified times below as a AT LEAST how long the
- * system should wait before firing the the timeouts. this requires
+ * system should wait before firing the timeouts. this requires
  * rounding up, which has the potential to overflow. if we detect
  * overflow, interpret it as "wait for as long as possible". this will
  * be shorter than specified time, which violates the "wait at least

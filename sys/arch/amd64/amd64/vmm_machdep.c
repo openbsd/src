@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.59 2025/06/19 12:01:08 jca Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.60 2025/07/04 09:34:48 jsg Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4618,7 +4618,7 @@ svm_handle_efercr(struct vcpu *vcpu, uint64_t exit_reason)
  * svm_get_iflag
  *
  * With SEV-ES the hypervisor has no access to the flags register.
- * Only the the state of the PSL_I is proivded by v_intr_shadow in
+ * Only the state of the PSL_I is proivded by v_intr_shadow in
  * the VMCB.
  */
 int
