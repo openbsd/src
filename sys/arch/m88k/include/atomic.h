@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.17 2025/06/07 07:52:17 aoyama Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.18 2025/07/04 13:22:29 miod Exp $	*/
 
 /* Public Domain */
 
@@ -186,12 +186,12 @@ __sync_synchronize(void)
 #define	atomic_dec_int		UNIMPLEMENTED
 #define	atomic_dec_long		UNIMPLEMENTED
 
+#endif	/* gcc < 4 */
+
 /* trap numbers below 128 would cause a privileged instruction fault */
 #define	__membar() do {						\
 	__asm volatile("tb1 0, %%r0, 128" ::: "memory");	\
 } while (0)
-
-#endif	/* gcc < 4 */
 
 #define	membar_enter()		__membar()
 #define	membar_exit()		__membar()
