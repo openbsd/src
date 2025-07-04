@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.c,v 1.2 2025/06/27 17:23:49 bluhm Exp $	*/
+/*	$OpenBSD: ghcb.c,v 1.3 2025/07/04 10:11:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -63,7 +63,7 @@ ghcb_valbm_set(uint8_t *bm, int qword)
 /*
  * ghcb_valbm_isset
  *
- * Indicate wether a specific quad word is set or not.
+ * Indicate whether a specific quad word is set or not.
  * Used by host and guest.
  */
 int
@@ -134,7 +134,7 @@ void
 ghcb_sync_val(int type, int size, struct ghcb_sync *gs)
 {
 	if (size > GHCB_SZ64)
-		panic("invalide size: %d", size);
+		panic("invalid size: %d", size);
 
 	switch (type) {
 	case GHCB_RAX:

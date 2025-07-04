@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.60 2025/07/04 09:34:48 jsg Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.61 2025/07/04 10:11:28 jsg Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4488,7 +4488,7 @@ svm_handle_vmgexit(struct vcpu *vcpu)
 	if (vcpu->vc_svm_ghcb_va == 0 && (vmcb->v_ghcb_gpa & ~PG_FRAME) == 0 &&
 	    (vmcb->v_ghcb_gpa & PG_FRAME) != 0) {
 		/*
-		 * Guest provides a valid guest physcial address
+		 * Guest provides a valid guest physical address
 		 * for GHCB and it is not set yet -> assign it.
 		 *
 		 * We only accept a GHCB once; we decline re-definition.
@@ -4618,7 +4618,7 @@ svm_handle_efercr(struct vcpu *vcpu, uint64_t exit_reason)
  * svm_get_iflag
  *
  * With SEV-ES the hypervisor has no access to the flags register.
- * Only the state of the PSL_I is proivded by v_intr_shadow in
+ * Only the state of the PSL_I is provided by v_intr_shadow in
  * the VMCB.
  */
 int
