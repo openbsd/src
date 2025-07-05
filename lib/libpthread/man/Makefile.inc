@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.38 2025/07/03 18:01:38 tedu Exp $
+# $OpenBSD: Makefile.inc,v 1.39 2025/07/05 16:13:50 tedu Exp $
 # $FreeBSD: Makefile.inc,v 1.6 1999/08/28 00:03:02 peter Exp $
 
 # POSIX thread man files
@@ -40,11 +40,7 @@ MAN+=	\
 	pthread_mutex_lock.3 \
 	pthread_mutex_unlock.3 \
 	pthread_once.3 \
-	pthread_rwlock_destroy.3 \
 	pthread_rwlock_init.3 \
-	pthread_rwlock_rdlock.3 \
-	pthread_rwlock_unlock.3 \
-	pthread_rwlock_wrlock.3 \
 	pthread_rwlockattr_destroy.3 \
 	pthread_rwlockattr_getpshared.3 \
 	pthread_rwlockattr_init.3 \
