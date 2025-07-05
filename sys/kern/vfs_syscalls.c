@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.375 2025/04/27 00:58:55 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.376 2025/07/05 04:25:43 jsg Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -974,7 +974,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	/*
 	 * System calls in other threads may sleep between unveil
 	 * datastructure inspections -- this is the simplest way to
-	 * provide consistancy
+	 * provide consistency 
 	 */
 	single_thread_set(p, SINGLE_UNWIND);
 
