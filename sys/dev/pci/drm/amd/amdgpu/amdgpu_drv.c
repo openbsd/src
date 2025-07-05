@@ -3145,7 +3145,6 @@ MODULE_LICENSE("GPL and additional rights");
 
 #include <ddb/db_var.h>
 
-#include <drm/drm_drv.h>
 #include <drm/drm_utils.h>
 #include <drm/drm_fb_helper.h>
 

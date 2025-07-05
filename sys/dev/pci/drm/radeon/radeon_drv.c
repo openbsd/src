@@ -657,7 +657,6 @@ bool radeon_has_atpx(void);
 static inline bool radeon_has_atpx(void) { return false; }
 #endif
 
-#include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
 #include "vga.h"
 
