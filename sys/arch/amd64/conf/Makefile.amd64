@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.143 2025/06/03 10:44:52 jsg Exp $
+#	$OpenBSD: Makefile.amd64,v 1.144 2025/07/05 19:03:02 kn Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -111,6 +111,8 @@ COPTIMIZE?=	-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTIMIZE} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-T ld.script -X --warn-common -nopie
+# propagate failure like ENOSPC on relink
+LINKFLAGS+=	--no-mmap-output-file
 
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}

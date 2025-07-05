@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.149 2025/05/05 20:43:32 tedu Exp $
+#	$OpenBSD: Makefile.i386,v 1.150 2025/07/05 19:03:02 kn Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -53,6 +53,8 @@ COPTIMIZE?=	-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTIMIZE} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-T ld.script -X --warn-common -nopie
+# propagate failure like ENOSPC on relink
+LINKFLAGS+=	--no-mmap-output-file
 
 .if ${MACHINE} == "amd64"
 CFLAGS+=	-m32
