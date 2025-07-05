@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.51 2024/10/29 12:40:17 jsg Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.52 2025/07/05 09:24:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -136,7 +136,6 @@ int	pledge_flock(struct proc *p);
 int	pledge_fcntl(struct proc *p, int cmd);
 int	pledge_swapctl(struct proc *p, int cmd);
 int	pledge_kill(struct proc *p, pid_t pid);
-int	pledge_profil(struct proc *, u_int);
 int	pledge_protexec(struct proc *p, int prot);
 
 #endif /* _KERNEL */

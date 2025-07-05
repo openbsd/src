@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.242 2025/04/29 02:24:32 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.243 2025/07/05 09:24:37 jsg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1070,10 +1070,6 @@ int hw_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *);
 #endif
-int fs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-		   struct proc *);
-int fs_posix_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-			 struct proc *);
 int net_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *);
 int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t,
