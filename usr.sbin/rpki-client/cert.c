@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.183 2025/07/04 16:22:07 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.184 2025/07/05 15:05:12 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1094,10 +1094,6 @@ certificate_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		    "want CPS, got %s", fn, nid2str(nid));
 		goto out;
 	}
-
-	if (verbose > 1 && !filemode)
-		warnx("%s: CPS %.*s", fn, qualifier->d.cpsuri->length,
-		    qualifier->d.cpsuri->data);
 
 	rc = 1;
  out:
