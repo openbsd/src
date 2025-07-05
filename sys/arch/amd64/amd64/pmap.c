@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.180 2025/06/19 12:01:08 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.181 2025/07/05 22:54:53 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3194,7 +3194,6 @@ volatile vaddr_t tlb_shoot_addr2 __attribute__((section(".kudata")));
 volatile int tlb_shoot_first_pcid __attribute__((section(".kudata")));
 
 #if NVMM > 0
-#include <amd64/vmmvar.h>
 volatile uint64_t ept_shoot_mode __attribute__((section(".kudata")));
 volatile struct vmx_invept_descriptor ept_shoot_vid
     __attribute__((section(".kudata")));
