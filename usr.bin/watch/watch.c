@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.33 2025/06/28 22:02:58 tedu Exp $ */
+/*	$OpenBSD: watch.c,v 1.34 2025/07/06 05:04:43 yasuoka Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
@@ -44,7 +44,6 @@
 #define DEFAULT_INTERVAL 1
 #define MAXLINE 300
 #define MAXCOLUMN 180
-#define TABSPACE 8
 
 typedef enum {
 	HIGHLIGHT_NONE,
@@ -352,10 +351,7 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 		case HIGHLIGHT_CHAR:
 			move(screen_y, screen_x);
 			while (*p && screen_x < COLS) {
-				if (*p == '\t')
-					cw = TABSPACE - (screen_x % TABSPACE);
-				else
-					cw = wcwidth(*p);
+				cw = wcwidth(*p);
 				if (screen_x + cw >= COLS)
 					break;
 				if (*p == *pp) {
@@ -377,11 +373,11 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 						screen_x -= wcwidth(*p);
 					}
 					move(screen_y, screen_x);
-					cw = wcwidth(*p);
 				}
 				standout();
 
 				/* Print character itself.  */
+				cw = wcwidth(*p);
 				addwch(*p++);
 				pp++;
 				screen_x += cw;
