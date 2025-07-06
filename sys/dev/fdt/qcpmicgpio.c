@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpmicgpio.c,v 1.3 2022/11/09 19:25:50 patrick Exp $	*/
+/*	$OpenBSD: qcpmicgpio.c,v 1.4 2025/07/06 11:07:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -38,6 +38,8 @@
 #define  GPIO_SUBTYPE_GPIOC_8CH		0xd
 #define  GPIO_SUBTYPE_GPIO_LV		0x10
 #define  GPIO_SUBTYPE_GPIO_MV		0x11
+#define  GPIO_SUBTYPE_GPIO_LV_VIN2	0x12
+#define  GPIO_SUBTYPE_GPIO_MV_VIN3	0x13
 #define GPIO_PIN_OFF(x)		(0x100 * (x))
 #define GPIO_PIN_STATUS		0x10
 #define  GPIO_PIN_STATUS_ON		(1 << 0)
@@ -62,7 +64,7 @@ struct qcpmicgpio_softc {
 	int8_t			sc_sid;
 	uint16_t		sc_addr;
 
-	int			sc_is_lv_mv;
+	int			*sc_is_lv_mv;
 
 	int			sc_npins;
 	struct gpio_controller	sc_gc;
@@ -100,6 +102,7 @@ qcpmicgpio_attach(struct device *parent, struct device *self, void *aux)
 	struct spmi_attach_args *saa = aux;
 	struct qcpmicgpio_softc *sc = (struct qcpmicgpio_softc *)self;
 	uint8_t reg;
+	int pin;
 
 	sc->sc_addr = OF_getpropint(saa->sa_node, "reg", -1);
 	if (sc->sc_addr < 0) {
@@ -115,6 +118,8 @@ qcpmicgpio_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_npins = 10;
 	if (OF_is_compatible(saa->sa_node, "qcom,pm8350c-gpio"))
 		sc->sc_npins = 9;
+	if (OF_is_compatible(saa->sa_node, "qcom,pmc8380-gpio"))
+		sc->sc_npins = 10;
 	if (OF_is_compatible(saa->sa_node, "qcom,pmr735a-gpio"))
 		sc->sc_npins = 4;
 
@@ -123,14 +128,35 @@ qcpmicgpio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (qcpmicgpio_read(sc, GPIO_TYPE) != GPIO_TYPE_VAL) {
-		printf(": not a GPIO block\n");
-		return;
-	}
+	printf("\n");
 
-	reg = qcpmicgpio_read(sc, GPIO_SUBTYPE);
-	if (reg == GPIO_SUBTYPE_GPIO_LV || reg == GPIO_SUBTYPE_GPIO_MV)
-		sc->sc_is_lv_mv = 1;
+	sc->sc_is_lv_mv = mallocarray(sc->sc_npins, sizeof(int),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+
+	for (pin = 0; pin < sc->sc_npins; pin++) {
+		reg = qcpmicgpio_read(sc, GPIO_PIN_OFF(pin) + GPIO_TYPE);
+		if (reg != GPIO_TYPE_VAL)
+			continue;
+
+		reg = qcpmicgpio_read(sc, GPIO_PIN_OFF(pin) + GPIO_SUBTYPE);
+		switch (reg) {
+		case GPIO_SUBTYPE_GPIO_4CH:
+		case GPIO_SUBTYPE_GPIOC_4CH:
+		case GPIO_SUBTYPE_GPIO_8CH:
+		case GPIO_SUBTYPE_GPIOC_8CH:
+			break;
+		case GPIO_SUBTYPE_GPIO_LV:
+		case GPIO_SUBTYPE_GPIO_MV:
+		case GPIO_SUBTYPE_GPIO_LV_VIN2:
+		case GPIO_SUBTYPE_GPIO_MV_VIN3:
+			sc->sc_is_lv_mv[pin] = 1;
+			break;
+		default:
+			printf("%s: unknown pin subtype 0x%02x for pin %d\n",
+			    sc->sc_dev.dv_xname, reg, pin);
+			break;
+		}
+	}
 
 	sc->sc_gc.gc_node = saa->sa_node;
 	sc->sc_gc.gc_cookie = sc;
@@ -138,15 +164,13 @@ qcpmicgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gc.gc_get_pin = qcpmicgpio_get_pin;
 	sc->sc_gc.gc_set_pin = qcpmicgpio_set_pin;
 	gpio_controller_register(&sc->sc_gc);
-
-	printf("\n");
 }
 
 void
 qcpmicgpio_config_pin(void *cookie, uint32_t *cells, int config)
 {
 	struct qcpmicgpio_softc *sc = cookie;
-	uint32_t pin = cells[0];
+	uint32_t pin = cells[0] - 1;
 	uint8_t reg;
 	int val;
 
@@ -158,7 +182,7 @@ qcpmicgpio_config_pin(void *cookie, uint32_t *cells, int config)
 	else
 		val = GPIO_PIN_MODE_DIR_DIGITAL_IN;
 
-	if (sc->sc_is_lv_mv) {
+	if (sc->sc_is_lv_mv[pin]) {
 		qcpmicgpio_write(sc, GPIO_PIN_OFF(pin) + GPIO_PIN_MODE, val);
 	} else {
 		reg = qcpmicgpio_read(sc, GPIO_PIN_OFF(pin) + GPIO_PIN_MODE);
@@ -172,7 +196,7 @@ int
 qcpmicgpio_get_pin(void *cookie, uint32_t *cells)
 {
 	struct qcpmicgpio_softc *sc = cookie;
-	uint32_t pin = cells[0];
+	uint32_t pin = cells[0] - 1;
 	uint32_t flags = cells[1];
 	uint8_t reg;
 	int val = 0;
@@ -181,7 +205,7 @@ qcpmicgpio_get_pin(void *cookie, uint32_t *cells)
 		return 0;
 
 	reg = qcpmicgpio_read(sc, GPIO_PIN_OFF(pin) + GPIO_PIN_MODE);
-	if (sc->sc_is_lv_mv) {
+	if (sc->sc_is_lv_mv[pin]) {
 		reg >>= GPIO_PIN_MODE_DIR_LVMV_SHIFT;
 		reg &= GPIO_PIN_MODE_DIR_LVMV_MASK;
 	} else {
@@ -196,7 +220,7 @@ qcpmicgpio_get_pin(void *cookie, uint32_t *cells)
 	}
 
 	if (reg == GPIO_PIN_MODE_DIR_DIGITAL_OUT) {
-		if (sc->sc_is_lv_mv) {
+		if (sc->sc_is_lv_mv[pin]) {
 			reg = qcpmicgpio_read(sc, GPIO_PIN_OFF(pin) +
 			    GPIO_PIN_LVMV_DOUT_CTL);
 			val = !!(reg & GPIO_PIN_LVMV_DOUT_CTL_INVERT);
@@ -216,7 +240,7 @@ void
 qcpmicgpio_set_pin(void *cookie, uint32_t *cells, int val)
 {
 	struct qcpmicgpio_softc *sc = cookie;
-	uint32_t pin = cells[0];
+	uint32_t pin = cells[0] - 1;
 	uint32_t flags = cells[1];
 	uint8_t reg;
 
@@ -226,7 +250,7 @@ qcpmicgpio_set_pin(void *cookie, uint32_t *cells, int val)
 	if (flags & GPIO_ACTIVE_LOW)
 		val = !val;
 
-	if (sc->sc_is_lv_mv) {
+	if (sc->sc_is_lv_mv[pin]) {
 		reg = qcpmicgpio_read(sc, GPIO_PIN_OFF(pin) +
 		    GPIO_PIN_LVMV_DOUT_CTL);
 		reg &= ~GPIO_PIN_LVMV_DOUT_CTL_INVERT;
