@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.184 2025/07/05 15:05:12 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.185 2025/07/06 19:29:13 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1162,7 +1162,7 @@ cert_check_validity_period(const char *fn, struct cert *cert)
 	if (!x509_get_notafter(cert->x509, fn, &cert->notafter))
 		return 0;
 
-	if (cert->notbefore >= cert->notafter) {
+	if (cert->notbefore > cert->notafter) {
 		warnx("%s: RFC 6487, 4.6: notAfter precedes notBefore", fn);
 		return 0;
 	}
