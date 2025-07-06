@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.35 2025/07/06 19:17:47 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.36 2025/07/06 19:19:56 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 }
 
 int
-display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
+display(BUFFER *cur, BUFFER *prev, highlight_mode_t hm)
 {
 	int i, screen_x, screen_y, cw, line, rl;
 	static char buf[30];
