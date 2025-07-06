@@ -26588,6 +26588,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core Ultra PMC",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_SMB,
+	    "Core Ultra SMBus",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_LNL_SPI,
 	    "Core Ultra SPI",
 	},

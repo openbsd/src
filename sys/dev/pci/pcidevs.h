@@ -7315,6 +7315,7 @@
 #define	PCI_PRODUCT_INTEL_LNL_ESPI	0xa807		/* Core Ultra eSPI */
 #define	PCI_PRODUCT_INTEL_LNL_P2SB_1	0xa820		/* Core Ultra P2SB */
 #define	PCI_PRODUCT_INTEL_LNL_PMC	0xa821		/* Core Ultra PMC */
+#define	PCI_PRODUCT_INTEL_LNL_SMB	0xa822		/* Core Ultra SMBus */
 #define	PCI_PRODUCT_INTEL_LNL_SPI	0xa823		/* Core Ultra SPI */
 #define	PCI_PRODUCT_INTEL_LNL_TH	0xa824		/* Core Ultra TH */
 #define	PCI_PRODUCT_INTEL_LNL_UART_0	0xa825		/* Core Ultra UART */
