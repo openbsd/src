@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.62 2025/01/24 20:17:28 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.63 2025/07/06 12:22:31 dlg Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/evcount.h>
+#include <sys/atomic.h>
 
 #include <machine/bus.h>
 #include <machine/cpufunc.h>
@@ -182,9 +183,9 @@ struct agintc_softc {
 	struct agintc_dmamem	*sc_prop;
 	struct agintc_dmamem	*sc_pend;
 	struct interrupt_controller sc_ic;
-	int			 sc_ipi_num[3]; /* id for each ipi */
+	int			 sc_ipi_num; /* id for ipi */
 	int			 sc_ipi_reason[MAXCPUS]; /* cause of ipi */
-	void			*sc_ipi_irq[3]; /* irqhandle for each ipi */
+	void			*sc_ipi_irq; /* ipi irqhandle */
 };
 struct agintc_softc *agintc_sc;
 
@@ -260,8 +261,7 @@ void		agintc_r_wait_rwp(struct agintc_softc *sc);
 
 int		agintc_ipi_ddb(void *v);
 int		agintc_ipi_halt(void *v);
-int		agintc_ipi_nop(void *v);
-int		agintc_ipi_combined(void *);
+int		agintc_ipi_handler(void *);
 void		agintc_send_ipi(struct cpu_info *, int);
 
 void		agintc_msi_discard(struct agintc_lpi_info *);
@@ -317,7 +317,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	int			 i, nbits, nintr;
 	int			 idx, offset, nredist;
 #ifdef MULTIPROCESSOR
-	int			 nipi, ipiirq[3];
+	int			 ipiirq;
 #endif
 
 	psw = intr_disable();
@@ -600,13 +600,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 #ifdef MULTIPROCESSOR
 	/* setup IPI interrupts */
 
-	/*
-	 * Ideally we want three IPI interrupts, one for NOP, one for
-	 * DDB and one for HALT.  However we can survive if only one
-	 * is available; it is possible that most are not available to
-	 * the non-secure OS.
-	 */
-	nipi = 0;
+	ipiirq = -1;
 	for (i = 0; i < 16; i++) {
 		int hwcpu = sc->sc_cpuremap[cpu_number()];
 		int reg, oldreg;
@@ -625,56 +619,19 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		/* return to original value, will be set when used */
 		bus_space_write_1(sc->sc_iot, sc->sc_r_ioh[hwcpu],
 		    GICR_IPRIORITYR(i), oldreg);
-
-		if (nipi == 0)
-			printf(" ipi: %d", i);
-		else
-			printf(", %d", i);
-		ipiirq[nipi++] = i;
-		if (nipi == 3)
-			break;
+		ipiirq = i;
+		break;
 	}
 
-	if (nipi == 0)
+	if (ipiirq == -1)
 		panic("no irq available for IPI");
 
-	switch (nipi) {
-	case 1:
-		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
-		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
-		    agintc_ipi_combined, sc, "ipi");
-		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
-		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[0];
-		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[0];
-		break;
-	case 2:
-		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
-		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
-		    agintc_ipi_nop, sc, "ipinop");
-		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
-		sc->sc_ipi_irq[1] = agintc_intr_establish(ipiirq[1],
-		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
-		    agintc_ipi_combined, sc, "ipi");
-		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
-		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[1];
-		break;
-	case 3:
-		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
-		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
-		    agintc_ipi_nop, sc, "ipinop");
-		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
-		sc->sc_ipi_irq[1] = agintc_intr_establish(ipiirq[1],
-		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
-		    agintc_ipi_ddb, sc, "ipiddb");
-		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
-		sc->sc_ipi_irq[2] = agintc_intr_establish(ipiirq[2],
-		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
-		    agintc_ipi_halt, sc, "ipihalt");
-		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[2];
-		break;
-	default:
-		panic("nipi unexpected number %d", nipi);
-	}
+	printf(" ipi %d", ipiirq);
+
+	sc->sc_ipi_irq = agintc_intr_establish(ipiirq,
+	    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
+	    agintc_ipi_handler, sc, "ipi");
+	sc->sc_ipi_num = ipiirq;
 
 	intr_send_ipi_func = agintc_send_ipi;
 #endif
@@ -798,12 +755,8 @@ agintc_cpuinit(void)
 	bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
 	    GICR_IGRPMODR0, 0);
 
-	if (sc->sc_ipi_irq[0] != NULL)
-		agintc_route_irq(sc->sc_ipi_irq[0], IRQ_ENABLE, curcpu());
-	if (sc->sc_ipi_irq[1] != NULL)
-		agintc_route_irq(sc->sc_ipi_irq[1], IRQ_ENABLE, curcpu());
-	if (sc->sc_ipi_irq[2] != NULL)
-		agintc_route_irq(sc->sc_ipi_irq[2], IRQ_ENABLE, curcpu());
+	if (sc->sc_ipi_irq != NULL)
+		agintc_route_irq(sc->sc_ipi_irq, IRQ_ENABLE, curcpu());
 
 	__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xff));
 	__asm volatile("msr "STR(ICC_BPR1)", %x0" :: "r"(0));
@@ -1451,7 +1404,7 @@ agintc_ipi_halt(void *v)
 	int old = curcpu()->ci_cpl;
 
 	intr_disable();
-	agintc_eoi(sc->sc_ipi_num[ARM_IPI_HALT]);
+	agintc_eoi(sc->sc_ipi_num);
 	agintc_setipl(IPL_NONE);
 
 	cpu_halt();
@@ -1462,47 +1415,44 @@ agintc_ipi_halt(void *v)
 }
 
 int
-agintc_ipi_nop(void *v)
-{
-	/* Nothing to do here, just enough to wake up from WFI */
-	return 1;
-}
-
-int
-agintc_ipi_combined(void *v)
+agintc_ipi_handler(void *v)
 {
 	struct agintc_softc *sc = v;
+	struct cpu_info *ci = curcpu();
+	u_int reasons;
 
-	if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_DDB) {
-		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
-		return agintc_ipi_ddb(v);
-	} else if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_HALT) {
-		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
-		return agintc_ipi_halt(v);
-	} else {
-		return agintc_ipi_nop(v);
+	reasons = sc->sc_ipi_reason[ci->ci_cpuid];
+	if (reasons) {
+		reasons = atomic_swap_uint(&sc->sc_ipi_reason[ci->ci_cpuid], 0);
+		if (ISSET(reasons, 1 << ARM_IPI_DDB))
+			agintc_ipi_ddb(v);
+		if (ISSET(reasons, 1 << ARM_IPI_HALT))
+			agintc_ipi_halt(v);
 	}
+
+	return (1);
 }
 
 void
-agintc_send_ipi(struct cpu_info *ci, int id)
+agintc_send_ipi(struct cpu_info *ci, int reason)
 {
 	struct agintc_softc	*sc = agintc_sc;
 	uint64_t sendmask;
 
-	if (ci == curcpu() && id == ARM_IPI_NOP)
-		return;
-
-	/* never overwrite IPI_DDB or IPI_HALT with IPI_NOP */
-	if (id == ARM_IPI_DDB || id == ARM_IPI_HALT)
-		sc->sc_ipi_reason[ci->ci_cpuid] = id;
+	if (reason == ARM_IPI_NOP) {
+		if (ci == curcpu())
+			return;
+	} else {
+		atomic_setbits_int(&sc->sc_ipi_reason[ci->ci_cpuid],
+		    1 << reason);
+	}
 
 	/* will only send 1 cpu */
 	sendmask = (ci->ci_mpidr & MPIDR_AFF3) << 16;
 	sendmask |= (ci->ci_mpidr & MPIDR_AFF2) << 16;
 	sendmask |= (ci->ci_mpidr & MPIDR_AFF1) << 8;
 	sendmask |= 1 << (ci->ci_mpidr & 0x0f);
-	sendmask |= (sc->sc_ipi_num[id] << 24);
+	sendmask |= (sc->sc_ipi_num << 24);
 
 	__asm volatile ("msr " STR(ICC_SGI1R)", %x0" ::"r"(sendmask));
 }

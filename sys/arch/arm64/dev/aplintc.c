@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.18 2022/12/21 22:30:42 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.19 2025/07/06 12:22:31 dlg Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -655,13 +655,13 @@ aplintc_send_ipi(struct cpu_info *ci, int reason)
 	struct aplintc_softc *sc = aplintc_sc;
 	uint64_t sendmask;
 
-	if (ci == curcpu() && reason == ARM_IPI_NOP)
-		return;
-
-	/* never overwrite IPI_DDB or IPI_HALT with IPI_NOP */
-	if (reason == ARM_IPI_DDB || reason == ARM_IPI_HALT)
-		sc->sc_ipi_reason[ci->ci_cpuid] = reason;
-	membar_producer();
+	if (reason == ARM_IPI_NOP) {
+		if (ci == curcpu())
+			return;
+	} else {
+		atomic_setbits_int(&sc->sc_ipi_reason[ci->ci_cpuid],
+		    1 << reason);
+	}
 
 	sendmask = (ci->ci_mpidr & MPIDR_AFF0);
 	if ((curcpu()->ci_mpidr & MPIDR_AFF1) == (ci->ci_mpidr & MPIDR_AFF1)) {
@@ -678,16 +678,17 @@ void
 aplintc_handle_ipi(struct aplintc_softc *sc)
 {
 	struct cpu_info *ci = curcpu();
+	u_int reasons;
 
-	membar_consumer();
-	if (sc->sc_ipi_reason[ci->ci_cpuid] == ARM_IPI_DDB) {
-		sc->sc_ipi_reason[ci->ci_cpuid] = ARM_IPI_NOP;
+	reasons = sc->sc_ipi_reason[ci->ci_cpuid];
+	if (reasons) {
+		reasons = atomic_swap_uint(&sc->sc_ipi_reason[ci->ci_cpuid], 0);
 #ifdef DDB
-		db_enter();
+		if (ISSET(reasons, 1 << ARM_IPI_DDB))
+			db_enter();
 #endif
-	} else if (sc->sc_ipi_reason[ci->ci_cpuid] == ARM_IPI_HALT) {
-		sc->sc_ipi_reason[ci->ci_cpuid] = ARM_IPI_NOP;
-		cpu_halt();
+		if (ISSET(reasons, 1 << ARM_IPI_HALT))
+			cpu_halt();
 	}
 
 	sc->sc_ipi_count.ec_count++;

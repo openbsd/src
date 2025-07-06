@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.15 2022/12/21 22:30:42 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.16 2025/07/06 12:22:31 dlg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -626,23 +626,18 @@ bcm_intc_handle_ipi(void)
 	struct bcm_intc_softc *sc = bcm_intc;
 	int cpuno = cpu_number();
 	uint32_t mbox_val;
-	int ipi;
 
 	mbox_val = bus_space_read_4(sc->sc_iot, sc->sc_lioh,
-		ARM_LOCAL_INT_MAILBOX_CLR(cpuno));
-	ipi = ffs(mbox_val) - 1;
+	    ARM_LOCAL_INT_MAILBOX_CLR(cpuno));
 	bus_space_write_4(sc->sc_iot, sc->sc_lioh,
-	    ARM_LOCAL_INT_MAILBOX_CLR(cpuno), 1 << ipi);
-	switch (ipi) {
-	case ARM_IPI_DDB:
-		/* XXX */
+	    ARM_LOCAL_INT_MAILBOX_CLR(cpuno), mbox_val);
+
 #ifdef DDB
+	if (ISSET(mbox_val, 1 << ARM_IPI_DDB)) {
+		/* XXX */
 		db_enter();
-#endif
-		break;
-	case ARM_IPI_NOP:
-		break;
 	}
+#endif
 }
 
 void
