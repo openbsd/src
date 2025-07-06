@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.77 2025/06/27 17:26:57 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.78 2025/07/06 15:37:33 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -102,9 +102,6 @@ typedef struct {
 } EVP_AES_CCM_CTX;
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
-
-void aes_ecb_encrypt_internal(const unsigned char *in, unsigned char *out,
-    size_t len, const AES_KEY *key, int encrypt);
 
 #ifdef AES_XTS_ASM
 void AES_xts_encrypt(const char *inp, char *out, size_t len,
