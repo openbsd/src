@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.75 2025/04/26 19:59:46 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.76 2025/07/06 10:50:17 kettenis Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8396,8 +8396,13 @@ qwx_core_check_dt(struct qwx_softc *sc)
 #ifdef __HAVE_FDT
 	if (sc->sc_node == 0)
 		return 0;
-	
-	OF_getprop(sc->sc_node, "qcom,ath11k-calibration-variant",
+
+	/* XXX deprecated; remove after OpenBSD 7.9 has been released */
+	if (OF_getprop(sc->sc_node, "qcom,ath11k-calibration-variant",
+	    sc->qmi_target.bdf_ext, sizeof(sc->qmi_target.bdf_ext) - 1) > 0)
+		return 0;
+
+	OF_getprop(sc->sc_node, "qcom,calibration-variant",
 	    sc->qmi_target.bdf_ext, sizeof(sc->qmi_target.bdf_ext) - 1);
 #endif
 
