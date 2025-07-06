@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2104 2025/07/04 04:35:58 tb Exp $
+$OpenBSD: pcidevs,v 1.2105 2025/07/06 02:10:13 daniel Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7310,6 +7310,7 @@ product INTEL RPL_U_GT_5	0xa7ad	Graphics
 product INTEL LNL_ESPI		0xa807	Core Ultra eSPI
 product INTEL LNL_P2SB_1	0xa820	Core Ultra P2SB
 product INTEL LNL_PMC		0xa821	Core Ultra PMC
+product INTEL LNL_SMB		0xa822	Core Ultra SMBus
 product INTEL LNL_SPI		0xa823	Core Ultra SPI
 product INTEL LNL_TH		0xa824	Core Ultra TH
 product INTEL LNL_UART_0	0xa825	Core Ultra UART
