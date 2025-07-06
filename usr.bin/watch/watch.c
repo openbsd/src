@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.34 2025/07/06 05:04:43 yasuoka Exp $ */
+/*	$OpenBSD: watch.c,v 1.35 2025/07/06 19:17:47 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
@@ -103,6 +103,7 @@ struct child {
 typedef wchar_t	  BUFFER[MAXLINE][MAXCOLUMN + 1];
 BUFFER		  buf0, buf1;
 BUFFER		 *cur_buf, *prev_buf;
+WINDOW		 *rw;
 struct event	  ev_timer;
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
@@ -294,16 +295,19 @@ display(BUFFER * cur, BUFFER * prev, highlight_mode_t hm)
 	move(1, 1);
 
 	if (show_rusage) {
+		wresize(stdscr, LINES - 9, COLS);
 		print_rusage();
-		return 1;
+	} else {
+		delwin(rw);
+		wresize(stdscr, LINES, COLS);
 	}
 
 	if (!prev || (cur == prev))
 		hm = HIGHLIGHT_NONE;
 
 	for (line = start_line, screen_y = 2;
-	    screen_y < LINES && line < MAXLINE && (*cur)[line][0];
-	    line++, screen_y++) {
+	    screen_y < (show_rusage ? LINES - 9 : LINES) && line < MAXLINE
+	    && (*cur)[line][0]; line++, screen_y++) {
 		wchar_t	*cur_line, *prev_line, *p, *pp;
 
 		rl = 0;	/* reversing line */
@@ -472,6 +476,9 @@ child_done(struct child *child)
 	// assert(running_child == child);
 	if (running_child == child)
 		running_child = NULL;
+
+	display(cur_buf, prev_buf, highlight_mode);
+
 	if (want_update)
 		update();
 	else if (!paused)
@@ -556,11 +563,6 @@ kbd_result_t
 kbd_command(int ch)
 {
 	char buf[10];
-
-	if (show_rusage) {
-		show_rusage = 0;
-		return (RSLT_REDRAW);
-	}
 
 	switch (ch) {
 
@@ -664,7 +666,11 @@ kbd_command(int ch)
 		}
 
 	case 'r':
-		show_rusage = 1;
+		if (show_rusage == 1) {
+			show_rusage = 0;
+		} else {
+			show_rusage = 1;
+		}
 		return (RSLT_REDRAW);
 
 	case 's':
@@ -765,6 +771,9 @@ print_rusage(void)
 	struct timespec elapsed;
 	size_t size;
 
+	rw = newwin(9, 0, LINES - 9, 0);
+	wprintw(rw, "\n");
+
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
 	size = sizeof(clkinfo);
@@ -777,36 +786,36 @@ print_rusage(void)
 
 	timespecsub(&prev_stop, &prev_start, &elapsed);
 
-	printw("\n%7lld.%02ld  %s\n", (long long)elapsed.tv_sec,
+	wprintw(rw, "%7lld.%02ld  %-7s", (long long)elapsed.tv_sec,
 	    elapsed.tv_nsec / 10000000, "real");
-	printw("%7lld.%02ld  %s\n", (long long)prev_ru.ru_utime.tv_sec,
+	wprintw(rw, "%7lld.%02ld  %-7s", (long long)prev_ru.ru_utime.tv_sec,
 	    prev_ru.ru_utime.tv_usec / 10000, "user");
-	printw("%7lld.%02ld  %s\n", (long long)prev_ru.ru_stime.tv_sec,
+	wprintw(rw, "%7lld.%02ld  %-7s\n", (long long)prev_ru.ru_stime.tv_sec,
 	    prev_ru.ru_stime.tv_usec / 10000, "sys");
-
-	printw("%10ld  %s\n", prev_ru.ru_maxrss, "maximum resident set size");
-	printw("%10ld  %s\n", ticks ? prev_ru.ru_ixrss / ticks : 0,
+	wprintw(rw, "%10ld  %-26s", prev_ru.ru_maxrss,
+	    "maximum resident set size");
+	wprintw(rw, "%10ld  %s\n", ticks ? prev_ru.ru_ixrss / ticks : 0,
 	    "average shared memory size");
-	printw("%10ld  %s\n", ticks ? prev_ru.ru_idrss / ticks : 0,
+	wprintw(rw, "%10ld  %-26s", ticks ? prev_ru.ru_idrss / ticks : 0,
 	    "average unshared data size");
-	printw("%10ld  %s\n", ticks ? prev_ru.ru_isrss / ticks : 0,
+	wprintw(rw, "%10ld  %s\n", ticks ? prev_ru.ru_isrss / ticks : 0,
 	    "average unshared stack size");
-	printw("%10ld  %s\n", prev_ru.ru_minflt, "minor page faults");
-	printw("%10ld  %s\n", prev_ru.ru_majflt, "major page faults");
-	printw("%10ld  %s\n", prev_ru.ru_nswap, "swaps");
-	printw("%10ld  %s\n", prev_ru.ru_inblock, "block input operations");
-	printw("%10ld  %s\n", prev_ru.ru_oublock, "block output operations");
-	printw("%10ld  %s\n", prev_ru.ru_msgsnd, "messages sent");
-	printw("%10ld  %s\n", prev_ru.ru_msgrcv, "messages received");
-	printw("%10ld  %s\n", prev_ru.ru_nsignals, "signals received");
-	printw("%10ld  %s\n", prev_ru.ru_nvcsw, "voluntary context switches");
-	printw("%10ld  %s\n", prev_ru.ru_nivcsw,
+	wprintw(rw, "%10ld  %-26s", prev_ru.ru_minflt, "minor page faults");
+	wprintw(rw, "%10ld  %s\n", prev_ru.ru_majflt, "major page faults");
+	wprintw(rw, "%10ld  %-26s", prev_ru.ru_nswap, "swaps");
+	wprintw(rw, "%10ld  %s\n", prev_ru.ru_nsignals, "signals received");
+	wprintw(rw, "%10ld  %-26s", prev_ru.ru_inblock,
+	    "block input operations");
+	wprintw(rw, "%10ld  %s\n", prev_ru.ru_oublock,
+	    "block output operations");
+	wprintw(rw, "%10ld  %-26s", prev_ru.ru_msgrcv, "messages received");
+	wprintw(rw, "%10ld  %s\n", prev_ru.ru_msgsnd, "messages sent");
+	wprintw(rw, "%10ld  %-26s", prev_ru.ru_nvcsw,
+	    "voluntary context switches");
+	wprintw(rw, "%10ld  %s", prev_ru.ru_nivcsw,
 	    "involuntary context switches");
 
-	standout();
-	printw("\nHit any key to continue.");
-	standend();
-	refresh();
+	wrefresh(rw);
 }
 
 void
