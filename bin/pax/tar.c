@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.86 2025/06/29 20:29:48 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.87 2025/07/06 19:25:51 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -658,10 +658,11 @@ tar_wr(ARCHD *arcn)
 	if (ul_oct(tar_chksm(hdblk, sizeof(HD_TAR)), hd->chksum,
 	    sizeof(hd->chksum), 3))
 		goto out;
-	if (wr_rdbuf(hdblk, sizeof(HD_TAR)) < 0)
+	if (wr_rdbuf(hdblk, sizeof(HD_TAR)) < 0 ||
+	    wr_skip(BLKMULT - sizeof(HD_TAR)) < 0) {
+		paxwarn(1,"Could not write tar header for %s", arcn->org_name);
 		return(-1);
-	if (wr_skip(BLKMULT - sizeof(HD_TAR)) < 0)
-		return(-1);
+	}
 	if (PAX_IS_REG(arcn->type))
 		return(0);
 	return(1);
@@ -1055,7 +1056,7 @@ wr_xheader(char *fname, HD_USTAR *fhd, struct xheader *xhdr)
 	strncpy(hd->magic, TMAGIC, TMAGLEN);
 	strncpy(hd->version, TVERSION, TVERSLEN);
 	if (ul_oct(size, hd->size, sizeof(hd->size), 3))
-		return -1;
+		goto out;
 
 	/*
 	 * Best effort attempt at providing a useful file name for
@@ -1078,23 +1079,33 @@ wr_xheader(char *fname, HD_USTAR *fhd, struct xheader *xhdr)
 	memcpy(hd->gid, fhd->gid, sizeof(hd->gid));
 	if (ul_oct(tar_chksm(hdblk, sizeof(HD_USTAR)), hd->chksum,
 	   sizeof(hd->chksum), 3))
-		return -1;
+		goto out;
 
 	/* write out extended header */
-	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0)
-		return -1;
-	if (wr_skip(BLKMULT - sizeof(HD_USTAR)) < 0)
-		return -1;
+	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0 ||
+	    wr_skip(BLKMULT - sizeof(HD_USTAR)) < 0)
+		goto err;
 
 	/* write out extended header records */
 	SLIST_FOREACH(rec, xhdr, entry)
 		if (wr_rdbuf(rec->record, rec->reclen) < 0)
-			return -1;
+			goto err;
 
 	if (wr_skip(TAR_PAD(size)) < 0)
-		return -1;
+		goto err;
 
 	return 0;
+
+out:
+	/*
+	 * header field is out of range
+	 */
+	paxwarn(1, "Pax header field is too small for %s", fname);
+	return 1;
+
+err:
+	paxwarn(1,"Could not write pax extended header for %s", fname);
+	return -1;
 }
 #endif
 
@@ -1341,8 +1352,8 @@ wr_ustar_or_pax(ARCHD *arcn, int ustar)
 
 		ret = wr_xheader(arcn->name, hd, &xhdr);
 		xheader_free(&xhdr);
-		if (ret == -1)
-			return(-1);
+		if (ret)
+			return(ret);
 	}
 #endif
 
@@ -1354,10 +1365,12 @@ wr_ustar_or_pax(ARCHD *arcn, int ustar)
 	if (ul_oct(tar_chksm(hdblk, sizeof(HD_USTAR)), hd->chksum,
 	   sizeof(hd->chksum), 3))
 		goto out;
-	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0)
+	if (wr_rdbuf(hdblk, sizeof(HD_USTAR)) < 0 ||
+	    wr_skip(BLKMULT - sizeof(HD_USTAR)) < 0) {
+		paxwarn(1,"Could not write ustar header for %s",
+		    arcn->org_name);
 		return(-1);
-	if (wr_skip(BLKMULT - sizeof(HD_USTAR)) < 0)
-		return(-1);
+	}
 	if (PAX_IS_REG(arcn->type))
 		return(0);
 	return(1);
