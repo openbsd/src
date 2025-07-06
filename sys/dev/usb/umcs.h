@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.h,v 1.6 2023/04/11 00:45:09 jsg Exp $ */
+/* $OpenBSD: umcs.h,v 1.7 2025/07/06 01:54:12 jsg Exp $ */
 /* $NetBSD: umcs.h,v 1.1 2014/03/16 09:34:45 martin Exp $ */
 
 /*-
@@ -380,7 +380,6 @@
 #define	UMCS_LCR_PARITYON	0x08	/* Parity ON/OFF - ON */
 #define	UMCS_LCR_PARITYODD	0x00	/* Parity Odd */
 #define	UMCS_LCR_PARITYEVEN	0x10	/* Parity Even */
-#define	UMCS_LCR_PARITYODD	0x00	/* Parity Odd */
 #define	UMCS_LCR_PARITYFORCE	0x20	/* Force parity odd/even */
 
 #define	UMCS_LCR_BREAK		0x40	/* Send BREAK */

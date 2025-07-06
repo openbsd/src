@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.h,v 1.5 2015/04/26 06:38:04 jmatthew Exp $	*/
+/*	$OpenBSD: umct.h,v 1.6 2025/07/06 01:54:12 jsg Exp $	*/
 /*	$NetBSD: umct.h,v 1.1 2001/03/28 18:42:13 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -102,7 +102,6 @@
 #define LSR_THRE		0x20	/* transmit holding register empty */
 #define LSR_BI			0x10	/* break indicator */
 #define LSR_FE			0x08	/* framing error */
-#define LSR_OE			0x02	/* overrun error */
 #define LSR_PE			0x04	/* parity error */
 #define LSR_OE			0x02	/* overrun error */
 #define LSR_DR			0x01	/* receive data ready */
