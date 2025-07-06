@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.68 2025/07/06 11:04:37 schwarze Exp $
+.\" $OpenBSD: vm.conf.5,v 1.69 2025/07/06 15:45:02 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -43,13 +43,11 @@ Configuration for each individual virtual machine.
 Configuration for virtual switches.
 .El
 .Pp
-The current logical line can be extended to the next physical line
-by putting a backslash
-.Pq Sq \e
-at the end of the physical line.
+The current line can be extended over multiple lines using a backslash
+.Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq #
-and extend to the end of the logical line.
+and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
 .Pp
