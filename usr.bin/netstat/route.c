@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.110 2023/11/14 10:31:22 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.111 2025/07/07 06:33:40 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <net/if_types.h>
 #define _KERNEL
 #include <net/art.h>
+#include <net/rtable.h>
 #include <net/route.h>
 #undef _KERNEL
 #include <netinet/ip_ipsp.h>
@@ -78,14 +79,15 @@ static void p_krtentry(struct rtentry *);
 void
 routepr(u_long afmap, u_long af2idx, u_long af2idx_max, u_int tableid)
 {
+	struct rtable tbl;
 	struct art_root ar;
 	struct art_node *node;
 	struct srp *afm_head, *afm;
 	struct {
 		unsigned int	limit;
-		void	      **tbl;
+		struct rtable **tbl;
 	} map;
-	void **tbl;
+	struct rtable **tblmap;
 	int i;
 	uint8_t af2i[AF_MAX+1];
 	uint8_t af2i_max;
@@ -116,16 +118,18 @@ routepr(u_long afmap, u_long af2idx, u_long af2idx_max, u_int tableid)
 		if (tableid >= map.limit)
 			continue;
 
-		if ((tbl = calloc(map.limit, sizeof(*tbl))) == NULL)
+		if ((tblmap = calloc(map.limit, sizeof(*tblmap))) == NULL)
 			err(1, NULL);
 
-		kread((u_long)map.tbl, tbl, map.limit * sizeof(*tbl));
-		if (tbl[tableid] == NULL)
+		kread((u_long)map.tbl, tblmap, map.limit * sizeof(*tblmap));
+		if (tblmap[tableid] == NULL)
 			continue;
 
-		kread((u_long)tbl[tableid], &ar, sizeof(ar));
+		kread((u_long)tblmap[tableid], &tbl, sizeof(tbl));
 
-		free(tbl);
+		free(tblmap);
+
+		kread((u_long)tbl.r_art, &ar, sizeof(ar));
 
 		if (ar.ar_root.ref == NULL)
 			continue;

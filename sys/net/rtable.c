@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.88 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.89 2025/07/07 06:33:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -56,7 +56,7 @@ uint8_t		   af2idx_max;
 /* Array of routing table pointers. */
 struct rtmap {
 	unsigned int	   limit;
-	void		 **tbl;
+	struct rtable	 **tbl;
 };
 
 /*
@@ -84,8 +84,8 @@ void		   rtmap_dtor(void *, void *);
 struct srp_gc	   rtmap_gc = SRP_GC_INITIALIZER(rtmap_dtor, NULL);
 
 void		   rtable_init_backend(void);
-void		  *rtable_alloc(unsigned int, unsigned int, unsigned int);
-void		  *rtable_get(unsigned int, sa_family_t);
+struct rtable	  *rtable_alloc(unsigned int, unsigned int, unsigned int);
+struct rtable	  *rtable_get(unsigned int, sa_family_t);
 
 void
 rtmap_init(void)
@@ -192,7 +192,7 @@ int
 rtable_add(unsigned int id)
 {
 	const struct domain	*dp;
-	void			*tbl;
+	struct rtable		*tbl;
 	struct rtmap		*map;
 	struct dommp		*dmm;
 	sa_family_t		 af;
@@ -243,11 +243,11 @@ out:
 	return (error);
 }
 
-void *
+struct rtable *
 rtable_get(unsigned int rtableid, sa_family_t af)
 {
 	struct rtmap	*map;
-	void		*tbl = NULL;
+	struct rtable	*tbl = NULL;
 	struct srp_ref	 sr;
 
 	if (af >= nitems(af2idx) || af2idx[af] == 0)
@@ -285,7 +285,7 @@ rtable_empty(unsigned int rtableid)
 {
 	const struct domain	*dp;
 	int			 i;
-	struct art_root		*tbl;
+	struct rtable		*tbl;
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_rtoffset == 0)
@@ -294,7 +294,7 @@ rtable_empty(unsigned int rtableid)
 		tbl = rtable_get(rtableid, dp->dom_family);
 		if (tbl == NULL)
 			continue;
-		if (tbl->ar_root.ref != NULL)
+		if (tbl->r_art->ar_root.ref != NULL)
 			return (0);
 	}
 
@@ -366,23 +366,36 @@ rtable_init_backend(void)
 	art_init();
 }
 
-void *
+struct rtable *
 rtable_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 {
-	return (art_alloc(rtableid, alen, off));
+	struct rtable *tbl;
+
+	tbl = malloc(sizeof(*tbl), M_RTABLE, M_NOWAIT|M_ZERO);
+	if (tbl == NULL)
+		return (NULL);
+
+	tbl->r_art = art_alloc(rtableid, alen, off);
+	if (tbl->r_art == NULL) {
+		free(tbl, M_RTABLE, sizeof(*tbl));
+		return (NULL);
+	}
+
+	return (tbl);
 }
 
 int
 rtable_setsource(unsigned int rtableid, int af, struct sockaddr *src)
 {
-	struct art_root		*ar;
+	struct rtable		*tbl;
 
 	NET_ASSERT_LOCKED_EXCLUSIVE();
 
-	if ((ar = rtable_get(rtableid, af)) == NULL)
+	tbl = rtable_get(rtableid, af);
+	if (tbl == NULL)
 		return (EAFNOSUPPORT);
 
-	ar->ar_source = src;
+	tbl->r_art->ar_source = src;
 
 	return (0);
 }
@@ -390,15 +403,15 @@ rtable_setsource(unsigned int rtableid, int af, struct sockaddr *src)
 struct sockaddr *
 rtable_getsource(unsigned int rtableid, int af)
 {
-	struct art_root		*ar;
+	struct rtable		*tbl;
 
 	NET_ASSERT_LOCKED();
 
-	ar = rtable_get(rtableid, af);
-	if (ar == NULL)
+	tbl = rtable_get(rtableid, af);
+	if (tbl == NULL)
 		return (NULL);
 
-	return (ar->ar_source);
+	return (tbl->r_art->ar_source);
 }
 
 void
@@ -418,6 +431,7 @@ struct rtentry *
 rtable_lookup(unsigned int rtableid, const struct sockaddr *dst,
     const struct sockaddr *mask, const struct sockaddr *gateway, uint8_t prio)
 {
+	struct rtable			*tbl;
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt = NULL;
@@ -425,9 +439,10 @@ rtable_lookup(unsigned int rtableid, const struct sockaddr *dst,
 	const uint8_t			*addr;
 	int				 plen;
 
-	ar = rtable_get(rtableid, dst->sa_family);
-	if (ar == NULL)
+	tbl = rtable_get(rtableid, dst->sa_family);
+	if (tbl == NULL)
 		return (NULL);
+	ar = tbl->r_art;
 
 	addr = satoaddr(ar, dst);
 
@@ -473,6 +488,7 @@ out:
 struct rtentry *
 rtable_match(unsigned int rtableid, const struct sockaddr *dst, uint32_t *src)
 {
+	struct rtable			*tbl;
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt = NULL;
@@ -480,9 +496,10 @@ rtable_match(unsigned int rtableid, const struct sockaddr *dst, uint32_t *src)
 	const uint8_t			*addr;
 	int				 hash;
 
-	ar = rtable_get(rtableid, dst->sa_family);
-	if (ar == NULL)
+	tbl = rtable_get(rtableid, dst->sa_family);
+	if (tbl == NULL)
 		return (NULL);
+	ar = tbl->r_art;
 
 	addr = satoaddr(ar, dst);
 
@@ -548,6 +565,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
     const struct sockaddr *mask, const struct sockaddr *gateway, uint8_t prio,
     struct rtentry *rt)
 {
+	struct rtable			*tbl;
 	struct rtentry			*mrt;
 	struct srp_ref			 sr;
 	struct art_root			*ar;
@@ -557,9 +575,10 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	unsigned int			 rt_flags;
 	int				 error = 0;
 
-	ar = rtable_get(rtableid, dst->sa_family);
-	if (ar == NULL)
+	tbl = rtable_get(rtableid, dst->sa_family);
+	if (tbl == NULL)
 		return (EAFNOSUPPORT);
+	ar = tbl->r_art;
 
 	addr = satoaddr(ar, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
@@ -653,6 +672,7 @@ int
 rtable_delete(unsigned int rtableid, const struct sockaddr *dst,
     const struct sockaddr *mask, struct rtentry *rt)
 {
+	struct rtable			*tbl;
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct srp_ref			 sr;
@@ -662,9 +682,10 @@ rtable_delete(unsigned int rtableid, const struct sockaddr *dst,
 	int				 npaths = 0;
 	int				 error = 0;
 
-	ar = rtable_get(rtableid, dst->sa_family);
-	if (ar == NULL)
+	tbl = rtable_get(rtableid, dst->sa_family);
+	if (tbl == NULL)
 		return (EAFNOSUPPORT);
+	ar = tbl->r_art;
 
 	addr = satoaddr(ar, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
@@ -751,13 +772,15 @@ int
 rtable_walk(unsigned int rtableid, sa_family_t af, struct rtentry **prt,
     int (*func)(struct rtentry *, void *, unsigned int), void *arg)
 {
+	struct rtable			*tbl;
 	struct art_root			*ar;
 	struct rtable_walk_cookie	 rwc;
 	int				 error;
 
-	ar = rtable_get(rtableid, af);
-	if (ar == NULL)
+	tbl = rtable_get(rtableid, af);
+	if (tbl == NULL)
 		return (EAFNOSUPPORT);
+	ar = tbl->r_art;
 
 	rwc.rwc_func = func;
 	rwc.rwc_arg = arg;
@@ -793,15 +816,17 @@ int
 rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
     int plen, uint8_t prio, struct rtentry *rt)
 {
+	struct rtable			*tbl;
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct srp_ref			 sr;
 	const uint8_t			*addr;
 	int				 error = 0;
 
-	ar = rtable_get(rtableid, dst->sa_family);
-	if (ar == NULL)
+	tbl = rtable_get(rtableid, dst->sa_family);
+	if (tbl == NULL)
 		return (EAFNOSUPPORT);
+	ar = tbl->r_art;
 
 	addr = satoaddr(ar, dst);
 

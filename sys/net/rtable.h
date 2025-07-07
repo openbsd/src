@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.30 2024/05/13 01:15:53 jsg Exp $ */
+/*	$OpenBSD: rtable.h,v 1.31 2025/07/07 06:33:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -18,6 +18,12 @@
 
 #ifndef	_NET_RTABLE_H_
 #define	_NET_RTABLE_H_
+
+struct art_root;
+
+struct rtable {
+	struct art_root		*r_art;
+};
 
 /*
  * Newer routing table implementation based on ART (Allotment Routing
