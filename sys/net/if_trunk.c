@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.156 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.157 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
@@ -25,7 +24,6 @@
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/task.h>
-#include <sys/timeout.h>
 
 #include <crypto/siphash.h>
 
@@ -33,7 +31,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -43,7 +40,6 @@
 #include <netinet/ip6.h>
 #endif
 
-#include <net/if_vlan_var.h>
 #include <net/if_trunk.h>
 #include <net/trunklacp.h>
 

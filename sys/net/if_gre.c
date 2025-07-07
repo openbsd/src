@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.189 2025/06/30 12:43:22 mvs Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.190 2025/07/07 02:28:50 jsg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/pool.h>
-#include <sys/rwlock.h>
 
 #include <crypto/siphash.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.736 2025/06/25 20:26:32 miod Exp $	*/
+/*	$OpenBSD: if.c,v 1.737 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -73,16 +73,13 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/timeout.h>
 #include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
-#include <sys/domain.h>
 #include <sys/task.h>
 #include <sys/atomic.h>
 #include <sys/percpu.h>
-#include <sys/proc.h>
 #include <sys/stdint.h>	/* uintptr_t */
 #include <sys/rwlock.h>
 #include <sys/smr.h>
@@ -92,11 +89,6 @@
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/netisr.h>
-
-#include "vlan.h"
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -112,7 +104,6 @@
 #include <netinet6/in6_var.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
-#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif
 
@@ -126,10 +117,6 @@
 
 #if NBRIDGE > 0
 #include <net/if_bridge.h>
-#endif
-
-#if NCARP > 0
-#include <netinet/ip_carp.h>
 #endif
 
 #if NPF > 0

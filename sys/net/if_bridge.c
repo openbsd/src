@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.375 2025/06/23 20:59:25 mvs Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.376 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -32,7 +32,6 @@
  */
 
 #include "bpfilter.h"
-#include "gif.h"
 #include "pf.h"
 #include "carp.h"
 #include "vlan.h"
@@ -42,13 +41,11 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_llc.h>
 #include <net/netisr.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -62,9 +59,7 @@
 #endif
 
 #ifdef INET6
-#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #endif
 
 #if NPF > 0

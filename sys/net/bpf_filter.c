@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.34 2020/08/03 03:21:24 dlg Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.35 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/time.h>
 #ifndef _KERNEL
 #include <stdlib.h>
 #include <string.h>
@@ -46,8 +45,6 @@
 #else
 #include <sys/systm.h>
 #endif
-
-#include <sys/endian.h>
 
 #ifdef _KERNEL
 extern int bpf_maxbufsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.445 2025/06/23 09:16:32 mvs Exp $	*/
+/*	$OpenBSD: route.c,v 1.446 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -105,11 +105,8 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/timeout.h>
 #include <sys/domain.h>
-#include <sys/ioctl.h>
-#include <sys/kernel.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
 #include <sys/atomic.h>
@@ -2012,7 +2009,6 @@ rt_plen2mask(struct rtentry *rt, struct sockaddr_in6 *sa_mask)
 }
 
 #ifdef DDB
-#include <machine/db_machdep.h>
 #include <ddb/db_output.h>
 
 void	db_print_sa(struct sockaddr *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.55 2024/08/17 09:52:11 denis Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.56 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -106,7 +106,6 @@
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/tty.h>
-#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
@@ -115,12 +114,6 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-
-#ifdef VJC
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <net/slcompress.h>
-#endif
 
 #include <net/bpf.h>
 #include <net/ppp_defs.h>

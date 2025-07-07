@@ -1,4 +1,4 @@
-/* $OpenBSD: toeplitz.c,v 1.10 2021/02/21 02:37:38 dlg Exp $ */
+/* $OpenBSD: toeplitz.c,v 1.11 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 The DragonFly Project.  All rights reserved.
@@ -53,8 +53,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 

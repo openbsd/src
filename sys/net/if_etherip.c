@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.58 2025/06/30 12:43:22 mvs Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.59 2025/07/07 02:28:50 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -23,15 +23,11 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/device.h>
 #include <sys/sysctl.h>
-#include <sys/tree.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
-#include <net/route.h>
 #include <net/rtable.h>
 
 #include <netinet/in.h>

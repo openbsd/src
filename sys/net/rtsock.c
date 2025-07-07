@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.384 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.385 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/domain.h>
 #include <sys/pool.h>
 #include <sys/protosw.h>
@@ -84,7 +83,6 @@
 #include <netmpls/mpls.h>
 #endif
 #ifdef IPSEC
-#include <netinet/ip_ipsp.h>
 #include <net/if_enc.h>
 #endif
 #ifdef BFD
@@ -92,7 +90,6 @@
 #endif
 
 #include <sys/stdarg.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 
 #define	ROUTESNDQ	8192

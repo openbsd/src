@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.119 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.120 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -114,7 +114,6 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
@@ -123,7 +122,6 @@
 #include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
-#include <net/route.h>
 #include <net/bpf.h>
 
 #include <netinet/in.h>

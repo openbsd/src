@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.196 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.197 2025/07/07 02:28:50 jsg Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -37,7 +37,6 @@
 #include <sys/param.h>
 
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/sockio.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
@@ -49,7 +48,6 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/netisr.h>
 #include <net/if_types.h>
 #include <net/route.h>
 

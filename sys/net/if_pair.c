@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.17 2021/01/13 01:57:31 kn Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.18 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -20,9 +20,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/sockio.h>
-#include <sys/ioctl.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

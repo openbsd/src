@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.7 2021/07/05 04:17:41 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.8 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -16,24 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/tree.h>
 
 #include <net/if.h>
-#include <net/if_var.h>
-#include <net/if_dl.h>
-#include <net/if_media.h>
-#include <net/if_types.h>
-#include <net/rtable.h>
 #include <net/toeplitz.h>
 
 #include <netinet/in.h>

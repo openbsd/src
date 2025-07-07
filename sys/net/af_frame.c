@@ -1,4 +1,4 @@
-/*	$OpenBSD: af_frame.c,v 1.2 2025/01/05 12:36:48 bluhm Exp $ */
+/*	$OpenBSD: af_frame.c,v 1.3 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2024 David Gwynne <dlg@openbsd.org>
@@ -20,14 +20,8 @@
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
-#include <sys/systm.h>
 
 #include <net/if_types.h>
-
-#include <net/if.h>
-#include <net/if_arp.h>
-#include <netinet/in.h>
-#include <netinet/if_ether.h>
 
 const struct domain framedomain;
 

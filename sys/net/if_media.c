@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.39 2025/06/13 00:08:16 jsg Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.40 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -80,7 +80,6 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
 
@@ -89,7 +88,6 @@
 #include <net/if_var.h>
 #endif
 #include <net/if_media.h>
-#include <net/netisr.h>
 
 /*
  * Compile-time options:

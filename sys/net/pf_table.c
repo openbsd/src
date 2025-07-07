@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.145 2023/08/10 16:44:04 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.146 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -48,7 +48,6 @@
 #include <netinet/udp.h>
 
 #ifdef INET6
-#include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #endif /* INET6 */
 

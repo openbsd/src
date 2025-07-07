@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.110 2025/05/13 00:09:41 dlg Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.111 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -26,15 +26,12 @@
 #include <sys/socket.h>
 #include <sys/timeout.h>
 #include <sys/ioctl.h>
-#include <sys/kernel.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/mutex.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/bpf.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/tcp.h>
@@ -44,14 +41,11 @@
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
-#include <netinet/in_pcb.h>
+#include <netinet/icmp6.h>
 
 #include <net/pfvar.h>
 #include <net/pfvar_priv.h>
 #include <net/if_pflow.h>
-
-#include "bpfilter.h"
-#include "pflow.h"
 
 #define PFLOW_MINMTU	\
     (sizeof(struct pflow_header) + sizeof(struct pflow_flow))

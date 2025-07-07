@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.50 2024/10/29 23:57:54 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.51 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
@@ -55,7 +54,6 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <netinet/in.h>
 
 #include <net/pfvar.h>
 #include <net/hfsc.h>

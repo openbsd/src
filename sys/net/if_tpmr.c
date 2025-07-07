@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.36 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.37 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -28,21 +28,17 @@
 #include "vlan.h"
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
-#include <sys/rwlock.h>
 #include <sys/percpu.h>
 #include <sys/smr.h>
 #include <sys/task.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>

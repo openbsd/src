@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.67 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.68 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -27,7 +27,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 #include <net/route.h>
 
 #include <netinet/in.h>

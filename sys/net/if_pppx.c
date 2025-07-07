@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.134 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.135 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -44,10 +44,7 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
@@ -61,20 +58,13 @@
 #include <sys/refcnt.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <net/if_dl.h>
 
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
-
-#ifdef INET6
-#include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
-#include <netinet6/nd6.h>
-#endif /* INET6 */
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -87,11 +77,9 @@
 #endif
 
 #include <net/ppp_defs.h>
-#include <net/ppp-comp.h>
 #include <crypto/arc4.h>
 
 #ifdef PIPEX
-#include <net/radix.h>
 #include <net/pipex.h>
 #include <net/pipex_local.h>
 #else

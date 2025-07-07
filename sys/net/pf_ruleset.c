@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.21 2023/06/30 09:58:30 mvs Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.22 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -36,7 +36,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -44,17 +43,8 @@
 #endif /* _KERNEL */
 #include <sys/syslog.h>
 
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-
 #include <net/if.h>
 #include <net/pfvar.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif /* INET6 */
-
 
 #ifdef _KERNEL
 #define rs_malloc(x)		malloc(x, M_PF, M_WAITOK|M_CANFAIL|M_ZERO)

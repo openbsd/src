@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1217 2025/06/30 12:43:22 mvs Exp $ */
+/*	$OpenBSD: pf.c,v 1.1218 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,7 +35,6 @@
  *
  */
 
-#include "bpfilter.h"
 #include "carp.h"
 #include "pflog.h"
 #include "pfsync.h"
@@ -44,10 +43,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/filio.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -68,7 +65,6 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/icmp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
@@ -83,15 +79,10 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
-#include <netinet6/nd6.h>
 #endif /* INET6 */
 
 #include <net/pfvar.h>
 #include <net/pfvar_priv.h>
-
-#if NPFLOG > 0
-#include <net/if_pflog.h>
-#endif	/* NPFLOG > 0 */
 
 #if NPFLOW > 0
 #include <net/if_pflow.h>

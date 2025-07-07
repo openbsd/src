@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.331 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.332 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -43,7 +43,6 @@
  */
 
 #include "bpfilter.h"
-#include "pfsync.h"
 #include "kstat.h"
 
 #include <sys/param.h>
@@ -54,11 +53,9 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/timeout.h>
-#include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
-#include <sys/tree.h>
 #include <sys/smr.h>
 #include <sys/percpu.h>
 #include <sys/refcnt.h>
@@ -68,8 +65,6 @@
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/bpf.h>
-#include <net/netisr.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -85,10 +80,8 @@
 #include <netinet/udp.h>
 
 #ifdef INET6
-#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/nd6.h>
 #endif /* INET6 */
 
 #include "carp.h"

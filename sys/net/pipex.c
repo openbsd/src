@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.159 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: pipex.c,v 1.160 2025/07/07 02:28:50 jsg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -33,10 +33,7 @@
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
-#include <sys/conf.h>
-#include <sys/time.h>
 #include <sys/timeout.h>
-#include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/percpu.h>
 #include <sys/mutex.h>

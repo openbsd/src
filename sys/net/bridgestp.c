@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.77 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.78 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -35,20 +35,15 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/if_llc.h>
-#include <net/netisr.h>
 
 #include <netinet/in.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 
 #include <net/if_bridge.h>

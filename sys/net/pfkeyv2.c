@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.269 2025/06/16 07:11:58 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.270 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -72,17 +72,14 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
 
-#include <net/route.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 #include <net/radix.h>

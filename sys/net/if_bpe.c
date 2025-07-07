@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.24 2025/03/02 21:28:31 bluhm Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.25 2025/07/07 02:28:50 jsg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -20,11 +20,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/tree.h>
 #include <sys/smr.h>
@@ -32,9 +30,7 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_dl.h>
-#include <net/if_media.h>
 #include <net/if_types.h>
-#include <net/rtable.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

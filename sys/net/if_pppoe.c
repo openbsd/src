@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.87 2025/05/15 10:16:40 semarie Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.88 2025/07/07 02:28:50 jsg Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -30,12 +30,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "pppoe.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -50,7 +48,6 @@
 #include <net/if_sppp.h>
 #include <net/if_pppoe.h>
 #include <net/netisr.h>
-#include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #if NBPFILTER > 0

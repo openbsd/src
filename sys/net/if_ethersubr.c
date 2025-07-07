@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.302 2025/06/04 17:35:21 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.303 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -77,27 +77,20 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/syslog.h>
-#include <sys/timeout.h>
 #include <sys/smr.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/route.h>
-#include <net/if_llc.h>
 #include <net/if_dl.h>
-#include <net/if_media.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip_ipsp.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
@@ -128,7 +121,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif
 
 #ifdef INET6
-#include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #endif
 
@@ -1264,7 +1256,6 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 
 #include <sys/socket.h>
 #include <sys/protosw.h>
-#include <sys/domain.h>
 
 /*
  * lock order is:

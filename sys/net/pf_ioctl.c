@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.421 2025/05/22 06:34:03 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.422 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -45,8 +45,6 @@
 #include <sys/filio.h>
 #include <sys/fcntl.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
@@ -67,14 +65,11 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/in_pcb.h>
-#include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
 #ifdef INET6
-#include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #endif /* INET6 */
 

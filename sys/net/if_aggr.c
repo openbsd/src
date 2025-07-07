@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.49 2025/03/02 21:28:31 bluhm Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.50 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -71,7 +71,6 @@
 #include <sys/kstat.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 
 #include <net/if_media.h>

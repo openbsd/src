@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.251 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.252 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 /* #define	TUN_DEBUG	9 */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -46,10 +45,6 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/syslog.h>
-#include <sys/fcntl.h>
-#include <sys/time.h>
-#include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
@@ -59,7 +54,6 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/rtable.h>
 
 #include <netinet/in.h>

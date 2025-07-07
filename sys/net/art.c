@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.31 2023/11/11 12:17:50 bluhm Exp $ */
+/*	$OpenBSD: art.c,v 1.32 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -32,7 +32,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/task.h>
-#include <sys/socket.h>
 #endif
 
 #include <net/art.h>

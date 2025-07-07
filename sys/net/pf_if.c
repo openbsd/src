@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.111 2023/06/30 09:58:30 mvs Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.112 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -35,11 +35,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/filio.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
 #include <sys/time.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
@@ -49,7 +45,6 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 
 #include <net/pfvar.h>
 

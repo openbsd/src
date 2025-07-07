@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.103 2025/03/03 22:25:58 bluhm Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.104 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -21,11 +21,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/tree.h>
 #include <sys/refcnt.h>
@@ -35,10 +33,6 @@
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/if_dl.h>
-#include <net/if_media.h>
-#include <net/if_types.h>
-#include <net/route.h>
 #include <net/rtable.h>
 
 #include <netinet/in.h>

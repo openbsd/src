@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.32 2019/10/02 22:31:08 dlg Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.33 2025/07/07 02:28:50 jsg Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -33,11 +33,7 @@
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
-#include <sys/lock.h>
-#include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/task.h>
 #include <sys/timeout.h>

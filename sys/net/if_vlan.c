@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.221 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.222 2025/07/07 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -48,7 +48,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.60 2025/06/12 20:37:59 deraadt Exp $ */
+/*	$OpenBSD: ifq.c,v 1.61 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -21,7 +21,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>

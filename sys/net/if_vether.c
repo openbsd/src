@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.36 2020/08/28 12:01:48 mvs Exp $ */
+/* $OpenBSD: if_vether.c,v 1.37 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -19,9 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
 #include <sys/sockio.h>
-#include <sys/ioctl.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

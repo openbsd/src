@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.83 2023/11/28 13:23:20 bluhm Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.84 2025/07/07 02:28:50 jsg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -96,9 +96,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
 #include <sys/socket.h>
-#include <sys/timeout.h>
 #include <net/route.h>
 #include <net/if.h>
 

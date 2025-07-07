@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.98 2023/10/12 19:15:21 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.99 2025/07/07 02:28:50 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -35,13 +35,11 @@
  */
 
 #include "bpfilter.h"
-#include "pflog.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
-#include <sys/socket.h>
 #include <sys/stdint.h>
 #include <sys/ioctl.h>
 
@@ -52,14 +50,12 @@
 #include <net/bpf.h>
 #endif
 
-#include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
 #ifdef INET6
-#include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #endif /* INET6 */
 

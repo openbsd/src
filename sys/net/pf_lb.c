@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.74 2023/05/10 22:42:51 sashan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.75 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,28 +35,16 @@
  *
  */
 
-#include "bpfilter.h"
-#include "pflog.h"
-#include "pfsync.h"
-#include "pflow.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/filio.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/kernel.h>
-#include <sys/time.h>
-#include <sys/pool.h>
-#include <sys/rwlock.h>
 #include <sys/syslog.h>
 #include <sys/stdint.h>
 
 #include <crypto/siphash.h>
 
 #include <net/if.h>
-#include <net/bpf.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -64,12 +52,8 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/icmp_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcp_seq.h>
-#include <netinet/tcp_timer.h>
 #include <netinet/udp.h>
-#include <netinet/udp_var.h>
 #include <netinet/if_ether.h>
 
 #ifdef INET6
@@ -79,18 +63,6 @@
 
 #include <net/pfvar.h>
 #include <net/pfvar_priv.h>
-
-#if NPFLOG > 0
-#include <net/if_pflog.h>
-#endif	/* NPFLOG > 0 */
-
-#if NPFLOW > 0
-#include <net/if_pflow.h>
-#endif	/* NPFLOW > 0 */
-
-#if NPFSYNC > 0
-#include <net/if_pfsync.h>
-#endif /* NPFSYNC > 0 */
 
 u_int64_t		 pf_hash(struct pf_addr *, struct pf_addr *,
 			    struct pf_poolhashkey *, sa_family_t);

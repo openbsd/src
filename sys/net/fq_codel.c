@@ -1,4 +1,4 @@
-/* $OpenBSD: fq_codel.c,v 1.16 2024/10/29 23:25:45 dlg Exp $ */
+/* $OpenBSD: fq_codel.c,v 1.17 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2017 Mike Belopuhov
@@ -35,7 +35,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
 

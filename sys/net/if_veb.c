@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.40 2025/06/30 13:01:10 jan Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.41 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -21,7 +21,6 @@
 #include "vlan.h"
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/queue.h>
@@ -36,17 +35,10 @@
 #include <sys/pool.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
-#include <netinet/ip.h>
 #include <netinet/if_ether.h>
-
-#ifdef INET6
-#include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
-#endif
 
 #if 0 && defined(IPSEC)
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.42 2025/04/17 12:42:50 tb Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.43 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -41,7 +41,6 @@
 #include <net/wg_cookie.h>
 
 #include <net/pfvar.h>
-#include <net/route.h>
 #include <net/bpf.h>
 #include <net/art.h>
 

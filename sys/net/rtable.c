@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.87 2024/04/09 12:53:08 claudio Exp $ */
+/*	$OpenBSD: rtable.c,v 1.88 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -23,7 +23,6 @@
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
-#include <sys/queue.h>
 #include <sys/domain.h>
 #include <sys/srp.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd-comp.c,v 1.17 2021/03/05 09:21:08 jsg Exp $	*/
+/*	$OpenBSD: bsd-comp.c,v 1.18 2025/07/07 02:28:50 jsg Exp $	*/
 /*	$NetBSD: bsd-comp.c,v 1.6 1996/10/13 02:10:58 christos Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -43,11 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <net/if_var.h>
 #include <net/ppp_defs.h>
-#include <net/if_ppp.h>
 
 #define PACKETPTR	struct mbuf *
 #include <net/ppp-comp.h>

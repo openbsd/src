@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.2 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.3 2025/07/07 02:28:50 jsg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -21,26 +21,12 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
-#include <sys/syslog.h>
-#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_types.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/ip_var.h>
-#include <netinet/ip_ipip.h>
-#include <netinet/ip_ecn.h>
-
-#ifdef INET6
-#include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif /* INET6 */
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

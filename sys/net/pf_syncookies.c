@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_syncookies.c,v 1.9 2025/04/14 20:02:34 sf Exp $ */
+/*	$OpenBSD: pf_syncookies.c,v 1.10 2025/07/07 02:28:50 jsg Exp $ */
 
 /* Copyright (c) 2016,2017 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -58,47 +58,28 @@
  *  http://cr.yp.to/syncookies/archive (details)
  */
 
-#include "pflog.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/filio.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/kernel.h>
-#include <sys/time.h>
-#include <sys/pool.h>
-#include <sys/proc.h>
-#include <sys/rwlock.h>
 #include <sys/syslog.h>
 
+#include <crypto/siphash.h>
+
 #include <net/if.h>
-#include <net/if_var.h>
-#include <net/if_types.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcp_seq.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/in_pcb.h>
+#include <netinet/icmp6.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcp_fsm.h>
-#include <netinet/udp_var.h>
-#include <netinet/icmp_var.h>
-#include <netinet/ip_divert.h>
 
 #include <net/pfvar.h>
 #include <net/pfvar_priv.h>
-
-#if NPFLOG > 0
-#include <net/if_pflog.h>
-#endif	/* NPFLOG > 0 */
 
 union pf_syncookie {
 	uint8_t		cookie;
