@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.50 2025/05/21 09:06:58 mpi Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.51 2025/07/07 18:33:36 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -53,8 +53,6 @@
 #include <machine/cpu.h>
 #include <machine/fpu.h>
 
-void setguardpage(struct proc *);
-
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
@@ -98,8 +96,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_kstack - 1;
 	*tf = *p1->p_md.md_regs;
 
-	setguardpage(p2);
-
 	/*
 	 * If specified, give the child a different stack and/or TCB
 	 */
@@ -119,24 +115,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 void
 cpu_exit(struct proc *p)
 {
-}
-
-/*
- * Set a red zone in the kernel stack after the u. area.
- */
-void
-setguardpage(struct proc *p)
-{
-	struct vm_page *pg = NULL;
-	vaddr_t va = (vaddr_t)p->p_addr + PAGE_SIZE;
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), va, &pa))
-		pg = PHYS_TO_VM_PAGE(pa);
-	pmap_kremove(va, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	if (pg)
-		uvm_pagefree(pg);
 }
 
 struct kmem_va_mode kv_physwait = {

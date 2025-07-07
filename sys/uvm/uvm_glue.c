@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.92 2025/06/03 08:38:17 mpi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.93 2025/07/07 18:33:37 kettenis Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -269,7 +269,26 @@ const struct kmem_va_mode kv_uarea = {
 vaddr_t
 uvm_uarea_alloc(void)
 {
-	return (vaddr_t)km_alloc(USPACE, &kv_uarea, &kp_zero, &kd_waitok);
+	vaddr_t va;
+
+	va = (vaddr_t)km_alloc(USPACE, &kv_uarea, &kp_zero, &kd_waitok);
+
+#ifdef __HAVE_USPACE_GUARD
+	/* Carve out a guard page between the PCB and the stack. */
+	if (va) {
+		struct vm_page *pg = NULL;
+		paddr_t pa;
+
+		if (pmap_extract(pmap_kernel(), va + PAGE_SIZE, &pa))
+			pg = PHYS_TO_VM_PAGE(pa);
+		pmap_kremove(va + PAGE_SIZE, PAGE_SIZE);
+		pmap_update(pmap_kernel());
+		if (pg)
+			uvm_pagefree(pg);
+	}
+#endif
+
+	return va;
 }
 
 /*

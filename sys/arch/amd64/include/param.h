@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.29 2023/12/14 13:26:49 claudio Exp $	*/
+/*	$OpenBSD: param.h,v 1.30 2025/07/07 18:33:36 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,6 +66,7 @@
 #define	UPAGES		6			/* pages of u-area */
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
 #define	USPACE_ALIGN	0			/* u-area alignment 0-none */
+#define __HAVE_USPACE_GUARD
 
 #define	NMBCLUSTERS	(256 * 1024)		/* max cluster allocation */
 
