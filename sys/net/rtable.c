@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.89 2025/07/07 06:33:40 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.90 2025/07/07 06:51:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -381,6 +381,8 @@ rtable_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 		return (NULL);
 	}
 
+	tbl->r_source = NULL;
+
 	return (tbl);
 }
 
@@ -395,7 +397,7 @@ rtable_setsource(unsigned int rtableid, int af, struct sockaddr *src)
 	if (tbl == NULL)
 		return (EAFNOSUPPORT);
 
-	tbl->r_art->ar_source = src;
+	tbl->r_source = src;
 
 	return (0);
 }
@@ -411,7 +413,7 @@ rtable_getsource(unsigned int rtableid, int af)
 	if (tbl == NULL)
 		return (NULL);
 
-	return (tbl->r_art->ar_source);
+	return (tbl->r_source);
 }
 
 void

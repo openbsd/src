@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.31 2025/07/07 06:33:40 dlg Exp $ */
+/*	$OpenBSD: rtable.h,v 1.32 2025/07/07 06:51:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -21,8 +21,16 @@
 
 struct art_root;
 
+/*
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	N	net lock
+ */
+
 struct rtable {
-	struct art_root		*r_art;
+	struct art_root		*r_art;		/* [I] */
+
+	struct sockaddr		*r_source;	/* [N] use optional src addr */
 };
 
 /*
