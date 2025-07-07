@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_extern.h,v 1.39 2024/10/08 02:58:26 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_extern.h,v 1.40 2025/07/07 00:55:15 jsg Exp $	*/
 /*	$NetBSD: ext2fs_extern.h,v 1.1 1997/06/11 09:33:55 bouyer Exp $	*/
 
 /*-
@@ -108,8 +108,6 @@ int	ext2fs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	ext2fs_vptofh(struct vnode *, struct fid *);
 int	ext2fs_sbupdate(struct ufsmount *, int);
 int	ext2fs_cgupdate(struct ufsmount *, int);
-int	ext2fs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-	    struct proc *);
 
 /* ext2fs_readwrite.c */
 int	ext2fs_read(void *);

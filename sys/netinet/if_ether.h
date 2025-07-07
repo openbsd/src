@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.95 2025/06/29 00:33:46 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.96 2025/07/07 00:55:15 jsg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -265,7 +265,6 @@ int	revarpwhoami(struct in_addr *, struct ifnet *);
 void	arpinit(void);
 void	arpinput(struct ifnet *, struct mbuf *, struct netstack *);
 void	arprequest(struct ifnet *, u_int32_t *, u_int32_t *, u_int8_t *);
-void	arpwhohas(struct arpcom *, struct in_addr *);
 int	arpproxy(struct in_addr, unsigned int);
 int	arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
 	    struct sockaddr *, u_char *);

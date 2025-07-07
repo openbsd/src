@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.13 2017/05/02 12:27:37 mikeb Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.14 2025/07/07 00:55:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -117,7 +117,6 @@ extern const struct pfq_ops * const pfq_hfsc_ops;
 #define	HFSC_DEFAULT_QLIMIT	50
 
 void		 hfsc_initialize(void);
-u_int64_t	 hfsc_microuptime(void);
 
 #endif /* _KERNEL */
 #endif /* _HFSC_H_ */

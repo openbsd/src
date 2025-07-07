@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.93 2025/05/20 12:46:52 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.94 2025/07/07 00:55:15 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -399,7 +399,6 @@ int		pmap_test_attrs(struct vm_page *, unsigned);
 static void	pmap_update_pg(vaddr_t);
 void		pmap_write_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
-void		pmap_fix_ept(struct pmap *, vaddr_t);
 
 paddr_t	pmap_prealloc_lowmem_ptps(paddr_t);
 

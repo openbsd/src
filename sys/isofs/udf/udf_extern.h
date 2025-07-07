@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_extern.h,v 1.15 2020/01/20 23:21:55 claudio Exp $	*/
+/*	$OpenBSD: udf_extern.h,v 1.16 2025/07/07 00:55:15 jsg Exp $	*/
 
 /*
  * Written by Pedro Martelletto <pedro@ambientworks.net> in February 2005.
@@ -27,7 +27,6 @@ int udf_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 int udf_statfs(struct mount *, struct statfs *, struct proc *);
 int udf_vget(struct mount *, ino_t, struct vnode **);
 int udf_sync(struct mount *, int, int, struct ucred *, struct proc *);
-int udf_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 int udf_checkexp(struct mount *, struct mbuf *, int *, struct ucred **);
 int udf_fhtovp(struct mount *, struct fid *, struct vnode **);
 int udf_vptofh(struct vnode *, struct fid *);

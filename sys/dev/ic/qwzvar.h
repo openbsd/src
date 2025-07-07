@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwzvar.h,v 1.11 2024/12/22 23:30:27 patrick Exp $	*/
+/*	$OpenBSD: qwzvar.h,v 1.12 2025/07/07 00:55:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -943,7 +943,6 @@ struct qwz_ce_ring {
 	void *per_transfer_context[0];
 };
 
-void qwz_htc_tx_completion_handler(struct qwz_softc *, struct mbuf *);
 void qwz_htc_rx_completion_handler(struct qwz_softc *, struct mbuf *);
 void qwz_dp_htt_htc_t2h_msg_handler(struct qwz_softc *, struct mbuf *);
 
