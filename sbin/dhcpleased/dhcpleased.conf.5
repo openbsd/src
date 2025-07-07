@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.15 2024/11/11 15:19:31 florian Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.16 2025/07/07 20:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2024 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt DHCPLEASED.CONF 5
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ The
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined variables may be defined and used later, simplifying the
+Definitions of variables that can be used later, simplifying the
 configuration file.
 .It Sy Interfaces
 If an interface requires non-default options, they can be defined in
@@ -42,12 +42,17 @@ this section.
 Most configurations do not require this.
 .El
 .Sh MACROS
-Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example,
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic interface ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Sh INTERFACES
 A list of interfaces to overwrite defaults:
 .Bl -tag -width Ds

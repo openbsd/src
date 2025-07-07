@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.602 2024/04/15 14:06:52 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.603 2025/07/07 20:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 15 2024 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -83,14 +83,20 @@ keyword, for example:
 include "/etc/pf/sub.filter.conf"
 .Ed
 .Pp
-Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic pass ,
 .Cm in ,
+or
 .Cm out ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Pp
 For example:
 .Bd -literal -offset indent

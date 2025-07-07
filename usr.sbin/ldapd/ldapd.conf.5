@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldapd.conf.5,v 1.28 2023/03/02 17:09:53 jmc Exp $
+.\"	$OpenBSD: ldapd.conf.5,v 1.29 2025/07/07 20:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt LDAPD.CONF 5
 .Os
 .Sh NAME
@@ -41,14 +41,20 @@ must be quoted.
 Arguments containing whitespace should be surrounded by double quotes
 .Pq \&" .
 .Pp
-Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ar listen ,
 .Ar namespace ,
+or
 .Ar port ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Pp
 For example:
 .Bd -literal -offset indent

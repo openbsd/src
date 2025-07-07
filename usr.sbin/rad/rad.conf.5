@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.29 2025/05/24 13:10:09 schwarze Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.30 2025/07/07 20:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2025 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ The
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined variables may be defined and used later, simplifying the
+Definitions of variables that can be used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global settings for
@@ -55,12 +55,17 @@ Additional configuration files can be included with the
 .Ic include
 keyword.
 .Sh MACROS
-Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example,
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic interface ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Sh GLOBAL CONFIGURATION
 The global configuration section sets defaults for router advertisement
 messages.

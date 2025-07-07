@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpd.conf.5,v 1.12 2023/03/02 17:09:53 jmc Exp $
+.\"	$OpenBSD: dvmrpd.conf.5,v 1.13 2025/07/07 20:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt DVMRPD.CONF 5
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ The
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined variables may be defined and used later, simplifying the
+Definitions of variables that can be used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global settings for
@@ -44,15 +44,20 @@ A number of global settings can be overruled in specific areas or interfaces.
 Groups are used to group similar interfaces, simplifying configuration.
 .El
 .Sh MACROS
-Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example,
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic area ,
 .Ic interface ,
 or
 .Ic hello-interval ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Pp
 For example:
 .Bd -literal -offset indent

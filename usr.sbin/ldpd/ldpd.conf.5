@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.42 2023/03/02 17:09:53 jmc Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.43 2025/07/07 20:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@ The
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined variables may be defined and used later, simplifying the
+Definitions of variables that can be used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global settings for
@@ -62,16 +62,17 @@ keyword, for example:
 include "/etc/ldpd.sub.conf"
 .Ed
 .Sh MACROS
-Much like
-.Xr cpp 1
-or
-.Xr m4 1 ,
-macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example,
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic neighbor ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Sh GLOBAL CONFIGURATION
 Several settings can be configured globally or within a more restricted scope,
 like per address-family or per interface.

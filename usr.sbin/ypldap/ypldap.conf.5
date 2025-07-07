@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.28 2022/10/13 04:55:33 jmatthew Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.29 2025/07/07 20:56:49 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 13 2022 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@ The
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined variables may be defined and used later, simplifying the
+Definitions of variables that can be used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global settings for
@@ -39,16 +39,17 @@ Global settings for
 LDAP Directory specific parameters.
 .El
 .Sh MACROS
-Much like
-.Xr cpp 1
-or
-.Xr m4 1 ,
-macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example,
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic domain ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Pp
 For example:
 .Bd -literal -offset indent

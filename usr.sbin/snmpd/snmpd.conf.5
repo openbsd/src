@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.64 2024/02/06 12:39:13 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.65 2025/07/07 20:56:49 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2024 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ The
 file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined variables may be defined and used later, simplifying the
+Definitions of variables that can be used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global runtime settings for
@@ -60,15 +60,20 @@ keyword, for example:
 include "/etc/snmpd.conf.local"
 .Ed
 .Sh MACROS
-Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example,
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic community ,
 .Ic system ,
 or
 .Ic oid ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Pp
 For example:
 .Bd -literal -offset indent

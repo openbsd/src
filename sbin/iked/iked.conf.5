@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.100 2025/04/30 03:51:42 tb Exp $
+.\" $OpenBSD: iked.conf.5,v 1.101 2025/07/07 20:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2025 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ for more information about manual keying and ISAKMP support.
 is divided into three main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined macros may be defined and used later, simplifying the
+Definitions of variables that can be used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global settings for
@@ -104,14 +104,20 @@ ikev2 esp proto { tcp, udp } \e
 	peer 192.168.10.1
 .Ed
 .Sh MACROS
-Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic flow ,
 .Ic from ,
+or
 .Ic esp ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Pp
 For example:
 .Bd -literal -offset indent

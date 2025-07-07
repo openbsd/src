@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.250 2025/03/10 07:56:45 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.251 2025/07/07 20:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 10 2025 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ The
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sx MACROS
-User-defined variables may be defined and used later, simplifying the
+Definitions of variables that can be used later, simplifying the
 configuration file.
 .It Sx GLOBAL CONFIGURATION
 Global settings for
@@ -80,15 +80,20 @@ keyword, for example:
 include "/etc/bgpd/bgpd-10.0.0.1.filter"
 .Ed
 .Sh MACROS
-Macros can be defined that will later be expanded in context.
-Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example,
+A macro is defined with a command of the form
+.Ar name Ns = Ns Ar value .
+The macro
+.Ar name
+can contain letters, digits, and underscores and cannot be a reserved word
+(for example,
 .Ic AS ,
 .Ic neighbor ,
 or
 .Ic group ) .
-Macros are not expanded inside quotes.
+Within unquoted arguments, the string
+.Pf $ Ar name
+is later expanded to
+.Ar value .
 .Pp
 For example:
 .Bd -literal -offset indent
