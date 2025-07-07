@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.14 2022/01/01 02:18:28 jsg Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.15 2025/07/07 10:54:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2022 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -49,6 +49,7 @@
 .Nm tls_default_ca_cert_file
 .Nd TLS certificate and key configuration
 .Sh SYNOPSIS
+.Lb libtls libssl libcrypto
 .In tls.h
 .Ft uint8_t *
 .Fo tls_load_file

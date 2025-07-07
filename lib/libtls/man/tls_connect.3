@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_connect.3,v 1.4 2018/07/09 19:51:18 tb Exp $
+.\" $OpenBSD: tls_connect.3,v 1.5 2025/07/07 10:54:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2014, 2015 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2018 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt TLS_CONNECT 3
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Nm tls_connect_cbs
 .Nd instruct a TLS client to establish a connection
 .Sh SYNOPSIS
+.Lb libtls libssl libcrypto
 .In tls.h
 .Ft int
 .Fo tls_connect

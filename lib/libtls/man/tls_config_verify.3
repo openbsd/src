@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_config_verify.3,v 1.4 2017/03/02 11:05:50 jmc Exp $
+.\" $OpenBSD: tls_config_verify.3,v 1.5 2025/07/07 10:54:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2017 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt TLS_CONFIG_VERIFY 3
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Nm tls_config_insecure_noverifytime
 .Nd insecure TLS configuration
 .Sh SYNOPSIS
+.Lb libtls libssl libcrypto
 .In tls.h
 .Ft void
 .Fn tls_config_verify "struct tls_config *config"

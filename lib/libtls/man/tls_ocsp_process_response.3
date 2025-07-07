@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_ocsp_process_response.3,v 1.6 2018/07/24 02:01:34 tb Exp $
+.\" $OpenBSD: tls_ocsp_process_response.3,v 1.7 2025/07/07 10:54:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 24 2018 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt TLS_OCSP_PROCESS_RESPONSE 3
 .Os
 .Sh NAME
@@ -29,6 +29,7 @@
 .Nm tls_peer_ocsp_next_update
 .Nd inspect an OCSP response
 .Sh SYNOPSIS
+.Lb libtls libssl libcrypto
 .In tls.h
 .Ft int
 .Fo tls_ocsp_process_response

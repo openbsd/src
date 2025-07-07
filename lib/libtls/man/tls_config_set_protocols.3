@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_config_set_protocols.3,v 1.12 2023/07/02 06:37:27 beck Exp $
+.\" $OpenBSD: tls_config_set_protocols.3,v 1.13 2025/07/07 10:54:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015, 2016 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 2 2023 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt TLS_CONFIG_SET_PROTOCOLS 3
 .Os
 .Sh NAME
@@ -26,10 +26,12 @@
 .Nm tls_config_set_ciphers ,
 .Nm tls_config_set_dheparams ,
 .Nm tls_config_set_ecdhecurves ,
+.\" .Nm tls_config_set_ecdhecurve is intentionally undocumented.
 .Nm tls_config_prefer_ciphers_client ,
 .Nm tls_config_prefer_ciphers_server
 .Nd TLS protocol and cipher selection
 .Sh SYNOPSIS
+.Lb libtls libssl libcrypto
 .In tls.h
 .Ft int
 .Fo tls_config_set_protocols

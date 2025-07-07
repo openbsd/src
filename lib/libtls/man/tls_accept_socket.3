@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_accept_socket.3,v 1.4 2018/05/26 12:35:26 schwarze Exp $
+.\" $OpenBSD: tls_accept_socket.3,v 1.5 2025/07/07 10:54:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2018 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt TLS_ACCEPT_SOCKET 3
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Nm tls_accept_cbs
 .Nd accept an incoming client connection in a TLS server
 .Sh SYNOPSIS
+.Lb libtls libssl libcrypto
 .In tls.h
 .Ft int
 .Fo tls_accept_socket

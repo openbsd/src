@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_read.3,v 1.8 2023/09/18 17:25:15 schwarze Exp $
+.\" $OpenBSD: tls_read.3,v 1.9 2025/07/07 10:54:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2023 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt TLS_READ 3
 .Os
 .Sh NAME
@@ -29,6 +29,7 @@
 .Nm tls_close
 .Nd use a TLS connection
 .Sh SYNOPSIS
+.Lb libtls libssl libcrypto
 .In tls.h
 .Ft ssize_t
 .Fo tls_read

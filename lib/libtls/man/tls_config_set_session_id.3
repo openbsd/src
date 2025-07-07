@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_config_set_session_id.3,v 1.5 2018/02/10 06:07:43 jsing Exp $
+.\" $OpenBSD: tls_config_set_session_id.3,v 1.6 2025/07/07 10:54:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2018 $
+.Dd $Mdocdate: July 7 2025 $
 .Dt TLS_CONFIG_SET_SESSION_ID 3
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Nm tls_config_add_ticket_key
 .Nd configure resuming of TLS handshakes
 .Sh SYNOPSIS
+.Lb libtls libssl libcrypto
 .In tls.h
 .Ft int
 .Fo tls_config_set_session_fd
