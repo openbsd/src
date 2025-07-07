@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.90 2025/07/07 06:51:45 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.91 2025/07/07 07:09:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -349,7 +349,7 @@ rtable_l2set(unsigned int rtableid, unsigned int rdomain, unsigned int loifidx)
 }
 
 
-static inline const uint8_t *satoaddr(struct art_root *,
+static inline const uint8_t *satoaddr(struct rtable *,
     const struct sockaddr *);
 
 int	an_match(struct art_node *, const struct sockaddr *, int);
@@ -375,12 +375,13 @@ rtable_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 	if (tbl == NULL)
 		return (NULL);
 
-	tbl->r_art = art_alloc(rtableid, alen, off);
+	tbl->r_art = art_alloc(rtableid, alen);
 	if (tbl->r_art == NULL) {
 		free(tbl, M_RTABLE, sizeof(*tbl));
 		return (NULL);
 	}
 
+	tbl->r_off = off;
 	tbl->r_source = NULL;
 
 	return (tbl);
@@ -446,7 +447,7 @@ rtable_lookup(unsigned int rtableid, const struct sockaddr *dst,
 		return (NULL);
 	ar = tbl->r_art;
 
-	addr = satoaddr(ar, dst);
+	addr = satoaddr(tbl, dst);
 
 	/* No need for a perfect match. */
 	if (mask == NULL) {
@@ -503,7 +504,7 @@ rtable_match(unsigned int rtableid, const struct sockaddr *dst, uint32_t *src)
 		return (NULL);
 	ar = tbl->r_art;
 
-	addr = satoaddr(ar, dst);
+	addr = satoaddr(tbl, dst);
 
 	an = art_match(ar, addr, &nsr);
 	if (an == NULL)
@@ -582,7 +583,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 		return (EAFNOSUPPORT);
 	ar = tbl->r_art;
 
-	addr = satoaddr(ar, dst);
+	addr = satoaddr(tbl, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
 	if (plen == -1)
 		return (EINVAL);
@@ -689,7 +690,7 @@ rtable_delete(unsigned int rtableid, const struct sockaddr *dst,
 		return (EAFNOSUPPORT);
 	ar = tbl->r_art;
 
-	addr = satoaddr(ar, dst);
+	addr = satoaddr(tbl, dst);
 	plen = rtable_satoplen(dst->sa_family, mask);
 	if (plen == -1)
 		return (EINVAL);
@@ -830,7 +831,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 		return (EAFNOSUPPORT);
 	ar = tbl->r_art;
 
-	addr = satoaddr(ar, dst);
+	addr = satoaddr(tbl, dst);
 
 	rw_enter_write(&ar->ar_lock);
 	an = art_lookup(ar, addr, plen, &sr);
@@ -930,9 +931,9 @@ rtentry_unref(void *null, void *xrt)
  * of "struct sockaddr" used by this routing table.
  */
 static inline const uint8_t *
-satoaddr(struct art_root *at, const struct sockaddr *sa)
+satoaddr(struct rtable *tbl, const struct sockaddr *sa)
 {
-	return (((const uint8_t *)sa) + at->ar_off);
+	return (((const uint8_t *)sa) + tbl->r_off);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.32 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: art.c,v 1.33 2025/07/07 07:09:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -84,7 +84,7 @@ art_init(void)
  * Per routing table initialization API function.
  */
 struct art_root *
-art_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
+art_alloc(unsigned int rtableid, unsigned int alen)
 {
 	struct art_root		*ar;
 	int			 i;
@@ -113,7 +113,6 @@ art_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 		return (NULL);
 	}
 
-	ar->ar_off = off;
 	rw_init(&ar->ar_lock, "art");
 
 	return (ar);

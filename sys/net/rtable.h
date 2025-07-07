@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.32 2025/07/07 06:51:45 dlg Exp $ */
+/*	$OpenBSD: rtable.h,v 1.33 2025/07/07 07:09:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -29,6 +29,7 @@ struct art_root;
 
 struct rtable {
 	struct art_root		*r_art;		/* [I] */
+	unsigned int		 r_off;		/* [I] Offset of key in bytes */
 
 	struct sockaddr		*r_source;	/* [N] use optional src addr */
 };
