@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.186 2025/07/08 12:19:08 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.187 2025/07/08 13:25:54 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1106,9 +1106,6 @@ cert_check_sigalg(const char *fn, const struct cert *cert)
 {
 	const X509		*x = cert->x509;
 	const X509_ALGOR	*alg = NULL, *tbsalg;
-	const ASN1_OBJECT	*aobj = NULL;
-	int			 ptype = 0;
-	int nid;
 
 	/* Retrieve AlgorithmIdentifiers from Certificate and TBSCertificate. */
 	X509_get0_signature(NULL, &alg, x);
@@ -1128,48 +1125,7 @@ cert_check_sigalg(const char *fn, const struct cert *cert)
 		return 0;
 	}
 
-	X509_ALGOR_get0(&aobj, &ptype, NULL, tbsalg);
-	if ((nid = OBJ_obj2nid(aobj)) == NID_undef) {
-		warnx("%s: unknown signature type", fn);
-		return 0;
-	}
-
-	if (nid == NID_sha256WithRSAEncryption) {
-		/*
-		 * Correct encoding of parameters is explicit ASN.1 NULL
-		 * (V_ASN1_NULL), but implementations MUST accept absent
-		 * parameters due to an ASN.1 syntax translation mishap,
-		 * see, e.g., RFC 4055, 2.1.
-		 */
-		if (ptype != V_ASN1_NULL && ptype != V_ASN1_UNDEF) {
-			warnx("%s: RFC 4055, 5: wrong ASN.1 parameters for %s",
-			    fn, LN_sha256WithRSAEncryption);
-			return 0;
-		}
-		/*
-		 * As of July 2025, there still are ~1600 ROA EE certs with this
-		 * faulty encoding, all issued by ARIN before September 2020.
-		 */
-		if (verbose > 1 && ptype == V_ASN1_UNDEF)
-			warnx("%s: RFC 4055, 5: %s without ASN.1 parameters",
-			    fn, LN_sha256WithRSAEncryption);
-		return 1;
-	}
-
-	if (experimental && nid == NID_ecdsa_with_SHA256) {
-		if (ptype != V_ASN1_UNDEF) {
-			warnx("%s: RFC 5758, 3.2: %s encoding MUST omit "
-			    "the parameters", fn, SN_ecdsa_with_SHA256);
-			return 0;
-		}
-		if (verbose)
-			warnx("%s: P-256 support is experimental", fn);
-		return 1;
-	}
-
-	warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
-	    fn, nid2str(nid), LN_sha256WithRSAEncryption);
-	return 0;
+	return x509_check_tbs_sigalg(fn, tbsalg);
 }
 
 static int

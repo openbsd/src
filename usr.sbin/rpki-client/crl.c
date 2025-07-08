@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.49 2025/06/25 16:24:44 job Exp $ */
+/*	$OpenBSD: crl.c,v 1.50 2025/07/08 13:25:54 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -172,6 +172,33 @@ crl_check_revoked(const char *fn, X509_CRL *x509_crl)
 	return 1;
 }
 
+static int
+crl_check_sigalg(const char *fn, const struct crl *crl)
+{
+	const X509_CRL		*x = crl->x509_crl;
+	const X509_ALGOR	*alg = NULL, *tbsalg;
+
+	/* Retrieve AlgorithmIdentifier from CertificateList and TBSCertList. */
+	X509_CRL_get0_signature(x, NULL, &alg);
+	if (alg == NULL) {
+		warnx("%s: missing signatureAlgorithm in certificateList", fn);
+		return 0;
+	}
+	if ((tbsalg = X509_CRL_get0_tbs_sigalg(x)) == NULL) {
+		warnx("%s: missing signature in tbsCertList", fn);
+		return 0;
+	}
+
+	/* Unlike X509_verify(), X509_CRL_verify() does not check this. */
+	if (X509_ALGOR_cmp(alg, tbsalg) != 0) {
+		warnx("%s: RFC 5280, 5.1.1.2: signatureAlgorithm and signature "
+		    "AlgorithmIdentifier mismatch", fn);
+		return 0;
+	}
+
+	return x509_check_tbs_sigalg(fn, tbsalg);
+}
+
 struct crl *
 crl_parse(const char *fn, const unsigned char *der, size_t len)
 {
@@ -179,7 +206,7 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 	struct crl		*crl;
 	const X509_NAME		*name;
 	const ASN1_TIME		*at;
-	int			 count, nid, rc = 0;
+	int			 count, rc = 0;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
@@ -210,18 +237,8 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 	if (!x509_valid_name(fn, "issuer", name))
 		goto out;
 
-	if ((nid = X509_CRL_get_signature_nid(crl->x509_crl)) == NID_undef) {
-		warnx("%s: unknown signature type", fn);
+	if (!crl_check_sigalg(fn, crl))
 		goto out;
-	}
-	if (experimental && nid == NID_ecdsa_with_SHA256) {
-		if (verbose)
-			warnx("%s: P-256 support is experimental", fn);
-	} else if (nid != NID_sha256WithRSAEncryption) {
-		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
-		    fn, nid2str(nid), LN_sha256WithRSAEncryption);
-		goto out;
-	}
 
 	/*
 	 * RFC 6487, section 5: AKI and crlNumber MUST be present, no other

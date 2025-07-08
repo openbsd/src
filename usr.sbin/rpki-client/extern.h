@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.243 2025/06/30 14:20:26 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.244 2025/07/08 13:25:54 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -958,6 +958,7 @@ char		*x509_convert_seqnum(const char *, const char *,
 		    const ASN1_INTEGER *);
 int		 x509_valid_seqnum(const char *, const char *,
 		    const ASN1_INTEGER *);
+int		 x509_check_tbs_sigalg(const char *, const X509_ALGOR *);
 int		 x509_location(const char *, const char *, GENERAL_NAME *,
 		    char **);
 int		 x509_inherits(X509 *);
