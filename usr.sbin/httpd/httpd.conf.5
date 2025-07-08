@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.126 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.127 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -28,15 +28,15 @@ is the configuration file for the HTTP daemon,
 .Nm
 is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr httpd 8 .
-.It Sy Servers
+.It Sx Servers
 Listening HTTP web servers.
-.It Sy Types
+.It Sx Types
 Media types and extensions.
 .El
 .Pp
@@ -84,7 +84,7 @@ keyword, for example:
 .Bd -literal -offset indent
 include "/etc/httpd.conf.local"
 .Ed
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -107,7 +107,7 @@ server "example.com" {
 	listen on $ext_ip port 80
 }
 .Ed
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 Here are the settings that can be set globally:
 .Bl -tag -width Ds
 .It Ic chroot Ar directory
@@ -122,7 +122,7 @@ Set the default media type that is used if the media type for a
 specified extension is not found in the configured types or for files
 without a file extension;
 see the
-.Sx TYPES
+.Sx Types
 section below.
 If not specified, the default type is set to
 .Ar application/octet-stream .
@@ -178,7 +178,7 @@ to a server.
 .Xr httpd 8
 runs 3 server processes by default.
 .El
-.Sh SERVERS
+.Ss Servers
 The configured web servers.
 .Pp
 Each
@@ -729,7 +729,7 @@ It is possible to set
 to default to use the httpd default timeout of 2 hours.
 .El
 .El
-.Sh TYPES
+.Ss Types
 Configure the supported media types.
 .Xr httpd 8
 will set the

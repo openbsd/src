@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dvmrpd.conf.5,v 1.13 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: dvmrpd.conf.5,v 1.14 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt DVMRPD.CONF 5
 .Os
 .Sh NAME
@@ -33,17 +33,17 @@ The
 .Nm
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr dvmrpd 8 .
 A number of global settings can be overruled in specific areas or interfaces.
-.It Sy Groups
+.It Sx Groups
 Groups are used to group similar interfaces, simplifying configuration.
 .El
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -71,7 +71,7 @@ group {
 .Pp
 The same can be accomplished by specifying the query-interval
 globally or within the group declaration.
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 All interface related settings can be configured globally, per group and per
 interface.
 The only settings that can be set globally and not overruled are listed below.
@@ -87,7 +87,7 @@ daemon.
 The default is
 .Ic yes .
 .El
-.Sh GROUPS
+.Ss Groups
 Groups can be used to easily configure similar interfaces.
 All interface-specific parameters can
 be configured per group, overruling the global settings.
@@ -103,7 +103,7 @@ group {
 }
 .Ed
 .El
-.Sh INTERFACES
+.Ss Interfaces
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
 .Bd -literal -offset indent

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.30 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.31 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -28,12 +28,12 @@ The
 .Nm
 file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Authorities
+.It Sx Authorities
 Certificate authorities (CAs) that can be contacted via ACME.
-.It Sy Domains
+.It Sx Domains
 Certificate specifications.
 .El
 .Pp
@@ -54,7 +54,7 @@ the comment is effective until the end of the entire block.
 .Pp
 Argument names not beginning with a letter, digit, underscore, or '/'
 must be quoted.
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -73,7 +73,7 @@ authority letsencrypt {
 	account key "/etc/acme/letsencrypt-privkey.pem"
 }
 .Ed
-.Sh AUTHORITIES
+.Ss Authorities
 The configured certificate authorities.
 .Pp
 Each authority section starts with a declaration of the name identifying a
@@ -108,7 +108,7 @@ Optional
 URLs that the authority can use to contact the client for issues related to
 this account.
 .El
-.Sh DOMAINS
+.Ss Domains
 The certificates to be obtained through ACME.
 .Bl -tag -width Ds
 .It Ic domain Ar handle Brq ...
@@ -193,7 +193,7 @@ is created if
 exists.
 .It Ic sign with Ar authority
 The certificate authority (as declared above in the
-.Sx AUTHORITIES
+.Sx Authorities
 section) to use.
 If this setting is absent, the first authority specified is used.
 .It Ic challengedir Ar path

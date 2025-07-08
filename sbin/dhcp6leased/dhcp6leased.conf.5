@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp6leased.conf.5,v 1.5 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: dhcp6leased.conf.5,v 1.6 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2018, 2021, 2024 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt DHCP6LEASED.CONF 5
 .Os
 .Sh NAME
@@ -34,20 +34,20 @@ The
 .Nm
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr dhcp6leased 8 .
-.It Sy Prefix delegation
+.It Sx Prefix delegation
 .Xr dhcp6leased 8
 requests prefix delegation from a DHCPv6 server and assigns prefixes
 to interfaces.
 This section defines on which interfaces prefix delegation should be
 requested and to which interfaces prefixes should be assigned.
 .El
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -59,7 +59,7 @@ Within unquoted arguments, the string
 .Pf $ Ar name
 is later expanded to
 .Ar value .
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 These settings affect the operation of the
 .Xr dhcp6leased 8
 daemon as a whole.
@@ -68,7 +68,7 @@ daemon as a whole.
 Send the rapid commit DHCPv6 option, requesting a two-message exchange
 from the server instead of the normal four-message exchange.
 .El
-.Sh PREFIX DELEGATION
+.Ss Prefix delegation
 A list of interfaces on which to request prefix delegation:
 .Bl -tag -width Ds
 .It Ic request prefix delegation on Ar name Ic for Brq Ar name Ns Oo / Ns Ar prefix Oc Ar ...

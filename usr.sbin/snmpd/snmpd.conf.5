@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.65 2025/07/07 20:56:49 schwarze Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.66 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -30,15 +30,15 @@ The
 .Nm
 file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global runtime settings for
 .Xr snmpd 8 .
-.It Sy User Configuration
+.It Sx User configuration
 USM user definitions.
-.It Sy OID Configuration
+.It Sx OID configuration
 Custom configuration of SNMP object identifiers and values.
 .El
 .Pp
@@ -59,7 +59,7 @@ keyword, for example:
 .Bd -literal -offset indent
 include "/etc/snmpd.conf.local"
 .Ed
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -80,7 +80,7 @@ For example:
 ext_addr="192.168.0.1"
 listen on $ext_addr
 .Ed
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 The following options can be set globally:
 .Bl -tag -width Ds
 .It Ic blocklist Ar oid
@@ -377,7 +377,7 @@ option.
 The IPv4 or IPv6 source address of the traps can be enforced using
 .Ic source-address .
 .El
-.Sh USER CONFIGURATION
+.Ss User configuration
 Users for the SNMP User-based Security Model (USM, RFC 3414) must be
 defined in the configuration file:
 .Bl -tag -width xxxx
@@ -425,7 +425,7 @@ and defaults to
 Any user account that has encryption enabled requires authentication to
 be enabled too.
 .El
-.Sh OID CONFIGURATION
+.Ss OID configuration
 It is possible to specify user-defined OIDs in the configuration file:
 .Bl -tag -width Ds
 .It Xo

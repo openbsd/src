@@ -1,4 +1,4 @@
-.\" $OpenBSD: iscsi.conf.5,v 1.6 2025/07/07 20:56:48 schwarze Exp $
+.\" $OpenBSD: iscsi.conf.5,v 1.7 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt ISCSI.CONF 5
 .Os
 .Sh NAME
@@ -32,13 +32,13 @@ The
 .Nm
 configuration file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr iscsid 8 .
-.It Sy Target Configuration
+.It Sx Target configuration
 Target-specific parameters.
 .El
 .Pp
@@ -64,7 +64,7 @@ keyword, for example:
 .Bd -literal -offset indent
 include "/etc/iscsi-target.conf"
 .Ed
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -86,7 +86,7 @@ target "disk1" {
         targetaddr $target1
 }
 .Ed
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 There are a few settings that affect the operation of the
 .Xr iscsid 8
 daemon globally.
@@ -128,7 +128,7 @@ and a 16-bit
 .Ar qual
 qualifier.
 .El
-.Sh TARGET CONFIGURATION
+.Ss Target configuration
 .Xr iscsid 8
 establishes TCP connections to iSCSI targets.
 Each target is specified by a

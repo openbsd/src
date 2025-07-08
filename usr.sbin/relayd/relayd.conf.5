@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.212 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.213 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -29,33 +29,33 @@ is the configuration file for the relay daemon,
 .Nm
 is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr relayd 8 .
 Do note that the config file allows global settings to be added after
 defining tables in the config file, but those tables will use the
 built-in defaults instead of the global settings below them.
-.It Sy Tables
+.It Sx Tables
 Table definitions describe a list of hosts,
 in a similar fashion to
 .Xr pf 4
 tables.
 They are used for relay, redirection, and router target selection with
 the described options and health checking on the host they contain.
-.It Sy Redirections
+.It Sx Redirections
 Redirections are translated to
 .Xr pf 4
 rdr-to rules for stateful forwarding to a target host from a
 health-checked table on layer 3.
-.It Sy Relays
+.It Sx Relays
 Relays allow application layer load balancing, TLS acceleration, and
 general purpose TCP proxying on layer 7.
-.It Sy Protocols
+.It Sx Protocols
 Protocols are predefined settings and filter rules for relays.
-.It Sy Routers
+.It Sx Routers
 Routers are used to insert routes with health-checked gateways for
 (WAN) link balancing.
 .El
@@ -95,7 +95,7 @@ keyword, for example:
 .Bd -literal -offset indent
 include "/etc/relayd.conf.local"
 .Ed
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -120,7 +120,7 @@ table <webhosts> {
 	$www2
 }
 .Ed
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 Here are the settings that can be set globally:
 .Bl -tag -width Ds
 .It Ic agentx Oo Ic context Ar context Oc Oo Ic path Ar path Oc
@@ -189,7 +189,7 @@ same collision domain \(en use a higher timeout, such as 1000 milliseconds,
 for checks of hosts in other subnets.
 If this option is to be set, it should be placed before overrides in tables.
 .El
-.Sh TABLES
+.Ss Tables
 Tables are used to group a set of hosts as the target for redirections
 or relays; they will be mapped to a
 .Xr pf 4
@@ -253,9 +253,9 @@ Tables are used by
 directives in redirections or relays with a set of general options,
 health-checking rules, and timings;
 see the
-.Sx REDIRECTIONS
+.Sx Redirections
 and
-.Sx RELAYS
+.Sx Relays
 sections for more information about the forward context.
 Table specific configuration directives are described below.
 Multiple options can be appended to
@@ -441,7 +441,7 @@ IP address and port of the relay.
 Additional input can be fed into the
 hash by looking at HTTP headers and GET variables;
 see the
-.Sx PROTOCOLS
+.Sx Protocols
 section below.
 This mode is only supported by relays.
 .It Ic mode least-states
@@ -483,7 +483,7 @@ or as a string.
 If omitted,
 .Xr relayd 8
 generates a random key when the configuration is loaded.
-.Sh REDIRECTIONS
+.Ss Redirections
 Redirections represent a
 .Xr pf 4
 rdr-to rule.
@@ -507,7 +507,7 @@ It can be later enabled through
 .Ar options ...
 .Xc
 Specify the tables of target hosts to be used; see the
-.Sx TABLES
+.Sx Tables
 section above for information about table options.
 If the
 .Ic port
@@ -599,7 +599,7 @@ for an rdr-to rule in
 It will ensure that multiple connections from the same source are
 mapped to the same redirection address.
 .El
-.Sh RELAYS
+.Ss Relays
 Relays will forward traffic between a client and a target server.
 In contrast to redirections and IP forwarding in the network stack, a
 relay will accept incoming connections from remote clients as a
@@ -682,7 +682,7 @@ more times.
 .Xc
 Like the previous directive, but connect to a host from the specified
 table; see the
-.Sx TABLES
+.Sx Tables
 section above for information about table options.
 This directive can be specified multiple times \(en subsequent entries
 will be used as the backup table if all hosts in the previous table
@@ -729,14 +729,14 @@ encrypted TLS protocol.
 Use the specified protocol definition for the relay.
 The generic TCP protocol options will be used by default;
 see the
-.Sx PROTOCOLS
+.Sx Protocols
 section below.
 .It Ic session timeout Ar seconds
 Specify the inactivity timeout in seconds for accepted sessions.
 The default timeout is 600 seconds (10 minutes).
 The maximum is 2147483647 seconds (68 years).
 .El
-.Sh TLS RELAYS
+.Ss TLS relays
 In addition to plain TCP,
 .Xr relayd 8
 supports the Transport Layer Security (TLS) cryptographic protocol for
@@ -758,7 +758,7 @@ of plain TCP connections.
 See the
 .Ic forward to
 description in the
-.Sx RELAYS
+.Sx Relays
 section for more details.
 .It Ic TLS server
 When specifying the
@@ -773,7 +773,7 @@ This mode is also known as
 See the
 .Ic listen on
 description in the
-.Sx RELAYS
+.Sx Relays
 section for more details.
 .It Ic TLS client and server
 When combining both modes, TLS server and client,
@@ -785,7 +785,7 @@ The configuration requires additional X.509 certificate settings;
 see the
 .Ic ca key
 description in the
-.Sx PROTOCOLS
+.Sx Protocols
 section for more details.
 .El
 .Pp
@@ -810,7 +810,7 @@ validation attributes.
 Now it finally accepts the TLS connection from the diverted client
 using the updated certificate and continues to handle the connection
 and to connect to the remote server.
-.Sh PROTOCOLS
+.Ss Protocols
 Protocols are templates defining settings and rules for relays.
 They allow setting generic TCP options, TLS settings, and rules
 for the selected application layer protocol.
@@ -848,7 +848,7 @@ The available configuration directives are described below:
 Specify one or more rules to filter connections based on their
 network or application layer headers;
 see the
-.Sx FILTER RULES
+.Sx Filter rules
 section for more details.
 .It Ic return error Op Ar option
 Return an error response to the client if an internal operation or the
@@ -1063,7 +1063,7 @@ The default is
 .Ic no websockets .
 .El
 .El
-.Sh FILTER RULES
+.Ss Filter rules
 Relays have the ability to filter connections based
 on their network or application layer headers.
 Filter rules apply options to connections based on the specified
@@ -1144,7 +1144,7 @@ With this option, requests can be passed to specific backend servers.
 A corresponding
 .Ic forward to
 declaration in the
-.Sx RELAYS
+.Sx Relays
 section is required.
 .It Ic label Ar string
 The label will be printed as part of the error message if the
@@ -1391,7 +1391,7 @@ target host.
 See the
 .Ic table
 keyword in the
-.Sx RELAYS
+.Sx Relays
 section above.
 .It Ic log
 Log the
@@ -1420,7 +1420,7 @@ as detailed for the
 .Ic append
 directive above.
 .El
-.Sh ROUTERS
+.Ss Routers
 Routers represent routing table entries in the kernel forwarding
 database, see
 .Xr route 4 ,
@@ -1460,7 +1460,7 @@ context are described below:
 .Ar options ...
 .Xc
 Specify the table of target gateways to be used; see the
-.Sx TABLES
+.Sx Tables
 section above for information about table options.
 This entry is mandatory and must be specified once.
 .It Xo
@@ -1617,7 +1617,7 @@ relay "sshforward" {
 The following relay example will configure
 .Dq TLS inspection
 as described in the
-.Sx TLS RELAYS
+.Sx TLS relays
 section.
 To start, first generate a new local CA key and certificate:
 .Bd -literal -offset indent
@@ -1629,7 +1629,7 @@ A TLS server key and self-signed cert for 127.0.0.1 are also required;
 see
 .Ic listen on
 in the
-.Sx RELAYS
+.Sx Relays
 section for more details about certificate locations.
 Configure the packet filter with a matching divert rule in
 .Xr pf.conf 5 :

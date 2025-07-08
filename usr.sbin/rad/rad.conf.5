@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.30 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.31 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -33,10 +33,10 @@ The
 .Nm
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr rad 8 .
 These are used as default values for
@@ -44,7 +44,7 @@ These are used as default values for
 definitions and can be overwritten in an
 .Ic interface
 block.
-.It Sy Interfaces
+.It Sx Interfaces
 .Xr rad 8
 sends IPv6 router advertisement messages.
 This section defines on which interfaces to advertise prefix information
@@ -54,7 +54,7 @@ and their associated parameters.
 Additional configuration files can be included with the
 .Ic include
 keyword.
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -66,7 +66,7 @@ Within unquoted arguments, the string
 .Pf $ Ar name
 is later expanded to
 .Ar value .
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 The global configuration section sets defaults for router advertisement
 messages.
 These can be overwritten in interface blocks.
@@ -147,7 +147,7 @@ communicate the link-layer address of the sending interface.
 The default is
 .Cm yes .
 .El
-.Sh INTERFACES
+.Ss Interfaces
 A list of interfaces or interface groups to send advertisements on:
 .Bl -tag -width Ds
 .It Ic interface Ar name Op Brq Ar prefix ...

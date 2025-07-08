@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.65 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.66 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -33,14 +33,14 @@ The
 .Nm
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr ospfd 8 .
 A number of global settings can be overruled in specific areas or interfaces.
-.It Sy Areas
+.It Sx Areas
 An OSPF router must be a member of at least one area.
 Areas are used to group interfaces, simplifying configuration.
 .El
@@ -54,7 +54,7 @@ keyword, for example:
 .Bd -literal -offset indent
 include "/etc/ospfd.sub.conf"
 .Ed
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -82,7 +82,7 @@ area 0.0.0.0 {
 .Pp
 The same can be accomplished by specifying the hello-interval
 globally or within the area declaration.
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 All interface related settings can be configured globally, per area and per
 interface.
 The only settings that can be set globally and not overruled are listed below.
@@ -257,7 +257,7 @@ variable
 .Va net.inet.ip.forwarding
 is set to a value other than 1 or if the FIB is not coupled.
 .El
-.Sh AREAS
+.Ss Areas
 Areas are used for grouping interfaces.
 All interface-specific parameters can
 be configured per area, overruling the global settings.
@@ -311,7 +311,7 @@ enabled by specifying the default redistribute option.
 A default summary LSA will only be redistributed if the router has an active
 connection to the backbone area 0.0.0.0.
 .El
-.Sh INTERFACES
+.Ss Interfaces
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
 An interface is specified by its name.

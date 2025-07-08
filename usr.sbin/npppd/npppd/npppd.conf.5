@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.35 2024/07/11 14:05:59 yasuoka Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.36 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 11 2024 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -29,22 +29,22 @@ is the configuration file for the PPP daemon
 is divided into the following main sections:
 .Pp
 .Bl -tag -width "AuthenticationXXX" -offset indent -compact
-.It Sy Global
+.It Sx Global
 Global settings.
-.It Sy Tunnel
+.It Sx Tunnel
 Tunneling protocol and PPP settings.
-.It Sy IPCP
+.It Sx IPCP
 Internet Protocol Configuration Protocol (IPCP) of PPP.
-.It Sy Interface
+.It Sx Interface
 Interface settings.
-.It Sy Authentication
+.It Sx Authentication
 Authentication settings.
-.It Sy Bind
+.It Sx Bind
 Bind settings.
-.It Sy RADIUS
+.It Sx RADIUS
 RADIUS settings.
 .El
-.Sh GLOBAL
+.Ss Global
 The global options are as follows:
 .Bl -tag -width Ds
 .It Ic set max-session Ar number
@@ -58,7 +58,7 @@ Specify the maximum number of sessions for each user.
 means no limit.
 The default value is 0.
 .El
-.Sh TUNNEL
+.Ss Tunnel
 The
 .Ic tunnel
 setting is described below:
@@ -474,7 +474,7 @@ dumps sent PPPoE session packets for debug.
 The default is
 .Dq no .
 .El
-.Sh IPCP
+.Ss IPCP
 The
 .Ic ipcp
 setting is described below:
@@ -536,7 +536,7 @@ setting.
 means no limit.
 The default value is 0.
 .El
-.Sh INTERFACE
+.Ss Interface
 The
 .Ic interface
 setting is described below:
@@ -559,7 +559,7 @@ setting name that is used with this interface.
 The maximum number of
 .Ic interface
 settings is 8.
-.Sh AUTHENTICATION
+.Ss Authentication
 The
 .Ic authentication
 setting is described below:
@@ -655,7 +655,7 @@ Specify the maximum number of sessions for each user for this
 .Ic authentication
 setting.
 .El
-.Sh BIND
+.Ss Bind
 .Ic bind
 describes a group of
 .Ar tunnel ,
@@ -666,7 +666,7 @@ settings so that they are used together.
 .Pp
 .Ic bind tunnel from Ar tunnel Ic authenticated by Ar authentication
 .Ic to Ar ifname
-.Sh RADIUS
+.Ss RADIUS
 .Ic radius
 configures the RADIUS features.
 The supported options are as follows:

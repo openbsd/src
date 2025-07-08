@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.43 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.44 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -34,21 +34,21 @@ The
 .Nm
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr ldpd 8 .
-.It Sy Address-Family Configuration
+.It Sx Address-family configuration
 Address-family specific parameters.
-.It Sy Interfaces Configuration
+.It Sx Interfaces configuration
 Interface-specific parameters.
-.It Sy Targeted Neighbors Configuration
+.It Sx Targeted neighbors configuration
 Targeted neighbor specific parameters.
-.It Sy Neighbors Configuration
+.It Sx Neighbors configuration
 Neighbor-specific parameters.
-.It Sy Layer 2 VPNs Configuration
+.It Sx Layer 2 VPNs configuration
 Layer 2 VPNs parameters as per RFC 4447.
 .El
 .Pp
@@ -61,7 +61,7 @@ keyword, for example:
 .Bd -literal -offset indent
 include "/etc/ldpd.sub.conf"
 .Ed
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -73,7 +73,7 @@ Within unquoted arguments, the string
 .Pf $ Ar name
 is later expanded to
 .Ar value .
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 Several settings can be configured globally or within a more restricted scope,
 like per address-family or per interface.
 The only settings that can be set globally and not overruled are listed below.
@@ -142,7 +142,7 @@ be established.
 The default is
 .Ic ipv6 .
 .El
-.Sh ADDRESS-FAMILY CONFIGURATION
+.Ss Address-family configuration
 Each address-family can have several parameters configured
 individually, otherwise they are inherited.
 .Bd -literal -offset indent
@@ -208,7 +208,7 @@ Set the local address to be used in the TCP sessions.
 For the IPv4 address-family, the router-id will be used if this option is not specified.
 For the IPv6 address-family, this option must be specified.
 .El
-.Sh INTERFACES
+.Ss Interfaces configuration
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
 .Bd -literal -offset indent
@@ -233,7 +233,7 @@ The default value is 15; valid range is 3\-65535.
 Set the hello interval in seconds.
 The default value is 5; valid range is 1\-65535.
 .El
-.Sh TARGETED NEIGHBORS
+.Ss Targeted neighbors configuration
 Each targeted neighbor can have several parameters configured individually,
 otherwise they are inherited.
 .Bd -literal -offset indent
@@ -261,7 +261,7 @@ The default value is 45.
 Set the hello interval in seconds.
 The default value is 5; valid range is 1\-65535.
 .El
-.Sh NEIGHBORS
+.Ss Neighbors configuration
 The
 .Ic neighbor
 section allows for the configuration of neighbor-specific parameters.
@@ -300,7 +300,7 @@ Enable TCP MD5 signatures per RFC 5036 with the specified hexadecimal key.
 .It Ic no tcp md5sig
 Disable the use of TCP MD5 signatures.
 .El
-.Sh LAYER 2 VPNS
+.Ss Layer 2 VPNs configuration
 .Xr ldpd 8
 implements the signaling of pseudowires which can be used to
 implement either the VPWS solution (also known as PWE3) or the VPLS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.16 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.17 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt DHCPLEASED.CONF 5
 .Os
 .Sh NAME
@@ -33,15 +33,15 @@ The
 .Nm
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Interfaces
+.It Sx Interfaces
 If an interface requires non-default options, they can be defined in
 this section.
 Most configurations do not require this.
 .El
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -53,7 +53,7 @@ Within unquoted arguments, the string
 .Pf $ Ar name
 is later expanded to
 .Ar value .
-.Sh INTERFACES
+.Ss Interfaces
 A list of interfaces to overwrite defaults:
 .Bl -tag -width Ds
 .It Ic interface Ar name Brq Ar option ...

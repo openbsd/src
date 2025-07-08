@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eigrpd.conf.5,v 1.12 2025/07/07 20:56:48 schwarze Exp $
+.\"	$OpenBSD: eigrpd.conf.5,v 1.13 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt EIGRPD.CONF 5
 .Os
 .Sh NAME
@@ -33,17 +33,17 @@ The
 .Nm
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr eigrpd 8 .
-.It Sy Routing Instances
+.It Sx Routing instances
 Multiple routing instances can be defined.
 Routing instances are defined hierarchically
 by address-family and then autonomous-system.
-.It Sy Interfaces Configuration
+.It Sx Interfaces configuration
 Interface-specific parameters.
 .El
 .Pp
@@ -56,7 +56,7 @@ keyword, for example:
 .Bd -literal -offset indent
 include "/etc/eigrpd.sub.conf"
 .Ed
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -86,7 +86,7 @@ address-family ipv4 {
 .Pp
 The same can be accomplished by specifying the bandwidth
 globally or within the address-family or autonomous-system declaration.
-.Sh GLOBAL CONFIGURATION
+.Sx Global configuration
 Several settings can be configured globally, per address-family, per
 autonomous-system and per interface.
 The only settings that can be set globally and not overruled are listed below.
@@ -124,7 +124,7 @@ Table 0 is the default table.
 Set the router ID; if not specified, the numerically lowest IP address of
 the router will be used.
 .El
-.Sh ROUTING INSTANCES
+.Ss Routing instances
 Multiple routing instances can be defined.
 Routing instances are defined hierarchically
 by address-family and then autonomous-system.
@@ -227,7 +227,7 @@ FIB if their metric is lower than the metric of the successor multiplied by the
 specified multiplier.
 The default value is 1; valid range is 1\-128.
 .El
-.Sh INTERFACES
+.Ss Interfaces configuration
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
 Interfaces can pertain to multiple routing instances.

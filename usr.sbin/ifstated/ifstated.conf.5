@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.conf.5,v 1.17 2025/07/07 20:56:48 schwarze Exp $
+.\" $OpenBSD: ifstated.conf.5,v 1.18 2025/07/08 14:26:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2005 Nikolay Sturm <sturm@openbsd.org>
 .\" Copyright (c) 2005 Marco Pfatschbacher <mpf@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt IFSTATED.CONF 5
 .Os
 .Sh NAME
@@ -33,23 +33,23 @@ The
 .Nm
 config file is divided into the following main sections:
 .Bl -tag -width xxxx
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr ifstated 8 .
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy State Definitions
+.It Sx State definitions
 Definitions of states and transitions.
 .El
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 .Bl -tag -width Ds
 .It Ic init-state Ar state
 Set the initial state to
 .Ar state
 instead of using the first state defined.
 .El
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -101,7 +101,7 @@ links_up = "em0.link.up && em1.link.up"
 net = '( "ping -q -c 1 -w 1 192.168.0.1 > /dev/null" every 10 && \e
          "ping -q -c 1 -w 1 192.168.0.2 > /dev/null" every 10 )'
 .Ed
-.Sh TESTS AND EVENTS
+.Ss Tests and events
 .Xr ifstated 8
 delegates the process of testing to libevent which associates a value with
 every test, in this case
@@ -110,7 +110,7 @@ or
 .Em false .
 Whenever the value of a test associated with the current state changes,
 an event is triggered and the state's body is processed.
-.Sh STATE DEFINITIONS
+.Ss State definitions
 .Xr ifstated 8
 operates on a finite state machine with states and transitions.
 .Pp
