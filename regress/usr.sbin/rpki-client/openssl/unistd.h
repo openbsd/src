@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.2 2024/09/04 07:52:45 tb Exp $ */
+/*	$OpenBSD: unistd.h,v 1.3 2025/07/08 12:20:19 tb Exp $ */
 /*
  * Public domain
  * compatibility shim for OpenSSL 3
@@ -26,4 +26,13 @@ CMS_SignerInfo_get_version(CMS_SignerInfo *si, long *version)
 {
 	*version = 3;
 	return 1;
+}
+
+static inline const X509_ALGOR *
+X509_CRL_get0_tbs_sigalg(const X509_CRL *crl)
+{
+	const X509_ALGOR *alg = NULL;
+
+	X509_CRL_get0_signature(crl, NULL, &alg);
+	return alg;
 }
