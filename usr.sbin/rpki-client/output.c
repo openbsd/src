@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.40 2025/04/03 14:29:44 tb Exp $ */
+/*	$OpenBSD: output.c,v 1.41 2025/07/08 14:19:21 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -63,9 +63,7 @@ static char	 output_name[PATH_MAX];
 static const struct outputs {
 	int	 format;
 	char	*name;
-	int	(*fn)(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
-		    struct stats *);
+	int	(*fn)(FILE *, struct validation_data *, struct stats *);
 } outputs[] = {
 	{ FORMAT_OPENBGPD, "openbgpd", output_bgpd },
 	{ FORMAT_BIRD, "bird", output_bird },
@@ -124,8 +122,7 @@ prune_as0_tals(struct vrp_tree *vrps)
 }
 
 int
-outputfiles(struct vrp_tree *v, struct brk_tree *b, struct vap_tree *a,
-    struct vsp_tree *p, struct nca_tree *ncas, struct stats *st)
+outputfiles(struct validation_data *vd, struct stats *st)
 {
 	int i, rc = 0;
 
@@ -133,7 +130,7 @@ outputfiles(struct vrp_tree *v, struct brk_tree *b, struct vap_tree *a,
 	set_signal_handler();
 
 	if (excludeas0)
-		prune_as0_tals(v);
+		prune_as0_tals(&vd->vrps);
 
 	for (i = 0; outputs[i].name; i++) {
 		FILE *fout;
@@ -147,7 +144,7 @@ outputfiles(struct vrp_tree *v, struct brk_tree *b, struct vap_tree *a,
 			rc = 1;
 			continue;
 		}
-		if ((*outputs[i].fn)(fout, v, b, a, p, ncas, st) != 0) {
+		if ((*outputs[i].fn)(fout, vd, st) != 0) {
 			warn("output for %s format failed", outputs[i].name);
 			fclose(fout);
 			output_cleantmp();

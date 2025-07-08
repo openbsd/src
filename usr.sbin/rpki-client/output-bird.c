@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.23 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.24 2025/07/08 14:19:21 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -21,9 +21,7 @@
 #include "extern.h"
 
 int
-output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct vap_tree *vaps, struct vsp_tree *vsps, struct nca_tree *ncas,
-    struct stats *st)
+output_bird(FILE *out, struct validation_data *vd, struct stats *st)
 {
 	struct vrp	*v;
 	struct vap	*vap;
@@ -49,7 +47,7 @@ output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	    "\troa4 { table ROAS4; };\n\n") < 0)
 		return -1;
 
-	RB_FOREACH(v, vrp_tree, vrps) {
+	RB_FOREACH(v, vrp_tree, &vd->vrps) {
 		char buf[64];
 
 		if (v->afi == AFI_IPV4) {
@@ -64,7 +62,7 @@ output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	    "\troa6 { table ROAS6; };\n\n") < 0)
 		return -1;
 
-	RB_FOREACH(v, vrp_tree, vrps) {
+	RB_FOREACH(v, vrp_tree, &vd->vrps) {
 		char buf[64];
 
 		if (v->afi == AFI_IPV6) {
@@ -85,7 +83,7 @@ output_bird(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	    "};\n\n") < 0)
 		return -1;
 
-	RB_FOREACH(vap, vap_tree, vaps) {
+	RB_FOREACH(vap, vap_tree, &vd->vaps) {
 		if (vap->overflowed)
 			continue;
 		if (fprintf(out, "\troute aspa %d providers ",

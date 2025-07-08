@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.244 2025/07/08 13:25:54 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.245 2025/07/08 14:19:21 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -501,6 +501,14 @@ struct brk {
 RB_HEAD(brk_tree, brk);
 RB_PROTOTYPE(brk_tree, brk, entry, brkcmp);
 
+struct validation_data {
+	struct vrp_tree	vrps;
+	struct brk_tree	brks;
+	struct vap_tree	vaps;
+	struct vsp_tree	vsps;
+	struct nca_tree ncas;
+};
+
 /*
  * A single CRL
  */
@@ -996,24 +1004,13 @@ extern int	 outformats;
 #define FORMAT_JSON	0x08
 #define FORMAT_OMETRIC	0x10
 
-int		 outputfiles(struct vrp_tree *v, struct brk_tree *b,
-		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
-		    struct stats *);
+int		 outputfiles(struct validation_data *, struct stats *);
 int		 outputheader(FILE *, struct stats *);
-int		 output_bgpd(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
-		    struct stats *);
-int		 output_bird(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
-		    struct stats *);
-int		 output_csv(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
-		    struct stats *);
-int		 output_json(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
-		    struct stats *);
-int		 output_ometric(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct vap_tree *, struct vsp_tree *, struct nca_tree *,
+int		 output_bgpd(FILE *, struct validation_data *, struct stats *);
+int		 output_bird(FILE *, struct validation_data *, struct stats *);
+int		 output_csv(FILE *, struct validation_data *, struct stats *);
+int		 output_json(FILE *, struct validation_data *, struct stats *);
+int		 output_ometric(FILE *, struct validation_data *,
 		    struct stats *);
 
 void		 logx(const char *fmt, ...)

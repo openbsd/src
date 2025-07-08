@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.53 2025/04/03 14:29:44 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.54 2025/07/08 14:19:21 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -145,9 +145,7 @@ output_spl(struct vsp_tree *vsps)
 }
 
 int
-output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct vap_tree *vaps, struct vsp_tree *vsps, struct nca_tree *ncas,
-    struct stats *st)
+output_json(FILE *out, struct validation_data *vd, struct stats *st)
 {
 	char			 buf[64];
 	struct vrp		*v;
@@ -158,7 +156,7 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	outputheader_json(st);
 
 	json_do_array("roas");
-	RB_FOREACH(v, vrp_tree, vrps) {
+	RB_FOREACH(v, vrp_tree, &vd->vrps) {
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
 
 		json_do_object("roa", 1);
@@ -172,7 +170,7 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	json_do_end();
 
 	json_do_array("bgpsec_keys");
-	RB_FOREACH(b, brk_tree, brks) {
+	RB_FOREACH(b, brk_tree, &vd->brks) {
 		json_do_object("brks", 0);
 		json_do_int("asn", b->asid);
 		json_do_string("ski", b->ski);
@@ -184,7 +182,7 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	json_do_end();
 
 	json_do_array("nonfunc_cas");
-	RB_FOREACH(nca, nca_tree, ncas) {
+	RB_FOREACH(nca, nca_tree, &vd->ncas) {
 		json_do_object("nca", 1);
 		json_do_string("location", nca->location);
 		json_do_string("ta", taldescs[nca->talid]);
@@ -196,10 +194,10 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	json_do_end();
 
 	if (!excludeaspa)
-		output_aspa(vaps);
+		output_aspa(&vd->vaps);
 
 	if (experimental)
-		output_spl(vsps);
+		output_spl(&vd->vsps);
 
 	return json_do_finish();
 }

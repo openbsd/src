@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.33 2025/03/27 05:03:09 tb Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.34 2025/07/08 14:19:21 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,9 +20,7 @@
 #include "extern.h"
 
 int
-output_bgpd(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct vap_tree *vaps, struct vsp_tree *vsps, struct nca_tree *ncas,
-    struct stats *st)
+output_bgpd(FILE *out, struct validation_data *vd, struct stats *st)
 {
 	struct vrp	*vrp;
 	struct vap	*vap;
@@ -34,7 +32,7 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	if (fprintf(out, "roa-set {\n") < 0)
 		return -1;
 
-	RB_FOREACH(vrp, vrp_tree, vrps) {
+	RB_FOREACH(vrp, vrp_tree, &vd->vrps) {
 		char ipbuf[64], maxlenbuf[100];
 
 		ip_addr_print(&vrp->addr, vrp->afi, ipbuf, sizeof(ipbuf));
@@ -58,7 +56,7 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 
 	if (fprintf(out, "\naspa-set {\n") < 0)
 		return -1;
-	RB_FOREACH(vap, vap_tree, vaps) {
+	RB_FOREACH(vap, vap_tree, &vd->vaps) {
 		if (vap->overflowed)
 			continue;
 		if (fprintf(out, "\tcustomer-as %d expires %lld "

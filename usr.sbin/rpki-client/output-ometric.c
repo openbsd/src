@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.14 2025/04/03 14:29:44 tb Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.15 2025/07/08 14:19:21 job Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -167,9 +167,7 @@ repo_stats(const struct repo *rp, const struct repostats *in, void *arg)
 }
 
 int
-output_ometric(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct vap_tree *vaps, struct vsp_tree *vsps, struct nca_tree *ncas,
-    struct stats *st)
+output_ometric(FILE *out, struct validation_data *vd, struct stats *st)
 {
 	struct olabels *ol;
 	const char *keys[4] = { "nodename", "domainname", "release", NULL };

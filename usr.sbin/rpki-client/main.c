@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.284 2025/06/26 06:00:32 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.285 2025/07/08 14:19:21 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -561,9 +561,7 @@ queue_add_from_cert(const struct cert *cert, struct nca_tree *ncas)
  * In all cases, we gather statistics.
  */
 static void
-entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
-    struct brk_tree *brktree, struct vap_tree *vaptree,
-    struct vsp_tree *vsptree, struct nca_tree *ncatree)
+entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 {
 	enum rtype	 type;
 	struct tal	*tal;
@@ -620,10 +618,10 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		switch (cert->purpose) {
 		case CERT_PURPOSE_TA:
 		case CERT_PURPOSE_CA:
-			queue_add_from_cert(cert, ncatree);
+			queue_add_from_cert(cert, &vd->ncas);
 			break;
 		case CERT_PURPOSE_BGPSEC_ROUTER:
-			cert_insert_brks(brktree, cert);
+			cert_insert_brks(&vd->brks, cert);
 			repo_stat_inc(rp, talid, type, STYPE_BGPSEC);
 			break;
 		default:
@@ -642,7 +640,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		if (mft->seqnum_gap)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
-		cert_remove_nca(ncatree, mft->certid, rp);
+		cert_remove_nca(&vd->ncas, mft->certid, rp);
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
@@ -657,7 +655,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		}
 		roa = roa_read(b);
 		if (roa->valid)
-			roa_insert_vrps(tree, roa, rp);
+			roa_insert_vrps(&vd->vrps, roa, rp);
 		else
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		roa_free(roa);
@@ -672,7 +670,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		}
 		aspa = aspa_read(b);
 		if (aspa->valid)
-			aspa_insert_vaps(file, vaptree, aspa, rp);
+			aspa_insert_vaps(file, &vd->vaps, aspa, rp);
 		else
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		aspa_free(aspa);
@@ -686,7 +684,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		}
 		spl = spl_read(b);
 		if (spl->valid)
-			spl_insert_vsps(vsptree, spl, rp);
+			spl_insert_vsps(&vd->vsps, spl, rp);
 		else
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		spl_free(spl);
@@ -989,15 +987,17 @@ main(int argc, char *argv[])
 	const char	*cachedir = NULL, *outputdir = NULL;
 	const char	*errs, *name;
 	const char	*skiplistfile = NULL;
-	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
-	struct vsp_tree	 vsps = RB_INITIALIZER(&vsps);
-	struct brk_tree	 brks = RB_INITIALIZER(&brks);
-	struct vap_tree	 vaps = RB_INITIALIZER(&vaps);
-	struct nca_tree	 ncas = RB_INITIALIZER(&ncas);
 	struct rusage	 ru;
 	struct timespec	 start_time, now_time;
+	struct validation_data vd;
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time);
+
+	RB_INIT(&vd.vrps);
+	RB_INIT(&vd.brks);
+	RB_INIT(&vd.vaps);
+	RB_INIT(&vd.vsps);
+	RB_INIT(&vd.ncas);
 
 	/* If started as root, priv-drop to _rpki-client */
 	if (getuid() == 0) {
@@ -1414,8 +1414,7 @@ main(int argc, char *argv[])
 				errx(1, "ibuf_read: connection closed");
 			}
 			while ((b = io_buf_get(queues[0])) != NULL) {
-				entity_process(b, &stats, &vrps, &brks, &vaps,
-				    &vsps, &ncas);
+				entity_process(b, &vd, &stats);
 				ibuf_free(b);
 			}
 		}
@@ -1508,7 +1507,7 @@ main(int argc, char *argv[])
 	}
 	repo_stats_collect(sum_repostats, &stats.repo_stats);
 
-	if (outputfiles(&vrps, &brks, &vaps, &vsps, &ncas, &stats))
+	if (outputfiles(&vd, &stats))
 		rc = 1;
 
 	printf("Processing time %lld seconds "
