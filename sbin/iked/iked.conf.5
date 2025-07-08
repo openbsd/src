@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.101 2025/07/07 20:56:48 schwarze Exp $
+.\" $OpenBSD: iked.conf.5,v 1.102 2025/07/08 14:18:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: July 8 2025 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ by specifying
 policies in
 .Nm
 (see
-.Sx AUTOMATIC KEYING POLICIES ,
+.Sx Automatic keying policies ,
 below).
 .Pp
 Alternative methods of setting up flows and SAs are also possible
@@ -63,13 +63,13 @@ for more information about manual keying and ISAKMP support.
 .Nm
 is divided into three main sections:
 .Bl -tag -width xxxx
-.It Sy Macros
+.It Sx Macros
 Definitions of variables that can be used later, simplifying the
 configuration file.
-.It Sy Global Configuration
+.It Sx Global configuration
 Global settings for
 .Xr iked 8 .
-.It Sy Automatic Keying Policies
+.It Sx Automatic keying policies
 Policies to set up IPsec flows and SAs automatically.
 .El
 .Pp
@@ -103,7 +103,7 @@ ikev2 esp proto { tcp, udp } \e
 	from 192.168.1.1 to 10.0.0.18 \e
 	peer 192.168.10.1
 .Ed
-.Sh MACROS
+.Ss Macros
 A macro is defined with a command of the form
 .Ar name Ns = Ns Ar value .
 The macro
@@ -124,7 +124,7 @@ For example:
 remote_gw = "192.168.3.12"
 ikev2 esp from 192.168.7.0/24 to 192.168.8.0/24 peer $remote_gw
 .Ed
-.Sh GLOBAL CONFIGURATION
+.Ss Global configuration
 Here are the settings that can be set globally:
 .Bl -tag -width xxxx
 .It Ic set active
@@ -245,7 +245,7 @@ The password has to be specified in plain text which is
 required to support different challenge-based EAP methods like
 EAP-MD5 or EAP-MSCHAPv2.
 .El
-.Sh AUTOMATIC KEYING POLICIES
+.Ss Automatic keying policies
 This section is used to configure policies that will be used by
 .Xr iked 8
 to set up flows and SAs automatically.
@@ -668,7 +668,7 @@ The responder will use RSA public key authentication.
 To use RADIUS for EAP,
 at least one RADIUS server should be configured.
 See the
-.Sx RADIUS
+.Sx RADIUS CONFIGURATION
 section for RADIUS support.
 .It Ic ecdsa256
 Use ECDSA with a 256-bit elliptic curve key and SHA2-256 for authentication.
@@ -818,7 +818,7 @@ for the address family of the IKE CP option.
 .It Ar option
 Specify an IKE CP option.
 Choose from
-.Sx AUTOMATIC KEYING POLICIES
+.Sx Automatic keying policies
 config options
 .Po
 .Cm address ,
