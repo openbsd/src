@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.300 2025/06/23 20:59:25 mvs Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.301 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -69,7 +69,6 @@
 #include <sys/errno.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 
@@ -93,7 +92,6 @@
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/nd6.h>
 
 #include <crypto/idgen.h>
 
@@ -103,8 +101,6 @@
 
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
-#include <netinet/ip_ah.h>
-#include <netinet/ip_esp.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(fmt, args...)						\

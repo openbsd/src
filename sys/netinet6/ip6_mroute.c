@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.149 2025/06/25 10:33:53 mvs Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.150 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -84,12 +84,9 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/protosw.h>
-#include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>

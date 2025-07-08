@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.291 2025/05/19 06:50:00 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.292 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -54,7 +53,6 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip_ipsp.h>
 
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>

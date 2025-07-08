@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.175 2025/05/27 07:52:49 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.176 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -32,26 +32,16 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
-#include <sys/queue.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_var.h>
 #include <net/route.h>
 #include <net/rtable.h>
 
 #include <netinet/in.h>
-#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>

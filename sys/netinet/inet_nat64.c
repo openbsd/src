@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_nat64.c,v 1.2 2015/03/14 03:38:51 jsg Exp $	*/
+/*	$OpenBSD: inet_nat64.c,v 1.3 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$vantronix: inet_nat64.c,v 1.2 2011/02/28 14:57:58 mike Exp $	*/
 
 /*
@@ -19,9 +19,7 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#ifdef _KERNEL
-#include <sys/mbuf.h>
-#else
+#ifndef _KERNEL
 #include <errno.h>
 #endif
 

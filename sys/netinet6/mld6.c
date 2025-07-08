@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.67 2025/05/27 07:52:49 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.68 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -70,11 +70,9 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
-#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>

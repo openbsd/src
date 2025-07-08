@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.121 2025/05/13 20:06:10 mvs Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.122 2025/07/08 00:47:41 jsg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -24,18 +24,14 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/kernel.h>
-#include <sys/socketvar.h>
 #include <sys/pool.h>
 #include <sys/timeout.h>
 
-#include <net/route.h>
-#include <net/netisr.h>
+#include <net/rtable.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
-#include <netinet/in_pcb.h>
+#include <netinet/ip6.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.104 2025/06/21 14:21:17 mvs Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.105 2025/07/08 00:47:41 jsg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -26,7 +26,6 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>
@@ -34,7 +33,8 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/in_pcb.h>
+#include <netinet/ip6.h>
+#include <netinet/ip_ipsp.h>
 #include <netinet/ip_var.h>
 #include <netinet6/ip6_var.h>
 
@@ -48,7 +48,6 @@
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ipcomp.h>
 
-#include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 
 /*

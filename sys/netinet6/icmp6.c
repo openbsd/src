@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.267 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.268 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -71,16 +71,12 @@
 #include <sys/sysctl.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/route.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>

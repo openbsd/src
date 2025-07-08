@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.193 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.194 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -68,14 +68,12 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
-#include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
@@ -87,15 +85,12 @@
 #include <netinet/icmp6.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet6/raw_ip6.h>
 
 #if NPF > 0
 #include <net/pfvar.h>
 #endif
-
-#include <sys/stdarg.h>
 
 /*
  * Raw interface to IP6 protocol.

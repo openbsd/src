@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.155 2025/06/23 20:59:25 mvs Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.156 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -76,12 +76,9 @@
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/route.h>
 #if NPF > 0
 #include <net/pfvar.h>
 #endif

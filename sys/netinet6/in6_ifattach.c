@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.123 2025/05/19 06:34:54 florian Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.124 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -33,11 +33,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
-
-#include <crypto/sha2.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -49,7 +44,6 @@
 
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/nd6.h>
 #ifdef MROUTING

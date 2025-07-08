@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.214 2025/06/30 12:43:22 mvs Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.215 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -73,10 +73,7 @@
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/timeout.h>
 #include <sys/protosw.h>
-#include <sys/kernel.h>
 #include <sys/pool.h>
 
 #include <net/route.h>

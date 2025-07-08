@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.369 2025/05/28 06:27:04 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.370 2025/07/08 00:47:41 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -34,18 +34,13 @@
  *
  */
 
-#include "ether.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/timeout.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/refcnt.h>
@@ -53,8 +48,6 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
-#include <net/route.h>
 
 #include <crypto/sha1.h>
 
@@ -63,7 +56,6 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/if_ether.h>
-#include <netinet/ip_ipsp.h>
 
 #include <net/if_dl.h>
 
@@ -79,11 +71,6 @@
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
-
-#include "vlan.h"
-#if NVLAN > 0
-#include <net/if_vlan_var.h>
 #endif
 
 #include <netinet/ip_carp.h>

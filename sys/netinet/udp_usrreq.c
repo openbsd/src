@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.346 2025/06/30 12:43:22 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.347 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -76,14 +76,11 @@
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/if_media.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -110,7 +107,6 @@
 #endif
 
 #ifdef PIPEX
-#include <netinet/if_ether.h>
 #include <net/pipex.h>
 #endif
 

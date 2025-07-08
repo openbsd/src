@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.280 2025/05/14 14:32:15 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.281 2025/07/08 00:47:41 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -45,20 +45,17 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/atomic.h>
 #include <sys/mutex.h>
 
+#include <crypto/siphash.h>
+
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/in_pcb.h>
-#include <netinet/ip_var.h>
-#include <netinet/ip_ipip.h>
+#include <netinet/ip_ipsp.h>
 
 #if NPF > 0
 #include <net/pfvar.h>
@@ -72,7 +69,6 @@
 #include <net/if_sec.h>
 #endif
 
-#include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 
 #ifdef DDB

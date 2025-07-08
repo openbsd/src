@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.202 2025/07/02 05:44:46 dlg Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.203 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -91,12 +91,7 @@
 #include <netinet/icmp_var.h>
 
 #if NCARP > 0
-#include <net/if_types.h>
 #include <netinet/ip_carp.h>
-#endif
-
-#if NPF > 0
-#include <net/pfvar.h>
 #endif
 
 /*

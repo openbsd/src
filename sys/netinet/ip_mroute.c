@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.148 2025/06/25 10:33:53 mvs Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.149 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>

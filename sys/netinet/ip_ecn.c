@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ecn.c,v 1.9 2018/11/14 23:55:04 dlg Exp $	*/
+/*	$OpenBSD: ip_ecn.c,v 1.10 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.9 2000/10/01 12:44:48 itojun Exp $	*/
 
 /*
@@ -37,15 +37,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
-
 #include <netinet/ip_ecn.h>
 
 /*

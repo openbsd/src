@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.32 2024/04/10 22:24:07 bluhm Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.33 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -84,20 +84,15 @@
 
 #include <net/route.h>
 
-#include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/in_pcb.h>
+#include <netinet/ip6.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_debug.h>
 #include <netinet/tcp_fsm.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif /* INET6 */
 
 #ifdef TCPDEBUG
 #include <sys/protosw.h>

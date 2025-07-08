@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.160 2025/05/27 07:52:49 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.161 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -35,10 +35,6 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/ioctl.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/timeout.h>

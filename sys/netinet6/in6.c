@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.270 2025/05/20 05:51:43 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.271 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -73,16 +73,14 @@
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
+#include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>

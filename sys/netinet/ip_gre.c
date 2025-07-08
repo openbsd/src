@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.89 2025/01/01 13:44:22 bluhm Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.90 2025/07/08 00:47:41 jsg Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -40,13 +40,9 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>

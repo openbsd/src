@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.125 2025/06/16 07:11:58 mvs Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.126 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -101,22 +101,15 @@
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
-#include <sys/mbuf.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/route.h>
-#include <net/rtable.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/in_pcb.h>
-
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #include <netinet/igmp_var.h>
 #include <netinet/tcp.h>
@@ -134,15 +127,10 @@
 #include <net/if_gif.h>
 #endif
 
-#ifdef INET6
-#include <netinet6/ip6_var.h>
-#endif /* INET6 */
-
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
 #endif
 
-#include <netinet/ip_ether.h>
 #include <netinet/ip_ipip.h>
 
 #include "gre.h"

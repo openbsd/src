@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.186 2024/01/06 10:58:45 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.187 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -78,9 +78,6 @@
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif
-
-#include "ether.h"
-
 
 void in_socktrim(struct sockaddr_in *);
 

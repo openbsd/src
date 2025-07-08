@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.278 2025/06/25 10:33:53 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.279 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -71,12 +71,8 @@
 #include <sys/sysctl.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>
-#include <sys/timeout.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
 #include <sys/task.h>
 
 #include <net/if.h>
@@ -92,14 +88,10 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/in6_ifattach.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
-
-#include "gif.h"
-#include "bpfilter.h"
 
 #ifdef MROUTING
 #include <netinet6/ip6_mroute.h>

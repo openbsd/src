@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.106 2025/06/23 12:05:46 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.107 2025/07/08 00:47:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -21,13 +21,11 @@
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_var.h>
-#include <net/netisr.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>

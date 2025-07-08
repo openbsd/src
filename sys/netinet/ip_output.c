@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.411 2025/06/30 12:43:22 mvs Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.412 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -39,9 +39,7 @@
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/proc.h>
-#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/if_var.h>

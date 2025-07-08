@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.109 2025/06/30 12:43:22 mvs Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.110 2025/07/08 00:47:41 jsg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -53,20 +53,16 @@
 #include <net/if_types.h>
 #include <net/if_var.h>
 #include <net/route.h>
-#include <net/netisr.h>
 #include <net/bpf.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/in_pcb.h>
+#include <netinet/ip6.h>
+#include <netinet/ip_ipsp.h>
 #include <netinet/ip_var.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/ip_ecn.h>
 #include <netinet/ip_ipip.h>
-
-#ifdef MROUTING
-#include <netinet/ip_mroute.h>
-#endif
 
 #if NPF > 0
 #include <net/pfvar.h>

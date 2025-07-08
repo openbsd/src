@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.318 2025/07/02 05:44:46 dlg Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.319 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -75,9 +75,7 @@
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/domain.h>
-#include <sys/mount.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 

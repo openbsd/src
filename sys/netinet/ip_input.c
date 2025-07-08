@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.416 2025/06/30 12:43:22 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.417 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/mutex.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
 #include <sys/task.h>

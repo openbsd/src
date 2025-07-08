@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.126 2025/02/24 20:16:14 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.127 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -38,19 +38,16 @@
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/if_enc.h>
 #include <net/route.h>
 #if NPF > 0
 #include <net/pfvar.h>
 #endif
 
 #include <netinet/in.h>
-#include <netinet/ip_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -58,12 +55,8 @@
 #include <netinet6/nd6.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
-#include <netinet/tcp_timer.h>
-#include <netinet/tcp_var.h>
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
-#include <netinet/ip_ah.h>
-#include <netinet/ip_esp.h>
 #endif
 
 /*

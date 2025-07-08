@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.134 2025/06/23 13:33:32 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.135 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -64,19 +64,14 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
-#include <sys/kernel.h>
 #include <sys/domain.h>
-#include <sys/mbuf.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/route.h>
-#include <net/rtable.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#include <netinet/in_pcb.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
@@ -87,12 +82,9 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/ip_ipsp.h>
-#include <netinet/ip_ah.h>
-#include <netinet/ip_esp.h>
 #include <netinet/ip_ipip.h>
 
 #include <netinet6/in6_var.h>
-#include <netinet6/nd6.h>
 
 #include "gif.h"
 #if NGIF > 0

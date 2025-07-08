@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.251 2025/06/26 21:46:40 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.252 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -72,18 +72,14 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/domain.h>
-#include <sys/kernel.h>
 #include <sys/pool.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>

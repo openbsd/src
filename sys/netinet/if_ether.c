@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.273 2025/06/12 07:17:00 jsg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.274 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
@@ -58,7 +57,6 @@
 #include <net/netisr.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #if NCARP > 0

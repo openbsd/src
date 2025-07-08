@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.220 2025/06/23 20:59:25 mvs Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.221 2025/07/08 00:47:41 jsg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -44,14 +44,11 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-#include <sys/kernel.h>
 #include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
-#include <net/netisr.h>
 #include <net/bpf.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -69,7 +66,6 @@
 #endif
 
 #ifdef INET6
-#include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif /* INET6 */
@@ -80,9 +76,6 @@
 #include <netinet/ip_ipcomp.h>
 
 #include <net/if_enc.h>
-
-#include <crypto/cryptodev.h>
-#include <crypto/xform.h>
 
 #include "bpfilter.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.102 2025/07/02 05:44:46 dlg Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.103 2025/07/08 00:47:41 jsg Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -63,12 +63,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/time.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -78,9 +74,7 @@
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/nd6.h>
 
 int in6_selectif(const struct in6_addr *, struct ip6_pktopts *,
     struct ip6_moptions *, struct route *, struct ifnet **, u_int);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.94 2025/05/14 14:32:15 mvs Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.95 2025/07/08 00:47:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -40,7 +40,6 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
