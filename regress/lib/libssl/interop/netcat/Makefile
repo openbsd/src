@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2025/01/15 10:54:17 tb Exp $
+# $OpenBSD: Makefile,v 1.11 2025/07/09 17:48:02 tb Exp $
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl33)
@@ -6,6 +6,9 @@ LIBRARIES +=		openssl33
 .endif
 .if exists(/usr/local/bin/eopenssl34)
 LIBRARIES +=		openssl34
+.endif
+.if exists(/usr/local/bin/eopenssl35)
+LIBRARIES +=		openssl35
 .endif
 
 # run netcat server and connect with test client

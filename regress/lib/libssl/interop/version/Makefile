@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2025/01/15 10:54:17 tb Exp $
+# $OpenBSD: Makefile,v 1.11 2025/07/09 17:48:02 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or openssl 3.0.  Pin client or server to a fixed TLS
@@ -12,6 +12,9 @@ LIBRARIES +=		openssl33
 .endif
 .if exists(/usr/local/bin/eopenssl34)
 LIBRARIES +=		openssl34
+.endif
+.if exists(/usr/local/bin/eopenssl35)
+LIBRARIES +=		openssl35
 .endif
 
 VERSIONS =	any TLS1_2 TLS1_3
@@ -31,6 +34,7 @@ FAIL_${cver}_${sver} = !
 .if ("${cver}" != TLS1_3 && "${sver}" != TLS1_3) && \
     ((("${clib}" != openssl33 && "${slib}" != openssl33)) || \
     (("${clib}" != openssl34 && "${slib}" != openssl34)) || \
+    (("${clib}" != openssl35 && "${slib}" != openssl35)) || \
     (("${cver}" != any && "${sver}" != any) && \
     ("${cver}" != TLS1 && "${sver}" != TLS1) && \
     ("${cver}" != TLS1_1 && "${sver}" != TLS1_1)))
