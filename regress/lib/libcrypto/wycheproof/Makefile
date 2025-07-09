@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2023/07/08 19:41:07 tb Exp $
+# $OpenBSD: Makefile,v 1.10 2025/07/09 05:04:35 tb Exp $
 
 WYCHEPROOF_TESTVECTORS = /usr/local/share/wycheproof/testvectors/
 
@@ -18,10 +18,16 @@ REGRESS_TARGETS += regress-wycheproof
 CLEANFILES +=	wycheproof
 
 wycheproof: wycheproof.go
-	go build -o wycheproof ${.CURDIR}/wycheproof.go
+	env GOCACHE=${.OBJDIR}/go-build go build -o wycheproof ${.CURDIR}/wycheproof.go
 
 regress-wycheproof: wycheproof
 	./wycheproof
+
+REGRESS_CLEANUP =	clean-go-cache
+
+clean-go-cache:
+	env GOCACHE=${.OBJDIR}/go-build go clean -cache
+	rm -rf ${.OBJDIR}/go-build
 
 . endif
 
