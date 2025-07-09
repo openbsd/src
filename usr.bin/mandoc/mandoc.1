@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.197 2025/06/26 17:21:02 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.198 2025/07/09 13:45:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2012, 2014-2023, 2025 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2025 $
+.Dd $Mdocdate: July 9 2025 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1108,17 +1108,21 @@ but leaving out the backslash might not be portable.
 .Ss Warnings related to the document prologue
 .Bl -ohang
 .It Sy "missing manual title, using UNTITLED"
-.Pq mdoc
+.Pq mdoc , man
 A
 .Ic \&Dt
-macro has no arguments, or there is no
+or
+.Ic \&TH
+macro has no arguments, its first argument is an empty string, or there is no
 .Ic \&Dt
-macro before the first non-prologue macro.
+macro before the first non-prologue
+.Xr mdoc 7
+macro.
 .It Sy "missing manual title, using \(dq\(dq"
 .Pq man
-There is no
+An input document does not contain any
 .Ic \&TH
-macro, or it has no arguments.
+macro.
 .It Sy "missing manual section, using \(dq\(dq"
 .Pq mdoc , man
 A
