@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.392 2025/04/29 13:40:26 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.393 2025/07/09 06:48:09 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3112,7 +3112,8 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 			goto done;
 		}
 		ikev2_ikesa_recv_delete(env, sa);
-		return (0);
+		ret = 0;
+		goto done;
 	default:
 		log_info("%s: error: invalid SPI size", __func__);
 		goto done;
@@ -3124,7 +3125,7 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 	if ((len / sz) != cnt) {
 		log_debug("%s: invalid payload length %zu/%zu != %zu",
 		    __func__, len, sz, cnt);
-		return (-1);
+		goto done;
 	}
 
 	if (((peersas = calloc(cnt, sizeof(struct iked_childsa *))) == NULL ||
@@ -3819,6 +3820,7 @@ ikev2_resp_ike_eap_mschap(struct iked *env, struct iked_sa *sa,
 	switch (eap->eam_state) {
 	case EAP_STATE_IDENTITY:
 		sa->sa_eapid = eap->eam_identity;
+		eap->eam_identity = NULL;
 		return (eap_challenge_request(env, sa, eap->eam_id));
 	case EAP_STATE_MSCHAPV2_CHALLENGE:
 		if (eap->eam_user) {
