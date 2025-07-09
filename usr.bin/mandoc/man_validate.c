@@ -1,4 +1,4 @@
-/* $OpenBSD: man_validate.c,v 1.130 2025/07/01 20:06:13 schwarze Exp $ */
+/* $OpenBSD: man_validate.c,v 1.131 2025/07/09 12:49:32 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020, 2023, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -479,7 +479,7 @@ post_TH(CHKARGS)
 	/* ->TITLE<- MSEC DATE OS VOL */
 
 	n = n->child;
-	if (n != NULL && n->string != NULL) {
+	if (n != NULL && n->string != NULL && *n->string != '\0') {
 		for (p = n->string; *p != '\0'; p++) {
 			/* Only warn about this once... */
 			if (isalpha((unsigned char)*p) &&
@@ -492,8 +492,8 @@ post_TH(CHKARGS)
 		}
 		man->meta.title = mandoc_strdup(n->string);
 	} else {
-		man->meta.title = mandoc_strdup("");
-		mandoc_msg(MANDOCERR_TH_NOTITLE, nb->line, nb->pos, "TH");
+		man->meta.title = mandoc_strdup("UNTITLED");
+		mandoc_msg(MANDOCERR_DT_NOTITLE, nb->line, nb->pos, "TH");
 	}
 
 	/* TITLE ->MSEC<- DATE OS VOL */
