@@ -2,13 +2,14 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: August 29 2022 $
+.Dd $Mdocdate: July 9 2025 $
 .Dt FIDO_ASSERT_VERIFY 3
 .Os
 .Sh NAME
 .Nm fido_assert_verify
 .Nd verifies the signature of a FIDO2 assertion statement
 .Sh SYNOPSIS
+.Lb libfido2 libcbor libcrypto libz
 .In fido.h
 .Ft int
 .Fn fido_assert_verify "const fido_assert_t *assert" "size_t idx" "int cose_alg" "const void *pk"

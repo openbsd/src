@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: August 29 2022 $
+.Dd $Mdocdate: July 9 2025 $
 .Dt FIDO_DEV_OPEN 3
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@
 .Nm fido_dev_minor
 .Nd FIDO2 device open/close and related functions
 .Sh SYNOPSIS
+.Lb libfido2 libcbor libcrypto libz
 .In fido.h
 .Ft int
 .Fn fido_dev_open "fido_dev_t *dev" "const char *path"

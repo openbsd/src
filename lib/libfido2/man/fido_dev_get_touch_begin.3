@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: August 29 2022 $
+.Dd $Mdocdate: July 9 2025 $
 .Dt FIDO_DEV_GET_TOUCH_BEGIN 3
 .Os
 .Sh NAME
@@ -10,6 +10,7 @@
 .Nm fido_dev_get_touch_status
 .Nd asynchronously wait for touch on a FIDO2 authenticator
 .Sh SYNOPSIS
+.Lb libfido2 libcbor libcrypto libz
 .In fido.h
 .Ft int
 .Fn fido_dev_get_touch_begin "fido_dev_t *dev"
