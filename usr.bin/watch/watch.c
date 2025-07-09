@@ -1,4 +1,4 @@
-/*	$OpenBSD: watch.c,v 1.36 2025/07/06 19:19:56 job Exp $ */
+/*	$OpenBSD: watch.c,v 1.37 2025/07/09 21:23:28 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2000, 2001 Internet Initiative Japan Inc.
@@ -305,6 +305,34 @@ display(BUFFER *cur, BUFFER *prev, highlight_mode_t hm)
 	if (!prev || (cur == prev))
 		hm = HIGHLIGHT_NONE;
 
+	attron(A_DIM);
+	for (line = start_line, screen_y = 2; line < MAXLINE &&
+	    (*prev)[line][0] && screen_y < (show_rusage ? LINES - 9 : LINES);
+	    line++, screen_y++) {
+		wchar_t *prev_line, *p;
+
+		prev_line = (*prev)[line];
+
+		for (p = prev_line, cw = 0; cw < start_column; p++)
+			cw += WCWIDTH(*p);
+		screen_x = cw - start_column;
+
+		move(screen_y, screen_x);
+		while (screen_x < COLS) {
+			if (*p && *p != L'\n') {
+				cw = wcwidth(*p);
+				if (screen_x + cw >= COLS)
+					break;
+				addwch(*p++);
+				screen_x += cw;
+			} else
+				break;
+		}
+	}
+	attroff(A_DIM);
+
+	move(1, 1);
+
 	for (line = start_line, screen_y = 2;
 	    screen_y < (show_rusage ? LINES - 9 : LINES) && line < MAXLINE
 	    && (*cur)[line][0]; line++, screen_y++) {
@@ -334,6 +362,7 @@ display(BUFFER *cur, BUFFER *prev, highlight_mode_t hm)
 
 		case HIGHLIGHT_NONE:
 			move(screen_y, screen_x);
+			clrtoeol();
 			while (screen_x < COLS) {
 				if (*p && *p != L'\n') {
 					cw = wcwidth(*p);
