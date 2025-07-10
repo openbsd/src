@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.187 2025/07/08 13:25:54 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.188 2025/07/10 03:37:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1488,7 +1488,7 @@ cert_parse_internal(const char *fn, X509 *x)
 	/* XXX - add SPKI here. */
 
 	/*
-	 * Disallowed for CA certs in RFC 5280, 4.1.2.8. Uniqueness of subjects
+	 * Disallowed in RFC 5280, 4.1.2.8. Also, uniqueness of subjects
 	 * per RFC 6487, 4.5 makes them meaningless.
 	 */
 	X509_get0_uids(x, &issuer_uid, &subject_uid);
