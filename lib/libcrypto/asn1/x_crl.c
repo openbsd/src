@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.49 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.50 2025/07/10 18:48:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -540,6 +540,12 @@ LCRYPTO_ALIAS(X509_CRL_add0_revoked);
 int
 X509_CRL_verify(X509_CRL *crl, EVP_PKEY *pkey)
 {
+	/*
+	 * The CertificateList's signature AlgorithmIdentifier must match
+	 * the one inside the TBSCertList, see RFC 5280, 5.1.1.2, 5.1.2.2.
+	 */
+	if (X509_ALGOR_cmp(crl->sig_alg, crl->crl->sig_alg) != 0)
+		return 0;
 	return ASN1_item_verify(&X509_CRL_INFO_it, crl->sig_alg, crl->signature,
 	    crl->crl, pkey);
 }
