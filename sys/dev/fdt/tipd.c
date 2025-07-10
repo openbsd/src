@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipd.c,v 1.3 2023/07/23 11:42:44 kettenis Exp $	*/
+/*	$OpenBSD: tipd.c,v 1.4 2025/07/10 22:46:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -303,15 +303,18 @@ tipd_exec(struct tipd_softc *sc, const char *cmd, const void *wbuf,
 	uint32_t val;
 	int timo, error;
 	uint8_t reg = TPS_DATA1;
+	int s;
 
 	if (wlen >= sizeof(buf) - 1)
 		return EINVAL;
 
+	s = splbio();
+
 	error = tipd_read_4(sc, TPS_CMD1, &val);
+	if (error == 0 && val == TPS_CMD("!CMD"))
+		error = EBUSY;
 	if (error)
-		return error;
-	if (val == TPS_CMD("!CMD"))
-		return EBUSY;
+		goto fail;
 
 	if (wlen > 0) {
 		buf[0] = wlen;
@@ -321,26 +324,28 @@ tipd_exec(struct tipd_softc *sc, const char *cmd, const void *wbuf,
 		    sc->sc_addr, &reg, sizeof(reg), buf, sizeof(buf), 0);
 		iic_release_bus(sc->sc_tag, 0);
 		if (error)
-			return error;
+			goto fail;
 	}
 
 	error = tipd_write_4(sc, TPS_CMD1, TPS_CMD(cmd));
 	if (error)
-		return error;
+		goto fail;
 
 	for (timo = 1000; timo > 0; timo--) {
 		error = tipd_read_4(sc, TPS_CMD1, &val);
+		if (error == 0 && val == TPS_CMD("!CMD"))
+			error = EBUSY;
 		if (error)
-			return error;
-		if (val == TPS_CMD("!CMD"))
-			return EBUSY;
+			goto fail;
 		if (val == 0)
 			break;
 		delay(10);
 	}
 
-	if (timo == 0)
-		return ETIMEDOUT;
+	if (timo == 0) {
+		error = ETIMEDOUT;
+		goto fail;
+	}
 
 	if (rlen > 0) {
 		memset(buf, 0, sizeof(buf));
@@ -348,12 +353,14 @@ tipd_exec(struct tipd_softc *sc, const char *cmd, const void *wbuf,
 		error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_addr, &reg, sizeof(reg), buf, sizeof(buf), 0);
 		iic_release_bus(sc->sc_tag, 0);
+		if (error == 0 && buf[0] < rlen)
+			error = EIO;
 		if (error)
-			return error;
-		if (buf[0] < rlen)
-			return EIO;
+			goto fail;
 		memcpy(rbuf, &buf[1], rlen);
 	}
 
-	return 0;
+fail:
+	splx(s);
+	return error;
 }
