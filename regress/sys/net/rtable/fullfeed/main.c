@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2021/04/13 08:21:12 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.6 2025/07/10 05:28:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -19,6 +19,7 @@
 #include "srp_compat.h"
 
 #include <sys/socket.h>
+#include <sys/rwlock.h>
 #include <net/route.h>
 #include <net/rtable.h>
 

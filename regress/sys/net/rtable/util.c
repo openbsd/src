@@ -1,4 +1,3 @@
-/*	$OpenBSD: util.c,v 1.16 2025/02/14 06:25:00 anton Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -52,6 +51,7 @@
 #undef _KERNEL
 
 #include "srp_compat.h"
+#include "smr_compat.h"
 
 #include <sys/socket.h>
 #include <sys/domain.h>
@@ -262,14 +262,16 @@ rtentry_delete(struct rtentry *rt, void *w, unsigned int rid)
 	struct sockaddr_in6	 sa_mask;
 	struct sockaddr		*mask = rt_plen2mask(rt, &sa_mask);
 	int			 error;
+	unsigned int		 refs;
 
 	assert(rt_plen(rt) == rtable_satoplen(af, mask));
-
+	refs = refcnt_read(&rt->rt_refcnt);
+	assert(refs > 0);
 	if ((error = rtable_delete(0, rt_key(rt), mask, rt)) != 0) {
 		inet_net_satop(af, rt_key(rt), rt_plen(rt), dest, sizeof(dest));
 		errx(1, "can't rm route: %s, %s", dest, strerror(error));
 	}
-	assert(refcnt_read(&rt->rt_refcnt) == 0);
+	assert(refcnt_read(&rt->rt_refcnt) == refs - 1);
 
 	return (0);
 }
@@ -576,4 +578,28 @@ rt_hash(struct rtentry *rt, const struct sockaddr *dst, uint32_t *src)
 void
 rt_timer_init(void)
 {
+}
+
+/*
+ * SMR stuff
+ */
+
+unsigned int smr_crit;
+
+void
+smr_read_enter(void)
+{
+	smr_crit++;
+}
+
+void
+smr_read_leave(void)
+{
+	smr_crit--;
+}
+
+void
+SMR_ASSERT_CRITICAL(void)
+{
+	assert(smr_crit > 0);
 }

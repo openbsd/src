@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2025/07/07 06:33:40 dlg Exp $ */
+/*	$OpenBSD: main.c,v 1.9 2025/07/10 05:28:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -19,8 +19,11 @@
 #include "srp_compat.h"
 
 #include <sys/socket.h>
+#include <sys/rwlock.h>
 #include <net/route.h>
 #include <net/rtable.h>
+
+#include <stdint.h>
 #include <net/art.h>
 
 #include <assert.h>
@@ -61,10 +64,10 @@ main(int argc, char *argv[])
 	struct rtable *tbl;
 	tbl = rtable_get(0, AF_INET6);
 	assert(tbl != NULL);
-	struct art_root *ar;
-	ar = tbl->r_art;
-	assert(ar != NULL);
-	assert(ar->ar_root.ref == NULL);
+	struct art *art;
+	art = tbl->r_art;
+	assert(art != NULL);
+	assert(art->art_root == NULL);
 
 	return (0);
 }

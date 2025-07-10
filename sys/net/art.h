@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.27 2025/07/07 07:09:05 dlg Exp $ */
+/* $OpenBSD: art.h,v 1.28 2025/07/10 05:28:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -19,92 +19,151 @@
 #ifndef _NET_ART_H_
 #define _NET_ART_H_
 
-#include <sys/rwlock.h>
-#include <sys/srp.h>
+/*
+ * Allotment Routing Table (ART)
+ *
+ * Yoichi Hariguchi paper can be found at:
+ *      http://www.hariguchi.org/art/art.pdf
+ *
+ * Locking:
+ *
+ * Modification (ie, art_insert or art_delete) and iteration
+ * (art_iter_next, etc) over the ART must be serialised by the caller.
+ * Lookups (ie, art_match and art_lookup) run within an SMR critical
+ * section.
+ *
+ * Iteration requires serialisation as it manipulates the reference
+ * counts on tables as it traverses the tree. The iterator maintains
+ * these references until it runs out of entries. This allows code
+ * iterating over the ART to release locks in between calls to
+ * art_iter_open and art_iter_next. The references may be dropped
+ * early with art_iter_close.
+ *
+ * Note, the iterator does not hold a reference to the art_node
+ * structure or the data hanging off the an_value pointer, they must
+ * be accounted for separately or their use must be serialised with
+ * art_delete.
+ */
 
-#define ART_MAXLVL	32	/* We currently use 32 levels for IPv6. */
+typedef uintptr_t		 art_heap_entry;
 
 /*
- * Root of the ART tables, equivalent to the radix head.
- *
- *  Locks used to protect struct members in this file:
- *	I	immutable after creation
- *	l	root's `ar_lock'
- *	K	kernel lock
- *  For SRP related structures that allow lock-free reads, the write lock
- *  is indicated below.
+ * Root of the ART, equivalent to the radix head.
  */
-struct art_root {
-	struct srp		 ar_root;	/* [l] First table */
-	struct rwlock		 ar_lock;	/* [] Serialise modifications */
-	uint8_t			 ar_bits[ART_MAXLVL]; /* [I] Per level stride */
-	uint8_t			 ar_nlvl;	/* [I] Number of levels */
-	uint8_t			 ar_alen;	/* [I] Address length in bits */
-};
 
-#define ISLEAF(e)	(((unsigned long)(e) & 1) == 0)
-#define SUBTABLE(e)	((struct art_table *)((unsigned long)(e) & ~1))
-#define ASNODE(t)	((struct art_node *)((unsigned long)(t) | 1))
+struct art {
+	art_heap_entry		*art_root;
+	const unsigned int	*art_levels;
+	unsigned int		 art_nlevels;
+	unsigned int		 art_alen;
+};
 
 /*
  * Allotment Table.
  */
 struct art_table {
+	art_heap_entry		*at_heap;
 	struct art_table	*at_parent;	/* Parent table */
-	uint32_t		 at_index;	/* Index in the parent table */
-	uint32_t		 at_minfringe;	/* Index that fringe begins */
-	uint32_t		 at_level;	/* Level of the table */
-	uint8_t			 at_bits;	/* Stride length of the table */
-	uint8_t			 at_offset;	/* Sum of parents' stride len */
 
-	/*
-	 * Items stored in the heap are pointers to nodes, in the leaf
-	 * case, or tables otherwise.  One exception is index 0 which
-	 * is a route counter.
-	 */
-	union {
-		struct srp		 node;
-		unsigned long		 count;
-	} *at_heap;				/* Array of 2^(slen+1) items */
+	unsigned int		 at_index;	/* Index in the parent table */
+	unsigned int		 at_minfringe;	/* Index that fringe begins */
+
+	unsigned int		 at_level;	/* Level of the table */
+	unsigned int		 at_bits;	/* Stride length of the table */
+	unsigned int		 at_offset;	/* Sum of parents' stride len */
+
+	unsigned int		 at_refcnt;
 };
-#define	at_refcnt	at_heap[0].count/* Refcounter (1 per different route) */
-#define	at_default	at_heap[1].node	/* Default route (was in parent heap) */
 
-/* Heap size for an ART table of stride length ``slen''. */
-#define AT_HEAPSIZE(slen)	((1 << ((slen) + 1)) * sizeof(void *))
+#define ART_HEAP_IDX_TABLE	0
+#define ART_HEAP_IDX_DEFAULT	1
 
-/*
- * Forward declaration needed for the list of mpath routes
- * attached to a single ART node.
- */
-struct rtentry;
+#define AT_HEAPSIZE(bits)	((1 << ((bits) + 1)) * sizeof(art_heap_entry))
 
 /*
  * A node is the internal representation of a route entry.
  */
 struct art_node {
+	void			*an_value;
 	union {
-	    SRPL_HEAD(, rtentry) an__rtlist;	/* Route related to this node */
-	    struct art_node	*an__gc;	/* Entry on GC list */
-	}			 an_pointer;
-	uint8_t			 an_plen;	/* Prefix length */
+		struct art_node		*an__gc;
+		uint8_t			 an__addr[16];
+	}			 an__u;
+#define an_gc			 an__u.an__gc
+#define an_addr			 an__u.an__addr
+	unsigned int		 an_plen;
 };
-#define an_rtlist	an_pointer.an__rtlist
-#define an_gc		an_pointer.an__gc
 
-void		 art_init(void);
-struct art_root *art_alloc(unsigned int, unsigned int);
-struct art_node *art_insert(struct art_root *, struct art_node *, const void *,
-		     int);
-struct art_node *art_delete(struct art_root *, struct art_node *, const void *,
-		     int);
-struct art_node *art_match(struct art_root *, const void *, struct srp_ref *);
-struct art_node *art_lookup(struct art_root *, const void *, int,
-		     struct srp_ref *);
-int		 art_walk(struct art_root *,
+static inline struct art_table *
+art_heap_to_table(art_heap_entry *heap)
+{
+	return ((struct art_table *)heap[ART_HEAP_IDX_TABLE]);
+}
+
+static inline int
+art_heap_entry_is_node(art_heap_entry ahe)
+{
+	return ((ahe & 1UL) == 0);
+}
+
+static inline struct art_node *
+art_heap_entry_to_node(art_heap_entry ahe)
+{
+	return ((struct art_node *)ahe);
+}
+
+static inline art_heap_entry *
+art_heap_entry_to_heap(art_heap_entry ahe)
+{
+	return ((art_heap_entry *)(ahe & ~1UL));
+}
+
+static inline art_heap_entry
+art_node_to_heap_entry(struct art_node *an)
+{
+	return ((art_heap_entry)an);
+}
+
+static inline art_heap_entry
+art_heap_to_heap_entry(art_heap_entry *heap)
+{
+	return ((art_heap_entry)heap | 1UL);
+}
+
+#ifdef _KERNEL
+void		 art_boot(void);
+struct art	*art_alloc(unsigned int);
+void		 art_init(struct art *, unsigned int);
+struct art_node *art_insert(struct art *, struct art_node *);
+struct art_node *art_delete(struct art *, const void *, unsigned int);
+struct art_node *art_match(struct art *, const void *);
+struct art_node *art_lookup(struct art *, const void *, unsigned int);
+int		 art_is_empty(struct art *);
+
+struct art_node	*art_get(const uint8_t *, unsigned int);
+void		 art_node_init(struct art_node *,
+		     const uint8_t *, unsigned int);
+void		 art_put(struct art_node *);
+
+struct art_iter {
+	struct art		*ai_art;
+	struct art_table	*ai_table;
+	unsigned int		 ai_j;
+	unsigned int		 ai_i;
+};
+
+struct art_node	*art_iter_open(struct art *, struct art_iter *);
+struct art_node	*art_iter_next(struct art_iter *);
+void		 art_iter_close(struct art_iter *);
+
+#define ART_FOREACH(_an, _art, _ai)					\
+	for ((_an) = art_iter_open((_art), (_ai));			\
+	     (_an) != NULL;						\
+	     (_an) = art_iter_next((_ai)))
+
+int		 art_walk(struct art *,
 		     int (*)(struct art_node *, void *), void *);
 
-struct art_node *art_get(uint8_t);
-void		 art_put(struct art_node *);
+#endif /* _KERNEL */
 
 #endif /* _NET_ART_H_ */

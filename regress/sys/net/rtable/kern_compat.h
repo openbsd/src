@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_compat.h,v 1.16 2023/11/11 07:34:54 anton Exp $	*/
+/*	$OpenBSD: kern_compat.h,v 1.17 2025/07/10 05:28:13 dlg Exp $	*/
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -23,9 +23,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
+#include "smr_compat.h"
 #include "srp_compat.h"
+
+#define membar_producer() __sync_synchronize()
 
 #define _KERNEL
 #define DIAGNOSTIC
@@ -65,6 +69,8 @@ struct pool {
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#define roundup(x, y)	((((x)+((y)-1))/(y))*(y))
+
 #ifndef IPL_NONE
 #define IPL_NONE 0
 #endif
@@ -89,5 +95,16 @@ extern struct domain *domains[];
 struct rtentry;
 
 int	 rt_hash(struct rtentry *, const struct sockaddr *, uint32_t *);
+
+#define READ_ONCE(x) ({							\
+	typeof(x) __tmp = *(volatile typeof(x) *)&(x);			\
+	__tmp;								\
+})
+
+#define WRITE_ONCE(x, val) ({						\
+	typeof(x) __tmp = (val);					\
+	*(volatile typeof(x) *)&(x) = __tmp;				\
+	__tmp;								\
+})
 
 #endif /* _KERN_COMPAT_H_ */
