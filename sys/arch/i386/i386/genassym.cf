@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.49 2024/10/05 09:54:39 jsg Exp $
+#	$OpenBSD: genassym.cf,v 1.50 2025/07/10 13:59:27 claudio Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -189,9 +189,6 @@ define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
-ifdef DIAGNOSTIC
-define	CPU_INFO_MUTEX_LEVEL	offsetof(struct cpu_info, ci_mutex_level)
-endif
 define	CPU_INFO_CURPMAP	offsetof(struct cpu_info, ci_curpmap)
 define	CPU_INFO_KERN_ESP	offsetof(struct cpu_info, ci_kern_esp)
 define	CPU_INFO_INTR_ESP	offsetof(struct cpu_info, ci_intr_esp)

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.46 2024/10/05 09:54:39 jsg Exp $
+#	$OpenBSD: genassym.cf,v 1.47 2025/07/10 13:59:27 claudio Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -111,9 +111,6 @@ member	CPU_INFO_IDEPTH		ci_idepth
 member	CPU_INFO_ISOURCES	ci_isources
 member	CPU_INFO_IPENDING	ci_ipending
 member	CPU_INFO_IUNMASK	ci_iunmask
-ifdef DIAGNOSTIC
-member	CPU_INFO_MUTEX_LEVEL	ci_mutex_level
-endif
 member	CPU_INFO_GDT		ci_gdt
 member	CPU_INFO_TSS		ci_tss
 member	CPU_INFO_PFLAGS		ci_pflags
