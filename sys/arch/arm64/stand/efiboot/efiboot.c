@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.64 2025/04/29 13:45:01 tobhe Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.65 2025/07/10 13:37:14 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1148,6 +1148,8 @@ struct smbios_dtb {
 	  "qcom/x1e78100-lenovo-thinkpad-t14s.dtb" },
 	{ "LENOVO", "83ED",
 	  "qcom/x1e80100-lenovo-yoga-slim7x.dtb" },
+	{ "Microsoft Corporation", "Windows Dev Kit 2023",
+	  "qcom/sc8280xp-microsoft-blackrock.dtb" },
 	{ "Qualcomm", "CRD",
 	  "qcom/x1e80100-crd.dtb" },
 	{ "SAMSUNG", "Galaxy Book4 Edge",
