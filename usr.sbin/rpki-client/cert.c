@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.188 2025/07/10 03:37:48 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.189 2025/07/10 19:18:54 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1172,14 +1172,16 @@ cert_check_validity_period(const char *fn, struct cert *cert)
  * TAs are self-signed, CAs not self-issued, EEs have no extended key usage,
  * BGPsec router have id-kp-bgpsec-router OID.
  */
-static enum cert_purpose
-cert_check_purpose(const char *fn, X509 *x)
+static int
+cert_check_purpose(const char *fn, struct cert *cert)
 {
+	X509				*x = cert->x509;
 	BASIC_CONSTRAINTS		*bc = NULL;
 	EXTENDED_KEY_USAGE		*eku = NULL;
 	const X509_EXTENSION		*ku;
 	int				 crit, ext_flags, i, is_ca, ku_idx;
-	enum cert_purpose		 purpose = CERT_PURPOSE_INVALID;
+
+	cert->purpose = CERT_PURPOSE_INVALID;
 
 	if (!x509_cache_extensions(x, fn))
 		goto out;
@@ -1251,9 +1253,9 @@ cert_check_purpose(const char *fn, X509 *x)
 		 * and we should never see EXFLAG_SI without EXFLAG_SS.
 		 */
 		if ((ext_flags & EXFLAG_SS) != 0)
-			purpose = CERT_PURPOSE_TA;
+			cert->purpose = CERT_PURPOSE_TA;
 		else if ((ext_flags & EXFLAG_SI) == 0)
-			purpose = CERT_PURPOSE_CA;
+			cert->purpose = CERT_PURPOSE_CA;
 		else
 			warnx("%s: RFC 6487, section 4.8.3: "
 			    "self-issued cert with AKI-SKI mismatch", fn);
@@ -1285,7 +1287,7 @@ cert_check_purpose(const char *fn, X509 *x)
 		if (crit != -1)
 			warnx("%s: error parsing EKU", fn);
 		else
-			purpose = CERT_PURPOSE_EE; /* EKU absent */
+			cert->purpose = CERT_PURPOSE_EE; /* EKU absent */
 		goto out;
 	}
 	if (crit != 0) {
@@ -1300,25 +1302,25 @@ cert_check_purpose(const char *fn, X509 *x)
 	 */
 	for (i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
 		if (OBJ_cmp(bgpsec_oid, sk_ASN1_OBJECT_value(eku, i)) == 0) {
-			purpose = CERT_PURPOSE_BGPSEC_ROUTER;
+			cert->purpose = CERT_PURPOSE_BGPSEC_ROUTER;
 			goto out;
 		}
 	}
 
 	warnx("%s: unknown certificate purpose", fn);
-	assert(purpose == CERT_PURPOSE_INVALID);
+	assert(cert->purpose == CERT_PURPOSE_INVALID);
 
  out:
 	BASIC_CONSTRAINTS_free(bc);
 	EXTENDED_KEY_USAGE_free(eku);
-	return purpose;
+	return cert->purpose != CERT_PURPOSE_INVALID;
 }
 
 /*
  * Parse extensions in a resource certificate following RFC 6487, section 4.8.
- *
- * Check issuance, basic constraints, and key usage bits are consistent and
- * determine what kind of cert we were passed: annoyingly, callers can't
+ * This must only be called after cert_check_purpose() so we know for sure
+ * that issuance, basic constraints, and key usage bits are consistent and
+ * what kind of cert we were passed. Annoyingly, callers of cert_parse() can't
  * distinguish BGPsec router certs (a rare kind of EE cert) from CA certs,
  * as they both are .cer files in a Manifest.
  *
@@ -1337,12 +1339,8 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 
 	nid = bc = ski = aki = ku = eku = crldp = aia = sia = cp = ip = as = 0;
 
-	/*
-	 * Check issuance, basic constraints and (extended) key usage bits are
-	 * appropriate for a resource cert. Covers RFC 6487 4.8.1, 4.8.4, 4.8.5.
-	 */
-	if ((cert->purpose = cert_check_purpose(fn, x)) == CERT_PURPOSE_INVALID)
-		goto out;
+	/* This can only work correctly after a call to cert_check_purpose(). */
+	assert(cert->purpose != CERT_PURPOSE_INVALID);
 
 	/* Look for X509v3 extensions. */
 	if ((extsz = X509_get_ext_count(x)) <= 0) {
@@ -1461,7 +1459,11 @@ cert_parse_internal(const char *fn, X509 *x)
 		err(1, NULL);
 	cert->x509 = x;
 
-	if (!x509_cache_extensions(x, fn))
+	/*
+	 * Figure out the type of certificate we seem to be dealing with to
+	 * allow some special casing. Also cache extensions.
+	 */
+	if (!cert_check_purpose(fn, cert))
 		goto out;
 
 	if (X509_get_version(x) != 2) {
