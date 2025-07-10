@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.32 2024/06/19 08:00:53 tb Exp $ */
+/* $OpenBSD: x_all.c,v 1.33 2025/07/10 18:50:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -399,7 +399,11 @@ LCRYPTO_ALIAS(i2d_PKCS8PrivateKeyInfo_fp);
 int
 X509_verify(X509 *a, EVP_PKEY *r)
 {
-	if (X509_ALGOR_cmp(a->sig_alg, a->cert_info->signature))
+	/*
+	 * The Certificate's signature AlgorithmIdentifier must match the one
+	 * inside the TBSCertificate, see RFC 5280, 4.1.1.2, 4.1.2.3.
+	 */
+	if (X509_ALGOR_cmp(a->sig_alg, a->cert_info->signature) != 0)
 		return 0;
 	return ASN1_item_verify(&X509_CINF_it, a->sig_alg,
 	    a->signature, a->cert_info, r);
