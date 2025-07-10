@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.189 2025/07/10 19:18:54 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.190 2025/07/10 19:22:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1166,6 +1166,152 @@ cert_check_validity_period(const char *fn, struct cert *cert)
 	return 1;
 }
 
+static int
+cert_compliant_rsa_key(const char *fn, struct cert *cert)
+{
+	EVP_PKEY		*pkey;
+	const RSA		*rsa;
+	const BIGNUM		*rsa_n, *rsa_e;
+
+	if ((pkey = X509_get0_pubkey(cert->x509)) == NULL) {
+		warnx("%s: cert without public key", fn);
+		return 0;
+	}
+	if ((rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
+		warnx("%s: expected RSA key", fn);
+		return 0;
+	}
+	if ((rsa_n = RSA_get0_n(rsa)) == NULL ||
+	    (rsa_e = RSA_get0_e(rsa)) == NULL) {
+		warnx("%s: missing RSA public key component", fn);
+		return 0;
+	}
+	if (BN_num_bits(rsa_n) != 2048) {
+		warnx("%s: RFC 7935, 3: want 2048-bit RSA modulus, have %d", fn,
+		    BN_num_bits(rsa_n));
+		return 0;
+	}
+	if (!BN_is_word(rsa_e, 65537)) {
+		warnx("%s: RFC 7935, 3: public RSA exponent not %d", fn, 65537);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+cert_compliant_ec_key(const char *fn, struct cert *cert)
+{
+	EVP_PKEY		*pkey;
+	const EC_KEY		*ec_key;
+
+	if ((pkey = X509_get0_pubkey(cert->x509)) == NULL) {
+		warnx("%s: cert without public key", fn);
+		return 0;
+	}
+	if ((ec_key = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
+		warnx("%s: expected EC key", fn);
+		return 0;
+	}
+	if (EC_KEY_get_conv_form(ec_key) != POINT_CONVERSION_UNCOMPRESSED) {
+		warnx("%s: RFC 8608: 3.1 public key not uncompressed", fn);
+		return 0;
+	}
+	if (!EC_KEY_check_key(ec_key)) {
+		warnx("%s: EC_KEY_check_key failed", fn);
+		return 0;
+	}
+
+	/* Prepare pubkey for the BRK tree - used in the final output dump. */
+	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+		unsigned char		*der = NULL;
+		int			 der_len;
+
+		if ((der_len = i2d_PUBKEY(pkey, &der)) <= 0) {
+			warnx("%s: i2d_PUBKEY failed", fn);
+			return 0;
+		}
+		if (base64_encode(der, der_len, &cert->pubkey) == -1)
+			errx(1, "base64_encode");
+		free(der);
+	}
+
+	return 1;
+}
+
+static int
+cert_check_spki(const char *fn, struct cert *cert)
+{
+	X509_PUBKEY		*pubkey;
+	X509_ALGOR		*alg = NULL;
+	const ASN1_OBJECT	*aobj = NULL;
+	int			 ptype = 0;
+	const void		*pval = NULL;
+	int			 rc = 0;
+
+	/* Should be called _get0_. It returns a pointer owned by cert->x509. */
+	if ((pubkey = X509_get_X509_PUBKEY(cert->x509)) == NULL) {
+		warnx("%s: RFC 6487, 4.7: certificate without SPKI", fn);
+		goto out;
+	}
+
+	/*
+	 * Excessive initialization above is due to incoherent semantics of
+	 * the following functions, e.g., OpenSSL may or may not set pval.
+	 */
+	if (!X509_PUBKEY_get0_param(NULL, NULL, NULL, &alg, pubkey) ||
+	    alg == NULL) {
+		warnx("%s: RFC 6487, 4.7: no AlgorithmIdentifier in SPKI", fn);
+		goto out;
+	}
+	X509_ALGOR_get0(&aobj, &ptype, &pval, alg);
+
+	switch (cert->purpose) {
+	case CERT_PURPOSE_TA:
+	case CERT_PURPOSE_CA:
+	case CERT_PURPOSE_EE:
+		if (OBJ_obj2nid(aobj) == NID_rsaEncryption) {
+			if (ptype != V_ASN1_NULL || pval != NULL) {
+				warnx("%s: RFC 4055, 1.2, rsaEncryption "
+				    "parameters not NULL", fn);
+				goto out;
+			}
+			if (!cert_compliant_rsa_key(fn, cert))
+				goto out;
+			break;
+		}
+		if (!experimental) {
+			warnx("%s: RFC 7935, 3.1 SPKI not RSAPublicKey", fn);
+			goto out;
+		}
+		/* FALLTHROUGH */
+	case CERT_PURPOSE_BGPSEC_ROUTER:
+		if (OBJ_obj2nid(aobj) == NID_X9_62_id_ecPublicKey) {
+			if (ptype != V_ASN1_OBJECT) {
+				warnx("%s: RFC 5480, 2.1.1, ecPublicKey "
+				    "parameters not namedCurve", fn);
+				goto out;
+			}
+			if (OBJ_obj2nid(pval) != NID_X9_62_prime256v1) {
+				warnx("%s: RFC 8608, 3.1, named curve not "
+				    "P-256", fn);
+				goto out;
+			}
+			if (!cert_compliant_ec_key(fn, cert))
+				goto out;
+			break;
+		}
+		warnx("%s: RFC 8608, 3.1, SPKI not an ecPublicKey", fn);
+		goto out;
+	default:
+		abort();
+	}
+
+	rc = 1;
+ out:
+	return rc;
+}
+
 /*
  * Check the cert's purpose: the cA bit in basic constraints distinguishes
  * between TA/CA and EE/BGPsec router and the key usage bits must match.
@@ -1487,7 +1633,8 @@ cert_parse_internal(const char *fn, X509 *x)
 	if (!cert_check_validity_period(fn, cert))
 		goto out;
 
-	/* XXX - add SPKI here. */
+	if (!cert_check_spki(fn, cert))
+		goto out;
 
 	/*
 	 * Disallowed in RFC 5280, 4.1.2.8. Also, uniqueness of subjects
@@ -1556,7 +1703,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	const unsigned char	*oder;
 	size_t			 j;
 	X509			*x = NULL;
-	EVP_PKEY		*pkey;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
@@ -1584,13 +1730,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	case CERT_PURPOSE_TA:
 		/* XXX - caller should indicate if it expects TA or CA cert */
 	case CERT_PURPOSE_CA:
-		if ((pkey = X509_get0_pubkey(x)) == NULL) {
-			warnx("%s: X509_get0_pubkey failed", fn);
-			goto out;
-		}
-		if (!valid_ca_pkey(fn, pkey))
-			goto out;
-
 		if (cert->mft == NULL) {
 			warnx("%s: RFC 6487 section 4.8.8: missing SIA", fn);
 			goto out;
@@ -1601,11 +1740,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		}
 		break;
 	case CERT_PURPOSE_BGPSEC_ROUTER:
-		cert->pubkey = x509_get_pubkey(x, fn);
-		if (cert->pubkey == NULL) {
-			warnx("%s: x509_get_pubkey failed", fn);
-			goto out;
-		}
 		if (cert->num_ips > 0) {
 			warnx("%s: unexpected IP resources in BGPsec cert", fn);
 			goto out;

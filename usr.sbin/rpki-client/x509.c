@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.113 2025/07/08 13:25:54 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.114 2025/07/10 19:22:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -268,80 +268,6 @@ x509_get_ski(X509 *x, const char *fn, char **ski)
  out:
 	ASN1_OCTET_STRING_free(os);
 	return rc;
-}
-
-/*
- * Extract Subject Public Key Info (SPKI) from BGPsec X.509 Certificate.
- * Returns NULL on failure, on success return the SPKI as base64 encoded pubkey
- */
-char *
-x509_get_pubkey(X509 *x, const char *fn)
-{
-	EVP_PKEY	*pkey;
-	const EC_KEY	*eckey;
-	const EC_GROUP	*ecg;
-	int		 nid;
-	const char	*cname;
-	uint8_t		*pubkey = NULL;
-	char		*res = NULL;
-	int		 len;
-
-	pkey = X509_get0_pubkey(x);
-	if (pkey == NULL) {
-		warnx("%s: X509_get0_pubkey failed in %s", fn, __func__);
-		goto out;
-	}
-	if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
-		warnx("%s: Expected EVP_PKEY_EC, got %d", fn,
-		    EVP_PKEY_base_id(pkey));
-		goto out;
-	}
-
-	eckey = EVP_PKEY_get0_EC_KEY(pkey);
-	if (eckey == NULL) {
-		warnx("%s: Incorrect key type", fn);
-		goto out;
-	}
-
-	if ((ecg = EC_KEY_get0_group(eckey)) == NULL) {
-		warnx("%s: EC_KEY_get0_group failed", fn);
-		goto out;
-	}
-
-	if (EC_GROUP_get_asn1_flag(ecg) != OPENSSL_EC_NAMED_CURVE) {
-		warnx("%s: curve encoding issue", fn);
-		goto out;
-	}
-
-	if (EC_GROUP_get_point_conversion_form(ecg) !=
-	    POINT_CONVERSION_UNCOMPRESSED)
-		warnx("%s: unconventional point encoding", fn);
-
-	nid = EC_GROUP_get_curve_name(ecg);
-	if (nid != NID_X9_62_prime256v1) {
-		if ((cname = EC_curve_nid2nist(nid)) == NULL)
-			cname = nid2str(nid);
-		warnx("%s: Expected P-256, got %s", fn, cname);
-		goto out;
-	}
-
-	if (!EC_KEY_check_key(eckey)) {
-		warnx("%s: EC_KEY_check_key failed in %s", fn, __func__);
-		goto out;
-	}
-
-	len = i2d_PUBKEY(pkey, &pubkey);
-	if (len <= 0) {
-		warnx("%s: i2d_PUBKEY failed in %s", fn, __func__);
-		goto out;
-	}
-
-	if (base64_encode(pubkey, len, &res) == -1)
-		errx(1, "base64_encode failed in %s", __func__);
-
- out:
-	free(pubkey);
-	return res;
 }
 
 /*
