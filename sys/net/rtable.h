@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.34 2025/07/10 05:28:13 dlg Exp $ */
+/*	$OpenBSD: rtable.h,v 1.35 2025/07/10 09:40:35 tb Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -18,6 +18,8 @@
 
 #ifndef	_NET_RTABLE_H_
 #define	_NET_RTABLE_H_
+
+#include <sys/rwlock.h>
 
 struct art;
 
