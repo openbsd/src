@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.169 2025/05/03 15:13:53 tb Exp $
+#	$OpenBSD: Makefile,v 1.170 2025/07/10 14:44:27 job Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	tail talk tcpbench tee telnet tftp tic time timeout \
 	tmux top touch tput tr true ts tset tsort tty usbhidaction usbhidctl \
 	ul uname unexpand unifdef uniq units \
-	unvis users uudecode uuencode vacation vi vis vmstat w wall wc \
+	unvis users uudecode uuencode vacation vi vis vmstat w wall watch wc \
 	what which who whois write x99token xargs xinstall \
 	yacc yes
 
