@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.122 2023/03/15 08:42:14 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.123 2025/07/10 07:55:44 dlg Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
-#include <net/rtable.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netmpls/mpls.h>
