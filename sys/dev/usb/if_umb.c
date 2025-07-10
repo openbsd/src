@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.64 2025/06/16 12:36:43 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.65 2025/07/10 14:27:43 gerhard Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -717,10 +717,8 @@ umb_ncm_setup(struct umb_softc *sc)
 	USETW(req.wLength, sizeof (np));
 	if (usbd_do_request(sc->sc_udev, &req, &np) == USBD_NORMAL_COMPLETION &&
 	    UGETW(np.wLength) == sizeof (np)) {
-		sc->sc_rx_bufsz = MIN(UGETDW(np.dwNtbInMaxSize),
-		    sc->sc_maxpktlen);
-		sc->sc_tx_bufsz = MIN(UGETDW(np.dwNtbOutMaxSize),
-		    sc->sc_maxpktlen);
+		sc->sc_rx_bufsz = MIN(UGETDW(np.dwNtbInMaxSize), UINT16_MAX);
+		sc->sc_tx_bufsz = MIN(UGETDW(np.dwNtbOutMaxSize), UINT16_MAX);
 		sc->sc_maxdgram = UGETW(np.wNtbOutMaxDatagrams);
 		sc->sc_align = UGETW(np.wNdpOutAlignment);
 		sc->sc_ndp_div = UGETW(np.wNdpOutDivisor);
