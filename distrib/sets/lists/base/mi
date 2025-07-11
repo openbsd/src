@@ -716,6 +716,7 @@
 ./usr/bin/vmstat
 ./usr/bin/w
 ./usr/bin/wall
+./usr/bin/watch
 ./usr/bin/wc
 ./usr/bin/what
 ./usr/bin/whatis
