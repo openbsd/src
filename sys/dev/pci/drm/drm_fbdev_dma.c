@@ -255,7 +255,9 @@ static int drm_fbdev_dma_driver_fbdev_probe_tail_shadowed(struct drm_fb_helper *
 	struct fb_info *info = fb_helper->info;
 	size_t screen_size = buffer->gem->size;
 	void *screen_buffer;
+#ifdef notyet
 	int ret;
+#endif
 
 	/*
 	 * Deferred I/O requires struct page for framebuffer memory,
