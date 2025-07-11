@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.51 2025/02/26 08:57:36 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.52 2025/07/11 09:20:23 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -102,7 +102,6 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	STACK_OF(X509_CRL)		*crls = NULL;
 	STACK_OF(CMS_SignerInfo)	*sinfos;
 	CMS_SignerInfo			*si;
-	EVP_PKEY			*pkey;
 	X509_ALGOR			*pdig, *psig;
 	int				 i, nattrs, nid;
 	int				 has_ct = 0, has_md = 0, has_st = 0;
@@ -242,9 +241,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	}
 
 	/* Check digest and signature algorithms (RFC 7935) */
-	CMS_SignerInfo_get0_algs(si, &pkey, NULL, &pdig, &psig);
-	if (!valid_ca_pkey(fn, pkey))
-		goto out;
+	CMS_SignerInfo_get0_algs(si, NULL, NULL, &pdig, &psig);
 
 	X509_ALGOR_get0(&obj, NULL, NULL, pdig);
 	nid = OBJ_obj2nid(obj);
