@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.110 2025/07/02 21:28:46 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.111 2025/07/11 20:04:20 bluhm Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@
 
 int	upageflttrap(struct trapframe *, uint64_t);
 int	kpageflttrap(struct trapframe *, uint64_t);
-int	vctrap(struct trapframe *);
+int	vctrap(struct trapframe *, int);
 void	kerntrap(struct trapframe *);
 void	usertrap(struct trapframe *);
 void	ast(struct trapframe *);
@@ -302,7 +302,7 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 }
 
 int
-vctrap(struct trapframe *frame)
+vctrap(struct trapframe *frame, int user)
 {
 	uint64_t	 sw_exitcode, sw_exitinfo1, sw_exitinfo2;
 	uint8_t		*rip = (uint8_t *)(frame->tf_rip);
@@ -340,6 +340,8 @@ vctrap(struct trapframe *frame)
 		frame->tf_rip += 2;
 		break;
 	case SVM_VMEXIT_MSR: {
+		if (user)
+			return 0;	/* not allowed from userspace */
 		if (*rip == 0x0f && *(rip + 1) == 0x30) {
 			/* WRMSR */
 			ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncout);
@@ -357,6 +359,8 @@ vctrap(struct trapframe *frame)
 		break;
 	    }
 	case SVM_VMEXIT_IOIO: {
+		if (user)
+			return 0;	/* not allowed from userspace */
 		switch (*rip) {
 		case 0x66: {
 			switch (*(rip + 1)) {
@@ -505,7 +509,7 @@ kerntrap(struct trapframe *frame)
 #endif /* NISA > 0 */
 
 	case T_VC:
-		if (vctrap(frame))
+		if (vctrap(frame, 0))
 			return;
 		goto we_re_toast;
 	}
@@ -588,9 +592,11 @@ usertrap(struct trapframe *frame)
 		    : ILL_BADSTK;
 		break;
 	case T_VC:
-		vctrap(frame);
-		goto out;
-
+		if (vctrap(frame, 1))
+			goto out;
+		sig = SIGILL;
+		code = ILL_PRVOPC;
+		break;
 	case T_PAGEFLT:			/* page fault */
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",

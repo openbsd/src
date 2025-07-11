@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.102 2025/06/29 09:31:47 bluhm Exp $	*/
+/*	$OpenBSD: vector.S,v 1.103 2025/07/11 20:04:20 bluhm Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -553,6 +553,7 @@ IDTVEC(vctrap_early)
 	TRAP_ENTRY_KERN		/* early #VC has to be in kernel mode */
 	cld
 	movq	%rsp, %rdi
+	movq	$0x0, %rsi
 	call	vctrap
 	movq	$0,-8(%rsp)
 	INTRFASTEXIT
