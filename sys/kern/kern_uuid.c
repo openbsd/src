@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_uuid.c,v 1.3 2025/06/25 20:28:52 miod Exp $	*/
+/*	$OpenBSD: kern_uuid.c,v 1.4 2025/07/11 19:12:49 krw Exp $	*/
 /*	$NetBSD: kern_uuid.c,v 1.18 2011/11/19 22:51:25 tls Exp $	*/
 
 /*-
@@ -117,67 +117,3 @@ uuid_printf(const struct uuid *uuid)
  *  |                         node (2-5)                            |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-
-/* Alignment-agnostic encode/decode bytestream to/from little/big endian. */
-
-static __inline uint16_t
-be16dec(const void *pp)
-{
-	uint8_t const *p = (uint8_t const *)pp;
-
-	return ((p[0] << 8) | p[1]);
-}
-
-static __inline uint32_t
-be32dec(const void *pp)
-{
-	uint8_t const *p = (uint8_t const *)pp;
-
-	return (((unsigned)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
-}
-
-static __inline uint16_t
-le16dec(const void *pp)
-{
-	uint8_t const *p = (uint8_t const *)pp;
-
-	return ((p[1] << 8) | p[0]);
-}
-
-static __inline uint32_t
-le32dec(const void *pp)
-{
-	uint8_t const *p = (uint8_t const *)pp;
-
-	return (((unsigned)p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
-}
-
-void
-uuid_dec_le(const void *buf, struct uuid *uuid)
-{
-	const uint8_t *p = buf;
-	int i;
-
-	uuid->time_low = le32dec(p);
-	uuid->time_mid = le16dec(p + 4);
-	uuid->time_hi_and_version = le16dec(p + 6);
-	uuid->clock_seq_hi_and_reserved = p[8];
-	uuid->clock_seq_low = p[9];
-	for (i = 0; i < _UUID_NODE_LEN; i++)
-		uuid->node[i] = p[10 + i];
-}
-
-void
-uuid_dec_be(const void *buf, struct uuid *uuid)
-{
-	const uint8_t *p = buf;
-	int i;
-
-	uuid->time_low = be32dec(p);
-	uuid->time_mid = be16dec(p + 4);
-	uuid->time_hi_and_version = be16dec(p + 6);
-	uuid->clock_seq_hi_and_reserved = p[8];
-	uuid->clock_seq_low = p[9];
-	for (i = 0; i < _UUID_NODE_LEN; i++)
-		uuid->node[i] = p[10 + i];
-}
