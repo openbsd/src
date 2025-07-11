@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.190 2025/07/10 19:22:48 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.191 2025/07/11 09:18:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1583,7 +1583,156 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 		}
 	}
 
-	/* XXX - validate required fields. */
+	/*
+	 * Check specifics on presence and absence of extensions depending
+	 * on the certificate purpose. Some of the checks are redundant with
+	 * cert_check_purpose(), some of the checks are also impossible to
+	 * hit with the checks in the extension parsers, but it is easier to
+	 * check for completeness against RFC 6487 and RFC 8209 if we're not
+	 * trying to be smart here.
+	 */
+
+	if (bc == 0) {
+		if (cert->purpose == CERT_PURPOSE_TA ||
+		    cert->purpose == CERT_PURPOSE_CA) {
+			warnx("%s: RFC 6487, 4.8.1: CA cert without "
+			    "basic constraints", fn);
+			goto out;
+		}
+	} else {
+		if (cert->purpose != CERT_PURPOSE_TA &&
+		    cert->purpose != CERT_PURPOSE_CA) {
+			/* This also covers RFC 8209, 3.1.3.1. */
+			warnx("%s: RFC 6487, 4.8.1: non-CA cert with "
+			    "basic constraints", fn);
+			goto out;
+		}
+	}
+
+	if (ski == 0) {
+		warnx("%s: RFC 6487, 4.8.2: cert without SKI", fn);
+		goto out;
+	}
+
+	if (aki == 0) {
+		if (cert->purpose != CERT_PURPOSE_TA) {
+			warnx("%s: RFC 6487, 4.8.3: non-TA cert without "
+			    "AKI", fn);
+			goto out;
+		}
+	} else {
+		if (cert->purpose == CERT_PURPOSE_TA) {
+			if (strcmp(cert->ski, cert->aki) != 0) {
+				warnx("%s: RFC 6487, 4.8.3: TA cert with "
+				    "mismatch between AKI and SKI", fn);
+				goto out;
+			}
+		} else {
+			if (strcmp(cert->ski, cert->aki) == 0) {
+				warnx("%s: RFC 6487, 4.8.3: non-TA cert "
+				    "must not have matching AKI and SKI", fn);
+				goto out;
+			}
+		}
+	}
+
+	if (ku == 0) {
+		warnx("%s: RFC 6487, 4.8.4: cert without key usage", fn);
+		goto out;
+	}
+
+	if (eku == 0) {
+		if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+			warnx("%s: RFC 8209, 3.1.3.2: BGPsec Router cert "
+			    "without extended key usage", fn);
+			goto out;
+		}
+	} else {
+		if (cert->purpose != CERT_PURPOSE_BGPSEC_ROUTER) {
+			warnx("%s: RFC 6487, 4.8.5: non-BGPsec cert with "
+			    "extended key usage", fn);
+			goto out;
+		}
+	}
+
+	if (crldp == 0) {
+		if (cert->purpose != CERT_PURPOSE_TA) {
+			warnx("%s: RFC 6487, 4.8.6: non-TA cert without "
+			    "CRL Distribution Point", fn);
+			goto out;
+		}
+	} else {
+		if (cert->purpose == CERT_PURPOSE_TA) {
+			warnx("%s: RFC 6487, 4.8.6: TA cert with "
+			    "CRL Distribution Point", fn);
+			goto out;
+		}
+	}
+
+	if (aia == 0) {
+		if (cert->purpose != CERT_PURPOSE_TA) {
+			warnx("%s: RFC 6487, 4.8.7: non-TA cert without "
+			    "AIA", fn);
+			goto out;
+		}
+	} else {
+		if (cert->purpose == CERT_PURPOSE_TA) {
+			warnx("%s: RFC 6487, 4.8.7: TA cert with AIA", fn);
+			goto out;
+		}
+	}
+
+	if (sia == 0) {
+		/*
+		 * Allow two special snowflakes to omit the SIA in EE certs
+		 * even though this extension is mandated by RFC 6487, 4.8.8.2.
+		 * RFC 9323, 2 clarifies: it is because RSCs are not distributed
+		 * through the RPKI repository system. Same goes for Geofeed.
+		 * RFC 9092 had an EE cert sporting an rpkiNotify SIA (!).
+		 * RFC 9632 fixed this and pleads the Fifth on SIAs...
+		 */
+		if (filemode && cert->purpose == CERT_PURPOSE_EE) {
+			if (rtype_from_file_extension(fn) != RTYPE_GEOFEED &&
+			    rtype_from_file_extension(fn) != RTYPE_RSC) {
+				warnx("%s: RFC 6487, 4.8.8: cert without SIA",
+				    fn);
+				goto out;
+			}
+		} else if (cert->purpose != CERT_PURPOSE_BGPSEC_ROUTER) {
+			warnx("%s: RFC 6487, 4.8.8: cert without SIA", fn);
+			goto out;
+		}
+	} else {
+		if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+			warnx("%s: RFC 8209, 3.1.3.3: BGPsec Router cert "
+			    "with SIA", fn);
+			goto out;
+		}
+	}
+
+	if (cp == 0) {
+		warnx("%s: RFC 6487, 4.8.9: missing certificate policy", fn);
+		goto out;
+	}
+
+	if (ip == 0 && as == 0) {
+		warnx("%s: RFC 6487, 4.8.10 and 4.8.11: cert without "
+		    "IP or AS resources", fn);
+		goto out;
+	}
+
+	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+		if (ip != 0) {
+			warnx("%s: RFC 8209, 3.1.3.4: BGPsec Router cert "
+			    "with IP resources", fn);
+			goto out;
+		}
+		if (as == 0) {
+			warnx("%s: RFC 8209, 3.1.3.5: BGPsec Router cert "
+			    "without AS resources", fn);
+			goto out;
+		}
+	}
 
 	return 1;
 
