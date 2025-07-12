@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: pem_info.c,v 1.29 2025/07/12 19:50:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,11 +57,15 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/buffer.h>
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/ec.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
