@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.227 2025/06/20 13:54:59 bluhm Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.228 2025/07/12 00:41:14 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -958,16 +958,6 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 	TRACEINDEX(refcnt, r->r_traceidx, r, refs, 0);
 	/* Order subsequent loads and stores after refs == 0 load. */
 	membar_sync();
-}
-
-int
-refcnt_shared(struct refcnt *r)
-{
-	u_int refs;
-
-	refs = atomic_load_int(&r->r_refs);
-	TRACEINDEX(refcnt, r->r_traceidx, r, refs, 0);
-	return (refs > 1);
 }
 
 unsigned int

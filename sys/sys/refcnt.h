@@ -1,4 +1,4 @@
-/*	$OpenBSD: refcnt.h,v 1.13 2025/01/09 17:43:33 mvs Exp $ */
+/*	$OpenBSD: refcnt.h,v 1.14 2025/07/12 00:41:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -40,8 +40,9 @@ void	refcnt_take(struct refcnt *);
 int	refcnt_rele(struct refcnt *);
 void	refcnt_rele_wake(struct refcnt *);
 void	refcnt_finalize(struct refcnt *, const char *);
-int	refcnt_shared(struct refcnt *);
 unsigned int	refcnt_read(struct refcnt *);
+
+#define refcnt_shared(_r) (refcnt_read((_r)) > 1)
 
 /* sorted alphabetically, keep in sync with dev/dt/dt_prov_static.c */
 #define DT_REFCNT_IDX_ETHMULTI	1
