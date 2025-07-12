@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.37 2024/08/18 02:25:51 guenther Exp $ */
+/* $OpenBSD: thread_private.h,v 1.38 2025/07/12 23:59:44 dlg Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -292,6 +292,12 @@ TAILQ_HEAD(pthread_queue, pthread);
 
 #ifdef FUTEX
 
+/*
+ * CAS based implementations
+ */
+
+#define __CMTX_CAS
+
 struct pthread_mutex {
 	volatile unsigned int lock;
 	int type;
@@ -311,6 +317,10 @@ struct pthread_rwlock {
 };
 
 #else
+
+/*
+ * spinlock based implementations
+ */
 
 struct pthread_mutex {
 	_atomic_lock_t lock;
@@ -335,6 +345,40 @@ struct pthread_rwlock {
 	int readers;
 };
 #endif /* FUTEX */
+
+/* libc mutex */
+
+#define __CMTX_UNLOCKED		0
+#define __CMTX_LOCKED		1
+#define __CMTX_CONTENDED	2
+
+#ifdef __CMTX_CAS
+struct __cmtx {
+	volatile unsigned int	lock;
+};
+
+#define __CMTX_INITIALIZER() {						\
+	.lock = __CMTX_UNLOCKED,					\
+}
+#else /* __CMTX_CAS */
+struct __cmtx {
+	_atomic_lock_t		spin;
+	volatile unsigned int	lock;
+};
+
+#define __CMTX_INITIALIZER() {						\
+	.spin = _SPINLOCK_UNLOCKED,					\
+	.lock = __CMTX_UNLOCKED,					\
+}
+#endif /* __CMTX_CAS */
+
+/* libc recursive mutex */
+
+struct __rcmtx {
+	volatile pthread_t	owner;
+	struct __cmtx		mtx;
+	unsigned int		depth;
+};
 
 struct pthread_mutex_attr {
 	int ma_type;
@@ -409,6 +453,16 @@ struct pthread {
 void	_spinlock(volatile _atomic_lock_t *);
 int	_spinlocktry(volatile _atomic_lock_t *);
 void	_spinunlock(volatile _atomic_lock_t *);
+
+void	__cmtx_init(struct __cmtx *);
+int	__cmtx_enter_try(struct __cmtx *);
+void	__cmtx_enter(struct __cmtx *);
+void	__cmtx_leave(struct __cmtx *);
+
+void	__rcmtx_init(struct __rcmtx *);
+int	__rcmtx_enter_try(struct __rcmtx *);
+void	__rcmtx_enter(struct __rcmtx *);
+void	__rcmtx_leave(struct __rcmtx *);
 
 void	_rthread_debug(int, const char *, ...)
 		__attribute__((__format__ (printf, 2, 3)));

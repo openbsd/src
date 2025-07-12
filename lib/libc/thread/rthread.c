@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.9 2020/10/12 22:06:51 deraadt Exp $ */
+/*	$OpenBSD: rthread.c,v 1.10 2025/07/12 23:59:44 dlg Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -20,12 +20,14 @@
  */
 
 #include <sys/types.h>
+#include <sys/futex.h>
 #include <sys/atomic.h>
 
 #include <pthread.h>
 #include <stdlib.h>
 #include <tib.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "rthread.h"
 
@@ -69,6 +71,221 @@ _spinunlock(volatile _atomic_lock_t *lock)
 	*lock = _ATOMIC_LOCK_UNLOCKED;
 }
 DEF_STRONG(_spinunlock);
+
+#ifdef __CMTX_CAS
+
+/*
+ * CAS+futex locks
+ */
+
+void
+__cmtx_init(struct __cmtx *cmtx)
+{
+	cmtx->lock = __CMTX_UNLOCKED;
+}
+
+int
+__cmtx_enter_try(struct __cmtx *cmtx)
+{
+	if (atomic_cas_uint(&cmtx->lock,
+	    __CMTX_UNLOCKED, __CMTX_LOCKED) == __CMTX_UNLOCKED) {
+		membar_enter_after_atomic();
+		return (1);
+	}
+
+	return (0);
+}
+
+void
+__cmtx_enter(struct __cmtx *cmtx)
+{
+	unsigned int locked;
+
+	locked = atomic_cas_uint(&cmtx->lock,
+	    __CMTX_UNLOCKED, __CMTX_LOCKED);
+	if (locked == __CMTX_UNLOCKED) {
+		membar_enter_after_atomic();
+		return;
+	}
+
+	/* add adaptive spin here */
+
+	do {
+		switch (locked) {
+		case __CMTX_LOCKED:
+			locked = atomic_cas_uint(&cmtx->lock,
+			    __CMTX_LOCKED, __CMTX_CONTENDED);
+			if (locked == __CMTX_UNLOCKED)
+				break;
+
+			/* lock is LOCKED -> CONTENDED or was CONTENDED */
+			/* FALLTHROUGH */
+		case __CMTX_CONTENDED:
+			futex(&cmtx->lock, FUTEX_WAIT_PRIVATE,
+			    __CMTX_CONTENDED, NULL, NULL);
+			break;
+		}
+
+		locked = atomic_cas_uint(&cmtx->lock,
+		    __CMTX_UNLOCKED, __CMTX_CONTENDED);
+	} while (locked != __CMTX_UNLOCKED);
+
+	membar_enter_after_atomic();
+}
+
+void
+__cmtx_leave(struct __cmtx *cmtx)
+{
+	unsigned int locked;
+
+	membar_exit_before_atomic();
+	locked = atomic_cas_uint(&cmtx->lock,
+	    __CMTX_LOCKED, __CMTX_UNLOCKED);
+	if (locked != __CMTX_LOCKED) {
+		assert(locked != __CMTX_UNLOCKED);
+		cmtx->lock = __CMTX_UNLOCKED;
+		futex(&cmtx->lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL);
+	}
+}
+
+#else /* __CMTX_CAS */
+
+/*
+ * spinlock+futex locks
+ */
+
+void
+__cmtx_init(struct __cmtx *cmtx)
+{
+	cmtx->spin = _SPINLOCK_UNLOCKED;
+	cmtx->lock = __CMTX_UNLOCKED;
+}
+
+int
+__cmtx_enter_try(struct __cmtx *cmtx)
+{
+	unsigned int locked;
+
+	_spinlock(&cmtx->spin);
+	locked = cmtx->lock;
+	if (locked == __CMTX_UNLOCKED)
+		cmtx->lock = __CMTX_LOCKED;
+	_spinunlock(&cmtx->spin);
+
+	/* spinlocks provide enough membars */
+
+	return (locked == __CMTX_UNLOCKED);
+}
+
+void
+__cmtx_enter(struct __cmtx *cmtx)
+{
+	unsigned int locked;
+
+	_spinlock(&cmtx->spin);
+	locked = cmtx->lock;
+	switch (locked) {
+	case __CMTX_UNLOCKED:
+		cmtx->lock = __CMTX_LOCKED;
+		break;
+	case __CMTX_LOCKED:
+		cmtx->lock = __CMTX_CONTENDED;
+		break;
+	}
+	_spinunlock(&cmtx->spin);
+
+	while (locked != __CMTX_UNLOCKED) {
+		futex(&cmtx->lock, FUTEX_WAIT_PRIVATE,
+		    __CMTX_CONTENDED, NULL, NULL);
+
+		_spinlock(&cmtx->spin);
+		locked = cmtx->lock;
+		switch (locked) {
+		case __CMTX_UNLOCKED:
+		case __CMTX_LOCKED:
+			cmtx->lock = __CMTX_CONTENDED;
+			break;
+		}
+		_spinunlock(&cmtx->spin);
+	}
+
+	/* spinlocks provide enough membars */
+}
+
+void
+__cmtx_leave(struct __cmtx *cmtx)
+{
+	unsigned int locked;
+
+	/* spinlocks provide enough membars */
+
+	_spinlock(&cmtx->spin);
+	locked = cmtx->lock;
+	cmtx->lock = __CMTX_UNLOCKED;
+	_spinunlock(&cmtx->spin);
+
+	if (locked != __CMTX_LOCKED) {
+		assert(locked != __CMTX_UNLOCKED);
+		futex(&cmtx->lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL);
+	}
+}
+
+#endif /* __CMTX_CAS */
+
+/*
+ * recursive mutex
+ */
+
+void
+__rcmtx_init(struct __rcmtx *rcmtx)
+{
+	__cmtx_init(&rcmtx->mtx);
+	rcmtx->owner = NULL;
+	rcmtx->depth = 0;
+}
+
+int
+__rcmtx_enter_try(struct __rcmtx *rcmtx)
+{
+	pthread_t self = pthread_self();
+
+	if (rcmtx->owner != self) {
+		if (__cmtx_enter_try(&rcmtx->mtx) == 0)
+			return (0);
+		assert(rcmtx->owner == NULL);
+		rcmtx->owner = self;
+		assert(rcmtx->depth == 0);
+	}
+
+	rcmtx->depth++;
+
+	return (1);
+}
+
+void
+__rcmtx_enter(struct __rcmtx *rcmtx)
+{
+	pthread_t self = pthread_self();
+
+	if (rcmtx->owner != self) {
+		__cmtx_enter(&rcmtx->mtx);
+		assert(rcmtx->owner == NULL);
+		rcmtx->owner = self;
+		assert(rcmtx->depth == 0);
+	}
+
+	rcmtx->depth++;
+}
+
+void
+__rcmtx_leave(struct __rcmtx *rcmtx)
+{
+	assert(rcmtx->owner == pthread_self());
+	if (--rcmtx->depth == 0) {
+		rcmtx->owner = NULL;
+		__cmtx_leave(&rcmtx->mtx);
+	}
+}
 
 static void
 _rthread_init(void)
