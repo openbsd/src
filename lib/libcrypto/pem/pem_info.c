@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.30 2025/07/12 19:54:58 tb Exp $ */
+/* $OpenBSD: pem_info.c,v 1.31 2025/07/12 19:57:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
@@ -75,6 +76,39 @@
 
 #include "err_local.h"
 #include "evp_local.h"
+
+X509_INFO *
+X509_INFO_new(void)
+{
+	X509_INFO *ret;
+
+	if ((ret = calloc(1, sizeof(X509_INFO))) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	ret->references = 1;
+
+	return ret;
+}
+LCRYPTO_ALIAS(X509_INFO_new);
+
+void
+X509_INFO_free(X509_INFO *x)
+{
+	if (x == NULL)
+		return;
+
+	if (CRYPTO_add(&x->references, -1, CRYPTO_LOCK_X509_INFO) > 0)
+		return;
+
+	X509_free(x->x509);
+	X509_CRL_free(x->crl);
+	X509_PKEY_free(x->x_pkey);
+	free(x->enc_data);
+
+	free(x);
+}
+LCRYPTO_ALIAS(X509_INFO_free);
 
 STACK_OF(X509_INFO) *
 PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
