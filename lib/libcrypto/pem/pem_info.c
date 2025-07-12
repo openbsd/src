@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.29 2025/07/12 19:50:02 tb Exp $ */
+/* $OpenBSD: pem_info.c,v 1.30 2025/07/12 19:54:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,19 +64,14 @@
 
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
+#include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
-#include <openssl/x509.h>
-
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
+#include <openssl/x509.h>
 
 #include "err_local.h"
 #include "evp_local.h"
