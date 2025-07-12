@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2019/12/13 19:09:10 djm Exp $
+#	$OpenBSD: Makefile,v 1.6 2025/07/12 05:28:33 miod Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -13,8 +13,8 @@ MAN=	ssh-sk-helper.8
 
 .include <bsd.prog.mk>
 
-LDADD+= -lfido2 -lcbor -lusbhid
-DPADD+=	${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID}
+LDADD+= -lfido2 -lcbor -lusbhid -lz
+DPADD+=	${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID} ${LIBZ}
 
 LDADD+=	-lcrypto -lutil
 DPADD+=	${LIBCRYPTO} ${LIBUTIL}

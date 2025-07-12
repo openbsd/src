@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2022/09/03 15:58:40 claudio Exp $
+#	$OpenBSD: Makefile,v 1.4 2025/07/12 05:28:33 miod Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -11,8 +11,8 @@ CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
 CPPFLAGS+= 	-I${.CURDIR}
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libedit
-LDADD=		-ledit
-DPADD+=		${LIBEDIT}
+LDADD=		-ledit -lcurses
+DPADD+=		${LIBEDIT} ${LIBCURSES}
 MAN=		bgplgsh.8
 
 BINDIR=		/usr/bin

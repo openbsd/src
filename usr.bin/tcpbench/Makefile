@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.11 2024/11/05 18:12:55 jan Exp $
+#	$OpenBSD: Makefile,v 1.12 2025/07/12 05:28:33 miod Exp $
 
 PROG=	tcpbench
-LDADD=	-lm -levent -ltls -lcrypto
-DPADD=	${LIBM} ${LIBEVENT} ${LIBTLS} ${LIBCRYPTO}
+LDADD=	-lm -levent -ltls -lssl -lcrypto
+DPADD=	${LIBM} ${LIBEVENT} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
 
 .include <bsd.prog.mk>
