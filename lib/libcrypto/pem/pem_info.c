@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.31 2025/07/12 19:57:13 tb Exp $ */
+/* $OpenBSD: pem_info.c,v 1.32 2025/07/12 20:22:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,6 +76,64 @@
 
 #include "err_local.h"
 #include "evp_local.h"
+
+X509_PKEY *
+X509_PKEY_new(void)
+{
+	X509_PKEY *ret = NULL;
+
+	if ((ret = malloc(sizeof(X509_PKEY))) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	ret->version = 0;
+	if ((ret->enc_algor = X509_ALGOR_new()) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if ((ret->enc_pkey = ASN1_OCTET_STRING_new()) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	ret->dec_pkey = NULL;
+	ret->key_length = 0;
+	ret->key_data = NULL;
+	ret->key_free = 0;
+	ret->cipher.cipher = NULL;
+	memset(ret->cipher.iv, 0, EVP_MAX_IV_LENGTH);
+	ret->references = 1;
+	return (ret);
+
+ err:
+	if (ret) {
+		X509_ALGOR_free(ret->enc_algor);
+		free(ret);
+	}
+	return NULL;
+}
+LCRYPTO_ALIAS(X509_PKEY_new);
+
+void
+X509_PKEY_free(X509_PKEY *x)
+{
+	int i;
+
+	if (x == NULL)
+		return;
+
+	i = CRYPTO_add(&x->references, -1, CRYPTO_LOCK_X509_PKEY);
+	if (i > 0)
+		return;
+
+	if (x->enc_algor != NULL)
+		X509_ALGOR_free(x->enc_algor);
+	ASN1_OCTET_STRING_free(x->enc_pkey);
+	EVP_PKEY_free(x->dec_pkey);
+	if ((x->key_data != NULL) && (x->key_free))
+		free(x->key_data);
+	free(x);
+}
+LCRYPTO_ALIAS(X509_PKEY_free);
 
 X509_INFO *
 X509_INFO_new(void)
