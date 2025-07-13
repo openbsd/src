@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.300 2025/06/27 17:23:49 bluhm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.301 2025/07/13 20:06:54 bluhm Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1470,9 +1470,10 @@ init_x86_64(paddr_t first_avail)
 	/*
 	 * locore0 mapped 2 pages for use as GHCB before pmap is initialized.
 	 */
-	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED)) {
 		cpu_init_early_vctrap(first_avail);
-	first_avail += 2 * NBPG;
+		first_avail += 2 * NBPG;
+	}
 
 	/*
 	 * locore0 mapped 3 pages for use before the pmap is initialized
