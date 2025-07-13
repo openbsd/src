@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.745 2025/04/23 21:40:22 kettenis Exp $
+#	$OpenBSD: files,v 1.746 2025/07/13 05:45:21 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -23,6 +23,7 @@ define	onewirebus {}
 define	video {}
 define	intrmap {}
 define	fdt {[early = 0]}
+define	xcall
 
 # filesystem firmware loading attribute
 define firmload
@@ -750,6 +751,7 @@ file kern/kern_uuid.c
 file kern/kern_watchdog.c		!small_kernel
 file kern/kern_task.c
 file kern/kern_srp.c
+file kern/kern_xcall.c			xcall			needs-flag
 file kern/kern_xxx.c
 file kern/sched_bsd.c
 file kern/subr_autoconf.c
