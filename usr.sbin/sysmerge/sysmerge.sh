@@ -1,6 +1,6 @@
 #!/bin/ksh -
 #
-# $OpenBSD: sysmerge.sh,v 1.235 2019/09/28 17:30:07 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.236 2025/07/13 08:15:46 bentley Exp $
 #
 # Copyright (c) 2008-2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
@@ -183,6 +183,9 @@ sm_run() {
 	sm_extract_sets
 	sm_add_user_grp
 	sm_cp_pkg_samples
+
+	# From 7.8 onwards, font cache isn't owned by root
+	chown -R _fc-cache:_fc-cache /var/cache/fontconfig
 
 	for _i in etcsum xetcsum pkgsum; do
 		if [[ -f /var/sysmerge/${_i} && \
