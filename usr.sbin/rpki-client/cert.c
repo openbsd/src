@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.191 2025/07/11 09:18:32 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.192 2025/07/13 10:39:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1153,10 +1153,25 @@ cert_check_subject_and_issuer(const char *fn, const struct cert *cert)
 static int
 cert_check_validity_period(const char *fn, struct cert *cert)
 {
-	if (!x509_get_notbefore(cert->x509, fn, &cert->notbefore))
+	const ASN1_TIME	*at;
+
+	if ((at = X509_get0_notBefore(cert->x509)) == NULL) {
+		warnx("%s: X509_get0_notBefore() failed", fn);
 		return 0;
-	if (!x509_get_notafter(cert->x509, fn, &cert->notafter))
+	}
+	if (!x509_get_time(at, &cert->notbefore)) {
+		warnx("%s: x509_get_time() failed", fn);
 		return 0;
+	}
+
+	if ((at = X509_get0_notAfter(cert->x509)) == NULL) {
+		warnx("%s: X509_get0_notAfter() failed", fn);
+		return 0;
+	}
+	if (!x509_get_time(at, &cert->notafter)) {
+		warnx("%s: x509_get_time() failed", fn);
+		return 0;
+	}
 
 	if (cert->notbefore > cert->notafter) {
 		warnx("%s: RFC 6487, 4.6: notAfter precedes notBefore", fn);
