@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.4 2021/01/06 19:54:17 otto Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.5 2025/07/13 00:01:36 dlg Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -303,18 +303,18 @@ _thread_atfork_unlock(void)
 /*
  * arc4random lock
  */
-static _atomic_lock_t arc4_lock = _SPINLOCK_UNLOCKED;
+static struct __cmtx arc4_lock = __CMTX_INITIALIZER();
 
 void
 _thread_arc4_lock(void)
 {
-	_spinlock(&arc4_lock);
+	__cmtx_enter(&arc4_lock);
 }
 
 void
 _thread_arc4_unlock(void)
 {
-	_spinunlock(&arc4_lock);
+	__cmtx_leave(&arc4_lock);
 }
 
 pid_t
