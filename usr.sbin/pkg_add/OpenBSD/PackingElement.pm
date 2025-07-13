@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.291 2024/04/30 14:26:50 sthen Exp $
+# $OpenBSD: PackingElement.pm,v 1.292 2025/07/13 08:16:30 bentley Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1671,10 +1671,20 @@ sub _restore_fontdir($state, $dirname)
 	}
 }
 
-sub _run_if_exists($state, $cmd, @l)
+sub _run_if_exists($state, $user, $cmd, @l)
 {
+	unshift(@l, $cmd);
 	if (-x $cmd) {
-		$state->vsystem($cmd, @l);
+		if (defined $user) {
+			my (undef, undef, $uid, $gid) = getpwnam($user);
+			if (!defined $uid) {
+				$state->log->fatal(
+				    $state->f("Couldn't change identity: no #1 user",
+				        $user));
+			}
+			unshift(@l, sub() { $state->change_user($uid, $gid); });
+		}
+		$state->vsystem(@l);
 	} else {
 		$state->errsay("#1 not found", $cmd);
 	}
@@ -1692,11 +1702,14 @@ sub finish($class, $state)
 		require OpenBSD::Error;
 
 		map { _update_fontalias($state, $_) } @l;
-		_run_if_exists($state, OpenBSD::Paths->mkfontscale, '--', @l);
-		_run_if_exists($state, OpenBSD::Paths->mkfontdir, '--', @l);
+		_run_if_exists($state, undef,
+		    OpenBSD::Paths->mkfontscale, '--', @l);
+		_run_if_exists($state, undef,
+		    OpenBSD::Paths->mkfontdir, '--', @l);
 		map { _restore_fontdir($state, $_) } @l;
 
-		_run_if_exists($state, OpenBSD::Paths->fc_cache, '--', @l);
+		_run_if_exists($state, '_fc-cache',
+		    OpenBSD::Paths->fc_cache, '--', @l);
 		$state->say("ok") if $state->verbose < 2;
 	}
 }
