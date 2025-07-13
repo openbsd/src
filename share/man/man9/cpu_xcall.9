@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu_xcall.9,v 1.1 2025/07/13 05:49:36 dlg Exp $
+.\" $OpenBSD: cpu_xcall.9,v 1.2 2025/07/13 19:36:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2025 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -92,10 +92,10 @@ with argument
 via future calls to
 .Fn cpu_xcall .
 .Sh CONTEXT
-.Fn cpu_xcall_set ,
+.Fn cpu_xcall_set
 and
 .Fn cpu_xcall
-can be called from process context, or from interrupt context.
+can be called from process context or from interrupt context.
 .Pp
 .Fn cpu_xcall_sync
 can be called from process context.
