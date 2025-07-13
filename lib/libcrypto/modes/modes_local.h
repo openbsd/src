@@ -1,4 +1,4 @@
-/* $OpenBSD: modes_local.h,v 1.6 2025/05/18 09:05:59 jsing Exp $ */
+/* $OpenBSD: modes_local.h,v 1.7 2025/07/13 06:01:33 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -46,7 +46,7 @@ struct gcm128_context {
 };
 
 struct xts128_context {
-	void      *key1, *key2;
+	const void *key1, *key2;
 	block128_f block1, block2;
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.78 2025/07/06 15:37:33 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.79 2025/07/13 06:01:33 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -84,10 +84,7 @@ typedef struct {
 
 typedef struct {
 	AES_KEY ks1, ks2;	/* AES key schedules to use */
-	XTS128_CONTEXT xts;
-	void (*stream)(const unsigned char *in, unsigned char *out,
-	    size_t length, const AES_KEY *key1, const AES_KEY *key2,
-	    const unsigned char iv[16]);
+	XTS128_CONTEXT xts;	/* XXX - replace with flags. */
 } EVP_AES_XTS_CTX;
 
 typedef struct {
@@ -102,13 +99,6 @@ typedef struct {
 } EVP_AES_CCM_CTX;
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
-
-#ifdef AES_XTS_ASM
-void AES_xts_encrypt(const char *inp, char *out, size_t len,
-    const AES_KEY *key1, const AES_KEY *key2, const unsigned char iv[16]);
-void AES_xts_decrypt(const char *inp, char *out, size_t len,
-    const AES_KEY *key1, const AES_KEY *key2, const unsigned char iv[16]);
-#endif
 
 #if	defined(AES_ASM) &&				(  \
 	((defined(__i386)	|| defined(__i386__)	|| \
@@ -137,14 +127,6 @@ void aesni_decrypt(const unsigned char *in, unsigned char *out,
 void aesni_ecb_encrypt(const unsigned char *in, unsigned char *out,
     size_t length, const AES_KEY *key, int enc);
 
-void aesni_xts_encrypt(const unsigned char *in, unsigned char *out,
-    size_t length, const AES_KEY *key1, const AES_KEY *key2,
-    const unsigned char iv[16]);
-
-void aesni_xts_decrypt(const unsigned char *in, unsigned char *out,
-    size_t length, const AES_KEY *key1, const AES_KEY *key2,
-    const unsigned char iv[16]);
-
 void aesni_ccm64_encrypt_blocks (const unsigned char *in, unsigned char *out,
     size_t blocks, const void *key, const unsigned char ivec[16],
     unsigned char cmac[16]);
@@ -161,44 +143,6 @@ aesni_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		return 1;
 
 	aesni_ecb_encrypt(in, out, len, ctx->cipher_data, ctx->encrypt);
-
-	return 1;
-}
-
-static int
-aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
-
-	if (!iv && !key)
-		return 1;
-
-	if (key) {
-		/* key_len is two AES keys */
-		if (enc) {
-			aesni_set_encrypt_key(key, ctx->key_len * 4,
-			    &xctx->ks1);
-			xctx->xts.block1 = (block128_f)aesni_encrypt;
-			xctx->stream = aesni_xts_encrypt;
-		} else {
-			aesni_set_decrypt_key(key, ctx->key_len * 4,
-			    &xctx->ks1);
-			xctx->xts.block1 = (block128_f)aesni_decrypt;
-			xctx->stream = aesni_xts_decrypt;
-		}
-
-		aesni_set_encrypt_key(key + ctx->key_len / 2,
-		    ctx->key_len * 4, &xctx->ks2);
-		xctx->xts.block2 = (block128_f)aesni_encrypt;
-
-		xctx->xts.key1 = &xctx->ks1;
-	}
-
-	if (iv) {
-		xctx->xts.key2 = &xctx->ks2;
-		memcpy(ctx->iv, iv, 16);
-	}
 
 	return 1;
 }
@@ -1242,36 +1186,24 @@ aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
 static int
 aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
+    const unsigned char *iv, int encrypt)
 {
 	EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
 
-	if (!iv && !key)
-		return 1;
-
-	if (key) {
-#ifdef AES_XTS_ASM
-		xctx->stream = enc ? AES_xts_encrypt : AES_xts_decrypt;
-#else
-		xctx->stream = NULL;
-#endif
+	if (key != NULL) {
 		/* key_len is two AES keys */
-		if (enc) {
+		if (encrypt)
 			AES_set_encrypt_key(key, ctx->key_len * 4, &xctx->ks1);
-			xctx->xts.block1 = (block128_f)AES_encrypt;
-		} else {
+		else
 			AES_set_decrypt_key(key, ctx->key_len * 4, &xctx->ks1);
-			xctx->xts.block1 = (block128_f)AES_decrypt;
-		}
 
-		AES_set_encrypt_key(key + ctx->key_len / 2,
-		    ctx->key_len * 4, &xctx->ks2);
-		xctx->xts.block2 = (block128_f)AES_encrypt;
+		AES_set_encrypt_key(key + ctx->key_len / 2, ctx->key_len * 4,
+		    &xctx->ks2);
 
 		xctx->xts.key1 = &xctx->ks1;
 	}
 
-	if (iv) {
+	if (iv != NULL) {
 		xctx->xts.key2 = &xctx->ks2;
 		memcpy(ctx->iv, iv, 16);
 	}
@@ -1285,39 +1217,21 @@ aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
 
-	if (!xctx->xts.key1 || !xctx->xts.key2)
-		return 0;
-	if (!out || !in || len < AES_BLOCK_SIZE)
+	if (xctx->xts.key1 == NULL || xctx->xts.key2 == NULL)
 		return 0;
 
-	if (xctx->stream)
-		(*xctx->stream)(in, out, len, xctx->xts.key1, xctx->xts.key2,
-		    ctx->iv);
-	else if (CRYPTO_xts128_encrypt(&xctx->xts, ctx->iv, in, out, len,
-	    ctx->encrypt))
+	if (out == NULL || in == NULL || len < AES_BLOCK_SIZE)
 		return 0;
+
+	aes_xts_encrypt_internal(in, out, len, xctx->xts.key1, xctx->xts.key2,
+	    ctx->iv, ctx->encrypt);
+
 	return 1;
 }
 
 #define XTS_FLAGS \
     ( EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV | \
       EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT | EVP_CIPH_CUSTOM_COPY )
-
-
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_128_xts = {
-	.nid = NID_aes_128_xts,
-	.block_size = 1,
-	.key_len = 2 * 16,
-	.iv_len = 16,
-	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
-	.init = aesni_xts_init_key,
-	.do_cipher = aes_xts_cipher,
-	.cleanup = NULL,
-	.ctx_size = sizeof(EVP_AES_XTS_CTX),
-	.ctrl = aes_xts_ctrl,
-};
-#endif
 
 static const EVP_CIPHER aes_128_xts = {
 	.nid = NID_aes_128_xts,
@@ -1335,28 +1249,9 @@ static const EVP_CIPHER aes_128_xts = {
 const EVP_CIPHER *
 EVP_aes_128_xts(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_128_xts : &aes_128_xts;
-#else
 	return &aes_128_xts;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_128_xts);
-
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_256_xts = {
-	.nid = NID_aes_256_xts,
-	.block_size = 1,
-	.key_len = 2 * 32,
-	.iv_len = 16,
-	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
-	.init = aesni_xts_init_key,
-	.do_cipher = aes_xts_cipher,
-	.cleanup = NULL,
-	.ctx_size = sizeof(EVP_AES_XTS_CTX),
-	.ctrl = aes_xts_ctrl,
-};
-#endif
 
 static const EVP_CIPHER aes_256_xts = {
 	.nid = NID_aes_256_xts,
@@ -1374,11 +1269,7 @@ static const EVP_CIPHER aes_256_xts = {
 const EVP_CIPHER *
 EVP_aes_256_xts(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_256_xts : &aes_256_xts;
-#else
 	return &aes_256_xts;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_256_xts);
 

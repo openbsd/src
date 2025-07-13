@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_amd64.c,v 1.2 2025/06/27 17:10:45 jsing Exp $ */
+/* $OpenBSD: aes_amd64.c,v 1.3 2025/07/13 06:01:33 jsing Exp $ */
 /*
  * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <openssl/aes.h>
 
 #include "crypto_arch.h"
+#include "modes_local.h"
 
 int aes_set_encrypt_key_generic(const unsigned char *userKey, const int bits,
     AES_KEY *key);
@@ -35,6 +36,10 @@ void aes_cbc_encrypt_generic(const unsigned char *in, unsigned char *out,
 void aes_ctr32_encrypt_generic(const unsigned char *in, unsigned char *out,
     size_t blocks, const AES_KEY *key, const unsigned char ivec[AES_BLOCK_SIZE]);
 
+void aes_xts_encrypt_generic(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key1, const AES_KEY *key2,
+    const unsigned char iv[16], int encrypt);
+
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key);
 int aesni_set_decrypt_key(const unsigned char *userKey, int bits,
@@ -50,6 +55,14 @@ void aesni_cbc_encrypt(const unsigned char *in, unsigned char *out,
 
 void aesni_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
     size_t blocks, const void *key, const unsigned char *ivec);
+
+void aesni_xts_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key1, const AES_KEY *key2,
+    const unsigned char iv[16]);
+
+void aesni_xts_decrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key1, const AES_KEY *key2,
+    const unsigned char iv[16]);
 
 int
 aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
@@ -117,4 +130,20 @@ aes_ctr32_encrypt_internal(const unsigned char *in, unsigned char *out,
 	}
 
 	aes_ctr32_encrypt_generic(in, out, blocks, key, ivec);
+}
+
+void
+aes_xts_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key1, const AES_KEY *key2,
+    const unsigned char iv[16], int encrypt)
+{
+	if ((crypto_cpu_caps_amd64 & CRYPTO_CPU_CAPS_AMD64_AES) != 0) {
+		if (encrypt)
+			aesni_xts_encrypt(in, out, len, key1, key2, iv);
+		else
+			aesni_xts_decrypt(in, out, len, key1, key2, iv);
+		return;
+	}
+
+	aes_xts_encrypt_generic(in, out, len, key1, key2, iv, encrypt);
 }

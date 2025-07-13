@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.10 2025/06/27 17:10:45 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.11 2025/07/13 06:01:33 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -57,6 +57,7 @@
 
 #include "crypto_arch.h"
 #include "crypto_internal.h"
+#include "modes_local.h"
 
 static const unsigned char aes_wrap_default_iv[] = {
 	0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6,
@@ -321,6 +322,35 @@ AES_ofb128_encrypt(const unsigned char *in, unsigned char *out, size_t length,
 	    aes_encrypt_block128);
 }
 LCRYPTO_ALIAS(AES_ofb128_encrypt);
+
+void
+aes_xts_encrypt_generic(const unsigned char *in, unsigned char *out, size_t len,
+    const AES_KEY *key1, const AES_KEY *key2, const unsigned char iv[16],
+    int encrypt)
+{
+	XTS128_CONTEXT xctx;
+
+	if (encrypt)
+		xctx.block1 = aes_encrypt_block128;
+	else 
+		xctx.block1 = aes_decrypt_block128;
+
+	xctx.block2 = aes_encrypt_block128;
+	xctx.key1 = key1;
+	xctx.key2 = key2;
+
+	CRYPTO_xts128_encrypt(&xctx, iv, in, out, len, encrypt);
+}
+
+#ifndef HAVE_AES_XTS_ENCRYPT_INTERNAL
+void
+aes_xts_encrypt_internal(const unsigned char *in, unsigned char *out, size_t len,
+    const AES_KEY *key1, const AES_KEY *key2, const unsigned char iv[16],
+    int encrypt)
+{
+	aes_xts_encrypt_generic(in, out, len, key1, key2, iv, encrypt);
+}
+#endif
 
 int
 AES_wrap_key(AES_KEY *key, const unsigned char *iv, unsigned char *out,
