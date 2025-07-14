@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.446 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: route.c,v 1.447 2025/07/14 08:48:51 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -2003,7 +2003,7 @@ rt_plentosa(sa_family_t af, int plen, struct sockaddr_in6 *sa_mask)
 }
 
 struct sockaddr *
-rt_plen2mask(struct rtentry *rt, struct sockaddr_in6 *sa_mask)
+rt_plen2mask(const struct rtentry *rt, struct sockaddr_in6 *sa_mask)
 {
 	return (rt_plentosa(rt_key(rt)->sa_family, rt_plen(rt), sa_mask));
 }

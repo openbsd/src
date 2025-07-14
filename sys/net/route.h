@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.217 2025/07/10 05:28:13 dlg Exp $	*/
+/*	$OpenBSD: route.h,v 1.218 2025/07/14 08:48:51 dlg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -476,7 +476,7 @@ void	 rtm_bfd(struct bfd_config *);
 void	 rtm_80211info(struct ifnet *, struct if_ieee80211_data *);
 void	 rt_maskedcopy(struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *);
-struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
+struct sockaddr *rt_plen2mask(const struct rtentry *, struct sockaddr_in6 *);
 void	 rtm_send(struct rtentry *, int, int, unsigned int);
 void	 rtm_addr(int, struct ifaddr *);
 void	 rtm_miss(int, struct rt_addrinfo *, int, uint8_t, u_int, int, u_int);
