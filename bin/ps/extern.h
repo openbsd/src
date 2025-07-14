@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.28 2025/07/02 13:24:48 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.29 2025/07/14 02:40:15 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@ void	 cputime(const struct pinfo *, VARENT *);
 int	 getkernvars(void);
 void	 elapsed(const struct pinfo *, VARENT *);
 double	 getpcpu(const struct kinfo_proc *);
-double	 getpmem(const struct kinfo_proc *);
 void	 gname(const struct pinfo *, VARENT *);
 void	 supgid(const struct pinfo *, VARENT *);
 void	 supgrp(const struct pinfo *, VARENT *);

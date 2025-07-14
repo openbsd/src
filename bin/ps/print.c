@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.92 2025/07/02 13:25:05 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.93 2025/07/14 02:40:15 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ extern int needenv, needcomm, commandonly;
 
 int mbswprint(const char *, int, int);  /* utf8.c */
 
+static double getpmem(const struct kinfo_proc *);
 static char *cmdpart(char *);
 
 #define	MINIMUM(a,b)	((a) < (b) ? (a) : (b))
@@ -557,7 +558,8 @@ lstarted(const struct pinfo *pi, VARENT *ve)
 	(void)printf("%-*s", v->width, buf);
 }
 
-void elapsed(const struct pinfo *pi, VARENT *ve)
+void
+elapsed(const struct pinfo *pi, VARENT *ve)
 {
 	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
@@ -692,7 +694,7 @@ pcpu(const struct pinfo *pi, VARENT *ve)
 	(void)printf("%*.1f", v->width, getpcpu(pi->ki));
 }
 
-double
+static double
 getpmem(const struct kinfo_proc *kp)
 {
 	double fracmem;
