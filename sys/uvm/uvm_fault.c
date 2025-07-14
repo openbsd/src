@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.169 2025/05/02 10:19:09 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.170 2025/07/14 08:45:16 jsg Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1338,7 +1338,7 @@ uvm_fault_lower_upgrade(struct uvm_faultctx *flt, struct uvm_object *uobj)
  *
  *	1. check uobj
  *	1.1. if null, ZFOD.
- *	1.2. if not null, look up unnmapped neighbor pages.
+ *	1.2. if not null, look up unmapped neighbor pages.
  *	2. for center page, check if promote.
  *	2.1. ZFOD always needs promotion.
  *	2.2. other uobjs, when entry is marked COW (usually MAP_PRIVATE vnode).
