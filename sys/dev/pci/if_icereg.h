@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icereg.h,v 1.3 2025/06/27 16:18:10 jan Exp $	*/
+/*	$OpenBSD: if_icereg.h,v 1.4 2025/07/14 23:22:44 jsg Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13588,7 +13588,7 @@ enum ice_rxdid {
 	ICE_RXDID_LAST			= 63,
 };
 
-/* Recceive Flex descriptor Dword Index */
+/* Receive Flex descriptor Dword Index */
 enum ice_flex_word {
 	ICE_RX_FLEX_DWORD_0 = 0,
 	ICE_RX_FLEX_DWORD_1,

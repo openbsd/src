@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.55 2024/11/08 09:12:46 kettenis Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.56 2025/07/14 23:22:44 jsg Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -4527,7 +4527,7 @@ struct iwx_mac_ctx_cmd {
  *	Available only from version 2 of the command.
  *	This values comes from the EMLSR transition delay in the EML Capabilities
  *	subfield.
- * @medium_sync_delay: the value as it appeasr in P802.11be_D2.2 Figure 9-1002j.
+ * @medium_sync_delay: the value as it appears in P802.11be_D2.2 Figure 9-1002j.
  * @assoc_id: unique ID assigned by the AP during association
  * @reserved1: alignment
  * @data_policy: see &enum iwx_mac_data_policy

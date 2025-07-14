@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.52 2025/06/27 16:18:10 jan Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.53 2025/07/14 23:22:44 jsg Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -14594,7 +14594,7 @@ ice_get_set_tx_topo(struct ice_hw *hw, uint8_t *buf, uint16_t buf_size,
 	if (set) {
 		ice_fill_dflt_direct_cmd_desc(&desc, ice_aqc_opc_set_tx_topo);
 		cmd->set_flags = ICE_AQC_TX_TOPO_FLAGS_ISSUED;
-		/* requested to update a new topology, not a default topolgy */
+		/* requested to update a new topology, not a default topology */
 		if (buf)
 			cmd->set_flags |= ICE_AQC_TX_TOPO_FLAGS_SRC_RAM |
 					  ICE_AQC_TX_TOPO_FLAGS_LOAD_NEW;
@@ -23620,7 +23620,7 @@ ice_add_dscp_tc_bw_tlv(struct ice_lldp_org_tlv *tlv,
 			   ICE_DSCP_SUBTYPE_TCBW);
 	tlv->ouisubtype = htonl(ouisubtype);
 
-	/* First Octect after subtype
+	/* First Octet after subtype
 	 * ----------------------------
 	 * | RSV | CBS | RSV | Max TCs |
 	 * | 1b  | 1b  | 3b  | 3b      |
