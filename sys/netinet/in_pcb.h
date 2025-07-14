@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.170 2025/06/08 17:06:19 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.171 2025/07/14 09:01:52 jsg Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
 /*
  * The pcb table mutex guarantees that all inpcb are consistent and
  * that bind(2) and connect(2) create unique combinations of
- * laddr/faddr/lport/fport/rtalbleid.  This mutex is used to protect
+ * laddr/faddr/lport/fport/rtableid.  This mutex is used to protect
  * both address consistency and inpcb lookup during protocol input.
  * All writes to inp_[lf]addr take table mutex.  A per socket lock is
  * needed, so that socket layer input have a consistent view at these
