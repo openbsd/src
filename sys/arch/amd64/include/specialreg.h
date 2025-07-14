@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.118 2025/06/26 12:17:27 bluhm Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.119 2025/07/14 04:44:06 dlg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -286,8 +286,9 @@
  */
 #define	TPM_SENSOR	0x00000001	 /* Digital temp sensor */
 #define	TPM_ARAT	0x00000004	 /* APIC Timer Always Running */
+#define	TPM_PTS		0x00000040	 /* Intel Package Thermal Status */ 
 #define TPM_EAX_BITS \
-    ("\20" "\01SENSOR" "\03ARAT" )
+    ("\20" "\01SENSOR" "\03ARAT" "\07PTS")
 /* Thermal and Power Management (CPUID function 0x6) ECX bits */
 #define	TPM_EFFFREQ	0x00000001	 /* APERF & MPERF MSR present */
 #define TPM_ECX_BITS \
