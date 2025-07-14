@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic_load_int.9,v 1.1 2022/03/10 14:12:40 bluhm Exp $
+.\" $OpenBSD: atomic_load_int.9,v 1.2 2025/07/14 08:43:35 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 10 2022 $
+.Dd $Mdocdate: July 14 2025 $
 .Dt ATOMIC_LOAD_INT 9
 .Os
 .Sh NAME
@@ -28,9 +28,9 @@
 .Sh SYNOPSIS
 .In sys/atomic.h
 .Ft unsigned int
-.Fn atomic_load_int "volatile unsigned int *p"
+.Fn atomic_load_int "volatile const unsigned int *p"
 .Ft unsigned long
-.Fn atomic_load_long "volatile unsigned long *p"
+.Fn atomic_load_long "volatile const unsigned long *p"
 .Ft void
 .Fn atomic_store_int "volatile unsigned int *p" "unsigned int v"
 .Ft void
