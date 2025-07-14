@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.378 2024/08/31 16:23:09 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.379 2025/07/14 11:52:43 jmatthew Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -3116,13 +3116,14 @@ em_rxeof(struct em_queue *que)
 
 		if (status & E1000_RXD_STAT_EOP) {
 			eop = 1;
-			if (desc_len < ETHER_CRC_LEN) {
+			if (sc->hw.mac_type == em_i210 ||
+			    sc->hw.mac_type == em_i350) {
+				/* crc has already been stripped */
+				len = desc_len;
+			} else if (desc_len < ETHER_CRC_LEN) {
 				len = 0;
 				prev_len_adj = ETHER_CRC_LEN - desc_len;
-			} else if (sc->hw.mac_type == em_i210 ||
-			    sc->hw.mac_type == em_i350)
-				len = desc_len;
-			else
+			} else
 				len = desc_len - ETHER_CRC_LEN;
 		} else {
 			eop = 0;
