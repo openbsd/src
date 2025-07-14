@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.156 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.157 2025/07/14 08:42:54 jsg Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -90,7 +90,7 @@
  *	       calls to malloc(9) are allowed in interrupt handlers.
  *   exec_map: Memory to hold arguments to system calls are allocated from
  *	       this map.
- *	       XXX: This is primeraly used to artificially limit the number
+ *	       XXX: This is primarily used to artificially limit the number
  *	       of concurrent processes doing an exec.
  *   phys_map: Buffers for vmapbuf (physio) are allocated from this map.
  *
