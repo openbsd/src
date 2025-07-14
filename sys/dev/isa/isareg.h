@@ -1,4 +1,4 @@
-/*	$OpenBSD: isareg.h,v 1.4 2012/03/07 18:15:25 miod Exp $	*/
+/*	$OpenBSD: isareg.h,v 1.5 2025/07/14 10:13:54 jsg Exp $	*/
 /*	$NetBSD: isareg.h,v 1.5 1995/04/17 12:09:13 cgd Exp $	*/
 
 /*-
@@ -108,8 +108,8 @@
 
 					/* 0x380 - 0x3AF Open */
 
-#define	IO_MDA		0x3B0		/* Monochome Adapter */
-#define	IO_LPT3		0x3BC		/* Monochome Adapter Printer Port */
+#define	IO_MDA		0x3B0		/* Monochrome Adapter */
+#define	IO_LPT3		0x3BC		/* Monochrome Adapter Printer Port */
 #define	IO_VGA		0x3C0		/* E/VGA Ports */
 #define	IO_CGA		0x3D0		/* CGA Ports */
 
