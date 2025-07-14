@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldog.c,v 1.5 2025/07/14 08:35:10 jca Exp $	*/
+/*	$OpenBSD: apldog.c,v 1.6 2025/07/14 12:33:55 jca Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -108,7 +108,9 @@ apldog_attach(struct device *parent, struct device *self, void *aux)
 	if (clock_freq != 0) {
 		sc->sc_clock_freq = clock_freq;
 		sc->sc_max_period = UINT32_MAX / sc->sc_clock_freq;
+#ifndef SMALL_KERNEL
 		wdog_register(apldog_wdog_cb, sc);
+#endif
 	}
 }
 
@@ -117,7 +119,9 @@ apldog_activate(struct device *self, int action)
 {
 	switch (action) {
 	case DVACT_POWERDOWN:
+#ifndef SMALL_KERNEL
 		wdog_shutdown(self);
+#endif
 		break;
 	}
 
@@ -137,6 +141,7 @@ apldog_reset(void)
 	delay(1000000);
 }
 
+#ifndef SMALL_KERNEL
 int
 apldog_wdog_cb(void *self, int period)
 {
@@ -158,3 +163,4 @@ apldog_wdog_cb(void *self, int period)
 
 	return period;
 }
+#endif
