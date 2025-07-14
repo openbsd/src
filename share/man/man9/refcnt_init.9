@@ -1,4 +1,4 @@
-.\"	$OpenBSD: refcnt_init.9,v 1.6 2023/07/12 18:14:13 jmc Exp $
+.\"	$OpenBSD: refcnt_init.9,v 1.7 2025/07/14 08:47:15 dlg Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 12 2023 $
+.Dd $Mdocdate: July 14 2025 $
 .Dt REFCNT_INIT 9
 .Os
 .Sh NAME
@@ -43,9 +43,9 @@
 .Ft void
 .Fn "refcnt_finalize" "struct refcnt *r" "const char *wmesg"
 .Ft int
-.Fn "refcnt_shared" "struct refcnt *r"
+.Fn "refcnt_shared" "const struct refcnt *r"
 .Ft unsigned int
-.Fn "refcnt_read" "struct refcnt *r"
+.Fn "refcnt_read" "const struct refcnt *r"
 .Fn "REFCNT_INITIALIZER"
 .Sh DESCRIPTION
 The refcnt API provides simple reference counters that can be used

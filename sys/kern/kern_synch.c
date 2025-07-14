@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.228 2025/07/12 00:41:14 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.229 2025/07/14 08:47:15 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -961,7 +961,7 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 }
 
 unsigned int
-refcnt_read(struct refcnt *r)
+refcnt_read(const struct refcnt *r)
 {
 	u_int refs;
 
