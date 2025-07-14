@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.347 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.348 2025/07/14 09:06:17 jsg Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -502,7 +502,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af, struct netstack *ns)
 			/*
 			 * No matching pcb found; discard datagram.
 			 * (No need to send an ICMP Port Unreachable
-			 * for a broadcast or multicast datgram.)
+			 * for a broadcast or multicast datagram.)
 			 */
 			udpstat_inc(udps_noportbcast);
 			m_freem(m);
