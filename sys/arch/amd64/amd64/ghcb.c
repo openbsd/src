@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.c,v 1.3 2025/07/04 10:11:28 jsg Exp $	*/
+/*	$OpenBSD: ghcb.c,v 1.4 2025/07/14 22:14:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -22,10 +22,25 @@
 #include <machine/frame.h>
 #include <machine/ghcb.h>
 
-/* Mask for adjusting GPR sizes. */
+/* Masks for adjusting GPR sizes. */
 const uint64_t ghcb_sz_masks[] = {
     0x00000000000000ffULL, 0x000000000000ffffULL,
     0x00000000ffffffffULL, 0xffffffffffffffffULL
+};
+
+/*
+ * In 64-bit mode, when performing 32-bit operations with a GPR
+ * destination, the 32-bit value gets zero extended to the full
+ * 64-bit destination size.  This means, unlike 8-bit or 16-bit
+ * values, the upper 32 bits of the destination register are not
+ * retained for 32-bit values.
+ *
+ * Therefore, when syncing values back to the stack frame, use a
+ * 64-bit "all 1" mask for 32-bit values.
+ */
+const uint64_t ghcb_sz_clear_masks[] = {
+    0x00000000000000ffULL, 0x000000000000ffffULL,
+    0xffffffffffffffffULL, 0xffffffffffffffffULL
 };
 
 vaddr_t ghcb_vaddr;
@@ -206,19 +221,19 @@ ghcb_sync_in(struct trapframe *frame, struct ghcb_sa *ghcb,
     struct ghcb_sync *gsin)
 {
 	if (ghcb_valbm_isset(gsin->valid_bitmap, GHCB_RAX)) {
-		frame->tf_rax &= ~ghcb_sz_masks[gsin->sz_a];
+		frame->tf_rax &= ~ghcb_sz_clear_masks[gsin->sz_a];
 		frame->tf_rax |= (ghcb->v_rax & ghcb_sz_masks[gsin->sz_a]);
 	}
 	if (ghcb_valbm_isset(gsin->valid_bitmap, GHCB_RBX)) {
-		frame->tf_rbx &= ~ghcb_sz_masks[gsin->sz_b];
+		frame->tf_rbx &= ~ghcb_sz_clear_masks[gsin->sz_b];
 		frame->tf_rbx |= (ghcb->v_rbx & ghcb_sz_masks[gsin->sz_b]);
 	}
 	if (ghcb_valbm_isset(gsin->valid_bitmap, GHCB_RCX)) {
-		frame->tf_rcx &= ~ghcb_sz_masks[gsin->sz_c];
+		frame->tf_rcx &= ~ghcb_sz_clear_masks[gsin->sz_c];
 		frame->tf_rcx |= (ghcb->v_rcx & ghcb_sz_masks[gsin->sz_c]);
 	}
 	if (ghcb_valbm_isset(gsin->valid_bitmap, GHCB_RDX)) {
-		frame->tf_rdx &= ~ghcb_sz_masks[gsin->sz_d];
+		frame->tf_rdx &= ~ghcb_sz_clear_masks[gsin->sz_d];
 		frame->tf_rdx |= (ghcb->v_rdx & ghcb_sz_masks[gsin->sz_d]);
 	}
 
