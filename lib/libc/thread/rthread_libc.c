@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.5 2025/07/13 00:01:36 dlg Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.6 2025/07/14 06:48:10 dlg Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -152,24 +152,9 @@ _thread_mutex_destroy(void **mutex)
 /*
  * the malloc lock
  */
-#ifndef FUTEX
-#define MALLOC_LOCK_INITIALIZER(n) { \
-	_SPINLOCK_UNLOCKED,	\
-	TAILQ_HEAD_INITIALIZER(malloc_lock[n].lockers), \
-	PTHREAD_MUTEX_DEFAULT,	\
-	NULL,			\
-	0,			\
-	-1 }
-#else
-#define MALLOC_LOCK_INITIALIZER(n) { \
-	_SPINLOCK_UNLOCKED,	\
-	PTHREAD_MUTEX_DEFAULT,	\
-	NULL,			\
-	0,			\
-	-1 }
-#endif
+#define MALLOC_LOCK_INITIALIZER(n) __CMTX_INITIALIZER()
 
-static struct pthread_mutex malloc_lock[_MALLOC_MUTEXES] = {
+static struct __cmtx malloc_lock[_MALLOC_MUTEXES] = {
 	MALLOC_LOCK_INITIALIZER(0),
 	MALLOC_LOCK_INITIALIZER(1),
 	MALLOC_LOCK_INITIALIZER(2),
@@ -204,51 +189,16 @@ static struct pthread_mutex malloc_lock[_MALLOC_MUTEXES] = {
 	MALLOC_LOCK_INITIALIZER(31)
 };
 
-static pthread_mutex_t malloc_mutex[_MALLOC_MUTEXES] = {
-	&malloc_lock[0],
-	&malloc_lock[1],
-	&malloc_lock[2],
-	&malloc_lock[3],
-	&malloc_lock[4],
-	&malloc_lock[5],
-	&malloc_lock[6],
-	&malloc_lock[7],
-	&malloc_lock[8],
-	&malloc_lock[9],
-	&malloc_lock[10],
-	&malloc_lock[11],
-	&malloc_lock[12],
-	&malloc_lock[13],
-	&malloc_lock[14],
-	&malloc_lock[15],
-	&malloc_lock[16],
-	&malloc_lock[17],
-	&malloc_lock[18],
-	&malloc_lock[19],
-	&malloc_lock[20],
-	&malloc_lock[21],
-	&malloc_lock[22],
-	&malloc_lock[23],
-	&malloc_lock[24],
-	&malloc_lock[25],
-	&malloc_lock[26],
-	&malloc_lock[27],
-	&malloc_lock[28],
-	&malloc_lock[29],
-	&malloc_lock[30],
-	&malloc_lock[31]
-};
-
 void
 _thread_malloc_lock(int i)
 {
-	pthread_mutex_lock(&malloc_mutex[i]);
+	__cmtx_enter(&malloc_lock[i]);
 }
 
 void
 _thread_malloc_unlock(int i)
 {
-	pthread_mutex_unlock(&malloc_mutex[i]);
+	__cmtx_leave(&malloc_lock[i]);
 }
 
 static void
@@ -256,14 +206,8 @@ _thread_malloc_reinit(void)
 {
 	int i;
 
-	for (i = 0; i < _MALLOC_MUTEXES; i++) {
-		malloc_lock[i].lock = _SPINLOCK_UNLOCKED;
-#ifndef FUTEX
-		TAILQ_INIT(&malloc_lock[i].lockers);
-#endif
-		malloc_lock[i].owner = NULL;
-		malloc_lock[i].count = 0;
-	}
+	for (i = 0; i < _MALLOC_MUTEXES; i++)
+		__cmtx_init(&malloc_lock[i]);
 }
 
 /*
