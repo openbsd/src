@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldog.c,v 1.4 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: apldog.c,v 1.5 2025/07/14 08:35:10 jca Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -24,15 +24,9 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_clock.h>
 
 extern void (*cpuresetfn)(void);
-
-/*
- * This driver is based on preliminary device tree bindings and will
- * almost certainly need changes once the official bindings land in
- * mainline Linux.  Support for these preliminary bindings will be
- * dropped as soon as official bindings are available.
- */
 
 #define WDT_CHIP_CTL	0x000c
 #define WDT_SYS_TMR	0x0010
@@ -50,15 +44,20 @@ struct apldog_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	uint32_t		sc_clock_freq;
+	uint32_t		sc_max_period;
+	uint32_t		sc_period;
 };
 
 struct apldog_softc *apldog_sc;
 
 int	apldog_match(struct device *, void *, void *);
 void	apldog_attach(struct device *, struct device *, void *);
+int	apldog_activate(struct device *, int);
 
 const struct cfattach	apldog_ca = {
-	sizeof (struct apldog_softc), apldog_match, apldog_attach
+	sizeof (struct apldog_softc), apldog_match, apldog_attach,
+	NULL, apldog_activate
 };
 
 struct cfdriver apldog_cd = {
@@ -66,6 +65,7 @@ struct cfdriver apldog_cd = {
 };
 
 void	apldog_reset(void);
+int	apldog_wdog_cb(void *, int);
 
 int
 apldog_match(struct device *parent, void *match, void *aux)
@@ -80,6 +80,7 @@ apldog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct apldog_softc *sc = (struct apldog_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	uint32_t clock_freq;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -102,6 +103,25 @@ apldog_attach(struct device *parent, struct device *self, void *aux)
 	apldog_sc = sc;
 	if (cpuresetfn == NULL)
 		cpuresetfn = apldog_reset;
+
+	clock_freq = clock_get_frequency_idx(faa->fa_node, 0);
+	if (clock_freq != 0) {
+		sc->sc_clock_freq = clock_freq;
+		sc->sc_max_period = UINT32_MAX / sc->sc_clock_freq;
+		wdog_register(apldog_wdog_cb, sc);
+	}
+}
+
+int
+apldog_activate(struct device *self, int action)
+{
+	switch (action) {
+	case DVACT_POWERDOWN:
+		wdog_shutdown(self);
+		break;
+	}
+
+	return 0;
 }
 
 void
@@ -115,4 +135,26 @@ apldog_reset(void)
 	HWRITE4(sc, WDT_SYS_TMR, 0);
 
 	delay(1000000);
+}
+
+int
+apldog_wdog_cb(void *self, int period)
+{
+	struct apldog_softc *sc = self;
+
+	HWRITE4(sc, WDT_SYS_TMR, 0);
+
+	if (period == 0)
+		HWRITE4(sc, WDT_SYS_CTL, 0);
+	else {
+		if (period > sc->sc_max_period)
+			period = sc->sc_max_period;
+		HWRITE4(sc, WDT_SYS_RST, period * sc->sc_clock_freq);
+		if (sc->sc_period == 0) 
+			HWRITE4(sc, WDT_SYS_CTL, WDT_SYS_CTL_ENABLE);
+	}
+
+	sc->sc_period = period;
+
+	return period;
 }
