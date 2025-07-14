@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.192 2025/07/13 10:39:07 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.193 2025/07/14 06:03:17 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -151,6 +151,15 @@ sbgp_as_inherit(const char *fn, struct cert_as *ases, size_t *num_ases)
 	as.type = CERT_AS_INHERIT;
 
 	return append_as(fn, ases, num_ases, &as);
+}
+
+static int
+cert_as_inherit(const struct cert *cert)
+{
+	if (cert->num_ases != 1)
+		return 0;
+
+	return cert->ases[0].type == CERT_AS_INHERIT;
 }
 
 int
@@ -1747,6 +1756,11 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 			    "without AS resources", fn);
 			goto out;
 		}
+		if (cert_as_inherit(cert)) {
+			warnx("%s: RFC 8209, 3.1.3.5: BGPsec Router cert "
+			    "with inherit element", fn);
+			goto out;
+		}
 	}
 
 	return 1;
@@ -1865,7 +1879,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 {
 	struct cert		*cert = NULL;
 	const unsigned char	*oder;
-	size_t			 j;
 	X509			*x = NULL;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
@@ -1907,13 +1920,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		if (cert->num_ips > 0) {
 			warnx("%s: unexpected IP resources in BGPsec cert", fn);
 			goto out;
-		}
-		for (j = 0; j < cert->num_ases; j++) {
-			if (cert->ases[j].type == CERT_AS_INHERIT) {
-				warnx("%s: inherit elements not allowed in EE"
-				    " cert", fn);
-				goto out;
-			}
 		}
 		break;
 	case CERT_PURPOSE_EE:
