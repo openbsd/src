@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.779 2025/06/18 13:48:48 jcs Exp $
+$OpenBSD: usbdevs,v 1.780 2025/07/14 23:49:08 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3169,7 +3169,7 @@ product MGE UPS2		0xffff	UPS
 product MICROCHIP USBLCD20X2	0x0002	USB-LCD-20x2
 product MICROCHIP USBLCD256X64	0xc002	USB-LCD-256x64
 
-/* Microdia / Sonix Techonology Co., Ltd. products */
+/* Microdia / Sonix Technology Co., Ltd. products */
 product MICRODIA YUREX		0x1010	YUREX
 product MICRODIA CAM_1		0x62c0	CAM_1
 product MICRODIA TEMPER		0x7401	TEMPer sensor

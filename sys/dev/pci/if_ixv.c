@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixv.c,v 1.1 2024/11/02 04:37:20 yasuoka Exp $	*/
+/*	$OpenBSD: if_ixv.c,v 1.2 2025/07/14 23:49:08 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -121,7 +121,7 @@ static void	ixv_kstats_tick(void *);
  ************************************************************************/
 /*
   Default value for Extended Interrupt Throttling Register.
-  128 * 2.048 uSec will be minimum interrupt iterval for 10GbE link.
+  128 * 2.048 uSec will be minimum interrupt interval for 10GbE link.
   Minimum interrupt interval can be set from 0 to 2044 in increments of 4.
  */
 #define IXGBE_EITR_DEFAULT              128

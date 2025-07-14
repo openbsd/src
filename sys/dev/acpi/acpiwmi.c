@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiwmi.c,v 1.5 2025/05/21 02:18:29 robert Exp $ */
+/*	$OpenBSD: acpiwmi.c,v 1.6 2025/07/14 23:49:08 jsg Exp $ */
 /*
  * Copyright (c) 2025 Ted Unangst <tedu@openbsd.org>
  *
@@ -202,7 +202,7 @@ acpiwmi_notify(struct aml_node *node, int note, void *arg)
 	input.type = AML_OBJTYPE_INTEGER;
 	input.v_integer = note; /* ??? */
 	if (aml_evalname(sc->sc_acpi, sc->sc_node, "_WED", 1, &input, &res) == -1) {
-		printf("%s: failed to evaulate _WED\n", DEVNAME(sc));
+		printf("%s: failed to evaluate _WED\n", DEVNAME(sc));
 		return 0;
 	}
 

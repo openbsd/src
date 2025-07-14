@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.37 2015/10/20 17:08:39 chrisz Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.38 2025/07/14 23:49:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -256,7 +256,7 @@
 #define VR_CFG_TAGCRC		0x00000020	/* 6105M tag in CRC */
 #define VR_CFG_MIIOPT		0x00000040	/* MII extension clock */
 #define VR_CFG_EELOAD		0x00000080	/* enable EEPROM programming */
-#define VR_CFG_LATMENB		0x00000100	/* larency timer effect enb. */
+#define VR_CFG_LATMENB		0x00000100	/* latency timer effect enb. */
 #define VR_CFG_MRREADWAIT	0x00000200
 #define VR_CFG_MRWRITEWAIT	0x00000400
 #define VR_CFG_RX_ARB		0x00000800

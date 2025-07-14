@@ -1,4 +1,4 @@
-/*	$OpenBSD: lancereg.h,v 1.3 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: lancereg.h,v 1.4 2025/07/14 23:49:08 jsg Exp $	*/
 /*	$NetBSD: lancereg.h,v 1.11 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
@@ -171,7 +171,7 @@
 #define	LE_CSR36	0x0024		/* Next Next Rx Desc addr lower */
 #define	LE_CSR37	0x0025		/* Next Next Rx Desc addr upper */
 #define	LE_CSR38	0x0026		/* Next Next Tx Desc addr lower */
-#define	LE_CSR39	0x0027		/* Next Next Tx Desc adddr upper */
+#define	LE_CSR39	0x0027		/* Next Next Tx Desc addr upper */
 #define	LE_CSR40	0x0028		/* Current Rx Byte Count */
 #define	LE_CSR41	0x0029		/* Current Rx Status */
 #define	LE_CSR42	0x002a		/* Current Tx Byte Count */

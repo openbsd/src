@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.44 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.45 2025/07/14 23:49:08 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -491,7 +491,7 @@ et_bus_config(struct et_softc *sc)
 #if 0
 	/*
 	 * Configure ACK latency and replay timer according to
-	 * max playload size
+	 * max payload size
 	 */
 	val = pci_conf_read(sc->sc_pct, sc->sc_pcitag, ET_PCIR_DEVICE_CAPS);
 	max_plsz = val & ET_PCIM_DEVICE_CAPS_MAX_PLSZ;

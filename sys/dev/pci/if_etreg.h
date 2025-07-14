@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etreg.h,v 1.7 2024/10/23 01:35:43 jsg Exp $	*/
+/*	$OpenBSD: if_etreg.h,v 1.8 2025/07/14 23:49:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -54,7 +54,7 @@
 #define ET_PCIR_BAR			0x10
 
 #define ET_PCIR_DEVICE_CAPS		0x4c
-#define ET_PCIM_DEVICE_CAPS_MAX_PLSZ	0x7	/* Max playload size */
+#define ET_PCIM_DEVICE_CAPS_MAX_PLSZ	0x7	/* Max payload size */
 #define ET_PCIV_DEVICE_CAPS_PLSZ_128	0x0
 #define ET_PCIV_DEVICE_CAPS_PLSZ_256	0x1
 

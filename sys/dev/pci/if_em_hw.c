@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.123 2024/09/04 07:54:52 mglocker Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.124 2025/07/14 23:49:08 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -2207,7 +2207,7 @@ em_setup_fiber_serdes_link(struct em_hw *hw)
 	 * Check for a software override of the flow control settings, and
 	 * setup the device accordingly.  If auto-negotiation is enabled,
 	 * then software will have to set the "PAUSE" bits to the correct
-	 * value in the Tranmsit Config Word Register (TXCW) and re-start
+	 * value in the Transmit Config Word Register (TXCW) and re-start
 	 * auto-negotiation.  However, if auto-negotiation is disabled, then
 	 * software will have to manually configure the two flow control
 	 * enable bits in the CTRL register.
@@ -8975,7 +8975,7 @@ em_set_phy_mode(struct em_hw *hw)
 /*****************************************************************************
  *
  * This function sets the lplu state according to the active flag.  When
- * activating lplu this function also disables smart speed and vise versa.
+ * activating lplu this function also disables smart speed and vice versa.
  * lplu will not be activated unless the device autonegotiation advertisement
  * meets standards of either 10 or 10/100 or 10/100/1000 at all duplexes.
  * hw: Struct containing variables accessed by shared code
@@ -9111,7 +9111,7 @@ em_set_d3_lplu_state(struct em_hw *hw, boolean_t active)
 /*****************************************************************************
  *
  * This function sets the lplu d0 state according to the active flag.  When
- * activating lplu this function also disables smart speed and vise versa.
+ * activating lplu this function also disables smart speed and vice versa.
  * lplu will not be activated unless the device autonegotiation advertisement
  * meets standards of either 10 or 10/100 or 10/100/1000 at all duplexes.
  * hw: Struct containing variables accessed by shared code

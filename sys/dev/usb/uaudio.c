@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.178 2025/01/07 12:49:40 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.179 2025/07/14 23:49:08 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2410,7 +2410,7 @@ uaudio_process_as_ep(struct uaudio_softc *sc,
 }
 
 /*
- * Parse AS class-specifig endpoint descriptor
+ * Parse AS class-specific endpoint descriptor
  */
 int
 uaudio_process_as_cs_ep(struct uaudio_softc *sc,

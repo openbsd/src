@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vgereg.h,v 1.3 2022/01/09 05:42:56 jsg Exp $	*/
+/*	$OpenBSD: if_vgereg.h,v 1.4 2025/07/14 23:49:08 jsg Exp $	*/
 /*	$FreeBSD: if_vgereg.h,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -424,7 +424,7 @@
 
 /* MII port status register */
 
-#define VGE_MIISTS_IIDL		0x80	/* not at sofrware/timer poll cycle */
+#define VGE_MIISTS_IIDL		0x80	/* not at software/timer poll cycle */
 
 /* PHY status register */
 

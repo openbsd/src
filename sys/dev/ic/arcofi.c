@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.21 2022/10/28 15:09:45 kn Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.22 2025/07/14 23:49:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -585,7 +585,7 @@ arcofi_mi_to_gain(int lvl)
  * The mapping between the available inputs and outputs, and CR3, is as
  * follows:
  * - the `line in' connector is the `MIC' input.
- * - the `line out' connector is the `H out' (heaphones) output.
+ * - the `line out' connector is the `H out' (headphones) output.
  * - the internal `speaker' is the `LS out' (loudspeaker) output.
  *
  * Each of these can be enabled or disabled independently, except for

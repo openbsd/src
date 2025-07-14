@@ -43,7 +43,7 @@
 
 /*
  * Note a write to ICW1 starts an initialization cycle, and must be
- * followied by writes to ICW2, ICW3, and ICW4.
+ * followed by writes to ICW2, ICW3, and ICW4.
  */
 #define	PIC_ICW1	0x00	/* Initialization Command Word 1 (w) */
 #define	ICW1_IC4	(1U << 0)	/* ICW4 Write Required */

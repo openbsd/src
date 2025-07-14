@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.59 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.60 2025/07/14 23:49:08 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3131,7 +3131,7 @@ rtwn_enable_intr(struct rtwn_softc *sc)
 		else
 			panic("unknown chip type 0x%x", sc->chip);
 
-		/* CLear pending interrupts. */
+		/* Clear pending interrupts. */
 		rtwn_write_4(sc, R92C_HISR, 0xffffffff);
 
 		/* Enable interrupts. */

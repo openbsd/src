@@ -1,4 +1,4 @@
-/*	$OpenBSD: anreg.h,v 1.12 2007/10/05 23:23:55 jsg Exp $	*/
+/*	$OpenBSD: anreg.h,v 1.13 2025/07/14 23:49:08 jsg Exp $	*/
 /*	$NetBSD: anreg.h,v 1.11 2005/01/15 11:01:46 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,7 +68,7 @@
 #define AN_CMD_ENABLE		0x0001 /* enable */
 #define AN_CMD_DISABLE		0x0002 /* disable */
 #define AN_CMD_FORCE_SYNCLOSS	0x0003 /* force loss of sync */
-#define AN_CMD_FW_RESTART	0x0004 /* firmware resrart */
+#define AN_CMD_FW_RESTART	0x0004 /* firmware restart */
 #define AN_CMD_HOST_SLEEP	0x0005
 #define AN_CMD_MAGIC_PKT	0x0006
 #define AN_CMD_READCFG		0x0008

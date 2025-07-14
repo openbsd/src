@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wbreg.h,v 1.9 2012/10/18 21:44:21 deraadt Exp $	*/
+/*	$OpenBSD: if_wbreg.h,v 1.10 2025/07/14 23:49:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -278,7 +278,7 @@ struct wb_desc {
  * A transmit 'super descriptor' is actually WB_MAXFRAGS regular
  * descriptors clumped together. The idea here is to emulate the
  * multi-fragment descriptor layout found in devices such as the
- * Texas Instruments ThunderLAN and 3Com boomerang and cylone chips.
+ * Texas Instruments ThunderLAN and 3Com boomerang and cyclone chips.
  * The advantage to using this scheme is that it avoids buffer copies.
  * The disadvantage is that there's a certain amount of overhead due
  * to the fact that each 'fragment' is 16 bytes long. In my tests,
