@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.46 2025/02/17 22:31:53 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.47 2025/07/14 12:23:28 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -544,6 +544,13 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pmap_lock(pm);
 	pted = pmap_vp_lookup(pm, va, NULL);
 	if (pted && PTED_VALID(pted)) {
+		if ((pted->pted_pte & PTE_RPGN) == (pa & PTE_RPGN) &&
+		   (pted->pted_va & PROT_MASK) == (prot & PROT_MASK) &&
+		   (pted->pted_va & PMAP_CACHE_BITS) == cache) {
+			pmap_unlock(pm);
+			return 0;
+		}
+
 		pmap_remove_pted(pm, pted);
 		/* we lost our pted if it was user */
 		if (pm != pmap_kernel())
@@ -808,7 +815,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	}
 	pted->pted_va |= cache;
 
-	pted->pted_va |= prot & (PROT_READ|PROT_WRITE|PROT_EXEC);
+	pted->pted_va |= prot & PROT_MASK;
 
 	if (flags & PMAP_WIRED) {
 		pted->pted_va |= PTED_VA_WIRED_M;
@@ -816,7 +823,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	}
 
 	pted->pted_pte = pa & PTE_RPGN;
-	pted->pted_pte |= flags & (PROT_READ|PROT_WRITE|PROT_EXEC);
+	pted->pted_pte |= flags & PROT_MASK;
 }
 
 /*
