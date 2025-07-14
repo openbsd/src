@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.13 2022/10/16 20:17:08 bru Exp $ */
+/* $OpenBSD: hidmt.c,v 1.14 2025/07/14 12:00:12 stsp Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -125,6 +125,11 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 
 	capsize = hid_report_size(desc, dlen, hid_feature, mt->sc_rep_cap);
 	rep = malloc(capsize, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (rep == NULL) {
+		printf("\n%s: could not allocate capability report buffer\n",
+		    self->dv_xname);
+		return 1;
+	}
 
 	if (mt->hidev_report_type_conv == NULL)
 		panic("no report type conversion function");
@@ -134,6 +139,7 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 	    rep, capsize)) {
 		printf("\n%s: failed getting capability report\n",
 		    self->dv_xname);
+		free(rep, M_DEVBUF, capsize);
 		return 1;
 	}
 
@@ -211,6 +217,12 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 		}
 
 		input = malloc(sizeof(*input), M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (input == NULL) {
+			printf("\n%s: could not allocate input report buffer\n",
+			    self->dv_xname);
+			hid_end_parse(hd);
+			goto fail;
+		}
 		memcpy(&input->loc, &h.loc, sizeof(struct hid_location));
 		input->usage = h.usage;
 
@@ -221,16 +233,27 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 	if (mt->sc_maxx <= 0 || mt->sc_maxy <= 0) {
 		printf("\n%s: invalid max X/Y %d/%d\n", self->dv_xname,
 		    mt->sc_maxx, mt->sc_maxy);
-		return 1;
+		goto fail;
 	}
 
 	if (hidmt_set_input_mode(mt, HIDMT_INPUT_MODE_MT_TOUCHPAD)) {
 		printf("\n%s: switch to multitouch mode failed\n",
 		    self->dv_xname);
-		return 1;
+		goto fail;
 	}
 
+	free(rep, M_DEVBUF, capsize);
 	return 0;
+
+fail:
+	while (!SIMPLEQ_EMPTY(&mt->sc_inputs)) {
+		struct hidmt_data *input = SIMPLEQ_FIRST(&mt->sc_inputs);
+		SIMPLEQ_REMOVE_HEAD(&mt->sc_inputs, entry);
+		free(input, M_DEVBUF, sizeof(*input));
+	}
+
+	free(rep, M_DEVBUF, capsize);
+	return 1;
 }
 
 void
