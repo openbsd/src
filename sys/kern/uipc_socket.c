@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.380 2025/07/02 16:44:40 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.381 2025/07/15 12:52:52 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -213,10 +213,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		/* sofree() calls sounlock(). */
-		soref(so);
-		sofree(so, 1);
-		sounlock_shared(so);
-		sorele(so);
+		sofree(so, 0);
 		return (error);
 	}
 	sounlock_shared(so);
@@ -304,7 +301,7 @@ sofree(struct socket *so, int keep_lock)
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0) {
 		if (!keep_lock)
-			sounlock(so);
+			sounlock_shared(so);
 		return;
 	}
 	if (so->so_head) {
@@ -317,7 +314,7 @@ sofree(struct socket *so, int keep_lock)
 		 */
 		if (so->so_onq == &head->so_q) {
 			if (!keep_lock)
-				sounlock(so);
+				sounlock_shared(so);
 			return;
 		}
 
@@ -344,7 +341,7 @@ sofree(struct socket *so, int keep_lock)
 	}
 
 	if (!keep_lock)
-		sounlock(so);
+		sounlock_shared(so);
 	sorele(so);
 }
 
@@ -368,7 +365,7 @@ soclose(struct socket *so, int flags)
 	struct socket *so2;
 	int error = 0;
 
-	solock(so);
+	solock_shared(so);
 	/* Revoke async IO early. There is a final revocation in sofree(). */
 	sigio_free(&so->so_sigio);
 	if (so->so_state & SS_ISCONNECTED) {
@@ -430,7 +427,7 @@ discard:
 	if (so->so_sp) {
 		struct socket *soback;
 
-		sounlock(so);
+		sounlock_shared(so);
 		/*
 		 * Concurrent sounsplice() locks `sb_mtx' mutexes on
 		 * both `so_snd' and `so_rcv' before unsplice sockets.
@@ -477,7 +474,7 @@ notsplicedback:
 		task_del(sosplice_taskq, &so->so_sp->ssp_task);
 		taskq_barrier(sosplice_taskq);
 
-		solock(so);
+		solock_shared(so);
 	}
 #endif /* SOCKET_SPLICE */
 
