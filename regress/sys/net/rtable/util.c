@@ -75,7 +75,7 @@
 
 #include "util.h"
 
-struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
+struct sockaddr *rt_plen2mask(const struct rtentry *, struct sockaddr_in6 *);
 
 struct domain inetdomain = {
   .dom_family		= AF_INET,
@@ -337,7 +337,7 @@ refcnt_rele(struct refcnt *r)
 }
 
 unsigned int
-refcnt_read(struct refcnt *r)
+refcnt_read(const struct refcnt *r)
 {
 	return (r->r_refs);
 }
@@ -401,7 +401,7 @@ rt_plentosa(sa_family_t af, int plen, struct sockaddr_in6 *sa_mask)
 }
 
 struct sockaddr *
-rt_plen2mask(struct rtentry *rt, struct sockaddr_in6 *sa_mask)
+rt_plen2mask(const struct rtentry *rt, struct sockaddr_in6 *sa_mask)
 {
 	return (rt_plentosa(rt_key(rt)->sa_family, rt_plen(rt), sa_mask));
 }
