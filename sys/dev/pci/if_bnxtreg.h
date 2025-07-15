@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxtreg.h,v 1.6 2024/09/01 03:08:56 jsg Exp $	*/
+/*	$OpenBSD: if_bnxtreg.h,v 1.7 2025/07/15 13:40:02 jsg Exp $	*/
 /*-
  *   BSD LICENSE
  *
@@ -9325,7 +9325,7 @@ struct hwrm_port_phy_qcfg_output {
 	/* This value represents transceiver identifier type. */
 	/*
 	 * Current setting of TX LPI timer in microseconds. This field is valid
-	 * only when_eee_enabled flag is set to 1 and tx_lpi_enabled is set to
+	 * only when eee_enabled flag is set to 1 and tx_lpi_enabled is set to
 	 * 1.
 	 */
 	#define HWRM_PORT_PHY_QCFG_OUTPUT_TX_LPI_TIMER_MASK	UINT32_C(0xffffff)
@@ -10680,7 +10680,7 @@ struct hwrm_port_phy_qcaps_output {
 	 * This is a bit mask to indicate what speeds are supported for EEE on
 	 * this link. For each speed that can be autonegotiated when EEE is
 	 * enabled on this link, the corresponding mask bit shall be set to '1'.
-	 * This field is only valid when the eee_suppotred is set to '1'.
+	 * This field is only valid when eee_supported is set to '1'.
 	 */
 	/* Reserved */
 	#define HWRM_PORT_PHY_QCAPS_OUTPUT_SUPPORTED_SPEEDS_EEE_MODE_RSVD1 UINT32_C(0x1)
@@ -10704,7 +10704,7 @@ struct hwrm_port_phy_qcaps_output {
 	/*
 	 * The lowest value of TX LPI timer that can be set on this link when
 	 * EEE is enabled. This value is in microseconds. This field is valid
-	 * only when_eee_supported is set to '1'.
+	 * only when eee_supported is set to '1'.
 	 */
 	#define HWRM_PORT_PHY_QCAPS_OUTPUT_TX_LPI_TIMER_LOW_MASK   UINT32_C(0xffffff)
 	#define HWRM_PORT_PHY_QCAPS_OUTPUT_TX_LPI_TIMER_LOW_SFT	0
@@ -10725,7 +10725,7 @@ struct hwrm_port_phy_qcaps_output {
 	/*
 	 * The highest value of TX LPI timer that can be set on this link when
 	 * EEE is enabled. This value is in microseconds. This field is valid
-	 * only when_eee_supported is set to '1'.
+	 * only when eee_supported is set to '1'.
 	 */
 	#define HWRM_PORT_PHY_QCAPS_OUTPUT_TX_LPI_TIMER_HIGH_MASK  UINT32_C(0xffffff)
 	#define HWRM_PORT_PHY_QCAPS_OUTPUT_TX_LPI_TIMER_HIGH_SFT   0

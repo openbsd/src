@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.10 2025/05/20 13:51:27 dv Exp $ */
+/* $OpenBSD: vmm.h,v 1.11 2025/07/15 13:40:02 jsg Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -198,7 +198,7 @@ SLIST_HEAD(vmlist_head, vm);
  * Virtual Machine Monitor
  *
  * Methods used to protect struct members in the global vmm device:
- *	a	atomic opererations
+ *	a	atomic operations
  *	I	immutable operations
  *	K	kernel lock
  *	p	virtual process id (vpid/asid) rwlock

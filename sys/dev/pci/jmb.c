@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmb.c,v 1.11 2024/05/24 06:02:58 jsg Exp $ */
+/*	$OpenBSD: jmb.c,v 1.12 2025/07/15 13:40:02 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -47,7 +47,7 @@
 #define  JM_PCI_CTL0_SATA0_AHCI		(1<<13) /* SATA port 0 AHCI enable */
 #define  JM_PCI_CTL0_SATA0_IDE		(1<<12) /* SATA port 0 PCIIDE enable */
 #define  JM_PCI_CTL0_AHCI_F1		(1<<9) /* AHCI on function 1 */
-#define  JM_PCI_CTL0_AHCI_EN		(1<<8) /* ACHI enable */
+#define  JM_PCI_CTL0_AHCI_EN		(1<<8) /* AHCI enable */
 #define  JM_PCI_CTL0_PATA0_RST		(1<<6) /* PATA port 0 reset */
 #define  JM_PCI_CTL0_PATA0_EN		(1<<5) /* PATA port 0 enable */
 #define  JM_PCI_CTL0_PATA0_SEC		(1<<4) /* PATA 0 enable on 2nd chan */

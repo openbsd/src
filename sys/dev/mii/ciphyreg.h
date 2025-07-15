@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciphyreg.h,v 1.4 2022/01/09 05:42:44 jsg Exp $	*/
+/*	$OpenBSD: ciphyreg.h,v 1.5 2025/07/15 13:40:02 jsg Exp $	*/
 /*	$FreeBSD: ciphyreg.h,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -90,7 +90,7 @@
 /* False carrier sense count register */
 #define CIPHY_MII_FCSERR	0x14
 
-/* Ddisconnect error counter */
+/* Disconnect error counter */
 #define CIPHY_MII_DISCERR	0x15
 
 /* 10baseT control/status register */

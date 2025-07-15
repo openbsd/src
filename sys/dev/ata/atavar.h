@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.24 2025/07/07 00:55:15 jsg Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.25 2025/07/15 13:40:02 jsg Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ struct ata_atapi_attach {
  * the len of data's to read/write (if any), and a function to call upon
  * completion.
  * If no sleep is allowed, the driver can poll for command completion.
- * Once the command completed, if the error registed is valid, the flag
+ * Once the command completed, if the error register is valid, the flag
  * AT_ERROR is set and the error register value is copied to r_error .
  * A separate interface is needed for read/write or ATAPI packet commands
  * (which need multiple interrupts per commands).

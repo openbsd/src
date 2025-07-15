@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.79 2024/05/24 06:02:57 jsg Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.80 2025/07/15 13:40:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1151,7 +1151,7 @@ tl_intvec_txeof(void *xsc, u_int32_t type)
  * When the TXEOF handler is called, it will free all of the transmitted
  * frames and reset the tx_head pointer to NULL. However, a TXEOC
  * interrupt should be received and acknowledged before any more frames
- * are queued for transmission. If tl_statrt() is called after TXEOF
+ * are queued for transmission. If tl_start() is called after TXEOF
  * resets the tx_head pointer but _before_ the TXEOC interrupt arrives,
  * it could attempt to issue a transmit command prematurely.
  *

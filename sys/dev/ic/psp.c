@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.18 2025/05/20 07:02:20 mpi Exp $ */
+/*	$OpenBSD: psp.c,v 1.19 2025/07/15 13:40:02 jsg Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -301,7 +301,7 @@ psp_reinit(struct psp_softc *sc)
 
 	/*
 	 * create and map Trusted Memory Region (TMR); size 1 Mbyte,
-	 * needs to be aligend to 1 Mbyte.
+	 * needs to be aligned to 1 Mbyte.
 	 */
 	sc->sc_tmr_size = size = PSP_TMR_SIZE;
 	error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.53 2025/07/14 23:22:44 jsg Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.54 2025/07/15 13:40:02 jsg Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -855,7 +855,7 @@ enum ice_memcpy_type {
 };
 
 /*
- * ice_calloc - Allocate an array of elementes
+ * ice_calloc - Allocate an array of elements
  * @hw: the hardware private structure
  * @count: number of elements to allocate
  * @size: the size of each element

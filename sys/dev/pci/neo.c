@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.42 2024/05/24 06:02:58 jsg Exp $       */
+/*      $OpenBSD: neo.c,v 1.43 2025/07/15 13:40:02 jsg Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -91,7 +91,7 @@
  * passes that location while playing, it signals an interrupt.
  *
  * The ring buffer size is currently 16k. That is about 100ms of audio
- * at 44.1khz/stero/16 bit. However, to keep the buffer full, interrupts
+ * at 44.1khz/stereo/16 bit. However, to keep the buffer full, interrupts
  * are generated more often than that, so 20-40 interrupts per second
  * should not be unexpected. Increasing BUFFSIZE should help minimize
  * the glitches due to drivers that spend too much time looping at high

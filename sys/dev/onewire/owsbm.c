@@ -1,4 +1,4 @@
-/*	$OpenBSD: owsbm.c,v 1.11 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: owsbm.c,v 1.12 2025/07/15 13:40:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Aaron Linville <aaron@linville.org>
@@ -19,7 +19,7 @@
 /*
  * 1-Wire Smart Battery Monitor family type device driver.
  * Provides on-board temperature, an A/D converter for voltage/current,
- * current accumulator, elapsed time metter, and 40 bytes of nonvolatile
+ * current accumulator, elapsed time meter, and 40 bytes of nonvolatile
  * memory.
  */
 

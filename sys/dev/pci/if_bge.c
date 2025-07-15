@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.407 2024/09/04 07:54:52 mglocker Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.408 2025/07/15 13:40:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1996,7 +1996,7 @@ bge_blockinit(struct bge_softc *sc)
 		/*
 		 * Bits 31-16: Programmable ring size (2048, 1024, 512, .., 32)
 		 * Bits 15-2 : Maximum RX frame size
-		 * Bit 1     : 1 = Ring Disabled, 0 = Ring ENabled
+		 * Bit 1     : 1 = Ring Disabled, 0 = Ring Enabled
 		 * Bit 0     : Reserved
 		 */
 		rcb->bge_maxlen_flags =

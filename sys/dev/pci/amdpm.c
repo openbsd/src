@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.40 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.41 2025/07/15 13:40:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -102,7 +102,7 @@ static struct timecounter amdpm_timecounter = {
 #define	AMDPM_PMPTR	0x58		/* PMxx System Management IO space
 					   Pointer */
 #define NFPM_PMPTR	0x14		/* nForce System Management IO space
-					   POinter */
+					   Pointer */
 #define	AMDPM_PMBASE(x)	((x) & 0xff00)	/* PMxx base address */
 #define	AMDPM_PMSIZE	256		/* PMxx space size */
 

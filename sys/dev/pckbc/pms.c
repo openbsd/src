@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.101 2025/04/28 13:35:39 deraadt Exp $ */
+/* $OpenBSD: pms.c,v 1.102 2025/07/15 13:40:02 jsg Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1670,7 +1670,7 @@ pms_proc_alps(struct pms_softc *sc)
 		return;
 
 	/*
-	 * XXX The Y-axis is in the oposit direction compared to
+	 * XXX The Y-axis is in the opposite direction compared to
 	 * Synaptics touchpads and PS/2 mouses.
 	 * It's why we need to translate the y value here for both
 	 * NATIVE and COMPAT modes.

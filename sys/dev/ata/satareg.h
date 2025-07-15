@@ -1,4 +1,4 @@
-/*	$OpenBSD: satareg.h,v 1.3 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: satareg.h,v 1.4 2025/07/15 13:40:02 jsg Exp $	*/
 /*	$NetBSD: satareg.h,v 1.3 2004/05/23 23:07:59 wiz Exp $	*/
 
 /*-
@@ -146,7 +146,7 @@
 	 * power management state.
 	 */
 #define	SControl_SPM_PARTIAL	(0x1 << 12)	/* transition to PARTIAL */
-#define	SControl_SPM_SLUMBER	(0x2 << 12)	/* transition to SLUBMER */
+#define	SControl_SPM_SLUMBER	(0x2 << 12)	/* transition to SLUMBER */
 #define	SControl_SPM_ComWake	(0x4 << 12)	/* transition from PM */
 	/*
 	 * The PMP field identifies the selected Port Multiplier Port
