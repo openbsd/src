@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.14 2025/07/14 12:00:12 stsp Exp $ */
+/* $OpenBSD: hidmt.c,v 1.15 2025/07/15 20:27:59 bru Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -41,6 +41,9 @@
 #else
 #define DPRINTF(x)
 #endif
+
+#define IS_REPORT_LEVEL_USAGE(u) ((((u) >> 16) & 0xffff) == HUP_BUTTON || \
+    (u) == HID_USAGE2(HUP_DIGITIZERS, HUD_CONTACTCOUNT))
 
 #define HID_UNIT_CM	0x11
 #define HID_UNIT_INCH	0x13
@@ -396,7 +399,7 @@ hidmt_input(struct hidmt *mt, uint8_t *data, u_int len)
 
 			bzero(&hc, sizeof(struct hidmt_contact));
 		}
-		else if (!firstu)
+		else if (!firstu && !IS_REPORT_LEVEL_USAGE(hi->usage))
 			firstu = hi->usage;
 
 		switch (hi->usage) {
