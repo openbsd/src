@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.93 2025/07/15 09:55:49 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.94 2025/07/15 10:14:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -896,7 +896,7 @@ rtable_mpath_insert(struct art_node *an, struct rtentry *rt)
 
 	prt = (struct rtentry **)&an->an_value;
 	while ((mrt = SMR_PTR_GET_LOCKED(prt)) != NULL) {
-		if (mrt->rt_priority >= prio)
+		if (mrt->rt_priority > prio)
 			break;
 
 		prt = &mrt->rt_next;
