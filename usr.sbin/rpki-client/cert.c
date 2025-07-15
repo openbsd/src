@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.193 2025/07/14 06:03:17 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.194 2025/07/15 07:23:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1875,7 +1875,7 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
  * Returns the parse results or NULL on failure.
  */
 struct cert *
-cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
+cert_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	struct cert		*cert = NULL;
 	const unsigned char	*oder;
@@ -1902,36 +1902,8 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	if ((cert = cert_parse_internal(fn, x)) == NULL)
 		goto out;
 
-	/* Validation on required fields. */
-	switch (cert->purpose) {
-	case CERT_PURPOSE_TA:
-		/* XXX - caller should indicate if it expects TA or CA cert */
-	case CERT_PURPOSE_CA:
-		if (cert->mft == NULL) {
-			warnx("%s: RFC 6487 section 4.8.8: missing SIA", fn);
-			goto out;
-		}
-		if (cert->num_ases == 0 && cert->num_ips == 0) {
-			warnx("%s: missing IP or AS resources", fn);
-			goto out;
-		}
-		break;
-	case CERT_PURPOSE_BGPSEC_ROUTER:
-		if (cert->num_ips > 0) {
-			warnx("%s: unexpected IP resources in BGPsec cert", fn);
-			goto out;
-		}
-		break;
-	case CERT_PURPOSE_EE:
+	if (cert->purpose == CERT_PURPOSE_EE) {
 		warnx("%s: unexpected EE cert", fn);
-		goto out;
-	default:
-		warnx("%s: x509_get_purpose failed in %s", fn, __func__);
-		goto out;
-	}
-
-	if (cert->ski == NULL) {
-		warnx("%s: RFC 6487 section 8.4.2: missing SKI", fn);
 		goto out;
 	}
 
@@ -1941,38 +1913,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
  out:
 	cert_free(cert);
 	X509_free(x);
-	return NULL;
-}
-
-struct cert *
-cert_parse(const char *fn, struct cert *p)
-{
-	if (p == NULL)
-		return NULL;
-
-	if (p->aki == NULL) {
-		warnx("%s: RFC 6487 section 8.4.2: "
-		    "non-trust anchor missing AKI", fn);
-		goto badcert;
-	}
-	if (strcmp(p->aki, p->ski) == 0) {
-		warnx("%s: RFC 6487 section 8.4.2: "
-		    "non-trust anchor AKI may not match SKI", fn);
-		goto badcert;
-	}
-	if (p->aia == NULL) {
-		warnx("%s: RFC 6487 section 8.4.7: AIA: extension missing", fn);
-		goto badcert;
-	}
-	if (p->crl == NULL) {
-		warnx("%s: RFC 6487 section 4.8.6: CRL: "
-		    "no CRL distribution point extension", fn);
-		goto badcert;
-	}
-	return p;
-
- badcert:
-	cert_free(p);
 	return NULL;
 }
 
@@ -2008,21 +1948,6 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 	}
 	if (p->notafter < now) {
 		warnx("%s: certificate has expired", fn);
-		goto badcert;
-	}
-	if (p->aki != NULL && strcmp(p->aki, p->ski)) {
-		warnx("%s: RFC 6487 section 4.8.3: "
-		    "trust anchor AKI, if specified, must match SKI", fn);
-		goto badcert;
-	}
-	if (p->aia != NULL) {
-		warnx("%s: RFC 6487 section 4.8.7: "
-		    "trust anchor must not have AIA", fn);
-		goto badcert;
-	}
-	if (p->crl != NULL) {
-		warnx("%s: RFC 6487 section 4.8.6: "
-		    "trust anchor may not specify CRL resource", fn);
 		goto badcert;
 	}
 	if (p->purpose != CERT_PURPOSE_TA) {

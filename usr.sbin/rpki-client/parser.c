@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.162 2025/06/25 16:24:44 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.163 2025/07/15 07:23:39 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -588,8 +588,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 
 	/* Extract certificate data. */
 
-	cert = cert_parse_pre(file, der, len);
-	cert = cert_parse(file, cert);
+	cert = cert_parse(file, der, len);
 	if (cert == NULL)
 		goto out;
 
@@ -693,7 +692,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 
 	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
 	der = load_file(file2, &der_len);
-	cert2 = cert_parse_pre(file2, der, der_len);
+	cert2 = cert_parse(file2, der, der_len);
 	free(der);
 	cert2 = ta_parse(file2, cert2, pkey, pkeysz);
 
@@ -701,7 +700,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 		file1 = parse_filepath(entp->repoid, entp->path, entp->file,
 		    DIR_TEMP);
 		der = load_file(file1, &der_len);
-		cert1 = cert_parse_pre(file1, der, der_len);
+		cert1 = cert_parse(file1, der, der_len);
 		free(der);
 		cert1 = ta_parse(file1, cert1, pkey, pkeysz);
 	}

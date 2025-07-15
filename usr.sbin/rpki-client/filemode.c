@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.62 2025/06/25 16:24:44 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.63 2025/07/15 07:23:39 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -151,7 +151,7 @@ parse_load_cert(char *uri)
 		goto done;
 	}
 
-	cert = cert_parse_pre(uri, f, flen);
+	cert = cert_parse(uri, f, flen);
 	free(f);
 
 	if (cert == NULL)
@@ -260,7 +260,7 @@ parse_load_ta(struct tal *tal)
 	}
 
 	/* Extract certificate data. */
-	cert = cert_parse_pre(file, f, flen);
+	cert = cert_parse(file, f, flen);
 	cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
 	if (cert == NULL)
 		goto out;
@@ -408,14 +408,10 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		notafter = &aspa->notafter;
 		break;
 	case RTYPE_CER:
-		cert = cert_parse_pre(file, buf, len);
+		cert = cert_parse(file, buf, len);
 		if (cert == NULL)
 			break;
 		is_ta = (cert->purpose == CERT_PURPOSE_TA);
-		if (!is_ta)
-			cert = cert_parse(file, cert);
-		if (cert == NULL)
-			break;
 		aia = cert->aia;
 		x509 = cert->x509;
 		if (X509_up_ref(x509) == 0)

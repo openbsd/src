@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.247 2025/07/11 09:20:23 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.248 2025/07/15 07:23:39 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -716,8 +716,7 @@ void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
 void		 auth_tree_free(struct auth_tree *);
 struct cert	*cert_parse_ee_cert(const char *, int, X509 *);
-struct cert	*cert_parse_pre(const char *, const unsigned char *, size_t);
-struct cert	*cert_parse(const char *, struct cert *);
+struct cert	*cert_parse(const char *, const unsigned char *, size_t);
 struct cert	*ta_parse(const char *, struct cert *, const unsigned char *,
 		    size_t);
 struct cert	*cert_read(struct ibuf *);
