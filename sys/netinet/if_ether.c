@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.274 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.275 2025/07/15 22:12:49 mvs Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -384,7 +384,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 
 		/* refresh ARP entry when timeout gets close */
 		if (rt->rt_expire != 0 &&
-		    rt->rt_expire - arpt_keep / 8 < uptime) {
+		    rt->rt_expire - atomic_load_int(&arpt_keep) / 8 < uptime) {
 
 			mtx_enter(&arp_mtx);
 			la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -709,7 +709,7 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	sdl->sdl_alen = sizeof(ea->arp_sha);
 	memcpy(LLADDR(sdl), ea->arp_sha, sizeof(ea->arp_sha));
 	if (rt->rt_expire)
-		rt->rt_expire = uptime + arpt_keep;
+		rt->rt_expire = uptime + atomic_load_int(&arpt_keep);
 	rt->rt_flags &= ~RTF_REJECT;
 
 	/* Notify userland that an ARP resolution has been done. */
