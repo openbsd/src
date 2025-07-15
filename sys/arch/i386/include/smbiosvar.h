@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbiosvar.h,v 1.13 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: smbiosvar.h,v 1.14 2025/07/15 01:09:32 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -191,7 +191,7 @@ struct smbios_board {
 } __packed;
 
 /*
- * SMBIOS Structure Type 3 "System Wnclosure or Chassis"
+ * SMBIOS Structure Type 3 "System Enclosure or Chassis"
  * DMTF Specification DSP0134
  */
 struct smbios_enclosure {
