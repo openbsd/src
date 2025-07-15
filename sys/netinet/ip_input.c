@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.417 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.418 2025/07/15 08:27:47 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -85,8 +85,9 @@
 /*
  * Locks used to protect global variables in this file:
  *	I	immutable after creation
- *	a	atomic operations
  *	N	net lock
+ *	a	atomic operations
+ *	q	ipq_mutex
  */
 
 /* values controllable via sysctl */
@@ -100,15 +101,14 @@ int	ip_mtudisc = 1;				/* [a] */
 int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;	/* [a] */
 int	ip_directedbcast = 0;			/* [a] */
 
-/* Protects `ipq' and `ip_frags'. */
 struct mutex	ipq_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 /* IP reassembly queue */
-LIST_HEAD(, ipq) ipq;
+LIST_HEAD(, ipq) ipq;				/* [q] */
 
 /* Keep track of memory used for reassembly */
-int	ip_maxqueue = 300;
-int	ip_frags = 0;
+int	ip_maxqueue = 300;			/* [a] */
+int	ip_frags = 0;				/* [q] */
 
 #ifndef SMALL_KERNEL
 const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
@@ -123,10 +123,10 @@ const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 	{ IPCTL_IPPORT_LASTAUTO, &ipport_lastauto, 0, 65535 },
 	{ IPCTL_IPPORT_HIFIRSTAUTO, &ipport_hifirstauto, 0, 65535 },
 	{ IPCTL_IPPORT_HILASTAUTO, &ipport_hilastauto, 0, 65535 },
+	{ IPCTL_IPPORT_MAXQUEUE, &ip_maxqueue, 0, 10000 },
 };
 
 const struct sysctl_bounded_args ipctl_vars[] = {
-	{ IPCTL_IPPORT_MAXQUEUE, &ip_maxqueue, 0, 10000 },
 	{ IPCTL_MFORWARDING, &ipmforwarding, 0, 1 },
 	{ IPCTL_ARPTIMEOUT, &arpt_keep, 0, INT_MAX },
 	{ IPCTL_ARPDOWN, &arpt_down, 0, INT_MAX },
@@ -155,7 +155,7 @@ int	in_ouraddr(struct mbuf *, struct ifnet *, struct route *, int);
 int		ip_fragcheck(struct mbuf **, int *);
 struct mbuf *	ip_reass(struct ipqent *, struct ipq *);
 void		ip_freef(struct ipq *);
-void		ip_flush(void);
+void		ip_flush(int);
 
 static void ip_send_dispatch(void *);
 static void ip_sendraw_dispatch(void *);
@@ -697,9 +697,11 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 		 * attempt reassembly; if it succeeds, proceed.
 		 */
 		if (mff || ip->ip_off) {
+			int ip_maxqueue_local = atomic_load_int(&ip_maxqueue);
+
 			ipstat_inc(ips_fragments);
-			if (ip_frags + 1 > ip_maxqueue) {
-				ip_flush();
+			if (ip_frags + 1 > ip_maxqueue_local) {
+				ip_flush(ip_maxqueue_local);
 				ipstat_inc(ips_rcvmemdrop);
 				goto bad;
 			}
@@ -1170,13 +1172,13 @@ ip_slowtimo(void)
  * Flush a bunch of datagram fragments, till we are down to 75%.
  */
 void
-ip_flush(void)
+ip_flush(int maxqueue)
 {
 	int max = 50;
 
 	MUTEX_ASSERT_LOCKED(&ipq_mutex);
 
-	while (!LIST_EMPTY(&ipq) && ip_frags > ip_maxqueue * 3 / 4 && --max) {
+	while (!LIST_EMPTY(&ipq) && ip_frags > maxqueue * 3 / 4 && --max) {
 		ipstat_inc(ips_fragdropped);
 		ip_freef(LIST_FIRST(&ipq));
 	}
@@ -1840,6 +1842,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_IPPORT_LASTAUTO:
 	case IPCTL_IPPORT_HIFIRSTAUTO:
 	case IPCTL_IPPORT_HILASTAUTO:
+	case IPCTL_IPPORT_MAXQUEUE:
 		return (sysctl_bounded_arr(
 		    ipctl_vars_unlocked, nitems(ipctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));
