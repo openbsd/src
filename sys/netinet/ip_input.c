@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.418 2025/07/15 08:27:47 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.419 2025/07/15 18:28:57 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -92,7 +92,7 @@
 
 /* values controllable via sysctl */
 int	ip_forwarding = 0;			/* [a] */
-int	ipmforwarding = 0;
+int	ipmforwarding = 0;			/* [a] */
 int	ipmultipath = 0;			/* [a] */
 int	ip_sendredirects = 1;			/* [a] */
 int	ip_dosourceroute = 0;			/* [a] */
@@ -124,10 +124,10 @@ const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 	{ IPCTL_IPPORT_HIFIRSTAUTO, &ipport_hifirstauto, 0, 65535 },
 	{ IPCTL_IPPORT_HILASTAUTO, &ipport_hilastauto, 0, 65535 },
 	{ IPCTL_IPPORT_MAXQUEUE, &ip_maxqueue, 0, 10000 },
+	{ IPCTL_MFORWARDING, &ipmforwarding, 0, 1 },
 };
 
 const struct sysctl_bounded_args ipctl_vars[] = {
-	{ IPCTL_MFORWARDING, &ipmforwarding, 0, 1 },
 	{ IPCTL_ARPTIMEOUT, &arpt_keep, 0, INT_MAX },
 	{ IPCTL_ARPDOWN, &arpt_down, 0, INT_MAX },
 };
@@ -529,7 +529,8 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
 		m->m_flags |= M_MCAST;
 
 #ifdef MROUTING
-		if (ipmforwarding && ip_mrouter[ifp->if_rdomain]) {
+		if (atomic_load_int(&ipmforwarding) &&
+		    ip_mrouter[ifp->if_rdomain]) {
 			int error;
 
 			if (m->m_flags & M_EXT) {
@@ -1843,6 +1844,7 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_IPPORT_HIFIRSTAUTO:
 	case IPCTL_IPPORT_HILASTAUTO:
 	case IPCTL_IPPORT_MAXQUEUE:
+	case IPCTL_MFORWARDING:
 		return (sysctl_bounded_arr(
 		    ipctl_vars_unlocked, nitems(ipctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));
