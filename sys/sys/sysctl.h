@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.243 2025/07/05 09:24:37 jsg Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.244 2025/07/15 09:55:49 dlg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1054,7 +1054,7 @@ struct mbuf_queue;
 int sysctl_mq(int *, u_int, void *, size_t *, void *, size_t,
     struct mbuf_queue *);
 struct rtentry;
-int sysctl_dumpentry(struct rtentry *, void *, unsigned int);
+int sysctl_dumpentry(const struct rtentry *, void *, unsigned int);
 int sysctl_rtable(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_clockrate(char *, size_t *, void *);
 #if defined(GPROF) || defined(DDBPROF)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.92 2025/07/10 05:28:13 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.93 2025/07/15 09:55:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -778,6 +778,37 @@ rtable_walk(unsigned int rtableid, sa_family_t af, struct rtentry **prt,
 		} while (rt != NULL);
 		rw_enter_write(&tbl->r_lock);
 	}
+	rw_exit_write(&tbl->r_lock);
+
+	return (error);
+}
+
+int
+rtable_read(unsigned int rtableid, sa_family_t af,
+    int (*func)(const struct rtentry *, void *, unsigned int), void *arg)
+{
+	struct rtable			*tbl;
+	struct art_iter			 ai;
+	struct art_node			*an;
+	int				 error = 0;
+
+	tbl = rtable_get(rtableid, af);
+	if (tbl == NULL)
+		return (EAFNOSUPPORT);
+
+	rw_enter_write(&tbl->r_lock);
+	ART_FOREACH(an, tbl->r_art, &ai) {
+		struct rtentry *rt;
+		for (rt = SMR_PTR_GET_LOCKED(&an->an_value); rt != NULL;
+		    rt = SMR_PTR_GET_LOCKED(&rt->rt_next)) {
+			error = func(rt, arg, rtableid);
+			if (error != 0) {
+				art_iter_close(&ai);
+				goto leave;
+			}
+		}
+	}
+leave:
 	rw_exit_write(&tbl->r_lock);
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.35 2025/07/10 09:40:35 tb Exp $ */
+/*	$OpenBSD: rtable.h,v 1.36 2025/07/15 09:55:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -71,6 +71,9 @@ int		 rtable_delete(unsigned int, const struct sockaddr *,
 		     const struct sockaddr *, struct rtentry *);
 int		 rtable_walk(unsigned int, sa_family_t, struct rtentry **,
 		     int (*)(struct rtentry *, void *, unsigned int), void *);
+int		 rtable_read(unsigned int, sa_family_t,
+		     int (*)(const struct rtentry *, void *, unsigned int),
+		     void *);
 
 int		 rtable_mpath_capable(unsigned int, sa_family_t);
 int		 rtable_mpath_reprio(unsigned int, struct sockaddr *, int,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.385 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.386 2025/07/15 09:55:49 dlg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1955,7 +1955,7 @@ rtm_proposal(struct ifnet *ifp, struct rt_addrinfo *rtinfo, int flags,
  * This is used in dumping the kernel table via sysctl().
  */
 int
-sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
+sysctl_dumpentry(const struct rtentry *rt, void *v, unsigned int id)
 {
 	struct walkarg		*w = v;
 	int			 error = 0, size;
@@ -2231,8 +2231,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 			if (af != 0 && af != i)
 				continue;
 
-			error = rtable_walk(tableid, i, NULL, sysctl_dumpentry,
-			    &w);
+			error = rtable_read(tableid, i, sysctl_dumpentry, &w);
 			if (error == EAFNOSUPPORT)
 				error = 0;
 			if (error)
