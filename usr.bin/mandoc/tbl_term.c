@@ -1,6 +1,6 @@
-/* $OpenBSD: tbl_term.c,v 1.66 2022/08/28 10:57:52 schwarze Exp $ */
+/* $OpenBSD: tbl_term.c,v 1.67 2025/07/16 14:23:55 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2022 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -34,23 +34,23 @@
 
 static	size_t	term_tbl_len(size_t, void *);
 static	size_t	term_tbl_strlen(const char *, void *);
-static	size_t	term_tbl_sulen(const struct roffsu *, void *);
 static	void	tbl_data(struct termp *, const struct tbl_opts *,
 			const struct tbl_cell *,
 			const struct tbl_dat *,
-			const struct roffcol *);
+			const struct roffcol *, size_t *);
 static	void	tbl_direct_border(struct termp *, int, size_t);
-static	void	tbl_fill_border(struct termp *, int, size_t);
-static	void	tbl_fill_char(struct termp *, char, size_t);
-static	void	tbl_fill_string(struct termp *, const char *, size_t);
+static	void	tbl_fill_border(struct termp *, int, size_t *, size_t);
+static	void	tbl_fill_char(struct termp *, char, size_t *, size_t);
+static	void	tbl_fill_string(struct termp *, const char *,
+			size_t *, size_t);
 static	void	tbl_hrule(struct termp *, const struct tbl_span *,
 			const struct tbl_span *, const struct tbl_span *,
 			int);
 static	void	tbl_literal(struct termp *, const struct tbl_dat *,
-			const struct roffcol *);
+			const struct roffcol *, size_t *);
 static	void	tbl_number(struct termp *, const struct tbl_opts *,
 			const struct tbl_dat *,
-			const struct roffcol *);
+			const struct roffcol *, size_t *);
 static	void	tbl_word(struct termp *, const struct tbl_dat *);
 
 
@@ -135,15 +135,6 @@ static	const int *borders_locale;
 
 
 static size_t
-term_tbl_sulen(const struct roffsu *su, void *arg)
-{
-	int	 i;
-
-	i = term_hen((const struct termp *)arg, su);
-	return i > 0 ? i : 0;
-}
-
-static size_t
 term_tbl_strlen(const char *p, void *arg)
 {
 	return term_strlen((const struct termp *)arg, p);
@@ -161,16 +152,29 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 {
 	const struct tbl_cell	*cp, *cpn, *cpp, *cps;
 	const struct tbl_dat	*dp;
-	static size_t		 offset;
-	size_t			 save_offset;
-	size_t			 coloff, tsz;
-	int			 hspans, ic, more;
-	int			 dvert, fc, horiz, lhori, rhori, uvert;
+
+	/* Positions and widths in basic units. */
+	static size_t	 offset;	/* Of the table as a whole. */
+	size_t		 save_offset;	/* Of the surrounding text. */
+	size_t		 coloff;	/* Of this cell. */
+	size_t		 tsz;		/* Total width of the table. */
+	size_t		 enw; 		/* Width of one EN unit. */
+
+	int	 ic;	 /* Column number. */
+	int	 hspans; /* Number of spans following this cell. */
+	int	 horiz;	 /* Boolean: this row only contains a line. */
+	int	 lhori;	 /* Number of horizontal lines pointing left. */
+	int	 rhori;	 /* Number of horizontal lines pointing right. */
+	int	 dvert;	 /* Number of vertical lines pointing down. */
+	int	 uvert;	 /* Number of vertical lines pointing up. */
+	int	 fc;	 /* Frame character index in borders_locale[]. */
+	int	 more;	 /* Boolean: there are more columns to print. */
 
 	/* Inhibit printing of spaces: we do padding ourselves. */
 
 	tp->flags |= TERMP_NOSPACE | TERMP_NONOSPACE;
 	save_offset = tp->tcol->offset;
+	enw = term_len(tp, 1);
 
 	/*
 	 * The first time we're invoked for a given table block,
@@ -183,7 +187,6 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		tp->tbl.len = term_tbl_len;
 		tp->tbl.slen = term_tbl_strlen;
-		tp->tbl.sulen = term_tbl_sulen;
 		tp->tbl.arg = tp;
 
 		tblcalc(&tp->tbl, sp, tp->tcol->offset, tp->tcol->rmargin);
@@ -192,17 +195,19 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		offset = tp->tcol->offset;
 		if (sp->opts->opts & TBL_OPT_CENTRE) {
-			tsz = sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)
-			    ? 2 : !!sp->opts->lvert + !!sp->opts->rvert;
+			tsz = term_len(tp,
+			    sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)
+			    ? 2 : !!sp->opts->lvert + !!sp->opts->rvert);
 			for (ic = 0; ic + 1 < sp->opts->cols; ic++)
 				tsz += tp->tbl.cols[ic].width +
-				    tp->tbl.cols[ic].spacing;
+				    term_len(tp, tp->tbl.cols[ic].spacing);
 			if (sp->opts->cols)
 				tsz += tp->tbl.cols[sp->opts->cols - 1].width;
 			if (offset + tsz > tp->tcol->rmargin)
-				tsz -= 1;
+				tsz -= enw;
 			offset = offset + tp->tcol->rmargin > tsz ?
-			    (offset + tp->tcol->rmargin - tsz) / 2 : 0;
+			    ((offset + tp->tcol->rmargin - tsz) / enw / 2) *
+			    enw : 0;
 			tp->tcol->offset = offset;
 		}
 
@@ -234,7 +239,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		if (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ||
 		    sp->opts->lvert)
-			coloff++;
+			coloff += enw;
 		tp->tcol->rmargin = coloff;
 
 		/* Set up the data columns. */
@@ -249,7 +254,8 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			coloff += tp->tbl.cols[ic].width;
 			tp->tcol->rmargin = coloff;
 			if (ic + 1 < sp->opts->cols)
-				coloff += tp->tbl.cols[ic].spacing;
+				coloff += term_len(tp,
+				    tp->tbl.cols[ic].spacing);
 			if (hspans) {
 				hspans--;
 				continue;
@@ -264,7 +270,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		/* Set up a column for a right vertical frame. */
 
 		tp->tcol++;
-		tp->tcol->offset = coloff + 1;
+		tp->tcol->offset = coloff + enw;
 		tp->tcol->rmargin = tp->maxrmargin;
 
 		/* Spans may have reduced the number of columns. */
@@ -274,6 +280,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		/* Fill the buffers for all data columns. */
 
 		tp->tcol = tp->tcols;
+		coloff = tp->tcols[1].offset;
 		cp = cpn = sp->layout->first;
 		dp = sp->first;
 		hspans = 0;
@@ -289,7 +296,9 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			tp->tcol++;
 			tp->col = 0;
 			tp->flags &= ~(TERMP_BACKAFTER | TERMP_BACKBEFORE);
-			tbl_data(tp, sp->opts, cp, dp, tp->tbl.cols + ic);
+			tbl_data(tp, sp->opts, cp, dp, tp->tbl.cols + ic,
+			    &coloff);
+			coloff += term_len(tp, tp->tbl.cols[ic].spacing);
 			if (dp != NULL &&
 			    (ic || sp->layout->first->pos != TBL_CELL_SPAN)) {
 				hspans = dp->hspans;
@@ -323,8 +332,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		fc = BUP * uvert + BDOWN * dvert + BRIGHT * rhori;
 		if (uvert > 0 || dvert > 0 || (horiz && sp->opts->lvert)) {
 			(*tp->advance)(tp, tp->tcols->offset);
-			tp->viscol = tp->tcol->offset;
-			tbl_direct_border(tp, fc, 1);
+			tbl_direct_border(tp, fc, enw);
 		}
 
 		/* Print the data cells. */
@@ -343,6 +351,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			for (ic = 0; ic < sp->opts->cols; ic++) {
 
 				/*
+				 * Handle horizontal alignment.
 				 * Figure out whether to print a
 				 * vertical line after this cell
 				 * and advance to next layout cell.
@@ -357,6 +366,16 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 					if (sp->pos == TBL_SPAN_DATA)
 						uvert = dvert = cps->vert;
 					switch (cp->pos) {
+					case TBL_CELL_CENTRE:
+						tp->flags |= TERMP_CENTER;
+						break;
+					case TBL_CELL_RIGHT:
+						tp->flags |= TERMP_RIGHT;
+						break;
+					case TBL_CELL_LONG:
+						if (hspans == 0)
+							tp->tcol->offset += enw;
+						break;
 					case TBL_CELL_HORIZ:
 						fc = BHORIZ;
 						break;
@@ -427,6 +446,9 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 				tp->tcol++;
 				if (tp->tcol->col < tp->tcol->lastcol)
 					term_flushln(tp);
+				tp->flags &= ~(TERMP_CENTER | TERMP_RIGHT);
+				if (cp != NULL && cp->pos == TBL_CELL_LONG)
+					tp->tcol->offset -= enw;
 				if (tp->tcol->col < tp->tcol->lastcol)
 					more = 1;
 
@@ -446,15 +468,13 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 					continue;
 				}
 
-				if (tp->viscol < tp->tcol->rmargin) {
-					(*tp->advance)(tp, tp->tcol->rmargin
-					   - tp->viscol);
-					tp->viscol = tp->tcol->rmargin;
-				}
+				if (tp->viscol < tp->tcol->rmargin)
+					(*tp->advance)(tp,
+					   tp->tcol->rmargin - tp->viscol);
 				while (tp->viscol < tp->tcol->rmargin +
-				    tp->tbl.cols[ic].spacing / 2)
+				    term_len(tp, tp->tbl.cols[ic].spacing / 2))
 					tbl_direct_border(tp,
-					    BHORIZ * lhori, 1);
+					    BHORIZ * lhori, enw);
 
 				if (tp->tcol + 1 == tp->tcols + tp->lasttcol)
 					continue;
@@ -474,7 +494,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 				if (tp->tbl.cols[ic].spacing)
 					tbl_direct_border(tp,
 					    BLEFT * lhori + BRIGHT * rhori +
-					    BUP * uvert + BDOWN * dvert, 1);
+					    BUP * uvert + BDOWN * dvert, enw);
 
 				if (tp->enc == TERMENC_UTF8)
 					uvert = dvert = 0;
@@ -484,7 +504,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 					tbl_direct_border(tp,
 					    BHORIZ * rhori +
 					    BUP * (uvert > 1) +
-					    BDOWN * (dvert > 1), 1);
+					    BDOWN * (dvert > 1), enw);
 			}
 		}
 
@@ -523,15 +543,14 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			if (horiz == 0 && (IS_HORIZ(sp->layout->last) == 0 ||
 			    sp->layout->last->col + 1 < sp->opts->cols)) {
 				tp->tcol++;
-				do {
+				if (tp->tcol->offset > tp->viscol)
 					tbl_direct_border(tp,
-					    BHORIZ * lhori, 1);
-				} while (tp->viscol < tp->tcol->offset);
+					    BHORIZ * lhori,
+					    tp->tcol->offset - tp->viscol);
 			}
-			tbl_direct_border(tp, fc, 1);
+			tbl_direct_border(tp, fc, enw);
 		}
 		(*tp->endline)(tp);
-		tp->viscol = 0;
 	} while (more);
 
 	/*
@@ -570,6 +589,7 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 	const struct tbl_cell	*cpn;    /* Layout cell below this line. */
 	const struct tbl_dat	*dpn;	 /* Data cell below this line. */
 	const struct roffcol	*col;    /* Contains width and spacing. */
+	size_t			 enw;	 /* Width of one EN unit. */
 	int			 opts;   /* For the table as a whole. */
 	int			 bw;	 /* Box line width. */
 	int			 hw;     /* Horizontal line width. */
@@ -594,16 +614,15 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 
 	/* Print the left end of the line. */
 
-	if (tp->viscol == 0) {
+	enw = term_len(tp, 1);
+	if (tp->viscol == 0)
 		(*tp->advance)(tp, tp->tcols->offset);
-		tp->viscol = tp->tcols->offset;
-	}
 	if (flags != 0)
 		tbl_direct_border(tp,
 		    (spp == NULL ? 0 : BUP * bw) +
 		    (spn == NULL ? 0 : BDOWN * bw) +
 		    (spp == NULL || cpn == NULL ||
-		     cpn->pos != TBL_CELL_DOWN ? BRIGHT * hw : 0), 1);
+		     cpn->pos != TBL_CELL_DOWN ? BRIGHT * hw : 0), enw);
 
 	col = tp->tbl.cols;
 	for (;;) {
@@ -620,7 +639,7 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 		      strcmp(dpn->string, "\\^") != 0))
 		    ? hw : 0;
 		tbl_direct_border(tp, BHORIZ * lw,
-		    col->width + col->spacing / 2);
+		    col->width + term_len(tp, col->spacing / 2));
 
 		/*
 		 * Figure out whether a vertical line is crossing
@@ -673,7 +692,7 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 
 		if (col->spacing)
 			tbl_direct_border(tp, BLEFT * lw +
-			    BRIGHT * rw + BUP * uw + BDOWN * dw, 1);
+			    BRIGHT * rw + BUP * uw + BDOWN * dw, enw);
 
 		/*
 		 * In ASCII output, a crossing may print two characters.
@@ -683,13 +702,14 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 			uw = dw = 0;
 		if (col->spacing > 2)
 			tbl_direct_border(tp,
-                            BHORIZ * rw + BUP * uw + BDOWN * dw, 1);
+                            BHORIZ * rw + BUP * uw + BDOWN * dw, enw);
 
 		/* Padding before the start of the next column. */
 
 		if (col->spacing > 4)
 			tbl_direct_border(tp,
-			    BHORIZ * rw, (col->spacing - 3) / 2);
+			    BHORIZ * rw,
+			    term_len(tp, (col->spacing - 3) / 2));
 	}
 
 	/* Print the right end of the line. */
@@ -700,23 +720,22 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 		    (spn == NULL ? 0 : BDOWN * bw) +
 		    (spp == NULL || spn == NULL ||
 		     spn->layout->last->pos != TBL_CELL_DOWN ?
-		     BLEFT * hw : 0), 1);
+		     BLEFT * hw : 0), enw);
 		(*tp->endline)(tp);
-		tp->viscol = 0;
 	}
 }
 
 static void
 tbl_data(struct termp *tp, const struct tbl_opts *opts,
     const struct tbl_cell *cp, const struct tbl_dat *dp,
-    const struct roffcol *col)
+    const struct roffcol *col, size_t *coloff)
 {
 	switch (cp->pos) {
 	case TBL_CELL_HORIZ:
-		tbl_fill_border(tp, BHORIZ, col->width);
+		tbl_fill_border(tp, BHORIZ, coloff, col->width);
 		return;
 	case TBL_CELL_DHORIZ:
-		tbl_fill_border(tp, BHORIZ * 2, col->width);
+		tbl_fill_border(tp, BHORIZ * 2, coloff, col->width);
 		return;
 	default:
 		break;
@@ -730,11 +749,11 @@ tbl_data(struct termp *tp, const struct tbl_opts *opts,
 		return;
 	case TBL_DATA_HORIZ:
 	case TBL_DATA_NHORIZ:
-		tbl_fill_border(tp, BHORIZ, col->width);
+		tbl_fill_border(tp, BHORIZ, coloff, col->width);
 		return;
 	case TBL_DATA_NDHORIZ:
 	case TBL_DATA_DHORIZ:
-		tbl_fill_border(tp, BHORIZ * 2, col->width);
+		tbl_fill_border(tp, BHORIZ * 2, coloff, col->width);
 		return;
 	default:
 		break;
@@ -745,10 +764,10 @@ tbl_data(struct termp *tp, const struct tbl_opts *opts,
 	case TBL_CELL_CENTRE:
 	case TBL_CELL_LEFT:
 	case TBL_CELL_RIGHT:
-		tbl_literal(tp, dp, col);
+		tbl_literal(tp, dp, col, coloff);
 		break;
 	case TBL_CELL_NUMBER:
-		tbl_number(tp, opts, dp, col);
+		tbl_number(tp, opts, dp, col, coloff);
 		break;
 	case TBL_CELL_DOWN:
 	case TBL_CELL_SPAN:
@@ -758,46 +777,72 @@ tbl_data(struct termp *tp, const struct tbl_opts *opts,
 	}
 }
 
+/*
+ * Print multiple copies of the string cp to advance to
+ * len basic units from the left edge of the current column.
+ */
 static void
-tbl_fill_string(struct termp *tp, const char *cp, size_t len)
+tbl_fill_string(struct termp *tp, const char *cp, size_t *coloff, size_t len)
 {
-	size_t	 i, sz;
+	size_t	 sz;      /* Width of the string cp in basic units. */
+	size_t	 target;  /* Distance from the left margin in basic units. */
 
+	if (len == 0)
+		return;
 	sz = term_strlen(tp, cp);
-	for (i = 0; i < len; i += sz)
+	target = tp->tcol->offset + len;
+	while (*coloff < target) {
 		term_word(tp, cp);
+		*coloff += sz;
+	}
 }
 
+/*
+ * Print multiple copies of the ASCII character c to advance to
+ * len basic units from the left edge of the current column.
+ */
 static void
-tbl_fill_char(struct termp *tp, char c, size_t len)
+tbl_fill_char(struct termp *tp, char c, size_t *coloff, size_t len)
 {
 	char	 cp[2];
 
 	cp[0] = c;
 	cp[1] = '\0';
-	tbl_fill_string(tp, cp, len);
+	tbl_fill_string(tp, cp, coloff, len);
 }
 
+/*
+ * Print multiple copies of the border c to fill len basic units.
+ * Used for horizontal lines inside table cells.
+ */
 static void
-tbl_fill_border(struct termp *tp, int c, size_t len)
+tbl_fill_border(struct termp *tp, int c, size_t *coloff, size_t len)
 {
 	char	 buf[12];
 
 	if ((c = borders_locale[c]) > 127) {
 		(void)snprintf(buf, sizeof(buf), "\\[u%04x]", c);
-		tbl_fill_string(tp, buf, len);
+		tbl_fill_string(tp, buf, coloff, len);
 	} else
-		tbl_fill_char(tp, c, len);
+		tbl_fill_char(tp, c, coloff, len);
 }
 
+/*
+ * The same, but bypassing term_flushln().
+ * Used for horizontal and vertical lines at the edges of table cells.
+ */
 static void
 tbl_direct_border(struct termp *tp, int c, size_t len)
 {
-	size_t	 i, sz;
+	size_t	 sz;      /* Width of the character in basic units. */
+	size_t	 enw2;    /* Width of half an EN in basic units. */
+	size_t	 target;  /* Distance from the left margin in basic units. */
 
 	c = borders_locale[c];
-	sz = (*tp->width)(tp, c);
-	for (i = 0; i < len; i += sz) {
+	sz = (*tp->getwidth)(tp, c);
+	enw2 = (*tp->getwidth)(tp, ' ') / 2;
+	target = tp->viscol + len;
+	while (tp->viscol + enw2 < target) {
 		(*tp->letter)(tp, c);
 		tp->viscol += sz;
 	}
@@ -805,56 +850,36 @@ tbl_direct_border(struct termp *tp, int c, size_t len)
 
 static void
 tbl_literal(struct termp *tp, const struct tbl_dat *dp,
-		const struct roffcol *col)
+		const struct roffcol *col, size_t *coloff)
 {
-	size_t		 len, padl, padr, width;
-	int		 ic, hspans;
+	size_t	 width;	 /* Of the cell including following spans [BU]. */
+	int	 ic;	 /* Column number of the cell. */
+	int	 hspans; /* Number of horizontal spans that follow. */
 
-	assert(dp->string);
-	len = term_strlen(tp, dp->string);
 	width = col->width;
 	ic = dp->layout->col;
 	hspans = dp->hspans;
 	while (hspans--) {
-		width += tp->tbl.cols[ic].spacing;
+		width += term_len(tp, tp->tbl.cols[ic].spacing);
 		ic++;
 		width += tp->tbl.cols[ic].width;
 	}
-
-	padr = width > len ? width - len : 0;
-	padl = 0;
-
-	switch (dp->layout->pos) {
-	case TBL_CELL_LONG:
-		padl = term_len(tp, 1);
-		padr = padr > padl ? padr - padl : 0;
-		break;
-	case TBL_CELL_CENTRE:
-		if (2 > padr)
-			break;
-		padl = padr / 2;
-		padr -= padl;
-		break;
-	case TBL_CELL_RIGHT:
-		padl = padr;
-		padr = 0;
-		break;
-	default:
-		break;
-	}
-
-	tbl_fill_char(tp, ASCII_NBRSP, padl);
 	tbl_word(tp, dp);
-	tbl_fill_char(tp, ASCII_NBRSP, padr);
+	*coloff += width;
 }
 
 static void
 tbl_number(struct termp *tp, const struct tbl_opts *opts,
 		const struct tbl_dat *dp,
-		const struct roffcol *col)
+		const struct roffcol *col, size_t *coloff)
 {
 	const char	*cp, *lastdigit, *lastpoint;
-	size_t		 intsz, padl, totsz;
+
+	/* Widths in basic units. */
+	size_t		 pad;	/* Padding before the number. */
+	size_t		 totsz;	/* Of the number to be printed. */
+	size_t		 intsz;	/* Of the integer part. */
+
 	char		 buf[2];
 
 	/*
@@ -878,7 +903,7 @@ tbl_number(struct termp *tp, const struct tbl_opts *opts,
 
 	/* Then measure both widths. */
 
-	padl = 0;
+	pad = 0;
 	totsz = term_strlen(tp, dp->string);
 	if (lastdigit != NULL) {
 		if (lastpoint == NULL)
@@ -896,23 +921,19 @@ tbl_number(struct termp *tp, const struct tbl_opts *opts,
 		 */
 
 		if (col->decimal > intsz && col->width > totsz) {
-			padl = col->decimal - intsz;
-			if (padl + totsz > col->width)
-				padl = col->width - totsz;
+			pad = col->decimal - intsz;
+			if (pad + totsz > col->width)
+				pad = col->width - totsz;
 		}
 
 	/* If it is not a number, simply center the string. */
 
 	} else if (col->width > totsz)
-		padl = (col->width - totsz) / 2;
+		pad = (col->width - totsz) / 2;
 
-	tbl_fill_char(tp, ASCII_NBRSP, padl);
+	tbl_fill_char(tp, ASCII_NBRSP, coloff, pad);
 	tbl_word(tp, dp);
-
-	/* Pad right to fill the column.  */
-
-	if (col->width > padl + totsz)
-		tbl_fill_char(tp, ASCII_NBRSP, col->width - padl - totsz);
+	*coloff += col->width;
 }
 
 static void

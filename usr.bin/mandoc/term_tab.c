@@ -1,6 +1,6 @@
-/* $OpenBSD: term_tab.c,v 1.6 2025/07/04 19:13:22 schwarze Exp $ */
+/* $OpenBSD: term_tab.c,v 1.7 2025/07/16 14:23:55 schwarze Exp $ */
 /*
- * Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2017, 2021, 2025 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@
 #include "term.h"
 
 struct tablist {
-	size_t	*t;	/* Allocated array of tab positions. */
+	size_t	*t;	/* Allocated array of tab positions [BU]. */
 	size_t	 s;	/* Allocated number of positions. */
 	size_t	 n;	/* Currently used number of positions. */
 };
@@ -34,7 +34,7 @@ static struct {
 	struct tablist	 a;	/* All tab positions for lookup. */
 	struct tablist	 p;	/* Periodic tab positions to add. */
 	struct tablist	*r;	/* Tablist currently being recorded. */
-	size_t		 d;	/* Default tab width in units of n. */
+	size_t		 d;	/* Default tab width in basic units. */
 } tabs;
 
 
@@ -53,7 +53,7 @@ term_tab_set(const struct termp *p, const char *arg)
 		tabs.r = &tabs.a;
 		if (tabs.d == 0) {
 			a2roffsu(".8i", &su, SCALE_IN);
-			tabs.d = term_hen(p, &su);
+			tabs.d = term_hspan(p, &su);
 		}
 		return;
 	}
@@ -82,7 +82,7 @@ term_tab_set(const struct termp *p, const char *arg)
 
 	/* Append the new position. */
 
-	pos = term_hen(p, &su);
+	pos = term_hspan(p, &su);
 	tl->t[tl->n] = pos;
 	if (add && tl->n)
 		tl->t[tl->n] += tl->t[tl->n - 1];

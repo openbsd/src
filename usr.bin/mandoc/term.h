@@ -1,6 +1,7 @@
-/* $OpenBSD: term.h,v 1.80 2025/07/04 19:13:22 schwarze Exp $ */
+/* $OpenBSD: term.h,v 1.81 2025/07/16 14:23:55 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2015,2017,2019,2022 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011-2015, 2017, 2019, 2021, 2022, 2025
+ *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -44,19 +45,14 @@ struct	termp;
 
 typedef void	(*term_margin)(struct termp *, const struct roff_meta *);
 
-struct	termp_tbl {
-	int		  width;	/* width in fixed chars */
-	int		  decimal;	/* decimal point position */
-};
-
 struct	termp_col {
 	int		 *buf;		/* Output buffer. */
 	size_t		  maxcols;	/* Allocated bytes in buf. */
 	size_t		  lastcol;	/* Last byte in buf. */
 	size_t		  col;		/* Byte in buf to be written. */
-	size_t		  rmargin;	/* Current right margin. */
-	size_t		  offset;	/* Current left margin. */
-	size_t		  taboff;	/* Offset for literal tabs. */
+	size_t		  rmargin;	/* Current right margin [BU]. */
+	size_t		  offset;	/* Current left margin [BU]. */
+	size_t		  taboff;	/* Offset for literal tabs [BU]. */
 };
 
 struct	termp {
@@ -66,16 +62,16 @@ struct	termp {
 	size_t		  maxtcol;	/* Allocated table columns. */
 	size_t		  lasttcol;	/* Last column currently used. */
 	size_t		  line;		/* Current output line number. */
-	size_t		  defindent;	/* Default indent for text. */
-	size_t		  defrmargin;	/* Right margin of the device. */
-	size_t		  lastrmargin;	/* Right margin before the last ll. */
-	size_t		  maxrmargin;	/* Max right margin. */
+	size_t		  defindent;	/* Default indent for text [EN]. */
+	size_t		  defrmargin;	/* Right margin of the device [BU]. */
+	size_t		  lastrmargin;	/* Right margin before last ll [BU]. */
+	size_t		  maxrmargin;	/* Maximum right margin [BU]. */
 	size_t		  col;		/* Byte position in buf. */
-	size_t		  viscol;	/* Chars on current line. */
-	size_t		  trailspace;	/* See term_flushln(). */
-	size_t		  minbl;	/* Minimum blanks before next field. */
+	size_t		  viscol;	/* Width of the current line [BU]. */
+	size_t		  trailspace;	/* Whitespace after field [EN]. */
+	size_t		  minbl;	/* Whitespace before field [EN]. */
 	int		  synopsisonly; /* Print the synopsis only. */
-	int		  ti;		/* Temporary indent for one line. */
+	int		  ti;		/* Temporary indent for line [BU]. */
 	int		  skipvsp;	/* Vertical space to skip. */
 	int		  flags;
 #define	TERMP_SENTENCE	 (1 << 0)	/* Space before a sentence. */
@@ -115,7 +111,7 @@ struct	termp {
 	void		(*endline)(struct termp *);
 	void		(*advance)(struct termp *, size_t);
 	void		(*setwidth)(struct termp *, int, int);
-	size_t		(*width)(const struct termp *, int);
+	size_t		(*getwidth)(const struct termp *, int);
 	int		(*hspan)(const struct termp *,
 				const struct roffsu *);
 	const void	 *argf;		/* arg for headf/footf */
@@ -142,7 +138,6 @@ void		  term_end(struct termp *);
 
 void		  term_setwidth(struct termp *, const char *);
 int		  term_hspan(const struct termp *, const struct roffsu *);
-int		  term_hen(const struct termp *, const struct roffsu *);
 int		  term_vspan(const struct termp *, const struct roffsu *);
 size_t		  term_strlen(const struct termp *, const char *);
 size_t		  term_len(const struct termp *, size_t);
