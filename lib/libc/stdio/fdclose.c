@@ -1,4 +1,4 @@
-/*	$OpenBSD: fclose.c,v 1.14 2025/07/16 15:33:05 yasuoka Exp $ */
+/*	$OpenBSD: fdclose.c,v 1.1 2025/07/16 15:33:05 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993 The Regents of the University of California.
  * Copyright (c) 2013 Mariusz Zaborski <oshogbo@FreeBSD.org>
@@ -34,40 +34,39 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include "local.h"
 
 int
-__cleanfile(FILE *fp, int doclose)
+fdclose(FILE *fp, int *fdp)
 {
-	int r;
+	int r, err;
 
-	r = __sflush(fp);
-	if (doclose && fp->_close != NULL && (*fp->_close)(fp->_cookie) < 0)
-		r = EOF;
-	if (fp->_flags & __SMBF)
-		free(fp->_bf._base);
-	if (HASUB(fp))
-		FREEUB(fp);
-	if (HASLB(fp))
-		FREELB(fp);
-	fp->_r = fp->_w = 0;	/* Mess up if reaccessed. */
-	fp->_flags = 0;		/* Release this FILE for reuse. */
-	return r;
-}
-
-int
-fclose(FILE *fp)
-{
-	int r;
+	if (fdp != NULL)
+		*fdp = -1;
 
 	if (fp->_flags == 0) {	/* not open! */
 		errno = EBADF;
-		return (EOF);
+		return EOF;
 	}
+
 	FLOCKFILE(fp);
-	r = __cleanfile(fp, 1);
+	r = 0;
+	if (fp->_close != __sclose) {
+		r = EOF;
+		err = EOPNOTSUPP;
+	} else if (fp->_file < 0) {
+		r = EOF;
+		err = EBADF;
+	}
+	if (r == EOF) {
+		(void)__cleanfile(fp, 1);
+		errno = err;
+	} else {
+		if (fdp != NULL)
+			*fdp = fp->_file;
+		r = __cleanfile(fp, 0);
+	}
 	FUNLOCKFILE(fp);
-	return (r);
+
+	return r;
 }
-DEF_STRONG(fclose);

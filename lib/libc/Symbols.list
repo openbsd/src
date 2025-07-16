@@ -1371,10 +1371,14 @@ __fwriting
 __sF
 __srget
 __swbuf
+__stderr
+__stdin
+__stdout
 asprintf
 clearerr
 dprintf
 fclose
+fdclose
 fdopen
 feof
 ferror

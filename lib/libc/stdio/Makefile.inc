@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.31 2024/08/12 20:56:55 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.32 2025/07/16 15:33:05 yasuoka Exp $
 
 # stdio sources
 .PATH: ${LIBCSRCDIR}/stdio
 
 CFLAGS+=-DFLOATING_POINT -DPRINTF_WIDE_CHAR -DSCANF_WIDE_CHAR
 
-SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
+SRCS+=	asprintf.c clrerr.c fclose.c fdclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c fmemopen.c \
 	fopen.c fprintf.c fpurge.c fputc.c fputs.c fread.c freopen.c fscanf.c \
 	fseek.c fsetpos.c ftell.c funopen.c fvwrite.c fwalk.c fwrite.c \

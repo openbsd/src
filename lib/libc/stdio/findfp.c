@@ -1,4 +1,4 @@
-/*	$OpenBSD: findfp.c,v 1.20 2021/11/29 03:20:37 deraadt Exp $ */
+/*	$OpenBSD: findfp.c,v 1.21 2025/07/16 15:33:05 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,11 +32,13 @@
  */
 
 #include <sys/param.h>	/* ALIGN ALIGNBYTES */
-#include <unistd.h>
-#include <stdio.h>
 #include <errno.h>
+#include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "local.h"
 #include "glue.h"
 #include "thread_private.h"
@@ -45,11 +47,11 @@ int	__sdidinit;
 
 #define	NDYNAMIC 10		/* add ten more whenever necessary */
 
-#define	std(flags, file) \
-	{0,0,0,flags,file,{0},0,__sF+file,__sclose,__sread,__sseek,__swrite, \
-	 {(unsigned char *)(__sFext+file), 0}}
-/*	 p r w flags file _bf z  cookie      close    read    seek    write 
-	 ext */
+
+#define	std(flags, file, cookie) \
+	{ ._flags = (flags), ._file = (file), ._cookie = (cookie), \
+	  ._close = __sclose, ._read = __sread, ._seek = __sseek, \
+	  ._write = __swrite, ._ext = { (unsigned char *)(__sFext + file), 0} }
 
 				/* the usual - (stdin + stdout + stderr) */
 static FILE usual[FOPEN_MAX - 3];
@@ -59,12 +61,25 @@ static struct glue *lastglue = &uglue;
 static void *sfp_mutex;
 
 static struct __sfileext __sFext[3];
+/*
+ * These are separate variables because they may end up copied
+ * into program images via COPY relocations, so their addresses
+ * won't be related.  That also means they need separate glue :(
+ */
+FILE __stdin[1]  = { std(__SRD,         STDIN_FILENO, __stdin) };
+FILE __stdout[1] = { std(__SWR,        STDOUT_FILENO, __stdout) };
+FILE __stderr[1] = { std(__SWR|__SNBF, STDERR_FILENO, __stderr) };
+
+static struct glue sglue2 = { &uglue, 1, __stderr };
+static struct glue sglue1 = { &sglue2, 1, __stdout };
+struct glue __sglue = { &sglue1, 1, __stdin };
+
+/* __sF[] for old version */
 FILE __sF[3] = {
-	std(__SRD, STDIN_FILENO),		/* stdin */
-	std(__SWR, STDOUT_FILENO),		/* stdout */
-	std(__SWR|__SNBF, STDERR_FILENO)	/* stderr */
+	std(__SRD, STDIN_FILENO, __stdin),
+	std(__SWR, STDOUT_FILENO, __stdout),
+	std(__SWR|__SNBF, STDERR_FILENO, __stderr)
 };
-struct glue __sglue = { &uglue, 3, __sF };
 
 static struct glue *
 moreglue(int n)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.33 2024/08/07 04:59:45 guenther Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.34 2025/07/16 15:33:05 yasuoka Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -63,7 +63,17 @@
 #include <sys/_null.h>
 #include <sys/_types.h>
 
-#include <stdio.h> /* for FILE* */
+#ifndef	_STDFILES_DECLARED
+#define	_STDFILES_DECLARED
+typedef	struct __sFILE FILE;
+struct __sFstub { long _stub; };
+
+__BEGIN_DECLS
+extern struct __sFstub __stdin[];
+extern struct __sFstub __stdout[];
+extern struct __sFstub __stderr[];
+__END_DECLS
+#endif
 
 #if !defined(_WCHAR_T_DEFINED_) && !defined(__cplusplus)
 #define _WCHAR_T_DEFINED_
@@ -235,9 +245,9 @@ wchar_t *fgetwln(FILE * __restrict, size_t * __restrict);
 #endif
 
 #define getwc(f) fgetwc(f)
-#define getwchar() getwc(stdin)
+#define getwchar() getwc((FILE *)__stdin)
 #define putwc(wc, f) fputwc((wc), (f))
-#define putwchar(wc) putwc((wc), stdout)
+#define putwchar(wc) putwc((wc), (FILE *)__stdout)
 __END_DECLS
 
 #endif /* !_WCHAR_H_ */

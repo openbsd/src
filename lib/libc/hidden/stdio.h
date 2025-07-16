@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.8 2022/05/14 05:06:32 guenther Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.9 2025/07/16 15:33:05 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -18,17 +18,23 @@
 #ifndef	_LIBC_STDIO_H_
 #define	_LIBC_STDIO_H_
 
-/* Rename __swbuf() before it's used in the inline __sputc() */
-struct __sFILE;
-int     __swbuf(int, struct __sFILE *);
-PROTO_NORMAL(__swbuf);
-
 /* we want the const-correct declarations inside libc */
 #define __SYS_ERRLIST
 
+#ifndef _STDFILES_DECLARED
+#define _STDFILES_DECLARED
+typedef struct __sFILE FILE;
+#endif
+
+int     __swbuf(int, struct __sFILE *);
+int	__srget(struct __sFILE *);
+PROTO_NORMAL(__swbuf);
+
 #include_next <stdio.h>
+#include <_stdio.h>		/* struct __sFILE, std{in,out,err} */
 
 __BEGIN_HIDDEN_DECLS
+int	__cleanfile(FILE *, int _doclose);
 char	*_mktemp(char *);
 __END_HIDDEN_DECLS
 
@@ -46,6 +52,7 @@ PROTO_NORMAL(clearerr);
 PROTO_NORMAL(ctermid);
 PROTO_NORMAL(dprintf);
 PROTO_NORMAL(fclose);
+PROTO_DEPRECATED(fdclose);
 PROTO_NORMAL(fdopen);
 PROTO_NORMAL(feof);
 PROTO_NORMAL(ferror);
@@ -117,5 +124,38 @@ PROTO_NORMAL(vscanf);
 PROTO_NORMAL(vsnprintf);
 PROTO_STD_DEPRECATED(vsprintf);
 PROTO_NORMAL(vsscanf);
+
+/*
+ * The __sfoo macros are here so that we can 
+ * define function versions in the C library.
+ */
+#define	__sgetc(p) (--(p)->_r < 0 ? __srget(p) : (int)(*(p)->_p++))
+static __inline int __sputc(int _c, FILE *_p) {
+	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
+		return (*_p->_p++ = _c);
+	else
+		return (__swbuf(_c, _p));
+}
+
+#define	__sfeof(p)	(((p)->_flags & __SEOF) != 0)
+#define	__sferror(p)	(((p)->_flags & __SERR) != 0)
+#define	__sclearerr(p)	((void)((p)->_flags &= ~(__SERR|__SEOF)))
+#define	__sfileno(p)	((p)->_file)
+
+extern int __isthreaded;
+
+#define feof(p)		(!__isthreaded ? __sfeof(p) : (feof)(p))
+#define ferror(p)	(!__isthreaded ? __sferror(p) : (ferror)(p))
+#define clearerr(p)	(!__isthreaded ? __sclearerr(p) : (clearerr)(p))
+#define fileno(p)	(!__isthreaded ? __sfileno(p) : (fileno)(p))
+#define getc(fp)	(!__isthreaded ? __sgetc(fp) : (getc)(fp))
+
+/*
+ * The macro implementations of putc and putc_unlocked are not
+ * fully POSIX compliant; they do not set errno on failure
+ */
+#define putc(x, fp)	(!__isthreaded ? __sputc(x, fp) : (putc)(x, fp))
+#define getc_unlocked(fp)	__sgetc(fp)
+#define putc_unlocked(x, fp)	__sputc(x, fp)
 
 #endif /* _LIBC_STDIO_H_ */
