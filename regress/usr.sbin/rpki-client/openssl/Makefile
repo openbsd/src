@@ -1,6 +1,10 @@
-# $OpenBSD: Makefile,v 1.3 2025/01/15 11:00:09 tb Exp $
+# $OpenBSD: Makefile,v 1.4 2025/07/16 15:21:45 tb Exp $
 
+.if exists(/usr/local/bin/eopenssl35)
+EOPENSSL =	eopenssl35
+.else
 EOPENSSL =	eopenssl33
+.endif
 
 LDADD +=	-Wl,-rpath,/usr/local/lib/${EOPENSSL} -L/usr/local/lib/${EOPENSSL}
 CFLAGS +=	-I${.CURDIR}/ -I/usr/local/include/${EOPENSSL}/
