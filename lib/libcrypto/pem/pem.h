@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.28 2024/05/11 05:41:28 tb Exp $ */
+/* $OpenBSD: pem.h,v 1.29 2025/07/16 15:59:26 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -338,8 +338,6 @@ int	PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp, void *x,
 
 STACK_OF(X509_INFO) *	PEM_X509_INFO_read_bio(BIO *bp,
 	    STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u);
-int	PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
-	    unsigned char *kstr, int klen, pem_password_cb *cd, void *u);
 #endif
 
 int	PEM_read(FILE *fp, char **name, char **header,
@@ -351,8 +349,6 @@ void *  PEM_ASN1_read(d2i_of_void *d2i, const char *name, FILE *fp, void **x,
 int	PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 	    void *x, const EVP_CIPHER *enc, unsigned char *kstr,
 	    int klen, pem_password_cb *callback, void *u);
-STACK_OF(X509_INFO) *	PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
-	    pem_password_cb *cb, void *u);
 
 int    PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
 int    PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *d, unsigned int cnt);

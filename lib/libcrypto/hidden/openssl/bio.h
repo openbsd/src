@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.8 2024/07/09 06:14:59 beck Exp $ */
+/* $OpenBSD: bio.h,v 1.9 2025/07/16 15:59:26 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -103,7 +103,6 @@ LCRYPTO_USED(BIO_s_socket);
 LCRYPTO_USED(BIO_s_connect);
 LCRYPTO_USED(BIO_s_accept);
 LCRYPTO_USED(BIO_s_fd);
-LCRYPTO_USED(BIO_s_log);
 LCRYPTO_USED(BIO_s_bio);
 LCRYPTO_USED(BIO_s_null);
 LCRYPTO_USED(BIO_f_null);

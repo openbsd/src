@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.15 2025/03/09 15:17:22 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.16 2025/07/16 15:59:26 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -401,8 +401,6 @@ LCRYPTO_USED(i2d_X509_CRL);
 LCRYPTO_USED(X509_CRL_add0_revoked);
 LCRYPTO_USED(X509_CRL_get0_by_serial);
 LCRYPTO_USED(X509_CRL_get0_by_cert);
-LCRYPTO_USED(X509_PKEY_new);
-LCRYPTO_USED(X509_PKEY_free);
 LCRYPTO_USED(NETSCAPE_SPKI_new);
 LCRYPTO_USED(NETSCAPE_SPKI_free);
 LCRYPTO_USED(d2i_NETSCAPE_SPKI);

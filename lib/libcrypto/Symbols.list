@@ -308,7 +308,6 @@ BIO_s_connect
 BIO_s_datagram
 BIO_s_fd
 BIO_s_file
-BIO_s_log
 BIO_s_mem
 BIO_s_null
 BIO_s_socket
@@ -1664,9 +1663,7 @@ PEM_ASN1_write_bio
 PEM_SignFinal
 PEM_SignInit
 PEM_SignUpdate
-PEM_X509_INFO_read
 PEM_X509_INFO_read_bio
-PEM_X509_INFO_write_bio
 PEM_bytes_read_bio
 PEM_def_callback
 PEM_dek_info
@@ -2474,8 +2471,6 @@ X509_OBJECT_idx_by_subject
 X509_OBJECT_new
 X509_OBJECT_retrieve_by_subject
 X509_OBJECT_retrieve_match
-X509_PKEY_free
-X509_PKEY_new
 X509_PUBKEY_free
 X509_PUBKEY_get
 X509_PUBKEY_get0

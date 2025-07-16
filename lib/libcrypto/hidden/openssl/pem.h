@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.2 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: pem.h,v 1.3 2025/07/16 15:59:26 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -33,12 +33,10 @@ LCRYPTO_USED(PEM_bytes_read_bio);
 LCRYPTO_USED(PEM_ASN1_read_bio);
 LCRYPTO_USED(PEM_ASN1_write_bio);
 LCRYPTO_USED(PEM_X509_INFO_read_bio);
-LCRYPTO_USED(PEM_X509_INFO_write_bio);
 LCRYPTO_USED(PEM_read);
 LCRYPTO_USED(PEM_write);
 LCRYPTO_USED(PEM_ASN1_read);
 LCRYPTO_USED(PEM_ASN1_write);
-LCRYPTO_USED(PEM_X509_INFO_read);
 LCRYPTO_USED(PEM_SignInit);
 LCRYPTO_USED(PEM_SignUpdate);
 LCRYPTO_USED(PEM_SignFinal);
