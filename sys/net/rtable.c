@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.94 2025/07/15 10:14:46 dlg Exp $ */
+/*	$OpenBSD: rtable.c,v 1.95 2025/07/16 13:48:38 jsg Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -729,7 +729,7 @@ rtable_walk(unsigned int rtableid, sa_family_t af, struct rtentry **prt,
 	struct rtable			*tbl;
 	struct art_iter			 ai;
 	struct art_node			*an;
-	int				 error;
+	int				 error = 0;
 
 	tbl = rtable_get(rtableid, af);
 	if (tbl == NULL)
