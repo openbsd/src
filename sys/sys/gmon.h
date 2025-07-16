@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.h,v 1.10 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: gmon.h,v 1.11 2025/07/16 15:43:26 deraadt Exp $	*/
 /*	$NetBSD: gmon.h,v 1.5 1996/04/09 20:55:30 cgd Exp $	*/
 
 /*-
@@ -172,8 +172,6 @@ extern struct gmonparam _gmonparam;
 void	_mcleanup(void);
 void	_monstartup(u_long, u_long);
 void	moncontrol(int);
-/* XXX remove end of may 2025 */
-void	monstartup(u_long, u_long);
 __END_DECLS
 
 #endif /* !_KERNEL */

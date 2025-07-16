@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.36 2025/05/31 14:17:09 deraadt Exp $ */
+/*	$OpenBSD: gmon.c,v 1.37 2025/07/16 15:43:26 deraadt Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,14 +49,6 @@ static int	s_scale;
 #define ERR(s) write(STDERR_FILENO, s, sizeof(s))
 
 PROTO_NORMAL(moncontrol);
-PROTO_DEPRECATED(monstartup);
-
-/* XXX remove after May 2025 */
-void
-monstartup(u_long lowpc, u_long highpc)
-{
-	abort();
-}
 
 #define PAGESIZE	(1UL << _MAX_PAGE_SHIFT)
 #define PAGEMASK	(PAGESIZE - 1)
