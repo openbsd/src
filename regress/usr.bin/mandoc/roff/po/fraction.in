@@ -1,0 +1,27 @@
+.\" $OpenBSD: fraction.in,v 1.1 2025/07/16 15:51:27 schwarze Exp $
+.TH PO-FRACTION 1 "July 16, 2025"
+.SH NAME
+po-fraction \- page offsets by non-integer multiples of EN
+.SH DESCRIPTION
+initial text
+.br
+.po 1u
+offset = 1u
+.br
+.po 11u
+offset = 11u
+.br
+.po 12u
+offset = 12u
+.br
+.po 13u
+offset = 13u
+.br
+.po 23u
+offset = 23u
+.br
+.po 24u
+offset = 24u
+.br
+.po 0
+final text

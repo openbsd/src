@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.2 2020/09/03 20:33:20 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2025/07/16 15:51:27 schwarze Exp $
 
-REGRESS_TARGETS	= basic-mdoc range
+REGRESS_TARGETS	= basic-mdoc fraction range
 
-# groff-1.22.4 defect:
+# groff-1.23.0 defects:
 # - Negative page objects sometimes result in output lines starting
 #   with backspace characters.
 # - Excessive page offsets cause excessive line lengths
