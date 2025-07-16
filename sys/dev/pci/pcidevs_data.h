@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2104 2025/07/04 04:35:58 tb Exp 
+ *	OpenBSD: pcidevs,v 1.2106 2025/07/16 11:50:21 stsp Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -13756,6 +13756,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82380FB Mobile",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E823_L_SFP,
+	    "E823-L SFP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E823_L_10G,
+	    "E823-L/X557-AT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E823_L_1G,
+	    "E823-L 1GbE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX,
 	    "82439HX",
 	},
@@ -13874,6 +13886,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82599_T3_LOM,
 	    "82599 T3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E823_L_QSFP,
+	    "E823-L QSFP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I350_COPPER,
