@@ -859,7 +859,7 @@ struct ec_response_port80_last_boot {
 /*****************************************************************************/
 /* Thermal engine commands */
 
-/* Set thershold value */
+/* Set threshold value */
 #define EC_CMD_THERMAL_SET_THRESHOLD 0x50
 
 struct ec_params_thermal_set_threshold {

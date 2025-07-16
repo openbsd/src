@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.97 2025/06/02 18:49:04 claudio Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.98 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ struct pmap {
 
 	/*
 	 * pm_pdir		: VA of PD when executing in privileged mode
-	 *			  (lock by objeckt lock)
+	 *			  (lock by object lock)
 	 * pm_pdirpa		: PA of PD when executing in privileged mode,
 	 *			  (read-only after create)
 	 * pm_pdir_intel	: VA of PD when executing on Intel CPU in

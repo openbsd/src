@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.19 2009/02/06 17:26:21 miod Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.20 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -114,7 +114,7 @@
 /* size of HPA space for any device */
 #define	IOMOD_HPASIZE	0x1000
 
-/* ASP prom offset for an lan stattion id */
+/* ASP prom offset for an lan station id */
 #define	ASP_PROM	(0xf0810000)
 
 /* offset to the device-specific registers,

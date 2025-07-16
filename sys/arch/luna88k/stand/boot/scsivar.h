@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsivar.h,v 1.3 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: scsivar.h,v 1.4 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: scsivar.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
 
 /*
@@ -76,8 +76,8 @@ struct scsidevice;
 struct	scsi_softc {
 	struct	scsidevice *sc_sd;
 	int	sc_unit;
-	u_char	*sc_buf;				/* Data Buffer Pointor*/
-	u_char	*sc_cdb;				/* CDB Buffer Pointor */
+	u_char	*sc_buf;				/* Data Buffer Pointer*/
+	u_char	*sc_cdb;				/* CDB Buffer Pointer */
 	volatile int *sc_lock;				/* Lock Flag address  */
 	int	sc_flags;				/* SPC Status Flags   */
 	int	sc_phase;				/* Current SCSI Phase */

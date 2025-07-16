@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.32 2024/06/26 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.33 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -307,7 +307,7 @@
 #define	SFSR_NF			0x1000000	/* Non-faulting load */
 #define	SFSR_ASI(x)		((x)>>16)
 #define	SFSR_TM			0x0008000	/* TLB miss  */
-#define	SFSR_FT_VA_OOR_2	0x0002000	/* IMMU: jumpl or return to unsupportd VA */
+#define	SFSR_FT_VA_OOR_2	0x0002000	/* IMMU: jumpl or return to unsupported VA */
 #define	SFSR_FT_VA_OOR_1	0x0001000	/* fault at unsupported VA */
 #define	SFSR_FT_NFO		0x0000800	/* DMMU: Access to page marked NFO */
 #define	SFSR_ILL_ASI		0x0000400	/* DMMU: Illegal (unsupported) ASI */
@@ -394,7 +394,7 @@
  * Interrupt registers.  This really gets hairy.
  */
 
-/* IRSR -- Interrupt Receive Status Ragister */
+/* IRSR -- Interrupt Receive Status Register */
 #define	ASI_IRSR	0x49
 #define	IRSR		0x00
 #define	IRSR_BUSY	0x020

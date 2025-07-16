@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.22 2024/05/22 14:25:47 jsg Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.23 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -236,7 +236,7 @@ smfb_attach_common(struct smfb_softc *sc, int is5xx, bus_space_tag_t memt,
 }
 
 /*
- * wsdisplay accesops
+ * wsdisplay accessops
  */
 
 int

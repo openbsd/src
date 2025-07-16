@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -169,7 +169,7 @@ trap(struct trapframe *frame)
 		 * stores into a single doubleword store instruction
 		 * even if the address is not guaranteed to be
 		 * doubleword aligned.  Such unaligned stores are not
-		 * supported in storage that is Caching Inibited.
+		 * supported in storage that is Caching Inhibited.
 		 * Access to such storage should be done through
 		 * volatile pointers which inhibit the aforementioned
 		 * optimizations.  Unfortunately code in the amdgpu(4)

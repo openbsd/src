@@ -1,4 +1,4 @@
-/*	$OpenBSD: instr.h,v 1.7 2003/07/13 07:00:48 jason Exp $	*/
+/*	$OpenBSD: instr.h,v 1.8 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: instr.h,v 1.3 2000/01/10 03:53:20 eeh Exp $ */
 
 /*
@@ -225,7 +225,7 @@ union instr {
 	 * different ways, if at all:
 	 *	1 bit of imm=0 + 8 bits of asi + 5 bits of rs2 [reg & mem]
 	 *	1 bit of imm=1 + 13 bits of signed immediate [reg & mem]
-	 *	9 bits of copressor `opf' opcode + 5 bits of rs2 [reg only]
+	 *	9 bits of coprocessor `opf' opcode + 5 bits of rs2 [reg only]
 	 */
 	struct {
 		u_int	:2;		/* 10 or 11 */
@@ -289,7 +289,7 @@ union instr {
 	 * different ways, if at all:
 	 *	1 bit of imm=0 + 8 bits of asi + 5 bits of rs2 [reg & mem]
 	 *	1 bit of imm=1 + 13 bits of signed immediate [reg & mem]
-	 * 9 bits of copressor `opf' opcode + 5 bits of rs2 [reg only] */
+	 * 9 bits of coprocessor `opf' opcode + 5 bits of rs2 [reg only] */
 	struct {
 		u_int	:2;		/* 10 */
 		u_int	i_rd:5;		/* destination register */

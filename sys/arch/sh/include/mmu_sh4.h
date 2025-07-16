@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu_sh4.h,v 1.2 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: mmu_sh4.h,v 1.3 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: mmu_sh4.h,v 1.6 2006/03/04 01:55:03 uwe Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@
 /*
  * memory-mapped TLB
  *	must be access from P2-area program.
- *	branch to the other area must be maed at least 8 instruction
+ *	branch to the other area must be made at least 8 instruction
  *	after access.
  */
 #define	SH4_ITLB_ENTRY		4

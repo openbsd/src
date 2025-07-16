@@ -1,8 +1,8 @@
-/*	$OpenBSD: viommu.c,v 1.21 2025/06/28 11:34:21 miod Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.22 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
- * Coptright (c) 2008 Mark Kettenis
+ * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2003 Henric Jungheim
  * Copyright (c) 2001, 2002 Eduardo Horvath
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -96,7 +96,7 @@ void _viommu_dvmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
     bus_addr_t, bus_size_t, int);
 
 /*
- * initialise the UltraSPARC IOMMU (Hypervisior):
+ * initialise the UltraSPARC IOMMU (Hypervisor):
  *	- allocate and setup the iotsb.
  *	- enable the IOMMU
  *	- create a private DVMA map.

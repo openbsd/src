@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssio.c,v 1.8 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: ssio.c,v 1.9 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -277,7 +277,7 @@ ssio_attach(struct device *parent, struct device *self, void *aux)
 
 #if NUKBD > 0
 	/*
-	 * If a USB keybard is used for console input, the firmware passes
+	 * If a USB keyboard is used for console input, the firmware passes
 	 * the mmio address of the USB controller the keyboard is attached
 	 * to.  Since we know the USB controller is function 2 on the same
 	 * device and comes right after us (we're function 1 remember),

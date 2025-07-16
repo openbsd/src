@@ -1,4 +1,4 @@
-/*	$OpenBSD: omehci.c,v 1.11 2024/08/20 16:24:50 deraadt Exp $ */
+/*	$OpenBSD: omehci.c,v 1.12 2025/07/16 07:15:42 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -372,7 +372,7 @@ omehci_init(struct omehci_softc *sc)
 
 	/* Set the interrupt threshold control, it controls the maximum rate at
 	 * which the host controller issues interrupts.  We set it to 1 microframe
-	 * at startup - the default is 8 mircoframes (equates to 1ms).
+	 * at startup - the default is 8 microframes (equates to 1ms).
 	 */
 	reg = bus_space_read_4(sc->sc.iot, sc->sc.ioh, OMAP_USBHOST_USBCMD);
 	reg &= 0xff00ffff;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.119 2025/07/14 04:44:06 dlg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.120 2025/07/16 07:15:41 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -406,7 +406,7 @@
 #define CPUIDEAX_SEVSNP		(1ULL << 4)  /* SEV-SNP */
 #define CPUIDEAX_VMPL		(1ULL << 5)  /* VM Permission Levels */
 #define CPUIDEAX_RMPQUERY	(1ULL << 6)  /* RMPQUERY */
-#define CPUIDEAX_VMPLSSS	(1ULL << 7)  /* VMPL Supservisor Shadow Stack */
+#define CPUIDEAX_VMPLSSS	(1ULL << 7)  /* VMPL Supervisor Shadow Stack */
 #define CPUIDEAX_SECTSC		(1ULL << 8)  /* Secure TSC */
 #define CPUIDEAX_TSCAUXVIRT	(1ULL << 9)  /* TSC Aux Virtualization */
 #define CPUIDEAX_HWECACHECOH	(1ULL << 10) /* Coherency Across Enc. Domains */

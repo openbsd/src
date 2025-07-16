@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.151 2024/05/17 20:05:08 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.152 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -611,9 +611,8 @@ bootpath_print(struct bootpath *bp)
 	printf("\n");
 }
 
-
 /*
- * save or read a bootpath pointer from the boothpath store.
+ * save or read a bootpath pointer from the bootpath store.
  *
  * XXX. required because of SCSI... we don't have control over the "sd"
  * device, so we can't set boot device there.   we patch in with

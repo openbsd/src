@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_fp.c,v 1.8 2025/07/04 09:34:48 jsg Exp $	*/
+/*	$OpenBSD: m88100_fp.c,v 1.9 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, 2014, Miodrag Vallat.
@@ -384,7 +384,7 @@ m88100_fpu_imprecise_exception(struct trapframe *frame)
 		fmt = FTYPE_SNG;
 
 	sign = (frame->tf_fprh & FPRH_SIGN) != 0;
-	exp = ((int32_t)frame->tf_fpit) >> 20; /* signed, unbiaised exponent */
+	exp = ((int32_t)frame->tf_fpit) >> 20; /* signed, unbiased exponent */
 
 	if (fmt == FTYPE_SNG) {
 		exp += SNG_EXP_BIAS;

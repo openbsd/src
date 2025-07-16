@@ -1,4 +1,4 @@
-/*	$OpenBSD: sisfb.c,v 1.10 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: sisfb.c,v 1.11 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -252,7 +252,7 @@ fail1:
 }
 
 /*
- * wsdisplay accesops
+ * wsdisplay accessops
  */
 
 int

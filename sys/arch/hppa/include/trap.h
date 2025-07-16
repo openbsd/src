@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.14 2024/10/24 06:30:28 jsg Exp $	*/
+/*	$OpenBSD: trap.h,v 1.15 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -55,7 +55,7 @@
 #define	T_TLB_DIRTY	20	/* TLB dirty bit */
 #define	T_PAGEREF	21	/* page reference */
 #define	T_EMULATION	22	/* assist emulation */
-#define	T_HIGHERPL	23	/* higher-privelege transfer */
+#define	T_HIGHERPL	23	/* higher-privilege transfer */
 #define	T_LOWERPL	24	/* lower-privilege transfer */
 #define	T_TAKENBR	25	/* taken branch */
 #define	T_DATACC	26	/* data access rights >=7100 */

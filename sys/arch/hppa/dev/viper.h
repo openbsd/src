@@ -1,4 +1,4 @@
-/*	$OpenBSD: viper.h,v 1.7 2021/03/11 11:16:56 jsg Exp $	*/
+/*	$OpenBSD: viper.h,v 1.8 2025/07/16 07:15:42 jsg Exp $	*/
 
 /* 
  * Copyright (c) 1991,1994 The University of Utah and
@@ -116,7 +116,7 @@ struct vi_trs {
 
 /*
 ** Viper also creates HPA registers for the graphics accelerator (Venom).
-** Venom has two sets of resisters; the User HPA contains registers that
+** Venom has two sets of registers; the User HPA contains registers that
 ** users are allowed to access, while the Supervisor HPA is only accessible
 ** by code running at the most privileged level.  Both sets of registers
 ** are defined below.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.37 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.38 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -155,7 +155,7 @@
 #define		IODC_IO_READ	0	/* read from boot device */
 #define		IODC_IO_WRITE	1	/* write to boot device */
 #define		IODC_IO_CONSIN	2	/* read from console */
-#define		IODC_IO_CONSOUT	3	/* write to conosle */
+#define		IODC_IO_CONSOUT	3	/* write to console */
 #define		IODC_IO_CLOSE	4	/* close device */
 #define		IODC_IO_MSG	9	/* return error message(s) */
 #define		IODC_SPA	5	/* get extended SPA information */
@@ -168,7 +168,7 @@
 #define	PDC_IODC_NINIT		2	/* non-destructive init */
 #define	PDC_IODC_DINIT		3	/* destructive init */
 #define	PDC_IODC_MEMERR		4	/* check for memory errors */
-#define	PDC_IODC_IMEMMASTER	5	/* interlieved memory master ID */
+#define	PDC_IODC_IMEMMASTER	5	/* interleaved memory master ID */
 
 #define	PDC_TOD		9	/* access time-of-day clock */
 #define	PDC_TOD_READ		0	/* read TOD clock */
@@ -697,7 +697,7 @@ struct boot_err {
 		be_chas : 16;	/* error code (interpret as 4 hex digits) */
 };
 
-#define	HPBE_HBOOT_CORRECTABLE	0	/* hard-boot corrctable error */
+#define	HPBE_HBOOT_CORRECTABLE	0	/* hard-boot correctable error */
 #define	HPBE_HBOOT_UNCORRECTBL	1	/* hard-boot uncorrectable error */
 #define	HPBE_SBOOT_CORRECTABLE	2	/* soft-boot correctable error */
 #define	HPBE_SBOOT_UNCORRECTBL	3	/* soft-boot uncorrectable error */
@@ -729,7 +729,7 @@ struct pz_device {
 #define	PCL_SEQU	2	/* sequential access (tape) */
 #define	PCL_DUPLEX	7	/* full-duplex point-to-point (RS-232, Net) */
 #define	PCL_KEYBD	8	/* half-duplex input (HIL Keyboard) */
-#define	PCL_DISPL	9	/* half-duplex ouptput (display) */
+#define	PCL_DISPL	9	/* half-duplex output (display) */
 #define	PCL_FC		10	/* fibre channel access media */
 #define	PCL_CLASS_MASK	0xf	/* XXX class mask */
 #define	PCL_NET_MASK	0x1000	/* mask for bootp/tftp device */

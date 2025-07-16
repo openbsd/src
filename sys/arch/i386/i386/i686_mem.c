@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.20 2023/01/30 10:49:05 jsg Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.21 2025/07/16 07:15:42 jsg Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -53,7 +53,7 @@ char *mem_owner_bios = "BIOS";
     ((!(base & ((1 << 12) - 1))) && 	/* base is multiple of 4k */	\
      ((len) >= (1 << 12)) && 		/* length is >= 4k */		\
      powerof2((len)) && 		/* ... and power of two */	\
-     !((base) & ((len) - 1)))		/* range is not discontiuous */
+     !((base) & ((len) - 1)))		/* range is not discontinuous */
 
 #define mrcopyflags(curr, new) (((curr) & ~MDF_ATTRMASK) | \
 	((new) & MDF_ATTRMASK))

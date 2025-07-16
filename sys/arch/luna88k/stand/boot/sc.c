@@ -1,4 +1,4 @@
-/*	$OpenBSD: sc.c,v 1.5 2023/01/10 17:10:57 miod Exp $	*/
+/*	$OpenBSD: sc.c,v 1.6 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: sc.c,v 1.4 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
@@ -530,7 +530,7 @@ scintr(struct scsi_softc *hs)
 				/* SCSI IO complete */
 				*(hs->sc_lock) = SC_IO_COMPLETE;
 			else
-				/* Cisconnected from Target */
+				/* Disconnected from Target */
 				*(hs->sc_lock) = SC_DISCONNECTED;
 			hd->scsi_ints = ints;
 			return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.10 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.11 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.9 2000/08/16 11:29:42 pk Exp $ */
 
 /*
@@ -153,7 +153,7 @@ char *prefetch[] = {
 /* The sparc instruction table has a format field which tells what
    the operand structure for this instruction is. Here are the codes:
 
-Modifiers (nust be first):
+Modifiers (must be first):
 	a -- opcode has annul bit
 	p -- opcode has branch prediction bit
 
@@ -183,7 +183,7 @@ Codes:
 	9 -- logical or of the cmask and mmask fields (membar insn)
 	0 -- icc or xcc condition codes register
 	. -- %fcc, %icc, or %xcc in opf_cc field
-	r -- prefection function stored in fcn field
+	r -- prefetch function stored in fcn field
 	A -- privileged register encoded in rs1
 	B -- state register encoded in rs1
 	C -- %hi(value) where value is stored in imm22 field

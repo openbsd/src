@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpko.c,v 1.9 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: cn30xxpko.c,v 1.10 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -44,7 +44,7 @@ static inline void	cn30xxpko_op_store(uint64_t, uint64_t);
 #define	_PKO_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_regt, (sc)->sc_regh, (off), (v))
 
-/* ----- gloal functions */
+/* ----- global functions */
 
 /* XXX */
 void

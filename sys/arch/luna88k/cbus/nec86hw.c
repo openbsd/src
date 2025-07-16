@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hw.c,v 1.10 2024/05/02 09:38:59 aoyama Exp $	*/
+/*	$OpenBSD: nec86hw.c,v 1.11 2025/07/16 07:15:42 jsg Exp $	*/
 /*	$NecBSD: nec86hw.c,v 1.13 1998/03/14 07:04:54 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -839,7 +839,7 @@ nec86hw_set_watermark(struct nec86hw_softc *sc, int wm)
 
 	/*
 	 * The interrupt occurs when the number of bytes in the FIFO ring
-	 * buffer exceeds this watarmark.
+	 * buffer exceeds this watermark.
 	 */
 	bus_space_write_1(iot, ioh, NEC86_FIFOINTRBLK,
 	    (wm / NEC86_INTRBLK_UNIT) - 1);

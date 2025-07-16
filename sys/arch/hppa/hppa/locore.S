@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.207 2023/12/12 07:37:20 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.208 2025/07/16 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -722,7 +722,7 @@ hpmc_v
 	STRAP(tlbd,T_TLB_DIRTY,DTLBPRE)	/* 20. TLB dirty bit trap */
 	ATRAP(pgref,T_PAGEREF)		/* 21. page reference trap */
 	CTRAP(emu,T_EMULATION,)		/* 22. assist emulation trap */
-	ATRAP(hpl,T_HIGHERPL)		/* 23. higher-privelege transfer trap*/
+	ATRAP(hpl,T_HIGHERPL)		/* 23. higher-privilege transfer trap */
 	ATRAP(lpl,T_LOWERPL)		/* 24. lower-privilege transfer trap */
 	ATRAP(tknbr,T_TAKENBR)		/* 25. taken branch trap */
 	ATRAP(dacc,T_DATACC)		/* 26. data access rights trap */
