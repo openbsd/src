@@ -7,7 +7,7 @@
 ./usr/lib/gcc-lib/sh-unknown-openbsd7.7/4.2.1/collect2
 ./usr/lib/gcc-lib/sh-unknown-openbsd7.7/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/sh-unknown-openbsd7.7/4.2.1/specs
-./usr/lib/libstdc++.so.57.0
+./usr/lib/libstdc++.so.58.0
 ./usr/libdata/perl5/sh-openbsd
 ./usr/libdata/perl5/sh-openbsd/.packlist
 ./usr/libdata/perl5/sh-openbsd/B
