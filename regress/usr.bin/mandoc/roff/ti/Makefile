@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.2 2020/09/03 17:37:06 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2025/07/16 16:36:03 schwarze Exp $
 
-REGRESS_TARGETS	 = basic-mdoc basic-man wide
+REGRESS_TARGETS	 = basic-mdoc basic-man fraction wide
 
-# groff-1.22.4 defect:
-# - Excessive temporare indentations cause excessive line lengths
+# groff-1.23.0 defect:
+# - Excessive temporary indentations cause excessive line lengths
 #   instead of being truncated to resonable indentations.
 
 SKIP_GROFF	 = wide

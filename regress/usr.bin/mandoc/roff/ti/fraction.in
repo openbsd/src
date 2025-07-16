@@ -1,0 +1,20 @@
+.\" $OpenBSD: fraction.in,v 1.1 2025/07/16 16:36:03 schwarze Exp $
+.TH TI-FRACTION 1 "July 16, 2025"
+.SH NAME
+ti-fraction \- temporary indentation by non-integer multiples of EN
+.SH DESCRIPTION
+initial text
+.ti +1u
+indent = 1u
+.ti +11u
+indent = 11u
+.ti +12u
+indent = 12u
+.ti +13u
+indent = 13u
+.ti +23u
+indent = 23u
+.ti +24u
+indent = 24u
+.br
+final text

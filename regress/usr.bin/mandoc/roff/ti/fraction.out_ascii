@@ -1,0 +1,16 @@
+TI-FRACTION(1)              General Commands Manual             TI-FRACTION(1)
+
+NNAAMMEE
+     ti-fraction - temporary indentation by non-integer multiples of EN
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+     indent = 1u
+     indent = 11u
+     indent = 12u
+      indent = 13u
+      indent = 23u
+      indent = 24u
+     final text
+
+OpenBSD                          July 16, 2025                  TI-FRACTION(1)
