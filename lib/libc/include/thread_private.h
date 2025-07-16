@@ -1,9 +1,12 @@
-/* $OpenBSD: thread_private.h,v 1.38 2025/07/12 23:59:44 dlg Exp $ */
+/* $OpenBSD: thread_private.h,v 1.39 2025/07/16 16:22:58 deraadt Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
 #ifndef _THREAD_PRIVATE_H_
 #define _THREAD_PRIVATE_H_
+
+#include <sys/types.h>
+#include <sys/gmon.h>
 
 extern int __isthreaded;
 
@@ -434,6 +437,7 @@ struct pthread {
 
 	/* cancel received in a delayed cancel block? */
 	int delayed_cancel;
+	struct gmonparam *gmonparam;
 };
 /* flags in pthread->flags */
 #define	THREAD_DONE		0x001

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.37 2025/07/16 15:43:26 deraadt Exp $ */
+/*	$OpenBSD: gmon.c,v 1.38 2025/07/16 16:22:58 deraadt Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,17 +42,39 @@
 
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
+#include <pthread.h>
+#include <thread_private.h>
+
+static SLIST_HEAD(, gmonparam) _gmonfree = SLIST_HEAD_INITIALIZER(_gmonfree);
+static SLIST_HEAD(, gmonparam) _gmoninuse = SLIST_HEAD_INITIALIZER(_gmoninuse);
+_THREAD_PRIVATE_MUTEX(_gmonlock);
+static pthread_key_t _gmonkey;
+
 static int	s_scale;
 /* see profil(2) where this is describe (incorrectly) */
 #define		SCALE_1_TO_1	0x10000L
 
 #define ERR(s) write(STDERR_FILENO, s, sizeof(s))
 
+PROTO_NORMAL(_gmon_alloc);
 PROTO_NORMAL(moncontrol);
 
 #define PAGESIZE	(1UL << _MAX_PAGE_SHIFT)
 #define PAGEMASK	(PAGESIZE - 1)
 #define PAGEROUND(x)	(((x) + (PAGEMASK)) & ~PAGEMASK)
+
+static void
+_gmon_destructor(void *arg)
+{
+	struct gmonparam *p = arg, *q, **prev;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(_gmonlock);
+	SLIST_REMOVE(&_gmoninuse, p, gmonparam, list);
+	SLIST_INSERT_HEAD(&_gmonfree, p, list);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(_gmonlock);
+
+	pthread_setspecific(_gmonkey, NULL);
+}
 
 void
 _monstartup(u_long lowpc, u_long highpc)
@@ -122,11 +144,165 @@ _monstartup(u_long lowpc, u_long highpc)
 	else
 		p->dirfd = -1;
 
+	pthread_key_create(&_gmonkey, _gmon_destructor);
+
 	moncontrol(1);
 
 	if (p->dirfd != -1)
 		close(p->dirfd);
 }
+
+struct gmonparam *
+_gmon_alloc(void)
+{
+	struct gmonparam *p;
+	char *a;
+
+	if (_gmonparam.state == GMON_PROF_OFF)
+		return NULL;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(_gmonlock);
+	p = SLIST_FIRST(&_gmonfree);
+	if (p != NULL) {
+		SLIST_REMOVE_HEAD(&_gmonfree, list);
+		SLIST_INSERT_HEAD(&_gmoninuse, p, list);
+	} else {
+		_THREAD_PRIVATE_MUTEX_UNLOCK(_gmonlock);
+		a = mmap(NULL,
+			 _ALIGN(sizeof(*p)) + _ALIGN(_gmonparam.fromssize) +
+			 _ALIGN(_gmonparam.tossize),
+			 PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+		if (a == MAP_FAILED) {
+			pthread_setspecific(_gmonkey, NULL);
+			ERR("_gmon_alloc: out of memory\n");
+			return NULL;
+		}
+		p = (struct gmonparam *)a;
+		*p = _gmonparam;
+		p->kcount = NULL;
+		p->kcountsize = 0;
+		p->froms = (void *)(a + _ALIGN(sizeof(*p)));
+		p->tos = (void *)(a + _ALIGN(sizeof(*p)) +
+		    _ALIGN(_gmonparam.fromssize));
+		_THREAD_PRIVATE_MUTEX_LOCK(_gmonlock);
+		SLIST_INSERT_HEAD(&_gmoninuse, p, list);
+	}
+	_THREAD_PRIVATE_MUTEX_UNLOCK(_gmonlock);
+	pthread_setspecific(_gmonkey, p);
+
+	return p;
+}
+DEF_WEAK(_gmon_alloc);
+
+static void
+_gmon_merge_two(struct gmonparam *p, struct gmonparam *q)
+{
+	u_long fromindex, selfpc, endfrom;
+	u_short *frompcindex, qtoindex, toindex;
+	long count;
+	struct tostruct *top;
+
+	endfrom = (q->fromssize / sizeof(*q->froms));
+	for (fromindex = 0; fromindex < endfrom; fromindex++) {
+		if (q->froms[fromindex] == 0)
+			continue;
+		for (qtoindex = q->froms[fromindex]; qtoindex != 0;
+		     qtoindex = q->tos[qtoindex].link) {
+			selfpc = q->tos[qtoindex].selfpc;
+			count = q->tos[qtoindex].count;
+			/* cribbed from mcount */
+			frompcindex = &p->froms[fromindex];
+			toindex = *frompcindex;
+			if (toindex == 0) {
+				/*
+				 *      first time traversing this arc
+				 */
+				toindex = ++p->tos[0].link;
+				if (toindex >= p->tolimit)
+					/* halt further profiling */
+					goto overflow;
+
+				*frompcindex = (u_short)toindex;
+				top = &p->tos[(size_t)toindex];
+				top->selfpc = selfpc;
+				top->count = count;
+				top->link = 0;
+				goto done;
+			}
+			top = &p->tos[(size_t)toindex];
+			if (top->selfpc == selfpc) {
+				/*
+				 * arc at front of chain; usual case.
+				 */
+				top->count+= count;
+				goto done;
+			}
+			/*
+			 * have to go looking down chain for it.
+			 * top points to what we are looking at,
+			 * we know it is not at the head of the chain.
+			 */
+			for (; /* goto done */; ) {
+				if (top->link == 0) {
+					/*
+					 * top is end of the chain and
+					 * none of the chain had
+					 * top->selfpc == selfpc.  so
+					 * we allocate a new tostruct
+					 * and link it to the head of
+					 * the chain.
+					 */
+					toindex = ++p->tos[0].link;
+					if (toindex >= p->tolimit)
+						goto overflow;
+					top = &p->tos[(size_t)toindex];
+					top->selfpc = selfpc;
+					top->count = count;
+					top->link = *frompcindex;
+					*frompcindex = (u_short)toindex;
+					goto done;
+				}
+				/*
+				 * otherwise, check the next arc on the chain.
+				 */
+				top = &p->tos[top->link];
+				if (top->selfpc == selfpc) {
+					/*
+					 * there it is.
+					 * add to its count.
+					 */
+					top->count += count;
+					goto done;
+				}
+
+			}
+
+		done: ;
+		}
+
+	}
+overflow: ;
+
+}
+
+static void
+_gmon_merge(void)
+{
+	struct gmonparam *q;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(_gmonlock);
+
+	SLIST_FOREACH(q, &_gmonfree, list)
+		_gmon_merge_two(&_gmonparam, q);
+
+	SLIST_FOREACH(q, &_gmoninuse, list) {
+		q->state = GMON_PROF_OFF;
+		_gmon_merge_two(&_gmonparam, q);
+	}
+
+	_THREAD_PRIVATE_MUTEX_UNLOCK(_gmonlock);
+}
+
 
 void
 _mcleanup(void)
@@ -171,6 +347,9 @@ _mcleanup(void)
 	    p->kcount, p->kcountsize);
 	write(log, dbuf, strlen(dbuf));
 #endif
+
+	_gmon_merge();
+
 	hdr = (struct gmonhdr *)p->outbuf;
 	hdr->lpc = p->lowpc;
 	hdr->hpc = p->highpc;

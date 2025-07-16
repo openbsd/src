@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.102 2022/01/09 16:39:06 robert Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.103 2025/07/16 16:22:58 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -33,6 +33,7 @@ CFLAGS+=	${NOPIE_FLAGS}
 CXXFLAGS+=	${NOPIE_FLAGS}
 AFLAGS+=	${NOPIE_FLAGS}
 .endif
+PFLAGS+=-p
 
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
@@ -42,8 +43,8 @@ AFLAGS+=	${NOPIE_FLAGS}
 	@rm -f ${.TARGET}.o
 
 .c.po:
-	@echo "${COMPILE.c} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${DFLAGS} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.c} ${PFLAGS} ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${DFLAGS} ${PFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
@@ -70,8 +71,8 @@ AFLAGS+=	${NOPIE_FLAGS}
 	@rm -f ${.TARGET}.o
 
 .cc.po .cpp.po .C.po .cxx.po:
-	@echo "${COMPILE.cc} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.cc} ${DFLAGS} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.cc} ${PFLAGS} ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.cc} ${DFLAGS} ${PFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
@@ -92,8 +93,8 @@ AFLAGS+=	${NOPIE_FLAGS}
 	@rm -f ${.TARGET}.o
 
 .f.po:
-	@echo "${COMPILE.f} -p ${.IMPSRC} -o ${.TARGET}"
-	@${COMPILE.f} ${DFLAGS} -p ${.IMPSRC} -o ${.TARGET}.o
+	@echo "${COMPILE.f} ${PFLAGS} ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.f} ${DFLAGS} ${PFLAGS} ${.IMPSRC} -o ${.TARGET}.o
 	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o

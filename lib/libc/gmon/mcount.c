@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.16 2022/01/11 09:21:34 jsg Exp $ */
+/*	$OpenBSD: mcount.c,v 1.17 2025/07/16 16:22:58 deraadt Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,6 +30,11 @@
 
 #include <sys/types.h>
 #include <sys/gmon.h>
+
+#ifndef _KERNEL
+#include <thread_private.h>
+#include <tib.h>
+#endif
 
 /*
  * mcount is called on entry to each function compiled with the profiling
@@ -65,13 +70,14 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)
 	if ((p = curcpu()->ci_gmon) == NULL)
 		return;
 #else
-	p = &_gmonparam;
+	p = (__isthreaded) ?
+		((pthread_t)TIB_GET()->tib_thread)->gmonparam : &_gmonparam;
 #endif
 	/*
 	 * check that we are profiling
 	 * and that we aren't recursively invoked.
 	 */
-	if (p->state != GMON_PROF_ON)
+	if (p == NULL || p->state != GMON_PROF_ON)
 		return;
 #ifdef _KERNEL
 	MCOUNT_ENTER;

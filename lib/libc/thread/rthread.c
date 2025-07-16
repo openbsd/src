@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.10 2025/07/12 23:59:44 dlg Exp $ */
+/*	$OpenBSD: rthread.c,v 1.11 2025/07/16 16:22:58 deraadt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/futex.h>
 #include <sys/atomic.h>
+#include <sys/gmon.h>
 
 #include <pthread.h>
 #include <stdlib.h>
@@ -320,6 +321,9 @@ _rthread_init(void)
 	}
 
 	_threads_inited = 1;
+
+	/* Ignore errors. NULL is OK for a non-profiling case. */
+	thread->gmonparam = _gmon_alloc();
 }
 
 /*
