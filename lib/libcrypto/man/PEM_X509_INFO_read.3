@@ -1,4 +1,4 @@
-.\" $OpenBSD: PEM_X509_INFO_read.3,v 1.5 2025/06/08 22:40:30 schwarze Exp $
+.\" $OpenBSD: PEM_X509_INFO_read.3,v 1.6 2025/07/16 17:59:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,23 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: July 16 2025 $
 .Dt PEM_X509_INFO_READ 3
 .Os
 .Sh NAME
-.Nm PEM_X509_INFO_read ,
 .Nm PEM_X509_INFO_read_bio
 .Nd PEM and DER decode X.509 certificates, private keys, and revocation lists
 .Sh SYNOPSIS
 .Lb libcrypto
 .In openssl/pem.h
-.Ft STACK_OF(X509_INFO) *
-.Fo PEM_X509_INFO_read
-.Fa "FILE *in_fp"
-.Fa "STACK_OF(X509_INFO) *sk"
-.Fa "pem_password_cb *cb"
-.Fa "void *u"
-.Fc
 .Ft STACK_OF(X509_INFO) *
 .Fo PEM_X509_INFO_read_bio
 .Fa "BIO *in_bp"
@@ -39,13 +31,11 @@
 .Fa "void *u"
 .Fc
 .Sh DESCRIPTION
-These functions read zero or more objects
+This function reads zero or more objects
 related to X.509 certificates from
-.Fa in_fp
-or
 .Fa in_bp ,
-perform both PEM and DER decoding,
-and wrap the resulting objects in newly allocated
+performs both PEM and DER decoding,
+and wraps the resulting objects in newly allocated
 .Vt X509_INFO
 containers.
 .Pp
@@ -110,11 +100,11 @@ during the same call are deleted again and
 .Fa sk
 is left unchanged.
 .Sh RETURN VALUES
-These functions return a pointer to the stack
+This function returns a pointer to the stack
 the objects read were pushed onto or
 .Dv NULL
 if an error occurs.
-They fail if
+It fails if
 .Xr PEM_read_bio 3 ,
 .Xr PEM_get_EVP_CIPHER_INFO 3 ,
 .Xr PEM_do_header 3 ,
@@ -129,9 +119,6 @@ include:
 .Bl -tag -width Ds
 .It Dv ERR_R_ASN1_LIB Qq "ASN1 lib"
 DER decoding of a PEM object failed.
-.It Dv ERR_R_BUF_LIB Qq BUF lib
-.Fn PEM_X509_INFO_read
-failed to set up a temporary BIO, for example because memory was exhausted.
 .It Dv ERR_R_MALLOC_FAILURE Qq "malloc failure"
 .Fn PEM_X509_INFO_read_bio
 failed to allocate a new
@@ -148,7 +135,7 @@ Additional types of errors can result from
 and
 .Xr PEM_do_header 3 .
 .Pp
-After these functions failed due to memory exhaustion,
+After this function failed due to memory exhaustion,
 .Xr ERR_get_error 3
 may sometimes return 0 anyway.
 .Sh SEE ALSO
@@ -163,14 +150,10 @@ may sometimes return 0 anyway.
 .Xr X509_CRL_new 3 ,
 .Xr X509_INFO_new 3 ,
 .Xr X509_LOOKUP_new 3 ,
-.Xr X509_new 3 ,
-.Xr X509_PKEY_new 3
+.Xr X509_new 3
 .Sh HISTORY
-.Fn PEM_X509_INFO_read
-first appeared in SSLeay 0.5.1 and
 .Fn PEM_X509_INFO_read_bio
-in SSLeay 0.6.0.
-Both functions have been available since
+first appeared in SSLeay 0.6.0 and has been available since
 .Ox 2.4 .
 .Sh CAVEATS
 It is not an error
@@ -185,6 +168,6 @@ a newly allocated, empty stack is returned.
 The only way to detect this situation is by comparing
 the number of objects on the stack before and after the call.
 .Sh BUGS
-When reaching the end of the input, these functions call
+When reaching the end of the input, this function calls
 .Xr ERR_clear_error 3 ,
-which may hide errors that occurred before calling these functions.
+which may hide errors that occurred before calling it.
