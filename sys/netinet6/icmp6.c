@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.268 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.269 2025/07/17 03:00:45 dlg Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1135,6 +1135,20 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 			src = &ia6->ia_addr.sin6_addr;
 		if (src == NULL)
 			src = &ifatoia6(rt->rt_ifa)->ia_addr.sin6_addr;
+
+		/* route sourceaddr may override src address selection */
+		if (ISSET(rt->rt_flags, RTF_GATEWAY)) {
+			struct sockaddr *sourceaddr;
+
+			sourceaddr = rtable_getsource(rtableid, AF_INET6);
+			if (sourceaddr != NULL) {
+				struct ifaddr *ifa;
+				ifa = ifa_ifwithaddr(sourceaddr, rtableid);
+				if (ifa != NULL &&
+				    ISSET(ifa->ifa_ifp->if_flags, IFF_UP))
+					src = &satosin6(sourceaddr)->sin6_addr;
+			}
+		}
 	}
 
 	ip6->ip6_src = *src;
