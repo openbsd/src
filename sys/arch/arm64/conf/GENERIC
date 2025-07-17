@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.296 2025/06/23 18:42:52 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.297 2025/07/17 15:52:10 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -340,6 +340,8 @@ sdmmc*		at dwmshc?
 qcaoss*		at fdt?
 qccpu*		at fdt?
 qccpucp*	at fdt?
+qcdrm*		at fdt?
+qcdpc*		at fdt?
 qcdwusb*	at fdt?
 qcgpio*		at acpi?
 qcgpio*		at fdt? early 1
