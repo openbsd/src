@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.55 2025/07/17 09:17:15 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.56 2025/07/17 09:19:21 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -143,6 +143,10 @@ static const struct pci_matchid ice_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_C_SFP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_QSFP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E810_XXV_SFP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E823_L_SFP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E823_L_10G },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E823_L_1G },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E823_L_QSFP },
 };
 
 int
