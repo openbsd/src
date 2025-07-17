@@ -1,6 +1,6 @@
 /* Subroutines for insn-output.c for Motorola 88000.
    Copyright (C) 1988, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002 Free Software Foundation, Inc. 
+   2001, 2002 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@mcc.com)
    Currently maintained by (gcc@dg-rtp.dg.com)
 
@@ -438,79 +438,16 @@ legitimize_address (pic, orig, reg, scratch)
   return new;
 }
 
-/* Support functions for code to emit a block move.  There are four methods
+/* Support functions for code to emit a block move.  There are two methods
    used to perform the block move:
    + call memcpy
-   + call the looping library function, e.g. __movstrSI64n8
-   + call a non-looping library function, e.g. __movstrHI15x11
-   + produce an inline sequence of ld/st instructions
-
-   The parameters below describe the library functions produced by
-   movstr-m88k.sh.  */
-
-#define MOVSTR_LOOP	64 /* __movstrSI64n68 .. __movstrSI64n8 */
-#define MOVSTR_QI	16 /* __movstrQI16x16 .. __movstrQI16x2 */
-#define MOVSTR_HI	48 /* __movstrHI48x48 .. __movstrHI48x4 */
-#define MOVSTR_SI	96 /* __movstrSI96x96 .. __movstrSI96x8 */
-#define MOVSTR_DI	96 /* __movstrDI96x96 .. __movstrDI96x16 */
-#define MOVSTR_ODD_HI	16 /* __movstrHI15x15 .. __movstrHI15x5 */
-#define MOVSTR_ODD_SI	48 /* __movstrSI47x47 .. __movstrSI47x11,
-			      __movstrSI46x46 .. __movstrSI46x10,
-			      __movstrSI45x45 .. __movstrSI45x9 */
-#define MOVSTR_ODD_DI	48 /* __movstrDI47x47 .. __movstrDI47x23,
-			      __movstrDI46x46 .. __movstrDI46x22,
-			      __movstrDI45x45 .. __movstrDI45x21,
-			      __movstrDI44x44 .. __movstrDI44x20,
-			      __movstrDI43x43 .. __movstrDI43x19,
-			      __movstrDI42x42 .. __movstrDI42x18,
-			      __movstrDI41x41 .. __movstrDI41x17 */
-
-/* Limits for using the non-looping movstr functions.  For the m88100
-   processor, we assume the source and destination are word aligned.
-   The QImode and HImode limits are the break even points where memcpy
-   does just as well and beyond which memcpy does better.  For the
-   m88110, we tend to assume double word alignment, but also analyze
-   the word aligned cases.  The analysis is complicated because memcpy
-   may use the cache control instructions for better performance.  */
-
-#define MOVSTR_QI_LIMIT_88100   13
-#define MOVSTR_HI_LIMIT_88100   38
-#define MOVSTR_SI_LIMIT_88100   MOVSTR_SI
-#define MOVSTR_DI_LIMIT_88100   MOVSTR_SI
-  
-#define MOVSTR_QI_LIMIT_88000   16
-#define MOVSTR_HI_LIMIT_88000   38
-#define MOVSTR_SI_LIMIT_88000   72
-#define MOVSTR_DI_LIMIT_88000   72
-
-#define MOVSTR_QI_LIMIT_88110   16
-#define MOVSTR_HI_LIMIT_88110   38
-#define MOVSTR_SI_LIMIT_88110   72
-#define MOVSTR_DI_LIMIT_88110   72
+   + produce an inline sequence of ld/st instructions  */
 
 static const enum machine_mode mode_from_align[] =
 			      {VOIDmode, QImode, HImode, VOIDmode, SImode,
 			       VOIDmode, VOIDmode, VOIDmode, DImode};
-static const int max_from_align[] = {0, MOVSTR_QI, MOVSTR_HI, 0, MOVSTR_SI,
-				     0, 0, 0, MOVSTR_DI};
-static const int all_from_align[] = {0, MOVSTR_QI, MOVSTR_ODD_HI, 0,
-				     MOVSTR_ODD_SI, 0, 0, 0, MOVSTR_ODD_DI};
 
-static const int best_from_align[3][9] = {
-  {0, MOVSTR_QI_LIMIT_88100, MOVSTR_HI_LIMIT_88100, 0, MOVSTR_SI_LIMIT_88100,
-   0, 0, 0, MOVSTR_DI_LIMIT_88100},
-  {0, MOVSTR_QI_LIMIT_88110, MOVSTR_HI_LIMIT_88110, 0, MOVSTR_SI_LIMIT_88110,
-   0, 0, 0, MOVSTR_DI_LIMIT_88110},
-  {0, MOVSTR_QI_LIMIT_88000, MOVSTR_HI_LIMIT_88000, 0, MOVSTR_SI_LIMIT_88000,
-   0, 0, 0, MOVSTR_DI_LIMIT_88000}
-};
-
-#if 0
-static void block_move_loop PARAMS ((rtx, rtx, rtx, rtx, int, int));
-static void block_move_no_loop PARAMS ((rtx, rtx, rtx, rtx, int, int));
-#endif
-static void block_move_sequence PARAMS ((rtx, rtx, rtx, rtx, int, int, int));
-static void output_short_branch_defs PARAMS ((FILE *));
+static void block_move_sequence PARAMS ((rtx, rtx, int, int));
 
 /* Emit code to perform a block move.  Choose the best method.
 
@@ -520,17 +457,13 @@ static void output_short_branch_defs PARAMS ((FILE *));
    OPERANDS[3] is the alignment safe to use.  */
 
 void
-expand_block_move (dest_mem, src_mem, operands)
-     rtx dest_mem;
-     rtx src_mem;
+expand_block_move (operands)
      rtx *operands;
 {
+  rtx dest, src;
   int align = INTVAL (operands[3]);
   int constp = (GET_CODE (operands[2]) == CONST_INT);
   int bytes = (constp ? INTVAL (operands[2]) : 0);
-#if 0
-  int target = (int) m88k_cpu;
-#endif
 
   if (constp && bytes <= 0)
     return;
@@ -541,192 +474,48 @@ expand_block_move (dest_mem, src_mem, operands)
   else if (align <= 0 || align == 3)
     abort ();	/* block move invalid alignment.  */
 
+  dest = operands[0];
+  src = operands[1];
+
   if (constp && bytes <= 3 * align)
-    block_move_sequence (operands[0], dest_mem, operands[1], src_mem,
-			 bytes, align, 0);
-
-#if 0
-  else if (constp && bytes <= best_from_align[target][align] && !TARGET_MEMCPY)
-    block_move_no_loop (operands[0], dest_mem, operands[1], src_mem,
-			bytes, align);
-
-  else if (constp && align == 4 && TARGET_88100 && !TARGET_MEMCPY)
-    block_move_loop (operands[0], dest_mem, operands[1], src_mem,
-		     bytes, align);
-#endif
-
-  else
     {
-#ifdef TARGET_MEM_FUNCTIONS
-      emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "memcpy"), 0,
-			 VOIDmode, 3,
-			 operands[0], Pmode,
-			 operands[1], Pmode,
-			 convert_to_mode (TYPE_MODE (sizetype), operands[2],
-					  TREE_UNSIGNED (sizetype)),
-			 TYPE_MODE (sizetype));
-#else
-      emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "bcopy"), 0,
-			 VOIDmode, 3,
-			 operands[1], Pmode,
-			 operands[0], Pmode,
-			 convert_to_mode (TYPE_MODE (integer_type_node),
-					  operands[2],
-					  TREE_UNSIGNED (integer_type_node)),
-			 TYPE_MODE (integer_type_node));
-#endif
-    }
-}
-
-#if 0
-/* Emit code to perform a block move by calling a looping movstr library
-   function.  SIZE and ALIGN are known constants.  DEST and SRC are
-   registers.  */
-
-static void
-block_move_loop (dest, dest_mem, src, src_mem, size, align)
-     rtx dest, dest_mem;
-     rtx src, src_mem;
-     int size;
-     int align;
-{
-  enum machine_mode mode;
-  int count;
-  int units;
-  int remainder;
-  rtx offset_rtx;
-  rtx value_rtx;
-  char entry[30];
-  tree entry_name;
-
-  /* Determine machine mode to do move with.  */
-  if (align != 4)
-    abort ();
-
-  /* Determine the structure of the loop.  */
-  count = size / MOVSTR_LOOP;
-  units = (size - count * MOVSTR_LOOP) / align;
-
-  if (units < 2)
-    {
-      count--;
-      units += MOVSTR_LOOP / align;
-    }
-
-  if (count <= 0)
-    {
-      block_move_no_loop (dest, dest_mem, src, src_mem, size, align);
+      block_move_sequence (dest, src, bytes, align);
       return;
     }
 
-  remainder = size - count * MOVSTR_LOOP - units * align;
+  dest = copy_to_mode_reg (SImode, XEXP (dest, 0));
+  src = copy_to_mode_reg (SImode, XEXP (src, 0));
 
-  mode = mode_from_align[align];
-  sprintf (entry, "__movstr%s%dn%d",
-	   GET_MODE_NAME (mode), MOVSTR_LOOP, units * align);
-  entry_name = get_identifier (entry);
-
-  offset_rtx = GEN_INT (MOVSTR_LOOP + (1 - units) * align);
-
-  value_rtx = gen_rtx_MEM (MEM_IN_STRUCT_P (src_mem) ? mode : BLKmode,
-			   gen_rtx_PLUS (Pmode,
-					 gen_rtx_REG (Pmode, 3),
-					 offset_rtx));
-  MEM_COPY_ATTRIBUTES (value_rtx, src_mem);
-
-  emit_insn (gen_call_movstrsi_loop
-	     (gen_rtx_SYMBOL_REF (Pmode, IDENTIFIER_POINTER (entry_name)),
-	      dest, src, offset_rtx, value_rtx,
-	      gen_rtx_REG (mode, ((units & 1) ? 4 : 5)),
-	      GEN_INT (count)));
-
-  if (remainder)
-    block_move_sequence (gen_rtx_REG (Pmode, 2), dest_mem,
-			 gen_rtx_REG (Pmode, 3), src_mem,
-			 remainder, align, MOVSTR_LOOP + align);
-}
-
-/* Emit code to perform a block move by calling a non-looping library
-   function.  SIZE and ALIGN are known constants.  DEST and SRC are
-   registers.  OFFSET is the known starting point for the output pattern.  */
-
-static void
-block_move_no_loop (dest, dest_mem, src, src_mem, size, align)
-     rtx dest, dest_mem;
-     rtx src, src_mem;
-     int size;
-     int align;
-{
-  enum machine_mode mode = mode_from_align[align];
-  int units = size / align;
-  int remainder = size - units * align;
-  int most;
-  int value_reg;
-  rtx offset_rtx;
-  rtx value_rtx;
-  char entry[30];
-  tree entry_name;
-
-  if (remainder && size <= all_from_align[align])
-    {
-      most = all_from_align[align] - (align - remainder);
-      remainder = 0;
-    }
-  else
-    {
-      most = max_from_align[align];
-    }
-
-  sprintf (entry, "__movstr%s%dx%d",
-	   GET_MODE_NAME (mode), most, size - remainder);
-  entry_name = get_identifier (entry);
-
-  offset_rtx = GEN_INT (most - (size - remainder));
-
-  value_rtx = gen_rtx_MEM (MEM_IN_STRUCT_P (src_mem) ? mode : BLKmode,
-			   gen_rtx_PLUS (Pmode,
-					 gen_rtx_REG (Pmode, 3),
-					 offset_rtx));
-
-  MEM_COPY_ATTRIBUTES (value_rtx, src_mem);
-
-  value_reg = ((((most - (size - remainder)) / align) & 1) == 0
-	       ? (mode == DImode ? 6 : 5) : 4);
-
-  if (mode == DImode)
-    {
-      emit_insn (gen_call_block_move_DI
-		 (gen_rtx_SYMBOL_REF (Pmode, IDENTIFIER_POINTER (entry_name)),
-		  dest, src, offset_rtx, value_rtx,
-		  gen_rtx_REG (mode, value_reg)));
-    }
-  else
-    {
-      emit_insn (gen_call_block_move
-		 (gen_rtx_SYMBOL_REF (Pmode, IDENTIFIER_POINTER (entry_name)),
-		  dest, src, offset_rtx, value_rtx,
-		  gen_rtx_REG (mode, value_reg)));
-    }
-
-  if (remainder)
-    block_move_sequence (gen_rtx_REG (Pmode, 2), dest_mem,
-			 gen_rtx_REG (Pmode, 3), src_mem,
-			 remainder, align, most);
-}
+#ifdef TARGET_MEM_FUNCTIONS
+  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "memcpy"), 0,
+		     VOIDmode, 3,
+		     dest, Pmode,
+		     src, Pmode,
+		     convert_to_mode (TYPE_MODE (sizetype), operands[2],
+				      TREE_UNSIGNED (sizetype)),
+		     TYPE_MODE (sizetype));
+#else
+  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "bcopy"), 0,
+		     VOIDmode, 3,
+		     src, Pmode,
+		     dest, Pmode,
+		     convert_to_mode (TYPE_MODE (integer_type_node),
+				      operands[2],
+				      TREE_UNSIGNED (integer_type_node)),
+		     TYPE_MODE (integer_type_node));
 #endif
+}
 
 /* Emit code to perform a block move with an offset sequence of ld/st
    instructions (..., ld 0, st 1, ld 1, st 0, ...).  SIZE and ALIGN are
-   known constants.  DEST and SRC are registers.  OFFSET is the known
-   starting point for the output pattern.  */
+   known constants.  DEST and SRC are memory addresses.  */
 
 static void
-block_move_sequence (dest, dest_mem, src, src_mem, size, align, offset)
-     rtx dest, dest_mem;
-     rtx src, src_mem;
+block_move_sequence (dest_mem, src_mem, size, align)
+     rtx dest_mem;
+     rtx src_mem;
      int size;
      int align;
-     int offset;
 {
   rtx temp[2];
   enum machine_mode mode[2];
@@ -734,8 +523,8 @@ block_move_sequence (dest, dest_mem, src, src_mem, size, align, offset)
   int active[2];
   int phase = 0;
   int next;
-  int offset_ld = offset;
-  int offset_st = offset;
+  int offset_ld = 0;
+  int offset_st = 0;
 
   active[0] = active[1] = FALSE;
 
@@ -851,18 +640,10 @@ output_xor (operands)
 }
 
 /* Output a call.  Normally this is just bsr or jsr, but this also deals with
-   accomplishing a branch after the call by incrementing r1.  This requires
-   that various assembler bugs be accommodated.  The 4.30 DG/UX assembler
-   requires that forward references not occur when computing the difference of
-   two labels.  The [version?] Motorola assembler computes a word difference.
-   No doubt there's more to come!
+   accomplishing a branch after the call by incrementing r1.
 
    It would seem the same idea could be used to tail call, but in this case,
    the epilogue will be non-null.  */
-
-static rtx sb_name = 0;
-static rtx sb_high = 0;
-static rtx sb_low = 0;
 
 const char *
 output_call (operands, addr)
@@ -884,9 +665,6 @@ output_call (operands, addr)
       jump = XVECEXP (final_sequence, 0, 1);
       if (GET_CODE (jump) == JUMP_INSN)
 	{
-#ifndef USE_GAS
-	  rtx low, high;
-#endif
 	  const char *last;
 	  rtx dest = XEXP (SET_SRC (PATTERN (jump)), 0);
 	  int delta = 4 * (INSN_ADDRESSES (INSN_UID (dest))
@@ -905,7 +683,7 @@ output_call (operands, addr)
 	     If we loose, we must use the non-delay form.  This is unlikely
 	     to ever happen.  If it becomes a problem, claim that a call
 	     has two delay slots and only the second can be filled with
-	     a jump.  
+	     a jump.
 
 	     The 88110 can lose when a jsr.n r1 is issued and a page fault
 	     occurs accessing the delay slot.  So don't use jsr.n form when
@@ -929,64 +707,16 @@ output_call (operands, addr)
 			    : (flag_pic ? "bsr.n %0#plt" : "bsr.n %0")),
 			   operands);
 
-#ifdef USE_GAS
 	  last = (delta < 0
 		  ? "subu %#r1,%#r1,.-%l0+4"
 		  : "addu %#r1,%#r1,%l0-.-4");
 	  operands[0] = dest;
-#else
-	  operands[0] = gen_label_rtx ();
-	  operands[1] = gen_label_rtx ();
-	  if (delta < 0)
-	    {
-	      low = dest;
-	      high = operands[1];
-	      last = "subu %#r1,%#r1,%l0\n%l1:";
-	    }
-	  else
-	    {
-	      low = operands[1];
-	      high = dest;
-	      last = "addu %#r1,%#r1,%l0\n%l1:";
-	    }
-
-	  /* Record the values to be computed later as "def name,high-low".  */
-	  sb_name = gen_rtx_EXPR_LIST (VOIDmode, operands[0], sb_name);
-	  sb_high = gen_rtx_EXPR_LIST (VOIDmode, high, sb_high);
-	  sb_low = gen_rtx_EXPR_LIST (VOIDmode, low, sb_low);
-#endif /* Don't USE_GAS */
-
 	  return last;
 	}
     }
   return (REG_P (addr)
 	  ? "jsr%. %0"
 	  : (flag_pic ? "bsr%. %0#plt" : "bsr%. %0"));
-}
-
-static void
-output_short_branch_defs (stream)
-     FILE *stream;
-{
-  char name[256], high[256], low[256];
-
-  for (; sb_name && sb_high && sb_low;
-       sb_name = XEXP (sb_name, 1),
-       sb_high = XEXP (sb_high, 1),
-       sb_low = XEXP (sb_low, 1))
-    {
-      ASM_GENERATE_INTERNAL_LABEL
-	(name, "L", CODE_LABEL_NUMBER (XEXP (sb_name, 0)));
-      ASM_GENERATE_INTERNAL_LABEL
-	(high, "L", CODE_LABEL_NUMBER (XEXP (sb_high, 0)));
-      ASM_GENERATE_INTERNAL_LABEL
-	(low, "L", CODE_LABEL_NUMBER (XEXP (sb_low, 0)));
-      /* This will change as the assembler requirements become known.  */
-      fprintf (stream, "%s%s,%s-%s\n",
-	       SET_ASM_OP, &name[1], &high[1], &low[1]);
-    }
-  if (sb_name || sb_high || sb_low)
-    abort ();
 }
 
 /* Return truth value of the statement that this conditional branch is likely
@@ -1088,7 +818,7 @@ mostly_false_jump (jump_insn, condition)
     case GEU:
     case GTU: /* Must get casesi right at least.  */
       if (XEXP (condition, 1) == const0_rtx)
-        return 1;
+	return 1;
       break;
     case GE:
     case GT:
@@ -1537,7 +1267,7 @@ output_ascii (file, opcode, max, p, size)
 	  fprintf (file, "\"\n%s\"", opcode);
 	  num = 0;
 	}
-	  
+
       if (c == '\"' || c == '\\')
 	{
 	escape:
@@ -1899,11 +1629,9 @@ m88k_output_function_epilogue (stream, size)
     {
       insn = prev_nonnote_insn (insn);
       if (insn && GET_CODE (insn) == CALL_INSN)
-        asm_fprintf (stream, "\tor\t %R%s,%R%s,%R%s\n",
+	asm_fprintf (stream, "\tor\t %R%s,%R%s,%R%s\n",
 		     reg_names[0], reg_names[0], reg_names[0]);
     }
-
-  output_short_branch_defs (stream);
 
   fprintf (stream, "\n");
 
@@ -1994,7 +1722,7 @@ preserve_registers (base, store_p)
 	    mo_ptr++;
 	    offset -= 4;
 	  }
-        else
+	else
 	  {
 	    regno--;
 	    offset -= 2*4;
@@ -2011,7 +1739,7 @@ preserve_registers (base, store_p)
 	  {
 	    offset -= 4;
 	  }
-        else
+	else
 	  {
 	    mo_ptr->nregs = 2;
 	    mo_ptr->regno = regno-1;
@@ -2225,7 +1953,7 @@ m88k_function_arg (args_so_far, mode, type, named)
     args_so_far++;
 
   if (args_so_far + words > 8)
-    return (rtx) 0;             /* args have exhausted registers */
+    return (rtx) 0;	/* args have exhausted registers */
 
   else if (mode == BLKmode
 	   && (TYPE_ALIGN (type) != BITS_PER_WORD || bytes != UNITS_PER_WORD))
@@ -2385,7 +2113,7 @@ m88k_setup_incoming_varargs (cum, mode, type, pretend_size, no_rtl)
 			  gen_rtx_REG (DImode, regno));
 	  offs += 2;
 	  regno += 2;
-        }
+	}
 
       *pretend_size = (regcnt + delta) * UNITS_PER_WORD;
     }
@@ -2577,8 +2305,8 @@ m88k_va_arg (valist, type)
     align = type == 0 ? 0 : TYPE_ALIGN (type) / BITS_PER_UNIT;
     if (align > UNITS_PER_WORD)
       {
-        t = build (PLUS_EXPR, TREE_TYPE (stk), stk, build_int_2 (align - 1, 0));
-        t = build (BIT_AND_EXPR, TREE_TYPE (t), t, build_int_2 (-align, -1));
+	t = build (PLUS_EXPR, TREE_TYPE (stk), stk, build_int_2 (align - 1, 0));
+	t = build (BIT_AND_EXPR, TREE_TYPE (t), t, build_int_2 (-align, -1));
 	TREE_SIDE_EFFECTS (t) = 1;
       }
     else
@@ -2824,7 +2552,7 @@ print_operand (file, x, code)
     case '!': /* Reverse the following condition. */
       sequencep++;
       reversep = 1;
-      return; 
+      return;
     case 'R': /* reverse the condition of the next print_operand
 		 if operand is a label_ref.  */
       sequencep++;
@@ -3044,7 +2772,7 @@ print_operand_address (file, addr)
     }
 }
 
-/* Return true if X is an address which needs a temporary register when 
+/* Return true if X is an address which needs a temporary register when
    reloaded while generating PIC code.  */
 
 int
@@ -3078,8 +2806,8 @@ symbolic_operand (op, mode)
     case CONST:
       op = XEXP (op, 0);
       return ((GET_CODE (XEXP (op, 0)) == SYMBOL_REF
-               || GET_CODE (XEXP (op, 0)) == LABEL_REF)
-              && GET_CODE (XEXP (op, 1)) == CONST_INT);
+	       || GET_CODE (XEXP (op, 0)) == LABEL_REF)
+	      && GET_CODE (XEXP (op, 1)) == CONST_INT);
 
       /* ??? This clause seems to be irrelevant.  */
     case CONST_DOUBLE:
