@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.328 2025/07/04 04:24:37 tb Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.329 2025/07/17 04:58:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -716,13 +716,9 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 
 		break;
 	case SYS_stat:
-		/* DNS needs /etc/{resolv.conf,hosts}. */
+		/* XXX go library stats /etc/hosts, remove this soon */
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (pledge & PLEDGE_DNS)) {
-			if (strcmp(path, "/etc/resolv.conf") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
 			if (strcmp(path, "/etc/hosts") == 0) {
 				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
