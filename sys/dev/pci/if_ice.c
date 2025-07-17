@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.54 2025/07/15 13:40:02 jsg Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.55 2025/07/17 09:17:15 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -989,19 +989,21 @@ ice_set_mac_type(struct ice_hw *hw)
 	case ICE_DEV_ID_E822L_BACKPLANE:
 	case ICE_DEV_ID_E822L_SFP:
 	case ICE_DEV_ID_E822L_SGMII:
-	case ICE_DEV_ID_E823L_10G_BASE_T:
-	case ICE_DEV_ID_E823L_1GBE:
+#endif
+	case PCI_PRODUCT_INTEL_E823_L_10G:
+	case PCI_PRODUCT_INTEL_E823_L_1G:
+	case PCI_PRODUCT_INTEL_E823_L_QSFP:
+	case PCI_PRODUCT_INTEL_E823_L_SFP:
+#if 0
 	case ICE_DEV_ID_E823L_BACKPLANE:
-	case ICE_DEV_ID_E823L_QSFP:
-	case ICE_DEV_ID_E823L_SFP:
 	case ICE_DEV_ID_E823C_10G_BASE_T:
 	case ICE_DEV_ID_E823C_BACKPLANE:
 	case ICE_DEV_ID_E823C_QSFP:
 	case ICE_DEV_ID_E823C_SFP:
 	case ICE_DEV_ID_E823C_SGMII:
+#endif
 		hw->mac_type = ICE_MAC_GENERIC;
 		break;
-#endif
 	default:
 		hw->mac_type = ICE_MAC_UNKNOWN;
 		break;
