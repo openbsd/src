@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1275 2025/07/13 08:15:46 bentley Exp $
+#	$OpenBSD: install.sub,v 1.1276 2025/07/17 10:47:36 bentley Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1808,7 +1808,7 @@ install_files() {
 	fi
 
 	# From 7.8 onwards, font cache isn't owned by root
-	chown -R _fc-cache:_fc-cache /mnt/var/cache/fontconfig
+	chown -R _fc-cache:_fc-cache /mnt/var/cache/fontconfig >/dev/null 2>&1
 
 	# Install the set files.
 	for _f in $_get_sets; do
