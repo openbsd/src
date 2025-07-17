@@ -1995,6 +1995,8 @@
 ./usr/share/man/man4/pwmreg.4
 ./usr/share/man/man4/qccpu.4
 ./usr/share/man/man4/qccpucp.4
+./usr/share/man/man4/qcdpc.4
+./usr/share/man/man4/qcdrm.4
 ./usr/share/man/man4/qcdwusb.4
 ./usr/share/man/man4/qcgpio.4
 ./usr/share/man/man4/qciic.4
