@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.311 2025/07/16 17:59:10 schwarze Exp $
+# $OpenBSD: Makefile,v 1.312 2025/07/17 10:31:50 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -235,7 +235,7 @@ MAN=	\
 	OPENSSL_sk_new.3 \
 	OpenSSL_add_all_algorithms.3 \
 	PEM_ASN1_read.3 \
-	PEM_X509_INFO_read.3 \
+	PEM_X509_INFO_read_bio.3 \
 	PEM_bytes_read_bio.3 \
 	PEM_read.3 \
 	PEM_read_bio_PrivateKey.3 \
