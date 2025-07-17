@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.98 2023/10/31 19:37:17 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.99 2025/07/17 05:30:41 tb Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -63,16 +63,236 @@ union ANY_CTX {
 	SHA2_CTX sha2;
 };
 
+#if !defined(SHA2_ONLY)
+static void
+cksum_init(union ANY_CTX *ctx)
+{
+	CKSUM_Init(&ctx->cksum);
+}
+
+static void
+cksum_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	CKSUM_Update(&ctx->cksum, data, len);
+}
+
+static void
+cksum_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	CKSUM_Final(&ctx->cksum);
+}
+
+static char *
+cksum_end(union ANY_CTX *ctx, char *digest)
+{
+	return CKSUM_End(&ctx->cksum, digest);
+}
+
+static void
+md5_init(union ANY_CTX *ctx)
+{
+	MD5Init(&ctx->md5);
+}
+
+static void
+md5_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	MD5Update(&ctx->md5, data, len);
+}
+
+static void
+md5_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	MD5Final(digest, &ctx->md5);
+}
+
+static char *
+md5_end(union ANY_CTX *ctx, char *digest)
+{
+	return MD5End(&ctx->md5, digest);
+}
+
+static void
+rmd160_init(union ANY_CTX *ctx)
+{
+	RMD160Init(&ctx->rmd160);
+}
+
+static void
+rmd160_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	RMD160Update(&ctx->rmd160, data, len);
+}
+
+static void
+rmd160_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	RMD160Final(digest, &ctx->rmd160);
+}
+
+static char *
+rmd160_end(union ANY_CTX *ctx, char *digest)
+{
+	return RMD160End(&ctx->rmd160, digest);
+}
+
+static void
+sha1_init(union ANY_CTX *ctx)
+{
+	SHA1Init(&ctx->sha1);
+}
+
+static void
+sha1_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	SHA1Update(&ctx->sha1, data, len);
+}
+
+static void
+sha1_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	SHA1Final(digest, &ctx->sha1);
+}
+
+static char *
+sha1_end(union ANY_CTX *ctx, char *digest)
+{
+	return SHA1End(&ctx->sha1, digest);
+}
+
+static void
+sha224_init(union ANY_CTX *ctx)
+{
+	SHA224Init(&ctx->sha2);
+}
+
+static void
+sha224_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	SHA224Update(&ctx->sha2, data, len);
+}
+
+static void
+sha224_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	SHA224Final(digest, &ctx->sha2);
+}
+
+static char *
+sha224_end(union ANY_CTX *ctx, char *digest)
+{
+	return SHA224End(&ctx->sha2, digest);
+}
+#endif /* !defined(SHA2_ONLY) */
+
+static void
+sha256_init(union ANY_CTX *ctx)
+{
+	SHA256Init(&ctx->sha2);
+}
+
+static void
+sha256_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	SHA256Update(&ctx->sha2, data, len);
+}
+
+static void
+sha256_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	SHA256Final(digest, &ctx->sha2);
+}
+
+static char *
+sha256_end(union ANY_CTX *ctx, char *digest)
+{
+	return SHA256End(&ctx->sha2, digest);
+}
+
+#if !defined(SHA2_ONLY)
+static void
+sha384_init(union ANY_CTX *ctx)
+{
+	SHA384Init(&ctx->sha2);
+}
+
+static void
+sha384_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	SHA384Update(&ctx->sha2, data, len);
+}
+
+static void
+sha384_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	SHA384Final(digest, &ctx->sha2);
+}
+
+static char *
+sha384_end(union ANY_CTX *ctx, char *digest)
+{
+	return SHA384End(&ctx->sha2, digest);
+}
+
+static void
+sha512_256_init(union ANY_CTX *ctx)
+{
+	SHA512_256Init(&ctx->sha2);
+}
+
+static void
+sha512_256_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	SHA512_256Update(&ctx->sha2, data, len);
+}
+
+static void
+sha512_256_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	SHA512_256Final(digest, &ctx->sha2);
+}
+
+static char *
+sha512_256_end(union ANY_CTX *ctx, char *digest)
+{
+	return SHA512_256End(&ctx->sha2, digest);
+}
+#endif /* !defined(SHA2_ONLY) */
+
+static void
+sha512_init(union ANY_CTX *ctx)
+{
+	SHA512Init(&ctx->sha2);
+}
+
+static void
+sha512_update(union ANY_CTX *ctx, const unsigned char *data, size_t len)
+{
+	SHA512Update(&ctx->sha2, data, len);
+}
+
+static void
+sha512_final(unsigned char *digest, union ANY_CTX *ctx)
+{
+	SHA512Final(digest, &ctx->sha2);
+}
+
+static char *
+sha512_end(union ANY_CTX *ctx, char *digest)
+{
+	return SHA512End(&ctx->sha2, digest);
+}
+
 struct hash_function {
 	const char *name;
 	size_t digestlen;
 	int style;
 	int base64;
 	void *ctx;	/* XXX - only used by digest_file() */
-	void (*init)(void *);
-	void (*update)(void *, const unsigned char *, size_t);
-	void (*final)(unsigned char *, void *);
-	char * (*end)(void *, char *);
+	void (*init)(union ANY_CTX *);
+	void (*update)(union ANY_CTX *, const unsigned char *, size_t);
+	void (*final)(unsigned char *, union ANY_CTX *);
+	char * (*end)(union ANY_CTX *, char *);
 	TAILQ_ENTRY(hash_function) tailq;
 } functions[] = {
 #if !defined(SHA2_ONLY)
@@ -82,10 +302,10 @@ struct hash_function {
 		STYLE_CKSUM,
 		-1,
 		NULL,
-		(void (*)(void *))CKSUM_Init,
-		(void (*)(void *, const unsigned char *, size_t))CKSUM_Update,
-		(void (*)(unsigned char *, void *))CKSUM_Final,
-		(char *(*)(void *, char *))CKSUM_End
+		cksum_init,
+		cksum_update,
+		cksum_final,
+		cksum_end,
 	},
 	{
 		"MD5",
@@ -93,10 +313,10 @@ struct hash_function {
 		STYLE_MD5,
 		0,
 		NULL,
-		(void (*)(void *))MD5Init,
-		(void (*)(void *, const unsigned char *, size_t))MD5Update,
-		(void (*)(unsigned char *, void *))MD5Final,
-		(char *(*)(void *, char *))MD5End
+		md5_init,
+		md5_update,
+		md5_final,
+		md5_end,
 	},
 	{
 		"RMD160",
@@ -104,10 +324,10 @@ struct hash_function {
 		STYLE_MD5,
 		0,
 		NULL,
-		(void (*)(void *))RMD160Init,
-		(void (*)(void *, const unsigned char *, size_t))RMD160Update,
-		(void (*)(unsigned char *, void *))RMD160Final,
-		(char *(*)(void *, char *))RMD160End
+		rmd160_init,
+		rmd160_update,
+		rmd160_final,
+		rmd160_end,
 	},
 	{
 		"SHA1",
@@ -115,10 +335,10 @@ struct hash_function {
 		STYLE_MD5,
 		0,
 		NULL,
-		(void (*)(void *))SHA1Init,
-		(void (*)(void *, const unsigned char *, size_t))SHA1Update,
-		(void (*)(unsigned char *, void *))SHA1Final,
-		(char *(*)(void *, char *))SHA1End
+		sha1_init,
+		sha1_update,
+		sha1_final,
+		sha1_end,
 	},
 	{
 		"SHA224",
@@ -126,10 +346,10 @@ struct hash_function {
 		STYLE_MD5,
 		0,
 		NULL,
-		(void (*)(void *))SHA224Init,
-		(void (*)(void *, const unsigned char *, size_t))SHA224Update,
-		(void (*)(unsigned char *, void *))SHA224Final,
-		(char *(*)(void *, char *))SHA224End
+		sha224_init,
+		sha224_update,
+		sha224_final,
+		sha224_end,
 	},
 #endif /* !defined(SHA2_ONLY) */
 	{
@@ -138,10 +358,10 @@ struct hash_function {
 		STYLE_MD5,
 		0,
 		NULL,
-		(void (*)(void *))SHA256Init,
-		(void (*)(void *, const unsigned char *, size_t))SHA256Update,
-		(void (*)(unsigned char *, void *))SHA256Final,
-		(char *(*)(void *, char *))SHA256End
+		sha256_init,
+		sha256_update,
+		sha256_final,
+		sha256_end,
 	},
 #if !defined(SHA2_ONLY)
 	{
@@ -150,10 +370,10 @@ struct hash_function {
 		STYLE_MD5,
 		0,
 		NULL,
-		(void (*)(void *))SHA384Init,
-		(void (*)(void *, const unsigned char *, size_t))SHA384Update,
-		(void (*)(unsigned char *, void *))SHA384Final,
-		(char *(*)(void *, char *))SHA384End
+		sha384_init,
+		sha384_update,
+		sha384_final,
+		sha384_end,
 	},
 	{
 		"SHA512/256",
@@ -161,10 +381,10 @@ struct hash_function {
 		STYLE_MD5,
 		0,
 		NULL,
-		(void (*)(void *))SHA512_256Init,
-		(void (*)(void *, const unsigned char *, size_t))SHA512_256Update,
-		(void (*)(unsigned char *, void *))SHA512_256Final,
-		(char *(*)(void *, char *))SHA512_256End
+		sha512_256_init,
+		sha512_256_update,
+		sha512_256_final,
+		sha512_256_end,
 	},
 #endif /* !defined(SHA2_ONLY) */
 	{
@@ -173,10 +393,10 @@ struct hash_function {
 		STYLE_MD5,
 		0,
 		NULL,
-		(void (*)(void *))SHA512Init,
-		(void (*)(void *, const unsigned char *, size_t))SHA512Update,
-		(void (*)(unsigned char *, void *))SHA512Final,
-		(char *(*)(void *, char *))SHA512End
+		sha512_init,
+		sha512_update,
+		sha512_final,
+		sha512_end,
 	},
 	{
 		NULL,
