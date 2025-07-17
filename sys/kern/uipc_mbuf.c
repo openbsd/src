@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.300 2025/06/25 20:26:32 miod Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.301 2025/07/17 17:30:47 mvs Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1839,7 +1839,7 @@ int
 sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen, struct mbuf_queue *mq)
 {
-	unsigned int maxlen;
+	unsigned int oldval, newval;
 	int error;
 
 	/* All sysctl names at this level are terminal. */
@@ -1850,10 +1850,10 @@ sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IFQCTL_LEN:
 		return (sysctl_rdint(oldp, oldlenp, newp, mq_len(mq)));
 	case IFQCTL_MAXLEN:
-		maxlen = mq->mq_maxlen;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxlen);
-		if (error == 0)
-			mq_set_maxlen(mq, maxlen);
+		oldval = newval = READ_ONCE(mq->mq_maxlen);
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &newval);
+		if (error == 0 && oldval != newval)
+			mq_set_maxlen(mq, newval);
 		return (error);
 	case IFQCTL_DROPS:
 		return (sysctl_rdint(oldp, oldlenp, newp, mq_drops(mq)));
