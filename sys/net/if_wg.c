@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.45 2025/07/10 05:28:13 dlg Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.46 2025/07/17 12:43:43 claudio Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -617,11 +617,16 @@ wg_aip_add(struct wg_softc *sc, struct wg_peer *peer, struct wg_aip_io *d)
 	int		 ret = 0;
 
 	switch (d->a_af) {
-	case AF_INET:	root = sc->sc_aip4; break;
+	case AF_INET:
+		root = sc->sc_aip4;
+		break;
 #ifdef INET6
-	case AF_INET6:	root = sc->sc_aip6; break;
+	case AF_INET6:
+		root = sc->sc_aip6;
+		break;
 #endif
-	default: return EAFNOSUPPORT;
+	default:
+		return EAFNOSUPPORT;
 	}
 
 	if ((aip = pool_get(&wg_aip_pool, PR_NOWAIT|PR_ZERO)) == NULL)
@@ -671,11 +676,16 @@ wg_aip_remove(struct wg_softc *sc, struct wg_peer *peer, struct wg_aip_io *d)
 	int		 ret = 0;
 
 	switch (d->a_af) {
-	case AF_INET:	root = sc->sc_aip4; break;
+	case AF_INET:
+		root = sc->sc_aip4;
+		break;
 #ifdef INET6
-	case AF_INET6:	root = sc->sc_aip6; break;
+	case AF_INET6:
+		root = sc->sc_aip6;
+		break;
 #endif
-	default: return EAFNOSUPPORT;
+	default:
+		return EAFNOSUPPORT;
 	}
 
 	rw_enter_write(&sc->sc_aip_lock);
