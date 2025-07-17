@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.420 2025/07/15 22:12:49 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.421 2025/07/17 17:31:45 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ int	ip_maxqueue = 300;			/* [a] */
 int	ip_frags = 0;				/* [q] */
 
 #ifndef SMALL_KERNEL
-const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
+const struct sysctl_bounded_args ipctl_vars[] = {
 	{ IPCTL_FORWARDING, &ip_forwarding, 0, 2 },
 	{ IPCTL_SENDREDIRECTS, &ip_sendredirects, 0, 1 },
 	{ IPCTL_DIRECTEDBCAST, &ip_directedbcast, 0, 1 },
@@ -126,9 +126,6 @@ const struct sysctl_bounded_args ipctl_vars_unlocked[] = {
 	{ IPCTL_IPPORT_MAXQUEUE, &ip_maxqueue, 0, 10000 },
 	{ IPCTL_MFORWARDING, &ipmforwarding, 0, 1 },
 	{ IPCTL_ARPTIMEOUT, &arpt_keep, 0, INT_MAX },
-};
-
-const struct sysctl_bounded_args ipctl_vars[] = {
 	{ IPCTL_ARPDOWN, &arpt_down, 0, INT_MAX },
 };
 #endif /* SMALL_KERNEL */
@@ -1832,29 +1829,9 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		}
 
 		return (error);
-	case IPCTL_FORWARDING:
-	case IPCTL_SENDREDIRECTS:
-	case IPCTL_DIRECTEDBCAST:
-#ifdef MROUTING
-	case IPCTL_MRTPROTO:
-#endif
-	case IPCTL_DEFTTL:
-	case IPCTL_IPPORT_FIRSTAUTO:
-	case IPCTL_IPPORT_LASTAUTO:
-	case IPCTL_IPPORT_HIFIRSTAUTO:
-	case IPCTL_IPPORT_HILASTAUTO:
-	case IPCTL_IPPORT_MAXQUEUE:
-	case IPCTL_MFORWARDING:
-	case IPCTL_ARPTIMEOUT:
-		return (sysctl_bounded_arr(
-		    ipctl_vars_unlocked, nitems(ipctl_vars_unlocked),
-		    name, namelen, oldp, oldlenp, newp, newlen));
 	default:
-		NET_LOCK();
-		error = sysctl_bounded_arr(ipctl_vars, nitems(ipctl_vars),
-		    name, namelen, oldp, oldlenp, newp, newlen);
-		NET_UNLOCK();
-		return (error);
+		return (sysctl_bounded_arr(ipctl_vars, nitems(ipctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
 }

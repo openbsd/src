@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.275 2025/07/15 22:12:49 mvs Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.276 2025/07/17 17:31:45 mvs Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 				refresh = 1;
 			else {
 				reject = RTF_REJECT;
-				rt->rt_expire += arpt_down;
+				rt->rt_expire += atomic_load_int(&arpt_down);
 				la->la_asked = 0;
 				la->la_refreshed = 0;
 				atomic_sub_int(&la_hold_total,
