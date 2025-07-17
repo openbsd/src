@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.124 2025/06/26 06:00:32 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.125 2025/07/17 18:21:37 tb Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2025 $
+.Dd $Mdocdate: July 17 2025 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -441,6 +441,11 @@ default roa-set output file.
 .Re
 .Pp
 .Rs
+.%T Handling of RPKI CRL Number Extensions
+.%R RFC 9829
+.Re
+.Pp
+.Rs
 .%T A Profile for Autonomous System Provider Authorization (ASPA)
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-aspa-profile
 .%D Jun, 2023
@@ -456,12 +461,6 @@ default roa-set output file.
 .%T A profile for Signed Prefix Lists for Use in the RPKI
 .%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rpki-prefixlist-02
 .%D Jan, 2024
-.Re
-.Pp
-.Rs
-.%T Relying Party Handling of RPKI CRL Number Extensions
-.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rpki-crl-numbers
-.%D May, 2024
 .Re
 .Pp
 .Rs
