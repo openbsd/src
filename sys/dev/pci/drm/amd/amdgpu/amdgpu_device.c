@@ -4184,7 +4184,6 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	rw_init(&adev->grbm_idx_mutex, "grbmidx");
 	rw_init(&adev->mn_lock, "agpumn");
 	rw_init(&adev->virt.vf_errors.lock, "vferr");
-	rw_init(&adev->virt.rlcg_reg_lock, "vrlcg");
 	hash_init(adev->mn_hash);
 	rw_init(&adev->psp.mutex, "agpsp");
 	rw_init(&adev->notifier_lock, "agnf");
@@ -4210,6 +4209,7 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	mtx_init(&adev->se_cac_idx_lock, IPL_TTY);
 	mtx_init(&adev->audio_endpt_idx_lock, IPL_TTY);
 	mtx_init(&adev->mm_stats.lock, IPL_NONE);
+	mtx_init(&adev->virt.rlcg_reg_lock, IPL_TTY);
 	mtx_init(&adev->wb.lock, IPL_TTY);
 
 	INIT_LIST_HEAD(&adev->reset_list);
