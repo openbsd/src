@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.16 2023/07/08 15:12:49 beck Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.17 2025/07/17 00:55:48 kenjiro Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -3781,6 +3781,17 @@ ge_double_scalarmult_vartime(ge_p2 *r, const uint8_t *a,
   }
 }
 
+/* 
+ * int64_lshift21 returns |a << 21| but is defined when shifting bits into the
+ * sign bit. This works around a language flaw in C.
+ *
+ * XXX: This is a hack to avoid undefined behavior when shifting into the sign bit.
+ * We match BoringSSL's implementation here.
+ */
+static inline int64_t int64_lshift21(int64_t a) {
+  return (int64_t)((uint64_t)a << 21);
+}
+
 /* The set of scalars is \Z/l
  * where l = 2^252 + 27742317777372353535851937790883648493. */
 
@@ -3885,38 +3896,38 @@ x25519_sc_reduce(uint8_t *s) {
 
   carry6 = (s6 + (1 << 20)) >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry8 = (s8 + (1 << 20)) >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry10 = (s10 + (1 << 20)) >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
   carry12 = (s12 + (1 << 20)) >> 21;
   s13 += carry12;
-  s12 -= carry12 << 21;
+  s12 -= int64_lshift21(carry12);
   carry14 = (s14 + (1 << 20)) >> 21;
   s15 += carry14;
-  s14 -= carry14 << 21;
+  s14 -= int64_lshift21(carry14);
   carry16 = (s16 + (1 << 20)) >> 21;
   s17 += carry16;
-  s16 -= carry16 << 21;
+  s16 -= int64_lshift21(carry16);
 
   carry7 = (s7 + (1 << 20)) >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry9 = (s9 + (1 << 20)) >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry11 = (s11 + (1 << 20)) >> 21;
   s12 += carry11;
-  s11 -= carry11 << 21;
+  s11 -= int64_lshift21(carry11);
   carry13 = (s13 + (1 << 20)) >> 21;
   s14 += carry13;
-  s13 -= carry13 << 21;
+  s13 -= int64_lshift21(carry13);
   carry15 = (s15 + (1 << 20)) >> 21;
   s16 += carry15;
-  s15 -= carry15 << 21;
+  s15 -= int64_lshift21(carry15);
 
   s5 += s17 * 666643;
   s6 += s17 * 470296;
@@ -3968,41 +3979,41 @@ x25519_sc_reduce(uint8_t *s) {
 
   carry0 = (s0 + (1 << 20)) >> 21;
   s1 += carry0;
-  s0 -= carry0 << 21;
+  s0 -= int64_lshift21(carry0);
   carry2 = (s2 + (1 << 20)) >> 21;
   s3 += carry2;
-  s2 -= carry2 << 21;
+  s2 -= int64_lshift21(carry2);
   carry4 = (s4 + (1 << 20)) >> 21;
   s5 += carry4;
-  s4 -= carry4 << 21;
+  s4 -= int64_lshift21(carry4);
   carry6 = (s6 + (1 << 20)) >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry8 = (s8 + (1 << 20)) >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry10 = (s10 + (1 << 20)) >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
 
   carry1 = (s1 + (1 << 20)) >> 21;
   s2 += carry1;
-  s1 -= carry1 << 21;
+  s1 -= int64_lshift21(carry1);
   carry3 = (s3 + (1 << 20)) >> 21;
   s4 += carry3;
-  s3 -= carry3 << 21;
+  s3 -= int64_lshift21(carry3);
   carry5 = (s5 + (1 << 20)) >> 21;
   s6 += carry5;
-  s5 -= carry5 << 21;
+  s5 -= int64_lshift21(carry5);
   carry7 = (s7 + (1 << 20)) >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry9 = (s9 + (1 << 20)) >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry11 = (s11 + (1 << 20)) >> 21;
   s12 += carry11;
-  s11 -= carry11 << 21;
+  s11 -= int64_lshift21(carry11);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -4014,40 +4025,40 @@ x25519_sc_reduce(uint8_t *s) {
 
   carry0 = s0 >> 21;
   s1 += carry0;
-  s0 -= carry0 << 21;
+  s0 -= int64_lshift21(carry0);
   carry1 = s1 >> 21;
   s2 += carry1;
-  s1 -= carry1 << 21;
+  s1 -= int64_lshift21(carry1);
   carry2 = s2 >> 21;
   s3 += carry2;
-  s2 -= carry2 << 21;
+  s2 -= int64_lshift21(carry2);
   carry3 = s3 >> 21;
   s4 += carry3;
-  s3 -= carry3 << 21;
+  s3 -= int64_lshift21(carry3);
   carry4 = s4 >> 21;
   s5 += carry4;
-  s4 -= carry4 << 21;
+  s4 -= int64_lshift21(carry4);
   carry5 = s5 >> 21;
   s6 += carry5;
-  s5 -= carry5 << 21;
+  s5 -= int64_lshift21(carry5);
   carry6 = s6 >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry7 = s7 >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry8 = s8 >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry9 = s9 >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry10 = s10 >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
   carry11 = s11 >> 21;
   s12 += carry11;
-  s11 -= carry11 << 21;
+  s11 -= int64_lshift21(carry11);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -4059,37 +4070,37 @@ x25519_sc_reduce(uint8_t *s) {
 
   carry0 = s0 >> 21;
   s1 += carry0;
-  s0 -= carry0 << 21;
+  s0 -= int64_lshift21(carry0);
   carry1 = s1 >> 21;
   s2 += carry1;
-  s1 -= carry1 << 21;
+  s1 -= int64_lshift21(carry1);
   carry2 = s2 >> 21;
   s3 += carry2;
-  s2 -= carry2 << 21;
+  s2 -= int64_lshift21(carry2);
   carry3 = s3 >> 21;
   s4 += carry3;
-  s3 -= carry3 << 21;
+  s3 -= int64_lshift21(carry3);
   carry4 = s4 >> 21;
   s5 += carry4;
-  s4 -= carry4 << 21;
+  s4 -= int64_lshift21(carry4);
   carry5 = s5 >> 21;
   s6 += carry5;
-  s5 -= carry5 << 21;
+  s5 -= int64_lshift21(carry5);
   carry6 = s6 >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry7 = s7 >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry8 = s8 >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry9 = s9 >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry10 = s10 >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;
@@ -4257,74 +4268,74 @@ sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 
   carry0 = (s0 + (1 << 20)) >> 21;
   s1 += carry0;
-  s0 -= carry0 << 21;
+  s0 -= int64_lshift21(carry0);
   carry2 = (s2 + (1 << 20)) >> 21;
   s3 += carry2;
-  s2 -= carry2 << 21;
+  s2 -= int64_lshift21(carry2);
   carry4 = (s4 + (1 << 20)) >> 21;
   s5 += carry4;
-  s4 -= carry4 << 21;
+  s4 -= int64_lshift21(carry4);
   carry6 = (s6 + (1 << 20)) >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry8 = (s8 + (1 << 20)) >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry10 = (s10 + (1 << 20)) >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
   carry12 = (s12 + (1 << 20)) >> 21;
   s13 += carry12;
-  s12 -= carry12 << 21;
+  s12 -= int64_lshift21(carry12);
   carry14 = (s14 + (1 << 20)) >> 21;
   s15 += carry14;
-  s14 -= carry14 << 21;
+  s14 -= int64_lshift21(carry14);
   carry16 = (s16 + (1 << 20)) >> 21;
   s17 += carry16;
-  s16 -= carry16 << 21;
+  s16 -= int64_lshift21(carry16);
   carry18 = (s18 + (1 << 20)) >> 21;
   s19 += carry18;
-  s18 -= carry18 << 21;
+  s18 -= int64_lshift21(carry18);
   carry20 = (s20 + (1 << 20)) >> 21;
   s21 += carry20;
-  s20 -= carry20 << 21;
+  s20 -= int64_lshift21(carry20);
   carry22 = (s22 + (1 << 20)) >> 21;
   s23 += carry22;
-  s22 -= carry22 << 21;
+  s22 -= int64_lshift21(carry22);
 
   carry1 = (s1 + (1 << 20)) >> 21;
   s2 += carry1;
-  s1 -= carry1 << 21;
+  s1 -= int64_lshift21(carry1);
   carry3 = (s3 + (1 << 20)) >> 21;
   s4 += carry3;
-  s3 -= carry3 << 21;
+  s3 -= int64_lshift21(carry3);
   carry5 = (s5 + (1 << 20)) >> 21;
   s6 += carry5;
-  s5 -= carry5 << 21;
+  s5 -= int64_lshift21(carry5);
   carry7 = (s7 + (1 << 20)) >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry9 = (s9 + (1 << 20)) >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry11 = (s11 + (1 << 20)) >> 21;
   s12 += carry11;
-  s11 -= carry11 << 21;
+  s11 -= int64_lshift21(carry11);
   carry13 = (s13 + (1 << 20)) >> 21;
   s14 += carry13;
-  s13 -= carry13 << 21;
+  s13 -= int64_lshift21(carry13);
   carry15 = (s15 + (1 << 20)) >> 21;
   s16 += carry15;
-  s15 -= carry15 << 21;
+  s15 -= int64_lshift21(carry15);
   carry17 = (s17 + (1 << 20)) >> 21;
   s18 += carry17;
-  s17 -= carry17 << 21;
+  s17 -= int64_lshift21(carry17);
   carry19 = (s19 + (1 << 20)) >> 21;
   s20 += carry19;
-  s19 -= carry19 << 21;
+  s19 -= int64_lshift21(carry19);
   carry21 = (s21 + (1 << 20)) >> 21;
   s22 += carry21;
-  s21 -= carry21 << 21;
+  s21 -= int64_lshift21(carry21);
 
   s11 += s23 * 666643;
   s12 += s23 * 470296;
@@ -4376,38 +4387,38 @@ sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 
   carry6 = (s6 + (1 << 20)) >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry8 = (s8 + (1 << 20)) >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry10 = (s10 + (1 << 20)) >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
   carry12 = (s12 + (1 << 20)) >> 21;
   s13 += carry12;
-  s12 -= carry12 << 21;
+  s12 -= int64_lshift21(carry12);
   carry14 = (s14 + (1 << 20)) >> 21;
   s15 += carry14;
-  s14 -= carry14 << 21;
+  s14 -= int64_lshift21(carry14);
   carry16 = (s16 + (1 << 20)) >> 21;
   s17 += carry16;
-  s16 -= carry16 << 21;
+  s16 -= int64_lshift21(carry16);
 
   carry7 = (s7 + (1 << 20)) >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry9 = (s9 + (1 << 20)) >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry11 = (s11 + (1 << 20)) >> 21;
   s12 += carry11;
-  s11 -= carry11 << 21;
+  s11 -= int64_lshift21(carry11);
   carry13 = (s13 + (1 << 20)) >> 21;
   s14 += carry13;
-  s13 -= carry13 << 21;
+  s13 -= int64_lshift21(carry13);
   carry15 = (s15 + (1 << 20)) >> 21;
   s16 += carry15;
-  s15 -= carry15 << 21;
+  s15 -= int64_lshift21(carry15);
 
   s5 += s17 * 666643;
   s6 += s17 * 470296;
@@ -4459,41 +4470,41 @@ sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 
   carry0 = (s0 + (1 << 20)) >> 21;
   s1 += carry0;
-  s0 -= carry0 << 21;
+  s0 -= int64_lshift21(carry0);
   carry2 = (s2 + (1 << 20)) >> 21;
   s3 += carry2;
-  s2 -= carry2 << 21;
+  s2 -= int64_lshift21(carry2);
   carry4 = (s4 + (1 << 20)) >> 21;
   s5 += carry4;
-  s4 -= carry4 << 21;
+  s4 -= int64_lshift21(carry4);
   carry6 = (s6 + (1 << 20)) >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry8 = (s8 + (1 << 20)) >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry10 = (s10 + (1 << 20)) >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
 
   carry1 = (s1 + (1 << 20)) >> 21;
   s2 += carry1;
-  s1 -= carry1 << 21;
+  s1 -= int64_lshift21(carry1);
   carry3 = (s3 + (1 << 20)) >> 21;
   s4 += carry3;
-  s3 -= carry3 << 21;
+  s3 -= int64_lshift21(carry3);
   carry5 = (s5 + (1 << 20)) >> 21;
   s6 += carry5;
-  s5 -= carry5 << 21;
+  s5 -= int64_lshift21(carry5);
   carry7 = (s7 + (1 << 20)) >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry9 = (s9 + (1 << 20)) >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry11 = (s11 + (1 << 20)) >> 21;
   s12 += carry11;
-  s11 -= carry11 << 21;
+  s11 -= int64_lshift21(carry11);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -4505,40 +4516,40 @@ sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 
   carry0 = s0 >> 21;
   s1 += carry0;
-  s0 -= carry0 << 21;
+  s0 -= int64_lshift21(carry0);
   carry1 = s1 >> 21;
   s2 += carry1;
-  s1 -= carry1 << 21;
+  s1 -= int64_lshift21(carry1);
   carry2 = s2 >> 21;
   s3 += carry2;
-  s2 -= carry2 << 21;
+  s2 -= int64_lshift21(carry2);
   carry3 = s3 >> 21;
   s4 += carry3;
-  s3 -= carry3 << 21;
+  s3 -= int64_lshift21(carry3);
   carry4 = s4 >> 21;
   s5 += carry4;
-  s4 -= carry4 << 21;
+  s4 -= int64_lshift21(carry4);
   carry5 = s5 >> 21;
   s6 += carry5;
-  s5 -= carry5 << 21;
+  s5 -= int64_lshift21(carry5);
   carry6 = s6 >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry7 = s7 >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry8 = s8 >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry9 = s9 >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry10 = s10 >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
   carry11 = s11 >> 21;
   s12 += carry11;
-  s11 -= carry11 << 21;
+  s11 -= int64_lshift21(carry11);
 
   s0 += s12 * 666643;
   s1 += s12 * 470296;
@@ -4550,37 +4561,37 @@ sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 
   carry0 = s0 >> 21;
   s1 += carry0;
-  s0 -= carry0 << 21;
+  s0 -= int64_lshift21(carry0);
   carry1 = s1 >> 21;
   s2 += carry1;
-  s1 -= carry1 << 21;
+  s1 -= int64_lshift21(carry1);
   carry2 = s2 >> 21;
   s3 += carry2;
-  s2 -= carry2 << 21;
+  s2 -= int64_lshift21(carry2);
   carry3 = s3 >> 21;
   s4 += carry3;
-  s3 -= carry3 << 21;
+  s3 -= int64_lshift21(carry3);
   carry4 = s4 >> 21;
   s5 += carry4;
-  s4 -= carry4 << 21;
+  s4 -= int64_lshift21(carry4);
   carry5 = s5 >> 21;
   s6 += carry5;
-  s5 -= carry5 << 21;
+  s5 -= int64_lshift21(carry5);
   carry6 = s6 >> 21;
   s7 += carry6;
-  s6 -= carry6 << 21;
+  s6 -= int64_lshift21(carry6);
   carry7 = s7 >> 21;
   s8 += carry7;
-  s7 -= carry7 << 21;
+  s7 -= int64_lshift21(carry7);
   carry8 = s8 >> 21;
   s9 += carry8;
-  s8 -= carry8 << 21;
+  s8 -= int64_lshift21(carry8);
   carry9 = s9 >> 21;
   s10 += carry9;
-  s9 -= carry9 << 21;
+  s9 -= int64_lshift21(carry9);
   carry10 = s10 >> 21;
   s11 += carry10;
-  s10 -= carry10 << 21;
+  s10 -= int64_lshift21(carry10);
 
   s[0] = s0 >> 0;
   s[1] = s0 >> 8;
