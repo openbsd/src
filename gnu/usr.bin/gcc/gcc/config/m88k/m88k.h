@@ -1239,18 +1239,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /*** Condition Code Information ***/
 
-/* C code for a data type which is used for declaring the `mdep'
-   component of `cc_status'.  It defaults to `int'.  */
-/* #define CC_STATUS_MDEP int */
-
-/* A C expression to initialize the `mdep' field to "empty".  */
-/* #define CC_STATUS_MDEP_INIT (cc_status.mdep = 0) */
-
-/* Macro to zap the normal portions of CC_STATUS, but leave the
-   machine dependent parts (ie, literal synthesis) alone.  */
-/* #define CC_STATUS_INIT_NO_MDEP \
-  (cc_status.flags = 0, cc_status.value1 = 0, cc_status.value2 = 0) */
-
 /* When using a register to hold the condition codes, the cc_status
    mechanism cannot be used.  */
 #define NOTICE_UPDATE_CC(EXP, INSN) (0)
