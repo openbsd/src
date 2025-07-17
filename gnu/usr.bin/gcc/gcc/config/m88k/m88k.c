@@ -2727,31 +2727,20 @@ print_operand (file, x, code)
 
 	     The mechanism below is completed by having CC_STATUS_INIT set
 	     the code to the unknown value.  */
-
-	  /*
-	     hassey 6/30/93
-	     A problem with 88110 4.1 & 4.2 makes the use of fldcr for
-	     this purpose undesirable.  Instead we will use tb1, this will
-	     cause serialization on the 88100 but such is life.
-	  */
-
 	  static rtx last_addr = 0;
 	  if (code == 'V' /* Only need to serialize before a load.  */
 	      && m88k_volatile_code != 'V' /* Loads complete in FIFO order.  */
 	      && !(m88k_volatile_code == 'v'
 		   && GET_CODE (XEXP (x, 0)) == LO_SUM
 		   && rtx_equal_p (XEXP (XEXP (x, 0), 1), last_addr)))
-	    asm_fprintf (file,
-#if 0
-#ifdef AS_BUG_FLDCR
-			 "fldcr\t %R%s,%Rcr63\n\t",
-#else
-			 "fldcr\t %R%s,%Rfcr63\n\t",
-#endif
-			 reg_names[0]);
-#else /* 0 */
-			 "tb1\t 1,%R%s,0xff\n\t", reg_names[0]);
-#endif /* 0 */
+	    {
+	      /* 88110 cpus up to revision 4.2 can misbehave if the fldcr
+		 instruction is the last one of a page. We simply force it
+		 to be aligned to an 8-byte boundary to make sure this can
+		 never happen. */
+	      ASM_OUTPUT_ALIGN (file, 3);
+	      asm_fprintf (file, "fldcr\t %R%s,%Rfcr63\n\t", reg_names[0]);
+	    }
 	  m88k_volatile_code = code;
 	  last_addr = (GET_CODE (XEXP (x, 0)) == LO_SUM
 		       ? XEXP (XEXP (x, 0), 1) : 0);
