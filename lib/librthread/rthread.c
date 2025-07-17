@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.100 2022/12/27 17:10:07 jmc Exp $ */
+/*	$OpenBSD: rthread.c,v 1.101 2025/07/17 02:21:44 deraadt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -24,6 +24,9 @@
 #ifndef NO_PIC
 #include <elf.h>
 #pragma weak _DYNAMIC
+#endif
+#ifdef __PROFIL_SRC__
+#include <sys/gmon.h>
 #endif
 
 #include <stdlib.h>
@@ -393,6 +396,12 @@ pthread_create(pthread_t *threadp, const pthread_attr_t *attr,
 
 	/* we're going to be multi-threaded real soon now */
 	__isthreaded = 1;
+
+#ifdef __PROFIL_SRC__
+	/* Ignore errors. NULL is OK for a non-profiling case. */
+	thread->gmonparam = _gmon_alloc();
+#endif
+
 	rc = __tfork_thread(&param, sizeof(param), _rthread_start, thread);
 	if (rc != -1) {
 		/* success */

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2020/02/06 03:13:45 jsg Exp $
+#	$OpenBSD: Makefile,v 1.57 2025/07/17 02:21:44 deraadt Exp $
 
 LIB=pthread
 LIBCSRCDIR=	${.CURDIR}/../libc
@@ -10,6 +10,7 @@ CFLAGS+=-I${.CURDIR} -include namespace.h \
 	-I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/include
 CDIAGFLAGS=
 LDADD = -Wl,-znodelete
+PFLAGS= -D__PROFIL_SRC__
 
 .if defined(NOPIC)
 CFLAGS+=-DNO_PIC
