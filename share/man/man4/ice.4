@@ -1,4 +1,4 @@
-.\" $OpenBSD: ice.4,v 1.4 2025/05/23 09:53:15 stsp Exp $
+.\" $OpenBSD: ice.4,v 1.5 2025/07/17 09:25:11 stsp Exp $
 .\"
 .\" Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2025 $
+.Dd $Mdocdate: July 17 2025 $
 .Dt ICE 4
 .Os
 .Sh NAME
@@ -26,7 +26,18 @@
 The
 .Nm
 driver supports Intel 800 series controllers based on the
-Intel E810 Ethernet chipset.
+Intel E810 and E823 Ethernet chipsets, including the following:
+.Pp
+.Bl -bullet -offset indent -compact
+.It
+Intel E810-C SFP/QSFP
+.It
+Intel E810-XXV SFP/QSFP
+.It
+Intel E823-L SFP/QSFP
+.It
+Intel E823-L 10G/1G
+.El
 .Sh FILES
 Intel 800 series controllers contain basic firmware which allows the
 device to be used with single Tx/Rx queues and without any hardware
