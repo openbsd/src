@@ -477,7 +477,7 @@ expand_block_move (operands)
   dest = operands[0];
   src = operands[1];
 
-  if (constp && bytes <= 3 * align)
+  if (constp && bytes <= (optimize_size ? 3 : 6) * align)
     {
       block_move_sequence (dest, src, bytes, align);
       return;
