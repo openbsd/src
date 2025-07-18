@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.7 2024/11/13 12:51:04 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.8 2025/07/18 12:20:32 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -242,17 +242,20 @@ spl_parse_econtent(const char *fn, struct spl *spl, const unsigned char *d,
  * Returns the SPL, or NULL if the object was malformed.
  */
 struct spl *
-spl_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
-    size_t len)
+spl_parse(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t len)
 {
 	struct spl	*spl;
+	struct cert	*cert = NULL;
 	size_t		 cmsz;
 	unsigned char	*cms;
-	struct cert	*cert = NULL;
 	time_t		 signtime = 0;
 	int		 rc = 0;
 
-	cms = cms_parse_validate(x509, fn, der, len, spl_oid, &cmsz, &signtime);
+	assert(*out_cert == NULL);
+
+	cms = cms_parse_validate(&cert, fn, talid, der, len, spl_oid, &cmsz,
+	    &signtime);
 	if (cms == NULL)
 		return NULL;
 
@@ -260,36 +263,24 @@ spl_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		err(1, NULL);
 	spl->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &spl->aia))
-		goto out;
-	if (!x509_get_aki(*x509, fn, &spl->aki))
-		goto out;
-	if (!x509_get_sia(*x509, fn, &spl->sia))
-		goto out;
-	if (!x509_get_ski(*x509, fn, &spl->ski))
-		goto out;
+	spl->aia = strdup(cert->aia);
+	spl->aki = strdup(cert->aki);
+	spl->sia = strdup(cert->signedobj);
+	spl->ski = strdup(cert->ski);
 	if (spl->aia == NULL || spl->aki == NULL || spl->sia == NULL ||
-	    spl->ski == NULL) {
-		warnx("%s: RFC 6487 section 4.8: "
-		    "missing AIA, AKI, SIA, or SKI X509 extension", fn);
-		goto out;
-	}
+	    spl->ski == NULL)
+		err(1, NULL);
 
-	if (!x509_get_notbefore(*x509, fn, &spl->notbefore))
-		goto out;
-	if (!x509_get_notafter(*x509, fn, &spl->notafter))
-		goto out;
+	spl->notbefore = cert->notbefore;
+	spl->notafter = cert->notafter;
 
 	if (!spl_parse_econtent(fn, spl, cms, cmsz))
 		goto out;
 
-	if (x509_any_inherits(*x509)) {
+	if (x509_any_inherits(cert->x509)) {
 		warnx("%s: inherit elements not allowed in EE cert", fn);
 		goto out;
 	}
-
-	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
-		goto out;
 
 	if (cert->num_ases == 0) {
 		warnx("%s: AS Resources extension missing", fn);
@@ -307,13 +298,14 @@ spl_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	 */
 	spl->valid = valid_spl(fn, cert, spl);
 
+	*out_cert = cert;
+	cert = NULL;
+
 	rc = 1;
  out:
 	if (rc == 0) {
 		spl_free(spl);
 		spl = NULL;
-		X509_free(*x509);
-		*x509 = NULL;
 	}
 	cert_free(cert);
 	free(cms);

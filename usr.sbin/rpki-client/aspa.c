@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.32 2024/11/13 12:51:03 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.33 2025/07/18 12:20:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -161,17 +161,19 @@ aspa_parse_econtent(const char *fn, struct aspa *aspa, const unsigned char *d,
  * Returns the payload or NULL if the file was malformed.
  */
 struct aspa *
-aspa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
-    size_t len)
+aspa_parse(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t len)
 {
 	struct aspa	*aspa;
+	struct cert	*cert = NULL;
 	size_t		 cmsz;
 	unsigned char	*cms;
-	struct cert	*cert = NULL;
 	time_t		 signtime = 0;
 	int		 rc = 0;
 
-	cms = cms_parse_validate(x509, fn, der, len, aspa_oid, &cmsz,
+	assert(*out_cert == NULL);
+
+	cms = cms_parse_validate(&cert, fn, talid, der, len, aspa_oid, &cmsz,
 	    &signtime);
 	if (cms == NULL)
 		return NULL;
@@ -181,32 +183,23 @@ aspa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 
 	aspa->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &aspa->aia))
-		goto out;
-	if (!x509_get_aki(*x509, fn, &aspa->aki))
-		goto out;
-	if (!x509_get_sia(*x509, fn, &aspa->sia))
-		goto out;
-	if (!x509_get_ski(*x509, fn, &aspa->ski))
-		goto out;
+	aspa->aia = strdup(cert->aia);
+	aspa->aki = strdup(cert->aki);
+	aspa->sia = strdup(cert->signedobj);
+	aspa->ski = strdup(cert->ski);
 	if (aspa->aia == NULL || aspa->aki == NULL || aspa->sia == NULL ||
-	    aspa->ski == NULL) {
-		warnx("%s: RFC 6487 section 4.8: "
-		    "missing AIA, AKI, SIA, or SKI X509 extension", fn);
-		goto out;
-	}
+	    aspa->ski == NULL)
+		err(1, NULL);
 
-	if (X509_get_ext_by_NID(*x509, NID_sbgp_ipAddrBlock, -1) != -1) {
+	aspa->notbefore = cert->notbefore;
+	aspa->notafter = cert->notafter;
+
+	if (cert->num_ips > 0) {
 		warnx("%s: superfluous IP Resources extension present", fn);
 		goto out;
 	}
 
-	if (!x509_get_notbefore(*x509, fn, &aspa->notbefore))
-		goto out;
-	if (!x509_get_notafter(*x509, fn, &aspa->notafter))
-		goto out;
-
-	if (x509_any_inherits(*x509)) {
+	if (x509_any_inherits(cert->x509)) {
 		warnx("%s: inherit elements not allowed in EE cert", fn);
 		goto out;
 	}
@@ -214,18 +207,16 @@ aspa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if (!aspa_parse_econtent(fn, aspa, cms, cmsz))
 		goto out;
 
-	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
-		goto out;
-
 	aspa->valid = valid_aspa(fn, cert, aspa);
+
+	*out_cert = cert;
+	cert = NULL;
 
 	rc = 1;
  out:
 	if (rc == 0) {
 		aspa_free(aspa);
 		aspa = NULL;
-		X509_free(*x509);
-		*x509 = NULL;
 	}
 	cert_free(cert);
 	free(cms);

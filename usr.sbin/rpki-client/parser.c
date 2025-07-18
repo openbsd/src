@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.163 2025/07/15 07:23:39 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.164 2025/07/18 12:20:32 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -187,12 +187,12 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
     const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct roa		*roa;
-	X509			*x509 = NULL;
+	struct cert		*cert = NULL;
 	struct auth		*a;
 	struct crl		*crl;
 	const char		*errstr;
 
-	if ((roa = roa_parse(&x509, file, entp->talid, der, len)) == NULL)
+	if ((roa = roa_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, roa->aki, entp->mftaki);
@@ -200,12 +200,12 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
+	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	X509_free(x509);
-	x509 = NULL;
+	cert_free(cert);
+	cert = NULL;
 
 	roa->talid = a->cert->talid;
 
@@ -215,7 +215,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 
  out:
 	roa_free(roa);
-	X509_free(x509);
+	cert_free(cert);
 
 	return NULL;
 }
@@ -229,12 +229,12 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
     const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct spl		*spl;
-	X509			*x509 = NULL;
+	struct cert		*cert = NULL;
 	struct auth		*a;
 	struct crl		*crl;
 	const char		*errstr;
 
-	if ((spl = spl_parse(&x509, file, entp->talid, der, len)) == NULL)
+	if ((spl = spl_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, spl->aki, entp->mftaki);
@@ -242,12 +242,12 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
+	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	X509_free(x509);
-	x509 = NULL;
+	cert_free(cert);
+	cert = NULL;
 
 	spl->talid = a->cert->talid;
 
@@ -257,7 +257,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 
  out:
 	spl_free(spl);
-	X509_free(x509);
+	cert_free(cert);
 
 	return NULL;
 }
@@ -372,7 +372,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
     X509_STORE_CTX *ctx, BN_CTX *bn_ctx)
 {
 	struct mft	*mft;
-	X509		*x509;
+	struct cert	*cert = NULL;
 	struct auth	*a;
 	unsigned char	*der;
 	size_t		 len;
@@ -390,7 +390,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	if (der == NULL && errno != ENOENT)
 		warn("parse file %s", file);
 
-	if ((mft = mft_parse(&x509, file, entp->talid, der, len)) == NULL) {
+	if ((mft = mft_parse(&cert, file, entp->talid, der, len)) == NULL) {
 		free(der);
 		return NULL;
 	}
@@ -412,10 +412,10 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	a = find_issuer(file, entp->certid, mft->aki, NULL);
 	if (a == NULL)
 		goto err;
-	if (!valid_x509(file, ctx, x509, a, *crl, errstr))
+	if (!valid_x509(file, ctx, cert->x509, a, *crl, errstr))
 		goto err;
-	X509_free(x509);
-	x509 = NULL;
+	cert_free(cert);
+	cert = NULL;
 
 	mft->repoid = entp->repoid;
 	mft->talid = a->cert->talid;
@@ -486,7 +486,7 @@ proc_parser_mft_pre(struct entity *entp, char *file, struct crl **crl,
 	return mft;
 
  err:
-	X509_free(x509);
+	cert_free(cert);
 	mft_free(mft);
 	crl_free(*crl);
 	*crl = NULL;
@@ -743,12 +743,12 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
     const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct gbr	*gbr;
-	X509		*x509 = NULL;
+	struct cert	*cert = NULL;
 	struct crl	*crl;
 	struct auth	*a;
 	const char	*errstr;
 
-	if ((gbr = gbr_parse(&x509, file, entp->talid, der, len)) == NULL)
+	if ((gbr = gbr_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, gbr->aki, entp->mftaki);
@@ -756,12 +756,12 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
+	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	X509_free(x509);
-	x509 = NULL;
+	cert_free(cert);
+	cert = NULL;
 
 	gbr->talid = a->cert->talid;
 
@@ -769,7 +769,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 
  out:
 	gbr_free(gbr);
-	X509_free(x509);
+	cert_free(cert);
 
 	return NULL;
 }
@@ -782,12 +782,12 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
     const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct aspa	*aspa;
-	X509		*x509 = NULL;
+	struct cert	*cert = NULL;
 	struct auth	*a;
 	struct crl	*crl;
 	const char	*errstr;
 
-	if ((aspa = aspa_parse(&x509, file, entp->talid, der, len)) == NULL)
+	if ((aspa = aspa_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, aspa->aki, entp->mftaki);
@@ -795,12 +795,12 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
+	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	X509_free(x509);
-	x509 = NULL;
+	cert_free(cert);
+	cert = NULL;
 
 	aspa->talid = a->cert->talid;
 
@@ -810,7 +810,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 
  out:
 	aspa_free(aspa);
-	X509_free(x509);
+	cert_free(cert);
 
 	return NULL;
 }
@@ -823,12 +823,12 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
     const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct tak	*tak;
-	X509		*x509 = NULL;
+	struct cert	*cert;
 	struct crl	*crl;
 	struct auth	*a;
 	const char	*errstr;
 
-	if ((tak = tak_parse(&x509, file, entp->talid, der, len)) == NULL)
+	if ((tak = tak_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
 	a = find_issuer(file, entp->certid, tak->aki, entp->mftaki);
@@ -836,12 +836,12 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 		goto out;
 	crl = crl_get(&crls, a);
 
-	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
+	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	X509_free(x509);
-	x509 = NULL;
+	cert_free(cert);
+	cert = NULL;
 
 	/* TAK EE must be signed by self-signed CA */
 	if (a->issuer != NULL)
@@ -853,7 +853,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 
  out:
 	tak_free(tak);
-	X509_free(x509);
+	cert_free(cert);
 
 	return NULL;
 }

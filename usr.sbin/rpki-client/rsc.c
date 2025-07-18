@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.37 2024/11/13 12:51:04 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.38 2025/07/18 12:20:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -17,6 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
@@ -379,17 +380,19 @@ rsc_parse_econtent(const char *fn, struct rsc *rsc, const unsigned char *d,
  * Returns the RSC or NULL if the object was malformed.
  */
 struct rsc *
-rsc_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
-    size_t len)
+rsc_parse(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t len)
 {
 	struct rsc		*rsc;
+	struct cert		*cert = NULL;
 	unsigned char		*cms;
 	size_t			 cmsz;
-	struct cert		*cert = NULL;
 	time_t			 signtime = 0;
 	int			 rc = 0;
 
-	cms = cms_parse_validate(x509, fn, der, len, rsc_oid, &cmsz,
+	assert(*out_cert == NULL);
+
+	cms = cms_parse_validate(&cert, fn, talid, der, len, rsc_oid, &cmsz,
 	    &signtime);
 	if (cms == NULL)
 		return NULL;
@@ -398,29 +401,22 @@ rsc_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		err(1, NULL);
 	rsc->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &rsc->aia))
-		goto out;
-	if (!x509_get_aki(*x509, fn, &rsc->aki))
-		goto out;
-	if (!x509_get_ski(*x509, fn, &rsc->ski))
-		goto out;
-	if (rsc->aia == NULL || rsc->aki == NULL || rsc->ski == NULL) {
-		warnx("%s: RFC 6487 section 4.8: "
-		    "missing AIA, AKI or SKI X509 extension", fn);
-		goto out;
-	}
+	/* RFC 9323, 2: not distributed via RPKI repositories, hence no SIA. */
+	rsc->aia = strdup(cert->aia);
+	rsc->aki = strdup(cert->aki);
+	rsc->ski = strdup(cert->ski);
+	if (rsc->aia == NULL || rsc->aki == NULL || rsc->ski == NULL)
+		err(1, NULL);
 
-	if (!x509_get_notbefore(*x509, fn, &rsc->notbefore))
-		goto out;
-	if (!x509_get_notafter(*x509, fn, &rsc->notafter))
-		goto out;
+	rsc->notbefore = cert->notbefore;
+	rsc->notafter = cert->notafter;
 
-	if (X509_get_ext_by_NID(*x509, NID_sinfo_access, -1) != -1) {
+	if (cert->signedobj != NULL) {
 		warnx("%s: RSC: EE cert must not have an SIA extension", fn);
 		goto out;
 	}
 
-	if (x509_any_inherits(*x509)) {
+	if (x509_any_inherits(cert->x509)) {
 		warnx("%s: inherit elements not allowed in EE cert", fn);
 		goto out;
 	}
@@ -428,18 +424,16 @@ rsc_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if (!rsc_parse_econtent(fn, rsc, cms, cmsz))
 		goto out;
 
-	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
-		goto out;
-
 	rsc->valid = valid_rsc(fn, cert, rsc);
+
+	*out_cert = cert;
+	cert = NULL;
 
 	rc = 1;
  out:
 	if (rc == 0) {
 		rsc_free(rsc);
 		rsc = NULL;
-		X509_free(*x509);
-		*x509 = NULL;
 	}
 	cert_free(cert);
 	free(cms);

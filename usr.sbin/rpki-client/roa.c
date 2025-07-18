@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.80 2024/11/12 09:23:07 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.81 2025/07/18 12:20:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -235,17 +235,20 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
  * Returns the ROA or NULL if the document was malformed.
  */
 struct roa *
-roa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
-    size_t len)
+roa_parse(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t len)
 {
 	struct roa	*roa;
+	struct cert	*cert = NULL;
 	size_t		 cmsz;
 	unsigned char	*cms;
-	struct cert	*cert = NULL;
 	time_t		 signtime = 0;
 	int		 rc = 0;
 
-	cms = cms_parse_validate(x509, fn, der, len, roa_oid, &cmsz, &signtime);
+	assert(*out_cert == NULL);
+
+	cms = cms_parse_validate(&cert, fn, talid, der, len, roa_oid, &cmsz,
+	    &signtime);
 	if (cms == NULL)
 		return NULL;
 
@@ -253,36 +256,24 @@ roa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		err(1, NULL);
 	roa->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &roa->aia))
-		goto out;
-	if (!x509_get_aki(*x509, fn, &roa->aki))
-		goto out;
-	if (!x509_get_sia(*x509, fn, &roa->sia))
-		goto out;
-	if (!x509_get_ski(*x509, fn, &roa->ski))
-		goto out;
+	roa->aia = strdup(cert->aia);
+	roa->aki = strdup(cert->aki);
+	roa->sia = strdup(cert->signedobj);
+	roa->ski = strdup(cert->ski);
 	if (roa->aia == NULL || roa->aki == NULL || roa->sia == NULL ||
-	    roa->ski == NULL) {
-		warnx("%s: RFC 6487 section 4.8: "
-		    "missing AIA, AKI, SIA, or SKI X509 extension", fn);
-		goto out;
-	}
+	    roa->ski == NULL)
+		err(1, NULL);
 
-	if (!x509_get_notbefore(*x509, fn, &roa->notbefore))
-		goto out;
-	if (!x509_get_notafter(*x509, fn, &roa->notafter))
-		goto out;
+	roa->notbefore = cert->notbefore;
+	roa->notafter = cert->notafter;
 
 	if (!roa_parse_econtent(fn, roa, cms, cmsz))
 		goto out;
 
-	if (x509_any_inherits(*x509)) {
+	if (x509_any_inherits(cert->x509)) {
 		warnx("%s: inherit elements not allowed in EE cert", fn);
 		goto out;
 	}
-
-	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
-		goto out;
 
 	if (cert->num_ases > 0) {
 		warnx("%s: superfluous AS Resources extension present", fn);
@@ -300,13 +291,14 @@ roa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	 */
 	roa->valid = valid_roa(fn, cert, roa);
 
+	*out_cert = cert;
+	cert = NULL;
+
 	rc = 1;
 out:
 	if (rc == 0) {
 		roa_free(roa);
 		roa = NULL;
-		X509_free(*x509);
-		*x509 = NULL;
 	}
 	cert_free(cert);
 	free(cms);

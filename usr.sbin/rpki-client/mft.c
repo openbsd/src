@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.123 2025/06/22 12:56:42 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.124 2025/07/18 12:20:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -414,55 +414,42 @@ mft_parse_econtent(const char *fn, struct mft *mft, const unsigned char *d,
  * Return mft if it conforms to RFC 6486, otherwise NULL.
  */
 struct mft *
-mft_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
-    size_t len)
+mft_parse(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t len)
 {
 	struct mft	*mft;
 	struct cert	*cert = NULL;
 	int		 rc = 0;
 	size_t		 cmsz;
 	unsigned char	*cms;
-	char		*crldp = NULL, *crlfile;
+	char		*crlfile;
 	time_t		 signtime = 0;
 
-	cms = cms_parse_validate(x509, fn, der, len, mft_oid, &cmsz, &signtime);
+	assert(*out_cert == NULL);
+
+	cms = cms_parse_validate(&cert, fn, talid, der, len, mft_oid, &cmsz,
+	    &signtime);
 	if (cms == NULL)
 		return NULL;
-	assert(*x509 != NULL);
 
 	if ((mft = calloc(1, sizeof(*mft))) == NULL)
 		err(1, NULL);
 	mft->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &mft->aia))
-		goto out;
-	if (!x509_get_aki(*x509, fn, &mft->aki))
-		goto out;
-	if (!x509_get_sia(*x509, fn, &mft->sia))
-		goto out;
-	if (!x509_get_ski(*x509, fn, &mft->ski))
-		goto out;
+	mft->aia = strdup(cert->aia);
+	mft->aki = strdup(cert->aki);
+	mft->sia = strdup(cert->signedobj);
+	mft->ski = strdup(cert->ski);
 	if (mft->aia == NULL || mft->aki == NULL || mft->sia == NULL ||
-	    mft->ski == NULL) {
-		warnx("%s: RFC 6487 section 4.8: "
-		    "missing AIA, AKI, SIA, or SKI X509 extension", fn);
-		goto out;
-	}
+	    mft->ski == NULL)
+		err(1, NULL);
 
-	if (!x509_inherits(*x509)) {
+	if (!x509_inherits(cert->x509)) {
 		warnx("%s: RFC 3779 extension not set to inherit", fn);
 		goto out;
 	}
 
-	/* get CRL info for later */
-	if (!x509_get_crl(*x509, fn, &crldp))
-		goto out;
-	if (crldp == NULL) {
-		warnx("%s: RFC 6487 section 4.8.6: CRL: "
-		    "missing CRL distribution point extension", fn);
-		goto out;
-	}
-	crlfile = strrchr(crldp, '/');
+	crlfile = strrchr(cert->crl, '/');
 	if (crlfile == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: "
 		    "invalid CRL distribution point", fn);
@@ -481,24 +468,21 @@ mft_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if (mft_parse_econtent(fn, mft, cms, cmsz) == 0)
 		goto out;
 
-	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
-		goto out;
-
 	if (mft->signtime > mft->nextupdate) {
 		warnx("%s: dating issue: CMS signing-time after MFT nextUpdate",
 		    fn);
 		goto out;
 	}
 
+	*out_cert = cert;
+	cert = NULL;
+
 	rc = 1;
 out:
 	if (rc == 0) {
 		mft_free(mft);
 		mft = NULL;
-		X509_free(*x509);
-		*x509 = NULL;
 	}
-	free(crldp);
 	cert_free(cert);
 	free(cms);
 	return mft;

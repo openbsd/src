@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.52 2025/07/11 09:20:23 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.53 2025/07/18 12:20:32 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <err.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -88,10 +89,11 @@ cms_get_signtime(const char *fn, X509_ATTRIBUTE *attr, time_t *signtime)
 }
 
 static int
-cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
-    size_t len, const ASN1_OBJECT *oid, BIO *bio, unsigned char **res,
-    size_t *rsz, time_t *signtime)
+cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t len, const ASN1_OBJECT *oid, BIO *bio,
+    unsigned char **res, size_t *rsz, time_t *signtime)
 {
+	struct cert			*cert = NULL;
 	const unsigned char		*oder;
 	char				 buf[128], obuf[128];
 	const ASN1_OBJECT		*obj, *octype;
@@ -105,10 +107,10 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	X509_ALGOR			*pdig, *psig;
 	int				 i, nattrs, nid;
 	int				 has_ct = 0, has_md = 0, has_st = 0;
-	time_t				 notafter;
 	int				 rc = 0;
 
-	*xp = NULL;
+	assert(*out_cert == NULL);
+
 	if (rsz != NULL)
 		*rsz = 0;
 	*signtime = 0;
@@ -327,18 +329,12 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 		    "want 1 signer, have %d", fn, sk_X509_num(certs));
 		goto out;
 	}
-	*xp = sk_X509_value(certs, 0);
-	if (!X509_up_ref(*xp)) {
-		*xp = NULL;
-		goto out;
-	}
 
-	if (!x509_cache_extensions(*xp, fn))
+	cert = cert_parse_ee_cert(fn, talid, sk_X509_value(certs, 0));
+	if (cert == NULL)
 		goto out;
 
-	if (!x509_get_notafter(*xp, fn, &notafter))
-		goto out;
-	if (*signtime > notafter)
+	if (*signtime > cert->notafter)
 		warnx("%s: dating issue: CMS signing-time after X.509 notAfter",
 		    fn);
 
@@ -347,7 +343,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 		warnx("%s: RFC 6488: could not extract SKI from SID", fn);
 		goto out;
 	}
-	if (CMS_SignerInfo_cert_cmp(si, *xp) != 0) {
+	if (CMS_SignerInfo_cert_cmp(si, cert->x509) != 0) {
 		warnx("%s: RFC 6488: wrong cert referenced by SignerInfo", fn);
 		goto out;
 	}
@@ -355,12 +351,12 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	if (!cms_extract_econtent(fn, cms, res, rsz))
 		goto out;
 
+	*out_cert = cert;
+	cert = NULL;
+
 	rc = 1;
  out:
-	if (rc == 0) {
-		X509_free(*xp);
-		*xp = NULL;
-	}
+	cert_free(cert);
 	sk_X509_CRL_pop_free(crls, X509_CRL_free);
 	sk_X509_free(certs);
 	CMS_ContentInfo_free(cms);
@@ -374,13 +370,14 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
  * Return the eContent as a string and set "rsz" to be its length.
  */
 unsigned char *
-cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
-    size_t derlen, const ASN1_OBJECT *oid, size_t *rsz, time_t *st)
+cms_parse_validate(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t derlen, const ASN1_OBJECT *oid,
+    size_t *rsz, time_t *st)
 {
 	unsigned char *res = NULL;
 
-	if (!cms_parse_validate_internal(xp, fn, der, derlen, oid, NULL, &res,
-	    rsz, st))
+	if (!cms_parse_validate_internal(out_cert, fn, talid, der, derlen, oid,
+	    NULL, &res, rsz, st))
 		return NULL;
 
 	return res;
@@ -392,9 +389,10 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
  * Return the 1 on success, 0 on failure.
  */
 int
-cms_parse_validate_detached(X509 **xp, const char *fn, const unsigned char *der,
-    size_t derlen, const ASN1_OBJECT *oid, BIO *bio, time_t *st)
+cms_parse_validate_detached(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t derlen, const ASN1_OBJECT *oid, BIO *bio,
+    time_t *st)
 {
-	return cms_parse_validate_internal(xp, fn, der, derlen, oid, bio, NULL,
-	    NULL, st);
+	return cms_parse_validate_internal(out_cert, fn, talid, der, derlen,
+	    oid, bio, NULL, NULL, st);
 }

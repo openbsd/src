@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.22 2025/04/02 09:42:57 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.23 2025/07/18 12:20:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -17,6 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
@@ -204,8 +205,8 @@ tak_parse_econtent(const char *fn, struct tak *tak, const unsigned char *d,
  * Returns the TAK or NULL if the object was malformed.
  */
 struct tak *
-tak_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
-    size_t len)
+tak_parse(struct cert **out_cert, const char *fn, int talid,
+    const unsigned char *der, size_t len)
 {
 	struct tak		*tak;
 	struct cert		*cert = NULL;
@@ -214,7 +215,10 @@ tak_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	time_t			 signtime = 0;
 	int			 rc = 0;
 
-	cms = cms_parse_validate(x509, fn, der, len, tak_oid, &cmsz, &signtime);
+	assert(*out_cert == NULL);
+
+	cms = cms_parse_validate(&cert, fn, talid, der, len, tak_oid, &cmsz,
+	    &signtime);
 	if (cms == NULL)
 		return NULL;
 
@@ -222,27 +226,18 @@ tak_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		err(1, NULL);
 	tak->signtime = signtime;
 
-	if (!x509_get_aia(*x509, fn, &tak->aia))
-		goto out;
-	if (!x509_get_aki(*x509, fn, &tak->aki))
-		goto out;
-	if (!x509_get_sia(*x509, fn, &tak->sia))
-		goto out;
-	if (!x509_get_ski(*x509, fn, &tak->ski))
-		goto out;
+	tak->aia = strdup(cert->aia);
+	tak->aki = strdup(cert->aki);
+	tak->sia = strdup(cert->signedobj);
+	tak->ski = strdup(cert->ski);
 	if (tak->aia == NULL || tak->aki == NULL || tak->sia == NULL ||
-	    tak->ski == NULL) {
-		warnx("%s: RFC 6487 section 4.8: "
-		    "missing AIA, AKI, SIA, or SKI X509 extension", fn);
-		goto out;
-	}
+	    tak->ski == NULL)
+		err(1, NULL);
 
-	if (!x509_get_notbefore(*x509, fn, &tak->notbefore))
-		goto out;
-	if (!x509_get_notafter(*x509, fn, &tak->notafter))
-		goto out;
+	tak->notbefore = cert->notbefore;
+	tak->notafter = cert->notafter;
 
-	if (!x509_inherits(*x509)) {
+	if (!x509_inherits(cert->x509)) {
 		warnx("%s: RFC 3779 extension not set to inherit", fn);
 		goto out;
 	}
@@ -250,21 +245,19 @@ tak_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if (!tak_parse_econtent(fn, tak, cms, cmsz))
 		goto out;
 
-	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
-		goto out;
-
 	if (strcmp(tak->aki, tak->current->ski) != 0) {
 		warnx("%s: current TAKey's SKI does not match EE AKI", fn);
 		goto out;
 	}
+
+	*out_cert = cert;
+	cert = NULL;
 
 	rc = 1;
  out:
 	if (rc == 0) {
 		tak_free(tak);
 		tak = NULL;
-		X509_free(*x509);
-		*x509 = NULL;
 	}
 	cert_free(cert);
 	free(cms);
