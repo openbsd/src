@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-seqnum.c,v 1.2 2025/06/19 08:21:56 job Exp $ */
+/*	$OpenBSD: test-seqnum.c,v 1.3 2025/07/18 16:21:00 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -126,7 +126,6 @@ static int
 seqnum_testcase(const struct seqnum *test)
 {
 	ASN1_INTEGER *aint = NULL;
-	const BIGNUM *bn;
 	const unsigned char *p;
 	char *s = NULL;
 	int failed = 1;
