@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.106 2025/06/29 10:26:35 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.107 2025/07/18 18:11:51 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -39,7 +39,7 @@
 #define DPRINTF(x...)	printf(x)
 #else
 #define DPRINTF(x...)
-#endif
+#endif	/* DEBUG */
 
 struct mbr		gmbr;
 struct gpt_header	gh;
@@ -498,7 +498,6 @@ GPT_print(const char *units)
 #ifdef	DEBUG
 	char			*p;
 	uint64_t		 sig;
-	unsigned int		 i;
 
 	sig = htole64(gh.gh_sig);
 	p = (char *)&sig;

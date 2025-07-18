@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.75 2022/04/25 17:10:09 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.76 2025/07/18 18:11:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -131,7 +131,7 @@ readsectors(const uint64_t sector, const uint32_t count)
 	if (off == -1) {
 #ifdef DEBUG
 		warn("lseek(%lld) for read", (int64_t)where);
-#endif
+#endif	/* DEBUG */
 		return NULL;
 	}
 
@@ -143,14 +143,14 @@ readsectors(const uint64_t sector, const uint32_t count)
 	if (len == -1) {
 #ifdef DEBUG
 		warn("read(%zu @ %lld)", bytes, (int64_t)where);
-#endif
+#endif	/* DEBUG */
 		free(secbuf);
 		return NULL;
 	}
 	if (len != (ssize_t)bytes) {
 #ifdef DEBUG
 		warnx("short read(%zu @ %lld)", bytes, (int64_t)where);
-#endif
+#endif	/* DEBUG */
 		free(secbuf);
 		return NULL;
 	}
@@ -172,7 +172,7 @@ writesectors(const void *buf, const uint64_t sector, const uint32_t count)
 	if (off == -1) {
 #ifdef DEBUG
 		warn("lseek(%lld) for write", (int64_t)where);
-#endif
+#endif	/* DEBUG */
 		return -1;
 	}
 
@@ -180,13 +180,13 @@ writesectors(const void *buf, const uint64_t sector, const uint32_t count)
 	if (len == -1) {
 #ifdef DEBUG
 		warn("write(%zu @ %lld)", bytes, (int64_t)where);
-#endif
+#endif	/* DEBUG */
 		return -1;
 	}
 	if (len != (ssize_t)bytes) {
 #ifdef DEBUG
 		warnx("short write(%zu @ %lld)", bytes, (int64_t)where);
-#endif
+#endif	/* DEBUG */
 		return -1;
 	}
 
