@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.191 2025/06/29 19:32:08 miod Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.192 2025/07/18 16:09:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -11489,9 +11489,14 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_INTEL_WL_22500_3:
 		if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QU_C0)
 			sc->sc_fwname = IWX_QU_C_HR_B_FW;
-		else if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QUZ)
-			sc->sc_fwname = IWX_QUZ_A_HR_B_FW;
-		else
+		else if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QUZ) {
+			uint32_t rf_id = IWX_CSR_HW_RFID_TYPE(sc->sc_hw_rf_id);
+			if (rf_id == IWX_CFG_RF_TYPE_JF1 ||
+			    rf_id == IWX_CFG_RF_TYPE_JF2)
+				sc->sc_fwname = IWX_QUZ_A_JF_B_FW;
+			else
+				sc->sc_fwname = IWX_QUZ_A_HR_B_FW;
+		} else
 			sc->sc_fwname = IWX_QU_B_HR_B_FW;
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_integrated = 1;
