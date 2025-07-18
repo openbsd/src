@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.348 2025/07/14 09:06:17 jsg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.349 2025/07/18 08:39:14 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1134,7 +1134,8 @@ udp_attach(struct socket *so, int proto, int wait)
 		return error;
 #ifdef INET6
 	if (ISSET(sotoinpcb(so)->inp_flags, INP_IPV6))
-		sotoinpcb(so)->inp_ipv6.ip6_hlim = ip6_defhlim;
+		sotoinpcb(so)->inp_ipv6.ip6_hlim =
+		    atomic_load_int(&ip6_defhlim);
 	else
 #endif
 		sotoinpcb(so)->inp_ip.ip_ttl = atomic_load_int(&ip_defttl);

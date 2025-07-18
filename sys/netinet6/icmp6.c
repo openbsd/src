@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.269 2025/07/17 03:00:45 dlg Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.270 2025/07/18 08:39:14 mvs Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1158,7 +1158,7 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
-	ip6->ip6_hlim = ip6_defhlim;
+	ip6->ip6_hlim = atomic_load_int(&ip6_defhlim);
 
 	icmp6->icmp6_cksum = 0;
 	m->m_pkthdr.csum_flags = M_ICMP_CSUM_OUT;

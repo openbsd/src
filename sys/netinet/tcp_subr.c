@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.215 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.216 2025/07/18 08:39:14 mvs Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ tcp_newtcpcb(struct inpcb *inp, int wait)
 #ifdef INET6
 	if (ISSET(inp->inp_flags, INP_IPV6)) {
 		tp->pf = PF_INET6;
-		inp->inp_ipv6.ip6_hlim = ip6_defhlim;
+		inp->inp_ipv6.ip6_hlim = atomic_load_int(&ip6_defhlim);
 	} else
 #endif
 	{
