@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.135 2024/11/20 20:54:02 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.136 2025/07/18 20:44:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -267,6 +267,7 @@ grid_set_tab(struct grid_cell *gc, u_int width)
 {
 	memset(gc->data.data, 0, sizeof gc->data.data);
 	gc->flags |= GRID_FLAG_TAB;
+	gc->flags &= ~GRID_FLAG_PADDING;
 	gc->data.width = gc->data.size = gc->data.have = width;
 	memset(gc->data.data, ' ', gc->data.size);
 }

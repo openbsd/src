@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.233 2025/05/01 07:12:00 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.234 2025/07/18 20:44:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1782,9 +1782,13 @@ screen_write_collect_end(struct screen_write_ctx *ctx)
 			grid_view_set_cell(s->grid, xx, s->cy,
 			    &grid_default_cell);
 		}
-		if (gc.data.width > 1) {
-			grid_view_set_cell(s->grid, xx, s->cy,
-			    &grid_default_cell);
+		if (xx != s->cx) {
+			if (xx == 0)
+				grid_view_get_cell(s->grid, 0, s->cy, &gc);
+			if (gc.data.width > 1) {
+				grid_view_set_cell(s->grid, xx, s->cy,
+				    &grid_default_cell);
+			}
 		}
 	}
 
