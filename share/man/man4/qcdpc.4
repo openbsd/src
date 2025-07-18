@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qcdpc.4,v 1.1 2025/07/17 15:53:36 kettenis Exp $
+.\"	$OpenBSD: qcdpc.4,v 1.2 2025/07/18 09:27:53 jsg Exp $
 .\"
 .\" Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,14 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2025 $
-.Dt QCDRM 4
+.Dd $Mdocdate: July 18 2025 $
+.Dt QCDPC 4
 .Os
 .Sh NAME
-.Nm qcdrm
-.Nd Qualcomm Snapdragon DRM subsystem
+.Nm qcdpc
+.Nd Qualcomm DisplayPort Controller
 .Sh SYNOPSIS
-.Cd "qcdrm* at fdt?"
+.Cd "qcdpc* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -44,7 +44,3 @@ The
 .Nm
 driver was written by
 .An Mark Kettenis Aq Mt kettenis@openbsd.org .
-.Sh BUGS
-The
-.Nm
-driver does not implement any usable DRM functionality yet.
