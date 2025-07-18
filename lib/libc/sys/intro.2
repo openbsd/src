@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.76 2025/07/18 16:32:39 schwarze Exp $
+.\"	$OpenBSD: intro.2,v 1.77 2025/07/18 16:50:30 schwarze Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -352,6 +352,8 @@ and
 .Ql \&..
 was supplied to a remove directory or rename call.
 .It Er 67 EPROCLIM Em "Too many processes" .
+Not used in
+.Ox .
 .It Er 68 EUSERS Em "Too many users" .
 The quota system ran out of table entries.
 .It Er 69 EDQUOT Em "Disk quota exceeded" .
@@ -366,6 +368,9 @@ An attempt was made to access an open file on an NFS filesystem which
 is now unavailable as referenced by the file descriptor.
 This may indicate the file was deleted on the NFS server or some other
 catastrophic event occurred.
+.It Er 71 EREMOTE Em "Too many levels of remote in path" .
+Not used in
+.Ox .
 .It Er 72 EBADRPC Em "RPC struct is bad" .
 Exchange of
 .Xr rpc 3
