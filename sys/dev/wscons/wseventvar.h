@@ -1,4 +1,4 @@
-/* $OpenBSD: wseventvar.h,v 1.14 2025/01/21 20:13:19 mvs Exp $ */
+/* $OpenBSD: wseventvar.h,v 1.15 2025/07/18 17:34:29 mvs Exp $ */
 /* $NetBSD: wseventvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
 
 /*
@@ -87,10 +87,6 @@
  *	m	ws_mtx
  */
 
-/*
- * XXXSMP: Non WSEVENT_MPSAFE wseventvar structures rely on kernel lock
- */
-
 /* WSEVENT_QSIZE should be a power of two so that `%' is fast */
 #define	WSEVENT_QSIZE	256	/* may need tuning; this uses 2k */
 
@@ -99,7 +95,6 @@ struct wseventvar {
 					    synchronously) */
 	volatile u_int ws_put;		/* [m] put (write) index (modified by
 					    interrupt) */
-	int	ws_flags;		/* [I] flags, see below*/
 	struct mutex ws_mtx;
 	struct klist ws_klist;		/* [m] list of knotes */
 	struct sigio_ref ws_sigio;	/* async I/O registration */
@@ -108,8 +103,6 @@ struct wseventvar {
 	struct wscons_event *ws_q;	/* [m] circular buffer (queue) of
 					    events */
 };
-
-#define WSEVENT_MPSAFE		0x0001
 
 static inline void
 wsevent_wakeup(struct wseventvar *ev)
@@ -131,18 +124,10 @@ wsevent_wakeup(struct wseventvar *ev)
 		pgsigio(&ev->ws_sigio, SIGIO, 0);
 }
 
-#define	WSEVENT_WAKEUP(ev) do { wsevent_wakeup(ev); } while (0)
-
-int	wsevent_init_flags(struct wseventvar *, int);
+int	wsevent_init(struct wseventvar *);
 void	wsevent_fini(struct wseventvar *);
 int	wsevent_read(struct wseventvar *, struct uio *, int);
 int	wsevent_kqfilter(struct wseventvar *, struct knote *);
-
-static inline int
-wsevent_init(struct wseventvar *ev)
-{
-	return wsevent_init_flags(ev, 0);
-}
 
 /*
  * PWSEVENT is set just above PSOCK, which is just above TTIPRI, on the

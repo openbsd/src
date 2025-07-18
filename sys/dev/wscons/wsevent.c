@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.29 2025/01/21 20:13:19 mvs Exp $ */
+/* $OpenBSD: wsevent.c,v 1.30 2025/07/18 17:34:29 mvs Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -88,44 +88,6 @@ int	filt_wseventread(struct knote *, long);
 int	filt_wseventmodify(struct kevent *, struct knote *);
 int	filt_wseventprocess(struct knote *, struct kevent *);
 
-static void
-wsevent_klist_assertlk(void *arg)
-{
-	struct wseventvar *ev = arg;
-
-	if((ev->ws_flags & WSEVENT_MPSAFE) == 0)
-		KERNEL_ASSERT_LOCKED();
-	MUTEX_ASSERT_LOCKED(&ev->ws_mtx);
-}
-
-static int
-wsevent_klist_lock(void *arg)
-{
-	struct wseventvar *ev = arg;
-
-	if((ev->ws_flags & WSEVENT_MPSAFE) == 0)
-		KERNEL_LOCK();
-	mtx_enter(&ev->ws_mtx);
-
-	return (0);
-}
-
-static void
-wsevent_klist_unlock(void *arg, int s)
-{
-	struct wseventvar *ev = arg;
-
-	mtx_leave(&ev->ws_mtx);
-	if ((ev->ws_flags & WSEVENT_MPSAFE) == 0)
-		KERNEL_UNLOCK();
-}
-
-static const struct klistops wsevent_klistops = {
-	.klo_assertlk	= wsevent_klist_assertlk,
-	.klo_lock	= wsevent_klist_lock,
-	.klo_unlock	= wsevent_klist_unlock,
-};
-
 const struct filterops wsevent_filtops = {
 	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
@@ -139,7 +101,7 @@ const struct filterops wsevent_filtops = {
  * Initialize a wscons_event queue.
  */
 int
-wsevent_init_flags(struct wseventvar *ev, int flags)
+wsevent_init(struct wseventvar *ev)
 {
 	struct wscons_event *queue;
 
@@ -155,9 +117,8 @@ wsevent_init_flags(struct wseventvar *ev, int flags)
 	}
 
 	mtx_init_flags(&ev->ws_mtx, IPL_TTY, "wsmtx", 0);
-	klist_init(&ev->ws_klist, &wsevent_klistops, ev);
+	klist_init_mutex(&ev->ws_klist, &ev->ws_mtx);
 
-	ev->ws_flags = flags;
 	ev->ws_q = queue;
 	ev->ws_get = ev->ws_put = 0;
 
@@ -291,8 +252,6 @@ filt_wseventread(struct knote *kn, long hint)
 {
 	struct wseventvar *ev = kn->kn_hook;
 
-	if((ev->ws_flags & WSEVENT_MPSAFE) == 0)
-		KERNEL_ASSERT_LOCKED();
 	MUTEX_ASSERT_LOCKED(&ev->ws_mtx);
 
 	if (ev->ws_get == ev->ws_put)
@@ -310,15 +269,11 @@ int
 filt_wseventmodify(struct kevent *kev, struct knote *kn)
 {
 	struct wseventvar *ev = kn->kn_hook;
-	int active, dolock = ((ev->ws_flags & WSEVENT_MPSAFE) == 0);
+	int active;
 
-	if (dolock)
-		KERNEL_LOCK();
 	mtx_enter(&ev->ws_mtx);
 	active = knote_modify(kev, kn);
 	mtx_leave(&ev->ws_mtx);
-	if (dolock)
-		KERNEL_UNLOCK();
 
 	return (active);
 }
@@ -327,16 +282,11 @@ int
 filt_wseventprocess(struct knote *kn, struct kevent *kev)
 {
 	struct wseventvar *ev = kn->kn_hook;
-	int active, dolock = ((ev->ws_flags & WSEVENT_MPSAFE) == 0);
+	int active;
 
-	if (dolock)
-		KERNEL_LOCK();
 	mtx_enter(&ev->ws_mtx);
 	active = knote_process(kn, kev);
 	mtx_leave(&ev->ws_mtx);
-	if (dolock)
-		KERNEL_UNLOCK();
 
 	return (active);
-	
 }

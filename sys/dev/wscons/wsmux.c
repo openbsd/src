@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.61 2025/01/22 15:06:56 mvs Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.62 2025/07/18 17:34:29 mvs Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -208,7 +208,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	if (wsevent_init_flags(evar, WSEVENT_MPSAFE))
+	if (wsevent_init(evar))
 		return (EBUSY);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
