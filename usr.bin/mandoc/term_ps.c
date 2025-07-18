@@ -1,7 +1,7 @@
-/* $OpenBSD: term_ps.c,v 1.57 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: term_ps.c,v 1.58 2025/07/18 15:46:58 schwarze Exp $ */
 /*
+ * Copyright (c) 2014-2017, 2020, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014,2015,2016,2017,2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2017 Marc Espie <espie@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1207,6 +1207,7 @@ ps_advance(struct termp *p, size_t len)
 	ps_plast(p);
 	ps_pclose(p);
 	p->ps->pscol += len;
+	p->viscol += len;
 }
 
 static void
@@ -1230,6 +1231,8 @@ ps_endline(struct termp *p)
 	/* Left-justify. */
 
 	p->ps->pscol = p->ps->left;
+	p->viscol = 0;
+	p->minbl = 0;
 
 	/* If we haven't printed anything, return. */
 
@@ -1307,7 +1310,7 @@ ps_hspan(const struct termp *p, const struct roffsu *su)
 		 * scaling unit so that output is the same regardless
 		 * the media.
 		 */
-		r = PNT2AFM(p, su->scale * 72.0 / 240.0);
+		r = PNT2AFM(p, su->scale * 72.0 / 10.0);
 		break;
 	case SCALE_CM:
 		r = PNT2AFM(p, su->scale * 72.0 / 2.54);
@@ -1340,8 +1343,7 @@ ps_hspan(const struct termp *p, const struct roffsu *su)
 		r = su->scale;
 		break;
 	}
-
-	return r * 24.0;
+	return r;
 }
 
 static void
