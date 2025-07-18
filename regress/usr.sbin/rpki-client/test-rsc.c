@@ -1,4 +1,4 @@
-/*	$Id: test-rsc.c,v 1.11 2025/07/07 17:57:16 tb Exp $ */
+/*	$Id: test-rsc.c,v 1.12 2025/07/18 12:22:07 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ main(int argc, char *argv[])
 {
 	int		 c, i, ppem = 0, verb = 0;
 	struct rsc	*p;
-	X509		*xp = NULL;
+	struct cert	*cert = NULL;
 	unsigned char	*buf;
 	size_t		 len;
 
@@ -74,19 +74,20 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < argc; i++) {
 		buf = load_file(argv[i], &len);
-		if ((p = rsc_parse(&xp, argv[i], -1, buf, len)) == NULL) {
+		if ((p = rsc_parse(&cert, argv[i], -1, buf, len)) == NULL) {
 			free(buf);
 			break;
 		}
 		if (verb)
-			rsc_print(xp, p);
+			rsc_print(cert->x509, p);
 		if (ppem) {
-			if (!PEM_write_X509(stdout, xp))
+			if (!PEM_write_X509(stdout, cert->x509))
 				errx(1, "PEM_write_X509: unable to write cert");
 		}
 		free(buf);
 		rsc_free(p);
-		X509_free(xp);
+		cert_free(cert);
+		cert = NULL;
 	}
 
 	EVP_cleanup();

@@ -1,4 +1,4 @@
-/*	$Id: test-spl.c,v 1.3 2024/04/22 05:54:01 claudio Exp $ */
+/*	$Id: test-spl.c,v 1.4 2025/07/18 12:22:07 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,8 +40,8 @@ int
 main(int argc, char *argv[])
 {
 	int		 c, i, ppem = 0, verb = 0;
-	X509		*xp = NULL;
 	struct spl	*p;
+	struct cert	*cert = NULL;
 	unsigned char	*buf;
 	size_t		 len;
 
@@ -72,19 +72,20 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < argc; i++) {
 		buf = load_file(argv[i], &len);
-		if ((p = spl_parse(&xp, argv[i], -1, buf, len)) == NULL) {
+		if ((p = spl_parse(&cert, argv[i], -1, buf, len)) == NULL) {
 			free(buf);
 			break;
 		}
 		if (verb)
-			spl_print(xp, p);
+			spl_print(cert->x509, p);
 		if (ppem) {
-			if (!PEM_write_X509(stdout, xp))
+			if (!PEM_write_X509(stdout, cert->x509))
 				errx(1, "PEM_write_X509: unable to write cert");
 		}
 		free(buf);
 		spl_free(p);
-		X509_free(xp);
+		cert_free(cert);
+		cert = NULL;
 	}
 
 	EVP_cleanup();
