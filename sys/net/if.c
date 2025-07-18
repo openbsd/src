@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.737 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if.c,v 1.738 2025/07/18 15:44:44 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ struct softnet {
 	struct taskq	*sn_taskq;
 	struct netstack	 sn_netstack;
 } __aligned(64);
-#define NET_TASKQ	4
+#define NET_TASKQ	8
 struct softnet	softnets[NET_TASKQ];
 
 struct task	if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
