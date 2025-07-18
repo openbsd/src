@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.h,v 1.9 2024/11/21 10:07:30 yasuoka Exp $	 */
+/* $OpenBSD: hash.h,v 1.10 2025/07/18 03:16:28 tb Exp $	 */
 /* $EOM: hash.h,v 1.6 1998/07/25 22:04:36 niklas Exp $	 */
 
 /*
@@ -49,6 +49,8 @@ enum hashes {
 	HASH_SHA2_512
 };
 
+union ANY_CTX;
+
 struct hash {
 	enum hashes     type;
 	int             id;	/* ISAKMP/Oakley ID */
@@ -58,9 +60,9 @@ struct hash {
 	unsigned char  *digest;	/* Pointer to a digest */
 	int             ctxsize;
 	void           *ctx2;	/* Pointer to a 2nd context, for HMAC octx */
-	void            (*Init) (void *);
-	void            (*Update) (void *, unsigned char *, unsigned int);
-	void            (*Final) (unsigned char *, void *);
+	void            (*Init) (union ANY_CTX *);
+	void            (*Update) (union ANY_CTX *, const unsigned char *, size_t);
+	void            (*Final) (unsigned char *, union ANY_CTX *);
 	void            (*HMACInit) (struct hash *, unsigned char *, unsigned int);
 	void            (*HMACFinal) (unsigned char *, struct hash *);
 };
