@@ -1,0 +1,14 @@
+IN-INCR(1)                  General Commands Manual                 IN-INCR(1)
+
+NNAAMMEE
+     in-incr - incremental .in requests
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+      offset 1n
+       offset 2n
+      offset 1n
+
+     final text
+
+OpenBSD                          July 19, 2025                      IN-INCR(1)

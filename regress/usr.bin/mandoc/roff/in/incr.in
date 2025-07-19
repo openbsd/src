@@ -1,0 +1,14 @@
+.\" $OpenBSD: incr.in,v 1.1 2025/07/19 10:02:37 schwarze Exp $
+.TH IN-INCR 1 "July 19, 2025"
+.SH NAME
+in-incr \- incremental .in requests
+.SH DESCRIPTION
+initial text
+.in +1n
+offset 1n
+.in +1n
+offset 2n
+.in -1n
+offset 1n
+.PP
+final text

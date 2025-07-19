@@ -1,0 +1,13 @@
+IN-FRACTION(1)              General Commands Manual             IN-FRACTION(1)
+
+NNAAMMEE
+     in-fraction - indentation by non-integer multiples of EN
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+     offset 12u
+      offset 13u
+
+     final text
+
+OpenBSD                          July 19, 2025                  IN-FRACTION(1)
