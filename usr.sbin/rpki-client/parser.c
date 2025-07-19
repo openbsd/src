@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.164 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.165 2025/07/19 09:27:41 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -823,7 +823,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
     const struct entity *entp, X509_STORE_CTX *ctx)
 {
 	struct tak	*tak;
-	struct cert	*cert;
+	struct cert	*cert = NULL;
 	struct crl	*crl;
 	struct auth	*a;
 	const char	*errstr;
