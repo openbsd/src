@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1276 2025/07/17 10:47:36 bentley Exp $
+#	$OpenBSD: install.sub,v 1.1277 2025/07/19 12:23:30 bentley Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1788,10 +1788,10 @@ install_files() {
 		return
 	fi
 
-	# We are committed to installing new files.  Attempt to cope with
-	# potential space shortage in /usr by deleting a few versioned
-	# areas which will be replaced from the new sets
 	if [[ $MODE == upgrade ]]; then
+		# We are committed to installing new files.  Attempt to cope
+		# with potential space shortage in /usr by deleting a few
+		# versioned areas which will be replaced from the new sets
 		if isin base$VERSION.tgz $_get_sets; then
 			rm -f /mnt/usr/share/relink/usr/lib/*
 			rm -rf /mnt/usr/lib/libLLVM.so.[0-7].0
@@ -1804,11 +1804,12 @@ install_files() {
 			# file changed to dir in libc++
 			rm -rf /mnt/usr/include/c++/v1
 		fi
+
+		# From 7.8 onwards, font cache isn't owned by root
+		chown -R _fc-cache:_fc-cache /mnt/var/cache/fontconfig >/dev/null 2>&1
+
 		rm -rf /mnt/var/syspatch/*
 	fi
-
-	# From 7.8 onwards, font cache isn't owned by root
-	chown -R _fc-cache:_fc-cache /mnt/var/cache/fontconfig >/dev/null 2>&1
 
 	# Install the set files.
 	for _f in $_get_sets; do
