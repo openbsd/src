@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.149 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.150 2025/07/19 16:40:40 mvs Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -360,18 +360,36 @@ get_vif_cnt(unsigned int rtableid, struct sioc_vif_req *req)
 int
 mrt_sysctl_vif(void *oldp, size_t *oldlenp)
 {
+	TAILQ_HEAD(, ifnet) if_tmplist =
+	    TAILQ_HEAD_INITIALIZER(if_tmplist);
 	caddr_t where = oldp;
 	size_t needed, given;
 	struct ifnet *ifp;
 	struct vif *vifp;
 	struct vifinfo vinfo;
+	int error = 0;
 
 	given = *oldlenp;
 	needed = 0;
 	memset(&vinfo, 0, sizeof vinfo);
+
+	rw_enter_write(&if_tmplist_lock);
+	NET_LOCK_SHARED();
+
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
-		if ((vifp = (struct vif *)ifp->if_mcast) == NULL)
+		if (ifp->if_mcast != NULL) {
+			if_ref(ifp);
+			TAILQ_INSERT_TAIL(&if_tmplist, ifp, if_tmplist);
+		}
+	}
+	NET_UNLOCK_SHARED();
+
+	TAILQ_FOREACH (ifp, &if_tmplist, if_tmplist) {
+		NET_LOCK_SHARED();
+		if ((vifp = (struct vif *)ifp->if_mcast) == NULL) {
+			NET_UNLOCK_SHARED();
 			continue;
+		}
 
 		vinfo.v_vifi = vifp->v_id;
 		vinfo.v_flags = vifp->v_flags;
@@ -382,17 +400,27 @@ mrt_sysctl_vif(void *oldp, size_t *oldlenp)
 		vinfo.v_pkt_out = vifp->v_pkt_out;
 		vinfo.v_bytes_in = vifp->v_bytes_in;
 		vinfo.v_bytes_out = vifp->v_bytes_out;
+		NET_UNLOCK_SHARED();
 
 		needed += sizeof(vinfo);
 		if (where && needed <= given) {
-			int error;
-
 			error = copyout(&vinfo, where, sizeof(vinfo));
 			if (error)
-				return (error);
+				break;
 			where += sizeof(vinfo);
 		}
 	}
+
+	while ((ifp = TAILQ_FIRST(&if_tmplist))) {
+		TAILQ_REMOVE(&if_tmplist, ifp, if_tmplist);
+		if_put(ifp);
+	}
+
+	rw_exit_write(&if_tmplist_lock);
+
+	if (error)
+		return (error);
+
 	if (where) {
 		*oldlenp = needed;
 		if (given < needed)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.138 2025/06/25 20:26:32 miod Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.139 2025/07/19 16:40:40 mvs Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -328,6 +328,7 @@ int		niq_enqueue(struct niqueue *, struct mbuf *);
 #define sysctl_niq(_n, _l, _op, _olp, _np, _nl, _niq) \
     sysctl_mq((_n), (_l), (_op), (_olp), (_np), (_nl), &(_niq)->ni_q)
 
+extern struct rwlock if_tmplist_lock;
 extern struct ifnet_head ifnetlist;
 
 void	if_start(struct ifnet *);

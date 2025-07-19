@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.126 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.127 2025/07/19 16:40:40 mvs Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -168,6 +168,7 @@ const struct protosw inetsw[] = {
   .pr_init	= ip_init,
   .pr_slowtimo	= ip_slowtimo,
 #ifndef SMALL_KERNEL
+  .pr_flags	= PR_MPSYSCTL,
   .pr_sysctl	= ip_sysctl
 #endif /* SMALL_KERNEL */
 },

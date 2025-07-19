@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.738 2025/07/18 15:44:44 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.739 2025/07/19 16:40:40 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -186,8 +186,6 @@ struct softnet *
  * for network interfaces in SNMP applications as per RFC2863. therefore
  * if_get(0) returns NULL.
  */
-
-struct ifnet *if_ref(struct ifnet *);
 
 /*
  * struct if_idxmap
