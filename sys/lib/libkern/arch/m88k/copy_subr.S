@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy_subr.S,v 1.7 2022/12/06 18:51:00 guenther Exp $	*/
+/*	$OpenBSD: copy_subr.S,v 1.8 2025/07/19 05:23:37 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -319,7 +319,7 @@ ASLOCAL(bcopy_out)
 	jmp	%r1		/* all done, return to caller */
 #endif
 
-	.data
+	.section .rodata
 	.align	2
 ASLOCAL(f_strat)
 	.word	f_word_copy
