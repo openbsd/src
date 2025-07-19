@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.192 2025/07/13 06:32:34 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.193 2025/07/19 19:20:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1422,14 +1422,16 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 		return (1);
 
 	/* Copy the rest up to a c. */
-	for (i = 0; i < (sizeof tmp); i++) {
+	for (i = 0; i < sizeof tmp; i++) {
 		if (3 + i == len)
 			return (1);
-		if (buf[3 + i] == 'c')
+		if (buf[3 + i] >= 'a' && buf[3 + i] <= 'z')
 			break;
 		tmp[i] = buf[3 + i];
 	}
-	if (i == (sizeof tmp))
+	if (i == sizeof tmp)
+		return (-1);
+	if (buf[3 + i] != 'c')
 		return (-1);
 	tmp[i] = '\0';
 	*size = 4 + i;
@@ -1504,14 +1506,16 @@ tty_keys_device_attributes2(struct tty *tty, const char *buf, size_t len,
 		return (1);
 
 	/* Copy the rest up to a c. */
-	for (i = 0; i < (sizeof tmp); i++) {
+	for (i = 0; i < sizeof tmp; i++) {
 		if (3 + i == len)
 			return (1);
-		if (buf[3 + i] == 'c')
+		if (buf[3 + i] >= 'a' && buf[3 + i] <= 'z')
 			break;
 		tmp[i] = buf[3 + i];
 	}
-	if (i == (sizeof tmp))
+	if (i == sizeof tmp)
+		return (-1);
+	if (buf[3 + i] != 'c')
 		return (-1);
 	tmp[i] = '\0';
 	*size = 4 + i;
