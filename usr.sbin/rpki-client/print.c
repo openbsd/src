@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.62 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.63 2025/07/20 12:00:49 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -448,18 +448,18 @@ crl_print(const struct crl *p)
 }
 
 void
-mft_print(const X509 *x, const struct mft *p)
+mft_print(const struct cert *c, const struct mft *p)
 {
 	size_t i;
 	char *hash;
 
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "manifest");
-		json_do_string("ski", p->ski);
-		x509_print(x);
-		json_do_string("aki", p->aki);
-		json_do_string("aia", p->aia);
-		json_do_string("sia", p->sia);
+		json_do_string("ski", c->ski);
+		x509_print(c->x509);
+		json_do_string("aki", c->aki);
+		json_do_string("aia", c->aia);
+		json_do_string("sia", c->signedobj);
 		json_do_string("manifest_number", p->seqnum);
 		if (p->signtime != 0)
 			json_do_int("signing_time", p->signtime);
@@ -468,11 +468,11 @@ mft_print(const X509 *x, const struct mft *p)
 		if (p->expires)
 			json_do_int("expires", p->expires);
 	} else {
-		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
-		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
-		x509_print(x);
-		printf("Authority info access:    %s\n", p->aia);
-		printf("Subject info access:      %s\n", p->sia);
+		printf("Subject key identifier:   %s\n", pretty_key_id(c->ski));
+		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
+		x509_print(c->x509);
+		printf("Authority info access:    %s\n", c->aia);
+		printf("Subject info access:      %s\n", c->signedobj);
 		printf("Manifest number:          %s\n", p->seqnum);
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",

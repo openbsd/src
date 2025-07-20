@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.124 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.125 2025/07/20 12:00:49 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -436,12 +436,9 @@ mft_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	mft->signtime = signtime;
 
-	mft->aia = strdup(cert->aia);
-	mft->aki = strdup(cert->aki);
-	mft->sia = strdup(cert->signedobj);
-	mft->ski = strdup(cert->ski);
-	if (mft->aia == NULL || mft->aki == NULL || mft->sia == NULL ||
-	    mft->ski == NULL)
+	if ((mft->aki = strdup(cert->aki)) == NULL)
+		err(1, NULL);
+	if ((mft->sia = strdup(cert->signedobj)) == NULL)
 		err(1, NULL);
 
 	if (!x509_inherits(cert->x509)) {
@@ -506,10 +503,8 @@ mft_free(struct mft *p)
 	free(p->path);
 	free(p->files);
 	free(p->seqnum);
-	free(p->aia);
 	free(p->aki);
 	free(p->sia);
-	free(p->ski);
 	free(p->crl);
 	free(p);
 }
@@ -529,9 +524,7 @@ mft_buffer(struct ibuf *b, const struct mft *p)
 	io_simple_buffer(b, &p->seqnum_gap, sizeof(p->seqnum_gap));
 	io_str_buffer(b, p->path);
 
-	io_str_buffer(b, p->aia);
 	io_str_buffer(b, p->aki);
-	io_str_buffer(b, p->ski);
 
 	io_simple_buffer(b, &p->filesz, sizeof(size_t));
 	for (i = 0; i < p->filesz; i++) {
@@ -563,10 +556,8 @@ mft_read(struct ibuf *b)
 	io_read_buf(b, &p->seqnum_gap, sizeof(p->seqnum_gap));
 	io_read_str(b, &p->path);
 
-	io_read_str(b, &p->aia);
 	io_read_str(b, &p->aki);
-	io_read_str(b, &p->ski);
-	assert(p->aia && p->aki && p->ski);
+	assert(p->aki != NULL);
 
 	io_read_buf(b, &p->filesz, sizeof(size_t));
 	if ((p->files = calloc(p->filesz, sizeof(struct mftfile))) == NULL)

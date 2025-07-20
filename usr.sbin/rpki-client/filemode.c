@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.65 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.66 2025/07/20 12:00:49 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -425,7 +425,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		mft = mft_parse(&cert, file, -1, buf, len);
 		if (mft == NULL)
 			break;
-		aia = mft->aia;
+		aia = cert->aia;
 		expires = &mft->expires;
 		notbefore = &mft->thisupdate;
 		notafter = &mft->nextupdate;
@@ -565,7 +565,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			geofeed_print(cert, geofeed);
 			break;
 		case RTYPE_MFT:
-			mft_print(cert->x509, mft);
+			mft_print(cert, mft);
 			break;
 		case RTYPE_ROA:
 			roa_print(cert, roa);

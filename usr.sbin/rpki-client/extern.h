@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.251 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.252 2025/07/20 12:00:49 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -229,10 +229,8 @@ struct mft {
 	char		*path; /* relative path to directory of the MFT */
 	struct mftfile	*files; /* file and hash */
 	char		*seqnum; /* manifestNumber */
-	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*sia; /* SIA signedObject */
-	char		*ski; /* SKI */
 	char		*crl; /* CRL file name */
 	unsigned char	 mfthash[SHA256_DIGEST_LENGTH];
 	unsigned char	 crlhash[SHA256_DIGEST_LENGTH];
@@ -933,7 +931,7 @@ void		 x509_print(const X509 *);
 void		 tal_print(const struct tal *);
 void		 cert_print(const struct cert *);
 void		 crl_print(const struct crl *);
-void		 mft_print(const X509 *, const struct mft *);
+void		 mft_print(const struct cert *, const struct mft *);
 void		 roa_print(const struct cert *, const struct roa *);
 void		 gbr_print(const struct cert *, const struct gbr *);
 void		 rsc_print(const struct cert *, const struct rsc *);
