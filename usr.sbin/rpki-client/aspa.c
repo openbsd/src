@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.34 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.35 2025/07/20 12:21:28 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -180,7 +180,6 @@ aspa_parse(struct cert **out_cert, const char *fn, int talid,
 
 	if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
 		err(1, NULL);
-
 	aspa->signtime = signtime;
 
 	if (cert->num_ips > 0) {
