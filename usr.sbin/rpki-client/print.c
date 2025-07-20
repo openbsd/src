@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.63 2025/07/20 12:00:49 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.64 2025/07/20 14:22:53 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -461,8 +461,7 @@ mft_print(const struct cert *c, const struct mft *p)
 		json_do_string("aia", c->aia);
 		json_do_string("sia", c->signedobj);
 		json_do_string("manifest_number", p->seqnum);
-		if (p->signtime != 0)
-			json_do_int("signing_time", p->signtime);
+		json_do_int("signing_time", p->signtime);
 		json_do_int("valid_since", p->thisupdate);
 		json_do_int("valid_until", p->nextupdate);
 		if (p->expires)
@@ -474,9 +473,7 @@ mft_print(const struct cert *c, const struct mft *p)
 		printf("Authority info access:    %s\n", c->aia);
 		printf("Subject info access:      %s\n", c->signedobj);
 		printf("Manifest number:          %s\n", p->seqnum);
-		if (p->signtime != 0)
-			printf("Signing time:             %s\n",
-			    time2str(p->signtime));
+		printf("Signing time:             %s\n", time2str(p->signtime));
 		printf("Manifest this update:     %s\n", time2str(p->thisupdate));
 		printf("Manifest next update:     %s\n", time2str(p->nextupdate));
 		printf("Files and hashes:         ");
@@ -520,8 +517,7 @@ roa_print(const struct cert *c, const struct roa *p)
 		json_do_string("aki", c->aki);
 		json_do_string("aia", c->aia);
 		json_do_string("sia", c->signedobj);
-		if (p->signtime != 0)
-			json_do_int("signing_time", p->signtime);
+		json_do_int("signing_time", p->signtime);
 		json_do_int("valid_since", c->notbefore);
 		json_do_int("valid_until", c->notafter);
 		if (p->expires)
@@ -532,9 +528,7 @@ roa_print(const struct cert *c, const struct roa *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
 		printf("Authority info access:    %s\n", c->aia);
 		printf("Subject info access:      %s\n", c->signedobj);
-		if (p->signtime != 0)
-			printf("Signing time:             %s\n",
-			    time2str(p->signtime));
+		printf("Signing time:             %s\n", time2str(p->signtime));
 		printf("ROA not before:           %s\n",
 		    time2str(c->notbefore));
 		printf("ROA not after:            %s\n", time2str(c->notafter));
@@ -576,8 +570,7 @@ spl_print(const struct cert *c, const struct spl *s)
 		json_do_string("aki", c->aki);
 		json_do_string("aia", c->aia);
 		json_do_string("sia", c->signedobj);
-		if (s->signtime != 0)
-			json_do_int("signing_time", s->signtime);
+		json_do_int("signing_time", s->signtime);
 		json_do_int("valid_since", c->notbefore);
 		json_do_int("valid_until", c->notafter);
 		if (s->expires)
@@ -589,9 +582,7 @@ spl_print(const struct cert *c, const struct spl *s)
 		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
 		printf("Authority info access:    %s\n", c->aia);
 		printf("Subject info access:      %s\n", c->signedobj);
-		if (s->signtime != 0)
-			printf("Signing time:             %s\n",
-			    time2str(s->signtime));
+		printf("Signing time:             %s\n", time2str(s->signtime));
 		printf("SPL not before:           %s\n",
 		    time2str(c->notbefore));
 		printf("SPL not after:            %s\n", time2str(c->notafter));
@@ -627,8 +618,7 @@ gbr_print(const struct cert *c, const struct gbr *p)
 		json_do_string("aki", c->aki);
 		json_do_string("aia", c->aia);
 		json_do_string("sia", c->signedobj);
-		if (p->signtime != 0)
-			json_do_int("signing_time", p->signtime);
+		json_do_int("signing_time", p->signtime);
 		json_do_int("valid_since", c->notbefore);
 		json_do_int("valid_until", c->notafter);
 		if (p->expires)
@@ -640,9 +630,7 @@ gbr_print(const struct cert *c, const struct gbr *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
 		printf("Authority info access:    %s\n", c->aia);
 		printf("Subject info access:      %s\n", c->signedobj);
-		if (p->signtime != 0)
-			printf("Signing time:             %s\n",
-			    time2str(p->signtime));
+		printf("Signing time:             %s\n", time2str(p->signtime));
 		printf("GBR not before:           %s\n",
 		    time2str(c->notbefore));
 		printf("GBR not after:            %s\n", time2str(c->notafter));
@@ -662,8 +650,7 @@ rsc_print(const struct cert *c, const struct rsc *p)
 		x509_print(c->x509);
 		json_do_string("aki", c->aki);
 		json_do_string("aia", c->aia);
-		if (p->signtime != 0)
-			json_do_int("signing_time", p->signtime);
+		json_do_int("signing_time", p->signtime);
 		json_do_int("valid_since", c->notbefore);
 		json_do_int("valid_until", c->notafter);
 		if (p->expires)
@@ -674,9 +661,7 @@ rsc_print(const struct cert *c, const struct rsc *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
 		x509_print(c->x509);
 		printf("Authority info access:    %s\n", c->aia);
-		if (p->signtime != 0)
-			printf("Signing time:             %s\n",
-			    time2str(p->signtime));
+		printf("Signing time:             %s\n", time2str(p->signtime));
 		printf("RSC not before:           %s\n",
 		    time2str(c->notbefore));
 		printf("RSC not after:            %s\n", time2str(c->notafter));
@@ -731,8 +716,7 @@ aspa_print(const struct cert *c, const struct aspa *p)
 		json_do_string("aki", c->aki);
 		json_do_string("aia", c->aia);
 		json_do_string("sia", c->signedobj);
-		if (p->signtime != 0)
-			json_do_int("signing_time", p->signtime);
+		json_do_int("signing_time", p->signtime);
 		json_do_int("valid_since", c->notbefore);
 		json_do_int("valid_until", c->notafter);
 		if (p->expires)
@@ -745,9 +729,7 @@ aspa_print(const struct cert *c, const struct aspa *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
 		printf("Authority info access:    %s\n", c->aia);
 		printf("Subject info access:      %s\n", c->signedobj);
-		if (p->signtime != 0)
-			printf("Signing time:             %s\n",
-			    time2str(p->signtime));
+		printf("Signing time:             %s\n", time2str(p->signtime));
 		printf("ASPA not before:          %s\n",
 		    time2str(c->notbefore));
 		printf("ASPA not after:           %s\n", time2str(c->notafter));
@@ -820,8 +802,7 @@ tak_print(const struct cert *c, const struct tak *p)
 		json_do_string("aki", c->aki);
 		json_do_string("aia", c->aia);
 		json_do_string("sia", c->signedobj);
-		if (p->signtime != 0)
-			json_do_int("signing_time", p->signtime);
+		json_do_int("signing_time", p->signtime);
 		json_do_int("valid_since", c->notbefore);
 		json_do_int("valid_until", c->notafter);
 		if (p->expires)
@@ -833,9 +814,7 @@ tak_print(const struct cert *c, const struct tak *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
 		printf("Authority info access:    %s\n", c->aia);
 		printf("Subject info access:      %s\n", c->signedobj);
-		if (p->signtime != 0)
-			printf("Signing time:             %s\n",
-			    time2str(p->signtime));
+		printf("Signing time:             %s\n", time2str(p->signtime));
 		printf("TAK not before:           %s\n",
 		    time2str(c->notbefore));
 		printf("TAK not after:            %s\n", time2str(c->notafter));
@@ -863,8 +842,7 @@ geofeed_print(const struct cert *c, const struct geofeed *p)
 		x509_print(c->x509);
 		json_do_string("aki", c->aki);
 		json_do_string("aia", c->aia);
-		if (p->signtime != 0)
-			json_do_int("signing_time", p->signtime);
+		json_do_int("signing_time", p->signtime);
 		json_do_int("valid_since", c->notbefore);
 		json_do_int("valid_until", c->notafter);
 		if (p->expires)
@@ -875,9 +853,7 @@ geofeed_print(const struct cert *c, const struct geofeed *p)
 		x509_print(c->x509);
 		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
 		printf("Authority info access:    %s\n", c->aia);
-		if (p->signtime != 0)
-			printf("Signing time:             %s\n",
-			    time2str(p->signtime));
+		printf("Signing time:             %s\n", time2str(p->signtime));
 		printf("Geofeed not before:       %s\n",
 		    time2str(c->notbefore));
 		printf("Geofeed not after:        %s\n", time2str(c->notafter));
