@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.66 2025/05/19 14:27:38 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.67 2025/07/20 21:24:07 schwarze Exp $	*/
 
 /*
  *	vi command editing
@@ -1789,25 +1789,61 @@ outofwin(void)
 static void
 rewindow(void)
 {
-	int	tcur, tcol;
-	int	holdcur1, holdcol1;
-	int	holdcur2, holdcol2;
+	int		cur;	/* byte# in the main command line buffer */
+	int		col;	/* corresponding display column */
+	int		tabc;	/* columns a tab character can take up */
+	int		thisc;	/* columns the current character requires */
+	unsigned char	uc;	/* the current byte */
 
-	holdcur1 = holdcur2 = tcur = 0;
-	holdcol1 = holdcol2 = tcol = 0;
-	while (tcur < es->cursor) {
-		if (tcol - holdcol2 > winwidth / 2) {
-			holdcur1 = holdcur2;
-			holdcol1 = holdcol2;
-			holdcur2 = tcur;
-			holdcol2 = tcol;
+	/* The desired cursor position is near the middle of the window. */
+	cur = es->cursor;
+	col = winwidth / 2;
+	tabc = 0;
+
+	/* Step left to find the desired left margin. */
+	while (cur > 0 && col > 0) {
+		uc = es->cbuf[--cur];
+
+		/* Never start the window on a continuation byte. */
+		if (isu8cont(uc))
+			continue;
+
+		if (uc == '\t') {
+			/*
+			 * If two tabs occur close together,
+			 * count the right one, including optional
+			 * characters between both, as 8 columns.
+			 */
+			if (tabc > 0) {
+				col -= 8;
+				/* Prefer starting after a tab. */
+				if (col <= 0)
+					cur++;
+			}
+
+			/*
+			 * A tab can be preceded by up to 7 characters
+			 * without taking up additional space.
+			 */
+			tabc = 7;
+			continue;
 		}
-		tcol = newcol((unsigned char) es->cbuf[tcur++], tcol);
+		thisc = char_len(uc);
+		if (tabc > 0) {
+			if (tabc > thisc) {
+				/* The character still fits in the tab. */
+				tabc -= thisc;
+				continue;
+			}
+			col -= 8;	/* The tab is now full. */
+			thisc -= tabc;	/* This may produce overflow. */
+			tabc = 0;
+		}
+
+		/* Handle a normal character or the overflow. */
+		col -= thisc;
 	}
-	while (tcol - holdcol1 > winwidth / 2)
-		holdcol1 = newcol((unsigned char) es->cbuf[holdcur1++],
-		    holdcol1);
-	es->winleft = holdcur1;
+	es->winleft = cur;
 }
 
 /* Printing the byte ch at display column col moves to which column? */
