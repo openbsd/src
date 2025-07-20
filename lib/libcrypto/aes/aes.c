@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.11 2025/07/13 06:01:33 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.12 2025/07/20 08:55:49 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -196,6 +196,9 @@ aes_ctr32_encrypt_generic(const unsigned char *in, unsigned char *out,
 		out += 16;
 		blocks--;
 	}
+
+	explicit_bzero(buf, sizeof(buf));
+	explicit_bzero(iv, sizeof(iv));
 }
 
 #ifdef HAVE_AES_CTR32_ENCRYPT_INTERNAL
