@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.194 2025/07/15 07:23:39 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.195 2025/07/20 06:15:50 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1838,7 +1838,7 @@ cert_parse_internal(const char *fn, X509 *x)
 /*
  * Parse an EE cert extracted from a CMS signed object. Store all cert and
  * extension data we need later in the returned struct cert.
- * Check the cretificate's purpose and validate the TA constraints.
+ * Check the certificate's purpose and validate the TA constraints.
  * Returns cert on success and NULL on failure.
  */
 struct cert *
