@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.64 2025/07/20 14:22:53 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.65 2025/07/20 14:23:44 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -474,8 +474,10 @@ mft_print(const struct cert *c, const struct mft *p)
 		printf("Subject info access:      %s\n", c->signedobj);
 		printf("Manifest number:          %s\n", p->seqnum);
 		printf("Signing time:             %s\n", time2str(p->signtime));
-		printf("Manifest this update:     %s\n", time2str(p->thisupdate));
-		printf("Manifest next update:     %s\n", time2str(p->nextupdate));
+		printf("Manifest this update:     %s\n",
+		    time2str(p->thisupdate));
+		printf("Manifest next update:     %s\n",
+		    time2str(p->nextupdate));
 		printf("Files and hashes:         ");
 	}
 
