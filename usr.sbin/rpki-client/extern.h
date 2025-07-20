@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.250 2025/07/18 13:19:59 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.251 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -270,13 +270,7 @@ struct roa {
 	size_t		 num_ips;
 	int		 talid; /* ROAs are covered by which TAL */
 	int		 valid; /* validated resources */
-	char		*aia; /* AIA */
-	char		*aki; /* AKI */
-	char		*sia; /* SIA signedObject */
-	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 notafter; /* EE cert's Not After */
 	time_t		 expires; /* when the signature path expires */
 };
 
@@ -297,12 +291,7 @@ struct rsc {
 	size_t		 num_ases;
 	struct rscfile	*files; /* FileAndHashes in the RSC */
 	size_t		 num_files;
-	char		*aia; /* AIA */
-	char		*aki; /* AKI */
-	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 notafter; /* Not After of the RSC EE */
 	time_t		 expires; /* when the signature path expires */
 };
 
@@ -323,13 +312,7 @@ struct spl {
 	struct spl_pfx	*prefixes;
 	size_t		 num_prefixes;
 	int		 talid;
-	char		*aia;
-	char		*aki;
-	char		*sia;
-	char		*ski;
 	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 notafter; /* EE cert's Not After */
 	time_t		 expires; /* when the certification path expires */
 	int		 valid;
 };
@@ -355,13 +338,7 @@ struct tak {
 	struct takey	*current;
 	struct takey	*predecessor;
 	struct takey	*successor;
-	char		*aia; /* AIA */
-	char		*aki; /* AKI */
-	char		*sia; /* SIA signed Object */
-	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 notafter; /* Not After of the TAK EE */
 	time_t		 expires; /* when the signature path expires */
 };
 
@@ -379,12 +356,7 @@ struct geoip {
 struct geofeed {
 	struct geoip	*geoips; /* Prefix + location entry in the CSV */
 	size_t		 num_geoips;
-	char		*aia; /* AIA */
-	char		*aki; /* AKI */
-	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 notafter; /* Not After of the Geofeed EE */
 	time_t		 expires; /* when the signature path expires */
 	int		 valid; /* all resources covered */
 };
@@ -394,13 +366,7 @@ struct geofeed {
  */
 struct gbr {
 	char		*vcard;
-	char		*aia; /* AIA */
-	char		*aki; /* AKI */
-	char		*sia; /* SIA signedObject */
-	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 notafter; /* Not After of the GBR EE */
 	time_t		 expires; /* when the signature path expires */
 	int		 talid; /* TAL the GBR is chained up to */
 };
@@ -411,16 +377,10 @@ struct gbr {
 struct aspa {
 	int			 valid; /* contained in issuer auth */
 	int			 talid; /* TAL the ASPA is chained up to */
-	char			*aia; /* AIA */
-	char			*aki; /* AKI */
-	char			*sia; /* SIA signedObject */
-	char			*ski; /* SKI */
 	uint32_t		 custasid; /* the customerASID */
 	uint32_t		*providers; /* the providers */
 	size_t			 num_providers;
 	time_t			 signtime; /* CMS signing-time attribute */
-	time_t			 notbefore; /* EE cert's Not Before */
-	time_t			 notafter; /* notAfter of the ASPA EE cert */
 	time_t			 expires; /* when the signature path expires */
 };
 
@@ -974,13 +934,13 @@ void		 tal_print(const struct tal *);
 void		 cert_print(const struct cert *);
 void		 crl_print(const struct crl *);
 void		 mft_print(const X509 *, const struct mft *);
-void		 roa_print(const X509 *, const struct roa *);
-void		 gbr_print(const X509 *, const struct gbr *);
-void		 rsc_print(const X509 *, const struct rsc *);
-void		 aspa_print(const X509 *, const struct aspa *);
-void		 tak_print(const X509 *, const struct tak *);
-void		 geofeed_print(const X509 *, const struct geofeed *);
-void		 spl_print(const X509 *, const struct spl *);
+void		 roa_print(const struct cert *, const struct roa *);
+void		 gbr_print(const struct cert *, const struct gbr *);
+void		 rsc_print(const struct cert *, const struct rsc *);
+void		 aspa_print(const struct cert *, const struct aspa *);
+void		 tak_print(const struct cert *, const struct tak *);
+void		 geofeed_print(const struct cert *, const struct geofeed *);
+void		 spl_print(const struct cert *, const struct spl *);
 
 /* Missing RFC 3779 API */
 IPAddrBlocks *IPAddrBlocks_new(void);

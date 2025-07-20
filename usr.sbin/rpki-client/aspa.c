@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.33 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.34 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -183,17 +183,6 @@ aspa_parse(struct cert **out_cert, const char *fn, int talid,
 
 	aspa->signtime = signtime;
 
-	aspa->aia = strdup(cert->aia);
-	aspa->aki = strdup(cert->aki);
-	aspa->sia = strdup(cert->signedobj);
-	aspa->ski = strdup(cert->ski);
-	if (aspa->aia == NULL || aspa->aki == NULL || aspa->sia == NULL ||
-	    aspa->ski == NULL)
-		err(1, NULL);
-
-	aspa->notbefore = cert->notbefore;
-	aspa->notafter = cert->notafter;
-
 	if (cert->num_ips > 0) {
 		warnx("%s: superfluous IP Resources extension present", fn);
 		goto out;
@@ -233,10 +222,6 @@ aspa_free(struct aspa *p)
 	if (p == NULL)
 		return;
 
-	free(p->aia);
-	free(p->aki);
-	free(p->sia);
-	free(p->ski);
 	free(p->providers);
 	free(p);
 }
@@ -256,10 +241,6 @@ aspa_buffer(struct ibuf *b, const struct aspa *p)
 	io_simple_buffer(b, &p->num_providers, sizeof(size_t));
 	io_simple_buffer(b, p->providers,
 	    p->num_providers * sizeof(p->providers[0]));
-
-	io_str_buffer(b, p->aia);
-	io_str_buffer(b, p->aki);
-	io_str_buffer(b, p->ski);
 }
 
 /*
@@ -289,11 +270,6 @@ aspa_read(struct ibuf *b)
 		io_read_buf(b, p->providers,
 		    p->num_providers * sizeof(p->providers[0]));
 	}
-
-	io_read_str(b, &p->aia);
-	io_read_str(b, &p->aki);
-	io_read_str(b, &p->ski);
-	assert(p->aia && p->aki && p->ski);
 
 	return p;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.38 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.39 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -401,21 +401,6 @@ rsc_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	rsc->signtime = signtime;
 
-	/* RFC 9323, 2: not distributed via RPKI repositories, hence no SIA. */
-	rsc->aia = strdup(cert->aia);
-	rsc->aki = strdup(cert->aki);
-	rsc->ski = strdup(cert->ski);
-	if (rsc->aia == NULL || rsc->aki == NULL || rsc->ski == NULL)
-		err(1, NULL);
-
-	rsc->notbefore = cert->notbefore;
-	rsc->notafter = cert->notafter;
-
-	if (cert->signedobj != NULL) {
-		warnx("%s: RSC: EE cert must not have an SIA extension", fn);
-		goto out;
-	}
-
 	if (x509_any_inherits(cert->x509)) {
 		warnx("%s: inherit elements not allowed in EE cert", fn);
 		goto out;
@@ -455,9 +440,6 @@ rsc_free(struct rsc *p)
 	for (i = 0; i < p->num_files; i++)
 		free(p->files[i].filename);
 
-	free(p->aia);
-	free(p->aki);
-	free(p->ski);
 	free(p->ips);
 	free(p->ases);
 	free(p->files);

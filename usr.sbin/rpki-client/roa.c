@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.81 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.82 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -256,17 +256,6 @@ roa_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	roa->signtime = signtime;
 
-	roa->aia = strdup(cert->aia);
-	roa->aki = strdup(cert->aki);
-	roa->sia = strdup(cert->signedobj);
-	roa->ski = strdup(cert->ski);
-	if (roa->aia == NULL || roa->aki == NULL || roa->sia == NULL ||
-	    roa->ski == NULL)
-		err(1, NULL);
-
-	roa->notbefore = cert->notbefore;
-	roa->notafter = cert->notafter;
-
 	if (!roa_parse_econtent(fn, roa, cms, cmsz))
 		goto out;
 
@@ -315,10 +304,6 @@ roa_free(struct roa *p)
 
 	if (p == NULL)
 		return;
-	free(p->aia);
-	free(p->aki);
-	free(p->sia);
-	free(p->ski);
 	free(p->ips);
 	free(p);
 }
@@ -337,10 +322,6 @@ roa_buffer(struct ibuf *b, const struct roa *p)
 	io_simple_buffer(b, &p->expires, sizeof(p->expires));
 
 	io_simple_buffer(b, p->ips, p->num_ips * sizeof(p->ips[0]));
-
-	io_str_buffer(b, p->aia);
-	io_str_buffer(b, p->aki);
-	io_str_buffer(b, p->ski);
 }
 
 /*
@@ -367,11 +348,6 @@ roa_read(struct ibuf *b)
 			err(1, NULL);
 		io_read_buf(b, p->ips, p->num_ips * sizeof(p->ips[0]));
 	}
-
-	io_read_str(b, &p->aia);
-	io_read_str(b, &p->aki);
-	io_read_str(b, &p->ski);
-	assert(p->aia && p->aki && p->ski);
 
 	return p;
 }

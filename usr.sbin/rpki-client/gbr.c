@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.33 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: gbr.c,v 1.34 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -69,17 +69,6 @@ gbr_parse(struct cert **out_cert, const char *fn, int talid,
 	free(cms);
 	cms = NULL;
 
-	gbr->aia = strdup(cert->aia);
-	gbr->aki = strdup(cert->aki);
-	gbr->sia = strdup(cert->signedobj);
-	gbr->ski = strdup(cert->ski);
-	if (gbr->aia == NULL || gbr->aki == NULL || gbr->sia == NULL ||
-	    gbr->ski == NULL)
-		err(1, NULL);
-
-	gbr->notbefore = cert->notbefore;
-	gbr->notafter = cert->notafter;
-
 	if (!x509_inherits(cert->x509)) {
 		warnx("%s: RFC 3779 extension not set to inherit", fn);
 		goto out;
@@ -103,13 +92,9 @@ gbr_parse(struct cert **out_cert, const char *fn, int talid,
 void
 gbr_free(struct gbr *p)
 {
-
 	if (p == NULL)
 		return;
-	free(p->aia);
-	free(p->aki);
-	free(p->sia);
-	free(p->ski);
+
 	free(p->vcard);
 	free(p);
 }

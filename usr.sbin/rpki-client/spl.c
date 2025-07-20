@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.8 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.9 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -263,17 +263,6 @@ spl_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	spl->signtime = signtime;
 
-	spl->aia = strdup(cert->aia);
-	spl->aki = strdup(cert->aki);
-	spl->sia = strdup(cert->signedobj);
-	spl->ski = strdup(cert->ski);
-	if (spl->aia == NULL || spl->aki == NULL || spl->sia == NULL ||
-	    spl->ski == NULL)
-		err(1, NULL);
-
-	spl->notbefore = cert->notbefore;
-	spl->notafter = cert->notafter;
-
 	if (!spl_parse_econtent(fn, spl, cms, cmsz))
 		goto out;
 
@@ -318,10 +307,6 @@ spl_free(struct spl *s)
 	if (s == NULL)
 		return;
 
-	free(s->aia);
-	free(s->aki);
-	free(s->sia);
-	free(s->ski);
 	free(s->prefixes);
 	free(s);
 }
@@ -341,10 +326,6 @@ spl_buffer(struct ibuf *b, const struct spl *s)
 
 	io_simple_buffer(b, s->prefixes,
 	    s->num_prefixes * sizeof(s->prefixes[0]));
-
-	io_str_buffer(b, s->aia);
-	io_str_buffer(b, s->aki);
-	io_str_buffer(b, s->ski);
 }
 
 /*
@@ -373,11 +354,6 @@ spl_read(struct ibuf *b)
 		io_read_buf(b, s->prefixes,
 		    s->num_prefixes * sizeof(s->prefixes[0]));
 	}
-
-	io_read_str(b, &s->aia);
-	io_read_str(b, &s->aki);
-	io_read_str(b, &s->ski);
-	assert(s->aia && s->aki && s->ski);
 
 	return s;
 }

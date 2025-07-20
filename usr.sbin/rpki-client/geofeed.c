@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.20 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.21 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -233,20 +233,6 @@ geofeed_parse(struct cert **out_cert, const char *fn, int talid, char *buf,
 	    geofeed_oid, bio, &geofeed->signtime))
 		goto out;
 
-	/*
-	 * Not distributed via RPKI repositories, so no SIA. Would've been nice
-	 * if RFC 9632 had followed RFC 9323's example and made that explicit.
-	 */
-	geofeed->aia = strdup(cert->aia);
-	geofeed->aki = strdup(cert->aki);
-	geofeed->ski = strdup(cert->ski);
-	if (geofeed->aia == NULL || geofeed->aki == NULL ||
-	    geofeed->ski == NULL)
-		err(1, NULL);
-
-	geofeed->notbefore = cert->notbefore;
-	geofeed->notafter = cert->notafter;
-
 	if (x509_any_inherits(cert->x509)) {
 		warnx("%s: inherit elements not allowed in EE cert", fn);
 		goto out;
@@ -294,8 +280,5 @@ geofeed_free(struct geofeed *p)
 	}
 
 	free(p->geoips);
-	free(p->aia);
-	free(p->aki);
-	free(p->ski);
 	free(p);
 }

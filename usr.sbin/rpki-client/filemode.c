@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.64 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.65 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -400,10 +400,10 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aspa = aspa_parse(&cert, file, -1, buf, len);
 		if (aspa == NULL)
 			break;
-		aia = aspa->aia;
+		aia = cert->aia;
 		expires = &aspa->expires;
-		notbefore = &aspa->notbefore;
-		notafter = &aspa->notafter;
+		notbefore = &cert->notbefore;
+		notafter = &cert->notafter;
 		break;
 	case RTYPE_CER:
 		cert = cert_parse(file, buf, len);
@@ -434,55 +434,55 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		gbr = gbr_parse(&cert, file, -1, buf, len);
 		if (gbr == NULL)
 			break;
-		aia = gbr->aia;
+		aia = cert->aia;
 		expires = &gbr->expires;
-		notbefore = &gbr->notbefore;
-		notafter = &gbr->notafter;
+		notbefore = &cert->notbefore;
+		notafter = &cert->notafter;
 		break;
 	case RTYPE_GEOFEED:
 		geofeed = geofeed_parse(&cert, file, -1, buf, len);
 		if (geofeed == NULL)
 			break;
-		aia = geofeed->aia;
+		aia = cert->aia;
 		expires = &geofeed->expires;
-		notbefore = &geofeed->notbefore;
-		notafter = &geofeed->notafter;
+		notbefore = &cert->notbefore;
+		notafter = &cert->notafter;
 		break;
 	case RTYPE_ROA:
 		roa = roa_parse(&cert, file, -1, buf, len);
 		if (roa == NULL)
 			break;
-		aia = roa->aia;
+		aia = cert->aia;
 		expires = &roa->expires;
-		notbefore = &roa->notbefore;
-		notafter = &roa->notafter;
+		notbefore = &cert->notbefore;
+		notafter = &cert->notafter;
 		break;
 	case RTYPE_RSC:
 		rsc = rsc_parse(&cert, file, -1, buf, len);
 		if (rsc == NULL)
 			break;
-		aia = rsc->aia;
+		aia = cert->aia;
 		expires = &rsc->expires;
-		notbefore = &rsc->notbefore;
-		notafter = &rsc->notafter;
+		notbefore = &cert->notbefore;
+		notafter = &cert->notafter;
 		break;
 	case RTYPE_SPL:
 		spl = spl_parse(&cert, file, -1, buf, len);
 		if (spl == NULL)
 			break;
-		aia = spl->aia;
+		aia = cert->aia;
 		expires = &spl->expires;
-		notbefore = &spl->notbefore;
-		notafter = &spl->notafter;
+		notbefore = &cert->notbefore;
+		notafter = &cert->notafter;
 		break;
 	case RTYPE_TAK:
 		tak = tak_parse(&cert, file, -1, buf, len);
 		if (tak == NULL)
 			break;
-		aia = tak->aia;
+		aia = cert->aia;
 		expires = &tak->expires;
-		notbefore = &tak->notbefore;
-		notafter = &tak->notafter;
+		notbefore = &cert->notbefore;
+		notafter = &cert->notafter;
 		break;
 	case RTYPE_TAL:
 		tal = tal_parse(file, buf, len);
@@ -553,31 +553,31 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 		switch (type) {
 		case RTYPE_ASPA:
-			aspa_print(cert->x509, aspa);
+			aspa_print(cert, aspa);
 			break;
 		case RTYPE_CER:
 			cert_print(cert);
 			break;
 		case RTYPE_GBR:
-			gbr_print(cert->x509, gbr);
+			gbr_print(cert, gbr);
 			break;
 		case RTYPE_GEOFEED:
-			geofeed_print(cert->x509, geofeed);
+			geofeed_print(cert, geofeed);
 			break;
 		case RTYPE_MFT:
 			mft_print(cert->x509, mft);
 			break;
 		case RTYPE_ROA:
-			roa_print(cert->x509, roa);
+			roa_print(cert, roa);
 			break;
 		case RTYPE_RSC:
-			rsc_print(cert->x509, rsc);
+			rsc_print(cert, rsc);
 			break;
 		case RTYPE_SPL:
-			spl_print(cert->x509, spl);
+			spl_print(cert, spl);
 			break;
 		case RTYPE_TAK:
-			tak_print(cert->x509, tak);
+			tak_print(cert, tak);
 			break;
 		default:
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.23 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.24 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -226,17 +226,6 @@ tak_parse(struct cert **out_cert, const char *fn, int talid,
 		err(1, NULL);
 	tak->signtime = signtime;
 
-	tak->aia = strdup(cert->aia);
-	tak->aki = strdup(cert->aki);
-	tak->sia = strdup(cert->signedobj);
-	tak->ski = strdup(cert->ski);
-	if (tak->aia == NULL || tak->aki == NULL || tak->sia == NULL ||
-	    tak->ski == NULL)
-		err(1, NULL);
-
-	tak->notbefore = cert->notbefore;
-	tak->notafter = cert->notafter;
-
 	if (!x509_inherits(cert->x509)) {
 		warnx("%s: RFC 3779 extension not set to inherit", fn);
 		goto out;
@@ -245,7 +234,7 @@ tak_parse(struct cert **out_cert, const char *fn, int talid,
 	if (!tak_parse_econtent(fn, tak, cms, cmsz))
 		goto out;
 
-	if (strcmp(tak->aki, tak->current->ski) != 0) {
+	if (strcmp(cert->aki, tak->current->ski) != 0) {
 		warnx("%s: current TAKey's SKI does not match EE AKI", fn);
 		goto out;
 	}
@@ -301,10 +290,5 @@ tak_free(struct tak *t)
 	takey_free(t->current);
 	takey_free(t->predecessor);
 	takey_free(t->successor);
-
-	free(t->aia);
-	free(t->aki);
-	free(t->sia);
-	free(t->ski);
 	free(t);
 }

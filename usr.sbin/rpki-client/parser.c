@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.165 2025/07/19 09:27:41 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.166 2025/07/20 07:48:31 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -195,7 +195,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 	if ((roa = roa_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, roa->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -204,12 +204,11 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	cert_free(cert);
-	cert = NULL;
 
 	roa->talid = a->cert->talid;
 
-	roa->expires = x509_find_expires(roa->notafter, a, &crls);
+	roa->expires = x509_find_expires(cert->notafter, a, &crls);
+	cert_free(cert);
 
 	return roa;
 
@@ -237,7 +236,7 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 	if ((spl = spl_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, spl->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -246,12 +245,11 @@ proc_parser_spl(char *file, const unsigned char *der, size_t len,
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	cert_free(cert);
-	cert = NULL;
 
 	spl->talid = a->cert->talid;
 
-	spl->expires = x509_find_expires(spl->notafter, a, &crls);
+	spl->expires = x509_find_expires(cert->notafter, a, &crls);
+	cert_free(cert);
 
 	return spl;
 
@@ -751,7 +749,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 	if ((gbr = gbr_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, gbr->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -760,10 +758,11 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	cert_free(cert);
-	cert = NULL;
 
 	gbr->talid = a->cert->talid;
+
+	/* XXX - gbr->expires? */
+	cert_free(cert);
 
 	return gbr;
 
@@ -790,7 +789,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 	if ((aspa = aspa_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, aspa->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -799,12 +798,11 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	cert_free(cert);
-	cert = NULL;
 
 	aspa->talid = a->cert->talid;
 
-	aspa->expires = x509_find_expires(aspa->notafter, a, &crls);
+	aspa->expires = x509_find_expires(cert->notafter, a, &crls);
+	cert_free(cert);
 
 	return aspa;
 
@@ -831,7 +829,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 	if ((tak = tak_parse(&cert, file, entp->talid, der, len)) == NULL)
 		goto out;
 
-	a = find_issuer(file, entp->certid, tak->aki, entp->mftaki);
+	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
 	crl = crl_get(&crls, a);
@@ -840,14 +838,15 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 		warnx("%s: %s", file, errstr);
 		goto out;
 	}
-	cert_free(cert);
-	cert = NULL;
 
 	/* TAK EE must be signed by self-signed CA */
 	if (a->issuer != NULL)
 		goto out;
 
 	tak->talid = a->cert->talid;
+
+	/* XXX - tak->expires? */
+	cert_free(cert);
 
 	return tak;
 
