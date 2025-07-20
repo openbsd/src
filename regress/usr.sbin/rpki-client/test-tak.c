@@ -1,4 +1,4 @@
-/*	$Id: test-tak.c,v 1.9 2025/07/18 12:22:07 tb Exp $ */
+/*	$Id: test-tak.c,v 1.10 2025/07/20 07:49:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 			break;
 		}
 		if (verb)
-			tak_print(cert->x509, p);
+			tak_print(cert, p);
 		if (ppem) {
 			if (!PEM_write_X509(stdout, cert->x509))
 				errx(1, "PEM_write_X509: unable to write cert");

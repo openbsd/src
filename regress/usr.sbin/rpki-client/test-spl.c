@@ -1,4 +1,4 @@
-/*	$Id: test-spl.c,v 1.4 2025/07/18 12:22:07 tb Exp $ */
+/*	$Id: test-spl.c,v 1.5 2025/07/20 07:49:47 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 			break;
 		}
 		if (verb)
-			spl_print(cert->x509, p);
+			spl_print(cert, p);
 		if (ppem) {
 			if (!PEM_write_X509(stdout, cert->x509))
 				errx(1, "PEM_write_X509: unable to write cert");
