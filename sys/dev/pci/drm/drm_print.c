@@ -40,7 +40,7 @@
  * Bitmask of DRM_UT_x. See include/drm/drm_print.h for details.
  */
 #ifdef DRMDEBUG
-unsigned long __drm_debug = DRM_UT_DRIVER | DRM_UT_KMS;
+unsigned long __drm_debug = BIT(DRM_UT_CORE) | BIT(DRM_UT_DRIVER);
 #else
 unsigned long __drm_debug;
 #endif
