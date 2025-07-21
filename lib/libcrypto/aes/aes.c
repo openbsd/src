@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.12 2025/07/20 08:55:49 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.13 2025/07/21 10:24:23 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -171,6 +171,74 @@ AES_cfb8_encrypt(const unsigned char *in, unsigned char *out, size_t length,
 	    aes_encrypt_block128);
 }
 LCRYPTO_ALIAS(AES_cfb8_encrypt);
+
+void
+aes_ccm64_encrypt_generic(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16], int encrypt)
+{
+	uint8_t iv[AES_BLOCK_SIZE], buf[AES_BLOCK_SIZE];
+	uint8_t in_mask;
+	uint64_t ctr;
+	int i;
+
+	in_mask = 0 - (encrypt != 0);
+
+	memcpy(iv, ivec, sizeof(iv));
+
+	ctr = crypto_load_be64toh(&iv[8]);
+
+	while (blocks > 0) {
+		crypto_store_htobe64(&iv[8], ctr);
+		aes_encrypt_internal(iv, buf, key);
+		ctr++;
+
+		for (i = 0; i < 16; i++) {
+			out[i] = in[i] ^ buf[i];
+			cmac[i] ^= (in[i] & in_mask) | (out[i] & ~in_mask);
+		}
+
+		aes_encrypt_internal(cmac, cmac, key);
+
+		in += 16;
+		out += 16;
+		blocks--;
+	}
+
+	explicit_bzero(buf, sizeof(buf));
+	explicit_bzero(iv, sizeof(iv));
+}
+
+#ifdef HAVE_AES_CCM64_ENCRYPT_INTERNAL
+void aes_ccm64_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16], int encrypt);
+
+#else
+static inline void
+aes_ccm64_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16], int encrypt)
+{
+	aes_ccm64_encrypt_generic(in, out, blocks, key, ivec, cmac, encrypt);
+}
+#endif
+
+void
+aes_ccm64_encrypt_ccm128f(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16])
+{
+	aes_ccm64_encrypt_internal(in, out, blocks, key, ivec, cmac, 1);
+}
+
+void
+aes_ccm64_decrypt_ccm128f(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16])
+{
+	aes_ccm64_encrypt_internal(in, out, blocks, key, ivec, cmac, 0);
+}
 
 void
 aes_ctr32_encrypt_generic(const unsigned char *in, unsigned char *out,

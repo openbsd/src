@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_amd64.c,v 1.3 2025/07/13 06:01:33 jsing Exp $ */
+/* $OpenBSD: aes_amd64.c,v 1.4 2025/07/21 10:24:23 jsing Exp $ */
 /*
  * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
@@ -33,6 +33,10 @@ void aes_decrypt_generic(const unsigned char *in, unsigned char *out,
 void aes_cbc_encrypt_generic(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key, unsigned char *ivec, const int enc);
 
+void aes_ccm64_encrypt_generic(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16], int encrypt);
+
 void aes_ctr32_encrypt_generic(const unsigned char *in, unsigned char *out,
     size_t blocks, const AES_KEY *key, const unsigned char ivec[AES_BLOCK_SIZE]);
 
@@ -52,6 +56,14 @@ void aesni_decrypt(const unsigned char *in, unsigned char *out,
 
 void aesni_cbc_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key, unsigned char *ivec, const int enc);
+
+void aesni_ccm64_encrypt_blocks(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16]);
+
+void aesni_ccm64_decrypt_blocks(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16]);
 
 void aesni_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
     size_t blocks, const void *key, const unsigned char *ivec);
@@ -118,6 +130,22 @@ aes_cbc_encrypt_internal(const unsigned char *in, unsigned char *out,
 	}
 
 	aes_cbc_encrypt_generic(in, out, len, key, ivec, enc);
+}
+
+void
+aes_ccm64_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16], int encrypt)
+{
+	if ((crypto_cpu_caps_amd64 & CRYPTO_CPU_CAPS_AMD64_AES) != 0) {
+		if (encrypt)
+			aesni_ccm64_encrypt_blocks(in, out, blocks, key, ivec, cmac);
+		else
+			aesni_ccm64_decrypt_blocks(in, out, blocks, key, ivec, cmac);
+		return;
+	}
+
+	aes_ccm64_encrypt_generic(in, out, blocks, key, ivec, cmac, encrypt);
 }
 
 void

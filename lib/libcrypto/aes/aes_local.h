@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_local.h,v 1.9 2025/07/13 06:01:33 jsing Exp $ */
+/* $OpenBSD: aes_local.h,v 1.10 2025/07/21 10:24:23 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -65,6 +65,14 @@ __BEGIN_HIDDEN_DECLS
 
 void aes_ctr32_encrypt_ctr128f(const unsigned char *in, unsigned char *out,
     size_t blocks, const void *key, const unsigned char ivec[AES_BLOCK_SIZE]);
+
+void aes_ccm64_encrypt_ccm128f(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16]);
+
+void aes_ccm64_decrypt_ccm128f(const unsigned char *in, unsigned char *out,
+    size_t blocks, const void *key, const unsigned char ivec[16],
+    unsigned char cmac[16]);
 
 void aes_ecb_encrypt_internal(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key, int encrypt);

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.79 2025/07/13 06:01:33 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.80 2025/07/21 10:24:23 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -95,7 +95,6 @@ typedef struct {
 	int len_set;		/* Set if message length set */
 	int L, M;		/* L and M parameters from RFC3610 */
 	CCM128_CONTEXT ccm;
-	ccm128_f str;
 } EVP_AES_CCM_CTX;
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
@@ -114,26 +113,8 @@ typedef struct {
  */
 #define	AESNI_CAPABLE	(crypto_cpu_caps_ia32() & CPUCAP_MASK_AESNI)
 
-int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
-    AES_KEY *key);
-int aesni_set_decrypt_key(const unsigned char *userKey, int bits,
-    AES_KEY *key);
-
-void aesni_encrypt(const unsigned char *in, unsigned char *out,
-    const AES_KEY *key);
-void aesni_decrypt(const unsigned char *in, unsigned char *out,
-    const AES_KEY *key);
-
 void aesni_ecb_encrypt(const unsigned char *in, unsigned char *out,
     size_t length, const AES_KEY *key, int enc);
-
-void aesni_ccm64_encrypt_blocks (const unsigned char *in, unsigned char *out,
-    size_t blocks, const void *key, const unsigned char ivec[16],
-    unsigned char cmac[16]);
-
-void aesni_ccm64_decrypt_blocks (const unsigned char *in, unsigned char *out,
-    size_t blocks, const void *key, const unsigned char ivec[16],
-    unsigned char cmac[16]);
 
 static int
 aesni_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -144,29 +125,6 @@ aesni_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	aesni_ecb_encrypt(in, out, len, ctx->cipher_data, ctx->encrypt);
 
-	return 1;
-}
-
-static int
-aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	EVP_AES_CCM_CTX *cctx = ctx->cipher_data;
-
-	if (!iv && !key)
-		return 1;
-	if (key) {
-		aesni_set_encrypt_key(key, ctx->key_len * 8, &cctx->ks);
-		CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
-		    &cctx->ks, (block128_f)aesni_encrypt);
-		cctx->str = enc ? (ccm128_f)aesni_ccm64_encrypt_blocks :
-		    (ccm128_f)aesni_ccm64_decrypt_blocks;
-		cctx->key_set = 1;
-	}
-	if (iv) {
-		memcpy(ctx->iv, iv, 15 - cctx->L);
-		cctx->iv_set = 1;
-	}
 	return 1;
 }
 #endif
@@ -1353,7 +1311,6 @@ aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		AES_set_encrypt_key(key, ctx->key_len * 8, &cctx->ks);
 		CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
 		    &cctx->ks, (block128_f)AES_encrypt);
-		cctx->str = NULL;
 		cctx->key_set = 1;
 	}
 	if (iv) {
@@ -1405,15 +1362,15 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		cctx->len_set = 1;
 	}
 	if (ctx->encrypt) {
-		if (cctx->str ? CRYPTO_ccm128_encrypt_ccm64(ccm, in, out, len,
-		    cctx->str) : CRYPTO_ccm128_encrypt(ccm, in, out, len))
+		if (CRYPTO_ccm128_encrypt_ccm64(ccm, in, out, len,
+		    aes_ccm64_encrypt_ccm128f) != 0)
 			return -1;
 		cctx->tag_set = 1;
 		return len;
 	} else {
 		int rv = -1;
-		if (cctx->str ? !CRYPTO_ccm128_decrypt_ccm64(ccm, in, out, len,
-		    cctx->str) : !CRYPTO_ccm128_decrypt(ccm, in, out, len)) {
+		if (CRYPTO_ccm128_decrypt_ccm64(ccm, in, out, len,
+		    aes_ccm64_decrypt_ccm128f) == 0) {
 			unsigned char tag[16];
 			if (CRYPTO_ccm128_tag(ccm, tag, cctx->M)) {
 				if (timingsafe_memcmp(tag, ctx->buf, cctx->M) == 0)
@@ -1427,23 +1384,7 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		cctx->len_set = 0;
 		return rv;
 	}
-
 }
-
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_128_ccm = {
-	.nid = NID_aes_128_ccm,
-	.block_size = 1,
-	.key_len = 16,
-	.iv_len = 12,
-	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
-	.init = aesni_ccm_init_key,
-	.do_cipher = aes_ccm_cipher,
-	.cleanup = NULL,
-	.ctx_size = sizeof(EVP_AES_CCM_CTX),
-	.ctrl = aes_ccm_ctrl,
-};
-#endif
 
 static const EVP_CIPHER aes_128_ccm = {
 	.nid = NID_aes_128_ccm,
@@ -1461,28 +1402,9 @@ static const EVP_CIPHER aes_128_ccm = {
 const EVP_CIPHER *
 EVP_aes_128_ccm(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_128_ccm : &aes_128_ccm;
-#else
 	return &aes_128_ccm;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_128_ccm);
-
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_192_ccm = {
-	.nid = NID_aes_192_ccm,
-	.block_size = 1,
-	.key_len = 24,
-	.iv_len = 12,
-	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
-	.init = aesni_ccm_init_key,
-	.do_cipher = aes_ccm_cipher,
-	.cleanup = NULL,
-	.ctx_size = sizeof(EVP_AES_CCM_CTX),
-	.ctrl = aes_ccm_ctrl,
-};
-#endif
 
 static const EVP_CIPHER aes_192_ccm = {
 	.nid = NID_aes_192_ccm,
@@ -1500,28 +1422,9 @@ static const EVP_CIPHER aes_192_ccm = {
 const EVP_CIPHER *
 EVP_aes_192_ccm(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_192_ccm : &aes_192_ccm;
-#else
 	return &aes_192_ccm;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_192_ccm);
-
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_256_ccm = {
-	.nid = NID_aes_256_ccm,
-	.block_size = 1,
-	.key_len = 32,
-	.iv_len = 12,
-	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
-	.init = aesni_ccm_init_key,
-	.do_cipher = aes_ccm_cipher,
-	.cleanup = NULL,
-	.ctx_size = sizeof(EVP_AES_CCM_CTX),
-	.ctrl = aes_ccm_ctrl,
-};
-#endif
 
 static const EVP_CIPHER aes_256_ccm = {
 	.nid = NID_aes_256_ccm,
@@ -1539,11 +1442,7 @@ static const EVP_CIPHER aes_256_ccm = {
 const EVP_CIPHER *
 EVP_aes_256_ccm(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_256_ccm : &aes_256_ccm;
-#else
 	return &aes_256_ccm;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_256_ccm);
 
