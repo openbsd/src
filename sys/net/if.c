@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.739 2025/07/19 16:40:40 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.740 2025/07/21 20:36:41 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -246,7 +246,8 @@ struct task	if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
  * Serialize socket operations to ensure no new sleeping points
  * are introduced in IP output paths.
  */
-struct rwlock netlock = RWLOCK_INITIALIZER("netlock");
+struct rwlock netlock = RWLOCK_INITIALIZER_TRACE("netlock",
+    DT_RWLOCK_IDX_NETLOCK);
 
 /*
  * Network interface utility routines.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.25 2025/03/10 09:28:56 claudio Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.26 2025/07/21 20:36:41 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -107,6 +107,13 @@ DT_STATIC_PROBE3(refcnt, syncache, "void *", "int", "int");
 DT_STATIC_PROBE3(refcnt, tdb, "void *", "int", "int");
 
 /*
+ * read write sleeping locks, keep in sync with sys/rwlock.h
+ */
+DT_STATIC_PROBE0(rwlock, none);
+DT_STATIC_PROBE3(rwlock, netlock, "void *", "int", "int");
+DT_STATIC_PROBE3(rwlock, solock, "void *", "int", "int");
+
+/*
  * List of all static probes
  */
 struct dt_probe *const dtps_static[] = {
@@ -161,9 +168,14 @@ struct dt_probe *const dtps_static[] = {
 	&_DT_STATIC_P(refcnt, socket),
 	&_DT_STATIC_P(refcnt, syncache),
 	&_DT_STATIC_P(refcnt, tdb),
+	/* rwlock */
+	&_DT_STATIC_P(rwlock, none),
+	&_DT_STATIC_P(rwlock, netlock),
+	&_DT_STATIC_P(rwlock, solock),
 };
 
 struct dt_probe *const *dtps_index_refcnt;
+struct dt_probe *const *dtps_index_rwlock;
 
 int
 dt_prov_static_init(void)
@@ -173,6 +185,8 @@ dt_prov_static_init(void)
 	for (i = 0; i < nitems(dtps_static); i++) {
 		if (dtps_static[i] == &_DT_STATIC_P(refcnt, none))
 			dtps_index_refcnt = &dtps_static[i];
+		if (dtps_static[i] == &_DT_STATIC_P(rwlock, none))
+			dtps_index_rwlock = &dtps_static[i];
 		dt_dev_register_probe(dtps_static[i]);
 	}
 

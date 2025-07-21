@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.33 2025/05/18 00:13:57 dlg Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.34 2025/07/21 20:36:41 bluhm Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -66,6 +66,7 @@ struct rwlock {
 #ifdef WITNESS
 	struct lock_object	 rwl_lock_obj;
 #endif
+	int			 rwl_traceidx;
 };
 
 #define RWLOCK_LO_FLAGS(flags) \
@@ -93,10 +94,14 @@ struct rwlock {
 
 #ifdef WITNESS
 #define RWLOCK_INITIALIZER(name) \
-	{ 0, 0, 0, name, .rwl_lock_obj = RWLOCK_LO_INITIALIZER(name, 0) }
+	{ 0, 0, 0, name, .rwl_lock_obj = RWLOCK_LO_INITIALIZER(name, 0), 0 }
+#define RWLOCK_INITIALIZER_TRACE(name, trace) \
+	{ 0, 0, 0, name, .rwl_lock_obj = RWLOCK_LO_INITIALIZER(name, 0), trace }
 #else
 #define RWLOCK_INITIALIZER(name) \
-	{ 0, 0, 0, name }
+	{ 0, 0, 0, name, 0 }
+#define RWLOCK_INITIALIZER_TRACE(name, trace) \
+	{ 0, 0, 0, name, trace }
 #endif
 
 #define RWLOCK_WRLOCK		0x04UL
@@ -133,18 +138,24 @@ struct rrwlock {
 #ifdef _KERNEL
 
 void	_rw_init_flags(struct rwlock *, const char *, int,
-	    const struct lock_type *);
+	    const struct lock_type *, int);
 
 #ifdef WITNESS
+#define rw_init_flags_trace(rwl, name, flags, trace) do {		\
+	static const struct lock_type __lock_type = { .lt_name = #rwl };\
+	_rw_init_flags(rwl, name, flags, &__lock_type, trace);		\
+} while (0)
 #define rw_init_flags(rwl, name, flags) do {				\
 	static const struct lock_type __lock_type = { .lt_name = #rwl };\
-	_rw_init_flags(rwl, name, flags, &__lock_type);			\
+	_rw_init_flags(rwl, name, flags, &__lock_type, 0);	\
 } while (0)
-#define rw_init(rwl, name)	rw_init_flags(rwl, name, 0)
+#define rw_init(rwl, name)		rw_init_flags(rwl, name, 0)
 #else /* WITNESS */
+#define rw_init_flags_trace(rwl, name, flags, trace) \
+				_rw_init_flags(rwl, name, flags, NULL, trace)
 #define rw_init_flags(rwl, name, flags) \
-				_rw_init_flags(rwl, name, flags, NULL)
-#define rw_init(rwl, name)	_rw_init_flags(rwl, name, 0, NULL)
+				_rw_init_flags(rwl, name, flags, NULL, 0)
+#define rw_init(rwl, name)	_rw_init_flags(rwl, name, 0, NULL, 0)
 #endif /* WITNESS */
 
 void	rw_enter_read(struct rwlock *);
@@ -230,6 +241,10 @@ void	_rw_obj_alloc_flags(struct rwlock **, const char *, int,
 		struct lock_type *);
 void	rw_obj_hold(struct rwlock *);
 int	rw_obj_free(struct rwlock *);
+
+/* sorted alphabetically, keep in sync with dev/dt/dt_prov_static.c */
+#define DT_RWLOCK_IDX_NETLOCK	1
+#define DT_RWLOCK_IDX_SOLOCK	2
 
 #endif /* _KERNEL */
 

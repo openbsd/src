@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.57 2025/06/03 00:20:31 dlg Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.58 2025/07/21 20:36:41 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/rwlock.h>
 #include <sys/limits.h>
 #include <sys/atomic.h>
+#include <sys/tracepoint.h>
 #include <sys/witness.h>
 
 #ifdef RWDIAG
@@ -162,12 +163,13 @@ rw_exit_write(struct rwlock *rwl)
 
 static void
 _rw_init_flags_witness(struct rwlock *rwl, const char *name, int lo_flags,
-    const struct lock_type *type)
+    const struct lock_type *type, int trace)
 {
 	rwl->rwl_owner = 0;
 	rwl->rwl_waiters = 0;
 	rwl->rwl_readers = 0;
 	rwl->rwl_name = name;
+	rwl->rwl_traceidx = trace;
 
 #ifdef WITNESS
 	rwl->rwl_lock_obj.lo_flags = lo_flags;
@@ -182,9 +184,9 @@ _rw_init_flags_witness(struct rwlock *rwl, const char *name, int lo_flags,
 
 void
 _rw_init_flags(struct rwlock *rwl, const char *name, int flags,
-    const struct lock_type *type)
+    const struct lock_type *type, int trace)
 {
-	_rw_init_flags_witness(rwl, name, RWLOCK_LO_FLAGS(flags), type);
+	_rw_init_flags_witness(rwl, name, RWLOCK_LO_FLAGS(flags), type, trace);
 }
 
 int
@@ -235,6 +237,7 @@ rw_do_enter_write(struct rwlock *rwl, int flags)
 	owner = rw_cas(&rwl->rwl_owner, 0, self);
 	if (owner == 0) {
 		/* wow, we won. so easy */
+		TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 2, 1);
 		goto locked;
 	}
 	if (__predict_false(owner == self)) {
@@ -268,6 +271,8 @@ rw_do_enter_write(struct rwlock *rwl, int flags)
 			if (owner == 0) {
 				spc->spc_spinning--;
 				/* ok, we won now. */
+				TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 2,
+				    2);
 				goto locked;
 			}
 		}
@@ -275,8 +280,10 @@ rw_do_enter_write(struct rwlock *rwl, int flags)
 	}
 #endif
 
-	if (ISSET(flags, RW_NOSLEEP))
+	if (ISSET(flags, RW_NOSLEEP)) {
+		TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 2, 4);
 		return (EBUSY);
+	}
 
 	prio = PLOCK - 4;
 	if (ISSET(flags, RW_INTR))
@@ -299,12 +306,14 @@ rw_do_enter_write(struct rwlock *rwl, int flags)
 #endif
 		if (ISSET(flags, RW_INTR) && (error != 0)) {
 			rw_dec(&rwl->rwl_waiters);
+			TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 2, 4);
 			return (error);
 		}
 
 		owner = rw_cas(&rwl->rwl_owner, 0, self);
 	} while (owner != 0);
 	rw_dec(&rwl->rwl_waiters);
+	TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 2, 3);
 
 locked:
 	membar_enter_after_atomic();
@@ -349,6 +358,7 @@ rw_do_enter_read(struct rwlock *rwl, int flags)
 	owner = rw_cas(&rwl->rwl_owner, 0, RWLOCK_READ_INCR);
 	if (owner == 0) {
 		/* ermagerd, we won! */
+		TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 1, 1);
 		goto locked;
 	}
 
@@ -360,12 +370,15 @@ rw_do_enter_read(struct rwlock *rwl, int flags)
 	} else if (atomic_load_int(&rwl->rwl_waiters) == 0) {
 		if (rw_read_incr(rwl, owner)) {
 			/* nailed it */
+			TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 1, 2);
 			goto locked;
 		}
 	}
 
-	if (ISSET(flags, RW_NOSLEEP))
+	if (ISSET(flags, RW_NOSLEEP)) {
+		TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 1, 4);
 		return (EBUSY);
+	}
 
 	prio = PLOCK;
 	if (ISSET(flags, RW_INTR))
@@ -388,10 +401,12 @@ rw_do_enter_read(struct rwlock *rwl, int flags)
 #endif
 		if (ISSET(flags, RW_INTR) && (error != 0)) {
 			rw_dec(&rwl->rwl_readers);
+			TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 1, 4);
 			return (error);
 		}
 	} while (!rw_read_incr(rwl, 0));
 	rw_dec(&rwl->rwl_readers);
+	TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 1, 3);
 
 locked:
 	membar_enter_after_atomic();
@@ -450,9 +465,10 @@ rw_upgrade(struct rwlock *rwl, int flags)
 			    "(owner 0x%lx, self 0x%lx)", rwl->rwl_name, rwl,
 			    owner, self);
 		}
-
+		TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 3, 4);
 		return (EBUSY);
 	}
+	TRACEINDEX(rwlock, rwl->rwl_traceidx, rwl, 3, 1);
 
 #ifdef WITNESS
 	{
@@ -583,7 +599,7 @@ _rrw_init_flags(struct rrwlock *rrwl, const char *name, int flags,
 {
 	memset(rrwl, 0, sizeof(struct rrwlock));
 	_rw_init_flags_witness(&rrwl->rrwl_lock, name, RRWLOCK_LO_FLAGS(flags),
-	    type);
+	    type, 0);
 }
 
 int
@@ -696,7 +712,7 @@ _rw_obj_alloc_flags(struct rwlock **lock, const char *name, int flags,
 
 	mo = pool_get(&rwlock_obj_pool, PR_WAITOK);
 	mo->ro_magic = RWLOCK_OBJ_MAGIC;
-	_rw_init_flags(&mo->ro_lock, name, flags, type);
+	_rw_init_flags(&mo->ro_lock, name, flags, type, 0);
 	mo->ro_refcnt = 1;
 
 	*lock = &mo->ro_lock;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.240 2025/06/12 20:37:58 deraadt Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.241 2025/07/21 20:36:41 bluhm Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -2244,7 +2244,7 @@ void
 pool_lock_rw_init(struct pool *pp, union pool_lock *lock,
     const struct lock_type *type)
 {
-	_rw_init_flags(&lock->prl_rwlock, pp->pr_wchan, 0, type);
+	_rw_init_flags(&lock->prl_rwlock, pp->pr_wchan, 0, type, 0);
 }
 
 void
