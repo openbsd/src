@@ -1,4 +1,4 @@
-/* $OpenBSD: umt.c,v 1.8 2024/05/26 20:06:27 mglocker Exp $ */
+/* $OpenBSD: umt.c,v 1.9 2025/07/21 21:46:40 bru Exp $ */
 /*
  * USB multitouch touchpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -60,8 +60,6 @@ const struct wsmouse_accessops umt_accessops = {
 };
 
 int	umt_match(struct device *, void *, void *);
-int	umt_find_winptp_reports(struct uhidev_softc *, void *, int, int *,
-	    int *, int *);
 void	umt_attach(struct device *, struct device *, void *);
 int	umt_hidev_get_report(struct device *, int, int, void *, int);
 int	umt_hidev_set_report(struct device *, int, int, void *, int);
@@ -88,7 +86,7 @@ umt_match(struct device *parent, void *match, void *aux)
 
 	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha)) {
 		uhidev_get_report_desc(uha->parent, &desc, &size);
-		if (umt_find_winptp_reports(uha->parent, desc, size, &input,
+		if (hidmt_find_winptp_reports(desc, size, &input,
 		    &conf, &cap)) {
 			uha->claimed[input] = 1;
 			uha->claimed[conf] = 1;
@@ -98,50 +96,6 @@ umt_match(struct device *parent, void *match, void *aux)
 	}
 
 	return (UMATCH_NONE);
-}
-
-int
-umt_find_winptp_reports(struct uhidev_softc *parent, void *desc, int size,
-    int *input, int *config, int *cap)
-{
-	int repid;
-	int finput = 0, fconf = 0, fcap = 0;
-
-	if (input != NULL)
-		*input = -1;
-	if (config != NULL)
-		*config = -1;
-	if (cap != NULL)
-		*cap = -1;
-
-	for (repid = 0; repid < parent->sc_nrepid; repid++) {
-		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
-		    hid_report_size(desc, size, hid_output, repid) == 0 &&
-		    hid_report_size(desc, size, hid_feature, repid) == 0)
-			continue;
-
-		if (hid_is_collection(desc, size, repid,
-		    HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCHPAD))) {
-			finput = 1;
-			if (input != NULL && *input == -1)
-				*input = repid;
-		} else if (hid_is_collection(desc, size, repid,
-		    HID_USAGE2(HUP_DIGITIZERS, HUD_CONFIG))) {
-			fconf = 1;
-			if (config != NULL && *config == -1)
-				*config = repid;
-		}
-
-		/* capabilities report could be anywhere */
-		if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
-		    HUD_CONTACT_MAX), repid, hid_feature, NULL, NULL)) {
-			fcap = 1;
-			if (cap != NULL && *cap == -1)
-				*cap = repid;
-		}
-	}
-
-	return (fconf && finput && fcap);
 }
 
 void
@@ -163,7 +117,7 @@ umt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_quirks = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
-	umt_find_winptp_reports(uha->parent, desc, size, &sc->sc_rep_input,
+	hidmt_find_winptp_reports(desc, size, &sc->sc_rep_input,
 	    &sc->sc_rep_config, &sc->sc_rep_cap);
 
 	memset(mt, 0, sizeof(sc->sc_mt));

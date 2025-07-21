@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.11 2023/08/12 20:47:06 miod Exp $ */
+/*	$OpenBSD: hid.h,v 1.12 2025/07/21 21:46:40 bru Exp $ */
 /*	$NetBSD: hid.h,v 1.8 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -95,6 +95,8 @@ uint32_t hid_get_udata(const uint8_t *buf, int, struct hid_location *);
 int	hid_is_collection(const void *, int, uint8_t, int32_t);
 struct hid_data *hid_get_collection_data(const void *, int, int32_t, uint32_t);
 int	hid_get_id_of_collection(const void *, int, int32_t, uint32_t);
+int	hid_find_report(const void *, int len, enum hid_kind, int32_t,
+	    int, int32_t *, int32_t *);
 
 #endif /* _KERNEL */
 

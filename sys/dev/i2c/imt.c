@@ -1,4 +1,4 @@
-/* $OpenBSD: imt.c,v 1.6 2024/05/13 01:15:50 jsg Exp $ */
+/* $OpenBSD: imt.c,v 1.7 2025/07/21 21:46:40 bru Exp $ */
 /*
  * HID-over-i2c multitouch trackpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -56,8 +56,6 @@ const struct wsmouse_accessops imt_accessops = {
 };
 
 int	imt_match(struct device *, void *, void *);
-int	imt_find_winptp_reports(struct ihidev_softc *, void *, int,
-	    struct imt_softc *);
 void	imt_attach(struct device *, struct device *, void *);
 int	imt_hidev_get_report(struct device *, int, int, void *, int);
 int	imt_hidev_set_report(struct device *, int, int, void *, int);
@@ -78,65 +76,23 @@ int
 imt_match(struct device *parent, void *match, void *aux)
 {
 	struct ihidev_attach_arg *iha = (struct ihidev_attach_arg *)aux;
-	struct imt_softc sc;
+	int input_rid, conf_rid, cap_rid;
 	int size;
 	void *desc;
 
 	if (iha->reportid == IHIDEV_CLAIM_MULTIPLEID) {
 		ihidev_get_report_desc(iha->parent, &desc, &size);
-		if (imt_find_winptp_reports(iha->parent, desc, size, &sc)) {
-			iha->claims[0] = sc.sc_rep_input;
-			iha->claims[1] = sc.sc_rep_config;
-			iha->claims[2] = sc.sc_rep_cap;
+		if (hidmt_find_winptp_reports(desc, size,
+		    &input_rid, &conf_rid, &cap_rid)) {
+			iha->claims[0] = input_rid;
+			iha->claims[1] = conf_rid;
+			iha->claims[2] = cap_rid;
 			iha->nclaims = 3;
 			return (IMATCH_DEVCLASS_DEVSUBCLASS);
 		}
 	}
 
 	return (IMATCH_NONE);
-}
-
-int
-imt_find_winptp_reports(struct ihidev_softc *parent, void *desc, int size,
-    struct imt_softc *sc)
-{
-	int repid;
-	int input = 0, conf = 0, cap = 0;
-
-	if (sc != NULL) {
-		sc->sc_rep_input = -1;
-		sc->sc_rep_config = -1;
-		sc->sc_rep_cap = -1;
-	}
-
-	for (repid = 0; repid < parent->sc_nrepid; repid++) {
-		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
-		    hid_report_size(desc, size, hid_output, repid) == 0 &&
-		    hid_report_size(desc, size, hid_feature, repid) == 0)
-			continue;
-
-		if (hid_is_collection(desc, size, repid,
-		    HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCHPAD))) {
-			input = 1;
-			if (sc != NULL && sc->sc_rep_input == -1)
-				sc->sc_rep_input = repid;
-		} else if (hid_is_collection(desc, size, repid,
-		    HID_USAGE2(HUP_DIGITIZERS, HUD_CONFIG))) {
-			conf = 1;
-			if (sc != NULL && sc->sc_rep_config == -1)
-				sc->sc_rep_config = repid;
-		}
-
-		/* capabilities report could be anywhere */
-		if (hid_locate(desc, size, HID_USAGE2(HUP_DIGITIZERS,
-		    HUD_CONTACT_MAX), repid, hid_feature, NULL, NULL)) {
-			cap = 1;
-			if (sc != NULL && sc->sc_rep_cap == -1)
-				sc->sc_rep_cap = repid;
-		}
-	}
-
-	return (conf && input && cap);
 }
 
 void
@@ -152,7 +108,8 @@ imt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_parent = iha->parent;
 
 	ihidev_get_report_desc(iha->parent, &desc, &size);
-	imt_find_winptp_reports(iha->parent, desc, size, sc);
+	hidmt_find_winptp_reports(desc, size, &sc->sc_rep_input,
+	    &sc->sc_rep_config, &sc->sc_rep_cap);
 
 	memset(mt, 0, sizeof(sc->sc_mt));
 

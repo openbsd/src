@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.15 2025/07/15 20:27:59 bru Exp $ */
+/* $OpenBSD: hidmt.c,v 1.16 2025/07/21 21:46:40 bru Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -556,4 +556,41 @@ void
 hidmt_disable(struct hidmt *mt)
 {
 	mt->sc_enabled = 0;
+}
+
+int
+hidmt_find_winptp_reports(const void *desc, int len, int *input_rid,
+    int *config_rid, int *cap_rid)
+{
+	static int32_t ptp_collections[] = {
+		HID_USAGE2(HUP_DIGITIZERS, HUD_FINGER), 0
+	};
+	static int32_t input_usages[] = {
+		/* report-level */
+		HID_USAGE2(HUP_DIGITIZERS, HUD_CONTACTCOUNT),
+		/* contact-level */
+		HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
+		HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
+		HID_USAGE2(HUP_DIGITIZERS, HUD_CONFIDENCE),
+		HID_USAGE2(HUP_DIGITIZERS, HUD_TIP_SWITCH),
+		HID_USAGE2(HUP_DIGITIZERS, HUD_CONTACTID),
+	};
+	static int32_t cfg_usages[] = {
+		HID_USAGE2(HUP_DIGITIZERS, HUD_INPUT_MODE),
+	};
+	static int32_t cap_usages[] = {
+		HID_USAGE2(HUP_DIGITIZERS, HUD_CONTACT_MAX),
+	};
+
+	*input_rid = hid_find_report(desc, len, hid_input,
+	    HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCHPAD),
+	    nitems(input_usages), input_usages, ptp_collections);
+	*config_rid = hid_find_report(desc, len, hid_feature,
+	    HID_USAGE2(HUP_DIGITIZERS, HUD_CONFIG),
+	    nitems(cfg_usages), cfg_usages, ptp_collections);
+	*cap_rid = hid_find_report(desc, len, hid_feature,
+	    HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCHPAD),
+	    nitems(cap_usages), cap_usages, ptp_collections);
+
+	return (*input_rid > 0 && *config_rid > 0 && *cap_rid > 0);
 }

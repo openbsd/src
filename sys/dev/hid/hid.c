@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.7 2024/05/10 10:49:10 mglocker Exp $ */
+/*	$OpenBSD: hid.c,v 1.8 2025/07/21 21:46:40 bru Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -705,4 +705,71 @@ hid_get_id_of_collection(const void *desc, int size, int32_t usage,
 	DPRINTF("%s: not found\n", __func__);
 	hid_end_parse(hd);
 	return -1;
+}
+
+/*
+ * Find the first report that contains each of the given "usages" and
+ * belongs to an application collection with the 'app_usage' type.
+ * The size of the 'usages' array must be in the range [1..32].
+ *
+ * If 'coll_usages' is NULL, the search will skip collections with
+ * usages from vendor pages (0xFF00 - 0xFFFF).
+ *
+ * If 'coll_usages' is non-NULL, it must point to a 0-terminated
+ * sequence of collection usages, and the search will skip collections
+ * with usages not present in this set. (It isn't necessary to include
+ * the usage of the application collection here.)
+ *
+ * Return Values:
+ *     -1:		No match
+ *     0:		Success (single report without an ID)
+ *     [1..255]:	Report ID
+ */
+int
+hid_find_report(const void *desc, int len, enum hid_kind kind,
+    int32_t app_usage, int n_usages, int32_t *usages, int32_t *coll_usages)
+{
+	struct hid_data *hd;
+	struct hid_item h;
+	uint32_t matches;
+	int i, cur_id, skip;
+
+	hd = hid_start_parse(desc, len, hid_all);
+	for (cur_id = -1, skip = 0; hid_get_item(hd, &h); ) {
+		if (cur_id != h.report_ID) {
+			matches = 0;
+			cur_id = h.report_ID;
+		}
+		if (h.kind == hid_collection) {
+			if (skip)
+				continue;
+			if (h.collevel == 1) {
+				if (h.usage != app_usage)
+					skip = 1;
+			} else if (coll_usages != NULL) {
+				for (i = 0; coll_usages[i] != h.usage; i++)
+					if (coll_usages[i] == 0) {
+						skip = h.collevel;
+						break;
+					}
+			} else if (((h.usage >> 16) & 0xffff) >= 0xff00) {
+				skip = h.collevel;
+			}
+		} else if (h.kind == hid_endcollection) {
+			if (h.collevel < skip)
+				skip = 0;
+		}
+		if (h.kind != kind || skip)
+			continue;
+		for (i = 0; i < n_usages; i++)
+			if (h.usage == usages[i] && !(matches & (1 << i))) {
+				matches |= (1 << i);
+				if (matches != (1 << n_usages) - 1)
+					break;
+				hid_end_parse(hd);
+				return (h.report_ID);
+			}
+	}
+	hid_end_parse(hd);
+	return (-1);
 }
