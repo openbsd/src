@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.252 2025/07/20 12:00:49 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.253 2025/07/21 11:00:49 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -908,7 +908,6 @@ struct ibuf	*io_buf_get(struct msgbuf *);
 /* X509 helpers. */
 
 void		 x509_init_oid(void);
-int		 x509_cache_extensions(X509 *, const char *);
 char		*x509_pubkey_get_ski(X509_PUBKEY *, const char *);
 int		 x509_get_time(const ASN1_TIME *, time_t *);
 char		*x509_convert_seqnum(const char *, const char *,

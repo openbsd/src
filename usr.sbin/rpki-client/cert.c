@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.195 2025/07/20 06:15:50 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.196 2025/07/21 11:00:49 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1353,8 +1353,15 @@ cert_check_purpose(const char *fn, struct cert *cert)
 
 	cert->purpose = CERT_PURPOSE_INVALID;
 
-	if (!x509_cache_extensions(x, fn))
+	/*
+	 * Ensure the X.509v3 extensions can be parsed and are cached in x.
+	 * Avoids unexpected failure modes of API such as X509_check_ca(),
+	 * X509_cmp(), X509_get_extension_flags(), and X509_get*_key_usage().
+	 */
+	if (X509_check_purpose(x, -1, 0) <= 0) {
+		warnx("%s: could not cache X509v3 extensions", fn);
 		goto out;
+	}
 
 	ext_flags = X509_get_extension_flags(x);
 

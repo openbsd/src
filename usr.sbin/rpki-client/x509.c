@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.115 2025/07/18 13:19:59 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.116 2025/07/21 11:00:49 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -135,26 +135,6 @@ x509_init_oid(void)
 		if (*oid_table[i].ptr == NULL)
 			errx(1, "OBJ_txt2obj for %s failed", oid_table[i].oid);
 	}
-}
-
-/*
- * A number of critical OpenSSL API functions can't properly indicate failure
- * and are unreliable if the extensions aren't already cached. An old trick is
- * to cache the extensions using an error-checked call to X509_check_purpose()
- * with a purpose of -1. This way functions such as X509_check_ca(), X509_cmp(),
- * X509_get_key_usage(), X509_get_extended_key_usage() won't lie.
- *
- * Should be called right after deserialization and is essentially free to call
- * multiple times.
- */
-int
-x509_cache_extensions(X509 *x509, const char *fn)
-{
-	if (X509_check_purpose(x509, -1, 0) <= 0) {
-		warnx("%s: could not cache X509v3 extensions", fn);
-		return 0;
-	}
-	return 1;
 }
 
 /*
