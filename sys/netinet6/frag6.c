@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.93 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.94 2025/07/21 11:07:31 mvs Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -196,11 +196,9 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 		 * Enforce upper bound on number of fragmented packets
 		 * for which we attempt reassembly;
 		 * If maxfragpackets is 0, never accept fragments.
-		 * If maxfragpackets is -1, accept all fragments without
-		 * limitation.
 		 */
-		if (ip6_maxfragpackets >= 0 &&
-		    frag6_nfragpackets >= (u_int)ip6_maxfragpackets) {
+		if (frag6_nfragpackets >=
+		    atomic_load_int(&ip6_maxfragpackets)) {
 			mtx_leave(&frag6_mutex);
 			goto dropfrag;
 		}
@@ -574,6 +572,7 @@ frag6_slowtimo(void)
 {
 	struct ip6q_head rmq6;
 	struct ip6q *q6, *nq6;
+	u_int ip6_maxfragpackets_local = atomic_load_int(&ip6_maxfragpackets);
 
 	TAILQ_INIT(&rmq6);
 
@@ -591,7 +590,7 @@ frag6_slowtimo(void)
 	 * (due to the limit being lowered), drain off
 	 * enough to get down to the new limit.
 	 */
-	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets &&
+	while (frag6_nfragpackets > ip6_maxfragpackets_local &&
 	    !TAILQ_EMPTY(&frag6_queue)) {
 		ip6stat_inc(ip6s_fragoverflow);
 		frag6_unlink(TAILQ_LAST(&frag6_queue, ip6q_head), &rmq6);
