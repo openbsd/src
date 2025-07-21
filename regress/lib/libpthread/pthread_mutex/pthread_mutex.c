@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.10 2012/03/24 21:39:10 guenther Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.11 2025/07/21 01:48:47 dlg Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -216,7 +216,7 @@ test_mutex_recursive(void)
 static void *
 thread_deadlock(void *arg)
 {
-	pthread_mutex_t *mutex = arg;; 
+	pthread_mutex_t *mutex = arg; 
 
 	/* intentionally deadlock this thread */
 	CHECKr(pthread_mutex_lock(mutex));
