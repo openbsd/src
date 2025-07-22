@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.81 2025/07/22 09:13:49 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.82 2025/07/22 09:29:31 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -818,7 +818,7 @@ aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		return 1;
 	if (key) {
 		AES_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks);
-		CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks, (block128_f)AES_encrypt);
+		CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks, aes_encrypt_block128);
 
 		/* If we have an iv can set it directly, otherwise use
 		 * saved IV.
@@ -1229,7 +1229,7 @@ aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	if (key) {
 		AES_set_encrypt_key(key, ctx->key_len * 8, &cctx->ks);
 		CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
-		    &cctx->ks, (block128_f)AES_encrypt);
+		    &cctx->ks, aes_encrypt_block128);
 		cctx->key_set = 1;
 	}
 	if (iv) {
@@ -1402,7 +1402,7 @@ aead_aes_gcm_init(EVP_AEAD_CTX *ctx, const unsigned char *key, size_t key_len,
 		return 0;
 
 	AES_set_encrypt_key(key, key_bits, &gcm_ctx->ks.ks);
-	CRYPTO_gcm128_init(&gcm_ctx->gcm, &gcm_ctx->ks.ks, (block128_f)AES_encrypt);
+	CRYPTO_gcm128_init(&gcm_ctx->gcm, &gcm_ctx->ks.ks, aes_encrypt_block128);
 	gcm_ctx->tag_len = tag_len;
 	ctx->aead_state = gcm_ctx;
 
