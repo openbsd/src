@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.80 2025/07/21 10:24:23 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.81 2025/07/22 09:13:49 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -98,36 +98,6 @@ typedef struct {
 } EVP_AES_CCM_CTX;
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
-
-#if	defined(AES_ASM) &&				(  \
-	((defined(__i386)	|| defined(__i386__)	|| \
-	  defined(_M_IX86)))|| \
-	defined(__x86_64)	|| defined(__x86_64__)	|| \
-	defined(_M_AMD64)	|| defined(_M_X64)	|| \
-	defined(__INTEL__)				)
-
-#include "x86_arch.h"
-
-/*
- * AES-NI section
- */
-#define	AESNI_CAPABLE	(crypto_cpu_caps_ia32() & CPUCAP_MASK_AESNI)
-
-void aesni_ecb_encrypt(const unsigned char *in, unsigned char *out,
-    size_t length, const AES_KEY *key, int enc);
-
-static int
-aesni_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len)
-{
-	if (len < ctx->cipher->block_size)
-		return 1;
-
-	aesni_ecb_encrypt(in, out, len, ctx->cipher_data, ctx->encrypt);
-
-	return 1;
-}
-#endif
 
 static int
 aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -301,19 +271,6 @@ EVP_aes_128_cbc(void)
 }
 LCRYPTO_ALIAS(EVP_aes_128_cbc);
 
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_128_ecb = {
-	.nid = NID_aes_128_ecb,
-	.block_size = 16,
-	.key_len = 16,
-	.iv_len = 0,
-	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
-	.init = aes_ecb_init_key,
-	.do_cipher = aesni_ecb_cipher,
-	.ctx_size = sizeof(EVP_AES_KEY),
-};
-#endif
-
 static const EVP_CIPHER aes_128_ecb = {
 	.nid = NID_aes_128_ecb,
 	.block_size = 16,
@@ -328,11 +285,7 @@ static const EVP_CIPHER aes_128_ecb = {
 const EVP_CIPHER *
 EVP_aes_128_ecb(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_128_ecb : &aes_128_ecb;
-#else
 	return &aes_128_ecb;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_128_ecb);
 
@@ -444,19 +397,6 @@ EVP_aes_192_cbc(void)
 }
 LCRYPTO_ALIAS(EVP_aes_192_cbc);
 
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_192_ecb = {
-	.nid = NID_aes_192_ecb,
-	.block_size = 16,
-	.key_len = 24,
-	.iv_len = 0,
-	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
-	.init = aes_ecb_init_key,
-	.do_cipher = aesni_ecb_cipher,
-	.ctx_size = sizeof(EVP_AES_KEY),
-};
-#endif
-
 static const EVP_CIPHER aes_192_ecb = {
 	.nid = NID_aes_192_ecb,
 	.block_size = 16,
@@ -471,11 +411,7 @@ static const EVP_CIPHER aes_192_ecb = {
 const EVP_CIPHER *
 EVP_aes_192_ecb(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_192_ecb : &aes_192_ecb;
-#else
 	return &aes_192_ecb;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_192_ecb);
 
@@ -587,19 +523,6 @@ EVP_aes_256_cbc(void)
 }
 LCRYPTO_ALIAS(EVP_aes_256_cbc);
 
-#ifdef AESNI_CAPABLE
-static const EVP_CIPHER aesni_256_ecb = {
-	.nid = NID_aes_256_ecb,
-	.block_size = 16,
-	.key_len = 32,
-	.iv_len = 0,
-	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
-	.init = aes_ecb_init_key,
-	.do_cipher = aesni_ecb_cipher,
-	.ctx_size = sizeof(EVP_AES_KEY),
-};
-#endif
-
 static const EVP_CIPHER aes_256_ecb = {
 	.nid = NID_aes_256_ecb,
 	.block_size = 16,
@@ -614,11 +537,7 @@ static const EVP_CIPHER aes_256_ecb = {
 const EVP_CIPHER *
 EVP_aes_256_ecb(void)
 {
-#ifdef AESNI_CAPABLE
-	return AESNI_CAPABLE ? &aesni_256_ecb : &aes_256_ecb;
-#else
 	return &aes_256_ecb;
-#endif
 }
 LCRYPTO_ALIAS(EVP_aes_256_ecb);
 

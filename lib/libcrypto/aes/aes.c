@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.13 2025/07/21 10:24:23 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.14 2025/07/22 09:13:49 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -310,6 +310,7 @@ AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
 }
 LCRYPTO_ALIAS(AES_ecb_encrypt);
 
+#ifndef HAVE_AES_ECB_ENCRYPT_INTERNAL
 void
 aes_ecb_encrypt_internal(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key, int encrypt)
@@ -321,6 +322,7 @@ aes_ecb_encrypt_internal(const unsigned char *in, unsigned char *out,
 		len -= AES_BLOCK_SIZE;
 	}
 }
+#endif
 
 #define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
 typedef struct {

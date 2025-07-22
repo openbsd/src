@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_i386.c,v 1.4 2025/07/21 10:24:23 jsing Exp $ */
+/* $OpenBSD: aes_i386.c,v 1.5 2025/07/22 09:13:49 jsing Exp $ */
 /*
  * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
@@ -67,6 +67,9 @@ void aesni_ccm64_decrypt_blocks(const unsigned char *in, unsigned char *out,
 
 void aesni_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
     size_t blocks, const void *key, const unsigned char *ivec);
+
+void aesni_ecb_encrypt(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key, int enc);
 
 void aesni_xts_encrypt(const unsigned char *in, unsigned char *out,
     size_t length, const AES_KEY *key1, const AES_KEY *key2,
@@ -158,6 +161,27 @@ aes_ctr32_encrypt_internal(const unsigned char *in, unsigned char *out,
 	}
 
 	aes_ctr32_encrypt_generic(in, out, blocks, key, ivec);
+}
+
+void
+aes_ecb_encrypt_internal(const unsigned char *in, unsigned char *out,
+    size_t len, const AES_KEY *key, int encrypt)
+{
+	if ((crypto_cpu_caps_i386 & CRYPTO_CPU_CAPS_I386_AES) != 0) {
+		aesni_ecb_encrypt(in, out, len, key, encrypt);
+		return;
+	}
+
+	while (len >= AES_BLOCK_SIZE) {
+		if (encrypt)
+			aes_encrypt_generic(in, out, key);
+		else
+			aes_decrypt_generic(in, out, key);
+
+		in += AES_BLOCK_SIZE;
+		out += AES_BLOCK_SIZE;
+		len -= AES_BLOCK_SIZE;
+	}
 }
 
 void
