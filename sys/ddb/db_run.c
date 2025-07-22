@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.32 2024/11/05 10:19:11 miod Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.33 2025/07/22 09:09:50 kettenis Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ db_restart_at_pc(db_regs_t *regs, int watchpt)
 			db_set_breakpoints();
 			db_set_watchpoints();
 		}
-	} else {
+	} else if (db_run_mode != STEP_NONE) {
 		db_set_single_step(regs);
 	}
 }
