@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_legacy.c,v 1.8 2025/05/24 07:23:14 jsing Exp $ */
+/* $OpenBSD: crypto_legacy.c,v 1.9 2025/07/22 09:18:02 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -305,14 +305,6 @@ void
 	return NULL;
 }
 LCRYPTO_ALIAS(CRYPTO_get_dynlock_destroy_callback);
-
-#ifndef HAVE_CRYPTO_CPU_CAPS_IA32
-uint64_t
-crypto_cpu_caps_ia32(void)
-{
-	return 0;
-}
-#endif
 
 uint64_t
 OPENSSL_cpu_caps(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_cpu_caps.c,v 1.5 2025/06/28 12:21:46 jsing Exp $ */
+/*	$OpenBSD: crypto_cpu_caps.c,v 1.6 2025/07/22 09:18:02 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -121,10 +121,4 @@ crypto_cpu_caps_init(void)
 		crypto_cpu_caps |= CRYPTO_CPU_CAPS_ACCELERATED_AES;
 
 	OPENSSL_ia32cap_P = caps;
-}
-
-uint64_t
-crypto_cpu_caps_ia32(void)
-{
-	return OPENSSL_ia32cap_P;
 }
