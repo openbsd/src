@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.82 2025/07/22 09:29:31 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.83 2025/07/22 09:31:09 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1373,7 +1373,6 @@ struct aead_aes_gcm_ctx {
 		AES_KEY ks;
 	} ks;
 	GCM128_CONTEXT gcm;
-	ctr128_f ctr;
 	unsigned char tag_len;
 };
 
