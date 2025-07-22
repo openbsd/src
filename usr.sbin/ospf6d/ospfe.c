@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.78 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.79 2025/07/22 18:39:19 jan Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -201,14 +201,6 @@ ospfe_shutdown(void)
 	struct area	*area;
 	struct iface	*iface;
 
-	/* close pipes */
-	imsgbuf_write(&iev_rde->ibuf);
-	imsgbuf_clear(&iev_rde->ibuf);
-	close(iev_rde->ibuf.fd);
-	imsgbuf_write(&iev_main->ibuf);
-	imsgbuf_clear(&iev_main->ibuf);
-	close(iev_main->ibuf.fd);
-
 	/* stop all interfaces and remove all areas */
 	while ((area = LIST_FIRST(&oeconf->area_list)) != NULL) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
@@ -222,6 +214,14 @@ ospfe_shutdown(void)
 	}
 
 	close(oeconf->ospf_socket);
+
+	/* close pipes */
+	imsgbuf_write(&iev_rde->ibuf);
+	imsgbuf_clear(&iev_rde->ibuf);
+	close(iev_rde->ibuf.fd);
+	imsgbuf_write(&iev_main->ibuf);
+	imsgbuf_clear(&iev_main->ibuf);
+	close(iev_main->ibuf.fd);
 
 	/* clean up */
 	free(iev_rde);
