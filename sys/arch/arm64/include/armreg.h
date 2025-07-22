@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.43 2025/07/01 11:10:36 dlg Exp $ */
+/* $OpenBSD: armreg.h,v 1.44 2025/07/22 09:20:41 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -196,6 +196,7 @@
 #define	 ISS_MSR_OP0_SHIFT	20
 #define	 ISS_MSR_OP0_MASK	(0x3 << ISS_MSR_OP0_SHIFT)
 #define	 ISS_MSR_OP0(x)		(((x) & ISS_MSR_OP0_MASK) >> ISS_MSR_OP0_SHIFT)
+#define	 ISS_BRK_COMMENT_MASK	0xffff
 #define	ESR_ELx_IL		(0x01 << 25)
 #define	ESR_ELx_EC_SHIFT	26
 #define	ESR_ELx_EC_MASK		(0x3f << 26)

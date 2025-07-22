@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.7 2025/07/07 18:06:35 kettenis Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.8 2025/07/22 09:20:41 kettenis Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <uvm/uvm_extern.h>
 #include <machine/armreg.h>
 #include <machine/frame.h>
-#include <machine/trap.h>
 
 /* end of mangling */
 
@@ -54,38 +53,25 @@ extern db_regs_t		ddb_regs;	/* register state */
 #define	PC_REGS(regs)	((vaddr_t)(regs)->tf_elr)
 #define	SET_PC_REGS(regs, value)	(regs)->tf_elr = (register_t)(value)
 
-#define	BKPT_INST	(KERNEL_BREAKPOINT)	/* breakpoint instruction */
+#define	BKPT_INST	0xd4200000		/* breakpoint instruction */
 #define	BKPT_SIZE	(INSN_SIZE)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-/*#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_lr -= BKPT_SIZE)*/
+#define	db_clear_single_step(regs)	((regs)->tf_spsr &= ~PSR_SS)
+#define	db_set_single_step(regs)	((regs)->tf_spsr |= PSR_SS)
 
-#define T_BREAKPOINT			(1)
-
-#define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
-#define IS_WATCHPOINT_TRAP(type, code)	(0)
+#define	IS_BREAKPOINT_TRAP(type, code)	((type) == EXCP_BRK)
+#define	IS_WATCHPOINT_TRAP(type, code)	((type) == EXCP_WATCHPT_EL1)
 
 // ALL BROKEN!!!
 #define	inst_trap_return(ins)	((ins) == 0 && (ins) == 1)
 #define	inst_return(ins)	((ins) == 0 && (ins) == 1)
-				
 #define	inst_call(ins)		((ins) == 0 && (ins) == 1)
-#define	inst_branch(ins)	((ins) == 0 && (ins) == 1)
-#define inst_unconditional_flow_transfer(ins)	(0)
-
-#define getreg_val			(0)
-#define next_instr_address(pc, bd)	((bd) ? (pc) : ((pc) + INSN_SIZE))
 
 #define DB_MACHINE_COMMANDS
 
-#define SOFTWARE_SSTEP
-
-vaddr_t	db_branch_taken(u_int inst, vaddr_t pc, db_regs_t *regs);
-int kdb_trap (int, db_regs_t *);
+int db_ktrap(int, db_regs_t *);
 void db_machine_init (void);
-
-#define branch_taken(ins, pc, fun, regs) \
-	db_branch_taken((ins), (pc), (regs))
 
 #define DDB_STATE_NOT_RUNNING	0  
 #define DDB_STATE_RUNNING	1

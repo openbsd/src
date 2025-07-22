@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.16 2024/05/22 05:51:49 jsg Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.17 2025/07/22 09:20:41 kettenis Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
@@ -55,8 +55,6 @@
 #include <ddb/db_output.h>
 #include <ddb/db_run.h>
 #include <ddb/db_variables.h>
-
-int db_trapper (vaddr_t, u_int, trapframe_t *, int);
 
 struct db_variable db_regs[] = {
 	{ "x0", (long *)&DDB_REGS->tf_x[0], FCN_NULL, },
@@ -118,11 +116,12 @@ struct db_variable * db_eregs = db_regs + nitems(db_regs);
 
 #ifdef DDB
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ *  db_ktrap - field a TRACE or BPT trap
  */
 int
-kdb_trap(int type, db_regs_t *regs)
+db_ktrap(int type, db_regs_t *regs)
 {
+	uint64_t mdscr;
 	int s;
 
 #ifdef MULTIPROCESSOR
@@ -134,7 +133,9 @@ kdb_trap(int type, db_regs_t *regs)
 #endif
 
 	switch (type) {
-	case T_BREAKPOINT:	/* breakpoint */
+	case EXCP_BRK:		/* breakpoint */
+	case EXCP_WATCHPT_EL1:	/* watchpoint */
+	case EXCP_SOFTSTP_EL1:	/* single-step */
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
@@ -143,6 +144,7 @@ kdb_trap(int type, db_regs_t *regs)
 			db_error("Faulted in DDB; continuing...\n");
 			/*NOTREACHED*/
 		}
+		break;
 	}
 
 	/* Should switch to kdb`s own stack here. */
@@ -164,6 +166,18 @@ kdb_trap(int type, db_regs_t *regs)
 			ddb_state = DDB_STATE_EXITING;
 	}
 #endif
+
+	/* Enable debug exceptions in the kernel when needed. */
+	mdscr = READ_SPECIALREG(mdscr_el1);
+	if (regs->tf_spsr & PSR_SS) {
+		mdscr |= (DBG_MDSCR_KDE | DBG_MDSCR_SS);
+		regs->tf_spsr &= ~PSR_D;
+	} else {
+		mdscr &= ~(DBG_MDSCR_KDE | DBG_MDSCR_SS);
+		regs->tf_spsr |= PSR_D;
+	}
+	WRITE_SPECIALREG(mdscr_el1, mdscr);
+
 	return (1);
 }
 #endif
@@ -280,7 +294,7 @@ db_write_bytes(vaddr_t addr, size_t size, void *datap)
 	/* If any part is in kernel text, use db_write_text() */
 	if (addr >= KERNBASE && addr < (vaddr_t)&etext) {
 		db_write_text(addr, size, data);
-		return;
+		goto sync;
 	}
 
 	dst = (char *)addr;
@@ -292,6 +306,8 @@ db_write_bytes(vaddr_t addr, size_t size, void *datap)
 		}
 		*dst++ = *data++;
 	}
+
+sync:
 	/* make sure the caches and memory are in sync */
 	cpu_icache_sync_range(addr, size);
 
@@ -302,7 +318,12 @@ db_write_bytes(vaddr_t addr, size_t size, void *datap)
 void
 db_enter(void)
 {
-	asm("brk 0");
+	/*
+	 * This is the equivalent of LLVM's __builtin_debugtrap. The
+	 * #0xf000 comment field allows us to recognize this as a
+	 * permanent breakpoint and step over it.
+	 */
+	__asm volatile("brk #0xf000");
 }
 
 #ifdef MULTIPROCESSOR
@@ -499,18 +520,6 @@ const struct db_command db_machine_command_table[] = {
 #endif
 	{ NULL, 	NULL, 			0,	NULL }
 };
-
-int
-db_trapper(vaddr_t addr, u_int inst, trapframe_t *frame, int fault_code)
-{
-
-	if (fault_code == EXCP_BRK) {
-		kdb_trap(T_BREAKPOINT, frame);
-		frame->tf_elr += INSN_SIZE;
-	} else
-		kdb_trap(-1, frame);
-	return (0);
-}
 
 extern vaddr_t esym;
 extern vaddr_t end;

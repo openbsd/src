@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.52 2025/03/01 07:42:09 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.53 2025/07/22 09:20:41 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -46,6 +46,7 @@
 
 #ifdef DDB
 #include <ddb/db_output.h>
+#include <machine/db_machdep.h>
 #endif
 
 /* Called from exception.S */
@@ -279,42 +280,49 @@ emulate_msr(struct trapframe *frame, uint64_t esr)
 	return 1;
 }
 
+static inline void
+fault(const char *fmt, ...)
+{
+	struct cpu_info *ci = curcpu();
+	va_list ap;
+
+	atomic_cas_ptr(&panicstr, NULL, ci->ci_panicbuf);
+
+	va_start(ap, fmt);
+	vsnprintf(ci->ci_panicbuf, sizeof(ci->ci_panicbuf), fmt, ap);
+	va_end(ap);
+#ifdef DDB
+	db_printf("%s\n", ci->ci_panicbuf);
+#else
+	printf("%s", ci->ci_panicbuf);
+#endif
+}
+
 void
 do_el1h_sync(struct trapframe *frame)
 {
 	uint32_t exception;
 	uint64_t esr, far;
 
-	/* Read the esr register to get the exception details */
+	/* Read the ESR and FAR registers to get the exception details */
 	esr = READ_SPECIALREG(esr_el1);
-	exception = ESR_ELx_EXCEPTION(esr);
 	far = READ_SPECIALREG(far_el1);
 
 	intr_enable();
 	uvmexp.traps++;
 
-	/*
-	 * Sanity check we are in an exception er can handle. The IL bit
-	 * is used to indicate the instruction length, except in a few
-	 * exceptions described in the ARMv8 ARM.
-	 *
-	 * It is unclear in some cases if the bit is implementation defined.
-	 * The Foundation Model and QEMU disagree on if the IL bit should
-	 * be set when we are in a data fault from the same EL and the ISV
-	 * bit (bit 24) is also set.
-	 */
-//	KASSERT((esr & ESR_ELx_IL) == ESR_ELx_IL ||
-//	    (exception == EXCP_DATA_ABORT && ((esr & ISS_DATA_ISV) == 0)),
-//	    ("Invalid instruction length in exception"));
-
-	switch(exception) {
+	exception = ESR_ELx_EXCEPTION(esr);
+	switch (exception) {
 	case EXCP_FP_SIMD:
 	case EXCP_TRAP_FP:
-		panic("FP exception in the kernel");
+		fault("FP exception in kernel");
+		goto we_re_toast;
 	case EXCP_BRANCH_TGT:
-		panic("Branch target exception in the kernel");
+		fault("Branch target exception in kernel");
+		goto we_re_toast;
 	case EXCP_FPAC:
-		panic("Faulting PAC trap in kernel");
+		fault("Pointher authentication failure in kernel");
+		goto we_re_toast;
 	case EXCP_INSN_ABORT:
 		kdata_abort(frame, esr, far, 1);
 		break;
@@ -325,27 +333,27 @@ do_el1h_sync(struct trapframe *frame)
 	case EXCP_WATCHPT_EL1:
 	case EXCP_SOFTSTP_EL1:
 #ifdef DDB
-		{
-		/* XXX */
-		int db_trapper (u_int, u_int, trapframe_t *, int);
-		db_trapper(frame->tf_elr, 0/*XXX*/, frame, exception);
-		}
+		db_ktrap(exception, frame);
+		/* Step over permanent breakpoints. */
+		if (exception == EXCP_BRK &&
+		    (esr & ISS_BRK_COMMENT_MASK) == 0xf000)
+			frame->tf_elr += INSN_SIZE;
 #else
-		panic("No debugger in kernel.");
+		panic("No debugger in kernel");
 #endif
 		break;
 	default:
+		fault("Unknown kernel exception 0x%02x", exception);
+	we_re_toast:
 #ifdef DDB
-		{
-		/* XXX */
-		int db_trapper (u_int, u_int, trapframe_t *, int);
-		db_trapper(frame->tf_elr, 0/*XXX*/, frame, exception);
-		break;
-		}
+		db_printf("esr 0x%08llx far 0x%016llx elr 0x%016lx",
+		    esr, far, frame->tf_elr);
+		db_ktrap(exception, frame);
+#else
+		panic("esr 0x%08llx far 0x%016llx elr 0x%016lx",
+		    esr, far, frame->tf_elr);
 #endif
-		panic("Unknown kernel exception %x esr_el1 %llx lr %lxpc %lx",
-		    exception,
-		    esr, frame->tf_lr, frame->tf_elr);
+		break;
 	}
 }
 
