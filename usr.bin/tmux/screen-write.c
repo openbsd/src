@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.234 2025/07/18 20:44:13 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.235 2025/07/22 07:42:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2038,17 +2038,27 @@ screen_write_combine(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		return (zero_width);
 
 	/*
-	 * Check if we need to combine characters. This could be zero width
-	 * (set above), a modifier character (with an existing Unicode
-	 * character) or a previous ZWJ.
+	 * Check if we need to combine characters. This could be a Korean
+	 * Hangul Jamo character, zero width (set above), a modifier character
+	 * (with an existing Unicode character) or a previous ZWJ.
 	 */
 	if (!zero_width) {
-		if (utf8_is_modifier(ud)) {
-			if (last.data.size < 2)
-				return (0);
-			force_wide = 1;
-		} else if (!utf8_has_zwj(&last.data))
+		switch (hanguljamo_check_state(&last.data, ud)) {
+		case HANGULJAMO_STATE_NOT_COMPOSABLE:
+			return (1);
+		case HANGULJAMO_STATE_CHOSEONG:
 			return (0);
+		case HANGULJAMO_STATE_COMPOSABLE:
+			break;
+		case HANGULJAMO_STATE_NOT_HANGULJAMO:
+			if (utf8_is_modifier(ud)) {
+				if (last.data.size < 2)
+					return (0);
+				force_wide = 1;
+			} else if (!utf8_has_zwj(&last.data))
+				return (0);
+			break;
+		}
 	}
 
 	/* Check if this combined character would be too long. */

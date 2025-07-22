@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1265 2025/07/13 06:32:34 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1266 2025/07/22 07:42:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -675,6 +675,14 @@ enum utf8_state {
 	UTF8_MORE,
 	UTF8_DONE,
 	UTF8_ERROR
+};
+
+/* State for processing of Korean characters. */
+enum hanguljamo_state {
+	HANGULJAMO_STATE_NOT_HANGULJAMO,
+	HANGULJAMO_STATE_CHOSEONG,
+	HANGULJAMO_STATE_COMPOSABLE,
+	HANGULJAMO_STATE_NOT_COMPOSABLE
 };
 
 /* Colour flags. */
@@ -3465,6 +3473,8 @@ int		 utf8_has_zwj(const struct utf8_data *);
 int		 utf8_is_zwj(const struct utf8_data *);
 int		 utf8_is_vs(const struct utf8_data *);
 int		 utf8_is_modifier(const struct utf8_data *);
+enum hanguljamo_state hanguljamo_check_state(const struct utf8_data *,
+		    const struct utf8_data *);
 
 /* procname.c */
 char   *get_proc_name(int, char *);
