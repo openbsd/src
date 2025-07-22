@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.9 2025/06/03 13:40:19 kettenis Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.10 2025/07/22 14:42:46 jsg Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -947,7 +947,7 @@ qcpas_glink_recv_open(struct qcpas_softc *sc, uint32_t rcid, uint32_t namelen)
 	err = proto->init(ch);
 	if (err) {
 		TAILQ_REMOVE(&sc->sc_glink_channels, ch, ch_q);
-		free(ch, M_TEMP, sizeof(*ch));
+		free(ch, M_DEVBUF, sizeof(*ch));
 		free(name, M_TEMP, namelen);
 		return;
 	}
