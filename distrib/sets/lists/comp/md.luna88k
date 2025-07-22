@@ -65,6 +65,7 @@
 ./usr/include/m88k/cmmu.h
 ./usr/include/m88k/cpu.h
 ./usr/include/m88k/db_machdep.h
+./usr/include/m88k/elf.h
 ./usr/include/m88k/endian.h
 ./usr/include/m88k/exec.h
 ./usr/include/m88k/fenv.h

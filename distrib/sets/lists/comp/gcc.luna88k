@@ -198,7 +198,6 @@
 ./usr/lib/gcc-lib/m88k-unknown-openbsd7.7/3.3.6
 ./usr/lib/gcc-lib/m88k-unknown-openbsd7.7/3.3.6/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m88k-unknown-openbsd7.7/3.3.6/cc1
-./usr/lib/gcc-lib/m88k-unknown-openbsd7.7/3.3.6/cc1obj
 ./usr/lib/gcc-lib/m88k-unknown-openbsd7.7/3.3.6/cc1plus
 ./usr/lib/gcc-lib/m88k-unknown-openbsd7.7/3.3.6/collect2
 ./usr/lib/gcc-lib/m88k-unknown-openbsd7.7/3.3.6/fPIC
