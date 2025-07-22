@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.19 2025/07/07 18:06:35 kettenis Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.20 2025/07/22 09:11:13 kettenis Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -112,11 +112,13 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 		if (name != NULL) {
 			if ((strcmp (name, "handle_el0_irq") == 0) ||
-			    (strcmp (name, "handle_el1_irq") == 0)) {
+			    (strcmp (name, "handle_el1h_irq") == 0) ||
+			    (strcmp (name, "handle_el0_fiq") == 0) ||
+			    (strcmp (name, "handle_el1h_fiq") == 0)) {
 				(*pr)("--- interrupt ---\n");
 			} else if (
 			    (strcmp (name, "handle_el0_sync") == 0) ||
-			    (strcmp (name, "handle_el1_sync") == 0)) {
+			    (strcmp (name, "handle_el1h_sync") == 0)) {
 				(*pr)("--- trap ---\n");
 			}
 		}
