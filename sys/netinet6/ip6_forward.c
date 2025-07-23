@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.127 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.128 2025/07/23 18:58:38 mvs Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -110,7 +110,8 @@ ip6_forward(struct mbuf *m, struct route *ro, int flags)
 		ip6stat_inc(ip6s_cantforward);
 		uptime = getuptime();
 
-		if (ip6_log_time + ip6_log_interval < uptime) {
+		if (ip6_log_time + atomic_load_int(&ip6_log_interval) <
+		    uptime) {
 			ip6_log_time = uptime;
 			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
@@ -227,7 +228,8 @@ reroute:
 		ip6stat_inc(ip6s_badscope);
 		uptime = getuptime();
 
-		if (ip6_log_time + ip6_log_interval < uptime) {
+		if (ip6_log_time + atomic_load_int(&ip6_log_interval) <
+		    uptime) {
 			ip6_log_time = uptime;
 			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.150 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.151 2025/07/23 18:58:38 mvs Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -923,7 +923,8 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m, int flags)
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 		ip6stat_inc(ip6s_cantforward);
-		if (ip6_log_time + ip6_log_interval < getuptime()) {
+		if (ip6_log_time + atomic_load_int(&ip6_log_interval) <
+		    getuptime()) {
 			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
 			ip6_log_time = getuptime();
