@@ -1,6 +1,9 @@
-# $OpenBSD: Makefile.inc,v 1.40 2025/06/05 04:26:42 anton Exp $
+# $OpenBSD: Makefile.inc,v 1.41 2025/07/23 07:22:05 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
+
+WARNINGS = Yes
+CFLAGS += -Werror
 
 PROGS += test-ip
 PROGS += test-cert
