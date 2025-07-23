@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.38 2025/06/12 23:35:33 jsg Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.39 2025/07/23 01:14:54 jsg Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -606,7 +606,7 @@ isa_malloc(struct device *isadev, int chan, size_t size, int pool, int flags)
 		return 0;
 	}
 	m = malloc(sizeof(*m), pool, flags);
-	if (m == 0) {
+	if (m == NULL) {
 		isa_dmamem_unmap(isadev, chan, kva, size);
 		isa_dmamem_free(isadev, chan, addr, size);
 		return 0;
