@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.138 2025/07/23 18:58:38 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.139 2025/07/23 20:53:55 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -357,7 +357,7 @@ int	ip6_defmcasthlim = IPV6_DEFAULT_MULTICAST_HOPS;
 int	ip6_maxfragpackets = 200;	/* [a] */
 int	ip6_maxfrags = 200;
 int	ip6_log_interval = 5;	/* [a] */
-int	ip6_hdrnestlimit = 10;	/* appropriate? */
+int	ip6_hdrnestlimit = 10;	/* [a] appropriate? */
 int	ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
 int	ip6_dad_pending;	/* number of currently running DADs */
 int	ip6_auto_flowlabel = 1;

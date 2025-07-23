@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.422 2025/07/19 16:40:40 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.423 2025/07/23 20:53:55 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -788,7 +788,7 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af, int shared,
 
 #ifdef INET6
 		if (af == AF_INET6 &&
-		    ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
+		    (++nest > atomic_load_int(&ip6_hdrnestlimit))) {
 			ip6stat_inc(ip6s_toomanyhdr);
 			goto bad;
 		}
