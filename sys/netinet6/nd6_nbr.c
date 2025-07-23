@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.161 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.162 2025/07/23 22:32:49 mvs Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1021,6 +1021,7 @@ nd6_dad_start(struct ifaddr *ifa)
 	struct in6_ifaddr *ia6 = ifatoia6(ifa);
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
+	int ip6_dad_count_local = atomic_load_int(&ip6_dad_count);
 
 	NET_ASSERT_LOCKED();
 
@@ -1031,7 +1032,7 @@ nd6_dad_start(struct ifaddr *ifa)
 	 * - the interface address is anycast
 	 */
 	KASSERT(ia6->ia6_flags & IN6_IFF_TENTATIVE);
-	if ((ia6->ia6_flags & IN6_IFF_ANYCAST) || (!ip6_dad_count)) {
+	if ((ia6->ia6_flags & IN6_IFF_ANYCAST) || ip6_dad_count_local == 0) {
 		ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
 		rtm_addr(RTM_CHGADDRATTR, ifa);
@@ -1062,7 +1063,7 @@ nd6_dad_start(struct ifaddr *ifa)
 	 * (re)initialization.
 	 */
 	dp->dad_ifa = ifaref(ifa);
-	dp->dad_count = ip6_dad_count;
+	dp->dad_count = ip6_dad_count_local;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	nd6_dad_ns_output(dp, ifa);
