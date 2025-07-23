@@ -1,4 +1,4 @@
-/*	$OpenBSD: _stdio.h,v 1.1 2025/07/16 15:33:05 yasuoka Exp $	*/
+/*	$OpenBSD: _stdio.h,v 1.2 2025/07/23 08:17:23 yasuoka Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -52,8 +52,6 @@ struct __sbuf {
 	int	_size;
 };
 
-typedef __off_t fpos_t;
-
 /*
  * stdio state variables.
  *
@@ -91,7 +89,7 @@ struct __sFILE {
 	void	*_cookie;	/* cookie passed to io functions */
 	int	(*_close)(void *);
 	int	(*_read)(void *, char *, int);
-	fpos_t	(*_seek)(void *, fpos_t, int);
+	__off_t	(*_seek)(void *, __off_t, int);
 	int	(*_write)(void *, const char *, int);
 
 	/* extension data, to avoid further ABI breakage */
@@ -109,7 +107,7 @@ struct __sFILE {
 
 	/* Unix stdio files get aligned to block boundaries on fseek() */
 	int	_blksize;	/* stat.st_blksize (may be != _bf._size) */
-	fpos_t	_offset;	/* current lseek offset */
+	__off_t	_offset;	/* current lseek offset */
 };
 
 #define	__SLBF	0x0001		/* line buffered */
