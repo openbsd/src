@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.35 2025/06/14 09:36:59 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.36 2025/07/23 07:42:33 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024, 2025 Theo Buehler <tb@openbsd.org>
@@ -17,9 +17,13 @@
  */
 
 #include <err.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/bio.h>
+#include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
