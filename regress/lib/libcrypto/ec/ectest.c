@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.35 2025/01/24 11:49:13 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.36 2025/07/23 07:40:07 tb Exp $	*/
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -71,14 +71,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
-#include <openssl/obj_mac.h>
-#include <openssl/objects.h>
-#include <openssl/bn.h>
 #include <openssl/opensslconf.h>
 
 #define ABORT do { \
