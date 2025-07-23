@@ -22,11 +22,6 @@
 #endif
 #endif
 
-#if defined(HEADER_BN_H) && !defined(CONFIG_HEADER_BN_H)
-#define CONFIG_HEADER_BN_H
-#define BN_LLONG
-#endif
-
 #if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
 #define CONFIG_HEADER_DES_LOCL_H
 #ifndef DES_DEFAULT_OPTIONS
