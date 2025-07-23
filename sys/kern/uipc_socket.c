@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.382 2025/07/21 20:36:41 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.383 2025/07/23 20:18:04 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -460,14 +460,11 @@ discard:
 notsplicedback:
 		sblock(&so->so_rcv, SBL_WAIT | SBL_NOINTR);
 		if (isspliced(so)) {
-			struct socket *sosp;
 			int freeing = SOSP_FREEING_READ;
 
 			if (so == so->so_sp->ssp_socket)
 				freeing |= SOSP_FREEING_WRITE;
-			sosp = soref(so->so_sp->ssp_socket);
 			sounsplice(so, so->so_sp->ssp_socket, freeing);
-			sorele(sosp);
 		}
 		sbunlock(&so->so_rcv);
 
@@ -1307,11 +1304,9 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if (fd < 0) {
 		if ((error = sblock(&so->so_rcv, SBL_WAIT)) != 0)
 			return (error);
-		if (so->so_sp && so->so_sp->ssp_socket) {
-			sosp = soref(so->so_sp->ssp_socket);
+		if (so->so_sp && so->so_sp->ssp_socket)
 			sounsplice(so, so->so_sp->ssp_socket, 0);
-			sorele(sosp);
-		} else
+		else
 			error = EPROTO;
 		sbunlock(&so->so_rcv);
 		return (error);
@@ -1409,8 +1404,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	/* Splice so and sosp together. */
 	mtx_enter(&so->so_rcv.sb_mtx);
 	mtx_enter(&sosp->so_snd.sb_mtx);
-	so->so_sp->ssp_socket = sosp;
-	sosp->so_sp->ssp_soback = so;
+	so->so_sp->ssp_socket = soref(sosp);
+	sosp->so_sp->ssp_soback = soref(so);
 	mtx_leave(&sosp->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
 
@@ -1448,6 +1443,8 @@ sounsplice(struct socket *so, struct socket *sosp, int freeing)
 	mtx_enter(&sosp->so_snd.sb_mtx);
 	so->so_rcv.sb_flags &= ~SB_SPLICE;
 	sosp->so_snd.sb_flags &= ~SB_SPLICE;
+	KASSERT(so->so_sp->ssp_socket == sosp);
+	KASSERT(sosp->so_sp->ssp_soback == so);
 	so->so_sp->ssp_socket = sosp->so_sp->ssp_soback = NULL;
 	mtx_leave(&sosp->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
@@ -1473,6 +1470,9 @@ sounsplice(struct socket *so, struct socket *sosp, int freeing)
 			sowwakeup(sosp);
 		sounlock_shared(sosp);
 	}
+
+	sorele(sosp);
+	sorele(so);
 }
 
 void
@@ -1482,12 +1482,8 @@ soidle(void *arg)
 
 	sblock(&so->so_rcv, SBL_WAIT | SBL_NOINTR);
 	if (so->so_rcv.sb_flags & SB_SPLICE) {
-		struct socket *sosp;
-
 		WRITE_ONCE(so->so_error, ETIMEDOUT);
-		sosp = soref(so->so_sp->ssp_socket);
 		sounsplice(so, so->so_sp->ssp_socket, 0);
-		sorele(sosp);
 	}
 	sbunlock(&so->so_rcv);
 }
@@ -1853,10 +1849,7 @@ somove(struct socket *so, int wait)
 		sbunlock(&so->so_snd);
 
 	if (unsplice) {
-		soref(sosp);
 		sounsplice(so, sosp, 0);
-		sorele(sosp);
-
 		return (0);
 	}
 	if (timerisset(&so->so_idletv)) {
