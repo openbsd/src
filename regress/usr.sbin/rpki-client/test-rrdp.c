@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-rrdp.c,v 1.10 2024/04/22 05:54:01 claudio Exp $ */
+/*	$OpenBSD: test-rrdp.c,v 1.11 2025/07/23 07:21:32 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -143,11 +143,17 @@ rrdp_new(unsigned int id, char *local, char *notify, char *session_id,
 
 	s->infd = 0; /* stdin */
 	s->id = id;
-	s->local = local;
-	s->notifyuri = notify;
-	s->repository.session_id = session_id;
+	if ((s->local = strdup(local)) == NULL)
+		err(1, NULL);
+	if ((s->notifyuri = strdup(notify)) == NULL)
+		err(1, NULL);
+	if (session_id != NULL &&
+	    (s->repository.session_id = strdup(session_id)) == NULL)
+		err(1, NULL);
 	s->repository.serial = serial;
-	s->repository.last_mod = last_mod;
+	if (last_mod != NULL &&
+	    (s->repository.last_mod = strdup(last_mod)) == NULL)
+		err(1, NULL);
 
 	s->state = RRDP_STATE_REQ;
 	if ((s->parser = XML_ParserCreate("US-ASCII")) == NULL)
@@ -185,7 +191,6 @@ static void
 rrdp_finished(struct rrdp *s)
 {
 	XML_Parser p = s->parser;
-	unsigned int id = s->id;
 
 	if (s->state & RRDP_STATE_PARSE_ERROR)
 		return;
@@ -272,7 +277,7 @@ main(int argc, char **argv)
 	char *session_id = NULL;
 	char hash[SHA256_DIGEST_LENGTH];
 	long long serial = 0;
-	int c;
+	int c, ret = 0;
 
 
 	while ((c = getopt(argc, argv, "dH:N:nS:s")) != -1)
@@ -330,12 +335,12 @@ main(int argc, char **argv)
 		rrdp_data_handler(s);
 	}
 
-	if ((s->state & RRDP_STATE_PARSE_ERROR) == 0) {
+	if ((ret = (s->state & RRDP_STATE_PARSE_ERROR)) == 0)
 		printf("OK\n");
-		return 0;
-	} else {
-		return 1;
-	}
+
+	rrdp_free(s);
+
+	return ret;
 
 usage:
 	fprintf(stderr, "usage: %s [-S session_id] [-N serial] [-H hash] "
