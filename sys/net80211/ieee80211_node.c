@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.200 2025/03/22 07:24:08 kevlo Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.201 2025/07/24 13:41:12 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2684,9 +2684,8 @@ ieee80211_node_addba_request_ac_vo_to(void *arg)
 	ieee80211_node_addba_request(ni, EDCA_AC_VO);
 }
 
-#ifndef IEEE80211_STA_ONLY
 /*
- * Check if the specified node supports ERP.
+ * Check if the specified node supports ERP / 802.11g.
  */
 int
 ieee80211_iserp_sta(const struct ieee80211_node *ni)
@@ -2710,6 +2709,7 @@ ieee80211_iserp_sta(const struct ieee80211_node *ni)
 	return 1;
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * This function is called to notify the 802.1X PACP machine that a new
  * 802.1X port is enabled and must be authenticated. For 802.11, a port

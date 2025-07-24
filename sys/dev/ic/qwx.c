@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.79 2025/07/24 13:26:54 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.80 2025/07/24 13:41:12 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -23046,21 +23046,13 @@ qwx_mac_vdev_start_restart(struct qwx_softc *sc, struct qwx_vif *arvif,
 	arg.channel.band_center_freq1 = chan->ic_freq;
 	arg.channel.band_center_freq2 = chan->ic_freq;
 
-	switch (ic->ic_curmode) {
-	case IEEE80211_MODE_11A:
+	/* Deduce a legacy mode based on the channel characteristics. */
+	if (IEEE80211_IS_CHAN_5GHZ(chan))
 		arg.channel.mode = MODE_11A;
-		break;
-	case IEEE80211_MODE_11B:
-		arg.channel.mode = MODE_11B;
-		break;
-	case IEEE80211_MODE_11G:
+	else if (ieee80211_iserp_sta(ic->ic_bss))
 		arg.channel.mode = MODE_11G;
-		break;
-	default:
-		printf("%s: unsupported phy mode %d\n",
-		    sc->sc_dev.dv_xname, ic->ic_curmode);
-		return ENOTSUP;
-	}
+	else
+		arg.channel.mode = MODE_11B;
 
 	arg.channel.min_power = 0;
 	arg.channel.max_power = 20; /* XXX */
