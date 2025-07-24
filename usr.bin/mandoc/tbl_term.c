@@ -1,4 +1,4 @@
-/* $OpenBSD: tbl_term.c,v 1.67 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: tbl_term.c,v 1.68 2025/07/24 17:51:00 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -195,14 +195,31 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		offset = tp->tcol->offset;
 		if (sp->opts->opts & TBL_OPT_CENTRE) {
+
+			/*
+			 * Vertical lines on the edges of the table make the
+			 * table wider; take that into account for centering.
+			 * The following assignment essentially says that a
+			 * line on the right side occupies two columns (which
+			 * matches reality) and a line on the left side three
+			 * columns (which does not match reality; in fact,
+			 * it only occupies two columns).  But this is how
+			 * groff does centering, so for compatibility, use
+			 * the same numbers as groff.
+			 */
+
 			tsz = term_len(tp,
-			    sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX)
-			    ? 2 : !!sp->opts->lvert + !!sp->opts->rvert);
+			    sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ?
+			    5 : 3 * !!sp->opts->lvert + 2 * !!sp->opts->rvert);
+
+			/* Column widths and column spacing. */
+
 			for (ic = 0; ic + 1 < sp->opts->cols; ic++)
 				tsz += tp->tbl.cols[ic].width +
 				    term_len(tp, tp->tbl.cols[ic].spacing);
 			if (sp->opts->cols)
 				tsz += tp->tbl.cols[sp->opts->cols - 1].width;
+
 			if (offset + tsz > tp->tcol->rmargin)
 				tsz -= enw;
 			offset = offset + tp->tcol->rmargin > tsz ?
@@ -239,7 +256,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		if (sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ||
 		    sp->opts->lvert)
-			coloff += enw;
+			coloff += enw * 2;
 		tp->tcol->rmargin = coloff;
 
 		/* Set up the data columns. */
@@ -333,6 +350,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		if (uvert > 0 || dvert > 0 || (horiz && sp->opts->lvert)) {
 			(*tp->advance)(tp, tp->tcols->offset);
 			tbl_direct_border(tp, fc, enw);
+			tbl_direct_border(tp, BHORIZ * rhori, enw);
 		}
 
 		/* Print the data cells. */
@@ -617,12 +635,16 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 	enw = term_len(tp, 1);
 	if (tp->viscol == 0)
 		(*tp->advance)(tp, tp->tcols->offset);
-	if (flags != 0)
+	if (flags != 0) {
 		tbl_direct_border(tp,
 		    (spp == NULL ? 0 : BUP * bw) +
 		    (spn == NULL ? 0 : BDOWN * bw) +
 		    (spp == NULL || cpn == NULL ||
 		     cpn->pos != TBL_CELL_DOWN ? BRIGHT * hw : 0), enw);
+		tbl_direct_border(tp,
+		    (spp == NULL || cpn == NULL ||
+		     cpn->pos != TBL_CELL_DOWN ? BHORIZ * hw : 0), enw);
+	}
 
 	col = tp->tbl.cols;
 	for (;;) {
