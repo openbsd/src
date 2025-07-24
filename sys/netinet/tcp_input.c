@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.456 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.457 2025/07/24 21:34:07 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -847,7 +847,8 @@ findpcb:
 				 * are not exactly the same.  I believe 5.5.4
 				 * is the best one, so we follow 5.5.4.
 				 */
-				if (ip6 && !ip6_use_deprecated) {
+				if (ip6 &&
+				    !atomic_load_int(&ip6_use_deprecated)) {
 					struct in6_ifaddr *ia6;
 					struct ifnet *ifp =
 					    if_get(m->m_pkthdr.ph_ifidx);

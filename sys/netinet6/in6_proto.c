@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.142 2025/07/24 19:49:08 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.143 2025/07/24 21:34:07 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ int	ip6_hdrnestlimit = 10;	/* [a] appropriate? */
 int	ip6_dad_count = 1;	/* [a] DupAddrDetectionTransmits */
 int	ip6_dad_pending;	/* number of currently running DADs */
 int	ip6_auto_flowlabel = 1;	/* [a] */
-int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
+int	ip6_use_deprecated = 1;	/* [a] allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_mcast_pmtu = 0;	/* enable pMTU discovery for multicast? */
 int	ip6_neighborgcthresh = 2048; /* Threshold # of NDP entries for GC */
 int	ip6_maxdynroutes = 4096; /* Max # of routes created via redirect */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.271 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: in6.c,v 1.272 2025/07/24 21:34:07 mvs Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1427,7 +1427,7 @@ in6_ifawithscope(struct ifnet *oifp, const struct in6_addr *dst, u_int rdomain,
 				 * Ignore any deprecated addresses if
 				 * specified by configuration.
 				 */
-				if (!ip6_use_deprecated)
+				if (!atomic_load_int(&ip6_use_deprecated))
 					continue;
 
 				/*
