@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.150 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.151 2025/07/24 18:02:19 mvs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -334,7 +334,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	mtx_leave(&table->inpt_mtx);
 
 	inp->inp_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-	if (ip6_auto_flowlabel) {
+	if (atomic_load_int(&ip6_auto_flowlabel)) {
 		inp->inp_flowinfo |=
 		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
 	}
@@ -730,7 +730,7 @@ in6_pcbset_addr(struct inpcb *inp, const struct sockaddr_in6 *fsin6,
 	mtx_leave(&table->inpt_mtx);
 
 	inp->inp_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-	if (ip6_auto_flowlabel) {
+	if (atomic_load_int(&ip6_auto_flowlabel)) {
 		inp->inp_flowinfo |=
 		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
 	}
