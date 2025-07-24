@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.301 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.302 2025/07/24 19:49:08 mvs Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -420,7 +420,7 @@ reroute:
 		if (im6o != NULL)
 			ip6->ip6_hlim = im6o->im6o_hlim;
 		else
-			ip6->ip6_hlim = ip6_defmcasthlim;
+			ip6->ip6_hlim = atomic_load_int(&ip6_defmcasthlim);
 	}
 
 #ifdef IPSEC
@@ -1879,6 +1879,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 	struct ip6_moptions *im6o = *im6op;
 	struct in6_multi_mship *imm;
 	struct proc *p = curproc;	/* XXX */
+	int ip6_defmcasthlim_local = atomic_load_int(&ip6_defmcasthlim);
 
 	if (im6o == NULL) {
 		/*
@@ -1890,7 +1891,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 			return (ENOBUFS);
 		*im6op = im6o;
 		im6o->im6o_ifidx = 0;
-		im6o->im6o_hlim = ip6_defmcasthlim;
+		im6o->im6o_hlim = ip6_defmcasthlim_local;
 		im6o->im6o_loop = IPV6_DEFAULT_MULTICAST_LOOP;
 		LIST_INIT(&im6o->im6o_memberships);
 	}
@@ -1937,7 +1938,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 		if (optval < -1 || optval >= 256)
 			error = EINVAL;
 		else if (optval == -1)
-			im6o->im6o_hlim = ip6_defmcasthlim;
+			im6o->im6o_hlim = ip6_defmcasthlim_local;
 		else
 			im6o->im6o_hlim = optval;
 		break;
@@ -2137,7 +2138,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 	 * structure.
 	 */
 	if (im6o->im6o_ifidx == 0 &&
-	    im6o->im6o_hlim == ip6_defmcasthlim &&
+	    im6o->im6o_hlim == ip6_defmcasthlim_local &&
 	    im6o->im6o_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
 	    LIST_EMPTY(&im6o->im6o_memberships)) {
 		free(*im6op, M_IPMOPTS, sizeof(**im6op));
@@ -2169,7 +2170,7 @@ ip6_getmoptions(int optname, struct ip6_moptions *im6o, struct mbuf *m)
 		hlim = mtod(m, u_int *);
 		m->m_len = sizeof(u_int);
 		if (im6o == NULL)
-			*hlim = ip6_defmcasthlim;
+			*hlim = atomic_load_int(&ip6_defmcasthlim);
 		else
 			*hlim = im6o->im6o_hlim;
 		return (0);
@@ -2178,7 +2179,7 @@ ip6_getmoptions(int optname, struct ip6_moptions *im6o, struct mbuf *m)
 		loop = mtod(m, u_int *);
 		m->m_len = sizeof(u_int);
 		if (im6o == NULL)
-			*loop = ip6_defmcasthlim;
+			*loop = atomic_load_int(&ip6_defmcasthlim);
 		else
 			*loop = im6o->im6o_loop;
 		return (0);
