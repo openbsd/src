@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.116 2025/05/08 15:30:41 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.117 2025/07/24 07:36:21 jan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -92,6 +92,7 @@
 #include <limits.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -474,6 +475,7 @@ parse_file(struct entrylist *list, int *nentries)
 	int lineno = 0;
 	int ret = 0;
 	FILE *f;
+	const char *errstr;
 	long l;
 
 	if (strcmp(conf, "-") == 0)
@@ -513,7 +515,14 @@ nextline:
 			if (*q == '\0') {
 				working->uid = (uid_t)-1;
 			} else if (isnumberstr(q)) {
-				working->uid = atoi(q);
+				working->uid = strtonum(q, 0, UID_MAX, &errstr);
+				if (errstr) {
+					warnx("%s:%d: invalid user %s (%s)"
+					    " --> skipping", conf, lineno, q,
+					    errstr);
+					ret = 1;
+					goto nextline;
+				}
 			} else if (uid_from_user(q, &working->uid) == -1) {
 				warnx("%s:%d: unknown user %s --> skipping",
 				    conf, lineno, q);
@@ -525,7 +534,14 @@ nextline:
 			if (*q == '\0') {
 				working->gid = (gid_t)-1;
 			} else if (isnumberstr(q)) {
-				working->gid = atoi(q);
+				working->gid = strtonum(q, 0, GID_MAX, &errstr);
+				if (errstr) {
+					warnx("%s:%d: invalid group %s (%s)"
+					    " --> skipping", conf, lineno, q,
+					    errstr);
+					ret = 1;
+					goto nextline;
+				}
 			} else if (gid_from_group(q, &working->gid) == -1) {
 				warnx("%s:%d: unknown group %s --> skipping",
 				    conf, lineno, q);
@@ -562,10 +578,18 @@ nextline:
 
 		q = parse = missing_field(sob(++parse), errline, lineno);
 		*(parse = son(parse)) = '\0';
-		if (isdigit((unsigned char)*q))
-			working->size = atoi(q) * 1024;
-		else
+		if (strcmp(q, "*") == 0) {
 			working->size = -1;
+		} else {
+			working->size = strtonum(q, 0, INT64_MAX/1024, &errstr);
+			if (errstr) {
+				warnx("%s:%d: invalid size %s (%s)"
+				    " --> skipping", conf, lineno, q, errstr);
+				ret = 1;
+				goto nextline;
+			}
+			working->size *= 1024;
+		}
 
 		working->flags = 0;
 		q = parse = missing_field(sob(++parse), errline, lineno);
