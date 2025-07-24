@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.80 2023/08/03 09:49:08 mvs Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.81 2025/07/24 00:49:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
@@ -143,7 +143,7 @@ struct pool	 bfd_pool, bfd_pool_neigh, bfd_pool_time;
 struct taskq	*bfdtq;
 
 
-struct bfd_config *bfd_lookup(struct rtentry *);
+struct bfd_config *bfd_lookup(const struct rtentry *);
 void		 bfddestroy(void);
 
 struct socket	*bfd_listener(struct bfd_config *, unsigned int);
@@ -315,7 +315,7 @@ bfddestroy(void)
  * Return the matching bfd
  */
 struct bfd_config *
-bfd_lookup(struct rtentry *rt)
+bfd_lookup(const struct rtentry *rt)
 {
 	struct bfd_config *bfd;
 
@@ -327,7 +327,7 @@ bfd_lookup(struct rtentry *rt)
 }
 
 struct sockaddr *
-bfd2sa(struct rtentry *rt, struct sockaddr_bfd *sa_bfd)
+bfd2sa(const struct rtentry *rt, struct sockaddr_bfd *sa_bfd)
 {
 	struct bfd_config *bfd;
 

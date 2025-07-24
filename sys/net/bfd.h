@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.13 2018/04/28 07:45:47 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.14 2025/07/24 00:49:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -152,7 +152,7 @@ struct bfd_config {
 	uint16_t		 bc_mode;
 };
 
-struct sockaddr *bfd2sa(struct rtentry *, struct sockaddr_bfd *);
+struct sockaddr *bfd2sa(const struct rtentry *, struct sockaddr_bfd *);
 
 int		 bfdset(struct rtentry *);
 void		 bfdclear(struct rtentry *);
