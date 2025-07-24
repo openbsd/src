@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2020/04/03 02:26:56 djm Exp $
+#	$OpenBSD: Makefile,v 1.22 2025/07/24 05:44:55 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -6,7 +6,7 @@ SRCS=	ssh-keysign.c readconf.c compat.c
 SRCS+=	cleanup.c fatal.c
 SRCS+=	uidswap.c utf8.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} ${SRCS_PKT} \
-	${SRCS_UTL} ${SRCS_SK_CLIENT}
+	${SRCS_UTL} ${SRCS_SK_CLIENT} ${SRCS_PKCS11_CLIENT}
 PROG=	ssh-keysign
 BINOWN=	root
 BINMODE=4555

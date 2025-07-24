@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.111 2024/05/17 00:30:24 djm Exp $
+#	$OpenBSD: Makefile,v 1.112 2025/07/24 05:44:55 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	sshd.c servconf.c sshpty.c srclimit.c groupaccess.c auth2-methods.c
 SRCS+=	dns.c fatal.c compat.c utf8.c authfd.c canohost.c kex-names.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEY} ${SRCS_KEYP} ${SRCS_KRL} \
-	${SRCS_MAC} ${SRCS_UTL} ${SRCS_SK_CLIENT}
+	${SRCS_MAC} ${SRCS_UTL} ${SRCS_SK_CLIENT} ${SRCS_PKCS11_CLIENT}
 
 PROG=	sshd
 BINMODE=511
