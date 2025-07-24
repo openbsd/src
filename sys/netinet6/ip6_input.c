@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.287 2025/07/24 21:34:07 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.288 2025/07/24 21:35:53 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1516,10 +1516,7 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_MRTMIF:
 		if (newp)
 			return (EPERM);
-		NET_LOCK();
-		error = mrt6_sysctl_mif(oldp, oldlenp);
-		NET_UNLOCK();
-		return (error);
+		return (mrt6_sysctl_mif(oldp, oldlenp));
 	case IPV6CTL_MRTMFC:
 		if (newp)
 			return (EPERM);

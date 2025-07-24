@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.151 2025/07/23 18:58:38 mvs Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.152 2025/07/24 21:35:53 mvs Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -304,18 +304,36 @@ get_mif6_cnt(struct sioc_mif_req6 *req, unsigned int rtableid)
 int
 mrt6_sysctl_mif(void *oldp, size_t *oldlenp)
 {
+	TAILQ_HEAD(, ifnet) if_tmplist =
+	    TAILQ_HEAD_INITIALIZER(if_tmplist);
 	struct ifnet *ifp;
 	caddr_t where = oldp;
 	size_t needed, given;
 	struct mif6 *mifp;
 	struct mif6info minfo;
+	int error = 0;
 
 	given = *oldlenp;
 	needed = 0;
 	memset(&minfo, 0, sizeof minfo);
+
+	rw_enter_write(&if_tmplist_lock);
+	NET_LOCK_SHARED();
+
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
-		if ((mifp = (struct mif6 *)ifp->if_mcast6) == NULL)
+		if (ifp->if_mcast6 != NULL) {
+			if_ref(ifp);
+			TAILQ_INSERT_TAIL(&if_tmplist, ifp, if_tmplist);
+		}
+	}
+	NET_UNLOCK_SHARED();
+
+	TAILQ_FOREACH (ifp, &if_tmplist, if_tmplist) {
+		NET_LOCK_SHARED();
+		if ((mifp = (struct mif6 *)ifp->if_mcast6) == NULL) {
+			NET_UNLOCK_SHARED();
 			continue;
+		}
 
 		minfo.m6_mifi = mifp->m6_mifi;
 		minfo.m6_flags = mifp->m6_flags;
@@ -326,6 +344,7 @@ mrt6_sysctl_mif(void *oldp, size_t *oldlenp)
 		minfo.m6_bytes_in = mifp->m6_bytes_in;
 		minfo.m6_bytes_out = mifp->m6_bytes_out;
 		minfo.m6_rate_limit = mifp->m6_rate_limit;
+		NET_UNLOCK_SHARED();
 
 		needed += sizeof(minfo);
 		if (where && needed <= given) {
@@ -333,10 +352,21 @@ mrt6_sysctl_mif(void *oldp, size_t *oldlenp)
 
 			error = copyout(&minfo, where, sizeof(minfo));
 			if (error)
-				return (error);
+				break;
 			where += sizeof(minfo);
 		}
 	}
+
+	while ((ifp = TAILQ_FIRST(&if_tmplist))) {
+		TAILQ_REMOVE(&if_tmplist, ifp, if_tmplist);
+		if_put(ifp);
+	}
+
+	rw_exit_write(&if_tmplist_lock);
+
+	if (error)
+		return (error);
+
 	if (where) {
 		*oldlenp = needed;
 		if (given < needed)
