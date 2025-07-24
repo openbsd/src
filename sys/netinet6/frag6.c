@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.94 2025/07/21 11:07:31 mvs Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.95 2025/07/24 22:57:24 mvs Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -46,12 +46,17 @@
 #include <netinet/icmp6.h>
 #include <netinet/ip.h>		/* for ECN definitions */
 
-/* Protects `frag6_queue', `frag6_nfragpackets' and `frag6_nfrags'. */
+
+/*
+ * Locks used to protect global variables in this file:
+ *	Q	frag6_mutex
+ */
+
 struct mutex frag6_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
 
-u_int frag6_nfragpackets;
-u_int frag6_nfrags;
-TAILQ_HEAD(ip6q_head, ip6q) frag6_queue;	/* ip6 reassemble queue */
+u_int frag6_nfragpackets;			/* [Q] */
+u_int frag6_nfrags;				/* [Q] */
+TAILQ_HEAD(ip6q_head, ip6q) frag6_queue;	/* [Q] ip6 reassemble queue */
 
 void frag6_freef(struct ip6q *);
 void frag6_unlink(struct ip6q *, struct ip6q_head *);
@@ -173,9 +178,8 @@ frag6_input(struct mbuf **mp, int *offp, int proto, int af,
 	/*
 	 * Enforce upper bound on number of fragments.
 	 * If maxfrag is 0, never accept fragments.
-	 * If maxfrag is -1, accept all fragments without limitation.
 	 */
-	if (ip6_maxfrags >= 0 && frag6_nfrags >= (u_int)ip6_maxfrags) {
+	if (frag6_nfrags >= atomic_load_int(&ip6_maxfrags)) {
 		mtx_leave(&frag6_mutex);
 		goto dropfrag;
 	}
