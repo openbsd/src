@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.35 2024/11/07 16:02:29 miod Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.36 2025/07/24 01:12:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -693,7 +693,7 @@ db_ctf_decompress(const char *buf, size_t size, size_t len)
 	return data;
 
 exit:
-	free(data, M_DEVBUF, len);
+	free(data, M_TEMP, len);
 	return NULL;
 }
 
