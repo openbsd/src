@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.77 2025/07/24 10:52:35 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.78 2025/07/24 13:24:58 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -153,6 +153,7 @@ int qwx_dp_tx_send_reo_cmd(struct qwx_softc *, struct dp_rx_tid *,
 void qwx_dp_rx_deliver_msdu(struct qwx_softc *, struct qwx_rx_msdu *);
 void qwx_dp_service_mon_ring(void *);
 void qwx_peer_frags_flush(struct qwx_softc *, struct ath11k_peer *);
+struct ath11k_peer *qwx_peer_find_by_id(struct qwx_softc *, uint16_t);
 int qwx_wmi_vdev_install_key(struct qwx_softc *,
     struct wmi_vdev_install_key_arg *, uint8_t);
 int qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *, struct qwx_vif *,
@@ -176,8 +177,46 @@ qwx_node_alloc(struct ieee80211com *ic)
 
 	nq = malloc(sizeof(struct qwx_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (nq != NULL)
-		nq->peer.peer_id = HAL_INVALID_PEERID;
+		nq->peer_id = HAL_INVALID_PEERID;
 	return (struct ieee80211_node *)nq;
+}
+
+void
+qwx_node_clear_peer_id(struct qwx_softc *sc, struct ath11k_peer *peer)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_node *nq = (struct qwx_node *)ni;
+	int s;
+
+	s = splnet();
+
+	if (nq->peer_id == peer->peer_id)
+		nq->peer_id = HAL_INVALID_PEERID;
+
+	RBT_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
+		nq = (struct qwx_node *)ni;
+		if (nq->peer_id == peer->peer_id)
+			nq->peer_id = HAL_INVALID_PEERID;
+	}
+
+	splx(s);
+}
+
+void
+qwx_free_peers(struct qwx_softc *sc)
+{
+	struct ath11k_peer *peer;
+
+	while (!TAILQ_EMPTY(&sc->peers)) {
+		peer = TAILQ_FIRST(&sc->peers);
+		TAILQ_REMOVE(&sc->peers, peer, entry);
+		qwx_node_clear_peer_id(sc, peer);
+		free(peer, M_DEVBUF, sizeof(*peer));
+		sc->num_peers--;
+		if (TAILQ_EMPTY(&sc->peers) || sc->num_peers == 0)
+			KASSERT(TAILQ_EMPTY(&sc->peers) && sc->num_peers == 0);
+	}
 }
 
 int
@@ -361,6 +400,8 @@ qwx_stop(struct ifnet *ifp)
 			sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 		}
 		refcnt_finalize(&sc->task_refs, "qwxstop");
+		qwx_free_peers(sc);
+		sc->bss_peer_id = HAL_INVALID_PEERID;
 	}
 
 	sc->scan.state = ATH11K_SCAN_IDLE;
@@ -714,12 +755,16 @@ qwx_add_sta_key(struct qwx_softc *sc, struct ieee80211_node *ni,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct ath11k_peer *peer = &nq->peer;
+	struct ath11k_peer *peer;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	int ret = 0;
 	uint32_t flags = 0;
 	const int want_keymask = (QWX_NODE_FLAG_HAVE_PAIRWISE_KEY |
 	    QWX_NODE_FLAG_HAVE_GROUP_KEY);
+
+	peer = qwx_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return EINVAL;
 
 	/*
 	 * Flush the fragments cache during key (re)install to
@@ -14502,20 +14547,22 @@ qwx_peer_map_event(struct qwx_softc *sc, uint8_t vdev_id, uint16_t peer_id,
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
+	peer = qwx_peer_find_by_id(sc, HAL_INVALID_PEERID);
+	if (peer == NULL)
+		return;
+
 	ni = ieee80211_find_node(ic, mac_addr);
 	if (ni == NULL)
 		return;
 	nq = (struct qwx_node *)ni;
-	peer = &nq->peer;
 
 	peer->vdev_id = vdev_id;
 	peer->peer_id = peer_id;
 	peer->ast_hash = ast_hash;
 	peer->hw_peer_id = hw_peer_id;
-#if 0
-	ether_addr_copy(peer->addr, mac_addr);
-	list_add(&peer->list, &ab->peers);
-#endif
+	IEEE80211_ADDR_COPY(peer->addr, mac_addr);
+	nq->peer_id = peer_id;
+
 	sc->peer_mapped = 1;
 	wakeup(&sc->peer_mapped);
 
@@ -14526,40 +14573,35 @@ qwx_peer_map_event(struct qwx_softc *sc, uint8_t vdev_id, uint16_t peer_id,
 #endif
 }
 
-struct ieee80211_node *
+struct ath11k_peer *
 qwx_peer_find_by_id(struct qwx_softc *sc, uint16_t peer_id)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = NULL;
-	int s;
+	struct ath11k_peer *peer;
 
-	s = splnet();
-	RBT_FOREACH(ni, ieee80211_tree, &ic->ic_tree) {
-		struct qwx_node *nq = (struct qwx_node *)ni;
-		if (nq->peer.peer_id == peer_id)
-			break;
+	TAILQ_FOREACH(peer, &sc->peers, entry) {
+		if (peer->peer_id == peer_id)
+			return peer;
 	}
-	splx(s);
 
-	return ni;
+	return NULL;
 }
 
 void
 qwx_peer_unmap_event(struct qwx_softc *sc, uint16_t peer_id)
 {
-	struct ieee80211_node *ni;
+	struct ath11k_peer *peer;
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
-	ni = qwx_peer_find_by_id(sc, peer_id);
-	if (!ni) {
+	peer = qwx_peer_find_by_id(sc, peer_id);
+	if (!peer) {
 		printf("%s: peer-unmap-event: unknown peer id %d\n",
 		    sc->sc_dev.dv_xname, peer_id);
 		goto exit;
 	}
 
 	DNPRINTF(QWX_D_HTT, "%s: peer unmap peer %s id %d\n",
-	    __func__, ether_sprintf(ni->ni_macaddr), peer_id);
+	    __func__, ether_sprintf(peer->addr), peer_id);
 #if 0
 	list_del(&peer->list);
 	kfree(peer);
@@ -23659,17 +23701,18 @@ qwx_mac_get_rate_hw_value(struct ieee80211com *ic,
 
 int
 qwx_peer_delete(struct qwx_softc *sc, uint32_t vdev_id, uint8_t pdev_id,
-    uint8_t *addr)
+    struct ath11k_peer *peer)
 {
 	int ret;
 
 	sc->peer_mapped = 0;
 	sc->peer_delete_done = 0;
 
-	ret = qwx_wmi_send_peer_delete_cmd(sc, addr, vdev_id, pdev_id);
+	ret = qwx_wmi_send_peer_delete_cmd(sc, peer->addr, vdev_id, pdev_id);
 	if (ret) {
 		printf("%s: failed to delete peer vdev_id %d addr %s ret %d\n",
-		    sc->sc_dev.dv_xname, vdev_id, ether_sprintf(addr), ret);
+		    sc->sc_dev.dv_xname, vdev_id, ether_sprintf(peer->addr),
+		    ret);
 		return ret;
 	}
 
@@ -23693,7 +23736,10 @@ qwx_peer_delete(struct qwx_softc *sc, uint32_t vdev_id, uint8_t pdev_id,
 		}
 	}
 
+	TAILQ_REMOVE(&sc->peers, peer, entry);
 	sc->num_peers--;
+	qwx_node_clear_peer_id(sc, peer);
+	free(peer, M_DEVBUF, sizeof(*peer));
 	return 0;
 }
 
@@ -23717,7 +23763,7 @@ qwx_peer_create(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 	mutex_lock(&ar->ab->tbl_mtx_lock);
 	spin_lock_bh(&ar->ab->base_lock);
 #endif
-	peer = &nq->peer;
+	peer = qwx_peer_find_by_id(sc, nq->peer_id);
 	if (peer) {
 		if (peer->peer_id != HAL_INVALID_PEERID &&
 		    peer->vdev_id == param->vdev_id) {
@@ -23733,6 +23779,14 @@ qwx_peer_create(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 		 */
 		ath11k_peer_rhash_delete(ar->ab, peer);
 #endif
+	} else {
+		peer = malloc(sizeof(*peer), M_DEVBUF, M_ZERO | M_NOWAIT);
+		if (peer == NULL)
+			return ENOMEM;
+
+		peer->peer_id = HAL_INVALID_PEERID;
+		TAILQ_INSERT_TAIL(&sc->peers, peer, entry);
+		sc->num_peers++;
 	}
 #ifdef notyet
 	spin_unlock_bh(&ar->ab->base_lock);
@@ -23742,6 +23796,9 @@ qwx_peer_create(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 
 	ret = qwx_wmi_send_peer_create_cmd(sc, pdev_id, param);
 	if (ret) {
+		TAILQ_REMOVE(&sc->peers, peer, entry);
+		sc->num_peers--;
+		free(peer, M_DEVBUF, sizeof(*peer));
 		printf("%s: failed to send peer create vdev_id %d ret %d\n",
 		    sc->sc_dev.dv_xname, param->vdev_id, ret);
 		return ret;
@@ -23751,11 +23808,16 @@ qwx_peer_create(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 		ret = tsleep_nsec(&sc->peer_mapped, 0, "qwxpeer",
 		    SEC_TO_NSEC(3));
 		if (ret) {
+			TAILQ_REMOVE(&sc->peers, peer, entry);
+			sc->num_peers--;
+			free(peer, M_DEVBUF, sizeof(*peer));
 			printf("%s: peer create command timeout\n",
 			    sc->sc_dev.dv_xname);
 			return ret;
 		}
 	}
+
+	nq->peer_id = peer->peer_id;
 
 #ifdef notyet
 	mutex_lock(&ar->ab->tbl_mtx_lock);
@@ -23802,7 +23864,6 @@ qwx_peer_create(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 		arsta->tcl_metadata &= ~HTT_TCL_META_DATA_VALID_HTT;
 	}
 #endif
-	sc->num_peers++;
 #ifdef notyet
 	spin_unlock_bh(&ar->ab->base_lock);
 	mutex_unlock(&ar->ab->tbl_mtx_lock);
@@ -24245,22 +24306,25 @@ qwx_dp_rx_tid_mem_free(struct qwx_softc *sc, struct ieee80211_node *ni,
     int vdev_id, uint8_t tid)
 {
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct ath11k_peer *peer = &nq->peer;
+	struct ath11k_peer *peer;
 	struct dp_rx_tid *rx_tid;
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
-	rx_tid = &peer->rx_tid[tid];
+	peer = qwx_peer_find_by_id(sc, nq->peer_id);
+	if (peer) {
+		rx_tid = &peer->rx_tid[tid];
 
-	if (rx_tid->mem) {
-		qwx_dmamem_free(sc->sc_dmat, rx_tid->mem);
-		rx_tid->mem = NULL;
-		rx_tid->vaddr = NULL;
-		rx_tid->paddr = 0ULL;
-		rx_tid->size = 0;
+		if (rx_tid->mem) {
+			qwx_dmamem_free(sc->sc_dmat, rx_tid->mem);
+			rx_tid->mem = NULL;
+			rx_tid->vaddr = NULL;
+			rx_tid->paddr = 0ULL;
+			rx_tid->size = 0;
+		}
+
+		rx_tid->active = 0;
 	}
-
-	rx_tid->active = 0;
 #ifdef notyet
 	spin_unlock_bh(&ab->base_lock);
 #endif
@@ -24272,7 +24336,7 @@ qwx_peer_rx_tid_setup(struct qwx_softc *sc, struct ieee80211_node *ni,
     enum hal_pn_type pn_type)
 {
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct ath11k_peer *peer = &nq->peer;
+	struct ath11k_peer *peer;
 	struct dp_rx_tid *rx_tid;
 	uint32_t hw_desc_sz;
 	void *vaddr;
@@ -24281,6 +24345,14 @@ qwx_peer_rx_tid_setup(struct qwx_softc *sc, struct ieee80211_node *ni,
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
+	peer = qwx_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL) {
+#ifdef notyet
+		spin_unlock_bh(&ab->base_lock);
+#endif
+		return EINVAL;
+	}
+
 	rx_tid = &peer->rx_tid[tid];
 	/* Update the tid queue if it is already setup */
 	if (rx_tid->active) {
@@ -24357,12 +24429,20 @@ qwx_peer_rx_frag_setup(struct qwx_softc *sc, struct ieee80211_node *ni,
     int vdev_id)
 {
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct ath11k_peer *peer = &nq->peer;
+	struct ath11k_peer *peer;
 	struct dp_rx_tid *rx_tid;
 	int i;
 #ifdef notyet
 	spin_lock_bh(&ab->base_lock);
 #endif
+	peer = qwx_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL) {
+#ifdef notyet
+		spin_unlock_bh(&ab->base_lock);
+#endif
+		return EINVAL;
+	}
+
 	for (i = 0; i <= nitems(peer->rx_tid); i++) {
 		rx_tid = &peer->rx_tid[i];
 #if 0
@@ -24384,9 +24464,13 @@ qwx_dp_peer_setup(struct qwx_softc *sc, int vdev_id, int pdev_id,
     struct ieee80211_node *ni)
 {
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct ath11k_peer *peer = &nq->peer;
+	struct ath11k_peer *peer;
 	uint32_t reo_dest;
 	int ret = 0, tid;
+
+	peer = qwx_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return EINVAL;
 
 	/* reo_dest ring id starts from 1 unlike mac_id which starts from 0 */
 	reo_dest = sc->pdev_dp.mac_id + 1;
@@ -24447,7 +24531,7 @@ qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *sc, struct qwx_vif *arvif,
 {
 	struct ath11k_hal_reo_cmd cmd = {0};
 	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct ath11k_peer *peer = &nq->peer;
+	struct ath11k_peer *peer;
 	struct dp_rx_tid *rx_tid;
 	uint8_t tid;
 	int ret = 0;
@@ -24485,6 +24569,10 @@ qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *sc, struct qwx_vif *arvif,
 		    sc->sc_dev.dv_xname, k->k_cipher);
 		return EOPNOTSUPP;
 	}
+
+	peer = qwx_peer_find_by_id(sc, nq->peer_id);
+	if (peer == NULL)
+		return EINVAL;
 
 	for (tid = 0; tid < IEEE80211_NUM_TID; tid++) {
 		rx_tid = &peer->rx_tid[tid];
@@ -24783,15 +24871,13 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 
 int
 qwx_mac_station_remove(struct qwx_softc *sc, struct qwx_vif *arvif,
-    uint8_t pdev_id, struct ieee80211_node *ni)
+    uint8_t pdev_id, struct ath11k_peer *peer)
 {
-	struct qwx_node *nq = (struct qwx_node *)ni;
-	struct ath11k_peer *peer = &nq->peer;
 	int ret;
 
 	qwx_peer_rx_tid_cleanup(sc, peer);
 
-	ret = qwx_peer_delete(sc, arvif->vdev_id, pdev_id, ni->ni_macaddr);
+	ret = qwx_peer_delete(sc, arvif->vdev_id, pdev_id, peer);
 	if (ret) {
 		printf("%s: unable to delete BSS peer: %d\n",
 		   sc->sc_dev.dv_xname, ret);
@@ -24827,17 +24913,19 @@ qwx_mac_station_add(struct qwx_softc *sc, struct qwx_vif *arvif,
 
 	ret = qwx_dp_peer_setup(sc, arvif->vdev_id, pdev_id, ni);
 	if (ret) {
+		struct qwx_node *nq = (struct qwx_node *)ni;
+		struct ath11k_peer *peer;
+
 		printf("%s: failed to setup dp for peer %s on vdev %d (%d)\n",
 		    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_macaddr),
 		    arvif->vdev_id, ret);
-		goto free_peer;
+		peer = qwx_peer_find_by_id(sc, nq->peer_id);
+		if (peer)
+			qwx_peer_delete(sc, arvif->vdev_id, pdev_id, peer);
+		return ret;
 	}
 
 	return 0;
-
-free_peer:
-	qwx_peer_delete(sc, arvif->vdev_id, pdev_id, ni->ni_macaddr);
-	return ret;
 }
 
 int
@@ -25520,11 +25608,14 @@ qwx_auth(struct qwx_softc *sc)
 int
 qwx_deauth(struct qwx_softc *sc)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = ic->ic_bss;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	struct ath11k_peer *peer;
 	int ret;
+
+	peer = qwx_peer_find_by_id(sc, sc->bss_peer_id);
+	if (peer == NULL)
+		return EINVAL;
 
 	ret = qwx_mac_vdev_stop(sc, arvif, pdev_id);
 	if (ret) {
@@ -25533,7 +25624,8 @@ qwx_deauth(struct qwx_softc *sc)
 		return ret;
 	}
 
-	ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr, arvif->vdev_id,
+
+	ret = qwx_wmi_set_peer_param(sc, peer->addr, arvif->vdev_id,
 	    pdev_id, WMI_PEER_AUTHORIZE, 0);
 	if (ret) {
 		printf("%s: unable to deauthorize BSS peer: %d\n",
@@ -25541,12 +25633,15 @@ qwx_deauth(struct qwx_softc *sc)
 		return ret;
 	}
 
-	ret = qwx_mac_station_remove(sc, arvif, pdev_id, ni);
+	ret = qwx_mac_station_remove(sc, arvif, pdev_id, peer);
 	if (ret)
 		return ret;
 
+	qwx_free_peers(sc);
+	sc->bss_peer_id = HAL_INVALID_PEERID;
+
 	DNPRINTF(QWX_D_MAC, "%s: disassociated from bssid %s aid %d\n",
-	    __func__, ether_sprintf(ni->ni_bssid), arvif->aid);
+	    __func__, ether_sprintf(arvif->bssid), arvif->aid);
 
 	return 0;
 }
@@ -25668,6 +25763,7 @@ qwx_run(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_node *nq = (struct qwx_node *)ni;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	struct peer_assoc_params peer_arg;
@@ -25723,6 +25819,7 @@ qwx_run(struct qwx_softc *sc)
 
 	arvif->aid = ni->ni_associd;
 	IEEE80211_ADDR_COPY(arvif->bssid, ni->ni_bssid);
+	sc->bss_peer_id = nq->peer_id;
 
 	ret = qwx_wmi_vdev_up(sc, arvif->vdev_id, pdev_id, arvif->aid,
 	    arvif->bssid, NULL, 0, 0);
@@ -25813,6 +25910,7 @@ qwx_attach(struct qwx_softc *sc)
 		sc->pdevs[i].sc = sc;
 
 	TAILQ_INIT(&sc->vif_list);
+	TAILQ_INIT(&sc->peers);
 
 	error = qwx_init(ifp);
 	if (error)
@@ -25827,6 +25925,8 @@ qwx_attach(struct qwx_softc *sc)
 void
 qwx_detach(struct qwx_softc *sc)
 {
+	qwx_free_peers(sc);
+
 	if (sc->fwmem) {
 		qwx_dmamem_free(sc->sc_dmat, sc->fwmem);
 		sc->fwmem = NULL;
