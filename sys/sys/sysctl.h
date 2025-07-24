@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.244 2025/07/15 09:55:49 dlg Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.245 2025/07/24 19:42:41 miod Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1040,7 +1040,6 @@ int sysctl_securelevel_int(void *, size_t *, void *, size_t, int *);
 int sysctl_int_bounded(void *, size_t *, void *, size_t, int *, int, int);
 int sysctl_bounded_arr(const struct sysctl_bounded_args *, u_int,
     int *, u_int, void *, size_t *, void *, size_t);
-int sysctl_quad(void *, size_t *, void *, size_t, int64_t *);
 int sysctl_rdquad(void *, size_t *, void *, int64_t);
 int sysctl_string(void *, size_t *, void *, size_t, char *, size_t);
 int sysctl_tstring(void *, size_t *, void *, size_t, char *, size_t);

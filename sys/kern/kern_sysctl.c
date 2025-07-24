@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.480 2025/07/23 22:58:00 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.481 2025/07/24 19:42:41 miod Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1301,29 +1301,8 @@ sysctl_bounded_arr(const struct sysctl_bounded_args *valpp, u_int valplen,
 }
 
 /*
- * Validate parameters and get old / set new parameters
+ * Validate parameters and get old parameters
  * for an integer-valued sysctl function.
- */
-int
-sysctl_quad(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
-    int64_t *valp)
-{
-	int error = 0;
-
-	if (oldp && *oldlenp < sizeof(int64_t))
-		return (ENOMEM);
-	if (newp && newlen != sizeof(int64_t))
-		return (EINVAL);
-	*oldlenp = sizeof(int64_t);
-	if (oldp)
-		error = copyout(valp, oldp, sizeof(int64_t));
-	if (error == 0 && newp)
-		error = copyin(newp, valp, sizeof(int64_t));
-	return (error);
-}
-
-/*
- * As above, but read-only.
  */
 int
 sysctl_rdquad(void *oldp, size_t *oldlenp, void *newp, int64_t val)
