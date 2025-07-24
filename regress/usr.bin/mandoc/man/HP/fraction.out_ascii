@@ -1,0 +1,27 @@
+HP-FRACTION(1)              General Commands Manual             HP-FRACTION(1)
+
+NNAAMMEE
+     HP-fraction - indentation by non-integer multiples of EN
+
+DDEESSCCRRIIPPTTIIOONN
+     Normal text.
+
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+       next line.  This one is indenred by 60u.
+
+     Each hanged paragraph gets a sufficient amount of text to wrap to the
+        next line.  This one is indenred by 61u.
+
+     Normal text.
+       Offset 2.5n.
+
+       Each hanged paragraph gets a sufficient amount of text to wrap to the
+         next line.  This one is indenred by 48u.
+
+       Each hanged paragraph gets a sufficient amount of text to wrap to the
+          next line.  This one is indenred by 49u.
+
+       Back to 2.5n.
+     Normal text.
+
+OpenBSD                          July 24, 2025                  HP-FRACTION(1)

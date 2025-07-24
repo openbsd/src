@@ -1,0 +1,23 @@
+TP-FRACTION(1)              General Commands Manual             TP-FRACTION(1)
+
+NNAAMMEE
+     TP-fraction - indentation by non-integer multiples of EN
+
+DDEESSCCRRIIPPTTIIOONN
+     regular text
+
+     tag  indent 5.5n
+
+     tag   indent 5.6n
+
+     regular text
+          offset 5.5n
+
+          tag  indent 5.5n + 5n
+
+          tag   indent 5.5n + 5.1n
+
+          back to 5.5n
+     regular text
+
+OpenBSD                          July 24, 2015                  TP-FRACTION(1)

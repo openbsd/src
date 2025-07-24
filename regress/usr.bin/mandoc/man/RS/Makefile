@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.14 2019/01/06 04:41:15 schwarze Exp $
+# $OpenBSD: Makefile,v 1.15 2025/07/24 10:55:09 schwarze Exp $
 
-REGRESS_TARGETS	 = an-margin breaking broken empty literal lonelyRE
+REGRESS_TARGETS	 = an-margin breaking broken empty fraction literal lonelyRE
 REGRESS_TARGETS	+= nested noRE nowidth paragraph REarg width
 LINT_TARGETS	 = empty lonelyRE noRE REarg
 HTML_TARGETS	 = literal paragraph

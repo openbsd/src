@@ -1,0 +1,34 @@
+.\" $OpenBSD: fraction.in,v 1.1 2025/07/24 10:55:09 schwarze Exp $
+.TH RS-FRACTION 1 "July 23, 2025"
+.SH NAME
+RS-fraction \- indentation by non-integer multiples of EN
+.SH DESCRIPTION
+regular
+text
+.RS 2.5n
+offset 2.5n
+.RS 2.5n
+double offset 2.5n
+.RE
+back to 2.5n
+.RE
+regular
+text
+.RS 5n
+offset 5n
+.RS -2.5n
+reduced by 2.5n
+.RE
+back to 5n
+.RE
+regular
+text
+.RS 2.5n
+offset 2.5n
+.RS 1u
+offset 2.5n + 1u
+.RE
+back to 2.5n
+.RE
+regular
+text

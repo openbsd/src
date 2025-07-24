@@ -1,0 +1,30 @@
+.\" $OpenBSD: fraction.in,v 1.1 2025/07/24 10:55:09 schwarze Exp $
+.TH HP-FRACTION 1 "July 24, 2025"
+.SH NAME
+HP-fraction \- indentation by non-integer multiples of EN
+.SH DESCRIPTION
+Normal text.
+.HP 60u
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+This one is indenred by 60u.
+.HP 61u
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+This one is indenred by 61u.
+.PP
+Normal text.
+.RS 2.5n
+Offset 2.5n.
+.HP 48u
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+This one is indenred by 48u.
+.HP 49u
+Each hanged paragraph gets a sufficient amount of text
+to wrap to the next line.
+This one is indenred by 49u.
+.PP
+Back to 2.5n.
+.RE
+Normal text.

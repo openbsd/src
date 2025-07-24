@@ -1,12 +1,13 @@
-# $OpenBSD: Makefile,v 1.17 2020/03/13 00:31:05 schwarze Exp $
+# $OpenBSD: Makefile,v 1.18 2025/07/24 10:55:09 schwarze Exp $
 
-REGRESS_TARGETS	 = badarg broken double eof fill indent literal longhead
-REGRESS_TARGETS	+= macrotag manyargs sameline spacing tag vert width
+REGRESS_TARGETS	 = badarg broken double eof fill fraction indent
+REGRESS_TARGETS	+= literal longhead macrotag manyargs
+REGRESS_TARGETS	+= sameline spacing tag vert width
 TAG_TARGETS	 = tag
 LINT_TARGETS	 = broken double eof
 HTML_TARGETS	 = literal tag vert
 
-# groff-1.22.3 defects:
+# groff-1.23.0 defects:
 # - If .TP precedes .RE, the latter does not properly reset indentation.
 # - If the last line of the file is .TP, groff does not print a page footer.
 # - A blank line in .TP next line scope causes a blank line.
