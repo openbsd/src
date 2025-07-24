@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11.c,v 1.65 2025/07/24 05:44:55 djm Exp $ */
+/* $OpenBSD: ssh-pkcs11.c,v 1.66 2025/07/24 06:59:51 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  * Copyright (c) 2014 Pedro Martelletto. All rights reserved.
@@ -460,8 +460,7 @@ pkcs11_lookup_key(struct sshkey *key)
 
 /*
  * See:
- * http://www.rsasecurity.com/rsalabs/pkcs/pkcs-1/
- * ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-1/pkcs-1v2-1.asn
+ * https://datatracker.ietf.org/doc/html/rfc8017#section-9.2
  */
 
 /*
@@ -478,7 +477,6 @@ static const u_char id_sha1[] = {
 };
 
 /*
- * See http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/algorithms.html
  * id-sha256 OBJECT IDENTIFIER ::= { joint-iso-itu-t(2) country(16) us(840)
  *      organization(1) gov(101) csor(3) nistAlgorithm(4) hashAlgs(2)
  *      id-sha256(1) }
@@ -493,7 +491,6 @@ static const u_char id_sha256[] = {
 };
 
 /*
- * See http://csrc.nist.gov/groups/ST/crypto_apps_infra/csor/algorithms.html
  * id-sha512 OBJECT IDENTIFIER ::= { joint-iso-itu-t(2) country(16) us(840)
  *      organization(1) gov(101) csor(3) nistAlgorithm(4) hashAlgs(2)
  *      id-sha256(3) }
