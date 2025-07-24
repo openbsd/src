@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.383 2025/07/23 20:18:04 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.384 2025/07/24 23:30:04 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -119,6 +119,12 @@ struct pool socket_pool;
 struct pool sosplice_pool;
 struct taskq *sosplice_taskq;
 struct rwlock sosplice_lock = RWLOCK_INITIALIZER("sosplicelk");
+
+#define so_splicelen	so_sp->ssp_len
+#define so_splicemax	so_sp->ssp_max
+#define so_spliceidletv	so_sp->ssp_idletv
+#define so_spliceidleto	so_sp->ssp_idleto
+#define so_splicetask	so_sp->ssp_task
 #endif
 
 void
@@ -468,8 +474,8 @@ notsplicedback:
 		}
 		sbunlock(&so->so_rcv);
 
-		timeout_del_barrier(&so->so_sp->ssp_idleto);
-		task_del(sosplice_taskq, &so->so_sp->ssp_task);
+		timeout_del_barrier(&so->so_spliceidleto);
+		task_del(sosplice_taskq, &so->so_splicetask);
 		taskq_barrier(sosplice_taskq);
 
 		solock_shared(so);
@@ -1279,12 +1285,6 @@ sorflush(struct socket *so)
 
 #ifdef SOCKET_SPLICE
 
-#define so_splicelen	so_sp->ssp_len
-#define so_splicemax	so_sp->ssp_max
-#define so_idletv	so_sp->ssp_idletv
-#define so_idleto	so_sp->ssp_idleto
-#define so_splicetask	so_sp->ssp_task
-
 int
 sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 {
@@ -1365,24 +1365,16 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 		goto release;
 	}
 	if (so->so_sp == NULL) {
-		struct sosplice *so_sp;
-
-		so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
-		timeout_set_flags(&so_sp->ssp_idleto, soidle, so,
+		so->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
+		timeout_set_flags(&so->so_spliceidleto, soidle, so,
 		    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
-		task_set(&so_sp->ssp_task, sotask, so);
-
-		so->so_sp = so_sp;
+		task_set(&so->so_splicetask, sotask, so);
 	}
 	if (sosp->so_sp == NULL) {
-		struct sosplice *so_sp;
-
-		so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
-		timeout_set_flags(&so_sp->ssp_idleto, soidle, sosp,
+		sosp->so_sp = pool_get(&sosplice_pool, PR_WAITOK | PR_ZERO);
+		timeout_set_flags(&sosp->so_spliceidleto, soidle, sosp,
 		    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
-		task_set(&so_sp->ssp_task, sotask, sosp);
-
-		sosp->so_sp = so_sp;
+		task_set(&sosp->so_splicetask, sotask, sosp);
 	}
 	if (so->so_sp->ssp_socket || sosp->so_sp->ssp_soback) {
 		error = EBUSY;
@@ -1392,9 +1384,9 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	so->so_splicelen = 0;
 	so->so_splicemax = max;
 	if (tv)
-		so->so_idletv = *tv;
+		so->so_spliceidletv = *tv;
 	else
-		timerclear(&so->so_idletv);
+		timerclear(&so->so_spliceidletv);
 
 	/*
 	 * To prevent sorwakeup() calling somove() before this somove()
@@ -1450,7 +1442,7 @@ sounsplice(struct socket *so, struct socket *sosp, int freeing)
 	mtx_leave(&so->so_rcv.sb_mtx);
 
 	task_del(sosplice_taskq, &so->so_splicetask);
-	timeout_del(&so->so_idleto);
+	timeout_del(&so->so_spliceidleto);
 
 	/* Do not wakeup a socket that is about to be freed. */
 	if ((freeing & SOSP_FREEING_READ) == 0) {
@@ -1852,9 +1844,9 @@ somove(struct socket *so, int wait)
 		sounsplice(so, sosp, 0);
 		return (0);
 	}
-	if (timerisset(&so->so_idletv)) {
-		timeout_add_nsec(&so->so_idleto,
-		    TIMEVAL_TO_NSEC(&so->so_idletv));
+	if (timerisset(&so->so_spliceidletv)) {
+		timeout_add_nsec(&so->so_spliceidleto,
+		    TIMEVAL_TO_NSEC(&so->so_spliceidletv));
 	}
 	return (1);
 }
@@ -2201,7 +2193,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 
 			m->m_len = sizeof(off_t);
 			solock_shared(so);
-			len = so->so_sp ? so->so_sp->ssp_len : 0;
+			len = so->so_sp ? so->so_splicelen : 0;
 			sounlock_shared(so);
 			memcpy(mtod(m, off_t *), &len, sizeof(off_t));
 			break;
@@ -2545,15 +2537,13 @@ so_print(void *v,
 	if (so->so_sp != NULL) {
 		(*pr)("\tssp_socket: %p\n", so->so_sp->ssp_socket);
 		(*pr)("\tssp_soback: %p\n", so->so_sp->ssp_soback);
-		(*pr)("\tssp_len: %lld\n",
-		    (unsigned long long)so->so_sp->ssp_len);
-		(*pr)("\tssp_max: %lld\n",
-		    (unsigned long long)so->so_sp->ssp_max);
-		(*pr)("\tssp_idletv: %lld %ld\n", so->so_sp->ssp_idletv.tv_sec,
-		    so->so_sp->ssp_idletv.tv_usec);
-		(*pr)("\tssp_idleto: %spending (@%i)\n",
-		    timeout_pending(&so->so_sp->ssp_idleto) ? "" : "not ",
-		    so->so_sp->ssp_idleto.to_time);
+		(*pr)("\tssp_len: %lld\n", so->so_splicelen);
+		(*pr)("\tssp_max: %lld\n", so->so_splicemax);
+		(*pr)("\tssp_idletv: %lld %ld\n", so->so_spliceidletv.tv_sec,
+		    so->so_spliceidletv.tv_usec);
+		(*pr)("\tssp_idleto: %spending (@%d)\n",
+		    timeout_pending(&so->so_spliceidleto) ? "" : "not ",
+		    so->so_spliceidleto.to_time);
 	}
 
 	(*pr)("so_rcv:\n");
