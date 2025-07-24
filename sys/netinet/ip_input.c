@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.423 2025/07/23 20:53:55 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.424 2025/07/24 22:31:19 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -86,8 +86,8 @@
  * Locks used to protect global variables in this file:
  *	I	immutable after creation
  *	N	net lock
+ *	Q	ipq_mutex
  *	a	atomic operations
- *	q	ipq_mutex
  */
 
 /* values controllable via sysctl */
@@ -104,11 +104,11 @@ int	ip_directedbcast = 0;			/* [a] */
 struct mutex	ipq_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 /* IP reassembly queue */
-LIST_HEAD(, ipq) ipq;				/* [q] */
+LIST_HEAD(, ipq) ipq;				/* [Q] */
 
 /* Keep track of memory used for reassembly */
 int	ip_maxqueue = 300;			/* [a] */
-int	ip_frags = 0;				/* [q] */
+int	ip_frags = 0;				/* [Q] */
 
 #ifndef SMALL_KERNEL
 const struct sysctl_bounded_args ipctl_vars[] = {
