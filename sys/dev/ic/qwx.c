@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.78 2025/07/24 13:24:58 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.79 2025/07/24 13:26:54 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -968,8 +968,10 @@ qwx_newstate_task(void *arg)
 			}
 			/* FALLTHROUGH */
 		case IEEE80211_S_SCAN:
-			if (nstate < IEEE80211_S_SCAN)
+			if (sc->scan.state == ATH11K_SCAN_RUNNING)
 				qwx_scan_abort(sc);
+			if (nstate == IEEE80211_S_SCAN)
+				ieee80211_free_allnodes(ic, 0);
 			break;
 		case IEEE80211_S_INIT:
 			break;
