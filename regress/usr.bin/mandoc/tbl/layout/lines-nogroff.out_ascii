@@ -6,8 +6,8 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      vline top left:
 
-     |11   12
-      21   22
+     | 11   12
+       21   22
 
      hline and vline top left:
 
@@ -16,8 +16,8 @@ DDEESSCCRRIIPPTTIIOONN
 
      vline and hline top left:
 
-     +---- 12
-      21   22
+     +----- 12
+       21   22
 
      vline top:
 
@@ -56,8 +56,8 @@ DDEESSCCRRIIPPTTIIOONN
 
      double vline top left:
 
-     |11   12
-      21   22
+     | 11   12
+       21   22
 
      hline and double vline top left:
 
@@ -66,8 +66,8 @@ DDEESSCCRRIIPPTTIIOONN
 
      double vline and hline top left:
 
-     +---- 12
-      21   22
+     +----- 12
+       21   22
 
      double vline top:
 

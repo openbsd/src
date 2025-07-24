@@ -5,9 +5,9 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
      normal text
-                              +----------------------+
-                              |northwest   northeast |
-                              |southwest   southeast |
-                              +----------------------+
+                            +-----------------------+
+                            | northwest   northeast |
+                            | southwest   southeast |
+                            +-----------------------+
 
 OpenBSD                        January 31, 2019             TBL-CENTER-MDOC(1)

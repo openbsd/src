@@ -7,25 +7,25 @@ DDEESSCCRRIIPPTTIIOONN
      normal text before table
      table without box
      normal text after table without box
-     +---------------+
-     |table with box |
-     +---------------+
+     +----------------+
+     | table with box |
+     +----------------+
      normal text after table with box
-     +----------------------+
-     +----------------------+
-     |table with double box |
-     +----------------------+
-     +----------------------+
+     +-----------------------+
+     +-----------------------+
+     | table with double box |
+     +-----------------------+
+     +-----------------------+
      normal text after table with double box
      table without box
-     +---------------+
-     |table with box |
-     +---------------+
-     +----------------------+
-     +----------------------+
-     |table with double box |
-     +----------------------+
-     +----------------------+
+     +----------------+
+     | table with box |
+     +----------------+
+     +-----------------------+
+     +-----------------------+
+     | table with double box |
+     +-----------------------+
+     +-----------------------+
      table without box
 
 OpenBSD                         August 28, 2022                  TBL-VSPACE(1)
