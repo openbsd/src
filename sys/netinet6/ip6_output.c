@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.302 2025/07/24 19:49:08 mvs Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.303 2025/07/25 20:04:47 mvs Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -529,7 +529,8 @@ reroute:
 			 * above, will be forwarded by the ip6_input() routine,
 			 * if necessary.
 			 */
-			if (ip6_mforwarding && ip6_mrouter[ifp->if_rdomain] &&
+			if (atomic_load_int(&ip6_mforwarding) &&
+			    ip6_mrouter[ifp->if_rdomain] &&
 			    (flags & IPV6_FORWARDING) == 0) {
 				if (ip6_mforward(ip6, ifp, m, flags) != 0) {
 					m_freem(m);

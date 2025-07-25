@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.289 2025/07/24 22:57:24 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.290 2025/07/25 20:04:47 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -477,7 +477,8 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp,
 			ours = 1;
 
 #ifdef MROUTING
-		if (ip6_mforwarding && ip6_mrouter[ifp->if_rdomain]) {
+		if (atomic_load_int(&ip6_mforwarding) &&
+		    ip6_mrouter[ifp->if_rdomain]) {
 			int error;
 
 			nxt = ip6_hbhchcheck(&m, offp, &ours, flags);
@@ -1455,10 +1456,10 @@ const struct sysctl_bounded_args ipv6ctl_vars_unlocked[] = {
 	{ IPV6CTL_DEFMCASTHLIM, &ip6_defmcasthlim, 0, 255 },
 	{ IPV6CTL_USE_DEPRECATED, &ip6_use_deprecated, 0, 1 },
 	{ IPV6CTL_MAXFRAGS, &ip6_maxfrags, 0, 1000 },
+	{ IPV6CTL_MFORWARDING, &ip6_mforwarding, 0, 1 },
 };
 
 const struct sysctl_bounded_args ipv6ctl_vars[] = {
-	{ IPV6CTL_MFORWARDING, &ip6_mforwarding, 0, 1 },
 	{ IPV6CTL_MCAST_PMTU, &ip6_mcast_pmtu, 0, 1 },
 	{ IPV6CTL_NEIGHBORGCTHRESH, &ip6_neighborgcthresh, -1, 5 * 2048 },
 	{ IPV6CTL_MAXDYNROUTES, &ip6_maxdynroutes, -1, 5 * 4096 },
@@ -1575,6 +1576,7 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_DEFMCASTHLIM:
 	case IPV6CTL_USE_DEPRECATED:
 	case IPV6CTL_MAXFRAGS:
+	case IPV6CTL_MFORWARDING:
 		return (sysctl_bounded_arr(
 		    ipv6ctl_vars_unlocked, nitems(ipv6ctl_vars_unlocked),
 		    name, namelen, oldp, oldlenp, newp, newlen));
