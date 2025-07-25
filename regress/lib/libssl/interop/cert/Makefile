@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2025/07/09 17:48:02 tb Exp $
+# $OpenBSD: Makefile,v 1.16 2025/07/25 16:33:15 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 3.x.  Create client and server certificates
@@ -7,12 +7,6 @@
 # and check the result of certificate verification.
 
 LIBRARIES =		libressl
-.if exists(/usr/local/bin/eopenssl33)
-LIBRARIES +=		openssl33
-.endif
-.if exists(/usr/local/bin/eopenssl34)
-LIBRARIES +=		openssl34
-.endif
 .if exists(/usr/local/bin/eopenssl35)
 LIBRARIES +=		openssl35
 .endif

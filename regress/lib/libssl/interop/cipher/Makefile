@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2025/07/09 17:48:02 tb Exp $
+# $OpenBSD: Makefile,v 1.19 2025/07/25 16:33:15 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or 3.0.  Create lists of supported ciphers
@@ -7,12 +7,6 @@
 # have used correct cipher by grepping in their session print out.
 
 LIBRARIES =		libressl
-.if exists(/usr/local/bin/eopenssl33)
-LIBRARIES +=		openssl33
-.endif
-.if exists(/usr/local/bin/eopenssl34)
-LIBRARIES +=		openssl34
-.endif
 .if exists(/usr/local/bin/eopenssl35)
 LIBRARIES +=		openssl35
 .endif
@@ -44,9 +38,7 @@ client-${clib}-server-${slib}.ciphers: \
 	uniq -d <$@.tmp >$@
 	# we are only interested in ciphers supported by libressl
 	sort $@ client-libressl.ciphers >$@.tmp
-. if "${clib}" == "openssl33" || "${slib}" == "openssl33" || \
-	"${clib}" == "openssl34" || "${slib}" == "openssl34" || \
-	"${clib}" == "openssl35" || "${slib}" == "openssl35"
+. if "${clib}" == "openssl35" || "${slib}" == "openssl35"
 	# OpenSSL's SSL_CTX_set_cipher_list doesn't accept TLSv1.3 ciphers
 	sed -i '/^TLS_/d' $@.tmp
 . endif
@@ -74,8 +66,6 @@ regress: ciphers.mk
 .endif
 
 LEVEL_libressl =
-LEVEL_openssl33 = ,@SECLEVEL=0
-LEVEL_openssl34 = ,@SECLEVEL=0
 LEVEL_openssl35 = ,@SECLEVEL=0
 
 .for clib in ${LIBRARIES}
@@ -137,7 +127,7 @@ check-cipher-${cipher}-client-${clib}-server-${slib}: \
 . endif
 . if "${clib}" == "libressl"
 	# libressl client may prefer chacha-poly if aes-ni is not supported
-.  if "${slib}" == "openssl33" || "${slib}" == "openssl34" || "${slib}" == "openssl35"
+.  if "${slib}" == "openssl35"
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
 .  else
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out

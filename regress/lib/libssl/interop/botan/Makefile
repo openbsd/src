@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2025/07/09 17:48:02 tb Exp $
+# $OpenBSD: Makefile,v 1.12 2025/07/25 16:33:15 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -20,12 +20,6 @@ CXX = /usr/local/bin/eg++
 .endif
 
 LIBRARIES =		libressl
-.if exists(/usr/local/bin/eopenssl33)
-LIBRARIES +=		openssl33
-.endif
-.if exists(/usr/local/bin/eopenssl34)
-LIBRARIES +=		openssl34
-.endif
 .if exists(/usr/local/bin/eopenssl35)
 LIBRARIES +=		openssl35
 .endif
