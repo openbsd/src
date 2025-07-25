@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.152 2025/07/24 21:35:53 mvs Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.153 2025/07/25 22:24:06 mvs Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -125,7 +125,7 @@ int mcast6_debug = 1;
 #endif
 
 int ip6_mdq(struct mbuf *, struct ifnet *, struct rtentry *, int);
-void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *, int);
+void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *, int, int);
 
 /*
  * Globals.  All but ip6_mrouter, ip6_mrtproto and mrt6stat could be static,
@@ -1078,7 +1078,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 	struct mif6 *m6, *mifp = (struct mif6 *)ifp->if_mcast6;
 	struct mf6c *mf6c = (struct mf6c *)rt->rt_llinfo;
 	struct ifnet *ifn;
-	int plen = m->m_pkthdr.len;
+	int plen = m->m_pkthdr.len, ip6_mcast_pmtu_local;
 
 	if (mifp == NULL || mf6c == NULL) {
 		rtfree(rt);
@@ -1111,6 +1111,8 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 	 * For each mif, forward a copy of the packet if there are group
 	 * members downstream on the interface.
 	 */
+	ip6_mcast_pmtu_local = atomic_load_int(&ip6_mcast_pmtu);
+
 	do {
 		/* Don't consider non multicast routes. */
 		if (ISSET(rt->rt_flags, RTF_HOST | RTF_MULTICAST) !=
@@ -1160,7 +1162,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 		m6->m6_pkt_out++;
 		m6->m6_bytes_out += plen;
 
-		phyint_send6(ifn, ip6, m, flags);
+		phyint_send6(ifn, ip6, m, flags, ip6_mcast_pmtu_local);
 		if_put(ifn);
 	} while ((rt = rtable_iterate(rt)) != NULL);
 
@@ -1168,7 +1170,8 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int flags)
 }
 
 void
-phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m, int flags)
+phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m,
+    int flags, int mcast_pmtu)
 {
 	struct mbuf *mb_copy;
 	struct sockaddr_in6 *dst6, sin6;
@@ -1228,7 +1231,7 @@ phyint_send6(struct ifnet *ifp, struct ip6_hdr *ip6, struct mbuf *m, int flags)
 		dst6->sin6_addr = ip6->ip6_dst;
 		error = ifp->if_output(ifp, mb_copy, sin6tosa(dst6), NULL);
 	} else {
-		if (ip6_mcast_pmtu)
+		if (mcast_pmtu)
 			icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0,
 			    ifp->if_mtu);
 		else {
