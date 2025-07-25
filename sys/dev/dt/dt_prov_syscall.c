@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_syscall.c,v 1.9 2024/04/06 11:18:02 mpi Exp $ */
+/*	$OpenBSD: dt_prov_syscall.c,v 1.10 2025/07/25 05:18:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -75,7 +75,7 @@ dt_prov_syscall_init(void)
 		snprintf(sysnb, len + 1, "sys%%%u", i);
 		dtp = dt_dev_alloc_probe(sysnb, "entry", &dt_prov_syscall);
 		if (dtp == NULL) {
-			free(sysnb, M_DT, len);
+			free(sysnb, M_DT, len + 1);
 			break;
 		}
 		dtp->dtp_nargs = sysent[i].sy_narg;
