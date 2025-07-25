@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.384 2025/07/24 23:30:04 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.385 2025/07/25 08:58:44 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1450,7 +1450,7 @@ sounsplice(struct socket *so, struct socket *sosp, int freeing)
 
 		solock_shared(so);
 		mtx_enter(&so->so_rcv.sb_mtx);
-		readable = soreadable(so);
+		readable = so->so_qlen || soreadable(so);
 		mtx_leave(&so->so_rcv.sb_mtx);
 		if (readable)
 			sorwakeup(so);

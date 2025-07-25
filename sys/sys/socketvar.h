@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.158 2025/04/08 15:31:22 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.159 2025/07/25 08:58:44 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -387,7 +387,7 @@ soreadable(struct socket *so)
 	soassertlocked_readonly(so);
 	if (isspliced(so))
 		return 0;
-	return (so->so_rcv.sb_state & SS_CANTRCVMORE) || so->so_qlen ||
+	return (so->so_rcv.sb_state & SS_CANTRCVMORE) ||
 	    so->so_error || so->so_rcv.sb_cc >= so->so_rcv.sb_lowat;
 }
 
