@@ -2620,7 +2620,6 @@
 ./usr/share/man/man3/getaddrinfo.3
 ./usr/share/man/man3/getbsize.3
 ./usr/share/man/man3/getc.3
-./usr/share/man/man3/getc_unlocked.3
 ./usr/share/man/man3/getcwd.3
 ./usr/share/man/man3/getdelim.3
 ./usr/share/man/man3/getdiskbyname.3
@@ -2847,10 +2846,7 @@
 ./usr/share/man/man3/pthread_key_delete.3
 ./usr/share/man/man3/pthread_kill.3
 ./usr/share/man/man3/pthread_main_np.3
-./usr/share/man/man3/pthread_mutex_destroy.3
 ./usr/share/man/man3/pthread_mutex_init.3
-./usr/share/man/man3/pthread_mutex_lock.3
-./usr/share/man/man3/pthread_mutex_unlock.3
 ./usr/share/man/man3/pthread_mutexattr.3
 ./usr/share/man/man3/pthread_once.3
 ./usr/share/man/man3/pthread_rwlock_init.3
@@ -2872,7 +2868,6 @@
 ./usr/share/man/man3/pthreads.3
 ./usr/share/man/man3/ptsname.3
 ./usr/share/man/man3/putc.3
-./usr/share/man/man3/putc_unlocked.3
 ./usr/share/man/man3/putwc.3
 ./usr/share/man/man3/pw_dup.3
 ./usr/share/man/man3/pw_init.3
