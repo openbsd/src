@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.292 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.293 2025/07/26 01:16:59 mvs Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -729,6 +729,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	struct llinfo_nd6 *ln;
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ifa6;
+	int ip6_neighborgcthresh_local;
 
 	if (ISSET(rt->rt_flags, RTF_GATEWAY|RTF_MULTICAST|RTF_MPLS))
 		return;
@@ -829,8 +830,11 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		 * cause re-entering rtable related routines triggering
 		 * lock-order-reversal problems.
 		 */
-		if (ip6_neighborgcthresh >= 0 &&
-		    nd6_inuse >= ip6_neighborgcthresh) {
+		ip6_neighborgcthresh_local =
+		    atomic_load_int(&ip6_neighborgcthresh);
+
+		if (ip6_neighborgcthresh_local >= 0 &&
+		    nd6_inuse >= ip6_neighborgcthresh_local) {
 			int i;
 
 			for (i = 0; i < 10; i++) {
