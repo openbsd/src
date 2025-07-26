@@ -1,13 +1,11 @@
-# $OpenBSD: Makefile,v 1.8 2017/03/08 22:53:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.9 2025/07/26 12:32:01 schwarze Exp $
 
 REGRESS_TARGETS	 = badsec case dupe fourargs late
 REGRESS_TARGETS	+= missing noarg nobody nosec order
 LINT_TARGETS	 = badsec case dupe fourargs late
 LINT_TARGETS	+= missing noarg nobody nosec order
 
-SKIP_GROFF	 = badsec nobody
-SKIP_ASCII	 = badsec
-SKIP_MARKDOWN	?= badsec
+SKIP_GROFF	 = nobody
 
 # When the section is missing from the man(7) .TH title line,
 # empty parentheses are shown in the page header.
