@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.309 2025/06/30 19:52:19 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.310 2025/07/26 08:28:26 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2719,7 +2719,7 @@ post_dd(POST_ARGS)
 		mandoc_msg(MANDOCERR_PROLOG_ORDER,
 		    n->line, n->pos, "Dd after Os");
 
-	if (mdoc->quick && n != NULL)
+	if (mdoc->quick)
 		mdoc->meta.date = mandoc_strdup("");
 	else
 		mdoc->meta.date = mandoc_normdate(n->child, n);
