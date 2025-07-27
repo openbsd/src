@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.34 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.35 2025/07/27 07:16:20 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -484,35 +484,6 @@ CMS_add1_signer(CMS_ContentInfo *cms, X509 *signer, EVP_PKEY *pk,
 }
 LCRYPTO_ALIAS(CMS_add1_signer);
 
-static int
-cms_add1_signingTime(CMS_SignerInfo *si, ASN1_TIME *t)
-{
-	ASN1_TIME *tt;
-	int r = 0;
-
-	if (t)
-		tt = t;
-	else
-		tt = X509_gmtime_adj(NULL, 0);
-
-	if (!tt)
-		goto merr;
-
-	if (CMS_signed_add1_attr_by_NID(si, NID_pkcs9_signingTime,
-			                        tt->type, tt, -1) <= 0)
-		goto merr;
-
-	r = 1;
-
- merr:
-	if (!t)
-		ASN1_TIME_free(tt);
-	if (!r)
-		CMSerror(ERR_R_MALLOC_FAILURE);
-
-	return r;
-}
-
 EVP_PKEY_CTX *
 CMS_SignerInfo_get0_pkey_ctx(CMS_SignerInfo *si)
 {
@@ -778,6 +749,7 @@ cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain)
 int
 CMS_SignerInfo_sign(CMS_SignerInfo *si)
 {
+	ASN1_TIME *at = NULL;
 	const EVP_MD *md;
 	unsigned char *buf = NULL, *sig = NULL;
 	int buf_len = 0;
@@ -788,7 +760,12 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 		goto err;
 
 	if (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
-		if (!cms_add1_signingTime(si, NULL))
+		if ((at = X509_gmtime_adj(NULL, 0)) == NULL) {
+			CMSerror(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		if (!CMS_signed_add1_attr_by_NID(si, NID_pkcs9_signingTime,
+		    at->type, at, -1))
 			goto err;
 	}
 
@@ -828,6 +805,7 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 	ret = 1;
 
  err:
+	ASN1_TIME_free(at);
 	(void)EVP_MD_CTX_reset(si->mctx);
 	freezero(buf, buf_len);
 	freezero(sig, sig_len);
