@@ -1,4 +1,4 @@
-/* $OpenBSD: des_fcrypt.c,v 1.4 2024/08/31 16:22:18 jsing Exp $ */
+/* $OpenBSD: des_fcrypt.c,v 1.5 2025/07/27 13:26:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,8 +90,8 @@ fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
 {
 	DES_LONG l, r, t, u;
 	DES_LONG *s;
-	int j;
 	DES_LONG E0, E1;
+	int i, j;
 
 	l = 0;
 	r = 0;
@@ -101,32 +101,12 @@ fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
 	E1 = Eswap1;
 
 	for (j = 0; j < 25; j++) {
-#ifndef DES_UNROLL
-		int i;
-
-		for (i = 0; i < 32; i += 4) {
-			D_ENCRYPT(l, r, i + 0); /*  1 */
-			D_ENCRYPT(r, l, i + 2); /*  2 */
+		for (i = 0; i < 32; i += 8) {
+			D_ENCRYPT(l, r, i + 0);
+			D_ENCRYPT(r, l, i + 2);
+			D_ENCRYPT(l, r, i + 4);
+			D_ENCRYPT(r, l, i + 6);
 		}
-#else
-		D_ENCRYPT(l, r, 0); /*  1 */
-		D_ENCRYPT(r, l, 2); /*  2 */
-		D_ENCRYPT(l, r, 4); /*  3 */
-		D_ENCRYPT(r, l, 6); /*  4 */
-		D_ENCRYPT(l, r, 8); /*  5 */
-		D_ENCRYPT(r, l, 10); /*  6 */
-		D_ENCRYPT(l, r, 12); /*  7 */
-		D_ENCRYPT(r, l, 14); /*  8 */
-		D_ENCRYPT(l, r, 16); /*  9 */
-		D_ENCRYPT(r, l, 18); /*  10 */
-		D_ENCRYPT(l, r, 20); /*  11 */
-		D_ENCRYPT(r, l, 22); /*  12 */
-		D_ENCRYPT(l, r, 24); /*  13 */
-		D_ENCRYPT(r, l, 26); /*  14 */
-		D_ENCRYPT(l, r, 28); /*  15 */
-		D_ENCRYPT(r, l, 30); /*  16 */
-#endif
-
 		t = l;
 		l = r;
 		r = t;

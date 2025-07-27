@@ -1,4 +1,4 @@
-/* $OpenBSD: des_enc.c,v 1.20 2024/08/31 16:17:13 jsing Exp $ */
+/* $OpenBSD: des_enc.c,v 1.21 2025/07/27 13:26:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -210,10 +210,8 @@ void
 DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
 	DES_LONG l, r, t, u;
-#ifndef DES_UNROLL
-	int i;
-#endif
 	DES_LONG *s;
+	int i;
 
 	r = data[0];
 	l = data[1];
@@ -231,56 +229,21 @@ DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 	l = ROTATE(l, 29) & 0xffffffffL;
 
 	s = ks->ks->deslong;
-	/* I don't know if it is worth the effort of loop unrolling the
-	 * inner loop */
+
 	if (enc) {
-#ifdef DES_UNROLL
-		D_ENCRYPT(l, r, 0); /*  1 */
-		D_ENCRYPT(r, l, 2); /*  2 */
-		D_ENCRYPT(l, r, 4); /*  3 */
-		D_ENCRYPT(r, l, 6); /*  4 */
-		D_ENCRYPT(l, r, 8); /*  5 */
-		D_ENCRYPT(r, l, 10); /*  6 */
-		D_ENCRYPT(l, r, 12); /*  7 */
-		D_ENCRYPT(r, l, 14); /*  8 */
-		D_ENCRYPT(l, r, 16); /*  9 */
-		D_ENCRYPT(r, l, 18); /*  10 */
-		D_ENCRYPT(l, r, 20); /*  11 */
-		D_ENCRYPT(r, l, 22); /*  12 */
-		D_ENCRYPT(l, r, 24); /*  13 */
-		D_ENCRYPT(r, l, 26); /*  14 */
-		D_ENCRYPT(l, r, 28); /*  15 */
-		D_ENCRYPT(r, l, 30); /*  16 */
-#else
-		for (i = 0; i < 32; i += 4) {
-			D_ENCRYPT(l, r, i + 0); /*  1 */
-			D_ENCRYPT(r, l, i + 2); /*  2 */
+		for (i = 0; i < 32; i += 8) {
+			D_ENCRYPT(l, r, i + 0);
+			D_ENCRYPT(r, l, i + 2);
+			D_ENCRYPT(l, r, i + 4);
+			D_ENCRYPT(r, l, i + 6);
 		}
-#endif
 	} else {
-#ifdef DES_UNROLL
-		D_ENCRYPT(l, r, 30); /* 16 */
-		D_ENCRYPT(r, l, 28); /* 15 */
-		D_ENCRYPT(l, r, 26); /* 14 */
-		D_ENCRYPT(r, l, 24); /* 13 */
-		D_ENCRYPT(l, r, 22); /* 12 */
-		D_ENCRYPT(r, l, 20); /* 11 */
-		D_ENCRYPT(l, r, 18); /* 10 */
-		D_ENCRYPT(r, l, 16); /*  9 */
-		D_ENCRYPT(l, r, 14); /*  8 */
-		D_ENCRYPT(r, l, 12); /*  7 */
-		D_ENCRYPT(l, r, 10); /*  6 */
-		D_ENCRYPT(r, l, 8); /*  5 */
-		D_ENCRYPT(l, r, 6); /*  4 */
-		D_ENCRYPT(r, l, 4); /*  3 */
-		D_ENCRYPT(l, r, 2); /*  2 */
-		D_ENCRYPT(r, l, 0); /*  1 */
-#else
-		for (i = 30; i > 0; i -= 4) {
-			D_ENCRYPT(l, r, i - 0); /* 16 */
-			D_ENCRYPT(r, l, i - 2); /* 15 */
+		for (i = 32; i > 0; i -= 8) {
+			D_ENCRYPT(l, r, i - 2);
+			D_ENCRYPT(r, l, i - 4);
+			D_ENCRYPT(l, r, i - 6);
+			D_ENCRYPT(r, l, i - 8);
 		}
-#endif
 	}
 
 	/* rotate and clear the top bits on machines with 8byte longs */
@@ -298,10 +261,8 @@ void
 DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 {
 	DES_LONG l, r, t, u;
-#ifndef DES_UNROLL
-	int i;
-#endif
 	DES_LONG *s;
+	int i;
 
 	r = data[0];
 	l = data[1];
@@ -320,53 +281,19 @@ DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 	/* I don't know if it is worth the effort of loop unrolling the
 	 * inner loop */
 	if (enc) {
-#ifdef DES_UNROLL
-		D_ENCRYPT(l, r, 0); /*  1 */
-		D_ENCRYPT(r, l, 2); /*  2 */
-		D_ENCRYPT(l, r, 4); /*  3 */
-		D_ENCRYPT(r, l, 6); /*  4 */
-		D_ENCRYPT(l, r, 8); /*  5 */
-		D_ENCRYPT(r, l, 10); /*  6 */
-		D_ENCRYPT(l, r, 12); /*  7 */
-		D_ENCRYPT(r, l, 14); /*  8 */
-		D_ENCRYPT(l, r, 16); /*  9 */
-		D_ENCRYPT(r, l, 18); /*  10 */
-		D_ENCRYPT(l, r, 20); /*  11 */
-		D_ENCRYPT(r, l, 22); /*  12 */
-		D_ENCRYPT(l, r, 24); /*  13 */
-		D_ENCRYPT(r, l, 26); /*  14 */
-		D_ENCRYPT(l, r, 28); /*  15 */
-		D_ENCRYPT(r, l, 30); /*  16 */
-#else
-		for (i = 0; i < 32; i += 4) {
-			D_ENCRYPT(l, r, i + 0); /*  1 */
-			D_ENCRYPT(r, l, i + 2); /*  2 */
+		for (i = 0; i < 32; i += 8) {
+			D_ENCRYPT(l, r, i + 0);
+			D_ENCRYPT(r, l, i + 2);
+			D_ENCRYPT(l, r, i + 4);
+			D_ENCRYPT(r, l, i + 6);
 		}
-#endif
 	} else {
-#ifdef DES_UNROLL
-		D_ENCRYPT(l, r, 30); /* 16 */
-		D_ENCRYPT(r, l, 28); /* 15 */
-		D_ENCRYPT(l, r, 26); /* 14 */
-		D_ENCRYPT(r, l, 24); /* 13 */
-		D_ENCRYPT(l, r, 22); /* 12 */
-		D_ENCRYPT(r, l, 20); /* 11 */
-		D_ENCRYPT(l, r, 18); /* 10 */
-		D_ENCRYPT(r, l, 16); /*  9 */
-		D_ENCRYPT(l, r, 14); /*  8 */
-		D_ENCRYPT(r, l, 12); /*  7 */
-		D_ENCRYPT(l, r, 10); /*  6 */
-		D_ENCRYPT(r, l, 8); /*  5 */
-		D_ENCRYPT(l, r, 6); /*  4 */
-		D_ENCRYPT(r, l, 4); /*  3 */
-		D_ENCRYPT(l, r, 2); /*  2 */
-		D_ENCRYPT(r, l, 0); /*  1 */
-#else
-		for (i = 30; i > 0; i -= 4) {
-			D_ENCRYPT(l, r, i - 0); /* 16 */
-			D_ENCRYPT(r, l, i - 2); /* 15 */
+		for (i = 32; i > 0; i -= 8) {
+			D_ENCRYPT(l, r, i - 2);
+			D_ENCRYPT(r, l, i - 4);
+			D_ENCRYPT(l, r, i - 6);
+			D_ENCRYPT(r, l, i - 8);
 		}
-#endif
 	}
 	/* rotate and clear the top bits on machines with 8byte longs */
 	data[0] = ROTATE(l, 3) & 0xffffffffL;
