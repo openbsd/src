@@ -21,15 +21,3 @@
 #define RC4_CHUNK unsigned long
 #endif
 #endif
-
-#if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
-#define CONFIG_HEADER_DES_LOCL_H
-#ifndef DES_DEFAULT_OPTIONS
-/* Unroll the inner loop, this sometimes helps, sometimes hinders.
- * Very much CPU dependent */
-#ifndef DES_UNROLL
-#undef DES_UNROLL
-#endif
-
-#endif /* DES_DEFAULT_OPTIONS */
-#endif /* HEADER_DES_LOCL_H */
