@@ -1,0 +1,12 @@
+SH-FONT(1)                  General Commands Manual                 SH-FONT(1)
+
+NNAAMMEE
+     SH-font - font changes in section headers
+
+FFOONNTT _EE_SS_CC_AA_PP_EE_SS IINN AA SECTION HHEEAADDEERR
+     some text
+
+   FFoonntt _ee_ss_cc_aa_pp_ee_ss iinn aa subsection hheeaaddeerr
+     some text
+
+OpenBSD                          July 27, 2025                      SH-FONT(1)

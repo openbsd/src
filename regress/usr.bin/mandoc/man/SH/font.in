@@ -1,0 +1,8 @@
+.\" $OpenBSD: font.in,v 1.1 2025/07/27 15:31:02 schwarze Exp $
+.TH SH-FONT 1 "July 27, 2025"
+.SH NAME
+SH-font \- font changes in section headers
+.SH FONT \fIESCAPES\fP IN A \fRSECTION\fB HEADER
+some text
+.SS Font \fIescapes\fB in a \fRsubsection\fP header
+some text
