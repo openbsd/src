@@ -1,0 +1,15 @@
+.\" $OpenBSD: font.in,v 1.1 2025/07/27 15:38:55 schwarze Exp $
+.Dd $Mdocdate: July 27 2025 $
+.Dt SH-FONT 1
+.Os
+.Sh NAME
+.Nm Sh-font
+.Nd font changes in section headers
+.Sh FONT \fIESCAPES\fP IN A \fRSECTION\fP HEADER
+some text
+.Sh FONT Em MACROS Sy IN A No SECTION Sy HEADER
+some text
+.Ss Font \fIescapes\fP in a \fRsubsection\fP header
+some text
+.Ss Font Em macros Sy in a No subsection Sy header
+some text
