@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_bootmgr.c,v 1.5 2025/04/06 10:42:27 kettenis Exp $	*/
+/*	$OpenBSD: efi_bootmgr.c,v 1.6 2025/07/27 20:00:26 krw Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -121,8 +121,8 @@ create_efi_load_option(int gpart, struct gpt_partition *gp,
 	dp->Length[0] = sizeof(HARDDRIVE_DEVICE_PATH);
 	hd = (HARDDRIVE_DEVICE_PATH *)dp;
 	hd->PartitionNumber = gpart + 1;
-	hd->PartitionStart = htole64(gp->gp_lba_start);
-	hd->PartitionSize = htole64(gp->gp_lba_end - gp->gp_lba_start + 1);
+	hd->PartitionStart = gp->gp_lba_start;
+	hd->PartitionSize = gp->gp_lba_end - gp->gp_lba_start + 1;
 	memcpy(hd->Signature, &gp->gp_guid, sizeof(hd->Signature));
 	hd->MBRType = MBR_TYPE_GPT;
 	hd->SignatureType = SIGNATURE_TYPE_GUID;
