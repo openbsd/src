@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.60 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.61 2025/07/27 07:06:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1208,43 +1208,51 @@ PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK_OF(X509_ATTRIBUTE) *sk)
 LCRYPTO_ALIAS(PKCS7_set_attributes);
 
 static int
-add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype, void *value)
+add_attribute(STACK_OF(X509_ATTRIBUTE) **in_sk, int nid, int atrtype, void *value)
 {
-	X509_ATTRIBUTE *attr = NULL;
+	STACK_OF(X509_ATTRIBUTE) *sk;
+	X509_ATTRIBUTE *old_attr = NULL, *new_attr = NULL;
+	int need_pop = 0;
+	int i;
 
-	if (*sk == NULL) {
-		*sk = sk_X509_ATTRIBUTE_new_null();
-		if (*sk == NULL)
-			return 0;
-new_attrib:
-		if (!(attr = X509_ATTRIBUTE_create(nid, atrtype, value)))
-			return 0;
-		if (!sk_X509_ATTRIBUTE_push(*sk, attr)) {
-			X509_ATTRIBUTE_free(attr);
-			return 0;
-		}
-	} else {
-		int i;
+	if ((sk = *in_sk) == NULL)
+		sk = sk_X509_ATTRIBUTE_new_null();
+	if (sk == NULL)
+		goto err;
 
-		for (i = 0; i < sk_X509_ATTRIBUTE_num(*sk); i++) {
-			attr = sk_X509_ATTRIBUTE_value(*sk, i);
-			if (OBJ_obj2nid(attr->object) == nid) {
-				X509_ATTRIBUTE_free(attr);
-				attr = X509_ATTRIBUTE_create(nid, atrtype,
-				    value);
-				if (attr == NULL)
-					return 0;
-				if (!sk_X509_ATTRIBUTE_set(*sk, i, attr)) {
-					X509_ATTRIBUTE_free(attr);
-					return 0;
-				}
-				goto end;
-			}
-		}
-		goto new_attrib;
+	/* Replace an already existing attribute with the given nid. */
+	for (i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
+		old_attr = sk_X509_ATTRIBUTE_value(sk, i);
+		if(OBJ_obj2nid(old_attr->object) == nid)
+			break;
 	}
-end:
+
+	/* If there is none, make room for the new one, so _set() succeeds. */
+	if (i == sk_X509_ATTRIBUTE_num(sk)) {
+		old_attr = NULL;
+		if (sk_X509_ATTRIBUTE_push(sk, NULL) <= 0)
+			goto err;
+		need_pop = 1;
+	}
+
+	/* On success, new_attr owns value. */
+	if ((new_attr = X509_ATTRIBUTE_create(nid, atrtype, value)) == NULL)
+		goto err;
+
+	X509_ATTRIBUTE_free(old_attr);
+	(void)sk_X509_ATTRIBUTE_set(sk, i, new_attr);
+
+	*in_sk = sk;
+
 	return 1;
+
+ err:
+	if (need_pop)
+		(void)sk_X509_ATTRIBUTE_pop(sk);
+	if (*in_sk != sk)
+		sk_X509_ATTRIBUTE_pop_free(sk, X509_ATTRIBUTE_free);
+
+	return 0;
 }
 
 int
