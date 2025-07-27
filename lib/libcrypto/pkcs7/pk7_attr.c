@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.16 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.17 2025/07/27 07:11:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -63,6 +63,7 @@
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 
+#include "asn1_local.h"
 #include "err_local.h"
 
 int
@@ -148,12 +149,30 @@ LCRYPTO_ALIAS(PKCS7_add_attrib_content_type);
 int
 PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t)
 {
-	if (!t && !(t = X509_gmtime_adj(NULL, 0))) {
+	ASN1_TIME *tm;
+	int ret = 0;
+
+	if ((tm = t) == NULL)
+		tm = X509_gmtime_adj(NULL, 0);
+	if (tm == NULL) {
 		PKCS7error(ERR_R_MALLOC_FAILURE);
-		return 0;
+		goto err;
 	}
-	return PKCS7_add_signed_attribute(si, NID_pkcs9_signingTime,
-	    V_ASN1_UTCTIME, t);
+
+	/* RFC 5652, section 11.3 - UTCTime for times between 1950 and 2050. */
+	if (ASN1_time_parse(tm->data, tm->length, NULL, tm->type) == -1)
+		goto err;
+	if (!PKCS7_add_signed_attribute(si, NID_pkcs9_signingTime, tm->type, tm))
+		goto err;
+	tm = NULL;
+
+	ret = 1;
+
+ err:
+	if (tm != t)
+		ASN1_TIME_free(tm);
+
+	return ret;
 }
 LCRYPTO_ALIAS(PKCS7_add0_attrib_signing_time);
 
