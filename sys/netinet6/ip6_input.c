@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.292 2025/07/26 01:16:59 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.293 2025/07/27 17:46:58 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1440,7 +1440,8 @@ const u_char inet6ctlerrmap[PRC_NCMDS] = {
 extern int ip6_mrtproto;
 #endif
 
-const struct sysctl_bounded_args ipv6ctl_vars_unlocked[] = {
+#ifndef SMALL_KERNEL
+const struct sysctl_bounded_args ipv6ctl_vars[] = {
 	{ IPV6CTL_FORWARDING, &ip6_forwarding, 0, 2 },
 	{ IPV6CTL_SENDREDIRECTS, &ip6_sendredirects, 0, 1 },
 	{ IPV6CTL_DAD_PENDING, &ip6_dad_pending, SYSCTL_INT_READONLY },
@@ -1459,13 +1460,9 @@ const struct sysctl_bounded_args ipv6ctl_vars_unlocked[] = {
 	{ IPV6CTL_MFORWARDING, &ip6_mforwarding, 0, 1 },
 	{ IPV6CTL_MCAST_PMTU, &ip6_mcast_pmtu, 0, 1 },
 	{ IPV6CTL_NEIGHBORGCTHRESH, &ip6_neighborgcthresh, -1, 5 * 2048 },
-};
-
-const struct sysctl_bounded_args ipv6ctl_vars[] = {
 	{ IPV6CTL_MAXDYNROUTES, &ip6_maxdynroutes, -1, 5 * 4096 },
 };
 
-#ifndef SMALL_KERNEL
 int
 ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 {
@@ -1501,13 +1498,13 @@ int
 ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	int error;
-
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1 && name[0] != IPV6CTL_IFQUEUE)
 		return (ENOTDIR);
 
 	switch (name[0]) {
+	case IPV6CTL_SOIIKEY:
+		return (ip6_sysctl_soiikey(oldp, oldlenp, newp, newlen));
 #ifndef SMALL_KERNEL
 	case IPV6CTL_STATS:
 		return (ip6_sysctl_ip6stat(oldp, oldlenp, newp));
@@ -1530,7 +1527,7 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (EOPNOTSUPP);
 #endif
 	case IPV6CTL_MTUDISCTIMEOUT: {
-		int oldval, newval;
+		int oldval, newval, error;
 
 		oldval = newval = atomic_load_int(&ip6_mtudisc_timeout);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
@@ -1548,7 +1545,7 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &ip6intrq));
 	case IPV6CTL_MULTIPATH: {
-		int oldval, newval;
+		int oldval, newval, error;
 
 		oldval = newval = atomic_load_int(&ip6_multipath);
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
@@ -1561,36 +1558,13 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 		return (error);
 	}
-	case IPV6CTL_FORWARDING:
-	case IPV6CTL_SENDREDIRECTS:
-	case IPV6CTL_DAD_PENDING:
-#ifdef MROUTING
-	case IPV6CTL_MRTPROTO:
-#endif
-	case IPV6CTL_DEFHLIM:
-	case IPV6CTL_MAXFRAGPACKETS:
-	case IPV6CTL_LOG_INTERVAL:
-	case IPV6CTL_HDRNESTLIMIT:
-	case IPV6CTL_DAD_COUNT:
-	case IPV6CTL_AUTO_FLOWLABEL:
-	case IPV6CTL_DEFMCASTHLIM:
-	case IPV6CTL_USE_DEPRECATED:
-	case IPV6CTL_MAXFRAGS:
-	case IPV6CTL_MFORWARDING:
-	case IPV6CTL_MCAST_PMTU:
-	case IPV6CTL_NEIGHBORGCTHRESH:
-		return (sysctl_bounded_arr(
-		    ipv6ctl_vars_unlocked, nitems(ipv6ctl_vars_unlocked),
-		    name, namelen, oldp, oldlenp, newp, newlen));
-#endif /* SMALL_KERNEL */
-	case IPV6CTL_SOIIKEY:
-		return (ip6_sysctl_soiikey(oldp, oldlenp, newp, newlen));
 	default:
-		NET_LOCK();
-		error = sysctl_bounded_arr(ipv6ctl_vars, nitems(ipv6ctl_vars),
-		    name, namelen, oldp, oldlenp, newp, newlen);
-		NET_UNLOCK();
-		return (error);
+		return (sysctl_bounded_arr(ipv6ctl_vars, nitems(ipv6ctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
+#else
+	default:
+		return (EOPNOTSUPP);
+#endif /* SMALL_KERNEL */
 	}
 	/* NOTREACHED */
 }
