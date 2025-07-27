@@ -1,4 +1,4 @@
-.\" $OpenBSD: PKCS7_add_attribute.3,v 1.4 2025/06/08 22:40:30 schwarze Exp $
+.\" $OpenBSD: PKCS7_add_attribute.3,v 1.5 2025/07/27 07:13:24 tb Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: July 27 2025 $
 .Dt PKCS7_ADD_ATTRIBUTE 3
 .Os
 .Sh NAME
@@ -346,7 +346,7 @@ in a state that violates the standard.
 .Fn PKCS7_add0_attrib_signing_time
 does not validate
 .Fa t
-in any way.
+beyond checking that it is well-formed per RFC 5652, section 11.3.
 In particular, it may set the signing time to the future
 or to the remote past.
 .Sh BUGS
