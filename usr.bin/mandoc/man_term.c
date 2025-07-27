@@ -1,4 +1,4 @@
-/* $OpenBSD: man_term.c,v 1.200 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: man_term.c,v 1.201 2025/07/27 15:21:30 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020,2022-23,2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -692,6 +692,7 @@ pre_SS(DECL_ARGS)
 			term_vspace(p);
 		break;
 	case ROFFT_HEAD:
+		p->fontibi = 1;
 		term_fontrepl(p, TERMFONT_BOLD);
 		p->tcol->offset = term_len(p, p->defindent) / 2 + 1;
 		p->tcol->rmargin = mt->offset;
@@ -733,6 +734,7 @@ pre_SH(DECL_ARGS)
 			term_vspace(p);
 		break;
 	case ROFFT_HEAD:
+		p->fontibi = 1;
 		term_fontrepl(p, TERMFONT_BOLD);
 		p->tcol->offset = 0;
 		p->tcol->rmargin = mt->offset;
@@ -758,6 +760,8 @@ post_SH(DECL_ARGS)
 	case ROFFT_BLOCK:
 		break;
 	case ROFFT_HEAD:
+		p->fontibi = 0;
+		/* FALLTHROUGH */
 	case ROFFT_BODY:
 		term_newln(p);
 		break;

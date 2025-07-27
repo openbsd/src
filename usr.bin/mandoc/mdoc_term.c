@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_term.c,v 1.285 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: mdoc_term.c,v 1.286 2025/07/27 15:21:30 schwarze Exp $ */
 /*
  * Copyright (c) 2010,2012-2020,2022,2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1277,6 +1277,7 @@ termp_sh_pre(DECL_ARGS)
 			term_vspace(p);
 		break;
 	case ROFFT_HEAD:
+		p->fontibi = 1;
 		return termp_bold_pre(p, pair, meta, n);
 	case ROFFT_BODY:
 		p->tcol->offset = term_len(p, p->defindent);
@@ -1297,6 +1298,7 @@ termp_sh_post(DECL_ARGS)
 {
 	switch (n->type) {
 	case ROFFT_HEAD:
+		p->fontibi = 0;
 		term_newln(p);
 		break;
 	case ROFFT_BODY:
@@ -1513,6 +1515,7 @@ termp_ss_pre(DECL_ARGS)
 		break;
 	case ROFFT_HEAD:
 		p->tcol->offset = term_len(p, p->defindent) / 2 + 1;
+		p->fontibi = 1;
 		return termp_bold_pre(p, pair, meta, n);
 	case ROFFT_BODY:
 		p->tcol->offset = term_len(p, p->defindent);
@@ -1529,8 +1532,16 @@ termp_ss_pre(DECL_ARGS)
 static void
 termp_ss_post(DECL_ARGS)
 {
-	if (n->type == ROFFT_HEAD || n->type == ROFFT_BODY)
+	switch (n->type) {
+	case ROFFT_HEAD:
+		p->fontibi = 0;
+		/* FALLTHROUGH */
+	case ROFFT_BODY:
 		term_newln(p);
+		break;
+	default:
+		break;
+	}
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $OpenBSD: term.h,v 1.81 2025/07/16 14:23:55 schwarze Exp $ */
+/* $OpenBSD: term.h,v 1.82 2025/07/27 15:21:30 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015, 2017, 2019, 2021, 2022, 2025
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -103,6 +103,7 @@ struct	termp {
 	enum termfont	 *fontq;	/* Symmetric fonts. */
 	int		  fontsz;	/* Allocated size of font stack */
 	int		  fonti;	/* Index of font stack. */
+	int		  fontibi;	/* Map font I to BI. */
 	term_margin	  headf;	/* invoked to print head */
 	term_margin	  footf;	/* invoked to print foot */
 	void		(*letter)(struct termp *, int);
