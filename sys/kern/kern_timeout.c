@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.111 2025/07/04 09:34:48 jsg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.112 2025/07/28 05:25:44 dlg Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -202,7 +202,6 @@ void softclock_thread(void *);
 #ifdef MULTIPROCESSOR
 void softclock_thread_mp(void *);
 #endif
-void timeout_barrier_timeout(void *);
 uint32_t timeout_bucket(const struct timeout *);
 uint32_t timeout_maskwheel(uint32_t, const struct timespec *);
 void timeout_run(struct timeout_ctx *, struct timeout *);
@@ -515,7 +514,7 @@ timeout_barrier(struct timeout *to)
 	flags = to->to_flags & (TIMEOUT_PROC | TIMEOUT_MPSAFE);
 	timeout_sync_order(ISSET(flags, TIMEOUT_PROC));
 
-	timeout_set_flags(&barrier, timeout_barrier_timeout, &c, KCLOCK_NONE,
+	timeout_set_flags(&barrier, cond_signal_handler, &c, KCLOCK_NONE,
 	    flags);
 	barrier.to_process = curproc->p_p;
 	cond_init(&c);
@@ -548,14 +547,6 @@ timeout_barrier(struct timeout *to)
 	 */
 
 	cond_wait(&c, "tmobar");
-}
-
-void
-timeout_barrier_timeout(void *arg)
-{
-	struct cond *c = arg;
-
-	cond_signal(c);
 }
 
 uint32_t

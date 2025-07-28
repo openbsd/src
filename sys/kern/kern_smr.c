@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.17 2024/07/08 14:46:47 mpi Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.18 2025/07/28 05:25:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -278,14 +278,6 @@ smr_call_impl(struct smr_entry *smr, void (*func)(void *), void *arg,
 }
 
 void
-smr_barrier_func(void *arg)
-{
-	struct cond *c = arg;
-
-	cond_signal(c);
-}
-
-void
 smr_barrier_impl(int expedite)
 {
 	struct cond c = COND_INITIALIZER();
@@ -298,7 +290,7 @@ smr_barrier_impl(int expedite)
 
 	TRACEPOINT(smr, barrier_enter, expedite);
 	smr_init(&smr);
-	smr_call_impl(&smr, smr_barrier_func, &c, expedite);
+	smr_call_impl(&smr, cond_signal_handler, &c, expedite);
 	cond_wait(&c, "smrbar");
 	TRACEPOINT(smr, barrier_exit, expedite);
 }

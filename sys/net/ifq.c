@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.61 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.62 2025/07/28 05:25:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -74,7 +74,6 @@ struct priq {
 
 void	ifq_start_task(void *);
 void	ifq_restart_task(void *);
-void	ifq_barrier_task(void *);
 void	ifq_bundle_task(void *);
 
 static inline void
@@ -187,7 +186,7 @@ void
 ifq_barrier(struct ifqueue *ifq)
 {
 	struct cond c = COND_INITIALIZER();
-	struct task t = TASK_INITIALIZER(ifq_barrier_task, &c);
+	struct task t = TASK_INITIALIZER(cond_signal_handler, &c);
 
 	task_del(ifq->ifq_softnet, &ifq->ifq_bundle);
 
@@ -197,14 +196,6 @@ ifq_barrier(struct ifqueue *ifq)
 	ifq_serialize(ifq, &t);
 
 	cond_wait(&c, "ifqbar");
-}
-
-void
-ifq_barrier_task(void *p)
-{
-	struct cond *c = p;
-
-	cond_signal(c);
 }
 
 /*
