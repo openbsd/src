@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.229 2025/07/14 08:47:15 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.230 2025/07/28 05:08:35 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -977,8 +977,10 @@ cond_init(struct cond *c)
 }
 
 void
-cond_signal(struct cond *c)
+cond_signal_handler(void *arg)
 {
+	struct cond *c = arg;
+
 	atomic_store_int(&c->c_wait, 0);
 
 	wakeup_one(c);

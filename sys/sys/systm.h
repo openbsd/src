@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.176 2025/06/19 12:01:08 jca Exp $	*/
+/*	$OpenBSD: systm.h,v 1.177 2025/07/28 05:08:35 dlg Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -269,7 +269,13 @@ void	sleep_queue_init(void);
 struct cond;
 void	cond_init(struct cond *);
 void	cond_wait(struct cond *, const char *);
-void	cond_signal(struct cond *);
+void	cond_signal_handler(void *);
+
+static inline void
+cond_signal(struct cond *c)
+{
+	cond_signal_handler(c);
+}
 
 #define	INFSLP	UINT64_MAX
 #define	MAXTSLP	(UINT64_MAX - 1)
