@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cond_init.9,v 1.4 2025/07/28 05:18:37 dlg Exp $ */
+.\"	$OpenBSD: cond_init.9,v 1.5 2025/07/28 13:33:17 schwarze Exp $ */
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -49,7 +49,7 @@ is used to sleep on the wait condition
 until whatever the thread is waiting on calls
 .Fn cond_signal
 or
-.Fn cond_handler .
+.Fn cond_signal_handler .
 .Fa wmesg
 is a pointer to a character string indicating the reason the thread
 is sleeping.
