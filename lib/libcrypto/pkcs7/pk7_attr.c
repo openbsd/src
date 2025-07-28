@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.17 2025/07/27 07:11:36 tb Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.18 2025/07/28 04:29:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -159,7 +159,7 @@ PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t)
 		goto err;
 	}
 
-	/* RFC 5652, section 11.3 - UTCTime for times between 1950 and 2050. */
+	/* RFC 5652, section 11.3 - UTCTime for the years 1950-2049. */
 	if (ASN1_time_parse(tm->data, tm->length, NULL, tm->type) == -1)
 		goto err;
 	if (!PKCS7_add_signed_attribute(si, NID_pkcs9_signingTime, tm->type, tm))
