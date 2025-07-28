@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cond_init.9,v 1.3 2022/03/11 14:42:08 visa Exp $ */
+.\"	$OpenBSD: cond_init.9,v 1.4 2025/07/28 05:18:37 dlg Exp $ */
 .\"
 .\" Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 11 2022 $
+.Dd $Mdocdate: July 28 2025 $
 .Dt COND_INIT 9
 .Os
 .Sh NAME
@@ -31,6 +31,8 @@
 .Fn "cond_wait" "struct cond *c" "const char *wmesg"
 .Ft void
 .Fn "cond_signal" "struct cond *c"
+.Ft void
+.Fn "cond_signal_handler" "void *c"
 .Fn "COND_INITIALIZER"
 .Sh DESCRIPTION
 The wait condition API allows a thread to sleep while it waits for
@@ -45,22 +47,38 @@ for use.
 is used to sleep on the wait condition
 .Fa c
 until whatever the thread is waiting on calls
-.Fn cond_signal .
+.Fn cond_signal
+or
+.Fn cond_handler .
 .Fa wmesg
 is a pointer to a character string indicating the reason the thread
 is sleeping.
 .Pp
 .Fn cond_signal
-is used to notify the thread waiting on
+and
+.Fn cond_signal_handler
+notify the thread waiting on
 .Fa c
 that the work has finished and it may proceed.
+.Fn cond_signal
+and
+.Fn cond_signal_handler
+operate identically, the only difference is the type of argument they take.
+.Fn cond_signal_handler
+takes a
+.Ft void *
+argument, allowing it to be used directly with APIs such as
+.Xr task_set 9
+and
+.Xr timeout_set 9 .
 .Pp
 .Fn COND_INITIALIZER
 initialises a declaration of a cond for use.
 .Sh CONTEXT
 .Fn cond_init ,
+.Fn cond_signal ,
 and
-.Fn cond_signal
+.Fn cond_signal_handler
 can be called during autoconf, from process context, or from interrupt
 context.
 .Pp
