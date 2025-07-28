@@ -1,14 +1,21 @@
-# $OpenBSD: Makefile,v 1.15 2022/08/02 10:59:51 schwarze Exp $
+# $OpenBSD: Makefile,v 1.16 2025/07/28 15:17:54 schwarze Exp $
 
 REGRESS_TARGETS	 = append cond empty escname factorial
 REGRESS_TARGETS	+= indir infinite startde tab TH Dd
 LINT_TARGETS	 = escname indir infinite
 
-# groff-1.22.4 defect:
+# groff-1.23.0 defect:
 # infinite recursion aborts output completely
 
 SKIP_GROFF	 = infinite
 
+# groff-1.23.0 regression:
+#  - .Dd redefines all mdoc(7) macros even if -mdoc was explicitly
+#    specified.  While it is maybe not completely clear which behaviour
+#    is desirable, this is closely related to the other .Dd regressions,
+#    so mark it as an regression for now rather than changing mandoc(1).
+
+SKIP_GROFF	+= Dd_opt
 
 # --- local rules ---
 
