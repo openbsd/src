@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.17 2025/07/17 00:55:48 kenjiro Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.18 2025/07/29 10:52:20 tb Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -3781,7 +3781,7 @@ ge_double_scalarmult_vartime(ge_p2 *r, const uint8_t *a,
   }
 }
 
-/* 
+/*
  * int64_lshift21 returns |a << 21| but is defined when shifting bits into the
  * sign bit. This works around a language flaw in C.
  *
