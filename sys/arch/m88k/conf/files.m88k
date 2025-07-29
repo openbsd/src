@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m88k,v 1.32 2025/04/30 12:35:37 visa Exp $
+#	$OpenBSD: files.m88k,v 1.33 2025/07/29 19:03:47 miod Exp $
 
 file	arch/m88k/m88k/atomic.S				multiprocessor
 file	arch/m88k/m88k/db_disasm.c			ddb
@@ -6,7 +6,6 @@ file	arch/m88k/m88k/db_interface.c			ddb
 file	arch/m88k/m88k/db_sstep.c			ddb
 file	arch/m88k/m88k/db_trace.c			ddb
 file	arch/m88k/m88k/fpu.c
-file	arch/m88k/m88k/in_cksum.c
 file	arch/m88k/m88k/m88100_fp.c			m88100
 file	arch/m88k/m88k/m88100_machdep.c			m88100
 file	arch/m88k/m88k/m88110_fp.c			m88110
@@ -31,6 +30,9 @@ file	lib/libkern/arch/m88k/divsi3.S
 file	lib/libkern/arch/m88k/modsi3.S
 file	lib/libkern/arch/m88k/udivsi3.S
 file	lib/libkern/arch/m88k/umodsi3.S
+
+file	netinet/in_cksum.c
+file	netinet/in4_cksum.c
 
 # quad support is necessary for 32 bit architectures
 file	lib/libkern/adddi3.c
