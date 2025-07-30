@@ -1437,6 +1437,7 @@ m88k_layout_frame ()
     {
       save_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
       nregs++;
+      save_regs[1] = 1;
     }
 
   /* If a frame is requested, save the previous FP, and the return
