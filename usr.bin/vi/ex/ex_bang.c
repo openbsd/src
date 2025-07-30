@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_bang.c,v 1.12 2022/04/22 15:48:29 millert Exp $	*/
+/*	$OpenBSD: ex_bang.c,v 1.13 2025/07/30 22:19:13 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -171,8 +171,8 @@ ex_bang(SCR *sp, EXCMD *cmdp)
 	if (!F_ISSET(sp, SC_VI) && !F_ISSET(sp, SC_EX_SILENT))
 		(void)ex_puts(sp, "!\n");
 
-	/* Apply expandtab to the new text */
-	if (O_ISSET(sp, O_EXPANDTAB))
+	/* If addresses were specified, apply expandtab to the new text. */
+	if (cmdp->addrcnt != 0 && O_ISSET(sp, O_EXPANDTAB))
 		ex_retab(sp, cmdp);
 
 	/*
