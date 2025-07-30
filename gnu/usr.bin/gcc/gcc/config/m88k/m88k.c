@@ -2185,7 +2185,7 @@ m88k_va_start (valist, nextarg)
   expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
 
   /* Store the arg pointer in the __va_stk member.  */
-  offset = XINT (current_function_arg_offset_rtx, 0);
+  offset = INTVAL (current_function_arg_offset_rtx);
   if (current_function_args_info >= 8 && ! stdarg_p)
     offset -= UNITS_PER_WORD;
   t = make_tree (TREE_TYPE (stk), virtual_incoming_args_rtx);
