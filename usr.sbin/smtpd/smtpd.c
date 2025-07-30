@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.356 2025/06/01 08:47:51 op Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.357 2025/07/30 20:26:29 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -188,6 +188,9 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &password);
 		m_end(&m);
 
+		if (username == NULL || password == NULL)
+			fatalx("parent_imsg: missing username or password");
+
 		ret = parent_auth_user(username, password);
 
 		m_create(p, IMSG_LKA_AUTHENTICATE, 0, 0, -1);
@@ -212,6 +215,9 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_id(&m, &reqid);
 		m_get_string(&m, &cause);
 		m_end(&m);
+
+		if (cause == NULL)
+			fatalx("parent_imsg: missing cause");
 
 		i = NULL;
 		while ((n = tree_iter(&children, &i, NULL, (void**)&c)))
@@ -249,6 +255,9 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_string(&m, &procname);
 		m_end(&m);
+
+		if (procname == NULL)
+			fatalx("parent_imsg: missing procname");
 
 		processor = dict_xget(env->sc_filter_processes_dict, procname);
 		m_create(p_lka, IMSG_LKA_PROCESSOR_ERRFD, 0, 0, processor->errfd);
