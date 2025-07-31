@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_gpio.c,v 1.5 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: bcm2835_gpio.c,v 1.6 2025/07/31 11:03:37 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -210,7 +210,7 @@ bcmgpio_pinctrl(uint32_t phandle, void *cookie)
 
 	plen = OF_getproplen(node, "brcm,pull");
 	if (plen > 0) {
-		pull = malloc(len, M_TEMP, M_WAITOK);
+		pull = malloc(plen, M_TEMP, M_WAITOK);
 		if (OF_getpropintarray(node, "brcm,pull", pull, plen) != plen)
 			goto fail;
 	}
