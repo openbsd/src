@@ -1,6 +1,6 @@
-/*	$OpenBSD: cert.c,v 1.200 2025/07/31 14:53:06 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.201 2025/07/31 14:53:27 tb Exp $ */
 /*
- * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
