@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.109 2025/05/29 13:56:43 deraadt Exp $
+# $OpenBSD: services,v 1.110 2025/07/31 09:05:26 ajacoutot Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -253,6 +253,7 @@ postgresql	5432/udp			# PostgreSQL
 matter		5540/tcp			# Matter IoT
 matter		5540/udp			# Matter IoT
 rfb		5900/tcp	vnc		# Remote Framebuffer
+dtspc		6112/tcp			# CDE Subprocess Control Service
 syslog-tls	6514/tcp			# syslog over TLS
 afs3-fileserver	7000/tcp			# AFS fileserver
 afs3-fileserver	7000/udp			# AFS fileserver
