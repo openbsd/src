@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.288 2025/07/31 16:27:36 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.289 2025/07/31 16:33:09 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -205,8 +205,8 @@ entity_write_repo(const struct repo *rp)
 	io_simple_buffer(b, &certid, sizeof(certid));
 	io_str_buffer(b, path);
 	io_str_buffer(b, altpath);
-	io_buf_buffer(b, NULL, 0); /* ent->mftaki */
-	io_buf_buffer(b, NULL, 0); /* ent->data */
+	io_str_buffer(b, NULL);		/* ent->mftaki */
+	io_buf_buffer(b, NULL, 0);	/* ent->data */
 	io_close_buffer(procq, b);
 	free(path);
 	free(altpath);
