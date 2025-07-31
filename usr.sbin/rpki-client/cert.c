@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.199 2025/07/31 12:29:47 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.200 2025/07/31 14:53:06 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -422,224 +422,6 @@ cert_check_spki(const char *fn, struct cert *cert)
 
 	rc = 1;
  out:
-	return rc;
-}
-
-/*
- * Append an AS identifier structure to our list of results.
- * Makes sure that the identifiers do not overlap or improperly inherit
- * as defined by RFC 3779 section 3.3.
- */
-static int
-append_as(const char *fn, struct cert_as *ases, size_t *num_ases,
-    const struct cert_as *as)
-{
-	if (!as_check_overlap(as, fn, ases, *num_ases, 0))
-		return 0;
-	ases[(*num_ases)++] = *as;
-	return 1;
-}
-
-/*
- * Parse a range of AS identifiers as in 3.2.3.8.
- * Returns zero on failure, non-zero on success.
- */
-int
-sbgp_as_range(const char *fn, struct cert_as *ases, size_t *num_ases,
-    const ASRange *range)
-{
-	struct cert_as		 as;
-
-	memset(&as, 0, sizeof(struct cert_as));
-	as.type = CERT_AS_RANGE;
-
-	if (!as_id_parse(range->min, &as.range.min)) {
-		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
-		    "malformed AS identifier", fn);
-		return 0;
-	}
-
-	if (!as_id_parse(range->max, &as.range.max)) {
-		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
-		    "malformed AS identifier", fn);
-		return 0;
-	}
-
-	if (as.range.max == as.range.min) {
-		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
-		    "range is singular", fn);
-		return 0;
-	} else if (as.range.max < as.range.min) {
-		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
-		    "range is out of order", fn);
-		return 0;
-	}
-
-	return append_as(fn, ases, num_ases, &as);
-}
-
-/*
- * Parse an entire 3.2.3.10 integer type.
- */
-int
-sbgp_as_id(const char *fn, struct cert_as *ases, size_t *num_ases,
-    const ASN1_INTEGER *i)
-{
-	struct cert_as	 as;
-
-	memset(&as, 0, sizeof(struct cert_as));
-	as.type = CERT_AS_ID;
-
-	if (!as_id_parse(i, &as.id)) {
-		warnx("%s: RFC 3779 section 3.2.3.10 (via RFC 1930): "
-		    "malformed AS identifier", fn);
-		return 0;
-	}
-	if (as.id == 0) {
-		warnx("%s: RFC 3779 section 3.2.3.10 (via RFC 1930): "
-		    "AS identifier zero is reserved", fn);
-		return 0;
-	}
-
-	return append_as(fn, ases, num_ases, &as);
-}
-
-static int
-sbgp_as_inherit(const char *fn, struct cert_as *ases, size_t *num_ases)
-{
-	struct cert_as as;
-
-	memset(&as, 0, sizeof(struct cert_as));
-	as.type = CERT_AS_INHERIT;
-
-	return append_as(fn, ases, num_ases, &as);
-}
-
-static int
-cert_as_inherit(const struct cert *cert)
-{
-	if (cert->num_ases != 1)
-		return 0;
-
-	return cert->ases[0].type == CERT_AS_INHERIT;
-}
-
-int
-sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
-    struct cert_as **out_as, size_t *out_num_ases)
-{
-	const ASIdOrRanges	*aors = NULL;
-	struct cert_as		*as = NULL;
-	size_t			 num_ases = 0, num;
-	int			 i;
-
-	assert(*out_as == NULL && *out_num_ases == 0);
-
-	if (asidentifiers->rdi != NULL) {
-		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "should not have RDI values", fn);
-		goto out;
-	}
-
-	if (asidentifiers->asnum == NULL) {
-		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "no AS number resource set", fn);
-		goto out;
-	}
-
-	switch (asidentifiers->asnum->type) {
-	case ASIdentifierChoice_inherit:
-		num = 1;
-		break;
-	case ASIdentifierChoice_asIdsOrRanges:
-		aors = asidentifiers->asnum->u.asIdsOrRanges;
-		num = sk_ASIdOrRange_num(aors);
-		break;
-	default:
-		warnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
-		    "unknown type %d", fn, asidentifiers->asnum->type);
-		goto out;
-	}
-
-	if (num == 0) {
-		warnx("%s: RFC 6487 section 4.8.11: empty asIdsOrRanges", fn);
-		goto out;
-	}
-	if (num >= MAX_AS_SIZE) {
-		warnx("%s: too many AS number entries: limit %d",
-		    fn, MAX_AS_SIZE);
-		goto out;
-	}
-	as = calloc(num, sizeof(struct cert_as));
-	if (as == NULL)
-		err(1, NULL);
-
-	if (aors == NULL) {
-		if (!sbgp_as_inherit(fn, as, &num_ases))
-			goto out;
-	}
-
-	for (i = 0; i < sk_ASIdOrRange_num(aors); i++) {
-		const ASIdOrRange *aor;
-
-		aor = sk_ASIdOrRange_value(aors, i);
-		switch (aor->type) {
-		case ASIdOrRange_id:
-			if (!sbgp_as_id(fn, as, &num_ases, aor->u.id))
-				goto out;
-			break;
-		case ASIdOrRange_range:
-			if (!sbgp_as_range(fn, as, &num_ases, aor->u.range))
-				goto out;
-			break;
-		default:
-			warnx("%s: RFC 3779 section 3.2.3.5: ASIdOrRange: "
-			    "unknown type %d", fn, aor->type);
-			goto out;
-		}
-	}
-
-	*out_as = as;
-	*out_num_ases = num_ases;
-
-	return 1;
-
- out:
-	free(as);
-
-	return 0;
-}
-
-/*
- * Parse RFC 6487 4.8.11 X509v3 extension, with syntax documented in RFC
- * 3779 starting in section 3.2.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_assysnum(const char *fn, struct cert *cert, X509_EXTENSION *ext)
-{
-	ASIdentifiers		*asidentifiers = NULL;
-	int			 rc = 0;
-
-	if (!X509_EXTENSION_get_critical(ext)) {
-		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "extension not critical", fn);
-		goto out;
-	}
-
-	if ((asidentifiers = X509V3_EXT_d2i(ext)) == NULL) {
-		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "failed extension parse", fn);
-		goto out;
-	}
-
-	if (!sbgp_parse_assysnum(fn, asidentifiers, &cert->ases,
-	    &cert->num_ases))
-		goto out;
-
-	rc = 1;
- out:
-	ASIdentifiers_free(asidentifiers);
 	return rc;
 }
 
@@ -1483,6 +1265,224 @@ sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	rc = 1;
  out:
 	IPAddrBlocks_free(addrblk);
+	return rc;
+}
+
+/*
+ * Append an AS identifier structure to our list of results.
+ * Makes sure that the identifiers do not overlap or improperly inherit
+ * as defined by RFC 3779 section 3.3.
+ */
+static int
+append_as(const char *fn, struct cert_as *ases, size_t *num_ases,
+    const struct cert_as *as)
+{
+	if (!as_check_overlap(as, fn, ases, *num_ases, 0))
+		return 0;
+	ases[(*num_ases)++] = *as;
+	return 1;
+}
+
+/*
+ * Parse a range of AS identifiers as in 3.2.3.8.
+ * Returns zero on failure, non-zero on success.
+ */
+int
+sbgp_as_range(const char *fn, struct cert_as *ases, size_t *num_ases,
+    const ASRange *range)
+{
+	struct cert_as		 as;
+
+	memset(&as, 0, sizeof(struct cert_as));
+	as.type = CERT_AS_RANGE;
+
+	if (!as_id_parse(range->min, &as.range.min)) {
+		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
+		    "malformed AS identifier", fn);
+		return 0;
+	}
+
+	if (!as_id_parse(range->max, &as.range.max)) {
+		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
+		    "malformed AS identifier", fn);
+		return 0;
+	}
+
+	if (as.range.max == as.range.min) {
+		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
+		    "range is singular", fn);
+		return 0;
+	} else if (as.range.max < as.range.min) {
+		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
+		    "range is out of order", fn);
+		return 0;
+	}
+
+	return append_as(fn, ases, num_ases, &as);
+}
+
+/*
+ * Parse an entire 3.2.3.10 integer type.
+ */
+int
+sbgp_as_id(const char *fn, struct cert_as *ases, size_t *num_ases,
+    const ASN1_INTEGER *i)
+{
+	struct cert_as	 as;
+
+	memset(&as, 0, sizeof(struct cert_as));
+	as.type = CERT_AS_ID;
+
+	if (!as_id_parse(i, &as.id)) {
+		warnx("%s: RFC 3779 section 3.2.3.10 (via RFC 1930): "
+		    "malformed AS identifier", fn);
+		return 0;
+	}
+	if (as.id == 0) {
+		warnx("%s: RFC 3779 section 3.2.3.10 (via RFC 1930): "
+		    "AS identifier zero is reserved", fn);
+		return 0;
+	}
+
+	return append_as(fn, ases, num_ases, &as);
+}
+
+static int
+sbgp_as_inherit(const char *fn, struct cert_as *ases, size_t *num_ases)
+{
+	struct cert_as as;
+
+	memset(&as, 0, sizeof(struct cert_as));
+	as.type = CERT_AS_INHERIT;
+
+	return append_as(fn, ases, num_ases, &as);
+}
+
+static int
+cert_as_inherit(const struct cert *cert)
+{
+	if (cert->num_ases != 1)
+		return 0;
+
+	return cert->ases[0].type == CERT_AS_INHERIT;
+}
+
+int
+sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
+    struct cert_as **out_as, size_t *out_num_ases)
+{
+	const ASIdOrRanges	*aors = NULL;
+	struct cert_as		*as = NULL;
+	size_t			 num_ases = 0, num;
+	int			 i;
+
+	assert(*out_as == NULL && *out_num_ases == 0);
+
+	if (asidentifiers->rdi != NULL) {
+		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		    "should not have RDI values", fn);
+		goto out;
+	}
+
+	if (asidentifiers->asnum == NULL) {
+		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		    "no AS number resource set", fn);
+		goto out;
+	}
+
+	switch (asidentifiers->asnum->type) {
+	case ASIdentifierChoice_inherit:
+		num = 1;
+		break;
+	case ASIdentifierChoice_asIdsOrRanges:
+		aors = asidentifiers->asnum->u.asIdsOrRanges;
+		num = sk_ASIdOrRange_num(aors);
+		break;
+	default:
+		warnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
+		    "unknown type %d", fn, asidentifiers->asnum->type);
+		goto out;
+	}
+
+	if (num == 0) {
+		warnx("%s: RFC 6487 section 4.8.11: empty asIdsOrRanges", fn);
+		goto out;
+	}
+	if (num >= MAX_AS_SIZE) {
+		warnx("%s: too many AS number entries: limit %d",
+		    fn, MAX_AS_SIZE);
+		goto out;
+	}
+	as = calloc(num, sizeof(struct cert_as));
+	if (as == NULL)
+		err(1, NULL);
+
+	if (aors == NULL) {
+		if (!sbgp_as_inherit(fn, as, &num_ases))
+			goto out;
+	}
+
+	for (i = 0; i < sk_ASIdOrRange_num(aors); i++) {
+		const ASIdOrRange *aor;
+
+		aor = sk_ASIdOrRange_value(aors, i);
+		switch (aor->type) {
+		case ASIdOrRange_id:
+			if (!sbgp_as_id(fn, as, &num_ases, aor->u.id))
+				goto out;
+			break;
+		case ASIdOrRange_range:
+			if (!sbgp_as_range(fn, as, &num_ases, aor->u.range))
+				goto out;
+			break;
+		default:
+			warnx("%s: RFC 3779 section 3.2.3.5: ASIdOrRange: "
+			    "unknown type %d", fn, aor->type);
+			goto out;
+		}
+	}
+
+	*out_as = as;
+	*out_num_ases = num_ases;
+
+	return 1;
+
+ out:
+	free(as);
+
+	return 0;
+}
+
+/*
+ * Parse RFC 6487 4.8.11 X509v3 extension, with syntax documented in RFC
+ * 3779 starting in section 3.2.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+sbgp_assysnum(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+{
+	ASIdentifiers		*asidentifiers = NULL;
+	int			 rc = 0;
+
+	if (!X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		    "extension not critical", fn);
+		goto out;
+	}
+
+	if ((asidentifiers = X509V3_EXT_d2i(ext)) == NULL) {
+		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		    "failed extension parse", fn);
+		goto out;
+	}
+
+	if (!sbgp_parse_assysnum(fn, asidentifiers, &cert->ases,
+	    &cert->num_ases))
+		goto out;
+
+	rc = 1;
+ out:
+	ASIdentifiers_free(asidentifiers);
 	return rc;
 }
 
