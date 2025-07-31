@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.20 2025/07/31 02:10:55 tb Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.21 2025/07/31 02:21:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -203,19 +203,25 @@ LCRYPTO_ALIAS(PKCS7_add0_attrib_signing_time);
 
 int
 PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si, const unsigned char *md,
-    int mdlen)
+    int md_len)
 {
 	ASN1_OCTET_STRING *os;
+	int ret = 0;
 
-	os = ASN1_OCTET_STRING_new();
-	if (!os)
-		return 0;
-	if (!ASN1_STRING_set(os, md, mdlen) ||
-	    !PKCS7_add_signed_attribute(si, NID_pkcs9_messageDigest,
-	    V_ASN1_OCTET_STRING, os)) {
-		ASN1_OCTET_STRING_free(os);
-		return 0;
-	}
-	return 1;
+	if ((os = ASN1_OCTET_STRING_new()) == NULL)
+		goto err;
+	if (!ASN1_STRING_set(os, md, md_len))
+		goto err;
+	if (!PKCS7_add_signed_attribute(si, NID_pkcs9_messageDigest,
+	    V_ASN1_OCTET_STRING, os))
+		goto err;
+	os = NULL;
+
+	ret = 1;
+
+ err:
+	ASN1_OCTET_STRING_free(os);
+
+	return ret;
 }
 LCRYPTO_ALIAS(PKCS7_add1_attrib_digest);
