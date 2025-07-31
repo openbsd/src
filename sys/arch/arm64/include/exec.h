@@ -1,4 +1,4 @@
-/* $OpenBSD: exec.h,v 1.2 2017/02/08 05:09:25 guenther Exp $ */
+/* $OpenBSD: exec.h,v 1.3 2025/07/31 16:09:59 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,5 +25,9 @@
 #define ELF_TARG_CLASS		ELFCLASS64
 #define ELF_TARG_DATA		ELFDATA2LSB
 #define ELF_TARG_MACH		EM_AARCH64
+
+#ifdef _KERNEL
+#define __HAVE_COREDUMP_NOTE_ELF_MD
+#endif
 
 #endif

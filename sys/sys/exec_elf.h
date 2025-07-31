@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.107 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.108 2025/07/31 16:09:59 kettenis Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -825,11 +825,17 @@ extern Elf_Dyn		_DYNAMIC[];
 #define	ELF_AUX_ENTRIES	11
 #define	ELF_AUX_WORDS	(sizeof(AuxInfo) * ELF_AUX_ENTRIES / sizeof(char *))
 
+#define	ELFROUNDSIZE	sizeof(Elf_Word)
+#define	elfround(x)	roundup((x), ELFROUNDSIZE)
+
 struct exec_package;
 
 int	exec_elf_makecmds(struct proc *, struct exec_package *);
 int	exec_elf_fixup(struct proc *, struct exec_package *);
 int	coredump_elf(struct proc *, void *);
+int	coredump_note_elf_md(struct proc *, void *, const char *, size_t *);
+int	coredump_writenote_elf(struct proc *, void *, Elf_Note *,
+	    const char *, void *);
 #endif /* _KERNEL */
 
 #define ELF_TARG_VER	1	/* The ver for which this code is intended */

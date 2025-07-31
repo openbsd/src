@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.192 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.193 2025/07/31 16:09:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -120,10 +120,6 @@ struct elf_note_name {
 } elf_note_names[] = {
 	{ "OpenBSD",	ELF_NOTE_NAME_OPENBSD },
 };
-
-#define	ELFROUNDSIZE	sizeof(Elf_Word)
-#define	elfround(x)	roundup((x), ELFROUNDSIZE)
-
 
 /*
  * Check header for validity; return 0 for ok, ENOEXEC if error
@@ -1153,8 +1149,6 @@ uvm_coredump_walk_cb	coredump_walk_elf;
 
 int	coredump_notes_elf(struct proc *, void *, size_t *);
 int	coredump_note_elf(struct proc *, void *, size_t *);
-int	coredump_writenote_elf(struct proc *, void *, Elf_Note *,
-	    const char *, void *);
 
 extern vaddr_t sigcode_va;
 extern vsize_t sigcode_sz;
@@ -1552,9 +1546,6 @@ coredump_note_elf(struct proc *p, void *iocookie, size_t *sizep)
 #ifdef PT_GETFPREGS
 	struct fpreg freg;
 #endif
-#ifdef PT_PACMASK
-	register_t pacmask[2];
-#endif
 
 	size = 0;
 
@@ -1599,27 +1590,14 @@ coredump_note_elf(struct proc *p, void *iocookie, size_t *sizep)
 	size += notesize;
 #endif
 
-#ifdef PT_PACMASK
-	notesize = sizeof(nhdr) + elfround(namesize) +
-	    elfround(sizeof(pacmask));
-	if (iocookie) {
-		pacmask[0] = pacmask[1] = process_get_pacmask(p);
-
-		nhdr.namesz = namesize;
-		nhdr.descsz = sizeof(pacmask);
-		nhdr.type = NT_OPENBSD_PACMASK;
-
-		error = coredump_writenote_elf(p, iocookie, &nhdr,
-		    name, &pacmask);
-		if (error)
-			return (error);
-	}
-	size += notesize;
-#endif
-
 	*sizep = size;
-	/* XXX Add hook for machdep per-LWP notes. */
-	return (0);
+
+#ifdef __HAVE_COREDUMP_NOTE_ELF_MD
+	/* Add machdep per-thread notes. */
+	return coredump_note_elf_md(p, iocookie, name, sizep);
+#else
+	return 0;
+#endif
 }
 
 int

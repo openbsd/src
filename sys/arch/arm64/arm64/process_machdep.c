@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.10 2025/02/07 13:37:11 kettenis Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.11 2025/07/31 16:09:59 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -143,3 +143,41 @@ process_get_pacmask(struct proc *p)
 {
 	return (-1ULL << USER_SPACE_BITS);
 }
+
+#ifndef SMALL_KERNEL
+
+#include <sys/exec_elf.h>
+
+int
+coredump_note_elf_md(struct proc *p, void *iocookie, const char *name,
+    size_t *sizep)
+{
+	Elf_Note nhdr;
+	int size, notesize, error;
+	int namesize;
+	register_t pacmask[2];
+
+	size = *sizep;
+
+	namesize = strlen(name) + 1;
+	notesize = sizeof(nhdr) + elfround(namesize) +
+	    elfround(sizeof(pacmask));
+	if (iocookie) {
+		pacmask[0] = pacmask[1] = process_get_pacmask(p);
+
+		nhdr.namesz = namesize;
+		nhdr.descsz = sizeof(pacmask);
+		nhdr.type = NT_OPENBSD_PACMASK;
+
+		error = coredump_writenote_elf(p, iocookie, &nhdr,
+		    name, &pacmask);
+		if (error)
+			return (error);
+	}
+	size += notesize;
+
+	*sizep = size;
+	return 0;
+}
+
+#endif /* !SMALL_KERNEL */
