@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.198 2025/07/31 10:58:02 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.199 2025/07/31 12:29:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -426,27 +426,6 @@ cert_check_spki(const char *fn, struct cert *cert)
 }
 
 /*
- * Append an IP address structure to our list of results.
- * This will also constrain us to having at most one inheritance
- * statement per AFI and also not have overlapping ranges (as prohibited
- * in section 2.2.3.6).
- * It does not make sure that ranges can't coalesce, that is, that any
- * two ranges abut each other.
- * This is warned against in section 2.2.3.6, but doesn't change the
- * semantics of the system.
- * Returns zero on failure (IP overlap) non-zero on success.
- */
-static int
-append_ip(const char *fn, struct cert_ip *ips, size_t *num_ips,
-    const struct cert_ip *ip)
-{
-	if (!ip_addr_check_overlap(ip, fn, ips, *num_ips, 0))
-		return 0;
-	ips[(*num_ips)++] = *ip;
-	return 1;
-}
-
-/*
  * Append an AS identifier structure to our list of results.
  * Makes sure that the identifiers do not overlap or improperly inherit
  * as defined by RFC 3779 section 3.3.
@@ -661,235 +640,6 @@ sbgp_assysnum(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	rc = 1;
  out:
 	ASIdentifiers_free(asidentifiers);
-	return rc;
-}
-
-/*
- * Construct a RFC 3779 2.2.3.8 range from its bit string.
- * Returns zero on failure, non-zero on success.
- */
-int
-sbgp_addr(const char *fn, struct cert_ip *ips, size_t *num_ips, enum afi afi,
-    const ASN1_BIT_STRING *bs)
-{
-	struct cert_ip	ip;
-
-	memset(&ip, 0, sizeof(struct cert_ip));
-
-	ip.afi = afi;
-	ip.type = CERT_IP_ADDR;
-
-	if (!ip_addr_parse(bs, afi, fn, &ip.ip)) {
-		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
-		    "invalid IP address", fn);
-		return 0;
-	}
-
-	if (!ip_cert_compose_ranges(&ip)) {
-		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
-		    "IP address range reversed", fn);
-		return 0;
-	}
-
-	return append_ip(fn, ips, num_ips, &ip);
-}
-
-/*
- * Parse RFC 3779 2.2.3.9 range of addresses.
- * Returns zero on failure, non-zero on success.
- */
-int
-sbgp_addr_range(const char *fn, struct cert_ip *ips, size_t *num_ips,
-    enum afi afi, const IPAddressRange *range)
-{
-	struct cert_ip	ip;
-
-	memset(&ip, 0, sizeof(struct cert_ip));
-
-	ip.afi = afi;
-	ip.type = CERT_IP_RANGE;
-
-	if (!ip_addr_parse(range->min, afi, fn, &ip.range.min)) {
-		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
-		    "invalid IP address", fn);
-		return 0;
-	}
-
-	if (!ip_addr_parse(range->max, afi, fn, &ip.range.max)) {
-		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
-		    "invalid IP address", fn);
-		return 0;
-	}
-
-	if (!ip_cert_compose_ranges(&ip)) {
-		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
-		    "IP address range reversed", fn);
-		return 0;
-	}
-
-	return append_ip(fn, ips, num_ips, &ip);
-}
-
-static int
-sbgp_addr_inherit(const char *fn, struct cert_ip *ips, size_t *num_ips,
-    enum afi afi)
-{
-	struct cert_ip	ip;
-
-	memset(&ip, 0, sizeof(struct cert_ip));
-
-	ip.afi = afi;
-	ip.type = CERT_IP_INHERIT;
-
-	return append_ip(fn, ips, num_ips, &ip);
-}
-
-int
-sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
-    struct cert_ip **out_ips, size_t *out_num_ips)
-{
-	const IPAddressFamily	*af;
-	const IPAddressOrRanges	*aors;
-	const IPAddressOrRange	*aor;
-	enum afi		 afi;
-	struct cert_ip		*ips = NULL;
-	size_t			 num_ips = 0, num;
-	int			 ipv4_seen = 0, ipv6_seen = 0;
-	int			 i, j, ipaddrblocksz;
-
-	assert(*out_ips == NULL && *out_num_ips == 0);
-
-	ipaddrblocksz = sk_IPAddressFamily_num(addrblk);
-	if (ipaddrblocksz != 1 && ipaddrblocksz != 2) {
-		warnx("%s: RFC 6487 section 4.8.10: unexpected number of "
-		    "ipAddrBlocks (got %d, expected 1 or 2)",
-		    fn, ipaddrblocksz);
-		goto out;
-	}
-
-	for (i = 0; i < ipaddrblocksz; i++) {
-		af = sk_IPAddressFamily_value(addrblk, i);
-
-		switch (af->ipAddressChoice->type) {
-		case IPAddressChoice_inherit:
-			aors = NULL;
-			num = num_ips + 1;
-			break;
-		case IPAddressChoice_addressesOrRanges:
-			aors = af->ipAddressChoice->u.addressesOrRanges;
-			num = num_ips + sk_IPAddressOrRange_num(aors);
-			break;
-		default:
-			warnx("%s: RFC 3779: IPAddressChoice: unknown type %d",
-			    fn, af->ipAddressChoice->type);
-			goto out;
-		}
-		if (num == num_ips) {
-			warnx("%s: RFC 6487 section 4.8.10: "
-			    "empty ipAddressesOrRanges", fn);
-			goto out;
-		}
-
-		if (num >= MAX_IP_SIZE)
-			goto out;
-		ips = recallocarray(ips, num_ips, num, sizeof(struct cert_ip));
-		if (ips == NULL)
-			err(1, NULL);
-
-		if (!ip_addr_afi_parse(fn, af->addressFamily, &afi)) {
-			warnx("%s: RFC 3779: invalid AFI", fn);
-			goto out;
-		}
-
-		switch (afi) {
-		case AFI_IPV4:
-			if (ipv4_seen++ > 0) {
-				warnx("%s: RFC 6487 section 4.8.10: "
-				    "IPv4 appears twice", fn);
-				goto out;
-			}
-			break;
-		case AFI_IPV6:
-			if (ipv6_seen++ > 0) {
-				warnx("%s: RFC 6487 section 4.8.10: "
-				    "IPv6 appears twice", fn);
-				goto out;
-			}
-			break;
-		}
-
-		if (aors == NULL) {
-			if (!sbgp_addr_inherit(fn, ips, &num_ips, afi))
-				goto out;
-			continue;
-		}
-
-		for (j = 0; j < sk_IPAddressOrRange_num(aors); j++) {
-			aor = sk_IPAddressOrRange_value(aors, j);
-			switch (aor->type) {
-			case IPAddressOrRange_addressPrefix:
-				if (!sbgp_addr(fn, ips, &num_ips, afi,
-				    aor->u.addressPrefix))
-					goto out;
-				break;
-			case IPAddressOrRange_addressRange:
-				if (!sbgp_addr_range(fn, ips, &num_ips, afi,
-				    aor->u.addressRange))
-					goto out;
-				break;
-			default:
-				warnx("%s: RFC 3779: IPAddressOrRange: "
-				    "unknown type %d", fn, aor->type);
-				goto out;
-			}
-		}
-	}
-
-	*out_ips = ips;
-	*out_num_ips = num_ips;
-
-	return 1;
-
- out:
-	free(ips);
-
-	return 0;
-}
-
-/*
- * Parse an sbgp-ipAddrBlock X509 extension, RFC 6487 4.8.10, with
- * syntax documented in RFC 3779 starting in section 2.2.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
-{
-	IPAddrBlocks	*addrblk = NULL;
-	int		 rc = 0;
-
-	if (!X509_EXTENSION_get_critical(ext)) {
-		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
-		    "extension not critical", fn);
-		goto out;
-	}
-
-	if ((addrblk = X509V3_EXT_d2i(ext)) == NULL) {
-		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
-		    "failed extension parse", fn);
-		goto out;
-	}
-
-	if (!sbgp_parse_ipaddrblk(fn, addrblk, &cert->ips, &cert->num_ips))
-		goto out;
-
-	if (cert->num_ips == 0) {
-		warnx("%s: RFC 6487 section 4.8.10: empty ipAddrBlock", fn);
-		goto out;
-	}
-
-	rc = 1;
- out:
-	IPAddrBlocks_free(addrblk);
 	return rc;
 }
 
@@ -1490,6 +1240,249 @@ certificate_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	rc = 1;
  out:
 	sk_POLICYINFO_pop_free(policies, POLICYINFO_free);
+	return rc;
+}
+
+/*
+ * Append an IP address structure to our list of results, ensuring there is
+ * at most one inheritance marker per AFI and no overlapping ranges.
+ */
+static int
+append_ip(const char *fn, struct cert_ip *ips, size_t *num_ips,
+    const struct cert_ip *ip)
+{
+	if (!ip_addr_check_overlap(ip, fn, ips, *num_ips, 0))
+		return 0;
+	ips[(*num_ips)++] = *ip;
+	return 1;
+}
+
+/*
+ * Construct a RFC 3779 2.2.3.8 range from its bit string.
+ * Returns zero on failure, non-zero on success.
+ */
+int
+sbgp_addr(const char *fn, struct cert_ip *ips, size_t *num_ips, enum afi afi,
+    const ASN1_BIT_STRING *bs)
+{
+	struct cert_ip	ip;
+
+	memset(&ip, 0, sizeof(struct cert_ip));
+
+	ip.afi = afi;
+	ip.type = CERT_IP_ADDR;
+
+	if (!ip_addr_parse(bs, afi, fn, &ip.ip)) {
+		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
+		    "invalid IP address", fn);
+		return 0;
+	}
+
+	if (!ip_cert_compose_ranges(&ip)) {
+		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
+		    "IP address range reversed", fn);
+		return 0;
+	}
+
+	return append_ip(fn, ips, num_ips, &ip);
+}
+
+/*
+ * Parse RFC 3779 2.2.3.9 range of addresses.
+ * Returns zero on failure, non-zero on success.
+ */
+int
+sbgp_addr_range(const char *fn, struct cert_ip *ips, size_t *num_ips,
+    enum afi afi, const IPAddressRange *range)
+{
+	struct cert_ip	ip;
+
+	memset(&ip, 0, sizeof(struct cert_ip));
+
+	ip.afi = afi;
+	ip.type = CERT_IP_RANGE;
+
+	if (!ip_addr_parse(range->min, afi, fn, &ip.range.min)) {
+		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
+		    "invalid IP address", fn);
+		return 0;
+	}
+
+	if (!ip_addr_parse(range->max, afi, fn, &ip.range.max)) {
+		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
+		    "invalid IP address", fn);
+		return 0;
+	}
+
+	if (!ip_cert_compose_ranges(&ip)) {
+		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
+		    "IP address range reversed", fn);
+		return 0;
+	}
+
+	return append_ip(fn, ips, num_ips, &ip);
+}
+
+static int
+sbgp_addr_inherit(const char *fn, struct cert_ip *ips, size_t *num_ips,
+    enum afi afi)
+{
+	struct cert_ip	ip;
+
+	memset(&ip, 0, sizeof(struct cert_ip));
+
+	ip.afi = afi;
+	ip.type = CERT_IP_INHERIT;
+
+	return append_ip(fn, ips, num_ips, &ip);
+}
+
+int
+sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
+    struct cert_ip **out_ips, size_t *out_num_ips)
+{
+	const IPAddressFamily	*af;
+	const IPAddressOrRanges	*aors;
+	const IPAddressOrRange	*aor;
+	enum afi		 afi;
+	struct cert_ip		*ips = NULL;
+	size_t			 num_ips = 0, num;
+	int			 ipv4_seen = 0, ipv6_seen = 0;
+	int			 i, j, ipaddrblocksz;
+
+	assert(*out_ips == NULL && *out_num_ips == 0);
+
+	ipaddrblocksz = sk_IPAddressFamily_num(addrblk);
+	if (ipaddrblocksz != 1 && ipaddrblocksz != 2) {
+		warnx("%s: RFC 6487 section 4.8.10: unexpected number of "
+		    "ipAddrBlocks (got %d, expected 1 or 2)",
+		    fn, ipaddrblocksz);
+		goto out;
+	}
+
+	for (i = 0; i < ipaddrblocksz; i++) {
+		af = sk_IPAddressFamily_value(addrblk, i);
+
+		switch (af->ipAddressChoice->type) {
+		case IPAddressChoice_inherit:
+			aors = NULL;
+			num = num_ips + 1;
+			break;
+		case IPAddressChoice_addressesOrRanges:
+			aors = af->ipAddressChoice->u.addressesOrRanges;
+			num = num_ips + sk_IPAddressOrRange_num(aors);
+			break;
+		default:
+			warnx("%s: RFC 3779: IPAddressChoice: unknown type %d",
+			    fn, af->ipAddressChoice->type);
+			goto out;
+		}
+		if (num == num_ips) {
+			warnx("%s: RFC 6487 section 4.8.10: "
+			    "empty ipAddressesOrRanges", fn);
+			goto out;
+		}
+
+		if (num >= MAX_IP_SIZE)
+			goto out;
+		ips = recallocarray(ips, num_ips, num, sizeof(struct cert_ip));
+		if (ips == NULL)
+			err(1, NULL);
+
+		if (!ip_addr_afi_parse(fn, af->addressFamily, &afi)) {
+			warnx("%s: RFC 3779: invalid AFI", fn);
+			goto out;
+		}
+
+		switch (afi) {
+		case AFI_IPV4:
+			if (ipv4_seen++ > 0) {
+				warnx("%s: RFC 6487 section 4.8.10: "
+				    "IPv4 appears twice", fn);
+				goto out;
+			}
+			break;
+		case AFI_IPV6:
+			if (ipv6_seen++ > 0) {
+				warnx("%s: RFC 6487 section 4.8.10: "
+				    "IPv6 appears twice", fn);
+				goto out;
+			}
+			break;
+		}
+
+		if (aors == NULL) {
+			if (!sbgp_addr_inherit(fn, ips, &num_ips, afi))
+				goto out;
+			continue;
+		}
+
+		for (j = 0; j < sk_IPAddressOrRange_num(aors); j++) {
+			aor = sk_IPAddressOrRange_value(aors, j);
+			switch (aor->type) {
+			case IPAddressOrRange_addressPrefix:
+				if (!sbgp_addr(fn, ips, &num_ips, afi,
+				    aor->u.addressPrefix))
+					goto out;
+				break;
+			case IPAddressOrRange_addressRange:
+				if (!sbgp_addr_range(fn, ips, &num_ips, afi,
+				    aor->u.addressRange))
+					goto out;
+				break;
+			default:
+				warnx("%s: RFC 3779: IPAddressOrRange: "
+				    "unknown type %d", fn, aor->type);
+				goto out;
+			}
+		}
+	}
+
+	*out_ips = ips;
+	*out_num_ips = num_ips;
+
+	return 1;
+
+ out:
+	free(ips);
+
+	return 0;
+}
+
+/*
+ * Parse an sbgp-ipAddrBlock X509 extension, RFC 6487 4.8.10, with
+ * syntax documented in RFC 3779 starting in section 2.2.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+sbgp_ipaddrblk(const char *fn, struct cert *cert, X509_EXTENSION *ext)
+{
+	IPAddrBlocks	*addrblk = NULL;
+	int		 rc = 0;
+
+	if (!X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
+		    "extension not critical", fn);
+		goto out;
+	}
+
+	if ((addrblk = X509V3_EXT_d2i(ext)) == NULL) {
+		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
+		    "failed extension parse", fn);
+		goto out;
+	}
+
+	if (!sbgp_parse_ipaddrblk(fn, addrblk, &cert->ips, &cert->num_ips))
+		goto out;
+
+	if (cert->num_ips == 0) {
+		warnx("%s: RFC 6487 section 4.8.10: empty ipAddrBlock", fn);
+		goto out;
+	}
+
+	rc = 1;
+ out:
+	IPAddrBlocks_free(addrblk);
 	return rc;
 }
 
