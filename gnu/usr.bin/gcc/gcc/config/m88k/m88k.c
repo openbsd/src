@@ -1426,12 +1426,6 @@ m88k_layout_frame ()
   if (current_function_profile)
     frame_pointer_needed = 1;
 
-  /* If we are producing debug information, store r1 and r30 where the
-     debugger wants to find them (r30 at r30+0, r1 at r30+4).  Space has
-     already been reserved for r1/r30 in STARTING_FRAME_OFFSET.  */
-  if (write_symbols != NO_DEBUG)
-    save_regs[1] = 1;
-
   /* If we are producing PIC, save the addressing base register and r1.  */
   if (flag_pic && current_function_uses_pic_offset_table)
     {
@@ -2863,9 +2857,6 @@ m88k_override_options ()
 
   if ((target_flags & MASK_EITHER_LARGE_SHIFT) == MASK_EITHER_LARGE_SHIFT)
     error ("-mtrap-large-shift and -mhandle-large-shift are incompatible");
-
-  if (TARGET_OMIT_LEAF_FRAME_POINTER)	/* keep nonleaf frame pointers */
-    flag_omit_frame_pointer = 1;
 
   /* On the m88100, it is desirable to align functions to a cache line.
      The m88110 cache is small, so align to an 8 byte boundary.  */

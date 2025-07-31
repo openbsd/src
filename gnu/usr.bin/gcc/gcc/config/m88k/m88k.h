@@ -139,7 +139,6 @@ extern int target_flags;			/* -m compiler switches */
 #define MASK_MEMCPY		0x00002000 /* Always use memcpy for movstr */
 #define MASK_EITHER_LARGE_SHIFT	(MASK_TRAP_LARGE_SHIFT | \
 				 MASK_HANDLE_LARGE_SHIFT)
-#define MASK_OMIT_LEAF_FRAME_POINTER 0x00004000 /* omit leaf frame pointers */
 
 
 #define TARGET_88100   		 ((target_flags & MASK_88000) == MASK_88100)
@@ -154,7 +153,6 @@ extern int target_flags;			/* -m compiler switches */
 #define TARGET_MEMCPY		  (target_flags & MASK_MEMCPY)
 
 #define TARGET_EITHER_LARGE_SHIFT (target_flags & MASK_EITHER_LARGE_SHIFT)
-#define TARGET_OMIT_LEAF_FRAME_POINTER (target_flags & MASK_OMIT_LEAF_FRAME_POINTER)
 
 #define TARGET_DEFAULT	(MASK_CHECK_ZERO_DIV)
 #define CPU_DEFAULT MASK_88100
@@ -181,10 +179,6 @@ extern int target_flags;			/* -m compiler switches */
     N_("Do not force serialization on volatile memory access") },	\
   { "serialize-volatile",		-MASK_NO_SERIALIZE_VOLATILE,	\
     N_("Force serialization on volatile memory access") },		\
-  { "omit-leaf-frame-pointer",		 MASK_OMIT_LEAF_FRAME_POINTER,	\
-    N_("Do not save the frame pointer in leaf functions") },		\
-  { "no-omit-leaf-frame-pointer",	-MASK_OMIT_LEAF_FRAME_POINTER,	\
-    N_("Save the frame pointer in leaf functions") },			\
   { "memcpy",				 MASK_MEMCPY,			\
     N_("Force all memory copies to use memcpy()") },			\
   { "no-memcpy",			-MASK_MEMCPY,			\
@@ -698,7 +692,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* Similar, but for floating constants, and defining letters G and H.
    Here VALUE is the CONST_DOUBLE rtx itself.  For the m88000, the
-   constraints are:  `G' requires zero, and `H' requires one or two.  */
+   constraints is:  `G' requires zero.  */
 #define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)				\
   ((C) == 'G' ? (CONST_DOUBLE_HIGH (VALUE) == 0				\
 		 && CONST_DOUBLE_LOW (VALUE) == 0)			\
@@ -919,9 +913,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    may be accessed via the stack pointer) in functions that seem suitable.
    This is computed in `reload', in reload1.c.  */
 #define FRAME_POINTER_REQUIRED						\
-((current_function_profile || !leaf_function_p ()			\
-  || !TARGET_OMIT_LEAF_FRAME_POINTER)					\
- || (write_symbols != NO_DEBUG))
+(current_function_profile || !leaf_function_p ())
 
 /* Define registers used by the epilogue and return instruction.  */
 #define EPILOGUE_USES(REGNO) \
