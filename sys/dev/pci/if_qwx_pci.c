@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.24 2025/03/28 13:55:27 kevlo Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.25 2025/07/31 10:00:01 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1119,6 +1119,8 @@ unsupported_wcn6855_soc:
 	ic->ic_updateedca = qwx_updateedca;
 	ic->ic_updatedtim = qwx_updatedtim;
 #endif
+	ic->ic_bgscan_start = qwx_bgscan;
+
 	/*
 	 * We cannot read the MAC address without loading the
 	 * firmware from disk. Postpone until mountroot is done.

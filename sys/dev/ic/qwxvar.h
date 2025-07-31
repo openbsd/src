@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.27 2025/07/24 13:24:59 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.28 2025/07/31 10:00:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1841,6 +1841,7 @@ struct qwx_softc {
 	} scan;
 	u_int			scan_channel;
 	struct qwx_survey_info	survey[IEEE80211_CHAN_MAX];
+	struct task		bgscan_task;
 
 	int			attached;
 	struct {
@@ -1986,6 +1987,7 @@ int	qwx_media_change(struct ifnet *);
 void	qwx_init_task(void *);
 int	qwx_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void	qwx_newstate_task(void *);
+int	qwx_bgscan(struct ieee80211com *);
 
 struct qwx_node {
 	struct ieee80211_node ni;

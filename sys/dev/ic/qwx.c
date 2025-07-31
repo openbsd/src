@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.82 2025/07/31 09:56:00 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.83 2025/07/31 10:00:01 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -163,7 +163,7 @@ void qwx_vif_free_all(struct qwx_softc *);
 void qwx_dp_stop_shadow_timers(struct qwx_softc *);
 void qwx_ce_stop_shadow_timers(struct qwx_softc *);
 
-int qwx_scan(struct qwx_softc *);
+int qwx_scan(struct qwx_softc *, int);
 void qwx_scan_abort(struct qwx_softc *);
 int qwx_auth(struct qwx_softc *);
 int qwx_deauth(struct qwx_softc *);
@@ -373,6 +373,7 @@ qwx_stop(struct ifnet *ifp)
 	task_del(systq, &sc->init_task);
 	qwx_del_task(sc, sc->sc_nswq, &sc->newstate_task);
 	qwx_del_task(sc, systq, &sc->setkey_task);
+	qwx_del_task(sc, systq, &sc->bgscan_task);
 	refcnt_finalize(&sc->task_refs, "qwxstop");
 
 	qwx_setkey_clear(sc);
@@ -868,6 +869,76 @@ qwx_setkey_task(void *arg)
 }
 
 void
+qwx_clear_hwkeys(struct qwx_softc *sc, struct ath11k_peer *peer)
+{
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	struct wmi_vdev_install_key_arg arg =  {
+		.vdev_id = arvif->vdev_id,
+		.key_len = 0,
+		.key_data = NULL,
+		.key_cipher = WMI_CIPHER_NONE,
+		.key_flags = 0,
+	};
+	int k_id = 0, ret;
+
+	arg.macaddr = peer->addr;
+
+	for (k_id = 0; k_id <= WMI_MAX_KEY_INDEX; k_id++) {
+		arg.key_idx = k_id;
+
+		sc->install_key_done = 0;
+		ret = qwx_wmi_vdev_install_key(sc, &arg, pdev_id);
+		if (ret) {
+			printf("%s: delete key %d failed: error %d\n",
+			    sc->sc_dev.dv_xname, k_id, ret);
+			continue;
+		}
+
+		while (!sc->install_key_done) {
+			ret = tsleep_nsec(&sc->install_key_done, 0,
+			    "qwxinstkey", SEC_TO_NSEC(1));
+			if (ret) {
+				printf("%s: delete key %d timeout\n",
+				    sc->sc_dev.dv_xname, k_id);
+			}
+		}
+	}
+}
+
+void
+qwx_clear_pn_replay_config(struct qwx_softc *sc, struct ath11k_peer *peer)
+{
+	struct ath11k_hal_reo_cmd cmd = {0};
+	struct dp_rx_tid *rx_tid;
+	uint8_t tid;
+	int ret = 0;
+
+	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
+	cmd.upd0 |= HAL_REO_CMD_UPD0_PN |
+		    HAL_REO_CMD_UPD0_PN_SIZE |
+		    HAL_REO_CMD_UPD0_PN_VALID |
+		    HAL_REO_CMD_UPD0_PN_CHECK |
+		    HAL_REO_CMD_UPD0_SVLD;
+
+	for (tid = 0; tid < IEEE80211_NUM_TID; tid++) {
+		rx_tid = &peer->rx_tid[tid];
+		if (!rx_tid->active)
+			continue;
+		cmd.addr_lo = rx_tid->paddr & 0xffffffff;
+		cmd.addr_hi = (rx_tid->paddr >> 32);
+		ret = qwx_dp_tx_send_reo_cmd(sc, rx_tid,
+		    HAL_REO_CMD_UPDATE_RX_QUEUE, &cmd, NULL);
+		if (ret) {
+			printf("%s: failed to configure rx tid %d queue "
+			    "for pn replay detection %d\n",
+			    sc->sc_dev.dv_xname, tid, ret);
+			break;
+		}
+	}
+}
+
+void
 qwx_setkey_clear(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -910,6 +981,8 @@ qwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 #endif
 		qwx_del_task(sc, systq, &sc->setkey_task);
 		qwx_setkey_clear(sc);
+
+		qwx_del_task(sc, systq, &sc->bgscan_task);
 #if 0
 		qwx_del_task(sc, systq, &sc->bgscan_done_task);
 #endif
@@ -991,7 +1064,7 @@ qwx_newstate_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 next_scan:
-		err = qwx_scan(sc);
+		err = qwx_scan(sc, 0);
 		if (err)
 			break;
 		if (ifp->if_flags & IFF_DEBUG)
@@ -25255,7 +25328,7 @@ qwx_start_scan(struct qwx_softc *sc, struct scan_req_params *arg)
 #define ATH11K_MAC_SCAN_CMD_EVT_OVERHEAD		200 /* in msecs */
 
 int
-qwx_scan(struct qwx_softc *sc)
+qwx_scan(struct qwx_softc *sc, int bgscan)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list);
@@ -25419,7 +25492,7 @@ qwx_scan(struct qwx_softc *sc)
 #ifdef notyet
 		spin_unlock_bh(&ar->data_lock);
 #endif
-	} else {
+	} else if (!bgscan) {
 		/*
 		 * The current mode might have been fixed during association.
 		 * Ensure all channels get scanned.
@@ -25485,6 +25558,31 @@ qwx_scan_abort(struct qwx_softc *sc)
 #ifdef notyet
 	spin_unlock_bh(&ar->data_lock);
 #endif
+}
+
+void
+qwx_bgscan_task(void *arg)
+{
+	struct qwx_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    sc->scan.state == ATH11K_SCAN_IDLE &&
+	    !test_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags))
+		qwx_scan(sc, 1);
+
+	refcnt_rele_wake(&sc->task_refs);
+}
+
+int
+qwx_bgscan(struct ieee80211com *ic)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct qwx_softc *sc = ifp->if_softc;
+
+	qwx_add_task(sc, systq, &sc->bgscan_task);
+
+	return 0;
 }
 
 /*
@@ -25639,6 +25737,9 @@ qwx_deauth(struct qwx_softc *sc)
 		   sc->sc_dev.dv_xname, ret);
 		return ret;
 	}
+
+	qwx_clear_pn_replay_config(sc, peer);
+	qwx_clear_hwkeys(sc, peer);
 
 	ret = qwx_mac_station_remove(sc, arvif, pdev_id, peer);
 	if (ret)
@@ -25852,6 +25953,7 @@ qwx_run(struct qwx_softc *sc)
 		return ret;
 	}
 
+	sc->ops.irq_enable(sc);
 	return 0;
 }
 
@@ -25909,6 +26011,7 @@ qwx_attach(struct qwx_softc *sc)
 	task_set(&sc->init_task, qwx_init_task, sc);
 	task_set(&sc->newstate_task, qwx_newstate_task, sc);
 	task_set(&sc->setkey_task, qwx_setkey_task, sc);
+	task_set(&sc->bgscan_task, qwx_bgscan_task, sc);
 	timeout_set_proc(&sc->scan.timeout, qwx_scan_timeout, sc);
 #if NBPFILTER > 0
 	qwx_radiotap_attach(sc);
