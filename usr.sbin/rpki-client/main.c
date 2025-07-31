@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.285 2025/07/08 14:19:21 job Exp $ */
+/*	$OpenBSD: main.c,v 1.286 2025/07/31 08:32:43 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -977,7 +977,7 @@ main(int argc, char *argv[])
 {
 	int		 rc, c, i, st, hangup = 0;
 	int		 procfd, rsyncfd, httpfd, rrdpfd;
-	int		 nthreads = 1;
+	int		 nthreads = 2;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];

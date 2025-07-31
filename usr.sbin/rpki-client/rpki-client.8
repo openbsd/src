@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.125 2025/07/17 18:21:37 tb Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.126 2025/07/31 08:32:43 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2025 $
+.Dd $Mdocdate: July 31 2025 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -181,7 +181,7 @@ seconds from the unix epoch.
 This overrides the default of using the current system time.
 .It Fl p Ar threads
 Validate using the specified number of threads.
-The default is one.
+The default is two.
 Has no effect in combination with
 .Fl f .
 .It Fl R
