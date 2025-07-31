@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.19 2025/06/16 20:21:33 kettenis Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.20 2025/07/31 16:29:39 stsp Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -224,5 +224,5 @@ fail_hiballoc:
 int
 resuming(void)
 {
-	return (getuptime() < resume_time + 10);
+	return (getuptime() < resume_time + 15);
 }
