@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.10 2018/03/24 04:19:43 visa Exp $ */
+/* $OpenBSD: cpu.h,v 1.11 2025/07/31 15:14:38 miod Exp $ */
 /* public domain */
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
@@ -8,15 +8,8 @@
 
 #ifdef _KERNEL
 
-/*
- * 88110 systems only have cpudep6..7 available so far.
- * By the time Luna2001/2010 are supported, we can grow ci_cpudep to a
- * couple more fields to unbreak this.
- */
-#ifndef M88110
 #define	ci_curspl	ci_cpudep4
 #define	ci_swireg	ci_cpudep5
-#endif
 #define	ci_intr_mask	ci_cpudep6
 #define	ci_clock_ack	ci_cpudep7
 
