@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.35 2024/12/20 22:18:27 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.36 2025/07/31 19:19:25 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -129,6 +129,8 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	    VIRTIO_SCSI_CONFIG_SEG_MAX);
 	uint16_t max_target = virtio_read_device_config_2(vsc,
 	    VIRTIO_SCSI_CONFIG_MAX_TARGET);
+	uint32_t max_lun = virtio_read_device_config_4(vsc,
+	    VIRTIO_SCSI_CONFIG_MAX_LUN);
 
 	if (seg_max < SEG_MAX) {
 		printf("\nMax number of segments %d too small\n", seg_max);
@@ -162,7 +164,7 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = max_target;
-	saa.saa_luns = 8;
+	saa.saa_luns = MIN(UINT8_MAX, max_lun + 1);
 	saa.saa_openings = (nreqs > cmd_per_lun) ? cmd_per_lun : nreqs;
 	saa.saa_pool = &sc->sc_iopool;
 	saa.saa_quirks = saa.saa_flags = 0;
