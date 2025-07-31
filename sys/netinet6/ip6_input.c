@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.293 2025/07/27 17:46:58 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.294 2025/07/31 09:05:11 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1484,14 +1484,27 @@ ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 int
 ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
+	uint8_t soiikey[sizeof(ip6_soiikey)];
 	int error;
 
 	error = suser(curproc);
 	if (error != 0)
 		return (error);
 
-	return (sysctl_struct(oldp, oldlenp, newp, newlen, ip6_soiikey,
-	    sizeof(ip6_soiikey)));
+	rw_enter_read(&sysctl_lock);
+	memcpy(soiikey, ip6_soiikey, sizeof(ip6_soiikey));
+	rw_exit_read(&sysctl_lock);
+
+	error = sysctl_struct(oldp, oldlenp, newp, newlen, soiikey,
+	    sizeof(soiikey));
+
+	if (error == 0 && newp) {
+		rw_enter_write(&sysctl_lock);
+		memcpy(ip6_soiikey, soiikey, sizeof(soiikey));
+		rw_exit_write(&sysctl_lock);
+	}
+
+	return (error);
 }
 
 int
@@ -1533,10 +1546,10 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &newval, 0, INT_MAX);
 		if (error == 0 && oldval != newval) {
-			rw_enter_write(&ip_sysctl_lock);
+			rw_enter_write(&sysctl_lock);
 			atomic_store_int(&ip6_mtudisc_timeout, newval);
 			rt_timer_queue_change(&icmp6_mtudisc_timeout_q, newval);
-			rw_exit_write(&ip_sysctl_lock);
+			rw_exit_write(&sysctl_lock);
 		}
 
 		return (error);

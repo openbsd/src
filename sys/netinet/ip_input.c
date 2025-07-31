@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.424 2025/07/24 22:31:19 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.425 2025/07/31 09:05:11 mvs Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1723,9 +1723,6 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 
 #ifndef SMALL_KERNEL
 
-/* Temporary, to avoid sysctl_lock recursion. */
-struct rwlock ip_sysctl_lock = RWLOCK_INITIALIZER("ipslk");
-
 int
 ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
@@ -1759,10 +1756,10 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &newval, 0, INT_MAX);
 		if (error == 0 && oldval != newval) {
-			rw_enter_write(&ip_sysctl_lock);
+			rw_enter_write(&sysctl_lock);
 			atomic_store_int(&ip_mtudisc_timeout, newval);
 			rt_timer_queue_change(&ip_mtudisc_timeout_q, newval);
-			rw_exit_write(&ip_sysctl_lock);
+			rw_exit_write(&sysctl_lock);
 		}
 
 		return (error);

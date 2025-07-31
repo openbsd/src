@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.122 2025/06/21 14:21:17 mvs Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.123 2025/07/31 09:05:11 mvs Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -283,10 +283,6 @@ int	 rip_send(struct socket *, struct mbuf *, struct mbuf *,
 	     struct mbuf *);
 #ifdef MROUTING
 extern struct socket *ip_mrouter[];	/* multicast routing daemon */
-#endif
-
-#ifndef SMALL_KERNEL
-extern struct rwlock ip_sysctl_lock;
 #endif
 
 #endif /* _KERNEL */

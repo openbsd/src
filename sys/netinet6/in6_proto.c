@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.148 2025/07/27 17:46:58 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.149 2025/07/31 09:05:11 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ const struct protosw inet6sw[] = {
 {
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_IPV6,
+  .pr_flags	= PR_MPSYSCTL,
   .pr_init	= ip6_init,
   .pr_slowtimo	= frag6_slowtimo,
   .pr_sysctl	= ip6_sysctl
