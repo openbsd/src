@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.10 2025/07/22 14:42:46 jsg Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.11 2025/07/31 15:39:51 mglocker Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -245,7 +245,8 @@ qcpas_mountroot(struct device *self)
 		    &dtb_fw, &dtb_fwlen);
 		if (error) {
 			printf("%s: failed to load %s: %d\n",
-			    sc->sc_dev.dv_xname, fwname, error);
+			    sc->sc_dev.dv_xname, fwname + strlen(fwname) + 1,
+			    error);
 			return;
 		}
 	}
