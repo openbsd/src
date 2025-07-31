@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.271 2025/06/20 20:10:35 kn Exp $
+.\"	$OpenBSD: port-modules.5,v 1.272 2025/07/31 13:00:54 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 20 2025 $
+.Dd $Mdocdate: July 31 2025 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -653,7 +653,26 @@ will add default values to
 .Ev CONFIGURE_ARGS
 and
 .Ev CONFIGURE_ENV .
-Also this module has the following knob:
+.Pp
+To figure out some dependencies,
+.Xr meson 1
+uses
+.Xr pkg-config 1
+then falls back to
+.Xr cmake 1 .
+As we do not want to enforce a dependency on devel/cmake/core,
+.Xr dpb 1
+might junk it if it's found.
+This could create a race between finding foo.cmake and junking
+.Xr cmake 1
+at
+configure time.
+To prevent this, unless devel/cmake/core is explicitely part of
+.Ev BUILD_DEPENDS ,
+.Xr cmake 1
+will be disabled by creating a link to false in ${WRKDIR}/bin/.
+.Pp
+This module supports the following knob:
 .Bl -tag -width Ds
 .It MODMESON_WANTCOLOR
 If set to `Yes', meson will colorize its output.
