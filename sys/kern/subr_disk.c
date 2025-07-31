@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.275 2025/07/06 12:08:23 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.276 2025/07/31 16:29:18 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -654,9 +654,12 @@ spoofgpt(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 	partoff = DL_SECTOBLK(lp, lbastart);
 	obsdfound = 0;
 	for (i = 0; i < partnum; i++) {
-		if (letoh64(gp[i].gp_attrs) & GPTPARTATTR_REQUIRED) {
-			DPRINTF("spoofgpt: Skipping partition %u (REQUIRED)\n",
-			    i);
+		fstype = gpt_get_fstype(&gp[i].gp_type);
+		if (fstype == FS_UNUSED)
+			continue;
+		if (fstype == FS_OTHER) {
+			DPRINTF("spoofgpt: Skipping partition %u "
+			    "(unknown filesystem)\n", i);
 			continue;
 		}
 
@@ -668,7 +671,6 @@ spoofgpt(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 		if (start > end)
 			continue;
 
-		fstype = gpt_get_fstype(&gp[i].gp_type);
 		if (obsdfound && fstype == FS_BSDFFS)
 			continue;
 
