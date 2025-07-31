@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.80 2025/07/24 13:41:12 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.81 2025/07/31 09:30:17 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15696,6 +15696,7 @@ void
 qwx_dp_tx_free_txbuf(struct qwx_softc *sc, int msdu_id,
     struct dp_tx_ring *tx_ring)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_tx_data *tx_data;
 
 	if (msdu_id >= sc->hw_params.tx_ring_size)
@@ -15706,6 +15707,9 @@ qwx_dp_tx_free_txbuf(struct qwx_softc *sc, int msdu_id,
 	bus_dmamap_unload(sc->sc_dmat, tx_data->map);
 	m_freem(tx_data->m);
 	tx_data->m = NULL;
+
+	ieee80211_release_node(ic, tx_data->ni);
+	tx_data->ni = NULL;
 
 	if (tx_ring->queued > 0)
 		tx_ring->queued--;
