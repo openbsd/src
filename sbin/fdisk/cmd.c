@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.185 2025/06/26 13:33:44 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.186 2025/07/31 13:37:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -632,7 +632,6 @@ ask_uuid(const struct uuid *olduuid)
 	static struct uuid	 uuid;
 	const char		*guid;
 	const char		*dflt;
-	uint32_t		 status;
 
 	dflt = PRT_uuid_to_desc(olduuid, 1);	/* guid, menu id or "00". */
 	for (;;) {
@@ -653,8 +652,7 @@ ask_uuid(const struct uuid *olduuid)
 		if (guid == NULL)
 			guid = lbuf;
 
-		uuid_from_string(guid, &uuid, &status);
-		if (status == uuid_s_ok)
+		if (string_to_uuid(guid, &uuid) == uuid_s_ok)
 			goto done;
 
 		printf("'%s' has no associated UUID\n", lbuf);

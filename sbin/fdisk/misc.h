@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.51 2025/06/26 13:33:44 krw Exp $	*/
+/*	$OpenBSD: misc.h,v 1.52 2025/07/31 13:37:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -40,3 +40,5 @@ int		 ask_yn(const char *);
 int		 hex_octet(char *);
 uint64_t	 getuint64(const char *, uint64_t, const uint64_t,
     const uint64_t);
+
+uint32_t	 string_to_uuid(const char *, struct uuid *);

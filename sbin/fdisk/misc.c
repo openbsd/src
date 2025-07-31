@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.88 2022/07/10 20:34:31 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.89 2025/07/31 13:37:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <uuid.h>
 
 #include "part.h"
 #include "disk.h"
@@ -256,4 +257,14 @@ hex_octet(char *buf)
 		return -1;
 
 	return num;
+}
+
+uint32_t
+string_to_uuid(const char *uuidstr, struct uuid *uuid)
+{
+	uint32_t		status;
+
+	uuid_from_string(uuidstr, uuid, &status);
+
+	return status == uuid_s_bad_version ? uuid_s_ok : status;
 }

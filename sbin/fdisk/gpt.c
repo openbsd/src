@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.107 2025/07/18 18:11:51 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.108 2025/07/31 13:37:06 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -329,7 +329,6 @@ GPT_recover_partition(const char *line1, const char *line2, const char *line3)
 	unsigned int		 pn;
 	int			 error, fields;
 	unsigned int		 i;
-	uint32_t		 status;
 
 	if (line1 == NULL) {
 		/* Try to recover from disk contents. */
@@ -380,8 +379,7 @@ GPT_recover_partition(const char *line1, const char *line2, const char *line3)
 		break;
 	}
 
-	uuid_from_string(type, &type_uuid, &status);
-	if (status != uuid_s_ok) {
+	if (string_to_uuid(type, &type_uuid) != uuid_s_ok) {
 		for (i = strlen(type); i > 0; i--) {
 			if (!isspace((unsigned char)type[i - 1]))
 				break;
@@ -389,19 +387,14 @@ GPT_recover_partition(const char *line1, const char *line2, const char *line3)
 		}
 		if ((p = PRT_desc_to_guid(type)) == NULL)
 			return -1;
-		uuid_from_string(p, &type_uuid, &status);
-		if (status != uuid_s_ok)
+		if (string_to_uuid(p, &type_uuid) != uuid_s_ok)
 			return -1;
 	}
 
-	uuid_from_string(guid, &guid_uuid, &status);
-	if (status != uuid_s_ok)
+	if (string_to_uuid(guid, &guid_uuid) != uuid_s_ok)
 		return -1;
-	if (uuid_is_nil(&guid_uuid, NULL)) {
-		uuid_create(&guid_uuid, &status);
-		if (status != uuid_s_ok)
-			return -1;
-	}
+	if (uuid_is_nil(&guid_uuid, NULL))
+		uuid_create(&guid_uuid, NULL);
 
 	if (start == 0) {
 		if (lba_free(&start, NULL) == -1)
