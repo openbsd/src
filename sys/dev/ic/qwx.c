@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.81 2025/07/31 09:30:17 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.82 2025/07/31 09:56:00 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -15704,15 +15704,19 @@ qwx_dp_tx_free_txbuf(struct qwx_softc *sc, int msdu_id,
 
 	tx_data = &tx_ring->data[msdu_id];
 
-	bus_dmamap_unload(sc->sc_dmat, tx_data->map);
-	m_freem(tx_data->m);
-	tx_data->m = NULL;
+	if (tx_data->m) {
+		bus_dmamap_unload(sc->sc_dmat, tx_data->map);
+		m_freem(tx_data->m);
+		tx_data->m = NULL;
 
-	ieee80211_release_node(ic, tx_data->ni);
-	tx_data->ni = NULL;
+		if (tx_ring->queued > 0)
+			tx_ring->queued--;
+	}
 
-	if (tx_ring->queued > 0)
-		tx_ring->queued--;
+	if (tx_data->ni) {
+		ieee80211_release_node(ic, tx_data->ni);
+		tx_data->ni = NULL;
+	}
 }
 
 void
@@ -15853,9 +15857,17 @@ qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
 		return;
 	}
 
-	bus_dmamap_unload(sc->sc_dmat, tx_data->map);
-	m_freem(tx_data->m);
-	tx_data->m = NULL;
+	if (tx_data->m) {
+		bus_dmamap_unload(sc->sc_dmat, tx_data->map);
+		m_freem(tx_data->m);
+		tx_data->m = NULL;
+	
+		if (tx_ring->queued > 0)
+			tx_ring->queued--;
+	}
+
+	if (tx_data->ni == NULL)
+		return;
 
 	pkt_type = FIELD_GET(HAL_TX_RATE_STATS_INFO0_PKT_TYPE, ts->rate_stats);
 	mcs = FIELD_GET(HAL_TX_RATE_STATS_INFO0_MCS, ts->rate_stats);
@@ -15865,9 +15877,6 @@ qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
 
 	ieee80211_release_node(ic, tx_data->ni);
 	tx_data->ni = NULL;
-	
-	if (tx_ring->queued > 0)
-		tx_ring->queued--;
 }
 
 #define QWX_TX_COMPL_NEXT(x)	(((x) + 1) % DP_TX_COMP_RING_SIZE)
