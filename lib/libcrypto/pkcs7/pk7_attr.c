@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.21 2025/07/31 02:21:01 tb Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.22 2025/07/31 02:24:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -65,6 +65,7 @@
 
 #include "asn1_local.h"
 #include "err_local.h"
+#include "x509_local.h"
 
 int
 PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
@@ -122,40 +123,46 @@ PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
 }
 LCRYPTO_ALIAS(PKCS7_get_smimecap);
 
-/* Basic smime-capabilities OID and optional integer arg */
+/*
+ * Add AlgorithmIdentifier OID of type |nid| to the SMIMECapability attribute
+ * set |sk| (see RFC 3851, section 2.5.2). If keysize > 0, the OID has an
+ * integer parameter of value |keysize|, otherwise parameters are omitted.
+ *
+ * See also CMS_add_simple_smimecap().
+ */
 int
-PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
+PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int keysize)
 {
-	X509_ALGOR *alg;
+	X509_ALGOR *alg = NULL;
+	ASN1_INTEGER *parameter = NULL;
+	int parameter_type = V_ASN1_UNDEF;
+	int ret = 0;
 
-	if (!(alg = X509_ALGOR_new())) {
-		PKCS7error(ERR_R_MALLOC_FAILURE);
-		return 0;
+	if (keysize > 0) {
+		if ((parameter = ASN1_INTEGER_new()) == NULL)
+			goto err;
+		if (!ASN1_INTEGER_set(parameter, keysize))
+			goto err;
+		parameter_type = V_ASN1_INTEGER;
 	}
-	ASN1_OBJECT_free(alg->algorithm);
-	alg->algorithm = OBJ_nid2obj(nid);
-	if (arg > 0) {
-		ASN1_INTEGER *nbit;
 
-		if (!(alg->parameter = ASN1_TYPE_new()))
-			goto err;
-		if (!(nbit = ASN1_INTEGER_new()))
-			goto err;
-		if (!ASN1_INTEGER_set(nbit, arg)) {
-			ASN1_INTEGER_free(nbit);
-			goto err;
-		}
-		alg->parameter->value.integer = nbit;
-		alg->parameter->type = V_ASN1_INTEGER;
-	}
-	if (sk_X509_ALGOR_push(sk, alg) == 0)
+	if ((alg = X509_ALGOR_new()) == NULL)
 		goto err;
-	return 1;
+	if (!X509_ALGOR_set0_by_nid(alg, nid, parameter_type, parameter))
+		goto err;
+	parameter = NULL;
 
-err:
-	PKCS7error(ERR_R_MALLOC_FAILURE);
+	if (sk_X509_ALGOR_push(sk, alg) <= 0)
+		goto err;
+	alg = NULL;
+
+	ret = 1;
+
+ err:
 	X509_ALGOR_free(alg);
-	return 0;
+	ASN1_INTEGER_free(parameter);
+
+	return ret;
 }
 LCRYPTO_ALIAS(PKCS7_simple_smimecap);
 

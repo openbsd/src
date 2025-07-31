@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.35 2025/07/27 07:16:20 tb Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.36 2025/07/31 02:24:21 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -990,6 +990,8 @@ LCRYPTO_ALIAS(CMS_add_smimecap);
  * Add AlgorithmIdentifier OID of type |nid| to the SMIMECapability attribute
  * set |*out_algs| (see RFC 3851, section 2.5.2). If keysize > 0, the OID has
  * an integer parameter of value |keysize|, otherwise parameters are omitted.
+ *
+ * See also PKCS7_simple_smimecap().
  */
 int
 CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **out_algs, int nid, int keysize)
