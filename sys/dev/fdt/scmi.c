@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmi.c,v 1.3 2025/05/22 03:04:01 tobhe Exp $	*/
+/*	$OpenBSD: scmi.c,v 1.4 2025/07/31 10:23:20 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
@@ -104,6 +104,8 @@ struct scmi_perf_level {
 
 struct scmi_perf_domain {
 	size_t				pd_nlevels;
+	uint32_t			pd_perf_max;
+	uint32_t			pd_perf_min;
 	struct scmi_perf_level		*pd_levels;
 	int				pd_curlevel;
 };
@@ -160,6 +162,7 @@ struct cfdriver scmi_cd = {
 void	scmi_attach_proto(struct scmi_softc *, int);
 void	scmi_attach_clock(struct scmi_softc *, int);
 void	scmi_attach_perf(struct scmi_softc *, int);
+void	scmi_attach_sensors(struct scmi_softc *, int);
 
 int32_t	scmi_smc_command(struct scmi_softc *);
 int32_t	scmi_mbox_command(struct scmi_softc *);
@@ -484,6 +487,9 @@ int	scmi_perf_level_get(struct scmi_softc *, int);
 int	scmi_perf_level_set(struct scmi_softc *, int, int);
 void	scmi_perf_refresh_sensor(void *);
 
+int	scmi_perf_cpuspeed(int *);
+void	scmi_perf_cpusetperf(int);
+
 void
 scmi_attach_perf(struct scmi_softc *sc, int node)
 {
@@ -558,6 +564,10 @@ scmi_attach_perf(struct scmi_softc *sc, int node)
 	}
 	sensordev_install(&sc->sc_perf_sensordev);
 	sensor_task_register(sc, scmi_perf_refresh_sensor, 1);
+
+	cpu_setperf = scmi_perf_cpusetperf;
+	cpu_cpuspeed = scmi_perf_cpuspeed;
+
 	return;
 err:
 	free(sc->sc_perf_fsensors, M_DEVBUF,
@@ -596,9 +606,17 @@ scmi_perf_descr_levels(struct scmi_softc *sc, int domain)
 			pd->pd_levels = malloc(pd->pd_nlevels *
 			    sizeof(struct scmi_perf_level),
 			    M_DEVBUF, M_ZERO | M_WAITOK);
+
+			pd->pd_perf_min = UINT32_MAX;
+			pd->pd_perf_max = 0;
 		}
 
 		for (i = 0; i < pl->pl_nret; i++) {
+			if (pl->pl_entry[i].pe_perf < pd->pd_perf_min)
+				pd->pd_perf_min = pl->pl_entry[i].pe_perf;
+			if (pl->pl_entry[i].pe_perf > pd->pd_perf_max)
+				pd->pd_perf_max = pl->pl_entry[i].pe_perf;
+
 			pd->pd_levels[idx + i].pl_cost =
 			    pl->pl_entry[i].pe_cost;
 			pd->pd_levels[idx + i].pl_perf =
@@ -647,6 +665,77 @@ scmi_perf_level_set(struct scmi_softc *sc, int domain, int level)
 		return -1;
 	}
 	return 0;
+}
+
+int
+scmi_perf_cpuspeed(int *freq)
+{
+	struct scmi_softc *sc;
+	int i, level = -1;
+	uint64_t opp_hz = 0;
+
+        for (i = 0; i < scmi_cd.cd_ndevs; i++) {
+                sc = scmi_cd.cd_devs[i];
+                if (sc == NULL)
+                        continue;
+
+		if (sc->sc_perf_domains == NULL)
+			continue;
+
+		for (i = 0; i < sc->sc_perf_ndomains; i++) {
+			if (sc->sc_perf_domains[i].pd_levels == NULL)
+				return EINVAL;
+
+			level = scmi_perf_level_get(sc, i);
+			opp_hz = MAX(opp_hz, (uint64_t)sc->sc_perf_domains[i].
+			    pd_levels[level].pl_ifreq * 1000);
+		}
+	}
+
+	if (opp_hz == 0)
+		return EINVAL;
+
+	*freq = opp_hz / 1000000;
+	return 0;
+}
+
+void
+scmi_perf_cpusetperf(int level)
+{
+	struct scmi_softc *sc;
+	struct scmi_perf_domain *d;
+	uint64_t min, max, perf;
+	int i, j;
+
+        for (i = 0; i < scmi_cd.cd_ndevs; i++) {
+                sc = scmi_cd.cd_devs[i];
+                if (sc == NULL)
+			return;
+		if (sc->sc_perf_domains == NULL)
+			continue;
+
+		for (i = 0; i < sc->sc_perf_ndomains; i++) {
+			d = &sc->sc_perf_domains[i];
+			if (d->pd_nlevels == 0)
+				continue;
+
+			/*
+			 * Map the performance level onto SCMI perf scale
+			 */
+			min = d->pd_perf_min;
+			max = d->pd_perf_max;
+			perf = min + (level * (max - min)) / 100;
+
+			/*
+			 * Find best matching level
+			 */
+			for (j = 0; j < d->pd_nlevels - 1; j++)
+				if (d->pd_levels[j + 1].pl_perf > perf)
+					break;
+
+			scmi_perf_level_set(sc, i, j);
+		}
+	}
 }
 
 void
