@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.19 2025/07/31 02:02:35 tb Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.20 2025/07/31 02:10:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -108,14 +108,17 @@ PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
 {
 	ASN1_TYPE *cap;
 	const unsigned char *p;
+	int len;
 
-	cap = PKCS7_get_signed_attribute(si, NID_SMIMECapabilities);
-	if (!cap || (cap->type != V_ASN1_SEQUENCE))
+	if ((cap = PKCS7_get_signed_attribute(si, NID_SMIMECapabilities)) == NULL)
 		return NULL;
+	if (cap->type != V_ASN1_SEQUENCE)
+		return NULL;
+
 	p = cap->value.sequence->data;
-	return (STACK_OF(X509_ALGOR) *)
-	ASN1_item_d2i(NULL, &p, cap->value.sequence->length,
-	    &X509_ALGORS_it);
+	len = cap->value.sequence->length;
+
+	return d2i_X509_ALGORS(NULL, &p, len);
 }
 LCRYPTO_ALIAS(PKCS7_get_smimecap);
 
