@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2024/11/06 17:53:23 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2025/07/31 19:51:06 bluhm Exp $
 
 PROGS+=	dev-limit
 PROGS+=	iocmd-limit
@@ -31,6 +31,9 @@ regress:
 	@echo SKIPPED
 .endif
 
+PF_PREOPEN !=	fstat /dev/pf | grep -c ' pf ' || true
+PF_MAXOPEN !=	expr 1023 - ${PF_PREOPEN}
+
 .endif
 
 #
@@ -38,9 +41,10 @@ regress:
 # open /dev/pf and wait for 10 secs on success. If
 # /dev/pf can not be opened child exits immediately.
 # There should be 1023 children, which could open /dev/pf.
+# snmpd might keep /dev/pf open that must be subtracted
 #
 run-regress-dev-limit:
-	${SUDO} ./dev-limit -c 2048 -s 1023 -t ${TIMEOUT}
+	${SUDO} ./dev-limit -c 2048 -s ${PF_MAXOPEN} -t ${TIMEOUT}
 
 #
 # Open 1024 tickets for DIOCGETRULES without closing them.
