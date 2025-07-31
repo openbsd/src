@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.82 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.83 2025/07/31 15:52:24 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -371,10 +371,7 @@ roa_insert_vrps(struct vrp_tree *tree, struct roa *roa, struct repo *rp)
 		v->maxlength = roa->ips[i].maxlength;
 		v->asid = roa->asid;
 		v->talid = roa->talid;
-		if (rp != NULL)
-			v->repoid = repo_id(rp);
-		else
-			v->repoid = 0;
+		v->repoid = repo_id(rp);
 		v->expires = roa->expires;
 
 		/*

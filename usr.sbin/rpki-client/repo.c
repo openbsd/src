@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.76 2025/04/08 09:28:25 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.77 2025/07/31 15:52:24 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -142,6 +142,7 @@ filepath_add(struct filepath_tree *tree, char *file, int id, time_t mtime,
 
 	CTASSERT(TALSZ_MAX < 8 * sizeof(fp->talmask));
 	assert(id >= 0 && id < 8 * (int)sizeof(fp->talmask));
+	assert(file != NULL);
 
 	if ((fp = calloc(1, sizeof(*fp))) == NULL)
 		err(1, NULL);
@@ -1273,7 +1274,8 @@ repo_byid(unsigned int id)
 		if (rp->id == id)
 			return rp;
 	}
-	return NULL;
+
+	errx(1, "unknown repo with id %u", id);
 }
 
 static struct repo *
@@ -1496,6 +1498,8 @@ repo_check_timeout(int timeout)
 void
 repostats_new_files_inc(struct repo *rp, const char *file)
 {
+	assert(rp != NULL);
+
 	if (strncmp(file, ".rsync/", strlen(".rsync/")) == 0 ||
 	    strncmp(file, ".rrdp/", strlen(".rrdp/")) == 0)
 		rp->repostats.new_files++;
@@ -1507,8 +1511,8 @@ repostats_new_files_inc(struct repo *rp, const char *file)
 void
 repo_stat_inc(struct repo *rp, int talid, enum rtype type, enum stype subtype)
 {
-	if (rp == NULL)
-		return;
+	assert(rp != NULL);
+
 	rp->stats_used[talid] = 1;
 	switch (type) {
 	case RTYPE_CER:

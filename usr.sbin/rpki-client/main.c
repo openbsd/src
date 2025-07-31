@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.286 2025/07/31 08:32:43 job Exp $ */
+/*	$OpenBSD: main.c,v 1.287 2025/07/31 15:52:24 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -570,7 +570,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 	struct roa	*roa;
 	struct aspa	*aspa;
 	struct spl	*spl;
-	struct repo	*rp;
+	struct repo	*rp = NULL;
 	char		*file;
 	time_t		 mtime;
 	unsigned int	 id;
@@ -593,14 +593,19 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 	if (filemode)
 		goto done;
 
+	if (file == NULL)
+		errx(1, "no filename present in entity response");
 	if (filepath_valid(&fpt, file, talid)) {
 		warnx("%s: File already visited", file);
 		goto done;
 	}
 
-	rp = repo_byid(id);
-	repo_stat_inc(rp, talid, type, STYPE_OK);
-	repostats_new_files_inc(rp, file);
+	if (type != RTYPE_TAL) {
+		rp = repo_byid(id);
+		repo_stat_inc(rp, talid, type, STYPE_OK);
+		repostats_new_files_inc(rp, file);
+	}
+
 	switch (type) {
 	case RTYPE_TAL:
 		st->tals++;

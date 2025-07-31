@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.35 2025/07/20 12:21:28 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.36 2025/07/31 15:52:24 claudio Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -303,10 +303,7 @@ aspa_insert_vaps(char *fn, struct vap_tree *tree, struct aspa *aspa,
 		err(1, NULL);
 	v->custasid = aspa->custasid;
 	v->talid = aspa->talid;
-	if (rp != NULL)
-		v->repoid = repo_id(rp);
-	else
-		v->repoid = 0;
+	v->repoid = repo_id(rp);
 	v->expires = aspa->expires;
 
 	if ((found = RB_INSERT(vap_tree, tree, v)) != NULL) {
