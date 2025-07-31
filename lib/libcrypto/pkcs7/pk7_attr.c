@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_attr.c,v 1.18 2025/07/28 04:29:00 tb Exp $ */
+/* $OpenBSD: pk7_attr.c,v 1.19 2025/07/31 02:02:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -69,15 +69,37 @@
 int
 PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 {
-	ASN1_STRING *seq;
-	if (!(seq = ASN1_STRING_new())) {
-		PKCS7error(ERR_R_MALLOC_FAILURE);
-		return 0;
+	ASN1_STRING *seq = NULL;
+	unsigned char *data = NULL;
+	int len = 0;
+	int ret = 0;
+
+	if ((len = i2d_X509_ALGORS(cap, &data)) <= 0) {
+		len = 0;
+		goto err;
 	}
-	seq->length = ASN1_item_i2d((ASN1_VALUE *)cap, &seq->data,
-	    &X509_ALGORS_it);
-	return PKCS7_add_signed_attribute(si, NID_SMIMECapabilities,
-	    V_ASN1_SEQUENCE, seq);
+
+	if ((seq = ASN1_STRING_new()) == NULL) {
+		PKCS7error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	ASN1_STRING_set0(seq, data, len);
+	data = NULL;
+	len = 0;
+
+	if (!PKCS7_add_signed_attribute(si, NID_SMIMECapabilities,
+	    V_ASN1_SEQUENCE, seq))
+		goto err;
+	seq = NULL;
+
+	ret = 1;
+
+ err:
+	ASN1_STRING_free(seq);
+	freezero(data, len);
+
+	return ret;
 }
 LCRYPTO_ALIAS(PKCS7_add_attrib_smimecap);
 

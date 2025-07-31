@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.36 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.37 2025/07/31 02:02:35 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -955,28 +955,32 @@ static int
 ESS_add_signing_cert(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
 {
 	ASN1_STRING *seq = NULL;
-	unsigned char *p, *pp = NULL;
-	int len;
+	unsigned char *data = NULL;
+	int len = 0;
+	int ret = 0;
 
-	len = i2d_ESS_SIGNING_CERT(sc, NULL);
-	if (!(pp = malloc(len))) {
-		TSerror(ERR_R_MALLOC_FAILURE);
+	if ((len = i2d_ESS_SIGNING_CERT(sc, &data)) <= 0) {
+		len = 0;
 		goto err;
 	}
-	p = pp;
-	i2d_ESS_SIGNING_CERT(sc, &p);
-	if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len)) {
-		TSerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	free(pp);
-	pp = NULL;
-	return PKCS7_add_signed_attribute(si,
-	    NID_id_smime_aa_signingCertificate, V_ASN1_SEQUENCE, seq);
 
-err:
+	if ((seq = ASN1_STRING_new()) == NULL)
+		goto err;
+
+	ASN1_STRING_set0(seq, data, len);
+	data = NULL;
+	len = 0;
+
+	if (!PKCS7_add_signed_attribute(si, NID_id_smime_aa_signingCertificate,
+	    V_ASN1_SEQUENCE, seq))
+		goto err;
+	seq = NULL;
+
+	ret = 1;
+
+ err:
 	ASN1_STRING_free(seq);
-	free(pp);
+	freezero(data, len);
 
-	return 0;
+	return ret;
 }
