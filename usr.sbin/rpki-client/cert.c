@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.197 2025/07/31 09:46:57 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.198 2025/07/31 10:58:02 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -197,6 +197,232 @@ cert_check_purpose(const char *fn, struct cert *cert)
 	BASIC_CONSTRAINTS_free(bc);
 	EXTENDED_KEY_USAGE_free(eku);
 	return cert->purpose != CERT_PURPOSE_INVALID;
+}
+
+static int
+cert_check_sigalg(const char *fn, const struct cert *cert)
+{
+	const X509		*x = cert->x509;
+	const X509_ALGOR	*alg = NULL, *tbsalg;
+
+	/* Retrieve AlgorithmIdentifiers from Certificate and TBSCertificate. */
+	X509_get0_signature(NULL, &alg, x);
+	if (alg == NULL) {
+		warnx("%s: missing signatureAlgorithm in certificate", fn);
+		return 0;
+	}
+	if ((tbsalg = X509_get0_tbs_sigalg(x)) == NULL) {
+		warnx("%s: missing signature in tbsCertificate", fn);
+		return 0;
+	}
+
+	/* This cheap comparison is an undocumented part of X509_verify(). */
+	if (X509_ALGOR_cmp(alg, tbsalg) != 0) {
+		warnx("%s: RFC 5280, 4.1.1.2: signatureAlgorithm and signature "
+		    "AlgorithmIdentifier mismatch", fn);
+		return 0;
+	}
+
+	return x509_check_tbs_sigalg(fn, tbsalg);
+}
+
+static int
+cert_check_subject_and_issuer(const char *fn, const struct cert *cert)
+{
+	const X509_NAME *name;
+
+	if ((name = X509_get_subject_name(cert->x509)) == NULL) {
+		warnx("%s: X509_get_subject_name", fn);
+		return 0;
+	}
+	if (!x509_valid_name(fn, "subject", name))
+		return 0;
+
+	if ((name = X509_get_issuer_name(cert->x509)) == NULL) {
+		warnx("%s: X509_get_issuer_name", fn);
+		return 0;
+	}
+	if (!x509_valid_name(fn, "issuer", name))
+		return 0;
+
+	return 1;
+}
+
+static int
+cert_check_validity_period(const char *fn, struct cert *cert)
+{
+	const ASN1_TIME	*at;
+
+	if ((at = X509_get0_notBefore(cert->x509)) == NULL) {
+		warnx("%s: X509_get0_notBefore() failed", fn);
+		return 0;
+	}
+	if (!x509_get_time(at, &cert->notbefore)) {
+		warnx("%s: x509_get_time() failed", fn);
+		return 0;
+	}
+
+	if ((at = X509_get0_notAfter(cert->x509)) == NULL) {
+		warnx("%s: X509_get0_notAfter() failed", fn);
+		return 0;
+	}
+	if (!x509_get_time(at, &cert->notafter)) {
+		warnx("%s: x509_get_time() failed", fn);
+		return 0;
+	}
+
+	if (cert->notbefore > cert->notafter) {
+		warnx("%s: RFC 6487, 4.6: notAfter precedes notBefore", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+cert_compliant_rsa_key(const char *fn, struct cert *cert)
+{
+	EVP_PKEY		*pkey;
+	const RSA		*rsa;
+	const BIGNUM		*rsa_n, *rsa_e;
+
+	if ((pkey = X509_get0_pubkey(cert->x509)) == NULL) {
+		warnx("%s: cert without public key", fn);
+		return 0;
+	}
+	if ((rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
+		warnx("%s: expected RSA key", fn);
+		return 0;
+	}
+	if ((rsa_n = RSA_get0_n(rsa)) == NULL ||
+	    (rsa_e = RSA_get0_e(rsa)) == NULL) {
+		warnx("%s: missing RSA public key component", fn);
+		return 0;
+	}
+	if (BN_num_bits(rsa_n) != 2048) {
+		warnx("%s: RFC 7935, 3: want 2048-bit RSA modulus, have %d", fn,
+		    BN_num_bits(rsa_n));
+		return 0;
+	}
+	if (!BN_is_word(rsa_e, 65537)) {
+		warnx("%s: RFC 7935, 3: public RSA exponent not %d", fn, 65537);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+cert_compliant_ec_key(const char *fn, struct cert *cert)
+{
+	EVP_PKEY		*pkey;
+	const EC_KEY		*ec_key;
+
+	if ((pkey = X509_get0_pubkey(cert->x509)) == NULL) {
+		warnx("%s: cert without public key", fn);
+		return 0;
+	}
+	if ((ec_key = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
+		warnx("%s: expected EC key", fn);
+		return 0;
+	}
+	if (EC_KEY_get_conv_form(ec_key) != POINT_CONVERSION_UNCOMPRESSED) {
+		warnx("%s: RFC 8608: 3.1 public key not uncompressed", fn);
+		return 0;
+	}
+	if (!EC_KEY_check_key(ec_key)) {
+		warnx("%s: EC_KEY_check_key failed", fn);
+		return 0;
+	}
+
+	/* Prepare pubkey for the BRK tree - used in the final output dump. */
+	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+		unsigned char		*der = NULL;
+		int			 der_len;
+
+		if ((der_len = i2d_PUBKEY(pkey, &der)) <= 0) {
+			warnx("%s: i2d_PUBKEY failed", fn);
+			return 0;
+		}
+		if (base64_encode(der, der_len, &cert->pubkey) == -1)
+			errx(1, "base64_encode");
+		free(der);
+	}
+
+	return 1;
+}
+
+static int
+cert_check_spki(const char *fn, struct cert *cert)
+{
+	X509_PUBKEY		*pubkey;
+	X509_ALGOR		*alg = NULL;
+	const ASN1_OBJECT	*aobj = NULL;
+	int			 ptype = 0;
+	const void		*pval = NULL;
+	int			 rc = 0;
+
+	/* Should be called _get0_. It returns a pointer owned by cert->x509. */
+	if ((pubkey = X509_get_X509_PUBKEY(cert->x509)) == NULL) {
+		warnx("%s: RFC 6487, 4.7: certificate without SPKI", fn);
+		goto out;
+	}
+
+	/*
+	 * Excessive initialization above is due to incoherent semantics of
+	 * the following functions, e.g., OpenSSL may or may not set pval.
+	 */
+	if (!X509_PUBKEY_get0_param(NULL, NULL, NULL, &alg, pubkey) ||
+	    alg == NULL) {
+		warnx("%s: RFC 6487, 4.7: no AlgorithmIdentifier in SPKI", fn);
+		goto out;
+	}
+	X509_ALGOR_get0(&aobj, &ptype, &pval, alg);
+
+	switch (cert->purpose) {
+	case CERT_PURPOSE_TA:
+	case CERT_PURPOSE_CA:
+	case CERT_PURPOSE_EE:
+		if (OBJ_obj2nid(aobj) == NID_rsaEncryption) {
+			if (ptype != V_ASN1_NULL || pval != NULL) {
+				warnx("%s: RFC 4055, 1.2, rsaEncryption "
+				    "parameters not NULL", fn);
+				goto out;
+			}
+			if (!cert_compliant_rsa_key(fn, cert))
+				goto out;
+			break;
+		}
+		if (!experimental) {
+			warnx("%s: RFC 7935, 3.1 SPKI not RSAPublicKey", fn);
+			goto out;
+		}
+		/* FALLTHROUGH */
+	case CERT_PURPOSE_BGPSEC_ROUTER:
+		if (OBJ_obj2nid(aobj) == NID_X9_62_id_ecPublicKey) {
+			if (ptype != V_ASN1_OBJECT) {
+				warnx("%s: RFC 5480, 2.1.1, ecPublicKey "
+				    "parameters not namedCurve", fn);
+				goto out;
+			}
+			if (OBJ_obj2nid(pval) != NID_X9_62_prime256v1) {
+				warnx("%s: RFC 8608, 3.1, named curve not "
+				    "P-256", fn);
+				goto out;
+			}
+			if (!cert_compliant_ec_key(fn, cert))
+				goto out;
+			break;
+		}
+		warnx("%s: RFC 8608, 3.1, SPKI not an ecPublicKey", fn);
+		goto out;
+	default:
+		abort();
+	}
+
+	rc = 1;
+ out:
+	return rc;
 }
 
 /*
@@ -1264,232 +1490,6 @@ certificate_policies(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	rc = 1;
  out:
 	sk_POLICYINFO_pop_free(policies, POLICYINFO_free);
-	return rc;
-}
-
-static int
-cert_check_sigalg(const char *fn, const struct cert *cert)
-{
-	const X509		*x = cert->x509;
-	const X509_ALGOR	*alg = NULL, *tbsalg;
-
-	/* Retrieve AlgorithmIdentifiers from Certificate and TBSCertificate. */
-	X509_get0_signature(NULL, &alg, x);
-	if (alg == NULL) {
-		warnx("%s: missing signatureAlgorithm in certificate", fn);
-		return 0;
-	}
-	if ((tbsalg = X509_get0_tbs_sigalg(x)) == NULL) {
-		warnx("%s: missing signature in tbsCertificate", fn);
-		return 0;
-	}
-
-	/* This cheap comparison is an undocumented part of X509_verify(). */
-	if (X509_ALGOR_cmp(alg, tbsalg) != 0) {
-		warnx("%s: RFC 5280, 4.1.1.2: signatureAlgorithm and signature "
-		    "AlgorithmIdentifier mismatch", fn);
-		return 0;
-	}
-
-	return x509_check_tbs_sigalg(fn, tbsalg);
-}
-
-static int
-cert_check_subject_and_issuer(const char *fn, const struct cert *cert)
-{
-	const X509_NAME *name;
-
-	if ((name = X509_get_subject_name(cert->x509)) == NULL) {
-		warnx("%s: X509_get_subject_name", fn);
-		return 0;
-	}
-	if (!x509_valid_name(fn, "subject", name))
-		return 0;
-
-	if ((name = X509_get_issuer_name(cert->x509)) == NULL) {
-		warnx("%s: X509_get_issuer_name", fn);
-		return 0;
-	}
-	if (!x509_valid_name(fn, "issuer", name))
-		return 0;
-
-	return 1;
-}
-
-static int
-cert_check_validity_period(const char *fn, struct cert *cert)
-{
-	const ASN1_TIME	*at;
-
-	if ((at = X509_get0_notBefore(cert->x509)) == NULL) {
-		warnx("%s: X509_get0_notBefore() failed", fn);
-		return 0;
-	}
-	if (!x509_get_time(at, &cert->notbefore)) {
-		warnx("%s: x509_get_time() failed", fn);
-		return 0;
-	}
-
-	if ((at = X509_get0_notAfter(cert->x509)) == NULL) {
-		warnx("%s: X509_get0_notAfter() failed", fn);
-		return 0;
-	}
-	if (!x509_get_time(at, &cert->notafter)) {
-		warnx("%s: x509_get_time() failed", fn);
-		return 0;
-	}
-
-	if (cert->notbefore > cert->notafter) {
-		warnx("%s: RFC 6487, 4.6: notAfter precedes notBefore", fn);
-		return 0;
-	}
-
-	return 1;
-}
-
-static int
-cert_compliant_rsa_key(const char *fn, struct cert *cert)
-{
-	EVP_PKEY		*pkey;
-	const RSA		*rsa;
-	const BIGNUM		*rsa_n, *rsa_e;
-
-	if ((pkey = X509_get0_pubkey(cert->x509)) == NULL) {
-		warnx("%s: cert without public key", fn);
-		return 0;
-	}
-	if ((rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
-		warnx("%s: expected RSA key", fn);
-		return 0;
-	}
-	if ((rsa_n = RSA_get0_n(rsa)) == NULL ||
-	    (rsa_e = RSA_get0_e(rsa)) == NULL) {
-		warnx("%s: missing RSA public key component", fn);
-		return 0;
-	}
-	if (BN_num_bits(rsa_n) != 2048) {
-		warnx("%s: RFC 7935, 3: want 2048-bit RSA modulus, have %d", fn,
-		    BN_num_bits(rsa_n));
-		return 0;
-	}
-	if (!BN_is_word(rsa_e, 65537)) {
-		warnx("%s: RFC 7935, 3: public RSA exponent not %d", fn, 65537);
-		return 0;
-	}
-
-	return 1;
-}
-
-static int
-cert_compliant_ec_key(const char *fn, struct cert *cert)
-{
-	EVP_PKEY		*pkey;
-	const EC_KEY		*ec_key;
-
-	if ((pkey = X509_get0_pubkey(cert->x509)) == NULL) {
-		warnx("%s: cert without public key", fn);
-		return 0;
-	}
-	if ((ec_key = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
-		warnx("%s: expected EC key", fn);
-		return 0;
-	}
-	if (EC_KEY_get_conv_form(ec_key) != POINT_CONVERSION_UNCOMPRESSED) {
-		warnx("%s: RFC 8608: 3.1 public key not uncompressed", fn);
-		return 0;
-	}
-	if (!EC_KEY_check_key(ec_key)) {
-		warnx("%s: EC_KEY_check_key failed", fn);
-		return 0;
-	}
-
-	/* Prepare pubkey for the BRK tree - used in the final output dump. */
-	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
-		unsigned char		*der = NULL;
-		int			 der_len;
-
-		if ((der_len = i2d_PUBKEY(pkey, &der)) <= 0) {
-			warnx("%s: i2d_PUBKEY failed", fn);
-			return 0;
-		}
-		if (base64_encode(der, der_len, &cert->pubkey) == -1)
-			errx(1, "base64_encode");
-		free(der);
-	}
-
-	return 1;
-}
-
-static int
-cert_check_spki(const char *fn, struct cert *cert)
-{
-	X509_PUBKEY		*pubkey;
-	X509_ALGOR		*alg = NULL;
-	const ASN1_OBJECT	*aobj = NULL;
-	int			 ptype = 0;
-	const void		*pval = NULL;
-	int			 rc = 0;
-
-	/* Should be called _get0_. It returns a pointer owned by cert->x509. */
-	if ((pubkey = X509_get_X509_PUBKEY(cert->x509)) == NULL) {
-		warnx("%s: RFC 6487, 4.7: certificate without SPKI", fn);
-		goto out;
-	}
-
-	/*
-	 * Excessive initialization above is due to incoherent semantics of
-	 * the following functions, e.g., OpenSSL may or may not set pval.
-	 */
-	if (!X509_PUBKEY_get0_param(NULL, NULL, NULL, &alg, pubkey) ||
-	    alg == NULL) {
-		warnx("%s: RFC 6487, 4.7: no AlgorithmIdentifier in SPKI", fn);
-		goto out;
-	}
-	X509_ALGOR_get0(&aobj, &ptype, &pval, alg);
-
-	switch (cert->purpose) {
-	case CERT_PURPOSE_TA:
-	case CERT_PURPOSE_CA:
-	case CERT_PURPOSE_EE:
-		if (OBJ_obj2nid(aobj) == NID_rsaEncryption) {
-			if (ptype != V_ASN1_NULL || pval != NULL) {
-				warnx("%s: RFC 4055, 1.2, rsaEncryption "
-				    "parameters not NULL", fn);
-				goto out;
-			}
-			if (!cert_compliant_rsa_key(fn, cert))
-				goto out;
-			break;
-		}
-		if (!experimental) {
-			warnx("%s: RFC 7935, 3.1 SPKI not RSAPublicKey", fn);
-			goto out;
-		}
-		/* FALLTHROUGH */
-	case CERT_PURPOSE_BGPSEC_ROUTER:
-		if (OBJ_obj2nid(aobj) == NID_X9_62_id_ecPublicKey) {
-			if (ptype != V_ASN1_OBJECT) {
-				warnx("%s: RFC 5480, 2.1.1, ecPublicKey "
-				    "parameters not namedCurve", fn);
-				goto out;
-			}
-			if (OBJ_obj2nid(pval) != NID_X9_62_prime256v1) {
-				warnx("%s: RFC 8608, 3.1, named curve not "
-				    "P-256", fn);
-				goto out;
-			}
-			if (!cert_compliant_ec_key(fn, cert))
-				goto out;
-			break;
-		}
-		warnx("%s: RFC 8608, 3.1, SPKI not an ecPublicKey", fn);
-		goto out;
-	default:
-		abort();
-	}
-
-	rc = 1;
- out:
 	return rc;
 }
 
