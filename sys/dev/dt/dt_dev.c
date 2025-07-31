@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.44 2025/06/03 00:20:31 dlg Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.45 2025/07/31 15:07:59 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -86,13 +86,19 @@
 #define DPRINTF(x...) /* nothing */
 
 /*
- * Per-CPU Event States
- *
- *  Locks used to protect struct members:
+ *  Locks used to protect struct members and variables in this file:
+ *	a	atomic
+ *	I	invariant after initialization
+ *	K	kernel lock
+ *	D	dtrace rw-lock dt_lock
  *	r	owned by thread doing read(2)
  *	c	owned by CPU
  *	s	sliced ownership, based on read/write indexes
  *	p	written by CPU, read by thread doing read(2)
+ */
+
+/*
+ * Per-CPU Event States
  */
 struct dt_cpubuf {
 	unsigned int		 dc_prod;	/* [r] read index */
@@ -110,12 +116,6 @@ struct dt_cpubuf {
 /*
  * Descriptor associated with each program opening /dev/dt.  It is used
  * to keep track of enabled PCBs.
- *
- *  Locks used to protect struct members in this file:
- *	a	atomic
- *	K	kernel lock
- *	r	owned by thread doing read(2)
- *	I	invariant after initialization
  */
 struct dt_softc {
 	SLIST_ENTRY(dt_softc)	 ds_next;	/* [K] descriptor list */
@@ -124,7 +124,7 @@ struct dt_softc {
 	void			*ds_si;		/* [I] to defer wakeup(9) */
 
 	struct dt_pcb_list	 ds_pcbs;	/* [K] list of enabled PCBs */
-	int			 ds_recording;	/* [K] currently recording? */
+	int			 ds_recording;	/* [D] currently recording? */
 	unsigned int		 ds_evtcnt;	/* [a] # of readable evts */
 
 	struct dt_cpubuf	 ds_cpu[MAXCPUS]; /* [I] Per-cpu event states */
@@ -141,7 +141,7 @@ unsigned int			dt_nprobes;	/* [I] # of probes available */
 SIMPLEQ_HEAD(, dt_probe)	dt_probe_list;	/* [I] list of probes */
 
 struct rwlock			dt_lock = RWLOCK_INITIALIZER("dtlk");
-volatile uint32_t		dt_tracing = 0;	/* [K] # of processes tracing */
+volatile uint32_t		dt_tracing = 0;	/* [D] # of processes tracing */
 
 int allowdt;					/* [a] */
 
@@ -519,15 +519,20 @@ dt_ioctl_record_start(struct dt_softc *sc)
 {
 	uint64_t now;
 	struct dt_pcb *dp;
-
-	if (sc->ds_recording)
-		return EBUSY;
-
-	KERNEL_ASSERT_LOCKED();
-	if (TAILQ_EMPTY(&sc->ds_pcbs))
-		return ENOENT;
+	int error = 0;
 
 	rw_enter_write(&dt_lock);
+	if (sc->ds_recording) {
+		error = EBUSY;
+		goto out;
+	}
+
+	KERNEL_ASSERT_LOCKED();
+	if (TAILQ_EMPTY(&sc->ds_pcbs)) {
+		error = ENOENT;
+		goto out;
+	}
+
 	now = nsecuptime();
 	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
 		struct dt_probe *dtp = dp->dp_dtp;
@@ -543,12 +548,12 @@ dt_ioctl_record_start(struct dt_softc *sc)
 			    now + dp->dp_nsecs);
 		}
 	}
-	rw_exit_write(&dt_lock);
-
 	sc->ds_recording = 1;
 	dt_tracing++;
 
-	return 0;
+ out:
+	rw_exit_write(&dt_lock);
+	return error;
 }
 
 void
@@ -556,15 +561,16 @@ dt_ioctl_record_stop(struct dt_softc *sc)
 {
 	struct dt_pcb *dp;
 
-	if (!sc->ds_recording)
+	rw_enter_write(&dt_lock);
+	if (!sc->ds_recording) {
+		rw_exit_write(&dt_lock);
 		return;
+	}
 
 	DPRINTF("dt%d: pid %d disable\n", sc->ds_unit, sc->ds_pid);
 
 	dt_tracing--;
 	sc->ds_recording = 0;
-
-	rw_enter_write(&dt_lock);
 	TAILQ_FOREACH(dp, &sc->ds_pcbs, dp_snext) {
 		struct dt_probe *dtp = dp->dp_dtp;
 
