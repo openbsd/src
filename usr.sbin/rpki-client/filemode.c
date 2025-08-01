@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.66 2025/07/20 12:00:49 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.67 2025/08/01 16:33:58 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -32,6 +32,7 @@
 #include <imsg.h>
 
 #include <openssl/asn1.h>
+#include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -330,6 +331,80 @@ print_signature_path(const char *crl, const char *aia, const struct auth *a)
 }
 
 /*
+ * Attempt to determine the file type from the DER by trial and error.
+ */
+static enum rtype
+rtype_from_der(const char *fn, const unsigned char *der, size_t len)
+{
+	CMS_ContentInfo		*cms = NULL;
+	X509			*x509 = NULL;
+	X509_CRL		*crl = NULL;
+	const unsigned char	*p;
+	enum rtype		 rtype = RTYPE_INVALID;
+
+	/* Does der parse as a CMS signed object? */
+	p = der;
+	if ((cms = d2i_CMS_ContentInfo(NULL, &p, len)) != NULL) {
+		const ASN1_OBJECT *obj;
+
+		if (CMS_get0_SignerInfos(cms) == NULL) {
+			warnx("%s: CMS object not signedData", fn);
+			goto out;
+		}
+
+		if ((obj = CMS_get0_eContentType(cms)) == NULL) {
+			warnx("%s: RFC 6488, section 2.1.3.1: eContentType: "
+			    "OID object is NULL", fn);
+			goto out;
+		}
+
+		if (OBJ_cmp(obj, aspa_oid) == 0)
+			rtype = RTYPE_ASPA;
+		else if (OBJ_cmp(obj, mft_oid) == 0)
+			rtype = RTYPE_MFT;
+		else if (OBJ_cmp(obj, gbr_oid) == 0)
+			rtype = RTYPE_GBR;
+		else if (OBJ_cmp(obj, roa_oid) == 0)
+			rtype = RTYPE_ROA;
+		else if (OBJ_cmp(obj, rsc_oid) == 0)
+			rtype = RTYPE_RSC;
+		else if (OBJ_cmp(obj, spl_oid) == 0)
+			rtype = RTYPE_SPL;
+		else if (OBJ_cmp(obj, tak_oid) == 0)
+			rtype = RTYPE_TAK;
+
+		goto out;
+	}
+
+	/* Does der parse as a certificate? */
+	p = der;
+	if ((x509 = d2i_X509(NULL, &p, len)) != NULL) {
+		rtype = RTYPE_CER;
+		goto out;
+	}
+
+	/* Does der parse as a CRL? */
+	p = der;
+	if ((crl = d2i_X509_CRL(NULL, &p, len)) != NULL) {
+		rtype = RTYPE_CRL;
+		goto out;
+	}
+
+	/*
+	 * We could add some heuristics for recognizing TALs and geofeed by
+	 * looking for things like "rsync://" and "MII" or "RPKI Signature"
+	 * using memmem(3). If we do this, we should also rename the function.
+	 */
+
+ out:
+	CMS_ContentInfo_free(cms);
+	X509_free(x509);
+	X509_CRL_free(crl);
+
+	return rtype;
+}
+
+/*
  * Parse file passed with -f option.
  */
 static void
@@ -394,6 +469,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	free(hash);
 
 	type = rtype_from_file_extension(file);
+	if (type == RTYPE_INVALID)
+		type = rtype_from_der(file, buf, len);
 
 	switch (type) {
 	case RTYPE_ASPA:
