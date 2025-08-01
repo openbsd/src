@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.24 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.25 2025/08/01 02:34:54 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -36,7 +36,7 @@
 extern ASN1_OBJECT	*tak_oid;
 
 /*
- * ASN.1 templates for Trust Anchor Keys (draft-ietf-sidrops-signed-tal-12)
+ * ASN.1 templates for Trust Anchor Keys (RFC 9691)
  */
 
 ASN1_ITEM_EXP TAKey_it;
@@ -201,7 +201,7 @@ tak_parse_econtent(const char *fn, struct tak *tak, const unsigned char *d,
 }
 
 /*
- * Parse a full draft-ietf-sidrops-signed-tal file.
+ * Parse a full RFC 9691 Trust Anchor Key file.
  * Returns the TAK or NULL if the object was malformed.
  */
 struct tak *

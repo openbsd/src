@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.253 2025/07/21 11:00:49 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.254 2025/08/01 02:34:54 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -329,7 +329,7 @@ struct takey {
 };
 
 /*
- * A Signed TAL (TAK) draft-ietf-sidrops-signed-tal-12
+ * A Signed TAL (TAK), RFC 9691.
  */
 struct tak {
 	int		 talid; /* TAK covered by what TAL */
