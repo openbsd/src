@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.25 2025/08/01 02:34:54 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.26 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -32,8 +32,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*tak_oid;
 
 /*
  * ASN.1 templates for Trust Anchor Keys (RFC 9691)

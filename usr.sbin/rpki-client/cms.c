@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.53 2025/07/18 12:20:32 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.54 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,10 +26,6 @@
 #include <openssl/cms.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*cnt_type_oid;
-extern ASN1_OBJECT	*msg_dgst_oid;
-extern ASN1_OBJECT	*sign_time_oid;
 
 static int
 cms_extract_econtent(const char *fn, CMS_ContentInfo *cms, unsigned char **res,

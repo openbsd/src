@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.83 2025/07/31 15:52:24 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.84 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -30,8 +30,6 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*roa_oid;
 
 /*
  * Types and templates for the ROA eContent, RFC 6482, section 3.

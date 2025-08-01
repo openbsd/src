@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.79 2025/07/11 09:20:23 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.80 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,8 +26,6 @@
 #include <unistd.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*certpol_oid;
 
 /*
  * Walk up the chain of certificates trying to match our AS number to

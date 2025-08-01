@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.255 2025/08/01 13:46:06 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.256 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -651,6 +651,25 @@ struct msgbuf;
 struct ibufqueue;
 
 /* global variables */
+extern ASN1_OBJECT *certpol_oid;
+extern ASN1_OBJECT *caissuers_oid;
+extern ASN1_OBJECT *carepo_oid;
+extern ASN1_OBJECT *manifest_oid;
+extern ASN1_OBJECT *signedobj_oid;
+extern ASN1_OBJECT *notify_oid;
+extern ASN1_OBJECT *roa_oid;
+extern ASN1_OBJECT *mft_oid;
+extern ASN1_OBJECT *gbr_oid;
+extern ASN1_OBJECT *bgpsec_oid;
+extern ASN1_OBJECT *cnt_type_oid;
+extern ASN1_OBJECT *msg_dgst_oid;
+extern ASN1_OBJECT *sign_time_oid;
+extern ASN1_OBJECT *rsc_oid;
+extern ASN1_OBJECT *aspa_oid;
+extern ASN1_OBJECT *tak_oid;
+extern ASN1_OBJECT *geofeed_oid;
+extern ASN1_OBJECT *spl_oid;
+
 extern int verbose;
 extern int noop;
 extern int filemode;

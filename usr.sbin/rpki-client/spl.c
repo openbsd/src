@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.12 2025/08/01 02:33:23 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.13 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -32,8 +32,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*spl_oid;
 
 /*
  * Types and templates for the SPL eContent.

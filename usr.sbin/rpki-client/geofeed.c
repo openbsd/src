@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.21 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.22 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -31,8 +31,6 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*geofeed_oid;
 
 /*
  * Take a CIDR prefix (in presentation format) and add it to parse results.

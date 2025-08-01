@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.36 2025/07/31 15:52:24 claudio Exp $ */
+/*	$OpenBSD: aspa.c,v 1.37 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -31,8 +31,6 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*aspa_oid;
 
 /*
  * Types and templates for ASPA eContent draft-ietf-sidrops-aspa-profile-15

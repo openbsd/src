@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.202 2025/08/01 13:46:06 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.203 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -29,14 +29,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
-extern ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
-extern ASN1_OBJECT	*caissuers_oid;	/* 1.3.6.1.5.5.7.48.2 (caIssuers) */
-extern ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
-extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
-extern ASN1_OBJECT	*signedobj_oid;	/* 1.3.6.1.5.5.7.48.11 (signedObject) */
-extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
 
 int certid = TALSZ_MAX;
 

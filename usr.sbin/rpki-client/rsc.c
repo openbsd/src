@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.39 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.40 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -31,8 +31,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*rsc_oid;
 
 /*
  * Types and templates for RSC eContent - RFC 9323

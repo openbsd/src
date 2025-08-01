@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.34 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: gbr.c,v 1.35 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -25,8 +25,6 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*gbr_oid;
 
 #define VCARD_START	"BEGIN:VCARD\r\nVERSION:4.0\r\n"
 #define VCARD_START_LEN	(sizeof(VCARD_START) - 1)

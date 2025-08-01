@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.126 2025/08/01 13:46:06 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.127 2025/08/01 14:57:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -33,8 +33,6 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
-
-extern ASN1_OBJECT	*mft_oid;
 
 /*
  * Types and templates for the Manifest eContent, RFC 6486, section 4.2.
