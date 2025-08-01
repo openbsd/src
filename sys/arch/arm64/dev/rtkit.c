@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.18 2025/02/14 18:42:43 kettenis Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.19 2025/08/01 09:51:52 jsg Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -520,6 +520,7 @@ rtkit_handle_crashlog(struct rtkit_state *state, struct aplmbox_msg *msg)
 			if (buf) {
 				memcpy(buf, state->crashlog, size * PAGE_SIZE);
 				rtkit_crashlog_dump(buf, size * PAGE_SIZE);
+				free(buf, M_TEMP, size * PAGE_SIZE);
 			}
 			break;
 		}
