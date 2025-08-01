@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.194 2025/04/24 20:32:33 claudio Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.195 2025/08/01 08:16:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -485,7 +485,7 @@ parent_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_BINDANY:
 		IMSG_SIZE_CHECK(imsg, &bnd);
 		bcopy(imsg->data, &bnd, sizeof(bnd));
-		if (bnd.bnd_proc > env->sc_conf.prefork_relay)
+		if (bnd.bnd_proc < 0 || bnd.bnd_proc > env->sc_conf.prefork_relay)
 			fatalx("%s: invalid relay proc", __func__);
 		switch (bnd.bnd_proto) {
 		case IPPROTO_TCP:
