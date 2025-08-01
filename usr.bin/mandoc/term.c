@@ -1,4 +1,4 @@
-/* $OpenBSD: term.c,v 1.153 2025/07/27 15:21:30 schwarze Exp $ */
+/* $OpenBSD: term.c,v 1.154 2025/08/01 14:56:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2022, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1067,7 +1067,7 @@ term_strlen(const struct termp *p, const char *cp)
 				skip = 1;
 				continue;
 			case ESCAPE_OVERSTRIKE:
-				this_sz = 0;
+				max_sz = 0;
 				rhs = seq + ssz;
 				while (seq < rhs) {
 					if (*seq == '\\') {
