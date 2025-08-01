@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.45 2025/01/16 10:33:27 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.46 2025/08/01 14:41:03 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -646,7 +646,7 @@ vioblk_alloc_reqs(struct vioblk_softc *sc, int qsize)
 
 	allocsize = sizeof(struct virtio_blk_req) * nreqs;
 	r = bus_dmamem_alloc(sc->sc_virtio->sc_dmat, allocsize, 0, 0,
-	    &sc->sc_reqs_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
+	    &sc->sc_reqs_segs[0], 1, &rsegs, BUS_DMA_NOWAIT | BUS_DMA_64BIT);
 	if (r != 0) {
 		printf("DMA memory allocation failed, size %d, error %d\n",
 		    allocsize, r);
@@ -697,7 +697,8 @@ vioblk_alloc_reqs(struct vioblk_softc *sc, int qsize)
 
 		r = bus_dmamap_create(sc->sc_virtio->sc_dmat,
 		    VR_DMA_END, 1, VR_DMA_END, 0,
-		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_cmdsts);
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    &vr->vr_cmdsts);
 		if (r != 0) {
 			printf("cmd dmamap creation failed, err %d\n", r);
 			nreqs = i;
@@ -711,7 +712,8 @@ vioblk_alloc_reqs(struct vioblk_softc *sc, int qsize)
 			goto err_reqs;
 		}
 		r = bus_dmamap_create(sc->sc_virtio->sc_dmat, MAXPHYS,
-		    SEG_MAX, MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    SEG_MAX, MAXPHYS, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 		    &vr->vr_payload);
 		if (r != 0) {
 			printf("payload dmamap creation failed, err %d\n", r);

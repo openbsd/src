@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.36 2025/07/31 19:19:25 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.37 2025/08/01 14:41:03 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -435,7 +435,7 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 
 	allocsize = nreqs * sizeof(struct vioscsi_req);
 	r = bus_dmamem_alloc(vsc->sc_dmat, allocsize, 0, 0,
-	    &sc->sc_reqs_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
+	    &sc->sc_reqs_segs[0], 1, &rsegs, BUS_DMA_NOWAIT | BUS_DMA_64BIT);
 	if (r != 0) {
 		printf("bus_dmamem_alloc, size %zd, error %d\n",
 		    allocsize, r);
@@ -488,13 +488,15 @@ vioscsi_alloc_reqs(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 		r = bus_dmamap_create(vsc->sc_dmat,
 		    offsetof(struct vioscsi_req, vr_xs), 1,
 		    offsetof(struct vioscsi_req, vr_xs), 0,
-		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_control);
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    &vr->vr_control);
 		if (r != 0) {
 			printf("bus_dmamap_create vr_control failed, error  %d\n", r);
 			return i;
 		}
-		r = bus_dmamap_create(vsc->sc_dmat, MAXPHYS, SEG_MAX,
-		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &vr->vr_data);
+		r = bus_dmamap_create(vsc->sc_dmat, MAXPHYS, SEG_MAX, MAXPHYS,
+		    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    &vr->vr_data);
 		if (r != 0) {
 			printf("bus_dmamap_create vr_data failed, error %d\n", r );
 			return i;
