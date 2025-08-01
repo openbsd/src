@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.116 2025/07/21 11:00:49 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.117 2025/08/01 17:29:30 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -144,24 +144,58 @@ x509_init_oid(void)
 char *
 x509_pubkey_get_ski(X509_PUBKEY *pubkey, const char *fn)
 {
-	ASN1_OBJECT		*obj;
+	X509_ALGOR		*alg = NULL;
+	const ASN1_OBJECT	*aobj = NULL;
+	int			 ptype = 0;
+	const void		*pval = NULL;
 	const unsigned char	*der;
-	int			 der_len, nid;
+	int			 der_len;
 	unsigned char		 md[EVP_MAX_MD_SIZE];
 	unsigned int		 md_len = EVP_MAX_MD_SIZE;
+	unsigned char		 buf[80];
 
-	if (!X509_PUBKEY_get0_param(&obj, &der, &der_len, NULL, pubkey)) {
+	/* XXX - dedup with cert_check_spki(), add more validity checks? */
+
+	if (!X509_PUBKEY_get0_param(NULL, &der, &der_len, &alg, pubkey)) {
 		warnx("%s: X509_PUBKEY_get0_param failed", fn);
 		return NULL;
 	}
+	X509_ALGOR_get0(&aobj, &ptype, &pval, alg);
 
-	/* XXX - should allow other keys as well. */
-	if ((nid = OBJ_obj2nid(obj)) != NID_rsaEncryption) {
-		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
-		    fn, nid2str(nid), LN_rsaEncryption);
+	if (OBJ_obj2nid(aobj) == NID_rsaEncryption) {
+		if (ptype != V_ASN1_NULL || pval != NULL) {
+			warnx("%s: RFC 4055, 1.2, rsaEncryption "
+			    "parameters not NULL", fn);
+			return NULL;
+		}
+
+		goto done;
+	}
+
+	if (!experimental) {
+		warnx("%s: RFC 7935, 3.1 SPKI not RSAPublicKey", fn);
 		return NULL;
 	}
 
+	if (OBJ_obj2nid(aobj) == NID_X9_62_id_ecPublicKey) {
+		if (ptype != V_ASN1_OBJECT) {
+			warnx("%s: RFC 5480, 2.1.1, ecPublicKey "
+			    "parameters not namedCurve", fn);
+			return NULL;
+		}
+		if (OBJ_obj2nid(pval) != NID_X9_62_prime256v1) {
+			warnx("%s: RFC 8608, 3.1, named curve not P-256", fn);
+			return NULL;
+		}
+
+		goto done;
+	}
+
+	OBJ_obj2txt(buf, sizeof(buf), aobj, 0);
+	warnx("%s: unsupported public key type %s", fn, buf);
+	return NULL;
+
+ done:
 	if (!EVP_Digest(der, der_len, md, &md_len, EVP_sha1(), NULL)) {
 		warnx("%s: EVP_Digest failed", fn);
 		return NULL;
