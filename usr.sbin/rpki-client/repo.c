@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.77 2025/07/31 15:52:24 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.78 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -142,7 +142,6 @@ filepath_add(struct filepath_tree *tree, char *file, int id, time_t mtime,
 
 	CTASSERT(TALSZ_MAX < 8 * sizeof(fp->talmask));
 	assert(id >= 0 && id < 8 * (int)sizeof(fp->talmask));
-	assert(file != NULL);
 
 	if ((fp = calloc(1, sizeof(*fp))) == NULL)
 		err(1, NULL);
@@ -852,9 +851,9 @@ rrdp_session_buffer(struct ibuf *b, const struct rrdp_session *s)
 
 	io_str_buffer(b, s->session_id);
 	io_simple_buffer(b, &s->serial, sizeof(s->serial));
-	io_str_buffer(b, s->last_mod);
+	io_opt_str_buffer(b, s->last_mod);
 	for (i = 0; i < sizeof(s->deltas) / sizeof(s->deltas[0]); i++)
-		io_str_buffer(b, s->deltas[i]);
+		io_opt_str_buffer(b, s->deltas[i]);
 }
 
 struct rrdp_session *
@@ -868,9 +867,9 @@ rrdp_session_read(struct ibuf *b)
 
 	io_read_str(b, &s->session_id);
 	io_read_buf(b, &s->serial, sizeof(s->serial));
-	io_read_str(b, &s->last_mod);
+	io_read_opt_str(b, &s->last_mod);
 	for (i = 0; i < sizeof(s->deltas) / sizeof(s->deltas[0]); i++)
-		io_read_str(b, &s->deltas[i]);
+		io_read_opt_str(b, &s->deltas[i]);
 
 	return s;
 }

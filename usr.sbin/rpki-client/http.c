@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.97 2025/06/18 18:13:49 job Exp $ */
+/*	$OpenBSD: http.c,v 1.98 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -625,7 +625,7 @@ http_req_done(unsigned int id, enum http_result res, const char *last_modified)
 	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
-	io_str_buffer(b, last_modified);
+	io_opt_str_buffer(b, last_modified);
 	io_close_buffer(msgq, b);
 }
 
@@ -641,7 +641,7 @@ http_req_fail(unsigned int id)
 	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
-	io_str_buffer(b, NULL);
+	io_opt_str_buffer(b, NULL);
 	io_close_buffer(msgq, b);
 }
 
@@ -2174,7 +2174,7 @@ proc_http(char *bind_addr, int fd)
 
 				io_read_buf(b, &id, sizeof(id));
 				io_read_str(b, &uri);
-				io_read_str(b, &mod);
+				io_read_opt_str(b, &mod);
 
 				/* queue up new requests */
 				http_req_new(id, uri, mod, 0, ibuf_fd_get(b));

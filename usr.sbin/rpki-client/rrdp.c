@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.40 2025/03/27 19:27:59 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.41 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -119,7 +119,7 @@ rrdp_http_req(unsigned int id, const char *uri, const char *last_mod)
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
-	io_str_buffer(b, last_mod);
+	io_opt_str_buffer(b, last_mod);
 	io_close_buffer(msgq, b);
 }
 
@@ -419,7 +419,13 @@ rrdp_input_handler(struct ibuf *b)
 			errx(1, "received unexpected fd");
 		io_read_str(b, &local);
 		io_read_str(b, &notify);
-		state = rrdp_session_read(b);
+		io_read_buf(b, &ok, sizeof(ok));
+		if (ok != 0) {
+			state = rrdp_session_read(b);
+		} else {
+			if ((state = calloc(1, sizeof(*state))) == NULL)
+				err(1, NULL);
+		}
 		rrdp_new(id, local, notify, state);
 		break;
 	case RRDP_HTTP_INI:
@@ -439,7 +445,7 @@ rrdp_input_handler(struct ibuf *b)
 		break;
 	case RRDP_HTTP_FIN:
 		io_read_buf(b, &res, sizeof(res));
-		io_read_str(b, &last_mod);
+		io_read_opt_str(b, &last_mod);
 		if (ibuf_fd_avail(b))
 			errx(1, "received unexpected fd");
 

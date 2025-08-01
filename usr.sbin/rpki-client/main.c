@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.289 2025/07/31 16:33:09 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.290 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -156,9 +156,9 @@ entity_read_req(struct ibuf *b, struct entity *ent)
 	io_read_buf(b, &ent->repoid, sizeof(ent->repoid));
 	io_read_buf(b, &ent->talid, sizeof(ent->talid));
 	io_read_buf(b, &ent->certid, sizeof(ent->certid));
-	io_read_str(b, &ent->path);
-	io_read_str(b, &ent->file);
-	io_read_str(b, &ent->mftaki);
+	io_read_opt_str(b, &ent->path);
+	io_read_opt_str(b, &ent->file);
+	io_read_opt_str(b, &ent->mftaki);
 	io_read_buf_alloc(b, (void **)&ent->data, &ent->datasz);
 }
 
@@ -177,9 +177,9 @@ entity_write_req(const struct entity *ent)
 	io_simple_buffer(b, &ent->repoid, sizeof(ent->repoid));
 	io_simple_buffer(b, &ent->talid, sizeof(ent->talid));
 	io_simple_buffer(b, &ent->certid, sizeof(ent->certid));
-	io_str_buffer(b, ent->path);
+	io_opt_str_buffer(b, ent->path);
 	io_str_buffer(b, ent->file);
-	io_str_buffer(b, ent->mftaki);
+	io_opt_str_buffer(b, ent->mftaki);
 	io_buf_buffer(b, ent->data, ent->datasz);
 	io_close_buffer(procq, b);
 }
@@ -205,7 +205,7 @@ entity_write_repo(const struct repo *rp)
 	io_simple_buffer(b, &certid, sizeof(certid));
 	io_str_buffer(b, path);
 	io_str_buffer(b, altpath);
-	io_str_buffer(b, NULL);		/* ent->mftaki */
+	io_opt_str_buffer(b, NULL);		/* ent->mftaki */
 	io_buf_buffer(b, NULL, 0);	/* ent->data */
 	io_close_buffer(procq, b);
 	free(path);
@@ -287,14 +287,18 @@ rrdp_fetch(unsigned int id, const char *uri, const char *local,
 {
 	enum rrdp_msg type = RRDP_START;
 	struct ibuf *b;
+	int c;
 
 	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, local);
 	io_str_buffer(b, uri);
+	c = (s->session_id != NULL);
+	io_simple_buffer(b, &c, sizeof(c));
 
-	rrdp_session_buffer(b, s);
+	if (c != 0)
+		rrdp_session_buffer(b, s);
 	io_close_buffer(rrdpq, b);
 }
 
@@ -322,7 +326,7 @@ rsync_fetch(unsigned int id, const char *uri, const char *local,
 	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, local);
-	io_str_buffer(b, base);
+	io_opt_str_buffer(b, base);
 	io_str_buffer(b, uri);
 	io_close_buffer(rsyncq, b);
 }
@@ -334,9 +338,9 @@ rsync_abort(unsigned int id)
 
 	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
-	io_str_buffer(b, NULL);
-	io_str_buffer(b, NULL);
-	io_str_buffer(b, NULL);
+	io_opt_str_buffer(b, NULL);
+	io_opt_str_buffer(b, NULL);
+	io_opt_str_buffer(b, NULL);
 	io_close_buffer(rsyncq, b);
 }
 
@@ -351,7 +355,7 @@ http_fetch(unsigned int id, const char *uri, const char *last_mod, int fd)
 	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
-	io_str_buffer(b, last_mod);
+	io_opt_str_buffer(b, last_mod);
 	/* pass file as fd */
 	ibuf_fd_set(b, fd);
 	io_close_buffer(httpq, b);
@@ -391,7 +395,7 @@ rrdp_http_done(unsigned int id, enum http_result res, const char *last_mod)
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
 	io_simple_buffer(b, &res, sizeof(res));
-	io_str_buffer(b, last_mod);
+	io_opt_str_buffer(b, last_mod);
 	io_close_buffer(rrdpq, b);
 }
 
@@ -733,9 +737,7 @@ rrdp_process(struct ibuf *b)
 		break;
 	case RRDP_HTTP_REQ:
 		io_read_str(b, &uri);
-		io_read_str(b, &last_mod);
-		if (uri == NULL)
-			errx(1, "bad rrdp http request");
+		io_read_opt_str(b, &last_mod);
 		rrdp_http_fetch(id, uri, last_mod);
 		free(uri);
 		free(last_mod);
@@ -1387,7 +1389,7 @@ main(int argc, char *argv[])
 
 				io_read_buf(b, &id, sizeof(id));
 				io_read_buf(b, &res, sizeof(res));
-				io_read_str(b, &last_mod);
+				io_read_opt_str(b, &last_mod);
 				http_finish(id, res, last_mod);
 				free(last_mod);
 				ibuf_free(b);

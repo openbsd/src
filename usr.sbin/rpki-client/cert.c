@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.201 2025/07/31 14:53:27 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.202 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2022,14 +2022,14 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_simple_buffer(b, p->ases, p->num_ases * sizeof(p->ases[0]));
 
 	io_str_buffer(b, p->path);
-	io_str_buffer(b, p->mft);
-	io_str_buffer(b, p->notify);
-	io_str_buffer(b, p->repo);
-	io_str_buffer(b, p->crl);
-	io_str_buffer(b, p->aia);
-	io_str_buffer(b, p->aki);
+	io_opt_str_buffer(b, p->mft);
+	io_opt_str_buffer(b, p->notify);
+	io_opt_str_buffer(b, p->repo);
+	io_opt_str_buffer(b, p->crl);
+	io_opt_str_buffer(b, p->aia);
+	io_opt_str_buffer(b, p->aki);
 	io_str_buffer(b, p->ski);
-	io_str_buffer(b, p->pubkey);
+	io_opt_str_buffer(b, p->pubkey);
 }
 
 /*
@@ -2066,17 +2066,16 @@ cert_read(struct ibuf *b)
 	}
 
 	io_read_str(b, &p->path);
-	io_read_str(b, &p->mft);
-	io_read_str(b, &p->notify);
-	io_read_str(b, &p->repo);
-	io_read_str(b, &p->crl);
-	io_read_str(b, &p->aia);
-	io_read_str(b, &p->aki);
+	io_read_opt_str(b, &p->mft);
+	io_read_opt_str(b, &p->notify);
+	io_read_opt_str(b, &p->repo);
+	io_read_opt_str(b, &p->crl);
+	io_read_opt_str(b, &p->aia);
+	io_read_opt_str(b, &p->aki);
 	io_read_str(b, &p->ski);
-	io_read_str(b, &p->pubkey);
+	io_read_opt_str(b, &p->pubkey);
 
 	assert(p->mft != NULL || p->purpose == CERT_PURPOSE_BGPSEC_ROUTER);
-	assert(p->ski);
 	return p;
 }
 

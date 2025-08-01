@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.58 2025/06/16 14:18:40 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.59 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -392,9 +392,9 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		while ((b = io_buf_get(msgq)) != NULL) {
 			/* Read host and module. */
 			io_read_buf(b, &id, sizeof(id));
-			io_read_str(b, &dst);
-			io_read_str(b, &compdst);
-			io_read_str(b, &uri);
+			io_read_opt_str(b, &dst);
+			io_read_opt_str(b, &compdst);
+			io_read_opt_str(b, &uri);
 
 			ibuf_free(b);
 

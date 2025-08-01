@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.254 2025/08/01 02:34:54 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.255 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -897,10 +897,12 @@ struct ibuf	*io_new_buffer(void);
 void		 io_simple_buffer(struct ibuf *, const void *, size_t);
 void		 io_buf_buffer(struct ibuf *, const void *, size_t);
 void		 io_str_buffer(struct ibuf *, const char *);
+void		 io_opt_str_buffer(struct ibuf *, const char *);
 void		 io_close_buffer(struct msgbuf *, struct ibuf *);
 void		 io_close_queue(struct ibufqueue *, struct ibuf *);
 void		 io_read_buf(struct ibuf *, void *, size_t);
 void		 io_read_str(struct ibuf *, char **);
+void		 io_read_opt_str(struct ibuf *, char **);
 void		 io_read_buf_alloc(struct ibuf *, void **, size_t *);
 struct ibuf	*io_parse_hdr(struct ibuf *, void *, int *);
 struct ibuf	*io_buf_get(struct msgbuf *);

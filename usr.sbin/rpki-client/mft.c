@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.125 2025/07/20 12:00:49 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.126 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -522,7 +522,7 @@ mft_buffer(struct ibuf *b, const struct mft *p)
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
 	io_simple_buffer(b, &p->certid, sizeof(p->certid));
 	io_simple_buffer(b, &p->seqnum_gap, sizeof(p->seqnum_gap));
-	io_str_buffer(b, p->path);
+	io_opt_str_buffer(b, p->path);
 
 	io_str_buffer(b, p->aki);
 
@@ -554,12 +554,13 @@ mft_read(struct ibuf *b)
 	io_read_buf(b, &p->talid, sizeof(p->talid));
 	io_read_buf(b, &p->certid, sizeof(p->certid));
 	io_read_buf(b, &p->seqnum_gap, sizeof(p->seqnum_gap));
-	io_read_str(b, &p->path);
+	io_read_opt_str(b, &p->path);
 
 	io_read_str(b, &p->aki);
-	assert(p->aki != NULL);
 
 	io_read_buf(b, &p->filesz, sizeof(size_t));
+	if (p->filesz == 0)
+		err(1, "mft_read: bad message");
 	if ((p->files = calloc(p->filesz, sizeof(struct mftfile))) == NULL)
 		err(1, NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.41 2024/11/13 12:51:04 tb Exp $ */
+/*	$OpenBSD: tal.c,v 1.42 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -240,17 +240,14 @@ tal_read(struct ibuf *b)
 	io_read_buf_alloc(b, (void **)&p->pkey, &p->pkeysz);
 	io_read_str(b, &p->descr);
 	io_read_buf(b, &p->num_uris, sizeof(p->num_uris));
-	assert(p->pkeysz > 0);
-	assert(p->descr);
-	assert(p->num_uris > 0);
+	if (p->pkeysz <= 0 || p->num_uris <= 0)
+		errx(1, "tal_read: bad message");
 
 	if ((p->uri = calloc(p->num_uris, sizeof(char *))) == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < p->num_uris; i++) {
+	for (i = 0; i < p->num_uris; i++)
 		io_read_str(b, &p->uri[i]);
-		assert(p->uri[i]);
-	}
 
 	return p;
 }

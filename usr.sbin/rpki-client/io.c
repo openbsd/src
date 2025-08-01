@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.28 2025/06/04 09:18:28 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.29 2025/08/01 13:46:06 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -76,6 +76,15 @@ io_buf_buffer(struct ibuf *b, const void *p, size_t sz)
 void
 io_str_buffer(struct ibuf *b, const char *p)
 {
+	io_buf_buffer(b, p, strlen(p));
+}
+
+/*
+ * Add an optional string into the io buffer.
+ */
+void
+io_opt_str_buffer(struct ibuf *b, const char *p)
+{
 	size_t sz = (p == NULL) ? 0 : strlen(p);
 
 	io_buf_buffer(b, p, sz);
@@ -120,9 +129,25 @@ void
 io_read_buf(struct ibuf *b, void *res, size_t sz)
 {
 	if (sz == 0)
-		return;
+		errx(1, "io_read_buf: zero size");
 	if (ibuf_get(b, res, sz) == -1)
 		err(1, "bad internal framing");
+}
+
+/*
+ * Read a string, allocating space for it. String can not be empty.
+ */
+void
+io_read_str(struct ibuf *b, char **res)
+{
+	size_t	 sz;
+
+	io_read_buf(b, &sz, sizeof(sz));
+	if (sz == 0)
+		errx(1, "bad internal framing: empty string");
+	if ((*res = calloc(sz + 1, 1)) == NULL)
+		err(1, NULL);
+	io_read_buf(b, *res, sz);
 }
 
 /*
@@ -131,7 +156,7 @@ io_read_buf(struct ibuf *b, void *res, size_t sz)
  * Return 1 on success or 0 if there was not enough data.
  */
 void
-io_read_str(struct ibuf *b, char **res)
+io_read_opt_str(struct ibuf *b, char **res)
 {
 	size_t	 sz;
 
