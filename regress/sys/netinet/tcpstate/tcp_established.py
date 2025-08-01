@@ -103,8 +103,8 @@ rxmit_echo = sniffer.captured[2]
 if rxmit_echo is None:
 	print("ERROR: No echo retransmitted from echo server.")
 if rxmit_echo.seq != synack.seq+1+paylen-1 or rxmit_echo.ack != 2+paylen:
-	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in rxmit echo" % \
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
+	    "in rxmit echo" % \
 	    (synack.seq+1+paylen-1, 2+paylen, rxmit_echo.seq, rxmit_echo.ack))
 	exit(1)
 

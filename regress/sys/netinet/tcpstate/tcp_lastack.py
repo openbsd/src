@@ -72,8 +72,8 @@ if recv_fin is None:
 	print("ERROR: No FIN received from discard server.")
 	exit(1)
 if recv_fin.seq != synack.seq+1 or recv_fin.ack != 3:
-	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in recv fin" % \
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
+	    "in recv fin" % \
 	    (synack.seq+1, 3, recv_fin.seq, recv_fin.ack))
 	exit(1)
 
@@ -95,8 +95,8 @@ rxmit_fin = sniffer.captured[1]
 if rxmit_fin is None:
 	print("ERROR: No FIN retransmitted from discard server.")
 if rxmit_fin.seq != synack.seq+1 or rxmit_fin.ack != 3:
-	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in rxmit FIN" % \
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
+	    "in rxmit FIN" % \
 	    (synack.seq+1, 3, rxmit_fin.seq, rxmit_fin.ack))
 	exit(1)
 

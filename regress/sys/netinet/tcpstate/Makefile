@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2025/08/01 11:10:00 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2025/08/01 21:58:48 bluhm Exp $
 
 # Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -111,7 +111,7 @@ run-$t: $t.py addr.py
 	${SUDO} ${PYTHON}$t.py
 .endfor
 
-.for t in CLOSING ESTABLISHED FIN_WAIT_1 FIN_WAIT_2 LAST_ACK SYN_SENT
+.for t in CLOSING ESTABLISHED FIN_WAIT_1 FIN_WAIT_2 LAST_ACK SYN_RCVD SYN_SENT
 REGRESS_TARGETS +=	run-netstat-${t:L:S/_//g}
 netstat-${t:L:S/_//g}.log:
 	${MAKE} -C ${.CURDIR} run-tcp_${t:L:S/_//g:C/[12]//}

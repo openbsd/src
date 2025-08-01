@@ -37,7 +37,8 @@ sniffer.start()
 time.sleep(1)
 
 print("Connect netcat")
-os.popen("ssh %s nc -4n -s %s %s %u" % (REMOTE_SSH, ip.dst, ip.src, tport))
+nc=os.popen("ssh %s nc -4Nn -s %s %s %u" % (REMOTE_SSH, ip.dst, ip.src, tport),
+    mode='w')
 
 print("Wait for SYN and its retransmit.")
 sniffer.join(timeout=10)
@@ -58,11 +59,10 @@ synack=TCP(sport=syn.dport, dport=syn.sport, flags='SA',
     seq=1, ack=syn.seq+1, window=(2**16)-1)
 ack=sr1(ip/synack, timeout=5)
 if ack is None:
-	print("ERROR: No 3-way handshake ACK from netcat client received.")
+	print("ERROR: No ACK from netcat client received.")
 	exit(1)
 if ack.seq != syn.seq+1 or ack.ack != 2:
-	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in 3-way handshake ACK" % \
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d in ACK" % \
 	    (syn.seq+1, 2, ack.seq, ack.ack))
 	exit(1)
 
@@ -76,8 +76,8 @@ rxmit_syn = sniffer.captured[1]
 if rxmit_syn is None:
 	print("ERROR: No SYN retransmitted from netstat client.")
 if rxmit_syn.seq != syn.seq or rxmit_syn.ack != syn.ack:
-	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in rxmit SYN" % \
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
+	    "in rxmit SYN" % \
 	    (syn.seq, syn.ack, rxmit_syn.seq, rxmit_syn.ack))
 	exit(1)
 

@@ -89,8 +89,8 @@ if recv_ack.getlayer(TCP).flags != 'FA':
 	    (recv_fin.getlayer(TCP).flags))
 	exit(1)
 if recv_ack.seq != recv_fin.seq or recv_ack.ack != 3:
-	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in recv ack" % \
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
+	    "in recv ack" % \
 	    (recv_fin.seq, 3, recv_ack.seq, recv_ack.ack))
 	exit(1)
 
@@ -115,8 +115,8 @@ rxmit_fin = sniffer.captured[3]
 if rxmit_fin is None:
 	print("ERROR: No FIN retransmitted from daytime server.")
 if rxmit_fin.seq != data.seq+tcplen or rxmit_fin.ack != 3:
-	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in rxmit FIN" % \
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
+	    "in rxmit FIN" % \
 	    (data.seq+tcplen, 3, rxmit_fin.seq, rxmit_fin.ack))
 	exit(1)
 
