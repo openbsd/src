@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.11 2025/07/31 15:39:51 mglocker Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.12 2025/08/01 08:55:09 mglocker Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -1554,7 +1554,7 @@ qcpas_pmic_rtr_bat_status(struct qcpas_softc *sc,
 #endif
 
 #if NAPM > 0
-	/* Needs BAT_INFO fist */
+	/* Needs BAT_INFO first */
 	if (sc->sc_last_full_capacity == 0) {
 		wakeup(&qcpas_pmic_rtr_apm_power_info);
 		return;
