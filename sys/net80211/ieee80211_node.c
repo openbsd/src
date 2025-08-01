@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.201 2025/07/24 13:41:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.202 2025/08/01 09:13:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2633,6 +2633,10 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 		}
 		memcpy(rs->rs_rates + rs->rs_nrates, xrates+2, nxrates);
 		rs->rs_nrates += nxrates;
+
+		/* 11g support implies ERP support */
+		if (nxrates > 0 && IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+			ni->ni_flags |= IEEE80211_NODE_ERP;
 	}
 	return ieee80211_fix_rate(ic, ni, flags);
 }
@@ -2682,31 +2686,6 @@ ieee80211_node_addba_request_ac_vo_to(void *arg)
 {
 	struct ieee80211_node *ni = arg;
 	ieee80211_node_addba_request(ni, EDCA_AC_VO);
-}
-
-/*
- * Check if the specified node supports ERP / 802.11g.
- */
-int
-ieee80211_iserp_sta(const struct ieee80211_node *ni)
-{
-	static const u_int8_t rates[] = { 2, 4, 11, 22, 12, 24, 48 };
-	const struct ieee80211_rateset *rs = &ni->ni_rates;
-	int i, j;
-
-	/*
-	 * A STA supports ERP operation if it includes all the Clause 19
-	 * mandatory rates in its supported rate set.
-	 */
-	for (i = 0; i < nitems(rates); i++) {
-		for (j = 0; j < rs->rs_nrates; j++) {
-			if ((rs->rs_rates[j] & IEEE80211_RATE_VAL) == rates[i])
-				break;
-		}
-		if (j == rs->rs_nrates)
-			return 0;
-	}
-	return 1;
 }
 
 #ifndef IEEE80211_STA_ONLY
@@ -2804,7 +2783,7 @@ ieee80211_count_nonerpsta(void *arg, struct ieee80211_node *ni)
 	if (ni->ni_associd == 0 || ni->ni_state == IEEE80211_STA_COLLECT)
 		return;
 
-	if (!ieee80211_iserp_sta(ni))
+	if ((ni->ni_flags & IEEE80211_NODE_ERP) == 0)
 		(*nonerpsta)++;
 }
 
@@ -2857,7 +2836,7 @@ ieee80211_node_join_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 		    ether_sprintf(ni->ni_macaddr), longslotsta));
 	}
 
-	if (!ieee80211_iserp_sta(ni)) {
+	if ((ni->ni_flags & IEEE80211_NODE_ERP) == 0) {
 		/*
 		 * Joining STA is non-ERP.
 		 */
@@ -2874,8 +2853,7 @@ ieee80211_node_join_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 		if (!(ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE))
 			ic->ic_flags &= ~IEEE80211_F_SHPREAMBLE;
-	} else
-		ni->ni_flags |= IEEE80211_NODE_ERP;
+	}
 }
 
 void

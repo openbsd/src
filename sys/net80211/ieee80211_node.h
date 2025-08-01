@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.95 2024/11/14 07:49:24 kevlo Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.96 2025/08/01 09:13:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -645,7 +645,6 @@ int ieee80211_setup_vhtop(struct ieee80211_node *, const uint8_t *,
 int ieee80211_setup_rates(struct ieee80211com *,
 	    struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);
 void ieee80211_node_trigger_addba_req(struct ieee80211_node *, int);
-int ieee80211_iserp_sta(const struct ieee80211_node *);
 void ieee80211_count_longslotsta(void *, struct ieee80211_node *);
 void ieee80211_count_nonerpsta(void *, struct ieee80211_node *);
 void ieee80211_count_pssta(void *, struct ieee80211_node *);

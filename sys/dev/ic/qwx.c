@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.83 2025/07/31 10:00:01 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.84 2025/08/01 09:13:11 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -23135,7 +23135,7 @@ qwx_mac_vdev_start_restart(struct qwx_softc *sc, struct qwx_vif *arvif,
 	/* Deduce a legacy mode based on the channel characteristics. */
 	if (IEEE80211_IS_CHAN_5GHZ(chan))
 		arg.channel.mode = MODE_11A;
-	else if (ieee80211_iserp_sta(ic->ic_bss))
+	else if (ic->ic_bss->ni_flags & IEEE80211_NODE_ERP)
 		arg.channel.mode = MODE_11G;
 	else
 		arg.channel.mode = MODE_11B;
