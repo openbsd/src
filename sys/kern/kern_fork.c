@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.273 2025/06/09 11:11:03 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.274 2025/08/01 13:32:53 jca Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ process_new(struct proc *p, struct process *parent, int flags)
 
 	pr->ps_flags = parent->ps_flags &
 	    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE |
-	    PS_WXNEEDED | PS_CHROOT);
+	    PS_NOBTCFI | PS_WXNEEDED | PS_CHROOT);
 	if (parent->ps_session->s_ttyvp != NULL)
 		pr->ps_flags |= parent->ps_flags & PS_CONTROLT;
 
