@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.276 2025/07/31 16:29:18 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.277 2025/08/01 09:18:30 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -573,33 +573,27 @@ gpt_get_parts(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 int
 gpt_get_fstype(const struct uuid *uuid_part)
 {
-	const uint8_t uuid_openbsd[] = GPT_LEUUID_OPENBSD;
-	const uint8_t uuid_msdos[] = GPT_UUID_MSDOS;
-	const uint8_t uuid_chromerootfs[] = GPT_UUID_CHROMEROOTFS;
-	const uint8_t uuid_linux[] = GPT_UUID_LINUX;
-	const uint8_t uuid_hfs[] = GPT_UUID_APPLE_HFS;
-	const uint8_t uuid_unused[] = GPT_UUID_UNUSED;
-	const uint8_t uuid_efi_system[] = GPT_LEUUID_EFI_SYSTEM;
-	const uint8_t uuid_bios_boot[] = GPT_UUID_BIOS_BOOT;
+	unsigned int		i;
+	struct partfs {
+		uint8_t gptype[16];
+		int fstype;
+	} knownfs[] = {
+		{ GPT_UUID_UNUSED,	FS_UNUSED	},
+		{ GPT_LEUUID_OPENBSD,	FS_BSDFFS	},
+		{ GPT_UUID_MSDOS,	FS_MSDOS	},
+		{ GPT_UUID_CHROMEROOTFS,FS_EXT2FS	},
+		{ GPT_UUID_LINUX,	FS_EXT2FS	},
+		{ GPT_UUID_APPLE_HFS,	FS_HFS		},
+		{ GPT_LEUUID_EFI_SYSTEM,FS_MSDOS	},
+		{ GPT_UUID_BIOS_BOOT,	FS_BOOT		}
+	};
 
-	if (!memcmp(uuid_part, uuid_unused, sizeof(struct uuid)))
-		return FS_UNUSED;
-	else if (!memcmp(uuid_part, uuid_openbsd, sizeof(struct uuid)))
-		return FS_BSDFFS;
-	else if (!memcmp(uuid_part, uuid_msdos, sizeof(struct uuid)))
-		return FS_MSDOS;
-	else if (!memcmp(uuid_part, uuid_chromerootfs, sizeof(struct uuid)))
-		return FS_EXT2FS;
-	else if (!memcmp(uuid_part, uuid_linux, sizeof(struct uuid)))
-		return FS_EXT2FS;
-	else if (!memcmp(uuid_part, uuid_hfs, sizeof(struct uuid)))
-		return FS_HFS;
-	else if (!memcmp(uuid_part, uuid_efi_system, sizeof(struct uuid)))
-		return FS_MSDOS;
-	else if (!memcmp(uuid_part, uuid_bios_boot, sizeof(struct uuid)))
-		return FS_BOOT;
-	else
-		return FS_OTHER;
+	for (i = 0; i < nitems(knownfs); i++) {
+		if (!memcmp(uuid_part, knownfs[i].gptype, sizeof(struct uuid)))
+		    return knownfs[i].fstype;
+	}
+
+	return FS_OTHER;
 }
 
 int
