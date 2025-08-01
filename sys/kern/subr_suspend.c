@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.20 2025/07/31 16:29:39 stsp Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.21 2025/08/01 12:38:21 stsp Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -218,11 +218,12 @@ fail_hiballoc:
 		cpu_setperf(perflevel);	/* Restore hw.setperf */
 	if (suspend_finish(v) == EAGAIN)
 		goto top;
+	resume_time = getuptime();
 	return (error);
 }
 
 int
 resuming(void)
 {
-	return (getuptime() < resume_time + 15);
+	return (getuptime() < resume_time + 10);
 }
