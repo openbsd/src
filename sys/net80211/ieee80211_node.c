@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.202 2025/08/01 09:13:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.203 2025/08/01 20:39:26 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -931,8 +931,29 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		mode = IEEE80211_MODE_11AC;
 	else if (ic->ic_flags & IEEE80211_F_HTON)
 		mode = IEEE80211_MODE_11N;
-	else
-		mode = ieee80211_chan2mode(ic, ni->ni_chan);
+	else {
+		/* Was a specific 11a/b/g phy mode set by ifconfig? */
+		switch (IFM_MODE(ic->ic_media.ifm_cur->ifm_media)) {
+		case IFM_IEEE80211_11A:
+			mode = IEEE80211_MODE_11A;
+			break;
+		case IFM_IEEE80211_11G:
+			mode = IEEE80211_MODE_11G;
+			break;
+		case IFM_IEEE80211_11B:
+			mode = IEEE80211_MODE_11B;
+			break;
+		default: /* If we get here, our phy mode is MODE_AUTO. */
+			if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan))
+				mode = IEEE80211_MODE_11A;
+			else if ((ni->ni_chan->ic_flags &
+			    (IEEE80211_CHAN_OFDM | IEEE80211_CHAN_DYN)) != 0)
+				mode = IEEE80211_MODE_11G;
+			else
+				mode = IEEE80211_MODE_11B;
+			break;
+		}
+	}
 	ieee80211_setmode(ic, mode);
 	/* Pick an appropriate mode for supported legacy rates. */
 	if (ic->ic_curmode == IEEE80211_MODE_11AC) {
@@ -1303,7 +1324,7 @@ ieee80211_node_join_bss(struct ieee80211com *ic, struct ieee80211_node *selbs)
 	uint32_t assoc_fail = 0;
 
 	/* Reinitialize media mode and channels if needed. */
-	mode = ieee80211_chan2mode(ic, selbs->ni_chan);
+	mode = ieee80211_node_abg_mode(ic, selbs);
 	if (mode != ic->ic_curmode)
 		ieee80211_setmode(ic, mode);
 
@@ -1316,8 +1337,6 @@ ieee80211_node_join_bss(struct ieee80211com *ic, struct ieee80211_node *selbs)
 	(*ic->ic_node_copy)(ic, ic->ic_bss, selbs);
 	ni = ic->ic_bss;
 	ni->ni_assoc_fail |= assoc_fail;
-
-	ic->ic_curmode = ieee80211_chan2mode(ic, ni->ni_chan);
 
 	/* Make sure we send valid rates in an association request. */
 	if (ic->ic_opmode == IEEE80211_M_STA)
@@ -1561,7 +1580,7 @@ ieee80211_end_scan(struct ifnet *ifp)
 				ieee80211_setmode(ic, IEEE80211_MODE_11N);
 			else
 				ieee80211_setmode(ic,
-				    ieee80211_chan2mode(ic, ni->ni_chan));
+				    ieee80211_node_abg_mode(ic, ni));
 			return;
 		}
 	
@@ -2639,6 +2658,40 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 			ni->ni_flags |= IEEE80211_NODE_ERP;
 	}
 	return ieee80211_fix_rate(ic, ni, flags);
+}
+
+/* 
+ * Return the 11a/b/g mode mutually supported for the given node.
+ * ni->ni_chan must be set before calling this, and ieee80211_setup_rates()
+ * should be called beforehand to properly differentiate 11b and 11g.
+ */
+enum ieee80211_phymode
+ieee80211_node_abg_mode(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	/* Handle the case where our own phy mode was fixed by ifconfig. */
+	switch (IFM_MODE(ic->ic_media.ifm_cur->ifm_media)) {
+	case IFM_IEEE80211_11A:
+		return IEEE80211_MODE_11A; /* Peer uses 11a. */
+	case IFM_IEEE80211_11B:
+		return IEEE80211_MODE_11B; /* Peer uses 11b. */
+	case IFM_IEEE80211_11G:
+		/* Peer could be using either 11g or 11b, check below. */
+		break;
+	default:
+		break;
+	}
+
+	/* Our own phy mode is either 11G or AUTO. */
+
+	if (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan))
+		return IEEE80211_MODE_11A;
+
+	if ((ni->ni_flags & IEEE80211_NODE_ERP) &&
+	    (ni->ni_chan->ic_flags &
+	    (IEEE80211_CHAN_OFDM | IEEE80211_CHAN_DYN)) != 0)
+		return IEEE80211_MODE_11G;
+
+	return IEEE80211_MODE_11B;
 }
 
 void

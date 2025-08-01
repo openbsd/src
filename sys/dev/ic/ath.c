@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.125 2023/11/10 15:51:20 bluhm Exp $  */
+/*      $OpenBSD: ath.c,v 1.126 2025/08/01 20:39:26 stsp Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ void	ath_rx_proc(void *, int);
 int	ath_tx_start(struct ath_softc *, struct ieee80211_node *,
 	    struct ath_buf *, struct mbuf *);
 void	ath_tx_proc(void *, int);
-int	ath_chan_set(struct ath_softc *, struct ieee80211_channel *);
+int	ath_chan_set(struct ath_softc *, struct ieee80211_node *);
 void	ath_draintxq(struct ath_softc *);
 void	ath_stoprecv(struct ath_softc *);
 int	ath_startrecv(struct ath_softc *);
@@ -675,7 +675,7 @@ ath_init1(struct ath_softc *sc)
 	 */
 	ni = ic->ic_bss;
 	ni->ni_chan = ic->ic_ibss_chan;
-	mode = ieee80211_chan2mode(ic, ni->ni_chan);
+	mode = ieee80211_node_abg_mode(ic, ni);
 	if (mode != sc->sc_curmode)
 		ath_setcurmode(sc, mode);
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
@@ -2570,11 +2570,12 @@ ath_startrecv(struct ath_softc *sc)
  * ath_init.
  */
 int
-ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
+ath_chan_set(struct ath_softc *sc, struct ieee80211_node *ni)
 {
 	struct ath_hal *ah = sc->sc_ah;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_channel *chan = ni->ni_chan;
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: %u (%u MHz) -> %u (%u MHz)\n", __func__,
 	    ieee80211_chan2ieee(ic, ic->ic_ibss_chan),
@@ -2631,7 +2632,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		 * if we're switching; e.g. 11a to 11b/g.
 		 */
 		ic->ic_ibss_chan = chan;
-		mode = ieee80211_chan2mode(ic, chan);
+		mode = ieee80211_node_abg_mode(ic, ni);
 		if (mode != sc->sc_curmode)
 			ath_setcurmode(sc, mode);
 
@@ -2775,7 +2776,7 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		return (*sc->sc_newstate)(ic, nstate, arg);
 	}
 	ni = ic->ic_bss;
-	error = ath_chan_set(sc, ni->ni_chan);
+	error = ath_chan_set(sc, ni);
 	if (error != 0)
 		goto bad;
 	rfilt = ath_calcrxfilter(sc);

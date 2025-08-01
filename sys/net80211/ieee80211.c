@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.90 2025/08/01 09:45:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.91 2025/08/01 20:39:26 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -1171,55 +1171,6 @@ ieee80211_next_mode(struct ifnet *ifp)
 		ieee80211_setmode(ic, mode);
 
 	return (ic->ic_curmode);
-}
-
-/*
- * Return the phy mode for with the specified channel so the
- * caller can select a rate set.  This is problematic and the
- * work here assumes how things work elsewhere in this code.
- *
- * Because the result of this function is ultimately used to select a
- * rate from the rate set of the returned mode, it must return one of the
- * legacy 11a/b/g modes; 11n and 11ac modes use MCS instead of rate sets.
- */
-enum ieee80211_phymode
-ieee80211_chan2mode(struct ieee80211com *ic,
-    const struct ieee80211_channel *chan)
-{
-	/*
-	 * Are we fixed in 11a/b/g mode?
-	 * NB: this assumes the channel would not be supplied to us
-	 *     unless it was already compatible with the current mode.
-	 */
-	if (ic->ic_curmode == IEEE80211_MODE_11A ||
-	    ic->ic_curmode == IEEE80211_MODE_11B ||
-	    ic->ic_curmode == IEEE80211_MODE_11G)
-		return ic->ic_curmode;
-
-	/* If no channel was provided, return the most suitable legacy mode. */
-	if (chan == IEEE80211_CHAN_ANYC) {
-		switch (ic->ic_curmode) {
-		case IEEE80211_MODE_AUTO:
-		case IEEE80211_MODE_11N:
-			if (ic->ic_modecaps & (1 << IEEE80211_MODE_11A))
-				return IEEE80211_MODE_11A;
-			if (ic->ic_modecaps & (1 << IEEE80211_MODE_11G))
-				return IEEE80211_MODE_11G;
-			return IEEE80211_MODE_11B;
-		case IEEE80211_MODE_11AC:
-			return IEEE80211_MODE_11A;
-		default:
-			return ic->ic_curmode;
-		}
-	}
-
-	/* Deduce a legacy mode based on the channel characteristics. */
-	if (IEEE80211_IS_CHAN_5GHZ(chan))
-		return IEEE80211_MODE_11A;
-	else if (chan->ic_flags & (IEEE80211_CHAN_OFDM|IEEE80211_CHAN_DYN))
-		return IEEE80211_MODE_11G;
-	else
-		return IEEE80211_MODE_11B;
 }
 
 /*

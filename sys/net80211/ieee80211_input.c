@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.255 2025/03/22 07:24:08 kevlo Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.256 2025/08/01 20:39:26 stsp Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -2671,7 +2671,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 	else if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_setmode(ic, IEEE80211_MODE_11N);
 	else
-		ieee80211_setmode(ic, ieee80211_chan2mode(ic, ni->ni_chan));
+		ieee80211_setmode(ic, ieee80211_node_abg_mode(ic, ni));
 	/*
 	 * Reset the erp state (mostly the slot time) now that
 	 * our operating mode has been nailed down.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.141 2025/06/14 08:46:34 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.142 2025/08/01 20:39:26 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1258,7 +1258,7 @@ struct mbuf *
 ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	const struct ieee80211_rateset *rs =
-	    &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
+	    &ic->ic_sup_rates[ieee80211_node_abg_mode(ic, ni)];
 	struct mbuf *m;
 	u_int8_t *frm;
 

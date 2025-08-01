@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.109 2024/02/08 00:05:46 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.110 2025/08/01 20:39:26 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -221,7 +221,7 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	error = 0;
 	okrate = badrate = fixedrate = 0;
-	srs = &ic->ic_sup_rates[ieee80211_chan2mode(ic, ni->ni_chan)];
+	srs = &ic->ic_sup_rates[ieee80211_node_abg_mode(ic, ni)];
 	nrs = &ni->ni_rates;
 	for (i = 0; i < nrs->rs_nrates; ) {
 		ignore = 0;
@@ -1154,7 +1154,7 @@ justcleanup:
 		IEEE80211_ADDR_COPY(ni->ni_macaddr, etherbroadcastaddr);
 		IEEE80211_ADDR_COPY(ni->ni_bssid, etherbroadcastaddr);
 		ni->ni_rates = ic->ic_sup_rates[
-			ieee80211_chan2mode(ic, ni->ni_chan)];
+		    ieee80211_node_abg_mode(ic, ni)];
 		ni->ni_associd = 0;
 		ni->ni_rstamp = 0;
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
