@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.393 2025/06/12 20:47:11 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.394 2025/08/01 10:53:23 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -375,7 +375,8 @@ struct proc {
 	int	p_dupfd;	 /* Sideways return value from filedescopen. XXX */
 
 	/* scheduling */
-	int	p_cpticks;	 /* Ticks of cpu time. */
+	unsigned int	p_cpticks; 	/* [o] Ticks of cpu time. */
+	unsigned int	p_cpticks2; 	/* [K] last times ticks */
 	const volatile void *p_wchan;	/* [S] Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
 	const char *p_wmesg;		/* [S] Reason for sleep. */

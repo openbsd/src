@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.103 2025/06/16 09:55:47 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.104 2025/08/01 10:53:23 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ update_loadavg(void *unused)
  *          Note that, as ps(1) mentions, this can let percentages
  *          total over 100% (I've seen 137.9% for 3 processes).
  *
- * Note that hardclock updates p_estcpu and p_cpticks independently.
+ * Note that p_estcpu and p_cpticks are updated independently.
  *
  * We wish to decay away 90% of p_estcpu in (5 * loadavg) seconds.
  * That is, the system wants to compute a value of decay such
@@ -232,7 +232,7 @@ schedcpu(void *unused)
 	static struct timeout to = TIMEOUT_INITIALIZER(schedcpu, NULL);
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]), pctcpu;
 	struct proc *p;
-	unsigned int newcpu;
+	unsigned int newcpu, cpt;
 
 	LIST_FOREACH(p, &allproc, p_list) {
 		/*
@@ -260,17 +260,18 @@ schedcpu(void *unused)
 		/*
 		 * p_pctcpu is only for diagnostic tools such as ps.
 		 */
+		cpt = READ_ONCE(p->p_cpticks);
 #if	(FSHIFT >= CCPU_SHIFT)
-		pctcpu += (stathz == 100)?
-			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
-                	100 * (((fixpt_t) p->p_cpticks)
+		pctcpu += (stathz == 100) ?
+		    (cpt - p->p_cpticks2) << (FSHIFT - CCPU_SHIFT) :
+		    100 * ((cpt - p->p_cpticks2)
 				<< (FSHIFT - CCPU_SHIFT)) / stathz;
 #else
 		pctcpu += ((FSCALE - ccpu) *
-			(p->p_cpticks * FSCALE / stathz)) >> FSHIFT;
+		    ((cpt - p->p_cpticks2) * FSCALE / stathz)) >> FSHIFT;
 #endif
 		p->p_pctcpu = pctcpu;
-		p->p_cpticks = 0;
+		p->p_cpticks2 = cpt;
 		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);
 		setpriority(p, newcpu, p->p_p->ps_nice);
 
