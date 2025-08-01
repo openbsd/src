@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.10 2025/07/31 15:52:24 claudio Exp $ */
+/*	$OpenBSD: spl.c,v 1.11 2025/08/01 02:31:01 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -142,7 +142,7 @@ spl_parse_econtent(const char *fn, struct spl *spl, const unsigned char *d,
 
 	oder = d;
 	if ((spl_asn1 = d2i_SignedPrefixList(NULL, &d, dsz)) == NULL) {
-		warnx("%s: RFC 6482 section 3: failed to parse "
+		warnx("%s: RFC 9691 section 3: failed to parse "
 		    "SignedPrefixList", fn);
 		goto out;
 	}
