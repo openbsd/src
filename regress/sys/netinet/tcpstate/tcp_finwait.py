@@ -122,7 +122,7 @@ if rxmit_fin is None:
 	print("ERROR: No FIN retransmitted from daytime server.")
 if rxmit_fin.seq != data.seq+tcplen or rxmit_fin.ack != 2:
 	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in rxmit fin" % \
+	    "got seq %d ack %d in rxmit FIN" % \
 	    (data.seq+tcplen, 2, rxmit_fin.seq, rxmit_fin.ack))
 	exit(1)
 

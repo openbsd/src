@@ -41,6 +41,10 @@ os.popen("ssh %s nc -4n -s %s %s %u" % (REMOTE_SSH, ip.dst, ip.src, tport))
 
 print("Wait for SYN and its retransmit.")
 sniffer.join(timeout=10)
+syn=sniffer.packet
+if syn is None:
+	print("ERROR: No SYN received from netcat client.")
+	exit(1)
 
 print("Check peer is in SYN_SENT state.")
 with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
@@ -50,7 +54,6 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				print(line)
 				log.write(line)
 
-syn=sniffer.packet
 synack=TCP(sport=syn.dport, dport=syn.sport, flags='SA',
     seq=1, ack=syn.seq+1, window=(2**16)-1)
 ack=sr1(ip/synack, timeout=5)
@@ -74,7 +77,7 @@ if rxmit_syn is None:
 	print("ERROR: No SYN retransmitted from netstat client.")
 if rxmit_syn.seq != syn.seq or rxmit_syn.ack != syn.ack:
 	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in rxmit fin" % \
+	    "got seq %d ack %d in rxmit SYN" % \
 	    (syn.seq, syn.ack, rxmit_syn.seq, rxmit_syn.ack))
 	exit(1)
 
