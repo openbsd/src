@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mwx.c,v 1.6 2025/02/16 13:07:08 kevlo Exp $ */
+/*	$OpenBSD: if_mwx.c,v 1.7 2025/08/01 14:37:06 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2021 MediaTek Inc.
@@ -2910,7 +2910,7 @@ mt7921_load_firmware(struct mwx_softc *sc)
 		if ((be32toh(sec->type) & PATCH_SEC_TYPE_MASK) !=
 		    PATCH_SEC_TYPE_INFO) {
 			DPRINTF("%s: invalid firmware sector\n", DEVNAME(sc));
-			rv =  EINVAL;
+			rv = EINVAL;
 			goto out;
 		}
 
