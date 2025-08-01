@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.203 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.204 2025/08/01 15:26:05 job Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -899,14 +899,7 @@ cert_ee_sia(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if (filemode) {
-		if (rtype_from_file_extension(cert->signedobj) !=
-		    rtype_from_file_extension(fn)) {
-			warnx("%s: SIA signedObject contains unexpected "
-			    "filename extension", fn);
-			goto out;
-		}
-	} else {
+	if (!filemode) {
 		const char *p = cert->signedobj + RSYNC_PROTO_LEN;
 		size_t fnlen, plen;
 
