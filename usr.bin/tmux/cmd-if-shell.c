@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.85 2025/02/10 08:14:32 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.86 2025/08/01 09:05:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -124,7 +124,7 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 	    -1) == NULL) {
 		cmdq_error(item, "failed to run command: %s", shellcmd);
 		free(shellcmd);
-		free(cdata);
+		cmd_if_shell_free(cdata);
 		return (CMD_RETURN_ERROR);
 	}
 	free(shellcmd);
