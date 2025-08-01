@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.166 2025/07/20 07:48:31 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.167 2025/08/01 09:52:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1094,17 +1094,17 @@ parse_worker(void *arg)
 		while ((entp = TAILQ_FIRST(&globalq)) != NULL) {
 			TAILQ_REMOVE(&globalq, entp, entries);
 			TAILQ_INSERT_TAIL(&q, entp, entries);
-			if (n++ > 16)
+			if (++n > 16)
 				break;
 		}
-		if ((error = pthread_mutex_unlock(&globalq_mtx)) != 0)
-			errx(1, "pthread_mutex_unlock: %s",
-			    strerror(error));
 		if (n > 16) {
 			if ((error = pthread_cond_signal(&globalq_cond)) != 0)
 				errx(1, "pthread_cond_signal: %s",
 				    strerror(error));
 		}
+		if ((error = pthread_mutex_unlock(&globalq_mtx)) != 0)
+			errx(1, "pthread_mutex_unlock: %s",
+			    strerror(error));
 
 		parse_entity(&q, myq, ctx, bn_ctx);
 
