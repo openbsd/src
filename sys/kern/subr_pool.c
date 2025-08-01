@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.241 2025/07/21 20:36:41 bluhm Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.242 2025/08/01 19:00:38 cludwig Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -561,6 +561,9 @@ pool_get(struct pool *pp, int flags)
 {
 	void *v = NULL;
 	int slowdown = 0;
+
+	if (flags & PR_WAITOK)
+		assertwaitok();
 
 	KASSERT(flags & (PR_WAITOK | PR_NOWAIT));
 	if (pp->pr_flags & PR_RWLOCK)
