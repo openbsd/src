@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_argv.c,v 1.20 2016/05/27 09:18:12 martijn Exp $	*/
+/*	$OpenBSD: ex_argv.c,v 1.21 2025/08/02 20:14:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -321,7 +321,7 @@ argv_fexp(SCR *sp, EXCMD *excp, char *cmd, size_t cmdlen, char *p,
 			F_SET(excp, E_MODIFY);
 			break;
 		case '%':
-			if ((t = sp->frp->name) == NULL) {
+			if (sp->frp == NULL || (t = sp->frp->name) == NULL) {
 				msgq(sp, M_ERR,
 				    "No filename to substitute for %%");
 				return (1);
