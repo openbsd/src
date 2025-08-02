@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.150 2025/02/02 05:45:20 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.151 2025/08/02 07:33:28 sf Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -148,18 +148,9 @@
 
 #if NLAPIC > 0 
 	.align	NBPG, 0xcc
-	.globl	local_apic, lapic_id, lapic_tpr
+	.globl	local_apic
 local_apic:
-	.space	LAPIC_ID
-lapic_id:
-	.long	0x00000000
-	.space	LAPIC_TPRI-(LAPIC_ID+4)
-lapic_tpr:
-	.space	LAPIC_PPRI-LAPIC_TPRI
-lapic_ppr:
-	.space	LAPIC_ISR-LAPIC_PPRI 
-lapic_isr:
-	.space	NBPG-LAPIC_ISR
+	.space	NBPG
 #endif
 
 /*****************************************************************************/

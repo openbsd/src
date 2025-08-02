@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.74 2024/11/07 17:24:42 bluhm Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.75 2025/08/02 07:33:28 sf Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -179,10 +179,8 @@ lapic_map(paddr_t lapic_base)
 	vaddr_t va;
 	u_int64_t msr;
 	u_long s;
-	int tpr;
 
 	s = intr_disable();
-	tpr = lapic_tpr;
 
 	msr = rdmsr(MSR_APICBASE);
 
@@ -210,7 +208,6 @@ lapic_map(paddr_t lapic_base)
 		x2apic_enabled = 1;
 		codepatch_call(CPTAG_EOI, &x2apic_eoi);
 
-		lapic_writereg(LAPIC_TPRI, tpr);
 		va = (vaddr_t)&local_apic;
 	} else {
 		/*
@@ -225,8 +222,6 @@ lapic_map(paddr_t lapic_base)
 		pte = kvtopte(va);
 		*pte = lapic_base | PG_RW | PG_V | PG_N | PG_G | pg_nx;
 		invlpg(va);
-
-		lapic_tpr = tpr;
 	}
 
 	/*
