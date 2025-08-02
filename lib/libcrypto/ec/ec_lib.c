@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.125 2025/05/24 08:25:58 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.126 2025/08/02 15:47:27 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -164,6 +164,10 @@ EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src)
 		return 0;
 
 	dst->a_is_minus3 = src->a_is_minus3;
+
+	memcpy(&dst->fm, &src->fm, sizeof(src->fm));
+	memcpy(&dst->fe_a, &src->fe_a, sizeof(src->fe_a));
+	memcpy(&dst->fe_b, &src->fe_b, sizeof(src->fe_b));
 
 	BN_MONT_CTX_free(dst->mont_ctx);
 	dst->mont_ctx = NULL;
@@ -859,6 +863,10 @@ EC_POINT_copy(EC_POINT *dst, const EC_POINT *src)
 	if (!bn_copy(dst->Z, src->Z))
 		return 0;
 	dst->Z_is_one = src->Z_is_one;
+
+	memcpy(&dst->fe_x, &src->fe_x, sizeof(dst->fe_x));
+	memcpy(&dst->fe_y, &src->fe_y, sizeof(dst->fe_y));
+	memcpy(&dst->fe_z, &src->fe_z, sizeof(dst->fe_z));
 
 	return 1;
 }
