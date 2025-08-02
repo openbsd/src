@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.277 2025/08/01 09:18:30 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.278 2025/08/02 07:02:00 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -546,16 +546,16 @@ gpt_get_parts(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 #define GPT_UUID_UNUSED \
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
-#define GPT_UUID_MSDOS \
+#define GPT_UUID_MICROSOFT_BASIC_DATA \
     { 0xa2, 0xa0, 0xd0, 0xeb, 0xe5, 0xb9, 0x33, 0x44, \
       0x87, 0xc0, 0x68, 0xb6, 0xb7, 0x26, 0x99, 0xc7 }
-#define GPT_UUID_CHROMEROOTFS \
+#define GPT_UUID_CHROMEOS_ROOTFS \
     { 0x02, 0xe2, 0xb8, 0x3c, 0x7e, 0x3b, 0xdd, 0x47, \
       0x8a, 0x3c, 0x7f, 0xf2, 0xa1, 0x3c, 0xfc, 0xec }
-#define GPT_UUID_LINUX \
+#define GPT_UUID_LINUX_FILES \
     { 0xaf, 0x3d, 0xc6, 0x0f, 0x83, 0x84, 0x72, 0x47, \
       0x8e, 0x79, 0x3d, 0x69, 0xd8, 0x47, 0x7d, 0xe4 }
-#define GPT_UUID_APPLE_HFS \
+#define GPT_UUID_MAC_OS_X_HFS \
     { 0x00, 0x53, 0x46, 0x48, 0x00, 0x00, 0xaa, 0x11,\
       0xaa, 0x11, 0x00, 0x30, 0x65, 0x43, 0xec, 0xac }
 #define GPT_UUID_BIOS_BOOT \
@@ -578,14 +578,14 @@ gpt_get_fstype(const struct uuid *uuid_part)
 		uint8_t gptype[16];
 		int fstype;
 	} knownfs[] = {
-		{ GPT_UUID_UNUSED,	FS_UNUSED	},
-		{ GPT_LEUUID_OPENBSD,	FS_BSDFFS	},
-		{ GPT_UUID_MSDOS,	FS_MSDOS	},
-		{ GPT_UUID_CHROMEROOTFS,FS_EXT2FS	},
-		{ GPT_UUID_LINUX,	FS_EXT2FS	},
-		{ GPT_UUID_APPLE_HFS,	FS_HFS		},
-		{ GPT_LEUUID_EFI_SYSTEM,FS_MSDOS	},
-		{ GPT_UUID_BIOS_BOOT,	FS_BOOT		}
+		{ GPT_UUID_UNUSED,		FS_UNUSED },
+		{ GPT_LEUUID_OPENBSD,		FS_BSDFFS },
+		{ GPT_UUID_MICROSOFT_BASIC_DATA,FS_MSDOS  },
+		{ GPT_UUID_CHROMEOS_ROOTFS,	FS_EXT2FS },
+		{ GPT_UUID_LINUX_FILES,		FS_EXT2FS },
+		{ GPT_UUID_MAC_OS_X_HFS,	FS_HFS	  },
+		{ GPT_LEUUID_EFI_SYSTEM,	FS_MSDOS  },
+		{ GPT_UUID_BIOS_BOOT,		FS_BOOT   }
 	};
 
 	for (i = 0; i < nitems(knownfs); i++) {
