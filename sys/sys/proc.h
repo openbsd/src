@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.394 2025/08/01 10:53:23 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.395 2025/08/02 20:44:10 jca Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -287,6 +287,9 @@ struct process {
 
 /*
  * These flags are kept in ps_flags.
+ *
+ * When adding a new flag, carefully consider whether it should be 
+ * added to PS_FLAGS_INHERITED_ON_FORK.
  */
 #define	PS_CONTROLT	0x00000001	/* Has a controlling terminal. */
 #define	PS_EXEC		0x00000002	/* Process called exec. */
@@ -329,6 +332,10 @@ struct process {
      "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" \
      "\030ORPHAN" "\031CHROOT" "\032NOBTCFI" "\033ITIMER" "\034PROFILE" \
      "\035WAITEVENT" "\036CONTINUED" "\037STOPPED" "\040TRAPPED")
+
+#define PS_FLAGS_INHERITED_ON_FORK \
+    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE | \
+     PS_NOBTCFI | PS_WXNEEDED | PS_CHROOT | PS_PROFILE)
 
 struct kcov_dev;
 struct lock_list_entry;
