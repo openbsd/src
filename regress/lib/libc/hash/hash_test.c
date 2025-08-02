@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_test.c,v 1.2 2025/04/14 18:33:56 tb Exp $ */
+/*	$OpenBSD: hash_test.c,v 1.3 2025/08/02 06:05:13 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -757,7 +757,7 @@ struct hash_ctx {
 	void		*ctx;
 	void		(*init)(void *);
 	void		(*update)(void *, const uint8_t *, size_t);
-	void		(*final)(void *, void *final);
+	void		(*final)(void *, void *);
 };
 
 static const struct hash_tests {
@@ -814,7 +814,7 @@ hash_test_case(struct hash_ctx *ctx, const struct hash_test_case *tc,
 	size_t in_len = tc->in != NULL ? strlen(tc->in) : 0;
 
 	ctx->init(ctx->ctx);
-	ctx->update(ctx->ctx, (uint8_t *)tc->in, in_len);
+	ctx->update(ctx->ctx, (const uint8_t *)tc->in, in_len);
 	ctx->final(ctx->digest, ctx->ctx);
 
 	if (memcmp(tc->out, ctx->digest, ctx->digest_len) != 0) {
