@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.48 2025/05/23 03:13:33 sashan Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.49 2025/08/02 19:22:18 sashan Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -305,7 +305,8 @@ stacktrace_save_utrace(struct stacktrace *st)
 	/*
 	 * skip kernel frames
 	 */
-	while (frame != NULL && lastframe < frame && INKERNEL(frame)) {
+	while (frame != NULL && lastframe < frame &&
+	    frame <= (struct callframe *)pcb->pcb_kstack) {
 		lastframe = frame;
 		frame = frame->f_frame;
 	}
