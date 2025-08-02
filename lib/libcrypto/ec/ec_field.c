@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_field.c,v 1.1 2025/05/25 05:12:05 jsing Exp $	*/
+/*	$OpenBSD: ec_field.c,v 1.2 2025/08/02 15:44:09 jsing Exp $	*/
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -129,6 +129,19 @@ void
 ec_field_element_copy(EC_FIELD_ELEMENT *dst, const EC_FIELD_ELEMENT *src)
 {
 	memcpy(dst, src, sizeof(EC_FIELD_ELEMENT));
+}
+
+void
+ec_field_element_select(const EC_FIELD_MODULUS *fm, EC_FIELD_ELEMENT *r,
+    const EC_FIELD_ELEMENT *a, const EC_FIELD_ELEMENT *b, int conditional)
+{
+	BN_ULONG mask;
+	int i;
+
+	mask = bn_ct_eq_zero_mask(conditional);
+
+	for (i = 0; i < fm->n; i++)
+		r->w[i] = (a->w[i] & mask) | (b->w[i] & ~mask);
 }
 
 int
