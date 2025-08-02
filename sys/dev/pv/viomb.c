@@ -118,7 +118,7 @@ const struct cfattach viomb_ca = {
 };
 
 struct cfdriver viomb_cd = {
-	NULL, "viomb", DV_DULL
+	NULL, "viomb", DV_DULL, CD_COCOVM
 };
 
 int
