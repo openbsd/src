@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.126 2025/07/31 08:32:43 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.127 2025/08/02 13:24:16 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 31 2025 $
+.Dd $Mdocdate: August 2 2025 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -116,13 +116,9 @@ and
 .Fl -address
 flags and connect with rsync-protocol locations.
 .It Fl f Ar
-Decode the
-.Em TAL
-or validate the
-.Em Signed Object
-in
+Attempt to decode and validate the RPKI object in
 .Ar file
-against the RPKI cache stored in
+using the cache stored in
 .Ar cachedir
 and print human-readable information about the object.
 If
@@ -134,6 +130,7 @@ and can be combined with
 .Fl j
 to emit a stream of
 .Em Concatenated JSON .
+This option is intended for debugging.
 .It Fl H Ar fqdn
 Create a shortlist and add
 .Ar fqdn
