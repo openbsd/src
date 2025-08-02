@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.38 2025/06/24 22:01:10 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.39 2025/08/02 15:16:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -22,6 +22,7 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/vmm/vmm.h>
 
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -54,7 +55,7 @@ const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 6, 7, 9, 10, 11, 12,
  *  barfn: callback function invoked on BAR access
  *  cookie: cookie passed to barfn on access
  *
- * Returns 0 if the BAR was added successfully, 1 otherwise.
+ * Returns the index of the BAR if added successfully, -1 otherwise.
  */
 int
 pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
@@ -63,18 +64,18 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 
 	/* Check id */
 	if (id >= pci.pci_dev_ct)
-		return (1);
+		return (-1);
 
 	/* Can only add PCI_MAX_BARS BARs to any device */
 	bar_ct = pci.pci_devices[id].pd_bar_ct;
 	if (bar_ct >= PCI_MAX_BARS)
-		return (1);
+		return (-1);
 
 	/* Compute BAR address and add */
 	bar_reg_idx = (PCI_MAPREG_START + (bar_ct * 4)) / 4;
 	if (type == PCI_MAPREG_TYPE_MEM) {
 		if (pci.pci_next_mmio_bar >= PCI_MMIO_BAR_END)
-			return (1);
+			return (-1);
 
 		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] =
 		    PCI_MAPREG_MEM_ADDR(pci.pci_next_mmio_bar);
@@ -88,7 +89,7 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 #ifdef __amd64__
 	else if (type == PCI_MAPREG_TYPE_IO) {
 		if (pci.pci_next_io_bar >= VM_PCI_IO_BAR_END)
-			return (1);
+			return (-1);
 
 		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] =
 		    PCI_MAPREG_IO_ADDR(pci.pci_next_io_bar) |
@@ -104,7 +105,7 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 	}
 #endif /* __amd64__ */
 
-	return (0);
+	return ((int)bar_ct);
 }
 
 int
@@ -156,6 +157,7 @@ pci_get_dev_irq(uint8_t id)
  *  subclass: PCI 'subclass' of the new device
  *  subsys_vid: subsystem VID of the new device
  *  subsys_id: subsystem ID of the new device
+ *  rev_id: revision id
  *  irq_needed: 1 if an IRQ should be assigned to this PCI device, 0 otherwise
  *  csfunc: PCI config space callback function when the guest VM accesses
  *      CS of this PCI device
@@ -167,7 +169,7 @@ pci_get_dev_irq(uint8_t id)
 int
 pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
     uint8_t subclass, uint16_t subsys_vid, uint16_t subsys_id,
-    uint8_t irq_needed, pci_cs_fn_t csfunc)
+    uint8_t rev_id, uint8_t irq_needed, pci_cs_fn_t csfunc)
 {
 	/* Exceeded max devices? */
 	if (pci.pci_dev_ct >= PCI_CONFIG_MAX_DEV)
@@ -182,6 +184,7 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 
 	pci.pci_devices[*id].pd_vid = vid;
 	pci.pci_devices[*id].pd_did = pid;
+	pci.pci_devices[*id].pd_rev = rev_id;
 	pci.pci_devices[*id].pd_class = class;
 	pci.pci_devices[*id].pd_subclass = subclass;
 	pci.pci_devices[*id].pd_subsys_vid = subsys_vid;
@@ -204,6 +207,34 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 	return (0);
 }
 
+int
+pci_add_capability(uint8_t id, struct pci_cap *cap)
+{
+	uint8_t cid;
+	struct pci_dev *dev = NULL;
+
+	if (id >= pci.pci_dev_ct)
+		return (-1);
+	dev = &pci.pci_devices[id];
+
+	if (dev->pd_cap_ct >= PCI_MAX_CAPS)
+		return (-1);
+	cid = dev->pd_cap_ct;
+
+	memcpy(&dev->pd_caps[cid], cap, sizeof(dev->pd_caps[0]));
+
+	/* Update the linkage. */
+	if (cid > 0)
+		dev->pd_caps[cid - 1].pc_next = (sizeof(struct pci_cap) * cid) +
+		    offsetof(struct pci_dev, pd_caps);
+
+	dev->pd_cap_ct++;
+	dev->pd_cap = offsetof(struct pci_dev, pd_caps);
+	dev->pd_status |= (PCI_STATUS_CAPLIST_SUPPORT >> 16);
+
+	return (cid);
+}
+
 /*
  * pci_init
  *
@@ -216,15 +247,18 @@ pci_init(void)
 	uint8_t id;
 
 	memset(&pci, 0, sizeof(pci));
-	pci.pci_next_mmio_bar = PCI_MMIO_BAR_BASE;
 
+	/* Check if changes to struct pci_dev create an invalid config space. */
+	CTASSERT(sizeof(pci.pci_devices[0].pd_cfg_space) <= 256);
+
+	pci.pci_next_mmio_bar = PCI_MMIO_BAR_BASE;
 #ifdef __amd64__
 	pci.pci_next_io_bar = VM_PCI_IO_BAR_BASE;
 #endif /* __amd64__ */
 
 	if (pci_add_device(&id, PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
 	    PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_HOST,
-	    PCI_VENDOR_OPENBSD, 0, 0, NULL)) {
+	    PCI_VENDOR_OPENBSD, 0, 0, 0, NULL)) {
 		log_warnx("%s: can't add PCI host bridge", __progname);
 		return;
 	}
@@ -441,4 +475,16 @@ pci_find_first_device(uint16_t subsys_id)
 		if (pci.pci_devices[i].pd_subsys_id == subsys_id)
 			return (i);
 	return (-1);
+}
+
+/*
+ * Retrieve the subsystem identifier for a PCI device if found, otherwise 0.
+ */
+uint16_t
+pci_get_subsys_id(uint8_t pci_id)
+{
+	if (pci_id >= pci.pci_dev_ct)
+		return (0);
+	else
+		return (pci.pci_devices[pci_id].pd_subsys_id);
 }

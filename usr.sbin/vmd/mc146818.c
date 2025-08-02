@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.30 2025/06/12 21:04:37 dv Exp $ */
+/* $OpenBSD: mc146818.c,v 1.31 2025/08/02 15:16:18 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -127,7 +127,7 @@ rtc_fire1(int fd, short type, void *arg)
 	if (rtc.now - old > 5) {
 		log_debug("%s: RTC clock drift (%llds), requesting guest "
 		    "resync", __func__, (rtc.now - old));
-		vmmci_ctl(VMMCI_SYNCRTC);
+		vmmci_ctl(&vmmci, VMMCI_SYNCRTC);
 	}
 	evtimer_add(&rtc.sec, &rtc.sec_tv);
 }

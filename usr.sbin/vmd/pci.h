@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.14 2025/06/12 21:04:37 dv Exp $	*/
+/*	$OpenBSD: pci.h,v 1.15 2025/08/02 15:16:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -30,6 +30,7 @@
 #define PCI_MODE1_DATA_REG	0x0cfc
 #define PCI_CONFIG_MAX_DEV	32
 #define PCI_MAX_BARS		6
+#define PCI_MAX_CAPS		8
 
 #define PCI_BAR_TYPE_IO		0x0
 #define PCI_BAR_TYPE_MMIO	0x1
@@ -44,6 +45,15 @@ typedef int (*pci_iobar_fn_t)(int dir, uint16_t reg, uint32_t *data, uint8_t *,
     void *, uint8_t);
 typedef int (*pci_mmiobar_fn_t)(int dir, uint32_t ofs, uint32_t *data);
 
+/*
+ * Represents a PCI Capability entry with enough space for the virtio-specific
+ * capabilities.
+ */
+struct pci_cap {
+	uint8_t		pc_vndr;	/* Vendor-specific ID */
+	uint8_t		pc_next;	/* Link to next capability */
+	uint8_t		pc_extra[22];	/* Enough space for Virtio PCI data. */
+} __packed;
 
 struct pci_dev {
 	union {
@@ -73,9 +83,12 @@ struct pci_dev {
 			uint8_t pd_int;
 			uint8_t pd_min_grant;
 			uint8_t pd_max_grant;
+			struct pci_cap pd_caps[PCI_MAX_CAPS];
 		} __packed;
 	};
+
 	uint8_t pd_bar_ct;
+	uint8_t pd_cap_ct;
 	pci_cs_fn_t pd_csfunc;
 
 	uint8_t pd_bartype[PCI_MAX_BARS];
@@ -97,10 +110,12 @@ struct pci {
 int pci_find_first_device(uint16_t);
 void pci_init(void);
 int pci_add_device(uint8_t *, uint16_t, uint16_t, uint8_t, uint8_t, uint16_t,
-    uint16_t, uint8_t, pci_cs_fn_t);
+    uint16_t, uint8_t, uint8_t, pci_cs_fn_t);
+int pci_add_capability(uint8_t, struct pci_cap *);
 int pci_add_bar(uint8_t, uint32_t, void *, void *);
 int pci_set_bar_fn(uint8_t, uint8_t, void *, void *);
 uint8_t pci_get_dev_irq(uint8_t);
+uint16_t pci_get_subsys_id(uint8_t);
 
 #ifdef __amd64__
 void pci_handle_address_reg(struct vm_run_params *);

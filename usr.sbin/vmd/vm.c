@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.114 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.115 2025/08/02 15:16:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -356,11 +356,11 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			    sizeof(verbose));
 			break;
 		case IMSG_VMDOP_VM_SHUTDOWN:
-			if (vmmci_ctl(VMMCI_SHUTDOWN) == -1)
+			if (vmmci_ctl(&vmmci, VMMCI_SHUTDOWN) == -1)
 				_exit(0);
 			break;
 		case IMSG_VMDOP_VM_REBOOT:
-			if (vmmci_ctl(VMMCI_REBOOT) == -1)
+			if (vmmci_ctl(&vmmci, VMMCI_REBOOT) == -1)
 				_exit(0);
 			break;
 		case IMSG_VMDOP_PAUSE_VM:

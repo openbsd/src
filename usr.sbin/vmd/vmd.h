@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.138 2025/06/28 05:29:47 jsg Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.139 2025/08/02 15:16:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -42,6 +42,9 @@
 #define ISSET(_v, _m)		((_v) & (_m))
 
 #define nitems(_a)      (sizeof((_a)) / sizeof((_a)[0]))
+
+#define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
+			    __attribute__((__unused__))
 
 #define MB(x)	(x * 1024UL * 1024UL)
 #define GB(x)	(x * 1024UL * 1024UL * 1024UL)

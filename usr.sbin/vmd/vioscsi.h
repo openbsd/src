@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.h,v 1.3 2020/09/03 13:11:49 krw Exp $  */
+/*	$OpenBSD: vioscsi.h,v 1.4 2025/08/02 15:16:18 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -21,7 +21,7 @@
 #define VIOSCSI_CDB_LEN			32
 #define VIOSCSI_SENSE_LEN		96
 
-#define VIOSCSI_NUM_QUEUES		1
+#define VIOSCSI_NUM_REQ_QUEUES		1
 #define VIOSCSI_CMD_PER_LUN		1
 #define VIOSCSI_MAX_TARGET		1
 #define VIOSCSI_MAX_LUN			1
@@ -231,8 +231,8 @@ struct scsi_config_random_read_descriptor {
 	u_int8_t unused[2];
 };
 
-/* 
- * Variant of scsi_report_luns_data in scsi_all.h 
+/*
+ * Variant of scsi_report_luns_data in scsi_all.h
  * but with only one lun in the lun list
  */
 struct vioscsi_report_luns_data {

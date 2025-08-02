@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.23 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.24 2025/08/02 15:16:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -35,18 +35,16 @@
 
 extern char *__progname;
 extern struct vmd_vm *current_vm;
-struct iovec io_v[VIOBLK_QUEUE_SIZE];
+struct iovec io_v[VIRTIO_QUEUE_SIZE_MAX];
 
 static const char *disk_type(int);
-static uint32_t handle_io_read(struct viodev_msg *, struct virtio_dev *,
-    int8_t *);
-static int handle_io_write(struct viodev_msg *, struct virtio_dev *);
+static uint32_t vioblk_read(struct virtio_dev *, struct viodev_msg *, int *);
+static int vioblk_write(struct virtio_dev *, struct viodev_msg *);
+static uint32_t vioblk_dev_read(struct virtio_dev *, struct viodev_msg *);
 
-static void vioblk_update_qs(struct vioblk_dev *);
-static void vioblk_update_qa(struct vioblk_dev *);
-static int vioblk_notifyq(struct vioblk_dev *);
-static ssize_t vioblk_rw(struct vioblk_dev *, int, off_t,
-    struct vring_desc *, struct vring_desc **);
+static int vioblk_notifyq(struct virtio_dev *, uint16_t);
+static ssize_t vioblk_io(struct vioblk_dev *, struct virtio_vq_info *, int,
+    off_t, struct vring_desc *, struct vring_desc **);
 
 static void dev_dispatch_vm(int, short, void *);
 static void handle_sync_io(int, short, void *);
@@ -243,43 +241,6 @@ vioblk_cmd_name(uint32_t type)
 	}
 }
 
-static void
-vioblk_update_qa(struct vioblk_dev *dev)
-{
-	struct virtio_vq_info *vq_info;
-	void *hva = NULL;
-
-	/* Invalid queue? */
-	if (dev->cfg.queue_select > 0)
-		return;
-
-	vq_info = &dev->vq[dev->cfg.queue_select];
-	vq_info->q_gpa = (uint64_t)dev->cfg.queue_pfn * VIRTIO_PAGE_SIZE;
-
-	hva = hvaddr_mem(vq_info->q_gpa, vring_size(VIOBLK_QUEUE_SIZE));
-	if (hva == NULL)
-		fatal("vioblk_update_qa");
-	vq_info->q_hva = hva;
-}
-
-static void
-vioblk_update_qs(struct vioblk_dev *dev)
-{
-	struct virtio_vq_info *vq_info;
-
-	/* Invalid queue? */
-	if (dev->cfg.queue_select > 0) {
-		dev->cfg.queue_size = 0;
-		return;
-	}
-
-	vq_info = &dev->vq[dev->cfg.queue_select];
-
-	/* Update queue pfn/size based on queue select */
-	dev->cfg.queue_pfn = vq_info->q_gpa >> 12;
-	dev->cfg.queue_size = vq_info->qs;
-}
-
 /*
  * Process virtqueue notifications. If an unrecoverable error occurs, puts
  * device into a "needs reset" state.
@@ -287,26 +248,28 @@ vioblk_update_qs(struct vioblk_dev *dev)
  * Returns 1 if an we need to assert an IRQ.
  */
 static int
-vioblk_notifyq(struct vioblk_dev *dev)
+vioblk_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 {
 	uint32_t cmd_len;
 	uint16_t idx, cmd_desc_idx;
 	uint8_t ds;
 	off_t offset;
 	ssize_t sz;
-	int is_write, notify = 0, i;
+	int is_write, notify = 0;
 	char *vr;
+	size_t i;
 	struct vring_desc *table, *desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
 	struct virtio_blk_req_hdr *cmd;
 	struct virtio_vq_info *vq_info;
+	struct vioblk_dev *vioblk = &dev->vioblk;
 
 	/* Invalid queue? */
-	if (dev->cfg.queue_notify > 0)
+	if (vq_idx > dev->num_queues)
 		return (0);
 
-	vq_info = &dev->vq[dev->cfg.queue_notify];
+	vq_info = &dev->vq[vq_idx];
 	idx = vq_info->last_avail;
 	vr = vq_info->q_hva;
 	if (vr == NULL)
@@ -319,7 +282,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 
 	while (idx != avail->idx) {
 		/* Retrieve Command descriptor. */
-		cmd_desc_idx = avail->ring[idx & VIOBLK_QUEUE_MASK];
+		cmd_desc_idx = avail->ring[idx & vq_info->mask];
 		desc = &table[cmd_desc_idx];
 		cmd_len = desc->len;
 
@@ -342,7 +305,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			goto reset;
 
 		/* Advance to the 2nd descriptor. */
-		desc = &table[desc->next & VIOBLK_QUEUE_MASK];
+		desc = &table[desc->next & vq_info->mask];
 
 		/* Process each available command & chain. */
 		switch (cmd->type) {
@@ -351,7 +314,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			/* Read (IN) & Write (OUT) */
 			is_write = (cmd->type == VIRTIO_BLK_T_OUT) ? 1 : 0;
 			offset = cmd->sector * VIRTIO_BLK_SECTOR_SIZE;
-			sz = vioblk_rw(dev, is_write, offset, table, &desc);
+			sz = vioblk_io(vioblk, vq_info, is_write, offset, table,
+			    &desc);
 			if (sz == -1)
 				ds = VIRTIO_BLK_S_IOERR;
 			else
@@ -376,8 +340,8 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		/* Advance to the end of the chain, if needed. */
 		i = 0;
 		while (desc->flags & VRING_DESC_F_NEXT) {
-			desc = &table[desc->next & VIOBLK_QUEUE_MASK];
-			if (++i >= VIOBLK_QUEUE_SIZE) {
+			desc = &table[desc->next & vq_info->mask];
+			if (++i >= vq_info->qs) {
 				/*
 				 * If we encounter an infinite/looping chain,
 				 * not much we can do but say we need a reset.
@@ -398,11 +362,11 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			log_warnx("%s: can't write device status data "
 			    "@ 0x%llx",__func__, desc->addr);
 
-		dev->cfg.isr_status |= 1;
+		dev->isr |= 1;
 		notify = 1;
 
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_len;
+		used->ring[used->idx & vq_info->mask].id = cmd_desc_idx;
+		used->ring[used->idx & vq_info->mask].len = cmd_len;
 
 		__sync_synchronize();
 		used->idx++;
@@ -417,8 +381,8 @@ reset:
 	 * When setting the "needs reset" flag, the driver is notified
 	 * via a configuration change interrupt.
 	 */
-	dev->cfg.device_status |= DEVICE_NEEDS_RESET;
-	dev->cfg.isr_status |= VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
+	dev->status |= DEVICE_NEEDS_RESET;
+	dev->isr |= VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
 	return (1);
 }
 
@@ -498,7 +462,7 @@ handle_sync_io(int fd, short event, void *arg)
 	struct viodev_msg msg;
 	struct imsg imsg;
 	ssize_t n;
-	int8_t intr = INTR_STATE_NOOP;
+	int deassert = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsgbuf_read(ibuf)) == -1)
@@ -538,15 +502,18 @@ handle_sync_io(int fd, short event, void *arg)
 		switch (msg.type) {
 		case VIODEV_MSG_IO_READ:
 			/* Read IO: make sure to send a reply */
-			msg.data = handle_io_read(&msg, dev, &intr);
+			msg.data = vioblk_read(dev, &msg, &deassert);
 			msg.data_valid = 1;
-			msg.state = intr;
+			if (deassert) {
+				/* Inline any interrupt deassertions. */
+				msg.state = INTR_STATE_DEASSERT;
+			}
 			imsg_compose_event(iev, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
 			    sizeof(msg));
 			break;
 		case VIODEV_MSG_IO_WRITE:
-			/* Write IO: no reply needed */
-			if (handle_io_write(&msg, dev) == 1)
+			/* Write IO: no reply needed, but maybe an irq assert */
+			if (vioblk_write(dev, &msg))
 				virtio_assert_irq(dev, 0);
 			break;
 		case VIODEV_MSG_SHUTDOWN:
@@ -561,223 +528,106 @@ handle_sync_io(int fd, short event, void *arg)
 }
 
 static int
-handle_io_write(struct viodev_msg *msg, struct virtio_dev *dev)
+vioblk_write(struct virtio_dev *dev, struct viodev_msg *msg)
 {
-	struct vioblk_dev *vioblk = &dev->vioblk;
 	uint32_t data = msg->data;
+	uint16_t reg = msg->reg;
+	uint8_t sz = msg->io_sz;
 	int intr = 0;
 
-	switch (msg->reg) {
-	case VIRTIO_CONFIG_DEVICE_FEATURES:
-	case VIRTIO_CONFIG_QUEUE_SIZE:
-	case VIRTIO_CONFIG_ISR_STATUS:
-		log_warnx("%s: illegal write %x to %s", __progname, data,
-		    virtio_reg_name(msg->reg));
+	switch (reg & 0xFF00) {
+	case VIO1_CFG_BAR_OFFSET:
+		(void)virtio_io_cfg(dev, VEI_DIR_OUT, (reg & 0x00FF), data, sz);
 		break;
-	case VIRTIO_CONFIG_GUEST_FEATURES:
-		vioblk->cfg.guest_feature = data;
+	case VIO1_DEV_BAR_OFFSET:
+		/* Ignore all writes to device configuration registers. */
 		break;
-	case VIRTIO_CONFIG_QUEUE_PFN:
-		vioblk->cfg.queue_pfn = data;
-		vioblk_update_qa(vioblk);
+	case VIO1_NOTIFY_BAR_OFFSET:
+		intr = vioblk_notifyq(dev, (uint16_t)(msg->data));
 		break;
-	case VIRTIO_CONFIG_QUEUE_SELECT:
-		vioblk->cfg.queue_select = data;
-		vioblk_update_qs(vioblk);
-		break;
-	case VIRTIO_CONFIG_QUEUE_NOTIFY:
-		/* XXX We should be stricter about status checks. */
-		if (!(vioblk->cfg.device_status & DEVICE_NEEDS_RESET)) {
-			vioblk->cfg.queue_notify = data;
-			if (vioblk_notifyq(vioblk))
-				intr = 1;
-		}
-		break;
-	case VIRTIO_CONFIG_DEVICE_STATUS:
-		vioblk->cfg.device_status = data;
-		if (vioblk->cfg.device_status == 0) {
-			vioblk->cfg.guest_feature = 0;
-			vioblk->cfg.queue_pfn = 0;
-			vioblk_update_qa(vioblk);
-			vioblk->cfg.queue_size = 0;
-			vioblk_update_qs(vioblk);
-			vioblk->cfg.queue_select = 0;
-			vioblk->cfg.queue_notify = 0;
-			vioblk->cfg.isr_status = 0;
-			vioblk->vq[0].last_avail = 0;
-			vioblk->vq[0].notified_avail = 0;
-			virtio_deassert_irq(dev, msg->vcpu);
-		}
+	case VIO1_ISR_BAR_OFFSET:
+		/* Ignore writes to ISR. */
 		break;
 	default:
-		break;
+		log_debug("%s: no handler for reg 0x%04x", __func__, reg);
 	}
+
 	return (intr);
 }
 
 static uint32_t
-handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev, int8_t *intr)
+vioblk_read(struct virtio_dev *dev, struct viodev_msg *msg, int *deassert)
 {
-	struct vioblk_dev *vioblk = &dev->vioblk;
+	uint32_t data = (uint32_t)(-1);
+	uint16_t reg = msg->reg;
 	uint8_t sz = msg->io_sz;
-	uint32_t data;
 
-	if (msg->data_valid)
-		data = msg->data;
-	else
-		data = 0;
-
-	switch (msg->reg) {
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI:
-		switch (sz) {
-		case 4:
-			data = (uint32_t)(vioblk->capacity);
-			break;
-		case 2:
-			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->capacity) & 0xFFFF;
-			break;
-		case 1:
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->capacity) & 0xFF;
-			break;
-		}
-		/* XXX handle invalid sz */
+	switch (reg & 0xFF00) {
+	case VIO1_CFG_BAR_OFFSET:
+		data = virtio_io_cfg(dev, VEI_DIR_IN, (uint8_t)reg, 0, sz);
 		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 1:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->capacity >> 8) & 0xFF;
-		}
-		/* XXX handle invalid sz */
+	case VIO1_DEV_BAR_OFFSET:
+		data = vioblk_dev_read(dev, msg);
 		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 2:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->capacity >> 16) & 0xFF;
-		} else if (sz == 2) {
-			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->capacity >> 16) & 0xFFFF;
-		}
-		/* XXX handle invalid sz */
+	case VIO1_NOTIFY_BAR_OFFSET:
+		/* Reads of notify register return all 1's. */
 		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 3:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->capacity >> 24) & 0xFF;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
-		switch (sz) {
-		case 4:
-			data = (uint32_t)(vioblk->capacity >> 32);
-			break;
-		case 2:
-			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->capacity >> 32) & 0xFFFF;
-			break;
-		case 1:
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->capacity >> 32) & 0xFF;
-			break;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 5:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->capacity >> 40) & 0xFF;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 6:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->capacity >> 48) & 0xFF;
-		} else if (sz == 2) {
-			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->capacity >> 48) & 0xFFFF;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 7:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->capacity >> 56) & 0xFF;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 12:
-		switch (sz) {
-		case 4:
-			data = (uint32_t)(vioblk->seg_max);
-			break;
-		case 2:
-			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->seg_max) & 0xFFFF;
-			break;
-		case 1:
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->seg_max) & 0xFF;
-			break;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 13:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->seg_max >> 8) & 0xFF;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 14:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->seg_max >> 16) & 0xFF;
-		} else if (sz == 2) {
-			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->seg_max >> 16)
-			    & 0xFFFF;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 15:
-		if (sz == 1) {
-			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->seg_max >> 24) & 0xFF;
-		}
-		/* XXX handle invalid sz */
-		break;
-	case VIRTIO_CONFIG_DEVICE_FEATURES:
-		data = vioblk->cfg.device_feature;
-		break;
-	case VIRTIO_CONFIG_GUEST_FEATURES:
-		data = vioblk->cfg.guest_feature;
-		break;
-	case VIRTIO_CONFIG_QUEUE_PFN:
-		data = vioblk->cfg.queue_pfn;
-		break;
-	case VIRTIO_CONFIG_QUEUE_SIZE:
-		data = vioblk->cfg.queue_size;
-		break;
-	case VIRTIO_CONFIG_QUEUE_SELECT:
-		data = vioblk->cfg.queue_select;
-		break;
-	case VIRTIO_CONFIG_QUEUE_NOTIFY:
-		data = vioblk->cfg.queue_notify;
-		break;
-	case VIRTIO_CONFIG_DEVICE_STATUS:
-		data = vioblk->cfg.device_status;
-		break;
-	case VIRTIO_CONFIG_ISR_STATUS:
-		data = vioblk->cfg.isr_status;
-		vioblk->cfg.isr_status = 0;
-		if (intr != NULL)
-			*intr = INTR_STATE_DEASSERT;
+	case VIO1_ISR_BAR_OFFSET:
+		data = dev->isr;
+		dev->isr = 0;
+		*deassert = 1;
 		break;
 	default:
-		return (0xFFFFFFFF);
+		log_debug("%s: no handler for reg 0x%04x", __func__, reg);
+	}
+
+	return (data);
+}
+
+static uint32_t
+vioblk_dev_read(struct virtio_dev *dev, struct viodev_msg *msg)
+{
+	struct vioblk_dev *vioblk = (struct vioblk_dev *)&dev->vioblk;
+	uint32_t data = (uint32_t)(-1);
+	uint16_t reg = msg->reg;
+	uint8_t sz = msg->io_sz;
+
+	switch (reg & 0xFF) {
+	case VIRTIO_BLK_CONFIG_CAPACITY:
+		if (sz != 4) {
+			log_warnx("%s: unaligned read from capacity register",
+			    __func__);
+			break;
+		}
+		data = (uint32_t)(0xFFFFFFFF & vioblk->capacity);
+		break;
+	case VIRTIO_BLK_CONFIG_CAPACITY + 4:
+		if (sz != 4) {
+			log_warnx("%s: unaligned read from capacity register",
+			    __func__);
+			break;
+		}
+		data = (uint32_t)(vioblk->capacity >> 32);
+		break;
+	case VIRTIO_BLK_CONFIG_SEG_MAX:
+		if (sz != 4) {
+			log_warnx("%s: unaligned read from segment max "
+			    "register", __func__);
+			break;
+		}
+		data = vioblk->seg_max;
+		break;
+	case VIRTIO_BLK_CONFIG_GEOMETRY_C:
+	case VIRTIO_BLK_CONFIG_GEOMETRY_H:
+	case VIRTIO_BLK_CONFIG_GEOMETRY_S:
+		/*
+		 * SeaBIOS unconditionally reads without checking the
+		 * geometry feature flag.
+		 */
+		break;
+	default:
+		log_warnx("%s: invalid register 0x%04x", __func__, reg);
+		return (uint32_t)(-1);
 	}
 
 	return (data);
@@ -791,8 +641,8 @@ handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev, int8_t *intr)
  * On error, returns -1 and descriptor (desc) remains at its current position.
  */
 static ssize_t
-vioblk_rw(struct vioblk_dev *dev, int is_write, off_t offset,
-    struct vring_desc *desc_tbl, struct vring_desc **desc)
+vioblk_io(struct vioblk_dev *dev, struct virtio_vq_info *vq_info, int is_write,
+    off_t offset, struct vring_desc *desc_tbl, struct vring_desc **desc)
 {
 	struct iovec *iov = NULL;
 	ssize_t sz = 0;
@@ -830,7 +680,7 @@ vioblk_rw(struct vioblk_dev *dev, int is_write, off_t offset,
 		}
 
 		/* Advance to the next descriptor. */
-		*desc = &desc_tbl[(*desc)->next & VIOBLK_QUEUE_MASK];
+		*desc = &desc_tbl[(*desc)->next & vq_info->mask];
 	} while ((*desc)->flags & VRING_DESC_F_NEXT);
 
 	/*

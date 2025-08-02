@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.55 2025/06/12 21:04:37 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.56 2025/08/02 15:16:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -19,11 +19,13 @@
 #include <sys/types.h>
 
 #include <dev/pv/virtioreg.h>
+#include <dev/pci/virtio_pcireg.h>
 #include <net/if_tun.h>
 
 #include <event.h>
 
 #include "vmd.h"
+#include "pci.h"
 
 #ifndef _VIRTIO_H_
 #define _VIRTIO_H_
@@ -33,19 +35,52 @@
 #define ALIGNSZ(sz, align)	((sz + align - 1) & ~(align - 1))
 #define MIN(a,b)		(((a)<(b))?(a):(b))
 
+#define VIO1_PCI_DEVICE_FEATURE_SELECT					\
+	(offsetof(struct virtio_pci_common_cfg, device_feature_select))
+#define VIO1_PCI_DEVICE_FEATURE						\
+	(offsetof(struct virtio_pci_common_cfg, device_feature))
+#define VIO1_PCI_DRIVER_FEATURE_SELECT					\
+	(offsetof(struct virtio_pci_common_cfg, driver_feature_select))
+#define VIO1_PCI_DRIVER_FEATURE						\
+	(offsetof(struct virtio_pci_common_cfg, driver_feature))
+#define VIO1_PCI_CONFIG_MSIX_VECTOR					\
+	(offsetof(struct virtio_pci_common_cfg, config_msix_vector))
+#define VIO1_PCI_NUM_QUEUES						\
+	(offsetof(struct virtio_pci_common_cfg, num_queues))
+#define VIO1_PCI_DEVICE_STATUS						\
+	(offsetof(struct virtio_pci_common_cfg, device_status))
+#define VIO1_PCI_CONFIG_GENERATION					\
+	(offsetof(struct virtio_pci_common_cfg, config_generation))
+#define VIO1_PCI_QUEUE_SELECT						\
+	(offsetof(struct virtio_pci_common_cfg, queue_select))
+#define VIO1_PCI_QUEUE_SIZE						\
+	(offsetof(struct virtio_pci_common_cfg, queue_size))
+#define VIO1_PCI_QUEUE_MSIX_VECTOR					\
+	(offsetof(struct virtio_pci_common_cfg, queue_msix_vector))
+#define VIO1_PCI_QUEUE_ENABLE						\
+	(offsetof(struct virtio_pci_common_cfg, queue_enable))
+#define VIO1_PCI_QUEUE_NOTIFY_OFF					\
+	(offsetof(struct virtio_pci_common_cfg, queue_notify_off))
+#define VIO1_PCI_QUEUE_DESC						\
+	(offsetof(struct virtio_pci_common_cfg, queue_desc))
+#define VIO1_PCI_QUEUE_AVAIL						\
+	(offsetof(struct virtio_pci_common_cfg, queue_avail))
+#define VIO1_PCI_QUEUE_USED						\
+	(offsetof(struct virtio_pci_common_cfg, queue_used))
+
+#define VIO1_CFG_BAR_OFFSET		0x000
+#define VIO1_NOTIFY_BAR_OFFSET		0x100
+#define VIO1_ISR_BAR_OFFSET		0x200
+#define VIO1_DEV_BAR_OFFSET		0x300
+
 /* Queue sizes must be power of two and less than IOV_MAX (1024). */
-#define VIORND_QUEUE_SIZE	64
-#define VIORND_QUEUE_MASK	(VIORND_QUEUE_SIZE - 1)
+#define VIRTIO_QUEUE_SIZE_MAX		IOV_MAX
+#define VIORND_QUEUE_SIZE_DEFAULT	64
+#define VIOBLK_QUEUE_SIZE_DEFAULT	128
+#define VIOSCSI_QUEUE_SIZE_DEFAULT	128
+#define VIONET_QUEUE_SIZE_DEFAULT	256
 
-#define VIOBLK_QUEUE_SIZE	128
-#define VIOBLK_QUEUE_MASK	(VIOBLK_QUEUE_SIZE - 1)
-#define VIOBLK_SEG_MAX		(VIOBLK_QUEUE_SIZE - 2)
-
-#define VIOSCSI_QUEUE_SIZE	128
-#define VIOSCSI_QUEUE_MASK	(VIOSCSI_QUEUE_SIZE - 1)
-
-#define VIONET_QUEUE_SIZE	256
-#define VIONET_QUEUE_MASK	(VIONET_QUEUE_SIZE - 1)
+#define VIOBLK_SEG_MAX_DEFAULT		(VIOBLK_QUEUE_SIZE_DEFAULT - 2)
 
 /* Virtio network device is backed by tap(4), so inherit limits */
 #define VIONET_HARD_MTU		TUNMRU
@@ -56,12 +91,15 @@
 #define VMMCI_TIMEOUT_SHORT	3
 #define VMMCI_TIMEOUT_LONG	120
 
-/* All the devices we support have either 1, 2 or 3 queues */
-/* viornd - 1 queue
- * vioblk - 1 queue
- * vionet - 2 queues
- * vioscsi - 3 queues
+/*
+ * All the devices we support have either 1, 2 or 3 virtqueues.
+ * No devices currently support VIRTIO_*_F_MQ so values are fixed.
  */
+#define VIRTIO_RND_QUEUES	1
+#define VIRTIO_BLK_QUEUES	1
+#define VIRTIO_NET_QUEUES	2
+#define VIRTIO_SCSI_QUEUES	3
+#define VIRTIO_VMMCI_QUEUES	0
 #define VIRTIO_MAX_QUEUES	3
 
 #define MAXPHYS	(64 * 1024)	/* max raw I/O transfer size */
@@ -74,6 +112,14 @@
 #define DESC_WRITABLE(/* struct vring_desc */ x)	\
 	(((x)->flags & VRING_DESC_F_WRITE) ? 1 : 0)
 
+struct virtio_pci_common_cap {
+	union {
+		struct pci_cap pci;
+		struct virtio_pci_cap virtio;
+		struct virtio_pci_notify_cap notify;
+		struct virtio_pci_cfg_cap cfg;
+	};
+} __packed;
 
 /*
  * VM <-> Device messaging.
@@ -104,18 +150,15 @@ struct viodev_msg {
 } __packed;
 
 /*
- * This struct stores notifications from a virtio driver. There is
- * one such struct per virtio device.
+ * Legacy Virtio 0.9 register state.
  */
 struct virtio_io_cfg {
 	uint32_t device_feature;
 	uint32_t guest_feature;
 	uint32_t queue_pfn;
-	uint16_t queue_size;
 	uint16_t queue_select;
+	uint16_t queue_size;
 	uint16_t queue_notify;
-	uint8_t device_status;
-	uint8_t isr_status;
 };
 
 struct virtio_backing {
@@ -143,6 +186,9 @@ struct virtio_vq_info {
 	/* Queue size: number of queue entries in virtq */
 	uint32_t qs;
 
+	/* Queue mask */
+	uint32_t mask;
+
 	/*
 	 * The offset of the 'available' ring within the virtq located at
 	 * guest physical address qa above
@@ -166,6 +212,8 @@ struct virtio_vq_info {
 	 * driver notified to the host.
 	 */
 	uint16_t notified_avail;
+
+	uint8_t vq_enabled;
 };
 
 /*
@@ -202,22 +250,10 @@ struct virtio_vq_acct {
 	struct vring_used *used;
 };
 
-struct viornd_dev {
-	struct virtio_io_cfg cfg;
-
-	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
-
-	uint8_t pci_id;
-	int irq;
-	uint32_t vm_id;
-};
-
 struct vioblk_dev {
-	struct virtio_io_cfg cfg;
-	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 	struct virtio_backing file;
-
 	int disk_fd[VM_MAX_BASE_PER_DISK];	/* fds for disk image(s) */
+
 	uint8_t ndisk_fd;	/* number of valid disk fds */
 	uint64_t capacity;	/* size in 512 byte sectors */
 	uint32_t seg_max;	/* maximum number of segments */
@@ -232,31 +268,16 @@ struct vioblk_dev {
  * 2 - requests
  */
 struct vioscsi_dev {
-	struct virtio_io_cfg cfg;
-
-	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
-
 	struct virtio_backing file;
 
-	/* is the device locked */
-	int locked;
-	/* size of iso file in bytes */
-	uint64_t sz;
-	/* last block address read */
-	uint64_t lba;
-	/* number of blocks represented in iso */
-	uint64_t n_blocks;
+	int locked;		/* is the device locked? */
+	uint64_t sz;		/* size of iso file in bytes */
+	uint64_t lba;		/* last block address read */
+	uint64_t n_blocks;	/* number of blocks represented in iso */
 	uint32_t max_xfer;
-
-	uint8_t pci_id;
-	uint32_t vm_id;
-	int irq;
 };
 
 struct vionet_dev {
-	struct virtio_io_cfg cfg;
-	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
-
 	int data_fd;		/* fd for our tap device */
 
 	uint8_t mac[6];
@@ -269,28 +290,6 @@ struct vionet_dev {
 	unsigned int idx;
 };
 
-struct virtio_dev {
-	union {
-		struct vioblk_dev vioblk;
-		struct vionet_dev vionet;
-	};
-
-	struct imsgev async_iev;
-	struct imsgev sync_iev;
-
-	int sync_fd;		/* fd for synchronous channel */
-	int async_fd;		/* fd for async channel */
-
-	uint8_t pci_id;
-	uint32_t vm_id;
-	uint32_t vm_vmid;
-	int irq;
-
-	pid_t dev_pid;
-	char dev_type;
-	SLIST_ENTRY(virtio_dev) dev_next;
-};
-
 struct virtio_net_hdr {
 	uint8_t flags;
 	uint8_t gso_type;
@@ -298,13 +297,17 @@ struct virtio_net_hdr {
 	uint16_t gso_size;
 	uint16_t csum_start;
 	uint16_t csum_offset;
+	uint16_t num_buffers;
 
 	/*
-	 * num_buffers is only used if VIRTIO_NET_F_MRG_RXBUF is negotiated.
-	 * vmd(8) doesn't negotiate that, but the field is listed here
-	 * for completeness sake.
+	 * The following fields exist only if VIRTIO_NET_F_HASH_REPORT
+	 * is negotiated.
 	 */
-/*	uint16_t num_buffers; */
+	/*
+	uint32_t hash_value;
+	uint16_t hash_report;
+	uint16_t padding_reserved;
+	*/
 };
 
 enum vmmci_cmd {
@@ -315,13 +318,9 @@ enum vmmci_cmd {
 };
 
 struct vmmci_dev {
-	struct virtio_io_cfg cfg;
 	struct event timeout;
 	struct timeval time;
 	enum vmmci_cmd cmd;
-	uint32_t vm_id;
-	int irq;
-	uint8_t pci_id;
 
 	pthread_mutex_t mutex;
 	struct vm_dev_pipe dev_pipe;
@@ -334,8 +333,52 @@ struct ioinfo {
 	off_t offset;
 };
 
+struct virtio_dev {
+	uint16_t device_id;			/* Virtio device id [r] */
+	union {
+		/* Multi-process enabled. */
+		struct vioblk_dev vioblk;
+		struct vionet_dev vionet;
+
+		/* In-process only. */
+		struct vmmci_dev vmmci;
+		struct vioscsi_dev vioscsi;
+	};
+
+	struct virtio_io_cfg		cfg;		/* Virtio 0.9 */
+	struct virtio_pci_common_cfg	pci_cfg;	/* Virtio 1.x */
+	struct virtio_vq_info		vq[VIRTIO_MAX_QUEUES];	/* Virtqueues */
+
+	uint16_t num_queues;			/* number of virtqueues [r] */
+	uint16_t queue_size;			/* default queue size [r] */
+
+	uint8_t		isr;			/* isr status register [rw] */
+	uint8_t		status;			/* device status register [rw] */
+	uint64_t	device_feature;		/* device features [r] */
+	uint64_t 	driver_feature;		/* driver features [rw] */
+
+	uint8_t		pci_id;			/* pci device id [r] */
+	uint32_t	vm_id;			/* vmm(4) vm identifier [r] */
+	int		irq;			/* assigned irq [r] */
+
+	/* Multi-process emulation fields. */
+	struct imsgev async_iev;		/* async imsg event [r] */
+	struct imsgev sync_iev;			/* sync imsg event [r] */
+
+	int sync_fd;				/* fd for synchronous channel */
+	int async_fd;				/* fd for async channel */
+
+	uint32_t	vm_vmid;		/* vmd(8) vm identifier [r] */
+	pid_t		dev_pid;		/* pid of emulator process */
+	char		dev_type;		/* device type (as char) */
+	SLIST_ENTRY(virtio_dev) dev_next;
+};
+
 /* virtio.c */
+extern struct virtio_dev vmmci;
+
 void virtio_init(struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK], int *);
+void virtio_vq_init(struct virtio_dev *, size_t);
 void virtio_broadcast_imsg(struct vmd_vm *, uint16_t, void *, uint16_t);
 void virtio_stop(struct vmd_vm *);
 void virtio_start(struct vmd_vm *);
@@ -347,11 +390,10 @@ int vm_device_pipe(struct virtio_dev *, void (*)(int, short, void *),
 int virtio_pci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 void virtio_assert_irq(struct virtio_dev *, int);
 void virtio_deassert_irq(struct virtio_dev *, int);
+uint32_t virtio_io_cfg(struct virtio_dev *, int, uint8_t, uint32_t, uint8_t);
 
-int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
-void viornd_update_qs(void);
-void viornd_update_qa(void);
-int viornd_notifyq(void);
+void virtio_update_qs(struct virtio_dev *);
+void virtio_update_qa(struct virtio_dev *);
 
 ssize_t virtio_qcow2_get_base(int, char *, size_t, const char *);
 int virtio_qcow2_create(const char *, const char *, uint64_t);
@@ -362,8 +404,7 @@ int virtio_raw_init(struct virtio_backing *, off_t *, int*, size_t);
 void vionet_set_hostmac(struct vmd_vm *, unsigned int, uint8_t *);
 
 int vmmci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
-int vmmci_ctl(unsigned int);
-void vmmci_ack(unsigned int);
+int vmmci_ctl(struct virtio_dev *, unsigned int);
 void vmmci_timeout(int, short, void *);
 
 const char *vioblk_cmd_name(uint32_t);
@@ -373,9 +414,7 @@ ssize_t dhcp_request(struct virtio_dev *, char *, size_t, char **);
 
 /* vioscsi.c */
 int vioscsi_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
-void vioscsi_update_qs(struct vioscsi_dev *);
-void vioscsi_update_qa(struct vioscsi_dev *);
-int vioscsi_notifyq(struct vioscsi_dev *);
+int vioscsi_notifyq(struct virtio_dev *, uint16_t);
 
 /* imsg handling */
 void	viodev_msg_read(struct imsg *, struct viodev_msg *);
