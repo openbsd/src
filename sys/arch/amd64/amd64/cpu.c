@@ -445,7 +445,7 @@ const struct cfattach cpu_ca = {
 };
 
 struct cfdriver cpu_cd = {
-	NULL, "cpu", DV_DULL
+	NULL, "cpu", DV_DULL, CD_COCOVM
 };
 
 /*

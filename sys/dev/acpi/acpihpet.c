@@ -79,7 +79,7 @@ const struct cfattach acpihpet_ca = {
 };
 
 struct cfdriver acpihpet_cd = {
-	NULL, "acpihpet", DV_DULL
+	NULL, "acpihpet", DV_DULL, CD_COCOVM
 };
 
 uint64_t

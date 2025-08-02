@@ -231,7 +231,7 @@ const struct cfattach ioapic_ca = {
 };
 
 struct cfdriver ioapic_cd = {
-	NULL, "ioapic", DV_DULL
+	NULL, "ioapic", DV_DULL, CD_COCOVM
 };
 
 int

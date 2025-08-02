@@ -96,7 +96,7 @@ void	compwroff(struct com_softc *);
 void	cominit(bus_space_tag_t, bus_space_handle_t, int, int);
 
 struct cfdriver com_cd = {
-	NULL, "com", DV_TTY
+	NULL, "com", DV_TTY, CD_COCOVM
 };
 
 int	comdefaultrate = TTYDEF_SPEED;

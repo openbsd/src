@@ -77,7 +77,7 @@ const struct cfattach acpiprt_ca = {
 };
 
 struct cfdriver acpiprt_cd = {
-	NULL, "acpiprt", DV_DULL
+	NULL, "acpiprt", DV_DULL, CD_COCOVM
 };
 
 void	acpiprt_prt_add(struct acpiprt_softc *, struct aml_value *);

@@ -183,7 +183,7 @@ const struct cfattach acpicpu_ca = {
 };
 
 struct cfdriver acpicpu_cd = {
-	NULL, "acpicpu", DV_DULL
+	NULL, "acpicpu", DV_DULL, CD_COCOVM
 };
 
 const char *acpicpu_hids[] = {

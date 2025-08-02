@@ -50,7 +50,7 @@ const struct cfattach bios_ca = {
 };
 
 struct cfdriver bios_cd = {
-	NULL, "bios", DV_DULL
+	NULL, "bios", DV_DULL, CD_COCOVM
 };
 
 struct smbios_entry smbios_entry;

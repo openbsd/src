@@ -88,7 +88,7 @@ const struct cfattach softraid_ca = {
 };
 
 struct cfdriver softraid_cd = {
-	NULL, "softraid", DV_DULL
+	NULL, "softraid", DV_DULL, CD_COCOVM
 };
 
 /* scsi & discipline */

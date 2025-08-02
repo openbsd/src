@@ -102,7 +102,7 @@ const struct cfattach scsibus_ca = {
 };
 
 struct cfdriver scsibus_cd = {
-	NULL, "scsibus", DV_DULL
+	NULL, "scsibus", DV_DULL, CD_COCOVM
 };
 
 struct scsi_quirk_inquiry_pattern {

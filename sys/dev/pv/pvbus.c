@@ -68,7 +68,8 @@ const struct cfattach pvbus_ca = {
 struct cfdriver pvbus_cd = {
 	NULL,
 	"pvbus",
-	DV_DULL
+	DV_DULL,
+	CD_COCOVM
 };
 
 struct pvbus_type {

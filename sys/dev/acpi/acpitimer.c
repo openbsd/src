@@ -55,7 +55,7 @@ const struct cfattach acpitimer_ca = {
 };
 
 struct cfdriver acpitimer_cd = {
-	NULL, "acpitimer", DV_DULL
+	NULL, "acpitimer", DV_DULL, CD_COCOVM
 };
 
 int

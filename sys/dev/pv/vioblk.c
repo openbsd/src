@@ -146,7 +146,7 @@ const struct cfattach vioblk_ca = {
 };
 
 struct cfdriver vioblk_cd = {
-	NULL, "vioblk", DV_DULL
+	NULL, "vioblk", DV_DULL, CD_COCOVM
 };
 
 const struct scsi_adapter vioblk_switch = {

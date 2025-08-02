@@ -76,7 +76,7 @@ const struct cfattach acpipci_ca = {
 };
 
 struct cfdriver acpipci_cd = {
-	NULL, "acpipci", DV_DULL
+	NULL, "acpipci", DV_DULL, CD_COCOVM
 };
 
 const char *acpipci_hids[] = {

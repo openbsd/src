@@ -122,7 +122,7 @@ const struct cfattach pchb_ca = {
 };
 
 struct cfdriver pchb_cd = {
-	NULL, "pchb", DV_DULL
+	NULL, "pchb", DV_DULL, CD_COCOVM
 };
 
 int	pchb_print(void *, const char *);

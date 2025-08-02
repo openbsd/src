@@ -139,6 +139,7 @@ struct cfattach {
 /* For cd_mode, below */
 #define CD_INDIRECT		1
 #define CD_SKIPHIBERNATE	2
+#define CD_COCOVM		4
 
 struct cfdriver {
 	void	**cd_devs;		/* devices found */

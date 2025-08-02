@@ -89,7 +89,8 @@ const struct cfattach vscsi_ca = {
 struct cfdriver vscsi_cd = {
 	NULL,
 	"vscsi",
-	DV_DULL
+	DV_DULL,
+	CD_COCOVM
 };
 
 void		vscsi_cmd(struct scsi_xfer *);

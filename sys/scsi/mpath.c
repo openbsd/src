@@ -79,7 +79,8 @@ const struct cfattach mpath_ca = {
 struct cfdriver mpath_cd = {
 	NULL,
 	"mpath",
-	DV_DULL
+	DV_DULL,
+	CD_COCOVM
 };
 
 void		mpath_cmd(struct scsi_xfer *);

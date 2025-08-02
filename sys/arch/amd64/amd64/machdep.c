@@ -1474,6 +1474,8 @@ init_x86_64(paddr_t first_avail)
 		cpu_init_early_vctrap(first_avail);
 		first_avail += 2 * NBPG;
 	}
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ENABLED))
+		boothowto |= RB_COCOVM;
 
 	/*
 	 * locore0 mapped 3 pages for use before the pmap is initialized

@@ -37,7 +37,7 @@ const struct cfattach acpicmos_ca = {
 };
 
 struct cfdriver acpicmos_cd = {
-	NULL, "acpicmos", DV_DULL
+	NULL, "acpicmos", DV_DULL, CD_COCOVM
 };
 
 const char *acpicmos_hids[] = {

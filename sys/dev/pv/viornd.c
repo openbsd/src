@@ -66,7 +66,7 @@ const struct cfattach viornd_ca = {
 };
 
 struct cfdriver viornd_cd = {
-	NULL, "viornd", DV_DULL
+	NULL, "viornd", DV_DULL, CD_COCOVM
 };
 
 int

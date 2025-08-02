@@ -144,7 +144,7 @@ const struct cfattach viocon_ca = {
 };
 
 struct cfdriver viocon_cd = {
-	NULL, "viocon", DV_TTY
+	NULL, "viocon", DV_TTY, CD_COCOVM
 };
 
 static inline struct viocon_softc *

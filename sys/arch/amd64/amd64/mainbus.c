@@ -83,7 +83,7 @@ const struct cfattach mainbus_ca = {
 };
 
 struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
+	NULL, "mainbus", DV_DULL, CD_COCOVM
 };
 
 int	mainbus_print(void *, const char *);

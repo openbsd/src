@@ -90,7 +90,7 @@ const struct cfattach pci_ca = {
 };
 
 struct cfdriver pci_cd = {
-	NULL, "pci", DV_DULL
+	NULL, "pci", DV_DULL, CD_COCOVM
 };
 
 int	pci_ndomains;

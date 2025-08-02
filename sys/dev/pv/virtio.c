@@ -48,7 +48,7 @@ void		 vq_free_entry(struct virtqueue *, struct vq_entry *);
 struct vq_entry	*vq_alloc_entry(struct virtqueue *);
 
 struct cfdriver virtio_cd = {
-	NULL, "virtio", DV_DULL
+	NULL, "virtio", DV_DULL, CD_COCOVM
 };
 
 static const char * const virtio_device_name[] = {

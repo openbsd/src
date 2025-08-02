@@ -116,7 +116,7 @@ const struct cfattach sd_ca = {
 };
 
 struct cfdriver sd_cd = {
-	NULL, "sd", DV_DISK
+	NULL, "sd", DV_DISK, CD_COCOVM
 };
 
 const struct scsi_inquiry_pattern sd_patterns[] = {

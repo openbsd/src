@@ -59,6 +59,7 @@
 #define	RB_RESET	0x08000	/* just reset, no cleanup  */
 #define	RB_GOODRANDOM	0x10000	/* excellent random seed loaded */
 #define	RB_UNHIBERNATE	0x20000	/* unhibernate */
+#define RB_COCOVM	0x40000	/* VM booting with SEV enabled */
 
 /*
  * Constants for converting boot-style device number to type,

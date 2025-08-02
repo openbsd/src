@@ -31,7 +31,7 @@ const struct cfattach acpimcfg_ca = {
 };
 
 struct cfdriver acpimcfg_cd = {
-	NULL, "acpimcfg", DV_DULL
+	NULL, "acpimcfg", DV_DULL, CD_COCOVM
 };
 
 int

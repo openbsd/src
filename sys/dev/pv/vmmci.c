@@ -72,7 +72,7 @@ const struct cfattach vmmci_ca = {
 #define VMMCI_F_SYNCRTC		(1ULL<<2)
 
 struct cfdriver vmmci_cd = {
-	NULL, "vmmci", DV_DULL
+	NULL, "vmmci", DV_DULL, CD_COCOVM
 };
 
 int

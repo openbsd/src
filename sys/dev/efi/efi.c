@@ -24,7 +24,7 @@
 #include <machine/efivar.h>
 
 struct cfdriver efi_cd = {
-	NULL, "efi", DV_DULL
+	NULL, "efi", DV_DULL, CD_COCOVM
 };
 
 int	efiioc_get_table(struct efi_softc *sc, void *);

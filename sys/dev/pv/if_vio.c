@@ -382,7 +382,7 @@ const struct cfattach vio_ca = {
 };
 
 struct cfdriver vio_cd = {
-	NULL, "vio", DV_IFNET
+	NULL, "vio", DV_IFNET, CD_COCOVM
 };
 
 int

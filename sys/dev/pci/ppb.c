@@ -113,7 +113,7 @@ const struct cfattach ppb_ca = {
 };
 
 struct cfdriver ppb_cd = {
-	NULL, "ppb", DV_DULL
+	NULL, "ppb", DV_DULL, CD_COCOVM
 };
 
 void	ppb_alloc_busrange(struct ppb_softc *, struct pci_attach_args *,

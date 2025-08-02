@@ -125,7 +125,8 @@ const struct cfattach pvclock_ca = {
 struct cfdriver pvclock_cd = {
 	NULL,
 	"pvclock",
-	DV_DULL
+	DV_DULL,
+	CD_COCOVM
 };
 
 struct timecounter pvclock_timecounter = {
