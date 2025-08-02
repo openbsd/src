@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.272 2025/08/02 09:03:54 mvs Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.273 2025/08/02 12:53:04 mvs Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1774,8 +1774,11 @@ icmp6_mtudisc_timeout(struct rtentry *rt, u_int rtableid)
 }
 
 #ifndef SMALL_KERNEL
-const struct sysctl_bounded_args icmpv6ctl_vars[] = {
+const struct sysctl_bounded_args icmpv6ctl_vars_unlocked[] = {
 	{ ICMPV6CTL_ND6_DELAY, &nd6_delay, 0, INT_MAX },
+};
+
+const struct sysctl_bounded_args icmpv6ctl_vars[] = {
 	{ ICMPV6CTL_ND6_UMAXTRIES, &nd6_umaxtries, 0, INT_MAX },
 	{ ICMPV6CTL_ND6_MMAXTRIES, &nd6_mmaxtries, 0, INT_MAX },
 	{ ICMPV6CTL_ERRPPSLIMIT, &icmp6errppslim, -1, 1000 },
@@ -1841,6 +1844,12 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case ICMPV6CTL_ND6_QUEUED:
 		error = sysctl_rdint(oldp, oldlenp, newp,
 		    atomic_load_int(&ln_hold_total));
+		break;
+
+	case ICMPV6CTL_ND6_DELAY:
+		error = sysctl_bounded_arr(icmpv6ctl_vars_unlocked,
+		    nitems(icmpv6ctl_vars_unlocked), name, namelen,
+		    oldp, oldlenp, newp, newlen);
 		break;
 
 	default:
