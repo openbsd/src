@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.271 2025/07/27 17:46:58 mvs Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.272 2025/08/02 09:03:54 mvs Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1801,6 +1801,12 @@ icmp6_sysctl_icmp6stat(void *oldp, size_t *oldlenp, void *newp)
 	return (ret);
 }
 
+/*
+ * Temporary, should be replaced with sysctl_lock after icmp6_sysctl()
+ * unlocking.
+ */
+struct rwlock icmp6_sysctl_lock = RWLOCK_INITIALIZER("icmp6rwl"); 
+
 int
 icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
@@ -1812,15 +1818,22 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case ICMPV6CTL_REDIRTIMEOUT:
-		NET_LOCK();
-		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-		    &icmp6_redirtimeout, 0, INT_MAX);
-		rt_timer_queue_change(&icmp6_redirect_timeout_q,
-		    icmp6_redirtimeout);
-		NET_UNLOCK();
-		break;
+	case ICMPV6CTL_REDIRTIMEOUT: {
+		int oldval, newval, error;
 
+		oldval = newval = atomic_load_int(&icmp6_redirtimeout);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &newval, 0, INT_MAX);
+		if (error == 0 && oldval != newval) {
+			rw_enter_write(&icmp6_sysctl_lock);
+			atomic_store_int(&icmp6_redirtimeout, newval);
+			rt_timer_queue_change(&icmp6_redirect_timeout_q,
+			    newval);
+			rw_exit_write(&icmp6_sysctl_lock);
+		}
+
+		return (error);
+	}
 	case ICMPV6CTL_STATS:
 		error = icmp6_sysctl_icmp6stat(oldp, oldlenp, newp);
 		break;
