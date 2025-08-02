@@ -2474,7 +2474,8 @@ m88k_rtx_costs (rtx x, int code, int outer_code, int *total)
         *total = 2;
       else if (classify_integer (SImode, INTVAL (x)) != m88k_oru_or)
         *total = 4;
-      *total = 7;
+      else
+	*total = 7;
       return true;
 
     case HIGH:
