@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.19 2025/05/25 05:12:05 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.20 2025/08/02 16:20:00 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -41,6 +41,8 @@ void bn_mod_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     const BN_ULONG *m, size_t n);
 void bn_mod_mul_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     const BN_ULONG *m, BN_ULONG *t, BN_ULONG m0, size_t n);
+void bn_mod_sqr_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *m,
+    BN_ULONG *t, BN_ULONG m0, size_t n);
 
 void bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap,
     const BN_ULONG *bp, const BN_ULONG *np, BN_ULONG *tp, BN_ULONG n0,

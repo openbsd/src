@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_words.c,v 1.1 2025/05/25 04:58:32 jsing Exp $	*/
+/*	$OpenBSD: bn_mod_words.c,v 1.2 2025/08/02 16:20:00 jsing Exp $	*/
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -74,5 +74,19 @@ bn_mod_mul_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     const BN_ULONG *m, BN_ULONG *t, BN_ULONG m0, size_t n)
 {
 	bn_montgomery_multiply_words(r, a, b, m, t, m0, n);
+}
+#endif
+
+/*
+ * bn_mod_sqr_words() computes r[] = (a[] * a[]) mod m[], where a, r and
+ * m are arrays of words with length n (r may be the same as a) in the
+ * Montgomery domain. The result remains in the Montgomery domain.
+ */
+#ifndef HAVE_BN_MOD_SQR_WORDS
+void
+bn_mod_sqr_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *m,
+    BN_ULONG *t, BN_ULONG m0, size_t n)
+{
+	bn_montgomery_multiply_words(r, a, a, m, t, m0, n);
 }
 #endif
