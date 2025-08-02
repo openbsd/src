@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.41 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.42 2025/08/02 10:19:37 jan Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1028,7 +1028,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 			continue;
 
 		if ((m0 = veb_offload(ifp, ifp0, m0)) == NULL)
-			goto done;
+			goto rele;
 
 		m = m_dup_pkt(m0, max_linkhdr + ETHER_ALIGN, M_NOWAIT);
 		if (m == NULL) {
@@ -1038,6 +1038,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 
 		(*tp->p_enqueue)(ifp0, m); /* XXX count error */
 	}
+ rele:
 	refcnt_rele_wake(&pm->m_refs);
 
 done:
