@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.69 2025/05/25 05:19:26 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.70 2025/08/03 15:07:57 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -184,6 +184,7 @@ struct ec_point_st {
 
 const EC_METHOD *EC_GFp_simple_method(void);
 const EC_METHOD *EC_GFp_mont_method(void);
+const EC_METHOD *EC_GFp_homogeneous_projective_method(void);
 
 /* Compute r = scalar1 * point1 + scalar2 * point2 in non-constant time. */
 int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
