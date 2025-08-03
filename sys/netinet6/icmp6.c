@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.274 2025/08/03 11:08:40 mvs Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.275 2025/08/03 11:12:58 mvs Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1292,7 +1292,6 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		struct sockaddr_in6 ssrc;
 		unsigned long rtcount;
 		struct rtentry *newrt = NULL;
-		int ip6_maxdynroutes_local = atomic_load_int(&ip6_maxdynroutes);
 
 		/*
 		 * do not install redirect route, if the number of entries
@@ -1301,8 +1300,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		 * (there will be additional hops, though).
 		 */
 		rtcount = rt_timer_queue_count(&icmp6_redirect_timeout_q);
-		if (ip6_maxdynroutes_local >= 0 &&
-		    rtcount >= ip6_maxdynroutes_local)
+		if (rtcount >= atomic_load_int(&ip6_maxdynroutes))
 			goto freeit;
 
 		bzero(&sdst, sizeof(sdst));
