@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.65 2025/04/19 19:35:32 kirill Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.66 2025/08/03 08:39:01 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -53,6 +53,9 @@
 #define UDESCSUB_VS_FORMAT_FRAME_BASED			0x10
 #define UDESCSUB_VS_FRAME_FRAME_BASED			0x11
 #define UDESCSUB_VS_FORMAT_STREAM_BASED			0x12
+#define UDESCSUB_VS_FORMAT_H264				0x13
+#define UDESCSUB_VS_FRAME_H264				0x14
+#define UDESCSUB_VS_FORMAT_H264_SIMULCAST		0x15
 
 /* Table A-8: Video Class-Specific Request Codes */
 #define RC_UNDEFINED					0x00
@@ -437,20 +440,53 @@ struct usb_video_format_mjpeg_desc {
 	uByte	bCopyProtect;
 } __packed;
 
-/* Table 3-2: Video Frame Descriptor (same for mjpeg and uncompressed)*/
 struct usb_video_frame_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
 	uByte	bDescriptorSubtype;
 	uByte	bFrameIndex;
-	uByte	bmCapabilities;
-	uWord	wWidth;
-	uWord	wHeight;
-	uDWord	dwMinBitRate;
-	uDWord	dwMaxBitRate;
-	uDWord	dwMaxVideoFrameBufferSize;
-	uDWord	dwDefaultFrameInterval;
-	uByte	bFrameIntervalType;
+	union {
+	    /*
+	     * Table 3-2: Video Frame Descriptor
+	     * (same for mjpeg and uncompressed)
+	     */
+	    struct {
+		uByte	bmCapabilities;
+		uWord	wWidth;
+		uWord	wHeight;
+		uDWord	dwMinBitRate;
+		uDWord	dwMaxBitRate;
+		uDWord	dwMaxVideoFrameBufferSize;
+		uDWord	dwDefaultFrameInterval;
+		uByte	bFrameIntervalType;
+	    } d;
+#define UVIDEO_FRAME_MIN_LEN						\
+	(offsetof(struct usb_video_frame_desc, u.d)			\
+		+ sizeof(((struct usb_video_frame_desc *)0)->u.d))
+
+	    /* Table 3-2: H.264 Payload Video Frame Descriptor */
+	    struct {
+		uWord	wWidth;
+		uWord	wHeight;
+		uWord	wSARwidth;
+		uWord	wSARheight;
+		uWord	wProfile;
+		uByte	bLevelIDC;
+		uWord	wConstrainedToolset;
+		uDWord	bmSupportedUsages;
+		uWord	bmCapabilities;
+		uDWord	bmSVCCapabilities;
+		uDWord	bmMVCCapabilities;
+		uDWord	dwMinBitRate;
+		uDWord	dwMaxBitRate;
+		uDWord	dwDefaultFrameInterval;
+		uByte	bNumFrameIntervals;
+	    } h264;
+#define UVIDEO_FRAME_H264_MIN_LEN					\
+	(offsetof(struct usb_video_frame_desc, u.h264)			\
+		+ sizeof(((struct usb_video_frame_desc *)0)->u.h264))
+
+	} u;
 	/* uDWord ivals[]; frame intervals, length varies */
 } __packed;
 
@@ -471,6 +507,36 @@ struct usb_video_format_uncompressed_desc {
 	uByte	bAspectRatioY;
 	uByte	bmInterlaceFlags;
 	uByte	bCopyProtect;
+} __packed;
+
+/* Table 3-1: H.264 Payload Video Format Descriptor */
+struct usb_video_format_h264_desc {
+	uByte	bLength;
+	uByte	bDescriptorType;
+	uByte	bDescriptorSubtype;
+	uByte	bFormatIndex;
+	uByte	bNumFrameDescriptors;
+	uByte	bDefaultFrameIndex;
+	uByte	bMaxCodecConfigDelay;
+	uByte	bmSupportedSliceModes;
+	uByte	bmSupportedSyncFrameTypes;
+	uByte	bResolutionScaling;
+	uByte	_reserved1;
+	uByte	bmSupportedRateControlModes;
+	uWord	wMaxMBperSecOneResolutionNoScalability;
+	uWord	wMaxMBperSecTwoResolutionsNoScalability;
+	uWord	wMaxMBperSecOneResolutionTemporalQualityScalability;
+	uWord	wMaxMBperSecTwoResolutionsTemporalQualityScalability;
+	uWord	wMaxMBperSecThreeResolutionsTemporalQualityScalablity;
+	uWord	wMaxMBperSecFourResolutionsTemporalQualityScalability;
+	uWord	wMaxMBperSecOneResolutionsTemporalSpatialScalability;
+	uWord	wMaxMBperSecTwoResolutionsTemporalSpatialScalability;
+	uWord	wMaxMBperSecThreeResolutionsTemporalSpatialScalability;
+	uWord	wMaxMBperSecFourResolutionsTemporalSpatialScalability;
+	uWord	wMaxMBperSecOneResolutionFullScalability;
+	uWord	wMaxMBperSecTwoResolutionsFullScalability;
+	uWord	wMaxMBperSecThreeResolutionsFullScalability;
+	uWord	wMaxMBperSecFourResolutionsFullScalability;
 } __packed;
 
 /*
@@ -503,6 +569,31 @@ struct uvideo_format_desc {
 			uByte	bmInterlaceFlags;
 			uByte	bCopyProtect;
 		} uc;
+
+		/* h264 */
+		struct {
+			uByte	bDefaultFrameIndex;
+			uByte	bMaxCodecConfigDelay;
+			uByte	bmSupportedSliceModes;
+			uByte	bmSupportedSyncFrameTypes;
+			uByte	bResolutionScaling;
+			uByte	_reserved1;
+			uByte	bmSupportedRateControlModes;
+			uDWord	wMaxMBperSecOneResolutionNoScalability;
+			uDWord	wMaxMBperSecTwoResolutionsNoScalability;
+			uDWord	wMaxMBperSecOneResolutionTemporalQualityScalability;
+			uDWord	wMaxMBperSecTwoResolutionsTemporalQualityScalability;
+			uDWord	wMaxMBperSecThreeResolutionsTemporalQualityScalablity;
+			uDWord	wMaxMBperSecFourResolutionsTemporalQualityScalability;
+			uDWord	wMaxMBperSecOneResolutionsTemporalSpatialScalability;
+			uDWord	wMaxMBperSecTwoResolutionsTemporalSpatialScalability;
+			uDWord	wMaxMBperSecThreeResolutionsTemporalSpatialScalability;
+			uDWord	wMaxMBperSecFourResolutionsTemporalSpatialScalability;
+			uDWord	wMaxMBperSecOneResolutionFullScalability;
+			uDWord	wMaxMBperSecTwoResolutionsFullScalability;
+			uDWord	wMaxMBperSecThreeResolutionsFullScalability;
+			uDWord	wMaxMBperSecFourResolutionsFullScalability;
+		} h264;
 	} u;
 } __packed;
 
