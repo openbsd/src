@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.25 2025/07/31 10:00:01 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.26 2025/08/03 10:06:37 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1074,9 +1074,7 @@ unsupported_wcn6855_soc:
 
 	/* Set device capabilities. */
 	ic->ic_caps =
-#if 0
 	    IEEE80211_C_QOS | IEEE80211_C_TX_AMPDU | /* A-MPDU */
-#endif
 	    IEEE80211_C_ADDBA_OFFLOAD | /* device sends ADDBA/DELBA frames */
 	    IEEE80211_C_WEP |		/* WEP */
 	    IEEE80211_C_RSN |		/* WPA/RSN */
@@ -1091,6 +1089,9 @@ unsupported_wcn6855_soc:
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
+
+	memset(ic->ic_sup_mcs, 0, sizeof(ic->ic_sup_mcs));
+	ic->ic_sup_mcs[0] = 0xff;		/* MCS 0-7 */
 
 	/* IBSS channel undefined for now. */
 	ic->ic_ibss_chan = &ic->ic_channels[1];
@@ -1119,6 +1120,10 @@ unsupported_wcn6855_soc:
 	ic->ic_updateedca = qwx_updateedca;
 	ic->ic_updatedtim = qwx_updatedtim;
 #endif
+	ic->ic_ampdu_rx_start = qwx_ampdu_rx_start;
+	ic->ic_ampdu_rx_stop = qwx_ampdu_rx_stop;
+	ic->ic_ampdu_tx_start = qwx_ampdu_tx_start;
+	ic->ic_ampdu_tx_stop = NULL;
 	ic->ic_bgscan_start = qwx_bgscan;
 
 	/*

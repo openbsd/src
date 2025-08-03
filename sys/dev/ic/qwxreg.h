@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxreg.h,v 1.9 2025/03/28 13:55:27 kevlo Exp $	*/
+/*	$OpenBSD: qwxreg.h,v 1.10 2025/08/03 10:06:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -13253,3 +13253,45 @@ struct ath11k_htt_extd_stats_msg {
 #define	HTT_MAC_ADDR_L32_3	GENMASK(31, 24)
 #define	HTT_MAC_ADDR_H16_0	GENMASK(7, 0)
 #define	HTT_MAC_ADDR_H16_1	GENMASK(15, 8)
+
+#define WMI_HOST_RC_DS_FLAG			0x01
+#define WMI_HOST_RC_CW40_FLAG			0x02
+#define WMI_HOST_RC_SGI_FLAG			0x04
+#define WMI_HOST_RC_HT_FLAG			0x08
+#define WMI_HOST_RC_RTSCTS_FLAG			0x10
+#define WMI_HOST_RC_TX_STBC_FLAG		0x20
+#define WMI_HOST_RC_RX_STBC_FLAG		0xC0
+#define WMI_HOST_RC_RX_STBC_FLAG_S		6
+#define WMI_HOST_RC_WEP_TKIP_FLAG		0x100
+#define WMI_HOST_RC_TS_FLAG			0x200
+#define WMI_HOST_RC_UAPSD_FLAG			0x400
+
+#define WMI_HT_CAP_ENABLED			0x0001
+#define WMI_HT_CAP_HT20_SGI			0x0002
+#define WMI_HT_CAP_DYNAMIC_SMPS			0x0004
+#define WMI_HT_CAP_TX_STBC			0x0008
+#define WMI_HT_CAP_TX_STBC_MASK_SHIFT		3
+#define WMI_HT_CAP_RX_STBC			0x0030
+#define WMI_HT_CAP_RX_STBC_MASK_SHIFT		4
+#define WMI_HT_CAP_LDPC				0x0040
+#define WMI_HT_CAP_L_SIG_TXOP_PROT		0x0080
+#define WMI_HT_CAP_MPDU_DENSITY			0x0700
+#define WMI_HT_CAP_MPDU_DENSITY_MASK_SHIFT	8
+#define WMI_HT_CAP_HT40_SGI			0x0800
+#define WMI_HT_CAP_RX_LDPC			0x1000
+#define WMI_HT_CAP_TX_LDPC			0x2000
+#define WMI_HT_CAP_IBF_BFER			0x4000
+
+/* These macros should be used when we wish to advertise STBC support for
+ * only 1SS or 2SS or 3SS.
+ */
+#define WMI_HT_CAP_RX_STBC_1SS			0x0010
+#define WMI_HT_CAP_RX_STBC_2SS			0x0020
+#define WMI_HT_CAP_RX_STBC_3SS			0x0030
+
+#define WMI_HT_CAP_DEFAULT_ALL (WMI_HT_CAP_ENABLED    | \
+				WMI_HT_CAP_HT20_SGI   | \
+				WMI_HT_CAP_HT40_SGI   | \
+				WMI_HT_CAP_TX_STBC    | \
+				WMI_HT_CAP_RX_STBC    | \
+				WMI_HT_CAP_LDPC)

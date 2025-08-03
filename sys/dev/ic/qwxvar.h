@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.28 2025/07/31 10:00:01 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.29 2025/08/03 10:06:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1791,6 +1791,11 @@ struct ath11k_peer {
 };
 TAILQ_HEAD(qwx_peer_list, ath11k_peer);
 
+struct qwx_ba_task_data {
+	uint32_t		start_tidmask;
+	uint32_t		stop_tidmask;
+};
+
 struct qwx_softc {
 	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
@@ -1824,6 +1829,10 @@ struct qwx_softc {
 
 	int install_key_done;
 	int install_key_status;
+
+	/* Task for firmware BlockAck setup/teardown and its arguments. */
+	struct task		ba_task;
+	struct qwx_ba_task_data	ba_rx;
 
 	enum ath11k_11d_state	state_11d;
 	int			completed_11d_scan;
@@ -2002,6 +2011,12 @@ int	qwx_set_key(struct ieee80211com *, struct ieee80211_node *,
     struct ieee80211_key *);
 void	qwx_delete_key(struct ieee80211com *, struct ieee80211_node *,
     struct ieee80211_key *);
+int	qwx_ampdu_rx_start(struct ieee80211com *, struct ieee80211_node *,
+	    uint8_t);
+void	qwx_ampdu_rx_stop(struct ieee80211com *, struct ieee80211_node *,
+	    uint8_t);
+int	qwx_ampdu_tx_start(struct ieee80211com *, struct ieee80211_node *,
+	    uint8_t);
 
 void	qwx_qrtr_recv_msg(struct qwx_softc *, struct mbuf *);
 
