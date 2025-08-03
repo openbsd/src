@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.532 2025/02/10 11:41:19 miod Exp $
+#	$OpenBSD: GENERIC,v 1.533 2025/08/03 09:23:19 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -86,6 +86,7 @@ ipmi0		at acpi? disable
 ccpmic*		at iic?
 tipmic*		at iic?
 intelpmc*	at acpi?
+amdpmc*		at acpi?
 pckbc*		at acpi?
 
 efi0		at bios0
