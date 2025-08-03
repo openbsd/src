@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.259 2025/08/03 08:39:00 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.260 2025/08/03 20:00:11 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -132,6 +132,8 @@ usbd_status	uvideo_vs_parse_desc_input_header(struct uvideo_softc *,
 usbd_status	uvideo_vs_parse_desc_format(struct uvideo_softc *);
 usbd_status	uvideo_vs_parse_desc_colorformat(struct uvideo_softc *,
 		    const usb_descriptor_t *);
+usbd_status	uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *,
+		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_format_h264(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *,
@@ -139,9 +141,9 @@ usbd_status	uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *,
 usbd_status	uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_frame(struct uvideo_softc *);
-usbd_status	uvideo_vs_parse_desc_frame_h264(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc_frame_buffer_size(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-usbd_status	uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *,
+usbd_status	uvideo_vs_parse_desc_frame_max_rate(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 uint32_t	uvideo_vc_parse_max_packet_size(struct uvideo_softc *,
 		    usb_endpoint_descriptor_t *);
@@ -216,9 +218,13 @@ void		uvideo_dump_desc_format_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_format_h264(struct uvideo_softc *,
 		    const usb_descriptor_t *);
+void		uvideo_dump_desc_format_frame_based(struct uvideo_softc *,
+		    const usb_descriptor_t *);
 void		uvideo_dump_desc_frame(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_h264_frame(struct uvideo_softc *,
+		    const usb_descriptor_t *);
+void		uvideo_dump_desc_frame_based_frame(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_processing(struct uvideo_softc *,
 		    const usb_descriptor_t *);
@@ -746,7 +752,7 @@ uvideo_vc_parse_desc(struct uvideo_softc *sc)
 			break;
 		case UDESCSUB_VC_PROCESSING_UNIT:
 			/* XXX do correct length calculation */
-			if (desc->bLength < UVIDEO_FRAME_MIN_LEN)
+			if (desc->bLength < UVIDEO_FRAME_MIN_LEN(desc))
 				(void)uvideo_vc_parse_desc_pu(sc, desc);
 			break;
 
@@ -1064,6 +1070,12 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 				    sc, desc);
 			}
 			break;
+		case UDESCSUB_VS_FORMAT_FRAME_BASED:
+			if (desc->bLength == 28) {
+				(void)uvideo_vs_parse_desc_format_frame_based(
+				    sc, desc);
+			}
+			break;
 		case UDESCSUB_VS_FORMAT_H264:
 		case UDESCSUB_VS_FORMAT_H264_SIMULCAST:
 			if (desc->bLength == 52) {
@@ -1174,7 +1186,7 @@ uvideo_vs_parse_desc_format_h264(struct uvideo_softc *sc,
 	d = (struct usb_video_format_h264_desc *)(uint8_t *)desc;
 
 	if (d->bNumFrameDescriptors == 0) {
-		printf("%s: no H.264 frame descriptors available!\n",
+		printf("%s: no H264 frame descriptors available!\n",
 		    DEVNAME(sc));
 		return (USBD_INVAL);
 	}
@@ -1197,7 +1209,65 @@ uvideo_vs_parse_desc_format_h264(struct uvideo_softc *sc,
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].pixelformat = V4L2_PIX_FMT_H264;
 
 	if (sc->sc_fmtgrp_cur == NULL)
-		/* set H.264 format */
+		/* set H264 format */
+		sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[sc->sc_fmtgrp_idx];
+
+	sc->sc_fmtgrp_idx++;
+	sc->sc_fmtgrp_num++;
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
+uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc)
+{
+	struct usb_video_format_frame_based_desc *d;
+	int i, j, nent;
+
+	d = (struct usb_video_format_frame_based_desc *)(uint8_t *)desc;
+
+	if (d->bNumFrameDescriptors == 0) {
+		printf("%s: no Frame Based frame descriptors available!\n",
+		    DEVNAME(sc));
+		return (USBD_INVAL);
+	}
+
+	if (sc->sc_fmtgrp_idx >= UVIDEO_MAX_FORMAT) {
+		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
+		return (USBD_INVAL);
+	}
+
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
+	    (struct uvideo_format_desc *)d;
+	if (d->bDefaultFrameIndex > d->bNumFrameDescriptors ||
+	    d->bDefaultFrameIndex < 1) {
+		/* sanitize wrong bDefaultFrameIndex value */
+		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx = 1;
+	} else {
+		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
+		    d->bDefaultFrameIndex;
+	}
+
+	i = sc->sc_fmtgrp_idx;
+
+	/* map GUID to pixel format if a matching entry is found */
+	for (j = 0, nent = nitems(uvideo_map_fmts); j < nent; j++) {
+		if (!memcmp(sc->sc_fmtgrp[i].format->u.uc.guidFormat,
+		    uvideo_map_fmts[j].guidFormat, 16)) {
+			sc->sc_fmtgrp[i].pixelformat =
+			    uvideo_map_fmts[j].pixelformat;
+			break;
+		}
+	}
+	/* default to using GUID start as the pixel format */
+	if (j == nent)
+		memcpy(&sc->sc_fmtgrp[i].pixelformat,
+		    sc->sc_fmtgrp[i].format->u.uc.guidFormat,
+		    sizeof(uint32_t));
+
+	if (sc->sc_fmtgrp_cur == NULL)
+		/* set Frame Based format */
 		sc->sc_fmtgrp_cur = &sc->sc_fmtgrp[sc->sc_fmtgrp_idx];
 
 	sc->sc_fmtgrp_idx++;
@@ -1290,17 +1360,18 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 		if (desc->bDescriptorType == UDESC_IFACE_ASSOC)
 			break;
 		if (desc->bDescriptorType == UDESC_CS_INTERFACE &&
-		    desc->bLength > UVIDEO_FRAME_MIN_LEN &&
+		    desc->bLength > UVIDEO_FRAME_MIN_LEN(desc) &&
 		    (desc->bDescriptorSubtype == UDESCSUB_VS_FRAME_MJPEG ||
 		    desc->bDescriptorSubtype == UDESCSUB_VS_FRAME_UNCOMPRESSED)) {
-			error = uvideo_vs_parse_desc_frame_sub(sc, desc);
+			error = uvideo_vs_parse_desc_frame_buffer_size(sc, desc);
 			if (error != USBD_NORMAL_COMPLETION)
 				return (error);
 		}
 		if (desc->bDescriptorType == UDESC_CS_INTERFACE &&
-		    desc->bLength > UVIDEO_FRAME_H264_MIN_LEN &&
-		    desc->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264) {
-			error = uvideo_vs_parse_desc_frame_h264(sc, desc);
+		    desc->bLength > UVIDEO_FRAME_MIN_LEN(desc) &&
+		    (desc->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264 ||
+		    desc->bDescriptorSubtype == UDESCSUB_VS_FRAME_FRAME_BASED)) {
+			error = uvideo_vs_parse_desc_frame_max_rate(sc, desc);
 			if (error != USBD_NORMAL_COMPLETION)
 				return (error);
 		}
@@ -1311,7 +1382,7 @@ uvideo_vs_parse_desc_frame(struct uvideo_softc *sc)
 }
 
 usbd_status
-uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
+uvideo_vs_parse_desc_frame_buffer_size(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
 	struct usb_video_frame_desc *fd = 
@@ -1343,14 +1414,14 @@ uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
 	 * Bytes per pixel can vary with compressed formats.
 	 */
 	if (desc->bDescriptorSubtype == UDESCSUB_VS_FRAME_UNCOMPRESSED) {
-		fbuf_size = UGETW(fd->u.d.wWidth) * UGETW(fd->u.d.wHeight) *
+		fbuf_size = UGETW(fd->u.uc.wWidth) * UGETW(fd->u.uc.wHeight) *
 		    sc->sc_fmtgrp[fmtidx].format->u.uc.bBitsPerPixel / NBBY;
 		DPRINTF(10, "%s: %s: frame buffer size=%d "
 		    "width=%d height=%d bpp=%d\n", DEVNAME(sc), __func__,
-		    fbuf_size, UGETW(fd->u.d.wWidth), UGETW(fd->u.d.wHeight),
+		    fbuf_size, UGETW(fd->u.uc.wWidth), UGETW(fd->u.uc.wHeight),
 		    sc->sc_fmtgrp[fmtidx].format->u.uc.bBitsPerPixel);
 	} else
-		fbuf_size = UGETDW(fd->u.d.dwMaxVideoFrameBufferSize);
+		fbuf_size = UGETDW(fd->u.uc.dwMaxVideoFrameBufferSize);
 
 	/* store max value */
 	if (fbuf_size > sc->sc_max_fbuf_size)
@@ -1369,20 +1440,22 @@ uvideo_vs_parse_desc_frame_sub(struct uvideo_softc *sc,
 }
 
 usbd_status
-uvideo_vs_parse_desc_frame_h264(struct uvideo_softc *sc,
+uvideo_vs_parse_desc_frame_max_rate(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
 	struct usb_video_frame_desc *fd =
 	    (struct usb_video_frame_desc *)(uint8_t *)desc;
 	uint8_t *p;
-	int i, fmtidx, frame_num, length;
+	int i, fmtidx, frame_num, length, nivals;
 	uint32_t fbuf_size, frame_ival, next_frame_ival;
 
 	fmtidx = sc->sc_fmtgrp_idx;
 	frame_num = sc->sc_fmtgrp[fmtidx].frame_num;
 	if (frame_num >= UVIDEO_MAX_FRAME) {
-		printf("%s: too many H.264 frame descriptors found!\n",
-		    DEVNAME(sc));
+		printf("%s: too many %s frame descriptors found!\n",
+		    DEVNAME(sc),
+		    desc->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264 ?
+		    "H264" : "FRAME BASED");
 		return (USBD_INVAL);
 	}
 	sc->sc_fmtgrp[fmtidx].frame[frame_num] = fd;
@@ -1392,17 +1465,19 @@ uvideo_vs_parse_desc_frame_h264(struct uvideo_softc *sc,
 		sc->sc_fmtgrp[fmtidx].frame_cur = fd;
 
 	/*
-	 * H.264 frame hasn't got dwMaxVideoFrameBufferSize, instead
-	 * compute requiers buffer via dwMaxBitRate and dwFrameInterval.
+	 * Frame Based and H264 frame hasn't got
+	 * dwMaxVideoFrameBufferSize, instead compute required buffer
+	 * via dwMaxBitRate and dwFrameInterval.
 	 */
 
 	frame_ival = UGETDW(fd->u.h264.dwDefaultFrameInterval);
 
-	p = (uint8_t *)desc;
-	p += UVIDEO_FRAME_H264_MIN_LEN;
-	length = fd->bLength - UVIDEO_FRAME_H264_MIN_LEN;
+	p = (uint8_t *)desc + UVIDEO_FRAME_MIN_LEN(fd);
+	length = fd->bLength - UVIDEO_FRAME_MIN_LEN(fd);
 
-	for (i = 0; i < fd->u.h264.bNumFrameIntervals; i++) {
+	nivals = UVIDEO_FRAME_NUM_INTERVALS(fd);
+
+	for (i = 0; i < nivals; i++) {
 		if (length <= 0) {
 			printf("frame descriptor ended early\n");
 			break;
@@ -1414,7 +1489,7 @@ uvideo_vs_parse_desc_frame_h264(struct uvideo_softc *sc,
 		length -= sizeof(uDWord);
 	}
 
-	fbuf_size = UGETDW(fd->u.h264.dwMaxBitRate) * frame_ival;
+	fbuf_size = UGETDW(UVIDEO_FRAME_FIELD(fd, dwMaxBitRate)) * frame_ival;
 	fbuf_size /= 8 * 10000000;
 
 	/* store max value */
@@ -1706,13 +1781,8 @@ uvideo_find_res(struct uvideo_softc *sc, int idx, int width, int height,
 
 	for (i = 0; i < sc->sc_fmtgrp[idx].frame_num; i++) {
 		frame = sc->sc_fmtgrp[idx].frame[i];
-		if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264) {
-			w = UGETW(frame->u.h264.wWidth);
-			h = UGETW(frame->u.h264.wHeight);
-		} else {
-			w = UGETW(frame->u.d.wWidth);
-			h = UGETW(frame->u.d.wHeight);
-		}
+		w = UGETW(UVIDEO_FRAME_FIELD(frame, wWidth));
+		h = UGETW(UVIDEO_FRAME_FIELD(frame, wHeight));
 		size_is = w * h;
 		if (size_is > size_want)
 			diff = size_is - size_want;
@@ -1764,20 +1834,12 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	pc->bFrameIndex = fmtgrp->frame_cur->bFrameIndex;
 	/* dwFrameInterval: 30fps=333333, 15fps=666666, 10fps=1000000 */
 	frame = fmtgrp->frame_cur;
-	if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264)
-		frame_ival = UGETDW(frame->u.h264.dwDefaultFrameInterval);
-	else
-		frame_ival = UGETDW(frame->u.d.dwDefaultFrameInterval);
+	frame_ival = UGETDW(UVIDEO_FRAME_FIELD(frame, dwDefaultFrameInterval));
 	if (sc->sc_frame_rate != 0) {
 		frame_ival = 10000000 / sc->sc_frame_rate;
 		/* find closest matching interval the device supports */
-		if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264) {
-			len = UVIDEO_FRAME_H264_MIN_LEN;
-			nivals = 0;
-		} else {
-			len = UVIDEO_FRAME_MIN_LEN;
-			nivals = frame->u.d.bFrameIntervalType;
-		}
+		len = UVIDEO_FRAME_MIN_LEN(frame);
+		nivals = UVIDEO_FRAME_NUM_INTERVALS(frame);
 		p = (uint8_t *)fmtgrp->frame_cur;
 		p += len;
 		ival_bytes = frame->bLength - len;
@@ -1880,12 +1942,12 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	 */
 	if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_UNCOMPRESSED) {
 		USETDW(pc->dwMaxVideoFrameSize,
-		    UGETW(frame->u.d.wWidth) * UGETW(frame->u.d.wHeight) *
+		    UGETW(frame->u.uc.wWidth) * UGETW(frame->u.uc.wHeight) *
 		    fmtgrp->format->u.uc.bBitsPerPixel / NBBY);
 		DPRINTF(1, "fixed dwMaxVideoFrameSize=%d, "
 		    "width=%d height=%d bpp=%d\n",
 		    UGETDW(pc->dwMaxVideoFrameSize),
-		    UGETW(frame->u.d.wWidth), UGETW(frame->u.d.wHeight),
+		    UGETW(frame->u.uc.wWidth), UGETW(frame->u.uc.wHeight),
 		    fmtgrp->format->u.uc.bBitsPerPixel);
 	} else {
 		/*
@@ -1898,7 +1960,7 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 			DPRINTF(1, "%s: dwMaxVideoFrameSize == 0, fixed\n",
 			    DEVNAME(sc));
 			USETDW(pc->dwMaxVideoFrameSize,
-			    UGETDW(frame->u.d.dwMaxVideoFrameBufferSize));
+			    UGETDW(frame->u.uc.dwMaxVideoFrameBufferSize));
 		}
 	}
 
@@ -2807,7 +2869,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 			case UDESCSUB_VC_PROCESSING_UNIT:
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
-				if (desc->bLength > UVIDEO_FRAME_MIN_LEN) {
+				if (desc->bLength > UVIDEO_FRAME_MIN_LEN(desc)) {
 					printf(" (UDESCSUB_VS_FRAME_"
 					    "UNCOMPRESSED)\n");
 					uvideo_dump_desc_frame(sc, desc);
@@ -2836,9 +2898,27 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
 				printf(" (UDESCSUB_VS_FRAME_MJPEG)\n");
-				if (desc->bLength > UVIDEO_FRAME_MIN_LEN) {
+				if (desc->bLength > UVIDEO_FRAME_MIN_LEN(desc)) {
 					printf("|\n");
 					uvideo_dump_desc_frame(sc, desc);
+				}
+				break;
+			case UDESCSUB_VS_FORMAT_FRAME_BASED:
+				printf("bDescriptorSubtype=0x%02x",
+				    desc->bDescriptorSubtype);
+				printf(" (UDESCSUB_VS_FORMAT_FRAME_BASED)\n");
+				if (desc->bLength == 28) {
+					printf("|\n");
+					uvideo_dump_desc_format_frame_based(sc, desc);
+				}
+				break;
+			case UDESCSUB_VS_FRAME_FRAME_BASED:
+				printf("bDescriptorSubtype=0x%02x",
+				    desc->bDescriptorSubtype);
+				printf(" (UDESCSUB_VS_FRAME_FRAME_BASED)\n");
+				if (desc->bLength > UVIDEO_FRAME_MIN_LEN(desc)) {
+					printf("|\n");
+					uvideo_dump_desc_frame_based_frame(sc, desc);
 				}
 				break;
 			case UDESCSUB_VS_FORMAT_H264:
@@ -2854,7 +2934,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
 				printf(" (UDESCSUB_VS_FRAME_H264)\n");
-				if (desc->bLength > UVIDEO_FRAME_H264_MIN_LEN) {
+				if (desc->bLength > UVIDEO_FRAME_MIN_LEN(desc)) {
 					printf("|\n");
 					uvideo_dump_desc_h264_frame(sc, desc);
 				}
@@ -3192,23 +3272,22 @@ uvideo_dump_desc_frame(struct uvideo_softc *sc, const usb_descriptor_t *desc)
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
 	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
 	printf("bFrameIndex=0x%02x\n", d->bFrameIndex);
-	printf("bmCapabilities=0x%02x\n", d->u.d.bmCapabilities);
-	printf("wWidth=%d\n", UGETW(d->u.d.wWidth));
-	printf("wHeight=%d\n", UGETW(d->u.d.wHeight));
-	printf("dwMinBitRate=%d\n", UGETDW(d->u.d.dwMinBitRate));
-	printf("dwMaxBitRate=%d\n", UGETDW(d->u.d.dwMaxBitRate));
+	printf("bmCapabilities=0x%02x\n", d->u.uc.bmCapabilities);
+	printf("wWidth=%d\n", UGETW(d->u.uc.wWidth));
+	printf("wHeight=%d\n", UGETW(d->u.uc.wHeight));
+	printf("dwMinBitRate=%d\n", UGETDW(d->u.uc.dwMinBitRate));
+	printf("dwMaxBitRate=%d\n", UGETDW(d->u.uc.dwMaxBitRate));
 	printf("dwMaxVideoFrameBufferSize=%d\n",
-	    UGETDW(d->u.d.dwMaxVideoFrameBufferSize));
+	    UGETDW(d->u.uc.dwMaxVideoFrameBufferSize));
 	printf("dwDefaultFrameInterval=%d\n",
-	    UGETDW(d->u.d.dwDefaultFrameInterval));
-	printf("bFrameIntervalType=0x%02x\n", d->u.d.bFrameIntervalType);
+	    UGETDW(d->u.uc.dwDefaultFrameInterval));
+	printf("bFrameIntervalType=0x%02x\n", d->u.uc.bFrameIntervalType);
 
-	p = (uint8_t *)d;
-	p += UVIDEO_FRAME_MIN_LEN;
+	p = (uint8_t *)d + UVIDEO_FRAME_MIN_LEN(d);
 
-	if (!d->u.d.bFrameIntervalType) {
+	if (!d->u.uc.bFrameIntervalType) {
 		/* continuous */
-		if (d->bLength < UVIDEO_FRAME_MIN_LEN +
+		if (d->bLength < UVIDEO_FRAME_MIN_LEN(d) +
 		    (sizeof(uDWord) * 3)) {
 			printf("invalid frame descriptor length\n");
 		} else {
@@ -3221,8 +3300,8 @@ uvideo_dump_desc_frame(struct uvideo_softc *sc, const usb_descriptor_t *desc)
 		}
 	} else {
 		/* discrete */
-		length = d->bLength - UVIDEO_FRAME_MIN_LEN;
-		for (i = 0; i < d->u.d.bFrameIntervalType; i++) {
+		length = d->bLength - UVIDEO_FRAME_MIN_LEN(d);
+		for (i = 0; i < d->u.uc.bFrameIntervalType; i++) {
 			if (length <= 0) {
 				printf("frame descriptor ended early\n");
 				break;
@@ -3254,6 +3333,83 @@ uvideo_dump_desc_format_uncompressed(struct uvideo_softc *sc,
 	printf("bAspectRatioY=0x%02x\n", d->bAspectRatioY);
 	printf("bmInterlaceFlags=0x%02x\n", d->bmInterlaceFlags);
 	printf("bCopyProtect=0x%02x\n", d->bCopyProtect);
+}
+
+void
+uvideo_dump_desc_format_frame_based(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc)
+{
+	struct usb_video_format_frame_based_desc *d;
+
+	d = (struct usb_video_format_frame_based_desc *)(uint8_t *)desc;
+
+	printf("bLength=%d\n", d->bLength);
+	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
+	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
+	printf("bFormatIndex=0x%02x\n", d->bFormatIndex);
+	printf("bNumFrameDescriptors=0x%02x\n", d->bNumFrameDescriptors);
+	printf("guidFormat=%s\n", d->guidFormat);
+	printf("bBitsPerPixel=0x%02x\n", d->bBitsPerPixel);
+	printf("bDefaultFrameIndex=0x%02x\n", d->bDefaultFrameIndex);
+	printf("bAspectRatioX=0x%02x\n", d->bAspectRatioX);
+	printf("bAspectRatioY=0x%02x\n", d->bAspectRatioY);
+	printf("bmInterlaceFlags=0x%02x\n", d->bmInterlaceFlags);
+	printf("bCopyProtect=0x%02x\n", d->bCopyProtect);
+	printf("bVariableSize=0x%02x\n", d->bVariableSize);
+}
+
+void
+uvideo_dump_desc_frame_based_frame(struct uvideo_softc *sc, const usb_descriptor_t *desc)
+{
+	struct usb_video_frame_desc *d;
+	uint8_t *p;
+	int length, i;
+
+	d = (struct usb_video_frame_desc *)(uint8_t *)desc;
+
+	printf("bLength=%d\n", d->bLength);
+	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
+	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
+	printf("bFrameIndex=0x%02x\n", d->bFrameIndex);
+	printf("bmCapabilities=0x%02x\n", d->u.fb.bmCapabilities);
+	printf("wWidth=%d\n", UGETW(d->u.fb.wWidth));
+	printf("wHeight=%d\n", UGETW(d->u.fb.wHeight));
+	printf("dwMinBitRate=%d\n", UGETDW(d->u.fb.dwMinBitRate));
+	printf("dwMaxBitRate=%d\n", UGETDW(d->u.fb.dwMaxBitRate));
+	printf("dwDefaultFrameInterval=%d\n",
+	    UGETDW(d->u.fb.dwDefaultFrameInterval));
+	printf("bFrameIntervalType=0x%02x\n", d->u.fb.bFrameIntervalType);
+	printf("dwBytesPerLine=%d\n",
+	    UGETDW(d->u.fb.dwBytesPerLine));
+
+	p = (uint8_t *)d + UVIDEO_FRAME_MIN_LEN(d);
+
+	if (!d->u.uc.bFrameIntervalType) {
+		/* continuous */
+		if (d->bLength < UVIDEO_FRAME_MIN_LEN(d) +
+		    (sizeof(uDWord) * 3)) {
+			printf("invalid frame descriptor length\n");
+		} else {
+			printf("dwMinFrameInterval = %d\n", UGETDW(p));
+			p += sizeof(uDWord);
+			printf("dwMaxFrameInterval = %d\n", UGETDW(p));
+			p += sizeof(uDWord);
+			printf("dwFrameIntervalStep = %d\n", UGETDW(p));
+			p += sizeof(uDWord);
+		}
+	} else {
+		/* discrete */
+		length = d->bLength - UVIDEO_FRAME_MIN_LEN(d);
+		for (i = 0; i < d->u.uc.bFrameIntervalType; i++) {
+			if (length <= 0) {
+				printf("frame descriptor ended early\n");
+				break;
+			}
+			printf("dwFrameInterval = %d\n", UGETDW(p));
+			p += sizeof(uDWord);
+			length -= sizeof(uDWord);
+		}
+	}
 }
 
 void
@@ -3343,10 +3499,9 @@ uvideo_dump_desc_h264_frame(struct uvideo_softc *sc,
 	printf("bNumFrameIntervals=0x%02x\n",
 	    d->u.h264.bNumFrameIntervals);
 
-	p = (uint8_t *)d;
-	p += UVIDEO_FRAME_H264_MIN_LEN;;
+	p = (uint8_t *)d + UVIDEO_FRAME_MIN_LEN(d);
 
-	length = d->bLength - UVIDEO_FRAME_H264_MIN_LEN;
+	length = d->bLength - UVIDEO_FRAME_MIN_LEN(d);
 	for (i = 0; i < d->u.h264.bNumFrameIntervals; i++) {
 		if (length <= 0) {
 			printf("frame descriptor ended early\n");
@@ -3469,10 +3624,21 @@ uvideo_enum_fmt(void *v, struct v4l2_fmtdesc *fmtdesc)
 		    sizeof(fmtdesc->description));
 		bzero(fmtdesc->reserved, sizeof(fmtdesc->reserved));
 		break;
+	case UDESCSUB_VS_FORMAT_FRAME_BASED:
+		if (sc->sc_fmtgrp[idx].format->u.fb.bVariableSize)
+			fmtdesc->flags = V4L2_FMT_FLAG_COMPRESSED;
+		else
+			fmtdesc->flags = 0;
+		fmtdesc->pixelformat = sc->sc_fmtgrp[idx].pixelformat;
+		(void)strlcpy(fmtdesc->description,
+		    (char *) &fmtdesc->pixelformat,
+		    sizeof(fmtdesc->description));
+		bzero(fmtdesc->reserved, sizeof(fmtdesc->reserved));
+		break;
 	case UDESCSUB_VS_FORMAT_H264:
 	case UDESCSUB_VS_FORMAT_H264_SIMULCAST:
 		fmtdesc->flags = V4L2_FMT_FLAG_COMPRESSED;
-		(void)strlcpy(fmtdesc->description, "H.264",
+		(void)strlcpy(fmtdesc->description, "H264",
 		    sizeof(fmtdesc->description));
 		fmtdesc->pixelformat = V4L2_PIX_FMT_H264;
 		bzero(fmtdesc->reserved, sizeof(fmtdesc->reserved));
@@ -3510,13 +3676,8 @@ uvideo_enum_fsizes(void *v, struct v4l2_frmsizeenum *fsizes)
 
 	fsizes->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 	frame = sc->sc_fmtgrp[idx].frame[fsizes->index];
-	if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264) {
-		fsizes->discrete.width = UGETW(frame->u.h264.wWidth);
-		fsizes->discrete.height = UGETW(frame->u.h264.wHeight);
-	} else {
-		fsizes->discrete.width = UGETW(frame->u.d.wWidth);
-		fsizes->discrete.height = UGETW(frame->u.d.wHeight);
-	}
+	fsizes->discrete.width = UGETW(UVIDEO_FRAME_FIELD(frame, wWidth));
+	fsizes->discrete.height = UGETW(UVIDEO_FRAME_FIELD(frame, wHeight));
 
 	return (0);
 }
@@ -3541,17 +3702,8 @@ uvideo_enum_fivals(void *v, struct v4l2_frmivalenum *fivals)
 		return (EINVAL);
 
 	for (idx = 0; idx < fmtgrp->frame_num; idx++) {
-		switch (fmtgrp->frame[idx]->bDescriptorSubtype) {
-		case UDESCSUB_VS_FRAME_H264:
-			width = UGETW(fmtgrp->frame[idx]->u.h264.wWidth);
-			height = UGETW(fmtgrp->frame[idx]->u.h264.wHeight);
-			break;
-
-		default:
-			width = UGETW(fmtgrp->frame[idx]->u.d.wWidth);
-			height = UGETW(fmtgrp->frame[idx]->u.d.wHeight);
-			break;
-		}
+		width = UGETW(UVIDEO_FRAME_FIELD(fmtgrp->frame[idx], wWidth));
+		height = UGETW(UVIDEO_FRAME_FIELD(fmtgrp->frame[idx], wHeight));
 
 		if (width == fivals->width && height == fivals->height) {
 			frame = fmtgrp->frame[idx];
@@ -3562,14 +3714,9 @@ uvideo_enum_fivals(void *v, struct v4l2_frmivalenum *fivals)
 		return (EINVAL);
 
 	/* byte-wise pointer to start of frame intervals */
-	p = (uint8_t *)frame;
-	if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264)
-		p += UVIDEO_FRAME_H264_MIN_LEN;
-	else
-		p += UVIDEO_FRAME_MIN_LEN;
+	p = (uint8_t *)frame + UVIDEO_FRAME_MIN_LEN(frame);
 
-	if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264 ||
-	    frame->u.d.bFrameIntervalType == 0) {
+	if (UVIDEO_FRAME_NUM_INTERVALS(frame) == 0) {
 		if (fivals->index != 0)
 			return (EINVAL);
 		fivals->type = V4L2_FRMIVAL_TYPE_STEPWISE;
@@ -3583,7 +3730,7 @@ uvideo_enum_fivals(void *v, struct v4l2_frmivalenum *fivals)
 		fivals->stepwise.step.denominator = 10000000;
 		p += sizeof(uDWord);
 	} else {
-		if (fivals->index >= frame->u.d.bFrameIntervalType)
+		if (fivals->index >= UVIDEO_FRAME_NUM_INTERVALS(frame))
 			return (EINVAL);
 		p += sizeof(uDWord) * fivals->index;
 		if (p > frame->bLength + (uint8_t *)frame) {
@@ -3678,14 +3825,8 @@ uvideo_g_fmt(void *v, struct v4l2_format *fmt)
 	fmt->fmt.pix.pixelformat = sc->sc_fmtgrp_cur->pixelformat;
 
 	frame = sc->sc_fmtgrp_cur->frame_cur;
-	if (frame->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264) {
-		fmt->fmt.pix.width = UGETW(frame->u.h264.wWidth);
-		fmt->fmt.pix.height = UGETW(frame->u.h264.wHeight);
-	} else {
-		fmt->fmt.pix.width = UGETW(frame->u.d.wWidth);
-		fmt->fmt.pix.height = UGETW(frame->u.d.wHeight);
-	}
-
+	fmt->fmt.pix.width = UGETW(UVIDEO_FRAME_FIELD(frame, wWidth));
+	fmt->fmt.pix.height = UGETW(UVIDEO_FRAME_FIELD(frame, wHeight));
 	fmt->fmt.pix.sizeimage = UGETDW(sc->sc_desc_probe.dwMaxVideoFrameSize);
 
 	if (sc->sc_fmtgrp_cur->has_colorformat) {

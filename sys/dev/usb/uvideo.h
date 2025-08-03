@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.66 2025/08/03 08:39:01 kirill Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.67 2025/08/03 20:00:11 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -459,10 +459,20 @@ struct usb_video_frame_desc {
 		uDWord	dwMaxVideoFrameBufferSize;
 		uDWord	dwDefaultFrameInterval;
 		uByte	bFrameIntervalType;
-	    } d;
-#define UVIDEO_FRAME_MIN_LEN						\
-	(offsetof(struct usb_video_frame_desc, u.d)			\
-		+ sizeof(((struct usb_video_frame_desc *)0)->u.d))
+	    } uc;
+
+	    /*
+	     * Table 3-2 Frame Based Payload Video Frame Descriptors */
+	    struct {
+		uByte	bmCapabilities;
+		uWord	wWidth;
+		uWord	wHeight;
+		uDWord	dwMinBitRate;
+		uDWord	dwMaxBitRate;
+		uDWord	dwDefaultFrameInterval;
+		uByte	bFrameIntervalType;
+		uDWord	dwBytesPerLine;
+	    } fb;
 
 	    /* Table 3-2: H.264 Payload Video Frame Descriptor */
 	    struct {
@@ -482,11 +492,38 @@ struct usb_video_frame_desc {
 		uDWord	dwDefaultFrameInterval;
 		uByte	bNumFrameIntervals;
 	    } h264;
-#define UVIDEO_FRAME_H264_MIN_LEN					\
-	(offsetof(struct usb_video_frame_desc, u.h264)			\
-		+ sizeof(((struct usb_video_frame_desc *)0)->u.h264))
 
 	} u;
+
+#define UVIDEO_FRAME_MIN_LEN(frm)						\
+	(offsetof(struct usb_video_frame_desc, u) +				\
+		(								\
+		((frm)->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264) ?		\
+			sizeof(((struct usb_video_frame_desc *)0)->u.h264) :	\
+		 ((frm)->bDescriptorSubtype == UDESCSUB_VS_FRAME_FRAME_BASED) ?	\
+			sizeof(((struct usb_video_frame_desc *)0)->u.fb) :	\
+			sizeof(((struct usb_video_frame_desc *)0)->u.uc)	\
+		)								\
+	)
+
+#define UVIDEO_FRAME_FIELD(frm, field)					\
+	(								\
+	((frm)->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264) ?		\
+		(frm)->u.h264.field :					\
+	((frm)->bDescriptorSubtype == UDESCSUB_VS_FRAME_FRAME_BASED) ?	\
+		(frm)->u.fb.field :					\
+		(frm)->u.uc.field					\
+	)
+
+#define UVIDEO_FRAME_NUM_INTERVALS(frm)					\
+	(								\
+	((frm)->bDescriptorSubtype == UDESCSUB_VS_FRAME_H264) ?		\
+		(frm)->u.h264.bNumFrameIntervals :			\
+	((frm)->bDescriptorSubtype == UDESCSUB_VS_FRAME_FRAME_BASED) ?	\
+		(frm)->u.fb.bFrameIntervalType :			\
+		(frm)->u.uc.bFrameIntervalType				\
+	)
+
 	/* uDWord ivals[]; frame intervals, length varies */
 } __packed;
 
@@ -539,6 +576,23 @@ struct usb_video_format_h264_desc {
 	uWord	wMaxMBperSecFourResolutionsFullScalability;
 } __packed;
 
+/* Table 3-1: Frame Based Payload Video Format Descriptor */
+struct usb_video_format_frame_based_desc {
+	uByte	bLength;
+	uByte	bDescriptorType;
+	uByte	bDescriptorSubtype;
+	uByte	bFormatIndex;
+	uByte	bNumFrameDescriptors;
+	uByte	guidFormat[16];
+	uByte	bBitsPerPixel;
+	uByte	bDefaultFrameIndex;
+	uByte	bAspectRatioX;
+	uByte	bAspectRatioY;
+	uByte	bmInterlaceFlags;
+	uByte	bCopyProtect;
+	uByte	bVariableSize;
+} __packed;
+
 /*
  * Driver specific private definitions.
  */
@@ -569,6 +623,18 @@ struct uvideo_format_desc {
 			uByte	bmInterlaceFlags;
 			uByte	bCopyProtect;
 		} uc;
+
+		/* frame based */
+		struct {
+			uByte	guidFormat[16];
+			uByte	bBitsPerPixel;
+			uByte	bDefaultFrameIndex;
+			uByte	bAspectRatioX;
+			uByte	bAspectRatioY;
+			uByte	bmInterlaceFlags;
+			uByte	bCopyProtect;
+			uByte	bVariableSize;
+		} fb;
 
 		/* h264 */
 		struct {
