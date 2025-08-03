@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.153 2025/07/25 22:24:06 mvs Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.154 2025/08/03 10:02:23 bluhm Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -348,8 +348,6 @@ mrt6_sysctl_mif(void *oldp, size_t *oldlenp)
 
 		needed += sizeof(minfo);
 		if (where && needed <= given) {
-			int error;
-
 			error = copyout(&minfo, where, sizeof(minfo));
 			if (error)
 				break;
