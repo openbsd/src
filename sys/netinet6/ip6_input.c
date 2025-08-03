@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.294 2025/07/31 09:05:11 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.295 2025/08/03 04:11:57 mvs Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1459,7 +1459,7 @@ const struct sysctl_bounded_args ipv6ctl_vars[] = {
 	{ IPV6CTL_MAXFRAGS, &ip6_maxfrags, 0, 1000 },
 	{ IPV6CTL_MFORWARDING, &ip6_mforwarding, 0, 1 },
 	{ IPV6CTL_MCAST_PMTU, &ip6_mcast_pmtu, 0, 1 },
-	{ IPV6CTL_NEIGHBORGCTHRESH, &ip6_neighborgcthresh, -1, 5 * 2048 },
+	{ IPV6CTL_NEIGHBORGCTHRESH, &ip6_neighborgcthresh, 0, 5 * 2048 },
 	{ IPV6CTL_MAXDYNROUTES, &ip6_maxdynroutes, -1, 5 * 4096 },
 };
 
