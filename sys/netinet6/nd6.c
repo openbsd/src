@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.295 2025/08/03 04:11:57 mvs Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.296 2025/08/03 11:08:40 mvs Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 int	nd6_timer_next	= -1;	/* at which uptime nd6_timer runs */
 time_t	nd6_expire_next	= -1;	/* at which uptime nd6_expire runs */
 int	nd6_delay	= 5;	/* [a] delay first probe time 5 second */
-int	nd6_umaxtries	= 3;	/* maximum unicast query */
+int	nd6_umaxtries	= 3;	/* [a] maximum unicast query */
 int	nd6_mmaxtries	= 3;	/* maximum multicast query */
 int	nd6_gctimer	= (60 * 60 * 24); /* 1 day: garbage collection timer */
 
@@ -360,7 +360,7 @@ nd6_llinfo_timer(struct rtentry *rt, int i_am_router)
 		break;
 
 	case ND6_LLINFO_PROBE:
-		if (ln->ln_asked < nd6_umaxtries) {
+		if (ln->ln_asked < atomic_load_int(&nd6_umaxtries)) {
 			ln->ln_asked++;
 			nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
 			nd6_ns_output(ifp, &dst->sin6_addr, &dst->sin6_addr,
