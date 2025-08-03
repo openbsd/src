@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.111 2024/02/19 21:23:02 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.112 2025/08/03 14:25:32 tobhe Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2352,7 +2352,7 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 	/* Remaining data is an ethernet packet, so align. */
 	if ((mtod(m, paddr_t) & 0x3) != ETHER_ALIGN) {
 		struct mbuf *m0;
-		m0 = m_dup_pkt(m, ETHER_ALIGN, M_WAITOK);
+		m0 = m_dup_pkt(m, ETHER_ALIGN, M_DONTWAIT);
 		m_freem(m);
 		if (m0 == NULL) {
 			ifp->if_ierrors++;
