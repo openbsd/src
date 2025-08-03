@@ -1,4 +1,4 @@
-.\" $OpenBSD: qwx.4,v 1.7 2025/03/27 09:38:38 jmc Exp $
+.\" $OpenBSD: qwx.4,v 1.8 2025/08/03 14:04:58 stsp Exp $
 .\"
 .\" Copyright (c) 2022 Martin Pieuchot <mpi@openbsd.org>
 .\" Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2025 $
+.Dd $Mdocdate: August 3 2025 $
 .Dt QWX 4
 .Os
 .Sh NAME
@@ -126,10 +126,11 @@ driver first appeared in
 .Sh CAVEATS
 The
 .Nm
-driver does not support any of the 802.11n, 802.11ac, and 802.11ax
+driver does not support any of the 802.11ac and 802.11ax
 capabilities offered by the hardware.
 .Sh BUGS
 Broadcast and Multicast frames are only received on networks which
-do not use encryption or which use WPA2 with group cipher CCMP.
-This prevents ARP and IPv6 from working correctly on other types of
-networks.
+do not use encryption or which use WPA.
+This prevents ARP and IPv6 from working correctly on networks which
+use WEP encryption.
+
