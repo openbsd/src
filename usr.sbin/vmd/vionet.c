@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.25 2025/08/02 15:16:18 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.26 2025/08/03 08:50:25 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -38,7 +38,7 @@
 #include "virtio.h"
 #include "vmd.h"
 
-#define VIONET_DEBUG	1
+#define VIONET_DEBUG	0
 #ifdef DPRINTF
 #undef DPRINTF
 #endif
