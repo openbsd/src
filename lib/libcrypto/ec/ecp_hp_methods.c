@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_hp_methods.c,v 1.3 2025/06/01 03:23:33 tb Exp $	*/
+/*	$OpenBSD: ecp_hp_methods.c,v 1.4 2025/08/03 15:08:28 jsing Exp $	*/
 /*
  * Copyright (c) 2024-2025 Joel Sing <jsing@openbsd.org>
  *
@@ -434,10 +434,6 @@ ec_point_dbl_a1(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *c
 	ec_field_element_copy(&X1, &a->fe_x);
 	ec_field_element_copy(&Y1, &a->fe_y);
 	ec_field_element_copy(&Z1, &a->fe_z);
-
-	/* b3 := 3 * b ; */
-	ec_field_element_add(&group->fm, &b3, &gb, &gb);
-	ec_field_element_add(&group->fm, &b3, &b3, &gb);
 
 	/* b3 := 3 * b ; */
 	ec_field_element_add(&group->fm, &b3, &gb, &gb);
