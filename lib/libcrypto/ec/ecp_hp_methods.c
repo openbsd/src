@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_hp_methods.c,v 1.4 2025/08/03 15:08:28 jsing Exp $	*/
+/*	$OpenBSD: ecp_hp_methods.c,v 1.5 2025/08/03 15:44:00 jsing Exp $	*/
 /*
  * Copyright (c) 2024-2025 Joel Sing <jsing@openbsd.org>
  *
@@ -22,14 +22,10 @@
 #include <openssl/err.h>
 
 #include "bn_internal.h"
+#include "crypto_internal.h"
 #include "ec_local.h"
 #include "ec_internal.h"
 #include "err_local.h"
-
-/*
- * TODO:
- *  - Constant time and blinding for scalar multiplication
- */
 
 static int
 ec_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
@@ -781,38 +777,129 @@ ec_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 }
 #endif
 
+static void
+ec_point_select(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
+    const EC_POINT *b, int conditional)
+{
+	ec_field_element_select(&group->fm, &r->fe_x, &a->fe_x, &b->fe_x, conditional);
+	ec_field_element_select(&group->fm, &r->fe_y, &a->fe_y, &b->fe_y, conditional);
+	ec_field_element_select(&group->fm, &r->fe_z, &a->fe_z, &b->fe_z, conditional);
+}
+
 static int
 ec_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, const EC_POINT *point,
     BN_CTX *ctx)
 {
-	EC_POINT *rr;
-	int bits, i;
+	BIGNUM *cardinality;
+	EC_POINT *multiples[15];
+	EC_POINT *rr = NULL, *t = NULL;
+	uint8_t *scalar_bytes = NULL;
+	int scalar_len = 0;
+	uint8_t j, wv;
+	int conditional, i;
 	int ret = 0;
 
-	/* XXX - need constant time and blinding. */
+	memset(multiples, 0, sizeof(multiples));
+
+	BN_CTX_start(ctx);
+
+	/* XXX - consider blinding. */
+
+	if ((cardinality = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if (!BN_mul(cardinality, group->order, group->cofactor, ctx))
+		goto err;
+
+	/* XXX - handle scalar > cardinality and/or negative. */
+
+	/* Convert scalar into big endian bytes. */
+	scalar_len = BN_num_bytes(cardinality);
+	if ((scalar_bytes = calloc(1, scalar_len)) == NULL)
+		goto err;
+	if (!BN_bn2binpad(scalar, scalar_bytes, scalar_len))
+		goto err;
+
+	/* Compute multiples of point. */
+	if ((multiples[0] = EC_POINT_dup(point, group)) == NULL)
+		goto err;
+	for (i = 1; i < 15; i += 2) {
+		if ((multiples[i] = EC_POINT_new(group)) == NULL)
+			goto err;
+		if (!EC_POINT_dbl(group, multiples[i], multiples[i / 2], ctx))
+			goto err;
+		if ((multiples[i + 1] = EC_POINT_new(group)) == NULL)
+			goto err;
+		if (!EC_POINT_add(group, multiples[i + 1], multiples[i], point, ctx))
+			goto err;
+	}
 
 	if ((rr = EC_POINT_new(group)) == NULL)
 		goto err;
+	if ((t = EC_POINT_new(group)) == NULL)
+		goto err;
 
-	bits = BN_num_bits(scalar);
+	if (!EC_POINT_set_to_infinity(group, rr))
+		goto err;
 
-	EC_POINT_copy(rr, point);
-
-	for (i = bits - 2; i >= 0; i--) {
-		if (!EC_POINT_dbl(group, rr, rr, ctx))
-			goto err;
-		if (BN_is_bit_set(scalar, i)) {
-			if (!EC_POINT_add(group, rr, rr, point, ctx))
+	for (i = 0; i < scalar_len; i++) {
+		if (i != 0) {
+			if (!EC_POINT_dbl(group, rr, rr, ctx))
+				goto err;
+			if (!EC_POINT_dbl(group, rr, rr, ctx))
+				goto err;
+			if (!EC_POINT_dbl(group, rr, rr, ctx))
+				goto err;
+			if (!EC_POINT_dbl(group, rr, rr, ctx))
 				goto err;
 		}
+
+		if (!EC_POINT_set_to_infinity(group, t))
+			goto err;
+
+		wv = scalar_bytes[i] >> 4;
+		for (j = 1; j < 16; j++) {
+			conditional = crypto_ct_eq_u8(j, wv);
+			ec_point_select(group, t, t, multiples[j - 1], conditional);
+		}
+		if (!EC_POINT_add(group, rr, rr, t, ctx))
+			goto err;
+
+		if (!EC_POINT_dbl(group, rr, rr, ctx))
+			goto err;
+		if (!EC_POINT_dbl(group, rr, rr, ctx))
+			goto err;
+		if (!EC_POINT_dbl(group, rr, rr, ctx))
+			goto err;
+		if (!EC_POINT_dbl(group, rr, rr, ctx))
+			goto err;
+
+		if (!EC_POINT_set_to_infinity(group, t))
+			goto err;
+
+		wv = scalar_bytes[i] & 0xf;
+		for (j = 1; j < 16; j++) {
+			conditional = crypto_ct_eq_u8(j, wv);
+			ec_point_select(group, t, t, multiples[j - 1], conditional);
+		}
+		if (!EC_POINT_add(group, rr, rr, t, ctx))
+			goto err;
 	}
 
-	EC_POINT_copy(r, rr);
+	if (!EC_POINT_copy(r, rr))
+		goto err;
 
 	ret = 1;
 
  err:
+	for (i = 0; i < 15; i++)
+		EC_POINT_free(multiples[i]);
+
 	EC_POINT_free(rr);
+	EC_POINT_free(t);
+
+	freezero(scalar_bytes, scalar_len);
+
+	BN_CTX_end(ctx);
 
 	return ret;
 }
