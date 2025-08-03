@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_mutex.c,v 1.6 2024/09/20 02:00:46 jsg Exp $ */
+/*	$OpenBSD: rthread_mutex.c,v 1.7 2025/08/03 06:42:31 dlg Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -43,7 +43,7 @@ enum {
 #define SPIN_WAIT()	do { } while (0)
 #endif
 
-static _atomic_lock_t static_init_lock = _SPINLOCK_UNLOCKED;
+static struct __cmtx static_init_lock = __CMTX_INITIALIZER();
 
 int
 pthread_mutex_init(pthread_mutex_t *mutexp, const pthread_mutexattr_t *attr)
@@ -151,10 +151,10 @@ _rthread_mutex_timedlock(pthread_mutex_t *mutexp, int trywait,
 	 * is NULL.
 	 */
 	if (*mutexp == NULL) {
-		_spinlock(&static_init_lock);
+		__cmtx_enter(&static_init_lock);
 		if (*mutexp == NULL)
 			error = pthread_mutex_init(mutexp, NULL);
-		_spinunlock(&static_init_lock);
+		__cmtx_leave(&static_init_lock);
 		if (error != 0)
 			return (EINVAL);
 	}
