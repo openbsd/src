@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.85 2025/08/03 10:06:37 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.86 2025/08/03 10:07:24 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -162,6 +162,8 @@ void qwx_setkey_clear(struct qwx_softc *);
 void qwx_vif_free_all(struct qwx_softc *);
 void qwx_dp_stop_shadow_timers(struct qwx_softc *);
 void qwx_ce_stop_shadow_timers(struct qwx_softc *);
+int qwx_wmi_vdev_set_param_cmd(struct qwx_softc *, uint32_t, uint8_t,
+    uint32_t, uint32_t);
 
 int qwx_scan(struct qwx_softc *, int);
 void qwx_scan_abort(struct qwx_softc *);
@@ -234,14 +236,11 @@ qwx_init(struct ifnet *ifp)
 	 *
 	 * 1) Broadcast/Multicast frames will only be received on
 	 *    encrypted networks if hardware crypto is used and a
-	 *    CCMP group key is used. Otherwise such frames never
+	 *    CCMP/TKIP group key is used. Otherwise such frames never
 	 *    even trigger an interrupt. This breaks ARP and IPv6.
 	 *    This issue is known to affect the Linux ath11k vendor
 	 *    driver when software crypto mode is selected.
 	 *    Workaround: Use hardware crypto on WPA2 networks.
-	 *    However, even with hardware crypto broadcast frames
-	 *    are never received if TKIP is used as the WPA2 group
-	 *    cipher and we have no workaround for this.
 	 *
 	 * 2) Adding WEP keys for hardware crypto crashes the firmware.
 	 *    Presumably, lack of WEP support is deliberate because the
@@ -249,20 +248,8 @@ qwx_init(struct ifnet *ifp)
 	 *    WEP keys to hardware.
 	 *    Workaround: Use software crypto if WEP is enabled.
 	 *    This suffers from the broadcast issues mentioned above.
-	 *
-	 * 3) A WPA1 group key handshake message from the AP is never
-	 *    received if hardware crypto is used.
-	 *    Workaround: Use software crypto if WPA1 is enabled.
-	 *    This suffers from the broadcast issues mentioned above,
-	 *    even on WPA2 networks when WPA1 and WPA2 are both enabled.
-	 *    On OpenBSD, WPA1 is disabled by default.
-	 *
-	 * The only known fully working configurations are unencrypted
-	 * networks, and WPA2/CCMP-only networks provided WPA1 remains
-	 * disabled.
 	 */
-	if ((ic->ic_flags & IEEE80211_F_WEPON) ||
-	    (ic->ic_rsnprotos & IEEE80211_PROTO_WPA))
+	if (ic->ic_flags & IEEE80211_F_WEPON)
 		sc->crypto_mode = ATH11K_CRYPT_MODE_SW;
 	else
 		sc->crypto_mode = ATH11K_CRYPT_MODE_HW;
@@ -759,6 +746,7 @@ qwx_add_sta_key(struct qwx_softc *sc, struct ieee80211_node *ni,
 	struct qwx_node *nq = (struct qwx_node *)ni;
 	struct ath11k_peer *peer;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
 	int ret = 0;
 	uint32_t flags = 0;
 	const int want_keymask = (QWX_NODE_FLAG_HAVE_PAIRWISE_KEY |
@@ -775,7 +763,7 @@ qwx_add_sta_key(struct qwx_softc *sc, struct ieee80211_node *ni,
 	qwx_peer_frags_flush(sc, peer);
 
 	if (k->k_flags & IEEE80211_KEY_GROUP)
-		flags |= WMI_KEY_GROUP;
+		flags |= WMI_KEY_GROUP | WMI_KEY_TX_USAGE;
 	else
 		flags |= WMI_KEY_PAIRWISE;
 
@@ -793,9 +781,15 @@ qwx_add_sta_key(struct qwx_softc *sc, struct ieee80211_node *ni,
 		return ret;
 	}
 
-	if (k->k_flags & IEEE80211_KEY_GROUP)
+	if (k->k_flags & IEEE80211_KEY_GROUP) {
+		ret = qwx_wmi_vdev_set_param_cmd(sc, arvif->vdev_id, pdev_id,
+		    WMI_VDEV_PARAM_DEF_KEYID, k->k_id);
+		if (ret) {
+			printf("%s: failed to set vdev %d def key ID %d: %d\n",
+			    sc->sc_dev.dv_xname, arvif->vdev_id, k->k_id, ret);
+		}
 		nq->flags |= QWX_NODE_FLAG_HAVE_GROUP_KEY;
-	else
+	} else
 		nq->flags |= QWX_NODE_FLAG_HAVE_PAIRWISE_KEY;
 
 	if ((nq->flags & want_keymask) == want_keymask) {
@@ -16449,6 +16443,10 @@ qwx_dp_rx_h_rxdma_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu)
 		ic->ic_stats.is_rx_locmicfail++;
 		drop = 1;
 		break;
+	case HAL_REO_ENTR_RING_RXDMA_ECODE_DECRYPT_ERR:
+		ic->ic_stats.is_rx_wepfail++;
+		drop = 1;
+		break;
 	default:
 		/* TODO: Review other rxdma error code to check if anything is
 		 * worth reporting to mac80211
@@ -17005,10 +17003,11 @@ qwx_dp_rx_h_mpdu(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 #endif
 	struct rx_attention *rx_attention;
 	uint32_t err_bitmap;
-
+#if 0
 	/* PN for multicast packets will be checked in net80211 */
 	fill_crypto_hdr = qwx_dp_rx_h_attn_is_mcbc(sc, rx_desc);
 	msdu->is_mcbc = fill_crypto_hdr;
+#endif
 #if 0
 	if (rxcb->is_mcbc) {
 		rxcb->peer_id = ath11k_dp_rx_h_mpdu_start_peer_id(ar->ab, rx_desc);
@@ -19020,7 +19019,7 @@ qwx_wmi_vdev_install_key(struct qwx_softc *sc,
 	cmd->key_idx = arg->key_idx;
 	cmd->key_flags = arg->key_flags;
 	cmd->key_cipher = arg->key_cipher;
-	cmd->key_len = arg->key_len;
+	cmd->key_len = arg->key_len - (arg->key_txmic_len + arg->key_rxmic_len);
 	cmd->key_txmic_len = arg->key_txmic_len;
 	cmd->key_rxmic_len = arg->key_rxmic_len;
 
@@ -24761,14 +24760,6 @@ qwx_dp_peer_rx_pn_replay_config(struct qwx_softc *sc, struct qwx_vif *arvif,
 	struct dp_rx_tid *rx_tid;
 	uint8_t tid;
 	int ret = 0;
-
-	/*
-	 * NOTE: Enable PN/TSC replay check offload only for unicast frames.
-	 * We use net80211 PN/TSC replay check functionality for bcast/mcast
-	 * for now.
-	 */
-	if (k->k_flags & IEEE80211_KEY_GROUP)
-		return 0;
 
 	cmd.flag |= HAL_REO_CMD_FLG_NEED_STATUS;
 	cmd.upd0 |= HAL_REO_CMD_UPD0_PN |

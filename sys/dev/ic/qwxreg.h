@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxreg.h,v 1.10 2025/08/03 10:06:37 stsp Exp $	*/
+/*	$OpenBSD: qwxreg.h,v 1.11 2025/08/03 10:07:24 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -5208,6 +5208,7 @@ enum wmi_ap_ps_peer_param {
 
 #define WMI_KEY_PAIRWISE 0x00
 #define WMI_KEY_GROUP    0x01
+#define WMI_KEY_TX_USAGE 0x02
 
 #define WMI_CIPHER_NONE     0x0 /* clear key */
 #define WMI_CIPHER_WEP      0x1
