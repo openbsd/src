@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.49 2025/08/02 19:22:18 sashan Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.50 2025/08/03 11:17:08 sashan Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -318,8 +318,18 @@ stacktrace_save_utrace(struct stacktrace *st)
 		st->st_pc[st->st_count++] = lastframe->f_retaddr;
 
 	while (frame != NULL && st->st_count < STACKTRACE_MAX) {
-		if (copyin(frame, &f, sizeof(f)) != 0)
+		if (copyin(frame, &f, sizeof(f)) != 0) {
+			/*
+			 * If the frame pointer read from the previous frame
+			 * is invalid, assume the return address we read
+			 * from that frame is invalid as well.
+			 */
+			if (st->st_count == 0)
+				st->st_pc[0] = 0;
+			else
+				st->st_count--;
 			break;
+		}
 		st->st_pc[st->st_count++] = f.f_retaddr;
 		frame = f.f_frame;
 	}
