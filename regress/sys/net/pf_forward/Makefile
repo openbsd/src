@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2021/02/01 12:52:07 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.36 2025/08/03 12:43:38 sashan Exp $
 
 # Copyright (c) 2012-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -363,6 +363,8 @@ check-setup-pf:
 .endfor
 	ssh ${PF_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${PF_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
+	# 'set skip lo' rule must be removed/commented out
+	ssh ${PF_SSH} ${SUDO} pfctl -sI -v | egrep '^lo.?' | grep -v skip
 	ssh ${PF_SSH} sysctl net.inet.ip.forwarding | fgrep =1
 	ssh ${PF_SSH} sysctl net.inet6.ip6.forwarding | fgrep =1
 	ssh ${PF_SSH} ifconfig ${PF_IFOUT} | fgrep 'mtu 1400'
