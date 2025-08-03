@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.2 2024/11/08 04:02:30 jsg Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.3 2025/08/03 10:17:33 tb Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -80,6 +80,11 @@ struct vm_rwregs_params {
 	uint32_t		vrwp_vcpu_id;
 	uint64_t		vrwp_mask;
 	struct vcpu_reg_state	vrwp_regs;
+};
+
+enum {
+	VEI_DIR_OUT,
+	VEI_DIR_IN
 };
 
 /* IOCTL definitions */
