@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.13 2024/11/18 05:32:39 jsg Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.14 2025/08/03 14:03:12 jca Exp $ */
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -70,6 +70,7 @@ struct machine_bus_dma_tag mainbus_dma_tag = {
 	_dmamap_unload,
 	_dmamap_sync,
 	_dmamem_alloc,
+	_dmamem_alloc_range,
 	_dmamem_free,
 	_dmamem_map,
 	_dmamem_unmap,
