@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.39 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.40 2025/08/03 10:32:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -338,9 +339,9 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	if (rr == NULL)
 		goto err;
 
-	rn = a->top + b->top;
-	if (rn < a->top)
+	if (a->top > INT_MAX - b->top)
 		goto err;
+	rn = a->top + b->top;
 	if (!bn_wexpand(rr, rn))
 		goto err;
 
