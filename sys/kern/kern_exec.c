@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.264 2025/05/31 12:40:33 dlg Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.265 2025/08/04 04:59:31 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -531,7 +531,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	}
 
 	stopprofclock(pr);	/* stop profiling */
-	fdcloseexec(p);		/* handle close on exec */
+	fdprepforexec(p);	/* handle close on exec and close on fork */
 	execsigs(p);		/* reset caught signals */
 	TCB_SET(p, NULL);	/* reset the TCB address */
 	pr->ps_kbind_addr = 0;	/* reset the kbind bits */

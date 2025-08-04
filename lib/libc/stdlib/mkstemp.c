@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkstemp.c,v 1.1 2024/01/19 19:45:02 millert Exp $ */
+/*	$OpenBSD: mkstemp.c,v 1.2 2025/08/04 04:59:31 guenther Exp $ */
 /*
  * Copyright (c) 2024 Todd C. Miller
  *
@@ -20,7 +20,8 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-#define MKOSTEMP_FLAGS	(O_APPEND | O_CLOEXEC | O_DSYNC | O_RSYNC | O_SYNC)
+#define MKOSTEMP_FLAGS \
+	(O_APPEND | O_CLOEXEC | O_CLOFORK | O_DSYNC | O_RSYNC | O_SYNC)
 
 static int
 mkstemp_cb(const char *path, int flags)

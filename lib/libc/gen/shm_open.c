@@ -1,4 +1,4 @@
-/* $OpenBSD: shm_open.c,v 1.9 2017/09/10 18:20:00 guenther Exp $ */
+/* $OpenBSD: shm_open.c,v 1.10 2025/08/04 04:59:31 guenther Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -31,8 +31,9 @@
 /* "/tmp/" + sha256 + ".shm" */
 #define SHM_PATH_SIZE (5 + SHA256_DIGEST_STRING_LENGTH + 4)
 
-/* O_CLOEXEC and O_NOFOLLOW are extensions to POSIX */
-#define OK_FLAGS	(O_CREAT | O_EXCL | O_TRUNC | O_CLOEXEC | O_NOFOLLOW)
+/* O_CLOEXEC, O_CLOFORK, and O_NOFOLLOW are extensions to POSIX */
+#define OK_FLAGS \
+	(O_CREAT | O_EXCL | O_TRUNC | O_CLOEXEC | O_CLOFORK | O_NOFOLLOW)
 
 static void
 makeshmpath(const char *origpath, char *shmpath, size_t len)

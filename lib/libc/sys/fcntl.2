@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.36 2022/12/29 02:12:41 jsg Exp $
+.\"	$OpenBSD: fcntl.2,v 1.37 2025/08/04 04:59:31 guenther Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: December 29 2022 $
+.Dd $Mdocdate: August 4 2025 $
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -95,22 +95,47 @@ flag associated with the new file descriptor is set, so the file descriptor
 is closed when
 .Xr execve 2
 is called.
+.It Dv F_DUPFD_CLOFORK
+Like
+.Dv F_DUPFD ,
+but the
+.Dv FD_CLOFORK
+flag associated with the new file descriptor is set, so the file descriptor
+is closed in the child when
+.Xr fork 2
+or
+.Xr vfork 2
+is called.
 .It Dv F_GETFD
-Get the close-on-exec flag associated with the file descriptor
+Get the close-on-exec and close-on-fork flags associated with the
+file descriptor
 .Fa fd
 as
-.Dv FD_CLOEXEC .
+.Dv FD_CLOEXEC
+and
+.Dv FD_CLOFORK .
 If the returned value ANDed with
 .Dv FD_CLOEXEC
 is 0,
 the file will remain open across
 .Fn exec ,
 otherwise the file will be closed upon execution of
-.Fn exec
+.Fn exec ;
+if the returned value ANDed with
+.Dv FD_CLOFORK
+is 0,
+the file will remain open across
+.Fn fork
+and
+.Fn vfork ,
+otherwise the file will be closed upon execution of
+.Fn fork
+or
+.Fn vfork
 .Fa ( arg
 is ignored).
 .It Dv F_SETFD
-Set the close-on-exec flag associated with
+Set the close-on-exec and close-on-fork flags associated with
 .Fa fd
 to
 .Fa arg ,
@@ -118,8 +143,10 @@ where
 .Fa arg
 (interpreted as an
 .Vt int )
-is either 0 or
-.Dv FD_CLOEXEC ,
+is the bitwise OR of zero or more of
+.Dv FD_CLOEXEC
+and
+.Dv FD_CLOFORK ,
 as described above.
 .It Dv F_GETFL
 Get file status flags associated with the file descriptor
@@ -392,8 +419,14 @@ as follows:
 A new file descriptor.
 .It Dv F_DUPFD_CLOEXEC
 A new file descriptor.
+.It Dv F_DUPFD_CLOFORK
+A new file descriptor.
 .It Dv F_GETFD
-Value of flag (only the low-order bit is defined).
+Value of file descriptor flags (only the
+.Dv FD_CLOEXEC
+and
+.Dv FD_CLOFORK
+bits are defined).
 .It Dv F_GETFL
 Value of flags.
 .It Dv F_GETOWN

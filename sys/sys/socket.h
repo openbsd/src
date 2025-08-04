@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.107 2025/04/19 04:12:36 jsg Exp $	*/
+/*	$OpenBSD: socket.h,v 1.108 2025/08/04 04:59:30 guenther Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -72,14 +72,19 @@ typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 /*
  * Socket creation flags
  */
-#if __BSD_VISIBLE
+#if __POSIX_VISIBLE >= 202405 || __BSD_VISIBLE
 #define	SOCK_CLOEXEC		0x8000	/* set FD_CLOEXEC */
 #define	SOCK_NONBLOCK		0x4000	/* set O_NONBLOCK */
+#endif
+#if __BSD_VISIBLE
 #ifdef _KERNEL
 #define	SOCK_NONBLOCK_INHERIT	0x2000	/* inherit O_NONBLOCK from listener */
 #endif
 #define	SOCK_DNS		0x1000	/* set SS_DNS */
 #endif /* __BSD_VISIBLE */
+#if __POSIX_VISIBLE >= 202405
+#define	SOCK_CLOFORK		0x0800	/* set FD_CLOFORK */
+#endif
 
 /*
  * Option flags per-socket.
@@ -511,6 +516,7 @@ struct timespec;
 #define	MSG_NOSIGNAL		0x400	/* do not send SIGPIPE */
 #define	MSG_CMSG_CLOEXEC	0x800	/* set FD_CLOEXEC on received fds */
 #define	MSG_WAITFORONE		0x1000	/* nonblocking but wait for one msg */
+#define	MSG_CMSG_CLOFORK	0x2000	/* set FD_CLOFORK on received fds */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
@@ -586,7 +592,7 @@ int	sockatmark(int);
 int	socket(int, int, int);
 int	socketpair(int, int, int, int *);
 
-#if __BSD_VISIBLE
+#if __POSIX_VISIBLE >= 202405 || __BSD_VISIBLE
 int	accept4(int, struct sockaddr *__restrict, socklen_t *__restrict, int);
 #endif
 

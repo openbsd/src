@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.45 2025/07/02 16:07:02 schwarze Exp $
+.\"	$OpenBSD: socket.2,v 1.46 2025/08/04 04:59:31 guenther Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 2 2025 $
+.Dd $Mdocdate: August 4 2025 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -103,6 +103,8 @@ argument:
 .Bl -tag -width "SOCK_NONBLOCKX" -offset indent -compact
 .It Dv SOCK_CLOEXEC
 Set close-on-exec flag on the new descriptor.
+.It Dv SOCK_CLOFORK
+Set close-on-fork flag on the new descriptor.
 .It Dv SOCK_NONBLOCK
 Set non-blocking I/O mode on the new socket.
 .It Dv SOCK_DNS
@@ -282,12 +284,7 @@ is denied.
 The
 .Fn socket
 function conforms to
-.St -p1003.1-2008 .
-The
-.Dv SOCK_CLOEXEC
-and
-.Dv SOCK_NONBLOCK
-flags are expected to conform to a future revision of that standard.
+.St -p1003.1-2024 .
 .Pp
 The
 .Dv SOCK_DNS

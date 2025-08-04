@@ -1,4 +1,4 @@
-/*	$OpenBSD: w_fcntl.c,v 1.1 2016/05/07 19:05:22 guenther Exp $ */
+/*	$OpenBSD: w_fcntl.c,v 1.2 2025/08/04 04:59:31 guenther Exp $ */
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -29,6 +29,7 @@ fcntl(int fd, int cmd, ...)
 	switch (cmd) {
 	case F_DUPFD:
 	case F_DUPFD_CLOEXEC:
+	case F_DUPFD_CLOFORK:
 	case F_SETFD:
 	case F_SETFL:
 	case F_SETOWN:

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.59 2025/07/19 13:18:06 deraadt Exp $
+.\"	$OpenBSD: execve.2,v 1.60 2025/08/04 04:59:31 guenther Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: July 19 2025 $
+.Dd $Mdocdate: August 4 2025 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -109,7 +109,8 @@ flag is set (see
 and
 .Xr fcntl 2 ) .
 Descriptors that remain open are unaffected by
-.Fn execve .
+.Fn execve ,
+except that the close-on-fork flag is cleared on all descriptors.
 In the case of a new setuid or setgid executable being executed, if
 file descriptors 0, 1, or 2 (representing stdin, stdout, and stderr)
 are currently unallocated, these descriptors will be opened to point to
@@ -320,7 +321,13 @@ the system file table was found to be full.
 The
 .Fn execve
 function is expected to conform to
-.St -p1003.1-2008 .
+.St -p1003.1-2024 ,
+except that the
+.Dv FD_CLOFORK
+flag is cleared on all file descriptors.
+(The behavior required by the standard is not safe and
+was reported as a defect by
+.Ox . )
 .Sh HISTORY
 The predecessor of these functions, the former
 .Fn exec

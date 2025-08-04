@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.223 2025/06/20 14:34:34 bluhm Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.224 2025/08/04 04:59:31 guenther Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int type = SCARG(uap, type);
 	int domain = SCARG(uap, domain);
-	int fd, cloexec, nonblock, fflag, error;
+	int fd, fdflags, nonblock, fflag, error;
 	unsigned int ss = 0;
 
 	if ((type & SOCK_DNS) && !(domain == AF_INET || domain == AF_INET6))
@@ -93,8 +93,9 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	type &= ~(SOCK_CLOEXEC | SOCK_NONBLOCK | SOCK_DNS);
-	cloexec = (SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
+	type &= ~(SOCK_CLOEXEC | SOCK_CLOFORK | SOCK_NONBLOCK | SOCK_DNS);
+	fdflags = ((SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0)
+	    | ((SCARG(uap, type) & SOCK_CLOFORK) ? UF_FORKCLOSE : 0);
 	nonblock = SCARG(uap, type) & SOCK_NONBLOCK;
 	fflag = FREAD | FWRITE | (nonblock ? FNONBLOCK : 0);
 
@@ -113,7 +114,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		fp->f_ops = &socketops;
 		so->so_state |= ss;
 		fp->f_data = so;
-		fdinsert(fdp, fd, cloexec, fp);
+		fdinsert(fdp, fd, fdflags, fp);
 		fdpunlock(fdp);
 		FRELE(fp, p);
 		*retval = fd;
@@ -240,7 +241,7 @@ sys_accept4(struct proc *p, void *v, register_t *retval)
 		syscallarg(socklen_t *) int flags;
 	} */ *uap = v;
 
-	if (SCARG(uap, flags) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
+	if (SCARG(uap, flags) & ~(SOCK_CLOEXEC | SOCK_CLOFORK | SOCK_NONBLOCK))
 		return (EINVAL);
 
 	return (doaccept(p, SCARG(uap, s), SCARG(uap, name),
@@ -257,9 +258,10 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	socklen_t namelen;
 	int error, tmpfd;
 	struct socket *head, *so;
-	int cloexec, nflag;
+	int fdflags, nflag;
 
-	cloexec = (flags & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
+	fdflags = ((flags & SOCK_CLOEXEC) ? UF_EXCLOSE : 0)
+	    | ((flags & SOCK_CLOFORK) ? UF_FORKCLOSE : 0);
 
 	if (name && (error = copyin(anamelen, &namelen, sizeof (namelen))))
 		return (error);
@@ -346,7 +348,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	}
 
 	fdplock(fdp);
-	fdinsert(fdp, tmpfd, cloexec, fp);
+	fdinsert(fdp, tmpfd, fdflags, fp);
 	fdpunlock(fdp);
 	FRELE(fp, p);
 	*retval = tmpfd;
@@ -457,10 +459,11 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp1 = NULL, *fp2 = NULL;
 	struct socket *so1, *so2;
-	int type, cloexec, nonblock, fflag, error, sv[2];
+	int type, fdflags, nonblock, fflag, error, sv[2];
 
-	type  = SCARG(uap, type) & ~(SOCK_CLOEXEC | SOCK_NONBLOCK);
-	cloexec = (SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
+	type  = SCARG(uap, type) & ~(SOCK_CLOEXEC | SOCK_CLOFORK | SOCK_NONBLOCK);
+	fdflags = ((SCARG(uap, type) & SOCK_CLOEXEC) ? UF_EXCLOSE : 0)
+	    | ((SCARG(uap, type) & SOCK_CLOFORK) ? UF_FORKCLOSE : 0);
 	nonblock = SCARG(uap, type) & SOCK_NONBLOCK;
 	fflag = FREAD | FWRITE | (nonblock ? FNONBLOCK : 0);
 
@@ -498,8 +501,8 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	fp2->f_data = so2;
 	error = copyout(sv, SCARG(uap, rsv), 2 * sizeof (int));
 	if (error == 0) {
-		fdinsert(fdp, sv[0], cloexec, fp1);
-		fdinsert(fdp, sv[1], cloexec, fp2);
+		fdinsert(fdp, sv[0], fdflags, fp1);
+		fdinsert(fdp, sv[1], fdflags, fp2);
 		fdpunlock(fdp);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))

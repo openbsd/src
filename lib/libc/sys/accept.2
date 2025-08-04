@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.30 2022/09/11 06:38:11 jmc Exp $
+.\"	$OpenBSD: accept.2,v 1.31 2025/08/04 04:59:31 guenther Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: August 4 2025 $
 .Dt ACCEPT 2
 .Os
 .Sh NAME
@@ -58,19 +58,18 @@ call extracts the first connection request on the queue of pending
 connections, creates a new socket with the same non-blocking I/O mode as
 .Fa s ,
 and allocates a new file descriptor for the socket with the
-close-on-exec flag clear.
+close-on-exec and close-on-fork flags clear.
 .Pp
 The
 .Fn accept4
-system call is similar, however the non-blocking I/O mode of the
-new socket is determined by the
-.Dv SOCK_NONBLOCK
-flag in the
-.Fa flags
-argument and the close-on-exec flag on the new file descriptor is
+system call is similar, however the non-blocking I/O mode,
+close-on-exec flag,
+and close-on-fork flag on the new file descriptor are
 determined by the
-.Dv SOCK_CLOEXEC
-flag in the
+.Dv SOCK_NONBLOCK , SOCK_CLOEXEC ,
+and
+.Dv SOCK_CLOFORK
+flags, respectively, in the
 .Fa flags
 argument.
 .Pp
@@ -204,11 +203,10 @@ is invalid.
 .Sh STANDARDS
 The
 .Fn accept
-function conforms to
-.St -p1003.1-2008 .
-The
+and
 .Fn accept4
-function is expected to conform to a future revision of that standard.
+functions conform to
+.St -p1003.1-2024 .
 .Sh HISTORY
 The
 .Fn accept

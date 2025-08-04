@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.21 2018/04/08 18:46:43 schwarze Exp $
+.\"	$OpenBSD: socketpair.2,v 1.22 2025/08/04 04:59:31 guenther Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socketpair.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: April 8 2018 $
+.Dd $Mdocdate: August 4 2025 $
 .Dt SOCKETPAIR 2
 .Os
 .Sh NAME
@@ -75,6 +75,8 @@ argument:
 .Bl -tag -width "SOCK_NONBLOCKX" -offset indent -compact
 .It SOCK_CLOEXEC
 Set close-on-exec flag on both the new descriptors.
+.It SOCK_CLOFORK
+Set close-on-fork flag on both the new descriptors.
 .It SOCK_NONBLOCK
 Set non-blocking I/O mode on both the new sockets.
 .El
@@ -113,12 +115,7 @@ process address space.
 The
 .Fn socketpair
 function conforms to
-.St -p1003.1-2008 .
-The
-.Dv SOCK_CLOEXEC
-and
-.Dv SOCK_NONBLOCK
-flags are expected to conform to a future revision of that standard.
+.St -p1003.1-2024 .
 .Sh HISTORY
 The
 .Fn socketpair

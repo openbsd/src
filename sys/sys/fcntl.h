@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.22 2019/01/21 18:09:21 anton Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.23 2025/08/04 04:59:30 guenther Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -83,22 +83,24 @@
 #define	O_EXLOCK	0x0020		/* open with exclusive file lock */
 #define	O_ASYNC		0x0040		/* signal pgrp when data ready */
 #define	O_FSYNC		0x0080		/* backwards compatibility */
-#define	O_NOFOLLOW	0x0100		/* if path is a symlink, don't follow */
 #endif
 #if __POSIX_VISIBLE >= 199309 || __XPG_VISIBLE >= 420
 #define	O_SYNC		0x0080		/* synchronous writes */
-#endif
-#define	O_CREAT		0x0200		/* create if nonexistent */
-#define	O_TRUNC		0x0400		/* truncate to zero length */
-#define	O_EXCL		0x0800		/* error if already exists */
-
 /*
- * POSIX 1003.1 specifies a higher granularity for synchronous operations
+ * POSIX 1003.1 permits a higher granularity for synchronous operations
  * than we support.  Since synchronicity is all or nothing in OpenBSD
  * we just define these to be the same as O_SYNC.
  */
 #define	O_DSYNC		O_SYNC		/* synchronous data writes */
 #define	O_RSYNC		O_SYNC		/* synchronous reads */
+#endif
+
+/* defined by POSIX Issue 7 */
+#define	O_NOFOLLOW	0x0100		/* if path is a symlink, don't follow */
+
+#define	O_CREAT		0x0200		/* create if nonexistent */
+#define	O_TRUNC		0x0400		/* truncate to zero length */
+#define	O_EXCL		0x0800		/* error if already exists */
 
 /* defined by POSIX 1003.1; BSD default, this bit is not required */
 #define	O_NOCTTY	0x8000		/* don't assign controlling terminal */
@@ -106,6 +108,9 @@
 /* defined by POSIX Issue 7 */
 #define	O_CLOEXEC	0x10000		/* atomically set FD_CLOEXEC */
 #define	O_DIRECTORY	0x20000		/* fail if not a directory */
+
+/* defined by POSIX Issue 8 */
+#define	O_CLOFORK	0x40000		/* atomically set FD_CLOFORK */
 
 #ifdef _KERNEL
 /*
@@ -158,9 +163,15 @@
 #if __BSD_VISIBLE
 #define F_ISATTY	11		/* used by isatty(3) */
 #endif
+#if __POSIX_VISIBLE >= 202405
+#define	F_DUPFD_CLOFORK	12		/* duplicate with FD_CLOFORK set */
+#endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
 #define	FD_CLOEXEC	1		/* close-on-exec flag */
+#if __POSIX_VISIBLE >= 202405
+#define	FD_CLOFORK	4		/* close-on-fork flag */
+#endif
 
 /* record locking flags (F_GETLK, F_SETLK, F_SETLKW) */
 #define	F_RDLCK		1		/* shared or read lock */
