@@ -1,7 +1,8 @@
-.\"	$OpenBSD: man.7,v 1.62 2023/10/23 22:57:51 schwarze Exp $
+.\" $OpenBSD: man.7,v 1.63 2025/08/04 19:21:47 schwarze Exp $
 .\"
+.\" Copyright (c) 2011-2015, 2017-2020, 2023, 2025
+.\"               Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2011-2015,2017-2020,2023 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2017 Anthony Bentley <bentley@openbsd.org>
 .\" Copyright (c) 2010 Joerg Sonnenberger <joerg@netbsd.org>
 .\"
@@ -17,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2023 $
+.Dd $Mdocdate: August 4 2025 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -239,6 +240,17 @@ A synonym for
 End a mailto block started with
 .Ic MT .
 This is a GNU extension.
+.It Ic MR
+Reference another manual page.
+This is a Plan 9 extension also supported by GNU.
+It has the following syntax:
+.Pp
+.D1 Pf . Ic MR Ar name section Op Ar suffix
+.Pp
+The optional, single
+.Ar suffix
+argument is appended without preceding whitespace
+and typically used for trailing punctuation.
 .It Ic MT
 Begin a mailto block.
 This is a GNU extension.
@@ -518,6 +530,7 @@ The syntax is as follows:
 .It Ic I   Ta    n         Ta    next-line Ta    \&
 .It Ic IB  Ta    n         Ta    current   Ta    \&
 .It Ic IR  Ta    n         Ta    current   Ta    \&
+.It Ic MR  Ta    2 or 3    Ta    current   Ta    Plan 9
 .It Ic OP  Ta    >=1       Ta    current   Ta    DWB
 .It Ic PD  Ta    1         Ta    current   Ta    \&
 .It Ic RB  Ta    n         Ta    current   Ta    \&
