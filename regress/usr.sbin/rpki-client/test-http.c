@@ -63,7 +63,7 @@ http_request(unsigned int id, const char *uri, const char *last_mod, int fd)
 	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
-	io_str_buffer(b, last_mod);
+	io_opt_str_buffer(b, last_mod);
 	/* pass file as fd */
 	b->fd = fd;
 	io_close_buffer(httpq, b);
@@ -105,7 +105,7 @@ http_response(int fd)
 
 	io_read_buf(b, &id, sizeof(id));
 	io_read_buf(b, &res, sizeof(res));
-	io_read_str(b, &lastmod);
+	io_read_opt_str(b, &lastmod);
 	ibuf_free(b);
 
 	printf("transfer %s", http_result(res));
