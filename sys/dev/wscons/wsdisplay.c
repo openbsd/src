@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.154 2024/11/05 16:53:30 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.155 2025/08/04 15:00:57 kettenis Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1850,6 +1850,11 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	}
 
 	s = spltty();
+
+	if (sc->sc_resumescreen != WSDISPLAY_NULLSCREEN && !waitok) {
+		splx(s);
+		return (EBUSY);
+	}
 
 	while (sc->sc_resumescreen != WSDISPLAY_NULLSCREEN && res == 0)
 		res = tsleep_nsec(&sc->sc_resumescreen, PCATCH, "wsrestore",
