@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.37 2025/08/04 04:59:31 guenther Exp $
+.\"	$OpenBSD: fcntl.2,v 1.38 2025/08/04 15:08:16 schwarze Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -118,20 +118,20 @@ If the returned value ANDed with
 .Dv FD_CLOEXEC
 is 0,
 the file will remain open across
-.Fn exec ,
+.Xr execve 2 ,
 otherwise the file will be closed upon execution of
-.Fn exec ;
+.Xr execve 2 ;
 if the returned value ANDed with
 .Dv FD_CLOFORK
 is 0,
 the file will remain open across
-.Fn fork
+.Xr fork 2
 and
-.Fn vfork ,
+.Xr vfork 2 ,
 otherwise the file will be closed upon execution of
-.Fn fork
+.Xr fork 2
 or
-.Fn vfork
+.Xr vfork 2
 .Fa ( arg
 is ignored).
 .It Dv F_SETFD
