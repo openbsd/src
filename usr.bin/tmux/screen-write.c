@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.235 2025/07/22 07:42:52 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.236 2025/08/04 13:16:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1901,7 +1901,7 @@ screen_write_cell(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		log_debug("%s: wrapped at %u,%u", __func__, s->cx, s->cy);
 		screen_write_linefeed(ctx, 1, 8);
 		screen_write_set_cursor(ctx, 0, -1);
-		screen_write_collect_flush(ctx, 1, __func__);
+		screen_write_collect_flush(ctx, 0, __func__);
 	}
 
 	/* Sanity check cursor position. */
