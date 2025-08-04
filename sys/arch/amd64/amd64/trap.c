@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.111 2025/07/11 20:04:20 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.112 2025/08/04 12:34:41 hshoexer Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -306,7 +306,7 @@ vctrap(struct trapframe *frame, int user)
 {
 	uint64_t	 sw_exitcode, sw_exitinfo1, sw_exitinfo2;
 	uint8_t		*rip = (uint8_t *)(frame->tf_rip);
-	uint16_t	 port;
+	uint64_t	 port;
 	struct ghcb_sync syncout, syncin;
 	struct ghcb_sa	*ghcb;
 
@@ -366,14 +366,14 @@ vctrap(struct trapframe *frame, int user)
 			switch (*(rip + 1)) {
 			case 0xef:	/* out %ax,(%dx) */
 				ghcb_sync_val(GHCB_RAX, GHCB_SZ16, &syncout);
-				port = (uint16_t)frame->tf_rdx;
+				port = frame->tf_rdx & 0xffff;
 				sw_exitinfo1 = (port << 16) |
 				    (1ULL << 5);
 				frame->tf_rip += 2;
 				break;
 			case 0xed:	/* in (%dx),%ax */
 				ghcb_sync_val(GHCB_RAX, GHCB_SZ16, &syncin);
-				port = (uint16_t)frame->tf_rdx;
+				port = frame->tf_rdx & 0xffff;
 				sw_exitinfo1 = (port << 16) |
 				    (1ULL << 5) | (1ULL << 0);
 				frame->tf_rip += 2;
@@ -385,40 +385,40 @@ vctrap(struct trapframe *frame, int user)
 		    }
 		case 0xe4:	/* in $port,%al */
 			ghcb_sync_val(GHCB_RAX, GHCB_SZ8, &syncin);
-			port = *(rip + 1);
+			port = *(rip + 1) & 0xff;
 			sw_exitinfo1 = (port << 16) | (1ULL << 4) |
 			    (1ULL << 0);
 			frame->tf_rip += 2;
 			break;
 		case 0xe6:	/* outb %al,$port */
 			ghcb_sync_val(GHCB_RAX, GHCB_SZ8, &syncout);
-			port = *(rip + 1);
+			port = *(rip + 1) & 0xff;
 			sw_exitinfo1 = (port << 16) | (1ULL << 4);
 			frame->tf_rip += 2;
 			break;
 		case 0xec:	/* in (%dx),%al */
 			ghcb_sync_val(GHCB_RAX, GHCB_SZ8, &syncin);
-			port = (uint16_t)frame->tf_rdx;
+			port = frame->tf_rdx & 0xffff;
 			sw_exitinfo1 = (port << 16) | (1ULL << 4) |
 			    (1ULL << 0);
 			frame->tf_rip += 1;
 			break;
 		case 0xed:	/* in (%dx),%eax */
 			ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncin);
-			port = (uint16_t)frame->tf_rdx;
+			port = frame->tf_rdx & 0xffff;
 			sw_exitinfo1 = (port << 16) | (1ULL << 6) |
 			    (1ULL << 0);
 			frame->tf_rip += 1;
 			break;
 		case 0xee:	/* out %al,(%dx) */
 			ghcb_sync_val(GHCB_RAX, GHCB_SZ8, &syncout);
-			port = (uint16_t)frame->tf_rdx;
+			port = frame->tf_rdx & 0xffff;
 			sw_exitinfo1 = (port << 16) | (1ULL << 4);
 			frame->tf_rip += 1;
 			break;
 		case 0xef:	/* out %eax,(%dx) */
 			ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncout);
-			port = (uint16_t)frame->tf_rdx;
+			port = frame->tf_rdx & 0xffff;
 			sw_exitinfo1 = (port << 16) | (1ULL << 6);
 			frame->tf_rip += 1;
 			break;
