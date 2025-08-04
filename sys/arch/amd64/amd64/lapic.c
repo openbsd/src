@@ -108,6 +108,9 @@ u_int32_t x2apic_cpu_number(void);
 void x2apic_writereg(int reg, u_int32_t val);
 void x2apic_ipi(int vec, int target, int dl);
 
+u_int32_t x2apic_readreg_ghcb(int reg);
+void x2apic_writereg_ghcb(int reg, u_int32_t val);
+
 u_int32_t i82489_readreg(int reg);
 u_int32_t i82489_cpu_number(void);
 void i82489_writereg(int reg, u_int32_t val);
@@ -157,6 +160,18 @@ x2apic_writereg(int reg, u_int32_t val)
 	wrmsr(MSR_X2APIC_BASE + (reg >> 4), val);
 }
 
+u_int32_t
+x2apic_readreg_ghcb(int reg)
+{
+	return ghcb_rdmsr(MSR_X2APIC_BASE + (reg >> 4));
+}
+
+void
+x2apic_writereg_ghcb(int reg, u_int32_t val)
+{
+	ghcb_wrmsr(MSR_X2APIC_BASE + (reg >> 4), val);
+}
+
 #ifdef MULTIPROCESSOR
 static inline void
 x2apic_writeicr(u_int32_t hi, u_int32_t lo)
@@ -202,8 +217,13 @@ lapic_map(paddr_t lapic_base)
 			msr |= APICBASE_ENABLE_X2APIC;
 			wrmsr(MSR_APICBASE, msr);
 		}
-		lapic_readreg = x2apic_readreg;
-		lapic_writereg = x2apic_writereg;
+		if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED)) {
+			lapic_readreg = x2apic_readreg_ghcb;
+			lapic_writereg = x2apic_writereg_ghcb;
+		} else {
+			lapic_readreg = x2apic_readreg;
+			lapic_writereg = x2apic_writereg;
+		}
 #ifdef MULTIPROCESSOR
 		x86_ipi = x2apic_ipi;
 #endif
