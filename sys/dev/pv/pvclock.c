@@ -27,6 +27,7 @@
 
 #include <machine/cpu.h>
 #include <machine/atomic.h>
+#include <machine/ghcb.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/pv/pvvar.h>
@@ -114,6 +115,11 @@ static inline int
 static inline uint64_t
 	 pvclock_scale_delta(uint64_t, uint32_t, int);
 
+void	pvclock_write_msr(int, uint64_t);
+void	pvclock_write_ghcb(int, uint64_t);
+
+void	(*pvclock_writereg)(int, uint64_t) = &pvclock_write_msr;
+
 const struct cfattach pvclock_ca = {
 	sizeof(struct pvclock_softc),
 	pvclock_match,
@@ -138,6 +144,18 @@ struct timecounter pvclock_timecounter = {
 	.tc_priv = NULL,
 	.tc_user = 0,
 };
+
+void
+pvclock_write_msr(int msr, uint64_t val)
+{
+	wrmsr(msr, val);
+}
+
+void
+pvclock_write_ghcb(int msr, uint64_t val)
+{
+	ghcb_wrmsr(msr, val);
+}
 
 int
 pvclock_match(struct device *parent, void *match, void *aux)
@@ -202,7 +220,10 @@ pvclock_attach(struct device *parent, struct device *self, void *aux)
 	pmap_update(pmap_kernel());
 	memset(sc->sc_page, 0, PAGE_SIZE);
 
-	wrmsr(KVM_MSR_SYSTEM_TIME, pa | PVCLOCK_SYSTEM_TIME_ENABLE);
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+		pvclock_writereg = &pvclock_write_ghcb;
+
+	pvclock_writereg(KVM_MSR_SYSTEM_TIME, pa | PVCLOCK_SYSTEM_TIME_ENABLE);
 	sc->sc_paddr = pa;
 
 	ti = &sc->sc_page->ti;
@@ -262,10 +283,12 @@ pvclock_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_POWERDOWN:
-		wrmsr(KVM_MSR_SYSTEM_TIME, pa & ~PVCLOCK_SYSTEM_TIME_ENABLE);
+		pvclock_writereg(KVM_MSR_SYSTEM_TIME,
+		    pa & ~PVCLOCK_SYSTEM_TIME_ENABLE);
 		break;
 	case DVACT_RESUME:
-		wrmsr(KVM_MSR_SYSTEM_TIME, pa | PVCLOCK_SYSTEM_TIME_ENABLE);
+		pvclock_writereg(KVM_MSR_SYSTEM_TIME,
+		    pa | PVCLOCK_SYSTEM_TIME_ENABLE);
 		break;
 	}
 
@@ -370,7 +393,8 @@ pvclock_tick(void *arg)
 	struct pvclock_wall_clock	*wc = &sc->sc_page->wc;
 	int64_t				 value;
 
-	wrmsr(KVM_MSR_WALL_CLOCK, sc->sc_paddr + offsetof(struct pvpage, wc));
+	pvclock_writereg(KVM_MSR_WALL_CLOCK,
+	    sc->sc_paddr + offsetof(struct pvpage, wc));
 	while (wc->wc_version & 0x1)
 		virtio_membar_sync();
 	if (wc->wc_sec) {
