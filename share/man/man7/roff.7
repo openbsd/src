@@ -1,4 +1,4 @@
-.\" $OpenBSD: roff.7,v 1.103 2025/08/04 21:09:37 schwarze Exp $
+.\" $OpenBSD: roff.7,v 1.104 2025/08/04 23:11:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2019,2022-2023,2025 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -79,8 +79,10 @@ They provide free-form text to be printed; the formatting of the text
 depends on the respective processing context.
 .Sh LANGUAGE SYNTAX
 .Nm
-documents may contain only graphable 7-bit ASCII characters, the space
-character, and, in certain circumstances, the tab character.
+documents are text files containing only printable
+.Xr ascii 7
+characters, the space character,
+and, in certain circumstances, the tab character.
 The backslash character
 .Sq \e
 indicates the start of an escape sequence, used for example for
@@ -267,7 +269,7 @@ width of rendered
 .Pq en
 character
 .It u
-default horizontal span for the terminal
+device-dependent basic units
 .It M
 mini-em (1/100 em)
 .El
@@ -289,7 +291,7 @@ for vertical spaces and
 for horizontal ones.
 .Pp
 Examples:
-.Bl -tag -width ".Bl -tag -width 2i" -offset indent -compact
+.Bl -tag -width "xBl -tag -width 2i" -offset indent -compact
 .It Li \&.Bl -tag -width 2i
 two-inch tagged list indentation in
 .Xr mdoc 7
@@ -2288,7 +2290,7 @@ always returns 0, meaning flush left.
 The line length in basic units;
 .Xr mandoc 1
 always returns 78 * 24, corresponding to 78 characters per line.
-.It Cm .T
+.It Cm \&.T
 Whether an output device has been selected;
 .Xr mandoc 1
 always returns 1, meaning yes.
@@ -2344,17 +2346,29 @@ never reads or writes external files except via
 .Ic \&so
 requests with safe relative paths.
 .It
-There is no automatic hyphenation, no adjustment to the right margin,
-and very limited support for centering; the output is always set flush-left.
+There is no automatic hyphenation and no support for the
+.Ic \&ad
+line adjustment request.
+Except when the
+.Ic \&ce
+or
+.Ic \&rj
+requests or the
+.Xr tbl 7
+cell specifications
+.Cm c ,
+.Cm n ,
+or
+.Cm r
+or the table option
+.Cm center
+are used, output is always set flush-left.
 .It
-Support for setting tabulator and leader characters is missing,
-and support for manually changing indentation is limited.
-.It
-The
-.Sq u
-scaling unit is the default terminal unit.
-In traditional troff systems, this unit changes depending on the
-output media.
+Support for setting tabulator and leader characters is missing, and the
+.Ic \&in
+indentation request is not supported in
+.Xr mdoc 7
+input files.
 .It
 Width measurements are implemented in a crude way
 and often yield wrong results.
@@ -2413,6 +2427,15 @@ implementations.
 .%T Heirloom Documentation Tools Nroff/Troff User's Manual
 .%D September 17, 2007
 .%U http://heirloom.sourceforge.net/doctools/troff.pdf
+.Re
+.Rs
+.%A James Clark
+.%A Werner Lemberg
+.%A G. Branden Robinson
+.%I Free Software Foundation, Inc.
+.%T The GNU Troff Manual
+.%D 1999\(en2023
+.%U https://www.gnu.org/software/groff/manual/
 .Re
 .Sh HISTORY
 The RUNOFF typesetting system, whose input forms the basis for
