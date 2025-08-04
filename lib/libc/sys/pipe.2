@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipe.2,v 1.19 2025/08/04 04:59:31 guenther Exp $
+.\"	$OpenBSD: pipe.2,v 1.20 2025/08/04 17:34:07 schwarze Exp $
 .\"	$NetBSD: pipe.2,v 1.6 1995/02/27 12:35:27 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -81,14 +81,13 @@ function is identical to
 .Fn pipe
 except that the non-blocking I/O mode,
 close-on-exec flag,
-and close-on-fork flag are
-determined by the
+and close-on-fork flag of both new file descriptors are determined by the
 .Dv O_NONBLOCK , O_CLOEXEC ,
 and
 .Dv O_CLOFORK
-flags, respectively, in the
+flags in the
 .Fa flags
-argument.
+argument, respectively.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
