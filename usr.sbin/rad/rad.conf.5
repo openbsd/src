@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.31 2025/07/08 14:26:45 schwarze Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.32 2025/08/04 11:52:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2025 $
+.Dd $Mdocdate: August 4 2025 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -156,12 +156,12 @@ block.
 In addition an interface block can contain a list of prefixes:
 .Pp
 .Bl -tag -width Ds -compact
-.It Oo Ic no Oc Ic auto prefix Op Brq Ar option ...
+.It Oo Cm no Oc Ic auto prefix Op Brq Ar option ...
 .It Ic prefix Ar prefix Op Brq Ar option ...
 The default is to discover prefixes to announce by inspecting the IPv6
 addresses configured on an interface.
 This can be disabled with
-.Ic no auto prefix .
+.Cm no Ic auto prefix .
 If
 .Ar prefix
 is specified without a prefix length, its default is 64.
