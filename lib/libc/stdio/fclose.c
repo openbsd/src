@@ -1,4 +1,4 @@
-/*	$OpenBSD: fclose.c,v 1.14 2025/07/16 15:33:05 yasuoka Exp $ */
+/*	$OpenBSD: fclose.c,v 1.15 2025/08/04 01:44:33 dlg Exp $ */
 /*-
  * Copyright (c) 1990, 1993 The Regents of the University of California.
  * Copyright (c) 2013 Mariusz Zaborski <oshogbo@FreeBSD.org>
@@ -52,8 +52,13 @@ __cleanfile(FILE *fp, int doclose)
 	if (HASLB(fp))
 		FREELB(fp);
 	fp->_r = fp->_w = 0;	/* Mess up if reaccessed. */
-	fp->_flags = 0;		/* Release this FILE for reuse. */
 	return r;
+}
+
+void
+__relefile(FILE *fp)
+{
+	fp->_flags = 0;		/* Release this FILE for reuse. */
 }
 
 int
@@ -68,6 +73,7 @@ fclose(FILE *fp)
 	FLOCKFILE(fp);
 	r = __cleanfile(fp, 1);
 	FUNLOCKFILE(fp);
+	__relefile(fp);
 	return (r);
 }
 DEF_STRONG(fclose);

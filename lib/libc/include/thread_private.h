@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.39 2025/07/16 16:22:58 deraadt Exp $ */
+/* $OpenBSD: thread_private.h,v 1.40 2025/08/04 01:44:33 dlg Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -382,6 +382,12 @@ struct __rcmtx {
 	struct __cmtx		mtx;
 	unsigned int		depth;
 };
+
+#define __RCMTX_INITIALIZER() {						\
+	.owner = NULL,							\
+	.mtx = __CMTX_INITIALIZER(),					\
+	.depth = 0,							\
+}
 
 struct pthread_mutex_attr {
 	int ma_type;

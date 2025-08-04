@@ -1,4 +1,4 @@
-/*	$OpenBSD: findfp.c,v 1.21 2025/07/16 15:33:05 yasuoka Exp $ */
+/*	$OpenBSD: findfp.c,v 1.22 2025/08/04 01:44:33 dlg Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,12 @@ static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
 static struct glue *lastglue = &uglue;
 static void *sfp_mutex;
 
-static struct __sfileext __sFext[3];
+static struct __sfileext __sFext[3] = {
+	{ ._lock = __RCMTX_INITIALIZER() },
+	{ ._lock = __RCMTX_INITIALIZER() },
+	{ ._lock = __RCMTX_INITIALIZER() },
+};
+
 /*
  * These are separate variables because they may end up copied
  * into program images via COPY relocations, so their addresses

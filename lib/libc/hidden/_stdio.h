@@ -1,4 +1,4 @@
-/*	$OpenBSD: _stdio.h,v 1.2 2025/07/23 08:17:23 yasuoka Exp $	*/
+/*	$OpenBSD: _stdio.h,v 1.3 2025/08/04 01:44:32 dlg Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -37,6 +37,8 @@
 
 #ifndef _LIBC__STDIO_H_
 #define _LIBC__STDIO_H_
+
+#include "thread_private.h"
 
 /*
  * NB: to fit things in six character monocase externals, the stdio

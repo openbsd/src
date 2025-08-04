@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileext.h,v 1.2 2005/06/17 20:40:32 espie Exp $	*/
+/*	$OpenBSD: fileext.h,v 1.3 2025/08/04 01:44:33 dlg Exp $	*/
 /* $NetBSD: fileext.h,v 1.5 2003/07/18 21:46:41 nathanw Exp $ */
 
 /*-
@@ -35,6 +35,7 @@
 struct __sfileext {
 	struct	__sbuf _ub; /* ungetc buffer */
 	struct wchar_io_data _wcio;	/* wide char io status */
+	struct __rcmtx _lock;
 };
 
 #define _EXT(fp) ((struct __sfileext *)((fp)->_ext._base))
@@ -45,6 +46,7 @@ do { \
 	_UB(fp)._base = NULL; \
 	_UB(fp)._size = 0; \
 	WCIO_INIT(fp); \
+	__rcmtx_init(&_EXT(fp)->_lock); \
 } while (0)
 
 #define _FILEEXT_SETUP(f, fext) \

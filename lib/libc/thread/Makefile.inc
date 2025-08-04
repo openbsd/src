@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.19 2020/02/06 03:13:45 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.20 2025/08/04 01:44:33 dlg Exp $
 
 .PATH: ${LIBCSRCDIR}/thread
 
@@ -8,7 +8,6 @@ SRCS+=	callbacks.c atfork.c
 SRCS+=	rthread.c \
 	rthread_condattr.c \
 	rthread_debug.c \
-	rthread_file.c \
 	rthread_libc.c \
 	rthread_once.c \
 	rthread_tls.c \

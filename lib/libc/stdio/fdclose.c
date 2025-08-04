@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdclose.c,v 1.1 2025/07/16 15:33:05 yasuoka Exp $ */
+/*	$OpenBSD: fdclose.c,v 1.2 2025/08/04 01:44:33 dlg Exp $ */
 /*-
  * Copyright (c) 1990, 1993 The Regents of the University of California.
  * Copyright (c) 2013 Mariusz Zaborski <oshogbo@FreeBSD.org>
@@ -67,6 +67,7 @@ fdclose(FILE *fp, int *fdp)
 		r = __cleanfile(fp, 0);
 	}
 	FUNLOCKFILE(fp);
+	__relefile(fp);
 
 	return r;
 }

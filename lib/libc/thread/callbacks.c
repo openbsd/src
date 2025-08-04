@@ -51,9 +51,6 @@ _thread_set_callbacks(const struct thread_callbacks *cb, size_t len)
 		 * here when we actually need to prep for doing MT.
 		 */
 		_thread_cb.tc_canceled		= _thread_canceled;
-		_thread_cb.tc_flockfile		= _thread_flockfile;
-		_thread_cb.tc_ftrylockfile	= _thread_ftrylockfile;
-		_thread_cb.tc_funlockfile	= _thread_funlockfile;
 		_thread_cb.tc_malloc_lock	= _thread_malloc_lock;
 		_thread_cb.tc_malloc_unlock	= _thread_malloc_unlock;
 		_thread_cb.tc_atexit_lock	= _thread_atexit_lock;

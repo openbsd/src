@@ -1,4 +1,4 @@
-/*	$OpenBSD: local.h,v 1.25 2016/05/23 00:21:48 guenther Exp $	*/
+/*	$OpenBSD: local.h,v 1.26 2025/08/04 01:44:33 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -97,11 +97,11 @@ __END_HIDDEN_DECLS
 
 #define FLOCKFILE(fp)							\
 	do {								\
-		if (_thread_cb.tc_flockfile != NULL)			\
-			_thread_cb.tc_flockfile(fp);			\
+		if (__isthreaded)					\
+			__rcmtx_enter(&_EXT(fp)->_lock);		\
 	} while (0)
 #define FUNLOCKFILE(fp)							\
 	do {								\
-		if (_thread_cb.tc_funlockfile != NULL)			\
-			_thread_cb.tc_funlockfile(fp);			\
+		if (__isthreaded)					\
+			__rcmtx_leave(&_EXT(fp)->_lock);		\
 	} while (0)

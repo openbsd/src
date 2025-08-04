@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.9 2025/07/16 15:33:05 yasuoka Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.10 2025/08/04 01:44:32 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -35,6 +35,7 @@ PROTO_NORMAL(__swbuf);
 
 __BEGIN_HIDDEN_DECLS
 int	__cleanfile(FILE *, int _doclose);
+void	__relefile(FILE *);
 char	*_mktemp(char *);
 __END_HIDDEN_DECLS
 

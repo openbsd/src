@@ -1,4 +1,4 @@
-/*	$OpenBSD: flockfile.c,v 1.9 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: flockfile.c,v 1.10 2025/08/04 01:44:33 dlg Exp $	*/
 
 #include <stdio.h>
 #include "local.h"
@@ -14,8 +14,8 @@ DEF_WEAK(flockfile);
 int
 ftrylockfile(FILE *fp)
 {
-	if (_thread_cb.tc_ftrylockfile != NULL)
-		return (_thread_cb.tc_ftrylockfile(fp));
+	if (__isthreaded)
+		return __rcmtx_enter_try(&_EXT(fp)->_lock) ? 0 : 1;
 
 	return 0;
 }
