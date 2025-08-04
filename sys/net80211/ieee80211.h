@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.63 2022/03/14 15:07:24 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.64 2025/08/04 11:39:50 stsp Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -102,6 +102,8 @@ struct ieee80211_htframe_addr4 {	/* 11n */
 	u_int8_t	i_qos[2];
 	u_int8_t	i_ht[4];
 } __packed;
+
+#define IEEE80211_MAX_FRAME_HDR_LEN	(sizeof(struct ieee80211_htframe_addr4))
 
 #define	IEEE80211_FC0_VERSION_MASK		0x03
 #define	IEEE80211_FC0_VERSION_SHIFT		0

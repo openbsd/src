@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.86 2025/08/03 10:07:24 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.87 2025/08/04 11:39:50 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16738,7 +16738,7 @@ qwx_dp_rx_h_undecap_nwifi(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 {
 	struct ieee80211_frame *wh;
 	struct ieee80211_qosframe *qwh;
-	uint8_t decap_hdr[DP_MAX_NWIFI_HDR_LEN];
+	uint8_t decap_hdr[IEEE80211_MAX_FRAME_HDR_LEN];
 	uint8_t da[IEEE80211_ADDR_LEN];
 	uint8_t sa[IEEE80211_ADDR_LEN];
 	u_int hdr_len;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxreg.h,v 1.11 2025/08/03 10:07:24 stsp Exp $	*/
+/*	$OpenBSD: qwxreg.h,v 1.12 2025/08/04 11:39:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021-2022, Qualcomm Innovation Center, Inc.
@@ -10423,8 +10423,6 @@ enum rx_desc_sw_frame_grp_id {
 	RX_DESC_SW_FRAME_GRP_ID_UNSUPPORTED,
 	RX_DESC_SW_FRAME_GRP_ID_PHY_ERR,
 };
-
-#define DP_MAX_NWIFI_HDR_LEN	30
 
 #define DP_RX_MPDU_ERR_FCS			BIT(0)
 #define DP_RX_MPDU_ERR_DECRYPT			BIT(1)
