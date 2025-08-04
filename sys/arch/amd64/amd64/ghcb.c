@@ -576,3 +576,66 @@ ghcb_mem_write_8(uint64_t addr, uint64_t v)
 	if (_ghcb_mem_rw(addr, GHCB_SZ64, &val, 0))
 		panic("_ghcb_mem_rw() failed");
 }
+
+/*
+ * ghcb_msr_rw
+ *
+ * Paravirtualize WRMSR and RDMSR instructions by directly calling
+ * vmgexit().
+ */
+void
+ghcb_msr_rw(int msr, uint64_t *val, int read)
+{
+	struct ghcb_sync	 syncout, syncin;
+	struct ghcb_sa		*ghcb;
+	struct ghcb_extra_regs	 ghcb_regs;
+	struct trapframe	 frame;
+	unsigned long		 s;
+
+	KASSERT(val != NULL);
+
+	memset(&syncout, 0, sizeof(syncout));
+	memset(&syncin, 0, sizeof(syncin));
+	memset(&ghcb_regs, 0, sizeof(ghcb_regs));
+	memset(&frame, 0, sizeof(frame));
+
+	ghcb_regs.exitcode = SVM_VMEXIT_MSR;
+	frame.tf_rcx = msr;
+
+	if (!read) {
+		ghcb_regs.exitinfo1 = 1;		/* WRMSR */
+		frame.tf_rax = *val & 0xffffffff;
+		frame.tf_rdx = *val >> 32;
+		ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncout);
+		ghcb_sync_val(GHCB_RDX, GHCB_SZ32, &syncout);
+	} else {
+		ghcb_regs.exitinfo1 = 0;		/* RDMSR */
+		ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncin);
+		ghcb_sync_val(GHCB_RDX, GHCB_SZ32, &syncin);
+	}
+
+	ghcb_sync_val(GHCB_RCX, GHCB_SZ32, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITCODE, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO1, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO2, GHCB_SZ64, &syncout);
+
+	s = intr_disable();
+
+	ghcb = (struct ghcb_sa *)ghcb_vaddr;
+	ghcb_sync_out(&frame, &ghcb_regs, ghcb, &syncout);
+
+	vmgexit();
+
+	if (ghcb_verify_bm(ghcb->valid_bitmap, syncin.valid_bitmap)) {
+		ghcb_clear(ghcb);
+		panic("invalid hypervisor response");
+	}
+
+	if (read)
+		ghcb_sync_in(&frame, NULL, ghcb, &syncin);
+
+	intr_restore(s);
+
+	if (read && val)
+		*val = ((frame.tf_rdx << 32) | frame.tf_rax);
+}

@@ -131,6 +131,7 @@ void	ghcb_sync_out(struct trapframe *, const struct ghcb_extra_regs *,
 	    struct ghcb_sa *, struct ghcb_sync *);
 void	ghcb_sync_in(struct trapframe *, uint64_t *, struct ghcb_sa *,
 	    struct ghcb_sync *);
+void	ghcb_msr_rw(int, uint64_t *, int);
 
 uint8_t		ghcb_io_read_1(unsigned int);
 uint16_t	ghcb_io_read_2(unsigned int);
@@ -146,6 +147,22 @@ void		ghcb_mem_write_1(uint64_t, uint8_t);
 void		ghcb_mem_write_2(uint64_t, uint16_t);
 void		ghcb_mem_write_4(uint64_t, uint32_t);
 void		ghcb_mem_write_8(uint64_t, uint64_t);
+
+static inline void
+ghcb_wrmsr(int msr, uint64_t val)
+{
+	ghcb_msr_rw(msr, &val, 0);
+}
+
+static inline uint64_t
+ghcb_rdmsr(int msr)
+{
+	uint64_t val;
+
+	ghcb_msr_rw(msr, &val, 1);
+
+	return val;
+}
 
 #endif /* !_LOCORE */
 
