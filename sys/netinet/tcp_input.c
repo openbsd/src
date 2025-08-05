@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.457 2025/07/24 21:34:07 mvs Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.458 2025/08/05 09:51:12 jan Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4385,7 +4385,7 @@ tcp_softlro_compare(struct ether_extracted *head, struct ether_extracted *tail)
 			return 0;
 
 		/* Check max. IPv4 length. */
-		if (head->iplen + tail->iplen > IP_MAXPACKET)
+		if (head->iplen + tail->iplen > IP_MAXPACKET - max_linkhdr)
 			return 0;
 	} else if (head->ip6 && tail->ip6) {
 		/* Check IPv6 addresses. */
@@ -4397,7 +4397,7 @@ tcp_softlro_compare(struct ether_extracted *head, struct ether_extracted *tail)
 
 		/* Check max. IPv6 length. */
 		if ((head->iplen - head->iphlen) +
-		    (tail->iplen - tail->iphlen) > IPV6_MAXPACKET)
+		    (tail->iplen - tail->iphlen) > IPV6_MAXPACKET - max_linkhdr)
 			return 0;
 	} else {
 		/* Address family does not match. */
