@@ -1,4 +1,4 @@
-.\" $OpenBSD: man.7,v 1.64 2025/08/05 00:08:41 schwarze Exp $
+.\" $OpenBSD: man.7,v 1.65 2025/08/05 18:44:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2011-2015, 2017-2020, 2023, 2025
 .\"               Ingo Schwarze <schwarze@openbsd.org>
@@ -258,8 +258,12 @@ link description to be shown
 .Ed
 .It Ic OP
 Optional command-line argument.
-This is a rarely used DWB extension.
-It has the following syntax:
+This is a deprecated GNU extension.
+The name and purpose of the macro match an earlier DWB extension,
+but both the syntax and semantics are incompatible.
+In GNU and
+.Xr mandoc 1 ,
+it has the following syntax:
 .Pp
 .D1 Pf . Ic OP Ar key Op Ar value
 .Pp
@@ -527,7 +531,7 @@ The syntax is as follows:
 .It Ic IB  Ta    n         Ta    current   Ta    \&
 .It Ic IR  Ta    n         Ta    current   Ta    \&
 .It Ic MR  Ta    2 or 3    Ta    current   Ta    Plan 9
-.It Ic OP  Ta    >=1       Ta    current   Ta    DWB
+.It Ic OP  Ta    1 or 2    Ta    current   Ta    GNU
 .It Ic PD  Ta    1         Ta    current   Ta    \&
 .It Ic RB  Ta    n         Ta    current   Ta    \&
 .It Ic RI  Ta    n         Ta    current   Ta    \&
