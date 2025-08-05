@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.c,v 1.7 2023/06/24 16:01:44 jsing Exp $ */
+/*	$OpenBSD: bn_arch.c,v 1.8 2025/08/05 15:01:13 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -78,7 +78,7 @@ bn_mul_words(BN_ULONG *rd, const BN_ULONG *ad, int num, BN_ULONG w)
 
 #ifdef HAVE_BN_MUL_COMBA4
 void
-bn_mul_comba4(BN_ULONG *rd, BN_ULONG *ad, BN_ULONG *bd)
+bn_mul_comba4(BN_ULONG *rd, const BN_ULONG *ad, const BN_ULONG *bd)
 {
 	/* XXX - consider using non-alt on CPUs that have the ADX extension. */
 	bignum_mul_4_8_alt((uint64_t *)rd, (uint64_t *)ad, (uint64_t *)bd);
@@ -87,7 +87,7 @@ bn_mul_comba4(BN_ULONG *rd, BN_ULONG *ad, BN_ULONG *bd)
 
 #ifdef HAVE_BN_MUL_COMBA8
 void
-bn_mul_comba8(BN_ULONG *rd, BN_ULONG *ad, BN_ULONG *bd)
+bn_mul_comba8(BN_ULONG *rd, const BN_ULONG *ad, const BN_ULONG *bd)
 {
 	/* XXX - consider using non-alt on CPUs that have the ADX extension. */
 	bignum_mul_8_16_alt((uint64_t *)rd, (uint64_t *)ad, (uint64_t *)bd);

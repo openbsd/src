@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.40 2025/08/03 10:32:04 tb Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.41 2025/08/05 15:01:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@
  */
 #ifndef HAVE_BN_MUL_COMBA4
 void
-bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
+bn_mul_comba4(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b)
 {
 	BN_ULONG c0, c1, c2;
 
@@ -110,7 +110,7 @@ bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
  */
 #ifndef HAVE_BN_MUL_COMBA8
 void
-bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
+bn_mul_comba8(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b)
 {
 	BN_ULONG c0, c1, c2;
 
