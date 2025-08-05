@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_words.c,v 1.2 2025/08/02 16:20:00 jsing Exp $	*/
+/*	$OpenBSD: bn_mod_words.c,v 1.3 2025/08/05 15:15:54 jsing Exp $	*/
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -73,7 +73,18 @@ void
 bn_mod_mul_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     const BN_ULONG *m, BN_ULONG *t, BN_ULONG m0, size_t n)
 {
-	bn_montgomery_multiply_words(r, a, b, m, t, m0, n);
+	if (n == 4) {
+		bn_mul_comba4(t, a, b);
+		bn_montgomery_reduce_words(r, t, m, m0, n);
+	} else if (n == 6) {
+		bn_mul_comba6(t, a, b);
+		bn_montgomery_reduce_words(r, t, m, m0, n);
+	} else if (n == 8) {
+		bn_mul_comba8(t, a, b);
+		bn_montgomery_reduce_words(r, t, m, m0, n);
+	} else {
+		bn_montgomery_multiply_words(r, a, b, m, t, m0, n);
+	}
 }
 #endif
 
@@ -87,6 +98,17 @@ void
 bn_mod_sqr_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *m,
     BN_ULONG *t, BN_ULONG m0, size_t n)
 {
-	bn_montgomery_multiply_words(r, a, a, m, t, m0, n);
+	if (n == 4) {
+		bn_sqr_comba4(t, a);
+		bn_montgomery_reduce_words(r, t, m, m0, n);
+	} else if (n == 6) {
+		bn_sqr_comba6(t, a);
+		bn_montgomery_reduce_words(r, t, m, m0, n);
+	} else if (n == 8) {
+		bn_sqr_comba8(t, a);
+		bn_montgomery_reduce_words(r, t, m, m0, n);
+	} else {
+		bn_montgomery_multiply_words(r, a, a, m, t, m0, n);
+	}
 }
 #endif
