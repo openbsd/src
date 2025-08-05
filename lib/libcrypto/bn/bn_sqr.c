@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.36 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.37 2025/08/05 15:08:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,6 +93,51 @@ bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 	bn_mul2_mulw_addtw(a[3], a[2], 0, c2, c1, &c2, &c1, &r[5]);
 
 	bn_mulw_addtw(a[3], a[3], 0, c2, c1, &c2, &r[7], &r[6]);
+}
+#endif
+
+/*
+ * bn_sqr_comba6() computes r[] = a[] * a[] using Comba multiplication
+ * (https://everything2.com/title/Comba+multiplication), where a is an
+ * six word array, producing an 12 word array result.
+ */
+#ifndef HAVE_BN_SQR_COMBA6
+void
+bn_sqr_comba6(BN_ULONG *r, const BN_ULONG *a)
+{
+	BN_ULONG c2, c1, c0;
+
+	bn_mulw_addtw(a[0], a[0], 0, 0, 0, &c2, &c1, &r[0]);
+
+	bn_mul2_mulw_addtw(a[1], a[0], 0, c2, c1, &c2, &c1, &r[1]);
+
+	bn_mulw_addtw(a[1], a[1], 0, c2, c1, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[2], a[0], c2, c1, c0, &c2, &c1, &r[2]);
+
+	bn_mul2_mulw_addtw(a[3], a[0], 0, c2, c1, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[2], a[1], c2, c1, c0, &c2, &c1, &r[3]);
+
+	bn_mulw_addtw(a[2], a[2], 0, c2, c1, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[3], a[1], c2, c1, c0, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[4], a[0], c2, c1, c0, &c2, &c1, &r[4]);
+
+	bn_mul2_mulw_addtw(a[5], a[0], 0, c2, c1, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[4], a[1], c2, c1, c0, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[3], a[2], c2, c1, c0, &c2, &c1, &r[5]);
+
+	bn_mulw_addtw(a[3], a[3], 0, c2, c1, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[4], a[2], c2, c1, c0, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[5], a[1], c2, c1, c0, &c2, &c1, &r[6]);
+
+	bn_mul2_mulw_addtw(a[5], a[2], 0, c2, c1, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[4], a[3], c2, c1, c0, &c2, &c1, &r[7]);
+
+	bn_mulw_addtw(a[4], a[4], 0, c2, c1, &c2, &c1, &c0);
+	bn_mul2_mulw_addtw(a[5], a[3], c2, c1, c0, &c2, &c1, &r[8]);
+
+	bn_mul2_mulw_addtw(a[5], a[4], 0, c2, c1, &c2, &c1, &r[9]);
+
+	bn_mulw_addtw(a[5], a[5], 0, c2, c1, &c2, &r[11], &r[10]);
 }
 #endif
 
