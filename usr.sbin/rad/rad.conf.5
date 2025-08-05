@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.32 2025/08/04 11:52:36 schwarze Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.33 2025/08/05 13:22:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 4 2025 $
+.Dd $Mdocdate: August 5 2025 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -76,16 +76,25 @@ Act as a default router or not.
 The default is
 .Cm yes .
 .It Ic dns Brq Ar option ...
+Add a DNS router advertisement option
+to communicate network provided nameservers.
+In a
 .Ic dns
-options are as follows:
+block, a
+.Cm search
+option or at least one
+.Cm nameserver
+option is required, whereas specifying the
+.Cm lifetime
+is optional:
 .Bl -tag -width Ds
-.It Ic lifetime Ar seconds
+.It Cm lifetime Ar seconds
 The number of seconds the dns options are valid after receiving a router
 advertisement message.
 The default is 1800 seconds.
-.It Ic nameserver Pq Ar address Ns | Ns Brq Ar address ...
+.It Cm nameserver Pq Ar address Ns | Ns Brq Ar address ...
 IPv6 address or list of IPv6 addresses of DNS name servers.
-.It Ic search Pq Ar domain Ns | Ns Brq Ar domain ...
+.It Cm search Pq Ar domain Ns | Ns Brq Ar domain ...
 Domain or list of domains for the
 .Xr resolv.conf 5
 search list.
@@ -115,7 +124,7 @@ is specified without a prefix length, its default is 64.
 .Ic nat64 prefix
 options are as follows:
 .Bl -tag -width Ds
-.It Ic lifetime Ar seconds
+.It Cm lifetime Ar seconds
 The number of seconds the nat64 prefix option is valid after receiving a router
 advertisement message.
 A value of zero indicates to not use the prefix anymore.
@@ -148,7 +157,11 @@ The default is
 .Cm yes .
 .El
 .Ss Interfaces
-A list of interfaces or interface groups to send advertisements on:
+This section contains a list of interfaces or interface groups
+to send advertisements on.
+At least one
+.Ic interface
+is required.
 .Bl -tag -width Ds
 .It Ic interface Ar name Op Brq Ar prefix ...
 Options set in the global section can be overwritten inside an interface
@@ -169,21 +182,21 @@ is specified without a prefix length, its default is 64.
 .Ic prefix
 options are as follows:
 .Bl -tag -width Ds
-.It Ic autonomous address-configuration Pq Cm yes Ns | Ns Cm no
+.It Cm autonomous address-configuration Pq Cm yes Ns | Ns Cm no
 This prefix can be used to generate IPv6 addresses.
 The default is
 .Cm yes .
-.It Ic on-link Pq Cm yes Ns | Ns Cm no
+.It Cm on-link Pq Cm yes Ns | Ns Cm no
 This prefix is considered on-link.
 The default is
 .Cm yes .
-.It Ic preferred lifetime Ar seconds
+.It Cm preferred lifetime Ar seconds
 The preferred lifetime (pltime) in seconds for addresses generated from this
 prefix.
 The default is 2700.
 This option is ignored if the prefix is discovered from a network interface
 and it has a preferred lifetime configured.
-.It Ic valid lifetime Ar seconds
+.It Cm valid lifetime Ar seconds
 The valid lifetime (vltime) in seconds for addresses generated from this
 prefix.
 The default is 5400.
