@@ -1,4 +1,4 @@
-.\" $OpenBSD: man.7,v 1.63 2025/08/04 19:21:47 schwarze Exp $
+.\" $OpenBSD: man.7,v 1.64 2025/08/05 00:08:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2011-2015, 2017-2020, 2023, 2025
 .\"               Ingo Schwarze <schwarze@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 4 2025 $
+.Dd $Mdocdate: August 5 2025 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -100,6 +100,7 @@ but can be found in the alphabetical reference below.
 .It Ic PP Ta start an undecorated paragraph (no arguments)
 .It Ic IP Ta indented paragraph: Op Ar head Op Ar width
 .It Ic TP Ta tagged paragraph: Op Ar width
+.It Ic HP Ta hanged paragraph: Op Ar width
 .It Ic PD Ta set vertical paragraph distance: Op Ar height
 .It Ic EX , EE Ta display an example (no arguments)
 .It Ic RS , RE Ta reset the left margin: Op Ar width
@@ -199,11 +200,6 @@ argument is a
 scaling width.
 If specified, it's saved for later paragraph left margins;
 if unspecified, the saved or default width is used.
-.Pp
-This macro is portable, but deprecated
-because it has no good representation in HTML output,
-usually ending up indistinguishable from
-.Ic PP .
 .It Ic I
 Text is rendered in italics.
 .It Ic IB
