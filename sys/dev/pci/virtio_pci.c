@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.51 2025/01/29 14:03:18 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.52 2025/08/05 09:48:44 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -151,6 +151,7 @@ struct virtio_pci_softc {
 struct virtio_pci_attach_args {
 	struct virtio_attach_args	 vpa_va;
 	struct pci_attach_args		*vpa_pa;
+	int				 vpa_msix;
 };
 
 
@@ -596,7 +597,7 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcitag_t tag = pa->pa_tag;
 	int revision, product, vendor, ret = ENODEV, flags;
 	pcireg_t id;
-	struct virtio_pci_attach_args vpa = { { 0 }, pa };
+	struct virtio_pci_attach_args vpa = { { 0 }, pa, 0 };
 
 	revision = PCI_REVISION(pa->pa_class);
 	product = PCI_PRODUCT(pa->pa_id);
@@ -632,7 +633,10 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	sc->sc_nintr = min(MAX_MSIX_VECS, pci_intr_msix_count(pa));
-	sc->sc_nintr = max(sc->sc_nintr, 1);
+	if (sc->sc_nintr > 0)
+		vpa.vpa_msix = 1;
+	else
+		sc->sc_nintr = 1;
 	vpa.vpa_va.va_nintr = sc->sc_nintr;
 
 	sc->sc_intr = mallocarray(sc->sc_nintr, sizeof(*sc->sc_intr),
@@ -978,6 +982,9 @@ virtio_pci_msix_establish(struct virtio_pci_softc *sc,
 	int r;
 
 	KASSERT(idx < sc->sc_nintr);
+
+	if (!vpa->vpa_msix)
+		return ENXIO;
 
 	r = pci_intr_map_msix(vpa->vpa_pa, idx, &ih);
 	if (r != 0) {
