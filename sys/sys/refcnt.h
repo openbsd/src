@@ -1,4 +1,4 @@
-/*	$OpenBSD: refcnt.h,v 1.15 2025/07/14 08:47:15 dlg Exp $ */
+/*	$OpenBSD: refcnt.h,v 1.16 2025/08/05 12:52:20 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -35,7 +35,7 @@ struct refcnt {
 #ifdef _KERNEL
 
 void	refcnt_init(struct refcnt *);
-void	refcnt_init_trace(struct refcnt *, int id);
+void	refcnt_init_trace(struct refcnt *, int);
 void	refcnt_take(struct refcnt *);
 int	refcnt_rele(struct refcnt *);
 void	refcnt_rele_wake(struct refcnt *);

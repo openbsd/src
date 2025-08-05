@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.230 2025/07/28 05:08:35 dlg Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.231 2025/08/05 12:52:20 bluhm Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -900,9 +900,9 @@ refcnt_init(struct refcnt *r)
 }
 
 void
-refcnt_init_trace(struct refcnt *r, int idx)
+refcnt_init_trace(struct refcnt *r, int trace)
 {
-	r->r_traceidx = idx;
+	r->r_traceidx = trace;
 	atomic_store_int(&r->r_refs, 1);
 	TRACEINDEX(refcnt, r->r_traceidx, r, 0, +1);
 }
