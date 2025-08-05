@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.29 2025/08/05 12:52:20 bluhm Exp $
+.\" $OpenBSD: rwlock.9,v 1.30 2025/08/05 14:25:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -48,7 +48,13 @@
 .Fn rw_init "struct rwlock *rwl" "const char *name"
 .Ft void
 .Fn rw_init_flags "struct rwlock *rwl" "const char *name" "int flags"
-.Fn rw_init_flags_trace "struct rwlock *rwl" "const char *name" "int flags" "int trace"
+.Ft void
+.Fo rw_init_flags_trace
+.Fa "struct rwlock *rwl"
+.Fa "const char *name"
+.Fa "int flags"
+.Fa "int trace"
+.Fc
 .Ft int
 .Fn rw_enter "struct rwlock *rwl" "int flags"
 .Ft void
@@ -126,7 +132,9 @@ Instructs
 to ignore this lock.
 .El
 .Fn rw_init_flags_trace
-additionally accepts a dt(4) static probe index.
+additionally accepts a
+.Xr dt 4
+static probe index.
 .Pp
 The
 .Fn rw_enter
@@ -204,7 +212,9 @@ The
 argument specifies the name of the lock, which is used as the wait message
 if the thread needs to sleep.
 .Fn RWLOCK_INITIALIZER_TRACE
-additionally accepts a dt(4) static probe index.
+additionally accepts a
+.Xr dt 4
+static probe index.
 .Pp
 The
 .Nm rrwlock
