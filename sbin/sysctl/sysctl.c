@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.267 2025/06/21 22:08:44 bluhm Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.268 2025/08/06 16:50:53 florian Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -692,10 +692,6 @@ parse(char *string, int flags)
 			len = sysctl_inet6(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
-
-			if (mib[2] == IPPROTO_IPV6 &&
-			    mib[3] == IPV6CTL_SOIIKEY)
-				special |= HEX;
 
 			if ((mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMFC) ||
 			    (mib[2] == IPPROTO_IPV6 && mib[3] == IPV6CTL_MRTMIF)) {

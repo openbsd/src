@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.584 2025/06/17 01:36:55 dlg Exp $
+#	$OpenBSD: rc,v 1.585 2025/08/06 16:50:53 florian Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -163,9 +163,7 @@ make_keys() {
 	    (read sz fp comm type && echo "sshd: $type $fp")
 
 	if [[ ! -f /etc/soii.key ]]; then
-		openssl rand -hex 16 > /etc/soii.key &&
-		    chmod 600 /etc/soii.key && sysctl -q \
-		    "net.inet6.ip6.soiikey=$(</etc/soii.key)"
+		openssl rand -hex 16 > /etc/soii.key && chmod 600 /etc/soii.key
 	fi
 }
 

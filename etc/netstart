@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.234 2022/12/18 15:52:52 kn Exp $
+#	$OpenBSD: netstart,v 1.235 2025/08/06 16:50:53 florian Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -358,13 +358,6 @@ shift $((OPTIND-1))
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	IP6KERNEL=true
-fi
-
-# Load key material for the generation of IPv6 Semantically Opaque Interface
-# Identifiers (SOII) used for SLAAC addresses.
-if $IP6KERNEL && ! $PRINT_ONLY; then
-	[[ -f /etc/soii.key ]] &&
-		sysctl -q "net.inet6.ip6.soiikey=$(</etc/soii.key)"
 fi
 
 # If we were invoked with a list of interface names, just reconfigure these

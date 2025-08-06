@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.80 2025/04/26 17:50:04 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.81 2025/08/06 16:50:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -34,6 +34,7 @@
 #include <netinet6/in6_var.h>
 #include <netinet/icmp6.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -76,7 +77,9 @@ void	configure_gateway(struct imsg_configure_dfr *, uint8_t);
 void	add_gateway(struct imsg_configure_dfr *);
 void	delete_gateway(struct imsg_configure_dfr *);
 void	send_rdns_proposal(struct imsg_propose_rdns *);
-int	get_soiikey(uint8_t *);
+void	read_soiikey(void);
+int	parse_hex_char(char);
+ssize_t	parse_hex_string(unsigned char *, size_t, const char *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 int		main_imsg_compose_frontend(int, int, void *, uint16_t);
@@ -89,6 +92,7 @@ pid_t			 frontend_pid;
 pid_t			 engine_pid;
 
 int			 routesock, ioctl_sock, rtm_seq = 0;
+uint8_t			 soiikey[SLAACD_SOIIKEY_LEN];
 
 void
 main_sig_handler(int sig, short event, void *arg)
@@ -274,6 +278,8 @@ main(int argc, char *argv[])
 #ifndef SMALL
 	if ((control_fd = control_init(csock)) == -1)
 		warnx("control socket setup failed");
+
+	read_soiikey();
 #endif /* SMALL */
 
 	if (pledge("stdio inet sendfd wroute", NULL) == -1)
@@ -439,11 +445,10 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			    sizeof(imsg_ifinfo)) == -1)
 				fatalx("%s: invalid %s", __func__, i2s(type));
 
-			if (get_soiikey(imsg_ifinfo.soiikey) == -1)
-				log_warn("get_soiikey");
-			else
-				main_imsg_compose_engine(IMSG_UPDATE_IF, 0,
-				    &imsg_ifinfo, sizeof(imsg_ifinfo));
+			memcpy(imsg_ifinfo.soiikey, soiikey,
+			    SLAACD_SOIIKEY_LEN);
+			main_imsg_compose_engine(IMSG_UPDATE_IF, 0,
+			    &imsg_ifinfo, sizeof(imsg_ifinfo));
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__, type);
@@ -874,16 +879,78 @@ sin6_to_str(struct sockaddr_in6 *sin6)
 	}
 	return hbuf;
 }
-#endif	/* SMALL */
 
 int
-get_soiikey(uint8_t *key)
+parse_hex_char(char ch)
 {
-	int	 mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_SOIIKEY};
-	size_t	 size = SLAACD_SOIIKEY_LEN;
+	if (ch >= '0' && ch <= '9')
+		return (ch - '0');
 
-	return sysctl(mib, sizeof(mib) / sizeof(mib[0]), key, &size, NULL, 0);
+	ch = tolower((unsigned char)ch);
+	if (ch >= 'a' && ch <= 'f')
+		return (ch - 'a' + 10);
+
+	return (-1);
 }
+
+ssize_t
+parse_hex_string(unsigned char *dst, size_t dstlen, const char *src)
+{
+	size_t len = 0;
+	int digit;
+
+	memset(dst, 0, dstlen);
+	while (len < dstlen) {
+		if (*src == '\0')
+			return (len);
+
+		digit = parse_hex_char(*src++);
+		if (digit == -1)
+			return (-1);
+		dst[len] = digit << 4;
+
+		digit = parse_hex_char(*src++);
+		if (digit == -1)
+			return (-1);
+
+		dst[len] |= digit;
+		len++;
+	}
+
+	while (*src != '\0') {
+		if (parse_hex_char(*src++) == -1 ||
+		    parse_hex_char(*src++) == -1)
+			return (-1);
+
+		len++;
+	}
+
+	return (len);
+}
+
+void
+read_soiikey(void)
+{
+	int	 fd = -1;
+	char	 buf[33];
+
+	if ((fd = open("/etc/soii.key", O_RDONLY)) == -1)
+		goto err;
+	memset(buf, 0, sizeof(buf));
+	if (read(fd, buf, sizeof(buf) - 1) == -1)
+		goto err;
+	close(fd);
+	fd = -1;
+	if (parse_hex_string(soiikey, sizeof(soiikey), buf) == -1)
+		goto err;
+	return;
+ err:
+	memset(soiikey, 0, sizeof(soiikey));
+	if (fd != -1)
+		close(fd);
+}
+
+#endif	/* SMALL */
 
 void
 open_icmp6sock(int rdomain)
