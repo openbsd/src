@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.5 2023/04/19 12:30:09 jsg Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.6 2025/08/06 04:11:22 dlg Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -32,7 +32,7 @@ struct rthread_key {
 };
 
 static struct rthread_key rkeys[PTHREAD_KEYS_MAX];
-static _atomic_lock_t rkeyslock = _SPINLOCK_UNLOCKED;
+static struct __cmtx rkeyslock = __CMTX_INITIALIZER();
 
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
@@ -40,14 +40,14 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 	static int hint;
 	int i;
 
-	_spinlock(&rkeyslock);
+	__cmtx_enter(&rkeyslock);
 	if (rkeys[hint].used) {
 		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
 			if (!rkeys[i].used)
 				break;
 		}
 		if (i == PTHREAD_KEYS_MAX) {
-			_spinunlock(&rkeyslock);
+			__cmtx_leave(&rkeyslock);
 			return (EAGAIN);
 		}
 		hint = i;
@@ -58,7 +58,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void*))
 	*key = hint++;
 	if (hint >= PTHREAD_KEYS_MAX)
 		hint = 0;
-	_spinunlock(&rkeyslock);
+	__cmtx_leave(&rkeyslock);
 
 	return (0);
 }
@@ -73,7 +73,7 @@ pthread_key_delete(pthread_key_t key)
 	if (key < 0 || key >= PTHREAD_KEYS_MAX)
 		return (EINVAL);
 
-	_spinlock(&rkeyslock);
+	__cmtx_enter(&rkeyslock);
 	if (!rkeys[key].used) {
 		rv = EINVAL;
 		goto out;
@@ -91,7 +91,7 @@ pthread_key_delete(pthread_key_t key)
 	}
 
 out:
-	_spinunlock(&rkeyslock);
+	__cmtx_leave(&rkeyslock);
 	return (rv);
 }
 
@@ -165,7 +165,7 @@ _rthread_tls_destructors(pthread_t thread)
 	struct rthread_storage *rs;
 	int i;
 
-	_spinlock(&rkeyslock);
+	__cmtx_enter(&rkeyslock);
 	for (i = 0; i < PTHREAD_DESTRUCTOR_ITERATIONS; i++) {
 		for (rs = thread->local_storage; rs; rs = rs->next) {
 			if (!rs->data)
@@ -175,9 +175,9 @@ _rthread_tls_destructors(pthread_t thread)
 				    rkeys[rs->keyid].destructor;
 				void *data = rs->data;
 				rs->data = NULL;
-				_spinunlock(&rkeyslock);
+				__cmtx_leave(&rkeyslock);
 				destructor(data);
-				_spinlock(&rkeyslock);
+				__cmtx_enter(&rkeyslock);
 			}
 		}
 	}
@@ -185,5 +185,5 @@ _rthread_tls_destructors(pthread_t thread)
 		thread->local_storage = rs->next;
 		free(rs);
 	}
-	_spinunlock(&rkeyslock);
+	__cmtx_leave(&rkeyslock);
 }
