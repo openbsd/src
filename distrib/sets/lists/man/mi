@@ -1364,6 +1364,7 @@
 ./usr/share/man/man4/amdgpio.4
 ./usr/share/man/man4/amdiic.4
 ./usr/share/man/man4/amdpm.4
+./usr/share/man/man4/amdpmc.4
 ./usr/share/man/man4/ami.4
 ./usr/share/man/man4/amlclock.4
 ./usr/share/man/man4/amldwusb.4
