@@ -99,6 +99,9 @@ static void m88k_output_file_start (void);
 #undef TARGET_SCHED_ADJUST_COST
 #define TARGET_SCHED_ADJUST_COST m88k_adjust_cost
 
+#undef TARGET_DEFAULT_TARGET_FLAGS
+#define TARGET_DEFAULT_TARGET_FLAGS (TARGET_DEFAULT)
+
 #undef TARGET_HANDLE_OPTION
 #define TARGET_HANDLE_OPTION m88k_handle_option
 
