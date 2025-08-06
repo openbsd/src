@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.291 2025/08/06 05:23:06 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.292 2025/08/06 15:17:56 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -145,7 +145,8 @@ entity_free(struct entity *ent)
 
 /*
  * Read a queue entity from the descriptor.
- * Matched by entity_write_req().
+ * Matched by entity_write_req() and entity_write_repo().
+ * Both the parser and filemode modules use this function.
  * The pointer must be passed entity_free().
  */
 void
@@ -170,7 +171,7 @@ entity_read_req(struct ibuf *b, struct entity *ent)
 
 /*
  * Write the queue entity.
- * Matched by entity_read_req().
+ * Matched by entity_read_req() above.
  */
 static void
 entity_write_req(const struct entity *ent)
@@ -190,6 +191,10 @@ entity_write_req(const struct entity *ent)
 	io_close_buffer(procq, b);
 }
 
+/*
+ * Write a repository entity to inform the parser of a new repository.
+ * Matched by entity_read_req() above.
+ */
 static void
 entity_write_repo(const struct repo *rp)
 {
