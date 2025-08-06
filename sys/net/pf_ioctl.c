@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.422 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.423 2025/08/06 14:00:33 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2129,7 +2129,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			goto fail;
 		}
 		/* Fragments reference mbuf clusters. */
-		if (pl->index == PF_LIMIT_FRAGS && pl->limit > nmbclust) {
+		if (pl->index == PF_LIMIT_FRAGS &&
+		    pl->limit > atomic_load_long(&nmbclust)) {
 			error = EINVAL;
 			PF_UNLOCK();
 			goto fail;
