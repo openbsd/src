@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.167 2025/08/01 09:52:03 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.168 2025/08/06 05:23:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -97,9 +97,8 @@ repo_add(unsigned int id, char *path, char *validpath)
 	if (path != NULL)
 		if ((rp->path = strdup(path)) == NULL)
 			err(1, NULL);
-	if (validpath != NULL)
-		if ((rp->validpath = strdup(validpath)) == NULL)
-			err(1, NULL);
+	if ((rp->validpath = strdup(validpath)) == NULL)
+		err(1, NULL);
 
 	if ((error = pthread_rwlock_wrlock(&repos_lk)) != 0)
 		errx(1, "pthread_rwlock_wrlock: %s", strerror(error));

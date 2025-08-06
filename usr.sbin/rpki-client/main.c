@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.290 2025/08/01 13:46:06 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.291 2025/08/06 05:23:06 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -154,12 +154,18 @@ entity_read_req(struct ibuf *b, struct entity *ent)
 	io_read_buf(b, &ent->type, sizeof(ent->type));
 	io_read_buf(b, &ent->location, sizeof(ent->location));
 	io_read_buf(b, &ent->repoid, sizeof(ent->repoid));
-	io_read_buf(b, &ent->talid, sizeof(ent->talid));
-	io_read_buf(b, &ent->certid, sizeof(ent->certid));
-	io_read_opt_str(b, &ent->path);
-	io_read_opt_str(b, &ent->file);
-	io_read_opt_str(b, &ent->mftaki);
-	io_read_buf_alloc(b, (void **)&ent->data, &ent->datasz);
+
+	if (ent->type == RTYPE_REPO) {
+		io_read_opt_str(b, &ent->path);
+		io_read_str(b, &ent->file);
+	} else {
+		io_read_buf(b, &ent->talid, sizeof(ent->talid));
+		io_read_buf(b, &ent->certid, sizeof(ent->certid));
+		io_read_opt_str(b, &ent->path);
+		io_read_str(b, &ent->file);
+		io_read_opt_str(b, &ent->mftaki);
+		io_read_buf_alloc(b, (void **)&ent->data, &ent->datasz);
+	}
 }
 
 /*
@@ -192,21 +198,17 @@ entity_write_repo(const struct repo *rp)
 	enum location loc = DIR_UNKNOWN;
 	unsigned int repoid;
 	char *path, *altpath;
-	int talid = 0, certid = 0;
 
 	repoid = repo_id(rp);
 	path = repo_basedir(rp, 0);
 	altpath = repo_basedir(rp, 1);
+
 	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &loc, sizeof(loc));
 	io_simple_buffer(b, &repoid, sizeof(repoid));
-	io_simple_buffer(b, &talid, sizeof(talid));
-	io_simple_buffer(b, &certid, sizeof(certid));
-	io_str_buffer(b, path);
+	io_opt_str_buffer(b, path);
 	io_str_buffer(b, altpath);
-	io_opt_str_buffer(b, NULL);		/* ent->mftaki */
-	io_buf_buffer(b, NULL, 0);	/* ent->data */
 	io_close_buffer(procq, b);
 	free(path);
 	free(altpath);
