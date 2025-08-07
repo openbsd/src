@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.272 2025/07/31 13:00:54 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.273 2025/08/07 09:12:47 jsg Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 31 2025 $
+.Dd $Mdocdate: August 7 2025 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -667,7 +667,7 @@ This could create a race between finding foo.cmake and junking
 .Xr cmake 1
 at
 configure time.
-To prevent this, unless devel/cmake/core is explicitely part of
+To prevent this, unless devel/cmake/core is explicitly part of
 .Ev BUILD_DEPENDS ,
 .Xr cmake 1
 will be disabled by creating a link to false in ${WRKDIR}/bin/.
