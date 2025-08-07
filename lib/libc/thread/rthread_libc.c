@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.7 2025/08/02 11:17:00 dlg Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.8 2025/08/07 03:40:50 dlg Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -269,35 +269,35 @@ _thread_malloc_reinit(void)
 /*
  * atexit lock
  */
-static _atomic_lock_t atexit_lock = _SPINLOCK_UNLOCKED;
+static struct __cmtx atexit_lock = __CMTX_INITIALIZER();
 
 void
 _thread_atexit_lock(void)
 {
-	_spinlock(&atexit_lock);
+	__cmtx_enter(&atexit_lock);
 }
 
 void
 _thread_atexit_unlock(void)
 {
-	_spinunlock(&atexit_lock);
+	__cmtx_leave(&atexit_lock);
 }
 
 /*
  * atfork lock
  */
-static _atomic_lock_t atfork_lock = _SPINLOCK_UNLOCKED;
+static struct __cmtx atfork_lock = __CMTX_INITIALIZER();
 
 void
 _thread_atfork_lock(void)
 {
-	_spinlock(&atfork_lock);
+	__cmtx_enter(&atfork_lock);
 }
 
 void
 _thread_atfork_unlock(void)
 {
-	_spinunlock(&atfork_lock);
+	__cmtx_leave(&atfork_lock);
 }
 
 /*
