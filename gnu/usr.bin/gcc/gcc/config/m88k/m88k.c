@@ -1310,7 +1310,6 @@ static int  nregs;
 static int  nxregs;
 static char save_regs[FIRST_PSEUDO_REGISTER];
 static int  frame_laid_out;
-static int  frame_size;
 
 #define STACK_UNIT_BOUNDARY (STACK_BOUNDARY / BITS_PER_UNIT)
 #define ROUND_CALL_BLOCK_SIZE(BYTES) \
@@ -1323,7 +1322,7 @@ static int  frame_size;
 void
 m88k_layout_frame ()
 {
-  int regno, sp_size;
+  int regno, sp_size, frame_size;
 
   if (frame_laid_out && reload_completed)
     return;
