@@ -692,7 +692,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /* Similar, but for floating constants, and defining letters G and H.
    Here VALUE is the CONST_DOUBLE rtx itself.  For the m88000, the
-   constraints is:  `G' requires zero.  */
+   constraints are:  `G' requires zero, and `H' requires one or two.  */
 #define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)				\
   ((C) == 'G' ? (CONST_DOUBLE_HIGH (VALUE) == 0				\
 		 && CONST_DOUBLE_LOW (VALUE) == 0)			\
