@@ -1528,21 +1528,9 @@ m88k_output_function_epilogue (stream, size)
   if (insn == 0 || GET_CODE (insn) != BARRIER)
     asm_fprintf (stream, "\tjmp\t %R%s\n", reg_names[1]);
 
-  /* If the last insn is a barrier, and the insn before that is a call,
-     then add a nop instruction so that tdesc can walk the stack correctly
-     even though there is no epilogue. (Otherwise, the label for the
-     end of the tdesc region ends up at the start of the next function. */
-  if (insn && GET_CODE (insn) == BARRIER)
-    {
-      insn = prev_nonnote_insn (insn);
-      if (insn && GET_CODE (insn) == CALL_INSN)
-	asm_fprintf (stream, "\tor\t %R%s,%R%s,%R%s\n",
-		     reg_names[0], reg_names[0], reg_names[0]);
-    }
-
   fprintf (stream, "\n");
 
-  frame_laid_out	= 0;
+  frame_laid_out = 0;
 }
 
 void
