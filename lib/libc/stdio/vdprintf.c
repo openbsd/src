@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdprintf.c,v 1.3 2019/03/03 16:41:41 semarie Exp $	*/
+/*	$OpenBSD: vdprintf.c,v 1.4 2025/08/08 15:58:53 yasuoka Exp $	*/
 /*	$FreeBSD: src/lib/libc/stdio/vdprintf.c,v 1.4 2012/11/17 01:49:40 svnexp Exp $ */
 
 /*-
@@ -50,17 +50,12 @@ __dwrite(void *cookie, const char *buf, int n)
 int
 vdprintf(int fd, const char * __restrict fmt, va_list ap)
 {
-	FILE f;
-	struct __sfileext fext;
+	FILE f = FILEINIT(__SWR);
 	unsigned char buf[BUFSIZ];
 	int ret;
 
-	_FILEEXT_SETUP(&f, &fext);
-
 	f._p = buf;
 	f._w = sizeof(buf);
-	f._flags = __SWR;
-	f._file = -1;
 	f._bf._base = buf;
 	f._bf._size = sizeof(buf);
 	f._cookie = &fd;

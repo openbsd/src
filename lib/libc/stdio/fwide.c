@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwide.c,v 1.6 2019/12/03 05:03:37 asou Exp $	*/
+/*	$OpenBSD: fwide.c,v 1.7 2025/08/08 15:58:53 yasuoka Exp $	*/
 /* $NetBSD: fwide.c,v 1.2 2003/01/18 11:29:54 thorpej Exp $ */
 
 /*-
@@ -36,30 +36,12 @@
 int
 fwide(FILE *fp, int mode)
 {
-	struct wchar_io_data *wcio;
-
-	/*
-	 * this implementation use only -1, 0, 1
-	 * for mode value.
-	 * (we don't need to do this, but
-	 *  this can make things simpler.)
-	 */
-	if (mode > 0)
-		mode = 1;
-	else if (mode < 0)
-		mode = -1;
-
 	FLOCKFILE(fp);
-	wcio = WCIO_GET(fp);
-	if (!wcio) {
-		FUNLOCKFILE(fp);
-		return 0; /* XXX */
-	}
-
-	if (wcio->wcio_mode == 0 && mode != 0)
-		wcio->wcio_mode = mode;
+	if ((fp->_flags & (__SONW|__SOWD)) == 0 && mode != 0)
+		fp->_flags |= (mode > 0 ? __SOWD : __SONW);
 	else
-		mode = wcio->wcio_mode;
+		mode = (fp->_flags & __SOWD) ?  1 :
+		       (fp->_flags & __SONW) ? -1 : 0;
 	FUNLOCKFILE(fp);
 
 	return mode;

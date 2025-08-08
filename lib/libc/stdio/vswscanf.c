@@ -1,4 +1,4 @@
-/* $OpenBSD: vswscanf.c,v 1.3 2015/08/31 02:53:57 guenther Exp $ */
+/* $OpenBSD: vswscanf.c,v 1.4 2025/08/08 15:58:53 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,8 +53,7 @@ vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
     __va_list ap)
 {
 	mbstate_t mbs;
-	FILE f;
-	struct __sfileext fext;
+	FILE f = FILEINIT(__SRD);
 	char *mbstr;
 	size_t len, mlen;
 	int r;
@@ -75,12 +74,9 @@ vswscanf(const wchar_t * __restrict str, const wchar_t * __restrict fmt,
 	}
 	if (mlen == len)
 		mbstr[len] = '\0';
-	_FILEEXT_SETUP(&f, &fext);
-	f._flags = __SRD;
 	f._bf._base = f._p = (unsigned char *)mbstr;
 	f._bf._size = f._r = mlen;
 	f._read = eofread;
-	f._lb._base = NULL;
 	r = __vfwscanf(&f, fmt, ap);
 	free(mbstr);
 

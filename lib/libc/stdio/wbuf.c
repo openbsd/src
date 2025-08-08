@@ -1,4 +1,4 @@
-/*	$OpenBSD: wbuf.c,v 1.14 2023/10/06 16:41:02 millert Exp $ */
+/*	$OpenBSD: wbuf.c,v 1.15 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -79,4 +79,3 @@ __swbuf(int c, FILE *fp)
 			return (EOF);
 	return (c);
 }
-DEF_STRONG(__swbuf);

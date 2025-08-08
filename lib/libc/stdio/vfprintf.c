@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.83 2024/07/14 13:31:50 millert Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.84 2025/08/08 15:58:53 yasuoka Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -124,13 +124,10 @@ static int
 __sbprintf(FILE *fp, const char *fmt, va_list ap)
 {
 	int ret;
-	FILE fake;
-	struct __sfileext fakeext;
+	FILE fake = FILEINIT(fp->_flags & ~__SNBF);
 	unsigned char buf[BUFSIZ];
 
-	_FILEEXT_SETUP(&fake, &fakeext);
 	/* copy the important variables */
-	fake._flags = fp->_flags & ~__SNBF;
 	fake._file = fp->_file;
 	fake._cookie = fp->_cookie;
 	fake._write = fp->_write;
@@ -138,7 +135,6 @@ __sbprintf(FILE *fp, const char *fmt, va_list ap)
 	/* set up the buffer */
 	fake._bf._base = fake._p = buf;
 	fake._bf._size = fake._w = sizeof(buf);
-	fake._lbfsize = 0;	/* not actually used, but Just In Case */
 
 	/* do the work, then copy any error status */
 	ret = __vfprintf(&fake, fmt, ap);

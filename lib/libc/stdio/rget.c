@@ -1,4 +1,4 @@
-/*	$OpenBSD: rget.c,v 1.8 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: rget.c,v 1.9 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,4 +49,3 @@ __srget(FILE *fp)
 	}
 	return (EOF);
 }
-DEF_STRONG(__srget);

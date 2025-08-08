@@ -1,4 +1,4 @@
-/*	$OpenBSD: fflush.c,v 1.12 2025/06/03 14:15:53 yasuoka Exp $ */
+/*	$OpenBSD: fflush.c,v 1.13 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -91,13 +91,14 @@ __sflush(FILE *fp)
 			off = fp->_ur;
 			FREEUB(fp);
 		}
+		fp->_ungetwc_inbuf = 0;
+
 		if (t & __SOFF) {
 			off = fp->_offset - off;
 			__sseek(fp->_cookie, off, SEEK_SET);
 		} else if (off != 0)
 			__sseek(fp->_cookie, -off, SEEK_CUR);
 
-		WCIO_FREE(fp);
 		if ((fp->_flags & __SOFF)) {
 			fp->_p = fp->_bf._base;
 			fp->_r = 0;

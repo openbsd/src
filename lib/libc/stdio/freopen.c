@@ -1,4 +1,4 @@
-/*	$OpenBSD: freopen.c,v 1.20 2025/06/03 14:15:53 yasuoka Exp $ */
+/*	$OpenBSD: freopen.c,v 1.21 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -115,7 +115,7 @@ freopen(const char *file, const char *mode, FILE *fp)
 	if (HASUB(fp))
 		FREEUB(fp);
 	_UB(fp)._size = 0;
-	WCIO_FREE(fp);
+	fp->_ungetwc_inbuf = 0;
 	if (HASLB(fp))
 		FREELB(fp);
 	fp->_lb._size = 0;
@@ -137,14 +137,6 @@ freopen(const char *file, const char *mode, FILE *fp)
 			(void) close(f);
 			f = wantfd;
 		}
-	}
-
-	/* _file is only a short */
-	if (f > SHRT_MAX) {
-		fp->_flags = 0;		/* set it free */
-		FUNLOCKFILE(fp);
-		errno = EMFILE;
-		return (NULL);
 	}
 
 	fp->_flags = flags;

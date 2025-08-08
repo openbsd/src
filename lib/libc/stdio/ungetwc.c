@@ -1,4 +1,4 @@
-/*	$OpenBSD: ungetwc.c,v 1.6 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: ungetwc.c,v 1.7 2025/08/08 15:58:53 yasuoka Exp $	*/
 /* $NetBSD: ungetwc.c,v 1.2 2003/01/18 11:29:59 thorpej Exp $ */
 
 /*-
@@ -37,8 +37,6 @@
 wint_t
 __ungetwc(wint_t wc, FILE *fp)
 {
-	struct wchar_io_data *wcio;
-
 	if (wc == WEOF)
 		return WEOF;
 
@@ -47,19 +45,11 @@ __ungetwc(wint_t wc, FILE *fp)
 	 * XXX since we have no way to transform a wchar string to
 	 * a char string in reverse order, we can't use ungetc.
 	 */
-	/* XXX should we flush ungetc buffer? */
-
-	wcio = WCIO_GET(fp);
-	if (wcio == 0) {
-		errno = ENOMEM; /* XXX */
+	if (fp->_ungetwc_inbuf >= FILE_UNGETWC_BUFSIZE) {
 		return WEOF;
 	}
 
-	if (wcio->wcio_ungetwc_inbuf >= WCIO_UNGETWC_BUFSIZE) {
-		return WEOF;
-	}
-
-	wcio->wcio_ungetwc_buf[wcio->wcio_ungetwc_inbuf++] = wc;
+	fp->_ungetwc_buf[fp->_ungetwc_inbuf++] = wc;
 	__sclearerr(fp);
 
 	return wc;

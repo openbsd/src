@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.10 2025/08/04 01:44:32 dlg Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.11 2025/08/08 15:58:53 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -26,16 +26,14 @@
 typedef struct __sFILE FILE;
 #endif
 
-int     __swbuf(int, struct __sFILE *);
-int	__srget(struct __sFILE *);
-PROTO_NORMAL(__swbuf);
-
 #include_next <stdio.h>
 #include <_stdio.h>		/* struct __sFILE, std{in,out,err} */
 
 __BEGIN_HIDDEN_DECLS
 int	__cleanfile(FILE *, int _doclose);
 void	__relefile(FILE *);
+int	__srget(FILE *);
+int	__swbuf(int, FILE *);
 char	*_mktemp(char *);
 __END_HIDDEN_DECLS
 
@@ -47,7 +45,6 @@ extern PROTO_NORMAL(sys_nerr);
 extern PROTO_NORMAL(sys_errlist);
 #endif
 
-PROTO_NORMAL(__srget);
 PROTO_NORMAL(asprintf);
 PROTO_NORMAL(clearerr);
 PROTO_NORMAL(ctermid);

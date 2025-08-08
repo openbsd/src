@@ -1,4 +1,4 @@
-/*	$OpenBSD: vswprintf.c,v 1.7 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: vswprintf.c,v 1.8 2025/08/08 15:58:53 yasuoka Exp $	*/
 /*	$NetBSD: vswprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
 
 /*
@@ -41,20 +41,16 @@ vswprintf(wchar_t * __restrict s, size_t n, const wchar_t * __restrict fmt,
     __va_list ap)
 {
 	mbstate_t mbs;
-	FILE f;
+	FILE f = FILEINIT(__SWR | __SSTR | __SALC);
 	char *mbp;
 	int ret, sverrno;
 	size_t nwc;
-	struct __sfileext fext;
 
 	if (n == 0) {
 		errno = EINVAL;
 		return (-1);
 	}
 
-	_FILEEXT_SETUP(&f, &fext);
-	f._file = -1;
-	f._flags = __SWR | __SSTR | __SALC;
 	f._bf._base = f._p = malloc(128);
 	if (f._bf._base == NULL) {
 		errno = ENOMEM;

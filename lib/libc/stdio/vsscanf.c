@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsscanf.c,v 1.13 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: vsscanf.c,v 1.14 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,15 +45,11 @@ eofread(void *cookie, char *buf, int len)
 int
 vsscanf(const char *str, const char *fmt, __va_list ap)
 {
-	FILE f;
-	struct __sfileext fext;
+	FILE f = FILEINIT(__SRD);
 
-	_FILEEXT_SETUP(&f, &fext);
-	f._flags = __SRD;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._r = strlen(str);
 	f._read = eofread;
-	f._lb._base = NULL;
 	return (__svfscanf(&f, fmt, ap));
 }
 DEF_STRONG(vsscanf);

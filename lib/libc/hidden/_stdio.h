@@ -1,4 +1,4 @@
-/*	$OpenBSD: _stdio.h,v 1.3 2025/08/04 01:44:32 dlg Exp $	*/
+/*	$OpenBSD: _stdio.h,v 1.4 2025/08/08 15:58:53 yasuoka Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -79,13 +79,14 @@ struct __sbuf {
  * _ub._base!=NULL) and _up and _ur save the current values of _p and _r.
  */
 struct __sFILE {
+	int	_flags;		/* flags, below; this FILE is free if 0 */
+	int	_file;		/* fileno, if Unix descriptor, else -1 */
 	unsigned char *_p;	/* current position in (some) buffer */
 	int	_r;		/* read space left for getc() */
 	int	_w;		/* write space left for putc() */
-	short	_flags;		/* flags, below; this FILE is free if 0 */
-	short	_file;		/* fileno, if Unix descriptor, else -1 */
 	struct	__sbuf _bf;	/* the buffer (at least 1 byte, if !NULL) */
 	int	_lbfsize;	/* 0 or -_bf._size, for inline putc */
+	struct __rcmtx _lock;
 
 	/* operations */
 	void	*_cookie;	/* cookie passed to io functions */
@@ -94,8 +95,8 @@ struct __sFILE {
 	__off_t	(*_seek)(void *, __off_t, int);
 	int	(*_write)(void *, const char *, int);
 
-	/* extension data, to avoid further ABI breakage */
-	struct	__sbuf _ext;
+	struct	__sbuf _ub;	/* ungetc buffer */
+
 	/* data for long sequences of ungetc() */
 	unsigned char *_up;	/* saved _p when _p is doing ungetc data */
 	int	_ur;		/* saved _r when _r is counting ungetc data */
@@ -110,6 +111,17 @@ struct __sFILE {
 	/* Unix stdio files get aligned to block boundaries on fseek() */
 	int	_blksize;	/* stat.st_blksize (may be != _bf._size) */
 	__off_t	_offset;	/* current lseek offset */
+
+	/* minimal requirement of SUSv2 */
+	/* XXX switch to (re)using _ub */
+#define	FILE_UNGETWC_BUFSIZE	1
+	__wchar_t	_ungetwc_buf[FILE_UNGETWC_BUFSIZE];
+	size_t		_ungetwc_inbuf;
+
+	/* conversion state for wide-oriented streams */
+	/* XXX should only need one; clear when switching mode */
+	__mbstate_t	_mbstate_in;
+	__mbstate_t	_mbstate_out;
 };
 
 #define	__SLBF	0x0001		/* line buffered */

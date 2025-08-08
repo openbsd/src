@@ -1,4 +1,4 @@
-/*	$OpenBSD: fopen.c,v 1.10 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: fopen.c,v 1.11 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,14 +53,6 @@ fopen(const char *file, const char *mode)
 		return (NULL);
 	if ((f = open(file, oflags, DEFFILEMODE)) == -1) {
 		fp->_flags = 0;			/* release */
-		return (NULL);
-	}
-
-	/* _file is only a short */
-	if (f > SHRT_MAX) {
-		fp->_flags = 0;			/* release */
-		close(f);
-		errno = EMFILE;
 		return (NULL);
 	}
 

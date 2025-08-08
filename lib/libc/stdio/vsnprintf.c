@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsnprintf.c,v 1.16 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: vsnprintf.c,v 1.17 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,10 +41,7 @@ vsnprintf(char *str, size_t n, const char *fmt, __va_list ap)
 {
 	int ret;
 	char dummy;
-	FILE f;
-	struct __sfileext fext;
-
-	_FILEEXT_SETUP(&f, &fext);
+	FILE f = FILEINIT(__SWR | __SSTR);
 
 	/* While snprintf(3) specifies size_t stdio uses an int internally */
 	if (n > INT_MAX)
@@ -54,8 +51,6 @@ vsnprintf(char *str, size_t n, const char *fmt, __va_list ap)
 		str = &dummy;
 		n = 1;
 	}
-	f._file = -1;
-	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = n - 1;
 	ret = __vfprintf(&f, fmt, ap);

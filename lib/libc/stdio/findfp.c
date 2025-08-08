@@ -1,4 +1,4 @@
-/*	$OpenBSD: findfp.c,v 1.22 2025/08/04 01:44:33 dlg Exp $ */
+/*	$OpenBSD: findfp.c,v 1.23 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,20 +51,13 @@ int	__sdidinit;
 #define	std(flags, file, cookie) \
 	{ ._flags = (flags), ._file = (file), ._cookie = (cookie), \
 	  ._close = __sclose, ._read = __sread, ._seek = __sseek, \
-	  ._write = __swrite, ._ext = { (unsigned char *)(__sFext + file), 0} }
+	  ._write = __swrite, ._lock = __RCMTX_INITIALIZER() }
 
 				/* the usual - (stdin + stdout + stderr) */
 static FILE usual[FOPEN_MAX - 3];
-static struct __sfileext usualext[FOPEN_MAX - 3];
 static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
 static struct glue *lastglue = &uglue;
 static void *sfp_mutex;
-
-static struct __sfileext __sFext[3] = {
-	{ ._lock = __RCMTX_INITIALIZER() },
-	{ ._lock = __RCMTX_INITIALIZER() },
-	{ ._lock = __RCMTX_INITIALIZER() },
-};
 
 /*
  * These are separate variables because they may end up copied
@@ -79,39 +72,19 @@ static struct glue sglue2 = { &uglue, 1, __stderr };
 static struct glue sglue1 = { &sglue2, 1, __stdout };
 struct glue __sglue = { &sglue1, 1, __stdin };
 
-/* __sF[] for old version */
-FILE __sF[3] = {
-	std(__SRD, STDIN_FILENO, __stdin),
-	std(__SWR, STDOUT_FILENO, __stdout),
-	std(__SWR|__SNBF, STDERR_FILENO, __stderr)
-};
-
 static struct glue *
 moreglue(int n)
 {
 	struct glue *g;
-	FILE *p;
-	struct __sfileext *pext;
-	static FILE empty;
 	char *data;
 
-	data = malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE)
-	    + n * sizeof(struct __sfileext));
+	data = calloc(1, sizeof(*g) + ALIGNBYTES + n * sizeof(FILE));
 	if (data == NULL)
 		return (NULL);
 	g = (struct glue *)data;
-	p = (FILE *)ALIGN(data + sizeof(*g));
-	pext = (struct __sfileext *)
-	    (ALIGN(data + sizeof(*g)) + n * sizeof(FILE));
 	g->next = NULL;
 	g->niobs = n;
-	g->iobs = p;
-	while (--n >= 0) {
-		*p = empty;
-		_FILEEXT_SETUP(p, pext);
-		p++;
-		pext++;
-	}
+	g->iobs = (FILE *)ALIGN(data + sizeof(*g));
 	return (g);
 }
 
@@ -146,17 +119,16 @@ __sfp(void)
 found:
 	fp->_flags = 1;		/* reserve this slot; caller sets real flags */
 	_MUTEX_UNLOCK(&sfp_mutex);
-	fp->_p = NULL;		/* no current pointer */
-	fp->_w = 0;		/* nothing to read or write */
-	fp->_r = 0;
-	fp->_bf._base = NULL;	/* no buffer */
-	fp->_bf._size = 0;
-	fp->_lbfsize = 0;	/* not line buffered */
+
+	/* make sure this next memset covers everything but _flags */
+	extern char _ctassert[(offsetof(FILE, _flags) == 0) ? 1 : -1 ]
+	    __attribute__((__unused__));
+
+	memset((char *)fp + sizeof fp->_flags, 0, sizeof *fp -
+	    sizeof fp->_flags);
 	fp->_file = -1;		/* no file */
-/*	fp->_cookie = <any>; */	/* caller sets cookie, _read/_write etc */
-	fp->_lb._base = NULL;	/* no line buffer */
-	fp->_lb._size = 0;
-	_FILEEXT_INIT(fp);
+	__rcmtx_init(&fp->_lock);
+
 	return (fp);
 }
 
@@ -187,9 +159,7 @@ __sinit(void)
 	_MUTEX_LOCK(&sinit_mutex);
 	if (__sdidinit)
 		goto out;	/* bail out if caller lost the race */
-	for (i = 0; i < FOPEN_MAX - 3; i++) {
-		_FILEEXT_SETUP(usual+i, usualext+i);
-	}
+
 	/* make sure we clean up on exit */
 	__atexit_register_cleanup(_cleanup); /* conservative */
 	__sdidinit = 1;

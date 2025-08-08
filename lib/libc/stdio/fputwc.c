@@ -1,4 +1,4 @@
-/*	$OpenBSD: fputwc.c,v 1.7 2016/01/26 13:57:02 schwarze Exp $	*/
+/*	$OpenBSD: fputwc.c,v 1.8 2025/08/08 15:58:53 yasuoka Exp $	*/
 /* $NetBSD: fputwc.c,v 1.3 2003/03/07 07:11:37 tshiozak Exp $ */
 
 /*-
@@ -39,8 +39,6 @@
 wint_t
 __fputwc_unlock(wchar_t wc, FILE *fp)
 {
-	struct wchar_io_data *wcio;
-	mbstate_t *st;
 	size_t size;
 	char buf[MB_LEN_MAX];
 	struct __suio uio;
@@ -51,16 +49,10 @@ __fputwc_unlock(wchar_t wc, FILE *fp)
 	uio.uio_iovcnt = 1;
 
 	_SET_ORIENTATION(fp, 1);
-	wcio = WCIO_GET(fp);
-	if (wcio == 0) {
-		errno = ENOMEM;
-		return WEOF;
-	}
 
-	wcio->wcio_ungetwc_inbuf = 0;
-	st = &wcio->wcio_mbstate_out;
+	fp->_ungetwc_inbuf = 0;
 
-	size = wcrtomb(buf, wc, st);
+	size = wcrtomb(buf, wc, &fp->_mbstate_out);
 	if (size == (size_t)-1) {
 		fp->_flags |= __SERR;
 		return WEOF;

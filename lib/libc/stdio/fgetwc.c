@@ -1,4 +1,4 @@
-/*	$OpenBSD: fgetwc.c,v 1.6 2015/12/24 19:55:39 schwarze Exp $	*/
+/*	$OpenBSD: fgetwc.c,v 1.7 2025/08/08 15:58:53 yasuoka Exp $	*/
 /* $NetBSD: fgetwc.c,v 1.3 2003/03/07 07:11:36 tshiozak Exp $ */
 
 /*-
@@ -37,26 +37,17 @@
 wint_t
 __fgetwc_unlock(FILE *fp)
 {
-	struct wchar_io_data *wcio;
-	mbstate_t *st;
 	wchar_t wc;
 	size_t size;
 
 	_SET_ORIENTATION(fp, 1);
-	wcio = WCIO_GET(fp);
-	if (wcio == 0) {
-		errno = ENOMEM;
-		return WEOF;
-	}
 
 	/* if there're ungetwc'ed wchars, use them */
-	if (wcio->wcio_ungetwc_inbuf) {
-		wc = wcio->wcio_ungetwc_buf[--wcio->wcio_ungetwc_inbuf];
+	if (fp->_ungetwc_inbuf) {
+		wc = fp->_ungetwc_buf[--fp->_ungetwc_inbuf];
 
 		return wc;
 	}
-
-	st = &wcio->wcio_mbstate_in;
 
 	do {
 		char c;
@@ -67,7 +58,7 @@ __fgetwc_unlock(FILE *fp)
 		}
 
 		c = ch;
-		size = mbrtowc(&wc, &c, 1, st);
+		size = mbrtowc(&wc, &c, 1, &fp->_mbstate_in);
 		if (size == (size_t)-1) {
 			fp->_flags |= __SERR;
 			return WEOF;

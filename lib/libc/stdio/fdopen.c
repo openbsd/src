@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdopen.c,v 1.10 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: fdopen.c,v 1.11 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,12 +44,6 @@ fdopen(int fd, const char *mode)
 {
 	FILE *fp;
 	int flags, oflags, fdflags, tmp;
-
-	/* _file is only a short */
-	if (fd > SHRT_MAX) {
-		errno = EMFILE;
-		return (NULL);
-	}
 
 	if ((flags = __sflags(mode, &oflags)) == 0)
 		return (NULL);

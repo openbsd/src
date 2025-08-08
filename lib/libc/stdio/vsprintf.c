@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsprintf.c,v 1.17 2017/11/28 06:55:49 tb Exp $ */
+/*	$OpenBSD: vsprintf.c,v 1.18 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,12 +45,8 @@ int
 vsprintf(char *str, const char *fmt, __va_list ap)
 {
 	int ret;
-	FILE f;
-	struct __sfileext fext;
+	FILE f = FILEINIT(__SWR | __SSTR);;
 
-	_FILEEXT_SETUP(&f, &fext);
-	f._file = -1;
-	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;
 	ret = __vfprintf(&f, fmt, ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flockfile.c,v 1.10 2025/08/04 01:44:33 dlg Exp $	*/
+/*	$OpenBSD: flockfile.c,v 1.11 2025/08/08 15:58:53 yasuoka Exp $	*/
 
 #include <stdio.h>
 #include "local.h"
@@ -15,7 +15,7 @@ int
 ftrylockfile(FILE *fp)
 {
 	if (__isthreaded)
-		return __rcmtx_enter_try(&_EXT(fp)->_lock) ? 0 : 1;
+		return __rcmtx_enter_try(&fp->_lock) ? 0 : 1;
 
 	return 0;
 }

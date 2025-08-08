@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.26 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.27 2025/08/08 15:58:53 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
@@ -31,13 +31,9 @@ asprintf(char **str, const char *fmt, ...)
 {
 	int ret;
 	va_list ap;
-	FILE f;
-	struct __sfileext fext;
+	FILE f = FILEINIT(__SWR | __SSTR | __SALC);
 	const int pgsz = getpagesize();
 
-	_FILEEXT_SETUP(&f, &fext);
-	f._file = -1;
-	f._flags = __SWR | __SSTR | __SALC;
 	f._bf._base = f._p = malloc(INITIAL_SIZE);
 	if (f._bf._base == NULL)
 		goto err;

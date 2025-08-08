@@ -1,4 +1,4 @@
-/*	$OpenBSD: setvbuf.c,v 1.15 2022/09/28 16:44:14 gnezdo Exp $ */
+/*	$OpenBSD: setvbuf.c,v 1.16 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@ setvbuf(FILE *fp, char *buf, int mode, size_t size)
 	(void)__sflush(fp);
 	if (HASUB(fp))
 		FREEUB(fp);
-	WCIO_FREE(fp);
+	fp->_ungetwc_inbuf = 0;
 	fp->_r = fp->_lbfsize = 0;
 	flags = fp->_flags;
 	if (flags & __SMBF)

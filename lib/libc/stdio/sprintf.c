@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprintf.c,v 1.19 2017/11/28 06:55:49 tb Exp $ */
+/*	$OpenBSD: sprintf.c,v 1.20 2025/08/08 15:58:53 yasuoka Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,12 +47,8 @@ sprintf(char *str, const char *fmt, ...)
 {
 	int ret;
 	va_list ap;
-	FILE f;
-	struct __sfileext fext;
+	FILE f = FILEINIT(__SWR | __SSTR);
 
-	_FILEEXT_SETUP(&f, &fext);
-	f._file = -1;
-	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;
 	va_start(ap, fmt);
