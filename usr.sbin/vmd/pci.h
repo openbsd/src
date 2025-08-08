@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.15 2025/08/02 15:16:18 dv Exp $	*/
+/*	$OpenBSD: pci.h,v 1.16 2025/08/08 13:40:12 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -36,7 +36,7 @@
 #define PCI_BAR_TYPE_MMIO	0x1
 
 #define PCI_MMIO_BAR_BASE	0xF0000000ULL
-#define PCI_MMIO_BAR_END	0xFFDFFFFFULL		/* 2 MiB below 4 GiB */
+#define PCI_MMIO_BAR_END	0xFFBFFFFFULL		/* 4 MiB below 4 GiB */
 
 #define PCI_MAX_PIC_IRQS	10
 

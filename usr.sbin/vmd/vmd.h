@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.139 2025/08/02 15:16:18 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.140 2025/08/08 13:40:12 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -46,6 +46,7 @@
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
 			    __attribute__((__unused__))
 
+#define KB(x)	(x * 1024UL)
 #define MB(x)	(x * 1024UL * 1024UL)
 #define GB(x)	(x * 1024UL * 1024UL * 1024UL)
 

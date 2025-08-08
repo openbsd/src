@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.6 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.7 2025/08/08 13:40:12 dv Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -190,10 +190,13 @@ create_memory_map(struct vm_create_params *vcp)
 	vcp->vcp_memranges[1].vmr_type = VM_MEM_RESERVED;
 	mem_bytes -= len;
 
-	/* If we have less than 2MB remaining, still create a 2nd BIOS area. */
-	if (mem_bytes <= MB(2)) {
+	/*
+	 * If we have less than 4MB remaining to assign, still create a 2nd
+	 * BIOS area.
+	 */
+	if (mem_bytes <= MB(4)) {
 		vcp->vcp_memranges[2].vmr_gpa = PCI_MMIO_BAR_END;
-		vcp->vcp_memranges[2].vmr_size = MB(2);
+		vcp->vcp_memranges[2].vmr_size = MB(4);
 		vcp->vcp_memranges[2].vmr_type = VM_MEM_RESERVED;
 		vcp->vcp_nmemranges = 3;
 		return;
@@ -225,7 +228,7 @@ create_memory_map(struct vm_create_params *vcp)
 
 	/* Fifth region: 2nd copy of BIOS above MMIO ending at 4GB */
 	vcp->vcp_memranges[4].vmr_gpa = PCI_MMIO_BAR_END + 1;
-	vcp->vcp_memranges[4].vmr_size = MB(2);
+	vcp->vcp_memranges[4].vmr_size = MB(4);
 	vcp->vcp_memranges[4].vmr_type = VM_MEM_RESERVED;
 
 	/* Sixth region: any remainder above 4GB */
@@ -290,34 +293,49 @@ load_firmware(struct vmd_vm *vm, struct vcpu_reg_state *vrs)
 int
 loadfile_bios(gzFile fp, off_t size, struct vcpu_reg_state *vrs)
 {
-	off_t	 off;
+	off_t	 off = 0;
+	size_t	 lower_sz = size;
 
-	/* Set up a "flat 16 bit" register state for BIOS */
-	memcpy(vrs, &vcpu_init_flat16, sizeof(*vrs));
-
-	/* Seek to the beginning of the BIOS image */
-	if (gzseek(fp, 0, SEEK_SET) == -1)
-		return (-1);
-
-	/* The BIOS image must end at 1MB */
-	if ((off = MB(1) - size) < 0)
-		return (-1);
-
-	/* Read BIOS image into memory */
-	if (mread(fp, off, size) != (size_t)size) {
-		errno = EIO;
+	/*
+	 * While a 15 byte firmware is most likely useless, given the
+	 * reset vector on a PC is 15 bytes below 0xFFFFF, make sure
+	 * we will at least align to that boundary.
+	 */
+	if (size < 15) {
+		log_warnx("bios image too small");
 		return (-1);
 	}
 
-	if (gzseek(fp, 0, SEEK_SET) == -1)
+	/* Assumptions elsewhere in memory layout limit to 4 MiB. */
+	if (size > (off_t)MB(4)) {
+		log_warnx("bios image too large (> 4 MiB)");
+		return (-1);
+	}
+
+	/* Set up a "flat 16 bit" register state for BIOS. */
+	memcpy(vrs, &vcpu_init_flat16, sizeof(*vrs));
+
+	/* Read a full copy into BIOS area ending at 4 GiB. */
+	if (gzrewind(fp) == -1)
 		return (-1);
 
-	/* Read a second BIOS copy into memory ending at 4GB */
 	off = GB(4) - size;
 	if (mread(fp, off, size) != (size_t)size) {
 		errno = EIO;
 		return (-1);
 	}
+
+	/* Copy the last 128K into the lower BIOS area ending at 1 MiB. */
+	if (gzrewind(fp) == -1)
+		return (-1);
+
+	lower_sz = MIN((off_t)KB(128), size);
+	if (gzseek(fp, size - lower_sz, SEEK_SET) == -1)
+		return (-1);
+
+	off = MB(1) - lower_sz;
+	if (mread(fp, off, lower_sz) != lower_sz)
+		return (-1);
 
 	log_debug("%s: loaded BIOS image", __func__);
 
