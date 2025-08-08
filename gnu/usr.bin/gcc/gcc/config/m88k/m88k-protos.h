@@ -44,7 +44,7 @@ extern int pic_address_needs_scratch PARAMS ((rtx));
 extern int symbolic_address_p PARAMS ((rtx));
 extern int condition_value PARAMS ((rtx));
 extern int emit_move_sequence PARAMS ((rtx *, enum machine_mode, rtx));
-extern int mostly_false_jump PARAMS ((rtx, rtx));
+extern int mostly_false_jump PARAMS ((rtx));
 extern int real_power_of_2_operand PARAMS ((rtx, enum machine_mode));
 extern int move_operand PARAMS ((rtx, enum machine_mode));
 extern int call_address_operand PARAMS ((rtx, enum machine_mode));
@@ -65,7 +65,6 @@ extern int odd_relop PARAMS ((rtx, enum machine_mode));
 extern int relop_no_unsigned PARAMS ((rtx, enum machine_mode));
 extern int equality_op PARAMS ((rtx, enum machine_mode));
 extern int pc_or_label_ref PARAMS ((rtx, enum machine_mode));
-extern int symbolic_operand PARAMS ((rtx, enum machine_mode));
 #ifdef TREE_CODE
 extern void m88k_va_start PARAMS ((tree, rtx));
 #endif /* TREE_CODE */
