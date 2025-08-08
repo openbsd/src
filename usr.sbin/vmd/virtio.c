@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.126 2025/08/02 15:16:18 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.127 2025/08/08 13:36:04 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -345,7 +345,7 @@ virtio_io_dispatch(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	case VIO1_ISR_BAR_OFFSET:
 		return virtio_io_isr(dir, actual, data, intr, arg, sz);
 	default:
-		log_debug("%s: no handler for reg 0x%04x", __func__, reg);
+		DPRINTF("%s: no handler for reg 0x%04x", __func__, reg);
 		if (dir == VEI_DIR_IN)
 			*data = (uint32_t)(-1);
 	}
