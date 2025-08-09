@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.329 2025/07/17 04:58:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.330 2025/08/09 00:29:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1384,6 +1384,18 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 			return (0);
 		}
 		break;
+	case IPPROTO_IP:
+		switch (optname) {
+		case IP_TOS:
+			return (0);
+		}
+		break;
+	case IPPROTO_IPV6:
+		switch (optname) {
+		case IPV6_TCLASS:
+			return (0);
+		}
+		break;
 	}
 
 	if ((pledge & PLEDGE_WROUTE)) {
@@ -1450,7 +1462,6 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 			if (!set)
 				return (0);
 			break;
-		case IP_TOS:
 		case IP_TTL:
 		case IP_MINTTL:
 		case IP_IPDEFTTL:
@@ -1472,7 +1483,6 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		break;
 	case IPPROTO_IPV6:
 		switch (optname) {
-		case IPV6_TCLASS:
 		case IPV6_DONTFRAG:
 		case IPV6_UNICAST_HOPS:
 		case IPV6_MINHOPCOUNT:
