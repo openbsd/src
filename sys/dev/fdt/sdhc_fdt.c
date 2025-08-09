@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.21 2024/10/09 00:38:26 jsg Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.22 2025/08/09 14:45:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -129,6 +129,7 @@ sdhc_fdt_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(faa->fa_node, "arasan,sdhci-5.1") ||
 	    OF_is_compatible(faa->fa_node, "arasan,sdhci-8.9a") ||
 	    OF_is_compatible(faa->fa_node, "brcm,bcm2711-emmc2") ||
+	    OF_is_compatible(faa->fa_node, "brcm,bcm2712-sdhci") ||
 	    OF_is_compatible(faa->fa_node, "brcm,bcm2835-sdhci") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada-3700-sdhci") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada-ap806-sdhci") ||
@@ -141,7 +142,7 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct sdhc_fdt_softc *sc = (struct sdhc_fdt_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct regmap *rm = NULL;
-	uint64_t capmask = 0, capset = 0;
+	uint64_t capmask, capset;
 	uint32_t reg, phandle, freq;
 	char pad_type[16] = { 0 };
 
@@ -172,6 +173,9 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't establish interrupt\n");
 		goto unmap;
 	}
+
+	capmask = OF_getpropint64(sc->sc_node, "sdhci-caps-mask", 0);
+	capset = OF_getpropint64(sc->sc_node, "sdhci-caps", 0);
 
 	if (OF_getproplen(faa->fa_node, "cd-gpios") > 0 ||
 	    OF_getproplen(faa->fa_node, "non-removable") == 0) {
