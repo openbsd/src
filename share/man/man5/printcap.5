@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.29 2022/09/01 18:15:04 jmc Exp $
+.\"	$OpenBSD: printcap.5,v 1.30 2025/08/09 02:03:33 deraadt Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 1 2022 $
+.Dd $Mdocdate: August 9 2025 $
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -116,6 +116,13 @@ blocks); 0=unlimited
 .It "tr" Ta "str" Ta Dv NULL Ta "trailer string to print when queue empties"
 .It "vf" Ta "str" Ta Dv NULL Ta "raster image filter"
 .El
+.Pp
+The classic port number used for remote printing is
+.Vt printer
+(515).
+Many newer printers work better with
+.Vt jetdirect
+(9100).
 .Pp
 If the local line printer driver supports indentation, the daemon
 must understand how to invoke it.
