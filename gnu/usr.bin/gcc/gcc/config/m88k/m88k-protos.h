@@ -44,7 +44,7 @@ extern int pic_address_needs_scratch PARAMS ((rtx));
 extern int symbolic_address_p PARAMS ((rtx));
 extern int condition_value PARAMS ((rtx));
 extern int emit_move_sequence PARAMS ((rtx *, enum machine_mode, rtx));
-extern int mostly_false_jump PARAMS ((rtx));
+extern int mostly_false_jump PARAMS ((rtx, rtx));
 extern int real_power_of_2_operand PARAMS ((rtx, enum machine_mode));
 extern int move_operand PARAMS ((rtx, enum machine_mode));
 extern int call_address_operand PARAMS ((rtx, enum machine_mode));
