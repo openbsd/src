@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.21 2022/09/11 10:28:56 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.22 2025/08/09 09:28:03 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -614,11 +614,11 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 			/* Take over QCOM SMRs */
 			if (sc->sc_is_qcom && sc->sc_smr[i] != NULL &&
 			    sc->sc_smr[i]->ss_dom == NULL &&
-			    sc->sc_smr[i]->ss_id == sid &&
-			    sc->sc_smr[i]->ss_mask == 0) {
-				free(sc->sc_smr[i], M_DEVBUF,
-				    sizeof(struct smmu_smr));
-				sc->sc_smr[i] = NULL;
+			    !((sc->sc_smr[i]->ss_id ^ sid) &
+			    ~sc->sc_smr[i]->ss_mask)) {
+				sc->sc_smr[i]->ss_dom = dom;
+				dom->sd_smr_idx = i;
+				break;
 			}
 			if (sc->sc_smr[i] != NULL)
 				continue;
@@ -779,7 +779,8 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 
 	/* Map stream idx to S2CR idx */
 	if (sc->sc_smr) {
-		reg = sid;
+		reg = sc->sc_smr[dom->sd_smr_idx]->ss_id << SMMU_SMR_ID_SHIFT |
+		    sc->sc_smr[dom->sd_smr_idx]->ss_mask << SMMU_SMR_MASK_SHIFT;
 		if (!sc->sc_has_exids)
 			reg |= SMMU_SMR_VALID;
 		smmu_gr0_write_4(sc, SMMU_SMR(dom->sd_smr_idx), reg);
