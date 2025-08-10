@@ -2389,6 +2389,17 @@ emit_bcnd (op, label)
 	}
     }
 }
+
+/* Use instead of emit_label for the last label in an expansion.  */
+
+void
+emit_trailing_label (rtx label)
+{
+  emit_label (label);
+  /* Allow REG_NOTES to be set on last insn (labels don't have enough
+     fields, and can't be used for REG_NOTES anyway).  */
+  emit_insn (gen_rtx_USE (VOIDmode, stack_pointer_rtx));
+}
 
 /* Print an operand.  Recognize special options, documented below.  */
 
