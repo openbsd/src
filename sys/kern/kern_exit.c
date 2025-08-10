@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.251 2025/06/03 08:38:17 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.252 2025/08/10 15:17:57 deraadt Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -736,7 +736,7 @@ sys_waitid(struct proc *q, void *v, register_t *retval)
 	struct sys_waitid_args /* {
 		syscallarg(idtype_t) idtype;
 		syscallarg(id_t) id;
-		syscallarg(siginfo_t) info;
+		syscallarg(siginfo_t *) info;
 		syscallarg(int) options;
 	} */ *uap = v;
 	siginfo_t info;
