@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.28 2023/08/25 12:45:45 schwarze Exp $
+#	$OpenBSD: Makefile.inc,v 1.29 2025/08/10 11:36:07 miod Exp $
 
 # locale sources
 .PATH: ${LIBCSRCDIR}/locale
@@ -24,4 +24,4 @@ MAN+=	nl_langinfo.3 setlocale.3 newlocale.3 uselocale.3 localeconv.3 \
 	wcstol.3 wcstombs.3 wcsxfrm.3 wctob.3 wctomb.3 \
 	wctype.3 iswctype.3 wctrans.3 towctrans.3 wcwidth.3
 
-CFLAGS+=-I${.CURDIR} -I${LIBCSRCDIR}/citrus
+CFLAGS+=-I${LIBCSRCDIR}/citrus
