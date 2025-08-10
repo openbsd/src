@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.32 2025/05/10 05:54:39 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.33 2025/08/10 06:36:45 beck Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -26,9 +26,6 @@
 #include "stack_local.h"
 #include "x509_internal.h"
 #include "x509_local.h"
-
-/* XXX move to proper place */
-#define X509_R_INVALID_POLICY_EXTENSION 201
 
 /*
  * This file computes the X.509 policy tree, as described in RFC 5280,

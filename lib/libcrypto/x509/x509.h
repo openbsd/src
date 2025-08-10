@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.123 2025/07/16 15:59:26 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.124 2025/08/10 06:36:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -995,6 +995,7 @@ void ERR_load_X509_strings(void);
 #define X509_R_ERR_ASN1_LIB				 102
 #define X509_R_INVALID_DIRECTORY			 113
 #define X509_R_INVALID_FIELD_NAME			 119
+#define X509_R_INVALID_POLICY_EXTENSION			 201
 #define X509_R_INVALID_TRUST				 123
 #define X509_R_INVALID_VERSION				 137
 #define X509_R_KEY_TYPE_MISMATCH			 115
