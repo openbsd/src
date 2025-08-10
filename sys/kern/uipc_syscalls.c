@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.225 2025/08/09 14:13:36 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.226 2025/08/10 07:50:58 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1300,9 +1300,6 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 		error = ENOTSOCK;
 		goto out;
 	}
-	error = pledge_socket(p, -1, so->so_state);
-	if (error)
-		goto out;
 	error = copyin(SCARG(uap, alen), &len, sizeof (len));
 	if (error)
 		goto out;
@@ -1343,9 +1340,6 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 		error = ENOTSOCK;
 		goto bad;
 	}
-	error = pledge_socket(p, -1, so->so_state);
-	if (error)
-		goto bad;
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
 		error = ENOTCONN;
 		goto bad;

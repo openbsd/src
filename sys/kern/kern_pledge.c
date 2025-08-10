@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.330 2025/08/09 00:29:29 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.331 2025/08/10 07:50:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -350,12 +350,12 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
 	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
 	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
-	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
+	[SYS_getsockname] = PLEDGE_STDIO,
 
 	[SYS_listen] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_accept4] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_accept] = PLEDGE_INET | PLEDGE_UNIX,
-	[SYS_getpeername] = PLEDGE_INET | PLEDGE_UNIX,
+	[SYS_getpeername] = PLEDGE_STDIO,
 
 	[SYS_flock] = PLEDGE_FLOCK,
 
