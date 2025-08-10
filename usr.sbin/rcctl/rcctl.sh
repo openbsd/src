@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.120 2024/09/29 14:36:13 kn Exp $
+# $OpenBSD: rcctl.sh,v 1.121 2025/08/10 09:30:55 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,7 +33,7 @@ usage()
 
 	_rc_err \
 	"usage:	rcctl get|getdef|set daemon|service [variable [argument ...]]
-	rcctl [-df] ${_a} daemon ...
+	rcctl [-d | -q] [-f] ${_a} daemon ...
 	rcctl disable|enable|order [daemon ...]
 	rcctl ls all|failed|off|on|rogue|started|stopped"
 }
@@ -506,16 +506,18 @@ svc_set()
 	rcconf_edit_end
 }
 
-unset _RC_DEBUG _RC_FORCE
-while getopts "df" c; do
+unset _RC_DEBUG _RC_FORCE _RC_QUIET
+while getopts "dfq" c; do
 	case "$c" in
 		d) _RC_DEBUG=-d;;
 		f) _RC_FORCE=-f;;
+		q) _RC_QUIET=-q;;
 		*) usage;;
 	esac
 done
 shift $((OPTIND-1))
 [ $# -gt 0 ] || usage
+[[ -n ${_RC_DEBUG} && -n ${_RC_QUIET} ]] && usage
 
 action=$1
 ret=0
@@ -647,7 +649,7 @@ case ${action} in
 			if svc_is_special ${svc}; then
 				rcctl_err "\"${svc}\" is a special variable, no rc.d(8) script"
 			fi
-			/etc/rc.d/${svc} ${_RC_DEBUG} ${_RC_FORCE} ${action} || ret=$?;
+			/etc/rc.d/${svc} ${_RC_DEBUG} ${_RC_FORCE} ${_RC_QUIET} ${action} || ret=$?;
 		done
 		exit ${ret}
 		;;

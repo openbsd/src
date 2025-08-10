@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.163 2024/09/29 14:36:13 kn Exp $
+#	$OpenBSD: rc.subr,v 1.164 2025/08/10 09:30:55 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -106,7 +106,7 @@ _rc_usage() {
 	for _a in ${_rc_actions}; do
 		_rc_not_supported ${_a} || _allsup="${_allsup:+$_allsup|}${_a}"
 	done
-	_rc_err "usage: $0 [-df] ${_allsup}"
+	_rc_err "usage: $0 [-d | -q] [-f] ${_allsup}"
 }
 
 _rc_write_runfile() {
@@ -134,7 +134,7 @@ _rc_rm_runfile() {
 _rc_exit() {
 	local _pfix
 	[ -z "${INRC}" -o X"$1" != X"ok" ] && _pfix="($1)"
-	echo ${INRC:+'-n'} "${_pfix}"
+	[ -n "${_RC_QUIET}" ] || echo ${INRC:+'-n'} "${_pfix}"
 	[[ $1 == @(ok|killed) ]] && exit 0 || exit 1
 }
 
@@ -143,6 +143,13 @@ _rc_alarm()
 	trap - ALRM
 	kill -ALRM ${_TIMERSUB} 2>/dev/null # timer may not be running anymore
 	kill $! 2>/dev/null # kill last job if it's running
+}
+
+_rc_printname()
+{
+	local _n
+	[ -n "${_RC_DEBUG}" ] || _n="-n"
+	[ -n "${_RC_QUIET}" ] || echo $_n "${INRC:+ }${_name}"
 }
 
 _rc_sendsig() {
@@ -198,7 +205,7 @@ rc_stop() {
 }
 
 rc_cmd() {
-	local _exit _n _ret _timer
+	local _exit _ret _timer
 	# optim: don't sleep(1) in the first loop
 	_1stloop=true
 
@@ -213,17 +220,15 @@ rc_cmd() {
 		_rc_err "$0: $1 is not supported"
 	fi
 
-	[ -n "${_RC_DEBUG}" ] || _n="-n"
-
 	[[ ${1} == start ]] || _rc_do _rc_parse_conf ${_RC_RUNFILE}
 
 	case "$1" in
 	check)
-		echo $_n "${INRC:+ }${_name}"
+		_rc_printname
 		_rc_do rc_check && _rc_exit ok || _rc_exit failed
 		;;
 	configtest)
-		echo $_n "${INRC:+ }${_name}"
+		_rc_printname
 		_rc_do rc_configtest && _rc_exit ok || _rc_exit failed
 		;;
 	start)
@@ -231,7 +236,7 @@ rc_cmd() {
 			_rc_err "$0: need -f to force $1 since ${_name}_flags=NO"
 		fi
 		[ -z "${INRC}" ] && _rc_do rc_check && exit 0
-		echo $_n "${INRC:+ }${_name}"
+		_rc_printname
 		while true; do # no real loop, only needed to break
 			# running during start is mostly useful for daemons
 			# whose child will not return a config parsing error to
@@ -265,7 +270,7 @@ rc_cmd() {
 		;;
 	stop)
 		_rc_do rc_check || exit 0
-		echo $_n "${INRC:+ }${_name}"
+		_rc_printname
 		_rc_do rc_stop & _timer=$!
 		while ((SECONDS < daemon_timeout)); do
 			# last chance: send a SIGTERM first in case the process
@@ -291,7 +296,7 @@ rc_cmd() {
 		_rc_exit ${_exit:=ok}
 		;;
 	reload)
-		echo $_n "${INRC:+ }${_name}"
+		_rc_printname
 		_rc_do rc_check || _rc_exit failed
 		if typeset -f rc_configtest >/dev/null; then
 			_rc_do rc_configtest || _rc_exit failed
@@ -312,8 +317,8 @@ rc_cmd() {
 		if typeset -f rc_configtest >/dev/null; then
 			_rc_do rc_configtest || _rc_exit failed
 		fi
-		$0 ${_RC_DEBUG} ${_RC_FORCE} stop &&
-			$0 ${_RC_DEBUG} ${_RC_FORCE} start
+		$0 ${_RC_DEBUG} ${_RC_FORCE} ${_RC_QUIET} stop &&
+			$0 ${_RC_DEBUG} ${_RC_FORCE} ${_RC_QUIET} start
 		;;
 	*)
 		_rc_usage
@@ -327,15 +332,17 @@ _rc_check_name "${_name}" || _rc_err "invalid rc.d script name: ${_name}"
 [ -n "${KSH_VERSION}" ] || _rc_err "$0: wrong shell, use /bin/ksh"
 [ -n "${daemon}" ] || _rc_err "$0: daemon is not set"
 
-unset _RC_DEBUG _RC_FORCE
-while getopts "df" c; do
+unset _RC_DEBUG _RC_FORCE _RC_QUIET
+while getopts "dfq" c; do
 	case "$c" in
 		d) _RC_DEBUG=-d;;
 		f) _RC_FORCE=-f;;
+		q) _RC_QUIET=-q;;
 		*) _rc_usage;;
 	esac
 done
 shift $((OPTIND-1))
+[[ -n ${_RC_DEBUG} && -n ${_RC_QUIET} ]] && _rc_usage
 
 _RC_RUNDIR=/var/run/rc.d
 _RC_RUNFILE=${_RC_RUNDIR}/${_name}
