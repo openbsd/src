@@ -73,7 +73,6 @@ extern void m88k_va_start PARAMS ((tree, rtx));
 
 extern void output_file_start PARAMS ((FILE *));
 
-extern int null_prologue PARAMS ((void));
 extern int integer_ok_for_set PARAMS ((unsigned));
 extern void m88k_layout_frame PARAMS ((void));
 extern void m88k_expand_prologue PARAMS ((void));

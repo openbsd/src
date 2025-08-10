@@ -1501,20 +1501,6 @@ m88k_layout_frame ()
 			       + current_function_pretend_args_size);
   }
 }
-
-/* Return true if this function is known to have a null prologue.  */
-
-int
-null_prologue ()
-{
-  if (! reload_completed)
-    return 0;
-  m88k_layout_frame ();
-  return (! frame_pointer_needed
-	  && nregs == 0
-	  && nxregs == 0
-	  && m88k_stack_size == 0);
-}
 
 static void
 m88k_maybe_dead (insn)
