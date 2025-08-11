@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.89 2025/08/11 17:06:21 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.90 2025/08/11 17:08:38 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16909,7 +16909,13 @@ qwx_dp_rx_h_undecap_nwifi(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 		memcpy(mtod(m, void *) + off, decap_hdr, hdr_len);
 		qwh = mtod(m, struct ieee80211_qosframe *);
 		*(u_int16_t *)qwh->i_qos = htole16(qos_ctl);
+	
+		/* A-MSDU subframes cause duplicate sequence numbers. */
+		msdu->rxi.rxi_flags |= IEEE80211_RXI_SAME_SEQ;
 	}
+
+	/* Hardware has already reordered A-MPDU subframes. */
+	msdu->rxi.rxi_flags |= IEEE80211_RXI_AMPDU_DONE;
 
 	msdu->m = m;
 	return 0;
