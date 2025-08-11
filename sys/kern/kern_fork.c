@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.276 2025/08/02 20:44:10 jca Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.277 2025/08/11 14:16:42 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ int
 sys___tfork(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___tfork_args /* {
-		syscallarg(const struct __tfork) *param;
+		syscallarg(const struct __tfork *) param;
 		syscallarg(size_t) psize;
 	} */ *uap = v;
 	size_t psize = SCARG(uap, psize);
