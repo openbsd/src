@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2025/08/04 01:47:37 dlg Exp $
+#	$OpenBSD: Makefile,v 1.23 2025/08/11 17:16:18 gkoehler Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
@@ -35,7 +35,11 @@ CFLAGS+=-DSHA2_SMALL -UYP -DNO_LOG_BAD_DNS_RESPONSES \
 	-I${LIBCSRCDIR}/asr -I${LIBCSRCDIR}/locale -I${LIBCSRCDIR}/gdtoa \
 	-I${LIBCSRCDIR}/arch/${MACHINE_CPU}/gdtoa -I${LIBCSRCDIR}/stdio \
 	-include namespace.h
-CFLAGS+=
+.if ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "m88k" || \
+    ${MACHINE_ARCH} == "sh"
+.else
+CFLAGS+= -DFUTEX
+.endif
 
 LIBCSRCDIR=${.CURDIR}/../../../lib/libc
 
