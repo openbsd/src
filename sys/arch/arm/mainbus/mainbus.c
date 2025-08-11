@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.25 2024/08/18 15:50:49 deraadt Exp $ */
+/* $OpenBSD: mainbus.c,v 1.26 2025/08/11 07:18:40 miod Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -70,6 +70,7 @@ struct arm32_bus_dma_tag mainbus_dma_tag = {
 	_bus_dmamap_unload,
 	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
+	_bus_dmamem_alloc_range,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,

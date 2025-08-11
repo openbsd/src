@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.18 2020/04/29 15:25:07 kettenis Exp $	*/
+/*	$OpenBSD: bus.h,v 1.19 2025/08/11 07:18:40 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
@@ -700,6 +700,9 @@ struct arm32_bus_dma_tag {
 	 */
 	int	(*_dmamem_alloc) (bus_dma_tag_t, bus_size_t, bus_size_t,
 		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	int	(*_dmamem_alloc_range) (bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int,
+		    paddr_t, paddr_t);
 	void	(*_dmamem_free) (bus_dma_tag_t,
 		    bus_dma_segment_t *, int);
 	int	(*_dmamem_map) (bus_dma_tag_t, bus_dma_segment_t *,
@@ -729,6 +732,9 @@ struct arm32_bus_dma_tag {
 
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
+#define	bus_dmamem_alloc_range(t, s, a, b, sg, n, r, f, l, h)	\
+	(*(t)->_dmamem_alloc_range)((t), (s), (a), (b), (sg),	\
+	    (n), (r), (f), (l), (h))
 #define	bus_dmamem_free(t, sg, n)				\
 	(*(t)->_dmamem_free)((t), (sg), (n))
 #define	bus_dmamem_map(t, sg, n, s, k, f)			\

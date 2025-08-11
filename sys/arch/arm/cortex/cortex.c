@@ -1,4 +1,4 @@
-/*	$OpenBSD: cortex.c,v 1.8 2024/08/18 15:50:47 deraadt Exp $	*/
+/*	$OpenBSD: cortex.c,v 1.9 2025/08/11 07:18:40 miod Exp $	*/
 /* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
 
 /*
@@ -65,6 +65,7 @@ struct arm32_bus_dma_tag cortex_bus_dma_tag = {
 	_bus_dmamap_unload,
 	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
+	_bus_dmamem_alloc_range,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,

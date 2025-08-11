@@ -1,4 +1,4 @@
-/* $OpenBSD: armv7.c,v 1.19 2021/04/02 03:02:46 tb Exp $ */
+/* $OpenBSD: armv7.c,v 1.20 2025/08/11 07:18:40 miod Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -37,6 +37,7 @@ struct arm32_bus_dma_tag armv7_bus_dma_tag = {
 	_bus_dmamap_unload,
 	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
+	_bus_dmamem_alloc_range,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
