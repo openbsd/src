@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.26 2025/08/03 10:06:37 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.27 2025/08/11 18:13:43 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1089,6 +1089,12 @@ unsupported_wcn6855_soc:
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
+
+	ic->ic_htcaps = IEEE80211_HTCAP_SGI20;
+	ic->ic_htxcaps = 0;
+	ic->ic_txbfcaps = 0;
+	ic->ic_aselcaps = 0;
+	ic->ic_ampdu_params = (IEEE80211_AMPDU_PARAM_SS_NONE | 0x3 /* 64k */);
 
 	memset(ic->ic_sup_mcs, 0, sizeof(ic->ic_sup_mcs));
 	ic->ic_sup_mcs[0] = 0xff;		/* MCS 0-7 */
