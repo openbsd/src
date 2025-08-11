@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.458 2025/08/05 09:51:12 jan Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.459 2025/08/11 15:34:30 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3216,42 +3216,38 @@ struct syn_cache_set tcp_syn_cache[2];		/* [S] */
 int tcp_syn_cache_active;			/* [S] */
 struct mutex syn_cache_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
-#define SYN_HASH(sa, sp, dp, rand) \
-	(((sa)->s_addr ^ (rand)[0]) *				\
-	(((((u_int32_t)(dp))<<16) + ((u_int32_t)(sp))) ^ (rand)[4]))
-#ifndef INET6
-#define	SYN_HASHALL(hash, src, dst, rand) \
-do {									\
-	hash = SYN_HASH(&satosin_const(src)->sin_addr,			\
-		satosin_const(src)->sin_port,				\
-		satosin_const(dst)->sin_port, (rand));			\
-} while (/*CONSTCOND*/ 0)
-#else
-#define SYN_HASH6(sa, sp, dp, rand) \
-	(((sa)->s6_addr32[0] ^ (rand)[0]) *			\
-	((sa)->s6_addr32[1] ^ (rand)[1]) *			\
-	((sa)->s6_addr32[2] ^ (rand)[2]) *			\
-	((sa)->s6_addr32[3] ^ (rand)[3]) *			\
-	(((((u_int32_t)(dp))<<16) + ((u_int32_t)(sp))) ^ (rand)[4]))
+static inline uint32_t
+syn_cache_hash(const struct sockaddr *src, const struct sockaddr *dst,
+    uint32_t rand[])
+{
+	switch (src->sa_family) {
+	case AF_INET: {
+		uint32_t src_port = satosin_const(src)->sin_port;
+		uint32_t dst_port = satosin_const(dst)->sin_port;
+		const in_addr_t *src_addr =
+		    &satosin_const(src)->sin_addr.s_addr;
 
-#define SYN_HASHALL(hash, src, dst, rand) \
-do {									\
-	switch ((src)->sa_family) {					\
-	case AF_INET:							\
-		hash = SYN_HASH(&satosin_const(src)->sin_addr,		\
-			satosin_const(src)->sin_port,			\
-			satosin_const(dst)->sin_port, (rand));		\
-		break;							\
-	case AF_INET6:							\
-		hash = SYN_HASH6(&satosin6_const(src)->sin6_addr,	\
-			satosin6_const(src)->sin6_port,			\
-			satosin6_const(dst)->sin6_port, (rand));	\
-		break;							\
-	default:							\
-		hash = 0;						\
-	}								\
-} while (/*CONSTCOND*/0)
-#endif /* INET6 */
+		return ((((dst_port << 16) + src_port) ^ rand[4]) *
+		    (*src_addr ^ rand[0]));
+	    }
+#ifdef INET6
+	case AF_INET6: {
+		uint32_t src_port = satosin6_const(src)->sin6_port;
+		uint32_t dst_port = satosin6_const(dst)->sin6_port;
+		const uint32_t *src_addr6 =
+		    satosin6_const(src)->sin6_addr.s6_addr32;
+
+		return ((((dst_port << 16) + src_port) ^ rand[4]) *
+		    (src_addr6[0] ^ rand[0]) *
+		    (src_addr6[1] ^ rand[1]) *
+		    (src_addr6[2] ^ rand[2]) *
+		    (src_addr6[3] ^ rand[3]));
+	    }
+#endif
+	default:
+		unhandled_af(src->sa_family);
+	}
+}
 
 void
 syn_cache_rm(struct syn_cache *sc)
@@ -3345,7 +3341,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 		tcpstat_inc(tcps_sc_seedrandom);
 	}
 
-	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa,
+	sc->sc_hash = syn_cache_hash(&sc->sc_src.sa, &sc->sc_dst.sa,
 	    set->scs_random);
 	scp = &set->scs_buckethead[sc->sc_hash % set->scs_size];
 	sc->sc_buckethead = scp;
@@ -3564,7 +3560,7 @@ syn_cache_lookup(const struct sockaddr *src, const struct sockaddr *dst,
 	for (i = 0; i < 2; i++) {
 		if (sets[i]->scs_count == 0)
 			continue;
-		SYN_HASHALL(hash, src, dst, sets[i]->scs_random);
+		hash = syn_cache_hash(src, dst, sets[i]->scs_random);
 		scp = &sets[i]->scs_buckethead[hash % sets[i]->scs_size];
 		*headp = scp;
 		TAILQ_FOREACH(sc, &scp->sch_bucket, sc_bucketq) {
