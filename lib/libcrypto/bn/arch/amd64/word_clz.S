@@ -16,7 +16,7 @@
 // Count leading zero bits in a single word
 // Input a; output function return
 //
-//    extern uint64_t word_clz (uint64_t a);
+//    extern uint64_t word_clz(uint64_t a);
 //
 // Standard x86-64 ABI: RDI = a, returns RAX
 // Microsoft x64 ABI:   RCX = a, returns RAX
@@ -30,7 +30,7 @@
         .text
 
 S2N_BN_SYMBOL(word_clz):
-	_CET_ENDBR
+        _CET_ENDBR
 
 #if WINDOWS_ABI
         push    rdi

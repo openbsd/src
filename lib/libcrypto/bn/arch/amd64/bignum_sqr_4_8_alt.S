@@ -16,8 +16,8 @@
 // Square, z := x^2
 // Input x[4]; output z[8]
 //
-//    extern void bignum_sqr_4_8_alt
-//      (uint64_t z[static 8], uint64_t x[static 4]);
+//    extern void bignum_sqr_4_8_alt(uint64_t z[static 8],
+//                                   const uint64_t x[static 4]);
 //
 // Standard x86-64 ABI: RDI = z, RSI = x
 // Microsoft x64 ABI:   RCX = z, RDX = x
@@ -71,7 +71,7 @@
         adc     c, 0
 
 S2N_BN_SYMBOL(bignum_sqr_4_8_alt):
-	_CET_ENDBR
+        _CET_ENDBR
 
 #if WINDOWS_ABI
         push    rdi

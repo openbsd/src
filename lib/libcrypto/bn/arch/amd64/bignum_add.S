@@ -16,9 +16,8 @@
 // Add, z := x + y
 // Inputs x[m], y[n]; outputs function return (carry-out) and z[p]
 //
-//    extern uint64_t bignum_add
-//     (uint64_t p, uint64_t *z,
-//      uint64_t m, uint64_t *x, uint64_t n, uint64_t *y);
+//    extern uint64_t bignum_add(uint64_t p, uint64_t *z, uint64_t m,
+//                               const uint64_t *x, uint64_t n, const uint64_t *y);
 //
 // Does the z := x + y operation, truncating modulo p words in general and
 // returning a top carry (0 or 1) in the p'th place, only adding the input
@@ -49,7 +48,7 @@
 
 
 S2N_BN_SYMBOL(bignum_add):
-	_CET_ENDBR
+        _CET_ENDBR
 
 #if WINDOWS_ABI
         push    rdi
@@ -75,7 +74,7 @@ S2N_BN_SYMBOL(bignum_add):
         cmp     p, n
         cmovc   n, p
         cmp     m, n
-        jc      ylonger
+        jc      bignum_add_ylonger
 
 // The case where x is longer or of the same size (p >= m >= n)
 
@@ -83,27 +82,27 @@ S2N_BN_SYMBOL(bignum_add):
         sub     m, n
         inc     m
         test    n, n
-        jz      xtest
-xmainloop:
+        jz      bignum_add_xtest
+bignum_add_xmainloop:
         mov     a, [x+8*i]
         adc     a, [y+8*i]
         mov     [z+8*i],a
         inc     i
         dec     n
-        jnz     xmainloop
-        jmp     xtest
-xtoploop:
+        jnz     bignum_add_xmainloop
+        jmp     bignum_add_xtest
+bignum_add_xtoploop:
         mov     a, [x+8*i]
         adc     a, 0
         mov     [z+8*i],a
         inc     i
-xtest:
+bignum_add_xtest:
         dec     m
-        jnz     xtoploop
+        jnz     bignum_add_xtoploop
         mov     ashort, 0
         adc     a, 0
         test    p, p
-        jnz     tails
+        jnz     bignum_add_tails
 #if WINDOWS_ABI
         pop    rsi
         pop    rdi
@@ -112,30 +111,30 @@ xtest:
 
 // The case where y is longer (p >= n > m)
 
-ylonger:
+bignum_add_ylonger:
 
         sub     p, n
         sub     n, m
         test    m, m
-        jz      ytoploop
-ymainloop:
+        jz      bignum_add_ytoploop
+bignum_add_ymainloop:
         mov     a, [x+8*i]
         adc     a, [y+8*i]
         mov     [z+8*i],a
         inc     i
         dec     m
-        jnz     ymainloop
-ytoploop:
+        jnz     bignum_add_ymainloop
+bignum_add_ytoploop:
         mov     a, [y+8*i]
         adc     a, 0
         mov     [z+8*i],a
         inc     i
         dec     n
-        jnz     ytoploop
+        jnz     bignum_add_ytoploop
         mov     ashort, 0
         adc     a, 0
         test    p, p
-        jnz     tails
+        jnz     bignum_add_tails
 #if WINDOWS_ABI
         pop    rsi
         pop    rdi
@@ -144,16 +143,16 @@ ytoploop:
 
 // Adding a non-trivial tail, when p > max(m,n)
 
-tails:
+bignum_add_tails:
         mov     [z+8*i],a
         xor     a, a
-        jmp     tail
-tailloop:
+        jmp     bignum_add_tail
+bignum_add_tailloop:
         mov     [z+8*i],a
-tail:
+bignum_add_tail:
         inc     i
         dec     p
-        jnz     tailloop
+        jnz     bignum_add_tailloop
 #if WINDOWS_ABI
         pop    rsi
         pop    rdi
