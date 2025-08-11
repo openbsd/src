@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.88 2025/08/11 17:05:22 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.89 2025/08/11 17:06:21 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16525,6 +16525,7 @@ qwx_dp_rx_wbm_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 	}
 
 	qwx_dp_rx_deliver_msdu(sc, msdu);
+	msdu->m = NULL;
 }
 
 int
