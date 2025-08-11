@@ -1,3 +1,5 @@
+// $OpenBSD: bignum_cmul.S,v 1.7 2025/08/11 14:13:56 jsing Exp $
+//
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
