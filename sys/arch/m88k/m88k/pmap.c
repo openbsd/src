@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.89 2025/06/02 18:49:04 claudio Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.90 2025/08/11 14:22:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -171,6 +171,17 @@ static __inline pv_entry_t
 pg_to_pvh(struct vm_page *pg)
 {
 	return &pg->mdpage.pv_ent;
+}
+
+static __inline pt_entry_t
+invalidate_pte(pt_entry_t *pte)
+{
+	pt_entry_t oldpte;
+
+	oldpte = PG_NV;
+	__asm__ volatile
+	    ("xmem %0, %2, %%r0" : "+r"(oldpte), "+m"(*pte) : "r"(pte));
+	return oldpte;
 }
 
 /*

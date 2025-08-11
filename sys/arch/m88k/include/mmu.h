@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.16 2014/03/29 18:09:29 guenther Exp $ */
+/*	$OpenBSD: mmu.h,v 1.17 2025/08/11 14:22:55 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -179,17 +179,5 @@ typedef uint32_t	batc_t;
 
 #define	trunc_batc(a)	((a) & ~BATC_BLKMASK)
 #define	round_batc(a)	trunc_batc((a) + BATC_BLKBYTES - 1)
-
-static pt_entry_t invalidate_pte(pt_entry_t *);
-static __inline__ pt_entry_t
-invalidate_pte(pt_entry_t *pte)
-{
-	pt_entry_t oldpte;
-
-	oldpte = PG_NV;
-	__asm__ volatile
-	    ("xmem %0, %2, %%r0" : "+r"(oldpte), "+m"(*pte) : "r"(pte));
-	return oldpte;
-}
 
 #endif /* __M88K_MMU_H__ */
