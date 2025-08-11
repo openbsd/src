@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.29 2025/08/03 10:06:37 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.30 2025/08/11 17:05:22 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -279,8 +279,8 @@ struct ath11k_hw_ops {
 	bool (*rx_desc_get_ldpc_support)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_mpdu_seq_ctl_vld)(struct hal_rx_desc *desc);
 	bool (*rx_desc_get_mpdu_fc_valid)(struct hal_rx_desc *desc);
-	uint16_t (*rx_desc_get_mpdu_start_seq_no)(struct hal_rx_desc *desc);
 #endif
+	uint16_t (*rx_desc_get_mpdu_start_seq_no)(struct hal_rx_desc *desc);
 	uint16_t (*rx_desc_get_msdu_len)(struct hal_rx_desc *desc);
 #ifdef notyet
 	uint8_t (*rx_desc_get_msdu_sgi)(struct hal_rx_desc *desc);
@@ -292,7 +292,9 @@ struct ath11k_hw_ops {
 	uint8_t (*rx_desc_get_msdu_pkt_type)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_nss)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_mpdu_tid)(struct hal_rx_desc *desc);
+#endif
 	uint16_t (*rx_desc_get_mpdu_peer_id)(struct hal_rx_desc *desc);
+#if 0
 	void (*rx_desc_copy_attn_end_tlv)(struct hal_rx_desc *fdesc,
 					  struct hal_rx_desc *ldesc);
 	uint32_t (*rx_desc_get_mpdu_start_tag)(struct hal_rx_desc *desc);
@@ -1783,8 +1785,10 @@ struct ath11k_peer {
 	struct crypto_shash *tfm_mmic;
 	u8 mcast_keyidx;
 	u8 ucast_keyidx;
-	u16 sec_type;
-	u16 sec_type_grp;
+#endif
+	uint16_t sec_type;
+	uint16_t sec_type_grp;
+#if 0
 	bool is_authorized;
 	bool dp_setup_done;
 #endif
