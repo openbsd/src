@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.90 2025/08/11 17:08:38 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.91 2025/08/11 17:14:54 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -17246,6 +17246,8 @@ void
 qwx_dp_rx_process_received_packets(struct qwx_softc *sc,
     struct qwx_rx_msdu_list *msdu_list, int mac_id)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	struct qwx_rx_msdu *msdu;
 	int ret;
 
@@ -17256,6 +17258,7 @@ qwx_dp_rx_process_received_packets(struct qwx_softc *sc,
 			DNPRINTF(QWX_D_MAC, "Unable to process msdu: %d", ret);
 			m_freem(msdu->m);
 			msdu->m = NULL;
+			ifp->if_ierrors++;
 			continue;
 		}
 
