@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.68 2025/04/22 12:23:26 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.69 2025/08/12 12:26:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -860,8 +860,10 @@ window_tree_search(__unused void *modedata, void *itemdata, const char *ss)
 		if (s == NULL || wl == NULL || wp == NULL)
 			break;
 		cmd = get_proc_name(wp->fd, wp->tty);
-		if (cmd == NULL || *cmd == '\0')
+		if (cmd == NULL || *cmd == '\0') {
+			free(cmd);
 			return (0);
+		}
 		retval = (strstr(cmd, ss) != NULL);
 		free(cmd);
 		return (retval);
