@@ -1,4 +1,4 @@
-// $OpenBSD: bignum_modsub.S,v 1.3 2025/08/12 10:22:13 jsing Exp $
+// $OpenBSD: bignum_modsub.S,v 1.4 2025/08/12 10:23:40 jsing Exp $
 //
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
@@ -25,7 +25,7 @@
 // Microsoft x64 ABI:   RCX = k, RDX = z, R8 = x, R9 = y, [RSP+40] = m
 // ----------------------------------------------------------------------------
 
-#include "_internal_s2n_bignum.h"
+#include "s2n_bignum_internal.h"
 
         .intel_syntax noprefix
         S2N_BN_SYM_VISIBILITY_DIRECTIVE(bignum_modsub)
