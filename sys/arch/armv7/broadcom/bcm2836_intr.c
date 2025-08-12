@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.8 2022/01/03 03:06:49 jsg Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.9 2025/08/12 08:43:55 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -144,7 +144,7 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bcm_intc_softc *sc = (struct bcm_intc_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	uint32_t reg[2];
+	uint32_t phandle, reg[2];
 	int node;
 	int i;
 
@@ -166,8 +166,9 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 	 * controller, but for now it is easier to handle it together
 	 * with its BCM2835 partner.
 	 */
-	node = OF_finddevice("/soc/local_intc");
-	if (node == -1)
+	phandle = OF_getpropint(faa->fa_node, "interrupt-parent", 0);
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
 		panic("%s: can't find ARM control logic", __func__);
 
 	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
