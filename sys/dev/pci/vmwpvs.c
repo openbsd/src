@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.30 2024/09/20 02:00:46 jsg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.31 2025/08/12 04:09:43 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -525,7 +525,7 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 		vmwpvs_ccb_put(sc, ccb);
 	}
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO | IPL_MPSAFE,
 	    isr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL)
 		goto free_msg_ring;
@@ -749,7 +749,7 @@ vmwpvs_intr(void *xsc)
 	}
 
 	if (msg)
-		task_add(systq, &sc->sc_msg_task);
+		task_add(systqmp, &sc->sc_msg_task);
 
 	return (1);
 }
@@ -794,12 +794,14 @@ vmwpvs_msg_task(void *xsc)
 				break;
 			}
 
+			KERNEL_LOCK();
 			if (scsi_probe_lun(sc->sc_scsibus,
 			    letoh32(dvmsg->target), dvmsg->lun[1]) != 0) {
 				printf("%s: error probing target %d lun %d\n",
 				    DEVNAME(sc), letoh32(dvmsg->target),
 				    dvmsg->lun[1]);
 			}
+			KERNEL_UNLOCK();
 			break;
 
 		case VMWPVS_MSG_T_REMOVED:
@@ -811,6 +813,7 @@ vmwpvs_msg_task(void *xsc)
 				break;
 			}
 
+			KERNEL_LOCK();
 			if (scsi_detach_lun(sc->sc_scsibus,
 			    letoh32(dvmsg->target), dvmsg->lun[1],
 			    DETACH_FORCE) != 0) {
@@ -818,6 +821,7 @@ vmwpvs_msg_task(void *xsc)
 				    DEVNAME(sc), letoh32(dvmsg->target),
 				    dvmsg->lun[1]);
 			}
+			KERNEL_UNLOCK();
 			break;
 
 		default:
