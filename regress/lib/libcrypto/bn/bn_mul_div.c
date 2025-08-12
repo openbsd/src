@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mul_div.c,v 1.7 2023/06/21 07:18:10 jsing Exp $ */
+/*	$OpenBSD: bn_mul_div.c,v 1.8 2025/08/12 10:29:35 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -233,6 +233,13 @@ struct benchmark benchmarks[] = {
 		.b_bits = 256,
 	},
 	{
+		.desc = "BN_mul (384 bit x 384 bit)",
+		.setup = benchmark_bn_mul_setup,
+		.run_once = benchmark_bn_mul_run_once,
+		.a_bits = 384,
+		.b_bits = 384,
+	},
+	{
 		.desc = "BN_mul (512 bit x 512 bit)",
 		.setup = benchmark_bn_mul_setup,
 		.run_once = benchmark_bn_mul_run_once,
@@ -292,6 +299,12 @@ struct benchmark benchmarks[] = {
 		.setup = benchmark_bn_sqr_setup,
 		.run_once = benchmark_bn_sqr_run_once,
 		.a_bits = 256,
+	},
+	{
+		.desc = "BN_sqr (384 bit)",
+		.setup = benchmark_bn_sqr_setup,
+		.run_once = benchmark_bn_sqr_run_once,
+		.a_bits = 384,
 	},
 	{
 		.desc = "BN_sqr (512 bit)",
