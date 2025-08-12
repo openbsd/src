@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.780 2025/07/14 23:49:08 jsg Exp $
+$OpenBSD: usbdevs,v 1.781 2025/08/12 03:43:45 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4710,6 +4710,7 @@ product WCH CH341		0x5523	CH341 serial/parallel
 product WCH2 CH341A		0x5523	CH341A serial/parallel
 product WCH2 CH343		0x55d3	CH343 serial/parallel
 product WCH2 CH9102		0x55d4	CH9102 serial/parallel
+product WCH2 CH340K		0x7522	CH340K serial/parallel
 product WCH2 CH340		0x7523	CH340 serial/parallel
 product	WCH2 TEMPER		0xe025	TEMPer sensor
 
