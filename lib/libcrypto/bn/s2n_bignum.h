@@ -1,3 +1,5 @@
+// $OpenBSD: s2n_bignum.h,v 1.4 2025/08/12 10:01:37 jsing Exp $
+//
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Permission to use, copy, modify, and/or distribute this software for any
