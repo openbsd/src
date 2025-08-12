@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.18 2022/05/19 12:55:59 aoyama Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.19 2025/08/12 16:17:10 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -126,20 +126,32 @@ m8820x_setup_board_config()
 	u_int pos = 0;
 
 	if (m8820x_probe_cmmus(CMMU_I0, CMMU_D0) != 0) {
-		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_I0;
-		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_D0;
+		m8820x_cmmu[pos].cmmu_regs = (void *)CMMU_I0;
+		m8820x_cmmu[pos].cmmu_next = m8820x_cmmu + pos + 1;
+		pos++;
+		m8820x_cmmu[pos].cmmu_regs = (void *)CMMU_D0;
+		pos++;
 	}
 	if (m8820x_probe_cmmus(CMMU_I1, CMMU_D1) != 0) {
-		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_I1;
-		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_D1;
+		m8820x_cmmu[pos].cmmu_regs = (void *)CMMU_I1;
+		m8820x_cmmu[pos].cmmu_next = m8820x_cmmu + pos + 1;
+		pos++;
+		m8820x_cmmu[pos].cmmu_regs = (void *)CMMU_D1;
+		pos++;
 	}
 	if (m8820x_probe_cmmus(CMMU_I2, CMMU_D2) != 0) {
-		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_I2;
-		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_D2;
+		m8820x_cmmu[pos].cmmu_regs = (void *)CMMU_I2;
+		m8820x_cmmu[pos].cmmu_next = m8820x_cmmu + pos + 1;
+		pos++;
+		m8820x_cmmu[pos].cmmu_regs = (void *)CMMU_D2;
+		pos++;
 	}
 	if (m8820x_probe_cmmus(CMMU_I3, CMMU_D3) != 0) {
-		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_I3;
-		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_D3;
+		m8820x_cmmu[pos].cmmu_regs = (void *)CMMU_I3;
+		m8820x_cmmu[pos].cmmu_next = m8820x_cmmu + pos + 1;
+		pos++;
+		m8820x_cmmu[pos].cmmu_regs = (void *)CMMU_D3;
+		pos++;
 	}
 
 	ncpusfound = pos >> 1;
