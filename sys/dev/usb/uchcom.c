@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.37 2024/10/22 21:50:02 jsg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.38 2025/08/12 03:46:17 jsg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -242,6 +242,7 @@ const struct ucom_methods uchcom_methods = {
 static const struct usb_devno uchcom_devs[] = {
 	{ USB_VENDOR_WCH, USB_PRODUCT_WCH_CH341 },
 	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH340 },
+	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH340K },
 	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH341A },
 	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH343 },
 	{ USB_VENDOR_WCH2, USB_PRODUCT_WCH2_CH9102 }
