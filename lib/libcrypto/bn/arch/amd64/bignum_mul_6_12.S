@@ -1,3 +1,5 @@
+// $OpenBSD: bignum_mul_6_12.S,v 1.2 2025/08/12 10:20:06 jsing Exp $
+//
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0 OR ISC OR MIT-0
 
