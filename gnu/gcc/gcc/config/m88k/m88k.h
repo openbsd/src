@@ -804,16 +804,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 /* Define the offset between two registers, one to be eliminated, and the other
    its replacement, at the start of a routine.  */
 #define INITIAL_ELIMINATION_OFFSET(FROM, TO, OFFSET)			\
-{ m88k_layout_frame ();							\
-  if ((FROM) == FRAME_POINTER_REGNUM && (TO) == STACK_POINTER_REGNUM)	\
-      (OFFSET) = m88k_fp_offset;					\
-  else if ((FROM) == ARG_POINTER_REGNUM && (TO) == FRAME_POINTER_REGNUM)\
-    (OFFSET) = m88k_stack_size - m88k_fp_offset;			\
-  else if ((FROM) == ARG_POINTER_REGNUM && (TO) == STACK_POINTER_REGNUM)\
-    (OFFSET) = m88k_stack_size;						\
-  else									\
-    gcc_unreachable ();							\
-}
+  ((OFFSET) = m88k_initial_elimination_offset(FROM, TO))
 
 /*** Trampolines for Nested Functions ***/
 

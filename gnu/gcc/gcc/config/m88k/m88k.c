@@ -1085,6 +1085,28 @@ m88k_layout_frame (void)
 			       + current_function_pretend_args_size);
   }
 }
+
+int
+m88k_initial_elimination_offset (int from, int to)
+{
+  m88k_layout_frame ();
+  switch (from)
+    {
+    case FRAME_POINTER_REGNUM:
+      return m88k_fp_offset;
+      break;
+
+    case ARG_POINTER_REGNUM:
+      if (to == FRAME_POINTER_REGNUM)
+       return m88k_stack_size - m88k_fp_offset;
+      else /* to == STACK_POINTER_REGNUM */
+       return m88k_stack_size;
+      break;
+
+    default:
+      gcc_unreachable ();
+    }
+}
 
 static void
 m88k_maybe_dead (rtx insn)

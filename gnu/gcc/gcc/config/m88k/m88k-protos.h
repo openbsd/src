@@ -53,6 +53,7 @@ extern void m88k_va_start (tree, rtx);
 #endif /* RTX_CODE */
 
 extern bool integer_ok_for_set (unsigned int);
+extern int m88k_initial_elimination_offset (int, int);
 extern void m88k_expand_prologue (void);
 extern void m88k_expand_epilogue (void);
 extern void output_function_profiler (FILE *, int, const char *);
