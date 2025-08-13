@@ -380,7 +380,7 @@ emit_move_sequence (rtx *operands, enum machine_mode mode, rtx scratch)
    and we need a second temp register, then we use SCRATCH, which is
    provided via the SECONDARY_INPUT_RELOAD_CLASS mechanism.  */
 
-struct rtx_def *
+rtx
 legitimize_address (int pic, rtx orig, rtx reg, rtx scratch)
 {
   rtx addr = (GET_CODE (orig) == MEM ? XEXP (orig, 0) : orig);
@@ -820,7 +820,7 @@ real_power_of_2_operand (rtx op)
    operands, putting them in registers and making CONST_DOUBLE values
    SFmode where possible.  */
 
-struct rtx_def *
+rtx
 legitimize_operand (rtx op, enum machine_mode mode)
 {
   rtx temp;
@@ -991,7 +991,7 @@ static int  frame_laid_out;
    either during output_function_prologue() or by
    INITIAL_ELIMINATION_OFFSET.  */
 
-void
+static void
 m88k_layout_frame (void)
 {
   int regno, sp_size, frame_size;
@@ -1073,7 +1073,7 @@ m88k_layout_frame (void)
   /* First, combine m88k_stack_size and size.  If m88k_stack_size is
      nonzero, align the frame size to 8 mod 16; otherwise align the
      frame size to 0 mod 16.  (If stacks are 8 byte aligned, this ends
-     up as a NOP.  */
+     up as a NOP).  */
   {
     int need
       = ((m88k_stack_size ? STACK_UNIT_BOUNDARY - STARTING_FRAME_OFFSET : 0)
@@ -1453,7 +1453,7 @@ m88k_order_regs_for_local_alloc (void)
    where GCC did not expect to have register arguments, followed
    by stack arguments, followed by register arguments.  */
 
-struct rtx_def *
+rtx
 m88k_function_arg (CUMULATIVE_ARGS args_so_far, enum machine_mode mode,
 		   tree type, int named ATTRIBUTE_UNUSED)
 {
@@ -2102,8 +2102,6 @@ print_operand (FILE *file, rtx x, int code)
       return;
 
     case 'B': /* bcnd branch values */
-      if (0) /* SVR4 */
-	fputs (m88k_register_prefix, file);
       switch (xc)
 	{
 	case EQ: fputs ("eq0", file); return;
@@ -2116,8 +2114,6 @@ print_operand (FILE *file, rtx x, int code)
 	}
 
     case 'C': /* bb0/bb1 branch values for comparisons */
-      if (0) /* SVR4 */
-	fputs (m88k_register_prefix, file);
       switch (xc)
 	{
 	case EQ:  fputs ("eq", file); return;
@@ -2139,13 +2135,9 @@ print_operand (FILE *file, rtx x, int code)
 	case EQ: fputs ("0xa", file); return;
 	case NE: fputs ("0x5", file); return;
 	case GT:
-	  if (0) /* SVR4 */
-	    fputs (m88k_register_prefix, file);
 	  fputs ("gt0", file);
 	  return;
 	case LE:
-	  if (0) /* SVR4 */
-	    fputs (m88k_register_prefix, file);
 	  fputs ("le0", file);
 	  return;
 	case LT: fputs ("0x4", file); return;

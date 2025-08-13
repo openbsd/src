@@ -37,9 +37,9 @@ extern const char *output_ior (rtx[]);
 extern const char *output_xor (rtx[]);
 extern const char *output_call (rtx[], rtx);
 
-extern struct rtx_def *emit_test (enum rtx_code, enum machine_mode);
-extern struct rtx_def *legitimize_address (int, rtx, rtx, rtx);
-extern struct rtx_def *legitimize_operand (rtx, enum machine_mode);
+extern rtx emit_test (enum rtx_code, enum machine_mode);
+extern rtx legitimize_address (int, rtx, rtx, rtx);
+extern rtx legitimize_operand (rtx, enum machine_mode);
 
 extern bool pic_address_needs_scratch (rtx);
 extern bool symbolic_address_p (rtx);
@@ -53,7 +53,6 @@ extern void m88k_va_start (tree, rtx);
 #endif /* RTX_CODE */
 
 extern bool integer_ok_for_set (unsigned int);
-extern void m88k_layout_frame (void);
 extern void m88k_expand_prologue (void);
 extern void m88k_expand_epilogue (void);
 extern void output_function_profiler (FILE *, int, const char *);
@@ -62,7 +61,7 @@ extern bool mak_mask_p (int);
 
 extern void m88k_order_regs_for_local_alloc (void);
 #ifdef TREE_CODE
-extern struct rtx_def *m88k_function_arg (CUMULATIVE_ARGS, enum machine_mode,
+extern rtx m88k_function_arg (CUMULATIVE_ARGS, enum machine_mode,
 					  tree, int);
 extern void m88k_function_arg_advance (CUMULATIVE_ARGS *, enum machine_mode,
 				       tree, int);

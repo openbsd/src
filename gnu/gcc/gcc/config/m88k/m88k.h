@@ -90,9 +90,9 @@ extern int m88k_fp_offset;
 extern int m88k_stack_size;
 extern int m88k_case_index;
 
-extern struct rtx_def *m88k_compare_reg;
-extern struct rtx_def *m88k_compare_op0;
-extern struct rtx_def *m88k_compare_op1;
+extern rtx m88k_compare_reg;
+extern rtx m88k_compare_op0;
+extern rtx m88k_compare_op1;
 
 extern enum processor_type m88k_cpu;
 
