@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.33 2025/08/05 13:22:10 schwarze Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.34 2025/08/13 16:52:27 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 5 2025 $
+.Dd $Mdocdate: August 13 2025 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -146,10 +146,22 @@ The default is 1800 seconds.
 Indicate whether to prefer this router over other default routers.
 The default is
 .Cm medium .
-.\" .It Ic reachable time Ar number
-.\" XXX
-.\" .It Ic retrans timer Ar number
-.\" XXX
+.It Ic reachable time Ar number
+The time, in milliseconds, that a node assumes a neighbor is reachable.
+The default is 0, meaning unspecified by this router.
+This option is ignored by
+.Xr slaacd 8
+and cannot be set on
+.Ox
+IPv6 hosts.
+.It Ic retrans timer Ar number
+The time, in milliseconds, between retransmitted Neighbor Solicitation messages.
+The default is 0, meaning unspecified by this router.
+This option is ignored by
+.Xr slaacd 8
+and cannot be set on
+.Ox
+IPv6 hosts.
 .It Ic source link-layer address Pq Cm yes Ns | Ns Cm no
 Add a source link-layer address option to router advertisement messages, to
 communicate the link-layer address of the sending interface.
