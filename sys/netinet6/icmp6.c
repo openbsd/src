@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.276 2025/08/04 10:44:43 mvs Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.277 2025/08/13 11:30:31 mvs Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -97,6 +97,11 @@
 #include <net/pfvar.h>
 #endif
 
+/*
+ * Locks used to protect data:
+ *	a	atomic
+ */
+
 struct cpumem *icmp6counters;
 
 extern int icmp6errppslim;
@@ -117,8 +122,8 @@ LIST_HEAD(, icmp6_mtudisc_callback) icmp6_mtudisc_callbacks =
 struct rttimer_queue icmp6_mtudisc_timeout_q;
 
 /* XXX do these values make any sense? */
-static int icmp6_mtudisc_hiwat = 1280;
-static int icmp6_mtudisc_lowat = 256;
+static int icmp6_mtudisc_hiwat = 1280;	/* [a] */
+static int icmp6_mtudisc_lowat = 256;	/* [a] */
 
 /*
  * keep track of # of redirect routes.
@@ -962,16 +967,15 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 */
 	rtcount = rt_timer_queue_count(&icmp6_mtudisc_timeout_q);
 	if (validated) {
-		if (0 <= icmp6_mtudisc_hiwat && rtcount > icmp6_mtudisc_hiwat)
+		if (rtcount > atomic_load_int(&icmp6_mtudisc_hiwat))
 			return;
-		else if (0 <= icmp6_mtudisc_lowat &&
-		    rtcount > icmp6_mtudisc_lowat) {
+		else if (rtcount > atomic_load_int(&icmp6_mtudisc_lowat)) {
 			/*
 			 * XXX nuke a victim, install the new one.
 			 */
 		}
 	} else {
-		if (0 <= icmp6_mtudisc_lowat && rtcount > icmp6_mtudisc_lowat)
+		if (rtcount > atomic_load_int(&icmp6_mtudisc_lowat))
 			return;
 	}
 
@@ -1776,13 +1780,13 @@ const struct sysctl_bounded_args icmpv6ctl_vars_unlocked[] = {
 	{ ICMPV6CTL_ND6_DELAY, &nd6_delay, 0, INT_MAX },
 	{ ICMPV6CTL_ND6_UMAXTRIES, &nd6_umaxtries, 0, INT_MAX },
 	{ ICMPV6CTL_ND6_MMAXTRIES, &nd6_mmaxtries, 0, INT_MAX },
+	{ ICMPV6CTL_MTUDISC_HIWAT, &icmp6_mtudisc_hiwat, 0, INT_MAX },
+	{ ICMPV6CTL_MTUDISC_LOWAT, &icmp6_mtudisc_lowat, 0, INT_MAX },
 };
 
 const struct sysctl_bounded_args icmpv6ctl_vars[] = {
 	{ ICMPV6CTL_ERRPPSLIMIT, &icmp6errppslim, -1, 1000 },
 	{ ICMPV6CTL_ND6_MAXNUDHINT, &nd6_maxnudhint, 0, INT_MAX },
-	{ ICMPV6CTL_MTUDISC_HIWAT, &icmp6_mtudisc_hiwat, -1, INT_MAX },
-	{ ICMPV6CTL_MTUDISC_LOWAT, &icmp6_mtudisc_lowat, -1, INT_MAX },
 };
 
 int
@@ -1847,6 +1851,8 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case ICMPV6CTL_ND6_DELAY:
 	case ICMPV6CTL_ND6_UMAXTRIES:
 	case ICMPV6CTL_ND6_MMAXTRIES:
+	case ICMPV6CTL_MTUDISC_HIWAT:
+	case ICMPV6CTL_MTUDISC_LOWAT:
 		error = sysctl_bounded_arr(icmpv6ctl_vars_unlocked,
 		    nitems(icmpv6ctl_vars_unlocked), name, namelen,
 		    oldp, oldlenp, newp, newlen);
