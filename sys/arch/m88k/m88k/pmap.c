@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.90 2025/08/11 14:22:55 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.91 2025/08/13 16:23:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -103,7 +103,7 @@ vaddr_t virtual_end = VM_MAX_KERNEL_ADDRESS;
 #define CD_RMPG		0x00000100	/* pmap_remove_page */
 #define CD_EXP		0x00000200	/* pmap_expand */
 #define CD_ENT		0x00000400	/* pmap_enter / pmap_kenter_pa */
-#define CD_CBIT		0x00001000	/* pmap_changebit */
+#define CD_WP		0x00001000	/* pmap_write_protect */
 #define CD_TBIT		0x00002000	/* pmap_testbit */
 #define CD_USBIT	0x00004000	/* pmap_unsetbit */
 #define	CD_COPY		0x00008000	/* pmap_copy_page */
@@ -155,7 +155,7 @@ batc_t global_ibatc[BATC_MAX];
 /*
  * Internal routines
  */
-void		 pmap_changebit(struct vm_page *, int, int);
+void		 pmap_write_protect(struct vm_page *);
 void		 pmap_clean_page(paddr_t);
 pt_entry_t	*pmap_expand(pmap_t, vaddr_t, int);
 pt_entry_t	*pmap_expand_kmap(vaddr_t, int);
@@ -1508,12 +1508,10 @@ pmap_zero_page(struct vm_page *pg)
 
 /*
  * [INTERNAL]
- * Alters bits in the pte of all mappings of `pg'. For each pte, bits in
- * `set' are set and bits not in `mask' are cleared. The flags summary
- * at the head of the pv list is modified in a similar way.
+ * Set the PG_RO bit in the pte of all mappings of `pg'.
  */
 void
-pmap_changebit(struct vm_page *pg, int set, int mask)
+pmap_write_protect(struct vm_page *pg)
 {
 	pv_entry_t head, pvep;
 	pt_entry_t *pte, npte, opte;
@@ -1521,14 +1519,9 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 	int s;
 	vaddr_t va;
 
-	DPRINTF(CD_CBIT, ("pmap_changebit(%p, %x, %x)\n", pg, set, mask));
+	DPRINTF(CD_WP, ("pmap_write_protect(%p)\n", pg));
 
 	s = splvm();
-
-	/*
-	 * Clear saved attributes (modify, reference)
-	 */
-	pg->mdpage.pv_flags &= mask;
 
 	head = pg_to_pvh(pg);
 	if (head->pv_pmap != NULL) {
@@ -1545,7 +1538,7 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 				continue;	 /* no page mapping */
 #ifdef PMAPDEBUG
 			if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-				panic("pmap_changebit: pte %08x in pmap %p doesn't point to page %p@%lx",
+				panic("pmap_write_protect: pte %08x in pmap %p doesn't point to page %p@%lx",
 				    *pte, pmap, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
@@ -1553,7 +1546,7 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 			 * Update bits
 			 */
 			opte = *pte;
-			npte = (opte | set) & mask;
+			npte = opte | PG_RO;
 
 			/*
 			 * Invalidate pte temporarily to avoid the modified bit
@@ -1750,7 +1743,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	if ((prot & PROT_READ) == PROT_NONE)
 		pmap_remove_page(pg);
 	else if ((prot & PROT_WRITE) == PROT_NONE)
-		pmap_changebit(pg, PG_RO, ~0);
+		pmap_write_protect(pg);
 }
 
 /*
