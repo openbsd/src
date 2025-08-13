@@ -1252,17 +1252,8 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 #define ADDITIONAL_REGISTER_NAMES	{{"psr", 0}, {"cc", 0}}
 
-/* Change to the readonly data section for a table of addresses.
-   final_scan_insn changes back to the text section.  */
-#undef	ASM_OUTPUT_BEFORE_CASE_LABEL
-#define ASM_OUTPUT_BEFORE_CASE_LABEL(FILE, PREFIX, NUM, TABLE)		\
-  do {									\
-    if (! CASE_VECTOR_INSNS)						\
-      {									\
-	switch_to_section (readonly_data_section);			\
-	ASM_OUTPUT_ALIGN ((FILE), 2);					\
-      }									\
-  } while (0);
+/* Alignment for case jump tables. No need to use the default 16 bytes.  */
+#define ADDR_VEC_ALIGN(ADDR_VEC)	UNITS_PER_WORD
 
 /* Epilogue for case labels.  This jump instruction is called by casesi
    to transfer to the appropriate branch instruction within the table.
