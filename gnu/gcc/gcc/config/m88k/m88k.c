@@ -1,6 +1,6 @@
 /* Subroutines for insn-output.c for Motorola 88000.
    Copyright (C) 1988, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002 Free Software Foundation, Inc. 
+   2001, 2002 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@mcc.com)
    Currently maintained by (gcc@dg-rtp.dg.com)
 
@@ -502,7 +502,7 @@ static const enum machine_mode mode_from_align[] =
 			      {VOIDmode, QImode, HImode, VOIDmode, SImode,
 			       VOIDmode, VOIDmode, VOIDmode, DImode};
 
-static void block_move_sequence (rtx, rtx, rtx, rtx, int, int);
+static void block_move_sequence (rtx, rtx, int, int);
 
 /* Emit code to perform a block move.  Choose the best method.
 
@@ -512,8 +512,9 @@ static void block_move_sequence (rtx, rtx, rtx, rtx, int, int);
    OPERANDS[3] is the alignment safe to use.  */
 
 void
-expand_block_move (rtx dest_mem, rtx src_mem, rtx *operands)
+expand_block_move (rtx *operands)
 {
+  rtx dest, src;
   int align = INTVAL (operands[3]);
   int constp = (GET_CODE (operands[2]) == CONST_INT);
   int bytes = (constp ? INTVAL (operands[2]) : 0);
@@ -527,29 +528,30 @@ expand_block_move (rtx dest_mem, rtx src_mem, rtx *operands)
   else
     gcc_assert (align > 0 && align != 3); /* block move invalid alignment.  */
 
-  if (constp && bytes <= 3 * align)
-    block_move_sequence (operands[0], dest_mem, operands[1], src_mem,
-			 bytes, align);
+  dest = operands[0];
+  src = operands[1];
 
-  else
+  if (constp && bytes <= (optimize_size ? 3 : 6) * align)
     {
-      emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "memcpy"), 0,
-			 VOIDmode, 3,
-			 operands[0], Pmode,
-			 operands[1], Pmode,
-			 convert_to_mode (TYPE_MODE (sizetype), operands[2],
-					  TYPE_UNSIGNED (sizetype)),
-			 TYPE_MODE (sizetype));
+      block_move_sequence (dest, src, bytes, align);
+      return;
     }
+
+  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "memcpy"), 0,
+		     VOIDmode, 3,
+		     dest, Pmode,
+		     src, Pmode,
+		     convert_to_mode (TYPE_MODE (sizetype), operands[2],
+				      TYPE_UNSIGNED (sizetype)),
+		     TYPE_MODE (sizetype));
 }
 
 /* Emit code to perform a block move with an offset sequence of ld/st
    instructions (..., ld 0, st 1, ld 1, st 0, ...).  SIZE and ALIGN are
-   known constants.  DEST and SRC are registers.  */
+   known constants.  DEST and SRC are memory addresses.  */
 
 static void
-block_move_sequence (rtx dest, rtx dest_mem, rtx src, rtx src_mem, int size,
-		     int align)
+block_move_sequence (rtx dest_mem, rtx src_mem, int size, int align)
 {
   rtx temp[2];
   enum machine_mode mode[2];
@@ -683,18 +685,17 @@ output_call (rtx operands[], rtx addr)
   if (final_sequence)
     {
       rtx jump;
-      rtx seq_insn;
 
       /* This can be generalized, but there is currently no need.  */
       gcc_assert (XVECLEN (final_sequence, 0) == 2);
 
       /* The address of interior insns is not computed, so use the sequence.  */
-      seq_insn = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
       jump = XVECEXP (final_sequence, 0, 1);
       if (GET_CODE (jump) == JUMP_INSN)
 	{
 	  const char *last;
 	  rtx dest = XEXP (SET_SRC (PATTERN (jump)), 0);
+	  rtx seq_insn = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
 	  int delta = 4 * (INSN_ADDRESSES (INSN_UID (dest))
 			   - INSN_ADDRESSES (INSN_UID (seq_insn))
 			   - 2);
@@ -708,10 +709,10 @@ output_call (rtx operands[], rtx addr)
 	     r1 in the delay slot confuses debuggers and profilers on some
 	     systems.
 
-	     If we loose, we must use the non-delay form.  This is unlikely
+	     If we can't, we must use the non-delay form.  This is unlikely
 	     to ever happen.  If it becomes a problem, claim that a call
 	     has two delay slots and only the second can be filled with
-	     a jump.  
+	     a jump.
 
 	     The 88110 can lose when a jsr.n r1 is issued and a page fault
 	     occurs accessing the delay slot.  So don't use jsr.n form when
@@ -749,112 +750,25 @@ output_call (rtx operands[], rtx addr)
 }
 
 /* Return truth value of the statement that this conditional branch is likely
-   to fall through.  CONDITION, is the condition that JUMP_INSN is testing.  */
+   to fall through.  */
 
 bool
-mostly_false_jump (rtx jump_insn, rtx condition)
+mostly_false_jump (rtx jump_insn)
 {
-  rtx target_label = JUMP_LABEL (jump_insn);
-  rtx insnt, insnj;
+  rtx note;
 
   /* Much of this isn't computed unless we're optimizing.  */
   if (optimize == 0)
     return false;
 
-  /* Determine if one path or the other leads to a return.  */
-  for (insnt = NEXT_INSN (target_label);
-       insnt;
-       insnt = NEXT_INSN (insnt))
+  /* If branch probabilities are available, trust them.  */
+  note = find_reg_note (jump_insn, REG_BR_PROB, 0);
+  if (note)
     {
-      if (GET_CODE (insnt) == JUMP_INSN)
-	break;
-      else if (GET_CODE (insnt) == INSN
-	       && GET_CODE (PATTERN (insnt)) == SEQUENCE
-	       && GET_CODE (XVECEXP (PATTERN (insnt), 0, 0)) == JUMP_INSN)
-	{
-	  insnt = XVECEXP (PATTERN (insnt), 0, 0);
-	  break;
-	}
-    }
-  if (insnt
-      && (GET_CODE (PATTERN (insnt)) == RETURN
-	  || (GET_CODE (PATTERN (insnt)) == SET
-	      && GET_CODE (SET_SRC (PATTERN (insnt))) == REG
-	      && REGNO (SET_SRC (PATTERN (insnt))) == 1)))
-    insnt = NULL_RTX;
-
-  for (insnj = NEXT_INSN (jump_insn);
-       insnj;
-       insnj = NEXT_INSN (insnj))
-    {
-      if (GET_CODE (insnj) == JUMP_INSN)
-	break;
-      else if (GET_CODE (insnj) == INSN
-	       && GET_CODE (PATTERN (insnj)) == SEQUENCE
-	       && GET_CODE (XVECEXP (PATTERN (insnj), 0, 0)) == JUMP_INSN)
-	{
-	  insnj = XVECEXP (PATTERN (insnj), 0, 0);
-	  break;
-	}
-    }
-  if (insnj
-      && (GET_CODE (PATTERN (insnj)) == RETURN
-	  || (GET_CODE (PATTERN (insnj)) == SET
-	      && GET_CODE (SET_SRC (PATTERN (insnj))) == REG
-	      && REGNO (SET_SRC (PATTERN (insnj))) == 1)))
-    insnj = NULL_RTX;
-
-  /* Predict to not return.  */
-  if ((insnt == NULL_RTX) != (insnj == NULL_RTX))
-    return (insnt == NULL_RTX);
-
-  /* Predict loops to loop.  */
-  for (insnt = PREV_INSN (target_label);
-       insnt && GET_CODE (insnt) == NOTE;
-       insnt = PREV_INSN (insnt))
-    if (NOTE_LINE_NUMBER (insnt) == NOTE_INSN_LOOP_END)
-      return true;
-    else if (NOTE_LINE_NUMBER (insnt) == NOTE_INSN_LOOP_BEG)
+      int prob = INTVAL (XEXP (note, 0));
+      if (prob < REG_BR_PROB_BASE / 2)
+	return true;
       return false;
-
-  /* Predict backward branches usually take.  */
-  if (final_sequence)
-    insnj = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
-  else
-    insnj = jump_insn;
-  if (INSN_ADDRESSES (INSN_UID (insnj))
-      > INSN_ADDRESSES (INSN_UID (target_label)))
-    return false;
-
-  /* EQ tests are usually false and NE tests are usually true.  Also,
-     most quantities are positive, so we can make the appropriate guesses
-     about signed comparisons against zero.  Consider unsigned comparisons
-     to be a range check and assume quantities to be in range.  */
-  switch (GET_CODE (condition))
-    {
-    case CONST_INT:
-      /* Unconditional branch.  */
-      return false;
-    case EQ:
-      return true;
-    case NE:
-      return false;
-    case LE:
-    case LT:
-    case GEU:
-    case GTU: /* Must get casesi right at least.  */
-      if (XEXP (condition, 1) == const0_rtx)
-        return true;
-      break;
-    case GE:
-    case GT:
-    case LEU:
-    case LTU:
-      if (XEXP (condition, 1) == const0_rtx)
-	return false;
-      break;
-    default:
-      break;
     }
 
   return false;
@@ -1068,7 +982,6 @@ static int  nregs;
 static int  nxregs;
 static char save_regs[FIRST_PSEUDO_REGISTER];
 static int  frame_laid_out;
-static int  frame_size;
 
 #define STACK_UNIT_BOUNDARY (STACK_BOUNDARY / BITS_PER_UNIT)
 #define ROUND_CALL_BLOCK_SIZE(BYTES) \
@@ -1081,7 +994,7 @@ static int  frame_size;
 void
 m88k_layout_frame (void)
 {
-  int regno, sp_size;
+  int regno, sp_size, frame_size;
 
   if (frame_laid_out && reload_completed)
     return;
@@ -1096,17 +1009,12 @@ m88k_layout_frame (void)
   if (current_function_profile)
     frame_pointer_needed = 1;
 
-  /* If we are producing debug information, store r1 and r30 where the
-     debugger wants to find them (r30 at r30+0, r1 at r30+4).  Space has
-     already been reserved for r1/r30 in STARTING_FRAME_OFFSET.  */
-  if (write_symbols != NO_DEBUG)
-    save_regs[1] = 1;
-
   /* If we are producing PIC, save the addressing base register and r1.  */
   if (flag_pic && current_function_uses_pic_offset_table)
     {
       save_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
       nregs++;
+      save_regs[1] = 1;
     }
 
   /* If a frame is requested, save the previous FP, and the return
@@ -1176,20 +1084,6 @@ m88k_layout_frame (void)
       = ROUND_CALL_BLOCK_SIZE (m88k_stack_size + frame_size + need
 			       + current_function_pretend_args_size);
   }
-}
-
-/* Return true if this function is known to have a null prologue.  */
-
-bool
-null_prologue (void)
-{
-  if (! reload_completed)
-    return false;
-  m88k_layout_frame ();
-  return (! frame_pointer_needed
-	  && nregs == 0
-	  && nxregs == 0
-	  && m88k_stack_size == 0);
 }
 
 static void
@@ -1264,7 +1158,7 @@ m88k_expand_prologue (void)
 static void
 m88k_output_function_epilogue (FILE *stream,
 			       HOST_WIDE_INT size ATTRIBUTE_UNUSED)
-{ 
+{
   frame_laid_out = 0;
 }
 
@@ -1356,7 +1250,7 @@ preserve_registers (int base, int store_p)
 	    mo_ptr++;
 	    offset -= 4;
 	  }
-        else
+	else
 	  {
 	    regno--;
 	    offset -= 2*4;
@@ -1373,7 +1267,7 @@ preserve_registers (int base, int store_p)
 	  {
 	    offset -= 4;
 	  }
-        else
+	else
 	  {
 	    mo_ptr->nregs = 2;
 	    mo_ptr->regno = regno-1;
@@ -1514,6 +1408,22 @@ output_function_profiler (FILE *file, int labelno, const char *name)
   asm_fprintf (file, "\taddu\t %R%s,%R%s,32\n", reg_names[31], reg_names[31]);
 }
 
+void
+m88k_order_regs_for_local_alloc (void)
+{
+  static const int leaf[] = REG_LEAF_ALLOC_ORDER;
+  static const int nonleaf[] = REG_ALLOC_ORDER;
+  /* 1 below because reg_alloc_order is initialized with REG_ALLOC_ORDER */
+  static int last_alloc_order = 1;
+
+  if (regs_ever_live[1] != last_alloc_order)
+    {
+      last_alloc_order = regs_ever_live[1];
+      memcpy (reg_alloc_order, last_alloc_order ? nonleaf : leaf,
+	    FIRST_PSEUDO_REGISTER * sizeof (int));
+    }
+}
+
 /* Determine whether a function argument is passed in a register, and
    which register.
 
@@ -1746,7 +1656,7 @@ m88k_setup_incoming_varargs (CUMULATIVE_ARGS *cum, enum machine_mode mode,
 			  gen_rtx_REG (DImode, regno));
 	  offs += 2;
 	  regno += 2;
-        }
+	}
 
       *pretend_size = (regcnt + delta) * UNITS_PER_WORD;
     }
@@ -1818,7 +1728,7 @@ m88k_va_start (tree valist, rtx nextarg ATTRIBUTE_UNUSED)
   expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
 
   /* Store the arg pointer in the __va_stk member.  */
-  offset = XINT (current_function_arg_offset_rtx, 0);
+  offset = INTVAL (current_function_arg_offset_rtx);
   if (current_function_args_info >= 8 && ! stdarg_p)
     offset -= UNITS_PER_WORD;
   t = make_tree (TREE_TYPE (stk), virtual_incoming_args_rtx);
@@ -1936,8 +1846,8 @@ m88k_gimplify_va_arg (tree valist, tree type, tree *pre_p, tree *post_p)
     align = type == NULL_TREE ? 0 : TYPE_ALIGN (type) / BITS_PER_UNIT;
     if (align > UNITS_PER_WORD)
       {
-        t = build2 (PLUS_EXPR, TREE_TYPE (stk), stk, size_int (align - 1));
-        t = build2 (BIT_AND_EXPR, TREE_TYPE (t), t,
+	t = build2 (PLUS_EXPR, TREE_TYPE (stk), stk, size_int (align - 1));
+	t = build2 (BIT_AND_EXPR, TREE_TYPE (t), t,
 		    build_int_cst (NULL_TREE, -align));
 	gimplify_expr (&t, pre_p, NULL, is_gimple_val, fb_rvalue);
       }
@@ -2030,6 +1940,17 @@ emit_bcnd (enum rtx_code op, rtx label)
 	}
     }
 }
+
+/* Use instead of emit_label for the last label in an expansion.  */
+
+void
+emit_trailing_label (rtx label)
+{
+  emit_label (label);
+  /* Allow REG_NOTES to be set on last insn (labels don't have enough
+     fields, and can't be used for REG_NOTES anyway).  */
+  emit_insn (gen_rtx_USE (VOIDmode, stack_pointer_rtx));
+}
 
 /* Print an operand.  Recognize special options, documented below.  */
 
@@ -2076,26 +1997,20 @@ print_operand (FILE *file, rtx x, int code)
 	     The mechanism below is completed by having CC_STATUS_INIT set
 	     the code to the unknown value.  */
 
-	  /*
-	     hassey 6/30/93
-	     A problem with 88110 4.1 & 4.2 makes the use of fldcr for
-	     this purpose undesirable.  Instead we will use tb1, this will
-	     cause serialization on the 88100 but such is life.
-	  */
-
 	  static rtx last_addr = NULL_RTX;
 	  if (code == 'V' /* Only need to serialize before a load.  */
 	      && m88k_volatile_code != 'V' /* Loads complete in FIFO order.  */
 	      && !(m88k_volatile_code == 'v'
 		   && GET_CODE (XEXP (x, 0)) == LO_SUM
 		   && rtx_equal_p (XEXP (XEXP (x, 0), 1), last_addr)))
-	    asm_fprintf (file,
-#if 0
-			 "fldcr\t %R%s,%Rfcr63\n\t",
-#else /* 0 */
-			 "tb1\t 1,%R%s,0xff\n\t",
-#endif /* 0 */
-			 reg_names[0]);
+	    {
+	      /* 88110 cpus up to revision 4.2 can misbehave if the fldcr
+		 instruction is the last one of a page. We simply force it
+		 to be aligned to an 8-byte boundary to make sure this can
+		 never happen. */
+	      ASM_OUTPUT_ALIGN (file, 3);
+	      asm_fprintf (file, "fldcr\t %R%s,%Rfcr63\n\t", reg_names[0]);
+	    }
 	  m88k_volatile_code = code;
 	  last_addr = (GET_CODE (XEXP (x, 0)) == LO_SUM
 		       ? XEXP (XEXP (x, 0), 1) : 0);
@@ -2179,7 +2094,7 @@ print_operand (FILE *file, rtx x, int code)
     case '!': /* Reverse the following condition. */
       sequencep++;
       reversep = 1;
-      return; 
+      return;
     case 'R': /* reverse the condition of the next print_operand
 		 if operand is a label_ref.  */
       sequencep++;
@@ -2392,7 +2307,7 @@ print_operand_address (FILE *file, rtx addr)
     }
 }
 
-/* Return true if X is an address which needs a temporary register when 
+/* Return true if X is an address which needs a temporary register when
    reloaded while generating PIC code.  */
 
 bool
@@ -2472,11 +2387,11 @@ m88k_rtx_costs (rtx x, int code, int outer_code, int *total)
 	 indicate 0 cost, in an attempt to get GCC not to optimize things
 	 like comparison against a constant.  */
       if (SMALL_INT (x))
-        *total = 0;
+	*total = 0;
       else if (SMALL_INTVAL (- INTVAL (x)))
-        *total = 2;
+	*total = 2;
       else if (classify_integer (SImode, INTVAL (x)) != m88k_oru_or)
-        *total = 4;
+	*total = 4;
       else
 	*total = 7;
       return true;
@@ -2489,9 +2404,9 @@ m88k_rtx_costs (rtx x, int code, int outer_code, int *total)
     case LABEL_REF:
     case SYMBOL_REF:
       if (flag_pic)
-        *total = (flag_pic == 2) ? 11 : 8;
+	*total = (flag_pic == 2) ? 11 : 8;
       else
-        *total = 5;
+	*total = 5;
       return true;
 
       /* The cost of CONST_DOUBLE is zero (if it can be placed in an insn,
@@ -2567,9 +2482,6 @@ m88k_override_options (void)
 
   if (TARGET_TRAP_LARGE_SHIFT && TARGET_HANDLE_LARGE_SHIFT)
     error ("-mtrap-large-shift and -mhandle-large-shift are incompatible");
-
-  if (TARGET_OMIT_LEAF_FRAME_POINTER)	/* keep nonleaf frame pointers */
-    flag_omit_frame_pointer = 1;
 
   /* On the m88100, it is desirable to align functions to a cache line.
      The m88110 cache is small, so align to an 8 byte boundary.  */

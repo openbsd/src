@@ -52,10 +52,6 @@ mserialize-volatile
 Target Report Mask(SERIALIZE_VOLATILE)
 Force serialization on volatile memory access
 
-momit-leaf-frame-pointer
-Target Report Mask(OMIT_LEAF_FRAME_POINTER)
-Do not save the frame pointer in leaf functions
-
 mmemcpy
 Target Report Mask(MEMCPY)
 Force all memory copies to use memcpy()
