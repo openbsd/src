@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.63 2025/08/12 16:17:10 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.64 2025/08/13 08:45:22 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -1131,23 +1131,13 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 #endif
 	}
 	if (sz1 != 0) {
-#ifdef MULTIPROCESSOR
 		m8820x_cmmu_wbinv_locked(cmmu, pa1, MC88200_CACHE_LINE);
 		m8820x_cmmu_wait(cmmu);
-#else
-		m8820x_cmmu_wbinv_locked(cmmu, pa1, MC88200_CACHE_LINE);
-		m8820x_cmmu_wait(cmmu);
-#endif
 	}
 	if (sz2 != 0) {
 		pa2 = trunc_cache_line(pa2);
-#ifdef MULTIPROCESSOR
 		m8820x_cmmu_wbinv_locked(cmmu, pa2, MC88200_CACHE_LINE);
 		m8820x_cmmu_wait(cmmu);
-#else
-		m8820x_cmmu_wbinv_locked(cmmu, pa2, MC88200_CACHE_LINE);
-		m8820x_cmmu_wait(cmmu);
-#endif
 	}
 
 	CMMU_UNLOCK;
