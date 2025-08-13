@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.235 2025/08/06 16:50:53 florian Exp $
+#	$OpenBSD: netstart,v 1.236 2025/08/13 16:36:10 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -382,7 +382,7 @@ else
 	ifconfig lo0 inet 127.0.0.1/8
 fi
 
-if $IP6KERNEL && ! $PRINT_ONLY; then
+if $IP6KERNEL; then
 	ip6routes
 fi
 
