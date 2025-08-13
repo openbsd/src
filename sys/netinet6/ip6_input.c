@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.296 2025/08/03 11:12:58 mvs Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.297 2025/08/13 16:48:04 florian Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -109,14 +109,11 @@ struct niqueue ip6intrq = NIQUEUE_INITIALIZER(IPQ_MAXLEN, NETISR_IPV6);
 
 struct cpumem *ip6counters;
 
-uint8_t ip6_soiikey[IP6_SOIIKEY_LEN];
-
 int ip6_ours(struct mbuf **, int *, int, int, int, struct netstack *);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf **, int *, int *, int);
 int ip6_hopopts_input(struct mbuf **, int *, u_int32_t *, u_int32_t *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
-int ip6_sysctl_soiikey(void *, size_t *, void *, size_t);
 
 static struct mbuf_queue	ip6send_mq;
 
@@ -1482,32 +1479,6 @@ ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 #endif /* SMALL_KERNEL */
 
 int
-ip6_sysctl_soiikey(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
-{
-	uint8_t soiikey[sizeof(ip6_soiikey)];
-	int error;
-
-	error = suser(curproc);
-	if (error != 0)
-		return (error);
-
-	rw_enter_read(&sysctl_lock);
-	memcpy(soiikey, ip6_soiikey, sizeof(ip6_soiikey));
-	rw_exit_read(&sysctl_lock);
-
-	error = sysctl_struct(oldp, oldlenp, newp, newlen, soiikey,
-	    sizeof(soiikey));
-
-	if (error == 0 && newp) {
-		rw_enter_write(&sysctl_lock);
-		memcpy(ip6_soiikey, soiikey, sizeof(soiikey));
-		rw_exit_write(&sysctl_lock);
-	}
-
-	return (error);
-}
-
-int
 ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
@@ -1516,8 +1487,6 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case IPV6CTL_SOIIKEY:
-		return (ip6_sysctl_soiikey(oldp, oldlenp, newp, newlen));
 #ifndef SMALL_KERNEL
 	case IPV6CTL_STATS:
 		return (ip6_sysctl_ip6stat(oldp, oldlenp, newp));

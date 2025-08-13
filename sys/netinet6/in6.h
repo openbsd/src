@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.121 2025/05/20 05:51:43 bluhm Exp $	*/
+/*	$OpenBSD: in6.h,v 1.122 2025/08/13 16:48:04 florian Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -597,8 +597,7 @@ ifatoia6(struct ifaddr *ifa)
 #define IPV6CTL_IFQUEUE		51
 #define IPV6CTL_MRTMIF		52
 #define IPV6CTL_MRTMFC		53
-#define IPV6CTL_SOIIKEY		54
-#define IPV6CTL_MAXID		55
+#define IPV6CTL_MAXID		54
 
 /* New entries should be added here from current IPV6CTL_MAXID value. */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
@@ -658,7 +657,6 @@ ifatoia6(struct ifaddr *ifa)
 	{ "ifq", CTLTYPE_NODE }, \
 	{ "mrtmif", CTLTYPE_STRUCT }, \
 	{ "mrtmfc", CTLTYPE_STRUCT }, \
-	{ "soiikey", CTLTYPE_STRING }, /* binary string */ \
 }
 
 __BEGIN_DECLS
