@@ -719,115 +719,27 @@ output_call (operands, addr)
 }
 
 /* Return truth value of the statement that this conditional branch is likely
-   to fall through.  CONDITION, is the condition that JUMP_INSN is testing.  */
+   to fall through.  */
 
 int
-mostly_false_jump (jump_insn, condition)
-     rtx jump_insn, condition;
+mostly_false_jump (jump_insn)
+     rtx jump_insn;
 {
-  rtx target_label = JUMP_LABEL (jump_insn);
-  rtx insnt, insnj;
+  rtx note;
 
   /* Much of this isn't computed unless we're optimizing.  */
   if (optimize == 0)
     return 0;
 
-  /* Determine if one path or the other leads to a return.  */
-  for (insnt = NEXT_INSN (target_label);
-       insnt;
-       insnt = NEXT_INSN (insnt))
+  /* If branch probabilities are available, trust them.  */
+  note = find_reg_note (jump_insn, REG_BR_PROB, 0);
+  if (note)
     {
-      if (GET_CODE (insnt) == JUMP_INSN)
-	break;
-      else if (GET_CODE (insnt) == INSN
-	       && GET_CODE (PATTERN (insnt)) == SEQUENCE
-	       && GET_CODE (XVECEXP (PATTERN (insnt), 0, 0)) == JUMP_INSN)
-	{
-	  insnt = XVECEXP (PATTERN (insnt), 0, 0);
-	  break;
-	}
-    }
-  if (insnt
-      && (GET_CODE (PATTERN (insnt)) == RETURN
-	  || (GET_CODE (PATTERN (insnt)) == SET
-	      && GET_CODE (SET_SRC (PATTERN (insnt))) == REG
-	      && REGNO (SET_SRC (PATTERN (insnt))) == 1)))
-    insnt = 0;
+      int prob = INTVAL (XEXP (note, 0));
 
-  for (insnj = NEXT_INSN (jump_insn);
-       insnj;
-       insnj = NEXT_INSN (insnj))
-    {
-      if (GET_CODE (insnj) == JUMP_INSN)
-	break;
-      else if (GET_CODE (insnj) == INSN
-	       && GET_CODE (PATTERN (insnj)) == SEQUENCE
-	       && GET_CODE (XVECEXP (PATTERN (insnj), 0, 0)) == JUMP_INSN)
-	{
-	  insnj = XVECEXP (PATTERN (insnj), 0, 0);
-	  break;
-	}
-    }
-  if (insnj
-      && (GET_CODE (PATTERN (insnj)) == RETURN
-	  || (GET_CODE (PATTERN (insnj)) == SET
-	      && GET_CODE (SET_SRC (PATTERN (insnj))) == REG
-	      && REGNO (SET_SRC (PATTERN (insnj))) == 1)))
-    insnj = 0;
-
-  /* Predict to not return.  */
-  if ((insnt == 0) != (insnj == 0))
-    return (insnt == 0);
-
-  /* Predict loops to loop.  */
-  for (insnt = PREV_INSN (target_label);
-       insnt && GET_CODE (insnt) == NOTE;
-       insnt = PREV_INSN (insnt))
-    if (NOTE_LINE_NUMBER (insnt) == NOTE_INSN_LOOP_END)
-      return 1;
-    else if (NOTE_LINE_NUMBER (insnt) == NOTE_INSN_LOOP_BEG)
-      return 0;
-    else if (NOTE_LINE_NUMBER (insnt) == NOTE_INSN_LOOP_CONT)
-      return 0;
-
-  /* Predict backward branches usually take.  */
-  if (final_sequence)
-    insnj = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
-  else
-    insnj = jump_insn;
-  if (INSN_ADDRESSES (INSN_UID (insnj))
-      > INSN_ADDRESSES (INSN_UID (target_label)))
-    return 0;
-
-  /* EQ tests are usually false and NE tests are usually true.  Also,
-     most quantities are positive, so we can make the appropriate guesses
-     about signed comparisons against zero.  Consider unsigned comparisons
-     to be a range check and assume quantities to be in range.  */
-  switch (GET_CODE (condition))
-    {
-    case CONST_INT:
-      /* Unconditional branch.  */
-      return 0;
-    case EQ:
-      return 1;
-    case NE:
-      return 0;
-    case LE:
-    case LT:
-    case GEU:
-    case GTU: /* Must get casesi right at least.  */
-      if (XEXP (condition, 1) == const0_rtx)
+      if (prob < REG_BR_PROB_BASE / 2)
 	return 1;
-      break;
-    case GE:
-    case GT:
-    case LEU:
-    case LTU:
-      if (XEXP (condition, 1) == const0_rtx)
-	return 0;
-      break;
-    default:
-      break;
+      return 0;
     }
 
   return 0;
