@@ -548,14 +548,7 @@ extern int target_flags;			/* -m compiler switches */
 
 /* Switch between the leaf and non-leaf orderings.  The purpose is to avoid
    write-over scoreboard delays between caller and callee.  */
-#define ORDER_REGS_FOR_LOCAL_ALLOC				\
-{								\
-  static const int leaf[] = REG_LEAF_ALLOC_ORDER;		\
-  static const int nonleaf[] = REG_ALLOC_ORDER;			\
-								\
-  memcpy (reg_alloc_order, regs_ever_live[1] ? nonleaf : leaf,	\
-	  FIRST_PSEUDO_REGISTER * sizeof (int));		\
-}
+#define ORDER_REGS_FOR_LOCAL_ALLOC m88k_order_regs_for_local_alloc ()
 
 /*** Register Classes ***/
 

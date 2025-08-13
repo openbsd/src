@@ -87,6 +87,7 @@ extern void m88k_setup_incoming_varargs PARAMS ((CUMULATIVE_ARGS *,
 extern enum m88k_instruction classify_integer PARAMS ((enum machine_mode, int));
 extern int mak_mask_p PARAMS ((int));
 
+extern void m88k_order_regs_for_local_alloc PARAMS ((void));
 #ifdef TREE_CODE
 extern struct rtx_def *m88k_function_arg PARAMS ((CUMULATIVE_ARGS,
 						  enum machine_mode, tree,

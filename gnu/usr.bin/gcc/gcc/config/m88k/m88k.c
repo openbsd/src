@@ -1768,6 +1768,22 @@ output_function_profiler (file, labelno, name)
   asm_fprintf (file, "\taddu\t %R%s,%R%s,32\n", reg_names[31], reg_names[31]);
 }
 
+void
+m88k_order_regs_for_local_alloc (void)
+{
+  static const int leaf[] = REG_LEAF_ALLOC_ORDER;
+  static const int nonleaf[] = REG_ALLOC_ORDER;
+  /* 1 below because reg_alloc_order is initialized with REG_ALLOC_ORDER */
+  static int last_alloc_order = 1;
+
+  if (regs_ever_live[1] != last_alloc_order)
+    {
+      last_alloc_order = regs_ever_live[1];
+      memcpy (reg_alloc_order, last_alloc_order ? nonleaf : leaf,
+	     FIRST_PSEUDO_REGISTER * sizeof (int));
+    }
+}
+
 /* Determine whether a function argument is passed in a register, and
    which register.
 
