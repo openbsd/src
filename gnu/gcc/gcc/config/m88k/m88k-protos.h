@@ -23,8 +23,8 @@ Boston, MA 02110-1301, USA.  */
 
 #ifdef RTX_CODE
 extern int m88k_debugger_offset (rtx, int);
-extern void emit_bcnd (enum rtx_code, rtx);
-extern void emit_trailing_label (rtx);
+extern void m88k_emit_bcnd (enum rtx_code, rtx);
+extern void m88k_emit_trailing_label (rtx);
 extern void expand_block_move (rtx *);
 extern void print_operand (FILE *, rtx, int);
 extern void print_operand_address (FILE *, rtx);
@@ -37,7 +37,7 @@ extern const char *output_ior (rtx[]);
 extern const char *output_xor (rtx[]);
 extern const char *output_call (rtx[], rtx);
 
-extern rtx emit_test (enum rtx_code, enum machine_mode);
+extern rtx m88k_emit_test (enum rtx_code, enum machine_mode);
 extern rtx legitimize_address (int, rtx, rtx, rtx);
 extern rtx legitimize_operand (rtx, enum machine_mode);
 

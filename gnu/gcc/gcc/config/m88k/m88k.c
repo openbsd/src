@@ -1878,7 +1878,7 @@ m88k_gimplify_va_arg (tree valist, tree type, tree *pre_p, tree *post_p)
    expression describing the test of operator OP.  */
 
 rtx
-emit_test (enum rtx_code op, enum machine_mode mode)
+m88k_emit_test (enum rtx_code op, enum machine_mode mode)
 {
   if (m88k_compare_reg == NULL_RTX)
     emit_insn (gen_test (m88k_compare_op0, m88k_compare_op1));
@@ -1891,7 +1891,7 @@ emit_test (enum rtx_code op, enum machine_mode mode)
    as needed.  */
 
 void
-emit_bcnd (enum rtx_code op, rtx label)
+m88k_emit_bcnd (enum rtx_code op, rtx label)
 {
   if (m88k_compare_op1 == const0_rtx)
     emit_jump_insn (gen_bcnd
@@ -1903,7 +1903,7 @@ emit_bcnd (enum rtx_code op, rtx label)
 				     VOIDmode, m88k_compare_op1, const0_rtx),
 		     label));
   else if (op != EQ && op != NE)
-    emit_jump_insn (gen_bxx (emit_test (op, VOIDmode), label));
+    emit_jump_insn (gen_bxx (m88k_emit_test (op, VOIDmode), label));
   else
     {
       rtx zero = gen_reg_rtx (SImode);
@@ -1925,7 +1925,7 @@ emit_bcnd (enum rtx_code op, rtx label)
       /* Perform an arithmetic computation to make the compared-to value
 	 zero, but avoid loosing if the bcnd is later changed into sxx.  */
       if (SMALL_INTVAL (value))
-	emit_jump_insn (gen_bxx (emit_test (op, VOIDmode), label));
+	emit_jump_insn (gen_bxx (m88k_emit_test (op, VOIDmode), label));
       else
 	{
 	  if (SMALL_INTVAL (-value))
@@ -1944,7 +1944,7 @@ emit_bcnd (enum rtx_code op, rtx label)
 /* Use instead of emit_label for the last label in an expansion.  */
 
 void
-emit_trailing_label (rtx label)
+m88k_emit_trailing_label (rtx label)
 {
   emit_label (label);
   /* Allow REG_NOTES to be set on last insn (labels don't have enough
