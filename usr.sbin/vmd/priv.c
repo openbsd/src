@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.28 2025/05/12 17:17:42 dv Exp $	*/
+/*	$OpenBSD: priv.c,v 1.29 2025/08/13 10:26:31 dv Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -239,7 +239,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (ioctl(ifd, SIOCGIFADDR, &varesult.var_addr) != 0)
 			log_warn("SIOCGIFADDR");
 		else
-			proc_compose_imsg(ps, PROC_PARENT, -1,
+			proc_compose_imsg(ps, PROC_PARENT,
 			    IMSG_VMDOP_PRIV_GET_ADDR_RESPONSE, peer_id,
 			    -1, &varesult, sizeof(varesult));
 		close(ifd);

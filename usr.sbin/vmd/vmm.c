@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.132 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.133 2025/08/13 10:26:31 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -298,12 +298,12 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		vmr.vmr_result = res;
 		vmr.vmr_id = id;
 		vmr.vmr_pid = vm_pid;
-		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd, vm_id, -1, &vmr,
+		if (proc_compose_imsg(ps, PROC_PARENT, cmd, vm_id, -1, &vmr,
 		    sizeof(vmr)) == -1)
 			return (-1);
 		break;
 	default:
-		if (proc_compose_imsg(ps, PROC_PARENT, -1, cmd, vm_id, -1, &res,
+		if (proc_compose_imsg(ps, PROC_PARENT, cmd, vm_id, -1, &res,
 		    sizeof(res)) == -1)
 			return (-1);
 		break;
@@ -363,9 +363,8 @@ vmm_sighdlr(int sig, short event, void *arg)
 				vmr.vmr_result = ret;
 				vmr.vmr_id = vm_id2vmid(vmid, vm);
 				if (proc_compose_imsg(ps, PROC_PARENT,
-				    -1, IMSG_VMDOP_TERMINATE_VM_EVENT,
-				    vm->vm_peerid, -1,
-				    &vmr, sizeof(vmr)) == -1)
+				    IMSG_VMDOP_TERMINATE_VM_EVENT,
+				    vm->vm_peerid, -1, &vmr, sizeof(vmr)) == -1)
 					log_warnx("could not signal "
 					    "termination of VM %u to "
 					    "parent", vm->vm_vmid);
@@ -833,7 +832,7 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 		vir.vir_info.vir_id = vm_id2vmid(info[i].vir_id, NULL);
 		peer_id = imsg_get_id(imsg);
 
-		if (proc_compose_imsg(ps, PROC_PARENT, -1,
+		if (proc_compose_imsg(ps, PROC_PARENT,
 		    IMSG_VMDOP_GET_INFO_VM_DATA, peer_id, -1,
 		    &vir, sizeof(vir)) == -1) {
 			ret = EIO;

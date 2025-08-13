@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_agentx.c,v 1.4 2025/05/12 17:17:42 dv Exp $ */
+/*	$OpenBSD: vm_agentx.c,v 1.5 2025/08/13 10:26:31 dv Exp $ */
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -523,7 +523,7 @@ vm_agentx_vminfo(struct agentx_varbind *vb)
 	}
 
 	if (!vmcollecting) {
-		if (proc_compose_imsg(&(env->vmd_ps), PROC_PARENT, -1,
+		if (proc_compose_imsg(&(env->vmd_ps), PROC_PARENT,
 		    IMSG_VMDOP_GET_INFO_VM_REQUEST, IMSG_AGENTX_PEERID,
 		    -1, NULL, 0) == -1) {
 			log_warn("%s: Couldn't retrieve vm information",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.168 2025/06/28 05:29:47 jsg Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.169 2025/08/13 10:26:31 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -181,7 +181,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			vid.vid_id = vm_id;
 			vid.vid_flags = flags;
 
-			if (proc_compose_imsg(ps, PROC_VMM, -1, type, peer_id,
+			if (proc_compose_imsg(ps, PROC_VMM, type, peer_id,
 			    -1, &vid, sizeof(vid)) == -1)
 				return (-1);
 		}
@@ -210,9 +210,9 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		verbose = imsg_int_read(imsg);
 		log_setverbose(verbose);
 
-		proc_compose_imsg(ps, PROC_VMM, -1, type, -1, -1, &verbose,
+		proc_compose_imsg(ps, PROC_VMM, type, -1, -1, &verbose,
 		    sizeof(verbose));
-		proc_compose_imsg(ps, PROC_PRIV, -1, type, -1, -1, &verbose,
+		proc_compose_imsg(ps, PROC_PRIV, type, -1, -1, &verbose,
 		    sizeof(verbose));
 		cmd = IMSG_CTL_OK;
 		break;
@@ -244,7 +244,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    : IMSG_VMDOP_UNPAUSE_VM_RESPONSE;
 			break;
 		}
-		proc_compose_imsg(ps, PROC_VMM, -1, type, vm->vm_peerid, -1,
+		proc_compose_imsg(ps, PROC_VMM, type, vm->vm_peerid, -1,
 		    &vid, sizeof(vid));
 		break;
 	case IMSG_VMDOP_DONE:
@@ -265,12 +265,12 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memset(&vmr, 0, sizeof(vmr));
 		vmr.vmr_result = res;
 		vmr.vmr_id = vm_id;
-		if (proc_compose_imsg(ps, PROC_CONTROL, -1, cmd, peer_id, -1,
+		if (proc_compose_imsg(ps, PROC_CONTROL, cmd, peer_id, -1,
 		    &vmr, sizeof(vmr)) == -1)
 			return (-1);
 		break;
 	default:
-		if (proc_compose_imsg(ps, PROC_CONTROL, -1, cmd, peer_id, -1,
+		if (proc_compose_imsg(ps, PROC_CONTROL, cmd, peer_id, -1,
 		    &res, sizeof(res)) == -1)
 			return (-1);
 		break;
@@ -297,7 +297,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		vmop_result_read(imsg, &vmr);
 		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 			break;
-		proc_compose_imsg(ps, PROC_CONTROL, -1, type, vm->vm_peerid, -1,
+		proc_compose_imsg(ps, PROC_CONTROL, type, vm->vm_peerid, -1,
 		    &vmr, sizeof(vmr));
 		log_info("%s: paused vm %d successfully",
 		    vm->vm_params.vmc_params.vcp_name, vm->vm_vmid);
@@ -307,7 +307,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		vmop_result_read(imsg, &vmr);
 		if ((vm = vm_getbyvmid(vmr.vmr_id)) == NULL)
 			break;
-		proc_compose_imsg(ps, PROC_CONTROL, -1, type, vm->vm_peerid, -1,
+		proc_compose_imsg(ps, PROC_CONTROL, type, vm->vm_peerid, -1,
 		    &vmr, sizeof(vmr));
 		log_info("%s: unpaused vm %d successfully.",
 		    vm->vm_params.vmc_params.vcp_name, vm->vm_vmid);
@@ -329,7 +329,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		if (vm->vm_peerid != (uint32_t)-1) {
 			(void)strlcpy(vmr.vmr_ttyname, vm->vm_ttyname,
 			    sizeof(vmr.vmr_ttyname));
-			if (proc_compose_imsg(ps, PROC_CONTROL, -1, type,
+			if (proc_compose_imsg(ps, PROC_CONTROL, type,
 			    vm->vm_peerid, -1, &vmr, sizeof(vmr)) == -1) {
 				errno = vmr.vmr_result;
 				log_warn("%s: failed to forward vm result",
@@ -391,7 +391,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		/* The error is meaningless for deferred responses */
 		vmr.vmr_result = 0;
 
-		if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+		if (proc_compose_imsg(ps, PROC_CONTROL,
 		    IMSG_VMDOP_TERMINATE_VM_EVENT, peer_id, -1, &vmr,
 		    sizeof(vmr)) == -1)
 			return (-1);
@@ -412,7 +412,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		if (proc_compose_imsg(ps,
 		    peer_id == IMSG_AGENTX_PEERID ? PROC_AGENTX : PROC_CONTROL,
-		    -1, type, peer_id, -1, &vir, sizeof(vir)) == -1) {
+		    type, peer_id, -1, &vir, sizeof(vir)) == -1) {
 			if (vm)
 				vm_terminate(vm, __func__);
 			return (-1);
@@ -444,7 +444,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				vir.vir_state = vm->vm_state;
 				if (proc_compose_imsg(ps,
 				    peer_id == IMSG_AGENTX_PEERID ?
-				    PROC_AGENTX : PROC_CONTROL, -1,
+				    PROC_AGENTX : PROC_CONTROL,
 				    IMSG_VMDOP_GET_INFO_VM_DATA, peer_id, -1,
 				    &vir, sizeof(vir)) == -1) {
 					log_debug("%s: GET_INFO_VM_END failed",
@@ -547,7 +547,7 @@ main(int argc, char **argv)
 	struct privsep		*ps;
 	int			 ch;
 	enum privsep_procid	 proc_id = PROC_PARENT;
-	int			 proc_instance = 0, vm_launch = 0;
+	int			 vm_launch = 0;
 	int			 vmm_fd = -1, vm_fd = -1, psp_fd = -1;
 	const char		*errp, *title = NULL;
 	int			 argc0 = argc;
@@ -560,7 +560,7 @@ main(int argc, char **argv)
 	env->vmd_fd = -1;
 	env->vmd_fd6 = -1;
 
-	while ((ch = getopt(argc, argv, "D:P:I:V:X:df:i:j:nt:vp:")) != -1) {
+	while ((ch = getopt(argc, argv, "D:P:V:X:df:i:j:nt:vp:")) != -1) {
 		switch (ch) {
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -585,12 +585,6 @@ main(int argc, char **argv)
 			proc_id = proc_getid(procs, nitems(procs), title);
 			if (proc_id == PROC_MAX)
 				fatalx("invalid process name");
-			break;
-		case 'I':
-			proc_instance = strtonum(optarg, 0,
-			    PROC_MAX_INSTANCES, &errp);
-			if (errp)
-				fatalx("invalid process instance");
 			break;
 		/* child vm and device fork/exec */
 		case 'p':
@@ -703,7 +697,6 @@ main(int argc, char **argv)
 
 	if (env->vmd_noaction)
 		ps->ps_noaction = 1;
-	ps->ps_instance = proc_instance;
 	if (title != NULL)
 		ps->ps_title[proc_id] = title;
 
@@ -812,12 +805,12 @@ vmd_configure(void)
 	}
 
 	/* Send VMM device fd to vmm proc. */
-	proc_compose_imsg(&env->vmd_ps, PROC_VMM, -1,
+	proc_compose_imsg(&env->vmd_ps, PROC_VMM,
 	    IMSG_VMDOP_RECEIVE_VMM_FD, -1, env->vmd_fd, NULL, 0);
 
 	/* Send PSP device fd to vmm proc. */
 	if (env->vmd_psp_fd != -1) {
-		proc_compose_imsg(&env->vmd_ps, PROC_VMM, -1,
+		proc_compose_imsg(&env->vmd_ps, PROC_VMM,
 		    IMSG_VMDOP_RECEIVE_PSP_FD, -1, env->vmd_psp_fd, NULL, 0);
 	}
 

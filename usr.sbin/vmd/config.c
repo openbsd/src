@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.78 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.79 2025/08/13 10:26:31 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -455,36 +455,34 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	/* Send VM information */
 	/* XXX check proc_compose_imsg return values */
-	proc_compose_imsg(ps, PROC_VMM, -1, IMSG_VMDOP_START_VM_REQUEST,
+	proc_compose_imsg(ps, PROC_VMM, IMSG_VMDOP_START_VM_REQUEST,
 	    vm->vm_vmid, vm->vm_kernel, vmc, sizeof(*vmc));
 
 	if (strlen(vmc->vmc_cdrom))
-		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_CDROM, vm->vm_vmid, cdromfd,
-		    NULL, 0);
+		proc_compose_imsg(ps, PROC_VMM, IMSG_VMDOP_START_VM_CDROM,
+		    vm->vm_vmid, cdromfd, NULL, 0);
 
 	for (i = 0; i < vmc->vmc_ndisks; i++) {
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
 			if (diskfds[i][j] == -1)
 				break;
-			proc_compose_imsg(ps, PROC_VMM, -1,
+			proc_compose_imsg(ps, PROC_VMM,
 			    IMSG_VMDOP_START_VM_DISK, vm->vm_vmid,
 			    diskfds[i][j], &i, sizeof(i));
 		}
 	}
 	for (i = 0; i < vmc->vmc_nnics; i++) {
-		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_IF, vm->vm_vmid, tapfds[i],
-		    &i, sizeof(i));
+		proc_compose_imsg(ps, PROC_VMM, IMSG_VMDOP_START_VM_IF,
+		    vm->vm_vmid, tapfds[i], &i, sizeof(i));
 
 		memset(&var, 0, sizeof(var));
 		var.var_vmid = vm->vm_vmid;
 		var.var_nic_idx = i;
-		proc_compose_imsg(ps, PROC_PRIV, -1, IMSG_VMDOP_PRIV_GET_ADDR,
+		proc_compose_imsg(ps, PROC_PRIV, IMSG_VMDOP_PRIV_GET_ADDR,
 		    vm->vm_vmid, dup(tapfds[i]), &var, sizeof(var));
 	}
 
-	proc_compose_imsg(ps, PROC_VMM, -1, IMSG_VMDOP_START_VM_END,
+	proc_compose_imsg(ps, PROC_VMM, IMSG_VMDOP_START_VM_END,
 	    vm->vm_vmid, fd, NULL, 0);
 
 	free(tapfds);

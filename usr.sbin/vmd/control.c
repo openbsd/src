@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.51 2025/06/09 18:43:01 dv Exp $	*/
+/*	$OpenBSD: control.c,v 1.52 2025/08/13 10:26:31 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -74,6 +74,9 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	 */
 	if (pledge("stdio unix recvfd sendfd", NULL) == -1)
 		fatal("pledge");
+
+	/* Signal to the parent that we're done initializing. */
+	proc_compose(ps, PROC_PARENT, IMSG_VMDOP_DONE, NULL, 0);
 }
 
 int
@@ -226,8 +229,6 @@ control_init(struct privsep *ps, struct control_sock *cs)
 
 	cs->cs_fd = fd;
 	cs->cs_env = ps;
-
-	proc_compose(ps, PROC_PARENT, IMSG_VMDOP_DONE, NULL, 0);
 
 	return (0);
 }
@@ -433,7 +434,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 		case IMSG_CTL_VERBOSE:
 			v = imsg_int_read(&imsg);
 			log_setverbose(v);
-			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			if (proc_compose_imsg(ps, PROC_PARENT, type,
 			    peer_id, -1, &v, sizeof(v)))
 				goto fail;
 			break;
@@ -449,7 +450,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			vmc.vmc_owner.gid = -1;
 
 			/* imsg passed fd may contain kernel image fd. */
-			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			if (proc_compose_imsg(ps, PROC_PARENT, type,
 			    peer_id, imsg_get_fd(&imsg), &vmc,
 			    sizeof(vmc)) == -1) {
 				control_close(fd, cs);
@@ -475,7 +476,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				    __func__, fd);
 			}
 
-			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			if (proc_compose_imsg(ps, PROC_PARENT, type,
 			    peer_id, -1, &vid, sizeof(vid))) {
 				log_debug("%s: proc_compose_imsg failed",
 				    __func__);
@@ -484,7 +485,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			}
 			break;
 		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
-			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			if (proc_compose_imsg(ps, PROC_PARENT, type,
 			    peer_id, -1, NULL, 0)) {
 				control_close(fd, cs);
 				return;
@@ -497,7 +498,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			log_debug("%s id: %d, name: %s, uid: %d", __func__,
 			    vid.vid_id, vid.vid_name, vid.vid_uid);
 
-			if (proc_compose_imsg(ps, PROC_PARENT, -1, type,
+			if (proc_compose_imsg(ps, PROC_PARENT, type,
 			    peer_id, imsg_get_fd(&imsg), &vid, sizeof(vid)))
 				goto fail;
 			break;
