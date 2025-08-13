@@ -654,19 +654,18 @@ output_call (operands, addr)
   if (final_sequence)
     {
       rtx jump;
-      rtx seq_insn;
 
       /* This can be generalized, but there is currently no need.  */
       if (XVECLEN (final_sequence, 0) != 2)
 	abort ();
 
       /* The address of interior insns is not computed, so use the sequence.  */
-      seq_insn = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
       jump = XVECEXP (final_sequence, 0, 1);
       if (GET_CODE (jump) == JUMP_INSN)
 	{
 	  const char *last;
 	  rtx dest = XEXP (SET_SRC (PATTERN (jump)), 0);
+	  rtx seq_insn = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
 	  int delta = 4 * (INSN_ADDRESSES (INSN_UID (dest))
 			   - INSN_ADDRESSES (INSN_UID (seq_insn))
 			   - 2);
@@ -680,7 +679,7 @@ output_call (operands, addr)
 	     r1 in the delay slot confuses debuggers and profilers on some
 	     systems.
 
-	     If we loose, we must use the non-delay form.  This is unlikely
+	     If we can't, we must use the non-delay form.  This is unlikely
 	     to ever happen.  If it becomes a problem, claim that a call
 	     has two delay slots and only the second can be filled with
 	     a jump.
