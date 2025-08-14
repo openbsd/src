@@ -1,6 +1,7 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.9 2024/11/08 12:28:00 mpi Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.10 2025/08/14 13:04:48 mpi Exp $	*/
 
 /*
+ * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -15,13 +16,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #if defined(DDBPROF) && (defined(__amd64__) || defined(__i386__))
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
-#include <sys/atomic.h>
 #include <sys/exec_elf.h>
 
 #include <ddb/db_elf.h>
@@ -33,18 +34,34 @@
 
 #include <dev/dt/dtvar.h>
 
-int dt_prov_kprobe_alloc(struct dt_probe *dtp, struct dt_softc *sc,
-    struct dt_pcb_list *plist, struct dtioc_req *dtrq);
-int dt_prov_kprobe_hook(struct dt_provider *dtpv, ...);
-int dt_prov_kprobe_dealloc(struct dt_probe *dtp, struct dt_softc *sc,
-    struct dtioc_req *dtrq);
+#define KPROBE_ENTRY	0x1
+#define KPROBE_RETURN	0x2
 
-void	db_prof_count(struct trapframe *frame);
-vaddr_t	db_get_probe_addr(struct trapframe *);
+extern db_symtab_t	db_symtab;
+extern char		__kutext_end[];
+extern int		db_prof_on;
 
-struct kprobe_probe {
-	struct dt_probe* dtp;
-	SLIST_ENTRY(kprobe_probe) kprobe_next;
+extern void	db_prof_count(struct trapframe *);
+extern vaddr_t	db_get_probe_addr(struct trapframe *);
+
+/* Lists of probes per ELF symbol. */
+SLIST_HEAD(, dt_probe) *dtpf_entry;
+SLIST_HEAD(, dt_probe) *dtpf_return;
+
+int	dt_prov_kprobe_alloc(struct dt_probe *, struct dt_softc *,
+	    struct dt_pcb_list *, struct dtioc_req *);
+int	dt_prov_kprobe_hook(struct dt_provider *, ...);
+int	dt_prov_kprobe_dealloc(struct dt_probe *, struct dt_softc *,
+	    struct dtioc_req *);
+
+#define DTEVT_PROV_KPROBE (DTEVT_COMMON|DTEVT_FUNCARGS)
+
+struct dt_provider dt_prov_kprobe = {
+	.dtpv_name    = "kprobe",
+	.dtpv_alloc   = dt_prov_kprobe_alloc,
+	.dtpv_enter   = dt_prov_kprobe_hook,
+	.dtpv_leave   = NULL,
+	.dtpv_dealloc = dt_prov_kprobe_dealloc,
 };
 
 /* Bob Jenkin's public domain 32-bit integer hashing function.
@@ -61,85 +78,227 @@ ptr_hash(uint32_t a) {
 	return a;
 }
 
-#define PPTSIZE		PAGE_SIZE * 30
-#define	PPTMASK		((PPTSIZE / sizeof(struct kprobe_probe)) - 1)
-#define INSTTOIDX(inst)	(ptr_hash(inst) & PPTMASK)
-
-SLIST_HEAD(, kprobe_probe) *dtpf_entry;
-SLIST_HEAD(, kprobe_probe) *dtpf_return;
-int nb_probes_entry =	0;
-int nb_probes_return =	0;
-
-#define DTEVT_PROV_KPROBE (DTEVT_COMMON|DTEVT_FUNCARGS)
-
-#define KPROBE_ENTRY "entry"
-#define KPROBE_RETURN "return"
+#define	PPTSIZE		(PAGE_SIZE * 30) /* XXX */
+#define	PPTMASK		((PPTSIZE / sizeof(struct dt_probe)) - 1)
+#define	INSTTOIDX(inst)	(ptr_hash(inst) & PPTMASK)
 
 #if defined(__amd64__)
-#define KPROBE_IBT_1	0xf3
-#define KPROBE_IBT_2	0x0f
-#define KPROBE_IBT_3	0x1e
-#define KPROBE_IBT_4	0xfa
-#define KPROBE_IBT_SIZE	4
+#define	IBT_SIZE	4
+#define	RTGD_MOV_SIZE	7
+#define	RTGD_XOR_SIZE	4
+#define	FRAME_SIZE	(IBT_SIZE + RTGD_XOR_SIZE + RTGD_XOR_SIZE + 1 + 3)
 
-#define KPROBE_RETGUARD_MOV_1 0x4c
-#define KPROBE_RETGUARD_MOV_2 0x8b
-#define KPROBE_RETGUARD_MOV_3 0x1d
+#define	RET_INST	0xc3
+#define	RET_SIZE	1
 
-#define KPROBE_RETGUARD_MOV_SIZE 7
+/*
+ * Validate that this prologue respect a well-known layout and return
+ * the offset where the symbol can be patched.
+ */
+// XXX use db_get_value();
+int
+db_prologue_validate(Elf_Sym *symp)
+{
+	uint8_t *inst = (uint8_t *)symp->st_value;
+	int off = symp->st_size - 1;
 
-#define KPROBE_RETGUARD_XOR_1 0x4c
-#define KPROBE_RETGUARD_XOR_2 0x33
-#define KPROBE_RETGUARD_XOR_3 0x1c
+	if (off < IBT_SIZE + RTGD_MOV_SIZE + RTGD_XOR_SIZE)
+		return -1;
 
-#define KPROBE_RETGUARD_XOR_SIZE 4
+	/* Check for IBT */
+	if (inst[0] != 0xf3 || inst[1] != 0x0f ||
+	    inst[2] != 0x1e || inst[3] != 0xfa)
+		return -1;
 
-#define RET_INST	0xc3
-#define RET_SIZE	1
+	/* Check for retguard */
+	off = IBT_SIZE;
+	if (inst[off] != 0x4c || inst[off + 1] != 0x8b || inst[off + 2] != 0x1d)
+	    	return -1;
+
+	/* Check for `xorq off(%rsp), %reg' */
+	off += RTGD_MOV_SIZE;
+	if (inst[off] != 0x4c || inst[off + 1] != 0x33 || inst[off + 2] != 0x1c)
+		return -1;
+
+	/* Check for `pushq %rbp' */
+	off += RTGD_XOR_SIZE;
+	if (inst[off] != SSF_INST)
+		return -1;
+
+	/* Check for `movq %rsp, %rbp'  */
+	if (inst[off + 1] != 0x48 || inst[off + 2] != 0x89 ||
+	    inst[off + 3] != 0xe5)
+	    	return -1;
+
+	return off;
+}
+
+/*
+ * Insert a breakpoint or restore `pushq %rbp'.
+ */
+void
+db_prologue_patch(vaddr_t addr, int restore)
+{
+	uint8_t patch;
+	size_t size;
+	unsigned s;
+
+	CTASSERT(SSF_SIZE == BKPT_SIZE);
+	if (restore) {
+		patch = SSF_INST;
+		size = SSF_SIZE;
+	} else {
+		patch = BKPT_INST;
+		size = BKPT_SIZE;
+	}
+
+	s = intr_disable();
+	db_write_bytes(addr, size, &patch);
+	intr_restore(s);
+}
+
+int
+db_epilogue_validate(Elf_Sym *symp)
+{
+	uint8_t *inst = (uint8_t *)symp->st_value;
+	int off = symp->st_size - 1;
+
+	while (off > FRAME_SIZE + 2) {
+		if (inst[off - 1] == 0xcc && inst[off] == RET_INST)
+			return off;
+		off--;
+	}
+
+	return -1;
+}
+
+void
+db_epilogue_patch(vaddr_t addr, int restore)
+{
+	uint8_t patch;
+	size_t size;
+	unsigned s;
+
+	CTASSERT(RET_SIZE == BKPT_SIZE);
+	if (restore) {
+		patch = RET_INST;
+		size = RET_SIZE;
+	} else {
+		patch = BKPT_INST;
+		size = BKPT_SIZE;
+	}
+
+	s = intr_disable();
+	db_write_bytes(addr, size, &patch);
+	intr_restore(s);
+}
+
 #elif defined(__i386__)
-#define POP_RBP_INST	0x5d
-#define POP_RBP_SIZE	1
+#define	POP_RBP_INST	0x5d
+#define	POP_RBP_SIZE	1
+
+int
+db_prologue_validate(Elf_Sym *symp)
+{
+	uint8_t *inst = (uint8_t *)symp->st_value;
+
+	/* No retguard or IBT on i386 */
+	if (*inst != SSF_INST)
+		return -1;
+
+	return 0;
+}
+
+/*
+ * Insert a breakpoint or restore
+ */
+void
+db_prologue_patch(vaddr_t addr, int restore)
+{
+	uint8_t patch;
+	size_t size;
+	unsigned s;
+
+	CTASSERT(SSF_SIZE == BKPT_SIZE);
+	if (restore) {
+		patch = SSF_INST;
+		size = SSF_SIZE;
+	} else {
+		patch = BKPT_INST;
+		size = BKPT_SIZE;
+	}
+
+	s = intr_disable();
+	db_write_bytes(addr, size, &patch);
+	intr_restore(s);
+}
+
+int
+db_epilogue_validate(Elf_Sym *symp)
+{
+	vaddr_t limit = symp->st_value + symp->st_size;
+#if 0
+	/*
+	 * Little temporary hack to find some return probe
+	 *   => always int3 after 'pop %rpb; ret'
+	 */
+	while(*((uint8_t *)inst) == 0xcc)
+		(*(uint8_t *)inst) -= 1;
 #endif
+	if (*(uint8_t *)(limit - 2) != POP_RBP)
+		return -1;
 
-struct dt_provider dt_prov_kprobe = {
-	.dtpv_name    = "kprobe",
-	.dtpv_alloc   = dt_prov_kprobe_alloc,
-	.dtpv_enter   = dt_prov_kprobe_hook,
-	.dtpv_leave   = NULL,
-	.dtpv_dealloc = dt_prov_kprobe_dealloc,
-};
+	return symp->st_size - 2;
+}
 
-extern db_symtab_t db_symtab;
-extern char __kutext_end[];
-extern int db_prof_on;
+void
+db_epilogue_patch(vaddr_t addr, int restore)
+{
+	uint8_t patch;
+	size_t size;
+	unsigned s;
+
+	CTASSERT(SSF_SIZE == BKPT_SIZE);
+	if (restore) {
+		patch = POP_RBP_INST;
+		size = POP_RBP_SIZE;
+	} else {
+		patch = BKPT_INST;
+		size = BKPT_SIZE;
+	}
+
+	s = intr_disable();
+	db_write_bytes(addr, size, &patch);
+	intr_restore(s);
+}
+#endif /* defined(__i386__) */
 
 /* Initialize all entry and return probes and store them in global arrays */
 int
 dt_prov_kprobe_init(void)
 {
 	struct dt_probe *dtp;
-	struct kprobe_probe *kprobe_dtp;
 	Elf_Sym *symp, *symtab_start, *symtab_end;
 	const char *strtab, *name;
-	vaddr_t inst, limit;
-	int nb_sym, nb_probes;
+	vaddr_t inst;
+	int off, nb_sym, nb_probes = 0;
 
 	nb_sym = (db_symtab.end - db_symtab.start) / sizeof (Elf_Sym);
-	nb_probes = nb_probes_entry = nb_probes_return = 0;
 
 	dtpf_entry = malloc(PPTSIZE, M_DT, M_NOWAIT|M_ZERO);
 	if (dtpf_entry == NULL)
-		goto end;
+		return 0;
 
 	dtpf_return = malloc(PPTSIZE, M_DT, M_NOWAIT|M_ZERO);
-	if (dtpf_return == NULL)
-		goto end;
+	if (dtpf_return == NULL) {
+		free(dtpf_entry, M_DT, PPTSIZE);
+		return 0;
+	}
 
 	db_symtab_t *stab = &db_symtab;
 
 	symtab_start = STAB_TO_SYMSTART(stab);
 	symtab_end = STAB_TO_SYMEND(stab);
-
 	strtab = db_elf_find_strtab(stab);
 
 	for (symp = symtab_start; symp < symtab_end; symp++) {
@@ -148,96 +307,49 @@ dt_prov_kprobe_init(void)
 
 		inst = symp->st_value;
 		name = strtab + symp->st_name;
-		limit = symp->st_value + symp->st_size;
 
 		/* Filter function that are not mapped in memory */
 		if (inst < KERNBASE || inst >= (vaddr_t)&__kutext_end)
 			continue;
 
 		/* Remove some function to avoid recursive tracing */
-		if (strncmp(name, "dt_", 3) == 0 || strncmp(name, "trap", 4) == 0 ||
+		if (strncmp(name, "dt_", 3) == 0 ||
+		    strncmp(name, "trap", 4) == 0 ||
 		    strncmp(name, "db_", 3) == 0)
 			continue;
 
-#if defined(__amd64__)
-		/*
-		 * Find the IBT target and the retguard which follows it.
-		 * Move the instruction pointer down to the 'push rbp' as needed.
-		 */
-		if (*((uint8_t *)inst) != SSF_INST) {
-			if (((uint8_t *)inst)[0] != KPROBE_IBT_1 ||
-				((uint8_t *)inst)[1] != KPROBE_IBT_2 ||
-				((uint8_t *)inst)[2] != KPROBE_IBT_3 ||
-				((uint8_t *)inst)[3] != KPROBE_IBT_4)
-				continue;
-
-			if (((uint8_t *)inst)[KPROBE_IBT_SIZE] != KPROBE_RETGUARD_MOV_1 ||
-				((uint8_t *)inst)[KPROBE_IBT_SIZE + 1] != KPROBE_RETGUARD_MOV_2 ||
-				((uint8_t *)inst)[KPROBE_IBT_SIZE + 2] != KPROBE_RETGUARD_MOV_3 ||
-				((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE] != KPROBE_RETGUARD_XOR_1 ||
-				((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE + 1] != KPROBE_RETGUARD_XOR_2 ||
-				((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE + 2] != KPROBE_RETGUARD_XOR_3 ||
-				((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE + KPROBE_RETGUARD_XOR_SIZE] != SSF_INST)
-				continue;
-			inst = (vaddr_t)&(((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE + KPROBE_RETGUARD_XOR_SIZE]);
-		}
-#elif defined(__i386__)
-		/* No retguard or IBT on i386 */
-		if (*((uint8_t *)inst) != SSF_INST)
+		off = db_prologue_validate(symp);
+		if (off < 0)
 			continue;
-#endif
 
-		dtp = dt_dev_alloc_probe(name, KPROBE_ENTRY, &dt_prov_kprobe);
+		dtp = dt_dev_alloc_probe(name, "entry", &dt_prov_kprobe);
 		if (dtp == NULL)
-			goto end;
+			break;
 
-		kprobe_dtp = malloc(sizeof(struct kprobe_probe), M_TEMP, M_NOWAIT|M_ZERO);
-		if (kprobe_dtp == NULL)
-			goto end;
-		kprobe_dtp->dtp = dtp;
-
-		dtp->dtp_addr = inst;
+		dtp->dtp_addr = inst + off;
+		dtp->dtp_type = KPROBE_ENTRY;
 		dtp->dtp_nargs = db_ctf_func_numargs(symp);
+		SLIST_INSERT_HEAD(&dtpf_entry[INSTTOIDX(dtp->dtp_addr)],
+		    dtp, dtp_knext);
 		dt_dev_register_probe(dtp);
-
-		SLIST_INSERT_HEAD(&dtpf_entry[INSTTOIDX(dtp->dtp_addr)], kprobe_dtp, kprobe_next);
-
 		nb_probes++;
-		nb_probes_entry++;
 
-#if defined(__amd64__)
-		/* If there last instruction isn't a ret, just bail. */
-		if (*(uint8_t *)(limit - 1) != RET_INST)
+		off = db_epilogue_validate(symp);
+		if (off < 0)
 			continue;
-		inst = limit - 1;
-#elif defined(__i386__)
-		/*
-		 * Little temporary hack to find some return probe
-		 *   => always int3 after 'pop %rpb; ret'
-		 */
-		while(*((uint8_t *)inst) == 0xcc)
-			(*(uint8_t *)inst) -= 1;
-		if (*(uint8_t *)(limit - 2) != POP_RBP)
-			continue;
-		inst = limit - 2;
-#endif
 
-		dtp = dt_dev_alloc_probe(name, KPROBE_RETURN, &dt_prov_kprobe);
+		dtp = dt_dev_alloc_probe(name, "return", &dt_prov_kprobe);
 		if (dtp == NULL)
-			goto end;
+			break;
 
-		kprobe_dtp = malloc(sizeof(struct kprobe_probe), M_TEMP, M_NOWAIT|M_ZERO);
-		if (kprobe_dtp == NULL)
-			goto end;
-		kprobe_dtp->dtp = dtp;
-
-		dtp->dtp_addr = inst;
+		dtp->dtp_addr = inst + off;
+		dtp->dtp_type = KPROBE_RETURN;
+		SLIST_INSERT_HEAD(&dtpf_return[INSTTOIDX(dtp->dtp_addr)],
+		    dtp, dtp_knext);
 		dt_dev_register_probe(dtp);
-		SLIST_INSERT_HEAD(&dtpf_return[INSTTOIDX(dtp->dtp_addr)], kprobe_dtp, kprobe_next);
 		nb_probes++;
-		nb_probes_return++;
 	}
-end:
+
 	return nb_probes;
 }
 
@@ -245,22 +357,24 @@ int
 dt_prov_kprobe_alloc(struct dt_probe *dtp, struct dt_softc *sc,
     struct dt_pcb_list *plist, struct dtioc_req *dtrq)
 {
-	uint8_t patch = BKPT_INST;
 	struct dt_pcb *dp;
-	unsigned s;
 
 	dp = dt_pcb_alloc(dtp, sc);
 	if (dp == NULL)
 		return ENOMEM;
 
-	/* Patch only if it's first pcb referencing this probe */
 	dtp->dtp_ref++;
-	KASSERT(dtp->dtp_ref != 0);
-
 	if (dtp->dtp_ref == 1) {
-		s = intr_disable();
-		db_write_bytes(dtp->dtp_addr, BKPT_SIZE, &patch);
-		intr_restore(s);
+		switch (dtp->dtp_type) {
+		case KPROBE_ENTRY:
+			db_prologue_patch(dtp->dtp_addr, 0);
+			break;
+		case KPROBE_RETURN:
+			db_epilogue_patch(dtp->dtp_addr, 0);
+			break;
+		default:
+			panic("unknown probe type %d", dtp->dtp_type);
+		}
 	}
 
 	dp->dp_evtflags = dtrq->dtrq_evtflags & DTEVT_PROV_KPROBE;
@@ -272,30 +386,19 @@ int
 dt_prov_kprobe_dealloc(struct dt_probe *dtp, struct dt_softc *sc,
    struct dtioc_req *dtrq)
 {
-	uint8_t patch;
-	int size;
-	unsigned s;
-
-	if (strcmp(dtp->dtp_name, KPROBE_ENTRY) == 0) {
-		patch = SSF_INST;
-		size  = SSF_SIZE;
-	} else if (strcmp(dtp->dtp_name, KPROBE_RETURN) == 0) {
-#if defined(__amd64__)
-		patch = RET_INST;
-		size  = RET_SIZE;
-#elif defined(__i386__)
-		patch = POP_RBP_INST;
-		size  = POP_RBP_SIZE;
-#endif
-	} else
-		panic("Trying to dealloc not yet implemented probe type");
-
 	dtp->dtp_ref--;
+	if (dtp->dtp_ref > 0)
+		return 0;
 
-	if (dtp->dtp_ref == 0) {
-		s = intr_disable();
-		db_write_bytes(dtp->dtp_addr, size, &patch);
-		intr_restore(s);
+	switch (dtp->dtp_type) {
+	case KPROBE_ENTRY:
+		db_prologue_patch(dtp->dtp_addr, 1);
+		break;
+	case KPROBE_RETURN:
+		db_epilogue_patch(dtp->dtp_addr, 1);
+		break;
+	default:
+		panic("unknown probe type %d", dtp->dtp_type);
 	}
 
 	/* Deallocation of PCB is done by dt_pcb_purge when closing the dev */
@@ -308,7 +411,6 @@ dt_prov_kprobe_hook(struct dt_provider *dtpv, ...)
 	struct dt_probe *dtp;
 	struct dt_pcb *dp;
 	struct trapframe *tf;
-	struct kprobe_probe *kprobe_dtp;
 	va_list ap;
 	int is_dt_bkpt = 0;
 	int error;	/* Return values for return probes*/
@@ -324,9 +426,7 @@ dt_prov_kprobe_hook(struct dt_provider *dtpv, ...)
 
 	addr = db_get_probe_addr(tf);
 
-	SLIST_FOREACH(kprobe_dtp, &dtpf_entry[INSTTOIDX(addr)], kprobe_next) {
-		dtp = kprobe_dtp->dtp;
-
+	SLIST_FOREACH(dtp, &dtpf_entry[INSTTOIDX(addr)], dtp_knext) {
 		if (dtp->dtp_addr != addr)
 			continue;
 
@@ -366,9 +466,7 @@ dt_prov_kprobe_hook(struct dt_provider *dtpv, ...)
 	if (is_dt_bkpt)
 		return is_dt_bkpt;
 
-	SLIST_FOREACH(kprobe_dtp, &dtpf_return[INSTTOIDX(addr)], kprobe_next) {
-		dtp = kprobe_dtp->dtp;
-
+	SLIST_FOREACH(dtp, &dtpf_return[INSTTOIDX(addr)], dtp_knext) {
 		if (dtp->dtp_addr != addr)
 			continue;
 
@@ -406,50 +504,38 @@ dt_prov_kprobe_hook(struct dt_provider *dtpv, ...)
 	return is_dt_bkpt;
 }
 
-/* Function called by ddb to patch all functions without allocating 1 pcb per probe */
+/* Called by ddb to patch all functions without allocating 1 pcb per probe */
 void
 dt_prov_kprobe_patch_all_entry(void)
 {
-	uint8_t patch = BKPT_INST;
 	struct dt_probe *dtp;
-	struct kprobe_probe *kprobe_dtp;
 	size_t i;
 
 	for (i = 0; i < PPTMASK; ++i) {
-		SLIST_FOREACH(kprobe_dtp, &dtpf_entry[i], kprobe_next) {
-			dtp = kprobe_dtp->dtp;
+		SLIST_FOREACH(dtp, &dtpf_entry[i], dtp_knext) {
 			dtp->dtp_ref++;
+			if (dtp->dtp_ref != 1)
+				continue;
 
-			if (dtp->dtp_ref == 1) {
-				unsigned s;
-				s = intr_disable();
-				db_write_bytes(dtp->dtp_addr, BKPT_SIZE, &patch);
-				intr_restore(s);
-			}
+			db_prologue_patch(dtp->dtp_addr, 0);
 		}
 	}
 }
 
-/* Function called by ddb to patch all functions without allocating 1 pcb per probe */
+/* Called by ddb to patch all functions without allocating 1 pcb per probe */
 void
 dt_prov_kprobe_depatch_all_entry(void)
 {
-	uint8_t patch = SSF_INST;
 	struct dt_probe *dtp;
-	struct kprobe_probe *kprobe_dtp;
 	size_t i;
 
 	for (i = 0; i < PPTMASK; ++i) {
-		SLIST_FOREACH(kprobe_dtp, &dtpf_entry[i], kprobe_next) {
-			dtp = kprobe_dtp->dtp;
+		SLIST_FOREACH(dtp, &dtpf_entry[i], dtp_knext) {
 			dtp->dtp_ref--;
+			if (dtp->dtp_ref != 0)
+				continue;
 
-			if (dtp->dtp_ref == 0) {
-				unsigned s;
-				s = intr_disable();
-				db_write_bytes(dtp->dtp_addr, SSF_SIZE, &patch);
-				intr_restore(s);
-			}
+			db_prologue_patch(dtp->dtp_addr, 1);
 		}
 
 	}

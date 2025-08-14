@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.22 2025/01/23 11:17:32 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.23 2025/08/14 13:04:48 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -211,7 +211,11 @@ struct dt_probe {
 	const char		*dtp_argtype[DTMAXARGTYPES];
 						/* [I] type of arguments */
 	int			 dtp_nargs;	/* [I] # of arguments */
+#ifdef DDBPROF
+	int			 dtp_type;	/* [I] 'entry' or 'return' */
 	vaddr_t			 dtp_addr;	/* [I] address of breakpoint */
+	SLIST_ENTRY(dt_probe)	 dtp_knext;	/* [K] list of ELF kprobe */
+#endif
 };
 
 
