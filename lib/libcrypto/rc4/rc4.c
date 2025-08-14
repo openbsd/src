@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4.c,v 1.13 2025/01/27 14:02:32 jsing Exp $ */
+/* $OpenBSD: rc4.c,v 1.14 2025/08/14 14:55:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,12 +75,25 @@ void rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
     unsigned char *outdata);
 
 #else
+static inline RC4_INT
+rc4_step(RC4_INT *d, RC4_INT *x, RC4_INT *y)
+{
+	RC4_INT tx, ty;
+
+	*x = (*x + 1) & 0xff;
+	tx = d[*x];
+	*y = (tx + *y) & 0xff;
+	d[*x] = ty = d[*y];
+	d[*y] = tx;
+
+	return d[(tx + ty) & 0xff];
+}
+
 static void
 rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
     unsigned char *outdata)
 {
-	RC4_INT *d;
-	RC4_INT x, y,tx, ty;
+	RC4_INT *d, x, y;
 	size_t i;
 
 	x = key->x;
@@ -119,15 +132,7 @@ rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
 	 *					<appro@fy.chalmers.se>
 	 */
 
-# define RC4_STEP	( \
-			x=(x+1) &0xff,	\
-			tx=d[x],	\
-			y=(tx+y)&0xff,	\
-			ty=d[y],	\
-			d[y]=tx,	\
-			d[x]=ty,	\
-			(RC4_CHUNK)d[(tx+ty)&0xff]\
-			)
+# define RC4_STEP	((RC4_CHUNK)rc4_step(d, &x, &y))
 
 	if ((((size_t)indata & (sizeof(RC4_CHUNK) - 1)) |
 	    ((size_t)outdata & (sizeof(RC4_CHUNK) - 1))) == 0 ) {
@@ -196,59 +201,18 @@ rc4_internal(RC4_KEY *key, size_t len, const unsigned char *indata,
 #endif
 	}
 #endif
-#define RC4_LOOP(in,out) \
-		x=((x+1)&0xff); \
-		tx=d[x]; \
-		y=(tx+y)&0xff; \
-		d[x]=ty=d[y]; \
-		d[y]=tx; \
-		(out) = d[(tx+ty)&0xff]^ (in);
 
-	i = len >> 3;
-	if (i) {
-		for (;;) {
-			RC4_LOOP(indata[0], outdata[0]);
-			RC4_LOOP(indata[1], outdata[1]);
-			RC4_LOOP(indata[2], outdata[2]);
-			RC4_LOOP(indata[3], outdata[3]);
-			RC4_LOOP(indata[4], outdata[4]);
-			RC4_LOOP(indata[5], outdata[5]);
-			RC4_LOOP(indata[6], outdata[6]);
-			RC4_LOOP(indata[7], outdata[7]);
+	while (len >= 8) {
+		for (i = 0; i < 8; i++)
+			outdata[i] = rc4_step(d, &x, &y) ^ indata[i];
 
-			indata += 8;
-			outdata += 8;
-
-			if (--i == 0)
-				break;
-		}
+		indata += 8;
+		outdata += 8;
+		len -= 8;
 	}
-	i = len&0x07;
-	if (i) {
-		for (;;) {
-			RC4_LOOP(indata[0], outdata[0]);
-			if (--i == 0)
-				break;
-			RC4_LOOP(indata[1], outdata[1]);
-			if (--i == 0)
-				break;
-			RC4_LOOP(indata[2], outdata[2]);
-			if (--i == 0)
-				break;
-			RC4_LOOP(indata[3], outdata[3]);
-			if (--i == 0)
-				break;
-			RC4_LOOP(indata[4], outdata[4]);
-			if (--i == 0)
-				break;
-			RC4_LOOP(indata[5], outdata[5]);
-			if (--i == 0)
-				break;
-			RC4_LOOP(indata[6], outdata[6]);
-			if (--i == 0)
-				break;
-		}
-	}
+	for (i = 0; i < len; i++)
+		outdata[i] = rc4_step(d, &x, &y) ^ indata[i];
+
 	key->x = x;
 	key->y = y;
 }
@@ -261,30 +225,27 @@ void rc4_set_key_internal(RC4_KEY *key, int len, const unsigned char *data);
 static inline void
 rc4_set_key_internal(RC4_KEY *key, int len, const unsigned char *data)
 {
-	RC4_INT tmp;
-	int id1, id2;
-	RC4_INT *d;
-	unsigned int i;
+	RC4_INT *d, tmp;
+	int idx1, idx2;
+	int i, j;
 
-	d = &(key->data[0]);
+	d = key->data;
 	key->x = 0;
 	key->y = 0;
-	id1 = id2 = 0;
-
-#define SK_LOOP(d,n) { \
-		tmp=d[(n)]; \
-		id2 = (data[id1] + tmp + id2) & 0xff; \
-		if (++id1 == len) id1=0; \
-		d[(n)]=d[id2]; \
-		d[id2]=tmp; }
+	idx1 = idx2 = 0;
 
 	for (i = 0; i < 256; i++)
 		d[i] = i;
 	for (i = 0; i < 256; i += 4) {
-		SK_LOOP(d, i + 0);
-		SK_LOOP(d, i + 1);
-		SK_LOOP(d, i + 2);
-		SK_LOOP(d, i + 3);
+		for (j = 0; j < 4; j++) {
+			tmp = d[i + j];
+			idx2 = (data[idx1] + tmp + idx2) & 0xff;
+			d[i + j] = d[idx2];
+			d[idx2] = tmp;
+
+			if (++idx1 == len)
+				idx1 = 0;
+		}
 	}
 }
 #endif
