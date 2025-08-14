@@ -704,6 +704,11 @@ struct internal_reloc
 #define R_HVRT16       131
 #define R_LVRT16       132
 #define R_VRT32        133
+#define R_VRT16I       134
+#define R_VRT16XA      135
+#define R_VRT16XB      136
+#define R_PCR16LX      137
+#define R_PCR26LX      138
 
 
 /* This reloc identifies mov.b instructions with a 16bit absolute

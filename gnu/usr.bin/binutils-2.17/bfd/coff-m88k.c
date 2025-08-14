@@ -231,6 +231,76 @@ static reloc_howto_type howto_table[] =
 	 0xffffffff,			/* src_mask */
 	 0xffffffff,			/* dst_mask */
 	 TRUE),				/* pcrel_offset */
+
+  HOWTO (R_VRT16I,			/* type */
+	 00,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_bitfield,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "VRT16I",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0000ffff,			/* src_mask */
+	 0x0000ffff,			/* dst_mask */
+	 TRUE),				/* pcrel_offset */
+
+  HOWTO (R_VRT16XA,			/* type */
+	 00,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_bitfield,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "VRT16XA",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0000ffff,			/* src_mask */
+	 0x0000ffff,			/* dst_mask */
+	 TRUE),				/* pcrel_offset */
+
+  HOWTO (R_VRT16XB,			/* type */
+	 00,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 FALSE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_bitfield,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "VRT16XB",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0000ffff,			/* src_mask */
+	 0x0000ffff,			/* dst_mask */
+	 TRUE),				/* pcrel_offset */
+
+  HOWTO (R_PCR16LX,			/* type */
+	 02,				/* rightshift */
+	 1,				/* size (0 = byte, 1 = short, 2 = long) */
+	 16,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_signed,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "PCR16LX",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x0000ffff,			/* src_mask */
+	 0x0000ffff,			/* dst_mask */
+	 TRUE),				/* pcrel_offset */
+
+  HOWTO (R_PCR26LX,			/* type */
+	 02,				/* rightshift */
+	 2,				/* size (0 = byte, 1 = short, 2 = long) */
+	 26,				/* bitsize */
+	 TRUE,				/* pc_relative */
+	 0,				/* bitpos */
+	 complain_overflow_signed,	/* complain_on_overflow */
+	 m88k_special_reloc,		/* special_function */
+	 "PCR26LX",			/* name */
+	 FALSE,				/* partial_inplace */
+	 0x03ffffff,			/* src_mask */
+	 0x03ffffff,			/* dst_mask */
+	 TRUE),				/* pcrel_offset */
 };
 
 /* Code to turn an external r_type into a pointer to an entry in the
@@ -240,7 +310,7 @@ rtype2howto (cache_ptr, dst)
      arelent *cache_ptr;
      struct internal_reloc *dst;
 {
-  if (dst->r_type >= R_PCR16L && dst->r_type <= R_VRT32)
+  if (dst->r_type >= R_PCR16L && dst->r_type <= R_PCR26LX)
     {
       cache_ptr->howto = howto_table + dst->r_type - R_PCR16L;
     }
