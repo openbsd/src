@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.19 2025/07/15 13:40:02 jsg Exp $ */
+/*	$OpenBSD: psp.c,v 1.20 2025/08/14 11:18:11 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -341,6 +341,7 @@ fail_2:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_tmr_seg, nsegs);
 fail_1:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_tmr_map);
+	sc->sc_tmr_map = NULL;
 fail_0:
 	return (error);
 }
