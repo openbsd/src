@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.c,v 1.9 2025/08/12 10:00:40 jsing Exp $ */
+/*	$OpenBSD: bn_arch.c,v 1.10 2025/08/14 15:17:19 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -57,6 +57,26 @@ bn_sub_words(BN_ULONG *rd, const BN_ULONG *ad, const BN_ULONG *bd, int n)
 {
 	return bignum_sub(n, (uint64_t *)rd, n, (const uint64_t *)ad, n,
 	    (const uint64_t *)bd);
+}
+#endif
+
+#ifdef HAVE_BN_MOD_ADD_WORDS
+void
+bn_mod_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    const BN_ULONG *m, size_t n)
+{
+	bignum_modadd(n, (uint64_t *)r, (const uint64_t *)a,
+	    (const uint64_t *)b, (const uint64_t *)m);
+}
+#endif
+
+#ifdef HAVE_BN_MOD_SUB_WORDS
+void
+bn_mod_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
+    const BN_ULONG *m, size_t n)
+{
+	bignum_modsub(n, (uint64_t *)r, (const uint64_t *)a,
+	    (const uint64_t *)b, (const uint64_t *)m);
 }
 #endif
 
