@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.208 2025/01/01 15:17:36 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.209 2025/08/14 06:49:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -72,7 +72,8 @@ server_set_marked(struct session *s, struct winlink *wl, struct window_pane *wp)
 	cmd_find_clear_state(&marked_pane, 0);
 	marked_pane.s = s;
 	marked_pane.wl = wl;
-	marked_pane.w = wl->window;
+	if (wl != NULL)
+		marked_pane.w = wl->window;
 	marked_pane.wp = wp;
 }
 
