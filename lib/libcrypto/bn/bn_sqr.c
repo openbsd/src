@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.37 2025/08/05 15:08:13 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.38 2025/08/14 15:15:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,6 +326,8 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 
 	if (a->top == 4) {
 		bn_sqr_comba4(rr->d, a->d);
+	} else if (a->top == 6) {
+		bn_sqr_comba6(rr->d, a->d);
 	} else if (a->top == 8) {
 		bn_sqr_comba8(rr->d, a->d);
 	} else {

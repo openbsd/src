@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.42 2025/08/05 15:06:13 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.43 2025/08/14 15:15:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -407,6 +407,8 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 
 	if (a->top == 4 && b->top == 4) {
 		bn_mul_comba4(rr->d, a->d, b->d);
+	} else if (a->top == 6 && b->top == 6) {
+		bn_mul_comba6(rr->d, a->d, b->d);
 	} else if (a->top == 8 && b->top == 8) {
 		bn_mul_comba8(rr->d, a->d, b->d);
 	} else {
