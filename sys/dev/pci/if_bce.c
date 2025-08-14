@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.58 2025/08/14 11:08:27 mpi Exp $ */
+/* $OpenBSD: if_bce.c,v 1.59 2025/08/14 11:13:57 mpi Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -442,6 +442,7 @@ bce_activate(struct device *self, int act)
 			bce_stop(ifp);
 		break;
 	case DVACT_RESUME:
+		bce_reset(sc);
 		if (ifp->if_flags & IFF_UP) {
 			bce_init(ifp);
 			bce_start(ifp);
