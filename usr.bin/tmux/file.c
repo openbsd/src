@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.15 2023/04/17 17:58:35 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.16 2025/08/14 06:37:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -364,7 +364,7 @@ file_read(struct client *c, const char *path, client_file_cb cb, void *cbdata)
 	size_t			 msglen;
 	int			 fd = -1;
 	u_int			 stream = file_next_stream++;
-	FILE			*f;
+	FILE			*f = NULL;
 	size_t			 size;
 	char			 buffer[BUFSIZ];
 
@@ -404,7 +404,6 @@ file_read(struct client *c, const char *path, client_file_cb cb, void *cbdata)
 			cf->error = EIO;
 			goto done;
 		}
-		fclose(f);
 		goto done;
 	}
 
@@ -427,6 +426,8 @@ skip:
 	return cf;
 
 done:
+	if (f != NULL)
+		fclose(f);
 	file_fire_done(cf);
 	return NULL;
 }
