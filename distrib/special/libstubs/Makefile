@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2025/08/11 17:16:18 gkoehler Exp $
+#	$OpenBSD: Makefile,v 1.24 2025/08/14 09:31:21 kettenis Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
@@ -25,6 +25,10 @@ SRCS+=	asr.c			\
 	res_send.c		\
 	res_send_async.c	\
 	sethostent.c
+
+.if ${MACHINE_ARCH} == "aarch64"
+SRCS+=	aarch64_lse.c
+.endif
 
 NOPIC=	Yes
 NOPROFILE=Yes
