@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.28 2025/08/14 10:50:08 jsg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.29 2025/08/14 13:58:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -118,11 +118,6 @@ struct privsep_proc {
 	struct privsep		*p_ps;
 };
 
-struct privsep_fd {
-	enum privsep_procid		 pf_procid;
-	unsigned int			 pf_instance;
-};
-
 #if DEBUG
 #define DPRINTF		log_debug
 #else
@@ -130,7 +125,6 @@ struct privsep_fd {
 #endif
 
 #define PROC_PARENT_SOCK_FILENO	3
-#define PROC_MAX_INSTANCES	32
 
 /* proc.c */
 void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
