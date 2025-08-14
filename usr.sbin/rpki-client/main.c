@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.292 2025/08/06 15:17:56 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.293 2025/08/14 15:12:00 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -57,7 +57,8 @@ int		 talsz;
 size_t	entity_queue;
 int	timeout = 60*60;
 volatile sig_atomic_t killme;
-void	suicide(int sig);
+volatile sig_atomic_t printinfo;
+void	sighandler(int sig);
 
 static struct filepath_tree	fpt = RB_INITIALIZER(&fpt);
 static struct msgbuf		*procq, *rsyncq, *httpq, *rrdpq;
@@ -984,9 +985,12 @@ process_start(const char *title, int *fd)
 }
 
 void
-suicide(int sig __attribute__((unused)))
+sighandler(int sig)
 {
-	killme = 1;
+	if (sig == SIGINFO)
+		printinfo = 1;
+	else
+		killme = 1;
 }
 
 #define NPFD	4
@@ -1245,13 +1249,15 @@ main(int argc, char *argv[])
 		rrdppid = -1;
 	}
 
+	if (!filemode)
+		signal(SIGINFO, sighandler);
 	if (!filemode && timeout > 0) {
 		/*
 		 * Commit suicide eventually
 		 * cron will normally start a new one
 		 */
 		alarm(timeout);
-		signal(SIGALRM, suicide);
+		signal(SIGALRM, sighandler);
 
 		/* give up a bit before the hard timeout and try to finish up */
 		if (!noop)
@@ -1322,13 +1328,18 @@ main(int argc, char *argv[])
 	while (entity_queue > 0 && !killme) {
 		int polltim;
 
-		polltim = repo_check_timeout(INFTIM);
+		if (printinfo) {
+			printinfo = 0;
+			repo_printinfo(entity_queue);
+		}
 
 		for (i = 0; i < NPFD; i++) {
 			pfd[i].events = POLLIN;
 			if (msgbuf_queuelen(queues[i]) > 0)
 				pfd[i].events |= POLLOUT;
 		}
+
+		polltim = repo_check_timeout(INFTIM);
 
 		if (poll(pfd, NPFD, polltim) == -1) {
 			if (errno == EINTR)
@@ -1441,6 +1452,7 @@ main(int argc, char *argv[])
 
 	signal(SIGALRM, SIG_DFL);
 	if (killme) {
+		repo_printinfo(entity_queue);
 		syslog(LOG_CRIT|LOG_DAEMON,
 		    "excessive runtime (%d seconds), giving up", timeout);
 		errx(1, "excessive runtime (%d seconds), giving up", timeout);
@@ -1489,8 +1501,10 @@ main(int argc, char *argv[])
 	}
 
 	/* processing did not finish because of error */
-	if (entity_queue != 0)
+	if (entity_queue != 0) {
+		repo_printinfo(entity_queue);
 		errx(1, "not all files processed, giving up");
+	}
 
 	/* if processing in filemode the process is done, no cleanup */
 	if (filemode)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.78 2025/08/01 13:46:06 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.79 2025/08/14 15:12:00 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -301,6 +301,20 @@ repo_state(const struct repo *rp)
 		return rp->rrdp->state;
 	/* No backend so sync is by definition done. */
 	return REPO_DONE;
+}
+
+static const char *
+repo_state_string(const struct repo *rp)
+{
+	switch (repo_state(rp)) {
+	case REPO_LOADING:
+		return "loading";
+	case REPO_DONE:
+		return "done";
+	case REPO_FAILED:
+		return "failed";
+	}
+	return "unknown";
 }
 
 /*
@@ -1414,6 +1428,21 @@ repo_queued(struct repo *rp, struct entity *p)
 		return 1;
 	}
 	return 0;
+}
+
+void
+repo_printinfo(size_t qlen)
+{
+	struct repo	*rp;
+
+	warnx("%zu outstanding entities", qlen);
+
+	SLIST_FOREACH(rp, &repos, entry) {
+		if (TAILQ_EMPTY(&rp->queue))
+			continue;
+		warnx("%s: queue not empty, state %s", rp->basedir,
+		    repo_state_string(rp));
+	}
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.256 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.257 2025/08/14 15:12:00 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -875,6 +875,7 @@ struct repo	*ta_lookup(int, struct tal *);
 struct repo	*repo_lookup(int, const char *, const char *);
 struct repo	*repo_byid(unsigned int);
 int		 repo_queued(struct repo *, struct entity *);
+void		 repo_printinfo(size_t);
 void		 repo_cleanup(struct filepath_tree *, int);
 int		 repo_check_timeout(int);
 void		 repostats_new_files_inc(struct repo *, const char *);
