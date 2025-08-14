@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_fre.c,v 1.24 2024/12/11 11:22:06 tb Exp $ */
+/* $OpenBSD: tasn_fre.c,v 1.25 2025/08/14 19:02:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -147,8 +147,9 @@ asn1_item_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 				return;
 		}
 		asn1_enc_cleanup(pval, it);
-		/* If we free up as normal we will invalidate any
-		 * ANY DEFINED BY field and we wont be able to
+		/*
+		 * If we free up as normal, we will invalidate any
+		 * ANY DEFINED BY field and we won't be able to
 		 * determine the type of the field it defines. So
 		 * free up in reverse order.
 		 */
