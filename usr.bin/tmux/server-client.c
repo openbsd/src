@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.428 2025/03/24 20:01:03 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.429 2025/08/14 07:15:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -884,8 +884,7 @@ have_event:
 			m->wp = wp->id;
 			m->w = wp->window->id;
 		}
-	} else
-		m->wp = -1;
+	}
 
 	/* Stop dragging if needed. */
 	if (type != DRAG &&

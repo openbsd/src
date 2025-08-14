@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1007 2025/08/14 06:44:50 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1008 2025/08/14 07:15:40 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -5187,6 +5187,38 @@ Other attributes are ignored.
 .Op Ic left | right
 .Xc
 Sets which side of the pane to display pane scrollbars on.
+.Pp
+.It Ic pane-status-current-style Ar style
+Set status line style for the currently active pane.
+For how to specify
+.Ar style ,
+see the
+.Sx STYLES
+section.
+.Pp
+.It Ic pane-status-style Ar style
+Set status line style for a single pane.
+For how to specify
+.Ar style ,
+see the
+.Sx STYLES
+section.
+.Pp
+.It Ic session-status-current-style Ar style
+Set status line style for the currently active session.
+For how to specify
+.Ar style ,
+see the
+.Sx STYLES
+section.
+.Pp
+.It Ic session-status-style Ar style
+Set status line style for a single session.
+For how to specify
+.Ar style ,
+see the
+.Sx STYLES
+section.
 .Pp
 .It Ic window-status-activity-style Ar style
 Set status line style for windows with an activity alert.

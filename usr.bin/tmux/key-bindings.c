@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.153 2025/04/22 12:34:56 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.154 2025/08/14 07:15:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -437,7 +437,6 @@ key_bindings_init(void)
 		"bind -N 'Display window menu' < { display-menu -xW -yW -T '#[align=centre]#{window_index}:#{window_name}' " DEFAULT_WINDOW_MENU " }",
 		"bind -N 'Display pane menu' > { display-menu -xP -yP -T '#[align=centre]#{pane_index} (#{pane_id})' " DEFAULT_PANE_MENU " }",
 
-
 		/* Mouse button 1 down on pane. */
 		"bind -n MouseDown1Pane { select-pane -t=; send -M }",
 
@@ -460,7 +459,7 @@ key_bindings_init(void)
 		"bind -n MouseDrag1Border { resize-pane -M }",
 
 		/* Mouse button 1 down on status line. */
-		"bind -n MouseDown1Status { select-window -t= }",
+		"bind -n MouseDown1Status { switch-client -t= }",
 
 		/* Mouse wheel down on status line. */
 		"bind -n WheelDownStatus { next-window }",
