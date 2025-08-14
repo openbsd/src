@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.41 2025/06/28 12:39:10 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.42 2025/08/14 15:12:53 jsing Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -26,11 +26,21 @@ SRCS += bn_arch.c
 SRCS += bignum_add.S
 SRCS += bignum_cmadd.S
 SRCS += bignum_cmul.S
+SRCS += bignum_modadd.S
+SRCS += bignum_modsub.S
 SRCS += bignum_mul.S
+SRCS += bignum_mul_4_8.S
 SRCS += bignum_mul_4_8_alt.S
+SRCS += bignum_mul_6_12.S
+SRCS += bignum_mul_6_12_alt.S
+SRCS += bignum_mul_8_16.S
 SRCS += bignum_mul_8_16_alt.S
 SRCS += bignum_sqr.S
+SRCS += bignum_sqr_4_8.S
 SRCS += bignum_sqr_4_8_alt.S
+SRCS += bignum_sqr_6_12.S
+SRCS += bignum_sqr_6_12_alt.S
+SRCS += bignum_sqr_8_16.S
 SRCS += bignum_sqr_8_16_alt.S
 SRCS += bignum_sub.S
 SRCS += word_clz.S
