@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.118 2025/06/08 06:23:43 rsadowski Exp $	*/
+/*	$OpenBSD: buf.h,v 1.119 2025/08/14 15:48:48 beck Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -114,6 +114,10 @@ union bufq_data {
 	struct bufq_nscan	bufq_data_nscan;
 };
 
+/*
+ * Locks used to protect struct members in struct buf
+ * 	f   b_flag_mtx
+ */
 /* The buffer header describes an I/O operation in the kernel. */
 struct buf {
 	RBT_ENTRY(buf) b_rbbufs;	/* vnode "hash" tree */

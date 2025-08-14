@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.241 2025/07/16 15:59:26 tb Exp $
+# $OpenBSD: Makefile,v 1.242 2025/08/14 15:48:48 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -374,8 +374,10 @@ SRCS+= md4.c
 SRCS+= md5.c
 
 # mlkem/
+SRCS+= mlkem.c
 SRCS+= mlkem768.c
 SRCS+= mlkem1024.c
+SRCS+= mlkem_key.c
 
 # modes/
 SRCS+= cbc128.c
@@ -668,6 +670,7 @@ HDRS=\
 	${LCRYPTO_SRC}/lhash/lhash.h \
 	${LCRYPTO_SRC}/md4/md4.h \
 	${LCRYPTO_SRC}/md5/md5.h \
+	${LCRYPTO_SRC}/mlkem/mlkem.h \
 	${LCRYPTO_SRC}/modes/modes.h \
 	${LCRYPTO_SRC}/objects/objects.h \
 	${LCRYPTO_SRC}/ocsp/ocsp.h \

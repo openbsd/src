@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_iteration_tests.c,v 1.5 2025/05/20 00:33:41 beck Exp $ */
+/*	$OpenBSD: mlkem_iteration_tests.c,v 1.6 2025/08/14 15:48:48 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mlkem.h"
 
@@ -63,46 +64,49 @@ const uint8_t kExpectedAdam1024[32] = {
 	0x04, 0xab, 0xdb, 0x94, 0x8b, 0x90, 0x8b, 0x75, 0xba, 0xd5
 };
 
-struct iteration_ctx {
-	uint8_t *encoded_public_key;
-	size_t encoded_public_key_len;
-	uint8_t *ciphertext;
-	size_t ciphertext_len;
-	uint8_t *invalid_ciphertext;
-	size_t invalid_ciphertext_len;
-	void *priv;
-	void *pub;
-
-	mlkem_marshal_private_key_fn marshal_private_key;
-	mlkem_encap_external_entropy_fn encap_external_entropy;
-	mlkem_generate_key_external_entropy_fn generate_key_external_entropy;
-	mlkem_public_from_private_fn public_from_private;
-	mlkem_decap_fn decap;
-
-	const uint8_t *start;
-	size_t start_len;
-
-	const uint8_t *expected;
-	size_t expected_len;
-};
-
 static int
-MlkemIterativeTest(struct iteration_ctx *ctx)
+MlkemIterativeTest(int rank)
 {
-	uint8_t shared_secret[MLKEM_SHARED_SECRET_BYTES];
+	const uint8_t *start, *expected;
+	size_t start_len;
 	uint8_t encap_entropy[MLKEM_ENCAP_ENTROPY];
-	uint8_t seed[MLKEM_SEED_BYTES] = {0};
+	uint8_t seed[MLKEM_SEED_LENGTH] = {0};
+	uint8_t *shared_secret = NULL;
 	sha3_ctx drng, results;
 	uint8_t out[32];
 	int i;
+
+	start = kExpectedSeedStart;
+	start_len = sizeof(kExpectedSeedStart);
+	switch(rank){
+	case RANK768:
+		expected = kExpectedAdam768;
+		break;
+	case RANK1024:
+		expected = kExpectedAdam1024;
+		break;
+	default:
+		errx(1, "invalid rank %d", rank);
+	}
 
 	shake128_init(&drng);
 	shake128_init(&results);
 
 	shake_xof(&drng);
 	for (i = 0; i < 10000; i++) {
-		uint8_t *encoded_private_key = NULL;
-		size_t encoded_private_key_len;
+		uint8_t *encoded_public_key = NULL, *ciphertext = NULL,
+		    *encoded_private_key = NULL, *invalid_ciphertext = NULL;
+		size_t encoded_public_key_len, ciphertext_len,
+		    encoded_private_key_len, invalid_ciphertext_len;
+		MLKEM_private_key *priv;
+		MLKEM_public_key *pub;
+		size_t s_len = 0;
+
+		/* allocate keys for this iteration */
+		if ((priv = MLKEM_private_key_new(rank)) == NULL)
+			errx(1, "malloc");
+		if ((pub = MLKEM_public_key_new(rank)) == NULL)
+			errx(1, "malloc");
 
 		/*
 		 * This should draw both d and z from DRNG concatenating in
@@ -110,120 +114,91 @@ MlkemIterativeTest(struct iteration_ctx *ctx)
 		 */
 		shake_out(&drng, seed, sizeof(seed));
 		if (i == 0) {
-			if (compare_data(seed, ctx->start, ctx->start_len,
+			if (compare_data(seed, start, start_len,
 			    "seed start") != 0)
 				errx(1, "compare_data");
 		}
 
 		/* generate ek as encoded_public_key */
-		if (!ctx->generate_key_external_entropy(ctx->encoded_public_key,
-		    ctx->priv, seed)) {
+		if (!MLKEM_generate_key_external_entropy(priv,
+		    &encoded_public_key, &encoded_public_key_len,
+		    seed))
 			errx(1, "generate_key_external_entropy");
-		}
-		ctx->public_from_private(ctx->pub, ctx->priv);
+
+		if (!MLKEM_public_from_private(priv, pub))
+			errx(1, "public_from_private");
 
 		/* hash in ek */
-		shake_update(&results, ctx->encoded_public_key,
-		    ctx->encoded_public_key_len);
+		shake_update(&results, encoded_public_key,
+		    encoded_public_key_len);
 
 		/* marshal priv to dk as encoded_private_key */
-		if (!ctx->marshal_private_key(ctx->priv, &encoded_private_key,
+		if (!MLKEM_marshal_private_key(priv, &encoded_private_key,
 		    &encoded_private_key_len))
-			errx(1, "encode private key");
+			errx(1, "marshal private key");
 
 		/* hash in dk */
 		shake_update(&results, encoded_private_key,
 		    encoded_private_key_len);
 
-		free(encoded_private_key);
+		freezero(encoded_private_key, encoded_private_key_len);
 
 		/* draw m as encap entropy from DRNG */
 		shake_out(&drng, encap_entropy, sizeof(encap_entropy));
 
 		/* generate ct as ciphertext, k as shared_secret */
-		ctx->encap_external_entropy(ctx->ciphertext, shared_secret,
-		    ctx->pub, encap_entropy);
+		if (!MLKEM_encap_external_entropy(pub, encap_entropy,
+		    &ciphertext, &ciphertext_len, &shared_secret, &s_len))
+			errx(1, "encap_external_entropy");
 
 		/* hash in ct */
-		shake_update(&results, ctx->ciphertext, ctx->ciphertext_len);
+		shake_update(&results, ciphertext, ciphertext_len);
 		/* hash in k */
-		shake_update(&results, shared_secret, sizeof(shared_secret));
+		shake_update(&results, shared_secret, s_len);
+
+		freezero(shared_secret, s_len);
+		shared_secret = NULL;
+
+		invalid_ciphertext_len = ciphertext_len;
+		if ((invalid_ciphertext = calloc(1, invalid_ciphertext_len))
+		    == NULL)
+			errx(1, "malloc");
 
 		/* draw ct as invalid_ciphertxt from DRNG */
-		shake_out(&drng, ctx->invalid_ciphertext,
-		    ctx->invalid_ciphertext_len);
+		shake_out(&drng, invalid_ciphertext, invalid_ciphertext_len);
 
 		/* generate k as shared secret from invalid ciphertext */
-		if (!ctx->decap(shared_secret, ctx->invalid_ciphertext,
-		    ctx->invalid_ciphertext_len, ctx->priv))
-			errx(1, "decap failed");
+		if (!MLKEM_decap(priv, invalid_ciphertext,
+		    invalid_ciphertext_len, &shared_secret, &s_len))
+			errx(1, "decap failed, iteration %d", i);
 
 		/* hash in k */
-		shake_update(&results, shared_secret, sizeof(shared_secret));
+		shake_update(&results, shared_secret, s_len);
+
+		freezero(shared_secret, s_len);
+		shared_secret = NULL;
+		freezero(invalid_ciphertext, invalid_ciphertext_len);
+		invalid_ciphertext = NULL;
+
+		/* free keys and intermediate products for this iteration */
+		MLKEM_private_key_free(priv);
+		MLKEM_public_key_free(pub);
+		freezero(encoded_public_key, encoded_public_key_len);
+		freezero(ciphertext, ciphertext_len);
 	}
 	shake_xof(&results);
 	shake_out(&results, out, sizeof(out));
 
-	return compare_data(ctx->expected, out, sizeof(out), "final result hash");
+	return compare_data(expected, out, sizeof(out), "final result hash");
 }
 
 int
 main(void)
 {
-	uint8_t encoded_public_key768[MLKEM768_PUBLIC_KEY_BYTES];
-	uint8_t ciphertext768[MLKEM768_CIPHERTEXT_BYTES];
-	uint8_t invalid_ciphertext768[MLKEM768_CIPHERTEXT_BYTES];
-	struct MLKEM768_private_key priv768;
-	struct MLKEM768_public_key pub768;
-	struct iteration_ctx iteration768 = {
-		.encoded_public_key = encoded_public_key768,
-		.encoded_public_key_len = sizeof(encoded_public_key768),
-		.ciphertext = ciphertext768,
-		.ciphertext_len = sizeof(ciphertext768),
-		.invalid_ciphertext = invalid_ciphertext768,
-		.invalid_ciphertext_len = sizeof(invalid_ciphertext768),
-		.priv = &priv768,
-		.pub = &pub768,
-		.encap_external_entropy = mlkem768_encap_external_entropy,
-		.marshal_private_key = mlkem768_marshal_private_key,
-		.generate_key_external_entropy =
-		    mlkem768_generate_key_external_entropy,
-		.public_from_private = mlkem768_public_from_private,
-		.decap = mlkem768_decap,
-		.start = kExpectedSeedStart,
-		.start_len = sizeof(kExpectedSeedStart),
-		.expected = kExpectedAdam768,
-		.expected_len = sizeof(kExpectedAdam768),
-	};
-	uint8_t encoded_public_key1024[MLKEM1024_PUBLIC_KEY_BYTES];
-	uint8_t ciphertext1024[MLKEM1024_CIPHERTEXT_BYTES];
-	uint8_t invalid_ciphertext1024[MLKEM1024_CIPHERTEXT_BYTES];
-	struct MLKEM1024_private_key priv1024;
-	struct MLKEM1024_public_key pub1024;
-	struct iteration_ctx iteration1024 = {
-		.encoded_public_key = encoded_public_key1024,
-		.encoded_public_key_len = sizeof(encoded_public_key1024),
-		.ciphertext = ciphertext1024,
-		.ciphertext_len = sizeof(ciphertext1024),
-		.invalid_ciphertext = invalid_ciphertext1024,
-		.invalid_ciphertext_len = sizeof(invalid_ciphertext1024),
-		.priv = &priv1024,
-		.pub = &pub1024,
-		.encap_external_entropy = mlkem1024_encap_external_entropy,
-		.marshal_private_key = mlkem1024_marshal_private_key,
-		.generate_key_external_entropy =
-		    mlkem1024_generate_key_external_entropy,
-		.public_from_private = mlkem1024_public_from_private,
-		.decap = mlkem1024_decap,
-		.start = kExpectedSeedStart,
-		.start_len = sizeof(kExpectedSeedStart),
-		.expected = kExpectedAdam1024,
-		.expected_len = sizeof(kExpectedAdam1024),
-	};
 	int failed = 0;
 
-	failed |= MlkemIterativeTest(&iteration768);
-	failed |= MlkemIterativeTest(&iteration1024);
+	failed |= MlkemIterativeTest(RANK768);
+	failed |= MlkemIterativeTest(RANK1024);
 
 	return failed;
 }

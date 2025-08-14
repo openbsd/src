@@ -1,6 +1,6 @@
-/* $OpenBSD: mlkem.h,v 1.4 2024/12/20 15:10:31 tb Exp $ */
+/* $OpenBSD: mlkem.h,v 1.5 2025/08/14 15:48:48 beck Exp $ */
 /*
- * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
+ * Copyright (c) 2025 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,9 +18,6 @@
 #ifndef _LIBCRYPTO_MLKEM_H
 #define _LIBCRYPTO_MLKEM_H
 
-/* Undo when making public */
-#ifdef LIBRESSL_HAS_MLKEM
-
 #ifndef _MSC_VER
 #include_next <openssl/mlkem.h>
 #else
@@ -28,22 +25,21 @@
 #endif
 #include "crypto_namespace.h"
 
-LCRYPTO_USED(MLKEM768_generate_key);
-LCRYPTO_USED(MLKEM768_public_from_private);
-LCRYPTO_USED(MLKEM768_encap);
-LCRYPTO_USED(MLKEM768_decap);
-LCRYPTO_USED(MLKEM768_marshal_public_key);
-LCRYPTO_USED(MLKEM768_parse_public_key);
-LCRYPTO_USED(MLKEM768_private_key_from_seed);
-LCRYPTO_USED(MLKEM768_parse_private_key);
-LCRYPTO_USED(MLKEM1024_generate_key);
-LCRYPTO_USED(MLKEM1024_public_from_private);
-LCRYPTO_USED(MLKEM1024_encap);
-LCRYPTO_USED(MLKEM1024_decap);
-LCRYPTO_USED(MLKEM1024_marshal_public_key);
-LCRYPTO_USED(MLKEM1024_parse_public_key);
-LCRYPTO_USED(MLKEM1024_private_key_from_seed);
-LCRYPTO_USED(MLKEM1024_parse_private_key);
-#endif /* LIBRESSL_HAS_MLKEM */
+LCRYPTO_USED(MLKEM_private_key_new);
+LCRYPTO_USED(MLKEM_private_key_free);
+LCRYPTO_USED(MLKEM_private_key_ciphertext_length);
+LCRYPTO_USED(MLKEM_private_key_encoded_length);
+LCRYPTO_USED(MLKEM_public_key_new);
+LCRYPTO_USED(MLKEM_public_key_free);
+LCRYPTO_USED(MLKEM_public_key_ciphertext_length);
+LCRYPTO_USED(MLKEM_public_key_encoded_length);
+LCRYPTO_USED(MLKEM_generate_key);
+LCRYPTO_USED(MLKEM_private_key_from_seed);
+LCRYPTO_USED(MLKEM_public_from_private);
+LCRYPTO_USED(MLKEM_encap);
+LCRYPTO_USED(MLKEM_decap);
+LCRYPTO_USED(MLKEM_marshal_public_key);
+LCRYPTO_USED(MLKEM_parse_public_key);
+LCRYPTO_USED(MLKEM_parse_private_key);
 
 #endif /* _LIBCRYPTO_MLKEM_H */

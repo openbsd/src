@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.c,v 1.8 2025/05/20 00:33:41 beck Exp $ */
+/*	$OpenBSD: mlkem_tests_util.c,v 1.9 2025/08/14 15:48:48 beck Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -23,7 +23,7 @@
 #include <string.h>
 
 #include "bytestring.h"
-#include "mlkem.h"
+#include <openssl/mlkem.h>
 
 #include "mlkem_internal.h"
 
@@ -58,158 +58,4 @@ compare_data(const uint8_t *want, const uint8_t *got, size_t len, const char *ms
 	fprintf(stderr, "\n");
 
 	return 1;
-}
-
-int
-mlkem768_marshal_private_key(const void *private_key, uint8_t **out_buf,
-    size_t *out_len)
-{
-	return MLKEM768_marshal_private_key(private_key, out_buf, out_len);
-}
-
-int
-mlkem768_marshal_public_key(const void *public_key, uint8_t **out_buf,
-    size_t *out_len)
-{
-	return MLKEM768_marshal_public_key(out_buf, out_len, public_key);
-}
-
-int
-mlkem1024_marshal_private_key(const void *private_key, uint8_t **out_buf,
-    size_t *out_len)
-{
-	return MLKEM1024_marshal_private_key(private_key, out_buf, out_len);
-}
-
-int
-mlkem1024_marshal_public_key(const void *public_key, uint8_t **out_buf,
-    size_t *out_len)
-{
-	return MLKEM1024_marshal_public_key(out_buf, out_len, public_key);
-}
-
-int
-mlkem768_decap(uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
-    const uint8_t *ciphertext, size_t ciphertext_len, const void *private_key)
-{
-	return MLKEM768_decap(out_shared_secret, ciphertext, ciphertext_len,
-	    private_key);
-}
-
-void
-mlkem768_encap(uint8_t *out_ciphertext,
-    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
-    const void *public_key)
-{
-	MLKEM768_encap(out_ciphertext, out_shared_secret, public_key);
-}
-
-void
-mlkem768_encap_external_entropy(uint8_t *out_ciphertext,
-    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
-    const void *public_key, const uint8_t entropy[MLKEM_ENCAP_ENTROPY])
-{
-	MLKEM768_encap_external_entropy(out_ciphertext, out_shared_secret,
-	    public_key, entropy);
-}
-
-int
-mlkem768_generate_key(uint8_t *out_encoded_public_key,
-    uint8_t optional_out_seed[MLKEM_SEED_BYTES], void *out_private_key)
-{
-	return MLKEM768_generate_key(out_encoded_public_key, optional_out_seed,
-	    out_private_key);
-}
-
-int
-mlkem768_generate_key_external_entropy(uint8_t *out_encoded_public_key,
-    void *out_private_key, const uint8_t entropy[MLKEM_SEED_BYTES])
-{
-	return MLKEM768_generate_key_external_entropy(out_encoded_public_key,
-	    out_private_key, entropy);
-}
-
-int
-mlkem768_parse_private_key(void *out_private_key, const uint8_t *private_key,
-    size_t private_key_len)
-{
-	return MLKEM768_parse_private_key(out_private_key, private_key,
-	    private_key_len);
-}
-
-int
-mlkem768_parse_public_key(void *out_public_key, const uint8_t *public_key,
-    size_t public_key_len)
-{
-	return MLKEM768_parse_public_key(out_public_key, public_key,
-	    public_key_len);
-}
-
-void
-mlkem768_public_from_private(void *out_public_key, const void *private_key)
-{
-	MLKEM768_public_from_private(out_public_key, private_key);
-}
-
-int
-mlkem1024_decap(uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
-    const uint8_t *ciphertext, size_t ciphertext_len, const void *private_key)
-{
-	return MLKEM1024_decap(out_shared_secret, ciphertext, ciphertext_len,
-	    private_key);
-}
-
-void
-mlkem1024_encap(uint8_t *out_ciphertext,
-    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
-    const void *public_key)
-{
-	MLKEM1024_encap(out_ciphertext, out_shared_secret, public_key);
-}
-
-void
-mlkem1024_encap_external_entropy(uint8_t *out_ciphertext,
-    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_BYTES],
-    const void *public_key, const uint8_t entropy[MLKEM_ENCAP_ENTROPY])
-{
-	MLKEM1024_encap_external_entropy(out_ciphertext, out_shared_secret,
-	    public_key, entropy);
-}
-
-int
-mlkem1024_generate_key(uint8_t *out_encoded_public_key,
-    uint8_t optional_out_seed[MLKEM_SEED_BYTES], void *out_private_key)
-{
-	return MLKEM1024_generate_key(out_encoded_public_key, optional_out_seed,
-	    out_private_key);
-}
-
-int
-mlkem1024_generate_key_external_entropy(uint8_t *out_encoded_public_key,
-    void *out_private_key, const uint8_t entropy[MLKEM_SEED_BYTES])
-{
-	return MLKEM1024_generate_key_external_entropy(out_encoded_public_key,
-	    out_private_key, entropy);
-}
-
-int
-mlkem1024_parse_private_key(void *out_private_key, const uint8_t *private_key,
-    size_t private_key_len)
-{
-	return MLKEM1024_parse_private_key(out_private_key, private_key,
-	    private_key_len);
-}
-
-void
-mlkem1024_public_from_private(void *out_public_key, const void *private_key)
-{
-	MLKEM1024_public_from_private(out_public_key, private_key);
-}
-
-int
-mlkem1024_parse_public_key(void *out_public_key, const uint8_t *public_key,
-    size_t public_key_len)
-{
-	return MLKEM1024_parse_public_key(out_public_key, public_key,
-	    public_key_len);
 }
