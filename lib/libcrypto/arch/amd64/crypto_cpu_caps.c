@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_cpu_caps.c,v 1.7 2025/07/22 09:18:02 jsing Exp $ */
+/*	$OpenBSD: crypto_cpu_caps.c,v 1.8 2025/08/14 15:11:01 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -118,6 +118,10 @@ crypto_cpu_caps_init(void)
 
 	if (max_cpuid >= 7) {
 		cpuid(7, NULL, &ebx, NULL, NULL);
+
+		/* Intel ADX feature bit - ebx[19]. */
+		if (((ebx >> 19) & 1) != 0)
+			crypto_cpu_caps_amd64 |= CRYPTO_CPU_CAPS_AMD64_ADX;
 
 		/* Intel SHA extensions feature bit - ebx[29]. */
 		if (((ebx >> 29) & 1) != 0)

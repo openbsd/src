@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_arch.h,v 1.13 2025/07/22 09:18:02 jsing Exp $ */
+/*	$OpenBSD: crypto_arch.h,v 1.14 2025/08/14 15:11:01 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -26,9 +26,10 @@
 extern uint64_t crypto_cpu_caps_amd64;
 #endif
 
-#define CRYPTO_CPU_CAPS_AMD64_AES	(1ULL << 0)
-#define CRYPTO_CPU_CAPS_AMD64_CLMUL	(1ULL << 1)
-#define CRYPTO_CPU_CAPS_AMD64_SHA	(1ULL << 2)
+#define CRYPTO_CPU_CAPS_AMD64_ADX	(1ULL << 0)
+#define CRYPTO_CPU_CAPS_AMD64_AES	(1ULL << 1)
+#define CRYPTO_CPU_CAPS_AMD64_CLMUL	(1ULL << 2)
+#define CRYPTO_CPU_CAPS_AMD64_SHA	(1ULL << 3)
 
 #ifndef OPENSSL_NO_ASM
 
