@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.105 2025/05/22 07:46:38 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.106 2025/08/14 06:44:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -86,6 +86,10 @@ screen_redraw_border_set(struct window *w, struct window_pane *wp,
 	case PANE_LINES_SIMPLE:
 		gc->attr &= ~GRID_ATTR_CHARSET;
 		utf8_set(&gc->data, SIMPLE_BORDERS[cell_type]);
+		break;
+	case PANE_LINES_SPACES:
+		gc->attr &= ~GRID_ATTR_CHARSET;
+		utf8_set(&gc->data, ' ');
 		break;
 	default:
 		gc->attr |= GRID_ATTR_CHARSET;
