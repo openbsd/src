@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.90 2024/05/23 03:21:09 jsg Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.91 2025/08/14 14:39:44 deraadt Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -195,6 +195,14 @@ ukbd_match(struct device *parent, void *match, void *aux)
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	int size;
 	void *desc;
+
+	/*
+	 * Most Yubikey have OTP enabled by default, and the feature
+	 * is difficult to disable.  Policy decision: Don't attach
+	 * as a keyboard.
+	 */
+	if (uha->uaa->vendor == USB_VENDOR_YUBICO)
+		return (UMATCH_NONE);
 
 	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
 		return (UMATCH_NONE);
