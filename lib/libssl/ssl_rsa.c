@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.52 2025/08/14 15:48:48 beck Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.53 2025/08/14 15:55:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -390,7 +390,7 @@ ssl_set_cert(SSL_CTX *ctx, SSL *ssl, X509 *x)
 	int ssl_err;
 	int i;
 
-	if (0 && !ssl_security_cert(ctx, ssl, x, 1, &ssl_err)) {
+	if (!ssl_security_cert(ctx, ssl, x, 1, &ssl_err)) {
 		SSLerrorx(ssl_err);
 		return (0);
 	}
