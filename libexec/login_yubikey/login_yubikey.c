@@ -1,4 +1,4 @@
-/* $OpenBSD: login_yubikey.c,v 1.16 2016/09/03 11:01:44 gsoares Exp $ */
+/* $OpenBSD: login_yubikey.c,v 1.17 2025/08/14 19:09:09 tb Exp $ */
 
 /*
  * Copyright (c) 2010 Daniel Hartmeier <daniel@benzedrine.cx>
@@ -252,16 +252,11 @@ yubikey_login(const char *username, const char *password)
 			if (!yubikey_crc_ok_p((uint8_t *)&tok))
 				continue;	/* try another one */
 			crcok++;
-			syslog(LOG_DEBUG, "user %s: crc %04x ok",
-			    username, tok.crc);
+			syslog(LOG_DEBUG, "user %s: crc ok", username);
 
 			if (memcmp(tok.uid, uid, YUBIKEY_UID_SIZE)) {
-				char h[13];
-
-				yubikey_hex_encode(h, (const char *)tok.uid,
-				    YUBIKEY_UID_SIZE);
-				syslog(LOG_DEBUG, "user %s: uid %s != %s",
-				    username, h, hexuid);
+				syslog(LOG_DEBUG, "user %s: uid doesn't match",
+				    username);
 				continue;	/* try another one */
 			}
 			break; /* uid matches */
@@ -282,18 +277,16 @@ yubikey_login(const char *username, const char *password)
 
 	explicit_bzero(key, sizeof(key));
 
-	syslog(LOG_INFO, "user %s uid %s: %d matching keymaps (%d checked), "
-	    "%d crc ok", username, hexuid, mapok, i, crcok);
+	syslog(LOG_INFO, "user %s uid: %d matching keymaps (%d checked), "
+	    "%d crc ok", username, mapok, i, crcok);
 
 	ctr = ((u_int32_t)yubikey_counter(tok.ctr) << 8) | tok.use;
 	if (ctr <= last_ctr) {
-		syslog(LOG_INFO, "user %s: counter %u.%u <= %u.%u "
-		    "(REPLAY ATTACK!)", username, ctr / 256, ctr % 256,
-		    last_ctr / 256, last_ctr % 256);
+		syslog(LOG_INFO, "user %s: counter <= last (REPLAY ATTACK!)",
+		    username);
 		return (AUTH_FAILED);
 	}
-	syslog(LOG_INFO, "user %s: counter %u.%u > %u.%u",
-	    username, ctr / 256, ctr % 256, last_ctr / 256, last_ctr % 256);
+	syslog(LOG_INFO, "user %s: counter > last [OK]", username);
 	umask(S_IRWXO);
 	if ((f = fopen(fn, "w")) == NULL) {
 		syslog(LOG_ERR, "user %s: fopen: %s: %m", username, fn);
