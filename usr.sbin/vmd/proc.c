@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.35 2025/08/13 10:26:31 dv Exp $	*/
+/*	$OpenBSD: proc.c,v 1.36 2025/08/14 10:50:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -43,7 +43,6 @@ void	 proc_accept(struct privsep *, int, enum privsep_procid);
 void	 proc_close(struct privsep *);
 void	 proc_shutdown(struct privsep_proc *);
 void	 proc_sig_handler(int, short, void *);
-void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
 int	 proc_dispatch_null(int, struct privsep_proc *, struct imsg *);
 
 enum privsep_procid

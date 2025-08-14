@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.27 2025/08/13 10:26:31 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.28 2025/08/14 10:50:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -196,6 +196,5 @@ __dead void fatalx(const char *, ...)
 int 		 imsg_int_read(struct imsg *);
 unsigned int	 imsg_uint_read(struct imsg *);
 char		*imsg_string_read(struct imsg *, size_t max);
-void		 privsep_fd_read(struct imsg *, struct privsep_fd *);
 
 #endif /* _PROC_H */
