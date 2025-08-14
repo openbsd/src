@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.299 2025/08/04 21:50:59 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.300 2025/08/14 08:50:25 mvs Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ int	nd6_gctimer	= (60 * 60 * 24); /* 1 day: garbage collection timer */
 /* preventing too many loops in ND option parsing */
 int nd6_maxndopt = 10;	/* max # of ND options allowed */
 
-int nd6_maxnudhint = 0;	/* max # of subsequent upper layer hints */
+int nd6_maxnudhint = 0;	/* [a] max # of subsequent upper layer hints */
 
 /* llinfo_nd6 live time, rt_llinfo and RTF_LLINFO are protected by nd6_mtx */
 struct mutex nd6_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
@@ -674,7 +674,7 @@ nd6_free(struct rtentry *rt, struct ifnet *ifp, int i_am_router)
  * XXX cost-effective methods?
  */
 void
-nd6_nud_hint(struct rtentry *rt)
+nd6_nud_hint(struct rtentry *rt, int maxnudhint)
 {
 	struct llinfo_nd6 *ln;
 	struct ifnet *ifp;
@@ -706,7 +706,7 @@ nd6_nud_hint(struct rtentry *rt)
 	 * it is possible we have false information.
 	 */
 	ln->ln_byhint++;
-	if (ln->ln_byhint > nd6_maxnudhint)
+	if (ln->ln_byhint > maxnudhint)
 		goto out;
 
 	ln->ln_state = ND6_LLINFO_REACHABLE;

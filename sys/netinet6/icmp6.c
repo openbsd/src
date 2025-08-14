@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.277 2025/08/13 11:30:31 mvs Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.278 2025/08/14 08:50:25 mvs Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1781,12 +1781,12 @@ const struct sysctl_bounded_args icmpv6ctl_vars_unlocked[] = {
 	{ ICMPV6CTL_ND6_UMAXTRIES, &nd6_umaxtries, 0, INT_MAX },
 	{ ICMPV6CTL_ND6_MMAXTRIES, &nd6_mmaxtries, 0, INT_MAX },
 	{ ICMPV6CTL_MTUDISC_HIWAT, &icmp6_mtudisc_hiwat, 0, INT_MAX },
+	{ ICMPV6CTL_ND6_MAXNUDHINT, &nd6_maxnudhint, 0, INT_MAX },
 	{ ICMPV6CTL_MTUDISC_LOWAT, &icmp6_mtudisc_lowat, 0, INT_MAX },
 };
 
 const struct sysctl_bounded_args icmpv6ctl_vars[] = {
 	{ ICMPV6CTL_ERRPPSLIMIT, &icmp6errppslim, -1, 1000 },
-	{ ICMPV6CTL_ND6_MAXNUDHINT, &nd6_maxnudhint, 0, INT_MAX },
 };
 
 int
@@ -1851,6 +1851,7 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case ICMPV6CTL_ND6_DELAY:
 	case ICMPV6CTL_ND6_UMAXTRIES:
 	case ICMPV6CTL_ND6_MMAXTRIES:
+	case ICMPV6CTL_ND6_MAXNUDHINT:
 	case ICMPV6CTL_MTUDISC_HIWAT:
 	case ICMPV6CTL_MTUDISC_LOWAT:
 		error = sysctl_bounded_arr(icmpv6ctl_vars_unlocked,
