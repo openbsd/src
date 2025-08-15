@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.76 2025/03/18 22:12:12 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.77 2025/08/15 13:40:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1543,24 +1543,21 @@ pmap_write_protect_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
     vm_prot_t prot)
 {
 	pt_entry_t *ptes, *spte, *epte, npte, opte;
-	vaddr_t blockend;
+	vaddr_t blkendva;
 	u_int64_t md_prot;
 	vaddr_t va;
 	int shootall = 0;
 
 	ptes = pmap_map_ptes_pae(pmap);		/* locks pmap */
 
-	/* should be ok, but just in case ... */
-	sva &= PG_FRAME;
-	eva &= PG_FRAME;
-
 	if ((eva - sva > 32 * PAGE_SIZE) && pmap != pmap_kernel())
 		shootall = 1;
 
-	for (va = sva; va < eva; va = blockend) {
-		blockend = (va & PD_MASK) + NBPD;
-		if (blockend > eva)
-			blockend = eva;
+	for (va = sva; va < eva; va = blkendva) {
+		/* determine range of block */
+		blkendva = i386_round_pdr(va + 1);
+		if (blkendva > eva)
+			blkendva = eva;
 
 		/*
 		 * XXXCDC: our PTE mappings should never be write-protected!
@@ -1589,7 +1586,7 @@ pmap_write_protect_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 			md_prot |= PG_RW;
 
 		spte = &ptes[atop(va)];
-		epte = &ptes[atop(blockend)];
+		epte = &ptes[atop(blkendva)];
 
 		for (/*null */; spte < epte ; spte++, va += PAGE_SIZE) {
 
