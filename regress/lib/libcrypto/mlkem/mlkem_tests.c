@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests.c,v 1.9 2025/08/15 14:45:33 tb Exp $ */
+/*	$OpenBSD: mlkem_tests.c,v 1.10 2025/08/15 21:47:39 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -274,17 +274,13 @@ mlkem_decap_tests(const char *fn, int rank, enum test_type test_type)
 	struct decap_ctx decap = {
 		.rank = rank,
 	};
-	int ret = 0;
 
 	if (test_type == TEST_TYPE_NORMAL)
-		ret = parse_test_file(fn, &decap_parse, &decap);
-	else if (test_type == TEST_TYPE_NIST)
-		ret = parse_test_file(fn, &nist_decap_parse, &decap);
-	else
-		errx(1, "unknown decap test: rank %d, type %d", rank,
-		    test_type);
+		return parse_test_file(fn, &decap_parse, &decap);
+	if (test_type == TEST_TYPE_NIST)
+		return parse_test_file(fn, &nist_decap_parse, &decap);
 
-	return ret;
+	errx(1, "unknown decap test: rank %d, type %d", rank, test_type);
 }
 
 struct encap_ctx {
@@ -677,17 +673,13 @@ mlkem_keygen_tests(const char *fn, int rank, enum test_type test_type)
 	struct keygen_ctx keygen = {
 		.rank = rank,
 	};
-	int ret = 0;
 
 	if (test_type == TEST_TYPE_NORMAL)
-		ret = parse_test_file(fn, &keygen_parse, &keygen);
-	else if (test_type == TEST_TYPE_NIST)
-		ret = parse_test_file(fn, &nist_keygen_parse, &keygen);
-	else
-		errx(1, "unknown keygen test: rank %d, type %d", rank,
-		    test_type);
+		return parse_test_file(fn, &keygen_parse, &keygen);
+	if (test_type == TEST_TYPE_NIST)
+		return parse_test_file(fn, &nist_keygen_parse, &keygen);
 
-	return ret;
+	errx(1, "unknown keygen test: rank %d, type %d", rank, test_type);
 }
 
 static int
