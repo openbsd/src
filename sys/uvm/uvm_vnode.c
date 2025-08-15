@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.139 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.140 2025/08/15 08:21:41 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1113,9 +1113,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			atomic_clearbits_int(&ptmp->pg_flags,
 			    PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(ptmp, NULL);
-			uvm_lock_pageq();
 			uvm_pagefree(ptmp);
-			uvm_unlock_pageq();
 			rw_exit(uobj->vmobjlock);
 			return result;
 		}
