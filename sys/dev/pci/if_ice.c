@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.56 2025/07/17 09:19:21 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.57 2025/08/15 16:35:58 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -28005,108 +28005,108 @@ ice_print_health_status_string(struct ice_softc *sc,
 
 	switch (status_code) {
 	case ICE_AQC_HEALTH_STATUS_INFO_RECOVERY:
-		printf("%s: The device is in firmware recovery mode.\n",
+		DPRINTF("%s: The device is in firmware recovery mode.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_FLASH_ACCESS:
-		printf("%s: The flash chip cannot be accessed.\n",
+		DPRINTF("%s: The flash chip cannot be accessed.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_NVM_AUTH:
-		printf("%s: NVM authentication failed.\n",
+		DPRINTF("%s: NVM authentication failed.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_OROM_AUTH:
-		printf("%s: Option ROM authentication failed.\n",
+		DPRINTF("%s: Option ROM authentication failed.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_DDP_AUTH:
-		printf("%s: DDP package failed.\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: DDP package failed.\n", sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_NVM_COMPAT:
-		printf("%s: NVM image is incompatible.\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: NVM image is incompatible.\n", sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_OROM_COMPAT:
-		printf("%s: Option ROM is incompatible.\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: Option ROM is incompatible.\n", sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_DCB_MIB:
-		printf("%s: Supplied MIB file is invalid. "
+		DPRINTF("%s: Supplied MIB file is invalid. "
 		    "DCB reverted to default configuration.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_UNKNOWN_MOD_STRICT:
-		printf("%s: An unsupported module was detected.\n",
+		DPRINTF("%s: An unsupported module was detected.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_MOD_TYPE:
-		printf("%s: Module type is not supported.\n",
+		DPRINTF("%s: Module type is not supported.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_MOD_QUAL:
-		printf("%s: Module is not qualified.\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: Module is not qualified.\n", sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_MOD_COMM:
-		printf("%s: Device cannot communicate with the module.\n",
+		DPRINTF("%s: Device cannot communicate with the module.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_MOD_CONFLICT:
-		printf("%s: Unresolved module conflict.\n",
+		DPRINTF("%s: Unresolved module conflict.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_MOD_NOT_PRESENT:
-		printf("%s: Module is not present.\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: Module is not present.\n", sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_INFO_MOD_UNDERUTILIZED:
-		printf("%s: Underutilized module.\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: Underutilized module.\n", sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_UNKNOWN_MOD_LENIENT:
-		printf("%s: An unsupported module was detected.\n",
+		DPRINTF("%s: An unsupported module was detected.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_INVALID_LINK_CFG:
-		printf("%s: Invalid link configuration.\n",
+		DPRINTF("%s: Invalid link configuration.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_PORT_ACCESS:
-		printf("%s: Port hardware access error.\n",
+		DPRINTF("%s: Port hardware access error.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_PORT_UNREACHABLE:
-		printf("%s: A port is unreachable.\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: A port is unreachable.\n", sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_INFO_PORT_SPEED_MOD_LIMITED:
-		printf("%s: Port speed is limited due to module.\n",
+		DPRINTF("%s: Port speed is limited due to module.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_PARALLEL_FAULT:
-		printf("%s: A parallel fault was detected.\n",
+		DPRINTF("%s: A parallel fault was detected.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_INFO_PORT_SPEED_PHY_LIMITED:
-		printf("%s: Port speed is limited by PHY capabilities.\n",
+		DPRINTF("%s: Port speed is limited by PHY capabilities.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_NETLIST_TOPO:
-		printf("%s: LOM topology netlist is corrupted.\n",
+		DPRINTF("%s: LOM topology netlist is corrupted.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_NETLIST:
-		printf("%s: Unrecoverable netlist error.\n",
+		DPRINTF("%s: Unrecoverable netlist error.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_TOPO_CONFLICT:
-		printf("%s: Port topology conflict.\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: Port topology conflict.\n", sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_LINK_HW_ACCESS:
-		printf("%s: Unrecoverable hardware access error.\n",
+		DPRINTF("%s: Unrecoverable hardware access error.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_LINK_RUNTIME:
-		printf("%s: Unrecoverable runtime error.\n",
+		DPRINTF("%s: Unrecoverable runtime error.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	case ICE_AQC_HEALTH_STATUS_ERR_DNL_INIT:
-		printf("%s: Link management engine failed to initialize.\n",
+		DPRINTF("%s: Link management engine failed to initialize.\n",
 		    sc->sc_dev.dv_xname);
 		break;
 	default:
