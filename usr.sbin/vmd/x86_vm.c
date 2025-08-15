@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.7 2025/08/08 13:40:12 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.8 2025/08/15 21:09:49 dv Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -325,11 +325,15 @@ loadfile_bios(gzFile fp, off_t size, struct vcpu_reg_state *vrs)
 		return (-1);
 	}
 
-	/* Copy the last 128K into the lower BIOS area ending at 1 MiB. */
+	/*
+	 * Copy whatever fits of the upper part of the image
+	 * into the lower BIOS area ending at 1 MiB.
+	 */
 	if (gzrewind(fp) == -1)
 		return (-1);
 
-	lower_sz = MIN((off_t)KB(128), size);
+	lower_sz = MB(1) - (LOWMEM_KB * 1024);
+	lower_sz = MIN((off_t)lower_sz, size);
 	if (gzseek(fp, size - lower_sz, SEEK_SET) == -1)
 		return (-1);
 
