@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.34 2025/07/10 05:28:13 dlg Exp $ */
+/*	$OpenBSD: art.c,v 1.35 2025/08/15 09:15:55 jsg Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -95,10 +95,6 @@ static void		 art_allot(struct art_table *at, unsigned int,
 struct art_table	*art_table_get(struct art *, struct art_table *,
 			     unsigned int);
 struct art_table	*art_table_put(struct art  *, struct art_table *);
-struct art_node		*art_table_insert(struct art *, struct art_table *,
-			     int, struct art_node *);
-struct art_node		*art_table_delete(struct art *, struct art_table *,
-			     int, struct art_node *);
 struct art_table	*art_table_ref(struct art *, struct art_table *);
 int			 art_table_free(struct art *, struct art_table *);
 void			 art_table_gc(void *);
