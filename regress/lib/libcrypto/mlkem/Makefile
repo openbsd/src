@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.9 2024/12/29 20:14:15 tb Exp $
+#       $OpenBSD: Makefile,v 1.10 2025/08/15 14:46:37 tb Exp $
 
 REGRESS_SLOW_TARGETS += run-regress-mlkem_iteration_tests
 
@@ -22,7 +22,7 @@ run-regress-mlkem_tests: mlkem_tests
 	./mlkem_tests $f ${.CURDIR}/$f.txt
 .endfor
 
-SRCS_mlkem_tests =	mlkem_tests.c mlkem_tests_util.c parse_test_file.c
+SRCS_mlkem_tests =	mlkem_tests.c parse_test_file.c
 SRCS_mlkem_iteration_tests = mlkem_iteration_tests.c mlkem_tests_util.c
 SRCS_mlkem_unittest =	mlkem_unittest.c mlkem_tests_util.c
 
