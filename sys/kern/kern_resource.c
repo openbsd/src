@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.95 2025/05/31 12:40:33 dlg Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.96 2025/08/15 09:53:53 mpi Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -328,10 +328,8 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 			}
 			addr = trunc_page(addr);
 			size = round_page(size);
-			KERNEL_LOCK();
 			(void) uvm_map_protect(&vm->vm_map, addr,
 			    addr+size, prot, UVM_ET_STACK, FALSE, FALSE);
-			KERNEL_UNLOCK();
 		}
 	}
 
