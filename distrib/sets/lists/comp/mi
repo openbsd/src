@@ -1144,6 +1144,7 @@
 ./usr/include/openssl/lhash.h
 ./usr/include/openssl/md4.h
 ./usr/include/openssl/md5.h
+./usr/include/openssl/mlkem.h
 ./usr/include/openssl/modes.h
 ./usr/include/openssl/obj_mac.h
 ./usr/include/openssl/objects.h
