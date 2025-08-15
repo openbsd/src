@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.68 2024/11/02 10:02:23 jsg Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.69 2025/08/15 07:50:53 mpi Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 		 * uvm_map_protect() to fix up the protection.  ICK.
 		 */
 		error = (uvm_map_protect(&p->p_vmspace->vm_map,
-		    cmd->ev_addr, round_page(cmd->ev_len),
+		    cmd->ev_addr, round_page(cmd->ev_addr + cmd->ev_len),
 		    prot, 0, FALSE, TRUE));
 	}
 	if (error == 0) {
