@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.164 2025/08/10 09:30:55 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.165 2025/08/15 11:35:18 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -132,10 +132,14 @@ _rc_rm_runfile() {
 }
 
 _rc_exit() {
-	local _pfix
+	local _pfix _ret=0
 	[ -z "${INRC}" -o X"$1" != X"ok" ] && _pfix="($1)"
+	if [[ $1 != @(ok|killed) ]]; then
+		[ -n "${_RC_QUIET}" ] && unset _RC_QUIET && _rc_printname
+		_ret=1
+	fi
 	[ -n "${_RC_QUIET}" ] || echo ${INRC:+'-n'} "${_pfix}"
-	[[ $1 == @(ok|killed) ]] && exit 0 || exit 1
+	exit ${_ret}
 }
 
 _rc_alarm()
