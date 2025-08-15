@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.h,v 1.8 2025/08/14 15:48:48 beck Exp $ */
+/*	$OpenBSD: mlkem_tests_util.h,v 1.9 2025/08/15 14:47:54 tb Exp $ */
 /*
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -21,11 +21,6 @@
 
 #include <stddef.h>
 #include <stdint.h>
-
-#include "bytestring.h"
-
-#include "mlkem.h"
-#include "mlkem_internal.h"
 
 int compare_data(const uint8_t *want, const uint8_t *got, size_t len,
     const char *msg);

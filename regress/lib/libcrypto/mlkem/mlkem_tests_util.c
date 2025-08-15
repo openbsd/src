@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests_util.c,v 1.9 2025/08/14 15:48:48 beck Exp $ */
+/*	$OpenBSD: mlkem_tests_util.c,v 1.10 2025/08/15 14:47:54 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -21,11 +21,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "bytestring.h"
-#include <openssl/mlkem.h>
-
-#include "mlkem_internal.h"
 
 #include "mlkem_tests_util.h"
 
