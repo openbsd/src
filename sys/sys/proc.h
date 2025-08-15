@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.395 2025/08/02 20:44:10 jca Exp $	*/
+/*	$OpenBSD: proc.h,v 1.396 2025/08/15 04:21:00 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -246,6 +246,12 @@ struct process {
 	vaddr_t ps_sigcoderet;		/* [I] User ptr to sigreturn retPC */
 	u_long	ps_sigcookie;		/* [I] */
 	u_int	ps_rtableid;		/* [a] Process routing table/domain. */
+	u_short	ps_iflags;		/* [I] flags set at exec time */
+# define	PSI_WXNEEDED	0x0001	/* Process allowed to violate W^X */
+# define	PSI_NOBTCFI	0x0002	/* No Branch Target CFI */
+# define	PSI_PROFILE	0x0004	/* linked with -pg: allow profile(2) */
+# define	PSI_BITS \
+    ("\20" "\001WXNEEDED" "\002NOBTCFI" "\003PROFILE" )
 	char	ps_nice;		/* Process "nice" value. */
 
 	struct uprof {			/* profile arguments */
@@ -312,13 +318,13 @@ struct process {
 #define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
 #define	PS_NOBROADCASTKILL 0x00080000	/* Process excluded from kill -1. */
 #define	PS_PLEDGE	0x00100000	/* Has called pledge(2) */
-#define	PS_WXNEEDED	0x00200000	/* Process allowed to violate W^X */
+#define	PS_avail2	0x00200000
 #define	PS_EXECPLEDGE	0x00400000	/* Has exec pledges */
 #define	PS_ORPHAN	0x00800000	/* Process is on an orphan list */
 #define	PS_CHROOT	0x01000000	/* Process is chrooted */
-#define	PS_NOBTCFI	0x02000000	/* No Branch Target CFI */
+#define	PS_avail1	0x02000000
 #define	PS_ITIMER	0x04000000	/* Virtual interval timers running */
-#define	PS_PROFILE	0x08000000	/* linked with -pg: allow profile(2) */
+#define	PS_avail0	0x08000000
 #define	PS_WAITEVENT	0x10000000	/* wait(2) event pending */
 #define	PS_CONTINUED	0x20000000	/* Continued proc not yet waited for */
 #define	PS_STOPPED	0x40000000	/* Stopped process */
@@ -329,13 +335,12 @@ struct process {
      "\06SUGIDEXEC" "\07PPWAIT" "\010ISPWAIT" "\011PROFIL" "\012TRACED" \
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
      "\017NOZOMBIE" "\020STOPPING" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
-     "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" \
-     "\030ORPHAN" "\031CHROOT" "\032NOBTCFI" "\033ITIMER" "\034PROFILE" \
+     "\024NOBROADCASTKILL" "\025PLEDGE" "\027EXECPLEDGE" \
+     "\030ORPHAN" "\031CHROOT" "\033ITIMER" \
      "\035WAITEVENT" "\036CONTINUED" "\037STOPPED" "\040TRAPPED")
 
 #define PS_FLAGS_INHERITED_ON_FORK \
-    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE | \
-     PS_NOBTCFI | PS_WXNEEDED | PS_CHROOT | PS_PROFILE)
+    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE | PS_CHROOT)
 
 struct kcov_dev;
 struct lock_list_entry;

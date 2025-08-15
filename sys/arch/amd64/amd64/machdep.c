@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.301 2025/07/13 20:06:54 bluhm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.302 2025/08/15 04:21:00 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -580,7 +580,7 @@ maybe_enable_user_cet(struct proc *p)
 #ifndef SMALL_KERNEL
 	/* Enable indirect-branch tracking if present and not disabled */
 	if ((xsave_mask & XFEATURE_CET_U) &&
-	    (p->p_p->ps_flags & PS_NOBTCFI) == 0) {
+	    (p->p_p->ps_iflags & PSI_NOBTCFI) == 0) {
 		uint64_t msr = rdmsr(MSR_U_CET);
 		wrmsr(MSR_U_CET, msr | MSR_CET_ENDBR_EN | MSR_CET_NO_TRACK_EN);
 	}

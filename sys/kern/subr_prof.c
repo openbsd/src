@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.42 2025/05/24 06:49:16 deraadt Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.43 2025/08/15 04:21:00 guenther Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -287,7 +287,7 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 	int s;
 
 	/* Only binaries linked for profiling can do profil() */
-	if ((pr->ps_flags & PS_PROFILE) == 0)
+	if ((pr->ps_iflags & PSI_PROFILE) == 0)
 		return (EPERM);
 
 	if (SCARG(uap, scale) > (1 << 16))

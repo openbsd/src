@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.202 2025/06/13 10:48:56 mpi Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.203 2025/08/15 04:21:00 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ uvm_wxcheck(struct proc *p, char *call)
 	int wxallowed = (pr->ps_textvp->v_mount &&
 	    (pr->ps_textvp->v_mount->mnt_flag & MNT_WXALLOWED));
 
-	if (wxallowed && (pr->ps_flags & PS_WXNEEDED))
+	if (wxallowed && (pr->ps_iflags & PSI_WXNEEDED))
 		return 0;
 
 	if (atomic_load_int(&uvm_wxabort)) {
