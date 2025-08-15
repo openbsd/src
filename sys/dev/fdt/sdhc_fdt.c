@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.22 2025/08/09 14:45:08 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.23 2025/08/15 13:31:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -95,6 +95,7 @@ struct sdhc_fdt_softc {
 	void			*sc_ih;
 	int			sc_node;
 	uint32_t		sc_gpio[3];
+	uint32_t		sc_vmmc;
 	uint32_t		sc_vqmmc;
 
 	/* Marvell Xenon */
@@ -185,6 +186,7 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc.sc_card_detect = sdhc_fdt_card_detect;
 	}
 
+	sc->sc_vmmc = OF_getpropint(sc->sc_node, "vmmc-supply", 0);
 	sc->sc_vqmmc = OF_getpropint(sc->sc_node, "vqmmc-supply", 0);
 
 	printf("\n");
@@ -322,6 +324,9 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc.sc_clkbase = freq / 1000;
 		sc->sc.sc_bus_clock_post = sdhc_fdt_xenon_bus_clock_post;
 	}
+
+	if (sc->sc_vmmc)
+		regulator_enable(sc->sc_vmmc);
 
 	sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_size, 1,
 	    capmask, capset);
