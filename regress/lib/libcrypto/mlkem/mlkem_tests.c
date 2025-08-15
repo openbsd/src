@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests.c,v 1.8 2025/08/15 07:49:12 tb Exp $ */
+/*	$OpenBSD: mlkem_tests.c,v 1.9 2025/08/15 14:45:33 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -23,12 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bytestring.h"
-#include "mlkem.h"
+#include <openssl/mlkem.h>
 
+#include "bytestring.h"
 #include "mlkem_internal.h"
 
-#include "mlkem_tests_util.h"
 #include "parse_test_file.h"
 
 enum test_type {
