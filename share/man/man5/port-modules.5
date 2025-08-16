@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.274 2025/08/14 15:11:30 matthieu Exp $
+.\"	$OpenBSD: port-modules.5,v 1.275 2025/08/16 16:43:06 daniel Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 14 2025 $
+.Dd $Mdocdate: August 16 2025 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -301,7 +301,6 @@ The following variables can be overridden in a relatively safe fashion:
 .Ev IS_INTERACTIVE ,
 .Ev LIBTOOL_FLAGS ,
 .Ev MAKE_FILE ,
-.Ev MASTER_SITES ,
 .Ev MULTI_PACKAGES ,
 .Ev NO_BUILD ,
 .Ev NO_TEST ,
@@ -313,6 +312,7 @@ The following variables can be overridden in a relatively safe fashion:
 .Ev TEST_IS_INTERACTIVE ,
 .Ev REORDER_DEPENDENCIES ,
 .Ev SEPARATE_BUILD ,
+.Ev SITES ,
 .Ev USE_GMAKE ,
 .Ev USE_LIBTOOL .
 .Pp
@@ -975,7 +975,7 @@ and allows any of these PDO packages to satisfy the dependency, with
 .It lang/php/pecl
 Used for ports for PHP PECL extensions.
 Sets default
-.Ev MASTER_SITES ,
+.Ev SITES ,
 .Ev HOMEPAGE ,
 .Ev EXTRACT_SUFX ,
 .Ev DESTDIRNAME ,
@@ -1088,7 +1088,7 @@ to them.
 Sets
 .Ev PKGNAME ,
 .Ev HOMEPAGE ,
-.Ev MASTER_SITES ,
+.Ev SITES ,
 .Ev DISTNAME ,
 .Ev USE_GMAKE ,
 and
@@ -1155,7 +1155,7 @@ is set to No.
 .It www/pear
 Used for PHP PEAR ports.
 Sets default
-.Ev MASTER_SITES ,
+.Ev SITES ,
 .Ev EXTRACT_SUFX ,
 .Ev PKGNAME .
 Sets
@@ -1312,7 +1312,7 @@ Also affects
 Xfce ports can be divided into five categories: core libraries and
 applications, goodies, artwork, thunar plugins, and panel plugins.
 .Ev HOMEPAGE ,
-.Ev MASTER_SITES
+.Ev SITES
 and
 .Ev DISTNAME
 are built using
