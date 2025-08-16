@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsmux.4,v 1.16 2025/08/16 11:28:25 matthieu Exp $
+.\" $OpenBSD: wsmux.4,v 1.17 2025/08/16 13:33:48 jsg Exp $
 .\" $NetBSD: wsmux.4,v 1.2 1999/11/03 22:01:40 castor Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ struct wscons_event {
 };
 .Ed
 .It Dv WSMUXIO_ADD_DEVICE Pq Vt "struct wsmux_device"
-adds a device to the mux. 
+adds a device to the mux.
 This commands uses a
 .Vt wsmux_device
 structure as input.
@@ -112,12 +112,13 @@ struct wsmux_device {
 .It Dv WSMUXIO_REMOVE_DEVICE Pq Vt "struct wsmux_device"
 removes a device from the mux.
 .It Dv WSMUXIO_LIST_DEVICES Pq Vt "struct wsmux_device_list"
-returns an array of WSMUX_MAXDEV elements decribing the devices attached to the mux.
+returns an array of WSMUX_MAXDEV elements describing the devices attached to
+the mux.
 The array is composed of
 .Fa wsmux_device
-structues enclosed in a
+structures enclosed in a
 .Fa wsmux_device_list
-strucure.
+structure.
 .Bd -literal
 struct wsmux_device_list {
 	int ndevices;
