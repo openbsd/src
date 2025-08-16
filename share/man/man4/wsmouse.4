@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsmouse.4,v 1.24 2024/10/05 13:27:16 chrisz Exp $
+.\" $OpenBSD: wsmouse.4,v 1.25 2025/08/16 11:28:25 matthieu Exp $
 .\" $NetBSD: wsmouse.4,v 1.3 1999/12/06 14:52:08 augustss Exp $
 .\"
 .\" Copyright (c) 2018 Ulf Brosziewski <bru@openbsd.org>
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 5 2024 $
+.Dd $Mdocdate: August 16 2025 $
 .Dt WSMOUSE 4
 .Os
 .Sh NAME
@@ -161,6 +161,57 @@ When multi-touch input is available, a touch is ignored if it rests in
 the bottom area while there are other inputs - movement, scrolling, or
 tapping -, and the driver continues to ignore it as long as and whenever
 other touches are present.
+.Ss Ioctls
+The following
+.Xr ioctl 2
+calls are provided by the
+.Nm
+driver or by devices which use it.
+Their definitions are found in
+.Pa dev/wscons/wsconsio.h .
+.Bl -tag -width Dv
+.It Dv WSKBDIO_GTYPE
+Get the mouse or device type.
+.It Dv WSMOUSEIO_SRES Pq Vt "int"
+Set the resolution of the pointer.
+Not applicable to all mouse types.
+.It Dv WSMOUSEIO_GCALIBCOORDS, WSMOUSEIO_SCALIBCOORDS Pq Vt "struct wsmouse_calibcoords"
+Get and set device calibration data for touchscreens.
+.It Dv WSMOUSEIO_SETMODE Pq Vt "int"
+Sets the mode of a touchpad device
+.Po Li WSMOUSE_COMPAT
+or
+.Li WSMOUSE_NATIVE Pc
+.It Dv WSMOUSEIO_GETPARAMS, WSMOUSEIO_SETPARAMS Pq Vt "struct wsmouse_parameters"
+Obtain and set various mouse parameters as a key/value set.
+Currently these primarily relate to touchpads.
+The structure
+.Vt struct wsmouse_parameters
+is defined as follows:
+.Bd -literal -offset indent
+struct wsmouse_param {
+	enum wsmousecfg key;
+	int value;
+};
+
+struct wsmouse_parameters {
+	struct wsmouse_param *params;
+	unsigned int nparams;
+};
+.Ed
+.Pp
+The number of parameters to read or write must be specified in
+.Va nparams .
+For each parameter, when
+.Dv WSMOUSEIO_GETPARAMS 
+is used, a key must be specified.
+When
+.Dv WSMOUSEIO_SETPARAMS
+is used, a key and a value must be specified.
+A single ioctl may retrieve up to
+.Dv WSMOUSECFG_MAX
+.Va nparams .
+.El
 .Sh FILES
 .Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
 .It Pa /dev/wsmouse*

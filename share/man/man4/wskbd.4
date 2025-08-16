@@ -1,4 +1,4 @@
-.\" $OpenBSD: wskbd.4,v 1.24 2016/09/03 14:36:14 jmc Exp $
+.\" $OpenBSD: wskbd.4,v 1.25 2025/08/16 11:28:25 matthieu Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
 .\" Copyright (c) 1999
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2016 $
+.Dd $Mdocdate: August 16 2025 $
 .Dt WSKBD 4
 .Os
 .Sh NAME
@@ -129,6 +129,132 @@ When audio devices are supported, keys
 and
 .Cm VolumeDown
 tweak mixer settings.
+.Ss Keyboard encodings
+The following encodings are supported.
+Device drivers for legacy keyboard interfaces may only support a subset
+of these.
+However, generally, all encodings are supported by
+.Xr pckbd 4
+and
+.Xr ukbd 4 .
+.Bl -column ".Li us.colemak" ".Dv KB_US|KB_COLEMAK"
+.It Sy "wsconsctl" Ta Sy "define" Ta Sy "language"
+.It Li user Ta Dv KB_USER Ta User-defined
+.It Li us Ta Dv KB_US Ta English/US keyboard mapping (default)
+.It Li uk Ta Dv KB_UK Ta English/UK keyboard mapping
+.It Li be Ta Dv KB_BE Ta Belgian
+.It Li br Ta Dv KB_BR Ta Brazilian with
+.Dq dead accents
+.It Li cf Ta Dv KB_CF Ta Canadian French
+.It Li dk Ta Dv KB_DK Ta Danish with
+.Dq dead accents
+.It Li nl Ta Dv KB_NL Ta Dutch
+.It Li ee Ta Dv KB_EE Ta Estonian with
+.Dq dead accents
+.It Li fr Ta Dv KB_FR Ta French
+.It Li de Ta Dv KB_DE Ta German QWERTZ with
+.Dq dead accents
+.It Li hu Ta Dv KB_HU Ta Hungarian
+.It Li is Ta Dv KB_IS Ta Icelandic with
+.Dq dead accents
+.It Li it Ta Dv KB_IT Ta Italian
+.It Li jp Ta Dv KB_JP Ta Japanese
+.It Li la Ta Dv KB_LA Ta Latin American Spanish
+.It Li no Ta Dv KB_NO Ta Norwegian with
+.Dq dead accents
+.It Li pl Ta Dv KB_PL Ta Polish
+.It Li pt Ta Dv KB_PT Ta Portuguese
+.It Li ru Ta Dv KB_RU Ta Russian
+.It Li es Ta Dv KB_ES Ta Spanish
+.It Li sv Ta Dv KB_SV Ta Swedish with
+.Dq dead accents
+.It Li sf Ta Dv KB_SF Ta Swiss French
+.It Li sg Ta Dv KB_SG Ta Swiss German
+.It Li tr Ta Dv KB_TR Ta Turkish (QWERTY) with
+.Dq dead accents
+.It Li ua Ta Dv KB_UA Ta Ukrainian
+.It Li us.declk Ta Dv "KB_US|KB_DECLK" Ta English/US mapping for
+.Tn DEC LK400 Ns - Ns style
+keyboards with PC keyboard interface (e.g.,
+.Tn LK461 )
+.It Li us.dvorak Ta Dv "KB_US|KB_DVORAK" Ta English/US keyboard with
+.Dq Dvorak
+layout
+.It Li us.colemak Ta Dv "KB_US|KB_COLEMAK" Ta English/US keyboard with
+.Dq Colemak
+layout
+.El
+.Pp
+The
+.Dq Li \&.nodead
+suffix
+.Dv ( KB_NODEAD
+flag)
+can be applied to layouts with
+.Dq dead accents
+to switch them off.
+.Pp
+The
+.Dv KB_US ,
+.Dv KB_UK ,
+.Dv KB_FR ,
+.Dv KB_JP
+and
+.Dv KB_US|KB_DVORAK
+mappings can be modified
+to swap the left
+.Aq Ctrl
+and the
+.Aq CapsLock
+keys by the
+.Dv KB_SWAPCTRLCAPS
+variant bit or the
+.Dq Li .swapctrlcaps
+suffix.
+.Pp
+The
+.Dq Li .metaesc
+suffix
+.Dv ( KB_METAESC
+flag)
+option can be applied to any layout.
+If set, keys pressed together
+with the
+.Tn ALT
+modifier are prefixed by an
+.Tn ESC
+character.
+(Standard behaviour is to add 128 to the
+.Tn ASCII
+value.)
+.Ss Ioctls
+The following
+.Xr ioctl 2
+calls are provided by the
+.Nm
+driver or by devices which use it.
+Their definitions are found in
+.In dev/wscons/wsconsio.h .
+.Bl -tag -width Dv
+.It Dv WSKBDIO_GTYPE
+Get the keyboard type.
+.It Dv WSKBDIO_GETMODE
+Get the keyboard mode, 0 means translated through keyboard map, 1 means raw.
+.It Dv WSKBDIO_SETMODE
+Set the keyboard mode.
+.It Dv WSKBDIO_COMPLEXBELL , WSKBDIO_SETBELL , WSKBDIO_GETBELL , WSKBDIO_SETDEFAULTBELL , WSKBDIO_GETDEFAULTBELL Pq Vt "struct wskbd_bell_data"
+Get and set keyboard bell settings.
+.It Dv WSKBDIO_SETKEYREPEAT , WSKBDIO_GETKEYREPEAT , WSKBDIO_SETDEFAULTKEYREPEAT , WSKBDIO_GETDEFAULTKEYREPEAT Pq Vt "struct wskbd_keyrepeat_data"
+Get and set keyboard autorepeat settings.
+.It Dv WSKBDIO_SETLEDS , WSKBDIO_GETLEDS Pq Vt "int"
+Get and set keyboard LED settings.
+.It Dv WSKBDIO_GETMAP , WSKBDIO_SETMAP Pq Vt "struct wskbd_map_data"
+Get and set keyboard keymapping settings.
+.It Dv WSKBDIO_GETBACKLIGHT, WSKBDIO_SETBACKLIGHT Pq Vt "struct wskbd_backlight"
+Get and set keyboard backlight
+.It Dv WSKBDIO_GETENCODING , WSKBDIO_SETENCODING Pq Vt "kbd_t"
+Get and set keyboard encoding settings.
+.El
 .Sh FILES
 .Bl -tag -width /usr/include/dev/wscons/wsksymdef.h -compact
 .It Pa /dev/wskbd*
