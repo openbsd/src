@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.260 2025/08/03 20:00:11 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.261 2025/08/16 08:13:11 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2032,6 +2032,7 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 	usb_device_request_t req;
 	usbd_status error;
 	uint16_t tmp;
+	int actlen;
 	struct usb_video_probe_commit *pc;
 
 	req.bmRequestType = UVIDEO_GET_IF;
@@ -2044,12 +2045,20 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 
 	pc = (struct usb_video_probe_commit *)probe_data;
 
-	error = usbd_do_request(sc->sc_udev, &req, probe_data);
-	if (error) {
+	error = usbd_do_request_flags(sc->sc_udev, &req, probe_data,
+	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
+	if (error != USBD_NORMAL_COMPLETION) {
 		printf("%s: could not GET probe request: %s\n",
 		    DEVNAME(sc), usbd_errstr(error));
 		return (USBD_INVAL);
 	}
+
+	/*
+	 * Different UVC version defines different length of a probe;
+	 * Make sure that the unused portion of probe_data remains zero.
+	 */
+	bzero(probe_data + actlen,
+	    sizeof(struct usb_video_probe_commit) - actlen);
 
 	if (sc->sc_quirk &&
 	    sc->sc_quirk->flags & UVIDEO_FLAG_FORMAT_INDEX_IN_BMHINT &&
@@ -2065,7 +2074,8 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 		USETW(pc->bmHint, 1);
 	}
 
-	DPRINTF(1, "%s: GET probe request successfully\n", DEVNAME(sc));
+	DPRINTF(1, "%s: GET probe request successfully, length: %d\n",
+	    DEVNAME(sc), actlen);
 
 	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
 	DPRINTF(1, "bFormatIndex=0x%02x\n", pc->bFormatIndex);
@@ -2081,6 +2091,26 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 	    UGETDW(pc->dwMaxVideoFrameSize));
 	DPRINTF(1, "dwMaxPayloadTransferSize=%d (bytes)\n",
 	    UGETDW(pc->dwMaxPayloadTransferSize));
+	DPRINTF(1, "dwClockFrequency=%d (Hz)\n",
+	    UGETDW(pc->dwClockFrequency));
+	DPRINTF(1, "bmFramingInfo=0x%02x\n", pc->bmFramingInfo);
+	DPRINTF(1, "bPreferedVersion=%d\n", pc->bPreferedVersion);
+	DPRINTF(1, "bMinVersion=%d\n", pc->bMinVersion);
+	DPRINTF(1, "bMaxVersion=%d\n", pc->bMaxVersion);
+	DPRINTF(1, "bUsage=%d\n", pc->bUsage);
+	DPRINTF(1, "bBitDepthLuma=%d\n", pc->bBitDepthLuma);
+	DPRINTF(1, "bmSettings=0x%02x\n", pc->bmSettings);
+	DPRINTF(1, "bMaxNumberOfRefFramesPlus1=%d\n",
+	    pc->bMaxNumberOfRefFramesPlus1);
+	DPRINTF(1, "bmRateControlModes=%d\n",
+	    UGETW(pc->bmRateControlModes));
+#ifdef UVIDEO_DEBUG
+	if (1 <= uvideo_debug) {
+		printf("bmLayoutPerStream=0x");
+		uvideo_hexdump(pc->bmLayoutPerStream,
+		    sizeof(pc->bmLayoutPerStream), 1);
+	}
+#endif
 
 	return (USBD_NORMAL_COMPLETION);
 }

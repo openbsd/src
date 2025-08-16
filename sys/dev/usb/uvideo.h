@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.67 2025/08/03 20:00:11 kirill Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.68 2025/08/16 08:13:11 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -275,7 +275,7 @@ struct usb_video_color_matching_descr {
 	uByte	bMatrixCoefficients;
 } __packed;
 
-/* Table 4-47: Video Probe and Commit Controls */
+/* Table 4-75: Video Probe and Commit Controls */
 struct usb_video_probe_commit {
 	uWord	bmHint;
 	uByte	bFormatIndex;
@@ -293,6 +293,12 @@ struct usb_video_probe_commit {
 	uByte	bPreferedVersion;
 	uByte	bMinVersion;
 	uByte	bMaxVersion;
+	uByte	bUsage;
+	uByte	bBitDepthLuma;
+	uByte	bmSettings;
+	uByte	bMaxNumberOfRefFramesPlus1;
+	uWord	bmRateControlModes;
+	uByte	bmLayoutPerStream[8];
 } __packed;
 
 /*
