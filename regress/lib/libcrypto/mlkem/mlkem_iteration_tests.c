@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_iteration_tests.c,v 1.7 2025/08/15 14:47:54 tb Exp $ */
+/*	$OpenBSD: mlkem_iteration_tests.c,v 1.8 2025/08/17 19:26:35 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mlkem.h"
+#include <openssl/mlkem.h>
 
 #include "mlkem_internal.h"
 #include "mlkem_tests_util.h"
