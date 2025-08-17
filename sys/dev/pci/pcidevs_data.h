@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2106 2025/07/16 11:50:21 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.2107 2025/08/17 10:27:38 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -8770,6 +8770,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM2711,
 	    "BCM2711",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM2712,
+	    "BCM2712",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4303,
@@ -32516,6 +32520,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RS56/SP-PCI11P1 Modem",
 	},
 	{
+	    PCI_VENDOR_RPI, PCI_PRODUCT_RPI_RP1,
+	    "RP1",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
 	    "ViRGE",
 	},
@@ -37902,6 +37910,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TEKRAM2,
 	    "Tekram",
+	},
+	{
+	    PCI_VENDOR_RPI,
+	    "Raspberry Pi",
 	},
 	{
 	    PCI_VENDOR_AMPERE,

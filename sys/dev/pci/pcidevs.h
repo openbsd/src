@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2106 2025/07/16 11:50:21 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.2107 2025/08/17 10:27:38 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -357,6 +357,7 @@
 #define	PCI_VENDOR_ROCKCHIP	0x1d87		/* Rockchip */
 #define	PCI_VENDOR_LONGSYS	0x1d97		/* Longsys */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
+#define	PCI_VENDOR_RPI	0x1de4		/* Raspberry Pi */
 #define	PCI_VENDOR_AMPERE	0x1def		/* Ampere */
 #define	PCI_VENDOR_KIOXIA	0x1e0f		/* Kioxia */
 #define	PCI_VENDOR_YMTC	0x1e49		/* YMTC */
@@ -2698,6 +2699,7 @@
 #define	PCI_PRODUCT_BROADCOM_BCM5906	0x1712		/* BCM5906 */
 #define	PCI_PRODUCT_BROADCOM_BCM5906M	0x1713		/* BCM5906M */
 #define	PCI_PRODUCT_BROADCOM_BCM2711	0x2711		/* BCM2711 */
+#define	PCI_PRODUCT_BROADCOM_BCM2712	0x2712		/* BCM2712 */
 #define	PCI_PRODUCT_BROADCOM_BCM4303	0x4301		/* BCM4303 */
 #define	PCI_PRODUCT_BROADCOM_BCM4307	0x4307		/* BCM4307 */
 #define	PCI_PRODUCT_BROADCOM_BCM4311	0x4311		/* BCM4311 */
@@ -9007,6 +9009,9 @@
 
 /* Rockwell products */
 #define	PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1	0x2005		/* RS56/SP-PCI11P1 Modem */
+
+/* Raspberry Pi products */
+#define	PCI_PRODUCT_RPI_RP1	0x0001		/* RP1 */
 
 /* S3 products */
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */
