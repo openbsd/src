@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.70 2025/06/23 13:53:11 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.71 2025/08/17 08:42:21 phessler Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -60,7 +60,7 @@
 
 static char		wildabbr[] = WILDABBR;
 
-static const char	gmt[] = "GMT";
+static const char	gmt[] = "UTC";
 
 static const time_t time_t_min = LLONG_MIN;
 static const time_t time_t_max = LLONG_MAX;
