@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2106 2025/07/16 11:50:21 stsp Exp $
+$OpenBSD: pcidevs,v 1.2107 2025/08/17 10:27:38 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -352,6 +352,7 @@ vendor	AQUANTIA	0x1d6a	Aquantia
 vendor	ROCKCHIP	0x1d87	Rockchip
 vendor	LONGSYS		0x1d97	Longsys
 vendor	TEKRAM2		0x1de1	Tekram
+vendor	RPI		0x1de4	Raspberry Pi
 vendor	AMPERE		0x1def	Ampere
 vendor	KIOXIA		0x1e0f	Kioxia
 vendor	YMTC		0x1e49	YMTC
@@ -2693,6 +2694,7 @@ product BROADCOM BCM5903F	0x170f	BCM5903F
 product BROADCOM BCM5906	0x1712	BCM5906
 product BROADCOM BCM5906M	0x1713	BCM5906M
 product BROADCOM BCM2711	0x2711	BCM2711
+product BROADCOM BCM2712	0x2712	BCM2712
 product BROADCOM BCM4303	0x4301	BCM4303
 product BROADCOM BCM4307	0x4307	BCM4307
 product BROADCOM BCM4311	0x4311	BCM4311
@@ -9002,6 +9004,9 @@ product ROCKCHIP RK3588		0x3588	RK3588
 
 /* Rockwell products */
 product ROCKWELL RS56SP_PCI11P1	0x2005	RS56/SP-PCI11P1 Modem
+
+/* Raspberry Pi products */
+product RPI RP1			0x0001	RP1
 
 /* S3 products */
 product S3 VIRGE		0x5631	ViRGE
