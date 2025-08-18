@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.231 2025/08/05 12:52:20 bluhm Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.232 2025/08/18 04:15:35 dlg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -654,6 +654,8 @@ struct tslpentry {
 	long			 tslp_ident;
 	struct proc *volatile	 tslp_p;
 };
+
+TAILQ_HEAD(tslpqueue, tslpentry);
 
 struct tslp_bucket {
 	struct tslpqueue	 tsb_list;

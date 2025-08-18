@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.277 2025/08/11 14:16:42 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.278 2025/08/18 04:15:35 dlg Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -199,7 +199,6 @@ process_initialize(struct process *pr, struct proc *p)
 	LIST_INIT(&pr->ps_children);
 	LIST_INIT(&pr->ps_orphans);
 	LIST_INIT(&pr->ps_sigiolst);
-	TAILQ_INIT(&pr->ps_tslpqueue);
 
 	rw_init(&pr->ps_lock, "pslock");
 	mtx_init(&pr->ps_mtx, IPL_HIGH);

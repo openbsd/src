@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.396 2025/08/15 04:21:00 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.397 2025/08/18 04:15:35 dlg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -127,8 +127,6 @@ struct tusage {
  */
 #ifdef __need_process
 struct proc;
-struct tslpentry;
-TAILQ_HEAD(tslpqueue, tslpentry);
 struct unveil;
 
 struct pinsyscall {
@@ -186,7 +184,6 @@ struct process {
 	struct	vmspace *ps_vmspace;	/* Address space */
 	pid_t	ps_pid;			/* [I] Process identifier. */
 
-	struct	tslpqueue ps_tslpqueue;	/* [p] queue of threads in thrsleep */
 	struct	rwlock	ps_lock;	/* per-process rwlock */
 	struct  mutex	ps_mtx;		/* per-process mutex */
 
