@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.460 2025/08/14 08:50:25 mvs Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.461 2025/08/18 13:54:01 jan Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -4500,8 +4500,7 @@ void
 tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 {
 	struct ether_extracted head, tail;
-	struct mbuf *m, *mhead;
-	unsigned int headcnt, tailcnt;
+	struct mbuf *mhead;
 
 	if (!ISSET(ifp->if_xflags, IFXF_LRO))
 		goto dontmerge;
@@ -4523,12 +4522,6 @@ tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 
 	if (!tcp_softlro_check(mtail, &tail))
 		goto dontmerge;
-
-	tailcnt = 0;
-	for (m = mtail; m != NULL; m = m->m_next) {
-		if (tailcnt++ >= 8)
-			goto dontmerge;
-	}
 
 	mtail->m_pkthdr.ph_mss = tail.paylen;
 
@@ -4563,13 +4556,6 @@ tcp_softlro_glue(struct mbuf_list *ml, struct mbuf *mtail, struct ifnet *ifp)
 		ether_extract_headers(mhead, &head);
 		if (!tcp_softlro_compare(&head, &tail))
 			continue;
-
-		/* Limit mbuf chain to avoid m_defrag calls when forwarding. */
-		headcnt = tailcnt;
-		for (m = mhead; m != NULL; m = m->m_next) {
-			if (headcnt++ >= 8)
-				goto dontmerge;
-		}
 
 		tcp_softlro_concat(mhead, &head, mtail, &tail);
 		return;
