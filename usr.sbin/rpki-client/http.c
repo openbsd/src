@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.98 2025/08/01 13:46:06 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.99 2025/08/18 11:27:13 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -220,7 +220,7 @@ static enum res	data_inflate_write(struct http_connection *);
 static const char *
 http_info(const char *uri)
 {
-	static char buf[80];
+	static char buf[200];
 
 	if (strnvis(buf, uri, sizeof buf, VIS_SAFE) >= (int)sizeof buf) {
 		/* overflow, add indicator */
@@ -251,7 +251,7 @@ ip_info(const struct http_connection *conn)
 static const char *
 conn_info(const struct http_connection *conn)
 {
-	static char	 buf[100 + NI_MAXHOST];
+	static char	 buf[220 + NI_MAXHOST];
 	const char	*uri;
 
 	if (conn->req == NULL)
