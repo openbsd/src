@@ -1,4 +1,9 @@
-#	$OpenBSD: Makefile,v 1.31 2023/10/26 17:13:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.32 2025/08/18 17:34:31 kettenis Exp $
+#
+# Install media requires the following packages:
+# - raspberrypi-firmware
+# - u-boot-rpi
+#
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		88064
