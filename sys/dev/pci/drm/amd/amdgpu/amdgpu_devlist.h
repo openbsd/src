@@ -223,6 +223,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x7448 },	/* Radeon Pro W7900 */
 	{0x1002, 0x7449 },	/* Radeon Pro W7800 48GB */
 	{0x1002, 0x744a },	/* Radeon Pro W7900 Dual Slot */
+	{0x1002, 0x744b },	/* Radeon Pro W7900D */
 	{0x1002, 0x744c },	/* Radeon RX 7900 XT/XTX/GRE, 7900M */
 	{0x1002, 0x745e },	/* Radeon Pro W7800 */
 
@@ -263,7 +264,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 	/* GC 11.5.3, DCN 3.6.0?, APU, linux 6.15 */
 
 	/* GC 12.0.0, DCN 4.0.1, dGPU, "Navi 44" */
-	{0x1002, 0x7590 },	/* Radeon RX 9060 XT */
+	{0x1002, 0x7590 },	/* Radeon RX 9060, 9060 XT */
 
 	/* GC 12.0.1, DCN 4.0.1, dGPU, "Navi 48" */
 	{0x1002, 0x7550 },	/* Radeon RX 9070, 9070 XT, 9070 GRE */
