@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2107 2025/08/17 10:27:38 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2108 2025/08/18 06:09:10 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2191,6 +2191,7 @@
 #define	PCI_PRODUCT_ATI_NAVI31_2	0x7448		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI31_5	0x7449		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI31_4	0x744a		/* Navi 31 */
+#define	PCI_PRODUCT_ATI_NAVI31_6	0x744b		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI31_1	0x744c		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI31_3	0x745e		/* Navi 31 */
 #define	PCI_PRODUCT_ATI_NAVI32_3	0x7460		/* Navi 32 */
