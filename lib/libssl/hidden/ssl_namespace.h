@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_namespace.h,v 1.3 2024/07/12 05:26:34 miod Exp $	*/
+/*	$OpenBSD: ssl_namespace.h,v 1.4 2025/08/18 16:00:53 tb Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -35,7 +35,11 @@
 #else
 #define LSSL_UNUSED(x)
 #define LSSL_USED(x)
+#ifdef _MSC_VER
+#define LSSL_ALIAS(x)
+#else
 #define LSSL_ALIAS(x)		asm("")
+#endif /* _MSC_VER */
 #endif
 
 #endif	/* _LIBSSL_SSL_NAMESPACE_H_ */
