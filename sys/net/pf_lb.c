@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.75 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.76 2025/08/18 11:27:58 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -77,6 +77,8 @@ int			 pf_map_addr_sticky(sa_family_t, struct pf_rule *,
 			    struct pf_addr *, struct pf_addr *,
 			    struct pf_src_node **, struct pf_pool *,
 			    enum pf_sn_types);
+int			 pf_pool_states_decrease_addr(struct pf_pool *, int,
+			    struct pf_addr *);
 
 u_int64_t
 pf_hash(struct pf_addr *inaddr, struct pf_addr *hash,
@@ -706,6 +708,12 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 			    r->nat.proxy_port[1]);
 			return (-1);
 		}
+		/* decrease least-connection state counter of the previous */
+		if ((*nr) != NULL && (*nr)->nat.addr.type != PF_ADDR_NONE &&
+		    ((*nr)->nat.opts & PF_POOL_TYPEMASK) ==
+		    PF_POOL_LEASTSTATES)
+			pf_pool_states_decrease_addr(&(*nr)->nat, pd->af,
+			    &pd->nsaddr);
 		*nr = r;
 		pf_addrcpy(&pd->nsaddr, &naddr, pd->af);
 		pd->nsport = nport;
@@ -735,6 +743,12 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 			nport = htons((u_int16_t)tmp_nport);
 		} else if (r->rdr.proxy_port[0])
 			nport = htons(r->rdr.proxy_port[0]);
+		/* decrease least-connection state counter of the previous */
+		if ((*nr) != NULL && (*nr)->rdr.addr.type != PF_ADDR_NONE &&
+		    ((*nr)->rdr.opts & PF_POOL_TYPEMASK) ==
+		    PF_POOL_LEASTSTATES)
+			pf_pool_states_decrease_addr(&(*nr)->rdr, pd->af,
+			    &pd->ndaddr);
 		*nr = r;
 		pf_addrcpy(&pd->ndaddr, &naddr, pd->af);
 		if (nport)
@@ -879,70 +893,102 @@ pf_get_transaddr_af(struct pf_rule *r, struct pf_pdesc *pd,
 int
 pf_postprocess_addr(struct pf_state *cur)
 {
-	struct pf_rule		*nr;
 	struct pf_state_key	*sks;
-	struct pf_pool		 rpool;
-	struct pf_addr		 lookup_addr;
-	int			 slbcount = -1;
+	struct pf_addr		*addr;
+	struct pf_pool		*rpool, *natpl = NULL, *rdrpl = NULL;
+	struct pf_rule_item	*ri;
+	int			 ret = 0;
 
-	nr = cur->natrule.ptr;
-
-	if (nr == NULL)
-		return (0);
-
-	/* decrease counter */
-
-	sks = cur->key[PF_SK_STACK];
-
-	/* check for outgoing or ingoing balancing */
-	if (nr->rt == PF_ROUTETO)
-		lookup_addr = cur->rt_addr;
-	else if (sks != NULL)
-		lookup_addr = sks->addr[1];
-	else {
-		if (pf_status.debug >= LOG_DEBUG) {
-			log(LOG_DEBUG, "pf: %s: unable to obtain address",
-			    __func__);
+	/* decrease the states counter in pool for "least-states" */
+	if (cur->natrule.ptr != NULL) { /* this is the final */
+		if (cur->natrule.ptr->nat.addr.type != PF_ADDR_NONE)
+			natpl = &cur->natrule.ptr->nat;
+		if (cur->natrule.ptr->rdr.addr.type != PF_ADDR_NONE)
+			rdrpl = &cur->natrule.ptr->rdr;
+	}
+	if (natpl == NULL || rdrpl == NULL) {
+		/* nat or rdr might be done by a previous "match" */
+		SLIST_FOREACH(ri, &cur->match_rules, entry) {
+			/* first match since the list order is reversed */
+			if (natpl == NULL &&
+			    ri->r->nat.addr.type != PF_ADDR_NONE)
+				natpl = &ri->r->nat;
+			if (rdrpl == NULL &&
+			    ri->r->rdr.addr.type != PF_ADDR_NONE)
+				rdrpl = &ri->r->rdr;
+			if (natpl != NULL && rdrpl != NULL)
+				break;
 		}
-		return (1);
+	}
+	if (natpl != NULL &&
+	    (natpl->opts & PF_POOL_TYPEMASK) == PF_POOL_LEASTSTATES) {
+		/* nat-to <table> least-state */
+		if (cur->direction == PF_IN) {
+			sks = cur->key[PF_SK_STACK];
+			addr = &sks->addr[0];
+		} else {
+			sks = cur->key[PF_SK_WIRE];
+			addr = &sks->addr[1];
+		}
+		if (pf_pool_states_decrease_addr(natpl, sks->af, addr) != 0)
+			ret = 1;
+	}
+	if (rdrpl != NULL &&
+	    (rdrpl->opts & PF_POOL_TYPEMASK) == PF_POOL_LEASTSTATES) {
+		/* rdr <table> least-state */
+		if (cur->direction == PF_IN) {
+			sks = cur->key[PF_SK_STACK];
+			addr = &sks->addr[1];
+		} else {
+			sks = cur->key[PF_SK_WIRE];
+			addr = &sks->addr[0];
+		}
+		if (pf_pool_states_decrease_addr(rdrpl, sks->af, addr) != 0)
+			ret = 1;
+	}
+	if (cur->rule.ptr != NULL) {
+		/* route-to <table> least-state */
+		rpool = &cur->rule.ptr->route;
+		if (rpool->addr.type != PF_ADDR_NONE &&
+		    (rpool->opts & PF_POOL_TYPEMASK) == PF_POOL_LEASTSTATES) {
+			sks = cur->key[(cur->direction == PF_IN)
+			    ? PF_SK_STACK : PF_SK_WIRE];
+			addr = &cur->rt_addr;
+			KASSERT(sks != NULL);
+			if (pf_pool_states_decrease_addr(rpool, sks->af, addr)
+			    != 0)
+				ret = 1;
+		}
 	}
 
-	/* check for appropriate pool */
-	if (nr->rdr.addr.type != PF_ADDR_NONE)
-		rpool = nr->rdr;
-	else if (nr->nat.addr.type != PF_ADDR_NONE)
-		rpool = nr->nat;
-	else if (nr->route.addr.type != PF_ADDR_NONE)
-		rpool = nr->route;
-	else
-		return (0);
+	return (ret);
+}
 
-	if (((rpool.opts & PF_POOL_TYPEMASK) != PF_POOL_LEASTSTATES))
-		return (0);
+int
+pf_pool_states_decrease_addr(struct pf_pool *rpool, int af,
+    struct pf_addr *addr)
+{
+	int	 slbcount = -1;
 
-	if (rpool.addr.type == PF_ADDR_TABLE) {
+	if (rpool->addr.type == PF_ADDR_TABLE) {
 		if ((slbcount = pfr_states_decrease(
-		    rpool.addr.p.tbl,
-		    &lookup_addr, sks->af)) == -1) {
+		    rpool->addr.p.tbl, addr, af)) == -1) {
 			if (pf_status.debug >= LOG_DEBUG) {
 				log(LOG_DEBUG, "pf: %s: selected address ",
 				    __func__);
-				pf_print_host(&lookup_addr,
-				    sks->port[0], sks->af);
+				pf_print_host(addr, 0, af);
 				addlog(". Failed to "
 				    "decrease count!\n");
 			}
 			return (1);
 		}
-	} else if (rpool.addr.type == PF_ADDR_DYNIFTL) {
+	} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
 		if ((slbcount = pfr_states_decrease(
-		    rpool.addr.p.dyn->pfid_kt,
-		    &lookup_addr, sks->af)) == -1) {
+		    rpool->addr.p.dyn->pfid_kt, addr, af)) == -1) {
 			if (pf_status.debug >= LOG_DEBUG) {
 				log(LOG_DEBUG, "pf: %s: selected address ",
 				    __func__);
-				pf_print_host(&lookup_addr,
-				    sks->port[0], sks->af);
+				pf_print_host(addr, 0, af);
 				addlog(". Failed to "
 				    "decrease count!\n");
 			}
@@ -952,11 +998,11 @@ pf_postprocess_addr(struct pf_state *cur)
 	if (slbcount > -1) {
 		if (pf_status.debug >= LOG_INFO) {
 			log(LOG_INFO, "pf: %s: selected address ", __func__);
-			pf_print_host(&lookup_addr, sks->port[0],
-			    sks->af);
+			pf_print_host(addr, 0, af);
 			addlog(" decreased state count to %u\n",
 			    slbcount);
 		}
 	}
+
 	return (0);
 }
