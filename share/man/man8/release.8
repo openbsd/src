@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.99 2025/08/18 17:35:54 kettenis Exp $
+.\"	$OpenBSD: release.8,v 1.100 2025/08/19 15:51:51 schwarze Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"	Copyright (c) 2016 Theo Buehler <tb@openbsd.org>
@@ -10,7 +10,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: August 18 2025 $
+.Dd $Mdocdate: August 19 2025 $
 .Dt RELEASE 8
 .Os
 .Sh NAME
@@ -158,11 +158,17 @@ some installation media, the release tarballs,
 installation instructions, and checksum files.
 .Pp
 On arm64 and armv7 architectures, additional files are required.
-For armv7, install u-boot-arm and dtb using
+Install the following packages using
 .Xr pkg_add 1
 or from
-.Xr ports 7 .
-For arm64, install raspberrypi-firmware and u-boot-rpi.
+.Xr ports 7 :
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It arm64
+raspberrypi-firmware u-boot-rpi
+.It armv7
+dtb u-boot-arm
+.El
 .Pp
 Create a
 .Va RELEASEDIR
