@@ -1452,6 +1452,7 @@ MD5_Update
 MLKEM_decap
 MLKEM_encap
 MLKEM_generate_key
+MLKEM_marshal_private_key
 MLKEM_marshal_public_key
 MLKEM_parse_private_key
 MLKEM_parse_public_key

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_internal.h,v 1.8 2025/08/14 15:48:48 beck Exp $ */
+/*	$OpenBSD: mlkem_internal.h,v 1.9 2025/08/19 21:37:08 tb Exp $ */
 /*
  * Copyright (c) 2023, Google Inc.
  *
@@ -58,11 +58,6 @@ int
 MLKEM_generate_key_external_entropy(MLKEM_private_key *private_key,
     uint8_t **out_encoded_public_key, size_t *out_encoded_public_key_len,
     const uint8_t *entropy);
-/*
- * Marshals a private key to encoded format, used for NIST tests.
- */
-int MLKEM_marshal_private_key(const MLKEM_private_key *private_key,
-    uint8_t **out, size_t *out_len);
 
 /*
  * ML-KEM-768

@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem.h,v 1.5 2025/08/14 15:48:48 beck Exp $ */
+/* $OpenBSD: mlkem.h,v 1.6 2025/08/19 21:37:08 tb Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@openbsd.org>
  *
@@ -40,6 +40,7 @@ LCRYPTO_USED(MLKEM_encap);
 LCRYPTO_USED(MLKEM_decap);
 LCRYPTO_USED(MLKEM_marshal_public_key);
 LCRYPTO_USED(MLKEM_parse_public_key);
+LCRYPTO_USED(MLKEM_marshal_private_key);
 LCRYPTO_USED(MLKEM_parse_private_key);
 
 #endif /* _LIBCRYPTO_MLKEM_H */

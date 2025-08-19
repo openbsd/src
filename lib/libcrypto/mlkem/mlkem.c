@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.c,v 1.2 2025/08/14 16:04:01 beck Exp $ */
+/*	$OpenBSD: mlkem.c,v 1.3 2025/08/19 21:37:08 tb Exp $ */
 /*
  * Copyright (c) 2025, Bob Beck <beck@obtuse.com>
  *
@@ -358,6 +358,7 @@ MLKEM_marshal_private_key(const MLKEM_private_key *private_key, uint8_t **out,
 		return 0;
 	}
 }
+LCRYPTO_ALIAS(MLKEM_marshal_private_key);
 
 int
 MLKEM_parse_public_key(MLKEM_public_key *public_key, const uint8_t *in,
