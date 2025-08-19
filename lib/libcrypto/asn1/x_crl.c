@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.50 2025/07/10 18:48:31 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.51 2025/08/19 21:54:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,8 +105,9 @@ X509_REVOKED_cmp(const X509_REVOKED * const *a, const X509_REVOKED * const *b)
 	return ASN1_INTEGER_cmp((*a)->serialNumber, (*b)->serialNumber);
 }
 
-/* The X509_CRL_INFO structure needs a bit of customisation.
- * Since we cache the original encoding the signature wont be affected by
+/*
+ * The X509_CRL_INFO structure needs a bit of customisation.
+ * Since we cache the original encoding, the signature won't be affected by
  * reordering of the revoked field.
  */
 static int
