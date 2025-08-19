@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icereg.h,v 1.4 2025/07/14 23:22:44 jsg Exp $	*/
+/*	$OpenBSD: if_icereg.h,v 1.5 2025/08/19 11:46:52 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -10900,6 +10900,11 @@ struct ice_aqc_get_phy_caps_data {
 	uint8_t extended_compliance_code;
 #define ICE_MODULE_TYPE_TOTAL_BYTE			3
 	uint8_t module_type[ICE_MODULE_TYPE_TOTAL_BYTE];
+#define ICE_SFF8024_ID_NONE				0x00
+#define ICE_SFF8024_ID_SFP				0x03
+#define ICE_SFF8024_ID_QSFP				0x0c
+#define ICE_SFF8024_ID_QSFP_PLUS			0x0d
+#define ICE_SFF8024_ID_QSFP28				0x11
 #define ICE_AQC_MOD_TYPE_BYTE0_SFP_PLUS			0xA0
 #define ICE_AQC_MOD_TYPE_BYTE0_QSFP_PLUS		0x80
 #define ICE_AQC_MOD_TYPE_IDENT				1

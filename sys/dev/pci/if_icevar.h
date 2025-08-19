@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icevar.h,v 1.7 2025/07/14 23:22:44 jsg Exp $	*/
+/*	$OpenBSD: if_icevar.h,v 1.8 2025/08/19 11:46:52 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -4694,3 +4694,5 @@ struct ice_vsi {
 
 /* Driver always calls main vsi_handle first */
 #define ICE_MAIN_VSI_HANDLE		0
+
+#define ICE_I2C_MAX_RETRIES		10

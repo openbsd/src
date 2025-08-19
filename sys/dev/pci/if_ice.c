@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.57 2025/08/15 16:35:58 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.58 2025/08/19 11:46:52 stsp Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -260,6 +260,8 @@ struct ice_intr_vector {
 };
 
 #define ICE_MAX_VECTORS			8 /* XXX this is pretty arbitrary */
+
+static struct rwlock ice_sff_lock = RWLOCK_INITIALIZER("icesff");
 
 struct ice_softc {
 	struct device sc_dev;
@@ -13568,6 +13570,160 @@ ice_down(struct ice_softc *sc)
 	return 0;
 }
 
+/* Read SFF EEPROM (0x06EE) */
+int
+ice_aq_sff_eeprom(struct ice_hw *hw, uint16_t lport, uint8_t bus_addr,
+    uint16_t mem_addr, uint8_t page, uint8_t set_page,
+    uint8_t *data, uint8_t length, int write, struct ice_sq_cd *cd)
+{
+	struct ice_aqc_sff_eeprom *cmd;
+	struct ice_aq_desc desc;
+	int status;
+
+	if (!data || (mem_addr & 0xff00))
+		return ICE_ERR_PARAM;
+
+	ice_fill_dflt_direct_cmd_desc(&desc, ice_aqc_opc_sff_eeprom);
+	cmd = &desc.params.read_write_sff_param;
+	desc.flags = htole16(ICE_AQ_FLAG_RD);
+	cmd->lport_num = (uint8_t)(lport & 0xff);
+	cmd->lport_num_valid = (uint8_t)((lport >> 8) & 0x01);
+	cmd->i2c_bus_addr = htole16(
+	    ((bus_addr >> 1) & ICE_AQC_SFF_I2CBUS_7BIT_M) |
+	    ((set_page << ICE_AQC_SFF_SET_EEPROM_PAGE_S) &
+	    ICE_AQC_SFF_SET_EEPROM_PAGE_M));
+	cmd->i2c_mem_addr = htole16(mem_addr & 0xff);
+	cmd->eeprom_page = htole16((uint16_t)page << ICE_AQC_SFF_EEPROM_PAGE_S);
+	if (write)
+		cmd->i2c_bus_addr |= htole16(ICE_AQC_SFF_IS_WRITE);
+
+	status = ice_aq_send_cmd(hw, &desc, data, length, cd);
+	return status;
+}
+
+int
+ice_rw_sff_eeprom(struct ice_softc *sc, uint16_t dev_addr, uint16_t offset,
+    uint8_t page, uint8_t* data, uint16_t length, uint8_t set_page, int write)
+{
+	struct ice_hw *hw = &sc->hw;
+	int ret = 0, retries = 0;
+	int status;
+
+	if (length > 16)
+		return (EINVAL);
+
+	if (ice_test_state(&sc->state, ICE_STATE_RECOVERY_MODE))
+		return (ENOSYS);
+
+	if (ice_test_state(&sc->state, ICE_STATE_NO_MEDIA))
+		return (ENXIO);
+
+	do {
+		status = ice_aq_sff_eeprom(hw, 0, dev_addr, offset, page,
+		    set_page, data, length, write, NULL);
+		if (!status) {
+			ret = 0;
+			break;
+		}
+		if (status == ICE_ERR_AQ_ERROR &&
+		    hw->adminq.sq_last_status == ICE_AQ_RC_EBUSY) {
+			ret = EBUSY;
+			continue;
+		}
+		if (status == ICE_ERR_AQ_ERROR &&
+		    hw->adminq.sq_last_status == ICE_AQ_RC_EACCES) {
+			/* FW says I2C access isn't supported */
+			ret = EACCES;
+			break;
+		}
+		if (status == ICE_ERR_AQ_ERROR &&
+		    hw->adminq.sq_last_status == ICE_AQ_RC_EPERM) {
+			ret = EPERM;
+			break;
+		} else {
+			ret = EIO;
+			break;
+		}
+	} while (retries++ < ICE_I2C_MAX_RETRIES);
+
+	return (ret);
+}
+
+/*
+ * Read from the SFF eeprom.
+ * The I2C device address is typically 0xA0 or 0xA2. For more details on
+ * the contents of an SFF eeprom, refer to SFF-8724 (SFP), SFF-8636 (QSFP),
+ * and SFF-8024 (both).
+ */
+int
+ice_read_sff_eeprom(struct ice_softc *sc, uint16_t dev_addr, uint16_t offset,
+    uint8_t page, uint8_t* data, uint16_t length)
+{
+	return ice_rw_sff_eeprom(sc, dev_addr, offset, page, data, length,
+	    0, 0);
+}
+
+/* Write to the SFF eeprom. */
+int
+ice_write_sff_eeprom(struct ice_softc *sc, uint16_t dev_addr, uint16_t offset,
+    uint8_t page, uint8_t* data, uint16_t length, uint8_t set_page)
+{
+	return ice_rw_sff_eeprom(sc, dev_addr, offset, page, data, length,
+	    1, set_page);
+}
+
+int
+ice_get_sffpage(struct ice_softc *sc, struct if_sffpage *sff)
+{
+	struct ice_hw *hw = &sc->hw;
+	struct ice_port_info *pi = hw->port_info;
+	struct ice_link_status *li = &pi->phy.link_info;
+	const uint16_t chunksize = 16;
+	uint16_t offset = 0;
+	uint8_t curpage = 0;
+	int error;
+
+	if (sff->sff_addr != IFSFF_ADDR_EEPROM &&
+	    sff->sff_addr != IFSFF_ADDR_DDM)
+		return (EINVAL);
+
+	if (li->module_type[0] == ICE_SFF8024_ID_NONE)
+		return (ENXIO);
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM &&
+	    li->module_type[0] == ICE_SFF8024_ID_SFP) {
+		error = ice_read_sff_eeprom(sc, sff->sff_addr, 127, 0,
+		    &curpage, 1);
+		if (error)
+			return error;
+
+		if (curpage != sff->sff_page) {
+			error = ice_write_sff_eeprom(sc, sff->sff_addr, 127, 0,
+			    &sff->sff_page, 1, 1);
+			if (error)
+				return error;
+		}
+	}
+
+	for (; offset <= IFSFF_DATA_LEN - chunksize; offset += chunksize) {
+		error = ice_read_sff_eeprom(sc, sff->sff_addr, offset,
+		    sff->sff_page, &sff->sff_data[0] + offset, chunksize);
+		if (error)
+			return error;
+	}
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM &&
+	    li->module_type[0] == ICE_SFF8024_ID_SFP &&
+	    curpage != sff->sff_page) {
+		error = ice_write_sff_eeprom(sc, sff->sff_addr, 127, 0,
+		    &curpage, 1, 1);
+		if (error)
+			return error;
+	}
+
+	return 0;
+}
+
 int
 ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -13636,6 +13792,13 @@ ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = ENETRESET;
 			}
 		}
+		break;
+	case SIOCGIFSFFPAGE:
+		error = rw_enter(&ice_sff_lock, RW_WRITE|RW_INTR);
+		if (error)
+			break;
+		error = ice_get_sffpage(sc, (struct if_sffpage *)data);
+		rw_exit(&ice_sff_lock);
 		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
