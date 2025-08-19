@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2024/11/28 18:54:36 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.65 2025/08/19 23:20:19 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1065,6 +1065,31 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	PMAP_VP_LOCK(pm);
 	pted = pmap_vp_lookup(pm, va);
 	if (pted && PTED_VALID(pted)) {
+		/* Check if entering a mapping that already exists. */
+		if ((pted->pted_pte.pte_lo & PTE_RPGN) == (pa & PTE_RPGN)) {
+			uint64_t old_pp = pted->pted_pte.pte_lo & PTE_PP;
+			uint64_t old_acwimgn = pted->pted_pte.pte_lo &
+			    (PTE_AC | PTE_W | PTE_I | PTE_M | PTE_G | PTE_N);
+			uint64_t acwimgn = 0;
+
+			if (!(prot & PROT_EXEC))
+				acwimgn |= PTE_N;
+
+			if (cache == PMAP_CACHE_WB)
+				acwimgn |= PTE_M;
+			else
+				acwimgn |= (PTE_M | PTE_I | PTE_G);
+
+			if ((prot & (PROT_READ | PROT_WRITE)) == 0)
+				acwimgn |= PTE_AC;
+
+			if (old_acwimgn == acwimgn &&
+			    ((old_pp == PTE_RO && !(flags & PROT_WRITE)) ||
+			     (old_pp == PTE_RW && (prot & PROT_WRITE)))) {
+				PMAP_VP_UNLOCK(pm);
+				return 0;
+			}
+		}
 		pmap_remove_pted(pm, pted);
 		pted = NULL;
 	}
