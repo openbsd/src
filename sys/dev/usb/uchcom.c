@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.38 2025/08/12 03:46:17 jsg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.39 2025/08/19 00:47:43 kevlo Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -116,14 +116,8 @@ int	uchcomdebug = 0;
 #define UCHCOM_T		0x08
 #define UCHCOM_CL		0x04
 #define UCHCOM_CT		0x80
-/*
- * XXX - these magic numbers come from Linux (drivers/usb/serial/ch341.c).
- * The manufacturer was unresponsive when asked for documentation.
- */
-#define UCHCOM_RESET_VALUE	0x501F	/* line mode? */
-#define UCHCOM_RESET_INDEX	0xD90A	/* baud rate? */
 
-#define UCHCOMOBUFSIZE 256
+#define UCHCOMOBUFSIZE	256
 
 #define UCHCOM_TYPE_CH343	1
 
@@ -158,29 +152,6 @@ struct uchcom_endpoints {
 	int		ep_intr_size;
 };
 
-struct uchcom_divider {
-	uint8_t		dv_prescaler;
-	uint8_t		dv_div;
-	uint8_t		dv_mod;
-};
-
-struct uchcom_divider_record {
-	uint32_t		dvr_high;
-	uint32_t		dvr_low;
-	uint32_t		dvr_base_clock;
-	struct uchcom_divider	dvr_divider;
-};
-
-static const struct uchcom_divider_record dividers[] =
-{
-	{  307200, 307200, UCHCOM_BASE_UNKNOWN, { 7, 0xD9, 0 } },
-	{  921600, 921600, UCHCOM_BASE_UNKNOWN, { 7, 0xF3, 0 } },
-	{ 2999999,  23530,             6000000, { 3,    0, 0 } },
-	{   23529,   2942,              750000, { 2,    0, 0 } },
-	{    2941,    368,               93750, { 1,    0, 0 } },
-	{     367,      1,               11719, { 0,    0, 0 } },
-};
-
 void		uchcom_get_status(void *, int, u_char *, u_char *);
 void		uchcom_set(void *, int, int, int);
 int		uchcom_param(void *, int, struct termios *);
@@ -211,16 +182,12 @@ int		uchcom_update_status(struct uchcom_softc *);
 int		uchcom_set_dtrrts(struct uchcom_softc *, int, int);
 int		uchcom_set_break(struct uchcom_softc *, int);
 int		uchcom_set_break_ch343(struct uchcom_softc *, int);
-void		uchcom_calc_baudrate_ch343(uint32_t, uint8_t *, uint8_t *);
-int		uchcom_calc_divider_settings(struct uchcom_divider *, uint32_t);
-int		uchcom_set_dte_rate_ch343(struct uchcom_softc *, uint32_t,
-		    uint16_t);
-int		uchcom_set_dte_rate(struct uchcom_softc *, uint32_t);
+void		uchcom_calc_baudrate(struct uchcom_softc *, uint32_t, uint8_t *,
+		    uint8_t *);
+int		uchcom_set_dte_rate(struct uchcom_softc *, uint32_t, uint16_t);
 uint16_t	uchcom_set_line_control(struct uchcom_softc *, tcflag_t,
 		    uint16_t *);
 int		uchcom_clear_chip(struct uchcom_softc *);
-int		uchcom_reset_chip(struct uchcom_softc *);
-int		uchcom_setup_comm(struct uchcom_softc *);
 int		uchcom_setup_intr_pipe(struct uchcom_softc *);
 
 
@@ -577,9 +544,6 @@ uchcom_update_version(struct uchcom_softc *sc)
 void
 uchcom_convert_status(struct uchcom_softc *sc, uint8_t cur)
 {
-	sc->sc_dtr = !(cur & UCHCOM_DTR_MASK);
-	sc->sc_rts = !(cur & UCHCOM_RTS_MASK);
-
 	cur = ~cur & 0x0F;
 	sc->sc_msr = (cur << 4) | ((sc->sc_msr >> 4) ^ cur);
 }
@@ -596,6 +560,10 @@ uchcom_update_status(struct uchcom_softc *sc)
 		       sc->sc_dev.dv_xname, usbd_errstr(err));
 		return EIO;
 	}
+
+	sc->sc_dtr = !(cur & UCHCOM_DTR_MASK);
+	sc->sc_rts = !(cur & UCHCOM_RTS_MASK);
+
 	uchcom_convert_status(sc, cur);
 
 	return 0;
@@ -667,11 +635,12 @@ uchcom_set_break_ch343(struct uchcom_softc *sc, int onoff)
 }
 
 void
-uchcom_calc_baudrate_ch343(uint32_t rate, uint8_t *divisor, uint8_t *factor)
+uchcom_calc_baudrate(struct uchcom_softc *sc, uint32_t rate, uint8_t *divisor,
+    uint8_t *factor)
 {
 	uint32_t clk = 12000000;
 
-	if (rate >= 256000)
+	if (rate == 921600 || rate == 4000000)
 		*divisor = 7;
 	else if (rate > 23529) {
 		clk /= 2;
@@ -687,56 +656,21 @@ uchcom_calc_baudrate_ch343(uint32_t rate, uint8_t *divisor, uint8_t *factor)
 		*divisor = 0;
 	}
 
-	*factor = 256 - clk / rate;
+	if (rate == 921600 && sc->sc_type != UCHCOM_TYPE_CH343)
+		*factor = 243;
+	else
+		*factor = 256 - clk / rate;
 }
 
 int
-uchcom_calc_divider_settings(struct uchcom_divider *dp, uint32_t rate)
-{
-	int i;
-	const struct uchcom_divider_record *rp;
-	uint32_t div, rem, mod;
-
-	/* find record */
-	for (i=0; i<nitems(dividers); i++) {
-		if (dividers[i].dvr_high >= rate &&
-		    dividers[i].dvr_low <= rate) {
-			rp = &dividers[i];
-			goto found;
-		}
-	}
-	return -1;
-
-found:
-	dp->dv_prescaler = rp->dvr_divider.dv_prescaler;
-	if (rp->dvr_base_clock == UCHCOM_BASE_UNKNOWN)
-		dp->dv_div = rp->dvr_divider.dv_div;
-	else {
-		div = rp->dvr_base_clock / rate;
-		rem = rp->dvr_base_clock % rate;
-		if (div==0 || div>=0xFF)
-			return -1;
-		if ((rem<<1) >= rate)
-			div += 1;
-		dp->dv_div = (uint8_t)-div;
-	}
-
-	mod = UCHCOM_BPS_MOD_BASE/rate + UCHCOM_BPS_MOD_BASE_OFS;
-	mod = mod + mod/2;
-
-	dp->dv_mod = mod / 0x100;
-
-	return 0;
-}
-
-int
-uchcom_set_dte_rate_ch343(struct uchcom_softc *sc, uint32_t rate, uint16_t val)
+uchcom_set_dte_rate(struct uchcom_softc *sc, uint32_t rate, uint16_t val)
 {
 	usbd_status err;
 	uint16_t idx;
 	uint8_t factor, div;
 
-	uchcom_calc_baudrate_ch343(rate, &div, &factor);
+	uchcom_calc_baudrate(sc, rate, &div, &factor);
+	div |= (sc->sc_type != UCHCOM_TYPE_CH343) ? 0x80 : 0;
 	idx = (factor << 8) | div;
 
 	err = uchcom_generic_control_out(sc, UCHCOM_REQ_SET_BAUDRATE, val, idx);
@@ -749,34 +683,10 @@ uchcom_set_dte_rate_ch343(struct uchcom_softc *sc, uint32_t rate, uint16_t val)
 	return 0;
 }
 
-int
-uchcom_set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
-{
-	usbd_status err;
-	struct uchcom_divider dv;
-
-	if (uchcom_calc_divider_settings(&dv, rate))
-		return EINVAL;
-
-	if ((err = uchcom_write_reg(sc,
-			     UCHCOM_REG_BPS_PRE, dv.dv_prescaler,
-			     UCHCOM_REG_BPS_DIV, dv.dv_div)) ||
-	    (err = uchcom_write_reg(sc,
-			     UCHCOM_REG_BPS_MOD, dv.dv_mod,
-			     UCHCOM_REG_BPS_PAD, 0))) {
-		printf("%s: cannot set DTE rate: %s\n",
-		       sc->sc_dev.dv_xname, usbd_errstr(err));
-		return EIO;
-	}
-
-	return 0;
-}
-
 uint16_t
 uchcom_set_line_control(struct uchcom_softc *sc, tcflag_t cflag, uint16_t *val)
 {
-	usbd_status err;
-	uint8_t lcr = 0, lcr2 = 0;
+	uint8_t lcr = 0;
 
 	if (sc->sc_release == UCHCOM_REV_CH340) {
 		/*
@@ -796,16 +706,6 @@ uchcom_set_line_control(struct uchcom_softc *sc, tcflag_t cflag, uint16_t *val)
 		if (ISSET(cflag, PARENB) || ISSET(cflag, CSTOPB))
 			return EINVAL;
 		return 0;
-	}
-
-	if (sc->sc_type != UCHCOM_TYPE_CH343) {
-		err = uchcom_read_reg(sc, UCHCOM_REG_LCR, &lcr, UCHCOM_REG_LCR2,
-		    &lcr2);
-		if (err) {
-			printf("%s: cannot get LCR: %s\n",
-			    sc->sc_dev.dv_xname, usbd_errstr(err));
-			return EIO;
-		}
 	}
 
 	lcr = UCHCOM_LCR_RXE | UCHCOM_LCR_TXE;
@@ -835,16 +735,8 @@ uchcom_set_line_control(struct uchcom_softc *sc, tcflag_t cflag, uint16_t *val)
 		lcr |= UCHCOM_LCR_STOPB;
 	}
 
-	if (sc->sc_type != UCHCOM_TYPE_CH343) {
-		err = uchcom_write_reg(sc, UCHCOM_REG_LCR, lcr, UCHCOM_REG_LCR2,
-		    lcr2);
-		if (err) {
-			printf("%s: cannot set LCR: %s\n",
-			    sc->sc_dev.dv_xname, usbd_errstr(err));
-			return EIO;
-		}
-	} else
-		*val = UCHCOM_T | UCHCOM_CL | UCHCOM_CT | lcr << 8;
+	*val = UCHCOM_T | UCHCOM_CL | UCHCOM_CT | lcr << 8;
+	*val |= (sc->sc_type != UCHCOM_TYPE_CH343) ? 0x10 : 0;
 
 	return 0;
 }
@@ -861,59 +753,6 @@ uchcom_clear_chip(struct uchcom_softc *sc)
 		       sc->sc_dev.dv_xname, usbd_errstr(err));
 		return EIO;
 	}
-
-	return 0;
-}
-
-int
-uchcom_reset_chip(struct uchcom_softc *sc)
-{
-	usbd_status err;
-
-	DPRINTF(("%s: reset\n", sc->sc_dev.dv_xname));
-
-	err = uchcom_generic_control_out(sc, UCHCOM_REQ_RESET,
-					 UCHCOM_RESET_VALUE,
-					 UCHCOM_RESET_INDEX);
-	if (err)
-		goto failed;
-
-	return 0;
-
-failed:
-	printf("%s: cannot reset: %s\n",
-	       sc->sc_dev.dv_xname, usbd_errstr(err));
-	return EIO;
-}
-
-int
-uchcom_setup_comm(struct uchcom_softc *sc)
-{
-	int ret;
-
-	ret = uchcom_clear_chip(sc);
-	if (ret)
-		return ret;
-
-	ret = uchcom_set_dte_rate(sc, TTYDEF_SPEED);
-	if (ret)
-		return ret;
-
-	ret = uchcom_set_line_control(sc, CS8, 0);
-	if (ret)
-		return ret;
-
-	ret = uchcom_update_status(sc);
-	if (ret)
-		return ret;
-
-	ret = uchcom_reset_chip(sc);
-	if (ret)
-		return ret;
-
-	ret = uchcom_set_dte_rate(sc, TTYDEF_SPEED); /* XXX */
-	if (ret)
-		return ret;
 
 	return 0;
 }
@@ -1009,14 +848,16 @@ uchcom_param(void *arg, int portno, struct termios *t)
 	if (usbd_is_dying(sc->sc_udev))
 		return 0;
 
+	if (t->c_ospeed <= 0 ||
+	    (t->c_ospeed > 921600 && sc->sc_type != UCHCOM_TYPE_CH343) ||
+	    (t->c_ospeed > 6000000 && sc->sc_type == UCHCOM_TYPE_CH343))
+		return EINVAL;
+
 	ret = uchcom_set_line_control(sc, t->c_cflag, &val);
 	if (ret)
 		return ret;
 
-	if (sc->sc_type == UCHCOM_TYPE_CH343)
-		ret = uchcom_set_dte_rate_ch343(sc, t->c_ospeed, val);
-	else
-		ret = uchcom_set_dte_rate(sc, t->c_ospeed);
+	ret = uchcom_set_dte_rate(sc, t->c_ospeed, val);
 	if (ret)
 		return ret;
 
@@ -1026,8 +867,8 @@ uchcom_param(void *arg, int portno, struct termios *t)
 int
 uchcom_open(void *arg, int portno)
 {
-	int ret;
 	struct uchcom_softc *sc = arg;
+	int ret;
 
 	if (usbd_is_dying(sc->sc_udev))
 		return EIO;
@@ -1040,14 +881,17 @@ uchcom_open(void *arg, int portno)
 	if (ret)
 		return ret;
 
-	if (sc->sc_type == UCHCOM_TYPE_CH343)
-		ret = uchcom_update_status(sc);
-	else
-		ret = uchcom_setup_comm(sc);
+	if (sc->sc_type != UCHCOM_TYPE_CH343) {
+		ret = uchcom_clear_chip(sc);
+		if (ret)
+			return ret;
+	}
+
+	ret = uchcom_update_status(sc);
 	if (ret)
 		return ret;
 
-	sc->sc_dtr = sc->sc_rts = 1;
+	sc->sc_dtr = sc->sc_rts = 0;
 	ret = uchcom_set_dtrrts(sc, sc->sc_dtr, sc->sc_rts);
 	if (ret)
 		return ret;
