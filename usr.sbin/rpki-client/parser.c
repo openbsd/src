@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.168 2025/08/06 05:23:06 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.169 2025/08/19 08:32:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -760,7 +760,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 
 	gbr->talid = a->cert->talid;
 
-	/* XXX - gbr->expires? */
+	gbr->expires = x509_find_expires(cert->notafter, a, &crls);
 	cert_free(cert);
 
 	return gbr;
@@ -844,7 +844,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 
 	tak->talid = a->cert->talid;
 
-	/* XXX - tak->expires? */
+	tak->expires = x509_find_expires(cert->notafter, a, &crls);
 	cert_free(cert);
 
 	return tak;
