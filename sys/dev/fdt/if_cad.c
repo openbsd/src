@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.14 2024/03/24 22:34:06 patrick Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.15 2025/08/19 15:52:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -396,6 +396,7 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t val;
 	unsigned int i;
 	int node, phy;
+	int mii_flags;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -451,7 +452,7 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_phy_loc = MII_PHY_ANY;
 
-	sc->sc_phy_mode = CAD_PHY_MODE_RGMII;
+	sc->sc_phy_mode = CAD_PHY_MODE_RGMII_ID;
 	OF_getprop(faa->fa_node, "phy-mode", phy_mode, sizeof(phy_mode));
 	for (i = 0; i < nitems(cad_phy_modes); i++) {
 		if (strcmp(phy_mode, cad_phy_modes[i].name) == 0) {
@@ -532,8 +533,26 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_statchg = cad_mii_statchg;
 	ifmedia_init(&sc->sc_media, 0, cad_media_change, cad_media_status);
 
+	switch (sc->sc_phy_mode) {
+	case CAD_PHY_MODE_RGMII:
+		mii_flags = MIIF_SETDELAY;
+		break;
+	case CAD_PHY_MODE_RGMII_RXID:
+		mii_flags = MIIF_SETDELAY | MIIF_RXID;
+		break;
+	case CAD_PHY_MODE_RGMII_TXID:
+		mii_flags = MIIF_SETDELAY | MIIF_TXID;
+		break;
+	case CAD_PHY_MODE_RGMII_ID:
+		mii_flags = MIIF_SETDELAY | MIIF_RXID | MIIF_TXID;
+		break;
+	default:
+		mii_flags = 0;
+		break;
+	}
+
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, sc->sc_phy_loc,
-	    MII_OFFSET_ANY, MIIF_NOISOLATE);
+	    MII_OFFSET_ANY, MIIF_NOISOLATE | mii_flags);
 
 	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
 		printf("%s: no PHY found\n", sc->sc_dev.dv_xname);
