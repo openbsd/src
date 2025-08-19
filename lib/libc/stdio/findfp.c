@@ -1,4 +1,4 @@
-/*	$OpenBSD: findfp.c,v 1.23 2025/08/08 15:58:53 yasuoka Exp $ */
+/*	$OpenBSD: findfp.c,v 1.24 2025/08/19 02:34:31 jsg Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -154,7 +154,6 @@ void
 __sinit(void)
 {
 	static void *sinit_mutex;
-	int i;
 
 	_MUTEX_LOCK(&sinit_mutex);
 	if (__sdidinit)

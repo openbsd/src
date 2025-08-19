@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.39 2025/07/16 16:43:22 yasuoka Exp $ */
+/*	$OpenBSD: gmon.c,v 1.40 2025/08/19 02:34:31 jsg Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -101,7 +101,7 @@ PROTO_NORMAL(moncontrol);
 static void
 _gmon_destructor(void *arg)
 {
-	struct gmonparam *p = arg, *q, **prev;
+	struct gmonparam *p = arg;
 
 	_THREAD_PRIVATE_MUTEX_LOCK(_gmonlock);
 	SLIST_REMOVE(&_gmoninuse, p, gmonparam, list);
