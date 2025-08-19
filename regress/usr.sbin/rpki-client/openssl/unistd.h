@@ -1,9 +1,12 @@
-/*	$OpenBSD: unistd.h,v 1.3 2025/07/08 12:20:19 tb Exp $ */
+/*	$OpenBSD: unistd.h,v 1.4 2025/08/19 11:31:48 job Exp $ */
 /*
  * Public domain
  * compatibility shim for OpenSSL 3
  * overloading unistd.h is a ugly guly hack for this issue but works here
  */
+
+#ifndef RPKI_CLIENT_UNISTD_H
+#define RPKI_CLIENT_UNISTD_H
 
 #include_next <unistd.h>
 
@@ -36,3 +39,5 @@ X509_CRL_get0_tbs_sigalg(const X509_CRL *crl)
 	X509_CRL_get0_signature(crl, NULL, &alg);
 	return alg;
 }
+
+#endif  /* ! RPKI_CLIENT_UNISTD_H */
