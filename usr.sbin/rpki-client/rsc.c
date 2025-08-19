@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.40 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.41 2025/08/19 11:30:20 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -31,9 +31,10 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+#include "rpki-asn1.h"
 
 /*
- * Types and templates for RSC eContent - RFC 9323
+ * RSC eContent definition in RFC 9323, section 4.
  */
 
 ASN1_ITEM_EXP ConstrainedASIdentifiers_it;
@@ -43,18 +44,9 @@ ASN1_ITEM_EXP FileNameAndHash_it;
 ASN1_ITEM_EXP ResourceBlock_it;
 ASN1_ITEM_EXP RpkiSignedChecklist_it;
 
-typedef struct {
-	ASIdOrRanges		*asnum;
-} ConstrainedASIdentifiers;
-
 ASN1_SEQUENCE(ConstrainedASIdentifiers) = {
 	ASN1_EXP_SEQUENCE_OF(ConstrainedASIdentifiers, asnum, ASIdOrRange, 0),
 } ASN1_SEQUENCE_END(ConstrainedASIdentifiers);
-
-typedef struct {
-	ASN1_OCTET_STRING		*addressFamily;
-	STACK_OF(IPAddressOrRange)	*addressesOrRanges;
-} ConstrainedIPAddressFamily;
 
 ASN1_SEQUENCE(ConstrainedIPAddressFamily) = {
 	ASN1_SIMPLE(ConstrainedIPAddressFamily, addressFamily,
@@ -63,18 +55,10 @@ ASN1_SEQUENCE(ConstrainedIPAddressFamily) = {
 	    IPAddressOrRange),
 } ASN1_SEQUENCE_END(ConstrainedIPAddressFamily);
 
-typedef STACK_OF(ConstrainedIPAddressFamily) ConstrainedIPAddrBlocks;
-DECLARE_STACK_OF(ConstrainedIPAddressFamily);
-
 ASN1_ITEM_TEMPLATE(ConstrainedIPAddrBlocks) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, ConstrainedIPAddrBlocks,
 	    ConstrainedIPAddressFamily)
 ASN1_ITEM_TEMPLATE_END(ConstrainedIPAddrBlocks);
-
-typedef struct {
-	ConstrainedASIdentifiers	*asID;
-	ConstrainedIPAddrBlocks		*ipAddrBlocks;
-} ResourceBlock;
 
 ASN1_SEQUENCE(ResourceBlock) = {
 	ASN1_EXP_OPT(ResourceBlock, asID, ConstrainedASIdentifiers, 0),
@@ -82,34 +66,10 @@ ASN1_SEQUENCE(ResourceBlock) = {
 	    ConstrainedIPAddressFamily, 1)
 } ASN1_SEQUENCE_END(ResourceBlock);
 
-typedef struct {
-	ASN1_IA5STRING		*fileName;
-	ASN1_OCTET_STRING	*hash;
-} FileNameAndHash;
-
-DECLARE_STACK_OF(FileNameAndHash);
-
-#ifndef DEFINE_STACK_OF
-#define sk_ConstrainedIPAddressFamily_num(sk) \
-    SKM_sk_num(ConstrainedIPAddressFamily, (sk))
-#define sk_ConstrainedIPAddressFamily_value(sk, i) \
-    SKM_sk_value(ConstrainedIPAddressFamily, (sk), (i))
-
-#define sk_FileNameAndHash_num(sk)	SKM_sk_num(FileNameAndHash, (sk))
-#define sk_FileNameAndHash_value(sk, i)	SKM_sk_value(FileNameAndHash, (sk), (i))
-#endif
-
 ASN1_SEQUENCE(FileNameAndHash) = {
 	ASN1_OPT(FileNameAndHash, fileName, ASN1_IA5STRING),
 	ASN1_SIMPLE(FileNameAndHash, hash, ASN1_OCTET_STRING),
 } ASN1_SEQUENCE_END(FileNameAndHash);
-
-typedef struct {
-	ASN1_INTEGER			*version;
-	ResourceBlock			*resources;
-	X509_ALGOR			*digestAlgorithm;
-	STACK_OF(FileNameAndHash)	*checkList;
-} RpkiSignedChecklist;
 
 ASN1_SEQUENCE(RpkiSignedChecklist) = {
 	ASN1_EXP_OPT(RpkiSignedChecklist, version, ASN1_INTEGER, 0),
@@ -118,8 +78,8 @@ ASN1_SEQUENCE(RpkiSignedChecklist) = {
 	ASN1_SEQUENCE_OF(RpkiSignedChecklist, checkList, FileNameAndHash),
 } ASN1_SEQUENCE_END(RpkiSignedChecklist);
 
-DECLARE_ASN1_FUNCTIONS(RpkiSignedChecklist);
 IMPLEMENT_ASN1_FUNCTIONS(RpkiSignedChecklist);
+
 
 /*
  * Parse asID (inside ResourceBlock)

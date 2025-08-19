@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.26 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.27 2025/08/19 11:30:20 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -32,33 +32,14 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+#include "rpki-asn1.h"
 
 /*
- * ASN.1 templates for Trust Anchor Keys (RFC 9691)
+ * TAK eContent definition in RFC 9691, Appendix A.
  */
 
 ASN1_ITEM_EXP TAKey_it;
 ASN1_ITEM_EXP TAK_it;
-
-DECLARE_STACK_OF(ASN1_IA5STRING);
-
-#ifndef DEFINE_STACK_OF
-#define sk_ASN1_IA5STRING_num(st) SKM_sk_num(ASN1_IA5STRING, (st))
-#define sk_ASN1_IA5STRING_value(st, i) SKM_sk_value(ASN1_IA5STRING, (st), (i))
-#endif
-
-typedef struct {
-	STACK_OF(ASN1_UTF8STRING)	*comments;
-	STACK_OF(ASN1_IA5STRING)	*certificateURIs;
-	X509_PUBKEY			*subjectPublicKeyInfo;
-} TAKey;
-
-typedef struct {
-	ASN1_INTEGER			*version;
-	TAKey				*current;
-	TAKey				*predecessor;
-	TAKey				*successor;
-} TAK;
 
 ASN1_SEQUENCE(TAKey) = {
 	ASN1_SEQUENCE_OF(TAKey, comments, ASN1_UTF8STRING),
@@ -73,8 +54,8 @@ ASN1_SEQUENCE(TAK) = {
 	ASN1_EXP_OPT(TAK, successor, TAKey, 1),
 } ASN1_SEQUENCE_END(TAK);
 
-DECLARE_ASN1_FUNCTIONS(TAK);
 IMPLEMENT_ASN1_FUNCTIONS(TAK);
+
 
 /*
  * On success return pointer to allocated & valid takey structure,

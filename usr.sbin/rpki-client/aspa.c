@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.37 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.38 2025/08/19 11:30:20 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -31,18 +31,13 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
+#include "rpki-asn1.h"
 
 /*
- * Types and templates for ASPA eContent draft-ietf-sidrops-aspa-profile-15
+ * ASPA eContent definition in draft-ietf-sidrops-aspa-profile-20, section 3.
  */
 
 ASN1_ITEM_EXP ASProviderAttestation_it;
-
-typedef struct {
-	ASN1_INTEGER		*version;
-	ASN1_INTEGER		*customerASID;
-	STACK_OF(ASN1_INTEGER)	*providers;
-} ASProviderAttestation;
 
 ASN1_SEQUENCE(ASProviderAttestation) = {
 	ASN1_EXP_OPT(ASProviderAttestation, version, ASN1_INTEGER, 0),
@@ -50,8 +45,8 @@ ASN1_SEQUENCE(ASProviderAttestation) = {
 	ASN1_SEQUENCE_OF(ASProviderAttestation, providers, ASN1_INTEGER),
 } ASN1_SEQUENCE_END(ASProviderAttestation);
 
-DECLARE_ASN1_FUNCTIONS(ASProviderAttestation);
 IMPLEMENT_ASN1_FUNCTIONS(ASProviderAttestation);
+
 
 /*
  * Parse the ProviderASSet sequence.

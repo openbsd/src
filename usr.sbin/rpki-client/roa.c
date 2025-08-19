@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.84 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.85 2025/08/19 11:30:20 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -30,43 +30,15 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
+#include "rpki-asn1.h"
 
 /*
- * Types and templates for the ROA eContent, RFC 6482, section 3.
+ * ROA eContent definition in RFC 9582, section 4.
  */
 
 ASN1_ITEM_EXP ROAIPAddress_it;
 ASN1_ITEM_EXP ROAIPAddressFamily_it;
 ASN1_ITEM_EXP RouteOriginAttestation_it;
-
-typedef struct {
-	ASN1_BIT_STRING		*address;
-	ASN1_INTEGER		*maxLength;
-} ROAIPAddress;
-
-DECLARE_STACK_OF(ROAIPAddress);
-
-typedef struct {
-	ASN1_OCTET_STRING	*addressFamily;
-	STACK_OF(ROAIPAddress)	*addresses;
-} ROAIPAddressFamily;
-
-DECLARE_STACK_OF(ROAIPAddressFamily);
-
-#ifndef DEFINE_STACK_OF
-#define sk_ROAIPAddress_num(st)		SKM_sk_num(ROAIPAddress, (st))
-#define sk_ROAIPAddress_value(st, i)	SKM_sk_value(ROAIPAddress, (st), (i))
-
-#define sk_ROAIPAddressFamily_num(st)	SKM_sk_num(ROAIPAddressFamily, (st))
-#define sk_ROAIPAddressFamily_value(st, i) \
-    SKM_sk_value(ROAIPAddressFamily, (st), (i))
-#endif
-
-typedef struct {
-	ASN1_INTEGER			*version;
-	ASN1_INTEGER			*asid;
-	STACK_OF(ROAIPAddressFamily)	*ipAddrBlocks;
-} RouteOriginAttestation;
 
 ASN1_SEQUENCE(ROAIPAddress) = {
 	ASN1_SIMPLE(ROAIPAddress, address, ASN1_BIT_STRING),
@@ -85,8 +57,8 @@ ASN1_SEQUENCE(RouteOriginAttestation) = {
 	    ROAIPAddressFamily),
 } ASN1_SEQUENCE_END(RouteOriginAttestation);
 
-DECLARE_ASN1_FUNCTIONS(RouteOriginAttestation);
 IMPLEMENT_ASN1_FUNCTIONS(RouteOriginAttestation);
+
 
 /*
  * Parses the eContent section of an ROA file, RFC 6482, section 3.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.127 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.128 2025/08/19 11:30:20 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -33,39 +33,14 @@
 #include <openssl/x509.h>
 
 #include "extern.h"
+#include "rpki-asn1.h"
 
 /*
- * Types and templates for the Manifest eContent, RFC 6486, section 4.2.
+ * Manifest eContent definition in RFC 9286, section 4.2.
  */
 
 ASN1_ITEM_EXP FileAndHash_it;
 ASN1_ITEM_EXP Manifest_it;
-
-typedef struct {
-	ASN1_IA5STRING	*file;
-	ASN1_BIT_STRING	*hash;
-} FileAndHash;
-
-DECLARE_STACK_OF(FileAndHash);
-
-#ifndef DEFINE_STACK_OF
-#define sk_FileAndHash_dup(sk)		SKM_sk_dup(FileAndHash, (sk))
-#define sk_FileAndHash_free(sk)		SKM_sk_free(FileAndHash, (sk))
-#define sk_FileAndHash_num(sk)		SKM_sk_num(FileAndHash, (sk))
-#define sk_FileAndHash_value(sk, i)	SKM_sk_value(FileAndHash, (sk), (i))
-#define sk_FileAndHash_sort(sk)		SKM_sk_sort(FileAndHash, (sk))
-#define sk_FileAndHash_set_cmp_func(sk, cmp) \
-    SKM_sk_set_cmp_func(FileAndHash, (sk), (cmp))
-#endif
-
-typedef struct {
-	ASN1_INTEGER		*version;
-	ASN1_INTEGER		*manifestNumber;
-	ASN1_GENERALIZEDTIME	*thisUpdate;
-	ASN1_GENERALIZEDTIME	*nextUpdate;
-	ASN1_OBJECT		*fileHashAlg;
-	STACK_OF(FileAndHash)	*fileList;
-} Manifest;
 
 ASN1_SEQUENCE(FileAndHash) = {
 	ASN1_SIMPLE(FileAndHash, file, ASN1_IA5STRING),
@@ -81,8 +56,8 @@ ASN1_SEQUENCE(Manifest) = {
 	ASN1_SEQUENCE_OF(Manifest, fileList, FileAndHash),
 } ASN1_SEQUENCE_END(Manifest);
 
-DECLARE_ASN1_FUNCTIONS(Manifest);
 IMPLEMENT_ASN1_FUNCTIONS(Manifest);
+
 
 #define GENTIME_LENGTH 15
 

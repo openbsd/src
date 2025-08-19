@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.13 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.14 2025/08/19 11:30:20 job Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -32,22 +32,14 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+#include "rpki-asn1.h"
 
 /*
- * Types and templates for the SPL eContent.
+ * SPL eContent definition in draft-ietf-sidrops-rpki-prefixlist-04, section 3.
  */
 
 ASN1_ITEM_EXP AddressFamilyPrefixes_it;
 ASN1_ITEM_EXP SignedPrefixList_it;
-
-DECLARE_STACK_OF(ASN1_BIT_STRING);
-
-typedef struct {
-	ASN1_OCTET_STRING		*addressFamily;
-	STACK_OF(ASN1_BIT_STRING)	*addressPrefixes;
-} AddressFamilyPrefixes;
-
-DECLARE_STACK_OF(AddressFamilyPrefixes);
 
 ASN1_SEQUENCE(AddressFamilyPrefixes) = {
 	ASN1_SIMPLE(AddressFamilyPrefixes, addressFamily, ASN1_OCTET_STRING),
@@ -55,30 +47,14 @@ ASN1_SEQUENCE(AddressFamilyPrefixes) = {
 	    ASN1_BIT_STRING),
 } ASN1_SEQUENCE_END(AddressFamilyPrefixes);
 
-#ifndef DEFINE_STACK_OF
-#define sk_ASN1_BIT_STRING_num(st)	SKM_sk_num(ASN1_BIT_STRING, (st))
-#define sk_ASN1_BIT_STRING_value(st, i)	SKM_sk_value(ASN1_BIT_STRING, (st), (i))
-
-#define sk_AddressFamilyPrefixes_num(st)	\
-    SKM_sk_num(AddressFamilyPrefixes, (st))
-#define sk_AddressFamilyPrefixes_value(st, i)	\
-    SKM_sk_value(AddressFamilyPrefixes, (st), (i))
-#endif
-
-typedef struct {
-	ASN1_INTEGER			*version;
-	ASN1_INTEGER			*asid;
-	STACK_OF(AddressFamilyPrefixes)	*prefixBlocks;
-} SignedPrefixList;
-
 ASN1_SEQUENCE(SignedPrefixList) = {
 	ASN1_EXP_OPT(SignedPrefixList, version, ASN1_INTEGER, 0),
 	ASN1_SIMPLE(SignedPrefixList, asid, ASN1_INTEGER),
 	ASN1_SEQUENCE_OF(SignedPrefixList, prefixBlocks, AddressFamilyPrefixes)
 } ASN1_SEQUENCE_END(SignedPrefixList);
 
-DECLARE_ASN1_FUNCTIONS(SignedPrefixList);
 IMPLEMENT_ASN1_FUNCTIONS(SignedPrefixList);
+
 
 /*
  * Comparator to help sorting elements in SPL prefixBlocks and VSPs.
