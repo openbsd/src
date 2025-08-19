@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.19 2025/06/03 06:52:54 jsg Exp $ */
+/* $OpenBSD: simplebus.c,v 1.20 2025/08/19 15:57:03 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -318,8 +318,11 @@ simplebus_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 
 		/* All good, extract to address and translate. */
 		rto = range[sc->sc_acells];
-		if (sc->sc_pacells == 2)
+		if (sc->sc_pacells > 1)
 			rto = (rto << 32) + range[sc->sc_acells + 1];
+		/* Quietly drop the "flags" part of PCI addresses. */
+		if (sc->sc_pacells > 2)
+			rto = (rto << 32) + range[sc->sc_acells + 2];
 
 		addr -= rfrom;
 		addr += rto;
@@ -369,8 +372,11 @@ simplebus_bs_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t off,
 
 		/* All good, extract to address and translate. */
 		rto = range[sc->sc_acells];
-		if (sc->sc_pacells == 2)
+		if (sc->sc_pacells > 1)
 			rto = (rto << 32) + range[sc->sc_acells + 1];
+		/* Quietly drop the "flags" part of PCI addresses. */
+		if (sc->sc_pacells > 2)
+			rto = (rto << 32) + range[sc->sc_acells + 2];
 
 		addr -= rfrom;
 		addr += rto;
@@ -415,8 +421,11 @@ simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		     rlen -= rone, range += rone) {
 			/* Extract from and size, so we can see if we fit. */
 			rfrom = range[sc->sc_acells];
-			if (sc->sc_pacells == 2)
+			if (sc->sc_pacells > 1)
 				rfrom = (rfrom << 32) + range[sc->sc_acells + 1];
+			/* Quietly drop the "flags" part of PCI addresses. */
+			if (sc->sc_pacells > 2)
+				rfrom = (rfrom << 32) + range[sc->sc_acells + 2];
 
 			rsize = range[sc->sc_acells + sc->sc_pacells];
 			if (sc->sc_scells == 2)
@@ -473,8 +482,11 @@ simplebus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		     rlen -= rone, range += rone) {
 			/* Extract from and size, so we can see if we fit. */
 			rfrom = range[sc->sc_acells];
-			if (sc->sc_pacells == 2)
+			if (sc->sc_pacells > 1)
 				rfrom = (rfrom << 32) + range[sc->sc_acells + 1];
+			/* Quietly drop the "flags" part of PCI addresses. */
+			if (sc->sc_pacells > 2)
+				rfrom = (rfrom << 32) + range[sc->sc_acells + 2];
 
 			rsize = range[sc->sc_acells + sc->sc_pacells];
 			if (sc->sc_scells == 2)
