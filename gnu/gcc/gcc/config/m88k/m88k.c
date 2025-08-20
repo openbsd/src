@@ -161,6 +161,7 @@ const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER] =
   XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
   XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
   XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+  GENERAL_REGS,
 };
 
 /* Worker function for TARGET_STRUCT_VALUE_RTX.  */
@@ -510,14 +511,15 @@ bool m88k_regno_ok_for_index_p (int regno)
 {
   if (regno >= FIRST_PSEUDO_REGISTER && reg_renumber[regno] >= 0)
     regno = reg_renumber[regno];
-  return (regno != 0 && regno < FIRST_EXTENDED_REGISTER);
+  return ((regno != 0 && regno < FIRST_EXTENDED_REGISTER)
+	  || regno == FRAME_POINTER_REGNUM);
 }
 
 bool m88k_regno_ok_for_base_p (int regno)
 {
   if (regno >= FIRST_PSEUDO_REGISTER && reg_renumber[regno] >= 0)
     regno = reg_renumber[regno];
-  return (regno < FIRST_EXTENDED_REGISTER);
+  return (regno < FIRST_EXTENDED_REGISTER || regno == FRAME_POINTER_REGNUM);
 }
 
 /* The macros REG_OK_FOR..._P (now functions below) assume that the arg
@@ -1171,11 +1173,11 @@ m88k_layout_frame (void)
      information.  Otherwise, simply save the FP if it is used as
      a preserve register.  */
   if (frame_pointer_needed)
-    save_regs[FRAME_POINTER_REGNUM] = save_regs[1] = 1;
+    save_regs[HARD_FRAME_POINTER_REGNUM] = save_regs[1] = 1;
   else
     {
-      if (regs_ever_live[FRAME_POINTER_REGNUM])
-	save_regs[FRAME_POINTER_REGNUM] = 1;
+      if (regs_ever_live[HARD_FRAME_POINTER_REGNUM])
+	save_regs[HARD_FRAME_POINTER_REGNUM] = 1;
       /* If there is a call, r1 needs to be saved as well.  */
       if (regs_ever_live[1])
 	save_regs[1] = 1;
@@ -1191,7 +1193,7 @@ m88k_layout_frame (void)
       }
 
   /* Figure out which normal register(s) needs to be saved.  */
-  for (regno = 2; regno < FRAME_POINTER_REGNUM; regno++)
+  for (regno = 2; regno < HARD_FRAME_POINTER_REGNUM; regno++)
     if (regs_ever_live[regno] && ! call_used_regs[regno])
       {
 	save_regs[regno] = 1;
@@ -1200,10 +1202,10 @@ m88k_layout_frame (void)
 
   /* Achieve greatest use of double memory ops.  Either we end up saving
      r30 or we use that slot to align the registers we do save.  */
-  if (nregs >= 2 && save_regs[1] && !save_regs[FRAME_POINTER_REGNUM])
+  if (nregs >= 2 && save_regs[1] && !save_regs[HARD_FRAME_POINTER_REGNUM])
     sp_size += 4;
 
-  nregs += save_regs[1] + save_regs[FRAME_POINTER_REGNUM];
+  nregs += save_regs[1] + save_regs[HARD_FRAME_POINTER_REGNUM];
   /* if we need to align extended registers, add a word */
   if (nxregs > 0 && (nregs & 1) != 0)
     sp_size +=4;
@@ -1242,11 +1244,14 @@ m88k_initial_elimination_offset (int from, int to)
   switch (from)
     {
     case FRAME_POINTER_REGNUM:
-      return m88k_fp_offset;
+      if (to == HARD_FRAME_POINTER_REGNUM)
+	return 0;
+      else /* to == STACK_POINTER_REGNUM */
+	return m88k_fp_offset;
       break;
 
     case ARG_POINTER_REGNUM:
-      if (to == FRAME_POINTER_REGNUM)
+      if (to == HARD_FRAME_POINTER_REGNUM)
        return m88k_stack_size - m88k_fp_offset;
       else /* to == STACK_POINTER_REGNUM */
        return m88k_stack_size;
@@ -1299,7 +1304,7 @@ m88k_expand_prologue (void)
       /* Be sure to emit this instruction after all register saves, DWARF
 	 information depends on this.  */
       emit_insn (gen_blockage ());
-      insn = emit_add (frame_pointer_rtx, stack_pointer_rtx, m88k_fp_offset);
+      insn = emit_add (hard_frame_pointer_rtx, stack_pointer_rtx, m88k_fp_offset);
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 
@@ -1339,7 +1344,7 @@ m88k_expand_epilogue (void)
   if (frame_pointer_needed)
     {
       emit_insn (gen_blockage ());
-      emit_add (stack_pointer_rtx, frame_pointer_rtx, -m88k_fp_offset);
+      emit_add (stack_pointer_rtx, hard_frame_pointer_rtx, -m88k_fp_offset);
     }
 
   if (nregs || nxregs)
@@ -1399,7 +1404,7 @@ preserve_registers (int base, int store_p)
     {
       /* An extra word is given in this case to make best use of double
 	 memory ops.  */
-      if (nregs > 2 && !save_regs[FRAME_POINTER_REGNUM])
+      if (nregs > 2 && !save_regs[HARD_FRAME_POINTER_REGNUM])
 	offset -= 4;
       /* Do not reload r1 in the epilogue unless really necessary */
       if (store_p || regs_ever_live[1]
@@ -1410,7 +1415,7 @@ preserve_registers (int base, int store_p)
     }
 
   /* Walk the registers to save recording all single memory operations.  */
-  for (regno = FRAME_POINTER_REGNUM; regno > 1; regno--)
+  for (regno = HARD_FRAME_POINTER_REGNUM; regno > 1; regno--)
     if (save_regs[regno])
       {
 	if ((offset & 7) != 4 || (regno & 1) != 1 || !save_regs[regno-1])
@@ -1431,7 +1436,7 @@ preserve_registers (int base, int store_p)
   /* Walk the registers to save recording all double memory operations.
      This avoids a delay in the epilogue (ld.d/ld).  */
   offset = base;
-  for (regno = FRAME_POINTER_REGNUM; regno > 1; regno--)
+  for (regno = HARD_FRAME_POINTER_REGNUM; regno > 1; regno--)
     if (save_regs[regno])
       {
 	if ((offset & 7) != 4 || (regno & 1) != 1 || !save_regs[regno-1])
@@ -1518,7 +1523,7 @@ m88k_debugger_offset (rtx reg, int offset)
     }
 
   /* Put the offset in terms of the CFA (arg pointer).  */
-  if (reg == frame_pointer_rtx)
+  if (reg == hard_frame_pointer_rtx)
     offset += m88k_fp_offset - m88k_stack_size;
   else if (reg == stack_pointer_rtx)
     offset -= m88k_stack_size;
@@ -1590,7 +1595,7 @@ m88k_order_regs_for_local_alloc (void)
     {
       last_alloc_order = regs_ever_live[1];
       memcpy (reg_alloc_order, last_alloc_order ? nonleaf : leaf,
-	    FIRST_PSEUDO_REGISTER * sizeof (int));
+	      FIRST_PSEUDO_REGISTER * sizeof (int));
     }
 }
 
@@ -2344,6 +2349,8 @@ print_operand (FILE *file, rtx x, int code)
 	reg:
 	  if (REGNO (x) == ARG_POINTER_REGNUM)
 	    output_operand_lossage ("operand is r0");
+	  else if (REGNO (x) == FRAME_POINTER_REGNUM)
+	    output_operand_lossage ("operand is framep");
 	  else
 	    asm_fprintf (file, "%R%s", reg_names[REGNO (x)]);
 	}

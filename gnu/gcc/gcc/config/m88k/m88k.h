@@ -223,10 +223,19 @@ extern enum processor_type m88k_cpu;
    even those that are not normally considered general registers.
 
    The m88100 has a General Register File (GRF) of 32 32-bit registers.
-   The m88110 adds an Extended Register File (XRF) of 32 80-bit registers.  */
+   The m88110 adds an Extended Register File (XRF) of 32 80-bit registers.
+
+   There are also two fake registers:
+   - ARG_POINTER_REGNUM abuses r0 (which is always zero and never used
+     as a working register), and will always get eliminated in favour of
+     HARD_FRAME_POINTER_REGNUM or STACK_POINTER_REGNUM.
+   - FRAME_POINTER_REGNUM, which will also always get eliminated.  */
 #define FIRST_EXTENDED_REGISTER 32
 #define LAST_EXTENDED_REGISTER 63
-#define FIRST_PSEUDO_REGISTER 64
+#define FIRST_PSEUDO_REGISTER 65
+
+/* Don't count soft frame pointer.  */
+#define DWARF_FRAME_REGISTERS (FIRST_PSEUDO_REGISTER - 1)
 
 /*  General notes on extended registers, their use and misuse.
 
@@ -357,7 +366,8 @@ extern enum processor_type m88k_cpu;
  {1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 0,			\
   0, 0, 0, 0,  0, 0, 0, 0,   0, 0, 1, 1,  1, 1, 1, 1,			\
   1, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 0, 0,			\
-  0, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 1, 1}
+  0, 0, 0, 0,  0, 0, 0, 0,   0, 0, 0, 0,  0, 0, 1, 1,			\
+  1}
 
 /* 1 for registers not available across function calls.
    These must include the FIXED_REGISTERS and also any
@@ -370,7 +380,8 @@ extern enum processor_type m88k_cpu;
  {1, 1, 1, 1,  1, 1, 1, 1,   1, 1, 1, 1,  1, 1, 0, 0,			\
   0, 0, 0, 0,  0, 0, 0, 0,   0, 0, 1, 1,  1, 1, 1, 1,			\
   1, 1, 1, 1,  1, 1, 1, 1,   1, 1, 1, 1,  1, 1, 1, 1,			\
-  1, 1, 1, 1,  1, 1, 0, 0,   0, 0, 0, 0,  0, 0, 1, 1}
+  1, 1, 1, 1,  1, 1, 0, 0,   0, 0, 0, 0,  0, 0, 1, 1,			\
+  1}
 
 /* Macro to conditionally modify fixed_regs/call_used_regs.  */
 #define CONDITIONAL_REGISTER_USAGE					\
@@ -443,7 +454,8 @@ extern enum processor_type m88k_cpu;
 #define STACK_POINTER_REGNUM 31
 
 /* Base register for access to local variables of the function.  */
-#define FRAME_POINTER_REGNUM 30
+#define FRAME_POINTER_REGNUM 64
+#define HARD_FRAME_POINTER_REGNUM 30
 
 /* Base register for access to arguments of the function.  */
 #define ARG_POINTER_REGNUM 0
@@ -476,7 +488,8 @@ extern enum processor_type m88k_cpu;
   40, 39, 38, 37, 36, 35, 34, 33,					\
   25, 24, 23, 22, 21, 20, 19, 18,					\
   17, 16, 15, 14, 61, 60, 59, 58,					\
-  57, 56, 55, 54, 30, 31,  0, 32}
+  57, 56, 55, 54, 30, 31,  0, 32,					\
+  64}
 
 /* Order for leaf functions.  */
 #define REG_LEAF_ALLOC_ORDER						\
@@ -488,7 +501,8 @@ extern enum processor_type m88k_cpu;
   40, 39, 38, 37, 36, 35, 34, 33,					\
   25, 24, 23, 22, 21, 20, 19, 18,					\
   17, 16, 15, 14, 61, 60, 59, 58,					\
-  57, 56, 55, 54, 30, 31,  1, 32}
+  57, 56, 55, 54, 30, 31,  1, 32,					\
+  64}
 
 /* Switch between the leaf and non-leaf orderings.  The purpose is to avoid
    write-over scoreboard delays between caller and callee.  */
@@ -533,13 +547,13 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    This is an initializer for a vector of HARD_REG_SET
    of length N_REG_CLASSES.  */
 #define REG_CLASS_CONTENTS						\
-  { { 0x00000000, 0x00000000 },						\
-    { 0x00000001, 0x00000000 },						\
-    { 0x00000000, 0xffffffff },						\
-    { 0xfffffffe, 0x00000000 },						\
-    { 0xffffffff, 0x00000000 },						\
-    { 0xfffffffe, 0xffffffff },						\
-    { 0xffffffff, 0xffffffff } }
+  { { 0x00000000, 0x00000000, 0x00000000 },				\
+    { 0x00000001, 0x00000000, 0x00000000 },				\
+    { 0x00000000, 0xffffffff, 0x00000000 },				\
+    { 0xfffffffe, 0x00000000, 0x00000001 },				\
+    { 0xffffffff, 0x00000000, 0x00000001 },				\
+    { 0xfffffffe, 0xffffffff, 0x00000001 },				\
+    { 0xffffffff, 0xffffffff, 0x00000001 } }
 
 /* The same information, inverted:
    Return the class number of the smallest class containing
@@ -774,7 +788,7 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
 #define EPILOGUE_USES(REGNO)						\
 (reload_completed && ((REGNO) == 1					\
 		      || (current_function_profile			\
-			  && (REGNO) == FRAME_POINTER_REGNUM)))
+			  && (REGNO) == HARD_FRAME_POINTER_REGNUM)))
 
 /* Before the prologue, RA is in r1.  */
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (Pmode, 1)
@@ -793,13 +807,15 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
    in order of preference.  */
 #define ELIMINABLE_REGS							\
 {{ ARG_POINTER_REGNUM, STACK_POINTER_REGNUM},				\
- { ARG_POINTER_REGNUM, FRAME_POINTER_REGNUM},				\
- { FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM}}
+ { ARG_POINTER_REGNUM, HARD_FRAME_POINTER_REGNUM},			\
+ { FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM},				\
+ { FRAME_POINTER_REGNUM, HARD_FRAME_POINTER_REGNUM}}
 
 /* Given FROM and TO register numbers, say whether this elimination
    is allowed.  */
 #define CAN_ELIMINATE(FROM, TO)						\
-  (!((FROM) == FRAME_POINTER_REGNUM && FRAME_POINTER_REQUIRED))
+  ((TO) == HARD_FRAME_POINTER_REGNUM					\
+   || ((TO) == STACK_POINTER_REGNUM && !frame_pointer_needed))
 
 /* Define the offset between two registers, one to be eliminated, and the other
    its replacement, at the start of a routine.  */
@@ -1143,7 +1159,8 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
     "x0",  "x1",  "x2",  "x3",  "x4",  "x5",  "x6",  "x7",		\
     "x8",  "x9",  "x10", "x11", "x12", "x13", "x14", "x15",		\
     "x16", "x17", "x18", "x19", "x20", "x21", "x22", "x23",		\
-    "x24", "x25", "x26", "x27", "x28", "x29", "x30", "x31" }
+    "x24", "x25", "x26", "x27", "x28", "x29", "x30", "x31",		\
+    "framep" }
 
 /* Define additional names for use in asm clobbers and asm declarations.
 
