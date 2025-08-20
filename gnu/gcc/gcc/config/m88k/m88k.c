@@ -1265,22 +1265,16 @@ m88k_output_function_epilogue (FILE *stream,
 void
 m88k_expand_epilogue (void)
 {
+  emit_insn (gen_blockage ());
+
   if (frame_pointer_needed)
-    {
-      emit_insn (gen_blockage ());
-      emit_add (stack_pointer_rtx, hard_frame_pointer_rtx, -m88k_hardfp_offset);
-    }
+    emit_add (stack_pointer_rtx, hard_frame_pointer_rtx, -m88k_hardfp_offset);
 
   if (nregs || nxregs)
-    {
-      emit_insn (gen_blockage ());
-      preserve_registers (false);
-    }
+    preserve_registers (false);
 
   if (m88k_stack_size)
-    {
-      emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
-    }
+    emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
 
   emit_insn (gen_indirect_jump (INCOMING_RETURN_ADDR_RTX));
 
