@@ -375,7 +375,7 @@ extern enum processor_type m88k_cpu;
   {									\
     if (! TARGET_88110)							\
       {									\
-	register int i;							\
+	int i;								\
 	  for (i = FIRST_EXTENDED_REGISTER; i < FIRST_PSEUDO_REGISTER;	\
 	       i++)							\
 	    {								\
@@ -955,8 +955,8 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
     }									\
   else if (GET_CODE (X) == PLUS)					\
     {									\
-      register rtx _x0 = XEXP (X, 0);					\
-      register rtx _x1 = XEXP (X, 1);					\
+      rtx _x0 = XEXP (X, 0);						\
+      rtx _x1 = XEXP (X, 1);						\
       if ((flag_pic							\
 	   && _x0 == pic_offset_table_rtx				\
 	   && (flag_pic == 2						\
@@ -971,8 +971,8 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
     }									\
   else if (GET_CODE (X) == LO_SUM)					\
     {									\
-      register rtx _x0 = XEXP (X, 0);					\
-      register rtx _x1 = XEXP (X, 1);					\
+      rtx _x0 = XEXP (X, 0);						\
+      rtx _x1 = XEXP (X, 1);						\
       if (RTX_OK_FOR_BASE_P (_x0)					\
 	  && CONSTANT_P (_x1))						\
 	goto ADDR;							\
@@ -1251,9 +1251,6 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    be clobbered by an asm.  The carry bit in the PSR is now used.  */
 
 #define ADDITIONAL_REGISTER_NAMES	{{"psr", 0}, {"cc", 0}}
-
-/* Alignment for case jump tables. No need to use the default 16 bytes.  */
-#define ADDR_VEC_ALIGN(ADDR_VEC)	UNITS_PER_WORD
 
 /* Epilogue for case labels.  This jump instruction is called by casesi
    to transfer to the appropriate branch instruction within the table.

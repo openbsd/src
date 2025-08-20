@@ -1,7 +1,7 @@
 ;; Register constraints
 
 (define_register_constraint "x" "XRF_REGS"
-  "A register form the 88110 Extended Register File.")
+  "A register from the 88110 Extended Register File.")
 
 ;; Integer constraints
 

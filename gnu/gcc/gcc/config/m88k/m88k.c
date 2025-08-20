@@ -140,10 +140,6 @@ static void m88k_output_file_start (void);
 
 #undef TARGET_ASM_FILE_START
 #define TARGET_ASM_FILE_START m88k_output_file_start
-/* from elfos.h
-#undef TARGET_ASM_FILE_START_FILE_DIRECTIVE
-#define TARGET_ASM_FILE_START_FILE_DIRECTIVE true
-*/
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -431,6 +427,8 @@ legitimize_address (int pic, rtx orig, rtx reg, rtx scratch)
 	{
 	  rtx base;
 
+	  gcc_assert (GET_CODE (XEXP (addr, 0)) == PLUS);
+
 	  if (GET_CODE (XEXP (addr, 0)) == PLUS
 	      && XEXP (XEXP (addr, 0), 0) == pic_offset_table_rtx)
 	    return orig;
@@ -440,8 +438,6 @@ legitimize_address (int pic, rtx orig, rtx reg, rtx scratch)
 	      gcc_assert (!reload_in_progress && !reload_completed);
 	      reg = gen_reg_rtx (Pmode);
 	    }
-
-	  gcc_assert (GET_CODE (XEXP (addr, 0)) == PLUS);
 
 	  base = legitimize_address (1, XEXP (XEXP (addr, 0), 0), reg,
 				     NULL_RTX);

@@ -54,14 +54,14 @@
   (and (match_code "subreg, reg, const_int")
        (match_test "op == const0_rtx || register_operand (op, mode)")))
 
-;; Nonzero if OP is a valid second operand for an arithmetic insn.
+;; Return true if OP is a valid second operand for an arithmetic insn.
 
 (define_predicate "arith_operand"
   (and (match_code "subreg, reg, const_int")
        (match_test "register_operand (op, mode)
 		    || (GET_CODE (op) == CONST_INT && SMALL_INT (op))")))
 
-;; Return true if OP is a  register or 5 bit integer.
+;; Return true if OP is a register or 5 bit integer.
 
 (define_predicate "arith5_operand"
   (and (match_code "subreg, reg, const_int")
@@ -170,7 +170,7 @@
 (define_special_predicate "pc_or_label_ref"
   (match_code "pc, label_ref"))
 
-;; Returns 1 if OP is either a symbol reference or a sum of a symbol
+;; Return true if OP is either a symbol reference or a sum of a symbol
 ;; reference and a constant.
 
 (define_predicate "symbolic_operand"
