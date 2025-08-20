@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.104 2024/06/04 06:51:15 op Exp $	*/
+/*	$OpenBSD: dired.c,v 1.105 2025/08/20 03:10:45 tb Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -60,7 +60,9 @@ static int	 createlist(struct buffer *);
 static void	 redelete(struct buffer *);
 static char 	 *findfname(struct line *, char *);
 
-extern struct keymap_s helpmap, cXmap, metamap;
+extern struct KEYMAPE (2) helpmap;
+extern struct KEYMAPE (6) cXmap;
+extern struct KEYMAPE (8) metamap;
 
 const char DDELCHAR = 'D';
 
