@@ -579,7 +579,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
   ((flag_pic								\
     && GET_CODE (IN) == CONST						\
     && GET_CODE (XEXP (IN, 0)) == PLUS					\
-    && GET_CODE (XEXP (XEXP (IN, 0), 0)) == CONST_INT			\
+    && CONST_INT_P (XEXP (XEXP (IN, 0), 0))				\
     && ! SMALL_INT (XEXP (XEXP (IN, 0), 1))) ? GENERAL_REGS : NO_REGS)
 
 /* Return the maximum number of consecutive registers
@@ -898,7 +898,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 #define CONSTANT_ADDRESS_P(X)						\
   (GET_CODE (X) == LABEL_REF || GET_CODE (X) == SYMBOL_REF		\
-   || GET_CODE (X) == CONST_INT || GET_CODE (X) == HIGH			\
+   || CONST_INT_P (X) || GET_CODE (X) == HIGH				\
    || (GET_CODE (X) == CONST						\
        && ! (flag_pic && pic_address_needs_scratch (X))))
 
@@ -924,26 +924,25 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    pointer and frame pointer changing to REG+SMALLINT.  */
 
 #define LEGITIMATE_INDEX_P(X, MODE)					\
-   ((GET_CODE (X) == CONST_INT						\
-     && SMALL_INT (X))							\
+   ((CONST_INT_P (X) && SMALL_INT (X))					\
     || (REG_P (X)							\
 	&& REG_OK_FOR_INDEX_P (X))					\
     || (GET_CODE (X) == MULT						\
 	&& REG_P (XEXP (X, 0))						\
 	&& REG_OK_FOR_INDEX_P (XEXP (X, 0))				\
-	&& GET_CODE (XEXP (X, 1)) == CONST_INT				\
+	&& CONST_INT_P (XEXP (X, 1))					\
 	&& INTVAL (XEXP (X, 1)) == GET_MODE_SIZE (MODE)))
 
 #define RTX_OK_FOR_BASE_P(X)						\
-  ((GET_CODE (X) == REG && REG_OK_FOR_BASE_P (X))			\
+  ((REG_P (X) && REG_OK_FOR_BASE_P (X))					\
   || (GET_CODE (X) == SUBREG						\
-      && GET_CODE (SUBREG_REG (X)) == REG				\
+      && REG_P (SUBREG_REG (X))						\
       && REG_OK_FOR_BASE_P (SUBREG_REG (X))))
 
 #define RTX_OK_FOR_INDEX_P(X)						\
-  ((GET_CODE (X) == REG && REG_OK_FOR_INDEX_P (X))			\
+  ((REG_P (X) && REG_OK_FOR_INDEX_P (X))				\
   || (GET_CODE (X) == SUBREG						\
-      && GET_CODE (SUBREG_REG (X)) == REG				\
+      && REG_P (SUBREG_REG (X))						\
       && REG_OK_FOR_INDEX_P (SUBREG_REG (X))))
 
 #define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)				\
@@ -977,8 +976,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 	  && CONSTANT_P (_x1))						\
 	goto ADDR;							\
     }									\
-  else if (GET_CODE (X) == CONST_INT					\
-	   && SMALL_INT (X))						\
+  else if (CONST_INT_P (X) && SMALL_INT (X))				\
     goto ADDR;								\
 }
 
@@ -1158,14 +1156,14 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    Account for profiling code output at NOTE_INSN_PROLOGUE_END.
    Account for block profiling code at basic block boundaries.  */
 #define ADJUST_INSN_LENGTH(RTX, LENGTH)					\
-  if (GET_CODE (RTX) == BARRIER						\
+  if (BARRIER_P (RTX)							\
       || (TARGET_SERIALIZE_VOLATILE					\
-	  && GET_CODE (RTX) == INSN					\
+	  && NONJUMP_INSN_P (RTX)					\
 	  && GET_CODE (PATTERN (RTX)) == SET				\
-	  && ((GET_CODE (SET_SRC (PATTERN (RTX))) == MEM		\
+	  && ((MEM_P (SET_SRC (PATTERN (RTX)))				\
 	       && MEM_VOLATILE_P (SET_SRC (PATTERN (RTX)))))))		\
     (LENGTH) += 1;							\
-  else if (GET_CODE (RTX) == NOTE					\
+  else if (NOTE_P (RTX)							\
 	   && NOTE_LINE_NUMBER (RTX) == NOTE_INSN_PROLOGUE_END)		\
     {									\
       if (current_function_profile)					\

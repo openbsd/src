@@ -26,19 +26,18 @@
 {
   if (register_operand (op, mode))
     return true;
-  if (GET_CODE (op) == CONST_INT)
+  if (CONST_INT_P (op))
     return (classify_integer (mode, INTVAL (op)) < m88k_oru_hi16);
   if (GET_MODE (op) != mode)
     return false;
   if (GET_CODE (op) == SUBREG)
     op = SUBREG_REG (op);
-  if (GET_CODE (op) != MEM)
+  if (!MEM_P (op))
     return false;
 
   op = XEXP (op, 0);
   if (GET_CODE (op) == LO_SUM)
-    return (REG_P (XEXP (op, 0))
-	    && symbolic_address_p (XEXP (op, 1)));
+    return (REG_P (XEXP (op, 0)) && symbolic_address_p (XEXP (op, 1)));
   return memory_address_p (mode, op);
 })
 
@@ -59,25 +58,22 @@
 (define_predicate "arith_operand"
   (and (match_code "subreg, reg, const_int")
        (match_test "register_operand (op, mode)
-		    || (GET_CODE (op) == CONST_INT && SMALL_INT (op))")))
+		    || (CONST_INT_P (op) && SMALL_INT (op))")))
 
 ;; Return true if OP is a register or 5 bit integer.
 
 (define_predicate "arith5_operand"
   (and (match_code "subreg, reg, const_int")
        (match_test "register_operand (op, mode)
-		    || (GET_CODE (op) == CONST_INT
-			&& (unsigned) INTVAL (op) < 32)")))
+		    || (CONST_INT_P (op) && (unsigned) INTVAL (op) < 32)")))
 
 (define_predicate "arith32_operand"
   (and (match_code "subreg, reg, const_int")
-       (match_test "register_operand (op, mode)
-		    || GET_CODE (op) == CONST_INT")))
+       (match_test "register_operand (op, mode) || CONST_INT_P (op)")))
 
 (define_predicate "arith64_operand"
   (and (match_code "subreg, reg, const_int")
-       (match_test "register_operand (op, mode)
-		    || GET_CODE (op) == CONST_INT")))
+       (match_test "register_operand (op, mode) || CONST_INT_P (op)")))
 
 (define_predicate "int5_operand"
   (and (match_code "const_int")
@@ -92,7 +88,7 @@
 (define_predicate "add_operand"
   (and (match_code "subreg, reg, const_int")
        (match_test "register_operand (op, mode)
-		    || (GET_CODE (op) == CONST_INT && ADD_INT (op))")))
+		    || (CONST_INT_P (op) && ADD_INT (op))")))
 
 (define_predicate "reg_or_bbx_mask_operand"
   (match_code "subreg, reg, const_int")
@@ -100,7 +96,7 @@
   int value;
   if (register_operand (op, mode))
     return true;
-  if (GET_CODE (op) != CONST_INT)
+  if (!CONST_INT_P (op))
     return false;
 
   value = INTVAL (op);

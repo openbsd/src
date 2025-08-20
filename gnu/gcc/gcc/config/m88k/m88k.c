@@ -240,8 +240,7 @@ output_load_const_int (enum machine_mode mode, rtx *operands)
       "or.u %0,%#r0,%X1\n\tor %0,%0,%x1",
     };
 
-  gcc_assert (REG_P (operands[0])
-	      && GET_CODE (operands[1]) == CONST_INT);
+  gcc_assert (REG_P (operands[0]) && CONST_INT_P (operands[1]));
   return patterns[classify_integer (mode, INTVAL (operands[1]))];
 }
 
@@ -322,17 +321,17 @@ emit_move_sequence (rtx *operands, enum machine_mode mode, rtx scratch)
   if (register_operand (operand0, mode))
     {
       if (register_operand (operand1, mode)
-	  || (GET_CODE (operand1) == CONST_INT && SMALL_INT (operand1))
+	  || (CONST_INT_P (operand1) && SMALL_INT (operand1))
 	  || GET_CODE (operand1) == HIGH
 	  /* Only `general_operands' can come here, so MEM is ok.  */
-	  || GET_CODE (operand1) == MEM)
+	  || MEM_P (operand1))
 	{
 	  /* Run this case quickly.  */
 	  emit_insn (gen_rtx_SET (VOIDmode, operand0, operand1));
 	  return 1;
 	}
     }
-  else if (GET_CODE (operand0) == MEM)
+  else if (MEM_P (operand0))
     {
       if (register_operand (operand1, mode)
 	  || (operand1 == const0_rtx && GET_MODE_SIZE (mode) <= UNITS_PER_WORD))
@@ -351,8 +350,7 @@ emit_move_sequence (rtx *operands, enum machine_mode mode, rtx scratch)
   /* Simplify the source if we need to.  */
   if (GET_CODE (operand1) != HIGH && immediate_operand (operand1, mode))
     {
-      if (GET_CODE (operand1) != CONST_INT
-	  && GET_CODE (operand1) != CONST_DOUBLE)
+      if (!CONST_INT_P (operand1) && GET_CODE (operand1) != CONST_DOUBLE)
 	{
 	  rtx temp = ((reload_in_progress || reload_completed)
 		      ? operand0 : NULL_RTX);
@@ -379,7 +377,7 @@ emit_move_sequence (rtx *operands, enum machine_mode mode, rtx scratch)
 rtx
 legitimize_address (int pic, rtx orig, rtx reg, rtx scratch)
 {
-  rtx addr = (GET_CODE (orig) == MEM ? XEXP (orig, 0) : orig);
+  rtx addr = MEM_P (orig) ? XEXP (orig, 0) : orig;
   rtx new = orig;
   rtx temp, insn;
 
@@ -444,7 +442,7 @@ legitimize_address (int pic, rtx orig, rtx reg, rtx scratch)
 	  addr = legitimize_address (1, XEXP (XEXP (addr, 0), 1),
 				     base == reg ? NULL_RTX : reg, NULL_RTX);
 
-	  if (GET_CODE (addr) == CONST_INT)
+	  if (CONST_INT_P (addr))
 	    {
 	      if (ADD_INT (addr))
 		return plus_constant (base, INTVAL (addr));
@@ -480,7 +478,7 @@ legitimize_address (int pic, rtx orig, rtx reg, rtx scratch)
       new = gen_rtx_LO_SUM (SImode, reg, addr);
     }
 
-  if (GET_CODE (orig) == MEM)
+  if (MEM_P (orig))
     {
       new = gen_rtx_MEM (GET_MODE (orig), new);
       MEM_COPY_ATTRIBUTES (new, orig);
@@ -512,8 +510,8 @@ expand_block_move (rtx *operands)
 {
   rtx dest, src;
   int align = INTVAL (operands[3]);
-  int constp = (GET_CODE (operands[2]) == CONST_INT);
-  int bytes = (constp ? INTVAL (operands[2]) : 0);
+  int constp = CONST_INT_P (operands[2]);
+  int bytes = constp ? INTVAL (operands[2]) : 0;
 
   if (constp && bytes <= 0)
     return;
@@ -694,7 +692,7 @@ output_call (rtx operands[], rtx addr)
 
       /* The address of interior insns is not computed, so use the sequence.  */
       jump = XVECEXP (final_sequence, 0, 1);
-      if (GET_CODE (jump) == JUMP_INSN)
+      if (JUMP_P (jump))
 	{
 	  rtx dest = XEXP (SET_SRC (PATTERN (jump)), 0);
 	  rtx seq_insn = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
@@ -834,7 +832,7 @@ legitimize_operand (rtx op, enum machine_mode mode)
     } s2;
   } u;
 
-  if (GET_CODE (op) == REG || mode != DFmode)
+  if (REG_P (op) || mode != DFmode)
     return op;
 
   if (GET_CODE (op) == CONST_DOUBLE)
@@ -870,7 +868,7 @@ symbolic_address_p (rtx op)
       op = XEXP (op, 0);
       return ((GET_CODE (XEXP (op, 0)) == SYMBOL_REF
 	       || GET_CODE (XEXP (op, 0)) == LABEL_REF)
-	      && GET_CODE (XEXP (op, 1)) == CONST_INT);
+	      && CONST_INT_P (XEXP (op, 1)));
 
     default:
       return false;
@@ -1924,7 +1922,7 @@ m88k_emit_bcnd (enum rtx_code op, rtx label)
       rtx reg, constant;
       int value;
 
-      if (GET_CODE (m88k_compare_op1) == CONST_INT)
+      if (CONST_INT_P (m88k_compare_op1))
 	{
 	  reg = force_reg (SImode, m88k_compare_op0);
 	  constant = m88k_compare_op1;
@@ -2246,7 +2244,7 @@ print_operand_address (FILE *file, rtx addr)
     case PLUS:
       reg0 = XEXP (addr, 0);
       reg1 = XEXP (addr, 1);
-      if (GET_CODE (reg0) == MULT || GET_CODE (reg0) == CONST_INT)
+      if (GET_CODE (reg0) == MULT || CONST_INT_P (reg0))
 	{
 	  rtx tmp = reg0;
 	  reg0 = reg1;
@@ -2262,7 +2260,7 @@ print_operand_address (FILE *file, rtx addr)
 	    asm_fprintf (file, "%R%s,%R%s",
 			 reg_names [REGNO (reg0)], reg_names [REGNO (reg1)]);
 
-	  else if (GET_CODE (reg1) == CONST_INT)
+	  else if (CONST_INT_P (reg1))
 	    asm_fprintf (file, "%R%s,%d",
 			 reg_names [REGNO (reg0)], INTVAL (reg1));
 
@@ -2326,7 +2324,7 @@ pic_address_needs_scratch (rtx x)
       if (GET_CODE (x) == PLUS)
 	{
 	  if (GET_CODE (XEXP (x, 0)) == SYMBOL_REF
-	      && GET_CODE (XEXP (x, 1)) == CONST_INT
+	      && CONST_INT_P (XEXP (x, 1))
 	      && ! ADD_INT (XEXP (x, 1)))
 	    return true;
 	}
