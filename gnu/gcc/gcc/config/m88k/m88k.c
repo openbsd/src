@@ -143,6 +143,26 @@ static void m88k_output_file_start (void);
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
+const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER] =
+{
+  AP_REG, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  GENERAL_REGS, GENERAL_REGS, GENERAL_REGS, GENERAL_REGS,
+  XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+  XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+  XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+  XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+  XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+  XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+  XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+  XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
+};
+
 /* Worker function for TARGET_STRUCT_VALUE_RTX.  */
 
 static rtx
@@ -970,7 +990,7 @@ static void emit_ldst (int, int, enum machine_mode, int);
 
 static int  nregs;
 static int  nxregs;
-static char save_regs[FIRST_PSEUDO_REGISTER];
+static char save_regs[LAST_EXTENDED_REGISTER + 1];
 static int  frame_laid_out;
 
 #define STACK_UNIT_BOUNDARY (STACK_BOUNDARY / BITS_PER_UNIT)
@@ -1023,7 +1043,7 @@ m88k_layout_frame (void)
     }
 
   /* Figure out which extended register(s) needs to be saved.  */
-  for (regno = FIRST_EXTENDED_REGISTER + 1; regno < FIRST_PSEUDO_REGISTER;
+  for (regno = FIRST_EXTENDED_REGISTER + 1; regno <= LAST_EXTENDED_REGISTER;
        regno++)
     if (regs_ever_live[regno] && ! call_used_regs[regno])
       {
@@ -1228,7 +1248,7 @@ preserve_registers (int base, int store_p)
     int regno;
     int nregs;
     int offset;
-  } mem_op[FIRST_PSEUDO_REGISTER];
+  } mem_op[LAST_EXTENDED_REGISTER + 1];
   struct mem_op *mo_ptr = mem_op;
 
   /* The 88open OCS mandates that preserved registers be stored in
@@ -1293,8 +1313,7 @@ preserve_registers (int base, int store_p)
   /* Walk the extended registers to record all memory operations.  */
   /*  Be sure the offset is double word aligned.  */
   offset = (offset - 1) & ~7;
-  for (regno = FIRST_PSEUDO_REGISTER - 1; regno > FIRST_EXTENDED_REGISTER;
-       regno--)
+  for (regno = LAST_EXTENDED_REGISTER; regno > FIRST_EXTENDED_REGISTER; regno--)
     if (save_regs[regno])
       {
 	mo_ptr->nregs = 2;

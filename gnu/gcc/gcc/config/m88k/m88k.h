@@ -216,6 +216,7 @@ extern enum processor_type m88k_cpu;
 #undef REGISTER_PREFIX
 
 /* Number of actual hardware registers.
+
    The hardware registers are assigned numbers for the compiler
    from 0 to just below FIRST_PSEUDO_REGISTER.
    All registers that the compiler knows about must be given numbers,
@@ -223,8 +224,9 @@ extern enum processor_type m88k_cpu;
 
    The m88100 has a General Register File (GRF) of 32 32-bit registers.
    The m88110 adds an Extended Register File (XRF) of 32 80-bit registers.  */
-#define FIRST_PSEUDO_REGISTER 64
 #define FIRST_EXTENDED_REGISTER 32
+#define LAST_EXTENDED_REGISTER 63
+#define FIRST_PSEUDO_REGISTER 64
 
 /*  General notes on extended registers, their use and misuse.
 
@@ -376,7 +378,7 @@ extern enum processor_type m88k_cpu;
     if (! TARGET_88110)							\
       {									\
 	int i;								\
-	  for (i = FIRST_EXTENDED_REGISTER; i < FIRST_PSEUDO_REGISTER;	\
+	  for (i = FIRST_EXTENDED_REGISTER; i <= LAST_EXTENDED_REGISTER;\
 	       i++)							\
 	    {								\
 	      fixed_regs[i] = 1;					\
@@ -392,7 +394,7 @@ extern enum processor_type m88k_cpu;
 
 /* True if register is an extended register.  */
 #define XRF_REGNO_P(N)							\
-  ((N) < FIRST_PSEUDO_REGISTER && (N) >= FIRST_EXTENDED_REGISTER)
+  ((N) <= LAST_EXTENDED_REGISTER && (N) >= FIRST_EXTENDED_REGISTER)
  
 /* Return number of consecutive hard regs needed starting at reg REGNO
    to hold something of mode MODE.
@@ -543,8 +545,9 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
    Return the class number of the smallest class containing
    reg number REGNO.  This could be a conditional expression
    or could index an array.  */
-#define REGNO_REG_CLASS(REGNO)						\
-  ((REGNO) ? ((REGNO) < 32 ? GENERAL_REGS : XRF_REGS) : AP_REG)
+extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
+
+#define REGNO_REG_CLASS(REGNO)	m88k_regno_reg_class[(REGNO)]
 
 /* The class value for index registers, and the one for base regs.  */
 #define BASE_REG_CLASS AGRF_REGS
