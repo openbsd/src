@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.74 2025/06/07 15:11:12 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.75 2025/08/20 21:40:34 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -258,6 +258,11 @@ device	smmu
 attach	smmu at fdt with smmu_fdt
 file	arch/arm64/dev/smmu.c			smmu
 file	arch/arm64/dev/smmu_fdt.c		smmu_fdt
+
+# Raspberry Pi RP1
+device	rpone: fdt
+attach	rpone at pci
+file	arch/arm64/dev/rpone.c			rpone
 
 device	rpigpio
 attach	rpigpio at fdt
