@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.212 2025/08/20 12:01:02 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.213 2025/08/20 13:07:39 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -151,6 +151,10 @@ file	dev/fdt/bcmstbgpio.c		bcmstbgpio
 device	bcmstbpinctrl
 attach	bcmstbpinctrl at fdt
 file	dev/fdt/bcmstbpinctrl.c		bcmstbpinctrl
+
+device	bcmstbrescal
+attach	bcmstbrescal at fdt
+file	dev/fdt/bcmstbrescal.c		bcmstbrescal
 
 device	bcmstbreset
 attach	bcmstbreset at fdt

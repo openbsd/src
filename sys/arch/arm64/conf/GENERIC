@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.300 2025/08/20 12:01:02 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.301 2025/08/20 13:07:40 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -243,6 +243,7 @@ bcmsdhost*	at fdt?
 sdmmc*		at bcmsdhost?
 bcmstbgpio*	at fdt? early 1
 bcmstbpinctrl*	at fdt? early 1
+bcmstbrescal*	at fdt? early 1
 bcmstbreset*	at fdt? early 1
 bcmtemp*	at fdt?
 bcmtmon*	at fdt? early 1
