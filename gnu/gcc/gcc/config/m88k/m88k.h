@@ -579,7 +579,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
   ((flag_pic								\
     && GET_CODE (IN) == CONST						\
     && GET_CODE (XEXP (IN, 0)) == PLUS					\
-    && CONST_INT_P (XEXP (XEXP (IN, 0), 0))				\
+    && CONST_INT_P (XEXP (XEXP (IN, 0), 1))				\
     && ! SMALL_INT (XEXP (XEXP (IN, 0), 1))) ? GENERAL_REGS : NO_REGS)
 
 /* Return the maximum number of consecutive registers
