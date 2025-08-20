@@ -617,14 +617,15 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
 #define STACK_GROWS_DOWNWARD
 
 /* Define this if the addresses of local variable slots are at negative
-   offsets from the frame pointer.  */
-/* #define FRAME_GROWS_DOWNWARD */
+   offsets from the (logical) frame pointer.  */
+#define FRAME_GROWS_DOWNWARD 1
 
 /* Offset from the frame pointer to the first local variable slot to be
    allocated. For the m88k, the debugger wants the return address (r1)
    stored at location r30+4, and the previous frame pointer stored at
-   location r30.  */
-#define STARTING_FRAME_OFFSET 8
+   location r30.  But since we use a logical frame pointer, these
+   details are hidden. */
+#define STARTING_FRAME_OFFSET 0
 
 /* If we generate an insn to push BYTES bytes, this says how many the
    stack pointer really advances by.  The m88k has no push instruction.  */
@@ -1225,13 +1226,6 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
 	       reg_names[STACK_POINTER_REGNUM],				\
 	       reg_names[STACK_POINTER_REGNUM],				\
 	       (STACK_BOUNDARY / BITS_PER_UNIT))
-
-/* Macros for debug information */
-#define DEBUGGER_AUTO_OFFSET(X)						\
-  (m88k_debugger_offset (X, 0) + (m88k_stack_size - m88k_fp_offset))
-
-#define DEBUGGER_ARG_OFFSET(OFFSET, X)					\
-  (m88k_debugger_offset (X, OFFSET) + (m88k_stack_size - m88k_fp_offset))
 
 /* Jump tables consist of branch instructions and should be output in
    the text section.  When we use a table of addresses, we explicitly

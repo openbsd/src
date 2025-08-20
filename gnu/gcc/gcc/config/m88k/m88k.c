@@ -53,7 +53,8 @@ const char *m88k_register_prefix = "";
 #endif
 char m88k_volatile_code;
 
-int m88k_fp_offset	= 0;	/* offset of frame pointer if used */
+int m88k_hardfp_offset	= 0;	/* offset of frame pointer if used */
+int m88k_frame_size	= 0;	/* size of frame */
 int m88k_stack_size	= 0;	/* size of allocated stack (including frame) */
 int m88k_case_index;
 
@@ -603,6 +604,16 @@ bool m88k_legitimate_address_p (enum machine_mode mode, rtx x, int strict)
 	return true;
       if (rtx_ok_for_base_p (x1, strict) && legitimate_index_p (x0, mode, strict))
 	return true;
+      /* Before reload (strict == 0), also allow stack accesses. With the
+	 frame going downwards, local variables are at negative offsets
+	 from the logical stack pointer, and thus satisfy
+	 rtx_ok_for_base_p (x0) but not legitimate_index_p (x1) above.  */
+      if (!strict
+	  && (x0 == virtual_stack_vars_rtx
+	      || x0 == frame_pointer_rtx
+	      || x0 == arg_pointer_rtx)
+	  && CONST_INT_P (x1))
+	return true;
     }
   else if (GET_CODE (x) == LO_SUM)
     {
@@ -1060,39 +1071,8 @@ m88k_output_file_start (void)
 
    The prologue is responsible for setting up the stack frame,
    initializing the frame pointer register, saving registers that must be
-   saved, and allocating SIZE additional bytes of storage for the
-   local variables.  SIZE is an integer.  FILE is a stdio
-   stream to which the assembler code should be output.
-
-   The label for the beginning of the function need not be output by this
-   macro.  That has already been done when the macro is run.
-
-   To determine which registers to save, the macro can refer to the array
-   `regs_ever_live': element R is nonzero if hard register
-   R is used anywhere within the function.  This implies the
-   function prologue should save register R, but not if it is one
-   of the call-used registers.
-
-   On machines where functions may or may not have frame-pointers, the
-   function entry code must vary accordingly; it must set up the frame
-   pointer if one is wanted, and not otherwise.  To determine whether a
-   frame pointer is in wanted, the macro can refer to the variable
-   `frame_pointer_needed'.  The variable's value will be 1 at run
-   time in a function that needs a frame pointer.
-
-   On machines where an argument may be passed partly in registers and
-   partly in memory, this macro must examine the variable
-   `current_function_pretend_args_size', and allocate that many bytes
-   of uninitialized space on the stack just underneath the first argument
-   arriving on the stack.  (This may not be at the very end of the stack,
-   if the calling sequence has pushed anything else since pushing the stack
-   arguments.  But usually, on such machines, nothing else has been pushed
-   yet, because the function prologue itself does all the pushing.)
-
-   If `ACCUMULATE_OUTGOING_ARGS' is defined, the variable
-   `current_function_outgoing_args_size' contains the size in bytes
-   required for the outgoing arguments.  This macro must add that
-   amount of uninitialized space to very bottom of the stack.
+   saved, and allocating the required bytes of storage for the
+   local variables.
 
    The stack frame we use looks like this:
 
@@ -1101,13 +1081,13 @@ m88k_output_file_start (void)
         |                caller's frame                |
         |==============================================|
         |     [caller's outgoing memory arguments]     |
-  sp -> |==============================================| <- ap
+  sp -> |==============================================| <- ap, logical fp
         |            [local variable space]            |
         |----------------------------------------------|
         |            [return address (r1)]             |
         |----------------------------------------------|
         |        [previous frame pointer (r30)]        |
-        |==============================================| <- fp
+        |==============================================| <- hardware fp (r30)
         |       [preserved registers (r25..r14)]       |
         |----------------------------------------------|
         |       [preserved registers (x29..x22)]       |
@@ -1115,18 +1095,12 @@ m88k_output_file_start (void)
         |    [dynamically allocated space (alloca)]    |
         |==============================================|
         |     [callee's outgoing memory arguments]     |
-        |==============================================| <- sp
+        |==============================================| <- sp (r31)
 
-  Notes:
-
-  r1 and r30 must be saved if debugging.
-
-  fp (if present) is located two words down from the local
-  variable space.
   */
 
 static rtx emit_add (rtx, rtx, int);
-static void preserve_registers (int, int);
+static void preserve_registers (bool);
 static void emit_ldst (int, int, enum machine_mode, int);
 
 static int  nregs;
@@ -1134,9 +1108,12 @@ static int  nxregs;
 static char save_regs[LAST_EXTENDED_REGISTER + 1];
 static int  frame_laid_out;
 
+/* Round to the next highest integer that meets the alignment.  */
+#define CEIL_ROUND(VALUE,ALIGN)	(((VALUE) + (ALIGN) - 1) & ~((ALIGN)- 1))
+
 #define STACK_UNIT_BOUNDARY (STACK_BOUNDARY / BITS_PER_UNIT)
-#define ROUND_CALL_BLOCK_SIZE(BYTES) \
-  (((BYTES) + (STACK_UNIT_BOUNDARY - 1)) & ~(STACK_UNIT_BOUNDARY - 1))
+#define ROUND_CALL_BLOCK_SIZE(BYTES) CEIL_ROUND(BYTES, STACK_UNIT_BOUNDARY)
+
 
 /* Establish the position of the FP relative to the SP.  This is done
    either during output_function_prologue() or by
@@ -1145,7 +1122,7 @@ static int  frame_laid_out;
 static void
 m88k_layout_frame (void)
 {
-  int regno, sp_size, frame_size;
+  int regno, sp_size;
 
   if (frame_laid_out && reload_completed)
     return;
@@ -1153,8 +1130,9 @@ m88k_layout_frame (void)
   frame_laid_out = 1;
 
   memset ((char *) &save_regs[0], 0, sizeof (save_regs));
-  sp_size = nregs = nxregs = 0;
-  frame_size = get_frame_size ();
+  nregs = nxregs = 0;
+  sp_size = CEIL_ROUND(current_function_outgoing_args_size, 2 * UNITS_PER_WORD);
+  m88k_frame_size = 0;
 
   /* Profiling requires a stack frame.  */
   if (current_function_profile)
@@ -1200,41 +1178,26 @@ m88k_layout_frame (void)
 	nregs++;
       }
 
-  /* Achieve greatest use of double memory ops.  Either we end up saving
-     r30 or we use that slot to align the registers we do save.  */
-  if (nregs >= 2 && save_regs[1] && !save_regs[HARD_FRAME_POINTER_REGNUM])
-    sp_size += 4;
-
-  nregs += save_regs[1] + save_regs[HARD_FRAME_POINTER_REGNUM];
-  /* if we need to align extended registers, add a word */
+  /* If we need to align extended registers, add a word.  */
   if (nxregs > 0 && (nregs & 1) != 0)
     sp_size +=4;
   sp_size += 4 * nregs;
   sp_size += 8 * nxregs;
-  sp_size += current_function_outgoing_args_size;
 
   /* The first two saved registers are placed above the new frame pointer
-     if any.  In the only case this matters, they are r1 and r30. */
-  if (frame_pointer_needed || sp_size)
-    m88k_fp_offset = ROUND_CALL_BLOCK_SIZE (sp_size - STARTING_FRAME_OFFSET);
-  else
-    m88k_fp_offset = -STARTING_FRAME_OFFSET;
-  m88k_stack_size = m88k_fp_offset + STARTING_FRAME_OFFSET;
+     if any. Then, local variables are placed on top of it, with the end
+     of local variables aligned to a stack boundary. */
+  if (save_regs[1] || save_regs[HARD_FRAME_POINTER_REGNUM])
+    {
+      nregs += save_regs[1] + save_regs[HARD_FRAME_POINTER_REGNUM];
+      m88k_frame_size = 8;
+    }
+  m88k_frame_size = ROUND_CALL_BLOCK_SIZE (m88k_frame_size + get_frame_size ());
 
-  /* First, combine m88k_stack_size and size.  If m88k_stack_size is
-     nonzero, align the frame size to 8 mod 16; otherwise align the
-     frame size to 0 mod 16.  (If stacks are 8 byte aligned, this ends
-     up as a NOP).  */
-  {
-    int need
-      = ((m88k_stack_size ? STACK_UNIT_BOUNDARY - STARTING_FRAME_OFFSET : 0)
-	 - (frame_size % STACK_UNIT_BOUNDARY));
-    if (need < 0)
-      need += STACK_UNIT_BOUNDARY;
-    m88k_stack_size
-      = ROUND_CALL_BLOCK_SIZE (m88k_stack_size + frame_size + need
-			       + current_function_pretend_args_size);
-  }
+  m88k_hardfp_offset = ROUND_CALL_BLOCK_SIZE (sp_size);
+  m88k_stack_size
+    = m88k_hardfp_offset + m88k_frame_size
+      + ROUND_CALL_BLOCK_SIZE (current_function_pretend_args_size);
 }
 
 int
@@ -1245,14 +1208,14 @@ m88k_initial_elimination_offset (int from, int to)
     {
     case FRAME_POINTER_REGNUM:
       if (to == HARD_FRAME_POINTER_REGNUM)
-	return 0;
+	return m88k_frame_size;
       else /* to == STACK_POINTER_REGNUM */
-	return m88k_fp_offset;
+	return m88k_frame_size + m88k_hardfp_offset;
       break;
 
-    case ARG_POINTER_REGNUM:
+    case ARG_POINTER_REGNUM: // MIOD maybe - current_function_pretend_args_size?
       if (to == HARD_FRAME_POINTER_REGNUM)
-       return m88k_stack_size - m88k_fp_offset;
+       return m88k_stack_size - m88k_hardfp_offset;
       else /* to == STACK_POINTER_REGNUM */
        return m88k_stack_size;
       break;
@@ -1297,14 +1260,17 @@ m88k_expand_prologue (void)
     }
 
   if (nregs || nxregs)
-    preserve_registers (m88k_fp_offset + 4, 1);
-
-  if (frame_pointer_needed)
     {
+      preserve_registers (true);
       /* Be sure to emit this instruction after all register saves, DWARF
 	 information depends on this.  */
       emit_insn (gen_blockage ());
-      insn = emit_add (hard_frame_pointer_rtx, stack_pointer_rtx, m88k_fp_offset);
+    }
+
+  if (frame_pointer_needed)
+    {
+      insn
+	= emit_add (hard_frame_pointer_rtx, stack_pointer_rtx, m88k_hardfp_offset);
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 
@@ -1344,13 +1310,14 @@ m88k_expand_epilogue (void)
   if (frame_pointer_needed)
     {
       emit_insn (gen_blockage ());
-      emit_add (stack_pointer_rtx, hard_frame_pointer_rtx, -m88k_fp_offset);
+      emit_add (stack_pointer_rtx, hard_frame_pointer_rtx, -m88k_hardfp_offset);
     }
 
   if (nregs || nxregs)
-    preserve_registers (m88k_fp_offset + 4, 0);
-
-  emit_insn (gen_blockage ());
+    {
+      emit_insn (gen_blockage ());
+      preserve_registers (false);
+    }
 
   if (m88k_stack_size)
     {
@@ -1380,102 +1347,68 @@ emit_add (rtx dstreg, rtx srcreg, int amount)
 							    incr));
 }
 
-/* Save/restore the preserve registers.  base is the highest offset from
-   r31 at which a register is stored.  store_p is true if stores are to
+/* Save/restore the preserve registers.  store_p is true if stores are to
    be done; otherwise loads.  */
 
 static void
-preserve_registers (int base, int store_p)
+preserve_registers (bool store_p)
 {
   int regno, offset;
-  struct mem_op {
-    int regno;
-    int nregs;
-    int offset;
-  } mem_op[LAST_EXTENDED_REGISTER + 1];
-  struct mem_op *mo_ptr = mem_op;
 
   /* The 88open OCS mandates that preserved registers be stored in
      increasing order.  For compatibility with current practice,
-     the order is r1, r30, then the preserve registers.  */
+     the order is r1, r30, then the preserve registers.
+     Note that we are not strictly conforming, as we are storing
+     register pairs (e.g. r24:r25) before individual registers.  */
 
-  offset = base;
   if (save_regs[1])
     {
-      /* An extra word is given in this case to make best use of double
-	 memory ops.  */
-      if (nregs > 2 && !save_regs[HARD_FRAME_POINTER_REGNUM])
-	offset -= 4;
       /* Do not reload r1 in the epilogue unless really necessary */
       if (store_p || regs_ever_live[1]
 	  || (flag_pic && save_regs[PIC_OFFSET_TABLE_REGNUM]))
-	emit_ldst (store_p, 1, SImode, offset);
-      offset -= 4;
-      base = offset;
+	emit_ldst (store_p, 1, SImode, m88k_hardfp_offset);
     }
 
-  /* Walk the registers to save recording all single memory operations.  */
-  for (regno = HARD_FRAME_POINTER_REGNUM; regno > 1; regno--)
-    if (save_regs[regno])
-      {
-	if ((offset & 7) != 4 || (regno & 1) != 1 || !save_regs[regno-1])
-	  {
-	    mo_ptr->nregs = 1;
-	    mo_ptr->regno = regno;
-	    mo_ptr->offset = offset;
-	    mo_ptr++;
-	    offset -= 4;
-	  }
-	else
-	  {
-	    regno--;
-	    offset -= 2*4;
-	  }
-      }
-
-  /* Walk the registers to save recording all double memory operations.
-     This avoids a delay in the epilogue (ld.d/ld).  */
-  offset = base;
-  for (regno = HARD_FRAME_POINTER_REGNUM; regno > 1; regno--)
-    if (save_regs[regno])
-      {
-	if ((offset & 7) != 4 || (regno & 1) != 1 || !save_regs[regno-1])
-	  {
-	    offset -= 4;
-	  }
-	else
-	  {
-	    mo_ptr->nregs = 2;
-	    mo_ptr->regno = regno-1;
-	    mo_ptr->offset = offset-4;
-	    mo_ptr++;
-	    regno--;
-	    offset -= 2*4;
-	  }
-      }
-
-  /* Walk the extended registers to record all memory operations.  */
-  /*  Be sure the offset is double word aligned.  */
-  offset = (offset - 1) & ~7;
-  for (regno = LAST_EXTENDED_REGISTER; regno > FIRST_EXTENDED_REGISTER; regno--)
-    if (save_regs[regno])
-      {
-	mo_ptr->nregs = 2;
-	mo_ptr->regno = regno;
-	mo_ptr->offset = offset;
-	mo_ptr++;
-	offset -= 2*4;
-      }
-
-  mo_ptr->regno = 0;
-
-  /* Output the memory operations.  */
-  for (mo_ptr = mem_op; mo_ptr->regno; mo_ptr++)
+  if (save_regs[HARD_FRAME_POINTER_REGNUM])
     {
-      if (mo_ptr->nregs)
-	emit_ldst (store_p, mo_ptr->regno,
-		   (mo_ptr->nregs > 1 ? DImode : SImode),
-		   mo_ptr->offset);
+      emit_ldst (store_p, HARD_FRAME_POINTER_REGNUM, SImode,
+		 m88k_hardfp_offset + 4);
+    }
+
+  offset = CEIL_ROUND(current_function_outgoing_args_size, 2 * UNITS_PER_WORD);
+
+  /* Process all the extended registers. */
+  for (regno = FIRST_EXTENDED_REGISTER; regno <= LAST_EXTENDED_REGISTER;
+       regno++)
+    if (save_regs[regno])
+      {
+	emit_ldst (store_p, regno, DImode, offset);
+	offset += 2*4;
+      }
+
+  /* Process all the register pairs using double memory operations.  */
+  for (regno = 2; regno < HARD_FRAME_POINTER_REGNUM; regno += 2)
+    if (save_regs[regno] && save_regs[regno + 1])
+      {
+	emit_ldst (store_p, regno, DImode, offset);
+	offset += 2*4;
+      }
+
+  /* Process all the remaining registers using single memory operations.  */
+  for (regno = 2; regno < HARD_FRAME_POINTER_REGNUM; regno += 2)
+    {
+      if (save_regs[regno])
+	{
+	  if (save_regs[regno + 1])
+	    continue; /* done earlier */
+	  emit_ldst (store_p, regno, SImode, offset);
+	  offset += 4;
+	}
+      if (save_regs[regno + 1])
+	{
+	  emit_ldst (store_p, regno + 1, SImode, offset);
+	  offset += 4;
+	}
     }
 }
 
@@ -1492,8 +1425,7 @@ emit_ldst (int store_p, int regno, enum machine_mode mode, int offset)
     }
   else
     {
-      /* offset is too large for immediate index must use register */
-
+      /* offset is too large for immediate index, must use register */
       rtx disp = GEN_INT (offset);
       rtx temp = gen_rtx_REG (SImode, TEMP_REGNUM);
       rtx regi = gen_rtx_PLUS (SImode, stack_pointer_rtx, temp);
@@ -1509,28 +1441,6 @@ emit_ldst (int store_p, int regno, enum machine_mode mode, int offset)
     }
   else
     emit_move_insn (reg, mem);
-}
-
-/* Convert the address expression REG to a CFA offset.  */
-
-int
-m88k_debugger_offset (rtx reg, int offset)
-{
-  if (GET_CODE (reg) == PLUS)
-    {
-      offset = INTVAL (XEXP (reg, 1));
-      reg = XEXP (reg, 0);
-    }
-
-  /* Put the offset in terms of the CFA (arg pointer).  */
-  if (reg == hard_frame_pointer_rtx)
-    offset += m88k_fp_offset - m88k_stack_size;
-  else if (reg == stack_pointer_rtx)
-    offset -= m88k_stack_size;
-  else if (reg != arg_pointer_rtx)
-    return 0;
-
-  return offset;
 }
 
 /* Output assembler code to FILE to increment profiler label # LABELNO

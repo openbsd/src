@@ -22,7 +22,6 @@ the Free Software Foundation, 51 Franklin Street, Fifth Floor,
 Boston, MA 02110-1301, USA.  */
 
 #ifdef RTX_CODE
-extern int m88k_debugger_offset (rtx, int);
 extern void m88k_emit_bcnd (enum rtx_code, rtx);
 extern void m88k_emit_trailing_label (rtx);
 extern void expand_block_move (rtx *);
