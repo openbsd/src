@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.28 2023/12/20 15:36:36 otto Exp $ */
+/*	$OpenBSD: util.c,v 1.29 2025/08/20 10:40:21 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Alexander Guy <alexander.guy@andern.org>
@@ -18,6 +18,7 @@
 
 #include <fcntl.h>
 #include <limits.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,15 +74,21 @@ getmonotime(void)
 }
 
 
-void
+int
 d_to_tv(double d, struct timeval *tv)
 {
+	/* this assumes a 64 bit time_t */
+	if (!isfinite(d) || d > (double)LLONG_MAX || d < (double)LLONG_MIN)
+		return (-1);
+
 	tv->tv_sec = d;
 	tv->tv_usec = (d - tv->tv_sec) * 1000000;
 	while (tv->tv_usec < 0) {
 		tv->tv_usec += 1000000;
 		tv->tv_sec -= 1;
 	}
+
+	return (0);
 }
 
 double

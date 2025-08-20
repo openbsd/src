@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.142 2024/11/21 13:38:14 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.143 2025/08/20 10:40:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -410,6 +410,8 @@ dispatch_imsg(struct ntpd_conf *lconf, int argc, char **argv)
 				fatalx("invalid IMSG_ADJTIME received");
 			memcpy(&d, imsg.data, sizeof(d));
 			n = ntpd_adjtime(d);
+			if (n == -1)
+				fatalx("IMSG_ADJTIME with invalid value");
 			imsg_compose(ibuf, IMSG_ADJTIME, 0, 0, -1,
 			     &n, sizeof(n));
 			break;
@@ -474,7 +476,8 @@ ntpd_adjtime(double d)
 		log_info("adjusting local clock by %fs", d);
 	else
 		log_debug("adjusting local clock by %fs", d);
-	d_to_tv(d, &tv);
+	if (d_to_tv(d, &tv) == -1)
+		return (-1);
 	if (adjtime(&tv, &olddelta) == -1)
 		log_warn("adjtime failed");
 	else if (!firstadj && olddelta.tv_sec == 0 && olddelta.tv_usec == 0)
@@ -532,7 +535,10 @@ ntpd_settime(double d)
 		log_warn("gettimeofday");
 		return;
 	}
-	d_to_tv(d, &tv);
+	if (d_to_tv(d, &tv) == -1) {
+		log_warn("ntpd_settime: invalid value");
+		return;
+	}
 	curtime.tv_usec += tv.tv_usec + 1000000;
 	curtime.tv_sec += tv.tv_sec - 1 + (curtime.tv_usec / 1000000);
 	curtime.tv_usec %= 1000000;

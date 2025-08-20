@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.154 2024/05/21 05:00:48 jsg Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.155 2025/08/20 10:40:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -399,7 +399,7 @@ double			 gettime_from_timeval(struct timeval *);
 double			 getoffset(void);
 double			 gettime(void);
 time_t			 getmonotime(void);
-void			 d_to_tv(double, struct timeval *);
+int			 d_to_tv(double, struct timeval *);
 double			 lfp_to_d(struct l_fixedpt);
 struct l_fixedpt	 d_to_lfp(double);
 double			 sfp_to_d(struct s_fixedpt);
