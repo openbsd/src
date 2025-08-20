@@ -315,7 +315,7 @@ emit_move_sequence (rtx *operands, enum machine_mode mode, rtx scratch)
   if (CONSTANT_P (operand1) && flag_pic
       && pic_address_needs_scratch (operand1))
     operands[1] = operand1 = legitimize_address (1, operand1, NULL_RTX,
-						 NULL_RTX);
+						 scratch);
 
   /* Handle most common case first: storing into a register.  */
   if (register_operand (operand0, mode))
