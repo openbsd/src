@@ -1488,6 +1488,8 @@
 ./usr/share/man/man4/bcmsdhost.4
 ./usr/share/man/man4/bcmstbgpio.4
 ./usr/share/man/man4/bcmstbpinctrl.4
+./usr/share/man/man4/bcmstbrescal.4
+./usr/share/man/man4/bcmstbreset.4
 ./usr/share/man/man4/bcmtemp.4
 ./usr/share/man/man4/bcmtmon.4
 ./usr/share/man/man4/bdpmic.4
