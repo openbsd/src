@@ -45,7 +45,6 @@ extern bool symbolic_address_p (rtx);
 extern int condition_value (rtx);
 extern int emit_move_sequence (rtx *, enum machine_mode, rtx);
 extern bool mostly_false_jump (rtx);
-extern bool real_power_of_2_operand (rtx);
 #ifdef TREE_CODE
 extern void m88k_va_start (tree, rtx);
 #endif /* TREE_CODE */

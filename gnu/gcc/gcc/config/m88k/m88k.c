@@ -936,48 +936,6 @@ mostly_false_jump (rtx jump_insn)
   return false;
 }
 
-/* Return true if the operand is a power of two and is a floating
-   point type (to optimize division by power of two into multiplication).  */
-
-bool
-real_power_of_2_operand (rtx op)
-{
-  REAL_VALUE_TYPE d;
-  union {
-    long l[2];
-    struct {				/* IEEE double precision format */
-      unsigned sign	 :  1;
-      unsigned exponent  : 11;
-      unsigned mantissa1 : 20;
-      unsigned mantissa2;
-    } s;
-    struct {				/* IEEE double format to quick check */
-      unsigned sign	 :  1;		/* if it fits in a float */
-      unsigned exponent1 :  4;
-      unsigned exponent2 :  7;
-      unsigned mantissa1 : 20;
-      unsigned mantissa2;
-    } s2;
-  } u;
-
-  if (GET_MODE (op) != DFmode && GET_MODE (op) != SFmode)
-    return false;
-
-  if (GET_CODE (op) != CONST_DOUBLE)
-    return false;
-
-  REAL_VALUE_FROM_CONST_DOUBLE (d, op);
-  REAL_VALUE_TO_TARGET_DOUBLE (d, u.l);
-
-  if (u.s.mantissa1 != 0 || u.s.mantissa2 != 0	/* not a power of two */
-      || u.s.exponent == 0			/* constant 0.0 */
-      || u.s.exponent == 0x7ff			/* NaN */
-      || (u.s2.exponent1 != 0x8 && u.s2.exponent1 != 0x7))
-    return false;				/* const won't fit in float */
-
-  return true;
-}
-
 /* Make OP legitimate for mode MODE.  Currently this only deals with DFmode
    operands, putting them in registers and making CONST_DOUBLE values
    SFmode where possible.  */
@@ -1213,7 +1171,7 @@ m88k_initial_elimination_offset (int from, int to)
 	return m88k_frame_size + m88k_hardfp_offset;
       break;
 
-    case ARG_POINTER_REGNUM: // MIOD maybe - current_function_pretend_args_size?
+    case ARG_POINTER_REGNUM:
       if (to == HARD_FRAME_POINTER_REGNUM)
        return m88k_stack_size - m88k_hardfp_offset;
       else /* to == STACK_POINTER_REGNUM */
