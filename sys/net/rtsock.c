@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.386 2025/07/15 09:55:49 dlg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.387 2025/08/20 03:55:37 dlg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #include <sys/domain.h>
 #include <sys/pool.h>
 #include <sys/protosw.h>
-#include <sys/srp.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -104,8 +103,6 @@ struct walkarg {
 };
 
 void	route_prinit(void);
-void	rcb_ref(void *, void *);
-void	rcb_unref(void *, void *);
 int	route_output(struct mbuf *, struct socket *);
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
 int	route_attach(struct socket *, int, int);
@@ -148,12 +145,13 @@ int		 rt_setsource(unsigned int, const struct sockaddr *);
  * Locks used to protect struct members
  *       I       immutable after creation
  *       s       solock
+ *
+ * Lock order: rtptable.rtp_lk -> solock
  */
 struct rtpcb {
 	struct socket		*rop_socket;		/* [I] */
 
-	SRPL_ENTRY(rtpcb)	rop_list;
-	struct refcnt		rop_refcnt;
+	TAILQ_ENTRY(rtpcb)	rop_list;
 	struct timeout		rop_timeout;
 	unsigned int		rop_msgfilter;		/* [s] */
 	unsigned int		rop_flagfilter;		/* [s] */
@@ -165,8 +163,7 @@ struct rtpcb {
 #define	sotortpcb(so)	((struct rtpcb *)(so)->so_pcb)
 
 struct rtptable {
-	SRPL_HEAD(, rtpcb)	rtp_list;
-	struct srpl_rc		rtp_rc;
+	TAILQ_HEAD(, rtpcb)	rtp_list;
 	struct rwlock		rtp_lk;
 	unsigned int		rtp_count;
 };
@@ -188,27 +185,10 @@ struct rtptable rtptable;
 void
 route_prinit(void)
 {
-	srpl_rc_init(&rtptable.rtp_rc, rcb_ref, rcb_unref, NULL);
 	rw_init(&rtptable.rtp_lk, "rtsock");
-	SRPL_INIT(&rtptable.rtp_list);
+	TAILQ_INIT(&rtptable.rtp_list);
 	pool_init(&rtpcb_pool, sizeof(struct rtpcb), 0,
 	    IPL_SOFTNET, PR_WAITOK, "rtpcb", NULL);
-}
-
-void
-rcb_ref(void *null, void *v)
-{
-	struct rtpcb *rop = v;
-
-	refcnt_take(&rop->rop_refcnt);
-}
-
-void
-rcb_unref(void *null, void *v)
-{
-	struct rtpcb *rop = v;
-
-	refcnt_rele_wake(&rop->rop_refcnt);
 }
 
 int
@@ -216,6 +196,8 @@ route_attach(struct socket *so, int proto, int wait)
 {
 	struct rtpcb	*rop;
 	int		 error;
+
+	soassertlocked(so);
 
 	error = soreserve(so, ROUTESNDQ, ROUTERCVQ);
 	if (error)
@@ -233,7 +215,6 @@ route_attach(struct socket *so, int proto, int wait)
 	/* Init the timeout structure */
 	timeout_set_flags(&rop->rop_timeout, rtm_senddesync_timer, so,
 	    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
-	refcnt_init(&rop->rop_refcnt);
 
 	rop->rop_socket = so;
 	rop->rop_proto = proto;
@@ -243,10 +224,15 @@ route_attach(struct socket *so, int proto, int wait)
 	soisconnected(so);
 	so->so_options |= SO_USELOOPBACK;
 
+	/* Give up solock before taking rtp_lk for the lock ordering. */
+	soref(so); /* Take a ref for the list */
+	sounlock(so);
+
 	rw_enter(&rtptable.rtp_lk, RW_WRITE);
-	SRPL_INSERT_HEAD_LOCKED(&rtptable.rtp_rc, &rtptable.rtp_list, rop,
-	    rop_list);
+	TAILQ_INSERT_TAIL(&rtptable.rtp_list, rop, rop_list);
 	rtptable.rtp_count++;
+
+	solock(so);
 	rw_exit(&rtptable.rtp_lk);
 
 	return (0);
@@ -263,20 +249,19 @@ route_detach(struct socket *so)
 	if (rop == NULL)
 		return (EINVAL);
 
-	rw_enter(&rtptable.rtp_lk, RW_WRITE);
-
-	rtptable.rtp_count--;
-	SRPL_REMOVE_LOCKED(&rtptable.rtp_rc, &rtptable.rtp_list, rop, rtpcb,
-	    rop_list);
-	rw_exit(&rtptable.rtp_lk);
-
+	/* Give up solock before taking rtp_lk for the lock ordering. */
 	sounlock(so);
 
+	rw_enter(&rtptable.rtp_lk, RW_WRITE);
+	rtptable.rtp_count--;
+	TAILQ_REMOVE(&rtptable.rtp_list, rop, rop_list);
+	rw_exit(&rtptable.rtp_lk);
+
 	/* wait for all references to drop */
-	refcnt_finalize(&rop->rop_refcnt, "rtsockrefs");
 	timeout_del_barrier(&rop->rop_timeout);
 
 	solock(so);
+	sorele(so); /* Release the ref the list had */
 
 	so->so_pcb = NULL;
 	KASSERT((so->so_state & SS_NOFDREF) == 0);
@@ -501,7 +486,6 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 	struct rtpcb *rop;
 	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
-	struct srp_ref sr;
 
 	/* ensure that we can access the rtm_type via mtod() */
 	if (m->m_len < offsetof(struct rt_msghdr, rtm_type) + 1) {
@@ -509,7 +493,8 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 		return;
 	}
 
-	SRPL_FOREACH(rop, &sr, &rtptable.rtp_list, rop_list) {
+	rw_enter_read(&rtptable.rtp_lk);
+	TAILQ_FOREACH(rop, &rtptable.rtp_list, rop_list) {
 		/*
 		 * If route socket is bound to an address family only send
 		 * messages that match the address family. Address family
@@ -580,7 +565,7 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 next:
 		sounlock(so);
 	}
-	SRPL_LEAVE(&sr);
+	rw_exit_read(&rtptable.rtp_lk);
 
 	m_freem(m);
 }
