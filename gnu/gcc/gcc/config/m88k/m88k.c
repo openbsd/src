@@ -677,8 +677,15 @@ output_xor (rtx operands[])
 const char *
 output_call (rtx operands[], rtx addr)
 {
+  const char *pattern;
+
   operands[0] = addr;
-  if (final_sequence)
+  pattern = REG_P (addr)
+	    ? "jsr%. %0"
+	    : (flag_pic ? "bsr%. %0#plt" : "bsr%. %0");
+
+  if (final_sequence
+      && ! INSN_ANNULLED_BRANCH_P (XVECEXP (final_sequence, 0, 0)))
     {
       rtx jump;
 
@@ -689,17 +696,11 @@ output_call (rtx operands[], rtx addr)
       jump = XVECEXP (final_sequence, 0, 1);
       if (GET_CODE (jump) == JUMP_INSN)
 	{
-	  const char *last;
 	  rtx dest = XEXP (SET_SRC (PATTERN (jump)), 0);
 	  rtx seq_insn = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
 	  int delta = 4 * (INSN_ADDRESSES (INSN_UID (dest))
 			   - INSN_ADDRESSES (INSN_UID (seq_insn))
 			   - 2);
-
-	  /* Delete the jump.  */
-	  PUT_CODE (jump, NOTE);
-	  NOTE_LINE_NUMBER (jump) = NOTE_INSN_DELETED;
-	  NOTE_SOURCE_FILE (jump) = 0;
 
 	  /* We only do this optimization if -O2, modifying the value of
 	     r1 in the delay slot confuses debuggers and profilers on some
@@ -714,35 +715,30 @@ output_call (rtx operands[], rtx addr)
 	     occurs accessing the delay slot.  So don't use jsr.n form when
 	     jumping thru r1.
 	   */
-	  if (optimize < 2
-	      || ! ADD_INTVAL (delta)
-	      || (REG_P (addr) && REGNO (addr) == 1))
+	  if (optimize >= 2
+	      && ADD_INTVAL (delta)
+	      && (!REG_P (addr) || REGNO (addr) != 1))
 	    {
-	      operands[1] = dest;
-	      return (REG_P (addr)
-		      ? "jsr %0\n\tbr %l1"
-		      : (flag_pic
-			 ? "bsr %0#plt\n\tbr %l1"
-			 : "bsr %0\n\tbr %l1"));
+	      const char *last;
+
+	      /* Delete the jump.  */
+	      PUT_CODE (jump, NOTE);
+	      NOTE_LINE_NUMBER (jump) = NOTE_INSN_DELETED;
+	      NOTE_SOURCE_FILE (jump) = 0;
+	      
+	      /* Output the short branch form.  */
+	      output_asm_insn (pattern, operands);
+	      
+	      last = (delta < 0
+		      ? "subu %#r1,%#r1,.-%l0+4"
+		      : "addu %#r1,%#r1,%l0-.-4");
+	      operands[0] = dest;
+
+	      return last;
 	    }
-
-	  /* Output the short branch form.  */
-	  output_asm_insn ((REG_P (addr)
-			    ? "jsr.n %0"
-			    : (flag_pic ? "bsr.n %0#plt" : "bsr.n %0")),
-			   operands);
-
-	  last = (delta < 0
-		  ? "subu %#r1,%#r1,.-%l0+4"
-		  : "addu %#r1,%#r1,%l0-.-4");
-	  operands[0] = dest;
-
-	  return last;
 	}
     }
-  return (REG_P (addr)
-	  ? "jsr%. %0"
-	  : (flag_pic ? "bsr%. %0#plt" : "bsr%. %0"));
+  return pattern;
 }
 
 /* Return truth value of the statement that this conditional branch is likely
