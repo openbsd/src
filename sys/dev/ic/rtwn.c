@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.60 2025/07/14 23:49:08 jsg Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.61 2025/08/20 14:24:05 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1461,7 +1461,7 @@ rtwn_get_rssi(struct rtwn_softc *sc, int rate, void *physt)
 
 	if (sc->chip & (RTWN_CHIP_88E | RTWN_CHIP_92E))
 		return rtwn_r88e_get_rssi(sc, rate, physt);
-	else if (sc->chip & RTWN_CHIP_88E)
+	else if (sc->chip & RTWN_CHIP_88F)
 		return rtwn_r88f_get_rssi(sc, rate, physt);
 
 	if (rate <= 3) {
