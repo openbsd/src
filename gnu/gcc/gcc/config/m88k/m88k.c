@@ -506,6 +506,145 @@ legitimize_address (int pic, rtx orig, rtx reg, rtx scratch)
   return new;
 }
 
+bool m88k_regno_ok_for_index_p (int regno)
+{
+  if (regno >= FIRST_PSEUDO_REGISTER && reg_renumber[regno] >= 0)
+    regno = reg_renumber[regno];
+  return (regno != 0 && regno < FIRST_EXTENDED_REGISTER);
+}
+
+bool m88k_regno_ok_for_base_p (int regno)
+{
+  if (regno >= FIRST_PSEUDO_REGISTER && reg_renumber[regno] >= 0)
+    regno = reg_renumber[regno];
+  return (regno < FIRST_EXTENDED_REGISTER);
+}
+
+/* The macros REG_OK_FOR..._P (now functions below) assume that the arg
+   is a REG rtx and check its validity for a certain class.
+   We have two alternate definitions for each of them.
+   The usual definition accepts all pseudo regs; the other rejects
+   them unless they have been allocated suitable hard regs.
+   The symbol REG_OK_STRICT causes the latter definition to be used.
+
+   Most source files want to accept pseudo regs in the hope that
+   they will get allocated to the class that the insn wants them to be in.
+   Source files for reload pass need to be strict.
+   After reload, it makes no difference, since pseudo regs have
+   been eliminated by then.  */
+
+/* Nonzero if X is a hard reg (or a pseudo reg if not strict) that can be
+   used as a base reg.  */
+static inline bool reg_ok_for_base_p (rtx x, int strict)
+{
+  int regno = REGNO (x);
+  if (regno >= FIRST_PSEUDO_REGISTER && !strict)
+    return true;
+  return m88k_regno_ok_for_base_p (regno);
+}
+
+/* Nonzero if X is a hard reg (or a pseudo reg if not strict) that can be
+   used as a an index.  */
+static inline bool reg_ok_for_index_p (rtx x, int strict)
+{
+  int regno = REGNO (x);
+  if (regno >= FIRST_PSEUDO_REGISTER && !strict)
+    return true;
+  return m88k_regno_ok_for_index_p (regno);
+}
+
+static inline bool rtx_ok_for_base_p (rtx x, int strict)
+{
+  if (GET_CODE (x) == SUBREG)
+    x = SUBREG_REG (x);
+  return REG_P (x) && reg_ok_for_base_p (x, strict);
+}
+
+static bool legitimate_index_p (rtx x, enum machine_mode mode, int strict)
+{
+  if (CONST_INT_P (x) && SMALL_INT (x))
+    return true;
+  if (REG_P (x) && reg_ok_for_index_p (x, strict))
+    return true;
+  if (GET_CODE (x) == MULT
+      && REG_P (XEXP (x, 0))
+      && reg_ok_for_index_p (XEXP (x, 0), strict)
+      && CONST_INT_P (XEXP (x, 1))
+      && INTVAL (XEXP (x, 1)) == GET_MODE_SIZE (mode))
+    return true;
+
+  return false;
+}
+
+bool m88k_legitimate_address_p (enum machine_mode mode, rtx x, int strict)
+{
+  if (REG_P (x))
+    {
+      if (reg_ok_for_base_p (x, strict))
+	return true;
+    }
+  else if (GET_CODE (x) == PLUS)
+    {
+      rtx x0 = XEXP (x, 0);
+      rtx x1 = XEXP (x, 1);
+      if (flag_pic && x0 == pic_offset_table_rtx)
+	{
+	  if (flag_pic == 2)
+	    {
+	      if (rtx_ok_for_base_p (x1, strict))
+		return true;
+	    }
+	  else if (GET_CODE (x1) == SYMBOL_REF || GET_CODE (x1) == LABEL_REF)
+	    return true;
+	}
+      if (rtx_ok_for_base_p (x0, strict) && legitimate_index_p (x1, mode, strict))
+	return true;
+      if (rtx_ok_for_base_p (x1, strict) && legitimate_index_p (x0, mode, strict))
+	return true;
+    }
+  else if (GET_CODE (x) == LO_SUM)
+    {
+      rtx x0 = XEXP (x, 0);
+      rtx x1 = XEXP (x, 1);
+      if (rtx_ok_for_base_p (x0, strict) && CONSTANT_P (x1))
+	return true;
+    }
+  else if (CONST_INT_P (x) && SMALL_INT (x))
+    return true;
+
+  return false;
+}
+
+/* On the m88000, change REG+N into REG+REG, and REG+(X*Y) into REG+REG.  */
+rtx m88k_legitimize_address (rtx x, enum machine_mode mode)
+{
+  if (GET_CODE (x) == PLUS)
+    {
+      if (CONSTANT_ADDRESS_P (XEXP (x, 1)))
+	x = gen_rtx_PLUS (SImode, XEXP (x, 0),
+			  copy_to_mode_reg (SImode, XEXP (x, 1)));
+      else if (CONSTANT_ADDRESS_P (XEXP (x, 0)))
+	x = gen_rtx_PLUS (SImode, XEXP (x, 1),
+			  copy_to_mode_reg (SImode, XEXP (x, 0)));
+      else if (GET_CODE (XEXP (x, 0)) == MULT)
+	x = gen_rtx_PLUS (SImode, XEXP (x, 1),
+			  force_operand (XEXP (x, 0), 0));
+      else if (GET_CODE (XEXP (x, 1)) == MULT)
+	x = gen_rtx_PLUS (SImode, XEXP (x, 0),
+			  force_operand (XEXP (x, 1), 0));
+      else if (GET_CODE (XEXP (x, 0)) == PLUS)
+	x = gen_rtx_PLUS (Pmode, force_operand (XEXP (x, 0), NULL_RTX),
+			  XEXP (x, 1));
+      else if (GET_CODE (XEXP (x, 1)) == PLUS)
+	x = gen_rtx_PLUS (Pmode, XEXP (x, 0),
+			  force_operand (XEXP (x, 1), NULL_RTX));
+    }
+  if (GET_CODE (x) == SYMBOL_REF || GET_CODE (x) == CONST
+      || GET_CODE (x) == LABEL_REF)
+    x = legitimize_address (flag_pic, x, NULL_RTX, NULL_RTX);
+  return x;
+}
+
 /* Support functions for code to emit a block move.  There are two methods
    used to perform the block move:
    + call memcpy

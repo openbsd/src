@@ -52,6 +52,10 @@ extern void m88k_va_start (tree, rtx);
 #endif /* TREE_CODE */
 #endif /* RTX_CODE */
 
+extern bool m88k_regno_ok_for_base_p (int);
+extern bool m88k_regno_ok_for_index_p (int);
+extern bool m88k_legitimate_address_p (enum machine_mode, rtx, int);
+extern rtx m88k_legitimize_address (rtx, enum machine_mode);
 extern bool integer_ok_for_set (unsigned int);
 extern int m88k_initial_elimination_offset (int, int);
 extern void m88k_expand_prologue (void);

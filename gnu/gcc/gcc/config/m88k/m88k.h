@@ -560,12 +560,9 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
    Since they use reg_renumber, they are safe only once reg_renumber
    has been allocated, which happens in local-alloc.c.  */
 #define REGNO_OK_FOR_BASE_P(REGNO)					\
-  ((REGNO) < FIRST_EXTENDED_REGISTER					\
-   || (unsigned) reg_renumber[REGNO] < FIRST_EXTENDED_REGISTER)
+  m88k_regno_ok_for_base_p (REGNO)
 #define REGNO_OK_FOR_INDEX_P(REGNO)					\
-  (((REGNO) && (REGNO) < FIRST_EXTENDED_REGISTER)			\
-   || (reg_renumber[REGNO]						\
-       && (unsigned) reg_renumber[REGNO] < FIRST_EXTENDED_REGISTER))
+  m88k_regno_ok_for_index_p (REGNO)
 
 /* Given an rtx X being reloaded into a reg required to be
    in class CLASS, return the class of reg to actually use.
@@ -926,93 +923,18 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
    The register elimination process should deal with the argument
    pointer and frame pointer changing to REG+SMALLINT.  */
 
-#define LEGITIMATE_INDEX_P(X, MODE)					\
-   ((CONST_INT_P (X) && SMALL_INT (X))					\
-    || (REG_P (X)							\
-	&& REG_OK_FOR_INDEX_P (X))					\
-    || (GET_CODE (X) == MULT						\
-	&& REG_P (XEXP (X, 0))						\
-	&& REG_OK_FOR_INDEX_P (XEXP (X, 0))				\
-	&& CONST_INT_P (XEXP (X, 1))					\
-	&& INTVAL (XEXP (X, 1)) == GET_MODE_SIZE (MODE)))
-
-#define RTX_OK_FOR_BASE_P(X)						\
-  ((REG_P (X) && REG_OK_FOR_BASE_P (X))					\
-  || (GET_CODE (X) == SUBREG						\
-      && REG_P (SUBREG_REG (X))						\
-      && REG_OK_FOR_BASE_P (SUBREG_REG (X))))
-
-#define RTX_OK_FOR_INDEX_P(X)						\
-  ((REG_P (X) && REG_OK_FOR_INDEX_P (X))				\
-  || (GET_CODE (X) == SUBREG						\
-      && REG_P (SUBREG_REG (X))						\
-      && REG_OK_FOR_INDEX_P (SUBREG_REG (X))))
-
+#ifdef REG_OK_STRICT
 #define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)				\
 {									\
-  if (REG_P (X))							\
-    {									\
-      if (REG_OK_FOR_BASE_P (X))					\
-	goto ADDR;							\
-    }									\
-  else if (GET_CODE (X) == PLUS)					\
-    {									\
-      rtx _x0 = XEXP (X, 0);						\
-      rtx _x1 = XEXP (X, 1);						\
-      if ((flag_pic							\
-	   && _x0 == pic_offset_table_rtx				\
-	   && (flag_pic == 2						\
-	       ? RTX_OK_FOR_BASE_P (_x1)				\
-	       : (GET_CODE (_x1) == SYMBOL_REF				\
-		  || GET_CODE (_x1) == LABEL_REF)))			\
-	  || (RTX_OK_FOR_BASE_P (_x0)					\
-	      && LEGITIMATE_INDEX_P (_x1, MODE))			\
-	  || (RTX_OK_FOR_BASE_P (_x1)					\
-	      && LEGITIMATE_INDEX_P (_x0, MODE)))			\
-	goto ADDR;							\
-    }									\
-  else if (GET_CODE (X) == LO_SUM)					\
-    {									\
-      rtx _x0 = XEXP (X, 0);						\
-      rtx _x1 = XEXP (X, 1);						\
-      if (RTX_OK_FOR_BASE_P (_x0)					\
-	  && CONSTANT_P (_x1))						\
-	goto ADDR;							\
-    }									\
-  else if (CONST_INT_P (X) && SMALL_INT (X))				\
+  if (m88k_legitimate_address_p (MODE, X, 1))				\
     goto ADDR;								\
 }
-
-/* The macros REG_OK_FOR..._P assume that the arg is a REG rtx
-   and check its validity for a certain class.
-   We have two alternate definitions for each of them.
-   The usual definition accepts all pseudo regs; the other rejects
-   them unless they have been allocated suitable hard regs.
-   The symbol REG_OK_STRICT causes the latter definition to be used.
-
-   Most source files want to accept pseudo regs in the hope that
-   they will get allocated to the class that the insn wants them to be in.
-   Source files for reload pass need to be strict.
-   After reload, it makes no difference, since pseudo regs have
-   been eliminated by then.  */
-
-#ifndef REG_OK_STRICT
-
-/* Nonzero if X is a hard reg that can be used as an index
-   or if it is a pseudo reg.  Not the argument pointer.  */
-#define REG_OK_FOR_INDEX_P(X)						\
-  (!XRF_REGNO_P(REGNO (X)))
-/* Nonzero if X is a hard reg that can be used as a base reg
-   or if it is a pseudo reg.  */
-#define REG_OK_FOR_BASE_P(X) (REG_OK_FOR_INDEX_P (X))
-
 #else
-
-/* Nonzero if X is a hard reg that can be used as an index.  */
-#define REG_OK_FOR_INDEX_P(X) REGNO_OK_FOR_INDEX_P (REGNO (X))
-/* Nonzero if X is a hard reg that can be used as a base reg.  */
-#define REG_OK_FOR_BASE_P(X) REGNO_OK_FOR_BASE_P (REGNO (X))
-
+#define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)				\
+{									\
+  if (m88k_legitimate_address_p (MODE, X, 0))				\
+    goto ADDR;								\
+}
 #endif
 
 /* Try machine-dependent ways of modifying an illegitimate address
@@ -1028,31 +950,9 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
    It is always safe for this macro to do nothing.  It exists to recognize
    opportunities to optimize the output.  */
 
-/* On the m88000, change REG+N into REG+REG, and REG+(X*Y) into REG+REG.  */
-
 #define LEGITIMIZE_ADDRESS(X,OLDX,MODE,WIN)				\
 {									\
-  if (GET_CODE (X) == PLUS && CONSTANT_ADDRESS_P (XEXP (X, 1)))		\
-    (X) = gen_rtx_PLUS (SImode, XEXP (X, 0),				\
-			copy_to_mode_reg (SImode, XEXP (X, 1)));	\
-  if (GET_CODE (X) == PLUS && CONSTANT_ADDRESS_P (XEXP (X, 0)))		\
-    (X) = gen_rtx_PLUS (SImode, XEXP (X, 1),				\
-			copy_to_mode_reg (SImode, XEXP (X, 0)));	\
-  if (GET_CODE (X) == PLUS && GET_CODE (XEXP (X, 0)) == MULT)		\
-    (X) = gen_rtx_PLUS (SImode, XEXP (X, 1),				\
-			force_operand (XEXP (X, 0), 0));		\
-  if (GET_CODE (X) == PLUS && GET_CODE (XEXP (X, 1)) == MULT)		\
-    (X) = gen_rtx_PLUS (SImode, XEXP (X, 0),				\
-			force_operand (XEXP (X, 1), 0));		\
-  if (GET_CODE (X) == PLUS && GET_CODE (XEXP (X, 0)) == PLUS)		\
-    (X) = gen_rtx_PLUS (Pmode, force_operand (XEXP (X, 0), NULL_RTX),	\
-			XEXP (X, 1));					\
-  if (GET_CODE (X) == PLUS && GET_CODE (XEXP (X, 1)) == PLUS)		\
-    (X) = gen_rtx_PLUS (Pmode, XEXP (X, 0),				\
-			force_operand (XEXP (X, 1), NULL_RTX));		\
-  if (GET_CODE (X) == SYMBOL_REF || GET_CODE (X) == CONST		\
-	   || GET_CODE (X) == LABEL_REF)				\
-    (X) = legitimize_address (flag_pic, X, 0, 0);			\
+  (X) = m88k_legitimize_address (X, MODE);				\
   if (memory_address_p (MODE, X))					\
     goto WIN;								\
 }
