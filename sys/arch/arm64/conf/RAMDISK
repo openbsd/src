@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.229 2025/08/20 21:40:34 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.230 2025/08/21 14:53:07 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -172,6 +172,7 @@ bcmgpio*	at fdt? early 1
 bcmintc*	at fdt? early 1
 bcmirng*	at fdt?
 bcmmbox*	at fdt? early 1
+bcmmip*		at fdt? early 1
 bcmpcie*	at fdt?
 pci*		at bcmpcie?
 bcmrng*		at fdt?
