@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_kex.c,v 1.11 2025/05/06 06:05:48 djm Exp $ */
+/* 	$OpenBSD: test_kex.c,v 1.12 2025/08/21 05:55:30 djm Exp $ */
 /*
  * Regress test KEX
  *
@@ -155,6 +155,9 @@ do_kex_with_key(char *kex, char *cipher, char *mac,
 	/* XXX we need to set the callbacks */
 	server2->kex->kex[KEX_DH_GRP1_SHA1] = kex_gen_server;
 	server2->kex->kex[KEX_DH_GRP14_SHA1] = kex_gen_server;
+	server2->kex->kex[KEX_DH_GRP14_SHA256] = kex_gen_server;
+	server2->kex->kex[KEX_DH_GRP16_SHA512] = kex_gen_server;
+	server2->kex->kex[KEX_DH_GRP18_SHA512] = kex_gen_server;
 	server2->kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 	server2->kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
 	server2->kex->kex[KEX_ECDH_SHA2] = kex_gen_server;
@@ -219,14 +222,19 @@ kex_tests(void)
 #if 0
         log_init("test_kex", SYSLOG_LEVEL_DEBUG3, SYSLOG_FACILITY_AUTH, 1);
 #endif
-	do_kex("curve25519-sha256@libssh.org");
+	do_kex("curve25519-sha256");
 	do_kex("ecdh-sha2-nistp256");
 	do_kex("ecdh-sha2-nistp384");
 	do_kex("ecdh-sha2-nistp521");
 	do_kex("diffie-hellman-group-exchange-sha256");
 	do_kex("diffie-hellman-group-exchange-sha1");
 	do_kex("diffie-hellman-group14-sha1");
+	if (test_is_benchmark()) {
+		do_kex("diffie-hellman-group14-sha256");
+		do_kex("diffie-hellman-group16-sha512");
+		do_kex("diffie-hellman-group18-sha512");
+	}
 	do_kex("diffie-hellman-group1-sha1");
-	do_kex("sntrup761x25519-sha512@openssh.com");
+	do_kex("sntrup761x25519-sha512");
 	do_kex("mlkem768x25519-sha256");
 }
