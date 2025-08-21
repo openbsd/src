@@ -868,9 +868,14 @@ output_call (rtx operands[], rtx addr)
 	{
 	  rtx dest = XEXP (SET_SRC (PATTERN (jump)), 0);
 	  rtx seq_insn = NEXT_INSN (PREV_INSN (XVECEXP (final_sequence, 0, 0)));
-	  int delta = 4 * (INSN_ADDRESSES (INSN_UID (dest))
-			   - INSN_ADDRESSES (INSN_UID (seq_insn))
-			   - 2);
+	  /* Note that this doesn't need to be exact - since length attributes
+	     in m88k.md are upper bounds - but it must not be smaller than the
+	     real value, as we can only perform this optimization if the
+	     displacement fits in a short branch offset.  */
+	  int delta =
+	    INSN_ADDRESSES (INSN_UID (dest))
+	    - INSN_ADDRESSES (INSN_UID (seq_insn))
+	    - 8;
 
 	  /* We only do this optimization if -O2, modifying the value of
 	     r1 in the delay slot confuses debuggers and profilers on some

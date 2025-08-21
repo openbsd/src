@@ -770,7 +770,7 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
   output_function_profiler (FILE, LABELNO, "mcount")
 
 /* Maximum length in instructions of the code output by FUNCTION_PROFILER.  */
-#define FUNCTION_PROFILER_LENGTH (5+3+1+5)
+#define FUNCTION_PROFILER_LENGTH (4*(5+3+1+5))
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,
    the stack pointer does not matter.  The value is tested only in
@@ -1082,7 +1082,7 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
 	  && GET_CODE (PATTERN (RTX)) == SET				\
 	  && ((MEM_P (SET_SRC (PATTERN (RTX)))				\
 	       && MEM_VOLATILE_P (SET_SRC (PATTERN (RTX)))))))		\
-    (LENGTH) += 1;							\
+    (LENGTH) += 4;							\
   else if (NOTE_P (RTX)							\
 	   && NOTE_LINE_NUMBER (RTX) == NOTE_INSN_PROLOGUE_END)		\
     {									\
