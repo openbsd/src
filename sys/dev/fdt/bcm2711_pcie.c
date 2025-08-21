@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.13 2024/03/27 15:15:00 patrick Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.14 2025/08/21 12:09:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -518,9 +518,12 @@ bcmpcie_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     int *segp, int first)
 {
 	struct bcmpcie_softc *sc = t->_cookie;
+	paddr_t lastaddr = *lastaddrp;
+	bus_size_t lastlen;
 	int seg, firstseg = *segp;
 	int error;
 
+	lastlen = map->dm_segs[firstseg].ds_len;
 	error = sc->sc_dmat->_dmamap_load_buffer(sc->sc_dmat, map, buf, buflen,
 	    p, flags, lastaddrp, segp, first);
 	if (error)
@@ -528,6 +531,10 @@ bcmpcie_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	if (sc->sc_dmaranges == NULL)
 		return 0;
+
+	/* If we already translated the first segment, don't do it again! */
+	if (!first && lastaddr == map->dm_segs[firstseg]._ds_paddr + lastlen)
+		firstseg++;
 
 	/* For each segment. */
 	for (seg = firstseg; seg <= *segp; seg++) {

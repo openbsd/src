@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.20 2025/08/19 15:57:03 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.21 2025/08/21 12:09:47 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -393,10 +393,13 @@ simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     int *segp, int first)
 {
 	struct simplebus_softc *sc = t->_cookie;
-	int rlen, rone, seg;
+	paddr_t lastaddr = *lastaddrp;
+	bus_size_t lastlen;
 	int firstseg = *segp;
+	int rlen, rone, seg;
 	int error;
 
+	lastlen = map->dm_segs[firstseg].ds_len;
 	error = sc->sc_dmat->_dmamap_load_buffer(sc->sc_dmat, map, buf, buflen,
 	    p, flags, lastaddrp, segp, first);
 	if (error)
@@ -404,6 +407,10 @@ simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	if (sc->sc_dmaranges == NULL)
 		return 0;
+
+	/* If we already translated the first segment, don't do it again! */
+	if (!first && lastaddr == map->dm_segs[firstseg]._ds_paddr + lastlen)
+		firstseg++;
 
 	rlen = sc->sc_dmarangeslen / sizeof(uint32_t);
 	rone = sc->sc_pacells + sc->sc_acells + sc->sc_scells;
