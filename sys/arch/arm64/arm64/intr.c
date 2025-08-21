@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.32 2025/04/25 12:48:48 mvs Exp $ */
+/* $OpenBSD: intr.c,v 1.33 2025/08/21 09:48:04 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -540,6 +540,8 @@ arm_intr_establish_fdt_msi_cpu(int node, uint64_t *addr, uint64_t *data,
 
 	val = ic->ic_establish_msi(ic->ic_cookie, addr, data,
 	    level, ci, func, cookie, name);
+	if (val == NULL)
+		return NULL;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
