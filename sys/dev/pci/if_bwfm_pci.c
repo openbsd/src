@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.77 2024/07/12 08:33:25 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.78 2025/08/21 17:03:58 mbuhl Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -2369,9 +2369,9 @@ bwfm_pci_intr(void *v)
 		mask = BWFM_PCI_64_PCIE2REG_MAILBOXMASK_INT_D2H_DB;
 
 	if (status & mask) {
+		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete, &ml);
 		bwfm_pci_ring_rx(sc, &sc->sc_rx_complete, &ml);
 		bwfm_pci_ring_rx(sc, &sc->sc_tx_complete, &ml);
-		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete, &ml);
 
 		if (ifiq_input(&ifp->if_rcv, &ml))
 			if_rxr_livelocked(&sc->sc_rxbuf_ring);
