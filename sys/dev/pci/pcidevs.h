@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2108 2025/08/18 06:09:10 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2109 2025/08/21 02:54:52 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6342,6 +6342,56 @@
 #define	PCI_PRODUCT_INTEL_82440BX_AGP	0x71a1		/* 82440BX AGP */
 #define	PCI_PRODUCT_INTEL_82443GX	0x71a2		/* 82443GX */
 #define	PCI_PRODUCT_INTEL_82372FB_IDE	0x7601		/* 82372FB IDE */
+#define	PCI_PRODUCT_INTEL_ARL_H_ESPI	0x7702		/* Core Ultra eSPI */
+#define	PCI_PRODUCT_INTEL_ARL_U_ESPI	0x7703		/* Core Ultra eSPI */
+#define	PCI_PRODUCT_INTEL_ARL_U_P2SB_SOC	0x7720		/* Core Ultra P2SB */
+#define	PCI_PRODUCT_INTEL_ARL_U_PMC_SOC	0x7721		/* Core Ultra PMC */
+#define	PCI_PRODUCT_INTEL_ARL_U_SMB	0x7722		/* Core Ultra SMBus */
+#define	PCI_PRODUCT_INTEL_ARL_U_SPI	0x7723		/* Core Ultra SPI */
+#define	PCI_PRODUCT_INTEL_ARL_U_TH	0x7724		/* Core Ultra TH */
+#define	PCI_PRODUCT_INTEL_ARL_U_UART_0	0x7725		/* Core Ultra UART */
+#define	PCI_PRODUCT_INTEL_ARL_U_UART_1	0x7726		/* Core Ultra UART */
+#define	PCI_PRODUCT_INTEL_ARL_U_GSPI_0	0x7727		/* Core Ultra GSPI */
+#define	PCI_PRODUCT_INTEL_ARL_U_HDA	0x7728		/* Core Ultra HD Audio */
+#define	PCI_PRODUCT_INTEL_ARL_U_GSPI_1	0x7730		/* Core Ultra GSPI */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_1	0x7738		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_2	0x7739		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_3	0x773a		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_4	0x773b		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_5	0x773c		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_6	0x773d		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_7	0x773e		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_8	0x773f		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_ISH	0x7745		/* Core Ultra ISH */
+#define	PCI_PRODUCT_INTEL_ARL_U_GSPI_2	0x7746		/* Core Ultra GSPI */
+#define	PCI_PRODUCT_INTEL_ARL_U_THC_0_1	0x7748		/* Core Ultra THC */
+#define	PCI_PRODUCT_INTEL_ARL_U_THC_0_2	0x7749		/* Core Ultra THC */
+#define	PCI_PRODUCT_INTEL_ARL_U_THC_1_1	0x774a		/* Core Ultra THC */
+#define	PCI_PRODUCT_INTEL_ARL_U_THC_1_2	0x774b		/* Core Ultra THC */
+#define	PCI_PRODUCT_INTEL_ARL_U_GNA	0x774c		/* Core Ultra GNA */
+#define	PCI_PRODUCT_INTEL_ARL_U_PCIE_9	0x774d		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_ARL_U_I2C_4	0x7750		/* Core Ultra I2C */
+#define	PCI_PRODUCT_INTEL_ARL_U_I2C_5	0x7751		/* Core Ultra I2C */
+#define	PCI_PRODUCT_INTEL_ARL_U_UART_2	0x7752		/* Core Ultra UART */
+#define	PCI_PRODUCT_INTEL_ARL_U_HECI_1	0x7758		/* Core Ultra HECI */
+#define	PCI_PRODUCT_INTEL_ARL_U_HECI_2	0x7759		/* Core Ultra HECI */
+#define	PCI_PRODUCT_INTEL_ARL_U_HECI_3	0x775a		/* Core Ultra HECI */
+#define	PCI_PRODUCT_INTEL_ARL_U_AHCI	0x7763		/* Core Ultra AHCI */
+#define	PCI_PRODUCT_INTEL_ARL_U_RAID	0x7767		/* Core Ultra RAID */
+#define	PCI_PRODUCT_INTEL_ARL_U_HECI_4	0x7770		/* Core Ultra HECI */
+#define	PCI_PRODUCT_INTEL_ARL_U_HECI_5	0x7771		/* Core Ultra HECI */
+#define	PCI_PRODUCT_INTEL_ARL_U_IDER	0x7772		/* Core Ultra IDE-R */
+#define	PCI_PRODUCT_INTEL_ARL_U_KT	0x7773		/* Core Ultra KT */
+#define	PCI_PRODUCT_INTEL_ARL_U_HECI_6	0x7774		/* Core Ultra HECI */
+#define	PCI_PRODUCT_INTEL_ARL_U_HECI_7	0x7775		/* Core Ultra HECI */
+#define	PCI_PRODUCT_INTEL_ARL_U_I2C_0	0x7778		/* Core Ultra I2C */
+#define	PCI_PRODUCT_INTEL_ARL_U_I2C_1	0x7779		/* Core Ultra I2C */
+#define	PCI_PRODUCT_INTEL_ARL_U_I2C_2	0x777a		/* Core Ultra I2C */
+#define	PCI_PRODUCT_INTEL_ARL_U_I2C_3	0x777b		/* Core Ultra I2C */
+#define	PCI_PRODUCT_INTEL_ARL_U_I3C	0x777c		/* Core Ultra I3C */
+#define	PCI_PRODUCT_INTEL_ARL_U_XHCI	0x777d		/* Core Ultra xHCI */
+#define	PCI_PRODUCT_INTEL_ARL_U_XDCI	0x777e		/* Core Ultra xDCI */
+#define	PCI_PRODUCT_INTEL_ARL_U_SRAM	0x777f		/* Core Ultra SRAM */
 #define	PCI_PRODUCT_INTEL_82740	0x7800		/* 82740 AGP */
 #define	PCI_PRODUCT_INTEL_Z790_ESPI	0x7a04		/* Z790 eSPI */
 #define	PCI_PRODUCT_INTEL_H770_ESPI	0x7a05		/* H770 eSPI */
@@ -6473,12 +6523,14 @@
 #define	PCI_PRODUCT_INTEL_MTL_H_HB_2	0x7d01		/* Core Ultra Host */
 #define	PCI_PRODUCT_INTEL_MTL_U_HB_2	0x7d02		/* Core Ultra Host */
 #define	PCI_PRODUCT_INTEL_MTL_DTT	0x7d03		/* Core Ultra DTT */
+#define	PCI_PRODUCT_INTEL_ARL_H_HB	0x7d06		/* Core Ultra Host */
 #define	PCI_PRODUCT_INTEL_MTL_VMD	0x7d0b		/* Core Ultra VMD */
 #define	PCI_PRODUCT_INTEL_MTL_PMT	0x7d0d		/* Core Ultra PMT */
 #define	PCI_PRODUCT_INTEL_MTL_H_HB_1	0x7d14		/* Core Ultra Host */
 #define	PCI_PRODUCT_INTEL_MTL_U_HB_1	0x7d16		/* Core Ultra Host */
 #define	PCI_PRODUCT_INTEL_MTL_IPU	0x7d19		/* Core Ultra IPU */
 #define	PCI_PRODUCT_INTEL_MTL_NPU	0x7d1d		/* Core Ultra NPU */
+#define	PCI_PRODUCT_INTEL_ARL_U_HB	0x7d30		/* Core Ultra Host */
 #define	PCI_PRODUCT_INTEL_MTL_U4_GT_1	0x7d40		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ARL_U_GT_1	0x7d41		/* Graphics */
 #define	PCI_PRODUCT_INTEL_MTL_U_GT_1	0x7d45		/* Graphics */
