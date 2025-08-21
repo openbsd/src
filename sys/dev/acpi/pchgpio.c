@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.18 2025/06/16 15:44:35 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.19 2025/08/21 03:12:11 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -118,6 +118,7 @@ const char *pchgpio_hids[] = {
 	"INTC1055",
 	"INTC1056",
 	"INTC1057",
+	"INTC105E",
 	"INTC1082",
 	"INTC1083",
 	"INTC1085",
@@ -460,6 +461,7 @@ struct pchgpio_match pchgpio_devices[] = {
 	{ "INTC1085", &adl_s_device },
 	{ "INTC1082", &mtl_s_device },
 	{ "INTC1083", &mtl_p_device },
+	{ "INTC105E", &mtl_p_device },
 };
 
 int	pchgpio_read_pin(void *, int);
