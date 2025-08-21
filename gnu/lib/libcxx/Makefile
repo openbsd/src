@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2024/01/26 11:51:45 robert Exp $
+# $OpenBSD: Makefile,v 1.8 2025/08/21 15:26:58 rsadowski Exp $
 
 .include <bsd.own.mk>
 
@@ -17,75 +17,93 @@ CXXINCLUDEDIR=	/usr/include/c++/v1
 
 LOCALHDRDIR=	${.CURDIR}/include/c++/v1
 CONFIG_SITE=	${LOCALHDRDIR}/__config_site
+ASSERTION_H=	${LOCALHDRDIR}/__assertion_handler
 
 .PATH:	${SRCDIR} ${SRCDIR}/filesystem ${SRCDIR}/ryu
 
 LIB=		c++
 
+
 SRCS+=		algorithm.cpp \
 		any.cpp \
-		atomic.cpp \
-		barrier.cpp \
 		bind.cpp \
+		call_once.cpp \
 		charconv.cpp \
 		chrono.cpp \
-		condition_variable.cpp \
-		condition_variable_destructor.cpp \
-		debug.cpp \
+		expected.cpp \
+		error_category.cpp \
 		exception.cpp \
 		functional.cpp \
-		future.cpp \
 		hash.cpp \
-		ios.cpp \
-		ios.instantiations.cpp \
-		iostream.cpp \
-		legacy_debug_handler.cpp \
 		legacy_pointer_safety.cpp \
-		locale.cpp \
 		memory.cpp \
 		memory_resource.cpp \
-		mutex.cpp \
-		mutex_destructor.cpp \
-		new.cpp \
+		new_handler.cpp \
+		new_helpers.cpp \
 		optional.cpp \
-		random.cpp \
+		print.cpp \
 		random_shuffle.cpp \
-		regex.cpp \
-		shared_mutex.cpp \
 		stdexcept.cpp \
 		string.cpp \
-		strstream.cpp \
 		system_error.cpp \
-		thread.cpp \
 		typeinfo.cpp \
-		utility.cpp \
 		valarray.cpp \
 		variant.cpp \
 		vector.cpp \
 		verbose_abort.cpp
 
 # filesystem
-SRCS+=		directory_iterator.cpp \
+SRCS+=		filesystem_clock.cpp \
+		filesystem_error.cpp \
+		path.cpp \
+		directory_entry.cpp \
+		directory_iterator.cpp \
 		operations.cpp
+
 # ryu
 SRCS+=		d2fixed.cpp \
 		d2s.cpp \
 		f2s.cpp
 
-CPPFLAGS+=	-Wall -DLIBCXXABI -I${HDRDIR} -I${SRCDIR} -D_LIBCPP_BUILDING_LIBRARY \
-		-DLIBCXX_BUILDING_LIBCXXABI -I${AHDRDIR} -I${UHDRDIR} -I${LOCALHDRDIR} \
-		-DNDEBUG
+SRCS+=		atomic.cpp \
+		barrier.cpp \
+		condition_variable_destructor.cpp \
+		condition_variable.cpp \
+		future.cpp \
+		mutex_destructor.cpp \
+		mutex.cpp \
+		shared_mutex.cpp \
+		thread.cpp
+
+# localization
+SRCS+=	fstream.cpp \
+		ios.cpp \
+		ios.instantiations.cpp \
+		iostream.cpp \
+		locale.cpp \
+		ostream.cpp \
+		regex.cpp \
+		strstream.cpp
+
+SRCS+=		random.cpp
+
+CPPFLAGS+=	-Wall -DLIBCXXABI -I${HDRDIR} -I${SRCDIR} -I${AHDRDIR} \
+		-I${UHDRDIR} -I${LOCALHDRDIR} -DNDEBUG
+
+CPPFLAGS+=	-D_LIBCPP_BUILDING_LIBRARY
+CPPFLAGS+=	-DLIBCXX_BUILDING_LIBCXXABI
+CPPFLAGS+=	-D_LIBCPP_HAS_NO_TIME_ZONE_DATABASE
+CPPFLAGS+=	-D_LIBCPP_PSTL_BACKEND_STD_THREAD
 
 # This is required because our __string directory has been moved
-CPPFLAGS+=	-I${HDRDIR}/__string.d/
+CPPFLAGS+=	-I${HDRDIR}/__string/
 
 CXXFLAGS+=	-nostdlib -nostdinc++
 .if empty(CXXFLAGS:M-std=*)
-CXXFLAGS+=	-std=c++20
+CXXFLAGS+=	-std=c++23
 .endif
 
 LDADD+=		-L${BSDOBJDIR}/gnu/lib/libcxxabi -lc++abi
-
 
 STD_HEADERS=	\
 	__algorithm/adjacent_find.h \
@@ -111,8 +129,11 @@ STD_HEADERS=	\
 	__algorithm/find_first_of.h \
 	__algorithm/find_if.h \
 	__algorithm/find_if_not.h \
+	__algorithm/find_segment_if.h \
+	__algorithm/fold.h \
 	__algorithm/for_each.h \
 	__algorithm/for_each_n.h \
+	__algorithm/for_each_segment.h \
 	__algorithm/generate.h \
 	__algorithm/generate_n.h \
 	__algorithm/half_positive.h \
@@ -133,6 +154,7 @@ STD_HEADERS=	\
 	__algorithm/iter_swap.h \
 	__algorithm/iterator_operations.h \
 	__algorithm/lexicographical_compare.h \
+	__algorithm/lexicographical_compare_three_way.h \
 	__algorithm/lower_bound.h \
 	__algorithm/make_heap.h \
 	__algorithm/make_projected.h \
@@ -157,18 +179,22 @@ STD_HEADERS=	\
 	__algorithm/partition_point.h \
 	__algorithm/pop_heap.h \
 	__algorithm/prev_permutation.h \
+	__algorithm/pstl.h \
 	__algorithm/push_heap.h \
 	__algorithm/ranges_adjacent_find.h \
 	__algorithm/ranges_all_of.h \
 	__algorithm/ranges_any_of.h \
 	__algorithm/ranges_binary_search.h \
 	__algorithm/ranges_clamp.h \
+	__algorithm/ranges_contains.h \
+	__algorithm/ranges_contains_subrange.h \
 	__algorithm/ranges_copy.h \
 	__algorithm/ranges_copy_backward.h \
 	__algorithm/ranges_copy_if.h \
 	__algorithm/ranges_copy_n.h \
 	__algorithm/ranges_count.h \
 	__algorithm/ranges_count_if.h \
+	__algorithm/ranges_ends_with.h \
 	__algorithm/ranges_equal.h \
 	__algorithm/ranges_equal_range.h \
 	__algorithm/ranges_fill.h \
@@ -178,6 +204,7 @@ STD_HEADERS=	\
 	__algorithm/ranges_find_first_of.h \
 	__algorithm/ranges_find_if.h \
 	__algorithm/ranges_find_if_not.h \
+	__algorithm/ranges_find_last.h \
 	__algorithm/ranges_for_each.h \
 	__algorithm/ranges_for_each_n.h \
 	__algorithm/ranges_generate.h \
@@ -239,6 +266,7 @@ STD_HEADERS=	\
 	__algorithm/ranges_sort_heap.h \
 	__algorithm/ranges_stable_partition.h \
 	__algorithm/ranges_stable_sort.h \
+	__algorithm/ranges_starts_with.h \
 	__algorithm/ranges_swap_ranges.h \
 	__algorithm/ranges_transform.h \
 	__algorithm/ranges_unique.h \
@@ -267,11 +295,13 @@ STD_HEADERS=	\
 	__algorithm/shift_right.h \
 	__algorithm/shuffle.h \
 	__algorithm/sift_down.h \
+	__algorithm/simd_utils.h \
 	__algorithm/sort.h \
 	__algorithm/sort_heap.h \
 	__algorithm/stable_partition.h \
 	__algorithm/stable_sort.h \
 	__algorithm/swap_ranges.h \
+	__algorithm/three_way_comp_ref_type.h \
 	__algorithm/transform.h \
 	__algorithm/uniform_random_bit_generator_adaptor.h \
 	__algorithm/unique.h \
@@ -280,7 +310,22 @@ STD_HEADERS=	\
 	__algorithm/unwrap_range.h \
 	__algorithm/upper_bound.h \
 	__assert \
-	__availability \
+	__atomic/aliases.h \
+	__atomic/atomic.h \
+	__atomic/atomic_base.h \
+	__atomic/atomic_flag.h \
+	__atomic/atomic_init.h \
+	__atomic/atomic_lock_free.h \
+	__atomic/atomic_ref.h \
+	__atomic/atomic_sync.h \
+	__atomic/check_memory_order.h \
+	__atomic/contention_t.h \
+	__atomic/cxx_atomic_impl.h \
+	__atomic/fence.h \
+	__atomic/is_always_lock_free.h \
+	__atomic/kill_dependency.h \
+	__atomic/memory_order.h \
+	__atomic/to_gcc_order.h \
 	__bit/bit_cast.h \
 	__bit/bit_ceil.h \
 	__bit/bit_floor.h \
@@ -292,26 +337,34 @@ STD_HEADERS=	\
 	__bit/countr.h \
 	__bit/endian.h \
 	__bit/has_single_bit.h \
+	__bit/invert_if.h \
 	__bit/popcount.h \
 	__bit/rotate.h \
 	__bit_reference \
-	__bsd_locale_defaults.h \
-	__bsd_locale_fallbacks.h \
 	__charconv/chars_format.h \
+	__charconv/from_chars_integral.h \
 	__charconv/from_chars_result.h \
 	__charconv/tables.h \
+	__charconv/to_chars.h \
 	__charconv/to_chars_base_10.h \
+	__charconv/to_chars_floating_point.h \
+	__charconv/to_chars_integral.h \
 	__charconv/to_chars_result.h \
+	__charconv/traits.h \
 	__chrono/calendar.h \
+	__chrono/concepts.h \
 	__chrono/convert_to_timespec.h \
 	__chrono/convert_to_tm.h \
 	__chrono/day.h \
 	__chrono/duration.h \
+	__chrono/exception.h \
 	__chrono/file_clock.h \
 	__chrono/formatter.h \
 	__chrono/hh_mm_ss.h \
 	__chrono/high_resolution_clock.h \
+	__chrono/leap_second.h \
 	__chrono/literals.h \
+	__chrono/local_info.h \
 	__chrono/month.h \
 	__chrono/month_weekday.h \
 	__chrono/monthday.h \
@@ -319,13 +372,19 @@ STD_HEADERS=	\
 	__chrono/parser_std_format_spec.h \
 	__chrono/statically_widen.h \
 	__chrono/steady_clock.h \
+	__chrono/sys_info.h \
 	__chrono/system_clock.h \
 	__chrono/time_point.h \
+	__chrono/time_zone.h \
+	__chrono/time_zone_link.h \
+	__chrono/tzdb.h \
+	__chrono/tzdb_list.h \
 	__chrono/weekday.h \
 	__chrono/year.h \
 	__chrono/year_month.h \
 	__chrono/year_month_day.h \
 	__chrono/year_month_weekday.h \
+	__chrono/zoned_time.h \
 	__compare/common_comparison_category.h \
 	__compare/compare_partial_order_fallback.h \
 	__compare/compare_strong_order_fallback.h \
@@ -361,14 +420,25 @@ STD_HEADERS=	\
 	__concepts/semiregular.h \
 	__concepts/swappable.h \
 	__concepts/totally_ordered.h \
+	__condition_variable/condition_variable.h \
 	__config \
+	__configuration/abi.h \
+	__configuration/availability.h \
+	__configuration/compiler.h \
+	__configuration/language.h \
+	__configuration/platform.h \
 	__coroutine/coroutine_handle.h \
 	__coroutine/coroutine_traits.h \
 	__coroutine/noop_coroutine_handle.h \
 	__coroutine/trivial_awaitables.h \
-	__debug \
 	__debug_utils/randomize_range.h \
-	__errc \
+	__debug_utils/sanitizers.h \
+	__debug_utils/strict_weak_ordering_check.h \
+	__exception/exception.h \
+	__exception/exception_ptr.h \
+	__exception/nested_exception.h \
+	__exception/operations.h \
+	__exception/terminate.h \
 	__expected/bad_expected_access.h \
 	__expected/expected.h \
 	__expected/unexpect.h \
@@ -401,7 +471,6 @@ STD_HEADERS=	\
 	__format/format_context.h \
 	__format/format_error.h \
 	__format/format_functions.h \
-	__format/format_fwd.h \
 	__format/format_parse_context.h \
 	__format/format_string.h \
 	__format/format_to_n_result.h \
@@ -415,10 +484,13 @@ STD_HEADERS=	\
 	__format/formatter_pointer.h \
 	__format/formatter_string.h \
 	__format/formatter_tuple.h \
+	__format/indic_conjunct_break_table.h \
 	__format/parser_std_format_spec.h \
 	__format/range_default_formatter.h \
 	__format/range_formatter.h \
 	__format/unicode.h \
+	__format/width_estimation_table.h \
+	__format/write_escaped.h \
 	__functional/binary_function.h \
 	__functional/binary_negate.h \
 	__functional/bind.h \
@@ -445,27 +517,42 @@ STD_HEADERS=	\
 	__functional/reference_wrapper.h \
 	__functional/unary_function.h \
 	__functional/unary_negate.h \
-	__functional/unwrap_ref.h \
 	__functional/weak_result_type.h \
 	__fwd/array.h \
-	__fwd/get.h \
-	__fwd/hash.h \
+	__fwd/bit_reference.h \
+	__fwd/complex.h \
+	__fwd/deque.h \
+	__fwd/format.h \
+	__fwd/fstream.h \
+	__fwd/functional.h \
+	__fwd/ios.h \
+	__fwd/istream.h \
+	__fwd/mdspan.h \
+	__fwd/memory.h \
 	__fwd/memory_resource.h \
+	__fwd/ostream.h \
 	__fwd/pair.h \
+	__fwd/queue.h \
 	__fwd/span.h \
+	__fwd/sstream.h \
+	__fwd/stack.h \
+	__fwd/streambuf.h \
 	__fwd/string.h \
 	__fwd/string_view.h \
 	__fwd/subrange.h \
 	__fwd/tuple.h \
+	__fwd/vector.h \
 	__hash_table \
 	__ios/fpos.h \
 	__iterator/access.h \
 	__iterator/advance.h \
+	__iterator/aliasing_iterator.h \
 	__iterator/back_insert_iterator.h \
 	__iterator/bounded_iter.h \
 	__iterator/common_iterator.h \
 	__iterator/concepts.h \
 	__iterator/counted_iterator.h \
+	__iterator/cpp17_iterator_concepts.h \
 	__iterator/data.h \
 	__iterator/default_sentinel.h \
 	__iterator/distance.h \
@@ -491,6 +578,7 @@ STD_HEADERS=	\
 	__iterator/permutable.h \
 	__iterator/prev.h \
 	__iterator/projected.h \
+	__iterator/ranges_iterator_traits.h \
 	__iterator/readable_traits.h \
 	__iterator/reverse_access.h \
 	__iterator/reverse_iterator.h \
@@ -500,9 +588,47 @@ STD_HEADERS=	\
 	__iterator/unreachable_sentinel.h \
 	__iterator/wrap_iter.h \
 	__locale \
+	__locale_dir/locale_base_api.h \
+	__locale_dir/locale_base_api/android.h \
+	__locale_dir/locale_base_api/bsd_locale_defaults.h \
+	__locale_dir/locale_base_api/bsd_locale_fallbacks.h \
+	__locale_dir/locale_base_api/fuchsia.h \
+	__locale_dir/locale_base_api/ibm.h \
+	__locale_dir/locale_base_api/locale_guard.h \
+	__locale_dir/locale_base_api/musl.h \
+	__locale_dir/locale_base_api/newlib.h \
+	__locale_dir/locale_base_api/openbsd.h \
+	__locale_dir/locale_base_api/win32.h \
+	__math/abs.h \
+	__math/copysign.h \
+	__math/error_functions.h \
+	__math/exponential_functions.h \
+	__math/fdim.h \
+	__math/fma.h \
+	__math/gamma.h \
+	__math/hyperbolic_functions.h \
+	__math/hypot.h \
+	__math/inverse_hyperbolic_functions.h \
+	__math/inverse_trigonometric_functions.h \
+	__math/logarithms.h \
+	__math/min_max.h \
+	__math/modulo.h \
+	__math/remainder.h \
+	__math/roots.h \
+	__math/rounding_functions.h \
+	__math/special_functions.h \
+	__math/traits.h \
+	__math/trigonometric_functions.h \
 	__mbstate_t.h \
+	__mdspan/default_accessor.h \
+	__mdspan/extents.h \
+	__mdspan/layout_left.h \
+	__mdspan/layout_right.h \
+	__mdspan/layout_stride.h \
+	__mdspan/mdspan.h \
 	__memory/addressof.h \
 	__memory/align.h \
+	__memory/aligned_alloc.h \
 	__memory/allocate_at_least.h \
 	__memory/allocation_guard.h \
 	__memory/allocator.h \
@@ -516,6 +642,8 @@ STD_HEADERS=	\
 	__memory/concepts.h \
 	__memory/construct_at.h \
 	__memory/destruct_n.h \
+	__memory/inout_ptr.h \
+	__memory/out_ptr.h \
 	__memory/pointer_traits.h \
 	__memory/ranges_construct_at.h \
 	__memory/ranges_uninitialized_algorithms.h \
@@ -535,7 +663,11 @@ STD_HEADERS=	\
 	__memory_resource/pool_options.h \
 	__memory_resource/synchronized_pool_resource.h \
 	__memory_resource/unsynchronized_pool_resource.h \
-	__mutex_base \
+	__mutex/lock_guard.h \
+	__mutex/mutex.h \
+	__mutex/once_flag.h \
+	__mutex/tag_types.h \
+	__mutex/unique_lock.h \
 	__node_handle \
 	__numeric/accumulate.h \
 	__numeric/adjacent_difference.h \
@@ -546,10 +678,31 @@ STD_HEADERS=	\
 	__numeric/iota.h \
 	__numeric/midpoint.h \
 	__numeric/partial_sum.h \
+	__numeric/pstl.h \
 	__numeric/reduce.h \
+	__numeric/saturation_arithmetic.h \
 	__numeric/transform_exclusive_scan.h \
 	__numeric/transform_inclusive_scan.h \
 	__numeric/transform_reduce.h \
+	__ostream/basic_ostream.h \
+	__ostream/print.h \
+	__pstl/backend.h \
+	__pstl/backend_fwd.h \
+	__pstl/backends/default.h \
+	__pstl/backends/libdispatch.h \
+	__pstl/backends/serial.h \
+	__pstl/backends/std_thread.h \
+	__pstl/cpu_algos/any_of.h \
+	__pstl/cpu_algos/cpu_traits.h \
+	__pstl/cpu_algos/fill.h \
+	__pstl/cpu_algos/find_if.h \
+	__pstl/cpu_algos/for_each.h \
+	__pstl/cpu_algos/merge.h \
+	__pstl/cpu_algos/stable_sort.h \
+	__pstl/cpu_algos/transform.h \
+	__pstl/cpu_algos/transform_reduce.h \
+	__pstl/dispatch.h \
+	__pstl/handle_exception.h \
 	__random/bernoulli_distribution.h \
 	__random/binomial_distribution.h \
 	__random/cauchy_distribution.h \
@@ -590,9 +743,10 @@ STD_HEADERS=	\
 	__ranges/access.h \
 	__ranges/all.h \
 	__ranges/as_rvalue_view.h \
+	__ranges/chunk_by_view.h \
 	__ranges/common_view.h \
 	__ranges/concepts.h \
-	__ranges/copyable_box.h \
+	__ranges/container_compatible_range.h \
 	__ranges/counted.h \
 	__ranges/dangling.h \
 	__ranges/data.h \
@@ -604,16 +758,19 @@ STD_HEADERS=	\
 	__ranges/enable_borrowed_range.h \
 	__ranges/enable_view.h \
 	__ranges/filter_view.h \
+	__ranges/from_range.h \
 	__ranges/iota_view.h \
 	__ranges/istream_view.h \
 	__ranges/join_view.h \
 	__ranges/lazy_split_view.h \
+	__ranges/movable_box.h \
 	__ranges/non_propagating_cache.h \
 	__ranges/owning_view.h \
 	__ranges/range_adaptor.h \
 	__ranges/rbegin.h \
 	__ranges/ref_view.h \
 	__ranges/rend.h \
+	__ranges/repeat_view.h \
 	__ranges/reverse_view.h \
 	__ranges/single_view.h \
 	__ranges/size.h \
@@ -621,42 +778,59 @@ STD_HEADERS=	\
 	__ranges/subrange.h \
 	__ranges/take_view.h \
 	__ranges/take_while_view.h \
+	__ranges/to.h \
 	__ranges/transform_view.h \
 	__ranges/view_interface.h \
 	__ranges/views.h \
 	__ranges/zip_view.h \
 	__split_buffer \
-	__std_stream \
-	__support/android/locale_bionic.h \
-	__support/fuchsia/xlocale.h \
+	__std_clang_module \
+	__std_mbstate_t.h \
+	__stop_token/atomic_unique_lock.h \
+	__stop_token/intrusive_list_view.h \
+	__stop_token/intrusive_shared_ptr.h \
+	__stop_token/stop_callback.h \
+	__stop_token/stop_source.h \
+	__stop_token/stop_state.h \
+	__stop_token/stop_token.h \
+	__string/char_traits.h \
+	__string/constexpr_c_functions.h \
+	__string/extern_template_lists.h \
 	__support/ibm/gettod_zos.h \
 	__support/ibm/locale_mgmt_zos.h \
 	__support/ibm/nanosleep.h \
-	__support/ibm/xlocale.h \
-	__support/musl/xlocale.h \
-	__support/newlib/xlocale.h \
-	__support/openbsd/xlocale.h \
-	__support/solaris/floatingpoint.h \
-	__support/solaris/wchar.h \
-	__support/solaris/xlocale.h \
-	__support/win32/locale_win32.h \
 	__support/xlocale/__nop_locale_mgmt.h \
 	__support/xlocale/__posix_l_fallback.h \
 	__support/xlocale/__strtonum_fallback.h \
+	__system_error/errc.h \
+	__system_error/error_category.h \
+	__system_error/error_code.h \
+	__system_error/error_condition.h \
+	__system_error/system_error.h \
+	__thread/formatter.h \
+	__thread/id.h \
+	__thread/jthread.h \
 	__thread/poll_with_backoff.h \
+	__thread/support.h \
+	__thread/support/c11.h \
+	__thread/support/external.h \
+	__thread/support/pthread.h \
+	__thread/support/windows.h \
+	__thread/this_thread.h \
+	__thread/thread.h \
 	__thread/timed_backoff_policy.h \
-	__threading_support \
 	__tree \
-	__tuple_dir/apply_cv.h \
-	__tuple_dir/make_tuple_types.h \
-	__tuple_dir/pair_like.h \
-	__tuple_dir/sfinae_helpers.h \
-	__tuple_dir/tuple_element.h \
-	__tuple_dir/tuple_indices.h \
-	__tuple_dir/tuple_like.h \
-	__tuple_dir/tuple_like_ext.h \
-	__tuple_dir/tuple_size.h \
-	__tuple_dir/tuple_types.h \
+	__tuple/find_index.h \
+	__tuple/ignore.h \
+	__tuple/make_tuple_types.h \
+	__tuple/sfinae_helpers.h \
+	__tuple/tuple_element.h \
+	__tuple/tuple_indices.h \
+	__tuple/tuple_like.h \
+	__tuple/tuple_like_ext.h \
+	__tuple/tuple_like_no_subrange.h \
+	__tuple/tuple_size.h \
+	__tuple/tuple_types.h \
 	__type_traits/add_const.h \
 	__type_traits/add_cv.h \
 	__type_traits/add_lvalue_reference.h \
@@ -666,7 +840,6 @@ STD_HEADERS=	\
 	__type_traits/aligned_storage.h \
 	__type_traits/aligned_union.h \
 	__type_traits/alignment_of.h \
-	__type_traits/apply_cv.h \
 	__type_traits/can_extract_key.h \
 	__type_traits/common_reference.h \
 	__type_traits/common_type.h \
@@ -674,14 +847,17 @@ STD_HEADERS=	\
 	__type_traits/conjunction.h \
 	__type_traits/copy_cv.h \
 	__type_traits/copy_cvref.h \
+	__type_traits/datasizeof.h \
 	__type_traits/decay.h \
 	__type_traits/dependent_type.h \
+	__type_traits/desugars_to.h \
 	__type_traits/disjunction.h \
 	__type_traits/enable_if.h \
 	__type_traits/extent.h \
 	__type_traits/has_unique_object_representation.h \
 	__type_traits/has_virtual_destructor.h \
 	__type_traits/integral_constant.h \
+	__type_traits/invoke.h \
 	__type_traits/is_abstract.h \
 	__type_traits/is_aggregate.h \
 	__type_traits/is_allocator.h \
@@ -699,13 +875,12 @@ STD_HEADERS=	\
 	__type_traits/is_constant_evaluated.h \
 	__type_traits/is_constructible.h \
 	__type_traits/is_convertible.h \
-	__type_traits/is_copy_assignable.h \
-	__type_traits/is_copy_constructible.h \
 	__type_traits/is_core_convertible.h \
-	__type_traits/is_default_constructible.h \
 	__type_traits/is_destructible.h \
 	__type_traits/is_empty.h \
 	__type_traits/is_enum.h \
+	__type_traits/is_equality_comparable.h \
+	__type_traits/is_execution_policy.h \
 	__type_traits/is_final.h \
 	__type_traits/is_floating_point.h \
 	__type_traits/is_function.h \
@@ -713,20 +888,11 @@ STD_HEADERS=	\
 	__type_traits/is_implicitly_default_constructible.h \
 	__type_traits/is_integral.h \
 	__type_traits/is_literal_type.h \
-	__type_traits/is_member_function_pointer.h \
-	__type_traits/is_member_object_pointer.h \
 	__type_traits/is_member_pointer.h \
-	__type_traits/is_move_assignable.h \
-	__type_traits/is_move_constructible.h \
 	__type_traits/is_nothrow_assignable.h \
 	__type_traits/is_nothrow_constructible.h \
 	__type_traits/is_nothrow_convertible.h \
-	__type_traits/is_nothrow_copy_assignable.h \
-	__type_traits/is_nothrow_copy_constructible.h \
-	__type_traits/is_nothrow_default_constructible.h \
 	__type_traits/is_nothrow_destructible.h \
-	__type_traits/is_nothrow_move_assignable.h \
-	__type_traits/is_nothrow_move_constructible.h \
 	__type_traits/is_null_pointer.h \
 	__type_traits/is_object.h \
 	__type_traits/is_pod.h \
@@ -738,7 +904,6 @@ STD_HEADERS=	\
 	__type_traits/is_referenceable.h \
 	__type_traits/is_same.h \
 	__type_traits/is_scalar.h \
-	__type_traits/is_scoped_enum.h \
 	__type_traits/is_signed.h \
 	__type_traits/is_signed_integer.h \
 	__type_traits/is_specialization.h \
@@ -747,13 +912,10 @@ STD_HEADERS=	\
 	__type_traits/is_trivial.h \
 	__type_traits/is_trivially_assignable.h \
 	__type_traits/is_trivially_constructible.h \
-	__type_traits/is_trivially_copy_assignable.h \
-	__type_traits/is_trivially_copy_constructible.h \
 	__type_traits/is_trivially_copyable.h \
-	__type_traits/is_trivially_default_constructible.h \
 	__type_traits/is_trivially_destructible.h \
-	__type_traits/is_trivially_move_assignable.h \
-	__type_traits/is_trivially_move_constructible.h \
+	__type_traits/is_trivially_lexicographically_comparable.h \
+	__type_traits/is_trivially_relocatable.h \
 	__type_traits/is_unbounded_array.h \
 	__type_traits/is_union.h \
 	__type_traits/is_unsigned.h \
@@ -786,24 +948,32 @@ STD_HEADERS=	\
 	__type_traits/type_identity.h \
 	__type_traits/type_list.h \
 	__type_traits/underlying_type.h \
+	__type_traits/unwrap_ref.h \
 	__type_traits/void_t.h \
 	__undef_macros \
 	__utility/as_const.h \
+	__utility/as_lvalue.h \
 	__utility/auto_cast.h \
 	__utility/cmp.h \
 	__utility/convert_to_integral.h \
 	__utility/declval.h \
+	__utility/empty.h \
 	__utility/exception_guard.h \
 	__utility/exchange.h \
 	__utility/forward.h \
 	__utility/forward_like.h \
 	__utility/in_place.h \
 	__utility/integer_sequence.h \
+	__utility/is_pointer_in_range.h \
+	__utility/is_valid_range.h \
 	__utility/move.h \
+	__utility/no_destroy.h \
 	__utility/pair.h \
 	__utility/piecewise_construct.h \
 	__utility/priority_tag.h \
+	__utility/private_constructor_tag.h \
 	__utility/rel_ops.h \
+	__utility/small_buffer.h \
 	__utility/swap.h \
 	__utility/to_underlying.h \
 	__utility/unreachable.h \
@@ -857,26 +1027,21 @@ STD_HEADERS=	\
 	execution \
 	expected \
 	experimental/__config \
-	experimental/__memory \
-	experimental/algorithm \
-	experimental/coroutine \
-	experimental/deque \
-	experimental/forward_list \
-	experimental/functional \
+	experimental/__simd/aligned_tag.h \
+	experimental/__simd/declaration.h \
+	experimental/__simd/reference.h \
+	experimental/__simd/scalar.h \
+	experimental/__simd/simd.h \
+	experimental/__simd/simd_mask.h \
+	experimental/__simd/traits.h \
+	experimental/__simd/utility.h \
+	experimental/__simd/vec_ext.h \
 	experimental/iterator \
-	experimental/list \
-	experimental/map \
-	experimental/memory_resource \
+	experimental/memory \
 	experimental/propagate_const \
-	experimental/regex \
-	experimental/set \
 	experimental/simd \
-	experimental/string \
 	experimental/type_traits \
-	experimental/unordered_map \
-	experimental/unordered_set \
 	experimental/utility \
-	experimental/vector \
 	ext/__hash \
 	ext/hash_map \
 	ext/hash_set \
@@ -897,22 +1062,23 @@ STD_HEADERS=	\
 	istream \
 	iterator \
 	latch \
-	libcxx.imp \
 	limits \
-	limits.h \
 	list \
 	locale \
 	locale.h \
 	map \
 	math.h \
+	mdspan \
 	memory \
 	memory_resource \
+	module.modulemap \
 	mutex \
 	new \
 	numbers \
 	numeric \
 	optional \
 	ostream \
+	print \
 	queue \
 	random \
 	ranges \
@@ -921,7 +1087,6 @@ STD_HEADERS=	\
 	scoped_allocator \
 	semaphore \
 	set \
-	setjmp.h \
 	shared_mutex \
 	source_location \
 	span \
@@ -934,11 +1099,13 @@ STD_HEADERS=	\
 	stdint.h \
 	stdio.h \
 	stdlib.h \
+	stop_token \
 	streambuf \
 	string \
 	string.h \
 	string_view \
 	strstream \
+	syncstream \
 	system_error \
 	tgmath.h \
 	thread \
@@ -960,8 +1127,9 @@ STD_HEADERS=	\
 # __string has moved from a file to a directory which CVS cannot
 # handle so we have to do some trickery with these
 STRING_HEADERS=	\
-	__string/char_traits.h \
-	__string/extern_template_lists.h
+	char_traits.h \
+	constexpr_c_functions.h \
+	extern_template_lists.h
 
 includes:
 	@echo installing ${STD_HEADERS}
@@ -973,10 +1141,13 @@ includes:
 	cmp -s ${CONFIG_SITE} ${DESTDIR}/${CXXINCLUDEDIR}/${CONFIG_SITE:T} || \
 		${INSTALL} ${INSTALL_COPY} -D -m 444 ${CONFIG_SITE} \
 			${DESTDIR}/${CXXINCLUDEDIR}/${CONFIG_SITE:T}
+	cmp -s ${ASSERTION_H} ${DESTDIR}/${CXXINCLUDEDIR}/${ASSERTION_H:T} || \
+		${INSTALL} ${INSTALL_COPY} -D -m 444 ${ASSERTION_H} \
+			${DESTDIR}/${CXXINCLUDEDIR}/${ASSERTION_H:T}
 	@echo installing ${STRING_HEADERS}
 .	for hdr in ${STRING_HEADERS}
-		cmp -s ${HDRDIR}/__string.d/${hdr} ${DESTDIR}/${CXXINCLUDEDIR}/${hdr} || \
-			${INSTALL} ${INSTALL_COPY} -D -m 444 ${HDRDIR}/__string.d/${hdr} \
+		cmp -s ${HDRDIR}/__string/${hdr} ${DESTDIR}/${CXXINCLUDEDIR}/${hdr} || \
+			${INSTALL} ${INSTALL_COPY} -D -m 444 ${HDRDIR}/__string/${hdr} \
 				${DESTDIR}/${CXXINCLUDEDIR}/${hdr};
 .	endfor
 

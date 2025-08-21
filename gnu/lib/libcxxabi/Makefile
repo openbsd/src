@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2024/01/26 11:51:45 robert Exp $
+# $OpenBSD: Makefile,v 1.6 2025/08/21 15:26:58 rsadowski Exp $
 
 .include <bsd.own.mk>
 
@@ -54,11 +54,13 @@ CPPFLAGS+=	-Wall -I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR} \
 CPPFLAGS+=	-D_LIBUNWIND_IS_NATIVE_ONLY
 CPPFLAGS+=	-D_LIBCXXABI_BUILDING_LIBRARY
 CPPFLAGS+=	-D_LIBCPP_BUILDING_LIBRARY
+CPPFLAGS+=	-D_LIBCPP_PSTL_BACKEND_STD_THREAD
+CPPFLAGS+=	-D_LIBCPP_HARDENING_MODE=2
 CPPFLAGS+=	-DNDEBUG
 CFLAGS+=	-nostdlib -funwind-tables
 CXXFLAGS+=	-nostdlib -nostdinc++ -funwind-tables
 .if empty(CXXFLAGS:M-std=*)
-CXXFLAGS+=	-std=c++20
+CXXFLAGS+=	-std=c++23
 .endif
 
 STD_HEADERS=	cxxabi.h \

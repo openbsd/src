@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2024/01/26 11:51:45 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2025/08/21 15:26:58 rsadowski Exp $
 
 .include <bsd.own.mk>
 
@@ -40,7 +40,7 @@ SRCS+=unwind.c \
 	UnwindRegistersRestore.S \
 	UnwindRegistersSave.S \
 	libunwind.cpp \
-	new.cpp
+	new_handler.cpp
 
 .else # !${USE_UNWIND}
 SRCS+=builtin.c
