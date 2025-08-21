@@ -945,22 +945,8 @@ legitimize_operand (rtx op, enum machine_mode mode)
 {
   rtx temp;
   REAL_VALUE_TYPE d;
-  union {
-    long l[2];
-    struct {				/* IEEE double precision format */
-      unsigned sign	 :  1;
-      unsigned exponent  : 11;
-      unsigned mantissa1 : 20;
-      unsigned mantissa2;
-    } s;
-    struct {				/* IEEE double format to quick check */
-      unsigned sign	 :  1;		/* if it fits in a float */
-      unsigned exponent1 :  4;
-      unsigned exponent2 :  7;
-      unsigned mantissa1 : 20;
-      unsigned mantissa2;
-    } s2;
-  } u;
+  long l[2];
+  int exponent;
 
   if (REG_P (op) || mode != DFmode)
     return op;
@@ -968,10 +954,12 @@ legitimize_operand (rtx op, enum machine_mode mode)
   if (GET_CODE (op) == CONST_DOUBLE)
     {
       REAL_VALUE_FROM_CONST_DOUBLE (d, op);
-      REAL_VALUE_TO_TARGET_DOUBLE (d, u.l);
-      if (u.s.exponent != 0x7ff /* NaN */
-	  && u.s.mantissa2 == 0 /* Mantissa fits */
-	  && (u.s2.exponent1 == 0x8 || u.s2.exponent1 == 0x7) /* Exponent fits */
+      REAL_VALUE_TO_TARGET_DOUBLE (d, l);
+      exponent = (l[0] >> 20) & 0x7ff; /* not sign-extended */
+      if (exponent != 0x7ff /* NaN */
+	  && l[1] == 0 /* Mantissa fits */
+	  && ((exponent >> 7) == 0x8
+	      || (exponent >> 7) == 0x7) /* Exponent fits */
 	  && (temp = simplify_unary_operation (FLOAT_TRUNCATE, SFmode,
 					       op, mode)) != 0)
 	return gen_rtx_FLOAT_EXTEND (mode, force_reg (SFmode, temp));
