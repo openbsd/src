@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.387 2025/08/20 03:55:37 dlg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.388 2025/08/21 08:49:21 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -225,15 +225,14 @@ route_attach(struct socket *so, int proto, int wait)
 	so->so_options |= SO_USELOOPBACK;
 
 	/* Give up solock before taking rtp_lk for the lock ordering. */
-	soref(so); /* Take a ref for the list */
 	sounlock(so);
 
 	rw_enter(&rtptable.rtp_lk, RW_WRITE);
 	TAILQ_INSERT_TAIL(&rtptable.rtp_list, rop, rop_list);
 	rtptable.rtp_count++;
+	rw_exit(&rtptable.rtp_lk);
 
 	solock(so);
-	rw_exit(&rtptable.rtp_lk);
 
 	return (0);
 }
@@ -261,7 +260,6 @@ route_detach(struct socket *so)
 	timeout_del_barrier(&rop->rop_timeout);
 
 	solock(so);
-	sorele(so); /* Release the ref the list had */
 
 	so->so_pcb = NULL;
 	KASSERT((so->so_state & SS_NOFDREF) == 0);
