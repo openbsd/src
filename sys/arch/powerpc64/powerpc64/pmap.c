@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.65 2025/08/19 23:20:19 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.66 2025/08/21 00:10:21 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -709,6 +709,25 @@ pte_zap(struct pte *pte, struct pte_desc *pted)
 	pte_del(pte, pmap_pted2ava(pted));
 }
 
+uint64_t
+pmap_acwimgn(vm_prot_t prot, int cache)
+{
+	uint64_t acwimgn = 0;
+
+	if (!(prot & PROT_EXEC))
+		acwimgn |= PTE_N;
+
+	if (cache == PMAP_CACHE_WB)
+		acwimgn |= PTE_M;
+	else
+		acwimgn |= (PTE_M | PTE_I | PTE_G);
+
+	if ((prot & (PROT_READ | PROT_WRITE)) == 0)
+		acwimgn |= PTE_AC;
+
+	return acwimgn;
+}
+
 void
 pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
     vm_prot_t prot, int cache)
@@ -732,16 +751,7 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 		pte->pte_lo |= PTE_RO;
 	if (prot & PROT_EXEC)
 		pted->pted_va |= PTED_VA_EXEC_M;
-	else
-		pte->pte_lo |= PTE_N;
-
-	if (cache == PMAP_CACHE_WB)
-		pte->pte_lo |= PTE_M;
-	else
-		pte->pte_lo |= (PTE_M | PTE_I | PTE_G);
-
-	if ((prot & (PROT_READ | PROT_WRITE)) == 0)
-		pte->pte_lo |= PTE_AC;
+	pte->pte_lo |= pmap_acwimgn(prot, cache);
 }
 
 void
@@ -1070,20 +1080,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			uint64_t old_pp = pted->pted_pte.pte_lo & PTE_PP;
 			uint64_t old_acwimgn = pted->pted_pte.pte_lo &
 			    (PTE_AC | PTE_W | PTE_I | PTE_M | PTE_G | PTE_N);
-			uint64_t acwimgn = 0;
 
-			if (!(prot & PROT_EXEC))
-				acwimgn |= PTE_N;
-
-			if (cache == PMAP_CACHE_WB)
-				acwimgn |= PTE_M;
-			else
-				acwimgn |= (PTE_M | PTE_I | PTE_G);
-
-			if ((prot & (PROT_READ | PROT_WRITE)) == 0)
-				acwimgn |= PTE_AC;
-
-			if (old_acwimgn == acwimgn &&
+			if (old_acwimgn == pmap_acwimgn(prot, cache) &&
 			    ((old_pp == PTE_RO && !(flags & PROT_WRITE)) ||
 			     (old_pp == PTE_RW && (prot & PROT_WRITE)))) {
 				PMAP_VP_UNLOCK(pm);
