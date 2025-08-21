@@ -18,7 +18,7 @@
 // * Start of the shadow memory region is aligned to 2**kShadowBaseAlignment.
 // * All stack ring buffers are located within (2**kShadowBaseAlignment)
 // sized region below and adjacent to the shadow region.
-// * Each ring buffer has a size of (2**N)*4096 where N is in [0, 8), and is
+// * Each ring buffer has a size of (2**N)*4096 where N is in [0, 7), and is
 // aligned to twice its size. The value of N can be different for each buffer.
 //
 // These constrains guarantee that, given an address A of any element of the
@@ -47,8 +47,7 @@
 #include "hwasan_allocator.h"
 #include "hwasan_flags.h"
 #include "hwasan_thread.h"
-
-#include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_thread_arg_retval.h"
 
 namespace __hwasan {
 
@@ -56,7 +55,10 @@ static uptr RingBufferSize() {
   uptr desired_bytes = flags()->stack_history_size * sizeof(uptr);
   // FIXME: increase the limit to 8 once this bug is fixed:
   // https://bugs.llvm.org/show_bug.cgi?id=39030
-  for (int shift = 1; shift < 7; ++shift) {
+  // Note that we *cannot* do that on Android, as the runtime will indefinitely
+  // have to support code that is compiled with ashr, which only works with
+  // shifts up to 6.
+  for (int shift = 0; shift < 7; ++shift) {
     uptr size = 4096 * (1ULL << shift);
     if (size >= desired_bytes)
       return size;
@@ -131,9 +133,9 @@ class SANITIZER_MUTEX HwasanThreadList {
 
   void ReleaseThread(Thread *t) SANITIZER_EXCLUDES(free_list_mutex_) {
     RemoveThreadStats(t);
+    RemoveThreadFromLiveList(t);
     t->Destroy();
     DontNeedThread(t);
-    RemoveThreadFromLiveList(t);
     SpinMutexLock l(&free_list_mutex_);
     free_list_.push_back(t);
   }
@@ -157,7 +159,7 @@ class SANITIZER_MUTEX HwasanThreadList {
   }
 
   template <class CB>
-  Thread *FindThreadLocked(CB cb) SANITIZER_CHECK_LOCKED(stats_mutex_) {
+  Thread *FindThreadLocked(CB cb) SANITIZER_CHECK_LOCKED(live_list_mutex_) {
     CheckLocked();
     for (Thread *t : live_list_)
       if (cb(t))
@@ -199,7 +201,7 @@ class SANITIZER_MUTEX HwasanThreadList {
     CHECK(IsAligned(free_space_, align));
     Thread *t = (Thread *)(free_space_ + ring_buffer_size_);
     free_space_ += thread_alloc_size_;
-    CHECK(free_space_ <= free_space_end_ && "out of thread memory");
+    CHECK_LE(free_space_, free_space_end_);
     return t;
   }
 
@@ -222,5 +224,6 @@ class SANITIZER_MUTEX HwasanThreadList {
 
 void InitThreadList(uptr storage, uptr size);
 HwasanThreadList &hwasanThreadList();
+ThreadArgRetval &hwasanThreadArgRetval();
 
 } // namespace __hwasan

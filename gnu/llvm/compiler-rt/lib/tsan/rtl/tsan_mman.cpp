@@ -9,21 +9,26 @@
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
 //===----------------------------------------------------------------------===//
+#include "tsan_mman.h"
+
 #include "sanitizer_common/sanitizer_allocator_checks.h"
 #include "sanitizer_common/sanitizer_allocator_interface.h"
 #include "sanitizer_common/sanitizer_allocator_report.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_errno.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
-#include "tsan_mman.h"
-#include "tsan_rtl.h"
-#include "tsan_report.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "tsan_flags.h"
+#include "tsan_interface.h"
+#include "tsan_report.h"
+#include "tsan_rtl.h"
 
 namespace __tsan {
 
 struct MapUnmapCallback {
   void OnMap(uptr p, uptr size) const { }
+  void OnMapSecondary(uptr p, uptr size, uptr user_begin,
+                      uptr user_size) const {};
   void OnUnmap(uptr p, uptr size) const {
     // We are about to unmap a chunk of user memory.
     // Mark the corresponding shadow memory as not needed.
@@ -49,7 +54,7 @@ struct MapUnmapCallback {
   }
 };
 
-static char allocator_placeholder[sizeof(Allocator)] ALIGNED(64);
+alignas(64) static char allocator_placeholder[sizeof(Allocator)];
 Allocator *allocator() {
   return reinterpret_cast<Allocator*>(&allocator_placeholder);
 }
@@ -70,7 +75,7 @@ struct GlobalProc {
         internal_alloc_mtx(MutexTypeInternalAlloc) {}
 };
 
-static char global_proc_placeholder[sizeof(GlobalProc)] ALIGNED(64);
+alignas(64) static char global_proc_placeholder[sizeof(GlobalProc)];
 GlobalProc *global_proc() {
   return reinterpret_cast<GlobalProc*>(&global_proc_placeholder);
 }
@@ -112,12 +117,21 @@ ScopedGlobalProcessor::~ScopedGlobalProcessor() {
   gp->mtx.Unlock();
 }
 
-void AllocatorLock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
+void AllocatorLockBeforeFork() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
   global_proc()->internal_alloc_mtx.Lock();
   InternalAllocatorLock();
+#if !SANITIZER_APPLE
+  // OS X allocates from hooks, see 6a3958247a.
+  allocator()->ForceLock();
+  StackDepotLockBeforeFork();
+#endif
 }
 
-void AllocatorUnlock() SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
+void AllocatorUnlockAfterFork(bool child) SANITIZER_NO_THREAD_SAFETY_ANALYSIS {
+#if !SANITIZER_APPLE
+  StackDepotUnlockAfterFork(child);
+  allocator()->ForceUnlock();
+#endif
   InternalAllocatorUnlock();
   global_proc()->internal_alloc_mtx.Unlock();
 }
@@ -351,10 +365,35 @@ void *user_pvalloc(ThreadState *thr, uptr pc, uptr sz) {
   return SetErrnoOnNull(user_alloc_internal(thr, pc, sz, PageSize));
 }
 
+static const void *user_alloc_begin(const void *p) {
+  if (p == nullptr || !IsAppMem((uptr)p))
+    return nullptr;
+  void *beg = allocator()->GetBlockBegin(p);
+  if (!beg)
+    return nullptr;
+
+  MBlock *b = ctx->metamap.GetBlock((uptr)beg);
+  if (!b)
+    return nullptr;  // Not a valid pointer.
+
+  return (const void *)beg;
+}
+
 uptr user_alloc_usable_size(const void *p) {
   if (p == 0 || !IsAppMem((uptr)p))
     return 0;
   MBlock *b = ctx->metamap.GetBlock((uptr)p);
+  if (!b)
+    return 0;  // Not a valid pointer.
+  if (b->siz == 0)
+    return 1;  // Zero-sized allocations are actually 1 byte.
+  return b->siz;
+}
+
+uptr user_alloc_usable_size_fast(const void *p) {
+  MBlock *b = ctx->metamap.GetBlock((uptr)p);
+  // Static objects may have malloc'd before tsan completes
+  // initialization, and may believe returned ptrs to be valid.
   if (!b)
     return 0;  // Not a valid pointer.
   if (b->siz == 0)
@@ -429,8 +468,23 @@ int __sanitizer_get_ownership(const void *p) {
   return allocator()->GetBlockBegin(p) != 0;
 }
 
+const void *__sanitizer_get_allocated_begin(const void *p) {
+  return user_alloc_begin(p);
+}
+
 uptr __sanitizer_get_allocated_size(const void *p) {
   return user_alloc_usable_size(p);
+}
+
+uptr __sanitizer_get_allocated_size_fast(const void *p) {
+  DCHECK_EQ(p, __sanitizer_get_allocated_begin(p));
+  uptr ret = user_alloc_usable_size_fast(p);
+  DCHECK_EQ(ret, __sanitizer_get_allocated_size(p));
+  return ret;
+}
+
+void __sanitizer_purge_allocator() {
+  allocator()->ForceReleaseToOS();
 }
 
 void __tsan_on_thread_idle() {

@@ -1,8 +1,8 @@
 
-#include "msan.h"
 #include "msan_thread.h"
-#include "msan_interface_internal.h"
 
+#include "msan.h"
+#include "msan_interface_internal.h"
 #include "sanitizer_common/sanitizer_tls_get_addr.h"
 
 namespace __msan {
@@ -47,6 +47,7 @@ void MsanThread::Init() {
   CHECK(MEM_IS_APP(stack_.bottom));
   CHECK(MEM_IS_APP(stack_.top - 1));
   ClearShadowForThreadStackAndTLS();
+  malloc_storage().Init();
 }
 
 void MsanThread::TSDDtor(void *tsd) {

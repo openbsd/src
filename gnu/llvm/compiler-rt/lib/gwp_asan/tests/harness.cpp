@@ -8,14 +8,7 @@
 
 #include "gwp_asan/tests/harness.h"
 
-namespace gwp_asan {
-namespace test {
-bool OnlyOnce() {
-  static int x = 0;
-  return !x++;
-}
-} // namespace test
-} // namespace gwp_asan
+#include <string>
 
 // Optnone to ensure that the calls to these functions are not optimized away,
 // as we're looking for them in the backtraces.
@@ -34,3 +27,28 @@ DeallocateMemory2(gwp_asan::GuardedPoolAllocator &GPA, void *Ptr) {
 __attribute__((optnone)) void TouchMemory(void *Ptr) {
   *(reinterpret_cast<volatile char *>(Ptr)) = 7;
 }
+
+void CheckOnlyOneGwpAsanCrash(const std::string &OutputBuffer) {
+  const char *kGwpAsanErrorString = "GWP-ASan detected a memory error";
+  size_t FirstIndex = OutputBuffer.find(kGwpAsanErrorString);
+  ASSERT_NE(FirstIndex, std::string::npos) << "Didn't detect a GWP-ASan crash";
+  ASSERT_EQ(OutputBuffer.find(kGwpAsanErrorString, FirstIndex + 1),
+            std::string::npos)
+      << "Detected more than one GWP-ASan crash:\n"
+      << OutputBuffer;
+}
+
+// Fuchsia does not support recoverable GWP-ASan.
+#if defined(__Fuchsia__)
+INSTANTIATE_TEST_SUITE_P(RecoverableAndNonRecoverableTests,
+                         BacktraceGuardedPoolAllocatorDeathTest,
+                         /* Recoverable */ testing::Values(false));
+#else
+INSTANTIATE_TEST_SUITE_P(RecoverableTests, BacktraceGuardedPoolAllocator,
+                         /* Recoverable */ testing::Values(true));
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BacktraceGuardedPoolAllocator);
+INSTANTIATE_TEST_SUITE_P(RecoverableAndNonRecoverableTests,
+                         BacktraceGuardedPoolAllocatorDeathTest,
+                         /* Recoverable */ testing::Bool());
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(BacktraceGuardedPoolAllocatorDeathTest);
+#endif
