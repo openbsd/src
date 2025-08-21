@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2024/02/06 05:07:28 jca Exp $
+# $OpenBSD: Makefile,v 1.9 2025/08/21 10:42:46 rsadowski Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ LIB=	compiler_rt
 NOPIC=
 NOPROFILE=
 
-CFLAGS+=	-fPIC -std=gnu99 -fvisibility=hidden -fno-stack-protector
+CFLAGS+=	-fPIC -std=gnu11 -fvisibility=hidden -fno-stack-protector
 CPPFLAGS+=	-I${.CURDIR}/../../llvm/compiler-rt/lib/builtins
 CPPFLAGS+=	-DVISIBILITY_HIDDEN
 
@@ -30,10 +30,20 @@ RTARCH=	${MACHINE_ARCH}
 .PATH: ${.CURDIR}/../../llvm/compiler-rt/lib/builtins/${RTARCH}
 .PATH: ${.CURDIR}/../../llvm/compiler-rt/lib/builtins
 
+# Enable Float16 support for x86_64
+.if ${RTARCH} == "x86_64"
+CPPFLAGS+=	-DCOMPILER_RT_HAS_FLOAT16
+.endif
+
+# BFloat16 support?
+.if ${RTARCH} == "x86_64" || ${RTARCH} == "aarch64"
+CPPFLAGS+=	-DCOMPILER_RT_HAS_BFLOAT16
+SRCS+=	extendbfsf2.c
+.endif
+
 GEN_SRCS=	absvdi2 \
 		absvsi2 \
 		absvti2 \
-		addtf3 \
 		addvdi3 \
 		addvsi3 \
 		addvti3 \
@@ -53,7 +63,6 @@ GEN_SRCS=	absvdi2 \
 		cmpti2 \
 		comparedf2 \
 		comparesf2 \
-		cpu_model \
 		ctzdi2 \
 		ctzsi2 \
 		ctzti2 \
@@ -64,8 +73,6 @@ GEN_SRCS=	absvdi2 \
 		divsc3 \
 		divtc3 \
 		divti3 \
-		divtf3 \
-		divxc3 \
 		emutls \
 		enable_execute_stack \
 		eprintf \
@@ -79,19 +86,12 @@ GEN_SRCS=	absvdi2 \
 		fixunsdfti \
 		fixunssfsi \
 		fixunssfti \
-		fixunsxfdi \
-		fixunsxfsi \
-		fixunsxfti \
-		fixxfdi \
-		fixxfti \
 		floattidf \
 		floattisf \
-		floattixf \
 		floatunsidf \
 		floatunsisf \
 		floatuntidf \
 		floatuntisf \
-		floatuntixf \
 		fp_mode \
 		gcc_personality_v0 \
 		int_util \
@@ -107,11 +107,9 @@ GEN_SRCS=	absvdi2 \
 		muloti4 \
 		mulsc3 \
 		multi3 \
-		multf3 \
 		mulvdi3 \
 		mulvsi3 \
 		mulvti3 \
-		mulxc3 \
 		negdf2 \
 		negdi2 \
 		negsf2 \
@@ -127,12 +125,9 @@ GEN_SRCS=	absvdi2 \
 		popcountti2 \
 		powidf2 \
 		powisf2 \
-		powitf2 \
-		powixf2 \
 		subvdi3 \
 		subvsi3 \
 		subvti3 \
-		subtf3 \
 		trampoline_setup \
 		truncdfhf2 \
 		truncsfhf2 \
@@ -146,6 +141,13 @@ GEN_SRCS=	absvdi2 \
 		umoddi3 \
 		umodsi3 \
 		umodti3
+
+# Architecture-specific TF (quad-precision) functions
+TF_SRCS=	addtf3 \
+		divtf3 \
+		multf3 \
+		powitf2 \
+		subtf3
 
 .if ${RTARCH} != "arm"
 GEN_SRCS+=	adddf3 \
@@ -173,17 +175,13 @@ GEN_SRCS+=	adddf3 \
 .if ${RTARCH} == "i386"
 SRCS+=	floatdidf.c \
 	floatdisf.c \
-	floatdixf.c \
 	floatundidf.c \
-	floatundisf.c \
-	floatundixf.c
+	floatundisf.c
 .else
 GEN_SRCS+=	floatdidf \
-		floatdisf \
-		floatdixf \
-		floatundidf \
-		floatundisf \
-		floatundixf
+	floatdisf \
+	floatundidf \
+	floatundisf
 .endif
 
 .for file in ${GEN_SRCS}
@@ -194,7 +192,27 @@ SRCS+=	${file}.c
 .	endif
 .endfor
 
+# x86_64 specific additions
+.if ${RTARCH} == "x86_64"
+# CPU model detection
+.PATH: ${.CURDIR}/../../llvm/compiler-rt/lib/builtins/cpu_model
+SRCS+=	x86.c
+
+# Float16 conversion functions
+SRCS+=	extendhfsf2.c \
+	truncdfhf2.c \
+	truncsfhf2.c
+.endif
+
 .if ${RTARCH} == "aarch64"
+# Add CPU model detection
+.PATH: ${.CURDIR}/../../llvm/compiler-rt/lib/builtins/cpu_model
+SRCS+=	aarch64.c
+
+# Quad-precision float support
+.for tf in ${TF_SRCS}
+SRCS+=	${tf}.c
+.endfor
 SRCS+=	comparetf2.c \
 	extenddftf2.c \
 	extendsftf2.c \
@@ -226,10 +244,17 @@ outline_atomic_${pat}${size}_${model}.S: Makefile ${.CURDIR}/../../llvm/compiler
 	@mv $@.tmp $@
 
 SRCS+=	outline_atomic_${pat}${size}_${model}.S
+CLEANFILES+=	outline_atomic_${pat}${size}_${model}.S
 .      endif
 .    endfor
 .  endfor
 .endfor
+
+
+# XXX SME (Scalable Matrix Extension) support
+#SRCS+=	sme-abi.S \
+#	sme-abi-init.c \
+#	sme-abi-vg.c
 
 .endif
 
@@ -276,7 +301,30 @@ SRCS+=	aeabi_cdcmp.S \
 	sync_synchronize.S
 .endif
 
+.if ${RTARCH} == "i386" || ${RTARCH} == "x86_64"
+# Extended precision (80-bit) support
+SRCS+=	divxc3.c \
+	extendxftf2.c \
+	fixxfdi.c \
+	fixxfti.c \
+	fixunsxfdi.c \
+	fixunsxfsi.c \
+	fixunsxfti.c \
+	floatdixf.c \
+	floattixf.c \
+	floatundixf.c \
+	floatuntixf.c \
+	mulxc3.c \
+	powixf2.c \
+	trunctfxf2.c
+.endif
+
 .if ${RTARCH} == "mips64" || ${RTARCH} == "mips64el"
+# Quad-precision float support
+.for tf in ${TF_SRCS}
+SRCS+=	${tf}.c
+.endfor
+
 SRCS+=	comparetf2.c \
 	extenddftf2.c \
 	extendsftf2.c \
@@ -304,6 +352,10 @@ SRCS+=	atomic_lock_free.c
 .endif
 
 .if ${RTARCH} == "riscv"
+# Quad-precision float support
+.for tf in ${TF_SRCS}
+SRCS+=	${tf}.c
+.endfor
 SRCS+=	comparetf2.c \
 	extenddftf2.c \
 	extendsftf2.c \
@@ -327,6 +379,10 @@ SRCS+=	comparetf2.c \
 .endif
 
 .if ${RTARCH} == "sparc64"
+# Quad-precision float support
+.for tf in ${TF_SRCS}
+SRCS+=	${tf}.c
+.endfor
 SRCS+=	comparetf2.c \
 	extenddftf2.c \
 	extendsftf2.c \

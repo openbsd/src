@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.4 2025/08/21 10:42:46 rsadowski Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,8 @@ LIB=	clang_rt.ubsan_minimal
 NOPIC=
 NOPROFILE=
 
-CFLAGS+=	-fPIC
+CPPFLAGS+=	-fPIC
+CPPFLAGS+=	-DSANITIZER_COMMON_NO_REDEFINE_BUILTINS
 CPPFLAGS+=	-I${BSDSRCDIR}/gnu/llvm/compiler-rt/lib
 
 .PATH: ${.CURDIR}/../../../llvm/compiler-rt/lib/ubsan_minimal

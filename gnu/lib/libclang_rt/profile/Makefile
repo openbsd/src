@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2025/06/11 17:46:32 robert Exp $
+# $OpenBSD: Makefile,v 1.5 2025/08/21 10:42:46 rsadowski Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ LIB=	clang_rt.profile
 NOPIC=
 NOPROFILE=
 
-CFLAGS+=	-fPIC -std=gnu99 -fvisibility=hidden -fno-stack-protector
+CFLAGS+=	-fPIC -std=gnu11 -fvisibility=hidden -fno-stack-protector
 CFLAGS+=	-DCOMPILER_RT_HAS_ATOMICS=1
 CFLAGS+=	-DCOMPILER_RT_HAS_FCNTL_LCK=1
 CFLAGS+=	-DCOMPILER_RT_HAS_UNAME=1
