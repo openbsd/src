@@ -55,6 +55,19 @@ template <typename A>
 bool EHHeaderParser<A>::decodeEHHdr(A &addressSpace, pint_t ehHdrStart,
                                     pint_t ehHdrEnd, EHHeaderInfo &ehHdrInfo) {
   pint_t p = ehHdrStart;
+
+  // Ensure that we don't read data beyond the end of .eh_frame_hdr
+  if (ehHdrEnd - ehHdrStart < 4) {
+    // Don't print a message for an empty .eh_frame_hdr (this can happen if
+    // the linker script defines symbols for it even in the empty case).
+    if (ehHdrEnd == ehHdrStart)
+      return false;
+    _LIBUNWIND_LOG("unsupported .eh_frame_hdr at %" PRIx64
+                   ": need at least 4 bytes of data but only got %zd",
+                   static_cast<uint64_t>(ehHdrStart),
+                   static_cast<size_t>(ehHdrEnd - ehHdrStart));
+    return false;
+  }
   uint8_t version = addressSpace.get8(p++);
   if (version != 1) {
     _LIBUNWIND_LOG("unsupported .eh_frame_hdr version: %" PRIu8 " at %" PRIx64,
@@ -145,9 +158,6 @@ bool EHHeaderParser<A>::findFDE(A &addressSpace, pint_t pc, pint_t ehHdrStart,
 
 template <typename A>
 size_t EHHeaderParser<A>::getTableEntrySize(uint8_t tableEnc) {
-  if (tableEnc == DW_EH_PE_omit) {
-    return 0;
-  }
   switch (tableEnc & 0x0f) {
   case DW_EH_PE_sdata2:
   case DW_EH_PE_udata2:
@@ -161,6 +171,8 @@ size_t EHHeaderParser<A>::getTableEntrySize(uint8_t tableEnc) {
   case DW_EH_PE_sleb128:
   case DW_EH_PE_uleb128:
     _LIBUNWIND_ABORT("Can't binary search on variable length encoded data.");
+  case DW_EH_PE_omit:
+    return 0;
   default:
     _LIBUNWIND_ABORT("Unknown DWARF encoding for search table.");
   }
