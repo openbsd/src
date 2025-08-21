@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.14 2024/05/20 10:00:00 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.15 2025/08/21 15:15:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -111,24 +111,21 @@ log_peer_warnx(const struct peer_config *peer, const char *emsg, ...)
 }
 
 void
-log_statechange(struct peer *peer, enum session_state nstate,
+log_statechange(struct peer *peer, enum session_state ostate,
     enum session_events event)
 {
-	char	*p;
-
 	/* don't clutter the logs with constant Connect -> Active -> Connect */
-	if (nstate == STATE_CONNECT && peer->state == STATE_ACTIVE &&
-	    peer->prev_state == STATE_CONNECT)
+	if (peer->state == STATE_CONNECT && peer->prev_state == STATE_ACTIVE &&
+	    ostate == STATE_CONNECT)
 		return;
-	if (nstate == STATE_ACTIVE && peer->state == STATE_CONNECT &&
-	    peer->prev_state == STATE_ACTIVE)
+	if (peer->state == STATE_ACTIVE && peer->prev_state == STATE_CONNECT &&
+	    ostate == STATE_ACTIVE)
 		return;
 
 	peer->lasterr = 0;
-	p = log_fmt_peer(&peer->conf);
-	logit(LOG_INFO, "%s: state change %s -> %s, reason: %s",
-	    p, statenames[peer->state], statenames[nstate], eventnames[event]);
-	free(p);
+	log_peer_info(&peer->conf, "state change %s -> %s, reason: %s",
+	    statenames[peer->prev_state], statenames[peer->state],
+	    eventnames[event]);
 }
 
 void

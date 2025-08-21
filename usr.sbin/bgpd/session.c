@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.525 2025/04/14 14:52:34 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.526 2025/08/21 15:15:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1089,8 +1089,7 @@ session_graceful_flush(struct peer *p, uint8_t aid, const char *why)
 }
 
 void
-session_mrt_dump_state(struct peer *p, enum session_state oldstate,
-    enum session_state newstate)
+session_mrt_dump_state(struct peer *p)
 {
 	struct mrt		*mrt;
 
@@ -1100,7 +1099,7 @@ session_mrt_dump_state(struct peer *p, enum session_state oldstate,
 		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 		    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
 		    mrt->group_id == p->conf.groupid))
-			mrt_dump_state(mrt, oldstate, newstate, p);
+			mrt_dump_state(mrt, p);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.126 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.127 2025/08/21 15:15:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -190,8 +190,7 @@ fail:
 }
 
 void
-mrt_dump_state(struct mrt *mrt, uint16_t old_state, uint16_t new_state,
-    struct peer *peer)
+mrt_dump_state(struct mrt *mrt, struct peer *peer)
 {
 	struct ibuf	*buf;
 	uint16_t	 subtype = BGP4MP_STATE_CHANGE;
@@ -203,9 +202,9 @@ mrt_dump_state(struct mrt *mrt, uint16_t old_state, uint16_t new_state,
 	    2 * sizeof(short), 0) == -1)
 		goto fail;
 
-	if (ibuf_add_n16(buf, old_state) == -1)
+	if (ibuf_add_n16(buf, peer->prev_state) == -1)
 		goto fail;
-	if (ibuf_add_n16(buf, new_state) == -1)
+	if (ibuf_add_n16(buf, peer->state) == -1)
 		goto fail;
 
 	ibuf_close(mrt->wbuf, buf);

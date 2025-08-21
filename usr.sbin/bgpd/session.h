@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.191 2025/02/26 19:31:31 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.192 2025/08/21 15:15:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -263,7 +263,7 @@ unsigned int	control_accept(int, int);
 
 /* log.c */
 char	*log_fmt_peer(const struct peer_config *);
-void	 log_statechange(struct peer *, enum session_state,
+void	 log_statechange(struct peer *,  enum session_state,
 	    enum session_events);
 void	 log_notification(const struct peer *, uint8_t, uint8_t,
 	    const struct ibuf *, const char *);
@@ -273,8 +273,7 @@ void	 log_conn_attempt(const struct peer *, struct sockaddr *,
 /* mrt.c */
 void	 mrt_dump_bgp_msg(struct mrt *, struct ibuf *, struct peer *,
 	    enum msg_type);
-void	 mrt_dump_state(struct mrt *, uint16_t, uint16_t,
-	    struct peer *);
+void	 mrt_dump_state(struct mrt *, struct peer *);
 void	 mrt_done(struct mrt *);
 
 /* pfkey.c */
@@ -339,8 +338,7 @@ void		 session_handle_update(struct peer *, struct ibuf *);
 void		 session_handle_rrefresh(struct peer *, struct route_refresh *);
 void		 session_graceful_restart(struct peer *);
 void		 session_graceful_flush(struct peer *, uint8_t, const char *);
-void		 session_mrt_dump_state(struct peer *, enum session_state,
-		    enum session_state);
+void		 session_mrt_dump_state(struct peer *);
 void		 session_mrt_dump_bgp_msg(struct peer *, struct ibuf *,
 		    enum msg_type, enum directions);
 int		 peer_matched(struct peer *, struct ctl_neighbor *);
