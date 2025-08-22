@@ -1302,22 +1302,22 @@ preserve_registers (bool store_p)
 
   /* The 88open OCS mandates that preserved registers be stored in
      increasing order.  For compatibility with current practice,
-     the order is r1, r30, then the preserve registers.
+     the order is r30, r1, then the preserve registers.
      Note that we are not strictly conforming, as we are storing
      register pairs (e.g. r24:r25) before individual registers.  */
+
+  if (save_regs[HARD_FRAME_POINTER_REGNUM])
+    {
+      emit_ldst (store_p, HARD_FRAME_POINTER_REGNUM, SImode,
+		 m88k_hardfp_offset);
+    }
 
   if (save_regs[1])
     {
       /* Do not reload r1 in the epilogue unless really necessary */
       if (store_p || regs_ever_live[1]
 	  || (flag_pic && save_regs[PIC_OFFSET_TABLE_REGNUM]))
-	emit_ldst (store_p, 1, SImode, m88k_hardfp_offset);
-    }
-
-  if (save_regs[HARD_FRAME_POINTER_REGNUM])
-    {
-      emit_ldst (store_p, HARD_FRAME_POINTER_REGNUM, SImode,
-		 m88k_hardfp_offset + 4);
+	emit_ldst (store_p, 1, SImode, m88k_hardfp_offset + 4);
     }
 
   offset = CEIL_ROUND(current_function_outgoing_args_size, 2 * UNITS_PER_WORD);

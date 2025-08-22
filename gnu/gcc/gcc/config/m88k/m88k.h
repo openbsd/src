@@ -795,6 +795,13 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
 #define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (Pmode, 1)
 #define DWARF_FRAME_RETURN_COLUMN DWARF_FRAME_REGNUM (1)
 
+/* Where to find the lowest frame.  */
+#define INITIAL_FRAME_ADDRESS_RTX hard_frame_pointer_rtx
+
+/* Where to find the return address in the given frame.  */
+#define RETURN_ADDR_RTX(COUNT, FRAME) \
+  gen_rtx_MEM (Pmode, plus_constant (FRAME, 4))
+
 /* Definitions for register eliminations.
 
    We have two registers that can be eliminated on the m88k.  First, the
