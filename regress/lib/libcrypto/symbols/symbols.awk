@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.13 2024/09/01 17:20:37 tb Exp $
+# $OpenBSD: symbols.awk,v 1.14 2025/08/22 15:49:26 tb Exp $
 
 # Copyright (c) 2018,2020 Theo Buehler <tb@openbsd.org>
 #
@@ -26,7 +26,7 @@ BEGIN {
 	# Undefine aliases, so we don't accidentally leave them in Symbols.list.
 	printf("#ifdef %s\n#undef %s\n#endif\n", $0, $0)
 
-	printf("static typeof(%s) *_libre_%s;\n", $0, $0);
+	printf("extern typeof(%s) *_libre_%s;\n", $0, $0);
 }
 
 END {
