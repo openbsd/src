@@ -1,4 +1,4 @@
-/* $OpenBSD: man.c,v 1.137 2022/08/16 22:59:48 schwarze Exp $ */
+/* $OpenBSD: man.c,v 1.138 2025/08/22 13:08:21 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015,2017-2019,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -132,6 +132,7 @@ man_ptext(struct roff_man *man, int line, char *buf, int offs)
 			*ep = '\0';
 			return 1;
 		}
+		mandoc_msg(MANDOCERR_FI_BLANK, line, i, NULL);
 		roff_elem_alloc(man, line, offs, ROFF_sp);
 		man->next = ROFF_NEXT_SIBLING;
 		return 1;

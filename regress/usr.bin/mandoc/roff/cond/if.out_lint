@@ -1,4 +1,7 @@
+mandoc: if.in:8:6: WARNING: blank line in fill mode, using .sp
 mandoc: if.in:15:2: WARNING: conditional request controls empty scope: if
 mandoc: if.in:17:2: WARNING: conditional request controls empty scope: if
+mandoc: if.in:17:7: WARNING: blank line in fill mode, using .sp
+mandoc: if.in:43:9: WARNING: blank line in fill mode, using .sp
 mandoc: if.in:42:2: WARNING: skipping paragraph macro: br before sp
 mandoc: if.in:71:2: WARNING: skipping paragraph macro: br after br
