@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-switch-client.c,v 1.70 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-switch-client.c,v 1.71 2025/08/22 07:42:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -61,7 +61,8 @@ cmd_switch_client_exec(struct cmd *self, struct cmdq_item *item)
 	const char		*tablename;
 	struct key_table	*table;
 
-	if (tflag != NULL && tflag[strcspn(tflag, ":.%")] != '\0') {
+	if (tflag != NULL &&
+	    (tflag[strcspn(tflag, ":.%")] != '\0' || strcmp(tflag, "=") == 0)) {
 		type = CMD_FIND_PANE;
 		flags = 0;
 	} else {
