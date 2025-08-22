@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.69 2025/08/12 12:26:09 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.70 2025/08/22 07:39:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -657,8 +657,10 @@ window_tree_draw_session(struct window_tree_modedata *data, struct session *s,
 		screen_write_preview(ctx, &w->active->base, width, sy);
 
 		xasprintf(&label, " %u:%s ", wl->idx, w->name);
-		if (strlen(label) > width)
+		if (strlen(label) > width) {
+			free(label);
 			xasprintf(&label, " %u ", wl->idx);
+		}
 		window_tree_draw_label(ctx, cx + offset, cy, width, sy, &gc,
 		    label);
 		free(label);
