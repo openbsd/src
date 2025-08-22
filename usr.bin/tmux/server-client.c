@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.429 2025/08/14 07:15:40 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.430 2025/08/22 07:26:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3446,7 +3446,7 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 	struct msg_command	  data;
 	char			 *buf;
 	size_t			  len;
-	int			  argc;
+	int			  argc = 0;
 	char			**argv, *cause;
 	struct cmd_parse_result	 *pr;
 	struct args_value	 *values;
@@ -3465,12 +3465,12 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 	if (len > 0 && buf[len - 1] != '\0')
 		fatalx("bad MSG_COMMAND string");
 
-	argc = data.argc;
-	if (cmd_unpack_argv(buf, len, argc, &argv) != 0) {
+	if (cmd_unpack_argv(buf, len, data.argc, &argv) != 0) {
 		cause = xstrdup("command too long");
 		goto error;
 	}
 
+	argc = data.argc;
 	if (argc == 0) {
 		cmdlist = cmd_list_copy(options_get_command(global_options,
 		    "default-client-command"), 0, NULL);
