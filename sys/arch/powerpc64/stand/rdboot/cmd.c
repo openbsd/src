@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.3 2024/08/08 13:59:11 miod Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.4 2025/08/22 20:05:31 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -252,7 +252,7 @@ readline(char *buf, size_t n, int to)
 	struct timeval tv;
 	fd_set fdset;
 	char *p;
-	int timed_out = 0;
+	int c, timed_out = 0;
 #ifdef DEBUG
 	extern int debug;
 #endif
@@ -271,6 +271,10 @@ readline(char *buf, size_t n, int to)
 		tv.tv_usec = 0;
 		if (select(STDIN_FILENO + 1, &fdset, NULL, NULL, &tv) == 0)
 			timed_out = 1;
+		else if ((c = getchar()) != EOF) {
+			putchar(c);		/* Echo. */
+			ungetc(c, stdin);
+		}
 
 		/* Restore canonical mode. */
 		tcsetattr(STDIN_FILENO, TCSANOW, &saved_tio);
