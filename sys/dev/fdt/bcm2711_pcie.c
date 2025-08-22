@@ -1,6 +1,6 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.14 2025/08/21 12:09:47 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.15 2025/08/22 13:09:32 kettenis Exp $	*/
 /*
- * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2020, 2025 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,23 +32,102 @@
 #include <dev/pci/ppbreg.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
+#define PCIE_RC_CFG_VENDOR_VENDOR_SPECIFIC_REG1		0x0188
+
+#define PCIE_RC_CFG_PRIV1_LINK_CAP			0x04dc
+#define  PCIE_RC_CFG_PRIV1_LINK_CAP_MAX_LINK_WIDTH_MASK	(0x1f << 4)
+#define  PCIE_RC_CFG_PRIV1_LINK_CAP_ASPM_SUPPORT_MASK	(0x3 << 10)
+#define PCIE_RC_CFG_PRIV1_ROOT_CAP			0x04f8
+#define  PCIE_RC_CFG_PRIV1_ROOT_CAP_L1SS_MODE_MASK	(0x1f << 3)
+#define  PCIE_RC_CFG_PRIV1_ROOT_CAP_L1SS_MODE_SHIFT	3
+
+#define PCIE_RC_TL_VDM_CTL1				0x0a0c
+#define PCIE_RC_TL_VDM_CTL0				0x0a20
+#define  PCIE_RC_TL_VDM_CTL0_VDM_ENABLED		(1 << 16)
+#define  PCIE_RC_TL_VDM_CTL0_VDM_IGNORETAG		(1 << 17)
+#define  PCIE_RC_TL_VDM_CTL0_VDM_IGNOREVNDRID		(1 << 18)
+
+#define PCIE_MISC_MISC_CTRL				0x4008
+#define  PCIE_MISC_MISC_CTRL_PCIE_RCB_64B_MODE		(1 << 7)
+#define  PCIE_MISC_MISC_CTRL_PCIE_RCB_MPS_MODE		(1 << 10)
+#define  PCIE_MISC_MISC_CTRL_SCB_ACCESS_EN		(1 << 12)
+#define  PCIE_MISC_MISC_CTRL_CFG_READ_UR_MODE		(1 << 13)
+#define  PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_MASK	(0x3 << 20)
+#define  PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_128		(0x0 << 20)
+#define  PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_256		(0x1 << 20)
+#define  PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_512		(0x2 << 20)
 #define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LO		0x400c
 #define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_HI		0x4010
+#define PCIE_MISC_RC_BAR1_CONFIG_LO			0x402c
+#define  PCIE_MISC_RC_BAR1_CONFIG_SIZE_MASK		(0x1f << 0)
+#define PCIE_MISC_RC_BAR1_CONFIG_HI			0x4030
+#define PCIE_MISC_MSI_BAR_CONFIG_LO			0x4044
+#define  PCIE_MISC_MSI_BAR_CONFIG_LO_EN			(1 << 0)
+#define PCIE_MISC_MSI_BAR_CONFIG_HI			0x4048
+#define PCIE_MISC_MSI_DATA_CONFIG			0x404c
+#define  PCIE_MISC_MSI_DATA_CONFIG_8			0xffe06540
+#define  PCIE_MISC_MSI_DATA_CONFIG_32			0xfff86540
+#define PCIE_MISC_RC_CONFIG_RETRY_TIMEOUT		0x405c
+#define PCIE_MISC_PCIE_CTRL				0x4064
+#define  PCIE_MISC_PCIE_CTRL_PCIE_PERSTB		(1 << 2)
+#define PCIE_MISC_PCIE_STATUS				0x4068
+#define  PCIE_MISC_PCIE_STATUS_PCIE_PHYLINKUP		(1 << 4)
+#define  PCIE_MISC_PCIE_STATUS_PCIE_DL_ACTIVE		(1 << 5)
 #define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_LIMIT	0x4070
 #define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_HI		0x4080
 #define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI		0x4084
+#define PCIE_MISC_CTRL_1				0x40a0
+#define  PCIE_MISC_CTRL_1_EN_VDM_QOS_CONTROL		(1 << 5)
+#define PCIE_MISC_UBUS_CTRL				0x40a4
+#define  PCIE_MISC_UBUS_CTRL_UBUS_PCIE_REPLY_ERR_DIS    (1 << 13)
+#define  PCIE_MISC_UBUS_CTRL_UBUS_PCIE_REPLY_DECERR_DIS (1 << 19)
+#define PCIE_MISC_UBUS_TIMEOUT				0x40a8
+#define PCIE_MISC_UBUS_BAR1_CONFIG_REMAP_LO		0x40ac
+#define  PCIE_MISC_UBUS_BAR1_CONFIG_REMAP_EN		(1 << 0)
+#define PCIE_MISC_UBUS_BAR1_CONFIG_REMAP_HI		0x40b0
+#define PCIE_MISC_VDM_PRIORITY_TO_QOS_MAP_HI		0x4164
+#define PCIE_MISC_VDM_PRIORITY_TO_QOS_MAP_LO		0x4168
+#define PCIE_MISC_AXI_INTF_CTRL				0x416c
+#define  PCIE_MISC_AXI_REQFIFO_EN_QOS_PROPAGATION	(1 << 17)
+#define  PCIE_MISC_AXI_EN_RCLK_QOS_ARRAY_FIX		(1 << 13)
+#define  PCIE_MISC_AXI_EN_QOS_UPDATE_TIMING_FIX		(1 << 12)
+#define  PCIE_MISC_AXI_DIS_QOS_GATING_IN_MASTER		(1 << 11)
+#define  PCIE_MISC_AXI_MASTER_MAX_OUTSTANDING_REQUESTS_MASK (0x3f << 0)
+#define  PCIE_MISC_AXI_MASTER_MAX_OUTSTANDING_REQUESTS_SHIFT 0
+#define PCIE_MISC_AXI_READ_ERROR_DATA			0x4170
+#define PCIE_HARD_DEBUG					0x4204
+#define PCIE_HARD_DEBUG_7712				0x4304
+#define  PCIE_HARD_DEBUG_CLKREQ_DEBUG_ENABLE		(1 << 1)
+#define  PCIE_HARD_DEBUG_REFCLK_OVRD_ENABLE		(1 << 16)
+#define  PCIE_HARD_DEBUG_REFCLK_OVRD_OUT		(1 << 20)
+#define  PCIE_HARD_DEBUG_L1SS_ENABLE			(1 << 21)
+#define  PCIE_HARD_DEBUG_SERDES_IDDQ			(1 << 27)
+#define  PCIE_HARD_DEBUG_CLKREQ_MASK \
+	    (PCIE_HARD_DEBUG_CLKREQ_DEBUG_ENABLE |	\
+	     PCIE_HARD_DEBUG_REFCLK_OVRD_ENABLE	|	\
+	     PCIE_HARD_DEBUG_REFCLK_OVRD_OUT |		\
+	     PCIE_HARD_DEBUG_L1SS_ENABLE)
+#define PCIE_MSI_INTR2_INT_STATUS			0x4500
+#define PCIE_MSI_INTR2_INT_CLR				0x4508
+#define PCIE_MSI_INTR2_INT_MASK_SET			0x4510
+#define PCIE_MSI_INTR2_INT_MASK_CLR			0x4514
 #define PCIE_EXT_CFG_DATA				0x8000
 #define PCIE_EXT_CFG_INDEX				0x9000
 #define PCIE_RGR1_SW_INIT_1				0x9210
-#define  PCIE_RGR1_SW_INIT_1_PERST_MASK			(1 << 0)
-#define  PCIE_RGR1_SW_INIT_1_INIT_MASK			(1 << 1)
+#define  PCIE_RGR1_SW_INIT_1_PERST			(1 << 0)
+#define  PCIE_RGR1_SW_INIT_1_INIT			(1 << 1)
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define HSET4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
+#define HCLR4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
 struct bcmpcie_range {
 	uint32_t		flags;
@@ -58,10 +137,12 @@ struct bcmpcie_range {
 };
 
 struct bcmpcie_softc {
-	struct simplebus_softc	sc_sbus;
+	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
+
+	bus_addr_t		sc_pcie_hard_debug;
 
 	int			sc_node;
 	int			sc_acells;
@@ -79,6 +160,8 @@ struct bcmpcie_softc {
 	struct machine_bus_dma_tag sc_dma;
 
 	struct machine_pci_chipset sc_pc;
+	struct extent		*sc_busex;
+	struct extent		*sc_memex;
 	int			sc_bus;
 };
 
@@ -102,7 +185,12 @@ bcmpcie_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "brcm,bcm2712-pcie");
 }
 
-int	bcmpcie_submatch(struct device *, void *, void *);
+void	bcmpcie_reset_bridge(struct bcmpcie_softc *, int);
+void	bcmpcie_setup_clkreq(struct bcmpcie_softc *);
+void	bcmpcie_setup_outbound(struct bcmpcie_softc *);
+void	bcmpcie_setup_inbound(struct bcmpcie_softc *);
+int	bcmpcie_link_up(struct bcmpcie_softc *);
+
 void	bcmpcie_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
 int	bcmpcie_bus_maxdevs(void *, int);
@@ -134,9 +222,12 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	struct bcmpcie_softc *sc = (struct bcmpcie_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct pcibus_attach_args pba;
+	uint32_t bus_range[2];
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
+	uint32_t msi_parent, phandle;
 	uint32_t reg;
+	int timo;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -151,13 +242,18 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	reg = HREAD4(sc, PCIE_RGR1_SW_INIT_1);
-	if (reg & PCIE_RGR1_SW_INIT_1_INIT_MASK) {
+	if (reg & PCIE_RGR1_SW_INIT_1_INIT) {
 		printf(": disabled\n");
 		return;
 	}
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_dmat = faa->fa_dmat;
+
+	if (OF_is_compatible(faa->fa_node, "brcm,bcm2712-pcie"))
+		sc->sc_pcie_hard_debug = PCIE_HARD_DEBUG_7712;
+	else
+		sc->sc_pcie_hard_debug = PCIE_HARD_DEBUG;
 
 	sc->sc_acells = OF_getpropint(sc->sc_node, "#address-cells",
 	    faa->fa_acells);
@@ -250,30 +346,76 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 		free(ranges, M_TEMP, rangeslen);
 	}
 
-	/*
-	 * Reprogram the outbound window to match the configuration in
-	 * the device tree.  This is necessary since the EDK2-based
-	 * UEFI firmware reprograms the window.
-	 */
-	for (i = 0; i < sc->sc_nranges; i++) {
-		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x02000000) {
-			uint64_t cpu_base = sc->sc_ranges[i].phys_base;
-			uint64_t cpu_limit = sc->sc_ranges[i].phys_base +
-			    sc->sc_ranges[i].size - 1;
+	printf("\n");
 
-			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LO,
-			    sc->sc_ranges[i].pci_base);
-			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_HI,
-			    sc->sc_ranges[i].pci_base >> 32);
-			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_LIMIT,
-			    (cpu_base & PPB_MEM_MASK) >> PPB_MEM_SHIFT |
-			    (cpu_limit & PPB_MEM_MASK));
-			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_HI,
-			    cpu_base >> 32);
-			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI,
-			    cpu_limit >> 32);
-		}
+	reset_assert(faa->fa_node, "rescal");
+	reset_deassert(faa->fa_node, "rescal");
+
+	bcmpcie_reset_bridge(sc, 1);
+	delay(200);
+	bcmpcie_reset_bridge(sc, 0);
+
+	reg = HREAD4(sc, sc->sc_pcie_hard_debug);
+	reg &= ~PCIE_HARD_DEBUG_SERDES_IDDQ;
+	HWRITE4(sc, sc->sc_pcie_hard_debug, reg);
+	delay(200);
+
+	reg = HREAD4(sc, PCIE_MISC_MISC_CTRL);
+	reg &= ~PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_MASK;
+	if (OF_is_compatible(faa->fa_node, "brcm,bcm2711-pcie"))
+		reg |= PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_128;
+	else
+		reg |= PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_512;
+	reg |= PCIE_MISC_MISC_CTRL_SCB_ACCESS_EN;
+	reg |= PCIE_MISC_MISC_CTRL_CFG_READ_UR_MODE;
+	reg |= PCIE_MISC_MISC_CTRL_PCIE_RCB_64B_MODE;
+	reg |= PCIE_MISC_MISC_CTRL_PCIE_RCB_MPS_MODE;
+	HWRITE4(sc, PCIE_MISC_MISC_CTRL, reg);
+
+	if (OF_is_compatible(sc->sc_node, "brcm,bcm2712-pcie"))
+		HWRITE4(sc, PCIE_MISC_AXI_READ_ERROR_DATA, 0xffffffff);
+
+	/* Deassert PERST#. */
+	if (OF_is_compatible(sc->sc_node, "brcm,bcm2711-pcie")) {
+		reg = HREAD4(sc, PCIE_RGR1_SW_INIT_1);
+		reg &= ~PCIE_RGR1_SW_INIT_1_PERST;
+		HWRITE4(sc, PCIE_RGR1_SW_INIT_1, reg);
+	} else {
+		reg = HREAD4(sc, PCIE_MISC_PCIE_CTRL);
+		reg |= PCIE_MISC_PCIE_CTRL_PCIE_PERSTB;
+		HWRITE4(sc, PCIE_MISC_PCIE_CTRL, reg);
 	}
+
+	/* Wait for the link to come up. */
+	for (timo = 100; timo > 0; timo--) {
+		if (bcmpcie_link_up(sc))
+			break;
+		delay(1000);
+	}
+	if (timo == 0)
+		return;
+
+	bcmpcie_setup_clkreq(sc);
+
+	/* Create extents for our address spaces. */
+	sc->sc_busex = extent_create("pcibus", 0, 255,
+	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
+	sc->sc_memex = extent_create("pcimem", 0, (u_long)-1,
+	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_FILLED);
+
+	/* Set up bus range. */
+	if (OF_getpropintarray(sc->sc_node, "bus-range", bus_range,
+	    sizeof(bus_range)) != sizeof(bus_range) ||
+	    bus_range[0] >= 32 || bus_range[1] >= 32) {
+		bus_range[0] = 0;
+		bus_range[1] = 31;
+	}
+	sc->sc_bus = bus_range[0];
+	extent_free(sc->sc_busex, bus_range[0],
+	    bus_range[1] - bus_range[0] + 1, EX_WAITOK);
+
+	bcmpcie_setup_outbound(sc);
+	bcmpcie_setup_inbound(sc);
 
 	memcpy(&sc->sc_bus_iot, sc->sc_iot, sizeof(sc->sc_bus_iot));
 	sc->sc_bus_iot.bus_private = sc;
@@ -312,25 +454,191 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = &sc->sc_bus_memt;
 	pba.pba_dmat = &sc->sc_dma;
 	pba.pba_pc = &sc->sc_pc;
+	pba.pba_busex = sc->sc_busex;
+	pba.pba_memex = sc->sc_memex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
 
-	/* Attach device tree nodes enumerating PCIe bus */
-	simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
+	/* Enable MSI support if we have an external MSI controller. */
+	phandle = OF_getpropint(sc->sc_node, "phandle", 0);
+	msi_parent = OF_getpropint(sc->sc_node, "msi-parent", phandle);
+	if (msi_parent != phandle)
+		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
-	config_found_sm(self, &pba, NULL, bcmpcie_submatch);
+	config_found(self, &pba, NULL);
+}
+
+void
+bcmpcie_reset_bridge(struct bcmpcie_softc *sc, int assert)
+{
+	if (OF_getindex(sc->sc_node, "reset-names", "bridge") >= 0) {
+		if (assert)
+			reset_assert(sc->sc_node, "bridge");
+		else
+			reset_deassert(sc->sc_node, "bridge");
+		return;
+	}
+
+	/*
+	 * XXX Avoid resetting the BCM2711 until we have code to
+	 * reload the firmware for the VIA VL805 USB controller.
+	 */
+#ifdef notyet
+	if (assert)
+		HSET4(sc, PCIE_RGR1_SW_INIT_1, PCIE_RGR1_SW_INIT_1_INIT);
+	else
+		HCLR4(sc, PCIE_RGR1_SW_INIT_1, PCIE_RGR1_SW_INIT_1_INIT);
+#endif
+}
+
+void
+bcmpcie_setup_clkreq(struct bcmpcie_softc *sc)
+{
+	char mode[8] = "default";
+	uint32_t reg;
+
+	/* Start out in safe mode. */
+	reg = HREAD4(sc, sc->sc_pcie_hard_debug);
+	reg &= ~PCIE_HARD_DEBUG_CLKREQ_MASK;
+
+	OF_getprop(sc->sc_node, "brcm,clkreq-mode", mode, sizeof(&mode));
+	if (strcmp(mode, "no-l1ss") == 0) {
+		reg |= PCIE_HARD_DEBUG_CLKREQ_DEBUG_ENABLE;
+	} else if (strcmp(mode, "default") == 0) {
+		reg |= PCIE_HARD_DEBUG_L1SS_ENABLE;
+	}
+
+	HWRITE4(sc, sc->sc_pcie_hard_debug, reg);
+
+	/* Unadvertise L1SS if appropriate. */
+	if (strcmp(mode, "no-l1ss") == 0) {
+		reg = HREAD4(sc, PCIE_RC_CFG_PRIV1_ROOT_CAP);
+		reg &= ~PCIE_RC_CFG_PRIV1_ROOT_CAP_L1SS_MODE_MASK;
+		reg |= (1 << PCIE_RC_CFG_PRIV1_ROOT_CAP_L1SS_MODE_SHIFT);
+		HWRITE4(sc, PCIE_RC_CFG_PRIV1_ROOT_CAP, reg);
+	}
+}
+
+void
+bcmpcie_setup_outbound(struct bcmpcie_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < sc->sc_nranges; i++) {
+		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x02000000) {
+			uint64_t cpu_base = sc->sc_ranges[i].phys_base;
+			uint64_t cpu_limit = sc->sc_ranges[i].phys_base +
+			    sc->sc_ranges[i].size - 1;
+
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LO,
+			    sc->sc_ranges[i].pci_base);
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_HI,
+			    sc->sc_ranges[i].pci_base >> 32);
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_LIMIT,
+			    (cpu_base & PPB_MEM_MASK) >> PPB_MEM_SHIFT |
+			    (cpu_limit & PPB_MEM_MASK));
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_HI,
+			    cpu_base >> 32);
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI,
+			    cpu_limit >> 32);
+
+			extent_free(sc->sc_memex, sc->sc_ranges[i].pci_base,
+			    sc->sc_ranges[i].size, EX_WAITOK);
+		}
+	}
+}
+
+void
+bcmpcie_setup_inbound(struct bcmpcie_softc *sc)
+{
+	struct bcmpcie_range ranges[3];
+	uint64_t pci_base, cpu_base, size;
+	int nranges = 0;
+	int i;
+
+	if (sc->sc_ndmaranges == 0)
+		return;
+
+	if (OF_is_compatible(sc->sc_node, "brcm,bcm2711-pcie")) {
+		uint64_t start = sc->sc_dmaranges[0].pci_base;
+		uint64_t end = start + sc->sc_dmaranges[0].size;
+		
+		for (i = 1; i < sc->sc_ndmaranges; i++) {
+			pci_base = sc->sc_dmaranges[i].pci_base;
+			size = sc->sc_dmaranges[i].size;
+
+			start = MIN(start, pci_base);
+			end = MAX(end, pci_base + size);
+		}
+
+		/*
+		 * BAR1 needs to be disabled, BAR2 should cover all
+		 * inbound traffic.
+		 */
+		ranges[0].pci_base = 0;
+		ranges[0].phys_base = 0;
+		ranges[0].size = 0;
+		ranges[1].pci_base = start;
+		ranges[1].phys_base = 0;
+		ranges[1].size = end - start;
+		nranges = 2;
+	} else {
+		for (i = 0; i < sc->sc_ndmaranges; i++) {
+			if (nranges == nitems(ranges)) {
+				printf("%s: too many dma-ranges\n",
+				    sc->sc_dev.dv_xname);
+				break;
+			}
+			ranges[i].pci_base = sc->sc_dmaranges[i].pci_base;
+			ranges[i].phys_base = sc->sc_dmaranges[i].phys_base;
+			ranges[i].size = sc->sc_dmaranges[i].size;
+			nranges++;
+		}
+	}
+
+	for (i = 0; i < nranges; i++) {
+		u_int shift;
+
+		pci_base = ranges[i].pci_base;
+		cpu_base = ranges[i].phys_base;
+		size = ranges[i].size;
+
+		shift = 0;
+		while ((1ULL << shift) < size)
+			shift++;
+		if (shift >= 12 && shift <= 15)
+			size = 0x1c + (shift - 12);
+		else if (shift >= 16 && shift <= 36)
+			size = (shift - 15);
+		else
+			size = 0;
+
+		HWRITE4(sc, PCIE_MISC_RC_BAR1_CONFIG_LO + i * 8,
+		    (pci_base & ~PCIE_MISC_RC_BAR1_CONFIG_SIZE_MASK) | size);
+		HWRITE4(sc, PCIE_MISC_RC_BAR1_CONFIG_HI + i * 8,
+		    pci_base >> 32);
+
+		/* BCM2711 doesn't have UBUS. */
+		if (OF_is_compatible(sc->sc_node, "brcm,bcm2711-pcie"))
+			continue;
+
+		HWRITE4(sc, PCIE_MISC_UBUS_BAR1_CONFIG_REMAP_LO + i * 8,
+		    cpu_base | PCIE_MISC_UBUS_BAR1_CONFIG_REMAP_EN);
+		HWRITE4(sc, PCIE_MISC_UBUS_BAR1_CONFIG_REMAP_HI + i * 8,
+		    cpu_base >> 32);
+	}
 }
 
 int
-bcmpcie_submatch(struct device *self, void *match, void *aux)
+bcmpcie_link_up(struct bcmpcie_softc *sc)
 {
-	struct cfdata *cf = match;
-	struct pcibus_attach_args *pba = aux;
+	uint32_t reg;
 
-	if (strcmp(pba->pba_busname, cf->cf_driver->cd_name) != 0)
-		return 0;
-
-	return (*cf->cf_attach->ca_match)(self, match, aux);
+	reg = HREAD4(sc, PCIE_MISC_PCIE_STATUS);
+	if ((reg & PCIE_MISC_PCIE_STATUS_PCIE_DL_ACTIVE) &&
+	    (reg & PCIE_MISC_PCIE_STATUS_PCIE_PHYLINKUP))
+		return 1;
+	return 0;
 }
 
 void
@@ -409,6 +717,15 @@ bcmpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 int
 bcmpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
 {
+	struct bcmpcie_softc *sc = v;
+	int node;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RPI &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RPI_RP1) {
+		node = OF_getnodebyname(sc->sc_node, "rp1");
+		pa->pa_tag |= ((pcitag_t)node << 32);
+	}
+
 	return 0;
 }
 
@@ -449,18 +766,40 @@ bcmpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
     struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct bcmpcie_softc *sc = v;
-	int bus, dev, fn;
-	uint32_t reg[4];
+	void *cookie;
 
-	KASSERT(ih.ih_type == PCI_INTX);
-	bcmpcie_decompose_tag(sc, ih.ih_tag, &bus, &dev, &fn);
+	if (ih.ih_type != PCI_INTX) {
+		uint64_t addr = 0, data;
 
-	reg[0] = bus << 16 | dev << 11 | fn << 8;
-	reg[1] = reg[2] = 0;
-	reg[3] = ih.ih_intrpin;
+		/* Assume hardware passes Requester ID as sideband data. */
+		data = pci_requester_id(ih.ih_pc, ih.ih_tag);
+		cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
+		    &data, level, ci, func, arg, name);
+		if (cookie == NULL)
+			return NULL;
 
-	return fdt_intr_establish_imap_cpu(sc->sc_node, reg, sizeof(reg),
-	    level, ci, func, arg, name);
+		/* TODO: translate address to the PCI device's view */
+
+		if (ih.ih_type == PCI_MSIX) {
+			pci_msix_enable(ih.ih_pc, ih.ih_tag,
+			    &sc->sc_bus_memt, ih.ih_intrpin, addr, data);
+		} else
+			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
+	} else {
+		int bus, dev, fn;
+		uint32_t reg[4];
+
+		bcmpcie_decompose_tag(sc, ih.ih_tag, &bus, &dev, &fn);
+
+		reg[0] = bus << 16 | dev << 11 | fn << 8;
+		reg[1] = reg[2] = 0;
+		reg[3] = ih.ih_intrpin;
+
+		cookie = fdt_intr_establish_imap_cpu(sc->sc_node,
+		    reg, sizeof(reg), level, ci, func, arg, name);
+	}
+
+	return cookie;
 }
 
 void
