@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.61 2025/02/20 13:39:58 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.62 2025/08/22 07:48:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -248,8 +248,8 @@ cmd_capture_pane_exec(struct cmd *self, struct cmdq_item *item)
 			}
 			file_print_buffer(c, buf, len);
 			file_print(c, "\n");
-			free(buf);
 		}
+		free(buf);
 	} else {
 		bufname = NULL;
 		if (args_has(args, 'b'))
