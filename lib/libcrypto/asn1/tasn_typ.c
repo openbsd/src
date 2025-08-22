@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.20 2024/07/08 16:24:22 beck Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.21 2025/08/22 14:07:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -623,6 +623,7 @@ const ASN1_ITEM ASN1_BOOLEAN_it = {
 	.size = -1,
 	.sname = "ASN1_BOOLEAN",
 };
+LCRYPTO_ALIAS(ASN1_BOOLEAN_it);
 
 int
 i2d_ASN1_BOOLEAN(int a, unsigned char **out)
@@ -652,6 +653,7 @@ const ASN1_ITEM ASN1_TBOOLEAN_it = {
 	.size = 1,
 	.sname = "ASN1_TBOOLEAN",
 };
+LCRYPTO_ALIAS(ASN1_TBOOLEAN_it);
 
 const ASN1_ITEM ASN1_FBOOLEAN_it = {
 	.itype = ASN1_ITYPE_PRIMITIVE,
@@ -659,6 +661,7 @@ const ASN1_ITEM ASN1_FBOOLEAN_it = {
 	.size = 0,
 	.sname = "ASN1_FBOOLEAN",
 };
+LCRYPTO_ALIAS(ASN1_FBOOLEAN_it);
 
 /* Special, OCTET STRING with indefinite length constructed support */
 
