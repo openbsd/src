@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.14 2025/08/22 15:49:26 tb Exp $
+# $OpenBSD: symbols.awk,v 1.15 2025/08/22 15:52:34 tb Exp $
 
 # Copyright (c) 2018,2020 Theo Buehler <tb@openbsd.org>
 #
@@ -51,8 +51,12 @@ END {
 
 	printf("\t\};\n\n")
 
-	printf("\tfor (i = 0; i < sizeof(symbols) / sizeof(symbols[0]); i++)\n")
+	printf("\tfor (i = 0; i < sizeof(symbols) / sizeof(symbols[0]); i++) {\n")
 	printf("\t\tfprintf(stderr, \"%%s: %%p\\n\", symbols[i].name, symbols[i].addr);\n")
+	printf("#if defined(USE_LIBRESSL_NAMESPACE)\n")
+	printf("\t\tfprintf(stderr, \"_libre_%%s: %%p\\n\", symbols[i].name, symbols[i].libre_addr);\n")
+	printf("#endif\n")
+	printf("\t}\n")
 	printf("\n\tprintf(\"OK\\n\");\n")
 	printf("\n\treturn 0;\n}\n")
 }
