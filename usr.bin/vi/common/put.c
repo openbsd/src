@@ -1,4 +1,4 @@
-/*	$OpenBSD: put.c,v 1.16 2016/05/27 09:18:11 martijn Exp $	*/
+/*	$OpenBSD: put.c,v 1.17 2025/08/23 21:02:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -27,16 +27,16 @@
  * put --
  *	Put text buffer contents into the file.
  *
- * PUBLIC: int put(SCR *, CB *, CHAR_T *, MARK *, MARK *, int);
+ * PUBLIC: int put(SCR *, CB *, CHAR_T *, MARK *, MARK *, int, int);
  */
 int
-put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
+put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append, int cnt)
 {
 	CHAR_T name;
 	TEXT *ltp, *tp;
 	recno_t lno;
 	size_t blen, clen, len;
-	int rval;
+	int rval, i, isempty;
 	char *bp, *p, *t;
 
 	if (cbp == NULL) {
@@ -77,11 +77,15 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 	if (cp->lno == 1) {
 		if (db_last(sp, &lno))
 			return (1);
-		if (lno == 0) {
-			for (; tp; ++lno, ++sp->rptlines[L_ADDED],
-			    tp = TAILQ_NEXT(tp, q))
-				if (db_append(sp, 1, lno, tp->lb, tp->len))
-					return (1);
+		if (lno == 0 && F_ISSET(cbp, CB_LMODE)) {
+			for (i = cnt; i > 0; i--) {
+				for (; tp; ++lno, ++sp->rptlines[L_ADDED],
+				    tp = TAILQ_NEXT(tp, q))
+					if (db_append(sp, 1, lno, tp->lb,
+					    tp->len))
+						return (1);
+				tp = TAILQ_FIRST(&cbp->textq);
+			}
 			rp->lno = 1;
 			rp->cno = 0;
 			return (0);
@@ -92,10 +96,14 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 	if (F_ISSET(cbp, CB_LMODE)) {
 		lno = append ? cp->lno : cp->lno - 1;
 		rp->lno = lno + 1;
-		for (; tp;
-		    ++lno, ++sp->rptlines[L_ADDED], tp = TAILQ_NEXT(tp, q))
-			if (db_append(sp, 1, lno, tp->lb, tp->len))
-				return (1);
+		for (i = cnt; i > 0; i--) {
+			for (; tp;
+			    ++lno, ++sp->rptlines[L_ADDED],
+			    tp = TAILQ_NEXT(tp, q))
+				if (db_append(sp, 1, lno, tp->lb, tp->len))
+					return (1);
+			tp = TAILQ_FIRST(&cbp->textq);
+		}
 		rp->cno = 0;
 		(void)nonblank(sp, rp->lno, &rp->cno);
 		return (0);
@@ -111,8 +119,11 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 	 * Get the first line.
 	 */
 	lno = cp->lno;
-	if (db_get(sp, lno, DBG_FATAL, &p, &len))
-		return (1);
+	if (db_eget(sp, lno, &p, &len, &isempty)) {
+		if (!isempty)
+			return (1);
+		len = 0;
+	}
 
 	GET_SPACE_RET(sp, bp, blen, tp->len + len + 1);
 	t = bp;
@@ -126,8 +137,10 @@ put(SCR *sp, CB *cbp, CHAR_T *namep, MARK *cp, MARK *rp, int append)
 
 	/* First line from the CB. */
 	if (tp->len != 0) {
-		memcpy(t, tp->lb, tp->len);
-		t += tp->len;
+		for (i = cnt; i > 0; i--) {
+			memcpy(t, tp->lb, tp->len);
+			t += tp->len;
+		}
 	}
 
 	/* Calculate length left in the original line. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_extern.h,v 1.16 2019/05/21 09:24:58 martijn Exp $	*/
+/*	$OpenBSD: com_extern.h,v 1.17 2025/08/23 21:02:10 millert Exp $	*/
 
 int cut(SCR *, CHAR_T *, MARK *, MARK *, int);
 int cut_line(SCR *, recno_t, size_t, size_t, CB *);
@@ -81,7 +81,7 @@ int f_w300(SCR *, OPTION *, char *, u_long *);
 int f_w1200(SCR *, OPTION *, char *, u_long *);
 int f_w9600(SCR *, OPTION *, char *, u_long *);
 int f_window(SCR *, OPTION *, char *, u_long *);
-int put(SCR *, CB *, CHAR_T *, MARK *, MARK *, int);
+int put(SCR *, CB *, CHAR_T *, MARK *, MARK *, int, int);
 int rcv_tmp(SCR *, EXF *, char *);
 int rcv_init(SCR *);
 int rcv_sync(SCR *, u_int);

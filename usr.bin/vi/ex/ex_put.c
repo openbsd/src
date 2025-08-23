@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_put.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: ex_put.c,v 1.7 2025/08/23 21:02:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ ex_put(SCR *sp, EXCMD *cmdp)
 	m.cno = sp->cno;
 	if (put(sp, NULL,
 	    FL_ISSET(cmdp->iflags, E_C_BUFFER) ? &cmdp->buffer : NULL,
-	    &cmdp->addr1, &m, 1))
+	    &cmdp->addr1, &m, 1, 1))
 		return (1);
 	sp->lno = m.lno;
 	sp->cno = m.cno;

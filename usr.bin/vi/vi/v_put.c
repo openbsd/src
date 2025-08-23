@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_put.c,v 1.8 2016/05/27 09:18:12 martijn Exp $	*/
+/*	$OpenBSD: v_put.c,v 1.9 2025/08/23 21:02:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -43,15 +43,11 @@ v_Put(SCR *sp, VICMD *vp)
 	 * Historic vi did not support a count with the 'p' and 'P'
 	 * commands.  It's useful, so we do.
 	 */
-	for (cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1; cnt--;) {
-		if (put(sp, NULL,
-		    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-		    &vp->m_start, &vp->m_final, 0))
-			return (1);
-		vp->m_start = vp->m_final;
-		if (INTERRUPTED(sp))
-			return (1);
-	}
+	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
+	if (put(sp, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+	    &vp->m_start, &vp->m_final, 0, cnt))
+		return (1);
+
 	return (0);
 }
 
@@ -74,15 +70,11 @@ v_put(SCR *sp, VICMD *vp)
 	 * Historic vi did not support a count with the 'p' and 'P'
 	 * commands.  It's useful, so we do.
 	 */
-	for (cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1; cnt--;) {
-		if (put(sp, NULL,
-		    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
-		    &vp->m_start, &vp->m_final, 1))
-			return (1);
-		vp->m_start = vp->m_final;
-		if (INTERRUPTED(sp))
-			return (1);
-	}
+	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
+	if (put(sp, NULL, F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL,
+	    &vp->m_start, &vp->m_final, 1, cnt))
+		return (1);
+
 	return (0);
 }
 
