@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.7 2024/07/02 19:41:52 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.8 2025/08/23 21:31:25 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -34,12 +34,13 @@
 
 struct smmu_fdt_softc {
 	struct smmu_softc	 sc_smmu;
-
 	struct iommu_device	 sc_id;
 };
 
 int smmu_fdt_match(struct device *, void *, void *);
 void smmu_fdt_attach(struct device *, struct device *, void *);
+
+int smmu_v2_fdt_attach(struct smmu_fdt_softc *, int);
 
 bus_dma_tag_t smmu_fdt_map(void *, uint32_t *, bus_dma_tag_t);
 void smmu_fdt_reserve(void *, uint32_t *, bus_addr_t, bus_size_t);
@@ -63,8 +64,7 @@ smmu_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct smmu_fdt_softc *fsc = (struct smmu_fdt_softc *)self;
 	struct smmu_softc *sc = &fsc->sc_smmu;
 	struct fdt_attach_args *faa = aux;
-	uint32_t ngirq;
-	int i;
+	int ret = ENXIO;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -79,46 +79,63 @@ smmu_fdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (OF_is_compatible(faa->fa_node, "arm,mmu-500"))
-		sc->sc_is_mmu500 = 1;
-	if (OF_is_compatible(faa->fa_node, "marvell,ap806-smmu-500"))
-		sc->sc_is_ap806 = 1;
-	if (OF_is_compatible(faa->fa_node, "qcom,sc8280xp-smmu-500") ||
-	    OF_is_compatible(faa->fa_node, "qcom,x1e80100-smmu-500"))
-		sc->sc_is_qcom = 1;
-	if (OF_getproplen(faa->fa_node, "dma-coherent") == 0)
-		sc->sc_coherent = 1;
+	if (OF_is_compatible(faa->fa_node, "arm,mmu-500") ||
+	    OF_is_compatible(faa->fa_node, "arm,smmu-v2"))
+		ret = smmu_v2_fdt_attach(fsc, faa->fa_node);
 
-	if (sc->sc_is_qcom) {
-		printf(": disabled\n");
+	if (ret)
 		return;
-	}
-
-	if (smmu_attach(sc) != 0)
-		return;
-
-	ngirq = OF_getpropint(faa->fa_node, "#global-interrupts", 1);
-	for (i = 0; i < ngirq; i++) {
-		fdt_intr_establish_idx(faa->fa_node, i, IPL_TTY,
-		    smmu_global_irq, sc, sc->sc_dev.dv_xname);
-	}
-	for (i = ngirq; ; i++) {
-		struct smmu_cb_irq *cbi = malloc(sizeof(*cbi),
-		    M_DEVBUF, M_WAITOK);
-		cbi->cbi_sc = sc;
-		cbi->cbi_idx = i - ngirq;
-		if (fdt_intr_establish_idx(faa->fa_node, i, IPL_TTY,
-		    smmu_context_irq, cbi, sc->sc_dev.dv_xname) == NULL) {
-			free(cbi, M_DEVBUF, sizeof(*cbi));
-			break;
-		}
-	}
 
 	fsc->sc_id.id_node = faa->fa_node;
 	fsc->sc_id.id_cookie = fsc;
 	fsc->sc_id.id_map = smmu_fdt_map;
 	fsc->sc_id.id_reserve = smmu_fdt_reserve;
 	iommu_device_register(&fsc->sc_id);
+}
+
+int
+smmu_v2_fdt_attach(struct smmu_fdt_softc *fsc, int node)
+{
+	struct smmu_softc *sc = &fsc->sc_smmu;
+	uint32_t ngirq;
+	int i;
+
+	if (OF_is_compatible(node, "arm,mmu-500"))
+		sc->sc_is_mmu500 = 1;
+	if (OF_is_compatible(node, "marvell,ap806-smmu-500"))
+		sc->sc_is_ap806 = 1;
+	if (OF_is_compatible(node, "qcom,sc8280xp-smmu-500") ||
+	    OF_is_compatible(node, "qcom,x1e80100-smmu-500"))
+		sc->sc_is_qcom = 1;
+	if (OF_getproplen(node, "dma-coherent") == 0)
+		sc->sc_coherent = 1;
+
+	if (sc->sc_is_qcom) {
+		printf(": disabled\n");
+		return ENXIO;
+	}
+
+	if (smmu_v2_attach(sc) != 0)
+		return ENXIO;
+
+	ngirq = OF_getpropint(node, "#global-interrupts", 1);
+	for (i = 0; i < ngirq; i++) {
+		fdt_intr_establish_idx(node, i, IPL_TTY,
+		    smmu_v2_global_irq, sc, sc->sc_dev.dv_xname);
+	}
+	for (i = ngirq; ; i++) {
+		struct smmu_cb_irq *cbi = malloc(sizeof(*cbi),
+		    M_DEVBUF, M_WAITOK);
+		cbi->cbi_sc = sc;
+		cbi->cbi_idx = i - ngirq;
+		if (fdt_intr_establish_idx(node, i, IPL_TTY,
+		    smmu_v2_context_irq, cbi, sc->sc_dev.dv_xname) == NULL) {
+			free(cbi, M_DEVBUF, sizeof(*cbi));
+			break;
+		}
+	}
+
+	return 0;
 }
 
 bus_dma_tag_t

@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.22 2025/08/09 09:28:03 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.23 2025/08/23 21:31:25 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -72,8 +72,10 @@ void smmu_cb_write_4(struct smmu_softc *, int, bus_size_t, uint32_t);
 uint64_t smmu_cb_read_8(struct smmu_softc *, int, bus_size_t);
 void smmu_cb_write_8(struct smmu_softc *, int, bus_size_t, uint64_t);
 
-void smmu_tlb_sync_global(struct smmu_softc *);
-void smmu_tlb_sync_context(struct smmu_domain *);
+int smmu_v2_domain_create(struct smmu_domain *);
+void smmu_v2_tlbi_va(struct smmu_domain *, vaddr_t);
+void smmu_v2_tlb_sync_global(struct smmu_softc *);
+void smmu_v2_tlb_sync_context(struct smmu_domain *);
 
 struct smmu_domain *smmu_domain_lookup(struct smmu_softc *, uint32_t);
 struct smmu_domain *smmu_domain_create(struct smmu_softc *, uint32_t);
@@ -120,9 +122,6 @@ struct cfdriver smmu_cd = {
 int
 smmu_attach(struct smmu_softc *sc)
 {
-	uint32_t reg;
-	int i;
-
 	SIMPLEQ_INIT(&sc->sc_domains);
 
 	pool_init(&sc->sc_vp_pool, sizeof(struct smmuvp0), PAGE_SIZE, IPL_VM, 0,
@@ -131,6 +130,18 @@ smmu_attach(struct smmu_softc *sc)
 	pool_init(&sc->sc_vp3_pool, sizeof(struct smmuvp3), PAGE_SIZE, IPL_VM, 0,
 	    "smmu_vp3", NULL);
 	pool_setlowat(&sc->sc_vp3_pool, 20);
+
+	return 0;
+}
+
+int
+smmu_v2_attach(struct smmu_softc *sc)
+{
+	uint32_t reg;
+	int i;
+
+	if (smmu_attach(sc) != 0)
+		return ENXIO;
 
 	reg = smmu_gr0_read_4(sc, SMMU_IDR0);
 	if (reg & SMMU_IDR0_S1TS)
@@ -348,14 +359,17 @@ smmu_attach(struct smmu_softc *sc)
 	if (sc->sc_has_vmid16s)
 		reg |= SMMU_SCR0_VMID16EN;
 
-	smmu_tlb_sync_global(sc);
+	smmu_v2_tlb_sync_global(sc);
 	smmu_gr0_write_4(sc, SMMU_SCR0, reg);
 
+	sc->sc_domain_create = smmu_v2_domain_create;
+	sc->sc_tlbi_va = smmu_v2_tlbi_va;
+	sc->sc_tlb_sync_context = smmu_v2_tlb_sync_context;
 	return 0;
 }
 
 int
-smmu_global_irq(void *cookie)
+smmu_v2_global_irq(void *cookie)
 {
 	struct smmu_softc *sc = cookie;
 	uint32_t reg;
@@ -376,7 +390,7 @@ smmu_global_irq(void *cookie)
 }
 
 int
-smmu_context_irq(void *cookie)
+smmu_v2_context_irq(void *cookie)
 {
 	struct smmu_cb_irq *cbi = cookie;
 	struct smmu_softc *sc = cbi->cbi_sc;
@@ -398,7 +412,7 @@ smmu_context_irq(void *cookie)
 }
 
 void
-smmu_tlb_sync_global(struct smmu_softc *sc)
+smmu_v2_tlb_sync_global(struct smmu_softc *sc)
 {
 	int i;
 
@@ -414,7 +428,7 @@ smmu_tlb_sync_global(struct smmu_softc *sc)
 }
 
 void
-smmu_tlb_sync_context(struct smmu_domain *dom)
+smmu_v2_tlb_sync_context(struct smmu_domain *dom)
 {
 	struct smmu_softc *sc = dom->sd_sc;
 	int i;
@@ -568,10 +582,6 @@ struct smmu_domain *
 smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 {
 	struct smmu_domain *dom;
-	uint32_t iovabits, reg;
-	paddr_t pa;
-	vaddr_t l0va;
-	int i, start, end;
 
 	dom = malloc(sizeof(*dom), M_DEVBUF, M_WAITOK | M_ZERO);
 	mtx_init(&dom->sd_iova_mtx, IPL_VM);
@@ -580,14 +590,38 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 	dom->sd_sid = sid;
 
 	/* Prefer stage 1 if possible! */
-	if (sc->sc_has_s1) {
+	if (sc->sc_has_s1)
+		dom->sd_stage = 1;
+	else
+		dom->sd_stage = 2;
+
+	if (sc->sc_domain_create(dom) != 0) {
+		free(dom, M_DEVBUF, sizeof(*dom));
+		return NULL;
+	}
+
+	/* Reserve first page (to catch NULL access) */
+	extent_alloc_region(dom->sd_iovamap, 0, PAGE_SIZE, EX_WAITOK);
+
+	SIMPLEQ_INSERT_TAIL(&sc->sc_domains, dom, sd_list);
+	return dom;
+}
+
+int
+smmu_v2_domain_create(struct smmu_domain *dom)
+{
+	struct smmu_softc *sc = dom->sd_sc;
+	uint32_t iovabits, reg;
+	paddr_t pa;
+	vaddr_t l0va;
+	int i, start, end;
+
+	if (dom->sd_stage == 1) {
 		start = sc->sc_num_s2_context_banks;
 		end = sc->sc_num_context_banks;
-		dom->sd_stage = 1;
 	} else {
 		start = 0;
 		end = sc->sc_num_context_banks;
-		dom->sd_stage = 2;
 	}
 
 	for (i = start; i < end; i++) {
@@ -601,12 +635,11 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 	if (i >= end) {
 		printf("%s: out of context blocks, I/O device will fail\n",
 		    sc->sc_dev.dv_xname);
-		free(dom, M_DEVBUF, sizeof(*dom));
-		return NULL;
+		return ENXIO;
 	}
 
 	/* Stream indexing is easy */
-	dom->sd_smr_idx = sid;
+	dom->sd_smr_idx = dom->sd_sid;
 
 	/* Stream mapping is a bit more effort */
 	if (sc->sc_smr) {
@@ -614,7 +647,7 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 			/* Take over QCOM SMRs */
 			if (sc->sc_is_qcom && sc->sc_smr[i] != NULL &&
 			    sc->sc_smr[i]->ss_dom == NULL &&
-			    !((sc->sc_smr[i]->ss_id ^ sid) &
+			    !((sc->sc_smr[i]->ss_id ^ dom->sd_sid) &
 			    ~sc->sc_smr[i]->ss_mask)) {
 				sc->sc_smr[i]->ss_dom = dom;
 				dom->sd_smr_idx = i;
@@ -625,7 +658,7 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 			sc->sc_smr[i] = malloc(sizeof(struct smmu_smr),
 			    M_DEVBUF, M_WAITOK | M_ZERO);
 			sc->sc_smr[i]->ss_dom = dom;
-			sc->sc_smr[i]->ss_id = sid;
+			sc->sc_smr[i]->ss_id = dom->sd_sid;
 			sc->sc_smr[i]->ss_mask = 0;
 			dom->sd_smr_idx = i;
 			break;
@@ -635,10 +668,9 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 			free(sc->sc_cb[dom->sd_cb_idx], M_DEVBUF,
 			    sizeof(struct smmu_cb));
 			sc->sc_cb[dom->sd_cb_idx] = NULL;
-			free(dom, M_DEVBUF, sizeof(*dom));
 			printf("%s: out of streams, I/O device will fail\n",
 			    sc->sc_dev.dv_xname);
-			return NULL;
+			return ENXIO;
 		}
 	}
 
@@ -787,16 +819,12 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 	}
 
 	snprintf(dom->sd_exname, sizeof(dom->sd_exname), "%s:%x",
-	    sc->sc_dev.dv_xname, sid);
+	    sc->sc_dev.dv_xname, dom->sd_sid);
 	dom->sd_iovamap = extent_create(dom->sd_exname, 0,
 	    (1LL << iovabits) - 1, M_DEVBUF, NULL, 0, EX_WAITOK |
 	    EX_NOCOALESCE);
 
-	/* Reserve first page (to catch NULL access) */
-	extent_alloc_region(dom->sd_iovamap, 0, PAGE_SIZE, EX_WAITOK);
-
-	SIMPLEQ_INSERT_TAIL(&sc->sc_domains, dom, sd_list);
-	return dom;
+	return 0;
 }
 
 void
@@ -1211,6 +1239,14 @@ smmu_unmap(struct smmu_domain *dom, vaddr_t va)
 	/* Remove mapping from pagetable */
 	smmu_pte_remove(dom, va);
 
+	sc->sc_tlbi_va(dom, va);
+}
+
+void
+smmu_v2_tlbi_va(struct smmu_domain *dom, vaddr_t va)
+{
+	struct smmu_softc *sc = dom->sd_sc;
+
 	/* Invalidate IOTLB */
 	if (dom->sd_stage == 1)
 		smmu_cb_write_8(sc, dom->sd_cb_idx, SMMU_CB_TLBIVAL,
@@ -1268,6 +1304,7 @@ smmu_load_map(struct smmu_domain *dom, bus_dmamap_t map)
 void
 smmu_unload_map(struct smmu_domain *dom, bus_dmamap_t map)
 {
+	struct smmu_softc *sc = dom->sd_sc;
 	struct smmu_map_state *sms = map->_dm_cookie;
 	u_long len, dva;
 
@@ -1286,7 +1323,7 @@ smmu_unload_map(struct smmu_domain *dom, bus_dmamap_t map)
 
 	sms->sms_loaded = 0;
 
-	smmu_tlb_sync_context(dom);
+	sc->sc_tlb_sync_context(dom);
 }
 
 int

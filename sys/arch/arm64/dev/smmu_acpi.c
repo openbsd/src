@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.8 2024/06/19 21:25:41 patrick Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.9 2025/08/23 21:31:25 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -29,13 +29,22 @@
 #include <arm64/dev/smmuvar.h>
 #include <arm64/dev/smmureg.h>
 
+struct smmu_v2_acpi_softc {
+	void			*sc_gih;
+};
+
 struct smmu_acpi_softc {
 	struct smmu_softc	 sc_smmu;
-	void			*sc_gih;
+
+	union {
+		struct smmu_v2_acpi_softc v2;
+	};
 };
 
 int smmu_acpi_match(struct device *, void *, void *);
 void smmu_acpi_attach(struct device *, struct device *, void *);
+
+int smmu_v2_acpi_attach(struct smmu_acpi_softc *, struct acpi_iort_node *);
 
 int smmu_acpi_foundqcom(struct aml_node *, void *);
 
@@ -62,22 +71,43 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct smmu_softc *sc = &asc->sc_smmu;
 	struct acpiiort_attach_args *aia = aux;
 	struct acpi_iort_node *node = aia->aia_node;
+	struct acpiiort_smmu *as;
+	int ret = ENXIO;
+
+	sc->sc_dmat = aia->aia_dmat;
+	sc->sc_iot = aia->aia_memt;
+
+	if (node->type == ACPI_IORT_SMMU)
+		ret = smmu_v2_acpi_attach(asc, node);
+
+	if (ret)
+		return;
+
+	as = malloc(sizeof(*as), M_DEVBUF, M_WAITOK | M_ZERO);
+	as->as_node = node;
+	as->as_cookie = sc;
+	as->as_map = smmu_device_map;
+	as->as_reserve = smmu_reserve_region;
+	acpiiort_smmu_register(as);
+}
+
+int
+smmu_v2_acpi_attach(struct smmu_acpi_softc *asc, struct acpi_iort_node *node)
+{
+	struct smmu_softc *sc = &asc->sc_smmu;
 	struct acpi_iort_smmu_node *smmu;
 	struct acpi_iort_smmu_global_interrupt *girq;
 	struct acpi_iort_smmu_context_interrupt *cirq;
-	struct acpiiort_smmu *as;
 	int i;
 
 	smmu = (struct acpi_iort_smmu_node *)&node[1];
 
 	printf(" addr 0x%llx/0x%llx", smmu->base_address, smmu->span);
 
-	sc->sc_dmat = aia->aia_dmat;
-	sc->sc_iot = aia->aia_memt;
 	if (bus_space_map(sc->sc_iot, smmu->base_address, smmu->span,
 	    0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
-		return;
+		return EIO;
 	}
 
 	switch (smmu->model) {
@@ -85,7 +115,7 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 	case ACPI_IORT_SMMU_CORELINK_MMU400:
 	case ACPI_IORT_SMMU_CORELINK_MMU401:
 		printf(": SMMUv1 is unsupported\n");
-		break;
+		return ENXIO;
 	case ACPI_IORT_SMMU_CORELINK_MMU500:
 		sc->sc_is_mmu500 = 1;
 	case ACPI_IORT_SMMU_V2:
@@ -93,7 +123,7 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	default:
 		printf(": unknown model %u\n", smmu->model);
-		return;
+		return ENXIO;
 	}
 
 	if (smmu->flags & ACPI_IORT_SMMU_COHERENT)
@@ -105,20 +135,20 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* FIXME: Don't configure on QCOM until its runtime use is fixed. */
 	if (sc->sc_is_qcom) {
 		printf(": disabled\n");
-		return;
+		return ENXIO;
 	}
 
-	if (smmu_attach(sc) != 0)
-		return;
+	if (smmu_v2_attach(sc) != 0)
+		return ENXIO;
 
 	girq = (struct acpi_iort_smmu_global_interrupt *)
 	    ((char *)node + smmu->global_interrupt_offset);
-	asc->sc_gih = acpi_intr_establish(girq->nsgirpt_gsiv,
+	asc->v2.sc_gih = acpi_intr_establish(girq->nsgirpt_gsiv,
 	    girq->nsgirpt_flags & ACPI_IORT_SMMU_INTR_EDGE ?
-	    LR_EXTIRQ_MODE : 0, IPL_TTY, smmu_global_irq,
+	    LR_EXTIRQ_MODE : 0, IPL_TTY, smmu_v2_global_irq,
 	    sc, sc->sc_dev.dv_xname);
-	if (asc->sc_gih == NULL)
-		return;
+	if (asc->v2.sc_gih == NULL)
+		return ENXIO;
 
 	cirq = (struct acpi_iort_smmu_context_interrupt *)
 	    ((char *)node + smmu->context_interrupt_offset);
@@ -129,16 +159,11 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 		cbi->cbi_idx = i;
 		acpi_intr_establish(cirq[i].gsiv,
 		    cirq[i].flags & ACPI_IORT_SMMU_INTR_EDGE ?
-		    LR_EXTIRQ_MODE : 0, IPL_TTY, smmu_context_irq,
+		    LR_EXTIRQ_MODE : 0, IPL_TTY, smmu_v2_context_irq,
 		    cbi, sc->sc_dev.dv_xname);
 	}
 
-	as = malloc(sizeof(*as), M_DEVBUF, M_WAITOK | M_ZERO);
-	as->as_node = node;
-	as->as_cookie = sc;
-	as->as_map = smmu_device_map;
-	as->as_reserve = smmu_reserve_region;
-	acpiiort_smmu_register(as);
+	return 0;
 }
 
 int

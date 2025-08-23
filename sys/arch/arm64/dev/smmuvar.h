@@ -1,4 +1,4 @@
-/* $OpenBSD: smmuvar.h,v 1.8 2022/09/11 10:18:54 patrick Exp $ */
+/* $OpenBSD: smmuvar.h,v 1.9 2025/08/23 21:31:25 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -20,8 +20,14 @@ struct smmu_domain {
 	struct smmu_softc		*sd_sc;
 	uint32_t			 sd_sid;
 	bus_dma_tag_t			 sd_dmat;
-	int				 sd_cb_idx;
-	int				 sd_smr_idx;
+
+	union {
+		struct {
+			int		 sd_cb_idx;
+			int		 sd_smr_idx;
+		};
+	};
+
 	int				 sd_stage;
 	int				 sd_4level;
 	char				 sd_exname[32];
@@ -54,33 +60,44 @@ struct smmu_softc {
 	bus_space_tag_t		  sc_iot;
 	bus_space_handle_t	  sc_ioh;
 	bus_dma_tag_t		  sc_dmat;
-	int			  sc_is_mmu500;
-	int			  sc_is_ap806;
-	int			  sc_is_qcom;
-	int			  sc_bypass_quirk;
-	size_t			  sc_pagesize;
-	int			  sc_numpage;
-	int			  sc_num_context_banks;
-	int			  sc_num_s2_context_banks;
+
+	union {
+		struct {
+			int			  sc_is_mmu500;
+			int			  sc_is_ap806;
+			int			  sc_is_qcom;
+			int			  sc_bypass_quirk;
+			size_t			  sc_pagesize;
+			int			  sc_numpage;
+			int			  sc_num_context_banks;
+			int			  sc_num_s2_context_banks;
+			int			  sc_has_exids;
+			int			  sc_num_streams;
+			uint16_t		  sc_stream_mask;
+			struct smmu_smr		**sc_smr;
+			struct smmu_cb		**sc_cb;
+		};
+	};
+
 	int			  sc_has_s1;
 	int			  sc_has_s2;
-	int			  sc_has_exids;
 	int			  sc_has_vmid16s;
-	int			  sc_num_streams;
-	uint16_t		  sc_stream_mask;
 	int			  sc_ipa_bits;
 	int			  sc_pa_bits;
 	int			  sc_va_bits;
-	struct smmu_smr		**sc_smr;
-	struct smmu_cb		**sc_cb;
 	int			  sc_coherent;
 	struct pool		  sc_vp_pool;
 	struct pool		  sc_vp3_pool;
 	SIMPLEQ_HEAD(, smmu_domain) sc_domains;
+
+	int			 (*sc_domain_create)(struct smmu_domain *);
+	void			 (*sc_tlbi_va)(struct smmu_domain *, vaddr_t);
+	void			 (*sc_tlb_sync_context)(struct smmu_domain *);
 };
 
-int smmu_attach(struct smmu_softc *);
-int smmu_global_irq(void *);
-int smmu_context_irq(void *);
+int smmu_v2_attach(struct smmu_softc *);
+int smmu_v2_global_irq(void *);
+int smmu_v2_context_irq(void *);
+
 bus_dma_tag_t smmu_device_map(void *, uint32_t, bus_dma_tag_t);
 void smmu_reserve_region(void *, uint32_t, bus_addr_t, bus_size_t);

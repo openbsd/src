@@ -1,4 +1,4 @@
-/* $OpenBSD: smmureg.h,v 1.2 2022/09/11 10:18:54 patrick Exp $ */
+/* $OpenBSD: smmureg.h,v 1.3 2025/08/23 21:31:25 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* SMMU v2 */
 
 /* Global Register Space 0 */
 #define SMMU_SCR0			0x000
