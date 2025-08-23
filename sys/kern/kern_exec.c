@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.266 2025/08/15 04:21:00 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.267 2025/08/23 16:12:52 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -864,8 +864,10 @@ exec_sigcode_map(struct process *pr)
 	 * memory) that we keep a permanent reference to and that we map
 	 * in all processes that need this sigcode. The creation is simple,
 	 * we create an object, add a permanent reference to it, map it in
-	 * kernel space, copy out the sigcode to it and unmap it.  Then we map
-	 * it with PROT_EXEC into the process just the way sys_mmap would map it.
+	 * kernel space, copy out the sigcode to it and map it PROT_READ
+	 * such that the coredump code can write it out into core dumps.
+	 * Then we map it with PROT_EXEC into the process just the way
+	 * sys_mmap would map it.
 	 */
 	if (sigobject == NULL) {
 		extern int sigfillsiz;
@@ -892,7 +894,7 @@ exec_sigcode_map(struct process *pr)
 		}
 		memcpy((caddr_t)va, sigcode, sz);
 
-		(void) uvm_map_protect(kernel_map, va, round_page(sz),
+		(void) uvm_map_protect(kernel_map, va, round_page(va + sz),
 		    PROT_READ, 0, FALSE, FALSE);
 		sigcode_va = va;
 		sigcode_sz = round_page(sz);
