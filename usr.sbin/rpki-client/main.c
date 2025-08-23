@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.293 2025/08/14 15:12:00 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.294 2025/08/23 09:13:14 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -658,6 +658,7 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 			repo_stat_inc(rp, talid, type, STYPE_SEQNUM_GAP);
 		queue_add_from_mft(mft);
 		cert_remove_nca(&vd->ncas, mft->certid, rp);
+		ccr_insert_mft(&vd->ccr.mfts, mft);
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
@@ -671,9 +672,10 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 			break;
 		}
 		roa = roa_read(b);
-		if (roa->valid)
+		if (roa->valid) {
 			roa_insert_vrps(&vd->vrps, roa, rp);
-		else
+			ccr_insert_roa(&vd->ccr.vrps, roa);
+		} else
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		roa_free(roa);
 		break;
@@ -1021,6 +1023,8 @@ main(int argc, char *argv[])
 	RB_INIT(&vd.vaps);
 	RB_INIT(&vd.vsps);
 	RB_INIT(&vd.ncas);
+	RB_INIT(&vd.ccr.mfts);
+	RB_INIT(&vd.ccr.vrps);
 
 	/* If started as root, priv-drop to _rpki-client */
 	if (getuid() == 0) {
@@ -1164,6 +1168,7 @@ main(int argc, char *argv[])
 			err(1, "output directory %s", outputdir);
 		if (outformats == 0)
 			outformats = FORMAT_OPENBGPD;
+		outformats |= FORMAT_CCR;
 	}
 
 	check_fs_size(cachefd, cachedir);
@@ -1540,6 +1545,8 @@ main(int argc, char *argv[])
 	}
 	repo_stats_collect(sum_repostats, &stats.repo_stats);
 
+	serialize_ccr_content(&vd);
+
 	if (outputfiles(&vd, &stats))
 		rc = 1;
 
@@ -1549,6 +1556,9 @@ main(int argc, char *argv[])
 	    (long long)stats.user_time.tv_sec,
 	    (long long)stats.system_time.tv_sec);
 	printf("Skiplist entries: %u\n", stats.skiplistentries);
+	printf("CCR manifest state hash: %s\n", vd.ccr.mfts_hash);
+	printf("CCR ROA payloads hash: %s\n", vd.ccr.vrps_hash);
+	printf("CCR ASPA paylaods hash: %s\n", vd.ccr.vaps_hash);
 	printf("Route Origin Authorizations: %u (%u failed parse, %u "
 	    "invalid)\n", stats.repo_tal_stats.roas,
 	    stats.repo_tal_stats.roas_fail,

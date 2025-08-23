@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.41 2025/07/08 14:19:21 job Exp $ */
+/*	$OpenBSD: output.c,v 1.42 2025/08/23 09:13:14 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -70,6 +70,7 @@ static const struct outputs {
 	{ FORMAT_CSV, "csv", output_csv },
 	{ FORMAT_JSON, "json", output_json },
 	{ FORMAT_OMETRIC, "metrics", output_ometric },
+	{ FORMAT_CCR, "rpki.ccr", output_ccr_der },
 	{ 0, NULL, NULL }
 };
 
@@ -238,7 +239,7 @@ set_signal_handler(void)
 }
 
 int
-outputheader(FILE *out, struct stats *st)
+outputheader(FILE *out, struct validation_data *vd, struct stats *st)
 {
 	char		hn[NI_MAXHOST], tbuf[80];
 	struct tm	*tp;
@@ -254,11 +255,15 @@ outputheader(FILE *out, struct stats *st)
 	if (fprintf(out,
 	    "# Generated on host %s at %s\n"
 	    "# Processing time %lld seconds (%llds user, %llds system)\n"
+	    "# CCR manifest hash: %s\n"
+	    "# CCR validated ROA payloads hash: %s\n"
+	    "# CCR validated ASPA payloads hash: %s\n"
 	    "# Route Origin Authorizations: %u (%u failed parse, %u invalid)\n"
 	    "# BGPsec Router Certificates: %u\n"
 	    "# Certificates: %u (%u invalid, %u non-functional)\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
+	    vd->ccr.mfts_hash, vd->ccr.vrps_hash, vd->ccr.vaps_hash,
 	    st->repo_tal_stats.roas, st->repo_tal_stats.roas_fail,
 	    st->repo_tal_stats.roas_invalid, st->repo_tal_stats.brks,
 	    st->repo_tal_stats.certs, st->repo_tal_stats.certs_fail,

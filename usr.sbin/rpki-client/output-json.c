@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.54 2025/07/08 14:19:21 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.55 2025/08/23 09:13:14 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -24,7 +24,7 @@
 #include "json.h"
 
 static void
-outputheader_json(struct stats *st)
+outputheader_json(struct validation_data *vd, struct stats *st)
 {
 	char		 hn[NI_MAXHOST], tbuf[26];
 	struct tm	*tp;
@@ -44,6 +44,11 @@ outputheader_json(struct stats *st)
 	json_do_int("elapsedtime", st->elapsed_time.tv_sec);
 	json_do_int("usertime", st->user_time.tv_sec);
 	json_do_int("systemtime", st->system_time.tv_sec);
+
+	json_do_string("ccr_mfts_hash", vd->ccr.mfts_hash);
+	json_do_string("ccr_vrps_hash", vd->ccr.vrps_hash);
+	json_do_string("ccr_vaps_hash", vd->ccr.vaps_hash);
+
 	json_do_int("roas", st->repo_tal_stats.roas);
 	json_do_int("failedroas", st->repo_tal_stats.roas_fail);
 	json_do_int("invalidroas", st->repo_tal_stats.roas_invalid);
@@ -153,7 +158,7 @@ output_json(FILE *out, struct validation_data *vd, struct stats *st)
 	struct nonfunc_ca	*nca;
 
 	json_do_start(out);
-	outputheader_json(st);
+	outputheader_json(vd, st);
 
 	json_do_array("roas");
 	RB_FOREACH(v, vrp_tree, &vd->vrps) {

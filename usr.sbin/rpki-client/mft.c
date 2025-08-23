@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.128 2025/08/19 11:30:20 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.129 2025/08/23 09:13:14 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -408,6 +408,7 @@ mft_parse(struct cert **out_cert, const char *fn, int talid,
 	if ((mft = calloc(1, sizeof(*mft))) == NULL)
 		err(1, NULL);
 	mft->signtime = signtime;
+	mft->mftsize = len;
 
 	if ((mft->aki = strdup(cert->aki)) == NULL)
 		err(1, NULL);
@@ -498,6 +499,11 @@ mft_buffer(struct ibuf *b, const struct mft *p)
 	io_opt_str_buffer(b, p->path);
 
 	io_str_buffer(b, p->aki);
+	io_str_buffer(b, p->seqnum);
+	io_str_buffer(b, p->sia);
+	io_simple_buffer(b, &p->thisupdate, sizeof(p->thisupdate));
+	io_simple_buffer(b, p->mfthash, sizeof(p->mfthash));
+	io_simple_buffer(b, &p->mftsize, sizeof(p->mftsize));
 
 	io_simple_buffer(b, &p->filesz, sizeof(size_t));
 	for (i = 0; i < p->filesz; i++) {
@@ -530,6 +536,11 @@ mft_read(struct ibuf *b)
 	io_read_opt_str(b, &p->path);
 
 	io_read_str(b, &p->aki);
+	io_read_str(b, &p->seqnum);
+	io_read_str(b, &p->sia);
+	io_read_buf(b, &p->thisupdate, sizeof(p->thisupdate));
+	io_read_buf(b, &p->mfthash, sizeof(p->mfthash));
+	io_read_buf(b, &p->mftsize, sizeof(p->mftsize));
 
 	io_read_buf(b, &p->filesz, sizeof(size_t));
 	if (p->filesz == 0)

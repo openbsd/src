@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.36 2025/07/14 20:42:21 tb Exp $
+#	$OpenBSD: Makefile,v 1.37 2025/08/23 09:13:14 job Exp $
 
 PROG=	rpki-client
 
 SRCS+=	as.c
 SRCS+=	aspa.c
+SRCS+=	ccr.c
 SRCS+=	cert.c
 SRCS+=	cms.c
 SRCS+=	constraints.c

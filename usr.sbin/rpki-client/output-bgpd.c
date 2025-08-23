@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.34 2025/07/08 14:19:21 job Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.35 2025/08/23 09:13:14 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,7 +26,7 @@ output_bgpd(FILE *out, struct validation_data *vd, struct stats *st)
 	struct vap	*vap;
 	size_t		 i;
 
-	if (outputheader(out, st) < 0)
+	if (outputheader(out, vd, st) < 0)
 		return -1;
 
 	if (fprintf(out, "roa-set {\n") < 0)
