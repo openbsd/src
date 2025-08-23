@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.261 2025/08/16 08:13:11 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.262 2025/08/23 10:52:45 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -130,15 +130,15 @@ usbd_status	uvideo_vs_parse_desc(struct uvideo_softc *,
 usbd_status	uvideo_vs_parse_desc_input_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_format(struct uvideo_softc *);
-usbd_status	uvideo_vs_parse_desc_colorformat(struct uvideo_softc *,
+void		uvideo_vs_parse_desc_colorformat(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-usbd_status	uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *,
+void		uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-usbd_status	uvideo_vs_parse_desc_format_h264(struct uvideo_softc *,
+void		uvideo_vs_parse_desc_format_h264(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-usbd_status	uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *,
+void		uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-usbd_status	uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
+void		uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_frame(struct uvideo_softc *);
 usbd_status	uvideo_vs_parse_desc_frame_buffer_size(struct uvideo_softc *,
@@ -1054,32 +1054,32 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_VS_COLORFORMAT:
 			if (desc->bLength == 6) {
-				(void)uvideo_vs_parse_desc_colorformat(
+				uvideo_vs_parse_desc_colorformat(
 				    sc, desc);
 			}
 			break;
 		case UDESCSUB_VS_FORMAT_MJPEG:
 			if (desc->bLength == 11) {
-				(void)uvideo_vs_parse_desc_format_mjpeg(
+				uvideo_vs_parse_desc_format_mjpeg(
 				    sc, desc);
 			}
 			break;
 		case UDESCSUB_VS_FORMAT_UNCOMPRESSED:
 			if (desc->bLength == 27) {
-				(void)uvideo_vs_parse_desc_format_uncompressed(
+				uvideo_vs_parse_desc_format_uncompressed(
 				    sc, desc);
 			}
 			break;
 		case UDESCSUB_VS_FORMAT_FRAME_BASED:
 			if (desc->bLength == 28) {
-				(void)uvideo_vs_parse_desc_format_frame_based(
+				uvideo_vs_parse_desc_format_frame_based(
 				    sc, desc);
 			}
 			break;
 		case UDESCSUB_VS_FORMAT_H264:
 		case UDESCSUB_VS_FORMAT_H264_SIMULCAST:
 			if (desc->bLength == 52) {
-				(void)uvideo_vs_parse_desc_format_h264(
+				uvideo_vs_parse_desc_format_h264(
 				    sc, desc);
 			}
 			break;
@@ -1100,7 +1100,7 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status
+void
 uvideo_vs_parse_desc_colorformat(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -1111,7 +1111,7 @@ uvideo_vs_parse_desc_colorformat(struct uvideo_softc *sc,
 
 	fmtidx = sc->sc_fmtgrp_idx - 1;
 	if (fmtidx < 0 || sc->sc_fmtgrp[fmtidx].has_colorformat)
-		return (USBD_INVAL);
+		return;
 
 	if (d->bColorPrimaries < nitems(uvideo_color_primaries))
 		sc->sc_fmtgrp[fmtidx].colorspace =
@@ -1132,11 +1132,9 @@ uvideo_vs_parse_desc_colorformat(struct uvideo_softc *sc,
 		sc->sc_fmtgrp[fmtidx].ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
 
 	sc->sc_fmtgrp[fmtidx].has_colorformat = 1;
-
-	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status
+void
 uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -1147,12 +1145,12 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no MJPEG frame descriptors available!\n",
 		    DEVNAME(sc));
-		return (USBD_INVAL);
+		return;
 	}
 
 	if (sc->sc_fmtgrp_idx >= UVIDEO_MAX_FORMAT) {
 		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
-		return (USBD_INVAL);
+		return;
 	}
 
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
@@ -1173,11 +1171,9 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 
 	sc->sc_fmtgrp_idx++;
 	sc->sc_fmtgrp_num++;
-
-	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status
+void
 uvideo_vs_parse_desc_format_h264(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -1188,12 +1184,12 @@ uvideo_vs_parse_desc_format_h264(struct uvideo_softc *sc,
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no H264 frame descriptors available!\n",
 		    DEVNAME(sc));
-		return (USBD_INVAL);
+		return;
 	}
 
 	if (sc->sc_fmtgrp_idx >= UVIDEO_MAX_FORMAT) {
 		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
-		return (USBD_INVAL);
+		return;
 	}
 
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
@@ -1214,11 +1210,9 @@ uvideo_vs_parse_desc_format_h264(struct uvideo_softc *sc,
 
 	sc->sc_fmtgrp_idx++;
 	sc->sc_fmtgrp_num++;
-
-	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status
+void
 uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -1230,12 +1224,12 @@ uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *sc,
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no Frame Based frame descriptors available!\n",
 		    DEVNAME(sc));
-		return (USBD_INVAL);
+		return;
 	}
 
 	if (sc->sc_fmtgrp_idx >= UVIDEO_MAX_FORMAT) {
 		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
-		return (USBD_INVAL);
+		return;
 	}
 
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
@@ -1272,11 +1266,9 @@ uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *sc,
 
 	sc->sc_fmtgrp_idx++;
 	sc->sc_fmtgrp_num++;
-
-	return (USBD_NORMAL_COMPLETION);
 }
 
-usbd_status
+void
 uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
@@ -1288,12 +1280,12 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no UNCOMPRESSED frame descriptors available!\n",
 		    DEVNAME(sc));
-		return (USBD_INVAL);
+		return;
 	}
 
 	if (sc->sc_fmtgrp_idx >= UVIDEO_MAX_FORMAT) {
 		printf("%s: too many format descriptors found!\n", DEVNAME(sc));
-		return (USBD_INVAL);
+		return;
 	}
 
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
@@ -1331,7 +1323,7 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 	sc->sc_fmtgrp_idx++;
 	sc->sc_fmtgrp_num++;
 
-	return (USBD_NORMAL_COMPLETION);
+	return;
 }
 
 usbd_status
