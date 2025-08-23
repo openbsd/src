@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.1 2025/08/23 09:13:14 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.2 2025/08/23 11:16:50 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -570,7 +570,8 @@ ccr_insert_roa(struct ccr_vrp_tree *tree, const struct roa *roa)
 		vrp->addr = roa->ips[i].addr;
 		vrp->maxlength = roa->ips[i].maxlength;
 
-		RB_INSERT(ccr_vrp_tree, tree, vrp);
+		if (RB_INSERT(ccr_vrp_tree, tree, vrp) != NULL)
+			free(vrp);
 	}
 }
 
