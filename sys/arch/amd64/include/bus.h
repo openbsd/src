@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.36 2024/08/14 18:31:33 bluhm Exp $	*/
+/*	$OpenBSD: bus.h,v 1.37 2025/08/23 10:15:49 sf Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -498,12 +498,12 @@ bus_space_barrier(bus_space_tag_t space, bus_space_handle_t
  */
 
 /* space is i/o space */
-extern const struct x86_bus_space_ops x86_bus_space_io_ops;
-#define	X86_BUS_SPACE_IO	(&x86_bus_space_io_ops)
+extern const struct x86_bus_space_ops *x86_bus_space_io_ops;
+#define	X86_BUS_SPACE_IO	(x86_bus_space_io_ops)
 
 /* space is mem space */
-extern const struct x86_bus_space_ops x86_bus_space_mem_ops;
-#define X86_BUS_SPACE_MEM	(&x86_bus_space_mem_ops)
+extern const struct x86_bus_space_ops *x86_bus_space_mem_ops;
+#define X86_BUS_SPACE_MEM	(x86_bus_space_mem_ops)
 
 /*
  * bus_dma

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.52 2022/02/21 11:03:39 mpi Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.53 2025/08/23 10:15:49 sf Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -113,17 +113,6 @@ union mainbus_attach_args {
  * time it's checked below, then mainbus attempts to attach an ISA.
  */
 int	isa_has_been_seen;
-#if NISA > 0
-struct isabus_attach_args mba_iba = {
-	"isa",
-	X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
-#if NISADMA > 0
-	&isa_bus_dma_tag
-#else
-	NULL
-#endif
-};
-#endif
 
 #if NMPBIOS > 0 || NACPI > 0
 struct mp_bus *mp_busses;
@@ -250,8 +239,17 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if NISA > 0
-	if (isa_has_been_seen == 0)
-		config_found(self, &mba_iba, mainbus_print);
+	if (isa_has_been_seen == 0) {
+		mba.mba_busname = "isa";
+		mba.mba_iba.iba_iot = X86_BUS_SPACE_IO;
+		mba.mba_iba.iba_memt = X86_BUS_SPACE_MEM;
+#if NISADMA > 0
+		mba.mba_iba.iba_dmat = &isa_bus_dma_tag;
+#endif
+		mba.mba_iba.iba_ic = NULL;
+
+		config_found(self, &mba, mainbus_print);
+	}
 #endif
 
 #if NVMM > 0
