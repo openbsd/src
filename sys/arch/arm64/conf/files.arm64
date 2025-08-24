@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.76 2025/08/21 14:53:07 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.77 2025/08/24 10:51:42 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -271,6 +271,10 @@ file	arch/arm64/dev/rpone.c			rpone
 device	rpigpio
 attach	rpigpio at fdt
 file	arch/arm64/dev/rpigpio.c		rpigpio
+
+device	rpirtc
+attach	rpirtc at fdt
+file	arch/arm64/dev/rpirtc.c			rpirtc
 
 # ACPI
 include "dev/acpi/files.acpi"

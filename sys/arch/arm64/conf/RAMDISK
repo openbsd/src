@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.230 2025/08/21 14:53:07 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.231 2025/08/24 10:51:42 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -188,6 +188,7 @@ dwctwo*		at fdt?
 usb*		at dwctwo?
 rpone*		at pci?
 rpigpio*	at fdt? early 1
+rpirtc*		at fdt?
 
 # Amlogic SoCs
 amlclock*	at fdt? early 1
