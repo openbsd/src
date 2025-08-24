@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.258 2025/08/23 09:13:14 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.259 2025/08/24 11:52:20 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -260,7 +260,7 @@ struct roa_ip {
 };
 
 /*
- * An ROA, RFC 6482.
+ * An ROA, RFC 9582.
  * This consists of the concerned ASID and its IP prefixes.
  */
 struct roa {

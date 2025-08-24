@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.80 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.81 2025/08/24 11:52:20 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -140,7 +140,7 @@ valid_roa(const char *fn, struct cert *cert, struct roa *roa)
 
 		ip_addr_print(&roa->ips[i].addr, roa->ips[i].afi, buf,
 		    sizeof(buf));
-		warnx("%s: RFC 6482: uncovered IP: %s", fn, buf);
+		warnx("%s: RFC 9582: uncovered IP: %s", fn, buf);
 		return 0;
 	}
 

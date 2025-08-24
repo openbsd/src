@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.85 2025/08/19 11:30:20 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.86 2025/08/24 11:52:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -36,19 +36,9 @@
  * ROA eContent definition in RFC 9582, section 4.
  */
 
-ASN1_ITEM_EXP ROAIPAddress_it;
-ASN1_ITEM_EXP ROAIPAddressFamily_it;
 ASN1_ITEM_EXP RouteOriginAttestation_it;
-
-ASN1_SEQUENCE(ROAIPAddress) = {
-	ASN1_SIMPLE(ROAIPAddress, address, ASN1_BIT_STRING),
-	ASN1_OPT(ROAIPAddress, maxLength, ASN1_INTEGER),
-} ASN1_SEQUENCE_END(ROAIPAddress);
-
-ASN1_SEQUENCE(ROAIPAddressFamily) = {
-	ASN1_SIMPLE(ROAIPAddressFamily, addressFamily, ASN1_OCTET_STRING),
-	ASN1_SEQUENCE_OF(ROAIPAddressFamily, addresses, ROAIPAddress),
-} ASN1_SEQUENCE_END(ROAIPAddressFamily);
+ASN1_ITEM_EXP ROAIPAddressFamily_it;
+ASN1_ITEM_EXP ROAIPAddress_it;
 
 ASN1_SEQUENCE(RouteOriginAttestation) = {
 	ASN1_EXP_OPT(RouteOriginAttestation, version, ASN1_INTEGER, 0),
@@ -59,9 +49,18 @@ ASN1_SEQUENCE(RouteOriginAttestation) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(RouteOriginAttestation);
 
+ASN1_SEQUENCE(ROAIPAddressFamily) = {
+	ASN1_SIMPLE(ROAIPAddressFamily, addressFamily, ASN1_OCTET_STRING),
+	ASN1_SEQUENCE_OF(ROAIPAddressFamily, addresses, ROAIPAddress),
+} ASN1_SEQUENCE_END(ROAIPAddressFamily);
+
+ASN1_SEQUENCE(ROAIPAddress) = {
+	ASN1_SIMPLE(ROAIPAddress, address, ASN1_BIT_STRING),
+	ASN1_OPT(ROAIPAddress, maxLength, ASN1_INTEGER),
+} ASN1_SEQUENCE_END(ROAIPAddress);
 
 /*
- * Parses the eContent section of an ROA file, RFC 6482, section 3.
+ * Parses the eContent section of an ROA file, RFC 9582, section 4.
  * Returns zero on failure, non-zero on success.
  */
 static int
@@ -83,7 +82,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 
 	oder = d;
 	if ((roa_asn1 = d2i_RouteOriginAttestation(NULL, &d, dsz)) == NULL) {
-		warnx("%s: RFC 6482 section 3: failed to parse "
+		warnx("%s: RFC 9582 section 4: failed to parse "
 		    "RouteOriginAttestation", fn);
 		goto out;
 	}
@@ -97,7 +96,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 		goto out;
 
 	if (!as_id_parse(roa_asn1->asid, &roa->asid)) {
-		warnx("%s: RFC 6482 section 3.2: asID: "
+		warnx("%s: RFC 9582 section 4.2: asID: "
 		    "malformed AS identifier", fn);
 		goto out;
 	}
@@ -116,7 +115,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 		addrsz = sk_ROAIPAddress_num(addrs);
 
 		if (!ip_addr_afi_parse(fn, addrfam->addressFamily, &afi)) {
-			warnx("%s: RFC 6482 section 3.3: addressFamily: "
+			warnx("%s: RFC 9582 section 4.3: addressFamily: "
 			    "invalid", fn);
 			goto out;
 		}
@@ -124,14 +123,14 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 		switch (afi) {
 		case AFI_IPV4:
 			if (ipv4_seen++ > 0) {
-				warnx("%s: RFC 9582 section 4.3.2: "
+				warnx("%s: RFC 9582 section 4.3.1: "
 				    "IPv4 appears twice", fn);
 				goto out;
 			}
 			break;
 		case AFI_IPV6:
 			if (ipv6_seen++ > 0) {
-				warnx("%s: RFC 9582 section 4.3.2: "
+				warnx("%s: RFC 9582 section 4.3.1: "
 				    "IPv6 appears twice", fn);
 				goto out;
 			}
@@ -139,7 +138,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 		}
 
 		if (addrsz == 0) {
-			warnx("%s: RFC 9582, section 4.3.2: "
+			warnx("%s: RFC 9582, section 4.3.1: "
 			    "empty ROAIPAddressFamily", fn);
 			goto out;
 		}
@@ -158,7 +157,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 			addr = sk_ROAIPAddress_value(addrs, j);
 
 			if (!ip_addr_parse(addr->address, afi, fn, &ipaddr)) {
-				warnx("%s: RFC 6482 section 3.3: address: "
+				warnx("%s: RFC 9582 section 4.3.2.1: address: "
 				    "invalid IP address", fn);
 				goto out;
 			}
@@ -167,7 +166,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 			if (addr->maxLength != NULL) {
 				if (!ASN1_INTEGER_get_uint64(&maxlen,
 				    addr->maxLength)) {
-					warnx("%s: RFC 6482 section 3.2: "
+					warnx("%s: RFC 9582 section 4.3.2.2: "
 					    "ASN1_INTEGER_get_uint64 failed",
 					    fn);
 					goto out;
@@ -201,7 +200,7 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 }
 
 /*
- * Parse a full RFC 6482 file.
+ * Parse a full RFC 9582 file.
  * Returns the ROA or NULL if the document was malformed.
  */
 struct roa *
