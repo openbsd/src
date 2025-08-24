@@ -796,7 +796,8 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
 #define DWARF_FRAME_RETURN_COLUMN DWARF_FRAME_REGNUM (1)
 
 /* Where to find the lowest frame.  */
-#define INITIAL_FRAME_ADDRESS_RTX hard_frame_pointer_rtx
+#define INITIAL_FRAME_ADDRESS_RTX \
+  (current_function_accesses_prior_frames = 1, hard_frame_pointer_rtx)
 
 /* Where to find the return address in the given frame.  */
 #define RETURN_ADDR_RTX(COUNT, FRAME) \
