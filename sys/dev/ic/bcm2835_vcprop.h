@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_vcprop.h,v 1.1 2020/04/19 14:51:52 tobhe Exp $ */
+/*     $OpenBSD: bcm2835_vcprop.h,v 1.2 2025/08/24 11:08:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -85,6 +85,9 @@ struct vcprop_tag {
 
 #define VCPROPTAG_GET_TEMPERATURE	0x00030006
 #define VCPROPTAG_GET_MAX_TEMPERATURE	0x0003000a
+
+#define VCPROPTAG_GET_RTC_REG		0x00030087
+#define VCPROPTAG_SET_RTC_REG		0x00038087
 
 #define	VCPROPTAG_GET_CMDLINE		0x00050001
 #define	VCPROPTAG_GET_DMACHAN		0x00060001
@@ -249,6 +252,21 @@ struct vcprop_tag_temperature {
 	struct vcprop_tag tag;
 	uint32_t id;
 	uint32_t value;
+};
+
+#define VCPROP_RTC_TIME			0
+#define VCPROP_RTC_ALARM		1
+#define VCPROP_RTC_ALARM_PENDING	2
+#define VCPROP_RTC_ALARM_ENABLE		3
+#define VCPROP_RTC_BBAT_CHG_VOLTS	4
+#define VCPROP_RTC_BBAT_CHG_VOLTS_MIN	5
+#define VCPROP_RTC_BBAT_CHG_VOLTS_MAX	6
+#define VCPROP_RTC_BBAT_VOLTS		7
+
+struct vcprop_tag_rtc {
+	struct vcprop_tag tag;
+	uint32_t id;
+	uint32_t data;
 };
 
 #define	VCPROP_POWER_SDCARD	0
