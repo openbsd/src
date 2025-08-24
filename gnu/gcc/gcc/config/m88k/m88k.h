@@ -824,7 +824,7 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
    is allowed.  */
 #define CAN_ELIMINATE(FROM, TO)						\
   ((TO) == HARD_FRAME_POINTER_REGNUM					\
-   || ((TO) == STACK_POINTER_REGNUM && !frame_pointer_needed))
+   || (/*(TO) == STACK_POINTER_REGNUM &&*/ !frame_pointer_needed))
 
 /* Define the offset between two registers, one to be eliminated, and the other
    its replacement, at the start of a routine.  */

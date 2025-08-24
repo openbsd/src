@@ -55,6 +55,7 @@ char m88k_volatile_code;
 
 int m88k_hardfp_offset	= 0;	/* offset of frame pointer if used */
 int m88k_frame_size	= 0;	/* size of frame */
+int m88k_arg_size	= 0;	/* rounded current_function_pretend_args_size */
 int m88k_stack_size	= 0;	/* size of allocated stack (including frame) */
 int m88k_case_index;
 
@@ -1032,7 +1033,9 @@ m88k_output_file_start (void)
         |                caller's frame                |
         |==============================================|
         |     [caller's outgoing memory arguments]     |
-  sp -> |==============================================| <- ap, logical fp
+  sp -> |==============================================| <- ap
+        |      [va_args register copy (optional)]      |
+        |----------------------------------------------| <- logical fp
         |            [local variable space]            |
         |----------------------------------------------|
         |            [return address (r1)]             |
@@ -1042,7 +1045,7 @@ m88k_output_file_start (void)
         |       [preserved registers (r25..r14)]       |
         |----------------------------------------------|
         |       [preserved registers (x29..x22)]       |
-        |==============================================|
+        |==============================================| <- sp at function entry
         |    [dynamically allocated space (alloca)]    |
         |==============================================|
         |     [callee's outgoing memory arguments]     |
@@ -1134,6 +1137,7 @@ m88k_layout_frame (void)
     sp_size +=4;
   sp_size += 4 * nregs;
   sp_size += 8 * nxregs;
+  m88k_hardfp_offset = ROUND_CALL_BLOCK_SIZE (sp_size);
 
   /* The first two saved registers are placed above the new frame pointer
      if any. Then, local variables are placed on top of it, with the end
@@ -1145,10 +1149,8 @@ m88k_layout_frame (void)
     }
   m88k_frame_size = ROUND_CALL_BLOCK_SIZE (m88k_frame_size + get_frame_size ());
 
-  m88k_hardfp_offset = ROUND_CALL_BLOCK_SIZE (sp_size);
-  m88k_stack_size
-    = m88k_hardfp_offset + m88k_frame_size
-      + ROUND_CALL_BLOCK_SIZE (current_function_pretend_args_size);
+  m88k_arg_size = ROUND_CALL_BLOCK_SIZE (current_function_pretend_args_size);
+  m88k_stack_size = m88k_hardfp_offset + m88k_frame_size + m88k_arg_size;
 }
 
 int
