@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.259 2025/08/24 11:52:20 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.260 2025/08/24 12:17:12 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -221,7 +221,7 @@ struct mftfile {
 };
 
 /*
- * A manifest, RFC 6486.
+ * A manifest, RFC 9286.
  * This consists of a bunch of files found in the same directory as the
  * manifest file.
  */

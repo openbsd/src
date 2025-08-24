@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.294 2025/08/23 09:13:14 job Exp $ */
+/*	$OpenBSD: main.c,v 1.295 2025/08/24 12:17:12 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -408,7 +408,7 @@ rrdp_http_done(unsigned int id, enum http_result res, const char *last_mod)
 }
 
 /*
- * Add a file (CER, ROA, CRL) from an MFT file, RFC 6486.
+ * Add a file (CER, ROA, CRL, ...) from a manifest fileList, RFC 9286.
  * These are always relative to the directory in which "mft" sits.
  */
 static void
