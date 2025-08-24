@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.8 2025/08/23 21:31:25 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.9 2025/08/24 19:49:16 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -32,15 +32,30 @@
 #include <arm64/dev/smmuvar.h>
 #include <arm64/dev/smmureg.h>
 
+struct smmu_v2_fdt_softc {
+};
+
+struct smmu_v3_fdt_softc {
+	void			*sc_eih;
+	void			*sc_gih;
+	void			*sc_pih;
+};
+
 struct smmu_fdt_softc {
 	struct smmu_softc	 sc_smmu;
 	struct iommu_device	 sc_id;
+
+	union {
+		struct smmu_v2_fdt_softc v2;
+		struct smmu_v3_fdt_softc v3;
+	};
 };
 
 int smmu_fdt_match(struct device *, void *, void *);
 void smmu_fdt_attach(struct device *, struct device *, void *);
 
 int smmu_v2_fdt_attach(struct smmu_fdt_softc *, int);
+int smmu_v3_fdt_attach(struct smmu_fdt_softc *, int);
 
 bus_dma_tag_t smmu_fdt_map(void *, uint32_t *, bus_dma_tag_t);
 void smmu_fdt_reserve(void *, uint32_t *, bus_addr_t, bus_size_t);
@@ -82,6 +97,9 @@ smmu_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_is_compatible(faa->fa_node, "arm,mmu-500") ||
 	    OF_is_compatible(faa->fa_node, "arm,smmu-v2"))
 		ret = smmu_v2_fdt_attach(fsc, faa->fa_node);
+
+	if (OF_is_compatible(faa->fa_node, "arm,smmu-v3"))
+		ret = smmu_v3_fdt_attach(fsc, faa->fa_node);
 
 	if (ret)
 		return;
@@ -132,6 +150,62 @@ smmu_v2_fdt_attach(struct smmu_fdt_softc *fsc, int node)
 		    smmu_v2_context_irq, cbi, sc->sc_dev.dv_xname) == NULL) {
 			free(cbi, M_DEVBUF, sizeof(*cbi));
 			break;
+		}
+	}
+
+	return 0;
+}
+
+int
+smmu_v3_fdt_attach(struct smmu_fdt_softc *fsc, int node)
+{
+	struct smmu_softc *sc = &fsc->sc_smmu;
+	int idx;
+
+	if (OF_getproplen(node, "dma-coherent") == 0)
+		sc->sc_coherent = 1;
+
+	if (smmu_v3_attach(sc) != 0)
+		return ENXIO;
+
+	idx = OF_getindex(node, "eventq", "interrupt-names");
+	if (idx < 0) {
+		printf("%s: no eventq interrupt\n", sc->sc_dev.dv_xname);
+		return ENXIO;
+	}
+	fsc->v3.sc_eih = fdt_intr_establish_idx(node, idx, IPL_TTY,
+	    smmu_v3_event_irq, sc, sc->sc_dev.dv_xname);
+	if (fsc->v3.sc_eih == NULL) {
+		printf("%s: can't establish eventq interrupt\n",
+		    sc->sc_dev.dv_xname);
+		return ENXIO;
+	}
+
+	idx = OF_getindex(node, "gerror", "interrupt-names");
+	if (idx < 0) {
+		printf("%s: no gerror interrupt\n", sc->sc_dev.dv_xname);
+		return ENXIO;
+	}
+	fsc->v3.sc_gih = fdt_intr_establish_idx(node, idx, IPL_TTY,
+	    smmu_v3_gerr_irq, sc, sc->sc_dev.dv_xname);
+	if (fsc->v3.sc_gih == NULL) {
+		printf("%s: can't establish gerror interrupt\n",
+		    sc->sc_dev.dv_xname);
+		return ENXIO;
+	}
+
+	if (sc->v3.sc_has_pri) {
+		idx = OF_getindex(node, "priq", "interrupt-names");
+		if (idx < 0) {
+			/* No priq interrupt, PRI will be broken */
+			return 0;
+		}
+		fsc->v3.sc_pih = fdt_intr_establish_idx(node, idx, IPL_TTY,
+		    smmu_v3_priq_irq, sc, sc->sc_dev.dv_xname);
+		if (fsc->v3.sc_pih == NULL) {
+			printf("%s: can't establish priq interrupt\n",
+			    sc->sc_dev.dv_xname);
+			return ENXIO;
 		}
 	}
 

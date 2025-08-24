@@ -1,4 +1,4 @@
-/* $OpenBSD: smmureg.h,v 1.3 2025/08/23 21:31:25 patrick Exp $ */
+/* $OpenBSD: smmureg.h,v 1.4 2025/08/24 19:49:16 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -274,3 +274,208 @@
 #define SMMU_CB_TLBSYNC			0x7f0
 #define SMMU_CB_TLBSTATUS		0x7f4
 #define  SMMU_CB_TLBSTATUS_SACTIVE		(1 << 0)
+
+/* SMMU v3 */
+
+#define SMMU_V3_IDR0			0x00
+#define  SMMU_V3_IDR0_S2P			(1 << 0)
+#define  SMMU_V3_IDR0_S1P			(1 << 1)
+#define  SMMU_V3_TTF_AA32			(1 << 2)
+#define  SMMU_V3_TTF_AA64			(1 << 3)
+#define  SMMU_V3_IDR0_COHACC			(1 << 4)
+#define  SMMU_V3_IDR0_ASID16			(1 << 12)
+#define  SMMU_V3_IDR0_PRI			(1 << 16)
+#define  SMMU_V3_IDR0_VMID16			(1 << 18)
+#define  SMMU_V3_IDR0_CD2L			(1 << 19)
+#define  SMMU_V3_IDR0_ST_LEVEL(x)		(((x) >> 27) & 0x3)
+#define  SMMU_V3_IDR0_ST_LEVEL_1		0x0
+#define  SMMU_V3_IDR0_ST_LEVEL_2		0x1
+#define SMMU_V3_IDR1			0x04
+#define  SMMU_V3_IDR1_SIDSIZE(x)		(((x) >> 0) & 0x3f)
+#define  SMMU_V3_IDR1_SSIDSIZE(x)		(((x) >> 6) & 0x1f)
+#define  SMMU_V3_IDR1_PRIQS(x)			(((x) >> 11) & 0x1f)
+#define  SMMU_V3_IDR1_EVENTQS(x)		(((x) >> 16) & 0x1f)
+#define  SMMU_V3_IDR1_CMDQS(x)			(((x) >> 21) & 0x1f)
+#define SMMU_V3_IDR2			0x08
+#define SMMU_V3_IDR3			0x0c
+#define  SMMU_V3_IDR3_STT			(1 << 9)
+#define SMMU_V3_IDR4			0x10
+#define SMMU_V3_IDR5			0x14
+#define  SMMU_V3_IDR5_OAS(x)			(((x) >> 0) & 0x7)
+#define  SMMU_V3_IDR5_OAS_32BIT			0x0
+#define  SMMU_V3_IDR5_OAS_36BIT			0x1
+#define  SMMU_V3_IDR5_OAS_40BIT			0x2
+#define  SMMU_V3_IDR5_OAS_42BIT			0x3
+#define  SMMU_V3_IDR5_OAS_44BIT			0x4
+#define  SMMU_V3_IDR5_OAS_48BIT			0x5
+#define  SMMU_V3_IDR5_OAS_52BIT			0x6
+#define  SMMU_V3_IDR5_VAX			(1 << 10)
+#define SMMU_V3_IIDR			0x018
+#define SMMU_V3_AIDR			0x01c
+#define SMMU_V3_CR0			0x020
+#define  SMMU_V3_CR0_SMMUEN			(1 << 0)
+#define  SMMU_V3_CR0_PRIQEN			(1 << 1)
+#define  SMMU_V3_CR0_EVENTQEN			(1 << 2)
+#define  SMMU_V3_CR0_CMDQEN			(1 << 3)
+#define SMMU_V3_CR0ACK			0x24
+#define SMMU_V3_CR1			0x28
+#define  SMMU_V3_CR1_QUEUE_IC(x)		((x) << 0)
+#define  SMMU_V3_CR1_QUEUE_OC(x)		((x) << 2)
+#define  SMMU_V3_CR1_QUEUE_SH(x)		((x) << 4)
+#define  SMMU_V3_CR1_TABLE_IC(x)		((x) << 6)
+#define  SMMU_V3_CR1_TABLE_OC(x)		((x) << 8)
+#define  SMMU_V3_CR1_TABLE_SH(x)		((x) << 10)
+#define  SMMU_V3_CR1_CACHE_NC			0x0
+#define  SMMU_V3_CR1_CACHE_WB			0x1
+#define  SMMU_V3_CR1_CACHE_WT			0x2
+#define  SMMU_V3_CR1_SHARE_NSH			0x0
+#define  SMMU_V3_CR1_SHARE_OSH			0x2
+#define  SMMU_V3_CR1_SHARE_ISH			0x3
+#define SMMU_V3_CR2			0x2c
+#define  SMMU_V3_CR2_E2H			(1 << 0)
+#define  SMMU_V3_CR2_RECINVSID			(1 << 1)
+#define  SMMU_V3_CR2_PTM			(1 << 2)
+#define SMMU_V3_GBPA			0x44
+#define  SMMU_V3_GBPA_ABORT			(1 << 20)
+#define  SMMU_V3_GBPA_UPDATE			(1U << 31)
+#define SMMU_V3_IRQ_CTRL		0x50
+#define  SMMU_V3_IRQ_CTRL_GERROR		(1 << 0)
+#define  SMMU_V3_IRQ_CTRL_PRIQ			(1 << 1)
+#define  SMMU_V3_IRQ_CTRL_EVENTQ		(1 << 2)
+#define SMMU_V3_IRQ_CTRLACK		0x54
+#define SMMU_V3_GERROR			0x60
+#define  SMMU_V3_GERROR_MASK			0x1fd
+#define  SMMU_V3_GERROR_CMDQ_ERR		(1 << 0)
+#define SMMU_V3_GERRORN			0x64
+#define SMMU_V3_GERROR_IRQ_CFG0		0x68
+#define SMMU_V3_STRTAB_BASE		0x80
+#define  SMMU_V3_STRTAB_BASE_RA			(1ULL << 62)
+#define SMMU_V3_STRTAB_BASE_CFG		0x88
+#define  SMMU_V3_STRTAB_BASE_CFG_LOG2SIZE(x)	((uint64_t)(x) << 0)
+#define  SMMU_V3_STRTAB_BASE_CFG_SPLIT(x)	((x) << 6)
+#define  SMMU_V3_STRTAB_BASE_CFG_FMT_L1		(0 << 16)
+#define  SMMU_V3_STRTAB_BASE_CFG_FMT_L2		(1 << 16)
+#define SMMU_V3_CMDQ_BASE		0x90
+#define  SMMU_V3_CMDQ_BASE_RA			(1ULL << 62)
+#define  SMMU_V3_CMDQ_BASE_LOG2SIZE(x)		((uint64_t)(x) << 0)
+#define SMMU_V3_CMDQ_PROD		0x98
+#define SMMU_V3_CMDQ_CONS		0x9c
+#define  SMMU_V3_CMDQ_CONS_ERR(x)		(((x) >> 24) & 0x7f)
+#define SMMU_V3_EVENTQ_BASE		0xa0
+#define  SMMU_V3_EVENTQ_BASE_WA			(1ULL << 62)
+#define  SMMU_V3_EVENTQ_BASE_LOG2SIZE(x)	((uint64_t)(x) << 0)
+#define SMMU_V3_EVENTQ_PROD		0x100a8
+#define SMMU_V3_EVENTQ_CONS		0x100ac
+#define SMMU_V3_EVENTQ_IRQ_CFG0		0xb0
+#define SMMU_V3_PRIQ_BASE		0xc0
+#define  SMMU_V3_PRIQ_BASE_WA			(1ULL << 62)
+#define  SMMU_V3_PRIQ_BASE_LOG2SIZE(x)		((uint64_t)(x) << 0)
+#define SMMU_V3_PRIQ_PROD		0x100c8
+#define SMMU_V3_PRIQ_CONS		0x100cc
+#define SMMU_V3_PRIQ_IRQ_CFG0		0xd0
+
+#define SMMU_V3_Q_OVF(p)		((p) & (1U << 31))
+#define SMMU_V3_Q_IDX(q, p)		((p) & ((1U << (q)->sq_size_log2) - 1))
+#define SMMU_V3_Q_WRP(q, p)		((p) & (1U << (q)->sq_size_log2))
+
+#define SMMU_V3_CMD_CFGI_STE		0x03
+#define SMMU_V3_CMD_CFGI_STE_RANGE	0x04
+#define SMMU_V3_CMD_CFGI_CD		0x05
+#define  SMMU_V3_CMD_CFGI_0_SID(x)		(((uint64_t)(x) & 0xffff) << 32)
+#define  SMMU_V3_CMD_CFGI_1_LEAF		(1ULL << 0)
+#define  SMMU_V3_CMD_CFGI_1_RANGE(x)		(((uint64_t)(x) & 0x1f) << 0)
+#define SMMU_V3_CMD_TLBI_NH_ALL		0x10
+#define SMMU_V3_CMD_TLBI_NH_ASID	0x11
+#define SMMU_V3_CMD_TLBI_NH_VA		0x12
+#define SMMU_V3_CMD_TLBI_EL2_ALL	0x20
+#define SMMU_V3_CMD_TLBI_EL2_ASID	0x21
+#define SMMU_V3_CMD_TLBI_EL2_VA		0x22
+#define SMMU_V3_CMD_TLBI_NSNH_ALL	0x30
+#define  SMMU_V3_CMD_TLBI_0_NUM(x)		(((uint64_t)(x) & 0x3f) << 12)
+#define  SMMU_V3_CMD_TLBI_0_SCALE(x)		(((uint64_t)(x) & 0x7f) << 20)
+#define  SMMU_V3_CMD_TLBI_0_VMID(x)		(((uint64_t)(x) & 0xffff) << 32)
+#define  SMMU_V3_CMD_TLBI_0_ASID(x)		(((uint64_t)(x) & 0xffff) << 48)
+#define  SMMU_V3_CMD_TLBI_1_LEAF		(1ULL << 0)
+#define  SMMU_V3_CMD_TLBI_1_TTL(x)		(((uint64_t)(x) & 0x3) << 8)
+#define  SMMU_V3_CMD_TLBI_1_TG(x)		(((uint64_t)(x) & 0x3) << 10)
+#define SMMU_V3_CMD_SYNC		0x46
+#define  SMMU_V3_CMD_SYNC_0_CS_NONE		(0 << 12)
+#define  SMMU_V3_CMD_SYNC_0_CS_IRQ		(1 << 12)
+#define  SMMU_V3_CMD_SYNC_0_CS_SEV		(2 << 12)
+#define  SMMU_V3_CMD_SYNC_0_MSH_NSH		(0x0 << 22)
+#define  SMMU_V3_CMD_SYNC_0_MSH_OSH		(0x2 << 22)
+#define  SMMU_V3_CMD_SYNC_0_MSH_ISH		(0x3 << 22)
+#define  SMMU_V3_CMD_SYNC_0_MSIATTR_OIWB	(0xf << 24)
+
+#define SMMU_V3_CD_0_TCR_T0SZ(x)	(((uint64_t)(x) & 0x3f) << 0)
+#define SMMU_V3_CD_0_TCR_TG0_4KB	(0x0ULL << 6)
+#define SMMU_V3_CD_0_TCR_TG0_64KB	(0x1ULL << 6)
+#define SMMU_V3_CD_0_TCR_TG0_16KB	(0x2ULL << 6)
+#define SMMU_V3_CD_0_TCR_IRGN0_NC	(0x0ULL << 8)
+#define SMMU_V3_CD_0_TCR_IRGN0_WBWA	(0x1ULL << 8)
+#define SMMU_V3_CD_0_TCR_IRGN0_WT	(0x2ULL << 8)
+#define SMMU_V3_CD_0_TCR_IRGN0_WB	(0x3ULL << 8)
+#define SMMU_V3_CD_0_TCR_ORGN0_NC	(0x0ULL << 10)
+#define SMMU_V3_CD_0_TCR_ORGN0_WBWA	(0x1ULL << 10)
+#define SMMU_V3_CD_0_TCR_ORGN0_WT	(0x2ULL << 10)
+#define SMMU_V3_CD_0_TCR_ORGN0_WB	(0x3ULL << 10)
+#define SMMU_V3_CD_0_TCR_SH0_NSH	(0x0ULL << 12)
+#define SMMU_V3_CD_0_TCR_SH0_OSH	(0x2ULL << 12)
+#define SMMU_V3_CD_0_TCR_SH0_ISH	(0x3ULL << 12)
+#define SMMU_V3_CD_0_TCR_EPD0		(1ULL << 14)
+#define SMMU_V3_CD_0_ENDI		(1ULL << 15)
+#define SMMU_V3_CD_0_TCR_EPD1		(1ULL << 30)
+#define SMMU_V3_CD_0_V			(1ULL << 31)
+#define SMMU_V3_CD_0_TCR_IPS_32BIT	(0x0ULL << 32)
+#define SMMU_V3_CD_0_TCR_IPS_36BIT	(0x1ULL << 32)
+#define SMMU_V3_CD_0_TCR_IPS_40BIT	(0x2ULL << 32)
+#define SMMU_V3_CD_0_TCR_IPS_42BIT	(0x3ULL << 32)
+#define SMMU_V3_CD_0_TCR_IPS_44BIT	(0x4ULL << 32)
+#define SMMU_V3_CD_0_TCR_IPS_48BIT	(0x5ULL << 32)
+#define SMMU_V3_CD_0_TCR_IPS_52BIT	(0x6ULL << 32)
+#define SMMU_V3_CD_0_TCR_TBI0		(1ULL << 38)
+#define SMMU_V3_CD_0_AA64		(1ULL << 41)
+#define SMMU_V3_CD_0_TCR_HD		(1ULL << 42)
+#define SMMU_V3_CD_0_TCR_HA		(1ULL << 43)
+#define SMMU_V3_CD_0_S			(1ULL << 44)
+#define SMMU_V3_CD_0_R			(1ULL << 45)
+#define SMMU_V3_CD_0_A			(1ULL << 46)
+#define SMMU_V3_CD_0_ASET		(1ULL << 47)
+#define SMMU_V3_CD_0_ASID(x)		(((uint64_t)(x) & 0xffff) << 48)
+#define SMMU_V3_CD_3_MAIR_ATTR(attr, idx) ((uint64_t)(attr) << ((idx) * 8))
+#define SMMU_V3_CD_3_MAIR_DEVICE_nGnRnE	0x00
+#define SMMU_V3_CD_3_MAIR_DEVICE_nGnRE	0x04
+#define SMMU_V3_CD_3_MAIR_DEVICE_NC	0x44
+#define SMMU_V3_CD_3_MAIR_DEVICE_WB	0xff
+#define SMMU_V3_CD_3_MAIR_DEVICE_WT	0x88
+
+#define SMMU_V3_STE_0_V			(1ULL << 0)
+#define SMMU_V3_STE_0_CFG_ABORT		(0ULL << 1)
+#define SMMU_V3_STE_0_CFG_BYPASS	(4ULL << 1)
+#define SMMU_V3_STE_0_CFG_S1_TRANS	(5ULL << 1)
+#define SMMU_V3_STE_0_CFG_S2_TRANS	(6ULL << 1)
+#define SMMU_V3_STE_0_CFG_NESTED	(7ULL << 1)
+#define SMMU_V3_STE_0_S1FMT_LINEAR	(0ULL << 4)
+#define SMMU_V3_STE_0_S1FMT_64K_L2	(2ULL << 4)
+#define SMMU_V3_STE_1_S1DSS_TERMINATE	(0ULL << 0)
+#define SMMU_V3_STE_1_S1DSS_BYPASS	(1ULL << 0)
+#define SMMU_V3_STE_1_S1DSS_SSID0	(2ULL << 0)
+#define SMMU_V3_STE_1_S1CIR_NC		(0ULL << 2)
+#define SMMU_V3_STE_1_S1CIR_WBRA	(1ULL << 2)
+#define SMMU_V3_STE_1_S1CIR_WT		(2ULL << 2)
+#define SMMU_V3_STE_1_S1CIR_WB		(3ULL << 2)
+#define SMMU_V3_STE_1_S1COR_NC		(0ULL << 4)
+#define SMMU_V3_STE_1_S1COR_WBRA	(1ULL << 4)
+#define SMMU_V3_STE_1_S1COR_WT		(2ULL << 4)
+#define SMMU_V3_STE_1_S1COR_WB		(3ULL << 4)
+#define SMMU_V3_STE_1_S1CSH_NSH		(0ULL << 6)
+#define SMMU_V3_STE_1_S1CSH_OSH		(2ULL << 6)
+#define SMMU_V3_STE_1_S1CSH_ISH		(3ULL << 6)
+#define SMMU_V3_STE_1_S2FWB		(1ULL << 25)
+#define SMMU_V3_STE_1_S1STALLD		(1ULL << 27)
+#define SMMU_V3_STE_1_EATS_ABT		(0ULL << 28)
+#define SMMU_V3_STE_1_EATS_TRANS	(1ULL << 28)
+#define SMMU_V3_STE_1_EATS_S1CHK	(2ULL << 28)
+#define SMMU_V3_STE_1_STRW_NSEL1	(0ULL << 30)
+#define SMMU_V3_STE_1_STRW_EL2		(2ULL << 30)
+#define SMMU_V3_STE_1_SHCFG_INCOMING	(1ULL << 44)

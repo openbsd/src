@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.9 2025/08/23 21:31:25 patrick Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.10 2025/08/24 19:49:16 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -33,11 +33,18 @@ struct smmu_v2_acpi_softc {
 	void			*sc_gih;
 };
 
+struct smmu_v3_acpi_softc {
+	void			*sc_eih;
+	void			*sc_gih;
+	void			*sc_pih;
+};
+
 struct smmu_acpi_softc {
 	struct smmu_softc	 sc_smmu;
 
 	union {
 		struct smmu_v2_acpi_softc v2;
+		struct smmu_v3_acpi_softc v3;
 	};
 };
 
@@ -45,6 +52,7 @@ int smmu_acpi_match(struct device *, void *, void *);
 void smmu_acpi_attach(struct device *, struct device *, void *);
 
 int smmu_v2_acpi_attach(struct smmu_acpi_softc *, struct acpi_iort_node *);
+int smmu_v3_acpi_attach(struct smmu_acpi_softc *, struct acpi_iort_node *);
 
 int smmu_acpi_foundqcom(struct aml_node *, void *);
 
@@ -79,6 +87,8 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if (node->type == ACPI_IORT_SMMU)
 		ret = smmu_v2_acpi_attach(asc, node);
+	if (node->type == ACPI_IORT_SMMU_V3)
+		ret = smmu_v3_acpi_attach(asc, node);
 
 	if (ret)
 		return;
@@ -180,6 +190,63 @@ smmu_acpi_foundqcom(struct aml_node *node, void *arg)
 	    strcmp(dev, "QCOM0809") == 0 || /* SC7180 */
 	    strcmp(dev, "QCOM0C09") == 0) /* X1E80100 */
 		sc->sc_is_qcom = 1;
+
+	return 0;
+}
+
+int
+smmu_v3_acpi_attach(struct smmu_acpi_softc *asc, struct acpi_iort_node *node)
+{
+	struct smmu_softc *sc = &asc->sc_smmu;
+	struct acpi_iort_smmu_v3_node *smmu;
+	uint64_t span = 0x20000;
+
+	smmu = (struct acpi_iort_smmu_v3_node *)&node[1];
+
+	printf(" addr 0x%llx/0x%llx", smmu->base_address, span);
+
+	if (bus_space_map(sc->sc_iot, smmu->base_address, span,
+	    0, &sc->sc_ioh)) {
+		printf(": can't map registers\n");
+		return EIO;
+	}
+
+	switch (smmu->model) {
+	case ACPI_IORT_SMMU_V3_GENERIC:
+		break;
+	default:
+		printf(": unknown model %u\n", smmu->model);
+		return ENXIO;
+	}
+
+	if (ACPI_IORT_SMMU_V3_COHACC_OVERRIDE(smmu->flags))
+		sc->sc_coherent = 1;
+
+	if (smmu_v3_attach(sc) != 0)
+		return ENXIO;
+
+	if (smmu->event)
+		asc->v3.sc_eih = acpi_intr_establish(smmu->event,
+		    LR_EXTIRQ_MODE, IPL_TTY, smmu_v3_event_irq,
+		    sc, sc->sc_dev.dv_xname);
+	if (asc->v3.sc_eih == NULL)
+		return ENXIO;
+
+	if (smmu->gerr)
+		asc->v3.sc_gih = acpi_intr_establish(smmu->gerr,
+		    LR_EXTIRQ_MODE, IPL_TTY, smmu_v3_gerr_irq,
+		    sc, sc->sc_dev.dv_xname);
+	if (asc->v3.sc_gih == NULL)
+		return ENXIO;
+
+	if (sc->v3.sc_has_pri) {
+		if (smmu->pri)
+			asc->v3.sc_pih = acpi_intr_establish(smmu->pri,
+			    LR_EXTIRQ_MODE, IPL_TTY, smmu_v3_priq_irq,
+			    sc, sc->sc_dev.dv_xname);
+		if (asc->v3.sc_pih == NULL)
+			return ENXIO;
+	}
 
 	return 0;
 }
