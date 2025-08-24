@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_clock.c,v 1.3 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: bcm2835_clock.c,v 1.4 2025/08/24 10:50:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -125,7 +125,7 @@ bcmclock_get_frequency(void *cookie, uint32_t *cells)
 		struct vcprop_buffer_hdr vb_hdr;
 		struct vcprop_tag_clockrate vbt_clkrate;
 		struct vcprop_tag end;
-	} __attribute((aligned(16), packed));
+	} __packed;
 
 	uint32_t result;
 	struct request req = {
@@ -195,7 +195,7 @@ bcmclock_get_frequency(void *cookie, uint32_t *cells)
 	if (vcprop_tag_success_p(&req.vbt_clkrate.tag))
 		return req.vbt_clkrate.rate;
 
-	printf("bcmclock[unknown]: vcprop result %x:%x\n", req.vb_hdr.vpb_rcode,
+	printf("%s: vcprop result %x:%x\n", __func__, req.vb_hdr.vpb_rcode,
 	       req.vbt_clkrate.tag.vpt_rcode);
 
 	return 0;

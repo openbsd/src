@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_mbox.c,v 1.5 2024/05/28 09:19:04 claudio Exp $ */
+/*     $OpenBSD: bcm2835_mbox.c,v 1.6 2025/08/24 10:50:43 kettenis Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -70,7 +70,9 @@ struct bcmmbox_softc {
 	bus_space_handle_t sc_ioh;
 
 	bus_dma_tag_t	sc_dmat;
+	bus_dma_segment_t sc_dmaseg;
 	bus_dmamap_t	sc_dmamap;
+	caddr_t		sc_dmabuf;
 
 	void *sc_ih;
 
@@ -111,6 +113,7 @@ bcmmbox_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	bus_addr_t addr;
 	bus_size_t size;
+	int nsegs;
 
 	if (bcmmbox_sc) {
 		printf(": a similar device as already attached\n");
@@ -135,10 +138,28 @@ bcmmbox_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (bus_dmamap_create(sc->sc_dmat, ~0UL, 1, ~0UL, 0,
-	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->sc_dmamap) != 0) {
-		printf(": unable to create dma map\n");
+	if (bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
+	    &sc->sc_dmaseg, 1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_COHERENT)) {
+		printf(": can't allocate DMA memory\n");
 		goto clean_bus_space_map;
+	}
+
+	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_dmaseg, 1, PAGE_SIZE,
+	    &sc->sc_dmabuf, BUS_DMA_WAITOK)) {
+		printf(": can't map DMA memory\n");
+		goto clean_dmamem_free;
+	}
+
+	if (bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &sc->sc_dmamap)) {
+		printf(": can't create DMA map\n");
+		goto clean_dmamem_unmap;
+	}
+
+	if (bus_dmamap_load_raw(sc->sc_dmat, sc->sc_dmamap,
+	    &sc->sc_dmaseg, 1, PAGE_SIZE, BUS_DMA_WAITOK)) {
+		printf(": can't load DMA map\n");
+		goto clean_dmamap_destroy;
 	}
 
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_VM, bcmmbox_intr, sc,
@@ -156,8 +177,13 @@ bcmmbox_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
  clean_dmamap:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
+ clean_dmamap_destroy:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
-
+ clean_dmamem_unmap:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dmabuf, PAGE_SIZE);
+ clean_dmamem_free:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, 1);
  clean_bus_space_map:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 }
@@ -201,7 +227,7 @@ bcmmbox_intr_helper(struct bcmmbox_softc *sc, int broadcast)
 
 	bcmmbox_reg_flush(sc, BUS_SPACE_BARRIER_READ);
 
-	while (!ISSET(bcmmbox_reg_read(sc, BCMMBOX_STATUS), BCMMBOX_STATUS_EMPTY)) {
+	while (!ISSET(bcmmbox_reg_read(sc, BCMMBOX0_STATUS), BCMMBOX_STATUS_EMPTY)) {
 		mbox = bcmmbox_reg_read(sc, BCMMBOX0_READ);
 
 		chan = mbox & BCMMBOX_CHANNEL_MASK;
@@ -226,27 +252,38 @@ void
 bcmmbox_read(uint8_t chan, uint32_t *data)
 {
 	struct bcmmbox_softc *sc = bcmmbox_sc;
-	uint32_t mbox, rchan, rdata, status;
+	int error = 0, timo;
 
 	KASSERT(sc != NULL);
 	KASSERT(chan == (chan & BCMMBOX_CHANNEL_MASK));
 
-	while (1) {
-		bcmmbox_reg_flush(sc, BUS_SPACE_BARRIER_READ);
-		status = bcmmbox_reg_read(sc, BCMMBOX0_STATUS);
-		if (ISSET(status, BCMMBOX_STATUS_EMPTY))
-			continue;
+	mtx_enter(&sc->sc_intr_lock);
 
-		mbox = bcmmbox_reg_read(sc, BCMMBOX0_READ);
-
-		rchan = mbox & BCMMBOX_CHANNEL_MASK;
-		rdata = mbox & ~BCMMBOX_CHANNEL_MASK;
-
-		if (rchan == chan) {
-			*data = rdata;
-			return;
+	timo = 1000;
+	while ((sc->sc_mbox[chan] & BCMMBOX_CHANNEL_MASK) == 0) {
+		if (cold) {
+			bcmmbox_intr_helper(sc, 0);
+			if (--timo == 0) {
+				error = EWOULDBLOCK;
+				break;
+			}
+			delay(1000);
+		} else {
+			error = msleep_nsec(&sc->sc_chan[chan],
+			    &sc->sc_intr_lock, PWAIT, "bcmmbox",
+			    SEC_TO_NSEC(1));
+			if (error)
+				break;
 		}
 	}
+
+	*data = sc->sc_mbox[chan] & ~BCMMBOX_CHANNEL_MASK;
+	sc->sc_mbox[chan] = 0;
+
+	mtx_leave(&sc->sc_intr_lock);
+
+	if (error)
+		printf("%s: timeout\n", sc->sc_dev.dv_xname);
 }
 
 void
@@ -274,30 +311,23 @@ int
 bcmmbox_post(uint8_t chan, void *buf, size_t len, uint32_t *res)
 {
 	struct bcmmbox_softc *sc = bcmmbox_sc;
-	bus_dmamap_t map;
-	int error;
 
 	KASSERT(sc != NULL);
+	KASSERT(len < PAGE_SIZE);
+
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
-	map = sc->sc_dmamap;
-
-	error = bus_dmamap_load(sc->sc_dmat, map, buf, len, NULL,
-	    BUS_DMA_NOWAIT | BUS_DMA_READ | BUS_DMA_WRITE);
-	if (error != 0)
-		return (error);
-
-	bus_dmamap_sync(sc->sc_dmat, map, 0, len,
+	memcpy(sc->sc_dmabuf, buf, len);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, len,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	bcmmbox_write(chan, map->dm_segs[0].ds_addr);
+	bcmmbox_write(chan, sc->sc_dmamap->dm_segs[0].ds_addr);
 	bcmmbox_read(chan, res);
 
-	bus_dmamap_sync(sc->sc_dmat, map, 0, len,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0, len,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	memcpy(buf, sc->sc_dmabuf, len);
 
-	bus_dmamap_unload(sc->sc_dmat, map);
-
-	return (0);
+	return 0;
 }
