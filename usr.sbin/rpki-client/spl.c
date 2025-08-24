@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.c,v 1.15 2025/08/24 11:51:12 tb Exp $ */
+/*	$OpenBSD: spl.c,v 1.16 2025/08/24 12:34:39 tb Exp $ */
 /*
  * Copyright (c) 2024 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -38,14 +38,8 @@
  * SPL eContent definition in draft-ietf-sidrops-rpki-prefixlist-04, section 3.
  */
 
-ASN1_ITEM_EXP AddressFamilyPrefixes_it;
 ASN1_ITEM_EXP SignedPrefixList_it;
-
-ASN1_SEQUENCE(AddressFamilyPrefixes) = {
-	ASN1_SIMPLE(AddressFamilyPrefixes, addressFamily, ASN1_OCTET_STRING),
-	ASN1_SEQUENCE_OF(AddressFamilyPrefixes, addressPrefixes,
-	    ASN1_BIT_STRING),
-} ASN1_SEQUENCE_END(AddressFamilyPrefixes);
+ASN1_ITEM_EXP AddressFamilyPrefixes_it;
 
 ASN1_SEQUENCE(SignedPrefixList) = {
 	ASN1_EXP_OPT(SignedPrefixList, version, ASN1_INTEGER, 0),
@@ -55,6 +49,11 @@ ASN1_SEQUENCE(SignedPrefixList) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(SignedPrefixList);
 
+ASN1_SEQUENCE(AddressFamilyPrefixes) = {
+	ASN1_SIMPLE(AddressFamilyPrefixes, addressFamily, ASN1_OCTET_STRING),
+	ASN1_SEQUENCE_OF(AddressFamilyPrefixes, addressPrefixes,
+	    ASN1_BIT_STRING),
+} ASN1_SEQUENCE_END(AddressFamilyPrefixes);
 
 /*
  * Comparator to help sorting elements in SPL prefixBlocks and VSPs.

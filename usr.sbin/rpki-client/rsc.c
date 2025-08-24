@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.41 2025/08/19 11:30:20 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.42 2025/08/24 12:34:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -37,39 +37,12 @@
  * RSC eContent definition in RFC 9323, section 4.
  */
 
-ASN1_ITEM_EXP ConstrainedASIdentifiers_it;
-ASN1_ITEM_EXP ConstrainedIPAddressFamily_it;
-ASN1_ITEM_EXP ConstrainedIPAddrBlocks_it;
+ASN1_ITEM_EXP RpkiSignedChecklist_it;
 ASN1_ITEM_EXP FileNameAndHash_it;
 ASN1_ITEM_EXP ResourceBlock_it;
-ASN1_ITEM_EXP RpkiSignedChecklist_it;
-
-ASN1_SEQUENCE(ConstrainedASIdentifiers) = {
-	ASN1_EXP_SEQUENCE_OF(ConstrainedASIdentifiers, asnum, ASIdOrRange, 0),
-} ASN1_SEQUENCE_END(ConstrainedASIdentifiers);
-
-ASN1_SEQUENCE(ConstrainedIPAddressFamily) = {
-	ASN1_SIMPLE(ConstrainedIPAddressFamily, addressFamily,
-	    ASN1_OCTET_STRING),
-	ASN1_SEQUENCE_OF(ConstrainedIPAddressFamily, addressesOrRanges,
-	    IPAddressOrRange),
-} ASN1_SEQUENCE_END(ConstrainedIPAddressFamily);
-
-ASN1_ITEM_TEMPLATE(ConstrainedIPAddrBlocks) =
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, ConstrainedIPAddrBlocks,
-	    ConstrainedIPAddressFamily)
-ASN1_ITEM_TEMPLATE_END(ConstrainedIPAddrBlocks);
-
-ASN1_SEQUENCE(ResourceBlock) = {
-	ASN1_EXP_OPT(ResourceBlock, asID, ConstrainedASIdentifiers, 0),
-	ASN1_EXP_SEQUENCE_OF_OPT(ResourceBlock, ipAddrBlocks,
-	    ConstrainedIPAddressFamily, 1)
-} ASN1_SEQUENCE_END(ResourceBlock);
-
-ASN1_SEQUENCE(FileNameAndHash) = {
-	ASN1_OPT(FileNameAndHash, fileName, ASN1_IA5STRING),
-	ASN1_SIMPLE(FileNameAndHash, hash, ASN1_OCTET_STRING),
-} ASN1_SEQUENCE_END(FileNameAndHash);
+ASN1_ITEM_EXP ConstrainedIPAddrBlocks_it;
+ASN1_ITEM_EXP ConstrainedIPAddressFamily_it;
+ASN1_ITEM_EXP ConstrainedASIdentifiers_it;
 
 ASN1_SEQUENCE(RpkiSignedChecklist) = {
 	ASN1_EXP_OPT(RpkiSignedChecklist, version, ASN1_INTEGER, 0),
@@ -80,6 +53,32 @@ ASN1_SEQUENCE(RpkiSignedChecklist) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(RpkiSignedChecklist);
 
+ASN1_SEQUENCE(FileNameAndHash) = {
+	ASN1_OPT(FileNameAndHash, fileName, ASN1_IA5STRING),
+	ASN1_SIMPLE(FileNameAndHash, hash, ASN1_OCTET_STRING),
+} ASN1_SEQUENCE_END(FileNameAndHash);
+
+ASN1_SEQUENCE(ResourceBlock) = {
+	ASN1_EXP_OPT(ResourceBlock, asID, ConstrainedASIdentifiers, 0),
+	ASN1_EXP_SEQUENCE_OF_OPT(ResourceBlock, ipAddrBlocks,
+	    ConstrainedIPAddressFamily, 1)
+} ASN1_SEQUENCE_END(ResourceBlock);
+
+ASN1_ITEM_TEMPLATE(ConstrainedIPAddrBlocks) =
+	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, ConstrainedIPAddrBlocks,
+	    ConstrainedIPAddressFamily)
+ASN1_ITEM_TEMPLATE_END(ConstrainedIPAddrBlocks);
+
+ASN1_SEQUENCE(ConstrainedIPAddressFamily) = {
+	ASN1_SIMPLE(ConstrainedIPAddressFamily, addressFamily,
+	    ASN1_OCTET_STRING),
+	ASN1_SEQUENCE_OF(ConstrainedIPAddressFamily, addressesOrRanges,
+	    IPAddressOrRange),
+} ASN1_SEQUENCE_END(ConstrainedIPAddressFamily);
+
+ASN1_SEQUENCE(ConstrainedASIdentifiers) = {
+	ASN1_EXP_SEQUENCE_OF(ConstrainedASIdentifiers, asnum, ASIdOrRange, 0),
+} ASN1_SEQUENCE_END(ConstrainedASIdentifiers);
 
 /*
  * Parse asID (inside ResourceBlock)
