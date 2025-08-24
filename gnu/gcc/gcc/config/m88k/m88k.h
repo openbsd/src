@@ -1048,12 +1048,21 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
    in one reasonably fast instruction.  */
 #define MOVE_MAX 8
 
-/* Define if normal loads of shorter-than-word items from memory clears
-   the rest of the bigs in the register.  */
-#define BYTE_LOADS_ZERO_EXTEND
-
 /* Zero if access to memory by bytes is faster.  */
 #define SLOW_BYTE_ACCESS 1
+
+/* Define if operations between registers always perform the operation
+   on the full register even if a narrower mode is specified.  */
+#define WORD_REGISTER_OPERATIONS
+
+/* Define if loading in MODE, an integral mode narrower than BITS_PER_WORD
+   will either zero-extend or sign-extend.  The value of this macro should
+   be the code that says which one of the two operations is implicitly
+   done, UNKNOWN if none.
+/* #define LOAD_EXTEND_OP(MODE) UNKNOWN */
+
+/* Define if loading short immediate values into registers sign extends.  */
+/* #define SHORT_IMMEDIATES_SIGN_EXTEND */
 
 /* Value is 1 if truncating an integer of INPREC bits to OUTPREC bits
    is done just by pretending it is already truncated.  */
