@@ -611,6 +611,10 @@ bool m88k_legitimate_address_p (enum machine_mode mode, rtx x, int strict)
 	 rtx_ok_for_base_p (x0) but not legitimate_index_p (x1) above.  */
       if (!strict
 	  && (x0 == virtual_stack_vars_rtx
+	      || x0 == virtual_incoming_args_rtx
+	      || x0 == virtual_outgoing_args_rtx
+	      || x0 == virtual_stack_dynamic_rtx
+	      || x0 == virtual_stack_vars_rtx
 	      || x0 == frame_pointer_rtx
 	      || x0 == arg_pointer_rtx)
 	  && CONST_INT_P (x1))
@@ -1085,8 +1089,6 @@ m88k_layout_frame (void)
 
   memset ((char *) &save_regs[0], 0, sizeof (save_regs));
   nregs = nxregs = 0;
-  sp_size = CEIL_ROUND(current_function_outgoing_args_size, 2 * UNITS_PER_WORD);
-  m88k_frame_size = 0;
 
   /* Profiling requires a stack frame.  */
   if (current_function_profile)
@@ -1132,10 +1134,11 @@ m88k_layout_frame (void)
 	nregs++;
       }
 
+  sp_size = CEIL_ROUND(current_function_outgoing_args_size, 2 * UNITS_PER_WORD);
+  sp_size += 4 * nregs;
   /* If we need to align extended registers, add a word.  */
   if (nxregs > 0 && (nregs & 1) != 0)
     sp_size +=4;
-  sp_size += 4 * nregs;
   sp_size += 8 * nxregs;
   m88k_hardfp_offset = ROUND_CALL_BLOCK_SIZE (sp_size);
 
@@ -1147,8 +1150,9 @@ m88k_layout_frame (void)
       nregs += save_regs[1] + save_regs[HARD_FRAME_POINTER_REGNUM];
       m88k_frame_size = 8;
     }
+  else
+    m88k_frame_size = 0;
   m88k_frame_size = ROUND_CALL_BLOCK_SIZE (m88k_frame_size + get_frame_size ());
-
   m88k_arg_size = ROUND_CALL_BLOCK_SIZE (current_function_pretend_args_size);
   m88k_stack_size = m88k_hardfp_offset + m88k_frame_size + m88k_arg_size;
 }
