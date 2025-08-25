@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.40 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.41 2025/08/25 18:47:39 tb Exp $ */
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
