@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2023/04/15 14:10:09 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2025/08/25 06:08:33 tb Exp $
 
 TESTS = \
 	freenull
@@ -10,9 +10,11 @@ REGRESS_TARGETS= all_tests
 LDADD=		-lcrypto
 DPADD=		${LIBCRYPTO}
 
+CFLAGS+=	-Wall -Werror
+
 CLEANFILES+= freenull.c freenull.c.body freenull.c.tmp
 
-freenull.c: freenull.awk ../../../../lib/libcrypto/Symbols.list
+freenull.c: freenull.awk freenull.c.head freenull.c.tail ../../../../lib/libcrypto/Symbols.list
 	awk -f ${.CURDIR}/freenull.awk \
 		< ${BSDSRCDIR}/lib/libcrypto/Symbols.list > freenull.c.body
 	cat ${.CURDIR}/freenull.c.head freenull.c.body \
