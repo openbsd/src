@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.17 2022/08/26 21:47:16 kn Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.18 2025/08/25 14:59:13 claudio Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -51,7 +51,7 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 	static char namebuf[PATH_MAX];
 	struct dk_diskmap dm;
 	char *slash, *prefix;
-	int fd;
+	int fd, ret;
 
 	/* Initial state */
 	fd = -1;
@@ -88,19 +88,20 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 			/*
 			 * First try raw partition (for removable drives)
 			 */
-			if (snprintf(namebuf, sizeof(namebuf), "%s%s%s%c",
-			    _PATH_DEV, prefix, path, 'a' + getrawpartition())
-			    < sizeof(namebuf)) {
-				fd = open(namebuf, oflags);
-			} else
+			ret = snprintf(namebuf, sizeof(namebuf), "%s%s%s%c",
+			    _PATH_DEV, prefix, path, 'a' + getrawpartition());
+			if (ret < 0 || (size_t)ret >= sizeof(namebuf))
 				errno = ENAMETOOLONG;
+			else
+				fd = open(namebuf, oflags);
 		}
 		if (fd == -1 && errno == ENOENT) {
-			if (snprintf(namebuf, sizeof(namebuf), "%s%s%s",
-			    _PATH_DEV, prefix, path) < sizeof(namebuf)) {
-				fd = open(namebuf, oflags);
-			} else
+			ret = snprintf(namebuf, sizeof(namebuf), "%s%s%s",
+			    _PATH_DEV, prefix, path);
+			if (ret < 0 || (size_t)ret >= sizeof(namebuf))
 				errno = ENAMETOOLONG;
+			else
+				fd = open(namebuf, oflags);
 		}
 	}
 	if (realpath)

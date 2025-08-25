@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.21 2019/07/03 03:24:04 deraadt Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.22 2025/08/25 14:59:13 claudio Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -197,7 +197,7 @@ put_pid(int fd, pid_t pid)
 	int len;
 
 	len = snprintf(buf, sizeof buf, "%10ld\n", (long)pid);
-	if (len < 0 || len >= sizeof buf)
+	if (len < 0 || (size_t)len >= sizeof buf)
 		return 0;
 
 	if (write(fd, buf, len) != len)
