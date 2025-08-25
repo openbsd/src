@@ -1419,6 +1419,7 @@
 ./usr/share/man/man4/arm64/aplspmi.4
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/intro.4
+./usr/share/man/man4/arm64/rpirtc.4
 ./usr/share/man/man4/arm64/rpone.4
 ./usr/share/man/man4/arm64/smbios.4
 ./usr/share/man/man4/armv7/agtimer.4
