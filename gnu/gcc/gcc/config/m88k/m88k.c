@@ -39,6 +39,7 @@ Boston, MA 02110-1301, USA.  */
 #include "libfuncs.h"
 #include "c-tree.h"
 #include "flags.h"
+#include "ggc.h"
 #include "recog.h"
 #include "toplev.h"
 #include "tm_p.h"
@@ -47,26 +48,41 @@ Boston, MA 02110-1301, USA.  */
 #include "tree-gimple.h"
 
 #ifdef REGISTER_PREFIX
-const char *m88k_register_prefix = REGISTER_PREFIX;
+static const char *m88k_register_prefix = REGISTER_PREFIX;
 #else
-const char *m88k_register_prefix = "";
+static const char *m88k_register_prefix = "";
 #endif
+
+/* A C structure for machine-specific, per-function data.
+   This is added to the cfun structure.  */
+struct machine_function GTY(())
+{
+  /* Offset of hardware frame pointer (r30) if used.  */
+  int hardfp_offset;
+  /* Size of frame, rounded to a 16 byte boundary.  */
+  int frame_size;
+  /* Total size of allocated stack.  */
+  int stack_size;
+  /* Number of argument registers to save for proper va_list operation.  */
+  int saved_va_regcnt;
+  /* Number of general registers needing to be saved.  */
+  int saved_gregs;
+  /* Number of extended registers needing to be saved.  */
+  int saved_xregs;
+  /* Above data is valid and final.  */
+  bool initialized;
+};
+
 char m88k_volatile_code;
-
-int m88k_hardfp_offset	= 0;	/* offset of frame pointer if used */
-int m88k_frame_size	= 0;	/* size of frame */
-int m88k_arg_size	= 0;	/* rounded current_function_pretend_args_size */
-int m88k_stack_size	= 0;	/* size of allocated stack (including frame) */
 int m88k_case_index;
-
-rtx m88k_compare_reg;		/* cmp output pseudo register */
-rtx m88k_compare_op0;		/* cmpsi operand 0 */
-rtx m88k_compare_op1;		/* cmpsi operand 1 */
+rtx m88k_compare_reg = NULL_RTX;	/* cmp output pseudo register */
+rtx m88k_compare_op0 = NULL_RTX;	/* cmpsi operand 0 */
+rtx m88k_compare_op1 = NULL_RTX;	/* cmpsi operand 1 */
 
 enum processor_type m88k_cpu;	/* target cpu */
 
+static struct machine_function *m88k_init_machine_status (void);
 static void m88k_maybe_dead (rtx);
-static void m88k_output_function_epilogue (FILE *, HOST_WIDE_INT);
 static rtx m88k_struct_value_rtx (tree, int);
 static int m88k_adjust_cost (rtx, rtx, rtx, int);
 static bool m88k_handle_option (size_t, const char *, int);
@@ -94,9 +110,6 @@ static void m88k_output_file_start (void);
 #undef TARGET_ASM_UNALIGNED_SI_OP
 #define TARGET_ASM_UNALIGNED_SI_OP "\tuaword\t"
 #endif
-
-#undef TARGET_ASM_FUNCTION_EPILOGUE
-#define TARGET_ASM_FUNCTION_EPILOGUE m88k_output_function_epilogue
 
 #undef TARGET_SCHED_ADJUST_COST
 #define TARGET_SCHED_ADJUST_COST m88k_adjust_cost
@@ -163,7 +176,6 @@ const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER] =
   XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
   XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
   XRF_REGS, XRF_REGS, XRF_REGS, XRF_REGS,
-  GENERAL_REGS,
 };
 
 /* Worker function for TARGET_STRUCT_VALUE_RTX.  */
@@ -513,15 +525,14 @@ bool m88k_regno_ok_for_index_p (int regno)
 {
   if (regno >= FIRST_PSEUDO_REGISTER && reg_renumber[regno] >= 0)
     regno = reg_renumber[regno];
-  return ((regno != 0 && regno < FIRST_EXTENDED_REGISTER)
-	  || regno == FRAME_POINTER_REGNUM);
+  return regno != 0 && regno < FIRST_EXTENDED_REGISTER;
 }
 
 bool m88k_regno_ok_for_base_p (int regno)
 {
   if (regno >= FIRST_PSEUDO_REGISTER && reg_renumber[regno] >= 0)
     regno = reg_renumber[regno];
-  return (regno < FIRST_EXTENDED_REGISTER || regno == FRAME_POINTER_REGNUM);
+  return regno < FIRST_EXTENDED_REGISTER;
 }
 
 /* The macros REG_OK_FOR..._P (now functions below) assume that the arg
@@ -1037,15 +1048,15 @@ m88k_output_file_start (void)
         |                caller's frame                |
         |==============================================|
         |     [caller's outgoing memory arguments]     |
-  sp -> |==============================================| <- ap
-        |      [va_args register copy (optional)]      |
-        |----------------------------------------------| <- logical fp
+  sp -> |==============================================| <- ap, logical fp
         |            [local variable space]            |
         |----------------------------------------------|
         |            [return address (r1)]             |
         |----------------------------------------------|
         |        [previous frame pointer (r30)]        |
         |==============================================| <- hardware fp (r30)
+        |      [va_args register copy (optional)]      |
+        |----------------------------------------------|
         |       [preserved registers (r25..r14)]       |
         |----------------------------------------------|
         |       [preserved registers (x29..x22)]       |
@@ -1061,10 +1072,7 @@ static rtx emit_add (rtx, rtx, int);
 static void preserve_registers (bool);
 static void emit_ldst (int, int, enum machine_mode, int);
 
-static int  nregs;
-static int  nxregs;
 static char save_regs[LAST_EXTENDED_REGISTER + 1];
-static int  frame_laid_out;
 
 /* Round to the next highest integer that meets the alignment.  */
 #define CEIL_ROUND(VALUE,ALIGN)	(((VALUE) + (ALIGN) - 1) & ~((ALIGN)- 1))
@@ -1073,6 +1081,16 @@ static int  frame_laid_out;
 #define ROUND_CALL_BLOCK_SIZE(BYTES) CEIL_ROUND(BYTES, STACK_UNIT_BOUNDARY)
 
 
+/* Function to init struct machine_function.
+   This will be called, via a pointer variable,
+   from push_function_context.  */
+static struct machine_function *
+m88k_init_machine_status (void)
+{
+  return (struct machine_function *)
+	 ggc_alloc_cleared (sizeof (struct machine_function));
+}
+
 /* Establish the position of the FP relative to the SP.  This is done
    either during output_function_prologue() or by
    INITIAL_ELIMINATION_OFFSET.  */
@@ -1082,13 +1100,11 @@ m88k_layout_frame (void)
 {
   int regno, sp_size;
 
-  if (frame_laid_out && reload_completed)
+  if (cfun->machine->initialized)
     return;
 
-  frame_laid_out = 1;
-
   memset ((char *) &save_regs[0], 0, sizeof (save_regs));
-  nregs = nxregs = 0;
+  cfun->machine->saved_gregs = cfun->machine->saved_xregs = 0;
 
   /* Profiling requires a stack frame.  */
   if (current_function_profile)
@@ -1098,7 +1114,7 @@ m88k_layout_frame (void)
   if (flag_pic && current_function_uses_pic_offset_table)
     {
       save_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
-      nregs++;
+      cfun->machine->saved_gregs++;
       save_regs[1] = 1;
     }
 
@@ -1123,7 +1139,7 @@ m88k_layout_frame (void)
     if (regs_ever_live[regno] && ! call_used_regs[regno])
       {
 	save_regs[regno] = 1;
-	nxregs++;
+	cfun->machine->saved_xregs++;
       }
 
   /* Figure out which normal register(s) needs to be saved.  */
@@ -1131,55 +1147,46 @@ m88k_layout_frame (void)
     if (regs_ever_live[regno] && ! call_used_regs[regno])
       {
 	save_regs[regno] = 1;
-	nregs++;
+	cfun->machine->saved_gregs++;
       }
 
   sp_size = CEIL_ROUND(current_function_outgoing_args_size, 2 * UNITS_PER_WORD);
-  sp_size += 4 * nregs;
+  sp_size += 4 * cfun->machine->saved_gregs;
   /* If we need to align extended registers, add a word.  */
-  if (nxregs > 0 && (nregs & 1) != 0)
+  if (cfun->machine->saved_xregs > 0 && (cfun->machine->saved_gregs & 1) != 0)
     sp_size +=4;
-  sp_size += 8 * nxregs;
-  m88k_hardfp_offset = ROUND_CALL_BLOCK_SIZE (sp_size);
+  sp_size += 8 * cfun->machine->saved_xregs;
+  sp_size += cfun->machine->saved_va_regcnt * UNITS_PER_WORD;
+  cfun->machine->hardfp_offset = ROUND_CALL_BLOCK_SIZE (sp_size);
 
   /* The first two saved registers are placed above the new frame pointer
      if any. Then, local variables are placed on top of it, with the end
      of local variables aligned to a stack boundary. */
   if (save_regs[1] || save_regs[HARD_FRAME_POINTER_REGNUM])
     {
-      nregs += save_regs[1] + save_regs[HARD_FRAME_POINTER_REGNUM];
-      m88k_frame_size = 8;
+      cfun->machine->saved_gregs
+	+= save_regs[1] + save_regs[HARD_FRAME_POINTER_REGNUM];
+      cfun->machine->frame_size = 8;
     }
   else
-    m88k_frame_size = 0;
-  m88k_frame_size = ROUND_CALL_BLOCK_SIZE (m88k_frame_size + get_frame_size ());
-  m88k_arg_size = ROUND_CALL_BLOCK_SIZE (current_function_pretend_args_size);
-  m88k_stack_size = m88k_hardfp_offset + m88k_frame_size + m88k_arg_size;
+    cfun->machine->frame_size = 0;
+  cfun->machine->frame_size += get_frame_size ();
+  cfun->machine->frame_size = ROUND_CALL_BLOCK_SIZE (cfun->machine->frame_size);
+  cfun->machine->stack_size
+    = cfun->machine->hardfp_offset
+    + cfun->machine->frame_size
+    + current_function_pretend_args_size;
+  cfun->machine->initialized = reload_completed;
 }
 
 int
 m88k_initial_elimination_offset (int from, int to)
 {
   m88k_layout_frame ();
-  switch (from)
-    {
-    case FRAME_POINTER_REGNUM:
-      if (to == HARD_FRAME_POINTER_REGNUM)
-	return m88k_frame_size;
-      else /* to == STACK_POINTER_REGNUM */
-	return m88k_frame_size + m88k_hardfp_offset;
-      break;
-
-    case ARG_POINTER_REGNUM:
-      if (to == HARD_FRAME_POINTER_REGNUM)
-       return m88k_stack_size - m88k_hardfp_offset;
-      else /* to == STACK_POINTER_REGNUM */
-       return m88k_stack_size;
-      break;
-
-    default:
-      gcc_unreachable ();
-    }
+  if (to == HARD_FRAME_POINTER_REGNUM)
+    return cfun->machine->frame_size;
+  else /* to == STACK_POINTER_REGNUM */
+    return cfun->machine->frame_size + cfun->machine->hardfp_offset;
 }
 
 static void
@@ -1197,26 +1204,28 @@ m88k_expand_prologue (void)
 
   m88k_layout_frame ();
 
-  if (warn_stack_larger_than && m88k_stack_size > stack_larger_than_size)
-    warning (0, "stack usage is %d bytes", m88k_stack_size);
+  if (warn_stack_larger_than
+      && cfun->machine->stack_size > stack_larger_than_size)
+    warning (0, "stack usage is %d bytes", cfun->machine->stack_size);
 
-  if (m88k_stack_size)
+  if (cfun->machine->stack_size)
     {
-      insn = emit_add (stack_pointer_rtx, stack_pointer_rtx, -m88k_stack_size);
+      insn = emit_add (stack_pointer_rtx, stack_pointer_rtx,
+		       -cfun->machine->stack_size);
       RTX_FRAME_RELATED_P (insn) = 1;
 
       /* If the stack pointer adjustment has required a temporary register,
 	 tell the DWARF code how to understand this sequence.  */
-      if (! ADD_INTVAL (m88k_stack_size))
+      if (! ADD_INTVAL (cfun->machine->stack_size))
 	REG_NOTES (insn)
 	  = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR,
-			       gen_rtx_SET (VOIDmode, stack_pointer_rtx,
-				     gen_rtx_PLUS (Pmode, stack_pointer_rtx,
-						   GEN_INT (-m88k_stack_size))),
-			       REG_NOTES(insn));
+	      gen_rtx_SET (VOIDmode, stack_pointer_rtx,
+		           gen_rtx_PLUS (Pmode, stack_pointer_rtx,
+					 GEN_INT (-cfun->machine->stack_size))),
+	      REG_NOTES(insn));
     }
 
-  if (nregs || nxregs)
+  if (cfun->machine->saved_gregs || cfun->machine->saved_xregs)
     {
       preserve_registers (true);
       /* Be sure to emit this instruction after all register saves, DWARF
@@ -1226,8 +1235,8 @@ m88k_expand_prologue (void)
 
   if (frame_pointer_needed)
     {
-      insn
-	= emit_add (hard_frame_pointer_rtx, stack_pointer_rtx, m88k_hardfp_offset);
+      insn = emit_add (hard_frame_pointer_rtx, stack_pointer_rtx,
+		       cfun->machine->hardfp_offset);
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 
@@ -1246,34 +1255,20 @@ m88k_expand_prologue (void)
     emit_insn (gen_blockage ());
 }
 
-/* This function generates the assembly code for function exit,
-   on machines that need it.
-
-   The function epilogue should not depend on the current stack pointer!
-   It should use the frame pointer only, if there is a frame pointer.
-   This is mandatory because of alloca; we also take advantage of it to
-   omit stack adjustments before returning.  */
-
-static void
-m88k_output_function_epilogue (FILE *stream,
-			       HOST_WIDE_INT size ATTRIBUTE_UNUSED)
-{
-  frame_laid_out = 0;
-}
-
 void
 m88k_expand_epilogue (void)
 {
   emit_insn (gen_blockage ());
 
   if (frame_pointer_needed)
-    emit_add (stack_pointer_rtx, hard_frame_pointer_rtx, -m88k_hardfp_offset);
+    emit_add (stack_pointer_rtx, hard_frame_pointer_rtx,
+	      -cfun->machine->hardfp_offset);
 
-  if (nregs || nxregs)
+  if (cfun->machine->saved_gregs || cfun->machine->saved_xregs)
     preserve_registers (false);
 
-  if (m88k_stack_size)
-    emit_add (stack_pointer_rtx, stack_pointer_rtx, m88k_stack_size);
+  if (cfun->machine->stack_size)
+    emit_add (stack_pointer_rtx, stack_pointer_rtx, cfun->machine->stack_size);
 
   emit_insn (gen_indirect_jump (INCOMING_RETURN_ADDR_RTX));
 
@@ -1305,25 +1300,29 @@ static void
 preserve_registers (bool store_p)
 {
   int regno, offset;
+  struct mem_op {
+    int offset;
+    enum machine_mode mode;
+  } mem_op[FIRST_PSEUDO_REGISTER];
+
+  memset (&mem_op, 0, sizeof (mem_op));
 
   /* The 88open OCS mandates that preserved registers be stored in
      increasing order.  For compatibility with current practice,
-     the order is r30, r1, then the preserve registers.
-     Note that we are not strictly conforming, as we are storing
-     register pairs (e.g. r24:r25) before individual registers.  */
-
-  if (save_regs[HARD_FRAME_POINTER_REGNUM])
-    {
-      emit_ldst (store_p, HARD_FRAME_POINTER_REGNUM, SImode,
-		 m88k_hardfp_offset);
-    }
+     the order is r1, r30, then the preserve registers.  */
 
   if (save_regs[1])
     {
       /* Do not reload r1 in the epilogue unless really necessary */
       if (store_p || regs_ever_live[1]
 	  || (flag_pic && save_regs[PIC_OFFSET_TABLE_REGNUM]))
-	emit_ldst (store_p, 1, SImode, m88k_hardfp_offset + 4);
+	emit_ldst (store_p, 1, SImode, cfun->machine->hardfp_offset + 4);
+    }
+
+  if (save_regs[HARD_FRAME_POINTER_REGNUM])
+    {
+      emit_ldst (store_p, HARD_FRAME_POINTER_REGNUM, SImode,
+		 cfun->machine->hardfp_offset);
     }
 
   offset = CEIL_ROUND(current_function_outgoing_args_size, 2 * UNITS_PER_WORD);
@@ -1333,7 +1332,8 @@ preserve_registers (bool store_p)
        regno++)
     if (save_regs[regno])
       {
-	emit_ldst (store_p, regno, DImode, offset);
+	mem_op[regno].offset = offset;
+	mem_op[regno].mode = DImode;
 	offset += 2*4;
       }
 
@@ -1341,7 +1341,8 @@ preserve_registers (bool store_p)
   for (regno = 2; regno < HARD_FRAME_POINTER_REGNUM; regno += 2)
     if (save_regs[regno] && save_regs[regno + 1])
       {
-	emit_ldst (store_p, regno, DImode, offset);
+	mem_op[regno].offset = offset;
+	mem_op[regno].mode = DImode;
 	offset += 2*4;
       }
 
@@ -1352,15 +1353,24 @@ preserve_registers (bool store_p)
 	{
 	  if (save_regs[regno + 1])
 	    continue; /* done earlier */
-	  emit_ldst (store_p, regno, SImode, offset);
+	  mem_op[regno].offset = offset;
+	  mem_op[regno].mode = SImode;
 	  offset += 4;
 	}
       if (save_regs[regno + 1])
 	{
-	  emit_ldst (store_p, regno + 1, SImode, offset);
+	  mem_op[regno + 1].offset = offset;
+	  mem_op[regno + 1].mode = SImode;
 	  offset += 4;
 	}
     }
+
+  /* Output the memory operations.  */
+  for (regno = 2; regno <= LAST_EXTENDED_REGISTER; regno++)
+    if (mem_op[regno].mode != 0)
+      {
+	emit_ldst (store_p, regno, mem_op[regno].mode, mem_op[regno].offset);
+      }
 }
 
 static void
@@ -1620,7 +1630,7 @@ m88k_return_in_memory (tree type, tree fndecl ATTRIBUTE_UNUSED)
    variable number of arguments.
 
    CUM is a variable of type CUMULATIVE_ARGS which gives info about
-    the preceding args and about the function being called.
+   the preceding args and about the function being called.
 
    MODE and TYPE are the mode and type of the current parameter.
 
@@ -1637,8 +1647,8 @@ m88k_setup_incoming_varargs (CUMULATIVE_ARGS *cum, enum machine_mode mode,
 {
   CUMULATIVE_ARGS next_cum;
   tree fntype;
-  int stdarg_p;
-  int regcnt, delta;
+  bool stdarg_p;
+  int regcnt;
 
   fntype = TREE_TYPE (current_function_decl);
   stdarg_p = (TYPE_ARG_TYPES (fntype) != NULL_TREE
@@ -1652,50 +1662,46 @@ m88k_setup_incoming_varargs (CUMULATIVE_ARGS *cum, enum machine_mode mode,
     m88k_function_arg_advance(&next_cum, mode, type, 1);
 
   regcnt = next_cum < 8 ? 8 - next_cum : 0;
-  delta = regcnt & 1;
 
   if (! no_rtl && regcnt != 0)
     {
-      rtx mem, dst;
-      int set, regno, offs;
+      rtx mem;
+      HOST_WIDE_INT set;
+      int regno, offs;
 
+      offs = 0;
       set = get_varargs_alias_set ();
-      mem = gen_rtx_MEM (BLKmode,
-			 plus_constant (virtual_incoming_args_rtx,
-					- (regcnt + delta) * UNITS_PER_WORD));
+      mem = gen_rtx_MEM (BLKmode, hard_frame_pointer_rtx);
+      mem = adjust_address (mem, BLKmode, -regcnt * UNITS_PER_WORD);
       MEM_NOTRAP_P (mem) = 1;
       set_mem_alias_set (mem, set);
 
       /* Now store the incoming registers.  */
       /* The following is equivalent to
-	 move_block_from_reg (2 + next_cum,
-			      adjust_address (mem, Pmode,
-					      delta * UNITS_PER_WORD),
+	 move_block_from_reg (2 + next_cum, mem,
 			      regcnt, UNITS_PER_WORD * regcnt);
-	 but using double store instruction since the stack is properly
-	 aligned.  */
+	 but using as many double store instruction as possible,
+	 since the stack is properly aligned.  */
       regno = 2 + next_cum;
-      dst = mem;
 
-      if (delta != 0)
+      if (regcnt & 1)
 	{
-	  dst = adjust_address (dst, Pmode, UNITS_PER_WORD);
-	  emit_move_insn (operand_subword (dst, 0, 1, BLKmode),
+	  emit_move_insn (adjust_address (mem, SImode, 0),
 			  gen_rtx_REG (SImode, regno));
 	  regno++;
+	  offs += UNITS_PER_WORD;
 	}
 
-      offs = delta;
       while (regno < 10)
 	{
-	  emit_move_insn (adjust_address (dst, DImode, offs * UNITS_PER_WORD),
+	  emit_move_insn (adjust_address (mem, DImode, offs),
 			  gen_rtx_REG (DImode, regno));
-	  offs += 2;
+	  offs += 2 * UNITS_PER_WORD;
 	  regno += 2;
 	}
-
-      *pretend_size = (regcnt + delta) * UNITS_PER_WORD;
     }
+
+  cfun->machine->saved_va_regcnt = regcnt;
 }
 
 /* Define the `__builtin_va_list' type for the ABI.  */
@@ -1774,9 +1780,9 @@ m88k_va_start (tree valist, rtx nextarg ATTRIBUTE_UNUSED)
   expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
 
   /* Setup __va_reg */
-  t = make_tree (TREE_TYPE (reg), virtual_incoming_args_rtx);
+  t = make_tree (TREE_TYPE (reg), hard_frame_pointer_rtx);
   t = build2 (PLUS_EXPR, TREE_TYPE (reg), t,
-	     build_int_cst (NULL_TREE, -8 * UNITS_PER_WORD));
+	      build_int_cst (NULL_TREE, - 8 * UNITS_PER_WORD));
   t = build2 (MODIFY_EXPR, TREE_TYPE (reg), reg, t);
   TREE_SIDE_EFFECTS (t) = 1;
   expand_expr (t, const0_rtx, VOIDmode, EXPAND_NORMAL);
@@ -2210,8 +2216,6 @@ print_operand (FILE *file, rtx x, int code)
 	reg:
 	  if (REGNO (x) == ARG_POINTER_REGNUM)
 	    output_operand_lossage ("operand is r0");
-	  else if (REGNO (x) == FRAME_POINTER_REGNUM)
-	    output_operand_lossage ("operand is framep");
 	  else
 	    asm_fprintf (file, "%R%s", reg_names[REGNO (x)]);
 	}
@@ -2523,4 +2527,8 @@ m88k_override_options (void)
 
   /* XXX -freorder-blocks (enabled at -O2) does not work reliably yet.  */
   flag_reorder_blocks = flag_reorder_blocks_and_partition = 0;
+
+  init_machine_status = m88k_init_machine_status;
 }
+
+#include "gt-m88k.h"
