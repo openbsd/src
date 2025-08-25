@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.38 2025/08/19 11:30:20 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.39 2025/08/25 04:13:56 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -46,7 +46,6 @@ ASN1_SEQUENCE(ASProviderAttestation) = {
 } ASN1_SEQUENCE_END(ASProviderAttestation);
 
 IMPLEMENT_ASN1_FUNCTIONS(ASProviderAttestation);
-
 
 /*
  * Parse the ProviderASSet sequence.
