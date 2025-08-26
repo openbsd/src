@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_vcprop.h,v 1.2 2025/08/24 11:08:10 kettenis Exp $ */
+/*     $OpenBSD: bcm2835_vcprop.h,v 1.3 2025/08/26 15:29:11 kettenis Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -85,6 +85,8 @@ struct vcprop_tag {
 
 #define VCPROPTAG_GET_TEMPERATURE	0x00030006
 #define VCPROPTAG_GET_MAX_TEMPERATURE	0x0003000a
+
+#define VCPROPTAG_NOTIFY_XHCI_RESET	0x00030058
 
 #define VCPROPTAG_GET_RTC_REG		0x00030087
 #define VCPROPTAG_SET_RTC_REG		0x00038087
@@ -386,6 +388,11 @@ struct vcprop_tag_allocmem {
 struct vcprop_tag_lockmem {
 	struct vcprop_tag tag;
 	uint32_t handle;	/* bus address returned here */
+};
+
+struct vcprop_tag_notifyxhcireset {
+	struct vcprop_tag tag;
+	uint32_t deviceaddress;
 };
 
 struct vcprop_buffer_hdr {

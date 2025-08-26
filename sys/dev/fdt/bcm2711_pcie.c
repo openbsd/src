@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.15 2025/08/22 13:09:32 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.16 2025/08/26 15:29:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2020, 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,6 +35,9 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
+#include <dev/ic/bcm2835_mbox.h>
+#include <dev/ic/bcm2835_vcprop.h>
+
 #define PCIE_RC_CFG_VENDOR_VENDOR_SPECIFIC_REG1		0x0188
 
 #define PCIE_RC_CFG_PRIV1_LINK_CAP			0x04dc
@@ -50,6 +53,18 @@
 #define  PCIE_RC_TL_VDM_CTL0_VDM_IGNORETAG		(1 << 17)
 #define  PCIE_RC_TL_VDM_CTL0_VDM_IGNOREVNDRID		(1 << 18)
 
+#define PCIE_RC_DL_MDIO_ADDR				0x1100
+#define  PCIE_RC_DL_MDIO_PORT_MASK			(0xf << 16)
+#define  PCIE_RC_DL_MDIO_PORT_SHIFT			16
+#define  PCIE_RC_DL_MDIO_REGAD_MASK			(0xffff << 0)
+#define  PCIE_RC_DL_MDIO_REGAD_SHIFT			0
+#define  PCIE_RC_DL_MDIO_CMD_READ			(1 << 20)
+#define  PCIE_RC_DL_MDIO_CMD_WRITE			(0 << 20)
+#define PCIE_RC_DL_MDIO_WR_DATA				0x1104
+#define PCIE_RC_DL_MDIO_RD_DATA				0x1108
+#define  PCIE_RC_DL_MDIO_DATA_DONE			(1U << 31)
+#define  PCIE_RC_DL_MDIO_DATA_MASK			(0x7fffffff << 0)
+
 #define PCIE_MISC_MISC_CTRL				0x4008
 #define  PCIE_MISC_MISC_CTRL_PCIE_RCB_64B_MODE		(1 << 7)
 #define  PCIE_MISC_MISC_CTRL_PCIE_RCB_MPS_MODE		(1 << 10)
@@ -59,6 +74,8 @@
 #define  PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_128		(0x0 << 20)
 #define  PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_256		(0x1 << 20)
 #define  PCIE_MISC_MISC_CTRL_MAX_BURST_SIZE_512		(0x2 << 20)
+#define  PCIE_MISC_MISC_CTRL_SCB0_SIZE_MASK		(0x1fU << 27)
+#define  PCIE_MISC_MISC_CTRL_SCB0_SIZE_SHIFT		27
 #define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LO		0x400c
 #define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_HI		0x4010
 #define PCIE_MISC_RC_BAR1_CONFIG_LO			0x402c
@@ -120,7 +137,17 @@
 #define  PCIE_RGR1_SW_INIT_1_PERST			(1 << 0)
 #define  PCIE_RGR1_SW_INIT_1_INIT			(1 << 1)
 
-#define HREAD4(sc, reg)							\
+#define MDIO_SET_ADDR			0x1f
+#define  MDIO_SSC_REGS_ADDR		0x1100
+
+#define MDIO_SSC_STATUS			0x01
+#define  MDIO_SSC_STATUS_SSC		(1 << 10)
+#define  MDIO_SSC_STATUS_PLL_LOCK	(1 << 11)
+#define MDIO_SSC_CNTL			0x02
+#define  MDIO_SSC_CNTL_OVRD_EN		(1 << 15)
+#define  MDIO_SSC_CNTL_OVRD_VAL		(1 << 14)
+
+#define HREAD4(sc, reg)						\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
@@ -163,6 +190,8 @@ struct bcmpcie_softc {
 	struct extent		*sc_busex;
 	struct extent		*sc_memex;
 	int			sc_bus;
+
+	int			sc_vl805_fwload;
 };
 
 int bcmpcie_match(struct device *, void *, void *);
@@ -185,11 +214,17 @@ bcmpcie_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "brcm,bcm2712-pcie");
 }
 
+void	bcmpcie_perst(struct bcmpcie_softc *, int);
 void	bcmpcie_reset_bridge(struct bcmpcie_softc *, int);
 void	bcmpcie_setup_clkreq(struct bcmpcie_softc *);
+int	bcmpcie_setup_ssc(struct bcmpcie_softc *);
 void	bcmpcie_setup_outbound(struct bcmpcie_softc *);
 void	bcmpcie_setup_inbound(struct bcmpcie_softc *);
 int	bcmpcie_link_up(struct bcmpcie_softc *);
+int	bcmpcie_mdio_read(struct bcmpcie_softc *sc, uint8_t, uint16_t,
+	    uint32_t *);
+int	bcmpcie_mdio_write(struct bcmpcie_softc *sc, uint8_t, uint16_t,
+	    uint32_t);
 
 void	bcmpcie_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -351,6 +386,9 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	reset_assert(faa->fa_node, "rescal");
 	reset_deassert(faa->fa_node, "rescal");
 
+	/* Assert PERST#. */
+	bcmpcie_perst(sc, 1);
+
 	bcmpcie_reset_bridge(sc, 1);
 	delay(200);
 	bcmpcie_reset_bridge(sc, 0);
@@ -376,15 +414,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 		HWRITE4(sc, PCIE_MISC_AXI_READ_ERROR_DATA, 0xffffffff);
 
 	/* Deassert PERST#. */
-	if (OF_is_compatible(sc->sc_node, "brcm,bcm2711-pcie")) {
-		reg = HREAD4(sc, PCIE_RGR1_SW_INIT_1);
-		reg &= ~PCIE_RGR1_SW_INIT_1_PERST;
-		HWRITE4(sc, PCIE_RGR1_SW_INIT_1, reg);
-	} else {
-		reg = HREAD4(sc, PCIE_MISC_PCIE_CTRL);
-		reg |= PCIE_MISC_PCIE_CTRL_PCIE_PERSTB;
-		HWRITE4(sc, PCIE_MISC_PCIE_CTRL, reg);
-	}
+	bcmpcie_perst(sc, 0);
 
 	/* Wait for the link to come up. */
 	for (timo = 100; timo > 0; timo--) {
@@ -396,6 +426,11 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	bcmpcie_setup_clkreq(sc);
+
+	if (OF_getpropbool(sc->sc_node, "brcm,enable-ssc")) {
+		if (bcmpcie_setup_ssc(sc))
+			printf("%s: can't enable SSC\n", sc->sc_dev.dv_xname);
+	}
 
 	/* Create extents for our address spaces. */
 	sc->sc_busex = extent_create("pcibus", 0, 255,
@@ -469,6 +504,28 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
+bcmpcie_perst(struct bcmpcie_softc *sc, int assert)
+{
+	uint32_t reg;
+
+	if (OF_is_compatible(sc->sc_node, "brcm,bcm2711-pcie")) {
+		reg = HREAD4(sc, PCIE_RGR1_SW_INIT_1);
+		if (assert)
+			reg |= PCIE_RGR1_SW_INIT_1_PERST;
+		else
+			reg &= ~PCIE_RGR1_SW_INIT_1_PERST;
+		HWRITE4(sc, PCIE_RGR1_SW_INIT_1, reg);
+	} else {
+		reg = HREAD4(sc, PCIE_MISC_PCIE_CTRL);
+		if (assert)
+			reg &= ~PCIE_MISC_PCIE_CTRL_PCIE_PERSTB;
+		else
+			reg |= PCIE_MISC_PCIE_CTRL_PCIE_PERSTB;
+		HWRITE4(sc, PCIE_MISC_PCIE_CTRL, reg);
+	}
+}
+
+void
 bcmpcie_reset_bridge(struct bcmpcie_softc *sc, int assert)
 {
 	if (OF_getindex(sc->sc_node, "reset-names", "bridge") >= 0) {
@@ -479,16 +536,12 @@ bcmpcie_reset_bridge(struct bcmpcie_softc *sc, int assert)
 		return;
 	}
 
-	/*
-	 * XXX Avoid resetting the BCM2711 until we have code to
-	 * reload the firmware for the VIA VL805 USB controller.
-	 */
-#ifdef notyet
 	if (assert)
 		HSET4(sc, PCIE_RGR1_SW_INIT_1, PCIE_RGR1_SW_INIT_1_INIT);
 	else
 		HCLR4(sc, PCIE_RGR1_SW_INIT_1, PCIE_RGR1_SW_INIT_1_INIT);
-#endif
+
+	sc->sc_vl805_fwload = 1;
 }
 
 void
@@ -517,6 +570,35 @@ bcmpcie_setup_clkreq(struct bcmpcie_softc *sc)
 		reg |= (1 << PCIE_RC_CFG_PRIV1_ROOT_CAP_L1SS_MODE_SHIFT);
 		HWRITE4(sc, PCIE_RC_CFG_PRIV1_ROOT_CAP, reg);
 	}
+}
+
+int
+bcmpcie_setup_ssc(struct bcmpcie_softc *sc)
+{
+	uint32_t reg;
+	int error;
+
+	error = bcmpcie_mdio_write(sc, 0, MDIO_SET_ADDR, MDIO_SSC_REGS_ADDR);
+	if (error)
+		return error;
+
+	error = bcmpcie_mdio_read(sc, 0, MDIO_SSC_CNTL, &reg);
+	if (error)
+		return error;
+	reg |= MDIO_SSC_CNTL_OVRD_VAL | MDIO_SSC_CNTL_OVRD_EN;
+	error = bcmpcie_mdio_write(sc, 0, MDIO_SSC_CNTL, reg);
+	if (error)
+		return error;
+	delay(1000);
+
+	error = bcmpcie_mdio_read(sc, 0, MDIO_SSC_STATUS, &reg);
+	if (error)
+		return error;
+
+	if ((reg & MDIO_SSC_STATUS_SSC) && (reg & MDIO_SSC_STATUS_PLL_LOCK))
+		return 0;
+
+	return EIO;
 }
 
 void
@@ -572,8 +654,8 @@ bcmpcie_setup_inbound(struct bcmpcie_softc *sc)
 		}
 
 		/*
-		 * BAR1 needs to be disabled, BAR2 should cover all
-		 * inbound traffic.
+		 * BAR1 and BAR3 need to be disabled, BAR2 should
+		 * cover all inbound traffic.
 		 */
 		ranges[0].pci_base = 0;
 		ranges[0].phys_base = 0;
@@ -581,7 +663,10 @@ bcmpcie_setup_inbound(struct bcmpcie_softc *sc)
 		ranges[1].pci_base = start;
 		ranges[1].phys_base = 0;
 		ranges[1].size = end - start;
-		nranges = 2;
+		ranges[2].pci_base = 0;
+		ranges[2].phys_base = 0;
+		ranges[2].size = 0;
+		nranges = 3;
 	} else {
 		for (i = 0; i < sc->sc_ndmaranges; i++) {
 			if (nranges == nitems(ranges)) {
@@ -627,6 +712,22 @@ bcmpcie_setup_inbound(struct bcmpcie_softc *sc)
 		HWRITE4(sc, PCIE_MISC_UBUS_BAR1_CONFIG_REMAP_HI + i * 8,
 		    cpu_base >> 32);
 	}
+
+	if (OF_is_compatible(sc->sc_node, "brcm,bcm2711-pcie")) {
+		uint32_t reg;
+		u_int shift;
+
+		shift = 0;
+		size = ranges[1].size;
+		while ((1ULL << shift) < size)
+			shift++;
+		size = size ? (shift - 15) : 0xf;
+
+		reg = HREAD4(sc, PCIE_MISC_MISC_CTRL);
+		reg &= ~PCIE_MISC_MISC_CTRL_SCB0_SIZE_MASK;
+		reg |= (size << PCIE_MISC_MISC_CTRL_SCB0_SIZE_SHIFT);
+		HWRITE4(sc, PCIE_MISC_MISC_CTRL, reg);
+	}
 }
 
 int
@@ -638,6 +739,64 @@ bcmpcie_link_up(struct bcmpcie_softc *sc)
 	if ((reg & PCIE_MISC_PCIE_STATUS_PCIE_DL_ACTIVE) &&
 	    (reg & PCIE_MISC_PCIE_STATUS_PCIE_PHYLINKUP))
 		return 1;
+	return 0;
+}
+
+int
+bcmpcie_mdio_read(struct bcmpcie_softc *sc, uint8_t port, uint16_t addr,
+     uint32_t *data)
+{
+	uint32_t reg;
+	int timo;
+
+	KASSERT(port < 16);
+	reg = PCIE_RC_DL_MDIO_CMD_READ;
+	reg |= ((uint32_t)port << PCIE_RC_DL_MDIO_PORT_SHIFT);
+	reg |= ((uint32_t)addr << PCIE_RC_DL_MDIO_REGAD_SHIFT);
+	HWRITE4(sc, PCIE_RC_DL_MDIO_ADDR, reg);
+	HREAD4(sc, PCIE_RC_DL_MDIO_ADDR);
+
+	for (timo = 10; timo > 0; timo--) {
+		reg = HREAD4(sc, PCIE_RC_DL_MDIO_RD_DATA);
+		if (reg & PCIE_RC_DL_MDIO_DATA_DONE)
+			break;
+		delay(10);
+	}
+	if (timo == 0) {
+		printf("%s: timeout\n", __func__);
+		return EIO;
+	}
+
+	*data = reg & PCIE_RC_DL_MDIO_DATA_MASK;
+	return 0;
+}
+
+int
+bcmpcie_mdio_write(struct bcmpcie_softc *sc, uint8_t port, uint16_t addr,
+     uint32_t data)
+{
+	uint32_t reg;
+	int timo;
+
+	KASSERT(port < 16);
+	reg = PCIE_RC_DL_MDIO_CMD_WRITE;
+	reg |= ((uint32_t)port << PCIE_RC_DL_MDIO_PORT_SHIFT);
+	reg |= ((uint32_t)addr << PCIE_RC_DL_MDIO_REGAD_SHIFT);
+	HWRITE4(sc, PCIE_RC_DL_MDIO_ADDR, reg);
+	HREAD4(sc, PCIE_RC_DL_MDIO_ADDR);
+
+	HWRITE4(sc, PCIE_RC_DL_MDIO_WR_DATA, data | PCIE_RC_DL_MDIO_DATA_DONE);
+	for (timo = 10; timo > 0; timo--) {
+		reg = HREAD4(sc, PCIE_RC_DL_MDIO_WR_DATA);
+		if ((reg & PCIE_RC_DL_MDIO_DATA_DONE) == 0)
+			break;
+		delay(10);
+	}
+	if (timo == 0) {
+		printf("%s: timeout\n", __func__);
+		return EIO;
+	}
+
 	return 0;
 }
 
@@ -714,6 +873,51 @@ bcmpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	HWRITE4(sc, PCIE_EXT_CFG_DATA + reg, data);
 }
 
+void
+bcmpcie_vl805_fwload(struct bcmpcie_softc *sc, pcitag_t tag)
+{
+	struct request {
+		struct vcprop_buffer_hdr vb_hdr;
+		struct vcprop_tag_notifyxhcireset vbt_nhr;
+		struct vcprop_tag end;
+	} __packed;
+
+	uint32_t result;
+	struct request req = {
+		.vb_hdr = {
+			.vpb_len = sizeof(req),
+			.vpb_rcode = VCPROP_PROCESS_REQUEST,
+		},
+		.vbt_nhr = {
+			.tag = {
+				.vpt_tag = VCPROPTAG_NOTIFY_XHCI_RESET,
+				.vpt_len = VCPROPTAG_LEN(req.vbt_nhr),
+				.vpt_rcode = VCPROPTAG_REQUEST,
+			},
+		},
+		.end = {
+			.vpt_tag = VCPROPTAG_NULL,
+		}
+	};
+
+	/* Avoid loading the firmware multiple times. */
+	if (!sc->sc_vl805_fwload)
+		return;
+	sc->sc_vl805_fwload = 0;
+
+	req.vbt_nhr.deviceaddress = tag;
+	bcmmbox_post(BCMMBOX_CHANARM2VC, &req, sizeof(req), &result);
+
+	if (vcprop_tag_success_p(&req.vbt_nhr.tag)) {
+		/* Wait for the device to start. */
+		delay(200);
+		return;
+	}
+
+	printf("%s: vcprop result %x:%x\n", __func__, req.vb_hdr.vpb_rcode,
+	    req.vbt_nhr.tag.vpt_rcode);
+}
+
 int
 bcmpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
 {
@@ -725,6 +929,10 @@ bcmpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
 		node = OF_getnodebyname(sc->sc_node, "rp1");
 		pa->pa_tag |= ((pcitag_t)node << 32);
 	}
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_VIATECH_VL805_XHCI)
+		bcmpcie_vl805_fwload(sc, pa->pa_tag);
 
 	return 0;
 }
