@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_method_test.c,v 1.5 2025/01/05 18:21:36 tb Exp $ */
+/*	$OpenBSD: rsa_method_test.c,v 1.6 2025/08/26 05:07:50 tb Exp $ */
 
 /*
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -221,7 +221,7 @@ sign_and_verify_test(void)
 		errx(1, "%s: RSA_set_ex_data", __func__);
 
 	if ((sign_verify_method = RSA_meth_dup(RSA_get_default_method())) == NULL)
-		errx(1, "%s: RSA_get_default_method", __func__);
+		errx(1, "%s: RSA_meth_dup", __func__);
 	if (!RSA_meth_set0_app_data(sign_verify_method, rsa_priv))
 		errx(1, "%s: RSA_meth_set0_app_data", __func__);
 
