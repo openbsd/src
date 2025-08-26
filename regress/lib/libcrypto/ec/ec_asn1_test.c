@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.38 2025/08/26 16:18:15 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.39 2025/08/26 17:57:10 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024, 2025 Theo Buehler <tb@openbsd.org>
@@ -1047,7 +1047,7 @@ ec_group_check_prime_order(EC_builtin_curve *curve, BN_CTX *ctx)
 		errx(1, "order = BN_CTX_get()");
 
 	if (!EC_GROUP_get_order(group, order, ctx))
-		errx(1, "EC_GROUP_get_curve");
+		errx(1, "EC_GROUP_get_order");
 
 	if ((rv = BN_is_prime_ex(order, 0, ctx, NULL)) != 1) {
 		fprintf(stderr, "%s: nid %d: BN_is_prime_ex() returned %d, want 1\n",
