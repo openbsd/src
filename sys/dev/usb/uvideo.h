@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.68 2025/08/16 08:13:11 kirill Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.69 2025/08/26 09:34:52 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -568,13 +568,19 @@ struct usb_video_format_h264_desc {
 	uByte	bmSupportedRateControlModes;
 	uWord	wMaxMBperSecOneResolutionNoScalability;
 	uWord	wMaxMBperSecTwoResolutionsNoScalability;
+	uWord	wMaxMBperSecThreeResolutionsNoScalability;
+	uWord	wMaxMBperSecFourResolutionsNoScalability;
+	uWord	wMaxMBperSecOneResolutionTemporalScalability;
+	uWord	wMaxMBperSecTwoResolutionsTemporalScalablility;
+	uWord	wMaxMBperSecThreeResolutionsTemporalScalability;
+	uWord	wMaxMBperSecFourResolutionsTemporalScalability;
 	uWord	wMaxMBperSecOneResolutionTemporalQualityScalability;
 	uWord	wMaxMBperSecTwoResolutionsTemporalQualityScalability;
 	uWord	wMaxMBperSecThreeResolutionsTemporalQualityScalablity;
 	uWord	wMaxMBperSecFourResolutionsTemporalQualityScalability;
-	uWord	wMaxMBperSecOneResolutionsTemporalSpatialScalability;
+	uWord	wMaxMBperSecOneResolutionTemporalSpatialScalability;
 	uWord	wMaxMBperSecTwoResolutionsTemporalSpatialScalability;
-	uWord	wMaxMBperSecThreeResolutionsTemporalSpatialScalability;
+	uWord	wMaxMBperSecThreeResolutionsTemporalSpatialScalablity;
 	uWord	wMaxMBperSecFourResolutionsTemporalSpatialScalability;
 	uWord	wMaxMBperSecOneResolutionFullScalability;
 	uWord	wMaxMBperSecTwoResolutionsFullScalability;
@@ -651,20 +657,26 @@ struct uvideo_format_desc {
 			uByte	bResolutionScaling;
 			uByte	_reserved1;
 			uByte	bmSupportedRateControlModes;
-			uDWord	wMaxMBperSecOneResolutionNoScalability;
-			uDWord	wMaxMBperSecTwoResolutionsNoScalability;
-			uDWord	wMaxMBperSecOneResolutionTemporalQualityScalability;
-			uDWord	wMaxMBperSecTwoResolutionsTemporalQualityScalability;
-			uDWord	wMaxMBperSecThreeResolutionsTemporalQualityScalablity;
-			uDWord	wMaxMBperSecFourResolutionsTemporalQualityScalability;
-			uDWord	wMaxMBperSecOneResolutionsTemporalSpatialScalability;
-			uDWord	wMaxMBperSecTwoResolutionsTemporalSpatialScalability;
-			uDWord	wMaxMBperSecThreeResolutionsTemporalSpatialScalability;
-			uDWord	wMaxMBperSecFourResolutionsTemporalSpatialScalability;
-			uDWord	wMaxMBperSecOneResolutionFullScalability;
-			uDWord	wMaxMBperSecTwoResolutionsFullScalability;
-			uDWord	wMaxMBperSecThreeResolutionsFullScalability;
-			uDWord	wMaxMBperSecFourResolutionsFullScalability;
+			uWord	wMaxMBperSecOneResolutionNoScalability;
+			uWord	wMaxMBperSecTwoResolutionsNoScalability;
+			uWord	wMaxMBperSecThreeResolutionsNoScalability;
+			uWord	wMaxMBperSecFourResolutionsNoScalability;
+			uWord	wMaxMBperSecOneResolutionTemporalScalability;
+			uWord	wMaxMBperSecTwoResolutionsTemporalScalablility;
+			uWord	wMaxMBperSecThreeResolutionsTemporalScalability;
+			uWord	wMaxMBperSecFourResolutionsTemporalScalability;
+			uWord	wMaxMBperSecOneResolutionTemporalQualityScalability;
+			uWord	wMaxMBperSecTwoResolutionsTemporalQualityScalability;
+			uWord	wMaxMBperSecThreeResolutionsTemporalQualityScalablity;
+			uWord	wMaxMBperSecFourResolutionsTemporalQualityScalability;
+			uWord	wMaxMBperSecOneResolutionTemporalSpatialScalability;
+			uWord	wMaxMBperSecTwoResolutionsTemporalSpatialScalability;
+			uWord	wMaxMBperSecThreeResolutionsTemporalSpatialScalablity;
+			uWord	wMaxMBperSecFourResolutionsTemporalSpatialScalability;
+			uWord	wMaxMBperSecOneResolutionFullScalability;
+			uWord	wMaxMBperSecTwoResolutionsFullScalability;
+			uWord	wMaxMBperSecThreeResolutionsFullScalability;
+			uWord	wMaxMBperSecFourResolutionsFullScalability;
 		} h264;
 	} u;
 } __packed;

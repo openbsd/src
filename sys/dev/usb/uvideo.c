@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.262 2025/08/23 10:52:45 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.263 2025/08/26 09:34:52 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3458,6 +3458,18 @@ uvideo_dump_desc_format_h264(struct uvideo_softc *sc,
 	    UGETW(d->wMaxMBperSecOneResolutionNoScalability));
 	printf("wMaxMBperSecTwoResolutionsNoScalability=%d\n",
 	    UGETW(d->wMaxMBperSecTwoResolutionsNoScalability));
+	printf("wMaxMBperSecThreeResolutionsNoScalability=%d\n",
+	    UGETW(d->wMaxMBperSecThreeResolutionsNoScalability));
+	printf("wMaxMBperSecFourResolutionsNoScalability=%d\n",
+	    UGETW(d->wMaxMBperSecFourResolutionsNoScalability));
+	printf("wMaxMBperSecOneResolutionTemporalScalability=%d\n",
+	    UGETW(d->wMaxMBperSecOneResolutionTemporalScalability));
+	printf("wMaxMBperSecTwoResolutionsTemporalScalablility=%d\n",
+	    UGETW(d->wMaxMBperSecTwoResolutionsTemporalScalablility));
+	printf("wMaxMBperSecThreeResolutionsTemporalScalability=%d\n",
+	    UGETW(d->wMaxMBperSecThreeResolutionsTemporalScalability));
+	printf("wMaxMBperSecFourResolutionsTemporalScalability=%d\n",
+	    UGETW(d->wMaxMBperSecFourResolutionsTemporalScalability));
 	printf("wMaxMBperSecOneResolutionTemporalQualityScalability=%d\n",
 	    UGETW(d->wMaxMBperSecOneResolutionTemporalQualityScalability));
 	printf("wMaxMBperSecTwoResolutionsTemporalQualityScalability=%d\n",
@@ -3466,12 +3478,12 @@ uvideo_dump_desc_format_h264(struct uvideo_softc *sc,
 	    UGETW(d->wMaxMBperSecThreeResolutionsTemporalQualityScalablity));
 	printf("wMaxMBperSecFourResolutionsTemporalQualityScalability=%d\n",
 	    UGETW(d->wMaxMBperSecFourResolutionsTemporalQualityScalability));
-	printf("wMaxMBperSecOneResolutionsTemporalSpatialScalability=%d\n",
-	    UGETW(d->wMaxMBperSecOneResolutionsTemporalSpatialScalability));
+	printf("wMaxMBperSecOneResolutionTemporalSpatialScalability=%d\n",
+	    UGETW(d->wMaxMBperSecOneResolutionTemporalSpatialScalability));
 	printf("wMaxMBperSecTwoResolutionsTemporalSpatialScalability=%d\n",
 	    UGETW(d->wMaxMBperSecTwoResolutionsTemporalSpatialScalability));
-	printf("wMaxMBperSecThreeResolutionsTemporalSpatialScalability=%d\n",
-	    UGETW(d->wMaxMBperSecThreeResolutionsTemporalSpatialScalability));
+	printf("wMaxMBperSecThreeResolutionsTemporalSpatialScalablity=%d\n",
+	    UGETW(d->wMaxMBperSecThreeResolutionsTemporalSpatialScalablity));
 	printf("wMaxMBperSecFourResolutionsTemporalSpatialScalability=%d\n",
 	    UGETW(d->wMaxMBperSecFourResolutionsTemporalSpatialScalability));
 	printf("wMaxMBperSecOneResolutionFullScalability=%d\n",
