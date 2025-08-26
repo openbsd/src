@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.31 2023/03/02 16:21:51 millert Exp $ */
+/*	$OpenBSD: strptime.c,v 1.32 2025/08/26 22:23:06 millert Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@
 #define FIELD_TM_YDAY	(1 << 3)
 #define FIELD_TM_YEAR	(1 << 4)
 
-static char gmt[] = { "GMT" };
-static char utc[] = { "UTC" };
+static char const gmt[] = { "GMT" };
+static char const utc[] = { "UTC" };
 /* RFC-822/RFC-2822 */
 static const char * const nast[5] = {
        "EST",    "CST",    "MST",    "PST",    "\0\0\0"
