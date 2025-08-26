@@ -3888,6 +3888,14 @@ amdgpu_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
+
+		if (acpi_softc && acpi_softc->sc_state != ACPI_STATE_S4) {
+			if (amdgpu_acpi_is_s0ix_active(adev))
+				adev->in_s0ix = true;
+			else if (amdgpu_acpi_is_s3_active(adev))
+				 adev->in_s3 = true;
+		}
+
 		amdgpu_pmops_prepare(self);
 		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4) {
 			adev->in_s4 = true;
