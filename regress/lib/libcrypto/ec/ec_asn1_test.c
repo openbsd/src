@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.36 2025/07/23 07:42:33 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.37 2025/08/26 15:56:46 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024, 2025 Theo Buehler <tb@openbsd.org>
@@ -1025,6 +1025,62 @@ ec_group_non_builtin_curves(void)
 	failed |= ec_group_non_builtin_curve(&secp256k1_m, EC_GFp_mont_method(), ctx);
 	failed |= ec_group_non_builtin_curve(&secp256k1_m, EC_GFp_simple_method(), ctx);
 
+	BN_CTX_free(ctx);
+
+	return failed;
+}
+
+static int
+ec_group_check_prime_order(EC_builtin_curve *curve, BN_CTX *ctx)
+{
+	EC_GROUP *group;
+	BIGNUM *p;
+	int rv;
+	int failed = 0;
+
+	if ((group = EC_GROUP_new_by_curve_name(curve->nid)) == NULL)
+		errx(1, "EC_GROUP_new_by_curve_name");
+
+	BN_CTX_start(ctx);
+
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		errx(1, "p = BN_CTX_get()");
+
+	if (!EC_GROUP_get_curve(group, p, NULL, NULL, ctx))
+		errx(1, "EC_GROUP_get_curve");
+
+	if ((rv = BN_is_prime_ex(p, 0, ctx, NULL)) != 1) {
+		fprintf(stderr, "%s: nid %d: BN_is_prime_ex() returned %d, want 1\n",
+		    __func__, curve->nid, rv);
+		failed = 1;
+	}
+
+	BN_CTX_end(ctx);
+	EC_GROUP_free(group);
+
+	return failed;
+}
+
+static int
+ec_group_builtin_curves_have_prime_order(void)
+{
+	BN_CTX *ctx = NULL;
+	EC_builtin_curve *all_curves = NULL;
+	size_t curve_id, ncurves;
+	int failed = 0;
+
+	if ((ctx = BN_CTX_new()) == NULL)
+		errx(1, "BN_CTX_new");
+
+	ncurves = EC_get_builtin_curves(NULL, 0);
+	if ((all_curves = calloc(ncurves, sizeof(*all_curves))) == NULL)
+		err(1, "calloc builtin curves");
+	EC_get_builtin_curves(all_curves, ncurves);
+
+	for (curve_id = 0; curve_id < ncurves; curve_id++)
+		failed |= ec_group_check_prime_order(&all_curves[curve_id], ctx);
+
+	free(all_curves);
 	BN_CTX_free(ctx);
 
 	return failed;
@@ -2554,6 +2610,7 @@ main(int argc, char **argv)
 	failed |= ec_group_pkparameters_correct_padding_test();
 	failed |= ec_group_roundtrip_builtin_curves();
 	failed |= ec_group_non_builtin_curves();
+	failed |= ec_group_builtin_curves_have_prime_order();
 	failed |= ec_group_check_private_keys();
 	failed |= ec_group_check_seeds();
 
