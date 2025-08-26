@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.277 2025/07/07 20:56:49 schwarze Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.278 2025/08/26 13:46:59 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 7 2025 $
+.Dd $Mdocdate: August 26 2025 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -1010,7 +1010,7 @@ The following phases are currently supported:
 .It mail-from Ta after MAIL FROM command is submitted
 .It rcpt-to   Ta after RCPT TO command is submitted
 .It data       Ta after DATA command is submitted
-.It commit     Ta after message is fully is submitted
+.It commit     Ta after message is fully submitted
 .El
 .Pp
 At each phase, various conditions may be matched.
