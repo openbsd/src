@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.16 2025/08/26 15:29:11 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.17 2025/08/26 20:52:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2020, 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,6 +40,8 @@
 
 #define PCIE_RC_CFG_VENDOR_VENDOR_SPECIFIC_REG1		0x0188
 
+#define PCIE_RC_CFG_PRIV1_ID_VAL3			0x043c
+#define  PCIE_RC_CFG_PRIV1_ID_VAL3_CLASS_MASK		(0xffffff << 0)
 #define PCIE_RC_CFG_PRIV1_LINK_CAP			0x04dc
 #define  PCIE_RC_CFG_PRIV1_LINK_CAP_MAX_LINK_WIDTH_MASK	(0x1f << 4)
 #define  PCIE_RC_CFG_PRIV1_LINK_CAP_ASPM_SUPPORT_MASK	(0x3 << 10)
@@ -64,6 +66,10 @@
 #define PCIE_RC_DL_MDIO_RD_DATA				0x1108
 #define  PCIE_RC_DL_MDIO_DATA_DONE			(1U << 31)
 #define  PCIE_RC_DL_MDIO_DATA_MASK			(0x7fffffff << 0)
+
+#define PCIE_RC_PL_PHY_CTL_15			0x184c
+#define  PCIE_RC_PL_PHY_CTL_15_PM_CLK_PERIOD_MASK	(0xff << 0)
+#define  PCIE_RC_PL_PHY_CTL_15_PM_CLK_PERIOD_SHIFT	0
 
 #define PCIE_MISC_MISC_CTRL				0x4008
 #define  PCIE_MISC_MISC_CTRL_PCIE_RCB_64B_MODE		(1 << 7)
@@ -216,6 +222,7 @@ bcmpcie_match(struct device *parent, void *match, void *aux)
 
 void	bcmpcie_perst(struct bcmpcie_softc *, int);
 void	bcmpcie_reset_bridge(struct bcmpcie_softc *, int);
+int	bcmpcie_setup_bcm2712(struct bcmpcie_softc *);
 void	bcmpcie_setup_clkreq(struct bcmpcie_softc *);
 int	bcmpcie_setup_ssc(struct bcmpcie_softc *);
 void	bcmpcie_setup_outbound(struct bcmpcie_softc *);
@@ -410,8 +417,16 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	reg |= PCIE_MISC_MISC_CTRL_PCIE_RCB_MPS_MODE;
 	HWRITE4(sc, PCIE_MISC_MISC_CTRL, reg);
 
-	if (OF_is_compatible(sc->sc_node, "brcm,bcm2712-pcie"))
-		HWRITE4(sc, PCIE_MISC_AXI_READ_ERROR_DATA, 0xffffffff);
+	/* Self-identify as a PCI bridge. */
+	reg = HREAD4(sc, PCIE_RC_CFG_PRIV1_ID_VAL3);
+	reg &= ~PCIE_RC_CFG_PRIV1_ID_VAL3_CLASS_MASK;
+	reg |= (PCI_CLASS_BRIDGE << 16) | (PCI_SUBCLASS_BRIDGE_PCI << 8);
+	HWRITE4(sc, PCIE_RC_CFG_PRIV1_ID_VAL3, reg);
+
+	if (OF_is_compatible(sc->sc_node, "brcm,bcm2712-pcie")) {
+		if (bcmpcie_setup_bcm2712(sc))
+			printf("%s: can't set refclk\n", sc->sc_dev.dv_xname);
+	}
 
 	/* Deassert PERST#. */
 	bcmpcie_perst(sc, 0);
@@ -542,6 +557,48 @@ bcmpcie_reset_bridge(struct bcmpcie_softc *sc, int assert)
 		HCLR4(sc, PCIE_RGR1_SW_INIT_1, PCIE_RGR1_SW_INIT_1_INIT);
 
 	sc->sc_vl805_fwload = 1;
+}
+
+int
+bcmpcie_setup_bcm2712(struct bcmpcie_softc *sc)
+{
+	struct {
+		uint16_t addr;
+		uint16_t data;
+	} regs[] = {
+		{ 0x16, 0x50b9 },
+		{ 0x17, 0xbda1 },
+		{ 0x18, 0x0094 },
+		{ 0x19, 0x97b4 },
+		{ 0x1b, 0x5030 },
+		{ 0x1c, 0x5030 },
+		{ 0x1e, 0x0007 },
+	};
+	uint32_t reg;
+	int error, i;
+
+	/* Make sure read errors return 0xffffffff instead of 0xdeaddead. */
+	HWRITE4(sc, PCIE_MISC_AXI_READ_ERROR_DATA, 0xffffffff);
+
+	/* Magic to select a 54MHz refclk soure? */
+	error = bcmpcie_mdio_write(sc, 0, MDIO_SET_ADDR, 0x1600);
+	if (error)
+		return error;
+	for (i = 0; i < nitems(regs); i++) {
+		error = bcmpcie_mdio_write(sc, 0, regs[i].addr, regs[i].data);
+		if (error)
+			return error;
+	}
+
+	delay(100);
+
+	/* Adjust L1SS sub-state timers. */
+	reg = HREAD4(sc, PCIE_RC_PL_PHY_CTL_15);
+	reg &= ~PCIE_RC_PL_PHY_CTL_15_PM_CLK_PERIOD_MASK;
+	reg |= 18 << PCIE_RC_PL_PHY_CTL_15_PM_CLK_PERIOD_SHIFT;
+	HWRITE4(sc, PCIE_RC_PL_PHY_CTL_15, reg);
+
+	return 0;
 }
 
 void
