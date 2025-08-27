@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.42 2024/04/25 18:31:49 kn Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.43 2025/08/27 09:08:12 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -39,6 +39,8 @@
 #include "run_i386.h"
 
 #define	KERN_LOADSPACE_SIZE	(64 * 1024 * 1024)
+
+#define EFI_OS_INDICATIONS_BOOT_TO_FW_UI	1ULL
 
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
@@ -1243,3 +1245,41 @@ Xidle_efi(void)
 	return 0;
 }
 #endif /* IDLE_POWEROFF */
+
+int
+Xfwsetup_efi(void)
+{
+	UINT64 osind;
+	UINTN osind_size = sizeof(osind);
+	UINT32 osind_attrs = 0x1 | 0x2 | 0x4;
+	EFI_GUID global = EFI_GLOBAL_VARIABLE;
+	EFI_STATUS status;
+
+	status = RS->GetVariable(L"OsIndicationsSupported", &global, NULL,
+	    &osind_size, &osind);
+	if (status == EFI_NOT_FOUND) {
+		printf("not supported on this machine.\n");
+		return -1;
+	} else if (status != EFI_SUCCESS) {
+		printf("%s: %d\n", __func__, status);
+		return -1;
+	}
+
+	if ((osind & EFI_OS_INDICATIONS_BOOT_TO_FW_UI) == 0) {
+		printf("not supported on this machine.\n");
+		return -1;
+	}
+
+	osind = EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
+	status = RS->SetVariable(L"OsIndications", &global, osind_attrs,
+	    sizeof(osind), &osind);
+	if (status != EFI_SUCCESS) {
+		printf("%s: %d\n", __func__, status);
+		return -1;
+	}
+
+	RS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+	for (;;)
+		continue;
+	return 0;
+}

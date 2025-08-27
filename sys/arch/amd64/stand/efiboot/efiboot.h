@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.h,v 1.6 2024/04/25 18:31:49 kn Exp $	*/
+/*	$OpenBSD: efiboot.h,v 1.7 2025/08/27 09:08:12 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -40,6 +40,7 @@ int	 Xpoweroff_efi(void);
 #ifdef IDLE_POWEROFF
 int	 Xidle_efi(void);
 #endif
+int	 Xfwsetup_efi(void);
 
 extern void (*run_i386)(u_long, u_long, int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));

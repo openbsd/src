@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.2 2024/04/25 18:31:49 kn Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.3 2025/08/27 09:08:12 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -65,6 +65,7 @@ const struct cmd_table cmd_machine[] = {
 #ifdef IDLE_POWEROFF
 	{ "idle",	CMDT_CMD, Xidle_efi },
 #endif
+	{ "fwsetup",	CMDT_CMD, Xfwsetup_efi },
 	{ NULL, 0 }
 };
 
