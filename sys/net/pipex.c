@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.160 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: pipex.c,v 1.161 2025/08/27 22:39:04 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -27,6 +27,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -1962,6 +1963,7 @@ pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 		ip6->ip6_flow = 0;
 		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc |= IPV6_VERSION;
+		ip6->ip6_hlim = atomic_load_int(&ip6_defhlim);
 		ip6->ip6_nxt = IPPROTO_UDP;
 		ip6->ip6_src = session->local.sin6.sin6_addr;
 		in6_embedscope(&ip6->ip6_dst, &session->peer.sin6, NULL, NULL);
