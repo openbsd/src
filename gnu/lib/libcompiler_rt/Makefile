@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2025/08/21 10:42:46 rsadowski Exp $
+# $OpenBSD: Makefile,v 1.10 2025/08/27 20:18:11 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -30,15 +30,17 @@ RTARCH=	${MACHINE_ARCH}
 .PATH: ${.CURDIR}/../../llvm/compiler-rt/lib/builtins/${RTARCH}
 .PATH: ${.CURDIR}/../../llvm/compiler-rt/lib/builtins
 
-# Enable Float16 support for x86_64
-.if ${RTARCH} == "x86_64"
+# Enable Float16 support for aarch64 and x86_64
+.if ${RTARCH} == "aarch64" || ${RTARCH} == "x86_64"
 CPPFLAGS+=	-DCOMPILER_RT_HAS_FLOAT16
 .endif
 
-# BFloat16 support?
-.if ${RTARCH} == "x86_64" || ${RTARCH} == "aarch64"
+# Enable BFloat16 support for aarch64 and x86_64
+.if ${RTARCH} == "aarch64" || ${RTARCH} == "x86_64"
 CPPFLAGS+=	-DCOMPILER_RT_HAS_BFLOAT16
-SRCS+=	extendbfsf2.c
+SRCS+=	extendbfsf2.c \
+	truncdfbf2.c \
+	truncsfbf2.c
 .endif
 
 GEN_SRCS=	absvdi2 \
