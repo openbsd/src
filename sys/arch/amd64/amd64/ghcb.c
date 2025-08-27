@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.c,v 1.4 2025/07/14 22:14:20 bluhm Exp $	*/
+/*	$OpenBSD: ghcb.c,v 1.5 2025/08/27 06:11:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -185,8 +185,8 @@ ghcb_sync_val(int type, int size, struct ghcb_sync *gs)
  * Used by guest only.
  */
 void
-ghcb_sync_out(struct trapframe *frame, uint64_t exitcode, uint64_t exitinfo1,
-    uint64_t exitinfo2, struct ghcb_sa *ghcb, struct ghcb_sync *gsout)
+ghcb_sync_out(struct trapframe *frame, const struct ghcb_extra_regs *regs,
+    struct ghcb_sa *ghcb, struct ghcb_sync *gsout)
 {
 	ghcb_clear(ghcb);
 
@@ -203,11 +203,11 @@ ghcb_sync_out(struct trapframe *frame, uint64_t exitcode, uint64_t exitinfo1,
 		ghcb->v_rdx = frame->tf_rdx & ghcb_sz_masks[gsout->sz_d];
 
 	if (ghcb_valbm_isset(gsout->valid_bitmap, GHCB_SW_EXITCODE))
-		ghcb->v_sw_exitcode = exitcode;
+		ghcb->v_sw_exitcode = regs->exitcode;
 	if (ghcb_valbm_isset(gsout->valid_bitmap, GHCB_SW_EXITINFO1))
-		ghcb->v_sw_exitinfo1 = exitinfo1;
+		ghcb->v_sw_exitinfo1 = regs->exitinfo1;
 	if (ghcb_valbm_isset(gsout->valid_bitmap, GHCB_SW_EXITINFO2))
-		ghcb->v_sw_exitinfo2 = exitinfo2;
+		ghcb->v_sw_exitinfo2 = regs->exitinfo2;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.h,v 1.4 2025/06/27 17:23:49 bluhm Exp $	*/
+/*	$OpenBSD: ghcb.h,v 1.5 2025/08/27 06:11:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -112,6 +112,12 @@ struct ghcb_sync {
 extern vaddr_t ghcb_vaddr;
 extern paddr_t ghcb_paddr;
 
+struct ghcb_extra_regs {
+	uint64_t	exitcode;
+	uint64_t	exitinfo1;
+	uint64_t	exitinfo2;
+};
+
 void	ghcb_clear(struct ghcb_sa *);
 int	ghcb_valbm_set(uint8_t *, int);
 int	ghcb_valbm_isset(uint8_t *, int);
@@ -119,7 +125,7 @@ int	ghcb_verify_bm(uint8_t *, uint8_t *);
 int	ghcb_valid(struct ghcb_sa *);
 
 void	ghcb_sync_val(int, int, struct ghcb_sync *);
-void	ghcb_sync_out(struct trapframe *, uint64_t, uint64_t, uint64_t,
+void	ghcb_sync_out(struct trapframe *, const struct ghcb_extra_regs *,
 	    struct ghcb_sa *, struct ghcb_sync *);
 void	ghcb_sync_in(struct trapframe *, struct ghcb_sa *, struct ghcb_sync *);
 
