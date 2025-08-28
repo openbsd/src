@@ -163,6 +163,18 @@ extern enum processor_type m88k_cpu;
 /* Width of a word, in units (bytes).  */
 #define UNITS_PER_WORD 4
 
+/* A macro to update MODE and UNSIGNEDP when an object whose type is TYPE and
+   which has the specified mode and signedness is to be stored in a register.
+   This macro is only called when TYPE is a scalar type.  */
+#define PROMOTE_MODE(MODE,UNSIGNEDP,TYPE)				\
+do									\
+  {									\
+    if (GET_MODE_CLASS (MODE) == MODE_INT				\
+	&& GET_MODE_SIZE (MODE) < UNITS_PER_WORD)			\
+      (MODE) = SImode;							\
+  }									\
+while (0)
+
 /* Allocation boundary (in *bits*) for storing arguments in argument list.  */
 #define PARM_BOUNDARY 32
 
