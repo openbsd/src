@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.265 2024/03/29 01:16:30 millert Exp $ */
+/* $OpenBSD: main.c,v 1.266 2025/08/28 16:37:25 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -108,7 +108,7 @@ static	void		  parse(struct mparse *, int, const char *,
 				struct outstate *, struct manconf *);
 static	void		  passthrough(int, int);
 static	void		  process_onefile(struct mparse *, struct manpage *,
-				int, struct outstate *, struct manconf *);
+				struct outstate *, struct manconf *);
 static	void		  run_pager(struct outstate *, char *);
 static	pid_t		  spawn_pager(struct outstate *, char *);
 static	void		  usage(enum argmode) __attribute__((__noreturn__));
@@ -143,7 +143,6 @@ main(int argc, char *argv[])
 	int		 options;	/* Parser options. */
 	int		 show_usage;	/* Invalid argument: give up. */
 	int		 prio, best_prio;
-	int		 startdir;
 	int		 c;
 	enum mandoc_os	 os_e;		/* Check base system conventions. */
 	enum outmode	 outmode;	/* According to command line. */
@@ -459,7 +458,7 @@ main(int argc, char *argv[])
 			if (resnsz == 0)
 				(void)fs_search(&search, &conf.manpath,
 				    *argv, &resn, &resnsz);
-			if (resnsz == 0 && strchr(*argv, '/') == NULL) {
+			if (resnsz == 0) {
 				if (search.arch != NULL &&
 				    arch_valid(search.arch, OSENUM) == 0)
 					warnx("Unknown architecture \"%s\".",
@@ -473,20 +472,6 @@ main(int argc, char *argv[])
 					    "the manual.", *argv);
 				mandoc_msg_setrc(MANDOCLEVEL_BADARG);
 				continue;
-			}
-			if (resnsz == 0) {
-				if (access(*argv, R_OK) == -1) {
-					mandoc_msg_setinfilename(*argv);
-					mandoc_msg(MANDOCERR_BADARG_BAD,
-					    0, 0, "%s", strerror(errno));
-					mandoc_msg_setinfilename(NULL);
-					continue;
-				}
-				resnsz = 1;
-				resn = mandoc_calloc(resnsz, sizeof(*res));
-				resn->file = mandoc_strdup(*argv);
-				resn->ipath = SIZE_MAX;
-				resn->form = FORM_SRC;
 			}
 			if (outmode != OUTMODE_ONE || resnsz == 1) {
 				res = mandoc_reallocarray(res,
@@ -593,22 +578,10 @@ main(int argc, char *argv[])
 	mchars_alloc();
 	mp = mparse_alloc(options, os_e, os_s);
 
-	/*
-	 * Remember the original working directory, if possible.
-	 * This will be needed if some names on the command line
-	 * are page names and some are relative file names.
-	 * Do not error out if the current directory is not
-	 * readable: Maybe it won't be needed after all.
-	 */
-	startdir = open(".", O_RDONLY | O_DIRECTORY);
 	for (i = 0; i < ressz; i++) {
-		process_onefile(mp, res + i, startdir, &outst, &conf);
+		process_onefile(mp, res + i, &outst, &conf);
 		if (outst.wstop && mandoc_msg_getrc() != MANDOCLEVEL_OK)
 			break;
-	}
-	if (startdir != -1) {
-		(void)fchdir(startdir);
-		close(startdir);
 	}
 	if (conf.output.tag != NULL && conf.output.tag_found == 0) {
 		mandoc_msg(MANDOCERR_TAG, 0, 0, "%s", conf.output.tag);
@@ -852,7 +825,7 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 }
 
 static void
-process_onefile(struct mparse *mp, struct manpage *resp, int startdir,
+process_onefile(struct mparse *mp, struct manpage *resp,
     struct outstate *outst, struct manconf *conf)
 {
 	int	 fd;
@@ -864,8 +837,6 @@ process_onefile(struct mparse *mp, struct manpage *resp, int startdir,
 	 */
 	if (resp->ipath != SIZE_MAX)
 		(void)chdir(conf->manpath.paths[resp->ipath]);
-	else if (startdir != -1)
-		(void)fchdir(startdir);
 
 	mandoc_msg_setinfilename(resp->file);
 	if (resp->file != NULL) {
