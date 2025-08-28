@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.43 2024/04/30 17:04:23 miod Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.44 2025/08/28 18:30:08 claudio Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ struct sillyrename {
  * An nfsnode is 'named' by its file handle. (nget/nfs_node.c)
  */
 struct nfsnode {
-	RB_ENTRY(nfsnode)	n_entry;	/* filehandle/node tree. */
+	RBT_ENTRY(nfsnode)	n_entry;	/* filehandle/node tree. */
 	u_quad_t		n_size;		/* Current size of file */
 	struct vattr		n_vattr;	/* Vnode attribute cache */
 	time_t			n_attrstamp;	/* Attr. cache timestamp */
