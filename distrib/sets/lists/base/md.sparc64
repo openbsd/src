@@ -19,7 +19,7 @@
 ./usr/lib/libc++.so.12.0
 ./usr/lib/libc++abi.so.9.0
 ./usr/lib/libcompiler_rt.a
-./usr/lib/libstdc++.so.58.0
+./usr/lib/libstdc++.so.59.0
 ./usr/libdata/perl5/sparc64-openbsd
 ./usr/libdata/perl5/sparc64-openbsd/.packlist
 ./usr/libdata/perl5/sparc64-openbsd/B
