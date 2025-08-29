@@ -2347,7 +2347,7 @@ print_operand_address (FILE *file, rtx addr)
 bool
 pic_address_needs_scratch (rtx x)
 {
-  /* An address which is a symbolic plus a non SMALL_INT needs a temp reg.  */
+  /* An address which is a symbolic plus a non ADD_INT needs a temp reg.  */
   if (GET_CODE (x) == CONST)
     {
       x = XEXP (x, 0);

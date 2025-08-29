@@ -599,11 +599,7 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
    into a register of class CLASS in MODE.  On the m88k, when PIC, we
    need a temporary when loading some addresses into a register.  */
 #define SECONDARY_INPUT_RELOAD_CLASS(CLASS, MODE, IN)			\
-  ((flag_pic								\
-    && GET_CODE (IN) == CONST						\
-    && GET_CODE (XEXP (IN, 0)) == PLUS					\
-    && CONST_INT_P (XEXP (XEXP (IN, 0), 1))				\
-    && ! SMALL_INT (XEXP (XEXP (IN, 0), 1))) ? GENERAL_REGS : NO_REGS)
+  ((flag_pic && pic_address_needs_scratch (IN)) ? GENERAL_REGS : NO_REGS)
 
 /* Return the maximum number of consecutive registers
    needed to represent mode MODE in a register of class CLASS.  */
