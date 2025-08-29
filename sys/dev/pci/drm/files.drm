@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.67 2025/03/14 03:39:23 jsg Exp $
+# $OpenBSD: files.drm,v 1.68 2025/08/29 05:11:19 jsg Exp $
 
 #file	dev/pci/drm/aperture.c			drm
 file	dev/pci/drm/dma-resv.c			drm
@@ -24,6 +24,7 @@ file	dev/pci/drm/drm_damage_helper.c		drm
 #file	dev/pci/drm/drm_debugfs.c		drm
 #file	dev/pci/drm/drm_debugfs_crc.c		drm
 file	dev/pci/drm/drm_displayid.c		drm
+#file	dev/pci/drm/drm_draw.c			drm
 file	dev/pci/drm/drm_dumb_buffers.c		drm
 file	dev/pci/drm/drm_edid.c			drm
 file	dev/pci/drm/drm_eld.c			drm
