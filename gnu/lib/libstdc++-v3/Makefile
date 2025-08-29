@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/lib/libstdc++/Makefile,v 1.63.2.1 2009/08/03 08:13:06 kensmith Exp $
-# $OpenBSD: Makefile,v 1.13 2017/02/15 21:22:53 miod Exp $
+# $OpenBSD: Makefile,v 1.14 2025/08/29 16:19:12 miod Exp $
 
 .include "${.CURDIR}/Makefile.common"
 
@@ -7,9 +7,6 @@ GCC_TARGET=	${MACHINE_ARCH}-unknown-openbsd${OSREV}
 
 LIB=		stdc++
 
-.if ${MACHINE_ARCH} == "m88k"
-CPPFLAGS+=	-D_GLIBCXX_SJLJ_EXCEPTIONS=1
-.endif
 .if ${MACHINE_ARCH} == "arm"
 CXXFLAGS+=	-fno-stack-protector
 .endif
