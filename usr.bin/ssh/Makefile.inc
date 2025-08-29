@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.100 2025/07/30 04:27:42 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.101 2025/08/29 03:50:38 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -136,17 +136,5 @@ SRCS_SK=		ssh-sk.c
 SRCS_SK+=		sk-usbhid.c
 SRCS_SK_CLIENT=		ssh-sk-client.c
 SRCS_SK_CLIENT+=	msg.c
-
-WITH_XMSS?=	no
-.if (${WITH_XMSS:L} == "yes")
-CFLAGS+=	-DWITH_XMSS
-SRCS_KEY+=	ssh-xmss.c
-SRCS_KEY+=	sshkey-xmss.c
-SRCS_KEY+=	xmss_commons.c
-SRCS_KEY+=	xmss_fast.c
-SRCS_KEY+=	xmss_hash.c
-SRCS_KEY+=	xmss_hash_address.c
-SRCS_KEY+=	xmss_wots.c
-.endif
 
 .include <bsd.obj.mk>
