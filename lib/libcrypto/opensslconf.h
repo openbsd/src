@@ -1,11 +1,9 @@
-/*	$OpenBSD: opensslconf.h,v 1.3 2025/08/25 16:48:01 tb Exp $ */
+/*	$OpenBSD: opensslconf.h,v 1.4 2025/08/29 18:29:42 tb Exp $ */
 /*
  * Public domain.
  */
 
 #include <openssl/opensslfeatures.h>
-
-#undef OPENSSL_EXPORT_VAR_AS_FUNCTION
 
 #ifndef OPENSSL_FILE
 #ifdef OPENSSL_NO_FILENAMES
