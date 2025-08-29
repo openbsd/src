@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.52 2024/10/06 23:43:18 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.53 2025/08/29 12:41:21 stsp Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1360,8 +1360,8 @@ bnxt_start(struct ifqueue *ifq)
 	used = 0;
 
 	for (;;) {
-		/* +1 for tx_bd_long_hi */
-		if (used + BNXT_MAX_TX_SEGS + 1 > free) {
+		/* +1 for tx_bd_long_hi, + 1 to leave a slot free */
+		if (used + BNXT_MAX_TX_SEGS + 2 > free) {
 			ifq_set_oactive(ifq);
 			break;
 		}
