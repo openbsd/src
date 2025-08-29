@@ -85,9 +85,6 @@ enum processor_type {
 /* External variables/functions defined in m88k.c.  */
 
 extern char m88k_volatile_code;
-
-extern int m88k_fp_offset;
-extern int m88k_stack_size;
 extern int m88k_case_index;
 
 extern rtx m88k_compare_reg;

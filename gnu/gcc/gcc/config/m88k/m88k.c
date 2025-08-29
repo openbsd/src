@@ -65,10 +65,12 @@ struct machine_function GTY(())
   int stack_size;
   /* Number of argument registers to save for proper va_list operation.  */
   int saved_va_regcnt;
-  /* Number of general registers needing to be saved.  */
+  /* Number of general registers (but r1 and r30) needing to be saved.  */
   int saved_gregs;
   /* Number of extended registers needing to be saved.  */
   int saved_xregs;
+  /* Registers needing to be saved. */
+  char save_regs[LAST_EXTENDED_REGISTER + 1];
   /* Above data is valid and final.  */
   bool initialized;
 };
@@ -83,19 +85,20 @@ enum processor_type m88k_cpu;	/* target cpu */
 
 static struct machine_function *m88k_init_machine_status (void);
 static void m88k_maybe_dead (rtx);
-static rtx m88k_struct_value_rtx (tree, int);
+
+static void m88k_output_file_start (void);
 static int m88k_adjust_cost (rtx, rtx, rtx, int);
 static bool m88k_handle_option (size_t, const char *, int);
+static bool m88k_rtx_costs (rtx, int, int, int *);
+static int m88k_address_cost (rtx);
+static tree m88k_build_va_list (void);
+static tree m88k_gimplify_va_arg (tree, tree, tree *, tree *);
+static rtx m88k_struct_value_rtx (tree, int);
 static bool m88k_pass_by_reference (CUMULATIVE_ARGS *, enum machine_mode,
 				    tree, bool);
 static bool m88k_return_in_memory (tree, tree);
 static void m88k_setup_incoming_varargs (CUMULATIVE_ARGS *, enum machine_mode,
 					 tree, int *, int);
-static tree m88k_build_va_list (void);
-static tree m88k_gimplify_va_arg (tree, tree, tree *, tree *);
-static bool m88k_rtx_costs (rtx, int, int, int *);
-static int m88k_address_cost (rtx);
-static void m88k_output_file_start (void);
 
 /* Initialize the GCC target structure.  */
 #if !defined(OBJECT_FORMAT_ELF)
@@ -111,6 +114,9 @@ static void m88k_output_file_start (void);
 #define TARGET_ASM_UNALIGNED_SI_OP "\tuaword\t"
 #endif
 
+#undef TARGET_ASM_FILE_START
+#define TARGET_ASM_FILE_START m88k_output_file_start
+
 #undef TARGET_SCHED_ADJUST_COST
 #define TARGET_SCHED_ADJUST_COST m88k_adjust_cost
 
@@ -119,6 +125,27 @@ static void m88k_output_file_start (void);
 
 #undef TARGET_HANDLE_OPTION
 #define TARGET_HANDLE_OPTION m88k_handle_option
+
+#undef TARGET_RTX_COSTS
+#define TARGET_RTX_COSTS m88k_rtx_costs
+
+#undef TARGET_ADDRESS_COST
+#define TARGET_ADDRESS_COST m88k_address_cost
+
+#undef TARGET_BUILD_BUILTIN_VA_LIST
+#define TARGET_BUILD_BUILTIN_VA_LIST m88k_build_va_list
+
+#undef TARGET_GIMPLIFY_VA_ARG_EXPR
+#define TARGET_GIMPLIFY_VA_ARG_EXPR m88k_gimplify_va_arg
+
+#undef TARGET_PROMOTE_FUNCTION_ARGS
+#define TARGET_PROMOTE_FUNCTION_ARGS hook_bool_tree_true
+
+#undef TARGET_PROMOTE_FUNCTION_RETURN
+#define TARGET_PROMOTE_FUNCTION_RETURN hook_bool_tree_true
+
+#undef TARGET_PROMOTE_PROTOTYPES
+#define TARGET_PROMOTE_PROTOTYPES hook_bool_tree_true
 
 #undef TARGET_STRUCT_VALUE_RTX
 #define TARGET_STRUCT_VALUE_RTX m88k_struct_value_rtx
@@ -129,32 +156,8 @@ static void m88k_output_file_start (void);
 #undef TARGET_RETURN_IN_MEMORY
 #define TARGET_RETURN_IN_MEMORY m88k_return_in_memory
 
-#undef TARGET_PROMOTE_PROTOTYPES
-#define TARGET_PROMOTE_PROTOTYPES hook_bool_tree_true
-
-#undef TARGET_PROMOTE_FUNCTION_ARGS
-#define TARGET_PROMOTE_FUNCTION_ARGS hook_bool_tree_true
-
-#undef TARGET_PROMOTE_FUNCTION_RETURN
-#define TARGET_PROMOTE_FUNCTION_RETURN hook_bool_tree_true
-
 #undef TARGET_SETUP_INCOMING_VARARGS
 #define TARGET_SETUP_INCOMING_VARARGS m88k_setup_incoming_varargs
-
-#undef TARGET_BUILD_BUILTIN_VA_LIST
-#define TARGET_BUILD_BUILTIN_VA_LIST m88k_build_va_list
-
-#undef TARGET_GIMPLIFY_VA_ARG_EXPR
-#define TARGET_GIMPLIFY_VA_ARG_EXPR m88k_gimplify_va_arg
-
-#undef TARGET_RTX_COSTS
-#define TARGET_RTX_COSTS m88k_rtx_costs
-
-#undef TARGET_ADDRESS_COST
-#define TARGET_ADDRESS_COST m88k_address_cost
-
-#undef TARGET_ASM_FILE_START
-#define TARGET_ASM_FILE_START m88k_output_file_start
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
@@ -1072,8 +1075,6 @@ static rtx emit_add (rtx, rtx, int);
 static void preserve_registers (bool);
 static void emit_ldst (int, int, enum machine_mode, int);
 
-static char save_regs[LAST_EXTENDED_REGISTER + 1];
-
 /* Round to the next highest integer that meets the alignment.  */
 #define CEIL_ROUND(VALUE,ALIGN)	(((VALUE) + (ALIGN) - 1) & ~((ALIGN)- 1))
 
@@ -1103,7 +1104,7 @@ m88k_layout_frame (void)
   if (cfun->machine->initialized)
     return;
 
-  memset ((char *) &save_regs[0], 0, sizeof (save_regs));
+  memset (cfun->machine->save_regs, 0, sizeof (cfun->machine->save_regs));
   cfun->machine->saved_gregs = cfun->machine->saved_xregs = 0;
 
   /* Profiling requires a stack frame.  */
@@ -1113,9 +1114,9 @@ m88k_layout_frame (void)
   /* If we are producing PIC, save the addressing base register and r1.  */
   if (flag_pic && current_function_uses_pic_offset_table)
     {
-      save_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
+      cfun->machine->save_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
       cfun->machine->saved_gregs++;
-      save_regs[1] = 1;
+      cfun->machine->save_regs[1] = 1;
     }
 
   /* If a frame is requested, save the previous FP, and the return
@@ -1123,30 +1124,33 @@ m88k_layout_frame (void)
      information.  Otherwise, simply save the FP if it is used as
      a preserve register.  */
   if (frame_pointer_needed)
-    save_regs[HARD_FRAME_POINTER_REGNUM] = save_regs[1] = 1;
+    {
+      cfun->machine->save_regs[HARD_FRAME_POINTER_REGNUM] = 1;
+      cfun->machine->save_regs[1] = 1;
+    }
   else
     {
       if (regs_ever_live[HARD_FRAME_POINTER_REGNUM])
-	save_regs[HARD_FRAME_POINTER_REGNUM] = 1;
+	cfun->machine->save_regs[HARD_FRAME_POINTER_REGNUM] = 1;
       /* If there is a call, r1 needs to be saved as well.  */
       if (regs_ever_live[1])
-	save_regs[1] = 1;
+	cfun->machine->save_regs[1] = 1;
     }
 
-  /* Figure out which extended register(s) needs to be saved.  */
+  /* Figure out which extended registers need to be saved.  */
   for (regno = FIRST_EXTENDED_REGISTER + 1; regno <= LAST_EXTENDED_REGISTER;
        regno++)
     if (regs_ever_live[regno] && ! call_used_regs[regno])
       {
-	save_regs[regno] = 1;
+	cfun->machine->save_regs[regno] = 1;
 	cfun->machine->saved_xregs++;
       }
 
-  /* Figure out which normal register(s) needs to be saved.  */
+  /* Figure out which normal registers need to be saved.  */
   for (regno = 2; regno < HARD_FRAME_POINTER_REGNUM; regno++)
     if (regs_ever_live[regno] && ! call_used_regs[regno])
       {
-	save_regs[regno] = 1;
+	cfun->machine->save_regs[regno] = 1;
 	cfun->machine->saved_gregs++;
       }
 
@@ -1162,10 +1166,12 @@ m88k_layout_frame (void)
   /* The first two saved registers are placed above the new frame pointer
      if any. Then, local variables are placed on top of it, with the end
      of local variables aligned to a stack boundary. */
-  if (save_regs[1] || save_regs[HARD_FRAME_POINTER_REGNUM])
+  if (cfun->machine->save_regs[1]
+      || cfun->machine->save_regs[HARD_FRAME_POINTER_REGNUM])
     {
       cfun->machine->saved_gregs
-	+= save_regs[1] + save_regs[HARD_FRAME_POINTER_REGNUM];
+	+= cfun->machine->save_regs[1]
+	   + cfun->machine->save_regs[HARD_FRAME_POINTER_REGNUM];
       cfun->machine->frame_size = 8;
     }
   else
@@ -1240,7 +1246,7 @@ m88k_expand_prologue (void)
       RTX_FRAME_RELATED_P (insn) = 1;
     }
 
-  if (flag_pic && save_regs[PIC_OFFSET_TABLE_REGNUM])
+  if (flag_pic && cfun->machine->save_regs[PIC_OFFSET_TABLE_REGNUM])
     {
       rtx return_reg = gen_rtx_REG (SImode, 1);
       rtx label = gen_label_rtx ();
@@ -1311,15 +1317,15 @@ preserve_registers (bool store_p)
      increasing order.  For compatibility with current practice,
      the order is r1, r30, then the preserve registers.  */
 
-  if (save_regs[1])
+  if (cfun->machine->save_regs[1])
     {
       /* Do not reload r1 in the epilogue unless really necessary */
-      if (store_p || regs_ever_live[1]
-	  || (flag_pic && save_regs[PIC_OFFSET_TABLE_REGNUM]))
+      if (store_p || regs_ever_live[1] || current_function_calls_eh_return
+	  || (flag_pic && cfun->machine->save_regs[PIC_OFFSET_TABLE_REGNUM]))
 	emit_ldst (store_p, 1, SImode, cfun->machine->hardfp_offset + 4);
     }
 
-  if (save_regs[HARD_FRAME_POINTER_REGNUM])
+  if (cfun->machine->save_regs[HARD_FRAME_POINTER_REGNUM])
     {
       emit_ldst (store_p, HARD_FRAME_POINTER_REGNUM, SImode,
 		 cfun->machine->hardfp_offset);
@@ -1330,7 +1336,7 @@ preserve_registers (bool store_p)
   /* Process all the extended registers. */
   for (regno = FIRST_EXTENDED_REGISTER; regno <= LAST_EXTENDED_REGISTER;
        regno++)
-    if (save_regs[regno])
+    if (cfun->machine->save_regs[regno])
       {
 	mem_op[regno].offset = offset;
 	mem_op[regno].mode = DImode;
@@ -1339,7 +1345,7 @@ preserve_registers (bool store_p)
 
   /* Process all the register pairs using double memory operations.  */
   for (regno = 2; regno < HARD_FRAME_POINTER_REGNUM; regno += 2)
-    if (save_regs[regno] && save_regs[regno + 1])
+    if (cfun->machine->save_regs[regno] && cfun->machine->save_regs[regno + 1])
       {
 	mem_op[regno].offset = offset;
 	mem_op[regno].mode = DImode;
@@ -1349,15 +1355,15 @@ preserve_registers (bool store_p)
   /* Process all the remaining registers using single memory operations.  */
   for (regno = 2; regno < HARD_FRAME_POINTER_REGNUM; regno += 2)
     {
-      if (save_regs[regno])
+      if (cfun->machine->save_regs[regno])
 	{
-	  if (save_regs[regno + 1])
+	  if (cfun->machine->save_regs[regno + 1])
 	    continue; /* done earlier */
 	  mem_op[regno].offset = offset;
 	  mem_op[regno].mode = SImode;
 	  offset += 4;
 	}
-      if (save_regs[regno + 1])
+      if (cfun->machine->save_regs[regno + 1])
 	{
 	  mem_op[regno + 1].offset = offset;
 	  mem_op[regno + 1].mode = SImode;
