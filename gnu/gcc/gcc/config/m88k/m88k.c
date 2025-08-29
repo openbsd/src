@@ -1405,6 +1405,32 @@ emit_ldst (int store_p, int regno, enum machine_mode mode, int offset)
     {
       insn = emit_move_insn (mem, reg);
       RTX_FRAME_RELATED_P (insn) = 1;
+
+      /* If this is a double-register operation, the DWARF code translating
+	 this into CFI data will lose the double-width information, so we
+	 must synthesize what would have been the pair of single-register
+	 instructions in the notes, to let the DWARF code understand this
+	 sequence correctly.  */
+      if (mode == DImode && ! XRF_REGNO_P (regno))
+	{
+	  rtx m1 = gen_rtx_MEM (SImode,
+				plus_constant (stack_pointer_rtx, offset));
+	  rtx m2 = gen_rtx_MEM (SImode,
+				plus_constant (stack_pointer_rtx, offset + 4));
+	  rtx r1 = gen_rtx_REG (SImode, regno);
+	  rtx r2 = gen_rtx_REG (SImode, regno + 1);
+	  rtx op1 = gen_rtx_SET (VOIDmode, m1, r1);
+	  rtx op2 = gen_rtx_SET (VOIDmode, m2, r2);
+	  rtvec vec;
+
+	  RTX_FRAME_RELATED_P (op1) = 1;
+	  RTX_FRAME_RELATED_P (op2) = 1;
+	  vec = gen_rtvec (2, op1, op2);
+	  REG_NOTES (insn)
+	    = gen_rtx_EXPR_LIST (REG_FRAME_RELATED_EXPR,
+				 gen_rtx_SEQUENCE (VOIDmode, vec),
+				 REG_NOTES(insn));
+	}
     }
   else
     emit_move_insn (reg, mem);
