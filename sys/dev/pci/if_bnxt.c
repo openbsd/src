@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.54 2025/08/29 12:50:00 stsp Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.55 2025/08/29 14:53:55 stsp Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -428,11 +428,11 @@ bnxt_dmamem_alloc(struct bnxt_softc *sc, size_t size)
 		goto bdmfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &m->bdm_seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
+	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO | BUS_DMA_64BIT) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &m->bdm_seg, nsegs, size, &m->bdm_kva,
-	    BUS_DMA_NOWAIT | BUS_DMA_64BIT) != 0)
+	    BUS_DMA_NOWAIT) != 0)
 		goto free;
 
 	if (bus_dmamap_load(sc->sc_dmat, m->bdm_map, m->bdm_kva, size, NULL,
