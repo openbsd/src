@@ -1416,7 +1416,8 @@ static void intel_tc_port_reset_mode(struct intel_tc_port *tc,
 
 		aux_domain = intel_aux_power_domain(dig_port);
 		aux_powered = intel_display_power_is_enabled(i915, aux_domain);
-		drm_WARN_ON(&i915->drm, aux_powered);
+		drm_dbg_kms(&i915->drm, "Port %s: AUX powered %d\n",
+			    tc->port_name, aux_powered);
 	}
 
 	tc_phy_disconnect(tc);
