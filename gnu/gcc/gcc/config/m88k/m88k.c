@@ -93,6 +93,7 @@ static bool m88k_rtx_costs (rtx, int, int, int *);
 static int m88k_address_cost (rtx);
 static tree m88k_build_va_list (void);
 static tree m88k_gimplify_va_arg (tree, tree, tree *, tree *);
+static rtx m88k_builtin_setjmp_frame_value (void);
 static rtx m88k_struct_value_rtx (tree, int);
 static bool m88k_pass_by_reference (CUMULATIVE_ARGS *, enum machine_mode,
 				    tree, bool);
@@ -137,6 +138,9 @@ static void m88k_setup_incoming_varargs (CUMULATIVE_ARGS *, enum machine_mode,
 
 #undef TARGET_GIMPLIFY_VA_ARG_EXPR
 #define TARGET_GIMPLIFY_VA_ARG_EXPR m88k_gimplify_va_arg
+
+#undef TARGET_BUILTIN_SETJMP_FRAME_VALUE
+#define TARGET_BUILTIN_SETJMP_FRAME_VALUE m88k_builtin_setjmp_frame_value
 
 #undef TARGET_PROMOTE_FUNCTION_ARGS
 #define TARGET_PROMOTE_FUNCTION_ARGS hook_bool_tree_true
@@ -1154,6 +1158,23 @@ m88k_layout_frame (void)
 	cfun->machine->saved_gregs++;
       }
 
+  /* Figure out which exception-used registers need to be saved.  */
+  if (current_function_calls_eh_return)
+    {
+      unsigned int i;
+      for (i = 0; ; i++)
+	{
+	  regno = EH_RETURN_DATA_REGNO (i);
+	  if (regno == INVALID_REGNUM)
+	    break;
+	  if (!cfun->machine->save_regs[regno])
+	    {
+	      cfun->machine->save_regs[regno] = 1;
+	      cfun->machine->saved_gregs++;
+	    }
+	}
+    }
+
   sp_size = CEIL_ROUND(current_function_outgoing_args_size, 2 * UNITS_PER_WORD);
   sp_size += 4 * cfun->machine->saved_gregs;
   /* If we need to align extended registers, add a word.  */
@@ -1193,6 +1214,13 @@ m88k_initial_elimination_offset (int from, int to)
     return cfun->machine->frame_size;
   else /* to == STACK_POINTER_REGNUM */
     return cfun->machine->frame_size + cfun->machine->hardfp_offset;
+}
+
+/* Implementation of TARGET_BUILTIN_SETJMP_FRAME_VALUE.  */
+static rtx
+m88k_builtin_setjmp_frame_value (void)
+{
+  return hard_frame_pointer_rtx;
 }
 
 static void

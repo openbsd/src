@@ -100,7 +100,7 @@ extern enum processor_type m88k_cpu;
 /* If -m88100 is in effect, add -D__m88100__; similarly for -m88110.
    Here, the CPU_DEFAULT is assumed to be -m88100.  */
 #undef	CPP_SPEC
-#define	CPP_SPEC "%{!m88000:%{!m88100:%{m88110:-D__m88110__}}}		\
+#define CPP_SPEC "%{!m88000:%{!m88100:%{m88110:-D__m88110__}}}		\
 		  %{!m88000:%{!m88110:-D__m88100__}}"
 
 /*** Run-time Target Specification ***/
@@ -139,7 +139,7 @@ extern enum processor_type m88k_cpu;
 #define LONG_TYPE_SIZE		32
 #define LONG_LONG_TYPE_SIZE	64
 #define FLOAT_TYPE_SIZE		32
-#define	DOUBLE_TYPE_SIZE	64
+#define DOUBLE_TYPE_SIZE	64
 #define LONG_DOUBLE_TYPE_SIZE	64
 
 /* Define this if most significant bit is lowest numbered
@@ -243,9 +243,6 @@ while (0)
 #define FIRST_EXTENDED_REGISTER 32
 #define LAST_EXTENDED_REGISTER 63
 #define FIRST_PSEUDO_REGISTER 64
-
-/* Don't count soft frame pointer.  */
-#define DWARF_FRAME_REGISTERS (FIRST_PSEUDO_REGISTER - 1)
 
 /*  General notes on extended registers, their use and misuse.
 
@@ -1258,3 +1255,16 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
 
 /* Print a memory address as an operand to reference that memory location.  */
 #define PRINT_OPERAND_ADDRESS(FILE, ADDR) print_operand_address (FILE, ADDR)
+
+/* DWARF unwinding needs two scratch registers; we choose to use r8-r9.  */
+#define EH_RETURN_DATA_REGNO(N) \
+  ((N) < 2 ? (N) + 8 : INVALID_REGNUM)
+
+#define EH_RETURN_HANDLER_RTX \
+  RETURN_ADDR_RTX (0, hard_frame_pointer_rtx)
+
+/* Select a format to encode pointers in exception handling data.  CODE
+   is 0 for data, 1 for code labels, 2 for function pointers.  GLOBAL is
+   true if the symbol may be affected by dynamic relocations.  */
+#define ASM_PREFERRED_EH_DATA_FORMAT(CODE, GLOBAL)			\
+  ((flag_pic || GLOBAL) ? DW_EH_PE_aligned : DW_EH_PE_absptr)
