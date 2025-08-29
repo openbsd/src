@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.17 2025/08/26 20:52:07 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.18 2025/08/29 11:50:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2020, 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -280,12 +280,6 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
-		return;
-	}
-
-	reg = HREAD4(sc, PCIE_RGR1_SW_INIT_1);
-	if (reg & PCIE_RGR1_SW_INIT_1_INIT) {
-		printf(": disabled\n");
 		return;
 	}
 
