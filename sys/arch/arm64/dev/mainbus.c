@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.32 2024/11/18 05:32:39 jsg Exp $ */
+/* $OpenBSD: mainbus.c,v 1.33 2025/08/30 10:30:22 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -413,13 +413,30 @@ mainbus_attach_apm(struct device *self)
 void
 mainbus_attach_framebuffer(struct device *self)
 {
+	struct mainbus_softc *sc = (struct mainbus_softc *)self;
 	int node = OF_finddevice("/chosen");
+	int acells, scells;
 
 	if (node == -1)
 		return;
 
-	for (node = OF_child(node); node != 0; node = OF_peer(node))
-		mainbus_attach_node(self, node, NULL);
+	/*
+	 * On some systems, such as the Rasperry Pi 5B, /chosen has
+	 * its own #address-cells and #size-cells that differ from the
+	 * root node.
+	 */
+	acells = sc->sc_acells;
+	scells = sc->sc_scells;
+	sc->sc_acells = OF_getpropint(node, "#address-cells", acells);
+	sc->sc_scells = OF_getpropint(node, "#size-cells", scells);
+
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+		if (OF_is_compatible(node, "simple-framebuffer"))
+			mainbus_attach_node(self, node, NULL);
+	}
+
+	sc->sc_acells = acells;
+	sc->sc_scells = scells;
 }
 
 void
