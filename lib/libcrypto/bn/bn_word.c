@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.21 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_word.c,v 1.22 2025/08/30 07:54:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -232,7 +232,7 @@ BN_mul_word(BIGNUM *a, BN_ULONG w)
 		if (w == 0)
 			BN_zero(a);
 		else {
-			ll = bn_mul_words(a->d, a->d, a->top, w);
+			ll = bn_mulw_words(a->d, a->d, a->top, w);
 			if (ll) {
 				if (!bn_wexpand(a, a->top + 1))
 					return (0);

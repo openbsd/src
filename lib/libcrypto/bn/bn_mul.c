@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.43 2025/08/14 15:15:04 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.44 2025/08/30 07:54:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,14 +256,13 @@ bn_mul_comba8(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b)
 #endif
 
 /*
- * bn_mul_words() computes (carry:r[i]) = a[i] * w + carry, where a is an array
- * of words and w is a single word. This should really be called bn_mulw_words()
- * since only one input is an array. This is used as a step in the multiplication
+ * bn_mulw_words() computes (carry:r[i]) = a[i] * w + carry, where a is an array
+ * of words and w is a single word. This is used as a step in the multiplication
  * of word arrays.
  */
-#ifndef HAVE_BN_MUL_WORDS
+#ifndef HAVE_BN_MULW_WORDS
 BN_ULONG
-bn_mul_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
+bn_mulw_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
 {
 	BN_ULONG carry = 0;
 
@@ -289,14 +288,13 @@ bn_mul_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
 #endif
 
 /*
- * bn_mul_add_words() computes (carry:r[i]) = a[i] * w + r[i] + carry, where
- * a is an array of words and w is a single word. This should really be called
- * bn_mulw_add_words() since only one input is an array. This is used as a step
- * in the multiplication of word arrays.
+ * bn_mulw_add_words() computes (carry:r[i]) = a[i] * w + r[i] + carry, where
+ * a is an array of words and w is a single word. This is used as a step in the
+ * multiplication of word arrays.
  */
-#ifndef HAVE_BN_MUL_ADD_WORDS
+#ifndef HAVE_BN_MULW_ADD_WORDS
 BN_ULONG
-bn_mul_add_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
+bn_mulw_add_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
 {
 	BN_ULONG carry = 0;
 
@@ -323,61 +321,58 @@ bn_mul_add_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
 }
 #endif
 
+#ifndef HAVE_BN_MUL_WORDS
 void
-bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
+bn_mul_words(BN_ULONG *r, BN_ULONG *a, int a_len, BN_ULONG *b, int b_len)
 {
 	BN_ULONG *rr;
 
-
-	if (na < nb) {
+	if (a_len < b_len) {
 		int itmp;
 		BN_ULONG *ltmp;
 
-		itmp = na;
-		na = nb;
-		nb = itmp;
+		itmp = a_len;
+		a_len = b_len;
+		b_len = itmp;
 		ltmp = a;
 		a = b;
 		b = ltmp;
 
 	}
-	rr = &(r[na]);
-	if (nb <= 0) {
-		(void)bn_mul_words(r, a, na, 0);
+	rr = &(r[a_len]);
+	if (b_len <= 0) {
+		(void)bn_mulw_words(r, a, a_len, 0);
 		return;
 	} else
-		rr[0] = bn_mul_words(r, a, na, b[0]);
+		rr[0] = bn_mulw_words(r, a, a_len, b[0]);
 
 	for (;;) {
-		if (--nb <= 0)
+		if (--b_len <= 0)
 			return;
-		rr[1] = bn_mul_add_words(&(r[1]), a, na, b[1]);
-		if (--nb <= 0)
+		rr[1] = bn_mulw_add_words(&(r[1]), a, a_len, b[1]);
+		if (--b_len <= 0)
 			return;
-		rr[2] = bn_mul_add_words(&(r[2]), a, na, b[2]);
-		if (--nb <= 0)
+		rr[2] = bn_mulw_add_words(&(r[2]), a, a_len, b[2]);
+		if (--b_len <= 0)
 			return;
-		rr[3] = bn_mul_add_words(&(r[3]), a, na, b[3]);
-		if (--nb <= 0)
+		rr[3] = bn_mulw_add_words(&(r[3]), a, a_len, b[3]);
+		if (--b_len <= 0)
 			return;
-		rr[4] = bn_mul_add_words(&(r[4]), a, na, b[4]);
+		rr[4] = bn_mulw_add_words(&(r[4]), a, a_len, b[4]);
 		rr += 4;
 		r += 4;
 		b += 4;
 	}
 }
+#endif
 
-
-#ifndef HAVE_BN_MUL
-int
+static int
 bn_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, int rn, BN_CTX *ctx)
 {
-	bn_mul_normal(r->d, a->d, a->top, b->d, b->top);
+	bn_mul_words(r->d, a->d, a->top, b->d, b->top);
 
 	return 1;
 }
-
-#endif /* HAVE_BN_MUL */
 
 int
 BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)

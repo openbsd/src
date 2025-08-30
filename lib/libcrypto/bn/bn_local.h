@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.55 2025/08/30 07:16:06 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.56 2025/08/30 07:54:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -257,8 +257,8 @@ int bn_expand_bits(BIGNUM *a, size_t bits);
 int bn_expand_bytes(BIGNUM *a, size_t bytes);
 int bn_wexpand(BIGNUM *a, int words);
 
-BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
-BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+BN_ULONG bn_mulw_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
+BN_ULONG bn_mulw_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
 void bn_div_rem_words(BN_ULONG h, BN_ULONG l, BN_ULONG d, BN_ULONG *out_q,
     BN_ULONG *out_r);

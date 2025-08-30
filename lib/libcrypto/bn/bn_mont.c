@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.69 2025/08/03 10:33:46 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.70 2025/08/30 07:54:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -332,7 +332,7 @@ bn_montgomery_reduce_words(BN_ULONG *r, BN_ULONG *a, const BN_ULONG *n,
 
 	/* Add multiples of the modulus, so that it becomes divisible by R. */
 	for (i = 0; i < n_len; i++) {
-		v = bn_mul_add_words(&a[i], n, n_len, a[i] * n0);
+		v = bn_mulw_add_words(&a[i], n, n_len, a[i] * n0);
 		bn_addw_addw(v, a[i + n_len], carry, &carry, &a[i + n_len]);
 	}
 

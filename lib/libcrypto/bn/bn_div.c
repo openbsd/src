@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.42 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bn_div.c,v 1.43 2025/08/30 07:54:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -375,7 +375,7 @@ BN_div_internal(BIGNUM *quotient, BIGNUM *remainder, const BIGNUM *numerator,
 		 *  | wnum - sdiv * q | < sdiv
 		 */
 		q = bn_div_3_words(wnump, d1, d0);
-		l0 = bn_mul_words(tmp->d, sdiv->d, div_n, q);
+		l0 = bn_mulw_words(tmp->d, sdiv->d, div_n, q);
 		tmp->d[div_n] = l0;
 		wnum.d--;
 

@@ -10,8 +10,8 @@ $sse2=1;
 
 &external_label("OPENSSL_ia32cap_P") if ($sse2);
 
-&bn_mul_add_words("bn_mul_add_words");
-&bn_mul_words("bn_mul_words");
+&bn_mulw_add_words("bn_mulw_add_words");
+&bn_mulw_words("bn_mulw_words");
 &bn_sqr_words("bn_sqr_words");
 &bn_div_words("bn_div_words");
 &bn_add_words("bn_add_words");
@@ -19,7 +19,7 @@ $sse2=1;
 
 &asm_finish();
 
-sub bn_mul_add_words
+sub bn_mulw_add_words
 	{
 	local($name)=@_;
 
@@ -206,7 +206,7 @@ sub bn_mul_add_words
 	&function_end($name);
 	}
 
-sub bn_mul_words
+sub bn_mulw_words
 	{
 	local($name)=@_;
 

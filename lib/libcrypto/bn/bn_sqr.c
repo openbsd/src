@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.39 2025/08/30 07:16:06 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.40 2025/08/30 07:54:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -267,7 +267,7 @@ bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int a_len)
 	/* Compute initial product - r[n:1] = a[n:1] * a[0] */
 	n = a_len - 1;
 	if (n > 0) {
-		rp[n] = bn_mul_words(rp, ap, n, w);
+		rp[n] = bn_mulw_words(rp, ap, n, w);
 	}
 	rp += 2;
 	n--;
@@ -277,7 +277,7 @@ bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int a_len)
 		w = ap[0];
 		ap++;
 
-		rp[n] = bn_mul_add_words(rp, ap, n, w);
+		rp[n] = bn_mulw_add_words(rp, ap, n, w);
 		rp += 2;
 		n--;
 	}
