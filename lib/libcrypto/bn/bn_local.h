@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.54 2025/08/05 15:08:13 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.55 2025/08/30 07:16:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -247,6 +247,7 @@ void bn_mul_comba8(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
 void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a);
 void bn_sqr_comba6(BN_ULONG *r, const BN_ULONG *a);
 void bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a);
+void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int a_len);
 
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, const BN_ULONG *n0, int num);
@@ -258,7 +259,6 @@ int bn_wexpand(BIGNUM *a, int words);
 
 BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
 BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w);
-void     bn_sqr_words(BN_ULONG *rp, const BN_ULONG *ap, int num);
 BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d);
 void bn_div_rem_words(BN_ULONG h, BN_ULONG l, BN_ULONG d, BN_ULONG *out_q,
     BN_ULONG *out_r);

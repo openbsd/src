@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.c,v 1.12 2025/08/14 15:29:17 jsing Exp $ */
+/*	$OpenBSD: bn_arch.c,v 1.13 2025/08/30 07:16:06 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -142,16 +142,6 @@ bn_mul_comba8(BN_ULONG *rd, const BN_ULONG *ad, const BN_ULONG *bd)
 }
 #endif
 
-#ifdef HAVE_BN_SQR
-int
-bn_sqr(BIGNUM *r, const BIGNUM *a, int r_len, BN_CTX *ctx)
-{
-	bignum_sqr(r_len, (uint64_t *)r->d, a->top, (const uint64_t *)a->d);
-
-	return 1;
-}
-#endif
-
 #ifdef HAVE_BN_SQR_COMBA4
 void
 bn_sqr_comba4(BN_ULONG *rd, const BN_ULONG *ad)
@@ -188,6 +178,14 @@ bn_sqr_comba8(BN_ULONG *rd, const BN_ULONG *ad)
 	}
 
 	bignum_sqr_8_16_alt((uint64_t *)rd, (const uint64_t *)ad);
+}
+#endif
+
+#ifdef HAVE_BN_SQR_WORDS
+void
+bn_sqr_words(BN_ULONG *rd, const BN_ULONG *ad, int a_len)
+{
+	bignum_sqr(a_len * 2, (uint64_t *)rd, a_len, (const uint64_t *)ad);
 }
 #endif
 

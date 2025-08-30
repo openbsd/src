@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.38 2025/08/14 15:15:04 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.39 2025/08/30 07:16:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,8 +63,6 @@
 #include "bn_arch.h"
 #include "bn_local.h"
 #include "bn_internal.h"
-
-int bn_sqr(BIGNUM *r, const BIGNUM *a, int max, BN_CTX *ctx);
 
 /*
  * bn_sqr_comba4() computes r[] = a[] * a[] using Comba multiplication
@@ -205,7 +203,7 @@ bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a)
 }
 #endif
 
-#ifndef HAVE_BN_SQR
+#ifndef HAVE_BN_SQR_WORDS
 /*
  * bn_sqr_add_words() computes (r[i*2+1]:r[i*2]) = (r[i*2+1]:r[i*2]) + a[i] * a[i].
  */
@@ -242,12 +240,16 @@ bn_sqr_add_words(BN_ULONG *r, const BN_ULONG *a, int n)
 	}
 }
 
-static void
-bn_sqr_normal(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len)
+/*
+ * bn_sqr_words() computes r[] = a[] * a[].
+ */
+void
+bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int a_len)
 {
 	const BN_ULONG *ap;
 	BN_ULONG *rp;
 	BN_ULONG w;
+	int r_len;
 	int n;
 
 	if (a_len <= 0)
@@ -258,6 +260,7 @@ bn_sqr_normal(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len)
 	ap++;
 
 	rp = r;
+	r_len = a_len * 2;
 	rp[0] = rp[r_len - 1] = 0;
 	rp++;
 
@@ -285,20 +288,20 @@ bn_sqr_normal(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len)
 	/* Add squares. */
 	bn_sqr_add_words(r, a, a_len);
 }
+#endif
 
 /*
  * bn_sqr() computes a * a, storing the result in r. The caller must ensure that
  * r is not the same BIGNUM as a and that r has been expanded to rn = a->top * 2
  * words.
  */
-int
-bn_sqr(BIGNUM *r, const BIGNUM *a, int r_len, BN_CTX *ctx)
+static int
+bn_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 {
-	bn_sqr_normal(r->d, r_len, a->d, a->top);
+	bn_sqr_words(r->d, a->d, a->top);
 
 	return 1;
 }
-#endif
 
 int
 BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
@@ -331,7 +334,7 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	} else if (a->top == 8) {
 		bn_sqr_comba8(rr->d, a->d);
 	} else {
-		if (!bn_sqr(rr, a, r_len, ctx))
+		if (!bn_sqr(rr, a, ctx))
 			goto err;
 	}
 
