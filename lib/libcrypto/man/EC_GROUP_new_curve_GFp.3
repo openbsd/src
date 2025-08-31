@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_GROUP_new_curve_GFp.3,v 1.5 2025/06/13 18:34:00 schwarze Exp $
+.\" $OpenBSD: EC_GROUP_new_curve_GFp.3,v 1.6 2025/08/31 11:32:03 tb Exp $
 .\"
 .\" Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: August 31 2025 $
 .Dt EC_GROUP_NEW_CURVE_GFP 3
 .Os
 .Sh NAME
@@ -134,6 +134,11 @@ where
 and
 .Fa b
 are such that the discriminant 4a^3 - 27b^2 is non-zero.
+They consist of
+.Em affine points ,
+which are pairs of field elements (x, y) satisfying
+the Weierstrass equation, and an extra
+.Em point at infinity .
 .Pp
 The points on an elliptic curve form a group.
 Cryptographic applications usually depend on the choice of a
