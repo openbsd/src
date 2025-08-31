@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.56 2025/08/30 07:54:27 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.57 2025/08/31 09:33:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,10 +239,10 @@ BN_ULONG bn_add(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len,
 BN_ULONG bn_sub(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len,
     const BN_ULONG *b, int b_len);
 
-void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb);
 void bn_mul_comba4(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
 void bn_mul_comba6(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
 void bn_mul_comba8(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
+void bn_mul_words(BN_ULONG *r, BN_ULONG *a, int a_len, BN_ULONG *b, int b_len);
 
 void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a);
 void bn_sqr_comba6(BN_ULONG *r, const BN_ULONG *a);
