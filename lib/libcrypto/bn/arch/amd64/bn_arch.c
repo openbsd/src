@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.c,v 1.14 2025/08/30 07:54:27 jsing Exp $ */
+/*	$OpenBSD: bn_arch.c,v 1.15 2025/08/31 09:34:51 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -81,22 +81,6 @@ bn_mod_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
 }
 #endif
 
-#ifdef HAVE_BN_MULW_ADD_WORDS
-BN_ULONG
-bn_mulw_add_words(BN_ULONG *rd, const BN_ULONG *ad, int num, BN_ULONG w)
-{
-	return bignum_cmadd(num, (uint64_t *)rd, w, num, (const uint64_t *)ad);
-}
-#endif
-
-#ifdef HAVE_BN_MULW_WORDS
-BN_ULONG
-bn_mulw_words(BN_ULONG *rd, const BN_ULONG *ad, int num, BN_ULONG w)
-{
-	return bignum_cmul(num, (uint64_t *)rd, w, num, (const uint64_t *)ad);
-}
-#endif
-
 #ifdef HAVE_BN_MUL_COMBA4
 void
 bn_mul_comba4(BN_ULONG *rd, const BN_ULONG *ad, const BN_ULONG *bd)
@@ -139,6 +123,22 @@ bn_mul_comba8(BN_ULONG *rd, const BN_ULONG *ad, const BN_ULONG *bd)
 
 	bignum_mul_8_16_alt((uint64_t *)rd, (const uint64_t *)ad,
 	    (const uint64_t *)bd);
+}
+#endif
+
+#ifdef HAVE_BN_MULW_ADD_WORDS
+BN_ULONG
+bn_mulw_add_words(BN_ULONG *rd, const BN_ULONG *ad, int num, BN_ULONG w)
+{
+	return bignum_cmadd(num, (uint64_t *)rd, w, num, (const uint64_t *)ad);
+}
+#endif
+
+#ifdef HAVE_BN_MULW_WORDS
+BN_ULONG
+bn_mulw_words(BN_ULONG *rd, const BN_ULONG *ad, int num, BN_ULONG w)
+{
+	return bignum_cmul(num, (uint64_t *)rd, w, num, (const uint64_t *)ad);
 }
 #endif
 
