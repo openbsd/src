@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.44 2025/08/30 07:54:27 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.45 2025/09/01 15:33:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -323,7 +323,8 @@ bn_mulw_add_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
 
 #ifndef HAVE_BN_MUL_WORDS
 void
-bn_mul_words(BN_ULONG *r, BN_ULONG *a, int a_len, BN_ULONG *b, int b_len)
+bn_mul_words(BN_ULONG *r, const BN_ULONG *a, int a_len, const BN_ULONG *b,
+    int b_len)
 {
 	BN_ULONG *rr;
 

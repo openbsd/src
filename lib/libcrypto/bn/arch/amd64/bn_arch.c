@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.c,v 1.16 2025/09/01 15:15:44 jsing Exp $ */
+/*	$OpenBSD: bn_arch.c,v 1.17 2025/09/01 15:33:23 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -128,7 +128,8 @@ bn_mul_comba8(BN_ULONG *rd, const BN_ULONG *ad, const BN_ULONG *bd)
 
 #ifdef HAVE_BN_MUL_WORDS
 void
-bn_mul_words(BN_ULONG *r, BN_ULONG *a, int a_len, BN_ULONG *b, int b_len)
+bn_mul_words(BN_ULONG *r, const BN_ULONG *a, int a_len, const BN_ULONG *b,
+    int b_len)
 {
 	bignum_mul(a_len + b_len, (uint64_t *)r, a_len, (const uint64_t *)a,
 	    b_len, (const uint64_t *)b);
