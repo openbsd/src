@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.431 2025/08/26 07:00:22 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.432 2025/09/01 07:58:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3358,7 +3358,7 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 			break;
 		server_client_update_latest(c);
 		tty_resize(&c->tty);
-		tty_repeat_requests(&c->tty);
+		tty_repeat_requests(&c->tty, 0);
 		recalculate_sizes();
 		if (c->overlay_resize == NULL)
 			server_client_clear_overlay(c);
@@ -3958,5 +3958,5 @@ server_client_report_theme(struct client *c, enum client_theme theme)
 	 * Request foreground and background colour again. Don't forward 2031 to
 	 * panes until a response is received.
 	 */
-	tty_puts(&c->tty, "\033]10;?\033\\\033]11;?\033\\");
+	tty_repeat_requests(&c->tty, 1);
 }

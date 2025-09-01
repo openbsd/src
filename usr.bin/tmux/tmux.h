@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1267 2025/08/14 06:44:50 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1268 2025/09/01 07:58:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1543,10 +1543,10 @@ struct tty {
 #define TTY_SYNCING 0x400
 #define TTY_HAVEDA2 0x800
 #define TTY_WINSIZEQUERY 0x1000
-#define TTY_HAVEFG 0x2000
-#define TTY_HAVEBG 0x4000
+#define TTY_WAITFG 0x2000
+#define TTY_WAITBG 0x4000
 #define TTY_ALL_REQUEST_FLAGS \
-	(TTY_HAVEDA|TTY_HAVEDA2|TTY_HAVEXDA|TTY_HAVEFG|TTY_HAVEBG)
+	(TTY_HAVEDA|TTY_HAVEDA2|TTY_HAVEXDA)
 	int		 flags;
 
 	struct tty_term	*term;
@@ -2474,7 +2474,7 @@ void	tty_set_size(struct tty *, u_int, u_int, u_int, u_int);
 void	tty_invalidate(struct tty *);
 void	tty_start_tty(struct tty *);
 void	tty_send_requests(struct tty *);
-void	tty_repeat_requests(struct tty *);
+void	tty_repeat_requests(struct tty *, int);
 void	tty_stop_tty(struct tty *);
 void	tty_set_title(struct tty *, const char *);
 void	tty_set_path(struct tty *, const char *);
