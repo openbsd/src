@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.27 2025/05/03 16:48:56 fcambus Exp $
+dnl	$OpenBSD: hardware,v 1.28 2025/09/01 19:08:24 kettenis Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5/H6/H616
@@ -41,12 +41,13 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Apple MacBook Pro (14-inch, M2 Pro/Max, 2023)
 		Apple MacBook Pro (16-inch, M2 Pro/Max, 2023)
 		Apple Mac Studio (M2 Max/Ultra, 2023)
-	Broadcom BCM2837/BCM2711
+	Broadcom BCM2837/BCM2711/BCM2712
 		Raspberry Pi 3
 		Raspberry Pi 3 Model B+
 		Raspberry Pi 4
 		Raspberry Pi 400
 		Raspberry Pi Compute Module 4
+		Raspberry Pi 5
 	Cix CD8180
 		Radxa Orion O6
 	Marvell ARMADA 3K
