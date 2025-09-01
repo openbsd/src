@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.23 2023/11/13 12:49:41 jsg Exp $
+#	$OpenBSD: list,v 1.24 2025/09/01 18:56:04 mglocker Exp $
 
 SRCDIRS distrib/special
 
@@ -110,11 +110,20 @@ COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-cm3.dtb usr/mdec/rpi
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-4-b.dtb usr/mdec/rpi/bcm2711-rpi-4-b.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-400.dtb usr/mdec/rpi/bcm2711-rpi-400.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-cm4.dtb usr/mdec/rpi/bcm2711-rpi-cm4.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2712-d-rpi-5-b.dtb usr/mdec/rpi/bcm2712-d-rpi-5-b.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2712-rpi-5-b.dtb usr/mdec/rpi/bcm2712-rpi-5-b.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2712-rpi-500.dtb usr/mdec/rpi/bcm2712-rpi-500.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2712-rpi-cm5-cm4io.dtb usr/mdec/rpi/bcm2712-rpi-cm5-cm4io.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2712-rpi-cm5-cm5io.dtb usr/mdec/rpi/bcm2712-rpi-cm5-cm5io.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2712-rpi-cm5l-cm4io.dtb usr/mdec/rpi/bcm2712-rpi-cm5l-cm4io.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2712-rpi-cm5l-cm5io.dtb usr/mdec/rpi/bcm2712-rpi-cm5l-cm5io.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2712d0-rpi-5-b.dtb usr/mdec/rpi/bcm2712d0-rpi-5-b.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bootcode.bin usr/mdec/rpi/bootcode.bin
 COPY	/usr/local/share/raspberrypi-firmware/boot/start.elf usr/mdec/rpi/start.elf
 COPY	/usr/local/share/raspberrypi-firmware/boot/start4.elf usr/mdec/rpi/start4.elf
 COPY	/usr/local/share/raspberrypi-firmware/boot/fixup.dat usr/mdec/rpi/fixup.dat
 COPY	/usr/local/share/raspberrypi-firmware/boot/fixup4.dat usr/mdec/rpi/fixup4.dat
+COPY	/usr/local/share/raspberrypi-firmware/boot/overlays/bcm2712d0.dtbo usr/mdec/rpi/bcm2712d0.dtbo
 COPY	/usr/local/share/raspberrypi-firmware/boot/overlays/disable-bt.dtbo usr/mdec/rpi/disable-bt.dtbo
 COPY	/usr/local/share/u-boot/rpi_arm64/u-boot.bin usr/mdec/rpi/u-boot.bin
 

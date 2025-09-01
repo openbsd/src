@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.51 2025/02/19 21:36:02 kettenis Exp $
+#	$OpenBSD: install.md,v 1.52 2025/09/01 18:56:04 mglocker Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ md_installboot() {
 			cp $_mdec/{bootcode.bin,start*.elf,fixup*.dat,*.dtb} /mnt/mnt/
 			cp $_mdec/u-boot.bin /mnt/mnt/
 			mkdir -p /mnt/mnt/overlays
+			cp $_mdec/bcm2712d0.dtbo /mnt/mnt/overlays
 			cp $_mdec/disable-bt.dtbo /mnt/mnt/overlays
 			if [[ ! -f /mnt/mnt/config.txt ]]; then
 				cat > /mnt/mnt/config.txt<<-__EOT
