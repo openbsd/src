@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.45 2025/09/01 15:33:23 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.46 2025/09/01 15:39:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -330,7 +330,7 @@ bn_mul_words(BN_ULONG *r, const BN_ULONG *a, int a_len, const BN_ULONG *b,
 
 	if (a_len < b_len) {
 		int itmp;
-		BN_ULONG *ltmp;
+		const BN_ULONG *ltmp;
 
 		itmp = a_len;
 		a_len = b_len;
