@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1008 2025/08/14 07:15:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1009 2025/09/01 08:03:07 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2025 $
+.Dd $Mdocdate: September 1 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6967,7 +6967,7 @@ forwards any input read from stdin to the empty pane given by
 .Ar target-pane .
 .Tg popup
 .It Xo Ic display-popup
-.Op Fl BCE
+.Op Fl BCEk
 .Op Fl b Ar border-lines
 .Op Fl c Ar target-client
 .Op Fl d Ar start-directory
@@ -7001,6 +7001,11 @@ Two
 closes the popup only if
 .Ar shell-command
 exited with success.
+.Fl k
+allows any key to dismiss the popup instead of only
+.Ql Escape
+or
+.Ql C-c .
 .Pp
 .Fl x
 and

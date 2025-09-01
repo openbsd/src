@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.45 2025/04/09 07:03:04 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.46 2025/09/01 08:03:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -55,8 +55,8 @@ const struct cmd_entry cmd_display_popup_entry = {
 	.name = "display-popup",
 	.alias = "popup",
 
-	.args = { "Bb:Cc:d:e:Eh:s:S:t:T:w:x:y:", 0, -1, NULL },
-	.usage = "[-BCE] [-b border-lines] [-c target-client] "
+	.args = { "Bb:Cc:d:e:Eh:ks:S:t:T:w:x:y:", 0, -1, NULL },
+	.usage = "[-BCEk] [-b border-lines] [-c target-client] "
 		 "[-d start-directory] [-e environment] [-h height] "
 		 "[-s style] [-S border-style] " CMD_TARGET_PANE_USAGE
 		 " [-T title] [-w width] [-x position] [-y position] "
@@ -485,6 +485,8 @@ cmd_display_popup_exec(struct cmd *self, struct cmdq_item *item)
 		flags |= POPUP_CLOSEEXITZERO;
 	else if (args_has(args, 'E'))
 		flags |= POPUP_CLOSEEXIT;
+	if (args_has(args, 'k'))
+		flags |= POPUP_CLOSEANYKEY;
 	if (popup_display(flags, lines, item, px, py, w, h, env, shellcmd, argc,
 	    argv, cwd, title, tc, s, style, border_style, NULL, NULL) != 0) {
 		cmd_free_argv(argc, argv);

@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.59 2025/08/14 06:49:53 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.60 2025/09/01 08:03:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -548,6 +548,9 @@ popup_key_cb(struct client *c, void *data, struct key_event *event)
 	if ((((pd->flags & (POPUP_CLOSEEXIT|POPUP_CLOSEEXITZERO)) == 0) ||
 	    pd->job == NULL) &&
 	    (event->key == '\033' || event->key == ('c'|KEYC_CTRL)))
+		return (1);
+	if (pd->job == NULL && (pd->flags & POPUP_CLOSEANYKEY) &&
+            !KEYC_IS_MOUSE(event->key) && !KEYC_IS_PASTE(event->key))
 		return (1);
 	if (pd->job != NULL) {
 		if (KEYC_IS_MOUSE(event->key)) {
