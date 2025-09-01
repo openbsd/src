@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2025/08/27 20:18:11 kettenis Exp $
+# $OpenBSD: Makefile,v 1.11 2025/09/01 12:31:26 jca Exp $
 
 .include <bsd.own.mk>
 
@@ -196,10 +196,6 @@ SRCS+=	${file}.c
 
 # x86_64 specific additions
 .if ${RTARCH} == "x86_64"
-# CPU model detection
-.PATH: ${.CURDIR}/../../llvm/compiler-rt/lib/builtins/cpu_model
-SRCS+=	x86.c
-
 # Float16 conversion functions
 SRCS+=	extendhfsf2.c \
 	truncdfhf2.c \
@@ -304,6 +300,10 @@ SRCS+=	aeabi_cdcmp.S \
 .endif
 
 .if ${RTARCH} == "i386" || ${RTARCH} == "x86_64"
+# CPU model detection
+.PATH: ${.CURDIR}/../../llvm/compiler-rt/lib/builtins/cpu_model
+SRCS+=	x86.c
+
 # Extended precision (80-bit) support
 SRCS+=	divxc3.c \
 	extendxftf2.c \
