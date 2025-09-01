@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_words.c,v 1.4 2025/09/01 15:18:55 jsing Exp $	*/
+/*	$OpenBSD: bn_mod_words.c,v 1.5 2025/09/01 15:35:25 jsing Exp $	*/
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -75,16 +75,14 @@ bn_mod_mul_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
 {
 	if (n == 4) {
 		bn_mul_comba4(t, a, b);
-		bn_montgomery_reduce_words(r, t, m, m0, n);
 	} else if (n == 6) {
 		bn_mul_comba6(t, a, b);
-		bn_montgomery_reduce_words(r, t, m, m0, n);
 	} else if (n == 8) {
 		bn_mul_comba8(t, a, b);
-		bn_montgomery_reduce_words(r, t, m, m0, n);
 	} else {
-		bn_montgomery_multiply_words(r, a, b, m, t, m0, n);
+		bn_mul_words(t, a, n, b, n);
 	}
+	bn_montgomery_reduce_words(r, t, m, m0, n);
 }
 #endif
 
