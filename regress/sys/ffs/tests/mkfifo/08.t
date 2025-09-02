@@ -15,7 +15,7 @@ expect 0 mkfifo ${n0}/${n1} 0644
 expect 0 unlink ${n0}/${n1}
 mount -ur /dev/vnd1c
 expect EROFS mkfifo ${n0}/${n1} 0644
-#mount -uw /dev/vnd1c
+mount -uw /dev/vnd1c
 expect 0 mkfifo ${n0}/${n1} 0644
 expect 0 unlink ${n0}/${n1}
 umount /dev/vnd1c
