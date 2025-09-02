@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.51 2019/06/28 13:32:42 deraadt Exp $ */
+/* $OpenBSD: fuse.c,v 1.52 2025/09/02 15:58:51 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/wait.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 
 #include <miscfs/fuse/fusefs.h>
 
@@ -154,9 +153,9 @@ fuse_loop(struct fuse *fuse)
 {
 	struct fusebuf fbuf;
 	struct fuse_context ctx;
-	struct fb_ioctl_xch ioexch;
 	struct kevent event[5];
 	struct kevent ev;
+	ssize_t fbuf_size;
 	ssize_t n;
 	int ret;
 
@@ -201,27 +200,13 @@ fuse_loop(struct fuse *fuse)
 					strsignal(signum));
 			}
 		} else if (ret > 0) {
-			n = read(fuse->fc->fd, &fbuf, sizeof(fbuf));
-			if (n != sizeof(fbuf)) {
+			n = read(fuse->fc->fd, &fbuf, FUSEBUFSIZE);
+			fbuf_size = sizeof(fbuf.fb_hdr) + sizeof(fbuf.FD) +
+			    fbuf.fb_len;
+			if (n != fbuf_size) {
 				fprintf(stderr, "%s: bad fusebuf read\n",
 				    __func__);
 				return (-1);
-			}
-
-			/* check if there is data something present */
-			if (fbuf.fb_len) {
-				fbuf.fb_dat = malloc(fbuf.fb_len);
-				if (fbuf.fb_dat == NULL)
-					return (-1);
-				ioexch.fbxch_uuid = fbuf.fb_uuid;
-				ioexch.fbxch_len = fbuf.fb_len;
-				ioexch.fbxch_data = fbuf.fb_dat;
-
-				if (ioctl(fuse->fc->fd, FIOCGETFBDAT,
-				    &ioexch) == -1) {
-					free(fbuf.fb_dat);
-					return (-1);
-				}
 			}
 
 			ctx.fuse = fuse;
@@ -238,26 +223,13 @@ fuse_loop(struct fuse *fuse)
 				return (-1);
 			}
 
-			n = write(fuse->fc->fd, &fbuf, sizeof(fbuf));
-			if (fbuf.fb_len) {
-				if (fbuf.fb_dat == NULL) {
-					fprintf(stderr, "%s: fb_dat is Null\n",
-					    __func__);
-					return (-1);
-				}
-				ioexch.fbxch_uuid = fbuf.fb_uuid;
-				ioexch.fbxch_len = fbuf.fb_len;
-				ioexch.fbxch_data = fbuf.fb_dat;
+			fbuf_size = sizeof(fbuf.fb_hdr) + sizeof(fbuf.FD) +
+			    fbuf.fb_len;
+			n = write(fuse->fc->fd, &fbuf, fbuf_size);
 
-				if (ioctl(fuse->fc->fd, FIOCSETFBDAT, &ioexch) == -1) {
-					free(fbuf.fb_dat);
-					return (-1);
-				}
-				free(fbuf.fb_dat);
-			}
 			ictx = NULL;
 
-			if (n != FUSEBUFSIZE) {
+			if (n != fbuf_size) {
 				errno = EINVAL;
 				return (-1);
 			}
