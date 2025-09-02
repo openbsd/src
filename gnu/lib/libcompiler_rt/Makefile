@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2025/09/01 12:31:26 jca Exp $
+# $OpenBSD: Makefile,v 1.12 2025/09/02 18:06:02 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -193,14 +193,6 @@ SRCS+=	${file}.S
 SRCS+=	${file}.c
 .	endif
 .endfor
-
-# x86_64 specific additions
-.if ${RTARCH} == "x86_64"
-# Float16 conversion functions
-SRCS+=	extendhfsf2.c \
-	truncdfhf2.c \
-	truncsfhf2.c
-.endif
 
 .if ${RTARCH} == "aarch64"
 # Add CPU model detection
