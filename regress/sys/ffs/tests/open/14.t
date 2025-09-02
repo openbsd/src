@@ -14,11 +14,9 @@ mount /dev/vnd1c ${n0}
 expect 0 create ${n0}/${n1} 0644
 expect 0 open ${n0}/${n1} O_WRONLY
 expect 0 open ${n0}/${n1} O_RDWR
-expect 0 open ${n0}/${n1} O_RDONLY,O_TRUNC
 mount -ur /dev/vnd1c
 expect EROFS open ${n0}/${n1} O_WRONLY
 expect EROFS open ${n0}/${n1} O_RDWR
-expect EROFS open ${n0}/${n1} O_RDONLY,O_TRUNC
 mount -uw /dev/vnd1c
 expect 0 unlink ${n0}/${n1}
 umount /dev/vnd1c

@@ -11,8 +11,6 @@ expect 0 open ${n0} O_WRONLY,O_APPEND
 expect 0 open ${n0} O_RDWR,O_APPEND
 expect EPERM open ${n0} O_WRONLY
 expect EPERM open ${n0} O_RDWR
-expect EPERM open ${n0} O_RDONLY,O_TRUNC
-expect EPERM open ${n0} O_RDONLY,O_APPEND,O_TRUNC
 expect EPERM open ${n0} O_WRONLY,O_APPEND,O_TRUNC
 expect EPERM open ${n0} O_RDWR,O_APPEND,O_TRUNC
 expect 0 chflags ${n0} none
@@ -24,8 +22,6 @@ expect 0 open ${n0} O_WRONLY,O_APPEND
 expect 0 open ${n0} O_RDWR,O_APPEND
 expect EPERM open ${n0} O_WRONLY
 expect EPERM open ${n0} O_RDWR
-expect EPERM open ${n0} O_RDONLY,O_TRUNC
-expect EPERM open ${n0} O_RDONLY,O_APPEND,O_TRUNC
 expect EPERM open ${n0} O_WRONLY,O_APPEND,O_TRUNC
 expect EPERM open ${n0} O_RDWR,O_APPEND,O_TRUNC
 expect 0 chflags ${n0} none

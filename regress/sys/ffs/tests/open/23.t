@@ -8,4 +8,8 @@ n0=`namegen`
 expect 0 create ${n0} 0644
 expect EINVAL open ${n0} O_WRONLY,O_RDWR
 expect EINVAL open ${n0} O_RDONLY,O_WRONLY,O_RDWR
+
+# POSIX: The value of the oflag argument is not valid.
+expect EINVAL open ${n0} O_RDONLY,O_TRUNC
+
 expect 0 unlink ${n0}
