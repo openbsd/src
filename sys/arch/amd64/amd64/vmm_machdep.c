@@ -2150,10 +2150,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
 		    IA32_VMX_UNRESTRICTED_GUEST, 1)) {
-			if ((cr0 & (CR0_PE | CR0_PG)) == 0) {
-				want1 |= IA32_VMX_UNRESTRICTED_GUEST;
-				ug = 1;
-			}
+			want1 |= IA32_VMX_UNRESTRICTED_GUEST;
+			ug = 1;
 		}
 	}
 
