@@ -66,14 +66,14 @@ expect 0 chown ${n0} 65534 65533
 expect 0 -u 65532 -g 65531 chown ${n0} -1 -1
 expect 0 unlink ${n0}
 
-# when super-user calls chown(2), set-uid and set-gid bits are not removed.
+# when super-user calls chown(2), set-uid and set-gid bits are removed.
 # 43
 expect 0 create ${n0} 0644
 expect 0 chown ${n0} 65534 65533
 expect 0 chmod ${n0} 06555
 expect 06555 lstat ${n0} mode
 expect 0 chown ${n0} 65532 65531
-expect 06555 lstat ${n0} mode
+expect 0555 lstat ${n0} mode
 expect 0 unlink ${n0}
 # 50
 expect 0 create ${n0} 0644
@@ -81,7 +81,7 @@ expect 0 chown ${n0} 0 0
 expect 0 chmod ${n0} 06555
 expect 06555 lstat ${n0} mode
 expect 0 chown ${n0} 65534 65533
-expect 06555 lstat ${n0} mode
+expect 0555 lstat ${n0} mode
 expect 0 unlink ${n0}
 # 57
 expect 0 create ${n0} 0644
@@ -89,7 +89,7 @@ expect 0 chown ${n0} 65534 65533
 expect 0 chmod ${n0} 06555
 expect 06555 lstat ${n0} mode
 expect 0 chown ${n0} 0 0
-expect 06555 lstat ${n0} mode
+expect 0555 lstat ${n0} mode
 expect 0 unlink ${n0}
 
 # when non-super-user calls chown(2) successfully, set-uid and set-gid bits are
