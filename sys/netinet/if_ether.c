@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.276 2025/07/17 17:31:45 mvs Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.277 2025/09/02 11:39:13 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -73,14 +73,22 @@
  */
 
 struct llinfo_arp {
-	LIST_ENTRY(llinfo_arp)	 la_list;	/* [mN] global arp_list */
+	LIST_ENTRY(llinfo_arp)	 la_list;	/* [m] global arp_list */
 	struct rtentry		*la_rt;		/* [I] backpointer to rtentry */
+	/* keep fields above in sync with struct llinfo_arp_iterator */
+	struct refcnt		 la_refcnt;	/* entry refereced by list */
 	struct mbuf_queue	 la_mq;		/* packet hold queue */
 	time_t			 la_refreshed;	/* when was refresh sent */
 	int			 la_asked;	/* number of queries sent */
 };
 #define LA_HOLD_QUEUE 10
 #define LA_HOLD_TOTAL 100
+
+struct llinfo_arp_iterator {
+	LIST_ENTRY(llinfo_arp)   la_list;       /* [m] global arp_list */
+	struct rtentry          *la_rt;         /* [I] always NULL */
+	/* keep fields above in sync with struct llinfo_arp */
+};
 
 /* timer values */
 int	arpt_prune = (5 * 60);	/* [I] walk list every 5 minutes */
@@ -103,8 +111,8 @@ struct niqueue arpinq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 /* llinfo_arp live time, rt_llinfo and RTF_LLINFO are protected by arp_mtx */
 struct mutex arp_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
-LIST_HEAD(, llinfo_arp) arp_list =
-    LIST_HEAD_INITIALIZER(arp_list);	/* [mN] list of llinfo_arp structures */
+LIST_HEAD(, llinfo_arp) arp_list = LIST_HEAD_INITIALIZER(arp_list);
+				/* [m] list of llinfo_arp structures */
 struct	pool arp_pool;		/* [I] pool for llinfo_arp structures */
 int	arp_maxtries = 5;	/* [I] arp requests before set to rejected */
 unsigned int	la_hold_total;	/* [a] packets currently in the arp queue */
@@ -116,27 +124,63 @@ int revarp_finished;
 unsigned int revarp_ifidx;
 #endif /* NFSCLIENT */
 
+static struct llinfo_arp *
+arpiterator(struct llinfo_arp *la, struct llinfo_arp_iterator *iter)
+{
+	struct llinfo_arp *tmp;
+
+	MUTEX_ASSERT_LOCKED(&arp_mtx);
+
+	if (la)
+		tmp = LIST_NEXT((struct llinfo_arp *)iter, la_list);
+	else
+		tmp = LIST_FIRST(&arp_list);
+
+	while (tmp && tmp->la_rt == NULL)
+		tmp = LIST_NEXT(tmp, la_list);
+
+	if (la) {
+		LIST_REMOVE((struct llinfo_arp *)iter, la_list);
+		if (refcnt_rele(&la->la_refcnt))
+			pool_put(&arp_pool, la);
+	}
+	if (tmp) {
+		LIST_INSERT_AFTER(tmp, (struct llinfo_arp *)iter, la_list);
+		refcnt_take(&tmp->la_refcnt);
+	}
+
+	return tmp;
+}
+
 /*
- * Timeout routine.  Age arp_tab entries periodically.
+ * Timeout routine.  Age arp table entries periodically.
  */
 void
 arptimer(void *arg)
 {
 	struct timeout *to = arg;
-	struct llinfo_arp *la, *nla;
+	struct llinfo_arp_iterator iter = { .la_rt = NULL };
+	struct llinfo_arp *la = NULL;
 	time_t uptime;
 
-	NET_LOCK();
 	uptime = getuptime();
 	timeout_add_sec(to, arpt_prune);
-	/* Net lock is exclusive, no arp mutex needed for arp_list here. */
-	LIST_FOREACH_SAFE(la, &arp_list, la_list, nla) {
+
+	mtx_enter(&arp_mtx);
+	while ((la = arpiterator(la, &iter)) != NULL) {
 		struct rtentry *rt = la->la_rt;
 
-		if (rt->rt_expire && rt->rt_expire < uptime)
+		if (rt->rt_expire && rt->rt_expire < uptime) {
+			rtref(rt);
+			mtx_leave(&arp_mtx);
+			NET_LOCK();
 			arptfree(rt); /* timer has expired; clear */
+			NET_UNLOCK();
+			rtfree(rt);
+			mtx_enter(&arp_mtx);
+		}
 	}
-	NET_UNLOCK();
+	mtx_leave(&arp_mtx);
 }
 
 void
@@ -210,6 +254,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			pool_put(&arp_pool, la);
 			break;
 		}
+		refcnt_init(&la->la_refcnt);
 		mq_init(&la->la_mq, LA_HOLD_QUEUE, IPL_SOFTNET);
 		rt->rt_llinfo = (caddr_t)la;
 		la->la_rt = rt;
@@ -235,7 +280,8 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		atomic_sub_int(&la_hold_total, mq_purge(&la->la_mq));
 		mtx_leave(&arp_mtx);
 
-		pool_put(&arp_pool, la);
+		if (refcnt_rele(&la->la_refcnt))
+			pool_put(&arp_pool, la);
 		break;
 
 	case RTM_INVALIDATE:
@@ -749,6 +795,12 @@ void
 arptfree(struct rtentry *rt)
 {
 	struct ifnet *ifp;
+
+	NET_ASSERT_LOCKED_EXCLUSIVE();
+
+	/* might have been freed between leave arp_mtx and enter net lock */
+	if (!ISSET(rt->rt_flags, RTF_LLINFO))
+		return;
 
 	KASSERT(!ISSET(rt->rt_flags, RTF_LOCAL));
 	arpinvalidate(rt);
