@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.36 2025/09/02 15:58:51 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.37 2025/09/02 17:18:40 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -21,8 +21,6 @@
 
 #include "fuse_private.h"
 #include "debug.h"
-
-#define MIN(a,b) (((a)<(b))?(a):(b))
 
 #define CHECK_OPT(opname)	DPRINTF("Opcode: %s\t", #opname);	\
 				DPRINTF("Inode: %llu\t",		\
@@ -319,9 +317,17 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	offset = fbuf->fb_io_off;
 	size = fbuf->fb_io_len;
 
+	fbuf->fb_dat = calloc(1, size);
+
+	if (fbuf->fb_dat == NULL) {
+		fbuf->fb_err = -errno;
+		return (0);
+	}
+
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
@@ -338,6 +344,7 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
@@ -354,6 +361,9 @@ ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
 		fbuf->fb_len = 0;
 	else if (fd.full && fbuf->fb_len == 0)
 		fbuf->fb_err = -ENOBUFS;
+
+	if (fbuf->fb_len == 0)
+		free(fbuf->fb_dat);
 
 	return (0);
 }
@@ -516,6 +526,7 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 			    fbuf->fb_ino);
 			if (vn == NULL) {
 				fbuf->fb_err = -errno;
+				free(fbuf->fb_dat);
 				return (0);
 			}
 			set_vn(f, vn); /*XXX*/
@@ -526,11 +537,13 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
 	fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
 	fbuf->fb_ino = vn->ino;
+	free(fbuf->fb_dat);
 	free(realname);
 
 	return (0);
@@ -553,15 +566,23 @@ ifuse_ops_read(struct fuse *f, struct fusebuf *fbuf)
 	size = fbuf->fb_io_len;
 	offset = fbuf->fb_io_off;
 
+	fbuf->fb_dat = malloc(size);
+	if (fbuf->fb_dat == NULL) {
+		fbuf->fb_err = -errno;
+		return (0);
+	}
+
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
@@ -571,6 +592,9 @@ ifuse_ops_read(struct fuse *f, struct fusebuf *fbuf)
 		fbuf->fb_len = ret;
 	else
 		fbuf->fb_err = ret;
+
+	if (fbuf->fb_len == 0)
+		free(fbuf->fb_dat);
 
 	return (0);
 }
@@ -597,17 +621,20 @@ ifuse_ops_write(struct fuse *f, struct fusebuf *fbuf)
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
 	ret = f->op.write(realname, (char *)fbuf->fb_dat, size, offset, &ffi);
 	free(realname);
+	free(fbuf->fb_dat);
 
 	if (ret >= 0)
 		fbuf->fb_io_len = ret;
@@ -630,9 +657,11 @@ ifuse_ops_mkdir(struct fuse *f, struct fusebuf *fbuf)
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
+	free(fbuf->fb_dat);
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
@@ -661,9 +690,11 @@ ifuse_ops_rmdir(struct fuse *f, struct fusebuf *fbuf)
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
+	free(fbuf->fb_dat);
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
@@ -707,8 +738,13 @@ ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
 
 	fbuf->fb_err = ret;
 	if (!ret) {
-		len = strnlen(name, MIN(PATH_MAX, FUSEBUFMAXSIZE));
+		len = strnlen(name, PATH_MAX);
 		fbuf->fb_len = len;
+		fbuf->fb_dat = malloc(fbuf->fb_len);
+		if (fbuf->fb_dat == NULL) {
+			fbuf->fb_err = -errno;
+			return (0);
+		}
 		memcpy(fbuf->fb_dat, name, len);
 	} else
 		fbuf->fb_len = 0;
@@ -726,10 +762,12 @@ ifuse_ops_unlink(struct fuse *f, struct fusebuf *fbuf)
 
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	if (vn == NULL) {
+		free(fbuf->fb_dat);
 		fbuf->fb_err = -errno;
 		return (0);
 	}
 
+	free(fbuf->fb_dat);
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
@@ -783,9 +821,11 @@ ifuse_ops_link(struct fuse *f, struct fusebuf *fbuf)
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
+	free(fbuf->fb_dat);
 	realname = build_realname(f, oldnodeid);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
@@ -823,12 +863,14 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 	io = fbtod(fbuf, struct fb_io *);
@@ -881,6 +923,7 @@ ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
 	if (!fbuf->fb_err)
 		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
 	free(realname);
+	free(fbuf->fb_dat);
 
 	return (0);
 }
@@ -897,6 +940,7 @@ ifuse_ops_symlink(unused struct fuse *f, struct fusebuf *fbuf)
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
@@ -905,6 +949,7 @@ ifuse_ops_symlink(unused struct fuse *f, struct fusebuf *fbuf)
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
@@ -912,6 +957,7 @@ ifuse_ops_symlink(unused struct fuse *f, struct fusebuf *fbuf)
 	fbuf->fb_err = f->op.symlink((const char *)&fbuf->fb_dat[len + 1],
 	    realname);
 	fbuf->fb_ino = vn->ino;
+	free(fbuf->fb_dat);
 	free(realname);
 
 	return (0);
@@ -932,6 +978,7 @@ ifuse_ops_rename(struct fuse *f, struct fusebuf *fbuf)
 	vnf = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	if (vnf == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
@@ -939,8 +986,11 @@ ifuse_ops_rename(struct fuse *f, struct fusebuf *fbuf)
 	    fbuf->fb_io_ino);
 	if (vnt == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
+
+	free(fbuf->fb_dat);
 
 	realnamef = build_realname(f, vnf->ino);
 	if (realnamef == NULL) {
@@ -1010,9 +1060,11 @@ ifuse_ops_mknod(struct fuse *f, struct fusebuf *fbuf)
 	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
+		free(fbuf->fb_dat);
 		return (0);
 	}
 
+	free(fbuf->fb_dat);
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
 		fbuf->fb_err = -errno;

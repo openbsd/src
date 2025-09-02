@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.14 2025/09/02 15:58:51 helg Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.15 2025/09/02 17:18:40 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -69,11 +69,7 @@ struct fusebuf {
 		struct stat	FD_attr;	/* for attr vnops */
 		struct fb_io	FD_io;		/* for file io vnops */
 	} FD;
-#ifdef _KERNEL
 	uint8_t *fb_dat;			/* data's */
-#else
-	uint8_t fb_dat[FUSEBUFMAXSIZE];		/* userland does i/o with fixed size buffer */
-#endif
 };
 
 #define fb_next		fb_hdr.fh_next
