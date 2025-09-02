@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/10/03 08:56:53 claudio Exp $
+# $OpenBSD: Makefile,v 1.2 2025/09/02 16:26:42 helg Exp $
 
 TESTS=		chflags chmod chown link mkdir mkfifo open rename rmdir \
 		symlink truncate unlink
@@ -27,6 +27,7 @@ ${.OBJDIR}/../fstest:
 REGRESS_TARGETS+=	run-$t
 run-$t:
 	cd /mnt/regress-mfs && env FSTEST=${.OBJDIR}/../fstest \
+	    CHFLAGS=yes \
 	    /bin/sh ${.CURDIR}/../run ${.CURDIR}/../tests/$t/*.t
 .endfor
 

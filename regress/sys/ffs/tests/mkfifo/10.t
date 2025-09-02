@@ -6,6 +6,13 @@ desc="mkfifo returns EPERM if the parent directory of the file to be created has
 n0=`namegen`
 n1=`namegen`
 
+if [ ${CHFLAGS} == "no" ]; then
+	expect 0 mkdir ${n0} 0755
+	expect EOPNOTSUPP chflags ${n0} SF_IMMUTABLE
+	expect 0 rmdir ${n0}
+	return 0
+fi
+
 expect 0 mkdir ${n0} 0755
 
 expect 0 mkfifo ${n0}/${n1} 0644

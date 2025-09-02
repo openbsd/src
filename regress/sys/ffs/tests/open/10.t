@@ -5,6 +5,13 @@ desc="open returns EPERM when the named file has its immutable flag set and the 
 
 n0=`namegen`
 
+if [ ${CHFLAGS} == "no" ]; then
+	expect 0 create ${n0} 0644
+	expect EOPNOTSUPP chflags ${n0} SF_IMMUTABLE
+	expect 0 unlink ${n0}
+	return 0
+fi
+
 expect 0 create ${n0} 0644
 expect 0 chflags ${n0} SF_IMMUTABLE
 expect EPERM open ${n0} O_WRONLY

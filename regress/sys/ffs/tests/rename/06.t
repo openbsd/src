@@ -6,6 +6,13 @@ desc="rename returns EPERM if the file pointed at by the 'from' argument has its
 n0=`namegen`
 n1=`namegen`
 
+if [ ${CHFLAGS} == "no" ]; then
+	expect 0 create ${n0} 0644
+	expect EOPNOTSUPP chflags ${n0} SF_IMMUTABLE
+	expect 0 unlink ${n0}
+	return 0
+fi
+
 expect 0 create ${n0} 0644
 for flag in SF_IMMUTABLE UF_IMMUTABLE SF_APPEND UF_APPEND; do
 	expect 0 chflags ${n0} ${flag}

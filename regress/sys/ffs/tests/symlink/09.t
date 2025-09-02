@@ -8,6 +8,13 @@ n1=`namegen`
 
 expect 0 mkdir ${n0} 0755
 
+if [ ${CHFLAGS} == "no" ]; then
+	expect 0 mkdir ${n0} 0755
+	expect EOPNOTSUPP chflags ${n0} SF_IMMUTABLE
+	expect 0 rmdir ${n0}
+	return 0
+fi
+
 expect 0 symlink test ${n0}/${n1}
 expect 0 unlink ${n0}/${n1}
 

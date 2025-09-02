@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.6 2020/12/16 21:49:20 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2025/09/02 16:26:42 helg Exp $
 
-TESTS=		chflags chmod chown link mkdir mkfifo open rename rmdir \
+TESTS=		chmod chown link mkdir mkfifo open rename rmdir \
 		symlink truncate unlink
 CLEANFILES=	diskimage
 
@@ -55,6 +55,7 @@ ${.OBJDIR}/../fstest:
 REGRESS_TARGETS+=	run-$t
 run-$t:
 	cd /mnt/regress-nfs-client && env FSTEST=${.OBJDIR}/../fstest \
+	    CHFLAGS=no \
 	    /bin/sh ${.CURDIR}/../run ${.CURDIR}/../tests/$t/*.t
 .endfor
 
