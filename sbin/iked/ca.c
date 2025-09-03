@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.102 2024/06/18 05:08:41 tb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.103 2025/09/03 05:16:59 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -321,7 +321,7 @@ ca_decode_cert_bundle(struct iked *env, struct iked_sahdr *sh,
 	if (ret != 0)
 		log_info("%s: failed to decode cert bundle",
 		    SPI_SH(sh, __func__));
-	sk_X509_free(untrusted);
+	sk_X509_pop_free(untrusted, X509_free);
 	return ret;
 }
 
@@ -659,7 +659,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 				    type, issuer);
 				X509_free(issuer);
 				if (ret == 0) {
-					sk_X509_free(untrusted);
+					sk_X509_pop_free(untrusted, X509_free);
 					return (0);
 				}
 			} else
@@ -699,7 +699,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 
 	ret = proc_composev(&env->sc_ps, PROC_IKEV2, cmd, iov, iovcnt);
 	ibuf_free(key.id_buf);
-	sk_X509_free(untrusted);
+	sk_X509_pop_free(untrusted, X509_free);
 
 	return (ret);
 }
