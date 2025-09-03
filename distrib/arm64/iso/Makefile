@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2025/09/01 18:56:04 mglocker Exp $
+#	$OpenBSD: Makefile,v 1.14 2025/09/03 01:39:28 jsg Exp $
 
 FS=		install${OSrev}.img
 FSSIZE=		1290240
@@ -37,6 +37,7 @@ PIFILES=\
 	bcm2710-rpi-3-b.dtb \
 	bcm2710-rpi-3-b-plus.dtb \
 	bcm2710-rpi-cm3.dtb \
+	bcm2710-rpi-zero-2-w.dtb \
 	bcm2711-rpi-4-b.dtb \
 	bcm2711-rpi-400.dtb \
 	bcm2711-rpi-cm4.dtb \

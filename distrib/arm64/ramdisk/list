@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.24 2025/09/01 18:56:04 mglocker Exp $
+#	$OpenBSD: list,v 1.25 2025/09/03 01:39:28 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -107,6 +107,7 @@ COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-2-b.dtb usr/mdec/rpi
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b.dtb usr/mdec/rpi/bcm2710-rpi-3-b.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b-plus.dtb usr/mdec/rpi/bcm2710-rpi-3-b-plus.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-cm3.dtb usr/mdec/rpi/bcm2710-rpi-cm3.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-zero-2-w.dtb usr/mdec/rpi/bcm2710-rpi-zero-2-w.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-4-b.dtb usr/mdec/rpi/bcm2711-rpi-4-b.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-400.dtb usr/mdec/rpi/bcm2711-rpi-400.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2711-rpi-cm4.dtb usr/mdec/rpi/bcm2711-rpi-cm4.dtb
