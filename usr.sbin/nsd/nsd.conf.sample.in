@@ -195,6 +195,10 @@ server:
 	# log timestamp in ascii (y-m-d h:m:s.msec), yes is default.
 	# log-time-ascii: yes
 
+	# log timestamp in ISO8601 format if also log-time-ascii is enabled.
+	# (y-m-dTh:m:s.msec[+-]tzhours:tzminutes)
+	# log-time-iso: no
+
 	# round robin rotation of records in the answer.
 	# round-robin: no
 
@@ -215,6 +219,9 @@ server:
 	# write changed zonefiles to disk, every N seconds.
 	# default is 3600.
 	# zonefiles-write: 3600
+
+	# Reload nsd.conf and update TSIG keys and zones on SIGHUP.
+	# reload-config: no
 
 	# RRLconfig
 	# Response Rate Limiting, size of the hashtable. Default 1000000.
@@ -256,6 +263,18 @@ server:
 	# tls-service-ocsp: "path/to/ocsp.pem"
 	# tls-port: 853
 	
+	# Provides a dedidated TLS port where only authenticated clients can
+	# connect. Used for zone transfers to secondary servers. It uses
+	# tls-service-key and tls-service-pem and verifies client certificates
+	# using tls-cert-bundle.
+	# Default is "" (disabled). Requires restart to take effect.
+	# tls-auth-port: ""
+
+	# Allow zone transfers only on the tls-auth-port port and only to
+	# authenticated clients. Requests for zone transfers on other ports
+	# are refused. Default is no. Requires restart to change it.
+	# tls-auth-xfr-only: no
+
 	# Certificates used to authenticate connections made upstream for
 	# Transfers over TLS (XoT). Default is "" (default verify locations).
 	# tls-cert-bundle: "path/to/ca-bundle.pem"
@@ -325,11 +344,13 @@ remote-control:
 	# interfaces can be specified by IP address or interface name.
 	# with an interface name, all IP addresses associated with that
 	# interface are used.
-	# with an absolute path, a unix local named pipe is used for control
-	# (and key and cert files are not needed, use directory permissions).
 	# control-interface: 127.0.0.1
 	# control-interface: ::1
 	# control-interface: lo
+
+	# with an absolute path, a unix local named pipe is used for control
+	# (and key and cert files are not needed, use directory permissions).
+	# control-interface: @runstatedir@/nsd/nsd.sock
 
 	# port number for remote control operations (uses TLS over TCP).
 	# control-port: 8952
@@ -429,13 +450,13 @@ remote-control:
 	#allow-notify: 2001:db8::0/64 my_tsig_key_name
 	# By default, a secondary will request a zone transfer with IXFR/TCP.
 	# If you want to make use of IXFR/UDP use: UDP addr tsigkey
-	# for a master that only speaks AXFR (like NSD) use AXFR addr tsigkey
+	# for a primary that only speaks AXFR use AXFR addr tsigkey
 	# If you want to require use of XFR-over-TLS use: addr tsigkey tlsauthname
 	#request-xfr: 192.0.2.2 the_tsig_key_name
 	#request-xfr: 192.0.2.2 the_tsig_key_name the_tls_auth_name
 	# Attention: You cannot use UDP and AXFR together. AXFR is always over
 	# TCP. If you use UDP, we highly recommend you to deploy TSIG.
-	# Allow AXFR fallback if the master does not support IXFR. Default
+	# Allow AXFR fallback if the primary does not support IXFR. Default
 	# is yes.
 	#allow-axfr-fallback: yes
 	# set local interface for sending zone transfer requests.
@@ -467,8 +488,8 @@ remote-control:
 	# from that pattern are inserted into this one (as if it were a
 	# macro).  The statement can be given in between other statements,
 	# because the order of access control elements can make a difference
-	# (which master to request from first, which secondary to notify first).
-	#include-pattern: "common-masters"
+	# (which primary to request from first, which secondary to notify first).
+	#include-pattern: "common-primaries"
 
 	# Verify zone before publishing.
 	# Default is value of verify-zones in verify.
@@ -513,7 +534,7 @@ remote-control:
 	# name: "example.com"
 	# you can give a pattern here, all the settings from that pattern
 	# are then inserted at this point
-	# include-pattern: "master"
+	# include-pattern: "primary"
 	# You can also specify (additional) options directly for this zone.
 	# zonefile: "example.com.zone"
 	# request-xfr: 192.0.2.1 example.com.key

@@ -130,6 +130,11 @@ void region_free_all(region_type *region);
 char *region_strdup(region_type *region, const char *string);
 
 /*
+ * Replace a string on the to_replace location, if string is different
+ */
+void region_str_replace(region_type* region, char **to_replace,
+		const char *string);
+/*
  * Recycle an allocated memory block. Pass size used to alloc it.
  * Does nothing if recycling is not enabled for the region.
  */

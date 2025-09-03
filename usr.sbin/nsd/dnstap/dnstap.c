@@ -404,7 +404,11 @@ dt_tls_writer_open(void* obj)
 		log_crypto_err("SSL verification failed");
 		return fstrm_res_failure;
 	}
+#ifdef HAVE_SSL_GET1_PEER_CERTIFICATE
+	x = SSL_get1_peer_certificate(dtw->ssl);
+#else
 	x = SSL_get_peer_certificate(dtw->ssl);
+#endif
 	if(!x) {
 		log_crypto_err("Server presented no peer certificate");
 		return fstrm_res_failure;

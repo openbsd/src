@@ -139,7 +139,12 @@ struct zone
 #endif
 	struct zone_options* opts;
 	struct zone_ixfr* ixfr;
-	char*        filename; /* set if read from file, which file */
+	char *filename; /* set if read from file, which files */
+	/* list of include files to monitor for changes */
+	struct {
+		size_t count;
+		char **paths;
+	} includes;
 	char*        logstr; /* set for zone xfer, the log string */
 	struct timespec mtime; /* time of last modification */
 	unsigned     zonestatid; /* array index for zone stats */
@@ -400,6 +405,7 @@ namedb_find_or_create_zone(namedb_type *db, const dname_type *dname,
 	       	struct zone_options* zopt)
 { zone_type* zone = namedb_find_zone(db, dname);
   return zone ? zone : namedb_zone_create(db, dname, zopt); }
+void namedb_zone_free_filenames(namedb_type* db, zone_type* zone);
 void namedb_zone_delete(namedb_type* db, zone_type* zone);
 void namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt);
 void namedb_write_zonefiles(struct nsd* nsd, struct nsd_options* options);

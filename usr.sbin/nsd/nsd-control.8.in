@@ -1,5 +1,5 @@
-.TH "nsd\-control" "8" "Apr  4, 2024" "NLnet Labs" "nsd 4.9.1"
-.\" Copyright (c) 2011, NLnet Labs. All rights reserved.
+.TH "nsd\-control" "8" "dec 12, 2024" "NLnet Labs" "nsd 4.11.0"
+.\" Copyright (c) 2011-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd\-control,
@@ -190,27 +190,27 @@ restart, for lasting changes edit the nsd.conf file or a file included from it.
 .B add_cookie_secret <secret>
 Add or replace a cookie secret persistently. <secret> needs to be an 128 bit
 hex string.
-
+.sp
 Cookie secrets can be either \fIactive\fR or \fIstaging\fR. \fIActive\fR cookie
 secrets are used to create DNS Cookies, but verification of a DNS Cookie
 succeeds with any of the \fIactive\fR or \fIstaging\fR cookie secrets. The
 state of the current cookie secrets can be printed with the
 \fBprint_cookie_secrets\fR command.
-
+.sp
 When there are no cookie secrets configured yet, the <secret> is added as
 \fIactive\fR. If there is already an \fIactive\fR cookie secret, the <secret>
 is added as \fIstaging\fR or replacing an existing \fIstaging\fR secret.
-
+.sp
 To "roll" a cookie secret used in an anycast set. The new secret has to be
 added as staging secret to \fBall\fR nodes in the anycast set. When \fBall\fR
 nodes can verify DNS Cookies with the new secret, the new secret can be
 activated with the \fBactivate_cookie_secret\fR command. After \fBall\fR nodes
 have the new secret \fIactive\fR for at least one hour, the previous secret can
 be dropped with the \fBdrop_cookie_secret\fR command.
-
+.sp
 Persistence is accomplished by writing to a file which if configured with the
 \fBcookie\-secret\-file\fR option in the server section of the config file.
-The default value for that is: @configdir@/nsd_cookiesecrets.txt .
+The default value for that is: @cookiesecretsfile@ .
 .TP
 .B drop_cookie_secret
 Drop the \fIstaging\fR cookie secret.

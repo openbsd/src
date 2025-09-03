@@ -274,18 +274,20 @@ xfrd_handle_notify_reply(struct notify_zone* zone, buffer_type* packet,
 static int
 xfrd_notify_send_udp(struct notify_zone* zone, int index)
 {
+	int apex_compress = 0;
 	buffer_type* packet = xfrd_get_temp_buffer();
 	if(!zone->pkts[index].dest) return 0;
 	/* send NOTIFY to secondary. */
 	xfrd_setup_packet(packet, TYPE_SOA, CLASS_IN, zone->apex,
-		qid_generate());
+		qid_generate(), &apex_compress);
 	zone->pkts[index].notify_query_id = ID(packet);
 	OPCODE_SET(packet, OPCODE_NOTIFY);
 	AA_SET(packet);
 	if(zone->current_soa->serial != 0) {
 		/* add current SOA to answer section */
 		ANCOUNT_SET(packet, 1);
-		xfrd_write_soa_buffer(packet, zone->apex, zone->current_soa);
+		xfrd_write_soa_buffer(packet, zone->apex, zone->current_soa,
+			apex_compress);
 	}
 	if(zone->pkts[index].dest->key_options) {
 		xfrd_tsig_sign_request(packet, &zone->notify_tsig, zone->pkts[index].dest);
@@ -318,9 +320,17 @@ xfrd_notify_send_udp(struct notify_zone* zone, int index)
 		int fd;
 		socklen_t to_len = xfrd_acl_sockaddr_to(
 			zone->pkts[index].dest, &to);
-		if(zone->pkts[index].dest->is_ipv6)
+		if(zone->pkts[index].dest->is_ipv6
+		&& zone->notify_send6_handler.ev_fd != -1)
 			fd = zone->notify_send6_handler.ev_fd;
-		else	fd = zone->notify_send_handler.ev_fd;
+		else if (zone->notify_send_handler.ev_fd != -1)
+			fd = zone->notify_send_handler.ev_fd;
+		else {
+			log_msg(LOG_ERR, "xfrd notify: sendto %s failed %s",
+				zone->pkts[index].dest->ip_address_spec,
+				"invalid file descriptor");
+			return 0;
+		}
 		if(sendto(fd,
 			buffer_current(packet), buffer_remaining(packet), 0,
 			(struct sockaddr*)&to, to_len) == -1) {

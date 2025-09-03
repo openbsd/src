@@ -304,7 +304,7 @@ xfrd_tcp_pipeline_create(region_type* region, int tcp_pipeline)
 	tp->unused = (uint16_t*)region_alloc_zero(region,
 		sizeof(tp->unused[0])*tp->pipe_num);
 	tp->tcp_r = xfrd_tcp_create(region, QIOBUFSZ);
-	tp->tcp_w = xfrd_tcp_create(region, 512);
+	tp->tcp_w = xfrd_tcp_create(region, QIOBUFSZ);
 	xfrd_tcp_pipeline_init(tp);
 	return tp;
 }
@@ -377,7 +377,8 @@ xfrd_tcp_pipeline_skip_id(struct xfrd_tcp_pipeline* tp, uint16_t id)
 
 void
 xfrd_setup_packet(buffer_type* packet,
-	uint16_t type, uint16_t klass, const dname_type* dname, uint16_t qid)
+	uint16_t type, uint16_t klass, const dname_type* dname, uint16_t qid,
+	int* apex_compress)
 {
 	/* Set up the header */
 	buffer_clear(packet);
@@ -391,6 +392,8 @@ xfrd_setup_packet(buffer_type* packet,
 	buffer_skip(packet, QHEADERSZ);
 
 	/* The question record. */
+	if(apex_compress)
+		*apex_compress = buffer_position(packet);
 	buffer_write(packet, dname_name(dname), dname->name_size);
 	buffer_write_u16(packet, type);
 	buffer_write_u16(packet, klass);
@@ -469,11 +472,14 @@ xfrd_acl_sockaddr_frm(acl_options_type* acl, struct sockaddr_in *frm)
 
 void
 xfrd_write_soa_buffer(struct buffer* packet,
-	const dname_type* apex, struct xfrd_soa* soa)
+	const dname_type* apex, struct xfrd_soa* soa, int apex_compress)
 {
 	size_t rdlength_pos;
 	uint16_t rdlength;
-	buffer_write(packet, dname_name(apex), apex->name_size);
+	if(apex_compress > 0 && apex_compress < (int)buffer_limit(packet) &&
+		apex->name_size > 1)
+		buffer_write_u16(packet, 0xc000 | apex_compress);
+	else	buffer_write(packet, dname_name(apex), apex->name_size);
 
 	/* already in network order */
 	buffer_write(packet, &soa->type, sizeof(soa->type));
@@ -482,9 +488,28 @@ xfrd_write_soa_buffer(struct buffer* packet,
 	rdlength_pos = buffer_position(packet);
 	buffer_skip(packet, sizeof(rdlength));
 
-	/* uncompressed dnames */
-	buffer_write(packet, soa->prim_ns+1, soa->prim_ns[0]);
-	buffer_write(packet, soa->email+1, soa->email[0]);
+	/* compress dnames to apex if possible */
+	if(apex_compress > 0 && apex_compress < (int)buffer_limit(packet) &&
+		apex->name_size > 1 && is_dname_subdomain_of_case(
+		soa->prim_ns+1, soa->prim_ns[0], dname_name(apex),
+		apex->name_size)) {
+		if(soa->prim_ns[0] > apex->name_size)
+			buffer_write(packet, soa->prim_ns+1, soa->prim_ns[0]-
+				apex->name_size);
+		buffer_write_u16(packet, 0xc000 | apex_compress);
+	} else {
+		buffer_write(packet, soa->prim_ns+1, soa->prim_ns[0]);
+	}
+	if(apex_compress > 0 && apex_compress < (int)buffer_limit(packet) &&
+		apex->name_size > 1 && is_dname_subdomain_of_case(soa->email+1,
+		soa->email[0], dname_name(apex), apex->name_size)) {
+		if(soa->email[0] > apex->name_size)
+			buffer_write(packet, soa->email+1, soa->email[0]-
+				apex->name_size);
+		buffer_write_u16(packet, 0xc000 | apex_compress);
+	} else {
+		buffer_write(packet, soa->email+1, soa->email[0]);
+	}
 
 	buffer_write(packet, &soa->serial, sizeof(uint32_t));
 	buffer_write(packet, &soa->refresh, sizeof(uint32_t));
@@ -879,14 +904,6 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 	if (zone->master->tls_auth_options &&
 		zone->master->tls_auth_options->auth_domain_name) {
 #ifdef HAVE_TLS_1_3
-		if (!setup_ssl(tp, set, zone->master->tls_auth_options->auth_domain_name)) {
-			log_msg(LOG_ERR, "xfrd: Cannot setup TLS on pipeline for %s to %s",
-					zone->apex_str, zone->master->ip_address_spec);
-			close(fd);
-			xfrd_set_refresh_now(zone);
-			return 0;
-		}
-
 		/* Load client certificate (if provided) */
 		if (zone->master->tls_auth_options->client_cert &&
 		    zone->master->tls_auth_options->client_key) {
@@ -903,6 +920,29 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 			if (SSL_CTX_use_PrivateKey_file(set->ssl_ctx, zone->master->tls_auth_options->client_key, SSL_FILETYPE_PEM) != 1) {
 				log_msg(LOG_ERR, "xfrd tls: Unable to load private key from file %s", zone->master->tls_auth_options->client_key);
 			}
+
+			if (!SSL_CTX_check_private_key(set->ssl_ctx)) {
+				log_msg(LOG_ERR, "xfrd tls: Client private key from file %s does not match the certificate from file %s",
+				                 zone->master->tls_auth_options->client_key,
+				                 zone->master->tls_auth_options->client_cert);
+			}
+		/* If client certificate/private key loading has failed,
+		   client will not try to authenticate to the server but the connection
+		   will procceed and will be up to the server to allow or deny the
+		   unauthenticated connection. A server that does not enforce authentication
+		   (or a badly configured server?) might allow the transfer.
+		   XXX: Maybe we should close the connection now to make it obvious that
+		   there is something wrong from our side. Alternatively make it obvious
+		   to the operator that we're not being authenticated to the server.
+		*/
+		}
+
+		if (!setup_ssl(tp, set, zone->master->tls_auth_options->auth_domain_name)) {
+			log_msg(LOG_ERR, "xfrd: Cannot setup TLS on pipeline for %s to %s",
+					zone->apex_str, zone->master->ip_address_spec);
+			close(fd);
+			xfrd_set_refresh_now(zone);
+			return 0;
 		}
 
 		tp->handshake_done = 0;
@@ -978,20 +1018,28 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "request full zone transfer "
 						"(AXFR) for %s to %s",
 			zone->apex_str, zone->master->ip_address_spec));
+		VERBOSITY(3, (LOG_INFO, "request full zone transfer "
+						"(AXFR) for %s to %s",
+			zone->apex_str, zone->master->ip_address_spec));
 
 		xfrd_setup_packet(tcp->packet, TYPE_AXFR, CLASS_IN, zone->apex,
-			zone->query_id);
+			zone->query_id, NULL);
 		xfrd_prepare_zone_xfr(zone, TYPE_AXFR);
 	} else {
+		int apex_compress = 0;
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "request incremental zone "
+						"transfer (IXFR) for %s to %s",
+			zone->apex_str, zone->master->ip_address_spec));
+		VERBOSITY(3, (LOG_INFO, "request incremental zone "
 						"transfer (IXFR) for %s to %s",
 			zone->apex_str, zone->master->ip_address_spec));
 
 		xfrd_setup_packet(tcp->packet, TYPE_IXFR, CLASS_IN, zone->apex,
-			zone->query_id);
+			zone->query_id, &apex_compress);
 		xfrd_prepare_zone_xfr(zone, TYPE_IXFR);
 		NSCOUNT_SET(tcp->packet, 1);
-		xfrd_write_soa_buffer(tcp->packet, zone->apex, &zone->soa_disk);
+		xfrd_write_soa_buffer(tcp->packet, zone->apex, &zone->soa_disk,
+			apex_compress);
 	}
 	if(zone->master->key_options && zone->master->key_options->tsig_key) {
 		xfrd_tsig_sign_request(

@@ -224,10 +224,11 @@ int conn_write(struct xfrd_tcp* conn);
 
 /* setup DNS packet for a query of this type */
 void xfrd_setup_packet(struct buffer* packet,
-        uint16_t type, uint16_t klass, const struct dname* dname, uint16_t qid);
+        uint16_t type, uint16_t klass, const struct dname* dname, uint16_t qid,
+	int* apex_compress);
 /* write soa in network format to the packet buffer */
 void xfrd_write_soa_buffer(struct buffer* packet,
-        const struct dname* apex, struct xfrd_soa* soa);
+        const struct dname* apex, struct xfrd_soa* soa, int apex_compress);
 /* use acl address to setup sockaddr struct, returns length of addr. */
 socklen_t xfrd_acl_sockaddr_to(struct acl_options* acl,
 #ifdef INET6

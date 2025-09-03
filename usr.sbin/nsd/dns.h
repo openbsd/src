@@ -103,12 +103,12 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_X25	19	/* RFC1183 */
 #define TYPE_ISDN	20	/* RFC1183 */
 #define TYPE_RT		21	/* RFC1183 */
-#define TYPE_NSAP	22	/* RFC1706 */
-
+#define TYPE_NSAP	22	/* RFC1706 (deprecated by RFC9121) */
+#define TYPE_NSAP_PTR	23	/* RFC1348  (deprecated by RFC9121)*/
 #define TYPE_SIG	24	/* 2535typecode */
 #define TYPE_KEY	25	/* 2535typecode */
 #define TYPE_PX		26	/* RFC2163 */
-
+#define TYPE_GPOS	27	/* RFC1712 */
 #define TYPE_AAAA	28	/* ipv6 address */
 #define TYPE_LOC	29	/* LOC record  RFC1876 */
 #define TYPE_NXT	30	/* 2535typecode */
@@ -118,9 +118,7 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_NAPTR	35	/* RFC2915 */
 #define TYPE_KX		36	/* RFC2230 Key Exchange Delegation Record */
 #define TYPE_CERT	37	/* RFC2538 */
-
 #define TYPE_A6		38	/* RFC2874 */
-
 #define TYPE_DNAME	39	/* RFC2672 */
 
 #define TYPE_OPT	41	/* Pseudo OPT record... */
@@ -128,7 +126,6 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_DS		43	/* RFC 4033, 4034, and 4035 */
 #define TYPE_SSHFP	44	/* SSH Key Fingerprint */
 #define TYPE_IPSECKEY	45	/* public key for ipsec use. RFC 4025 */
-
 #define TYPE_RRSIG	46	/* RFC 4033, 4034, and 4035 */
 #define TYPE_NSEC	47	/* RFC 4033, 4034, and 4035 */
 #define TYPE_DNSKEY	48	/* RFC 4033, 4034, and 4035 */
@@ -137,13 +134,17 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_NSEC3PARAM 51	/* NSEC3PARAM at zone apex nsec3 parameters */
 #define TYPE_TLSA	52	/* RFC 6698 */
 #define TYPE_SMIMEA	53	/* RFC 8162 */
+#define TYPE_HIP	55	/* RFC 8005 */
+#define TYPE_NINFO	56	/* NINFO/ninfo-completed-template */
+#define TYPE_RKEY	57	/* RKEY/rkey-completed-template */
+
 #define TYPE_CDS	59	/* RFC 7344 */
 #define TYPE_CDNSKEY	60	/* RFC 7344 */
 #define TYPE_OPENPGPKEY 61	/* RFC 7929 */
 #define TYPE_CSYNC	62	/* RFC 7477 */
-#define TYPE_ZONEMD	63	/* draft-ietf-dnsop-dns-zone-digest */
-#define TYPE_SVCB	64	/* draft-ietf-dnsop-svcb-https-03 */
-#define TYPE_HTTPS	65	/* draft-ietf-dnsop-svcb-https-03 */
+#define TYPE_ZONEMD	63	/* RFC 8976 */
+#define TYPE_SVCB	64	/* RFC 9460 */
+#define TYPE_HTTPS	65	/* RFC 9460 */
 
 #define TYPE_SPF        99      /* RFC 4408 */
 
@@ -162,20 +163,28 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_ANY	255	/* any type (wildcard) */
 #define TYPE_URI	256	/* RFC 7553 */
 #define TYPE_CAA	257	/* RFC 6844 */
-#define TYPE_AVC	258
+#define TYPE_AVC	258	/* AVC/avc-completed-template */
 
+#define TYPE_RESINFO	261	/* RFC 9606 */
+#define TYPE_WALLET	262	/* WALLET/wallet-completed-template */
+#define TYPE_CLA	263	/* CLA/cla-completed-template */
+
+#define TYPE_TA		32768	/* http://www.watson.org/~weiler/INI1999-19.pdf */
 #define TYPE_DLV	32769	/* RFC 4431 */
-#define PSEUDO_TYPE_DLV	RRTYPE_DESCRIPTORS_LENGTH
+#define PSEUDO_TYPE_TA	RRTYPE_DESCRIPTORS_LENGTH
+#define PSEUDO_TYPE_DLV	(RRTYPE_DESCRIPTORS_LENGTH + 1)
 
 #define SVCB_KEY_MANDATORY		0
 #define SVCB_KEY_ALPN			1
 #define SVCB_KEY_NO_DEFAULT_ALPN	2
 #define SVCB_KEY_PORT			3
 #define SVCB_KEY_IPV4HINT		4
-#define SVCB_KEY_ECH		5
+#define SVCB_KEY_ECH			5
 #define SVCB_KEY_IPV6HINT		6
 #define SVCB_KEY_DOHPATH		7
-#define SVCPARAMKEY_COUNT 8
+#define SVCB_KEY_OHTTP			8
+#define SVCB_KEY_TLS_SUPPORTED_GROUPS	9
+#define SVCPARAMKEY_COUNT 10
 
 #define MAXLABELLEN	63
 #define MAXDOMAINLEN	255
@@ -214,10 +223,11 @@ enum rdata_wireformat
 	RDATA_WF_APL,                /* APL data.  */
 	RDATA_WF_IPSECGATEWAY,       /* IPSECKEY gateway ip4, ip6 or dname. */
 	RDATA_WF_ILNP64,             /* 64-bit uncompressed IPv6 address.  */
-	RDATA_WF_EUI48,	             /* 48-bit address.  */
+	RDATA_WF_EUI48,              /* 48-bit address.  */
 	RDATA_WF_EUI64,              /* 64-bit address.  */
 	RDATA_WF_LONG_TEXT,          /* Long (>255) text string. */
-	RDATA_WF_SVCPARAM            /* SvcParam <key>[=<value>] */
+	RDATA_WF_SVCPARAM,           /* SvcParam <key>[=<value>] */
+	RDATA_WF_HIP                 /* HIP rdata up to the Rendezvous Servers */
 };
 typedef enum rdata_wireformat rdata_wireformat_type;
 
@@ -255,8 +265,11 @@ enum rdata_zoneformat
 	RDATA_ZF_EUI48,		/* EUI48 address.  */
 	RDATA_ZF_EUI64,		/* EUI64 address.  */
 	RDATA_ZF_LONG_TEXT,	/* Long (>255) text string. */
-	RDATA_ZF_TAG,		/* Text string without quotes. */
+	RDATA_ZF_UNQUOTED,	/* Unquoted text string. */
+	RDATA_ZF_UNQUOTEDS,	/* A sequence of unquoted text strings. */
+	RDATA_ZF_TAG,		/* A sequence of letters and numbers. */
 	RDATA_ZF_SVCPARAM,	/* SvcParam <key>[=<value>] */
+	RDATA_ZF_HIP,		/* HIP rdata up to the Rendezvous Servers */
 	RDATA_ZF_UNKNOWN	/* Unknown data.  */
 };
 typedef enum rdata_zoneformat rdata_zoneformat_type;
@@ -265,7 +278,6 @@ struct rrtype_descriptor
 {
 	uint16_t    type;	/* RR type */
 	const char *name;	/* Textual name.  */
-	int         token;	/* Parser token.  */
 	uint32_t    minimum;	/* Minimum number of RDATAs.  */
 	uint32_t    maximum;	/* Maximum number of RDATAs.  */
 	uint8_t     wireformat[MAXRDATALEN]; /* rdata_wireformat_type */
@@ -277,9 +289,9 @@ typedef struct rrtype_descriptor rrtype_descriptor_type;
  * Indexed by type.  The special type "0" can be used to get a
  * descriptor for unknown types (with one binary rdata).
  *
- * AVC + 1
+ * CLA + 1
  */
-#define RRTYPE_DESCRIPTORS_LENGTH  (TYPE_AVC + 1)
+#define RRTYPE_DESCRIPTORS_LENGTH  (TYPE_CLA + 1)
 rrtype_descriptor_type *rrtype_descriptor_by_name(const char *name);
 rrtype_descriptor_type *rrtype_descriptor_by_type(uint16_t type);
 
@@ -295,14 +307,5 @@ uint16_t rrtype_from_string(const char *name);
 
 const char *rrclass_to_string(uint16_t rrclass);
 uint16_t rrclass_from_string(const char *name);
-
-#ifdef __cplusplus
-inline rr_section_type
-operator++(rr_section_type &lhs)
-{
-	lhs = (rr_section_type) ((int) lhs + 1);
-	return lhs;
-}
-#endif /* __cplusplus */
 
 #endif /* DNS_H */

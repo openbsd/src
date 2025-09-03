@@ -71,7 +71,6 @@
 #else
 #  include "mini_event.h"
 #endif
-#include "remote.h"
 #include "util.h"
 #include "xfrd.h"
 #include "xfrd-catalog-zones.h"
@@ -81,6 +80,7 @@
 #include "options.h"
 #include "difffile.h"
 #include "ipc.h"
+#include "remote.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -1969,19 +1969,64 @@ repat_options_changed(xfrd_state_type* xfrd, struct nsd_options* newopt)
 	return 0;
 }
 
+static int opt_str_changed(const char* old, const char* new)
+{ return !old ? ( !new ? 0 : 1 ) : ( !new ? 1 : strcasecmp(old, new) ); }
+
+/** true if cookie options are different that can be set via repat. */
+static int
+repat_cookie_options_changed(struct nsd_options* old, struct nsd_options* new)
+{
+	return old->answer_cookie != new->answer_cookie
+	    || opt_str_changed( old->cookie_secret
+	                      , new->cookie_secret)
+	    || opt_str_changed( old->cookie_staging_secret
+	                      , new->cookie_staging_secret)
+	    || old->cookie_secret_file_is_default !=
+	       new->cookie_secret_file_is_default
+	    || opt_str_changed( old->cookie_secret_file
+	                      , new->cookie_secret_file);
+}
+
 /** check if global options have changed */
 static void
 repat_options(xfrd_state_type* xfrd, struct nsd_options* newopt)
 {
+	struct nsd_options* oldopt = xfrd->nsd->options;
+
 	if(repat_options_changed(xfrd, newopt)) {
 		/* update our options */
 #ifdef RATELIMIT
-		xfrd->nsd->options->rrl_ratelimit = newopt->rrl_ratelimit;
-		xfrd->nsd->options->rrl_whitelist_ratelimit = newopt->rrl_whitelist_ratelimit;
-		xfrd->nsd->options->rrl_slip = newopt->rrl_slip;
+		oldopt->rrl_ratelimit = newopt->rrl_ratelimit;
+		oldopt->rrl_whitelist_ratelimit = newopt->rrl_whitelist_ratelimit;
+		oldopt->rrl_slip = newopt->rrl_slip;
 #endif
 		task_new_opt_change(xfrd->nsd->task[xfrd->nsd->mytask],
 			xfrd->last_task, newopt);
+		xfrd_set_reload_now(xfrd);
+	}
+	if(repat_cookie_options_changed(oldopt, newopt)) {
+		/* update our options */
+		oldopt->answer_cookie = newopt->answer_cookie;
+		region_str_replace(  oldopt->region
+		                  , &oldopt->cookie_secret
+		                  ,  newopt->cookie_secret);
+		region_str_replace(  oldopt->region
+		                  , &oldopt->cookie_staging_secret
+		                  ,  newopt->cookie_staging_secret);
+		oldopt->cookie_secret_file_is_default =
+			newopt->cookie_secret_file_is_default;
+		region_str_replace(  oldopt->region
+		                  , &oldopt->cookie_secret_file
+		                  ,  newopt->cookie_secret_file);
+
+		xfrd->nsd->cookie_count = 0;
+		xfrd->nsd->cookie_secrets_source = COOKIE_SECRETS_NONE;
+		reconfig_cookies(xfrd->nsd, newopt);
+		task_new_cookies( xfrd->nsd->task[xfrd->nsd->mytask]
+		                , xfrd->last_task
+		                , xfrd->nsd->do_answer_cookie
+		                , xfrd->nsd->cookie_count
+		                , xfrd->nsd->cookie_secrets);
 		xfrd_set_reload_now(xfrd);
 	}
 }
@@ -2036,6 +2081,48 @@ do_repattern(RES* ssl, xfrd_state_type* xfrd)
 	zonestat_inc_ifneeded(xfrd);
 	send_ok(ssl);
 	region_destroy(region);
+}
+
+static void print_cfg_err(void *unused, const char *message)
+{
+	(void)unused;
+	log_msg(LOG_ERR, "%s", message);
+}
+
+/* mostly identical to do_repattern */
+void xfrd_reload_config(xfrd_state_type *xfrd)
+{
+	const char *chrootdir = xfrd->nsd->chrootdir;
+	const char *file = xfrd->nsd->options->configfile;
+	region_type* region;
+	struct nsd_options* options;
+
+	if (chrootdir && !file_inside_chroot(file, chrootdir))
+	{
+		log_msg(LOG_ERR, "%s is not relative to %s: %s",
+			xfrd->nsd->options->configfile, xfrd->nsd->chrootdir,
+			"chroot prevents reread of config");
+		goto error_chroot;
+	}
+
+	region = region_create(xalloc, free);
+	options = nsd_options_create(region);
+
+	if (!parse_options_file(
+		options, file, print_cfg_err, NULL, xfrd->nsd->options))
+	{
+		goto error_parse;
+	}
+
+	repat_keys(xfrd, options);
+	repat_patterns(xfrd, options); /* adds/deletes zones too */
+	repat_options(xfrd, options);
+	zonestat_inc_ifneeded(xfrd);
+
+error_parse:
+	region_destroy(region);
+error_chroot:
+	return;
 }
 
 /** do the serverpid command: printout pid of server process */
@@ -2298,19 +2385,42 @@ do_del_tsig(RES* ssl, xfrd_state_type* xfrd, char* arg) {
 	send_ok(ssl);
 }
 
+
+static int
+can_dump_cookie_secrets(RES* ssl, nsd_type* const nsd)
+{
+	if(!nsd->options->cookie_secret_file)
+		(void)ssl_printf(ssl, "error: empty cookie-secret-file\n");
+
+	else if(nsd->cookie_secrets_source == COOKIE_SECRETS_FROM_CONFIG)
+		(void)ssl_printf(ssl, "error: cookie secrets are already "
+			"configured. Remove \"cookie-secret:\" and "
+			"\"cookie-staging-secret:\" entries from configuration "
+			"first (and reconfig) before managing cookies with "
+			"nsd-control\n");
+	else
+		return 1;
+	return 0;
+	
+}
+
 /* returns `0` on failure */
 static int
-cookie_secret_file_dump(RES* ssl, nsd_type const* nsd) {
-	char const* secret_file = nsd->options->cookie_secret_file;
+cookie_secret_file_dump_and_reload(RES* ssl, nsd_type* const nsd) {
 	char secret_hex[NSD_COOKIE_SECRET_SIZE * 2 + 1];
 	FILE* f;
 	size_t i;
-	assert( secret_file != NULL );
 
 	/* open write only and truncate */
-	if((f = fopen(secret_file, "w")) == NULL ) {
-		(void)ssl_printf(ssl, "unable to open cookie secret file %s: %s",
-		                 secret_file, strerror(errno));
+	if(!nsd->options->cookie_secret_file) {
+		(void)ssl_printf(ssl, "cookie-secret-file empty\n");
+		return 0;
+	}
+	else if((f = fopen(nsd->options->cookie_secret_file, "w")) == NULL ) {
+		(void)ssl_printf( ssl
+		                , "unable to open cookie secret file %s: %s\n"
+		                , nsd->options->cookie_secret_file
+		                , strerror(errno));
 		return 0;
 	}
 	for(i = 0; i < nsd->cookie_count; i++) {
@@ -2324,65 +2434,77 @@ cookie_secret_file_dump(RES* ssl, nsd_type const* nsd) {
 	}
 	explicit_bzero(secret_hex, sizeof(secret_hex));
 	fclose(f);
+	nsd->cookie_secrets_source = COOKIE_SECRETS_FROM_FILE;
+	region_str_replace(nsd->region, &nsd->cookie_secrets_filename
+	                              , nsd->options->cookie_secret_file);
+	task_new_cookies(xfrd->nsd->task[xfrd->nsd->mytask], xfrd->last_task,
+		nsd->do_answer_cookie, nsd->cookie_count, nsd->cookie_secrets);
+	xfrd_set_reload_now(xfrd);
+	send_ok(ssl);
 	return 1;
 }
 
 static void
 do_activate_cookie_secret(RES* ssl, xfrd_state_type* xrfd, char* arg) {
 	nsd_type* nsd = xrfd->nsd;
+	size_t backup_cookie_count;
+	cookie_secrets_type backup_cookie_secrets;
 	(void)arg;
+
+	if(!can_dump_cookie_secrets(ssl, xfrd->nsd))
+		return;
 
 	if(nsd->cookie_count <= 1 ) {
 		(void)ssl_printf(ssl, "error: no staging cookie secret to activate\n");
 		return;
 	}
-	if(!nsd->options->cookie_secret_file || !nsd->options->cookie_secret_file[0]) {
-		(void)ssl_printf(ssl, "error: no cookie secret file configured\n");
-		return;
-	}
-	if(!cookie_secret_file_dump(ssl, nsd)) {
-		(void)ssl_printf(ssl, "error: writing to cookie secret file: \"%s\"\n",
-				nsd->options->cookie_secret_file);
-		return;
-	}
+	backup_cookie_count = nsd->cookie_count;
+	memcpy( backup_cookie_secrets, nsd->cookie_secrets
+	      , sizeof(cookie_secrets_type));
 	activate_cookie_secret(nsd);
-	(void)cookie_secret_file_dump(ssl, nsd);
-	task_new_activate_cookie_secret(xfrd->nsd->task[xfrd->nsd->mytask],
-	    xfrd->last_task);
-	xfrd_set_reload_now(xfrd);
-	send_ok(ssl);
+	if(!cookie_secret_file_dump_and_reload(ssl, nsd)) {
+		memcpy( nsd->cookie_secrets, backup_cookie_secrets
+		      , sizeof(cookie_secrets_type));
+		nsd->cookie_count = backup_cookie_count;
+	}
+	explicit_bzero(backup_cookie_secrets, sizeof(cookie_secrets_type));
 }
 
 static void
 do_drop_cookie_secret(RES* ssl, xfrd_state_type* xrfd, char* arg) {
 	nsd_type* nsd = xrfd->nsd;
+	size_t backup_cookie_count;
+	cookie_secrets_type backup_cookie_secrets;
 	(void)arg;
+
+	if(!can_dump_cookie_secrets(ssl, xfrd->nsd))
+		return;
 
 	if(nsd->cookie_count <= 1 ) {
 		(void)ssl_printf(ssl, "error: can not drop the currently active cookie secret\n");
 		return;
 	}
-	if(!nsd->options->cookie_secret_file || !nsd->options->cookie_secret_file[0]) {
-		(void)ssl_printf(ssl, "error: no cookie secret file configured\n");
-		return;
-	}
-	if(!cookie_secret_file_dump(ssl, nsd)) {
-		(void)ssl_printf(ssl, "error: writing to cookie secret file: \"%s\"\n",
-				nsd->options->cookie_secret_file);
-		return;
-	}
+	backup_cookie_count = nsd->cookie_count;
+	memcpy( backup_cookie_secrets, nsd->cookie_secrets
+	      , sizeof(cookie_secrets_type));
 	drop_cookie_secret(nsd);
-	(void)cookie_secret_file_dump(ssl, nsd);
-	task_new_drop_cookie_secret(xfrd->nsd->task[xfrd->nsd->mytask],
-	    xfrd->last_task);
-	xfrd_set_reload_now(xfrd);
-	send_ok(ssl);
+	if(!cookie_secret_file_dump_and_reload(ssl, nsd)) {
+		memcpy( nsd->cookie_secrets, backup_cookie_secrets
+		      , sizeof(cookie_secrets_type));
+		nsd->cookie_count = backup_cookie_count;
+	}
+	explicit_bzero(backup_cookie_secrets, sizeof(cookie_secrets_type));
 }
 
 static void
 do_add_cookie_secret(RES* ssl, xfrd_state_type* xrfd, char* arg) {
 	nsd_type* nsd = xrfd->nsd;
 	uint8_t secret[NSD_COOKIE_SECRET_SIZE];
+	size_t backup_cookie_count;
+	cookie_secrets_type backup_cookie_secrets;
+
+	if(!can_dump_cookie_secrets(ssl, xfrd->nsd))
+		return;
 
 	if(*arg == '\0') {
 		(void)ssl_printf(ssl, "error: missing argument (cookie_secret)\n");
@@ -2401,27 +2523,26 @@ do_add_cookie_secret(RES* ssl, xfrd_state_type* xrfd, char* arg) {
 		(void)ssl_printf(ssl, "please provide a 128bit hex encoded secret\n");
 		return;
 	}
-	if(!nsd->options->cookie_secret_file || !nsd->options->cookie_secret_file[0]) {
-		explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
-		explicit_bzero(arg, strlen(arg));
-		(void)ssl_printf(ssl, "error: no cookie secret file configured\n");
-		return;
-	}
-	if(!cookie_secret_file_dump(ssl, nsd)) {
-		explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
-		explicit_bzero(arg, strlen(arg));
-		(void)ssl_printf(ssl, "error: writing to cookie secret file: \"%s\"\n",
-				nsd->options->cookie_secret_file);
-		return;
+	explicit_bzero(arg, strlen(arg));
+
+	backup_cookie_count = nsd->cookie_count;
+	memcpy( backup_cookie_secrets, nsd->cookie_secrets
+	      , sizeof(cookie_secrets_type));
+	if(nsd->cookie_secrets_source != COOKIE_SECRETS_FROM_FILE
+	&& nsd->cookie_secrets_source != COOKIE_SECRETS_FROM_CONFIG) {
+		nsd->cookie_count = 0;
 	}
 	add_cookie_secret(nsd, secret);
 	explicit_bzero(secret, NSD_COOKIE_SECRET_SIZE);
-	(void)cookie_secret_file_dump(ssl, nsd);
-	task_new_add_cookie_secret(xfrd->nsd->task[xfrd->nsd->mytask],
-	    xfrd->last_task, arg);
-	explicit_bzero(arg, strlen(arg));
-	xfrd_set_reload_now(xfrd);
-	send_ok(ssl);
+	if(!cookie_secret_file_dump_and_reload(ssl, nsd)) {
+		explicit_bzero(arg, strlen(arg));
+		(void)ssl_printf(ssl, "error: writing to cookie secret file: \"%s\"\n"
+		                , nsd->options->cookie_secret_file);
+		memcpy( nsd->cookie_secrets, backup_cookie_secrets
+		      , sizeof(cookie_secrets_type));
+		nsd->cookie_count = backup_cookie_count;
+	}
+	explicit_bzero(backup_cookie_secrets, sizeof(cookie_secrets_type));
 }
 
 static void
@@ -2431,7 +2552,27 @@ do_print_cookie_secrets(RES* ssl, xfrd_state_type* xrfd, char* arg) {
 	int i;
 	(void)arg;
 
-	/* (void)ssl_printf(ssl, "cookie_secret_count=%zu\n", nsd->cookie_count); */
+	switch(nsd->cookie_secrets_source){
+	case COOKIE_SECRETS_NONE:
+		break;
+	case COOKIE_SECRETS_GENERATED:
+		if(!ssl_printf(ssl, "source : random generated\n"))
+			return;
+		break;
+	case COOKIE_SECRETS_FROM_FILE:
+		if(!ssl_printf( ssl, "source : \"%s\"\n"
+		          , nsd->cookie_secrets_filename))
+			return;
+		break;
+	case COOKIE_SECRETS_FROM_CONFIG:
+		if(!ssl_printf(ssl, "source : configuration\n"))
+			return;
+		break;
+	default:
+		if(!ssl_printf(ssl, "source : unknown\n"))
+			return;
+		break;
+	}
 	for(i = 0; (size_t)i < nsd->cookie_count; i++) {
 		struct cookie_secret const* cs = &nsd->cookie_secrets[i];
 		ssize_t const len = hex_ntop(cs->cookie_secret, NSD_COOKIE_SECRET_SIZE,
@@ -2669,7 +2810,11 @@ remote_control_callback(int fd, short event, void* arg)
 		VERBOSITY(3, (LOG_INFO, "unauthenticated remote control connection"));
 #ifdef HAVE_SSL
 	} else if(SSL_get_verify_result(s->ssl) == X509_V_OK) {
+#  ifdef HAVE_SSL_GET1_PEER_CERTIFICATE
+		X509* x = SSL_get1_peer_certificate(s->ssl);
+#  else
 		X509* x = SSL_get_peer_certificate(s->ssl);
+#  endif
 		if(!x) {
 			VERBOSITY(2, (LOG_INFO, "remote control connection "
 				"provided no client certificate"));

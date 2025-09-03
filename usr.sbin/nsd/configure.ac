@@ -5,7 +5,9 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT([NSD],[4.9.1],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
+# autoconf-2.70 is needed for @runstatedir@
+AC_PREREQ([2.70])
+AC_INIT([NSD],[4.11.0],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
@@ -123,6 +125,12 @@ zonelistfile=${dbdir}/zone.list
 AC_ARG_WITH([zonelistfile], AS_HELP_STRING([--with-zonelistfile=path],[Pathname to the NSD zone list file]), [zonelistfile=$withval])
 AC_DEFINE_UNQUOTED(ZONELISTFILE, ["`eval echo $zonelistfile`"], [Pathname to the NSD zone list file.])
 AC_SUBST(zonelistfile)
+
+# default cookiesecrets file location.
+cookiesecretsfile=${dbdir}/cookiesecrets.txt
+AC_ARG_WITH([cookiesecretsfile], AS_HELP_STRING([--with-cookiesecretsfile=path],[Pathname to the NSD cookie secrets file]), [cookiesecretsfile=$withval])
+AC_DEFINE_UNQUOTED(COOKIESECRETSFILE, ["`eval echo $cookiesecretsfile`"], [Pathname to the NSD cookies secrets file.])
+AC_SUBST(cookiesecretsfile)
 
 # default xfr dir location.
 xfrdir="/tmp"
@@ -360,11 +368,11 @@ AC_DEFUN([CHECK_SSL], [
         ])
     if test x_$withval != x_no; then
         AC_MSG_CHECKING(for SSL)
-	if test -n "$withval"; then
-        	dnl look for openssl install with different version, eg.
-                dnl in /usr/include/openssl11/openssl/ssl.h
-                dnl and /usr/lib64/openssl11/libssl.so
-                dnl with the --with-ssl=/usr/include/openssl11
+        if test -n "$withval"; then
+            dnl look for openssl install with different version, eg.
+            dnl in /usr/include/openssl11/openssl/ssl.h
+            dnl and /usr/lib64/openssl11/libssl.so
+            dnl with the --with-ssl=/usr/include/openssl11
                 if test ! -f "$withval/include/openssl/ssl.h" -a -f "$withval/openssl/ssl.h"; then
                         ssldir="$withval"
                         found_ssl="yes"
@@ -384,7 +392,7 @@ AC_DEFUN([CHECK_SSL], [
                                 fi
                         fi
                 fi
-	fi
+            fi
         if test x_$withval = x_ -o x_$withval = x_yes; then
             withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl"
         fi
@@ -395,12 +403,12 @@ AC_DEFUN([CHECK_SSL], [
                 if test x_$ssldir != x_/usr; then
                     CPPFLAGS="$CPPFLAGS -I$ssldir/include";
                 fi
-		ssldir_include="$ssldir/include"
-		if test ! -d "$ssldir/lib" -a -d "$ssldir/lib64"; then
-			ssldir_lib="$ssldir/lib64"
-		else
-			ssldir_lib="$ssldir/lib"
-		fi
+                ssldir_include="$ssldir/include"
+                if test ! -d "$ssldir/lib" -a -d "$ssldir/lib64"; then
+                    ssldir_lib="$ssldir/lib64"
+                else
+                    ssldir_lib="$ssldir/lib"
+                fi
                 break;
             fi
         done
@@ -413,9 +421,9 @@ AC_DEFUN([CHECK_SSL], [
             if test x_$ssldir != x_/usr; then
                 LDFLAGS="$LDFLAGS -L$ssldir_lib";
             fi
-	    if test x_$ssldir = x_/usr/sfw; then
-		LDFLAGS="$LDFLAGS -R$ssldir_lib";
-	    fi
+            if test x_$ssldir = x_/usr/sfw; then
+                LDFLAGS="$LDFLAGS -R$ssldir_lib";
+            fi
         fi
         AC_SUBST(HAVE_SSL)
     fi
@@ -1075,8 +1083,8 @@ if test x$HAVE_SSL = x"yes"; then
 	fi
 	SSL_LIBS="-lssl"
 	AC_SUBST(SSL_LIBS)
-	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h openssl/core_names.h],,, [AC_INCLUDES_DEFAULT])
-	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params EVP_MAC_CTX_get_mac_size SHA1_Init])
+	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h openssl/core_names.h openssl/x509v3.h],,, [AC_INCLUDES_DEFAULT])
+	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params EVP_MAC_CTX_get_mac_size SHA1_Init ASN1_STRING_get0_data])
 	if test "$ac_cv_func_SHA1_Init" = "yes"; then
 		ACX_FUNC_DEPRECATED([SHA1_Init], [(void)SHA1_Init(NULL);], [
 #include <openssl/sha.h>
@@ -1101,6 +1109,9 @@ AC_INCLUDES_DEFAULT
 #endif
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
+#ifdef HAVE_OPENSSL_X509V3_h
+#include <openssl/x509v3.h>
+#endif
 ])
 	AC_CHECK_DECL([TLS1_3_VERSION], 
 		[AC_DEFINE([HAVE_TLS_1_3], [1], [Define if TLS 1.3 is supported by OpenSSL])],
@@ -1427,6 +1438,11 @@ if test "$enable_checking" = "yes"; then
 fi
 
 AC_CONFIG_FILES([Makefile $dnstap_config])
+
+# Arguments introduced specifically for simdzone.
+AC_ARG_ENABLE(westmere, AS_HELP_STRING([--disable-westmere], [Disable Westmere (SSE4.2) parser kernel]))
+AC_ARG_ENABLE(haswell, AS_HELP_STRING([--disable-haswell], [Disable Haswell (AVX2) parser kernel]))
+AC_CONFIG_SUBDIRS([simdzone])
 AC_OUTPUT
 m4_unquote(
   _m4_defn([_m4_wrap_text])_m4_popdef([_m4_wrap_text]))

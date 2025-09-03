@@ -162,6 +162,7 @@ struct tcp_accept_handler_data {
 #ifdef HAVE_SSL
 	/* handler accepts TLS connections on the dedicated port */
 	int                tls_accept;
+	int                tls_auth_accept;
 #endif
 	/* if set, PROXYv2 is expected on this connection */
 	int pp2_enabled;
@@ -285,9 +286,10 @@ struct tcp_handler_data
 
 #ifdef HAVE_SSL
 	/*
-	 * TLS object.
+	 * TLS objects.
 	 */
 	SSL* tls;
+	SSL* tls_auth;
 
 	/*
 	 * TLS handshake state.
@@ -435,7 +437,6 @@ static int
 restart_child_servers(struct nsd *nsd, region_type* region, netio_type* netio,
 	int* xfrd_sock_p)
 {
-	struct main_ipc_handler_data *ipc_data;
 	size_t i;
 	int sv[2];
 
@@ -461,17 +462,11 @@ restart_child_servers(struct nsd *nsd, region_type* region, netio_type* netio,
 				}
 				if(!nsd->children[i].handler)
 				{
+					struct main_ipc_handler_data *ipc_data;
 					ipc_data = (struct main_ipc_handler_data*) region_alloc(
 						region, sizeof(struct main_ipc_handler_data));
 					ipc_data->nsd = nsd;
 					ipc_data->child = &nsd->children[i];
-					ipc_data->child_num = i;
-					ipc_data->xfrd_sock = xfrd_sock_p;
-					ipc_data->packet = buffer_create(region, QIOBUFSZ);
-					ipc_data->forward_mode = 0;
-					ipc_data->got_bytes = 0;
-					ipc_data->total_bytes = 0;
-					ipc_data->acl_num = 0;
 					nsd->children[i].handler = (struct netio_handler*) region_alloc(
 						region, sizeof(struct netio_handler));
 					nsd->children[i].handler->fd = nsd->children[i].child_fd;
@@ -481,10 +476,6 @@ restart_child_servers(struct nsd *nsd, region_type* region, netio_type* netio,
 					nsd->children[i].handler->event_handler = parent_handle_child_command;
 					netio_add_handler(netio, nsd->children[i].handler);
 				}
-				/* clear any ongoing ipc */
-				ipc_data = (struct main_ipc_handler_data*)
-					nsd->children[i].handler->user_data;
-				ipc_data->forward_mode = 0;
 				/* restart - update fd */
 				nsd->children[i].handler->fd = nsd->children[i].child_fd;
 				break;
@@ -1455,13 +1446,11 @@ server_init(struct nsd *nsd)
 			if(open_udp_socket(nsd, &nsd->udp[i], &reuseport) == -1) {
 				return -1;
 			}
-			/* Turn off REUSEPORT for TCP by copying the socket
-			 * file descriptor.
-			 * This means we should not close TCP used by
-			 * other servers in reuseport enabled mode, in
-			 * server_child().
-			 */
 			nsd->tcp[i] = nsd->tcp[i%nsd->ifs];
+			nsd->tcp[i].s = -1;
+			if(open_tcp_socket(nsd, &nsd->tcp[i], &reuseport) == -1) {
+				return -1;
+			}
 		}
 
 		nsd->ifs = ifs;
@@ -1620,6 +1609,8 @@ server_shutdown(struct nsd *nsd)
 #ifdef HAVE_SSL
 	if (nsd->tls_ctx)
 		SSL_CTX_free(nsd->tls_ctx);
+	if (nsd->tls_auth_ctx)
+		SSL_CTX_free(nsd->tls_auth_ctx);
 #endif
 
 #ifdef MEMCLEAN /* OS collects memory pages */
@@ -1644,6 +1635,7 @@ void
 server_prepare_xfrd(struct nsd* nsd)
 {
 	char tmpfile[256];
+	size_t i;
 	/* create task mmaps */
 	nsd->mytask = 0;
 	snprintf(tmpfile, sizeof(tmpfile), "%snsd-xfr-%d/nsd.%u.task.0",
@@ -1687,6 +1679,24 @@ server_prepare_xfrd(struct nsd* nsd)
 		nsd;
 	((struct ipc_handler_conn_data*)nsd->xfrd_listener->user_data)->conn =
 		xfrd_tcp_create(nsd->region, QIOBUFSZ);
+	/* setup sockets to pass NOTIFY messages from the serve processes */
+	nsd->serve2xfrd_fd_send = region_alloc_array(
+			nsd->region, 2 * nsd->child_count, sizeof(int));
+	nsd->serve2xfrd_fd_recv= region_alloc_array(
+			nsd->region, 2 * nsd->child_count, sizeof(int));
+	for(i=0; i < 2 * nsd->child_count; i++) {
+		int pipefd[2];
+		pipefd[0] = -1; /* For receiving by parent (xfrd) */
+		pipefd[1] = -1; /* For sending   by child  (server childs) */
+		if(pipe(pipefd) < 0) {
+                        log_msg(LOG_ERR, "fatal error: cannot create NOTIFY "
+				"communication channel: %s", strerror(errno));
+			exit(1);
+                }
+                nsd->serve2xfrd_fd_recv[i] = pipefd[0];
+                nsd->serve2xfrd_fd_send[i] = pipefd[1];
+	}
+	nsd->serve2xfrd_fd_swap = nsd->serve2xfrd_fd_send + nsd->child_count;
 }
 
 
@@ -1696,6 +1706,7 @@ server_start_xfrd(struct nsd *nsd, int del_db, int reload_active)
 	pid_t pid;
 	int sockets[2] = {0,0};
 	struct ipc_handler_conn_data *data;
+	size_t i;
 
 	if(nsd->xfrd_listener->fd != -1)
 		close(nsd->xfrd_listener->fd);
@@ -1732,6 +1743,14 @@ server_start_xfrd(struct nsd *nsd, int del_db, int reload_active)
 		 * restarted, the reload is using nsd->mytask */
 		nsd->mytask = 1 - nsd->mytask;
 
+		/* close the send site of the serve2xfrd fds */
+		assert(nsd->serve2xfrd_fd_send < nsd->serve2xfrd_fd_swap);
+		for(i = 0; i < 2 * nsd->child_count; i++) {
+			if(nsd->serve2xfrd_fd_send[i] != -1) {
+				close(nsd->serve2xfrd_fd_send[i]);
+				nsd->serve2xfrd_fd_send[i] = -1;
+			}
+		}
 #ifdef HAVE_SETPROCTITLE
 		setproctitle("xfrd");
 #endif
@@ -1754,6 +1773,13 @@ server_start_xfrd(struct nsd *nsd, int del_db, int reload_active)
 			log_msg(LOG_ERR, "cannot fcntl pipe: %s", strerror(errno));
 		}
 		nsd->xfrd_listener->fd = sockets[0];
+		/* close the receive site of the serve2xfrd fds */
+		for(i = 0; i < 2 * nsd->child_count; i++) {
+			if(nsd->serve2xfrd_fd_recv[i] != -1) {
+				close(nsd->serve2xfrd_fd_recv[i]);
+				nsd->serve2xfrd_fd_recv[i] = -1;
+			}
+		}
 #ifdef HAVE_SETPROCTITLE
 		setproctitle("main");
 #endif
@@ -1809,7 +1835,7 @@ server_send_soa_xfrd(struct nsd* nsd, int shortsoa)
 			server_close_all_sockets(nsd->tcp, nsd->ifs);
 			daemon_remote_close(nsd->rc);
 			/* Unlink it if possible... */
-			unlinkpid(nsd->pidfile);
+			unlinkpid(nsd->pidfile, nsd->username);
 			unlink(nsd->task[0]->fname);
 			unlink(nsd->task[1]->fname);
 #ifdef USE_ZONE_STATS
@@ -2152,7 +2178,7 @@ server_tls_ctx_setup(char* key, char* pem, char* verifypem)
 			return NULL;
 		}
 		SSL_CTX_set_client_CA_list(ctx, SSL_load_client_CA_file(verifypem));
-		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
 	}
 	return ctx;
 }
@@ -2272,50 +2298,85 @@ block_read(struct nsd* nsd, int s, void* p, ssize_t sz, int timeout)
 }
 
 static void
-reload_process_tasks(struct nsd* nsd, udb_ptr* last_task, int cmdsocket)
+reload_process_non_xfr_tasks(struct nsd* nsd, udb_ptr* xfrs2process,
+		udb_ptr* last_task)
 {
-	sig_atomic_t cmd = NSD_QUIT_SYNC;
-	udb_ptr t, next;
+	udb_ptr t, next, xfr_tail;
 	udb_base* u = nsd->task[nsd->mytask];
 	udb_ptr_init(&next, u);
+	udb_ptr_init(&xfr_tail, u);
 	udb_ptr_new(&t, u, udb_base_get_userdata(u));
 	udb_base_set_userdata(u, 0);
+	/* Execute all tasks except of type "task_apply_xfr". */
 	while(!udb_ptr_is_null(&t)) {
 		/* store next in list so this one can be deleted or reused */
 		udb_ptr_set_rptr(&next, u, &TASKLIST(&t)->next);
 		udb_rptr_zero(&TASKLIST(&t)->next, u);
 
-		/* process task t */
-		/* append results for task t and update last_task */
-		task_process_in_reload(nsd, u, last_task, &t);
+		if(TASKLIST(&t)->task_type != task_apply_xfr) {
+			/* process task t */
+			/* append results for task t and update last_task */
+			task_process_in_reload(nsd, u, last_task, &t);
 
+		} else if(udb_ptr_is_null(xfrs2process)) {
+			udb_ptr_set_ptr( xfrs2process, u, &t);
+			udb_ptr_set_ptr(&xfr_tail, u, &t);
+		} else {
+			udb_rptr_set_ptr(&TASKLIST(&xfr_tail)->next, u, &t);
+			udb_ptr_set_ptr(&xfr_tail, u, &t);
+		}
 		/* go to next */
 		udb_ptr_set_ptr(&t, u, &next);
-
-		/* if the parent has quit, we must quit too, poll the fd for cmds */
-		if(block_read(nsd, cmdsocket, &cmd, sizeof(cmd), 0) == sizeof(cmd)) {
-			DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc command from main %d", (int)cmd));
-			if(cmd == NSD_QUIT) {
-				DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: quit to follow nsd"));
-				/* unlink files of remainder of tasks */
-				while(!udb_ptr_is_null(&t)) {
-					if(TASKLIST(&t)->task_type == task_apply_xfr) {
-						xfrd_unlink_xfrfile(nsd, TASKLIST(&t)->yesno);
-					}
-					udb_ptr_set_rptr(&t, u, &TASKLIST(&t)->next);
-				}
-				udb_ptr_unlink(&t, u);
-				udb_ptr_unlink(&next, u);
-				exit(0);
-			}
-		}
-
 	}
-	udb_ptr_unlink(&t, u);
-	udb_ptr_unlink(&next, u);
+	/* t and next are already unlinked (because they are null) */
+	udb_ptr_unlink(&xfr_tail, u);
 }
 
-void server_verify(struct nsd *nsd, int cmdsocket);
+static size_t
+reload_process_xfr_tasks(struct nsd* nsd, int cmdsocket, udb_ptr* xfrs2process)
+{
+	sig_atomic_t cmd = NSD_QUIT_SYNC;
+	udb_ptr next;
+	udb_base* u = nsd->task[nsd->mytask];
+	size_t xfrs_processed = 0;
+
+	udb_ptr_init(&next, u);
+	while(!udb_ptr_is_null(xfrs2process)) {
+		/* store next in list so this one can be deleted or reused */
+		udb_ptr_set_rptr(&next, u, &TASKLIST(xfrs2process)->next);
+		udb_rptr_zero(&TASKLIST(xfrs2process)->next, u);
+		
+		/* process xfr task at xfrs2process */
+		assert(TASKLIST(xfrs2process)->task_type == task_apply_xfr);
+		task_process_apply_xfr(nsd, u, xfrs2process);
+		xfrs_processed += 1;
+
+		/* go to next */
+		udb_ptr_set_ptr(xfrs2process, u, &next);
+
+		/* if the "old-main" has quit, we must quit too, poll the fd for cmds */
+		if(block_read(nsd, cmdsocket, &cmd, sizeof(cmd), 0) != sizeof(cmd))
+			; /* pass */
+		else if (cmd != NSD_QUIT)
+			DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc command from old-main %d", (int)cmd));
+		else {
+			udb_ptr_unlink(&next, u);
+			DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: quit to follow nsd"));
+			/* unlink files of remainder of tasks */
+			while(!udb_ptr_is_null(xfrs2process)) {
+				assert(TASKLIST(xfrs2process)->task_type == task_apply_xfr);
+				xfrd_unlink_xfrfile(nsd, TASKLIST(xfrs2process)->yesno);
+				udb_ptr_set_rptr(xfrs2process, u, &TASKLIST(xfrs2process)->next);
+			}
+			exit(0);
+		}
+	}
+	/* xfrs2process and next are already unlinked (because they are null) */
+	return xfrs_processed;
+}
+
+static void server_verify(struct nsd *nsd, int cmdsocket,
+	struct sigaction* old_sigchld);
 
 struct quit_sync_event_data {
 	struct event_base* base;
@@ -2395,11 +2456,10 @@ static void server_reload_handle_quit_sync_ack(int cmdsocket, short event,
  */
 static void
 server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
-	int cmdsocket)
+	int cmdsocket, udb_ptr* xfrs2process, udb_ptr* last_task)
 {
 	pid_t mypid;
 	sig_atomic_t cmd;
-	udb_ptr last_task;
 	struct sigaction old_sigchld, ign_sigchld;
 	struct radnode* node;
 	zone_type* zone;
@@ -2407,6 +2467,10 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	struct quit_sync_event_data cb_data;
 	struct event signal_event, cmd_event;
 	struct timeval reload_sync_timeout;
+	size_t xfrs_processed = 0;
+	/* For swapping filedescriptors from the serve childs to the xfrd
+	 * and/or the dnstap collector */
+	int *swap_fd_send;
 
 	/* ignore SIGCHLD from the previous server_main that used this pid */
 	memset(&ign_sigchld, 0, sizeof(ign_sigchld));
@@ -2420,9 +2484,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 #endif
 
 	/* see what tasks we got from xfrd */
-	task_remap(nsd->task[nsd->mytask]);
-	udb_ptr_init(&last_task, nsd->task[nsd->mytask]);
-	reload_process_tasks(nsd, &last_task, cmdsocket);
+	xfrs_processed = reload_process_xfr_tasks(nsd, cmdsocket, xfrs2process);
 
 #ifndef NDEBUG
 	if(nsd_debug_level >= 1)
@@ -2452,17 +2514,16 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 #endif
 
 		/* spin-up server and execute verifiers for each zone */
-		server_verify(nsd, cmdsocket);
+		server_verify(nsd, cmdsocket, &old_sigchld);
 #ifdef RATELIMIT
 		/* deallocate rate limiting resources */
 		rrl_deinit(nsd->child_count + 1);
 #endif
 	}
 
-	for(node = radix_first(nsd->db->zonetree);
-	    node != NULL;
-	    node = radix_next(node))
-	{
+	if(xfrs_processed) for( node = radix_first(nsd->db->zonetree)
+	                      ; node != NULL; node = radix_next(node)) {
+
 		zone = (zone_type *)node->elem;
 		if(zone->is_updated) {
 			if(zone->is_bad) {
@@ -2474,12 +2535,12 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 			/* update(s), verified or not, possibly with subsequent
 			   skipped update(s). skipped update(s) are picked up
 			   by failed update check in xfrd */
-			task_new_soainfo(nsd->task[nsd->mytask], &last_task,
+			task_new_soainfo(nsd->task[nsd->mytask], last_task,
 			                 zone, hint);
 		} else if(zone->is_skipped) {
 			/* corrupt or inconsistent update without preceding
 			   update(s), communicate soainfo_gone */
-			task_new_soainfo(nsd->task[nsd->mytask], &last_task,
+			task_new_soainfo(nsd->task[nsd->mytask], last_task,
 			                 zone, soainfo_gone);
 		}
 		zone->is_updated = 0;
@@ -2494,7 +2555,6 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	sigaction(SIGCHLD, &old_sigchld, NULL);
 #ifdef USE_DNSTAP
 	if (nsd->dt_collector) {
-		int *swap_fd_send;
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: swap dnstap collector pipes"));
 		/* Swap fd_send with fd_swap so old serve child and new serve
 		 * childs will not write to the same pipe ends simultaneously */
@@ -2504,6 +2564,9 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 
 	}
 #endif
+	swap_fd_send = nsd->serve2xfrd_fd_send;
+	nsd->serve2xfrd_fd_send = nsd->serve2xfrd_fd_swap;
+	nsd->serve2xfrd_fd_swap = swap_fd_send;
 	/* Start new child processes */
 	if (server_start_children(nsd, server_region, netio, &nsd->
 		xfrd_listener->fd) != 0) {
@@ -2544,7 +2607,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	event_set(&signal_event, SIGCHLD, EV_SIGNAL|EV_PERSIST,
 	    server_reload_handle_sigchld, NULL);
 	if(event_base_set(cb_data.base, &signal_event) != 0
-	|| event_add(&signal_event, NULL) != 0) {
+	|| signal_add(&signal_event, NULL) != 0) {
 		log_msg(LOG_ERR, "NSD quit sync: could not add signal event");
 	}
 
@@ -2560,7 +2623,9 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 
 	/* remove command and signal event handlers */
 	event_del(&cmd_event);
-	event_del(&signal_event);
+	signal_del(&signal_event);
+	/* restore the ordinary signal handler for SIGCHLD */
+	sigaction(SIGCHLD, &old_sigchld, NULL);
 	event_base_free(cb_data.base);
 	cmd = cb_data.to_read.cmd;
 
@@ -2570,7 +2635,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 		exit(1);
 	}
 	assert(cmd == NSD_RELOAD);
-	udb_ptr_unlink(&last_task, nsd->task[nsd->mytask]);
+	udb_ptr_unlink(last_task, nsd->task[nsd->mytask]);
 	task_process_sync(nsd->task[nsd->mytask]);
 #ifdef USE_ZONE_STATS
 	server_zonestat_realloc(nsd); /* realloc for next children */
@@ -2647,6 +2712,10 @@ server_main(struct nsd *nsd)
 	netio_type *netio = netio_create(server_region);
 	netio_handler_type reload_listener;
 	int reload_sockets[2] = {-1, -1};
+	/* pointer to the xfr tasks that will be processed in a second pass */
+	udb_ptr xfrs2process;
+	/* pointer to results of task processing */
+	udb_ptr last_task;
 	struct timespec timeout_spec;
 	int status;
 	pid_t child_pid;
@@ -2664,6 +2733,8 @@ server_main(struct nsd *nsd)
 	nsd->st->db_disk = 0;
 	nsd->st->db_mem = region_get_mem(nsd->db->region);
 #endif
+	memset(&xfrs2process, 0, sizeof(xfrs2process));
+	memset(&last_task, 0, sizeof(last_task));
 
 	/* Start the child processes that handle incoming queries */
 	if (server_start_children(nsd, server_region, netio,
@@ -2864,7 +2935,22 @@ server_main(struct nsd *nsd)
 				reload_pid = -1;
 				break;
 			}
-
+			/* Execute the tasks that cannot fail */
+#ifdef HAVE_SETPROCTITLE
+			setproctitle("load");
+#endif
+#ifdef USE_LOG_PROCESS_ROLE
+			log_set_process_role("load");
+#endif
+			/* Already process the non xfr tasks, so that a failed
+			 * transfer (which can exit) will not nullify the
+			 * effects of the other tasks that will not exit.
+			 */
+			task_remap(nsd->task[nsd->mytask]);
+			udb_ptr_init(&xfrs2process, nsd->task[nsd->mytask]);
+			udb_ptr_init(&last_task   , nsd->task[nsd->mytask]);
+			reload_process_non_xfr_tasks(nsd, &xfrs2process
+			                                , &last_task);
 			/* Do actual reload */
 			reload_pid = fork();
 			switch (reload_pid) {
@@ -2874,21 +2960,11 @@ server_main(struct nsd *nsd)
 			default:
 				/* PARENT */
 				close(reload_sockets[0]);
-#ifdef HAVE_SETPROCTITLE
-				setproctitle("load");
-#endif
-#ifdef USE_LOG_PROCESS_ROLE
-				log_set_process_role("load");
-#endif
-				server_reload(nsd, server_region, netio,
-					reload_sockets[1]);
+				server_reload(nsd, server_region, netio
+				                 , reload_sockets[1]
+				                 , &xfrs2process
+						 , &last_task);
 				DEBUG(DEBUG_IPC,2, (LOG_INFO, "Reload exited to become new main"));
-#ifdef HAVE_SETPROCTITLE
-				setproctitle("main");
-#endif
-#ifdef USE_LOG_PROCESS_ROLE
-				log_set_process_role("main");
-#endif
 				close(reload_sockets[1]);
 				DEBUG(DEBUG_IPC,2, (LOG_INFO, "Reload closed"));
 				/* drop stale xfrd ipc data */
@@ -2920,6 +2996,24 @@ server_main(struct nsd *nsd)
 				reload_pid = getppid();
 				break;
 			}
+			if(reload_pid == -1) {
+				/* Reset proctitle after "load" process exited
+				 * or when fork() failed
+				 */
+#ifdef HAVE_SETPROCTITLE
+				setproctitle("main");
+#endif
+#ifdef USE_LOG_PROCESS_ROLE
+				log_set_process_role("main");
+#endif
+			}
+			/* xfrs2process and last_task need to be reset in case
+			 * "old-main" becomes "main" (due to an failed (exited)
+			 * xfr update). If needed xfrs2process gets unlinked by
+			 * "load", and last_task by the xfrd.
+			 */
+			memset(&xfrs2process, 0, sizeof(xfrs2process));
+			memset(&last_task, 0, sizeof(last_task));
 			break;
 		case NSD_QUIT_SYNC:
 			/* synchronisation of xfrd, parent and reload */
@@ -2989,7 +3083,7 @@ server_main(struct nsd *nsd)
 	send_children_quit_and_wait(nsd);
 
 	/* Unlink it if possible... */
-	unlinkpid(nsd->pidfile);
+	unlinkpid(nsd->pidfile, nsd->username);
 	unlink(nsd->task[0]->fname);
 	unlink(nsd->task[1]->fname);
 #ifdef USE_ZONE_STATS
@@ -3189,10 +3283,24 @@ add_tcp_handler(
 		if(verbosity >= 2) {
 			char buf[48];
 			addrport2str((void*)(struct sockaddr_storage*)&sock->addr.ai_addr, buf, sizeof(buf));
-			VERBOSITY(4, (LOG_NOTICE, "setup TCP for TLS service on interface %s", buf));
+			VERBOSITY(5, (LOG_NOTICE, "setup TCP for TLS service on interface %s", buf));
 		}
 	} else {
 		data->tls_accept = 0;
+	}
+	if (nsd->tls_auth_ctx &&
+	    nsd->options->tls_auth_port &&
+	    using_tls_port((struct sockaddr *)&sock->addr.ai_addr, nsd->options->tls_auth_port))
+	{
+		data->tls_auth_accept = 1;
+		if(verbosity >= 2) {
+			char buf[48];
+			addrport2str((void*)(struct sockaddr_storage*)&sock->addr.ai_addr, buf, sizeof(buf));
+			VERBOSITY(4, (LOG_NOTICE, "setup TCP for TLS-AUTH service on interface %s", buf));
+		}
+
+	} else {
+		data->tls_auth_accept = 0;
 	}
 #endif
 
@@ -3208,7 +3316,8 @@ add_tcp_handler(
 /*
  * Serve DNS request to verifiers (short-lived)
  */
-void server_verify(struct nsd *nsd, int cmdsocket)
+static void server_verify(struct nsd *nsd, int cmdsocket,
+	struct sigaction* old_sigchld)
 {
 	size_t size = 0;
 	struct event cmd_event, signal_event, exit_event;
@@ -3315,12 +3424,13 @@ void server_verify(struct nsd *nsd, int cmdsocket)
 
 	/* remove command and exit event handlers */
 	event_del(&exit_event);
-	event_del(&signal_event);
 	event_del(&cmd_event);
 
 	assert(nsd->next_zone_to_verify == NULL || nsd->mode == NSD_QUIT);
 	assert(nsd->verifier_count == 0 || nsd->mode == NSD_QUIT);
+	signal_del(&signal_event);
 fail:
+	sigaction(SIGCHLD, old_sigchld, NULL);
 	close(nsd->verifier_pipe[0]);
 	close(nsd->verifier_pipe[1]);
 fail_pipe:
@@ -3478,15 +3588,7 @@ server_child(struct nsd *nsd)
 				add_tcp_handler(nsd, &nsd->tcp[i], data);
 			} else {
 				/* close sockets intended for other servers */
-				/*
-				 * uncomment this once tcp servers are no
-				 * longer copied in the tcp fd copy line
-				 * in server_init().
 				server_close_socket(&nsd->tcp[i]);
-				*/
-				/* close sockets not meant for this server*/
-				if(!listen)
-					server_close_socket(&nsd->tcp[i]);
 			}
 		}
 	} else {
@@ -3575,7 +3677,7 @@ service_remaining_tcp(struct nsd* nsd)
 	/* check if it is needed */
 	if(nsd->current_tcp_count == 0 || tcp_active_list == NULL)
 		return;
-	VERBOSITY(4, (LOG_INFO, "service remaining TCP connections"));
+	VERBOSITY(5, (LOG_INFO, "service remaining TCP connections"));
 #ifdef USE_DNSTAP
 	/* remove dnstap collector, we cannot write there because the new
 	 * child process is using the file descriptor, or the child
@@ -3601,6 +3703,10 @@ service_remaining_tcp(struct nsd* nsd)
 		void (*fn)(int, short, void*);
 #ifdef HAVE_SSL
 		if(p->tls) {
+			if((event&EV_READ))
+				fn = handle_tls_reading;
+			else	fn = handle_tls_writing;
+		} else if(p->tls_auth) {
 			if((event&EV_READ))
 				fn = handle_tls_reading;
 			else	fn = handle_tls_writing;
@@ -3663,7 +3769,7 @@ service_remaining_tcp(struct nsd* nsd)
 			event_del(&timeout);
 		} else {
 			/* timed out, quit */
-			VERBOSITY(4, (LOG_INFO, "service remaining TCP connections: timed out, quit"));
+			VERBOSITY(5, (LOG_INFO, "service remaining TCP connections: timed out, quit"));
 			break;
 		}
 	}
@@ -4110,6 +4216,11 @@ cleanup_tcp_handler(struct tcp_handler_data* data)
 		SSL_shutdown(data->tls);
 		SSL_free(data->tls);
 		data->tls = NULL;
+	}
+	if(data->tls_auth) {
+		SSL_shutdown(data->tls_auth);
+		SSL_free(data->tls_auth);
+		data->tls_auth = NULL;
 	}
 #endif
 	data->pp2_header_state = pp2_header_none;
@@ -4659,10 +4770,17 @@ tls_handshake(struct tcp_handler_data* data, int fd, int writing)
 
 	/* (continue to) setup the TLS connection */
 	ERR_clear_error();
-	r = SSL_do_handshake(data->tls);
+	if(data->tls_auth)
+		r = SSL_do_handshake(data->tls_auth);
+	else
+		r = SSL_do_handshake(data->tls);
 
 	if(r != 1) {
-		int want = SSL_get_error(data->tls, r);
+		int want;
+		if(data->tls_auth)
+			want = SSL_get_error(data->tls_auth, r);
+		else
+			want = SSL_get_error(data->tls, r);
 		if(want == SSL_ERROR_WANT_READ) {
 			if(data->shake_state == tls_hs_read) {
 				/* try again later */
@@ -4683,7 +4801,7 @@ tls_handshake(struct tcp_handler_data* data, int fd, int writing)
 			return 1;
 		} else {
 			if(r == 0)
-				VERBOSITY(3, (LOG_ERR, "TLS handshake: connection closed prematurely"));
+				VERBOSITY(5, (LOG_ERR, "TLS handshake: connection closed prematurely"));
 			else {
 				unsigned long err = ERR_get_error();
 				if(!squelch_err_ssl_handshake(err)) {
@@ -4699,7 +4817,10 @@ tls_handshake(struct tcp_handler_data* data, int fd, int writing)
 	}
 
 	/* Use to log successful upgrade for testing - could be removed*/
-	VERBOSITY(3, (LOG_INFO, "TLS handshake succeeded."));
+	if(data->tls_auth)
+		VERBOSITY(5, (LOG_INFO, "TLS-AUTH handshake succeeded."));
+	else
+		VERBOSITY(5, (LOG_INFO, "TLS handshake succeeded."));
 	/* set back to the event we need to have when reading (or writing) */
 	if(data->shake_state == tls_hs_read && writing) {
 		tcp_handler_setup_event(data, handle_tls_writing, fd, EV_PERSIST|EV_TIMEOUT|EV_WRITE);
@@ -4717,9 +4838,18 @@ static int
 more_read_buf_tls(int fd, struct tcp_handler_data* data, void* bufpos,
 	size_t add_amount, ssize_t* received)
 {
+	int r;
 	ERR_clear_error();
-	if((*received=SSL_read(data->tls, bufpos, add_amount)) <= 0) {
-		int want = SSL_get_error(data->tls, *received);
+	if(data->tls_auth)
+		r = (*received=SSL_read(data->tls_auth, bufpos, add_amount));
+	else
+		r = (*received=SSL_read(data->tls, bufpos, add_amount));
+	if(r <= 0) {
+		int want;
+		if(data->tls_auth)
+			want = SSL_get_error(data->tls_auth, *received);
+		else
+			want = SSL_get_error(data->tls, *received);
 		if(want == SSL_ERROR_ZERO_RETURN) {
 			cleanup_tcp_handler(data);
 			return 0; /* shutdown, closed */
@@ -5039,7 +5169,10 @@ handle_tls_writing(int fd, short event, void* arg)
 			return;
 	}
 
-	(void)SSL_set_mode(data->tls, SSL_MODE_ENABLE_PARTIAL_WRITE);
+	if(data->tls_auth)
+		(void)SSL_set_mode(data->tls_auth, SSL_MODE_ENABLE_PARTIAL_WRITE);
+	else
+		(void)SSL_set_mode(data->tls, SSL_MODE_ENABLE_PARTIAL_WRITE);
 
 	/* If we are writing the start of a message, we must include the length
 	 * this is done with a copy into write_buffer. */
@@ -5066,9 +5199,16 @@ handle_tls_writing(int fd, short event, void* arg)
 
 	/* Write the response */
 	ERR_clear_error();
-	sent = SSL_write(data->tls, buffer_current(write_buffer), buffer_remaining(write_buffer));
+	if(data->tls_auth)
+		sent = SSL_write(data->tls_auth, buffer_current(write_buffer), buffer_remaining(write_buffer));
+	else
+		sent = SSL_write(data->tls, buffer_current(write_buffer), buffer_remaining(write_buffer));
 	if(sent <= 0) {
-		int want = SSL_get_error(data->tls, sent);
+		int want;
+		if(data->tls_auth)
+			want = SSL_get_error(data->tls_auth, sent);
+		else
+			want = SSL_get_error(data->tls, sent);
 		if(want == SSL_ERROR_ZERO_RETURN) {
 			cleanup_tcp_handler(data);
 			/* closed */
@@ -5269,7 +5409,9 @@ handle_tcp_accept(int fd, short event, void* arg)
 	tcp_data->query_count = 0;
 #ifdef HAVE_SSL
 	tcp_data->shake_state = tls_hs_none;
+	/* initialize both incase of dangling pointers */
 	tcp_data->tls = NULL;
+	tcp_data->tls_auth = NULL;
 #endif
 	tcp_data->query_needs_reset = 1;
 	tcp_data->pp2_enabled = data->pp2_enabled;
@@ -5309,6 +5451,18 @@ handle_tcp_accept(int fd, short event, void* arg)
 			close(s);
 			return;
 		}
+		tcp_data->query->tls = tcp_data->tls;
+		tcp_data->shake_state = tls_hs_read;
+		memset(&tcp_data->event, 0, sizeof(tcp_data->event));
+		event_set(&tcp_data->event, s, EV_PERSIST | EV_READ | EV_TIMEOUT,
+			  handle_tls_reading, tcp_data);
+	} else if (data->tls_auth_accept) {
+		tcp_data->tls_auth = incoming_ssl_fd(tcp_data->nsd->tls_auth_ctx, s);
+		if(!tcp_data->tls_auth) {
+			close(s);
+			return;
+		}
+		tcp_data->query->tls_auth = tcp_data->tls_auth;
 		tcp_data->shake_state = tls_hs_read;
 		memset(&tcp_data->event, 0, sizeof(tcp_data->event));
 		event_set(&tcp_data->event, s, EV_PERSIST | EV_READ | EV_TIMEOUT,

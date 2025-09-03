@@ -181,8 +181,9 @@ dname_label(const dname_type *dname, uint8_t label)
  * RIGHT.  The comparison is case sensitive.
  *
  * Pre: left != NULL && right != NULL
+ * left and right are dname_type*.
  */
-int dname_compare(const dname_type *left, const dname_type *right);
+int dname_compare(const void *left, const void *right);
 
 
 /*
@@ -394,5 +395,12 @@ char* wiredname2str(const uint8_t* dname);
 char* wirelabel2str(const uint8_t* label);
 /** check if two uncompressed dnames of the same total length are equal */
 int dname_equal_nocase(uint8_t* a, uint8_t* b, uint16_t len);
+
+/* Test is the name is a subdomain of the other name. Equal names return true.
+ * Subdomain d of d2 returns true, otherwise false. The names are in
+ * wireformat, uncompressed. Does not perform canonicalization, it is case
+ * sensitive. */
+int is_dname_subdomain_of_case(const uint8_t* d, unsigned int len,
+	const uint8_t* d2, unsigned int len2);
 
 #endif /* DNAME_H */

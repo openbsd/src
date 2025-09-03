@@ -411,8 +411,10 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(hide_version, o);
 		SERV_GET_BIN(hide_identity, o);
 		SERV_GET_BIN(drop_updates, o);
+		SERV_GET_BIN(reload_config, o);
 		SERV_GET_BIN(zonefiles_check, o);
 		SERV_GET_BIN(log_time_ascii, o);
+		SERV_GET_BIN(log_time_iso, o);
 		SERV_GET_BIN(round_robin, o);
 		SERV_GET_BIN(minimal_responses, o);
 		SERV_GET_BIN(confine_to_zone, o);
@@ -438,6 +440,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_STR(tls_port, o);
 		SERV_GET_STR(tls_cert_bundle, o);
 		SERV_GET_STR(cookie_secret, o);
+		SERV_GET_STR(cookie_staging_secret, o);
 		SERV_GET_STR(cookie_secret_file, o);
 		SERV_GET_BIN(answer_cookie, o);
 		/* int */
@@ -671,6 +674,7 @@ config_test_print_server(nsd_options_type* opt)
 	print_string_var("xfrdir:", opt->xfrdir);
 	printf("\txfrd-reload-timeout: %d\n", opt->xfrd_reload_timeout);
 	printf("\tlog-time-ascii: %s\n", opt->log_time_ascii?"yes":"no");
+	printf("\tlog-time-iso: %s\n", opt->log_time_iso?"yes":"no");
 	printf("\tround-robin: %s\n", opt->round_robin?"yes":"no");
 	printf("\tminimal-responses: %s\n", opt->minimal_responses?"yes":"no");
 	printf("\tconfine-to-zone: %s\n",
@@ -706,6 +710,7 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\trrl-ipv6-prefix-length: %d\n", (int)opt->rrl_ipv6_prefix_length);
 	printf("\trrl-whitelist-ratelimit: %d\n", (int)opt->rrl_whitelist_ratelimit);
 #endif
+	printf("\treload-config: %s\n", opt->reload_config?"yes":"no");
 	printf("\tzonefiles-check: %s\n", opt->zonefiles_check?"yes":"no");
 	printf("\tzonefiles-write: %d\n", opt->zonefiles_write);
 	print_string_var("tls-service-key:", opt->tls_service_key);
@@ -714,10 +719,15 @@ config_test_print_server(nsd_options_type* opt)
 	print_string_var("tls-port:", opt->tls_port);
 	print_string_var("tls-cert-bundle:", opt->tls_cert_bundle);
 	printf("\tanswer-cookie: %s\n", opt->answer_cookie?"yes":"no");
-	if (opt->cookie_secret)
-		print_string_var("cookie-secret:", opt->cookie_secret);
-	if (opt->cookie_secret_file)
+	print_string_var("cookie-secret:", opt->cookie_secret);
+	print_string_var("cookie-staging-secret:", opt->cookie_staging_secret);
+	if(opt->cookie_secret_file_is_default) {
+		print_string_var("#cookie-secret-file:", opt->cookie_secret_file);
+	} else if(opt->cookie_secret_file) {
 		print_string_var("cookie-secret-file:", opt->cookie_secret_file);
+	} else {
+		print_string_var("cookie-secret-file:", "");
+	}
 	if(opt->proxy_protocol_port) {
 		struct proxy_protocol_port_list* p;
 		for(p = opt->proxy_protocol_port; p; p = p->next)

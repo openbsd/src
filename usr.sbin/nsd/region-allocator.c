@@ -429,6 +429,25 @@ region_strdup(region_type *region, const char *string)
 }
 
 void
+region_str_replace(region_type *region, char **to_replace, const char *string)
+{
+	assert(to_replace);
+	if(!*to_replace) {
+		if(!string)
+			return;
+		*to_replace = region_strdup(region, string);
+	}
+	else if(!string) {
+		region_recycle(region, *to_replace, strlen(*to_replace) + 1);
+		*to_replace = NULL;
+	}
+	else if(strcmp(*to_replace, string)) {
+		region_recycle(region, *to_replace, strlen(*to_replace) + 1);
+		*to_replace = region_strdup(region, string);
+	}
+}
+
+void
 region_recycle(region_type *region, void *block, size_t size)
 {
 	size_t aligned_size;

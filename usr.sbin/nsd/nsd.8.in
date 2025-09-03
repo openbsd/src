@@ -1,9 +1,9 @@
-.TH "NSD" "8" "Apr  4, 2024" "NLnet Labs" "NSD 4.9.1"
-.\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
+.TH "NSD" "8" "dec 12, 2024" "NLnet Labs" "NSD 4.11.0"
+.\" Copyright (c) 2001\-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd
-\- Name Server Daemon (NSD) version 4.9.1.
+\- Name Server Daemon (NSD) version 4.11.0.
 .SH "SYNOPSIS"
 .B nsd
 .RB [ \-4 ] 
@@ -13,8 +13,6 @@
 .RB [ \-c
 .IR configfile ]
 .RB [ \-d ] 
-.RB [ \-f
-.IR database ]
 .RB [ \-h ] 
 .RB [ \-i
 .IR identity ]
@@ -44,28 +42,22 @@
 is a complete implementation of an authoritative DNS nameserver. 
 Upon startup,
 .B NSD
-will read the database specified with 
-.B \-f
-.I database
-argument and put itself into background and answers queries on port 
-53 or a different port specified with 
+will read the configuration file and put itself into the background and
+answers queries on port 53 or a different port specified with
 .B \-p
 .I port
-option. The
-.I database
-is created if it does not exist. By default,
+option. By default,
 .B NSD 
 will bind to all local interfaces available. Use the 
 .B \-a
 .I ip\-address[@port]
-option to specify a single particular interface address to be
-bound. If this option is given more than once,
+option to specify a single particular interface address to be bound. If this
+option is given more than once,
 .B NSD
 will bind its UDP and TCP sockets to all the specified ip\-addresses
 separately. If IPv6 is enabled when 
 .B NSD 
 is compiled an IPv6 address can also be specified.
-.P
 .SH "OPTIONS"
 All the options can be specified in the configfile (
 .B \-c 
@@ -203,13 +195,15 @@ to standard error and exit.
 reacts to the following signals:
 .TP
 SIGTERM
+.br
 Stop answering queries, shutdown, and exit normally.
 .TP 
 SIGHUP
-Reload.  Scans zone files and if changed (mtime) reads
-them in.  Also reopens the logfile (assists logrotation).
+.br
+Reopen logfile (assists rotation) and optionally update TSIG keys and zones.
 .TP
 SIGUSR1
+.br
 Dump BIND8\-style statistics into the log. Ignored otherwise.
 .SH "FILES"
 .TP

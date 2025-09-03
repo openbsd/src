@@ -267,6 +267,7 @@ rrl-ipv4-prefix-length{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_RRL_IPV4_
 rrl-ipv6-prefix-length{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_RRL_IPV6_PREFIX_LENGTH;}
 rrl-whitelist-ratelimit{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_RRL_WHITELIST_RATELIMIT;}
 rrl-whitelist{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_RRL_WHITELIST;}
+reload-config{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_RELOAD_CONFIG; }
 zonefiles-check{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONEFILES_CHECK;}
 zonefiles-write{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ZONEFILES_WRITE;}
 dnstap{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP;}
@@ -285,6 +286,7 @@ dnstap-version{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_VERSION; }
 dnstap-log-auth-query-messages{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_LOG_AUTH_QUERY_MESSAGES; }
 dnstap-log-auth-response-messages{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DNSTAP_LOG_AUTH_RESPONSE_MESSAGES; }
 log-time-ascii{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_LOG_TIME_ASCII;}
+log-time-iso{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_LOG_TIME_ISO;}
 round-robin{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ROUND_ROBIN;}
 minimal-responses{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MINIMAL_RESPONSES;}
 confine-to-zone{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CONFINE_TO_ZONE;}
@@ -304,11 +306,14 @@ tls-service-key{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_KEY;
 tls-service-ocsp{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_OCSP;}
 tls-service-pem{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_PEM;}
 tls-port{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_PORT;}
+tls-auth-port{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_PORT;}
+tls-auth-xfr-only{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_XFR_ONLY;}
 tls-cert-bundle{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_CERT_BUNDLE; }
 proxy-protocol-port{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_PROXY_PROTOCOL_PORT; }
 answer-cookie{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ANSWER_COOKIE;}
 cookie-secret{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_COOKIE_SECRET;}
 cookie-secret-file{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_COOKIE_SECRET_FILE;}
+cookie-staging-secret{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_COOKIE_STAGING_SECRET;}
 xfrd-tcp-max{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_XFRD_TCP_MAX;}
 xfrd-tcp-pipeline{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_XFRD_TCP_PIPELINE;}
 verify{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERIFY; }

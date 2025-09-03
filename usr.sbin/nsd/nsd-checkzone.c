@@ -67,7 +67,7 @@ check_zone(struct nsd* nsd, const char* name, const char* fname, FILE *out,
 	zone = namedb_zone_create(nsd->db, dname, zo);
 
 	if(oldzone) {
-		errors = zonec_read(name, oldzone, zone);
+		errors = zonec_read(nsd->db, nsd->db->domains, name, oldzone, zone);
 		if(errors > 0) {
 			printf("zone %s file %s has %u errors\n", name, oldzone, errors);
 			exit(1);
@@ -80,7 +80,7 @@ check_zone(struct nsd* nsd, const char* name, const char* fname, FILE *out,
 	}
 
 	/* read the zone */
-	errors = zonec_read(name, fname, zone);
+	errors = zonec_read(nsd->db, nsd->db->domains, name, fname, zone);
 	if(errors > 0) {
 		printf("zone %s file %s has %u errors\n", name, fname, errors);
 		ixfr_create_cancel(ixfrcr);
@@ -116,7 +116,7 @@ int writepid(struct nsd * ATTR_UNUSED(nsd))
 {
 	        return 0;
 }
-void unlinkpid(const char * ATTR_UNUSED(file))
+void unlinkpid(const char * ATTR_UNUSED(file), const char* ATTR_UNUSED(username))
 {
 }
 void bind8_stats(struct nsd * ATTR_UNUSED(nsd))

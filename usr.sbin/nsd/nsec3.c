@@ -477,7 +477,22 @@ nsec3_tree_dszone(namedb_type* db, domain_type* d)
 	/* the DStree does not contain nodes with d==z->apex */
 	if(d->is_apex)
 		d = d->parent;
-	return nsec3_tree_zone(db, d);
+	while (d) {
+		if (d->is_apex) {
+			zone_type *zone = NULL;
+			for (rrset_type *rrset = d->rrsets; rrset; rrset = rrset->next)
+				if (rrset_rrtype(rrset) == TYPE_SOA ||
+				    rrset_rrtype(rrset) == TYPE_DNSKEY ||
+				    rrset_rrtype(rrset) == TYPE_NSEC3PARAM)
+					zone = rrset->zone;
+			if (!zone)
+				zone = namedb_find_zone(db, domain_dname(d));
+			if (zone && zone->dshashtree)
+				return zone;
+		}
+		d = d->parent;
+	}
+	return NULL;
 }
 
 int
@@ -560,9 +575,7 @@ nsec3_precompile_domain_ds(struct namedb* db, struct domain* domain,
 	/* lookup in tree cover ptr (or exact) */
 	exact = nsec3_find_cover(zone, domain->nsec3->ds_parent_hash->hash,
 		sizeof(domain->nsec3->ds_parent_hash->hash), &result);
-	if(exact)
-		domain->nsec3->nsec3_ds_parent_is_exact = 1;
-	else 	domain->nsec3->nsec3_ds_parent_is_exact = 0;
+	domain->nsec3->nsec3_ds_parent_is_exact = exact != 0;
 	domain->nsec3->nsec3_ds_parent_cover = result;
 	/* add into tree */
 	zone_add_domain_in_hash_tree(db->region, &zone->dshashtree,

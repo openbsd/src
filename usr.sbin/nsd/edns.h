@@ -20,7 +20,11 @@ struct query;
 #define NSID_CODE       3               /* nsid option code */
 #define COOKIE_CODE    10               /* COOKIE option code */
 #define EDE_CODE       15               /* Extended DNS Errors option code */
+#define ZONEVERSION_CODE 19             /* ZONEVERSION option code */
 #define DNSSEC_OK_MASK  0x8000U         /* do bit mask */
+
+/* https://iana.org/assignments/dns-parameters/#zoneversion-type-values */
+#define ZONEVERSION_SOA_SERIAL 0
 
 struct edns_data
 {
@@ -59,6 +63,7 @@ struct edns_record
 	size_t		   opt_reserved_space;
 	int                dnssec_ok;
 	int                nsid;
+	int                zoneversion;
 	cookie_status_type cookie_status;
 	size_t             cookie_len;
 	uint8_t            cookie[40];

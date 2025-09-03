@@ -101,4 +101,6 @@ void daemon_remote_attach(struct daemon_remote* rc, struct xfrd_state* xfrd);
  */
 int create_local_accept_sock(const char* path, int* noproto);
 
+void xfrd_reload_config(struct xfrd_state *xfrd);
+
 #endif /* DAEMON_REMOTE_H */

@@ -35,7 +35,6 @@ void
 namedb_close(struct namedb* db)
 {
 	if(db) {
-		zonec_desetup_parser();
 		region_destroy(db->region);
 	}
 }
@@ -76,6 +75,8 @@ namedb_zone_create(namedb_type* db, const dname_type* dname,
 	zone->opts = zo;
 	zone->ixfr = NULL;
 	zone->filename = NULL;
+	zone->includes.count = 0;
+	zone->includes.paths = NULL;
 	zone->logstr = NULL;
 	zone->mtime.tv_sec = 0;
 	zone->mtime.tv_nsec = 0;
@@ -88,6 +89,34 @@ namedb_zone_create(namedb_type* db, const dname_type* dname,
 	zone->is_bad = 0;
 	zone->is_ok = 1;
 	return zone;
+}
+
+void
+namedb_zone_free_filenames(namedb_type *db, zone_type* zone)
+{
+	assert(!zone->includes.paths == !zone->includes.count);
+
+	if (zone->filename) {
+		region_recycle(
+			db->region, zone->filename, strlen(zone->filename) + 1);
+		zone->filename = NULL;
+	}
+
+	if (zone->includes.count) {
+		for (size_t i=0; i < zone->includes.count; i++) {
+			region_recycle(
+				db->region,
+				zone->includes.paths[i],
+				strlen(zone->includes.paths[i]) + 1);
+		}
+
+		region_recycle(
+			db->region,
+			zone->includes.paths,
+			zone->includes.count * sizeof(*zone->includes.paths));
+		zone->includes.count = 0;
+		zone->includes.paths = NULL;
+	}
 }
 
 void
@@ -120,9 +149,7 @@ namedb_zone_delete(namedb_type* db, zone_type* zone)
 	hash_tree_delete(db->region, zone->dshashtree);
 #endif
 	zone_ixfr_free(zone->ixfr);
-	if(zone->filename)
-		region_recycle(db->region, zone->filename,
-			strlen(zone->filename)+1);
+	namedb_zone_free_filenames(db, zone);
 	if(zone->logstr)
 		region_recycle(db->region, zone->logstr,
 			strlen(zone->logstr)+1);
@@ -155,7 +182,6 @@ namedb_open (struct nsd_options* opt)
 	db->zonetree = radix_tree_create(db->region);
 	db->diff_skip = 0;
 	db->diff_pos = 0;
-	zonec_setup_parser(db);
 
 	if (gettimeofday(&(db->diff_timestamp), NULL) != 0) {
 		log_msg(LOG_ERR, "unable to load namedb: cannot initialize timestamp");
@@ -238,12 +264,27 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		/* if zone_fname, then the file was acquired from reading it,
 		 * and see if filename changed or mtime newer to read it */
 		} else if(zone_fname && strcmp(zone_fname, fname) == 0 &&
-		   timespec_compare(&zone_mtime, &mtime) == 0) {
-			VERBOSITY(3, (LOG_INFO, "zonefile %s is not modified",
-				fname));
-			return;
+			timespec_compare(&zone_mtime, &mtime) == 0) {
+			int changed = 0;
+			struct timespec include_mtime;
+			/* one of the includes may have been deleted, changed, etc */
+			for (size_t i=0; i < zone->includes.count; i++) {
+				if (!file_get_mtime(zone->includes.paths[i], &include_mtime, &nonexist)) {
+					changed = 1;
+				} else if (timespec_compare(&zone_mtime, &include_mtime) < 0) {
+					mtime = include_mtime;
+					changed = 1;
+				}
+			}
+
+			if (!changed) {
+				VERBOSITY(3, (LOG_INFO, "zonefile %s is not modified",
+					fname));
+				return;
+			}
 		}
 	}
+
 	if(ixfr_create_from_difference(zone, fname,
 		&ixfr_create_already_done)) {
 		ixfrcr = ixfr_create_start(zone, fname,
@@ -254,14 +295,18 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		}
 	}
 
-	assert(parser);
+	namedb_zone_free_filenames(nsd->db, zone);
+	zone->filename = region_strdup(nsd->db->region, fname);
+
 	/* wipe zone from memory */
 #ifdef NSEC3
 	nsec3_clear_precompile(nsd->db, zone);
 	zone->nsec3_param = NULL;
 #endif
 	delete_zone_rrs(nsd->db, zone);
-	errors = zonec_read(zone->opts->name, fname, zone);
+	VERBOSITY(5, (LOG_INFO, "zone %s zonec_read(%s)",
+		zone->opts->name, fname));
+	errors = zonec_read(nsd->db, nsd->db->domains, zone->opts->name, fname, zone);
 	if(errors > 0) {
 		log_msg(LOG_ERR, "zone %s file %s read with %u errors",
 			zone->opts->name, fname, errors);
@@ -272,10 +317,7 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		zone->nsec3_param = NULL;
 #endif
 		delete_zone_rrs(nsd->db, zone);
-		if(zone->filename)
-			region_recycle(nsd->db->region, zone->filename,
-				strlen(zone->filename)+1);
-		zone->filename = NULL;
+		namedb_zone_free_filenames(nsd->db, zone);
 		if(zone->logstr)
 			region_recycle(nsd->db->region, zone->logstr,
 				strlen(zone->logstr)+1);
@@ -287,10 +329,6 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		zone->is_changed = 0;
 		/* store zone into udb */
 		zone->mtime = mtime;
-		if(zone->filename)
-			region_recycle(nsd->db->region, zone->filename,
-				strlen(zone->filename)+1);
-		zone->filename = region_strdup(nsd->db->region, fname);
 		if(zone->logstr)
 			region_recycle(nsd->db->region, zone->logstr,
 				strlen(zone->logstr)+1);

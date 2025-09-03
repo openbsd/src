@@ -256,6 +256,8 @@ namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt)
 			return;
 		}
 		zone->is_changed = 0;
+		VERBOSITY(3, (LOG_INFO, "zone %s written to file %s",
+			zone->opts->name, zfile));
 		/* fetch the mtime of the just created zonefile so we
 		 * do not waste effort reading it back in */
 		if(!file_get_mtime(zfile, &mtime, &notexist)) {

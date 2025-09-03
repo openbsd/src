@@ -14,6 +14,13 @@
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
+#ifdef HAVE_SSL
+#include <openssl/ssl.h>
+#include <openssl/x509v3.h>
+#endif
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 #include "options.h"
 #include "query.h"
 #include "tsig.h"
@@ -73,6 +80,7 @@ nsd_options_create(region_type* region)
 	opt->logfile = 0;
 	opt->log_only_syslog = 0;
 	opt->log_time_ascii = 1;
+	opt->log_time_iso = 0;
 	opt->round_robin = 0; /* also packet.h::round_robin */
 	opt->minimal_responses = 1; /* also packet.h::minimal_responses */
 	opt->confine_to_zone = 0;
@@ -130,6 +138,7 @@ nsd_options_create(region_type* region)
 	opt->dnstap_log_auth_query_messages = 0;
 	opt->dnstap_log_auth_response_messages = 0;
 #endif
+	opt->reload_config = 0;
 	opt->zonefiles_check = 1;
 	opt->zonefiles_write = ZONEFILES_WRITE_INTERVAL;
 	opt->xfrd_reload_timeout = 1;
@@ -137,11 +146,15 @@ nsd_options_create(region_type* region)
 	opt->tls_service_ocsp = NULL;
 	opt->tls_service_pem = NULL;
 	opt->tls_port = TLS_PORT;
+	opt->tls_auth_port = NULL;
 	opt->tls_cert_bundle = NULL;
+	opt->tls_auth_xfr_only = 0;
 	opt->proxy_protocol_port = NULL;
 	opt->answer_cookie = 1;
 	opt->cookie_secret = NULL;
-	opt->cookie_secret_file = CONFIGDIR"/nsd_cookiesecrets.txt";
+	opt->cookie_staging_secret = NULL;
+	opt->cookie_secret_file = NULL;
+	opt->cookie_secret_file_is_default = 1;
 	opt->control_enable = 0;
 	opt->control_interface = NULL;
 	opt->control_port = NSD_CONTROL_PORT;
@@ -246,6 +259,16 @@ parse_options_file(struct nsd_options* opt, const char* file,
 
 	opt->configfile = region_strdup(opt->region, file);
 
+	/* Set default cookie_secret_file value */
+	if(opt->cookie_secret_file_is_default && !opt->cookie_secret_file) {
+		opt->cookie_secret_file =
+			region_strdup(opt->region, COOKIESECRETSFILE);
+	}
+	/* Semantic errors */
+	if(opt->cookie_staging_secret && !opt->cookie_secret) {
+		c_error("a cookie-staging-secret cannot be configured without "
+		        "also providing a cookie-secret");
+	}
 	RBTREE_FOR(pat, struct pattern_options*, opt->patterns)
 	{
 		struct pattern_options* old_pat =
@@ -290,6 +313,13 @@ parse_options_file(struct nsd_options* opt, const char* file,
 		}
 		for(acl=pat->provide_xfr; acl; acl=acl->next)
 		{
+			/* Find tls_auth */
+			if (acl->tls_auth_name) {
+				if (!(acl->tls_auth_options =
+			                tls_auth_options_find(opt, acl->tls_auth_name)))
+				    c_error("tls_auth %s in pattern %s could not be found",
+						acl->tls_auth_name, pat->pname);
+			}
 			if(acl->nokey || acl->blocked)
 				continue;
 			acl->key_options = key_options_find(opt, acl->key_name);
@@ -1940,9 +1970,16 @@ acl_check_incoming(struct acl_options* acl, struct query* q,
 
 	while(acl)
 	{
+#ifdef HAVE_SSL
+		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "testing acl %s %s %s",
+			acl->ip_address_spec, acl->nokey?"NOKEY":
+			(acl->blocked?"BLOCKED":acl->key_name),
+			(acl->tls_auth_name && q->tls_auth)?acl->tls_auth_name:""));
+#else
 		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "testing acl %s %s",
 			acl->ip_address_spec, acl->nokey?"NOKEY":
 			(acl->blocked?"BLOCKED":acl->key_name)));
+#endif
 		if(acl_addr_matches(acl, q) && acl_key_matches(acl, q)) {
 			if(!match)
 			{
@@ -1955,6 +1992,27 @@ acl_check_incoming(struct acl_options* acl, struct query* q,
 				return -1;
 			}
 		}
+#ifdef HAVE_SSL
+		/* we are in a acl with tls_auth */
+		if (acl->tls_auth_name && q->tls_auth) {
+			/* we have auth_domain_name in tls_auth */
+			if (acl->tls_auth_options && acl->tls_auth_options->auth_domain_name) {
+				if (!acl_tls_hostname_matches(q->tls_auth, acl->tls_auth_options->auth_domain_name)) {
+					VERBOSITY(3, (LOG_WARNING,
+							"client cert does not match %s %s",
+							acl->tls_auth_name, acl->tls_auth_options->auth_domain_name));
+					q->cert_cn = NULL;
+					return -1;
+				}
+				VERBOSITY(5, (LOG_INFO, "%s %s verified",
+					acl->tls_auth_name, acl->tls_auth_options->auth_domain_name));
+				q->cert_cn = acl->tls_auth_options->auth_domain_name;
+			} else {
+				/* nsd gives error on start for this, but check just in case */
+				log_msg(LOG_ERR, "auth-domain-name not defined in %s", acl->tls_auth_name);
+			}
+		}
+#endif
 		number++;
 		acl = acl->next;
 	}
@@ -2157,6 +2215,168 @@ acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t 
 	return 1;
 }
 #endif /* INET6 */
+
+#ifdef HAVE_SSL
+/* Code in for matches_subject_alternative_name and matches_common_name
+ * functions is from https://wiki.openssl.org/index.php/Hostname_validation
+ * with modifications.
+ *
+ * Obtained from: https://github.com/iSECPartners/ssl-conservatory
+ * Copyright (C) 2012, iSEC Partners.
+ * License: MIT License
+ * Author:  Alban Diquet
+ */
+static int matches_subject_alternative_name(
+	const char *acl_cert_cn, size_t acl_cert_cn_len, const X509 *cert)
+{
+	int result = 0;
+	int san_names_nb = -1;
+	STACK_OF(GENERAL_NAME) *san_names = NULL;
+
+	/* Try to extract the names within the SAN extension from the certificate */
+	san_names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
+	if (san_names == NULL)
+		return 0;
+
+	san_names_nb = sk_GENERAL_NAME_num(san_names);
+
+	/* Check each name within the extension */
+	for (int i = 0; i < san_names_nb && !result; i++) {
+		int len;
+		const char *str;
+		const GENERAL_NAME *current_name = sk_GENERAL_NAME_value(san_names, i);
+		/* Skip non-DNS SAN entries. */
+		if (current_name->type != GEN_DNS)
+			continue;
+#if HAVE_ASN1_STRING_GET0_DATA
+		str = (const char *)ASN1_STRING_get0_data(current_name->d.dNSName);
+#else
+		str = (const char *)ASN1_STRING_data(current_name->d.dNSName);
+#endif
+		if (str == NULL)
+			continue;
+		len = ASN1_STRING_length(current_name->d.dNSName);
+		if (acl_cert_cn_len == (size_t)len &&
+		    strncasecmp(str, acl_cert_cn, len) == 0)
+		{
+			result = 1;
+		} else {
+			/* Make sure there isn't an embedded NUL character in the DNS name */
+			/* From the man page: In general it cannot be assumed that the data
+			 * returned by ASN1_STRING_data() is null terminated or does not
+			 * contain embedded nulls. */
+			int pos = 0;
+			while (pos < len && str[pos] != 0)
+				pos++;
+			if (pos == len) {
+				DEBUG(DEBUG_XFRD, 2, (LOG_INFO,
+					"SAN %*s does not match acl for %s", len, str, acl_cert_cn));
+			} else {
+				DEBUG(DEBUG_XFRD, 2, (LOG_INFO, "Malformed SAN in certificate"));
+				break;
+			}
+		}
+	}
+	sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
+
+	return result;
+}
+
+static int matches_common_name(
+	const char *acl_cert_cn, size_t acl_cert_cn_len, const X509 *cert)
+{
+	int len;
+	int common_name_loc = -1;
+	const char *common_name_str = NULL;
+	X509_NAME *subject_name = NULL;
+	X509_NAME_ENTRY *common_name_entry = NULL;
+	ASN1_STRING *common_name_asn1 = NULL;
+
+	if ((subject_name = X509_get_subject_name(cert)) == NULL)
+		return 0;
+
+	/* Find the position of the CN field in the Subject field of the certificate */
+	common_name_loc = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
+	if (common_name_loc < 0)
+		return 0;
+
+	/* Extract the CN field */
+	common_name_entry = X509_NAME_get_entry(subject_name, common_name_loc);
+	if (common_name_entry == NULL)
+		return 0;
+
+	/* Convert the CN field to a C string */
+	common_name_asn1 = X509_NAME_ENTRY_get_data(common_name_entry);
+	if (common_name_asn1 == NULL)
+		return 0;
+
+#if HAVE_ASN1_STRING_GET0_DATA
+	common_name_str = (const char *)ASN1_STRING_get0_data(common_name_asn1);
+#else
+	common_name_str = (const char *)ASN1_STRING_data(common_name_asn1);
+#endif
+
+	len = ASN1_STRING_length(common_name_asn1);
+	if (acl_cert_cn_len == (size_t)len &&
+	    strncasecmp(acl_cert_cn, common_name_str, len) == 0)
+	{
+		return 1;
+	} else {
+		/* Make sure there isn't an embedded NUL character in the CN */
+		int pos = 0;
+		while (pos < len && common_name_str[pos] != 0)
+			pos++;
+		if (pos == len) {
+			DEBUG(DEBUG_XFRD, 2, (LOG_INFO,
+				"CN %*s does not match acl for %s", len, common_name_str, acl_cert_cn));
+		} else {
+			DEBUG(DEBUG_XFRD, 2, (LOG_INFO, "Malformed CN in certificate"));
+		}
+	}
+
+	return 0;
+}
+
+int
+acl_tls_hostname_matches(SSL* tls_auth, const char *acl_cert_cn)
+{
+	int result = 0;
+	size_t acl_cert_cn_len;
+	X509 *client_cert;
+
+	assert(acl_cert_cn != NULL);
+
+#ifdef HAVE_SSL_GET1_PEER_CERTIFICATE
+	client_cert = SSL_get1_peer_certificate(tls_auth);
+#else
+	client_cert = SSL_get_peer_certificate(tls_auth);
+#endif
+
+	if (client_cert == NULL)
+		return 0;
+
+	/* OpenSSL provides functions for hostname checking from certificate
+	 * Following code should work but it doesn't.
+	 * Keep it for future test in order to not use custom code
+	 *
+	 * X509_VERIFY_PARAM *vpm = SSL_get0_param(tls_auth);
+	 * Hostname check is done here:
+	 * X509_VERIFY_PARAM_set1_host(vpm, acl_cert_cn, 0); // recommended
+	 * X509_check_host() // can also be used instead. Not recommended DANE-EE
+	 * SSL_get_verify_result(tls_auth) != X509_V_OK) // NOT ok
+	 * const char *peername = X509_VERIFY_PARAM_get0_peername(vpm); // NOT ok
+	 */
+
+	acl_cert_cn_len = strlen(acl_cert_cn);
+	/* semi follow RFC6125#section-6.4.4 check SAN DNS first */
+	if (!(result = matches_subject_alternative_name(acl_cert_cn, acl_cert_cn_len, client_cert)))
+		result = matches_common_name(acl_cert_cn, acl_cert_cn_len, client_cert);
+
+	X509_free(client_cert);
+
+	return result;
+}
+#endif
 
 int
 acl_key_matches(struct acl_options* acl, struct query* q)

@@ -1,6 +1,7 @@
 # NSD
 
-[![Cirrus Build Status](https://api.cirrus-ci.com/github/NLnetLabs/nsd.svg?branch=master)](https://cirrus-ci.com/github/NLnetLabs/nsd)
+[![GitHub Build Status](https://github.com/NLnetLabs/nsd/actions/workflows/build-test.yml/badge.svg?branch=master)](https://github.com/NLnetLabs/nsd/actions)
+[![Coverity Scan Status](https://scan.coverity.com/projects/18867/badge.svg)](https://scan.coverity.com/projects/nlnetlabs-nsd)
 [![Packaging status](https://repology.org/badge/tiny-repos/nsd.svg)](https://repology.org/project/nsd/versions)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1462/badge)](https://bestpractices.coreinfrastructure.org/projects/1462)
 [![Mastodon Follow](https://img.shields.io/mastodon/follow/109262826617293067?domain=https%3A%2F%2Ffosstodon.org&style=social)](https://fosstodon.org/@nlnetlabs)
@@ -15,7 +16,7 @@ or post a message on the
 You can learn more about NSD by reading our
 [documentation](https://nsd.docs.nlnetlabs.nl/).
 
-## Compiling
+## Building
 
 Make sure you have the following installed:
   * C toolchain (the set of tools to compile C such as a compiler, linker, and assembler)
@@ -24,17 +25,24 @@ Make sure you have the following installed:
   * flex
   * bison
 
-The repository does not contain `./configure`, but you can generate it like
-this (note that the `./configure` is included in release tarballs so they do not have to be generated):
+When building from Git, the `configure` script and [simdzone][simdzone]
+sources are missing, use the following commands to get started (note that the
+`configure` script and sources are included in release tarballs and do not
+need to be generated/downloaded):
 
 ```
-autoreconf -fi
+$ git submodule update --init
+$ autoreconf -fi
 ```
 
-NSD can be compiled and installed using:
+> `autoreconf` should install the required auxiliary files (e.g. `config.sub`
+> and `config.guess`). Older versions of `autoreconf` may not do so, try
+> running `libtoolize -fi -c` first in that case.
+
+Compile and install using:
 
 ```
-./configure && make && make install
+$ ./configure && make && make install
 ```
 
 ## NSD configuration
@@ -45,3 +53,6 @@ installed (use `man nsd.conf`) and are available on the NSD
 
 An example configuration file is located in
 [nsd.conf.sample](https://github.com/NLnetLabs/nsd/blob/master/nsd.conf.sample.in).
+
+
+[simdzone]: https://github.com/NLnetLabs/simdzone

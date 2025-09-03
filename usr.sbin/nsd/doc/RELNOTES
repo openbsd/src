@@ -1,5 +1,123 @@
 NSD RELEASE NOTES
 
+4.11.0
+================
+FEATURES:
+	- Support reloading configuration on SIGHUP.
+	- Fix #383: log timestamps in ISO8601 format with timezone.
+	  This adds the option `log-time-iso: yes` that logs in ISO8601
+	  format.
+	- Updated cookie secrets management.
+	  The default cookie secret file location can be set at compile time
+	  with the --with-cookiesecretsfile=path option to configure. The
+	  default location is changed to {dbdir}/cookiesecrets.txt. The
+	  previous default location will be checked at startup when there is
+	  no cookie secrets file at the new default location.
+	  A staging cookie can now also be configured in the configuration
+	  file and secrets configured in the configuration file now take
+	  precedence over those read from file.
+	  All DNS related setting in the configuration file will be reevaluated
+	  and effectuated after nsd-control reconfig.
+	- Merge #398: RFC 9660 The DNS Zone Version (ZONEVERSION) Option
+	- Merge #406: ohttp and tls-supported-groups SvcParam suppor
+	- Merge #408: NINFO, RKEY, RESINFO, WALLET, CLA and TA RR types
+	- Merge #409: Writing of NSAP-PTR, GPOS and HIP RR types
+	- Merge #407: Better balanced verbosity levels for logging.
+
+BUG FIXES:
+	- Fix title underline and declaration after statement warnings.
+	- Add cross platform freebsd, openbsd and netbsd to github ci.
+	- Update simdzone to include fix for netbsd double bswap declarations,
+	  and also semantic checks for DS and ZONEMD. And CFLAGS has -march
+	  prepended to fix detection.
+	- Merge #376: Point the user towards tcpdump for logging individual
+	  queries.
+	- Track $INCLUDEs in zone files.
+	- Fix ci to update macos-12 to the macos-15 runner image.
+	- Merge #390: Apply non-xfr tasks before xfr tasks.
+	  This fixes an issue where non-xfr tasks are lost when they are
+	  batch processed together with non-xfr tasks.
+	  This merge also changes that notifies are passed on from the serve
+	  processes to the xfrd directly instead of via main. This was
+	  necessary to allow applying the non-xfr tasks without forking a
+	  backup-main for the sole purpose of forwarding notifies.
+	- Merge #391: Update copyright lines (in version output).
+	- Fix #392: Inconsistent documentation about control-interface.
+	- Merge #395: Explain the zonefile example better.
+	- Merge #394: Fix the path to use doc/manual/.
+	- Fix analyzer issue in do_print_cookie_secrets to check for failure.
+	- Merge #404: Introducing Sphinx substitution in code blocks.
+	  As well as other fixes with Sphinx build.
+	- Update Copyright lines in help output
+	- Merge #395: Explain zonefile example better
+	- Merge #394: Fix doc path (fixes "Edit on GitHub" button in the docs)
+	- Fix Makefile for parallel build failure around bison rule.
+	- Fix #405: Fix typo in documentation.
+	- Treat a mismatch in RRset TTLs as a warning.
+
+4.10.1
+================
+FEATURES:
+	- Merge #352 from orlitzky: contrib: add OpenRC service script, config
+	  file, and tmpfiles entry.
+	- Merge #337 from bilias: Mutual TLS-AUTH.
+
+BUG FIXES:
+	- Fix incorrect punctuation of log messages.
+	- Fix for #317, document more text on pidfile permissions.
+	- Fix #334: RFC8482 behavior documentation.
+	- Fix for OpenSSL 3.0 deprecated functions.
+	- Merge #341: Fix allow-query wording in nsd.conf.5.in.
+	- Fix test script from making spurious output.
+	- Fix cpu_affinity and socket_partitioning tests for --enable-log-role.
+	- Fix #344: Update simdzone.
+	- Fix #347: Adjust verbosity for TLS (+TCP) to be 5.
+	- Merge #348: Move TLS logging to verbosity level 5.
+	- For #347: Also adjust verbosity of log message for remaining TCP
+	  connections.
+	- Merge #349: log file name before loading.
+	- Use MAKE variable rather than make command directly in Makefile.
+	- Serialize WKS RRs using numeric values rather than names.
+	- Fix propagation of Makefile targets to simdzone.
+	- Do not log ACL mismatch on followed CNAMEs.
+	- Fix link of xfr-inspect for libssl dependency.
+	- Initialize tls_auth_port and tls_auth_xfr_only options.
+	- Merge #358: Fix Hurd build error due to log_err.
+	- Update simdzone to fix detection of AVX2 support.
+
+4.10.0
+================
+FEATURES:
+	- Merge #278: Replace Flex+Bison based zone parser with simdzone.
+	  Performance of loading zones and IXFRs is greatly improved by using
+	  the simdzone project by NLnet Labs. The optimized presentation format
+	  parser leverages SIMD instructions in modern CPUs to improve throughput.
+	  Right now SSE4.2 and AVX2 instruction sets are supported, other
+	  instruction sets will use the fallback implementation, which still is
+	  a decent improvement over the Flex+Bison based parser.
+
+BUG FIXES:
+	- Fix that when the server truncates the pidfile, it does not follow
+	  symbolic links.
+	- Fix #317: nsd should not chown its PID file.
+	- For #317: Modify nsd service script to stop NSD from creating a
+	  pid file that systemd is not using.
+	- Fix #324: Clarify the purpose of contrib/bug390.patch.
+	- Fix IXFR requests upstream for zones with a long name. Thanks for
+	  the report to Yuuki Wakisaka from Internet Initiative Japan Inc.
+	- Unit test for dname subdomain test used by xfrd-tcp.c.
+	- Fix #329: TCP accept queues number.
+	- Fix that the reload handler for sigchild uses signal_add, and
+	  also that the signal handler is restored when done.
+	- Fix that when server verify is done it resets the sigchild handler.
+	- Fix makedist.sh for simdzone inclusion.
+	- Fix makedist.sh to remove simdzone git tracking information and
+	  scripting temporaries from tarball.
+	- Fix error output of makedist.sh.
+	- Use simdzone version with name parser fix.
+	- Bump simdzone version to fix OpenBSD build issues.
+	- Bump simdzone to include minor fixes.
+
 4.9.1
 ================
 BUG FIXES:

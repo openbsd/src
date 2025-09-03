@@ -76,7 +76,7 @@ buffer_type *buffer_create(region_type *region, size_t capacity);
  * and no memory allocations are done.  The buffer is fixed and cannot
  * be resized using buffer_reserve().
  */
-void buffer_create_from(buffer_type *buffer, void *data, size_t size);
+void buffer_create_from(buffer_type *buffer, const void *data, size_t size);
 
 /*
  * Clear the buffer and make it ready for writing.  The buffer's limit

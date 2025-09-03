@@ -1,5 +1,5 @@
-.TH "nsd\-checkconf" "8" "Apr  4, 2024" "NLnet Labs" "nsd 4.9.1"
-.\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
+.TH "nsd\-checkconf" "8" "dec 12, 2024" "NLnet Labs" "nsd 4.11.0"
+.\" Copyright (c) 2001\-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd\-checkconf
@@ -57,14 +57,12 @@ prints out a list of configured zones.
 The special value
 .I patterns
 prints out a list of configured patterns.
-.P
-.RS
+.sp
 This option can be used to parse the config file from the shell. If the
 .B \-z
 option is given, but the 
 .B \-o 
 option is not given, nothing is printed. 
-.RE
 .TP
 .B \-s\fI keyname
 Prints the key secret (base64 blob) configured for this key in the 
@@ -83,15 +81,11 @@ for the given pattern name.
 Return the option specified with 
 .B \-o
 for zone 'zonename'.
-.P
-.RS
+.sp
 If this option is not given, the server section of the config file
 is used.
-.RE
-.P
-.RS
+.sp
 The \-o, \-s and \-z option print configfile options to standard output. 
-.RE
 .SH "FILES"
 .TP
 @nsdconfigfile@

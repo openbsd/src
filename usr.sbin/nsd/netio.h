@@ -174,17 +174,4 @@ int netio_dispatch(netio_type *netio,
 		   const struct timespec *timeout,
 		   const sigset_t *sigmask);
 
-
-#ifdef __cplusplus
-inline netio_event_types_type
-operator | (netio_event_types_type lhs, netio_event_types_type rhs) {
-	return (netio_event_types_type) (lhs | rhs);
-}
-inline netio_event_types_type
-operator |= (netio_event_types_type &lhs, netio_event_types_type rhs) {
-	lhs = (netio_event_types_type) (lhs | rhs);
-	return lhs;
-}
-#endif /* __cplusplus */
-
 #endif /* NETIO_H */

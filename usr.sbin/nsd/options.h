@@ -11,6 +11,9 @@
 #define OPTIONS_H
 
 #include <stdarg.h>
+#ifdef HAVE_SSL
+#include <openssl/ssl.h>
+#endif
 #include "region-allocator.h"
 #include "rbtree.h"
 struct query;
@@ -113,9 +116,11 @@ struct nsd_options {
 	const char* zonelistfile;
 	const char* nsid;
 	int xfrd_reload_timeout;
+	int reload_config;
 	int zonefiles_check;
 	int zonefiles_write;
 	int log_time_ascii;
+	int log_time_iso;
 	int round_robin;
 	int minimal_responses;
 	int refuse_any;
@@ -133,8 +138,12 @@ struct nsd_options {
 	char* tls_service_pem;
 	/* TLS dedicated port */
 	const char* tls_port;
+	/* TLS-AUTH dedicated port */
+	const char* tls_auth_port;
 	/* TLS certificate bundle */
 	const char* tls_cert_bundle;
+	/* Answer XFR only from tls_auth_port and after authentication */
+	int tls_auth_xfr_only;
 
 	/* proxy protocol port list */
 	struct proxy_protocol_port_list* proxy_protocol_port;
@@ -200,8 +209,12 @@ struct nsd_options {
 	int answer_cookie;
 	/** cookie secret */
 	char *cookie_secret;
+	/** cookie staging secret */
+	char *cookie_staging_secret;
 	/** path to cookie secret store */
-	char const* cookie_secret_file;
+	char *cookie_secret_file;
+	/** set when the cookie_secret_file whas not explicitely configured */
+	uint8_t cookie_secret_file_is_default;
 	/** enable verify */
 	int verify_enable;
 	/** list of ip addresses used to serve zones for verification */
@@ -557,6 +570,9 @@ int acl_check_incoming(struct acl_options* acl, struct query* q,
 int acl_addr_matches_host(struct acl_options* acl, struct acl_options* host);
 int acl_addr_matches(struct acl_options* acl, struct query* q);
 int acl_addr_matches_proxy(struct acl_options* acl, struct query* q);
+#ifdef HAVE_SSL
+int acl_tls_hostname_matches(SSL* ssl, const char* acl_cert_cn);
+#endif
 int acl_key_matches(struct acl_options* acl, struct query* q);
 int acl_addr_match_mask(uint32_t* a, uint32_t* b, uint32_t* mask, size_t sz);
 int acl_addr_match_range_v6(uint32_t* minval, uint32_t* x, uint32_t* maxval, size_t sz);

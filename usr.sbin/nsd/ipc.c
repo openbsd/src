@@ -166,31 +166,6 @@ send_stat_to_child(struct main_ipc_handler_data* data, int fd)
 	data->child->need_to_send_STATS = 0;
 }
 
-#ifndef NDEBUG
-int packet_read_query_section(buffer_type *packet, uint8_t* dest, uint16_t* qtype, uint16_t* qclass);
-static void
-debug_print_fwd_name(int ATTR_UNUSED(len), buffer_type* packet, int acl_num)
-{
-	uint8_t qnamebuf[MAXDOMAINLEN];
-	uint16_t qtype, qclass;
-	const dname_type* dname;
-	region_type* tempregion = region_create(xalloc, free);
-
-	size_t bufpos = buffer_position(packet);
-	buffer_rewind(packet);
-	buffer_skip(packet, 12);
-	if(packet_read_query_section(packet, qnamebuf, &qtype, &qclass)) {
-		dname = dname_make(tempregion, qnamebuf, 1);
-		log_msg(LOG_INFO, "main: fwd packet for %s, acl %d",
-			dname_to_string(dname,0), acl_num);
-	} else {
-		log_msg(LOG_INFO, "main: fwd packet badqname, acl %d", acl_num);
-	}
-	buffer_set_position(packet, bufpos);
-	region_destroy(tempregion);
-}
-#endif
-
 static void
 send_quit_to_child(struct main_ipc_handler_data* data, int fd)
 {
@@ -332,95 +307,6 @@ parent_handle_child_command(netio_type *ATTR_UNUSED(netio),
 		return;
 	}
 
-	if (data->forward_mode) {
-		int got_acl;
-		/* forward the data to xfrd */
-		DEBUG(DEBUG_IPC,2, (LOG_INFO,
-			"main passed packet readup %d", (int)data->got_bytes));
-		if(data->got_bytes < sizeof(data->total_bytes))
-		{
-			if ((len = read(handler->fd,
-				(char*)&data->total_bytes+data->got_bytes,
-				sizeof(data->total_bytes)-data->got_bytes)) == -1) {
-				log_msg(LOG_ERR, "handle_child_command: read: %s",
-					strerror(errno));
-				return;
-			}
-			if(len == 0) {
-				/* EOF */
-				data->forward_mode = 0;
-				return;
-			}
-			data->got_bytes += len;
-			if(data->got_bytes < sizeof(data->total_bytes))
-				return;
-			data->total_bytes = ntohs(data->total_bytes);
-			buffer_clear(data->packet);
-			if(data->total_bytes > buffer_capacity(data->packet)) {
-				log_msg(LOG_ERR, "internal error: ipc too large");
-				exit(1);
-			}
-			return;
-		}
-		/* read the packet */
-		if(data->got_bytes-sizeof(data->total_bytes) < data->total_bytes) {
-			if((len = read(handler->fd, buffer_current(data->packet),
-				data->total_bytes - (data->got_bytes-sizeof(data->total_bytes))
-				)) == -1 ) {
-				log_msg(LOG_ERR, "handle_child_command: read: %s",
-					strerror(errno));
-				return;
-			}
-			if(len == 0) {
-				/* EOF */
-				data->forward_mode = 0;
-				return;
-			}
-			data->got_bytes += len;
-			buffer_skip(data->packet, len);
-			/* read rest later */
-			return;
-		}
-		/* read the acl numbers */
-		got_acl = data->got_bytes - sizeof(data->total_bytes) - data->total_bytes;
-		if((len = read(handler->fd, (char*)&data->acl_num+got_acl,
-			sizeof(data->acl_num)+sizeof(data->acl_xfr)-got_acl)) == -1 ) {
-			log_msg(LOG_ERR, "handle_child_command: read: %s",
-				strerror(errno));
-			return;
-		}
-		if(len == 0) {
-			/* EOF */
-			data->forward_mode = 0;
-			return;
-		}
-		got_acl += len;
-		data->got_bytes += len;
-		if(got_acl >= (int)(sizeof(data->acl_num)+sizeof(data->acl_xfr))) {
-			uint16_t len = htons(data->total_bytes);
-			DEBUG(DEBUG_IPC,2, (LOG_INFO,
-				"main fwd passed packet write %d", (int)data->got_bytes));
-#ifndef NDEBUG
-			if(nsd_debug_level >= 2)
-				debug_print_fwd_name(len, data->packet, data->acl_num);
-#endif
-			data->forward_mode = 0;
-			mode = NSD_PASS_TO_XFRD;
-			if(!write_socket(*data->xfrd_sock, &mode, sizeof(mode)) ||
-			   !write_socket(*data->xfrd_sock, &len, sizeof(len)) ||
-			   !write_socket(*data->xfrd_sock, buffer_begin(data->packet),
-				data->total_bytes) ||
-			   !write_socket(*data->xfrd_sock, &data->acl_num,
-			   	sizeof(data->acl_num)) ||
-			   !write_socket(*data->xfrd_sock, &data->acl_xfr,
-			   	sizeof(data->acl_xfr))) {
-				log_msg(LOG_ERR, "error in ipc fwd main2xfrd: %s",
-					strerror(errno));
-			}
-		}
-		return;
-	}
-
 	/* read command from ipc */
 	if ((len = read(handler->fd, &mode, sizeof(mode))) == -1) {
 		log_msg(LOG_ERR, "handle_child_command: read: %s",
@@ -442,12 +328,6 @@ parent_handle_child_command(netio_type *ATTR_UNUSED(netio),
 		break;
 	case NSD_REAP_CHILDREN:
 		data->nsd->signal_hint_child = 1;
-		break;
-	case NSD_PASS_TO_XFRD:
-		/* set mode for handle_child_command; echo to xfrd. */
-		data->forward_mode = 1;
-		data->got_bytes = 0;
-		data->total_bytes = 0;
 		break;
 	default:
 		log_msg(LOG_ERR, "handle_child_command: bad mode %d",
@@ -651,52 +531,6 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 	sig_atomic_t cmd;
 	int len;
 
-	if(xfrd->ipc_conn->is_reading==2) {
-		buffer_type* tmp = xfrd->ipc_pass;
-		uint32_t acl_num;
-		int32_t acl_xfr;
-		/* read acl_num */
-		int ret = conn_read(xfrd->ipc_conn);
-		if(ret == -1) {
-			log_msg(LOG_ERR, "xfrd: error in read ipc: %s", strerror(errno));
-			xfrd->ipc_conn->is_reading = 0;
-			return;
-		}
-		if(ret == 0)
-			return;
-		buffer_flip(xfrd->ipc_conn->packet);
-		xfrd->ipc_pass = xfrd->ipc_conn->packet;
-		xfrd->ipc_conn->packet = tmp;
-		xfrd->ipc_conn->is_reading = 0;
-		acl_num = buffer_read_u32(xfrd->ipc_pass);
-		acl_xfr = (int32_t)buffer_read_u32(xfrd->ipc_pass);
-		xfrd_handle_passed_packet(xfrd->ipc_conn->packet, acl_num, acl_xfr);
-		return;
-	}
-	if(xfrd->ipc_conn->is_reading) {
-		/* reading an IPC message */
-		buffer_type* tmp;
-		int ret = conn_read(xfrd->ipc_conn);
-		if(ret == -1) {
-			log_msg(LOG_ERR, "xfrd: error in read ipc: %s", strerror(errno));
-			xfrd->ipc_conn->is_reading = 0;
-			return;
-		}
-		if(ret == 0)
-			return;
-		buffer_flip(xfrd->ipc_conn->packet);
-		/* use ipc_conn to read remaining data as well */
-		tmp = xfrd->ipc_pass;
-		xfrd->ipc_conn->is_reading=2;
-		xfrd->ipc_pass = xfrd->ipc_conn->packet;
-		xfrd->ipc_conn->packet = tmp;
-		xfrd->ipc_conn->total_bytes = sizeof(xfrd->ipc_conn->msglen);
-		xfrd->ipc_conn->msglen = 2*sizeof(uint32_t);
-		buffer_clear(xfrd->ipc_conn->packet);
-		buffer_set_limit(xfrd->ipc_conn->packet, xfrd->ipc_conn->msglen);
-		return;
-	}
-
 	if((len = read(handler->ev_fd, &cmd, sizeof(cmd))) == -1) {
 		if(errno != EINTR && errno != EAGAIN)
 			log_msg(LOG_ERR, "xfrd_handle_ipc: read: %s",
@@ -747,10 +581,6 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 		xfrd_prepare_zones_for_reload();
 		xfrd->reload_failed = 0;
 		break;
-	case NSD_PASS_TO_XFRD:
-		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc recv PASS_TO_XFRD"));
-		xfrd->ipc_conn->is_reading = 1;
-		break;
 	case NSD_RELOAD_REQ:
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc recv RELOAD_REQ"));
 		/* make reload happen, right away, and schedule file check */
@@ -769,11 +599,38 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 			(int)ntohl(cmd));
 		break;
 	}
+}
 
-	if(xfrd->ipc_conn->is_reading) {
-		/* setup read of info */
-		xfrd->ipc_conn->total_bytes = 0;
-		xfrd->ipc_conn->msglen = 0;
-		buffer_clear(xfrd->ipc_conn->packet);
+void
+xfrd_handle_notify(int ATTR_UNUSED(fd), short event, void* arg)
+{
+	struct xfrd_tcp* notify_pipe = (struct xfrd_tcp*)arg;
+	uint32_t acl_num;
+	int32_t acl_xfr;
+
+	if(!(event & EV_READ))
+		return;
+
+	switch(conn_read(notify_pipe)){
+	case -1: /* TODO: What to do here? */
+		 return;
+	case  0: return; /* call back later */
+	default: break;
 	}
+	if(buffer_limit(notify_pipe->packet) < sizeof(acl_xfr)+sizeof(acl_num))
+		log_msg(LOG_ERR, "xfrd_handle_notify invalid message size");
+	else {
+		size_t eop = buffer_position(notify_pipe->packet)
+		           - sizeof(acl_xfr) - sizeof(acl_num);
+
+		buffer_set_position(notify_pipe->packet, eop);
+		acl_num = buffer_read_u32(notify_pipe->packet);
+		acl_xfr = (int32_t)buffer_read_u32(notify_pipe->packet);
+		buffer_set_position(notify_pipe->packet, eop);
+		buffer_flip(notify_pipe->packet);
+		xfrd_handle_passed_packet(notify_pipe->packet,acl_num,acl_xfr);
+	}
+	notify_pipe->total_bytes = 0;
+	notify_pipe->msglen = 0;
+	buffer_clear(notify_pipe->packet);
 }

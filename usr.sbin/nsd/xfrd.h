@@ -97,8 +97,9 @@ struct xfrd_state {
 	/* communication channel with server_main */
 	struct event ipc_handler;
 	int ipc_handler_flags;
-	struct xfrd_tcp *ipc_conn;
-	struct buffer* ipc_pass;
+	/* 2 * nsd->child_count communication channels from the serve childs */
+	struct event    *notify_events;
+	struct xfrd_tcp *notify_pipes;
 	/* sending ipc to server_main */
 	uint8_t need_to_send_shutdown;
 	uint8_t need_to_send_reload;

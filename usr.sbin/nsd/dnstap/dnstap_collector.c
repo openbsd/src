@@ -430,6 +430,9 @@ void dt_collector_start(struct dt_collector* dt_col, struct nsd* nsd)
 #ifdef HAVE_SETPROCTITLE
 		setproctitle("dnstap_collector");
 #endif
+#ifdef USE_LOG_PROCESS_ROLE
+                log_set_process_role("dnstap_collector");
+#endif
 		/* Free serve process specific memory pages */
 #ifdef RATELIMIT
 		rrl_mmap_deinit_keep_mmap();

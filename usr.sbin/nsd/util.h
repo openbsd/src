@@ -18,6 +18,7 @@ struct rr;
 struct buffer;
 struct region;
 struct nsd;
+struct nsd_options;
 
 #ifdef HAVE_SYSLOG_H
 #  include <syslog.h>
@@ -303,6 +304,9 @@ extern int nsd_debug_level;
 /* set to true to log time prettyprinted, or false to print epoch */
 extern int log_time_asc;
 
+/* set to true to log time in iso format */
+extern int log_time_iso;
+
 /*
  * Timespec functions.
  */
@@ -320,25 +324,6 @@ timeval_to_timespec(struct timespec *left,
 
 /* get the time */
 void get_time(struct timespec* t);
-
-/*
- * Converts a string representation of a period of time into
- * a long integer of seconds or serial value.
- *
- * Set the endptr to the first illegal character.
- *
- * Interface is similar as strtol(3)
- *
- * Returns:
- *	LONG_MIN if underflow occurs
- *	LONG_MAX if overflow occurs.
- *	otherwise number of seconds
- *
- * XXX These functions do not check the range.
- *
- */
-uint32_t strtoserial(const char *nptr, const char **endptr);
-uint32_t strtottl(const char *nptr, const char **endptr);
 
 /*
  * Convert binary data to a string of hexadecimal characters.
@@ -364,12 +349,6 @@ void strip_string(char *str);
  * Convert a single (hexadecimal) digit to its integer value.
  */
 int hexdigit_to_int(char ch);
-
-/*
- * Convert TM to seconds since epoch (midnight, January 1st, 1970).
- * Like timegm(3), which is not always available.
- */
-time_t mktime_from_utc(const struct tm *tm);
 
 /*
  * Add bytes to given crc. Returns new CRC sum.
@@ -460,4 +439,7 @@ void activate_cookie_secret(struct nsd* nsd);
 /* Drop a cookie secret. Drops the staging secret. An active secret will not
  * be dropped. */
 void drop_cookie_secret(struct nsd* nsd);
+/* Configure nsd struct with how to respond to DNS Cookies based on options */
+void reconfig_cookies(struct nsd* nsd, struct nsd_options* options);
+
 #endif /* UTIL_H */

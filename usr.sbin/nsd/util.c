@@ -12,6 +12,9 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#ifdef HAVE_OPENSSL_RAND_H
+#include <openssl/rand.h>
+#endif
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +40,7 @@
 #include "rdata.h"
 #include "zonec.h"
 #include "nsd.h"
+#include "options.h"
 
 #ifdef USE_MMAP_ALLOC
 #include <sys/mman.h>
@@ -62,6 +66,7 @@ static const char *global_ident = NULL;
 static log_function_type *current_log_function = log_file;
 static FILE *current_log_file = NULL;
 int log_time_asc = 1;
+int log_time_iso = 0;
 
 #ifdef USE_LOG_PROCESS_ROLE
 void
@@ -160,15 +165,39 @@ log_file(int priority, const char *message)
 		char tmbuf[32];
 		tmbuf[0]=0;
 		tv.tv_usec = 0;
-		if(gettimeofday(&tv, NULL) == 0) {
-			struct tm tm;
-			time_t now = (time_t)tv.tv_sec;
-			strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%d %H:%M:%S",
-				localtime_r(&now, &tm));
+		if(log_time_iso) {
+			char tzbuf[16];
+			tzbuf[0]=0;
+			/* log time in iso format */
+			if(gettimeofday(&tv, NULL) == 0) {
+				struct tm tm, *tm_p;
+				time_t now = (time_t)tv.tv_sec;
+				tm_p = localtime_r(&now, &tm);
+				strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%dT%H:%M:%S",
+					tm_p);
+				if(strftime(tzbuf, sizeof(tzbuf), "%z", tm_p) == 5) {
+					/* put ':' in "+hh:mm" */
+					tzbuf[5] = tzbuf[4];
+					tzbuf[4] = tzbuf[3];
+					tzbuf[3] = ':';
+					tzbuf[6] = 0;
+				}
+			}
+			fprintf(current_log_file, "%s.%3.3d%s %s[%d]: %s: %s",
+				tmbuf, (int)tv.tv_usec/1000, tzbuf,
+				global_ident, (int) getpid(), priority_text, message);
+		} else {
+			/* log time in ascii format */
+			if(gettimeofday(&tv, NULL) == 0) {
+				struct tm tm;
+				time_t now = (time_t)tv.tv_sec;
+				strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%d %H:%M:%S",
+					localtime_r(&now, &tm));
+			}
+			fprintf(current_log_file, "[%s.%3.3d] %s[%d]: %s: %s",
+				tmbuf, (int)tv.tv_usec/1000,
+				global_ident, (int) getpid(), priority_text, message);
 		}
-		fprintf(current_log_file, "[%s.%3.3d] %s[%d]: %s: %s",
-			tmbuf, (int)tv.tv_usec/1000,
-			global_ident, (int) getpid(), priority_text, message);
  	} else
 #endif /* have time functions */
 		fprintf(current_log_file, "[%d] %s[%d]: %s: %s",
@@ -508,113 +537,6 @@ timespec_subtract(struct timespec *left,
 	}
 }
 
-uint32_t
-strtoserial(const char* nptr, const char** endptr)
-{
-	uint32_t i = 0;
-	uint32_t serial = 0;
-
-	for(*endptr = nptr; **endptr; (*endptr)++) {
-		switch (**endptr) {
-		case ' ':
-		case '\t':
-			break;
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			if((i*10)/10 != i)
-				/* number too large, return i
-				 * with *endptr != 0 as a failure*/
-				return i;
-			i *= 10;
-			i += (**endptr - '0');
-			break;
-		default:
-			return 0;
-		}
-	}
-	serial += i;
-	return serial;
-}
-
-uint32_t
-strtottl(const char *nptr, const char **endptr)
-{
-	uint32_t i = 0;
-	uint32_t seconds = 0;
-
-	for(*endptr = nptr; **endptr; (*endptr)++) {
-		switch (**endptr) {
-		case ' ':
-		case '\t':
-			break;
-		case 's':
-		case 'S':
-			seconds += i;
-			i = 0;
-			break;
-		case 'm':
-		case 'M':
-			seconds += i * 60;
-			i = 0;
-			break;
-		case 'h':
-		case 'H':
-			seconds += i * 60 * 60;
-			i = 0;
-			break;
-		case 'd':
-		case 'D':
-			seconds += i * 60 * 60 * 24;
-			i = 0;
-			break;
-		case 'w':
-		case 'W':
-			seconds += i * 60 * 60 * 24 * 7;
-			i = 0;
-			break;
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			i *= 10;
-			i += (**endptr - '0');
-			break;
-		default:
-			seconds += i;
-			/**
-			 * According to RFC2308, Section 8, the MSB
-			 * (sign bit) should be set to zero.
-			 * If we encounter a value larger than 2^31 -1,
-			 * we fall back to the default TTL.
-			 */
-			if ((seconds & MSB_32)) {
-				seconds = DEFAULT_TTL;
-			}
-			return seconds;
-		}
-	}
-	seconds += i;
-	if ((seconds & MSB_32)) {
-		seconds = DEFAULT_TTL;
-	}
-	return seconds;
-}
-
-
 ssize_t
 hex_ntop(uint8_t const *src, size_t srclength, char *target, size_t targsize)
 {
@@ -820,53 +742,6 @@ hexdigit_to_int(char ch)
 	default:
 		abort();
 	}
-}
-
-/* Number of days per month (except for February in leap years). */
-static const int mdays[] = {
-    31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-static int
-is_leap_year(int year)
-{
-    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
-}
-
-static int
-leap_days(int y1, int y2)
-{
-    --y1;
-    --y2;
-    return (y2/4 - y1/4) - (y2/100 - y1/100) + (y2/400 - y1/400);
-}
-
-/*
- * Code adapted from Python 2.4.1 sources (Lib/calendar.py).
- */
-time_t
-mktime_from_utc(const struct tm *tm)
-{
-    int year = 1900 + tm->tm_year;
-    time_t days = 365 * (year - 1970) + leap_days(1970, year);
-    time_t hours;
-    time_t minutes;
-    time_t seconds;
-    int i;
-
-    for (i = 0; i < tm->tm_mon; ++i) {
-        days += mdays[i];
-    }
-    if (tm->tm_mon > 1 && is_leap_year(year)) {
-        ++days;
-    }
-    days += tm->tm_mday - 1;
-
-    hours = days * 24 + tm->tm_hour;
-    minutes = hours * 60 + tm->tm_min;
-    seconds = minutes * 60 + tm->tm_sec;
-
-    return seconds;
 }
 
 /* code to calculate CRC. Lifted from BSD 4.4 crc.c in cksum(1). BSD license.
@@ -1223,7 +1098,7 @@ int number_of_cpus(void)
  * with a linker error, we print an error when it is used */
 int set_cpu_affinity(cpuset_t *ATTR_UNUSED(set))
 {
-	log_err("sched_setaffinity: not available on this system");
+	log_msg(LOG_ERR, "sched_setaffinity: not available on this system");
 	return -1;
 }
 #elif defined(HAVE_SCHED_SETAFFINITY)
@@ -1299,3 +1174,133 @@ void drop_cookie_secret(struct nsd* nsd)
 	              , NSD_COOKIE_SECRET_SIZE);
 	nsd->cookie_count -= 1;
 }
+
+void reconfig_cookies(struct nsd* nsd, struct nsd_options* options)
+{
+	cookie_secret_type cookie_secrets[NSD_COOKIE_HISTORY_SIZE];
+	char secret[NSD_COOKIE_SECRET_SIZE * 2 + 2/*'\n' and '\0'*/];
+	FILE* f = NULL;
+	size_t count = 0;
+	const char* fn;
+	size_t i, j;
+
+	nsd->do_answer_cookie = options->answer_cookie;
+
+	/* Cookie secrets in the configuration file take precedence */
+	if(options->cookie_secret) {
+		ssize_t len = hex_pton(options->cookie_secret,
+				nsd->cookie_secrets[0].cookie_secret,
+				NSD_COOKIE_SECRET_SIZE);
+
+		/* Cookie length guaranteed in configparser.y */
+		assert(len == NSD_COOKIE_SECRET_SIZE);
+		nsd->cookie_count = 1;
+		if(options->cookie_staging_secret) {
+			len = hex_pton(options->cookie_staging_secret,
+					nsd->cookie_secrets[1].cookie_secret,
+					NSD_COOKIE_SECRET_SIZE);
+			/* Cookie length guaranteed in configparser.y */
+			assert(len == NSD_COOKIE_SECRET_SIZE);
+			nsd->cookie_count = 2;
+		}
+		/*************************************************************/
+		nsd->cookie_secrets_source = COOKIE_SECRETS_FROM_CONFIG;
+		return;
+		/*************************************************************/
+	}
+	/* Are cookies from file explicitly disabled? */
+	if(!(fn = nsd->options->cookie_secret_file))
+		goto generate_cookie_secrets;
+
+	else if((f = fopen(fn, "r")) != NULL)
+		; /* pass */
+
+	/* a non-existing cookie file is not necessarily an error */
+	else if(errno != ENOENT) {
+		log_msg( LOG_ERR
+		       , "error reading cookie secret file \"%s\": \"%s\""
+		       , fn, strerror(errno));
+		goto generate_cookie_secrets;
+
+	/* Only at startup cookie_secrets_source == COOKIE_SECRETS_NONE.
+	 * Only then the previous default file location will be tried
+	 * when the current default file location didn't exist.
+	 */
+	} else if(nsd->cookie_secrets_source == COOKIE_SECRETS_NONE
+	       && nsd->options->cookie_secret_file_is_default
+	       && (f = fopen((fn = CONFIGDIR"/nsd_cookiesecrets.txt"),"r")))
+		; /* pass */
+
+	else if(errno != ENOENT) {
+		log_msg( LOG_ERR
+		       , "error reading cookie secret file \"%s\": \"%s\""
+		       , fn, strerror(errno));
+		goto generate_cookie_secrets;
+	} else
+		goto generate_cookie_secrets;
+
+	/* cookie secret file exists and is readable */
+	for( count = 0; count < NSD_COOKIE_HISTORY_SIZE; count++ ) {
+		size_t secret_len = 0;
+		ssize_t decoded_len = 0;
+		if( fgets(secret, sizeof(secret), f) == NULL ) { break; }
+		secret_len = strlen(secret);
+		if( secret_len == 0 ) { break; }
+		assert( secret_len <= sizeof(secret) );
+		secret_len = secret[secret_len - 1] == '\n' ? secret_len - 1 : secret_len;
+		if( secret_len != NSD_COOKIE_SECRET_SIZE * 2 ) {
+			fclose(f);
+			log_msg( LOG_ERR
+			       , "error parsing cookie secret file \"%s\""
+			       , fn);
+			explicit_bzero(cookie_secrets, sizeof(cookie_secrets));
+			explicit_bzero(secret, sizeof(secret));
+			goto generate_cookie_secrets;
+		}
+		/* needed for `hex_pton`; stripping potential `\n` */
+		secret[secret_len] = '\0';
+		decoded_len = hex_pton(secret, cookie_secrets[count].cookie_secret,
+		                       NSD_COOKIE_SECRET_SIZE);
+		if( decoded_len != NSD_COOKIE_SECRET_SIZE ) {
+			fclose(f);
+			log_msg( LOG_ERR
+			       , "error parsing cookie secret file \"%s\""
+			       , fn);
+			explicit_bzero(cookie_secrets, sizeof(cookie_secrets));
+			explicit_bzero(secret, sizeof(secret));
+			goto generate_cookie_secrets;
+		}
+		explicit_bzero(secret, sizeof(secret));
+	}
+	fclose(f);
+	if(count) {
+		nsd->cookie_count = count;
+		memcpy(nsd->cookie_secrets, cookie_secrets, sizeof(cookie_secrets));
+		region_str_replace(  nsd->region
+		                  , &nsd->cookie_secrets_filename, fn );
+		explicit_bzero(cookie_secrets, sizeof(cookie_secrets));
+		/*************************************************************/
+		nsd->cookie_secrets_source = COOKIE_SECRETS_FROM_FILE;
+		return;
+		/*************************************************************/
+	}
+	explicit_bzero(cookie_secrets, sizeof(cookie_secrets));
+
+generate_cookie_secrets:
+	/* Calculate a new random secret */
+	srandom(getpid() ^ time(NULL));
+
+	for( j = 0; j < NSD_COOKIE_HISTORY_SIZE; j++) {
+#if defined(HAVE_SSL)
+		if (!RAND_status()
+		||  !RAND_bytes(nsd->cookie_secrets[j].cookie_secret, NSD_COOKIE_SECRET_SIZE))
+#endif
+		for (i = 0; i < NSD_COOKIE_SECRET_SIZE; i++)
+			nsd->cookie_secrets[j].cookie_secret[i] = random_generate(256);
+	}
+	nsd->cookie_count = 1;
+	/*********************************************************************/
+	nsd->cookie_secrets_source = COOKIE_SECRETS_GENERATED;
+	/*********************************************************************/
+}
+

@@ -307,11 +307,15 @@ dname_is_subdomain(const dname_type *left, const dname_type *right)
 
 
 int
-dname_compare(const dname_type *left, const dname_type *right)
+dname_compare(const void *a, const void *b)
 {
 	int result;
 	uint8_t label_count;
 	uint8_t i;
+	const dname_type *left, *right;
+
+	left = a;
+	right = b;
 
 	assert(left);
 	assert(right);
@@ -584,4 +588,33 @@ int dname_equal_nocase(uint8_t* a, uint8_t* b, uint16_t len)
 		len -= lablen;
 	}
 	return 1;
+}
+
+int
+is_dname_subdomain_of_case(const uint8_t* d, unsigned int len,
+	const uint8_t* d2, unsigned int len2)
+{
+	unsigned int i;
+	if(len < len2)
+		return 0;
+	if(len == len2) {
+		if(memcmp(d, d2, len) == 0)
+			return 1;
+		return 0;
+	}
+	/* so len > len2, for d=a.example.com. and d2=example.com. */
+	/* trailing portion must be exactly name d2. */
+	if(memcmp(d+len-len2, d2, len2) != 0)
+		return 0;
+	/* that must also be a label point */
+	i=0;
+	while(i < len) {
+		if(i == len-len2)
+			return 1;
+		i += d[i];
+		i += 1;
+	}
+
+	/* The trailing portion is not at a label point. */
+	return 0;
 }

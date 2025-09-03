@@ -1,5 +1,5 @@
-.TH "nsd\-checkzone" "8" "Apr  4, 2024" "NLnet Labs" "nsd 4.9.1"
-.\" Copyright (c) 2014, NLnet Labs. All rights reserved.
+.TH "nsd\-checkzone" "8" "dec 12, 2024" "NLnet Labs" "nsd 4.11.0"
+.\" Copyright (c) 2014-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
 .B nsd\-checkzone
@@ -24,7 +24,8 @@ Print usage help information and exit.
 The name of the zone to check, eg. "example.com".
 .TP
 .I zonefile
-The file to read, eg. "zones/example.com.zone.signed".
+The file to read, eg. "zones/example.com.zone.signed". Use "-" to read
+from stdin.
 .TP
 .B \-p
 Print the zone contents to stdout if the zone is ok. This prints the
@@ -36,14 +37,14 @@ command write does.
 Create an IXFR from the differences between the old zone file and the
 new zone file. The argument to the \-i option is the old zone file,
 the other zonefile argument passed is the new zonefile.
-.IP
+.sp
 The difference is computed between the two zonefiles by keeping one
 version of the zone in memory, and another version in a temporary
 file. The temporary file is located at the zonefile directory. This is
 also where the result is written, to a file with the zonefile name,
 ending with '.ixfr'. This is also where NSD reads it when IXFRs are
 configured for the zone.
-.IP
+.sp
 The other existing ixfr files are renamed to become older IXFR contents
 for the zone, if any such files exist.  If the output file already exists
 with the correct contents, no new file is created. The contents of the
