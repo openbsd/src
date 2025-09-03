@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.418 2024/03/22 21:49:52 jan Exp $	*/
+/*	$OpenBSD: editor.c,v 1.419 2025/09/03 18:14:07 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -402,6 +402,7 @@ editor(int f)
 			else
 				fputs("Resize only implemented for auto "
 				    "allocated labels\n", stderr);
+			has_overlap(&newlab);
 			break;
 
 		case 'r': {
