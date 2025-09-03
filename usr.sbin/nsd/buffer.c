@@ -41,7 +41,7 @@ buffer_create(region_type *region, size_t capacity)
 }
 
 void
-buffer_create_from(buffer_type *buffer, void *data, size_t size)
+buffer_create_from(buffer_type *buffer, const void *data, size_t size)
 {
 	assert(data);
 

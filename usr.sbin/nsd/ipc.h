@@ -27,16 +27,6 @@ struct main_ipc_handler_data
 {
 	struct nsd	*nsd;
 	struct nsd_child *child;
-	int		child_num;
-
-	/* pointer to the socket, as it may change if it is restarted */
-	int		*xfrd_sock;
-	struct buffer	*packet;
-	int		forward_mode;
-	size_t		got_bytes;
-	uint16_t	total_bytes;
-	uint32_t	acl_num;
-	int32_t		acl_xfr;
 };
 
 /*
@@ -83,6 +73,9 @@ void child_handle_parent_command(int fd, short event, void* arg);
  * Handle interprocess communication with parent process, read and write.
  */
 void xfrd_handle_ipc(int fd, short event, void* arg);
+
+/* receive incoming notifies received by and from the serve processes */
+void xfrd_handle_notify(int fd, short event, void* arg);
 
 /* check if all children have exited in an orderly fashion and set mode */
 void parent_check_all_children_exited(struct nsd* nsd);
