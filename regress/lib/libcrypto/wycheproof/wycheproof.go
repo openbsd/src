@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.164 2025/09/04 16:44:14 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.165 2025/09/04 16:48:42 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -592,6 +592,15 @@ type wycheproofTestVectors struct {
 	NumberOfTests    int               `json:"numberOfTests"`
 	// Header
 	TestGroups []json.RawMessage `json:"testGroups"`
+}
+
+type wycheproofTestVectorsV1 struct {
+	Algorithm     string            `json:"algorithm"`
+	Schema        string            `json:"schema"`
+	NumberOfTests int               `json:"numberOfTests"`
+	Header        []string          `json:"header"`
+	Notes         json.RawMessage   `json:"notes"`
+	TestGroups    []json.RawMessage `json:"testGroups"`
 }
 
 var nids = map[string]int{
@@ -2658,13 +2667,23 @@ func runTestVectors(path string, variant testVariant, version wycheproofVersion)
 	if err != nil {
 		log.Fatalf("Failed to read test vectors: %v", err)
 	}
-	wtv := &wycheproofTestVectors{}
-	if err := json.Unmarshal(b, wtv); err != nil {
-		log.Fatalf("Failed to unmarshal JSON: %v", err)
+	if version == v0 {
+		wtv := &wycheproofTestVectors{}
+		if err := json.Unmarshal(b, wtv); err != nil {
+			log.Fatalf("Failed to unmarshal JSON: %v", err)
+		}
+		algorithm = wtv.Algorithm
+		testGroups = wtv.TestGroups
+		fmt.Printf("Loaded Wycheproof test vectors for %v with %d tests from %q\n", wtv.Algorithm, wtv.NumberOfTests, filepath.Base(path))
+	} else {
+		wtv := &wycheproofTestVectorsV1{}
+		if err := json.Unmarshal(b, wtv); err != nil {
+			log.Fatalf("Failed to unmarshal JSON: %v", err)
+		}
+		algorithm = wtv.Algorithm
+		testGroups = wtv.TestGroups
+		fmt.Printf("Loaded Wycheproof v1 test vectors for %v with %d tests from %q\n", wtv.Algorithm, wtv.NumberOfTests, filepath.Base(path))
 	}
-	algorithm = wtv.Algorithm
-	testGroups = wtv.TestGroups
-	fmt.Printf("Loaded Wycheproof test vectors for %v with %d tests from %q\n", algorithm, wtv.NumberOfTests, filepath.Base(path))
 
 	success := true
 	for _, tg := range testGroups {
