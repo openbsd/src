@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.171 2025/09/04 17:03:38 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.172 2025/09/04 17:06:34 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -1282,7 +1282,7 @@ func runEvpChaCha20Poly1305Test(ctx *C.EVP_CIPHER_CTX, algorithm string, wt *wyc
 		log.Fatal("Failed EVP_EncryptUpdate aad")
 	}
 
-	sealed := make([]byte, ctLen + tagLen)
+	sealed := make([]byte, ctLen+tagLen)
 	copy(sealed, msg)
 	if C.EVP_EncryptUpdate(ctx, (*C.uchar)(unsafe.Pointer(&sealed[0])), (*C.int)(unsafe.Pointer(&len)), (*C.uchar)(unsafe.Pointer(&sealed[0])), (C.int)(msgLen)) != 1 {
 		log.Fatal("Failed EVP_EncryptUpdate msg")
@@ -1297,7 +1297,7 @@ func runEvpChaCha20Poly1305Test(ctx *C.EVP_CIPHER_CTX, algorithm string, wt *wyc
 	}
 	outLen += (C.int)(tagLen)
 
-	if (C.int)(ctLen + tagLen) != outLen {
+	if (C.int)(ctLen+tagLen) != outLen {
 		fmt.Printf("%s\n", wt)
 	}
 
@@ -1306,7 +1306,7 @@ func runEvpChaCha20Poly1305Test(ctx *C.EVP_CIPHER_CTX, algorithm string, wt *wyc
 	tagMatch := bytes.Equal(tag, sealed[ctLen:])
 	if (ctMatch && tagMatch) == (wt.Result != "invalid") {
 		sealSuccess = true
-	} else  {
+	} else {
 		fmt.Printf("%s - ct match: %t tag match: %t\n", wt, ctMatch, tagMatch)
 	}
 
@@ -1332,9 +1332,9 @@ func runEvpChaCha20Poly1305Test(ctx *C.EVP_CIPHER_CTX, algorithm string, wt *wyc
 		ct = append(ct, 0)
 	}
 
-	opened := make([]byte, msgLen + tagLen)
+	opened := make([]byte, msgLen+tagLen)
 	copy(opened, ct)
-	if msgLen + aadLen == 0 {
+	if msgLen+aadLen == 0 {
 		opened = append(opened, 0)
 	}
 
