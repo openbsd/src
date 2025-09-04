@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.167 2025/09/04 16:53:06 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.168 2025/09/04 16:54:17 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2776,10 +2776,10 @@ func main() {
 		{v0, "KW", "kw_test.json", Normal},
 		{v0, "Primality test", "primality_test.json", Normal},
 		{v0, "RSA", "rsa_*test.json", Normal},
-		{v0, "X25519", "x25519_test.json", Normal},
-		{v0, "X25519 ASN", "x25519_asn_test.json", Skip},
-		{v0, "X25519 JWK", "x25519_jwk_test.json", Skip},
-		{v0, "X25519 PEM", "x25519_pem_test.json", Skip},
+		{v1, "X25519", "x25519_test.json", Normal},
+		{v1, "X25519 ASN", "x25519_asn_test.json", Skip},
+		{v1, "X25519 JWK", "x25519_jwk_test.json", Skip},
+		{v1, "X25519 PEM", "x25519_pem_test.json", Skip},
 		{v1, "XCHACHA20-POLY1305", "xchacha20_poly1305_test.json", Normal},
 	}
 
