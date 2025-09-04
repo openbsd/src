@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.168 2025/09/04 16:54:17 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.169 2025/09/04 16:56:42 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -236,9 +236,9 @@ func (wt *wycheproofTestDSA) String() string {
 }
 
 type wycheproofTestGroupDSA struct {
-	Key    *wycheproofDSAKey    `json:"key"`
-	KeyDER string               `json:"keyDer"`
-	KeyPEM string               `json:"keyPem"`
+	Key    *wycheproofDSAKey    `json:"publicKey"`
+	KeyDER string               `json:"publicKeyDer"`
+	KeyPEM string               `json:"publicKeyPem"`
 	SHA    string               `json:"sha"`
 	Type   string               `json:"type"`
 	Tests  []*wycheproofTestDSA `json:"tests"`
@@ -2758,8 +2758,8 @@ func main() {
 	}{
 		{v0, "AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{v1, "ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
-		{v0, "DSA", "dsa_*test.json", Normal},
-		{v0, "DSA", "dsa_*_p1363_test.json", P1363},
+		{v1, "DSA", "dsa_*test.json", Normal},
+		{v1, "DSA", "dsa_*_p1363_test.json", P1363},
 		{v0, "ECDH", "ecdh_test.json", Normal},
 		{v0, "ECDH", "ecdh_[^w_]*_test.json", Normal},
 		{v0, "ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
