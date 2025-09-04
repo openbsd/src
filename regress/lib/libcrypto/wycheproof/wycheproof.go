@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.165 2025/09/04 16:48:42 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.166 2025/09/04 16:51:31 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2639,7 +2639,7 @@ func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTes
 		return &wycheproofTestGroupEdDSA{}
 	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
 		return &wycheproofTestGroupHkdf{}
-	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
+	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA512/224", "HMACSHA512/256", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
 		return &wycheproofTestGroupHmac{}
 	case "KW":
 		return &wycheproofTestGroupKW{}
@@ -2771,7 +2771,7 @@ func main() {
 		{v0, "EDDSA", "eddsa_test.json", Normal},
 		{v0, "ED448", "ed448_test.json", Skip},
 		{v0, "HKDF", "hkdf_sha*_test.json", Normal},
-		{v0, "HMAC", "hmac_sha*_test.json", Normal},
+		{v1, "HMAC", "hmac_sha*_test.json", Normal},
 		{v0, "JSON webcrypto", "json_web_*_test.json", Skip},
 		{v0, "KW", "kw_test.json", Normal},
 		{v0, "Primality test", "primality_test.json", Normal},
