@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.169 2025/09/04 16:56:42 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.170 2025/09/04 16:59:37 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -357,10 +357,10 @@ func (wt *wycheproofTestEdDSA) String() string {
 }
 
 type wycheproofTestGroupEdDSA struct {
-	JWK    *wycheproofJWKEdDSA    `json:"jwk"`
-	Key    *wycheproofEdDSAKey    `json:"key"`
-	KeyDer string                 `json:"keyDer"`
-	KeyPem string                 `json:"keyPem"`
+	JWK    *wycheproofJWKEdDSA    `json:"publicKeyJwk"`
+	Key    *wycheproofEdDSAKey    `json:"publicKey"`
+	KeyDer string                 `json:"publicKeyDer"`
+	KeyPem string                 `json:"publicKeyPem"`
 	Type   string                 `json:"type"`
 	Tests  []*wycheproofTestEdDSA `json:"tests"`
 }
@@ -2768,8 +2768,8 @@ func main() {
 		{v0, "ECDSA", "ecdsa_[^w]*test.json", Normal},
 		{v0, "ECDSA P1363", "ecdsa_*_p1363_test.json", P1363},
 		{v0, "ECDSA webcrypto", "ecdsa_webcrypto_test.json", Webcrypto},
-		{v0, "EDDSA", "eddsa_test.json", Normal},
-		{v0, "ED448", "ed448_test.json", Skip},
+		{v1, "EDDSA", "ed25519_test.json", Normal},
+		{v1, "ED448", "ed448_test.json", Skip},
 		{v0, "HKDF", "hkdf_sha*_test.json", Normal},
 		{v1, "HMAC", "hmac_sha*_test.json", Normal},
 		{v0, "JSON webcrypto", "json_web_*_test.json", Skip},
