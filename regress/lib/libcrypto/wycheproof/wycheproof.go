@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.166 2025/09/04 16:51:31 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.167 2025/09/04 16:53:06 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2757,7 +2757,7 @@ func main() {
 		variant testVariant
 	}{
 		{v0, "AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
-		{v0, "ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
+		{v1, "ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
 		{v0, "DSA", "dsa_*test.json", Normal},
 		{v0, "DSA", "dsa_*_p1363_test.json", P1363},
 		{v0, "ECDH", "ecdh_test.json", Normal},
@@ -2780,7 +2780,7 @@ func main() {
 		{v0, "X25519 ASN", "x25519_asn_test.json", Skip},
 		{v0, "X25519 JWK", "x25519_jwk_test.json", Skip},
 		{v0, "X25519 PEM", "x25519_pem_test.json", Skip},
-		{v0, "XCHACHA20-POLY1305", "xchacha20_poly1305_test.json", Normal},
+		{v1, "XCHACHA20-POLY1305", "xchacha20_poly1305_test.json", Normal},
 	}
 
 	success := true
