@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.69 2025/08/26 09:34:52 kirill Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.70 2025/09/04 07:43:29 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -431,21 +431,6 @@ struct usb_video_colorformat_desc {
 	uByte	bMatrixCoefficients;
 } __packed;
 
-/* Table 3-1: Motion-JPEG Video Format Descriptor */
-struct usb_video_format_mjpeg_desc {
-	uByte	bLength;
-	uByte	bDescriptorType;
-	uByte	bDescriptorSubtype;
-	uByte	bFormatIndex;
-	uByte	bNumFrameDescriptors;
-	uByte	bmFlags;
-	uByte	bDefaultFrameIndex;
-	uByte	bAspectRatioX;
-	uByte	bAspectRatioY;
-	uByte	bmInterlaceFlags;
-	uByte	bCopyProtect;
-} __packed;
-
 struct usb_video_frame_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
@@ -533,89 +518,14 @@ struct usb_video_frame_desc {
 	/* uDWord ivals[]; frame intervals, length varies */
 } __packed;
 
-/*
- * USB Video Payload Uncompressed
- */
-/* Table 3-1: Uncompressed Video Format Descriptor */
-struct usb_video_format_uncompressed_desc {
-	uByte	bLength;
-	uByte	bDescriptorType;
-	uByte	bDescriptorSubtype;
-	uByte	bFormatIndex;
-	uByte	bNumFrameDescriptors;
-	uByte	guidFormat[16];
-	uByte	bBitsPerPixel;
-	uByte	bDefaultFrameIndex;
-	uByte	bAspectRatioX;
-	uByte	bAspectRatioY;
-	uByte	bmInterlaceFlags;
-	uByte	bCopyProtect;
-} __packed;
-
-/* Table 3-1: H.264 Payload Video Format Descriptor */
-struct usb_video_format_h264_desc {
-	uByte	bLength;
-	uByte	bDescriptorType;
-	uByte	bDescriptorSubtype;
-	uByte	bFormatIndex;
-	uByte	bNumFrameDescriptors;
-	uByte	bDefaultFrameIndex;
-	uByte	bMaxCodecConfigDelay;
-	uByte	bmSupportedSliceModes;
-	uByte	bmSupportedSyncFrameTypes;
-	uByte	bResolutionScaling;
-	uByte	_reserved1;
-	uByte	bmSupportedRateControlModes;
-	uWord	wMaxMBperSecOneResolutionNoScalability;
-	uWord	wMaxMBperSecTwoResolutionsNoScalability;
-	uWord	wMaxMBperSecThreeResolutionsNoScalability;
-	uWord	wMaxMBperSecFourResolutionsNoScalability;
-	uWord	wMaxMBperSecOneResolutionTemporalScalability;
-	uWord	wMaxMBperSecTwoResolutionsTemporalScalablility;
-	uWord	wMaxMBperSecThreeResolutionsTemporalScalability;
-	uWord	wMaxMBperSecFourResolutionsTemporalScalability;
-	uWord	wMaxMBperSecOneResolutionTemporalQualityScalability;
-	uWord	wMaxMBperSecTwoResolutionsTemporalQualityScalability;
-	uWord	wMaxMBperSecThreeResolutionsTemporalQualityScalablity;
-	uWord	wMaxMBperSecFourResolutionsTemporalQualityScalability;
-	uWord	wMaxMBperSecOneResolutionTemporalSpatialScalability;
-	uWord	wMaxMBperSecTwoResolutionsTemporalSpatialScalability;
-	uWord	wMaxMBperSecThreeResolutionsTemporalSpatialScalablity;
-	uWord	wMaxMBperSecFourResolutionsTemporalSpatialScalability;
-	uWord	wMaxMBperSecOneResolutionFullScalability;
-	uWord	wMaxMBperSecTwoResolutionsFullScalability;
-	uWord	wMaxMBperSecThreeResolutionsFullScalability;
-	uWord	wMaxMBperSecFourResolutionsFullScalability;
-} __packed;
-
-/* Table 3-1: Frame Based Payload Video Format Descriptor */
-struct usb_video_format_frame_based_desc {
-	uByte	bLength;
-	uByte	bDescriptorType;
-	uByte	bDescriptorSubtype;
-	uByte	bFormatIndex;
-	uByte	bNumFrameDescriptors;
-	uByte	guidFormat[16];
-	uByte	bBitsPerPixel;
-	uByte	bDefaultFrameIndex;
-	uByte	bAspectRatioX;
-	uByte	bAspectRatioY;
-	uByte	bmInterlaceFlags;
-	uByte	bCopyProtect;
-	uByte	bVariableSize;
-} __packed;
-
-/*
- * Driver specific private definitions.
- */
-struct uvideo_format_desc {
+struct usb_video_format_desc {
 	uByte	bLength;
 	uByte	bDescriptorType;
 	uByte	bDescriptorSubtype;
 	uByte	bFormatIndex;
 	uByte	bNumFrameDescriptors;
 	union {
-		/* mjpeg */
+		/* Table 3-1: Motion-JPEG Video Format Descriptor */
 		struct {
 			uByte	bmFlags;
 			uByte	bDefaultFrameIndex;
@@ -625,7 +535,7 @@ struct uvideo_format_desc {
 			uByte	bCopyProtect;
 		} mjpeg;
 
-		/* uncompressed */
+		/* Table 3-1: Uncompressed Video Format Descriptor */
 		struct {
 			uByte	guidFormat[16];
 			uByte	bBitsPerPixel;
@@ -636,7 +546,7 @@ struct uvideo_format_desc {
 			uByte	bCopyProtect;
 		} uc;
 
-		/* frame based */
+		/* Table 3-1: Frame Based Payload Video Format Descriptor */
 		struct {
 			uByte	guidFormat[16];
 			uByte	bBitsPerPixel;
@@ -648,7 +558,7 @@ struct uvideo_format_desc {
 			uByte	bVariableSize;
 		} fb;
 
-		/* h264 */
+		/* Table 3-1: H.264 Payload Video Format Descriptor */
 		struct {
 			uByte	bDefaultFrameIndex;
 			uByte	bMaxCodecConfigDelay;
@@ -681,6 +591,9 @@ struct uvideo_format_desc {
 	} u;
 } __packed;
 
+/*
+ * Driver specific private definitions.
+ */
 #define UVIDEO_NFRAMES_MAX	40
 struct uvideo_isoc_xfer {
 	struct uvideo_softc	*sc;
@@ -742,7 +655,7 @@ struct uvideo_format_group {
 	uint32_t				 xfer_func;
 	uint32_t				 ycbcr_enc;
 	uint8_t					 format_dfidx;
-	struct uvideo_format_desc		*format;
+	struct usb_video_format_desc		*format;
 	/* frame descriptors for mjpeg and uncompressed are identical */
 #define UVIDEO_MAX_FRAME			 32
 	struct usb_video_frame_desc		*frame_cur;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.263 2025/08/26 09:34:52 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.264 2025/09/04 07:43:29 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1138,9 +1138,9 @@ void
 uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_format_mjpeg_desc *d;
+	struct usb_video_format_desc *d;
 
-	d = (struct usb_video_format_mjpeg_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_desc *)(uint8_t *)desc;
 
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no MJPEG frame descriptors available!\n",
@@ -1153,15 +1153,14 @@ uvideo_vs_parse_desc_format_mjpeg(struct uvideo_softc *sc,
 		return;
 	}
 
-	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
-	    (struct uvideo_format_desc *)d;
-	if (d->bDefaultFrameIndex > d->bNumFrameDescriptors ||
-	    d->bDefaultFrameIndex < 1) {
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format = d;
+	if (d->u.mjpeg.bDefaultFrameIndex > d->bNumFrameDescriptors ||
+	    d->u.mjpeg.bDefaultFrameIndex < 1) {
 		/* sanitize wrong bDefaultFrameIndex value */
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx = 1;
 	} else {
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
-		    d->bDefaultFrameIndex;
+		    d->u.mjpeg.bDefaultFrameIndex;
 	}
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].pixelformat = V4L2_PIX_FMT_MJPEG;
 
@@ -1177,9 +1176,9 @@ void
 uvideo_vs_parse_desc_format_h264(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_format_h264_desc *d;
+	struct usb_video_format_desc *d;
 
-	d = (struct usb_video_format_h264_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_desc *)(uint8_t *)desc;
 
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no H264 frame descriptors available!\n",
@@ -1192,15 +1191,14 @@ uvideo_vs_parse_desc_format_h264(struct uvideo_softc *sc,
 		return;
 	}
 
-	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
-	    (struct uvideo_format_desc *)d;
-	if (d->bDefaultFrameIndex > d->bNumFrameDescriptors ||
-	    d->bDefaultFrameIndex < 1) {
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format = d;
+	if (d->u.h264.bDefaultFrameIndex > d->bNumFrameDescriptors ||
+	    d->u.h264.bDefaultFrameIndex < 1) {
 		/* sanitize wrong bDefaultFrameIndex value */
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx = 1;
 	} else {
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
-		    d->bDefaultFrameIndex;
+		    d->u.h264.bDefaultFrameIndex;
 	}
 	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].pixelformat = V4L2_PIX_FMT_H264;
 
@@ -1216,10 +1214,10 @@ void
 uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_format_frame_based_desc *d;
+	struct usb_video_format_desc *d;
 	int i, j, nent;
 
-	d = (struct usb_video_format_frame_based_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_desc *)(uint8_t *)desc;
 
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no Frame Based frame descriptors available!\n",
@@ -1232,15 +1230,14 @@ uvideo_vs_parse_desc_format_frame_based(struct uvideo_softc *sc,
 		return;
 	}
 
-	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
-	    (struct uvideo_format_desc *)d;
-	if (d->bDefaultFrameIndex > d->bNumFrameDescriptors ||
-	    d->bDefaultFrameIndex < 1) {
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format = d;
+	if (d->u.fb.bDefaultFrameIndex > d->bNumFrameDescriptors ||
+	    d->u.fb.bDefaultFrameIndex < 1) {
 		/* sanitize wrong bDefaultFrameIndex value */
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx = 1;
 	} else {
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
-		    d->bDefaultFrameIndex;
+		    d->u.fb.bDefaultFrameIndex;
 	}
 
 	i = sc->sc_fmtgrp_idx;
@@ -1272,10 +1269,10 @@ void
 uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_format_uncompressed_desc *d;
+	struct usb_video_format_desc *d;
 	int i, j, nent;
 
-	d = (struct usb_video_format_uncompressed_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_desc *)(uint8_t *)desc;
 
 	if (d->bNumFrameDescriptors == 0) {
 		printf("%s: no UNCOMPRESSED frame descriptors available!\n",
@@ -1288,15 +1285,14 @@ uvideo_vs_parse_desc_format_uncompressed(struct uvideo_softc *sc,
 		return;
 	}
 
-	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format =
-	    (struct uvideo_format_desc *)d;
-	if (d->bDefaultFrameIndex > d->bNumFrameDescriptors ||
-	    d->bDefaultFrameIndex < 1) {
+	sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format = d;
+	if (d->u.uc.bDefaultFrameIndex > d->bNumFrameDescriptors ||
+	    d->u.uc.bDefaultFrameIndex < 1) {
 		/* sanitize wrong bDefaultFrameIndex value */
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx = 1;
 	} else {
 		sc->sc_fmtgrp[sc->sc_fmtgrp_idx].format_dfidx =
-		    d->bDefaultFrameIndex;
+		    d->u.uc.bDefaultFrameIndex;
 	}
 
 	i = sc->sc_fmtgrp_idx;
@@ -3264,21 +3260,21 @@ void
 uvideo_dump_desc_format_mjpeg(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_format_mjpeg_desc *d;
+	struct usb_video_format_desc *d;
 
-	d = (struct usb_video_format_mjpeg_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_desc *)(uint8_t *)desc;
 
 	printf("bLength=%d\n", d->bLength);
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
 	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
 	printf("bFormatIndex=0x%02x\n", d->bFormatIndex);
 	printf("bNumFrameDescriptors=0x%02x\n", d->bNumFrameDescriptors);
-	printf("bmFlags=0x%02x\n", d->bmFlags);
-	printf("bDefaultFrameIndex=0x%02x\n", d->bDefaultFrameIndex);
-	printf("bAspectRatioX=0x%02x\n", d->bAspectRatioX);
-	printf("bAspectRatioY=0x%02x\n", d->bAspectRatioY);
-	printf("bmInterlaceFlags=0x%02x\n", d->bmInterlaceFlags);
-	printf("bCopyProtect=0x%02x\n", d->bCopyProtect);
+	printf("bmFlags=0x%02x\n", d->u.mjpeg.bmFlags);
+	printf("bDefaultFrameIndex=0x%02x\n", d->u.mjpeg.bDefaultFrameIndex);
+	printf("bAspectRatioX=0x%02x\n", d->u.mjpeg.bAspectRatioX);
+	printf("bAspectRatioY=0x%02x\n", d->u.mjpeg.bAspectRatioY);
+	printf("bmInterlaceFlags=0x%02x\n", d->u.mjpeg.bmInterlaceFlags);
+	printf("bCopyProtect=0x%02x\n", d->u.mjpeg.bCopyProtect);
 }
 
 void
@@ -3339,45 +3335,45 @@ void
 uvideo_dump_desc_format_uncompressed(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_format_uncompressed_desc *d;
+	struct usb_video_format_desc *d;
 
-	d = (struct usb_video_format_uncompressed_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_desc *)(uint8_t *)desc;
 
 	printf("bLength=%d\n", d->bLength);
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
 	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
 	printf("bFormatIndex=0x%02x\n", d->bFormatIndex);
 	printf("bNumFrameDescriptors=0x%02x\n", d->bNumFrameDescriptors);
-	printf("guidFormat=%s\n", d->guidFormat);
-	printf("bBitsPerPixel=0x%02x\n", d->bBitsPerPixel);
-	printf("bDefaultFrameIndex=0x%02x\n", d->bDefaultFrameIndex);
-	printf("bAspectRatioX=0x%02x\n", d->bAspectRatioX);
-	printf("bAspectRatioY=0x%02x\n", d->bAspectRatioY);
-	printf("bmInterlaceFlags=0x%02x\n", d->bmInterlaceFlags);
-	printf("bCopyProtect=0x%02x\n", d->bCopyProtect);
+	printf("guidFormat=%s\n", d->u.uc.guidFormat);
+	printf("bBitsPerPixel=0x%02x\n", d->u.uc.bBitsPerPixel);
+	printf("bDefaultFrameIndex=0x%02x\n", d->u.uc.bDefaultFrameIndex);
+	printf("bAspectRatioX=0x%02x\n", d->u.uc.bAspectRatioX);
+	printf("bAspectRatioY=0x%02x\n", d->u.uc.bAspectRatioY);
+	printf("bmInterlaceFlags=0x%02x\n", d->u.uc.bmInterlaceFlags);
+	printf("bCopyProtect=0x%02x\n", d->u.uc.bCopyProtect);
 }
 
 void
 uvideo_dump_desc_format_frame_based(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_format_frame_based_desc *d;
+	struct usb_video_format_desc *d;
 
-	d = (struct usb_video_format_frame_based_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_desc *)(uint8_t *)desc;
 
 	printf("bLength=%d\n", d->bLength);
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
 	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
 	printf("bFormatIndex=0x%02x\n", d->bFormatIndex);
 	printf("bNumFrameDescriptors=0x%02x\n", d->bNumFrameDescriptors);
-	printf("guidFormat=%s\n", d->guidFormat);
-	printf("bBitsPerPixel=0x%02x\n", d->bBitsPerPixel);
-	printf("bDefaultFrameIndex=0x%02x\n", d->bDefaultFrameIndex);
-	printf("bAspectRatioX=0x%02x\n", d->bAspectRatioX);
-	printf("bAspectRatioY=0x%02x\n", d->bAspectRatioY);
-	printf("bmInterlaceFlags=0x%02x\n", d->bmInterlaceFlags);
-	printf("bCopyProtect=0x%02x\n", d->bCopyProtect);
-	printf("bVariableSize=0x%02x\n", d->bVariableSize);
+	printf("guidFormat=%s\n", d->u.fb.guidFormat);
+	printf("bBitsPerPixel=0x%02x\n", d->u.fb.bBitsPerPixel);
+	printf("bDefaultFrameIndex=0x%02x\n", d->u.fb.bDefaultFrameIndex);
+	printf("bAspectRatioX=0x%02x\n", d->u.fb.bAspectRatioX);
+	printf("bAspectRatioY=0x%02x\n", d->u.fb.bAspectRatioY);
+	printf("bmInterlaceFlags=0x%02x\n", d->u.fb.bmInterlaceFlags);
+	printf("bCopyProtect=0x%02x\n", d->u.fb.bCopyProtect);
+	printf("bVariableSize=0x%02x\n", d->u.fb.bVariableSize);
 }
 
 void
@@ -3438,62 +3434,62 @@ void
 uvideo_dump_desc_format_h264(struct uvideo_softc *sc,
     const usb_descriptor_t *desc)
 {
-	struct usb_video_format_h264_desc *d;
+	struct usb_video_format_desc *d;
 
-	d = (struct usb_video_format_h264_desc *)(uint8_t *)desc;
+	d = (struct usb_video_format_desc *)(uint8_t *)desc;
 
 	printf("bLength=%d\n", d->bLength);
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
 	printf("bDescriptorSubtype=0x%02x\n", d->bDescriptorSubtype);
 	printf("bFormatIndex=0x%02x\n", d->bFormatIndex);
 	printf("bNumFrameDescriptors=0x%02x\n", d->bNumFrameDescriptors);
-	printf("bDefaultFrameIndex=0x%02x\n", d->bDefaultFrameIndex);
-	printf("bMaxCodecConfigDelay=0x%02x\n", d->bMaxCodecConfigDelay);
-	printf("bmSupportedSliceModes=0x%02x\n", d->bmSupportedSliceModes);
+	printf("bDefaultFrameIndex=0x%02x\n", d->u.h264.bDefaultFrameIndex);
+	printf("bMaxCodecConfigDelay=0x%02x\n", d->u.h264.bMaxCodecConfigDelay);
+	printf("bmSupportedSliceModes=0x%02x\n", d->u.h264.bmSupportedSliceModes);
 	printf("bmSupportedSyncFrameTypes=0x%02x\n",
-	    d->bmSupportedSyncFrameTypes);
+	    d->u.h264.bmSupportedSyncFrameTypes);
 	printf("bmSupportedRateControlModes=0x%02x\n",
-	    d->bmSupportedRateControlModes);
+	    d->u.h264.bmSupportedRateControlModes);
 	printf("wMaxMBperSecOneResolutionNoScalability=%d\n",
-	    UGETW(d->wMaxMBperSecOneResolutionNoScalability));
+	    UGETW(d->u.h264.wMaxMBperSecOneResolutionNoScalability));
 	printf("wMaxMBperSecTwoResolutionsNoScalability=%d\n",
-	    UGETW(d->wMaxMBperSecTwoResolutionsNoScalability));
+	    UGETW(d->u.h264.wMaxMBperSecTwoResolutionsNoScalability));
 	printf("wMaxMBperSecThreeResolutionsNoScalability=%d\n",
-	    UGETW(d->wMaxMBperSecThreeResolutionsNoScalability));
+	    UGETW(d->u.h264.wMaxMBperSecThreeResolutionsNoScalability));
 	printf("wMaxMBperSecFourResolutionsNoScalability=%d\n",
-	    UGETW(d->wMaxMBperSecFourResolutionsNoScalability));
+	    UGETW(d->u.h264.wMaxMBperSecFourResolutionsNoScalability));
 	printf("wMaxMBperSecOneResolutionTemporalScalability=%d\n",
-	    UGETW(d->wMaxMBperSecOneResolutionTemporalScalability));
+	    UGETW(d->u.h264.wMaxMBperSecOneResolutionTemporalScalability));
 	printf("wMaxMBperSecTwoResolutionsTemporalScalablility=%d\n",
-	    UGETW(d->wMaxMBperSecTwoResolutionsTemporalScalablility));
+	    UGETW(d->u.h264.wMaxMBperSecTwoResolutionsTemporalScalablility));
 	printf("wMaxMBperSecThreeResolutionsTemporalScalability=%d\n",
-	    UGETW(d->wMaxMBperSecThreeResolutionsTemporalScalability));
+	    UGETW(d->u.h264.wMaxMBperSecThreeResolutionsTemporalScalability));
 	printf("wMaxMBperSecFourResolutionsTemporalScalability=%d\n",
-	    UGETW(d->wMaxMBperSecFourResolutionsTemporalScalability));
+	    UGETW(d->u.h264.wMaxMBperSecFourResolutionsTemporalScalability));
 	printf("wMaxMBperSecOneResolutionTemporalQualityScalability=%d\n",
-	    UGETW(d->wMaxMBperSecOneResolutionTemporalQualityScalability));
+	    UGETW(d->u.h264.wMaxMBperSecOneResolutionTemporalQualityScalability));
 	printf("wMaxMBperSecTwoResolutionsTemporalQualityScalability=%d\n",
-	    UGETW(d->wMaxMBperSecTwoResolutionsTemporalQualityScalability));
+	    UGETW(d->u.h264.wMaxMBperSecTwoResolutionsTemporalQualityScalability));
 	printf("wMaxMBperSecThreeResolutionsTemporalQualityScalablity=%d\n",
-	    UGETW(d->wMaxMBperSecThreeResolutionsTemporalQualityScalablity));
+	    UGETW(d->u.h264.wMaxMBperSecThreeResolutionsTemporalQualityScalablity));
 	printf("wMaxMBperSecFourResolutionsTemporalQualityScalability=%d\n",
-	    UGETW(d->wMaxMBperSecFourResolutionsTemporalQualityScalability));
+	    UGETW(d->u.h264.wMaxMBperSecFourResolutionsTemporalQualityScalability));
 	printf("wMaxMBperSecOneResolutionTemporalSpatialScalability=%d\n",
-	    UGETW(d->wMaxMBperSecOneResolutionTemporalSpatialScalability));
+	    UGETW(d->u.h264.wMaxMBperSecOneResolutionTemporalSpatialScalability));
 	printf("wMaxMBperSecTwoResolutionsTemporalSpatialScalability=%d\n",
-	    UGETW(d->wMaxMBperSecTwoResolutionsTemporalSpatialScalability));
+	    UGETW(d->u.h264.wMaxMBperSecTwoResolutionsTemporalSpatialScalability));
 	printf("wMaxMBperSecThreeResolutionsTemporalSpatialScalablity=%d\n",
-	    UGETW(d->wMaxMBperSecThreeResolutionsTemporalSpatialScalablity));
+	    UGETW(d->u.h264.wMaxMBperSecThreeResolutionsTemporalSpatialScalablity));
 	printf("wMaxMBperSecFourResolutionsTemporalSpatialScalability=%d\n",
-	    UGETW(d->wMaxMBperSecFourResolutionsTemporalSpatialScalability));
+	    UGETW(d->u.h264.wMaxMBperSecFourResolutionsTemporalSpatialScalability));
 	printf("wMaxMBperSecOneResolutionFullScalability=%d\n",
-	    UGETW(d->wMaxMBperSecOneResolutionFullScalability));
+	    UGETW(d->u.h264.wMaxMBperSecOneResolutionFullScalability));
 	printf("wMaxMBperSecTwoResolutionsFullScalability=%d\n",
-	    UGETW(d->wMaxMBperSecTwoResolutionsFullScalability));
+	    UGETW(d->u.h264.wMaxMBperSecTwoResolutionsFullScalability));
 	printf("wMaxMBperSecThreeResolutionsFullScalability=%d\n",
-	    UGETW(d->wMaxMBperSecThreeResolutionsFullScalability));
+	    UGETW(d->u.h264.wMaxMBperSecThreeResolutionsFullScalability));
 	printf("wMaxMBperSecFourResolutionsFullScalability=%d\n",
-	    UGETW(d->wMaxMBperSecFourResolutionsFullScalability));
+	    UGETW(d->u.h264.wMaxMBperSecFourResolutionsFullScalability));
 }
 
 void
