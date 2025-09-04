@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.161 2024/11/24 10:13:16 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.162 2025/09/04 16:38:40 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2767,16 +2767,17 @@ func main() {
 	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sect\d{3}[rk]1|secp(160|192))_`)
 
 	for _, test := range tests {
-		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
+		path := testVectorPath
+		tvs, err := filepath.Glob(filepath.Join(path, test.pattern))
 		if err != nil {
 			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
 		}
 		if len(tvs) == 0 {
-			log.Fatalf("Failed to find %v test vectors at %q\n", test.name, testVectorPath)
+			log.Fatalf("Failed to find %v test vectors at %q\n", test.name, path)
 		}
 		for _, tv := range tvs {
 			if test.variant == Skip || (test.variant == Normal && skipNormal.Match([]byte(tv))) {
-				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, testVectorPath+"/"))
+				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, path+"/"))
 				continue
 			}
 			wg.Add(1)
