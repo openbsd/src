@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.781 2025/08/12 03:43:45 jsg Exp $
+$OpenBSD: usbdevs,v 1.782 2025/09/04 21:24:51 bmercer Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3109,6 +3109,7 @@ product MEDIATEK UMASS		0x0002	USB MSM installer
 product MEDIATEK DC_4COM	0x00a5	UMTS USB modem
 product MEDIATEK MT7601_1	0x760a	MT7601
 product MEDIATEK MT7601_2	0x760b	MT7601
+product MEDIATEK MT7612		0x7612	MT7612
 
 /* MEI products */
 product MEI CASHFLOW_SC		0x1100	Cashflow-SC
