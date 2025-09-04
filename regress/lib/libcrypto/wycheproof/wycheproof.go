@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.162 2025/09/04 16:38:40 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.163 2025/09/04 16:40:12 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2645,6 +2645,8 @@ func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTes
 }
 
 func runTestVectors(path string, variant testVariant) bool {
+	var algorithm string
+	var testGroups []json.RawMessage
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Failed to read test vectors: %v", err)
@@ -2653,23 +2655,25 @@ func runTestVectors(path string, variant testVariant) bool {
 	if err := json.Unmarshal(b, wtv); err != nil {
 		log.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
-	fmt.Printf("Loaded Wycheproof test vectors for %v with %d tests from %q\n", wtv.Algorithm, wtv.NumberOfTests, filepath.Base(path))
+	algorithm = wtv.Algorithm
+	testGroups = wtv.TestGroups
+	fmt.Printf("Loaded Wycheproof test vectors for %v with %d tests from %q\n", algorithm, wtv.NumberOfTests, filepath.Base(path))
 
 	success := true
-	for _, tg := range wtv.TestGroups {
-		wtg := testGroupFromAlgorithm(wtv.Algorithm, variant)
+	for _, tg := range testGroups {
+		wtg := testGroupFromAlgorithm(algorithm, variant)
 		if wtg == nil {
-			log.Printf("INFO: Unknown test vector algorithm %q", wtv.Algorithm)
+			log.Printf("INFO: Unknown test vector algorithm %q", algorithm)
 			return false
 		}
 		if err := json.Unmarshal(tg, wtg); err != nil {
 			log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
 		}
 		testc.runTest(func() bool {
-			return wtg.run(wtv.Algorithm, variant)
+			return wtg.run(algorithm, variant)
 		})
 	}
-	for _ = range wtv.TestGroups {
+	for _ = range testGroups {
 		result := <-testc.resultCh
 		if !result {
 			success = false
