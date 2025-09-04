@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.103 2025/09/03 05:16:59 jmatthew Exp $	*/
+/*	$OpenBSD: ca.c,v 1.104 2025/09/04 10:55:19 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,8 @@
 #include "iked.h"
 #include "ikev2.h"
 
+struct ca_store;
+
 void	 ca_run(struct privsep *, struct privsep_proc *, void *);
 void	 ca_shutdown(void);
 void	 ca_reset(struct iked *);
@@ -53,6 +55,7 @@ int	 ca_cert_local(struct iked *, X509 *);
 int	 ca_getreq(struct iked *, struct imsg *);
 int	 ca_getcert(struct iked *, struct imsg *);
 int	 ca_getauth(struct iked *, struct imsg *);
+int	 ca_load_cert_file(struct ca_store *, char *);
 X509	*ca_by_subjectpubkey(X509_STORE *, uint8_t *, size_t);
 X509	*ca_by_issuer(X509_STORE *, X509_NAME *, struct iked_static_id *);
 X509	*ca_by_subjectaltname(X509_STORE *, struct iked_static_id *);
@@ -1036,6 +1039,31 @@ ca_reload(struct iked *env)
 	closedir(dir);
 
 	/*
+	 * Load certificates
+	 */
+	if ((dir = opendir(IKED_CERT_DIR)) == NULL)
+		return (-1);
+
+	while ((entry = readdir(dir)) != NULL) {
+		if ((entry->d_type != DT_REG) &&
+		    (entry->d_type != DT_LNK))
+			continue;
+
+		if (snprintf(file, sizeof(file), "%s%s",
+		    IKED_CERT_DIR, entry->d_name) < 0)
+			continue;
+
+		if (!ca_load_cert_file(store, file)) {
+			log_warn("%s: failed to load cert file %s", __func__,
+			    entry->d_name);
+			ca_sslerror(__func__);
+			continue;
+		}
+		log_debug("%s: loaded cert file %s", __func__, entry->d_name);
+	}
+	closedir(dir);
+
+	/*
 	 * Save CAs signatures for the IKEv2 CERTREQ
 	 */
 	ibuf_free(env->sc_certreq);
@@ -1085,32 +1113,6 @@ ca_reload(struct iked *env)
 		    iov, iovcnt);
 	}
 
-	/*
-	 * Load certificates
-	 */
-	if ((dir = opendir(IKED_CERT_DIR)) == NULL)
-		return (-1);
-
-	while ((entry = readdir(dir)) != NULL) {
-		if ((entry->d_type != DT_REG) &&
-		    (entry->d_type != DT_LNK))
-			continue;
-
-		if (snprintf(file, sizeof(file), "%s%s",
-		    IKED_CERT_DIR, entry->d_name) < 0)
-			continue;
-
-		if (!X509_load_cert_file(store->ca_certlookup, file,
-		    X509_FILETYPE_PEM)) {
-			log_warn("%s: failed to load cert file %s", __func__,
-			    entry->d_name);
-			ca_sslerror(__func__);
-			continue;
-		}
-		log_debug("%s: loaded cert file %s", __func__, entry->d_name);
-	}
-	closedir(dir);
-
 	h = X509_STORE_get0_objects(store->ca_certs);
 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
 		xo = sk_X509_OBJECT_value(h, i);
@@ -1135,6 +1137,42 @@ ca_reload(struct iked *env)
 	(void)proc_composev(&env->sc_ps, PROC_IKEV2, IMSG_CERTREQ, iov, iovcnt);
 
 	return (0);
+}
+
+int
+ca_load_cert_file(struct ca_store *store, char *file)
+{
+	int	 ret = 0, i, count = 0;
+	BIO	*in = NULL;
+	X509	*x = NULL;
+
+	in = BIO_new(BIO_s_file());
+
+	if ((in == NULL) || (BIO_read_filename(in, file) <= 0))
+		goto done;
+
+	if ((x = PEM_read_bio_X509_AUX(in, NULL, NULL, "")) == NULL)
+		goto done;
+	if ((i = X509_STORE_add_cert(store->ca_certs, x)) == 0)
+		goto done;
+	count++;
+	X509_free(x);
+	x = NULL;
+
+	while ((x = PEM_read_bio_X509_AUX(in, NULL, NULL, "")) != NULL) {
+		i = X509_STORE_add_cert(store->ca_cas, x);
+		if (i == 0)
+			goto done;
+		count++;
+		X509_free(x);
+		x = NULL;
+	}
+	ret = count;
+done:
+	X509_free(x);
+	BIO_free(in);
+
+	return (ret);
 }
 
 X509 *
@@ -1843,6 +1881,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	const char		*errstr = "failed";
 	X509_NAME		*subj;
 	char			*subj_name;
+	int			 depth;
 
 	if (issuerp)
 		*issuerp = NULL;
@@ -1906,6 +1945,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 
 	result = X509_verify_cert(csc);
 	error = X509_STORE_CTX_get_error(csc);
+	depth = X509_STORE_CTX_get_error_depth(csc);
 	if (error == 0 && issuerp) {
 		if (X509_STORE_CTX_get1_issuer(issuerp, csc, cert) != 1) {
 			log_debug("%s: cannot get issuer", __func__);
@@ -1936,7 +1976,8 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 		subj_name = X509_NAME_oneline(subj, NULL, 0);
 		if (subj_name == NULL)
 			goto err;
-		log_debug("%s: %s %.100s", __func__, subj_name, errstr);
+		log_debug("%s: %s (depth = %d) %.100s", __func__, subj_name,
+		    depth, errstr);
 		OPENSSL_free(subj_name);
 	}
  err:
