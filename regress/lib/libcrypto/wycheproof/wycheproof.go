@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.163 2025/09/04 16:40:12 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.164 2025/09/04 16:44:14 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -577,6 +577,13 @@ type wycheproofTestGroupX25519 struct {
 type wycheproofTestGroupRunner interface {
 	run(string, testVariant) bool
 }
+
+type wycheproofVersion int
+
+const (
+	v0 wycheproofVersion = iota
+	v1
+)
 
 type wycheproofTestVectors struct {
 	Algorithm        string            `json:"algorithm"`
@@ -2644,7 +2651,7 @@ func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTes
 	}
 }
 
-func runTestVectors(path string, variant testVariant) bool {
+func runTestVectors(path string, variant testVariant, version wycheproofVersion) bool {
 	var algorithm string
 	var testGroups []json.RawMessage
 	b, err := ioutil.ReadFile(path)
@@ -2725,35 +2732,36 @@ func main() {
 	}
 
 	tests := []struct {
+		version wycheproofVersion
 		name    string
 		pattern string
 		variant testVariant
 	}{
-		{"AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
-		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
-		{"DSA", "dsa_*test.json", Normal},
-		{"DSA", "dsa_*_p1363_test.json", P1363},
-		{"ECDH", "ecdh_test.json", Normal},
-		{"ECDH", "ecdh_[^w_]*_test.json", Normal},
-		{"ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
-		{"ECDH webcrypto", "ecdh_webcrypto_test.json", Webcrypto},
-		{"ECDSA", "ecdsa_test.json", Normal},
-		{"ECDSA", "ecdsa_[^w]*test.json", Normal},
-		{"ECDSA P1363", "ecdsa_*_p1363_test.json", P1363},
-		{"ECDSA webcrypto", "ecdsa_webcrypto_test.json", Webcrypto},
-		{"EDDSA", "eddsa_test.json", Normal},
-		{"ED448", "ed448_test.json", Skip},
-		{"HKDF", "hkdf_sha*_test.json", Normal},
-		{"HMAC", "hmac_sha*_test.json", Normal},
-		{"JSON webcrypto", "json_web_*_test.json", Skip},
-		{"KW", "kw_test.json", Normal},
-		{"Primality test", "primality_test.json", Normal},
-		{"RSA", "rsa_*test.json", Normal},
-		{"X25519", "x25519_test.json", Normal},
-		{"X25519 ASN", "x25519_asn_test.json", Skip},
-		{"X25519 JWK", "x25519_jwk_test.json", Skip},
-		{"X25519 PEM", "x25519_pem_test.json", Skip},
-		{"XCHACHA20-POLY1305", "xchacha20_poly1305_test.json", Normal},
+		{v0, "AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
+		{v0, "ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
+		{v0, "DSA", "dsa_*test.json", Normal},
+		{v0, "DSA", "dsa_*_p1363_test.json", P1363},
+		{v0, "ECDH", "ecdh_test.json", Normal},
+		{v0, "ECDH", "ecdh_[^w_]*_test.json", Normal},
+		{v0, "ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
+		{v0, "ECDH webcrypto", "ecdh_webcrypto_test.json", Webcrypto},
+		{v0, "ECDSA", "ecdsa_test.json", Normal},
+		{v0, "ECDSA", "ecdsa_[^w]*test.json", Normal},
+		{v0, "ECDSA P1363", "ecdsa_*_p1363_test.json", P1363},
+		{v0, "ECDSA webcrypto", "ecdsa_webcrypto_test.json", Webcrypto},
+		{v0, "EDDSA", "eddsa_test.json", Normal},
+		{v0, "ED448", "ed448_test.json", Skip},
+		{v0, "HKDF", "hkdf_sha*_test.json", Normal},
+		{v0, "HMAC", "hmac_sha*_test.json", Normal},
+		{v0, "JSON webcrypto", "json_web_*_test.json", Skip},
+		{v0, "KW", "kw_test.json", Normal},
+		{v0, "Primality test", "primality_test.json", Normal},
+		{v0, "RSA", "rsa_*test.json", Normal},
+		{v0, "X25519", "x25519_test.json", Normal},
+		{v0, "X25519 ASN", "x25519_asn_test.json", Skip},
+		{v0, "X25519 JWK", "x25519_jwk_test.json", Skip},
+		{v0, "X25519 PEM", "x25519_pem_test.json", Skip},
+		{v0, "XCHACHA20-POLY1305", "xchacha20_poly1305_test.json", Normal},
 	}
 
 	success := true
@@ -2772,6 +2780,9 @@ func main() {
 
 	for _, test := range tests {
 		path := testVectorPath
+		if test.version == v1 {
+			path = path + "_v1"
+		}
 		tvs, err := filepath.Glob(filepath.Join(path, test.pattern))
 		if err != nil {
 			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
@@ -2786,15 +2797,15 @@ func main() {
 			}
 			wg.Add(1)
 			<-vectorsRateLimitCh
-			go func(tv string, variant testVariant) {
+			go func(tv string, variant testVariant, version wycheproofVersion) {
 				select {
-				case resultCh <- runTestVectors(tv, variant):
+				case resultCh <- runTestVectors(tv, variant, version):
 				default:
 					log.Fatal("result channel is full")
 				}
 				vectorsRateLimitCh <- true
 				wg.Done()
-			}(tv, test.variant)
+			}(tv, test.variant, test.version)
 		}
 	}
 
