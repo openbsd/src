@@ -1,4 +1,4 @@
-/* $OpenBSD: krl.c,v 1.60 2025/02/18 08:02:48 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.61 2025/09/05 09:58:08 dtucker Exp $ */
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
  *
@@ -22,10 +22,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <stdlib.h>
 
 #include "sshbuf.h"
 #include "ssherr.h"
