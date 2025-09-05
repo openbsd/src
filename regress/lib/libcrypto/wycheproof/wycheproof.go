@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.175 2025/09/05 11:25:50 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.176 2025/09/05 13:47:41 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -461,15 +461,31 @@ func (wt *wycheproofTestRSA) String() string {
 }
 
 type wycheproofTestGroupRSA struct {
-	E       string               `json:"e"`
-	KeyASN  string               `json:"keyAsn"`
-	KeyDER  string               `json:"keyDer"`
-	KeyPEM  string               `json:"keyPem"`
-	KeySize int                  `json:"keysize"`
-	N       string               `json:"n"`
-	SHA     string               `json:"sha"`
-	Type    string               `json:"type"`
-	Tests   []*wycheproofTestRSA `json:"tests"`
+	PrivateKey *wycheproofRSAPrivateKey `json:"privateKey"`
+	PublicKey  *wycheproofRSAPublicKey  `json:"publicKey"`
+	KeyASN     string                   `json:"keyAsn"`
+	KeyDER     string                   `json:"keyDer"`
+	KeyPEM     string                   `json:"keyPem"`
+	KeySize    int                      `json:"keysize"`
+	SHA        string                   `json:"sha"`
+	Type       string                   `json:"type"`
+	Tests      []*wycheproofTestRSA     `json:"tests"`
+}
+
+type wycheproofRSAPublicKey struct {
+	Modulus        string `json:"modulus"`
+	PublicExponent string `json:"publicExponent"`
+}
+
+type wycheproofRSAPrivateKey struct {
+	Modulus         string `json:"modulus"`
+	PrivateExponent string `json:"privateExponent"`
+	PublicExponent  string `json:"publicExponent"`
+	Prime1          string `json:"prime1"`
+	Prime2          string `json:"prime2"`
+	Exponent1       string `json:"exponent1"`
+	Exponent2       string `json:"exponent2"`
+	Coefficient     string `json:"coefficient"`
 }
 
 type wycheproofPrivateKeyJwk struct {
@@ -501,29 +517,25 @@ func (wt *wycheproofTestRsaes) String() string {
 }
 
 type wycheproofTestGroupRsaesOaep struct {
-	D               string                   `json:"d"`
-	E               string                   `json:"e"`
+	Type            string                   `json:"type"`
 	KeySize         int                      `json:"keysize"`
+	SHA             string                   `json:"sha"`
 	MGF             string                   `json:"mgf"`
 	MGFSHA          string                   `json:"mgfSha"`
-	N               string                   `json:"n"`
+	PrivateKey      *wycheproofRSAPrivateKey `json:"privateKey"`
 	PrivateKeyJwk   *wycheproofPrivateKeyJwk `json:"privateKeyJwk"`
 	PrivateKeyPem   string                   `json:"privateKeyPem"`
 	PrivateKeyPkcs8 string                   `json:"privateKeyPkcs8"`
-	SHA             string                   `json:"sha"`
-	Type            string                   `json:"type"`
 	Tests           []*wycheproofTestRsaes   `json:"tests"`
 }
 
 type wycheproofTestGroupRsaesPkcs1 struct {
-	D               string                   `json:"d"`
-	E               string                   `json:"e"`
-	KeySize         int                      `json:"keysize"`
-	N               string                   `json:"n"`
+	Type            string                   `json:"type"`
+	PrivateKey      *wycheproofRSAPrivateKey `json:"privateKey"`
 	PrivateKeyJwk   *wycheproofPrivateKeyJwk `json:"privateKeyJwk"`
 	PrivateKeyPem   string                   `json:"privateKeyPem"`
 	PrivateKeyPkcs8 string                   `json:"privateKeyPkcs8"`
-	Type            string                   `json:"type"`
+	KeySize         int                      `json:"keysize"`
 	Tests           []*wycheproofTestRsaes   `json:"tests"`
 }
 
@@ -541,18 +553,18 @@ func (wt *wycheproofTestRsassa) String() string {
 }
 
 type wycheproofTestGroupRsassa struct {
-	E       string                  `json:"e"`
-	KeyASN  string                  `json:"keyAsn"`
-	KeyDER  string                  `json:"keyDer"`
-	KeyPEM  string                  `json:"keyPem"`
-	KeySize int                     `json:"keysize"`
-	MGF     string                  `json:"mgf"`
-	MGFSHA  string                  `json:"mgfSha"`
-	N       string                  `json:"n"`
-	SLen    int                     `json:"sLen"`
-	SHA     string                  `json:"sha"`
-	Type    string                  `json:"type"`
-	Tests   []*wycheproofTestRsassa `json:"tests"`
+	PrivateKey *wycheproofRSAPrivateKey `json:"privateKey"`
+	PublicKey  *wycheproofRSAPublicKey  `json:"publicKey"`
+	KeyASN     string                   `json:"keyAsn"`
+	KeyDER     string                   `json:"keyDer"`
+	KeyPEM     string                   `json:"keyPem"`
+	KeySize    int                      `json:"keysize"`
+	MGF        string                   `json:"mgf"`
+	MGFSHA     string                   `json:"mgfSha"`
+	SLen       int                      `json:"sLen"`
+	SHA        string                   `json:"sha"`
+	Type       string                   `json:"type"`
+	Tests      []*wycheproofTestRsassa  `json:"tests"`
 }
 
 type wycheproofTestX25519 struct {
@@ -2303,7 +2315,7 @@ func (wtg *wycheproofTestGroupRsaesOaep) run(algorithm string, variant testVaria
 	}
 	defer C.RSA_free(rsa)
 
-	d := C.CString(wtg.D)
+	d := C.CString(wtg.PrivateKey.PrivateExponent)
 	var rsaD *C.BIGNUM
 	defer C.BN_free(rsaD)
 	if C.BN_hex2bn(&rsaD, d) == 0 {
@@ -2311,7 +2323,7 @@ func (wtg *wycheproofTestGroupRsaesOaep) run(algorithm string, variant testVaria
 	}
 	C.free(unsafe.Pointer(d))
 
-	e := C.CString(wtg.E)
+	e := C.CString(wtg.PrivateKey.PublicExponent)
 	var rsaE *C.BIGNUM
 	defer C.BN_free(rsaE)
 	if C.BN_hex2bn(&rsaE, e) == 0 {
@@ -2319,7 +2331,7 @@ func (wtg *wycheproofTestGroupRsaesOaep) run(algorithm string, variant testVaria
 	}
 	C.free(unsafe.Pointer(e))
 
-	n := C.CString(wtg.N)
+	n := C.CString(wtg.PrivateKey.Modulus)
 	var rsaN *C.BIGNUM
 	defer C.BN_free(rsaN)
 	if C.BN_hex2bn(&rsaN, n) == 0 {
@@ -2393,7 +2405,7 @@ func (wtg *wycheproofTestGroupRsaesPkcs1) run(algorithm string, variant testVari
 	}
 	defer C.RSA_free(rsa)
 
-	d := C.CString(wtg.D)
+	d := C.CString(wtg.PrivateKey.PrivateExponent)
 	var rsaD *C.BIGNUM
 	defer C.BN_free(rsaD)
 	if C.BN_hex2bn(&rsaD, d) == 0 {
@@ -2401,7 +2413,7 @@ func (wtg *wycheproofTestGroupRsaesPkcs1) run(algorithm string, variant testVari
 	}
 	C.free(unsafe.Pointer(d))
 
-	e := C.CString(wtg.E)
+	e := C.CString(wtg.PrivateKey.PublicExponent)
 	var rsaE *C.BIGNUM
 	defer C.BN_free(rsaE)
 	if C.BN_hex2bn(&rsaE, e) == 0 {
@@ -2409,7 +2421,7 @@ func (wtg *wycheproofTestGroupRsaesPkcs1) run(algorithm string, variant testVari
 	}
 	C.free(unsafe.Pointer(e))
 
-	n := C.CString(wtg.N)
+	n := C.CString(wtg.PrivateKey.Modulus)
 	var rsaN *C.BIGNUM
 	defer C.BN_free(rsaN)
 	if C.BN_hex2bn(&rsaN, n) == 0 {
@@ -2474,7 +2486,19 @@ func (wtg *wycheproofTestGroupRsassa) run(algorithm string, variant testVariant)
 	}
 	defer C.RSA_free(rsa)
 
-	e := C.CString(wtg.E)
+	var publicExponent, modulus string
+	if wtg.PublicKey != nil {
+		publicExponent = wtg.PublicKey.PublicExponent
+		modulus = wtg.PublicKey.Modulus
+	} else if wtg.PrivateKey != nil {
+		publicExponent = wtg.PrivateKey.PublicExponent
+		modulus = wtg.PrivateKey.Modulus
+	}
+	if publicExponent == "" || modulus == "" {
+		return true
+	}
+
+	e := C.CString(publicExponent)
 	var rsaE *C.BIGNUM
 	defer C.BN_free(rsaE)
 	if C.BN_hex2bn(&rsaE, e) == 0 {
@@ -2482,7 +2506,7 @@ func (wtg *wycheproofTestGroupRsassa) run(algorithm string, variant testVariant)
 	}
 	C.free(unsafe.Pointer(e))
 
-	n := C.CString(wtg.N)
+	n := C.CString(modulus)
 	var rsaN *C.BIGNUM
 	defer C.BN_free(rsaN)
 	if C.BN_hex2bn(&rsaN, n) == 0 {
@@ -2539,7 +2563,19 @@ func (wtg *wycheproofTestGroupRSA) run(algorithm string, variant testVariant) bo
 	}
 	defer C.RSA_free(rsa)
 
-	e := C.CString(wtg.E)
+	var publicExponent, modulus string
+	if wtg.PublicKey != nil {
+		publicExponent = wtg.PublicKey.PublicExponent
+		modulus = wtg.PublicKey.Modulus
+	} else if wtg.PrivateKey != nil {
+		publicExponent = wtg.PrivateKey.PublicExponent
+		modulus = wtg.PrivateKey.Modulus
+	}
+	if publicExponent == "" || modulus == "" {
+		return true
+	}
+
+	e := C.CString(publicExponent)
 	var rsaE *C.BIGNUM
 	defer C.BN_free(rsaE)
 	if C.BN_hex2bn(&rsaE, e) == 0 {
@@ -2547,7 +2583,7 @@ func (wtg *wycheproofTestGroupRSA) run(algorithm string, variant testVariant) bo
 	}
 	C.free(unsafe.Pointer(e))
 
-	n := C.CString(wtg.N)
+	n := C.CString(modulus)
 	var rsaN *C.BIGNUM
 	defer C.BN_free(rsaN)
 	if C.BN_hex2bn(&rsaN, n) == 0 {
@@ -2775,7 +2811,7 @@ func main() {
 		{v0, "JSON webcrypto", "json_web_*_test.json", Skip},
 		{v0, "KW", "kw_test.json", Normal},
 		{v0, "Primality test", "primality_test.json", Normal},
-		{v0, "RSA", "rsa_*test.json", Normal},
+		{v1, "RSA", "rsa_*test.json", Normal},
 		{v1, "X25519", "x25519_test.json", Normal},
 		{v1, "X25519 ASN", "x25519_asn_test.json", Skip},
 		{v1, "X25519 JWK", "x25519_jwk_test.json", Skip},
