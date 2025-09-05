@@ -1,4 +1,4 @@
-/* $OpenBSD: umac.c,v 1.26 2025/05/24 02:33:33 dtucker Exp $ */
+/* $OpenBSD: umac.c,v 1.27 2025/09/05 10:34:35 dtucker Exp $ */
 /* -----------------------------------------------------------------------
  *
  * umac.c -- C Implementation UMAC Message Authentication
@@ -141,10 +141,8 @@ typedef unsigned int	UWORD;  /* Register */
 #define STORE_UINT32_REVERSED(p,v)	put_u32_le(p,v)
 #endif
 
-#define LOAD_UINT32_LITTLE(p)           (get_u32_le(p))
-#define STORE_UINT32_BIG(p,v)           put_u32(p, v)
-
-
+#define LOAD_UINT32_LITTLE(p)		(get_u32_le(p))
+#define STORE_UINT32_BIG(p,v)		put_u32(p, v)
 
 /* ---------------------------------------------------------------------- */
 /* ---------------------------------------------------------------------- */
