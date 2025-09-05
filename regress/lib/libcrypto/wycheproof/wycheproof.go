@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.178 2025/09/05 14:06:15 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.179 2025/09/05 14:07:50 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2812,6 +2812,8 @@ func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTes
 		return &wycheproofTestGroupAesAead{}
 	case "AES-CMAC":
 		return &wycheproofTestGroupAesCmac{}
+	case "AES-WRAP":
+		return &wycheproofTestGroupKW{}
 	case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
 		return &wycheproofTestGroupChaCha{}
 	case "DSA":
@@ -2828,8 +2830,6 @@ func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTes
 		return &wycheproofTestGroupHkdf{}
 	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA512/224", "HMACSHA512/256", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
 		return &wycheproofTestGroupHmac{}
-	case "KW":
-		return &wycheproofTestGroupKW{}
 	case "PrimalityTest":
 		return &wycheproofTestGroupPrimality{}
 	case "RSAES-OAEP":
@@ -2944,6 +2944,7 @@ func main() {
 		variant testVariant
 	}{
 		{v1, "AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
+		{v1, "AES-WRAP", "aes_wrap_test.json", Normal},
 		{v1, "ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
 		{v1, "DSA", "dsa_*test.json", Normal},
 		{v1, "DSA", "dsa_*_p1363_test.json", P1363},
@@ -2960,7 +2961,6 @@ func main() {
 		{v1, "HKDF", "hkdf_sha*_test.json", Normal},
 		{v1, "HMAC", "hmac_sha*_test.json", Normal},
 		{v0, "JSON webcrypto", "json_web_*_test.json", Skip},
-		{v0, "KW", "kw_test.json", Normal},
 		{v1, "Primality test", "primality_test.json", Normal},
 		{v1, "RSA", "rsa_*test.json", Normal},
 		{v1, "X25519", "x25519_test.json", Normal},
