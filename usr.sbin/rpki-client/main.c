@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.295 2025/08/24 12:17:12 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.296 2025/09/05 17:38:03 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1558,7 +1558,7 @@ main(int argc, char *argv[])
 	printf("Skiplist entries: %u\n", stats.skiplistentries);
 	printf("CCR manifest state hash: %s\n", vd.ccr.mfts_hash);
 	printf("CCR ROA payloads hash: %s\n", vd.ccr.vrps_hash);
-	printf("CCR ASPA paylaods hash: %s\n", vd.ccr.vaps_hash);
+	printf("CCR ASPA payloads hash: %s\n", vd.ccr.vaps_hash);
 	printf("Route Origin Authorizations: %u (%u failed parse, %u "
 	    "invalid)\n", stats.repo_tal_stats.roas,
 	    stats.repo_tal_stats.roas_fail,
