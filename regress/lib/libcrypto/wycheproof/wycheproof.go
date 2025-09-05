@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.172 2025/09/04 17:06:34 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.173 2025/09/05 11:11:07 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2756,7 +2756,7 @@ func main() {
 		pattern string
 		variant testVariant
 	}{
-		{v0, "AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
+		{v1, "AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
 		{v1, "ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
 		{v1, "DSA", "dsa_*test.json", Normal},
 		{v1, "DSA", "dsa_*_p1363_test.json", P1363},
@@ -2795,7 +2795,7 @@ func main() {
 
 	testc = newTestCoordinator()
 
-	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sect\d{3}[rk]1|secp(160|192))_`)
+	skipNormal := regexp.MustCompile(`_(ecpoint|gmac|p1363|sect\d{3}[rk]1|secp(160|192))_`)
 
 	for _, test := range tests {
 		path := testVectorPath
