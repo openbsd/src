@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.176 2025/09/05 13:47:41 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.177 2025/09/05 14:01:56 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -81,6 +81,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -125,6 +126,59 @@ func wycheproofFormatTestCase(tcid int, comment string, flags []string, result s
 }
 
 var testc *testCoordinator
+
+type BigInt struct {
+	*big.Int
+}
+
+func mustConvertBigIntToBigNum(bi *BigInt) *C.BIGNUM {
+	value := bi.Bytes()
+	if len(value) == 0 {
+		value = append(value, 0)
+	}
+	bn := C.BN_new()
+	if bn == nil {
+		log.Fatal("BN_new failed")
+	}
+	if C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&value[0])), C.int(len(value)), bn) == nil {
+		log.Fatal("BN_bin2bn failed")
+	}
+	if bi.Sign() == -1 {
+		C.BN_set_negative(bn, C.int(1))
+	}
+	return bn
+}
+
+func (bi *BigInt) UnmarshalJSON(data []byte) error {
+	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
+		log.Fatalf("Failed to decode %q: too short or unquoted", data)
+	}
+	data = data[1 : len(data)-1]
+	if len(data)%2 == 1 {
+		pad := make([]byte, 1, len(data)+1)
+		if data[0] >= '0' && data[0] <= '7' {
+			pad[0] = '0'
+		} else {
+			pad[0] = 'f'
+		}
+		data = append(pad, data...)
+	}
+
+	src := make([]byte, hex.DecodedLen(len(data)))
+	_, err := hex.Decode(src, data)
+	if err != nil {
+		log.Fatalf("Failed to decode %q: %v", data, err)
+	}
+
+	bi.Int = &big.Int{}
+	bi.Int.SetBytes(src)
+	if data[0] >= '8' {
+		y := &big.Int{}
+		y.SetBit(y, 4*len(data), 1)
+		bi.Int.Sub(bi.Int, y)
+	}
+	return nil
+}
 
 type wycheproofJWKPublic struct {
 	Crv string `json:"crv"`
@@ -432,7 +486,7 @@ type wycheproofTestGroupKW struct {
 type wycheproofTestPrimality struct {
 	TCID    int      `json:"tcId"`
 	Comment string   `json:"comment"`
-	Value   string   `json:"value"`
+	Value   *BigInt  `json:"value"`
 	Result  string   `json:"result"`
 	Flags   []string `json:"flags"`
 }
@@ -2234,12 +2288,7 @@ func (wtg *wycheproofTestGroupKW) run(algorithm string, variant testVariant) boo
 }
 
 func runPrimalityTest(wt *wycheproofTestPrimality) bool {
-	var bnValue *C.BIGNUM
-	value := C.CString(wt.Value)
-	if C.BN_hex2bn(&bnValue, value) == 0 {
-		log.Fatal("Failed to set bnValue")
-	}
-	C.free(unsafe.Pointer(value))
+	bnValue := mustConvertBigIntToBigNum(wt.Value)
 	defer C.BN_free(bnValue)
 
 	ret := C.BN_is_prime_ex(bnValue, C.BN_prime_checks, (*C.BN_CTX)(unsafe.Pointer(nil)), (*C.BN_GENCB)(unsafe.Pointer(nil)))
@@ -2810,7 +2859,7 @@ func main() {
 		{v1, "HMAC", "hmac_sha*_test.json", Normal},
 		{v0, "JSON webcrypto", "json_web_*_test.json", Skip},
 		{v0, "KW", "kw_test.json", Normal},
-		{v0, "Primality test", "primality_test.json", Normal},
+		{v1, "Primality test", "primality_test.json", Normal},
 		{v1, "RSA", "rsa_*test.json", Normal},
 		{v1, "X25519", "x25519_test.json", Normal},
 		{v1, "X25519 ASN", "x25519_asn_test.json", Skip},
