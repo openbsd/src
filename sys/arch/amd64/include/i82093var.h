@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093var.h,v 1.7 2024/10/22 21:50:02 jsg Exp $	*/
+/*	$OpenBSD: i82093var.h,v 1.8 2025/09/05 16:57:48 kettenis Exp $	*/
 /* $NetBSD: i82093var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -53,9 +53,8 @@ struct ioapic_softc {
 	int			sc_apic_vecbase; /* global int base if ACPI */
 	int			sc_apic_sz;	/* apic size*/
 	int			sc_flags;
-	paddr_t			sc_pa;		/* PA of ioapic */
-	volatile u_int32_t	*sc_reg;	/* KVA of ioapic addr */
-	volatile u_int32_t	*sc_data;	/* KVA of ioapic data */
+	bus_space_tag_t		sc_memt;
+	bus_space_handle_t	sc_memh;
 	struct ioapic_pin	*sc_pins;	/* sc_apic_sz entries */
 };      
 

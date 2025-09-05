@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.32 2023/04/29 10:18:06 mlarkin Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.33 2025/09/05 16:57:48 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -86,9 +86,6 @@ int     ioapic_match(struct device *, void *, void *);
 void    ioapic_attach(struct device *, struct device *, void *);
 int	ioapic_activate(struct device *, int);
 
-extern int x86_mem_add_mapping(bus_addr_t, bus_size_t,
-    int, bus_space_handle_t *); /* XXX XXX */
-
 void ioapic_hwmask(struct pic *, int);
 void ioapic_hwunmask(struct pic *, int);
 void ioapic_addroute(struct pic *, struct cpu_info *, int, int, int);
@@ -131,19 +128,15 @@ ioapic_unlock(struct ioapic_softc *sc, u_long flags)
 static __inline u_int32_t
 ioapic_read_ul(struct ioapic_softc *sc,int regid)
 {
-	u_int32_t val;
-
-	*(sc->sc_reg) = regid;
-	val = *sc->sc_data;
-
-	return (val);
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOAPIC_REG, regid);
+	return bus_space_read_4(sc->sc_memt, sc->sc_memh, IOAPIC_DATA);
 }
 
 static __inline void
 ioapic_write_ul(struct ioapic_softc *sc,int regid, u_int32_t val)
 {
-	*(sc->sc_reg) = regid;
-	*(sc->sc_data) = val;
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOAPIC_REG, regid);
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOAPIC_DATA, val);
 }
 
 static __inline u_int32_t
@@ -264,16 +257,12 @@ ioapic_set_id(struct ioapic_softc *sc)
 		printf(", remapped");
 }
 
-/*
- * can't use bus_space_xxx as we don't have a bus handle ...
- */
 void
 ioapic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioapic_softc *sc = (struct ioapic_softc *)self;
 	struct apic_attach_args  *aaa = (struct apic_attach_args *)aux;
 	int apic_id;
-	bus_space_handle_t bh;
 	u_int32_t ver_sz;
 	int i;
 
@@ -291,12 +280,12 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(" pa 0x%lx", aaa->apic_address);
 
-	if (x86_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
+	sc->sc_memt = aaa->apic_memt;
+	if (bus_space_map(sc->sc_memt, aaa->apic_address, PAGE_SIZE, 0,
+	    &sc->sc_memh)) {
 		printf(", map failed\n");
 		return;
 	}
-	sc->sc_reg = (volatile u_int32_t *)(bh + IOAPIC_REG);
-	sc->sc_data = (volatile u_int32_t *)(bh + IOAPIC_DATA);
 
 	sc->sc_pic.pic_type = PIC_IOAPIC;
 #ifdef MULTIPROCESSOR

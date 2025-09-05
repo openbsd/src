@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.33 2024/10/22 21:50:02 jsg Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.34 2025/09/05 16:57:48 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -142,10 +142,16 @@ struct mp_map {
 	int		psize;
 };
 
+struct mpbios_softc {
+	struct device	sc_dev;
+	bus_space_tag_t	sc_memt;
+};
+
 int	mp_print(void *, const char *);
 int	mp_match(struct device *, void *, void *);
 const void *mpbios_search(struct device *, paddr_t, int, struct mp_map *);
 static __inline int mpbios_cksum(const void *, int);
+void	mpbios_scan(struct mpbios_softc *);
 
 void	mp_cfg_special_intr(const struct mpbios_int *, u_int32_t *);
 void	mp_print_special_intr(int);
@@ -161,9 +167,9 @@ void	mp_print_eisa_intr(int);
 void	mp_cfg_isa_intr(const struct mpbios_int *, u_int32_t *);
 void	mp_print_isa_intr(int);
 
-void	mpbios_cpu(const u_int8_t *, struct device *);
-void	mpbios_bus(const u_int8_t *, struct device *);
-void	mpbios_ioapic(const u_int8_t *, struct device *);
+void	mpbios_cpu(struct mpbios_softc *, const u_int8_t *);
+void	mpbios_bus(struct mpbios_softc *, const u_int8_t *);
+void	mpbios_ioapic(struct mpbios_softc *, const u_int8_t *);
 int	mpbios_int(const u_int8_t *, int, struct mp_intr_map *);
 
 const void *mpbios_map(paddr_t, int, struct mp_map *);
@@ -184,7 +190,7 @@ int	mpbios_match(struct device *, void *, void *);
 void	mpbios_attach(struct device *, struct device *, void *);
 
 const struct cfattach mpbios_ca = {
-	sizeof(struct device), mpbios_match, mpbios_attach
+	sizeof(struct mpbios_softc), mpbios_match, mpbios_attach
 };
 
 struct cfdriver mpbios_cd = {
@@ -195,9 +201,9 @@ int
 mpbios_match(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
-	struct bios_attach_args *bia = aux;
+	struct bios_attach_args *ba = aux;
 
-	if (strcmp(bia->ba_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(ba->ba_name, cf->cf_driver->cd_name) == 0)
 		return (1);
 	return (0);
 }
@@ -205,7 +211,11 @@ mpbios_match(struct device *parent, void *match, void *aux)
 void
 mpbios_attach(struct device *parent, struct device *self, void *aux)
 {
-	mpbios_scan(self);
+	struct mpbios_softc *sc = (struct mpbios_softc *)self;
+	struct bios_attach_args *ba = aux;
+
+	sc->sc_memt = ba->ba_memt;
+	mpbios_scan(sc);
 }
 
 int
@@ -488,7 +498,7 @@ static struct mp_bus nmi_bus = {
  *	nintrs
  */
 void
-mpbios_scan(struct device *self)
+mpbios_scan(struct mpbios_softc *sc)
 {
 	const u_int8_t 	*position, *end;
 	int		count;
@@ -497,7 +507,7 @@ mpbios_scan(struct device *self)
 	paddr_t		lapic_base;
 	const struct mpbios_int *iep;
 	struct mpbios_int ie;
-	struct ioapic_softc *sc;
+	struct ioapic_softc *ioapic;
 
 	printf(": Intel MP Specification 1.%d\n", mp_fps->spec_rev);
 
@@ -528,7 +538,7 @@ mpbios_scan(struct device *self)
 		if (type >= MPS_MCT_NTYPES) {
 			printf("%s: unknown entry type %x"
 			    " in MP config table\n",
-			    self->dv_xname, type);
+			    sc->sc_dev.dv_xname, type);
 			break;
 		}
 		mp_conf[type].count++;
@@ -568,21 +578,21 @@ mpbios_scan(struct device *self)
 	while ((count--) && (position < end)) {
 		switch (type = *(u_char *)position) {
 		case MPS_MCT_CPU:
-			mpbios_cpu(position, self);
+			mpbios_cpu(sc, position);
 			break;
 		case MPS_MCT_BUS:
-			mpbios_bus(position, self);
+			mpbios_bus(sc, position);
 			break;
 		case MPS_MCT_IOAPIC:
-			mpbios_ioapic(position, self);
+			mpbios_ioapic(sc, position);
 			break;
 		case MPS_MCT_IOINT:
 			iep = (const struct mpbios_int *)position;
 			ie = *iep;
 			if (iep->dst_apic_id == MPS_ALL_APICS) {
-				for (sc = ioapics ; sc != NULL;
-				     sc = sc->sc_next) {
-					ie.dst_apic_id = sc->sc_apicid;
+				for (ioapic = ioapics ; ioapic != NULL;
+				     ioapic = ioapic->sc_next) {
+					ie.dst_apic_id = ioapic->sc_apicid;
 					if (mpbios_int((char *)&ie,
 					    type, &mp_intrs[cur_intr]) == 0)
 						cur_intr++;
@@ -601,7 +611,7 @@ mpbios_scan(struct device *self)
 		default:
 			printf("%s: unknown entry type %x "
 			    "in MP config table\n",
-			    self->dv_xname, type);
+			    sc->sc_dev.dv_xname, type);
 			/* NOTREACHED */
 			return;
 		}
@@ -613,7 +623,7 @@ mpbios_scan(struct device *self)
 	if (mp_verbose && mp_cth->ext_len)
 		printf("%s: MP WARNING: %d "
 		    "bytes of extended entries not examined\n",
-		    self->dv_xname, mp_cth->ext_len);
+		    sc->sc_dev.dv_xname, mp_cth->ext_len);
 
 	/* Clean up. */
 	mp_fps = NULL;
@@ -630,10 +640,10 @@ mpbios_scan(struct device *self)
 }
 
 void
-mpbios_cpu(const u_int8_t *ent, struct device *self)
+mpbios_cpu(struct mpbios_softc *sc, const u_int8_t *ent)
 {
 	const struct mpbios_proc *entry = (const struct mpbios_proc *)ent;
-	struct device *mainbus = self->dv_parent->dv_parent;
+	struct device *mainbus = sc->sc_dev.dv_parent->dv_parent;
 	struct cpu_attach_args caa;
 
 	/* XXX move this into the CPU attachment goo. */
@@ -856,12 +866,12 @@ mp_print_eisa_intr(int intr)
 #endif
 
 void
-mpbios_bus(const u_int8_t *ent, struct device *self)
+mpbios_bus(struct mpbios_softc *sc, const u_int8_t *ent)
 {
 	const struct mpbios_bus *entry = (const struct mpbios_bus *)ent;
 	int bus_id = entry->bus_id;
 
-	printf("%s: bus %d is type %6.6s\n", self->dv_xname,
+	printf("%s: bus %d is type %6.6s\n", sc->sc_dev.dv_xname,
 	    bus_id, entry->bus_type);
 
 #ifdef DIAGNOSTIC
@@ -871,7 +881,7 @@ mpbios_bus(const u_int8_t *ent, struct device *self)
 	 */
 	if (bus_id >= mp_nbusses) {
 		panic("%s: bus number %d out of range?? (type %6.6s)",
-		    self->dv_xname, bus_id, entry->bus_type);
+		    sc->sc_dev.dv_xname, bus_id, entry->bus_type);
 	}
 #endif
 
@@ -893,7 +903,7 @@ mpbios_bus(const u_int8_t *ent, struct device *self)
 
 		if (mp_eisa_bus)
 			printf("%s: multiple eisa busses?\n",
-			    self->dv_xname);
+			    sc->sc_dev.dv_xname);
 		else
 			mp_eisa_bus = &mp_busses[bus_id];
 #endif
@@ -904,21 +914,21 @@ mpbios_bus(const u_int8_t *ent, struct device *self)
 		mp_busses[bus_id].mb_intr_cfg = mp_cfg_isa_intr;
 		if (mp_isa_bus)
 			printf("%s: multiple isa busses?\n",
-			    self->dv_xname);
+			    sc->sc_dev.dv_xname);
 		else
 			mp_isa_bus = &mp_busses[bus_id];
 	} else {
-		printf("%s: unsupported bus type %6.6s\n", self->dv_xname,
+		printf("%s: unsupported bus type %6.6s\n", sc->sc_dev.dv_xname,
 		    entry->bus_type);
 	}
 }
 
 
 void
-mpbios_ioapic(const u_int8_t *ent, struct device *self)
+mpbios_ioapic(struct mpbios_softc *sc, const u_int8_t *ent)
 {
 	const struct mpbios_ioapic *entry = (const struct mpbios_ioapic *)ent;
-	struct device *mainbus = self->dv_parent->dv_parent;
+	struct device *mainbus = sc->sc_dev.dv_parent->dv_parent;
 	struct apic_attach_args aaa;
 
 	/* XXX let flags checking happen in ioapic driver.. */
@@ -926,9 +936,10 @@ mpbios_ioapic(const u_int8_t *ent, struct device *self)
 		return;
 
 	aaa.aaa_name = "ioapic";
+	aaa.apic_memt = sc->sc_memt;
 	aaa.apic_id = entry->apic_id;
 	aaa.apic_version = entry->apic_version;
-	aaa.apic_address = (paddr_t)entry->apic_address;
+	aaa.apic_address = entry->apic_address;
 	aaa.apic_vecbase = -1;
 	aaa.flags = (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
 

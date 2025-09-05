@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.47 2025/07/10 13:59:27 claudio Exp $
+#	$OpenBSD: genassym.cf,v 1.48 2025/09/05 16:57:48 kettenis Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -12,7 +12,6 @@ include <machine/pte.h>
 include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/tss.h>
-include <machine/i82093var.h>
 
 export	SONPROC
 
@@ -140,10 +139,6 @@ member	ih_arg
 member	ih_next
 member	ih_level
 member	IH_COUNT	ih_count.ec_count
-
-struct	ioapic_softc
-member	IOAPIC_SC_REG	sc_reg
-member	IOAPIC_SC_DATA	sc_data
 
 # pte fields
 export	PG_V

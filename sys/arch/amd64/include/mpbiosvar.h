@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbiosvar.h,v 1.6 2014/11/22 18:31:46 mlarkin Exp $	*/
+/*	$OpenBSD: mpbiosvar.h,v 1.7 2025/09/05 16:57:48 kettenis Exp $	*/
 /* $NetBSD: mpbiosvar.h,v 1.2 2003/04/02 07:53:57 thorpej Exp $ */
 
 /*-
@@ -45,7 +45,6 @@
 #include <machine/mpconfig.h>
 
 #if defined(_KERNEL)
-void mpbios_scan(struct device *);
 int mpbios_probe(struct device *);
 
 void mpbios_intr_fixup(void);
