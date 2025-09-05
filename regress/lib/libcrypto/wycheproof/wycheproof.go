@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.173 2025/09/05 11:11:07 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.174 2025/09/05 11:12:59 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2760,10 +2760,9 @@ func main() {
 		{v1, "ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
 		{v1, "DSA", "dsa_*test.json", Normal},
 		{v1, "DSA", "dsa_*_p1363_test.json", P1363},
-		{v0, "ECDH", "ecdh_test.json", Normal},
-		{v0, "ECDH", "ecdh_[^w_]*_test.json", Normal},
-		{v0, "ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
-		{v0, "ECDH webcrypto", "ecdh_webcrypto_test.json", Webcrypto},
+		{v1, "ECDH", "ecdh_[^w_]*_test.json", Normal},
+		{v1, "ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
+		{v1, "ECDH webcrypto", "ecdh_*_webcrypto_test.json", Webcrypto},
 		{v0, "ECDSA", "ecdsa_test.json", Normal},
 		{v0, "ECDSA", "ecdsa_[^w]*test.json", Normal},
 		{v0, "ECDSA P1363", "ecdsa_*_p1363_test.json", P1363},
@@ -2795,7 +2794,7 @@ func main() {
 
 	testc = newTestCoordinator()
 
-	skipNormal := regexp.MustCompile(`_(ecpoint|gmac|p1363|sect\d{3}[rk]1|secp(160|192))_`)
+	skipNormal := regexp.MustCompile(`_(ecpoint|webcrypto|pem|gmac|p1363|sect\d{3}[rk]1|secp(160|192))_`)
 
 	for _, test := range tests {
 		path := testVectorPath
