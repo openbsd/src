@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.177 2025/09/05 14:01:56 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.178 2025/09/05 14:06:15 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -380,6 +380,32 @@ type wycheproofTestGroupECDSAWebCrypto struct {
 	SHA    string                 `json:"sha"`
 	Type   string                 `json:"type"`
 	Tests  []*wycheproofTestECDSA `json:"tests"`
+}
+
+type wycheproofTestEcCurve struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Flags   []string `json:"flags"`
+	Name    string   `json:"name"`
+	OID     string   `json:"oid"`
+	Ref     string   `json:"ref"`
+	P       *BigInt  `json:"p"`
+	N       *BigInt  `json:"n"`
+	A       *BigInt  `json:"a"`
+	B       *BigInt  `json:"b"`
+	Gx      *BigInt  `json:"gx"`
+	Gy      *BigInt  `json:"gy"`
+	H       int      `json:"h"`
+	Result  string   `json:"result"`
+}
+
+func (wt *wycheproofTestEcCurve) String() string {
+	return wycheproofFormatTestCase(wt.TCID, wt.Comment, wt.Flags, wt.Result)
+}
+
+type wycheproofTestGroupEcCurve struct {
+	Type  string                   `json:"type"`
+	Tests []*wycheproofTestEcCurve `json:"tests"`
 }
 
 type wycheproofJWKEdDSA struct {
@@ -2030,6 +2056,79 @@ func (wtg *wycheproofTestGroupECDSAWebCrypto) run(algorithm string, variant test
 	return success
 }
 
+func runEcCurveTest(wt *wycheproofTestEcCurve) bool {
+	oid := C.CString(wt.OID)
+	defer C.free(unsafe.Pointer(oid))
+
+	nid := C.OBJ_txt2nid(oid)
+	if nid == C.NID_undef {
+		fmt.Printf("INFO: %s: %s: unknown OID %s\n", wt, wt.Name, wt.OID)
+		return false
+	}
+
+	builtinGroup := C.EC_GROUP_new_by_curve_name(nid)
+	defer C.EC_GROUP_free(builtinGroup)
+
+	if builtinGroup == nil {
+		fmt.Printf("INFO: %s: %s: no builtin curve for OID %s\n", wt, wt.Name, wt.OID)
+		return true
+	}
+	
+	p := mustConvertBigIntToBigNum(wt.P)
+	defer C.BN_free(p)
+	a := mustConvertBigIntToBigNum(wt.A)
+	defer C.BN_free(a)
+	b := mustConvertBigIntToBigNum(wt.B)
+	defer C.BN_free(b)
+	n := mustConvertBigIntToBigNum(wt.N)
+	defer C.BN_free(n)
+	x := mustConvertBigIntToBigNum(wt.Gx)
+	defer C.BN_free(x)
+	y := mustConvertBigIntToBigNum(wt.Gy)
+	defer C.BN_free(y)
+
+	group := C.EC_GROUP_new_curve_GFp(p, a, b, (*C.BN_CTX)(nil))
+	defer C.EC_GROUP_free(group)
+
+	if group == nil {
+		log.Fatalf("EC_GROUP_new_curve_GFp failed")
+	}
+
+	point := C.EC_POINT_new(group)
+	defer C.EC_POINT_free(point)
+
+	if point == nil {
+		log.Fatalf("EC_POINT_new failed")
+	}
+
+	if C.EC_POINT_set_affine_coordinates(group, point, x, y, (*C.BN_CTX)(nil)) == 0 {
+		log.Fatalf("EC_POINT_set_affine_coordinates failed")
+	}
+
+	if C.EC_GROUP_set_generator(group, point, n, (*C.BIGNUM)(nil)) == 0 {
+		log.Fatalf("EC_POINT_set_generator failed")
+	}
+
+	success := true
+	if C.EC_GROUP_cmp(group, builtinGroup, (*C.BN_CTX)(nil)) != 0 {
+		fmt.Printf("FAIL: %s %s builtin curve has wrong parameters\n", wt, wt.Name)
+		success = false
+	}
+	return success
+}
+
+func (wtg *wycheproofTestGroupEcCurve) run(algorithm string, variant testVariant) bool {
+	fmt.Printf("Running %v test group %v...\n", algorithm, wtg.Type)
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runEcCurveTest(wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runEdDSATest(pkey *C.EVP_PKEY, wt *wycheproofTestEdDSA) bool {
 	mdctx := C.EVP_MD_CTX_new()
 	if mdctx == nil {
@@ -2717,6 +2816,8 @@ func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTes
 		return &wycheproofTestGroupChaCha{}
 	case "DSA":
 		return &wycheproofTestGroupDSA{}
+	case "EcCurveTest":
+		return &wycheproofTestGroupEcCurve{}
 	case "ECDH":
 		return &wycheproofTestGroupECDH{}
 	case "ECDSA":
@@ -2846,6 +2947,7 @@ func main() {
 		{v1, "ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
 		{v1, "DSA", "dsa_*test.json", Normal},
 		{v1, "DSA", "dsa_*_p1363_test.json", P1363},
+		{v1, "EcCurveTest", "ec_prime_order_curves_test.json", Normal},
 		{v1, "ECDH", "ecdh_[^w_]*_test.json", Normal},
 		{v1, "ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
 		{v1, "ECDH webcrypto", "ecdh_*_webcrypto_test.json", Webcrypto},
