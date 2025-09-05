@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.174 2025/09/05 11:12:59 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.175 2025/09/05 11:25:50 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -85,6 +85,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"unsafe"
@@ -309,19 +310,19 @@ func (wt *wycheproofTestECDSA) String() string {
 }
 
 type wycheproofTestGroupECDSA struct {
-	Key    *wycheproofECDSAKey    `json:"key"`
-	KeyDER string                 `json:"keyDer"`
-	KeyPEM string                 `json:"keyPem"`
+	Key    *wycheproofECDSAKey    `json:"publicKey"`
+	KeyDER string                 `json:"publicKeyDer"`
+	KeyPEM string                 `json:"publicKeyPem"`
 	SHA    string                 `json:"sha"`
 	Type   string                 `json:"type"`
 	Tests  []*wycheproofTestECDSA `json:"tests"`
 }
 
 type wycheproofTestGroupECDSAWebCrypto struct {
-	JWK    *wycheproofJWKPublic   `json:"jwk"`
-	Key    *wycheproofECDSAKey    `json:"key"`
-	KeyDER string                 `json:"keyDer"`
-	KeyPEM string                 `json:"keyPem"`
+	JWK    *wycheproofJWKPublic   `json:"publicKeyJwk"`
+	Key    *wycheproofECDSAKey    `json:"publicKey"`
+	KeyDER string                 `json:"publicKeyDer"`
+	KeyPEM string                 `json:"publicKeyPem"`
 	SHA    string                 `json:"sha"`
 	Type   string                 `json:"type"`
 	Tests  []*wycheproofTestECDSA `json:"tests"`
@@ -1799,7 +1800,7 @@ func runECDSATest(ecKey *C.EC_KEY, md *C.EVP_MD, nid int, variant testVariant, w
 
 	// XXX audit acceptable cases...
 	success := true
-	if ret == 1 != (wt.Result == "valid") && wt.Result != "acceptable" {
+	if ret == 1 != (wt.Result == "valid") && wt.Result != "acceptable" && !slices.Contains(wt.Flags, "SignatureSize") {
 		fmt.Printf("FAIL: %s - ECDSA_verify() = %d.\n", wt, int(ret))
 		success = false
 	}
@@ -2763,10 +2764,10 @@ func main() {
 		{v1, "ECDH", "ecdh_[^w_]*_test.json", Normal},
 		{v1, "ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
 		{v1, "ECDH webcrypto", "ecdh_*_webcrypto_test.json", Webcrypto},
-		{v0, "ECDSA", "ecdsa_test.json", Normal},
-		{v0, "ECDSA", "ecdsa_[^w]*test.json", Normal},
-		{v0, "ECDSA P1363", "ecdsa_*_p1363_test.json", P1363},
-		{v0, "ECDSA webcrypto", "ecdsa_webcrypto_test.json", Webcrypto},
+		{v1, "ECDSA", "ecdsa_[^w]*test.json", Normal},
+		{v1, "ECDSA P1363", "ecdsa_*_sha[1-9][1-9][1-9]_p1363_test.json", P1363},
+		{v1, "ECDSA webcrypto", "ecdsa_*_webcrypto_test.json", Webcrypto},
+		{v1, "ECDSA shake", "ecdsa_*_shake*_test.json", Skip},
 		{v1, "EDDSA", "ed25519_test.json", Normal},
 		{v1, "ED448", "ed448_test.json", Skip},
 		{v1, "HKDF", "hkdf_sha*_test.json", Normal},
@@ -2794,7 +2795,7 @@ func main() {
 
 	testc = newTestCoordinator()
 
-	skipNormal := regexp.MustCompile(`_(ecpoint|webcrypto|pem|gmac|p1363|sect\d{3}[rk]1|secp(160|192))_`)
+	skipNormal := regexp.MustCompile(`_(ecpoint|webcrypto|pem|bitcoin|shake\d{3}|gmac|p1363|sect\d{3}[rk]1|secp(160|192))_`)
 
 	for _, test := range tests {
 		path := testVectorPath
