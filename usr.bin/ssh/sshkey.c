@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.153 2025/09/02 11:08:34 djm Exp $ */
+/* $OpenBSD: sshkey.c,v 1.154 2025/09/05 10:23:55 dtucker Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -38,12 +38,13 @@
 #include "crypto_api.h"
 
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <util.h>
-#include <limits.h>
 #include <resolv.h>
+#include <time.h>
+#include <util.h>
 
 #include "ssh2.h"
 #include "ssherr.h"
