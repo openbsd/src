@@ -1,4 +1,4 @@
-/*	$OpenBSD: wycheproof-primes.c,v 1.2 2022/12/01 13:49:12 tb Exp $ */
+/*	$OpenBSD: wycheproof-primes.c,v 1.3 2025/09/05 14:36:03 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -16,7 +16,9 @@
  */
 
 #include <err.h>
+#include <limits.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/bn.h>
 
@@ -26,11 +28,30 @@ int
 primality_test(struct wycheproof_testcase *test)
 {
 	BIGNUM *value = NULL;
+	size_t len;
 	int ret;
 	int failed = 1;
 
 	if (!BN_hex2bn(&value, test->value))
 		errx(1, "%d: failed to set value \"%s\"", test->id, test->value);
+
+	if ((len = strlen(test->value)) > INT_MAX / 4)
+		errx(1, "%d: overlong test string %zu", test->id, len);
+
+	if (len > 0 && test->value[0] >= '8') {
+		BIGNUM *pow2;
+
+		if ((pow2 = BN_new()) == NULL)
+			errx(1, "BN_new");
+
+		if (!BN_set_bit(pow2, 4 * len))
+			errx(1, "BN_set_bit");
+
+		if (!BN_sub(value, value, pow2))
+			errx(1, "BN_sub");
+
+		BN_free(pow2);
+	}
 
 	if ((ret = BN_is_prime_ex(value, BN_prime_checks, NULL, NULL)) < 0)
 		errx(1, "%d: BN_is_prime_ex errored", test->id);

@@ -1,4 +1,4 @@
-# $OpenBSD: wycheproof-json.pl,v 1.2 2022/07/08 14:33:56 tb Exp $
+# $OpenBSD: wycheproof-json.pl,v 1.3 2025/09/05 14:36:03 tb Exp $
 
 # Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
 # Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -17,7 +17,7 @@
 
 use JSON::PP;
 
-$test_vector_path = "/usr/local/share/wycheproof/testvectors";
+$test_vector_path = "/usr/local/share/wycheproof/testvectors_v1";
 
 open JSON, "$test_vector_path/primality_test.json" or die;
 @json = <JSON>;
