@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.55 2025/08/29 14:53:55 stsp Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.56 2025/09/05 09:58:24 stsp Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -321,8 +321,8 @@ u_int		bnxt_rx_fill_slots(struct bnxt_softc *, struct bnxt_ring *, void *,
 		    struct bnxt_slot *, uint *, int, uint16_t, u_int);
 void		bnxt_refill(void *);
 int		bnxt_rx(struct bnxt_softc *, struct bnxt_rx_queue *,
-		    struct bnxt_cp_ring *, struct mbuf_list *, int *, int *,
-		    struct cmpl_base *);
+		    struct bnxt_cp_ring *, struct mbuf_list *, struct mbuf_list *,
+		    int *, int *, struct cmpl_base *);
 
 void		bnxt_txeof(struct bnxt_softc *, struct bnxt_tx_queue *, int *,
 		    struct cmpl_base *);
@@ -650,6 +650,8 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
+	ifp->if_capabilities |= IFCAP_LRO;	
+
 	ifq_init_maxlen(&ifp->if_snd, 1024);	/* ? */
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, bnxt_media_change,
@@ -1601,6 +1603,7 @@ bnxt_intr(void *xq)
 	struct bnxt_tx_queue *tx = &q->q_tx;
 	struct cmpl_base *cmpl;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct mbuf_list mltcp = MBUF_LIST_INITIALIZER();
 	uint16_t type;
 	int rxfree, txfree, agfree, rv, rollback;
 
@@ -1619,8 +1622,8 @@ bnxt_intr(void *xq)
 			break;
 		case CMPL_BASE_TYPE_RX_L2:
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
-				rollback = bnxt_rx(sc, rx, cpr, &ml, &rxfree,
-				    &agfree, cmpl);
+				rollback = bnxt_rx(sc, rx, cpr, &ml, &mltcp,
+				    &rxfree, &agfree, cmpl);
 			break;
 		case CMPL_BASE_TYPE_TX_L2:
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
@@ -1648,6 +1651,8 @@ bnxt_intr(void *xq)
 	    (cpr->commit_cons+1) % cpr->ring.ring_size, 1);
 
 	if (rxfree != 0) {
+		int livelocked = 0;
+
 		rx->rx_cons += rxfree;
 		if (rx->rx_cons >= rx->rx_ring.ring_size)
 			rx->rx_cons -= rx->rx_ring.ring_size;
@@ -1659,7 +1664,12 @@ bnxt_intr(void *xq)
 		if_rxr_put(&rx->rxr[0], rxfree);
 		if_rxr_put(&rx->rxr[1], agfree);
 
-		if (ifiq_input(rx->rx_ifiq, &ml)) {
+		if (ifiq_input(rx->rx_ifiq, &mltcp))
+			livelocked = 1;
+		if (ifiq_input(rx->rx_ifiq, &ml))
+			livelocked = 1;
+
+		if (livelocked) {
 			if_rxr_livelocked(&rx->rxr[0]);
 			if_rxr_livelocked(&rx->rxr[1]);
 		}
@@ -2284,8 +2294,8 @@ bnxt_refill(void *xq)
 
 int
 bnxt_rx(struct bnxt_softc *sc, struct bnxt_rx_queue *rx,
-    struct bnxt_cp_ring *cpr, struct mbuf_list *ml, int *slots, int *agslots,
-    struct cmpl_base *cmpl)
+    struct bnxt_cp_ring *cpr, struct mbuf_list *ml, struct mbuf_list *mltcp,
+    int *slots, int *agslots, struct cmpl_base *cmpl)
 {
 	struct mbuf *m, *am;
 	struct bnxt_slot *bs;
@@ -2359,7 +2369,15 @@ bnxt_rx(struct bnxt_softc *sc, struct bnxt_rx_queue *rx,
 		(*agslots)++;
 	}
 
-	ml_enqueue(ml, m);
+#ifndef SMALL_KERNEL
+	if (ISSET(sc->sc_ac.ac_if.if_xflags, IFXF_LRO) &&
+	    ((lemtoh16(&rxlo->flags_type) & RX_PKT_CMPL_FLAGS_ITYPE_TCP) ==
+	    RX_PKT_CMPL_FLAGS_ITYPE_TCP))
+		tcp_softlro_glue(mltcp, m, &sc->sc_ac.ac_if);
+	else
+#endif
+		ml_enqueue(ml, m);
+
 	return (0);
 }
 
