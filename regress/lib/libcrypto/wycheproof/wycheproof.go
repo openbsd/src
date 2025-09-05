@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.179 2025/09/05 14:07:50 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.180 2025/09/05 14:09:09 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
@@ -2960,7 +2960,6 @@ func main() {
 		{v1, "ED448", "ed448_test.json", Skip},
 		{v1, "HKDF", "hkdf_sha*_test.json", Normal},
 		{v1, "HMAC", "hmac_sha*_test.json", Normal},
-		{v0, "JSON webcrypto", "json_web_*_test.json", Skip},
 		{v1, "Primality test", "primality_test.json", Normal},
 		{v1, "RSA", "rsa_*test.json", Normal},
 		{v1, "X25519", "x25519_test.json", Normal},
