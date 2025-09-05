@@ -1,6 +1,6 @@
-/* $OpenBSD: mlkem_key.c,v 1.1 2025/08/14 15:48:48 beck Exp $ */
+/* $OpenBSD: mlkem_key.c,v 1.2 2025/09/05 23:30:12 beck Exp $ */
 /*
- * Copyright (c) 2025 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

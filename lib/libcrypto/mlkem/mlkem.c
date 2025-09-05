@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.c,v 1.3 2025/08/19 21:37:08 tb Exp $ */
+/*	$OpenBSD: mlkem.c,v 1.4 2025/09/05 23:30:12 beck Exp $ */
 /*
  * Copyright (c) 2025, Bob Beck <beck@obtuse.com>
  *
@@ -77,24 +77,15 @@ MLKEM_generate_key_external_entropy(MLKEM_private_key *private_key,
 	if ((k = calloc(1, k_len)) == NULL)
 		goto err;
 
-	switch (private_key->rank) {
-	case RANK768:
-		if (!MLKEM768_generate_key_external_entropy(k, private_key,
-		    entropy))
-			goto err;
-		break;
-	case RANK1024:
-		if (!MLKEM1024_generate_key_external_entropy(k, private_key,
-		    entropy))
-			goto err;
-		break;
-	}
+	if (!mlkem_generate_key_external_entropy(k, private_key, entropy))
+		goto err;
 
 	private_key->state = MLKEM_PRIVATE_KEY_INITIALIZED;
 
 	*out_encoded_public_key = k;
 	*out_encoded_public_key_len = k_len;
 	k = NULL;
+	k_len = 0;
 
 	ret = 1;
 
@@ -154,18 +145,8 @@ MLKEM_private_key_from_seed(MLKEM_private_key *private_key,
 	if (seed_len != MLKEM_SEED_LENGTH)
 		goto err;
 
-	switch (private_key->rank) {
-	case RANK768:
-		if (!MLKEM768_private_key_from_seed(seed,
-		    seed_len, private_key))
-			goto err;
-		break;
-	case RANK1024:
-		if (!MLKEM1024_private_key_from_seed(private_key,
-		    seed, seed_len))
-			goto err;
-		break;
-	}
+	if (!mlkem_private_key_from_seed(seed, seed_len, private_key))
+		goto err;
 
 	private_key->state = MLKEM_PRIVATE_KEY_INITIALIZED;
 
@@ -187,14 +168,8 @@ MLKEM_public_from_private(const MLKEM_private_key *private_key,
 		return 0;
 	if (public_key->rank != private_key->rank)
 		return 0;
-	switch (private_key->rank) {
-	case RANK768:
-		MLKEM768_public_from_private(private_key, public_key);
-		break;
-	case RANK1024:
-		MLKEM1024_public_from_private(private_key, public_key);
-		break;
-	}
+
+	mlkem_public_from_private(private_key, public_key);
 
 	public_key->state = MLKEM_PUBLIC_KEY_INITIALIZED;
 
@@ -230,17 +205,8 @@ MLKEM_encap_external_entropy(const MLKEM_public_key *public_key,
 	if ((ciphertext = calloc(1, ciphertext_len)) == NULL)
 		goto err;
 
-	switch (public_key->rank) {
-	case RANK768:
-		MLKEM768_encap_external_entropy(ciphertext, secret, public_key,
-		    entropy);
-		break;
+	mlkem_encap_external_entropy(ciphertext, secret, public_key, entropy);
 
-	case RANK1024:
-		MLKEM1024_encap_external_entropy(ciphertext, secret, public_key,
-		    entropy);
-		break;
-	}
 	*out_ciphertext = ciphertext;
 	*out_ciphertext_len = ciphertext_len;
 	ciphertext = NULL;
@@ -291,15 +257,7 @@ MLKEM_decap(const MLKEM_private_key *private_key,
 	if ((s = calloc(1, MLKEM_SHARED_SECRET_LENGTH)) == NULL)
 		goto err;
 
-	switch (private_key->rank) {
-	case RANK768:
-		MLKEM768_decap(private_key, ciphertext, ciphertext_len, s);
-		break;
-
-	case RANK1024:
-		MLKEM1024_decap(private_key, ciphertext, ciphertext_len, s);
-		break;
-	}
+	mlkem_decap(private_key, ciphertext, ciphertext_len, s);
 
 	*out_shared_secret = s;
 	*out_shared_secret_len = MLKEM_SHARED_SECRET_LENGTH;
@@ -324,14 +282,7 @@ MLKEM_marshal_public_key(const MLKEM_public_key *public_key, uint8_t **out,
 	if (!public_key_is_valid(public_key))
 		return 0;
 
-	switch (public_key->rank) {
-	case RANK768:
-		return MLKEM768_marshal_public_key(public_key, out, out_len);
-	case RANK1024:
-		return MLKEM1024_marshal_public_key(public_key, out, out_len);
-	default:
-		return 0;
-	}
+	return mlkem_marshal_public_key(public_key, out, out_len);
 }
 LCRYPTO_ALIAS(MLKEM_marshal_public_key);
 
@@ -349,14 +300,7 @@ MLKEM_marshal_private_key(const MLKEM_private_key *private_key, uint8_t **out,
 	if (!private_key_is_valid(private_key))
 		return 0;
 
-	switch (private_key->rank) {
-	case RANK768:
-		return MLKEM768_marshal_private_key(private_key, out, out_len);
-	case RANK1024:
-		return MLKEM1024_marshal_private_key(private_key, out, out_len);
-	default:
-		return 0;
-	}
+	return mlkem_marshal_private_key(private_key, out, out_len);
 }
 LCRYPTO_ALIAS(MLKEM_marshal_private_key);
 
@@ -370,18 +314,8 @@ MLKEM_parse_public_key(MLKEM_public_key *public_key, const uint8_t *in,
 	if (in_len != MLKEM_public_key_encoded_length(public_key))
 		return 0;
 
-	switch (public_key->rank) {
-	case RANK768:
-		if (!MLKEM768_parse_public_key(in, in_len,
-		    public_key))
-			return 0;
-		break;
-	case RANK1024:
-		if (!MLKEM1024_parse_public_key(in, in_len,
-		    public_key))
-			return 0;
-		break;
-	}
+	if (!mlkem_parse_public_key(in, in_len, public_key))
+		return 0;
 
 	public_key->state = MLKEM_PUBLIC_KEY_INITIALIZED;
 
@@ -399,16 +333,8 @@ MLKEM_parse_private_key(MLKEM_private_key *private_key, const uint8_t *in,
 	if (in_len != MLKEM_private_key_encoded_length(private_key))
 		return 0;
 
-	switch (private_key->rank) {
-	case RANK768:
-		if (!MLKEM768_parse_private_key(in, in_len, private_key))
-			return 0;
-		break;
-	case RANK1024:
-		if (!MLKEM1024_parse_private_key(in, in_len, private_key))
-			return 0;
-		break;
-	}
+	if (!mlkem_parse_private_key(in, in_len, private_key))
+		return 0;
 
 	private_key->state = MLKEM_PRIVATE_KEY_INITIALIZED;
 
