@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.20 2024/06/06 00:36:46 bluhm Exp $	*/
+/*	$OpenBSD: copy.S,v 1.21 2025/09/05 13:33:49 cludwig Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -111,11 +111,12 @@ ENTRY(kcopy)
 
 ENTRY(copyout)
 	RETGUARD_SETUP(kcopy, r10)
-	pushq	$0
+	movq	CPUVAR(CURPCB),%rax
+	pushq	PCB_ONFAULT(%rax)
 
 	xchgq	%rdi,%rsi
 	movq	%rdx,%rax
-	
+
 	movq	%rdi,%rdx
 	addq	%rax,%rdx
 	jc	copy_fault
@@ -150,7 +151,7 @@ ENTRY(copyout)
 ENTRY(_copyin)
 	RETGUARD_SETUP(kcopy, r10)
 	movq	CPUVAR(CURPCB),%rax
-	pushq	$0
+	pushq	PCB_ONFAULT(%rax)
 	leaq	copy_fault(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rax)
 	SMAP_STAC
@@ -204,7 +205,8 @@ ENTRY(copyoutstr)
 	movq	%rdx,%r8
 	movq	%rcx,%r9
 
-5:	movq	CPUVAR(CURPCB),%rax
+	movq	CPUVAR(CURPCB),%rax
+	pushq	PCB_ONFAULT(%rax)
 	leaq	copystr_fault(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rax)
 	SMAP_STAC
@@ -247,6 +249,7 @@ ENTRY(_copyinstr)
 	movq	%rcx,%r9
 
 	movq	CPUVAR(CURPCB),%rcx
+	pushq	PCB_ONFAULT(%rcx)
 	leaq	copystr_fault(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 	SMAP_STAC
@@ -290,7 +293,7 @@ copystr_return:
 	SMAP_CLAC
 	/* Set *lencopied and return %eax. */
 	movq	CPUVAR(CURPCB),%rcx
-	movq	$0,PCB_ONFAULT(%rcx)
+	popq	PCB_ONFAULT(%rcx)
 	testq	%r9,%r9
 	jz	8f
 	subq	%rdx,%r8
