@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.182 2025/09/06 03:57:54 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.183 2025/09/06 17:35:29 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -1860,9 +1860,9 @@ func runECDSATest(ecKey *C.EC_KEY, md *C.EVP_MD, nid int, variant testVariant, w
 	var ret C.int
 	if variant == Webcrypto || variant == P1363 {
 		order_bytes := int((C.EC_GROUP_order_bits(C.EC_KEY_get0_group(ecKey)) + 7) / 8)
-		if len(wt.Sig) / 2 != 2 * order_bytes {
+		if len(wt.Sig)/2 != 2*order_bytes {
 			if wt.Result == "valid" {
-				fmt.Printf("FAIL: %s - incorrect signature length, %d, %d\n", wt, len(wt.Sig) / 2, 2 * order_bytes)
+				fmt.Printf("FAIL: %s - incorrect signature length, %d, %d\n", wt, len(wt.Sig)/2, 2*order_bytes)
 				return false
 			}
 			return true
@@ -2065,7 +2065,7 @@ func runEcCurveTest(wt *wycheproofTestEcCurve) bool {
 		fmt.Printf("INFO: %s: %s: no builtin curve for OID %s\n", wt, wt.Name, wt.OID)
 		return true
 	}
-	
+
 	p := mustConvertBigIntToBigNum(wt.P)
 	defer C.BN_free(p)
 	a := mustConvertBigIntToBigNum(wt.A)
