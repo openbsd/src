@@ -148,10 +148,10 @@ netio_dispatch(netio_type *netio, const struct timespec *timeout, const sigset_t
 			fds[numfd].events = 0;
 			fds[numfd].revents = 0;
 			handler->pfd = numfd;
-			if (handler->event_types & NETIO_EVENT_READ) {
+			if ((handler->event_types & NETIO_EVENT_READ)) {
 				fds[numfd].events |= POLLIN;
 			}
-			if (handler->event_types & NETIO_EVENT_WRITE) {
+			if ((handler->event_types & NETIO_EVENT_WRITE)) {
 				fds[numfd].events |= POLLOUT;
 			}
 			numfd++;
@@ -251,7 +251,7 @@ netio_dispatch(netio_type *netio, const struct timespec *timeout, const sigset_t
 						event_types |= NETIO_EVENT_WRITE;
 				}
 
-				if (event_types & handler->event_types) {
+				if ((event_types & handler->event_types)) {
 					handler->event_handler(netio, handler, event_types & handler->event_types);
 					++result;
 				}

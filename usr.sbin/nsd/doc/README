@@ -21,7 +21,7 @@
 
 1.0 Introduction
 
-This is NSD Name Server Daemon (NSD) version 4.11.0.
+This is NSD Name Server Daemon (NSD) version 4.13.0.
 
 The NLnet Labs Name Server Daemon (NSD) is an authoritative RFC compliant 
 DNS nameserver. It was first conceived to allow for more genetic 
@@ -57,7 +57,7 @@ and uses a simple configuration file 'nsd.conf'.
 
 1.2 Quick build and install
 
-Step 1: Unpack the source with gtar -xzvf nsd-4.11.0.tar.gz
+Step 1: Unpack the source with gtar -xzvf nsd-4.13.0.tar.gz
 
 Step 2: Create user nsd or any other unprivileged user of your
         choice. In case of later make sure to use
@@ -111,9 +111,9 @@ Step 11: If desired add 'nsd-control write' to your superuser crontab to
 Use your favorite combination of tar and gnu zip to unpack the source,
 for example
 
-$ gtar -xzvf nsd-4.11.0.tar.gz
+$ gtar -xzvf nsd-4.13.0.tar.gz
 
-will unpack the source into the ./nsd-4.11.0 directory...
+will unpack the source into the ./nsd-4.13.0 directory...
 
 
 2.2 Configuring NSD
@@ -150,12 +150,6 @@ addition to standard configure options, one may use the following:
  
         Specify additional libraries to link with.
 
-  --enable-root-server
-
-        Configure NSD as a root server. Unless this option is
-        specified, NSD will refuse to serve the ``.'' zone as a
-        misconfiguration safeguard.
-
   --disable-ipv6
 
         Disables IPv6 support in NSD.
@@ -169,17 +163,32 @@ addition to standard configure options, one may use the following:
 	This will instruct NSD to be stricter when validating its input. 
 	This could lead to a reduced service level.
 
-  --enable-bind8-stats
+  --disable-bind8-stats
 
-        Enables BIND8-like statistics.
+        Disable BIND8-like statistics.
 
-  --enable-ratelimit
+  --disable-zone-stats
 
-	Enables ratelimiting, based on query name, type and source.
+	Disable per-zone statistics gathering (if enabled, it needs
+	bind8-stats).
 
-   --enable-draft-rrtypes
+  --disable-ratelimit
 
-	Enables draft RRtypes.
+	Disables ratelimiting, based on query name, type and source.
+
+  --disable-ratelimit-default-is-off
+
+	Disable this to set default of ratelimit to on (this controls
+	the default, ratelimits can be enabled and disabled in nsd.conf).
+
+  --disable-dnstap
+
+	Disable dnstap support (requires fstrm-devel, protobuf-c).
+
+  --enable-systemd
+
+	Compile with systemd support, and then the server notifies libsystemd
+	when the server is up (it needs pkg-config and systemd-devel).
 
   --with-configdir=dir
 
@@ -360,9 +369,6 @@ You should only do that if you're intending to run a root server, NSD
 is not suited for running a . cache. Therefore if you choose to serve
 the .  zone you have to make sure that the complete root zone is
 timely and fully updated.
-
-To prevent misconfiguration, NSD configure has the --enable-root-server
-switch, that is by default disabled.
 
 In the config file, you can use patterns.  A pattern can have the
 same configuration statements that a zone can have.  And then you can
@@ -920,4 +926,4 @@ larger and regular donations please contact us at users@NLnetLabs.nl. Also
 see http://www.nlnetlabs.nl/labs/contributors/.
 
 
-$Id: README,v 1.9 2025/09/03 18:46:48 sthen Exp $
+$Id: README,v 1.10 2025/09/06 17:41:37 sthen Exp $

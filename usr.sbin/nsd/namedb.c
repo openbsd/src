@@ -81,8 +81,7 @@ allocate_domain_nsec3(domain_table_type* table, domain_type* result)
 }
 #endif /* NSEC3 */
 
-/** make the domain last in the numlist, changes numbers of domains */
-static void
+void
 numlist_make_last(domain_table_type* table, domain_type* domain)
 {
 	uint32_t sw;
@@ -122,8 +121,7 @@ numlist_make_last(domain_table_type* table, domain_type* domain)
 	table->numlist_last = domain;
 }
 
-/** pop the biggest domain off the numlist */
-static domain_type*
+domain_type*
 numlist_pop_last(domain_table_type* table)
 {
 	domain_type* d = table->numlist_last;

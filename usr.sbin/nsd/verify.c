@@ -137,7 +137,7 @@ static void verify_handle_stream(int fd, short event, void *arg)
 	struct verifier *verifier;
 	struct verifier_stream *stream;
 
-	assert(event & EV_READ);
+	assert((event & EV_READ));
 	assert(arg != NULL);
 
 	verifier = (struct verifier *)arg;
@@ -251,7 +251,7 @@ void verify_handle_timeout(int fd, short event, void *arg)
 	struct verifier *verifier;
 
 	(void)fd;
-	assert(event & EV_TIMEOUT);
+	assert((event & EV_TIMEOUT));
 	assert(arg != NULL);
 
 	verifier = (struct verifier *)arg;
@@ -270,7 +270,7 @@ void verify_handle_signal(int sig, short event, void *arg)
 	struct nsd *nsd;
 
 	assert(sig == SIGCHLD);
-	assert(event & EV_SIGNAL);
+	assert((event & EV_SIGNAL));
 	assert(arg != NULL);
 
 	nsd = (struct nsd *)arg;
@@ -294,7 +294,7 @@ void verify_handle_exit(int fd, short event, void *arg)
 	struct nsd *nsd;
 	char buf[1];
 
-	assert(event & EV_READ);
+	assert((event & EV_READ));
 	assert(arg != NULL);
 
 	nsd = (struct nsd *)arg;
@@ -371,11 +371,11 @@ verify_handle_command(int fd, short event, void *arg)
 	sig_atomic_t mode;
 
 	assert(nsd != NULL);
-	assert(event & (EV_READ
+	assert((event & (EV_READ
 #ifdef EV_CLOSED
 	| EV_CLOSED
 #endif
-	));
+	)));
 
 	if((len = read(fd, &mode, sizeof(mode))) == -1) {
 		log_msg(LOG_ERR, "verify: verify_handle_command: read: %s",

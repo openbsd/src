@@ -9,7 +9,7 @@ WESTMERE = @HAVE_WESTMERE@
 HASWELL = @HAVE_HASWELL@
 
 CC = @CC@
-CPPFLAGS = @CPPFLAGS@ -Iinclude -I$(SOURCE)/include -Isrc -I$(SOURCE)/src -I.
+CPPFLAGS = @CPPFLAGS@ -Iinclude -I$(SOURCE)/include -I$(SOURCE)/src -I.
 CFLAGS = @CFLAGS@
 DEPFLAGS = @DEPFLAGS@
 VPATH = @srcdir@
@@ -43,6 +43,7 @@ all: libzone.a
 clean:
 	@rm -f .depend
 	@rm -f libzone.a $(OBJECTS) $(EXPORT_HEADER)
+	@rm -f $($(WESTMERE)_OBJECTS) $($(HASWELL)_OBJECTS)
 
 distclean: clean
 	@rm -f Makefile config.h config.log config.status
@@ -55,22 +56,22 @@ maintainer-clean: realclean
 devclean: realclean
 	@rm -rf config.h.in configure
 
-libzone.a: $(OBJECTS) $($(WESTMERE)_OBJECTS) $($(HASWELL)_OBJECTS)
+libzone.a: $(OBJECTS) $($(WESTMERE)_OBJECTS) $($(HASWELL)_OBJECTS) Makefile
 	$(AR) rcs libzone.a $(OBJECTS) $($(WESTMERE)_OBJECTS) $($(HASWELL)_OBJECTS)
 
 $(EXPORT_HEADER):
 	@mkdir -p include/zone
 	@echo "#define ZONE_EXPORT" > $(EXPORT_HEADER)
 
-$(WESTMERE_OBJECTS): $(EXPORT_HEADER) .depend
+$(WESTMERE_OBJECTS): $(EXPORT_HEADER) .depend Makefile
 	@mkdir -p src/westmere
 	$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) -march=westmere -o $@ -c $(SOURCE)/$(@:.o=.c)
 
-$(HASWELL_OBJECTS): $(EXPORT_HEADER) .depend
+$(HASWELL_OBJECTS): $(EXPORT_HEADER) .depend Makefile
 	@mkdir -p src/haswell
 	$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) -march=haswell -o $@ -c $(SOURCE)/$(@:.o=.c)
 
-$(OBJECTS): $(EXPORT_HEADER) .depend
+$(OBJECTS): $(EXPORT_HEADER) .depend Makefile
 	@mkdir -p src/fallback
 	$(CC) $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) -o $@ -c $(SOURCE)/$(@:.o=.c)
 	@touch $@

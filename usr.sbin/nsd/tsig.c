@@ -691,11 +691,13 @@ tsig_append_rr(tsig_record_type *tsig, buffer_type *packet)
 	buffer_write_u32(packet, tsig->signed_time_low);
 	buffer_write_u16(packet, tsig->signed_time_fudge);
 	buffer_write_u16(packet, tsig->mac_size);
-	buffer_write(packet, tsig->mac_data, tsig->mac_size);
+	if(tsig->mac_size != 0)
+		buffer_write(packet, tsig->mac_data, tsig->mac_size);
 	buffer_write_u16(packet, tsig->original_query_id);
 	buffer_write_u16(packet, tsig->error_code);
 	buffer_write_u16(packet, tsig->other_size);
-	buffer_write(packet, tsig->other_data, tsig->other_size);
+	if(tsig->other_size != 0)
+		buffer_write(packet, tsig->other_data, tsig->other_size);
 
 	buffer_write_u16_at(packet, rdlength_pos,
 			    buffer_position(packet) - rdlength_pos

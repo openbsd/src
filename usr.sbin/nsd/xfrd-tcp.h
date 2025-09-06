@@ -250,4 +250,9 @@ struct xfrd_tcp_pipeline* xfrd_tcp_pipeline_create(region_type* region,
 /* pick num uint16_t values, from 0..max-1, store in array */
 void pick_id_values(uint16_t* array, int num, int max);
 
+#ifdef HAVE_SSL
+void get_cert_info(SSL* ssl, region_type* region, char** cert_serial,
+	char** key_id, char** cert_algorithm, char** tls_version);
+#endif
+
 #endif /* XFRD_TCP_H */

@@ -1,3 +1,216 @@
+03 September 2025: Jannik
+	- Fix zonestatfd check
+
+18 August 2025: Willem
+	- Merge #455: --with-dbdir option for configure to set the base
+	  directory for the xfrd zone timer state file, the zone list file
+	  and the cookie secrets file. Thanks Simon Josefsson.
+
+18 August 2025: Willem
+	- Merge #456: Spelling fixes in metrics.c. Thanks Simon Josefsson.
+
+05 August 2025: Jannik
+	- Merge #425: Add experimental XDP (AF_XDP) support for UDP traffic
+
+5 August 2025: Wouter
+	- Merge #454 from jaredmauch: handle rare case but seen in
+	  production where data->query is NULL.
+	- Fix code analyzer warning, and bail out of handle_tcp_writing
+	  and handle_tls_writing early when data->query is NULL.
+
+18 July 2025: Wouter
+	- Merge #449: Add useful logging for XoT transfers.
+
+17 July 2025: Wouter
+	- Disable TLSv1.2 if TLSv1.3 is available.
+
+9 July 2025: Wouter
+	- Update simdzone with support for --enable-pie.
+
+8 July 2025: Wouter
+	- Merge #447: Minimize disruptions on reconfig.
+	- For #447: Updated simdzone to latest commit. With the padding
+	  test changes.
+	- For #447: use need_to_send_reload to detect if a reload is issued.
+	- For #447: acl_list_equal already tests for TSIG key changes, so
+	  removed the duplicate checks.
+	- For #447: log crypto error with the SSL_write error.
+
+7 July 2025: Willem
+	- Merge #448: Report larger transfer sizes correctly, also on 32bit
+	  systems. Thanks to Niek Willems for reporting.
+
+4 July 2025: Wouter
+	- Fix #446 nsd_size_db_in_mem_bytes (size.db.mem) metric not
+	  updated on reload.
+	- For #446, remove unused edit.
+
+13 June 2025: Wouter
+	- Merge #445: contrib/nsd.openrc.in: use supervise-daemon and
+	  add `need net`.
+
+11 June 2025: Wouter
+	- Fix bitwise operators in conditional expressions with parentheses.
+	- Fix conditional expressions with parentheses for bitwise and.
+
+22 May 2025: Wouter
+	- make depend.
+
+19 May 2025: Wouter
+	- Fix to remove shell assignment operator from Makefile for DATE.
+
+13 May 2025: Wouter
+	- Change default for send-buffer-size to 4m, to mitigate a
+	  cross-layer issue where the UDP socket send buffers are
+	  exhausted waiting for ARP/NDP resolution. Thanks to Reflyable
+	  for the report.
+
+6 May 2025: Wouter
+	- Fix #441: SystemD script for NSD prevents using chroot.
+	- Fix to add checks for compression pointers and too long dnames in
+	  internal dname routines, dname_make and ixfr dname_length.
+
+30 April 2025: Wouter
+	- Fix to provide doc for --enable-systemd.
+	- Fix to remove debug printout for configure dnstap header.
+
+29 April 2025: Wouter
+	- The --enable-bind8-stats feature, was already enabled by default,
+	  is described as enabled by default in usage.
+	- Fix contrib/nsd.spec to omit configure flags that are default or
+	  that do not exist.
+	- The --enable-zone-stats feature is enabled by default. It can be
+	  turned on with config like `zonestats: "%s"`.
+	- Fix to remove mention of obsolete root-server option.
+	- The --enable-ratelimit feature is enabled by default. The
+	  ratelimit value is off by default. It can be turned on with
+	  config like `rrl-ratelimit: 200`.
+	- Fix mention of draft-rrtypes and root-server configure options.
+	- The --enable-dnstap feature is enabled by default. If fstrm-devel
+	  or protobuf-c are not found by configure it prints an error.
+	  It can be turned on with config like `dnstap-enable: yes`.
+	- Fix ci workflow for enable dnstap.
+	- Fix to remove use of sprintf from metrics.
+	- Fix for fstrm and protobuf-c for ci workflow coverity-scan.
+	- Fix for parallel build of dnstap protoc-c output.
+	- Fix to remove unneeded mkdir from Makefile.
+	- Fix dnstap to use protoc and keep dnstap_config.h unchanged if
+	  possible.
+
+25 April 2025: Yorgos
+	- Prometheus metrics tests require --enable-zone-stats.
+	- Use '(all)' and '(none)' for the socket server affinity
+	  log output instead of '*' and '-'.
+	- Add unit test for socket server affinity log output.
+	- Move xfrd-tcp unit test to its own file.
+
+25 April 2025: Wouter
+	- Fix punctuation of nsd -h output for the -a option.
+	- Fix checkconf unit test for when metrics are not enabled.
+	- make depend
+
+24 April 2025: Jannik
+	- The main branch continues with version 4.12.1 in development.
+
+17 April 2025: Wouter
+	- Add autoconf files to gitignore.
+
+8 April 2025: Wouter
+	- Fix nsd-checkzone ixfr create cleanup on exit.
+
+4 April 2025: Wouter
+	- Fix to update common.sh for speed of kill_pid.
+
+1 April 2025: Wouter
+	- Fix escape more characters when printing an RR type with an
+	  unquoted string.
+	- Fix memory leak in the process of addzone.
+
+27 March 2025: Wouter
+	- Fix test checkconf for metrics options.
+	- Updated simdzone to include fixes for NSAP-PTR, LOC,
+	  uninitialized reads, and comment nit.
+	- Fix #436: Fix print of RR type NSAP-PTR.
+	- Fix unit test call to zone_parse_string and initialize padding.
+
+26 March 2025: Wouter
+	- Fix multiple zone transfers in one reload so that xfrd does not
+	  check the update as failed and restart the transfer.
+	- Test for the multiple transfer failure, xfr_over_notify.
+	- Fix read of ixfr file with rdata subdomain.
+	- Test for the ixfr rdata subdomain, ixfrout_deldomain.
+	- Fix note in ixfrout_deldomain test.
+
+25 March 2025: Wouter
+	- Fix to please sanitizer for ixfr store of data in cancelled state.
+
+24 March 2025: Jannik
+	- Merge #429: Add prometheus metrics
+
+14 March 2025: Wouter
+	- Fix log print assert in server sockets for printing '-' empty.
+	- Fix notify_fmt test for xfrd file location.
+	- Fix sanitizer warnings in read_uint32.
+	- Fix sanitizer warning in tsig write of zero length mac and otherdata.
+
+13 March 2025: Wouter
+	- Fix ixfr file read to manage numlist in temp domains.
+	- Fix nsd-mem to clean ixfr storage.
+
+12 March 2025: Wouter
+	- Fix ixfr read routine for use after the temp region is freed of rr.
+
+11 March 2025: Wouter
+	- Fix in nsd-mem for a zone with ixfr data.
+
+3 March 2025: Wouter
+	- Fix that nsec3 prehash after a full transfer can create the nsec3
+	  zone trees if they are needed.
+
+19 February 2025: Wouter
+	- Fix for #430: Confusing documentation: word "outgoing". Add wording
+	  to tcp-count, xfrd-tcp-max, xfrd-tcp-pipeline options.
+
+18 February 2025: Wouter
+	- Fix for #430: Confusing documentation: word "outgoing".
+
+11 February 2025: Willem
+	- Merge #420: Zones get state "old-serial" with
+	  `nsd-control zonestatus` when the served serial is older than
+	  the one received by the transfer daemon.
+
+23 January 2025: Willem
+	- Merge #418: Support for DSYNC, EID, NIMLOC, SINK, TALINK, DOA,
+	  AMTRELAY and IPN resource record types.
+
+22 January 2025: Wouter
+	- Fix #426: nsd crashes with patterns in config_apply_pattern.
+
+20 January 2025: Willem
+	- code repository continues with 4.11.2 under development.
+	- Fix re-enable to configure dns-cookies from config file, which
+	  was accidentally removed with the 4.11.1 release.
+
+19 January 2025: Willem
+	- NSD 4.11.1 emergency quick-fix release
+
+17 January 2025: Willem
+	- Fix #424: Stalled updates after corrupt transfer.
+
+15 January 2025: Wouter
+	- Fix whitespace in comment.
+
+7 January 2025: Willem
+	- Fix #421: old-main can quit before the reload process received        
+	  from old-main that it is done on the reload_listener pipe.                    
+	  Thanks Otto Retter.
+
+3 January 2025: Willem
+	- Fix #414: XoT interoperability with BIND and Knot
+
+23 December 2024: Willem
+	- Fix #415: Fix out of tree builds. Thanks Florian Obser (@fobser).
+
 5 December 2024: Willem
 	- The tag for the 4.11.0rc1 release became the release 4.11.0,
 	  on 12 December 2024, the code repository continues with 4.11.1 under

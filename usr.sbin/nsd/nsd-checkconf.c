@@ -467,6 +467,12 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_INT(rrl_ipv6_prefix_length, o);
 		SERV_GET_INT(rrl_whitelist_ratelimit, o);
 #endif
+#ifdef USE_METRICS
+		SERV_GET_BIN(metrics_enable, o);
+		SERV_GET_IP(metrics_interface, metrics_interface, o);
+		SERV_GET_INT(metrics_port, o);
+		SERV_GET_STR(metrics_path, o);
+#endif /* USE_METRICS */
 #ifdef USE_DNSTAP
 		SERV_GET_BIN(dnstap_enable, o);
 		SERV_GET_STR(dnstap_socket_path, o);
@@ -733,6 +739,14 @@ config_test_print_server(nsd_options_type* opt)
 		for(p = opt->proxy_protocol_port; p; p = p->next)
 			printf("\tproxy-protocol-port: %d\n", p->port);
 	}
+
+#ifdef USE_METRICS
+	printf("\tmetrics-enable: %s\n", opt->metrics_enable?"yes":"no");
+	for(ip = opt->metrics_interface; ip; ip=ip->next)
+		print_string_var("metrics-interface:", ip->address);
+	printf("\tmetrics-port: %d\n", opt->metrics_port);
+	print_string_var("metrics-path:", opt->metrics_path);
+#endif /* USE_METRICS */
 
 #ifdef USE_DNSTAP
 	printf("\ndnstap:\n");

@@ -139,6 +139,10 @@ struct component {
 %token VAR_DROP_UPDATES
 %token VAR_XFRD_TCP_MAX
 %token VAR_XFRD_TCP_PIPELINE
+%token VAR_METRICS_ENABLE
+%token VAR_METRICS_INTERFACE
+%token VAR_METRICS_PORT
+%token VAR_METRICS_PATH
 
 /* dnstap */
 %token VAR_DNSTAP
@@ -213,6 +217,11 @@ struct component {
 %token VAR_CATALOG
 %token VAR_CATALOG_MEMBER_PATTERN
 %token VAR_CATALOG_PRODUCER_ZONE
+%token VAR_XDP_INTERFACE
+%token VAR_XDP_PROGRAM_PATH
+%token VAR_XDP_PROGRAM_LOAD
+%token VAR_XDP_BPFFS_PATH
+%token VAR_XDP_FORCE_COPY
 
 /* zone */
 %token VAR_ZONE
@@ -587,6 +596,70 @@ server_option:
           }
         }
       }
+    }
+  | VAR_XDP_INTERFACE STRING
+    {
+#ifdef USE_XDP
+      cfg_parser->opt->xdp_interface = region_strdup(cfg_parser->opt->region, $2);
+#endif
+    }
+  | VAR_XDP_PROGRAM_PATH STRING
+    {
+#ifdef USE_XDP
+      cfg_parser->opt->xdp_program_path = region_strdup(cfg_parser->opt->region, $2);
+#endif
+    }
+  | VAR_XDP_PROGRAM_LOAD boolean
+    {
+#ifdef USE_XDP
+      cfg_parser->opt->xdp_program_load = $2;
+#endif
+    }
+  | VAR_XDP_BPFFS_PATH STRING
+    {
+#ifdef USE_XDP
+      cfg_parser->opt->xdp_bpffs_path = region_strdup(cfg_parser->opt->region, $2);
+#endif
+	}
+  | VAR_XDP_FORCE_COPY boolean
+    {
+#ifdef USE_XDP
+      cfg_parser->opt->xdp_force_copy = $2;
+#endif
+    }
+  | VAR_METRICS_ENABLE boolean
+    {
+#ifdef USE_METRICS
+      cfg_parser->opt->metrics_enable = $2;
+#endif /* USE_METRICS */
+    }
+  | VAR_METRICS_INTERFACE ip_address
+    {
+#ifdef USE_METRICS
+      struct ip_address_option *ip = cfg_parser->opt->metrics_interface;
+      if(ip == NULL) {
+        cfg_parser->opt->metrics_interface = $2;
+      } else {
+        while(ip->next != NULL) { ip = ip->next; }
+        ip->next = $2;
+      }
+#endif /* USE_METRICS */
+    }
+  | VAR_METRICS_PORT number
+    {
+#ifdef USE_METRICS
+      if($2 == 0) {
+        yyerror("metrics port number expected");
+      } else {
+        cfg_parser->opt->metrics_port = (int)$2;
+      }
+#endif /* USE_METRICS */
+    }
+  | VAR_METRICS_PATH STRING
+    {
+#ifdef USE_METRICS
+      cfg_parser->opt->metrics_path = region_strdup(cfg_parser->opt->region, $2);
+#endif /* USE_METRICS */
     }
   ;
 

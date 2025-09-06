@@ -21,6 +21,11 @@
 #define IPSECKEY_IP6            2
 #define IPSECKEY_DNAME          3
 
+#define AMTRELAY_NOGATEWAY      0       /* RFC 8777 */
+#define AMTRELAY_IP4            1
+#define AMTRELAY_IP6            2
+#define AMTRELAY_DNAME          3
+
 #define LINEBUFSZ 1024
 
 #define DEFAULT_TTL 3600

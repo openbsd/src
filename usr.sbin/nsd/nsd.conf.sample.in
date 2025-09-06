@@ -73,8 +73,8 @@ server:
 	# reuseport: no
 
 	# override maximum socket send buffer size.  Default of 0 results in
-	# send buffer size being set to 1048576 (bytes).
-	# send-buffer-size: 1048576
+	# send buffer size being set to 4194304 (bytes).
+	# send-buffer-size: 4194304
 
 	# override maximum socket receive buffer size. Default of 0 results in
 	# receive buffer size being set to 1048576 (bytes).
@@ -223,14 +223,14 @@ server:
 	# Reload nsd.conf and update TSIG keys and zones on SIGHUP.
 	# reload-config: no
 
-	# RRLconfig
 	# Response Rate Limiting, size of the hashtable. Default 1000000.
 	# rrl-size: 1000000
 
 	# Response Rate Limiting, maximum QPS allowed (from one query source).
 	# If set to 0, ratelimiting is disabled. Also set
 	# rrl-whitelist-ratelimit to 0 to disable ratelimit processing.
-	# Default is @ratelimit_default@.
+	# Default is @ratelimit_default@. If not compiled in, the option is
+	# ignored.
 	# rrl-ratelimit: 200
 
 	# Response Rate Limiting, number of packets to discard before
@@ -283,6 +283,58 @@ server:
 	# expect PROXYv2. For UDP and TCP/TLS interfaces.
 	# proxy-protocol-port: portno for each of the port numbers.
 
+	# The interface to use XDP with. Default is "", disabled.
+	# xdp-interface: eth0
+
+	# The eBPF XDP program to extract the XSKMAP from. Specify your own
+	# program here, if you want to use a custom XDP program.
+	# The default program shipped with NSD only redirects UDP
+	# (over Ethernet[+VLAN]+IPv4/6) traffic to port 53. When using your own
+	# XDP program, it needs to define a BPF_MAP_TYPE_XSKMAP named "xsks_map"
+	# and pin it (see xdp-bpffs-path) with read and write permission for NSD.
+	# This option needs to be set even when NSD is configured not to load
+	# the specified XDP program (see xdp-program-load), to be able to
+	# access the XSKMAP. Default is "@sharedfilesdir@/xdp-dns-redirect_kern.o".
+	# xdp-program-path: "@sharedfilesdir@/xdp-dns-redirect_kern.o"
+
+	# Specify whether NSD should load the XDP program. If set to no, you need
+	# to load the XDP program yourself. Default is yes, if xdp-interface is set.
+	# xdp-program-load: yes
+
+	# The path to the bpffs to store/read the xsks_map pin. The default XDP
+	# program loaded by NSD doesn't need this option, it is only necessary if
+	# you load a program that pins its BPF map.
+	# If NSD is configured to load an XDP program that pins its map, NSD needs
+	# to have read/write/execute access to the specified bpffs to be able to
+	# create and later delete the map pin. If you load the XDP program
+	# yourself, NSD only needs read and write access to the pin file itself
+	# (but at least execute access to the parent directories). The default
+	# bpffs (/sys/fs/bpf) usually doesn't have the necessary permissions set
+	# for non-root users. You can either set the necessary permissions or mount
+	# your own bpffs. Default is "/sys/fs/bpf".
+	# xdp-bpffs-path: "/sys/fs/bpf"
+
+	# Force the use of XDP_COPY mode instead of zero copy for AF_XDP sockets.
+	# This can help with drivers with broken AF_XDP support. Default is no.
+	# xdp-force-copy: no
+
+	# Enable the prometheus metrics HTTP endpoint. Default is no.
+	# metrics-enable: no
+
+	# Interfaces to expose the HTTP endpoint on, default is on localhost.
+	# Interfaces can be specified by IP address or interface name.
+	# With an interface name, all IP addresses associated with that
+	# interface are used. Default is 127.0.0.1 and ::1.
+	# metrics-interface: 127.0.0.1
+	# metrics-interface: ::1
+	# metrics-interface: lo
+
+	# Port number for the HTTP metrics endpoint. Default is 9100.
+	# metrics-port: 9100
+
+	# HTTP path for the metrics endpoint. Default is "/metrics".
+	# metrics-path: "/metrics"
+
 verify:
 	# Enable zone verification. Default is no.
 	# enable: no
@@ -315,7 +367,7 @@ verify:
 	# Number of seconds before verifier is killed (0 is forever).
 	# verifier-timeout: 0
 
-# DNSTAP config section, if compiled with that
+# DNSTAP config section, ignored if not compiled with that
 # dnstap:
 	# set this to yes and set one or more of dnstap-log-..-messages to yes.
 	# dnstap-enable: no
@@ -480,7 +532,7 @@ remote-control:
 	# 0 is no limits enforced.
 	# size-limit-xfr: 0
 
-	# if compiled with --enable-zone-stats, give name of stat block for
+	# if not compiled without zone-stats, give name of stat block for
 	# this zone (or group of zones).  Output from nsd-control stats.
 	# zonestats: "%s"
 
@@ -539,7 +591,6 @@ remote-control:
 	# zonefile: "example.com.zone"
 	# request-xfr: 192.0.2.1 example.com.key
 
-	# RRLconfig
 	# Response Rate Limiting, whitelist types
 	# rrl-whitelist: nxdomain
 	# rrl-whitelist: error
@@ -551,5 +602,4 @@ remote-control:
 	# rrl-whitelist: dnskey
 	# rrl-whitelist: positive
 	# rrl-whitelist: all
-	# RRLend
 

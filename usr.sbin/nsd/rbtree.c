@@ -63,7 +63,13 @@ rbtree_create (region_type *region, int (*cmpf)(const void *, const void *))
 static void
 rbtree_rotate_left(rbtree_type *rbtree, rbnode_type *node)
 {
-	rbnode_type *right = node->right;
+	rbnode_type *right;
+
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return;
+	}
+	right = node->right;
 	node->right = right->left;
 	if (right->left != RBTREE_NULL)
 		right->left->parent = node;
@@ -90,7 +96,13 @@ rbtree_rotate_left(rbtree_type *rbtree, rbnode_type *node)
 static void
 rbtree_rotate_right(rbtree_type *rbtree, rbnode_type *node)
 {
-	rbnode_type *left = node->left;
+	rbnode_type *left;
+
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return;
+	}
+	left = node->left;
 	node->left = left->right;
 	if (left->right != RBTREE_NULL)
 		left->right->parent = node;
@@ -114,6 +126,11 @@ static void
 rbtree_insert_fixup(rbtree_type *rbtree, rbnode_type *node)
 {
 	rbnode_type	*uncle;
+
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return;
+	}
 
 	/* While not at the root and need fixing... */
 	while (node != rbtree->root && node->parent->color == RED) {
@@ -185,10 +202,17 @@ rbtree_insert (rbtree_type *rbtree, rbnode_type *data)
 {
 	/* XXX Not necessary, but keeps compiler quiet... */
 	int r = 0;
+	rbnode_type	*node;
+	rbnode_type	*parent;
+
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return NULL;
+	}
 
 	/* We start at the root of the tree */
-	rbnode_type	*node = rbtree->root;
-	rbnode_type	*parent = RBTREE_NULL;
+	node = rbtree->root;
+	parent = RBTREE_NULL;
 
 	/* Lets find the new parent... */
 	while (node != RBTREE_NULL) {
@@ -237,6 +261,11 @@ rbtree_search (rbtree_type *rbtree, const void *key)
 {
 	rbnode_type *node;
 
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return NULL;
+	}
+
 	if (rbtree_find_less_equal(rbtree, key, &node)) {
 		return node;
 	} else {
@@ -257,6 +286,11 @@ static void swap_np(rbnode_type** x, rbnode_type** y)
 
 static void change_parent_ptr(rbtree_type* rbtree, rbnode_type* parent, rbnode_type* old, rbnode_type* new)
 {
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return;
+	}
+	
 	if(parent == RBTREE_NULL)
 	{
 		assert(rbtree->root == old);
@@ -280,6 +314,12 @@ rbtree_delete(rbtree_type *rbtree, const void *key)
 {
 	rbnode_type *to_delete;
 	rbnode_type *child;
+	
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return NULL;
+	}
+	
 	if((to_delete = rbtree_search(rbtree, key)) == 0) return 0;
 	rbtree->count--;
 
@@ -357,6 +397,11 @@ static void rbtree_delete_fixup(rbtree_type* rbtree, rbnode_type* child, rbnode_
 {
 	rbnode_type* sibling;
 	int go_up = 1;
+
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return;
+	}
 
 	/* determine sibling to the node that is one-black short */
 	if(child_parent->right == child) sibling = child_parent->left;
@@ -464,6 +509,12 @@ rbtree_find_less_equal(rbtree_type *rbtree, const void *key, rbnode_type **resul
 
 	assert(result);
 
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		*result = NULL;
+		return 0;
+	}
+
 	/* We start at root... */
 	node = rbtree->root;
 
@@ -497,6 +548,11 @@ rbtree_first (rbtree_type *rbtree)
 {
 	rbnode_type *node;
 
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return NULL;
+	}
+
 	for (node = rbtree->root; node->left != RBTREE_NULL; node = node->left);
 	return node;
 }
@@ -505,6 +561,11 @@ rbnode_type *
 rbtree_last (rbtree_type *rbtree)
 {
 	rbnode_type *node;
+
+	/* Check if rbtree is NULL */
+	if (!rbtree) {
+		return NULL;
+	}
 
 	for (node = rbtree->root; node->right != RBTREE_NULL; node = node->right);
 	return node;

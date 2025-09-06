@@ -474,4 +474,9 @@ void zone_rr_iter_init(zone_rr_iter_type *iter, zone_type *zone);
 
 rr_type *zone_rr_iter_next(zone_rr_iter_type *iter);
 
+/** make the domain last in the numlist, changes numbers of domains */
+void numlist_make_last(domain_table_type* table, domain_type* domain);
+/** pop the biggest domain off the numlist */
+domain_type* numlist_pop_last(domain_table_type* table);
+
 #endif /* NAMEDB_H */

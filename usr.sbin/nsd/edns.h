@@ -28,11 +28,11 @@ struct query;
 
 struct edns_data
 {
-	char ok[OPT_LEN];
-	char error[OPT_LEN];
-	char rdata_none[OPT_RDATA];
-	char nsid[OPT_HDR];
-	char cookie[OPT_HDR];
+	unsigned char ok[OPT_LEN];
+	unsigned char error[OPT_LEN];
+	unsigned char rdata_none[OPT_RDATA];
+	unsigned char nsid[OPT_HDR];
+	unsigned char cookie[OPT_HDR];
 };
 typedef struct edns_data edns_data_type;
 

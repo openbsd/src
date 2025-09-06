@@ -1188,15 +1188,20 @@ void reconfig_cookies(struct nsd* nsd, struct nsd_options* options)
 
 	/* Cookie secrets in the configuration file take precedence */
 	if(options->cookie_secret) {
-		ssize_t len = hex_pton(options->cookie_secret,
+#ifndef NDEBUG
+		ssize_t len =
+#endif
+		hex_pton(options->cookie_secret,
 				nsd->cookie_secrets[0].cookie_secret,
 				NSD_COOKIE_SECRET_SIZE);
-
 		/* Cookie length guaranteed in configparser.y */
 		assert(len == NSD_COOKIE_SECRET_SIZE);
 		nsd->cookie_count = 1;
 		if(options->cookie_staging_secret) {
-			len = hex_pton(options->cookie_staging_secret,
+#ifndef NDEBUG
+			len =
+#endif
+			hex_pton(options->cookie_staging_secret,
 					nsd->cookie_secrets[1].cookie_secret,
 					NSD_COOKIE_SECRET_SIZE);
 			/* Cookie length guaranteed in configparser.y */
@@ -1304,3 +1309,59 @@ generate_cookie_secrets:
 	/*********************************************************************/
 }
 
+ssize_t
+print_socket_servers(struct nsd_bitset *bitset, char *buf, size_t bufsz)
+{
+	/* x and y are the start and end points of a range of set bits */
+	/* z is the last unset bit */
+	int i, x, y, z, n = (int)(bitset->size);
+	char *sep = "";
+	size_t off, written_total;
+	ssize_t written = 0;
+
+	assert(bufsz != 0);
+
+	off = written_total = 0;
+	x = y = z = -1;
+	for (i = 0; i <= n; i++) {
+		if (i == n || !nsd_bitset_isset(bitset, i)) {
+			written = 0;
+			if (i == n && x == -1) {
+				assert(y == -1);
+				assert(z == (n - 1));
+				written = snprintf(buf, bufsz, "(none)");
+			} else if (y > z) {
+				assert(x > z);
+				if (x == 0 && y == (n - 1)) {
+					assert(z == -1);
+					written = snprintf(buf+off, bufsz-off,
+						"(all)");
+				} else if (x == y) {
+					written = snprintf(buf+off, bufsz-off,
+						"%s%d", sep, x+1);
+				} else if (x == (y - 1)) {
+					written = snprintf(buf+off, bufsz-off,
+						"%s%d %d", sep, x+1, y+1);
+				} else {
+					assert(y > (x + 1));
+					written = snprintf(buf+off, bufsz-off,
+						"%s%d-%d", sep, x+1, y+1);
+				}
+			}
+			z = i;
+			if (written > 0) {
+				written_total += (size_t)written;
+				off = (written_total < bufsz) ? written_total : bufsz - 1;
+				sep = " ";
+			} else if (written < 0) {
+				return -1;
+			}
+		} else if (x <= z) {
+			x = y = i;
+		} else {
+			assert(x > z);
+			y = i;
+		}
+	}
+	return written_total;
+}

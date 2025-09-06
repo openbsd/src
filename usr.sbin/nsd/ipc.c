@@ -290,7 +290,7 @@ parent_handle_child_command(netio_type *ATTR_UNUSED(netio),
 		(struct main_ipc_handler_data*)handler->user_data;
 
 	/* do a nonblocking write to the child if it is ready. */
-	if (event_types & NETIO_EVENT_WRITE) {
+	if ((event_types & NETIO_EVENT_WRITE)) {
 		if(data->child->need_to_send_STATS &&
 			!data->child->need_to_exit) {
 			send_stat_to_child(data, handler->fd);

@@ -87,6 +87,12 @@
 #endif
 #include "verify.h"
 #include "util/proxy_protocol.h"
+#ifdef USE_XDP
+#include "xdp-server.h"
+#endif
+#ifdef USE_METRICS
+#include "metrics.h"
+#endif /* USE_METRICS */
 
 #define RELOAD_SYNC_TIMEOUT 25 /* seconds */
 
@@ -168,6 +174,14 @@ struct tcp_accept_handler_data {
 	int pp2_enabled;
 };
 
+#ifdef USE_XDP
+struct xdp_handler_data {
+	struct nsd        *nsd;
+	struct xdp_server *server;
+	struct event event;
+};
+#endif
+
 /*
  * These globals are used to enable the TCP accept handlers
  * when the number of TCP connection drops below the maximum
@@ -202,6 +216,9 @@ struct mmsghdr {
 static struct mmsghdr msgs[NUM_RECV_PER_SELECT];
 static struct iovec iovecs[NUM_RECV_PER_SELECT];
 static struct query *queries[NUM_RECV_PER_SELECT];
+#ifdef USE_XDP
+static struct query *xdp_queries[XDP_RX_BATCH_SIZE];
+#endif
 
 /*
  * Data for the TCP connection handlers.
@@ -354,6 +371,10 @@ static void handle_tls_reading(int fd, short event, void* arg);
  * be called multiple times before a complete response is sent.
  */
 static void handle_tls_writing(int fd, short event, void* arg);
+#endif
+
+#ifdef USE_XDP
+static void handle_xdp(int fd, short event, void* arg);
 #endif
 
 /*
@@ -570,7 +591,7 @@ server_zonestat_alloc(struct nsd* nsd)
 		exit(1);
 	}
 	nsd->zonestatfd[1] = open(nsd->zonestatfname[1], O_CREAT|O_RDWR, 0600);
-	if(nsd->zonestatfd[0] == -1) {
+	if(nsd->zonestatfd[1] == -1) {
 		log_msg(LOG_ERR, "cannot create %s: %s", nsd->zonestatfname[1],
 			strerror(errno));
 		close(nsd->zonestatfd[0]);
@@ -1256,7 +1277,7 @@ set_setfib(struct nsd_socket *sock)
 static int
 open_udp_socket(struct nsd *nsd, struct nsd_socket *sock, int *reuseport_works)
 {
-	int rcv = 1*1024*1024, snd = 1*1024*1024;
+	int rcv = 1*1024*1024, snd = 4*1024*1024;
 
 	if(-1 == (sock->s = socket(
 		sock->addr.ai_family, sock->addr.ai_socktype, 0)))
@@ -1533,6 +1554,7 @@ server_prepare(struct nsd *nsd)
 #ifdef	BIND8_STATS
 	/* Initialize times... */
 	time(&nsd->st->boot);
+	nsd->st->reloadcount = 0;
 	set_bind8_alarm(nsd);
 #endif /* BIND8_STATS */
 
@@ -1606,6 +1628,9 @@ server_shutdown(struct nsd *nsd)
 
 	tsig_finalize();
 	daemon_remote_delete(nsd->rc); /* ssl-delete secret keys */
+#ifdef USE_METRICS
+	daemon_metrics_delete(nsd->metrics);
+#endif /* USE_METRICS */
 #ifdef HAVE_SSL
 	if (nsd->tls_ctx)
 		SSL_CTX_free(nsd->tls_ctx);
@@ -1904,23 +1929,29 @@ server_send_soa_xfrd(struct nsd* nsd, int shortsoa)
 
 #ifdef HAVE_SSL
 static void
-log_crypto_from_err(const char* str, unsigned long err)
+log_crypto_from_err(int level, const char* str, unsigned long err)
 {
 	/* error:[error code]:[library name]:[function name]:[reason string] */
 	char buf[128];
 	unsigned long e;
 	ERR_error_string_n(err, buf, sizeof(buf));
-	log_msg(LOG_ERR, "%s crypto %s", str, buf);
+	log_msg(level, "%s crypto %s", str, buf);
 	while( (e=ERR_get_error()) ) {
 		ERR_error_string_n(e, buf, sizeof(buf));
-		log_msg(LOG_ERR, "and additionally crypto %s", buf);
+		log_msg(level, "and additionally crypto %s", buf);
 	}
 }
 
 void
 log_crypto_err(const char* str)
 {
-	log_crypto_from_err(str, ERR_get_error());
+	log_crypto_from_err(LOG_ERR, str, ERR_get_error());
+}
+
+void
+log_crypto_warning(const char* str)
+{
+	log_crypto_from_err(LOG_WARNING, str, ERR_get_error());
 }
 
 /** true if the ssl handshake error has to be squelched from the logs */
@@ -2085,6 +2116,20 @@ add_ocsp_data_cb(SSL *s, void* ATTR_UNUSED(arg))
 	}
 }
 
+static int
+server_alpn_cb(SSL* ATTR_UNUSED(s),
+		const unsigned char** out, unsigned char* outlen,
+		const unsigned char* in, unsigned int inlen,
+		void* ATTR_UNUSED(arg))
+{
+	static const unsigned char alpns[] = { 3, 'd', 'o', 't' };
+	unsigned char* tmp_out;
+
+	SSL_select_next_proto(&tmp_out, outlen, alpns, sizeof(alpns), in, inlen);
+	*out = tmp_out;
+	return SSL_TLSEXT_ERR_OK;
+}
+
 SSL_CTX*
 server_tls_ctx_setup(char* key, char* pem, char* verifypem)
 {
@@ -2125,6 +2170,15 @@ server_tls_ctx_setup(char* key, char* pem, char* verifypem)
 		return 0;
 	}
 #endif
+#if defined(SSL_OP_NO_TLSv1_2) && defined(SSL_OP_NO_TLSv1_3)
+	/* if we have tls 1.3 disable 1.2 */
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2) & SSL_OP_NO_TLSv1_2)
+		!= SSL_OP_NO_TLSv1_2){
+		log_crypto_err("could not set SSL_OP_NO_TLSv1_2");
+		SSL_CTX_free(ctx);
+		return 0;
+	}
+#endif
 #if defined(SSL_OP_NO_RENEGOTIATION)
 	/* disable client renegotiation */
 	if((SSL_CTX_set_options(ctx, SSL_OP_NO_RENEGOTIATION) &
@@ -2132,6 +2186,13 @@ server_tls_ctx_setup(char* key, char* pem, char* verifypem)
 		log_crypto_err("could not set SSL_OP_NO_RENEGOTIATION");
 		SSL_CTX_free(ctx);
 		return 0;
+	}
+#endif
+#if defined(SSL_OP_IGNORE_UNEXPECTED_EOF)
+	/* disable client renegotiation */
+	if((SSL_CTX_set_options(ctx, SSL_OP_IGNORE_UNEXPECTED_EOF) &
+		SSL_OP_IGNORE_UNEXPECTED_EOF) != SSL_OP_IGNORE_UNEXPECTED_EOF) {
+		log_crypto_warning("could not set SSL_OP_IGNORE_UNEXPECTED_EOF");
 	}
 #endif
 #if defined(SHA256_DIGEST_LENGTH) && defined(SSL_TXT_CHACHA20)
@@ -2180,6 +2241,7 @@ server_tls_ctx_setup(char* key, char* pem, char* verifypem)
 		SSL_CTX_set_client_CA_list(ctx, SSL_load_client_CA_file(verifypem));
 		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
 	}
+	SSL_CTX_set_alpn_select_cb(ctx, server_alpn_cb, NULL);
 	return ctx;
 }
 
@@ -2391,7 +2453,7 @@ static void server_reload_handle_sigchld(int sig, short event,
 		void* ATTR_UNUSED(arg))
 {
 	assert(sig == SIGCHLD);
-	assert(event & EV_SIGNAL);
+	assert((event & EV_SIGNAL));
 
 	/* reap the exited old-serve child(s) */
 	while(waitpid(-1, NULL, WNOHANG) > 0) {
@@ -2406,7 +2468,7 @@ static void server_reload_handle_quit_sync_ack(int cmdsocket, short event,
 		(struct quit_sync_event_data*)arg;
 	ssize_t r;
 
-	if(event & EV_TIMEOUT) {
+	if((event & EV_TIMEOUT)) {
 		sig_atomic_t cmd = NSD_QUIT_SYNC;
 
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "reload: ipc send quit to main"));
@@ -2419,13 +2481,14 @@ static void server_reload_handle_quit_sync_ack(int cmdsocket, short event,
 		 */
 		return;
 	}
-	assert(event & EV_READ);
+	assert((event & EV_READ));
 	assert(cb_data->read < sizeof(cb_data->to_read.cmd));
 
 	r = read(cmdsocket, cb_data->to_read.buf + cb_data->read,
 			sizeof(cb_data->to_read.cmd) - cb_data->read);
 	if(r == 0) {
-		log_msg(LOG_ERR, "reload: old-main quit during quit sync");
+		DEBUG(DEBUG_IPC, 1, (LOG_WARNING,
+			"reload: old-main quit during quit sync"));
 		cb_data->to_read.cmd = NSD_RELOAD;
 
 	} else if(r == -1) {
@@ -2550,6 +2613,12 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	if(nsd->mode == NSD_RELOAD_FAILED) {
 		exit(NSD_RELOAD_FAILED);
 	}
+#ifdef BIND8_STATS
+	nsd->stats_per_child[nsd->stat_current][0].reloadcount =
+		nsd->stats_per_child[(nsd->stat_current==0?1:0)][0].reloadcount+1;
+	nsd->stats_per_child[nsd->stat_current][0].db_mem =
+		region_get_mem(nsd->db->region);
+#endif
 
 	/* listen for the signals of failed children again */
 	sigaction(SIGCHLD, &old_sigchld, NULL);
@@ -2635,7 +2704,7 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 		exit(1);
 	}
 	assert(cmd == NSD_RELOAD);
-	udb_ptr_unlink(last_task, nsd->task[nsd->mytask]);
+	udb_ptr_set(last_task, nsd->task[nsd->mytask], 0);
 	task_process_sync(nsd->task[nsd->mytask]);
 #ifdef USE_ZONE_STATS
 	server_zonestat_realloc(nsd); /* realloc for next children */
@@ -2949,6 +3018,15 @@ server_main(struct nsd *nsd)
 			task_remap(nsd->task[nsd->mytask]);
 			udb_ptr_init(&xfrs2process, nsd->task[nsd->mytask]);
 			udb_ptr_init(&last_task   , nsd->task[nsd->mytask]);
+			/* last_task and xfrs2process MUST be unlinked in all
+			 * possible branches of the fork() below.
+			 * server_reload() will unlink them, but for failed
+			 * fork and for the "old-main" (child) process, we MUST
+			 * unlink them in the case statement below.
+			 * Unlink by setting the value to 0, because
+			 * reload_process_non_xfr_tasks() may clear (and
+			 * implicitly unlink) xfrs2process.
+			 */
 			reload_process_non_xfr_tasks(nsd, &xfrs2process
 			                                , &last_task);
 			/* Do actual reload */
@@ -2956,6 +3034,8 @@ server_main(struct nsd *nsd)
 			switch (reload_pid) {
 			case -1:
 				log_msg(LOG_ERR, "fork failed: %s", strerror(errno));
+				udb_ptr_set(&last_task, nsd->task[nsd->mytask], 0);
+				udb_ptr_set(&xfrs2process, nsd->task[nsd->mytask], 0);
 				break;
 			default:
 				/* PARENT */
@@ -2987,6 +3067,8 @@ server_main(struct nsd *nsd)
 #ifdef USE_LOG_PROCESS_ROLE
 				log_set_process_role("old-main");
 #endif
+				udb_ptr_set(&last_task, nsd->task[nsd->mytask], 0);
+				udb_ptr_set(&xfrs2process, nsd->task[nsd->mytask], 0);
 				reload_listener.fd = reload_sockets[0];
 				reload_listener.timeout = NULL;
 				reload_listener.user_data = nsd;
@@ -3007,13 +3089,6 @@ server_main(struct nsd *nsd)
 				log_set_process_role("main");
 #endif
 			}
-			/* xfrs2process and last_task need to be reset in case
-			 * "old-main" becomes "main" (due to an failed (exited)
-			 * xfr update). If needed xfrs2process gets unlinked by
-			 * "load", and last_task by the xfrd.
-			 */
-			memset(&xfrs2process, 0, sizeof(xfrs2process));
-			memset(&last_task, 0, sizeof(last_task));
 			break;
 		case NSD_QUIT_SYNC:
 			/* synchronisation of xfrd, parent and reload */
@@ -3131,6 +3206,10 @@ server_main(struct nsd *nsd)
 		close(nsd->xfrd_listener->fd);
 		(void)kill(nsd->pid, SIGTERM);
 	}
+
+#ifdef USE_XDP
+	xdp_server_cleanup(&nsd->xdp.xdp_server);
+#endif
 
 #ifdef MEMCLEAN /* OS collects memory pages */
 	region_destroy(server_region);
@@ -3312,6 +3391,33 @@ add_tcp_handler(
 		log_msg(LOG_ERR, "nsd tcp: event_add failed");
 	data->event_added = 1;
 }
+
+#ifdef USE_XDP
+static void
+add_xdp_handler(struct nsd *nsd,
+	            struct xdp_server *xdp,
+	            struct xdp_handler_data *data) {
+
+	struct event *handler = &data->event;
+
+	data->nsd = nsd;
+	data->server = xdp;
+
+	memset(handler, 0, sizeof(*handler));
+	int sock = xsk_socket__fd(xdp->xsks[xdp->queue_index].xsk);
+	if (sock < 0) {
+		log_msg(LOG_ERR, "xdp: xsk socket file descriptor is invalid: %s",
+		        strerror(errno));
+		return;
+	}
+	// TODO: check which EV_flags are needed
+	event_set(handler, sock, EV_PERSIST|EV_READ, handle_xdp, data);
+	if (event_base_set(nsd->event_base, handler) != 0)
+		log_msg(LOG_ERR, "nsd xdp: event_base_set failed");
+	if (event_add(handler, NULL) != 0)
+		log_msg(LOG_ERR, "nsd xdp: event_add failed");
+}
+#endif
 
 /*
  * Serve DNS request to verifiers (short-lived)
@@ -3532,7 +3638,7 @@ server_child(struct nsd *nsd)
 		numifs = nsd->ifs;
 	}
 
-	if (nsd->server_kind & NSD_SERVER_UDP) {
+	if ((nsd->server_kind & NSD_SERVER_UDP)) {
 		int child = nsd->this_child->child_num;
 		memset(msgs, 0, sizeof(msgs));
 		for (i = 0; i < NUM_RECV_PER_SELECT; i++) {
@@ -3570,7 +3676,7 @@ server_child(struct nsd *nsd)
 	 * and disable them based on the current number of active TCP
 	 * connections.
 	 */
-	if (nsd->server_kind & NSD_SERVER_TCP) {
+	if ((nsd->server_kind & NSD_SERVER_TCP)) {
 		int child = nsd->this_child->child_num;
 		tcp_accept_handler_count = numifs;
 		tcp_accept_handlers = region_alloc_array(server_region,
@@ -3594,6 +3700,53 @@ server_child(struct nsd *nsd)
 	} else {
 		tcp_accept_handler_count = 0;
 	}
+
+#ifdef USE_XDP
+	if (nsd->options->xdp_interface) {
+		/* don't try to bind more sockets than there are queues available */
+		if (nsd->xdp.xdp_server.queue_count <= nsd->this_child->child_num) {
+			log_msg(LOG_WARNING,
+			        "xdp: server-count exceeds available queues (%d) on "
+			        "interface %s, skipping xdp in this process",
+			        nsd->xdp.xdp_server.queue_count,
+			        nsd->xdp.xdp_server.interface_name);
+		} else {
+			nsd->xdp.xdp_server.queue_index = nsd->this_child->child_num;
+			nsd->xdp.xdp_server.queries = xdp_queries;
+
+			log_msg(LOG_INFO,
+			        "xdp: using socket with queue_id %d on interface %s",
+			        nsd->xdp.xdp_server.queue_index,
+			        nsd->xdp.xdp_server.interface_name);
+
+			struct xdp_handler_data *data;
+			data = region_alloc_zero(nsd->server_region, sizeof(*data));
+			add_xdp_handler(nsd, &nsd->xdp.xdp_server, data);
+
+			const int scratch_data_len = 1;
+			void *scratch_data = region_alloc_zero(nsd->server_region,
+			                                       scratch_data_len);
+			for (i = 0; i < XDP_RX_BATCH_SIZE; i++) {
+				/* Be aware that the buffer is initialized with scratch data
+				 * and will be filled by the xdp handle and receive function
+				 * that receives the packet data.
+				 * Using scratch data so that the existing functions in regards
+				 * to queries and buffers don't break by use of NULL pointers */
+				struct buffer *buffer = region_alloc_zero(
+				                            nsd->server_region,
+				                            sizeof(struct buffer));
+				buffer_create_from(buffer, scratch_data, scratch_data_len);
+				xdp_queries[i] = query_create_with_buffer(
+				                                  server_region,
+				                                  compressed_dname_offsets,
+				                                  compression_table_size,
+				                                  compressed_dnames,
+				                                  buffer);
+				query_reset(xdp_queries[i], UDP_MAX_MESSAGE_LEN, 0);
+			}
+		}
+	}
+#endif
 
 	/* The main loop... */
 	while ((mode = nsd->mode) != NSD_QUIT) {
@@ -3645,6 +3798,10 @@ server_child(struct nsd *nsd)
 		}
 	}
 
+	/* This part is seemingly never reached as the loop WOULD exit on NSD_QUIT,
+	 * but nsd->mode is only set to NSD_QUIT in ipc_child_quit. However, that
+	 * function also calls exit(). */
+
 	service_remaining_tcp(nsd);
 #ifdef	BIND8_STATS
 	bind8_stats(nsd);
@@ -3663,7 +3820,7 @@ server_child(struct nsd *nsd)
 static void remaining_tcp_timeout(int ATTR_UNUSED(fd), short event, void* arg)
 {
 	int* timed_out = (int*)arg;
-        assert(event & EV_TIMEOUT); (void)event;
+        assert((event & EV_TIMEOUT)); (void)event;
 	/* wake up the service tcp thread, note event is no longer
 	 * registered */
 	*timed_out = 1;
@@ -4266,7 +4423,11 @@ more_read_buf_tcp(int fd, struct tcp_handler_data* data, void* bufpos,
 			return 0;
 		} else {
 			char buf[48];
-			addr2str(&data->query->remote_addr, buf, sizeof(buf));
+			if(data->query) {
+				addr2str(&data->query->remote_addr, buf, sizeof(buf));
+			} else {
+				snprintf(buf, sizeof(buf), "unknown");
+			}
 #ifdef ECONNRESET
 			if (verbosity >= 2 || errno != ECONNRESET)
 #endif /* ECONNRESET */
@@ -4571,8 +4732,9 @@ handle_tcp_writing(int fd, short event, void* arg)
 	struct event_base* ev_base;
 	uint32_t now = 0;
 
-	if ((event & EV_TIMEOUT)) {
+	if ((event & EV_TIMEOUT) || !q) {
 		/* Connection timed out.  */
+		/* Or data->query is NULL, in which case nothing to do. */
 		cleanup_tcp_handler(data);
 		return;
 	}
@@ -4608,7 +4770,15 @@ handle_tcp_writing(int fd, short event, void* arg)
 #ifdef EPIPE
 				  if(verbosity >= 2 || errno != EPIPE)
 #endif /* EPIPE 'broken pipe' */
-				    log_msg(LOG_ERR, "failed writing to tcp: %s", strerror(errno));
+				{
+					char client_ip[128];
+					if(data->query) {
+						addr2str(&data->query->client_addr, client_ip, sizeof(client_ip));
+					} else {
+						snprintf(client_ip, sizeof(client_ip), "unknown");
+					}
+					log_msg(LOG_ERR, "failed writing to tcp from %s: %s", client_ip, strerror(errno));
+				}
 				cleanup_tcp_handler(data);
 				return;
 			}
@@ -4647,7 +4817,15 @@ handle_tcp_writing(int fd, short event, void* arg)
 #ifdef EPIPE
 				  if(verbosity >= 2 || errno != EPIPE)
 #endif /* EPIPE 'broken pipe' */
-			log_msg(LOG_ERR, "failed writing to tcp: %s", strerror(errno));
+		{
+			char client_ip[128];
+			if(data->query) {
+				addr2str(&data->query->client_addr, client_ip, sizeof(client_ip));
+			} else {
+				snprintf(client_ip, sizeof(client_ip), "unknown");
+			}
+			log_msg(LOG_ERR, "failed writing to tcp from %s: %s", client_ip, strerror(errno));
+		}
 			cleanup_tcp_handler(data);
 			return;
 		}
@@ -4806,9 +4984,13 @@ tls_handshake(struct tcp_handler_data* data, int fd, int writing)
 				unsigned long err = ERR_get_error();
 				if(!squelch_err_ssl_handshake(err)) {
 					char a[64], s[256];
-					addr2str(&data->query->remote_addr, a, sizeof(a));
+					if(data->query) {
+						addr2str(&data->query->remote_addr, a, sizeof(a));
+					} else {
+						snprintf(a, sizeof(a), "unknown");
+					}
 					snprintf(s, sizeof(s), "TLS handshake failed from %s", a);
-					log_crypto_from_err(s, err);
+					log_crypto_from_err(LOG_ERR, s, err);
 				}
 			}
 			cleanup_tcp_handler(data);
@@ -5154,8 +5336,9 @@ handle_tls_writing(int fd, short event, void* arg)
 	buffer_type* write_buffer;
 	uint32_t now = 0;
 
-	if ((event & EV_TIMEOUT)) {
+	if ((event & EV_TIMEOUT) || !q) {
 		/* Connection timed out.  */
+		/* Or data->query is NULL, in which case nothing to do. */
 		cleanup_tcp_handler(data);
 		return;
 	}
@@ -5218,7 +5401,17 @@ handle_tls_writing(int fd, short event, void* arg)
 			tcp_handler_setup_event(data, handle_tls_reading, fd, EV_PERSIST | EV_READ | EV_TIMEOUT);
 		} else if(want != SSL_ERROR_WANT_WRITE) {
 			cleanup_tcp_handler(data);
-			log_crypto_err("could not SSL_write");
+			{
+				char client_ip[128], e[188];
+				if(data->query) {
+					addr2str(&data->query->client_addr, client_ip, sizeof(client_ip));
+				} else {
+					snprintf(client_ip, sizeof(client_ip), "unknown");
+				}
+				snprintf(e, sizeof(e), "failed writing to tls from %s: %s",
+					client_ip, "SSL_write error");
+				log_crypto_err(e);
+			}
 		}
 		return;
 	}
@@ -5510,6 +5703,15 @@ handle_tcp_accept(int fd, short event, void* arg)
 		configure_handler_event_types(0);
 	}
 }
+
+#ifdef USE_XDP
+static void handle_xdp(int fd, short event, void* arg) {
+	struct xdp_handler_data *data = (struct xdp_handler_data*) arg;
+
+	if ((event & EV_READ))
+		xdp_handle_recv_and_send(data->server);
+}
+#endif
 
 static void
 send_children_command(struct nsd* nsd, sig_atomic_t command, int timeout)

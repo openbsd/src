@@ -1031,6 +1031,8 @@ static void ixfr_create_finishup(struct ixfr_create* ixfrcr,
 	}
 	if(append_mem) {
 		ixfr_store_finish(store, nsd, log_buf);
+	} else {
+		ixfr_store_free(store);
 	}
 }
 

@@ -350,10 +350,10 @@ event_add(struct event* ev, struct timeval* tv)
 		return -1;
 	if( (ev->ev_flags&(EV_READ|EV_WRITE)) && ev->ev_fd != -1) {
 		ev->ev_base->fds[ev->ev_fd] = ev;
-		if(ev->ev_flags&EV_READ) {
+		if((ev->ev_flags&EV_READ)) {
 			FD_SET(FD_SET_T ev->ev_fd, &ev->ev_base->reads);
 		}
-		if(ev->ev_flags&EV_WRITE) {
+		if((ev->ev_flags&EV_WRITE)) {
 			FD_SET(FD_SET_T ev->ev_fd, &ev->ev_base->writes);
 		}
 		FD_SET(FD_SET_T ev->ev_fd, &ev->ev_base->content);

@@ -35,7 +35,7 @@ dname_make(region_type *region, const uint8_t *name, int normalize)
 	assert(name);
 
 	while (1) {
-		if (label_is_pointer(label))
+		if (!label_is_normal(label))
 			return NULL;
 
 		label_offsets[label_count] = (uint8_t) (label - name);
@@ -44,6 +44,8 @@ dname_make(region_type *region, const uint8_t *name, int normalize)
 
 		if (label_is_root(label))
 			break;
+		if (name_size > MAXDOMAINLEN)
+			return NULL;
 
 		label = label_next(label);
 	}

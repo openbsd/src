@@ -166,7 +166,7 @@ nsec3_has_soa(rr_type* rr)
 		rdata_atom_data(rr->rdatas[NSEC3_RDATA_BITMAP])[0] == 0 && /* first window = 0, */
 		/* [1]: bitmap length must be >= 1 */
 		/* [2]: bit[6] = SOA, thus mask first bitmap octet with 0x02 */
-		rdata_atom_data(rr->rdatas[NSEC3_RDATA_BITMAP])[2]&0x02) { /* SOA bit set */
+		(rdata_atom_data(rr->rdatas[NSEC3_RDATA_BITMAP])[2]&0x02)) { /* SOA bit set */
 		return 1;
 	}
 	return 0;
@@ -661,6 +661,7 @@ prehash_zone_complete(struct namedb* db, struct zone* zone)
 		zone->nsec3_last = NULL;
 		return;
 	}
+	nsec3_zone_trees_create(db->region, zone);
 	nsec3_precompile_newparam(db, zone);
 }
 

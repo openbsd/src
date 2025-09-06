@@ -7,7 +7,7 @@ sinclude(dnstap/dnstap.m4)
 
 # autoconf-2.70 is needed for @runstatedir@
 AC_PREREQ([2.70])
-AC_INIT([NSD],[4.11.0],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
+AC_INIT([NSD],[4.13.0],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
@@ -82,6 +82,9 @@ AC_SUBST(logfile)
 # Database directory
 #
 dbdir=${localstatedir}/db/nsd
+AC_ARG_WITH([dbdir],
+	AS_HELP_STRING([--with-dbdir=dir],[Base directory for the xfrd zone timer state file, the zone list file and the cookie secrets file]),
+	[dbdir=$withval])
 
 #
 # Determine the pidfile location. Check if /var/run exists, if so set pidfile
@@ -137,6 +140,11 @@ xfrdir="/tmp"
 AC_ARG_WITH([xfrdir], AS_HELP_STRING([--with-xfrdir=path],[Pathname to where the NSD transfer dir is created]), [xfrdir=$withval])
 AC_DEFINE_UNQUOTED(XFRDIR, ["`eval echo $xfrdir`"], [Pathname to where the NSD transfer dir is created.])
 AC_SUBST(xfrdir)
+
+sharedfilesdir=${datarootdir}/nsd
+AC_ARG_WITH([sharedfilesdir], AS_HELP_STRING([--with-sharedfilesdir=dir],[NSD shared files directory]), [sharedfilesdir=$withval])
+AC_DEFINE_UNQUOTED(SHAREDFILESDIR, ["`eval echo $sharedfilesdir`"], [NSD shared files dir])
+AC_SUBST(sharedfilesdir)
 
 # nsd sbin location. tmpinstantiate execprefix with defaults if not yet done.
 if test "x${exec_prefix}" = "xNONE"; then
@@ -493,8 +501,18 @@ You can restart ./configure --with-libevent=no to use a builtin alternative.])
 	AC_CHECK_FUNCS([event_base_get_method]) # only in libevent 1.4.3 and later
 	AC_CHECK_FUNCS([ev_loop]) # only in libev. (tested on 3.51)
 	AC_CHECK_FUNCS([ev_default_loop]) # only in libev. (tested on 4.00)
+
+	# prometheus metrics depend on libevent 2.0 and later, and is therefore
+	# only enabled when the required version is found and used
+	AC_CHECK_FUNCS([evhttp_free], [
+		AC_DEFINE_UNQUOTED([USE_METRICS], [], [Define this to expose NSD statistics via a prometheus metrics HTTP endpoint.])
+		AC_DEFINE_UNQUOTED([NSD_METRICS_PORT], [9100], [Define the default metrics HTTP endpoint port.])
+	], [
+		AC_MSG_NOTICE([disabling prometheus metrics])
+	])
 else
 	AC_DEFINE(USE_MINI_EVENT, 1, [Define if you want to use internal select based events])
+	AC_MSG_NOTICE([Prometheus metrics are disabled with the builtin libevent alternative])
 fi
 
 # Checks for header files.
@@ -976,23 +994,23 @@ case "$enable_ipv6" in
 		;;
 esac
 
-AC_ARG_ENABLE(bind8-stats, AS_HELP_STRING([--enable-bind8-stats],[Enables BIND8 like NSTATS & XSTATS and statistics in nsd-control]))
+AC_ARG_ENABLE(bind8-stats, AS_HELP_STRING([--disable-bind8-stats],[Disable BIND8 like NSTATS & XSTATS and statistics in nsd-control]))
 
 case "$enable_bind8_stats" in
-	yes|'')
-		AC_DEFINE_UNQUOTED([BIND8_STATS], [], [Define this to enable BIND8 like NSTATS & XSTATS.])
+	no)
 		;;
-	no|*)
+	yes|*)
+		AC_DEFINE_UNQUOTED([BIND8_STATS], [], [Define this to enable BIND8 like NSTATS & XSTATS.])
 		;;
 esac
 
-AC_ARG_ENABLE(zone-stats, AS_HELP_STRING([--enable-zone-stats],[Enable per-zone statistics gathering (needs --enable-bind8-stats)]))
+AC_ARG_ENABLE(zone-stats, AS_HELP_STRING([--disable-zone-stats],[Disable per-zone statistics gathering (if enabled, it needs bind8-stats)]))
 case "$enable_zone_stats" in
-	yes)
+	no)
+		;;
+	yes|*)
 		AC_DEFINE_UNQUOTED([USE_ZONE_STATS], [], [Define this to enable per-zone statistics gathering.])
 		AC_DEFINE_UNQUOTED([BIND8_STATS], [], [Define this to enable BIND8 like NSTATS & XSTATS.])
-		;;
-	no|''|*)
 		;;
 esac
 
@@ -1023,27 +1041,23 @@ AC_ARG_ENABLE(memclean, AS_HELP_STRING([--enable-memclean],[Cleanup memory (at e
 if test "$enable_memclean" = "yes"; then AC_DEFINE_UNQUOTED([MEMCLEAN], [1], [Define this to cleanup memory at exit (eg. for valgrind, etc.)])
 fi
 
-AC_ARG_ENABLE(ratelimit, AS_HELP_STRING([--enable-ratelimit],[Enable rate limiting]))
+AC_ARG_ENABLE(ratelimit, AS_HELP_STRING([--disable-ratelimit],[Disable rate limiting]))
 case "$enable_ratelimit" in
-	yes)
-		AC_DEFINE_UNQUOTED([RATELIMIT], [], [Define this to enable rate limiting.])
-		dnl causes awk to not match the exclusion start marker.
-		ratelimit="xx"
+	no)
 		;;
-	no|*)
-		ratelimit=""
+	yes|*)
+		AC_DEFINE_UNQUOTED([RATELIMIT], [], [Define this to enable rate limiting.])
 		;;
 esac
-AC_SUBST(ratelimit)
 
-AC_ARG_ENABLE(ratelimit-default-is-off, AS_HELP_STRING([--enable-ratelimit-default-is-off],[Enable this to set default of ratelimit to off (enable in nsd.conf), otherwise ratelimit is enabled by default if --enable-ratelimit is enabled]))
+AC_ARG_ENABLE(ratelimit-default-is-off, AS_HELP_STRING([--disable-ratelimit-default-is-off],[Disable this to set default of ratelimit to on (this controls the default, ratelimits can be enabled and disabled in nsd.conf)]))
 case "$enable_ratelimit_default_is_off" in
-	yes)
+	no)
+		ratelimit_default="on"
+		;;
+	yes|*)
 		AC_DEFINE_UNQUOTED([RATELIMIT_DEFAULT_OFF], [], [Define this to set ratelimit to off by default.])
 		ratelimit_default="off"
-		;;
-	no|*)
-		ratelimit_default="on"
 		;;
 esac
 AC_SUBST(ratelimit_default)
@@ -1084,7 +1098,7 @@ if test x$HAVE_SSL = x"yes"; then
 	SSL_LIBS="-lssl"
 	AC_SUBST(SSL_LIBS)
 	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h openssl/core_names.h openssl/x509v3.h],,, [AC_INCLUDES_DEFAULT])
-	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params EVP_MAC_CTX_get_mac_size SHA1_Init ASN1_STRING_get0_data])
+	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params EVP_MAC_CTX_get_mac_size SHA1_Init ASN1_STRING_get0_data EVP_PKEY_get0_type_name])
 	if test "$ac_cv_func_SHA1_Init" = "yes"; then
 		ACX_FUNC_DEPRECATED([SHA1_Init], [(void)SHA1_Init(NULL);], [
 #include <openssl/sha.h>
@@ -1187,6 +1201,37 @@ case "$enable_packed" in
 	;;
 esac
 
+AC_ARG_ENABLE(xdp, AS_HELP_STRING([--enable-xdp],[Enable XDP support.]))
+case "$enable_xdp" in
+	yes)
+	AC_DEFINE_UNQUOTED([USE_XDP], [], [Define this to enable the use of AF_XDP sockets.])
+
+	AC_SEARCH_LIBS(xdp_program__open_file, [xdp],, [AC_MSG_ERROR([Cannot find libxdp, but is needed for xdp support.])])
+	AC_SEARCH_LIBS(bpf_map__fd, [bpf],, [AC_MSG_ERROR([Cannot find libbpf, but is needed for xdp support.])])
+	AC_SEARCH_LIBS(cap_set_proc, [cap],, [AC_MSG_ERROR([Cannot find libcap, but is needed for xdp support.])])
+
+	# Using ARG_VAR here because AC_PROG_xxx doesn't exist for CLANG and LLC
+	AC_ARG_VAR(CLANG, [location of clang compiler (only needed for xdp)])
+	AC_ARG_VAR(LLC, [location of LLVM static compiler (only needed for xdp)])
+	# CHECK_PROG will not overwrite a variable if it is already provided by the user on the commandline
+	AC_CHECK_PROG(CLANG, clang, clang)
+	AC_CHECK_PROG(LLC, llc, llc)
+	test "$CLANG" = "" && AC_MSG_ERROR([Cannot find clang, but is needed for xdp support.])
+	test "$LLC" = "" && AC_MSG_ERROR([Cannot find llc, but is needed for xdp support.])
+
+	AC_ARG_VAR(BPF_CFLAGS, [The list of arguments passed to the BPF compiler])
+	test "$BPF_CFLAGS" = "" && BPF_CFLAGS="-Wall -Wextra -Wconversion -Werror"
+
+	xdp_targets="xdp-dns-redirect_kern.o xdp-dns-redirect_kern_pinned.o"
+	AC_SUBST(xdp_targets)
+
+	xdp="xx"
+	;;
+	no|*)
+	xdp=""
+	;;
+esac
+AC_SUBST(xdp)
 # check for dnstap if requested
 dt_DNSTAP([${localstatedir}/run/nsd-dnstap.sock],
     [
@@ -1200,7 +1245,9 @@ dt_DNSTAP([${localstatedir}/run/nsd-dnstap.sock],
 
         AC_SUBST([DNSTAP_SRC], ["dnstap/dnstap.c dnstap/dnstap.pb-c.c dnstap/dnstap_collector.c"])
         AC_SUBST([DNSTAP_OBJ], ["dnstap.o dnstap_collector.o dnstap.pb-c.o"])
-	dnstap_config="dnstap/dnstap_config.h"
+	dnstap_config="dnstap/dnstap_config.h.tmp:dnstap/dnstap_config.h.in"
+	dnstap_config_tmp="dnstap/dnstap_config.h.tmp"
+	dnstap_config_out="dnstap/dnstap_config.h"
     ],
     [
         AC_SUBST([ENABLE_DNSTAP], [0])
@@ -1444,5 +1491,18 @@ AC_ARG_ENABLE(westmere, AS_HELP_STRING([--disable-westmere], [Disable Westmere (
 AC_ARG_ENABLE(haswell, AS_HELP_STRING([--disable-haswell], [Disable Haswell (AVX2) parser kernel]))
 AC_CONFIG_SUBDIRS([simdzone])
 AC_OUTPUT
+# If dnstap config has changed, overwrite it.
+if test -n "$dnstap_config"; then
+	if test ! -f "$dnstap_config_out"; then
+		mv "$dnstap_config_tmp" "$dnstap_config_out" || AC_MSG_ERROR([Could not create $dnstap_config_out])
+	else if diff "$dnstap_config_out" "$dnstap_config_tmp" >/dev/null 2>&1; then
+		AC_MSG_NOTICE([In $srcdir: $dnstap_config_out is unchanged])
+		rm -f "$dnstap_config_tmp"
+	else
+		rm -f "$dnstap_config_out"
+		mv "$dnstap_config_tmp" "$dnstap_config_out" || AC_MSG_ERROR([Could not create $dnstap_config_out])
+	  fi
+	fi
+fi
 m4_unquote(
   _m4_defn([_m4_wrap_text])_m4_popdef([_m4_wrap_text]))

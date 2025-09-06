@@ -54,8 +54,17 @@
 #include "remote.h"
 #include "xfrd-disk.h"
 #include "ipc.h"
+#include "util.h"
+#ifdef USE_METRICS
+#include "metrics.h"
+#endif /* USE_METRICS */
 #ifdef USE_DNSTAP
 #include "dnstap/dnstap_collector.h"
+#endif
+#ifdef USE_XDP
+#include <sys/prctl.h>
+#include "xdp-server.h"
+#include "xdp-util.h"
 #endif
 #include "util/proxy_protocol.h"
 
@@ -79,7 +88,7 @@ usage (void)
 		"  -4                   Only listen to IPv4 connections.\n"
 		"  -6                   Only listen to IPv6 connections.\n"
 		"  -a ip-address[@port] Listen to the specified incoming IP address (and port)\n"
-		"                       May be specified multiple times).\n"
+		"                       (May be specified multiple times).\n"
 		"  -c configfile        Read specified configfile instead of %s.\n"
 		"  -d                   do not fork as a daemon process.\n"
 #ifndef NDEBUG
@@ -521,74 +530,13 @@ figure_sockets(
 #endif
 }
 
-/* print server affinity for given socket. "*" if socket has no affinity with
-   any specific server, "x-y" if socket has affinity with more than two
-   consecutively numbered servers, "x" if socket has affinity with a specific
-   server number, which is not necessarily just one server. e.g. "1 3" is
-   printed if socket has affinity with servers number one and three, but not
-   server number two. */
-static ssize_t
-print_socket_servers(struct nsd_socket *sock, char *buf, size_t bufsz)
-{
-	int i, x, y, z, n = (int)(sock->servers->size);
-	char *sep = "";
-	size_t off, tot;
-	ssize_t cnt = 0;
-
-	assert(bufsz != 0);
-
-	off = tot = 0;
-	x = y = z = -1;
-	for (i = 0; i <= n; i++) {
-		if (i == n || !nsd_bitset_isset(sock->servers, i)) {
-			cnt = 0;
-			if (i == n && x == -1) {
-				assert(y == -1);
-				assert(z == -1);
-				cnt = snprintf(buf, bufsz, "-");
-			} else if (y > z) {
-				assert(x > z);
-				if (x == 0 && y == (n - 1)) {
-					assert(z == -1);
-					cnt = snprintf(buf+off, bufsz-off,
-					               "*");
-				} else if (x == y) {
-					cnt = snprintf(buf+off, bufsz-off,
-					               "%s%d", sep, x+1);
-				} else if (x == (y - 1)) {
-					cnt = snprintf(buf+off, bufsz-off,
-					               "%s%d %d", sep, x+1, y+1);
-				} else {
-					assert(y > (x + 1));
-					cnt = snprintf(buf+off, bufsz-off,
-					               "%s%d-%d", sep, x+1, y+1);
-				}
-			}
-			z = i;
-			if (cnt > 0) {
-				tot += (size_t)cnt;
-				off = (tot < bufsz) ? tot : bufsz - 1;
-				sep = " ";
-			} else if (cnt < 0) {
-				return -1;
-			}
-		} else if (x <= z) {
-			x = y = i;
-		} else {
-			assert(x > z);
-			y = i;
-		}
-	}
-
-	return tot;
-}
-
 static void
 print_sockets(
 	struct nsd_socket *udp, struct nsd_socket *tcp, size_t ifs)
 {
+#define SERVERBUF_SIZE_MAX (999*4+1) /* assume something big */
 	char sockbuf[INET6_ADDRSTRLEN + 6 + 1];
-	char *serverbuf;
+	char serverbuf[SERVERBUF_SIZE_MAX];
 	size_t i, serverbufsz, servercnt;
 	const char *fmt = "listen on ip-address %s (%s) with server(s): %s";
 	struct nsd_bitset *servers;
@@ -601,8 +549,7 @@ print_sockets(
 	assert(tcp != NULL);
 
 	servercnt = udp[0].servers->size;
-	serverbufsz = (((servercnt / 10) * servercnt) + servercnt) + 1;
-	serverbuf = xalloc(serverbufsz);
+	serverbufsz = SERVERBUF_SIZE_MAX;
 
 	/* warn user of unused servers */
 	servers = xalloc(nsd_bitset_size(servercnt));
@@ -611,12 +558,12 @@ print_sockets(
 	for(i = 0; i < ifs; i++) {
 		assert(udp[i].servers->size == servercnt);
 		addrport2str((void*)&udp[i].addr.ai_addr, sockbuf, sizeof(sockbuf));
-		print_socket_servers(&udp[i], serverbuf, serverbufsz);
+		(void)print_socket_servers(udp[i].servers, serverbuf, serverbufsz);
 		nsd_bitset_or(servers, servers, udp[i].servers);
 		VERBOSITY(3, (LOG_NOTICE, fmt, sockbuf, "udp", serverbuf));
 		assert(tcp[i].servers->size == servercnt);
 		addrport2str((void*)&tcp[i].addr.ai_addr, sockbuf, sizeof(sockbuf));
-		print_socket_servers(&tcp[i], serverbuf, serverbufsz);
+		(void)print_socket_servers(tcp[i].servers, serverbuf, serverbufsz);
 		nsd_bitset_or(servers, servers, tcp[i].servers);
 		VERBOSITY(3, (LOG_NOTICE, fmt, sockbuf, "tcp", serverbuf));
 	}
@@ -629,7 +576,6 @@ print_sockets(
 			                     "any specified ip-address", i+1);
 		}
 	}
-	free(serverbuf);
 	free(servers);
 }
 
@@ -1159,6 +1105,32 @@ main(int argc, char *argv[])
 		nsd.child_count = nsd.options->server_count;
 	}
 
+#ifdef USE_XDP
+	/* make sure we will spawn enough servers to serve all queues of the
+	 * selected network device, otherwise traffic to these queues will take
+	 * the non-af_xdp path */
+	if (nsd.options->xdp_interface) {
+		int res = ethtool_channels_get(nsd.options->xdp_interface);
+		if (res <= 0) {
+			log_msg(LOG_ERR,
+			        "xdp: could not determine netdev queue count: %s. "
+			        "(attempting to continue with 1 queue)",
+			        strerror(errno));
+			nsd.xdp.xdp_server.queue_count = 1;
+		} else {
+			nsd.xdp.xdp_server.queue_count = res;
+		}
+
+		if (nsd.child_count < nsd.xdp.xdp_server.queue_count) {
+			log_msg(LOG_NOTICE,
+			        "xdp configured but server-count not high enough to serve "
+			        "all netdev queues, raising server-count to %u",
+			        nsd.xdp.xdp_server.queue_count);
+			nsd.child_count = nsd.xdp.xdp_server.queue_count;
+		}
+	}
+#endif
+
 #ifdef SO_REUSEPORT
 	if(nsd.options->reuseport && nsd.child_count > 1) {
 		nsd.reuseport = nsd.child_count;
@@ -1475,6 +1447,23 @@ main(int argc, char *argv[])
 	}
 #endif
 
+#ifdef USE_XDP
+	/* Set XDP config */
+	nsd.xdp.xdp_server.region = nsd.region;
+	nsd.xdp.xdp_server.interface_name = nsd.options->xdp_interface;
+	nsd.xdp.xdp_server.bpf_prog_filename = nsd.options->xdp_program_path;
+	nsd.xdp.xdp_server.bpf_prog_should_load = nsd.options->xdp_program_load;
+	nsd.xdp.xdp_server.bpf_bpffs_path = nsd.options->xdp_bpffs_path;
+	nsd.xdp.xdp_server.force_copy = nsd.options->xdp_force_copy;
+	nsd.xdp.xdp_server.nsd = &nsd;
+
+	if (!nsd.options->xdp_interface)
+		log_msg(LOG_NOTICE, "XDP support is enabled, but not configured. Not using XDP.");
+
+	/* moved xdp_server_init to after privilege drop to prevent
+	 * problems with file ownership of bpf object pins. */
+#endif
+
 	print_sockets(nsd.udp, nsd.tcp, nsd.ifs);
 
 	/* Setup the signal handling... */
@@ -1517,6 +1506,12 @@ main(int argc, char *argv[])
 		if(!(nsd.rc = daemon_remote_create(nsd.options)))
 			error("could not perform remote control setup");
 	}
+#ifdef USE_METRICS
+	if(nsd.options->metrics_enable) {
+		if(!(nsd.metrics = daemon_metrics_create(nsd.options)))
+			error("could not perform metrics server setup");
+	}
+#endif /* USE_METRICS */
 #if defined(HAVE_SSL)
 	if(nsd.options->tls_service_key && nsd.options->tls_service_key[0]
 	   && nsd.options->tls_service_pem && nsd.options->tls_service_pem[0]) {
@@ -1647,9 +1642,35 @@ main(int argc, char *argv[])
 			nsd.pidfile, strerror(errno));
 	}
 
+#ifdef USE_XDP
+	if (nsd.options->xdp_interface) {
+		/* initializing xdp needs the CAP_SYS_ADMIN, therefore doing it
+		 * before privilege drop (and not keeping CAP_SYS_ADMIN) */
+		if (xdp_server_init(&nsd.xdp.xdp_server)) {
+			log_msg(LOG_ERR, "failed to initialize XDP... disabling XDP.");
+			nsd.options->xdp_interface = NULL;
+		}
+	}
+#endif
+
 	/* Drop the permissions */
 #ifdef HAVE_GETPWNAM
 	if (*nsd.username) {
+#ifdef USE_XDP
+		if (nsd.options->xdp_interface) {
+			/* tell kernel to keep (permitted) privileges across uid change */
+			if (!prctl(PR_SET_KEEPCAPS, 1)) {
+				/* only keep needed capabilities across privilege drop */
+				/* this needs to be close to the privilege drop to prevent issues
+				 * with other setup functions like tls setup */
+				set_caps(0);
+			} else {
+				log_msg(LOG_ERR, "couldn't set keep capabilities... disabling XDP.");
+				nsd.options->xdp_interface = NULL;
+			}
+		}
+#endif /* USE_XDP */
+
 #ifdef HAVE_INITGROUPS
 		if(initgroups(nsd.username, nsd.gid) != 0)
 			log_msg(LOG_WARNING, "unable to initgroups %s: %s",
@@ -1679,6 +1700,14 @@ main(int argc, char *argv[])
 
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "dropped user privileges, run as %s",
 			nsd.username));
+
+#ifdef USE_XDP
+		/* enable capabilities after privilege drop */
+		if (nsd.options->xdp_interface) {
+			/* re-enable needed capabilities and drop setuid/gid capabilities */
+			set_caps(1);
+		}
+#endif /* USE_XDP */
 	}
 #endif /* HAVE_GETPWNAM */
 

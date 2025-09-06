@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "dec 12, 2024" "NLnet Labs" "nsd 4.11.0"
+.TH "nsd.conf" "5" "Sep  3, 2025" "NLnet Labs" "nsd 4.13.0"
 .\" Copyright (c) 2001\-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -148,9 +148,14 @@ work on other systems.
 .TP
 .B send\-buffer\-size:\fR <number>
 Set the send buffer size for query-servicing sockets.  Set to 0 to use the default settings.
+It needs some space to be able to deal with packets that wait for local
+address resolution, from like ARP and NDP discovery, before they are sent
+out, hence it is elevated above the system default by default.
+The default is 4194304 bytes (4m).
 .TP
 .B receive\-buffer\-size:\fR <number>
 Set the receive buffer size for query-servicing sockets.  Set to 0 to use the default settings.
+The default is 1048576 bytes (1m).
 .TP
 .B debug\-mode:\fR <yes or no>
 Turns on debugging mode for nsd, does not fork a daemon process.
@@ -228,6 +233,7 @@ enabled.
 The maximum number of concurrent, active TCP connections by each server.
 Default is 100. Same as command-line option
 .BR \-n .
+That is the number of requests from clients to this server.
 .TP
 .B tcp\-reject\-overflow:\fR <yes or no>
 If set to yes, TCP connections made beyond the maximum set by tcp-count will
@@ -261,6 +267,7 @@ negotiation between NSD and other servers.
 .B xfrd\-tcp\-max:\fR <number>
 Number of sockets for xfrd to use for outgoing zone transfers. Default 128.
 Increase it to allow more zone transfer sockets, like to 256.
+That is for zone transfers requested by this server from other servers.
 To save memory, this can be lowered, set it lower together with some other
 settings to have reduced memory footprint for NSD. xfrd\-tcp\-max: 32
 and xfrd\-tcp\-pipeline: 128 and rrl\-size: 1000
@@ -272,7 +279,8 @@ size of the zone data.
 .TP
 .B xfrd\-tcp\-pipeline:\fR <number>
 Number of simultaneous outgoing zone transfers that are possible on the
-tcp sockets of xfrd. Max is 65536, default is 128.
+tcp sockets of xfrd. Max is 65536, default is 128. That is for zone transfers
+requested by this server from other servers.
 .TP
 .B ipv4\-edns\-size:\fR <number>
 Preferred EDNS buffer size for IPv4.  Default 1232.
@@ -437,7 +445,6 @@ regardless of this option.
 Write updated secondary zones to their zonefile every N seconds.  If the
 zone or pattern's "zonefile" option is set to "" (empty string), no zonefile
 is written. The default is 3600 (1 hour).
-.\" rrlstart
 .TP
 .B rrl\-size:\fR <numbuckets>
 This option gives the size of the hashtable. Default 1000000. More buckets
@@ -451,11 +458,13 @@ blocked and unblocked subnets are logged.  Blocked queries are blocked
 and some receive TCP fallback replies.  Once the rate limit is reached,
 NSD begins dropping responses. However, one in every "rrl\-slip" number
 of responses is allowed, with the TC bit set. If slip is set to 2, the
-outgoing response rate will be halved. If it's set to 3, the outgoing
+returned response rate will be halved. If it's set to 3, the returned
 response rate will be one\-third, and so on.  If you set rrl\-slip to 10,
 traffic is reduced to 1/10th.  Ratelimit options rrl\-ratelimit, rrl\-size and
 rrl\-whitelist\-ratelimit are updated when nsd\-control reconfig is done (also
 the zone\-specific ratelimit options are updated).
+If not compiled in the option is ignored, the ratelimit can be on or off
+by default by compile time configuration.
 .TP
 .B rrl\-slip:\fR <numpackets>
 This option controls the number of packets discarded before we send back a SLIP response
@@ -474,7 +483,6 @@ The max qps for query sorts for a source, which have been
 whitelisted. Default @ratelimit_default@ (with a suggested 2000 qps). With the rrl\-whitelist option you can set
 specific queries to receive this qps limit instead of the normal limit.
 With the value 0 the rate is unlimited.
-.\" rrlend
 .TP
 .B answer\-cookie:\fR <yes or no>
 Enable to answer to requests containing DNS Cookies as specified in RFC7873.
@@ -601,6 +609,89 @@ The port number for proxy protocol service. If the statement is given multiple
 times, additional port numbers can be used for proxy protocol service. The
 interface definitions that use this port number expect PROXYv2 proxy protocol
 traffic, for UDP, TCP and for TLS service.
+.TP
+.B xdp\-interface:\fR <string>
+The interface to use XDP with. This enables the use of AF_XDP sockets for UDP
+queries. Default is "", disabled. (EXPERIMENTAL)
+
+.\" Considerations probably need improvement in format and wording
+Considerations:
+.br
+\(bu If \fBcpu-affinity\fR is configured, please be aware of the cpu affinity
+of network device queues.
+.br
+\(bu The number of spawned servers depends on the number of combined rx/tx
+channels/queues of the selected interface. As many processes as there are
+combined channels on the specified interface will receive traffic via XDP.
+\fBserver-count\fR will be increased if necessary. If \fBserver-count\fR is
+higher, the excess processes will not use XDP.
+.br
+\(bu The PROXYv2 protocol, DNSTAP, and ratelimiting are currently not supported
+via XDP.
+.TP
+.B xdp\-program\-path:\fR <string>
+The eBPF XDP program to extract the XSKMAP from. Specify your own program here,
+if you want to use a custom XDP program. The default program shipped with NSD
+only redirects UDP (over Ethernet[+VLAN]+IPv4/6) traffic to port 53.
+When using your own XDP program, it needs to define a BPF_MAP_TYPE_XSKMAP
+named "xsks_map".
+
+This option needs to be set, even when NSD is configured not to load the
+specified XDP program (see \fBxdp-program-load\fR), to be able to determine the
+XSKMAP structure. In this case your XDP program needs to pin the above
+mentioned map in a bpffs (see \fBxdp-bpffs-path\fR).
+
+Default is "@sharedfilesdir@/xdp-dns-redirect_kern.o".
+.TP
+.B xdp\-program\-load:\fR <yes or no>
+Specify whether NSD should load the XDP program. If set to no, you need
+to load the XDP program yourself. Default is yes, if xdp-interface is set.
+.TP
+.B xdp\-bpffs\-path:\fR <string>
+The path to the bpffs to store/read the xsks_map pin. The default XDP
+program loaded by NSD doesn't need this option, it is only necessary if you
+load a program that pins its BPF map.
+
+If NSD is configured to load an XDP program that pins its map, NSD needs to have
+read/write/execute access to the specified bpffs to be able to create and later
+delete the map pin. If you load the XDP program yourself, NSD only needs read
+and write access to the pin file itself (but at least execute access to the
+parent directories). The default bpffs (/sys/fs/bpf) usually doesn't have the
+necessary permissions set for non-root users. You can either set the necessary
+permissions or mount your own bpffs.
+
+Default is "/sys/fs/bpf".
+.TP
+.B xdp\-force\-copy:\fR <yes or no>
+Force the use of XDP_COPY mode instead of zero copy for AF_XDP sockets. This
+can help with drivers with broken AF_XDP support. Default is no.
+.TP
+.B metrics\-enable:\fR <yes or no>
+Enable the prometheus metrics HTTP endpoint. It exposes the same statistics as
+the \fInsd\-control\fR(8) stats_noreset command, but with metric names
+following the prometheus specification. (Requires libevent2)
+
+To generate per zone metrics, specify the \fBzonestats\fR option on the desired
+zones.
+
+Beware, that when using \fInsd\-control\fR(8) stats (instead of stats_noreset),
+the statistics will be reset for the HTTP metrics endpoint as well.
+.TP
+.B metrics\-interface:\fR <ip4 or ip6 | interface name>
+NSD will bind to the listed addresses or interfaces to serve the prometheus
+metrics. Can be given multiple times to bind multiple ip\-addresses. Use
+0.0.0.0 and ::0 to bind to the wildcard interface.
+
+If an interface name is used instead of ip4 or ip6, the list of IP addresses
+associated with that interface is picked up and used at server start.
+
+Default is 127.0.0.1 and ::1.
+.TP
+.B metrics\-port:\fR <number>
+The port number for the HTTP service. Default is 9100.
+.TP
+.B metrics\-path:\fR <string>
+The HTTP path to expose the metrics at. Default is "/metrics".
 .SS "Remote Control"
 The
 .B remote\-control:
@@ -990,7 +1081,7 @@ configured with max\-refresh\-time, min\-refresh\-time, max\-retry\-time and
 min\-retry\-time if given.
 .TP
 .B zonestats:\fR <name>
-When compiled with \-\-enable\-zone\-stats NSD can collect statistics per zone.
+When not compiled without zone\-stats NSD can collect statistics per zone.
 This name gives the group where statistics are added to.  The groups are
 output from nsd\-control stats and stats_noreset.  Default is "".
 You can use "%s" to use the name of the zone to track its statistics.
@@ -999,7 +1090,6 @@ If not compiled in, the option can be given but is ignored.
 .B include\-pattern:\fR <pattern\-name>
 The options from the given pattern are included at this point.
 The referenced pattern must be defined above this zone.
-.\" rrlstart
 .TP
 .B rrl\-whitelist:\fR <rrltype>
 This option causes queries of this rrltype to be whitelisted, for this
@@ -1010,7 +1100,6 @@ employs to make different types not interfere with one another.  The types
 are logged in the loglines when a subnet is blocked (in verbosity 2).
 The RRL classification types are: nxdomain, error, referral, any, rrsig,
 wildcard, nodata, dnskey, positive, all.
-.\" rrlend
 .TP
 .B multi\-primary\-check:\fR <yes or no>
 Default no.  If enabled, checks all primaries for the last version.  It uses

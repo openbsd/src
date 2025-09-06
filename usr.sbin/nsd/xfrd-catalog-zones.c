@@ -324,7 +324,7 @@ label_plus_dname(const char* label, const dname_type* dname)
 	memmove(name.bytes + dname->label_count
 			+ 1 /* label_count increases by one */
 			+ 1 /* label type/length byte for label */ + ll,
-		((void*)dname) + sizeof(dname_type) + dname->label_count,
+		((char*)dname) + sizeof(dname_type) + dname->label_count,
 		dname->name_size);
 	memcpy(name.bytes + dname->label_count
 			+ 1 /* label_count increases by one */

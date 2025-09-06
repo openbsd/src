@@ -48,6 +48,12 @@
 struct xfrd_state;
 struct nsd_options;
 
+#ifdef BIND8_STATS
+struct nsdst;
+struct remote_stream;
+struct evbuffer;
+#endif /* BIND8_STATS */
+
 /* private, defined in remote.c to keep ssl.h out of this header */
 struct daemon_remote;
 
@@ -102,5 +108,91 @@ void daemon_remote_attach(struct daemon_remote* rc, struct xfrd_state* xfrd);
 int create_local_accept_sock(const char* path, int* noproto);
 
 void xfrd_reload_config(struct xfrd_state *xfrd);
+
+#ifdef BIND8_STATS
+
+/**
+ * Allocate stats temp arrays, for taking a coherent snapshot of the
+ * statistics values at that time.
+ * @param xfrd: the process that hosts the control connection.
+ * @param stats: where to store the stats pointer
+ * @param zonestats: where to store the zonestats pointer
+ */
+void process_stats_alloc(struct xfrd_state* xfrd,
+                         struct nsdst** stats,
+                         struct nsdst** zonestats);
+
+/**
+ * Grab a copy of the statistics, at this particular time.
+ * @param xfrd: the process that hosts the control connection.
+ * @param stattime: where to write the timeofday
+ * @param stats: where to copy the stats to
+ * @param zonestats: where to copy the zonestats to
+ */
+void process_stats_grab(struct xfrd_state* xfrd,
+                        struct timeval* stattime,
+                        struct nsdst* stats,
+                        struct nsdst** zonestats);
+/**
+ * Add the old and new processes stat values into the first part of the
+ * array of stats
+ * @param xfrd: the process that hosts the control connection.
+ * @param stats: the stats pointer
+ */
+void process_stats_add_old_new(struct xfrd_state* xfrd, struct nsdst* stats);
+
+/**
+ * Manage clearing of stats, a cumulative count of cleared statistics
+ * @param xfrd: the process that hosts the control connection.
+ * @param stats: the stats pointer
+ * @param peek: whether to reset the stats time (0) or not (1)
+ */
+void
+process_stats_manage_clear(struct xfrd_state* xfrd,
+                           struct nsdst* stats,
+                           int peek);
+
+/**
+ * Add up the statistics to get the total over the server children.
+ * @param xfrd: the process that hosts the control connection.
+ * @param total: where to store the total data
+ * @param stats: the stats pointer
+ */
+void process_stats_add_total(struct xfrd_state* xfrd,
+                             struct nsdst* total,
+                             struct nsdst* stats);
+
+/**
+ * Process the statistics and output them
+ * @param ssl: the remote stream to write normal remote-control output to
+ * @param evbuf: the HTTP buffer to write prometheus metrics output to
+ * @param xfrd: the process that hosts the control connection.
+ * @param peek: whether to reset the stats time (0) or not (1)
+ */
+void process_stats(struct remote_stream* ssl,
+                   struct evbuffer* evbuf,
+                   struct xfrd_state* xfrd,
+                   int peek);
+
+#ifdef USE_ZONE_STATS
+/**
+ * Process the zonestat statistics and output them
+ * @param ssl: the remote stream to write normal remote-control output to
+ * @param evbuf: the HTTP buffer to write prometheus metrics output to
+ * @param xfrd: the process that hosts the control connection.
+ * @param clear: whether to reset the stats time
+ * @param zonestats: the zonestats pointer
+ */
+void zonestat_print(struct remote_stream *ssl, struct evbuffer *evbuf,
+                    struct xfrd_state *xfrd, int clear,
+                    struct nsdst **zonestats);
+#endif /*USE_ZONE_STATS*/
+
+const char* opcode2str(int o);
+
+void timeval_subtract(struct timeval *d, const struct timeval *end,
+                      const struct timeval *start);
+
+#endif /* BIND8_STATS */
 
 #endif /* DAEMON_REMOTE_H */
