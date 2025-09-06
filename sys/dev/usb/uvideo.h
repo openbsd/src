@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.70 2025/09/04 07:43:29 kirill Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.71 2025/09/06 13:45:41 kirill Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -589,6 +589,25 @@ struct usb_video_format_desc {
 			uWord	wMaxMBperSecFourResolutionsFullScalability;
 		} h264;
 	} u;
+
+#define UVIDEO_FORMAT_LEN(fmt)							\
+	(									\
+	(((fmt)->bDescriptorSubtype == UDESCSUB_VS_FORMAT_H264) ||		\
+	 ((fmt)->bDescriptorSubtype == UDESCSUB_VS_FORMAT_H264_SIMULCAST)) ?	\
+		(offsetof(struct usb_video_format_desc, u) +			\
+		 sizeof(((struct usb_video_format_desc *)0)->u.h264)) :		\
+	((fmt)->bDescriptorSubtype == UDESCSUB_VS_FORMAT_FRAME_BASED) ?		\
+		(offsetof(struct usb_video_format_desc, u) +			\
+		 sizeof(((struct usb_video_format_desc *)0)->u.fb)) :		\
+	((fmt)->bDescriptorSubtype == UDESCSUB_VS_FORMAT_UNCOMPRESSED) ?	\
+		(offsetof(struct usb_video_format_desc, u) +			\
+		 sizeof(((struct usb_video_format_desc *)0)->u.uc)) :		\
+	((fmt)->bDescriptorSubtype == UDESCSUB_VS_FORMAT_MJPEG) ?		\
+		(offsetof(struct usb_video_format_desc, u) +			\
+		 sizeof(((struct usb_video_format_desc *)0)->u.mjpeg)) :	\
+	sizeof(struct usb_video_colorformat_desc)				\
+	)
+
 } __packed;
 
 /*

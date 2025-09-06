@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.264 2025/09/04 07:43:29 kirill Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.265 2025/09/06 13:45:41 kirill Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1046,45 +1046,33 @@ uvideo_vs_parse_desc_format(struct uvideo_softc *sc)
 		/* Crossed device function boundary. */
 		if (desc->bDescriptorType == UDESC_IFACE_ASSOC)
 			break;
-		if (desc->bDescriptorType != UDESC_CS_INTERFACE) {
-			desc = usbd_desc_iter_next(&iter);
-			continue;
-		}
+
+		if (desc->bDescriptorType != UDESC_CS_INTERFACE)
+			goto next;
+
+		if (desc->bLength != UVIDEO_FORMAT_LEN(desc))
+			goto next;
 
 		switch (desc->bDescriptorSubtype) {
 		case UDESCSUB_VS_COLORFORMAT:
-			if (desc->bLength == 6) {
-				uvideo_vs_parse_desc_colorformat(
-				    sc, desc);
-			}
+			uvideo_vs_parse_desc_colorformat(sc, desc);
 			break;
 		case UDESCSUB_VS_FORMAT_MJPEG:
-			if (desc->bLength == 11) {
-				uvideo_vs_parse_desc_format_mjpeg(
-				    sc, desc);
-			}
+			uvideo_vs_parse_desc_format_mjpeg(sc, desc);
 			break;
 		case UDESCSUB_VS_FORMAT_UNCOMPRESSED:
-			if (desc->bLength == 27) {
-				uvideo_vs_parse_desc_format_uncompressed(
-				    sc, desc);
-			}
+			uvideo_vs_parse_desc_format_uncompressed(sc, desc);
 			break;
 		case UDESCSUB_VS_FORMAT_FRAME_BASED:
-			if (desc->bLength == 28) {
-				uvideo_vs_parse_desc_format_frame_based(
-				    sc, desc);
-			}
+			uvideo_vs_parse_desc_format_frame_based(sc, desc);
 			break;
 		case UDESCSUB_VS_FORMAT_H264:
 		case UDESCSUB_VS_FORMAT_H264_SIMULCAST:
-			if (desc->bLength == 52) {
-				uvideo_vs_parse_desc_format_h264(
-				    sc, desc);
-			}
+			uvideo_vs_parse_desc_format_h264(sc, desc);
 			break;
 		}
 
+next:
 		desc = usbd_desc_iter_next(&iter);
 	}
 
@@ -2873,7 +2861,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 			case UDESCSUB_VC_SELECTOR_UNIT:
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
-				if (desc->bLength == 27) {
+				if (desc->bLength == UVIDEO_FORMAT_LEN(desc)) {
 					printf(" (UDESCSUB_VS_FORMAT_"
 					    "UNCOMPRESSED)\n");
 					uvideo_dump_desc_format_uncompressed(
@@ -2901,7 +2889,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 			case UDESCSUB_VC_EXTENSION_UNIT:
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
-				if (desc->bLength == 11) {
+				if (desc->bLength == UVIDEO_FORMAT_LEN(desc)) {
 					printf(" (UDESCSUB_VS_FORMAT_MJPEG)\n");
 					printf("|\n");
 					uvideo_dump_desc_format_mjpeg(sc, desc);
@@ -2925,7 +2913,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
 				printf(" (UDESCSUB_VS_FORMAT_FRAME_BASED)\n");
-				if (desc->bLength == 28) {
+				if (desc->bLength == UVIDEO_FORMAT_LEN(desc)) {
 					printf("|\n");
 					uvideo_dump_desc_format_frame_based(sc, desc);
 				}
@@ -2943,7 +2931,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
 				printf(" (UDESCSUB_VS_FORMAT_H264)\n");
-				if (desc->bLength == 52) {
+				if (desc->bLength == UVIDEO_FORMAT_LEN(desc)) {
 					printf("|\n");
 					uvideo_dump_desc_format_h264(sc, desc);
 				}
@@ -2961,7 +2949,7 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 				printf("bDescriptorSubtype=0x%02x",
 				    desc->bDescriptorSubtype);
 				printf(" (UDESCSUB_VS_FORMAT_H264_SIMULCAST)\n");
-				if (desc->bLength == 52) {
+				if (desc->bLength == UVIDEO_FORMAT_LEN(desc)) {
 					printf("|\n");
 					uvideo_dump_desc_format_h264(sc, desc);
 				}
