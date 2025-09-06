@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.4 2025/09/06 13:07:20 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.5 2025/09/06 16:13:48 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -553,7 +553,7 @@ serialize_ccr_content(struct validation_data *vd)
 {
 	CanonicalCacheRepresentation *ccr;
 	ContentInfo *ci = NULL;
-	unsigned char *out = NULL;
+	unsigned char *out;
 	int out_len, ci_der_len;
 
 	if ((ci = ContentInfo_new()) == NULL)
@@ -568,6 +568,7 @@ serialize_ccr_content(struct validation_data *vd)
 
 	ccr = generate_ccr(vd);
 
+	out = NULL;
 	if ((out_len = i2d_CanonicalCacheRepresentation(ccr, &out)) <= 0)
 		err(1, "i2d_CanonicalCacheRepresentation");
 
@@ -575,6 +576,8 @@ serialize_ccr_content(struct validation_data *vd)
 
 	if (!ASN1_OCTET_STRING_set(ci->content, out, out_len))
 		errx(1, "ASN1_OCTET_STRING_set");
+
+	free(out);
 
 	vd->ccr.der = NULL;
 	if ((ci_der_len = i2d_ContentInfo(ci, &vd->ccr.der)) <= 0)
