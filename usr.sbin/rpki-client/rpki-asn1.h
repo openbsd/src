@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.2 2025/08/23 09:13:14 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.3 2025/09/06 11:55:44 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -53,6 +53,8 @@ extern ASN1_ITEM_EXP ROAPayloadSets_it;
 extern ASN1_ITEM_EXP ROAPayloadSet_it;
 extern ASN1_ITEM_EXP ASPAPayloadSets_it;
 extern ASN1_ITEM_EXP ASPAPayloadSet_it;
+extern ASN1_ITEM_EXP SubjectKeyIdentifiers_it;
+extern ASN1_ITEM_EXP SubjectKeyIdentifier_it;
 
 typedef struct {
 	ASN1_OCTET_STRING *hash;
@@ -133,6 +135,28 @@ typedef struct {
 
 DECLARE_ASN1_FUNCTIONS(ASPAPayloadState);
 
+typedef ASN1_OCTET_STRING SubjectKeyIdentifier;
+
+DECLARE_ASN1_FUNCTIONS(SubjectKeyIdentifier);
+
+DECLARE_STACK_OF(SubjectKeyIdentifier);
+
+#ifndef DEFINE_STACK_OF
+#define sk_SubjectKeyIdentifier_push(st, i) \
+    SKM_sk_push(SubjectKeyIdentifier, (st), (i))
+#endif
+
+typedef STACK_OF(SubjectKeyIdentifier) SubjectKeyIdentifiers;
+
+DECLARE_ASN1_FUNCTIONS(SubjectKeyIdentifiers);
+
+typedef struct {
+	STACK_OF(SubjectKeyIdentifier) *skis;
+	ASN1_OCTET_STRING *hash;
+} TrustAnchorState;
+
+DECLARE_ASN1_FUNCTIONS(TrustAnchorState);
+
 typedef struct {
 	ASN1_INTEGER *version;
 	ASN1_OBJECT *hashAlg;
@@ -140,6 +164,7 @@ typedef struct {
 	ManifestState *mfts;
 	ROAPayloadState *vrps;
 	ASPAPayloadState *vaps;
+	TrustAnchorState *tas;
 } CanonicalCacheRepresentation;
 
 DECLARE_ASN1_FUNCTIONS(CanonicalCacheRepresentation);

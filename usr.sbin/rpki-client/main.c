@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.296 2025/09/05 17:38:03 job Exp $ */
+/*	$OpenBSD: main.c,v 1.297 2025/09/06 11:55:44 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -634,6 +634,8 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		cert = cert_read(b);
 		switch (cert->purpose) {
 		case CERT_PURPOSE_TA:
+			ccr_insert_tas(&vd->ccr.tas, cert);
+			/* FALLTHROUGH */
 		case CERT_PURPOSE_CA:
 			queue_add_from_cert(cert, &vd->ncas);
 			break;
@@ -1025,6 +1027,7 @@ main(int argc, char *argv[])
 	RB_INIT(&vd.ncas);
 	RB_INIT(&vd.ccr.mfts);
 	RB_INIT(&vd.ccr.vrps);
+	RB_INIT(&vd.ccr.tas);
 
 	/* If started as root, priv-drop to _rpki-client */
 	if (getuid() == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.260 2025/08/24 12:17:12 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.261 2025/09/06 11:55:44 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -476,12 +476,22 @@ RB_PROTOTYPE(ccr_mft_tree, ccr_mft, entry, ccr_mft_cmp);
 RB_HEAD(ccr_vrp_tree, vrp);
 RB_PROTOTYPE(ccr_vrp_tree, vrp, entry, ccr_vrp_cmp);
 
+struct ccr_tas_ski {
+	RB_ENTRY(ccr_tas_ski) entry;
+	unsigned char keyid[SHA_DIGEST_LENGTH];
+};
+
+RB_HEAD(ccr_tas_tree, ccr_tas_ski);
+RB_PROTOTYPE(ccr_tas_tree, ccr_tas_ski, entry, ccr_tas_ski_cmp);
+
 struct ccr {
 	struct ccr_mft_tree mfts;
 	struct ccr_vrp_tree vrps;
+	struct ccr_tas_tree tas;
 	char *mfts_hash;
 	char *vrps_hash;
 	char *vaps_hash;
+	char *tas_hash;
 	unsigned char *der;
 	size_t der_len;
 };
@@ -1018,6 +1028,7 @@ int		 output_ccr_der(FILE *, struct validation_data *, struct stats *);
  */
 void ccr_insert_mft(struct ccr_mft_tree *, const struct mft *);
 void ccr_insert_roa(struct ccr_vrp_tree *, const struct roa *);
+void ccr_insert_tas(struct ccr_tas_tree *, const struct cert *);
 void serialize_ccr_content(struct validation_data *);
 
 void		 logx(const char *fmt, ...)

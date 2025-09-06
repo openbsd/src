@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.2 2025/08/23 11:16:50 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.3 2025/09/06 11:55:44 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -41,15 +41,10 @@
  * BEGIN
  *
  * IMPORTS
- *   CONTENT-TYPE, Digest, DigestAlgorithmIdentifier
+ *   CONTENT-TYPE, Digest, DigestAlgorithmIdentifier, SubjectKeyIdentifier
  *   FROM CryptographicMessageSyntax-2010 -- in [RFC6268]
  *     { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
- *       pkcs-9(9) smime(16) modules(0) id-mod-cms-2009(58) };
- *
- *   KeyIdentifier
- *   FROM PKIX1Implicit88 -- in [RFC5280]
- *   { iso(1) identified-organization(3) dod(6) internet(1) security(5)
- *     mechanisms(5) pkix(7) id-mod(0) id-pkix1-implicit(19) }
+ *       pkcs-9(9) smime(16) modules(0) id-mod-cms-2009(58) }
  *
  * -- in [draft-spaghetti-sidrops-rpki-erik-protocol-01]
  * -- https://sobornost.net/~job/draft-spaghetti-sidrops-rpki-erik-protocol.html
@@ -62,6 +57,7 @@
  *   FROM RPKI-ROA-2023 -- in [RFC9582]
  *     { so(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
  *       pkcs9(9) smime(16) mod(0) id-mod-rpkiROA-2023(75) }
+ * ;
  *
  * ct-rpkiCanonicalCacheRepresentation CONTENT-TYPE ::=
  *   { TYPE RpkiCanonicalCacheRepresentation
@@ -78,11 +74,13 @@
  *   mfts      [1]     ManifestState OPTIONAL,
  *   vrps      [2]     ROAPayloadState OPTIONAL,
  *   vaps      [3]     ASPAPayloadState OPTIONAL,
+ *   tas       [4]     TrustAnchorState OPTIONAL,
  *   ... }
- *   -- at least one of mfts, vrps or vaps MUST be present
+ *   -- at least one of mfts, vrps, vaps, or tas MUST be present
  *   ( WITH COMPONENTS { ..., mfts PRESENT } |
  *     WITH COMPONENTS { ..., vrps PRESENT } |
- *     WITH COMPONENTS { ..., vaps PRESENT } )
+ *     WITH COMPONENTS { ..., vaps PRESENT } |
+ *     WITH COMPONENTS { ..., tas PRESENT } )
  *
  * ManifestState ::= SEQUENCE {
  *   mftrefs           SEQUENCE OF ManifestRef,
@@ -105,6 +103,10 @@
  *   asID              ASID
  *   providers         SEQUENCE (SIZE(1..MAX)) OF ASID }
  *
+ * TrustAnchorState ::= SEQUENCE {
+ *   skis              SEQUENCE (SIZE(1..MAX)) OF SubjectKeyIdentifier,
+ *   hash              Digest }
+ *
  * END
  */
 
@@ -116,6 +118,8 @@ ASN1_ITEM_EXP ROAPayloadSets_it;
 ASN1_ITEM_EXP ROAPayloadSet_it;
 ASN1_ITEM_EXP ASPAPayloadSets_it;
 ASN1_ITEM_EXP ASPAPayloadSet_it;
+ASN1_ITEM_EXP SubjectKeyIdentifiers_it;
+ASN1_ITEM_EXP SubjectKeyIdentifier_it;
 
 /*
  * Can't use CMS_ContentInfo since it is not backed by a public struct
@@ -136,6 +140,7 @@ ASN1_SEQUENCE(CanonicalCacheRepresentation) = {
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, mfts, ManifestState, 1),
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, vrps, ROAPayloadState, 2),
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, vaps, ASPAPayloadState, 3),
+	ASN1_EXP_OPT(CanonicalCacheRepresentation, tas, TrustAnchorState, 4),
 } ASN1_SEQUENCE_END(CanonicalCacheRepresentation);
 
 IMPLEMENT_ASN1_FUNCTIONS(CanonicalCacheRepresentation);
@@ -207,6 +212,24 @@ ASN1_SEQUENCE(ASPAPayloadSet) = {
 } ASN1_SEQUENCE_END(ASPAPayloadSet);
 
 IMPLEMENT_ASN1_FUNCTIONS(ASPAPayloadSet);
+
+IMPLEMENT_ASN1_TYPE_ex(SubjectKeyIdentifier, ASN1_OCTET_STRING, 0)
+IMPLEMENT_ASN1_FUNCTIONS(SubjectKeyIdentifier);
+
+ASN1_SEQUENCE(TrustAnchorState) = {
+	ASN1_SEQUENCE_OF(TrustAnchorState, skis, SubjectKeyIdentifier),
+	ASN1_SIMPLE(TrustAnchorState, hash, ASN1_OCTET_STRING),
+} ASN1_SEQUENCE_END(TrustAnchorState);
+
+IMPLEMENT_ASN1_FUNCTIONS(TrustAnchorState);
+
+ASN1_ITEM_TEMPLATE(SubjectKeyIdentifiers) =
+	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, tas,
+	    SubjectKeyIdentifier)
+ASN1_ITEM_TEMPLATE_END(SubjectKeyIdentifiers)
+
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(SubjectKeyIdentifiers,
+    SubjectKeyIdentifiers, SubjectKeyIdentifiers);
 
 static void
 asn1int_set_seqnum(ASN1_INTEGER *aint, const char *seqnum)
@@ -456,6 +479,44 @@ generate_aspapayloadstate(struct validation_data *vd)
 	return vaps;
 }
 
+static void
+append_tas_ski(STACK_OF(SubjectKeyIdentifier) *skis, struct ccr_tas_ski *cts)
+{
+	SubjectKeyIdentifier *ski;
+
+	if ((ski = SubjectKeyIdentifier_new()) == NULL)
+		errx(1, "SubjectKeyIdentifier_new");
+
+	if (!ASN1_OCTET_STRING_set(ski, cts->keyid, sizeof(cts->keyid)))
+		errx(1, "ASN1_OCTET_STRING_set");
+
+	if ((sk_SubjectKeyIdentifier_push(skis, ski)) <= 0)
+		errx(1, "sk_SubjectKeyIdentifier_push");
+}
+
+static TrustAnchorState *
+generate_trustanchorstate(struct validation_data *vd)
+{
+	TrustAnchorState *tas;
+	struct ccr_tas_ski *cts;
+
+	if ((tas = TrustAnchorState_new()) == NULL)
+		errx(1, "TrustAnchorState_new");
+
+	RB_FOREACH(cts, ccr_tas_tree, &vd->ccr.tas) {
+		append_tas_ski(tas->skis, cts);
+	}
+
+	hash_asn1_item(tas->hash, ASN1_ITEM_rptr(SubjectKeyIdentifiers),
+	    tas->skis);
+
+	if (base64_encode(tas->hash->data, tas->hash->length,
+	    &vd->ccr.tas_hash) == -1)
+		errx(1, "base64_encode");
+
+	return tas;
+}
+
 static CanonicalCacheRepresentation *
 generate_ccr(struct validation_data *vd)
 {
@@ -480,6 +541,9 @@ generate_ccr(struct validation_data *vd)
 
 	if ((ccr->vaps = generate_aspapayloadstate(vd)) == NULL)
 		errx(1, "generate_aspapayloadstate");
+
+	if ((ccr->tas = generate_trustanchorstate(vd)) == NULL)
+		errx(1, "generate_trustanchorstate");
 
 	return ccr;
 }
@@ -520,6 +584,30 @@ serialize_ccr_content(struct validation_data *vd)
 	ContentInfo_free(ci);
 }
 
+static inline int
+ccr_tas_ski_cmp(const struct ccr_tas_ski *a, const struct ccr_tas_ski *b)
+{
+	return memcmp(a->keyid, b->keyid, SHA_DIGEST_LENGTH);
+}
+
+RB_GENERATE(ccr_tas_tree, ccr_tas_ski, entry, ccr_tas_ski_cmp);
+
+void
+ccr_insert_tas(struct ccr_tas_tree *tree, const struct cert *cert)
+{
+	struct ccr_tas_ski *cts;
+
+	assert(cert->purpose == CERT_PURPOSE_TA);
+
+	if ((cts = calloc(1, sizeof(*cts))) == NULL)
+		err(1, NULL);
+
+	if ((hex_decode(cert->ski, cts->keyid, sizeof(cts->keyid))) != 0)
+		err(1, NULL);
+
+	if (RB_INSERT(ccr_tas_tree, tree, cts) != NULL)
+		errx(1, "CCR TAS tree corrupted");
+}
 
 static inline int
 ccr_mft_cmp(const struct ccr_mft *a, const struct ccr_mft *b)
