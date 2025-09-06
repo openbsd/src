@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.3 2025/09/06 11:55:44 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.4 2025/09/06 13:07:20 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -155,7 +155,7 @@ IMPLEMENT_ASN1_FUNCTIONS(ManifestState);
 
 ASN1_ITEM_TEMPLATE(ManifestRefs) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, mftrefs, ManifestRef)
-ASN1_ITEM_TEMPLATE_END(ManifestRefs)
+ASN1_ITEM_TEMPLATE_END(ManifestRefs);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(ManifestRefs, ManifestRefs, ManifestRefs);
 
@@ -178,7 +178,7 @@ IMPLEMENT_ASN1_FUNCTIONS(ROAPayloadState);
 
 ASN1_ITEM_TEMPLATE(ROAPayloadSets) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, rps, ROAPayloadSet)
-ASN1_ITEM_TEMPLATE_END(ROAPayloadSets)
+ASN1_ITEM_TEMPLATE_END(ROAPayloadSets);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(ROAPayloadSets, ROAPayloadSets,
     ROAPayloadSets);
@@ -226,7 +226,7 @@ IMPLEMENT_ASN1_FUNCTIONS(TrustAnchorState);
 ASN1_ITEM_TEMPLATE(SubjectKeyIdentifiers) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, tas,
 	    SubjectKeyIdentifier)
-ASN1_ITEM_TEMPLATE_END(SubjectKeyIdentifiers)
+ASN1_ITEM_TEMPLATE_END(SubjectKeyIdentifiers);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(SubjectKeyIdentifiers,
     SubjectKeyIdentifiers, SubjectKeyIdentifiers);
