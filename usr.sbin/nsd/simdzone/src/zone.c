@@ -157,12 +157,12 @@ static void close_file(
   assert(!is_string || file == &parser->first);
   assert(!is_string || file->handle == NULL);
   (void)parser;
-
+#ifndef NDEBUG
   const bool is_stdin = file->name &&
                         file->name != not_a_file &&
                         strcmp(file->name, "-") == 0;
   assert(!is_stdin || (!file->handle || file->handle == stdin));
-
+#endif
   if (file->buffer.data && !is_string)
     free(file->buffer.data);
   file->buffer.data = NULL;

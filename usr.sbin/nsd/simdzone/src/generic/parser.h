@@ -318,6 +318,11 @@ static int32_t refill(parser_t *parser)
   parser->file->buffer.length += (size_t)count;
   parser->file->buffer.data[parser->file->buffer.length] = '\0';
   parser->file->end_of_file = feof(parser->file->handle) != 0;
+
+  /* After the file, there is padding, that is used by vector instructions,
+   * initialise those bytes. */
+  memset(parser->file->buffer.data+parser->file->buffer.length+1, 0,
+    ZONE_BLOCK_SIZE);
   return 0;
 }
 

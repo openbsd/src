@@ -119,8 +119,14 @@ extern "C" {
 #define ZONE_TYPE_LOC (29u)
 /** Next domain @rfc{3755} @rfc{2535} @obsolete */
 #define ZONE_TYPE_NXT (30u)
+/** Endpoint Identifier */
+#define ZONE_TYPE_EID (31u)
+/** Nimrod Locator */
+#define ZONE_TYPE_NIMLOC (32u)
 /** Server Selection @rfc{2782} */
 #define ZONE_TYPE_SRV (33u)
+/** ATM Address */
+#define ZONE_TYPE_ATMA (34u)
 /** Naming Authority Pointer @rfc{2915} @rfc{2168} @rfc{3403} */
 #define ZONE_TYPE_NAPTR (35u)
 /** Key Exchanger @rfc{2230} */
@@ -131,6 +137,8 @@ extern "C" {
 #define ZONE_TYPE_A6 (38u)
 /** DNAME @rfc{6672} */
 #define ZONE_TYPE_DNAME (39u)
+/** SINK @draft{eastlake, kitchen-sink} */
+#define ZONE_TYPE_SINK (40u)
 /** Address Prefix List @rfc{3123} */
 #define ZONE_TYPE_APL (42u)
 /** Delegation Signer @rfc{4034} @rfc{3658} */
@@ -161,6 +169,8 @@ extern "C" {
 #define ZONE_TYPE_NINFO (56u)
 /** RKEY */
 #define ZONE_TYPE_RKEY (57u)
+/** Trust Anchor LINK @draft{ietf, dnsop-dnssec-trust-history} */
+#define ZONE_TYPE_TALINK (58u)
 /** Child DS @rfc{7344} */
 #define ZONE_TYPE_CDS (59u)
 /** DNSKEY(s) the Child wants reflected in DS @rfc{7344} */
@@ -175,6 +185,8 @@ extern "C" {
 #define ZONE_TYPE_SVCB (64u)
 /** Service binding @rfc{9460} */
 #define ZONE_TYPE_HTTPS (65u)
+/** Endpoint discovery for delegation synchronization @draft{ietf, dnsop-generalized-notify} */
+#define ZONE_TYPE_DSYNC (66u)
 /** Sender Policy Framework @rfc{7208} */
 #define ZONE_TYPE_SPF (99u)
 /** Node Identifier @rfc{6742} */
@@ -195,12 +207,18 @@ extern "C" {
 #define ZONE_TYPE_CAA (257u)
 /** DNS Authoritative Source (DNS-AS) */
 #define ZONE_TYPE_AVC (258u)
+/** Digital Object Architecture @draft{durand, doa-over-dns} */
+#define ZONE_TYPE_DOA (259u)
+/** Automatic Multicast Tunneling Relay @rfc{8777} */
+#define ZONE_TYPE_AMTRELAY (260u)
 /** Resolver Information as Key/Value Pairs @rfc{9606} */
 #define ZONE_TYPE_RESINFO (261u)
 /** Public wallet address */
 #define ZONE_TYPE_WALLET (262u)
 /** BP Convergence Layer Adapter */
 #define ZONE_TYPE_CLA (263u)
+/** BP Node Number */
+#define ZONE_TYPE_IPN (264u)
 /** DNSSEC Trust Authorities */
 #define ZONE_TYPE_TA (32768u)
 /** DNSSEC Lookaside Validation @rfc{4431} @obsolete */

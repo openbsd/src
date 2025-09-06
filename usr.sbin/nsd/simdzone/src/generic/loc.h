@@ -235,7 +235,7 @@ static really_inline int32_t scan_precision(
     return -1; // syntax error
 
   uint8_t exponent = 0;
-  while (centimeters >= poweroften[exponent+1] && exponent < 9)
+  while (exponent < 9 && centimeters >= poweroften[exponent+1])
     exponent++;
 
   uint8_t mantissa = (uint8_t)(centimeters / poweroften[exponent]);

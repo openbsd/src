@@ -1,14 +1,14 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to 1 if you have the declaration of `bswap16', and to 0 if you
+/* Define to 1 if you have the declaration of 'bswap16', and to 0 if you
    don't. */
 #undef HAVE_DECL_BSWAP16
 
-/* Define to 1 if you have the declaration of `bswap32', and to 0 if you
+/* Define to 1 if you have the declaration of 'bswap32', and to 0 if you
    don't. */
 #undef HAVE_DECL_BSWAP32
 
-/* Define to 1 if you have the declaration of `bswap64', and to 0 if you
+/* Define to 1 if you have the declaration of 'bswap64', and to 0 if you
    don't. */
 #undef HAVE_DECL_BSWAP64
 
@@ -21,7 +21,7 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `realpath' function. */
+/* Define to 1 if you have the 'realpath' function. */
 #undef HAVE_REALPATH
 
 /* Define to 1 if you have the <stdint.h> header file. */
@@ -72,7 +72,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS

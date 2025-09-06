@@ -87,6 +87,8 @@ static really_inline int32_t check_bytes(
 
 #define check_int32(...) check_bytes(__VA_ARGS__, sizeof(uint32_t))
 
+#define check_int64(...) check_bytes(__VA_ARGS__, sizeof(uint64_t))
+
 #define check_ip4(...) check_bytes(__VA_ARGS__, 4)
 
 #define check_ip6(...) check_bytes(__VA_ARGS__, 16)
@@ -732,7 +734,7 @@ static int32_t check_nsap_ptr_rr(
     const uint8_t *o = parser->rdata->octets;
     const rdata_info_t *f = type->rdata.fields;
 
-    if ((r = check(&c, check_name(parser, type, &f[0], o, n))))
+    if ((r = check(&c, check_string(parser, type, &f[0], o, n))))
       return r;
 
     if (c != n)
@@ -774,9 +776,9 @@ static int32_t parse_nsap_ptr_rdata(
   int32_t code;
   const rdata_info_t *fields = type->rdata.fields;
 
-  if ((code = have_contiguous(parser, type, &fields[0], token)) < 0)
+  if ((code = have_contiguous_or_quoted(parser, type, &fields[0], token)) < 0)
     return code;
-  if ((code = parse_name(parser, type, &fields[0], rdata, token)) < 0)
+  if ((code = parse_string(parser, type, &fields[0], rdata, token)) < 0)
     return code;
   if ((code = take_delimiter(parser, type, token)) < 0)
     return code;
@@ -1113,6 +1115,27 @@ static int32_t parse_nxt_rdata(
 }
 
 nonnull_all
+static int32_t check_eid_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  if ((uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets <= 0)
+    SYNTAX_ERROR(parser, "Invalid %s record", NAME(type));
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t parse_eid_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+
+  if ((code = parse_base16_sequence(parser, type, &fields[1], rdata, token)) < 0)
+    return code;
+  return check_eid_rr(parser, type, rdata);
+}
+
+nonnull_all
 static int32_t check_srv_rr(
   parser_t *parser, const type_info_t *type, const rdata_t *rdata)
 {
@@ -1155,6 +1178,32 @@ static int32_t parse_srv_rdata(
   if ((code = take_contiguous(parser, type, &fields[3], token)) < 0)
     return code;
   if ((code = parse_name(parser, type, &fields[3], rdata, token)) < 0)
+    return code;
+  if ((code = take_delimiter(parser, type, token)) < 0)
+    return code;
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t check_atma_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  assert(rdata->octets >= parser->rdata->octets);
+  if ((uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets > 2)
+    return accept_rr(parser, type, rdata);
+  SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
+}
+
+nonnull_all
+static int32_t parse_atma_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+
+  if ((code = have_contiguous(parser, type, &fields[0], token)) < 0)
+    return code;
+  if ((code = parse_atma(parser, type, &fields[0], rdata, token)) < 0)
     return code;
   if ((code = take_delimiter(parser, type, token)) < 0)
     return code;
@@ -1246,6 +1295,41 @@ static int32_t parse_cert_rdata(
 }
 
 nonnull_all
+static int32_t check_sink_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  // FIXME: implement actual checks
+  (void)type;
+
+  assert(rdata->octets >= parser->rdata->octets);
+  if ((uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets < 3)
+    SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t parse_sink_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+
+  if ((code = have_contiguous(parser, type, &fields[0], token)) < 0)
+    return code;
+  if ((code = parse_int8(parser, type, &fields[0], rdata, token)) < 0)
+    return code;
+  if ((code = take_contiguous(parser, type, &fields[1], token)) < 0)
+    return code;
+  if ((code = parse_int8(parser, type, &fields[1], rdata, token)) < 0)
+    return code;
+  take(parser, token);
+  if ((code = parse_base64_sequence(parser, type, &fields[3], rdata, token)) < 0)
+    return code;
+
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
 static int32_t check_apl_rr(
   parser_t *parser, const type_info_t *type, const rdata_t *rdata)
 {
@@ -1312,7 +1396,7 @@ static int32_t check_ds_rr(
       SEMANTIC_ERROR(parser, "Invalid digest in %s", NAME(type));
   }
 
-  if (c >= n)
+  if (c > n)
     SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
   return accept_rr(parser, type, rdata);
 }
@@ -1337,7 +1421,8 @@ static int32_t parse_ds_rdata(
   if ((code = parse_int8(parser, type, &fields[2], rdata, token)) < 0)
     return code;
   take(parser, token);
-  if ((code = parse_base16_sequence(parser, type, &fields[3], rdata, token)) < 0)
+  if (!(token->length == 1 && (char)*token->data == '0')
+  &&  (code = parse_base16_sequence(parser, type, &fields[3], rdata, token)) < 0)
     return code;
 
   const uint8_t digest_algorithm = parser->rdata->octets[3];
@@ -1707,7 +1792,7 @@ static int32_t check_dnskey_rr(
       (r = check(&c, check_int8(parser, type, &f[2], o+c, n-c))))
     return r;
 
-  if (c >= n)
+  if (c > n)
     SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
   return accept_rr(parser, type, rdata);
 }
@@ -1732,7 +1817,8 @@ static int32_t parse_dnskey_rdata(
   if ((code = parse_algorithm(parser, type, &fields[2], rdata, token)) < 0)
     return code;
   take(parser, token);
-  if ((code = parse_base64_sequence(parser, type, &fields[3], rdata, token)) < 0)
+  if (!(token->length == 1 && (char)*token->data == '0')
+  &&  (code = parse_base64_sequence(parser, type, &fields[3], rdata, token)) < 0)
     return code;
 
   return accept_rr(parser, type, rdata);
@@ -2190,6 +2276,70 @@ static int32_t parse_https_rdata(
 }
 
 nonnull_all
+static int32_t check_dsync_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  int32_t r;
+  size_t c = 0;
+  const size_t n = (uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets;
+  const uint8_t *o = parser->rdata->octets;
+  const rdata_info_t *f = type->rdata.fields;
+
+  if ((r = check(&c, check_int16(parser, type, &f[0], o, n))) ||
+      (r = check(&c, check_int8(parser, type, &f[1], o+c, n-c))) ||
+      (r = check(&c, check_int16(parser, type, &f[2], o+c, n-c))) ||
+      (r = check(&c, check_name(parser, type, &f[3], o+c, n-c))))
+    return r;
+
+  const uint8_t dsync_scheme = o[2];
+  uint16_t dsync_type;
+  memcpy(&dsync_type, o, sizeof(dsync_type));
+  dsync_type = be16toh(dsync_type);
+  if (dsync_scheme == 1 && dsync_type != ZONE_TYPE_CDS
+                        && dsync_type != ZONE_TYPE_CSYNC)
+    SEMANTIC_ERROR(parser, "Wrong type for scheme 1 in %s", NAME(type));
+
+  if (c > n)
+    SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t parse_dsync_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+
+  if ((code = have_contiguous(parser, type, &fields[0], token)) < 0)
+    return code;
+  if ((code = parse_type(parser, type, &fields[0], rdata, token)) < 0)
+    return code;
+  if ((code = take_contiguous(parser, type, &fields[1], token)) < 0)
+    return code;
+  if ((code = parse_int8(parser, type, &fields[1], rdata, token)) < 0)
+    return code;
+  if ((code = take_contiguous(parser, type, &fields[2], token)) < 0)
+    return code;
+  if ((code = parse_int16(parser, type, &fields[2], rdata, token)) < 0)
+    return code;
+  if ((code = take_contiguous(parser, type, &fields[3], token)) < 0)
+    return code;
+  if ((code = parse_name(parser, type, &fields[3], rdata, token)) < 0)
+    return code;
+
+  const uint8_t dsync_scheme = parser->rdata->octets[2];
+  uint16_t dsync_type;
+  memcpy(&dsync_type, parser->rdata->octets, sizeof(dsync_type));
+  dsync_type = be16toh(dsync_type);
+  if (dsync_scheme == 1 && dsync_type != ZONE_TYPE_CDS
+                        && dsync_type != ZONE_TYPE_CSYNC)
+    SEMANTIC_ERROR(parser, "Wrong type for scheme 1 in %s", NAME(type));
+
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
 static int32_t check_nid_rr(
   parser_t *parser, const type_info_t *type, const rdata_t *rdata)
 {
@@ -2439,6 +2589,255 @@ static int32_t parse_caa_rdata(
 }
 
 nonnull_all
+static int32_t check_doa_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  int32_t r;
+  size_t c = 0;
+  const size_t n = (uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets;
+  const uint8_t *o = parser->rdata->octets;
+  const rdata_info_t *f = type->rdata.fields;
+
+  if ((r = check(&c, check_int32(parser, type, &f[0], o, n))) ||
+      (r = check(&c, check_int32(parser, type, &f[1], o+c, n-c))) ||
+      (r = check(&c, check_int8(parser, type, &f[2], o+c, n-c))) ||
+      (r = check(&c, check_string(parser, type, &f[3], o+c, n-c))))
+    return r;
+  if (c > n)
+    SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t parse_doa_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+
+  if ((code = have_contiguous(parser, type, &fields[0], token)) < 0)
+    return code;
+  if ((code = parse_int32(parser, type, &fields[0], rdata, token)) < 0)
+    return code;
+  if ((code = take_contiguous(parser, type, &fields[1], token)) < 0)
+    return code;
+  if ((code = parse_int32(parser, type, &fields[1], rdata, token)) < 0)
+    return code;
+  if ((code = take_contiguous(parser, type, &fields[2], token)) < 0)
+    return code;
+  if ((code = parse_int8(parser, type, &fields[2], rdata, token)) < 0)
+    return code;
+  if ((code = take_quoted_or_contiguous(parser, type, &fields[3], token)) < 0)
+    return code;
+  if ((code = parse_string(parser, type, &fields[3], rdata, token)) < 0)
+    return code;
+  take(parser, token);
+  if (!(token->length == 1 && ((char)*token->data == '0' || (char)*token->data == '-'))
+  &&  (code = parse_base64_sequence(parser, type, &fields[4], rdata, token)) < 0)
+    return code;
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t check_amtrelay_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata);
+
+nonnull_all
+static int32_t parse_amtrelay_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token);
+
+diagnostic_push()
+gcc_diagnostic_ignored(missing-field-initializers)
+clang_diagnostic_ignored(missing-field-initializers)
+
+static const rdata_info_t amtrelay_ipv4_rdata_fields[] = {
+  FIELD("precedence"),
+  FIELD("discovery optional"),
+  FIELD("type"),
+  FIELD("relay")
+};
+
+static const type_info_t amtrelay_ipv4[] = {
+  TYPE("AMTRELAY", ZONE_TYPE_AMTRELAY, ZONE_CLASS_IN, FIELDS(amtrelay_ipv4_rdata_fields),
+                   check_amtrelay_rr, parse_amtrelay_rdata),
+};
+
+static const rdata_info_t amtrelay_ipv6_rdata_fields[] = {
+  FIELD("precedence"),
+  FIELD("discovery optional"),
+  FIELD("type"),
+  FIELD("relay")
+};
+
+static const type_info_t amtrelay_ipv6[] = {
+  TYPE("AMTRELAY", ZONE_TYPE_AMTRELAY, ZONE_CLASS_IN, FIELDS(amtrelay_ipv6_rdata_fields),
+                   check_amtrelay_rr, parse_amtrelay_rdata),
+};
+
+diagnostic_pop()
+
+nonnull_all
+static int32_t check_amtrelay_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  int32_t r;
+  size_t c = 0;
+  const size_t n = (uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets;
+  const uint8_t *o = parser->rdata->octets;
+  const type_info_t *t = type;
+  const rdata_info_t *f = type->rdata.fields;
+
+  if ((r = check(&c, check_int8(parser, type, &f[0], o, n))) ||
+      (r = check(&c, check_int8(parser, type, &f[2], o+c, n-c))))
+    return r;
+
+  switch (parser->rdata->octets[1] & 0x7f) {
+    case 1: /* IPv4 address */
+      t = (const type_info_t *)amtrelay_ipv4;
+      f = amtrelay_ipv4_rdata_fields;
+      if ((r = check(&c, check_ip4(parser, t, &f[3], o+c, n-c))) < 0)
+        return r;
+      break;
+    case 2: /* IPv6 address */
+      t = (const type_info_t *)amtrelay_ipv6;
+      f = amtrelay_ipv6_rdata_fields;
+      if ((r = check(&c, check_ip6(parser, t, &f[3], o+c, n-c))) < 0)
+        return r;
+      break;
+    case 0: /* no gateway */
+      break;
+    case 3: /* domain name */
+      if ((r = check(&c, check_name(parser, t, &f[3], o+c, n-c))) < 0)
+        return r;
+      break;
+    default:
+      SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
+  }
+  if (c < n)
+    SYNTAX_ERROR(parser, "Trailing data in %s", NAME(t));
+  return accept_rr(parser, t, rdata);
+}
+
+nonnull_all
+static int32_t parse_amtrelay_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+  uint8_t *octets = rdata->octets;
+  uint8_t D;
+
+  if ((code = have_contiguous(parser, type, &fields[0], token)) < 0)
+    return code;
+  if ((code = parse_int8(parser, type, &fields[0], rdata, token)) < 0)
+    return code;
+
+  if ((code = take_contiguous(parser, type, &fields[1], token)) < 0)
+    return code;
+  if (token->length != 1)
+    SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(&fields[1]), NAME(type));
+  switch((char)*token->data) {
+    case '0':
+      D = 0x00;
+      break;
+    case '1':
+      D = 0x80;
+      break;
+    default :
+      SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(&fields[1]), NAME(type));
+  }
+
+  if ((code = take_contiguous(parser, type, &fields[2], token)) < 0)
+    return code;
+  if ((code = parse_int8(parser, type, &fields[2], rdata, token)) < 0)
+    return code;
+
+  if (octets[1]) {
+    if ((code = take_contiguous(parser, type, &fields[3], token)) < 0)
+      return code;
+    switch (octets[1]) {
+      case 1: /* IPv4 address */
+        type = (const type_info_t *)amtrelay_ipv4;
+        fields = type->rdata.fields;
+        if ((code = parse_ip4(parser, type, &fields[3], rdata, token)) < 0)
+          return code;
+        break;
+      case 2: /* IPv6 address */
+        type = (const type_info_t *)amtrelay_ipv6;
+        fields = type->rdata.fields;
+        if ((code = parse_ip6(parser, type, &fields[3], rdata, token)) < 0)
+          return code;
+        break;
+      case 3: /* domain name */
+        if ((code = parse_name(parser, type, &fields[3], rdata, token)) < 0)
+          return code;
+        break;
+      default:
+        SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(&fields[3]), NAME(type));
+    }
+  }
+  octets[1] |= D;
+  if ((code = take_delimiter(parser, type, token)) < 0)
+    return code;
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t check_ipn_rr(
+  parser_t *parser, const type_info_t *type, const rdata_t *rdata)
+{
+  int32_t r;
+  size_t c = 0;
+  const size_t n = (uintptr_t)rdata->octets - (uintptr_t)parser->rdata->octets;
+  const uint8_t *o = parser->rdata->octets;
+  const rdata_info_t *f = type->rdata.fields;
+
+  if ((r = check(&c, check_int64(parser, type, &f[0], o, n))))
+    return r;
+  if (c > n)
+    SYNTAX_ERROR(parser, "Invalid %s", NAME(type));
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
+static int32_t parse_ipn_rdata(
+  parser_t *parser, const type_info_t *type, rdata_t *rdata, token_t *token)
+{
+  int32_t code;
+  const rdata_info_t *fields = type->rdata.fields;
+  token_t left, right;
+
+  /* draft-johnson-dns-ipn-cla-07 Section 3.1. IPN:
+   *   Presentation format for these resource records are either a 64 bit
+   *   unsigned decimal integer, or two 32 bit unsigned decimal integers
+   *   delimited by a period with the most significant 32 bits first and least
+   *   significant 32 bits last.
+   */
+  if ((code = have_contiguous(parser, type, &fields[0], token)) < 0)
+    return code;
+  if (!(right.data = memchr(token->data, '.', token->length))) {
+    if ((code = parse_int64(parser, type, &fields[0], rdata, token)) < 0)
+      return code;
+    if ((code = take_delimiter(parser, type, token)) < 0)
+      return code;
+    return accept_rr(parser, type, rdata);
+  }
+  left.code = token->code;
+  left.data = token->data;
+  left.length = (size_t)(right.data - token->data);
+  right.code = token->code;
+  right.data += 1;
+  right.length = token->length - left.length - 1;
+  if ((code = parse_int32(parser, type, &fields[0], rdata, &left)) < 0)
+	  return code;
+  if ((code = parse_int32(parser, type, &fields[0], rdata, &right)) < 0)
+	  return code;
+  if ((code = take_delimiter(parser, type, token)) < 0)
+    return code;
+  return accept_rr(parser, type, rdata);
+}
+
+nonnull_all
 static int32_t check_generic_rr(
   parser_t *parser, const type_info_t *type, const rdata_t *rdata)
 {
@@ -2654,11 +3053,23 @@ static const rdata_info_t nxt_rdata_fields[] = {
   FIELD("type bit map")
 };
 
+static const rdata_info_t eid_rdata_fields[] = {
+  FIELD("end point identifier")
+};
+
+static const rdata_info_t nimloc_rdata_fields[] = {
+  FIELD("nimrod locator")
+};
+
 static const rdata_info_t srv_rdata_fields[] = {
   FIELD("priority"),
   FIELD("weight"),
   FIELD("port"),
   FIELD("target")
+};
+
+static const rdata_info_t atma_rdata_fields[] = {
+  FIELD("address")
 };
 
 static const rdata_info_t naptr_rdata_fields[] = {
@@ -2696,6 +3107,12 @@ static const rdata_info_t cert_rdata_fields[] = {
 
 static const rdata_info_t dname_rdata_fields[] = {
   FIELD("source")
+};
+
+static const rdata_info_t sink_rdata_fields[] = {
+  FIELD("coding"),
+  FIELD("subcoding"),
+  FIELD("data")
 };
 
 static const rdata_info_t apl_rdata_fields[] = {
@@ -2818,6 +3235,12 @@ static const rdata_info_t rkey_rdata_fields[] = {
   FIELD("publickey")
 };
 
+// https://www.iana.org/assignments/dns-parameters/TALINK/talink-completed-template
+static const rdata_info_t talink_rdata_fields[] = {
+  FIELD("start or previous"),
+  FIELD("end or next")
+};
+
 static const rdata_info_t openpgpkey_rdata_fields[] = {
   FIELD("key")
 };
@@ -2845,6 +3268,13 @@ static const rdata_info_t https_rdata_fields[] = {
   FIELD("priority"),
   FIELD("target"),
   FIELD("params")
+};
+
+static const rdata_info_t dsync_rdata_fields[] = {
+  FIELD("rrtype"),
+  FIELD("scheme"),
+  FIELD("port"),
+  FIELD("target")
 };
 
 static const rdata_info_t spf_rdata_fields[] = {
@@ -2899,6 +3329,25 @@ static const rdata_info_t avc_rdata_fields[] = {
   FIELD("text")
 };
 
+// draft-durand-doa-over-dns-02
+static const rdata_info_t doa_rdata_fields[] = {
+  FIELD("enterprise"),
+  FIELD("type"),
+  FIELD("location"),
+  FIELD("media type"),
+  FIELD("data")
+};
+
+// RFC 8777
+// AMTRELAY is different because the rdata depends on the type
+static const rdata_info_t amtrelay_rdata_fields[] = {
+  FIELD("precedence"),
+  FIELD("discovery optional"),
+  FIELD("type"),
+  FIELD("relay"),
+};
+
+
 // RFC 9606
 static const rdata_info_t resinfo_rdata_fields[] = {
   FIELD("text")
@@ -2912,6 +3361,12 @@ static const rdata_info_t wallet_rdata_fields[] = {
 // https://www.iana.org/assignments/dns-parameters/CLA/cla-completed-template
 static const rdata_info_t cla_rdata_fields[] = {
   FIELD("text")
+};
+
+// https://www.iana.org/assignments/dns-parameters/IPN/ipn-completed-template
+// and https://datatracker.ietf.org/doc/draft-johnson-dns-ipn-cla/07/
+static const rdata_info_t ipn_rdata_fields[] = {
+  FIELD("CBHE Node Number")
 };
 
 static const rdata_info_t ta_rdata_fields[] = {
@@ -2992,15 +3447,14 @@ static const type_info_t types[] = {
               check_loc_rr, parse_loc_rdata),
   TYPE("NXT", ZONE_TYPE_NXT, ZONE_CLASS_ANY, FIELDS(nxt_rdata_fields), // obsolete
               check_nxt_rr, parse_nxt_rdata),
-
-  UNKNOWN_TYPE(31),
-  UNKNOWN_TYPE(32),
-
+  TYPE("EID", ZONE_TYPE_EID, ZONE_CLASS_IN, FIELDS(eid_rdata_fields),
+              check_eid_rr, parse_eid_rdata),
+  TYPE("NIMLOC", ZONE_TYPE_NIMLOC, ZONE_CLASS_IN, FIELDS(nimloc_rdata_fields),
+              check_eid_rr, parse_eid_rdata),
   TYPE("SRV", ZONE_TYPE_SRV, ZONE_CLASS_IN, FIELDS(srv_rdata_fields),
               check_srv_rr, parse_srv_rdata),
-
-  UNKNOWN_TYPE(34),
-
+  TYPE("ATMA", ZONE_TYPE_ATMA, ZONE_CLASS_IN, FIELDS(atma_rdata_fields),
+               check_atma_rr, parse_atma_rdata),
   TYPE("NAPTR", ZONE_TYPE_NAPTR, ZONE_CLASS_IN, FIELDS(naptr_rdata_fields),
                 check_naptr_rr, parse_naptr_rdata),
   TYPE("KX", ZONE_TYPE_KX, ZONE_CLASS_IN, FIELDS(kx_rdata_fields),
@@ -3013,7 +3467,8 @@ static const type_info_t types[] = {
   TYPE("DNAME", ZONE_TYPE_DNAME, ZONE_CLASS_ANY, FIELDS(dname_rdata_fields),
                 check_ns_rr, parse_ns_rdata),
 
-  UNKNOWN_TYPE(40),
+  TYPE("SINK", ZONE_TYPE_SINK, ZONE_CLASS_ANY, FIELDS(sink_rdata_fields),
+               check_sink_rr, parse_sink_rdata),
   UNKNOWN_TYPE(41),
 
   TYPE("APL", ZONE_TYPE_APL, ZONE_CLASS_IN, FIELDS(apl_rdata_fields),
@@ -3048,10 +3503,9 @@ static const type_info_t types[] = {
   TYPE("NINFO", ZONE_TYPE_NINFO, ZONE_CLASS_ANY, FIELDS(ninfo_rdata_fields),
               check_txt_rr, parse_txt_rdata),
   TYPE("RKEY", ZONE_TYPE_RKEY, ZONE_CLASS_ANY, FIELDS(rkey_rdata_fields),
-                 check_dnskey_rr, parse_dnskey_rdata),
-
-  UNKNOWN_TYPE(58),
-
+               check_dnskey_rr, parse_dnskey_rdata),
+  TYPE("TALINK", ZONE_TYPE_TALINK, ZONE_CLASS_ANY, FIELDS(talink_rdata_fields),
+                 check_minfo_rr, parse_minfo_rdata),
   TYPE("CDS", ZONE_TYPE_CDS, ZONE_CLASS_ANY, FIELDS(cds_rdata_fields),
               check_ds_rr, parse_ds_rdata),
   TYPE("CDNSKEY", ZONE_TYPE_CDNSKEY, ZONE_CLASS_ANY, FIELDS(cdnskey_rdata_fields),
@@ -3066,8 +3520,8 @@ static const type_info_t types[] = {
                check_svcb_rr, parse_svcb_rdata),
   TYPE("HTTPS", ZONE_TYPE_HTTPS, ZONE_CLASS_IN, FIELDS(https_rdata_fields),
                 check_https_rr, parse_https_rdata),
-
-  UNKNOWN_TYPE(66),
+  TYPE("DSYNC", ZONE_TYPE_DSYNC, ZONE_CLASS_ANY, FIELDS(dsync_rdata_fields),
+                check_dsync_rr, parse_dsync_rdata),
   UNKNOWN_TYPE(67),
   UNKNOWN_TYPE(68),
   UNKNOWN_TYPE(69),
@@ -3275,23 +3729,29 @@ static const type_info_t types[] = {
               check_caa_rr, parse_caa_rdata),
   TYPE("AVC", ZONE_TYPE_AVC, ZONE_CLASS_ANY, FIELDS(avc_rdata_fields),
               check_txt_rr, parse_txt_rdata),
-
-  UNKNOWN_TYPE(259),
-  UNKNOWN_TYPE(260),
-
+  TYPE("DOA", ZONE_TYPE_DOA, ZONE_CLASS_ANY, FIELDS(doa_rdata_fields),
+              check_doa_rr, parse_doa_rdata),
+  TYPE("AMTRELAY", ZONE_TYPE_AMTRELAY, ZONE_CLASS_ANY, FIELDS(amtrelay_rdata_fields),
+              check_amtrelay_rr, parse_amtrelay_rdata),
   TYPE("RESINFO", ZONE_TYPE_RESINFO, ZONE_CLASS_ANY, FIELDS(resinfo_rdata_fields),
               check_txt_rr, parse_txt_rdata),
   TYPE("WALLET", ZONE_TYPE_WALLET, ZONE_CLASS_ANY, FIELDS(wallet_rdata_fields),
               check_txt_rr, parse_txt_rdata),
   TYPE("CLA", ZONE_TYPE_CLA, ZONE_CLASS_ANY, FIELDS(cla_rdata_fields),
               check_txt_rr, parse_txt_rdata),
+  TYPE("IPN", ZONE_TYPE_IPN, ZONE_CLASS_ANY, FIELDS(ipn_rdata_fields),
+              check_ipn_rr, parse_ipn_rdata),
 
-  UNKNOWN_TYPE(264),
+  UNKNOWN_TYPE(265),
+  UNKNOWN_TYPE(266),
+  UNKNOWN_TYPE(267),
+  UNKNOWN_TYPE(268),
+  UNKNOWN_TYPE(269),
 
-  /* Map 32768 in hash.c to 265 */
+  /* Map 32768 in hash.c to 270 */
   TYPE("TA", ZONE_TYPE_TA, ZONE_CLASS_ANY, FIELDS(ta_rdata_fields), // obsolete
               check_ds_rr, parse_ds_rdata),
-  /* Map 32769 in hash.c to 266 */
+  /* Map 32769 in hash.c to 271 */
   TYPE("DLV", ZONE_TYPE_DLV, ZONE_CLASS_ANY, FIELDS(dlv_rdata_fields), // obsolete
               check_ds_rr, parse_ds_rdata)
 };

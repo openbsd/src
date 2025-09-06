@@ -87,7 +87,7 @@ enum instruction_set {
 
 #if defined(__PPC64__)
 
-static inline uint32_t detect_supported_architectures() {
+static inline uint32_t detect_supported_architectures(void) {
   return ALTIVEC;
 }
 
@@ -95,13 +95,13 @@ static inline uint32_t detect_supported_architectures() {
 
 #if defined(__ARM_NEON)
 
-static inline uint32_t detect_supported_architectures() {
+static inline uint32_t detect_supported_architectures(void) {
   return NEON;
 }
 
 #else // ARM without NEON
 
-static inline uint32_t detect_supported_architectures() {
+static inline uint32_t detect_supported_architectures(void) {
   return DEFAULT;
 }
 
@@ -260,7 +260,7 @@ static inline uint32_t detect_supported_architectures(void)
 }
 #else // fallback
 
-static inline uint32_t detect_supported_architectures() {
+static inline uint32_t detect_supported_architectures(void) {
   return DEFAULT;
 }
 
