@@ -9,7 +9,6 @@ n1=`namegen`
 expect 0 mkdir ${n0} 0755
 
 if [ ${CHFLAGS} == "no" ]; then
-	expect 0 mkdir ${n0} 0755
 	expect EOPNOTSUPP chflags ${n0} SF_IMMUTABLE
 	expect 0 rmdir ${n0}
 	return 0
