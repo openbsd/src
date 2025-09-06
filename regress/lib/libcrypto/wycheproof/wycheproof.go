@@ -1,7 +1,7 @@
-/* $OpenBSD: wycheproof.go,v 1.181 2025/09/05 14:11:39 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.182 2025/09/06 03:57:54 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
- * Copyright (c) 2018,2019,2022-2024 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -86,7 +86,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"slices"
 	"strings"
 	"sync"
 	"unsafe"
@@ -1860,6 +1859,15 @@ func runECDSATest(ecKey *C.EC_KEY, md *C.EVP_MD, nid int, variant testVariant, w
 
 	var ret C.int
 	if variant == Webcrypto || variant == P1363 {
+		order_bytes := int((C.EC_GROUP_order_bits(C.EC_KEY_get0_group(ecKey)) + 7) / 8)
+		if len(wt.Sig) / 2 != 2 * order_bytes {
+			if wt.Result == "valid" {
+				fmt.Printf("FAIL: %s - incorrect signature length, %d, %d\n", wt, len(wt.Sig) / 2, 2 * order_bytes)
+				return false
+			}
+			return true
+		}
+
 		cDer, derLen := encodeECDSAWebCryptoSig(wt.Sig)
 		if cDer == nil {
 			fmt.Print("FAIL: unable to decode signature")
@@ -1876,7 +1884,7 @@ func runECDSATest(ecKey *C.EC_KEY, md *C.EVP_MD, nid int, variant testVariant, w
 
 	// XXX audit acceptable cases...
 	success := true
-	if ret == 1 != (wt.Result == "valid") && wt.Result != "acceptable" && !slices.Contains(wt.Flags, "SignatureSize") {
+	if ret == 1 != (wt.Result == "valid") && wt.Result != "acceptable" {
 		fmt.Printf("FAIL: %s - ECDSA_verify() = %d.\n", wt, int(ret))
 		success = false
 	}
