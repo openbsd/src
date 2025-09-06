@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.15 2025/09/02 17:18:40 helg Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.16 2025/09/06 06:15:52 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -20,9 +20,9 @@
 #define _SYS_FUSEBUF_H_
 
 /*
- * Fusebufs are of a single size, 4096 bytes.
+ * Maximum size of the read or write buffer sent from the kernel for VFS
+ * syscalls: read, readdir, readlink, write.
  */
-#define	FUSEBUFSIZE	(sizeof(struct fusebuf))
 #define FUSEBUFMAXSIZE	(4096*1024)
 
 /* header at beginning of each fusebuf: */

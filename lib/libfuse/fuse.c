@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.53 2025/09/02 17:18:40 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.54 2025/09/06 06:15:52 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/wait.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
+#include <sys/uio.h>
 
 #include <miscfs/fuse/fusefs.h>
 
@@ -154,9 +154,10 @@ fuse_loop(struct fuse *fuse)
 {
 	struct fusebuf fbuf;
 	struct fuse_context ctx;
-	struct fb_ioctl_xch ioexch;
 	struct kevent event[5];
 	struct kevent ev;
+	struct iovec iov[2];
+	size_t fb_dat_size = FUSEBUFMAXSIZE;
 	ssize_t n;
 	int ret;
 
@@ -180,6 +181,14 @@ fuse_loop(struct fuse *fuse)
 	EV_SET(&event[4], SIGTERM, EVFILT_SIGNAL, EV_ADD |
 	    EV_ENABLE, 0, 0, 0);
 
+	/* prepare the read and write data buffer */
+	fbuf.fb_dat = malloc(fb_dat_size);
+	if (fbuf.fb_dat == NULL)
+		return (-1);
+	iov[0].iov_base = &fbuf;
+	iov[0].iov_len  = sizeof(fbuf.fb_hdr) + sizeof(fbuf.FD);
+	iov[1].iov_base = fbuf.fb_dat;
+
 	while (!fuse->fc->dead) {
 		ret = kevent(fuse->fc->kq, &event[0], 5, &ev, 1, NULL);
 		if (ret == -1) {
@@ -201,27 +210,38 @@ fuse_loop(struct fuse *fuse)
 					strsignal(signum));
 			}
 		} else if (ret > 0) {
-			n = read(fuse->fc->fd, &fbuf, sizeof(fbuf));
-			if (n != sizeof(fbuf)) {
+			iov[1].iov_len = fb_dat_size;
+			n = readv(fuse->fc->fd, iov, 2);
+			if (n == -1) {
+				perror("fuse_loop");
+				fprintf(stderr, "%s: bad fusebuf read: %s\n",
+				    __func__, strerror(errno));
+				free(fbuf.fb_dat);
+				return (-1);
+			}
+			if (n < (ssize_t)sizeof(fbuf.fb_hdr)) {
 				fprintf(stderr, "%s: bad fusebuf read\n",
 				    __func__);
+				free(fbuf.fb_dat);
+				return (-1);
+			}
+			if ((size_t)n != sizeof(fbuf.fb_hdr) + sizeof(fbuf.FD) +
+                            fbuf.fb_len) {
+				fprintf(stderr, "%s: bad fusebuf read\n",
+				    __func__);
+				free(fbuf.fb_dat);
 				return (-1);
 			}
 
-			/* check if there is data something present */
-			if (fbuf.fb_len) {
-				fbuf.fb_dat = malloc(fbuf.fb_len);
-				if (fbuf.fb_dat == NULL)
-					return (-1);
-				ioexch.fbxch_uuid = fbuf.fb_uuid;
-				ioexch.fbxch_len = fbuf.fb_len;
-				ioexch.fbxch_data = fbuf.fb_dat;
-
-				if (ioctl(fuse->fc->fd, FIOCGETFBDAT,
-				    &ioexch) == -1) {
-					free(fbuf.fb_dat);
-					return (-1);
-				}
+			/*
+			 * fuse_ops check that they do not write more than
+			 * fb_io_len when writing to fb_dat
+			 */
+			if (fbuf.fb_io_len > fb_dat_size) {
+				fprintf(stderr, "%s: io exceeds buffer size\n",
+				    __func__);
+				free(fbuf.fb_dat);
+				return (-1);
 			}
 
 			ctx.fuse = fuse;
@@ -235,35 +255,25 @@ fuse_loop(struct fuse *fuse)
 			ret = ifuse_exec_opcode(fuse, &fbuf);
 			if (ret) {
 				ictx = NULL;
+				free(fbuf.fb_dat);
 				return (-1);
 			}
 
-			n = write(fuse->fc->fd, &fbuf, sizeof(fbuf));
-			if (fbuf.fb_len) {
-				if (fbuf.fb_dat == NULL) {
-					fprintf(stderr, "%s: fb_dat is Null\n",
-					    __func__);
-					return (-1);
-				}
-				ioexch.fbxch_uuid = fbuf.fb_uuid;
-				ioexch.fbxch_len = fbuf.fb_len;
-				ioexch.fbxch_data = fbuf.fb_dat;
+			iov[1].iov_len = fbuf.fb_len;
+			n = writev(fuse->fc->fd, iov, 2);
 
-				if (ioctl(fuse->fc->fd, FIOCSETFBDAT, &ioexch) == -1) {
-					free(fbuf.fb_dat);
-					return (-1);
-				}
-				free(fbuf.fb_dat);
-			}
 			ictx = NULL;
 
-			if (n != FUSEBUFSIZE) {
+			if (n == -1 || (size_t)n != sizeof(fbuf.fb_hdr) +
+			    sizeof(fbuf.FD) + fbuf.fb_len) {
 				errno = EINVAL;
+				free(fbuf.fb_dat);
 				return (-1);
 			}
 		}
 	}
 
+	free(fbuf.fb_dat);
 	return (0);
 }
 DEF(fuse_loop);
