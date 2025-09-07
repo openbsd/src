@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1009 2025/09/01 08:03:07 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1010 2025/09/07 14:03:18 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2025 $
+.Dd $Mdocdate: September 7 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5219,6 +5219,14 @@ For how to specify
 see the
 .Sx STYLES
 section.
+.Pp
+.It Ic tiled-layout-max-columns Ar number
+Set the maximum number of columns in the
+.Ic tiled
+layout.
+A value of 0 (the default) means no limit.
+When a limit is set, panes are arranged to not exceed this number of columns,
+with additional panes stacked in extra rows.
 .Pp
 .It Ic window-status-activity-style Ar style
 Set status line style for windows with an activity alert.
