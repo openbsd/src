@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.41 2025/09/02 14:18:38 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.42 2025/09/07 05:21:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,7 +203,7 @@ bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a)
 }
 #endif
 
-#ifndef HAVE_BN_SQR_WORDS_NONASM
+#ifndef HAVE_BN_SQR_WORDS
 /*
  * bn_sqr_add_words() computes (r[i*2+1]:r[i*2]) = (r[i*2+1]:r[i*2]) + a[i] * a[i].
  */
@@ -244,7 +244,7 @@ bn_sqr_add_words(BN_ULONG *r, const BN_ULONG *a, int n)
  * bn_sqr_words() computes r[] = a[] * a[].
  */
 void
-bn_sqr_words_nonasm(BN_ULONG *r, const BN_ULONG *a, int a_len)
+bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int a_len)
 {
 	const BN_ULONG *ap;
 	BN_ULONG *rp;
@@ -298,7 +298,7 @@ bn_sqr_words_nonasm(BN_ULONG *r, const BN_ULONG *a, int a_len)
 static int
 bn_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 {
-	bn_sqr_words_nonasm(r->d, a->d, a->top);
+	bn_sqr_words(r->d, a->d, a->top);
 
 	return 1;
 }
