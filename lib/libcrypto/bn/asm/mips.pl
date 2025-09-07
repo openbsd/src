@@ -397,19 +397,19 @@ $code.=<<___;
 .end	bn_mulw_words_internal
 
 .align	5
-.globl	bn_sqr_words
-.ent	bn_sqr_words
-bn_sqr_words:
+.globl	bn_sqr_word_wise
+.ent	bn_sqr_word_wise
+bn_sqr_word_wise:
 	.set	noreorder
-	bgtz	$a2,bn_sqr_words_internal
+	bgtz	$a2,bn_sqr_word_wise_internal
 	move	$v0,$zero
 	jr	$ra
 	move	$a0,$v0
-.end	bn_sqr_words
+.end	bn_sqr_word_wise
 
 .align	5
-.ent	bn_sqr_words_internal
-bn_sqr_words_internal:
+.ent	bn_sqr_word_wise_internal
+bn_sqr_word_wise_internal:
 ___
 $code.=<<___ if ($flavour =~ /nubi/i);
 	.frame	$sp,6*$SZREG,$ra
@@ -427,9 +427,9 @@ $code.=<<___;
 	.set	reorder
 	li	$minus4,-4
 	and	$ta0,$a2,$minus4
-	beqz	$ta0,.L_bn_sqr_words_tail
+	beqz	$ta0,.L_bn_sqr_word_wise_tail
 
-.L_bn_sqr_words_loop:
+.L_bn_sqr_word_wise_loop:
 	$LD	$t0,0($a1)
 	$MULTU	$t0,$t0
 	$LD	$t2,$BNSZ($a1)
@@ -463,13 +463,13 @@ $code.=<<___;
 	$ST	$ta3,-2*$BNSZ($a0)
 
 	.set	noreorder
-	bgtz	$ta0,.L_bn_sqr_words_loop
+	bgtz	$ta0,.L_bn_sqr_word_wise_loop
 	$ST	$ta2,-$BNSZ($a0)
 
-	beqz	$a2,.L_bn_sqr_words_return
+	beqz	$a2,.L_bn_sqr_word_wise_return
 	nop
 
-.L_bn_sqr_words_tail:
+.L_bn_sqr_word_wise_tail:
 	.set	reorder
 	$LD	$t0,0($a1)
 	$MULTU	$t0,$t0
@@ -478,7 +478,7 @@ $code.=<<___;
 	mfhi	$t0
 	$ST	$t1,0($a0)
 	$ST	$t0,$BNSZ($a0)
-	beqz	$a2,.L_bn_sqr_words_return
+	beqz	$a2,.L_bn_sqr_word_wise_return
 
 	$LD	$t0,$BNSZ($a1)
 	$MULTU	$t0,$t0
@@ -487,7 +487,7 @@ $code.=<<___;
 	mfhi	$t0
 	$ST	$t1,2*$BNSZ($a0)
 	$ST	$t0,3*$BNSZ($a0)
-	beqz	$a2,.L_bn_sqr_words_return
+	beqz	$a2,.L_bn_sqr_word_wise_return
 
 	$LD	$t0,2*$BNSZ($a1)
 	$MULTU	$t0,$t0
@@ -496,7 +496,7 @@ $code.=<<___;
 	$ST	$t1,4*$BNSZ($a0)
 	$ST	$t0,5*$BNSZ($a0)
 
-.L_bn_sqr_words_return:
+.L_bn_sqr_word_wise_return:
 	.set	noreorder
 ___
 $code.=<<___ if ($flavour =~ /nubi/i);
@@ -511,7 +511,7 @@ $code.=<<___;
 	jr	$ra
 	move	$a0,$v0
 
-.end	bn_sqr_words_internal
+.end	bn_sqr_word_wise_internal
 
 .align	5
 .globl	bn_add_words

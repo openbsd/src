@@ -12,7 +12,7 @@ $sse2=1;
 
 &bn_mulw_add_words("bn_mulw_add_words");
 &bn_mulw_words("bn_mulw_words");
-&bn_sqr_words("bn_sqr_words");
+&bn_sqr_word_wise("bn_sqr_word_wise");
 &bn_div_words("bn_div_words");
 &bn_add_words("bn_add_words");
 &bn_sub_words("bn_sub_words");
@@ -318,7 +318,7 @@ sub bn_mulw_words
 	&function_end($name);
 	}
 
-sub bn_sqr_words
+sub bn_sqr_word_wise
 	{
 	local($name)=@_;
 
