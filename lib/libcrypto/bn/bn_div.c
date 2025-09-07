@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.43 2025/08/30 07:54:27 jsing Exp $ */
+/* $OpenBSD: bn_div.c,v 1.44 2025/09/07 06:28:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,16 +71,6 @@
 BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
 
 #ifndef HAVE_BN_DIV_WORDS
-#if defined(BN_LLONG) && defined(BN_DIV2W)
-
-BN_ULONG
-bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
-{
-	return ((BN_ULONG)(((((BN_ULLONG)h) << BN_BITS2)|l)/(BN_ULLONG)d));
-}
-
-#else
-
 /* Divide h,l by d and return the result. */
 /* I need to test this some more :-( */
 BN_ULONG
@@ -148,7 +138,6 @@ bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 	ret |= q;
 	return (ret);
 }
-#endif /* !defined(BN_LLONG) && defined(BN_DIV2W) */
 #endif
 
 /*

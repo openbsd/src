@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.80 2025/03/09 15:22:40 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.81 2025/09/07 06:28:03 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,19 +137,6 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-/* This next option uses the C libraries (2 word)/(1 word) function.
- * If it is not defined, I use my C version (which is slower).
- * The reason for this flag is that when the particular C compiler
- * library routine is used, and the library is linked with a different
- * compiler, the library is missing.  This mostly happens when the
- * library is built with gcc and then linked using normal cc.  This would
- * be a common occurrence because gcc normally produces code that is
- * 2 times faster than system compilers for the big number stuff.
- * For machines with only one compiler (or shared libraries), this should
- * be on.  Again this in only really a problem on machines
- * using "long long's", are 32bit, and are not using my assembler code. */
-/* #define BN_DIV2W */
 
 #ifdef _LP64
 #undef	BN_LLONG

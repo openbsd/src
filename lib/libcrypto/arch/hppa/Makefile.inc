@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.26 2025/02/14 12:01:58 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.27 2025/09/07 06:28:03 jsing Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -7,7 +7,7 @@ CFLAGS+= -DAES_ASM
 SSLASM+= aes aes-parisc aes-parisc
 # bn
 SSLASM+= bn parisc-mont parisc-mont
-CFLAGS+= -DOPENSSL_BN_ASM_MONT -DBN_DIV2W
+CFLAGS+= -DOPENSSL_BN_ASM_MONT
 # modes
 CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-parisc ghash-parisc
