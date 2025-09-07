@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.183 2025/09/06 17:35:29 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.184 2025/09/07 19:26:28 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -363,16 +363,6 @@ func (wt *wycheproofTestECDSA) String() string {
 }
 
 type wycheproofTestGroupECDSA struct {
-	Key    *wycheproofECDSAKey    `json:"publicKey"`
-	KeyDER string                 `json:"publicKeyDer"`
-	KeyPEM string                 `json:"publicKeyPem"`
-	SHA    string                 `json:"sha"`
-	Type   string                 `json:"type"`
-	Tests  []*wycheproofTestECDSA `json:"tests"`
-}
-
-type wycheproofTestGroupECDSAWebCrypto struct {
-	JWK    *wycheproofJWKPublic   `json:"publicKeyJwk"`
 	Key    *wycheproofECDSAKey    `json:"publicKey"`
 	KeyDER string                 `json:"publicKeyDer"`
 	KeyPEM string                 `json:"publicKeyPem"`
@@ -1858,7 +1848,7 @@ func runECDSATest(ecKey *C.EC_KEY, md *C.EVP_MD, nid int, variant testVariant, w
 	msg, msgLen := mustHashHexMessage(md, wt.Msg)
 
 	var ret C.int
-	if variant == Webcrypto || variant == P1363 {
+	if variant == P1363 {
 		order_bytes := int((C.EC_GROUP_order_bits(C.EC_KEY_get0_group(ecKey)) + 7) / 8)
 		if len(wt.Sig)/2 != 2*order_bytes {
 			if wt.Result == "valid" {
@@ -1991,61 +1981,6 @@ func encodeECDSAWebCryptoSig(wtSig string) (*C.uchar, C.int) {
 	}
 
 	return cDer, derLen
-}
-
-func (wtg *wycheproofTestGroupECDSAWebCrypto) run(algorithm string, variant testVariant) bool {
-	fmt.Printf("Running %v test group %v with curve %v, key size %d and %v...\n", algorithm, wtg.Type, wtg.Key.Curve, wtg.Key.KeySize, wtg.SHA)
-
-	nid, err := nidFromString(wtg.JWK.Crv)
-	if err != nil {
-		log.Fatalf("Failed to get nid for curve: %v", err)
-	}
-	ecKey := C.EC_KEY_new_by_curve_name(C.int(nid))
-	if ecKey == nil {
-		log.Fatal("EC_KEY_new_by_curve_name failed")
-	}
-	defer C.EC_KEY_free(ecKey)
-
-	x, err := base64.RawURLEncoding.DecodeString(wtg.JWK.X)
-	if err != nil {
-		log.Fatalf("Failed to base64 decode X: %v", err)
-	}
-	bnX := C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&x[0])), C.int(len(x)), nil)
-	if bnX == nil {
-		log.Fatal("Failed to decode X")
-	}
-	defer C.BN_free(bnX)
-
-	y, err := base64.RawURLEncoding.DecodeString(wtg.JWK.Y)
-	if err != nil {
-		log.Fatalf("Failed to base64 decode Y: %v", err)
-	}
-	bnY := C.BN_bin2bn((*C.uchar)(unsafe.Pointer(&y[0])), C.int(len(y)), nil)
-	if bnY == nil {
-		log.Fatal("Failed to decode Y")
-	}
-	defer C.BN_free(bnY)
-
-	if C.EC_KEY_set_public_key_affine_coordinates(ecKey, bnX, bnY) != 1 {
-		log.Fatal("Failed to set EC public key")
-	}
-
-	nid, err = nidFromString(wtg.SHA)
-	if err != nil {
-		log.Fatalf("Failed to get MD NID: %v", err)
-	}
-	md, err := hashEvpMdFromString(wtg.SHA)
-	if err != nil {
-		log.Fatalf("Failed to get hash: %v", err)
-	}
-
-	success := true
-	for _, wt := range wtg.Tests {
-		if !runECDSATest(ecKey, md, nid, Webcrypto, wt) {
-			success = false
-		}
-	}
-	return success
 }
 
 func runEcCurveTest(wt *wycheproofTestEcCurve) bool {
@@ -2794,9 +2729,6 @@ func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTes
 	if algorithm == "ECDH" && variant == Webcrypto {
 		return &wycheproofTestGroupECDHWebCrypto{}
 	}
-	if algorithm == "ECDSA" && variant == Webcrypto {
-		return &wycheproofTestGroupECDSAWebCrypto{}
-	}
 	switch algorithm {
 	case "AES-CBC-PKCS5":
 		return &wycheproofTestGroupAesCbcPkcs5{}
@@ -2936,7 +2868,6 @@ func main() {
 		{"ECDH webcrypto", "ecdh_*_webcrypto_test.json", Webcrypto},
 		{"ECDSA", "ecdsa_[^w]*test.json", Normal},
 		{"ECDSA P1363", "ecdsa_*_sha[1-9][1-9][1-9]_p1363_test.json", P1363},
-		{"ECDSA webcrypto", "ecdsa_*_webcrypto_test.json", Webcrypto},
 		{"ECDSA shake", "ecdsa_*_shake*_test.json", Skip},
 		{"EDDSA", "ed25519_test.json", Normal},
 		{"ED448", "ed448_test.json", Skip},
