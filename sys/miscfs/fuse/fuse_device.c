@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.43 2025/09/06 06:15:52 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.44 2025/09/08 17:25:46 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>
-#include <sys/ioctl.h>
 #include <sys/event.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
@@ -68,7 +67,6 @@ struct fuse_d *fuse_lookup(int);
 void	fuseattach(int);
 int	fuseopen(dev_t, int, int, struct proc *);
 int	fuseclose(dev_t, int, int, struct proc *);
-int	fuseioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	fuseread(dev_t, struct uio *, int);
 int	fusewrite(dev_t, struct uio *, int);
 int	fusekqfilter(dev_t dev, struct knote *kn);
@@ -272,130 +270,6 @@ end:
 	free(fd, M_DEVBUF, sizeof(*fd));
 	stat_opened_fusedev--;
 	return (0);
-}
-
-/*
- * FIOCGETFBDAT		Get fusebuf data from kernel to user
- * FIOCSETFBDAT		Set fusebuf data from user to kernel
- */
-int
-fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
-{
-	struct fb_ioctl_xch *ioexch;
-	struct fusebuf *lastfbuf;
-	struct fusebuf *fbuf;
-	struct fuse_d *fd;
-	int error = 0;
-
-	fd = fuse_lookup(minor(dev));
-	if (fd == NULL)
-		return (ENXIO);
-
-	switch (cmd) {
-	case FIOCGETFBDAT:
-		ioexch = (struct fb_ioctl_xch *)addr;
-
-		/* Looking for uuid in fd_fbufs_in */
-		rw_enter_write(&fd->fd_lock);
-		SIMPLEQ_FOREACH(fbuf, &fd->fd_fbufs_in, fb_next) {
-			if (fbuf->fb_uuid == ioexch->fbxch_uuid)
-				break;
-
-			lastfbuf = fbuf;
-		}
-		if (fbuf == NULL) {
-			rw_exit_write(&fd->fd_lock);
-			printf("fuse: Cannot find fusebuf\n");
-			return (EINVAL);
-		}
-
-		/* Remove the fbuf from fd_fbufs_in */
-		if (fbuf == SIMPLEQ_FIRST(&fd->fd_fbufs_in))
-			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
-		else
-			SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_in, lastfbuf,
-			    fb_next);
-		rw_exit_write(&fd->fd_lock);
-	
-		stat_fbufs_in--;
-
-		/* Do not handle fbufs with bad len */
-		if (fbuf->fb_len != ioexch->fbxch_len) {
-			printf("fuse: Bad fusebuf len\n");
-			return (EINVAL);
-		}
-
-		/* Update the userland fbuf */
-		error = copyout(fbuf->fb_dat, ioexch->fbxch_data,
-		    ioexch->fbxch_len);
-		if (error) {
-			printf("fuse: cannot copyout\n");
-			return (error);
-		}
-
-#ifdef FUSE_DEBUG
-		fuse_dump_buff(fbuf->fb_dat, fbuf->fb_len);
-#endif
-
-		/* Adding fbuf in fd_fbufs_wait */
-		free(fbuf->fb_dat, M_FUSEFS, fbuf->fb_len);
-		fbuf->fb_dat = NULL;
-		SIMPLEQ_INSERT_TAIL(&fd->fd_fbufs_wait, fbuf, fb_next);
-		stat_fbufs_wait++;
-		break;
-
-	case FIOCSETFBDAT:
-		DPRINTF("SET BUFFER\n");
-		ioexch = (struct fb_ioctl_xch *)addr;
-
-		/* looking for uuid in fd_fbufs_wait */
-		SIMPLEQ_FOREACH(fbuf, &fd->fd_fbufs_wait, fb_next) {
-			if (fbuf->fb_uuid == ioexch->fbxch_uuid)
-				break;
-
-			lastfbuf = fbuf;
-		}
-		if (fbuf == NULL) {
-			printf("fuse: Cannot find fusebuf\n");
-			return (EINVAL);
-		}
-
-		/* Do not handle fbufs with bad len */
-		if (fbuf->fb_len != ioexch->fbxch_len) {
-			printf("fuse: Bad fusebuf size\n");
-			return (EINVAL);
-		}
-
-		/* fetching data from userland */
-		fbuf->fb_dat = malloc(ioexch->fbxch_len, M_FUSEFS,
-		    M_WAITOK | M_ZERO);
-		error = copyin(ioexch->fbxch_data, fbuf->fb_dat,
-		    ioexch->fbxch_len);
-		if (error) {
-			printf("fuse: Cannot copyin\n");
-			free(fbuf->fb_dat, M_FUSEFS, fbuf->fb_len);
-			fbuf->fb_dat = NULL;
-			return (error);
-		}
-
-#ifdef FUSE_DEBUG
-		fuse_dump_buff(fbuf->fb_dat, fbuf->fb_len);
-#endif
-
-		/* Remove fbuf from fd_fbufs_wait */
-		if (fbuf == SIMPLEQ_FIRST(&fd->fd_fbufs_wait))
-			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait, fb_next);
-		else
-			SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_wait, lastfbuf,
-			    fb_next);
-		stat_fbufs_wait--;
-		wakeup(fbuf);
-		break;
-	default:
-		error = EINVAL;
-	}
-
-	return (error);
 }
 
 int
