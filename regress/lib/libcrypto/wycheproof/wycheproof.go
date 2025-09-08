@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.186 2025/09/08 07:07:36 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.187 2025/09/08 07:10:14 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -721,6 +721,10 @@ func nidFromString(ns string) (int, error) {
 		return nid, nil
 	}
 	return -1, fmt.Errorf("unknown NID %q", ns)
+}
+
+func skipHash(hash string) bool {
+	return hash == "SHAKE128" || hash == "SHAKE256"
 }
 
 func skipCurve(nid int) bool {
@@ -1893,6 +1897,9 @@ func (wtg *wycheproofTestGroupECDSA) run(algorithm string, variant testVariant) 
 	if skipCurve(nid) {
 		return true
 	}
+	if skipHash(wtg.SHA) {
+		return true
+	}
 	ecKey := C.EC_KEY_new_by_curve_name(C.int(nid))
 	if ecKey == nil {
 		log.Fatal("EC_KEY_new_by_curve_name failed")
@@ -2386,6 +2393,10 @@ func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproo
 func (wtg *wycheproofTestGroupRsaesOaep) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d MGF %v and %v...\n", algorithm, wtg.Type, wtg.KeySize, wtg.MGFSHA, wtg.SHA)
 
+	if skipHash(wtg.SHA) {
+		return true
+	}
+
 	rsa := C.RSA_new()
 	if rsa == nil {
 		log.Fatal("RSA_new failed")
@@ -2557,6 +2568,11 @@ func runRsassaTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLen int, wt *wy
 
 func (wtg *wycheproofTestGroupRsassa) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d and %v...\n", algorithm, wtg.Type, wtg.KeySize, wtg.SHA)
+
+	if skipHash(wtg.SHA) {
+		return true
+	}
+
 	rsa := C.RSA_new()
 	if rsa == nil {
 		log.Fatal("RSA_new failed")
