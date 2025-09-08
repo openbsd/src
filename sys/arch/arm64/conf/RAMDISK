@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.231 2025/08/24 10:51:42 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.232 2025/09/08 19:31:05 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -161,7 +161,7 @@ imxesdhc*	at fdt?
 sdmmc*		at imxesdhc?
 imxpciephy*	at fdt?
 
-# Raspberry Pi 3/4
+# Raspberry Pi 3/4/5
 bcmaux*		at fdt? early 1
 bcmbsc*		at fdt?
 iic*		at bcmbsc?
