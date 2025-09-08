@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.188 2025/09/08 08:00:47 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.189 2025/09/08 08:11:49 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -84,7 +84,6 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -2752,14 +2751,28 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 	variant := Normal
 
 	switch wtv.Algorithm {
+	case "A128CBC-HS256", "A192CBC-HS384", "A256CBC-HS512":
+		return nil, Skip
+	case "AEGIS128", "AEGIS128L", "AEGIS256":
+		return nil, Skip
+	case "AEAD-AES-SIV-CMAC":
+		return nil, Skip
 	case "AES-CBC-PKCS5":
 		return &wycheproofTestGroupAesCbcPkcs5{}, variant
 	case "AES-CCM", "AES-GCM":
 		return &wycheproofTestGroupAesAead{}, variant
 	case "AES-CMAC":
 		return &wycheproofTestGroupAesCmac{}, variant
+	case "AES-EAX", "AES-FF1", "AES-GCM-SIV", "AES-GMAC", "AES-KWP", "AES-SIV-CMAC", "AES-XTS":
+		return nil, Skip
 	case "AES-WRAP":
 		return &wycheproofTestGroupKW{}, variant
+	case "ARIA-CBC-PKCS5", "ARIA-CCM", "ARIA-CMAC", "ARIA-GCM", "ARIA-KWP", "ARIA-WRAP":
+		return nil, Skip
+	case "ASCON128", "ASCON128A", "ASCON80PQ":
+		return nil, Skip
+	case "CAMELLIA-CBC-PKCS5", "CAMELLIA-CCM", "CAMELLIA-CMAC", "CAMELLIA-WRAP":
+		return nil, Skip
 	case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
 		return &wycheproofTestGroupChaCha{}, variant
 	case "DSA":
@@ -2776,8 +2789,14 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 		if wtv.Schema == "ecdh_ecpoint_test_schema_v1.json" {
 			variant = EcPoint
 		}
+		if wtv.Schema == "ecdh_pem_test_schema_v1.json" {
+			variant = Skip
+		}
 		return &wycheproofTestGroupECDH{}, variant
 	case "ECDSA":
+		if wtv.Schema == "ecdsa_bitcoin_verify_schema.json" {
+			variant = Skip
+		}
 		if wtv.Schema == "ecdsa_p1363_verify_schema_v1.json" {
 			variant = P1363
 		}
@@ -2788,6 +2807,21 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 		return &wycheproofTestGroupHkdf{}, variant
 	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA512/224", "HMACSHA512/256", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
 		return &wycheproofTestGroupHmac{}, variant
+	case "HMACSM3":
+		return nil, Skip
+	case "KMAC128", "KMAC256":
+		return nil, Skip
+	case "ML-DSA-44", "ML-DSA-65", "ML-DSA-87":
+		return nil, Skip
+	case "ML-KEM":
+		return nil, Skip
+	case "MORUS640", "MORUS1280":
+		return nil, Skip
+	case "PbeWithHmacSha1AndAes_128", "PbeWithHmacSha1AndAes_192", "PbeWithHmacSha1AndAes_256", "PbeWithHmacSha224AndAes_128", "PbeWithHmacSha224AndAes_192", "PbeWithHmacSha224AndAes_256", "PbeWithHmacSha256AndAes_128", "PbeWithHmacSha256AndAes_192", "PbeWithHmacSha256AndAes_256", "PbeWithHmacSha384AndAes_128", "PbeWithHmacSha384AndAes_192", "PbeWithHmacSha384AndAes_256", "PbeWithHmacSha512AndAes_128", "PbeWithHmacSha512AndAes_192", "PbeWithHmacSha512AndAes_256":
+		return nil, Skip
+
+	case "PBKDF2-HMACSHA1", "PBKDF2-HMACSHA224", "PBKDF2-HMACSHA256", "PBKDF2-HMACSHA384", "PBKDF2-HMACSHA512":
+		return nil, Skip
 	case "PrimalityTest":
 		return &wycheproofTestGroupPrimality{}, variant
 	case "RSAES-OAEP":
@@ -2798,16 +2832,32 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 		return &wycheproofTestGroupRsassa{}, variant
 	case "RSASSA-PKCS1-v1_5", "RSASig":
 		return &wycheproofTestGroupRSA{}, variant
-	case "XDH", "X25519":
+	case "SEED-CCM", "SEED-GCM", "SEED-WRAP":
+		return nil, Skip
+	case "SipHash-1-3", "SipHash-2-4", "SipHash-4-8", "SipHashX-2-4", "SipHashX-4-8":
+		return nil, Skip
+	case "SM4-CCM", "SM4-GCM":
+		return nil, Skip
+	case "VMAC-AES":
+		return nil, Skip
+	case "XDH":
+		switch wtv.Schema {
+		case "xdh_asn_comp_schema_v1.json", "xdh_jwk_comp_schema_v1.json", "xdh_pem_comp_schema_v1.json":
+			variant = Skip
+		case "xdh_comp_schema_v1.json":
+			variant = Normal
+		}
 		return &wycheproofTestGroupX25519{}, variant
 	default:
-		return nil, Skip
+		// XXX - JOSE tests don't set an Algorithm...
+		if strings.HasPrefix(wtv.Schema, "json_web_") {
+			return nil, Skip
+		}
+		return nil, Normal
 	}
 }
 
 func runTestVectors(path string) bool {
-	var algorithm string
-	var testGroups []json.RawMessage
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatalf("Failed to read test vectors: %v", err)
@@ -2816,25 +2866,26 @@ func runTestVectors(path string) bool {
 	if err := json.Unmarshal(b, wtv); err != nil {
 		log.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
-	algorithm = wtv.Algorithm
-	testGroups = wtv.TestGroups
 	fmt.Printf("Loaded Wycheproof test vectors for %v with %d tests from %q\n", wtv.Algorithm, wtv.NumberOfTests, filepath.Base(path))
 
 	success := true
-	for _, tg := range testGroups {
+	for _, tg := range wtv.TestGroups {
 		wtg, variant := testGroupFromTestVector(wtv)
+		if variant == Skip {
+			fmt.Printf("INFO: Skipping tests from \"%s\"\n", filepath.Base(path))
+			return true
+		}
 		if wtg == nil {
-			log.Printf("INFO: Unknown test vector algorithm %q", algorithm)
-			return false
+			log.Fatalf("INFO: Unknown test vector algorithm %qin \"%s\"", wtv.Algorithm, filepath.Base(path))
 		}
 		if err := json.Unmarshal(tg, wtg); err != nil {
 			log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
 		}
 		testc.runTest(func() bool {
-			return wtg.run(algorithm, variant)
+			return wtg.run(wtv.Algorithm, variant)
 		})
 	}
-	for _ = range testGroups {
+	for _ = range wtv.TestGroups {
 		result := <-testc.resultCh
 		if !result {
 			success = false
@@ -2886,36 +2937,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	tests := []struct {
-		name    string
-		pattern string
-		variant testVariant
-	}{
-		{"AES", "aes_[cg]*[^xv]_test.json", Normal}, // Skip AES-EAX, AES-GCM-SIV and AES-SIV-CMAC.
-		{"AES-WRAP", "aes_wrap_test.json", Normal},
-		{"ChaCha20-Poly1305", "chacha20_poly1305_test.json", Normal},
-		{"DSA", "dsa_*test.json", Normal},
-		{"DSA", "dsa_*_p1363_test.json", P1363},
-		{"EcCurveTest", "ec_prime_order_curves_test.json", Normal},
-		{"ECDH", "ecdh_[^w_]*_test.json", Normal},
-		{"ECDH EcPoint", "ecdh_*_ecpoint_test.json", EcPoint},
-		{"ECDH webcrypto", "ecdh_*_webcrypto_test.json", Webcrypto},
-		{"ECDSA", "ecdsa_[^w]*test.json", Normal},
-		{"ECDSA P1363", "ecdsa_*_sha[1-9][1-9][1-9]_p1363_test.json", P1363},
-		{"ECDSA shake", "ecdsa_*_shake*_test.json", Skip},
-		{"EDDSA", "ed25519_test.json", Normal},
-		{"ED448", "ed448_test.json", Skip},
-		{"HKDF", "hkdf_sha*_test.json", Normal},
-		{"HMAC", "hmac_sha*_test.json", Normal},
-		{"Primality test", "primality_test.json", Normal},
-		{"RSA", "rsa_*test.json", Normal},
-		{"X25519", "x25519_test.json", Normal},
-		{"X25519 ASN", "x25519_asn_test.json", Skip},
-		{"X25519 JWK", "x25519_jwk_test.json", Skip},
-		{"X25519 PEM", "x25519_pem_test.json", Skip},
-		{"XCHACHA20-POLY1305", "xchacha20_poly1305_test.json", Normal},
-	}
-
 	success := true
 
 	var wg sync.WaitGroup
@@ -2928,33 +2949,25 @@ func main() {
 
 	testc = newTestCoordinator()
 
-	skipNormal := regexp.MustCompile(`_(ecpoint|webcrypto|pem|bitcoin|shake\d{3}|gmac|p1363|sect\d{3}[rk]1|secp(160|192))_`)
-
-	for _, test := range tests {
-		tvs, err := filepath.Glob(filepath.Join(path, test.pattern))
-		if err != nil {
-			log.Fatalf("Failed to glob %v test vectors: %v", test.name, err)
-		}
-		if len(tvs) == 0 {
-			log.Fatalf("Failed to find %v test vectors at %q\n", test.name, path)
-		}
-		for _, tv := range tvs {
-			if test.variant == Skip || (test.variant == Normal && skipNormal.Match([]byte(tv))) {
-				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, path+"/"))
-				continue
+	tvs, err := filepath.Glob(filepath.Join(path, "*.json"))
+	if err != nil {
+		log.Fatalf("Failed to glob test vectors: %v", err)
+	}
+	if len(tvs) == 0 {
+		log.Fatalf("Failed to find test vectors at %q\n", path)
+	}
+	for _, tv := range tvs {
+		wg.Add(1)
+		<-vectorsRateLimitCh
+		go func(tv string) {
+			select {
+			case resultCh <- runTestVectors(tv):
+			default:
+				log.Fatal("result channel is full")
 			}
-			wg.Add(1)
-			<-vectorsRateLimitCh
-			go func(tv string) {
-				select {
-				case resultCh <- runTestVectors(tv):
-				default:
-					log.Fatal("result channel is full")
-				}
-				vectorsRateLimitCh <- true
-				wg.Done()
-			}(tv)
-		}
+			vectorsRateLimitCh <- true
+			wg.Done()
+		}(tv)
 	}
 
 	wg.Wait()
