@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.446 2025/09/01 22:11:23 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.447 2025/09/08 08:23:19 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -422,9 +422,9 @@ tty_repeat_requests(struct tty *tty, int force)
 
 	if (tty->term->flags & TERM_VT100LIKE) {
 		tty_puts(tty, "\033]10;?\033\\\033]11;?\033\\");
-	tty->flags |= (TTY_WAITBG|TTY_WAITFG);
-    }
-    tty_start_start_timer(tty);
+		tty->flags |= (TTY_WAITBG|TTY_WAITFG);
+	}
+	tty_start_start_timer(tty);
 }
 
 void
