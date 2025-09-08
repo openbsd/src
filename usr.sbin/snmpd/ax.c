@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.6 2024/02/20 12:51:10 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.7 2025/09/08 08:49:14 jsg Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -1208,10 +1208,10 @@ ax_pdu_add_oid(struct ax *ax, struct ax_oid *oid)
 	static struct ax_oid nulloid = {0};
 	uint8_t prefix = 0, n_subid, i = 0;
 
-	n_subid = oid->aoi_idlen;
-
 	if (oid == NULL)
 		oid = &nulloid;
+
+	n_subid = oid->aoi_idlen;
 
 	if (oid->aoi_idlen > 4 &&
 	    oid->aoi_id[0] == 1 && oid->aoi_id[1] == 3 &&
