@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.207 2025/09/05 13:33:49 cludwig Exp $	*/
+/*	$OpenBSD: locore.s,v 1.208 2025/09/08 08:35:55 cludwig Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -454,8 +454,7 @@ ENTRY(copyout)
 #endif
 	pushl	%esi
 	pushl	%edi
-	GET_CURPCB(%eax)
-	pushl	PCB_ONFAULT(%eax)
+	pushl	$0
 
 	movl	16+FPADD(%esp),%esi
 	movl	20+FPADD(%esp),%edi
@@ -510,7 +509,7 @@ ENTRY(_copyin)
 	pushl	%esi
 	pushl	%edi
 	GET_CURPCB(%eax)
-	pushl	PCB_ONFAULT(%eax)
+	pushl	$0
 	movl	$copy_fault,PCB_ONFAULT(%eax)
 	SMAP_STAC
 
@@ -582,8 +581,7 @@ ENTRY(copyoutstr)
 	movl	16+FPADD(%esp),%edi		# edi = to
 	movl	20+FPADD(%esp),%edx		# edx = maxlen
 
-	GET_CURPCB(%eax)
-	pushl	PCB_ONFAULT(%eax)
+5:	GET_CURPCB(%eax)
 	movl	$copystr_fault,PCB_ONFAULT(%eax)
 	SMAP_STAC
 	/*
@@ -635,7 +633,6 @@ ENTRY(_copyinstr)
 	pushl	%esi
 	pushl	%edi
 	GET_CURPCB(%ecx)
-	pushl	PCB_ONFAULT(%ecx)
 	movl	$copystr_fault,PCB_ONFAULT(%ecx)
 	SMAP_STAC
 
@@ -683,7 +680,7 @@ copystr_return:
 	SMAP_CLAC
 	/* Set *lencopied and return %eax. */
 	GET_CURPCB(%ecx)
-	popl	PCB_ONFAULT(%ecx)
+	movl	$0,PCB_ONFAULT(%ecx)
 	movl	20+FPADD(%esp),%ecx
 	subl	%edx,%ecx
 	movl	24+FPADD(%esp),%edx
