@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.29 2025/09/08 12:56:17 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.30 2025/09/08 13:37:39 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -747,7 +747,7 @@ aes_set_decrypt_key_generic(const unsigned char *userKey, const int bits,
 	int i, j, ret;
 
 	/* first, start with an encryption schedule */
-	if ((ret = aes_set_encrypt_key_internal(userKey, bits, key)) < 0)
+	if ((ret = aes_set_encrypt_key_generic(userKey, bits, key)) < 0)
 		return ret;
 
 	rk = key->rd_key;
