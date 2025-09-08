@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.24 2023/10/29 11:10:07 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.25 2025/09/08 08:43:39 jsg Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -1050,11 +1050,13 @@ agentx_agentcaps_close_finalize(struct ax_pdu *pdu, void *cookie)
 void
 agentx_agentcaps_free(struct agentx_agentcaps *axa)
 {
-	struct agentx *ax = axa->axa_axc->axc_axs->axs_ax;
+	struct agentx *ax;
 	int axfree;
 
 	if (axa == NULL)
 		return;
+
+	ax = axa->axa_axc->axc_axs->axs_ax;
 
 	axfree = ax->ax_free;
 	ax->ax_free = 1;
