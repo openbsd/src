@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.184 2025/09/07 19:26:28 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.185 2025/09/08 06:47:34 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -2725,53 +2725,64 @@ func (wtg *wycheproofTestGroupX25519) run(algorithm string, variant testVariant)
 	return success
 }
 
-func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTestGroupRunner {
-	if algorithm == "ECDH" && variant == Webcrypto {
-		return &wycheproofTestGroupECDHWebCrypto{}
-	}
-	switch algorithm {
+func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupRunner, testVariant) {
+	variant := Normal
+
+	switch wtv.Algorithm {
 	case "AES-CBC-PKCS5":
-		return &wycheproofTestGroupAesCbcPkcs5{}
+		return &wycheproofTestGroupAesCbcPkcs5{}, variant
 	case "AES-CCM", "AES-GCM":
-		return &wycheproofTestGroupAesAead{}
+		return &wycheproofTestGroupAesAead{}, variant
 	case "AES-CMAC":
-		return &wycheproofTestGroupAesCmac{}
+		return &wycheproofTestGroupAesCmac{}, variant
 	case "AES-WRAP":
-		return &wycheproofTestGroupKW{}
+		return &wycheproofTestGroupKW{}, variant
 	case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
-		return &wycheproofTestGroupChaCha{}
+		return &wycheproofTestGroupChaCha{}, variant
 	case "DSA":
-		return &wycheproofTestGroupDSA{}
+		if wtv.Schema == "dsa_p1363_verify_schema_v1.json" {
+			variant = P1363
+		}
+		return &wycheproofTestGroupDSA{}, variant
 	case "EcCurveTest":
-		return &wycheproofTestGroupEcCurve{}
+		return &wycheproofTestGroupEcCurve{}, variant
 	case "ECDH":
-		return &wycheproofTestGroupECDH{}
+		if wtv.Schema == "ecdh_webcrypto_test_schema_v1.json" {
+			return &wycheproofTestGroupECDHWebCrypto{}, Webcrypto
+		}
+		if wtv.Schema == "ecdh_ecpoint_test_schema_v1.json" {
+			variant = EcPoint
+		}
+		return &wycheproofTestGroupECDH{}, variant
 	case "ECDSA":
-		return &wycheproofTestGroupECDSA{}
+		if wtv.Schema == "ecdsa_p1363_verify_schema_v1.json" {
+			variant = P1363
+		}
+		return &wycheproofTestGroupECDSA{}, variant
 	case "EDDSA":
-		return &wycheproofTestGroupEdDSA{}
+		return &wycheproofTestGroupEdDSA{}, variant
 	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
-		return &wycheproofTestGroupHkdf{}
+		return &wycheproofTestGroupHkdf{}, variant
 	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA512/224", "HMACSHA512/256", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
-		return &wycheproofTestGroupHmac{}
+		return &wycheproofTestGroupHmac{}, variant
 	case "PrimalityTest":
-		return &wycheproofTestGroupPrimality{}
+		return &wycheproofTestGroupPrimality{}, variant
 	case "RSAES-OAEP":
-		return &wycheproofTestGroupRsaesOaep{}
+		return &wycheproofTestGroupRsaesOaep{}, variant
 	case "RSAES-PKCS1-v1_5":
-		return &wycheproofTestGroupRsaesPkcs1{}
+		return &wycheproofTestGroupRsaesPkcs1{}, variant
 	case "RSASSA-PSS":
-		return &wycheproofTestGroupRsassa{}
+		return &wycheproofTestGroupRsassa{}, variant
 	case "RSASSA-PKCS1-v1_5", "RSASig":
-		return &wycheproofTestGroupRSA{}
+		return &wycheproofTestGroupRSA{}, variant
 	case "XDH", "X25519":
-		return &wycheproofTestGroupX25519{}
+		return &wycheproofTestGroupX25519{}, variant
 	default:
-		return nil
+		return nil, Skip
 	}
 }
 
-func runTestVectors(path string, variant testVariant) bool {
+func runTestVectors(path string) bool {
 	var algorithm string
 	var testGroups []json.RawMessage
 	b, err := ioutil.ReadFile(path)
@@ -2788,7 +2799,7 @@ func runTestVectors(path string, variant testVariant) bool {
 
 	success := true
 	for _, tg := range testGroups {
-		wtg := testGroupFromAlgorithm(algorithm, variant)
+		wtg, variant := testGroupFromTestVector(wtv)
 		if wtg == nil {
 			log.Printf("INFO: Unknown test vector algorithm %q", algorithm)
 			return false
@@ -2911,15 +2922,15 @@ func main() {
 			}
 			wg.Add(1)
 			<-vectorsRateLimitCh
-			go func(tv string, variant testVariant) {
+			go func(tv string) {
 				select {
-				case resultCh <- runTestVectors(tv, variant):
+				case resultCh <- runTestVectors(tv):
 				default:
 					log.Fatal("result channel is full")
 				}
 				vectorsRateLimitCh <- true
 				wg.Done()
-			}(tv, test.variant)
+			}(tv)
 		}
 	}
 
