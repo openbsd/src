@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.28 2025/09/08 12:46:38 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.29 2025/09/08 12:56:17 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -51,10 +51,10 @@ Td3[x] = Si[x].[09, 0d, 0b, 0e];
 Td4[x] = Si[x].[01];
 */
 
-#if !defined(HAVE_AES_SET_ENCRYPT_KEY_INTERNAL) || \
-    !defined(HAVE_AES_SET_DECRYPT_KEY_INTERNAL) || \
-    !defined(HAVE_AES_ENCRYPT_INTERNAL) || \
-    !defined(HAVE_AES_DECRYPT_INTERNAL)
+#if !defined(HAVE_AES_SET_ENCRYPT_KEY_GENERIC) || \
+    !defined(HAVE_AES_SET_DECRYPT_KEY_GENERIC) || \
+    !defined(HAVE_AES_ENCRYPT_GENERIC) || \
+    !defined(HAVE_AES_DECRYPT_GENERIC)
 static const uint32_t Te0[256] = {
 	0xc66363a5U, 0xf87c7c84U, 0xee777799U, 0xf67b7b8dU,
 	0xfff2f20dU, 0xd66b6bbdU, 0xde6f6fb1U, 0x91c5c554U,
@@ -586,8 +586,8 @@ static const uint32_t Td3[256] = {
 };
 #endif
 
-#if !defined(HAVE_AES_ENCRYPT_INTERNAL) || \
-    !defined(HAVE_AES_DECRYPT_INTERNAL)
+#if !defined(HAVE_AES_ENCRYPT_GENERIC) || \
+    !defined(HAVE_AES_DECRYPT_GENERIC)
 static const uint8_t Td4[256] = {
 	0x52U, 0x09U, 0x6aU, 0xd5U, 0x30U, 0x36U, 0xa5U, 0x38U,
 	0xbfU, 0x40U, 0xa3U, 0x9eU, 0x81U, 0xf3U, 0xd7U, 0xfbU,
@@ -624,8 +624,8 @@ static const uint8_t Td4[256] = {
 };
 #endif
 
-#if !defined(HAVE_AES_SET_ENCRYPT_KEY_INTERNAL) || \
-    !defined(HAVE_AES_SET_DECRYPT_KEY_INTERNAL)
+#if !defined(HAVE_AES_SET_ENCRYPT_KEY_GENERIC) || \
+    !defined(HAVE_AES_SET_DECRYPT_KEY_GENERIC)
 static const uint32_t rcon[] = {
 	0x01000000, 0x02000000, 0x04000000, 0x08000000,
 	0x10000000, 0x20000000, 0x40000000, 0x80000000,
@@ -633,12 +633,12 @@ static const uint32_t rcon[] = {
 };
 #endif
 
-#ifndef HAVE_AES_SET_ENCRYPT_KEY_INTERNAL
+#ifndef HAVE_AES_SET_ENCRYPT_KEY_GENERIC
 /*
  * Expand the cipher key into the encryption key schedule.
  */
 int
-aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
+aes_set_encrypt_key_generic(const unsigned char *userKey, const int bits,
     AES_KEY *key)
 {
 	uint32_t *rk;
@@ -725,12 +725,21 @@ aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
 }
 #endif
 
-#ifndef HAVE_AES_SET_DECRYPT_KEY_INTERNAL
+#ifndef HAVE_AES_SET_ENCRYPT_KEY_INTERNAL
+int
+aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
+    AES_KEY *key)
+{
+	return aes_set_encrypt_key_generic(userKey, bits, key);
+}
+#endif
+
+#ifndef HAVE_AES_SET_DECRYPT_KEY_GENERIC
 /*
  * Expand the cipher key into the decryption key schedule.
  */
 int
-aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
+aes_set_decrypt_key_generic(const unsigned char *userKey, const int bits,
     AES_KEY *key)
 {
 	uint32_t *rk;
@@ -786,12 +795,21 @@ aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
 }
 #endif
 
-#ifndef HAVE_AES_ENCRYPT_INTERNAL
+#ifndef HAVE_AES_SET_DECRYPT_KEY_INTERNAL
+int
+aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
+    AES_KEY *key)
+{
+	return aes_set_decrypt_key_generic(userKey, bits, key);
+}
+#endif
+
+#ifndef HAVE_AES_ENCRYPT_GENERIC
 /*
  * Encrypt a single block - in and out can overlap.
  */
 void
-aes_encrypt_internal(const unsigned char *in, unsigned char *out,
+aes_encrypt_generic(const unsigned char *in, unsigned char *out,
     const AES_KEY *key)
 {
 	const uint32_t *rk;
@@ -978,12 +996,21 @@ aes_encrypt_internal(const unsigned char *in, unsigned char *out,
 }
 #endif
 
-#ifndef HAVE_AES_DECRYPT_INTERNAL
+#ifndef HAVE_AES_ENCRYPT_INTERNAL
+void
+aes_encrypt_internal(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key)
+{
+	aes_encrypt_generic(in, out, key);
+}
+#endif
+
+#ifndef HAVE_AES_DECRYPT_GENERIC
 /*
  * Decrypt a single block - in and out can overlap.
  */
 void
-aes_decrypt_internal(const unsigned char *in, unsigned char *out,
+aes_decrypt_generic(const unsigned char *in, unsigned char *out,
     const AES_KEY *key)
 {
 	const uint32_t *rk;
@@ -1167,5 +1194,14 @@ aes_decrypt_internal(const unsigned char *in, unsigned char *out,
 	    (Td4[(t0) & 0xff]) ^
 	    rk[3];
 	crypto_store_htobe32(&out[3 * 4], s3);
+}
+#endif
+
+#ifndef HAVE_AES_DECRYPT_INTERNAL
+void
+aes_decrypt_internal(const unsigned char *in, unsigned char *out,
+    const AES_KEY *key)
+{
+	aes_decrypt_generic(in, out, key);
 }
 #endif
