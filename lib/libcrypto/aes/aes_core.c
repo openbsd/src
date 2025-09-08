@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_core.c,v 1.27 2025/04/21 12:23:09 jsing Exp $ */
+/* $OpenBSD: aes_core.c,v 1.28 2025/09/08 12:46:38 jsing Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -645,19 +645,7 @@ aes_set_encrypt_key_internal(const unsigned char *userKey, const int bits,
 	int i = 0;
 	uint32_t temp;
 
-	if (!userKey || !key)
-		return -1;
-	if (bits != 128 && bits != 192 && bits != 256)
-		return -2;
-
 	rk = key->rd_key;
-
-	if (bits == 128)
-		key->rounds = 10;
-	else if (bits == 192)
-		key->rounds = 12;
-	else
-		key->rounds = 14;
 
 	rk[0] = crypto_load_be32toh(&userKey[0 * 4]);
 	rk[1] = crypto_load_be32toh(&userKey[1 * 4]);
@@ -746,13 +734,12 @@ aes_set_decrypt_key_internal(const unsigned char *userKey, const int bits,
     AES_KEY *key)
 {
 	uint32_t *rk;
-	int i, j, status;
 	uint32_t temp;
+	int i, j, ret;
 
 	/* first, start with an encryption schedule */
-	status = AES_set_encrypt_key(userKey, bits, key);
-	if (status < 0)
-		return status;
+	if ((ret = aes_set_encrypt_key_internal(userKey, bits, key)) < 0)
+		return ret;
 
 	rk = key->rd_key;
 

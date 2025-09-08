@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.14 2025/07/22 09:13:49 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.15 2025/09/08 12:46:38 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -72,9 +72,27 @@ void aes_encrypt_internal(const unsigned char *in, unsigned char *out,
 void aes_decrypt_internal(const unsigned char *in, unsigned char *out,
     const AES_KEY *key);
 
+static int
+aes_rounds_for_key_length(int bits)
+{
+	if (bits == 128)
+		return 10;
+	if (bits == 192)
+		return 12;
+	if (bits == 256)
+		return 14;
+
+	return 0;
+}
+
 int
 AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
+	if (userKey == NULL || key == NULL)
+		return -1;
+	if ((key->rounds = aes_rounds_for_key_length(bits)) <= 0)
+		return -2;
+
 	return aes_set_encrypt_key_internal(userKey, bits, key);
 }
 LCRYPTO_ALIAS(AES_set_encrypt_key);
@@ -82,6 +100,11 @@ LCRYPTO_ALIAS(AES_set_encrypt_key);
 int
 AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
+	if (userKey == NULL || key == NULL)
+		return -1;
+	if ((key->rounds = aes_rounds_for_key_length(bits)) <= 0)
+		return -2;
+
 	return aes_set_decrypt_key_internal(userKey, bits, key);
 }
 LCRYPTO_ALIAS(AES_set_decrypt_key);
