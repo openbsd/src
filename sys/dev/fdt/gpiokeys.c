@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiokeys.c,v 1.6 2025/06/03 15:04:00 kettenis Exp $	*/
+/*	$OpenBSD: gpiokeys.c,v 1.7 2025/09/08 19:32:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -56,10 +56,15 @@ enum gpiokeys_switch_event {
 	GPIOKEYS_SW_LID = 0,	/* set = lid closed */
 };
 
+enum gpiokeys_key_event {
+	GPIOKEYS_KEY_POWER = 116,
+};
+
 struct gpiokeys_key {
 	uint32_t			*key_pin;
 	uint32_t			 key_input_type;
 	uint32_t			 key_code;
+	int				 key_state;
 	struct ksensor			 key_sensor;
 	SLIST_ENTRY(gpiokeys_key)	 key_next;
 	void				 (*key_func)(void *);
@@ -85,6 +90,7 @@ struct cfdriver gpiokeys_cd = {
 };
 
 void	 gpiokeys_update_key(void *);
+void	 gpiokeys_power_button(void *);
 int	 gpiokeys_intr(void *);
 
 int
@@ -112,7 +118,8 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 	pinctrl_byname(faa->fa_node, "default");
 
 	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
-		if (OF_getprop(node, "linux,code", &code, sizeof(code)) == -1)
+		code = OF_getpropint(node, "linux,code", -1);
+		if (code == -1)
 			continue;
 		gpios_len = OF_getproplen(node, "gpios");
 		if (gpios_len <= 0)
@@ -146,6 +153,13 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 				key->key_func = gpiokeys_update_key;
 				key->key_wakeup = 1;
 				have_sensors = 1;
+				break;
+			}
+			break;
+		case GPIOKEYS_EV_KEY:
+			switch (key->key_code) {
+			case GPIOKEYS_KEY_POWER:
+				key->key_func = gpiokeys_power_button;
 				break;
 			}
 			break;
@@ -241,6 +255,22 @@ gpiokeys_update_key(void *arg)
 			break;
 		}
 		break;
+	}
+}
+
+void
+gpiokeys_power_button(void *arg)
+{
+	struct gpiokeys_key *key = arg;
+	int state;
+
+	state = gpio_controller_get_pin(key->key_pin);
+
+	if (state != key->key_state) {
+		/* Ignore presses, handle releases. */
+		if (!state)
+			powerbutton_event();
+		key->key_state = state;
 	}
 }
 
