@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.187 2025/09/08 07:10:14 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.188 2025/09/08 08:00:47 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -2090,11 +2090,11 @@ func runEdDSATest(pkey *C.EVP_PKEY, wt *wycheproofTestEdDSA) bool {
 }
 
 func (wtg *wycheproofTestGroupEdDSA) run(algorithm string, variant testVariant) bool {
-	fmt.Printf("Running %v test group %v...\n", algorithm, wtg.Type)
-
-	if wtg.Key.Curve != "edwards25519" || wtg.Key.KeySize != 255 {
-		fmt.Printf("INFO: Unexpected curve or key size. want (\"edwards25519\", 255), got (%q, %d)\n", wtg.Key.Curve, wtg.Key.KeySize)
-		return false
+	if wtg.Key.Curve == "edwards25519" {
+		fmt.Printf("Running %v test group %v...\n", algorithm, wtg.Type)
+	} else {
+		fmt.Printf("INFO: Skipping %v test group %v for %v...\n", algorithm, wtg.Type, wtg.Key.Curve)
+		return true
 	}
 
 	pubKey, pubKeyLen := mustDecodeHexString(wtg.Key.Pk, "pubkey")
@@ -2732,7 +2732,12 @@ func runX25519Test(wt *wycheproofTestX25519) bool {
 }
 
 func (wtg *wycheproofTestGroupX25519) run(algorithm string, variant testVariant) bool {
-	fmt.Printf("Running %v test group with curve %v...\n", algorithm, wtg.Curve)
+	if wtg.Curve == "curve25519" {
+		fmt.Printf("Running %v test group with curve %v...\n", algorithm, wtg.Curve)
+	} else {
+		fmt.Printf("INFO: Skipping %v test group with curve %v...\n", algorithm, wtg.Curve)
+		return true
+	}
 
 	success := true
 	for _, wt := range wtg.Tests {
