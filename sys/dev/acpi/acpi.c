@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.451 2025/06/17 13:01:11 krw Exp $ */
+/* $OpenBSD: acpi.c,v 1.452 2025/09/08 10:36:15 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2773,7 +2773,7 @@ acpi_create_thread(void *arg)
 		    DEVNAME(sc));
 }
 
-#if __arm64__
+#ifdef __arm64__
 int
 acpi_foundsectwo(struct aml_node *node, void *arg)
 {
