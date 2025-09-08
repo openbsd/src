@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.185 2025/09/08 06:47:34 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.186 2025/09/08 07:07:36 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -723,9 +723,11 @@ func nidFromString(ns string) (int, error) {
 	return -1, fmt.Errorf("unknown NID %q", ns)
 }
 
-func skipSmallCurve(nid int) bool {
+func skipCurve(nid int) bool {
 	switch C.int(nid) {
 	case C.NID_secp160k1, C.NID_secp160r1, C.NID_secp160r2, C.NID_secp192k1, C.NID_X9_62_prime192v1:
+		return true
+	case C.NID_sect283k1, C.NID_sect283r1, C.NID_sect409k1, C.NID_sect409r1, C.NID_sect571k1, C.NID_sect571r1:
 		return true
 	}
 	return false
@@ -1727,7 +1729,7 @@ func (wtg *wycheproofTestGroupECDH) run(algorithm string, variant testVariant) b
 	if err != nil {
 		log.Fatalf("Failed to get nid for curve: %v", err)
 	}
-	if skipSmallCurve(nid) {
+	if skipCurve(nid) {
 		return true
 	}
 
@@ -1888,7 +1890,7 @@ func (wtg *wycheproofTestGroupECDSA) run(algorithm string, variant testVariant) 
 	if err != nil {
 		log.Fatalf("Failed to get nid for curve: %v", err)
 	}
-	if skipSmallCurve(nid) {
+	if skipCurve(nid) {
 		return true
 	}
 	ecKey := C.EC_KEY_new_by_curve_name(C.int(nid))
