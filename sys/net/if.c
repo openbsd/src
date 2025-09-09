@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.740 2025/07/21 20:36:41 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.741 2025/09/09 09:16:18 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -237,7 +237,11 @@ struct softnet {
 	struct taskq	*sn_taskq;
 	struct netstack	 sn_netstack;
 } __aligned(64);
+#ifdef MULTIPROCESSOR
 #define NET_TASKQ	8
+#else
+#define NET_TASKQ	1
+#endif
 struct softnet	softnets[NET_TASKQ];
 
 struct task	if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
@@ -255,22 +259,44 @@ struct rwlock netlock = RWLOCK_INITIALIZER_TRACE("netlock",
 void
 ifinit(void)
 {
-	unsigned int	i;
-
 	/*
 	 * most machines boot with 4 or 5 interfaces, so size the initial map
 	 * to accommodate this
 	 */
 	if_idxmap_init(8); /* 8 is a nice power of 2 for malloc */
+}
 
+void
+softnet_init(void)
+{
+	unsigned int i;
+
+	/* Number of CPU is unknown, but driver attach needs softnet tasks. */
 	for (i = 0; i < NET_TASKQ; i++) {
 		struct softnet *sn = &softnets[i];
+
 		snprintf(sn->sn_name, sizeof(sn->sn_name), "softnet%u", i);
 		sn->sn_taskq = taskq_create(sn->sn_name, 1, IPL_NET,
 		    TASKQ_MPSAFE);
 		if (sn->sn_taskq == NULL)
 			panic("unable to create network taskq %d", i);
 	}
+}
+
+void
+softnet_percpu(void)
+{
+#ifdef MULTIPROCESSOR
+	unsigned int i;
+
+	/* After attaching all CPUs and interfaces, remove useless threads. */
+	for (i = softnet_count(); i < NET_TASKQ; i++) {
+		struct softnet *sn = &softnets[i];
+
+		taskq_destroy(sn->sn_taskq);
+		sn->sn_taskq = NULL;
+	}
+#endif /* MULTIPROCESSOR */
 }
 
 static struct if_idxmap if_idxmap;
@@ -3642,10 +3668,10 @@ unhandled_af(int af)
 	panic("unhandled af %d", af);
 }
 
-int
-net_sn_count(void)
+unsigned int
+softnet_count(void)
 {
-	static int nsoftnets;
+	static unsigned int nsoftnets;
 
 	if (nsoftnets == 0)
 		nsoftnets = min(NET_TASKQ, ncpus);
@@ -3656,7 +3682,7 @@ net_sn_count(void)
 struct softnet *
 net_sn(unsigned int ifindex)
 {
-	return (&softnets[ifindex % net_sn_count()]);
+	return (&softnets[ifindex % softnet_count()]);
 }
 
 struct taskq *
@@ -3672,7 +3698,7 @@ net_tq_barriers(const char *wmesg)
 	struct refcnt r = REFCNT_INITIALIZER();
 	int i;
 
-	for (i = 0; i < nitems(barriers); i++) {
+	for (i = 0; i < softnet_count(); i++) {
 		task_set(&barriers[i], (void (*)(void *))refcnt_rele_wake, &r);
 		refcnt_take(&r);
 		task_add(softnets[i].sn_taskq, &barriers[i]);

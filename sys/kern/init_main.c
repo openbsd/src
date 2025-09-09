@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.329 2025/06/09 10:57:46 claudio Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.330 2025/09/09 09:16:18 bluhm Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -328,6 +328,7 @@ main(void *framep)
 
 	/* Initialize the interface/address trees */
 	ifinit();
+	softnet_init();
 
 	/* Lock the kernel on behalf of proc0. */
 	KERNEL_LOCK();
@@ -345,6 +346,9 @@ main(void *framep)
 
 	/* Per CPU memory allocation */
 	percpu_init();
+
+	/* Reduce softnet threads to number of CPU */
+	softnet_percpu();
 
 	/* Initialize the file systems. */
 #if defined(NFSSERVER) || defined(NFSCLIENT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.220 2025/07/19 16:40:40 mvs Exp $	*/
+/*	$OpenBSD: if.h,v 1.221 2025/09/09 09:16:18 bluhm Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -561,10 +561,13 @@ void	if_congestion(void);
 int	if_congested(void);
 __dead void	unhandled_af(int);
 int	if_setlladdr(struct ifnet *, const uint8_t *);
+void	softnet_init(void);
+void	softnet_percpu(void);
+unsigned int
+	softnet_count(void);
 struct taskq *
 	net_tq(unsigned int);
 void	net_tq_barriers(const char *);
-int	net_sn_count(void);
 
 #endif /* _KERNEL */
 
