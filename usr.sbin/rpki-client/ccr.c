@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.6 2025/09/09 08:23:24 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.7 2025/09/09 13:22:38 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -405,8 +405,8 @@ generate_roapayloadstate(struct validation_data *vd)
 	struct ccr *ccr = &vd->ccr;
 	ROAPayloadState *vrps;
 	struct vrp *prev, *vrp;
-	ROAPayloadSet *rp;
-	ROAIPAddressFamily *ripaf;
+	ROAPayloadSet *rp = NULL;
+	ROAIPAddressFamily *ripaf = NULL;
 	unsigned char afibuf[2];
 
 	if ((vrps = ROAPayloadState_new()) == NULL)
@@ -1124,7 +1124,7 @@ parse_aspa_providers(const char *fn, struct ccr *ccr, int asid,
 {
 	struct vap *vap = NULL;
 	ASN1_INTEGER *aint;
-	uint32_t prev, provider;
+	uint32_t prev = 0, provider;
 	int i, p_num, rc = 0;
 
 	if ((p_num = sk_ASN1_INTEGER_num(providers)) <= 0) {
@@ -1178,7 +1178,7 @@ parse_aspa_payloads(const char *fn, struct ccr *ccr,
     const STACK_OF(ASPAPayloadSet) *aps)
 {
 	ASPAPayloadSet *a;
-	uint32_t asid, prev;
+	uint32_t asid, prev = 0;
 	int i, rc = 0, aps_num;
 
 	aps_num = sk_ASPAPayloadSet_num(aps);
