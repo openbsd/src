@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.48 2025/09/05 16:57:48 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.49 2025/09/09 08:50:56 hshoexer Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -128,14 +128,10 @@ member	is_recurse
 member	is_resume
 member	is_handlers
 member	is_pic
-member	is_flags
 member	is_pin
-member	is_type
 member	is_maxlevel
 
 struct	intrhand
-member	ih_fun
-member	ih_arg
 member	ih_next
 member	ih_level
 member	IH_COUNT	ih_count.ec_count
