@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2024/08/22 07:56:47 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.32 2025/09/09 04:15:53 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -875,14 +875,14 @@ ipcpopt		: POOL_ADDRESS STRING ipcppooltype {
 			if ($3 != 1) {
 				if (in_addr_range_list_add(
 				    &curr_ipcpconf->dynamic_pool, $2) != 0) {
-					yyerror("out of memory");
+					yyerror("%s", strerror(errno));
 					free($2);
 					YYERROR;
 				}
 			}
 			if (in_addr_range_list_add(
 			    &curr_ipcpconf->static_pool, $2) != 0) {
-				yyerror("out of memory");
+				yyerror("%s", strerror(errno));
 				free($2);
 				YYERROR;
 			}
