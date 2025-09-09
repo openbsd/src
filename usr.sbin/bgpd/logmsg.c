@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.15 2025/08/21 15:15:25 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.16 2025/09/09 12:42:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -128,6 +128,27 @@ log_statechange(struct peer *peer, enum session_state ostate,
 	    eventnames[event]);
 }
 
+static const char *
+tohex(const unsigned char *in, size_t len)
+{
+	const char hex[] = "0123456789ABCDEF";
+	static char out[(16 + 1) * 3];
+	size_t i, o = 0;
+
+	if (len > 16)
+		len = 16;
+	for (i = 0; i < len; i++) {
+		out[o++] = hex[in[i] >> 4];
+		out[o++] = hex[in[i] & 0xf];
+		out[o++] = ' ';
+		if (i == 7)
+			out[o++] = ' ';
+	}
+	out[o - 1] = '\0';
+
+	return out;
+}
+
 void
 log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
     const struct ibuf *data, const char *dir)
@@ -135,7 +156,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 	struct ibuf	 ibuf;
 	char		*p;
 	const char	*suberrname = NULL;
-	int		 uk = 0;
+	int		 uk = 0, dump = 0;
 
 	if (data != NULL)
 		ibuf_from_ibuf(&ibuf, data);
@@ -176,6 +197,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			uk = 1;
 		else
 			suberrname = suberr_update_names[subcode];
+		dump = 1;
 		break;
 	case ERR_CEASE:
 		if (subcode >= sizeof(suberr_cease_names) / sizeof(char *) ||
@@ -238,6 +260,23 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			logit(LOG_ERR, "%s: %s notification: %s, %s",
 			    p, dir, errnames[errcode], suberrname);
 	}
+
+	if (dump && log_getverbose() && ibuf_size(&ibuf) > 0) {
+		size_t off = 0;
+		logit(LOG_INFO, "%s: notification data", p);
+		while (ibuf_size(&ibuf) > 0) {
+			unsigned char buf[16];
+			size_t len = sizeof(buf);
+			if (ibuf_size(&ibuf) < len)
+				len = ibuf_size(&ibuf);
+			if (ibuf_get(&ibuf, buf, len) == -1) {
+				break;
+			}
+			logit(LOG_INFO, "   %5zu: %s", off, tohex(buf, len));
+			off += len;
+		}
+	}
+
 	free(p);
 }
 
