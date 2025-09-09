@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
-# transfer peer from SYN_SENT to SYN_RCVD state an check retransmit of SYN+ACK
-# from LISTEN state SYN_RCVD is cannot be reached as SYN cache handles it
+# transfer peer from SYN_SENT via SYN_RCVD to FIN_WAIT_1 state
+# an check retransmit of FIN
 
 import os
 import threading
@@ -38,7 +38,7 @@ sniffer.start()
 time.sleep(1)
 
 print("Connect from remote client.")
-os.popen("ssh %s perl %s/client.pl %s %s %u" % \
+client=os.popen("ssh %s perl %s/client.pl %s %s %u" % \
     (REMOTE_SSH, CURDIR, ip.dst, ip.src, tport), mode='w')
 
 print("Wait for SYN.")
@@ -48,23 +48,10 @@ if syn is None:
 	print("ERROR: No SYN received from remote client.")
 	exit(1)
 
-print("Start sniffer for SYN+ACK packet from peer.");
-sniffer = Sniff1(count=2, timeout=10)
-sniffer.filter = \
-    "ip and src %s and dst %s and tcp port %u " \
-    "and tcp[tcpflags] = tcp-syn|tcp-ack" % \
-    (ip.dst, ip.src, tport)
-sniffer.start()
-time.sleep(1)
-
 print("Send SYN packet, receive SYN+ACK.")
 synsyn=TCP(sport=syn.dport, dport=syn.sport, flags='S',
     seq=1, ack=syn.seq+1, window=(2**16)-1)
-send(ip/synsyn)
-
-print("Wait for SYN+ACK and its retransmit.")
-sniffer.join(timeout=10)
-synack=sniffer.packet
+synack=sr1(ip/synsyn)
 if synack is None:
 	print("ERROR: No SYN+ACK from remote client received.")
 	exit(1)
@@ -82,14 +69,32 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				print(line)
 				log.write(line)
 
-print("Send ACK packet to finish handshake.")
-ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
-    seq=2, ack=synack.seq+1, window=(2**16)-1)
-send(ip/ack)
+print("Start sniffer for FIN packet from peer.");
+sniffer = Sniff1(count=2, timeout=10)
+sniffer.filter = \
+    "ip and src %s and dst %s and tcp port %u " \
+    "and tcp[tcpflags] = tcp-fin|tcp-ack" % \
+    (ip.dst, ip.src, tport)
+sniffer.start()
+time.sleep(1)
 
-print("Check peer is in ESTABLISHED state.")
+print("Close remote client.")
+os.close(client.fileno())
+
+print("Wait for FIN and its retransmit.")
+sniffer.join(timeout=10)
+fin=sniffer.packet
+if fin is None:
+	print("ERROR: No FIN from remote client received.")
+	exit(1)
+if fin.seq != syn.seq or fin.ack != 2:
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d in FIN." % \
+	    (syn.seq, 2, fin.seq, fin.ack))
+	exit(1)
+
+print("Check peer is in FIN_WAIT_1 state.")
 with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
-	with open("netstat-synrcvd.log", 'a') as log:
+	with open("netstat-synfin.log", 'a') as log:
 		for line in netstat:
 			if "%s.%d" % (FAKE_NET_ADDR, tport) in line:
 				print(line)
@@ -97,21 +102,16 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 
 print("Send reset to cleanup the connection.")
 new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
-    seq=ack.seq, ack=ack.ack)
+    seq=fin.ack, ack=fin.seq)
 send(ip/new_rst)
 
-print("Check retransmit of SYN+ACK.");
-rxmit_synack = sniffer.captured[1]
-if rxmit_synack is None:
-	print("ERROR: No SYN+ACK retransmitted from remote client.")
-if rxmit_synack.ack != 2:
-	print("ERROR: expecting ack %d, got ack %d in rxmit SYN+ACK." % \
-	    (2, rxmit_synack.ack))
-	exit(1)
-if rxmit_synack.seq != syn.seq or rxmit_synack.ack != 2:
-	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in SYN+ACK." % \
-	    (syn.seq, 2, rxmit_synack.seq, rxmit_synack.ack))
+print("Check retransmit of FIN.");
+rxmit_fin = sniffer.captured[1]
+if rxmit_fin is None:
+	print("ERROR: No FIN retransmitted from remote client.")
+if rxmit_fin.seq != syn.seq or rxmit_fin.ack != 2:
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d in FIN." % \
+	    (syn.seq, 2, rxmit_fin.seq, rxmit_fin.ack))
 	exit(1)
 
 exit(0);

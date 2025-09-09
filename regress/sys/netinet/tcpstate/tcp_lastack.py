@@ -39,7 +39,7 @@ ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=synack.seq+1, window=(2**16)-1)
 send(ip/ack)
 
-print("Start sniffer to get FIN packet from peer");
+print("Start sniffer to get FIN packet from peer.");
 sniffer = Sniff1(count=2, timeout=10)
 sniffer.filter = \
     "ip and src %s and tcp port %u and dst %s and tcp port %u " \
@@ -48,7 +48,7 @@ sniffer.filter = \
 sniffer.start()
 time.sleep(1)
 
-print("Send FIN packet to close connection");
+print("Send FIN packet to close connection.");
 send_fin=TCP(sport=synack.dport, dport=synack.sport, flags='FA',
     seq=2, ack=synack.seq+1, window=(2**16)-1)
 recv_ack=sr1(ip/send_fin, timeout=5)
@@ -56,12 +56,12 @@ if recv_ack is None:
 	print("ERROR: No ACK for FIN from discard server received.")
 	exit(1)
 if recv_ack.getlayer(TCP).flags != 'A':
-	print("ERROR: expecting ACK, got flag '%s' in recv fin" % \
+	print("ERROR: expecting ACK, got flag '%s' in recv FIN." % \
 	    (recv_ack.getlayer(TCP).flags))
 	exit(1)
 if recv_ack.seq != synack.seq+1 or recv_ack.ack != 3:
 	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in recv ack" % \
+	    "got seq %d ack %d in recv ACK." % \
 	    (synack.seq+1, 3, recv_ack.seq, recv_ack.ack))
 	exit(1)
 
@@ -73,7 +73,7 @@ if recv_fin is None:
 	exit(1)
 if recv_fin.seq != synack.seq+1 or recv_fin.ack != 3:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in recv fin" % \
+	    "in recv FIN." % \
 	    (synack.seq+1, 3, recv_fin.seq, recv_fin.ack))
 	exit(1)
 
@@ -85,18 +85,18 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				print(line)
 				log.write(line)
 
-print("Send ACK for FIN packet to close connection");
+print("Send ACK for FIN packet to close connection.");
 send_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=3, ack=recv_fin.seq+1, window=(2**16)-1)
 send(ip/send_ack)
 
-print("Check retransmit of FIN");
+print("Check retransmit of FIN.");
 rxmit_fin = sniffer.captured[1]
 if rxmit_fin is None:
 	print("ERROR: No FIN retransmitted from discard server.")
 if rxmit_fin.seq != synack.seq+1 or rxmit_fin.ack != 3:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in rxmit FIN" % \
+	    "in rxmit FIN." % \
 	    (synack.seq+1, 3, rxmit_fin.seq, rxmit_fin.ack))
 	exit(1)
 

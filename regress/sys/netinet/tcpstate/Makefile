@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2025/08/01 21:58:48 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2025/09/09 18:49:54 bluhm Exp $
 
 # Copyright (c) 2025 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -83,6 +83,7 @@ addr.py: Makefile
 .for var in FAKE_NET REMOTE_SSH
 	echo '${var} = "${${var}}"' >>$@.tmp
 .endfor
+	echo 'CURDIR = "${.CURDIR}"' >>$@.tmp
 	mv $@.tmp $@
 
 # load the pf rules into the kernel of the REMOTE and LOCAL machine

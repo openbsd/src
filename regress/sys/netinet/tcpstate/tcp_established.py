@@ -39,7 +39,7 @@ ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=synack.seq+1, window=(2**16)-1)
 send(ip/ack)
 
-print("Start sniffer to get data retransmit from peer");
+print("Start sniffer to get data retransmit from peer.");
 sniffer = Sniff1(count=3, timeout=10)
 sniffer.filter = \
     "ip and src %s and tcp port %u and dst %s and tcp port %u " \
@@ -59,11 +59,11 @@ if data_ack is None:
 	exit(1)
 if data_ack.seq != synack.seq+1 or data_ack.ack != 2+paylen:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in data ACK" % \
+	    "in data ACK." % \
 	    (synack.seq+1, 2+paylen, data_ack.seq, data_ack.ack))
 	exit(1)
 
-print("Send ACK for echo packet, but with one squence less");
+print("Send ACK for echo packet, but with one squence less.");
 echo_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2+paylen, ack=data_ack.seq+paylen-1, window=(2**16)-1)
 echo=sr1(ip/echo_ack, timeout=5);
@@ -71,14 +71,14 @@ if echo is None:
 	print("ERROR: No truncated echo received from echo server.")
 	exit(1)
 if echo.getlayer(TCP).flags != 'AP':
-	print("ERROR: expecting PSH, got flag '%s' in echo" % \
+	print("ERROR: expecting PSH, got flag '%s' in echo." % \
 	    (echo.getlayer(TCP).flags))
 	exit(1)
 tcplen = echo.len - echo.ihl*4 - echo.dataofs*4
 if echo.seq != synack.seq+1+paylen-1 or echo.ack != 2+paylen or \
     tcplen != 1:
 	print("ERROR: expecting seq %d ack %d len %d, " \
-	    "got seq %d ack %d len %d in echo" % \
+	    "got seq %d ack %d len %d in echo." % \
 	    (synack.seq+1+paylen-1, 2+paylen, 1, echo.seq, echo.ack, tcplen))
 	exit(1)
 
@@ -93,18 +93,18 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				print(line)
 				log.write(line)
 
-print("Send reset to cleanup the connection")
+print("Send reset to cleanup the connection.")
 new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
     seq=data_ack.ack, ack=data_ack.seq)
 send(ip/new_rst)
 
-print("Check retransmit of echo");
+print("Check retransmit of echo.");
 rxmit_echo = sniffer.captured[2]
 if rxmit_echo is None:
 	print("ERROR: No echo retransmitted from echo server.")
 if rxmit_echo.seq != synack.seq+1+paylen-1 or rxmit_echo.ack != 2+paylen:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in rxmit echo" % \
+	    "in rxmit echo." % \
 	    (synack.seq+1+paylen-1, 2+paylen, rxmit_echo.seq, rxmit_echo.ack))
 	exit(1)
 

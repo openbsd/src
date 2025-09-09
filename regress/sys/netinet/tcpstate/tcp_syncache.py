@@ -27,7 +27,7 @@ class Sniff1(threading.Thread):
 ip=IP(src=FAKE_NET_ADDR, dst=REMOTE_ADDR)
 tport=os.getpid() & 0xffff
 
-print("Start sniffer for SYN+ACK packet from peer");
+print("Start sniffer for SYN+ACK packet from peer.");
 sniffer = Sniff1(count=2, timeout=10)
 sniffer.filter = \
     "ip and src %s and dst %s and tcp port %u " \
@@ -47,7 +47,7 @@ if synack is None:
 	print("ERROR: No SYN+ACK from discard server received.")
 	exit(1)
 if synack.ack != 2:
-	print("ERROR: expecting ack %d, got ack %d in SYN+ACK" % \
+	print("ERROR: expecting ack %d, got ack %d in SYN+ACK." % \
 	    (2, synack.ack))
 	exit(1)
 
@@ -64,17 +64,17 @@ ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=synack.seq+1, window=(2**16)-1)
 send(ip/ack)
 
-print("Send reset to cleanup the connection")
+print("Send reset to cleanup the connection.")
 new_rst=TCP(sport=synack.dport, dport=synack.sport, flags='RA',
     seq=ack.seq, ack=ack.ack)
 send(ip/new_rst)
 
-print("Check retransmit of SYN+ACK");
+print("Check retransmit of SYN+ACK.");
 rxmit_synack = sniffer.captured[1]
 if rxmit_synack is None:
 	print("ERROR: No SYN+ACK retransmitted from discard server.")
 if rxmit_synack.ack != 2:
-	print("ERROR: expecting ack %d, got ack %d in rxmit SYN+ACK" % \
+	print("ERROR: expecting ack %d, got ack %d in rxmit SYN+ACK." % \
 	    (2, rxmit_synack.ack))
 	exit(1)
 

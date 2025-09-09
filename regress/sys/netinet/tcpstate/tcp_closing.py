@@ -34,7 +34,7 @@ if synack is None:
 	print("ERROR: No SYN+ACK from daytime server received.")
 	exit(1)
 
-print("Start sniffer to get FIN packet from peer");
+print("Start sniffer to get FIN packet from peer.");
 sniffer = Sniff1(count=4, timeout=10)
 sniffer.filter = \
     "ip and src %s and tcp port %u and dst %s and tcp port %u " \
@@ -51,16 +51,16 @@ if data is None:
 	print("ERROR: No Data received from daytime server.")
 	exit(1)
 if data.getlayer(TCP).flags != 'PA':
-	print("ERROR: expecting PSH, got flag '%s' in data" % \
+	print("ERROR: expecting PSH, got flag '%s' in data." % \
 	    (data.getlayer(TCP).flags))
 	exit(1)
 if data.seq != synack.seq+1 or data.ack != 2:
-	print("ERROR: expecting seq %d ack %d, got seq %d ack %d in data" % \
+	print("ERROR: expecting seq %d ack %d, got seq %d ack %d in data." % \
 	    (synack.seq+1, 2, recv_fin.seq, recv_fin.ack))
 	exit(1)
 tcplen = data.len - data.ihl * 4 - data.dataofs * 4
 
-print("Send ACK for Data packet");
+print("Send ACK for Data packet.");
 data_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=data.seq+tcplen, window=(2**16)-1)
 recv_fin=sr1(ip/data_ack, timeout=5)
@@ -68,16 +68,16 @@ if recv_fin is None:
 	print("ERROR: No FIN received from daytime server.")
 	exit(1)
 if recv_fin.getlayer(TCP).flags != 'FA':
-	print("ERROR: expecting FIN, got flag '%s' in recv fin" % \
+	print("ERROR: expecting FIN, got flag '%s' in recv FIN." % \
 	    (recv_fin.getlayer(TCP).flags))
 	exit(1)
 if recv_fin.seq != data.seq+tcplen or recv_fin.ack != 2:
 	print("ERROR: expecting seq %d ack %d, " \
-	    "got seq %d ack %d in recv fin" % \
+	    "got seq %d ack %d in recv FIN." % \
 	    (data.seq+tcplen, 2, recv_fin.seq, recv_fin.ack))
 	exit(1)
 
-print("Send FIN packet to close connection");
+print("Send FIN packet to close connection.");
 send_fin=TCP(sport=synack.dport, dport=synack.sport, flags='FA',
     seq=2, ack=data.seq+tcplen, window=(2**16)-1)
 recv_ack=sr1(ip/send_fin, timeout=5)
@@ -85,12 +85,12 @@ if recv_ack is None:
 	print("ERROR: No ACK for FIN from daytime server received.")
 	exit(1)
 if recv_ack.getlayer(TCP).flags != 'FA':
-	print("ERROR: expecting FIN, got flag '%s' in recv ack" % \
+	print("ERROR: expecting FIN, got flag '%s' in recv ACK." % \
 	    (recv_fin.getlayer(TCP).flags))
 	exit(1)
 if recv_ack.seq != recv_fin.seq or recv_ack.ack != 3:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in recv ack" % \
+	    "in recv ACK." % \
 	    (recv_fin.seq, 3, recv_ack.seq, recv_ack.ack))
 	exit(1)
 
@@ -105,18 +105,18 @@ with os.popen("ssh "+REMOTE_SSH+" netstat -vnp tcp") as netstat:
 				print(line)
 				log.write(line)
 
-print("Send ACK for FIN packet to close connection");
+print("Send ACK for FIN packet to close connection.");
 send_ack=TCP(sport=synack.dport, dport=synack.sport, flags='A',
     seq=2, ack=recv_fin.seq+1, window=(2**16)-1)
 send(ip/send_ack)
 
-print("Check retransmit of FIN");
+print("Check retransmit of FIN.");
 rxmit_fin = sniffer.captured[3]
 if rxmit_fin is None:
 	print("ERROR: No FIN retransmitted from daytime server.")
 if rxmit_fin.seq != data.seq+tcplen or rxmit_fin.ack != 3:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
-	    "in rxmit FIN" % \
+	    "in rxmit FIN." % \
 	    (data.seq+tcplen, 3, rxmit_fin.seq, rxmit_fin.ack))
 	exit(1)
 
