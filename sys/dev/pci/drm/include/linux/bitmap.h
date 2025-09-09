@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.8 2024/03/20 22:52:44 bluhm Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.9 2025/09/09 10:11:41 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -129,9 +129,9 @@ static inline void
 bitmap_to_arr32(void *d, const unsigned long *src, u_int n)
 {
 	u_int *dst = d;
+#ifdef __LP64__
 	u_int b;
 
-#ifdef __LP64__
 	for (b = 0; b < n; b += 32) {
 		dst[b >> 5] = src[b >> 6] & 0xffffffff;
 		b += 32;
@@ -148,10 +148,10 @@ bitmap_to_arr32(void *d, const unsigned long *src, u_int n)
 static inline void
 bitmap_from_arr32(unsigned long *dst, const void *s, u_int n)
 {
+#ifdef __LP64__
 	const u_int *src = s;
 	u_int b;
 
-#ifdef __LP64__
 	for (b = 0; b < n; b += 32) {
 		dst[b >> 6] = src[b >> 5];
 		b += 32;
