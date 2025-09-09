@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.130 2025/08/24 12:17:12 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.131 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -58,8 +58,6 @@ ASN1_SEQUENCE(FileAndHash) = {
 	ASN1_SIMPLE(FileAndHash, hash, ASN1_BIT_STRING),
 } ASN1_SEQUENCE_END(FileAndHash);
 
-#define GENTIME_LENGTH 15
-
 /*
  * Determine rtype corresponding to file extension. Returns RTYPE_INVALID
  * on error or unknown extension.
@@ -95,6 +93,8 @@ rtype_from_file_extension(const char *fn)
 		return RTYPE_GEOFEED;
 	if (strcasecmp(fn + sz - 4, ".spl") == 0)
 		return RTYPE_SPL;
+	if (strcasecmp(fn + sz - 4, ".ccr") == 0)
+		return RTYPE_CCR;
 
 	return RTYPE_INVALID;
 }

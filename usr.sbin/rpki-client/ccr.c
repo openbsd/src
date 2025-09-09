@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.5 2025/09/06 16:13:48 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.6 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -232,6 +232,41 @@ IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(SubjectKeyIdentifiers,
     SubjectKeyIdentifiers, SubjectKeyIdentifiers);
 
 static void
+hash_asn1_item(ASN1_OCTET_STRING *astr, const ASN1_ITEM *it, void *val)
+{
+	unsigned char hash[SHA256_DIGEST_LENGTH];
+
+	if (!ASN1_item_digest(it, EVP_sha256(), val, hash, NULL))
+		errx(1, "ASN1_item_digest");
+
+	if (!ASN1_OCTET_STRING_set(astr, hash, sizeof(hash)))
+		errx(1, "ASN1_STRING_set");
+}
+
+static char *
+validate_asn1_hash(const char *fn, const char *descr,
+    const ASN1_OCTET_STRING *hash, const ASN1_ITEM *it, void *val)
+{
+	ASN1_OCTET_STRING *astr = NULL;
+	char *hex = NULL;
+
+	if ((astr = ASN1_OCTET_STRING_new()) == NULL)
+		err(1, NULL);
+
+	hash_asn1_item(astr, it, val);
+
+	if (ASN1_OCTET_STRING_cmp(hash, astr) != 0) {
+		warnx("%s: corrupted %s state", fn, descr);
+		goto out;
+	}
+
+	hex = hex_encode(hash->data, hash->length);
+ out:
+	ASN1_OCTET_STRING_free(astr);
+	return hex;
+}
+
+static void
 asn1int_set_seqnum(ASN1_INTEGER *aint, const char *seqnum)
 {
 	BIGNUM *bn = NULL;
@@ -291,16 +326,10 @@ append_cached_manifest(STACK_OF(ManifestRef) *mftrefs, struct ccr_mft *cm)
 		errx(1, "sk_ManifestRef_push");
 }
 
-static void
-hash_asn1_item(ASN1_OCTET_STRING *astr, const ASN1_ITEM *it, void *val)
+static int
+base64_encode_asn1str(const ASN1_OCTET_STRING *astr, char **out)
 {
-	unsigned char hash[SHA256_DIGEST_LENGTH];
-
-	if (!ASN1_item_digest(it, EVP_sha256(), val, hash, NULL))
-		errx(1, "ASN1_item_digest");
-
-	if (!ASN1_OCTET_STRING_set(astr, hash, sizeof(hash)))
-		errx(1, "ASN1_STRING_set");
+	return base64_encode(astr->data, astr->length, out) == 0;
 }
 
 static ManifestState *
@@ -327,9 +356,8 @@ generate_manifeststate(struct validation_data *vd)
 
 	hash_asn1_item(ms->hash, ASN1_ITEM_rptr(ManifestRefs), ms->mftrefs);
 
-	if (base64_encode(ms->hash->data, ms->hash->length,
-	    &ccr->mfts_hash) == -1)
-		errx(1, "base64_encode");
+	if (!base64_encode_asn1str(ms->hash, &ccr->mfts_hash))
+		errx(1, "base64_encode_asn1str");
 
 	return ms;
 }
@@ -374,6 +402,7 @@ append_cached_vrp(STACK_OF(ROAIPAddress) *addresses, struct vrp *vrp)
 static ROAPayloadState *
 generate_roapayloadstate(struct validation_data *vd)
 {
+	struct ccr *ccr = &vd->ccr;
 	ROAPayloadState *vrps;
 	struct vrp *prev, *vrp;
 	ROAPayloadSet *rp;
@@ -384,7 +413,7 @@ generate_roapayloadstate(struct validation_data *vd)
 		errx(1, "ROAPayloadState_new");
 
 	prev = NULL;
-	RB_FOREACH(vrp, ccr_vrp_tree, &vd->ccr.vrps) {
+	RB_FOREACH(vrp, ccr_vrp_tree, &ccr->vrps) {
 		if (prev == NULL || prev->asid != vrp->asid) {
 			if ((rp = ROAPayloadSet_new()) == NULL)
 				errx(1, "ROAPayloadSet_new");
@@ -421,9 +450,8 @@ generate_roapayloadstate(struct validation_data *vd)
 
 	hash_asn1_item(vrps->hash, ASN1_ITEM_rptr(ROAPayloadSets), vrps->rps);
 
-	if (base64_encode(vrps->hash->data, vrps->hash->length,
-	    &vd->ccr.vrps_hash) == -1)
-		errx(1, "base64_encode");
+	if (!base64_encode_asn1str(vrps->hash, &ccr->vrps_hash))
+		errx(1, "base64_encode_asn1str");
 
 	return vrps;
 }
@@ -460,6 +488,7 @@ append_cached_aspa(STACK_OF(ASPAPayloadSet) *aps, struct vap *vap)
 static ASPAPayloadState *
 generate_aspapayloadstate(struct validation_data *vd)
 {
+	struct ccr *ccr = &vd->ccr;
 	ASPAPayloadState *vaps;
 	struct vap *vap;
 
@@ -472,9 +501,8 @@ generate_aspapayloadstate(struct validation_data *vd)
 
 	hash_asn1_item(vaps->hash, ASN1_ITEM_rptr(ASPAPayloadSets), vaps->aps);
 
-	if (base64_encode(vaps->hash->data, vaps->hash->length,
-	    &vd->ccr.vaps_hash) == -1)
-		errx(1, "base64_encode");
+	if (!base64_encode_asn1str(vaps->hash, &ccr->vaps_hash))
+		errx(1, "base64_encode_asn1str");
 
 	return vaps;
 }
@@ -722,4 +750,655 @@ output_ccr_der(FILE *out, struct validation_data *vd, struct stats *st)
 		err(1, "fwrite");
 
 	return 0;
+}
+
+static void
+ccr_mft_free(struct ccr_mft *ccr_mft)
+{
+	if (ccr_mft == NULL)
+		return;
+
+	free(ccr_mft->seqnum);
+	free(ccr_mft->sia);
+	free(ccr_mft);
+}
+
+static void
+ccr_mfts_free(struct ccr_mft_tree *mfts)
+{
+	struct ccr_mft *ccr_mft, *tmp_ccr_mft;
+
+	RB_FOREACH_SAFE(ccr_mft, ccr_mft_tree, mfts, tmp_ccr_mft) {
+		RB_REMOVE(ccr_mft_tree, mfts, ccr_mft);
+		ccr_mft_free(ccr_mft);
+	}
+}
+
+static void
+ccr_vrps_free(struct ccr_vrp_tree *vrps)
+{
+	struct vrp *vrp, *tmp_vrp;
+
+	RB_FOREACH_SAFE(vrp, ccr_vrp_tree, vrps, tmp_vrp) {
+		RB_REMOVE(ccr_vrp_tree, vrps, vrp);
+		free(vrp);
+	}
+}
+
+static void
+vap_free(struct vap *vap)
+{
+	if (vap == NULL)
+		return;
+
+	free(vap->providers);
+	free(vap);
+}
+
+static void
+ccr_vaps_free(struct vap_tree *vaps)
+{
+	struct vap *vap, *tmp_vap;
+
+	RB_FOREACH_SAFE(vap, vap_tree, vaps, tmp_vap) {
+		RB_REMOVE(vap_tree, vaps, vap);
+		vap_free(vap);
+	}
+}
+
+static void
+ccr_tas_free(struct ccr_tas_tree *tas)
+{
+	struct ccr_tas_ski *cts, *tmp_cts;
+
+	RB_FOREACH_SAFE(cts, ccr_tas_tree, tas, tmp_cts) {
+		RB_REMOVE(ccr_tas_tree, tas, cts);
+		free(cts);
+	}
+}
+
+void
+ccr_free(struct ccr *ccr)
+{
+	if (ccr == NULL)
+		return;
+
+	ccr_mfts_free(&ccr->mfts);
+	ccr_vrps_free(&ccr->vrps);
+	ccr_vaps_free(&ccr->vaps);
+	ccr_tas_free(&ccr->tas);
+
+	free(ccr->mfts_hash);
+	free(ccr->vrps_hash);
+	free(ccr->vaps_hash);
+	free(ccr->tas_hash);
+	free(ccr->der);
+	free(ccr);
+}
+
+static int
+parse_mft_refs(const char *fn, struct ccr *ccr,
+    const STACK_OF(ManifestRef) *refs)
+{
+	ManifestRef *ref;
+	struct ccr_mft *ccr_mft = NULL, *prev;
+	int i, refs_num;
+	const ACCESS_DESCRIPTION *ad;
+	int rc = 0;
+	uint64_t size = 0;
+
+	refs_num = sk_ManifestRef_num(refs);
+
+	RB_INIT(&ccr->mfts);
+
+	prev = NULL;
+	for (i = 0; i < refs_num; i++) {
+		if ((ccr_mft = calloc(1, sizeof(*ccr_mft))) == NULL)
+			err(1, NULL);
+
+		ref = sk_ManifestRef_value(refs, i);
+
+		if (ref->hash->length != sizeof(ccr_mft->hash)) {
+			warnx("%s: manifest ref #%d corrupted", fn, i);
+			goto out;
+		}
+		memcpy(ccr_mft->hash, ref->hash->data, ref->hash->length);
+
+		if (prev != NULL) {
+			if (ccr_mft_cmp(ccr_mft, prev) <= 0) {
+				warnx("%s: misordered ManifestRef", fn);
+				goto out;
+			}
+		}
+
+		if (ref->aki->length != sizeof(ccr_mft->aki)) {
+			warnx("%s: manifest ref #%d corrupted", fn, i);
+			goto out;
+		}
+		memcpy(ccr_mft->aki, ref->aki->data, ref->aki->length);
+
+		if (!ASN1_INTEGER_get_uint64(&size, ref->size)) {
+			warnx("%s: manifest ref #%d corrupted", fn, i);
+			goto out;
+		}
+		if (size < 1000 || size > MAX_FILE_SIZE) {
+			warnx("%s: manifest ref #%d corrupted", fn, i);
+			goto out;
+		}
+		ccr_mft->size = size;
+
+		ccr_mft->seqnum = x509_convert_seqnum(fn, "manifest number",
+		    ref->manifestNumber);
+		if (ccr_mft->seqnum == NULL)
+			goto out;
+
+		if (sk_ACCESS_DESCRIPTION_num(ref->location) != 1) {
+			warnx("%s: unexpected number of locations", fn);
+			goto out;
+		}
+
+		ad = sk_ACCESS_DESCRIPTION_value(ref->location, 0);
+
+		if (!x509_location(fn, "SIA: signedObject", ad->location,
+		    &ccr_mft->sia))
+			goto out;
+
+		if (RB_INSERT(ccr_mft_tree, &ccr->mfts, ccr_mft) != NULL) {
+			warnx("%s: manifest state corrupted", fn);
+			goto out;
+		}
+
+		prev = ccr_mft;
+		ccr_mft = NULL;
+	}
+
+	rc = 1;
+ out:
+	ccr_mft_free(ccr_mft);
+	return rc;
+}
+
+static int
+parse_manifeststate(const char *fn, struct ccr *ccr, const ManifestState *state)
+{
+	int rc = 0;
+
+	ccr->mfts_hash = validate_asn1_hash(fn, "ManifestState", state->hash,
+	    ASN1_ITEM_rptr(ManifestRefs), state->mftrefs);
+	if (ccr->mfts_hash == NULL)
+		goto out;
+
+	/*
+	 * XXX: refactor into a x509_get_generalized_time() function.
+	 */
+	if (ASN1_STRING_length(state->mostRecentUpdate) != GENTIME_LENGTH) {
+		warnx("%s: mostRecentUpdate time format invalid", fn);
+		goto out;
+	}
+	if (!x509_get_time(state->mostRecentUpdate, &ccr->most_recent_update)) {
+		warnx("%s: parsing CCR mostRecentUpdate failed", fn);
+		goto out;
+	}
+
+	if (!parse_mft_refs(fn, ccr, state->mftrefs))
+		goto out;
+
+	rc = 1;
+ out:
+	return rc;
+}
+
+static int
+parse_roa_addresses(const char *fn, struct ccr *ccr, int asid, enum afi afi,
+    const STACK_OF(ROAIPAddress) *addrs)
+{
+	const ROAIPAddress *r;
+	struct vrp *prev, *vrp = NULL;
+	uint64_t maxlen;
+	int addrs_num, i, rc = 0;
+
+	if ((addrs_num = sk_ROAIPAddress_num(addrs)) <= 0) {
+		warnx("%s: missing ROAIPAddress", fn);
+		goto out;
+	}
+
+	prev = NULL;
+	for (i = 0; i < addrs_num; i++) {
+		r = sk_ROAIPAddress_value(addrs, i);
+
+		if ((vrp = calloc(1, sizeof(*vrp))) == NULL)
+			err(1, NULL);
+
+		vrp->asid = asid;
+		vrp->afi = afi;
+
+		if (!ip_addr_parse(r->address, afi, fn, &vrp->addr)) {
+			warnx("%s: invalid address in ROAPayload", fn);
+			goto out;
+		}
+
+		maxlen = vrp->addr.prefixlen;
+		if (r->maxLength != NULL) {
+			if (!ASN1_INTEGER_get_uint64(&maxlen, r->maxLength)) {
+				warnx("%s: ASN1_INTEGER_get_uint64 failed", fn);
+				goto out;
+			}
+			if (vrp->addr.prefixlen > maxlen) {
+				warnx("%s: invalid maxLength", fn);
+				goto out;
+			}
+			if (maxlen > ((afi == AFI_IPV4) ? 32 : 128)) {
+				warnx("%s: maxLength too large", fn);
+				goto out;
+			}
+			vrp->maxlength = maxlen;
+		}
+
+		if (prev != NULL) {
+			if (ccr_vrp_cmp(vrp, prev) <= 0) {
+				warnx("%s: misordered ROAIPAddressFamily", fn);
+				goto out;
+			}
+		}
+
+		if ((RB_INSERT(ccr_vrp_tree, &ccr->vrps, vrp)) != NULL) {
+			warnx("%s: duplicate ROAIPAddress", fn);
+			goto out;
+		}
+
+		prev = vrp;
+		vrp = NULL;
+	}
+
+	rc = 1;
+ out:
+	free(vrp);
+	return rc;
+}
+
+static int
+parse_roa_ipaddrb(const char *fn, struct ccr *ccr, int asid,
+    const STACK_OF(ROAIPAddressFamily) *ipaddrblocks)
+{
+	const ROAIPAddressFamily *ripaf;
+	enum afi afi;
+	int ipv4_seen = 0, ipv6_seen = 0;
+	int i, rc = 0, ipb_num;
+
+	ipb_num = sk_ROAIPAddressFamily_num(ipaddrblocks);
+	if (ipb_num != 1 && ipb_num != 2) {
+		warnx("%s: unexpected ipAddrBlocks count for AS %d", fn, asid);
+		goto out;
+	}
+
+	for (i = 0; i < ipb_num; i++) {
+		ripaf = sk_ROAIPAddressFamily_value(ipaddrblocks, i);
+
+		if (!ip_addr_afi_parse(fn, ripaf->addressFamily, &afi)) {
+			warnx("%s: invalid afi for AS %d", fn, asid);
+			goto out;
+		}
+
+		switch (afi) {
+		case AFI_IPV4:
+			if (ipv6_seen > 0) {
+				warnx("%s: misordered IPv4 addressFamily for AS"
+				    " %d", fn, asid);
+				goto out;
+			}
+			if (ipv4_seen++ > 0) {
+				warnx("%s: IPv4 addressFamily duplicate for AS"
+				    " %d", fn, asid);
+				goto out;
+			}
+			break;
+		case AFI_IPV6:
+			if (ipv6_seen++ > 0) {
+				warnx("%s: IPv6 addressFamily duplicate for AS"
+				    " %d", fn, asid);
+				goto out;
+			}
+			break;
+		}
+
+		if (!parse_roa_addresses(fn, ccr, asid, afi, ripaf->addresses))
+			goto out;
+	}
+
+	rc = 1;
+ out:
+	return rc;
+}
+
+static int
+parse_roa_payloads(const char *fn, struct ccr *ccr,
+    const STACK_OF(ROAPayloadSet) *rps)
+{
+	ROAPayloadSet *rp;
+	int i, rc = 0, rps_num;
+
+	rps_num = sk_ROAPayloadSet_num(rps);
+
+	RB_INIT(&ccr->vrps);
+
+	for (i = 0; i < rps_num; i++) {
+		int asid;
+
+		rp = sk_ROAPayloadSet_value(rps, i);
+
+		if (!as_id_parse(rp->asID, &asid)) {
+			warnx("%s: malformed asID in ROAPayloadSet", fn);
+			goto out;
+		}
+
+		if (!parse_roa_ipaddrb(fn, ccr, asid, rp->ipAddrBlocks))
+			goto out;
+	}
+
+	rc = 1;
+ out:
+	return rc;
+}
+
+static int
+parse_roastate(const char *fn, struct ccr *ccr, const ROAPayloadState *state)
+{
+	int rc = 0;
+
+	ccr->vrps_hash = validate_asn1_hash(fn, "ROAPayloadState", state->hash,
+	    ASN1_ITEM_rptr(ROAPayloadSets), state->rps);
+	if (ccr->vrps_hash == NULL)
+		goto out;
+
+	if (!parse_roa_payloads(fn, ccr, state->rps))
+		goto out;
+
+	rc = 1;
+ out:
+	return rc;
+}
+
+static int
+parse_aspa_providers(const char *fn, struct ccr *ccr, int asid,
+    STACK_OF(ASN1_INTEGER) *providers)
+{
+	struct vap *vap = NULL;
+	ASN1_INTEGER *aint;
+	uint32_t prev, provider;
+	int i, p_num, rc = 0;
+
+	if ((p_num = sk_ASN1_INTEGER_num(providers)) <= 0) {
+		warnx("%s: AS %d ASPAPayloadSet providers missing", fn, asid);
+		goto out;
+	}
+
+	if ((vap = calloc(1, sizeof(*vap))) == NULL)
+		err(1, NULL);
+
+	vap->custasid = asid;
+	vap->num_providers = p_num;
+
+	if ((vap->providers = calloc(p_num, sizeof(vap->providers[0]))) == NULL)
+		err(1, NULL);
+
+	for (i = 0; i < p_num; i++) {
+		aint = sk_ASN1_INTEGER_value(providers, i);
+
+		if (!as_id_parse(aint, &provider)) {
+			warnx("%s: AS %d malformed ASPA provider", fn, asid);
+			goto out;
+		}
+
+		if (i > 0) {
+			if (provider <= prev) {
+				warnx("%s: AS %d misordered providers", fn,
+				    asid);
+				goto out;
+			}
+		}
+
+		vap->providers[i] = provider;
+		prev = provider;
+	}
+
+	if ((RB_INSERT(vap_tree, &ccr->vaps, vap)) != NULL) {
+		warnx("%s: duplicate ASPAPayloadSet", fn);
+		goto out;
+	}
+	vap = NULL;
+
+	rc = 1;
+ out:
+	vap_free(vap);
+	return rc;
+}
+
+static int
+parse_aspa_payloads(const char *fn, struct ccr *ccr,
+    const STACK_OF(ASPAPayloadSet) *aps)
+{
+	ASPAPayloadSet *a;
+	uint32_t asid, prev;
+	int i, rc = 0, aps_num;
+
+	aps_num = sk_ASPAPayloadSet_num(aps);
+
+	RB_INIT(&ccr->vaps);
+
+	for (i = 0; i < aps_num; i++) {
+		a = sk_ASPAPayloadSet_value(aps, i);
+
+		if (!as_id_parse(a->asID, &asid)) {
+			warnx("%s: malformed asID in ASPAPayloadSet", fn);
+			goto out;
+		}
+
+		if (i > 0) {
+			if (asid <= prev) {
+				warnx("%s: ASPAPayloadState misordered", fn);
+				goto out;
+			}
+		}
+
+		if (!parse_aspa_providers(fn, ccr, asid, a->providers))
+			goto out;
+
+		prev = asid;
+	}
+
+	rc = 1;
+ out:
+	return rc;
+}
+
+static int
+parse_aspastate(const char *fn, struct ccr *ccr, const ASPAPayloadState *state)
+{
+	int rc = 0;
+
+	ccr->vaps_hash = validate_asn1_hash(fn, "ASPAPayloadState", state->hash,
+	    ASN1_ITEM_rptr(ASPAPayloadSets), state->aps);
+	if (ccr->vaps_hash == NULL)
+		goto out;
+
+	if (!parse_aspa_payloads(fn, ccr, state->aps))
+		goto out;
+
+	rc = 1;
+ out:
+	return rc;
+}
+
+static int
+parse_tas_skis(const char *fn, struct ccr *ccr,
+    const STACK_OF(SubjectKeyIdentifier) *skis)
+{
+	SubjectKeyIdentifier *ski;
+	struct ccr_tas_ski *cts = NULL, *prev;
+	int i, rc = 0, skis_num;
+
+	if ((skis_num = sk_SubjectKeyIdentifier_num(skis)) <= 0) {
+		warnx("%s: missing TrustAnchorState SubjectKeyIdentifier", fn);
+		goto out;
+	}
+
+	RB_INIT(&ccr->tas);
+
+	prev = NULL;
+	for (i = 0; i < skis_num; i++) {
+		if ((cts = calloc(1, sizeof(*cts))) == NULL)
+			err(1, NULL);
+
+		ski = sk_SubjectKeyIdentifier_value(skis, i);
+
+		if (ski->length != sizeof(cts->keyid)) {
+			warnx("%s: TAS SKI #%d corrupted", fn, i);
+			goto out;
+		}
+
+		memcpy(cts->keyid, ski->data, ski->length);
+
+		if (prev != NULL) {
+			if (ccr_tas_ski_cmp(cts, prev) <= 0) {
+				warnx("%s: misordered TrustAnchorState", fn);
+				goto out;
+			}
+		}
+
+		if (RB_INSERT(ccr_tas_tree, &ccr->tas, cts) != NULL) {
+			warnx("%s: trust anchor state corrupted", fn);
+			goto out;
+		}
+
+		prev = cts;
+		cts = NULL;
+	}
+
+	rc = 1;
+ out:
+	free(cts);
+	return rc;
+}
+
+static int
+parse_tastate(const char *fn, struct ccr *ccr, const TrustAnchorState *state)
+{
+	int rc = 0;
+
+	ccr->tas_hash = validate_asn1_hash(fn, "TrustAnchorState", state->hash,
+	    ASN1_ITEM_rptr(SubjectKeyIdentifiers), state->skis);
+	if (ccr->tas_hash == NULL)
+		goto out;
+
+	if (!parse_tas_skis(fn, ccr, state->skis))
+		goto out;
+
+	rc = 1;
+ out:
+	return rc;
+}
+
+struct ccr *
+ccr_parse(const char *fn, const unsigned char *der, size_t len)
+{
+	const unsigned char *oder;
+	ContentInfo *ci = NULL;
+	CanonicalCacheRepresentation *ccr_asn1 = NULL;
+	struct ccr *ccr = NULL;
+	int nid, rc = 0;
+
+	if (der == NULL)
+		return NULL;
+
+	oder = der;
+	if ((ci = d2i_ContentInfo(NULL, &der, len)) == NULL) {
+		warnx("%s: d2i_ContentInfo", fn);
+		goto out;
+	}
+	if (der != oder + len) {
+		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
+		goto out;
+	}
+
+	if (OBJ_cmp(ci->contentType, ccr_oid) != 0) {
+		char buf[128];
+
+		OBJ_obj2txt(buf, sizeof(buf), ci->contentType, 1);
+		warnx("%s: unexpected OID: got %s, want 1.3.6.1.4.1.41948.825",
+		    fn, buf);
+		goto out;
+	}
+
+	der = ASN1_STRING_get0_data(ci->content);
+	len = ASN1_STRING_length(ci->content);
+
+	oder = der;
+	ccr_asn1 = d2i_CanonicalCacheRepresentation(NULL, &der, len);
+	if (ccr_asn1 == NULL) {
+		warnx("%s: d2i_CanonicalCacheRepresentation failed", fn);
+		goto out;
+	}
+	if (der != oder + len) {
+		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
+		goto out;
+	}
+
+	if (!valid_econtent_version(fn, ccr_asn1->version, 0))
+		goto out;
+
+	if ((nid = OBJ_obj2nid(ccr_asn1->hashAlg)) != NID_sha256) {
+		warnx("%s: hashAlg: want SHA256 object, have %s", fn,
+		    nid2str(nid));
+		goto out;
+	}
+
+	if ((ccr = calloc(1, sizeof(*ccr))) == NULL)
+		err(1, NULL);
+
+	if (ASN1_STRING_length(ccr_asn1->producedAt) != GENTIME_LENGTH) {
+		warnx("%s: embedded from time format invalid", fn);
+		goto out;
+	}
+	if (!x509_get_time(ccr_asn1->producedAt, &ccr->producedat)) {
+		warnx("%s: parsing CCR producedAt failed", fn);
+		goto out;
+	}
+
+	if (ccr_asn1->mfts == NULL && ccr_asn1->vrps == NULL &&
+	    ccr_asn1->vaps == NULL && ccr_asn1->tas == NULL) {
+		warnx("%s: must contain at least one state component", fn);
+		goto out;
+	}
+
+	if (ccr_asn1->mfts != NULL) {
+		if (!parse_manifeststate(fn, ccr, ccr_asn1->mfts))
+			goto out;
+	}
+
+	if (ccr_asn1->vrps != NULL) {
+		if (!parse_roastate(fn, ccr, ccr_asn1->vrps))
+			goto out;
+	}
+
+	if (ccr_asn1->vaps != NULL) {
+		if (!parse_aspastate(fn, ccr, ccr_asn1->vaps))
+			goto out;
+	}
+
+	if (ccr_asn1->tas != NULL) {
+		if (!parse_tastate(fn, ccr, ccr_asn1->tas))
+			goto out;
+	}
+
+	rc = 1;
+ out:
+	CanonicalCacheRepresentation_free(ccr_asn1);
+	ContentInfo_free(ci);
+
+	if (rc == 0) {
+		ccr_free(ccr);
+		ccr = NULL;
+	}
+
+	return ccr;
 }

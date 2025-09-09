@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.65 2025/07/20 14:23:44 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.66 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -882,4 +882,217 @@ geofeed_print(const struct cert *c, const struct geofeed *p)
 
 	if (outformats & FORMAT_JSON)
 		json_do_end();
+}
+
+static void
+print_ccr_mftstate(struct ccr *ccr)
+{
+	char *aki, *hash;
+	struct ccr_mft *ccr_mft;
+
+	if (base64_encode(ccr->mfts_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
+		errx(1, "base64_encode");
+
+	if (outformats & FORMAT_JSON) {
+		json_do_object("manifest_state", 0);
+		json_do_int("most_recent_update", ccr->most_recent_update);
+		json_do_string("hash", hash);
+		json_do_array("refs");
+	} else {
+		printf("Manifest state hash:      %s\n", hash);
+		printf("Manifest last update:     %s\n",
+		    time2str(ccr->most_recent_update));
+		printf("Manifest references:      \n");
+	}
+	free(hash);
+
+	RB_FOREACH(ccr_mft, ccr_mft_tree, &ccr->mfts) {
+		if (base64_encode(ccr_mft->hash, SHA256_DIGEST_LENGTH, &hash)
+		    == -1)
+			errx(1, "base64_encode");
+		aki = hex_encode(ccr_mft->aki, SHA_DIGEST_LENGTH);
+
+		if (outformats & FORMAT_JSON) {
+			json_do_object("ref", 1);
+			json_do_string("hash", hash);
+			json_do_uint("size", ccr_mft->size);
+			json_do_string("aki", aki);
+			json_do_string("seqnum", ccr_mft->seqnum);
+			json_do_string("sia", ccr_mft->sia);
+			json_do_end();
+		} else {
+			printf("%26shash:%s size:%zu aki:%s seqnum:%s sia:%s\n",
+			    "", hash, ccr_mft->size, aki, ccr_mft->seqnum,
+			    ccr_mft->sia);
+		}
+
+		free(aki);
+		free(hash);
+	}
+	if (outformats & FORMAT_JSON) {
+		json_do_end();
+		json_do_end();
+	}
+}
+
+static void
+print_ccr_roastate(struct ccr *ccr)
+{
+	char buf[64], *hash;
+	struct vrp *vrp;
+
+	if (base64_encode(ccr->vrps_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
+		errx(1, "base64_encode");
+
+	if (outformats & FORMAT_JSON) {
+		json_do_object("roapayload_state", 0);
+		json_do_string("hash", hash);
+		json_do_array("vrps");
+	} else {
+		printf("ROA payload state hash:   %s\n", hash);
+		printf("ROA payload entries:\n");
+	}
+	free(hash);
+
+	RB_FOREACH(vrp, ccr_vrp_tree, &ccr->vrps) {
+		ip_addr_print(&vrp->addr, vrp->afi, buf, sizeof(buf));
+
+		if (outformats & FORMAT_JSON) {
+			json_do_object("vrp", 1);
+			json_do_string("prefix", buf);
+			json_do_int("asn", vrp->asid);
+			if (vrp->maxlength)
+				json_do_int("maxlen", vrp->maxlength);
+			json_do_end();
+		} else {
+			printf("%26s%s", "", buf);
+			if (vrp->maxlength)
+				printf("-%hhu", vrp->maxlength);
+			printf(" AS %u\n", vrp->asid);
+		}
+
+	}
+	if (outformats & FORMAT_JSON) {
+		json_do_end();
+		json_do_end();
+	}
+}
+
+static void
+print_ccr_aspastate(struct ccr *ccr)
+{
+	char *hash;
+	struct vap *vap;
+	size_t i;
+
+	if (base64_encode(ccr->vaps_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
+		errx(1, "base64_encode");
+
+	if (outformats & FORMAT_JSON) {
+		json_do_object("aspapayload_state", 0);
+		json_do_string("hash", hash);
+		json_do_array("vaps");
+	} else {
+		printf("ASPA payload state hash:  %s\n", hash);
+		printf("ASPA payload entries:\n");
+	}
+	free(hash);
+
+	RB_FOREACH(vap, vap_tree, &ccr->vaps) {
+		if (outformats & FORMAT_JSON) {
+			json_do_object("vap", 1);
+			json_do_uint("customer_asid", vap->custasid);
+			json_do_array("providers");
+		} else {
+			printf("%26s", "");
+			printf("customer: %d providers: ", vap->custasid);
+		}
+
+		for (i = 0; i < vap->num_providers; i++) {
+			if (outformats & FORMAT_JSON)
+				json_do_uint("provider", vap->providers[i]);
+			else {
+				if (i > 0)
+					printf(", ");
+				printf("%u", vap->providers[i]);
+			}
+		}
+		if (outformats & FORMAT_JSON) {
+			json_do_end();
+			json_do_end();
+		} else
+			printf("\n");
+	}
+
+	if (outformats & FORMAT_JSON) {
+		json_do_end();
+		json_do_end();
+	}
+}
+
+static void
+print_ccr_tastate(struct ccr *ccr)
+{
+	char *hash, *ski;
+	struct ccr_tas_ski *cts;
+	int i = 0;
+
+	if (base64_encode(ccr->tas_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
+		errx(1, "base64_encode");
+
+	if (outformats & FORMAT_JSON) {
+		json_do_object("trustanchor_state", 0);
+		json_do_string("hash", hash);
+		json_do_array("skis");
+	} else {
+		printf("Trust anchor state hash:  %s\n", hash);
+		printf("Trust anchor keyids:      ");
+	}
+
+	free(hash);
+
+	RB_FOREACH(cts, ccr_tas_tree, &ccr->tas) {
+		ski = hex_encode(cts->keyid, sizeof(cts->keyid));
+
+		if (outformats & FORMAT_JSON) {
+			json_do_string("ski", ski);
+		} else {
+			if (++i > 1)
+				printf(", ");
+			printf("%s", ski);
+		}
+
+		free(ski);
+	}
+
+	if (outformats & FORMAT_JSON) {
+		json_do_end();
+		json_do_end();
+	} else {
+		printf("\n");
+	}
+}
+
+void
+ccr_print(struct ccr *ccr)
+{
+	if (outformats & FORMAT_JSON) {
+		json_do_string("type", "ccr");
+		json_do_int("produced_at", ccr->producedat);
+	} else {
+		printf("CCR produced at:          %s\n",
+		    time2str(ccr->producedat));
+	}
+
+	if (ccr->mfts_hash != NULL)
+		print_ccr_mftstate(ccr);
+
+	if (ccr->vrps_hash != NULL)
+		print_ccr_roastate(ccr);
+
+	if (ccr->vaps_hash != NULL)
+		print_ccr_aspastate(ccr);
+
+	if (ccr->tas_hash != NULL)
+		print_ccr_tastate(ccr);
 }

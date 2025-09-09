@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.13 2022/05/15 15:00:53 deraadt Exp $ */
+/*	$OpenBSD: encoding.c,v 1.14 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -47,7 +47,7 @@ load_file(const char *name, size_t *len)
 		return NULL;
 	if (fstat(fd, &st) != 0)
 		goto err;
-	if (st.st_size <= 0 || st.st_size > MAX_FILE_SIZE) {
+	if (st.st_size <= 0 || (!filemode && st.st_size > MAX_FILE_SIZE)) {
 		errno = EFBIG;
 		goto err;
 	}

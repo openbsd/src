@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.86 2025/08/24 11:52:20 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.87 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -94,6 +94,11 @@ roa_parse_econtent(const char *fn, struct roa *roa, const unsigned char *d,
 
 	if (!valid_econtent_version(fn, roa_asn1->version, 0))
 		goto out;
+
+	/*
+	 * XXX: from here until the function end should be refactored
+	 * to deduplicate similar code in ccr.c.
+	 */
 
 	if (!as_id_parse(roa_asn1->asid, &roa->asid)) {
 		warnx("%s: RFC 9582 section 4.2: asID: "

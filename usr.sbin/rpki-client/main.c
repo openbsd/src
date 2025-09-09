@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.297 2025/09/06 11:55:44 job Exp $ */
+/*	$OpenBSD: main.c,v 1.298 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1016,7 +1016,7 @@ main(int argc, char *argv[])
 	const char	*skiplistfile = NULL;
 	struct rusage	 ru;
 	struct timespec	 start_time, now_time;
-	struct validation_data vd;
+	struct validation_data vd = { 0 };
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time);
 

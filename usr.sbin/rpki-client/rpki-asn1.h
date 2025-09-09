@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.3 2025/09/06 11:55:44 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.4 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -23,6 +23,8 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+
+#define GENTIME_LENGTH 15
 
 /*
  * Autonomous System Provider Authorization (ASPA)
@@ -69,6 +71,7 @@ DECLARE_STACK_OF(ManifestRef);
 #ifndef DEFINE_STACK_OF
 #define sk_ManifestRef_num(st) SKM_sk_num(ManifestRef, (st))
 #define sk_ManifestRef_push(st, i) SKM_sk_push(ManifestRef, (st), (i))
+#define sk_ManifestRef_value(st, i) SKM_sk_value(ManifestRef, (st), (i))
 #endif
 
 DECLARE_ASN1_FUNCTIONS(ManifestRef);
@@ -95,6 +98,7 @@ DECLARE_STACK_OF(ROAPayloadSet);
 #ifndef DEFINE_STACK_OF
 #define sk_ROAPayloadSet_num(st) SKM_sk_num(ROAPayloadSet, (st))
 #define sk_ROAPayloadSet_push(st, i) SKM_sk_push(ROAPayloadSet, (st), (i))
+#define sk_ROAPayloadSet_value(st, i) SKM_sk_value(ROAPayloadSet, (st), (i))
 #endif
 
 DECLARE_ASN1_FUNCTIONS(ROAPayloadSet);
@@ -120,6 +124,7 @@ DECLARE_STACK_OF(ASPAPayloadSet);
 #ifndef DEFINE_STACK_OF
 #define sk_ASPAPayloadSet_num(st) SKM_sk_num(ASPAPayloadSet, (st))
 #define sk_ASPAPayloadSet_push(st, i) SKM_sk_push(ASPAPayloadSet, (st), (i))
+#define sk_ASPAPayloadSet_value(st, i) SKM_sk_value(ASPAPayloadSet, (st), (i))
 #endif
 
 DECLARE_ASN1_FUNCTIONS(ASPAPayloadSet);
@@ -142,8 +147,11 @@ DECLARE_ASN1_FUNCTIONS(SubjectKeyIdentifier);
 DECLARE_STACK_OF(SubjectKeyIdentifier);
 
 #ifndef DEFINE_STACK_OF
+#define sk_SubjectKeyIdentifier_num(st) SKM_sk_num(SubjectKeyIdentifier, (st))
 #define sk_SubjectKeyIdentifier_push(st, i) \
     SKM_sk_push(SubjectKeyIdentifier, (st), (i))
+#define sk_SubjectKeyIdentifier_value(st, i) \
+    SKM_sk_value(SubjectKeyIdentifier, (st), (i))
 #endif
 
 typedef STACK_OF(SubjectKeyIdentifier) SubjectKeyIdentifiers;

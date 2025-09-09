@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.67 2025/08/01 16:33:58 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.68 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -413,6 +413,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	static int num;
 	struct aspa *aspa = NULL;
 	struct cert *cert = NULL;
+	struct ccr *ccr = NULL;
 	struct crl *crl = NULL;
 	struct gbr *gbr = NULL;
 	struct geofeed *geofeed = NULL;
@@ -481,6 +482,12 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		expires = &aspa->expires;
 		notbefore = &cert->notbefore;
 		notafter = &cert->notafter;
+		break;
+	case RTYPE_CCR:
+		ccr = ccr_parse(file, buf, len);
+		if (ccr == NULL)
+			break;
+		ccr_print(ccr);
 		break;
 	case RTYPE_CER:
 		cert = cert_parse(file, buf, len);
@@ -717,6 +724,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
  out:
 	aspa_free(aspa);
 	cert_free(cert);
+	ccr_free(ccr);
 	crl_free(crl);
 	gbr_free(gbr);
 	geofeed_free(geofeed);

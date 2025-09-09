@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.261 2025/09/06 11:55:44 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.262 2025/09/09 08:23:24 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -202,6 +202,7 @@ enum rtype {
 	RTYPE_TAK,
 	RTYPE_GEOFEED,
 	RTYPE_SPL,
+	RTYPE_CCR,
 };
 
 enum location {
@@ -487,11 +488,14 @@ RB_PROTOTYPE(ccr_tas_tree, ccr_tas_ski, entry, ccr_tas_ski_cmp);
 struct ccr {
 	struct ccr_mft_tree mfts;
 	struct ccr_vrp_tree vrps;
+	struct vap_tree vaps; /* only used in filemode */
 	struct ccr_tas_tree tas;
 	char *mfts_hash;
 	char *vrps_hash;
 	char *vaps_hash;
 	char *tas_hash;
+	time_t producedat;
+	time_t most_recent_update;
 	unsigned char *der;
 	size_t der_len;
 };
@@ -707,6 +711,7 @@ extern ASN1_OBJECT *aspa_oid;
 extern ASN1_OBJECT *tak_oid;
 extern ASN1_OBJECT *geofeed_oid;
 extern ASN1_OBJECT *spl_oid;
+extern ASN1_OBJECT *ccr_oid;
 
 extern int verbose;
 extern int noop;
@@ -1026,6 +1031,9 @@ int		 output_ccr_der(FILE *, struct validation_data *, struct stats *);
 /*
  * Canonical Cache Representation
  */
+void ccr_free(struct ccr *);
+void ccr_print(struct ccr *);
+struct ccr *ccr_parse(const char *, const unsigned char *, size_t);
 void ccr_insert_mft(struct ccr_mft_tree *, const struct mft *);
 void ccr_insert_roa(struct ccr_vrp_tree *, const struct roa *);
 void ccr_insert_tas(struct ccr_tas_tree *, const struct cert *);
