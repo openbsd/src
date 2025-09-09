@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.300 2025/08/14 08:50:25 mvs Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.301 2025/09/09 10:36:00 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -267,8 +267,8 @@ nd6_timer(void *unused)
 	}
 
 	secs = expire - uptime;
-	if (secs < 0)
-		secs = 0;
+	if (secs < 1)
+		secs = 1;
 	if (!TAILQ_EMPTY(&nd6_list)) {
 		nd6_timer_next = uptime + secs;
 		timeout_add_sec(&nd6_timer_to, secs);
