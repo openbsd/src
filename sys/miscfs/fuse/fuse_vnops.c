@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.72 2024/10/31 13:55:21 claudio Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.73 2025/09/09 16:46:55 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -909,7 +909,7 @@ fusefs_readlink(void *v)
 	struct fusebuf *fbuf;
 	struct uio *uio;
 	struct proc *p;
-	int error = 0;
+	int error;
 
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->i_ump;
@@ -918,11 +918,18 @@ fusefs_readlink(void *v)
 
 	if (!fmp->sess_init)
 		return (ENXIO);
+        if (uio->uio_resid == 0)
+                return (0);
+        if (uio->uio_offset < 0)
+                return (EINVAL);
 
 	if (fmp->undef_op & UNDEF_READLINK)
 		return (ENOSYS);
 
 	fbuf = fb_setup(0, ip->i_number, FBT_READLINK, p);
+
+	fbuf->fb_io_off = uio->uio_offset;
+	fbuf->fb_io_len = MIN(uio->uio_resid, fmp->max_read);
 
 	error = fb_queue(fmp->dev, fbuf);
 
@@ -932,6 +939,17 @@ fusefs_readlink(void *v)
 
 		fb_delete(fbuf);
 		return (error);
+	}
+
+	if (strnlen(fbuf->fb_dat, fbuf->fb_len) != fbuf->fb_len) {
+		/*
+		 * TODO
+		 * DPRINTF("fusefs: symbolic link contains embedded NUL: %s\n",
+		 *     fbuf->fb_dat);
+		 */
+
+		fb_delete(fbuf);
+		return (EIO);
 	}
 
 	error = uiomove(fbuf->fb_dat, fbuf->fb_len, uio);
@@ -1140,7 +1158,7 @@ fusefs_read(void *v)
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf = NULL;
 	size_t size;
-	int error=0;
+	int error;
 
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->i_ump;
@@ -1148,7 +1166,7 @@ fusefs_read(void *v)
 	if (!fmp->sess_init)
 		return (ENXIO);
 	if (uio->uio_resid == 0)
-		return (error);
+		return (0);
 	if (uio->uio_offset < 0)
 		return (EINVAL);
 
@@ -1194,7 +1212,7 @@ fusefs_write(void *v)
 	struct fusefs_mnt *fmp;
 	struct fusebuf *fbuf = NULL;
 	size_t len, diff;
-	int error=0;
+	int error;
 
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->i_ump;
@@ -1202,7 +1220,7 @@ fusefs_write(void *v)
 	if (!fmp->sess_init)
 		return (ENXIO);
 	if (uio->uio_resid == 0)
-		return (error);
+		return (0);
 
 	if (ioflag & IO_APPEND) {
 		if ((error = VOP_GETATTR(vp, &vattr, cred, p)) != 0)

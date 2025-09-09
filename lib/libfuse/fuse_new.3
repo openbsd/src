@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_new.3,v 1.8 2025/06/10 12:55:33 schwarze Exp $
+.\" $OpenBSD: fuse_new.3,v 1.9 2025/09/09 16:46:55 helg Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2025 $
+.Dd $Mdocdate: September 9 2025 $
 .Dt FUSE_NEW 3
 .Os
 .Sh NAME
@@ -179,6 +179,9 @@ The O_CREAT and O_TRUNC flags are never passed from the kernel to open,
 the mknod and truncate operations are invoked before open instead.
 .It opendir
 Called when a directory is opened for reading.
+.It readlink
+Called to read the target of a symbolic link.
+The path must be NUL-terminated.
 .It release
 Called when there are no more references to the file.
 .It releasedir

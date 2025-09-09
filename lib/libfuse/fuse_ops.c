@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.38 2025/09/06 06:15:52 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.39 2025/09/09 16:46:55 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -25,6 +25,7 @@
 #define CHECK_OPT(opname)	DPRINTF("Opcode: %s\t", #opname);	\
 				DPRINTF("Inode: %llu\t",		\
 				    (unsigned long long)fbuf->fb_ino);	\
+				DPRINTF("Size: %lu\t", fbuf->fb_io_len);\
 				if (!f->op.opname) {			\
 					fbuf->fb_err = -ENOSYS;		\
 					return (0);			\
@@ -678,13 +679,11 @@ static int
 ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
 {
 	struct fuse_vnode *vn;
+	size_t bufsize;
+	char *name;
 	char *realname;
-	char name[PATH_MAX + 1];
-	int len, ret;
 
-	DPRINTF("Opcode: readlink\t");
-	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-
+	CHECK_OPT(readlink);
 	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
 	if (vn == NULL) {
 		fbuf->fb_err = -errno;
@@ -697,19 +696,26 @@ ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
 		return (0);
 	}
 
-	if (f->op.readlink)
-		ret = f->op.readlink(realname, name, sizeof(name));
-	else
-		ret = -ENOSYS;
-	free(realname);
+	bufsize = fbuf->fb_io_len + 1;
+	name = calloc(bufsize, sizeof(*name));
+	if (name == NULL) {
+		fbuf->fb_err = -errno;
+		free(realname);
+		return (0);
+	}
 
-	fbuf->fb_err = ret;
-	if (!ret) {
-		len = strnlen(name, PATH_MAX);
-		fbuf->fb_len = len;
-		memcpy(fbuf->fb_dat, name, len);
+	fbuf->fb_err = f->op.readlink(realname, name, bufsize);
+
+	if (!fbuf->fb_err) {
+		/* file system should return a NUL-terminated string */
+		fbuf->fb_len = strlcpy(fbuf->fb_dat, name, bufsize);
+		if (fbuf->fb_len >= bufsize)
+			fbuf->fb_err = -ENAMETOOLONG;
 	} else
 		fbuf->fb_len = 0;
+
+	free(realname);
+	free(name);
 
 	return (0);
 }

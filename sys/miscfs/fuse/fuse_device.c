@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.44 2025/09/08 17:25:46 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.45 2025/09/09 16:46:55 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -380,7 +380,7 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 	fbuf->fb_ino = hdr.fh_ino;
 
 	/* Check for corrupted fbufs */
-	if ((fbuf->fb_len && fbuf->fb_err) ||
+	if ((fbuf->fb_len && fbuf->fb_err) || fbuf->fb_len > fbuf->fb_io_len ||
 	    SIMPLEQ_EMPTY(&fd->fd_fbufs_wait)) {
 		printf("fuse: dropping corrupted fusebuf\n");
 		error = EINVAL;
