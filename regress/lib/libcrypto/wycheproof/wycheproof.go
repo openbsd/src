@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.189 2025/09/08 08:11:49 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.190 2025/09/09 03:22:49 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -2819,7 +2819,6 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 		return nil, Skip
 	case "PbeWithHmacSha1AndAes_128", "PbeWithHmacSha1AndAes_192", "PbeWithHmacSha1AndAes_256", "PbeWithHmacSha224AndAes_128", "PbeWithHmacSha224AndAes_192", "PbeWithHmacSha224AndAes_256", "PbeWithHmacSha256AndAes_128", "PbeWithHmacSha256AndAes_192", "PbeWithHmacSha256AndAes_256", "PbeWithHmacSha384AndAes_128", "PbeWithHmacSha384AndAes_192", "PbeWithHmacSha384AndAes_256", "PbeWithHmacSha512AndAes_128", "PbeWithHmacSha512AndAes_192", "PbeWithHmacSha512AndAes_256":
 		return nil, Skip
-
 	case "PBKDF2-HMACSHA1", "PBKDF2-HMACSHA224", "PBKDF2-HMACSHA256", "PBKDF2-HMACSHA384", "PBKDF2-HMACSHA512":
 		return nil, Skip
 	case "PrimalityTest":
