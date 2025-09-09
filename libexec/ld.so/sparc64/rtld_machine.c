@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.70 2024/03/30 08:44:20 miod Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.71 2025/09/09 08:41:48 claudio Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -198,8 +198,10 @@ static const long reloc_target_bitmask[] = {
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
-int _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
-	Elf_Addr value);
+static int _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
+	    Elf_Addr value);
+static int _dl_reloc_addend(Elf_Word *where, Elf_Addr value,
+	    Elf64_Sxword addend, Elf_Addr base);
 void _dl_install_plt(Elf_Word *pltgot, Elf_Addr proc);
 
 int
@@ -363,7 +365,7 @@ resolve_failed:
 #define	HIVAL(v, s)	(((v) >> (s)) &  0x003fffff)
 #define LOVAL(v)	((v) & 0x000003ff)
 
-int
+static int
 _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
     Elf_Addr value)
 {
@@ -552,6 +554,22 @@ _dl_reloc_plt(Elf_Word *where1, Elf_Word *where2, Elf_Word *pltaddr,
 	}
 }
 
+static int
+_dl_reloc_addend(Elf_Word *where, Elf_Addr value, Elf64_Sxword addend,
+    Elf_Addr base)
+{
+	/*
+	 * This entry is >32768.  The relocation points to a
+	 * PC-relative pointer to the _dl_bind_start_0 stub at
+	 * the top of the PLT section.  Update it to point to
+	 * the target function.
+	 * Since this updates a 64bit address the where pointer
+	 * needs to be 64bit aligned to work.
+	 */
+	*((Elf_Addr *)where) = value + addend - base;
+	return 2;
+}
+
 /*
  * Resolve a symbol at run-time.
  */
@@ -627,9 +645,9 @@ _dl_bind(elf_object_t *object, int index)
 	 *   |     """    |		|     """    |
 	 *   | kbind.size |		| kbind.size |
 	 *   |     """    |		|     """    |
-	 *   |   word 2   |		|    word    |
-	 *   |   word 3   |		+------------+
-	 *   |   word 4   |
+	 *   |   word 2   |		|   word 1   |
+	 *   |   word 3   |		|  (word 2)  |
+	 *   |   word 4   |		+------------+
 	 *   |   word 5   |
 	 *   |   word 1   |
 	 *   +------------+
@@ -643,18 +661,14 @@ _dl_bind(elf_object_t *object, int index)
 	addr = (Elf_Word *)(object->obj_base + rela->r_offset);
 	_dl_memset(&buf, 0, sizeof(buf));
 	if (__predict_false(rela->r_addend)) {
-		/*
-		 * This entry is >32768.  The relocation points to a
-		 * PC-relative pointer to the _dl_bind_start_0 stub at
-		 * the top of the PLT section.  Update it to point to
-		 * the target function.
-		 */
-		buf.newval[0] = rela->r_addend + newvalue
-		    - object->Dyn.info[DT_PLTGOT];
+		i = _dl_reloc_addend(&buf.newval[0], newvalue,
+		    rela->r_addend, object->obj_base);
+
+		/* fill in the __kbind structure */
 		buf.param[1].kb_addr = addr;
-		buf.param[1].kb_size = sizeof(buf.newval[0]);
+		buf.param[1].kb_size = i * sizeof(buf.newval[0]);
 		param = &buf.param[1];
-		psize = sizeof(struct __kbind) + sizeof(buf.newval[0]);
+		psize = sizeof(struct __kbind) + i * sizeof(buf.newval[0]);
 	} else {
 		Elf_Word first;
 
@@ -779,14 +793,8 @@ _dl_md_reloc_all_plt(elf_object_t *object)
 		value = sr.obj->obj_base + sr.sym->st_value;
 
 		if (__predict_false(relas->r_addend)) {
-			/*
-			 * This entry is >32768.  The relocation points to a
-			 * PC-relative pointer to the _dl_bind_start_0 stub at
-			 * the top of the PLT section.  Update it to point to
-			 * the target function.
-			 */
-			*(Elf_Addr *)where = relas->r_addend + value -
-			    object->Dyn.info[DT_PLTGOT];
+			_dl_reloc_addend(&where[0], value,
+			    relas->r_addend, object->obj_base);
 		} else
 			_dl_reloc_plt(&where[1], &where[2], where, value);
 	}
