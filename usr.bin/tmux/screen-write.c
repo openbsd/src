@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.236 2025/08/04 13:16:13 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.237 2025/09/09 08:49:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -576,7 +576,6 @@ screen_write_fast_copy(struct screen_write_ctx *ctx, struct screen *src,
 	if (nx == 0 || ny == 0)
 		return;
 
-	cy = s->cy;
 	for (yy = py; yy < py + ny; yy++) {
 		if (yy >= gd->hsize + gd->sy)
 			break;

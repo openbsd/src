@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.138 2024/11/15 14:09:04 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.139 2025/09/09 08:49:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -425,7 +425,7 @@ void
 server_destroy_session(struct session *s)
 {
 	struct client	*c;
-	struct session	*s_new = NULL, *cs_new, *use_s;
+	struct session	*s_new = NULL, *cs_new = NULL, *use_s;
 	int		 detach_on_destroy;
 
 	detach_on_destroy = options_get_number(s->options, "detach-on-destroy");
