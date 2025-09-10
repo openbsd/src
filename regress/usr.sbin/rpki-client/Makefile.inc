@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.42 2025/09/10 06:28:20 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.43 2025/09/10 06:46:58 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -29,10 +29,11 @@ DPADD+=		${LIBCRYPTO} ${LIBUTIL} ${LIBPTHREAD}
 
 CLEANFILES+=	*.out *.err *.txt
 
-SRCS_test-ip +=		test-ip.c ip.c io.c encoding.c print.c x509.c \
-			validate.c as.c cert.c cms.c crl.c mft.c json.c \
-			constraints-dummy.c repo-dummy.c rfc3779.c \
-			aspa.c ccr.c roa.c
+TEST_COMMON= as.c aspa.c ccr.c cert.c cms.c constraints-dummy.c crl.c \
+	     encoding.c io.c ip.c json.c mft.c print.c repo-dummy.c \
+	     rfc3779.c roa.c validate.c x509.c
+
+SRCS_test-ip +=		test-ip.c ${TEST_COMMON}
 run-regress-test-ip: test-ip
 	./test-ip
 
@@ -40,78 +41,55 @@ TALARGS += ta/AfriNIC.cer			tal/afrinic.tal
 TALARGS += ta/apnic-rpki-root-iana-origin.cer	tal/apnic.tal
 TALARGS += ta/ripe-ncc-ta.cer			tal/ripe.tal
 
-SRCS_test-cert+=	test-cert.c cert.c cms.c crl.c x509.c ip.c as.c io.c \
-			tal.c validate.c encoding.c print.c mft.c json.c \
-			constraints-dummy.c repo-dummy.c rfc3779.c \
-			aspa.c ccr.c roa.c
+SRCS_test-cert+=	test-cert.c tal.c ${TEST_COMMON}
+
 run-regress-test-cert: test-cert
 	./test-cert -v ${.CURDIR}/../cer/*.cer
 	./test-cert -vt ${TALARGS:S,,${.CURDIR}/../&,}
 
-SRCS_test-mft+=	test-mft.c mft.c crl.c cms.c x509.c ip.c io.c validate.c \
-		encoding.c print.c json.c cert.c as.c \
-		constraints-dummy.c repo-dummy.c rfc3779.c aspa.c ccr.c roa.c
+SRCS_test-mft+=	test-mft.c ${TEST_COMMON}
+
 run-regress-test-mft: test-mft
 	./test-mft -v ${.CURDIR}/../mft/*.mft
 
-SRCS_test-roa+=	test-roa.c roa.c cms.c x509.c ip.c as.c io.c json.c \
-		encoding.c print.c validate.c cert.c crl.c mft.c repo-dummy.c \
-		constraints-dummy.c rfc3779.c aspa.c ccr.c
+SRCS_test-roa+=	test-roa.c ${TEST_COMMON}
+
 run-regress-test-roa: test-roa
 	./test-roa -v ${.CURDIR}/../roa/*.roa
 
-SRCS_test-rsc+=	test-rsc.c rsc.c cms.c x509.c ip.c as.c io.c \
-		encoding.c print.c validate.c cert.c crl.c mft.c json.c \
-		constraints-dummy.c repo-dummy.c rfc3779.c aspa.c ccr.c roa.c
+SRCS_test-rsc+=	test-rsc.c rsc.c ${TEST_COMMON}
+
 run-regress-test-rsc: test-rsc
 	./test-rsc -v ${.CURDIR}/../rsc/*.sig
 
-SRCS_test-gbr+=	test-gbr.c gbr.c cms.c crl.c x509.c ip.c io.c \
-		encoding.c print.c validate.c as.c cert.c mft.c json.c \
-		constraints-dummy.c repo-dummy.c rfc3779.c ccr.c aspa.c roa.c
+SRCS_test-gbr+=	test-gbr.c gbr.c ${TEST_COMMON}
 run-regress-test-gbr: test-gbr
 	./test-gbr -v ${.CURDIR}/../gbr/*.gbr
 
-SRCS_test-geofeed+=	test-geofeed.c geofeed.c cms.c x509.c ip.c io.c \
-		encoding.c print.c validate.c as.c cert.c crl.c mft.c json.c \
-		constraints-dummy.c repo-dummy.c rfc3779.c \
-		aspa.c ccr.c roa.c
+SRCS_test-geofeed+=	test-geofeed.c geofeed.c ${TEST_COMMON}
 run-regress-test-geofeed: test-geofeed
 	./test-geofeed -v ${.CURDIR}/../geofeed/*.csv
 
-SRCS_test-tal+=	test-tal.c tal.c ip.c io.c validate.c cms.c \
-		encoding.c print.c crl.c x509.c json.c cert.c as.c mft.c \
-		constraints-dummy.c repo-dummy.c rfc3779.c ccr.c aspa.c roa.c
+SRCS_test-tal+=	test-tal.c tal.c ${TEST_COMMON}
 run-regress-test-tal: test-tal
 	./test-tal -v ${.CURDIR}/../tal/*.tal
 
-SRCS_test-aspa+=	test-aspa.c aspa.c cms.c x509.c ip.c as.c io.c \
-		encoding.c print.c validate.c cert.c crl.c mft.c repo-dummy.c \
-		json.c constraints-dummy.c rfc3779.c ccr.c roa.c
+SRCS_test-aspa+=	test-aspa.c ${TEST_COMMON}
 run-regress-test-aspa: test-aspa
 	./test-aspa -v ${.CURDIR}/../aspa/*.asa
 
-SRCS_test-tak+=	test-tak.c tak.c cms.c x509.c ip.c as.c io.c \
-		encoding.c print.c validate.c cert.c crl.c mft.c json.c \
-		constraints-dummy.c repo-dummy.c rfc3779.c aspa.c ccr.c roa.c
+SRCS_test-tak+=	test-tak.c tak.c ${TEST_COMMON}
 run-regress-test-tak: test-tak
 	./test-tak -v ${.CURDIR}/../tak/*.tak
 
-SRCS_test-spl+=	test-spl.c spl.c cms.c x509.c ip.c as.c io.c \
-		encoding.c print.c validate.c cert.c crl.c mft.c json.c \
-		constraints-dummy.c repo-dummy.c rfc3779.c aspa.c ccr.c roa.c
+SRCS_test-spl+=	test-spl.c spl.c ${TEST_COMMON}
 run-regress-test-spl: test-spl
 	./test-spl -v ${.CURDIR}/../spl/*.spl
 
-SRCS_test-seqnum += test-seqnum.c as.c ip.c encoding.c x509.c print.c validate.c \
-			json.c crl.c aspa.c cert.c ccr.c cms.c mft.c roa.c io.c \
-			constraints-dummy.c repo-dummy.c rfc3779.c
+SRCS_test-seqnum += test-seqnum.c ${TEST_COMMON}
 
-SRCS_test-rrdp+=	test-rrdp.c rrdp_delta.c rrdp_notification.c cms.c \
-			rrdp_snapshot.c rrdp_util.c cert.c as.c mft.c io.c \
-			encoding.c ip.c validate.c crl.c x509.c \
-			constraints-dummy.c rfc3779.c repo-dummy.c print.c json.c \
-			aspa.c ccr.c roa.c
+SRCS_test-rrdp+=	test-rrdp.c rrdp_delta.c rrdp_notification.c \
+			rrdp_snapshot.c rrdp_util.c ${TEST_COMMON}
 LDADD_test-rrdp+=	-lexpat ${LDADD}
 DPADD_test-rrdp+=	${LIBEXPAT} ${DPADD}
 run-regress-test-rrdp: test-rrdp
