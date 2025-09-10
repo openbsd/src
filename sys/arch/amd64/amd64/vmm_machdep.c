@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.61 2025/07/04 10:11:28 jsg Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.62 2025/09/10 11:52:07 hshoexer Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2150,10 +2150,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
 		    IA32_VMX_UNRESTRICTED_GUEST, 1)) {
-			if ((cr0 & (CR0_PE | CR0_PG)) == 0) {
-				want1 |= IA32_VMX_UNRESTRICTED_GUEST;
-				ug = 1;
-			}
+			want1 |= IA32_VMX_UNRESTRICTED_GUEST;
+			ug = 1;
 		}
 	}
 
