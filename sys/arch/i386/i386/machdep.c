@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.677 2025/05/21 04:11:57 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.678 2025/09/10 00:07:29 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2019,7 +2019,7 @@ identifycpu(struct cpu_info *ci)
 			if (msr != nmsr)
 				wrmsr(MSR_DE_CFG, nmsr);
 		}
-		if (family == 0x17 && ci->ci_model >= 0x31 &&
+		if (ci->ci_family == 0x17 && ci->ci_model >= 0x31 &&
 		    (cpu_ecxfeature & CPUIDECX_HV) == 0) {
 			nmsr = msr = rdmsr(MSR_DE_CFG);
 			nmsr |= DE_CFG_SERIALIZE_9;
