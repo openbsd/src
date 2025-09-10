@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2025/09/05 17:05:14 kettenis Exp $
+# $OpenBSD: Makefile,v 1.14 2025/09/10 03:38:56 gkoehler Exp $
 
 .include <bsd.own.mk>
 
@@ -313,7 +313,6 @@ GEN_SRCS+=	${GEN_TF_SRCS}
 .if ${RTARCH} == "ppc"
 # Omit "double-double" functions since long double is the same as
 # double on OpenBSD.
-SRCS+=	atomic_lock_free.c
 .endif
 
 .if ${RTARCH} == "riscv"
