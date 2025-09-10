@@ -15,6 +15,8 @@
 
 static struct msgbuf	*httpq;
 
+int filemode;
+
 void
 logx(const char *fmt, ...)
 {
