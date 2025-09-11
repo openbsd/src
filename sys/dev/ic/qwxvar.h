@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.30 2025/08/11 17:05:22 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.31 2025/09/11 11:18:29 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -282,15 +282,13 @@ struct ath11k_hw_ops {
 #endif
 	uint16_t (*rx_desc_get_mpdu_start_seq_no)(struct hal_rx_desc *desc);
 	uint16_t (*rx_desc_get_msdu_len)(struct hal_rx_desc *desc);
-#ifdef notyet
 	uint8_t (*rx_desc_get_msdu_sgi)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_rate_mcs)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_rx_bw)(struct hal_rx_desc *desc);
-#endif
 	uint32_t (*rx_desc_get_msdu_freq)(struct hal_rx_desc *desc);
-#ifdef notyet
 	uint8_t (*rx_desc_get_msdu_pkt_type)(struct hal_rx_desc *desc);
 	uint8_t (*rx_desc_get_msdu_nss)(struct hal_rx_desc *desc);
+#ifdef notyet
 	uint8_t (*rx_desc_get_mpdu_tid)(struct hal_rx_desc *desc);
 #endif
 	uint16_t (*rx_desc_get_mpdu_peer_id)(struct hal_rx_desc *desc);
@@ -1739,15 +1737,35 @@ struct qwx_ext_irq_grp {
 
 struct qwx_rx_radiotap_header {
 	struct ieee80211_radiotap_header wr_ihdr;
+	uint64_t	wr_tsft;
+	uint8_t		wr_flags;
+	uint8_t		wr_rate;
+	uint16_t	wr_chan_freq;
+	uint16_t	wr_chan_flags;
+	int8_t		wr_dbm_antsignal;
+	int8_t		wr_dbm_antnoise;
 } __packed;
 
-#define IWX_RX_RADIOTAP_PRESENT	0 /* TODO add more information */
+#define QWX_RX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_TSFT) |				\
+	 (1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) |			\
+	 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
 
 struct qwx_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
+	uint8_t		wt_flags;
+	uint8_t		wt_rate;
+	uint16_t	wt_chan_freq;
+	uint16_t	wt_chan_flags;
 } __packed;
 
-#define IWX_TX_RADIOTAP_PRESENT	0 /* TODO add more information */
+#define QWX_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct qwx_setkey_task_arg {
 	struct ieee80211_node *ni;
