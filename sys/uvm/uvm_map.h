@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.94 2024/11/15 02:59:23 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.95 2025/09/11 17:04:35 mpi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -402,6 +402,8 @@ void		vm_map_lock_ln(struct vm_map*, char*, int);
 void		vm_map_lock_read_ln(struct vm_map*, char*, int);
 void		vm_map_unlock_ln(struct vm_map*, char*, int);
 void		vm_map_unlock_read_ln(struct vm_map*, char*, int);
+boolean_t	vm_map_upgrade_ln(struct vm_map*, char*, int);
+void		vm_map_downgrade_ln(struct vm_map*, char*, int);
 void		vm_map_busy_ln(struct vm_map*, char*, int);
 void		vm_map_unbusy_ln(struct vm_map*, char*, int);
 void		vm_map_assert_anylock_ln(struct vm_map*, char*, int);
@@ -413,6 +415,8 @@ void		vm_map_assert_wrlock_ln(struct vm_map*, char*, int);
 #define vm_map_lock_read(map)	vm_map_lock_read_ln(map, __FILE__, __LINE__)
 #define vm_map_unlock(map)	vm_map_unlock_ln(map, __FILE__, __LINE__)
 #define vm_map_unlock_read(map)	vm_map_unlock_read_ln(map, __FILE__, __LINE__)
+#define vm_map_upgrade(map)	vm_map_upgrade_ln(map, __FILE__, __LINE__)
+#define vm_map_downgrade(map)	vm_map_downgrade_ln(map, __FILE__, __LINE__)
 #define vm_map_busy(map)	vm_map_busy_ln(map, __FILE__, __LINE__)
 #define vm_map_unbusy(map)	vm_map_unbusy_ln(map, __FILE__, __LINE__)
 #define vm_map_assert_anylock(map)	\
@@ -425,6 +429,8 @@ void		vm_map_assert_wrlock_ln(struct vm_map*, char*, int);
 #define vm_map_lock_read(map)	vm_map_lock_read_ln(map, NULL, 0)
 #define vm_map_unlock(map)	vm_map_unlock_ln(map, NULL, 0)
 #define vm_map_unlock_read(map)	vm_map_unlock_read_ln(map, NULL, 0)
+#define vm_map_upgrade(map)	vm_map_upgrade_ln(map, NULL, 0)
+#define vm_map_downgrade(map)	vm_map_downgrade_ln(map, NULL, 0)
 #define vm_map_busy(map)	vm_map_busy_ln(map, NULL, 0)
 #define vm_map_unbusy(map)	vm_map_unbusy_ln(map, NULL, 0)
 #define vm_map_assert_anylock(map)	vm_map_assert_anylock_ln(map, NULL, 0)

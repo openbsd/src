@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.345 2025/06/03 08:38:17 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.346 2025/09/11 17:04:35 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -5223,6 +5223,51 @@ vm_map_unlock_read_ln(struct vm_map *map, char *file, int line)
 		rw_exit_read(&map->lock);
 	else
 		mtx_leave(&map->mtx);
+}
+
+boolean_t
+vm_map_upgrade_ln(struct vm_map *map, char *file, int line)
+{
+	int rv;
+
+	if (map->flags & VM_MAP_INTRSAFE) {
+		MUTEX_ASSERT_LOCKED(&map->mtx);
+	} else {
+		struct proc *busy;
+
+		mtx_enter(&map->flags_lock);
+		busy = map->busy;
+		mtx_leave(&map->flags_lock);
+		if (busy != NULL && busy != curproc)
+			return FALSE;
+
+		rv = rw_enter(&map->lock, RW_UPGRADE|RW_NOSLEEP);
+		if (rv != 0)
+			return FALSE;
+	}
+
+	map->timestamp++;
+	LPRINTF(("map   upgrade: %p (at %s %d)\n", map, file, line));
+	uvm_tree_sanity(map, file, line);
+	uvm_tree_size_chk(map, file, line);
+
+	return TRUE;
+}
+
+void
+vm_map_downgrade_ln(struct vm_map *map, char *file, int line)
+{
+	int rv;
+
+	uvm_tree_sanity(map, file, line);
+	uvm_tree_size_chk(map, file, line);
+	LPRINTF(("map   downgrade: %p (at %s %d)\n", map, file, line));
+	if (map->flags & VM_MAP_INTRSAFE) {
+		MUTEX_ASSERT_LOCKED(&map->mtx);
+	} else {
+		rv = rw_enter(&map->lock, RW_DOWNGRADE);
+		KASSERT(rv == 0);
+	}
 }
 
 void

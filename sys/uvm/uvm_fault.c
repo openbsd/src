@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.170 2025/07/14 08:45:16 jsg Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.171 2025/09/11 17:04:35 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -158,7 +158,6 @@ static struct uvm_advice uvmadvice[MADV_MASK + 1];
 /*
  * private prototypes
  */
-static void uvmfault_amapcopy(struct uvm_faultinfo *);
 static inline void uvmfault_anonflush(struct vm_anon **, int);
 void	uvmfault_unlockmaps(struct uvm_faultinfo *, boolean_t);
 void	uvmfault_update_stats(struct uvm_faultinfo *);
@@ -216,49 +215,6 @@ uvmfault_init(void)
 		uvmadvice[MADV_SEQUENTIAL].nforw = npages - 1;
 		uvmadvice[MADV_SEQUENTIAL].nback = npages;
 	}
-}
-
-/*
- * uvmfault_amapcopy: clear "needs_copy" in a map.
- *
- * => called with VM data structures unlocked (usually, see below)
- * => we get a write lock on the maps and clear needs_copy for a VA
- * => if we are out of RAM we sleep (waiting for more)
- */
-static void
-uvmfault_amapcopy(struct uvm_faultinfo *ufi)
-{
-	for (;;) {
-		/*
-		 * no mapping?  give up.
-		 */
-		if (uvmfault_lookup(ufi, TRUE) == FALSE)
-			return;
-
-		/*
-		 * copy if needed.
-		 */
-		if (UVM_ET_ISNEEDSCOPY(ufi->entry))
-			amap_copy(ufi->map, ufi->entry, M_NOWAIT,
-				UVM_ET_ISSTACK(ufi->entry) ? FALSE : TRUE,
-				ufi->orig_rvaddr, ufi->orig_rvaddr + 1);
-
-		/*
-		 * didn't work?  must be out of RAM.   unlock and sleep.
-		 */
-		if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
-			uvmfault_unlockmaps(ufi, TRUE);
-			uvm_wait("fltamapcopy");
-			continue;
-		}
-
-		/*
-		 * got it!   unlock and return.
-		 */
-		uvmfault_unlockmaps(ufi, TRUE);
-		return;
-	}
-	/*NOTREACHED*/
 }
 
 /*
@@ -734,14 +690,15 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
 	int nback, nforw;
+	boolean_t write_locked = FALSE;
 
 	/*
 	 * lookup and lock the maps
 	 */
-	if (uvmfault_lookup(ufi, FALSE) == FALSE) {
+lookup:
+	if (uvmfault_lookup(ufi, write_locked) == FALSE) {
 		return EFAULT;
 	}
-	/* locked: maps(read) */
 
 #ifdef DIAGNOSTIC
 	if ((ufi->map->flags & VM_MAP_PAGEABLE) == 0)
@@ -753,7 +710,7 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * check protection
 	 */
 	if ((ufi->entry->protection & flt->access_type) != flt->access_type) {
-		uvmfault_unlockmaps(ufi, FALSE);
+		uvmfault_unlockmaps(ufi, write_locked);
 		return EACCES;
 	}
 
@@ -779,11 +736,27 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
 		if ((flt->access_type & PROT_WRITE) ||
 		    (ufi->entry->object.uvm_obj == NULL)) {
-			/* need to clear */
-			uvmfault_unlockmaps(ufi, FALSE);
-			uvmfault_amapcopy(ufi);
+			/* modifying `ufi->entry' requires write lock */
+			if (!write_locked) {
+				write_locked = TRUE;
+				if (!vm_map_upgrade(ufi->map)) {
+					uvmfault_unlockmaps(ufi, FALSE);
+					goto lookup;
+				}
+			}
+
+			amap_copy(ufi->map, ufi->entry, M_NOWAIT,
+			    UVM_ET_ISSTACK(ufi->entry) ? FALSE : TRUE,
+			    ufi->orig_rvaddr, ufi->orig_rvaddr + 1);
+
+			/* didn't work?  must be out of RAM. */
+			if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
+				uvmfault_unlockmaps(ufi, write_locked);
+				uvm_wait("fltamapcopy");
+				return ERESTART;
+			}
+
 			counters_inc(uvmexp_counters, flt_amcopy);
-			return ERESTART;
 		} else {
 			/*
 			 * ensure that we pmap_enter page R/O since
@@ -791,6 +764,11 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			 */
 			flt->enter_prot &= ~PROT_WRITE;
 		}
+	}
+
+	if (write_locked) {
+		vm_map_downgrade(ufi->map);
+		write_locked = FALSE;
 	}
 
 	/*
