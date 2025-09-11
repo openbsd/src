@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.8 2025/09/11 08:21:00 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.9 2025/09/11 09:25:05 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -33,81 +33,7 @@
 #include "rpki-asn1.h"
 
 /*
- * RpkiCanonicalCacheRepresentation-2025
- *   { iso(1) member-body(2) us(840) rsadsi(113549)
- *     pkcs(1) pkcs9(9) smime(16) mod(0) id-mod-rpkiCCR-2025(TBD) }
- *
- * DEFINITIONS EXPLICIT TAGS ::=
- * BEGIN
- *
- * IMPORTS
- *   CONTENT-TYPE, Digest, DigestAlgorithmIdentifier, SubjectKeyIdentifier
- *   FROM CryptographicMessageSyntax-2010 -- in [RFC6268]
- *     { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
- *       pkcs-9(9) smime(16) modules(0) id-mod-cms-2009(58) }
- *
- * -- in [draft-spaghetti-sidrops-rpki-erik-protocol-01]
- * -- https://sobornost.net/~job/draft-spaghetti-sidrops-rpki-erik-protocol.html
- *   ManifestRef
- *   FROM RpkiErikPartition-2025
- *     { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
- *       pkcs9(9) smime(16) mod(0) id-mod-rpkiErikPartition-2025(TBD) }
- *
- *   ASID, ROAIPAddressFamily
- *   FROM RPKI-ROA-2023 -- in [RFC9582]
- *     { so(1) member-body(2) us(840) rsadsi(113549) pkcs(1)
- *       pkcs9(9) smime(16) mod(0) id-mod-rpkiROA-2023(75) }
- * ;
- *
- * ct-rpkiCanonicalCacheRepresentation CONTENT-TYPE ::=
- *   { TYPE RpkiCanonicalCacheRepresentation
- *     IDENTIFIED BY id-ct-rpkiCanonicalCacheRepresentation }
- *
- * id-ct-rpkiCanonicalCacheRepresentation OBJECT IDENTIFIER ::=
- *   { iso(1) identified-organization(3) dod(6) internet(1) private(4)
- *     enterprise(1) snijders(41948) ccr(825) }
- *
- * RpkiCanonicalCacheRepresentation ::= SEQUENCE {
- *   version   [0]     INTEGER DEFAULT 0,
- *   hashAlg           DigestAlgorithmIdentifier,
- *   producedAt        GeneralizedTime,
- *   mfts      [1]     ManifestState OPTIONAL,
- *   vrps      [2]     ROAPayloadState OPTIONAL,
- *   vaps      [3]     ASPAPayloadState OPTIONAL,
- *   tas       [4]     TrustAnchorState OPTIONAL,
- *   ... }
- *   -- at least one of mfts, vrps, vaps, or tas MUST be present
- *   ( WITH COMPONENTS { ..., mfts PRESENT } |
- *     WITH COMPONENTS { ..., vrps PRESENT } |
- *     WITH COMPONENTS { ..., vaps PRESENT } |
- *     WITH COMPONENTS { ..., tas PRESENT } )
- *
- * ManifestState ::= SEQUENCE {
- *   mftrefs           SEQUENCE OF ManifestRef,
- *   mostRecentUpdate  GeneralizedTime,
- *   hash              Digest }
- *
- * ROAPayloadState ::= SEQUENCE {
- *   rps               SEQUENCE OF ROAPayloadSet,
- *   hash              Digest }
- *
- * ROAPayloadSet ::= SEQUENCE {
- *   asID              ASID,
- *   ipAddrBlocks      SEQUENCE (SIZE(1..2)) OF ROAIPAddressFamily }
- *
- * ASPAPayloadState ::= SEQUENCE {
- *   aps               SEQUENCE OF ASPAPayloadSet,
- *   hash              Digest }
- *
- * ASPAPayloadSet ::= SEQUENCE {
- *   asID              ASID
- *   providers         SEQUENCE (SIZE(1..MAX)) OF ASID }
- *
- * TrustAnchorState ::= SEQUENCE {
- *   skis              SEQUENCE (SIZE(1..MAX)) OF SubjectKeyIdentifier,
- *   hash              Digest }
- *
- * END
+ * CCR definition in draft-spaghetti-sidrops-rpki-ccr-00, section 3.
  */
 
 ASN1_ITEM_EXP ContentInfo_it;
