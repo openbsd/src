@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.142 2025/07/01 11:10:36 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.143 2025/09/11 05:54:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -102,8 +102,12 @@
 #define CPU_PART_CORTEX_A725	0xd87
 #define CPU_PART_CORTEX_A520AE	0xd88
 #define CPU_PART_CORTEX_A720AE	0xd89
+#define CPU_PART_C1_NANO	0xd8a
+#define CPU_PART_C1_PRO		0xd8b
+#define CPU_PART_C1_ULTRA	0xd8c
 #define CPU_PART_NEOVERSE_N3	0xd8e
 #define CPU_PART_CORTEX_A320	0xd8f
+#define CPU_PART_C1_PREMIUM	0xd90
 
 /* Cavium */
 #define CPU_PART_THUNDERX_T88	0x0a1
@@ -151,6 +155,10 @@ struct cpu_cores cpu_cores_none[] = {
 };
 
 struct cpu_cores cpu_cores_arm[] = {
+	{ CPU_PART_C1_NANO, "C1-Nano" },
+	{ CPU_PART_C1_PREMIUM, "C1-Premium" },
+	{ CPU_PART_C1_PRO, "C1-Pro" },
+	{ CPU_PART_C1_ULTRA, "C1-Ultra" },
 	{ CPU_PART_CORTEX_A34, "Cortex-A34" },
 	{ CPU_PART_CORTEX_A35, "Cortex-A35" },
 	{ CPU_PART_CORTEX_A53, "Cortex-A53" },
