@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.91 2025/08/11 17:14:54 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.92 2025/09/11 11:16:34 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -26338,6 +26338,33 @@ qwx_ampdu_tx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 
 int
+qwx_setup_peer_smps(struct qwx_softc *sc, uint8_t pdev_id, struct qwx_vif *arvif,
+    uint8_t *addr, uint16_t htcaps)
+{
+	uint16_t smps;
+	uint32_t val;
+
+	smps = (htcaps & IEEE80211_HTCAP_SMPS_MASK) >>
+	    IEEE80211_HTCAP_SMPS_SHIFT;
+
+	switch (smps) {
+	case IEEE80211_HTCAP_SMPS_STA:
+		val = WMI_PEER_SMPS_STATIC;
+		break;
+	case IEEE80211_HTCAP_SMPS_DYN:
+		val = WMI_PEER_SMPS_DYNAMIC;
+		break;
+	case IEEE80211_HTCAP_SMPS_DIS:
+	default:
+		val = WMI_PEER_SMPS_PS_NONE;
+		break;
+	}
+
+	return qwx_wmi_set_peer_param(sc, addr, arvif->vdev_id,
+	    pdev_id, WMI_PEER_MIMO_PS_STATE, val);
+}
+
+int
 qwx_run(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -26377,16 +26404,17 @@ qwx_run(struct qwx_softc *sc)
 			return ret;
 		}
 	}
-#if 0
-	ret = ath11k_setup_peer_smps(ar, arvif, sta->addr,
-				     &sta->deflink.ht_cap,
-				     le16_to_cpu(sta->deflink.he_6ghz_capa.capa));
-	if (ret) {
-		ath11k_warn(ar->ab, "failed to setup peer SMPS for vdev %d: %d\n",
-			    arvif->vdev_id, ret);
-		return ret;
-	}
 
+	if (ni->ni_flags & IEEE80211_NODE_HT) {
+		ret = qwx_setup_peer_smps(sc, pdev_id, arvif, ni->ni_macaddr,
+		    ni->ni_htcaps);
+		if (ret) {
+			printf("%s: failed to setup SMPS for vdev %d: %d\n",
+			    sc->sc_dev.dv_xname, arvif->vdev_id, ret);
+			return ret;
+		}
+	}
+#if 0
 	if (!ath11k_mac_vif_recalc_sta_he_txbf(ar, vif, &he_cap)) {
 		ath11k_warn(ar->ab, "failed to recalc he txbf for vdev %i on bss %pM\n",
 			    arvif->vdev_id, bss_conf->bssid);
