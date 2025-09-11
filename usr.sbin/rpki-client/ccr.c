@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.7 2025/09/09 13:22:38 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.8 2025/09/11 08:21:00 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -928,17 +928,9 @@ parse_manifeststate(const char *fn, struct ccr *ccr, const ManifestState *state)
 	if (ccr->mfts_hash == NULL)
 		goto out;
 
-	/*
-	 * XXX: refactor into a x509_get_generalized_time() function.
-	 */
-	if (ASN1_STRING_length(state->mostRecentUpdate) != GENTIME_LENGTH) {
-		warnx("%s: mostRecentUpdate time format invalid", fn);
+	if (!x509_get_generalized_time(fn, "CCR mostRecentUpdate", 
+	    state->mostRecentUpdate, &ccr->most_recent_update))
 		goto out;
-	}
-	if (!x509_get_time(state->mostRecentUpdate, &ccr->most_recent_update)) {
-		warnx("%s: parsing CCR mostRecentUpdate failed", fn);
-		goto out;
-	}
 
 	if (!parse_mft_refs(fn, ccr, state->mftrefs))
 		goto out;
@@ -1355,14 +1347,9 @@ ccr_parse(const char *fn, const unsigned char *der, size_t len)
 	if ((ccr = calloc(1, sizeof(*ccr))) == NULL)
 		err(1, NULL);
 
-	if (ASN1_STRING_length(ccr_asn1->producedAt) != GENTIME_LENGTH) {
-		warnx("%s: embedded from time format invalid", fn);
+	if (!x509_get_generalized_time(fn, "CCR producedAt",
+	    ccr_asn1->producedAt, &ccr->producedat))
 		goto out;
-	}
-	if (!x509_get_time(ccr_asn1->producedAt, &ccr->producedat)) {
-		warnx("%s: parsing CCR producedAt failed", fn);
-		goto out;
-	}
 
 	if (ccr_asn1->mfts == NULL && ccr_asn1->vrps == NULL &&
 	    ccr_asn1->vaps == NULL && ccr_asn1->tas == NULL) {

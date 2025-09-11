@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.118 2025/09/09 08:23:24 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.119 2025/09/11 08:21:00 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -27,6 +27,8 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+#define GENTIME_LENGTH 15
 
 ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
 ASN1_OBJECT	*caissuers_oid;	/* 1.3.6.1.5.5.7.48.2 (caIssuers) */
@@ -308,6 +310,21 @@ x509_get_time(const ASN1_TIME *at, time_t *t)
 		return 0;
 	if ((*t = timegm(&tm)) == -1)
 		errx(1, "timegm failed");
+	return 1;
+}
+
+int
+x509_get_generalized_time(const char *fn, const char *descr,
+    const ASN1_TIME *at, time_t *t)
+{
+	if (at->length != GENTIME_LENGTH) {
+		warnx("%s: %s time format invalid", fn, descr);
+		return 0;
+	}
+	if (!x509_get_time(at, t)) {
+		warnx("%s: parsing %s failed", fn, descr);
+		return 0;
+	}
 	return 1;
 }
 

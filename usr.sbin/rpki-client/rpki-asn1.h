@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.4 2025/09/09 08:23:24 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.5 2025/09/11 08:21:00 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -23,8 +23,6 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-
-#define GENTIME_LENGTH 15
 
 /*
  * Autonomous System Provider Authorization (ASPA)
