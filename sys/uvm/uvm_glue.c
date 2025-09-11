@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.93 2025/07/07 18:33:37 kettenis Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.94 2025/09/11 15:28:40 mpi Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -255,7 +255,7 @@ uvm_vsunlock_device(struct proc *p, void *addr, size_t len, void *map)
 	uvm_km_pgremove_intrsafe(kva, kva + sz);
 	pmap_kremove(kva, sz);
 	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, kva, sz);
+	km_free((void *)kva, sz, &kv_any, &kp_none);
 }
 
 const struct kmem_va_mode kv_uarea = {
