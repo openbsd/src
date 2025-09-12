@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.68 2025/09/09 08:23:24 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.69 2025/09/12 10:01:07 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -346,6 +346,13 @@ rtype_from_der(const char *fn, const unsigned char *der, size_t len)
 	p = der;
 	if ((cms = d2i_CMS_ContentInfo(NULL, &p, len)) != NULL) {
 		const ASN1_OBJECT *obj;
+
+		if ((obj = CMS_get0_type(cms)) != NULL) {
+			if (OBJ_cmp(obj, ccr_oid) == 0) {
+				rtype = RTYPE_CCR;
+				goto out;
+			}
+		}
 
 		if (CMS_get0_SignerInfos(cms) == NULL) {
 			warnx("%s: CMS object not signedData", fn);
