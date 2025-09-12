@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.447 2025/09/08 08:23:19 jsg Exp $ */
+/* $OpenBSD: tty.c,v 1.448 2025/09/12 08:46:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -390,7 +390,7 @@ tty_send_requests(struct tty *tty)
 		return;
 
 	if (tty->term->flags & TERM_VT100LIKE) {
-		if (~tty->term->flags & TTY_HAVEDA)
+		if (~tty->flags & TTY_HAVEDA)
 			tty_puts(tty, "\033[c");
 		if (~tty->flags & TTY_HAVEDA2)
 			tty_puts(tty, "\033[>c");
