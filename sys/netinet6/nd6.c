@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.301 2025/09/09 10:36:00 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.302 2025/09/12 23:02:36 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -73,12 +73,12 @@
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
 
 /* timer values */
-time_t	nd6_timer_next	= -1;	/* at which uptime nd6_timer runs */
+time_t	nd6_timer_next	= -1;	/* [N] at which uptime nd6_timer runs */
 time_t	nd6_expire_next	= -1;	/* at which uptime nd6_expire runs */
 int	nd6_delay	= 5;	/* [a] delay first probe time 5 second */
 int	nd6_umaxtries	= 3;	/* [a] maximum unicast query */
 int	nd6_mmaxtries	= 3;	/* [a] maximum multicast query */
-int	nd6_gctimer	= (60 * 60 * 24); /* 1 day: garbage collection timer */
+const int nd6_gctimer	= (60 * 60 * 24); /* 1 day: garbage collection timer */
 
 /* preventing too many loops in ND option parsing */
 int nd6_maxndopt = 10;	/* max # of ND options allowed */
@@ -89,7 +89,8 @@ int nd6_maxnudhint = 0;	/* [a] max # of subsequent upper layer hints */
 struct mutex nd6_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 TAILQ_HEAD(llinfo_nd6_head, llinfo_nd6) nd6_list =
-    TAILQ_HEAD_INITIALIZER(nd6_list);	/* [mN] list of llinfo_nd6 structures */
+    TAILQ_HEAD_INITIALIZER(nd6_list);
+				/* [m] list of llinfo_nd6 structures */
 struct	pool nd6_pool;		/* [I] pool for llinfo_nd6 structures */
 int	nd6_inuse;		/* [m] limit neighbor discovery routes */
 unsigned int	ln_hold_total;	/* [a] packets currently in the nd6 queue */
@@ -241,39 +242,76 @@ nd6_llinfo_settimer(const struct llinfo_nd6 *ln, unsigned int secs)
 	}
 }
 
+static struct llinfo_nd6 *
+nd6_iterator(struct llinfo_nd6 *ln, struct llinfo_nd6_iterator *iter)
+{
+	struct llinfo_nd6 *tmp;
+
+	MUTEX_ASSERT_LOCKED(&nd6_mtx);
+
+	if (ln)
+		tmp = TAILQ_NEXT((struct llinfo_nd6 *)iter, ln_list);
+	else
+		tmp = TAILQ_FIRST(&nd6_list);
+
+	while (tmp && tmp->ln_rt == NULL)
+		tmp = TAILQ_NEXT(tmp, ln_list);
+
+	if (ln) {
+		TAILQ_REMOVE(&nd6_list, (struct llinfo_nd6 *)iter, ln_list);
+		if (refcnt_rele(&ln->ln_refcnt))
+			pool_put(&nd6_pool, ln);
+	}
+	if (tmp) {
+		TAILQ_INSERT_AFTER(&nd6_list, tmp, (struct llinfo_nd6 *)iter,
+		    ln_list);
+		refcnt_take(&tmp->ln_refcnt);
+	}
+
+	return tmp;
+}
+
 void
 nd6_timer(void *unused)
 {
-	struct llinfo_nd6 *ln, *nln;
+	struct llinfo_nd6_iterator iter = { .ln_rt = NULL };
+	struct llinfo_nd6 *ln = NULL;
 	time_t uptime, expire;
 	int i_am_router = (atomic_load_int(&ip6_forwarding) != 0);
 	int secs;
 
-	NET_LOCK();
-
 	uptime = getuptime();
 	expire = uptime + nd6_gctimer;
 
-	/* Net lock is exclusive, no nd6 mutex needed for nd6_list here. */
-	TAILQ_FOREACH_SAFE(ln, &nd6_list, ln_list, nln) {
+	mtx_enter(&nd6_mtx);
+	while ((ln = nd6_iterator(ln, &iter)) != NULL) {
 		struct rtentry *rt = ln->ln_rt;
 
-		if (rt->rt_expire && rt->rt_expire <= uptime)
-			if (nd6_llinfo_timer(rt, i_am_router))
-				continue;
-
-		if (rt->rt_expire && rt->rt_expire < expire)
+		if (rt->rt_expire && rt->rt_expire <= uptime) {
+			rtref(rt);
+			mtx_leave(&nd6_mtx);
+			NET_LOCK();
+			if (!nd6_llinfo_timer(rt, i_am_router)) {
+				if (rt->rt_expire && rt->rt_expire < expire)
+					expire = rt->rt_expire;
+			}
+			NET_UNLOCK();
+			rtfree(rt);
+			mtx_enter(&nd6_mtx);
+		} else if (rt->rt_expire && rt->rt_expire < expire)
 			expire = rt->rt_expire;
 	}
+	mtx_leave(&nd6_mtx);
 
 	secs = expire - uptime;
 	if (secs < 1)
 		secs = 1;
+
+	NET_LOCK();
 	if (!TAILQ_EMPTY(&nd6_list)) {
 		nd6_timer_next = uptime + secs;
 		timeout_add_sec(&nd6_timer_to, secs);
 	}
-
 	NET_UNLOCK();
 }
 
@@ -290,6 +328,10 @@ nd6_llinfo_timer(struct rtentry *rt, int i_am_router)
 	struct ifnet *ifp;
 
 	NET_ASSERT_LOCKED_EXCLUSIVE();
+
+	/* might have been freed between leave nd6_mtx and enter net lock */
+	if (!ISSET(rt->rt_flags, RTF_LLINFO))
+		return 0;
 
 	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
 		return 1;
@@ -459,26 +501,31 @@ nd6_expire_timer(void *unused)
 void
 nd6_purge(struct ifnet *ifp)
 {
-	struct llinfo_nd6 *ln, *nln;
+	struct llinfo_nd6_iterator iter = { .ln_rt = NULL };
+	struct llinfo_nd6 *ln = NULL;
 	int i_am_router = (atomic_load_int(&ip6_forwarding) != 0);
-
-	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	/*
 	 * Nuke neighbor cache entries for the ifp.
 	 */
-	TAILQ_FOREACH_SAFE(ln, &nd6_list, ln_list, nln) {
-		struct rtentry *rt;
+	mtx_enter(&nd6_mtx);
+	while ((ln = nd6_iterator(ln, &iter)) != NULL) {
+		struct rtentry *rt = ln->ln_rt;
 		struct sockaddr_dl *sdl;
 
-		rt = ln->ln_rt;
 		if (rt != NULL && rt->rt_gateway != NULL &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			sdl = satosdl(rt->rt_gateway);
-			if (sdl->sdl_index == ifp->if_index)
+			if (sdl->sdl_index == ifp->if_index) {
+				rtref(rt);
+				mtx_leave(&nd6_mtx);
 				nd6_free(rt, ifp, i_am_router);
+				rtfree(rt);
+				mtx_enter(&nd6_mtx);
+			}
 		}
 	}
+	mtx_leave(&nd6_mtx);
 }
 
 struct rtentry *
@@ -794,6 +841,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			break;
 		}
 		nd6_inuse++;
+		refcnt_init(&ln->ln_refcnt);
 		mq_init(&ln->ln_mq, LN_HOLD_QUEUE, IPL_SOFTNET);
 		rt->rt_llinfo = (caddr_t)ln;
 		ln->ln_rt = rt;
@@ -900,7 +948,8 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		atomic_sub_int(&ln_hold_total, mq_purge(&ln->ln_mq));
 		mtx_leave(&nd6_mtx);
 
-		pool_put(&nd6_pool, ln);
+		if (refcnt_rele(&ln->ln_refcnt))
+			pool_put(&nd6_pool, ln);
 
 		/* leave from solicited node multicast for proxy ND */
 		if ((rt->rt_flags & RTF_ANNOUNCE) != 0 &&
