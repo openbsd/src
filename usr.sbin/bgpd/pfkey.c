@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.72 2025/02/27 14:03:32 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.73 2025/09/12 11:48:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -453,13 +453,15 @@ pfkey_reply(int sd, uint32_t *spi)
 
 	if (hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
+
+		/* discard error message */
+		if (read(sd, &hdr, sizeof(hdr)) == -1)
+			log_warn("pfkey read");
+
 		if (errno == ESRCH)
 			return (0);
 		else {
 			log_warn("pfkey");
-			/* discard error message */
-			if (read(sd, &hdr, sizeof(hdr)) == -1)
-				log_warn("pfkey read");
 			return (-1);
 		}
 	}
