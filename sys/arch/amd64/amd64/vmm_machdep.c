@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.62 2025/09/10 11:52:07 hshoexer Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.63 2025/09/13 16:42:55 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3466,8 +3466,8 @@ vmm_fpusave(struct vcpu *vcpu)
 	}
 
 	/*
-	 * Save full copy of FPU state - guest content is always
-	 * a subset of host's save area (see xsetbv exit handler)
+	 * Save a copy of FPU state - guest content is always
+	 * a subset of host's save area. PKRU is saved separately.
 	 */
 	fpusavereset(&vcpu->vc_g_fpu);
 	vcpu->vc_fpuinited = 1;
@@ -5925,7 +5925,7 @@ svm_handle_xsetbv(struct vcpu *vcpu)
 int
 vmm_handle_xsetbv(struct vcpu *vcpu, uint64_t *rax)
 {
-	uint64_t *rdx, *rcx, val;
+	uint64_t *rdx, *rcx, val, mask = xsave_mask & XFEATURE_XCR0_MASK;
 
 	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
@@ -5941,8 +5941,12 @@ vmm_handle_xsetbv(struct vcpu *vcpu, uint64_t *rax)
 		return (vmm_inject_gp(vcpu));
 	}
 
+	/* If we're exposing PKRU features, allow guests to set PKRU in xcr0. */
+	if (vmm_softc->sc_md.pkru_enabled)
+		mask |= XFEATURE_PKRU;
+
 	val = *rax + (*rdx << 32);
-	if (val & ~xsave_mask) {
+	if (val & ~mask) {
 		DPRINTF("%s: guest specified xcr0 outside xsave_mask %lld\n",
 		    __func__, val);
 		return (vmm_inject_gp(vcpu));
@@ -6158,14 +6162,14 @@ static void
 vmm_handle_cpuid_0xd(struct vcpu *vcpu, uint32_t subleaf, uint64_t *rax,
     uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx)
 {
+	uint64_t xcr0 = vcpu->vc_gueststate.vg_xcr0;
+
 	if (subleaf == 0) {
 		/*
 		 * CPUID(0xd.0) depends on the value in XCR0 and MSR_XSS.  If
 		 * the guest XCR0 isn't the same as the host then set it, redo
 		 * the CPUID, and restore it.
 		 */
-		uint64_t xcr0 = vcpu->vc_gueststate.vg_xcr0;
-
 		/*
 		 * "ecx enumerates the size required ... for an area
 		 *  containing all the ... components supported by this
@@ -6185,11 +6189,31 @@ vmm_handle_cpuid_0xd(struct vcpu *vcpu, uint32_t subleaf, uint64_t *rax,
 		}
 		eax = xsave_mask & XFEATURE_XCR0_MASK;
 		edx = (xsave_mask & XFEATURE_XCR0_MASK) >> 32;
+
+		/*
+		 * Emulate support for the pkru xsave region if the
+		 * host has pku enabled. This allow guests to enable
+		 * it in xcr0 and use xsave/xrstor on context switches
+		 * to save or restore pkru.
+		 */
+		if (vmm_softc->sc_md.pkru_enabled) {
+			eax |= XFEATURE_PKRU;
+			ecx = sizeof(struct savefpu) + sizeof(uint64_t);
+			if (xcr0 & XFEATURE_PKRU)
+				ebx = ecx;
+		}
 	} else if (subleaf == 1) {
 		/* mask out XSAVEC, XSAVES, and XFD support */
 		eax &= XSAVE_XSAVEOPT | XSAVE_XGETBV1;
 		ebx = 0;	/* no xsavec or xsaves for now */
 		ecx = edx = 0;	/* no xsaves for now */
+	} else if ((1ULL << subleaf) == XFEATURE_PKRU) {
+		if (vmm_softc->sc_md.pkru_enabled) {
+			eax = sizeof(uint64_t);		/* size of PKRU area */
+			ebx = sizeof(struct savefpu);	/* offset of area */
+		} else
+			eax = ebx = 0;
+		ecx = edx = 0;
 	} else if (subleaf >= 63 ||
 	    ((1ULL << subleaf) & xsave_mask & XFEATURE_XCR0_MASK) == 0) {
 		/* disclaim subleaves of features we don't expose */
