@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_var.h,v 1.13 2025/05/21 04:05:22 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_var.h,v 1.14 2025/09/13 13:43:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -58,7 +58,7 @@
 /* Use 4MB hibernation chunks */
 #define HIBERNATE_CHUNK_SIZE		0x400000
 
-#define HIBERNATE_CHUNK_TABLE_SIZE	0x100000
+#define HIBERNATE_CHUNK_TABLE_SIZE	0x200000
 
 #define HIBERNATE_STACK_OFFSET	0x0F00
 
