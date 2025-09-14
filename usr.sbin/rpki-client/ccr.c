@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.9 2025/09/11 09:25:05 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.10 2025/09/14 14:02:27 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -46,6 +46,9 @@ ASN1_ITEM_EXP ASPAPayloadSets_it;
 ASN1_ITEM_EXP ASPAPayloadSet_it;
 ASN1_ITEM_EXP SubjectKeyIdentifiers_it;
 ASN1_ITEM_EXP SubjectKeyIdentifier_it;
+ASN1_ITEM_EXP RouterKeySets_it;
+ASN1_ITEM_EXP RouterKeySet_it;
+ASN1_ITEM_EXP RouterKey_it;
 
 /*
  * Can't use CMS_ContentInfo since it is not backed by a public struct
@@ -67,6 +70,7 @@ ASN1_SEQUENCE(CanonicalCacheRepresentation) = {
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, vrps, ROAPayloadState, 2),
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, vaps, ASPAPayloadState, 3),
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, tas, TrustAnchorState, 4),
+	ASN1_EXP_OPT(CanonicalCacheRepresentation, rks, RouterKeyState, 5),
 } ASN1_SEQUENCE_END(CanonicalCacheRepresentation);
 
 IMPLEMENT_ASN1_FUNCTIONS(CanonicalCacheRepresentation);
@@ -156,6 +160,34 @@ ASN1_ITEM_TEMPLATE_END(SubjectKeyIdentifiers);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(SubjectKeyIdentifiers,
     SubjectKeyIdentifiers, SubjectKeyIdentifiers);
+
+ASN1_SEQUENCE(RouterKeyState) = {
+	ASN1_SEQUENCE_OF(RouterKeyState, rksets, RouterKeySet),
+	ASN1_SIMPLE(RouterKeyState, hash, ASN1_OCTET_STRING),
+} ASN1_SEQUENCE_END(RouterKeyState);
+
+IMPLEMENT_ASN1_FUNCTIONS(RouterKeyState);
+
+ASN1_ITEM_TEMPLATE(RouterKeySets) =
+    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, rks, RouterKeySet)
+ASN1_ITEM_TEMPLATE_END(RouterKeySets);
+
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(RouterKeySets, RouterKeySets,
+    RouterKeySets);
+
+ASN1_SEQUENCE(RouterKeySet) = {
+	ASN1_SIMPLE(RouterKeySet, asID, ASN1_INTEGER),
+	ASN1_SEQUENCE_OF(RouterKeySet, routerKeys, RouterKey),
+} ASN1_SEQUENCE_END(RouterKeySet);
+
+IMPLEMENT_ASN1_FUNCTIONS(RouterKeySet);
+
+ASN1_SEQUENCE(RouterKey) = {
+	ASN1_SIMPLE(RouterKey, ski, SubjectKeyIdentifier),
+	ASN1_SIMPLE(RouterKey, spki, X509_PUBKEY),
+} ASN1_SEQUENCE_END(RouterKey);
+
+IMPLEMENT_ASN1_FUNCTIONS(RouterKey);
 
 static void
 hash_asn1_item(ASN1_OCTET_STRING *astr, const ASN1_ITEM *it, void *val)
@@ -471,6 +503,71 @@ generate_trustanchorstate(struct validation_data *vd)
 	return tas;
 }
 
+static RouterKeyState *
+generate_routerkeystate(struct validation_data *vd)
+{
+	RouterKeyState *rks;
+	RouterKeySet *rkset;
+	RouterKey *rk;
+	struct brk *brk, *prev;
+	unsigned char *pk_der = NULL;
+	size_t pk_len;
+	const unsigned char *der;
+
+	if ((rks = RouterKeyState_new()) == NULL)
+		errx(1, "RouterKeyState_new");
+
+	prev = NULL;
+	RB_FOREACH(brk, brk_tree, &vd->brks) {
+		static char hbuf[SHA_DIGEST_LENGTH] = { 0 };
+
+		if (prev == NULL || prev->asid != brk->asid) {
+			if ((rkset = RouterKeySet_new()) == NULL)
+				errx(1, "RouterKeySet_new");
+
+			if (!ASN1_INTEGER_set_uint64(rkset->asID, brk->asid))
+				errx(1, "ASN1_INTEGER_set_uint64");
+
+			if (sk_RouterKeySet_push(rks->rksets, rkset) <= 0)
+				errx(1, "sk_RouterKeySet_push");
+		}
+
+		if ((rk = RouterKey_new()) == NULL)
+			errx(1, "RouterKey_new");
+
+		if (hex_decode(brk->ski, hbuf, sizeof(hbuf)) == -1)
+			errx(1, "hex_decode brk pubkey corrupted");
+
+		if (!ASN1_OCTET_STRING_set(rk->ski, hbuf, sizeof(hbuf)))
+			errx(1, "ASN1_OCTET_STRING_set");
+
+		if (base64_decode(brk->pubkey, strlen(brk->pubkey), &pk_der,
+		    &pk_len) == -1)
+			errx(1, "base64_decode");
+
+		X509_PUBKEY_free(rk->spki);
+		der = pk_der;
+		if ((rk->spki = d2i_X509_PUBKEY(NULL, &der, pk_len)) == NULL)
+			errx(1, "d2i_X509_PUBKEY");
+		if (der != pk_der + pk_len)
+			errx(1, "brk pubkey corrupted");
+		free(pk_der);
+		pk_der = NULL;
+
+		if ((sk_RouterKey_push(rkset->routerKeys, rk)) <= 0)
+			errx(1, "sk_RouterKey_push");
+
+		prev = brk;
+	}
+
+	hash_asn1_item(rks->hash, ASN1_ITEM_rptr(RouterKeySets), rks->rksets);
+
+	if (!base64_encode_asn1str(rks->hash, &vd->ccr.brks_hash))
+		errx(1, "base64_encode_asn1str");
+
+	return rks;
+}
+
 static CanonicalCacheRepresentation *
 generate_ccr(struct validation_data *vd)
 {
@@ -498,6 +595,9 @@ generate_ccr(struct validation_data *vd)
 
 	if ((ccr->tas = generate_trustanchorstate(vd)) == NULL)
 		errx(1, "generate_trustanchorstate");
+
+	if ((ccr->rks = generate_routerkeystate(vd)) == NULL)
+		errx(1, "generate_routerkeystate");
 
 	return ccr;
 }
@@ -743,6 +843,28 @@ ccr_tas_free(struct ccr_tas_tree *tas)
 	}
 }
 
+static void
+brk_free(struct brk *brk)
+{
+	if (brk == NULL)
+		return;
+
+	free(brk->ski);
+	free(brk->pubkey);
+	free(brk);
+}
+
+static void
+ccr_brks_free(struct brk_tree *brks)
+{
+	struct brk *brk, *tmp_brk;
+
+	RB_FOREACH_SAFE(brk, brk_tree, brks, tmp_brk) {
+		RB_REMOVE(brk_tree, brks, brk);
+		brk_free(brk);
+	}
+}
+
 void
 ccr_free(struct ccr *ccr)
 {
@@ -753,6 +875,7 @@ ccr_free(struct ccr *ccr)
 	ccr_vrps_free(&ccr->vrps);
 	ccr_vaps_free(&ccr->vaps);
 	ccr_tas_free(&ccr->tas);
+	ccr_brks_free(&ccr->brks);
 
 	free(ccr->mfts_hash);
 	free(ccr->vrps_hash);
@@ -1216,6 +1339,127 @@ parse_tastate(const char *fn, struct ccr *ccr, const TrustAnchorState *state)
 	return rc;
 }
 
+static int
+parse_routerkeys(const char *fn, struct ccr *ccr, uint32_t asid,
+    STACK_OF(RouterKey) *routerkeys)
+{
+	RouterKey *rk;
+	struct brk *brk = NULL, *prev;
+	int i, rk_num, rc = 0;
+
+	if ((rk_num = sk_RouterKey_num(routerkeys)) <= 0) {
+		warnx("%s: missing RouterKey", fn);
+		goto out;
+	}
+
+	prev = NULL;
+	for (i = 0; i < rk_num; i++) {
+		unsigned char *der;
+		size_t der_len;
+
+		if ((brk = calloc(1, sizeof(*brk))) == NULL)
+			err(1, NULL);
+
+		brk->asid = asid;
+
+		rk = sk_RouterKey_value(routerkeys, i);
+
+		if (rk->ski->length != SHA_DIGEST_LENGTH) {
+			warnx("%s: AS%d RouterKey SKI corrupted", fn, asid);
+			goto out;
+		}
+
+		brk->ski = hex_encode(rk->ski->data, rk->ski->length);
+
+		der = NULL;
+		if ((der_len = i2d_X509_PUBKEY(rk->spki, &der)) <= 0) {
+			warnx("%s: AS%d RouterKey SPKI corrupted", fn, asid);
+			goto out;
+		}
+
+		if (base64_encode(der, der_len, &brk->pubkey) == -1)
+			errx(1, "base64_encode");
+
+		free(der);
+
+		if (prev != NULL) {
+			if (strcmp(brk->ski, prev->ski) <= 0) {
+				warnx("%s: misordered RouterKey", fn);
+				goto out;
+			}
+		}
+
+		if ((RB_INSERT(brk_tree, &ccr->brks, brk)) != NULL) {
+			warnx("%s; duplicate RouterKey", fn);
+			goto out;
+		}
+
+		prev = brk;
+		brk = NULL;
+	}
+
+	rc = 1;
+ out:
+	brk_free(brk);
+	return rc;
+}
+
+static int
+parse_rksets(const char *fn, struct ccr *ccr, STACK_OF(RouterKeySet) *rksets)
+{
+	RouterKeySet *rkset;
+	uint32_t asid, prev = 0;
+	int i, rc = 0, rksets_num;
+
+	rksets_num = sk_RouterKeySet_num(rksets);
+
+	RB_INIT(&ccr->brks);
+
+	for (i = 0; i < rksets_num; i++) {
+		rkset = sk_RouterKeySet_value(rksets, i);
+
+		if (!as_id_parse(rkset->asID, &asid)) {
+			warnx("%s: malformed asID in RouterKeySet", fn);
+			goto out;
+		}
+
+		if (i > 0) {
+			if (asid <= prev) {
+				warnx("%s: AS %d misordered routerkeyset", fn,
+				    asid);
+				goto out;
+			}
+		}
+
+		if (!parse_routerkeys(fn, ccr, asid, rkset->routerKeys))
+			goto out;
+
+		prev = asid;
+	}
+
+	rc = 1;
+ out:
+	return rc;
+}
+
+static int
+parse_rkstate(const char *fn, struct ccr *ccr, const RouterKeyState *state)
+{
+	int rc = 0;
+
+	ccr->brks_hash = validate_asn1_hash(fn, "RouterKeyState", state->hash,
+	    ASN1_ITEM_rptr(RouterKeySets), state->rksets);
+	if (ccr->brks_hash == NULL)
+		goto out;
+
+	if (!parse_rksets(fn, ccr, state->rksets))
+		goto out;
+
+	rc = 1;
+ out:
+	return rc;
+}
+
 struct ccr *
 ccr_parse(const char *fn, const unsigned char *der, size_t len)
 {
@@ -1278,7 +1522,8 @@ ccr_parse(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 
 	if (ccr_asn1->mfts == NULL && ccr_asn1->vrps == NULL &&
-	    ccr_asn1->vaps == NULL && ccr_asn1->tas == NULL) {
+	    ccr_asn1->vaps == NULL && ccr_asn1->tas == NULL &&
+	    ccr_asn1->rks == NULL) {
 		warnx("%s: must contain at least one state component", fn);
 		goto out;
 	}
@@ -1300,6 +1545,11 @@ ccr_parse(const char *fn, const unsigned char *der, size_t len)
 
 	if (ccr_asn1->tas != NULL) {
 		if (!parse_tastate(fn, ccr, ccr_asn1->tas))
+			goto out;
+	}
+
+	if (ccr_asn1->rks != NULL) {
+		if (!parse_rkstate(fn, ccr, ccr_asn1->rks))
 			goto out;
 	}
 

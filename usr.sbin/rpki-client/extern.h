@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.263 2025/09/11 08:21:00 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.264 2025/09/14 14:02:27 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -490,10 +490,12 @@ struct ccr {
 	struct ccr_vrp_tree vrps;
 	struct vap_tree vaps; /* only used in filemode */
 	struct ccr_tas_tree tas;
+	struct brk_tree brks; /* only used in filemode */
 	char *mfts_hash;
 	char *vrps_hash;
 	char *vaps_hash;
 	char *tas_hash;
+	char *brks_hash;
 	time_t producedat;
 	time_t most_recent_update;
 	unsigned char *der;

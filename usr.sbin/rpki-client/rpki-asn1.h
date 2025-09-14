@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.5 2025/09/11 08:21:00 tb Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.6 2025/09/14 14:02:27 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/x509.h>
 
 /*
  * Autonomous System Provider Authorization (ASPA)
@@ -55,6 +56,9 @@ extern ASN1_ITEM_EXP ASPAPayloadSets_it;
 extern ASN1_ITEM_EXP ASPAPayloadSet_it;
 extern ASN1_ITEM_EXP SubjectKeyIdentifiers_it;
 extern ASN1_ITEM_EXP SubjectKeyIdentifier_it;
+extern ASN1_ITEM_EXP RouterKeySets_it;
+extern ASN1_ITEM_EXP RouterKeySet_it;
+extern ASN1_ITEM_EXP RouterKey_it;
 
 typedef struct {
 	ASN1_OCTET_STRING *hash;
@@ -164,6 +168,47 @@ typedef struct {
 DECLARE_ASN1_FUNCTIONS(TrustAnchorState);
 
 typedef struct {
+	STACK_OF(RouterKeySet) *rksets;
+	ASN1_OCTET_STRING *hash;
+} RouterKeyState;
+
+DECLARE_ASN1_FUNCTIONS(RouterKeyState);
+
+typedef struct {
+	ASN1_INTEGER *asID;
+	STACK_OF(RouterKey) *routerKeys;
+} RouterKeySet;
+
+DECLARE_STACK_OF(RouterKeySet);
+
+#ifndef DEFINE_STACK_OF
+#define sk_RouterKeySet_num(st) SKM_sk_num(RouterKeySet, (st))
+#define sk_RouterKeySet_push(st, i) SKM_sk_push(RouterKeySet, (st), (i))
+#define sk_RouterKeySet_value(st, i) SKM_sk_value(RouterKeySet, (st), (i))
+#endif
+
+DECLARE_ASN1_FUNCTIONS(RouterKeySet);
+
+typedef STACK_OF(RouterKeySet) RouterKeySets;
+
+DECLARE_ASN1_FUNCTIONS(RouterKeySets);
+
+typedef struct {
+	SubjectKeyIdentifier *ski;
+	X509_PUBKEY *spki;
+} RouterKey;
+
+DECLARE_STACK_OF(RouterKey);
+
+#ifndef DEFINE_STACK_OF
+#define sk_RouterKey_num(st) SKM_sk_num(RouterKey, (st))
+#define sk_RouterKey_push(st, i) SKM_sk_push(RouterKey, (st), (i))
+#define sk_RouterKey_value(st, i) SKM_sk_value(RouterKey, (st), (i))
+#endif
+
+DECLARE_ASN1_FUNCTIONS(RouterKey);
+
+typedef struct {
 	ASN1_INTEGER *version;
 	ASN1_OBJECT *hashAlg;
 	ASN1_GENERALIZEDTIME *producedAt;
@@ -171,6 +216,7 @@ typedef struct {
 	ROAPayloadState *vrps;
 	ASPAPayloadState *vaps;
 	TrustAnchorState *tas;
+	RouterKeyState *rks;
 } CanonicalCacheRepresentation;
 
 DECLARE_ASN1_FUNCTIONS(CanonicalCacheRepresentation);

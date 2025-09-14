@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.66 2025/09/09 08:23:24 job Exp $ */
+/*	$OpenBSD: print.c,v 1.67 2025/09/14 14:02:27 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1073,6 +1073,42 @@ print_ccr_tastate(struct ccr *ccr)
 	}
 }
 
+static void
+print_ccr_rkstate(struct ccr *ccr)
+{
+	char *hash;
+	struct brk *brk;
+
+	if (base64_encode(ccr->brks_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
+		errx(1, "base64_encode");
+
+	if (outformats & FORMAT_JSON) {
+		json_do_object("routerkey_state", 0);
+		json_do_string("hash", hash);
+		json_do_array("routerkeys");
+		RB_FOREACH(brk, brk_tree, &ccr->brks) {
+			json_do_object("brk", 0);
+			json_do_int("asn", brk->asid);
+			json_do_string("ski", brk->ski);
+			json_do_string("pubkey", brk->pubkey);
+			json_do_end(); /* brk */
+		}
+		json_do_end(); /* routerkeys */
+		json_do_end(); /* routerkey_state */
+	} else {
+		printf("Router key state hash:    %s\n", hash);
+		printf("Router keys:\n");
+		RB_FOREACH(brk, brk_tree, &ccr->brks) {
+			printf("%26s", "");
+			printf("asid:%d ", brk->asid);
+			printf("ski:%s ", brk->ski);
+			printf("pubkey:%s\n", brk->pubkey);
+		}
+	}
+
+	free(hash);
+}
+
 void
 ccr_print(struct ccr *ccr)
 {
@@ -1095,4 +1131,7 @@ ccr_print(struct ccr *ccr)
 
 	if (ccr->tas_hash != NULL)
 		print_ccr_tastate(ccr);
+
+	if (ccr->brks_hash != NULL)
+		print_ccr_rkstate(ccr);
 }
