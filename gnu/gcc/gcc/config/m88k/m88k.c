@@ -689,14 +689,15 @@ static const enum machine_mode mode_from_align[] =
 
 static void block_move_sequence (rtx, rtx, int, int);
 
-/* Emit code to perform a block move.  Choose the best method.
+/* Emit code to perform a block move, and return 1 if successful.
+   Return 0 if we should let the compiler generate a call to memcpy().
 
    OPERANDS[0] is the destination.
    OPERANDS[1] is the source.
    OPERANDS[2] is the size.
    OPERANDS[3] is the alignment safe to use.  */
 
-void
+int
 expand_block_move (rtx *operands)
 {
   rtx dest, src;
@@ -704,8 +705,11 @@ expand_block_move (rtx *operands)
   int constp = CONST_INT_P (operands[2]);
   int bytes = constp ? INTVAL (operands[2]) : 0;
 
-  if (constp && bytes <= 0)
-    return;
+  if (!constp)
+    return 0;
+
+  if (bytes <= 0)
+    return 1; /* nothing to do.  */
 
   /* Determine machine mode to do move with.  */
   if (align > 4 && !TARGET_88110)
@@ -716,19 +720,11 @@ expand_block_move (rtx *operands)
   dest = operands[0];
   src = operands[1];
 
-  if (constp && bytes <= (optimize_size ? 3 : 6) * align)
-    {
-      block_move_sequence (dest, src, bytes, align);
-      return;
-    }
+  if (bytes > (optimize_size ? 3 : 6) * align)
+    return 0;
 
-  emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "memcpy"), 0,
-		     VOIDmode, 3,
-		     dest, Pmode,
-		     src, Pmode,
-		     convert_to_mode (TYPE_MODE (sizetype), operands[2],
-				      TYPE_UNSIGNED (sizetype)),
-		     TYPE_MODE (sizetype));
+  block_move_sequence (dest, src, bytes, align);
+  return 1;
 }
 
 /* Emit code to perform a block move with an offset sequence of ld/st
@@ -741,13 +737,13 @@ block_move_sequence (rtx dest_mem, rtx src_mem, int size, int align)
   rtx temp[2];
   enum machine_mode mode[2];
   int amount[2];
-  int active[2];
+  bool active[2];
   int phase = 0;
   int next;
   int offset_ld = 0;
   int offset_st = 0;
 
-  active[0] = active[1] = FALSE;
+  active[0] = active[1] = false;
 
   /* Establish parameters for the first load and for the second load if
      it is known to be the same mode as the first.  */
@@ -763,7 +759,7 @@ block_move_sequence (rtx dest_mem, rtx src_mem, int size, int align)
   do
     {
       next = phase;
-      phase = !phase;
+      phase ^= 1;
 
       if (size > 0)
 	{
@@ -2021,7 +2017,7 @@ m88k_emit_bcnd (enum rtx_code op, rtx label)
       value = INTVAL (constant);
 
       /* Perform an arithmetic computation to make the compared-to value
-	 zero, but avoid loosing if the bcnd is later changed into sxx.  */
+	 zero, but avoid losing if the bcnd is later changed into sxx.  */
       if (SMALL_INTVAL (value))
 	emit_jump_insn (gen_bxx (m88k_emit_test (op, VOIDmode), label));
       else

@@ -24,7 +24,7 @@ Boston, MA 02110-1301, USA.  */
 #ifdef RTX_CODE
 extern void m88k_emit_bcnd (enum rtx_code, rtx);
 extern void m88k_emit_trailing_label (rtx);
-extern void expand_block_move (rtx *);
+extern int expand_block_move (rtx *);
 extern void print_operand (FILE *, rtx, int);
 extern void print_operand_address (FILE *, rtx);
 extern const char *output_load_const_int (enum machine_mode, rtx *);
