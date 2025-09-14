@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.95 2025/09/11 17:04:35 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.96 2025/09/14 13:06:02 mpi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -376,25 +376,7 @@ int		uvm_map_fill_vmmap(struct vm_map *, struct kinfo_vmentry *,
 		    size_t *);
 
 /*
- * VM map locking operations:
- *
- *	These operations perform locking on the data portion of the
- *	map.
- *
- *	vm_map_lock_try: try to lock a map, failing if it is already locked.
- *
- *	vm_map_lock: acquire an exclusive (write) lock on a map.
- *
- *	vm_map_lock_read: acquire a shared (read) lock on a map.
- *
- *	vm_map_unlock: release an exclusive lock on a map.
- *
- *	vm_map_unlock_read: release a shared lock on a map.
- *
- *	vm_map_busy: mark a map as busy.
- *
- *	vm_map_unbusy: clear busy status on a map.
- *
+ * VM map locking operations.
  */
 
 boolean_t	vm_map_lock_try_ln(struct vm_map*, char*, int);
