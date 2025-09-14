@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.117 2025/07/24 07:36:21 jan Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.118 2025/09/14 21:43:58 jan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -1178,76 +1178,45 @@ lstat_log(char *file, size_t size, int flags)
 time_t
 parse8601(char *s)
 {
-	struct tm tm, *tmp;
-	char *t;
-	long l;
+	char		 format[16] = { 0 };
+	struct tm	*tm;
+	char		*t;
 
-	tmp = localtime(&timenow);
-	tm = *tmp;
+	tm = localtime(&timenow);
+	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+	t = strchr(s, 'T');
 
-	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
-
-	l = strtol(s, &t, 10);
-	if (l < 0 || l >= INT_MAX || (*t != '\0' && *t != 'T'))
-		return (-1);
-
-	/*
-	 * Now t points either to the end of the string (if no time was
-	 * provided) or to the letter `T' which separates date and time in
-	 * ISO 8601.  The pointer arithmetic is the same for either case.
-	 */
-	switch (t - s) {
-	case 8:
-		tm.tm_year = ((l / 1000000) - 19) * 100;
-		l = l % 1000000;
-	case 6:
-		tm.tm_year -= tm.tm_year % 100;
-		tm.tm_year += l / 10000;
-		l = l % 10000;
-	case 4:
-		tm.tm_mon = (l / 100) - 1;
-		l = l % 100;
-	case 2:
-		tm.tm_mday = l;
-	case 0:
-		break;
-	default:
-		return (-1);
-	}
-
-	/* sanity check */
-	if (tm.tm_year < 70 || tm.tm_mon < 0 || tm.tm_mon > 12 ||
-	    tm.tm_mday < 1 || tm.tm_mday > 31)
-		return (-1);
-
-	if (*t != '\0') {
-		s = ++t;
-		l = strtol(s, &t, 10);
-		if (l < 0 || l >= INT_MAX ||
-		    (*t != '\0' && !isspace((unsigned char)*t)))
-			return (-1);
-
-		switch (t - s) {
-		case 6:
-			tm.tm_sec = l % 100;
-			l /= 100;
-		case 4:
-			tm.tm_min = l % 100;
-			l /= 100;
-		case 2:
-			tm.tm_hour = l;
+	if (s != t) {
+		switch (t == NULL ? strlen(s) : t - s) {
+		case 8: strlcat(format, "%C", sizeof format); /* FALLTHROUGH */
+		case 6: strlcat(format, "%y", sizeof format); /* FALLTHROUGH */
+		case 4: strlcat(format, "%m", sizeof format); /* FALLTHROUGH */
+		case 2: strlcat(format, "%d", sizeof format); /* FALLTHROUGH */
 		case 0:
 			break;
 		default:
-			return (-1);
+			return -1;
 		}
-
-		/* sanity check */
-		if (tm.tm_sec < 0 || tm.tm_sec > 60 || tm.tm_min < 0 ||
-		    tm.tm_min > 59 || tm.tm_hour < 0 || tm.tm_hour > 23)
-			return (-1);
 	}
-	return (mktime(&tm));
+
+	if (t != NULL) {
+		strlcat(format, "T", sizeof format);
+
+		switch (strlen(t)) {
+		case 7: strlcat(format, "%H", sizeof format); /* FALLTHROUGH */
+		case 5: strlcat(format, "%M", sizeof format); /* FALLTHROUGH */
+		case 3: strlcat(format, "%S", sizeof format); /* FALLTHROUGH */
+		case 1:
+			break;
+		default:
+			return -1;
+		}
+	}
+
+	if (strptime(s, format, tm) == NULL)
+		return -1;
+
+	return mktime(tm);
 }
 
 /*-
