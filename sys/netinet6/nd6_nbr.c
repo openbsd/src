@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.162 2025/07/23 22:32:49 mvs Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.163 2025/09/14 20:47:33 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -73,6 +73,7 @@ struct dadq {
 
 struct dadq *nd6_dad_find(struct ifaddr *);
 void nd6_dad_destroy(struct dadq *);
+void nd6_dad_reaper(void *);
 void nd6_dad_starttimer(struct dadq *);
 void nd6_dad_stoptimer(struct dadq *);
 void nd6_dad_timer(void *);
@@ -994,9 +995,18 @@ void
 nd6_dad_destroy(struct dadq *dp)
 {
 	TAILQ_REMOVE(&dadq, dp, dad_list);
+	ip6_dad_pending--;
+	timeout_set_proc(&dp->dad_timer_ch, nd6_dad_reaper, dp);
+	timeout_add(&dp->dad_timer_ch, 0);
+}
+
+void
+nd6_dad_reaper(void *arg)
+{
+	struct dadq *dp = arg;
+
 	ifafree(dp->dad_ifa);
 	free(dp, M_IP6NDP, sizeof(*dp));
-	ip6_dad_pending--;
 }
 
 void
@@ -1089,9 +1099,9 @@ nd6_dad_stop(struct ifaddr *ifa)
 }
 
 void
-nd6_dad_timer(void *xifa)
+nd6_dad_timer(void *arg)
 {
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = arg;
 	struct in6_ifaddr *ia6;
 	struct in6_addr daddr6, taddr6;
 	struct ifnet *ifp;
@@ -1100,12 +1110,6 @@ nd6_dad_timer(void *xifa)
 
 	NET_LOCK();
 
-	/* Sanity check */
-	if (xifa == NULL) {
-		log(LOG_ERR, "%s: called with null parameter\n", __func__);
-		goto done;
-	}
-	ifa = xifa;
 	ia6 = ifatoia6(ifa);
 	taddr6 = ia6->ia_addr.sin6_addr;
 	ifp = ifa->ifa_ifp;
