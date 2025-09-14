@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.63 2025/09/13 16:42:55 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.64 2025/09/14 15:52:28 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -252,24 +252,30 @@ vmm_enabled(void)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	int found_vmx = 0, found_svm = 0;
+	int found_ept = 0, found_svm = 0;
 
-	/* Check if we have at least one CPU with either VMX or SVM */
+	/* Check if we have at least one CPU with either VMX/EPT or SVM */
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ci->ci_vmm_flags & CI_VMM_VMX)
-			found_vmx = 1;
+		if (ci->ci_vmm_flags & CI_VMM_EPT)
+			found_ept = 1;
 		if (ci->ci_vmm_flags & CI_VMM_SVM)
 			found_svm = 1;
 	}
 
-	/* Don't support both SVM and VMX at the same time */
-	if (found_vmx && found_svm)
+	/* Don't support both SVM and VMX/EPT at the same time */
+	if (found_ept && found_svm)
 		return (0);
 
-	if (found_vmx || found_svm)
+	if (found_ept || found_svm)
 		return 1;
 
 	return 0;
+}
+
+int
+vmm_probe_machdep(struct device *parent, void *match, void *aux)
+{
+	return vmm_enabled();
 }
 
 void

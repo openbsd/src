@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.151 2025/06/26 12:17:27 bluhm Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.152 2025/09/14 15:52:28 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -955,8 +955,9 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 		msr = rdmsr(IA32_VMX_PROCBASED_CTLS);
 		if (msr & (IA32_VMX_ACTIVATE_SECONDARY_CONTROLS) << 32) {
 			msr = rdmsr(IA32_VMX_PROCBASED2_CTLS);
-			/* EPT available? */
-			if (msr & (IA32_VMX_ENABLE_EPT) << 32)
+			/* EPT and UG available? */
+			if ((msr & (IA32_VMX_ENABLE_EPT) << 32) &&
+			    (msr & (IA32_VMX_UNRESTRICTED_GUEST) << 32))
 				ci->ci_vmm_flags |= CI_VMM_EPT;
 		}
 	}

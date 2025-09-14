@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.5 2025/05/20 13:51:27 dv Exp $ */
+/* $OpenBSD: vmm.c,v 1.6 2025/09/14 15:52:28 mlarkin Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -51,7 +51,7 @@ vmm_probe(struct device *parent, void *match, void *aux)
 
 	if (strcmp(*busname, vmm_cd.cd_name) != 0)
 		return (0);
-	return (1);
+	return (vmm_probe_machdep(parent, match, aux));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.115 2025/06/23 11:33:39 bluhm Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.116 2025/09/14 15:52:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1047,6 +1047,7 @@ int	svm_seves_enter_guest(uint64_t, vaddr_t, struct region_descriptor *);
 void	start_vmm_on_cpu(struct cpu_info *);
 void	stop_vmm_on_cpu(struct cpu_info *);
 void	vmclear_on_cpu(struct cpu_info *);
+int	vmm_probe_machdep(struct device *, void *, void *);
 void	vmm_attach_machdep(struct device *, struct device *, void *);
 void	vmm_activate_machdep(struct device *, int);
 int	vmmioctl_machdep(dev_t, u_long, caddr_t, int, struct proc *);
