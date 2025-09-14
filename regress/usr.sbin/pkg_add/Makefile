@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.89 2023/10/23 08:38:58 espie Exp $
+# $OpenBSD: Makefile,v 1.90 2025/09/14 18:41:11 afresh1 Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -13,7 +13,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	tying-1 tying-2 tag-delete setsprint temp-error1 \
 	temp-error2 temp-error2-as-root temp-error3 temp-error4 \
 	cksum-error system-version XXX-warning symlink no-symlink \
-	oldlib2
+	oldlib2 lib-error
 
 REGRESS_ROOT_TARGETS = temp-error2-as-root
 
@@ -52,7 +52,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D49, SRC30, plist27, rep7
+# current maxes (used): D49, SRC30, plist28, rep7
 pkgnames:
 	${PERLSCRIPT}/check-name
 
@@ -829,6 +829,14 @@ oldlib2: rep0/p4-0.tgz rep0/boost-0.tgz rep0/Imath-0.tgz \
 	@ROOT=${D49} ${ADD_PKG} rep0/Imath-0.tgz
 	@ROOT=${D49} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u
 	@if fgrep -q .libs ${D49}/pkgdb/Imath-0/+REQUIRING; then exit 1; fi
+
+plist28:
+	@${MKPLIST} '@lib lib/subdir/libbad.so.$${LIBbaad_VERSION}' >$@
+
+lib-error: plist28
+	@rm -f lib-error.out
+	@if ${CREATE_PKG} -B src30 -f plist28 bad-package-0 2>lib-error.out; then exit 1; fi
+	@diff -u lib-error.out ${.CURDIR}/lib-error.ref
 
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out *.ref *.out
