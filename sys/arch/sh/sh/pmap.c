@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2023/01/01 19:49:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2025/09/14 19:34:19 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -357,8 +357,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	else {
 		pte = __pmap_pte_alloc(pmap, va);
 		if (pte == NULL) {
-			if (flags & PMAP_CANFAIL)
+			if (flags & PMAP_CANFAIL) {
+				if (pg != NULL)
+					__pmap_pv_remove(pmap, pg, va);
 				return ENOMEM;
+			}
 			panic("pmap_enter: cannot allocate pte");
 		}
 	}
