@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_internal.c,v 1.1 2025/09/05 23:30:12 beck Exp $ */
+/* $OpenBSD: mlkem_internal.c,v 1.2 2025/09/14 16:47:37 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, 2025 Bob Beck <beck@obtuse.com>
@@ -990,12 +990,12 @@ mlkem_public_from_private(const MLKEM_private_key *private_key,
 	case RANK768:
 		memcpy(out_public_key->key_768->bytes,
 		    private_key->key_768->bytes,
-		    sizeof(struct MLKEM768_public_key));
+		    sizeof(out_public_key->key_768->bytes));
 		break;
 	case RANK1024:
 		memcpy(out_public_key->key_1024->bytes,
 		    private_key->key_1024->bytes,
-		    sizeof(struct MLKEM1024_public_key));
+		    sizeof(out_public_key->key_1024->bytes));
 		break;
 	}
 }
