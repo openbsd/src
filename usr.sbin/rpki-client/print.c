@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.67 2025/09/14 14:02:27 job Exp $ */
+/*	$OpenBSD: print.c,v 1.68 2025/09/14 15:15:57 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -902,7 +902,7 @@ print_ccr_mftstate(struct ccr *ccr)
 		printf("Manifest state hash:      %s\n", hash);
 		printf("Manifest last update:     %s\n",
 		    time2str(ccr->most_recent_update));
-		printf("Manifest references:      \n");
+		printf("Manifest references:\n");
 	}
 	free(hash);
 
