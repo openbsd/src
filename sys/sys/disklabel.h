@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.90 2025/09/14 10:19:07 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.91 2025/09/14 10:54:20 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -48,16 +48,6 @@
 #include <machine/disklabel.h>
 
 #include <sys/uuid.h>
-
-/*
- * The absolute maximum number of disk partitions allowed.
- * This is the maximum value of MAXPARTITIONS for which 'struct disklabel'
- * is <= DEV_BSIZE bytes long.  If MAXPARTITIONS is greater than this, beware.
- */
-#define	MAXMAXPARTITIONS	22
-#if MAXPARTITIONS > MAXMAXPARTITIONS
-#warn beware: MAXPARTITIONS bigger than MAXMAXPARTITIONS
-#endif
 
 /*
  * Translate between device numbers and major/disk unit/disk partition.
