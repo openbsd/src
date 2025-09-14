@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.33 2025/08/21 09:48:04 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.34 2025/09/14 15:09:36 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -244,7 +244,7 @@ arm_intr_prereg_disestablish_fdt(void *cookie)
 	if (ic != NULL && ip->ip_ih != NULL)
 		ic->ic_disestablish(ip->ip_ih);
 
-	if (ic != NULL)
+	if (ic == NULL)
 		LIST_REMOVE(ip, ip_list);
 
 	free(ip, M_DEVBUF, sizeof(*ip));
