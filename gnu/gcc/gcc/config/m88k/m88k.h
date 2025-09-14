@@ -1257,7 +1257,7 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
 
 /* DWARF unwinding needs two scratch registers; we choose to use r8-r9.  */
 #define EH_RETURN_DATA_REGNO(N) \
-  ((N) < 2 ? (N) + 8 : INVALID_REGNUM)
+  ((N) < 2 ? (N) + 6 : INVALID_REGNUM)
 
 #define EH_RETURN_HANDLER_RTX \
   RETURN_ADDR_RTX (0, hard_frame_pointer_rtx)
