@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.278 2025/08/02 07:02:00 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.279 2025/09/14 10:19:07 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -169,9 +169,7 @@ checkdisklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
     u_int64_t boundend)
 {
 	struct disklabel *dlp = rlp;
-	struct __partitionv0 *v0pp;
 	struct partition *pp;
-	const char *blkname;
 	u_int64_t disksize;
 	int error = 0;
 	int i;
@@ -186,6 +184,8 @@ checkdisklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
 		error = ENOSPC;	/* disk too small */
 	else if (dkcksum(dlp) != 0)
 		error = EINVAL;	/* incorrect checksum */
+	else if (dlp->d_version == 0)
+		error = EINVAL;	/* version too old to understand */
 
 	if (error) {
 		u_int16_t *start, *end, sum = 0;
@@ -240,13 +240,8 @@ checkdisklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
 			pp = &dlp->d_partitions[i];
 			pp->p_size = swap32(pp->p_size);
 			pp->p_offset = swap32(pp->p_offset);
-			if (dlp->d_version == 0) {
-				v0pp = (struct __partitionv0 *)pp;
-				v0pp->p_fsize = swap32(v0pp->p_fsize);
-			} else {
-				pp->p_offseth = swap16(pp->p_offseth);
-				pp->p_sizeh = swap16(pp->p_sizeh);
-			}
+			pp->p_offseth = swap16(pp->p_offseth);
+			pp->p_sizeh = swap16(pp->p_sizeh);
 			pp->p_cpg = swap16(pp->p_cpg);
 		}
 
@@ -262,26 +257,6 @@ checkdisklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
 
 	if (lp != dlp)
 		*lp = *dlp;
-
-	if (lp->d_version == 0) {
-		blkname = findblkname(major(dev));
-		if (blkname == NULL)
-			blkname = findblkname(major(chrtoblk(dev)));
-		printf("%s%d has legacy label, please rewrite using "
-		    "disklabel(8)\n", blkname, DISKUNIT(dev));
-
-		lp->d_version = 1;
-		lp->d_secperunith = 0;
-
-		v0pp = (struct __partitionv0 *)lp->d_partitions;
-		pp = lp->d_partitions;
-		for (i = 0; i < lp->d_npartitions; i++, pp++, v0pp++) {
-			pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(v0pp->
-			    p_fsize, v0pp->p_frag);
-			pp->p_offseth = 0;
-			pp->p_sizeh = 0;
-		}
-	}
 
 #ifdef DEBUG
 	if (DL_GETDSIZE(lp) != disksize)
