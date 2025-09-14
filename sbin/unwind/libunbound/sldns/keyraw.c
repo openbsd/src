@@ -371,7 +371,7 @@ EVP_PKEY *sldns_key_dsa2pkey_raw(unsigned char* key, size_t len)
 	return evp_key;
 #endif
 }
-#endif
+#endif /* USE_DSA */
 
 /* Retrieve params as BIGNUM from raw buffer, n is modulus, e is exponent */
 static int

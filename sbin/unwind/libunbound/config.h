@@ -383,6 +383,9 @@
 /* Define if we have LibreSSL */
 #define HAVE_LIBRESSL 1
 
+/* If we have atomic_store */
+#define HAVE_LINK_ATOMIC_STORE 1
+
 /* Define to 1 if you have the <linux/net_tstamp.h> header file. */
 /* #undef HAVE_LINUX_NET_TSTAMP_H */
 
@@ -668,6 +671,9 @@
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1
 
+/* Define to 1 if you have the <stdatomic.h> header file. */
+#define HAVE_STDATOMIC_H 1
+
 /* Define to 1 if you have the <stdbool.h> header file. */
 #define HAVE_STDBOOL_H 1
 
@@ -882,7 +888,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.22.0"
+#define PACKAGE_STRING "unbound 1.23.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -891,7 +897,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.22.0"
+#define PACKAGE_VERSION "1.23.1"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -914,7 +920,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,22,0,0
+#define RSRC_PACKAGE_VERSION 1,23,1,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
