@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.10 2025/09/14 14:02:27 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.11 2025/09/14 14:09:08 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -496,9 +496,8 @@ generate_trustanchorstate(struct validation_data *vd)
 	hash_asn1_item(tas->hash, ASN1_ITEM_rptr(SubjectKeyIdentifiers),
 	    tas->skis);
 
-	if (base64_encode(tas->hash->data, tas->hash->length,
-	    &vd->ccr.tas_hash) == -1)
-		errx(1, "base64_encode");
+	if (!base64_encode_asn1str(tas->hash, &vd->ccr.tas_hash))
+		errx(1, "base64_encode_asn1str");
 
 	return tas;
 }
