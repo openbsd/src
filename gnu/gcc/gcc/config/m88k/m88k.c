@@ -1991,7 +1991,7 @@ m88k_emit_bcnd (enum rtx_code op, rtx label)
     emit_jump_insn (gen_bcnd
 		    (gen_rtx_fmt_ee (op, VOIDmode, m88k_compare_op0, const0_rtx),
 		     label));
-  else if (m88k_compare_op0 == const0_rtx)
+  else if (m88k_compare_op0 == const0_rtx && swap_condition (op) != op)
     emit_jump_insn (gen_bcnd
 		    (gen_rtx_fmt_ee (swap_condition (op),
 				     VOIDmode, m88k_compare_op1, const0_rtx),
@@ -2210,6 +2210,12 @@ print_operand (FILE *file, rtx x, int code)
     case 'C': /* bb0/bb1 branch values for comparisons */
       switch (xc)
 	{
+	case UNORDERED:
+	  fputs ("nc", file);
+	  return;
+	case ORDERED:
+	  fputs ("cp", file);
+	  return;
 	case EQ:  fputs ("eq", file); return;
 	case NE:  fputs ("ne", file); return;
 	case GT:  fputs ("gt", file); return;

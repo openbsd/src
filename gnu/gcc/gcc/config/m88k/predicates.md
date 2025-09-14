@@ -131,13 +131,13 @@
 ;; Return true if OP is a relational operator.
 
 (define_predicate "relop"
-  (match_code "eq, ne, lt, le, ge, gt, ltu, leu, geu, gtu"))
+  (match_code "unordered, ordered, eq, ne, lt, le, ge, gt, ltu, leu, geu, gtu"))
 
 (define_predicate "even_relop"
-  (match_code "eq, lt, gt, ltu, gtu"))
+  (match_code "unordered, eq, lt, gt, ltu, gtu"))
 
 (define_predicate "odd_relop"
-  (match_code "ne, le, ge, leu, geu"))
+  (match_code "ordered, ne, le, ge, leu, geu"))
 
 ;; Return true if OP is a relational operator, and is not an unsigned
 ;; relational operator.
