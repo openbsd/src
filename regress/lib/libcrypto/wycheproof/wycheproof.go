@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.190 2025/09/09 03:22:49 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.191 2025/09/14 17:03:28 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -36,6 +36,7 @@ package main
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/hmac.h>
+#include <openssl/mlkem.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -495,6 +496,28 @@ type wycheproofTestGroupKW struct {
 	KeySize int                 `json:"keySize"`
 	Type    string              `json:"type"`
 	Tests   []*wycheproofTestKW `json:"tests"`
+}
+
+type wycheproofTestMLKEM struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Seed    string   `json:"seed"`
+	Ek      string   `json:"ek"`
+	M       string   `json:"m"`
+	C       string   `json:"c"`
+	K       string   `json:"K"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+func (wt *wycheproofTestMLKEM) String() string {
+	return wycheproofFormatTestCase(wt.TCID, wt.Comment, wt.Flags, wt.Result)
+}
+
+type wycheproofTestGroupMLKEM struct {
+	Type         string                 `json:"type"`
+	ParameterSet string                 `json:"parameterSet"`
+	Tests        []*wycheproofTestMLKEM `json:"tests"`
 }
 
 type wycheproofTestPrimality struct {
@@ -2321,6 +2344,120 @@ func (wtg *wycheproofTestGroupKW) run(algorithm string, variant testVariant) boo
 	return success
 }
 
+func runMLKEMTestGroup(rank C.int, wt *wycheproofTestMLKEM) bool {
+	privKey := C.MLKEM_private_key_new(rank)
+	defer C.MLKEM_private_key_free(privKey)
+	if privKey == nil {
+		log.Fatal("MLKEM_private_key_new failed")
+	}
+	pubKey := C.MLKEM_public_key_new(rank)
+	defer C.MLKEM_public_key_free(pubKey)
+	if pubKey == nil {
+		log.Fatal("MLKEM_public_key_new failed")
+	}
+
+	seed, seedLen := mustDecodeHexString(wt.Seed, "seed")
+	ek, _ := mustDecodeHexString(wt.Ek, "ek")
+
+	if C.MLKEM_private_key_from_seed(privKey, (*C.uchar)(unsafe.Pointer(&seed[0])), C.size_t(seedLen)) != 1 {
+		fmt.Printf("%s - MLKEM_private_key_from_seed failed\n", wt)
+		return false
+	}
+
+	if C.MLKEM_public_from_private(privKey, pubKey) != 1 {
+		fmt.Printf("%s - MLKEM_public_from_private failed\n", wt)
+		return false
+	}
+
+	var marshalledPubKey *C.uchar
+	var marshalledPubKeyLen C.size_t
+	defer C.free(unsafe.Pointer(marshalledPubKey))
+	if C.MLKEM_marshal_public_key(pubKey, (**C.uchar)(unsafe.Pointer(&marshalledPubKey)), (*C.size_t)(unsafe.Pointer(&marshalledPubKeyLen))) != 1 {
+		fmt.Printf("%s - MLKEM_marshal_private_key failed\n", wt)
+		return false
+	}
+	gotEk := unsafe.Slice((*byte)(unsafe.Pointer(marshalledPubKey)), marshalledPubKeyLen)
+
+	if !bytes.Equal(ek, gotEk) {
+		fmt.Printf("FAIL: %s marshalledPubKey mismatch\n", wt)
+		return false
+	}
+
+	c, cLen := mustDecodeHexString(wt.C, "c")
+
+	var sharedSecret *C.uchar
+	var sharedSecretLen C.size_t
+	defer C.free(unsafe.Pointer(sharedSecret))
+	if C.MLKEM_decap(privKey, (*C.uchar)(unsafe.Pointer(&c[0])), C.size_t(cLen), (**C.uchar)(unsafe.Pointer(&sharedSecret)), (*C.size_t)(unsafe.Pointer(&sharedSecretLen))) != 1 {
+		fmt.Printf("%s - MLKEM_decap failed\n", wt)
+		return false
+	}
+	gotK := unsafe.Slice((*byte)(unsafe.Pointer(sharedSecret)), sharedSecretLen)
+
+	k, _ := mustDecodeHexString(wt.K, "K")
+
+	if !bytes.Equal(k, gotK) {
+		fmt.Printf("FAIL: %s sharedSecret mismatch\n", wt)
+		return false
+	}
+
+	return true
+}
+
+func runMLKEMEncapsTestGroup(rank C.int, wt *wycheproofTestMLKEM) bool {
+	pubKey := C.MLKEM_public_key_new(rank)
+	defer C.MLKEM_public_key_free(pubKey)
+	if pubKey == nil {
+		log.Fatal("MLKEM_public_key_new failed")
+	}
+
+	ek, ekLen := mustDecodeHexString(wt.C, "eK")
+
+	if C.MLKEM_parse_public_key(pubKey, (*C.uchar)(unsafe.Pointer(&ek[0])), (C.size_t)(ekLen)) != 0 || wt.Result != "invalid" {
+		fmt.Printf("FAIL: %s MLKEM_parse_public_key succeeded\n", wt)
+		return false
+	}
+
+	return true
+}
+
+func (wtg *wycheproofTestGroupMLKEM) run(algorithm string, variant testVariant) bool {
+	var rank C.int
+
+	switch wtg.ParameterSet {
+	case "ML-KEM-512":
+		fmt.Printf("INFO: skipping %v test group of type %v for %s\n", algorithm, wtg.Type, wtg.ParameterSet)
+		return true
+	case "ML-KEM-768":
+		rank = C.RANK768
+	case "ML-KEM-1024":
+		rank = C.RANK1024
+	default:
+		log.Fatalf("Unknown ML-KEM parameterSet %v", wtg.ParameterSet)
+	}
+	fmt.Printf("Running %v test group of type %v\n", algorithm, wtg.Type)
+
+	type MLKEMTestFunc func(C.int, *wycheproofTestMLKEM) bool
+	var runTest MLKEMTestFunc
+
+	switch wtg.Type {
+	case "MLKEMTest":
+		runTest = runMLKEMTestGroup
+	case "MLKEMEncapsTest":
+		runTest = runMLKEMEncapsTestGroup
+	default:
+		log.Fatalf("Unknown ML-KEM test type %v", wtg.Type)
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runTest(rank, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runPrimalityTest(wt *wycheproofTestPrimality) bool {
 	bnValue := mustConvertBigIntToBigNum(wt.Value)
 	defer C.BN_free(bnValue)
@@ -2814,7 +2951,7 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 	case "ML-DSA-44", "ML-DSA-65", "ML-DSA-87":
 		return nil, Skip
 	case "ML-KEM":
-		return nil, Skip
+		return &wycheproofTestGroupMLKEM{}, Normal
 	case "MORUS640", "MORUS1280":
 		return nil, Skip
 	case "PbeWithHmacSha1AndAes_128", "PbeWithHmacSha1AndAes_192", "PbeWithHmacSha1AndAes_256", "PbeWithHmacSha224AndAes_128", "PbeWithHmacSha224AndAes_192", "PbeWithHmacSha224AndAes_256", "PbeWithHmacSha256AndAes_128", "PbeWithHmacSha256AndAes_192", "PbeWithHmacSha256AndAes_256", "PbeWithHmacSha384AndAes_128", "PbeWithHmacSha384AndAes_192", "PbeWithHmacSha384AndAes_256", "PbeWithHmacSha512AndAes_128", "PbeWithHmacSha512AndAes_192", "PbeWithHmacSha512AndAes_256":
