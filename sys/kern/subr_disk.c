@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.279 2025/09/14 10:19:07 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.280 2025/09/15 10:33:03 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -857,7 +857,7 @@ spooffat(const uint8_t *dosbb, struct disklabel *lp, daddr_t *partoffp)
  * Check new disk label for sensibility before setting it.
  */
 int
-setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int openmask)
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int64_t openmask)
 {
 	struct partition *opp, *npp;
 	struct disk *dk;

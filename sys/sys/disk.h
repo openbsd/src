@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.41 2024/10/30 15:00:12 deraadt Exp $	*/
+/*	$OpenBSD: disk.h,v 1.42 2025/09/15 10:33:03 krw Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -97,9 +97,9 @@ struct disk {
 	struct timeval	dk_timestamp;	/* time of first busy or any unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
 
-	int		dk_bopenmask;	/* block devices open */
-	int		dk_copenmask;	/* character devices open */
-	int		dk_openmask;	/* composite (bopen|copen) */
+	uint64_t	dk_bopenmask;	/* block devices open */
+	uint64_t	dk_copenmask;	/* character devices open */
+	uint64_t	dk_openmask;	/* composite (bopen|copen) */
 	int		dk_state;	/* label state   ### */
 	int		dk_blkshift;	/* shift to convert DEV_BSIZE to blks*/
 	int		dk_byteshift;	/* shift to convert bytes to blks */

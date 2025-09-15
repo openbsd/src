@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.181 2023/05/14 18:34:02 krw Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.182 2025/09/15 10:33:03 krw Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -399,7 +399,8 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	struct vnd_ioctl *vio;
 	struct vnd_user *vnu;
 	struct vattr vattr;
-	int error, part, pmask;
+	uint64_t pmask;
+	int error, part;
 
 	DNPRINTF(VDB_FOLLOW, "vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
 	    dev, cmd, addr, flag, p, unit);
