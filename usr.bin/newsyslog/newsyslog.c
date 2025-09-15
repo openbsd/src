@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.118 2025/09/14 21:43:58 jan Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.119 2025/09/15 18:51:22 jan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -1179,11 +1179,13 @@ time_t
 parse8601(char *s)
 {
 	char		 format[16] = { 0 };
-	struct tm	*tm;
+	struct tm	 tm;
 	char		*t;
 
-	tm = localtime(&timenow);
-	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+	if (localtime_r(&timenow, &tm) == NULL)
+		return -1;
+
+	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
 	t = strchr(s, 'T');
 
 	if (s != t) {
@@ -1213,10 +1215,10 @@ parse8601(char *s)
 		}
 	}
 
-	if (strptime(s, format, tm) == NULL)
+	if (strptime(s, format, &tm) == NULL)
 		return -1;
 
-	return mktime(tm);
+	return mktime(&tm);
 }
 
 /*-
@@ -1238,12 +1240,12 @@ parseDWM(char *s)
 {
 	static int mtab[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	int WMseen = 0, Dseen = 0, nd;
-	struct tm tm, *tmp;
+	struct tm tm;
 	char *t;
 	long l;
 
-	tmp = localtime(&timenow);
-	tm = *tmp;
+	if (localtime_r(&timenow, &tm) == NULL)
+		return -1;
 
 	/* set no. of days per month */
 
