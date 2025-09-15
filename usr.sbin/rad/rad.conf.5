@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.34 2025/08/13 16:52:27 florian Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.35 2025/09/15 09:01:56 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 13 2025 $
+.Dd $Mdocdate: September 15 2025 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -207,13 +207,13 @@ The preferred lifetime (pltime) in seconds for addresses generated from this
 prefix.
 The default is 2700.
 This option is ignored if the prefix is discovered from a network interface
-and it has a preferred lifetime configured.
+and it has a lower preferred lifetime.
 .It Cm valid lifetime Ar seconds
 The valid lifetime (vltime) in seconds for addresses generated from this
 prefix.
 The default is 5400.
 This option is ignored if the prefix is discovered from a network interface
-and it has a valid lifetime configured.
+and it has a lower valid lifetime.
 .El
 .El
 .El

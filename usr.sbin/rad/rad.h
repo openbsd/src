@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.29 2024/12/28 08:58:14 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.30 2025/09/15 09:01:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -35,8 +35,6 @@
 #define	MIN_DELAY_BETWEEN_RAS	3	/* 3 seconds */
 #define	MAX_SEARCH		1025	/* MAXDNAME in arpa/nameser.h */
 #define	DEFAULT_RDNS_LIFETIME	3 * MAX_RTR_ADV_INTERVAL
-#define	PLTIME_DECAYING		1
-#define	VLTIME_DECAYING		2
 
 #define	IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
 
@@ -116,7 +114,9 @@ struct ra_prefix_conf {
 	int				 prefixlen;	/* prefix length */
 	uint32_t			 vltime;	/* valid lifetime */
 	uint32_t			 pltime;	/* preferred lifetime */
-	int				 ltime_decaying;
+	uint32_t			 if_vltime;	/* valid lifetime */
+	uint32_t			 if_pltime;	/* preferred lifetime */
+	int				 autoconf;
 	int				 lflag;		/* on-link flag*/
 	int				 aflag;		/* autonom. addr flag */
 };
