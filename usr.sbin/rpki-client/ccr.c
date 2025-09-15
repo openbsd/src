@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.13 2025/09/15 12:05:15 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.14 2025/09/15 15:06:20 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -884,6 +884,7 @@ ccr_free(struct ccr *ccr)
 	free(ccr->vrps_hash);
 	free(ccr->vaps_hash);
 	free(ccr->tas_hash);
+	free(ccr->brks_hash);
 	free(ccr->der);
 	free(ccr);
 }
