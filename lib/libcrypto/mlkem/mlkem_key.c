@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_key.c,v 1.2 2025/09/05 23:30:12 beck Exp $ */
+/* $OpenBSD: mlkem_key.c,v 1.3 2025/09/15 03:34:58 tb Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
@@ -53,7 +53,7 @@ MLKEM_private_key_new(int rank)
 	key->state = MLKEM_PRIVATE_KEY_UNINITIALIZED;
 
 	ret = key;
-	key= NULL;
+	key = NULL;
 
  err:
 	MLKEM_private_key_free(key);
