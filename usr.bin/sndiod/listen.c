@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.15 2024/12/20 07:35:56 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.16 2025/09/15 08:39:22 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -167,7 +167,7 @@ listen_new_tcp(char *addr, unsigned int port)
 		}
 		f = xmalloc(sizeof(struct listen));
 		f->file = file_new(&listen_fileops, f, "tcp", 1);
-		if (f == NULL) {
+		if (f->file == NULL) {
 		bad_close:
 			close(s);
 			continue;
