@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.68 2025/09/14 15:15:57 job Exp $ */
+/*	$OpenBSD: print.c,v 1.69 2025/09/15 11:52:07 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -918,12 +918,14 @@ print_ccr_mftstate(struct ccr *ccr)
 			json_do_uint("size", ccr_mft->size);
 			json_do_string("aki", aki);
 			json_do_string("seqnum", ccr_mft->seqnum);
+			json_do_int("thisupdate", ccr_mft->thisupdate);
 			json_do_string("sia", ccr_mft->sia);
 			json_do_end();
 		} else {
-			printf("%26shash:%s size:%zu aki:%s seqnum:%s sia:%s\n",
-			    "", hash, ccr_mft->size, aki, ccr_mft->seqnum,
-			    ccr_mft->sia);
+			printf("%26shash:%s size:%zu aki:%s seqnum:%s "
+			    "thisupdate:%lld sia:%s\n", "", hash,
+			    ccr_mft->size, aki, ccr_mft->seqnum,
+			    (long long)ccr_mft->thisupdate, ccr_mft->sia);
 		}
 
 		free(aki);

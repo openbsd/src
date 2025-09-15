@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.11 2025/09/14 14:09:08 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.12 2025/09/15 11:52:07 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -94,6 +94,7 @@ ASN1_SEQUENCE(ManifestRef) = {
 	ASN1_SIMPLE(ManifestRef, size, ASN1_INTEGER),
 	ASN1_SIMPLE(ManifestRef, aki, ASN1_OCTET_STRING),
 	ASN1_SIMPLE(ManifestRef, manifestNumber, ASN1_INTEGER),
+	ASN1_SIMPLE(ManifestRef, thisUpdate, ASN1_GENERALIZEDTIME),
 	ASN1_SEQUENCE_OF(ManifestRef, location, ACCESS_DESCRIPTION),
 } ASN1_SEQUENCE_END(ManifestRef);
 
@@ -277,6 +278,10 @@ append_cached_manifest(STACK_OF(ManifestRef) *mftrefs, struct ccr_mft *cm)
 		errx(1, "ASN1_INTEGER_set_uint64");
 
 	asn1int_set_seqnum(mftref->manifestNumber, cm->seqnum);
+
+	if (ASN1_GENERALIZEDTIME_set(mftref->thisUpdate, cm->thisupdate)
+	    == NULL)
+		errx(1, "ASN1_GENERALIZEDTIME_set");
 
 	location_add_sia(mftref->location, cm->sia);
 
@@ -938,6 +943,10 @@ parse_mft_refs(const char *fn, struct ccr *ccr,
 		ccr_mft->seqnum = x509_convert_seqnum(fn, "manifest number",
 		    ref->manifestNumber);
 		if (ccr_mft->seqnum == NULL)
+			goto out;
+
+		if (!x509_get_generalized_time(fn, "ManifestRef thisUpdate",
+		    ref->thisUpdate, &ccr_mft->thisupdate))
 			goto out;
 
 		if (sk_ACCESS_DESCRIPTION_num(ref->location) != 1) {

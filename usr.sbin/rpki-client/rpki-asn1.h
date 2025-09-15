@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.6 2025/09/14 14:02:27 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.7 2025/09/15 11:52:07 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -65,6 +65,7 @@ typedef struct {
 	ASN1_INTEGER *size;
 	ASN1_OCTET_STRING *aki;
 	ASN1_INTEGER *manifestNumber;
+	ASN1_GENERALIZEDTIME *thisUpdate;
 	STACK_OF(ACCESS_DESCRIPTION) *location;
 } ManifestRef;
 
