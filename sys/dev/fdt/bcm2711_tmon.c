@@ -23,6 +23,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_thermal.h>
 #include <dev/ofw/fdt.h>
 
 /* Registers */
@@ -44,6 +45,8 @@ struct bcmtmon_softc {
 
 	struct ksensor		sc_sensor;
 	struct ksensordev	sc_sensordev;
+
+	struct thermal_sensor	sc_ts;
 };
 
 int	bcmtmon_match(struct device *, void *, void *);
@@ -58,6 +61,7 @@ struct cfdriver bcmtmon_cd = {
 };
 
 void	bcmtmon_refresh_sensors(void *);
+int32_t	bcmtmon_get_temperature(void *, uint32_t *);
 
 int
 bcmtmon_match(struct device *parent, void *match, void *aux)
@@ -77,7 +81,8 @@ bcmtmon_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bcmtmon_softc *sc = (struct bcmtmon_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	
+	int node;
+
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
 		return;
@@ -107,6 +112,17 @@ bcmtmon_attach(struct device *parent, struct device *self, void *aux)
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, bcmtmon_refresh_sensors, 5);
+
+	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+		if (!OF_is_compatible(node, "brcm,bcm2711-thermal"))
+			continue;
+		sc->sc_ts.ts_node = node;
+		sc->sc_ts.ts_cookie = sc;
+		sc->sc_ts.ts_get_temperature = bcmtmon_get_temperature;
+		thermal_sensor_register(&sc->sc_ts);
+		/* We expect only a single sensor. */
+		break;
+	}
 }
 
 void
@@ -124,4 +140,16 @@ bcmtmon_refresh_sensors(void *arg)
 		sc->sc_sensor.flags &= ~SENSOR_FINVALID;
 	else
 		sc->sc_sensor.flags |= SENSOR_FINVALID;
+}
+
+int32_t
+bcmtmon_get_temperature(void *cookie, uint32_t *cells)
+{
+	struct bcmtmon_softc *sc = cookie;
+	int32_t code, temp;
+
+	code = HREAD4(sc, sc->sc_tsensstat);
+	temp = sc->sc_slope * BCMTMON_TSENSSTAT_DATA(code) + sc->sc_offset;
+
+	return temp;
 }
