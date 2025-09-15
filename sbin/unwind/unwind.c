@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.76 2025/04/27 16:21:53 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.77 2025/09/15 08:43:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -671,6 +671,8 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 
 	memcpy(&conf->enabled_resolvers, &xconf->enabled_resolvers,
 	    sizeof(conf->enabled_resolvers));
+	memcpy(&conf->force_resolvers, &xconf->force_resolvers,
+	    sizeof(conf->force_resolvers));
 
 	memcpy(&conf->res_pref, &xconf->res_pref,
 	    sizeof(conf->res_pref));

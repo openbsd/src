@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.174 2025/04/27 16:21:26 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.175 2025/09/15 08:43:51 florian Exp $	*/
 
 
 /*
@@ -1297,8 +1297,19 @@ create_resolver(enum uw_resolver_type type)
 		}
 
 		for (i = 0; i < nitems(options); i++) {
+			const char* option = options[i].value;
+
+			if (resolver_conf->force_resolvers[type] &&
+			    strcmp("aggressive-nsec:", options[i].name) == 0) {
+				/*
+				 * Do not enable aggressive-nsec caching,
+				 * because typos can lead to unresolvable
+				 * "force" domains if an nsec proof is cached.
+				 */
+				option = "no";
+			}
 			if ((err = ub_ctx_set_option(res->ctx, options[i].name,
-			    options[i].value)) != 0) {
+			    option)) != 0) {
 				ub_ctx_delete(res->ctx);
 				free(res);
 				log_warnx("error setting %s: %s: %s",

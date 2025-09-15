@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.57 2024/08/09 19:43:26 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.58 2025/09/15 08:43:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -156,6 +156,7 @@ struct uw_conf {
 	struct force_tree		 force;
 	struct resolver_preference	 res_pref;
 	int				 enabled_resolvers[UW_RES_NONE];
+	int				 force_resolvers[UW_RES_NONE];
 	char				*blocklist_file;
 	int				 blocklist_log;
 };
