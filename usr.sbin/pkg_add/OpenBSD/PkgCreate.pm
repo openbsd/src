@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.199 2025/09/14 18:44:06 afresh1 Exp $
+# $OpenBSD: PkgCreate.pm,v 1.200 2025/09/15 01:59:37 afresh1 Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -771,7 +771,7 @@ sub check_version($self, $state, $unsubst)
 {
 	my @l  = $self->parse($self->name);
 	if (defined $l[0]) {
-		if ($unsubst !~ m/\$\{LIB$l[0]_VERSION\}/) {
+		if (!$unsubst =~ m/\$\{LIB$l[0]_VERSION\}/) {
 			$state->error(
 			    "Incorrectly versioned shared library: #1", 
 			    $unsubst);
