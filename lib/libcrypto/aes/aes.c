@@ -1,4 +1,4 @@
-/* $OpenBSD: aes.c,v 1.16 2025/09/08 12:50:02 jsing Exp $ */
+/* $OpenBSD: aes.c,v 1.17 2025/09/15 07:36:12 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2002-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -88,10 +88,11 @@ aes_rounds_for_key_length(int bits)
 int
 AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
-	explicit_bzero(key->rd_key, sizeof(key->rd_key));
-
 	if (userKey == NULL || key == NULL)
 		return -1;
+
+	explicit_bzero(key->rd_key, sizeof(key->rd_key));
+
 	if ((key->rounds = aes_rounds_for_key_length(bits)) <= 0)
 		return -2;
 
@@ -102,10 +103,11 @@ LCRYPTO_ALIAS(AES_set_encrypt_key);
 int
 AES_set_decrypt_key(const unsigned char *userKey, const int bits, AES_KEY *key)
 {
-	explicit_bzero(key->rd_key, sizeof(key->rd_key));
-
 	if (userKey == NULL || key == NULL)
 		return -1;
+
+	explicit_bzero(key->rd_key, sizeof(key->rd_key));
+
 	if ((key->rounds = aes_rounds_for_key_length(bits)) <= 0)
 		return -2;
 
