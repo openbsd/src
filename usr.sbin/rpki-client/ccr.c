@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.12 2025/09/15 11:52:07 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.13 2025/09/15 12:05:15 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -263,29 +263,28 @@ location_add_sia(STACK_OF(ACCESS_DESCRIPTION) *sad, const char *sia)
 static void
 append_cached_manifest(STACK_OF(ManifestRef) *mftrefs, struct ccr_mft *cm)
 {
-	ManifestRef *mftref;
+	ManifestRef *mr;
 
-	if ((mftref = ManifestRef_new()) == NULL)
+	if ((mr = ManifestRef_new()) == NULL)
 		errx(1, "ManifestRef_new");
 
-	if (!ASN1_OCTET_STRING_set(mftref->hash, cm->hash, sizeof(cm->hash)))
+	if (!ASN1_OCTET_STRING_set(mr->hash, cm->hash, sizeof(cm->hash)))
 		errx(1, "ASN1_OCTET_STRING_set");
 
-	if (!ASN1_OCTET_STRING_set(mftref->aki, cm->aki, sizeof(cm->aki)))
+	if (!ASN1_OCTET_STRING_set(mr->aki, cm->aki, sizeof(cm->aki)))
 		errx(1, "ASN1_OCTET_STRING_set");
 
-	if (!ASN1_INTEGER_set_uint64(mftref->size, cm->size))
+	if (!ASN1_INTEGER_set_uint64(mr->size, cm->size))
 		errx(1, "ASN1_INTEGER_set_uint64");
 
-	asn1int_set_seqnum(mftref->manifestNumber, cm->seqnum);
+	asn1int_set_seqnum(mr->manifestNumber, cm->seqnum);
 
-	if (ASN1_GENERALIZEDTIME_set(mftref->thisUpdate, cm->thisupdate)
-	    == NULL)
+	if (ASN1_GENERALIZEDTIME_set(mr->thisUpdate, cm->thisupdate) == NULL)
 		errx(1, "ASN1_GENERALIZEDTIME_set");
 
-	location_add_sia(mftref->location, cm->sia);
+	location_add_sia(mr->location, cm->sia);
 
-	if (sk_ManifestRef_push(mftrefs, mftref) <= 0)
+	if (sk_ManifestRef_push(mftrefs, mr) <= 0)
 		errx(1, "sk_ManifestRef_push");
 }
 
@@ -985,7 +984,7 @@ parse_manifeststate(const char *fn, struct ccr *ccr, const ManifestState *state)
 	if (ccr->mfts_hash == NULL)
 		goto out;
 
-	if (!x509_get_generalized_time(fn, "CCR mostRecentUpdate", 
+	if (!x509_get_generalized_time(fn, "CCR mostRecentUpdate",
 	    state->mostRecentUpdate, &ccr->most_recent_update))
 		goto out;
 
