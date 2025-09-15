@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.153 2025/05/21 04:05:22 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.154 2025/09/15 14:15:54 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -555,7 +555,7 @@ uvm_page_rle(paddr_t addr)
 int
 get_hibernate_info(union hibernate_info *hib, int suspend)
 {
-	struct disklabel dl;
+	struct disklabel *dl;
 	char err_string[128], *dl_ret;
 	int part;
 	SHA2_CTX ctx;
@@ -575,7 +575,8 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	hib->dev = swdevt[0];
 
 	/* Read disklabel (used to calculate signature and image offsets) */
-	dl_ret = disk_readlabel(&dl, hib->dev, err_string, sizeof(err_string));
+	dl = malloc(sizeof(*dl), M_DEVBUF, M_WAITOK);
+	dl_ret = disk_readlabel(dl, hib->dev, err_string, sizeof(err_string));
 
 	if (dl_ret) {
 		printf("Hibernate error reading disklabel: %s\n", dl_ret);
@@ -584,19 +585,19 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 
 	/* Make sure we have a swap partition. */
 	part = DISKPART(hib->dev);
-	if (dl.d_npartitions <= part ||
-	    dl.d_secsize > sizeof(union hibernate_info) ||
-	    dl.d_partitions[part].p_fstype != FS_SWAP ||
-	    DL_GETPSIZE(&dl.d_partitions[part]) == 0)
+	if (dl->d_npartitions <= part ||
+	    dl->d_secsize > sizeof(union hibernate_info) ||
+	    dl->d_partitions[part].p_fstype != FS_SWAP ||
+	    DL_GETPSIZE(&dl->d_partitions[part]) == 0)
 		return (1);
 
 	/* Magic number */
 	hib->magic = HIBERNATE_MAGIC;
 
 	/* Calculate signature block location */
-	hib->sec_size = dl.d_secsize;
-	hib->sig_offset = DL_GETPSIZE(&dl.d_partitions[part]) - 1;
-	hib->sig_offset = DL_SECTOBLK(&dl, hib->sig_offset);
+	hib->sec_size = dl->d_secsize;
+	hib->sig_offset = DL_GETPSIZE(&dl->d_partitions[part]) - 1;
+	hib->sig_offset = DL_SECTOBLK(dl, hib->sig_offset);
 
 	SHA256Init(&ctx);
 	SHA256Update(&ctx, version, strlen(version));
@@ -625,9 +626,9 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		 * completed.
 		 */
 		if (hib->io_func(hib->dev,
-		    DL_SECTOBLK(&dl, DL_GETPOFFSET(&dl.d_partitions[part])),
+		    DL_SECTOBLK(dl, DL_GETPOFFSET(&dl->d_partitions[part])),
 		    (vaddr_t)NULL,
-		    DL_SECTOBLK(&dl, DL_GETPSIZE(&dl.d_partitions[part])),
+		    DL_SECTOBLK(dl, DL_GETPSIZE(&dl->d_partitions[part])),
 		    HIB_INIT, hib->io_page))
 			goto fail;
 
@@ -645,9 +646,11 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	if (get_hibernate_info_md(hib))
 		goto fail;
 
+	free(dl, M_DEVBUF, sizeof(*dl));
 	return (0);
 
 fail:
+	free(dl, M_DEVBUF, sizeof(*dl));
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.145 2021/10/24 14:50:42 tobhe Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.146 2025/09/15 14:15:54 krw Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -641,7 +641,7 @@ sr_crypto_create_key_disk(struct sr_discipline *sd,
 	struct sr_meta_opt_item *omi = NULL;
 	struct sr_meta_keydisk	*skm;
 	struct sr_chunk		*key_disk = NULL;
-	struct disklabel	label;
+	struct disklabel	*label = NULL;
 	struct vnode		*vn;
 	char			devname[32];
 	int			c, part, open = 0;
@@ -674,16 +674,17 @@ sr_crypto_create_key_disk(struct sr_discipline *sd,
 	open = 1; /* close dev on error */
 
 	/* Get partition details. */
+	label = malloc(sizeof(*label), M_DEVBUF, M_WAITOK);
 	part = DISKPART(dev);
-	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label,
+	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)label,
 	    FREAD, NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_crypto_create_key_disk ioctl "
 		    "failed\n", DEVNAME(sc));
 		goto done;
 	}
-	if (label.d_partitions[part].p_fstype != FS_RAID) {
+	if (label->d_partitions[part].p_fstype != FS_RAID) {
 		sr_error(sc, "%s partition not of type RAID (%d)",
-		    devname, label.d_partitions[part].p_fstype);
+		    devname, label->d_partitions[part].p_fstype);
 		goto done;
 	}
 
@@ -779,6 +780,7 @@ fail:
 	key_disk = NULL;
 
 done:
+	free(label, M_DEVBUF, sizeof(*label));
 	free(omi, M_DEVBUF, sizeof(struct sr_meta_opt_item));
 	if (fakesd && fakesd->sd_vol.sv_chunks)
 		free(fakesd->sd_vol.sv_chunks, M_DEVBUF,
@@ -804,7 +806,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, struct sr_crypto *mdd_crypto,
 	struct sr_meta_keydisk	*skm;
 	struct sr_meta_opt_head som;
 	struct sr_chunk		*key_disk = NULL;
-	struct disklabel	label;
+	struct disklabel	*label = NULL;
 	struct vnode		*vn = NULL;
 	char			devname[32];
 	int			c, part, open = 0;
@@ -838,16 +840,17 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, struct sr_crypto *mdd_crypto,
 	open = 1; /* close dev on error */
 
 	/* Get partition details. */
+	label = malloc(sizeof(*label), M_DEVBUF, M_WAITOK);
 	part = DISKPART(dev);
-	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD,
+	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)label, FREAD,
 	    NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_crypto_read_key_disk ioctl "
 		    "failed\n", DEVNAME(sc));
 		goto done;
 	}
-	if (label.d_partitions[part].p_fstype != FS_RAID) {
+	if (label->d_partitions[part].p_fstype != FS_RAID) {
 		sr_error(sc, "%s partition not of type RAID (%d)",
-		    devname, label.d_partitions[part].p_fstype);
+		    devname, label->d_partitions[part].p_fstype);
 		goto done;
 	}
 
@@ -906,6 +909,7 @@ done:
 		free(omi, M_DEVBUF, sizeof(struct sr_meta_opt_item));
 	}
 
+	free(label, M_DEVBUF, sizeof(*label));
 	free(sm, M_DEVBUF, SR_META_SIZE * DEV_BSIZE);
 
 	if (vn && open) {

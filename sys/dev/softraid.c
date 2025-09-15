@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.433 2025/01/08 23:40:40 lucas Exp $ */
+/* $OpenBSD: softraid.c,v 1.434 2025/09/15 14:15:54 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1013,7 +1013,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
     struct sr_boot_chunk_head *bch)
 {
 	struct vnode		*vn;
-	struct disklabel	label;
+	struct disklabel	*label = NULL;
 	struct sr_metadata	*md = NULL;
 	struct sr_discipline	*fake_sd = NULL;
 	struct sr_boot_chunk	*bc;
@@ -1044,8 +1044,10 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 		goto done;
 	}
 
+	label = malloc(sizeof(*label), M_DEVBUF, M_WAITOK);
+
 	/* get disklabel */
-	error = VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD, NOCRED,
+	error = VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)label, FREAD, NOCRED,
 	    curproc);
 	if (error) {
 		DNPRINTF(SR_D_META, "%s: sr_meta_native_bootprobe ioctl "
@@ -1082,7 +1084,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 	fake_sd->sd_meta_type = SR_META_F_NATIVE;
 
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		if (label.d_partitions[i].p_fstype != FS_RAID)
+		if (label->d_partitions[i].p_fstype != FS_RAID)
 			continue;
 
 		/* open partition */
@@ -1135,6 +1137,7 @@ sr_meta_native_bootprobe(struct sr_softc *sc, dev_t devno,
 	}
 
 done:
+	free(label, M_DEVBUF, sizeof(*label));
 	free(fake_sd, M_DEVBUF, sizeof(struct sr_discipline));
 	free(md, M_DEVBUF, SR_META_SIZE * DEV_BSIZE);
 
@@ -1546,7 +1549,7 @@ sr_map_root(void)
 int
 sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 {
-	struct disklabel	label;
+	struct disklabel	*label;
 	char			*devname;
 	int			error, part;
 	u_int64_t		size;
@@ -1557,26 +1560,28 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 	devname = ch_entry->src_devname;
 	part = DISKPART(ch_entry->src_dev_mm);
 
+	label = malloc(sizeof(*label), M_DEVBUF, M_WAITOK);
+
 	/* get disklabel */
-	error = VOP_IOCTL(ch_entry->src_vn, DIOCGDINFO, (caddr_t)&label, FREAD,
+	error = VOP_IOCTL(ch_entry->src_vn, DIOCGDINFO, (caddr_t)label, FREAD,
 	    NOCRED, curproc);
 	if (error) {
 		DNPRINTF(SR_D_META, "%s: %s can't obtain disklabel\n",
 		    DEVNAME(sc), devname);
 		goto unwind;
 	}
-	memcpy(ch_entry->src_duid, label.d_uid, sizeof(ch_entry->src_duid));
+	memcpy(ch_entry->src_duid, label->d_uid, sizeof(ch_entry->src_duid));
 
 	/* make sure the partition is of the right type */
-	if (label.d_partitions[part].p_fstype != FS_RAID) {
+	if (label->d_partitions[part].p_fstype != FS_RAID) {
 		DNPRINTF(SR_D_META,
 		    "%s: %s partition not of type RAID (%d)\n", DEVNAME(sc),
 		    devname,
-		    label.d_partitions[part].p_fstype);
+		    label->d_partitions[part].p_fstype);
 		goto unwind;
 	}
 
-	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part]));
+	size = DL_SECTOBLK(label, DL_GETPSIZE(&label->d_partitions[part]));
 	if (size <= SR_DATA_OFFSET) {
 		DNPRINTF(SR_D_META, "%s: %s partition too small\n", DEVNAME(sc),
 		    devname);
@@ -1589,15 +1594,17 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 		goto unwind;
 	}
 	ch_entry->src_size = size;
-	ch_entry->src_secsize = label.d_secsize;
+	ch_entry->src_secsize = label->d_secsize;
 
 	DNPRINTF(SR_D_META, "%s: probe found %s size %lld\n", DEVNAME(sc),
 	    devname, (long long)size);
 
+	free(label, M_DEVBUF, sizeof(*label));
 	return (SR_META_F_NATIVE);
 unwind:
 	DNPRINTF(SR_D_META, "%s: invalid device: %s\n", DEVNAME(sc),
 	    devname ? devname : "nodev");
+	free(label, M_DEVBUF, sizeof(*label));
 	return (SR_META_F_INVALID);
 }
 
@@ -2800,7 +2807,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	struct sr_chunk_head	*cl;
 	struct sr_chunk		*chunk, *last, *hotspare = NULL;
 	struct sr_uuid		uuid;
-	struct disklabel	label;
+	struct disklabel	*label = NULL;
 	struct vnode		*vn;
 	u_int64_t		size;
 	char			devname[32];
@@ -2838,22 +2845,24 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	}
 	open = 1; /* close dev on error */
 
+	label = malloc(sizeof(*label), M_DEVBUF, M_WAITOK);
+
 	/* Get partition details. */
 	part = DISKPART(dev);
-	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD,
+	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)label, FREAD,
 	    NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_hotspare ioctl failed\n",
 		    DEVNAME(sc));
 		goto fail;
 	}
-	if (label.d_partitions[part].p_fstype != FS_RAID) {
+	if (label->d_partitions[part].p_fstype != FS_RAID) {
 		sr_error(sc, "%s partition not of type RAID (%d)",
-		    devname, label.d_partitions[part].p_fstype);
+		    devname, label->d_partitions[part].p_fstype);
 		goto fail;
 	}
 
 	/* Calculate partition size. */
-	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part]));
+	size = DL_SECTOBLK(label, DL_GETPSIZE(&label->d_partitions[part]));
 	if (size <= SR_DATA_OFFSET) {
 		DNPRINTF(SR_D_META, "%s: %s partition too small\n", DEVNAME(sc),
 		    devname);
@@ -2905,7 +2914,7 @@ sr_hotspare(struct sr_softc *sc, dev_t dev)
 	sm->ssdi.ssd_volid = SR_HOTSPARE_VOLID;
 	sm->ssdi.ssd_level = SR_HOTSPARE_LEVEL;
 	sm->ssdi.ssd_size = size;
-	sm->ssdi.ssd_secsize = label.d_secsize;
+	sm->ssdi.ssd_secsize = label->d_secsize;
 	strlcpy(sm->ssdi.ssd_vendor, "OPENBSD", sizeof(sm->ssdi.ssd_vendor));
 	snprintf(sm->ssdi.ssd_product, sizeof(sm->ssdi.ssd_product),
 	    "SR %s", "HOTSPARE");
@@ -2958,6 +2967,7 @@ done:
 	if (sd)
 		free(sd->sd_vol.sv_chunks, M_DEVBUF,
 		    sizeof(sd->sd_vol.sv_chunks));
+	free(label, M_DEVBUF, sizeof(*label));
 	free(sd, M_DEVBUF, sizeof(*sd));
 	free(sm, M_DEVBUF, sizeof(*sm));
 	if (open) {
@@ -3083,7 +3093,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	struct sr_softc		*sc = sd->sd_sc;
 	struct sr_chunk		*chunk = NULL;
 	struct sr_meta_chunk	*meta;
-	struct disklabel	label;
+	struct disklabel	*label = NULL;
 	struct vnode		*vn;
 	u_int64_t		size;
 	int64_t			csize;
@@ -3152,22 +3162,24 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	}
 	open = 1; /* close dev on error */
 
+	label = malloc(sizeof(*label), M_DEVBUF, M_WAITOK);
+
 	/* Get disklabel and check partition. */
 	part = DISKPART(dev);
-	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)&label, FREAD,
+	if (VOP_IOCTL(vn, DIOCGDINFO, (caddr_t)label, FREAD,
 	    NOCRED, curproc)) {
 		DNPRINTF(SR_D_META, "%s: sr_ioctl_setstate ioctl failed\n",
 		    DEVNAME(sc));
 		goto done;
 	}
-	if (label.d_partitions[part].p_fstype != FS_RAID) {
+	if (label->d_partitions[part].p_fstype != FS_RAID) {
 		sr_error(sc, "%s partition not of type RAID (%d)",
-		    devname, label.d_partitions[part].p_fstype);
+		    devname, label->d_partitions[part].p_fstype);
 		goto done;
 	}
 
 	/* Is the partition large enough? */
-	size = DL_SECTOBLK(&label, DL_GETPSIZE(&label.d_partitions[part]));
+	size = DL_SECTOBLK(label, DL_GETPSIZE(&label->d_partitions[part]));
 	if (size <= sd->sd_meta->ssd_data_blkno) {
 		sr_error(sc, "%s: %s partition too small", DEVNAME(sc),
 		    devname);
@@ -3186,7 +3198,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	} else if (size > csize)
 		sr_warn(sc, "%s partition too large, wasting %lld bytes",
 		    devname, (long long)((size - csize) << DEV_BSHIFT));
-	if (label.d_secsize > sd->sd_meta->ssdi.ssd_secsize) {
+	if (label->d_secsize > sd->sd_meta->ssdi.ssd_secsize) {
 		sr_error(sc, "%s sector size too large, <= %u bytes "
 		    "required", devname, sd->sd_meta->ssdi.ssd_secsize);
 		goto done;
@@ -3206,7 +3218,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 	open = 0; /* leave dev open from here on out */
 
 	/* Fix up chunk. */
-	memcpy(chunk->src_duid, label.d_uid, sizeof(chunk->src_duid));
+	memcpy(chunk->src_duid, label->d_uid, sizeof(chunk->src_duid));
 	chunk->src_dev_mm = dev;
 	chunk->src_vn = vn;
 
@@ -3239,6 +3251,7 @@ sr_rebuild_init(struct sr_discipline *sd, dev_t dev, int hotspare)
 
 	rv = 0;
 done:
+	free(label, M_DEVBUF, sizeof(*label));
 	if (open) {
 		VOP_CLOSE(vn, FREAD | FWRITE, NOCRED, curproc);
 		vput(vn);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.280 2025/09/15 10:33:03 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.281 2025/09/15 14:15:54 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -303,8 +303,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
     daddr_t *partoffp, int spoofonly)
 {
 	uint8_t			 dosbb[DEV_BSIZE];
-	struct disklabel	 nlp;
-	struct disklabel	*rlp;
+	struct disklabel	*nlp, *rlp;
 	daddr_t			 partoff;
 	int			 error;
 
@@ -334,19 +333,22 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 	memcpy(dosbb, bp->b_data, sizeof(dosbb));
 
-	nlp = *lp;
-	memset(nlp.d_partitions, 0, sizeof(nlp.d_partitions));
-	nlp.d_partitions[RAW_PART] = lp->d_partitions[RAW_PART];
-	nlp.d_magic = 0;
+	nlp = malloc(sizeof(*nlp), M_DEVBUF, M_WAITOK);
+	*nlp = *lp;
+	memset(nlp->d_partitions, 0, sizeof(nlp->d_partitions));
+	nlp->d_partitions[RAW_PART] = lp->d_partitions[RAW_PART];
+	nlp->d_magic = 0;
 
-	error = spoofgpt(bp, strat, dosbb, &nlp, &partoff);
-	if (error)
+	error = spoofgpt(bp, strat, dosbb, nlp, &partoff);
+	if (error) {
+		free(nlp, M_DEVBUF, sizeof(*nlp));
 		return error;
-	if (nlp.d_magic != DISKMAGIC)
-		spoofmbr(bp, strat, dosbb, &nlp, &partoff);
-	if (nlp.d_magic != DISKMAGIC)
-		spooffat(dosbb, &nlp, &partoff);
-	if (nlp.d_magic != DISKMAGIC) {
+	}
+	if (nlp->d_magic != DISKMAGIC)
+		spoofmbr(bp, strat, dosbb, nlp, &partoff);
+	if (nlp->d_magic != DISKMAGIC)
+		spooffat(dosbb, nlp, &partoff);
+	if (nlp->d_magic != DISKMAGIC) {
 		DPRINTF("readdoslabel: N/A -- label partition @ "
 		    "daddr_t 0 (default)\n");
 		partoff = 0;
@@ -361,16 +363,20 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 		if (partoff == -1) {
 			DPRINTF("readdoslabel return: %s, ENXIO, lp "
 			    "unchanged, *partoffp unchanged\n", devname);
+			free(nlp, M_DEVBUF, sizeof(*nlp));
 			return ENXIO;
 		}
 		*partoffp = partoff;
 		DPRINTF("readdoslabel return: %s, 0, lp unchanged, "
 		    "*partoffp set to %lld\n", devname, *partoffp);
+		free(nlp, M_DEVBUF, sizeof(*nlp));
 		return 0;
 	}
 
-	nlp.d_magic = lp->d_magic;
-	*lp = nlp;
+	nlp->d_magic = lp->d_magic;
+	*lp = *nlp;
+	free(nlp, M_DEVBUF, sizeof(*nlp));
+
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 
@@ -1112,7 +1118,7 @@ disk_attach_callback(void *xdat)
 {
 	struct disk_attach_task *dat = xdat;
 	struct disk *dk = dat->dk;
-	struct disklabel dl;
+	struct disklabel *dl;
 	char errbuf[100];
 
 	free(dat, M_TEMP, sizeof(*dat));
@@ -1121,9 +1127,10 @@ disk_attach_callback(void *xdat)
 		goto done;
 
 	/* Read disklabel. */
-	if (disk_readlabel(&dl, dk->dk_devno, errbuf, sizeof(errbuf)) == NULL) {
-		enqueue_randomness(dl.d_checksum);
-	}
+	dl = malloc(sizeof(*dl), M_DEVBUF, M_WAITOK);
+	if (disk_readlabel(dl, dk->dk_devno, errbuf, sizeof(errbuf)) == NULL)
+		enqueue_randomness(dl->d_checksum);
+	free(dl, M_DEVBUF, sizeof(*dl));
 
 done:
 	dk->dk_flags |= DKF_OPENED;
@@ -1292,16 +1299,17 @@ dk_mountroot(void)
 	char errbuf[100];
 	int part = DISKPART(rootdev);
 	int (*mountrootfn)(void);
-	struct disklabel dl;
+	struct disklabel *dl;
 	char *error;
 
-	error = disk_readlabel(&dl, rootdev, errbuf, sizeof(errbuf));
+	dl = malloc(sizeof(*dl), M_DEVBUF, M_WAITOK);
+	error = disk_readlabel(dl, rootdev, errbuf, sizeof(errbuf));
 	if (error)
 		panic("%s", error);
 
-	if (DL_GETPSIZE(&dl.d_partitions[part]) == 0)
+	if (DL_GETPSIZE(&dl->d_partitions[part]) == 0)
 		panic("root filesystem has size 0");
-	switch (dl.d_partitions[part].p_fstype) {
+	switch (dl->d_partitions[part].p_fstype) {
 #ifdef EXT2FS
 	case FS_EXT2FS:
 		{
@@ -1332,14 +1340,16 @@ dk_mountroot(void)
 		extern int ffs_mountroot(void);
 
 		printf("filesystem type %d not known.. assuming ffs\n",
-		    dl.d_partitions[part].p_fstype);
+		    dl->d_partitions[part].p_fstype);
 		mountrootfn = ffs_mountroot;
 		}
 #else
 		panic("disk 0x%x filesystem type %d not known",
-		    rootdev, dl.d_partitions[part].p_fstype);
+		    rootdev, dl->d_partitions[part].p_fstype);
 #endif
 	}
+	free(dl, M_DEVBUF, sizeof(*dl));
+
 	return (*mountrootfn)();
 }
 
