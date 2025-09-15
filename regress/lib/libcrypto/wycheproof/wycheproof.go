@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.191 2025/09/14 17:03:28 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.192 2025/09/15 09:43:42 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -771,6 +771,7 @@ var evpMds = map[string]*C.EVP_MD{
 	"SHA3-256":    C.EVP_sha3_256(),
 	"SHA3-384":    C.EVP_sha3_384(),
 	"SHA3-512":    C.EVP_sha3_512(),
+	"SM3":         C.EVP_sm3(),
 }
 
 func hashEvpMdFromString(hs string) (*C.EVP_MD, error) {
@@ -2250,6 +2251,10 @@ func (wtg *wycheproofTestGroupHmac) run(algorithm string, variant testVariant) b
 	if strings.HasPrefix(algorithm, "HMACSHA3-") {
 		prefix = "SHA"
 	}
+	if algorithm == "HMACSM3" {
+		prefix = ""
+		algorithm = "SM3"
+	}
 	md, err := hashEvpMdFromString(prefix + strings.TrimPrefix(algorithm, "HMACSHA"))
 	if err != nil {
 		log.Fatalf("Failed to get hash: %v", err)
@@ -2942,10 +2947,8 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 		return &wycheproofTestGroupEdDSA{}, variant
 	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
 		return &wycheproofTestGroupHkdf{}, variant
-	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA512/224", "HMACSHA512/256", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
+	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA512/224", "HMACSHA512/256", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512", "HMACSM3":
 		return &wycheproofTestGroupHmac{}, variant
-	case "HMACSM3":
-		return nil, Skip
 	case "KMAC128", "KMAC256":
 		return nil, Skip
 	case "ML-DSA-44", "ML-DSA-65", "ML-DSA-87":
