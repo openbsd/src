@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_sshbuf_getput_basic.c,v 1.4 2025/06/13 07:35:14 dtucker Exp $ */
+/* 	$OpenBSD: test_sshbuf_getput_basic.c,v 1.5 2025/09/15 03:00:22 djm Exp $ */
 /*
  * Regress test for sshbuf.h buffer API
  *
@@ -607,6 +607,7 @@ sshbuf_getput_basic_tests(void)
 	ASSERT_PTR_NE(s2, NULL);
 	ASSERT_STRING_EQ(s2, "00000000000000000000");
 	sshbuf_free(p1);
+	free(s2);
 	TEST_DONE();
 
 	TEST_START("sshbuf_poke_u16");
@@ -641,6 +642,7 @@ sshbuf_getput_basic_tests(void)
 	ASSERT_PTR_NE(s2, NULL);
 	ASSERT_STRING_EQ(s2, "00000000000000000000");
 	sshbuf_free(p1);
+	free(s2);
 	TEST_DONE();
 
 	TEST_START("sshbuf_poke_u8");
@@ -671,6 +673,7 @@ sshbuf_getput_basic_tests(void)
 	ASSERT_PTR_NE(s2, NULL);
 	ASSERT_STRING_EQ(s2, "00000000000000000000");
 	sshbuf_free(p1);
+	free(s2);
 	TEST_DONE();
 
 	TEST_START("sshbuf_poke");
@@ -705,5 +708,6 @@ sshbuf_getput_basic_tests(void)
 	ASSERT_PTR_NE(s2, NULL);
 	ASSERT_STRING_EQ(s2, "00000000000000000000");
 	sshbuf_free(p1);
+	free(s2);
 	TEST_DONE();
 }
