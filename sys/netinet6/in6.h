@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.122 2025/08/13 16:48:04 florian Exp $	*/
+/*	$OpenBSD: in6.h,v 1.123 2025/09/16 09:18:29 florian Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -584,7 +584,6 @@ ifatoia6(struct ifaddr *ifa)
 #define IPV6CTL_DAD_COUNT	16
 #define IPV6CTL_AUTO_FLOWLABEL	17
 #define IPV6CTL_DEFMCASTHLIM	18
-#define IPV6CTL_USE_DEPRECATED	21	/* use deprecated addr (RFC2462 5.5.4) */
 /* 24 to 40: reserved */
 #define IPV6CTL_MAXFRAGS	41	/* max fragments */
 #define IPV6CTL_MFORWARDING	42
@@ -624,7 +623,7 @@ ifatoia6(struct ifaddr *ifa)
 	{ "defmcasthlim", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ "use_deprecated", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \

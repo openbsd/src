@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.272 2025/07/24 21:34:07 mvs Exp $	*/
+/*	$OpenBSD: in6.c,v 1.273 2025/09/16 09:18:29 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1423,13 +1423,6 @@ in6_ifawithscope(struct ifnet *oifp, const struct in6_addr *dst, u_int rdomain,
 
 			/* Rule 3: Avoid deprecated addresses. */
 			if (ifatoia6(ifa)->ia6_flags & IN6_IFF_DEPRECATED) {
-				/*
-				 * Ignore any deprecated addresses if
-				 * specified by configuration.
-				 */
-				if (!atomic_load_int(&ip6_use_deprecated))
-					continue;
-
 				/*
 				 * If we have already found a non-deprecated
 				 * candidate, just ignore deprecated addresses.
