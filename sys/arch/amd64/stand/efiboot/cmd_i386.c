@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.3 2025/08/27 09:08:12 jmatthew Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.4 2025/09/16 05:07:33 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -95,6 +95,7 @@ Xmemory(void)
 		for (i = 1; i < cmd.argc; i++) {
 			char *p;
 			long long addr, size;
+			extern int bios_memmap_modified;
 
 			p = cmd.argv[i];
 
@@ -145,6 +146,7 @@ Xmemory(void)
 					printf("bad OP\n");
 					return 0;
 				}
+				bios_memmap_modified = 1;
 			}
 		}
 	}
