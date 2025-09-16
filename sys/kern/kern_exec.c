@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.267 2025/08/23 16:12:52 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.268 2025/09/16 12:15:06 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -860,12 +860,12 @@ exec_sigcode_map(struct process *pr)
 	/*
 	 * If we don't have a sigobject yet, create one.
 	 *
-	 * sigobject is an anonymous memory object (just like SYSV shared
-	 * memory) that we keep a permanent reference to and that we map
-	 * in all processes that need this sigcode. The creation is simple,
-	 * we create an object, add a permanent reference to it, map it in
-	 * kernel space, copy out the sigcode to it and map it PROT_READ
-	 * such that the coredump code can write it out into core dumps.
+	 * sigobject is an anonymous memory object (just like SYSV
+	 * shared memory) that we keep a permanent reference to and
+	 * that we map in all processes that need this sigcode. The
+	 * creation is simple, we create an object, map it in kernel
+	 * space, copy out the sigcode to it and map it PROT_READ such
+	 * that the coredump code can write it out into core dumps.
 	 * Then we map it with PROT_EXEC into the process just the way
 	 * sys_mmap would map it.
 	 */
@@ -874,17 +874,13 @@ exec_sigcode_map(struct process *pr)
 		extern u_char sigfill[];
 		size_t off, left;
 		vaddr_t va;
-		int r;
 
-		sigobject = uao_create(sz, 0);
-		uao_reference(sigobject);	/* permanent reference */
+		sigobject = uao_create(sz, 0);	/* permanent reference */
 
-		if ((r = uvm_map(kernel_map, &va, round_page(sz), sigobject,
-		    0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
-		    MAP_INHERIT_SHARE, MADV_RANDOM, 0)))) {
-			uao_detach(sigobject);
-			return (ENOMEM);
-		}
+		if (uvm_map(kernel_map, &va, round_page(sz), sigobject, 0, 0,
+		    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
+		    MAP_INHERIT_SHARE, MADV_RANDOM, 0)))
+			panic("can't map sigobject");
 
 		for (off = 0, left = round_page(sz); left != 0;
 		    off += sigfillsiz) {
@@ -894,8 +890,10 @@ exec_sigcode_map(struct process *pr)
 		}
 		memcpy((caddr_t)va, sigcode, sz);
 
-		(void) uvm_map_protect(kernel_map, va, round_page(va + sz),
-		    PROT_READ, 0, FALSE, FALSE);
+		if (uvm_map_protect(kernel_map, va, round_page(va + sz),
+		    PROT_READ, 0, FALSE, FALSE))
+			panic("can't write-protect sigobject");
+
 		sigcode_va = va;
 		sigcode_sz = round_page(sz);
 	}
