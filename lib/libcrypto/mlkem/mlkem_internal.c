@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_internal.c,v 1.2 2025/09/14 16:47:37 tb Exp $ */
+/* $OpenBSD: mlkem_internal.c,v 1.3 2025/09/16 06:12:04 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, 2025 Bob Beck <beck@obtuse.com>
@@ -942,7 +942,7 @@ mlkem_generate_key_external_entropy(uint8_t *out_encoded_public_key,
 	int ret = 0;
 
 	private_key_from_external(out_private_key, &priv);
-	memset(&cbb, 0, sizeof(CBB));
+	memset(&cbb, 0, sizeof(cbb));
 	memcpy(augmented_seed, entropy, 32);
 	augmented_seed[32] = out_private_key->rank;
 	hash_g(hashed, augmented_seed, 33);
