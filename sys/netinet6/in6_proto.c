@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.150 2025/09/16 09:18:29 florian Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.151 2025/09/16 09:18:55 florian Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -357,7 +357,6 @@ int	ip6_defhlim = IPV6_DEFHLIM;			/* [a] */
 int	ip6_defmcasthlim = IPV6_DEFAULT_MULTICAST_HOPS; /* [a] */
 int	ip6_maxfragpackets = 200;			/* [a] */
 int	ip6_maxfrags = 200;	/* [a] */
-int	ip6_log_interval = 5;	/* [a] */
 int	ip6_hdrnestlimit = 10;	/* [a] appropriate? */
 int	ip6_dad_count = 1;	/* [a] DupAddrDetectionTransmits */
 int	ip6_dad_pending;	/* number of currently running DADs */
@@ -365,7 +364,6 @@ int	ip6_auto_flowlabel = 1;	/* [a] */
 int	ip6_mcast_pmtu = 0;	/* [a] enable pMTU discovery for multicast? */
 int	ip6_neighborgcthresh = 2048; /* [a] Threshold # of NDP entries for GC */
 int	ip6_maxdynroutes = 4096; /* [a] Max # of routes created via redirect */
-time_t	ip6_log_time = (time_t)0L;
 
 /* raw IP6 parameters */
 /*

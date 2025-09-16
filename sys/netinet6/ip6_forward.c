@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.128 2025/07/23 18:58:38 mvs Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.129 2025/09/16 09:18:55 florian Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -94,7 +94,6 @@ ip6_forward(struct mbuf *m, struct route *ro, int flags)
 #ifdef IPSEC
 	struct tdb *tdb = NULL;
 #endif /* IPSEC */
-	char src6[INET6_ADDRSTRLEN], dst6[INET6_ADDRSTRLEN];
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled
@@ -105,21 +104,7 @@ ip6_forward(struct mbuf *m, struct route *ro, int flags)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
 	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
-		time_t uptime;
-
 		ip6stat_inc(ip6s_cantforward);
-		uptime = getuptime();
-
-		if (ip6_log_time + atomic_load_int(&ip6_log_interval) <
-		    uptime) {
-			ip6_log_time = uptime;
-			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
-			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
-			log(LOG_DEBUG,
-			    "cannot forward "
-			    "from %s to %s nxt %d received on interface %u\n",
-			    src6, dst6, ip6->ip6_nxt, ifidx);
-		}
 		m_freem(m);
 		goto done;
 	}
@@ -222,22 +207,8 @@ reroute:
 	 */
 	if (in6_addr2scopeid(ifidx, &ip6->ip6_src) !=
 	    in6_addr2scopeid(rt->rt_ifidx, &ip6->ip6_src)) {
-		time_t uptime;
-
 		ip6stat_inc(ip6s_cantforward);
 		ip6stat_inc(ip6s_badscope);
-		uptime = getuptime();
-
-		if (ip6_log_time + atomic_load_int(&ip6_log_interval) <
-		    uptime) {
-			ip6_log_time = uptime;
-			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
-			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
-			log(LOG_DEBUG,
-			    "cannot forward "
-			    "src %s, dst %s, nxt %d, rcvif %u, outif %u\n",
-			    src6, dst6, ip6->ip6_nxt, ifidx, rt->rt_ifidx);
-		}
 		type = ICMP6_DST_UNREACH;
 		code = ICMP6_DST_UNREACH_BEYONDSCOPE;
 		m_freem(m);

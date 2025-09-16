@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.126 2025/09/16 09:18:29 florian Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.127 2025/09/16 09:18:55 florian Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -289,8 +289,6 @@ extern struct socket *ip6_mrouter[RT_TABLEID_MAX + 1]; /* multicast routing daem
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */
 extern int	ip6_maxfrags;	/* Maximum fragments in reassembly queue */
-extern int	ip6_log_interval;
-extern time_t	ip6_log_time;
 extern int	ip6_hdrnestlimit; /* upper limit of # of extension headers */
 extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 extern int	ip6_dad_pending;	/* number of currently running DADs */
