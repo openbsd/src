@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.192 2025/09/15 09:43:42 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.193 2025/09/16 15:45:34 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -518,6 +518,27 @@ type wycheproofTestGroupMLKEM struct {
 	Type         string                 `json:"type"`
 	ParameterSet string                 `json:"parameterSet"`
 	Tests        []*wycheproofTestMLKEM `json:"tests"`
+}
+
+type wycheproofTestPbkdf struct {
+	TCID           int      `json:"tcId"`
+	Comment        string   `json:"comment"`
+	Flags          []string `json:"string"`
+	Password       string   `json:"password"`
+	Salt           string   `json:"salt"`
+	IterationCount int      `json:"iterationCount"`
+	DkLen          int      `json:"dkLen"`
+	Dk             string   `json:"dk"`
+	Result         string   `json:"result"`
+}
+
+func (wt *wycheproofTestPbkdf) String() string {
+	return wycheproofFormatTestCase(wt.TCID, wt.Comment, wt.Flags, wt.Result)
+}
+
+type wycheproofTestGroupPbkdf2HmacSha struct {
+	Type  string                 `json:"type"`
+	Tests []*wycheproofTestPbkdf `json:"tests"`
 }
 
 type wycheproofTestPrimality struct {
@@ -2463,6 +2484,41 @@ func (wtg *wycheproofTestGroupMLKEM) run(algorithm string, variant testVariant) 
 	return success
 }
 
+func runPbkdfTest(md *C.EVP_MD, wt *wycheproofTestPbkdf) bool {
+	pw, pwLen := mustDecodeHexString(wt.Password, "password")
+	salt, saltLen := mustDecodeHexString(wt.Salt, "salt")
+	dk, _ := mustDecodeHexString(wt.Dk, "dk")
+
+	out := make([]byte, wt.DkLen)
+
+	ret := C.PKCS5_PBKDF2_HMAC((*C.char)(unsafe.Pointer(&pw[0])), C.int(pwLen), (*C.uchar)(unsafe.Pointer(&salt[0])), C.int(saltLen), C.int(wt.IterationCount), md, C.int(wt.DkLen), (*C.uchar)(unsafe.Pointer(&out[0])))
+
+	success := true
+	if ret != 1 || !bytes.Equal(dk, out) || wt.Result != "valid" {
+		fmt.Printf("%s - %d\n", wt, int(ret))
+		success = false
+	}
+
+	return success
+}
+
+func (wtg *wycheproofTestGroupPbkdf2HmacSha) run(algorithm string, variant testVariant) bool {
+	fmt.Printf("Running %v test group of type %v...\n", algorithm, wtg.Type)
+
+	md, err := hashEvpMdFromString("SHA-" + strings.TrimPrefix(algorithm, "PBKDF2-HMACSHA"))
+	if err != nil {
+		log.Fatalf("Failed to get hash: %v", err)
+	}
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runPbkdfTest(md, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runPrimalityTest(wt *wycheproofTestPrimality) bool {
 	bnValue := mustConvertBigIntToBigNum(wt.Value)
 	defer C.BN_free(bnValue)
@@ -2960,7 +3016,7 @@ func testGroupFromTestVector(wtv *wycheproofTestVectorsV1) (wycheproofTestGroupR
 	case "PbeWithHmacSha1AndAes_128", "PbeWithHmacSha1AndAes_192", "PbeWithHmacSha1AndAes_256", "PbeWithHmacSha224AndAes_128", "PbeWithHmacSha224AndAes_192", "PbeWithHmacSha224AndAes_256", "PbeWithHmacSha256AndAes_128", "PbeWithHmacSha256AndAes_192", "PbeWithHmacSha256AndAes_256", "PbeWithHmacSha384AndAes_128", "PbeWithHmacSha384AndAes_192", "PbeWithHmacSha384AndAes_256", "PbeWithHmacSha512AndAes_128", "PbeWithHmacSha512AndAes_192", "PbeWithHmacSha512AndAes_256":
 		return nil, Skip
 	case "PBKDF2-HMACSHA1", "PBKDF2-HMACSHA224", "PBKDF2-HMACSHA256", "PBKDF2-HMACSHA384", "PBKDF2-HMACSHA512":
-		return nil, Skip
+		return &wycheproofTestGroupPbkdf2HmacSha{}, Skip
 	case "PrimalityTest":
 		return &wycheproofTestGroupPrimality{}, variant
 	case "RSAES-OAEP":
