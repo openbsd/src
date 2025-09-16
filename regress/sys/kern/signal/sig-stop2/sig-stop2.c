@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig-stop2.c,v 1.1 2024/10/07 14:01:12 claudio Exp $	*/
+/*	$OpenBSD: sig-stop2.c,v 1.2 2025/09/16 09:35:39 jsg Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2007 Public Domain.
  *	Written by Claudio Jeker <claudio@openbsd.org> 2024 Public Domain.
@@ -7,7 +7,6 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
-#include <err.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
