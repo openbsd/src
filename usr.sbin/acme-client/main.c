@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.56 2024/06/19 13:13:25 claudio Exp $ */
+/*	$Id: main.c,v 1.57 2025/09/16 15:06:02 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -224,7 +224,8 @@ main(int argc, char *argv[])
 		    chng_fds[1], cert_fds[1],
 		    dns_fds[1], rvk_fds[1],
 		    revocate, authority,
-		    (const char *const *)alts, altsz);
+		    (const char *const *)alts, altsz,
+		    domain->profile);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 

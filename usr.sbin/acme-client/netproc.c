@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.44 2025/06/12 15:46:28 florian Exp $ */
+/*	$Id: netproc.c,v 1.45 2025/09/16 15:06:02 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -493,14 +493,14 @@ dochkacc(struct conn *c, const struct capaths *p, const char *contact)
  */
 static int
 doneworder(struct conn *c, const char *const *alts, size_t altsz,
-    struct order *order, const struct capaths *p)
+    struct order *order, const struct capaths *p, const char *profile)
 {
 	struct jsmnn	*j = NULL;
 	int		 rc = 0;
 	char		*req;
 	long		 lc;
 
-	if ((req = json_fmt_neworder(alts, altsz)) == NULL)
+	if ((req = json_fmt_neworder(alts, altsz, profile)) == NULL)
 		warnx("json_fmt_neworder");
 	else if ((lc = sreq(c, p->neworder, 1, req, &order->uri)) < 0)
 		warnx("%s: bad comm", p->neworder);
@@ -723,7 +723,7 @@ dodirs(struct conn *c, const char *addr, struct capaths *paths)
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
     int revocate, struct authority_c *authority,
-    const char *const *alts, size_t altsz)
+    const char *const *alts, size_t altsz, const char *profile)
 {
 	int		 rc = 0, retries = 0;
 	size_t		 i;
@@ -814,7 +814,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	 * Following that, submit the request to the CA then notify the
 	 * certproc, which will in turn notify the fileproc.
 	 * XXX currently we can only sign with the account key, the RFC
-	 * also mentions signing with the privat key of the cert itself.
+	 * also mentions signing with the private key of the cert itself.
 	 */
 	if (revocate) {
 		if ((cert = readstr(rfd, COMM_CSR)) == NULL)
@@ -828,7 +828,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 
 	memset(&order, 0, sizeof(order));
 
-	if (!doneworder(&c, alts, altsz, &order, &paths))
+	if (!doneworder(&c, alts, altsz, &order, &paths, profile))
 		goto out;
 
 	chngs = calloc(order.authsz, sizeof(struct chng));

@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.21 2024/05/21 05:00:48 jsg Exp $ */
+/*	$Id: extern.h,v 1.22 2025/09/16 15:06:02 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -212,7 +212,7 @@ int		 keyproc(int, const char *, const char **, size_t,
 			enum keytype);
 int		 netproc(int, int, int, int, int, int, int,
 			struct authority_c *, const char *const *,
-			size_t);
+			size_t, const char *);
 
 /*
  * Debugging functions.
@@ -263,7 +263,7 @@ char		*json_getstr(struct jsmnn *, const char *);
 char		*json_fmt_newcert(const char *);
 char		*json_fmt_chkacc(void);
 char		*json_fmt_newacc(const char *);
-char		*json_fmt_neworder(const char *const *, size_t);
+char		*json_fmt_neworder(const char *const *, size_t, const char *);
 char		*json_fmt_protected_rsa(const char *,
 			const char *, const char *, const char *);
 char		*json_fmt_protected_ec(const char *, const char *, const char *,

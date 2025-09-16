@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.31 2025/07/08 14:26:45 schwarze Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.32 2025/09/16 15:06:02 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2025 $
+.Dd $Mdocdate: September 16 2025 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -191,6 +191,9 @@ A backup with name
 is created if
 .Ar file
 exists.
+.It Ic profile Ar profile
+The certificate profile to be requested.
+If this setting is absent, no profile request is made.
 .It Ic sign with Ar authority
 The certificate authority (as declared above in the
 .Sx Authorities
