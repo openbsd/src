@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.164 2025/09/16 09:19:43 florian Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.165 2025/09/16 09:52:49 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1208,18 +1208,10 @@ nd6_dad_ns_output(struct dadq *dp, struct ifaddr *ifa)
 	struct ifnet *ifp = ifa->ifa_ifp;
 
 	dp->dad_ns_tcount++;
-	if ((ifp->if_flags & IFF_UP) == 0) {
-#if 0
-		printf("%s: interface down?\n", ifp->if_xname);
-#endif
+	if ((ifp->if_flags & IFF_UP) == 0)
 		return;
-	}
-	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-#if 0
-		printf("%s: interface not running?\n", ifp->if_xname);
-#endif
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-	}
 
 	dp->dad_ns_ocount++;
 	nd6_ns_output(ifp, NULL, &ia6->ia_addr.sin6_addr, NULL, 1);
