@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.376 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.377 2025/09/16 09:07:00 jan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -798,6 +798,24 @@ bridge_stop(struct bridge_softc *sc)
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
 }
 
+struct mbuf *
+bridge_offload(struct ifnet *ifp, struct mbuf *m)
+{
+#if NVLAN > 0
+	/*
+	 * If the underlying interface has no VLAN hardware tagging support,
+	 * inject one in software.
+	 */
+	if (ISSET(m->m_flags, M_VLANTAG) &&
+	    !ISSET(ifp->if_capabilities, IFCAP_VLAN_HWTAGGING)) {
+		m = vlan_inject(m, ETHERTYPE_VLAN, m->m_pkthdr.ether_vtag);
+		if (m == NULL)
+			return NULL;
+	}
+#endif
+	return m;
+}
+
 /*
  * Send output from the bridge.  The mbuf has the ethernet header
  * already attached.  We must enqueue or free the mbuf before exiting.
@@ -1169,18 +1187,6 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 
 	if (m->m_pkthdr.len < sizeof(*eh))
 		goto bad;
-
-#if NVLAN > 0
-	/*
-	 * If the underlying interface removed the VLAN header itself,
-	 * add it back.
-	 */
-	if (ISSET(m->m_flags, M_VLANTAG)) {
-		m = vlan_inject(m, ETHERTYPE_VLAN, m->m_pkthdr.ether_vtag);
-		if (m == NULL)
-			goto bad;
-	}
-#endif
 
 #if NBPFILTER > 0
 	if_bpf = brifp->if_bpf;
@@ -1915,21 +1921,28 @@ bridge_ifenqueue(struct ifnet *brifp, struct ifnet *ifp, struct mbuf *m)
 {
 	int error, len;
 
+	if ((m = bridge_offload(ifp, m)) == NULL) {
+		error = ENOBUFS;
+		goto err;
+	}
+
 	/* Loop prevention. */
 	m->m_flags |= M_PROTO1;
 
 	len = m->m_pkthdr.len;
 
 	error = if_enqueue(ifp, m);
-	if (error) {
-		brifp->if_oerrors++;
-		return (error);
-	}
+	if (error) 
+		goto err; 
 
 	brifp->if_opackets++;
 	brifp->if_obytes += len;
 
 	return (0);
+
+ err:
+	brifp->if_oerrors++;
+	return (error);
 }
 
 void
