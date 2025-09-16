@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.8 2025/08/15 21:09:49 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.9 2025/09/16 15:10:03 mlarkin Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -906,7 +906,7 @@ vcpu_assert_irq(uint32_t vm_id, uint32_t vcpu_id, int irq)
 }
 
 /*
- * vcpu_deassert_pic_irq
+ * vcpu_deassert_irq
  *
  * Clears the specified IRQ on the supplied vcpu/vm
  *
@@ -926,6 +926,7 @@ vcpu_deassert_irq(uint32_t vm_id, uint32_t vcpu_id, int irq)
 			    "vcpu_id %d", __func__, vm_id, vcpu_id);
 	}
 }
+
 /*
  * set_return_data
  *
