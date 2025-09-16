@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_key.c,v 1.3 2025/09/15 03:34:58 tb Exp $ */
+/* $OpenBSD: mlkem_key.c,v 1.4 2025/09/16 06:10:24 tb Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
@@ -25,26 +25,20 @@
 MLKEM_private_key *
 MLKEM_private_key_new(int rank)
 {
-	struct MLKEM1024_private_key *key_1024 = NULL;
-	struct MLKEM768_private_key *key_768 = NULL;
 	MLKEM_private_key *key = NULL;
 	MLKEM_private_key *ret = NULL;
 
-	if ((key = calloc(1, sizeof(MLKEM_private_key))) == NULL)
+	if ((key = calloc(1, sizeof(*key))) == NULL)
 		goto err;
 
 	switch (rank) {
 	case RANK768:
-		if ((key_768 = calloc(1, sizeof(*key_768))) ==
-		    NULL)
+		if ((key->key_768 = calloc(1, sizeof(*key->key_768))) == NULL)
 			goto err;
-		key->key_768 = key_768;
 		break;
 	case RANK1024:
-		if ((key_1024 = calloc(1, sizeof(*key_1024))) ==
-		    NULL)
+		if ((key->key_1024 = calloc(1, sizeof(*key->key_1024))) == NULL)
 			goto err;
-		key->key_1024 = key_1024;
 		break;
 	default:
 		goto err;
@@ -113,26 +107,20 @@ LCRYPTO_ALIAS(MLKEM_private_key_ciphertext_length);
 MLKEM_public_key *
 MLKEM_public_key_new(int rank)
 {
-	struct MLKEM1024_public_key *key_1024 = NULL;
-	struct MLKEM768_public_key *key_768 = NULL;
 	MLKEM_public_key *key = NULL;
 	MLKEM_public_key *ret = NULL;
 
-	if ((key = calloc(1, sizeof(MLKEM_public_key))) == NULL)
+	if ((key = calloc(1, sizeof(*key))) == NULL)
 		goto err;
 
 	switch (rank) {
 	case RANK768:
-		if ((key_768 = calloc(1, sizeof(*key_768))) ==
-		    NULL)
+		if ((key->key_768 = calloc(1, sizeof(*key->key_768))) == NULL)
 			goto err;
-		key->key_768 = key_768;
 		break;
 	case RANK1024:
-		if ((key_1024 = calloc(1, sizeof(*key_1024))) ==
-		    NULL)
+		if ((key->key_1024 = calloc(1, sizeof(*key->key_1024))) == NULL)
 			goto err;
-		key->key_1024 = key_1024;
 		break;
 	default:
 		goto err;
