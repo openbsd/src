@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.462 2025/09/16 09:18:29 florian Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.463 2025/09/16 09:19:43 florian Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -124,22 +124,6 @@ struct timeval tcp_ackdrop_ppslim_last;
 /* for TCP SACK comparisons */
 #define	SEQ_MIN(a,b)	(SEQ_LT(a,b) ? (a) : (b))
 #define	SEQ_MAX(a,b)	(SEQ_GT(a,b) ? (a) : (b))
-
-/*
- * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
- */
-#ifdef INET6
-#define ND6_HINT(tp, hint) \
-do { \
-	if (tp && tp->t_inpcb &&					\
-	    ISSET(tp->t_inpcb->inp_flags, INP_IPV6) &&			\
-	    rtisvalid(tp->t_inpcb->inp_route.ro_rt)) {			\
-		nd6_nud_hint(tp->t_inpcb->inp_route.ro_rt, hint);	\
-	} \
-} while (0)
-#else
-#define ND6_HINT(tp, hint)
-#endif
 
 #ifdef TCP_ECN
 /*
@@ -311,9 +295,6 @@ tcp_flush_queue(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
 	struct tcpqent *q, *nq;
-#ifdef INET6
-	int nd6_maxnudhint_local = atomic_load_int(&nd6_maxnudhint);
-#endif
 	int flags;
 
 	/*
@@ -333,7 +314,6 @@ tcp_flush_queue(struct tcpcb *tp)
 
 		nq = TAILQ_NEXT(q, tcpqe_q);
 		TAILQ_REMOVE(&tp->t_segq, q, tcpqe_q);
-		ND6_HINT(tp, nd6_maxnudhint_local);
 		if (so->so_rcv.sb_state & SS_CANTRCVMORE)
 			m_freem(q->tcpqe_m);
 		else {
@@ -427,9 +407,6 @@ tcp_input_solocked(struct mbuf **mp, int *offp, int proto, int af,
 	struct ip6_hdr *ip6 = NULL;
 #endif /* INET6 */
 	int do_ecn = 0;
-#ifdef INET6
-	int nd6_maxnudhint_local = atomic_load_int(&nd6_maxnudhint);
-#endif
 #ifdef TCP_ECN
 	u_char iptos;
 #endif
@@ -973,7 +950,6 @@ findpcb:
 				tcpstat_pkt(tcps_rcvackpack, tcps_rcvackbyte,
 				    acked);
 				tp->t_rcvacktime = now;
-				ND6_HINT(tp, nd6_maxnudhint_local);
 
 				mtx_enter(&so->so_snd.sb_mtx);
 				sbdrop(&so->so_snd, acked);
@@ -1058,7 +1034,6 @@ findpcb:
 			/* Packet has most recent segment, no urgent exists. */
 			tp->rcv_up = tp->rcv_nxt;
 			tcpstat_pkt(tcps_rcvpack, tcps_rcvbyte, tlen);
-			ND6_HINT(tp, nd6_maxnudhint_local);
 
 			TCP_SETUP_ACK(tp, tiflags, m);
 			/*
@@ -1763,7 +1738,6 @@ trimthenstep6:
 			tp->snd_cwnd = ulmin(cw + incr,
 			    TCP_MAXWIN << tp->snd_scale);
 		}
-		ND6_HINT(tp, nd6_maxnudhint_local);
 		if (acked > so->so_snd.sb_cc) {
 			if (tp->snd_wnd > so->so_snd.sb_cc)
 				tp->snd_wnd -= so->so_snd.sb_cc;
@@ -1993,7 +1967,6 @@ dodata:							/* XXX */
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat_pkt(tcps_rcvpack, tcps_rcvbyte, tlen);
-			ND6_HINT(tp, nd6_maxnudhint_local);
 			if (so->so_rcv.sb_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {

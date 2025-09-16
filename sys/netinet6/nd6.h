@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.104 2025/09/12 23:02:36 bluhm Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.105 2025/09/16 09:19:43 florian Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ struct llinfo_nd6 {
 	struct	mbuf_queue ln_mq;	/* hold packets until resolved */
 	struct	in6_addr ln_saddr6;	/* source of prompting packet */
 	long	ln_asked;	/* number of queries already sent for addr */
-	int	ln_byhint;	/* # of times we made it reachable by UL hint */
 	short	ln_state;	/* reachability state */
 	short	ln_router;	/* 2^0: ND6 router bit */
 };
@@ -116,7 +115,6 @@ extern unsigned int ln_hold_total;
 extern int nd6_delay;
 extern int nd6_umaxtries;
 extern int nd6_mmaxtries;
-extern int nd6_maxnudhint;
 extern const int nd6_gctimer;
 
 struct nd_opts {
@@ -133,7 +131,6 @@ struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *,
     u_int);
 void nd6_llinfo_settimer(const struct llinfo_nd6 *, unsigned int);
 void nd6_purge(struct ifnet *);
-void nd6_nud_hint(struct rtentry *, int);
 void nd6_rtrequest(struct ifnet *, int, struct rtentry *);
 int nd6_ioctl(u_long, caddr_t, struct ifnet *);
 void nd6_cache_lladdr(struct ifnet *, const struct in6_addr *, char *,

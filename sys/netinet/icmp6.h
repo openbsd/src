@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.56 2025/05/19 06:50:00 florian Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.57 2025/09/16 09:19:43 florian Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -508,7 +508,6 @@ struct icmp6stat {
 #define ICMPV6CTL_ND6_QUEUED	11
 #define ICMPV6CTL_NODEINFO	13
 #define ICMPV6CTL_ERRPPSLIMIT	14	/* ICMPv6 error pps limitation */
-#define ICMPV6CTL_ND6_MAXNUDHINT	15
 #define ICMPV6CTL_MTUDISC_HIWAT	16
 #define ICMPV6CTL_MTUDISC_LOWAT	17
 #define ICMPV6CTL_MAXID		18
@@ -529,7 +528,7 @@ struct icmp6stat {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "errppslimit", CTLTYPE_INT }, \
-	{ "nd6_maxnudhint", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "mtudisc_hiwat", CTLTYPE_INT }, \
 	{ "mtudisc_lowat", CTLTYPE_INT }, \
 }

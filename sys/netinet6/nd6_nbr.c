@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.163 2025/09/14 20:47:33 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.164 2025/09/16 09:19:43 florian Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -670,7 +670,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		bcopy(lladdr, LLADDR(sdl), ifp->if_addrlen);
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
-			ln->ln_byhint = 0;
 			/* Notify userland that a new ND entry is reachable. */
 			rtm_send(rt, RTM_RESOLVE, 0, ifp->if_rdomain);
 			if (!ND6_LLINFO_PERMANENT(ln)) {
@@ -764,7 +763,6 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 */
 			if (is_solicited) {
 				ln->ln_state = ND6_LLINFO_REACHABLE;
-				ln->ln_byhint = 0;
 				if (!ND6_LLINFO_PERMANENT(ln)) {
 					nd6_llinfo_settimer(ln,
 					    ifp->if_nd->reachable);

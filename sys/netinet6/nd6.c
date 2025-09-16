@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.302 2025/09/12 23:02:36 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.303 2025/09/16 09:19:43 florian Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -82,8 +82,6 @@ const int nd6_gctimer	= (60 * 60 * 24); /* 1 day: garbage collection timer */
 
 /* preventing too many loops in ND option parsing */
 int nd6_maxndopt = 10;	/* max # of ND options allowed */
-
-int nd6_maxnudhint = 0;	/* [a] max # of subsequent upper layer hints */
 
 /* llinfo_nd6 live time, rt_llinfo and RTF_LLINFO are protected by nd6_mtx */
 struct mutex nd6_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
@@ -715,55 +713,6 @@ nd6_free(struct rtentry *rt, struct ifnet *ifp, int i_am_router)
 		rtdeletemsg(rt, ifp, ifp->if_rdomain);
 }
 
-/*
- * Upper-layer reachability hint for Neighbor Unreachability Detection.
- *
- * XXX cost-effective methods?
- */
-void
-nd6_nud_hint(struct rtentry *rt, int maxnudhint)
-{
-	struct llinfo_nd6 *ln;
-	struct ifnet *ifp;
-
-	NET_ASSERT_LOCKED();
-
-	if ((rt->rt_flags & RTF_GATEWAY) != 0 ||
-	    (rt->rt_flags & RTF_LLINFO) == 0 ||
-	    rt->rt_gateway == NULL ||
-	    rt->rt_gateway->sa_family != AF_LINK) {
-		/* This is not a host route. */
-		return;
-	}
-
-	ifp = if_get(rt->rt_ifidx);
-	if (ifp == NULL)
-		return;
-
-	mtx_enter(&nd6_mtx);
-
-	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	if (ln == NULL)
-		goto out;
-	if (ln->ln_state < ND6_LLINFO_REACHABLE)
-		goto out;
-
-	/*
-	 * if we get upper-layer reachability confirmation many times,
-	 * it is possible we have false information.
-	 */
-	ln->ln_byhint++;
-	if (ln->ln_byhint > maxnudhint)
-		goto out;
-
-	ln->ln_state = ND6_LLINFO_REACHABLE;
-	if (!ND6_LLINFO_PERMANENT(ln))
-		nd6_llinfo_settimer(ln, ifp->if_nd->reachable);
-out:
-	mtx_leave(&nd6_mtx);
-	if_put(ifp);
-}
-
 void
 nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
@@ -855,7 +804,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			 * which is specified by ndp command.
 			 */
 			ln->ln_state = ND6_LLINFO_REACHABLE;
-			ln->ln_byhint = 0;
 		} else {
 			/*
 			 * When req == RTM_RESOLVE, rt is created and
@@ -907,7 +855,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		if (ifa != NULL ||
 		    (rt->rt_flags & RTF_ANNOUNCE)) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
-			ln->ln_byhint = 0;
 			rt->rt_expire = 0;
 		}
 		mtx_leave(&nd6_mtx);
