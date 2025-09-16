@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.377 2025/09/16 09:07:00 jan Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.378 2025/09/16 23:11:39 jan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -799,8 +799,11 @@ bridge_stop(struct bridge_softc *sc)
 }
 
 struct mbuf *
-bridge_offload(struct ifnet *ifp, struct mbuf *m)
+bridge_offload(struct ifnet *brifp, struct ifnet *ifp, struct mbuf *m)
 {
+	struct ether_extracted ext;
+	int csum = 0;
+
 #if NVLAN > 0
 	/*
 	 * If the underlying interface has no VLAN hardware tagging support,
@@ -813,7 +816,63 @@ bridge_offload(struct ifnet *ifp, struct mbuf *m)
 			return NULL;
 	}
 #endif
+
+	if (ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT) &&
+	    !ISSET(ifp->if_capabilities, IFCAP_CSUM_IPv4))
+		csum = 1;
+
+	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT) &&
+	    (!ISSET(ifp->if_capabilities, IFCAP_CSUM_TCPv4) ||
+	     !ISSET(ifp->if_capabilities, IFCAP_CSUM_TCPv6)))
+		csum = 1;
+
+	if (ISSET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT) &&
+	    (!ISSET(ifp->if_capabilities, IFCAP_CSUM_UDPv4) ||
+	     !ISSET(ifp->if_capabilities, IFCAP_CSUM_UDPv6)))
+		csum = 1;
+
+	if (csum) {
+		int ethlen;
+		int hlen;
+
+		ether_extract_headers(m, &ext);
+
+		ethlen = sizeof *ext.eh;
+		if (ext.evh)
+			ethlen = sizeof *ext.evh;
+
+		hlen = m->m_pkthdr.len - ext.paylen;
+
+		if (m->m_len < hlen) {
+			m = m_pullup(m, hlen);
+			if (m == NULL)
+				goto err;
+		}
+
+		/* hide ethernet header */
+		m->m_data += ethlen;
+		m->m_len -= ethlen;
+		m->m_pkthdr.len -= ethlen;
+
+		if (ext.ip4) {
+			in_hdr_cksum_out(m, ifp);
+			in_proto_cksum_out(m, ifp);
+#ifdef INET6
+		} else if (ext.ip6) {
+			in6_proto_cksum_out(m, ifp);
+#endif
+		}
+
+		/* show ethernet header again */
+		m->m_data -= ethlen;
+		m->m_len += ethlen;
+		m->m_pkthdr.len += ethlen;
+	}
+
 	return m;
+err:
+	counters_inc(brifp->if_counters, ifc_ierrors);
+	return NULL;
 }
 
 /*
@@ -1921,7 +1980,7 @@ bridge_ifenqueue(struct ifnet *brifp, struct ifnet *ifp, struct mbuf *m)
 {
 	int error, len;
 
-	if ((m = bridge_offload(ifp, m)) == NULL) {
+	if ((m = bridge_offload(brifp, ifp, m)) == NULL) {
 		error = ENOBUFS;
 		goto err;
 	}

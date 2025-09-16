@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.38 2025/09/16 09:07:00 jan Exp $ */
+/* $OpenBSD: if_vether.c,v 1.39 2025/09/16 23:11:39 jan Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -89,6 +89,9 @@ vether_clone_create(struct if_clone *ifc, int unit)
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 
 	ifmedia_init(&sc->sc_media, 0, vether_media_change,
