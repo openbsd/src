@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.156 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.157 2025/09/16 17:29:35 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -209,12 +209,6 @@ tcp_output(struct tcpcb *tp)
 	int needect;
 #endif
 	int tso;
-
-	if (tp->t_flags & TF_BLOCKOUTPUT) {
-		tp->t_flags |= TF_NEEDOUTPUT;
-		return (0);
-	} else
-		tp->t_flags &= ~TF_NEEDOUTPUT;
 
 #if defined(TCP_SIGNATURE) && defined(DIAGNOSTIC)
 	if (tp->sack_enable && (tp->t_flags & TF_SIGNATURE))
