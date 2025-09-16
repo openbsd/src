@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2025/06/15 14:37:34 florian Exp $
+# $OpenBSD: Makefile,v 1.5 2025/09/16 15:12:50 sthen Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -32,7 +32,13 @@ clean: _SUBDIRUSE
 etc/acme-client.conf: acme-client.conf
 	mkdir -p etc
 	sed 's,$${.OBJDIR},${.OBJDIR},'\
-		${.CURDIR}/acme-client.conf >etc/acme-client.conf
+		${.CURDIR}/acme-client.conf > etc/acme-client.conf
+
+etc/acme-client-profile.conf: acme-client-profile.conf
+	mkdir -p etc
+	sed 's,$${.OBJDIR},${.OBJDIR},'\
+		${.CURDIR}/acme-client-profile.conf \
+		> etc/acme-client-profile.conf
 
 etc/httpd.conf: httpd.conf
 	mkdir -p etc
@@ -68,6 +74,15 @@ run-regress-acme: etc/acme-client.conf httpd-start pebble-start
 	    -v localhost
 	${SUDO} /usr/sbin/acme-client \
 	    -f ${.OBJDIR}/etc/acme-client.conf \
+	    -r -v localhost
+
+REGRESS_TARGETS +=	run-regress-acme-profile
+run-regress-acme-profile: etc/acme-client-profile.conf
+	${SUDO} /usr/sbin/acme-client \
+	    -f ${.OBJDIR}/etc/acme-client-profile.conf \
+	    -v localhost
+	${SUDO} /usr/sbin/acme-client \
+	    -f ${.OBJDIR}/etc/acme-client-profile.conf \
 	    -r -v localhost
 
 REGRESS_TARGETS +=	run-regress-cleanup
