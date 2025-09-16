@@ -1,4 +1,4 @@
-/* $OpenBSD: rpigpio.c,v 1.1 2024/03/25 17:24:03 patrick Exp $ */
+/* $OpenBSD: rpigpio.c,v 1.2 2025/09/16 08:42:59 kettenis Exp $ */
 /*
  * Copyright (c) 2024 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,6 +25,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #define GPIOx_STATUS(x)			(0x000 + (x) * 0x8)
@@ -90,6 +91,24 @@
 
 #define GPIO_NUM_PINS		54
 
+#define PAD_BIAS_MASK		0xc
+#define PAD_BIAS_DISABLE	0x0
+#define PAD_BIAS_PULL_DOWN	0x4
+#define PAD_BIAS_PULL_UP	0x8
+
+#define FUNC_MAX		8
+
+struct rpigpiopinctrl_pin {
+	char name[8];
+	uint8_t pin;
+	const char *func[FUNC_MAX + 1];
+};
+
+const struct rpigpiopinctrl_pin rpigpiopinctrl_pins[] = {
+	{ "gpio45", 45, { "pwm1", "i2c5", "spi7", "spi6", "i2s2", "gpio",
+	    "proc_rio", } },
+};
+
 struct rpigpio_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -99,12 +118,18 @@ struct rpigpio_softc {
 	int			sc_node;
 
 	struct gpio_controller	sc_gc;
+
+	const struct rpigpiopinctrl_pin *sc_pins;
+	u_int			sc_npins;
 };
 
 int rpigpio_match(struct device *, void *, void *);
 void rpigpio_attach(struct device *, struct device *, void *);
 
 const struct rpigpio_bank *rpigpio_get_bank(struct rpigpio_softc *, uint32_t);
+int rpigpio_pinctrl(uint32_t, void *);
+void rpigpio_config_func(struct rpigpio_softc *, const char *,
+    const char *, uint32_t);
 void rpigpio_config_pin(void *, uint32_t *, int);
 int rpigpio_get_pin(void *, uint32_t *);
 void rpigpio_set_pin(void *, uint32_t *, int);
@@ -158,6 +183,10 @@ rpigpio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_pins = rpigpiopinctrl_pins;
+	sc->sc_npins = nitems(rpigpiopinctrl_pins);
+	pinctrl_register(faa->fa_node, rpigpio_pinctrl, sc);
+
 	sc->sc_gc.gc_node = faa->fa_node;
 	sc->sc_gc.gc_cookie = sc;
 	sc->sc_gc.gc_config_pin = rpigpio_config_pin;
@@ -197,6 +226,119 @@ rpigpio_get_bank(struct rpigpio_softc *sc, uint32_t pin)
 
 	printf("%s: can't find pin %d\n", sc->sc_dev.dv_xname, pin);
 	return NULL;
+}
+
+int
+rpigpio_pinctrl(uint32_t phandle, void *cookie)
+{
+	struct rpigpio_softc *sc = cookie;
+	int node;
+	char function[16];
+	char *pins;
+	char *pin;
+	uint32_t bias;
+	int len;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return -1;
+
+	/* Function */
+	memset(function, 0, sizeof(function));
+	OF_getprop(node, "function", function, sizeof(function));
+	function[sizeof(function) - 1] = 0;
+
+	/* Bias */
+	if (OF_getproplen(node, "bias-pull-up") == 0)
+		bias = PAD_BIAS_PULL_UP;
+	else if (OF_getproplen(node, "bias-pull-down") == 0)
+		bias = PAD_BIAS_PULL_DOWN;
+	else
+		bias = PAD_BIAS_DISABLE;
+
+	len = OF_getproplen(node, "pins");
+	if (len <= 0) {
+		printf("%s: 0x%08x\n", __func__, phandle);
+		return -1;
+	}
+
+	pins = malloc(len, M_TEMP, M_WAITOK);
+	OF_getprop(node, "pins", pins, len);
+
+	pin = pins;
+	while (pin < pins + len) {
+		rpigpio_config_func(sc, pin, function, bias);
+		pin += strlen(pin) + 1;
+	}
+
+	free(pins, M_TEMP, len);
+
+	return 0;
+}
+
+void
+rpigpio_config_func(struct rpigpio_softc *sc, const char *name,
+    const char *function, uint32_t bias)
+{
+	const struct rpigpio_bank *bank;
+	uint32_t val;
+	int pin, func;
+
+	/* Find pin. */
+	for (pin = 0; pin < sc->sc_npins; pin++) {
+		if (strcmp(name, sc->sc_pins[pin].name) == 0)
+			break;
+	}
+	if (pin == sc->sc_npins) {
+		printf("%s: %s\n", __func__, name);
+		return;
+	}
+
+	/* Find function. */
+	for (func = 0; func <= FUNC_MAX; func++) {
+		if (sc->sc_pins[pin].func[func] &&
+		    strcmp(function, sc->sc_pins[pin].func[func]) == 0)
+			break;
+	}
+	if (func > FUNC_MAX) {
+		printf("%s: %s %s\n", __func__, name, function);
+		return;
+	}
+	pin = sc->sc_pins[pin].pin;
+
+	bank = rpigpio_get_bank(sc, pin);
+	if (bank == NULL)
+		return;
+	pin -= bank->start;
+
+	/* Configure pad. */
+	val = bus_space_read_4(sc->sc_iot, sc->sc_pads_ioh,
+	    bank->pads + PAD_CTRL(pin));
+
+	/* Set bias. */
+	val &= ~PAD_BIAS_MASK;
+	val |= bias;
+
+	/* Enable input/output. */
+	val &= ~PAD_CTRL_OUT_DIS;
+	val |= PAD_CTRL_IN_EN;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_pads_ioh,
+	    bank->pads + PAD_CTRL(pin), val);
+
+	/* Set function. */
+	val = bus_space_read_4(sc->sc_iot, sc->sc_gpio_ioh,
+	    bank->gpio + GPIOx_CTRL(pin));
+
+	val &= ~GPIOx_CTRL_FUNCSEL_MASK;
+	val |= GPIOx_CTRL_FUNCSEL(func);
+	val &= ~GPIOx_CTRL_OEOVER_MASK;
+	val |= GPIOx_CTRL_OEOVER_NRMFUNC;
+	val &= ~GPIOx_CTRL_OUTOVER_MASK;
+	val |= GPIOx_CTRL_OUTOVER_NRMFUNC;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_gpio_ioh,
+	    bank->gpio + GPIOx_CTRL(pin), val);
 }
 
 void
