@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.124 2025/09/16 09:18:55 florian Exp $	*/
+/*	$OpenBSD: in6.h,v 1.125 2025/09/16 09:19:16 florian Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -619,7 +619,7 @@ ifatoia6(struct ifaddr *ifa)
 	{ 0, 0 }, \
 	{ "hdrnestlimit", CTLTYPE_INT }, \
 	{ "dad_count", CTLTYPE_INT }, \
-	{ "auto_flowlabel", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "defmcasthlim", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \

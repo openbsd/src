@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.151 2025/07/24 18:02:19 mvs Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.152 2025/09/16 09:19:16 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -334,10 +334,8 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	mtx_leave(&table->inpt_mtx);
 
 	inp->inp_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-	if (atomic_load_int(&ip6_auto_flowlabel)) {
-		inp->inp_flowinfo |=
-		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
-	}
+	inp->inp_flowinfo |=
+	    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
 #if NSTOEPLITZ > 0
 	inp->inp_flowid = stoeplitz_ip6port(&inp->inp_faddr6,
 	    &inp->inp_laddr6, inp->inp_fport, inp->inp_lport);
@@ -730,10 +728,8 @@ in6_pcbset_addr(struct inpcb *inp, const struct sockaddr_in6 *fsin6,
 	mtx_leave(&table->inpt_mtx);
 
 	inp->inp_flowinfo &= ~IPV6_FLOWLABEL_MASK;
-	if (atomic_load_int(&ip6_auto_flowlabel)) {
-		inp->inp_flowinfo |=
-		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
-	}
+	inp->inp_flowinfo |=
+	    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
 #if NSTOEPLITZ > 0
 	inp->inp_flowid = stoeplitz_ip6port(&inp->inp_faddr6,
 	    &inp->inp_laddr6, inp->inp_fport, inp->inp_lport);

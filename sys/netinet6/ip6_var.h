@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.127 2025/09/16 09:18:55 florian Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.128 2025/09/16 09:19:16 florian Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -292,8 +292,6 @@ extern int	ip6_maxfrags;	/* Maximum fragments in reassembly queue */
 extern int	ip6_hdrnestlimit; /* upper limit of # of extension headers */
 extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 extern int	ip6_dad_pending;	/* number of currently running DADs */
-
-extern int ip6_auto_flowlabel;
 
 extern const struct pr_usrreqs rip6_usrreqs;
 
