@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmfan.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: pwmfan.c,v 1.3 2025/09/16 08:46:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -93,6 +93,9 @@ pwmfan_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nlevels = len / sizeof(uint32_t);
 
 	printf("\n");
+
+	/* Start fan at maximum speed. */
+	pwmfan_set_cooling_level(sc, NULL, sc->sc_nlevels - 1);
 
 	sc->sc_cd.cd_node = faa->fa_node;
 	sc->sc_cd.cd_cookie = sc;
