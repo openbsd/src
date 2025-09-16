@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.179 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: com.c,v 1.180 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ void	compwroff(struct com_softc *);
 void	cominit(bus_space_tag_t, bus_space_handle_t, int, int);
 
 struct cfdriver com_cd = {
-	NULL, "com", DV_TTY
+	NULL, "com", DV_TTY, CD_COCOVM
 };
 
 int	comdefaultrate = TTYDEF_SPEED;

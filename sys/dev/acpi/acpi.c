@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.452 2025/09/08 10:36:15 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.453 2025/09/16 12:18:10 hshoexer Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -184,7 +184,7 @@ struct acpi_softc *acpi_softc;
 extern struct aml_node aml_root;
 
 struct cfdriver acpi_cd = {
-	NULL, "acpi", DV_DULL
+	NULL, "acpi", DV_DULL, CD_COCOVM
 };
 
 uint8_t

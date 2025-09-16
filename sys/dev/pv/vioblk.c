@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.46 2025/08/01 14:41:03 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.47 2025/09/16 12:18:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -146,7 +146,7 @@ const struct cfattach vioblk_ca = {
 };
 
 struct cfdriver vioblk_cd = {
-	NULL, "vioblk", DV_DULL
+	NULL, "vioblk", DV_DULL, CD_COCOVM
 };
 
 const struct scsi_adapter vioblk_switch = {

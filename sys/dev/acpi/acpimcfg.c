@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimcfg.c,v 1.5 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpimcfg.c,v 1.6 2025/09/16 12:18:10 hshoexer Exp $ */
 /*
  * Copyright (c) 2010 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,7 +31,7 @@ const struct cfattach acpimcfg_ca = {
 };
 
 struct cfdriver acpimcfg_cd = {
-	NULL, "acpimcfg", DV_DULL
+	NULL, "acpimcfg", DV_DULL, CD_COCOVM
 };
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu_x86.c,v 1.1 2025/06/07 15:11:12 kettenis Exp $ */
+/* $OpenBSD: acpicpu_x86.c,v 1.2 2025/09/16 12:18:10 hshoexer Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -183,7 +183,7 @@ const struct cfattach acpicpu_ca = {
 };
 
 struct cfdriver acpicpu_cd = {
-	NULL, "acpicpu", DV_DULL
+	NULL, "acpicpu", DV_DULL, CD_COCOVM
 };
 
 const char *acpicpu_hids[] = {

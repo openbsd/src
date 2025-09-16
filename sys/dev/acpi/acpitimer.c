@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitimer.c,v 1.17 2023/02/04 19:19:37 cheloha Exp $ */
+/* $OpenBSD: acpitimer.c,v 1.18 2025/09/16 12:18:10 hshoexer Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -55,7 +55,7 @@ const struct cfattach acpitimer_ca = {
 };
 
 struct cfdriver acpitimer_cd = {
-	NULL, "acpitimer", DV_DULL
+	NULL, "acpitimer", DV_DULL, CD_COCOVM
 };
 
 int

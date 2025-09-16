@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.10 2025/04/01 08:43:33 sf Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.11 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -76,7 +76,7 @@ const struct cfattach acpipci_ca = {
 };
 
 struct cfdriver acpipci_cd = {
-	NULL, "acpipci", DV_DULL
+	NULL, "acpipci", DV_DULL, CD_COCOVM
 };
 
 const char *acpipci_hids[] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.33 2025/09/05 16:57:48 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.34 2025/09/16 12:18:10 hshoexer Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -224,7 +224,7 @@ const struct cfattach ioapic_ca = {
 };
 
 struct cfdriver ioapic_cd = {
-	NULL, "ioapic", DV_DULL
+	NULL, "ioapic", DV_DULL, CD_COCOVM
 };
 
 int

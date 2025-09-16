@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.58 2024/05/13 01:15:53 jsg Exp $ */
+/*	$OpenBSD: mpath.c,v 1.59 2025/09/16 12:18:10 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -79,7 +79,8 @@ const struct cfattach mpath_ca = {
 struct cfdriver mpath_cd = {
 	NULL,
 	"mpath",
-	DV_DULL
+	DV_DULL,
+	CD_COCOVM
 };
 
 void		mpath_cmd(struct scsi_xfer *);

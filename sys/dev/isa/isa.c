@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.51 2025/05/24 14:51:52 tedu Exp $	*/
+/*	$OpenBSD: isa.c,v 1.52 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/extent.h>
+#include <sys/reboot.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -84,7 +85,7 @@ const struct cfattach isa_ca = {
 };
 
 struct cfdriver isa_cd = {
-	NULL, "isa", DV_DULL, CD_INDIRECT
+	NULL, "isa", DV_DULL, CD_INDIRECT | CD_COCOVM
 };
 
 int
@@ -217,6 +218,10 @@ isascan(struct device *parent, void *match)
 	ia.ia_drq2 = cf->cf_drq2;
 	ia.ipa_ndrq = 2;
 	ia.ia_delaybah = sc->sc_delaybah;
+
+	if (ISSET(boothowto, RB_COCOVM) &&
+	    !ISSET(cf->cf_driver->cd_mode, CD_COCOVM))
+		return;
 
 	if (cf->cf_fstate == FSTATE_STAR) {
 		struct isa_attach_args ia2 = ia;

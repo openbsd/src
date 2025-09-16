@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.254 2024/09/04 07:54:53 mglocker Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.255 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ const struct cfattach scsibus_ca = {
 };
 
 struct cfdriver scsibus_cd = {
-	NULL, "scsibus", DV_DULL
+	NULL, "scsibus", DV_DULL, CD_COCOVM
 };
 
 struct scsi_quirk_inquiry_pattern {

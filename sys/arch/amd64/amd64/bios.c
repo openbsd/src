@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.47 2023/03/15 08:20:52 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.48 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -50,7 +50,7 @@ const struct cfattach bios_ca = {
 };
 
 struct cfdriver bios_cd = {
-	NULL, "bios", DV_DULL
+	NULL, "bios", DV_DULL, CD_COCOVM
 };
 
 struct smbios_entry smbios_entry;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.69 2025/06/16 20:21:33 kettenis Exp $	*/
+/*	$OpenBSD: device.h,v 1.70 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -139,6 +139,9 @@ struct cfattach {
 /* For cd_mode, below */
 #define CD_INDIRECT		1
 #define CD_SKIPHIBERNATE	2
+#define CD_COCOVM		4	/* Allow a device on a VM employing
+					 * confidential computing methods,
+					 * e.g. AMD SEV. */
 
 struct cfdriver {
 	void	**cd_devs;		/* devices found */

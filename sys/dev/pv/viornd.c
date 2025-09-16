@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.12 2024/12/20 22:18:27 sf Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.13 2025/09/16 12:18:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -66,7 +66,7 @@ const struct cfattach viornd_ca = {
 };
 
 struct cfdriver viornd_cd = {
-	NULL, "viornd", DV_DULL
+	NULL, "viornd", DV_DULL, CD_COCOVM
 };
 
 int

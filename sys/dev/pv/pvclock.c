@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.14 2025/06/20 14:06:34 sf Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.15 2025/09/16 12:18:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -125,7 +125,8 @@ const struct cfattach pvclock_ca = {
 struct cfdriver pvclock_cd = {
 	NULL,
 	"pvclock",
-	DV_DULL
+	DV_DULL,
+	CD_COCOVM
 };
 
 struct timecounter pvclock_timecounter = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.71 2025/08/01 14:41:03 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.72 2025/09/16 12:18:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -382,7 +382,7 @@ const struct cfattach vio_ca = {
 };
 
 struct cfdriver vio_cd = {
-	NULL, "vio", DV_IFNET
+	NULL, "vio", DV_IFNET, CD_COCOVM
 };
 
 int

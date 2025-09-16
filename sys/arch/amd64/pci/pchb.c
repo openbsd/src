@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.46 2022/02/21 11:03:39 mpi Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.47 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -122,7 +122,7 @@ const struct cfattach pchb_ca = {
 };
 
 struct cfdriver pchb_cd = {
-	NULL, "pchb", DV_DULL
+	NULL, "pchb", DV_DULL, CD_COCOVM
 };
 
 int	pchb_print(void *, const char *);

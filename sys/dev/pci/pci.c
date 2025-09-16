@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.130 2025/06/29 19:32:08 miod Exp $	*/
+/*	$OpenBSD: pci.c,v 1.131 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ const struct cfattach pci_ca = {
 };
 
 struct cfdriver pci_cd = {
-	NULL, "pci", DV_DULL
+	NULL, "pci", DV_DULL, CD_COCOVM
 };
 
 int	pci_ndomains;

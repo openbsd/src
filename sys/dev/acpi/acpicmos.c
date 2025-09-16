@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpicmos.c,v 1.2 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: acpicmos.c,v 1.3 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -37,7 +37,7 @@ const struct cfattach acpicmos_ca = {
 };
 
 struct cfdriver acpicmos_cd = {
-	NULL, "acpicmos", DV_DULL
+	NULL, "acpicmos", DV_DULL, CD_COCOVM
 };
 
 const char *acpicmos_hids[] = {

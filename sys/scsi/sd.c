@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.337 2024/09/04 07:54:53 mglocker Exp $	*/
+/*	$OpenBSD: sd.c,v 1.338 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -116,7 +116,7 @@ const struct cfattach sd_ca = {
 };
 
 struct cfdriver sd_cd = {
-	NULL, "sd", DV_DISK
+	NULL, "sd", DV_DISK, CD_COCOVM
 };
 
 const struct scsi_inquiry_pattern sd_patterns[] = {

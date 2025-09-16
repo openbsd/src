@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.17 2025/01/16 10:33:27 sf Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.18 2025/09/16 12:18:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -144,7 +144,7 @@ const struct cfattach viocon_ca = {
 };
 
 struct cfdriver viocon_cd = {
-	NULL, "viocon", DV_TTY
+	NULL, "viocon", DV_TTY, CD_COCOVM
 };
 
 static inline struct viocon_softc *

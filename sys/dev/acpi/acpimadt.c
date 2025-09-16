@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.40 2025/09/05 16:57:48 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.41 2025/09/16 12:18:10 hshoexer Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -48,7 +48,7 @@ const struct cfattach acpimadt_ca = {
 };
 
 struct cfdriver acpimadt_cd = {
-	NULL, "acpimadt", DV_DULL
+	NULL, "acpimadt", DV_DULL, CD_COCOVM
 };
 
 int acpimadt_validate(struct acpi_madt *);

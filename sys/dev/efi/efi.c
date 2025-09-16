@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.3 2025/03/27 10:19:29 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.4 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*
  * Copyright (c) 2022 3mdeb <contact@3mdeb.com>
  *
@@ -24,7 +24,7 @@
 #include <machine/efivar.h>
 
 struct cfdriver efi_cd = {
-	NULL, "efi", DV_DULL
+	NULL, "efi", DV_DULL, CD_COCOVM
 };
 
 int	efiioc_get_table(struct efi_softc *sc, void *);

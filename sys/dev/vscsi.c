@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.63 2024/05/13 01:15:50 jsg Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.64 2025/09/16 12:18:10 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -89,7 +89,8 @@ const struct cfattach vscsi_ca = {
 struct cfdriver vscsi_cd = {
 	NULL,
 	"vscsi",
-	DV_DULL
+	DV_DULL,
+	CD_COCOVM
 };
 
 void		vscsi_cmd(struct scsi_xfer *);

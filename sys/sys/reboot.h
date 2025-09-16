@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.h,v 1.20 2021/10/26 16:29:49 deraadt Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.21 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #define	RB_RESET	0x08000	/* just reset, no cleanup  */
 #define	RB_GOODRANDOM	0x10000	/* excellent random seed loaded */
 #define	RB_UNHIBERNATE	0x20000	/* unhibernate */
+#define RB_COCOVM	0x40000	/* booting confidential VM (e.g. SEV enabled) */
 
 /*
  * Constants for converting boot-style device number to type,

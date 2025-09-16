@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.53 2025/08/23 10:15:49 sf Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.54 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ const struct cfattach mainbus_ca = {
 };
 
 struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
+	NULL, "mainbus", DV_DULL, CD_COCOVM
 };
 
 int	mainbus_print(void *, const char *);

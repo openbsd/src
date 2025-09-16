@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.97 2022/11/07 14:25:44 robert Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.98 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -216,6 +216,9 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 			if (cf->cf_driver->cd_class == DV_TAPE)
 				continue;
 		}
+		if (ISSET(boothowto, RB_COCOVM) &&
+		    !ISSET(cf->cf_driver->cd_mode, CD_COCOVM))
+			continue;
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (parent->dv_cfdata == &cfdata[*p])
 				mapply(&m, cf);

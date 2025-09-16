@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.13 2024/12/20 22:18:27 sf Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.14 2025/09/16 12:18:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -72,7 +72,7 @@ const struct cfattach vmmci_ca = {
 #define VMMCI_F_SYNCRTC		(1ULL<<2)
 
 struct cfdriver vmmci_cd = {
-	NULL, "vmmci", DV_DULL
+	NULL, "vmmci", DV_DULL, CD_COCOVM
 };
 
 int

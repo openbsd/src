@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.52 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.53 2025/09/16 12:18:10 hshoexer Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -77,7 +77,7 @@ const struct cfattach acpiprt_ca = {
 };
 
 struct cfdriver acpiprt_cd = {
-	NULL, "acpiprt", DV_DULL
+	NULL, "acpiprt", DV_DULL, CD_COCOVM
 };
 
 void	acpiprt_prt_add(struct acpiprt_softc *, struct aml_value *);

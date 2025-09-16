@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.72 2023/04/13 15:07:43 miod Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.73 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ const struct cfattach ppb_ca = {
 };
 
 struct cfdriver ppb_cd = {
-	NULL, "ppb", DV_DULL
+	NULL, "ppb", DV_DULL, CD_COCOVM
 };
 
 void	ppb_alloc_busrange(struct ppb_softc *, struct pci_attach_args *,

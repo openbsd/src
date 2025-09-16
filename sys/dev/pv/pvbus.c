@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.29 2024/08/19 00:03:12 deraadt Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.30 2025/09/16 12:18:10 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -68,7 +68,8 @@ const struct cfattach pvbus_ca = {
 struct cfdriver pvbus_cd = {
 	NULL,
 	"pvbus",
-	DV_DULL
+	DV_DULL,
+	CD_COCOVM
 };
 
 struct pvbus_type {

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.434 2025/09/15 14:15:54 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.435 2025/09/16 12:18:10 hshoexer Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -88,7 +88,7 @@ const struct cfattach softraid_ca = {
 };
 
 struct cfdriver softraid_cd = {
-	NULL, "softraid", DV_DULL
+	NULL, "softraid", DV_DULL, CD_COCOVM
 };
 
 /* scsi & discipline */

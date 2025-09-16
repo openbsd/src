@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.302 2025/08/15 04:21:00 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.303 2025/09/16 12:18:10 hshoexer Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1474,6 +1474,8 @@ init_x86_64(paddr_t first_avail)
 		cpu_init_early_vctrap(first_avail);
 		first_avail += 2 * NBPG;
 	}
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ENABLED))
+		boothowto |= RB_COCOVM;
 
 	/*
 	 * locore0 mapped 3 pages for use before the pmap is initialized
