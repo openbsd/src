@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.c,v 1.10 2024/07/01 14:13:43 kettenis Exp $	*/
+/*	$OpenBSD: ofw_thermal.c,v 1.11 2025/09/16 08:52:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -511,6 +511,7 @@ thermal_zone_init(int node)
 				cd->cd_phandle = cdev[0];
 				cd->cd_level = 0;
 				cd->cd_active = 0;
+				cdev_set_level(cdev, cd->cd_level);
 				LIST_INSERT_HEAD(&tz->tz_cdevs, cd, cd_list);
 			}
 			cdev = cdev_next_cdev(cdev);
