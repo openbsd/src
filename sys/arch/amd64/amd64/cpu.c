@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.197 2025/09/16 12:18:10 hshoexer Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.198 2025/09/16 13:34:33 dv Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -856,12 +856,6 @@ cpu_init(struct cpu_info *ci)
 	} else {
 		fpureset();
 	}
-
-#if NVMM > 0
-	/* Re-enable VMM if needed */
-	if (ci->ci_flags & CPUF_VMM)
-		start_vmm_on_cpu(ci);
-#endif /* NVMM > 0 */
 
 #ifdef MULTIPROCESSOR
 	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
