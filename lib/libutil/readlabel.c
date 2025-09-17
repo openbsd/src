@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.15 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.16 2025/09/17 16:16:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -55,7 +55,7 @@ readlabelfs(char *device, int verbose)
 	struct disklabel dk;
 	char part, *type;
 	struct stat sbuf;
-	int fd = -1;
+	int fd = -1, partno;
 
 	/* Perform disk mapping if device is given as a DUID. */
 	if (isduid(device, 0)) {
@@ -124,7 +124,13 @@ readlabelfs(char *device, int verbose)
 	}
 
 disklabel:
-
+	partno = DL_PARTNAME2NUM(part);
+	if (partno == -1) {
+		if (verbose)
+			warn("%s: diskmap provided weird partition", rpath);
+		close(fd);
+		return NULL;
+	}
 	if (ioctl(fd, DIOCGDINFO, &dk) == -1) {
 		if (verbose)
 			warn("%s: couldn't read disklabel", rpath);
@@ -133,12 +139,12 @@ disklabel:
 	}
 	close(fd);
 
-	if (dk.d_partitions[part - 'a'].p_fstype >= FSMAXTYPES) {
+	if (dk.d_partitions[partno].p_fstype >= FSMAXTYPES) {
 		if (verbose)
 			warnx("%s: bad filesystem type in label", rpath);
 		return (NULL);
 	}
 
-	type = fstypesnames[dk.d_partitions[part - 'a'].p_fstype];
+	type = fstypesnames[dk.d_partitions[partno].p_fstype];
 	return ((type[0] == '\0') ? NULL : type);
 }
