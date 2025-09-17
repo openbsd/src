@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_installboot.c,v 1.14 2025/02/22 21:19:22 kettenis Exp $	*/
+/*	$OpenBSD: efi_installboot.c,v 1.15 2025/09/17 16:12:10 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -570,7 +570,7 @@ findgptefisys(int devfd, struct disklabel *dl, int *gpartp,
 		for (i = 0; i < MAXPARTITIONS; i++) {
 			if (DL_GETPSIZE(&dl->d_partitions[i]) > 0 &&
 			    DL_GETPOFFSET(&dl->d_partitions[i]) == start)
-				return ('a' + i);
+				return (DL_PARTNUM2NAME(i));
 		}
 	}
 
@@ -610,7 +610,7 @@ findmbrfat(int devfd, struct disklabel *dl)
 		for (i = 0; i < MAXPARTITIONS; i++) {
 			if (DL_GETPSIZE(&dl->d_partitions[i]) > 0 &&
 			    DL_GETPOFFSET(&dl->d_partitions[i]) == start)
-				return ('a' + i);
+				return (DL_PARTNUM2NAME(i));
 		}
 	}
 

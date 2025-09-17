@@ -1,4 +1,4 @@
-/*	$OpenBSD: macppc_installboot.c,v 1.11 2023/04/26 18:04:21 kn Exp $	*/
+/*	$OpenBSD: macppc_installboot.c,v 1.12 2025/09/17 16:12:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -284,7 +284,7 @@ findmbrfat(int devfd, struct disklabel *dl)
 		for (i = 0; i < MAXPARTITIONS; i++) {
 			if (DL_GETPSIZE(&dl->d_partitions[i]) > 0 &&
 			    DL_GETPOFFSET(&dl->d_partitions[i]) == start)
-				return ('a' + i);
+				return (DL_PARTNUM2NAME(i));
 		}
 	}
 

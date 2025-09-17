@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootstrap.c,v 1.13 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: bootstrap.c,v 1.14 2025/09/17 16:12:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -86,7 +86,7 @@ bootstrap(int devfd, char *dev, char *bootfile)
 		fprintf(stderr, "ensuring used partitions do not overlap "
 		    "with bootstrap sectors 0-%zu\n", bootsec);
 	for (i = 0; i < dl.d_npartitions; i++) {
-		part = 'a' + i;
+		part = DL_PARTNUM2NAME(i);
 		pp = &dl.d_partitions[i];
 		if (i == RAW_PART)
 			continue;

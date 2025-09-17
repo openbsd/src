@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.22 2025/02/19 21:30:46 kettenis Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.23 2025/09/17 16:12:10 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
@@ -73,7 +73,7 @@ sr_install_bootblk(int devfd, int vol, int disk)
 	}
 
 	/* Determine poffset and set symbol value. */
-	pp = &dl.d_partitions[part - 'a'];
+	pp = &dl.d_partitions[DL_PARTNAME2NUM(part)];
 	if (pp->p_offseth != 0)
 		errx(1, "partition offset too high");
 	poffset = pp->p_offset;			/* Offset of RAID partition. */
