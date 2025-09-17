@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.78 2025/09/17 09:23:43 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.79 2025/09/17 09:32:55 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -275,6 +275,10 @@ file	arch/arm64/dev/rpiclock.c		rpiclock
 device	rpigpio
 attach	rpigpio at fdt
 file	arch/arm64/dev/rpigpio.c		rpigpio
+
+device	rpipwm
+attach	rpipwm at fdt
+file	arch/arm64/dev/rpipwm.c			rpipwm
 
 device	rpirtc
 attach	rpirtc at fdt
