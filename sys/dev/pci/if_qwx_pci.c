@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.28 2025/09/11 11:13:53 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.29 2025/09/17 07:41:45 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -3018,15 +3018,15 @@ qwx_mhi_fw_load_handler(struct qwx_pci_softc *psc)
 	u_char *data;
 	size_t len;
 
+	ret = snprintf(amss_path, sizeof(amss_path), "%s-%s-%s",
+	    ATH11K_FW_DIR, sc->hw_params.fw.dir, ATH11K_AMSS_FILE);
+	if (ret < 0 || ret >= sizeof(amss_path))
+		return ENOSPC;
+
 	if (sc->fw_img[QWX_FW_AMSS].data) {
 		data = sc->fw_img[QWX_FW_AMSS].data;
 		len = sc->fw_img[QWX_FW_AMSS].size;
 	} else {
-		ret = snprintf(amss_path, sizeof(amss_path), "%s-%s-%s",
-		    ATH11K_FW_DIR, sc->hw_params.fw.dir, ATH11K_AMSS_FILE);
-		if (ret < 0 || ret >= sizeof(amss_path))
-			return ENOSPC;
-
 		ret = loadfirmware(amss_path, &data, &len);
 		if (ret) {
 			printf("%s: could not read %s (error %d)\n",
