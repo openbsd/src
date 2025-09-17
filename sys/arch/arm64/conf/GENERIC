@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.305 2025/09/08 19:31:05 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.306 2025/09/17 09:23:43 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -254,6 +254,7 @@ bse*		at acpi?
 dwctwo*		at fdt?
 usb*		at dwctwo?
 rpone*		at pci?
+rpiclock*	at fdt? early 1
 rpigpio*	at fdt? early 1
 rpirtc*		at fdt?
 
