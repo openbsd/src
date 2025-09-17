@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_icevar.h,v 1.8 2025/08/19 11:46:52 stsp Exp $	*/
+/*	$OpenBSD: if_icevar.h,v 1.9 2025/09/17 12:54:19 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -4537,6 +4537,7 @@ struct ice_pf_sw_stats {
 struct ice_tx_map {
 	struct mbuf		*txm_m;
 	bus_dmamap_t		 txm_map;
+	bus_dmamap_t		 txm_map_tso;
 	unsigned int		 txm_eop;
 };
 

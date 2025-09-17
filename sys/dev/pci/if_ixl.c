@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.108 2025/06/24 11:03:10 stsp Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.109 2025/09/17 12:54:19 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -900,6 +900,7 @@ struct ixl_rx_wb_desc_32 {
 } __packed __aligned(16);
 
 #define IXL_TX_PKT_DESCS		8
+#define IXL_TX_TSO_PKT_DESCS		128
 #define IXL_TX_QUEUE_ALIGN		128
 #define IXL_RX_QUEUE_ALIGN		128
 
@@ -1142,6 +1143,7 @@ struct ixl_chip;
 struct ixl_tx_map {
 	struct mbuf		*txm_m;
 	bus_dmamap_t		 txm_map;
+	bus_dmamap_t		 txm_map_tso;
 	unsigned int		 txm_eop;
 };
 
@@ -2584,6 +2586,12 @@ ixl_txr_alloc(struct ixl_softc *sc, unsigned int qid)
 		    &txm->txm_map) != 0)
 			goto uncreate;
 
+		if (bus_dmamap_create(sc->sc_dmat,
+		    MAXMCLBYTES, IXL_TX_TSO_PKT_DESCS, IXL_MAX_DMA_SEG_SIZE, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    &txm->txm_map_tso) != 0)
+			goto uncreate;
+
 		txm->txm_eop = -1;
 		txm->txm_m = NULL;
 	}
@@ -2600,10 +2608,10 @@ uncreate:
 	for (i = 0; i < sc->sc_tx_ring_ndescs; i++) {
 		txm = &maps[i];
 
-		if (txm->txm_map == NULL)
-			continue;
-
-		bus_dmamap_destroy(sc->sc_dmat, txm->txm_map);
+		if (txm->txm_map != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, txm->txm_map);
+		if (txm->txm_map_tso != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, txm->txm_map_tso);
 	}
 
 	ixl_dmamem_free(sc, &txr->txr_mem);
@@ -2680,7 +2688,10 @@ ixl_txr_clean(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 		if (txm->txm_m == NULL)
 			continue;
 
-		map = txm->txm_map;
+		if (ISSET(txm->txm_m->m_pkthdr.csum_flags, M_TCP_TSO))
+			map = txm->txm_map_tso;
+		else
+			map = txm->txm_map;
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, map);
@@ -2739,6 +2750,7 @@ ixl_txr_free(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 		txm = &maps[i];
 
 		bus_dmamap_destroy(sc->sc_dmat, txm->txm_map);
+		bus_dmamap_destroy(sc->sc_dmat, txm->txm_map_tso);
 	}
 
 	ixl_dmamem_free(sc, &txr->txr_mem);
@@ -2885,7 +2897,7 @@ ixl_start(struct ifqueue *ifq)
 
 	for (;;) {
 		/* We need one extra descriptor for TSO packets. */
-		if (free <= (IXL_TX_PKT_DESCS + 1)) {
+		if (free <= (IXL_TX_TSO_PKT_DESCS + 1)) {
 			ifq_set_oactive(ifq);
 			break;
 		}
@@ -2897,7 +2909,10 @@ ixl_start(struct ifqueue *ifq)
 		offload = ixl_tx_setup_offload(m, txr, prod);
 
 		txm = &txr->txr_maps[prod];
-		map = txm->txm_map;
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO))
+			map = txm->txm_map_tso;
+		else
+			map = txm->txm_map;
 
 		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
 			prod++;
@@ -2988,7 +3003,10 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 		if (dtype != htole64(IXL_TX_DESC_DTYPE_DONE))
 			break;
 
-		map = txm->txm_map;
+		if (ISSET(txm->txm_m->m_pkthdr.csum_flags, M_TCP_TSO))
+			map = txm->txm_map_tso;
+		else
+			map = txm->txm_map;
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE);

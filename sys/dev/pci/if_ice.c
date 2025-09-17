@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.58 2025/08/19 11:46:52 stsp Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.59 2025/09/17 12:54:19 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -13432,8 +13432,10 @@ ice_txq_clean(struct ice_softc *sc, struct ice_tx_queue *txq)
 
 		if (txm->txm_m == NULL)
 			continue;
-
-		map = txm->txm_map;
+		if (ISSET(txm->txm_m->m_pkthdr.csum_flags, M_TCP_TSO))
+			map = txm->txm_map_tso;
+		else
+			map = txm->txm_map;
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, map);
@@ -13868,10 +13870,10 @@ ice_tso_detect_sparse(struct mbuf *m, struct ether_extracted *ext,
 		hlen -= seglen;
 	}
 
-	maxsegs = ICE_MAX_TX_SEGS - hdrs;
+	maxsegs = ICE_MAX_TSO_SEGS - hdrs;
 
 	/* We must count the headers, in order to verify that they take up
-	 * 3 or fewer descriptors. However, we don't need to check the data
+	 * 128 or fewer descriptors. However, we don't need to check the data
 	 * if the total segments is small.
 	 */
 	if (nsegs <= maxsegs)
@@ -14066,7 +14068,11 @@ ice_start(struct ifqueue *ifq)
 		}
 
 		txm = &txq->tx_map[prod];
-		map = txm->txm_map;
+
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO))
+			map = txm->txm_map_tso;
+		else
+			map = txm->txm_map;
 
 		if (ice_load_mbuf(sc->sc_dmat, map, m) != 0) {
 			ifq->ifq_errors++;
@@ -29478,7 +29484,10 @@ ice_txeof(struct ice_softc *sc, struct ice_tx_queue *txq)
 		if (dtype != htole64(ICE_TX_DESC_DTYPE_DESC_DONE))
 			break;
 
-		map = txm->txm_map;
+		if (ISSET(txm->txm_m->m_pkthdr.csum_flags, M_TCP_TSO))
+			map = txm->txm_map_tso;
+		else
+			map = txm->txm_map;
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE);
@@ -29601,6 +29610,11 @@ ice_free_tx_queues(struct ice_softc *sc)
 				bus_dmamap_destroy(sc->sc_dmat, map->txm_map);
 				map->txm_map = NULL;
 			}
+			if (map->txm_map_tso != NULL) {
+				bus_dmamap_destroy(sc->sc_dmat,
+				    map->txm_map_tso);
+				map->txm_map_tso = NULL;
+			}
 		}
 		free(txq->tx_map, M_DEVBUF, txq->desc_count * sizeof(*map));
 		txq->tx_map = NULL;
@@ -29675,6 +29689,16 @@ ice_tx_queues_alloc(struct ice_softc *sc)
 			    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 			    &map->txm_map) != 0) {
 				printf("%s: could not allocate Tx DMA map\n",
+				    sc->sc_dev.dv_xname);
+				err = ENOMEM;
+				goto free_tx_queues;
+			}
+
+			if (bus_dmamap_create(sc->sc_dmat, MAXMCLBYTES,
+			    ICE_MAX_TSO_SEGS, ICE_MAX_DMA_SEG_SIZE, 0,
+			    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+			    &map->txm_map_tso) != 0) {
+				printf("%s: could not allocate TSO DMA map\n",
 				    sc->sc_dev.dv_xname);
 				err = ENOMEM;
 				goto free_tx_queues;
