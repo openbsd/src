@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.37 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.38 2025/09/17 20:23:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -516,9 +516,8 @@ biosopen(struct open_file *f, ...)
 	}
 
 	/* Get partition. */
-	if ('a' <= *cp && *cp <= 'p')
-		part = *cp++ - 'a';
-	else {
+	part = DL_PARTNAME2NUM(*cp++);
+	if (part == -1) {
 		printf("Bad partition\n");
 		return EPART;
 	}
@@ -571,7 +570,7 @@ biosopen(struct open_file *f, ...)
 			check_hibernate(dip);
 		}
 
-		bv->sbv_part = part + 'a';
+		bv->sbv_part = DL_PARTNUM2NAME(part);
 
 		bootdev_dip = dip;
 		f->f_devdata = dip;

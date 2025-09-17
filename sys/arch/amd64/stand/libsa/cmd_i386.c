@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.15 2022/03/29 13:57:52 deraadt Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.16 2025/09/17 20:23:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -105,7 +105,7 @@ Xboot(void)
 
 	dev = (cmd.argv[1][0] == 'h')?0x80:0;
 	dev += (cmd.argv[1][2] - '0');
-	part = (cmd.argv[1][3] - 'a');
+	part = DL_PARTNAME2NUM(cmd.argv[1][3]);
 
 	if (part >= 0)
 		printf("[%x,%d]\n", dev, part);
