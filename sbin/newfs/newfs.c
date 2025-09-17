@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.118 2024/01/09 03:16:00 guenther Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.119 2025/09/17 10:51:17 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 	struct stat st;
 	struct statfs *mp;
 	struct rlimit rl;
-	int fsi = -1, oflagset = 0, fso, len, n, maxpartitions;
+	int fsi = -1, oflagset = 0, fso, len, n;
 	char *cp = NULL, *s1, *s2, *special, *opstring, *realdev;
 #ifdef MFS
 	char mountfromname[BUFSIZ];
@@ -198,9 +198,6 @@ main(int argc, char *argv[])
 		mfs = Nflag = quiet = Oflag = 1;
 
 	getphysmem();
-	maxpartitions = getmaxpartitions();
-	if (maxpartitions > 26)
-		fatal("insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
 	    "O:P:T:b:c:e:f:i:m:o:s:" :
