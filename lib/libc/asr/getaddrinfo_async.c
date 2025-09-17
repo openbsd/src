@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.63 2024/08/21 05:53:10 florian Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.64 2025/09/17 10:47:30 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -272,17 +272,10 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 		}
 
 		/* Try numeric addresses first */
-		for (family = iter_family(as, 1);
-		    family != -1;
-		    family = iter_family(as, 0)) {
-
-			if (_asr_sockaddr_from_str(&sa.sa, family,
-			    as->as.ai.hostname) == -1)
-				continue;
-
+		if (_asr_sockaddr_from_str(&sa.sa, ai->ai_family,
+		    as->as.ai.hostname) != -1) {
 			if ((r = addrinfo_add(as, &sa.sa, as->as.ai.hostname)))
 				ar->ar_gai_errno = r;
-			break;
 		}
 		if (ar->ar_gai_errno || as->as_count) {
 			async_set_state(as, ASR_STATE_HALT);
