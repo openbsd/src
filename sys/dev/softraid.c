@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.436 2025/09/17 16:20:49 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.437 2025/09/17 22:05:34 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -5095,7 +5095,7 @@ sr_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size, int op, voi
 	struct device *dv;
 	daddr_t key_blkno;
 	uint32_t sub_raidoff;  /* ofs of sr part in underlying dev */
-	struct disklabel dl;
+	static struct disklabel dl;	/* XXX too big for kernel stack */
 	struct partition *pp;
 	size_t i, j;
 	u_char iv[8];
