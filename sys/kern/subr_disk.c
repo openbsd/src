@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.281 2025/09/15 14:15:54 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.282 2025/09/17 18:54:49 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -995,7 +995,7 @@ diskerr(struct buf *bp, char *dname, char *what, int pri, int blkdone,
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
 	int (*pr)(const char *, ...) __attribute__((__format__(__kprintf__,1,2)));
-	char partname = 'a' + part;
+	char partname = DL_PARTNUM2NAME(part);
 	daddr_t sn;
 
 	if (pri != LOG_PRINTF) {
@@ -1383,10 +1383,11 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 	if (len == 0)
 		return (NULL);
 	c = str[len-1];
-	if (c >= 'a' && (c - 'a') < MAXPARTITIONS) {
-		part = c - 'a';
-		len -= 1;
-	}
+	part = DL_PARTNAME2NUM(c);
+	if (part == -1 || part >= MAXPARTITIONS) {
+		part = defpart;
+	} else
+		len -=1;
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (dv->dv_class == DV_DISK &&
@@ -1480,7 +1481,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 			if (bootdv != NULL) {
 				printf(" (default %s", bootdv->dv_xname);
 				if (bootdv->dv_class == DV_DISK)
-					printf("%c", 'a' + part);
+					printf("%c", DL_PARTNUM2NAME(part));
 				printf(")");
 			}
 			printf(": ");
@@ -1493,6 +1494,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 				reboot(exitflags);
 			if (len == 0 && bootdv != NULL) {
 				strlcpy(buf, bootdv->dv_xname, sizeof buf);
+				//strlcat(buf, DL_PARTNUM2NAME(part), sizeof buf);
 				len = strlen(buf);
 			}
 			if (len > 0 && buf[len - 1] == '*') {
@@ -1607,7 +1609,7 @@ gotswap:
 		unit = DISKUNIT(rootdev);
 		part = DISKPART(rootdev);
 		snprintf(buf, sizeof buf, "%s%d%c",
-		    findblkname(majdev), unit, 'a' + part);
+		    findblkname(majdev), unit, DL_PARTNUM2NAME(part));
 		rootdv = parsedisk(buf, strlen(buf), 0, &nrootdev);
 		if (rootdv == NULL)
 			panic("root device (%s) not found", buf);
@@ -1637,10 +1639,10 @@ gotswap:
 		return;
 	}
 
-	printf("root on %s%c", rootdv->dv_xname, 'a' + part);
+	printf("root on %s%c", rootdv->dv_xname, DL_PARTNUM2NAME(part));
 
 	if (dk && dk->dk_device == rootdv)
-		printf(" (%s.%c)", duid_format(rootduid), 'a' + part);
+		printf(" (%s.%c)", duid_format(rootduid), DL_PARTNUM2NAME(part));
 
 	/*
 	 * Make the swap partition on the root drive the primary swap.
@@ -1664,11 +1666,10 @@ gotswap:
 	}
 	if (swdevt[0] != NODEV)
 		printf(" swap on %s%d%c", findblkname(major(swdevt[0])),
-		    DISKUNIT(swdevt[0]),
-		    'a' + DISKPART(swdevt[0]));
+		    DISKUNIT(swdevt[0]), DL_PARTNUM2NAME(DISKPART(swdevt[0])));
 	if (dumpdev != NODEV)
 		printf(" dump on %s%d%c", findblkname(major(dumpdev)),
-		    DISKUNIT(dumpdev), 'a' + DISKPART(dumpdev));
+		    DISKUNIT(dumpdev), DL_PARTNUM2NAME(DISKPART(dumpdev)));
 	printf("\n");
 }
 
@@ -1751,7 +1752,7 @@ disk_map(const char *path, char *mappath, int size, int flags)
 	struct disk *dk, *mdk;
 	u_char uid[8];
 	char c, part;
-	int i;
+	int i, partno;
 
 	/*
 	 * Attempt to map a request for a disklabel UID to the correct device.
@@ -1773,12 +1774,14 @@ disk_map(const char *path, char *mappath, int size, int flags)
 		return -1;
 
 	/* Get partition. */
-	if (flags & DM_OPENPART)
-		part = 'a' + RAW_PART;
-	else
+	if (flags & DM_OPENPART) {
+		partno = RAW_PART;
+		part = DL_PARTNUM2NAME(partno);
+	} else {
 		part = path[17];
-
-	if (part < 'a' || part >= 'a' + MAXPARTITIONS)
+		partno = DL_PARTNAME2NUM(part);
+	}
+	if (partno == -1)
 		return -1;
 
 	/* Derive label UID. */
