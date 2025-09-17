@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.585 2025/08/06 16:50:53 florian Exp $
+#	$OpenBSD: rc,v 1.586 2025/09/17 10:13:15 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -295,6 +295,26 @@ run_upgrade_script() {
 	rm -f /etc/rc.$_suffix.run
 }
 
+# If system still has old 16-partition disklabel, create fallback device nodes
+# for the root filesystem to allow repair in a future kernel with 64-partition
+# disklabel.  This is important if root isn't on sd0 or wd0.  When things fail:
+#   fsck /dev/rrootdisk
+#   mount -uw /dev/rootdisk /
+#   cd /dev && ./MAKEDEV redodisks
+rootdisk_nodes() {
+	if [ $(sysctl -n kern.maxpartitions) = 16 ]; then
+		_rootdev=$(mount | grep ' / ' | cut -d' ' -f1)
+		_maj=$(stat -f "%Hr" $_rootdev)
+		_min=$(stat -f "%Lr" $_rootdev)
+		_rrootdev=$(echo $_rootdev | sed -e 's,dev/,dev/r,')
+		_rmaj=$(stat -f "%Hr" $_rrootdev)
+		_min=$((_min / 16 * 64))
+		rm -f /dev/rrootdisk /dev/rootdisk
+		mknod -m 600 /dev/rrootdisk c $_rmaj $_min
+		mknod -m 600 /dev/rootdisk b $_maj $_min
+	fi
+}
+
 # Check filesystems, optionally by using a fsck(8) flag.
 # Usage: do_fsck [-flag]
 do_fsck() {
@@ -419,6 +439,8 @@ chmod og-rwx /bsd
 ln -fh /bsd /bsd.booted
 
 rm -f /fastboot
+
+rootdisk_nodes
 
 # Set flags on ttys.
 ttyflags -a
