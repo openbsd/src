@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.435 2025/09/16 12:18:10 hshoexer Exp $ */
+/* $OpenBSD: softraid.c,v 1.436 2025/09/17 16:20:49 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -393,7 +393,7 @@ sr_meta_getdevname(struct sr_softc *sc, dev_t dev, char *buf, int size)
 	if (name == NULL)
 		return;
 
-	snprintf(buf, size, "%s%d%c", name, unit, part + 'a');
+	snprintf(buf, size, "%s%d%c", name, unit, DL_PARTNUM2NAME(part));
 }
 
 int
