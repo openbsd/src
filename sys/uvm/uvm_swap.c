@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.174 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.175 2025/09/17 11:32:20 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1989,7 +1989,7 @@ swapmount(void)
 	/* Construct a potential path to swap */
 	if ((nam = findblkname(major(swap_dev))))
 		snprintf(path, sizeof(path), "/dev/%s%d%c", nam,
-		    DISKUNIT(swap_dev), 'a' + DISKPART(swap_dev));
+		    DISKUNIT(swap_dev), DL_PARTNUM2NAME(DISKPART(swap_dev)));
 	else
 		snprintf(path, sizeof(path), "blkdev0x%x",
 		    swap_dev);
