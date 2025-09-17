@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.419 2025/09/03 18:14:07 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.420 2025/09/17 16:06:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -783,7 +783,7 @@ editor_resize(struct disklabel *lp, const char *p)
 
 	if (shrunk != -1)
 		fprintf(stderr, "Partition %c shrunk to %llu sectors to make "
-		    "room\n", 'a' + shrunk,
+		    "room\n", DL_PARTNUM2NAME(shrunk),
 		    DL_GETPSIZE(&label.d_partitions[shrunk]));
 	*lp = label;
 }
@@ -927,7 +927,7 @@ editor_change(struct disklabel *lp, const char *p)
 	pp = &lp->d_partitions[partno];
 	printf("Partition %c is currently %llu sectors in size, and can have "
 	    "a maximum\nsize of %llu sectors.\n",
-	    'a' + partno, DL_GETPSIZE(pp), max_partition_size(lp, partno));
+	    DL_PARTNUM2NAME(partno), DL_GETPSIZE(pp), max_partition_size(lp, partno));
 
 	/* Get new size */
 	get_size(lp, partno);
@@ -1016,7 +1016,7 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 				if (partno >= lp->d_npartitions ||
 				    DL_GETPSIZE(pp) == 0 ||
 				    pp->p_fstype == FS_UNUSED) {
-					buf[0] = 'a' + partno;
+					buf[0] = DL_PARTNUM2NAME(partno);
 					p = buf;
 					break;
 				}
@@ -1032,12 +1032,12 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 	if (delete && strlen(p) == 1 && *p == '*')
 		return lp->d_npartitions;
 
-	if (strlen(p) > 1 || *p < 'a' || *p > maxpart || *p == 'c') {
-		fprintf(stderr, helpfmt, maxpart, delete ? ", or '*'" : "");
+	partno = DL_PARTNAME2NUM(*p);
+	if (strlen(p) > 1 || partno == -1 || *p == 'c') {
+		fprintf(stderr, helpfmt, delete ? ", or '*'" : "");
 		goto done;
 	}
 
-	partno = *p - 'a';
 	pp = &lp->d_partitions[partno];
 	inuse = partno < lp->d_npartitions && DL_GETPSIZE(pp) > 0 &&
 	    pp->p_fstype != FS_UNUSED;
@@ -1200,13 +1200,13 @@ has_overlap(struct disklabel *lp)
 			return 0;
 		}
 
-		p1 = 'a' + (spp[i] - lp->d_partitions);
-		p2 = 'a' + (spp[i+1] - lp->d_partitions);
+		p1 = DL_PARTNUM2NAME(spp[i] - lp->d_partitions);
+		p2 = DL_PARTNUM2NAME(spp[i+1] - lp->d_partitions);
 		printf("\nError, partitions %c and %c overlap:\n", p1, p2);
 		printf("#    %16.16s %16.16s  fstype [fsize bsize    cpg]\n",
 		    "size", "offset");
-		display_partition(stdout, lp, p1 - 'a', 0);
-		display_partition(stdout, lp, p2 - 'a', 0);
+		display_partition(stdout, lp, DL_PARTNAME2NUM(p1), 0);
+		display_partition(stdout, lp, DL_PARTNAME2NUM(p2), 0);
 
 		for (;;) {
 			printf("Disable which one? (%c %c) ", p1, p2);
@@ -1216,7 +1216,7 @@ has_overlap(struct disklabel *lp)
 			if (linelen == 2 && (line[0] == p1 || line[0] == p2))
 				break;
 		}
-		lp->d_partitions[line[0] - 'a'].p_fstype = FS_UNUSED;
+		lp->d_partitions[DL_PARTNAME2NUM(line[0])].p_fstype = FS_UNUSED;
 	}
 
 done:
@@ -1542,10 +1542,11 @@ mpsave(const struct disklabel *lp)
 			if (fstype == FS_RAID)
 				continue;
 			if (fstype == FS_SWAP) {
-				fprintf(fp, "%s%c none swap sw\n", bdev, 'a'+j);
+				fprintf(fp, "%s%c none swap sw\n", bdev,
+				    DL_PARTNUM2NAME(j));
 			} else if (mi[i].mountpoint) {
 				fprintf(fp, "%s%c %s %s rw 1 %d\n", bdev,
-				    'a' + j, mi[i].mountpoint,
+				    DL_PARTNUM2NAME(j), mi[i].mountpoint,
 				    fstypesnames[fstype], j == 0 ? 1 : 2);
 			}
 		}
@@ -1764,7 +1765,7 @@ get_mp(const struct disklabel *lp, int partno)
 				break;
 		if (i < MAXPARTITIONS) {
 			fprintf(stderr, "'%c' already being mounted at "
-			    "'%s'\n", 'a'+i, p);
+			    "'%s'\n", DL_PARTNUM2NAME(i), p);
 			break;
 		}
 		if (*p == '/') {
@@ -2052,7 +2053,7 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 	if (chunk->stop == 0) {
 		fprintf(stderr, "'%c' aligned offset %llu lies outside "
 		    "the OpenBSD bounds or inside another partition\n",
-		    'a' + partno, start);
+		    DL_PARTNUM2NAME(partno), start);
 		return 1;
 	}
 

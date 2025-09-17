@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.254 2023/07/03 15:27:07 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.255 2025/09/17 16:06:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -376,8 +376,8 @@ parsefstab(void)
 		err(1, NULL);
 	setfsent();
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		partname[strlen(dkname) + 5] = 'a' + i;
-		partduid[strlen(partduid) - 1] = 'a' + i;
+		partname[strlen(dkname) + 5] = DL_PARTNUM2NAME(i);
+		partduid[strlen(partduid) - 1] = DL_PARTNUM2NAME(i);
 		fsent = getfsspec(partname);
 		if (fsent == NULL)
 			fsent = getfsspec(partduid);
@@ -421,7 +421,7 @@ makedisktab(FILE *f, struct disklabel *lp)
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
 		if (DL_GETPSIZE(pp)) {
-			char c = 'a' + i;
+			char c = DL_PARTNUM2NAME(i);
 
 			(void)fprintf(f, "\\\n\t:");
 			(void)fprintf(f, "p%c#%llu:", c, DL_GETPSIZE(pp));
@@ -495,10 +495,10 @@ display_partition(FILE *f, const struct disklabel *lp, int i, char unit)
 		u_int32_t fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 
 		if (p_size < 0)
-			fprintf(f, "  %c: %16llu %16llu ", 'a' + i,
+			fprintf(f, "  %c: %16llu %16llu ", DL_PARTNUM2NAME(i),
 			    DL_GETPSIZE(pp), DL_GETPOFFSET(pp));
 		else
-			fprintf(f, "  %c: %15.*f%c %16llu ", 'a' + i,
+			fprintf(f, "  %c: %15.*f%c %16llu ", DL_PARTNUM2NAME(i),
 			    unit == 'B' ? 0 : 1, p_size, unit,
 			    DL_GETPOFFSET(pp));
 		if (pp->p_fstype < FSMAXTYPES)
@@ -906,11 +906,11 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		    !strcmp(cp, "type"))
 			continue;
 
-		if ('a' <= *cp && *cp <= 'z' && cp[1] == '\0') {
-			unsigned int part = *cp - 'a';
+		if (cp[1] == '\0') {
+			unsigned int part = DL_PARTNAME2NUM(*cp);
 
-			if (part >= lp->d_npartitions) {
-				if (part >= MAXPARTITIONS) {
+			if (part == -1 || part >= lp->d_npartitions) {
+				if (part == -1 || part >= MAXPARTITIONS) {
 					warnx("line %d: bad partition name: %s",
 					    lineno, cp);
 					errors++;
@@ -1043,7 +1043,7 @@ checklabel(struct disklabel *lp)
 		warnx("warning, number of partitions (%d) > MAXPARTITIONS (%d)",
 		    lp->d_npartitions, MAXPARTITIONS);
 	for (i = 0; i < lp->d_npartitions; i++) {
-		part = 'a' + i;
+		part = DL_PARTNUM2NAME(i);
 		pp = &lp->d_partitions[i];
 		if (DL_GETPSIZE(pp) == 0 && DL_GETPOFFSET(pp) != 0)
 			warnx("warning, partition %c: size 0, but offset %llu",
@@ -1083,7 +1083,7 @@ checklabel(struct disklabel *lp)
 #endif
 	}
 	for (; i < MAXPARTITIONS; i++) {
-		part = 'a' + i;
+		part = DL_PARTNUM2NAME(i);
 		pp = &lp->d_partitions[i];
 		if (DL_GETPSIZE(pp) || DL_GETPOFFSET(pp))
 			warnx("warning, unused partition %c: size %llu "
