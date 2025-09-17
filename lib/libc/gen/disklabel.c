@@ -53,8 +53,9 @@ getdiskbyname(const char *name)
 	char	*buf;
 	char	*db_array[2] = { _PATH_DISKTAB, 0 };
 	char	*cp, *cq;
-	char	p, max, psize[3], pbsize[3],
+	char	part, psize[3], pbsize[3],
 		pfsize[3], poffset[3], ptype[3];
+	int	partnum, maxpartnum = 0;
 
 	if (cgetent(&buf, db_array, (char *) name) < 0)
 		return NULL;
@@ -93,13 +94,13 @@ getdiskbyname(const char *name)
 	strlcpy(pfsize, "fx", sizeof pfsize);
 	strlcpy(poffset, "ox", sizeof poffset);
 	strlcpy(ptype, "tx", sizeof ptype);
-	max = 'a' - 1;
 	pp = &dp->d_partitions[0];
 	dp->d_version = 1;
-	for (p = 'a'; p < 'a' + MAXPARTITIONS; p++, pp++) {
+	for (partnum = 0; partnum < MAXPARTITIONS; partnum++, pp++) {
 		long f;
 
-		psize[1] = pbsize[1] = pfsize[1] = poffset[1] = ptype[1] = p;
+		psize[1] = pbsize[1] = pfsize[1] = poffset[1] = ptype[1] =
+		    DL_PARTNUM2NAME(partnum);
 		/* XXX */
 		if (cgetnum(buf, psize, &f) == -1)
 			DL_SETPSIZE(pp, 0);
@@ -122,10 +123,10 @@ getdiskbyname(const char *name)
 			getnumdflt(pp->p_fstype, ptype, 0);
 			if (pp->p_fstype == 0 && cgetstr(buf, ptype, &cq) > 0)
 				pp->p_fstype = (u_char)gettype(cq, fstypenames);
-			max = p;
+			maxpartnum = partnum;
 		}
 	}
-	dp->d_npartitions = max + 1 - 'a';
+	dp->d_npartitions = maxpartnum;
 	dp->d_magic = DISKMAGIC;
 	dp->d_magic2 = DISKMAGIC;
 	free(buf);
