@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.92 2025/09/15 10:33:03 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.93 2025/09/17 10:16:09 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -170,6 +170,32 @@ struct disklabel {
 #define DL_SECTOBLK(d, n)	((n) * DL_BLKSPERSEC(d))
 #define DL_BLKTOSEC(d, n)	((n) / DL_BLKSPERSEC(d))
 #define DL_BLKOFFSET(d, n)	(((n) % DL_BLKSPERSEC(d)) * DEV_BSIZE)
+
+static __inline char
+DL_PARTNUM2NAME(int partnum)
+{
+	if (partnum >= MAXPARTITIONS)
+		return -1;
+	if (partnum <= 'z' - 'a')
+		return 'a' + partnum;
+	else if (partnum - 26 <= 'Z' - 'A')
+		return 'A' + partnum - 26;
+	return -1;
+}
+
+static __inline int
+DL_PARTNAME2NUM(char partname)
+{
+	int partnum = -1;
+
+	if (partname >= 'a' && partname <= 'z')
+		partnum = partname - 'a';
+	else if (partname >= 'A' && partname <= 'Z')
+		partnum = partname - 'A' + 26;
+	if (partnum >= MAXPARTITIONS)
+		partnum = -1;
+	return partnum;
+}
 
 /* d_type values: */
 #define	DTYPE_SMD		1		/* SMD, XSMD; VAX hp/up */
