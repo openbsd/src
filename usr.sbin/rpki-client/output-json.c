@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.56 2025/09/06 11:55:44 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.57 2025/09/17 12:10:08 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -48,6 +48,7 @@ outputheader_json(struct validation_data *vd, struct stats *st)
 	json_do_string("ccr_mfts_hash", vd->ccr.mfts_hash);
 	json_do_string("ccr_vrps_hash", vd->ccr.vrps_hash);
 	json_do_string("ccr_vaps_hash", vd->ccr.vaps_hash);
+	json_do_string("ccr_brks_hash", vd->ccr.brks_hash);
 	json_do_string("ccr_tas_hash", vd->ccr.tas_hash);
 
 	json_do_int("roas", st->repo_tal_stats.roas);
