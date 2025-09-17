@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.29 2025/08/23 10:15:49 sf Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.30 2025/09/17 18:39:50 sf Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -317,6 +317,9 @@ const struct x86_bus_space_ops default_bus_space_mem_ops = {
 
 const struct x86_bus_space_ops *x86_bus_space_mem_ops;
 
+extern const struct x86_bus_space_ops sev_ghcb_bus_space_io_ops;
+extern const struct x86_bus_space_ops sev_ghcb_bus_space_mem_ops;
+
 void
 x86_bus_space_init(void)
 {
@@ -338,8 +341,13 @@ x86_bus_space_init(void)
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-	x86_bus_space_mem_ops = &default_bus_space_mem_ops;
-	x86_bus_space_io_ops  = &default_bus_space_io_ops;
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED)) {
+		x86_bus_space_mem_ops = &sev_ghcb_bus_space_mem_ops;
+		x86_bus_space_io_ops  = &sev_ghcb_bus_space_io_ops;
+	} else {
+		x86_bus_space_mem_ops = &default_bus_space_mem_ops;
+		x86_bus_space_io_ops  = &default_bus_space_io_ops;
+	}
 }
 
 void
