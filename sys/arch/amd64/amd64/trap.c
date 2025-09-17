@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.113 2025/08/27 06:11:12 sf Exp $	*/
+/*	$OpenBSD: trap.c,v 1.114 2025/09/17 18:37:44 sf Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -439,6 +439,8 @@ vctrap(struct trapframe *frame, int user)
 	ghcb = (struct ghcb_sa *)ghcb_vaddr;
 	ghcb_sync_out(frame, &ghcb_regs, ghcb, &syncout);
 
+	wrmsr(MSR_SEV_GHCB, ghcb_paddr);
+
 	/* Call hypervisor. */
 	vmgexit();
 
@@ -449,7 +451,7 @@ vctrap(struct trapframe *frame, int user)
 	}
 
 	/* Sync in from GHCB */
-	ghcb_sync_in(frame, ghcb, &syncin);
+	ghcb_sync_in(frame, NULL, ghcb, &syncin);
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.c,v 1.5 2025/08/27 06:11:12 sf Exp $	*/
+/*	$OpenBSD: ghcb.c,v 1.6 2025/09/17 18:37:44 sf Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -16,11 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/frame.h>
 #include <machine/ghcb.h>
+#include <machine/vmmvar.h>
 
 /* Masks for adjusting GPR sizes. */
 const uint64_t ghcb_sz_masks[] = {
@@ -167,6 +171,7 @@ ghcb_sync_val(int type, int size, struct ghcb_sync *gs)
 	case GHCB_SW_EXITCODE:
 	case GHCB_SW_EXITINFO1:
 	case GHCB_SW_EXITINFO2:
+	case GHCB_SW_SCRATCH:
 		break;
 
 	default:
@@ -188,6 +193,8 @@ void
 ghcb_sync_out(struct trapframe *frame, const struct ghcb_extra_regs *regs,
     struct ghcb_sa *ghcb, struct ghcb_sync *gsout)
 {
+	size_t data_sz;
+
 	ghcb_clear(ghcb);
 
 	memcpy(ghcb->valid_bitmap, gsout->valid_bitmap,
@@ -208,6 +215,14 @@ ghcb_sync_out(struct trapframe *frame, const struct ghcb_extra_regs *regs,
 		ghcb->v_sw_exitinfo1 = regs->exitinfo1;
 	if (ghcb_valbm_isset(gsout->valid_bitmap, GHCB_SW_EXITINFO2))
 		ghcb->v_sw_exitinfo2 = regs->exitinfo2;
+	if (ghcb_valbm_isset(gsout->valid_bitmap, GHCB_SW_SCRATCH))
+		ghcb->v_sw_scratch = regs->scratch;
+
+	if (regs && regs->data) {
+		data_sz = regs->data_sz;
+		KASSERT(data_sz <= sizeof(ghcb->v_sharedbuf));
+		memcpy(ghcb->v_sharedbuf, regs->data, data_sz);
+	}
 }
 
 /*
@@ -217,9 +232,11 @@ ghcb_sync_out(struct trapframe *frame, const struct ghcb_extra_regs *regs,
  * Used by guest only.
  */
 void
-ghcb_sync_in(struct trapframe *frame, struct ghcb_sa *ghcb,
-    struct ghcb_sync *gsin)
+ghcb_sync_in(struct trapframe *frame, struct ghcb_extra_regs *regs,
+    struct ghcb_sa *ghcb, struct ghcb_sync *gsin)
 {
+	size_t data_sz;
+
 	if (ghcb_valbm_isset(gsin->valid_bitmap, GHCB_RAX)) {
 		frame->tf_rax &= ~ghcb_sz_clear_masks[gsin->sz_a];
 		frame->tf_rax |= (ghcb->v_rax & ghcb_sz_masks[gsin->sz_a]);
@@ -237,5 +254,167 @@ ghcb_sync_in(struct trapframe *frame, struct ghcb_sa *ghcb,
 		frame->tf_rdx |= (ghcb->v_rdx & ghcb_sz_masks[gsin->sz_d]);
 	}
 
+	if (regs && regs->data) {
+		data_sz = regs->data_sz;
+		KASSERT(data_sz <= sizeof(ghcb->v_sharedbuf));
+		memcpy(regs->data, ghcb->v_sharedbuf, data_sz);
+	}
+
 	ghcb_clear(ghcb);
+}
+
+void
+_ghcb_mem_rw(vaddr_t addr, int valsz, void *val, bool read)
+{
+	size_t			 size;
+	paddr_t			 paddr;
+	struct ghcb_sync	 syncout, syncin;
+	struct ghcb_sa		*ghcb;
+	unsigned long		 s;
+	struct ghcb_extra_regs	 ghcb_regs;
+
+	KASSERT(val != NULL);
+
+	switch (valsz) {
+	case GHCB_SZ8:
+		size = sizeof(uint8_t);
+		break;
+	case GHCB_SZ16:
+		size = sizeof(uint16_t);
+		break;
+	case GHCB_SZ32:
+		size = sizeof(uint32_t);
+		break;
+	case GHCB_SZ64:
+		size = sizeof(uint64_t);
+		break;
+	default:
+		panic("%s: invalid size", __func__);
+	}
+
+	if (!pmap_extract(pmap_kernel(), addr, &paddr))
+		panic("%s: pmap_extract %#lx failed", __func__, addr);
+
+	memset(&syncout, 0, sizeof(syncout));
+	memset(&syncin, 0, sizeof(syncin));
+	memset(&ghcb_regs, 0, sizeof(ghcb_regs));
+
+	if (read) {
+		ghcb_regs.exitcode = SEV_VMGEXIT_MMIO_READ;
+		ghcb_regs.exitinfo1 = paddr;
+		ghcb_regs.exitinfo2 = size;
+		ghcb_regs.scratch = ghcb_paddr + offsetof(struct ghcb_sa,
+		    v_sharedbuf);
+	} else {
+		ghcb_regs.exitcode = SEV_VMGEXIT_MMIO_WRITE;
+		ghcb_regs.exitinfo1 = paddr;
+		ghcb_regs.exitinfo2 = size;
+		ghcb_regs.scratch = ghcb_paddr + offsetof(struct ghcb_sa,
+		    v_sharedbuf);
+		ghcb_regs.data = val;
+		ghcb_regs.data_sz = size;
+	}
+
+	ghcb_sync_val(GHCB_SW_EXITCODE, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO1, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO2, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_SCRATCH, GHCB_SZ64, &syncout);
+
+	s = intr_disable();
+
+	ghcb = (struct ghcb_sa *)ghcb_vaddr;
+	ghcb_sync_out(NULL, &ghcb_regs, ghcb, &syncout);
+
+	wrmsr(MSR_SEV_GHCB, ghcb_paddr);
+
+	vmgexit();
+
+	if (ghcb_verify_bm(ghcb->valid_bitmap, syncin.valid_bitmap)) {
+		ghcb_clear(ghcb);
+		panic("invalid hypervisor response");
+	}
+
+	memset(&ghcb_regs, 0, sizeof(ghcb_regs));
+
+	if (read) {
+		ghcb_regs.data = val;
+		ghcb_regs.data_sz = size;
+
+		ghcb_sync_in(NULL, &ghcb_regs, ghcb, &syncin);
+	}
+
+	intr_restore(s);
+}
+
+#define SVM_IOIO_INTERCEPT_READ		1
+#define SVM_IOIO_INTERCEPT_STRING	(1 << 2)
+#define SVM_IOIO_INTERCEPT_REP		(1 << 3)
+#define SVM_IOIO_INTERCEPT_SZ8		(1 << 4)
+#define SVM_IOIO_INTERCEPT_SZ16		(1 << 5)
+#define SVM_IOIO_INTERCEPT_SZ32		(1 << 6)
+
+void
+_ghcb_io_rw(uint16_t port, int valsz, uint32_t *val, bool read)
+{
+	struct ghcb_sync syncout, syncin;
+	struct ghcb_extra_regs ghcb_regs;
+	struct ghcb_sa *ghcb;
+	struct trapframe frame;
+	unsigned long s;
+
+	KASSERT(val != NULL);
+
+	memset(&syncout, 0, sizeof(syncout));
+	memset(&syncin, 0, sizeof(syncin));
+	memset(&ghcb_regs, 0, sizeof(ghcb_regs));
+
+	ghcb_regs.exitcode = SVM_VMEXIT_IOIO;
+	ghcb_regs.exitinfo1 = ((uint64_t)port) << 16;
+
+	switch (valsz) {
+	case GHCB_SZ8:
+		ghcb_regs.exitinfo1 |= SVM_IOIO_INTERCEPT_SZ8;
+		break;
+	case GHCB_SZ16:
+		ghcb_regs.exitinfo1 |= SVM_IOIO_INTERCEPT_SZ16;
+		break;
+	case GHCB_SZ32:
+		ghcb_regs.exitinfo1 |= SVM_IOIO_INTERCEPT_SZ32;
+		break;
+	default:
+		panic("%s: invalid size", __func__);
+	}
+
+	if (!read) {
+		frame.tf_rax = *val;
+		ghcb_sync_val(GHCB_RAX, valsz, &syncout);
+	} else {
+		ghcb_regs.exitinfo1 |= SVM_IOIO_INTERCEPT_READ;
+		ghcb_sync_val(GHCB_RAX, valsz, &syncin);
+	}
+
+	ghcb_sync_val(GHCB_SW_EXITCODE, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO1, GHCB_SZ64, &syncout);
+	ghcb_sync_val(GHCB_SW_EXITINFO2, GHCB_SZ64, &syncout);
+
+	s = intr_disable();
+
+	ghcb = (struct ghcb_sa *)ghcb_vaddr;
+	ghcb_sync_out(&frame, &ghcb_regs, ghcb, &syncout);
+
+	wrmsr(MSR_SEV_GHCB, ghcb_paddr);
+
+	vmgexit();
+
+	if (ghcb_verify_bm(ghcb->valid_bitmap, syncin.valid_bitmap)) {
+		ghcb_clear(ghcb);
+		panic("invalid hypervisor response");
+	}
+
+	ghcb_sync_in(&frame, NULL, ghcb, &syncin);
+
+	intr_restore(s);
+
+	if (read)
+		*val = frame.tf_rax;
 }

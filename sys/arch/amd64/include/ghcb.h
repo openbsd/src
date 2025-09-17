@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.h,v 1.5 2025/08/27 06:11:12 sf Exp $	*/
+/*	$OpenBSD: ghcb.h,v 1.6 2025/09/17 18:37:44 sf Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -20,6 +20,8 @@
 #define _MACHINE_GHCB_H_
 
 #ifndef _LOCORE
+
+#include <sys/systm.h>
 
 #include <machine/frame.h>
 
@@ -113,9 +115,12 @@ extern vaddr_t ghcb_vaddr;
 extern paddr_t ghcb_paddr;
 
 struct ghcb_extra_regs {
-	uint64_t	exitcode;
-	uint64_t	exitinfo1;
-	uint64_t	exitinfo2;
+	uint64_t	 exitcode;
+	uint64_t	 exitinfo1;
+	uint64_t	 exitinfo2;
+	uint64_t	 scratch;
+	void		*data;
+	size_t		 data_sz;
 };
 
 void	ghcb_clear(struct ghcb_sa *);
@@ -127,7 +132,119 @@ int	ghcb_valid(struct ghcb_sa *);
 void	ghcb_sync_val(int, int, struct ghcb_sync *);
 void	ghcb_sync_out(struct trapframe *, const struct ghcb_extra_regs *,
 	    struct ghcb_sa *, struct ghcb_sync *);
-void	ghcb_sync_in(struct trapframe *, struct ghcb_sa *, struct ghcb_sync *);
+void	ghcb_sync_in(struct trapframe *, struct ghcb_extra_regs *,
+	    struct ghcb_sa *, struct ghcb_sync *);
+void	_ghcb_mem_rw(vaddr_t, int, void *, bool);
+void	_ghcb_io_rw(uint16_t, int, uint32_t *, bool);
+
+static inline uint8_t
+ghcb_mem_read_1(vaddr_t addr)
+{
+	uint8_t val;
+
+	_ghcb_mem_rw(addr, GHCB_SZ8, &val, true);
+	return val;
+}
+
+static inline uint16_t
+ghcb_mem_read_2(vaddr_t addr)
+{
+	uint16_t val;
+
+	_ghcb_mem_rw(addr, GHCB_SZ16, &val, true);
+	return val;
+}
+
+static inline uint32_t
+ghcb_mem_read_4(vaddr_t addr)
+{
+	uint32_t val;
+
+	_ghcb_mem_rw(addr, GHCB_SZ32, &val, true);
+	return val;
+}
+
+static inline uint64_t
+ghcb_mem_read_8(vaddr_t addr)
+{
+	uint64_t val;
+
+	_ghcb_mem_rw(addr, GHCB_SZ64, &val, true);
+	return val;
+}
+
+static inline void
+ghcb_mem_write_1(vaddr_t addr, uint8_t v)
+{
+	_ghcb_mem_rw(addr, GHCB_SZ8, &v, false);
+}
+
+static inline void
+ghcb_mem_write_2(vaddr_t addr, uint16_t v)
+{
+	_ghcb_mem_rw(addr, GHCB_SZ16, &v, false);
+}
+
+static inline void
+ghcb_mem_write_4(vaddr_t addr, uint32_t v)
+{
+	_ghcb_mem_rw(addr, GHCB_SZ32, &v, false);
+}
+
+static inline void
+ghcb_mem_write_8(vaddr_t addr, uint64_t v)
+{
+	_ghcb_mem_rw(addr, GHCB_SZ64, &v, false);
+}
+
+static inline uint8_t
+ghcb_io_read_1(uint16_t port)
+{
+	uint32_t val;
+
+	_ghcb_io_rw(port, GHCB_SZ8, &val, true);
+	return val;
+}
+
+static inline uint16_t
+ghcb_io_read_2(uint16_t port)
+{
+	uint32_t val;
+
+	_ghcb_io_rw(port, GHCB_SZ16, &val, true);
+	return val;
+}
+
+static inline uint32_t
+ghcb_io_read_4(uint16_t port)
+{
+	uint32_t val;
+
+	_ghcb_io_rw(port, GHCB_SZ32, &val, true);
+	return val;
+}
+
+static inline void
+ghcb_io_write_1(uint16_t port, uint8_t v)
+{
+	uint32_t val = v;
+
+	_ghcb_io_rw(port, GHCB_SZ8, &val, false);
+}
+
+static inline void
+ghcb_io_write_2(uint16_t port, uint16_t v)
+{
+	uint32_t val = v;
+
+	_ghcb_io_rw(port, GHCB_SZ16, &val, false);
+}
+
+static inline void
+ghcb_io_write_4(uint16_t port, uint32_t v)
+{
+	_ghcb_io_rw(port, GHCB_SZ32, &v, false);
+}
 
 #endif /* !_LOCORE */
 

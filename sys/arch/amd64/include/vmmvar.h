@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.116 2025/09/14 15:52:28 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.117 2025/09/17 18:37:44 sf Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -265,6 +265,12 @@
 #define SVM_AVIC_NOACCEL			0x402
 #define SVM_VMEXIT_VMGEXIT			0x403
 #define SVM_VMEXIT_INVALID			-1
+
+/*
+ *  Additional VMEXIT codes used in SEV-ES/SNP in the GHCB
+ */
+#define SEV_VMGEXIT_MMIO_READ			0x80000001
+#define SEV_VMGEXIT_MMIO_WRITE			0x80000002
 
 #ifndef _LOCORE
 
