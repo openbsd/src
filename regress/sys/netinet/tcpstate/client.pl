@@ -4,14 +4,21 @@
 use strict;
 use warnings;
 use Errno qw(EINPROGRESS);
-use Socket qw(:DEFAULT SOCK_NONBLOCK inet_pton);
+use Socket qw(:DEFAULT SOCK_NONBLOCK inet_pton SOL_SOCKET SO_KEEPALIVE);
 
-@ARGV == 3
-    or die "usage: client.pl bind-addr connect-addr connect-port\n";
-my ($bindaddr, $connectaddr, $connectport) = @ARGV;
+@ARGV == 3 || @ARGV == 4
+    or die "usage: client.pl bind-addr connect-addr connect-port\n".
+    "    [shutdown|keepalive]\n";
+my ($bindaddr, $connectaddr, $connectport, $action) = @ARGV;
+$action ||= "";
 
 socket(my $s, PF_INET, SOCK_STREAM|SOCK_NONBLOCK, 0)
     or die "socket: $!";
+
+if ($action =~ /keepalive/) {
+    setsockopt($s, SOL_SOCKET, SO_KEEPALIVE, 1)
+	or die "setsockopt: $!";
+}
 
 my $bindip = inet_pton(AF_INET, $bindaddr)
     or die "inet_pton bind-addr $bindaddr";
@@ -26,8 +33,10 @@ connect($s, sockaddr_in($connectport, $connectip)) || $!{EINPROGRESS}
 
 getc();
 
-shutdown($s, SHUT_WR)
-    or die "shutdown: $!";
+if ($action =~ /shutdown/) {
+    shutdown($s, SHUT_WR)
+	or die "shutdown: $!";
+}
 
 my $timeout = 10;
 my $rin = '';

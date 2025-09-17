@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 # transfer peer from SYN_SENT via SYN_RCVD to FIN_WAIT_1 state
-# an check retransmit of FIN
+# and check retransmit of FIN
 
 import os
 import threading
@@ -38,7 +38,7 @@ sniffer.start()
 time.sleep(1)
 
 print("Connect from remote client.")
-client=os.popen("ssh %s perl %s/client.pl %s %s %u" % \
+client=os.popen("ssh %s perl %s/client.pl %s %s %u shutdown" % \
     (REMOTE_SSH, CURDIR, ip.dst, ip.src, tport), mode='w')
 
 print("Wait for SYN.")
@@ -78,7 +78,7 @@ sniffer.filter = \
 sniffer.start()
 time.sleep(1)
 
-print("Close remote client.")
+print("Close remote client to trigger shutdown.")
 os.close(client.fileno())
 
 print("Wait for FIN and its retransmit.")
@@ -109,6 +109,7 @@ print("Check retransmit of FIN.");
 rxmit_fin = sniffer.captured[1]
 if rxmit_fin is None:
 	print("ERROR: No FIN retransmitted from remote client.")
+	exit(1)
 if rxmit_fin.seq != syn.seq or rxmit_fin.ack != 2:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d in FIN." % \
 	    (syn.seq, 2, rxmit_fin.seq, rxmit_fin.ack))

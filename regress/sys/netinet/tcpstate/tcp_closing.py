@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3
-# transfer peer into CLOSING state an check retransmit of FIN
+# transfer peer into CLOSING state and check retransmit of FIN
 
 import os
 import threading
@@ -114,6 +114,7 @@ print("Check retransmit of FIN.");
 rxmit_fin = sniffer.captured[3]
 if rxmit_fin is None:
 	print("ERROR: No FIN retransmitted from daytime server.")
+	exit(1)
 if rxmit_fin.seq != data.seq+tcplen or rxmit_fin.ack != 3:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
 	    "in rxmit FIN." % \

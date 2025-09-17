@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3
-# transfer peer from SYN_SENT to SYN_RCVD state an check retransmit of SYN+ACK
+# transfer peer from SYN_SENT to SYN_RCVD state and check retransmit of SYN+ACK
 # from LISTEN state SYN_RCVD is cannot be reached as SYN cache handles it
 
 import os
@@ -104,6 +104,7 @@ print("Check retransmit of SYN+ACK.");
 rxmit_synack = sniffer.captured[1]
 if rxmit_synack is None:
 	print("ERROR: No SYN+ACK retransmitted from remote client.")
+	exit(1)
 if rxmit_synack.ack != 2:
 	print("ERROR: expecting ack %d, got ack %d in rxmit SYN+ACK." % \
 	    (2, rxmit_synack.ack))

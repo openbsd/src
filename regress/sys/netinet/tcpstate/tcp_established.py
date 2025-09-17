@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3
-# transfer peer into ESTABLISHED state an check retransmit of data
+# transfer peer into ESTABLISHED state and check retransmit of data
 
 import os
 import threading
@@ -102,6 +102,7 @@ print("Check retransmit of echo.");
 rxmit_echo = sniffer.captured[2]
 if rxmit_echo is None:
 	print("ERROR: No echo retransmitted from echo server.")
+	exit(1)
 if rxmit_echo.seq != synack.seq+1+paylen-1 or rxmit_echo.ack != 2+paylen:
 	print("ERROR: expecting seq %d ack %d, got seq %d ack %d " \
 	    "in rxmit echo." % \

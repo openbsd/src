@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3
-# transfer peer into SYN cache an check retransmit of SYN+ACK
+# transfer peer into SYN cache and check retransmit of SYN+ACK
 
 import os
 import threading
@@ -73,6 +73,7 @@ print("Check retransmit of SYN+ACK.");
 rxmit_synack = sniffer.captured[1]
 if rxmit_synack is None:
 	print("ERROR: No SYN+ACK retransmitted from discard server.")
+	exit(1)
 if rxmit_synack.ack != 2:
 	print("ERROR: expecting ack %d, got ack %d in rxmit SYN+ACK." % \
 	    (2, rxmit_synack.ack))
