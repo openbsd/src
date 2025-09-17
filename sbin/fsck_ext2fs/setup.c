@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.35 2024/12/18 10:36:05 sthen Exp $	*/
+/*	$OpenBSD: setup.c,v 1.36 2025/09/17 16:07:57 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -455,7 +455,7 @@ calcsb(char *dev, int devfd, struct m_ext2fs *fs, struct disklabel *lp)
 	char *cp;
 
 	cp = strchr(dev, '\0');
-	if ((cp == NULL || (cp[-1] < 'a' || cp[-1] >= 'a' + MAXPARTITIONS)) &&
+	if ((cp == NULL || DL_PARTNAME2NUM(cp[-1]) == -1) &&
 	    !isdigit((unsigned char)cp[-1])) {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
@@ -466,7 +466,7 @@ calcsb(char *dev, int devfd, struct m_ext2fs *fs, struct disklabel *lp)
 	if (isdigit((unsigned char)*cp))
 		pp = &lp->d_partitions[0];
 	else
-		pp = &lp->d_partitions[*cp - 'a'];
+		pp = &lp->d_partitions[DL_PARTNAME2NUM(*cp)];
 	if (pp->p_fstype != FS_EXT2FS) {
 		pfatal("%s: NOT LABELED AS A EXT2 FILE SYSTEM (%s)\n",
 			dev, pp->p_fstype < FSMAXTYPES ?

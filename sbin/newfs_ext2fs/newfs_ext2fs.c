@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.29 2022/12/04 23:50:47 cheloha Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.30 2025/09/17 16:07:57 deraadt Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -478,14 +478,13 @@ getpartition(int fsi, const char *special, char *argv[], struct disklabel **dl)
 	if (*argv[0] == '\0')
 		errx(EXIT_FAILURE, "empty partition name supplied");
 	cp = argv[0] + strlen(argv[0]) - 1;
-	if ((*cp < 'a' || *cp > ('a' + getmaxpartitions() - 1))
-	    && !isdigit((unsigned char)*cp))
+	if (DL_PARTNAME2NUM(*cp) == -1 && !isdigit((unsigned char)*cp))
 		errx(EXIT_FAILURE, "%s: can't figure out file system partition", argv[0]);
 	lp = getdisklabel(special, fsi);
 	if (isdigit((unsigned char)*cp))
 		pp = &lp->d_partitions[0];
 	else
-		pp = &lp->d_partitions[*cp - 'a'];
+		pp = &lp->d_partitions[DL_PARTNAME2NUM(*cp)];
 	if (DL_GETPSIZE(pp) == 0) 
 		errx(EXIT_FAILURE, "%s: `%c' partition is unavailable", argv[0], *cp);
 	*dl = lp;

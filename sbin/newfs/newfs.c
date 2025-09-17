@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.119 2025/09/17 10:51:17 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.120 2025/09/17 16:07:57 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -424,8 +424,7 @@ main(int argc, char *argv[])
 		if (*argv[0] == '\0')
 			fatal("empty partition name supplied");
 		cp = argv[0] + strlen(argv[0]) - 1;
-		if ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-		    && !isdigit((unsigned char)*cp))
+		if (DL_PARTNAME2NUM(*cp) == -1 && !isdigit((unsigned char)*cp))
 			fatal("%s: can't figure out file system partition",
 			    argv[0]);
 		lp = getdisklabel(special, fsi);
@@ -436,7 +435,7 @@ main(int argc, char *argv[])
 		if (isdigit((unsigned char)*cp))
 			pp = &lp->d_partitions[0];
 		else
-			pp = &lp->d_partitions[*cp - 'a'];
+			pp = &lp->d_partitions[DL_PARTNAME2NUM(*cp)];
 		if (DL_GETPSIZE(pp) == 0)
 			fatal("%s: `%c' partition is unavailable",
 			    argv[0], *cp);

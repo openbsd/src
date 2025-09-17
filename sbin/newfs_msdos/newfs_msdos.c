@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.29 2024/04/28 16:43:42 florian Exp $	*/
+/*	$OpenBSD: newfs_msdos.c,v 1.30 2025/09/17 16:07:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -727,9 +727,8 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
     else
 	while (isdigit((unsigned char)*++s2));
     s1 = s2;
-    if (s2 && *s2 >= 'a' && *s2 <= 'a' + MAXPARTITIONS - 1) {
-	part = *s2++ - 'a';
-    }
+    if (s2)
+	part = DL_PARTNAME2NUM(*s2++);
     if (!s2 || (*s2 && *s2 != '.'))
 	errx(1, "%s: can't figure out partition info", fname);
     if ((((!oflag && part != -1) || !bpb->bsec)) ||
