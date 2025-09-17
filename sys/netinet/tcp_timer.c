@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.87 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.88 2025/09/17 17:29:14 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -472,11 +472,12 @@ tcp_timer_keep(void *arg)
 	if ((atomic_load_int(&tcp_always_keepalive) ||
 	    so->so_options & SO_KEEPALIVE) &&
 	    tp->t_state <= TCPS_CLOSING) {
-		int keepidle, maxidle;
+		int keepidle, keepintvl, maxidle;
 		uint64_t now;
 
 		keepidle = atomic_load_int(&tcp_keepidle);
-		maxidle = TCPTV_KEEPCNT * keepidle;
+		keepintvl = atomic_load_int(&tcp_keepintvl);
+		maxidle = TCPTV_KEEPCNT * keepintvl;
 		now = tcp_now();
 		if ((maxidle > 0) &&
 		    ((now - tp->t_rcvtime) >= keepidle + maxidle)) {
@@ -499,7 +500,7 @@ tcp_timer_keep(void *arg)
 		tcpstat_inc(tcps_keepprobe);
 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
 		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0, 0, now);
-		TCP_TIMER_ARM(tp, TCPT_KEEP, atomic_load_int(&tcp_keepintvl));
+		TCP_TIMER_ARM(tp, TCPT_KEEP, keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, atomic_load_int(&tcp_keepidle));
 	if (otp)
@@ -516,7 +517,7 @@ tcp_timer_2msl(void *arg)
 	struct tcpcb *otp = NULL, *tp;
 	short ostate;
 	uint64_t now;
-	int maxidle;
+	int keepintvl, maxidle;
 
 	if (tcp_timer_enter(inp, &so, &tp, TCPT_2MSL))
 		goto out;
@@ -527,11 +528,12 @@ tcp_timer_2msl(void *arg)
 	}
 	tcp_timer_freesack(tp);
 
-	maxidle = TCPTV_KEEPCNT * atomic_load_int(&tcp_keepidle);
+	keepintvl = atomic_load_int(&tcp_keepintvl);
+	maxidle = TCPTV_KEEPCNT * keepintvl;
 	now = tcp_now();
 	if (tp->t_state != TCPS_TIME_WAIT &&
 	    ((maxidle == 0) || ((now - tp->t_rcvtime) <= maxidle)))
-		TCP_TIMER_ARM(tp, TCPT_2MSL, atomic_load_int(&tcp_keepintvl));
+		TCP_TIMER_ARM(tp, TCPT_2MSL, keepintvl);
 	else
 		tp = tcp_close(tp);
 	if (otp)
