@@ -1419,6 +1419,8 @@
 ./usr/share/man/man4/arm64/aplspmi.4
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/intro.4
+./usr/share/man/man4/arm64/rpiclock.4
+./usr/share/man/man4/arm64/rpipwm.4
 ./usr/share/man/man4/arm64/rpirtc.4
 ./usr/share/man/man4/arm64/rpone.4
 ./usr/share/man/man4/arm64/smbios.4
