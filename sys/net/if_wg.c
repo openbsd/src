@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.46 2025/07/17 12:43:43 claudio Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.47 2025/09/17 12:35:55 jsg Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -358,7 +358,6 @@ struct mbuf *
 	wg_ring_dequeue(struct wg_ring *);
 struct mbuf *
 	wg_queue_dequeue(struct wg_queue *, struct wg_tag **);
-size_t	wg_queue_len(struct wg_queue *);
 
 struct noise_remote *
 	wg_remote_get(void *, uint8_t[NOISE_PUBLIC_KEY_LEN]);
@@ -1995,16 +1994,6 @@ wg_queue_dequeue(struct wg_queue *q, struct wg_tag **t)
 		m = NULL;
 	mtx_leave(&q->q_mtx);
 	return m;
-}
-
-size_t
-wg_queue_len(struct wg_queue *q)
-{
-	size_t len;
-	mtx_enter(&q->q_mtx);
-	len = q->q_list.ml_len;
-	mtx_leave(&q->q_mtx);
-	return len;
 }
 
 struct noise_remote *
