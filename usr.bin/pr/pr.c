@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.45 2023/03/08 04:43:12 guenther Exp $	*/
+/*	$OpenBSD: pr.c,v 1.46 2025/09/17 12:09:49 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -1399,37 +1399,6 @@ otln(char *buf, int cnt, int *svips, int *svops, int mor)
     }
     return(0);
 }
-
-#ifdef notused
-/*
- * inskip():    skip over pgcnt pages with lncnt lines per page
- *        file is closed at EOF (if not stdin).
- *
- *    inf    FILE * to read from
- *    pgcnt    number of pages to skip
- *    lncnt    number of lines per page
- */
-int
-inskip(FILE *inf, int pgcnt, int lncnt)
-{
-    int c;
-    int cnt;
-
-    while(--pgcnt > 0) {
-	cnt = lncnt;
-	while ((c = getc(inf)) != EOF) {
-	    if ((c == '\n') && (--cnt == 0))
-		break;
-	}
-	if (c == EOF) {
-	    if (inf != stdin)
-		(void)fclose(inf);
-	    return(1);
-	}
-    }
-    return(0);
-}
-#endif
 
 /*
  * nxtfile:    returns a FILE * to next file in arg list and sets the

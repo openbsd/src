@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2015/01/19 15:30:52 krw Exp $ */
+/*	$OpenBSD: extern.h,v 1.7 2025/09/17 12:09:49 jsg Exp $ */
 /*-
  * Copyright (c) 1991 Keith Muller.
  * Copyright (c) 1993
@@ -42,7 +42,6 @@ int	 egetopt(int, char * const *, const char *);
 void	 flsh_errs(void);
 int	 horzcol(int, char **);
 int	 inln(FILE *, char *, int, int *, int *, int, int *);
-int	 inskip(FILE *, int, int);
 void	 mfail(void);
 int	 mulfile(int, char **);
 FILE	*nxtfile(int, char **, char **, char *, int);
