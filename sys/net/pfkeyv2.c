@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.271 2025/08/26 06:59:46 dlg Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.272 2025/09/17 02:50:11 jsg Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -177,9 +177,6 @@ int pfkey_sendup(struct pkpcb *, struct mbuf *, int);
 int pfkeyv2_sa_flush(struct tdb *, void *, int);
 int pfkeyv2_policy_flush(struct ipsec_policy *, void *, unsigned int);
 int pfkeyv2_sysctl_policydumper(struct ipsec_policy *, void *, unsigned int);
-
-void	keycb_ref(void *, void *);
-void	keycb_unref(void *, void *);
 
 /*
  * Wrapper around m_devget(); copy data from contiguous buffer to mbuf
