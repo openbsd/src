@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.15 2025/08/19 15:52:00 kettenis Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.16 2025/09/17 09:17:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -273,6 +273,7 @@ struct cad_softc {
 	int			sc_node;
 	int			sc_phy_loc;
 	enum cad_phy_mode	sc_phy_mode;
+	unsigned char		sc_hw_tx_freq;
 	unsigned char		sc_rxhang_erratum;
 	unsigned char		sc_rxdone;
 	unsigned char		sc_dma64;
@@ -486,6 +487,8 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 
 	if (OF_is_compatible(faa->fa_node, "cdns,zynq-gem"))
 		sc->sc_rxhang_erratum = 1;
+	if (OF_is_compatible(faa->fa_node, "raspberrypi,rp1-gem"))
+		sc->sc_hw_tx_freq = 1;
 
 	rw_init(&sc->sc_cfg_lock, "cadcfg");
 	timeout_set(&sc->sc_tick, cad_tick, sc);
@@ -897,7 +900,8 @@ cad_up(struct cad_softc *sc)
 
 	cad_iff(sc);
 
-	clock_set_frequency(sc->sc_node, GEM_CLK_TX, 2500000);
+	if (!sc->sc_hw_tx_freq)
+		clock_set_frequency(sc->sc_node, GEM_CLK_TX, 2500000);
 	clock_enable(sc->sc_node, GEM_CLK_TX);
 	delay(1000);
 
@@ -1671,7 +1675,8 @@ cad_mii_statchg(struct device *self)
 	HWRITE4(sc, GEM_NETCFG, netcfg);
 
 	/* Defer clock setting because it allocates memory with M_WAITOK. */
-	task_add(systq, &sc->sc_statchg_task);
+	if (!sc->sc_hw_tx_freq)
+		task_add(systq, &sc->sc_statchg_task);
 }
 
 void
