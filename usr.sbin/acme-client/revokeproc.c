@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.25 2022/12/18 12:04:55 tb Exp $ */
+/*	$Id: revokeproc.c,v 1.26 2025/09/18 13:22:36 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,28 +32,42 @@
 
 #include "extern.h"
 
-#define	RENEW_ALLOW (30 * 24 * 60 * 60)
-
 /*
- * Convert the X509's expiration time into a time_t value.
+ * Convert the X509's notAfter time into a time_t value.
  */
 static time_t
-X509expires(X509 *x)
+X509notafter(X509 *x)
 {
 	ASN1_TIME	*atim;
 	struct tm	 t;
 
-	if ((atim = X509_getm_notAfter(x)) == NULL) {
-		warnx("missing notAfter");
+	if ((atim = X509_getm_notAfter(x)) == NULL)
 		return -1;
-	}
 
 	memset(&t, 0, sizeof(t));
 
-	if (!ASN1_TIME_to_tm(atim, &t)) {
-		warnx("invalid ASN1_TIME");
+	if (!ASN1_TIME_to_tm(atim, &t))
 		return -1;
-	}
+
+	return timegm(&t);
+}
+
+/*
+ * Convert the X509's notBefore time into a time_t value.
+ */
+static time_t
+X509notbefore(X509 *x)
+{
+	ASN1_TIME	*atim;
+	struct tm	 t;
+
+	if ((atim = X509_getm_notBefore(x)) == NULL)
+		return -1;
+
+	memset(&t, 0, sizeof(t));
+
+	if (!ASN1_TIME_to_tm(atim, &t))
+		return -1;
 
 	return timegm(&t);
 }
@@ -70,7 +84,8 @@ revokeproc(int fd, const char *certfile, int force,
 	X509				*x = NULL;
 	long				 lval;
 	enum revokeop			 op, rop;
-	time_t				 t;
+	time_t				 notafter, notbefore, cert_validity;
+	time_t				 remaining_validity, renew_allow;
 	size_t				 j;
 
 	/*
@@ -125,8 +140,13 @@ revokeproc(int fd, const char *certfile, int force,
 
 	/* Read out the expiration date. */
 
-	if ((t = X509expires(x)) == -1) {
-		warnx("X509expires");
+	if ((notafter = X509notafter(x)) == -1) {
+		warnx("X509notafter");
+		goto out;
+	}
+
+	if ((notbefore = X509notbefore(x)) == -1) {
+		warnx("X509notbefore");
 		goto out;
 	}
 
@@ -252,14 +272,35 @@ revokeproc(int fd, const char *certfile, int force,
 		goto out;
 	}
 
-	rop = time(NULL) >= (t - RENEW_ALLOW) ? REVOKE_EXP : REVOKE_OK;
+	cert_validity = notafter - notbefore;
+
+	if (cert_validity < 0) {
+		warnx("Invalid cert, expire time before inception time");
+		rc = -1;
+		goto out;
+	}
+	if (cert_validity > 10 * 24 * 60 * 60)
+		renew_allow = cert_validity / 3;
+	else
+		renew_allow = cert_validity / 2;
+
+	/* We suggest to run renewals daily. Make sure we have 2 chances. */
+	if (renew_allow < 3 * 24 * 60 * 60)
+		renew_allow = 3 * 24 * 60 * 60;
+
+	remaining_validity = notafter - time(NULL);
+
+	if (remaining_validity < renew_allow)
+		rop = REVOKE_EXP;
+	else
+		rop = REVOKE_OK;
 
 	if (rop == REVOKE_EXP)
 		dodbg("%s: certificate renewable: %lld days left",
-		    certfile, (long long)(t - time(NULL)) / 24 / 60 / 60);
+		    certfile, (long long)(remaining_validity / 24 / 60 / 60));
 	else
 		dodbg("%s: certificate valid: %lld days left",
-		    certfile, (long long)(t - time(NULL)) / 24 / 60 / 60);
+		    certfile, (long long)(remaining_validity / 24 / 60 / 60));
 
 	if (rop == REVOKE_OK && force) {
 		warnx("%s: %sforcing renewal", certfile,
