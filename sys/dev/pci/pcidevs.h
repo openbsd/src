@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2109 2025/08/21 02:54:52 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2110 2025/09/18 13:15:45 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -928,6 +928,8 @@
 #define	PCI_PRODUCT_AMD_19_4X_XHCI_2	0x161e		/* 19h/4xh xHCI */
 #define	PCI_PRODUCT_AMD_19_4X_XHCI_3	0x161f		/* 19h/4xh xHCI */
 #define	PCI_PRODUCT_AMD_17_90_XHCI_1	0x162c		/* 17h/90h xHCI */
+#define	PCI_PRODUCT_AMD_19_4X_USB4_1	0x162e		/* 19h/4xh USB4 */
+#define	PCI_PRODUCT_AMD_19_4X_USB4_2	0x162f		/* 19h/4xh USB4 */
 #define	PCI_PRODUCT_AMD_17_6X_RC	0x1630		/* 17h/6xh Root Complex */
 #define	PCI_PRODUCT_AMD_17_6X_IOMMU	0x1631		/* 17h/6xh IOMMU */
 #define	PCI_PRODUCT_AMD_17_6X_HB	0x1632		/* 17h/6xh Host */
