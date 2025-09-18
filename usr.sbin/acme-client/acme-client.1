@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.42 2023/05/16 09:02:50 espie Exp $
+.\"	$OpenBSD: acme-client.1,v 1.43 2025/09/18 14:13:27 sthen Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2023 $
+.Dd $Mdocdate: September 18 2025 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -40,9 +40,12 @@ The certificates are typically used to provide HTTPS for web servers,
 but can be used in any situation where domain name validation is required
 (such as mail servers).
 .Pp
-If the certificate already exists and is less than 30 days from expiry,
+If the certificate already exists and is close to expiry,
 .Nm
 attempts to renew the certificate.
+For certificates with a lifetime of more than 10 days, this is done when
+less than a third of the lifetime remains.
+Otherwise, renewal is done when half the lifetime has expired.
 .Pp
 In order to prove that the client has access to the domain,
 a challenge is issued by the signing authority.
@@ -67,8 +70,7 @@ location "/.well-known/acme-challenge/*" {
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl F
-Force certificate renewal, even if it has more than 30 days
-validity.
+Force certificate renewal, regardless of remaining lifetime.
 .It Fl f Ar configfile
 Specify an alternative configuration file.
 .It Fl n
