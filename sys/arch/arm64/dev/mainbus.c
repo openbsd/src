@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.33 2025/08/30 10:30:22 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.34 2025/09/18 02:03:04 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -421,7 +421,7 @@ mainbus_attach_framebuffer(struct device *self)
 		return;
 
 	/*
-	 * On some systems, such as the Rasperry Pi 5B, /chosen has
+	 * On some systems, such as the Raspberry Pi 5B, /chosen has
 	 * its own #address-cells and #size-cells that differ from the
 	 * root node.
 	 */
