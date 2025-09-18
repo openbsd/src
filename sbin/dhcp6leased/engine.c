@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.33 2025/04/27 16:22:33 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.34 2025/09/18 11:49:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -139,6 +139,9 @@ void			 deprecate_interfaces(struct dhcp6leased_iface *);
 int			 prefixcmp(struct prefix *, struct prefix *, int);
 void			 send_reconfigure_interface(struct iface_pd_conf *,
 			     struct prefix *, enum reconfigure_action);
+void			 send_reconfigure_reject_route(
+			     struct dhcp6leased_iface *, struct in6_addr *,
+			     uint8_t, enum reconfigure_action);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 const char		*dhcp_option_type2str(int);
 const char		*dhcp_duid2str(int, uint8_t *);
@@ -1305,7 +1308,6 @@ request_dhcp_request(struct dhcp6leased_iface *iface)
 	}
 }
 
-/* XXX we need to install a reject route for the delegated prefix */
 void
 configure_interfaces(struct dhcp6leased_iface *iface)
 {
@@ -1336,6 +1338,9 @@ configure_interfaces(struct dhcp6leased_iface *iface)
 		    "server %s", i, inet_ntop(AF_INET6, &pd->prefix, ntopbuf,
 		    INET6_ADDRSTRLEN), pd->prefix_len, if_name,
 		    dhcp_duid2str(iface->serverid_len, iface->serverid));
+
+		send_reconfigure_reject_route(iface, &pd->prefix,
+		    pd->prefix_len, CONFIGURE);
 	}
 
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
@@ -1402,6 +1407,8 @@ deconfigure_interfaces(struct dhcp6leased_iface *iface)
 		    "server %s", i, inet_ntop(AF_INET6, &pd->prefix, ntopbuf,
 		    INET6_ADDRSTRLEN), pd->prefix_len, if_name,
 		    dhcp_duid2str(iface->serverid_len, iface->serverid));
+		send_reconfigure_reject_route(iface, &pd->prefix,
+		    pd->prefix_len, DECONFIGURE);
 	}
 
 	SIMPLEQ_FOREACH(ia_conf, &iface_conf->iface_ia_list, entry) {
@@ -1529,6 +1536,27 @@ send_reconfigure_interface(struct iface_pd_conf *pd_conf, struct prefix *pd,
 	else
 		engine_imsg_compose_main(IMSG_DECONFIGURE_ADDRESS, 0, &address,
 		    sizeof(address));
+}
+
+void
+send_reconfigure_reject_route(struct dhcp6leased_iface *iface,
+    struct in6_addr *prefix, uint8_t prefix_len, enum reconfigure_action action)
+{
+	struct imsg_configure_reject_route	 imsg;
+
+	memset(&imsg, 0, sizeof(imsg));
+
+	imsg.if_index = iface->if_index;
+	imsg.rdomain = iface->rdomain;
+	memcpy(&imsg.prefix, prefix, sizeof(imsg.prefix));
+	in6_prefixlen2mask(&imsg.mask, prefix_len);
+
+	if (action == CONFIGURE)
+		engine_imsg_compose_main(IMSG_CONFIGURE_REJECT_ROUTE, 0, &imsg,
+		    sizeof(imsg));
+	else
+		engine_imsg_compose_main(IMSG_DECONFIGURE_REJECT_ROUTE, 0,
+		    &imsg, sizeof(imsg));
 }
 
 const char *

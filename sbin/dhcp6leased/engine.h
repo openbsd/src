@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.h,v 1.1 2024/06/02 12:28:05 florian Exp $	*/
+/*	$OpenBSD: engine.h,v 1.2 2025/09/18 11:49:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
@@ -22,6 +22,13 @@ struct imsg_configure_address {
 	struct in6_addr		 mask;
 	uint32_t		 vltime;
 	uint32_t		 pltime;
+};
+
+struct imsg_configure_reject_route {
+	uint32_t		 if_index;
+	int			 rdomain;
+	struct in6_addr		 prefix;
+	struct in6_addr		 mask;
 };
 
 void		 engine(int, int);

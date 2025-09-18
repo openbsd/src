@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.h,v 1.9 2024/07/10 12:44:46 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.h,v 1.10 2025/09/18 11:49:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -171,6 +171,8 @@ enum imsg_type {
 	IMSG_DHCP,
 	IMSG_CONFIGURE_ADDRESS,
 	IMSG_DECONFIGURE_ADDRESS,
+	IMSG_CONFIGURE_REJECT_ROUTE,
+	IMSG_DECONFIGURE_REJECT_ROUTE,
 	IMSG_REQUEST_REBOOT,
 	IMSG_WRITE_LEASE,
 };

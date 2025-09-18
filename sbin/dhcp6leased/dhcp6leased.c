@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.19 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.20 2025/09/18 11:49:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -76,6 +76,7 @@ void	 main_dispatch_engine(int, short, void *);
 void	 open_udpsock(uint32_t);
 void	 configure_address(struct imsg_configure_address *);
 void	 deconfigure_address(struct imsg_configure_address *);
+void	 configure_reject_route(struct imsg_configure_reject_route *, uint8_t);
 void	 read_lease_file(struct imsg_ifinfo *);
 uint8_t	*get_uuid(void);
 void	 write_lease_file(struct imsg_lease_info *);
@@ -553,7 +554,27 @@ main_dispatch_engine(int fd, short event, void *bula)
 			deconfigure_address(&imsg_configure_address);
 			break;
 		}
-		case IMSG_WRITE_LEASE:  {
+		case IMSG_CONFIGURE_REJECT_ROUTE: {
+			struct imsg_configure_reject_route imsg_crr;
+			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_crr))
+				fatalx("%s: IMSG_CONFIGURE_REJECT_ROUTE wrong "
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
+			memcpy(&imsg_crr, imsg.data, sizeof(imsg_crr));
+			configure_reject_route(&imsg_crr, RTM_ADD);
+			break;
+		}
+		case IMSG_DECONFIGURE_REJECT_ROUTE: {
+			struct imsg_configure_reject_route imsg_crr;
+			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_crr))
+				fatalx("%s: IMSG_CONFIGURE_REJECT_ROUTE wrong "
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
+			memcpy(&imsg_crr, imsg.data, sizeof(imsg_crr));
+			configure_reject_route(&imsg_crr, RTM_DELETE);
+			break;
+		}
+		case IMSG_WRITE_LEASE: {
 			struct imsg_lease_info imsg_lease_info;
 			if (IMSG_DATA_SIZE(imsg) !=
 			    sizeof(imsg_lease_info))
@@ -769,6 +790,99 @@ deconfigure_address(struct imsg_configure_address *address)
 	if (ioctl(ioctl_sock, SIOCDIFADDR_IN6, &in6_ridreq) == -1 &&
 	    errno != EADDRNOTAVAIL)
 		log_warn("%s: cannot remove address", __func__);
+}
+
+#define	ROUNDUP(a)							\
+    (((a) & (sizeof(long) - 1)) ? (1 + ((a) | (sizeof(long) - 1))) : (a))
+
+void
+configure_reject_route(struct imsg_configure_reject_route *reject_route,
+    uint8_t rtm_type)
+{
+	struct rt_msghdr		 rtm;
+	struct sockaddr_rtlabel		 rl;
+	struct sockaddr_in6		 dst, gw, mask;
+	struct iovec			 iov[10];
+	long				 pad = 0;
+	int				 iovcnt = 0, padlen;
+
+	memset(&rtm, 0, sizeof(rtm));
+
+	rtm.rtm_version = RTM_VERSION;
+	rtm.rtm_type = rtm_type;
+	rtm.rtm_msglen = sizeof(rtm);
+	rtm.rtm_tableid = reject_route->rdomain;
+	rtm.rtm_index = reject_route->if_index;
+	rtm.rtm_seq = ++rtm_seq;
+	rtm.rtm_priority = RTP_DEFAULT;
+	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_LABEL;
+	rtm.rtm_flags = RTF_UP | RTF_REJECT | RTF_GATEWAY | RTF_STATIC;
+
+	iov[iovcnt].iov_base = &rtm;
+	iov[iovcnt++].iov_len = sizeof(rtm);
+
+	memset(&dst, 0, sizeof(dst));
+	dst.sin6_family = AF_INET6;
+	dst.sin6_len = sizeof(struct sockaddr_in6);
+	memcpy(&dst.sin6_addr, &reject_route->prefix, sizeof(dst.sin6_addr));
+
+	iov[iovcnt].iov_base = &dst;
+	iov[iovcnt++].iov_len = sizeof(dst);
+	rtm.rtm_msglen += sizeof(dst);
+	padlen = ROUNDUP(sizeof(dst)) - sizeof(dst);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	memset(&gw, 0, sizeof(gw));
+	gw.sin6_family = AF_INET6;
+	gw.sin6_len = sizeof(struct sockaddr_in6);
+	memcpy(&gw.sin6_addr, &in6addr_loopback, sizeof(gw.sin6_addr));
+
+	iov[iovcnt].iov_base = &gw;
+	iov[iovcnt++].iov_len = sizeof(gw);
+	rtm.rtm_msglen += sizeof(gw);
+	padlen = ROUNDUP(sizeof(gw)) - sizeof(gw);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	memset(&mask, 0, sizeof(mask));
+	mask.sin6_family = AF_INET6;
+	mask.sin6_len = sizeof(struct sockaddr_in6);
+	memcpy(&mask.sin6_addr, &reject_route->mask, sizeof(mask.sin6_addr));
+
+	iov[iovcnt].iov_base = &mask;
+	iov[iovcnt++].iov_len = sizeof(mask);
+	rtm.rtm_msglen += sizeof(mask);
+	padlen = ROUNDUP(sizeof(mask)) - sizeof(mask);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	memset(&rl, 0, sizeof(rl));
+	rl.sr_len = sizeof(rl);
+	rl.sr_family = AF_UNSPEC;
+	(void)snprintf(rl.sr_label, sizeof(rl.sr_label), "%s",
+	    DHCP6LEASED_RTA_LABEL);
+	iov[iovcnt].iov_base = &rl;
+	iov[iovcnt++].iov_len = sizeof(rl);
+	rtm.rtm_msglen += sizeof(rl);
+	padlen = ROUNDUP(sizeof(rl)) - sizeof(rl);
+	if (padlen > 0) {
+		iov[iovcnt].iov_base = &pad;
+		iov[iovcnt++].iov_len = padlen;
+		rtm.rtm_msglen += padlen;
+	}
+
+	if (writev(routesock, iov, iovcnt) == -1)
+		log_warn("failed to send route message");
 }
 
 const char*
