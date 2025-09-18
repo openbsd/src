@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.58 2025/05/09 19:17:31 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.59 2025/09/18 11:37:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -93,6 +93,7 @@ struct dhcpleased_iface {
 	struct event			 timer;
 	struct timeval			 timo;
 	uint32_t			 if_index;
+	char				 if_name[IF_NAMESIZE];
 	int				 rdomain;
 	int				 running;
 	struct ether_addr		 hw_address;
@@ -555,8 +556,6 @@ engine_dispatch_main(int fd, short event, void *bula)
 			struct dhcpleased_iface	*iface;
 			int			*ifaces;
 			int			 i, if_index;
-			char			*if_name;
-			char			 ifnamebuf[IF_NAMESIZE];
 
 			if (nconf == NULL)
 				fatalx("%s: %s without IMSG_RECONF_CONF",
@@ -567,12 +566,11 @@ engine_dispatch_main(int fd, short event, void *bula)
 			nconf = NULL;
 			for (i = 0; ifaces[i] != 0; i++) {
 				if_index = ifaces[i];
-				if_name = if_indextoname(if_index, ifnamebuf);
 				iface = get_dhcpleased_iface_by_id(if_index);
-				if (if_name == NULL || iface == NULL)
+				if (iface == NULL)
 					continue;
 				iface_conf = find_iface_conf(
-				    &engine_conf->iface_list, if_name);
+				    &engine_conf->iface_list, iface->if_name);
 				if (iface_conf == NULL)
 					continue;
 				if (iface_conf->ignore & IGN_DNS)
@@ -658,6 +656,9 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 		iface->running = imsg_ifinfo->running;
 		iface->link_state = imsg_ifinfo->link_state;
 		iface->requested_ip.s_addr = INADDR_ANY;
+		memcpy(iface->if_name, imsg_ifinfo->if_name,
+		    sizeof(iface->if_name));
+		iface->if_name[sizeof(iface->if_name) - 1] = '\0';
 		memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
 		    sizeof(struct ether_addr));
 		LIST_INSERT_HEAD(&dhcpleased_interfaces, iface, entries);
@@ -757,15 +758,12 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	char			 hbuf[INET_ADDRSTRLEN];
 	char			 domainname[4 * 255 + 1];
 	char			 hostname[4 * 255 + 1];
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if (bcast_mac.ether_addr_octet[0] == 0)
 		memset(bcast_mac.ether_addr_octet, 0xff, ETHER_ADDR_LEN);
 
-	if_name = if_indextoname(iface->if_index, ifnamebuf);
-
 #ifndef SMALL
-	iface_conf = find_iface_conf(&engine_conf->iface_list, if_name);
+	iface_conf = find_iface_conf(&engine_conf->iface_list, iface->if_name);
 #endif /* SMALL*/
 
 	memset(hbuf_src, 0, sizeof(hbuf_src));
@@ -1224,8 +1222,8 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		    from);
 
 	log_debug("%s on %s from %s/%s to %s/%s",
-	    dhcp_message_type2str(dhcp_message_type), if_name == NULL ? "?" :
-	    if_name, from, hbuf_src, to, hbuf_dst);
+	    dhcp_message_type2str(dhcp_message_type), iface->if_name, from,
+	    hbuf_src, to, hbuf_dst);
 
 	switch (dhcp_message_type) {
 	case DHCPOFFER:
@@ -1392,7 +1390,6 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 {
 	enum if_state	 old_state = iface->state;
 	struct timespec	 now, res;
-	char		 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	iface->state = new_state;
 
@@ -1506,9 +1503,8 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		}
 	}
 
-	if_name = if_indextoname(iface->if_index, ifnamebuf);
-	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
-	    "?" : if_name, if_state_name[old_state], if_state_name[new_state],
+	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, iface->if_name,
+	    if_state_name[old_state], if_state_name[new_state],
 	    iface->timo.tv_sec);
 
 	if (iface->timo.tv_sec == -1) {
@@ -1669,9 +1665,7 @@ void
 log_lease(struct dhcpleased_iface *iface, int deconfigure)
 {
 	char	 hbuf_lease[INET_ADDRSTRLEN], hbuf_server[INET_ADDRSTRLEN];
-	char	 ifnamebuf[IF_NAMESIZE], *if_name;
 
-	if_name = if_indextoname(iface->if_index, ifnamebuf);
 	inet_ntop(AF_INET, &iface->requested_ip, hbuf_lease,
 	    sizeof(hbuf_lease));
 	inet_ntop(AF_INET, &iface->server_identifier, hbuf_server,
@@ -1680,10 +1674,10 @@ log_lease(struct dhcpleased_iface *iface, int deconfigure)
 
 	if (deconfigure)
 		log_info("deleting %s from %s (lease from %s)", hbuf_lease,
-		    if_name == NULL ? "?" : if_name, hbuf_server);
+		    iface->if_name, hbuf_server);
 	else
 		log_info("adding %s to %s (lease from %s)", hbuf_lease,
-		    if_name == NULL ? "?" : if_name, hbuf_server);
+		    iface->if_name, hbuf_server);
 }
 
 void
@@ -1783,9 +1777,7 @@ log_rdns(struct dhcpleased_iface *iface, int withdraw)
 {
 	int	 i;
 	char	 hbuf_rdns[INET_ADDRSTRLEN], hbuf_server[INET_ADDRSTRLEN];
-	char	 ifnamebuf[IF_NAMESIZE], *if_name, *rdns_buf = NULL, *tmp_buf;
-
-	if_name = if_indextoname(iface->if_index, ifnamebuf);
+	char	*rdns_buf = NULL, *tmp_buf;
 
 	inet_ntop(AF_INET, &iface->server_identifier, hbuf_server,
 	    sizeof(hbuf_server));
@@ -1806,12 +1798,10 @@ log_rdns(struct dhcpleased_iface *iface, int withdraw)
 	if (rdns_buf != NULL) {
 		if (withdraw) {
 			log_info("deleting nameservers%s (lease from %s on %s)",
-			    rdns_buf, hbuf_server, if_name == NULL ? "?" :
-			    if_name);
+			    rdns_buf, hbuf_server, iface->if_name);
 		} else {
 			log_info("adding nameservers%s (lease from %s on %s)",
-			    rdns_buf, hbuf_server, if_name == NULL ? "?" :
-			    if_name);
+			    rdns_buf, hbuf_server, iface->if_name);
 		}
 		free(rdns_buf);
 	}

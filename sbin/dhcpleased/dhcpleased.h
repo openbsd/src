@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.17 2024/08/25 09:53:53 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.18 2025/09/18 11:37:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -269,6 +269,7 @@ struct dhcpleased_conf {
 
 struct imsg_ifinfo {
 	uint32_t		if_index;
+	char			if_name[IF_NAMESIZE];
 	int			rdomain;
 	int			running;
 	int			link_state;

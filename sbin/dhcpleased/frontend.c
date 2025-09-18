@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.45 2024/11/21 13:35:20 claudio Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.46 2025/09/18 11:37:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -428,7 +428,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 		case IMSG_RECONF_END: {
 			int	 i;
 			int	*ifaces;
-			char	 ifnamebuf[IF_NAMESIZE], *if_name;
 
 			if (nconf == NULL)
 				fatalx("%s: %s without IMSG_RECONF_CONF",
@@ -439,9 +438,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			nconf = NULL;
 			for (i = 0; ifaces[i] != 0; i++) {
 				if_index = ifaces[i];
-				if_name = if_indextoname(if_index, ifnamebuf);
-				log_debug("changed iface: %s[%d]", if_name !=
-				    NULL ? if_name : "<unknown>", if_index);
 				frontend_imsg_compose_engine(
 				    IMSG_REQUEST_REBOOT, 0, 0, &if_index,
 				    sizeof(if_index));
@@ -597,7 +593,6 @@ update_iface(struct if_msghdr *ifm, struct sockaddr_dl *sdl)
 	struct imsg_ifinfo	 ifinfo;
 	uint32_t		 if_index;
 	int			 flags, xflags;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if_index = ifm->ifm_index;
 
@@ -605,21 +600,11 @@ update_iface(struct if_msghdr *ifm, struct sockaddr_dl *sdl)
 	xflags = ifm->ifm_xflags;
 
 	iface = get_iface_by_id(if_index);
-	if_name = if_indextoname(if_index, ifnamebuf);
-
-	if (if_name == NULL) {
-		if (iface != NULL) {
-			log_debug("interface with idx %d removed", if_index);
-			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
-			    &if_index, sizeof(if_index));
-			remove_iface(if_index);
-		}
-		return;
-	}
 
 	if (!(xflags & IFXF_AUTOCONF4)) {
 		if (iface != NULL) {
-			log_info("Removed autoconf flag from %s", if_name);
+			log_info("Removed autoconf flag from %s",
+			    iface->ifinfo.if_name);
 			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
 			    &if_index, sizeof(if_index));
 			remove_iface(if_index);
@@ -629,6 +614,9 @@ update_iface(struct if_msghdr *ifm, struct sockaddr_dl *sdl)
 
 	memset(&ifinfo, 0, sizeof(ifinfo));
 	ifinfo.if_index = if_index;
+	if (if_indextoname(if_index, ifinfo.if_name) == NULL)
+		return; /* interface disappeared */
+
 	ifinfo.link_state = ifm->ifm_data.ifi_link_state;
 	ifinfo.rdomain = ifm->ifm_tableid;
 	ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
@@ -639,7 +627,8 @@ update_iface(struct if_msghdr *ifm, struct sockaddr_dl *sdl)
 		memcpy(ifinfo.hw_address.ether_addr_octet, LLADDR(sdl),
 		    ETHER_ADDR_LEN);
 	else if (iface == NULL) {
-		log_warnx("Could not find AF_LINK address for %s.", if_name);
+		log_warnx("Could not find AF_LINK address for %s.",
+		    ifinfo.if_name);
 		return;
 	}
 
@@ -708,6 +697,7 @@ init_ifaces(void)
 
 		memset(&ifinfo, 0, sizeof(ifinfo));
 		ifinfo.if_index = if_index;
+		memcpy(&ifinfo.if_name, if_name, sizeof(ifinfo.if_name));
 		ifinfo.link_state = -1;
 		ifinfo.running = (flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING);
@@ -1060,7 +1050,6 @@ void
 send_packet(uint8_t message_type, struct iface *iface)
 {
 	ssize_t			 pkt_len;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	if (!event_initialized(&iface->bpfev.ev)) {
 		iface->send_discover = 1;
@@ -1069,13 +1058,10 @@ send_packet(uint8_t message_type, struct iface *iface)
 
 	iface->send_discover = 0;
 
-	if ((if_name = if_indextoname(iface->ifinfo.if_index, ifnamebuf)) == NULL)
-		return; /* iface went away, nothing to do */
-
 	log_debug("%s on %s", message_type == DHCPDISCOVER ? "DHCPDISCOVER" :
-	    "DHCPREQUEST", if_name);
+	    "DHCPREQUEST", iface->ifinfo.if_name);
 
-	pkt_len = build_packet(message_type, if_name, iface->xid,
+	pkt_len = build_packet(message_type, iface->ifinfo.if_name, iface->xid,
 	    &iface->ifinfo.hw_address, &iface->ciaddr, &iface->requested_ip,
 	    &iface->server_identifier);
 	if (iface->dhcp_server.s_addr != INADDR_ANY) {
