@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.99 2025/08/18 11:27:13 job Exp $ */
+/*	$OpenBSD: http.c,v 1.100 2025/09/18 15:40:22 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -804,6 +804,12 @@ http_inflate_advance(struct http_connection *conn)
 
 		if (conn->iosz == 0) {
 			if (!conn->chunked) {
+				if (conn->bufpos != 0) {
+					warnx("%s: trailing data after "
+					    "compressed transfer",
+					    conn_info(conn));
+					return http_failed(conn);
+				}
 				return http_done(conn, HTTP_OK);
 			} else {
 				conn->state = STATE_RESPONSE_CHUNKED_CRLF;
@@ -1905,8 +1911,14 @@ data_write(struct http_connection *conn)
 	memmove(conn->buf, conn->buf + s, conn->bufpos);
 
 	/* check if regular file transfer is finished */
-	if (!conn->chunked && conn->iosz == 0)
+	if (!conn->chunked && conn->iosz == 0) {
+		if (conn->bufpos != 0) {
+			warnx("%s: trailing data after transfer",
+			    conn_info(conn));
+			return http_failed(conn);
+		}
 		return http_done(conn, HTTP_OK);
+	}
 
 	/* all data written, switch back to read */
 	if (conn->bufpos == 0 || conn->iosz == 0) {
