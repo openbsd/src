@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.420 2025/09/17 16:06:22 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.421 2025/09/18 13:05:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -993,8 +993,7 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 	const struct partition *pp;
 	char *help = NULL, *prompt = NULL;
 	unsigned char maxpart;
-	unsigned int partno;
-	int add, delete, inuse;
+	int add, delete, inuse, partno;
 
 	add = strcmp("add", action) == 0;
 	delete = strcmp("delete", action) == 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.255 2025/09/17 16:06:22 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.256 2025/09/18 13:05:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -907,7 +907,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 
 		if (cp[1] == '\0') {
-			unsigned int part = DL_PARTNAME2NUM(*cp);
+			int part = DL_PARTNAME2NUM(*cp);
 
 			if (part == -1 || part >= lp->d_npartitions) {
 				if (part == -1 || part >= MAXPARTITIONS) {
