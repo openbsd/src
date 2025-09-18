@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.40 2025/06/02 18:49:04 claudio Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.41 2025/09/18 14:54:33 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.16 2001/04/22 23:19:30 thorpej Exp $	*/
 
 /*-
@@ -41,6 +41,8 @@
 #endif
 #include <sys/mutex.h>
 #endif
+
+#define __HAVE_PMAP_PURGE
 
 /*
  * This scheme uses 2-level page tables.

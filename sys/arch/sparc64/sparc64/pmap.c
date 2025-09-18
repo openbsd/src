@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.123 2025/06/09 19:27:59 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.124 2025/09/18 14:54:33 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -1573,6 +1573,16 @@ pmap_activate(struct proc *p)
 void
 pmap_deactivate(struct proc *p)
 {
+}
+
+void
+pmap_purge(struct proc *p)
+{
+	/*
+	 * Write out the user windows before we tear down the userland
+	 * mappings.
+	 */
+	write_user_windows();
 }
 
 /*
