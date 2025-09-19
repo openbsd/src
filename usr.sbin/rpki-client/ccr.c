@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.14 2025/09/15 15:06:20 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.15 2025/09/19 11:52:20 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -199,7 +199,7 @@ hash_asn1_item(ASN1_OCTET_STRING *astr, const ASN1_ITEM *it, void *val)
 		errx(1, "ASN1_item_digest");
 
 	if (!ASN1_OCTET_STRING_set(astr, hash, sizeof(hash)))
-		errx(1, "ASN1_STRING_set");
+		errx(1, "ASN1_OCTET_STRING_set");
 }
 
 static char *
