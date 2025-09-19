@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.421 2025/09/18 13:05:24 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.422 2025/09/19 12:51:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -596,14 +596,14 @@ allocate_partition(struct disklabel *lp, struct space_allocation *sa)
 	struct partition *pp;
 	unsigned int partno;
 
-	for (partno = 0; partno < nitems(lp->d_partitions); partno++) {
+	for (partno = 0; partno < MAXPARTITIONS; partno++) {
 		if (partno == RAW_PART)
 			continue;
 		pp = &lp->d_partitions[partno];
 		if (DL_GETPSIZE(pp) == 0 || pp->p_fstype == FS_UNUSED)
 			break;
 	}
-	if (partno >= nitems(lp->d_partitions))
+	if (partno >= MAXPARTITIONS)
 		return 1;		/* No free partition. */
 
 	/* Find appropriate chunk of free space. */
