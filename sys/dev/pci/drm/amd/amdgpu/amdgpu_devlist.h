@@ -244,7 +244,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x7460 },	/* Radeon Pro V710 */
 	{0x1002, 0x7461 },	/* Radeon Pro V710 */
 	{0x1002, 0x7470 },	/* Radeon Pro W7700 */
-	{0x1002, 0x747e },	/* Radeon RX 7700 XT, 7800 XT, 7800M */
+	{0x1002, 0x747e },	/* Radeon RX 7700, 7700 XT, 7800 XT, 7800M */
 
 	/* GC 11.0.4, DCN 3.1.4, APU, Ryzen 7040 "Phoenix" */
 	{0x1002, 0x15c8 },	/* Radeon 740M */
