@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmstbpinctrl.c,v 1.2 2025/08/31 21:27:11 kettenis Exp $	*/
+/*	$OpenBSD: bcmstbpinctrl.c,v 1.3 2025/09/19 08:36:19 mglocker Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -75,7 +75,7 @@ const struct bcmstbpinctrl_pin bcmstbpinctrl_c0_aon_pins[] = {
 
 const struct bcmstbpinctrl_pin bcmstbpinctrl_d0_pins[] = {
 	{ "gpio20", 1, 4, 5, 2, { "gpio" } },
-	{ "gpio28", 2, 5, 5, 10, { "gpio" } },
+	{ "gpio28", 2, 4, 5, 10, { "gpio" } },
 	{ "gpio30", 2, 6, 5, 12, { "gpio", "sd2" } },
 	{ "gpio31", 2, 7, 5, 13, { "gpio", "sd2" } },
 	{ "gpio32", 3, 0, 5, 14, { "gpio", "sd2" } },
