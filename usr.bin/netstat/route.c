@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.112 2025/07/10 05:28:13 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.113 2025/09/19 11:27:51 jsg Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ static struct art_node *
 getdefault(art_heap_entry *heap)
 {
 	art_heap_entry entry;
-	kread((u_long)(heap + ART_HEAP_IDX_DEFAULT), &entry, sizeof(&entry));
+	kread((u_long)(heap + ART_HEAP_IDX_DEFAULT), &entry, sizeof(entry));
 	return (art_heap_entry_to_node(entry));
 }
 
