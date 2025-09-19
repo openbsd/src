@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.198 2025/09/16 13:34:33 dv Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.199 2025/09/19 07:00:32 sf Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -482,6 +482,11 @@ cpu_match(struct device *parent, void *match, void *aux)
 		return 0;
 
 	if (cf->cf_unit >= MAXCPUS)
+		return 0;
+
+	/* XXX We don't support MP with SEV-ES, yet */
+	if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED) &&
+	    cf->cf_unit >= 1)
 		return 0;
 
 	return 1;
