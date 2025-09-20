@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.137 2025/07/07 00:55:15 jsg Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.138 2025/09/20 17:43:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -249,6 +249,7 @@ struct acpi_softc {
 	}			sc_sleeptype[6];
 	int			sc_lastgpe;
 	int			sc_wakegpe;
+	int			sc_wakegpio;
 
 	struct gpe_block	*gpe_table;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.453 2025/09/16 12:18:10 hshoexer Exp $ */
+/* $OpenBSD: acpi.c,v 1.454 2025/09/20 17:43:28 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -925,6 +925,7 @@ acpi_gpio_event(void *arg)
 	if (cpu_suspended) {
 		cpu_suspended = 0;
 		sc->sc_wakegpe = -3;
+		sc->sc_wakegpio = ev->pin;
 	}
 
 	acpi_addtask(acpi_softc, acpi_gpio_event_task, ev, ev->pin);
