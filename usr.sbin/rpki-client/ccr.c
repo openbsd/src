@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.17 2025/09/20 05:04:54 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.18 2025/09/20 11:05:58 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -248,8 +248,8 @@ location_add_sia(STACK_OF(ACCESS_DESCRIPTION) *sad, const char *sia)
 		errx(1, "ACCESS_DESCRIPTION_new");
 
 	ASN1_OBJECT_free(ad->method);
-	if ((ad->method = OBJ_nid2obj(NID_signedObject)) == NULL)
-		errx(1, "OBJ_nid2obj");
+	if ((ad->method = OBJ_dup(signedobj_oid)) == NULL)
+		errx(1, "OBJ_dup");
 
 	GENERAL_NAME_free(ad->location);
 	ad->location = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_URI, sia, 0);
@@ -613,6 +613,9 @@ serialize_ccr_content(struct validation_data *vd)
 	unsigned char *out;
 	int out_len, ci_der_len;
 
+	/* XXX - This should probably move to main(). */
+	x509_init_oid();
+
 	if ((ci = ContentInfo_new()) == NULL)
 		errx(1, "ContentInfo_new");
 
@@ -620,8 +623,8 @@ serialize_ccr_content(struct validation_data *vd)
 	 * At some point the below PEN OID should be replaced by one from IANA.
 	 */
 	ASN1_OBJECT_free(ci->contentType);
-	if ((ci->contentType = OBJ_txt2obj("1.3.6.1.4.1.41948.825", 1)) == NULL)
-		errx(1, "OBJ_txt2obj");
+	if ((ci->contentType = OBJ_dup(ccr_oid)) == NULL)
+		errx(1, "OBJ_dup");
 
 	ccr = generate_ccr(vd);
 
