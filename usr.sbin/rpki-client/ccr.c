@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.16 2025/09/19 21:12:56 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.17 2025/09/20 05:04:54 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -248,7 +248,7 @@ location_add_sia(STACK_OF(ACCESS_DESCRIPTION) *sad, const char *sia)
 		errx(1, "ACCESS_DESCRIPTION_new");
 
 	ASN1_OBJECT_free(ad->method);
-	if ((ad->method = OBJ_dup(signedobj_oid)) == NULL)
+	if ((ad->method = OBJ_nid2obj(NID_signedObject)) == NULL)
 		errx(1, "OBJ_nid2obj");
 
 	GENERAL_NAME_free(ad->location);
