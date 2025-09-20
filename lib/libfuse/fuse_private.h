@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.23 2024/09/20 02:00:46 jsg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.24 2025/09/20 15:01:23 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -65,6 +65,7 @@ struct fuse_chan {
 	struct fuse_args *args;
 
 	int fd;
+	int init;
 	int dead;
 
 	/* kqueue stuff */

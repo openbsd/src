@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_main.3,v 1.8 2025/06/10 12:55:33 schwarze Exp $
+.\" $OpenBSD: fuse_main.3,v 1.9 2025/09/20 15:01:23 helg Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2025 $
+.Dd $Mdocdate: September 20 2025 $
 .Dt FUSE_MAIN 3
 .Os
 .Sh NAME
@@ -137,6 +137,7 @@ main(int argc, char **argv)
 .Xr fuse_new 3 ,
 .Xr fuse_parse_cmdline 3 ,
 .Xr fuse_setup 3 ,
+.Xr fuse_teardown 3 ,
 .Xr fuse 4
 .Sh STANDARDS
 The

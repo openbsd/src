@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_loop.3,v 1.3 2025/06/10 12:55:33 schwarze Exp $
+.\" $OpenBSD: fuse_loop.3,v 1.4 2025/09/20 15:01:23 helg Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2025 $
+.Dd $Mdocdate: September 20 2025 $
 .Dt FUSE_LOOP 3
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ the file system is being unmounted.
 If FUSE signaler handlers have been installed and either SIGHUP, SIGINT
 or SIGTERM is received then
 .Fn fuse_loop
-will attempt to unmount the file system.
+will terminate.
 See
 .Xr fuse_set_signal_handlers 3 .
 .Pp

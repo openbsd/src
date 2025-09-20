@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.45 2025/09/09 16:46:55 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.46 2025/09/20 15:01:23 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -165,6 +165,7 @@ fuse_device_cleanup(dev_t dev)
 		wakeup(f);
 		lprev = f;
 	}
+	knote_locked(&fd->fd_rklist, 0);
 	rw_exit_write(&fd->fd_lock);
 
 	/* clear FIFO WAIT*/
@@ -247,26 +248,22 @@ int
 fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct fuse_d *fd;
-	int error;
 
 	fd = fuse_lookup(minor(dev));
 	if (fd == NULL)
 		return (EINVAL);
 
-	if (fd->fd_fmp) {
-		printf("fuse: device close without umount\n");
-		fd->fd_fmp->sess_init = 0;
-		fuse_device_cleanup(dev);
-		if ((vfs_busy(fd->fd_fmp->mp, VB_WRITE | VB_NOWAIT)) != 0)
-			goto end;
-		error = dounmount(fd->fd_fmp->mp, MNT_FORCE, p);
-		if (error)
-			printf("fuse: unmount failed with error %d\n", error);
-		fd->fd_fmp = NULL;
-	}
+	fuse_device_cleanup(dev);
 
-end:
+	/*
+	 * Let fusefs_unmount know the device is closed so it doesn't try and
+	 * send FBT_DESTROY to a dead file system daemon.
+	 */
+	if (fd->fd_fmp)
+		fd->fd_fmp->sess_init = 0;
+
 	LIST_REMOVE(fd, fd_list);
+
 	free(fd, M_DEVBUF, sizeof(*fd));
 	stat_opened_fusedev--;
 	return (0);

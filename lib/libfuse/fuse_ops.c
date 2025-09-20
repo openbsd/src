@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.39 2025/09/09 16:46:55 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.40 2025/09/20 15:01:23 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -74,6 +74,9 @@ ifuse_ops_init(struct fuse *f)
 
 		f->op.init(&fci);
 	}
+
+	f->fc->init = 1;
+
 	return (0);
 }
 
@@ -969,15 +972,7 @@ ifuse_ops_rename(struct fuse *f, struct fusebuf *fbuf)
 static int
 ifuse_ops_destroy(struct fuse *f)
 {
-	struct fuse_context *ctx;
-
 	DPRINTF("Opcode: destroy\n");
-
-	if (f->op.destroy) {
-		ctx = fuse_get_context();
-
-		f->op.destroy((ctx)?ctx->private_data:NULL);
-	}
 
 	f->fc->dead = 1;
 

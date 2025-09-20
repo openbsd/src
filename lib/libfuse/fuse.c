@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.54 2025/09/06 06:15:52 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.55 2025/09/20 15:01:23 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -113,42 +113,6 @@ static struct fuse_opt fuse_mount_opts[] = {
 	FUSE_OPT_END
 };
 
-static void
-ifuse_try_unmount(struct fuse *f)
-{
-	pid_t child;
-
-	/* unmount in another thread so fuse_loop() doesn't deadlock */
-	child = fork();
-
-	if (child == -1) {
-		DPERROR(__func__);
-		return;
-	}
-
-	if (child == 0) {
-		fuse_remove_signal_handlers(fuse_get_session(f));
-		errno = 0;
-		fuse_unmount(f->fc->dir, f->fc);
-		_exit(errno);
-	}
-}
-
-static void
-ifuse_child_exit(const struct fuse *f)
-{
-	int status;
-
-	if (waitpid(WAIT_ANY, &status, WNOHANG) == -1)
-		fprintf(stderr, "fuse: %s\n", strerror(errno));
-
-	if (WIFEXITED(status) && (WEXITSTATUS(status) != 0))
-		fprintf(stderr, "fuse: %s: %s\n",
-			f->fc->dir, strerror(WEXITSTATUS(status)));
-
-	return;
-}
-
 int
 fuse_loop(struct fuse *fuse)
 {
@@ -159,7 +123,7 @@ fuse_loop(struct fuse *fuse)
 	struct iovec iov[2];
 	size_t fb_dat_size = FUSEBUFMAXSIZE;
 	ssize_t n;
-	int ret;
+	int ret, intr;
 
 	if (fuse == NULL)
 		return (-1);
@@ -189,7 +153,8 @@ fuse_loop(struct fuse *fuse)
 	iov[0].iov_len  = sizeof(fbuf.fb_hdr) + sizeof(fbuf.FD);
 	iov[1].iov_base = fbuf.fb_dat;
 
-	while (!fuse->fc->dead) {
+	intr = 0;
+	while (!intr && !fuse->fc->dead) {
 		ret = kevent(fuse->fc->kq, &event[0], 5, &ev, 1, NULL);
 		if (ret == -1) {
 			if (errno != EINTR)
@@ -197,23 +162,21 @@ fuse_loop(struct fuse *fuse)
 		} else if (ret > 0 && ev.filter == EVFILT_SIGNAL) {
 			int signum = ev.ident;
 			switch (signum) {
-			case SIGCHLD:
-				ifuse_child_exit(fuse);
-				break;
 			case SIGHUP:
 			case SIGINT:
 			case SIGTERM:
-				ifuse_try_unmount(fuse);
+				DPRINTF("%s: %s\n", __func__,
+				    strsignal(signum));
+				intr = 1;
 				break;
 			default:
 				fprintf(stderr, "%s: %s\n", __func__,
-					strsignal(signum));
+				    strsignal(signum));
 			}
 		} else if (ret > 0) {
 			iov[1].iov_len = fb_dat_size;
 			n = readv(fuse->fc->fd, iov, 2);
 			if (n == -1) {
-				perror("fuse_loop");
 				fprintf(stderr, "%s: bad fusebuf read: %s\n",
 				    __func__, strerror(errno));
 				free(fbuf.fb_dat);
@@ -251,7 +214,6 @@ fuse_loop(struct fuse *fuse)
 			ctx.umask = fbuf.fb_umask;
 			ctx.private_data = fuse->private_data;
 			ictx = &ctx;
-
 			ret = ifuse_exec_opcode(fuse, &fbuf);
 			if (ret) {
 				ictx = NULL;
@@ -353,11 +315,19 @@ DEF(fuse_mount);
 void
 fuse_unmount(const char *dir, struct fuse_chan *ch)
 {
-	if (ch == NULL || ch->dead)
+	if (ch == NULL)
 		return;
 
-	if (unmount(dir, MNT_UPDATE) == -1)
+	/*
+	 * Close the device before unmounting to prevent deadlocks with
+	 * FBT_DESTROY if fuse_loop() has already terminated.
+	 */
+	if (close(ch->fd) == -1)
 		DPERROR(__func__);
+
+	if (!ch->dead)
+		if (unmount(dir, MNT_FORCE) == -1)
+			DPERROR(__func__);
 }
 DEF(fuse_unmount);
 
@@ -463,20 +433,32 @@ fuse_daemonize(int foreground)
 DEF(fuse_daemonize);
 
 void
-fuse_destroy(struct fuse *f)
+fuse_destroy(struct fuse *fuse)
 {
-	if (f == NULL)
+        struct fuse_context ctx;
+
+	if (fuse == NULL)
 		return;
+
+	if (fuse->fc->init && fuse->op.destroy) {
+		/* setup a basic fuse context for the callback */
+		memset(&ctx, 0, sizeof(ctx));
+		ctx.fuse = fuse;
+		ctx.private_data = fuse->private_data;
+		ictx = &ctx;
+
+		fuse->op.destroy(fuse->private_data);
+
+		ictx = NULL;
+	}
 
 	/*
   	 * Even though these were allocated in fuse_mount(), we can't free them
- 	 * in fuse_unmount() since fuse_loop() will not have terminated yet so
- 	 * we free them here.
+ 	 * in fuse_unmount() since they are still needed, so we free them here.
  	 */
-	close(f->fc->fd);
-	free(f->fc->dir);
-	free(f->fc);
-	free(f);
+	free(fuse->fc->dir);
+	free(fuse->fc);
+	free(fuse);
 }
 DEF(fuse_destroy);
 
@@ -531,11 +513,6 @@ fuse_set_signal_handlers(unused struct fuse_session *se)
 		return (-1);
 	if (old_sa.sa_handler == SIG_DFL)
 		signal(SIGPIPE, SIG_IGN);
-
-	if (sigaction(SIGCHLD, NULL, &old_sa) == -1)
-		return (-1);
-	if (old_sa.sa_handler == SIG_DFL)
-		signal(SIGCHLD, SIG_IGN);
 
 	return (0);
 }
@@ -723,10 +700,15 @@ int
 fuse_main(int argc, char **argv, const struct fuse_operations *ops, void *data)
 {
 	struct fuse *fuse;
+	char *mp;
+	int ret;
 
-	fuse = fuse_setup(argc, argv, ops, sizeof(*ops), NULL, NULL, data);
+	fuse = fuse_setup(argc, argv, ops, sizeof(*ops), &mp, NULL, data);
 	if (fuse == NULL)
 		return (-1);
 
-	return (fuse_loop(fuse));
+	ret = fuse_loop(fuse);
+	fuse_teardown(fuse, mp);
+
+	return (ret == -1 ? 1 : 0);
 }
