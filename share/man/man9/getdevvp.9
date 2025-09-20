@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getdevvp.9,v 1.9 2020/11/14 10:35:58 jmc Exp $
+.\"     $OpenBSD: getdevvp.9,v 1.10 2025/09/20 13:56:15 mpi Exp $
 .\"
 .\" Copyright (C) 2002 Peter A. Werner. All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 14 2020 $
+.Dd $Mdocdate: September 20 2025 $
 .Dt GETDEVVP 9
 .Os
 .Sh NAME
@@ -80,7 +80,8 @@ and swap areas, among other things.
 will create a vnode for a character device and is used in console handling.
 .Sh RETURN VALUES
 All functions return 0 on success.
-If an error occurs, vpp will point to a NULLVP.
+If an error occurs, vpp will point to
+.Dv NULL .
 See
 .Xr getnewvnode 9
 for further return values.
