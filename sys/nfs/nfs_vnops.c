@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.208 2025/09/08 10:13:32 jsg Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.209 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -819,8 +819,8 @@ nfs_lookup(void *v)
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 
-	*vpp = NULLVP;
-	newvp = NULLVP;
+	*vpp = NULL;
+	newvp = NULL;
 	if ((flags & ISLASTCN) && (dvp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
@@ -845,14 +845,14 @@ nfs_lookup(void *v)
 		int err2;
 
 		if (error && error != ENOENT) {
-			*vpp = NULLVP;
+			*vpp = NULL;
 			return (error);
 		}
 
 		if (cnp->cn_flags & PDIRUNLOCK) {
 			err2 = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			if (err2 != 0) {
-				*vpp = NULLVP;
+				*vpp = NULL;
 				return (err2);
 			}
 			cnp->cn_flags &= ~PDIRUNLOCK;
@@ -866,7 +866,7 @@ nfs_lookup(void *v)
 				else
 					vrele(*vpp);
 			}
-			*vpp = NULLVP;
+			*vpp = NULL;
 			return (err2);
 		}
 
@@ -899,11 +899,11 @@ nfs_lookup(void *v)
 			vput(newvp);
 		else
 			vrele(newvp);
-		*vpp = NULLVP;
+		*vpp = NULL;
 	}
 dorpc:
 	error = 0;
-	newvp = NULLVP;
+	newvp = NULL;
 	nfsstats.lookupcache_misses++;
 	nfsstats.rpccnt[NFSPROC_LOOKUP]++;
 	len = cnp->cn_namelen;
@@ -1054,7 +1054,7 @@ nfsmout:
 		    cnp->cn_nameiop != CREATE) {
 			nfs_cache_enter(dvp, NULL, cnp);
 		}
-		if (newvp != NULLVP) {
+		if (newvp != NULL) {
 			if (newvp != dvp)
 				vput(newvp);
 			else
@@ -2545,7 +2545,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 #endif
 	NDINIT(ndp, 0, 0, UIO_SYSSPACE, NULL, p);
 	ndp->ni_dvp = vp;
-	newvp = NULLVP;
+	newvp = NULL;
 
 	txdr_hyper(uiop->uio_offset, &cookie.nfsuquad[0]);
 
@@ -2719,12 +2719,12 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 						goto nfsmout;
 				}
 			}
-			if (newvp != NULLVP) {
+			if (newvp != NULL) {
 				if (newvp == vp)
 					vrele(newvp);
 				else
 					vput(newvp);
-				newvp = NULLVP;
+				newvp = NULL;
 			}
 			tl = (uint32_t *)nfsm_dissect(&info, NFSX_UNSIGNED);
 			if (tl == NULL)
@@ -2768,7 +2768,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 	}
 
 nfsmout:
-	if (newvp != NULLVP) {
+	if (newvp != NULL) {
 		if (newvp == vp)
 			vrele(newvp);
 		else

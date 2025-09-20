@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.98 2024/10/18 05:52:32 miod Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.99 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -124,7 +124,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data,
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			error = vflush(mp, NULLVP, flags);
+			error = vflush(mp, NULL, flags);
 			if (!error) {
 				int force = 0;
 
@@ -572,7 +572,7 @@ msdosfs_unmount(struct mount *mp, int mntflags,struct proc *p)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	if ((error = vflush(mp, NULLVP, flags)) != 0)
+	if ((error = vflush(mp, NULL, flags)) != 0)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
 	pmp->pm_devvp->v_specmountpoint = NULL;
@@ -721,7 +721,7 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs, &dep);
 	if (error) {
-		*vpp = NULLVP;
+		*vpp = NULL;
 		return (error);
 	}
 	*vpp = DETOV(dep);

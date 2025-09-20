@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.89 2025/06/08 06:25:36 rsadowski Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.90 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ vfs_lookup(struct nameidata *ndp)
 	ndp->ni_dvp = NULL;
 	cnp->cn_flags &= ~ISSYMLINK;
 	dp = ndp->ni_startdir;
-	ndp->ni_startdir = NULLVP;
+	ndp->ni_startdir = NULL;
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*

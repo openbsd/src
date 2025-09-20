@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.66 2024/09/04 07:54:53 mglocker Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.67 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -426,7 +426,7 @@ out1:
 		if (ntmp->ntm_sysvn[i])
 			vrele(ntmp->ntm_sysvn[i]);
 
-	if (vflush(mp,NULLVP,0))
+	if (vflush(mp,NULL,0))
 		DPRINTF("ntfs_mountfs: vflush failed\n");
 
 out:
@@ -470,7 +470,7 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		flags |= FORCECLOSE;
 
 	DPRINTF("ntfs_unmount: vflushing...\n");
-	error = vflush(mp,NULLVP,flags | SKIPSYSTEM);
+	error = vflush(mp,NULL,flags | SKIPSYSTEM);
 	if (error) {
 		DPRINTF("ntfs_unmount: vflush failed: %d\n", error);
 		return (error);
@@ -488,7 +488,7 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		 if(ntmp->ntm_sysvn[i]) vrele(ntmp->ntm_sysvn[i]);
 
 	/* vflush system vnodes */
-	error = vflush(mp,NULLVP,flags);
+	error = vflush(mp,NULL,flags);
 	if (error) {
 		/* XXX should this be panic() ? */
 		printf("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
@@ -630,7 +630,7 @@ ntfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
 			LK_EXCLUSIVE | LK_RETRY, 0, vpp); /* XXX */
 	if (error != 0) {
-		*vpp = NULLVP;
+		*vpp = NULL;
 		return (error);
 	}
 

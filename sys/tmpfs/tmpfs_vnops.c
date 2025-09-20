@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.56 2024/10/18 05:52:32 miod Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.57 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ tmpfs_lookup(void *v)
 	 * directory/name couple is already in the cache.
 	 */
 	cachefound = cache_lookup(dvp, vpp, cnp);
-	if (cachefound == ENOENT /* && *vpp == NULLVP */)
+	if (cachefound == ENOENT /* && *vpp == NULL */)
 		return ENOENT; /* Negative cache hit. */
 	else if (cachefound != -1)
 		return 0; /* Found in cache. */

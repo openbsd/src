@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.69 2025/08/15 07:50:53 mpi Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.70 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ kill_vmcmds(struct exec_vmcmd_set *evsp)
 
 	for (i = 0; i < evsp->evs_used; i++) {
 		vcp = &evsp->evs_cmds[i];
-		if (vcp->ev_vp != NULLVP)
+		if (vcp->ev_vp != NULL)
 			vrele(vcp->ev_vp);
 	}
 
@@ -422,18 +422,18 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
 	    epp->ep_maxsaddr + epp->ep_ssize,
-	    NULLVP, 0, PROT_NONE,  VMCMD_IMMUTABLE);
+	    NULL, 0, PROT_NONE,  VMCMD_IMMUTABLE);
 	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    epp->ep_maxsaddr,
-	    NULLVP, 0, PROT_READ | PROT_WRITE, VMCMD_STACK | VMCMD_IMMUTABLE);
+	    NULL, 0, PROT_READ | PROT_WRITE, VMCMD_STACK | VMCMD_IMMUTABLE);
 #else
 	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
 	    epp->ep_maxsaddr,
-	    NULLVP, 0, PROT_NONE, VMCMD_IMMUTABLE);
+	    NULL, 0, PROT_NONE, VMCMD_IMMUTABLE);
 	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    (epp->ep_minsaddr - epp->ep_ssize),
-	    NULLVP, 0, PROT_READ | PROT_WRITE, VMCMD_STACK | VMCMD_IMMUTABLE);
+	    NULL, 0, PROT_READ | PROT_WRITE, VMCMD_STACK | VMCMD_IMMUTABLE);
 #endif
 
 	return (0);

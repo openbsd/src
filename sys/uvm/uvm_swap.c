@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.175 2025/09/17 11:32:20 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.176 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1274,7 +1274,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
 		nbp->vb_buf.b_proc     = bp->b_proc;
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
-		nbp->vb_buf.b_vp       = NULLVP;
+		nbp->vb_buf.b_vp       = NULL;
 		nbp->vb_buf.b_vnbufs.le_next = NOLIST;
 
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.377 2025/08/04 04:59:31 guenther Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.378 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -416,7 +416,7 @@ dounmount(struct mount *mp, int flags, struct proc *p)
 	 */
 	while ((mp = TAILQ_NEXT(mp, mnt_list)) != NULL) {
 		SLIST_FOREACH(nmp, &mplist, mnt_dounmount) {
-			if (mp->mnt_vnodecovered == NULLVP ||
+			if (mp->mnt_vnodecovered == NULL ||
 			    mp->mnt_vnodecovered->v_mount != nmp)
 				continue;
 
@@ -501,7 +501,7 @@ dounmount_leaf(struct mount *mp, int flags, struct proc *p)
 	}
 
 	TAILQ_REMOVE(&mountlist, mp, mnt_list);
-	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
+	if ((coveredvp = mp->mnt_vnodecovered) != NULL) {
 		coveredvp->v_mountedhere = NULL;
 		vrele(coveredvp);
 	}

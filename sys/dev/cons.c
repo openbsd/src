@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.30 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: cons.c,v 1.31 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include <dev/cons.h>
 
 struct	tty *constty = NULL;		/* virtual console output device */
-struct	vnode *cn_devvp = NULLVP;	/* vnode for underlying device. */
+struct	vnode *cn_devvp = NULL;		/* vnode for underlying device. */
 
 int
 cnopen(dev_t dev, int flag, int mode, struct proc *p)
@@ -71,7 +71,7 @@ cnopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (cndev == dev)
 		panic("cnopen: recursive");
 #endif
-	if (cn_devvp == NULLVP) {
+	if (cn_devvp == NULL) {
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(cndev, &cn_devvp);
 	}
@@ -92,10 +92,10 @@ cnclose(dev_t dev, int flag, int mode, struct proc *p)
 	 * screw up others who have it open.
 	 */
 	dev = cn_tab->cn_dev;
-	if (cn_devvp != NULLVP) {
+	if (cn_devvp != NULL) {
 		/* release our reference to real dev's vnode */
 		vrele(cn_devvp);
-		cn_devvp = NULLVP;
+		cn_devvp = NULL;
 	}
 	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
 		return (0);

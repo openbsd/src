@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vfsops.c,v 1.20 2023/03/08 04:43:09 guenther Exp $	*/
+/*	$OpenBSD: ufs_vfsops.c,v 1.21 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: ufs_vfsops.c,v 1.4 1996/02/09 22:36:12 christos Exp $	*/
 
 /*
@@ -133,13 +133,13 @@ ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
 	int error;
 
 	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
-		*vpp = NULLVP;
+		*vpp = NULL;
 		return (error);
 	}
 	ip = VTOI(nvp);
 	if (DIP(ip, mode) == 0 || DIP(ip, gen) != ufhp->ufid_gen) {
 		vput(nvp);
-		*vpp = NULLVP;
+		*vpp = NULL;
 		return (ESTALE);
 	}
 	*vpp = nvp;

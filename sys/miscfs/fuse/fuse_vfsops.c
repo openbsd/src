@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.48 2024/10/31 13:55:21 claudio Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.49 2025/09/20 13:53:36 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -153,7 +153,7 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	if ((error = vflush(mp, NULLVP, flags)))
+	if ((error = vflush(mp, NULL, flags)))
 		return (error);
 
 	if (fmp->sess_init && fmp->sess_init != PENDING) {
@@ -276,7 +276,7 @@ retry:
 	/*
 	 * check if vnode is in hash.
 	 */
-	if ((*vpp = fuse_ihashget(fmp->dev, ino)) != NULLVP)
+	if ((*vpp = fuse_ihashget(fmp->dev, ino)) != NULL)
 		return (0);
 
 	/*
@@ -284,7 +284,7 @@ retry:
 	 */
 	if ((error = getnewvnode(VT_FUSEFS, mp, &fusefs_vops, &nvp)) != 0) {
 		printf("fusefs: getnewvnode error\n");
-		*vpp = NULLVP;
+		*vpp = NULL;
 		return (error);
 	}
 

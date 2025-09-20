@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.200 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.201 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -773,7 +773,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	ump->um_seqinc = fs->fs_frag;
 	ump->um_maxsymlinklen = fs->fs_maxsymlinklen;
 	for (i = 0; i < MAXQUOTAS; i++)
-		ump->um_quotas[i] = NULLVP;
+		ump->um_quotas[i] = NULL;
 
 	devvp->v_specmountpoint = mp;
 	ffs_oldfscompat(fs);
@@ -968,10 +968,10 @@ ffs_flushfiles(struct mount *mp, int flags, struct proc *p)
 	ump = VFSTOUFS(mp);
 	if (mp->mnt_flag & MNT_QUOTA) {
 		int i;
-		if ((error = vflush(mp, NULLVP, SKIPSYSTEM|flags)) != 0)
+		if ((error = vflush(mp, NULL, SKIPSYSTEM|flags)) != 0)
 			return (error);
 		for (i = 0; i < MAXQUOTAS; i++) {
-			if (ump->um_quotas[i] == NULLVP)
+			if (ump->um_quotas[i] == NULL)
 				continue;
 			quotaoff(p, mp, i);
 		}

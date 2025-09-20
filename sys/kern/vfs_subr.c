@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.330 2025/06/12 20:37:58 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.331 2025/09/20 13:53:36 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	vfsp = vfs_byname(fstypename);
 	if (vfsp == NULL)
 		return (ENODEV);
-	mp = vfs_mount_alloc(NULLVP, vfsp);
+	mp = vfs_mount_alloc(NULL, vfsp);
 	mp->mnt_flag |= MNT_RDONLY;
 	mp->mnt_stat.f_mntonname[0] = '/';
 	strlcpy(mp->mnt_stat.f_mntfromname, devname, MNAMELEN);
@@ -537,12 +537,12 @@ getdevvp(dev_t dev, struct vnode **vpp, enum vtype type)
 	int error;
 
 	if (dev == NODEV) {
-		*vpp = NULLVP;
+		*vpp = NULL;
 		return (0);
 	}
 	error = getnewvnode(VT_NON, NULL, &spec_vops, &nvp);
 	if (error) {
-		*vpp = NULLVP;
+		*vpp = NULL;
 		return (error);
 	}
 	vp = nvp;
@@ -573,7 +573,7 @@ checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 	struct vnodechain *vchain;
 
 	if (nvp->v_type != VBLK && nvp->v_type != VCHR)
-		return (NULLVP);
+		return (NULL);
 
 	vchain = &speclisth[SPECHASH(nvp_rdev)];
 loop:
@@ -608,19 +608,19 @@ loop:
 		if (nvp->v_type == VCHR &&
 		    (cdevsw[major(nvp_rdev)].d_flags & D_CLONE) &&
 		    (minor(nvp_rdev) >> CLONE_SHIFT == 0)) {
-			if (vp != NULLVP)
+			if (vp != NULL)
 				nvp->v_specbitmap = vp->v_specbitmap;
 			else
 				nvp->v_specbitmap = malloc(CLONE_MAPSZ,
 				    M_VNODE, M_WAITOK | M_ZERO);
 		}
 		SLIST_INSERT_HEAD(vchain, nvp, v_specnext);
-		if (vp != NULLVP) {
+		if (vp != NULL) {
 			nvp->v_flag |= VALIASED;
 			vp->v_flag |= VALIASED;
 			vput(vp);
 		}
-		return (NULLVP);
+		return (NULL);
 	}
 
 	/*

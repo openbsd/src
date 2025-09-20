@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.72 2025/06/12 20:37:56 deraadt Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.73 2025/09/20 13:53:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -714,7 +714,7 @@ udf_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	ifhp = (struct ifid *)fhp;
 
 	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
-		*vpp = NULLVP;
+		*vpp = NULL;
 		return (error);
 	}
 
