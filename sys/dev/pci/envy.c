@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.88 2024/05/24 06:02:53 jsg Exp $	*/
+/*	$OpenBSD: envy.c,v 1.89 2025/09/20 13:50:33 mpi Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1811,6 +1811,8 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 	int err, wait;
 	struct envy_buf *buf;
 	bus_addr_t dma_addr;
+	bus_dma_segment_t seg;
+	int rseg;
 
 	buf = (dir == AUMODE_RECORD) ? &sc->ibuf : &sc->obuf;
 	if (buf->addr != NULL) {
@@ -1823,12 +1825,17 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
 #define ENVY_ALIGN	4
 #define ENVY_MAXADDR	((1 << 28) - 1)
 
-	buf->addr = (caddr_t)uvm_km_kmemalloc_pla(kernel_map,
-	    uvm.kernel_object, buf->size, 0, UVM_KMF_NOWAIT, 0,
-	    (paddr_t)ENVY_MAXADDR, 0, 0, 1);
-	if (buf->addr == NULL) {
-		DPRINTF("%s: unable to alloc dma segment\n", DEVNAME(sc));
+	err = bus_dmamem_alloc_range(sc->pci_dmat, buf->size, 0, 0, &seg, 1,
+	    &rseg, BUS_DMA_NOWAIT, (bus_addr_t)0, (bus_addr_t)ENVY_MAXADDR);
+	if (err) {
+		DPRINTF("%s: dmamem_alloc_range failed %d", DEVNAME(sc), err);
 		goto err_ret;
+	}
+	err = bus_dmamem_map(sc->pci_dmat, &seg, rseg, buf->size, &buf->addr,
+	    BUS_DMA_NOWAIT);
+	if (err) {
+		DPRINTF("%s: dmamem_map failed %d\n", DEVNAME(sc), err);
+		goto err_unmap;
 	}
 	err = bus_dmamap_create(sc->pci_dmat, buf->size, 1, buf->size, 0,
 	    wait, &buf->map);
@@ -1855,7 +1862,7 @@ envy_allocm(void *self, int dir, size_t size, int type, int flags)
  err_destroy:
 	bus_dmamap_destroy(sc->pci_dmat, buf->map);
  err_unmap:
-	uvm_km_free(kernel_map, (vaddr_t)buf->addr, buf->size);
+	bus_dmamem_free(sc->pci_dmat, &seg, rseg);
  err_ret:
 	return NULL;
 }
@@ -1879,7 +1886,7 @@ envy_freem(void *self, void *addr, int type)
 	}
 	bus_dmamap_unload(sc->pci_dmat, buf->map);
 	bus_dmamap_destroy(sc->pci_dmat, buf->map);
-	uvm_km_free(kernel_map, (vaddr_t)&buf->addr, buf->size);
+	bus_dmamem_free(sc->pci_dmat, buf->map->dm_segs, 1);
 	buf->addr = NULL;
 	DPRINTF("%s: freed buffer (mode=%d)\n", DEVNAME(sc), dir);
 }
