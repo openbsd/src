@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.23 2025/08/14 13:04:48 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.24 2025/09/22 07:49:43 sashan Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/ioccom.h>
 #include <sys/stacktrace.h>
 #include <sys/time.h>
+#include <sys/syslimits.h>
 
 /*
  * Length of provider/probe/function names, including NUL.
@@ -121,18 +122,25 @@ struct dtioc_stat {
 	uint64_t		 dtst_recurevt;	/* recursive events */
 };
 
-struct dtioc_getaux {
-	pid_t			 dtga_pid;	/* process to inspect */
-	unsigned long		 dtga_auxbase;	/* AUX_base value */
+struct dtioc_rdvn {
+	pid_t			 dtrv_pid;	/* process to inspect */
+	int			 dtrv_fd;	/* where to dump data */
+	caddr_t			 dtrv_va;
+				    /* programm counter in inspected process */
+	caddr_t			 dtrv_offset;
+				    /* comes from vm_map_entry::offset */
+	caddr_t			 dtrv_start;	/* end address for section */
+	size_t			 dtrv_len;	/* the length of ELF file */
 };
 
 #define DTIOCGPLIST	_IOWR('D', 1, struct dtioc_probe)
 #define DTIOCGSTATS	_IOR('D', 2, struct dtioc_stat)
 #define DTIOCRECORD	_IOW('D', 3, int)
 #define DTIOCPRBENABLE	_IOW('D', 4, struct dtioc_req)
-#define DTIOCPRBDISABLE	 _IOW('D', 5, struct dtioc_req)
+#define DTIOCPRBDISABLE	_IOW('D', 5, struct dtioc_req)
 #define DTIOCGARGS	_IOWR('D', 6, struct dtioc_arg)
-#define DTIOCGETAUXBASE	 _IOWR('D', 7, struct dtioc_getaux)
+/* _IOWR('D', 7, struct dtioc_getaux)  was DTIOCGETAUXBASE */
+#define DTIOCRDVNODE	_IOWR('D', 8, struct dtioc_rdvn)
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.97 2025/05/18 20:09:58 schwarze Exp $ */
+/*	$OpenBSD: btrace.c,v 1.98 2025/09/22 07:49:43 sashan Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -38,6 +38,8 @@
 #include <unistd.h>
 
 #include <dev/dt/dtvar.h>
+
+#include <gelf.h>
 
 #include "btrace.h"
 #include "bt_parser.h"
@@ -120,7 +122,7 @@ struct dt_evt		 bt_devt;	/* fake event for BEGIN/END */
 #define EVENT_END	 (unsigned int)(-1)
 uint64_t		 bt_filtered;	/* # of events filtered out */
 
-struct syms		*kelf, *uelf;
+struct syms		*kelf;
 
 char			**vargs;
 int			 nargs = 0;
@@ -156,9 +158,6 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			noaction = 1;
-			break;
-		case 'p':
-			uelf = kelf_open(optarg);
 			break;
 		case 'v':
 			verbose++;
@@ -611,7 +610,7 @@ rules_setup(int fd)
 	}
 
 	if (dokstack)
-		kelf = kelf_open(_PATH_KSYMS);
+		kelf = kelf_open_kernel(_PATH_KSYMS);
 
 	/* Initialize "fake" event for BEGIN/END */
 	bt_devt.dtev_pbn = EVENT_BEGIN;
@@ -699,9 +698,6 @@ rules_teardown(int fd)
 	}
 
 	kelf_close(kelf);
-	kelf = NULL;
-	kelf_close(uelf);
-	uelf = NULL;
 
 	/* Update "fake" event for BEGIN/END */
 	bt_devt.dtev_pbn = EVENT_END;
@@ -806,7 +802,7 @@ builtin_nsecs(struct dt_evt *dtev)
 }
 
 const char *
-builtin_stack(struct dt_evt *dtev, int kernel, unsigned long offset)
+builtin_stack(struct dt_evt *dtev, int kernel)
 {
 	struct stacktrace *st = &dtev->dtev_kstack;
 	static char buf[4096];
@@ -829,11 +825,11 @@ builtin_stack(struct dt_evt *dtev, int kernel, unsigned long offset)
 		int l;
 
 		if (!kernel)
-			l = kelf_snprintsym(uelf, bp, sz - 1, st->st_pc[i],
-			    offset);
+			l = kelf_snprintsym_proc(dtfd, dtev->dtev_pid, bp, sz - 1,
+			    st->st_pc[i]);
 		else
-			l = kelf_snprintsym(kelf, bp, sz - 1, st->st_pc[i],
-			    offset);
+			l = kelf_snprintsym_kernel(kelf, bp, sz - 1,
+			    st->st_pc[i]);
 		if (l < 0)
 			break;
 		if (l >= sz - 1) {
@@ -1805,10 +1801,10 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = "";
 		break;
 	case B_AT_BI_KSTACK:
-		str = builtin_stack(dtev, 1, 0);
+		str = builtin_stack(dtev, 1);
 		break;
 	case B_AT_BI_USTACK:
-		str = builtin_stack(dtev, 0, dt_get_offset(dtev->dtev_pid));
+		str = builtin_stack(dtev, 0);
 		break;
 	case B_AT_BI_COMM:
 		str = dtev->dtev_comm;
@@ -2102,31 +2098,4 @@ debug_dump_filter(struct bt_rule *r)
 	debugx(" /");
 	debug_dump_expr(SLIST_FIRST(&bs->bs_args));
 	debugx("/\n");
-}
-
-unsigned long
-dt_get_offset(pid_t pid)
-{
-	static struct dtioc_getaux	cache[32];
-	static int			next;
-	struct dtioc_getaux		*aux = NULL;
-	int				 i;
-
-	for (i = 0; i < 32; i++) {
-		if (cache[i].dtga_pid != pid)
-			continue;
-		aux = cache + i;
-		break;
-	}
-
-	if (aux == NULL) {
-		aux = &cache[next++];
-		next %= 32;
-
-		aux->dtga_pid = pid;
-		if (ioctl(dtfd, DTIOCGETAUXBASE, aux))
-			aux->dtga_auxbase = 0;
-	}
-
-	return aux->dtga_auxbase;
 }

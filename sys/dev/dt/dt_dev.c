@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.45 2025/07/31 15:07:59 bluhm Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.46 2025/09/22 07:49:43 sashan Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -25,6 +25,13 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
+#include <sys/vnode.h>
+#include <uvm/uvm.h>
+#include <uvm/uvm_map.h>
+#include <uvm/uvm_vnode.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/fcntl.h>
 
 #include <machine/intr.h>
 
@@ -162,7 +169,7 @@ int	dt_ioctl_record_start(struct dt_softc *);
 void	dt_ioctl_record_stop(struct dt_softc *);
 int	dt_ioctl_probe_enable(struct dt_softc *, struct dtioc_req *);
 int	dt_ioctl_probe_disable(struct dt_softc *, struct dtioc_req *);
-int	dt_ioctl_get_auxbase(struct dt_softc *, struct dtioc_getaux *);
+int	dt_ioctl_rd_vnode(struct dt_softc *, struct dtioc_rdvn *);
 
 int	dt_ring_copy(struct dt_cpubuf *, struct uio *, size_t, size_t *);
 
@@ -299,7 +306,7 @@ dtioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DTIOCRECORD:
 	case DTIOCPRBENABLE:
 	case DTIOCPRBDISABLE:
-	case DTIOCGETAUXBASE:
+	case DTIOCRDVNODE:
 		/* root only ioctl(2) */
 		break;
 	default:
@@ -323,8 +330,8 @@ dtioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DTIOCPRBDISABLE:
 		error = dt_ioctl_probe_disable(sc, (struct dtioc_req *)addr);
 		break;
-	case DTIOCGETAUXBASE:
-		error = dt_ioctl_get_auxbase(sc, (struct dtioc_getaux *)addr);
+	case DTIOCRDVNODE:
+		error = dt_ioctl_rd_vnode(sc, (struct dtioc_rdvn *)addr);
 		break;
 	default:
 		KASSERT(0);
@@ -652,39 +659,76 @@ dt_ioctl_probe_disable(struct dt_softc *sc, struct dtioc_req *dtrq)
 }
 
 int
-dt_ioctl_get_auxbase(struct dt_softc *sc, struct dtioc_getaux *dtga)
+dt_ioctl_rd_vnode(struct dt_softc *sc, struct dtioc_rdvn *dtrv)
 {
-	struct uio uio;
-	struct iovec iov;
-	struct process *pr;
+	struct process *ps;
 	struct proc *p = curproc;
-	AuxInfo auxv[ELF_AUX_ENTRIES];
-	int i, error;
+	boolean_t ok;
+	struct vm_map_entry *e;
+	int err = 0;
+	int fd;
+	struct uvm_vnode *uvn;
+	struct vnode *vn;
+	struct file *fp;
 
-	dtga->dtga_auxbase = 0;
-
-	if ((pr = prfind(dtga->dtga_pid)) == NULL)
+	if ((ps = prfind(dtrv->dtrv_pid)) == NULL)
 		return ESRCH;
 
-	iov.iov_base = auxv;
-	iov.iov_len = sizeof(auxv);
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = pr->ps_auxinfo;
-	uio.uio_resid = sizeof(auxv);
-	uio.uio_segflg = UIO_SYSSPACE;
-	uio.uio_procp = p;
-	uio.uio_rw = UIO_READ;
+	vm_map_lock_read(&ps->ps_vmspace->vm_map);
 
-	error = process_domem(p, pr, &uio, PT_READ_D);
-	if (error)
-		return error;
+	ok = uvm_map_lookup_entry(&ps->ps_vmspace->vm_map,
+	    (vaddr_t)dtrv->dtrv_va, &e);
+	if (ok == 0 || (e->etype & UVM_ET_OBJ) == 0 ||
+	    (e->protection & PROT_EXEC) == 0 ||
+	    !UVM_OBJ_IS_VNODE(e->object.uvm_obj)) {
+		err = ENOENT;
+		vn = NULL;
+		DPRINTF("%s no mapping for %p\n", __func__, dtrv->dtrv_va);
+	} else {
+		uvn = (struct uvm_vnode *)e->object.uvm_obj;
+		vn = uvn->u_vnode;
+		vref(vn);
 
-	for (i = 0; i < ELF_AUX_ENTRIES; i++)
-		if (auxv[i].au_id == AUX_base)
-			dtga->dtga_auxbase = auxv[i].au_v;
+		dtrv->dtrv_len = (size_t)uvn->u_size;
+		dtrv->dtrv_start = (caddr_t)e->start;
+		dtrv->dtrv_offset = (caddr_t)e->offset;
+	}
 
-	return 0;
+	vm_map_unlock_read(&ps->ps_vmspace->vm_map);
+
+	if (vn != NULL) {
+		fdplock(p->p_fd);
+	        err = falloc(p, &fp, &fd);
+		fdpunlock(p->p_fd);
+		if (err != 0) {
+			vrele(vn);
+			DPRINTF("%s fdopen failed (%d)\n", __func__, err);
+			return err;
+		}
+		err = VOP_OPEN(vn, O_RDONLY, p->p_p->ps_ucred, p);
+		if (err == 0) {
+			fp->f_flag = FREAD;
+			fp->f_type = DTYPE_VNODE;
+			fp->f_ops = &vnops;
+			fp->f_data = vn;
+			fp->f_offset = 0;
+			dtrv->dtrv_fd = fd;
+			fdplock(p->p_fd);
+			fdinsert(p->p_fd, fd, UF_EXCLOSE, fp);
+			fdpunlock(p->p_fd);
+			FRELE(fp, p);
+		} else {
+			DPRINTF("%s vopen() failed (%d)\n", __func__,
+			    err);
+			vrele(vn);
+			fdplock(p->p_fd);
+			fdremove(p->p_fd, fd);
+			fdpunlock(p->p_fd);
+			FRELE(fp, p);
+		}
+	}
+
+	return err;
 }
 
 struct dt_probe *
