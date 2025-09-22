@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.2 2012/07/07 08:25:21 jasper Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.3 2025/09/22 08:24:53 tb Exp $
 #
 # Copyright (c) 2010-2012 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
@@ -50,9 +50,9 @@ if [ ! -w "${objdir}" ]; then
 	exit 1
 fi
 
-version_major_re="s/#define[[:blank:]]XML_MAJOR_VERSION[[:blank:]](.*)/\1/p"
-version_minor_re="s/#define[[:blank:]]XML_MINOR_VERSION[[:blank:]](.*)/\1/p"
-version_micro_re="s/#define[[:blank:]]XML_MICRO_VERSION[[:blank:]](.*)/\1/p"
+version_major_re="s/#[[:blank:]]*define[[:blank:]]XML_MAJOR_VERSION[[:blank:]](.*)/\1/p"
+version_minor_re="s/#[[:blank:]]*define[[:blank:]]XML_MINOR_VERSION[[:blank:]](.*)/\1/p"
+version_micro_re="s/#[[:blank:]]*define[[:blank:]]XML_MICRO_VERSION[[:blank:]](.*)/\1/p"
 version_file=${curdir}/lib/expat.h
 lib_version=$(sed -nE ${version_major_re} ${version_file}).$(sed -nE ${version_minor_re} ${version_file}).$(sed -nE ${version_micro_re} ${version_file})
 
