@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fuse_opt.3,v 1.4 2025/06/10 12:55:33 schwarze Exp $
+.\"	$OpenBSD: fuse_opt.3,v 1.5 2025/09/22 17:18:40 schwarze Exp $
 .\"
 .\" Copyright (c) Ray Lai <ray@raylai.com>
 .\" Copyright (c) Helg Bredow <helg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2025 $
+.Dd $Mdocdate: September 22 2025 $
 .Dt FUSE_OPT 3
 .Os
 .Sh NAME
@@ -194,9 +194,9 @@ can be NULL, which is typically used when adding the first option.
 .Pp
 .It Fn fuse_opt_add_opt_escaped
 escapes any
-.Sq ","
+.Sq ,\&
 and
-.Sq "\\"
+.Sq \e
 characters in
 .Fa opt
 before adding it to
