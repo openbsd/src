@@ -2583,8 +2583,8 @@ m88k_override_options (void)
   if (align_functions == 0)
     align_functions = TARGET_88100 ? 16 : 8;
 
-  /* XXX -freorder-blocks (enabled at -O2) does not work reliably yet.  */
-  flag_reorder_blocks = flag_reorder_blocks_and_partition = 0;
+  /* XXX -fdelayed-branch (enabled at -O2) does not work reliably yet.  */
+  flag_delayed_branch = 0;
 
   init_machine_status = m88k_init_machine_status;
 }
