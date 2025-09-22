@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.18 2025/09/20 11:05:58 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.19 2025/09/22 07:37:28 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -210,7 +210,7 @@ validate_asn1_hash(const char *fn, const char *descr,
 	char *hex = NULL;
 
 	if ((astr = ASN1_OCTET_STRING_new()) == NULL)
-		err(1, NULL);
+		errx(1, "ASN1_OCTET_STRING_new");
 
 	hash_asn1_item(astr, it, val);
 
@@ -630,7 +630,7 @@ serialize_ccr_content(struct validation_data *vd)
 
 	out = NULL;
 	if ((out_len = i2d_CanonicalCacheRepresentation(ccr, &out)) <= 0)
-		err(1, "i2d_CanonicalCacheRepresentation");
+		errx(1, "i2d_CanonicalCacheRepresentation");
 
 	CanonicalCacheRepresentation_free(ccr);
 
@@ -666,7 +666,7 @@ ccr_insert_tas(struct ccr_tas_tree *tree, const struct cert *cert)
 		err(1, NULL);
 
 	if ((hex_decode(cert->ski, cts->keyid, sizeof(cts->keyid))) != 0)
-		err(1, NULL);
+		errx(1, "hex_decode");
 
 	if (RB_INSERT(ccr_tas_tree, tree, cts) != NULL)
 		errx(1, "CCR TAS tree corrupted");
