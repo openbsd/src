@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.199 2025/09/19 07:00:32 sf Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.200 2025/09/22 13:19:03 hshoexer Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1487,28 +1487,27 @@ wbinvd_on_all_cpus_acked(void)
 	int s;
 
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == self)
+		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
 		wait++;
 	}
 
-	KASSERT(wait > 0);
-
-	s = splvm();
-	while (atomic_cas_ulong(&wbinvd_wait, 0 , wait) != 0) {
-		while (wbinvd_wait != 0) {
-			CPU_BUSY_CYCLE();
+	if (wait > 0) {
+		s = splvm();
+		while (atomic_cas_ulong(&wbinvd_wait, 0 , wait) != 0) {
+			while (wbinvd_wait != 0)
+				CPU_BUSY_CYCLE();
 		}
-	}
 
-	CPU_INFO_FOREACH(cii, ci) {
-		if ((mask & (1ULL << ci->ci_cpuid)) == 0)
-			continue;
-		if (x86_fast_ipi(ci, LAPIC_IPI_WBINVD) != 0)
-			panic("%s: ipi failed", __func__);
+		CPU_INFO_FOREACH(cii, ci) {
+			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
+				continue;
+			if (x86_fast_ipi(ci, LAPIC_IPI_WBINVD) != 0)
+				panic("%s: ipi failed", __func__);
+		}
+		splx(s);
 	}
-	splx(s);
 
 	wbinvd();
 
