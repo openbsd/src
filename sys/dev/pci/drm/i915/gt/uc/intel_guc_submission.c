@@ -2272,7 +2272,7 @@ static int new_guc_id(struct intel_guc *guc, struct intel_context *ce)
 		ret = ida_alloc_range(&guc->submission_state.guc_ids,
 				      NUMBER_MULTI_LRC_GUC_ID(guc),
 				      guc->submission_state.num_guc_ids - 1,
-				      GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN);
+				      GFP_ATOMIC | __GFP_NOWARN);
 	if (unlikely(ret < 0))
 		return ret;
 
