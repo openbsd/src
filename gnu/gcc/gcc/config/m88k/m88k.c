@@ -624,8 +624,7 @@ bool m88k_legitimate_address_p (enum machine_mode mode, rtx x, int strict)
 	 from the logical stack pointer, and thus satisfy
 	 rtx_ok_for_base_p (x0) but not legitimate_index_p (x1) above.  */
       if (!strict
-	  && (x0 == virtual_stack_vars_rtx
-	      || x0 == virtual_incoming_args_rtx
+	  && (x0 == virtual_incoming_args_rtx
 	      || x0 == virtual_outgoing_args_rtx
 	      || x0 == virtual_stack_dynamic_rtx
 	      || x0 == virtual_stack_vars_rtx
