@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.65 2025/07/10 13:37:14 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.66 2025/09/23 05:44:28 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -43,6 +43,8 @@
 #include "efiboot.h"
 #include "efidt.h"
 #include "fdt.h"
+
+#define EFI_OS_INDICATIONS_BOOT_TO_FW_UI	1ULL
 
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
@@ -1266,12 +1268,14 @@ retry:
 int Xacpi_efi(void);
 int Xdtb_efi(void);
 int Xexit_efi(void);
+int Xfwsetup_efi(void);
 int Xpoweroff_efi(void);
 
 const struct cmd_table cmd_machine[] = {
 	{ "acpi",	CMDT_CMD, Xacpi_efi },
 	{ "dtb",	CMDT_CMD, Xdtb_efi },
 	{ "exit",	CMDT_CMD, Xexit_efi },
+	{ "fwsetup",	CMDT_CMD, Xfwsetup_efi },
 	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
 	{ NULL, 0 }
 };
@@ -1303,6 +1307,44 @@ int
 Xexit_efi(void)
 {
 	BS->Exit(IH, 0, 0, NULL);
+	for (;;)
+		continue;
+	return (0);
+}
+
+int
+Xfwsetup_efi(void)
+{
+	UINT64 osind;
+	UINTN osind_size = sizeof(osind);
+	UINT32 osind_attrs = 0x1 | 0x2 | 0x4;
+	EFI_GUID global = EFI_GLOBAL_VARIABLE;
+	EFI_STATUS status;
+
+	status = RS->GetVariable(L"OsIndicationsSupported", &global, NULL,
+	    &osind_size, &osind);
+	if (status == EFI_NOT_FOUND) {
+		printf("not supported on this machine.\n");
+		return (-1);
+	} else if (status != EFI_SUCCESS) {
+		printf("%s: %d\n", __func__, status);
+		return (-1);
+	}
+
+	if ((osind & EFI_OS_INDICATIONS_BOOT_TO_FW_UI) == 0) {
+		printf("not supported on this machine.\n");
+		return (-1);
+	}
+
+	osind = EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
+	status = RS->SetVariable(L"OsIndications", &global, osind_attrs,
+	    sizeof(osind), &osind);
+	if (status != EFI_SUCCESS) {
+		printf("%s: %d\n", __func__, status);
+		return (-1);
+	}
+
+	RS->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
 	for (;;)
 		continue;
 	return (0);
