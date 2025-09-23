@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_mount.3,v 1.4 2025/09/20 15:01:23 helg Exp $
+.\" $OpenBSD: fuse_mount.3,v 1.5 2025/09/23 09:28:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2025 $
+.Dd $Mdocdate: September 23 2025 $
 .Dt FUSE_MOUNT 3
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@ either individually or together separated by a comma.
 .Bl -tag -width Ds
 .It allow_other
 Allow other users to access the file system.
-By default, FUSE will prevent other users from accessing the file system or to
+By default, FUSE prevents other users from accessing the file system or to
 .Xr statfs 2
 the file system.
 This security measure is particularly important for
@@ -77,22 +77,25 @@ Can also be specified by itself with
 .El
 .Pp
 .Fn fuse_unmount
-will close the FUSE device and attempt to unmount the file system mounted at
+closes the FUSE device and attempts to unmount the file system mounted at
 .Fa dir
 by calling the
 .Xr unmount 2
 system call.
 To avoid a deadlock, the kernel will not send the
-FBT_DESTROY message to the file system.
+.Dv FBT_DESTROY
+message to the file system.
 There is no way to determine whether this call was successful.
 .Pp
 Only the super user can mount and unmount FUSE file systems.
 .Sh RETURN VALUES
 .Fn fuse_main
-will return NULL if the file system cannot be mounted.
+returns
+.Dv NULL
+if the file system cannot be mounted.
 .Sh ERRORS
 .Fn fuse_mount
-will fail when one of the following occurs:
+fails when one of the following occurs:
 .Fa dir
 does not exist or is not a directory.
 The fuse device cannot be opened for reading and writing.

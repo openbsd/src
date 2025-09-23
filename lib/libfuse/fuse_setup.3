@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_setup.3,v 1.4 2025/06/10 12:55:33 schwarze Exp $
+.\" $OpenBSD: fuse_setup.3,v 1.5 2025/09/23 09:28:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2025 $
+.Dd $Mdocdate: September 23 2025 $
 .Dt FUSE_SETUP 3
 .Os
 .Sh NAME
@@ -31,19 +31,26 @@
 .Fn fuse_setup
 is a helper function that mounts a FUSE file system, creates a new FUSE
 session and installs signal handlers that will try to unmount the file
-system on SIGINT, SIGTERM or SIGHUP.
+system on
+.Dv SIGINT ,
+.Dv SIGTERM ,
+or
+.Dv SIGHUP .
 .Pp
 .Fn fuse_setup
-will parse the arguments specified by argv and if neither the
-.Fl f , Fl d
+parses the arguments specified by
+.Fa argv ,
+and if neither the
+.Fl f ,
+.Fl d ,
 or
 .Fl odebug
-options were specified, detach from the controlling terminal
-and run in the background.
+options were specified, detaches from the controlling terminal
+and runs in the background.
 On success,
 .Fa mt
-will be 1 if the file system operations will be invoked in
-parallel (multi-threaded) or 0 if file system operations are serialized.
+is set to 1 if the file system operations will be invoked in
+parallel (multi-threaded) or to 0 if file system operations are serialized.
 File systems that do not support multi-threaded operation must include the
 .Fl s
 argument in
@@ -65,7 +72,9 @@ See
 .Xr fuse_new 3 .
 .Sh RETURN VALUES
 .Fn fuse_setup
-will return NULL on failure.
+returns
+.Dv NULL
+on failure.
 .Sh SEE ALSO
 .Xr fuse_main 3 ,
 .Xr fuse_mount 3  ,

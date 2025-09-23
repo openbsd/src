@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_loop.3,v 1.4 2025/09/20 15:01:23 helg Exp $
+.\" $OpenBSD: fuse_loop.3,v 1.5 2025/09/23 09:28:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2025 $
+.Dd $Mdocdate: September 23 2025 $
 .Dt FUSE_LOOP 3
 .Os
 .Sh NAME
@@ -41,15 +41,22 @@ prior to calling
 .Fn fuse_loop .
 .Pp
 .Fn fuse_loop
-will return when it reads the FBT_DESTROY message, which indicates that
+returns when it reads the
+.Dv FBT_DESTROY
+message, which indicates that
 the file system is being unmounted.
 .Pp
-If FUSE signaler handlers have been installed and either SIGHUP, SIGINT
-or SIGTERM is received then
+If FUSE signal handlers have been installed and
+.Dv SIGHUP ,
+.Dv SIGINT ,
+or
+.Dv SIGTERM
+is received,
 .Fn fuse_loop
-will terminate.
+terminates successfully.
 See
-.Xr fuse_set_signal_handlers 3 .
+.Xr fuse_set_signal_handlers 3
+for more details.
 .Pp
 .Fn fuse_loop_mt
 is a multi-threaded variant that allows the file system to process
@@ -58,7 +65,7 @@ This is not implemented on
 .Ox .
 .Sh RETURN VALUES
 .Fn fuse_loop
-will return 0 on success and -1 on failure.
+returns 0 on success or -1 on failure.
 .Pp
 .Fn fuse_loop_mt
 always returns -1.

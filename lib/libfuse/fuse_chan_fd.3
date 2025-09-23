@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_chan_fd.3,v 1.4 2025/06/10 12:55:33 schwarze Exp $
+.\" $OpenBSD: fuse_chan_fd.3,v 1.5 2025/09/23 09:28:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Helg Bredow <helg.bredow@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2025 $
+.Dd $Mdocdate: September 23 2025 $
 .Dt FUSE_CHAN_FD 3
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 .Fn fuse_chan_fd "struct fuse_chan *ch"
 .Sh DESCRIPTION
 .Fn fuse_chan_fd
-will return the file descriptor to the FUSE device opened for reading
+returns the file descriptor to the FUSE device opened for reading
 and writing by
 .Xr fuse_mount 3 .
 .Sh RETURN VALUES
@@ -36,7 +36,9 @@ If successful,
 returns a non-negative integer, termed a file descriptor.
 If
 .Fa ch
-is NULL, a value of -1 is returned.
+is
+.Dv NULL ,
+a value of -1 is returned.
 .Sh SEE ALSO
 .Xr fuse_mount 3 ,
 .Xr open 3 ,

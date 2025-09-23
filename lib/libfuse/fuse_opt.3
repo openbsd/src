@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fuse_opt.3,v 1.5 2025/09/22 17:18:40 schwarze Exp $
+.\"	$OpenBSD: fuse_opt.3,v 1.6 2025/09/23 09:28:28 schwarze Exp $
 .\"
 .\" Copyright (c) Ray Lai <ray@raylai.com>
 .\" Copyright (c) Helg Bredow <helg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 22 2025 $
+.Dd $Mdocdate: September 23 2025 $
 .Dt FUSE_OPT 3
 .Os
 .Sh NAME
@@ -157,7 +157,9 @@ and
 which are usually obtained from
 .Fn main .
 .Fa argv
-is NULL-terminated, and is suitable for use with
+is
+.Dv NULL Ns -terminated ,
+and is suitable for use with
 .Xr execvp 3 .
 .Fa argv
 is used directly and
@@ -190,7 +192,9 @@ adds an option
 to a comma-separated string of options
 .Fa opts .
 .Fa *opts
-can be NULL, which is typically used when adding the first option.
+can be
+.Dv NULL ,
+which is typically used when adding the first option.
 .Pp
 .It Fn fuse_opt_add_opt_escaped
 escapes any
@@ -224,7 +228,9 @@ parses options, setting any members of
 automatically depending on the format of the template.
 If
 .Fa proc
-is not NULL, then this is called for any argument that matches a template
+is not
+.Dv NULL ,
+then this is called for any argument that matches a template
 that has
 .Fa val
 = FUSE_OPT_KEY.
@@ -269,10 +275,10 @@ to be set by a single argument or option (see example for gid below).
 .Fn fuse_opt_add_opt_escaped ,
 and
 .Fn fuse_opt_parse
-return 0 on success, -1 on error.
+return 0 on success or -1 on error.
 .Pp
 .Fn fuse_opt_match
-returns 1 on match, 0 if no match.
+returns 1 on match or 0 if no match.
 .Sh ERRORS
 .Fn fuse_opt_add_arg ,
 .Fn fuse_opt_insert_arg ,
