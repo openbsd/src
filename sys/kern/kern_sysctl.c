@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.482 2025/08/06 14:00:33 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.483 2025/09/23 08:00:48 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2051,10 +2051,16 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 {
 	struct session *s = pr->ps_session;
 	struct tty *tp;
-	struct vmspace *vm = pr->ps_vmspace;
+	struct vmspace *vm = NULL;
 	struct timespec booted, st, ut, utc;
 	struct tusage tu;
 	int isthread;
+
+	/* exiting/zombie process might no longer have VM space. */
+	if ((pr->ps_flags & PS_EXITING) == 0) {
+		vm = pr->ps_vmspace;
+		uvmspace_addref(vm);
+	}
 
 	isthread = p != NULL;
 	if (!isthread) {
@@ -2082,7 +2088,7 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 	}
 
 	/* fixups that can only be done in the kernel */
-	if ((pr->ps_flags & PS_ZOMBIE) == 0) {
+	if ((pr->ps_flags & PS_EXITING) == 0) {
 		if ((pr->ps_flags & PS_EMBRYO) == 0 && vm != NULL)
 			ki->p_vm_rssize = vm_resident_count(vm);
 		calctsru(&tu, &ut, &st, NULL);
@@ -2103,13 +2109,15 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 #endif
 	}
 
+	uvmspace_free(vm);
+
 	/* get %cpu and schedule state: just one thread or sum of all? */
 	if (isthread) {
 		ki->p_pctcpu = p->p_pctcpu;
 		ki->p_stat   = p->p_stat;
 	} else {
 		ki->p_pctcpu = 0;
-		ki->p_stat = (pr->ps_flags & PS_ZOMBIE) ? SDEAD : SIDL;
+		ki->p_stat = (pr->ps_flags & PS_EXITING) ? SDEAD : SIDL;
 		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 			ki->p_pctcpu += p->p_pctcpu;
 			/* find best state: ONPROC > RUN > STOP > SLEEP > .. */

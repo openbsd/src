@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.346 2025/09/11 17:04:35 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.347 2025/09/23 08:00:48 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3426,6 +3426,9 @@ uvmspace_purge(struct vmspace *vm)
 void
 uvmspace_free(struct vmspace *vm)
 {
+	if (vm == NULL)
+		return;
+
 	if (atomic_dec_int_nv(&vm->vm_refcnt) == 0) {
 		/*
 		 * Sanity check.  Kernel threads never end up here and

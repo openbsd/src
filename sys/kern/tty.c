@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.180 2025/06/12 20:37:58 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.181 2025/09/23 08:00:48 mpi Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2198,8 +2198,8 @@ empty:		ttyprintf(tp, "empty foreground process group\n");
 			if (run2 || pctcpu2 > pctcpu)
 				goto update_pickpr;
 
-			/* if p has less cpu or is zombie, then it's worse */
-			if (pctcpu2 < pctcpu || (pr->ps_flags & PS_ZOMBIE))
+			/* if p has less cpu or is exiting, then it's worse */
+			if (pctcpu2 < pctcpu || (pr->ps_flags & PS_EXITING))
 				continue;
 update_pickpr:
 			pickpr = pr;
@@ -2209,7 +2209,7 @@ update_pickpr:
 
 		/* Calculate percentage cpu, resident set size. */
 		calc_pctcpu = (pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		if ((pickpr->ps_flags & (PS_EMBRYO | PS_ZOMBIE)) == 0 &&
+		if ((pickpr->ps_flags & (PS_EMBRYO | PS_EXITING)) == 0 &&
 		    pickpr->ps_vmspace != NULL)
 			rss = vm_resident_count(pickpr->ps_vmspace);
 
