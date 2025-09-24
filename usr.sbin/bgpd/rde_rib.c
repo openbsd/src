@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.269 2025/04/24 20:17:49 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.270 2025/09/24 12:52:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -43,7 +43,7 @@ struct rib_entry *rib_add(struct rib *, struct pt_entry *);
 static inline int rib_compare(const struct rib_entry *,
 			const struct rib_entry *);
 void rib_remove(struct rib_entry *);
-int rib_empty(struct rib_entry *);
+static inline int rib_empty(struct rib_entry *);
 static void rib_dump_abort(uint16_t);
 
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
@@ -393,7 +393,7 @@ rib_remove(struct rib_entry *re)
 	rdemem.rib_cnt--;
 }
 
-int
+static inline int
 rib_empty(struct rib_entry *re)
 {
 	return TAILQ_EMPTY(&re->prefix_h);
