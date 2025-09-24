@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.271 2025/09/24 13:26:17 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.272 2025/09/24 13:27:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -435,6 +435,8 @@ rib_dump_r(struct rib_context *ctx)
 
 	for (i = 0; re != NULL; re = next) {
 		next = RB_NEXT(rib_tree, unused, re);
+		if (rib_empty(re))
+			continue;
 		if (re->rib_id != ctx->ctx_id)
 			fatalx("%s: Unexpected RIB %u != %u.", __func__,
 			    re->rib_id, ctx->ctx_id);
