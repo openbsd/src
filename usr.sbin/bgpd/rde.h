@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.316 2025/06/04 09:12:34 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.317 2025/09/24 14:04:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -73,11 +73,9 @@ struct rib {
 RB_HEAD(peer_tree, rde_peer);
 RB_HEAD(prefix_tree, prefix);
 RB_HEAD(prefix_index, prefix);
-struct iq;
 
 struct rde_peer {
 	RB_ENTRY(rde_peer)		 entry;
-	SIMPLEQ_HEAD(, iq)		 imsg_queue;
 	struct peer_config		 conf;
 	struct rde_peer_stats		 stats;
 	struct bgpd_addr		 remote_addr;

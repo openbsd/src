@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.50 2025/08/22 11:41:56 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.51 2025/09/24 14:04:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -32,11 +32,6 @@ struct rde_peer		*peerself;
 
 CTASSERT(sizeof(peerself->recv_eor) * 8 >= AID_MAX);
 CTASSERT(sizeof(peerself->sent_eor) * 8 >= AID_MAX);
-
-struct iq {
-	SIMPLEQ_ENTRY(iq)	entry;
-	struct imsg		imsg;
-};
 
 int
 peer_has_as4byte(struct rde_peer *peer)
@@ -177,7 +172,6 @@ peer_add(uint32_t id, struct peer_config *p_conf, struct filter_head *rules)
 	peer->role = peer->conf.role;
 	peer->export_type = peer->conf.export_type;
 	peer->flags = peer->conf.flags;
-	SIMPLEQ_INIT(&peer->imsg_queue);
 	if ((peer->ibufq = ibufq_new()) == NULL)
 		fatal(NULL);
 
