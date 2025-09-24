@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.29 2025/08/14 13:58:46 jsg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.30 2025/09/24 15:27:19 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -26,6 +26,7 @@
 #define _PROC_H
 
 enum {
+	IMSG_NONE = 0,
 	IMSG_CTL_OK,
 	IMSG_CTL_FAIL,
 	IMSG_CTL_VERBOSE,

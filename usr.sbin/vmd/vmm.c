@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.133 2025/08/13 10:26:31 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.134 2025/09/24 15:27:19 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -95,7 +95,7 @@ int
 vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep		*ps = p->p_ps;
-	int			 res = 0, cmd = 0, verbose;
+	int			 res = 0, cmd = IMSG_NONE, verbose;
 	struct vmd_vm		*vm = NULL;
 	struct vm_terminate_params vtp;
 	struct vmop_id		 vid;

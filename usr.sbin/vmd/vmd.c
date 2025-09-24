@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.169 2025/08/13 10:26:31 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.170 2025/09/24 15:27:19 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -91,7 +91,7 @@ int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep			*ps = p->p_ps;
-	int				 res = 0, cmd = 0, verbose;
+	int				 res = 0, cmd = IMSG_NONE, verbose;
 	unsigned int			 v = 0, flags;
 	struct vmop_create_params	 vmc;
 	struct vmop_id			 vid;
@@ -251,14 +251,13 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		control_reset(&ps->ps_csock);
 		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
 			control_reset(rcs);
-		cmd = 0;
 		break;
 	default:
 		return (-1);
 	}
 
 	switch (cmd) {
-	case 0:
+	case IMSG_NONE:
 		break;
 	case IMSG_VMDOP_START_VM_RESPONSE:
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
