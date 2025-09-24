@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.270 2025/09/24 12:52:57 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.271 2025/09/24 13:26:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -42,7 +42,7 @@ struct rib flowrib = { .id = 1, .tree = RB_INITIALIZER(&flowrib.tree) };
 struct rib_entry *rib_add(struct rib *, struct pt_entry *);
 static inline int rib_compare(const struct rib_entry *,
 			const struct rib_entry *);
-void rib_remove(struct rib_entry *);
+static void rib_remove(struct rib_entry *);
 static inline int rib_empty(struct rib_entry *);
 static void rib_dump_abort(uint16_t);
 
@@ -368,13 +368,12 @@ rib_add(struct rib *rib, struct pt_entry *pte)
 		return (NULL);
 	}
 
-
 	rdemem.rib_cnt++;
 
 	return (re);
 }
 
-void
+static void
 rib_remove(struct rib_entry *re)
 {
 	if (!rib_empty(re))
@@ -495,6 +494,19 @@ rib_dump_runner(void)
 }
 
 static void
+rib_dump_free(struct rib_context *ctx)
+{
+	if (ctx->ctx_done)
+		ctx->ctx_done(ctx->ctx_arg, ctx->ctx_aid);
+	if (ctx->ctx_re && rib_empty(re_unlock(ctx->ctx_re)))
+		rib_remove(ctx->ctx_re);
+	if (ctx->ctx_p && prefix_is_dead(prefix_unlock(ctx->ctx_p)))
+		prefix_adjout_destroy(ctx->ctx_p);
+	LIST_REMOVE(ctx, entry);
+	free(ctx);
+}
+
+static void
 rib_dump_abort(uint16_t id)
 {
 	struct rib_context *ctx, *next;
@@ -502,14 +514,7 @@ rib_dump_abort(uint16_t id)
 	LIST_FOREACH_SAFE(ctx, &rib_dumps, entry, next) {
 		if (id != ctx->ctx_id)
 			continue;
-		if (ctx->ctx_done)
-			ctx->ctx_done(ctx->ctx_arg, ctx->ctx_aid);
-		if (ctx->ctx_re && rib_empty(re_unlock(ctx->ctx_re)))
-			rib_remove(ctx->ctx_re);
-		if (ctx->ctx_p && prefix_is_dead(prefix_unlock(ctx->ctx_p)))
-			prefix_adjout_destroy(ctx->ctx_p);
-		LIST_REMOVE(ctx, entry);
-		free(ctx);
+		rib_dump_free(ctx);
 	}
 }
 
@@ -521,14 +526,7 @@ rib_dump_terminate(void *arg)
 	LIST_FOREACH_SAFE(ctx, &rib_dumps, entry, next) {
 		if (ctx->ctx_arg != arg)
 			continue;
-		if (ctx->ctx_done)
-			ctx->ctx_done(ctx->ctx_arg, ctx->ctx_aid);
-		if (ctx->ctx_re && rib_empty(re_unlock(ctx->ctx_re)))
-			rib_remove(ctx->ctx_re);
-		if (ctx->ctx_p && prefix_is_dead(prefix_unlock(ctx->ctx_p)))
-			prefix_adjout_destroy(ctx->ctx_p);
-		LIST_REMOVE(ctx, entry);
-		free(ctx);
+		rib_dump_free(ctx);
 	}
 }
 
