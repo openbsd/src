@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.104 2025/08/01 10:53:23 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.105 2025/09/25 08:46:50 mvs Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@
 #endif
 
 uint64_t roundrobin_period;	/* [I] roundrobin period (ns) */
-int	lbolt;			/* once a second sleep address */
 
 struct mutex sched_lock;
 
@@ -282,7 +281,6 @@ schedcpu(void *unused)
 		}
 		SCHED_UNLOCK();
 	}
-	wakeup(&lbolt);
 	timeout_add_sec(&to, 1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.115 2024/11/05 06:03:19 jsg Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.116 2025/09/25 08:46:50 mvs Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -294,7 +294,8 @@ again:
 			    pr->ps_flags & PS_PPWAIT)
 				return (EIO);
 			pgsignal(pr->ps_pgrp, SIGTTIN, 1);
-			error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg);
+			error = ttysleep_nsec(tp, &nowake, TTIPRI | PCATCH, 
+				ttybg, SEC_TO_NSEC(1));
 			if (error)
 				return (error);
 		}

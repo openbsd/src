@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.44 2024/10/26 00:56:35 jsg Exp $	*/
+/*	$OpenBSD: tty.h,v 1.45 2025/09/25 08:46:50 mvs Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -290,6 +290,7 @@ void	 ttypend(struct tty *tp);
 int	 ttyretype(struct tty *tp);
 int	 ttyrub(int c, struct tty *tp);
 int	 ttysleep(struct tty *tp, void *chan, int pri, char *wmesg);
+int	 ttysleep_nsec(struct tty *, void *, int, char *, uint64_t);
 int	 ttywait(struct tty *tp);
 int	 ttywflush(struct tty *tp);
 void	 ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd);

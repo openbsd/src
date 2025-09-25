@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.h,v 1.27 2024/08/14 13:54:08 mvs Exp $	*/
+/*	$OpenBSD: kernel.h,v 1.28 2025/09/25 08:46:50 mvs Exp $	*/
 /*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@ extern int ticks;		/* # of hardclock ticks */
 extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
-extern int lbolt;		/* once a second sleep address */
 
 #ifndef HZ
 #define HZ 100

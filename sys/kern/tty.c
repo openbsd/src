@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.181 2025/09/23 08:00:48 mpi Exp $	*/
+/*	$OpenBSD: tty.c,v 1.182 2025/09/25 08:46:50 mvs Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -79,7 +79,6 @@ void 	filt_ttywdetach(struct knote *kn);
 int	filt_ttyexcept(struct knote *kn, long hint);
 void	ttystats_init(struct itty **, int *, size_t *);
 int	ttywait_nsec(struct tty *, uint64_t);
-int	ttysleep_nsec(struct tty *, void *, int, char *, uint64_t);
 
 /* Symbolic sleep message strings. */
 char ttclos[]	= "ttycls";
@@ -747,8 +746,8 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			if (pr->ps_pgrp->pg_jobc == 0)
 				return (EIO);
 			pgsignal(pr->ps_pgrp, SIGTTOU, 1);
-			error = ttysleep(tp, &lbolt, TTOPRI | PCATCH,
-			    ttybg);
+			error = ttysleep_nsec(tp, &nowake, TTOPRI | PCATCH,
+				ttybg, SEC_TO_NSEC(1));
 			if (error)
 				return (error);
 		}
@@ -1515,7 +1514,8 @@ loop:	lflag = tp->t_lflag;
 			goto out;
 		}
 		pgsignal(pr->ps_pgrp, SIGTTIN, 1);
-		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg);
+		error = ttysleep_nsec(tp, &nowake, TTIPRI | PCATCH, ttybg, 
+			SEC_TO_NSEC(1));
 		if (error)
 			goto out;
 		goto loop;
@@ -1613,8 +1613,8 @@ read:
 		    ISSET(lflag, IEXTEN | ISIG) == (IEXTEN | ISIG)) {
 			pgsignal(tp->t_pgrp, SIGTSTP, 1);
 			if (first) {
-				error = ttysleep(tp, &lbolt, TTIPRI | PCATCH,
-				    ttybg);
+				error = ttysleep_nsec(tp, &nowake, TTIPRI | PCATCH, 
+					ttybg, SEC_TO_NSEC(1));
 				if (error)
 					break;
 				goto loop;
@@ -1765,7 +1765,8 @@ loop:
 			goto out;
 		}
 		pgsignal(pr->ps_pgrp, SIGTTOU, 1);
-		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg);
+		error = ttysleep_nsec(tp, &nowake, TTIPRI | PCATCH, ttybg, 
+			SEC_TO_NSEC(1));
 		if (error)
 			goto out;
 		goto loop;
