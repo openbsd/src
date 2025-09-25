@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.140 2025/08/15 08:21:41 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.141 2025/09/25 09:05:47 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
@@ -67,7 +68,7 @@
  * we keep a list of writeable active vnode-backed VM objects for sync op.
  * we keep a simpleq of vnodes that are currently being sync'd.
  */
-
+struct pool			uvm_vnode_pool;
 LIST_HEAD(, uvm_vnode)		uvn_wlist;	/* [K] writeable uvns */
 SIMPLEQ_HEAD(, uvm_vnode)	uvn_sync_q;	/* [S] sync'ing uvns */
 struct rwlock uvn_sync_lock;			/* locks sync operation */
@@ -113,7 +114,8 @@ const struct uvm_pagerops uvm_vnodeops = {
 void
 uvn_init(void)
 {
-
+	pool_init(&uvm_vnode_pool, sizeof(struct uvm_vnode), 0, IPL_NONE,
+	    PR_WAITOK, "uvmvnodes", NULL);
 	LIST_INIT(&uvn_wlist);
 	/* note: uvn_sync_q init'd in uvm_vnp_sync() */
 	rw_init_flags(&uvn_sync_lock, "uvnsync", RWL_IS_VNODE);
@@ -1539,4 +1541,17 @@ uvm_vnp_sync(struct mount *mp)
 	}
 
 	rw_exit_write(&uvn_sync_lock);
+}
+
+void
+uvm_vnp_obj_alloc(struct vnode *vp)
+{
+	struct uvm_vnode *uvn;
+
+	KASSERT(vp->v_uvm == NULL);
+
+	uvn = pool_get(&uvm_vnode_pool, PR_WAITOK | PR_ZERO);
+	uvm_obj_init(&uvn->u_obj, &uvm_vnodeops, 0);
+	uvn->u_vnode = vp;
+	vp->v_uvm = uvn;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.331 2025/09/20 13:53:36 mpi Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.332 2025/09/25 09:05:47 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 
 #include <netinet/in.h>
 
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm_vnode.h>
 
 #include "softraid.h"
@@ -129,7 +128,6 @@ void printlockedvnodes(void);
 #endif
 
 struct pool vnode_pool;
-struct pool uvm_vnode_pool;
 
 static inline int rb_buf_compare(const struct buf *b1, const struct buf *b2);
 RBT_GENERATE(buf_rb_bufs, buf, b_rbbufs, rb_buf_compare);
@@ -154,8 +152,6 @@ vntblinit(void)
 	maxvnodes = 2 * initialvnodes;
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, IPL_NONE,
 	    PR_WAITOK, "vnodes", NULL);
-	pool_init(&uvm_vnode_pool, sizeof(struct uvm_vnode), 0, IPL_NONE,
-	    PR_WAITOK, "uvmvnodes", NULL);
 	TAILQ_INIT(&vnode_hold_list);
 	TAILQ_INIT(&vnode_free_list);
 	TAILQ_INIT(&mountlist);
@@ -424,9 +420,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, const struct vops *vops,
 	    ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
 		splx(s);
 		vp = pool_get(&vnode_pool, PR_WAITOK | PR_ZERO);
-		vp->v_uvm = pool_get(&uvm_vnode_pool, PR_WAITOK | PR_ZERO);
-		vp->v_uvm->u_vnode = vp;
-		uvm_obj_init(&vp->v_uvm->u_obj, &uvm_vnodeops, 0);
+		uvm_vnp_obj_alloc(vp);
 		RBT_INIT(buf_rb_bufs, &vp->v_bufs_tree);
 		cache_tree_init(&vp->v_nc_tree);
 		TAILQ_INIT(&vp->v_cache_dst);
