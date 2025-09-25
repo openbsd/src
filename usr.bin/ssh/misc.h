@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.h,v 1.111 2025/05/05 02:48:06 djm Exp $ */
+/* $OpenBSD: misc.h,v 1.112 2025/09/25 06:33:19 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -111,6 +111,8 @@ int	 lib_contains_symbol(const char *, const char *);
 char	*get_homedir(void);
 
 struct passwd *pwcopy(struct passwd *);
+void	 pwfree(struct passwd *); /* NB. only use with pwcopy */
+
 const char *ssh_gai_strerror(int);
 
 typedef void privdrop_fn(struct passwd *);
