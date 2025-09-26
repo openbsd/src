@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_mem.c,v 1.8 2015/12/11 22:34:34 beck Exp $	*/
+/*	$OpenBSD: tmpfs_mem.c,v 1.9 2025/09/26 10:11:02 mvs Exp $	*/
 /*	$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ tmpfs_node_get(struct tmpfs_mount *mp)
 		return NULL;
 	}
 	if (!tmpfs_mem_incr(mp, sizeof(struct tmpfs_node))) {
+		mp->tm_nodes_cnt--;
 		return NULL;
 	}
 	return pool_get(&tmpfs_node_pool, PR_WAITOK);
