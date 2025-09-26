@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.73 2025/09/09 16:46:55 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.74 2025/09/26 05:35:40 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -486,6 +486,13 @@ fusefs_setattr(void *v)
 	int error = 0;
 
 	fmp = (struct fusefs_mnt *)ip->i_ump;
+
+	/*
+	 * Setting of flags is not supported.
+	 */
+	if (vap->va_flags != VNOVAL)
+		return (EOPNOTSUPP);
+
 	/*
 	 * Check for unsettable attributes.
 	 */
