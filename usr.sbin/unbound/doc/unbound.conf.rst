@@ -56,47 +56,6 @@ Empty lines are ignored as is whitespace at the beginning of a line.
 The utility :doc:`unbound-checkconf(8)</manpages/unbound-checkconf>` can be
 used to check ``unbound.conf`` prior to usage.
 
-Example
--------
-
-An example config file is shown below.
-Copy this to :file:`/etc/unbound/unbound.conf` and start the server with:
-
-.. code-block:: text
-
-    $ unbound -c /etc/unbound/unbound.conf
-
-Most settings are the defaults.
-Stop the server with:
-
-.. code-block:: text
-
-    $ kill `cat /etc/unbound/unbound.pid`
-
-Below is a minimal config file.
-The source distribution contains an extensive :file:`example.conf` file with
-all the options.
-
-.. code-block:: text
-
-    # unbound.conf(5) config file for unbound(8).
-    server:
-        directory: "/etc/unbound"
-        username: unbound
-        # make sure unbound can access entropy from inside the chroot.
-        # e.g. on linux the use these commands (on BSD, devfs(8) is used):
-        #      mount --bind -n /dev/urandom /etc/unbound/dev/urandom
-        # and  mount --bind -n /dev/log /etc/unbound/dev/log
-        chroot: "/etc/unbound"
-        # logfile: "/etc/unbound/unbound.log"  #uncomment to use logfile.
-        pidfile: "/etc/unbound/unbound.pid"
-        # verbosity: 1      # uncomment and increase to get more logging.
-        # listen on all interfaces, answer queries from the local subnet.
-        interface: 0.0.0.0
-        interface: ::0
-        access-control: 10.0.0.0/8 allow
-        access-control: 2001:DB8::/64 allow
-
 File Format
 -----------
 
@@ -1634,22 +1593,7 @@ These options are part of the **server:** clause.
 
 @@UAHL@unbound.conf@pidfile@@: *<filename>*
     The process id is written to the file.
-    Default is :file:`"@UNBOUND_PIDFILE@"`.
-    So,
-
-    .. code-block:: text
-
-        kill -HUP `cat @UNBOUND_PIDFILE@`
-
-    triggers a reload,
-
-    .. code-block:: text
-
-        kill -TERM `cat @UNBOUND_PIDFILE@`
-
-    gracefully terminates.
-
-    Default: @UNBOUND_PIDFILE@
+    Default is to not write a file.
 
 
 @@UAHL@unbound.conf@root-hints@@: *<filename>*
@@ -2122,7 +2066,7 @@ These options are part of the **server:** clause.
 @@UAHL@unbound.conf@trust-anchor-signaling@@: *<yes or no>*
     Send :rfc:`8145` key tag query after trust anchor priming.
 
-    Default: yes
+    Default: no
 
 
 @@UAHL@unbound.conf@root-key-sentinel@@: *<yes or no>*
@@ -4982,9 +4926,6 @@ Files
 
 @ub_conf_file@
     Unbound configuration file.
-
-@UNBOUND_PIDFILE@
-    default Unbound pidfile with process ID of the running daemon.
 
 unbound.log
     Unbound log file.
