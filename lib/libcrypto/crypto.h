@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.79 2025/03/09 15:29:56 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.80 2025/09/28 07:52:53 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -197,15 +197,15 @@ extern "C" {
 
 #ifndef CRYPTO_w_lock
 #define CRYPTO_w_lock(type)	\
-	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
+	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE,type,NULL,0)
 #define CRYPTO_w_unlock(type)	\
-	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,OPENSSL_FILE,OPENSSL_LINE)
+	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,NULL,0)
 #define CRYPTO_r_lock(type)	\
-	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
+	CRYPTO_lock(CRYPTO_LOCK|CRYPTO_READ,type,NULL,0)
 #define CRYPTO_r_unlock(type)	\
-	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,OPENSSL_FILE,OPENSSL_LINE)
+	CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_READ,type,NULL,0)
 #define CRYPTO_add(addr,amount,type)	\
-	CRYPTO_add_lock(addr,amount,type,OPENSSL_FILE,OPENSSL_LINE)
+	CRYPTO_add_lock(addr,amount,type,NULL,0)
 #endif
 
 /* Some applications as well as some parts of OpenSSL need to allocate
@@ -275,9 +275,9 @@ DECLARE_STACK_OF(void)
 
 int CRYPTO_mem_ctrl(int mode);
 
-#define OPENSSL_malloc(num)	CRYPTO_malloc((num),OPENSSL_FILE,OPENSSL_LINE)
-#define OPENSSL_strdup(str)	CRYPTO_strdup((str),OPENSSL_FILE,OPENSSL_LINE)
-#define OPENSSL_free(addr)	CRYPTO_free((addr),OPENSSL_FILE,OPENSSL_LINE)
+#define OPENSSL_malloc(num)	CRYPTO_malloc((num),NULL,0)
+#define OPENSSL_strdup(str)	CRYPTO_strdup((str),NULL,0)
+#define OPENSSL_free(addr)	CRYPTO_free((addr),NULL,0)
 
 const char *OpenSSL_version(int type);
 #define OPENSSL_VERSION		0
