@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso9660_rrip.c,v 1.3 2016/10/16 20:26:56 natano Exp $	*/
+/*	$OpenBSD: iso9660_rrip.c,v 1.4 2025/09/28 13:44:28 deraadt Exp $	*/
 /*	$NetBSD: iso9660_rrip.c,v 1.14 2014/05/30 13:14:47 martin Exp $	*/
 
 /*
@@ -671,7 +671,9 @@ cd9660node_rrip_nm(struct ISO_SUSP_ATTRIBUTES *p, cd9660node *file_node)
 	int nm_length = strlen(file_node->isoDirRecord->name) + 5;
         p->attr.rr_entry.NM.h.type[0] = 'N';
 	p->attr.rr_entry.NM.h.type[1] = 'M';
-	sprintf(p->attr.rr_entry.NM.altname, "%s", file_node->isoDirRecord->name);
+	snprintf(p->attr.rr_entry.NM.altname,
+	    sizeof(p->attr.rr_entry.NM.altname), "%s",
+	    file_node->isoDirRecord->name);
 	p->attr.rr_entry.NM.h.length[0] = (unsigned char)nm_length;
 	p->attr.rr_entry.NM.h.version[0] = (unsigned char)1;
 	p->attr.rr_entry.NM.flags[0] = (unsigned char) NM_PARENT;
