@@ -509,6 +509,10 @@ wd*|sd*)
 	esac
 	;;
 
+redodisks)
+	R `find /dev -type b -name "*a" | sed -e 's/^.dev.\(.*\)a/\1/'`
+	;;
+
 *)
 	echo $i: unknown device
 	;;

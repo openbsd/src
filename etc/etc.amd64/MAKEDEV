@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.83 2024/09/03 09:35:46 bluhm Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.84 2025/02/19 21:36:02 kettenis Exp 
 #	OpenBSD: MAKEDEV.common,v 1.122 2025/01/08 23:09:25 kirill Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -624,6 +624,10 @@ wd*|sd*)
 	wd*) dodisk wd $U 0 3 $U 0;;
 	sd*) dodisk sd $U 4 13 $U 0;;
 	esac
+	;;
+
+redodisks)
+	R `find /dev -type b -name "*a" | sed -e 's/^.dev.\(.*\)a/\1/'`
 	;;
 
 *)

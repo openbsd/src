@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.37 2021/11/11 09:47:33 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.120 2023/01/28 11:04:47 phessler Exp 
+#	OpenBSD: MAKEDEV.common,v 1.122 2025/01/08 23:09:25 kirill Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -422,6 +422,10 @@ wd*|sd*)
 	wd*) dodisk wd $U 9 28 $U 0;;
 	sd*) dodisk sd $U 4 8 $U 0;;
 	esac
+	;;
+
+redodisks)
+	R `find /dev -type b -name "*a" | sed -e 's/^.dev.\(.*\)a/\1/'`
 	;;
 
 *)
