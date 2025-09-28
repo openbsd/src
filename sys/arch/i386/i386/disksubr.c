@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.116 2017/02/28 10:49:37 natano Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.117 2025/09/28 22:34:19 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -32,15 +32,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-
-#ifdef DEBUG
-#include <sys/systm.h>
-#endif
 
 #include <machine/biosvar.h>
 
