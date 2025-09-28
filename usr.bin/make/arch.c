@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.94 2023/09/04 11:35:11 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.95 2025/09/28 16:22:51 gkoehler Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -836,8 +836,10 @@ ArchTouch(const char *archive, const char *member)
 
 	arch = ArchFindMember(archive, member, &arHeader, "r+");
 	if (arch != NULL) {
-		snprintf(arHeader.ar_date, sizeof(arHeader.ar_date),
-		    "%-12ld", (long) time(NULL));
+		char temp[sizeof(arHeader.ar_date)+1];
+
+		snprintf(temp, sizeof(temp), "%-12lld", (long long)time(NULL));
+		memcpy(arHeader.ar_date, temp, sizeof(arHeader.ar_date));
 		if (fseek(arch, -sizeof(struct ar_hdr), SEEK_CUR) == 0)
 			(void)fwrite(&arHeader, sizeof(struct ar_hdr), 1, arch);
 		fclose(arch);
