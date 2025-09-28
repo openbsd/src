@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.422 2025/09/19 12:51:02 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.423 2025/09/28 22:05:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -992,12 +992,12 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 	    "(excluding 'c')%s.\n";
 	const struct partition *pp;
 	char *help = NULL, *prompt = NULL;
-	unsigned char maxpart;
+	char maxpart;
 	int add, delete, inuse, partno;
 
 	add = strcmp("add", action) == 0;
 	delete = strcmp("delete", action) == 0;
-	maxpart = 'a' - 1 + (add ? MAXPARTITIONS : lp->d_npartitions);
+	maxpart = DL_PARTNUM2NAME((add ? MAXPARTITIONS : lp->d_npartitions) - 1);
 
 	if (p == NULL) {
 		if (asprintf(&prompt, promptfmt, action) == -1 ||
@@ -1033,7 +1033,7 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 
 	partno = DL_PARTNAME2NUM(*p);
 	if (strlen(p) > 1 || partno == -1 || *p == 'c') {
-		fprintf(stderr, helpfmt, delete ? ", or '*'" : "");
+		fprintf(stderr, helpfmt, maxpart, delete ? ", or '*'" : "");
 		goto done;
 	}
 
