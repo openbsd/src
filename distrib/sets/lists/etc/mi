@@ -13,7 +13,6 @@
 ./etc/mail.rc
 ./etc/mail/aliases
 ./etc/mail/smtpd.conf
-./etc/mail/spamd.conf
 ./etc/mailer.conf
 ./etc/master.passwd
 ./etc/motd

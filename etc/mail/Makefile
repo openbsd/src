@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2015/12/22 07:39:00 sunil Exp $
+# $OpenBSD: Makefile,v 1.14 2025/09/28 12:30:49 sthen Exp $
 
 all clean:
 
@@ -7,8 +7,6 @@ distribution:
 	    ${DESTDIR}/etc/mail/aliases
 	${INSTALL} -c -o root -g wheel -m 644 smtpd.conf \
 	    ${DESTDIR}/etc/mail/smtpd.conf
-	${INSTALL} -c -o root -g wheel -m 644 spamd.conf \
-	    ${DESTDIR}/etc/mail/spamd.conf
 
 .PHONY: distribution
 .include <bsd.own.mk>
