@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.36 2024/06/27 20:15:50 jmc Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.37 2025/09/28 10:11:41 florian Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: June 27 2024 $
+.Dd $Mdocdate: September 28 2025 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -339,6 +339,7 @@ IP forwarding.
 This option specifies that NAT64 is available and the pool is IPv6-mostly
 capable.
 This option is specified in RFC 8925.
+The value is in seconds.
 .It Ic option irc-server Ar ip-address Oo , Ar ip-address ... Oc ;
 The
 .Ic irc-server
