@@ -531,6 +531,6 @@ int setup_domain_limits(struct rbtree_type* domain_limits,
 void domain_limits_free(struct rbtree_type* domain_limits);
 
 /** exported for unit test */
-int still_useful_timeout(void);
+int still_useful_timeout();
 
 #endif /* SERVICES_CACHE_INFRA_H */

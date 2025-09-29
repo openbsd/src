@@ -69,7 +69,7 @@ int infra_ip_ratelimit_cookie = 0;
  * If USEFUL_SERVER_TOP_TIMEOUT is below 1000 (configured via RTT_MAX_TIMEOUT,
  * infra-cache-max-rtt) change it to just above the RTT_BAND. */
 int
-still_useful_timeout(void)
+still_useful_timeout()
 {
 	return
 	USEFUL_SERVER_TOP_TIMEOUT < 1000 ||

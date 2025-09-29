@@ -1890,8 +1890,7 @@ struct mesh_state* mesh_area_find(struct mesh_area* mesh,
 }
 
 /** remove mesh state callback */
-static int mesh_state_del_cb(struct mesh_state* s, mesh_cb_func_type cb,
-        void* cb_arg)
+int mesh_state_del_cb(struct mesh_state* s, mesh_cb_func_type cb, void* cb_arg)
 {
 	struct mesh_cb* r, *prev = NULL;
 	r = s->cb_list;
@@ -2266,6 +2265,7 @@ mesh_stats_clear(struct mesh_area* mesh)
 	timehist_clear(mesh->histogram);
 	mesh->ans_secure = 0;
 	mesh->ans_bogus = 0;
+	mesh->val_ops = 0;
 	mesh->ans_expired = 0;
 	mesh->ans_cachedb = 0;
 	memset(&mesh->ans_rcode[0], 0, sizeof(size_t)*UB_STATS_RCODE_NUM);
