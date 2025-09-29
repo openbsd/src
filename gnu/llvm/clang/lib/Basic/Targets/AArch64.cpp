@@ -1235,13 +1235,16 @@ AArch64TargetInfo::checkCallingConvention(CallingConv CC) const {
   case CC_C:
   case CC_Swift:
   case CC_SwiftAsync:
-  case CC_PreserveMost:
-  case CC_PreserveAll:
-  case CC_PreserveNone:
   case CC_OpenCLKernel:
   case CC_AArch64VectorCall:
   case CC_AArch64SVEPCS:
   case CC_Win64:
+    return CCCR_OK;
+  case CC_PreserveMost:
+  case CC_PreserveAll:
+  case CC_PreserveNone:
+    if (getTriple().isOSOpenBSD())
+      return CCCR_Warning;
     return CCCR_OK;
   default:
     return CCCR_Warning;

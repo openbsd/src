@@ -763,11 +763,14 @@ public:
     case CC_X86VectorCall:
     case CC_IntelOclBicc:
     case CC_Win64:
+    case CC_X86RegCall:
+    case CC_OpenCLKernel:
+      return CCCR_OK;
     case CC_PreserveMost:
     case CC_PreserveAll:
     case CC_PreserveNone:
-    case CC_X86RegCall:
-    case CC_OpenCLKernel:
+      if (getTriple().isOSOpenBSD())
+        return CCCR_Warning;
       return CCCR_OK;
     default:
       return CCCR_Warning;
