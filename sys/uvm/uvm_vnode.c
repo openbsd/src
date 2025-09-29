@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.141 2025/09/25 09:05:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.142 2025/09/29 09:55:01 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -131,8 +131,6 @@ uvn_init(void)
  * our pages.
  *
  * => in fact, nothing should be locked so that we can sleep here.
- * => note that uvm_object is first thing in vnode structure, so their
- *    pointers are equiv.
  */
 struct uvm_object *
 uvn_attach(struct vnode *vp, vm_prot_t accessprot)
