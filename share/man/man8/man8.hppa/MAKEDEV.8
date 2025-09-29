@@ -1,11 +1,11 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.78 2022/11/10 11:02:27 krw Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.79 2025/09/29 01:02:58 deraadt Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.70 2022/11/09 19:35:23 krw Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.118 2022/11/10 09:50:00 krw Exp 
-.\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
+.\"	OpenBSD: etc.hppa/MAKEDEV.md,v 1.71 2025/09/29 01:00:14 deraadt Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.122 2025/01/08 23:09:25 kirill Exp 
+.\"	OpenBSD: MAKEDEV.man,v 1.10 2025/09/29 01:00:14 deraadt Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2022 $
+.Dd $Mdocdate: September 29 2025 $
 .Dt MAKEDEV 8 hppa
 .Os
 .Sh NAME
@@ -71,6 +71,9 @@ which are absolutely necessary for the system to function properly.
 .It Ar local
 Creates configuration-specific devices, by invoking the shell file
 .Pa MAKEDEV.local .
+.It Ar redodisks
+Recreates all partitions for disks found in
+.Pa /etc .
 .El
 .Pp
 .Sy Disks
