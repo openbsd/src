@@ -1,6 +1,6 @@
 define(MACHINE,macppc)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.81 2022/11/09 19:35:23 krw Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.82 2025/09/29 01:00:14 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -40,6 +40,7 @@ _DEV(all)
 _DEV(ramd)
 _DEV(std)
 _DEV(local)
+_DEV(redodisks)
 _TITLE(dis)
 _DEV(cd, 9, 3)
 _DEV(rd, 17, 17)

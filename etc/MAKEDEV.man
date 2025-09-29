@@ -1,7 +1,7 @@
 define(COMM,`.\"')dnl
 include(MAKEDEV.mansub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.man,v 1.10 2025/09/29 01:00:14 deraadt Exp $-})dnl
 dnl
 define(quote,{-.Dq $1
 -})dnl
@@ -19,6 +19,9 @@ which are absolutely necessary for the system to function properly-},nothing)dnl
 __devitem(local,local,dnl
 {-Creates configuration-specific devices{-,-} by invoking the shell file
 .Pa MAKEDEV.local -},nothing)dnl
+__devitem(redodisks,redodisks,dnl
+{-Recreates all partitions for disks found in
+.Pa /etc -},nothing)dnl
 define({-_std-},)dnl
 divert(1)dnl
 dnl send md shell fragments to the bit bucket...
@@ -49,7 +52,7 @@ show_vers()dnl <-- now that all files are included, show versions
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2017 $
+.Dd $Mdocdate: September 29 2025 $
 .Dt MAKEDEV 8 MACHINE
 .Os
 .Sh NAME
