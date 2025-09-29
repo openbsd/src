@@ -952,7 +952,7 @@ morechecks(struct config_file* cfg)
 #  endif
 	}
 
-	if (pledge("stdio rpath", NULL) == -1)
+	if (pledge("stdio rpath dns", NULL) == -1)
 		fatal_exit("Could not pledge");
 
 #endif
