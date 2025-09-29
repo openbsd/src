@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.31 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.32 2025/09/29 08:46:15 jan Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,6 +84,7 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	BIGNUM pr0, d, p;
 	int bitsp, bitsq, ok = -1, n = 0;
 	BN_CTX *ctx = NULL;
+	BIGNUM *diff, *mindiff;
 
 	ctx = BN_CTX_new();
 	if (ctx == NULL)
@@ -97,9 +98,23 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 		goto err;
 	if ((r3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
+	if ((diff = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((mindiff = BN_CTX_get(ctx)) == NULL)
+		goto err;
 
 	bitsp = (bits + 1) / 2;
 	bitsq = bits - bitsp;
+
+	/*
+	 * To guarantee a minimum distance of 2^(bits/2 - 100) between p and q.
+	 *
+	 * NIST SP 800-56B, section 6.2.1, 3.c
+	 */
+	if (bits < 200)
+		goto err;
+	if (!BN_set_bit(mindiff, bits/2 - 100))
+		goto err;
 
 	/* We need the RSA components non-NULL */
 	if (!rsa->n && ((rsa->n = BN_new()) == NULL))
@@ -148,8 +163,9 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 			if (!BN_generate_prime_ex(rsa->q, bitsq, 0, NULL, NULL,
 			    cb))
 				goto err;
-		} while (BN_cmp(rsa->p, rsa->q) == 0 &&
-		    ++degenerate < 3);
+			if (!BN_sub(diff, rsa->p, rsa->q))
+				goto err;
+		} while (BN_ucmp(diff, mindiff) <= 0 && ++degenerate < 3);
 		if (degenerate == 3) {
 			ok = 0; /* we set our own err */
 			RSAerror(RSA_R_KEY_SIZE_TOO_SMALL);
