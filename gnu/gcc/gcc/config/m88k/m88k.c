@@ -1102,8 +1102,9 @@ m88k_layout_frame (void)
   memset (cfun->machine->save_regs, 0, sizeof (cfun->machine->save_regs));
   cfun->machine->saved_gregs = cfun->machine->saved_xregs = 0;
 
-  /* Profiling requires a stack frame.  */
-  if (current_function_profile)
+  /* Profiling requires a stack frame, and so do variadic functions (due to
+     the saved register area being relative to r30).  */
+  if (current_function_profile || cfun->machine->saved_va_regcnt != 0)
     frame_pointer_needed = 1;
 
   /* If we are producing PIC, save the addressing base register and r1.
