@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.24 2023/07/23 11:49:17 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.25 2025/09/30 14:32:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -74,6 +74,7 @@ xhci_fdt_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "generic-xhci") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-dwc3") ||
 	    OF_is_compatible(faa->fa_node, "cavium,octeon-7130-xhci") ||
 	    OF_is_compatible(faa->fa_node, "cdns,usb3") ||
 	    OF_is_compatible(faa->fa_node, "snps,dwc3");
@@ -142,7 +143,8 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (OF_is_compatible(sc->sc_node, "cdns,usb3"))
 		error = xhci_cdns_attach(sc);
-	if (OF_is_compatible(sc->sc_node, "snps,dwc3"))
+	if (OF_is_compatible(sc->sc_node, "snps,dwc3") ||
+	    OF_is_compatible(sc->sc_node, "apple,t8103-dwc3"))
 		error = xhci_snps_attach(sc);
 	if (error) {
 		printf(": can't initialize hardware\n");
@@ -185,7 +187,8 @@ xhci_fdt_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 		power_domain_enable(sc->sc_node);
-		if (OF_is_compatible(sc->sc_node, "snps,dwc3"))
+		if (OF_is_compatible(sc->sc_node, "snps,dwc3") ||
+		    OF_is_compatible(sc->sc_node, "apple,t8103-dwc3"))
 			xhci_snps_init(sc);
 		rv = xhci_activate(self, act);
 		break;
@@ -285,7 +288,8 @@ xhci_snps_attach(struct xhci_fdt_softc *sc)
 	 * On Apple hardware we need to reset the controller when we
 	 * see a new connection.
 	 */
-	if (OF_is_compatible(sc->sc_node, "apple,dwc3")) {
+	if (OF_is_compatible(sc->sc_node, "apple,dwc3") ||
+	    OF_is_compatible(sc->sc_node, "apple,t8103-dwc3")) {
 		sc->sc_usb_controller_port.up_cookie = sc;
 		sc->sc_usb_controller_port.up_connect = xhci_snps_connect;
 		task_set(&sc->sc_snps_connect_task, xhci_snps_do_connect, sc);
