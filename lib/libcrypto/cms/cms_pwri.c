@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.33 2025/09/30 12:46:55 tb Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.34 2025/09/30 12:49:34 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -389,8 +389,8 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
 	/* Finish password based key derivation to setup key in "ctx" */
 
-	if (EVP_PBE_CipherInit(algtmp->algorithm, (char *)pwri->pass,
-	    pwri->passlen, algtmp->parameter, kekctx, en_de) < 0) {
+	if (!EVP_PBE_CipherInit(algtmp->algorithm, (char *)pwri->pass,
+	    pwri->passlen, algtmp->parameter, kekctx, en_de)) {
 		CMSerror(ERR_R_EVP_LIB);
 		goto err;
 	}
