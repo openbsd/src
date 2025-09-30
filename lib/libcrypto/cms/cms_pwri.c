@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.34 2025/09/30 12:49:34 tb Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.35 2025/09/30 12:51:16 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -267,7 +267,7 @@ kek_unwrap_key(unsigned char *out, size_t *outlen, const unsigned char *in,
 		/* Check byte failure */
 		goto err;
 	}
-	if (inlen < (size_t)(tmp[0] - 4)) {
+	if (inlen < 4 + (size_t)tmp[0]) {
 		/* Invalid length value */
 		goto err;
 	}
