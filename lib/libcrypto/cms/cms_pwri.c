@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.32 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.33 2025/09/30 12:46:55 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -368,13 +368,13 @@ cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 	kekcipher = EVP_get_cipherbyobj(kekalg->algorithm);
 	if (!kekcipher) {
 		CMSerror(CMS_R_UNKNOWN_CIPHER);
-		return 0;
+		goto err;
 	}
 
 	kekctx = EVP_CIPHER_CTX_new();
 	if (kekctx == NULL) {
 		CMSerror(ERR_R_MALLOC_FAILURE);
-		return 0;
+		goto err;
 	}
 	/* Fixup cipher based on AlgorithmIdentifier to set IV etc */
 	if (!EVP_CipherInit_ex(kekctx, kekcipher, NULL, NULL, NULL, en_de))
