@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpmu.c,v 1.7 2022/12/12 18:45:01 kettenis Exp $	*/
+/*	$OpenBSD: aplpmu.c,v 1.8 2025/09/30 14:22:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,13 +31,6 @@
 
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
-
-/*
- * This driver is based on preliminary device tree bindings and will
- * almost certainly need changes once the official bindings land in
- * mainline Linux.  Support for these preliminary bindings will be
- * dropped as soon as official bindings are available.
- */
 
 /*
  * Apple's "sera" PMU contains an RTC that provides time in 32.16
@@ -93,8 +86,15 @@ aplpmu_match(struct device *parent, void *match, void *aux)
 {
 	struct spmi_attach_args *sa = aux;
 
+	/*
+	 * Preliminary bindings used "apple,sera-pmu" and
+	 * "apple,spmi-pmu".  Drop these once the Asahi UEFI-only boot
+	 * environment ships the with device trees that follow the
+	 * upstream Linux bindings.
+	 */
 	return OF_is_compatible(sa->sa_node, "apple,sera-pmu") ||
-	    OF_is_compatible(sa->sa_node, "apple,spmi-pmu");
+	    OF_is_compatible(sa->sa_node, "apple,spmi-pmu") ||
+	    OF_is_compatible(sa->sa_node, "apple,spmi-nvmem");
 }
 
 void
@@ -108,7 +108,8 @@ aplpmu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = sa->sa_tag;
 	sc->sc_sid = sa->sa_sid;
 
-	if (OF_is_compatible(sa->sa_node, "apple,sera-pmu")) {
+	if (OF_is_compatible(sa->sa_node, "apple,sera-pmu") ||
+	    OF_is_compatible(sa->sa_node, "apple,sera-pmic")) {
 		error = spmi_cmd_read(sc->sc_tag, sc->sc_sid,
 		    SPMI_CMD_EXT_READL, SERA_TIME_OFFSET,
 		    &data, SERA_TIME_LEN);
@@ -132,14 +133,23 @@ aplpmu_attach(struct device *parent, struct device *self, void *aux)
 
 	for (node = OF_child(sa->sa_node); node; node = OF_peer(node)) {
 		struct aplpmu_nvmem *an;
-		uint32_t reg[2];
+		uint32_t reg[2] = { 0x0, 0x10000 };
 
-		if (!OF_is_compatible(node, "apple,spmi-pmu-nvmem"))
+		/*
+		 * Preliminary bindings used "apple,spmi-pmu-nvmem.
+		 * Drop this (and the code below) once the Asahi
+		 * UEFI-only boot environment ships the with device
+		 * trees that follow the upstream Linux bindings.
+		 */
+		if (!OF_is_compatible(node, "apple,spmi-pmu-nvmem") &&
+		    !OF_is_compatible(node, "fixed-layout"))
 			continue;
 
-		if (OF_getpropintarray(node, "reg", reg,
-		    sizeof(reg)) != sizeof(reg))
-			continue;
+		if (OF_is_compatible(node, "apple,spmi-pmu-nvmem")) {
+			if (OF_getpropintarray(node, "reg", reg,
+			    sizeof(reg)) != sizeof(reg))
+				continue;
+		}
 
 		an = malloc(sizeof(*an), M_DEVBUF, M_WAITOK);
 		an->an_sc = sc;
