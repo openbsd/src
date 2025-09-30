@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.84 2025/09/28 22:31:21 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.85 2025/09/30 23:33:59 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -27,6 +27,7 @@ __devitem({-all-}, {-all-}, {-makes all known devices{-,-} including local devic
 {-#-}		Tries to make the ``standard'' number of each type.-})dnl
 __devitem(std,{-std-},Standard devices)dnl
 __devitem(local,local,Configuration specific devices)dnl
+__devitem(redodisks,redodisks,Recreates all partitions)dnl
 dnl
 dnl _std
 dnl
