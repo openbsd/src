@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.256 2025/09/18 13:05:24 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.257 2025/09/30 02:29:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -616,12 +616,13 @@ edit(struct disklabel *lp, int f)
 	display(fp, lp, 0, 1);
 	fprintf(fp, "\n# Notes:\n");
 	fprintf(fp,
-"# Up to 16 partitions are valid, named from 'a' to 'p'.  Partition 'a' is\n"
+"# Up to 16 partitions are valid, named from 'a' to '%c'.  Partition 'a' is\n"
 "# your root filesystem, 'b' is your swap, and 'c' should cover your whole\n"
 "# disk. Any other partition is free for any use.  'size' and 'offset' are\n"
 "# in 512-byte blocks. fstype should be '4.2BSD', 'swap', or 'none' or some\n"
 "# other values.  fsize/bsize/cpg should typically be '2048 16384 16' for a\n"
-"# 4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, ...)\n");
+"# 4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, ...)\n",
+	    DL_PARTNUM2NAME(MAXPARTITIONS - 1));
 	fclose(fp);
 	for (;;) {
 		if (editit(tmpfil) == -1)
