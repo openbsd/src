@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.riscv64/MAKEDEV.md,v 1.5 2023/01/24 13:30:44 jca Exp 
+#	OpenBSD: etc.riscv64/MAKEDEV.md,v 1.6 2025/09/29 01:00:14 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.122 2025/01/08 23:09:25 kirill Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.85 2025/09/30 23:33:59 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -29,6 +29,7 @@
 #	ramdisk	Ramdisk kernel devices
 #	std	Standard devices
 #	local	Configuration specific devices
+#	redodisks	Recreates all partitions
 # Disks:
 #	cd*	ATAPI and SCSI CD-ROM drives
 #	rd*	"rd" pseudo-disks
