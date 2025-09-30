@@ -1,4 +1,4 @@
-/*	$OpenBSD: apliic.c,v 1.5 2022/12/10 18:43:48 kettenis Exp $	*/
+/*	$OpenBSD: apliic.c,v 1.6 2025/09/30 14:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -96,7 +96,8 @@ apliic_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,i2c");
+	return OF_is_compatible(faa->fa_node, "apple,i2c") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-i2c");
 }
 
 void

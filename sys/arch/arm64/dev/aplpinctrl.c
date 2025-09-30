@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpinctrl.c,v 1.8 2023/07/23 11:17:50 kettenis Exp $	*/
+/*	$OpenBSD: aplpinctrl.c,v 1.9 2025/09/30 14:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -114,7 +114,8 @@ aplpinctrl_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,pinctrl");
+	return OF_is_compatible(faa->fa_node, "apple,pinctrl") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-pinctrl");
 }
 
 void

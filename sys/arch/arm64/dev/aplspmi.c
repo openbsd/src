@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplspmi.c,v 1.2 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: aplspmi.c,v 1.3 2025/09/30 14:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -26,13 +26,6 @@
 #include <dev/ofw/fdt.h>
 
 #include <dev/fdt/spmivar.h>
-
-/*
- * This driver is based on preliminary device tree bindings and will
- * almost certainly need changes once the official bindings land in
- * mainline Linux.  Support for these preliminary bindings will be
- * dropped as soon as official bindings are available.
- */
 
 #define SPMI_STAT		0x00
 #define  SPMI_STAT_RXEMPTY		(1 << 24)
@@ -79,7 +72,8 @@ aplspmi_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,spmi");
+	return OF_is_compatible(faa->fa_node, "apple,spmi") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-spmi");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.31 2025/06/30 11:39:50 jsg Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.32 2025/09/30 14:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -217,7 +217,8 @@ aplsmc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,smc");
+	return OF_is_compatible(faa->fa_node, "apple,smc") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-smc");
 }
 
 void

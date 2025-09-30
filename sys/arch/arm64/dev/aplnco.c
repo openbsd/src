@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplnco.c,v 1.2 2022/05/29 16:19:08 kettenis Exp $	*/
+/*	$OpenBSD: aplnco.c,v 1.3 2025/09/30 14:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -78,7 +78,8 @@ aplnco_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,nco");
+	return OF_is_compatible(faa->fa_node, "apple,nco") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-nco");
 }
 
 void

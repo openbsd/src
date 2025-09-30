@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplspi.c,v 1.6 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: aplspi.c,v 1.7 2025/09/30 14:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -114,7 +114,8 @@ aplspi_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,spi");
+	return OF_is_compatible(faa->fa_node, "apple,spi") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-spi");
 }
 
 void

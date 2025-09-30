@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldma.c,v 1.6 2023/07/26 11:09:24 kettenis Exp $	*/
+/*	$OpenBSD: apldma.c,v 1.7 2025/09/30 14:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -128,7 +128,8 @@ apldma_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,admac");
+	return OF_is_compatible(faa->fa_node, "apple,admac") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-admac");
 }
 
 void

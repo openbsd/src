@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpmgr.c,v 1.5 2023/07/20 20:40:44 kettenis Exp $	*/
+/*	$OpenBSD: aplpmgr.c,v 1.6 2025/09/30 14:29:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -83,7 +83,8 @@ aplpmgr_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	if (OF_is_compatible(faa->fa_node, "apple,pmgr"))
+	if (OF_is_compatible(faa->fa_node, "apple,pmgr") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-pmgr"))
 		return 10;	/* Must beat syscon(4). */
 
 	return 0;
@@ -122,7 +123,8 @@ aplpmgr_attach(struct device *parent, struct device *self, void *aux)
 
 	ps = sc->sc_pwrstate;
 	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
-		if (!OF_is_compatible(node, "apple,pmgr-pwrstate"))
+		if (!OF_is_compatible(node, "apple,pmgr-pwrstate") &&
+		    !OF_is_compatible(node, "apple,t8103-pmgr-pwrstate"))
 			continue;
 
 		if (OF_getpropintarray(node, "reg", reg,
