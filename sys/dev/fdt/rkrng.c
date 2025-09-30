@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkrng.c,v 1.6 2024/02/17 13:29:25 kettenis Exp $	*/
+/*	$OpenBSD: rkrng.c,v 1.7 2025/09/30 14:18:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -127,7 +127,8 @@ rkrng_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-crypto") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-crypto") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-crypto") ||
-	    OF_is_compatible(faa->fa_node, "rockchip,cryptov2-rng");
+	    OF_is_compatible(faa->fa_node, "rockchip,cryptov2-rng") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-rng");
 }
 
 void
@@ -141,7 +142,8 @@ rkrng_attach(struct device *parent, struct device *self, void *aux)
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-crypto") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-crypto"))
 		sc->sc_v = &rkrnv_v1;
-	else if (OF_is_compatible(faa->fa_node, "rockchip,cryptov2-rng"))
+	else if (OF_is_compatible(faa->fa_node, "rockchip,cryptov2-rng") ||
+		 OF_is_compatible(faa->fa_node, "rockchip,rk3568-rng"))
 		sc->sc_v = &rkrnv_v2;
 	else {
 		printf(": unhandled version\n");
