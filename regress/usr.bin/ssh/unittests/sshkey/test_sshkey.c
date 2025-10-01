@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_sshkey.c,v 1.31 2025/09/29 07:40:55 dtucker Exp $ */
+/* 	$OpenBSD: test_sshkey.c,v 1.32 2025/10/01 00:33:37 dtucker Exp $ */
 /*
  * Regress test for sshkey.h key management API
  *
@@ -292,6 +292,7 @@ sshkey_tests(void)
 	    SSH_ERR_KEY_LENGTH);
 	ASSERT_PTR_EQ(k1, NULL);
 	sshkey_free(k1);
+	k1 = NULL;
 	TEST_DONE();
 
 	TEST_START("generate KEY_RSA");
@@ -339,6 +340,7 @@ sshkey_tests(void)
 	TEST_START("equal KEY_RSA/demoted KEY_RSA");
 	ASSERT_INT_EQ(sshkey_equal(kr, k1), 1);
 	sshkey_free(k1);
+	k1 = NULL;
 	TEST_DONE();
 
 
@@ -358,6 +360,7 @@ sshkey_tests(void)
 	TEST_START("equal KEY_ECDSA/demoted KEY_ECDSA");
 	ASSERT_INT_EQ(sshkey_equal(ke, k1), 1);
 	sshkey_free(k1);
+	k1 = NULL;
 	TEST_DONE();
 
 	TEST_START("demote KEY_ED25519");
@@ -372,6 +375,7 @@ sshkey_tests(void)
 	TEST_START("equal KEY_ED25519/demoted KEY_ED25519");
 	ASSERT_INT_EQ(sshkey_equal(kf, k1), 1);
 	sshkey_free(k1);
+	k1 = NULL;
 	TEST_DONE();
 
 	TEST_START("equal mismatched key types");
@@ -386,18 +390,22 @@ sshkey_tests(void)
 	ASSERT_INT_EQ(sshkey_generate(KEY_RSA, 1024, &k1), 0);
 	ASSERT_INT_EQ(sshkey_equal(kr, k1), 0);
 	sshkey_free(k1);
+	k1 = NULL;
 	ASSERT_INT_EQ(sshkey_generate(KEY_ECDSA, 256, &k1), 0);
 	ASSERT_INT_EQ(sshkey_equal(ke, k1), 0);
 	sshkey_free(k1);
+	k1 = NULL;
 	ASSERT_INT_EQ(sshkey_generate(KEY_ED25519, 256, &k1), 0);
 	ASSERT_INT_EQ(sshkey_equal(kf, k1), 0);
 	sshkey_free(k1);
+	k1 = NULL;
 	TEST_DONE();
 
 	sshkey_free(kr);
 	sshkey_free(kd);
 	sshkey_free(ke);
 	sshkey_free(kf);
+	kr = kd = ke = kf = NULL;
 
 	TEST_START("certify key");
 	ASSERT_INT_EQ(sshkey_load_public(test_data_file("ed25519_1.pub"),
@@ -442,6 +450,7 @@ sshkey_tests(void)
 	sshkey_free(k1);
 	sshkey_free(k2);
 	sshkey_free(k3);
+	k1 = k2 = k3 = NULL;
 	sshbuf_reset(b);
 	TEST_DONE();
 
@@ -452,6 +461,7 @@ sshkey_tests(void)
 	signature_tests(k1, k2, "ssh-rsa");
 	sshkey_free(k1);
 	sshkey_free(k2);
+	k1 = k2 = NULL;
 	TEST_DONE();
 
 	TEST_START("sign and verify RSA-SHA256");
@@ -461,6 +471,7 @@ sshkey_tests(void)
 	signature_tests(k1, k2, "rsa-sha2-256");
 	sshkey_free(k1);
 	sshkey_free(k2);
+	k1 = k2 = NULL;
 	TEST_DONE();
 
 	TEST_START("sign and verify RSA-SHA512");
@@ -470,6 +481,7 @@ sshkey_tests(void)
 	signature_tests(k1, k2, "rsa-sha2-512");
 	sshkey_free(k1);
 	sshkey_free(k2);
+	k1 = k2 = NULL;
 	TEST_DONE();
 
 
@@ -480,6 +492,7 @@ sshkey_tests(void)
 	signature_tests(k1, k2, NULL);
 	sshkey_free(k1);
 	sshkey_free(k2);
+	k1 = k2 = NULL;
 	TEST_DONE();
 
 	TEST_START("sign and verify ED25519");
@@ -489,6 +502,7 @@ sshkey_tests(void)
 	signature_tests(k1, k2, NULL);
 	sshkey_free(k1);
 	sshkey_free(k2);
+	k1 = k2 = NULL;
 	TEST_DONE();
 
 	TEST_START("nested certificate");
@@ -503,6 +517,7 @@ sshkey_tests(void)
 	sshkey_free(k1);
 	sshkey_free(k2);
 	sshkey_free(k3);
+	k1 = k2 = k3 = NULL;
 	sshbuf_free(b);
 	TEST_DONE();
 
