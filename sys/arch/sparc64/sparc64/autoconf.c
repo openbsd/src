@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.152 2025/07/16 07:15:42 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.153 2025/10/02 22:41:36 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -519,7 +519,7 @@ bootpath_build(void)
 				 * be an ethernet media specification, so be
 				 * sure to skip all letters.
 				 */
-				bp->val[2] = *++cp - 'a';
+				bp->val[2] = DL_PARTNAME2NUM(*++cp);
 				while (*cp != '\0' && *cp != '/')
 					cp++;
 			}
@@ -605,7 +605,7 @@ bootpath_print(struct bootpath *bp)
 		else
 			printf("/%s@%lx,%lx", bp->name, bp->val[0], bp->val[1]);
 		if (bp->val[2] != 0)
-			printf(":%c", (int)bp->val[2] + 'a');
+			printf(":%c", DL_PARTNUM2NAME(int)bp->val[2]));
 		bp++;
 	}
 	printf("\n");
