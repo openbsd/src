@@ -1,4 +1,4 @@
-/* $OpenBSD: kexdh.c,v 1.34 2020/12/04 02:29:25 djm Exp $ */
+/* $OpenBSD: kexdh.c,v 1.35 2025/10/03 00:08:02 djm Exp $ */
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
  *
@@ -28,6 +28,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
 #include "sshkey.h"
 #include "kex.h"

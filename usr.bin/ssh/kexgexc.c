@@ -1,4 +1,4 @@
-/* $OpenBSD: kexgexc.c,v 1.38 2021/12/19 22:08:06 djm Exp $ */
+/* $OpenBSD: kexgexc.c,v 1.39 2025/10/03 00:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,6 +26,7 @@
 
 #include <sys/types.h>
 
+#include <openssl/bn.h>
 #include <openssl/dh.h>
 
 #include <stdio.h>
