@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.91 2025/08/13 16:23:14 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.92 2025/10/03 19:27:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -814,12 +814,7 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	 * Adjust cache settings according to the hardware we are running on.
 	 */
 
-	kernel_apr = (kernel_apr & ~(CACHE_MASK & ~CACHE_GLOBAL)) |
-	    cmmu_apr_cmode();
-#if defined(M88110) && !defined(MULTIPROCESSOR)
-	if (CPU_IS88110)
-		kernel_apr &= ~CACHE_GLOBAL;
-#endif
+	kernel_apr = (kernel_apr & ~CACHE_MASK) | cmmu_apr_cmode();
 	userland_apr = (userland_apr & ~CACHE_MASK) | (kernel_apr & CACHE_MASK);
 
 	/*

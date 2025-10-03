@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.64 2025/08/13 08:45:22 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.65 2025/10/03 19:27:31 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, 2010, 2011, 2013, Miodrag Vallat.
  *
@@ -696,9 +696,9 @@ m8820x_apr_cmode()
 	 * XXX better be safe than sorry.
 	 */
 	if (((get_cpu_pid() & PID_VN) >> VN_SHIFT) <= 9)
-		return CACHE_WT;
+		return CACHE_WT | CACHE_GLOBAL;
 
-	return CACHE_DFL;
+	return CACHE_DFL | CACHE_GLOBAL;
 }
 
 /*
