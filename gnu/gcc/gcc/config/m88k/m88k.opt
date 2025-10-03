@@ -49,9 +49,9 @@ Target Report RejectNegative Mask(USE_DIV)
 Use the \"div\" instruction for signed integer divide
 
 mserialize-volatile
-Target Report Mask(SERIALIZE_VOLATILE)
+Target Report Mask(SERIALIZE_VOLATILE) Init(1)
 Force serialization on volatile memory access
 
 mmemcpy
 Target Report Mask(MEMCPY)
-Force all memory copies to use memcpy()
+Deprecated.  This switch has no effect
