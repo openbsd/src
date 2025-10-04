@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.19 2025/09/22 07:37:28 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.20 2025/10/04 10:52:30 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -669,7 +669,7 @@ ccr_insert_tas(struct ccr_tas_tree *tree, const struct cert *cert)
 		errx(1, "hex_decode");
 
 	if (RB_INSERT(ccr_tas_tree, tree, cts) != NULL)
-		errx(1, "CCR TAS tree corrupted");
+		errx(1, "multiple TALs with the same key are not supported");
 }
 
 static inline int
