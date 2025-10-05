@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dt.4,v 1.7 2020/12/02 07:00:42 anton Exp $
+.\"	$OpenBSD: dt.4,v 1.8 2025/10/05 22:31:54 sashan Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 2 2020 $
+.Dd $Mdocdate: October 5 2025 $
 .Dt DT 4
 .Os
 .Sh NAME
@@ -77,6 +77,58 @@ struct dtioc_req {
 	uint64_t		 dtrq_evtflags;
 };
 .Ed
+.It Dv DTIOCRDVNODE Fa "struct *dtioc_rdvn"
+Resolve the instruction pointer from the traced process to the ELF object.
+.Bd -literal
+struct dtioc_rdvn {
+	pid_t			 dtrv_pid;
+	int			 dtrv_fd;
+	caddr_t			 dtrv_va;
+	caddr_t			 dtrv_offset;
+	caddr_t			 dtrv_start;
+	size_t			 dtrv_len;
+};
+.Ed
+.Pp
+The caller populates
+.Fa dtrv_pid
+with the process ID of the traced process and
+.Fa dtrv_va
+with the program counter address to look up.
+.Pp
+On success, the remaining members are populated.
+.Fa dtrv_fd
+is the file descriptor to the DSO file that
+.Fa dtrv_va
+belongs to.
+.FA dtrv_len
+is the length of the DSO file.
+.Fa dtrv_offset
+and
+.Fa dtrv_start
+are the relative offset of
+.Fa dtrv_va
+to the start of the text segment and the base address of that segment
+respectively.
+.Pp
+To calculate the relative offset of
+.Fa dtrv_va
+in the DSO the following calculation can be used:
+.Pp
+.Dl iOffset = dtrv_va - dtrv_start + dtrv_offset
+.Pp
+The segment can be found by walking the ELF program headers and looking
+for the mapping where iOffset is included in the range
+[GElf_Phdr.p_offset, GElf_Phdr.p_offset + GElf_Phdr.p_filesz)
+.Pp
+Using the
+.Vt GElf_Phdr.p_vaddr
+the base address of the segment can be calculated by
+.Dl lbase = dtrv_start - GElf_Phdr.p_vaddr
+.Pp
+For symbol lookups the offset can now be calculated as
+.Dl symOffset = dtrv_va - lbase
+.El
 .El
 .Sh FILES
 .Bl -tag -width /dev/dt -compact
