@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.59 2025/09/18 11:37:01 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.60 2025/10/05 07:25:16 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -60,6 +60,9 @@
 #define	MAX_EXP_BACKOFF_SLOW	64 /* RFC 2131 4.1 p23 */
 #define	MAX_EXP_BACKOFF_FAST	 2
 #define	MINIMUM(a, b)		(((a) < (b)) ? (a) : (b))
+
+/* RFC 8925 3.4 disable IPv4 leases for at least this long */
+#define	MIN_V6ONLY_WAIT		 300
 
 enum if_state {
 	IF_DOWN,
@@ -1199,6 +1202,14 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			if (log_getverbose() > 1) {
 				log_debug("DHO_IPV6_ONLY_PREFERRED %us",
 				    ipv6_only_time);
+			}
+			if (ipv6_only_time < MIN_V6ONLY_WAIT) {
+				ipv6_only_time = MIN_V6ONLY_WAIT;
+				if (log_getverbose() > 1) {
+					log_debug("DHO_IPV6_ONLY_PREFERRED too "
+					    "small, setting to %us",
+					    ipv6_only_time);
+				}
 			}
 			p += dho_len;
 			rem -= dho_len;
