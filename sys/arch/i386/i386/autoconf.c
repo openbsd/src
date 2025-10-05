@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.110 2025/10/05 14:57:09 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.111 2025/10/05 17:11:21 krw Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/hibernate.h>
+#include <sys/disklabel.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

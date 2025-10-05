@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.57 2025/10/05 14:57:09 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.58 2025/10/05 17:11:21 krw Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
 #include <sys/socketvar.h>
 #include <sys/timeout.h>
 #include <sys/hibernate.h>
+#include <sys/disklabel.h>
 #include <uvm/uvm_extern.h>
 
 #include <net/if.h>
