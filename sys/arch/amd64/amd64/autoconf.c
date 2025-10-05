@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.56 2024/05/14 01:42:07 guenther Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.57 2025/10/05 14:57:09 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -185,7 +185,7 @@ diskconf(void)
 		unit = B_UNIT(bootdev);
 		part = B_PARTITION(bootdev);
 		snprintf(buf, sizeof buf, "%s%d%c", findblkname(majdev),
-		    unit, part + 'a');
+		    unit, DL_PARTNUM2NAME(part));
 		bootdv = parsedisk(buf, strlen(buf), part, &tmpdev);
 	}
 
