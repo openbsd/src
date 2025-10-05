@@ -108,7 +108,7 @@ extern enum processor_type m88k_cpu;
 #define VERSION_INFO	"m88k"
 #define TARGET_VERSION fprintf (stderr, " (%s)", VERSION_INFO)
 
-#define TARGET_DEFAULT		(MASK_CHECK_ZERO_DIV)
+#define TARGET_DEFAULT		(MASK_CHECK_ZERO_DIV | MASK_SERIALIZE_VOLATILE)
 #define CPU_DEFAULT		MASK_88100
 
 #define OVERRIDE_OPTIONS	m88k_override_options ()
