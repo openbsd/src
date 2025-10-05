@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.137 2025/06/02 18:49:04 claudio Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.138 2025/10/05 14:13:22 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -377,8 +377,11 @@ uvm_aiodone_daemon(void *arg)
 
 		uvm_lock_fpageq();
 		atomic_sub_int(&uvmexp.paging, npages);
-		wakeup(uvmexp.free <= uvmexp.reserve_kernel ? &uvm.pagedaemon :
-		    &uvmexp.free);
+		if (uvmexp.free <= uvmexp.reserve_kernel ||
+		    !TAILQ_EMPTY(&uvm.pmr_control.allocs))
+			wakeup(&uvm.pagedaemon);
+		else
+			wakeup(&uvmexp.free);
 		uvm_unlock_fpageq();
 	}
 }
