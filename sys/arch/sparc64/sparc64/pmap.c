@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.125 2025/10/05 14:29:16 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.126 2025/10/06 14:57:04 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -240,11 +240,10 @@ int	pmapdebug = 0;
  * physical addresses, of course.
  *
  */
-paddr_t *ctxbusy;
+paddr_t *ctxbusy;	
 int numctx;
 #define CTXENTRY	(sizeof(paddr_t))
 #define CTXSIZE		(numctx * CTXENTRY)
-struct mutex ctxmtx = MUTEX_INITIALIZER(IPL_HIGH);
 
 int pmap_get_page(paddr_t *, const char *, struct pmap *);
 void pmap_free_page(paddr_t, struct pmap *);
@@ -2528,7 +2527,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 int
 ctx_alloc(struct pmap *pm)
 {
-	int cnum;
+	int s, cnum;
 	static int next = 0;
 
 	if (pm == pmap_kernel()) {
@@ -2537,8 +2536,7 @@ ctx_alloc(struct pmap *pm)
 #endif
 		return (0);
 	}
-
-	mtx_enter(&ctxmtx);
+	s = splvm();
 	cnum = next;
 	do {
 		/*
@@ -2550,7 +2548,6 @@ ctx_alloc(struct pmap *pm)
 	} while (ctxbusy[++cnum] != 0 && cnum != next);
 	if (cnum==0) cnum++; /* Never steal ctx 0 */
 	if (ctxbusy[cnum]) {
-#ifdef notyet
 		int i;
 		/* We gotta steal this context */
 		for (i = 0; i < TSBENTS; i++) {
@@ -2560,13 +2557,10 @@ ctx_alloc(struct pmap *pm)
 				tsb_immu[i].tag = TSB_TAG_INVALID;
 		}
 		tlb_flush_ctx(cnum);
-#else
-		panic("%s: stealing context", __func__);
-#endif
 	}
 	ctxbusy[cnum] = pm->pm_physaddr;
 	next = cnum;
-	mtx_leave(&ctxmtx);
+	splx(s);
 	pm->pm_ctx = cnum;
 	return cnum;
 }
@@ -2578,9 +2572,6 @@ void
 ctx_free(struct pmap *pm)
 {
 	int oldctx;
-#ifdef DIAGNOSTIC
-	int i;
-#endif
 	
 	oldctx = pm->pm_ctx;
 
@@ -2596,18 +2587,9 @@ ctx_free(struct pmap *pm)
 		       (void *)(u_long)pm->pm_physaddr);
 		db_enter();
 	}
-	for (i = 0; i < TSBENTS; i++) {
-		if (TSB_TAG_CTX(tsb_dmmu[i].tag) == oldctx ||
-		    TSB_TAG_CTX(tsb_immu[i].tag) == oldctx) {
-			printf("ctx_free: context %d still active\n", oldctx);
-			db_enter();
-		}
-	}
 #endif
 	/* We should verify it has not been stolen and reallocated... */
-	mtx_enter(&ctxmtx);
 	ctxbusy[oldctx] = 0;
-	mtx_leave(&ctxmtx);
 }
 
 /*
