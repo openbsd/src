@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.59 2025/09/17 12:54:19 jan Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.60 2025/10/07 21:26:31 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -17937,9 +17937,10 @@ ice_print_nvm_version(struct ice_softc *sc)
 
 	ice_os_pkg_version_str(hw, os_pkg, sizeof(os_pkg));
 
-	printf("%s: %s%s%s, address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: %s%s%s, %u queue%s, address %s\n", sc->sc_dev.dv_xname,
 	    ice_nvm_version_str(hw, buf, sizeof(buf)),
 	    os_pkg[0] ? " ddp " : "", os_pkg[0] ? os_pkg : "",
+	    sc->sc_nqueues, sc->sc_nqueues > 1 ? "s" : "",
 	    ether_sprintf(hw->port_info->mac.perm_addr));
 }
 
@@ -30480,8 +30481,6 @@ ice_attach_hook(struct device *self)
 		goto deinit_hw;
 	}
 
-	ice_print_nvm_version(sc);
-
 	ice_setup_scctx(sc);
 	if (ice_is_bit_set(sc->feat_en, ICE_FEATURE_SAFE_MODE))
 		ice_set_safe_mode_caps(hw);
@@ -30509,6 +30508,8 @@ ice_attach_hook(struct device *self)
 	DPRINTF("%s: %d MSIx vector%s available, using %d queue%s\n", __func__,
 	    sc->sc_nmsix, sc->sc_nmsix > 1 ? "s" : "",
 	    sc->sc_nqueues, sc->sc_nqueues > 1 ? "s" : "");
+
+	ice_print_nvm_version(sc);
 
 	/* Initialize the Tx queue manager */
 	err = ice_resmgr_init(&sc->tx_qmgr, sc->sc_nqueues);
