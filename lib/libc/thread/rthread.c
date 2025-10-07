@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.11 2025/07/16 16:22:58 deraadt Exp $ */
+/*	$OpenBSD: rthread.c,v 1.12 2025/10/07 16:37:37 deraadt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -20,6 +20,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/futex.h>
 #include <sys/atomic.h>
 #include <sys/gmon.h>
