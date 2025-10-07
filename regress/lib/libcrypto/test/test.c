@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.4 2025/05/31 11:36:48 tb Exp $ */
+/*	$OpenBSD: test.c,v 1.5 2025/10/07 15:36:30 tb Exp $ */
 /*
  * Copyright (c) 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -23,6 +23,10 @@
 #include <unistd.h>
 
 #include "test.h"
+
+#ifndef TEST_TEMP
+#define TEST_TEMP "/tmp/"
+#endif
 
 struct test {
 	struct test *parent;
@@ -67,8 +71,8 @@ test_init(void)
 		return t;
 
 	/* Create a temporary file for logging in non-verbose mode */
-	if ((tmp_file = strdup("/tmp/libressl-test.XXXXXXXX")) == NULL)
-		err(1, "strdup");
+	if ((asprintf(&tmp_file, "%slibressl-test.XXXXXXXX", TEST_TEMP)) == -1)
+		err(1, "asprintf");
 	if ((out_fd = mkstemp(tmp_file)) == -1)
 		err(1, "mkstemp");
 
