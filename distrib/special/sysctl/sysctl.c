@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.17 2025/08/06 16:50:53 florian Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.18 2025/10/07 16:31:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -44,6 +44,8 @@ int	pstring(struct var *);
 int	pint(struct var *);
 
 struct var vars[] = {
+	{ "kern.maxpartitions", pint, 2,
+	    { CTL_KERN, KERN_MAXPARTITIONS }},
 	{ "kern.osrelease", pstring, 2,
 	    { CTL_KERN, KERN_OSRELEASE }},
 	{ "hw.machine", pstring, 2,
