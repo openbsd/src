@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.112 2025/05/24 06:49:16 deraadt Exp $ */
+/*	$OpenBSD: unistd.h,v 1.113 2025/10/07 12:02:21 brynet Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -530,7 +530,7 @@ int	 setpgrp(pid_t _pid, pid_t _pgrp);	/* BSD compat version */
 int	 setthrname(pid_t, const char *);
 void	 setusershell(void);
 int	 strtofflags(char **, u_int32_t *, u_int32_t *);
-int	 swapctl(int cmd, const void *arg, int misc);
+int	 swapctl(int, const void *, int);
 int	 pledge(const char *, const char *);
 int	 unveil(const char *, const char *);
 pid_t	 __tfork_thread(const struct __tfork *, size_t, void (*)(void *),
