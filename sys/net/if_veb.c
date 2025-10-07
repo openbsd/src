@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.43 2025/08/04 13:27:55 jan Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.44 2025/10/07 07:52:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -2533,6 +2533,21 @@ vport_down(struct vport_softc *sc)
 static int
 vport_if_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
+	uint16_t csum;
+
+	/* handle packets coming from a different vport into this one */
+
+	csum = m->m_pkthdr.csum_flags;
+	if (ISSET(csum, M_IPV4_CSUM_OUT))
+		SET(csum, M_IPV4_CSUM_IN_OK);
+	if (ISSET(csum, M_TCP_CSUM_OUT))
+		SET(csum, M_TCP_CSUM_IN_OK);
+	if (ISSET(csum, M_UDP_CSUM_OUT))
+		SET(csum, M_UDP_CSUM_IN_OK);
+	if (ISSET(csum, M_ICMP_CSUM_OUT))
+		SET(csum, M_ICMP_CSUM_IN_OK);
+	m->m_pkthdr.csum_flags = csum;
+
 	/*
 	 * switching an l2 packet toward a vport means pushing it
 	 * into the network stack. this function exists to make
