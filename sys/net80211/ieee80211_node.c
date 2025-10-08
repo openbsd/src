@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.203 2025/08/01 20:39:26 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.204 2025/10/08 13:15:33 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2625,6 +2625,28 @@ ieee80211_clear_vhtcaps(struct ieee80211_node *ni)
 }
 #endif
 
+int
+ieee80211_node_is_11g(struct ieee80211_node *ni)
+{
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+	const struct ieee80211_rateset *rs_ofdm = &ieee80211_std_rateset_11a;
+	int i, j;
+
+	if (!IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+		return 0;
+
+	/* 2GHz station which supports 11a OFDM rates implies 11g. */
+	for (i = 0; i < rs->rs_nrates; i++) {
+		for (j = 0; j < rs_ofdm->rs_nrates; j++) {
+			if ((rs->rs_rates[i] & IEEE80211_RATE_VAL) ==
+			    (rs_ofdm->rs_rates[j] & IEEE80211_RATE_VAL))
+			    	return 1;
+		}
+	}
+
+	return 0;
+}
+
 /*
  * Install received rate set information in the node's state block.
  */
@@ -2653,10 +2675,12 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 		memcpy(rs->rs_rates + rs->rs_nrates, xrates+2, nxrates);
 		rs->rs_nrates += nxrates;
 
-		/* 11g support implies ERP support */
-		if (nxrates > 0 && IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-			ni->ni_flags |= IEEE80211_NODE_ERP;
 	}
+
+	/* 11g support implies ERP support */
+	if (ieee80211_node_is_11g(ni))
+		ni->ni_flags |= IEEE80211_NODE_ERP;
+
 	return ieee80211_fix_rate(ic, ni, flags);
 }
 
