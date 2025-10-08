@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.4 2025/10/08 00:06:32 dlg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.5 2025/10/08 00:28:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -112,6 +112,7 @@ rport_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	if_attach(ifp);
+	if_attach_queues(ifp, softnet_count());
 	if_alloc_sadl(ifp);
 	if_counters_alloc(ifp);
 
@@ -205,6 +206,18 @@ rport_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifqueue *ifq = &ifp->if_snd;
 	int error;
+
+	if (ifp->if_nifqs > 1) {
+		unsigned int idx;
+
+		/*
+		 * use the operations on the first ifq to pick which of
+		 * the array gets this mbuf.
+		 */
+
+		idx = ifq_idx(&ifp->if_snd, ifp->if_nifqs, m);
+		ifq = ifp->if_ifqs[idx];
+	}
 
 	error = ifq_enqueue(ifq, m);
 	if (error)
