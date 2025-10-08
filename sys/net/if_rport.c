@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.3 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.4 2025/10/08 00:06:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -106,6 +106,10 @@ rport_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_rtrequest = p2p_rtrequest;
 	ifp->if_type = IFT_TUNNEL;
 	ifp->if_softc = sc;
+
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -222,6 +226,7 @@ rport_start(struct ifqueue *ifq)
 	struct rport_softc *sc = ifp->if_softc;
 	struct ifnet *ifp0;
 	struct mbuf *m;
+	uint16_t csum;
 
 	ifp0 = if_get(sc->sc_peer_idx);
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
@@ -240,6 +245,17 @@ rport_start(struct ifqueue *ifq)
 			continue;
 		}
 #endif
+
+		csum = m->m_pkthdr.csum_flags;
+		if (ISSET(csum, M_IPV4_CSUM_OUT))
+			SET(csum, M_IPV4_CSUM_IN_OK);
+		if (ISSET(csum, M_TCP_CSUM_OUT))
+			SET(csum, M_TCP_CSUM_IN_OK);
+		if (ISSET(csum, M_UDP_CSUM_OUT))
+			SET(csum, M_UDP_CSUM_IN_OK);
+		if (ISSET(csum, M_ICMP_CSUM_OUT))
+			SET(csum, M_ICMP_CSUM_IN_OK);
+		m->m_pkthdr.csum_flags = csum;
 
 		if_vinput(ifp0, m, NULL);
 	}
