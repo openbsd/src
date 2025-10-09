@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkrng.c,v 1.7 2025/09/30 14:18:26 kettenis Exp $	*/
+/*	$OpenBSD: rkrng.c,v 1.8 2025/10/09 19:25:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -56,6 +56,21 @@
 #define TRNG_SAMPLE_CNT			0x0404
 #define TRNG_DOUT_BASE			0x0410
 
+/* RK3588 TRNG */
+#define TRNG_V1_CTRL			0x0000
+#define  TRNG_V1_CTRL_NOP		0x00
+#define  TRNG_V1_CTRL_RAND		0x01
+#define TRNG_V1_STAT			0x0004
+#define  TRNG_V1_STAT_SEEDED		(1U << 9)
+#define  TRNG_V1_STAT_GENERATING	(1U << 30)
+#define  TRNG_V1_STAT_RESEEDING		(1U << 31)
+#define TRNG_V1_MODE			0x0008
+#define  TRNG_V1_MODE_256_BIT		(1U << 3)
+#define TRNG_V1_ISTAT			0x0014
+#define  TRNG_V1_ISTAT_RAND_RDY		(1U << 0)
+#define TRNG_V1_RAND0			0x0020
+#define TRNG_V1_AUTO_RQSTS		0x0060
+
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
@@ -75,6 +90,7 @@ struct rkrng_softc {
 
 struct rkrng_v {
 	unsigned int		version;
+	int (*init)(struct rkrng_softc *sc);
 	void (*start)(struct rkrng_softc *sc);
 	int (*starting)(struct rkrng_softc *sc);
 	void (*stop)(struct rkrng_softc *sc);
@@ -106,6 +122,7 @@ static const struct rkrng_v rkrnv_v1 = {
 	.dout		= RNG_DATA0,
 };
 
+int	rkrng_v2_init(struct rkrng_softc *);
 void	rkrng_v2_start(struct rkrng_softc *);
 int	rkrng_v2_starting(struct rkrng_softc *);
 void	rkrng_v2_stop(struct rkrng_softc *);
@@ -118,6 +135,20 @@ static const struct rkrng_v rkrnv_v2 = {
 	.dout		= TRNG_DOUT_BASE,
 };
 
+int	rkrng_rk3588_init(struct rkrng_softc *);
+void	rkrng_rk3588_start(struct rkrng_softc *);
+int	rkrng_rk3588_starting(struct rkrng_softc *);
+void	rkrng_rk3588_stop(struct rkrng_softc *);
+
+static const struct rkrng_v rkrnv_rk3588 = {
+	.version	= 3,
+	.init		= rkrng_rk3588_init,
+	.start		= rkrng_rk3588_start,
+	.starting	= rkrng_rk3588_starting,
+	.stop		= rkrng_rk3588_stop,
+	.dout		= TRNG_V1_RAND0,
+};
+
 int
 rkrng_match(struct device *parent, void *match, void *aux)
 {
@@ -128,7 +159,8 @@ rkrng_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-crypto") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-crypto") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,cryptov2-rng") ||
-	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-rng");
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-rng") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3588-rng");
 }
 
 void
@@ -145,6 +177,8 @@ rkrng_attach(struct device *parent, struct device *self, void *aux)
 	else if (OF_is_compatible(faa->fa_node, "rockchip,cryptov2-rng") ||
 		 OF_is_compatible(faa->fa_node, "rockchip,rk3568-rng"))
 		sc->sc_v = &rkrnv_v2;
+	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3588-rng"))
+		sc->sc_v = &rkrnv_rk3588;
 	else {
 		printf(": unhandled version\n");
 		return;
@@ -166,6 +200,11 @@ rkrng_attach(struct device *parent, struct device *self, void *aux)
 
 	clock_set_assigned(faa->fa_node);
 	clock_enable_all(faa->fa_node);
+
+	if (sc->sc_v->init && sc->sc_v->init(sc)) {
+		printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	timeout_set(&sc->sc_to, rkrng_rnd, sc);
 	rkrng_rnd(sc);
@@ -215,6 +254,51 @@ rkrng_v2_stop(struct rkrng_softc *sc)
 	uint32_t ctl_m = TRNG_CTL_RNG_START | TRNG_CTL_RNG_ENABLE;
 
 	HWRITE4(sc, TRNG_CTL, (ctl_m << 16) | 0);
+}
+
+int
+rkrng_rk3588_init(struct rkrng_softc *sc)
+{
+	uint32_t stat;
+	uint32_t mask;
+	int timo;
+
+	mask = TRNG_V1_STAT_SEEDED;
+	mask |= TRNG_V1_STAT_GENERATING | TRNG_V1_STAT_RESEEDING;
+	for (timo = 100; timo > 0; timo--) {
+		stat = HREAD4(sc, TRNG_V1_STAT);
+		if ((stat & mask) == TRNG_V1_STAT_SEEDED)
+			break;
+		delay(100);
+	}
+	if (timo == 0)
+		return ETIMEDOUT;
+
+	HWRITE4(sc, TRNG_V1_ISTAT, HREAD4(sc, TRNG_V1_ISTAT));
+	HWRITE4(sc, TRNG_V1_AUTO_RQSTS, 1000);
+
+	return 0;
+}
+
+void
+rkrng_rk3588_start(struct rkrng_softc *sc)
+{
+	HWRITE4(sc, TRNG_V1_ISTAT, HREAD4(sc, TRNG_V1_ISTAT));
+	HWRITE4(sc, TRNG_V1_MODE, TRNG_V1_MODE_256_BIT);
+	HWRITE4(sc, TRNG_V1_CTRL, TRNG_V1_CTRL_RAND);
+}
+
+int
+rkrng_rk3588_starting(struct rkrng_softc *sc)
+{
+	return ((HREAD4(sc, TRNG_V1_ISTAT) & TRNG_V1_ISTAT_RAND_RDY) == 0);
+}
+
+void
+rkrng_rk3588_stop(struct rkrng_softc *sc)
+{
+	HWRITE4(sc, TRNG_V1_ISTAT, HREAD4(sc, TRNG_V1_ISTAT));
+	HWRITE4(sc, TRNG_V1_CTRL, TRNG_V1_CTRL_NOP);
 }
 
 void
