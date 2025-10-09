@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.60 2025/10/07 21:26:31 jan Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.61 2025/10/09 11:22:06 claudio Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -337,6 +337,8 @@ struct ice_softc {
 
 	int sw_intr[ICE_MAX_VECTORS];
 };
+
+static int ice_rxrinfo(struct ice_softc *, struct if_rxrinfo *);
 
 /**
  * ice_driver_is_detaching - Check if the driver is detaching/unloading
@@ -13755,6 +13757,9 @@ ice_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->media, cmd);
+		break;
+	case SIOCGIFRXR:
+		error = ice_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
 	case SIOCADDMULTI:
 		error = ether_addmulti(ifr, &sc->sc_ac);
@@ -29801,6 +29806,35 @@ ice_rxrefill(void *arg)
 	struct ice_softc *sc = rxq->vsi->sc;
 
 	ice_rxfill(sc, rxq);
+}
+
+static int
+ice_rxrinfo(struct ice_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct if_rxring_info *ifr;
+	struct ice_rx_queue *rxq;
+	int i, rv;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return (ENOTTY);
+
+	ifr = mallocarray(sizeof(*ifr), sc->sc_nqueues, M_TEMP,
+	    M_WAITOK|M_CANFAIL|M_ZERO);
+	if (ifr == NULL)
+		return (ENOMEM);
+
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		rxq = ifp->if_iqs[i]->ifiq_softc;
+		ifr[i].ifr_size = MCLBYTES + ETHER_ALIGN;
+		snprintf(ifr[i].ifr_name, sizeof(ifr[i].ifr_name), "%d", i);
+		ifr[i].ifr_info = rxq->rxq_acct;
+	}
+
+	rv = if_rxr_info_ioctl(ifri, sc->sc_nqueues, ifr);
+	free(ifr, M_TEMP, sc->sc_nqueues * sizeof(*ifr));
+
+	return (rv);
 }
 
 /* ice_rx_queues_alloc - Allocate Rx queue memory */
