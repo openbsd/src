@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.14 2024/10/17 01:57:18 jsg Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.15 2025/10/09 20:08:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
@@ -587,7 +587,9 @@ stfclock_set_frequency_jh7110_aon(void *cookie, uint32_t *cells, uint32_t freq)
 	}
 
 	parent_freq = stfclock_get_frequency_jh7110_sys(sc, &parent);
-	div = parent_freq / freq;
+	div = (parent_freq + freq / 2) / freq;
+	if (div == 0)
+		div = 1;
 
 	reg &= ~CLKDIV_MASK;
 	reg |= (div << CLKDIV_SHIFT);
@@ -643,7 +645,7 @@ stfclock_get_frequency_jh7110_pll(void *cookie, uint32_t *cells)
 {
 	struct stfclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
-	uint32_t dacpd, dsmpd, fbdiv, frac, prediv, postdiv1, reg;
+	uint32_t dacpd, dsmpd, fbdiv, frac, prediv, postdiv, reg;
 	uint64_t frac_val, parent_freq;
 	bus_size_t base;
 
@@ -679,7 +681,7 @@ stfclock_get_frequency_jh7110_pll(void *cookie, uint32_t *cells)
 
 		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FRAC_OFF);
 		frac = (reg & PLLFRAC_MASK) >> PLLFRAC_SHIFT;
-		postdiv1 = 1 << ((reg & PLLPOSTDIV1_MASK) >> PLLPOSTDIV1_SHIFT);
+		postdiv = 1 << ((reg & PLLPOSTDIV1_MASK) >> PLLPOSTDIV1_SHIFT);
 
 		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_PREDIV_OFF);
 		prediv = (reg & PLLPREDIV_MASK) >> PLLPREDIV_SHIFT;
@@ -694,14 +696,14 @@ stfclock_get_frequency_jh7110_pll(void *cookie, uint32_t *cells)
 
 		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL_FRAC_OFF);
 		frac = (reg & PLLFRAC_MASK) >> PLLFRAC_SHIFT;
-		postdiv1 = 1 << ((reg & PLLPOSTDIV1_MASK) >> PLLPOSTDIV1_SHIFT);
+		postdiv = 1 << ((reg & PLLPOSTDIV1_MASK) >> PLLPOSTDIV1_SHIFT);
 
 		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL_PREDIV_OFF);
 		prediv = (reg & PLLPREDIV_MASK) >> PLLPREDIV_SHIFT;
 		break;
 	}
 
-	if (fbdiv == 0 || prediv == 0 || postdiv1 == 0) {
+	if (fbdiv == 0 || prediv == 0 || postdiv == 0) {
 		printf("%s: zero divisor\n", __func__);
 		return 0;
 	}
@@ -714,7 +716,7 @@ stfclock_get_frequency_jh7110_pll(void *cookie, uint32_t *cells)
 	if (dacpd == 0 && dsmpd == 0)
 		frac_val = ((uint64_t)frac * 1000) / (1 << 24);
 
-	return parent_freq / 1000 * (fbdiv * 1000 + frac_val) / prediv / postdiv1;
+	return parent_freq / 1000 * (fbdiv * 1000 + frac_val) / prediv / postdiv;
 }
 
 int
@@ -752,25 +754,31 @@ stfclock_set_frequency_jh7110_pll(void *cookie, uint32_t *cells, uint32_t freq)
 			return -1;
 		}
 
+		dacpd = dsmpd = 1;
+		fbdiv = 125;
+		postdiv1 = 0;
+
 		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_PD_OFF);
-		dacpd = (reg & PLL0DACPD_MASK) >> PLL0DACPD_SHIFT;
-		dsmpd = (reg & PLL0DSMPD_MASK) >> PLL0DSMPD_SHIFT;
-
-		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FBDIV_OFF);
-		fbdiv = (reg & PLL0FBDIV_MASK) >> PLL0FBDIV_SHIFT;
-
-		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FRAC_OFF);
-		postdiv1 = 1 << ((reg & PLLPOSTDIV1_MASK) >> PLLPOSTDIV1_SHIFT);
-
-		if (dacpd != 1 || dsmpd != 1 || fbdiv != 125 || postdiv1 != 1) {
-			printf("%s: misconfigured PLL0\n", __func__);
-			return -1;
-		}
+		reg &= ~(PLL0DACPD_MASK | PLL0DSMPD_MASK);
+		reg |= dacpd << PLL0DACPD_SHIFT;
+		reg |= dsmpd << PLL0DSMPD_SHIFT;
+		regmap_write_4(sc->sc_rm, base + JH7110_PLL0_PD_OFF, reg);
 
 		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_PREDIV_OFF);
 		reg &= ~PLLPREDIV_MASK;
 		reg |= (prediv << PLLPREDIV_SHIFT);
 		regmap_write_4(sc->sc_rm, base + JH7110_PLL0_PREDIV_OFF, reg);
+
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FBDIV_OFF);
+		reg &= ~PLL0FBDIV_MASK;
+		reg |= fbdiv << PLL0FBDIV_SHIFT;
+		regmap_write_4(sc->sc_rm, base + JH7110_PLL0_FBDIV_OFF, reg);
+
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FRAC_OFF);
+		reg &= ~PLLPOSTDIV1_MASK;
+		reg |= postdiv1 << PLLPOSTDIV1_SHIFT;
+		regmap_write_4(sc->sc_rm, base + JH7110_PLL0_FRAC_OFF, reg);
+
 		return 0;
 	}
 
@@ -993,8 +1001,8 @@ stfclock_set_frequency_jh7110_sys(void *cookie, uint32_t *cells, uint32_t freq)
 	 * for the CPU clock to 2 to make sure we don't run at a
 	 * frequency that is too high for the default CPU voltage.
 	 */
-	if (idx == JH7110_SYSCLK_CPU_CORE && freq != 1000000000 &&
-	    stfclock_get_frequency_jh7110_sys(sc, &idx) == 1000000000) {
+	if (idx == JH7110_SYSCLK_CPU_CORE &&
+	    clock_get_frequency(sc->sc_node, "pll0_out") != 1500000000) {
 		reg = HREAD4(sc, idx * 4);
 		reg &= ~CLKDIV_MASK;
 		reg |= (2 << CLKDIV_SHIFT);
@@ -1019,6 +1027,10 @@ stfclock_set_frequency_jh7110_sys(void *cookie, uint32_t *cells, uint32_t freq)
 	case JH7110_SYSCLK_CPU_CORE:
 		parent = JH7110_SYSCLK_CPU_ROOT;
 		break;
+	case JH7110_SYSCLK_SDIO0_SDCARD:
+	case JH7110_SYSCLK_SDIO1_SDCARD:
+		parent = JH7110_SYSCLK_AXI_CFG0;
+		break;
 	case JH7110_SYSCLK_GMAC1_GTXCLK:
 		parent = JH7110_SYSCLK_PLL0_OUT;
 		break;
@@ -1035,7 +1047,9 @@ stfclock_set_frequency_jh7110_sys(void *cookie, uint32_t *cells, uint32_t freq)
 	}
 
 	parent_freq = stfclock_get_frequency_jh7110_sys(sc, &parent);
-	div = parent_freq / freq;
+	div = (parent_freq + freq / 2) / freq;
+	if (div == 0)
+		div = 1;
 
 	reg &= ~CLKDIV_MASK;
 	reg |= (div << CLKDIV_SHIFT);
