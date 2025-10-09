@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.234 2025/09/17 09:32:55 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.235 2025/10/09 11:18:29 claudio Exp $
 
 machine		arm64
 maxusers	4
@@ -322,6 +322,7 @@ em*		at pci?			# Intel Pro/1000 Ethernet
 igc*		at pci?			# Intel I225 Ethernet
 ix*		at pci?			# Intel 82598EB 10Gb Ethernet
 ixl*		at pci?			# Intel Ethernet 700 Series
+ice*		at pci?			# Intel Ethernet 800 Series
 mcx*		at pci?			# Mellanox ConnectX-4/5 Ethernet
 mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
