@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.20 2025/10/04 10:52:30 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.21 2025/10/09 19:27:04 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -36,7 +36,7 @@
  * CCR definition in draft-spaghetti-sidrops-rpki-ccr-00, section 3.
  */
 
-ASN1_ITEM_EXP ContentInfo_it;
+ASN1_ITEM_EXP EncapContentInfo_it;
 ASN1_ITEM_EXP CanonicalCacheRepresentation_it;
 ASN1_ITEM_EXP ManifestRefs_it;
 ASN1_ITEM_EXP ManifestRef_it;
@@ -50,16 +50,12 @@ ASN1_ITEM_EXP RouterKeySets_it;
 ASN1_ITEM_EXP RouterKeySet_it;
 ASN1_ITEM_EXP RouterKey_it;
 
-/*
- * Can't use CMS_ContentInfo since it is not backed by a public struct
- * and since the OpenSSL CMS API does not support custom contentTypes.
- */
-ASN1_SEQUENCE(ContentInfo) = {
-	ASN1_SIMPLE(ContentInfo, contentType, ASN1_OBJECT),
-	ASN1_EXP(ContentInfo, content, ASN1_OCTET_STRING, 0),
-} ASN1_SEQUENCE_END(ContentInfo);
+ASN1_SEQUENCE(EncapContentInfo) = {
+	ASN1_SIMPLE(EncapContentInfo, contentType, ASN1_OBJECT),
+	ASN1_EXP(EncapContentInfo, content, ASN1_OCTET_STRING, 0),
+} ASN1_SEQUENCE_END(EncapContentInfo);
 
-IMPLEMENT_ASN1_FUNCTIONS(ContentInfo);
+IMPLEMENT_ASN1_FUNCTIONS(EncapContentInfo);
 
 ASN1_SEQUENCE(CanonicalCacheRepresentation) = {
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, version, ASN1_INTEGER, 0),
@@ -609,15 +605,15 @@ void
 serialize_ccr_content(struct validation_data *vd)
 {
 	CanonicalCacheRepresentation *ccr;
-	ContentInfo *ci = NULL;
+	EncapContentInfo *ci = NULL;
 	unsigned char *out;
 	int out_len, ci_der_len;
 
 	/* XXX - This should probably move to main(). */
 	x509_init_oid();
 
-	if ((ci = ContentInfo_new()) == NULL)
-		errx(1, "ContentInfo_new");
+	if ((ci = EncapContentInfo_new()) == NULL)
+		errx(1, "EncapContentInfo_new");
 
 	/*
 	 * At some point the below PEN OID should be replaced by one from IANA.
@@ -640,11 +636,11 @@ serialize_ccr_content(struct validation_data *vd)
 	free(out);
 
 	vd->ccr.der = NULL;
-	if ((ci_der_len = i2d_ContentInfo(ci, &vd->ccr.der)) <= 0)
-		errx(1, "i2d_ContentInfo");
+	if ((ci_der_len = i2d_EncapContentInfo(ci, &vd->ccr.der)) <= 0)
+		errx(1, "i2d_EncapContentInfo");
 	vd->ccr.der_len = ci_der_len;
 
-	ContentInfo_free(ci);
+	EncapContentInfo_free(ci);
 }
 
 static inline int
@@ -1475,7 +1471,7 @@ struct ccr *
 ccr_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	const unsigned char *oder;
-	ContentInfo *ci = NULL;
+	EncapContentInfo *ci = NULL;
 	CanonicalCacheRepresentation *ccr_asn1 = NULL;
 	struct ccr *ccr = NULL;
 	int nid, rc = 0;
@@ -1484,8 +1480,8 @@ ccr_parse(const char *fn, const unsigned char *der, size_t len)
 		return NULL;
 
 	oder = der;
-	if ((ci = d2i_ContentInfo(NULL, &der, len)) == NULL) {
-		warnx("%s: d2i_ContentInfo", fn);
+	if ((ci = d2i_EncapContentInfo(NULL, &der, len)) == NULL) {
+		warnx("%s: d2i_EncapContentInfo", fn);
 		goto out;
 	}
 	if (der != oder + len) {
@@ -1567,7 +1563,7 @@ ccr_parse(const char *fn, const unsigned char *der, size_t len)
 	rc = 1;
  out:
 	CanonicalCacheRepresentation_free(ccr_asn1);
-	ContentInfo_free(ci);
+	EncapContentInfo_free(ci);
 
 	if (rc == 0) {
 		ccr_free(ccr);

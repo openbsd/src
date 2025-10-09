@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.7 2025/09/15 11:52:07 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.8 2025/10/09 19:27:04 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -46,7 +46,7 @@ DECLARE_ASN1_FUNCTIONS(ASProviderAttestation);
  * reference: TBD
  */
 
-extern ASN1_ITEM_EXP ContentInfo_it;
+extern ASN1_ITEM_EXP EncapContentInfo_it;
 extern ASN1_ITEM_EXP CanonicalCacheRepresentation_it;
 extern ASN1_ITEM_EXP ManifestRefs_it;
 extern ASN1_ITEM_EXP ManifestRef_it;
@@ -225,9 +225,9 @@ DECLARE_ASN1_FUNCTIONS(CanonicalCacheRepresentation);
 typedef struct {
 	ASN1_OBJECT *contentType;
 	ASN1_OCTET_STRING *content;
-} ContentInfo;
+} EncapContentInfo;
 
-DECLARE_ASN1_FUNCTIONS(ContentInfo);
+DECLARE_ASN1_FUNCTIONS(EncapContentInfo);
 
 
 /*
