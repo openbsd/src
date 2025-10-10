@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.38 2025/03/06 07:20:01 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.39 2025/10/10 11:31:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -213,7 +213,6 @@ struct x509_revoked_st {
 	STACK_OF(GENERAL_NAME) *issuer;
 	/* Revocation reason */
 	int reason;
-	int sequence; /* load sequence */
 };
 
 struct X509_crl_info_st {

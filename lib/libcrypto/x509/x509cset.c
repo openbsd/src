@@ -1,4 +1,4 @@
-/* $OpenBSD: x509cset.c,v 1.22 2024/03/26 23:41:45 tb Exp $ */
+/* $OpenBSD: x509cset.c,v 1.23 2025/10/10 11:31:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -156,15 +156,7 @@ LCRYPTO_ALIAS(X509_CRL_set1_nextUpdate);
 int
 X509_CRL_sort(X509_CRL *c)
 {
-	X509_REVOKED *r;
-	int i;
-
-	/* Sort the data so it will be written in serial number order */
 	sk_X509_REVOKED_sort(c->crl->revoked);
-	for (i = 0; i < sk_X509_REVOKED_num(c->crl->revoked); i++) {
-		r = sk_X509_REVOKED_value(c->crl->revoked, i);
-		r->sequence = i;
-	}
 	c->crl->enc.modified = 1;
 	return 1;
 }
