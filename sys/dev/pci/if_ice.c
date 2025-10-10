@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.61 2025/10/09 11:22:06 claudio Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.62 2025/10/10 11:56:48 claudio Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -201,6 +201,10 @@ uint32_t	ice_debug = 0xffffffff & ~(ICE_DBG_AQ);
 
 #define ICE_WRITE(hw, reg, val)						\
 	bus_space_write_4((hw)->hw_sc->sc_st, (hw)->hw_sc->sc_sh, (reg), (val))
+
+#define ICE_WRITE_RAW(hw, reg, val)					\
+	bus_space_write_raw_4((hw)->hw_sc->sc_st, (hw)->hw_sc->sc_sh, (reg), \
+	    (val))
 
 #define ice_flush(_hw) ICE_READ((_hw), GLGEN_STAT)
 
@@ -10832,11 +10836,12 @@ ice_copy_rxq_ctx_to_hw(struct ice_hw *hw, uint8_t *ice_rxq_ctx,
 
 	/* Copy each dword separately to HW */
 	for (i = 0; i < ICE_RXQ_CTX_SIZE_DWORDS; i++) {
-		ICE_WRITE(hw, QRX_CONTEXT(i, rxq_index),
+		ICE_WRITE_RAW(hw, QRX_CONTEXT(i, rxq_index),
 		     *((uint32_t *)(ice_rxq_ctx + (i * sizeof(uint32_t)))));
 
 		DNPRINTF(ICE_DBG_QCTX, "%s: qrxdata[%d]: %08X\n", __func__,
-		    i, *((uint32_t *)(ice_rxq_ctx + (i * sizeof(uint32_t)))));
+		    i, le32toh(*((uint32_t *)(ice_rxq_ctx +
+		    (i * sizeof(uint32_t))))));
 	}
 
 	return ICE_SUCCESS;
@@ -13920,7 +13925,7 @@ ice_tx_setup_offload(struct mbuf *m0, struct ether_extracted *ext)
 
 #if NVLAN > 0
 	if (ISSET(m0->m_flags, M_VLANTAG)) {
-		uint64_t vtag = htole16(m0->m_pkthdr.ether_vtag);
+		uint64_t vtag = m0->m_pkthdr.ether_vtag;
 		offload |= (ICE_TX_DESC_CMD_IL2TAG1 << ICE_TXD_QW1_CMD_S) |
 		    (vtag << ICE_TXD_QW1_L2TAG1_S);
 	}
@@ -29485,9 +29490,9 @@ ice_txeof(struct ice_softc *sc, struct ice_tx_queue *txq)
 		last = txm->txm_eop;
 		txd = &ring[last];
 
-		dtype = htole64((txd->cmd_type_offset_bsz &
-		    ICE_TXD_QW1_DTYPE_M) >> ICE_TXD_QW1_DTYPE_S);
-		if (dtype != htole64(ICE_TX_DESC_DTYPE_DESC_DONE))
+		dtype = (htole64(txd->cmd_type_offset_bsz) &
+		    ICE_TXD_QW1_DTYPE_M) >> ICE_TXD_QW1_DTYPE_S;
+		if (dtype != ICE_TX_DESC_DTYPE_DESC_DONE)
 			break;
 
 		if (ISSET(txm->txm_m->m_pkthdr.csum_flags, M_TCP_TSO))
