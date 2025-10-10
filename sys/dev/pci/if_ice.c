@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.62 2025/10/10 11:56:48 claudio Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.63 2025/10/10 11:58:24 claudio Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -187,7 +187,7 @@ ice_match(struct device *parent, ice_match_t match __unused, void *aux)
 				 ICE_DBG_AQ_CMD)
 #define ICE_DBG_PARSER		(1UL << 28)
 #define ICE_DBG_USER		(1UL << 31)
-uint32_t	ice_debug = 0xffffffff & ~(ICE_DBG_AQ);
+uint32_t	ice_debug = 0xffffffff & ~(ICE_DBG_AQ | ICE_DBG_TRACE);
 #else
 #define DPRINTF(x...)
 #define DNPRINTF(n,x...)
