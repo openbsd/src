@@ -1,4 +1,4 @@
-#	$OpenBSD: sftp-cmds.sh,v 1.21 2025/10/09 23:58:27 djm Exp $
+#	$OpenBSD: sftp-cmds.sh,v 1.22 2025/10/10 00:31:53 djm Exp $
 #	Placed in the Public Domain.
 
 # XXX - TODO: 
@@ -33,7 +33,7 @@ sftpserver_with_stdout() {
 }
 
 forest() {
-	rm -f ${COPY}.dd/*
+	rm -rf ${COPY}.dd/*
 	rm -rf ${COPY}.dd2
 	mkdir -p ${COPY}.dd/a ${COPY}.dd/b ${COPY}.dd/c ${COPY}.dd/a/d
 	echo 'A' > ${COPY}.dd/a/A
@@ -107,24 +107,24 @@ echo "get \"${GLOBMETACOPY}\" ${COPY}" | sftpserver || fail "get failed"
 cmp ${COPY} "$GLOBMETACOPY" || \
 	fail "corrupted copy after get with glob metacharacters"
 
-rm -f ${COPY}.dd/*
+rm -rf ${COPY}.dd/*
 verbose "$tid: get to directory"
 echo "get $DATA ${COPY}.dd" | sftpserver || fail "get failed"
 cmp $DATA ${COPY}.dd/${DATANAME} || fail "corrupted copy after get"
 
-rm -f ${COPY}.dd/*
+rm -rf ${COPY}.dd/*
 verbose "$tid: glob get to directory"
 echo "get /bin/l* ${COPY}.dd" | sftpserver || fail "get failed"
 for x in $GLOBFILES; do
         cmp /bin/$x ${COPY}.dd/$x || fail "corrupted copy after get"
 done
 
-rm -f ${COPY}.dd/*
+rm -rf ${COPY}.dd/*
 verbose "$tid: get to local dir"
 printf "lcd ${COPY}.dd\nget $DATA\n" | sftpserver || fail "get failed"
 cmp $DATA ${COPY}.dd/${DATANAME} || fail "corrupted copy after get"
 
-rm -f ${COPY}.dd/*
+rm -rf ${COPY}.dd/*
 verbose "$tid: glob get to local dir"
 printf "lcd ${COPY}.dd\nget /bin/l*\n" | sftpserver || fail "get failed"
 for x in $GLOBFILES; do
@@ -146,24 +146,24 @@ verbose "$tid: put filename with spaces"
 echo "put $DATA ${SPACECOPY_ARG}" | sftpserver || fail "put failed"
 cmp $DATA "$SPACECOPY" || fail "corrupted copy after put with spaces"
 
-rm -f ${COPY}.dd/*
+rm -rf ${COPY}.dd/*
 verbose "$tid: put to directory"
 echo "put $DATA ${COPY}.dd" | sftpserver || fail "put failed"
 cmp $DATA ${COPY}.dd/${DATANAME} || fail "corrupted copy after put"
 
-rm -f ${COPY}.dd/*
+rm -rf ${COPY}.dd/*
 verbose "$tid: glob put to directory"
 echo "put /bin/l* ${COPY}.dd" | sftpserver || fail "put failed"
 for x in $GLOBFILES; do
 	cmp /bin/$x ${COPY}.dd/$x || fail "corrupted copy after put"
 done
 
-rm -f ${COPY}.dd/*
+rm -rf ${COPY}.dd/*
 verbose "$tid: put to local dir"
 printf "cd ${COPY}.dd\nput $DATA\n" | sftpserver || fail "put failed"
 cmp $DATA ${COPY}.dd/${DATANAME} || fail "corrupted copy after put"
 
-rm -f ${COPY}.dd/*
+rm -rf ${COPY}.dd/*
 verbose "$tid: glob put to local dir"
 printf "cd ${COPY}.dd\nput /bin/l*\n" | sftpserver || fail "put failed"
 for x in $GLOBFILES; do
