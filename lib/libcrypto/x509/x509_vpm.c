@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.56 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.57 2025/10/10 23:07:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -545,7 +545,7 @@ LCRYPTO_ALIAS(X509_VERIFY_PARAM_add1_host);
 
 /* Public API in OpenSSL - nothing seems to use this. */
 unsigned int
-X509_VERIFY_PARAM_get_hostflags(X509_VERIFY_PARAM *param)
+X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param)
 {
 	return param->hostflags;
 }
