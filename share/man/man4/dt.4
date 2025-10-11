@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dt.4,v 1.8 2025/10/05 22:31:54 sashan Exp $
+.\"	$OpenBSD: dt.4,v 1.9 2025/10/11 00:54:55 jsg Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 5 2025 $
+.Dd $Mdocdate: October 11 2025 $
 .Dt DT 4
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ On success, the remaining members are populated.
 is the file descriptor to the DSO file that
 .Fa dtrv_va
 belongs to.
-.FA dtrv_len
+.Fa dtrv_len
 is the length of the DSO file.
 .Fa dtrv_offset
 and
@@ -128,7 +128,6 @@ the base address of the segment can be calculated by
 .Pp
 For symbol lookups the offset can now be calculated as
 .Dl symOffset = dtrv_va - lbase
-.El
 .El
 .Sh FILES
 .Bl -tag -width /dev/dt -compact
