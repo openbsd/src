@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.234 2025/06/24 13:37:11 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.235 2025/10/11 15:46:06 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1542,7 +1542,12 @@ connection_info(const char *host, const char *port, const char *proto,
 
 	/* Look up service name unless -n. */
 	if (!nflag) {
-		sv = getservbyport(ntohs(atoi(port)), proto);
+		const char *errstr;
+
+		int p = strtonum(port, 1, PORT_MAX, &errstr);
+		if (errstr)
+			errx(1, "port number %s: %s", errstr, port);
+		sv = getservbyport(htons(p), proto);
 		if (sv != NULL)
 			service = sv->s_name;
 	}
