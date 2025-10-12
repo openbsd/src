@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.129 2023/09/19 15:02:55 naddy Exp $
+#	$OpenBSD: special,v 1.130 2025/10/12 15:48:32 landry Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -88,7 +88,6 @@ rc.shutdown	type=file mode=0644 uname=root gname=wheel optional
 relayd.conf	type=file mode=0600 uname=root gname=wheel optional
 remote		type=file mode=0644 uname=root gname=wheel optional
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
-resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
 rbootd.conf	type=file mode=0644 uname=root gname=wheel optional
 ripd.conf	type=file mode=0600 uname=root gname=wheel optional
 sasyncd.conf	type=file mode=0600 uname=root gname=wheel optional
