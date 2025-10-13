@@ -552,7 +552,7 @@ These options are part of the **server:** clause.
     On BSD, Solaris changes are similar to
     :ref:`so-rcvbuf<unbound.conf.so-rcvbuf>`.
 
-    Default: 4m
+    Default: 1m
 
 
 @@UAHL@unbound.conf@so-reuseport@@: *<yes or no>*
