@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.8 2025/10/09 19:27:04 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.9 2025/10/13 09:32:11 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -48,8 +48,8 @@ DECLARE_ASN1_FUNCTIONS(ASProviderAttestation);
 
 extern ASN1_ITEM_EXP EncapContentInfo_it;
 extern ASN1_ITEM_EXP CanonicalCacheRepresentation_it;
-extern ASN1_ITEM_EXP ManifestRefs_it;
-extern ASN1_ITEM_EXP ManifestRef_it;
+extern ASN1_ITEM_EXP ManifestInstances_it;
+extern ASN1_ITEM_EXP ManifestInstance_it;
 extern ASN1_ITEM_EXP ROAPayloadSets_it;
 extern ASN1_ITEM_EXP ROAPayloadSet_it;
 extern ASN1_ITEM_EXP ASPAPayloadSets_it;
@@ -67,24 +67,25 @@ typedef struct {
 	ASN1_INTEGER *manifestNumber;
 	ASN1_GENERALIZEDTIME *thisUpdate;
 	STACK_OF(ACCESS_DESCRIPTION) *location;
-} ManifestRef;
+} ManifestInstance;
 
-DECLARE_STACK_OF(ManifestRef);
+DECLARE_STACK_OF(ManifestInstance);
 
 #ifndef DEFINE_STACK_OF
-#define sk_ManifestRef_num(st) SKM_sk_num(ManifestRef, (st))
-#define sk_ManifestRef_push(st, i) SKM_sk_push(ManifestRef, (st), (i))
-#define sk_ManifestRef_value(st, i) SKM_sk_value(ManifestRef, (st), (i))
+#define sk_ManifestInstance_num(st) SKM_sk_num(ManifestInstance, (st))
+#define sk_ManifestInstance_push(st, i) SKM_sk_push(ManifestInstance, (st), (i))
+#define sk_ManifestInstance_value(st, i) \
+    SKM_sk_value(ManifestInstance, (st), (i))
 #endif
 
-DECLARE_ASN1_FUNCTIONS(ManifestRef);
+DECLARE_ASN1_FUNCTIONS(ManifestInstance);
 
-typedef STACK_OF(ManifestRef) ManifestRefs;
+typedef STACK_OF(ManifestInstance) ManifestInstances;
 
-DECLARE_ASN1_FUNCTIONS(ManifestRefs);
+DECLARE_ASN1_FUNCTIONS(ManifestInstances);
 
 typedef struct {
-	STACK_OF(ManifestRef) *mftrefs;
+	STACK_OF(ManifestInstance) *mis;
 	ASN1_GENERALIZEDTIME *mostRecentUpdate;
 	ASN1_OCTET_STRING *hash;
 } ManifestState;

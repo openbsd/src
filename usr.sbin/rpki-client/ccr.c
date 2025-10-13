@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.21 2025/10/09 19:27:04 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.22 2025/10/13 09:32:11 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -38,8 +38,8 @@
 
 ASN1_ITEM_EXP EncapContentInfo_it;
 ASN1_ITEM_EXP CanonicalCacheRepresentation_it;
-ASN1_ITEM_EXP ManifestRefs_it;
-ASN1_ITEM_EXP ManifestRef_it;
+ASN1_ITEM_EXP ManifestInstances_it;
+ASN1_ITEM_EXP ManifestInstance_it;
 ASN1_ITEM_EXP ROAPayloadSets_it;
 ASN1_ITEM_EXP ROAPayloadSet_it;
 ASN1_ITEM_EXP ASPAPayloadSets_it;
@@ -72,29 +72,30 @@ ASN1_SEQUENCE(CanonicalCacheRepresentation) = {
 IMPLEMENT_ASN1_FUNCTIONS(CanonicalCacheRepresentation);
 
 ASN1_SEQUENCE(ManifestState) = {
-	ASN1_SEQUENCE_OF(ManifestState, mftrefs, ManifestRef),
+	ASN1_SEQUENCE_OF(ManifestState, mis, ManifestInstance),
 	ASN1_SIMPLE(ManifestState, mostRecentUpdate, ASN1_GENERALIZEDTIME),
 	ASN1_SIMPLE(ManifestState, hash, ASN1_OCTET_STRING),
 } ASN1_SEQUENCE_END(ManifestState);
 
 IMPLEMENT_ASN1_FUNCTIONS(ManifestState);
 
-ASN1_ITEM_TEMPLATE(ManifestRefs) =
-    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, mftrefs, ManifestRef)
-ASN1_ITEM_TEMPLATE_END(ManifestRefs);
+ASN1_ITEM_TEMPLATE(ManifestInstances) =
+    ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, mis, ManifestInstance)
+ASN1_ITEM_TEMPLATE_END(ManifestInstances);
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(ManifestRefs, ManifestRefs, ManifestRefs);
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(ManifestInstances, ManifestInstances,
+    ManifestInstances);
 
-ASN1_SEQUENCE(ManifestRef) = {
-	ASN1_SIMPLE(ManifestRef, hash, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(ManifestRef, size, ASN1_INTEGER),
-	ASN1_SIMPLE(ManifestRef, aki, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(ManifestRef, manifestNumber, ASN1_INTEGER),
-	ASN1_SIMPLE(ManifestRef, thisUpdate, ASN1_GENERALIZEDTIME),
-	ASN1_SEQUENCE_OF(ManifestRef, location, ACCESS_DESCRIPTION),
-} ASN1_SEQUENCE_END(ManifestRef);
+ASN1_SEQUENCE(ManifestInstance) = {
+	ASN1_SIMPLE(ManifestInstance, hash, ASN1_OCTET_STRING),
+	ASN1_SIMPLE(ManifestInstance, size, ASN1_INTEGER),
+	ASN1_SIMPLE(ManifestInstance, aki, ASN1_OCTET_STRING),
+	ASN1_SIMPLE(ManifestInstance, manifestNumber, ASN1_INTEGER),
+	ASN1_SIMPLE(ManifestInstance, thisUpdate, ASN1_GENERALIZEDTIME),
+	ASN1_SEQUENCE_OF(ManifestInstance, location, ACCESS_DESCRIPTION),
+} ASN1_SEQUENCE_END(ManifestInstance);
 
-IMPLEMENT_ASN1_FUNCTIONS(ManifestRef);
+IMPLEMENT_ASN1_FUNCTIONS(ManifestInstance);
 
 ASN1_SEQUENCE(ROAPayloadState) = {
 	ASN1_SEQUENCE_OF(ROAPayloadState, rps, ROAPayloadSet),
@@ -257,31 +258,31 @@ location_add_sia(STACK_OF(ACCESS_DESCRIPTION) *sad, const char *sia)
 }
 
 static void
-append_cached_manifest(STACK_OF(ManifestRef) *mftrefs, struct ccr_mft *cm)
+append_cached_manifest(STACK_OF(ManifestInstance) *mis, struct ccr_mft *cm)
 {
-	ManifestRef *mr;
+	ManifestInstance *mi;
 
-	if ((mr = ManifestRef_new()) == NULL)
-		errx(1, "ManifestRef_new");
+	if ((mi = ManifestInstance_new()) == NULL)
+		errx(1, "ManifestInstance_new");
 
-	if (!ASN1_OCTET_STRING_set(mr->hash, cm->hash, sizeof(cm->hash)))
+	if (!ASN1_OCTET_STRING_set(mi->hash, cm->hash, sizeof(cm->hash)))
 		errx(1, "ASN1_OCTET_STRING_set");
 
-	if (!ASN1_OCTET_STRING_set(mr->aki, cm->aki, sizeof(cm->aki)))
+	if (!ASN1_OCTET_STRING_set(mi->aki, cm->aki, sizeof(cm->aki)))
 		errx(1, "ASN1_OCTET_STRING_set");
 
-	if (!ASN1_INTEGER_set_uint64(mr->size, cm->size))
+	if (!ASN1_INTEGER_set_uint64(mi->size, cm->size))
 		errx(1, "ASN1_INTEGER_set_uint64");
 
-	asn1int_set_seqnum(mr->manifestNumber, cm->seqnum);
+	asn1int_set_seqnum(mi->manifestNumber, cm->seqnum);
 
-	if (ASN1_GENERALIZEDTIME_set(mr->thisUpdate, cm->thisupdate) == NULL)
+	if (ASN1_GENERALIZEDTIME_set(mi->thisUpdate, cm->thisupdate) == NULL)
 		errx(1, "ASN1_GENERALIZEDTIME_set");
 
-	location_add_sia(mr->location, cm->sia);
+	location_add_sia(mi->location, cm->sia);
 
-	if (sk_ManifestRef_push(mftrefs, mr) <= 0)
-		errx(1, "sk_ManifestRef_push");
+	if (sk_ManifestInstance_push(mis, mi) <= 0)
+		errx(1, "sk_ManifestInstance_push");
 }
 
 static int
@@ -302,7 +303,7 @@ generate_manifeststate(struct validation_data *vd)
 		errx(1, "ManifestState_new");
 
 	RB_FOREACH(cm, ccr_mft_tree, &ccr->mfts) {
-		append_cached_manifest(ms->mftrefs, cm);
+		append_cached_manifest(ms->mis, cm);
 
 		if (cm->thisupdate > most_recent_update)
 			most_recent_update = cm->thisupdate;
@@ -312,7 +313,7 @@ generate_manifeststate(struct validation_data *vd)
 	    most_recent_update) == NULL)
 		errx(1, "ASN1_GENERALIZEDTIME_set");
 
-	hash_asn1_item(ms->hash, ASN1_ITEM_rptr(ManifestRefs), ms->mftrefs);
+	hash_asn1_item(ms->hash, ASN1_ITEM_rptr(ManifestInstances), ms->mis);
 
 	if (!base64_encode_asn1str(ms->hash, &ccr->mfts_hash))
 		errx(1, "base64_encode_asn1str");
@@ -889,71 +890,71 @@ ccr_free(struct ccr *ccr)
 }
 
 static int
-parse_mft_refs(const char *fn, struct ccr *ccr,
-    const STACK_OF(ManifestRef) *refs)
+parse_mft_instances(const char *fn, struct ccr *ccr,
+    const STACK_OF(ManifestInstance) *mis)
 {
-	ManifestRef *ref;
+	ManifestInstance *mi;
 	struct ccr_mft *ccr_mft = NULL, *prev;
-	int i, refs_num;
+	int i, instances_num;
 	const ACCESS_DESCRIPTION *ad;
 	int rc = 0;
 	uint64_t size = 0;
 
-	refs_num = sk_ManifestRef_num(refs);
+	instances_num = sk_ManifestInstance_num(mis);
 
 	RB_INIT(&ccr->mfts);
 
 	prev = NULL;
-	for (i = 0; i < refs_num; i++) {
+	for (i = 0; i < instances_num; i++) {
 		if ((ccr_mft = calloc(1, sizeof(*ccr_mft))) == NULL)
 			err(1, NULL);
 
-		ref = sk_ManifestRef_value(refs, i);
+		mi = sk_ManifestInstance_value(mis, i);
 
-		if (ref->hash->length != sizeof(ccr_mft->hash)) {
-			warnx("%s: manifest ref #%d corrupted", fn, i);
+		if (mi->hash->length != sizeof(ccr_mft->hash)) {
+			warnx("%s: manifest instance #%d corrupted", fn, i);
 			goto out;
 		}
-		memcpy(ccr_mft->hash, ref->hash->data, ref->hash->length);
+		memcpy(ccr_mft->hash, mi->hash->data, mi->hash->length);
 
 		if (prev != NULL) {
 			if (ccr_mft_cmp(ccr_mft, prev) <= 0) {
-				warnx("%s: misordered ManifestRef", fn);
+				warnx("%s: misordered ManifestInstances", fn);
 				goto out;
 			}
 		}
 
-		if (ref->aki->length != sizeof(ccr_mft->aki)) {
-			warnx("%s: manifest ref #%d corrupted", fn, i);
+		if (mi->aki->length != sizeof(ccr_mft->aki)) {
+			warnx("%s: manifest instance #%d corrupted", fn, i);
 			goto out;
 		}
-		memcpy(ccr_mft->aki, ref->aki->data, ref->aki->length);
+		memcpy(ccr_mft->aki, mi->aki->data, mi->aki->length);
 
-		if (!ASN1_INTEGER_get_uint64(&size, ref->size)) {
-			warnx("%s: manifest ref #%d corrupted", fn, i);
+		if (!ASN1_INTEGER_get_uint64(&size, mi->size)) {
+			warnx("%s: manifest instance #%d corrupted", fn, i);
 			goto out;
 		}
 		if (size < 1000 || size > MAX_FILE_SIZE) {
-			warnx("%s: manifest ref #%d corrupted", fn, i);
+			warnx("%s: manifest instance #%d corrupted", fn, i);
 			goto out;
 		}
 		ccr_mft->size = size;
 
 		ccr_mft->seqnum = x509_convert_seqnum(fn, "manifest number",
-		    ref->manifestNumber);
+		    mi->manifestNumber);
 		if (ccr_mft->seqnum == NULL)
 			goto out;
 
-		if (!x509_get_generalized_time(fn, "ManifestRef thisUpdate",
-		    ref->thisUpdate, &ccr_mft->thisupdate))
+		if (!x509_get_generalized_time(fn, "ManifestInstance "
+		    "thisUpdate", mi->thisUpdate, &ccr_mft->thisupdate))
 			goto out;
 
-		if (sk_ACCESS_DESCRIPTION_num(ref->location) != 1) {
+		if (sk_ACCESS_DESCRIPTION_num(mi->location) != 1) {
 			warnx("%s: unexpected number of locations", fn);
 			goto out;
 		}
 
-		ad = sk_ACCESS_DESCRIPTION_value(ref->location, 0);
+		ad = sk_ACCESS_DESCRIPTION_value(mi->location, 0);
 
 		if (!x509_location(fn, "SIA: signedObject", ad->location,
 		    &ccr_mft->sia))
@@ -980,7 +981,7 @@ parse_manifeststate(const char *fn, struct ccr *ccr, const ManifestState *state)
 	int rc = 0;
 
 	ccr->mfts_hash = validate_asn1_hash(fn, "ManifestState", state->hash,
-	    ASN1_ITEM_rptr(ManifestRefs), state->mftrefs);
+	    ASN1_ITEM_rptr(ManifestInstances), state->mis);
 	if (ccr->mfts_hash == NULL)
 		goto out;
 
@@ -988,7 +989,7 @@ parse_manifeststate(const char *fn, struct ccr *ccr, const ManifestState *state)
 	    state->mostRecentUpdate, &ccr->most_recent_update))
 		goto out;
 
-	if (!parse_mft_refs(fn, ccr, state->mftrefs))
+	if (!parse_mft_instances(fn, ccr, state->mis))
 		goto out;
 
 	rc = 1;
