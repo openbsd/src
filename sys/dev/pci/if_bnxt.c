@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.57 2025/10/07 08:35:44 stsp Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.58 2025/10/13 10:44:27 stsp Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -821,13 +821,13 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 		    HWRM_NA_SIGNATURE, 1) != 0) {
 			printf("%s: failed to allocate completion queue %d\n",
 			    DEVNAME(sc), bq->q_index);
-			goto free_rx;
+			goto free_cp_mem;
 		}
 
 		if (bnxt_set_cp_ring_aggint(sc, cp) != 0) {
 			printf("%s: failed to set interrupt %d aggregation\n",
 			    DEVNAME(sc), bq->q_index);
-			goto free_rx;
+			goto free_cp_ring;
 		}
 		bnxt_write_cp_doorbell(sc, &cp->ring, 1);
 	}
@@ -836,7 +836,7 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	    BNXT_DMA_DVA(sc->sc_stats_ctx_mem) +
 	    (bq->q_index * sizeof(struct ctx_hw_stats))) != 0) {
 		printf("%s: failed to set up stats context\n", DEVNAME(sc));
-		goto free_rx;
+		goto free_cp_ring;
 	}
 
 	tx->tx_ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
@@ -998,6 +998,16 @@ dealloc_rx:
 	    &rx->rx_ring);
 dealloc_stats:
 	bnxt_hwrm_stat_ctx_free(sc, cp);
+free_cp_ring:
+	if (sc->sc_intrmap != NULL) {
+		bnxt_hwrm_ring_free(sc,
+		    HWRM_RING_ALLOC_INPUT_RING_TYPE_L2_CMPL, &cp->ring);
+	}
+free_cp_mem:
+	if (sc->sc_intrmap != NULL) {
+		bnxt_dmamem_free(sc, cp->ring_mem);
+		cp->ring_mem = NULL;
+	}
 free_rx:
 	bnxt_dmamem_free(sc, rx->rx_ring_mem);
 	rx->rx_ring_mem = NULL;
