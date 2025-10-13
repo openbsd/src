@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.448 2025/09/12 08:46:29 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.449 2025/10/13 07:19:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -407,8 +407,8 @@ void
 tty_repeat_requests(struct tty *tty, int force)
 {
 	struct client	*c = tty->client;
-	time_t	t = time(NULL);
-	u_int	n = t - tty->last_requests;
+	time_t		 t = time(NULL);
+	u_int		 n = t - tty->last_requests;
 
 	if (~tty->flags & TTY_STARTED)
 		return;
