@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.337 2025/08/22 07:48:23 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.338 2025/10/13 07:29:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1366,6 +1366,21 @@ format_cb_buffer_sample(struct format_tree *ft)
 {
 	if (ft->pb != NULL)
 		return (paste_make_sample(ft->pb));
+	return (NULL);
+}
+
+/* Callback for buffer_full. */
+static void *
+format_cb_buffer_full(struct format_tree *ft)
+{
+	size_t		 size;
+	const char	*s;
+
+	if (ft->pb != NULL) {
+		s = paste_buffer_data(ft->pb, &size);
+		if (s != NULL)
+			return (xstrndup(s, size));
+	}
 	return (NULL);
 }
 
@@ -3003,6 +3018,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "buffer_created", FORMAT_TABLE_TIME,
 	  format_cb_buffer_created
+	},
+	{ "buffer_full", FORMAT_TABLE_STRING,
+	  format_cb_buffer_full
 	},
 	{ "buffer_mode_format", FORMAT_TABLE_STRING,
 	  format_cb_buffer_mode_format
