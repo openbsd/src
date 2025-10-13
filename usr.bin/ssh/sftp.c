@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.246 2025/10/08 21:48:40 djm Exp $ */
+/* $OpenBSD: sftp.c,v 1.247 2025/10/13 00:54:29 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -666,6 +666,10 @@ process_get(struct sftp_conn *conn, const char *src, const char *dst,
 			goto out;
 		}
 
+		/* Special handling for dest of '..' */
+		if (strcmp(filename, "..") == 0)
+			filename = "."; /* Download to dest, not dest/.. */
+
 		if (g.gl_matchc == 1 && dst) {
 			if (local_is_dir(dst)) {
 				abs_dst = sftp_path_append(dst, filename);
@@ -760,6 +764,9 @@ process_put(struct sftp_conn *conn, const char *src, const char *dst,
 			err = -1;
 			goto out;
 		}
+		/* Special handling for source of '..' */
+		if (strcmp(filename, "..") == 0)
+			filename = "."; /* Upload to dest, not dest/.. */
 
 		free(abs_dst);
 		abs_dst = NULL;
