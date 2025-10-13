@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.58 2025/10/13 10:44:27 stsp Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.59 2025/10/13 10:45:08 stsp Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -625,14 +625,14 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 	if (bnxt_cfg_async_cr(sc, cpr) != 0) {
 		printf("%s: failed to set async completion ring\n",
 		    DEVNAME(sc));
-		goto free_cp_mem;
+		goto free_cp_ring;
 	}
 	bnxt_write_cp_doorbell(sc, &cpr->ring, 1);
 
 	if (bnxt_set_cp_ring_aggint(sc, cpr) != 0) {
 		printf("%s: failed to set interrupt aggregation\n",
 		    DEVNAME(sc));
-		goto free_cp_mem;
+		goto free_cp_ring;
 	}
 
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
@@ -720,6 +720,9 @@ intrdisestablish:
 		pci_intr_disestablish(sc->sc_pc, bq->q_ihc);
 		bq->q_ihc = NULL;
 	}
+free_cp_ring:
+	bnxt_hwrm_ring_free(sc,
+	    HWRM_RING_ALLOC_INPUT_RING_TYPE_L2_CMPL, &cpr->ring);
 free_cp_mem:
 	bnxt_dmamem_free(sc, cpr->ring_mem);
 deintr:
