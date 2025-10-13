@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.31 2024/12/19 18:02:47 patrick Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.32 2025/10/13 19:15:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -311,6 +311,7 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 
 	pinctrl_byname(faa->fa_node, "default");
 
+	clock_set_assigned(faa->fa_node);
 	clock_enable_all(faa->fa_node);
 	reset_deassert_all(faa->fa_node);
 
