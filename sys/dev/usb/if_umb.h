@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.h,v 1.12 2025/06/16 12:36:43 gerhard Exp $ */
+/*	$OpenBSD: if_umb.h,v 1.13 2025/10/14 05:14:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -391,5 +391,6 @@ struct umb_softc {
 
 	struct rwlock		 sc_kstat_lock;
 	struct kstat		*sc_kstat_signal;
+	struct kstat		*sc_kstat_service;
 };
 #endif /* _KERNEL */
