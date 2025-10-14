@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.65 2025/07/10 14:27:43 gerhard Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.66 2025/10/14 01:41:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -205,6 +205,12 @@ void		 umb_intr(struct usbd_xfer *, void *, usbd_status);
 #if NKSTAT > 0
 void		 umb_kstat_attach(struct umb_softc *);
 void		 umb_kstat_detach(struct umb_softc *);
+
+struct umb_kstat_service {
+	struct kstat_kv		uplink;
+	struct kstat_kv		downlink;
+	struct kstat_kv		reports;
+};
 
 struct umb_kstat_signal {
 	struct kstat_kv		rssi;
@@ -1640,6 +1646,9 @@ umb_decode_packet_service(struct umb_softc *sc, void *data, int len)
 	int	 state, highestclass;
 	uint64_t up_speed, down_speed;
 	struct ifnet *ifp = GET_IFP(sc);
+#if NKSTAT > 0
+	struct kstat *ks;
+#endif
 
 	if (len < sizeof (*psi))
 		return 0;
@@ -1666,6 +1675,21 @@ umb_decode_packet_service(struct umb_softc *sc, void *data, int len)
 	sc->sc_info.highestclass = highestclass;
 	sc->sc_info.uplink_speed = up_speed;
 	sc->sc_info.downlink_speed = down_speed;
+
+#if NKSTAT > 0
+	ks = sc->sc_kstat_service;
+	if (ks != NULL) {
+		struct umb_kstat_service *uksvc = ks->ks_data;
+
+		rw_enter_write(&sc->sc_kstat_lock);
+		kstat_kv_u64(&uksvc->uplink) = up_speed;
+		kstat_kv_u64(&uksvc->downlink) = down_speed;
+		kstat_kv_u64(&uksvc->reports)++;
+
+		getnanouptime(&ks->ks_updated);
+		rw_exit_write(&sc->sc_kstat_lock);
+	}
+#endif /* NKSTAT */
 
 	if (sc->sc_info.regmode == MBIM_REGMODE_AUTOMATIC) {
 		/*
@@ -3228,6 +3252,7 @@ umb_kstat_attach(struct umb_softc *sc)
 {
 	struct kstat *ks;
 	struct umb_kstat_signal *uks;
+	struct umb_kstat_service *uksvc;
 
 	rw_init(&sc->sc_kstat_lock, "umbkstat");
 
@@ -3248,23 +3273,55 @@ umb_kstat_attach(struct umb_softc *sc)
 	ks->ks_softc = sc;
 	sc->sc_kstat_signal = ks;
 	kstat_install(ks);
+
+	ks = kstat_create(DEVNAM(sc), 0, "mbim-service", 0, KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	uksvc = malloc(sizeof(*uksvc), M_DEVBUF, M_WAITOK|M_ZERO);
+	kstat_kv_init(&uksvc->uplink, "uplink", KSTAT_KV_T_UINT64);
+	kstat_kv_init(&uksvc->downlink, "downlink", KSTAT_KV_T_UINT64);
+	kstat_kv_init(&uksvc->reports, "reports", KSTAT_KV_T_COUNTER64);
+
+	kstat_set_rlock(ks, &sc->sc_kstat_lock);
+	ks->ks_data = uksvc;
+	ks->ks_datalen = sizeof(*uksvc);
+	ks->ks_read = kstat_read_nop;
+
+	ks->ks_softc = sc;
+	sc->sc_kstat_service = ks;
+	kstat_install(ks);
 }
 
 void
 umb_kstat_detach(struct umb_softc *sc)
 {
 	struct kstat *ks = sc->sc_kstat_signal;
-	struct umb_kstat_signal *uks;
 
-	if (ks == NULL)
-		return;
+	ks = sc->sc_kstat_service;
+	if (ks == NULL) {
+		struct umb_kstat_service *uksvc;
 
-	kstat_remove(ks);
-	sc->sc_kstat_signal = NULL;
+		kstat_remove(ks);
+		sc->sc_kstat_service = NULL;
 
-	uks = ks->ks_data;
-	free(uks, M_DEVBUF, sizeof(*uks));
+		uksvc = ks->ks_data;
+		free(uksvc, M_DEVBUF, sizeof(*uksvc));
 
-	kstat_destroy(ks);
+		kstat_destroy(ks);
+	}
+
+	ks = sc->sc_kstat_signal;
+	if (ks == NULL) {
+		struct umb_kstat_signal *uks;
+
+		kstat_remove(ks);
+		sc->sc_kstat_signal = NULL;
+
+		uks = ks->ks_data;
+		free(uks, M_DEVBUF, sizeof(*uks));
+
+		kstat_destroy(ks);
+	}
 }
 #endif /* NKSTAT > 0 */
