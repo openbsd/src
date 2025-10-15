@@ -2103,7 +2103,7 @@ print_operand (FILE *file, rtx x, int code)
 		 to be aligned to an 8-byte boundary to make sure this can
 		 never happen. */
 	      ASM_OUTPUT_ALIGN (file, 3);
-	      asm_fprintf (file, "fldcr\t %R%s,%Rfcr63\n\t", reg_names[0]);
+	      asm_fprintf (file, "\tfldcr\t %R%s,%Rfcr63\n\t", reg_names[0]);
 	    }
 	  m88k_volatile_code = code;
 	  last_addr = (GET_CODE (XEXP (x, 0)) == LO_SUM
