@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.123 2025/10/15 00:24:40 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.124 2025/10/15 17:53:36 deraadt Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -244,7 +244,7 @@ _mkdev(flo, fd*,
 	*)	echo bad unit $U for $i; exit 1;;
 	esac
 	nam=fd${typnam}
-	n=Add(Mult($U, 128), Mult($typnum,$MAXPARTITIONS))
+	n=Add(Mult($U, 128), Mult($typnum,$UNITMULT))
 	M ${nam}a	b $blk $n 640 operator
 	M ${nam}b	b $blk Add($n, 1) 640 operator
 	M ${nam}c	b $blk Add($n, 2) 640 operator
