@@ -1269,3 +1269,9 @@ extern const enum reg_class m88k_regno_reg_class[FIRST_PSEUDO_REGISTER];
   ((flag_pic || GLOBAL) ? DW_EH_PE_aligned : DW_EH_PE_absptr)
 
 #define AVOID_CCMODE_COPIES
+
+/* The ctzsi2 pattern returns 31 for an input of zero.  */
+#define CTZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) ((VALUE) = 31)
+
+/* The clzsi2 pattern returns -1 for an input of zero.  */
+#define CLZ_DEFINED_VALUE_AT_ZERO(MODE, VALUE) ((VALUE) = -1)
