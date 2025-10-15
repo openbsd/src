@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp6leased.c,v 1.20 2025/09/18 11:49:23 florian Exp $	*/
+/*	$OpenBSD: dhcp6leased.c,v 1.21 2025/10/15 11:25:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021, 2024 Florian Obser <florian@openbsd.org>
@@ -881,8 +881,10 @@ configure_reject_route(struct imsg_configure_reject_route *reject_route,
 		rtm.rtm_msglen += padlen;
 	}
 
-	if (writev(routesock, iov, iovcnt) == -1)
-		log_warn("failed to send route message");
+	if (writev(routesock, iov, iovcnt) == -1) {
+		if (errno != EEXIST)
+			log_warn("failed to send route message");
+	}
 }
 
 const char*
