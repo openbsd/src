@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.19 2021/10/24 15:41:47 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.20 2025/10/15 06:52:50 mvs Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -53,6 +53,8 @@
 
 /* MODULE(MODULE_CLASS_VFS, tmpfs, NULL); */
 
+extern uint64_t tmpfs_bytes_limit;
+
 struct pool	tmpfs_dirent_pool;
 struct pool	tmpfs_node_pool;
 
@@ -72,6 +74,7 @@ int	tmpfs_mount_update(struct mount *);
 int
 tmpfs_init(struct vfsconf *vfsp)
 {
+	tmpfs_bytes_limit = ((uint64_t)(uvmexp.npages / 2) << PAGE_SHIFT);
 
 	pool_init(&tmpfs_dirent_pool, sizeof(tmpfs_dirent_t), 0, IPL_NONE,
 	    PR_WAITOK, "tmpfs_dirent", NULL);
@@ -122,31 +125,23 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	struct tmpfs_args *args = data;
 	tmpfs_mount_t *tmp;
 	tmpfs_node_t *root;
-	uint64_t memlimit;
+	uint64_t memlimit = 0;
 	uint64_t nodes;
 	int error;
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (tmpfs_mount_update(mp));
 
-	/* Prohibit mounts if there is not enough memory. */
-	if (tmpfs_mem_info(1) < TMPFS_PAGES_RESERVED)
-		return EINVAL;
-
 	if (args->ta_root_uid == VNOVAL || args->ta_root_gid == VNOVAL ||
 	    args->ta_root_mode == VNOVAL)
 		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */
-	if (args->ta_size_max < PAGE_SIZE) {
-		memlimit = UINT64_MAX;
-	} else {
-		memlimit = args->ta_size_max;
-	}
-	KASSERT(memlimit > 0);
+	if (args->ta_size_max)
+		memlimit = roundup(args->ta_size_max, PAGE_SIZE);
 
 	if (args->ta_nodes_max <= 3) {
-		nodes = 3 + (memlimit / 1024);
+		nodes = 3 + ((memlimit ?  memlimit : UINT64_MAX) / 1024);
 	} else {
 		nodes = args->ta_nodes_max;
 	}
@@ -331,9 +326,9 @@ tmpfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 
 	sbp->f_iosize = sbp->f_bsize = PAGE_SIZE;
 
-	rw_enter_write(&tmp->tm_acc_lock);
-	avail =  tmpfs_pages_avail(tmp);
-	sbp->f_blocks = (tmpfs_bytes_max(tmp) >> PAGE_SHIFT);
+	rw_enter_read(&tmp->tm_acc_lock);
+	avail = tmpfs_pages_avail(tmp);
+	sbp->f_blocks = tmpfs_pages_total(tmp);
 	sbp->f_bfree = avail;
 	sbp->f_bavail = avail & INT64_MAX; /* f_bavail is int64_t */
 
@@ -343,7 +338,7 @@ tmpfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	sbp->f_files = tmp->tm_nodes_cnt + freenodes;
 	sbp->f_ffree = freenodes;
 	sbp->f_favail = freenodes & INT64_MAX; /* f_favail is int64_t */
-	rw_exit_write(&tmp->tm_acc_lock);
+	rw_exit_read(&tmp->tm_acc_lock);
 
 	copy_statfs_info(sbp, mp);
 

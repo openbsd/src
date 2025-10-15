@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs.h,v 1.10 2020/10/12 13:08:03 visa Exp $	*/
+/*	$OpenBSD: tmpfs.h,v 1.11 2025/10/15 06:52:50 mvs Exp $	*/
 /*	$NetBSD: tmpfs.h,v 1.45 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -308,8 +308,7 @@ vaddr_t		tmpfs_uio_lookup(tmpfs_node_t *, voff_t);
 void		tmpfs_mntmem_init(tmpfs_mount_t *, uint64_t);
 void		tmpfs_mntmem_destroy(tmpfs_mount_t *);
 
-size_t		tmpfs_mem_info(int);
-uint64_t	tmpfs_bytes_max(tmpfs_mount_t *);
+uint64_t	tmpfs_pages_total(tmpfs_mount_t *);
 uint64_t	tmpfs_pages_avail(tmpfs_mount_t *);
 int		tmpfs_mem_incr(tmpfs_mount_t *, size_t);
 void		tmpfs_mem_decr(tmpfs_mount_t *, size_t);
@@ -332,13 +331,6 @@ int		tmpfs_strname_neqlen(struct componentname *, struct componentname *);
     KASSERT((node)->tn_vnode == NULL || VOP_ISLOCKED((node)->tn_vnode)); \
     KASSERT((node)->tn_type == VDIR); \
     KASSERT((node)->tn_size % sizeof(tmpfs_dirent_t) == 0);
-
-/*
- * Memory management stuff.
- */
-
-/* Amount of memory pages to reserve for the system. */
-#define	TMPFS_PAGES_RESERVED	(4 * 1024 * 1024 / PAGE_SIZE)
 
 /*
  * Routines to convert VFS structures to tmpfs internal ones.
