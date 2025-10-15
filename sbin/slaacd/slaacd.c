@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.81 2025/08/06 16:50:53 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.82 2025/10/15 11:25:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -805,8 +805,10 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 		rtm.rtm_msglen += padlen;
 	}
 
-	if (writev(routesock, iov, iovcnt) == -1)
-		log_warn("failed to send route message");
+	if (writev(routesock, iov, iovcnt) == -1) {
+		if (errno != EEXIST)
+			log_warn("failed to send route message");
+	}
 }
 
 void
