@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.169 2025/08/19 08:32:24 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.170 2025/10/16 06:46:31 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -619,6 +619,10 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	 * Add validated CA certs to the RPKI auth tree.
 	 */
 	if (cert->purpose == CERT_PURPOSE_CA) {
+		if (sizeof(cert->mfthash) != entp->datasz)
+			errx(1, "%s: corrupted entity", file);
+
+		memcpy(cert->mfthash, entp->data, entp->datasz);
 		auth_insert(file, &auths, cert, a);
 	}
 
@@ -926,7 +930,12 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
-			if (entp->data != NULL) {
+			/*
+			 * If entp->datasz == SHA256_DIGEST_LENGTH, we have a
+			 * cert added from a manifest, so it is not a root cert.
+			 */
+			if (entp->data != NULL &&
+			    entp->datasz != SHA256_DIGEST_LENGTH) {
 				file = proc_parser_root_cert(entp, &cert);
 			} else {
 				file = parse_load_file(entp, &f, &flen);

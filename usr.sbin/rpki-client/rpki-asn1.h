@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.9 2025/10/13 09:32:11 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.10 2025/10/16 06:46:31 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -67,6 +67,7 @@ typedef struct {
 	ASN1_INTEGER *manifestNumber;
 	ASN1_GENERALIZEDTIME *thisUpdate;
 	STACK_OF(ACCESS_DESCRIPTION) *location;
+	STACK_OF(SubjectKeyIdentifier) *subordinates;
 } ManifestInstance;
 
 DECLARE_STACK_OF(ManifestInstance);
@@ -151,9 +152,11 @@ DECLARE_ASN1_FUNCTIONS(SubjectKeyIdentifier);
 DECLARE_STACK_OF(SubjectKeyIdentifier);
 
 #ifndef DEFINE_STACK_OF
+#define sk_SubjectKeyIdentifier_new(cmp) SKM_sk_new(SubjectKeyIdentifier, (cmp))
 #define sk_SubjectKeyIdentifier_num(st) SKM_sk_num(SubjectKeyIdentifier, (st))
 #define sk_SubjectKeyIdentifier_push(st, i) \
     SKM_sk_push(SubjectKeyIdentifier, (st), (i))
+#define sk_SubjectKeyIdentifier_sort(st) SKM_sk_sort(SubjectKeyIdentifier, (st))
 #define sk_SubjectKeyIdentifier_value(st, i) \
     SKM_sk_value(SubjectKeyIdentifier, (st), (i))
 #endif

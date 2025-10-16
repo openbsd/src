@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.22 2025/10/13 09:32:11 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.23 2025/10/16 06:46:31 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/tree.h>
 
@@ -33,7 +34,7 @@
 #include "rpki-asn1.h"
 
 /*
- * CCR definition in draft-spaghetti-sidrops-rpki-ccr-00, section 3.
+ * CCR definition in draft-spaghetti-sidrops-rpki-ccr-04, section 3.
  */
 
 ASN1_ITEM_EXP EncapContentInfo_it;
@@ -93,6 +94,8 @@ ASN1_SEQUENCE(ManifestInstance) = {
 	ASN1_SIMPLE(ManifestInstance, manifestNumber, ASN1_INTEGER),
 	ASN1_SIMPLE(ManifestInstance, thisUpdate, ASN1_GENERALIZEDTIME),
 	ASN1_SEQUENCE_OF(ManifestInstance, location, ACCESS_DESCRIPTION),
+	ASN1_SEQUENCE_OF_OPT(ManifestInstance, subordinates,
+	    SubjectKeyIdentifier),
 } ASN1_SEQUENCE_END(ManifestInstance);
 
 IMPLEMENT_ASN1_FUNCTIONS(ManifestInstance);
@@ -257,10 +260,18 @@ location_add_sia(STACK_OF(ACCESS_DESCRIPTION) *sad, const char *sia)
 		errx(1, "sk_ACCESS_DESCRIPTION_push");
 }
 
+static int
+ski_cmp(const SubjectKeyIdentifier *const *a, const SubjectKeyIdentifier *const *b)
+{
+	return ASN1_OCTET_STRING_cmp(*a, *b);
+}
+
 static void
 append_cached_manifest(STACK_OF(ManifestInstance) *mis, struct ccr_mft *cm)
 {
 	ManifestInstance *mi;
+	struct ccr_mft_sub_ski *sub;
+	SubjectKeyIdentifier *ski;
 
 	if ((mi = ManifestInstance_new()) == NULL)
 		errx(1, "ManifestInstance_new");
@@ -281,6 +292,26 @@ append_cached_manifest(STACK_OF(ManifestInstance) *mis, struct ccr_mft *cm)
 
 	location_add_sia(mi->location, cm->sia);
 
+	if (SLIST_EMPTY(&cm->subordinates))
+		goto done;
+
+	if ((mi->subordinates = sk_SubjectKeyIdentifier_new(ski_cmp)) == NULL)
+		err(1, NULL);
+
+	SLIST_FOREACH(sub, &cm->subordinates, entry) {
+		if ((ski = SubjectKeyIdentifier_new()) == NULL)
+			err(1, NULL);
+
+		if (!ASN1_OCTET_STRING_set(ski, sub->ski, sizeof(sub->ski)))
+			errx(1, "ASN1_OCTET_STRING_set");
+
+		if (sk_SubjectKeyIdentifier_push(mi->subordinates, ski) <= 0)
+			errx(1, "sk_SubjectKeyIdentifier_push");
+	}
+
+	sk_SubjectKeyIdentifier_sort(mi->subordinates);
+
+ done:
 	if (sk_ManifestInstance_push(mis, mi) <= 0)
 		errx(1, "sk_ManifestInstance_push");
 }
@@ -669,6 +700,28 @@ ccr_insert_tas(struct ccr_tas_tree *tree, const struct cert *cert)
 		errx(1, "multiple TALs with the same key are not supported");
 }
 
+void
+ccr_insert_mft_sub(struct ccr_mft_tree *tree, const struct cert *cert)
+{
+	struct ccr_mft *m, needle = { 0 };
+	struct ccr_mft_sub_ski *sub;
+
+	assert(cert->purpose == CERT_PURPOSE_CA);
+
+	memcpy(needle.hash, cert->mfthash, sizeof(cert->mfthash));
+
+	if ((m = RB_FIND(ccr_mft_tree, tree, &needle)) == NULL)
+		errx(1, "RB_FIND ccr_mft_tree");
+
+	if ((sub = calloc(1, sizeof(*sub))) == NULL)
+		err(1, NULL);
+
+	if (hex_decode(cert->ski, sub->ski, sizeof(sub->ski)) != 0)
+		errx(1, "hex_decode");
+
+	SLIST_INSERT_HEAD(&m->subordinates, sub, entry);
+}
+
 static inline int
 ccr_mft_cmp(const struct ccr_mft *a, const struct ccr_mft *b)
 {
@@ -677,13 +730,25 @@ ccr_mft_cmp(const struct ccr_mft *a, const struct ccr_mft *b)
 
 RB_GENERATE(ccr_mft_tree, ccr_mft, entry, ccr_mft_cmp);
 
+static struct ccr_mft *
+ccr_mft_new(void)
+{
+	struct ccr_mft *ccr_mft = NULL;
+
+	if ((ccr_mft = calloc(1, sizeof(*ccr_mft))) == NULL)
+		err(1, NULL);
+
+	SLIST_INIT(&ccr_mft->subordinates);
+
+	return ccr_mft;
+}
+
 void
 ccr_insert_mft(struct ccr_mft_tree *tree, const struct mft *mft)
 {
 	struct ccr_mft *ccr_mft;
 
-	if ((ccr_mft = calloc(1, sizeof(*ccr_mft))) == NULL)
-		err(1, NULL);
+	ccr_mft = ccr_mft_new();
 
 	if (hex_decode(mft->aki, ccr_mft->aki, sizeof(ccr_mft->aki)) != 0)
 		errx(1, "hex_decode");
@@ -784,8 +849,16 @@ output_ccr_der(FILE *out, struct validation_data *vd, struct stats *st)
 static void
 ccr_mft_free(struct ccr_mft *ccr_mft)
 {
+	struct ccr_mft_sub_ski *sub_ski;
+
 	if (ccr_mft == NULL)
 		return;
+
+	while (!SLIST_EMPTY(&ccr_mft->subordinates)) {
+		sub_ski = SLIST_FIRST(&ccr_mft->subordinates);
+		SLIST_REMOVE_HEAD(&ccr_mft->subordinates, entry);
+		free(sub_ski);
+	}
 
 	free(ccr_mft->seqnum);
 	free(ccr_mft->sia);
@@ -895,8 +968,10 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 {
 	ManifestInstance *mi;
 	struct ccr_mft *ccr_mft = NULL, *prev;
-	int i, instances_num;
+	int i, j, instances_num, sub_num;
 	const ACCESS_DESCRIPTION *ad;
+	const SubjectKeyIdentifier *s;
+	struct ccr_mft_sub_ski *sub;
 	int rc = 0;
 	uint64_t size = 0;
 
@@ -906,8 +981,7 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 
 	prev = NULL;
 	for (i = 0; i < instances_num; i++) {
-		if ((ccr_mft = calloc(1, sizeof(*ccr_mft))) == NULL)
-			err(1, NULL);
+		ccr_mft = ccr_mft_new();
 
 		mi = sk_ManifestInstance_value(mis, i);
 
@@ -960,6 +1034,25 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 		    &ccr_mft->sia))
 			goto out;
 
+		sub_num = sk_SubjectKeyIdentifier_num(mi->subordinates);
+		if (sub_num <= 0)
+			goto insert;
+
+		for (j = 0; j < sub_num; j++) {
+			if ((sub = calloc(1, sizeof(*sub))) == NULL)
+				err(1, NULL);
+
+			s = sk_SubjectKeyIdentifier_value(mi->subordinates, j);
+			if (s->length != sizeof(sub->ski)) {
+				warnx("%s: manifest instance #%d corrupted",
+				    fn, j);
+				goto out;
+			}
+			memcpy(sub->ski, s->data, sizeof(sub->ski));
+			SLIST_INSERT_HEAD(&ccr_mft->subordinates, sub, entry);
+		}
+
+ insert:
 		if (RB_INSERT(ccr_mft_tree, &ccr->mfts, ccr_mft) != NULL) {
 			warnx("%s: manifest state corrupted", fn);
 			goto out;
@@ -1494,7 +1587,7 @@ ccr_parse(const char *fn, const unsigned char *der, size_t len)
 		char buf[128];
 
 		OBJ_obj2txt(buf, sizeof(buf), ci->contentType, 1);
-		warnx("%s: unexpected OID: got %s, want 1.3.6.1.4.1.41948.825",
+		warnx("%s: unexpected OID: got %s, want 1.3.6.1.4.1.41948.828",
 		    fn, buf);
 		goto out;
 	}

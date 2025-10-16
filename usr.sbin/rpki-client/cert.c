@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.205 2025/08/02 14:09:25 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.206 2025/10/16 06:46:31 job Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2023,6 +2023,7 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 		io_str_buffer(b, p->aia);
 		io_str_buffer(b, p->aki);
 		io_str_buffer(b, p->ski);
+		io_simple_buffer(b, &p->mfthash, sizeof(p->mfthash));
 	} else if (p->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		/* No SIA, so no mft, notify, repo. */
 		io_str_buffer(b, p->crl);
@@ -2085,6 +2086,7 @@ cert_read(struct ibuf *b)
 		io_read_str(b, &p->aia);
 		io_read_str(b, &p->aki);
 		io_read_str(b, &p->ski);
+		io_read_buf(b, &p->mfthash, sizeof(p->mfthash));
 	} else if (p->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		/* No SIA, so no mft, notify, repo. */
 		io_read_str(b, &p->crl);

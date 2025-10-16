@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.264 2025/09/14 14:02:27 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.265 2025/10/16 06:46:31 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -144,6 +144,7 @@ struct cert {
 	time_t		 notbefore; /* cert's Not Before */
 	time_t		 notafter; /* cert's Not After */
 	time_t		 expires; /* when the signature path expires */
+	unsigned char	 mfthash[SHA256_DIGEST_LENGTH]; /* of the parent mft */
 };
 
 /*
@@ -461,6 +462,13 @@ struct brk {
 RB_HEAD(brk_tree, brk);
 RB_PROTOTYPE(brk_tree, brk, entry, brkcmp);
 
+struct ccr_mft_sub_ski {
+	SLIST_ENTRY(ccr_mft_sub_ski) entry;
+	unsigned char ski[SHA_DIGEST_LENGTH];
+};
+
+SLIST_HEAD(subordinates_head, ccr_mft_sub_ski);
+
 struct ccr_mft {
 	RB_ENTRY(ccr_mft) entry;
 	char hash[SHA256_DIGEST_LENGTH];
@@ -469,6 +477,7 @@ struct ccr_mft {
 	time_t thisupdate;
 	char *seqnum;
 	char *sia;
+	struct subordinates_head subordinates;
 };
 
 RB_HEAD(ccr_mft_tree, ccr_mft);
@@ -1041,6 +1050,7 @@ struct ccr *ccr_parse(const char *, const unsigned char *, size_t);
 void ccr_insert_mft(struct ccr_mft_tree *, const struct mft *);
 void ccr_insert_roa(struct ccr_vrp_tree *, const struct roa *);
 void ccr_insert_tas(struct ccr_tas_tree *, const struct cert *);
+void ccr_insert_mft_sub(struct ccr_mft_tree *, const struct cert *);
 void serialize_ccr_content(struct validation_data *);
 
 void		 logx(const char *fmt, ...)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.69 2025/09/15 11:52:07 job Exp $ */
+/*	$OpenBSD: print.c,v 1.70 2025/10/16 06:46:31 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -887,8 +887,9 @@ geofeed_print(const struct cert *c, const struct geofeed *p)
 static void
 print_ccr_mftstate(struct ccr *ccr)
 {
-	char *aki, *hash;
+	char *aki, *hash, *ski;
 	struct ccr_mft *ccr_mft;
+	struct ccr_mft_sub_ski *sub;
 
 	if (base64_encode(ccr->mfts_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
 		errx(1, "base64_encode");
@@ -897,12 +898,12 @@ print_ccr_mftstate(struct ccr *ccr)
 		json_do_object("manifest_state", 0);
 		json_do_int("most_recent_update", ccr->most_recent_update);
 		json_do_string("hash", hash);
-		json_do_array("refs");
+		json_do_array("mft_instances");
 	} else {
 		printf("Manifest state hash:      %s\n", hash);
 		printf("Manifest last update:     %s\n",
 		    time2str(ccr->most_recent_update));
-		printf("Manifest references:\n");
+		printf("Manifest instances:\n");
 	}
 	free(hash);
 
@@ -913,27 +914,55 @@ print_ccr_mftstate(struct ccr *ccr)
 		aki = hex_encode(ccr_mft->aki, SHA_DIGEST_LENGTH);
 
 		if (outformats & FORMAT_JSON) {
-			json_do_object("ref", 1);
+			json_do_object("mft_instance", 1);
+
 			json_do_string("hash", hash);
 			json_do_uint("size", ccr_mft->size);
 			json_do_string("aki", aki);
 			json_do_string("seqnum", ccr_mft->seqnum);
 			json_do_int("thisupdate", ccr_mft->thisupdate);
 			json_do_string("sia", ccr_mft->sia);
-			json_do_end();
+
+			json_do_array("subordinates");
+			SLIST_FOREACH(sub, &ccr_mft->subordinates, entry) {
+				ski = hex_encode(sub->ski, SHA_DIGEST_LENGTH);
+				json_do_string("ski", ski);
+				free(ski);
+				ski = NULL;
+			}
+			json_do_end(); /* subordinates */
+
+			json_do_end(); /* mft_instance */
 		} else {
+			int i;
+
 			printf("%26shash:%s size:%zu aki:%s seqnum:%s "
-			    "thisupdate:%lld sia:%s\n", "", hash,
+			    "thisupdate:%lld sia:%s", "", hash,
 			    ccr_mft->size, aki, ccr_mft->seqnum,
 			    (long long)ccr_mft->thisupdate, ccr_mft->sia);
+
+			i = 0;
+			SLIST_FOREACH(sub, &ccr_mft->subordinates, entry) {
+				if (i++ == 0)
+					printf(" subordinates:");
+				else
+					printf(",");
+
+				ski = hex_encode(sub->ski, SHA_DIGEST_LENGTH);
+				printf("%s", ski);
+				free(ski);
+				ski = NULL;
+			}
+
+			printf("\n");
 		}
 
 		free(aki);
 		free(hash);
 	}
 	if (outformats & FORMAT_JSON) {
-		json_do_end();
-		json_do_end();
+		json_do_end(); /* mft_instances */
+		json_do_end(); /* manifest_state */
 	}
 }
 

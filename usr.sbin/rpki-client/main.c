@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.298 2025/09/09 08:23:24 job Exp $ */
+/*	$OpenBSD: main.c,v 1.299 2025/10/16 06:46:31 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -421,10 +421,20 @@ queue_add_from_mft(const struct mft *mft)
 
 	rp = repo_byid(mft->repoid);
 	for (i = 0; i < mft->filesz; i++) {
+		unsigned char *data = NULL;
+		size_t datasz = 0;
+
 		f = &mft->files[i];
 
 		if (f->type == RTYPE_INVALID || f->type == RTYPE_CRL)
 			continue;
+
+		if (f->type == RTYPE_CER) {
+			if ((data = calloc(1, sizeof(mft->mfthash))) == NULL)
+				err(1, NULL);
+			memcpy(data, mft->mfthash, sizeof(mft->mfthash));
+			datasz = sizeof(mft->mfthash);
+		}
 
 		if (mft->path != NULL)
 			if ((npath = strdup(mft->path)) == NULL)
@@ -433,8 +443,9 @@ queue_add_from_mft(const struct mft *mft)
 			err(1, NULL);
 		if ((mftaki = strdup(mft->aki)) == NULL)
 			err(1, NULL);
-		entityq_add(npath, nfile, f->type, f->location, rp, NULL, 0,
-		    mft->talid, mft->certid, mftaki);
+
+		entityq_add(npath, nfile, f->type, f->location, rp,
+		    data, datasz, mft->talid, mft->certid, mftaki);
 	}
 }
 
@@ -634,10 +645,12 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 		cert = cert_read(b);
 		switch (cert->purpose) {
 		case CERT_PURPOSE_TA:
+			queue_add_from_cert(cert, &vd->ncas);
 			ccr_insert_tas(&vd->ccr.tas, cert);
-			/* FALLTHROUGH */
+			break;
 		case CERT_PURPOSE_CA:
 			queue_add_from_cert(cert, &vd->ncas);
+			ccr_insert_mft_sub(&vd->ccr.mfts, cert);
 			break;
 		case CERT_PURPOSE_BGPSEC_ROUTER:
 			cert_insert_brks(&vd->brks, cert);
