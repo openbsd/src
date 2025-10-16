@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.651 2025/08/16 16:43:06 daniel Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.652 2025/10/16 09:50:02 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 16 2025 $
+.Dd $Mdocdate: October 16 2025 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1574,6 +1574,9 @@ style.
 .Pp
 If
 .Sq gnu ,
+.Sq autoconf ,
+or
+.Sq autoreconf ,
 assume
 GNU configure style.
 Add
@@ -1587,13 +1590,13 @@ see also
 Add
 .Sq old
 if port is an older autoconf port that does not recognize --sysconfdir.
-Add
+Use
 .Sq autoconf
 if autoconf needs to be rerun first,
 but set
 .Sq no-autoheader
 to prevent autoheader from running.
-Alternatively, add
+Alternatively, use
 .Sq autoreconf
 to rerun autoconf, automake, and related tools to completely regenerate
 the GNU build framework.
