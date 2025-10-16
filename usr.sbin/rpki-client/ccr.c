@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.23 2025/10/16 06:46:31 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.24 2025/10/16 07:49:36 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -93,7 +93,7 @@ ASN1_SEQUENCE(ManifestInstance) = {
 	ASN1_SIMPLE(ManifestInstance, aki, ASN1_OCTET_STRING),
 	ASN1_SIMPLE(ManifestInstance, manifestNumber, ASN1_INTEGER),
 	ASN1_SIMPLE(ManifestInstance, thisUpdate, ASN1_GENERALIZEDTIME),
-	ASN1_SEQUENCE_OF(ManifestInstance, location, ACCESS_DESCRIPTION),
+	ASN1_SEQUENCE_OF(ManifestInstance, locations, ACCESS_DESCRIPTION),
 	ASN1_SEQUENCE_OF_OPT(ManifestInstance, subordinates,
 	    SubjectKeyIdentifier),
 } ASN1_SEQUENCE_END(ManifestInstance);
@@ -290,7 +290,7 @@ append_cached_manifest(STACK_OF(ManifestInstance) *mis, struct ccr_mft *cm)
 	if (ASN1_GENERALIZEDTIME_set(mi->thisUpdate, cm->thisupdate) == NULL)
 		errx(1, "ASN1_GENERALIZEDTIME_set");
 
-	location_add_sia(mi->location, cm->sia);
+	location_add_sia(mi->locations, cm->sia);
 
 	if (SLIST_EMPTY(&cm->subordinates))
 		goto done;
@@ -1023,12 +1023,12 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 		    "thisUpdate", mi->thisUpdate, &ccr_mft->thisupdate))
 			goto out;
 
-		if (sk_ACCESS_DESCRIPTION_num(mi->location) != 1) {
+		if (sk_ACCESS_DESCRIPTION_num(mi->locations) != 1) {
 			warnx("%s: unexpected number of locations", fn);
 			goto out;
 		}
 
-		ad = sk_ACCESS_DESCRIPTION_value(mi->location, 0);
+		ad = sk_ACCESS_DESCRIPTION_value(mi->locations, 0);
 
 		if (!x509_location(fn, "SIA: signedObject", ad->location,
 		    &ccr_mft->sia))
