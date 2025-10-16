@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.131 2025/07/26 01:53:31 djm Exp $
+#	$OpenBSD: test-exec.sh,v 1.132 2025/10/16 00:01:54 djm Exp $
 #	Placed in the Public Domain.
 
 #SUDO=sudo
@@ -791,13 +791,19 @@ EOF
 		fatal "softhsm import ed25519 fail"
 	chmod 600 $ED25519
 	ssh-keygen -y -f $ED25519 > ${ED25519}.pub
-	# Prepare askpass script to load PIN.
+	# Prepare some askpass scripts to load PINs.
 	PIN_SH=$SSH_SOFTHSM_DIR/pin.sh
 	cat > $PIN_SH << EOF
 #!/bin/sh
 echo "${TEST_SSH_PIN}"
 EOF
 	chmod 0700 "$PIN_SH"
+	WRONGPIN_SH=$SSH_SOFTHSM_DIR/wrongpin.sh
+	cat > $WRONGPIN_SH << EOF
+#!/bin/sh
+echo "0000"
+EOF
+	chmod 0700 "$WRONGPIN_SH"
 	PKCS11_OK=yes
 	return 0
 }
