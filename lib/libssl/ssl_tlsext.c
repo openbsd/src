@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.156 2025/06/07 10:23:21 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.157 2025/10/16 14:42:21 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1554,6 +1554,7 @@ tlsext_keyshare_server_process(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		for (j = 0; j < server_groups_len; j++) {
 			if (server_groups[j] == client_groups[i]) {
 				client_preferred_group = client_groups[i];
+				s->s3->hs.tls13.server_group = client_preferred_group;
 				preferred_group_found = 1;
 				break;
 			}
