@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.1 2010/02/14 22:39:33 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.2 2025/10/17 16:52:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ devparse(const char *fname, int *dev, int *unit, int *part, const char **file)
 
 		/* partition number */
 		if (i < devlen)
-			p = fname[i++] - 'a';
+			p = DL_PARTNAME2NUM(fname[i++]);
 
 		if (i != devlen)
 			return (ENXIO);
