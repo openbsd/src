@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.40 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.41 2025/10/17 16:54:04 deraadt Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ filename(char *str, char *ppart)
 					*cp = 0;
 					for (cp = lp; *--cp && *cp != ',';)
 						;
-					if (*++cp >= 'a' && *cp <= 'a' + MAXPARTITIONS)
+					if (DL_PARTNAME2NUM(*++cp) != -1)
 						*ppart = *cp;
 				}
 			}
@@ -524,8 +524,7 @@ devopen(struct open_file *of, const char *name, char **file)
 			of->f_flags |= F_NOWRITE;
 
 			volno = fname[2];
-			if ('a' <= fname[3] &&
-			    fname[3] <= 'a' + MAXPARTITIONS) {
+			if (DL_PARTNUM2NAME(fname[3]) != -1) {
 				partition = fname[3];
 				if (fname[4] == ':')
 					cp = &fname[5];
@@ -607,12 +606,11 @@ devopen(struct open_file *of, const char *name, char **file)
 		ofdev.type = OFDEV_SOFTRAID;
 
 		if (partition) {
-			if (partition < 'a' ||
-			    partition >= 'a' + MAXPARTITIONS) {
+			part = DL_PARTNAME2NUM(partition);
+			if (part == -1) {
 				printf("invalid partition '%c'\n", partition);
 				return EINVAL;
 			}
-			part = partition - 'a';
 			pp = &bootdev_dip->disklabel.d_partitions[part];
 			if (pp->p_fstype == FS_UNUSED || pp->p_size == 0) {
 				printf("invalid partition '%c'\n", partition);
@@ -665,7 +663,7 @@ devopen(struct open_file *of, const char *name, char **file)
 			/* No, label, just use complete disk */
 			ofdev.partoff = 0;
 		} else {
-			part = partition ? partition - 'a' : 0;
+			part = partition ? DL_PARTNAME2NUM(partition) : 0;
 			ofdev.partoff = label.d_partitions[part].p_offset;
 			DNPRINTF(BOOT_D_OFDEV, "devopen: setting partition %d "
 			    "offset %x\n", part, ofdev.partoff);
