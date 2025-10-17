@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.11 2024/06/23 13:11:51 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.12 2025/10/17 16:53:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -853,7 +853,7 @@ devparse(const char *fname, int *dev, int *unit, int *part, const char **file)
 
 		/* partition number */
 		if (i < devlen)
-			p = fname[i++] - 'a';
+			p = DL_PARTNAME2NUM(fname[i++]);
 
 		if (i != devlen)
 			return (ENXIO);

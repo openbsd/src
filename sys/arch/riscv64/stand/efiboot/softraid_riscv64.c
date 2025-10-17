@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_riscv64.c,v 1.3 2023/01/16 21:30:46 kn Exp $	*/
+/*	$OpenBSD: softraid_riscv64.c,v 1.4 2025/10/17 16:53:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -182,7 +182,7 @@ srprobe(void)
 			bc = alloc(sizeof(struct sr_boot_chunk));
 			bc->sbc_diskinfo = dip;
 			bc->sbc_disk = 0;
-			bc->sbc_part = 'a' + i;
+			bc->sbc_part = DL_PARTNUM2NAME(i);
 
 			bc->sbc_mm = 0;
 
@@ -323,7 +323,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr_t blk, size_t size,
 	/* Partition offset within softraid volume. */
 	sr_dip = (struct diskinfo *)bv->sbv_diskinfo;
 	blk += DL_SECTOBLK(&sr_dip->disklabel,
-	    sr_dip->disklabel.d_partitions[bv->sbv_part - 'a'].p_offset);
+	    sr_dip->disklabel.d_partitions[DL_PARTNAME2NUM(bv->sbv_part)].p_offset);
 
 	if (bv->sbv_level == 0) {
 		return ENOTSUP;
@@ -573,7 +573,8 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	printf("sr_getdisklabel: magic %lx\n",
 	    ((struct disklabel *)buf)->d_magic);
 	for (i = 0; i < MAXPARTITIONS; i++)
-		printf("part %c: type = %d, size = %d, offset = %d\n", 'a' + i,
+		printf("part %c: type = %d, size = %d, offset = %d\n",
+		    DL_PARTNUM2NAME(i),
 		    (int)((struct disklabel *)buf)->d_partitions[i].p_fstype,
 		    (int)((struct disklabel *)buf)->d_partitions[i].p_size,
 		    (int)((struct disklabel *)buf)->d_partitions[i].p_offset);
@@ -629,7 +630,7 @@ sropen(struct open_file *f, ...)
 		dip->flags |= DISKINFO_FLAG_GOODLABEL;
 	}
 
-	bv->sbv_part = part + 'a';
+	bv->sbv_part = DL_PARTNUM2NAME(part);
 
 	bootdev_dip = dip;
 	f->f_devdata = dip;
