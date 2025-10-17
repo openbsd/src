@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.170 2025/10/16 06:46:31 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.171 2025/10/17 08:09:21 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1249,7 +1249,6 @@ proc_parser(int fd, int nthreads)
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
-	x509_init_oid();
 	constraints_parse();
 
 	if ((globalmsgq = ibufq_new()) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.24 2025/10/16 07:49:36 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.25 2025/10/17 08:09:21 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -640,9 +640,6 @@ serialize_ccr_content(struct validation_data *vd)
 	EncapContentInfo *ci = NULL;
 	unsigned char *out;
 	int out_len, ci_der_len;
-
-	/* XXX - This should probably move to main(). */
-	x509_init_oid();
 
 	if ((ci = EncapContentInfo_new()) == NULL)
 		errx(1, "EncapContentInfo_new");

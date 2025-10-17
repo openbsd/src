@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.69 2025/09/12 10:01:07 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.70 2025/10/17 08:09:21 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -809,7 +809,6 @@ proc_filemode(int fd)
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
-	x509_init_oid();
 	constraints_parse();
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)

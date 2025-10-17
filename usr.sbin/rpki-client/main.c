@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.299 2025/10/16 06:46:31 job Exp $ */
+/*	$OpenBSD: main.c,v 1.300 2025/10/17 08:09:21 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1188,6 +1188,8 @@ main(int argc, char *argv[])
 	}
 
 	check_fs_size(cachefd, cachedir);
+
+	x509_init_oid();
 
 	if (talsz == 0)
 		talsz = tal_load_default();
