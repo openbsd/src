@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.258 2025/09/30 16:21:09 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.259 2025/10/17 17:50:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -307,6 +307,19 @@ parsedisktab(char *type, struct disklabel *lp)
 int
 writelabel(int f, struct disklabel *lp)
 {
+	int i;
+
+	/*
+	 * If a 52-partition system creates a disklabel with <=16
+	 * partitions, make it compatible with old systems.
+	 */
+	lp->d_npartitions = MAXPARTITIONS;
+	for (i = lp->d_npartitions - 1; i >= 16; i--)
+		if (lp->d_partitions[i].p_fstype != FS_UNUSED)
+			break;
+	if (i < 16)
+		lp->d_npartitions = 16;
+
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
@@ -616,13 +629,14 @@ edit(struct disklabel *lp, int f)
 	display(fp, lp, 0, 1);
 	fprintf(fp, "\n# Notes:\n");
 	fprintf(fp,
-"# Up to %d partitions are valid, named from 'a' to '%c'.  Partition 'a' is\n"
+"# Up to %d partitions are valid, named from 'a' to %s.  Partition 'a' is\n"
 "# your root filesystem, 'b' is your swap, and 'c' should cover your whole\n"
 "# disk. Any other partition is free for any use.  'size' and 'offset' are\n"
 "# in 512-byte blocks. fstype should be '4.2BSD', 'swap', or 'none' or some\n"
 "# other values.  fsize/bsize/cpg should typically be '2048 16384 16' for a\n"
 "# 4.2BSD filesystem (or '512 4096 16' except on alpha, sun4, ...)\n",
-	    MAXPARTITIONS, DL_PARTNUM2NAME(MAXPARTITIONS - 1));
+	    MAXPARTITIONS,
+	    MAXPARTITIONS == 16 ? "'p'" : "'z' and 'A' to 'Z'");
 	fclose(fp);
 	for (;;) {
 		if (editit(tmpfil) == -1)

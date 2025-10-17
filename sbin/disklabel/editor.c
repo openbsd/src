@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.423 2025/09/28 22:05:53 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.424 2025/10/17 17:50:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -988,20 +988,21 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 {
 	char buf[2] = { '\0', '\0'};
 	const char *promptfmt = "partition to %s";
-	const char *helpfmt = "Partition must be between 'a' and '%c' "
-	    "(excluding 'c')%s.\n";
+	const char *helpfmt = "Partition must be between %s (excluding 'c')%s.\n";
 	const struct partition *pp;
-	char *help = NULL, *prompt = NULL;
+	char *help = NULL, *prompt = NULL, *partitionnames = "'a' to 'p'";
 	char maxpart;
 	int add, delete, inuse, partno;
 
 	add = strcmp("add", action) == 0;
 	delete = strcmp("delete", action) == 0;
 	maxpart = DL_PARTNUM2NAME((add ? MAXPARTITIONS : lp->d_npartitions) - 1);
+	if (maxpart > 16)
+		partitionnames = "'a'-'z' or 'A'-'Z'";
 
 	if (p == NULL) {
 		if (asprintf(&prompt, promptfmt, action) == -1 ||
-		    asprintf(&help, helpfmt, maxpart, delete ? ", or '*'" : "")
+		    asprintf(&help, helpfmt, partitionnames, delete ? ", or '*'" : "")
 		    == -1) {
 			fprintf(stderr, "Unable to build prompt or help\n");
 			goto done;
