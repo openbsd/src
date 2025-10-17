@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_bootmgr.c,v 1.6 2025/07/27 20:00:26 krw Exp $	*/
+/*	$OpenBSD: efi_bootmgr.c,v 1.7 2025/10/17 19:44:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -166,7 +166,7 @@ write_efi_load_option(EFI_LOAD_OPTION *opt, size_t optlen)
 
 	fd = open("/dev/efi", O_RDWR);
 	if (fd == -1)
-		err(1, "open");
+		err(1, "open /dev/efi");
 
 	/*
 	 * Check whether a Boot#### variable with the desired load
