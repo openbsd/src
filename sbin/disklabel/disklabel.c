@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.259 2025/10/17 17:50:10 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.260 2025/10/17 17:52:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -307,19 +307,6 @@ parsedisktab(char *type, struct disklabel *lp)
 int
 writelabel(int f, struct disklabel *lp)
 {
-	int i;
-
-	/*
-	 * If a 52-partition system creates a disklabel with <=16
-	 * partitions, make it compatible with old systems.
-	 */
-	lp->d_npartitions = MAXPARTITIONS;
-	for (i = lp->d_npartitions - 1; i >= 16; i--)
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED)
-			break;
-	if (i < 16)
-		lp->d_npartitions = 16;
-
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
