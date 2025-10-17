@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_i386.c,v 1.4 2020/12/09 18:10:18 krw Exp $	*/
+/*	$OpenBSD: softraid_i386.c,v 1.5 2025/10/17 16:54:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -181,12 +181,12 @@ srprobe(void)
 			bc = alloc(sizeof(struct sr_boot_chunk));
 			bc->sbc_diskinfo = dip;
 			bc->sbc_disk = dip->bios_info.bios_number;
-			bc->sbc_part = 'a' + i;
+			bc->sbc_part = DL_PARTNUM2NAME(i);
 
 			bsd_dev = dip->bios_info.bsd_dev;
 			bc->sbc_mm = MAKEBOOTDEV(B_TYPE(bsd_dev),
 			    B_ADAPTOR(bsd_dev), B_CONTROLLER(bsd_dev),
-			    B_UNIT(bsd_dev), bc->sbc_part - 'a');
+			    B_UNIT(bsd_dev), DL_PARTNAME2NUM(bc->sbc_part));
 
 			bc->sbc_chunk_id = md->ssdi.ssd_chunk_id;
 			bc->sbc_ondisk = md->ssd_ondisk;
@@ -322,7 +322,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr_t blk, size_t size,
 
 	/* Partition offset within softraid volume. */
 	sr_dip = (struct diskinfo *)bv->sbv_diskinfo;
-	blk += sr_dip->disklabel.d_partitions[bv->sbv_part - 'a'].p_offset;
+	blk += sr_dip->disklabel.d_partitions[DL_PARTNAME2NUM(bv->sbv_part)].p_offset;
 
 	if (bv->sbv_level == 0) {
 		return ENOTSUP;
@@ -414,7 +414,8 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	printf("sr_getdisklabel: magic %lx\n",
 	    ((struct disklabel *)buf)->d_magic);
 	for (i = 0; i < MAXPARTITIONS; i++)
-		printf("part %c: type = %d, size = %d, offset = %d\n", 'a' + i,
+		printf("part %c: type = %d, size = %d, offset = %d\n",
+		    DL_PARTNUM2NAME(i),
 		    (int)((struct disklabel *)buf)->d_partitions[i].p_fstype,
 		    (int)((struct disklabel *)buf)->d_partitions[i].p_size,
 		    (int)((struct disklabel *)buf)->d_partitions[i].p_offset);
