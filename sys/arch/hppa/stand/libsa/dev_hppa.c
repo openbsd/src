@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.18 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.19 2025/10/17 16:53:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -164,7 +164,7 @@ devboot(dev, p)
 		*p++ = '0' + (unit % 10);
 	} else
 		p[-1] = '0' + unit;
-	*p++ = 'a' + B_PARTITION(dev);
+	*p++ = DL_PARTNUM2NAME(B_PARTITION(dev));
 	*p = '\0';
 }
 
