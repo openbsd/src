@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.25 2025/10/17 08:09:21 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.26 2025/10/18 08:12:32 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -968,7 +968,7 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 	int i, j, instances_num, sub_num;
 	const ACCESS_DESCRIPTION *ad;
 	const SubjectKeyIdentifier *s;
-	struct ccr_mft_sub_ski *sub;
+	struct ccr_mft_sub_ski *sub = NULL;
 	int rc = 0;
 	uint64_t size = 0;
 
@@ -1047,6 +1047,7 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 			}
 			memcpy(sub->ski, s->data, sizeof(sub->ski));
 			SLIST_INSERT_HEAD(&ccr_mft->subordinates, sub, entry);
+			sub = NULL;
 		}
 
  insert:
@@ -1062,6 +1063,7 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 	rc = 1;
  out:
 	ccr_mft_free(ccr_mft);
+	free(sub);
 	return rc;
 }
 
