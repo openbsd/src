@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.437 2025/09/17 22:05:34 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.438 2025/10/18 15:33:19 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3448,7 +3448,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 			goto unwind;
 		}
 
-		if (user == 0 && sd->sd_meta_flags & BIOC_SCNOAUTOASSEMBLE) {
+		if (user == 0 && (sd->sd_meta_flags & BIOC_SCNOAUTOASSEMBLE)) {
 			DNPRINTF(SR_D_META, "%s: disk not auto assembled from "
 			    "metadata\n", DEVNAME(sc));
 			goto unwind;
