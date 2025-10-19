@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.103 2025/10/17 16:54:22 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.104 2025/10/19 06:17:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -517,7 +517,7 @@ biosopen(struct open_file *f, ...)
 	}
 
 	/* Get partition. */
-	if (DL_PARTNAME2NUM(*cp) == -1) {
+	if ((part = DL_PARTNAME2NUM(*cp)) == -1) {
 		printf("Bad partition\n");
 		return EPART;
 	}
