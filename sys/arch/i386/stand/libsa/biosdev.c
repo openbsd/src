@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.104 2025/10/19 06:17:26 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.105 2025/10/19 20:43:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -521,6 +521,7 @@ biosopen(struct open_file *f, ...)
 		printf("Bad partition\n");
 		return EPART;
 	}
+	cp++;
 
 	/* Get filename. */
 	cp++;	/* skip ':' */
