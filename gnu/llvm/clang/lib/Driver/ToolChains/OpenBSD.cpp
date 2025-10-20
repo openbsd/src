@@ -288,6 +288,19 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath(crtend)));
   }
 
+  auto hasNoExecuteOnly = [&Args]() {
+    for (const Arg *A : Args) {
+      if (A->getOption().matches(options::OPT_Wl_COMMA) &&
+          A->containsValue("--no-execute-only"))
+        return true;
+    }
+    return false;
+  };
+  if (ToolChain.getSanitizerArgs(Args).needsUbsanRt() && !hasNoExecuteOnly()) {
+    D.Diag(diag::err_drv_argument_only_allowed_with)
+        << "-fsanitize=undefined" << "-Wl,--no-execute-only";
+  }
+
   ToolChain.addProfileRTLibs(Args, CmdArgs);
 
   const char *Exec = Args.MakeArgString(ToolChain.GetLinkerPath());
