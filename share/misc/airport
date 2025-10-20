@@ -1,9 +1,5 @@
-#	$OpenBSD: airport,v 1.102 2025/06/09 17:02:08 fcambus Exp $
+#	$OpenBSD: airport,v 1.103 2025/10/20 04:01:35 gnezdo Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
-#
-# Some of this information from the Airport Search Engine at
-# http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
-# available at http://www.mapping.com/airportcodes.shtml
 #
 # Only use the IATA airport codes, and only add ones you have been to.
 # Only add airports. No trains or buses!
@@ -1786,6 +1782,7 @@ UIN:Baldwin Field, Quincy, Illinois, USA
 UIO:Mariscal, Quito, Ecuador
 UIP:Pluguffan, Quimper, France
 UKA:Ukunda Airstrip, Kwale County, Kenya
+UKK:Ust-Kamenogorsk, Kazakhstan
 UKS:Sevastopol International, Sevastopol, Ukraine
 ULN:Ulan Bator, Mongolia
 ULY:Ulyanovsk, Russia
