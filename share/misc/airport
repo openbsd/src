@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.103 2025/10/20 04:01:35 gnezdo Exp $
+#	$OpenBSD: airport,v 1.104 2025/10/20 14:02:21 henning Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Only use the IATA airport codes, and only add ones you have been to.
@@ -541,6 +541,7 @@ FEZ:Fez, Morocco
 FFM:Fergus Falls, Minnesota, USA
 FHU:Fort Huachuca/Sierra Vista, Arizona, USA
 FIH:Kinshasa, Democratic Republic of the Congo
+FKB:Karlsruhe / Baden-Baden, Germany
 FKL:Chess Lamberton, Franklin, Pennsylvania, USA
 FLG:Flagstaff, Arizona, USA
 FLL:Ft. Lauderdale-Hollywood International, Florida, USA
