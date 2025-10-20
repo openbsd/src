@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.26 2025/08/03 08:50:25 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.27 2025/10/20 19:22:00 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -980,7 +980,7 @@ static uint32_t
 vionet_cfg_read(struct virtio_dev *dev, struct viodev_msg *msg)
 {
 	struct virtio_pci_common_cfg *pci_cfg = &dev->pci_cfg;
-	uint32_t data = (uint32_t)(-1);
+	uint32_t data = 0;
 	uint16_t reg = msg->reg & 0x00FF;
 
 	pthread_rwlock_rdlock(&lock);
@@ -1272,7 +1272,7 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 static uint32_t
 vionet_read(struct virtio_dev *dev, struct viodev_msg *msg, int *deassert)
 {
-	uint32_t data = (uint32_t)(-1);
+	uint32_t data = 0;
 	uint16_t reg = msg->reg;
 
 	switch (reg & 0xFF00) {
@@ -1284,6 +1284,7 @@ vionet_read(struct virtio_dev *dev, struct viodev_msg *msg, int *deassert)
 		break;
 	case VIO1_NOTIFY_BAR_OFFSET:
 		/* Reads of notify register return all 1's. */
+		data = (uint32_t)(-1);
 		break;
 	case VIO1_ISR_BAR_OFFSET:
 		pthread_rwlock_wrlock(&lock);
@@ -1326,7 +1327,7 @@ static uint32_t
 vionet_dev_read(struct virtio_dev *dev, struct viodev_msg *msg)
 {
 	struct vionet_dev *vionet = (struct vionet_dev *)&dev->vionet;
-	uint32_t data = (uint32_t)(-1);
+	uint32_t data = 0;
 	uint16_t reg = msg->reg & 0xFF;
 
 	switch (reg) {
@@ -1340,7 +1341,6 @@ vionet_dev_read(struct virtio_dev *dev, struct viodev_msg *msg)
 		break;
 	default:
 		log_warnx("%s: invalid register 0x%04x", __func__, reg);
-		return (uint32_t)(-1);
 	}
 
 	return (data);

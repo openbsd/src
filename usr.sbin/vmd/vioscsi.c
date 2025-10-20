@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.26 2025/08/02 15:16:18 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.27 2025/10/20 19:22:00 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -1812,7 +1812,6 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			break;
 		default:
 			log_warnx("%s: invalid register 0x%04x", __func__, reg);
-			*data = (uint32_t)(-1);
 		}
 	}
 

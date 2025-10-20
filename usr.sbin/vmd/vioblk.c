@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.24 2025/08/02 15:16:18 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.25 2025/10/20 19:21:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -558,7 +558,7 @@ vioblk_write(struct virtio_dev *dev, struct viodev_msg *msg)
 static uint32_t
 vioblk_read(struct virtio_dev *dev, struct viodev_msg *msg, int *deassert)
 {
-	uint32_t data = (uint32_t)(-1);
+	uint32_t data = 0;
 	uint16_t reg = msg->reg;
 	uint8_t sz = msg->io_sz;
 
@@ -588,7 +588,7 @@ static uint32_t
 vioblk_dev_read(struct virtio_dev *dev, struct viodev_msg *msg)
 {
 	struct vioblk_dev *vioblk = (struct vioblk_dev *)&dev->vioblk;
-	uint32_t data = (uint32_t)(-1);
+	uint32_t data = 0;
 	uint16_t reg = msg->reg;
 	uint8_t sz = msg->io_sz;
 
@@ -627,7 +627,6 @@ vioblk_dev_read(struct virtio_dev *dev, struct viodev_msg *msg)
 		break;
 	default:
 		log_warnx("%s: invalid register 0x%04x", __func__, reg);
-		return (uint32_t)(-1);
 	}
 
 	return (data);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.127 2025/08/08 13:36:04 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.128 2025/10/20 19:22:00 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -683,7 +683,7 @@ virtio_io_notify(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 
 	if (dir == VEI_DIR_IN) {
 		/* Behavior is undefined. */
-		*data = (uint32_t)(-1);
+		*data = 0;
 		return (0);
 	}
 
