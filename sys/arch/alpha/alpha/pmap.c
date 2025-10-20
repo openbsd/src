@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.94 2025/06/29 15:55:21 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.95 2025/10/20 16:34:41 jca Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -320,7 +320,7 @@ struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	  of a (managed) physical page.
  *
  *	* pmap_all_pmaps_mtx - This lock protects the global list of
- *	  all pmaps.  Note that a pm_slock must never be held while this
+ *	  all pmaps.  Note that a pm_mtx must never be held while this
  *	  lock is held.
  *
  *	* pmap_growkernel_mtx - This lock protects pmap_growkernel()
