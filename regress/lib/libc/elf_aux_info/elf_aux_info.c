@@ -9,6 +9,7 @@ main(void)
 	int ret = 0;
 	int a;
 	unsigned long b;
+	unsigned long long c;
 
 	/* Should always succeed */
 	if (elf_aux_info(AT_PAGESZ, &a, sizeof(a)))
@@ -17,7 +18,7 @@ main(void)
 		fprintf(stderr, "AT_PAGESZ %d\n", a);
 
 	/* Wrong size */
-	if (elf_aux_info(AT_PAGESZ, &b, sizeof(b)) != EINVAL)
+	if (elf_aux_info(AT_PAGESZ, &c, sizeof(c)) != EINVAL)
 		ret |= 2;
 
 	/* Invalid request */
