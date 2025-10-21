@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.30 2022/12/27 17:10:07 jmc Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.31 2025/10/21 11:49:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,7 +39,7 @@
 struct sio_sun_hdl {
 	struct sio_hdl sio;
 	int fd;
-	int filling;
+	int prime;
 	unsigned int ibpf, obpf;	/* bytes per frame */
 	unsigned int ibytes, obytes;	/* bytes the hw transferred */
 	unsigned int ierr, oerr;	/* frames the hw dropped */
@@ -330,7 +330,7 @@ sio_sun_fdopen(int fd, unsigned int mode, int nbio)
 		return NULL;
 	}
 	hdl->fd = fd;
-	hdl->filling = 0;
+	hdl->prime = 0;
 	return (struct sio_hdl *)hdl;
 }
 
@@ -380,7 +380,7 @@ sio_sun_start(struct sio_hdl *sh)
 		 * keep the device paused and let sio_sun_pollfd() trigger the
 		 * start later, to avoid buffer underruns
 		 */
-		hdl->filling = 1;
+		hdl->prime = hdl->sio.par.pchan * hdl->sio.par.bps * hdl->sio.par.bufsz;
 	} else {
 		/*
 		 * no play buffers to fill, start now!
@@ -400,10 +400,9 @@ sio_sun_flush(struct sio_hdl *sh)
 {
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
 
-	if (hdl->filling) {
-		hdl->filling = 0;
+	if (hdl->prime > 0)
 		return 1;
-	}
+
 	if (ioctl(hdl->fd, AUDIO_STOP) == -1) {
 		DPERROR("AUDIO_STOP");
 		hdl->sio.eof = 1;
@@ -512,6 +511,19 @@ sio_sun_write(struct sio_hdl *sh, const void *buf, size_t len)
 		}
 		return 0;
 	}
+
+	if (hdl->prime > 0) {
+		hdl->prime -= n;
+		if (hdl->prime <= 0) {
+			if (ioctl(hdl->fd, AUDIO_START) == -1) {
+				DPERROR("AUDIO_START");
+				hdl->sio.eof = 1;
+				return 0;
+			}
+			_sio_onmove_cb(&hdl->sio, 0);
+		}
+	}
+
 	return n;
 }
 
@@ -528,16 +540,6 @@ sio_sun_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 
 	pfd->fd = hdl->fd;
 	pfd->events = events;
-	if (hdl->filling && hdl->sio.wused == hdl->sio.par.bufsz *
-		hdl->sio.par.pchan * hdl->sio.par.bps) {
-		hdl->filling = 0;
-		if (ioctl(hdl->fd, AUDIO_START) == -1) {
-			DPERROR("AUDIO_START");
-			hdl->sio.eof = 1;
-			return 0;
-		}
-		_sio_onmove_cb(&hdl->sio, 0);
-	}
 	return 1;
 }
 
