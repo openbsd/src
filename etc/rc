@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.586 2025/09/17 10:13:15 deraadt Exp $
+#	$OpenBSD: rc,v 1.587 2025/10/21 15:55:35 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -305,10 +305,15 @@ rootdisk_nodes() {
 	if [ $(sysctl -n kern.maxpartitions) = 16 ]; then
 		_rootdev=$(mount | grep ' / ' | cut -d' ' -f1)
 		_maj=$(stat -f "%Hr" $_rootdev)
-		_min=$(stat -f "%Lr" $_rootdev)
+		_omin=$(stat -f "%Lr" $_rootdev)
+		_min=$((_omin / 16 * 64))
+		if [ -b /dev/rootdisk -a \
+		    "$(stat -qf %Hr,%Lr /dev/rootdisk)" = "$_maj,$_min" ]; then
+			return
+		fi
+		# does not exist or device changed, redo
 		_rrootdev=$(echo $_rootdev | sed -e 's,dev/,dev/r,')
 		_rmaj=$(stat -f "%Hr" $_rrootdev)
-		_min=$((_min / 16 * 64))
 		rm -f /dev/rrootdisk /dev/rootdisk
 		mknod -m 600 /dev/rrootdisk c $_rmaj $_min
 		mknod -m 600 /dev/rootdisk b $_maj $_min
