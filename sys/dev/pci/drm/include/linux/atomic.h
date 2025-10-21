@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.28 2025/10/21 02:32:01 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.29 2025/10/21 02:55:48 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -405,7 +405,7 @@ find_next_bit(const volatile void *p, int max, int b)
 #define smp_mb()	__asm volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
 #define smp_rmb()	__membar("")
 #define smp_wmb()	__membar("")
-#define __smp_store_mb(var, value)	do { (void)xchg(&var, value); } while (0)
+#define smp_store_mb(var, value)	do { (void)xchg(&var, value); } while (0)
 #define smp_mb__after_atomic()	do { } while (0)
 #define smp_mb__before_atomic()	do { } while (0)
 #elif defined(__amd64__)
@@ -415,7 +415,7 @@ find_next_bit(const volatile void *p, int max, int b)
 #define smp_mb()	__asm volatile("lock; addl $0,-4(%%rsp)" : : : "memory", "cc")
 #define smp_rmb()	__membar("")
 #define smp_wmb()	__membar("")
-#define __smp_store_mb(var, value)	do { (void)xchg(&var, value); } while (0)
+#define smp_store_mb(var, value)	do { (void)xchg(&var, value); } while (0)
 #define smp_mb__after_atomic()	do { } while (0)
 #define smp_mb__before_atomic()	do { } while (0)
 #elif defined(__aarch64__)
