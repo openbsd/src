@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.25 2025/02/07 03:03:31 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.26 2025/10/21 01:36:55 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -59,7 +59,6 @@
 #define atomic_cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
 #define cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
 #define cmpxchg64(p, o, n)	__sync_val_compare_and_swap(p, o, n)
-#define atomic_set_release(p, v)	atomic_set((p), (v))
 #define atomic_andnot(bits, p)		atomic_clearbits_int(p,bits)
 #define atomic_fetch_inc(p)		__sync_fetch_and_add(p, 1)
 #define atomic_fetch_xor(n, p)		__sync_fetch_and_xor(p, n)
@@ -496,5 +495,10 @@ find_next_bit(const volatile void *p, int max, int b)
 	_v;					\
 })
 #endif
+
+#define atomic_set_release(p, v) do {		\
+	smp_mb__before_atomic();		\
+	atomic_set((p), (v));			\
+} while(0)
 
 #endif
