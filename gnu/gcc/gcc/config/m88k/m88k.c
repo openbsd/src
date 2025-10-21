@@ -2436,10 +2436,9 @@ m88k_adjust_cost (rtx insn, rtx link, rtx dep, int cost)
     return 0;  /* Anti or output dependence.  */
 
   if (TARGET_88110
-      && recog_memoized (insn) >= 0
       && get_attr_type (insn) == TYPE_STORE
       && SET_SRC (PATTERN (insn)) == SET_DEST (PATTERN (dep)))
-    return cost - 4;  /* 88110 store reservation station.  */
+    return cost - COSTS_N_INSNS (1);  /* 88110 store reservation station.  */
 
   return cost;
 }
