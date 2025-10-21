@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.44 2025/10/07 07:52:46 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.45 2025/10/21 05:13:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -64,7 +64,8 @@
 #endif
 
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
-#define VEB_IFBIF_FLAGS	(IFBIF_LEARNING|IFBIF_DISCOVER|IFBIF_BLOCKNONIP)
+#define VEB_IFBIF_FLAGS	\
+	(IFBIF_LOCKED|IFBIF_LEARNING|IFBIF_DISCOVER|IFBIF_BLOCKNONIP)
 
 struct veb_rule {
 	TAILQ_ENTRY(veb_rule)		vr_entry;
@@ -1176,6 +1177,17 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	eh = mtod(m, struct ether_header *);
 	src = ether_addr_to_e64((struct ether_addr *)eh->ether_shost);
 
+	if (ISSET(p->p_bif_flags, IFBIF_LOCKED)) {
+		struct veb_port *rp;
+
+		smr_read_enter();
+		rp = etherbridge_resolve(&sc->sc_eb, src);
+		smr_read_leave();
+
+		if (rp != p)
+			goto drop;
+	}
+
 	/* Is this a MAC Bridge component Reserved address? */
 	if (ETH64_IS_8021_RSVD(dst)) {
 		if (!ISSET(ifp->if_flags, IFF_LINK0)) {
@@ -2088,6 +2100,9 @@ veb_port_set_flags(struct veb_softc *sc, struct ifbreq *ifbr)
 	struct veb_port *p;
 
 	if (ISSET(ifbr->ifbr_ifsflags, ~VEB_IFBIF_FLAGS))
+		return (EINVAL);
+	if (ISSET(ifbr->ifbr_ifsflags, IFBIF_LOCKED) &&
+	    ISSET(ifbr->ifbr_ifsflags, IFBIF_LEARNING|IFBIF_DISCOVER))
 		return (EINVAL);
 
 	p = veb_port_get(sc, ifbr->ifbr_ifsname);
