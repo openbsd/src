@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.73 2021/11/11 10:03:10 claudio Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.74 2025/10/21 05:09:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -74,6 +74,7 @@ struct ifbreq {
 #define IFBIF_BSTP_AUTOPTP	0x0080	/* member stp autoptp enabled */
 #define	IFBIF_SPAN		0x0100	/* ifs is a span port (ro) */
 #define	IFBIF_LOCAL		0x1000	/* local port in switch(4) */
+#define	IFBIF_LOCKED		0x2000	/* restrict rx src mac with fib */
 #define	IFBIF_RO_MASK		0x0f00	/* read only bits */
 
 /* SIOCBRDGFLUSH */
