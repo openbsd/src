@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.23 2019/10/24 18:54:10 bluhm Exp $ */
+/*	$OpenBSD: sff.c,v 1.24 2025/10/21 05:18:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -888,10 +888,10 @@ static void
 hexdump(const void *d, size_t datalen)
 {
 	const uint8_t *data = d;
-	int i, j = 0;
+	size_t i, j = 0;
 
 	for (i = 0; i < datalen; i += j) {
-		printf("% 4d: ", i);
+		printf("%4zu: ", i);
 		for (j = 0; j < 16 && i+j < datalen; j++)
 			printf("%02x ", data[i + j]);
 		while (j++ < 16)
