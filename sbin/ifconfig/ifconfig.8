@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.404 2025/05/13 15:11:54 kn Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.405 2025/10/21 05:14:22 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 13 2025 $
+.Dd $Mdocdate: October 21 2025 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -2077,6 +2077,7 @@ device will try to establish a data connection with the service provider.
 .Op Oo Fl Oc Ns Cm discover Ar child-iface
 .Op Cm flushrule Ar interface
 .Op Oo Fl Oc Ns Cm learn Ar child-iface
+.Op Oo Fl Oc Ns Cm locked Ar child-iface
 .Op Oo Fl Oc Ns Cm link0
 .Op Oo Fl Oc Ns Cm link1
 .Op Cm maxaddr Ar size
@@ -2150,6 +2151,24 @@ Mark
 .Ar child-iface
 so that the source address of packets received from interface
 are not entered into the address cache.
+.It Cm locked Ar child-iface
+Mark
+.Ar child-iface
+so that the source address of packets received from
+the interface must have an entry in the address cache that refers
+to this interface.
+This option is mutually exclusive with the
+.Cm learn
+and
+.Cm discover
+options on the same interface.
+.It Cm -locked Ar child-iface
+Mark
+.Ar child-iface
+so that the source address of packets received from the interface
+does not need an existing entry in the address cache that refers to
+this interface.
+This is the default for interfaces added to the bridge.
 .It Cm link0
 Disable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
 .It Cm -link0

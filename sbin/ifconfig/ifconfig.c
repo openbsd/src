@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.476 2025/03/22 07:24:49 kevlo Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.477 2025/10/21 05:14:22 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -562,6 +562,8 @@ const struct	cmd {
 	{ "-blocknonip",NEXTARG,	0,		unsetblocknonip },
 	{ "learn",	NEXTARG,	0,		setlearn },
 	{ "-learn",	NEXTARG,	0,		unsetlearn },
+	{ "locked",	NEXTARG,	0,		setlocked },
+	{ "-locked",	NEXTARG,	0,		unsetlocked },
 	{ "stp",	NEXTARG,	0,		setstp },
 	{ "-stp",	NEXTARG,	0,		unsetstp },
 	{ "edge",	NEXTARG,	0,		setedge },

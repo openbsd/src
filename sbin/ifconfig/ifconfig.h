@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.h,v 1.6 2025/01/06 17:49:29 denis Exp $	*/
+/*	$OpenBSD: ifconfig.h,v 1.7 2025/10/21 05:14:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -29,6 +29,8 @@ void setblocknonip(const char *, int);
 void unsetblocknonip(const char *, int);
 void setlearn(const char *, int);
 void unsetlearn(const char *, int);
+void setlocked(const char *, int);
+void unsetlocked(const char *, int);
 void setstp(const char *, int);
 void unsetstp(const char *, int);
 void setedge(const char *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.33 2025/01/06 17:49:29 denis Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.34 2025/10/21 05:14:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -60,7 +60,7 @@ int bridge_arprule(struct ifbrlreq *, int *, char ***);
 
 #define	IFBAFBITS	"\020\1STATIC"
 #define	IFBIFBITS	\
-"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7PTP\10AUTOPTP\11SPAN\15LOCAL"
+"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7PTP\10AUTOPTP\11SPAN\15LOCAL\16LOCKED"
 
 #define	PV2ID(pv, epri, eaddr)	do {					\
 	epri	 = pv >> 48;						\
@@ -128,6 +128,18 @@ void
 unsetlearn(const char *val, int d)
 {
 	bridge_ifclrflag(val, IFBIF_LEARNING);
+}
+
+void
+setlocked(const char *val, int d)
+{
+	bridge_ifsetflag(val, IFBIF_LOCKED);
+}
+
+void
+unsetlocked(const char *val, int d)
+{
+	bridge_ifclrflag(val, IFBIF_LOCKED);
 }
 
 void
