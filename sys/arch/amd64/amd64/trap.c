@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.114 2025/09/17 18:37:44 sf Exp $	*/
+/*	$OpenBSD: trap.c,v 1.115 2025/10/22 14:31:24 hshoexer Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@
 
 int	upageflttrap(struct trapframe *, uint64_t);
 int	kpageflttrap(struct trapframe *, uint64_t);
-int	vctrap(struct trapframe *, int);
+int	vctrap(struct trapframe *, int, int *, int *);
 void	kerntrap(struct trapframe *);
 void	usertrap(struct trapframe *);
 void	ast(struct trapframe *);
@@ -302,7 +302,7 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 }
 
 int
-vctrap(struct trapframe *frame, int user)
+vctrap(struct trapframe *frame, int user, int *sig, int *code)
 {
 	uint8_t		*rip = (uint8_t *)(frame->tf_rip);
 	uint64_t	 port;
@@ -311,6 +311,11 @@ vctrap(struct trapframe *frame, int user)
 	struct ghcb_extra_regs	ghcb_regs;
 
 	KASSERT((read_rflags() & PSL_I) == 0);
+
+	if (user) {
+		KASSERT(sig != NULL);
+		KASSERT(code != NULL);
+	}
 
 	memset(&syncout, 0, sizeof(syncout));
 	memset(&syncin, 0, sizeof(syncin));
@@ -339,8 +344,11 @@ vctrap(struct trapframe *frame, int user)
 		frame->tf_rip += 2;
 		break;
 	case SVM_VMEXIT_MSR: {
-		if (user)
+		if (user) {
+			*sig = SIGILL;
+			*code = ILL_PRVOPC;
 			return 0;	/* not allowed from userspace */
+		}
 		if (*rip == 0x0f && *(rip + 1) == 0x30) {
 			/* WRMSR */
 			ghcb_sync_val(GHCB_RAX, GHCB_SZ32, &syncout);
@@ -358,8 +366,11 @@ vctrap(struct trapframe *frame, int user)
 		break;
 	    }
 	case SVM_VMEXIT_IOIO: {
-		if (user)
+		if (user) {
+			*sig = SIGILL;
+			*code = ILL_PRVOPC;
 			return 0;	/* not allowed from userspace */
+		}
 		switch (*rip) {
 		case 0x66: {
 			switch (*(rip + 1)) {
@@ -426,6 +437,14 @@ vctrap(struct trapframe *frame, int user)
 		}
 		break;
 	    }
+	case SVM_VMEXIT_NPF:
+		if (user) {
+			*sig = SIGBUS;
+			*code = BUS_ADRERR;
+			return 0;	/* not allowed from userspace */
+		}
+		panic("unexpected MMIO in kernelspace");
+		/* NOTREACHED */
 	default:
 		panic("invalid exit code 0x%llx", ghcb_regs.exitcode);
 	}
@@ -509,7 +528,7 @@ kerntrap(struct trapframe *frame)
 #endif /* NISA > 0 */
 
 	case T_VC:
-		if (vctrap(frame, 0))
+		if (vctrap(frame, 0, NULL, NULL))
 			return;
 		goto we_re_toast;
 	}
@@ -592,10 +611,8 @@ usertrap(struct trapframe *frame)
 		    : ILL_BADSTK;
 		break;
 	case T_VC:
-		if (vctrap(frame, 1))
+		if (vctrap(frame, 1, &sig, &code))
 			goto out;
-		sig = SIGILL;
-		code = ILL_PRVOPC;
 		break;
 	case T_PAGEFLT:			/* page fault */
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
