@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.31 2025/10/21 05:34:13 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.32 2025/10/22 02:14:31 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -425,6 +425,8 @@ find_next_bit(const volatile void *p, int max, int b)
 #define dma_rmb() __membar("dmb oshld")
 #define dma_wmb() __membar("dmb oshst")
 #define dma_mb() __membar("dmb osh")
+#define smp_rmb() __membar("dmb ishld")
+#define smp_wmb() __membar("dmb ishst")
 #define smp_mb() __membar("dmb ish")
 #elif defined(__arm__)
 #define rmb()	__membar("dsb sy")
