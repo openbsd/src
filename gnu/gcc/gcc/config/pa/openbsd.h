@@ -195,3 +195,13 @@ Boston, MA 02111-1307, USA.  */
 	%{!nopie:rcrt0%O%s}}}} crtbegin%O%s} %{shared:crtbeginS%O%s}"
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
+
+/* Find the return address associated with the frame given by
+   FRAMEADDR.
+   The default code in pa.h invokes return_addr_rtx(), which attemps to
+   read code at the return pointer in order to check for an export stub.
+   This is not possible under OpenBSD as code is not readable; but such
+   export stubs are not used under OpenBSD anymay.  */
+#undef RETURN_ADDR_RTX
+#define RETURN_ADDR_RTX(COUNT, FRAMEADDR)				 \
+  ((COUNT) == 0 ? get_hard_reg_initial_val (Pmode, 2) : NULL_RTX)
