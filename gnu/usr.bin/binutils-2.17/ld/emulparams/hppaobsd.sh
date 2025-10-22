@@ -4,6 +4,7 @@
 SCRIPT_NAME=elf_obsd
 ELFSIZE=32
 OUTPUT_FORMAT="elf32-hppa"
+EXTRA_EM_FILE=hppaelfobsd
 
 # other necessary defines, similar but not the same as linux.
 MAXPAGESIZE=0x1000
