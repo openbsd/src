@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1278 2025/08/06 16:50:53 florian Exp $
+#	$OpenBSD: install.sub,v 1.1279 2025/10/22 19:26:13 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -384,8 +384,8 @@ get_ifs_and_lladdrs() {
 get_dkdev_name() {
 	local _dev=${1#/dev/} _d
 
-	_dev=${_dev%.[a-p]}
-	((${#_dev} < 16)) && _dev=${_dev%[a-p]}
+	_dev=${_dev%.[${PARTITIONS}]}
+	((${#_dev} < 16)) && _dev=${_dev%[${PARTITIONS}]}
 	local IFS=,
 	for _d in $(sysctl -n hw.disknames); do
 		[[ $_dev == @(${_d%:*}|${_d#*:}) ]] && echo ${_d%:*} && break
@@ -464,7 +464,7 @@ disklabel_autolayout() {
 	_qst="Use (A)uto layout, (E)dit auto layout, or create (C)ustom layout?"
 	while :; do
 		echo "The auto-allocated layout for $_disk is:"
-		disklabel -h -A $_disk | egrep "^#  |^  [a-p]:"
+		disklabel -h -A $_disk | egrep "^#  |^  [${PARTITIONS}]:"
 		ask "$_qst" a
 		case $resp in
 		[aA]*)	_op=-w;;
@@ -2118,7 +2118,7 @@ mount_mnt2() {
 	local _dev=$1 _opts _file=/tmp/i/parts.$1 _parts
 
 	disklabel $_dev 2>/dev/null |
-		sed -En '/swap|unused/d;/^  [a-p]: /p' >$_file
+		sed -En "/swap|unused/d;/^  [${PARTITIONS}]: /p" >$_file
 	_parts=$(sed 's/^  \(.\): .*/\1/' $_file)
 	set -- $_parts
 	(($# == 0)) && { echo "No filesystems found on $_dev."; return 1; }
@@ -2132,9 +2132,7 @@ mount_mnt2() {
 	else
 		# Display partitions with filesystems and ask which to use.
 		cat $_file
-		ask_which "$_dev partition" "has the $MODE sets" \
-			'$(disklabel '$_dev' 2>/dev/null |
-			sed -En '\''/swap|unused/d;/^  ([a-p]): .*/s//\1/p'\'')'
+		ask_which "$_dev partition" "has the $MODE sets" "$_parts"
 		[[ $resp == done ]] && return 1
 	fi
 
@@ -3117,21 +3115,20 @@ do_autoinstall() {
 # otherwise return non-zero.
 pick_keydisk() {
 	KEYDISK=
-	local _disk _label
+	local _disk _label _parts
 
 	ask_which disk 'contains the key disk' '$(rmel $ROOTDISK $(get_dkdevs))'
 	[[ $resp == done ]] && return 1
 	_disk=$resp
 
 	make_dev $_disk
-	if disklabel $_disk 2>/dev/null | ! grep -qw RAID; then
+	_parts=$(disklabel $_disk | sed -En "/.*RAID.*/s/^  \(.\): .*/\1/p")
+	if [[ -n $_parts ]]; then
 		echo "$_disk must contain a RAID partition."
 		return 1
 	fi
 
-	ask_which "$_disk partition" 'is the key disk' \
-		"\$(disklabel $_disk 2>/dev/null |
-		    sed -En 's/^  ([a-p]):.*RAID.*$/\1/p')"
+	ask_which "$_disk partition" 'is the key disk' "$_parts"
 	[[ $resp == done ]] && return 1
 	_label=$resp
 	KEYDISK=$_disk$_label
@@ -3573,6 +3570,10 @@ start_watchdog() {
 # Some may require machine dependent routines, which may call functions defined
 # above, so it's safest to put this code here rather than at the top.
 # ------------------------------------------------------------------------------
+
+
+PARTITIONS=a-p
+(( $(sysctl -n kern.maxpartitions) == 52 )) && PARTITIONS=a-zA-Z
 
 # Parse parameters.
 AI=false
