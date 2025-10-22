@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.303 2025/09/16 12:18:10 hshoexer Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.304 2025/10/22 14:11:23 hshoexer Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -512,6 +512,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	extern uint64_t tsc_frequency;
+	char vmmode[16];
 	dev_t consdev;
 	dev_t dev;
 
@@ -567,6 +568,17 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 	case CPU_TSCFREQ:
 		return (sysctl_rdquad(oldp, oldlenp, newp, tsc_frequency));
+	case CPU_VMMODE:
+		if (ISSET(cpu_ecxfeature, CPUIDECX_HV)) {
+			if (ISSET(cpu_sev_guestmode, SEV_STAT_ES_ENABLED))
+				strlcpy(vmmode, "SEV-ES", sizeof(vmmode));
+			else if (ISSET(cpu_sev_guestmode, SEV_STAT_ENABLED))
+				strlcpy(vmmode, "SEV", sizeof(vmmode));
+			else
+				strlcpy(vmmode, "guest", sizeof(vmmode));
+		} else
+			strlcpy(vmmode, "host", sizeof(vmmode));
+		return sysctl_rdstring(oldp, oldlenp, newp, vmmode);
 	default:
 		return (sysctl_bounded_arr(cpuctl_vars, nitems(cpuctl_vars),
 		    name, namelen, oldp, oldlenp, newp, newlen));
