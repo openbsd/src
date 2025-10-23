@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.66 2025/10/23 19:35:56 miod Exp $
+#	$OpenBSD: Makefile,v 1.67 2025/10/23 20:42:52 miod Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ SUBDIR+=	cc clang
 SUBDIR+=	cc
 .  endif
 .  if ${BUILD_CLANG:L} == "yes"
-#SUBDIR+=	clang
+SUBDIR+=	clang
 .  endif
 .endif
 
