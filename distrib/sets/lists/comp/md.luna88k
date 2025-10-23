@@ -1,7 +1,5 @@
 ./usr/bin/as
 ./usr/bin/gdb
-./usr/bin/protoize
-./usr/bin/unprotoize
 ./usr/include/luna88k
 ./usr/include/luna88k/_float.h
 ./usr/include/luna88k/_types.h
