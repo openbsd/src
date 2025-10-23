@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.95 2025/03/26 15:29:30 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.96 2025/10/23 18:55:30 miod Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -249,13 +249,8 @@ const char *
 log_roa(struct roa *roa)
 {
 	static char buf[256];
-	char maxbuf[32];
-#if defined(__GNUC__) && __GNUC__ < 4
-	struct bgpd_addr addr = { .aid = roa->aid };
-	addr.v6 = roa->prefix.inet6;
-#else
 	struct bgpd_addr addr = { .aid = roa->aid, .v6 = roa->prefix.inet6 };
-#endif
+	char maxbuf[32];
 
 	maxbuf[0] = '\0';
 	if (roa->prefixlen != roa->maxlen)
