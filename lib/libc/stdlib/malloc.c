@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.299 2025/06/12 16:07:09 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.300 2025/10/23 18:49:46 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1091,24 +1091,6 @@ err:
 	return NULL;
 }
 
-#if defined(__GNUC__) && __GNUC__ < 4
-static inline unsigned int
-lb(u_int x)
-{
-#if defined(__m88k__)
-	__asm__ __volatile__ ("ff1 %0, %0" : "=r" (x) : "0" (x));
-	return x;
-#else
-	/* portable version */
-	unsigned int count = 0;
-	while ((x & (1U << (sizeof(int) * CHAR_BIT - 1))) == 0) {
-		count++;
-		x <<= 1;
-	}
-	return (sizeof(int) * CHAR_BIT - 1) - count;
-#endif
-}
-#else
 /* using built-in function version */
 static inline unsigned int
 lb(u_int x)
@@ -1116,7 +1098,6 @@ lb(u_int x)
 	/* I need an extension just for integer-length (: */
 	return (sizeof(int) * CHAR_BIT - 1) - __builtin_clz(x);
 }
-#endif
 
 /* https://pvk.ca/Blog/2015/06/27/linear-log-bucketing-fast-versatile-simple/
    via Tony Finch */
