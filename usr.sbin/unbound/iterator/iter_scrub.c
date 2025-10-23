@@ -645,7 +645,7 @@ scrub_normalize(sldns_buffer* pkt, struct msg_parse* msg,
 			 * and are removed later. */
 			if(FLAGS_GET_RCODE(msg->flags) == LDNS_RCODE_NOERROR &&
 				msg->an_rrsets != 0 &&
-				1 /* env->cfg->iter_scrub_promiscuous */) {
+				env->cfg->iter_scrub_promiscuous) {
 				remove_rrset("normalize: removing promiscuous "
 					"RRset:", pkt, msg, prev, &rrset);
 				continue;
