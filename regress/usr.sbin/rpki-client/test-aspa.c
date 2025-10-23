@@ -1,4 +1,4 @@
-/*	$Id: test-aspa.c,v 1.11 2025/10/23 05:26:25 tb Exp $ */
+/*	$Id: test-aspa.c,v 1.12 2025/10/23 05:35:46 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -26,7 +26,6 @@
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/pem.h>
 #include <openssl/x509v3.h>
 
 #include "extern.h"
@@ -39,7 +38,7 @@ int experimental;
 int
 main(int argc, char *argv[])
 {
-	int		 c, i, ppem = 0, verb = 0;
+	int		 c, i, verb = 0;
 	struct aspa	*p;
 	struct cert	*cert = NULL;
 	unsigned char	*buf;
@@ -47,13 +46,8 @@ main(int argc, char *argv[])
 
 	x509_init_oid();
 
-	while ((c = getopt(argc, argv, "pv")) != -1)
+	while ((c = getopt(argc, argv, "v")) != -1)
 		switch (c) {
-		case 'p':
-			if (ppem)
-				break;
-			ppem = 1;
-			break;
 		case 'v':
 			verb++;
 			break;
@@ -75,10 +69,6 @@ main(int argc, char *argv[])
 		}
 		if (verb)
 			aspa_print(cert, p);
-		if (ppem) {
-			if (!PEM_write_X509(stdout, cert->x509))
-				errx(1, "PEM_write_X509: unable to write cert");
-		}
 		free(buf);
 		aspa_free(p);
 		cert_free(cert);
