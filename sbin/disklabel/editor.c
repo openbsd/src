@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.424 2025/10/17 17:50:10 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.425 2025/10/23 15:12:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -990,15 +990,13 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 	const char *promptfmt = "partition to %s";
 	const char *helpfmt = "Partition must be between %s (excluding 'c')%s.\n";
 	const struct partition *pp;
-	char *help = NULL, *prompt = NULL, *partitionnames = "'a' to 'p'";
-	char maxpart;
+	char *help = NULL, *prompt = NULL, *partitionnames;
 	int add, delete, inuse, partno;
+
+	partitionnames = (MAXPARTITIONS == 16) ? "'a'-'p'" : "'a'-'z' or 'A'-'Z'";
 
 	add = strcmp("add", action) == 0;
 	delete = strcmp("delete", action) == 0;
-	maxpart = DL_PARTNUM2NAME((add ? MAXPARTITIONS : lp->d_npartitions) - 1);
-	if (maxpart > 16)
-		partitionnames = "'a'-'z' or 'A'-'Z'";
 
 	if (p == NULL) {
 		if (asprintf(&prompt, promptfmt, action) == -1 ||
@@ -1034,7 +1032,7 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 
 	partno = DL_PARTNAME2NUM(*p);
 	if (strlen(p) > 1 || partno == -1 || *p == 'c') {
-		fprintf(stderr, helpfmt, maxpart, delete ? ", or '*'" : "");
+		fprintf(stderr, helpfmt, partitionnames, delete ? ", or '*'" : "");
 		goto done;
 	}
 
