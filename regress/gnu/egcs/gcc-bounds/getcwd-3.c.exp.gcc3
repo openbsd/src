@@ -1,2 +1,0 @@
-getcwd-3.c: In function `main':
-getcwd-3.c:5: warning: array size (10) smaller than bound length (2010)

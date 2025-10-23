@@ -1,2 +1,0 @@
-memcpy-3.c: In function `main':
-memcpy-3.c:6: warning: array size (4) smaller than bound length (8)
