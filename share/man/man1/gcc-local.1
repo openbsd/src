@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.57 2023/10/29 23:31:16 millert Exp $
+.\" $OpenBSD: gcc-local.1,v 1.58 2025/10/23 20:00:24 miod Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 29 2023 $
+.Dd $Mdocdate: October 23 2025 $
 .Dt GCC-LOCAL 1
 .Os
 .Sh NAME
@@ -35,10 +35,8 @@
 .Ox
 uses derivatives of
 .Xr gcc 1
-versions 3.3.6 or 4.2.1,
-depending on machine architecture.
-In all cases,
-the software comes with specific modifications for
+version 4.2.1.
+The software comes with specific modifications for
 .Ox :
 .Bl -dash
 .It
@@ -94,8 +92,7 @@ The
 .Fl O2
 option does not include the
 .Fl ftree-vrp
-optimization as it is known to be broken in
-.Nm gcc 4.2.1 .
+optimization as it is known to be broken.
 .It
 .Nm gcc
 recognizes the extra format attribute syslog, to better match
@@ -179,8 +176,7 @@ System 5 AMD64 ABI.
 This enables tools and debuggers that understand this semantic to
 trivially generate stack traces that include function arguments.
 .It
-On the alpha, amd64, arm, hppa, i386, mips64, powerpc, sh and sparc64
-architectures,
+On all architectures but luna88k,
 .Nm gcc
 generates position-independent executables
 .Pq PIEs
@@ -219,19 +215,14 @@ This behavior can be restored with
 .It
 The option
 .Fl fstack-shuffle
-will randomize the order of stack variables at compile time with
-.Nm gcc 4.2.1 ,
+will randomize the order of stack variables at compile time,
 which can be helpful to find bugs.
-This option is silently ignored by
-.Nm gcc 3.3.6 .
 .It
 .Nm gcc
 will not move variables initialized with the value zero
 from the data section to the bss section.
 The default behaviour of
-.Nm gcc 3.3.6
-and
-.Nm gcc 4.2.1
+.Nm gcc
 on other systems is to perform this action, which can be restored for
 .Ox
 with
@@ -241,7 +232,7 @@ with
 does not warn for cast expressions used as lvalues outside of
 .Fl pedantic .
 .It
-.Nm gcc 4.2.1
+.Nm gcc
 does not warn for passing pointer arguments or assignment with
 different signedness outside of
 .Fl pedantic .
@@ -285,17 +276,15 @@ will report automatic variable declarations whose size cannot be
 determined at compile-time.
 .El
 .It
-.Nm gcc 4.2.1
-and
-.Nm gcc 3.3.6
-have backported support for the GCC binary integer constants extension,
+.Nm gcc
+has backported support for the GCC binary integer constants extension,
 which was first introduced in
 .Nm gcc 4.3 .
 .It
 The behavior of
 .Fl Wshadow
 in
-.Nm gcc 4.2.1
+.Nm gcc
 has been altered to behave similarly to
 .Nm gcc 4.8
 and not warn about variables or parameters that shadow a global
