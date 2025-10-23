@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.28 2025/07/20 07:49:47 tb Exp $ */
+/*	$Id: test-roa.c,v 1.29 2025/10/23 05:26:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,9 +44,6 @@ main(int argc, char *argv[])
 	unsigned char	*buf;
 	size_t		 len;
 
-	ERR_load_crypto_strings();
-	OpenSSL_add_all_ciphers();
-	OpenSSL_add_all_digests();
 	x509_init_oid();
 
 	while ((c = getopt(argc, argv, "pv")) != -1)
@@ -86,10 +83,6 @@ main(int argc, char *argv[])
 		cert_free(cert);
 		cert = NULL;
 	}
-
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
-	ERR_free_strings();
 
 	if (i < argc)
 		errx(1, "test failed for %s", argv[i]);

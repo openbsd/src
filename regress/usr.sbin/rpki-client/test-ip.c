@@ -1,4 +1,4 @@
-/*	$Id: test-ip.c,v 1.11 2024/08/23 12:56:26 anton Exp $ */
+/*	$Id: test-ip.c,v 1.12 2025/10/23 05:26:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -81,10 +81,6 @@ test(const char *res, uint16_t afiv, size_t sz, size_t unused, ...)
 int
 main(int argc, char *argv[])
 {
-	ERR_load_crypto_strings();
-	OpenSSL_add_all_ciphers();
-	OpenSSL_add_all_digests();
-
 	test("10.5.0.4/32",
 	     1, 0x04, 0x00, 0x0a, 0x05, 0x00, 0x04);
 
@@ -123,8 +119,6 @@ main(int argc, char *argv[])
 	     1, 0x01, 0x04, 0x80);
 	test("129.64.0.0/10",
 	     1, 0x02, 0x06, 0x81, 0x40);
-
-	ERR_free_strings();
 
 	printf("OK\n");
 	return 0;

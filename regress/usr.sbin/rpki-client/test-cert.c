@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.26 2025/07/15 09:26:19 tb Exp $ */
+/*	$Id: test-cert.c,v 1.27 2025/10/23 05:26:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,9 +43,6 @@ main(int argc, char *argv[])
 	int		 c, i, verb = 0, ta = 0;
 	struct cert	*p;
 
-	ERR_load_crypto_strings();
-	OpenSSL_add_all_ciphers();
-	OpenSSL_add_all_digests();
 	x509_init_oid();
 
 	while ((c = getopt(argc, argv, "tv")) != -1)
@@ -112,10 +109,6 @@ main(int argc, char *argv[])
 			cert_free(p);
 		}
 	}
-
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
-	ERR_free_strings();
 
 	if (i < argc)
 		errx(1, "test failed for %s", argv[i]);

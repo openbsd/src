@@ -1,4 +1,4 @@
-/*	$Id: test-tal.c,v 1.14 2024/04/22 05:54:01 claudio Exp $ */
+/*	$Id: test-tal.c,v 1.15 2025/10/23 05:26:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -42,10 +42,6 @@ main(int argc, char *argv[])
 	size_t		 len;
 	struct tal	*tal;
 
-	ERR_load_crypto_strings();
-	OpenSSL_add_all_ciphers();
-	OpenSSL_add_all_digests();
-
 	while ((c = getopt(argc, argv, "v")) != -1)
 		switch (c) {
 		case 'v':
@@ -71,10 +67,6 @@ main(int argc, char *argv[])
 			tal_print(tal);
 		tal_free(tal);
 	}
-
-	EVP_cleanup();
-	CRYPTO_cleanup_all_ex_data();
-	ERR_free_strings();
 
 	if (i < argc)
 		errx(1, "test failed for %s", argv[i]);
