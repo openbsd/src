@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.65 2025/10/23 19:06:10 miod Exp $
+#	$OpenBSD: Makefile,v 1.66 2025/10/23 19:35:56 miod Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ SUBDIR+=	cc clang
 SUBDIR+=	cc
 .  endif
 .  if ${BUILD_CLANG:L} == "yes"
-SUBDIR+=	clang
+#SUBDIR+=	clang
 .  endif
 .endif
 
@@ -26,11 +26,5 @@ SUBDIR+=	binutils-2.17
 
 # Do these last; texinfo builds the info 'dir' file, perl must be after binutils
 SUBDIR+=	perl texinfo
-
-maninstall:
-	${INSTALL} ${INSTALL_COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} \
-		gcc/protoize.1 ${DESTDIR}${MANDIR}1/protoize.1
-	@rm -f ${DESTDIR}${MANDIR}1/unprotoize.1
-	ln ${DESTDIR}${MANDIR}1/protoize.1 ${DESTDIR}${MANDIR}1/unprotoize.1
 
 .include <bsd.subdir.mk>
