@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2019/07/26 09:12:38 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2025/10/23 19:06:10 miod Exp $
 
 GCC_BUILTINS=	sprintf-1 sprintf-2 sprintf-3 stpcpy-1 stpcpy-2 strcat-1 \
 		strcat-2 strcpy-1 strcpy-2 strncat-1 vsprintf-1 vsprintf-2 \
@@ -30,13 +30,11 @@ NOOBJ= Yes
 REGRESS_EXPECTED_FAILURES=	${REGRESS_TARGETS:N*strncat*}
 .endif
 
-.if ${BUILD_GCC3:L} == "yes"
-EXP=            .exp.gcc3
-.elif ${BUILD_GCC4:L} == "yes"
+.if ${BUILD_GCC4:L} == "yes"
 EXP=            .exp.gcc4
 .else
 regress:
-	@echo neither gcc3 nor gcc4 exists on ${MACHINE_ARCH}
+	@echo gcc4 does not exist on ${MACHINE_ARCH}
 	@echo SKIPPED
 .endif
 

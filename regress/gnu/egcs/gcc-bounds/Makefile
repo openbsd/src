@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2019/07/25 14:17:11 bluhm Exp $
+# $OpenBSD: Makefile,v 1.19 2025/10/23 19:06:10 miod Exp $
 
 C_MODULES?=	strlcpy strlcat getcwd memcpy fread memcpy declare \
 		sscanf vararray md builtins
@@ -59,13 +59,11 @@ NOOBJ= Yes
 REGRESS_EXPECTED_FAILURES=	c-getcwd-1
 .endif
 
-.if ${BUILD_GCC3:L} == "yes" 
-EXP=		.exp.gcc3
-.elif ${BUILD_GCC4:L} == "yes" 
+.if ${BUILD_GCC4:L} == "yes" 
 EXP=		.exp.gcc4
 .else
 regress:
-	@echo neither gcc3 nor gcc4 exists on ${MACHINE_ARCH}
+	@echo gcc4 does not exist on ${MACHINE_ARCH}
 	@echo SKIPPED
 .endif
 

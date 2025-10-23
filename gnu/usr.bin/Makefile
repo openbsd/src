@@ -1,14 +1,11 @@
-#	$OpenBSD: Makefile,v 1.64 2022/10/28 15:50:55 miod Exp $
+#	$OpenBSD: Makefile,v 1.65 2025/10/23 19:06:10 miod Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
 
 .if make(obj)
-SUBDIR+=	cc clang gcc
+SUBDIR+=	cc clang
 .else
-.  if ${BUILD_GCC3:L} == "yes"
-SUBDIR+=	gcc
-.  endif
 .  if ${BUILD_GCC4:L} == "yes"
 SUBDIR+=	cc
 .  endif

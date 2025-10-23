@@ -1,15 +1,10 @@
-#	$OpenBSD: Makefile,v 1.16 2021/05/26 19:14:32 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.17 2025/10/23 19:06:10 miod Exp $
 
 .PATH: ${.CURDIR}/lib
 
-.include <bsd.own.mk>		# to check ${COMPILER_VERSION}
-
 LIB=	expat
 SRCS=	xmlparse.c xmltok.c xmlrole.c
-CFLAGS+=-I${.CURDIR}
-.if ${COMPILER_VERSION:L} != "gcc3"
-CFLAGS+=-fvisibility=hidden -DXML_ENABLE_VISIBILITY=1
-.endif
+CFLAGS+=-I${.CURDIR} -fvisibility=hidden -DXML_ENABLE_VISIBILITY=1
 
 PC_FILES=expat.pc
 CLEANFILES+=${PC_FILES}

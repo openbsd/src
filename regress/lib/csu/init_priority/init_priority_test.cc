@@ -1,4 +1,4 @@
-/* $OpenBSD: init_priority_test.cc,v 1.4 2013/08/01 21:26:30 kettenis Exp $ */
+/* $OpenBSD: init_priority_test.cc,v 1.5 2025/10/23 19:06:10 miod Exp $ */
 
 #include <cassert>
 #include <cstdio>
@@ -20,11 +20,7 @@ Test::Test(int x)
 	counter++;
 }
 
-#if __GNUC__ < 4
-#define TEST(n) Test test_##n (n) __attribute__((init_priority (n)))
-#else
 #define TEST(n) Test test_##n __attribute__((init_priority (n))) (n)
-#endif
 TEST(12597);
 TEST(20840);
 TEST(31319);

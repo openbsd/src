@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.232 2024/08/12 20:56:55 guenther Exp $
+#	$OpenBSD: Makefile,v 1.233 2025/10/23 19:06:10 miod Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -52,10 +52,6 @@ RDIRS=	../lib/libagentx ../lib/libcbor ../lib/libcurses ../lib/libedit \
 	../usr.bin/lex ../gnu/lib/libexecinfo ../gnu/lib/libreadline \
 	../sys/arch/${MACHINE}
 
-.if ${BUILD_GCC3:L} == "yes"
-RDIRS+= ../gnu/usr.bin/gcc
-PRDIRS+= ../gnu/lib/libstdc++
-.endif
 .if ${BUILD_GCC4:L} == "yes"
 PRDIRS+= ../gnu/lib/libstdc++-v3 ../gnu/usr.bin/cc/include
 .endif

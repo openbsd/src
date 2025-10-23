@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.16 2023/10/29 14:26:13 millert Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.17 2025/10/23 19:06:10 miod Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -57,13 +57,13 @@
 #define	DEF_WRAP(x)		__weak_alias(x, WRAP(x))
 #define	DEF_SYS(x)		__strong_alias(_thread_sys_##x, HIDDEN(x))
 
-#if !defined(__clang__) && __GNUC__ != 3
+#if !defined(__clang__)
 /* our gcc 4.2 handles redirecting builtins via PROTO_NORMAL()'s asm() label */
 #define	DEF_BUILTIN(x)		DEF_STRONG(x)
 #define	BUILTIN
 #else
 /*
- * clang and gcc can't redirect builtins via asm() labels, so mark
+ * clang can't redirect builtins via asm() labels, so mark
  * them protected instead.
  */
 #define	DEF_BUILTIN(x)		__asm("")
@@ -86,7 +86,7 @@ BUILTIN void	*memmove(void *, const void *, __size_t);
 BUILTIN void	*memcpy(void *__restrict, const void *__restrict, __size_t);
 BUILTIN void	*memset(void *, int, __size_t);
 BUILTIN void	__stack_smash_handler(const char [], int __unused);
-#if !defined(__clang__) && __GNUC__ != 3
+#if !defined(__clang__)
 PROTO_NORMAL(memmove);
 PROTO_NORMAL(memcpy);
 PROTO_NORMAL(memset);

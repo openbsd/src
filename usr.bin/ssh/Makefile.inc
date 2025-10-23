@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.101 2025/08/29 03:50:38 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.102 2025/10/23 19:06:10 miod Exp $
 
 .include <bsd.own.mk>
 
@@ -15,19 +15,17 @@ CDIAGFLAGS+=	-Wextra
 CDIAGFLAGS+=	-Wformat-security
 CDIAGFLAGS+=	-Wmissing-declarations
 CDIAGFLAGS+=	-Wmissing-prototypes
+CDIAGFLAGS+=	-Wold-style-definition
 CDIAGFLAGS+=	-Wpointer-arith
 CDIAGFLAGS+=	-Wshadow
+CDIAGFLAGS+=	-Wstrict-aliasing=2
 CDIAGFLAGS+=	-Wstrict-prototypes
 CDIAGFLAGS+=	-Wunused
 CDIAGFLAGS+=	-Wno-unused-parameter # Lots of these in protocol handlers.
 .if ${COMPILER_VERSION:L} == "clang"
 CDIAGFLAGS+=	-Widiomatic-parentheses -Wparentheses
 .endif
-.if ${COMPILER_VERSION:L} != "gcc3"
-CDIAGFLAGS+=	-Wstrict-aliasing=2
-CDIAGFLAGS+=	-Wold-style-definition
 CDIAGFLAGS+=	-Werror
-.endif
 
 #DEBUG=-g
 #INSTALL_STRIP=

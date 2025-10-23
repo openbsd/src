@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.214 2025/10/23 18:46:53 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.215 2025/10/23 19:06:10 miod Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -17,7 +17,6 @@ YP?=		yes
 
 CLANG_ARCH=aarch64 amd64 arm i386 mips64 mips64el powerpc powerpc64 riscv64 sparc64
 GCC4_ARCH=alpha hppa m88k sh sparc64
-GCC3_ARCH=
 LLD_ARCH=aarch64 amd64 arm i386 powerpc powerpc64 riscv64
 LLDB_ARCH=aarch64 amd64
 
@@ -26,19 +25,12 @@ PIE_ARCH=aarch64 alpha amd64 arm hppa i386 mips64 mips64el powerpc powerpc64 ris
 STATICPIE_ARCH=aarch64 alpha amd64 arm hppa i386 mips64 mips64el powerpc powerpc64 riscv64 sh sparc64
 
 .for _arch in ${MACHINE_ARCH}
-.if !empty(GCC3_ARCH:M${_arch})
-COMPILER_VERSION?=gcc3
-.elif !empty(GCC4_ARCH:M${_arch})
+.if !empty(GCC4_ARCH:M${_arch})
 COMPILER_VERSION?=gcc4
 .elif !empty(CLANG_ARCH:M${_arch})
 COMPILER_VERSION?=clang
 .endif
 
-.if !empty(GCC3_ARCH:M${_arch})
-BUILD_GCC3?=yes
-.else
-BUILD_GCC3?=no
-.endif
 .if !empty(GCC4_ARCH:M${_arch})
 BUILD_GCC4?=yes
 .else
