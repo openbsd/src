@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.652 2025/10/16 09:50:02 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.653 2025/10/24 08:10:37 rsadowski Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 16 2025 $
+.Dd $Mdocdate: October 24 2025 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1432,8 +1432,6 @@ First element in the list that matches will be chosen.
 gcc 4.2 compiler from base
 .It base-clang
 clang compiler from base
-.It gcc3
-gcc 3 compiler from base
 .It ports-gcc
 gcc 8 compiler from ports
 (heeds
@@ -1452,7 +1450,7 @@ On clang-based architectures, even though gcc is still compiled in base,
 never matches.
 .Pp
 Defaults to base compilers, e.g.,
-.Sq base-clang base-gcc gcc3 .
+.Sq base-clang base-gcc .
 .Pp
 Common reasons for explicitly setting
 .Ev COMPILER
@@ -1530,8 +1528,8 @@ preferring various gnu programs, unless
 .Ev BUILD_DEPENDS
 explicitly ask for them.
 Read-only, available for debugging purposes.
-.It Ev CLANG_ARCHS, GCC3_ARCHS , GCC4_ARCHS
-List of architectures using Clang, GCC 3.3.6 or GCC 4.2.1 as the base compiler.
+.It Ev CLANG_ARCHS, GCC4_ARCHS
+List of architectures using Clang or GCC 4.2.1 as the base compiler.
 Read-only.
 Use with
 .Ev NOT_FOR_ARCHS
