@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.33 2025/05/10 06:04:36 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.34 2025/10/24 09:23:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1240,7 +1240,7 @@ int ssl_security_cert_chain(const SSL *ssl, STACK_OF(X509) *sk,
 int ssl_security_shared_group(const SSL *ssl, uint16_t group_id);
 int ssl_security_supported_group(const SSL *ssl, uint16_t group_id);
 
-SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int include_ticket);
+SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int include_ticket);
 int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block,
     int *alert);
