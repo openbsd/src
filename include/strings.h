@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.h,v 1.6 2017/09/10 21:50:36 schwarze Exp $	*/
+/*	$OpenBSD: strings.h,v 1.7 2025/10/24 11:30:06 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,6 +77,10 @@ int	 strncasecmp(const char *, const char *, size_t);
 #if __POSIX_VISIBLE >= 200809
 int	 strcasecmp_l(const char *, const char *, locale_t);
 int	 strncasecmp_l(const char *, const char *, size_t, locale_t);
+#endif
+#if __POSIX_VISIBLE >= 202405
+int	 ffsl(long);
+int	 ffsll(long long);
 #endif
 __END_DECLS
 

@@ -1608,6 +1608,8 @@ bcopy
 bzero
 explicit_bzero
 ffs
+ffsl
+ffsll
 index
 memccpy
 memchr

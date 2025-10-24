@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile.inc,v 1.40 2024/07/14 09:51:18 jca Exp $
+#	$OpenBSD: Makefile.inc,v 1.41 2025/10/24 11:30:06 claudio Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_CPU}/string ${LIBCSRCDIR}/string
 
-SRCS+=	explicit_bzero.c memccpy.c memmem.c memrchr.c stpcpy.c stpncpy.c \
-	strcasecmp.c strcasecmp_l.c strcasestr.c strcoll.c strcoll_l.c \
-	strdup.c strerror.c strerror_l.c strerror_r.c strmode.c \
-	strndup.c strnlen.c strsignal.c strtok.c strxfrm.c strxfrm_l.c \
-	timingsafe_bcmp.c timingsafe_memcmp.c \
+SRCS+=	explicit_bzero.c ffsl.c ffsll.c memccpy.c memmem.c memrchr.c \
+	stpcpy.c stpncpy.c strcasecmp.c strcasecmp_l.c strcasestr.c \
+	strcoll.c strcoll_l.c strdup.c strerror.c strerror_l.c strerror_r.c \
+	strmode.c strndup.c strnlen.c strsignal.c strtok.c strxfrm.c \
+	strxfrm_l.c timingsafe_bcmp.c timingsafe_memcmp.c \
 	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
 	wcslen.c wcsncat.c wcsncmp.c wcsncpy.c wcsnlen.c wcspbrk.c wcsrchr.c \
 	wcsspn.c wcsstr.c wcstok.c wcswcs.c wcswidth.c wmemchr.c wmemcmp.c \
