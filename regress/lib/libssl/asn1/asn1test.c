@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.13 2024/07/22 14:50:45 jsing Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.14 2025/10/24 11:45:08 tb Exp $	*/
 /*
  * Copyright (c) 2014, 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -371,7 +371,7 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 static int
 do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 {
-	SSL_SESSION *sp = NULL;
+	SSL_SESSION *sp = NULL, *sp_copy = NULL;
 	unsigned char *ap, *asn1 = NULL;
 	const unsigned char *pp;
 	int i, len, rv = 1;
@@ -440,11 +440,31 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 		goto failed;
 	}
 
+	if ((sp_copy = SSL_SESSION_dup(sp)) == NULL) {
+		fprintf(stderr, "FAIL: test %d - session dup failed\n", test_no);
+		goto failed;
+	}
+
+	if (session_cmp(sp, sp_copy) != 0) {
+		fprintf(stderr, "FAIL: test %d - sp and sp_dup differ\n", test_no);
+		goto failed;
+	}
+
+	/*
+	 * session_cmp() checks that the certs compare as equal. Part of the
+	 * documented API contract is that the certs are equal as pointers.
+	 */
+	if (SSL_SESSION_get0_peer(sp) != SSL_SESSION_get0_peer(sp_copy)) {
+		fprintf(stderr, "FAIL: test %d - peer certs differ\n", test_no);
+		goto failed;
+	}
+
 	rv = 0;
 
  failed:
 	ERR_print_errors_fp(stderr);
 	SSL_SESSION_free(sp);
+	SSL_SESSION_free(sp_copy);
 	free(asn1);
 
 	return (rv);
