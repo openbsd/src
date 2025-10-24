@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.70 2025/03/09 15:20:20 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.71 2025/10/24 11:33:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -441,6 +441,7 @@ int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param, const char *name,
     size_t namelen);
 int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param, const char *name,
     size_t namelen);
+unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
     unsigned int flags);
 char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param);

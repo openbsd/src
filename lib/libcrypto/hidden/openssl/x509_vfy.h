@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.10 2025/03/09 15:20:20 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.11 2025/10/24 11:33:38 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -122,6 +122,7 @@ LCRYPTO_USED(X509_VERIFY_PARAM_set1_name);
 LCRYPTO_USED(X509_VERIFY_PARAM_set_flags);
 LCRYPTO_USED(X509_VERIFY_PARAM_clear_flags);
 LCRYPTO_USED(X509_VERIFY_PARAM_get_flags);
+LCRYPTO_USED(X509_VERIFY_PARAM_get_hostflags);
 LCRYPTO_USED(X509_VERIFY_PARAM_set_purpose);
 LCRYPTO_USED(X509_VERIFY_PARAM_set_trust);
 LCRYPTO_USED(X509_VERIFY_PARAM_set_depth);
