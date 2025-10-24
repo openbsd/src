@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.349 2025/07/18 08:39:14 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.350 2025/10/24 15:09:56 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_control	= in_control,
 	.pru_sockaddr	= in_sockaddr,
 	.pru_peeraddr	= in_peeraddr,
+	.pru_flowid	= in_flowid,
 };
 
 #ifdef INET6
@@ -150,6 +151,7 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pru_control	= in6_control,
 	.pru_sockaddr	= in6_sockaddr,
 	.pru_peeraddr	= in6_peeraddr,
+	.pru_flowid	= in_flowid,
 };
 #endif
 

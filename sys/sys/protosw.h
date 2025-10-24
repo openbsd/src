@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.72 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.73 2025/10/24 15:09:56 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -86,6 +86,7 @@ struct pr_usrreqs {
 		    struct mbuf *);
 	int	(*pru_sockaddr)(struct socket *, struct mbuf *);
 	int	(*pru_peeraddr)(struct socket *, struct mbuf *);
+	int	(*pru_flowid)(struct socket *);
 	int	(*pru_connect2)(struct socket *, struct socket *);
 };
 
@@ -392,6 +393,12 @@ static inline int
 pru_peeraddr(struct socket *so, struct mbuf *addr)
 {
 	return (*so->so_proto->pr_usrreqs->pru_peeraddr)(so, addr);
+}
+
+static inline int
+pru_flowid(struct socket *so)
+{
+	return (*so->so_proto->pr_usrreqs->pru_flowid)(so);
 }
 
 static inline int

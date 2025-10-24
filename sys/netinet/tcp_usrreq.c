@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.252 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.253 2025/10/24 15:09:56 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_control	= in_control,
 	.pru_sockaddr	= tcp_sockaddr,
 	.pru_peeraddr	= tcp_peeraddr,
+	.pru_flowid	= in_flowid,
 };
 
 #ifdef INET6
@@ -152,6 +153,7 @@ const struct pr_usrreqs tcp6_usrreqs = {
 	.pru_control	= in6_control,
 	.pru_sockaddr	= tcp_sockaddr,
 	.pru_peeraddr	= tcp_peeraddr,
+	.pru_flowid	= in_flowid,
 };
 #endif
 

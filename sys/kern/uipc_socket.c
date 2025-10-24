@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.385 2025/07/25 08:58:44 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.386 2025/10/24 15:09:56 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 #include <sys/rwlock.h>
 #include <sys/time.h>
 #include <sys/refcnt.h>
+
+#include <net/if.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -117,14 +119,13 @@ int	sominconn = SOMINCONN;
 struct pool socket_pool;
 #ifdef SOCKET_SPLICE
 struct pool sosplice_pool;
-struct taskq *sosplice_taskq;
-struct rwlock sosplice_lock = RWLOCK_INITIALIZER("sosplicelk");
 
 #define so_splicelen	so_sp->ssp_len
 #define so_splicemax	so_sp->ssp_max
 #define so_spliceidletv	so_sp->ssp_idletv
 #define so_spliceidleto	so_sp->ssp_idleto
 #define so_splicetask	so_sp->ssp_task
+#define so_splicequeue	so_sp->ssp_queue
 #endif
 
 void
@@ -433,6 +434,7 @@ discard:
 #ifdef SOCKET_SPLICE
 	if (so->so_sp) {
 		struct socket *soback;
+		struct taskq *spq, *spqback;
 
 		sounlock_shared(so);
 		/*
@@ -461,7 +463,6 @@ discard:
 			sounsplice(so->so_sp->ssp_soback, so, freeing);
 		}
 		sbunlock(&soback->so_rcv);
-		sorele(soback);
 
 notsplicedback:
 		sblock(&so->so_rcv, SBL_WAIT | SBL_NOINTR);
@@ -474,9 +475,16 @@ notsplicedback:
 		}
 		sbunlock(&so->so_rcv);
 
-		timeout_del_barrier(&so->so_spliceidleto);
-		task_del(sosplice_taskq, &so->so_splicetask);
-		taskq_barrier(sosplice_taskq);
+		timeout_barrier(&so->so_spliceidleto);
+		spq = so->so_splicequeue;
+		if (spq != NULL)
+			taskq_barrier(spq);
+		if (soback != NULL) {
+			spqback = soback->so_splicequeue;
+			if (spqback != NULL && spqback != spq)
+				taskq_barrier(spqback);
+			sorele(soback);
+		}
 
 		solock_shared(so);
 	}
@@ -1290,7 +1298,6 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 {
 	struct file	*fp;
 	struct socket	*sosp;
-	struct taskq	*tq;
 	int		 error = 0;
 
 	if ((so->so_proto->pr_flags & PR_SPLICE) == 0)
@@ -1310,25 +1317,6 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 			error = EPROTO;
 		sbunlock(&so->so_rcv);
 		return (error);
-	}
-
-	if (sosplice_taskq == NULL) {
-		rw_enter_write(&sosplice_lock);
-		if (sosplice_taskq == NULL) {
-			tq = taskq_create("sosplice", 1, IPL_SOFTNET,
-			    TASKQ_MPSAFE);
-			if (tq == NULL) {
-				rw_exit_write(&sosplice_lock);
-				return (ENOMEM);
-			}
-			/* Ensure the taskq is fully visible to other CPUs. */
-			membar_producer();
-			sosplice_taskq = tq;
-		}
-		rw_exit_write(&sosplice_lock);
-	} else {
-		/* Ensure the taskq is fully visible on this CPU. */
-		membar_consumer();
 	}
 
 	/* Find sosp, the drain socket where data will be spliced into. */
@@ -1398,6 +1386,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	mtx_enter(&sosp->so_snd.sb_mtx);
 	so->so_sp->ssp_socket = soref(sosp);
 	sosp->so_sp->ssp_soback = soref(so);
+	so->so_splicequeue = net_tq(pru_flowid(so));
 	mtx_leave(&sosp->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
 
@@ -1435,14 +1424,13 @@ sounsplice(struct socket *so, struct socket *sosp, int freeing)
 	mtx_enter(&sosp->so_snd.sb_mtx);
 	so->so_rcv.sb_flags &= ~SB_SPLICE;
 	sosp->so_snd.sb_flags &= ~SB_SPLICE;
+	timeout_del(&so->so_spliceidleto);
+	task_del(so->so_splicequeue, &so->so_splicetask);
 	KASSERT(so->so_sp->ssp_socket == sosp);
 	KASSERT(sosp->so_sp->ssp_soback == so);
 	so->so_sp->ssp_socket = sosp->so_sp->ssp_soback = NULL;
 	mtx_leave(&sosp->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
-
-	task_del(sosplice_taskq, &so->so_splicetask);
-	timeout_del(&so->so_spliceidleto);
 
 	/* Do not wakeup a socket that is about to be freed. */
 	if ((freeing & SOSP_FREEING_READ) == 0) {
@@ -1484,20 +1472,11 @@ void
 sotask(void *arg)
 {
 	struct socket *so = arg;
-	int doyield = 0;
 
 	sblock(&so->so_rcv, SBL_WAIT | SBL_NOINTR);
-	if (so->so_rcv.sb_flags & SB_SPLICE) {
-		if (so->so_proto->pr_flags & PR_WANTRCVD)
-			doyield = 1;
+	if (so->so_rcv.sb_flags & SB_SPLICE)
 		somove(so, M_DONTWAIT);
-	}
 	sbunlock(&so->so_rcv);
-
-	if (doyield) {
-		/* Avoid user land starvation. */
-		yield();
-	}
 }
 
 /*
@@ -1859,7 +1838,7 @@ sorwakeup(struct socket *so)
 	if (so->so_proto->pr_flags & PR_SPLICE) {
 		mtx_enter(&so->so_rcv.sb_mtx);
 		if (so->so_rcv.sb_flags & SB_SPLICE)
-			task_add(sosplice_taskq, &so->so_splicetask);
+			task_add(so->so_splicequeue, &so->so_splicetask);
 		if (isspliced(so)) {
 			mtx_leave(&so->so_rcv.sb_mtx);
 			return;
@@ -1879,7 +1858,7 @@ sowwakeup(struct socket *so)
 	if (so->so_proto->pr_flags & PR_SPLICE) {
 		mtx_enter(&so->so_snd.sb_mtx);
 		if (so->so_snd.sb_flags & SB_SPLICE)
-			task_add(sosplice_taskq,
+			task_add(so->so_sp->ssp_soback->so_splicequeue,
 			    &so->so_sp->ssp_soback->so_splicetask);
 		if (issplicedback(so)) {
 			mtx_leave(&so->so_snd.sb_mtx);
