@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.68 2025/08/29 05:11:19 jsg Exp $
+# $OpenBSD: files.drm,v 1.69 2025/10/24 02:02:27 jsg Exp $
 
 #file	dev/pci/drm/aperture.c			drm
 file	dev/pci/drm/dma-resv.c			drm
@@ -764,6 +764,7 @@ file	dev/pci/drm/amd/amdgpu/athub_v2_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/athub_v2_1.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/athub_v3_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/athub_v4_1_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/cyan_skillfish_reg_init.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/cz_ih.c			amdgpu
 file	dev/pci/drm/amd/amdgpu/dce_v10_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/dce_v11_0.c		amdgpu
