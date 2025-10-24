@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2017/06/30 14:56:08 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2025/10/24 05:14:25 anton Exp $
 
 # take any large xml file located in our source tree
-XMLFILE?=	${BSDSRCDIR}/gnu/lib/libstdc++/libstdc++/docs/html/17_intro/porting-howto.xml
+XMLFILE?=	${BSDSRCDIR}/regress/usr.sbin/rpki-client/rrdp/notification.xml
 
 run-regress-benchmark: ${PROG}
 	time ./${PROG} ${XMLFILE} 65535 10000
