@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.130 2025/10/24 09:23:06 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.131 2025/10/24 11:36:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -344,6 +344,13 @@ ssl_session_dup(const SSL_SESSION *sess, int include_ticket)
 
 	return NULL;
 }
+
+SSL_SESSION *
+SSL_SESSION_dup(const SSL_SESSION *src)
+{
+	return ssl_session_dup(src, 1);
+}
+LSSL_ALIAS(SSL_SESSION_dup);
 
 const unsigned char *
 SSL_SESSION_get_id(const SSL_SESSION *ss, unsigned int *len)

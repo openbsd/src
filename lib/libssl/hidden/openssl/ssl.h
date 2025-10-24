@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.9 2024/08/31 10:51:48 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.10 2025/10/24 11:36:08 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -182,6 +182,7 @@ LSSL_USED(SSL_SESSION_set1_id_context);
 LSSL_USED(SSL_SESSION_is_resumable);
 LSSL_USED(SSL_SESSION_new);
 LSSL_USED(SSL_SESSION_free);
+LSSL_USED(SSL_SESSION_dup);
 LSSL_USED(SSL_SESSION_up_ref);
 LSSL_USED(SSL_SESSION_get_id);
 LSSL_USED(SSL_SESSION_get0_id_context);

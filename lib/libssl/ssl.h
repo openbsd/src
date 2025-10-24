@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.248 2025/04/18 07:34:01 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.249 2025/10/24 11:36:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1199,6 +1199,7 @@ int SSL_SESSION_is_resumable(const SSL_SESSION *s);
 
 SSL_SESSION *SSL_SESSION_new(void);
 void	SSL_SESSION_free(SSL_SESSION *ses);
+SSL_SESSION *SSL_SESSION_dup(const SSL_SESSION *src);
 int	SSL_SESSION_up_ref(SSL_SESSION *ss);
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *ss,
 	    unsigned int *len);

@@ -137,6 +137,7 @@ SSL_CTX_use_certificate_ASN1
 SSL_CTX_use_certificate_chain_file
 SSL_CTX_use_certificate_chain_mem
 SSL_CTX_use_certificate_file
+SSL_SESSION_dup
 SSL_SESSION_free
 SSL_SESSION_get0_cipher
 SSL_SESSION_get0_id_context
