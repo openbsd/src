@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.279 2025/09/16 09:19:43 florian Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.280 2025/10/24 11:51:49 mvs Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1693,7 +1693,7 @@ icmp6_ratelimit(const struct in6_addr *dst, const int type, const int code)
 {
 	/* PPS limit */
 	if (!ppsratecheck(&icmp6errppslim_last, &icmp6errpps_count,
-	    icmp6errppslim))
+	    atomic_load_int(&icmp6errppslim)))
 		return 1;	/* The packet is subject to rate limit */
 	return 0;		/* okay to send */
 }
@@ -1776,15 +1776,12 @@ icmp6_mtudisc_timeout(struct rtentry *rt, u_int rtableid)
 }
 
 #ifndef SMALL_KERNEL
-const struct sysctl_bounded_args icmpv6ctl_vars_unlocked[] = {
+const struct sysctl_bounded_args icmpv6ctl_vars[] = {
 	{ ICMPV6CTL_ND6_DELAY, &nd6_delay, 0, INT_MAX },
 	{ ICMPV6CTL_ND6_UMAXTRIES, &nd6_umaxtries, 0, INT_MAX },
 	{ ICMPV6CTL_ND6_MMAXTRIES, &nd6_mmaxtries, 0, INT_MAX },
 	{ ICMPV6CTL_MTUDISC_HIWAT, &icmp6_mtudisc_hiwat, 0, INT_MAX },
 	{ ICMPV6CTL_MTUDISC_LOWAT, &icmp6_mtudisc_lowat, 0, INT_MAX },
-};
-
-const struct sysctl_bounded_args icmpv6ctl_vars[] = {
 	{ ICMPV6CTL_ERRPPSLIMIT, &icmp6errppslim, -1, 1000 },
 };
 
@@ -1805,12 +1802,6 @@ icmp6_sysctl_icmp6stat(void *oldp, size_t *oldlenp, void *newp)
 	return (ret);
 }
 
-/*
- * Temporary, should be replaced with sysctl_lock after icmp6_sysctl()
- * unlocking.
- */
-struct rwlock icmp6_sysctl_lock = RWLOCK_INITIALIZER("icmp6rwl"); 
-
 int
 icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
@@ -1829,11 +1820,11 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &newval, 0, INT_MAX);
 		if (error == 0 && oldval != newval) {
-			rw_enter_write(&icmp6_sysctl_lock);
+			rw_enter_write(&sysctl_lock);
 			atomic_store_int(&icmp6_redirtimeout, newval);
 			rt_timer_queue_change(&icmp6_redirect_timeout_q,
 			    newval);
-			rw_exit_write(&icmp6_sysctl_lock);
+			rw_exit_write(&sysctl_lock);
 		}
 
 		return (error);
@@ -1847,22 +1838,10 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    atomic_load_int(&ln_hold_total));
 		break;
 
-	case ICMPV6CTL_ND6_DELAY:
-	case ICMPV6CTL_ND6_UMAXTRIES:
-	case ICMPV6CTL_ND6_MMAXTRIES:
-	case ICMPV6CTL_MTUDISC_HIWAT:
-	case ICMPV6CTL_MTUDISC_LOWAT:
-		error = sysctl_bounded_arr(icmpv6ctl_vars_unlocked,
-		    nitems(icmpv6ctl_vars_unlocked), name, namelen,
-		    oldp, oldlenp, newp, newlen);
-		break;
-
 	default:
-		NET_LOCK();
 		error = sysctl_bounded_arr(icmpv6ctl_vars,
 		    nitems(icmpv6ctl_vars), name, namelen, oldp, oldlenp, newp,
 		    newlen);
-		NET_UNLOCK();
 		break;
 	}
 

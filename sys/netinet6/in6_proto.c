@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.152 2025/09/16 09:19:16 florian Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.153 2025/10/24 11:51:49 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ const struct protosw inet6sw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &inet6domain,
   .pr_protocol	= IPPROTO_ICMPV6,
-  .pr_flags	= PR_ATOMIC|PR_ADDR,
+  .pr_flags	= PR_ATOMIC|PR_ADDR|PR_MPSYSCTL,
   .pr_input	= icmp6_input,
   .pr_ctlinput	= rip6_ctlinput,
   .pr_ctloutput	= rip6_ctloutput,
@@ -376,5 +376,5 @@ u_long	rip6_recvspace = RIPV6RCVQ;
 
 /* ICMPV6 parameters */
 int	icmp6_redirtimeout = 10 * 60;	/* 10 minutes */
-int	icmp6errppslim = 100;		/* 100pps */
+int	icmp6errppslim = 100;		/* [a] 100pps */
 int	ip6_mtudisc_timeout = IPMTUDISCTIMEOUT;	/* [a] */
