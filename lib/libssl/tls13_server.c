@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.110 2025/10/16 14:42:21 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.111 2025/10/25 12:31:44 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -327,7 +327,7 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 static int
-tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb, int hrr)
+tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 {
 	uint16_t tlsext_msg_type = SSL_TLSEXT_MSG_SH;
 	const uint8_t *server_random;
@@ -338,7 +338,7 @@ tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb, int hrr)
 	cipher = SSL_CIPHER_get_value(ctx->hs->cipher);
 	server_random = s->s3->server_random;
 
-	if (hrr) {
+	if (ctx->hs->tls13.hrr) {
 		server_random = tls13_hello_retry_request_hash;
 		tlsext_msg_type = SSL_TLSEXT_MSG_HRR;
 	}
@@ -447,7 +447,7 @@ tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
 	if (ctx->hs->tls13.server_group == 0)
 		return 0;
 
-	if (!tls13_server_hello_build(ctx, cbb, 1))
+	if (!tls13_server_hello_build(ctx, cbb))
 		return 0;
 
 	return 1;
@@ -507,7 +507,7 @@ tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 	if (!tls13_servername_process(ctx))
 		return 0;
 
-	if (!tls13_server_hello_build(ctx, cbb, 0))
+	if (!tls13_server_hello_build(ctx, cbb))
 		return 0;
 
 	return 1;
