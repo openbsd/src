@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_general.c,v 1.7 2022/01/09 07:18:50 otto Exp $	*/
+/*	$OpenBSD: malloc_general.c,v 1.8 2025/10/26 21:25:12 miod Exp $	*/
 /*
  * Copyright (c) 2017 Otto Moerbeek <otto@drijf.net>
  *
@@ -23,6 +23,12 @@
 /* #define VERBOSE */
 
 #define N 1000
+
+#if defined(_LP64)
+#define COUNT 800000
+#else
+#define COUNT 20000
+#endif
 
 size_t
 size(void)
@@ -59,7 +65,7 @@ main(int argc, char *argv[])
 	void * q;
 	size_t sz;
 
-	for (count = 0; count < 800000; count++) {
+	for (count = 0; count < COUNT; count++) {
 		if (count % 10000 == 0) {
 			printf(".");
 			fflush(stdout);
