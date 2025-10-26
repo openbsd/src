@@ -1,4 +1,4 @@
-#	$OpenBSD: mime.types,v 1.5 2024/06/03 20:08:12 matthieu Exp $
+#	$OpenBSD: mime.types,v 1.6 2025/10/26 09:52:05 florian Exp $
 
 application/atom+xml					atom
 application/font-woff					woff
@@ -66,6 +66,7 @@ audio/ogg						ogg
 audio/x-m4a						m4a
 audio/x-realaudio					ra
 
+image/avif						avif
 image/gif						gif
 image/jpeg						jpeg jpg
 image/png						png
