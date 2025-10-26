@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.48 2025/03/31 17:35:28 schwarze Exp $
+# $OpenBSD: security,v 1.49 2025/10/26 22:44:53 afresh1 Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -36,6 +36,21 @@ use constant {
 $ENV{PATH} = '/bin:/usr/bin:/sbin:/usr/sbin';
 delete $ENV{ENV};
 umask 077;
+
+my $PARTITIONS = do {
+	my @p = ('a'..'z', 'A'..'Z');
+
+	my $max = `sysctl -n kern.maxpartitions`;
+	unless ($max && $max =~ /^[0-9]+\Z/) {
+		warn "Invalid kern.maxpartitions";
+		$max = @p;
+	}
+	warn "Unsupported kern.maxpartitions" if $max > @p;
+
+	$#p = $max - 1 if $max < @p;
+
+	join '', @p;
+};
 
 my $check_title;
 my $return_code = 0;
@@ -694,7 +709,7 @@ sub check_disks {
 	my $disk_re = qr/
 	    \/
 	    (?:ccd|dk|fd|hd|hk|hp|jb|kra|ra|rb|rd|rl|rx|rz|sd|up|vnd|wd|xd)
-	    \d+ [B-H]? [a-p] 
+	    \d+ [B-H]? [$PARTITIONS] 
 	    $
 	/x;
 
@@ -892,12 +907,12 @@ sub check_disklabels {
 	    "cannot spawn df: $!"
 	    and return;
 	my %disks;
-	@disks{map m{^/dev/(\w*\d*)[a-p]}, <$fh>} = ();
+	@disks{map m{^/dev/(\w*\d*)[$PARTITIONS]}, <$fh>} = ();
 	close_or_nag $fh, "df";
 
 	unless (nag !(open my $fh, '-|', qw(bioctl softraid0)),
 	    "cannot spawn bioctl: $!") {
-		@disks{map m{<(\w*\d*)[a-p]>}, <$fh>} = ();
+		@disks{map m{<(\w*\d*)[$PARTITIONS]>}, <$fh>} = ();
 		close_or_nag $fh, "bioctl";
 	}
 
