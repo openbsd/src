@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_mkdb.c,v 1.20 2023/12/24 06:35:05 gnezdo Exp $	*/
+/*	$OpenBSD: dev_mkdb.c,v 1.21 2025/10/27 16:17:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -112,11 +112,15 @@ main(int argc, char *argv[])
 			continue;
 
 		/* Create the key. */
-		if (S_ISCHR(dp->fts_statp->st_mode))
+		if (S_ISCHR(dp->fts_statp->st_mode)) {
+			if (strcmp(dp->fts_path, "./rrootdisk") == 0)
+				continue;
 			bkey.type = S_IFCHR;
-		else if (S_ISBLK(dp->fts_statp->st_mode))
+		} else if (S_ISBLK(dp->fts_statp->st_mode)) {
+			if (strcmp(dp->fts_path, "./rootdisk") == 0)
+				continue;
 			bkey.type = S_IFBLK;
-		else
+		} else
 			continue;
 		bkey.dev = dp->fts_statp->st_rdev;
 
