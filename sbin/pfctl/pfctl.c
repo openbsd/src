@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.397 2025/05/26 20:55:30 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.398 2025/10/27 09:54:55 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1935,6 +1935,7 @@ int
 pfctl_load_limit(struct pfctl *pf, unsigned int index, unsigned int limit)
 {
 	struct pfioc_limit pl;
+	static int restore_limit_handler_armed = 0;
 
 	memset(&pl, 0, sizeof(pl));
 	pl.index = index;
@@ -1947,6 +1948,9 @@ pfctl_load_limit(struct pfctl *pf, unsigned int index, unsigned int limit)
 			warnx("Cannot set %s limit to %u",
 			    pf_limits[index].name, limit);
 		return (1);
+	} else if (restore_limit_handler_armed == 0) {
+		atexit(pfctl_restore_limits);
+		restore_limit_handler_armed = 1;
 	}
 	return (0);
 }
@@ -2781,7 +2785,6 @@ main(int argc, char *argv[])
 		if (dev == -1)
 			err(1, "%s", pf_device);
 		pfctl_read_limits(dev);
-		atexit(pfctl_restore_limits);
 	} else {
 		dev = open(pf_device, O_RDONLY);
 		if (dev >= 0) {
