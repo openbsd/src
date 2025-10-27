@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.168 2023/12/13 17:50:23 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.169 2025/10/27 16:30:24 deraadt Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -91,10 +91,15 @@ checkfs()
 	set +e # ignore errors due to:
 	# - nonexistent files (i.e. syspatch is installing new files)
 	# - broken interpolation due to bogus devices like remote filesystems
-	eval $(cd / &&
-		stat -qf "_dev=\"\${_dev} %Sd\";
-			local %Sd=\"\${%Sd:+\${%Sd}\+}%Uz\"" ${_files}) \
-			2>/dev/null
+	for _f in ${_files}; do
+		_fdev=$(df /${_f} 2>/dev/null | grep "^/dev/" | \
+		    cut -d' ' -f1 | cut -d/ -f3)
+		[[ -n ${_fdev} ]] || continue
+		_dev="${_dev} ${_fdev}"
+		eval $(stat -qf "local ${_fdev}=\$((\$${_fdev}+%Uz))" /${_f} ) \
+		    2>/dev/null
+
+	done
 	set -e
 
 	for _d in $(printf '%s\n' ${_dev} | sort -u); do
