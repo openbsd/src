@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.103 2025/07/16 16:22:58 deraadt Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.104 2025/10/27 18:38:54 denis Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -256,7 +256,7 @@ ${DIST_LIB}: ${SELECTED_DOBJS}
 
 .if !target(clean)
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog *.core y.tab.h \
+	rm -f a.out [Ee]rrs mklog *.core *.o.tmp y.tab.h \
 	    ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 	rm -f lib${LIB}.a ${OBJS}
 	rm -f lib${LIB}_g.a ${GOBJS}

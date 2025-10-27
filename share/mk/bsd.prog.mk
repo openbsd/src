@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.83 2021/06/09 19:44:55 mortimer Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.84 2025/10/27 18:38:54 denis Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -135,7 +135,7 @@ BUILDAFTER += ${PROG} ${PROGS} ${OBJS}
 
 .if !target(clean)
 clean: _SUBDIRUSE
-	rm -f a.out [Ee]rrs mklog *.core y.tab.h \
+	rm -f a.out [Ee]rrs mklog *.core *.o.tmp y.tab.h \
 	    ${PROG} ${PROGS} ${OBJS} ${_LEXINTM} ${_YACCINTM} ${CLEANFILES}
 .endif
 
