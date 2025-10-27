@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.425 2025/10/23 15:12:52 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.426 2025/10/27 12:46:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -1040,7 +1040,7 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 	inuse = partno < lp->d_npartitions && DL_GETPSIZE(pp) > 0 &&
 	    pp->p_fstype != FS_UNUSED;
 
-	if ((add && !inuse) || (!add && inuse))
+	if (((add || delete) && !inuse) || (!add && inuse))
 		return partno;
 
 	fprintf(stderr, "Partition '%c' is %sin use.\n", *p,
