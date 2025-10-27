@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.60 2024/05/20 11:12:08 jca Exp $
+.\"	$OpenBSD: pool.9,v 1.61 2025/10/27 00:41:37 dv Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 20 2024 $
+.Dd $Mdocdate: October 27 2025 $
 .Dt POOL_INIT 9
 .Os
 .Sh NAME
@@ -72,8 +72,6 @@
 .Fo pool_sethardlimit
 .Fa "struct pool *pp"
 .Fa "unsigned n"
-.Fa "const char *warnmess"
-.Fa "int ratecap"
 .Fc
 .Sh DESCRIPTION
 These utility routines provide management of pools of fixed-sized
@@ -283,11 +281,6 @@ The function
 sets a hard limit on the pool to
 .Fa n
 items.
-If the hard limit is reached
-.Fa warnmess
-will be printed to the console, but no more than every
-.Fa ratecap
-seconds.
 Upon successful completion, a value of 0 is returned.
 The value EINVAL is returned when the current size of the pool
 already exceeds the requested hard limit.
