@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.192 2025/07/18 16:09:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.193 2025/10/27 20:48:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6392,14 +6392,16 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	desc->tbs[0].tb_len = htole16(IWX_FIRST_TB_SIZE);
 	paddr = htole64(data->cmd_paddr);
 	memcpy(&desc->tbs[0].addr, &paddr, sizeof(paddr));
-	if (data->cmd_paddr >> 32 != (data->cmd_paddr + le32toh(desc->tbs[0].tb_len)) >> 32)
+	if ((uint64_t)data->cmd_paddr >> 32 != ((uint64_t)data->cmd_paddr +
+	    le32toh(desc->tbs[0].tb_len)) >> 32)
 		DPRINTF(("%s: TB0 crosses 32bit boundary\n", __func__));
 	desc->tbs[1].tb_len = htole16(sizeof(struct iwx_cmd_header) +
 	    txcmd_size + hdrlen + pad - IWX_FIRST_TB_SIZE);
 	paddr = htole64(data->cmd_paddr + IWX_FIRST_TB_SIZE);
 	memcpy(&desc->tbs[1].addr, &paddr, sizeof(paddr));
 
-	if (data->cmd_paddr >> 32 != (data->cmd_paddr + le32toh(desc->tbs[1].tb_len)) >> 32)
+	if ((uint64_t)data->cmd_paddr >> 32 != ((uint64_t)data->cmd_paddr +
+	    le32toh(desc->tbs[1].tb_len)) >> 32)
 		DPRINTF(("%s: TB1 crosses 32bit boundary\n", __func__));
 
 	/* Other DMA segments are for data payload. */
@@ -6408,7 +6410,9 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		desc->tbs[i + 2].tb_len = htole16(seg->ds_len);
 		paddr = htole64(seg->ds_addr);
 		memcpy(&desc->tbs[i + 2].addr, &paddr, sizeof(paddr));
-		if (data->cmd_paddr >> 32 != (data->cmd_paddr + le32toh(desc->tbs[i + 2].tb_len)) >> 32)
+		if ((uint64_t)data->cmd_paddr >> 32 !=
+		    ((uint64_t)data->cmd_paddr +
+		    le32toh(desc->tbs[i + 2].tb_len)) >> 32)
 			DPRINTF(("%s: TB%d crosses 32bit boundary\n", __func__, i + 2));
 	}
 
