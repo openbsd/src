@@ -1,4 +1,4 @@
-/* $OpenBSD: des_key.c,v 1.1 2024/08/31 15:56:09 jsing Exp $ */
+/* $OpenBSD: des_key.c,v 1.2 2025/10/27 16:57:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -107,7 +107,7 @@ DES_check_key_parity(const_DES_cblock *key)
 }
 LCRYPTO_ALIAS(DES_check_key_parity);
 
-/* Weak and semi weak keys as taken from
+/* Weak and semi-weak keys as taken from
  * %A D.W. Davies
  * %A W.L. Price
  * %T Security for Computer Networks
