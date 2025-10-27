@@ -1,4 +1,4 @@
-/*	$OpenBSD: wg_noise.c,v 1.7 2024/03/05 17:48:01 mvs Exp $ */
+/*	$OpenBSD: wg_noise.c,v 1.8 2025/10/27 17:36:33 mvs Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
@@ -651,16 +651,14 @@ noise_remote_decrypt(struct noise_remote *r, uint32_t r_idx, uint64_t nonce,
 	 * next keypair into current. If we do slide the next keypair in, then
 	 * we skip the REKEY_AFTER_TIME_RECV check. This is safe to do as a
 	 * data packet can't confirm a session that we are an INITIATOR of. */
-	if (kp == r->r_next) {
-		if (kp == r->r_next && kp->kp_local_index == r_idx) {
-			noise_remote_keypair_free(r, r->r_previous);
-			r->r_previous = r->r_current;
-			r->r_current = r->r_next;
-			r->r_next = NULL;
+	if (kp == r->r_next && kp->kp_local_index == r_idx) {
+		noise_remote_keypair_free(r, r->r_previous);
+		r->r_previous = r->r_current;
+		r->r_current = r->r_next;
+		r->r_next = NULL;
 
-			ret = ECONNRESET;
-			goto error;
-		}
+		ret = ECONNRESET;
+		goto error;
 	}
 
 	/* Similar to when we encrypt, we want to notify the caller when we
