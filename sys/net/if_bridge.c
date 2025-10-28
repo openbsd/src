@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.378 2025/09/16 23:11:39 jan Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.379 2025/10/28 23:26:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -846,7 +846,7 @@ bridge_offload(struct ifnet *brifp, struct ifnet *ifp, struct mbuf *m)
 		if (m->m_len < hlen) {
 			m = m_pullup(m, hlen);
 			if (m == NULL)
-				goto err;
+				return (NULL);
 		}
 
 		/* hide ethernet header */
@@ -870,9 +870,6 @@ bridge_offload(struct ifnet *brifp, struct ifnet *ifp, struct mbuf *m)
 	}
 
 	return m;
-err:
-	counters_inc(brifp->if_counters, ifc_ierrors);
-	return NULL;
 }
 
 /*
