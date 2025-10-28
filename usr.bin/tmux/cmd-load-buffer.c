@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.65 2022/06/09 09:12:55 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.66 2025/10/28 07:32:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -66,7 +66,7 @@ cmd_load_buffer_done(__unused struct client *c, const char *path, int error,
 		return;
 
 	if (error != 0)
-		cmdq_error(item, "%s: %s", path, strerror(error));
+		cmdq_error(item, "%s: %s", strerror(error), path);
 	else if (bsize != 0) {
 		copy = xmalloc(bsize);
 		memcpy(copy, bdata, bsize);

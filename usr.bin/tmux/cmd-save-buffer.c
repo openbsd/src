@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.56 2024/11/22 12:58:05 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.57 2025/10/28 07:32:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -66,7 +66,7 @@ cmd_save_buffer_done(__unused struct client *c, const char *path, int error,
 		return;
 
 	if (error != 0)
-		cmdq_error(item, "%s: %s", path, strerror(error));
+		cmdq_error(item, "%s: %s", strerror(error), path);
 	cmdq_continue(item);
 }
 
