@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.60 2025/10/28 07:32:26 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.61 2025/10/28 10:51:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -136,16 +136,7 @@ cmd_source_file_done(struct client *c, const char *path, int error,
 static void
 cmd_source_file_add(struct cmd_source_file_data *cdata, const char *path)
 {
-	char	resolved[PATH_MAX];
-
-	if (realpath(path, resolved) == NULL) {
-		log_debug("%s: realpath(\"%s\") failed: %s", __func__,
-			path, strerror(errno));
-	} else
-		path = resolved;
-
 	log_debug("%s: %s", __func__, path);
-
 	cdata->files = xreallocarray(cdata->files, cdata->nfiles + 1,
 	    sizeof *cdata->files);
 	cdata->files[cdata->nfiles++] = xstrdup(path);
