@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.12 2025/07/21 21:46:40 bru Exp $ */
+/*	$OpenBSD: hid.h,v 1.13 2025/10/28 15:36:46 jcs Exp $ */
 /*	$NetBSD: hid.h,v 1.8 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -54,27 +54,27 @@ struct hid_location {
 
 struct hid_item {
 	/* Global */
-	int32_t _usage_page;
+	uint32_t _usage_page;
 	int32_t logical_minimum;
 	int32_t logical_maximum;
 	int32_t physical_minimum;
 	int32_t physical_maximum;
-	int32_t unit_exponent;
-	int32_t unit;
-	int32_t report_ID;
+	uint32_t unit_exponent;
+	uint32_t unit;
+	uint32_t report_ID;
 	/* Local */
-	int32_t usage;
-	int32_t usage_minimum;
-	int32_t usage_maximum;
-	int32_t designator_index;
-	int32_t designator_minimum;
-	int32_t designator_maximum;
-	int32_t string_index;
-	int32_t string_minimum;
-	int32_t string_maximum;
-	int32_t set_delimiter;
+	uint32_t usage;
+	uint32_t usage_minimum;
+	uint32_t usage_maximum;
+	uint32_t designator_index;
+	uint32_t designator_minimum;
+	uint32_t designator_maximum;
+	uint32_t string_index;
+	uint32_t string_minimum;
+	uint32_t string_maximum;
+	uint32_t set_delimiter;
 	/* Misc */
-	int32_t collection;
+	uint32_t collection;
 	int collevel;
 	enum hid_kind kind;
 	u_int32_t flags;
@@ -88,13 +88,13 @@ struct	hid_data *hid_start_parse(const void *, int, enum hid_kind);
 void	hid_end_parse(struct hid_data *);
 int	hid_get_item(struct hid_data *, struct hid_item *);
 int	hid_report_size(const void *, int, enum hid_kind, uint8_t);
-int	hid_locate(const void *, int, int32_t, uint8_t, enum hid_kind,
+int	hid_locate(const void *, int, uint32_t, uint8_t, enum hid_kind,
 	    struct hid_location *, uint32_t *);
 int32_t	hid_get_data(const uint8_t *buf, int, struct hid_location *);
 uint32_t hid_get_udata(const uint8_t *buf, int, struct hid_location *);
 int	hid_is_collection(const void *, int, uint8_t, int32_t);
 struct hid_data *hid_get_collection_data(const void *, int, int32_t, uint32_t);
-int	hid_get_id_of_collection(const void *, int, int32_t, uint32_t);
+int	hid_get_id_of_collection(const void *, int, uint32_t, uint32_t);
 int	hid_find_report(const void *, int len, enum hid_kind, int32_t,
 	    int, int32_t *, int32_t *);
 

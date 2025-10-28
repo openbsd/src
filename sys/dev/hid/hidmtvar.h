@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmtvar.h,v 1.9 2025/07/21 21:46:40 bru Exp $ */
+/* $OpenBSD: hidmtvar.h,v 1.10 2025/10/28 15:36:46 jcs Exp $ */
 /*
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 
 struct hidmt_data {
-	int32_t			usage;
+	uint32_t		usage;
 	struct hid_location	loc;
 	SIMPLEQ_ENTRY(hidmt_data) entry;
 };
