@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.6 2025/09/14 15:52:28 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.7 2025/10/28 14:26:24 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -457,6 +457,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 		vm->vm_vcpu_ct++;
 		if ((ret = vcpu_init(vcpu, vcp)) != 0) {
 			printf("failed to init vcpu %d for vm %p\n", i, vm);
+			pool_put(&vcpu_pool, vcpu);
 			vm_teardown(&vm);
 			return (ret);
 		}
