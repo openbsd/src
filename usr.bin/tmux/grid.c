@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.136 2025/07/18 20:44:13 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.137 2025/10/28 09:01:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1304,7 +1304,7 @@ grid_reflow_join(struct grid *target, struct grid *gd, u_int sx, u_int yy,
 		if (!wrapped || want != from->cellused || width == sx)
 			break;
 	}
-	if (lines == 0)
+	if (lines == 0 || from == NULL)
 		return;
 
 	/*
