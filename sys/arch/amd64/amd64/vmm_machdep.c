@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.64 2025/09/14 15:52:28 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.65 2025/10/28 13:40:53 hshoexer Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4489,14 +4489,8 @@ svm_handle_vmgexit(struct vcpu *vcpu)
 	uint64_t		 result;
 	int			 syncout, error = 0;
 
-	if (vcpu->vc_svm_ghcb_va == 0 && (vmcb->v_ghcb_gpa & ~PG_FRAME) == 0 &&
+	if ((vmcb->v_ghcb_gpa & ~PG_FRAME) == 0 &&
 	    (vmcb->v_ghcb_gpa & PG_FRAME) != 0) {
-		/*
-		 * Guest provides a valid guest physical address
-		 * for GHCB and it is not set yet -> assign it.
-		 *
-		 * We only accept a GHCB once; we decline re-definition.
-		 */
 		ghcb_gpa = vmcb->v_ghcb_gpa & PG_FRAME;
 		if (!pmap_extract(vm->vm_pmap, ghcb_gpa, &ghcb_hpa))
 			return (EINVAL);
