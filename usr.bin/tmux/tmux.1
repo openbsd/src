@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1011 2025/10/13 07:29:53 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1012 2025/10/28 16:36:52 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 13 2025 $
+.Dd $Mdocdate: October 28 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1950,6 +1950,16 @@ Move the cursor right.
 (emacs: Up)
 .Xc
 Move the cursor up.
+.It Xo
+.Ic cursor-centre-vertical
+(emacs: C-l)
+.Xc
+Moves the cursor to the vertical centre of the pane.
+.It Xo
+.Ic cursor-centre-horizontal
+(emacs: M-l)
+.Xc
+Moves the cursor to the horizontal centre of the pane.
 .It Xo
 .Ic end-of-line
 (vi: $)
