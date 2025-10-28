@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1269 2025/09/01 08:03:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1270 2025/10/28 14:21:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3290,7 +3290,7 @@ typedef void (*mode_tree_build_cb)(void *, struct mode_tree_sort_criteria *,
 				   uint64_t *, const char *);
 typedef void (*mode_tree_draw_cb)(void *, void *, struct screen_write_ctx *,
 	     u_int, u_int);
-typedef int (*mode_tree_search_cb)(void *, void *, const char *);
+typedef int (*mode_tree_search_cb)(void *, void *, const char *, int);
 typedef void (*mode_tree_menu_cb)(void *, struct client *, key_code);
 typedef u_int (*mode_tree_height_cb)(void *, u_int);
 typedef key_code (*mode_tree_key_cb)(void *, void *, u_int);
