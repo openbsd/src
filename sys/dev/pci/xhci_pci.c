@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.17 2025/08/11 14:22:04 jsg Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.18 2025/10/29 16:26:08 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -233,6 +233,7 @@ int
 xhci_pci_activate(struct device *self, int act)
 {
 	struct xhci_pci_softc *psc = (struct xhci_pci_softc *)self;
+	int rc;
 
 	switch (act) {
 	case DVACT_RESUME:
@@ -243,9 +244,23 @@ xhci_pci_activate(struct device *self, int act)
 		break;
 	}
 
-	return (xhci_activate(self, act));
-}
+	rc = xhci_activate(self, act);
 
+	switch (act) {
+	case DVACT_POWERDOWN:
+		if (pci_dopm) {
+			/*
+			 * Put the controller into its minimal power
+			 * state now such that we can tell its
+			 * companion USB4 controller to go to sleep.
+			 */
+			pci_set_powerstate(psc->sc_pc, psc->sc_tag,
+			    pci_min_powerstate(psc->sc_pc, psc->sc_tag));
+		}
+	}
+
+	return rc;
+}
 
 void
 xhci_pci_takecontroller(struct xhci_pci_softc *psc, int silent)
