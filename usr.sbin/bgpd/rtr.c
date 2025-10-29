@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.31 2025/04/14 14:50:29 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.32 2025/10/29 15:27:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -264,9 +264,11 @@ rtr_main(int debug, int verbose)
 			fatal("poll error");
 		}
 
-		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1)
-			fatalx("Lost connection to parent");
-		else
+		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1) {
+			log_warnx("RTR: Lost connection to parent");
+			rtr_quit = 1;
+			continue;
+		} else
 			rtr_dispatch_imsg_parent(ibuf_main);
 
 		if (handle_pollfd(&pfd[PFD_PIPE_RDE], ibuf_rde) == -1) {

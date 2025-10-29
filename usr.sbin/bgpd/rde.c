@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.658 2025/10/29 10:34:23 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.659 2025/10/29 15:27:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -272,9 +272,11 @@ rde_main(int debug, int verbose)
 			fatal("poll error");
 		}
 
-		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1)
-			fatalx("Lost connection to parent");
-		else
+		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1) {
+			log_warnx("RDE: Lost connection to parent");
+			rde_quit = 1;
+			continue;
+		} else
 			rde_dispatch_imsg_parent(ibuf_main);
 
 		if (handle_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se) == -1) {
