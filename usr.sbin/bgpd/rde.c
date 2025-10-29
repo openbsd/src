@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.657 2025/10/23 18:55:30 miod Exp $ */
+/*	$OpenBSD: rde.c,v 1.658 2025/10/29 10:34:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -212,6 +212,9 @@ rde_main(int debug, int verbose)
 	TAILQ_INIT(out_rules);
 
 	pt_init();
+	attr_init();
+	path_init();
+	communities_init();
 	peer_init(out_rules);
 
 	/* make sure the default RIBs are setup */
@@ -4772,8 +4775,6 @@ rde_shutdown(void)
 	/* now check everything */
 	rib_shutdown();
 	nexthop_shutdown();
-	path_shutdown();
-	attr_shutdown();
 	pt_shutdown();
 }
 

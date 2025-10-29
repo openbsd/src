@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.272 2025/09/24 13:27:18 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.273 2025/10/29 10:34:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 
 #include <limits.h>
+#include <siphash.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -27,6 +28,7 @@
 #include "bgpd.h"
 #include "rde.h"
 #include "log.h"
+#include "chash.h"
 
 /*
  * BGP RIB -- Routing Information Base
@@ -596,63 +598,64 @@ rib_dump_subtree(uint16_t id, struct bgpd_addr *subtree, uint8_t subtreelen,
 
 /* path specific functions */
 
-static struct rde_aspath *path_lookup(struct rde_aspath *);
+static struct rde_aspath *path_getcache(struct rde_aspath *);
 static void path_link(struct rde_aspath *);
 static void path_unlink(struct rde_aspath *);
 
-static inline int
-path_compare(struct rde_aspath *a, struct rde_aspath *b)
-{
-	int		 r;
+static SIPHASH_KEY	pathkey;
 
+static inline uint64_t
+path_hash(const struct rde_aspath *p)
+{
+	return p->hash;
+}
+
+static uint64_t
+path_calc_hash(const struct rde_aspath *p)
+{
+	SIPHASH_CTX ctx;
+
+	SipHash24_Init(&ctx, &pathkey);
+	SipHash24_Update(&ctx, PATH_HASHSTART(p), PATH_HASHSIZE);
+	SipHash24_Update(&ctx, aspath_dump(p->aspath),
+	    aspath_length(p->aspath));
+	return SipHash24_End(&ctx);
+}
+
+static inline int
+path_equal(const struct rde_aspath *a, const struct rde_aspath *b)
+{
 	if (a == NULL && b == NULL)
-		return (0);
+		return (1);
 	else if (b == NULL)
-		return (1);
+		return (0);
 	else if (a == NULL)
-		return (-1);
-	if ((a->flags & ~F_ATTR_LINKED) > (b->flags & ~F_ATTR_LINKED))
-		return (1);
-	if ((a->flags & ~F_ATTR_LINKED) < (b->flags & ~F_ATTR_LINKED))
-		return (-1);
-	if (a->origin > b->origin)
-		return (1);
-	if (a->origin < b->origin)
-		return (-1);
-	if (a->med > b->med)
-		return (1);
-	if (a->med < b->med)
-		return (-1);
-	if (a->lpref > b->lpref)
-		return (1);
-	if (a->lpref < b->lpref)
-		return (-1);
-	if (a->weight > b->weight)
-		return (1);
-	if (a->weight < b->weight)
-		return (-1);
-	if (a->rtlabelid > b->rtlabelid)
-		return (1);
-	if (a->rtlabelid < b->rtlabelid)
-		return (-1);
-	if (a->pftableid > b->pftableid)
-		return (1);
-	if (a->pftableid < b->pftableid)
-		return (-1);
+		return (0);
+
+	if ((a->flags & ~F_ATTR_LINKED) != (b->flags & ~F_ATTR_LINKED))
+		return (0);
+	if (a->origin != b->origin)
+		return (0);
+	if (a->med != b->med)
+		return (0);
+	if (a->lpref != b->lpref)
+		return (0);
+	if (a->weight != b->weight)
+		return (0);
+	if (a->rtlabelid != b->rtlabelid)
+		return (0);
+	if (a->pftableid != b->pftableid)
+		return (0);
 
 	/* no need to check aspa_state or aspa_generation */
 
-	r = aspath_compare(a->aspath, b->aspath);
-	if (r > 0)
-		return (1);
-	if (r < 0)
-		return (-1);
-
-	return (attr_compare(a, b));
+	if (aspath_compare(a->aspath, b->aspath) != 0)
+		return (0);
+	return (attr_equal(a, b));
 }
 
-RB_HEAD(path_tree, rde_aspath)	pathtable = RB_INITIALIZER(&pathtable);
-RB_GENERATE_STATIC(path_tree, rde_aspath, entry, path_compare);
+CH_HEAD(path_tree, rde_aspath)	pathtable = CH_INITIALIZER(&pathtable);
+CH_PROTOTYPE(path_tree, rde_aspath, path_hash);
 
 static inline struct rde_aspath *
 path_ref(struct rde_aspath *asp)
@@ -679,16 +682,23 @@ path_unref(struct rde_aspath *asp)
 }
 
 void
-path_shutdown(void)
+path_init(void)
 {
-	if (!RB_EMPTY(&pathtable))
-		log_warnx("path_free: free non-free table");
+	arc4random_buf(&pathkey, sizeof(pathkey));
 }
 
 static struct rde_aspath *
-path_lookup(struct rde_aspath *aspath)
+path_getcache(struct rde_aspath *aspath)
 {
-	return (RB_FIND(path_tree, &pathtable, aspath));
+	struct rde_aspath *asp;
+
+	aspath->hash = path_calc_hash(aspath);
+	if ((asp = CH_FIND(path_tree, &pathtable, aspath)) == NULL) {
+		/* Path not available, create and link a new one. */
+		asp = path_copy(path_get(), aspath);
+		path_link(asp);
+	}
+	return asp;
 }
 
 /*
@@ -698,7 +708,7 @@ path_lookup(struct rde_aspath *aspath)
 static void
 path_link(struct rde_aspath *asp)
 {
-	if (RB_INSERT(path_tree, &pathtable, asp) != NULL)
+	if (CH_INSERT(path_tree, &pathtable, asp, NULL) != 1)
 		fatalx("%s: already linked object", __func__);
 	asp->flags |= F_ATTR_LINKED;
 }
@@ -717,7 +727,7 @@ path_unlink(struct rde_aspath *asp)
 	if (asp->refcnt != 0)
 		fatalx("%s: still holds references", __func__);
 
-	RB_REMOVE(path_tree, &pathtable, asp);
+	CH_REMOVE(path_tree, &pathtable, asp);
 	asp->flags &= ~F_ATTR_LINKED;
 
 	path_put(asp);
@@ -734,6 +744,7 @@ path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 	dst->refcnt = 0;
 	dst->flags = src->flags & ~F_ATTR_LINKED;
 
+	dst->hash = src->hash;
 	dst->med = src->med;
 	dst->lpref = src->lpref;
 	dst->weight = src->weight;
@@ -797,6 +808,8 @@ path_put(struct rde_aspath *asp)
 	rdemem.path_cnt--;
 	free(asp);
 }
+
+CH_GENERATE(path_tree, rde_aspath, path_equal, path_hash);
 
 /* prefix specific functions */
 
@@ -985,7 +998,7 @@ prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 		if (prefix_nexthop(p) == state->nexthop &&
 		    prefix_nhflags(p) == state->nhflags &&
 		    communities_equal(ncomm, prefix_communities(p)) &&
-		    path_compare(nasp, prefix_aspath(p)) == 0) {
+		    path_equal(nasp, prefix_aspath(p))) {
 			/* no change, update last change */
 			p->lastchange = getmonotime();
 			p->validation_state = state->vstate;
@@ -1002,11 +1015,7 @@ prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 	 * In both cases lookup the new aspath to make sure it is not
 	 * already in the RIB.
 	 */
-	if ((asp = path_lookup(nasp)) == NULL) {
-		/* Path not available, create and link a new one. */
-		asp = path_copy(path_get(), nasp);
-		path_link(asp);
-	}
+	asp = path_getcache(nasp);
 
 	if ((comm = communities_lookup(ncomm)) == NULL) {
 		/* Communities not available, create and link a new one. */
@@ -1153,11 +1162,8 @@ prefix_flowspec_update(struct rde_peer *peer, struct filterstate *state,
 
 	nasp = &state->aspath;
 	ncomm = &state->communities;
-	if ((asp = path_lookup(nasp)) == NULL) {
-		/* Path not available, create and link a new one. */
-		asp = path_copy(path_get(), nasp);
-		path_link(asp);
-	}
+	asp = path_getcache(nasp);
+
 	if ((comm = communities_lookup(ncomm)) == NULL) {
 		/* Communities not available, create and link a new one. */
 		comm = communities_link(ncomm);
@@ -1271,7 +1277,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 		    prefix_nexthop(p) == state->nexthop &&
 		    communities_equal(&state->communities,
 		    prefix_communities(p)) &&
-		    path_compare(&state->aspath, prefix_aspath(p)) == 0) {
+		    path_equal(&state->aspath, prefix_aspath(p))) {
 			/* nothing changed */
 			p->validation_state = state->vstate;
 			p->lastchange = getmonotime();
@@ -1306,11 +1312,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 			fatalx("%s: RB index invariant violated", __func__);
 	}
 
-	if ((asp = path_lookup(&state->aspath)) == NULL) {
-		/* Path not available, create and link a new one. */
-		asp = path_copy(path_get(), &state->aspath);
-		path_link(asp);
-	}
+	asp = path_getcache(&state->aspath);
 
 	if ((comm = communities_lookup(&state->communities)) == NULL) {
 		/* Communities not available, create and link a new one. */

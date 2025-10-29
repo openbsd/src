@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.137 2025/04/14 11:49:39 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.138 2025/10/29 10:34:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -22,12 +22,14 @@
 
 #include <endian.h>
 #include <limits.h>
+#include <siphash.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "bgpd.h"
 #include "rde.h"
 #include "log.h"
+#include "chash.h"
 
 int
 attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
@@ -55,21 +57,36 @@ attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
 }
 
 /* optional attribute specific functions */
-struct attr	*attr_alloc(uint8_t, uint8_t, void *, uint16_t);
-struct attr	*attr_lookup(uint8_t, uint8_t, void *, uint16_t);
-void		 attr_put(struct attr *);
+static struct attr *attr_alloc(uint8_t, uint8_t, void *, uint16_t, uint64_t);
+static struct attr *attr_lookup(uint8_t, uint8_t, void *, uint16_t, uint64_t);
+static void attr_put(struct attr *);
 
-static inline int	 attr_diff(struct attr *, struct attr *);
+static SIPHASH_KEY	 attrkey;
 
-RB_HEAD(attr_tree, attr)	attrtable = RB_INITIALIZER(&attr);
-RB_GENERATE_STATIC(attr_tree, attr, entry, attr_diff);
+static inline uint64_t
+attr_hash(const struct attr *a)
+{
+	return a->hash;
+}
 
+static uint64_t
+attr_calc_hash(uint8_t type, const void *data, uint16_t len)
+{
+	SIPHASH_CTX ctx;
+
+	SipHash24_Init(&ctx, &attrkey);
+	SipHash24_Update(&ctx, data, len);
+	SipHash24_Update(&ctx, &type, sizeof(type));
+	return SipHash24_End(&ctx);
+}
+
+CH_HEAD(attr_tree, attr)        attrtable = CH_INITIALIZER(&attrtable);
+CH_PROTOTYPE(attr_tree, attr, attr_hash);
 
 void
-attr_shutdown(void)
+attr_init(void)
 {
-	if (!RB_EMPTY(&attrtable))
-		log_warnx("%s: free non-free attr table", __func__);
+	arc4random_buf(&attrkey, sizeof(attrkey));
 }
 
 int
@@ -79,6 +96,7 @@ attr_optadd(struct rde_aspath *asp, uint8_t flags, uint8_t type,
 	uint8_t		 l;
 	struct attr	*a, *t;
 	void		*p;
+	uint64_t	 h;
 
 	/* attribute allowed only once */
 	for (l = 0; l < asp->others_len; l++) {
@@ -91,8 +109,9 @@ attr_optadd(struct rde_aspath *asp, uint8_t flags, uint8_t type,
 	}
 
 	/* known optional attributes were validated previously */
-	if ((a = attr_lookup(flags, type, data, len)) == NULL)
-		a = attr_alloc(flags, type, data, len);
+	h = attr_calc_hash(type, data, len);
+	if ((a = attr_lookup(flags, type, data, len, h)) == NULL)
+		a = attr_alloc(flags, type, data, len, h);
 
 	/* add attribute to the table but first bump refcnt */
 	a->refcnt++;
@@ -169,57 +188,30 @@ attr_copy(struct rde_aspath *t, const struct rde_aspath *s)
 }
 
 static inline int
-attr_diff(struct attr *oa, struct attr *ob)
+attr_eq(const struct attr *oa, const struct attr *ob)
 {
-	int	r;
-
-	if (ob == NULL)
-		return (1);
-	if (oa == NULL)
-		return (-1);
-	if (oa->flags > ob->flags)
-		return (1);
-	if (oa->flags < ob->flags)
-		return (-1);
-	if (oa->type > ob->type)
-		return (1);
-	if (oa->type < ob->type)
-		return (-1);
-	if (oa->len > ob->len)
-		return (1);
-	if (oa->len < ob->len)
-		return (-1);
-	if (oa->len == 0)
-		return (0);
-	r = memcmp(oa->data, ob->data, oa->len);
-	if (r > 0)
-		return (1);
-	if (r < 0)
-		return (-1);
-	return (0);
+	if (oa->hash != ob->hash)
+		return 0;
+	if (oa->type != ob->type)
+		return 0;
+	if (oa->flags != ob->flags)
+		return 0;
+	if (oa->len != ob->len)
+		return 0;
+	return (oa->len == 0 || memcmp(oa->data, ob->data, oa->len) == 0);
 }
 
 int
-attr_compare(struct rde_aspath *a, struct rde_aspath *b)
+attr_equal(const struct rde_aspath *a, const struct rde_aspath *b)
 {
-	uint8_t l, min;
+	uint8_t l;
 
-	min = a->others_len < b->others_len ? a->others_len : b->others_len;
-	for (l = 0; l < min; l++)
+	if (a->others_len != b->others_len)
+		return (0);
+	for (l = 0; l < a->others_len; l++)
 		if (a->others[l] != b->others[l])
-			return (attr_diff(a->others[l], b->others[l]));
-
-	if (a->others_len < b->others_len) {
-		for (; l < b->others_len; l++)
-			if (b->others[l] != NULL)
-				return (-1);
-	} else if (a->others_len > b->others_len) {
-		for (; l < a->others_len; l++)
-			if (a->others[l] != NULL)
-				return (1);
-	}
-
-	return (0);
+			return (0);
+	return (1);
 }
 
 void
@@ -253,7 +245,7 @@ attr_freeall(struct rde_aspath *asp)
 }
 
 struct attr *
-attr_alloc(uint8_t flags, uint8_t type, void *data, uint16_t len)
+attr_alloc(uint8_t flags, uint8_t type, void *data, uint16_t len, uint64_t hash)
 {
 	struct attr	*a;
 
@@ -276,14 +268,17 @@ attr_alloc(uint8_t flags, uint8_t type, void *data, uint16_t len)
 	} else
 		a->data = NULL;
 
-	if (RB_INSERT(attr_tree, &attrtable, a) != NULL)
+	a->hash = hash;
+
+	if (CH_INSERT(attr_tree, &attrtable, a, NULL) != 1)
 		fatalx("corrupted attr tree");
 
 	return (a);
 }
 
 struct attr *
-attr_lookup(uint8_t flags, uint8_t type, void *data, uint16_t len)
+attr_lookup(uint8_t flags, uint8_t type, void *data, uint16_t len,
+    uint64_t hash)
 {
 	struct attr		needle;
 
@@ -293,7 +288,9 @@ attr_lookup(uint8_t flags, uint8_t type, void *data, uint16_t len)
 	needle.type = type;
 	needle.len = len;
 	needle.data = data;
-	return RB_FIND(attr_tree, &attrtable, &needle);
+	needle.hash = hash;
+
+	return CH_FIND(attr_tree, &attrtable, &needle);
 }
 
 void
@@ -308,7 +305,7 @@ attr_put(struct attr *a)
 		return;
 
 	/* unlink */
-	RB_REMOVE(attr_tree, &attrtable, a);
+	CH_REMOVE(attr_tree, &attrtable, a);
 
 	if (a->len != 0)
 		rdemem.attr_dcnt--;
@@ -317,6 +314,8 @@ attr_put(struct attr *a)
 	free(a->data);
 	free(a);
 }
+
+CH_GENERATE(attr_tree, attr, attr_eq, attr_hash);
 
 /* aspath specific functions */
 
@@ -327,7 +326,7 @@ static void	 aspath_countcopy(struct aspath *, uint16_t, uint8_t *,
 		    uint16_t, int);
 
 int
-aspath_compare(struct aspath *a1, struct aspath *a2)
+aspath_compare(const struct aspath *a1, const struct aspath *a2)
 {
 	int r;
 

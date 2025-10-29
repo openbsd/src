@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.317 2025/09/24 14:04:04 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.318 2025/10/29 10:34:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -161,7 +161,7 @@ enum attrtypes {
 #define ATTR_WELL_KNOWN		ATTR_TRANSITIVE
 
 struct attr {
-	RB_ENTRY(attr)			 entry;
+	uint64_t			 hash;
 	u_char				*data;
 	int				 refcnt;
 	uint16_t			 len;
@@ -170,17 +170,18 @@ struct attr {
 };
 
 struct rde_community {
-	RB_ENTRY(rde_community)		entry;
-	int				size;
-	int				nentries;
-	int				flags;
-	int				refcnt;
+	uint64_t			 hash;
+	int				 size;
+	int				 nentries;
+	int				 flags;
+	int				 refcnt;
 	struct community		*communities;
 };
 
 #define	PARTIAL_COMMUNITIES		0x01
 #define	PARTIAL_LARGE_COMMUNITIES	0x02
 #define	PARTIAL_EXT_COMMUNITIES		0x04
+#define	PARTIAL_DIRTY			0x08
 
 #define	F_ATTR_ORIGIN		0x00001
 #define	F_ATTR_ASPATH		0x00002
@@ -206,7 +207,7 @@ struct rde_community {
 #define DEFAULT_LPREF		100
 
 struct rde_aspath {
-	RB_ENTRY(rde_aspath)		 entry;
+	uint64_t			 hash;
 	struct attr			**others;
 	struct aspath			*aspath;
 	struct rde_aspa_state		 aspa_state;
@@ -221,6 +222,9 @@ struct rde_aspath {
 	uint8_t				 others_len;
 	uint8_t				 aspa_generation;
 };
+#define PATH_HASHOFF		offsetof(struct rde_aspath, med)
+#define PATH_HASHSTART(x)	((const uint8_t *)x + PATH_HASHOFF)
+#define PATH_HASHSIZE		(sizeof(struct rde_aspath) - PATH_HASHOFF)
 
 enum nexthop_state {
 	NEXTHOP_LOOKUP,
@@ -395,12 +399,13 @@ RB_PROTOTYPE(peer_tree, rde_peer, entry, peer_cmp);
 /* rde_attr.c */
 int		 attr_writebuf(struct ibuf *, uint8_t, uint8_t, void *,
 		    uint16_t);
-void		 attr_shutdown(void);
+void		 attr_init(void);
 int		 attr_optadd(struct rde_aspath *, uint8_t, uint8_t,
 		    void *, uint16_t);
 struct attr	*attr_optget(const struct rde_aspath *, uint8_t);
 void		 attr_copy(struct rde_aspath *, const struct rde_aspath *);
-int		 attr_compare(struct rde_aspath *, struct rde_aspath *);
+int		 attr_equal(const struct rde_aspath *,
+		    const struct rde_aspath *);
 void		 attr_freeall(struct rde_aspath *);
 void		 attr_free(struct rde_aspath *, struct attr *);
 
@@ -411,7 +416,7 @@ u_char		*aspath_deflate(u_char *, uint16_t *, int *);
 void		 aspath_merge(struct rde_aspath *, struct attr *);
 uint32_t	 aspath_neighbor(struct aspath *);
 int		 aspath_loopfree(struct aspath *, uint32_t);
-int		 aspath_compare(struct aspath *, struct aspath *);
+int		 aspath_compare(const struct aspath *, const struct aspath *);
 int		 aspath_match(struct aspath *, struct filter_as *, uint32_t);
 u_char		*aspath_prepend(struct aspath *, uint32_t, int, uint16_t *);
 u_char		*aspath_override(struct aspath *, uint32_t, uint32_t,
@@ -450,12 +455,13 @@ int	community_large_add(struct rde_community *, int, struct ibuf *);
 int	community_ext_add(struct rde_community *, int, int, struct ibuf *);
 int	community_writebuf(struct rde_community *, uint8_t, int, struct ibuf *);
 
-void			 communities_shutdown(void);
+void			 communities_init(void);
 struct rde_community	*communities_lookup(struct rde_community *);
 struct rde_community	*communities_link(struct rde_community *);
 void			 communities_unlink(struct rde_community *);
 
-int	 communities_equal(struct rde_community *, struct rde_community *);
+int	 communities_equal(const struct rde_community *,
+	    const struct rde_community *);
 void	 communities_copy(struct rde_community *, struct rde_community *);
 void	 communities_clean(struct rde_community *);
 
@@ -573,7 +579,7 @@ re_rib(struct rib_entry *re)
 	return rib_byid(re->rib_id);
 }
 
-void		 path_shutdown(void);
+void		 path_init(void);
 struct rde_aspath *path_copy(struct rde_aspath *, const struct rde_aspath *);
 struct rde_aspath *path_prep(struct rde_aspath *);
 struct rde_aspath *path_get(void);
