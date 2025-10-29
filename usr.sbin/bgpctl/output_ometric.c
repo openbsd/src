@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.14 2025/02/20 19:48:14 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.15 2025/10/29 21:39:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -176,14 +176,18 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	const char *keys[5] = {
 	    "remote_addr", "remote_as", "description", "group", NULL };
 	const char *values[5];
+	char *descr;
 
 	/* skip neighbor templates */
 	if (p->conf.template)
 		return;
 
+	descr = fmt_peer(p->conf.descr, &p->conf.remote_addr,
+	    p->conf.remote_masklen);
+
 	values[0] = log_addr(&p->conf.remote_addr);
 	values[1] = log_as(p->conf.remote_as);
-	values[2] = p->conf.descr;
+	values[2] = descr;
 	values[3] = p->conf.group;
 	values[4] = NULL;
 
@@ -249,6 +253,7 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	ometric_set_int(peer_rr_eorr_receive, p->stats.refresh_rcvd_eorr, ol);
 
 	olabels_free(ol);
+	free(descr);
 }
 
 static void
