@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.110 2025/10/11 18:34:24 claudio Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.111 2025/10/29 12:43:21 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1931,10 +1931,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 
 	ifp->if_capabilities |= IFCAP_LRO;
-#if notyet
-	/* for now tcplro at ixl(4) is default off */
 	ifp->if_xflags |= IFXF_LRO;
-#endif
 
 	ifmedia_init(&sc->sc_media, 0, ixl_media_change, ixl_media_status);
 
