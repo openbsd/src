@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2025/10/29 13:12:03 claudio Exp $
+# $OpenBSD: Makefile,v 1.14 2025/10/29 13:15:22 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/bgpd
 
@@ -8,6 +8,8 @@ PROGS += rde_community_test
 PROGS += rde_decide_test
 PROGS += rde_aspa_test
 PROGS += rde_flowspec_test
+PROGS += chash_sub_test
+PROGS += chash_test
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
@@ -43,5 +45,8 @@ SRCS_rde_community_test=	rde_community_test.c rde_community.c chash.c
 SRCS_rde_decide_test=	rde_decide_test.c rde_decide.c rde_attr.c util.c chash.c
 
 SRCS_rde_flowspec_test=	rde_flowspec_test.c flowspec.c util.c
+
+SRCS_chash_sub_test=	chash_sub_test.c
+SRCS_chash_test=	chash_test.c chash.c
 
 .include <bsd.regress.mk>
