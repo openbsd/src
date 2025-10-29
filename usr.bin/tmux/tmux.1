@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1012 2025/10/28 16:36:52 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1013 2025/10/29 09:37:36 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2025 $
+.Dd $Mdocdate: October 29 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6670,7 +6670,7 @@ See
 for possible values for
 .Ar prompt-type .
 .It Xo Ic command-prompt
-.Op Fl 1bFikN
+.Op Fl 1bFiklN
 .Op Fl I Ar inputs
 .Op Fl p Ar prompts
 .Op Fl t Ar target-client
@@ -6690,8 +6690,10 @@ With
 .Ar template
 is expanded as a format.
 .Pp
-If present,
+If
 .Fl I
+is present,
+.Ar inputs
 is a comma-separated list of the initial text for each prompt.
 If
 .Fl p
@@ -6703,6 +6705,12 @@ a single prompt is displayed, constructed from
 if it is present, or
 .Ql \&:
 if not.
+.Fl l
+disables splitting of
+.Ar inputs
+and
+.Ar prompts
+at commas and treats them literally.
 .Pp
 Before the command is executed, the first occurrence of the string
 .Ql %%
