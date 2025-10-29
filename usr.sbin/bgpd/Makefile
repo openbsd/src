@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.42 2025/02/26 15:49:56 claudio Exp $
+#	$OpenBSD: Makefile,v 1.43 2025/10/29 10:32:38 claudio Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c
 SRCS+=	carp.c
+SRCS+=	chash.c
 SRCS+=	config.c
 SRCS+=	control.c
 SRCS+=	flowspec.c
