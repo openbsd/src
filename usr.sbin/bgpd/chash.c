@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.1 2025/10/29 10:32:38 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.2 2025/10/30 10:29:51 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -489,7 +489,6 @@ ch_sub_merge(const struct ch_type *type, struct ch_group *to,
 static int
 ch_sub_alloc(struct ch_group **table, struct ch_meta **meta)
 {
-	*meta = NULL;
 	if ((*table = calloc(CH_H2_SIZE, sizeof(**table))) == NULL)
 		return -1;
 	if ((*meta = calloc(1, sizeof(**meta))) == NULL) {
@@ -607,31 +606,26 @@ static int
 ch_table_grow(const struct ch_type *type, struct ch_table *t, uint64_t h,
     struct ch_group *table, struct ch_meta *meta)
 {
-	struct ch_group *left, *right;
-	struct ch_meta *leftmeta, *rightmeta;
+	struct ch_group *left = NULL, *right = NULL;
+	struct ch_meta *leftmeta = NULL, *rightmeta = NULL;
 	uint64_t idx;
 
 	/* check if the extendible hashing table needs to grow */
 	if (meta->cs_local_level == t->ch_level) {
 		if (ch_table_resize(t) == -1)
-			return -1;
+			goto fail;
 	}
 
 	/* allocate new sub tables */
 	if (ch_sub_alloc(&left, &leftmeta) == -1)
-		return -1;
-	if (ch_sub_alloc(&right, &rightmeta) == -1) {
-		ch_sub_free(left, leftmeta);
-		return -1;
-	}
+		goto fail;
+	if (ch_sub_alloc(&right, &rightmeta) == -1)
+		goto fail;
 
 	/* split up the old table into the two new ones */
 	if (ch_sub_split(type, table, left, right,
-	    meta, leftmeta, rightmeta) == -1) {
-		ch_sub_free(right, rightmeta);
-		ch_sub_free(left, leftmeta);
-		return -1;
-	}
+	    meta, leftmeta, rightmeta) == -1)
+		goto fail;
 
 	/*
 	 * Insert new tables into the extendible hash table.
@@ -644,6 +638,11 @@ ch_table_grow(const struct ch_type *type, struct ch_table *t, uint64_t h,
 	ch_sub_free(table, meta);
 
 	return 0;
+
+ fail:
+	ch_sub_free(right, rightmeta);
+	ch_sub_free(left, leftmeta);
+	return -1;
 }
 
 /*
@@ -657,28 +656,24 @@ static int
 ch_table_compact(const struct ch_type *type, struct ch_table *t, uint64_t h,
     struct ch_group *table, struct ch_meta *meta)
 {
-	struct ch_group *buddy, *to;
-	struct ch_meta *buddymeta, *tometa;
+	struct ch_group *buddy, *to = NULL;
+	struct ch_meta *buddymeta, *tometa = NULL;
 	uint64_t idx;
 
 	idx = CH_H1(h, t->ch_level);
 	buddy = ch_table_buddy(t, idx, meta->cs_local_level, &buddymeta);
-	if (buddy == NULL ||
-	    ch_sub_fillfactor(meta) +
-	    ch_sub_fillfactor(buddymeta) >
-	    CH_MAX_LOAD * 2 / 3)
+	if (buddy == NULL || ch_sub_fillfactor(meta) +
+	    ch_sub_fillfactor(buddymeta) > CH_MAX_LOAD * 2 / 3)
 		return -1;
 
-	/* allocate new sub tables */
+	/* allocate new sub table */
 	if (ch_sub_alloc(&to, &tometa) == -1)
-		return -1;
+		goto fail;
 
 	/* merge the table and buddy into to. */
 	if (ch_sub_merge(type, to, table, buddy, tometa, meta, buddymeta) ==
-	    -1) {
-		ch_sub_free(to, tometa);
-		return -1;
-	}
+	    -1)
+		goto fail;
 
 	/*
 	 * Update table in the extendible hash table, which overwrites
@@ -690,6 +685,10 @@ ch_table_compact(const struct ch_type *type, struct ch_table *t, uint64_t h,
 	ch_sub_free(table, meta);
 
 	return 0;
+
+ fail:
+	ch_sub_free(to, tometa);
+	return -1;
 }
 
 /*
@@ -698,21 +697,24 @@ ch_table_compact(const struct ch_type *type, struct ch_table *t, uint64_t h,
 int
 _ch_init(const struct ch_type *type, struct ch_table *t)
 {
-	struct ch_group *table;
-	struct ch_meta *meta;
+	struct ch_group *table = NULL;
+	struct ch_meta *meta = NULL;
 
 	t->ch_level = 0;
 	t->ch_num_elm = 0;
 	if (ch_sub_alloc(&table, &meta) == -1)
-		return -1;
+		goto fail;
 
-	if (ch_table_resize(t) == -1) {
-		ch_sub_free(table, meta);
-		return -1;
-	}
+	if (ch_table_resize(t) == -1)
+		goto fail;
+
 	ch_table_fill(t, 0, table, meta);
 
 	return 0;
+
+ fail:
+	ch_sub_free(table, meta);
+	return -1;
 }
 
 void
