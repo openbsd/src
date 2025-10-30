@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.68 2025/06/06 00:04:33 dlg Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.69 2025/10/30 04:20:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -748,7 +748,7 @@ init_linktype(int type)
 		return;
 
 	case DLT_ENC:
-		off_linktype = -1;
+		off_linktype = 12; /* ENC_HDRLEN */
 		off_nl = 12;
 		return;
 
@@ -883,7 +883,6 @@ gen_linktype(int proto)
 		break;
 
 	case DLT_LOOP:
-	case DLT_ENC:
 	case DLT_NULL:
 	{
 		int v;
@@ -912,6 +911,7 @@ gen_linktype(int proto)
 		return (gen_cmp(0, BPF_W, (bpf_int32)v));
 		break;
 	}
+	case DLT_ENC:
 	case DLT_RAW: {
 		struct slist *s0, *s1;
 		int ipv;
