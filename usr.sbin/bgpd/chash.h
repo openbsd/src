@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.h,v 1.2 2025/10/30 12:48:16 claudio Exp $	*/
+/*	$OpenBSD: chash.h,v 1.3 2025/10/30 14:54:55 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -21,6 +21,11 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
+/* for -portable since __unused is differently used in some system headers */
+#ifndef	__unused
+#define	__unused	__attribute__((__unused__))
+#endif
 
 struct ch_type {
 	int		(*t_equal)(const void *, const void *);
