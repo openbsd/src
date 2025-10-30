@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.140 2025/10/20 07:28:38 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.141 2025/10/30 13:52:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -289,6 +289,8 @@ server_link_window(struct session *src, struct winlink *srcwl,
 	if (dstwl == NULL)
 		return (-1);
 
+	if (marked_pane.wl == srcwl)
+		marked_pane.wl = dstwl;
 	if (selectflag)
 		session_select(dst, dstwl->idx);
 	server_redraw_session_group(dst);

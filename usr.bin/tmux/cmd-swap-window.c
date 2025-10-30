@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-window.c,v 1.28 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-swap-window.c,v 1.29 2025/10/30 13:52:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,6 +77,8 @@ cmd_swap_window_exec(struct cmd *self, struct cmdq_item *item)
 	wl_src->window = w_dst;
 	TAILQ_INSERT_TAIL(&w_dst->winlinks, wl_src, wentry);
 
+	if (marked_pane.wl == wl_src)
+		marked_pane.wl = wl_dst;
 	if (args_has(args, 'd')) {
 		session_select(dst, wl_dst->idx);
 		if (src != dst)
