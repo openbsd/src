@@ -2277,11 +2277,10 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	intel_display_device_probe(dev_priv);
 
-	/*
-	 * with GuC submission, init sometimes fails on Alder Lake-P
-	 * too early for IS_ALDERLAKE_P
-	 */
-	if (info->platform == INTEL_ALDERLAKE_P)
+	/* uc_expand_default_options() with no GuC submission */
+	if (GRAPHICS_VER(dev_priv) >= 12 &&
+	    (INTEL_INFO(dev_priv)->platform != INTEL_TIGERLAKE) &&
+	    (INTEL_INFO(dev_priv)->platform != INTEL_ROCKETLAKE))
 		dev_priv->params.enable_guc = ENABLE_GUC_LOAD_HUC;
 
 	mmio_bar = (GRAPHICS_VER(dev_priv) == 2) ? 0x14 : 0x10;
