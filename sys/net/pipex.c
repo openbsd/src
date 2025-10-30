@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.161 2025/08/27 22:39:04 yasuoka Exp $ */
+/*	$OpenBSD: pipex.c,v 1.162 2025/10/30 17:30:46 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -99,9 +99,6 @@ struct radix_node_head	*pipex_rd_head4 = NULL;	/* [L] */
 struct timeout pipex_timer_ch;		/* callout timer context */
 int pipex_prune = 1;			/* [I] walk list every seconds */
 
-struct mbuf_queue pipexoutq = MBUF_QUEUE_INITIALIZER(
-    IFQ_MAXLEN, IPL_SOFTNET);
-
 #ifdef PIPEX_DEBUG
 int pipex_debug = 0;		/* [A] systcl net.inet.ip.pipex_debug */
 #endif
@@ -180,46 +177,6 @@ pipex_ioctl(void *ownersc, u_long cmd, caddr_t data)
 	}
 
 	return (ret);
-}
-
-/************************************************************************
- * Software Interrupt Handler
- ************************************************************************/
-
-void
-pipexintr(void)
-{
-	struct mbuf_list ml;
-	struct mbuf *m;
-	struct pipex_session *session;
-
-	NET_ASSERT_LOCKED();
-
-	mq_delist(&pipexoutq, &ml);
-
-	while ((m = ml_dequeue(&ml)) != NULL) {
-		struct ifnet *ifp;
-
-		session = m->m_pkthdr.ph_cookie;
-
-		ifp = if_get(session->proto.pppoe.over_ifidx);
-		if (ifp != NULL) {
-			struct pipex_pppoe_header *pppoe;
-			int len;
-
-			pppoe = mtod(m, struct pipex_pppoe_header *);
-			len = ntohs(pppoe->length);
-			ifp->if_output(ifp, m, &session->peer.sa, NULL);
-			counters_pkt(session->stat_counters, pxc_opackets,
-			    pxc_obytes, len);
-		} else {
-			m_freem(m);
-			counters_inc(session->stat_counters, pxc_oerrors);
-		}
-		if_put(ifp);
-
-		pipex_rele_session(session);
-	}
 }
 
 /************************************************************************
@@ -1335,6 +1292,7 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session,
 void
 pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 {
+	struct ifnet *ifp;
 	struct pipex_pppoe_header *pppoe;
 	int len, padlen;
 
@@ -1345,7 +1303,7 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 	M_PREPEND(m0, sizeof(struct pipex_pppoe_header), M_NOWAIT);
 	if (m0 == NULL) {
 		PIPEX_DBG((NULL, LOG_ERR,
-		    "<%s> cannot prepend header.", __func__));
+		    "<%s> cannot prepend pppoe header.", __func__));
 		counters_inc(session->stat_counters, pxc_oerrors);
 		return;
 	}
@@ -1362,15 +1320,37 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 	pppoe->length = htons(len);
 
 	m0->m_pkthdr.ph_ifidx = session->proto.pppoe.over_ifidx;
-	refcnt_take(&session->pxs_refcnt);
-	m0->m_pkthdr.ph_cookie = session;
 	m0->m_flags &= ~(M_BCAST|M_MCAST);
 
-	if (mq_enqueue(&pipexoutq, m0) != 0) {
+	M_PREPEND(m0, ETHER_ALIGN + sizeof(struct ether_header), M_NOWAIT);
+	if (m0 == NULL) {
+		PIPEX_DBG((NULL, LOG_ERR,
+		    "<%s> cannot prepend ethernet header.", __func__));
 		counters_inc(session->stat_counters, pxc_oerrors);
-		pipex_rele_session(session);
-	} else
-		schednetisr(NETISR_PIPEX);
+		return;
+	}
+
+	ifp = if_get(session->proto.pppoe.over_ifidx);
+	if (ifp != NULL) {
+		struct arpcom *ac = (struct arpcom *)ifp;
+		struct ether_header *eh;
+
+		/* setup ethernet header information */
+		m_adj(m0, ETHER_ALIGN);
+		eh = mtod(m0, struct ether_header *);
+		memcpy(eh, session->peer.sa.sa_data, sizeof(*eh));
+		memcpy(eh->ether_shost, ac->ac_enaddr, sizeof(eh->ether_shost));
+
+		if (if_enqueue(ifp, m0) == 0)
+			counters_pkt(session->stat_counters, pxc_opackets,
+			    pxc_obytes, len);
+		else
+			counters_inc(session->stat_counters, pxc_oerrors);
+	} else {
+		m_freem(m0);
+		counters_inc(session->stat_counters, pxc_oerrors);
+	}
+	if_put(ifp);
 }
 #endif /* PIPEX_PPPOE */
 

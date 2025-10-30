@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.741 2025/09/09 09:16:18 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.742 2025/10/30 17:30:46 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1102,10 +1102,6 @@ if_netisr(void *unused)
 #if NBRIDGE > 0
 		if (n & (1 << NETISR_BRIDGE))
 			bridgeintr();
-#endif
-#ifdef PIPEX
-		if (n & (1 << NETISR_PIPEX))
-			pipexintr();
 #endif
 #if NPPPOE > 0
 		if (n & (1 << NETISR_PPPOE)) {

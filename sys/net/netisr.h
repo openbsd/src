@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.61 2023/07/06 04:55:05 dlg Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.62 2025/10/30 17:30:46 mvs Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #define NETISR_IP	2		/* same as AF_INET */
 #define NETISR_ARP	18		/* same as AF_LINK */
 #define NETISR_IPV6	24		/* same as AF_INET6 */
-#define NETISR_PIPEX	27		/* for pipex processing */
 #define NETISR_PPP	28		/* for PPP processing */
 #define NETISR_BRIDGE	29		/* for bridge processing */
 #define NETISR_PPPOE	30		/* for pppoe processing */
@@ -63,7 +62,6 @@ void	ipintr(void);
 void	ip6intr(void);
 void	pppintr(void);
 void	bridgeintr(void);
-void	pipexintr(void);
 void	pppoeintr(void);
 
 #define	schednetisr(anisr)						\
