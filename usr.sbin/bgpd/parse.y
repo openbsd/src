@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.482 2025/02/27 14:15:35 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.483 2025/10/30 12:43:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,10 +51,6 @@
 #include "session.h"
 #include "rde.h"
 #include "log.h"
-
-#ifndef nitems
-#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
-#endif
 
 #define MACRO_NAME_LEN		128
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.16 2025/09/09 12:42:04 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.17 2025/10/30 12:43:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -166,14 +166,14 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 	p = log_fmt_peer(&peer->conf);
 	switch (errcode) {
 	case ERR_HEADER:
-		if (subcode >= sizeof(suberr_header_names) / sizeof(char *) ||
+		if (subcode >= nitems(suberr_header_names) ||
 		    suberr_header_names[subcode] == NULL)
 			uk = 1;
 		else
 			suberrname = suberr_header_names[subcode];
 		break;
 	case ERR_OPEN:
-		if (subcode >= sizeof(suberr_open_names) / sizeof(char *) ||
+		if (subcode >= nitems(suberr_open_names) ||
 		    suberr_open_names[subcode] == NULL)
 			uk = 1;
 		else
@@ -192,7 +192,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 		}
 		break;
 	case ERR_UPDATE:
-		if (subcode >= sizeof(suberr_update_names) / sizeof(char *) ||
+		if (subcode >= nitems(suberr_update_names) ||
 		    suberr_update_names[subcode] == NULL)
 			uk = 1;
 		else
@@ -200,7 +200,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 		dump = 1;
 		break;
 	case ERR_CEASE:
-		if (subcode >= sizeof(suberr_cease_names) / sizeof(char *) ||
+		if (subcode >= nitems(suberr_cease_names) ||
 		    suberr_cease_names[subcode] == NULL)
 			uk = 1;
 		else
@@ -229,14 +229,14 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			uk = 1;
 		break;
 	case ERR_FSM:
-		if (subcode >= sizeof(suberr_fsm_names) / sizeof(char *) ||
+		if (subcode >= nitems(suberr_fsm_names) ||
 		    suberr_fsm_names[subcode] == NULL)
 			uk = 1;
 		else
 			suberrname = suberr_fsm_names[subcode];
 		break;
 	case ERR_RREFRESH:
-		if (subcode >= sizeof(suberr_rrefresh_names) / sizeof(char *) ||
+		if (subcode >= nitems(suberr_rrefresh_names) ||
 		    suberr_rrefresh_names[subcode] == NULL)
 			uk = 1;
 		else

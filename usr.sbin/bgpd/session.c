@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.526 2025/08/21 15:15:25 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.527 2025/10/30 12:43:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1876,7 +1876,7 @@ session_stop(struct peer *peer, uint8_t subcode, const char *reason)
 		break;
 	default:
 		/* session not open, no need to send notification */
-		if (subcode >= sizeof(suberr_cease_names) / sizeof(char *) ||
+		if (subcode >= nitems(suberr_cease_names) ||
 		    suberr_cease_names[subcode] == NULL)
 			log_peer_warnx(&peer->conf, "session stop: %s, "
 			    "unknown subcode %u", errnames[ERR_CEASE], subcode);

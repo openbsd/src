@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.519 2025/03/21 01:06:48 jsg Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.520 2025/10/30 12:43:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -106,6 +106,10 @@
 
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
 			    __attribute__((__unused__))
+
+#ifndef nitems
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 /*
  * Note that these numeric assignments differ from the numbers commonly
