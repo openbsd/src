@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.h,v 1.1 2025/10/29 10:32:38 claudio Exp $	*/
+/*	$OpenBSD: chash.h,v 1.2 2025/10/30 12:48:16 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -18,6 +18,9 @@
 
 #ifndef __CHASH_H__
 #define __CHASH_H__
+
+#include <stddef.h>
+#include <stdint.h>
 
 struct ch_type {
 	int		(*t_equal)(const void *, const void *);
