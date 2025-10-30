@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.15 2025/10/29 21:39:19 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.16 2025/10/30 12:43:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -87,9 +87,8 @@ ometric_head(struct parse_result *arg)
 	 */
 	peer_info = ometric_new(OMT_INFO, "bgpd_peer",
 	    "peer information");
-	peer_state = ometric_new_state(statenames,
-	    sizeof(statenames) / sizeof(statenames[0]), "bgpd_peer_state",
-	    "peer session state");
+	peer_state = ometric_new_state(statenames, nitems(statenames),
+	    "bgpd_peer_state", "peer session state");
 	peer_state_raw = ometric_new(OMT_GAUGE, "bgpd_peer_state_raw",
 	    "peer session state raw int value");
 	peer_last_change = ometric_new(OMT_GAUGE,
