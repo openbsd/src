@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.449 2025/10/13 07:19:08 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.450 2025/10/30 07:41:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -414,10 +414,12 @@ tty_repeat_requests(struct tty *tty, int force)
 		return;
 
 	if (!force && n <= TTY_REQUEST_LIMIT) {
-		log_debug("%s: not repeating requests (%u seconds)", c->name, n);
+		log_debug("%s: not repeating requests (%u seconds)", c->name,
+		    n);
 		return;
 	}
-	log_debug("%s: %srepeating requests (%u seconds)", c->name, force ? "(force) " : "" , n);
+	log_debug("%s: %srepeating requests (%u seconds)", c->name,
+	    force ? "(force) " : "" , n);
 	tty->last_requests = t;
 
 	if (tty->term->flags & TERM_VT100LIKE) {
