@@ -1,8 +1,8 @@
-/* $OpenBSD: rthread_stack.c,v 1.20 2021/09/17 15:20:21 deraadt Exp $ */
+/* $OpenBSD: rthread_stack.c,v 1.21 2025/10/30 13:21:29 miod Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
-#include <sys/types.h>
+#include <sys/param.h>	/* for MACHINE_STACK_GROWS_UP */
 #include <sys/mman.h>
 
 #include <errno.h>
