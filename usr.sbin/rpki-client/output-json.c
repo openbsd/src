@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.57 2025/09/17 12:10:08 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.58 2025/10/30 23:18:06 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -28,11 +28,9 @@ outputheader_json(struct validation_data *vd, struct stats *st)
 {
 	char		 hn[NI_MAXHOST], tbuf[26];
 	struct tm	*tp;
-	time_t		 t;
 	int		 i;
 
-	time(&t);
-	tp = gmtime(&t);
+	tp = gmtime(&vd->buildtime);
 	strftime(tbuf, sizeof tbuf, "%FT%TZ", tp);
 
 	gethostname(hn, sizeof hn);

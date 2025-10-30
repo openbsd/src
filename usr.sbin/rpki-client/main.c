@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.300 2025/10/17 08:09:21 job Exp $ */
+/*	$OpenBSD: main.c,v 1.301 2025/10/30 23:18:06 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1552,6 +1552,8 @@ main(int argc, char *argv[])
 		TIMEVAL_TO_TIMESPEC(&ru.ru_stime, &ts);
 		timespecadd(&stats.system_time, &ts, &stats.system_time);
 	}
+
+	vd.buildtime = get_current_time();
 
 	/* change working directory to the output directory */
 	if (fchdir(outdirfd) == -1)

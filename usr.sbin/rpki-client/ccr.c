@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.26 2025/10/18 08:12:32 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.27 2025/10/30 23:18:06 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -603,7 +603,6 @@ static CanonicalCacheRepresentation *
 generate_ccr(struct validation_data *vd)
 {
 	CanonicalCacheRepresentation *ccr = NULL;
-	time_t now = get_current_time();
 
 	if ((ccr = CanonicalCacheRepresentation_new()) == NULL)
 		errx(1, "CanonicalCacheRepresentation_new");
@@ -612,7 +611,7 @@ generate_ccr(struct validation_data *vd)
 	if ((ccr->hashAlg = OBJ_nid2obj(NID_sha256)) == NULL)
 		errx(1, "OBJ_nid2obj");
 
-	if (ASN1_GENERALIZEDTIME_set(ccr->producedAt, now) == NULL)
+	if (ASN1_GENERALIZEDTIME_set(ccr->producedAt, vd->buildtime) == NULL)
 		errx(1, "ASN1_GENERALIZEDTIME_set");
 
 	if ((ccr->mfts = generate_manifeststate(vd)) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.265 2025/10/16 06:46:31 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.266 2025/10/30 23:18:06 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -512,6 +512,7 @@ struct ccr {
 };
 
 struct validation_data {
+	time_t buildtime;
 	struct vrp_tree	vrps;
 	struct brk_tree	brks;
 	struct vap_tree	vaps;

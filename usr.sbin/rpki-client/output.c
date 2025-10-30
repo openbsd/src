@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.42 2025/08/23 09:13:14 job Exp $ */
+/*	$OpenBSD: output.c,v 1.43 2025/10/30 23:18:06 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -243,11 +243,9 @@ outputheader(FILE *out, struct validation_data *vd, struct stats *st)
 {
 	char		hn[NI_MAXHOST], tbuf[80];
 	struct tm	*tp;
-	time_t		t;
 	int		i;
 
-	time(&t);
-	tp = gmtime(&t);
+	tp = gmtime(&vd->buildtime);
 	strftime(tbuf, sizeof tbuf, "%a %b %e %H:%M:%S UTC %Y", tp);
 
 	gethostname(hn, sizeof hn);
