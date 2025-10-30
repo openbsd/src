@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.103 2025/10/30 20:49:10 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.104 2025/10/30 23:19:33 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -101,7 +101,6 @@ SRCS_KEY+=	ed25519-openssl.c
 SRCS_KEY+=	ed25519.c
 .endif
 
-SRCS_KEY+=	hash.c
 SRCS_KEYP+=	authfile.c
 SRCS_KEYP+=	sshbuf-io.c
 SRCS_KEYP+=	atomicio.c
