@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.5 2020/09/11 09:27:10 mpi Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.6 2025/10/30 18:23:30 jca Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 1996/09/30 16:34:56 ws Exp $	*/
 
 /*
@@ -36,10 +36,14 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/pledge.h>
 
 int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
+	if ((p->p_p->ps_flags & PS_PLEDGE))
+		return pledge_fail(p, EINVAL, 0);
+
 	/*
 	 * Currently no special system calls
 	 */

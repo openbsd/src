@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.333 2025/09/17 10:30:10 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.334 2025/10/30 18:23:30 jca Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -362,6 +362,9 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_ypconnect] = PLEDGE_GETPW,
 
 	[SYS_swapctl] = PLEDGE_VMINFO,
+
+	/* for sysarch(*_SYNC_ICACHE) requests only */
+	[SYS_sysarch] = PLEDGE_PROTEXEC,
 };
 
 static const struct {

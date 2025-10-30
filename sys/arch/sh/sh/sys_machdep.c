@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.1.1.1 2006/10/06 21:02:55 miod Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.2 2025/10/30 18:23:30 jca Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.11 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
@@ -77,11 +77,15 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/pledge.h>
 
 int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args __attribute__((__unused__)) *uap = v;
+
+	if ((p->p_p->ps_flags & PS_PLEDGE))
+		return pledge_fail(p, EINVAL, 0);
 
 	return (ENOSYS);
 }

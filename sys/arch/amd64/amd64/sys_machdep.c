@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.20 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.21 2025/10/30 18:23:30 jca Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/pledge.h>
 
 #include <machine/psl.h>
 #include <machine/sysarch.h>
@@ -85,6 +86,9 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *) parms;
 	} */ *uap = v;
 	int error = 0;
+
+	if ((p->p_p->ps_flags & PS_PLEDGE))
+		return pledge_fail(p, EINVAL, 0);
 
 	switch(SCARG(uap, op)) {
 	case AMD64_IOPL: 

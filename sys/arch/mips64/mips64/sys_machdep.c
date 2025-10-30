@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.11 2019/12/20 13:34:41 visa Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.12 2025/10/30 18:23:30 jca Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,7 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/pledge.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -66,8 +67,12 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 		syscallarg(char *) parms;
 	} */ *uap = v;
 	int error = 0;
+	int op = SCARG(uap, op);
 
-	switch(SCARG(uap, op)) {
+	if ((p->p_p->ps_flags & PS_PLEDGE) && op != MIPS64_CACHEFLUSH)
+		return pledge_fail(p, EINVAL, 0);
+
+	switch(op) {
 	case MIPS64_CACHEFLUSH:
 	    {
 		struct mips64_cacheflush_args cfa;

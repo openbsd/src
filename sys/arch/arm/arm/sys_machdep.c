@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.7 2021/05/16 03:39:27 jsg Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.8 2025/10/30 18:23:30 jca Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.6 2003/07/15 00:24:42 lukem Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
+#include <sys/pledge.h>
 
 #include <machine/sysarch.h>
 
@@ -123,8 +124,12 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *) parms;
 	} */ *uap = v;
 	int error = 0;
+	int op = SCARG(uap, op);
 
-	switch(SCARG(uap, op)) {
+	if ((p->p_p->ps_flags & PS_PLEDGE) && op != ARM_SYNC_ICACHE)
+		return pledge_fail(p, EINVAL, 0);
+
+	switch(op) {
 	case ARM_SYNC_ICACHE : 
 		error = arm32_sync_icache(p, SCARG(uap, parms), retval);
 		break;

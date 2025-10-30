@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.4 2025/06/28 13:24:21 miod Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.5 2025/10/30 18:23:30 jca Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,6 +36,7 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/pledge.h>
 
 int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
@@ -45,6 +46,9 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 		syscallarg(char *) parms;
 	} */ *uap = v;
 	int error = 0;
+
+	if ((p->p_p->ps_flags & PS_PLEDGE))
+		return pledge_fail(p, EINVAL, 0);
 
 	switch (SCARG(uap, op)) {
 	default:

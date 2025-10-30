@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.146 2025/06/26 20:28:07 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.147 2025/10/30 18:23:30 jca Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -71,6 +71,7 @@
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
+#include <sys/pledge.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
 #include <sys/errno.h>
@@ -910,6 +911,9 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 	   syscallarg(char *) parm;
 	} */ *uap = v;
 #endif
+
+	if ((p->p_p->ps_flags & PS_PLEDGE))
+		return pledge_fail(p, EINVAL, 0);
 
 	return (ENOSYS);
 }
