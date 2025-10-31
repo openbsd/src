@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.43 2025/10/30 23:18:06 job Exp $ */
+/*	$OpenBSD: output.c,v 1.44 2025/10/31 07:41:36 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -76,7 +76,7 @@ static const struct outputs {
 
 static FILE	*output_createtmp(char *);
 static void	 output_cleantmp(void);
-static int	 output_finish(FILE *);
+static int	 output_finish(FILE *, time_t);
 static void	 sig_handler(int);
 static void	 set_signal_handler(void);
 
@@ -152,7 +152,7 @@ outputfiles(struct validation_data *vd, struct stats *st)
 			rc = 1;
 			continue;
 		}
-		if (output_finish(fout) != 0) {
+		if (output_finish(fout, vd->buildtime) != 0) {
 			warn("finish for %s format failed", outputs[i].name);
 			output_cleantmp();
 			rc = 1;
@@ -187,12 +187,23 @@ output_createtmp(char *name)
 }
 
 static int
-output_finish(FILE *out)
+output_finish(FILE *out, time_t buildtime)
 {
+	struct timespec ts[2];
+
 	if (fclose(out) != 0)
 		return -1;
+
+	ts[0].tv_nsec = UTIME_OMIT;
+	ts[1].tv_sec = buildtime;
+	ts[1].tv_nsec = 0;
+
+	if (utimensat(AT_FDCWD, output_tmpname, ts, 0) == -1)
+		return -1;
+
 	if (rename(output_tmpname, output_name) == -1)
 		return -1;
+
 	output_tmpname[0] = '\0';
 	return 0;
 }
