@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.2 2025/10/17 16:52:40 deraadt Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.3 2025/10/31 07:24:18 miod Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
  */
 
 #include "libsa.h"
+
+#include <sys/disklabel.h>
 
 #define MAXDEVNAME      16
 
