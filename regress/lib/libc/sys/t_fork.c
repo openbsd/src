@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_fork.c,v 1.5 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_fork.c,v 1.6 2025/10/31 17:14:46 miod Exp $	*/
 /*	$NetBSD: t_fork.c,v 1.4 2019/04/06 15:41:54 kamil Exp $	*/
 
 /*-
@@ -28,7 +28,7 @@
  */
 #include "macros.h"
 
-#include <sys/types.h>
+#include <sys/param.h>	/* for MACHINE_STACK_GROWS_UP */
 #include <sys/signal.h>
 #ifdef __OpenBSD__
 #include <sys/proc.h>
@@ -282,7 +282,7 @@ nested_raw(const char *fn, volatile int flags)
 	stack = malloc(stack_size);
 	ATF_REQUIRE(stack != NULL);
 
-#ifdef __MACHINE_STACK_GROWS_UP
+#ifdef MACHINE_STACK_GROWS_UP
 	stack_base = stack;
 #else
 	stack_base = (char *)stack + stack_size;
