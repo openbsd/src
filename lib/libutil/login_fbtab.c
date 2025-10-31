@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.18 2022/12/27 17:10:08 jmc Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.19 2025/10/31 17:58:59 jca Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -18,10 +18,7 @@
 ************************************************************************/
 /*
     SYNOPSIS
-	void login_fbtab(tty, uid, gid)
-	char *tty;
-	uid_t uid;
-	gid_t gid;
+	void login_fbtab(const char *tty, uid_t uid, gid_t gid);
 
     DESCRIPTION
 	This module implements device security as described in the
