@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.8 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.9 2025/11/01 10:04:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -239,20 +239,22 @@ ebe_free(void *arg)
 }
 
 void *
-etherbridge_resolve_ea(struct etherbridge *eb,
+etherbridge_resolve_ea(struct etherbridge *eb, uint16_t vid,
     const struct ether_addr *ea)
 {
-	return (etherbridge_resolve(eb, ether_addr_to_e64(ea)));
+	return (etherbridge_resolve(eb, vid, ether_addr_to_e64(ea)));
 }
 
 void *
-etherbridge_resolve(struct etherbridge *eb, uint64_t eba)
+etherbridge_resolve(struct etherbridge *eb, uint16_t vid, uint64_t eba)
 {
-	struct eb_list *ebl = etherbridge_list(eb, eba);
+	struct eb_list *ebl;
 	struct eb_entry *ebe;
 
 	SMR_ASSERT_CRITICAL();
 
+	eba |= (uint64_t)vid << 48;
+	ebl = etherbridge_list(eb, eba);
 	ebe = ebl_find(ebl, eba);
 	if (ebe != NULL) {
 		if (ebe->ebe_type == EBE_DYNAMIC) {
@@ -268,14 +270,14 @@ etherbridge_resolve(struct etherbridge *eb, uint64_t eba)
 }
 
 void
-etherbridge_map_ea(struct etherbridge *eb, void *port,
+etherbridge_map_ea(struct etherbridge *eb, void *port, uint16_t vid,
     const struct ether_addr *ea)
 {
-	etherbridge_map(eb, port, ether_addr_to_e64(ea));
+	etherbridge_map(eb, port, vid, ether_addr_to_e64(ea));
 }
 
 void
-etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
+etherbridge_map(struct etherbridge *eb, void *port, uint16_t vid, uint64_t eba)
 {
 	struct eb_list *ebl;
 	struct eb_entry *oebe, *nebe;
@@ -288,6 +290,8 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 		return;
 
 	now = getuptime();
+
+	eba |= (uint64_t)vid << 48;
 	ebl = etherbridge_list(eb, eba);
 
 	smr_read_enter();
@@ -332,6 +336,7 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 	nebe->ebe_addr = eba;
 	nebe->ebe_port = nport;
 	nebe->ebe_type = EBE_DYNAMIC;
+	nebe->ebe_created = now;
 	nebe->ebe_age = now;
 
 	mtx_enter(&eb->eb_lock);
@@ -385,14 +390,15 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 
 int
 etherbridge_add_addr(struct etherbridge *eb, void *port,
-    const struct ether_addr *ea, unsigned int type)
+    uint16_t vid, const struct ether_addr *ea, unsigned int type)
 {
-	uint64_t eba = ether_addr_to_e64(ea);
+	uint64_t eba = ether_addr_to_e64(ea) | (uint64_t)vid << 48;
 	struct eb_list *ebl;
 	struct eb_entry *nebe;
 	unsigned int num;
 	void *nport;
 	int error = 0;
+	time_t now;
 
 	if (ETH64_IS_MULTICAST(eba) || ETH64_IS_ANYADDR(eba))
 		return (EADDRNOTAVAIL);
@@ -407,13 +413,16 @@ etherbridge_add_addr(struct etherbridge *eb, void *port,
 		return (ENOMEM);
 	}
 
+	now = getuptime();
+
 	smr_init(&nebe->ebe_smr_entry);
 	nebe->ebe_etherbridge = eb;
 
 	nebe->ebe_addr = eba;
 	nebe->ebe_port = nport;
 	nebe->ebe_type = type;
-	nebe->ebe_age = getuptime();
+	nebe->ebe_created = now;
+	nebe->ebe_age = now;
 
 	ebl = etherbridge_list(eb, eba);
 
@@ -441,9 +450,10 @@ etherbridge_add_addr(struct etherbridge *eb, void *port,
 	return (error);
 }
 int
-etherbridge_del_addr(struct etherbridge *eb, const struct ether_addr *ea)
+etherbridge_del_addr(struct etherbridge *eb, uint16_t vid,
+    const struct ether_addr *ea)
 {
-	uint64_t eba = ether_addr_to_e64(ea);
+	uint64_t eba = ether_addr_to_e64(ea) | (uint64_t)vid << 48;
 	struct eb_list *ebl;
 	struct eb_entry *oebe;
 	const struct eb_entry key = {
@@ -654,6 +664,67 @@ etherbridge_rtfind(struct etherbridge *eb, struct ifbaconf *baconf)
 	}
 	nlen = baconf->ifbac_len;
 	baconf->ifbac_len = eb->eb_num * sizeof(bareq);
+	mtx_leave(&eb->eb_lock);
+
+	error = copyout(buf, baconf->ifbac_buf, len);
+	free(buf, M_TEMP, nlen);
+
+	return (error);
+}
+
+int
+etherbridge_vareq(struct etherbridge *eb, struct ifbaconf *baconf)
+{
+	struct eb_entry *ebe;
+	struct ifbvareq bvareq;
+	caddr_t buf;
+	size_t len, nlen;
+	int error;
+
+	if (baconf->ifbac_len == 0) {
+		/* single read is atomic */
+		baconf->ifbac_len = eb->eb_num * sizeof(bvareq);
+		return (0);
+	}
+
+	buf = malloc(baconf->ifbac_len, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (buf == NULL)
+		return (ENOMEM);
+	len = 0;
+
+	mtx_enter(&eb->eb_lock);
+	RBT_FOREACH(ebe, eb_tree, &eb->eb_tree) {
+		nlen = len + sizeof(bvareq);
+		if (nlen > baconf->ifbac_len)
+			break;
+
+		strlcpy(bvareq.ifbva_name, eb->eb_name,
+		    sizeof(bvareq.ifbva_name));
+		eb_port_ifname(eb,
+		    bvareq.ifbva_ifsname, sizeof(bvareq.ifbva_ifsname),
+		    ebe->ebe_port);
+		bvareq.ifbva_created = ebe->ebe_created;
+		bvareq.ifbva_used = ebe->ebe_age;
+		bvareq.ifbva_vid = ebe->ebe_addr >> 48;
+		ether_e64_to_addr(&bvareq.ifbva_dst, ebe->ebe_addr);
+
+		memset(&bvareq.ifbva_dstsa, 0, sizeof(bvareq.ifbva_dstsa));
+		eb_port_sa(eb, &bvareq.ifbva_dstsa, ebe->ebe_port);
+
+		switch (ebe->ebe_type) {
+		case EBE_DYNAMIC:
+			bvareq.ifbva_flags = IFBAF_DYNAMIC;
+			break;
+		case EBE_STATIC:
+			bvareq.ifbva_flags = IFBAF_STATIC;
+			break;
+		}
+
+		memcpy(buf + len, &bvareq, sizeof(bvareq));
+		len = nlen;
+	}
+	nlen = baconf->ifbac_len;
+	baconf->ifbac_len = eb->eb_num * sizeof(bvareq);
 	mtx_leave(&eb->eb_lock);
 
 	error = copyout(buf, baconf->ifbac_buf, len);

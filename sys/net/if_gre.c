@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.190 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.191 2025/11/01 10:04:49 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1460,7 +1460,7 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
 
 	eh = mtod(m, struct ether_header *);
 	etherbridge_map_ea(&sc->sc_eb, (void *)&key->t_dst,
-	    (struct ether_addr *)eh->ether_shost);
+	    0, (struct ether_addr *)eh->ether_shost);
 
 	SET(m->m_pkthdr.csum_flags, M_FLOWID);
 	m->m_pkthdr.ph_flowid = bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY;
@@ -3711,13 +3711,13 @@ nvgre_add_addr(struct nvgre_softc *sc, const struct ifbareq *ifba)
 	}
 
 	return (etherbridge_add_addr(&sc->sc_eb, &endpoint,
-	    &ifba->ifba_dst, type));
+	    0, &ifba->ifba_dst, type));
 }
 
 static int
 nvgre_del_addr(struct nvgre_softc *sc, const struct ifbareq *ifba)
 {
-	return (etherbridge_del_addr(&sc->sc_eb, &ifba->ifba_dst));
+	return (etherbridge_del_addr(&sc->sc_eb, 0, &ifba->ifba_dst));
 }
 
 static void
@@ -3753,7 +3753,7 @@ nvgre_start(struct ifnet *ifp)
 
 			smr_read_enter();
 			endpoint = etherbridge_resolve_ea(&sc->sc_eb,
-			    (struct ether_addr *)eh->ether_dhost);
+			    0, (struct ether_addr *)eh->ether_dhost);
 			if (endpoint == NULL) {
 				/* "flood" to unknown hosts */
 				endpoint = &tunnel->t_dst;

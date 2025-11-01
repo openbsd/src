@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.25 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.26 2025/11/01 10:04:49 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -265,7 +265,7 @@ bpe_start(struct ifnet *ifp)
 
 			smr_read_enter();
 			endpoint = etherbridge_resolve_ea(&sc->sc_eb,
-			    (struct ether_addr *)ceh->ether_dhost);
+			    0, (struct ether_addr *)ceh->ether_dhost);
 			if (endpoint == NULL) {
 				/* "flood" to unknown hosts */
 				endpoint = &sc->sc_group;
@@ -710,13 +710,13 @@ bpe_add_addr(struct bpe_softc *sc, const struct ifbareq *ifba)
 	/* check endpoint for multicast or broadcast? */
 
 	return (etherbridge_add_addr(&sc->sc_eb, (void *)endpoint,
-	    &ifba->ifba_dst, type));
+	    0, &ifba->ifba_dst, type));
 }
 
 static int
 bpe_del_addr(struct bpe_softc *sc, const struct ifbareq *ifba)
 {
-	return (etherbridge_del_addr(&sc->sc_eb, &ifba->ifba_dst));
+	return (etherbridge_del_addr(&sc->sc_eb, 0, &ifba->ifba_dst));
 }
 
 static inline struct bpe_softc *
@@ -770,7 +770,7 @@ bpe_input(struct ifnet *ifp0, struct mbuf *m, struct netstack *ns)
 	ceh = (struct ether_header *)(itagp + 1);
 
 	etherbridge_map_ea(&sc->sc_eb, ceh->ether_shost,
-	    (struct ether_addr *)beh->ether_shost);
+	    0, (struct ether_addr *)beh->ether_shost);
 
 	m_adj(m, sizeof(*beh) + sizeof(*itagp));
 

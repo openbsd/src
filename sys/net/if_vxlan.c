@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.104 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.105 2025/11/01 10:04:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -336,7 +336,7 @@ vxlan_encap(struct vxlan_softc *sc, struct mbuf *m,
 
 		smr_read_enter();
 		endpoint = etherbridge_resolve_ea(&sc->sc_eb,
-		    (struct ether_addr *)eh->ether_dhost);
+		    0, (struct ether_addr *)eh->ether_dhost);
 		if (endpoint != NULL) {
 			gateway = *endpoint;
 			endpoint = &gateway;
@@ -695,7 +695,7 @@ vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 	if (sc->sc_mode == VXLAN_TMODE_LEARNING) {
 		eh = mtod(m, struct ether_header *);
 		etherbridge_map_ea(&sc->sc_eb, &addr,
-		    (struct ether_addr *)eh->ether_shost);
+		    0, (struct ether_addr *)eh->ether_shost);
 	}
 
 	rxhprio = sc->sc_rxhprio;
@@ -1721,13 +1721,13 @@ vxlan_add_addr(struct vxlan_softc *sc, const struct ifbareq *ifba)
 	}
 
 	return (etherbridge_add_addr(&sc->sc_eb, &endpoint,
-	    &ifba->ifba_dst, type));
+	    0, &ifba->ifba_dst, type));
 }
 
 static int
 vxlan_del_addr(struct vxlan_softc *sc, const struct ifbareq *ifba)
 {
-	return (etherbridge_del_addr(&sc->sc_eb, &ifba->ifba_dst));
+	return (etherbridge_del_addr(&sc->sc_eb, 0, &ifba->ifba_dst));
 }
 
 void

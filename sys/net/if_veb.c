@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.45 2025/10/21 05:13:20 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.46 2025/11/01 10:04:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -63,6 +63,11 @@
 #include <net/if_vlan_var.h>
 #endif
 
+/* there are (basically) 4096 vids (vlan tags) */
+#define VEB_VID_COUNT		4096
+#define VEB_VID_BYTES		(VEB_VID_COUNT / 8)
+#define VEB_VID_WORDS		(VEB_VID_BYTES / sizeof(uint32_t))
+
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
 #define VEB_IFBIF_FLAGS	\
 	(IFBIF_LOCKED|IFBIF_LEARNING|IFBIF_DISCOVER|IFBIF_BLOCKNONIP)
@@ -125,6 +130,8 @@ struct veb_port {
 	unsigned int			 p_link_state;
 	unsigned int			 p_bif_flags;
 	uint32_t			 p_protected;
+	uint16_t			 p_pvid;
+	uint32_t			*p_vid_map;
 
 	struct veb_rules		 p_vrl;
 	unsigned int			 p_nvrl;
@@ -145,6 +152,9 @@ struct veb_softc {
 	unsigned int			 sc_dead;
 
 	struct etherbridge		 sc_eb;
+	int				 sc_dflt_pvid;
+	int				 sc_txprio;
+	int				 sc_rxprio;
 
 	struct rwlock			 sc_rule_lock;
 	struct veb_ports		*sc_ports;
@@ -165,6 +175,8 @@ static int	veb_enqueue(struct ifnet *, struct mbuf *);
 static int	veb_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
 static void	veb_start(struct ifqueue *);
+static struct mbuf *
+		veb_offload(struct ifnet *, struct ifnet *, struct mbuf *);
 
 static int	veb_up(struct veb_softc *);
 static int	veb_down(struct veb_softc *);
@@ -204,8 +216,15 @@ static int	veb_port_set_flags(struct veb_softc *, struct ifbreq *);
 static int	veb_port_get_flags(struct veb_softc *, struct ifbreq *);
 static int	veb_port_set_protected(struct veb_softc *,
 		    const struct ifbreq *);
+static int	veb_port_set_pvid(struct veb_softc *,
+		    const struct ifbreq *);
 static int	veb_add_addr(struct veb_softc *, const struct ifbareq *);
+static int	veb_add_vid_addr(struct veb_softc *, const struct ifbvareq *);
 static int	veb_del_addr(struct veb_softc *, const struct ifbareq *);
+static int	veb_del_vid_addr(struct veb_softc *, const struct ifbvareq *);
+
+static int	veb_get_vid_map(struct veb_softc *, struct ifbrvidmap *);
+static int	veb_set_vid_map(struct veb_softc *, const struct ifbrvidmap *);
 
 static int	veb_rule_add(struct veb_softc *, const struct ifbrlreq *);
 static int	veb_rule_list_flush(struct veb_softc *,
@@ -293,6 +312,10 @@ veb_clone_create(struct if_clone *ifc, int unit)
 		free(sc, M_DEVBUF, sizeof(*sc));
 		return (error);
 	}
+
+	sc->sc_dflt_pvid = 1;
+	sc->sc_txprio = IF_HDRPRIO_PACKET;
+	sc->sc_rxprio = IF_HDRPRIO_OUTER;
 
 	ifp->if_softc = sc;
 	ifp->if_type = IFT_BRIDGE;
@@ -441,6 +464,9 @@ veb_span(struct veb_softc *sc, struct mbuf *m0)
 			continue;
 		}
 
+		if ((m = veb_offload(&sc->sc_if, ifp0, m)) == NULL)
+			continue;
+
 		if_enqueue(ifp0, m); /* XXX count error */
 	}
 	refcnt_rele_wake(&sm->m_refs);
@@ -450,9 +476,6 @@ static int
 veb_ip_filter(const struct mbuf *m)
 {
 	const struct ether_header *eh;
-
-	if (ISSET(m->m_flags, M_VLANTAG))
-		return (1);
 
 	eh = mtod(m, struct ether_header *);
 	switch (ntohs(eh->ether_type)) {
@@ -469,23 +492,32 @@ veb_ip_filter(const struct mbuf *m)
 }
 
 static int
-veb_vlan_filter(const struct mbuf *m)
+veb_svlan_filter(const struct mbuf *m)
 {
 	const struct ether_header *eh;
 
-	if (ISSET(m->m_flags, M_VLANTAG))
-		return (1);
-
 	eh = mtod(m, struct ether_header *);
-	switch (ntohs(eh->ether_type)) {
-	case ETHERTYPE_VLAN:
-	case ETHERTYPE_QINQ:
-		return (1);
-	default:
-		break;
-	}
 
-	return (0);
+	return (eh->ether_type == htons(ETHERTYPE_QINQ));
+}
+
+static int
+veb_vid_map_filter(struct veb_port *p, uint16_t vid)
+{
+	uint32_t *map;
+	int drop = 1;
+
+	smr_read_enter();
+	map = SMR_PTR_GET(&p->p_vid_map);
+	if (map != NULL) {
+		unsigned int off = vid / 32;
+		unsigned int bit = vid % 32;
+
+		drop = !ISSET(map[off], 1U << bit);
+	}
+	smr_read_leave();
+
+	return (drop);
 }
 
 static int
@@ -493,9 +525,6 @@ veb_rule_arp_match(const struct veb_rule *vr, struct mbuf *m)
 {
 	struct ether_header *eh;
 	struct ether_arp ea;
-
-	if (ISSET(m->m_flags, M_VLANTAG))
-		return (0);
 
 	eh = mtod(m, struct ether_header *);
 
@@ -544,11 +573,13 @@ veb_rule_arp_match(const struct veb_rule *vr, struct mbuf *m)
 
 static int
 veb_rule_list_test(struct veb_rule *vr, int dir, struct mbuf *m,
-    uint64_t src, uint64_t dst)
+    uint64_t src, uint64_t dst, uint16_t vid)
 {
 	SMR_ASSERT_CRITICAL();
 
 	do {
+		/* XXX check vid */
+
 		if (ISSET(vr->vr_flags, VEB_R_F_ARP|VEB_R_F_RARP) &&
 		    !veb_rule_arp_match(vr, m))
 			continue;
@@ -574,7 +605,7 @@ veb_rule_list_test(struct veb_rule *vr, int dir, struct mbuf *m,
 
 static inline int
 veb_rule_filter(struct veb_port *p, int dir, struct mbuf *m,
-    uint64_t src, uint64_t dst)
+    uint64_t src, uint64_t dst, uint16_t vid)
 {
 	struct veb_rule *vr;
 	int filter = VEB_R_PASS;
@@ -582,7 +613,7 @@ veb_rule_filter(struct veb_port *p, int dir, struct mbuf *m,
 	smr_read_enter();
 	vr = SMR_TAILQ_FIRST(&p->p_vr_list[dir]);
 	if (vr != NULL)
-		filter = veb_rule_list_test(vr, dir, m, src, dst);
+		filter = veb_rule_list_test(vr, dir, m, src, dst, vid);
 	smr_read_leave();
 
 	return (filter == VEB_R_BLOCK);
@@ -625,9 +656,6 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m, struct netstack *ns)
 	 * other veb ports.
 	 */
 	if (ifp0->if_enqueue == vport_enqueue)
-		return (m);
-
-	if (ISSET(m->m_flags, M_VLANTAG))
 		return (m);
 
 	eh = mtod(m, struct ether_header *);
@@ -798,9 +826,6 @@ veb_ipsec_in(struct ifnet *ifp0, struct mbuf *m)
 	if (ifp0->if_enqueue == vport_enqueue)
 		return (m);
 
-	if (ISSET(m->m_flags, M_VLANTAG))
-		return (m);
-
 	eh = mtod(m, struct ether_header *);
 	switch (ntohs(eh->ether_type)) {
 	case ETHERTYPE_IP:
@@ -901,9 +926,6 @@ veb_ipsec_out(struct ifnet *ifp0, struct mbuf *m)
 	struct ether_header *eh, copy;
 
 	if (ifp0->if_enqueue == vport_enqueue)
-		return (m);
-
-	if (ISSET(m->m_flags, M_VLANTAG))
 		return (m);
 
 	eh = mtod(m, struct ether_header *);
@@ -1017,7 +1039,7 @@ veb_offload(struct ifnet *ifp, struct ifnet *ifp0, struct mbuf *m)
 
 static void
 veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
-    uint64_t src, uint64_t dst, struct netstack *ns)
+    uint64_t src, uint64_t dst, uint16_t vid, struct netstack *ns)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct veb_ports *pm;
@@ -1027,23 +1049,25 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 	struct mbuf *m;
 	unsigned int i;
 
+	if (rp->p_pvid == vid) { /* XXX which vlan is the right one? */
 #if NPF > 0
-	/*
-	 * we couldn't find a specific port to send this packet to,
-	 * but pf should still have a chance to apply policy to it.
-	 * let pf look at it, but use the veb interface as a proxy.
-	 */
-	if (ISSET(ifp->if_flags, IFF_LINK1) &&
-	    (m0 = veb_pf(ifp, PF_FWD, m0, ns)) == NULL)
-		return;
+		/*
+		 * we couldn't find a specific port to send this packet to,
+		 * but pf should still have a chance to apply policy to it.
+		 * let pf look at it, but use the veb interface as a proxy.
+		 */
+		if (ISSET(ifp->if_flags, IFF_LINK1) &&
+		    (m0 = veb_pf(ifp, PF_FWD, m0, ns)) == NULL)
+			return;
 #endif
 
 #if 0 && defined(IPSEC)
-	/* same goes for ipsec */
-	if (ISSET(ifp->if_flags, IFF_LINK2) &&
-	    (m0 = veb_ipsec_out(ifp, m0)) == NULL)
-		return;
+		/* same goes for ipsec */
+		if (ISSET(ifp->if_flags, IFF_LINK2) &&
+		    (m0 = veb_ipsec_out(ifp, m0)) == NULL)
+			return;
 #endif
+	}
 
 	counters_pkt(ifp->if_counters, ifc_opackets, ifc_obytes,
 	    m0->m_pkthdr.len);
@@ -1069,6 +1093,11 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 			continue;
 		}
 
+		if (vid != tp->p_pvid) {
+			if (veb_vid_map_filter(tp, vid))
+				continue;
+		}
+
 		ifp0 = tp->p_ifp0;
 		if (!ISSET(ifp0->if_flags, IFF_RUNNING)) {
 			/* don't waste time */
@@ -1081,17 +1110,20 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 			continue;
 		}
 
-		if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m0, src, dst))
+		if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m0, src, dst, vid))
 			continue;
-
-		if ((m0 = veb_offload(ifp, ifp0, m0)) == NULL)
-			goto rele;
 
 		m = m_dup_pkt(m0, max_linkhdr + ETHER_ALIGN, M_NOWAIT);
 		if (m == NULL) {
 			/* XXX count error? */
 			continue;
 		}
+
+		if (vid == tp->p_pvid)
+			CLR(m->m_flags, M_VLANTAG);
+
+		if ((m = veb_offload(ifp, ifp0, m)) == NULL)
+			goto rele;
 
 		(*tp->p_enqueue)(ifp0, m); /* XXX count error */
 	}
@@ -1104,7 +1136,8 @@ done:
 
 static struct mbuf *
 veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
-    struct mbuf *m, uint64_t src, uint64_t dst, struct netstack *ns)
+    struct mbuf *m, uint64_t src, uint64_t dst, uint16_t vid,
+    struct netstack *ns)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
@@ -1120,22 +1153,32 @@ veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
 		goto drop;
 	}
 
-	if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m, src, dst))
+	/* pvid or tagged config can override address entries */
+	if (vid != tp->p_pvid) {
+		if (veb_vid_map_filter(tp, vid))
+			goto drop;
+	}
+
+	if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m, src, dst, vid))
 		goto drop;
 
 	ifp0 = tp->p_ifp0;
 
+	if (vid == tp->p_pvid) {
 #if 0 && defined(IPSEC)
-	if (ISSET(ifp->if_flags, IFF_LINK2) &&
-	    (m = veb_ipsec_out(ifp0, m0)) == NULL)
-		return;
+		if (ISSET(ifp->if_flags, IFF_LINK2) &&
+		    (m = veb_ipsec_out(ifp0, m0)) == NULL)
+			return;
 #endif
 
 #if NPF > 0
-	if (ISSET(ifp->if_flags, IFF_LINK1) &&
-	    (m = veb_pf(ifp0, PF_FWD, m, ns)) == NULL)
-		return (NULL);
+		if (ISSET(ifp->if_flags, IFF_LINK1) &&
+		    (m = veb_pf(ifp0, PF_FWD, m, ns)) == NULL)
+			return (NULL);
 #endif
+
+		CLR(m->m_flags, M_VLANTAG);
+	}
 
 	counters_pkt(ifp->if_counters, ifc_opackets, ifc_obytes,
 	    m->m_pkthdr.len);
@@ -1158,6 +1201,7 @@ veb_vport_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	return (m);
 }
 
+
 static struct mbuf *
 veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
     struct netstack *ns)
@@ -1167,26 +1211,14 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
 	uint64_t src;
+	uint16_t vid = p->p_pvid;
+	int prio;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return (m);
-
-	eh = mtod(m, struct ether_header *);
-	src = ether_addr_to_e64((struct ether_addr *)eh->ether_shost);
-
-	if (ISSET(p->p_bif_flags, IFBIF_LOCKED)) {
-		struct veb_port *rp;
-
-		smr_read_enter();
-		rp = etherbridge_resolve(&sc->sc_eb, src);
-		smr_read_leave();
-
-		if (rp != p)
-			goto drop;
-	}
 
 	/* Is this a MAC Bridge component Reserved address? */
 	if (ETH64_IS_8021_RSVD(dst)) {
@@ -1198,7 +1230,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 			goto drop;
 		}
 
-		 /* look at the last nibble of the 802.1 reserved address */
+		/* look at the last nibble of the 802.1 reserved address */
 		switch (dst & 0xf) {
 		case 0x0: /* Nearest Customer Bridge Group Address */
 		case 0xb: /* EDE-SS PEP (IEEE Std 802.1AEcg) */
@@ -1211,8 +1243,76 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 		}
 	}
 
+	eh = mtod(m, struct ether_header *);
+	if (!ISSET(m->m_flags, M_VLANTAG) &&
+	    eh->ether_type == htons(ETHERTYPE_VLAN)) {
+		struct ether_vlan_header *evl;
+
+		evl = mtod(m, struct ether_vlan_header *);
+		m->m_pkthdr.ether_vtag = ntohs(evl->evl_tag);
+		SET(m->m_flags, M_VLANTAG);
+
+		memmove((caddr_t)evl + EVL_ENCAPLEN, evl,
+		    offsetof(struct ether_vlan_header, evl_encap_proto));
+		m_adj(m, EVL_ENCAPLEN);
+
+		eh = mtod(m, struct ether_header *);
+	}
+
+	if (ISSET(m->m_flags, M_VLANTAG)) {
+		uint16_t tvid = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
+
+		if (tvid == EVL_VLID_NULL) {
+			CLR(m->m_flags, M_VLANTAG);
+		} else if (veb_vid_map_filter(p, tvid)) {
+			/* count vlan tagged drop */
+			goto drop;
+		} else
+			vid = tvid;
+
+		prio = sc->sc_rxprio;
+		switch (prio) {
+		case IF_HDRPRIO_PACKET:
+			break;
+		case IF_HDRPRIO_OUTER:
+			prio = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
+			/* IEEE 802.1p has prio 0 and 1 swapped */
+			if (prio <= 1)
+				prio = !prio;
+			/* FALLTHROUGH */
+		default:
+			m->m_pkthdr.pf.prio = prio;
+			break;
+		}
+	}
+
+	if (vid == IFBR_PVID_NONE)
+		goto drop;
+
+	src = ether_addr_to_e64((struct ether_addr *)eh->ether_shost);
+
+	if (ISSET(p->p_bif_flags, IFBIF_LOCKED)) {
+		struct veb_port *rp;
+
+		smr_read_enter();
+		rp = etherbridge_resolve(&sc->sc_eb, vid, src);
+		smr_read_leave();
+
+		if (rp != p)
+			goto drop;
+	}
+
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes,
 	    m->m_pkthdr.len);
+
+	/*
+	 * set things up so we show BPF on veb which vlan this
+	 * packet is on. i can't decide if the txprio or rxprio is
+	 * better here, so i went with the third option of doing
+	 * nothing. - dlg
+	 */
+	SET(m->m_flags, M_VLANTAG);
+	m->m_pkthdr.ether_vtag = vid;
 
 	/* force packets into the one routing domain for pf */
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
@@ -1232,10 +1332,10 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 		goto drop;
 
 	if (!ISSET(ifp->if_flags, IFF_LINK0) &&
-	    veb_vlan_filter(m))
+	    veb_svlan_filter(m))
 		goto drop;
 
-	if (veb_rule_filter(p, VEB_RULE_LIST_IN, m, src, dst))
+	if (veb_rule_filter(p, VEB_RULE_LIST_IN, m, src, dst, vid))
 		goto drop;
 
 #if NPF > 0
@@ -1253,7 +1353,14 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	eh = mtod(m, struct ether_header *);
 
 	if (ISSET(p->p_bif_flags, IFBIF_LEARNING))
-		etherbridge_map(&sc->sc_eb, p, src);
+		etherbridge_map(&sc->sc_eb, p, vid, src);
+
+	prio = sc->sc_txprio;
+	prio = (prio == IF_HDRPRIO_PACKET) ? m->m_pkthdr.pf.prio : prio;
+	/* IEEE 802.1p has prio 0 and 1 swapped */
+	if (prio <= 1)
+		prio = !prio;
+	m->m_pkthdr.ether_vtag |= (prio << EVL_PRIO_BITS);
 
 	CLR(m->m_flags, M_BCAST|M_MCAST);
 
@@ -1261,12 +1368,12 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 		struct veb_port *tp = NULL;
 
 		smr_read_enter();
-		tp = etherbridge_resolve(&sc->sc_eb, dst);
+		tp = etherbridge_resolve(&sc->sc_eb, vid, dst);
 		if (tp != NULL)
 			veb_eb_port_take(NULL, tp);
 		smr_read_leave();
 		if (tp != NULL) {
-			m = veb_transmit(sc, p, tp, m, src, dst, ns);
+			m = veb_transmit(sc, p, tp, m, src, dst, vid, ns);
 			veb_eb_port_rele(NULL, tp);
 		}
 
@@ -1278,7 +1385,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 		SET(m->m_flags, ETH64_IS_BROADCAST(dst) ? M_BCAST : M_MCAST);
 	}
 
-	veb_broadcast(sc, p, m, src, dst, ns);
+	veb_broadcast(sc, p, m, src, dst, vid, ns);
 	return (NULL);
 
 drop:
@@ -1317,6 +1424,7 @@ static int
 veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct veb_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifbrparam *bparam = (struct ifbrparam *)data;
 	int error = 0;
 
@@ -1332,6 +1440,46 @@ veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = veb_down(sc);
 		}
+		break;
+
+	case SIOCSVNETID:
+		if (ifr->ifr_vnetid < IFBR_PVID_MIN ||
+		    ifr->ifr_vnetid > IFBR_PVID_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_dflt_pvid = ifr->ifr_vnetid;
+		break;
+	case SIOCGVNETID:
+		if (sc->sc_dflt_pvid == IFBR_PVID_NONE)
+			error = EADDRNOTAVAIL;
+		else
+			ifr->ifr_vnetid = (int64_t)sc->sc_dflt_pvid;
+		break;
+	case SIOCDVNETID:
+		sc->sc_dflt_pvid = IFBR_PVID_NONE;
+		break;
+	case SIOCSTXHPRIO:
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_txprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_rxprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_rxprio;
 		break;
 
 	case SIOCBRDGADD:
@@ -1388,6 +1536,9 @@ veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCBRDGRTS:
 		error = etherbridge_rtfind(&sc->sc_eb, (struct ifbaconf *)data);
 		break;
+	case SIOCBRDGVRTS:
+		error = etherbridge_vareq(&sc->sc_eb, (struct ifbaconf *)data);
+		break;
 	case SIOCBRDGIFS:
 		error = veb_port_list(sc, (struct ifbifconf *)data);
 		break;
@@ -1401,9 +1552,25 @@ veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCBRDGDADDR:
 		error = veb_del_addr(sc, (struct ifbareq *)data);
 		break;
+	case SIOCBRDGSVADDR:
+		error = veb_add_vid_addr(sc, (struct ifbvareq *)data);
+		break;
+	case SIOCBRDGDVADDR:
+		error = veb_del_vid_addr(sc, (struct ifbvareq *)data);
+		break;
 
 	case SIOCBRDGSIFPROT:
 		error = veb_port_set_protected(sc, (struct ifbreq *)data);
+		break;
+	case SIOCBRDGSPVID:
+		error = veb_port_set_pvid(sc, (struct ifbreq *)data);
+		break;
+
+	case SIOCBRDGSVMAP:
+		error = veb_set_vid_map(sc, (const struct ifbrvidmap *)data);
+		break;
+	case SIOCBRDGGVMAP:
+		error = veb_get_vid_map(sc, (struct ifbrvidmap *)data);
 		break;
 
 	case SIOCBRDGSIFFLGS:
@@ -1565,6 +1732,7 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 
 	p->p_ifp0 = ifp0;
 	p->p_veb = sc;
+	p->p_pvid = sc->sc_dflt_pvid;
 
 	refcnt_init(&p->p_refs);
 	TAILQ_INIT(&p->p_vrl);
@@ -1730,6 +1898,265 @@ veb_port_set_protected(struct veb_softc *sc, const struct ifbreq *ifbr)
 	veb_port_put(sc, p);
 
 	return (0);
+}
+
+static int
+veb_port_set_pvid(struct veb_softc *sc, const struct ifbreq *ifbr)
+{
+	struct veb_port *p;
+	uint16_t pvid;
+	int error = 0;
+
+	switch (ifbr->ifbr_pvid) {
+	case EVL_VLID_NULL:
+		pvid = sc->sc_dflt_pvid;
+		break;
+	default:
+		if (ifbr->ifbr_pvid < EVL_VLID_MIN ||
+		    ifbr->ifbr_pvid > EVL_VLID_MAX)
+			return (EINVAL);
+
+		/* FALLTHROUGH */
+	case IFBR_PVID_NONE:
+		pvid = ifbr->ifbr_pvid;
+		break;
+	}
+
+	p = veb_port_get(sc, ifbr->ifbr_ifsname);
+	if (p == NULL)
+		return (ESRCH);
+
+	if (pvid == IFBR_PVID_NONE &&
+	    p->p_ifp0->if_enqueue == vport_enqueue) {
+		error = EOPNOTSUPP;
+		goto put;
+	}
+	p->p_pvid = pvid;
+
+put:
+	veb_port_put(sc, p);
+
+	return (error);
+}
+
+static int
+veb_get_vid_map(struct veb_softc *sc, struct ifbrvidmap *ifbrvm)
+{
+	struct veb_port *p;
+	uint32_t *map;
+	int error = 0;
+
+	p = veb_port_get(sc, ifbrvm->ifbrvm_ifsname);
+	if (p == NULL)
+		return (ESRCH);
+
+	if (p->p_ifp0->if_enqueue == vport_enqueue) {
+		error = ENOTTY;
+		goto put;
+	}
+
+	smr_read_enter();
+	map = p->p_vid_map;
+	if (map == NULL)
+		memset(ifbrvm->ifbrvm_map, 0, sizeof(ifbrvm->ifbrvm_map));
+	else {
+		size_t w;
+
+		for (w = 0; w < VEB_VID_WORDS; w++) {
+			uint32_t e = map[w];
+			size_t t = w * sizeof(e);
+			size_t b;
+
+			for (b = 0; b < sizeof(e); b++)
+				ifbrvm->ifbrvm_map[t + b] = e >> (b * 8);
+		}
+	}
+	smr_read_leave();
+
+put:
+	veb_port_put(sc, p);
+	return (error);
+}
+
+static int
+veb_chk_vid_map(const struct ifbrvidmap *ifbrvm)
+{
+	size_t off;
+	size_t bit;
+
+	/*
+	 * vlan 0 and 4095 are not valid vlan tags
+	 */
+
+	off = 0 / 8;
+	bit = 0 % 8;
+	if (ISSET(ifbrvm->ifbrvm_map[off], 1U << bit))
+		return (EINVAL);
+
+	off = 4095 / 8;
+	bit = 4095 % 8;
+	if (ISSET(ifbrvm->ifbrvm_map[off], 1U << bit))
+		return (EINVAL);
+	
+	return (0);
+}
+
+static uint32_t *
+veb_new_vid_map(const struct ifbrvidmap *ifbrvm)
+{
+	uint32_t *map;
+	size_t w;
+
+	map = mallocarray(VEB_VID_WORDS, sizeof(*map), M_IFADDR,
+	    M_WAITOK|M_CANFAIL);
+	if (map == NULL)
+		return (NULL);
+
+	for (w = 0; w < VEB_VID_WORDS; w++) {
+		uint32_t e = 0;
+		size_t t = w * sizeof(e);
+		size_t b;
+
+		for (b = 0; b < sizeof(e); b++)
+			e |= (uint32_t)ifbrvm->ifbrvm_map[t + b] << (b * 8);
+
+		map[w] = e;
+	}
+
+	return (map);
+}
+
+static inline void
+veb_free_vid_map(uint32_t *map)
+{
+	free(map, M_IFADDR, VEB_VID_BYTES);
+}
+
+struct veb_vid_map_dtor {
+	struct smr_entry	 smr;
+	uint32_t		*map;
+};
+
+static void
+veb_dtor_vid_map(void *arg)
+{
+	struct veb_vid_map_dtor *dtor = arg;
+	veb_free_vid_map(dtor->map);
+	free(dtor, M_TEMP, sizeof(*dtor));
+}
+
+static void
+veb_destroy_vid_map(uint32_t *map)
+{
+	struct veb_vid_map_dtor *dtor;
+
+	dtor = malloc(sizeof(*dtor), M_TEMP, M_NOWAIT); 
+	if (dtor == NULL) {
+		/* oh well, the proc can sleep instead */
+		smr_barrier();
+		veb_free_vid_map(map);
+		return;
+	}
+
+	smr_init(&dtor->smr);
+	dtor->map = map;
+	smr_call(&dtor->smr, veb_dtor_vid_map, dtor);
+}
+
+static void
+veb_set_vid_map_set(uint32_t *nmap, const uint32_t *omap)
+{
+	/* nop - nmap replaces (sets) the vid map */
+}
+
+static void
+veb_set_vid_map_or(uint32_t *nmap, const uint32_t *omap)
+{
+	size_t w;
+
+	if (omap == NULL)
+		return;
+
+	for (w = 0; w < VEB_VID_WORDS; w++)
+		nmap[w] |= omap[w];
+}
+
+static void
+veb_set_vid_map_andnot(uint32_t *nmap, const uint32_t *omap)
+{
+	size_t w;
+
+	if (omap == NULL) {
+		/* empty set, clear everything */
+		for (w = 0; w < VEB_VID_WORDS; w++)
+			nmap[w] = 0;
+		return;
+	}
+
+	for (w = 0; w < VEB_VID_WORDS; w++) {
+		uint32_t e = nmap[w];
+		nmap[w] = omap[w] & ~e;
+	}
+}
+
+static int
+veb_set_vid_map(struct veb_softc *sc, const struct ifbrvidmap *ifbrvm)
+{
+	void (*apply)(uint32_t *, const uint32_t *);
+	struct veb_port *p;
+	uint32_t *nmap = NULL, *omap = NULL;
+	int error = 0;
+
+	switch (ifbrvm->ifbrvm_op) {
+	case IFBRVM_OP_SET:
+		apply = veb_set_vid_map_set;
+		break;
+	case IFBRVM_OP_OR:
+		apply = veb_set_vid_map_or;
+		break;
+	case IFBRVM_OP_ANDNOT:
+		apply = veb_set_vid_map_andnot;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	error = veb_chk_vid_map(ifbrvm);
+	if (error != 0)
+		return (error);
+
+	p = veb_port_get(sc, ifbrvm->ifbrvm_ifsname);
+	if (p == NULL)
+		return (ESRCH);
+
+	if (p->p_ifp0->if_enqueue == vport_enqueue) {
+		error = ENOTTY;
+		goto put;
+	}
+
+	nmap = veb_new_vid_map(ifbrvm);
+	if (nmap == NULL) {
+		error = ENOMEM;
+		goto put;
+	}
+
+	error = rw_enter(&sc->sc_rule_lock, RW_WRITE|RW_INTR);
+	if (error != 0)
+		goto put;
+
+	omap = SMR_PTR_GET_LOCKED(&p->p_vid_map);
+	apply(nmap, omap);
+	SMR_PTR_SET_LOCKED(&p->p_vid_map, nmap);
+	rw_exit(&sc->sc_rule_lock);
+	nmap = NULL;
+
+put:
+	veb_port_put(sc, p);
+	if (omap != NULL)
+		veb_destroy_vid_map(omap);
+	if (nmap != NULL)
+		veb_free_vid_map(nmap);
+	return (error);
 }
 
 static int
@@ -2055,6 +2482,7 @@ veb_port_list(struct veb_softc *sc, struct ifbifconf *bifc)
 			breq.ifbr_ifsflags = p->p_bif_flags;
 			breq.ifbr_portno = ifp0->if_index;
 			breq.ifbr_protected = p->p_protected;
+			breq.ifbr_pvid = p->p_pvid;
 			if ((error = copyout(&breq, bifc->ifbic_req + n,
 			    sizeof(breq))) != 0)
 				goto done;
@@ -2138,6 +2566,7 @@ veb_add_addr(struct veb_softc *sc, const struct ifbareq *ifba)
 	struct veb_port *p;
 	int error = 0;
 	unsigned int type;
+	uint16_t pvid;
 
 	if (ISSET(ifba->ifba_flags, ~IFBAF_TYPEMASK))
 		return (EINVAL);
@@ -2159,8 +2588,68 @@ veb_add_addr(struct veb_softc *sc, const struct ifbareq *ifba)
 	if (p == NULL)
 		return (ESRCH);
 
-	error = etherbridge_add_addr(&sc->sc_eb, p, &ifba->ifba_dst, type);
+	pvid = p->p_pvid;
+	if (pvid == IFBR_PVID_NONE) {
+		error = EADDRNOTAVAIL;
+		goto put;
+	}
 
+	error = etherbridge_add_addr(&sc->sc_eb, p,
+	    pvid, &ifba->ifba_dst, type);
+
+put:
+	veb_port_put(sc, p);
+
+	return (error);
+}
+
+static int
+veb_add_vid_addr(struct veb_softc *sc, const struct ifbvareq *ifbva)
+{
+	struct veb_port *p;
+	int error = 0;
+	unsigned int type;
+	uint16_t vid;
+
+	if (ISSET(ifbva->ifbva_flags, ~IFBAF_TYPEMASK))
+		return (EINVAL);
+	switch (ifbva->ifbva_flags & IFBAF_TYPEMASK) {
+	case IFBAF_DYNAMIC:
+		type = EBE_DYNAMIC;
+		break;
+	case IFBAF_STATIC:
+		type = EBE_STATIC;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	if (ifbva->ifbva_dstsa.ss_family != AF_UNSPEC)
+		return (EAFNOSUPPORT);
+
+	if (ifbva->ifbva_vid != EVL_VLID_NULL) {
+		if (ifbva->ifbva_vid < EVL_VLID_MIN ||
+		    ifbva->ifbva_vid > EVL_VLID_MAX)
+			return (EINVAL);
+	}
+
+	p = veb_port_get(sc, ifbva->ifbva_ifsname);
+	if (p == NULL)
+		return (ESRCH);
+
+	vid = ifbva->ifbva_vid;
+	if (vid == EVL_VLID_NULL) {
+		vid = p->p_pvid;
+		if (vid == IFBR_PVID_NONE) {
+			error = EADDRNOTAVAIL;
+			goto put;
+		}
+	}
+
+	error = etherbridge_add_addr(&sc->sc_eb, p,
+	    vid, &ifbva->ifbva_dst, type);
+
+put:
 	veb_port_put(sc, p);
 
 	return (error);
@@ -2169,7 +2658,24 @@ veb_add_addr(struct veb_softc *sc, const struct ifbareq *ifba)
 static int
 veb_del_addr(struct veb_softc *sc, const struct ifbareq *ifba)
 {
-	return (etherbridge_del_addr(&sc->sc_eb, &ifba->ifba_dst));
+	uint16_t vid = sc->sc_dflt_pvid;
+
+	if (vid == IFBR_PVID_NONE)
+		return (ESRCH);
+
+	return (etherbridge_del_addr(&sc->sc_eb,
+	    vid, &ifba->ifba_dst));
+}
+
+static int
+veb_del_vid_addr(struct veb_softc *sc, const struct ifbvareq *ifbva)
+{
+	if (ifbva->ifbva_vid < EVL_VLID_MIN ||
+	    ifbva->ifbva_vid > EVL_VLID_MAX)
+		return (EINVAL);
+
+	return (etherbridge_del_addr(&sc->sc_eb,
+	    ifbva->ifbva_vid, &ifbva->ifbva_dst));
 }
 
 static int
@@ -2270,6 +2776,7 @@ veb_p_fini(struct veb_port *p)
 	veb_rule_list_free(TAILQ_FIRST(&p->p_vrl));
 
 	if_put(ifp0);
+	veb_free_vid_map(p->p_vid_map);
 	free(p, M_DEVBUF, sizeof(*p)); /* hope you didn't forget smr_barrier */
 }
 
