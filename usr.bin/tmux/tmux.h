@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1271 2025/10/30 07:41:19 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1272 2025/11/01 16:44:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3499,7 +3499,8 @@ int		 utf8_cstrhas(const char *, const struct utf8_data *);
 int		 utf8_has_zwj(const struct utf8_data *);
 int		 utf8_is_zwj(const struct utf8_data *);
 int		 utf8_is_vs(const struct utf8_data *);
-int		 utf8_is_modifier(const struct utf8_data *);
+int		 utf8_should_combine(const struct utf8_data *,
+		    const struct utf8_data *);
 enum hanguljamo_state hanguljamo_check_state(const struct utf8_data *,
 		    const struct utf8_data *);
 
