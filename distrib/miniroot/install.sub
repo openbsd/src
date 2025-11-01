@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1279 2025/10/22 19:26:13 krw Exp $
+#	$OpenBSD: install.sub,v 1.1280 2025/11/01 12:54:17 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1793,7 +1793,7 @@ install_files() {
 		# with potential space shortage in /usr by deleting a few
 		# versioned areas which will be replaced from the new sets
 		if isin base$VERSION.tgz $_get_sets; then
-			rm -f /mnt/usr/share/relink/usr/lib/*
+			rm -rf /mnt/usr/share/relink/*
 			rm -rf /mnt/usr/lib/libLLVM.so.[0-7].0
 			rm -rf /mnt/usr/libdata/perl5
 		fi
