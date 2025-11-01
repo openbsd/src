@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.16 2025/08/14 06:37:29 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.17 2025/11/01 16:42:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,13 +44,21 @@ RB_GENERATE(client_files, client_file, entry, file_cmp);
 static char *
 file_get_path(struct client *c, const char *file)
 {
-	char	*path;
+	const char	*home;
+	char		*path, *full_path;
 
-	if (*file == '/')
+	if (strncmp(file, "~/", 2) != 0)
 		path = xstrdup(file);
-	else
-		xasprintf(&path, "%s/%s", server_client_get_cwd(c, NULL), file);
-	return (path);
+	else {
+		home = find_home();
+		if (home == NULL)
+			home = "";
+		xasprintf(&path, "%s%s", home, file + 1);
+	}
+	if (*path == '/')
+		return (path);
+	xasprintf(&full_path, "%s/%s", server_client_get_cwd(c, NULL), path);
+	return (full_path);
 }
 
 /* Tree comparison function. */
