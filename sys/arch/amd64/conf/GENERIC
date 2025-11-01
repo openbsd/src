@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.533 2025/08/03 09:23:19 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.534 2025/11/01 15:46:40 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -228,6 +228,7 @@ uhci*	at pci?			# Universal Host Controller (Intel)
 uhci*	at cardbus?		# Universal Host Controller (Intel)
 ohci*	at pci?			# Open Host Controller
 ohci*	at cardbus?		# Open Host Controller
+nhi*	at pci?			# USB4 Host Controller
 
 # USB bus support
 usb*	at xhci?
