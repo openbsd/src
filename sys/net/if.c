@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.742 2025/10/30 17:30:46 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.743 2025/11/01 09:46:31 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2453,11 +2453,14 @@ forceup:
 	case SIOCBRDGADDS:
 	case SIOCBRDGDELS:
 	case SIOCBRDGSADDR:
+	case SIOCBRDGSVADDR:
 	case SIOCBRDGSTO:
 	case SIOCBRDGDADDR:
+	case SIOCBRDGDVADDR:
 	case SIOCBRDGFLUSH:
 	case SIOCBRDGADDL:
 	case SIOCBRDGSIFPROT:
+	case SIOCBRDGSPVID:
 	case SIOCBRDGARL:
 	case SIOCBRDGFRL:
 	case SIOCBRDGSPRI:
@@ -2468,6 +2471,7 @@ forceup:
 	case SIOCBRDGSIFCOST:
 	case SIOCBRDGSTXHC:
 	case SIOCBRDGSPROTO:
+	case SIOCBRDGSVMAP:
 #endif
 		if ((error = suser(p)) != 0)
 			break;

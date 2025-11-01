@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.84 2021/11/11 10:03:10 claudio Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.85 2025/11/01 09:46:31 dlg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -85,12 +85,17 @@
 #define	SIOCBRDGDELS	 _IOW('i', 66, struct ifbreq)	/* del span port */
 #define	SIOCBRDGRTS	_IOWR('i', 67, struct ifbaconf)	/* get addresses */
 #define	SIOCBRDGSADDR	_IOWR('i', 68, struct ifbareq)	/* set addr flags */
+#define	SIOCBRDGSVADDR	 _IOW('i', 68, struct ifbvareq)	/* add addr@vid */
 #define	SIOCBRDGSTO	 _IOW('i', 69, struct ifbrparam)/* cache timeout */
 #define	SIOCBRDGGTO	_IOWR('i', 70, struct ifbrparam)/* cache timeout */
 #define	SIOCBRDGDADDR	 _IOW('i', 71, struct ifbareq)	/* delete addr */
+#define	SIOCBRDGDVADDR	 _IOW('i', 71, struct ifbvareq)	/* delete addr@vid */
 #define	SIOCBRDGFLUSH	 _IOW('i', 72, struct ifbreq)	/* flush addr cache */
 #define	SIOCBRDGADDL	 _IOW('i', 73, struct ifbreq)	/* add local port */
 #define	SIOCBRDGSIFPROT	 _IOW('i', 74, struct ifbreq)	/* set protected grp */
+#define	SIOCBRDGSPVID	 _IOW('i', 76, struct ifbreq)	/* set pvid */
+#define	SIOCBRDGSVMAP	 _IOW('i', 76, struct ifbrvidmap) /* set vid map */
+#define	SIOCBRDGGVMAP	_IOWR('i', 76, struct ifbrvidmap) /* get vid map */
 
 #define SIOCBRDGARL	 _IOW('i', 77, struct ifbrlreq)	/* add bridge rule */
 #define SIOCBRDGFRL	 _IOW('i', 78, struct ifbrlreq)	/* flush brdg rules */
@@ -105,6 +110,7 @@
 #define	SIOCBRDGSMA	 _IOW('i', 83, struct ifbrparam)/* set max age */
 #define	SIOCBRDGSIFPRIO	 _IOW('i', 84, struct ifbreq)	/* set if priority */
 #define	SIOCBRDGSIFCOST  _IOW('i', 85, struct ifbreq)	/* set if cost */
+#define	SIOCBRDGVRTS	_IOWR('i', 86, struct ifbaconf)	/* get vaddresses */
 
 #define SIOCBRDGGPARAM  _IOWR('i', 88, struct ifbropreq)/* get brdg STP parms */
 #define SIOCBRDGSTXHC    _IOW('i', 89, struct ifbrparam)/* set tx hold count */
