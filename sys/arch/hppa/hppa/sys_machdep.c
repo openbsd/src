@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.5 2025/10/30 18:23:30 jca Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.6 2025/11/01 00:49:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,6 +33,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

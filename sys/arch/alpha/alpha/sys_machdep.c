@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.9 2025/10/30 18:23:30 jca Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.10 2025/11/01 00:49:38 deraadt Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.14 2002/01/14 00:53:16 thorpej Exp $	*/
 
 /*-
@@ -61,8 +61,8 @@
 #include <sys/systm.h>
 #ifndef NO_IEEE
 #include <sys/device.h>
-#include <sys/proc.h>
 #endif
+#include <sys/proc.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
