@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-enc.c,v 1.17 2021/12/01 18:28:45 deraadt Exp $	*/
+/*	$OpenBSD: print-enc.c,v 1.18 2025/11/01 00:09:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -46,11 +46,14 @@
 #include "interface.h"
 #include "addrtoname.h"
 
-#define ENC_PRINT_TYPE(wh, xf, nam) \
-	if ((wh) & (xf)) { \
-		printf("%s%s", nam, (wh) == (xf) ? "): " : ","); \
-		(wh) &= ~(xf); \
-	}
+#define ENC_PRINT_TYPE(wh, xf, nam) do { \
+	int xxf = (xf); \
+	xxf |= swap32(xxf); \
+	if ((wh) & (xxf)) { \
+		(wh) &= ~(xxf); \
+		printf("%s%s", nam, (wh) == 0 ? "): " : ","); \
+	} \
+} while (0)
 
 void
 enc_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
@@ -90,10 +93,12 @@ enc_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 
 	switch (hdr->af) {
 	case AF_INET:
+	case swap32(AF_INET):
 	default:
 		ip_print(p, length);
 		break;
 	case AF_INET6:
+	case swap32(AF_INET6):
 		ip6_print(p, length);
 		break;
 	}
