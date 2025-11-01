@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.46 2025/11/01 10:04:49 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.47 2025/11/01 23:34:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1227,7 +1227,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 			 * letting vlans through implies this is
 			 * an s-vlan component.
 			 */
-			goto drop;
+			return (m);
 		}
 
 		/* look at the last nibble of the 802.1 reserved address */
@@ -1239,7 +1239,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 		case 0xf: /* reserved */
 			break;
 		default:
-			goto drop;
+			return (m);
 		}
 	}
 
