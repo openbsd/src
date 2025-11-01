@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.406 2025/10/21 05:27:04 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.407 2025/11/01 10:14:21 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: October 21 2025 $
+.Dd $Mdocdate: November 1 2025 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -2078,7 +2078,7 @@ device will try to establish a data connection with the service provider.
 .Op Cm add Ar child-iface
 .Op Cm addspan Ar child-iface
 .Op Cm del Ar child-iface
-.Op Cm deladdr Ar address
+.Op Cm deladdr Ar address Ns Oo @ Ns Ar vid Oc
 .Op Cm delspan Ar child-iface
 .Op Oo Fl Oc Ns Cm discover Ar child-iface
 .Op Cm flushrule Ar interface
@@ -2091,8 +2091,16 @@ device will try to establish a data connection with the service provider.
 .Op Cm rule Ar filtering-rule
 .Op Cm rulefile Ar filename
 .Op Cm rules Ar interface
-.Op Cm static Ar interface Ar address
+.Op Cm static Ar child-iface Ar address Ns Oo @ Ns Ar vid Oc
 .Op Cm timeout Ar time
+.Op Cm tagged Ar child-iface Ar vid
+.Op Cm -tagged Ar child-iface
+.Op Cm untagged Ar child-iface Ar vid
+.Op Cm -untagged Ar child-iface
+.Op Cm rxprio Ar prio
+.Op Cm txprio Ar prio
+.Op Cm vnetid Ar vid
+.Op Cm -vnetid
 .Op Cm up
 .Ek
 .nr nS 0
@@ -2112,10 +2120,15 @@ as a span port on the bridge.
 .It Cm del Ar child-iface
 Remove the member
 .Ar child-iface .
-.It Cm deladdr Ar address
+.It Cm deladdr Ar address Ns Oo @ Ns Ar vid Oc
 Delete
 .Ar address
+on VLAN
+.Ar vid
 from the cache.
+if
+.Ar vid
+is not specified it uses the default VLAN identifier on the bridge.
 .It Cm delspan Ar child-iface
 Delete
 .Ar child-iface
@@ -2268,11 +2281,19 @@ Load a set of rules from the file
 .It Cm rules Ar interface
 Display the active filtering rules in use on
 .Ar interface .
-.It Cm static Ar interface Ar address
-Add a static entry into the address cache pointing to
-.Ar interface .
-Static entries are never aged out of the cache or replaced, even if the address
-is seen on a different interface.
+.It Cm static Ar child-iface Ar address Ns Oo @ Ns Ar vid Oc
+Add a static entry for
+.Ar address
+on VLAN
+.Ar vid
+into the address cache pointing to
+.Ar child-iface .
+If
+.Ar vid
+is not specified it defaults to the VLAN used by untagged packets on
+.Ar child-iface .
+Static entries are never aged out of the cache or replaced, even
+if the address is seen on a different interface.
 .It Cm timeout Ar time
 Set the timeout, in seconds, for addresses in the cache to
 .Ar time .
@@ -2280,6 +2301,57 @@ The default is 240 seconds.
 If
 .Ar time
 is set to zero, then entries will not be expired.
+.It Cm tagged Ar child-iface Ar vid
+Modify the set of VLAN identifiers that can be sent and received
+as VLAN tagged traffic on
+.Ar child-iface
+to the specified
+.Ar vid .
+If
+.Ar vid
+is prefixed with + or -, the identifier is added to or removed from
+the set respectively, otherwise the set is replaced.
+.\" XXX tagged all|none
+By default the set of tagged VLAN is empty.
+.It Cm -tagged Ar child-iface
+Clear all the VLAN identifiers from the set that can be sent or
+received as VLAN tagged traffic on
+.Ar child-iface .
+This effectively disables VLAN tagged packet handling by the bridge
+on the specified port.
+.It Cm untagged Ar child-iface Ar vid
+Set untagged traffic on
+.Ar child-iface
+to operate in the VLAN specified by
+.Ar vid .
+By default ports are configured with the default VLAN identifier
+configured on the bridge.
+.It Cm -untagged Ar child-iface
+Don't allow untagged traffic on
+.Ar child-iface .
+.It Cm rxprio Ar prio
+Configure the handling of the VLAN priority field in received packets.
+This is compatible with the configuration of
+.Cm rxprio
+on
+.Xr vlan 4
+interfaces.
+.It Cm txprio Ar prio
+Configure the handling of the VLAN priority field in transmitted packets.
+This is compatible with the configuration of
+.Cm txprio
+on
+.Xr vlan 4
+interfaces.
+.It Cm vnetid Ar vid
+Set the default VLAN identifier for untagged packets for ports added
+to the bridge.
+The default is VLAN 1.
+.It Cm -vnetid
+Remove the default VLAN identifier for untagged packets for ports added
+to the bridge.
+Ports added to the bridge will not be able to send or receive packets
+until they are explicitly configured.
 .It Cm up
 Start forwarding packets.
 .El

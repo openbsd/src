@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.477 2025/10/21 05:14:22 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.478 2025/11/01 10:14:21 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -572,6 +572,10 @@ const struct	cmd {
 	{ "-autoedge",	NEXTARG,	0,		unsetautoedge },
 	{ "protected",	NEXTARG2,	0,		NULL, bridge_protect },
 	{ "-protected",	NEXTARG,	0,		bridge_unprotect },
+	{ "untagged",	NEXTARG2,	0,		NULL, bridge_pvid },
+	{ "-untagged",	NEXTARG,	0,		bridge_unpvid },
+	{ "tagged",	NEXTARG2,	0,		NULL, bridge_set_vidmap },
+	{ "-tagged",	NEXTARG2,	0,		bridge_unset_vidmap },
 	{ "ptp",	NEXTARG,	0,		setptp },
 	{ "-ptp",	NEXTARG,	0,		unsetptp },
 	{ "autoptp",	NEXTARG,	0,		setautoptp },
@@ -584,6 +588,7 @@ const struct	cmd {
 	{ "deladdr",	NEXTARG,	0,		bridge_deladdr },
 	{ "maxaddr",	NEXTARG,	0,		bridge_maxaddr },
 	{ "addr",	0,		0,		bridge_addrs },
+	{ "vaddr",	0,		0,		bridge_vaddrs },
 	{ "hellotime",	NEXTARG,	0,		bridge_hellotime },
 	{ "fwddelay",	NEXTARG,	0,		bridge_fwddelay },
 	{ "maxage",	NEXTARG,	0,		bridge_maxage },

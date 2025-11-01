@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.34 2025/10/21 05:14:22 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.35 2025/11/01 10:14:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -46,8 +46,11 @@
 #include <getopt.h>
 #include <limits.h>
 #include <arpa/inet.h>
+#include <time.h>
 
 #include "ifconfig.h"
+
+#define VID_SEP	'@'
 
 void bridge_ifsetflag(const char *, u_int32_t);
 void bridge_ifclrflag(const char *, u_int32_t);
@@ -57,6 +60,7 @@ void bridge_cfg(const char *);
 void bridge_badrule(int, char **, int);
 void bridge_showrule(struct ifbrlreq *);
 int bridge_arprule(struct ifbrlreq *, int *, char ***);
+void bridge_vidmap(const char *);
 
 #define	IFBAFBITS	"\020\1STATIC"
 #define	IFBIFBITS	\
@@ -355,6 +359,16 @@ bridge_list(char *delim)
 		printf("port %u ifpriority %u ifcost %u",
 		    reqp->ifbr_portno, reqp->ifbr_priority,
 		    reqp->ifbr_path_cost);
+		switch (reqp->ifbr_pvid) {
+		case IFBR_PVID_NULL:
+			break;
+		case IFBR_PVID_NONE:
+			printf(" -untagged");
+			break;
+		default:
+			printf(" untagged %u", reqp->ifbr_pvid);
+			break;
+		}
 		if (reqp->ifbr_protected) {
 			int v;
 
@@ -370,6 +384,7 @@ bridge_list(char *delim)
 			    stpstates[reqp->ifbr_state],
 			    stproles[reqp->ifbr_role]);
 		printf("\n");
+		bridge_vidmap(buf);
 		bridge_rules(buf, 1);
 	}
 	free(bifc.ifbic_buf);
@@ -517,6 +532,130 @@ bridge_unprotect(const char *ifsname, int d)
 }
 
 void
+bridge_pvid(const char *ifsname, const char *val)
+{
+	struct ifbreq breq;
+
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
+
+	if (strcmp(val, "default") == 0)
+		breq.ifbr_pvid = IFBR_PVID_NULL;
+	else if (strcmp(val, "none") == 0)
+		breq.ifbr_pvid = IFBR_PVID_NONE;
+	else {
+		const char *errstr;
+
+		breq.ifbr_pvid = strtonum(val,
+		    IFBR_PVID_MIN, IFBR_PVID_MAX, &errstr);
+		if (errstr != NULL) {
+			errx(1, "%s untagged %s: %s is %s",
+			    ifname, ifsname, val, errstr);
+		}
+	}
+
+	if (ioctl(sock, SIOCBRDGSPVID, &breq) == -1)
+		err(1, "%s untagged %s %s", ifname, ifsname, val);
+}
+
+void
+bridge_unpvid(const char *ifsname, int d)
+{
+	struct ifbreq breq;
+	const char *errstr;
+
+	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
+	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
+	breq.ifbr_pvid = IFBR_PVID_NONE;
+
+	if (ioctl(sock, SIOCBRDGSPVID, &breq) == -1)
+		err(1, "%s -untagged %s", ifname, ifsname);
+}
+
+static void
+bridge_set_vidmap_bit(struct ifbrvidmap *ifbrvm, unsigned int vid)
+{
+	unsigned int voff = vid / 8;
+	unsigned int vbit = vid % 8;
+
+	ifbrvm->ifbrvm_map[voff] |= 1U << vbit;
+}
+
+static void
+bridge_set_vidmap_range(struct ifbrvidmap *ifbrvm, uint16_t from, uint16_t to)
+{
+	unsigned int vid;
+
+	for (vid = from; vid <= to; vid++)
+		bridge_set_vidmap_bit(ifbrvm, vid);
+}
+
+void
+bridge_set_vidmap(const char *ifsname, const char *arg)
+{
+	struct ifbrvidmap ifbrvm;
+
+	memset(&ifbrvm, 0, sizeof(ifbrvm));
+
+	strlcpy(ifbrvm.ifbrvm_name, ifname, sizeof(ifbrvm.ifbrvm_name));
+	strlcpy(ifbrvm.ifbrvm_ifsname, ifsname, sizeof(ifbrvm.ifbrvm_ifsname));
+
+	if (strcmp(arg, "all") == 0) {
+		ifbrvm.ifbrvm_op = IFBRVM_OP_SET;
+		bridge_set_vidmap_range(&ifbrvm, EVL_VLID_MIN, EVL_VLID_MAX);
+	} else if (strcmp(arg, "none") == 0) {
+		ifbrvm.ifbrvm_op = IFBRVM_OP_SET;
+		/* map is already all 0 */
+	} else {
+		const char *val;
+		uint16_t vid;
+		const char *errstr;
+
+		switch (arg[0]) {
+		case '+':
+			ifbrvm.ifbrvm_op = IFBRVM_OP_OR;
+			val = arg + 1;
+			break;
+		case '-':
+			ifbrvm.ifbrvm_op = IFBRVM_OP_ANDNOT;
+			val = arg + 1;
+			break;
+		default:
+			ifbrvm.ifbrvm_op = IFBRVM_OP_SET;
+			val = arg;
+			break;
+		}
+
+		vid = strtonum(val, EVL_VLID_MIN, EVL_VLID_MAX, &errstr);
+		if (errstr != NULL) {
+			errx(1, "%s tagged %s: %s is %s", ifname, ifsname,
+			    val, errstr);
+		}
+
+		bridge_set_vidmap_bit(&ifbrvm, vid);
+	}
+
+	if (ioctl(sock, SIOCBRDGSVMAP, &ifbrvm) == -1)
+		err(1, "%s tagged %s %s", ifname, ifsname, arg);
+}
+
+void
+bridge_unset_vidmap(const char *ifsname, int d)
+{
+	struct ifbrvidmap ifbrvm;
+
+	memset(&ifbrvm, 0, sizeof(ifbrvm));
+
+	strlcpy(ifbrvm.ifbrvm_name, ifname, sizeof(ifbrvm.ifbrvm_name));
+	strlcpy(ifbrvm.ifbrvm_ifsname, ifsname, sizeof(ifbrvm.ifbrvm_ifsname));
+	ifbrvm.ifbrvm_op = IFBRVM_OP_SET;
+
+	if (ioctl(sock, SIOCBRDGSVMAP, &ifbrvm) == -1)
+		err(1, "%s -tagged %s", ifname, ifsname);
+
+}
+
+void
 bridge_proto(const char *arg, int d)
 {
 	struct ifbrparam bp;
@@ -584,23 +723,6 @@ bridge_maxaddr(const char *arg, int d)
 }
 
 void
-bridge_deladdr(const char *addr, int d)
-{
-	struct ifbareq ifba;
-	struct ether_addr *ea;
-
-	strlcpy(ifba.ifba_name, ifname, sizeof(ifba.ifba_name));
-	ea = ether_aton(addr);
-	if (ea == NULL)
-		err(1, "Invalid address: %s", addr);
-
-	bcopy(ea, &ifba.ifba_dst, sizeof(struct ether_addr));
-
-	if (ioctl(sock, SIOCBRDGDADDR, &ifba) == -1)
-		err(1, "%s: %s", ifname, addr);
-}
-
-void
 bridge_ifprio(const char *ifsname, const char *val)
 {
 	struct ifbreq breq;
@@ -648,11 +770,71 @@ bridge_noifcost(const char *ifsname, int d)
 		err(1, "%s", ifname);
 }
 
+static int
+bridge_addr_vid_parse(struct ifbvareq *ifbva,
+    const char *addr, const char *vid)
+{
+	struct ether_addr *ea;
+	const char *errstr;
+
+	memset(ifbva, 0, sizeof(*ifbva));
+	strlcpy(ifbva->ifbva_name, ifname, sizeof(ifbva->ifbva_name));
+
+	ea = ether_aton(addr);
+	if (ea == NULL)
+		errx(1, "Invalid address: %s", addr);
+
+	ifbva->ifbva_dst = *ea;
+	ifbva->ifbva_vid = strtonum(vid, EVL_VLID_MIN, EVL_VLID_MAX, &errstr);
+	if (errstr != NULL)
+		errx(1, "Invalid vid %s: %s", vid, errstr);
+
+	return (0);
+}
+
+static int
+bridge_addr_vid(struct ifbvareq *ifbva, const char *addr, size_t sep)
+{
+	char *buf;
+	int rv;
+
+	buf = strdup(addr);
+	if (buf == NULL)
+		err(1, NULL);
+
+	buf[sep] = '\0';
+	rv = bridge_addr_vid_parse(ifbva, buf, buf + sep + 1);
+	free(buf);
+	return (rv);
+}
+
+void
+bridge_addvaddr(const char *ifsname, const char *addr, size_t sep)
+{
+	struct ifbvareq ifbva;
+
+	if (bridge_addr_vid(&ifbva, addr, sep) == -1)
+		errx(1, "unable to parse address%cvid", VID_SEP);
+
+	strlcpy(ifbva.ifbva_ifsname, ifsname, sizeof(ifbva.ifbva_ifsname));
+	ifbva.ifbva_flags = IFBAF_STATIC;
+
+	if (ioctl(sock, SIOCBRDGSVADDR, &ifbva) == -1)
+		err(1, "%s static %s %s", ifname, ifsname, addr);
+}
+
 void
 bridge_addaddr(const char *ifsname, const char *addr)
 {
+	char *chr;
 	struct ifbareq ifba;
 	struct ether_addr *ea;
+
+	chr = strchr(addr, VID_SEP);
+	if (chr != NULL) {
+		bridge_addvaddr(ifsname, addr, chr - addr);
+		return;
+	}
 
 	strlcpy(ifba.ifba_name, ifname, sizeof(ifba.ifba_name));
 	strlcpy(ifba.ifba_ifsname, ifsname, sizeof(ifba.ifba_ifsname));
@@ -665,6 +847,42 @@ bridge_addaddr(const char *ifsname, const char *addr)
 	ifba.ifba_flags = IFBAF_STATIC;
 
 	if (ioctl(sock, SIOCBRDGSADDR, &ifba) == -1)
+		err(1, "%s: %s", ifname, addr);
+}
+
+static void
+bridge_delvaddr(const char *addr, size_t sep)
+{
+	struct ifbvareq ifbva;
+
+	if (bridge_addr_vid(&ifbva, addr, sep) == -1)
+		errx(1, "unable to parse address%cvid", VID_SEP);
+
+	if (ioctl(sock, SIOCBRDGDVADDR, &ifbva) == -1)
+		err(1, "%s deladdr %s", ifname, addr);
+}
+
+void
+bridge_deladdr(const char *addr, int d)
+{
+	char *chr;
+	struct ifbareq ifba;
+	struct ether_addr *ea;
+
+	chr = strchr(addr, VID_SEP);
+	if (chr != NULL) {
+		bridge_delvaddr(addr, chr - addr);
+		return;
+	}
+
+	strlcpy(ifba.ifba_name, ifname, sizeof(ifba.ifba_name));
+	ea = ether_aton(addr);
+	if (ea == NULL)
+		err(1, "Invalid address: %s", addr);
+
+	bcopy(ea, &ifba.ifba_dst, sizeof(struct ether_addr));
+
+	if (ioctl(sock, SIOCBRDGDADDR, &ifba) == -1)
 		err(1, "%s: %s", ifname, addr);
 }
 
@@ -725,6 +943,79 @@ bridge_delendpoint(const char *addr, int d)
 
 	if (ioctl(sock, SIOCBRDGDADDR, &ifba) == -1)
 		err(1, "%s -endpoint %s", ifname, addr);
+}
+
+static int
+bridge_vaddrs_try(const char *delim)
+{
+	char dstaddr[NI_MAXHOST];
+	char dstport[NI_MAXSERV];
+	const int niflag = NI_NUMERICHOST|NI_DGRAM;
+	struct ifbaconf ifbac;
+	struct ifbvareq *ifbva;
+	char *inbuf = NULL, buf[sizeof(ifbva->ifbva_ifsname) + 1], *inb;
+	struct sockaddr *sa;
+	int i, len = 8192;
+	struct timespec now;
+
+	while (1) {
+		ifbac.ifbac_len = len;
+		inb = realloc(inbuf, len);
+		if (inb == NULL)
+			err(1, "malloc");
+		ifbac.ifbac_buf = inbuf = inb;
+		strlcpy(ifbac.ifbac_name, ifname, sizeof(ifbac.ifbac_name));
+		if (ioctl(sock, SIOCBRDGVRTS, &ifbac) == -1) {
+			switch (errno) {
+			case ENETDOWN:
+				return (0);
+			case ENOTTY:
+				return (-1);
+			default:
+				err(1, "%s", ifname);
+			}
+		}
+		if (ifbac.ifbac_len + sizeof(*ifbva) < len)
+			break;
+		len *= 2;
+	}
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+
+	for (i = 0; i < ifbac.ifbac_len / sizeof(*ifbva); i++) {
+		ifbva = ifbac.ifbac_vreq + i;
+		strlcpy(buf, ifbva->ifbva_ifsname, sizeof(buf));
+		printf("%s%s", delim, ether_ntoa(&ifbva->ifbva_dst));
+		if (ifbva->ifbva_vid != EVL_VLID_NULL)
+			printf("%c%u", VID_SEP, ifbva->ifbva_vid);
+		if (buf[0] != '\0')
+			printf(" %s", buf);
+
+		/*
+		 * printf(" created %lld", now.tv_sec - ifbva->ifbva_created);
+		 * printf(" age");
+		 */
+		printf(" %lld", now.tv_sec - ifbva->ifbva_used);
+		printb(" flags", ifbva->ifbva_flags, IFBAFBITS);
+
+		sa = (struct sockaddr *)&ifbva->ifbva_dstsa;
+		if (sa->sa_family != AF_UNSPEC &&
+		    getnameinfo(sa, sa->sa_len,
+		    dstaddr, sizeof(dstaddr),
+		    dstport, sizeof(dstport), niflag) == 0)
+			printf(" tunnel %s:%s", dstaddr, dstport);
+		printf("\n");
+	}
+	free(inbuf);
+
+	return (0);
+}
+
+void
+bridge_vaddrs(const char *cmd, int d)
+{
+	if (bridge_vaddrs_try("") == -1)
+		err(1, "%s %s", ifname, cmd);
 }
 
 void
@@ -847,7 +1138,50 @@ bridge_status(void)
 	printf("\tAddresses (max cache: %u, timeout: %u):\n",
 	    bp1.ifbrp_csize, bp2.ifbrp_ctime);
 
+	/* try the new version of the addrs ioctl first */
+	if (bridge_vaddrs_try("\t\t") == 0)
+		return;
+
 	bridge_addrs("\t\t", 0);
+}
+
+void
+bridge_vidmap(const char *ifsname)
+{
+	struct ifbrvidmap ifbrvm;
+	size_t i;
+	char sep = ' ';
+
+	strlcpy(ifbrvm.ifbrvm_name, ifname, sizeof(ifbrvm.ifbrvm_name));
+	strlcpy(ifbrvm.ifbrvm_ifsname, ifsname, sizeof(ifbrvm.ifbrvm_ifsname));
+
+	if (ioctl(sock, SIOCBRDGGVMAP, &ifbrvm) == -1) {
+		if (errno != ENOTTY)
+			warn("%s port %s get tagged", ifname, ifsname);
+		return;
+	}
+
+	printf("\t\t" "tagged:");
+
+	for (i = 0; i < sizeof(ifbrvm.ifbrvm_map); i++) {
+		unsigned int voff = i * 8;
+		unsigned int vbit;
+		uint8_t tag = ifbrvm.ifbrvm_map[i];
+
+		if (tag == 0)
+			continue;
+
+		for (vbit = 0; vbit < 8; vbit++) {
+			if (tag & (1U << vbit)) {
+				printf("%c%u", sep, voff + vbit);
+				sep = ',';
+			}
+		}
+	}
+
+	if (sep == ' ')
+		printf(" none");
+	printf("\n");
 }
 
 void
