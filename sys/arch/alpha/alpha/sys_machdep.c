@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.10 2025/11/01 00:49:38 deraadt Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.11 2025/11/01 17:05:19 miod Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.14 2002/01/14 00:53:16 thorpej Exp $	*/
 
 /*-
@@ -71,8 +71,6 @@
 #ifndef NO_IEEE
 #include <machine/fpu.h>
 #include <machine/sysarch.h>
-
-#include <dev/pci/pcivar.h>
 
 int
 sys_sysarch(struct proc *p, void *v, register_t *retval)
