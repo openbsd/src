@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.89 2025/09/20 13:50:33 mpi Exp $	*/
+/*	$OpenBSD: envy.c,v 1.90 2025/11/02 14:37:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -110,6 +110,7 @@ int envy_halt_input(void *);
 int envy_query_devinfo(void *, struct mixer_devinfo *);
 int envy_get_port(void *, struct mixer_ctrl *);
 int envy_set_port(void *, struct mixer_ctrl *);
+size_t envy_display_name(void *, char *, size_t);
 #if NMIDI > 0
 int envy_midi_open(void *, int, void (*)(void *, int),
     void (*)(void *), void *);
@@ -191,6 +192,7 @@ const struct audio_hw_if envy_hw_if = {
 	.freem = envy_freem,
 	.trigger_output = envy_trigger_output,
 	.trigger_input = envy_trigger_input,
+	.display_name = envy_display_name,
 };
 
 #if NMIDI > 0
@@ -2433,6 +2435,14 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 	if (idx < ndev)
 		return sc->card->dac->set(sc, ctl, idx);
 	return ENXIO;
+}
+
+size_t
+envy_display_name(void *self, char *buf, size_t size)
+{
+	struct envy_softc *sc = (struct envy_softc *)self;
+
+	return strlcpy(buf, sc->card->name, size);
 }
 
 #if NMIDI > 0
