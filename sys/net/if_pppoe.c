@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.89 2025/11/02 07:57:30 dlg Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.90 2025/11/02 08:33:43 dlg Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -1545,6 +1545,10 @@ pppoe_transmit(struct pppoe_softc *sc, struct mbuf *m)
 {
 	size_t len;
 	uint8_t *p;
+#if NBPFILTER > 0
+	struct ifnet *ifp = &sc->sc_sppp.pp_if;
+	caddr_t if_bpf;
+#endif
 
 	len = m->m_pkthdr.len;
 	M_PREPEND(m, PPPOE_HEADERLEN, M_DONTWAIT);
@@ -1555,8 +1559,27 @@ pppoe_transmit(struct pppoe_softc *sc, struct mbuf *m)
 	PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
 
 #if NBPFILTER > 0
-	if (sc->sc_bpf)
-		bpf_mtap(sc->sc_bpf, m, BPF_DIRECTION_OUT);
+	if_bpf = ifp->if_bpf;
+	if (if_bpf && m->m_pkthdr.ph_family != AF_UNSPEC) {
+		struct m_hdr mh;
+		struct mbuf *n;
+		int off;
+
+		n = m_getptr(m, PPPOE_OVERHEAD, &off);
+		KASSERT(n != NULL);
+
+		mh.mh_flags = 0;
+		mh.mh_next = n->m_next;
+		mh.mh_len = n->m_len - off;
+		mh.mh_data = n->m_data + off;
+
+		bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family,
+		    (struct mbuf *)&mh, BPF_DIRECTION_OUT);
+	}
+
+	if_bpf = sc->sc_bpf;
+	if (if_bpf)
+		bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 	return (pppoe_output(sc, m));

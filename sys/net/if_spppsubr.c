@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.199 2025/11/02 08:04:04 dlg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.200 2025/11/02 08:33:43 dlg Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -695,6 +695,8 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		splx(s);
 		return (EAFNOSUPPORT);
 	}
+
+	m->m_pkthdr.ph_family = dst->sa_family; /* for bpf */
 
 	M_PREPEND(m, 2, M_DONTWAIT);
 	if (m == NULL) {
