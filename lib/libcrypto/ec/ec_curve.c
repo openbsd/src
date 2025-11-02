@@ -1,7 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.58 2025/05/10 05:54:38 tb Exp $ */
-/*
- * Written by Nils Larsch for the OpenSSL project.
- */
+/* $OpenBSD: ec_curve.c,v 1.59 2025/11/02 13:06:30 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2010 The OpenSSL Project.  All rights reserved.
  *
