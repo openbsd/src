@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.407 2025/11/01 10:14:21 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.408 2025/11/02 00:23:59 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 1 2025 $
+.Dd $Mdocdate: November 2 2025 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -2324,10 +2324,16 @@ Set untagged traffic on
 .Ar child-iface
 to operate in the VLAN specified by
 .Ar vid .
+The
+.Ar vid
+can be specified as
+.Cm passthrough
+to configure the bridge to decline untagged packets on this port
+and return them to the network stack for local processing.
 By default ports are configured with the default VLAN identifier
 configured on the bridge.
 .It Cm -untagged Ar child-iface
-Don't allow untagged traffic on
+Block untagged traffic on
 .Ar child-iface .
 .It Cm rxprio Ar prio
 Configure the handling of the VLAN priority field in received packets.
