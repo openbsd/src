@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.37 2025/11/02 23:35:36 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.38 2025/11/02 23:51:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -662,8 +662,12 @@ bridge_set_vidmap(const char *ifsname, const char *arg)
 			ifbrvm.ifbrvm_op = IFBRVM_OP_ANDNOT;
 			val = arg + 1;
 			break;
-		default:
+		case '=':
 			ifbrvm.ifbrvm_op = IFBRVM_OP_SET;
+			val = arg + 1;
+			break;
+		default:
+			ifbrvm.ifbrvm_op = IFBRVM_OP_OR;
 			val = arg;
 			break;
 		}

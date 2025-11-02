@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.409 2025/11/02 23:43:47 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.410 2025/11/02 23:51:42 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -2312,8 +2312,9 @@ Each VLAN identifier may be specified as a range with a minimum and
 maximum value separated by a hyphen.
 If
 .Ar vids
-is prefixed with + or -, the identifiers are added to or removed from
-the set respectively, otherwise the set is replaced.
+is prefixed with +, -, or =, the identifiers are added to, removed
+from, or replaced with the set respectively.
+Without a prefix the VLAN identifiers are added to the set.
 .\" XXX tagged all|none
 By default the set of tagged VLAN is empty.
 .It Cm -tagged Ar child-iface
