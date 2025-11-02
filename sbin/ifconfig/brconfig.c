@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.36 2025/11/02 00:15:20 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.37 2025/11/02 23:35:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -596,6 +596,41 @@ bridge_set_vidmap_range(struct ifbrvidmap *ifbrvm, uint16_t from, uint16_t to)
 		bridge_set_vidmap_bit(ifbrvm, vid);
 }
 
+static void
+bridge_set_vidmap_parse(struct ifbrvidmap *ifbrvm, const char *ifsname,
+    char *str)
+{
+	char *s;
+
+	while ((s = strsep(&str, ",")) != NULL) {
+		char *t;
+		uint16_t fvid, tvid;
+		const char *errstr;
+
+		t = strsep(&s, "-");
+		/* t can't be NULL if s is not NULL */
+
+		fvid = strtonum(t, EVL_VLID_MIN, EVL_VLID_MAX, &errstr);
+		if (errstr != NULL) {
+			errx(1, "%s tagged %s: %s is %s", ifname, ifsname,
+			    t, errstr);
+		}
+
+		if (s == NULL) {
+			bridge_set_vidmap_bit(ifbrvm, fvid);
+			continue;
+		}
+
+		tvid = strtonum(s, fvid + 1, EVL_VLID_MAX, &errstr);
+		if (errstr != NULL) {
+			errx(1, "%s tagged %s: %s is %s", ifname, ifsname,
+			    s, errstr);
+		}
+
+		bridge_set_vidmap_range(ifbrvm, fvid, tvid);
+	}
+}
+
 void
 bridge_set_vidmap(const char *ifsname, const char *arg)
 {
@@ -614,6 +649,7 @@ bridge_set_vidmap(const char *ifsname, const char *arg)
 		/* map is already all 0 */
 	} else {
 		const char *val;
+		char *str;
 		uint16_t vid;
 		const char *errstr;
 
@@ -632,13 +668,13 @@ bridge_set_vidmap(const char *ifsname, const char *arg)
 			break;
 		}
 
-		vid = strtonum(val, EVL_VLID_MIN, EVL_VLID_MAX, &errstr);
-		if (errstr != NULL) {
-			errx(1, "%s tagged %s: %s is %s", ifname, ifsname,
-			    val, errstr);
-		}
+		str = strdup(val);
+		if (str == NULL)
+			err(1, "%s strdup", __func__);
 
-		bridge_set_vidmap_bit(&ifbrvm, vid);
+		bridge_set_vidmap_parse(&ifbrvm, ifsname, str);
+
+		free(str);
 	}
 
 	if (ioctl(sock, SIOCBRDGSVMAP, &ifbrvm) == -1)
