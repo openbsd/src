@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.408 2025/11/02 00:23:59 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.409 2025/11/02 23:43:47 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -2093,7 +2093,7 @@ device will try to establish a data connection with the service provider.
 .Op Cm rules Ar interface
 .Op Cm static Ar child-iface Ar address Ns Oo @ Ns Ar vid Oc
 .Op Cm timeout Ar time
-.Op Cm tagged Ar child-iface Ar vid
+.Op Cm tagged Ar child-iface Ar vids
 .Op Cm -tagged Ar child-iface
 .Op Cm untagged Ar child-iface Ar vid
 .Op Cm -untagged Ar child-iface
@@ -2301,15 +2301,18 @@ The default is 240 seconds.
 If
 .Ar time
 is set to zero, then entries will not be expired.
-.It Cm tagged Ar child-iface Ar vid
+.It Cm tagged Ar child-iface Ar vids
 Modify the set of VLAN identifiers that can be sent and received
 as VLAN tagged traffic on
 .Ar child-iface
-to the specified
-.Ar vid .
+with the specified
+.Ar vids .
+Multiple VLAN identifiers can specified as comma separated values.
+Each VLAN identifier may be specified as a range with a minimum and
+maximum value separated by a hyphen.
 If
-.Ar vid
-is prefixed with + or -, the identifier is added to or removed from
+.Ar vids
+is prefixed with + or -, the identifiers are added to or removed from
 the set respectively, otherwise the set is replaced.
 .\" XXX tagged all|none
 By default the set of tagged VLAN is empty.
