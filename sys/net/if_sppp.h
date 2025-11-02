@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.31 2025/01/15 06:15:44 dlg Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.32 2025/11/02 08:04:04 dlg Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ struct sppp {
 	time_t	pp_last_receive;	/* peer's last "sign of life" */
 	time_t	pp_last_activity;	/* second of last payload data s/r */
 	enum ppp_phase pp_phase;	/* phase we're currently in */
+	struct task pp_autodial;
 	int	state[IDX_COUNT];	/* state machine */
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
 	int	rst_counter[IDX_COUNT];	/* restart counter */
