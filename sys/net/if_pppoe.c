@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.88 2025/07/07 02:28:50 jsg Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.89 2025/11/02 07:57:30 dlg Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -1555,8 +1555,8 @@ pppoe_transmit(struct pppoe_softc *sc, struct mbuf *m)
 	PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
 
 #if NBPFILTER > 0
-	if (sc->sc_sppp.pp_if.if_bpf)
-		bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m, BPF_DIRECTION_OUT);
+	if (sc->sc_bpf)
+		bpf_mtap(sc->sc_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 	return (pppoe_output(sc, m));
