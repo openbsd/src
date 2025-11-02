@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.47 2025/11/01 23:34:33 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.48 2025/11/02 00:15:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1284,10 +1284,19 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 			m->m_pkthdr.pf.prio = prio;
 			break;
 		}
-	}
+	} else if (vid == IFBR_PVID_DECLINE)
+		return (m);
 
 	if (vid == IFBR_PVID_NONE)
 		goto drop;
+
+#ifdef DIAGNOSTIC
+	if (vid < IFBR_PVID_MIN ||
+	    vid > IFBR_PVID_MAX) {
+		panic("%s: %s vid %u is outside valid range", __func__, 
+		    ifp0->if_xname, vid);
+	}
+#endif
 
 	src = ether_addr_to_e64((struct ether_addr *)eh->ether_shost);
 
@@ -1918,6 +1927,7 @@ veb_port_set_pvid(struct veb_softc *sc, const struct ifbreq *ifbr)
 
 		/* FALLTHROUGH */
 	case IFBR_PVID_NONE:
+	case IFBR_PVID_DECLINE:
 		pvid = ifbr->ifbr_pvid;
 		break;
 	}
@@ -1926,7 +1936,7 @@ veb_port_set_pvid(struct veb_softc *sc, const struct ifbreq *ifbr)
 	if (p == NULL)
 		return (ESRCH);
 
-	if (pvid == IFBR_PVID_NONE &&
+	if ((pvid < EVL_VLID_MIN || pvid > EVL_VLID_MAX) &&
 	    p->p_ifp0->if_enqueue == vport_enqueue) {
 		error = EOPNOTSUPP;
 		goto put;
@@ -2589,7 +2599,8 @@ veb_add_addr(struct veb_softc *sc, const struct ifbareq *ifba)
 		return (ESRCH);
 
 	pvid = p->p_pvid;
-	if (pvid == IFBR_PVID_NONE) {
+	if (pvid < IFBR_PVID_MIN ||
+	    pvid > IFBR_PVID_MAX) {
 		error = EADDRNOTAVAIL;
 		goto put;
 	}
@@ -2640,7 +2651,8 @@ veb_add_vid_addr(struct veb_softc *sc, const struct ifbvareq *ifbva)
 	vid = ifbva->ifbva_vid;
 	if (vid == EVL_VLID_NULL) {
 		vid = p->p_pvid;
-		if (vid == IFBR_PVID_NONE) {
+		if (vid < IFBR_PVID_MIN ||
+		    vid > IFBR_PVID_MAX) {
 			error = EADDRNOTAVAIL;
 			goto put;
 		}

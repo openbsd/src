@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.75 2025/11/01 09:38:49 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.76 2025/11/02 00:15:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -43,6 +43,7 @@
 #define IFBR_PVID_MIN		EVL_VLID_MIN
 #define IFBR_PVID_MAX		EVL_VLID_MAX
 #define IFBR_PVID_NONE		0xffff
+#define IFBR_PVID_DECLINE	0xfffe
 
 /*
  * Bridge control request: add/delete member interfaces.

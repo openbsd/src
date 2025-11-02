@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.35 2025/11/01 10:14:21 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.36 2025/11/02 00:15:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -365,6 +365,9 @@ bridge_list(char *delim)
 		case IFBR_PVID_NONE:
 			printf(" -untagged");
 			break;
+		case IFBR_PVID_DECLINE:
+			printf(" untagged passthrough");
+			break;
 		default:
 			printf(" untagged %u", reqp->ifbr_pvid);
 			break;
@@ -543,6 +546,9 @@ bridge_pvid(const char *ifsname, const char *val)
 		breq.ifbr_pvid = IFBR_PVID_NULL;
 	else if (strcmp(val, "none") == 0)
 		breq.ifbr_pvid = IFBR_PVID_NONE;
+	else if (strcmp(val, "passthrough") == 0 ||
+	    strcmp(val, "passthru") == 0)
+		breq.ifbr_pvid = IFBR_PVID_DECLINE;
 	else {
 		const char *errstr;
 
