@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.179 2025/07/14 23:49:08 jsg Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.180 2025/11/02 14:35:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -212,6 +212,7 @@ struct uaudio_softc {
 	struct device dev;
 	struct usbd_device *udev;
 	int version;
+	int instnum;
 
 	/*
 	 * UAC exposes the device as a circuit of units. Input and
@@ -442,6 +443,7 @@ int uaudio_halt_input(void *);
 int uaudio_query_devinfo(void *, struct mixer_devinfo *);
 int uaudio_get_port(void *, struct mixer_ctrl *);
 int uaudio_set_port(void *, struct mixer_ctrl *);
+size_t uaudio_display_name(void *, char *, size_t);
 
 int uaudio_process_unit(struct uaudio_softc *,
     struct uaudio_unit *, int,
@@ -493,6 +495,7 @@ const struct audio_hw_if uaudio_hw_if = {
 	.copy_output = uaudio_copy_output,
 	.underrun = uaudio_underrun,
 	.set_blksz = uaudio_set_blksz,
+	.display_name = uaudio_display_name,
 };
 
 /*
@@ -2800,6 +2803,7 @@ uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 			i = uaudio_iface_index(sc, ifnum);
 			if (i != -1 && usbd_iface_claimed(sc->udev, i)) {
 				DPRINTF("%s: %d: AC already claimed\n", __func__, ifnum);
+				sc->instnum++;
 				break;
 			}
 			if (sc->unit_list != NULL) {
@@ -4480,6 +4484,62 @@ uaudio_set_port(void *arg, struct mixer_ctrl *ctl)
 	rc = uaudio_set_port_do(sc, ctl);
 	usbd_ref_decr(sc->udev);
 	return rc;
+}
+
+size_t
+uaudio_display_name(void *arg, char *buf, size_t size)
+{
+	struct uaudio_softc *sc = arg;
+	char *vendor = sc->udev->vendor;
+	char *product = sc->udev->product;
+	char *p = buf, *end = buf + size;
+	size_t i;
+	int c;
+
+	if (product == NULL || vendor == NULL)
+		return strlcpy(buf, DEVNAME(sc), size);
+
+	/* 
+	 * If the product name is prefixed with the vendor, drop the prefix
+	 */
+	for (i = 0; product[i] != 0; i++) {
+		if (vendor[i] == 0) {
+			while (product[i] == ' ')
+				i++;
+			product += i;
+			break;
+		}
+		if (vendor[i] != product[i])
+			break;
+	}
+
+	/*
+	 * Copy the product name removing control and non-ascii chars. The
+	 * destination pointer 'p' is advanced, but chars are not written
+	 * past the 'end' pointer (end of the buffer).
+	 */
+	while ((c = *product++) != 0) {
+		if (c < ' ' || c > '~')
+			continue;
+		if (p < end)
+			*p = c;
+		p++;
+	}
+
+	/*
+	 * Terminating '\0'
+	 */
+	if (size > 0)
+		*(p < end ? p : end - 1) = 0;
+
+	/*
+	 * Append the instance number (if any), similarly advance 'p' but
+	 * don't write past 'end'
+	 */
+	if (sc->instnum > 0)
+		p += snprintf(p, p < end ? end - p : 0, "#%u", sc->instnum + 1);
+
+	return p - buf;
 }
 
 int
