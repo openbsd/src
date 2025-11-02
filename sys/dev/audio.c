@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.211 2025/02/14 13:29:00 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.212 2025/11/02 14:33:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1735,12 +1735,22 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 }
 
 int
-audio_getdev(struct audio_softc *sc, struct audio_device *adev)
+audio_getdev(struct audio_softc *sc, struct audio_device *p)
 {
-	memset(adev, 0, sizeof(struct audio_device));
-	if (sc->dev.dv_parent == NULL)
-		return EIO;
-	strlcpy(adev->name, sc->dev.dv_parent->dv_xname, MAX_AUDIO_DEV_LEN);
+	size_t sz;
+
+	memset(p, 0, sizeof(struct audio_device));
+	sz = 0;
+
+	if (sc->ops->display_name)
+		sz = sc->ops->display_name(sc->arg, p->name, sizeof(p->name));
+
+	if (sz == 0) {
+		if (sc->dev.dv_parent == NULL)
+			return EIO;
+		strlcpy(p->name, sc->dev.dv_parent->dv_xname, sizeof(p->name));
+	}
+
 	return 0;
 }
 

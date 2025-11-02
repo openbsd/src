@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.42 2022/11/02 10:41:34 kn Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.43 2025/11/02 14:33:06 ratchov Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ struct audio_hw_if {
 	    struct audio_params *, struct audio_params *, unsigned int);
 	unsigned int (*set_nblks)(void *, int,
 	    struct audio_params *, unsigned int, unsigned int);
+	size_t	(*display_name)(void *, char *, size_t);
 };
 
 struct audio_attach_args {
