@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.18 2025/11/03 16:22:13 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.19 2025/11/03 16:36:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -680,8 +680,10 @@ nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
 			X509V3error(X509V3_R_INVALID_NUMBER);
 			goto err;
 		}
-		if (!sk_ASN1_INTEGER_push(nnums, aint))
+		if (!sk_ASN1_INTEGER_push(nnums, aint)) {
+			ASN1_INTEGER_free(aint);
 			goto merr;
+		}
 	}
 	return 1;
 
