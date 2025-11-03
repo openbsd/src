@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.18 2025/09/16 12:18:10 hshoexer Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.19 2025/11/03 09:36:39 jan Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -173,6 +173,7 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct viocon_softc *sc = (struct viocon_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
+	struct virtio_attach_args *va = aux;
 	int maxports = 1;
 
 	if (vsc->sc_child)
