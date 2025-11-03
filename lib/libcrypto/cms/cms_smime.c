@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.29 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.30 2025/11/03 14:29:50 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -286,8 +286,10 @@ CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 	cms = CMS_ContentInfo_new();
 	if (cms == NULL)
 		return NULL;
-	if (!CMS_EncryptedData_set1_key(cms, cipher, key, keylen))
+	if (!CMS_EncryptedData_set1_key(cms, cipher, key, keylen)) {
+		CMS_ContentInfo_free(cms);
 		return NULL;
+	}
 
 	if (!(flags & CMS_DETACHED))
 		CMS_set_detached(cms, 0);
