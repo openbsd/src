@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.283 2025/04/24 20:24:12 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.284 2025/11/03 13:25:38 tb Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1404,14 +1404,14 @@ bgpd_rtr_conn_setup(struct rtr_config *r)
 		if (setsockopt(ce->fd, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) ==
 		    -1) {
 			log_warn("rtr %s: setsockopt IP_TOS", r->descr);
-			return;
+			goto fail;
 		}
 		break;
 	case AID_INET6:
 		if (setsockopt(ce->fd, IPPROTO_IPV6, IPV6_TCLASS, &pre,
 		    sizeof(pre)) == -1) {
-			log_warn("rtr %s: setsockopt IP_TOS", r->descr);
-			return;
+			log_warn("rtr %s: setsockopt IPV6_TCLASS", r->descr);
+			goto fail;
 		}
 		break;
 	}
@@ -1419,7 +1419,7 @@ bgpd_rtr_conn_setup(struct rtr_config *r)
 	if (setsockopt(ce->fd, IPPROTO_TCP, TCP_NODELAY, &nodelay,
 	    sizeof(nodelay)) == -1) {
 		log_warn("rtr %s: setsockopt TCP_NODELAY", r->descr);
-		return;
+		goto fail;
 	}
 
 	if (tcp_md5_set(ce->fd, &r->auth, &r->remote_addr) == -1)
