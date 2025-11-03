@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.38 2025/11/02 23:51:42 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.39 2025/11/03 00:41:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1195,8 +1195,10 @@ void
 bridge_vidmap(const char *ifsname)
 {
 	struct ifbrvidmap ifbrvm;
-	size_t i;
 	char sep = ' ';
+	int vid, fvid = -1;
+	unsigned int voff, vbit;
+	int rangelen = 0;
 
 	strlcpy(ifbrvm.ifbrvm_name, ifname, sizeof(ifbrvm.ifbrvm_name));
 	strlcpy(ifbrvm.ifbrvm_ifsname, ifsname, sizeof(ifbrvm.ifbrvm_ifsname));
@@ -1209,19 +1211,26 @@ bridge_vidmap(const char *ifsname)
 
 	printf("\t\t" "tagged:");
 
-	for (i = 0; i < sizeof(ifbrvm.ifbrvm_map); i++) {
-		unsigned int voff = i * 8;
-		unsigned int vbit;
-		uint8_t tag = ifbrvm.ifbrvm_map[i];
+	/* (ab)use the last bit to terminate a range */
+	vid = (sizeof(ifbrvm.ifbrvm_map) * 8) - 1;
+	voff = vid / 8;
+	vbit = vid % 8;
+	ifbrvm.ifbrvm_map[voff] &= ~(1U << vbit);
 
-		if (tag == 0)
-			continue;
+	for (vid = EVL_VLID_MIN; vid <= EVL_VLID_MAX; vid++) {
+		voff = vid / 8;
+		vbit = vid % 8;
 
-		for (vbit = 0; vbit < 8; vbit++) {
-			if (tag & (1U << vbit)) {
-				printf("%c%u", sep, voff + vbit);
+		if (ifbrvm.ifbrvm_map[voff] & (1U << vbit)) {
+			if (rangelen++ == 0) {
+				printf("%c%d", sep, vid);
 				sep = ',';
 			}
+		} else {
+			if (rangelen > 1)
+				printf("-%d", vid - 1);
+
+			rangelen = 0;
 		}
 	}
 
