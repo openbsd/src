@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.48 2025/11/02 00:15:20 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.49 2025/11/03 23:50:57 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -175,8 +175,6 @@ static int	veb_enqueue(struct ifnet *, struct mbuf *);
 static int	veb_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
 static void	veb_start(struct ifqueue *);
-static struct mbuf *
-		veb_offload(struct ifnet *, struct ifnet *, struct mbuf *);
 
 static int	veb_up(struct veb_softc *);
 static int	veb_down(struct veb_softc *);
@@ -464,8 +462,11 @@ veb_span(struct veb_softc *sc, struct mbuf *m0)
 			continue;
 		}
 
-		if ((m = veb_offload(&sc->sc_if, ifp0, m)) == NULL)
+		m = ether_offload_ifcap(ifp0, m);
+		if (m == NULL) {
+			counters_inc(sc->sc_if.if_counters, ifc_ierrors);
 			continue;
+		}
 
 		if_enqueue(ifp0, m); /* XXX count error */
 	}
@@ -960,83 +961,6 @@ veb_ipsec_out(struct ifnet *ifp0, struct mbuf *m)
 }
 #endif /* IPSEC */
 
-static struct mbuf *
-veb_offload(struct ifnet *ifp, struct ifnet *ifp0, struct mbuf *m)
-{
-	struct ether_extracted ext;
-	int csum = 0;
-
-#if NVLAN > 0
-	if (ISSET(m->m_flags, M_VLANTAG) &&
-	    !ISSET(ifp0->if_capabilities, IFCAP_VLAN_HWTAGGING)) {
-		/*
-		 * If the underlying interface has no VLAN hardware tagging
-		 * support, inject one in software.
-		 */
-		m = vlan_inject(m, ETHERTYPE_VLAN, m->m_pkthdr.ether_vtag);
-		if (m == NULL)
-			goto err;
-	}
-#endif
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT) &&
-	    !ISSET(ifp0->if_capabilities, IFCAP_CSUM_IPv4))
-		csum = 1;
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT) &&
-	    (!ISSET(ifp0->if_capabilities, IFCAP_CSUM_TCPv4) ||
-	     !ISSET(ifp0->if_capabilities, IFCAP_CSUM_TCPv6)))
-		csum = 1;
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT) &&
-	    (!ISSET(ifp0->if_capabilities, IFCAP_CSUM_UDPv4) ||
-	     !ISSET(ifp0->if_capabilities, IFCAP_CSUM_UDPv6)))
-		csum = 1;
-
-	if (csum) {
-		int ethlen;
-		int hlen;
-
-		ether_extract_headers(m, &ext);
-
-		ethlen = sizeof *ext.eh;
-		if (ext.evh)
-			ethlen = sizeof *ext.evh;
-
-		hlen = m->m_pkthdr.len - ext.paylen;
-
-		if (m->m_len < hlen) {
-			m = m_pullup(m, hlen);
-			if (m == NULL)
-				goto err;
-		}
-
-		/* hide ethernet header */
-		m->m_data += ethlen;
-		m->m_len -= ethlen;
-		m->m_pkthdr.len -= ethlen;
-
-		if (ext.ip4) {
-			in_hdr_cksum_out(m, ifp0);
-			in_proto_cksum_out(m, ifp0);
-#ifdef INET6
-		} else if (ext.ip6) {
-			in6_proto_cksum_out(m, ifp0);
-#endif
-		}
-
-		/* show ethernet header again */
-		m->m_data -= ethlen;
-		m->m_len += ethlen;
-		m->m_pkthdr.len += ethlen;
-	}
-
-	return m;
- err:
-	counters_inc(ifp->if_counters, ifc_ierrors);
-	return NULL;
-}
-
 static void
 veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
     uint64_t src, uint64_t dst, uint16_t vid, struct netstack *ns)
@@ -1122,12 +1046,14 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 		if (vid == tp->p_pvid)
 			CLR(m->m_flags, M_VLANTAG);
 
-		if ((m = veb_offload(ifp, ifp0, m)) == NULL)
-			goto rele;
+		m = ether_offload_ifcap(ifp0, m);
+		if (m == NULL) {
+			counters_inc(ifp->if_counters, ifc_ierrors);
+			continue;
+		}
 
 		(*tp->p_enqueue)(ifp0, m); /* XXX count error */
 	}
- rele:
 	refcnt_rele_wake(&pm->m_refs);
 
 done:
@@ -1183,8 +1109,11 @@ veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
 	counters_pkt(ifp->if_counters, ifc_opackets, ifc_obytes,
 	    m->m_pkthdr.len);
 
-	if ((m = veb_offload(ifp, ifp0, m)) == NULL)
+	m = ether_offload_ifcap(ifp0, m);
+	if (m == NULL) {
+		counters_inc(ifp->if_counters, ifc_ierrors);
 		goto drop;
+	}
 
 	(*tp->p_enqueue)(ifp0, m); /* XXX count error */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.303 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.304 2025/11/03 23:50:57 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1250,6 +1250,80 @@ ether_extract_headers(struct mbuf *m0, struct ether_extracted *ext)
 	    ext->ip4 ? "ip4," : "", ext->ip6 ? "ip6," : "",
 	    ext->tcp ? "tcp," : "", ext->udp ? "udp," : "",
 	    ext->iplen, ext->iphlen, ext->tcphlen, ext->paylen);
+}
+
+struct mbuf *
+ether_offload_ifcap(struct ifnet *ifp, struct mbuf *m)
+{
+	struct ether_extracted ext;
+	int csum = 0;
+
+#if NVLAN > 0
+	if (ISSET(m->m_flags, M_VLANTAG) &&
+	    !ISSET(ifp->if_capabilities, IFCAP_VLAN_HWTAGGING)) {
+		/*
+		 * If the underlying interface has no VLAN hardware tagging
+		 * support, inject one in software.
+		 */
+		m = vlan_inject(m, ETHERTYPE_VLAN, m->m_pkthdr.ether_vtag);
+		if (m == NULL)
+			return (NULL);
+	}
+#endif
+
+	if (ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT) &&
+	    !ISSET(ifp->if_capabilities, IFCAP_CSUM_IPv4))
+		csum = 1;
+
+	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT) &&
+	    (!ISSET(ifp->if_capabilities, IFCAP_CSUM_TCPv4) ||
+	     !ISSET(ifp->if_capabilities, IFCAP_CSUM_TCPv6)))
+		csum = 1;
+
+	if (ISSET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT) &&
+	    (!ISSET(ifp->if_capabilities, IFCAP_CSUM_UDPv4) ||
+	     !ISSET(ifp->if_capabilities, IFCAP_CSUM_UDPv6)))
+		csum = 1;
+
+	if (csum) {
+		int ethlen;
+		int hlen;
+
+		ether_extract_headers(m, &ext);
+
+		ethlen = sizeof *ext.eh;
+		if (ext.evh)
+			ethlen = sizeof *ext.evh;
+
+		hlen = m->m_pkthdr.len - ext.paylen;
+
+		if (m->m_len < hlen) {
+			m = m_pullup(m, hlen);
+			if (m == NULL)
+				return (NULL);
+		}
+
+		/* hide ethernet header */
+		m->m_data += ethlen;
+		m->m_len -= ethlen;
+		m->m_pkthdr.len -= ethlen;
+
+		if (ext.ip4) {
+			in_hdr_cksum_out(m, ifp);
+			in_proto_cksum_out(m, ifp);
+#ifdef INET6
+		} else if (ext.ip6) {
+			in6_proto_cksum_out(m, ifp);
+#endif
+		}
+
+		/* show ethernet header again */
+		m->m_data -= ethlen;
+		m->m_len += ethlen;
+		m->m_pkthdr.len += ethlen;
+	}
+
+	return m;
 }
 
 #if NAF_FRAME > 0

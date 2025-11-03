@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.379 2025/10/28 23:26:44 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.380 2025/11/03 23:50:57 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -796,80 +796,6 @@ bridge_stop(struct bridge_softc *sc)
 	timeout_del_barrier(&sc->sc_brtimeout);
 
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
-}
-
-struct mbuf *
-bridge_offload(struct ifnet *brifp, struct ifnet *ifp, struct mbuf *m)
-{
-	struct ether_extracted ext;
-	int csum = 0;
-
-#if NVLAN > 0
-	/*
-	 * If the underlying interface has no VLAN hardware tagging support,
-	 * inject one in software.
-	 */
-	if (ISSET(m->m_flags, M_VLANTAG) &&
-	    !ISSET(ifp->if_capabilities, IFCAP_VLAN_HWTAGGING)) {
-		m = vlan_inject(m, ETHERTYPE_VLAN, m->m_pkthdr.ether_vtag);
-		if (m == NULL)
-			return NULL;
-	}
-#endif
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT) &&
-	    !ISSET(ifp->if_capabilities, IFCAP_CSUM_IPv4))
-		csum = 1;
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT) &&
-	    (!ISSET(ifp->if_capabilities, IFCAP_CSUM_TCPv4) ||
-	     !ISSET(ifp->if_capabilities, IFCAP_CSUM_TCPv6)))
-		csum = 1;
-
-	if (ISSET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT) &&
-	    (!ISSET(ifp->if_capabilities, IFCAP_CSUM_UDPv4) ||
-	     !ISSET(ifp->if_capabilities, IFCAP_CSUM_UDPv6)))
-		csum = 1;
-
-	if (csum) {
-		int ethlen;
-		int hlen;
-
-		ether_extract_headers(m, &ext);
-
-		ethlen = sizeof *ext.eh;
-		if (ext.evh)
-			ethlen = sizeof *ext.evh;
-
-		hlen = m->m_pkthdr.len - ext.paylen;
-
-		if (m->m_len < hlen) {
-			m = m_pullup(m, hlen);
-			if (m == NULL)
-				return (NULL);
-		}
-
-		/* hide ethernet header */
-		m->m_data += ethlen;
-		m->m_len -= ethlen;
-		m->m_pkthdr.len -= ethlen;
-
-		if (ext.ip4) {
-			in_hdr_cksum_out(m, ifp);
-			in_proto_cksum_out(m, ifp);
-#ifdef INET6
-		} else if (ext.ip6) {
-			in6_proto_cksum_out(m, ifp);
-#endif
-		}
-
-		/* show ethernet header again */
-		m->m_data -= ethlen;
-		m->m_len += ethlen;
-		m->m_pkthdr.len += ethlen;
-	}
-
-	return m;
 }
 
 /*
@@ -1977,7 +1903,8 @@ bridge_ifenqueue(struct ifnet *brifp, struct ifnet *ifp, struct mbuf *m)
 {
 	int error, len;
 
-	if ((m = bridge_offload(brifp, ifp, m)) == NULL) {
+	m = ether_offload_ifcap(ifp, m);
+	if (m == NULL) {
 		error = ENOBUFS;
 		goto err;
 	}

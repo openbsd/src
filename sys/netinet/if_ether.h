@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.96 2025/07/07 00:55:15 jsg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.97 2025/11/03 23:50:57 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ struct ether_extracted {
 };
 
 void ether_extract_headers(struct mbuf *, struct ether_extracted *);
+struct mbuf *ether_offload_ifcap(struct ifnet *, struct mbuf *);
 
 /*
  * Ethernet multicast address structure.  There is one of these for each
