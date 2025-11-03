@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.39 2025/11/03 00:41:31 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.40 2025/11/03 00:44:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1197,7 +1197,7 @@ bridge_vidmap(const char *ifsname)
 	struct ifbrvidmap ifbrvm;
 	char sep = ' ';
 	int vid, fvid = -1;
-	unsigned int voff, vbit;
+	unsigned int voff, vbit, vmax;
 	int rangelen = 0;
 
 	strlcpy(ifbrvm.ifbrvm_name, ifname, sizeof(ifbrvm.ifbrvm_name));
@@ -1212,12 +1212,13 @@ bridge_vidmap(const char *ifsname)
 	printf("\t\t" "tagged:");
 
 	/* (ab)use the last bit to terminate a range */
-	vid = (sizeof(ifbrvm.ifbrvm_map) * 8) - 1;
+	vmax = sizeof(ifbrvm.ifbrvm_map) * 8;
+	vid = vmax - 1;
 	voff = vid / 8;
 	vbit = vid % 8;
 	ifbrvm.ifbrvm_map[voff] &= ~(1U << vbit);
 
-	for (vid = EVL_VLID_MIN; vid <= EVL_VLID_MAX; vid++) {
+	for (vid = EVL_VLID_MIN; vid < vmax; vid++) {
 		voff = vid / 8;
 		vbit = vid % 8;
 
