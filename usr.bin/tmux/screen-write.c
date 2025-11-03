@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.238 2025/11/01 16:44:24 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.239 2025/11/03 09:27:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2005,6 +2005,10 @@ screen_write_combine(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 	struct grid_cell	 last;
 	struct tty_ctx		 ttyctx;
 	int			 force_wide = 0, zero_width = 0;
+
+	/* Ignore U+3164 HANGUL_FILLER entirely. */
+	if (utf8_is_hangul_filler(ud))
+		return (1);
 
 	/*
 	 * Is this character which makes no sense without being combined? If
