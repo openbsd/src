@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.2 2025/10/30 10:29:51 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.3 2025/11/03 13:48:19 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -215,17 +215,19 @@ ch_sub_insert(const struct ch_type *type, struct ch_group *table,
 		}
 		/* at the same time remember the first empty spot */
 		empties = ~cg_meta_get_flags(g) & CH_SLOT_MASK;
-		if (ins_g == NULL && (i = ffs(empties)) != 0) {
-			ins_g = g;
-			ins_i = i - 1;
-		} else if (empties == 0) {
+		if (empties == 0) {
 			/* overflow, mark group as full */
 			if (cg_meta_set_flags(g, CH_EVER_FULL) == 0)
 				meta->cs_num_ever_full++;
+		} else {
+			if (ins_g == NULL) {
+				ins_g = g;
+				ins_i = ffs(empties) - 1;
+			}
+			/* check if lookup is finished and obj is not present */
+			if (cg_meta_check_flags(g, CH_EVER_FULL) == 0)
+				break;
 		}
-		/* check if lookup is finished and obj is not present */
-		if (cg_meta_check_flags(g, CH_EVER_FULL) == 0)
-			break;
 		g = &table[++bucket & CH_H2_MASK];
 	}
 
