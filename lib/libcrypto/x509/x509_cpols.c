@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.17 2025/11/03 16:20:43 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.18 2025/11/03 16:22:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -689,7 +689,7 @@ nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
 	X509V3error(ERR_R_MALLOC_FAILURE);
 
  err:
-	sk_ASN1_INTEGER_pop_free(nnums, ASN1_STRING_free);
+	sk_ASN1_INTEGER_pop_free(nnums, ASN1_INTEGER_free);
 	return 0;
 }
 
