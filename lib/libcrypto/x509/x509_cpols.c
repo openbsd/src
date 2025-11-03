@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.16 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.17 2025/11/03 16:20:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -488,7 +488,7 @@ r2i_certpol(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *value)
 	sk_CONF_VALUE_pop_free(vals, X509V3_conf_free);
 	return pols;
 
-err:
+ err:
 	sk_CONF_VALUE_pop_free(vals, X509V3_conf_free);
 	sk_POLICYINFO_pop_free(pols, POLICYINFO_free);
 	return NULL;
@@ -573,10 +573,10 @@ policy_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *polstrs, int ia5org)
 
 	return pol;
 
-merr:
+ merr:
 	X509V3error(ERR_R_MALLOC_FAILURE);
 
-err:
+ err:
 	POLICYQUALINFO_free(nqual);
 	POLICYINFO_free(pol);
 	return NULL;
@@ -659,10 +659,10 @@ notice_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *unot, int ia5org)
 
 	return qual;
 
-merr:
+ merr:
 	X509V3error(ERR_R_MALLOC_FAILURE);
 
-err:
+ err:
 	POLICYQUALINFO_free(qual);
 	return NULL;
 }
@@ -685,10 +685,10 @@ nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
 	}
 	return 1;
 
-merr:
+ merr:
 	X509V3error(ERR_R_MALLOC_FAILURE);
 
-err:
+ err:
 	sk_ASN1_INTEGER_pop_free(nnums, ASN1_STRING_free);
 	return 0;
 }
