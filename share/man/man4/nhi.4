@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nhi.4,v 1.1 2025/11/02 20:35:35 kettenis Exp $
+.\"	$OpenBSD: nhi.4,v 1.2 2025/11/03 20:56:08 jsg Exp $
 .\"
 .\" Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2025 $
+.Dd $Mdocdate: November 3 2025 $
 .Dt NHI 4
 .Os
 .Sh NAME
@@ -27,11 +27,9 @@ The
 .Nm
 driver provides support for the USB4 host interface.
 .Pp
-The
-.nm
-driver does not implement any meaningful USB4 connection manager
+The driver does not implement any meaningful USB4 connection manager
 functionality.
-It only puts the router that is part of the host interface inot sleep state
+It only puts the router that is part of the host interface into a sleep state
 during suspend.
 .Sh SEE ALSO
 .Xr intro 4 ,
