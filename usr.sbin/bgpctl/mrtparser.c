@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.22 2024/02/01 11:37:10 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.23 2025/11/03 11:32:07 tb Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -824,6 +824,7 @@ mrt_aspath_inflate(struct ibuf *buf, uint16_t *newlen)
 		err(1, "malloc");
 	if (ibuf_get(asbuf, data, len) == -1) {
 		ibuf_free(asbuf);
+		free(data);
 		return (NULL);
 	}
 	ibuf_free(asbuf);
