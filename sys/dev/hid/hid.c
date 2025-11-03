@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.9 2025/10/28 15:36:46 jcs Exp $ */
+/*	$OpenBSD: hid.c,v 1.10 2025/11/03 01:41:22 jmatthew Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -47,6 +47,7 @@
 #define	MAXUSAGE 64
 #define	MAXPUSH 4
 #define	MAXID 16
+#define	MAXLOCCNT 2048
 
 struct hid_pos_data {
 	int32_t rid;
@@ -64,10 +65,10 @@ struct hid_data {
 	uint32_t usage_last;	/* last seen usage */
 	uint32_t loc_size;	/* last seen size */
 	uint32_t loc_count;	/* last seen count */
+	uint32_t ncount;	/* end usage item count */
+	uint32_t icount;	/* current usage item count */
 	enum hid_kind kind;
 	uint8_t	pushlevel;	/* current pushlevel */
-	uint8_t	ncount;		/* end usage item count */
-	uint8_t icount;		/* current usage item count */
 	uint8_t	nusage;		/* end "usages_min/max" index */
 	uint8_t	iusage;		/* current "usages_min/max" index */
 	uint8_t ousage;		/* current "usages_min/max" offset */
@@ -298,17 +299,18 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			switch (bTag) {
 			case 8:	/* Input */
 				c->kind = hid_input;
-				c->flags = dval;
 		ret:
+				c->flags = dval;
 				c->loc.count = s->loc_count;
 				c->loc.size = s->loc_size;
 
 				if (c->flags & HIO_VARIABLE) {
 					/* range check usage count */
-					if (c->loc.count > 255) {
+					if (c->loc.count > MAXLOCCNT) {
 						DPRINTF("Number of "
-						    "items truncated to 255\n");
-						s->ncount = 255;
+						    "items truncated to %u\n",
+						    MAXLOCCNT);
+						s->ncount = MAXLOCCNT;
 					} else
 						s->ncount = c->loc.count;
 
@@ -324,7 +326,6 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 
 			case 9:	/* Output */
 				c->kind = hid_output;
-				c->flags = dval;
 				goto ret;
 			case 10:	/* Collection */
 				c->kind = hid_collection;
@@ -335,7 +336,6 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				return (1);
 			case 11:	/* Feature */
 				c->kind = hid_feature;
-				c->flags = dval;
 				goto ret;
 			case 12:	/* End collection */
 				c->kind = hid_endcollection;
