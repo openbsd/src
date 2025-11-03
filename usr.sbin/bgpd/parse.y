@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.483 2025/10/30 12:43:18 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.484 2025/11/03 15:41:21 tb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5511,7 +5511,7 @@ insert_rtr(struct rtr_config *new)
 	if (new->id == 0)
 		new->id = ++id;
 
-	SIMPLEQ_INSERT_TAIL(&conf->rtrs, currtr, entry);
+	SIMPLEQ_INSERT_TAIL(&conf->rtrs, new, entry);
 
 	return 0;
 }
