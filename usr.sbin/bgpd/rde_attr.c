@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.138 2025/10/29 10:34:23 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.139 2025/11/04 14:43:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -80,8 +80,10 @@ attr_calc_hash(uint8_t type, const void *data, uint16_t len)
 	return SipHash24_End(&ctx);
 }
 
-CH_HEAD(attr_tree, attr)        attrtable = CH_INITIALIZER(&attrtable);
+CH_HEAD(attr_tree, attr);
 CH_PROTOTYPE(attr_tree, attr, attr_hash);
+
+static struct attr_tree attrtable = CH_INITIALIZER(&attrtable);
 
 void
 attr_init(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.273 2025/10/29 10:34:23 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.274 2025/11/04 14:43:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -654,8 +654,10 @@ path_equal(const struct rde_aspath *a, const struct rde_aspath *b)
 	return (attr_equal(a, b));
 }
 
-CH_HEAD(path_tree, rde_aspath)	pathtable = CH_INITIALIZER(&pathtable);
+CH_HEAD(path_tree, rde_aspath);
 CH_PROTOTYPE(path_tree, rde_aspath, path_hash);
+
+static struct path_tree	pathtable = CH_INITIALIZER(&pathtable);
 
 static inline struct rde_aspath *
 path_ref(struct rde_aspath *asp)

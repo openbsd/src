@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.17 2025/10/29 10:34:23 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.18 2025/11/04 14:43:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -648,9 +648,11 @@ communities_calc_hash(struct rde_community *comm)
 	}
 }
 	
-CH_HEAD(comm_tree, rde_community)	commtable = CH_INITIALIZER(&commtable);
+CH_HEAD(comm_tree, rde_community);
 CH_PROTOTYPE(comm_tree, rde_community, communities_hash);
 CH_GENERATE(comm_tree, rde_community, communities_equal, communities_hash);
+
+static struct comm_tree	commtable = CH_INITIALIZER(&commtable);
 
 void
 communities_init(void)
