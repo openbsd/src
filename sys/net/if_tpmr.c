@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.37 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.38 2025/11/04 12:12:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -211,6 +211,11 @@ tpmr_vlan_filter(const struct mbuf *m)
 {
 	const struct ether_header *eh;
 
+#if NVLAN > 0
+	if (ISSET(m->m_flags, M_VLANTAG))
+		return (1);
+#endif
+
 	eh = mtod(m, struct ether_header *);
 	switch (ntohs(eh->ether_type)) {
 	case ETHERTYPE_VLAN:
@@ -268,6 +273,11 @@ tpmr_pf(struct ifnet *ifp0, int dir, struct mbuf *m, struct netstack *ns)
 {
 	struct ether_header *eh, copy;
 	const struct tpmr_pf_ip_family *fam;
+
+#if NVLAN > 0
+	if (ISSET(m->m_flags, M_VLANTAG))
+		return (m);
+#endif
 
 	eh = mtod(m, struct ether_header *);
 	switch (ntohs(eh->ether_type)) {
@@ -338,20 +348,6 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	if (!ISSET(iff, IFF_RUNNING))
 		goto drop;
 
-#if NVLAN > 0
-	/*
-	 * If the underlying interface removed the VLAN header itself,
-	 * add it back.
-	 */
-	if (ISSET(m->m_flags, M_VLANTAG)) {
-		m = vlan_inject(m, ETHERTYPE_VLAN, m->m_pkthdr.ether_vtag);
-		if (m == NULL) {
-			counters_inc(ifp->if_counters, ifc_ierrors);
-			goto drop;
-		}
-	}
-#endif
-
 	if (!ISSET(iff, IFF_LINK2) &&
 	    tpmr_vlan_filter(m))
 		goto drop;
@@ -372,7 +368,7 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 #if NBPFILTER > 0
 	if_bpf = READ_ONCE(ifp->if_bpf);
 	if (if_bpf) {
-		if (bpf_mtap(if_bpf, m, 0))
+		if (bpf_mtap_ether(if_bpf, m, 0))
 			goto drop;
 	}
 #endif
@@ -394,13 +390,20 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	}
 #endif
 
-	if (if_enqueue(ifpn, m))
+	m = ether_offload_ifcap(ifpn, m);
+	if (m == NULL) {
 		counters_inc(ifp->if_counters, ifc_oerrors);
-	else {
-		counters_pkt(ifp->if_counters,
-		    ifc_opackets, ifc_obytes, len);
+		goto rele;
 	}
 
+	if (if_enqueue(ifpn, m) != 0) {
+		counters_inc(ifp->if_counters, ifc_oerrors);
+		goto rele;
+	}
+
+	counters_pkt(ifp->if_counters, ifc_opackets, ifc_obytes, len);
+
+rele:
 	tpmr_p_rele(pn);
 
 	return (NULL);
