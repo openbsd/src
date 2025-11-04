@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.388 2025/08/21 08:49:21 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.389 2025/11/04 20:03:03 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2110,14 +2110,23 @@ sysctl_iflist(int af, struct walkarg *w)
 int
 sysctl_ifnames(struct walkarg *w)
 {
+	TAILQ_HEAD(, ifnet) if_tmplist = TAILQ_HEAD_INITIALIZER(if_tmplist);
 	struct if_nameindex_msg ifn;
 	struct ifnet *ifp;
 	int error = 0;
 
+	rw_enter_write(&if_tmplist_lock);
+	NET_LOCK_SHARED();
 	/* XXX ignore tableid for now */
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
+		if_ref(ifp);
+		TAILQ_INSERT_TAIL(&if_tmplist, ifp, if_tmplist);
+	}
+	NET_UNLOCK_SHARED();
+
+	TAILQ_FOREACH(ifp, &if_tmplist, if_tmplist) {
 		w->w_needed += sizeof(ifn);
 		if (w->w_where && w->w_needed <= w->w_given) {
 
@@ -2127,12 +2136,18 @@ sysctl_ifnames(struct walkarg *w)
 			    sizeof(ifn.if_name));
 			error = copyout(&ifn, w->w_where, sizeof(ifn));
 			if (error)
-				return (error);
+				break;
 			w->w_where += sizeof(ifn);
 		}
 	}
 
-	return (0);
+	while ((ifp = TAILQ_FIRST(&if_tmplist))) {
+		TAILQ_REMOVE(&if_tmplist, ifp, if_tmplist);
+		if_put(ifp);
+	}
+	rw_exit_write(&if_tmplist_lock);
+
+	return (error);
 }
 
 int
@@ -2261,10 +2276,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		break;
 
 	case NET_RT_IFNAMES:
-		NET_LOCK_SHARED();
-		error = sysctl_ifnames(&w);
-		NET_UNLOCK_SHARED();
-		break;
+		return (sysctl_ifnames(&w));
 	}
 	free(w.w_tmem, M_RTABLE, w.w_tmemsize);
 	if (where) {
