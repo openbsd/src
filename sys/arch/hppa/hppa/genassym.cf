@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.48 2019/06/11 15:23:41 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.49 2025/11/04 19:05:03 miod Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -44,6 +44,7 @@ include <uvm/uvm_extern.h>
 
 include <machine/cpu.h>
 include <machine/frame.h>
+include <machine/intr.h>
 include <machine/iomod.h>
 include <machine/mutex.h>
 include <machine/pmap.h>
@@ -163,6 +164,16 @@ member	ci_hpa
 struct	hppa_fpstate
 member	hfp_regs
 member	hfp_cpu
+
+struct	hppa_iv iv_
+member	flags
+member	handler
+member	arg
+member	bit
+member	share
+member	next
+
+export	CPU_NINTS
 
 # system calls
 export	SYSCALLGATE

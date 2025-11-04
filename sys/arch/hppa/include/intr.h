@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.44 2018/01/13 15:18:11 mpi Exp $	*/
+/*	$OpenBSD: intr.h,v 1.45 2025/11/04 19:05:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -175,6 +175,22 @@ void	 hppa_ipi_init(struct cpu_info *);
 int	 hppa_ipi_intr(void *arg);
 int	 hppa_ipi_send(struct cpu_info *, u_long);
 #endif
+
+struct hppa_iv {
+	char pri;
+	char irq;
+	char flags;
+#define	HPPA_IV_CALL	0x01
+#define	HPPA_IV_SOFT	0x02
+	char pad;
+	int pad2;
+	int (*handler)(void *);
+	void *arg;
+	u_int bit;
+	struct hppa_iv *share;
+	struct hppa_iv *next;
+	struct evcount *cnt;
+} __packed;
 
 #endif /* !_LOCORE && _KERNEL */
 #endif /* _MACHINE_INTR_H_ */

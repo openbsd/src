@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.208 2025/07/16 07:15:42 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.209 2025/11/04 19:05:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1903,34 +1903,34 @@ ENTRY(TLABEL(intr),0)
 
 	INTR_PROF_PRE
 
-	ldil	L%intr_table + 32*32, r1
-	ldo	R%intr_table + 32*32(r1), r1
+	ldil	L%intr_table + CPU_NINTS*HPPA_IV_SIZEOF, r1
+	ldo	R%intr_table + CPU_NINTS*HPPA_IV_SIZEOF(r1), r1
 	mfctl	cr29, r17
 	b	$intr_cont
 	ldw	CI_IPENDING(r17), r24
 
 $intr_ffs
-	addi	-32, r1, r1
+	addi	-HPPA_IV_SIZEOF, r1, r1
 	bb,>=	r8, 0, $intr_ffs
 	zdep	r8, 30, 31, r8
 
-	ldw	0(r1), r17
-	bb,>=,n	r17, 23, $intr_nocall
-
-	ldw	2*4(r1), r16	/* func */
-	ldw	3*4(r1), r9	/* arg: ioreg */
+	ldb	IV_FLAGS(r1), r17
+	bb,>=,n	r17, 31, $intr_nocall	/* skip invoking handler */
+					/* if HPPA_IV_CALL clear in flags */
+	ldw	IV_HANDLER(r1), r16
+	ldw	IV_ARG(r1), r9
 	mtctl	r1, tr7
 	bv	r0(r16)
-	ldw	6*4(r1), r1	/* next: sub-intr_table */
+	ldw	IV_NEXT(r1), r1		/* sub-intr_table */
 
 $intr_nocall
-	ldw	4*4(r1), r17	/* bit */
-	or	r17, r24, r24	/* ipending */
+	ldw	IV_BIT(r1), r17
+	or	r17, r24, r24		/* ipending */
 
 	/* also return from nested handlers */
 $intr_cont
 	comb,<>,n r0, r8, $intr_ffs
-	ldw	-32(r1), r0	/* preload cache */
+	ldw	-HPPA_IV_SIZEOF(r1), r0	/* preload cache */
 
 	mfctl	cr29, r17
 	stw	r24, CI_IPENDING(r17)
@@ -1968,14 +1968,14 @@ $gsc_intr_loop
 	comb,=,n r0, r16, $intr_cont
 	mfctl	tr7, r1
 $gsc_ffs
-	addi	32, r1, r1
+	addi	HPPA_IV_SIZEOF, r1, r1
 	bb,>=	r16, 31, $gsc_ffs
 	shd	r0, r16, 1, r16
 
-	ldo	-32(r1), r9
+	ldo	-HPPA_IV_SIZEOF(r1), r9
 $gsc_share
-	ldw	4*4(r9), r17	/* bit */
-	ldw	5*4(r9), r9	/* share */
+	ldw	IV_BIT(r9), r17
+	ldw	IV_SHARE(r9), r9
 
 	comb,<>	r0, r9, $gsc_share
 	or	r17, r24, r24	/* ipending */
@@ -1992,14 +1992,14 @@ $dino_intr_loop
 	comb,=,n r0, r16, $intr_cont
 	mfctl	tr7, r1
 $dino_ffs
-	addi	32, r1, r1
+	addi	HPPA_IV_SIZEOF, r1, r1
 	bb,>=	r16, 31, $dino_ffs
 	shd	r0, r16, 1, r16
 
-	ldo	-32(r1), r9
+	ldo	-HPPA_IV_SIZEOF(r1), r9
 $dino_share
-	ldw	4*4(r9), r17	/* bit */
-	ldw	5*4(r9), r9	/* share */
+	ldw	IV_BIT(r9), r17
+	ldw	IV_SHARE(r9), r9
 
 	comb,<>	r0, r9, $dino_share
 	or	r17, r24, r24	/* ipending */

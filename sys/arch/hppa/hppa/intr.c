@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.52 2024/10/23 07:52:55 mpi Exp $	*/
+/*	$OpenBSD: intr.c,v 1.53 2025/11/04 19:05:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -39,22 +39,6 @@
 #include <machine/autoconf.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
-
-struct hppa_iv {
-	char pri;
-	char irq;
-	char flags;
-#define	HPPA_IV_CALL	0x01
-#define	HPPA_IV_SOFT	0x02
-	char pad;
-	int pad2;
-	int (*handler)(void *);
-	void *arg;
-	u_int bit;
-	struct hppa_iv *share;
-	struct hppa_iv *next;
-	struct evcount *cnt;
-} __packed;
 
 struct hppa_iv intr_store[8*2*CPU_NINTS] __attribute__ ((aligned(32))),
     *intr_more = intr_store, *intr_list;
@@ -268,7 +252,7 @@ cpu_intr(void *v)
 			ci->ci_ipending &= ~(1L << bit);
 
 			if (iv->flags & HPPA_IV_CALL)
-				continue;
+				continue;	/* handled in locore */
 
 			uvmexp.intrs++;
 			if (iv->flags & HPPA_IV_SOFT)
