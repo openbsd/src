@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.317 2025/03/10 14:08:25 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.318 2025/11/04 10:59:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1690,7 +1690,7 @@ show_mrt_update(struct ibuf *b, int reqflags, int addpath)
 		uint16_t attrlen;
 		uint8_t flags;
 
-		ibuf_from_ibuf(&abuf, &attrbuf);
+		ibuf_from_ibuf(&attrbuf, &abuf);
 		if (ibuf_get_n8(&attrbuf, &flags) == -1 ||
 		    ibuf_skip(&attrbuf, 1) == -1)
 			goto trunc;
