@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.252 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.253 2025/11/04 12:02:39 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -832,7 +832,7 @@ tun_dev_read(dev_t dev, struct uio *uio, int ioflag)
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
+		ifp->if_bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif
 
 	if (ISSET(sc->sc_flags, TUN_HDR)) {
