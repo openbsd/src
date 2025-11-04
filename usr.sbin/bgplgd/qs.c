@@ -1,4 +1,4 @@
-/*	$OpenBSD: qs.c,v 1.7 2024/12/03 10:38:06 claudio Exp $ */
+/*	$OpenBSD: qs.c,v 1.8 2025/11/04 18:48:41 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -81,7 +81,7 @@ urldecode(const char *s, size_t len)
 	size_t i, blen = 0;
 
 	for (i = 0; i < len; i++) {
-		if (blen >= sizeof(buf))
+		if (blen >= sizeof(buf) - 1)
 			return NULL;
 		if (s[i] == '+') {
 			buf[blen++] = ' ';
