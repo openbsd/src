@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.3 2025/11/03 13:48:19 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.4 2025/11/04 13:07:14 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -517,8 +517,8 @@ ch_table_resize(struct ch_table *t)
 {
 	struct ch_group **tables;
 	struct ch_meta **metas;
-	uint64_t oldsize = 1 << t->ch_level;
-	uint64_t newsize = 1 << (t->ch_level + 1);
+	uint64_t oldsize = 1ULL << t->ch_level;
+	uint64_t newsize = 1ULL << (t->ch_level + 1);
 	int64_t idx;
 
 	if (t->ch_level + 1 >= CH_H1_BITS) {
@@ -566,7 +566,7 @@ ch_table_fill(struct ch_table *t, uint64_t idx, struct ch_group *table,
 	uint64_t cnt, i;
 
 	idx <<= (t->ch_level - meta->cs_local_level);
-	cnt = 1 << (t->ch_level - meta->cs_local_level);
+	cnt = 1ULL << (t->ch_level - meta->cs_local_level);
 
 	for (i = 0; i < cnt; i++) {
 		t->ch_tables[idx + i] = table;
@@ -722,7 +722,7 @@ _ch_init(const struct ch_type *type, struct ch_table *t)
 void
 _ch_destroy(const struct ch_type *type, struct ch_table *t)
 {
-	uint64_t idx, max = 1 << t->ch_level;
+	uint64_t idx, max = 1ULL << t->ch_level;
 	struct ch_group *table = NULL;
 
 	for (idx = 0; idx < max; idx++) {
@@ -859,7 +859,7 @@ _ch_next(const struct ch_type *type, struct ch_table *t, struct ch_iter *it)
 	if (t->ch_tables == NULL)
 		return NULL;
 
-	max = 1 << t->ch_level;
+	max = 1ULL << t->ch_level;
 	idx = it->ci_ext_idx;
 	if (idx >= max)
 		return NULL;
