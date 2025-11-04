@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.176 2025/06/04 09:12:34 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.177 2025/11/04 15:01:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -904,8 +904,8 @@ up_generate_mp_reach(struct ibuf *buf, struct rde_peer *peer,
 	if (ibuf_add_zero(buf, sizeof(len)) == -1)
 		return -1;
 
-	if (aid2afi(aid, &afi, &safi))
-		fatalx("up_generate_mp_reach: bad AID");
+	if (aid2afi(aid, &afi, &safi) == -1)
+		fatalx("%s: bad AID", __func__);
 
 	/* AFI + SAFI + NH LEN + NH + Reserved */
 	if (ibuf_add_n16(buf, afi) == -1)
@@ -1060,7 +1060,7 @@ up_dump_withdraws(struct imsgbuf *imsg, struct rde_peer *peer, uint8_t aid)
 			goto fail;
 
 		/* afi & safi */
-		if (aid2afi(aid, &afi, &safi))
+		if (aid2afi(aid, &afi, &safi) == -1)
 			fatalx("%s: bad AID", __func__);
 		if (ibuf_add_n16(buf, afi) == -1)
 			goto fail;
@@ -1131,7 +1131,7 @@ up_dump_withdraw_one(struct rde_peer *peer, struct prefix *p, struct ibuf *buf)
 			return -1;
 
 		/* afi & safi */
-		if (aid2afi(p->pt->aid, &afi, &safi))
+		if (aid2afi(p->pt->aid, &afi, &safi) == -1)
 			fatalx("%s: bad AID", __func__);
 		if (ibuf_add_n16(buf, afi) == -1)
 			return -1;

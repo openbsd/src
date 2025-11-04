@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.660 2025/11/04 12:54:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.661 2025/11/04 15:01:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4388,7 +4388,7 @@ rde_peer_send_eor(struct rde_peer *peer, uint8_t aid)
 		u_char		buf[10];
 
 		if (aid2afi(aid, &afi, &safi) == -1)
-			fatalx("peer_send_eor: bad AID");
+			fatalx("%s: bad AID", __func__);
 
 		i = 0;	/* v4 withdrawn len */
 		memcpy(&buf[0], &i, sizeof(i));

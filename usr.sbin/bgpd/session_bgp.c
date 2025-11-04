@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.5 2025/08/21 15:15:25 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.6 2025/11/04 15:01:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -146,7 +146,7 @@ session_capa_add_afi(struct ibuf *b, uint8_t aid, uint8_t flags)
 	uint16_t	afi;
 	uint8_t		safi;
 
-	if (aid2afi(aid, &afi, &safi)) {
+	if (aid2afi(aid, &afi, &safi) == -1) {
 		log_warn("%s: bad AID", __func__);
 		return (-1);
 	}
@@ -165,7 +165,7 @@ session_capa_add_ext_nh(struct ibuf *b, uint8_t aid)
 	uint16_t	afi;
 	uint8_t		safi;
 
-	if (aid2afi(aid, &afi, &safi)) {
+	if (aid2afi(aid, &afi, &safi) == -1) {
 		log_warn("%s: bad AID", __func__);
 		return (-1);
 	}
@@ -559,7 +559,7 @@ session_rrefresh(struct peer *p, uint8_t aid, uint8_t subtype)
 	}
 
 	if (aid2afi(aid, &afi, &safi) == -1)
-		fatalx("session_rrefresh: bad afi/safi pair");
+		fatalx("%s: bad AID", __func__);
 
 	if ((buf = session_newmsg(BGP_RREFRESH, MSGSIZE_RREFRESH)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL, NULL);

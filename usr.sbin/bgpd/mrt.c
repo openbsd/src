@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.128 2025/11/04 10:47:25 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.129 2025/11/04 15:01:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -709,7 +709,12 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 		 */
 		subtype = MRT_DUMP_V2_RIB_GENERIC;
 		apsubtype = MRT_DUMP_V2_RIB_GENERIC_ADDPATH;
-		aid2afi(re->prefix->aid, &afi, &safi);
+		if (aid2afi(re->prefix->aid, &afi, &safi) == -1) {
+			log_warnx("%s: bad AID", __func__);
+			ibuf_free(pbuf);
+			return (-1);
+		}
+
 
 		/* first add 3-bytes AFI/SAFI */
 		if (ibuf_add_n16(pbuf, afi) == -1)
