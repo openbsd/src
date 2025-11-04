@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.49 2025/11/03 23:50:57 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.50 2025/11/04 02:02:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1186,6 +1186,11 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 		m_adj(m, EVL_ENCAPLEN);
 
 		eh = mtod(m, struct ether_header *);
+	}
+
+	if (eh->ether_type == htons(ETHERTYPE_VLAN)) {
+		/* don't allow double tagging as it enables vlan hopping */
+		goto drop;
 	}
 
 	if (ISSET(m->m_flags, M_VLANTAG)) {
