@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.318 2025/11/04 10:59:17 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.319 2025/11/04 15:30:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	struct network_config	 net;
 	struct parse_result	*res;
-	struct ctl_neighbor	 neighbor;
+	struct ctl_neighbor	 neighbor = { 0 };
 	struct ctl_show_rib_request	ribreq;
 	struct flowspec		*f;
 	char			*sockname;
@@ -747,7 +747,7 @@ const char *
 fmt_flags(uint32_t flags, int sum)
 {
 	static char buf[80];
-	char	 flagstr[5];
+	char	 flagstr[12];
 	char	*p = flagstr;
 
 	if (sum) {

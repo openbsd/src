@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.138 2025/03/10 14:08:25 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.139 2025/11/04 15:30:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -489,6 +489,7 @@ parse(int argc, char *argv[])
 
 	memset(&res, 0, sizeof(res));
 	res.rtableid = getrtable();
+	res.mrtfd = -1;
 	TAILQ_INIT(&res.set);
 
 	while (argc >= 0) {
@@ -801,6 +802,8 @@ match_token(int argc, char *argv[], const struct token table[], int *argsused)
 			break;
 		case FILENAME:
 			if (word != NULL && wordlen > 0) {
+				if (res.mrtfd != -1)
+					errx(1, "mrt file already set");
 				if ((res.mrtfd = open(word, O_RDONLY)) == -1) {
 					/*
 					 * ignore error if path has no / and
