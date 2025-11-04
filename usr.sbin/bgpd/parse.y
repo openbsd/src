@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.484 2025/11/03 15:41:21 tb Exp $ */
+/*	$OpenBSD: parse.y,v 1.485 2025/11/04 10:47:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4760,6 +4760,7 @@ add_mrtconfig(enum mrt_type type, char *name, int timeout, struct peer *p,
 		free(n);
 		return (-1);
 	}
+	TAILQ_INIT(&MRT2MC(n)->timer);
 	MRT2MC(n)->ReopenTimerInterval = timeout;
 	if (p != NULL) {
 		if (curgroup == p) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.520 2025/10/30 12:43:18 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.521 2025/11/04 10:47:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -247,6 +247,8 @@ struct listen_addr {
 	socklen_t			sa_len;
 	uint8_t				flags;
 };
+
+TAILQ_HEAD(timer_head, timer);
 
 TAILQ_HEAD(listen_addrs, listen_addr);
 TAILQ_HEAD(filter_set_head, filter_set);
@@ -1447,7 +1449,7 @@ struct mrt_config {
 	struct mrt		conf;
 	char			name[MRT_FILE_LEN];	/* base file name */
 	char			file[MRT_FILE_LEN];	/* actual file name */
-	time_t			ReopenTimer;
+	struct timer_head	timer;
 	int			ReopenTimerInterval;
 };
 
@@ -1529,7 +1531,7 @@ void		 log_peer_warnx(const struct peer_config *, const char *, ...)
 void		 mrt_write(struct mrt *);
 void		 mrt_clean(struct mrt *);
 void		 mrt_init(struct imsgbuf *, struct imsgbuf *);
-time_t		 mrt_timeout(struct mrt_head *);
+monotime_t	 mrt_timeout(struct mrt_head *, monotime_t);
 void		 mrt_reconfigure(struct mrt_head *);
 void		 mrt_handler(struct mrt_head *);
 struct mrt	*mrt_get(struct mrt_head *, struct mrt *);
@@ -1802,6 +1804,7 @@ static const char * const timernames[] = {
 	"RTR RetryTimer",
 	"RTR ExpireTimer",
 	"RTR ActiveTimer",
+	"MRT ReopenTimer",
 	""
 };
 

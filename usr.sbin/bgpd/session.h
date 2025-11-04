@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.192 2025/08/21 15:15:25 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.193 2025/11/04 10:47:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -183,6 +183,7 @@ enum Timer {
 	Timer_Rtr_Retry,
 	Timer_Rtr_Expire,
 	Timer_Rtr_Active,
+	Timer_Mrt_Reopen,
 	Timer_Max
 };
 
@@ -191,8 +192,6 @@ struct timer {
 	enum Timer		type;
 	monotime_t		val;
 };
-
-TAILQ_HEAD(timer_head, timer);
 
 struct peer {
 	struct peer_config	 conf;

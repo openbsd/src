@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.284 2025/11/03 13:25:38 tb Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.285 2025/11/04 10:47:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -118,7 +118,7 @@ usage(void)
 #define PFD_SOCK_ROUTE		3
 #define PFD_SOCK_PFKEY		4
 #define PFD_CONNECT_START	5
-#define MAX_TIMEOUT		(3600 * 1000)
+#define MAX_TIMEOUT		3600
 
 int	 cmd_opts;
 
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	struct peer		*p;
 	struct pollfd		*pfd = NULL;
 	struct connect_elm	*ce;
-	time_t			 timeout;
+	monotime_t		 timeout;
 	pid_t			 se_pid = 0, rde_pid = 0, rtr_pid = 0, pid;
 	const char		*conffile;
 	char			*saved_argv0;
@@ -337,7 +337,10 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		}
 		memset(pfd, 0, sizeof(struct pollfd) * pfd_elms);
 
-		timeout = mrt_timeout(conf->mrt);
+		timeout = monotime_add(getmonotime(),
+		    monotime_from_sec(MAX_TIMEOUT));
+
+		timeout = mrt_timeout(conf->mrt, timeout);
 
 		pfd[PFD_SOCK_ROUTE].fd = rfd;
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
@@ -357,9 +360,11 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 				fatalx("polli pfd overflow");
 		}
 
-		if (timeout < 0 || timeout > MAX_TIMEOUT)
-			timeout = MAX_TIMEOUT;
-		if (poll(pfd, npfd, timeout) == -1) {
+		timeout = monotime_sub(timeout, getmonotime());
+		if (!monotime_valid(timeout))
+			timeout = monotime_clear();
+
+		if (poll(pfd, npfd, monotime_to_msec(timeout)) == -1) {
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;
