@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.40 2025/11/03 00:44:09 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.41 2025/11/04 02:00:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -451,7 +451,7 @@ bridge_timeout(const char *arg, int d)
 
 	bp.ifbrp_ctime = strtonum(arg, 0, UINT32_MAX, &errstr);
 	if (errstr)
-		err(1, "timeout %s is: %s", arg, errstr);
+		errx(1, "timeout %s is: %s", arg, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	if (ioctl(sock, SIOCBRDGSTO, (caddr_t)&bp) == -1)
@@ -509,7 +509,7 @@ bridge_protect(const char *ifsname, const char *val)
 	while (str != NULL) {
 		v = strtonum(str, 1, 31, &errstr);
 		if (errstr)
-			err(1, "protected domain %s is: %s", str, errstr);
+			errx(1, "protected domain %s is: %s", str, errstr);
 		breq.ifbr_protected |= (1 << (v - 1));
 		str = strtok(NULL, ",");
 	}
@@ -1122,7 +1122,7 @@ bridge_holdcnt(const char *value, int d)
 
 	bp.ifbrp_txhc = strtonum(value, 0, UINT8_MAX, &errstr);
 	if (errstr)
-		err(1, "holdcnt %s is: %s", value, errstr);
+		errx(1, "holdcnt %s is: %s", value, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	if (ioctl(sock, SIOCBRDGSTXHC, (caddr_t)&bp) == -1)
