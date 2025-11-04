@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.17 2025/10/30 12:43:18 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.18 2025/11/04 14:42:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -135,6 +135,8 @@ tohex(const unsigned char *in, size_t len)
 	static char out[(16 + 1) * 3];
 	size_t i, o = 0;
 
+	if (len == 0)
+		return "";
 	if (len > 16)
 		len = 16;
 	for (i = 0; i < len; i++) {
@@ -269,9 +271,8 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			size_t len = sizeof(buf);
 			if (ibuf_size(&ibuf) < len)
 				len = ibuf_size(&ibuf);
-			if (ibuf_get(&ibuf, buf, len) == -1) {
+			if (ibuf_get(&ibuf, buf, len) == -1)
 				break;
-			}
 			logit(LOG_INFO, "   %5zu: %s", off, tohex(buf, len));
 			off += len;
 		}
