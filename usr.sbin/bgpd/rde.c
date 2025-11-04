@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.659 2025/10/29 15:27:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.660 2025/11/04 12:54:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3841,7 +3841,8 @@ rde_reload_done(void)
 		switch (rib->state) {
 		case RECONF_DELETE:
 			rib_free(rib);
-			break;
+			rib = NULL;
+			continue;
 		case RECONF_RELOAD:
 			if (rib_update(rib)) {
 				RB_FOREACH(peer, peer_tree, &peertable) {
