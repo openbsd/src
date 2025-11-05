@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.5 2023/07/27 06:41:39 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.6 2025/11/05 11:40:47 jsing Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -51,7 +51,7 @@ const struct print_test {
 		.desc = "minus one",
 		.want = "    mana mana -1 (-0x1)\n",
 	},
-#ifdef _LP64
+#if BN_BYTES == 8
 	{
 		.desc = "largest word",
 		.want = "    mana mana 18446744073709551615 "
