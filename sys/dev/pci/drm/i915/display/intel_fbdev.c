@@ -225,8 +225,10 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	} else {
 		drm_dbg_kms(&dev_priv->drm, "re-using BIOS fb\n");
 		prealloc = true;
+#ifdef __linux__
 		sizes->fb_width = fb->base.width;
 		sizes->fb_height = fb->base.height;
+#endif
 	}
 
 	wakeref = intel_runtime_pm_get(&dev_priv->runtime_pm);
