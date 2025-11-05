@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.47 2017/06/15 13:48:42 bcallah Exp $	*/
+/*	$OpenBSD: misc.c,v 1.48 2025/11/05 17:04:54 tb Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ getdiv(int n)
 }
 
 void
-onintr(int signo)
+onintr(int signo UNUSED)
 {
 #define intrmessage	"m4: interrupted.\n"
 	write(STDERR_FILENO, intrmessage, sizeof(intrmessage)-1);
