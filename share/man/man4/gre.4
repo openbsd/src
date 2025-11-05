@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.83 2022/09/13 01:38:31 jsg Exp $
+.\" $OpenBSD: gre.4,v 1.84 2025/11/05 23:33:40 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 13 2022 $
+.Dd $Mdocdate: November 5 2025 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -152,7 +152,7 @@ The MTU is set to 1500 by default.
 .Ss Network Virtualization using GRE interfaces (nvgre)
 .Nm nvgre
 interfaces allow construction of virtual overlay Ethernet networks
-on top of an IPv4 or IPv6 underlay network as per RFC 7367.
+on top of an IPv4 or IPv6 underlay network as per RFC 7637.
 Ethernet traffic is encapsulated using Transparent Ethernet (0x6558)
 as the protocol identifier in the GRE header, a 24-bit Virtual
 Subnet ID (VSID), and an 8-bit FlowID.
