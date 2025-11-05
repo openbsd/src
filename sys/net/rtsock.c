@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.389 2025/11/04 20:03:03 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.390 2025/11/05 09:15:54 jmatthew Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2276,7 +2276,8 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		break;
 
 	case NET_RT_IFNAMES:
-		return (sysctl_ifnames(&w));
+		error = sysctl_ifnames(&w);
+		break;
 	}
 	free(w.w_tmem, M_RTABLE, w.w_tmemsize);
 	if (where) {
