@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.81 2025/09/07 06:28:03 jsing Exp $ */
+/* $OpenBSD: bn.h,v 1.82 2025/11/05 13:00:26 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,6 +125,8 @@
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -140,44 +142,44 @@ extern "C" {
 
 #ifdef _LP64
 #undef	BN_LLONG
-#define BN_ULONG	unsigned long
-#define BN_LONG		long
+#define BN_ULONG	uint64_t
+#define BN_LONG		int64_t
 #define BN_BITS		128
 #define BN_BYTES	8
 #define BN_BITS2	64
 #define BN_BITS4	32
-#define BN_MASK2	(0xffffffffffffffffL)
-#define BN_MASK2l	(0xffffffffL)
-#define BN_MASK2h	(0xffffffff00000000L)
-#define BN_MASK2h1	(0xffffffff80000000L)
-#define BN_TBIT		(0x8000000000000000L)
-#define BN_DEC_CONV	(10000000000000000000UL)
-#define BN_DEC_FMT1	"%lu"
-#define BN_DEC_FMT2	"%019lu"
+#define BN_MASK2	UINT64_C(0xffffffffffffffff)
+#define BN_MASK2l	UINT64_C(0xffffffff)
+#define BN_MASK2h	UINT64_C(0xffffffff00000000)
+#define BN_MASK2h1	UINT64_C(0xffffffff80000000)
+#define BN_TBIT		UINT64_C(0x8000000000000000)
+#define BN_DEC_CONV	UINT64_C(10000000000000000000)
+#define BN_DEC_FMT1	"%" PRIu64
+#define BN_DEC_FMT2	"%019" PRIu64
 #define BN_DEC_NUM	19
-#define BN_HEX_FMT1	"%lX"
-#define BN_HEX_FMT2	"%016lX"
+#define BN_HEX_FMT1	"%" PRIX64
+#define BN_HEX_FMT2	"%016" PRIX64
 #else
-#define BN_ULLONG	unsigned long long
+#define BN_ULLONG	uint64_t
 #define	BN_LLONG
-#define BN_ULONG	unsigned int
-#define BN_LONG		int
+#define BN_ULONG	uint32_t
+#define BN_LONG		int32_t
 #define BN_BITS		64
 #define BN_BYTES	4
 #define BN_BITS2	32
 #define BN_BITS4	16
-#define BN_MASK		(0xffffffffffffffffLL)
-#define BN_MASK2	(0xffffffffL)
-#define BN_MASK2l	(0xffff)
-#define BN_MASK2h1	(0xffff8000L)
-#define BN_MASK2h	(0xffff0000L)
-#define BN_TBIT		(0x80000000L)
-#define BN_DEC_CONV	(1000000000L)
-#define BN_DEC_FMT1	"%u"
-#define BN_DEC_FMT2	"%09u"
+#define BN_MASK		UINT64_C(0xffffffffffffffff)
+#define BN_MASK2	UINT32_C(0xffffffff)
+#define BN_MASK2l	UINT32_C(0xffff)
+#define BN_MASK2h1	UINT32_C(0xffff8000)
+#define BN_MASK2h	UINT32_C(0xffff0000)
+#define BN_TBIT		UINT32_C(0x80000000)
+#define BN_DEC_CONV	UINT32_C(1000000000)
+#define BN_DEC_FMT1	"%" PRIu32
+#define BN_DEC_FMT2	"%09" PRIu32
 #define BN_DEC_NUM	9
-#define BN_HEX_FMT1	"%X"
-#define BN_HEX_FMT2	"%08X"
+#define BN_HEX_FMT1	"%" PRIX32
+#define BN_HEX_FMT2	"%08" PRIX32
 #endif
 
 #define BN_FLG_MALLOCED		0x01
