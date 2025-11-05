@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: tokenizer.l,v 1.10 2017/06/17 01:55:16 bcallah Exp $ */
+/* $OpenBSD: tokenizer.l,v 1.11 2025/11/05 17:10:45 tb Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -61,7 +61,7 @@ radix	0[rR][0-9]+:[0-9a-zA-Z]+
 %%
 
 int32_t
-number()
+number(void)
 {
 	long l;
 
@@ -74,7 +74,7 @@ number()
 }
 
 int32_t
-parse_radix()
+parse_radix(void)
 {
 	long base;
 	char *next;

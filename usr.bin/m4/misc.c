@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.48 2025/11/05 17:04:54 tb Exp $	*/
+/*	$OpenBSD: misc.c,v 1.49 2025/11/05 17:10:45 tb Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ pbunsigned(unsigned long n)
 }
 
 void
-initspaces()
+initspaces(void)
 {
 	int i;
 
@@ -173,7 +173,7 @@ initspaces()
 }
 
 void
-enlarge_strspace()
+enlarge_strspace(void)
 {
 	char *newstrspace;
 	int i;
@@ -194,7 +194,7 @@ enlarge_strspace()
 }
 
 void
-enlarge_bufspace()
+enlarge_bufspace(void)
 {
 	unsigned char *newbuf;
 	int i;
@@ -249,7 +249,7 @@ onintr(int signo UNUSED)
  * killdiv - get rid of the diversion files
  */
 void
-killdiv()
+killdiv(void)
 {
 	int n;
 
@@ -411,7 +411,7 @@ set_input(struct input_file *f, FILE *real, const char *name)
 }
 
 void
-do_emit_synchline()
+do_emit_synchline(void)
 {
 	fprintf(active, "#line %lu \"%s\"\n",
 	    infile[ilevel].lineno, infile[ilevel].name);
@@ -451,7 +451,7 @@ doprintfilename(struct input_file *f)
  * and later dump everything that was added since then to a file.
  */
 size_t
-buffer_mark()
+buffer_mark(void)
 {
 	return bp - buf;
 }

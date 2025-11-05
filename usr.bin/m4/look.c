@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.24 2014/12/21 09:33:12 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.25 2025/11/05 17:10:45 tb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -84,7 +84,7 @@ element_alloc(size_t s, void *u UNUSED)
 }
 
 void
-init_macros()
+init_macros(void)
 {
 	ohash_init(&macros, 10, &macro_info);
 }

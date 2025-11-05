@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.16 2010/09/07 19:58:09 marco Exp $ */
+/* $OpenBSD: trace.c,v 1.17 2025/11/05 17:10:45 tb Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -118,7 +118,7 @@ set_trace_flags(const char *s)
 }
 
 static int
-frame_level()
+frame_level(void)
 {
 	int level;
 	int framep;

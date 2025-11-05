@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.54 2022/07/04 10:41:21 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.55 2025/11/05 17:10:45 tb Exp $ */
 
 /*
  * Copyright (c) 1999-2022 Marc Espie <espie@openbsd.org>
@@ -88,7 +88,7 @@ addtoincludepath(const char *dirname)
 }
 
 static void
-ensure_m4path()
+ensure_m4path(void)
 {
 	static int envpathdone = 0;
 	char *envpath;
