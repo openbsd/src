@@ -10,6 +10,7 @@
 #include <sys/errno.h>
 
 #include <linux/compiler.h>
+#include <linux/err.h>
 
 void *memchr_inv(const void *, int, size_t);
 
@@ -62,6 +63,18 @@ kmemdup_array(const void *src, size_t nemb, size_t size, int flags)
 	void *p = mallocarray(nemb, size, M_DRM, flags);
 	if (p)
 		memcpy(p, src, nemb * size);
+	return (p);
+}
+
+static inline void *
+memdup_array_user(const void *src, size_t nemb, size_t size)
+{
+	void *p = mallocarray(nemb, size, M_DRM, M_WAITOK | M_CANFAIL);
+	if (p == NULL)
+		return ERR_PTR(-ENOMEM);
+
+	if (copyin(src, p, nemb * size) != 0)
+		return ERR_PTR(-EFAULT);
 	return (p);
 }
 
