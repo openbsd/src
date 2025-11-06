@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpicmos.c,v 1.3 2025/09/16 12:18:10 hshoexer Exp $	*/
+/*	$OpenBSD: acpicmos.c,v 1.4 2025/11/06 21:23:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -84,7 +84,6 @@ acpicmos_opreg_handler(void *cookie, int iodir, uint64_t address, int size,
 		*value = mc146818_read(NULL, address);
 	else
 		mc146818_write(NULL, address, *value);
-
 
 	return 0;
 }
