@@ -27,9 +27,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: ffs.3,v 1.12 2025/10/24 11:30:06 claudio Exp $
+.\"	$OpenBSD: ffs.3,v 1.13 2025/11/06 17:19:11 schwarze Exp $
 .\"
-.Dd $Mdocdate: October 24 2025 $
+.Dd $Mdocdate: November 6 2025 $
 .Dt FFS 3
 .Os
 .Sh NAME
@@ -48,12 +48,12 @@
 .Sh DESCRIPTION
 The
 .Fn ffs ,
-.Fn ffsl
+.Fn ffsl ,
 and
 .Fn ffsll
 functions find the first bit set in
 .Fa value
-and returns the index of that bit.
+and return the index of that bit.
 Bits are numbered starting from 1, starting at the rightmost bit.
 A return value of 0 means that the argument was zero.
 .Sh SEE ALSO
