@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.130 2025/11/04 15:06:49 tb Exp $ */
+/*	$OpenBSD: mrt.c,v 1.131 2025/11/06 15:33:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -527,7 +527,8 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, uint16_t snum,
 	uint16_t	 subtype;
 	uint8_t		 dummy;
 
-	if (p->pt->aid != peer->remote_addr.aid ||
+	if ((peer->remote_addr.aid != AID_UNSPEC &&
+	    p->pt->aid != peer->remote_addr.aid) ||
 	    (p->pt->aid != AID_INET && p->pt->aid != AID_INET6))
 		/* only able to dump pure IPv4/IPv6 */
 		return (0);
