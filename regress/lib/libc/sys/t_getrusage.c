@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_getrusage.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_getrusage.c,v 1.4 2025/11/06 12:56:58 miod Exp $	*/
 /* $NetBSD: t_getrusage.c,v 1.8 2018/05/09 08:45:03 mrg Exp $ */
 
 /*-
@@ -68,6 +68,8 @@ work(void)
 		 asm volatile("l.nop");	/* Do something. */
 #elif defined(__ia64__)
 		 asm volatile("nop 0"); /* Do something. */
+#elif defined(__m88k)
+		 asm volatile("or %r0, %r0, %r0"); /* Do something. */
 #else
 		 asm volatile("nop");	/* Do something. */
 #endif
