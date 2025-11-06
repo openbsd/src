@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.23 2025/07/02 14:36:56 claudio Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.24 2025/11/06 00:45:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -54,7 +54,7 @@
 #include <sys/_lock.h>
 
 struct mutex {
-	void *volatile mtx_owner;
+	volatile unsigned long mtx_owner;
 	int mtx_wantipl;
 	int mtx_oldipl;
 #ifdef WITNESS
@@ -64,23 +64,26 @@ struct mutex {
 
 #ifdef WITNESS
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
-	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE, MTX_LO_INITIALIZER(name, flags) }
+	{ 0, __MUTEX_IPL((ipl)), IPL_NONE, MTX_LO_INITIALIZER(name, flags) }
 #else
 #define MUTEX_INITIALIZER_FLAGS(ipl, name, flags) \
-	{ NULL, __MUTEX_IPL((ipl)), IPL_NONE }
+	{ 0, __MUTEX_IPL((ipl)), IPL_NONE }
 #endif
 
 void __mtx_init(struct mutex *, int);
 #define _mtx_init(mtx, ipl) __mtx_init((mtx), __MUTEX_IPL((ipl)))
 
+#define mtx_curcpu() (unsigned long)curcpu()
+#define mtx_owner(mtx) ((mtx)->mtx_owner & ~1UL)
+
 #ifdef DIAGNOSTIC
 #define MUTEX_ASSERT_LOCKED(mtx) do {					\
-	if (((mtx)->mtx_owner != curcpu()) && !(panicstr || db_active))	\
+	if (mtx_owner(mtx) != mtx_curcpu() && !(panicstr || db_active))	\
 		panic("mutex %p not held in %s", (mtx), __func__);	\
 } while (0)
 
 #define MUTEX_ASSERT_UNLOCKED(mtx) do {					\
-	if (((mtx)->mtx_owner == curcpu()) && !(panicstr || db_active))	\
+	if (mtx_owner(mtx) == mtx_curcpu() && !(panicstr || db_active))	\
 		panic("mutex %p held in %s", (mtx), __func__);		\
 } while (0)
 #else
@@ -128,7 +131,7 @@ void	mtx_leave(struct mutex *);
 #define mtx_init(m, ipl)	mtx_init_flags(m, ipl, NULL, 0)
 
 #define mtx_owned(mtx) \
-	(((mtx)->mtx_owner == curcpu()) || panicstr || db_active)
+	((mtx_owner(mtx) == mtx_curcpu()) || panicstr || db_active)
 
 #ifdef WITNESS
 

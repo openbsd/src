@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.55 2025/04/14 09:14:51 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.56 2025/11/06 00:45:31 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1677,7 +1677,7 @@ _isitmyx(struct witness *w1, struct witness *w2, int rmask, const char *fname)
 	if (!((WITNESS_ATOD(r1) == r2 && WITNESS_DTOA(r2) == r1) ||
 	    (WITNESS_DTOA(r1) == r2 && WITNESS_ATOD(r2) == r1))) {
 		/* Don't squawk if we're potentially racing with an update. */
-		if (w_mtx.mtx_owner != curcpu())
+		if (mtx_owner(&w_mtx) != mtx_curcpu())
 			return (0);
 		printf("witness: %s: rmatrix mismatch between %s (index %d) "
 		    "and %s (index %d): w_rmatrix[%d][%d] == %x but "
