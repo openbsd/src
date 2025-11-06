@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.35 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.36 2025/11/06 09:04:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -338,7 +338,7 @@ probable_prime_dh(BIGNUM *rnd, int bits, const BIGNUM *add, const BIGNUM *rem,
 loop:
 	for (i = 1; i < NUMPRIMES; i++) {
 		/* check that rnd is a prime */
-		BN_LONG mod = BN_mod_word(rnd, primes[i]);
+		BN_ULONG mod = BN_mod_word(rnd, primes[i]);
 		if (mod == (BN_ULONG)-1)
 			goto err;
 		if (mod <= 1) {
