@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.41 2025/11/04 02:00:26 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.42 2025/11/07 23:23:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -568,7 +568,6 @@ void
 bridge_unpvid(const char *ifsname, int d)
 {
 	struct ifbreq breq;
-	const char *errstr;
 
 	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
 	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
@@ -650,8 +649,6 @@ bridge_set_vidmap(const char *ifsname, const char *arg)
 	} else {
 		const char *val;
 		char *str;
-		uint16_t vid;
-		const char *errstr;
 
 		switch (arg[0]) {
 		case '+':
@@ -973,7 +970,6 @@ bridge_delendpoint(const char *addr, int d)
 {
 	struct ifbareq ifba;
 	struct ether_addr *ea;
-	int ecode;
 
 	ea = ether_aton(addr);
 	if (ea == NULL) {
@@ -1196,7 +1192,7 @@ bridge_vidmap(const char *ifsname)
 {
 	struct ifbrvidmap ifbrvm;
 	char sep = ' ';
-	int vid, fvid = -1;
+	int vid;
 	unsigned int voff, vbit, vmax;
 	int rangelen = 0;
 
