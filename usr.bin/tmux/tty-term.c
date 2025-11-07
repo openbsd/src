@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.103 2025/10/30 11:52:25 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.104 2025/11/07 12:43:47 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -603,7 +603,7 @@ tty_term_create(struct tty *tty, char *name, char **caps, u_int ncaps,
 		if (strcasecmp(envent->value, "truecolor") == 0 ||
 		    strcasecmp(envent->value, "24bit") == 0)
 			tty_add_features(feat, "RGB", ",");
- 		else if (strstr(s, "256") != NULL)
+ 		else if (strstr(envent->value, "256") != NULL)
 			tty_add_features(feat, "256", ",");
 	}
 
