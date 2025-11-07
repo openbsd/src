@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.39 2025/10/27 03:18:36 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.40 2025/11/07 02:02:47 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023-2025
@@ -1528,19 +1528,7 @@ rge_reset(struct rge_softc *sc)
 	RGE_SETBIT_1(sc, RGE_PPSW, 0x08);
 
 	RGE_SETBIT_1(sc, RGE_CMD, RGE_CMD_STOPREQ);
-	if (sc->rge_type == MAC_R25) {
-		for (i = 0; i < 20; i++) {
-			DELAY(10);
-			if (!(RGE_READ_1(sc, RGE_CMD) & RGE_CMD_STOPREQ))
-				break;
-		}
-		if (i == 20) {
-			printf("%s: failed to stop all requests\n",
-			    sc->sc_dev.dv_xname);
-			return ETIMEDOUT;
-		}
-	} else
-		DELAY(200);
+	DELAY(200);
 
 	for (i = 0; i < 3000; i++) {
 		DELAY(50);
