@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2114 2025/10/28 13:12:47 jsg Exp $
+$OpenBSD: pcidevs,v 1.2115 2025/11/07 05:06:42 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1356,6 +1356,11 @@ product ATI KAVERI_20		0x131b	Kaveri Radeon R4
 product ATI KAVERI_21		0x131c	Kaveri Radeon R7
 product ATI KAVERI_22		0x131d	Kaveri Radeon R6
 product ATI GRANITE_RIDGE	0x13c0	Granite Ridge
+product ATI CYAN_SKILLFISH_3	0x13db	Cyan Skillfish
+product ATI CYAN_SKILLFISH_4	0x13f9	Cyan Skillfish
+product ATI CYAN_SKILLFISH_5	0x13fa	Cyan Skillfish
+product ATI CYAN_SKILLFISH_6	0x13fb	Cyan Skillfish
+product ATI CYAN_SKILLFISH_7	0x13fc	Cyan Skillfish
 product ATI CYAN_SKILLFISH_1	0x13fe	Cyan Skillfish
 product ATI VANGOGH_0932	0x1435	Van Gogh
 product ATI CYAN_SKILLFISH_2	0x143f	Cyan Skillfish
