@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.274 2025/11/04 14:43:22 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.275 2025/11/07 12:33:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1062,7 +1062,7 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 		p->flags |= PREFIX_FLAG_FILTERED;
 
 	/* add possible pftable reference form aspath */
-	if (asp && asp->pftableid)
+	if (asp->pftableid)
 		rde_pftable_add(asp->pftableid, p);
 	/* make route decision */
 	prefix_evaluate(re, p, NULL);
@@ -1094,7 +1094,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 		np->flags |= PREFIX_FLAG_FILTERED;
 
 	/* add possible pftable reference from new aspath */
-	if (asp && asp->pftableid)
+	if (asp->pftableid)
 		rde_pftable_add(asp->pftableid, np);
 
 	/*
