@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.51 2025/11/07 09:50:03 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.52 2025/11/07 09:57:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -456,7 +456,7 @@ veb_span(struct veb_softc *sc, struct mbuf *m0)
 
 		m = ether_offload_ifcap(ifp0, m);
 		if (m == NULL) {
-			counters_inc(sc->sc_if.if_counters, ifc_ierrors);
+			counters_inc(sc->sc_if.if_counters, ifc_oerrors);
 			continue;
 		}
 
@@ -781,7 +781,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 
 		m = ether_offload_ifcap(ifp0, m);
 		if (m == NULL) {
-			counters_inc(ifp->if_counters, ifc_ierrors);
+			counters_inc(ifp->if_counters, ifc_oerrors);
 			continue;
 		}
 
@@ -838,7 +838,7 @@ veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
 
 	m = ether_offload_ifcap(ifp0, m);
 	if (m == NULL) {
-		counters_inc(ifp->if_counters, ifc_ierrors);
+		counters_inc(ifp->if_counters, ifc_oerrors);
 		goto drop;
 	}
 
