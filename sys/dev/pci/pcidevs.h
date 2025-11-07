@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2114 2025/10/28 13:12:47 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2115 2025/11/07 05:06:42 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1361,6 +1361,11 @@
 #define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
 #define	PCI_PRODUCT_ATI_GRANITE_RIDGE	0x13c0		/* Granite Ridge */
+#define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_3	0x13db		/* Cyan Skillfish */
+#define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_4	0x13f9		/* Cyan Skillfish */
+#define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_5	0x13fa		/* Cyan Skillfish */
+#define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_6	0x13fb		/* Cyan Skillfish */
+#define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_7	0x13fc		/* Cyan Skillfish */
 #define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_1	0x13fe		/* Cyan Skillfish */
 #define	PCI_PRODUCT_ATI_VANGOGH_0932	0x1435		/* Van Gogh */
 #define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_2	0x143f		/* Cyan Skillfish */
