@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.82 2025/11/05 13:00:26 jsing Exp $ */
+/* $OpenBSD: bn.h,v 1.83 2025/11/07 13:41:40 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,7 +140,7 @@
 extern "C" {
 #endif
 
-#ifdef _LP64
+#if defined(_LP64) || defined(_WIN64)
 #undef	BN_LLONG
 #define BN_ULONG	uint64_t
 #define BN_LONG		int64_t
