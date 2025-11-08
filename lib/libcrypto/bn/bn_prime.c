@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.36 2025/11/06 09:04:14 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.37 2025/11/08 16:27:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,8 +109,9 @@
  *
  */
 
-#include <stdio.h>
-#include <time.h>
+#include <stddef.h>
+
+#include <openssl/bn.h>
 
 #include "bn_local.h"
 #include "err_local.h"
