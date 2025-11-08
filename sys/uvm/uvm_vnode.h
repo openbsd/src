@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.22 2025/09/25 09:05:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.23 2025/11/08 17:23:22 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.h,v 1.9 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ struct uvm_vnode {
  */
 #define UVM_VNODE_BLOCKED (UVM_VNODE_ALOCK|UVM_VNODE_DYING|UVM_VNODE_RELKILL)
 
-void			uvm_vnp_obj_alloc(struct vnode *);
+struct uvm_object	*uvn_attach(struct vnode *, vm_prot_t);
 void			uvm_vnp_terminate(struct vnode *);
 
 #endif /* _UVM_UVM_VNODE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.142 2025/09/29 09:55:01 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.143 2025/11/08 17:23:22 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ uvn_init(void)
 struct uvm_object *
 uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 {
-	struct uvm_vnode *uvn = vp->v_uvm;
+	struct uvm_vnode *uvn;
 	struct vattr vattr;
 	int oldflags, result;
 	struct partinfo pi;
@@ -146,7 +146,18 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 		return NULL;
 	}
 
-	/* first get a lock on the uvn. */
+	if (vp->v_uvm == NULL) {
+		uvn = pool_get(&uvm_vnode_pool, PR_WAITOK | PR_ZERO);
+		KERNEL_ASSERT_LOCKED();
+		if (vp->v_uvm == NULL) {
+			uvm_obj_init(&uvn->u_obj, &uvm_vnodeops, 0);
+			uvn->u_vnode = vp;
+			vp->v_uvm = uvn;
+		} else
+			pool_put(&uvm_vnode_pool, uvn);
+	}
+
+	uvn = vp->v_uvm;
 	rw_enter(uvn->u_obj.vmobjlock, RW_WRITE);
 	while (uvn->u_flags & UVM_VNODE_BLOCKED) {
 		uvn->u_flags |= UVM_VNODE_WANTED;
@@ -421,10 +432,12 @@ void
 uvm_vnp_terminate(struct vnode *vp)
 {
 	struct uvm_vnode *uvn = vp->v_uvm;
-	struct uvm_object *uobj = &uvn->u_obj;
+	struct uvm_object *uobj;
 	int oldflags;
 
-	/* check if it is valid */
+	if (uvn == NULL)
+		return;
+	uobj = &uvn->u_obj;
 	rw_enter(uobj->vmobjlock, RW_WRITE);
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0) {
 		rw_exit(uobj->vmobjlock);
@@ -1355,13 +1368,14 @@ int
 uvm_vnp_uncache(struct vnode *vp)
 {
 	struct uvm_vnode *uvn = vp->v_uvm;
-	struct uvm_object *uobj = &uvn->u_obj;
+	struct uvm_object *uobj;
 
-	/* lock uvn part of the vnode and check if we need to do anything */
-
+	if (uvn == NULL)
+		return TRUE;
+	uobj = &uvn->u_obj;
 	rw_enter(uobj->vmobjlock, RW_WRITE);
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0 ||
-			(uvn->u_flags & UVM_VNODE_BLOCKED) != 0) {
+	    (uvn->u_flags & UVM_VNODE_BLOCKED) != 0) {
 		rw_exit(uobj->vmobjlock);
 		return TRUE;
 	}
@@ -1434,13 +1448,13 @@ void
 uvm_vnp_setsize(struct vnode *vp, off_t newsize)
 {
 	struct uvm_vnode *uvn = vp->v_uvm;
-	struct uvm_object *uobj = &uvn->u_obj;
+	struct uvm_object *uobj;
 
 	KERNEL_ASSERT_LOCKED();
-
+	if (uvn == NULL)
+		return;
+	uobj = &uvn->u_obj;
 	rw_enter(uobj->vmobjlock, RW_WRITE);
-
-	/* lock uvn and check for valid object, and if valid: do it! */
 	if (uvn->u_flags & UVM_VNODE_VALID) {
 
 		/*
@@ -1539,17 +1553,4 @@ uvm_vnp_sync(struct mount *mp)
 	}
 
 	rw_exit_write(&uvn_sync_lock);
-}
-
-void
-uvm_vnp_obj_alloc(struct vnode *vp)
-{
-	struct uvm_vnode *uvn;
-
-	KASSERT(vp->v_uvm == NULL);
-
-	uvn = pool_get(&uvm_vnode_pool, PR_WAITOK | PR_ZERO);
-	uvm_obj_init(&uvn->u_obj, &uvm_vnodeops, 0);
-	uvn->u_vnode = vp;
-	vp->v_uvm = uvn;
 }

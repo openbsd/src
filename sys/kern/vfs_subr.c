@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.332 2025/09/25 09:05:47 mpi Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.333 2025/11/08 17:23:22 mpi Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -420,7 +420,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, const struct vops *vops,
 	    ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
 		splx(s);
 		vp = pool_get(&vnode_pool, PR_WAITOK | PR_ZERO);
-		uvm_vnp_obj_alloc(vp);
 		RBT_INIT(buf_rb_bufs, &vp->v_bufs_tree);
 		cache_tree_init(&vp->v_nc_tree);
 		TAILQ_INIT(&vp->v_cache_dst);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.184 2025/06/03 08:38:17 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.185 2025/11/08 17:23:22 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -442,9 +442,6 @@ void			uvm_pagezero_thread(void *);
 void			kmeminit_nkmempages(void);
 void			kmeminit(void);
 extern u_int		nkmempages;
-
-struct vnode;
-struct uvm_object	*uvn_attach(struct vnode *, vm_prot_t);
 
 struct process;
 struct kinfo_vmentry;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.70 2025/09/20 13:53:36 mpi Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.71 2025/11/08 17:23:22 mpi Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 #include <sys/mman.h>
 #include <sys/resourcevar.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm_vnode.h>
 
 /*
  * new_vmcmd():
