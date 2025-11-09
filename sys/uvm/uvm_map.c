@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.347 2025/09/23 08:00:48 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.348 2025/11/09 15:53:47 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -5386,37 +5386,7 @@ RBT_GENERATE_AUGMENT(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
 /*
  * MD code: vmspace allocator setup.
  */
-
-#ifdef __i386__
-void
-uvm_map_setup_md(struct vm_map *map)
-{
-	vaddr_t		min, max;
-
-	min = map->min_offset;
-	max = map->max_offset;
-
-	/*
-	 * Ensure the selectors will not try to manage page 0;
-	 * it's too special.
-	 */
-	if (min < VMMAP_MIN_ADDR)
-		min = VMMAP_MIN_ADDR;
-
-#if 0	/* Cool stuff, not yet */
-	/* Executable code is special. */
-	map->uaddr_exe = uaddr_rnd_create(min, I386_MAX_EXE_ADDR);
-	/* Place normal allocations beyond executable mappings. */
-	map->uaddr_any[3] = uaddr_pivot_create(2 * I386_MAX_EXE_ADDR, max);
-#else	/* Crappy stuff, for now */
-	map->uaddr_any[0] = uaddr_rnd_create(min, max);
-#endif
-
-#ifndef SMALL_KERNEL
-	map->uaddr_brk_stack = uaddr_stack_brk_create(min, max);
-#endif /* !SMALL_KERNEL */
-}
-#elif __LP64__
+#if __LP64__
 void
 uvm_map_setup_md(struct vm_map *map)
 {
@@ -5442,7 +5412,7 @@ uvm_map_setup_md(struct vm_map *map)
 	map->uaddr_brk_stack = uaddr_stack_brk_create(min, max);
 #endif /* !SMALL_KERNEL */
 }
-#else	/* non-i386, 32 bit */
+#else	/* 32 bit */
 void
 uvm_map_setup_md(struct vm_map *map)
 {
