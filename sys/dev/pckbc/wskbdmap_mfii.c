@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.48 2023/01/23 09:36:40 nicm Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.49 2025/11/09 16:21:56 matthieu Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -623,22 +623,6 @@ static const keysym_t pckbd_keydesc_swapctrlcaps[] = {
     KC(58),  KS_Cmd1,		KS_Control_L,
 };
 
-static const keysym_t pckbd_keydesc_iopener[] = {
-/*  pos      command		normal		shifted */
-    KC(59),  KS_Cmd_Debugger,	KS_Escape,
-    KC(60),  KS_Cmd_Screen0,	KS_f1,
-    KC(61),  KS_Cmd_Screen1,	KS_f2,
-    KC(62),  KS_Cmd_Screen2,	KS_f3,
-    KC(63),  KS_Cmd_Screen3,	KS_f4,
-    KC(64),  KS_Cmd_Screen4,	KS_f5,
-    KC(65),  KS_Cmd_Screen5,	KS_f6,
-    KC(66),  KS_Cmd_Screen6,	KS_f7,
-    KC(67),  KS_Cmd_Screen7,	KS_f8,
-    KC(68),  KS_Cmd_Screen8,	KS_f9,
-    KC(87),  KS_Cmd_Screen9,	KS_f10,
-    KC(88),			KS_f11,
-};
-
 static const keysym_t pckbd_keydesc_ru[] = {
 /*  pos      normal		shifted		altgr			shift-altgr */
     KC(7),   KS_6,		KS_asciicircum,	KS_6,			KS_comma,
@@ -1151,7 +1135,6 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	pckbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_COLEMAK,	KB_US,	pckbd_keydesc_us_colemak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_US | KB_IOPENER,	KB_US,	pckbd_keydesc_iopener),
 	KBD_MAP(KB_UK | KB_SWAPCTRLCAPS, KB_UK,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP,	pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR,	pckbd_keydesc_swapctrlcaps),
@@ -1161,8 +1144,6 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_COLEMAK | KB_SWAPCTRLCAPS,	KB_US | KB_COLEMAK,
-		pckbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES,			KB_US,	pckbd_keydesc_es),
 	KBD_MAP(KB_BE,			KB_US,	pckbd_keydesc_be),

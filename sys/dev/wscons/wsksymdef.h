@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.42 2023/11/22 18:19:25 tobhe Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.43 2025/11/09 16:21:56 matthieu Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -748,7 +748,6 @@
 #define KB_SWAPCTRLCAPS		0x00000008 /* swap Left-Control and Caps-Lock */
 #define KB_DVORAK		0x00000010 /* Dvorak layout */
 #define KB_METAESC		0x00000020 /* generate ESC prefix on ALT-key */
-#define KB_IOPENER		0x00000040 /* f1-f12 -> ESC,f1-f11 */
 #define KB_NOENCODING		0x00000080 /* no encodings available */
 #define KB_APPLE		0x00010000 /* Apple specific layout */
 #define KB_COLEMAK		0x02000000 /* Colemak layout */
@@ -792,7 +791,6 @@
 	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }, \
 	{ KB_DVORAK,	"dvorak" }, \
 	{ KB_METAESC,	"metaesc" }, \
-	{ KB_IOPENER,	"iopener" }, \
 	{ KB_NOENCODING, "noencoding" }, \
 	{ KB_APPLE,	"apple" }, \
 	{ KB_COLEMAK,	"colemak" }
