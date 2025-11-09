@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.49 2023/11/22 18:22:53 tobhe Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.50 2025/11/09 16:22:10 matthieu Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -658,22 +658,6 @@ static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
     KC(224),	KS_Caps_Lock,
 };
 
-static const keysym_t ukbd_keydesc_iopener[] = {
-/*  pos      command		normal		shifted */
-    KC(58),	KS_Cmd_Debugger,KS_Escape,
-    KC(59),	KS_Cmd_Screen0,	KS_f1,
-    KC(60),	KS_Cmd_Screen1,	KS_f2,
-    KC(61),	KS_Cmd_Screen2,	KS_f3,
-    KC(62),	KS_Cmd_Screen3,	KS_f4,
-    KC(63),	KS_Cmd_Screen4,	KS_f5,
-    KC(64),	KS_Cmd_Screen5,	KS_f6,
-    KC(65),	KS_Cmd_Screen6,	KS_f7,
-    KC(66),	KS_Cmd_Screen7,	KS_f8,
-    KC(67),	KS_Cmd_Screen8,	KS_f9,
-    KC(68),	KS_Cmd_Screen9,	KS_f10,
-    KC(69),	KS_f11,
-};
-
 static const keysym_t ukbd_keydesc_ru[] = {
 /*  pos      normal		shifted		altgr			shift-altgr */
     KC(4),	KS_a,		KS_A,		KS_Cyrillic_ef,	KS_Cyrillic_EF,
@@ -1207,7 +1191,6 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	ukbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_COLEMAK,	KB_US,	ukbd_keydesc_us_colemak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	ukbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_US | KB_IOPENER,	KB_US,	ukbd_keydesc_iopener),
 	KBD_MAP(KB_UK | KB_SWAPCTRLCAPS, KB_UK,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS, KB_JP,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR,	ukbd_keydesc_swapctrlcaps),
@@ -1219,8 +1202,6 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
 		ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_COLEMAK | KB_SWAPCTRLCAPS,	KB_US | KB_COLEMAK,
-		ukbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES,			KB_US,	ukbd_keydesc_es),
 	KBD_MAP(KB_BE,			KB_US,	ukbd_keydesc_be),
