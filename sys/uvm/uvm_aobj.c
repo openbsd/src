@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.116 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.117 2025/11/10 10:47:50 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1024,10 +1024,14 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 * to be useful must get a non-busy page
 			 */
 			if (ptmp == NULL || (ptmp->pg_flags & PG_BUSY) != 0) {
-				if (lcv == centeridx ||
-				    (flags & PGO_ALLPAGES) != 0)
+				if (lcv == centeridx) {
 					/* need to do a wait or I/O! */
 					done = FALSE;
+				}
+				if ((flags & PGO_ALLPAGES) != 0) {
+					done = FALSE;
+					break;
+				}
 				continue;
 			}
 
