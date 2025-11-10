@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2025/07/23 07:47:23 tb Exp $
+# $OpenBSD: Makefile,v 1.6 2025/11/10 16:29:08 tb Exp $
 
 EOPENSSL =	eopenssl35
 
@@ -7,5 +7,21 @@ CFLAGS +=	-I${.CURDIR}/ -I/usr/local/include/${EOPENSSL}/
 CFLAGS +=	-DOPENSSL_SUPPRESS_DEPRECATED
 
 .PATH:		${.CURDIR}/..
+
+.if exists(/usr/local/lib/eopenssl35/libcrypto.a) && \
+    exists(/usr/local/lib/eopenssl35/libtls.a)
+
+build-check:
+	${MAKE} -C ${.CURDIR}/build
+
+sanity: build-check
+	${.OBJDIR}/build/rpki-client -f ${.CURDIR}/../mft/*.mft
+
+REGRESS_TARGETS += build-check
+REGRESS_TARGETS += sanity
+
+.endif
+
+SUBDIR += build
 
 .include <bsd.regress.mk>
