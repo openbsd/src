@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.82 2025/11/06 00:45:31 dlg Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.83 2025/11/10 06:21:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -63,7 +63,9 @@ extern int ncpusfound;
 #include <sys/mplock.h>
 struct __mp_lock kernel_lock;
 
+#ifdef __USE_MI_MUTEX
 static void mtx_init_parking(void);
+#endif /* __USE_MI_MUTEX */
 
 /*
  * Functions for manipulating the kernel_lock.  We put them here
@@ -74,7 +76,9 @@ void
 _kernel_lock_init(void)
 {
 	__mp_lock_init(&kernel_lock);
+#ifdef __USE_MI_MUTEX
 	mtx_init_parking();
+#endif /* __USE_MI_MUTEX */
 }
 
 /*
