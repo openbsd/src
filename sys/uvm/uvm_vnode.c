@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.144 2025/11/10 10:47:50 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.145 2025/11/10 10:52:57 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -146,40 +146,6 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 		return NULL;
 	}
 
-	if (vp->v_type == VBLK) {
-		/*
-		 * We could implement this as a specfs getattr call, but:
-		 *
-		 *	(1) VOP_GETATTR() would get the file system
-		 *	    vnode operation, not the specfs operation.
-		 *
-		 *	(2) All we want is the size, anyhow.
-		 */
-		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
-		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
-		if (result == 0) {
-			/* XXX should remember blocksize */
-			used_vnode_size = (u_quad_t)pi.disklab->d_secsize *
-			    (u_quad_t)DL_GETPSIZE(pi.part);
-		}
-	} else {
-		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
-		if (result == 0)
-			used_vnode_size = vattr.va_size;
-	}
-
-	if (result != 0)
-		return NULL;
-
-	/*
-	 * make sure that the newsize fits within a vaddr_t
-	 * XXX: need to revise addressing data types
-	 */
-#ifdef DEBUG
-	if (vp->v_type == VBLK)
-		printf("used_vnode_size = %llu\n", (long long)used_vnode_size);
-#endif
-
 	if (vp->v_uvm == NULL) {
 		uvn = pool_get(&uvm_vnode_pool, PR_WAITOK | PR_ZERO);
 		KERNEL_ASSERT_LOCKED();
@@ -225,6 +191,57 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 		return (&uvn->u_obj);
 	}
 
+	/*
+	 * need to call VOP_GETATTR() to get the attributes, but that could
+	 * block (due to I/O), so we want to unlock the object before calling.
+	 * however, we want to keep anyone else from playing with the object
+	 * while it is unlocked.   to do this we set UVM_VNODE_ALOCK which
+	 * prevents anyone from attaching to the vnode until we are done with
+	 * it.
+	 */
+	uvn->u_flags = UVM_VNODE_ALOCK;
+	rw_exit(uvn->u_obj.vmobjlock);
+
+	if (vp->v_type == VBLK) {
+		/*
+		 * We could implement this as a specfs getattr call, but:
+		 *
+		 *	(1) VOP_GETATTR() would get the file system
+		 *	    vnode operation, not the specfs operation.
+		 *
+		 *	(2) All we want is the size, anyhow.
+		 */
+		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
+		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
+		if (result == 0) {
+			/* XXX should remember blocksize */
+			used_vnode_size = (u_quad_t)pi.disklab->d_secsize *
+			    (u_quad_t)DL_GETPSIZE(pi.part);
+		}
+	} else {
+		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
+		if (result == 0)
+			used_vnode_size = vattr.va_size;
+	}
+
+	if (result != 0) {
+		rw_enter(uvn->u_obj.vmobjlock, RW_WRITE);
+		if (uvn->u_flags & UVM_VNODE_WANTED)
+			wakeup(uvn);
+		uvn->u_flags = 0;
+		rw_exit(uvn->u_obj.vmobjlock);
+		return NULL;
+	}
+
+	/*
+	 * make sure that the newsize fits within a vaddr_t
+	 * XXX: need to revise addressing data types
+	 */
+#ifdef DEBUG
+	if (vp->v_type == VBLK)
+		printf("used_vnode_size = %llu\n", (long long)used_vnode_size);
+#endif
+
 	/* now set up the uvn. */
 	KASSERT(uvn->u_obj.uo_refs == 0);
 	uvn->u_obj.uo_refs++;
@@ -249,7 +266,6 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 
 	if (oldflags & UVM_VNODE_WANTED)
 		wakeup(uvn);
-	rw_exit(uvn->u_obj.vmobjlock);
 
 	return &uvn->u_obj;
 }
@@ -974,14 +990,10 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 * to be useful must get a non-busy page
 			 */
 			if (ptmp == NULL || (ptmp->pg_flags & PG_BUSY) != 0) {
-				if (lcv == centeridx) {
+				if (lcv == centeridx ||
+				    (flags & PGO_ALLPAGES) != 0)
 					/* need to do a wait or I/O! */
 					done = FALSE;
-				}
-				if ((flags & PGO_ALLPAGES) != 0) {
-					done = FALSE;
-					break;
-				}
 				continue;
 			}
 
