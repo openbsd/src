@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.103 2025/07/11 20:04:20 bluhm Exp $	*/
+/*	$OpenBSD: vector.S,v 1.104 2025/11/10 12:34:52 dlg Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include "xen.h"
 #include "hyperv.h"
 #include "vmm.h"
+#include "xcall.h"
 
 /*****************************************************************************/
 
@@ -1408,3 +1409,21 @@ KIDTVEC(softclock)
 	jmp	retpoline_r13
 	CODEPATCH_END(CPTAG_RETPOLINE_R13)
 END(Xsoftclock)
+
+#if NXCALL > 0
+#ifdef MULTIPROCESSOR
+KIDTVEC(xcallintr)
+	endbr64
+	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
+	sti
+	incl	CPUVAR(IDEPTH)
+	movq	CPUVAR(SELF),%rdi
+	call	cpu_xcall_dispatch
+	movq	$0,-8(%rsp)
+	decl	CPUVAR(IDEPTH)
+	CODEPATCH_START
+	jmp	retpoline_r13
+	CODEPATCH_END(CPTAG_RETPOLINE_R13)
+END(Xxcallintr)
+#endif /* MULTIPROCESSOR */
+#endif /* NXCALL > 0 */

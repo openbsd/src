@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.39 2024/06/07 16:53:35 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.40 2025/11/10 12:34:52 dlg Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -61,6 +61,7 @@
 void x86_64_ipi_nop(struct cpu_info *);
 void x86_64_ipi_halt(struct cpu_info *);
 void x86_64_ipi_wbinvd(struct cpu_info *);
+void x86_64_ipi_xcall(struct cpu_info *);
 
 #if NVMM > 0
 void x86_64_ipi_vmclear_vmm(struct cpu_info *);
@@ -108,6 +109,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	NULL,
 #endif
 	x86_64_ipi_wbinvd,
+	x86_64_ipi_xcall,
 };
 
 void
@@ -169,3 +171,9 @@ x86_64_ipi_wbinvd(struct cpu_info *ci)
 {
 	wbinvd();
 }
+
+void
+x86_64_ipi_xcall(struct cpu_info *ci)
+{
+	x86_atomic_setbits_u64(&ci->ci_ipending, 1UL << SIR_XCALL);
+};

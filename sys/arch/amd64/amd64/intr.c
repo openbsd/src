@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.63 2025/06/11 09:57:01 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.64 2025/11/10 12:34:52 dlg Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include "lapic.h"
 #include "xen.h"
 #include "hyperv.h"
+#include "xcall.h"
 
 #if NLAPIC > 0
 #include <machine/i82489var.h>
@@ -577,7 +578,9 @@ struct intrhand fake_softclock_intrhand;
 struct intrhand fake_softnet_intrhand;
 struct intrhand fake_softtty_intrhand;
 struct intrhand fake_timer_intrhand;
+#ifdef MULTIPROCESSOR
 struct intrhand fake_ipi_intrhand;
+#endif
 #if NXEN > 0
 struct intrhand fake_xen_intrhand;
 #endif
@@ -644,7 +647,19 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_ipi_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_IPI] = isp;
-#endif
+
+#if NXCALL > 0
+	isp = malloc(sizeof(*isp), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (isp == NULL)
+		panic("can't allocate fixed interrupt source");
+	isp->is_recurse = Xxcallintr;
+	isp->is_resume = Xxcallintr;
+	fake_ipi_intrhand.ih_level = IPL_SOFTCLOCK;
+	isp->is_handlers = &fake_ipi_intrhand;
+	isp->is_pic = &local_pic;
+	ci->ci_isources[SIR_XCALL] = isp;
+#endif /* NXCALL > 0 */
+#endif /* MULTIPROCESSOR */
 #if NXEN > 0
 	isp = malloc(sizeof (struct intrsource), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (isp == NULL)

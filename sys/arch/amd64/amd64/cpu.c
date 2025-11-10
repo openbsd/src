@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.200 2025/09/22 13:19:03 hshoexer Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.201 2025/11/10 12:34:52 dlg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -69,6 +69,7 @@
 #include "vmm.h"
 #include "pctr.h"
 #include "pvbus.h"
+#include "xcall.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -642,6 +643,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if defined(MULTIPROCESSOR)
+#if NXCALL > 0
+	cpu_xcall_establish(ci);
+#endif
+
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */

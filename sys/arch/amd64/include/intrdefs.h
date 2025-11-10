@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.24 2024/05/26 13:37:31 kettenis Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.25 2025/11/10 12:34:52 dlg Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _AMD64_INTRDEFS_H
@@ -52,12 +52,13 @@
 #define LIR_TIMER	62
 
 /* Soft interrupt masks. */
-#define	SIR_CLOCK	61
-#define	SIR_NET		60
-#define	SIR_TTY		59
+#define	SIR_XCALL	61
+#define	SIR_CLOCK	60
+#define	SIR_NET		59
+#define	SIR_TTY		58
 
-#define	LIR_XEN		58
-#define	LIR_HYPERV	57
+#define	LIR_XEN		57
+#define	LIR_HYPERV	56
 
 /*
  * Maximum # of interrupt sources per CPU. 64 to fit in one word.
@@ -85,8 +86,9 @@
 #define X86_IPI_START_VMM		0x00000100
 #define X86_IPI_STOP_VMM		0x00000200
 #define X86_IPI_WBINVD			0x00000400
+#define X86_IPI_XCALL			0x00000800
 
-#define X86_NIPI			12
+#define X86_NIPI			13
 
 #define IREENT_MAGIC	0x18041969
 

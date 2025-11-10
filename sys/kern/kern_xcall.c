@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xcall.c,v 1.1 2025/07/13 05:45:21 dlg Exp $ */
+/*	$OpenBSD: kern_xcall.c,v 1.2 2025/11/10 12:34:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2025 David Gwynne <dlg@openbsd.org>
@@ -106,10 +106,10 @@ cpu_xcall_sync(struct cpu_info *ci, void (*func)(void *), void *arg,
 /*
  * This is the glue between the MD IPI code and the calling of xcalls
  */
-static void
-cpu_xcall_handler(void *arg)
+void
+cpu_xcall_dispatch(struct cpu_info *ci)
 {
-	struct xcall_cpu *xci = arg;
+	struct xcall_cpu *xci = &ci->ci_xcall;
 	struct xcall *xc;
 	size_t i;
 
@@ -130,17 +130,6 @@ cpu_xcall_establish(struct cpu_info *ci)
 
 	for (i = 0; i < nitems(xci->xci_xcalls); i++)
 		xci->xci_xcalls[i] = NULL;
-
-	xci->xci_softintr = softintr_establish(IPL_XCALL | IPL_MPSAFE,
-	    cpu_xcall_handler, xci);
-}
-
-void
-cpu_xcall_dispatch(struct cpu_info *ci)
-{
-	struct xcall_cpu *xci = &ci->ci_xcall;
-
-	softintr_schedule(xci->xci_softintr);
 }
 
 #else /* MULTIPROCESSOR */

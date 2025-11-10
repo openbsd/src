@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.36 2025/06/11 09:57:01 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.37 2025/11/10 12:34:52 dlg Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -222,7 +222,10 @@ void x86_ipi_handler(void);
 void x86_setperf_ipi(struct cpu_info *);
 
 extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
-#endif
+
+#define cpu_xcall_ipi(_ci) x86_send_ipi((_ci), X86_IPI_XCALL)
+void Xxcallintr(void);
+#endif /* MULTIPROCESSOR */
 
 #endif /* !_LOCORE */
 

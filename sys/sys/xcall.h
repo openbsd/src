@@ -1,4 +1,4 @@
-/*	$OpenBSD: xcall.h,v 1.1 2025/07/13 05:45:21 dlg Exp $ */
+/*	$OpenBSD: xcall.h,v 1.2 2025/11/10 12:34:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2025 David Gwynne <dlg@openbsd.org>
@@ -45,7 +45,7 @@
  *
  * 4. cpu_xcall_ipi has to be provided by machine/intr.h.
  *
- * 5. The MD xcall IPI handler has to call cpu_xcall_dispatch.
+ * 5. call cpu_xcall_dispatch at IPL_SOFTCLOCK on the target CPU.
  */
 
 #ifndef _SYS_XCALL_H
