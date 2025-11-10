@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.147 2025/11/10 14:54:37 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.148 2025/11/10 15:53:06 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 {
 	struct uvm_vnode *uvn;
 	struct vattr vattr;
-	int oldflags, result;
+	int result;
 	struct partinfo pi;
 	u_quad_t used_vnode_size = 0;
 
@@ -202,8 +202,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	/*
 	 * now uvn must not be in a blocked state.
 	 * first check to see if it is already active, in which case
-	 * we can bump the reference count, check to see if we need to
-	 * add it to the writeable list, and then return.
+	 * we can bump the reference count.
 	 */
 	if (uvn->u_flags & UVM_VNODE_VALID) {	/* already active? */
 
@@ -212,42 +211,31 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 			vref(vp);
 		}
 		uvn->u_obj.uo_refs++;		/* bump uvn ref! */
+	} else {
+		/* now set up the uvn. */
+		KASSERT(uvn->u_obj.uo_refs == 0);
+		uvn->u_obj.uo_refs++;
+		uvn->u_flags = UVM_VNODE_VALID|UVM_VNODE_CANPERSIST;
+		uvn->u_nio = 0;
+		uvn->u_size = used_vnode_size;
 
-		/* check for new writeable uvn */
-		if ((accessprot & PROT_WRITE) != 0 &&
-		    (uvn->u_flags & UVM_VNODE_WRITEABLE) == 0) {
-			uvn->u_flags |= UVM_VNODE_WRITEABLE;
-			KERNEL_ASSERT_LOCKED();
-			LIST_INSERT_HEAD(&uvn_wlist, uvn, u_wlist);
-		}
-
-		rw_exit(uvn->u_obj.vmobjlock);
-		return (&uvn->u_obj);
+		/*
+		 * this reference will stay as long as there is a valid
+		 * mapping of the vnode.   dropped when the reference count
+		 * goes to zero [and we either free or persist].
+		 */
+		vref(vp);
 	}
 
-	/* now set up the uvn. */
-	KASSERT(uvn->u_obj.uo_refs == 0);
-	uvn->u_obj.uo_refs++;
-	oldflags = uvn->u_flags;
-	uvn->u_flags = UVM_VNODE_VALID|UVM_VNODE_CANPERSIST;
-	uvn->u_nio = 0;
-	uvn->u_size = used_vnode_size;
-
-	/*
-	 * add a reference to the vnode.   this reference will stay as long
-	 * as there is a valid mapping of the vnode.   dropped when the
-	 * reference count goes to zero [and we either free or persist].
-	 */
-	vref(vp);
-
 	/* if write access, we need to add it to the wlist */
-	if (accessprot & PROT_WRITE) {
+	if ((accessprot & PROT_WRITE) &&
+	    !(uvn->u_flags & UVM_VNODE_WRITEABLE)) {
 		uvn->u_flags |= UVM_VNODE_WRITEABLE;	/* we are on wlist! */
 		KERNEL_ASSERT_LOCKED();
 		LIST_INSERT_HEAD(&uvn_wlist, uvn, u_wlist);
 	}
 
-	if (oldflags & UVM_VNODE_WANTED)
+	if (uvn->u_flags & UVM_VNODE_WANTED)
 		wakeup(uvn);
 	rw_exit(uvn->u_obj.vmobjlock);
 
@@ -430,9 +418,7 @@ uvm_vnp_terminate(struct vnode *vp)
 
 	/*
 	 * must be a valid uvn that is not already dying (because XLOCK
-	 * protects us from that).   the uvn can't in the ALOCK state
-	 * because it is valid, and uvn's that are in the ALOCK state haven't
-	 * been marked valid yet.
+	 * protects us from that).
 	 */
 #ifdef DEBUG
 	/*
@@ -1495,9 +1481,6 @@ uvm_vnp_sync(struct mount *mp)
 		 * If the vnode is "blocked" it means it must be dying, which
 		 * in turn means its in the process of being flushed out so
 		 * we can safely skip it.
-		 *
-		 * note that uvn must already be valid because we found it on
-		 * the wlist (this also means it can't be ALOCK'd).
 		 */
 		if ((uvn->u_flags & UVM_VNODE_BLOCKED) != 0)
 			continue;

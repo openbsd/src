@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.23 2025/11/08 17:23:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.24 2025/11/10 15:53:06 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.h,v 1.9 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ struct uvm_vnode {
  */
 #define UVM_VNODE_VALID		0x001	/* we are attached to the vnode */
 #define UVM_VNODE_CANPERSIST	0x002	/* we can persist after ref == 0 */
-#define UVM_VNODE_ALOCK		0x004	/* uvn_attach is locked out */
 #define UVM_VNODE_DYING		0x008	/* final detach/terminate in 
 					   progress */
 #define UVM_VNODE_RELKILL	0x010	/* uvn should be killed by releasepg
@@ -92,7 +91,7 @@ struct uvm_vnode {
  * UVM_VNODE_BLOCKED: any condition that should new processes from
  * touching the vnode [set WANTED and sleep to wait for it to clear]
  */
-#define UVM_VNODE_BLOCKED (UVM_VNODE_ALOCK|UVM_VNODE_DYING|UVM_VNODE_RELKILL)
+#define UVM_VNODE_BLOCKED (UVM_VNODE_DYING|UVM_VNODE_RELKILL)
 
 struct uvm_object	*uvn_attach(struct vnode *, vm_prot_t);
 void			uvm_vnp_terminate(struct vnode *);
