@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.185 2025/11/08 17:23:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.186 2025/11/10 10:35:21 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -125,15 +125,6 @@ typedef int		vm_prot_t;
 /* magic offset value */
 #define UVM_UNKNOWN_OFFSET ((voff_t) -1)
 				/* offset not known(obj) or don't care(!obj) */
-
-/*
- * the following defines are for uvm_km_kmemalloc's flags
- */
-#define UVM_KMF_NOWAIT	0x1			/* matches M_NOWAIT */
-#define UVM_KMF_VALLOC	0x2			/* allocate VA only */
-#define UVM_KMF_CANFAIL	0x4			/* caller handles failure */
-#define UVM_KMF_ZERO	0x08			/* zero pages */
-#define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
 
 /*
  * flags for uvm_pagealloc()
@@ -286,12 +277,8 @@ int			uvm_io(vm_map_t, struct uio *, int);
 
 #define	UVM_IO_FIXPROT	0x01
 
-void			uvm_km_free(vm_map_t, vaddr_t, vsize_t);
-vaddr_t			uvm_km_kmemalloc_pla(struct vm_map *,
-			    struct uvm_object *, vsize_t, vsize_t, int,
-			    paddr_t, paddr_t, paddr_t, paddr_t, int);
-#define uvm_km_kmemalloc(map, obj, sz, flags)				\
-	uvm_km_kmemalloc_pla(map, obj, sz, 0, flags, 0, (paddr_t)-1, 0, 0, 0)
+void			uvm_km_free(vaddr_t, vsize_t);
+vaddr_t			uvm_km_kmemalloc_pla(vsize_t, int, paddr_t, paddr_t);
 struct vm_map		*uvm_km_suballoc(vm_map_t, vaddr_t *, vaddr_t *,
 			    vsize_t, int, boolean_t, vm_map_t);
 /*

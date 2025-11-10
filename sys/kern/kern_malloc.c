@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.155 2025/06/12 20:37:58 deraadt Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.156 2025/11/10 10:35:21 mpi Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -217,12 +217,9 @@ malloc(size_t size, int type, int flags)
 		mtx_leave(&malloc_mtx);
 		npg = atop(round_page(allocsize));
 		s = splvm();
-		va = (caddr_t)uvm_km_kmemalloc_pla(kmem_map, NULL,
-		    (vsize_t)ptoa(npg), 0,
-		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
-		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0),
-		    no_constraint.ucr_low, no_constraint.ucr_high,
-		    0, 0, 0);
+		va = (caddr_t)uvm_km_kmemalloc_pla((vsize_t)ptoa(npg),
+		    flags & (M_NOWAIT|M_CANFAIL),
+		    no_constraint.ucr_low, no_constraint.ucr_high);
 		splx(s);
 		if (va == NULL) {
 			/*
@@ -428,7 +425,7 @@ free(void *addr, int type, size_t freedsize)
 		kup->ku_pagecnt = 0;
 		mtx_leave(&malloc_mtx);
 		s = splvm();
-		uvm_km_free(kmem_map, (vaddr_t)addr, ptoa(pagecnt));
+		uvm_km_free((vaddr_t)addr, ptoa(pagecnt));
 		splx(s);
 #ifdef KMEMSTATS
 		mtx_enter(&malloc_mtx);
