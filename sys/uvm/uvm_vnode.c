@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.145 2025/11/10 10:52:57 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.146 2025/11/10 10:53:53 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -990,10 +990,14 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 * to be useful must get a non-busy page
 			 */
 			if (ptmp == NULL || (ptmp->pg_flags & PG_BUSY) != 0) {
-				if (lcv == centeridx ||
-				    (flags & PGO_ALLPAGES) != 0)
+				if (lcv == centeridx) {
 					/* need to do a wait or I/O! */
 					done = FALSE;
+				}
+				if ((flags & PGO_ALLPAGES) != 0) {
+					done = FALSE;
+					break;
+				}
 				continue;
 			}
 
