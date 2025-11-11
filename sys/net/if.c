@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.745 2025/11/11 07:56:50 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.746 2025/11/11 18:36:26 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2734,7 +2734,7 @@ ifconf(caddr_t data)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
-	int space = ifc->ifc_len, error = 0;
+	int space = ifc->ifc_len, error;
 
 	/* If ifc->ifc_len is 0, fill it in with the needed size and return. */
 	if (space == 0) {
@@ -2768,42 +2768,53 @@ ifconf(caddr_t data)
 			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
 			    sizeof(ifr));
 			if (error)
-				break;
-			space -= sizeof (ifr), ifrp++;
+				return (error);
+
+			space -= sizeof(ifr);
+			ifrp++;
 		} else
 			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				struct sockaddr *sa = ifa->ifa_addr;
 
 				if (space < sizeof(ifr))
-					break;
+					goto out;
 				if (sa->sa_len <= sizeof(*sa)) {
 					memset(&ifr.ifr_addr, 0,
 					    sizeof(ifr.ifr_addr));
 					memcpy(&ifr.ifr_addr, sa, sa->sa_len);
 					error = copyout((caddr_t)&ifr,
 					    (caddr_t)ifrp, sizeof (ifr));
+					if (error)
+						return (error);
+
+					space -= sizeof(ifr);
 					ifrp++;
 				} else {
-					space -= sa->sa_len - sizeof(*sa);
-					if (space < sizeof (ifr))
-						break;
+					int total = sizeof(ifr.ifr_name) +
+					    sa->sa_len;
+
+					if (space < total)
+						goto out;
 					error = copyout((caddr_t)&ifr,
 					    (caddr_t)ifrp,
 					    sizeof(ifr.ifr_name));
-					if (error == 0)
-						error = copyout((caddr_t)sa,
-						    (caddr_t)&ifrp->ifr_addr,
-						    sa->sa_len);
-					ifrp = (struct ifreq *)(sa->sa_len +
-					    (caddr_t)&ifrp->ifr_addr);
+					if (error)
+						return (error);
+					error = copyout((caddr_t)sa,
+					    (caddr_t)&ifrp->ifr_addr,
+					    sa->sa_len);
+					if (error)
+						return (error);
+
+					space -= total;
+					ifrp = (struct ifreq *)(
+					    (caddr_t)ifrp + total);
 				}
-				if (error)
-					break;
-				space -= sizeof (ifr);
 			}
 	}
+out:
 	ifc->ifc_len -= space;
-	return (error);
+	return (0);
 }
 
 void
