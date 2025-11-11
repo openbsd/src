@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.31 2025/10/21 11:49:01 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.32 2025/11/11 11:08:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -41,9 +41,8 @@ struct sio_sun_hdl {
 	int fd;
 	int prime;
 	unsigned int ibpf, obpf;	/* bytes per frame */
-	unsigned int ibytes, obytes;	/* bytes the hw transferred */
-	unsigned int ierr, oerr;	/* frames the hw dropped */
-	int idelta, odelta;		/* position reported to client */
+	unsigned int ibytes, obytes;	/* position reported to client */
+	int idelta, odelta;		/* position not reported yet */
 };
 
 static void sio_sun_close(struct sio_hdl *);
@@ -370,8 +369,6 @@ sio_sun_start(struct sio_hdl *sh)
 	hdl->ibpf = hdl->sio.par.rchan * hdl->sio.par.bps;
 	hdl->ibytes = 0;
 	hdl->obytes = 0;
-	hdl->ierr = 0;
-	hdl->oerr = 0;
 	hdl->idelta = 0;
 	hdl->odelta = 0;
 
@@ -527,6 +524,110 @@ sio_sun_write(struct sio_hdl *sh, const void *buf, size_t len)
 	return n;
 }
 
+/*
+ * Restart the device restoring its state (i.e. hdl->cpos, hdl->wused,
+ * hdl->rused), making the restart transparent to upper layers.
+ */
+static int
+sio_sun_xrun(struct sio_sun_hdl *hdl)
+{
+	int cmove;
+
+#ifdef DEBUG
+	if (_sndio_debug >= 1)
+		_sio_printpos(&hdl->sio);
+#endif
+	/*
+	 * The device restarts with empty buffers and block aligned.
+	 */
+	if (!sio_sun_flush(&hdl->sio))
+		return 0;
+	if (!sio_sun_start(&hdl->sio))
+		return 0;
+
+	DPRINTFN(1, "%s: rused = %d, wused = %d\n", __func__,
+	    hdl->sio.rused, hdl->sio.wused);
+
+	/*
+	 * To restore the device state, we play silence, drop recorded data,
+	 * and advance the clock. We suppose that it takes N blocks to restore
+	 * the state (where N is any integer).
+	 *
+	 * After N blocks of operation cpos (the clock) must have advanced to
+	 * the next block boundary (the stream must remain block-aligned):
+	 *
+	 *	cpos' = cpos + round - cpos % round
+	 *
+	 * on the other hand, cpos advances by N * par->round frames plus
+	 * hdl->delta (the advance we report immediately):
+	 *
+	 *	cpos' = cpos + delta + N * round
+	 *
+	 * by combining above expressions, we obtain the advance to report:
+	 *
+	 *	delta = - cpos % round - (N - 1) * round
+	 *
+	 * For playback, after N blocks, the buffer usage has decreased by
+	 * the elapsed time:
+	 *
+	 *	wused' = wused - (cpos' - cpos)
+	 *
+	 * on the other hand it is equal to the amount of silence we have
+	 * inserted minus the N blocks that the device has consumed:
+	 *
+	 *	wused' = wsil - N * par->round
+	 *
+	 * by combining both expressions, we obtain the amount of silence
+	 * we've to insert:
+	 *
+	 *      wsil = wused + (N - 1) * par->round + cpos % round
+	 *
+	 * Similarly, for recording the buffer usage has increased by
+	 * the elapsed time:
+	 *
+	 *	rused' = rused + (cpos' - cpos)
+	 *
+	 * it is also equal to the N blocks the device has produced minus
+	 * the amount of frames we drop:
+	 *
+	 *	rused' = N * round - rdrop
+	 *
+	 * by combining both expressions, we obtain the amount of frames
+	 * to drop:
+	 *
+	 *	rdrop = cpos % round + (N - 1) * round - rused;
+	 *
+	 * We're free to choose N. The smaller N (ideally 1) the sooner
+	 * performance will resume. But wsil and rdrop may not be negative.
+	 *
+	 */
+
+	cmove = hdl->sio.cpos % hdl->sio.par.round;
+
+	if (hdl->sio.mode & SIO_REC) {
+		while (1) {
+			hdl->sio.rdrop = cmove * hdl->ibpf - hdl->sio.rused;
+			if (hdl->sio.rdrop >= 0)
+				break;
+			/*
+			 * rdrop can't be negative, try a larger 'N'
+			 */
+			cmove += hdl->sio.par.round;
+		}
+		hdl->idelta = -cmove;
+	}
+
+	if (hdl->sio.mode & SIO_PLAY) {
+		hdl->sio.wsil = hdl->sio.wused + cmove * hdl->obpf;
+		hdl->odelta = -cmove;
+	}
+
+	DPRINTFN(1, "%s: cmove = %d, wsil = %d, rdrop = %d\n", __func__,
+	    cmove, hdl->sio.wsil, hdl->sio.rdrop);
+
+	return 1;
+}
+
 static int
 sio_sun_nfds(struct sio_hdl *hdl)
 {
@@ -548,8 +649,8 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 {
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
 	struct audio_pos ap;
-	int dierr = 0, doerr = 0, offset, delta;
 	int revents = pfd->revents;
+	int delta;
 
 	if ((pfd->revents & POLLHUP) ||
 	    (pfd->revents & (POLLIN | POLLOUT)) == 0)
@@ -559,56 +660,39 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		hdl->sio.eof = 1;
 		return POLLHUP;
 	}
-	if (hdl->sio.mode & SIO_PLAY) {
-		delta = (ap.play_pos - hdl->obytes) / hdl->obpf;
-		doerr = (ap.play_xrun - hdl->oerr) / hdl->obpf;
-		hdl->obytes = ap.play_pos;
-		hdl->oerr = ap.play_xrun;
-		hdl->odelta += delta;
-		if (!(hdl->sio.mode & SIO_REC)) {
-			hdl->idelta += delta;
-			dierr = doerr;
+	if (ap.play_xrun > 0 || ap.rec_xrun > 0) {
+		if (!sio_sun_xrun(hdl))
+			return POLLHUP;
+	} else {
+		if (hdl->sio.mode & SIO_PLAY) {
+			hdl->odelta += (ap.play_pos - hdl->obytes) / hdl->obpf;
+			hdl->obytes = ap.play_pos;
 		}
-		if (doerr > 0)
-			DPRINTFN(2, "play xrun %d\n", doerr);
-	}
-	if (hdl->sio.mode & SIO_REC) {
-		delta = (ap.rec_pos - hdl->ibytes) / hdl->ibpf;
-		dierr = (ap.rec_xrun - hdl->ierr) / hdl->ibpf;
-		hdl->ibytes = ap.rec_pos;
-		hdl->ierr = ap.rec_xrun;
-		hdl->idelta += delta;
-		if (!(hdl->sio.mode & SIO_PLAY)) {
-			hdl->odelta += delta;
-			doerr = dierr;
+		if (hdl->sio.mode & SIO_REC) {
+			hdl->idelta += (ap.rec_pos - hdl->ibytes) / hdl->ibpf;
+			hdl->ibytes = ap.rec_pos;
 		}
-		if (dierr > 0)
-			DPRINTFN(2, "rec xrun %d\n", dierr);
 	}
 
-	/*
-	 * GETPOS reports positions including xruns,
-	 * so we have to subtract to get the real position
-	 */
-	hdl->idelta -= dierr;
-	hdl->odelta -= doerr;
-
-	offset = doerr - dierr;
-	if (offset > 0) {
-		hdl->sio.rdrop += offset * hdl->ibpf;
-		hdl->idelta -= offset;
-		DPRINTFN(2, "will drop %d and pause %d\n", offset, doerr);
-	} else if (offset < 0) {
-		hdl->sio.wsil += -offset * hdl->obpf;
-		hdl->odelta -= -offset;
-		DPRINTFN(2, "will insert %d and pause %d\n", -offset, dierr);
+	switch (hdl->sio.mode & (SIO_PLAY | SIO_REC)) {
+	case SIO_PLAY:
+		delta = hdl->odelta;
+		break;
+	case SIO_REC:
+		delta = hdl->idelta;
+		break;
+	default:
+		/*
+		 * Use the max of two directions
+		 */
+		delta = hdl->odelta > hdl->idelta ? hdl->odelta : hdl->idelta;
 	}
-
-	delta = (hdl->idelta > hdl->odelta) ? hdl->idelta : hdl->odelta;
 	if (delta > 0) {
 		_sio_onmove_cb(&hdl->sio, delta);
-		hdl->idelta -= delta;
-		hdl->odelta -= delta;
+		if (hdl->sio.mode & SIO_PLAY)
+			hdl->odelta -= delta;
+		if (hdl->sio.mode & SIO_REC)
+			hdl->idelta -= delta;
 	}
 	return revents;
 }
