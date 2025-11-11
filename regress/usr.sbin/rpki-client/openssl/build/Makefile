@@ -1,7 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2025/11/10 16:27:53 tb Exp $
+# $OpenBSD: Makefile,v 1.2 2025/11/11 09:15:53 anton Exp $
 
 EOPENSSL =	eopenssl35
 EOPENSSL_PATH = /usr/local/lib/${EOPENSSL35}/
+
+regress: all
 
 .if (exists(/usr/local/lib/eopenssl35/libcrypto.a) && \
      exists(/usr/local/lib/eopenssl35/libtls.a)) || \
