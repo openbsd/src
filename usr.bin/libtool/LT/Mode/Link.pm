@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.38 2023/07/08 08:15:32 espie Exp $
+# $OpenBSD: Link.pm,v 1.39 2025/11/11 22:13:50 gkoehler Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -150,7 +150,7 @@ sub run($class, $ltprog, $gp, $ltconfig)
 
 	# XXX options ignored: bindir, dlopen, dlpreopen, no-fast-install,
 	#	no-install, no-undefined, precious-files-regex,
-	#	shrext, thread-safe, prefer-pic, prefer-non-pic,
+	#	thread-safe, prefer-pic, prefer-non-pic,
 	#	static-libtool-libs
 
 	my @RPopts = $gp->rpath;	 # -rpath options
@@ -245,8 +245,9 @@ sub run($class, $ltprog, $gp, $ltconfig)
 			$outfile =~ s/\.a$/.la/;
 		}
 		(my $libname = $ofile) =~ s/\.l?a$//;	# remove extension
+		my $shrext = $gp->shrext // '.so';
 		my $staticlib = $libname.'.a';
-		my $sharedlib = $libname.'.so';
+		my $sharedlib = $libname.$shrext;
 		my $sharedlib_symlink;
 
 		if ($gp->static || $gp->all_static) {
@@ -277,7 +278,7 @@ sub run($class, $ltprog, $gp, $ltconfig)
 		}
 		if (defined $gp->release) {
 			$sharedlib_symlink = $sharedlib;
-			$sharedlib = $libname.'-'.$gp->release.'.so';
+			$sharedlib = $libname.'-'.$gp->release.$shrext;
 		}
 		if ($gp->avoid_version ||
 			(defined $gp->release && !$gp->version_info)) {
