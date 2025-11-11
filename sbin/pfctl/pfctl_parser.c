@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.352 2024/11/12 04:14:51 dlg Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.353 2025/11/11 04:06:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -717,6 +717,38 @@ print_src_node(struct pf_src_node *sn, int opts)
 }
 
 void
+print_statelim(const struct pfioc_statelim *ioc)
+{
+	printf("state limiter %s id %u limit %u",
+	    ioc->name, ioc->id, ioc->limit);
+	if (ioc->rate.limit != 0)
+		printf(" rate %u/%u", ioc->rate.limit, ioc->rate.seconds);
+
+	printf("\n");
+}
+
+void
+print_sourcelim(const struct pfioc_sourcelim *ioc)
+{
+	printf("source limiter %s id %u limit %u states %u",
+	    ioc->name, ioc->id, ioc->entries, ioc->limit);
+	if (ioc->rate.limit != 0)
+		printf(" rate %u/%u", ioc->rate.limit, ioc->rate.seconds);
+	if (ioc->overload_tblname[0] != '\0') {
+		printf(" table <%s> above %u",
+		    ioc->overload_tblname, ioc->overload_hwm);
+		if (ioc->overload_lwm)
+			printf(" below %u", ioc->overload_lwm); 
+	}
+	if (ioc->inet_prefix < 32)
+		printf(" inet mask %u", ioc->inet_prefix);
+	if (ioc->inet6_prefix < 128)
+		printf(" inet6 mask %u", ioc->inet6_prefix);
+
+	printf("\n");
+}
+
+void
 print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 {
 	static const char *actiontypes[] = { "pass", "block", "scrub",
@@ -967,6 +999,28 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 			}
 		}
 		printf(" probability %s%%", buf);
+	}
+	if (r->statelim != PF_STATELIM_ID_NONE) {
+#if 0 /* XXX need pf to find statelims */
+		struct pfctl_statelim *stlim =
+		    pfctl_get_statelim_id(pf, r->statelim);
+
+		if (stlim != NULL)
+			printf(" state limiter %s", stlim->ioc.name);
+		else
+#endif
+			printf(" state limiter id %u", r->statelim);
+	}
+	if (r->sourcelim != PF_SOURCELIM_ID_NONE) {
+#if 0 /* XXX need pf to find sourcelims */
+		struct pfctl_sourcelim *srlim =
+		    pfctl_get_sourcelim_id(pf, r->sourcelim);
+
+		if (srlim != NULL)
+			printf(" source limiter %s", srlim->ioc.name);
+		else
+#endif
+			printf(" source limiter id %u", r->sourcelim);
 	}
 	if (ropts) {
 		printf(" (");

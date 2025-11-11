@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.398 2025/10/27 09:54:55 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.399 2025/11/11 04:06:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -35,6 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/tree.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -53,10 +54,13 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <libgen.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
+
+struct pfctl_opt_id;
 
 void	 usage(void);
 int	 pfctl_enable(int, int);
@@ -74,6 +78,7 @@ void	 pfctl_net_kill_states(int, const char *, int, int);
 void	 pfctl_label_kill_states(int, const char *, int, int);
 void	 pfctl_id_kill_states(int, int);
 void	 pfctl_key_kill_states(int, const char *, int, int);
+void	 pfctl_kill_source(int, const char *, const char *, int);
 int	 pfctl_parse_host(char *, struct pf_rule_addr *);
 void	 pfctl_init_options(struct pfctl *);
 int	 pfctl_load_options(struct pfctl *);
@@ -86,6 +91,8 @@ int	 pfctl_load_reassembly(struct pfctl *, u_int32_t);
 int	 pfctl_load_syncookies(struct pfctl *, u_int8_t);
 int	 pfctl_set_synflwats(struct pfctl *, u_int32_t, u_int32_t);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
+int	 pfctl_show_statelims(int, enum pfctl_show);
+int	 pfctl_show_sourcelims(int, enum pfctl_show, int, const char *);
 int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int, int,
 	    long);
 int	 pfctl_show_src_nodes(int, int);
@@ -103,9 +110,14 @@ void	 pfctl_load_queue(struct pfctl *, u_int32_t, struct pfctl_qsitem *);
 int	 pfctl_load_queues(struct pfctl *);
 u_int	 pfctl_leafqueue_check(char *);
 u_int	 pfctl_check_qassignments(struct pf_ruleset *);
+void	 pfctl_load_statelims(struct pfctl *);
+void	 pfctl_load_statelim(struct pfctl *, struct pfctl_statelim *);
+void	 pfctl_load_sourcelims(struct pfctl *);
+void	 pfctl_load_sourcelim(struct pfctl *, struct pfctl_sourcelim *);
 int	 pfctl_load_ruleset(struct pfctl *, char *, struct pf_ruleset *, int);
 int	 pfctl_load_rule(struct pfctl *, char *, struct pf_rule *, int);
 const char	*pfctl_lookup_option(char *, const char **);
+int	 pfctl_lookup_id(const char *, const struct pfctl_opt_id *);
 void	pfctl_state_store(int, const char *);
 void	pfctl_state_load(int, const char *);
 void	pfctl_reset(int, int);
@@ -122,9 +134,37 @@ int	pfctl_call_cleartables(int, int, struct pfr_anchoritem *);
 int	pfctl_call_clearanchors(int, int, struct pfr_anchoritem *);
 int	pfctl_call_showtables(int, int, struct pfr_anchoritem *);
 
+RBT_PROTOTYPE(pfctl_statelim_ids, pfctl_statelim, entry,
+    pfctl_statelim_id_cmp);
+RBT_PROTOTYPE(pfctl_statelim_nms, pfctl_statelim, entry,
+    pfctl_statelim_nm_cmp);
+RBT_PROTOTYPE(pfctl_sourcelim_ids, pfctl_sourcelim, entry,
+    pfctl_sourcelim_id_cmp);
+RBT_PROTOTYPE(pfctl_sourcelim_nms, pfctl_sourcelim, entry,
+    pfctl_sourcelim_nm_cmp);
+
+enum showopt_id {
+	SHOWOPT_NONE = 0,
+	SHOWOPT_QUEUE,
+	SHOWOPT_RULES,
+	SHOWOPT_ANCHORS,
+	SHOWOPT_SOURCES,
+	SHOWOPT_STATES,
+	SHOWOPT_INFO,
+	SHOWOPT_IFACES,
+	SHOWOPT_LABELS,
+	SHOWOPT_TIMEOUTS,
+	SHOWOPT_MEMORY,
+	SHOWOPT_TABLES,
+	SHOWOPT_OSFP,
+	SHOWOPT_STATELIMS,
+	SHOWOPT_SOURCELIMS,
+	SHOWOPT_ALL,
+};
+
 const char	*clearopt;
 char		*rulesopt;
-const char	*showopt;
+enum showopt_id	 showopt;
 const char	*debugopt;
 char		*anchoropt;
 const char	*optiopt = NULL;
@@ -229,10 +269,29 @@ static const char *clearopt_list[] = {
 	"all", NULL
 };
 
-static const char *showopt_list[] = {
-	"queue", "rules", "Anchors", "Sources", "states", "info",
-	"Interfaces", "labels", "timeouts", "memory", "Tables", "osfp",
-	"all", NULL
+struct pfctl_opt_id {
+	const char	*name;
+	int		 id;
+};
+
+static const struct pfctl_opt_id showopt_list[] = {
+	{ "queue",		SHOWOPT_QUEUE },
+	{ "rules",		SHOWOPT_RULES },
+	{ "Anchors",		SHOWOPT_ANCHORS },
+	{ "Sources",		SHOWOPT_SOURCES },
+	{ "states",		SHOWOPT_STATES },
+	{ "info",		SHOWOPT_INFO },
+	{ "Interfaces",		SHOWOPT_IFACES },
+	{ "labels",		SHOWOPT_LABELS },
+	{ "timeouts",		SHOWOPT_TIMEOUTS },
+	{ "memory",		SHOWOPT_MEMORY },
+	{ "Tables",		SHOWOPT_TABLES },
+	{ "osfp",		SHOWOPT_OSFP },
+	{ "Stlimiters",		SHOWOPT_STATELIMS },
+	{ "Srclimiters",	SHOWOPT_SOURCELIMS },
+	{ "all",		SHOWOPT_ALL },
+
+	{ NULL,			SHOWOPT_NONE },
 };
 
 static const char *tblcmdopt_list[] = {
@@ -838,6 +897,277 @@ pfctl_print_title(char *title)
 }
 
 int
+pfctl_show_statelims(int dev, enum pfctl_show format)
+{
+	struct pfioc_statelim stlim;
+	uint32_t id = PF_STATELIM_ID_MIN;
+
+	if (format == PFCTL_SHOW_LABELS) {
+		printf("%3s %8s/%-8s %5s/%-5s %8s %8s %8s\n", "ID",
+		    "USE", "LIMIT", "RATE", "SECS",
+		    "ADMIT", "HARDLIM", "RATELIM");
+	}
+
+	for (;;) {
+		memset(&stlim, 0, sizeof(stlim));
+		stlim.id = id;
+
+		if (ioctl(dev, DIOCGETNSTATELIM, &stlim) == -1) {
+			if (errno == ENOENT) {
+				/* we're done */
+				return (0);
+			}
+			warn("DIOCGETNSTATELIM %u", stlim.id);
+			return (-1);
+		}
+
+		switch (format) {
+		case PFCTL_SHOW_RULES:
+			print_statelim(&stlim);
+			break;
+		case PFCTL_SHOW_LABELS:
+			printf("%3u %8u/%-8u ", stlim.id,
+			    stlim.inuse, stlim.limit);
+			if (stlim.rate.limit != 0) {
+				printf("%5u/%-5u ",
+				    stlim.rate.limit, stlim.rate.seconds);
+			} else
+				printf("%5s/%-5s ", "nil", "nil");
+			printf("%8llu %8llu %8llu\n",
+			    stlim.admitted, stlim.hardlimited, stlim.ratelimited);
+			break;
+		default:
+			errx(1, "%s: unexpected format %d", __func__, format);
+			/* NOTREACHED */
+		}
+
+		id = stlim.id + 1;
+	}
+}
+
+static inline int
+pf_addr_inc(struct pf_addr *addr)
+{
+	int i;
+	uint32_t val, inc;
+
+	for (i = 3; i >= 0; i--) {
+		val = ntohl(addr->addr32[i]);
+		inc = val + 1;
+		addr->addr32[i] = htonl(inc);
+		if (inc > val)
+			return (0);
+	}
+
+	return (1);
+}
+
+static int
+pfctl_show_sources(int dev, const struct pfioc_sourcelim *srlim,
+    enum pfctl_show format, int opts)
+{
+	struct pfioc_source sr = { .id = srlim->id };
+	struct pfioc_source_entry *entries, *e;
+	unsigned int nentries;
+	size_t len, used;
+
+	if (format != PFCTL_SHOW_LABELS)
+		errx(1, "%s format is not PFCTL_SHOW_LABELS", __func__);
+
+	nentries = srlim->nentries;
+	if (nentries == 0)
+		return (0);
+	if (nentries > 128) /* arbitrary */
+		nentries = 128;
+
+	entries = reallocarray(NULL, nentries, sizeof(*entries));
+	if (entries == NULL)
+		err(1, "alloc %u source limiter entries", nentries);
+
+	len = nentries * sizeof(*entries);
+
+	e = entries;
+
+	/* start from af 0 address 0 */
+	memset(e, 0, sizeof(*e));
+
+	sr.entry_size = sizeof(*e);
+	sr.key = e;
+
+	for (;;) {
+		sr.entries = entries;
+		sr.entrieslen = len;
+
+		if (ioctl(dev, DIOCGETNSOURCE, &sr) == -1) {
+			switch (errno) {
+			case ESRCH: /* can't find the sourcelim */
+			case ENOENT: /* no more sources */
+				return (0); /* we're done */
+			}
+			warn("DIOCGETNSOURCE %u", sr.id);
+			return (-1);
+		}
+
+		used = 0;
+		if (sr.entrieslen > len)
+			errx(1, "DIOCGETNSOURCE used too much buffer");
+
+		e = entries;
+		for (;;) {
+			if (used > sr.entrieslen)
+				errx(1, "DIOCGETNSOURCE weird entrieslen");
+
+			print_addr_str(e->af, &e->addr);
+			switch (e->af) {
+			case AF_INET:
+				printf("/%u ", sr.inet_prefix);
+				break;
+			case AF_INET6:
+				printf("/%u ", sr.inet6_prefix);
+				break;
+			default:
+				printf("/af? ");
+				break;
+			}
+			printf("rdomain %u ", e->rdomain);
+
+			printf("inuse %u/%u ", e->inuse, sr.limit);
+			printf("admit %llu hardlim %llu ratelim %llu\n",
+			    e->admitted, e->hardlimited, e->ratelimited);
+
+			used += sizeof(*e);
+			if (used == sr.entrieslen)
+				break;
+
+			e++;
+		}
+
+		/* reuse the last entry as the next key */
+		e->af += pf_addr_inc(&e->addr);
+		sr.key = e;
+	}
+
+	return (0);
+}
+
+int
+pfctl_show_sourcelims(int dev, enum pfctl_show format, int opts,
+    const char *idopt)
+{
+	struct pfioc_sourcelim srlim;
+	uint32_t id = PF_SOURCELIM_ID_MIN;
+	unsigned long cmd = DIOCGETNSOURCELIM;
+
+	if (idopt != NULL) {
+		const char *errstr;
+
+		id = strtonum(idopt, PF_SOURCELIM_ID_MIN, PF_SOURCELIM_ID_MAX,
+		    &errstr);
+		if (errstr != NULL)
+			errx(1, "source limiter id: %s", errstr);
+
+		cmd = DIOCGETSOURCELIM;
+	}
+
+	if (format == PFCTL_SHOW_LABELS) {
+		printf("%3s %8s/%-8s %5s %5s/%-5s %8s %8s %8s %8s\n", "ID",
+		    "USE", "ADDRS", "LIMIT", "RATE", "SECS",
+		    "ADMIT", "ADDRLIM", "HARDLIM", "RATELIM");
+	}
+
+	for (;;) {
+		memset(&srlim, 0, sizeof(srlim));
+		srlim.id = id;
+
+		if (ioctl(dev, cmd, &srlim) == -1) {
+			if (errno == ESRCH) {
+				/* we're done */
+				return (0);
+			}
+			warn("DIOCGETNSOURCELIM %u", srlim.id);
+			return (-1);
+		}
+
+		switch (format) {
+		case PFCTL_SHOW_RULES:
+			print_sourcelim(&srlim);
+			break;
+
+		case PFCTL_SHOW_LABELS:
+			printf("%3u %8u/%-8u %5u ", srlim.id,
+			    srlim.nentries, srlim.entries, srlim.limit);
+			if (srlim.rate.limit != 0) {
+				printf("%5u/%-5u ",
+				    srlim.rate.limit, srlim.rate.seconds);
+			} else
+				printf("%5s/%-5s ", "nil", "nil");
+			printf("%8llu %8llu %8llu %8llu\n",
+			    srlim.admitted, srlim.addrlimited,
+			    srlim.hardlimited, srlim.ratelimited);
+
+			if (opts & PF_OPT_VERBOSE)
+				if (pfctl_show_sources(dev, &srlim,
+				    format, opts) != 0)
+					return (-1);
+			break;
+
+		default:
+			errx(1, "%s: unexpected format %d", __func__, format);
+			/* NOTREACHED */
+		}
+
+		id = srlim.id + 1;
+	}
+
+	return (0);
+}
+
+void
+pfctl_kill_source(int dev, const char *idopt, const char *source, int opts)
+{
+	struct pfioc_source_kill ioc;
+	unsigned int id;
+	const char *errstr;
+	struct addrinfo hints, *res;
+	int error;
+
+	if (idopt == NULL)
+		errx(1, "source limiter id unspecified");
+	if (source == NULL)
+		errx(1, "source limiter address unspecified");
+
+	id = strtonum(idopt, PF_SOURCELIM_ID_MIN, PF_SOURCELIM_ID_MAX, &errstr);
+	if (errstr != NULL)
+		errx(1, "source limiter id: %s", errstr);
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;	/* dummy */
+	hints.ai_flags = AI_NUMERICHOST;
+
+	error = getaddrinfo(source, NULL, &hints, &res);
+	if (error != 0)
+		errx(1, "source limiter address: %s", gai_strerror(error));
+
+	ioc.id = id;
+	ioc.af = res->ai_family;
+	copy_satopfaddr(&ioc.addr, res->ai_addr);
+	ioc.rmstates = 0;
+
+	freeaddrinfo(res);
+
+	if (ioctl(dev, DIOCCLRSOURCE, &ioc) == -1) {
+		switch (errno) {
+		case ESRCH:
+			errx(1, "source limiter %u not found", id);
+		case ENOENT:
+			errx(1, "source limiter %u: %s not found", id, source);
+		default:
+			err(1, "kill source limiter %u entry %s", id, source);
+		}
+	}
+}
+
+int
 pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
     char *anchorname, int depth, int wildcard, long shownr)
 {
@@ -849,6 +1179,15 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 	if (depth > PF_ANCHOR_STACK_MAX) {
 		warnx("%s: max stack depth exceeded for %s", __func__, path);
 		return (-1);
+	}
+
+	if (anchorname[0] == '\0') {
+		ret = pfctl_show_statelims(dev, format);
+		if (ret != 0)
+			goto error;
+		ret = pfctl_show_sourcelims(dev, format, opts, NULL);
+		if (ret != 0)
+			goto error;
 	}
 
 	/*
@@ -1459,6 +1798,70 @@ pfctl_check_qassignments(struct pf_ruleset *rs)
 	return (errs);
 }
 
+void
+pfctl_load_statelim(struct pfctl *pf, struct pfctl_statelim *stlim)
+{
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_statelim(&stlim->ioc);
+
+	if (pf->opts & PF_OPT_NOACTION)
+		return;
+
+	if (ioctl(pf->dev, DIOCADDSTATELIM, &stlim->ioc) == -1) {
+		err(1, "DIOCADDSTATELIM %s id %u",
+		    stlim->ioc.name, stlim->ioc.id);
+	}
+}
+
+void
+pfctl_load_statelims(struct pfctl *pf)
+{
+	struct pfctl_statelim	*stlim;
+	u_int32_t		 ticket = 0;
+
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		ticket = pfctl_get_ticket(pf->trans, PF_TRANS_RULESET, "");
+
+	RBT_FOREACH(stlim, pfctl_statelim_ids, &pf->statelim_ids) {
+		stlim->ioc.ticket = ticket;
+		pfctl_load_statelim(pf, stlim);
+	}
+
+	/* Don't free the statelims because we're about to exit anyway. */
+}
+
+void
+pfctl_load_sourcelim(struct pfctl *pf, struct pfctl_sourcelim *srlim)
+{
+	if (pf->opts & PF_OPT_VERBOSE)
+		print_sourcelim(&srlim->ioc);
+
+	if (pf->opts & PF_OPT_NOACTION)
+		return;
+
+	if (ioctl(pf->dev, DIOCADDSOURCELIM, &srlim->ioc) == -1) {
+		err(1, "DIOCADDSOURCELIM %s id %u",
+		    srlim->ioc.name, srlim->ioc.id);
+	}
+}
+
+void
+pfctl_load_sourcelims(struct pfctl *pf)
+{
+	struct pfctl_sourcelim	*srlim;
+	u_int32_t		 ticket = 0;
+
+	if ((pf->opts & PF_OPT_NOACTION) == 0)
+		ticket = pfctl_get_ticket(pf->trans, PF_TRANS_RULESET, "");
+
+	RBT_FOREACH(srlim, pfctl_sourcelim_ids, &pf->sourcelim_ids) {
+		srlim->ioc.ticket = ticket;
+		pfctl_load_sourcelim(pf, srlim);
+	}
+
+	/* Don't free the sourcelims because we're about to exit anyway. */
+}
+
 static int
 pfctl_load_tables(struct pfctl *pf, char *path, struct pf_anchor *a)
 {
@@ -1647,6 +2050,11 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	pf.opts = opts;
 	pf.optimize = optimize;
 
+	RBT_INIT(pfctl_statelim_ids, &pf.statelim_ids);
+	RBT_INIT(pfctl_statelim_nms, &pf.statelim_nms);
+	RBT_INIT(pfctl_sourcelim_ids, &pf.sourcelim_ids);
+	RBT_INIT(pfctl_sourcelim_nms, &pf.sourcelim_nms);
+
 	/* non-brace anchor, create without resolving the path */
 	if ((pf.anchor = calloc(1, sizeof(*pf.anchor))) == NULL)
 		ERR("%s: calloc", __func__);
@@ -1692,12 +2100,17 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 			goto _error;
 	}
 
-	if (!anchorname[0] && (pfctl_check_qassignments(&pf.anchor->ruleset) ||
-	    pfctl_load_queues(&pf))) {
-		if ((opts & PF_OPT_NOACTION) == 0)
-			ERRX("Unable to load queues into kernel");
-		else
-			goto _error;
+	if (anchorname[0] == '\0') {
+		if (pfctl_check_qassignments(&pf.anchor->ruleset) ||
+		    pfctl_load_queues(&pf)) {
+			if ((opts & PF_OPT_NOACTION) == 0)
+				ERRX("Unable to load queues into kernel");
+			else
+				goto _error;
+		}
+
+		pfctl_load_statelims(&pf);
+		pfctl_load_sourcelims(&pf);
 	}
 
 	if (pfctl_load_ruleset(&pf, path, rs, 0)) {
@@ -2461,6 +2874,24 @@ pfctl_lookup_option(char *cmd, const char **list)
 	return (item);
 }
 
+int
+pfctl_lookup_id(const char *cmd, const struct pfctl_opt_id *opt_ids)
+{
+	const struct pfctl_opt_id *opt_id;
+	int id = 0;
+	size_t cmdlen = strlen(cmd);
+
+	for (opt_id = opt_ids; opt_id->id != 0; opt_id++) {
+		if (strncmp(cmd, opt_id->name, cmdlen) == 0) {
+			if (id != 0)
+				errx(1, "%s is ambiguous", cmd);
+
+			id = opt_id->id;
+		}
+	}
+
+	return (id);
+}
 
 void
 pfctl_state_store(int dev, const char *file)
@@ -2585,6 +3016,7 @@ main(int argc, char *argv[])
 	int	 anchor_wildcard = 0;
 	char	*path;
 	char	*lfile = NULL, *sfile = NULL;
+	const char *idopt = NULL;
 	const char *errstr;
 	long	 shownr = -1;
 
@@ -2592,7 +3024,7 @@ main(int argc, char *argv[])
 		usage();
 
 	while ((ch = getopt(argc, argv,
-	    "a:dD:eqf:F:ghi:k:K:L:Nno:Pp:R:rS:s:t:T:vV:x:z")) != -1) {
+	    "a:dD:eqf:F:ghi:I:k:K:L:Nno:Pp:R:rS:s:t:T:vV:x:z")) != -1) {
 		switch (ch) {
 		case 'a':
 			anchoropt = optarg;
@@ -2623,6 +3055,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			ifaceopt = optarg;
+			break;
+		case 'I':
+			idopt = optarg;
 			break;
 		case 'k':
 			if (state_killers >= 2) {
@@ -2680,8 +3115,8 @@ main(int argc, char *argv[])
 			pf_device = optarg;
 			break;
 		case 's':
-			showopt = pfctl_lookup_option(optarg, showopt_list);
-			if (showopt == NULL) {
+			showopt = pfctl_lookup_id(optarg, showopt_list);
+			if (showopt == 0) {
 				warnx("Unknown show modifier '%s'", optarg);
 				usage();
 			}
@@ -2756,7 +3191,7 @@ main(int argc, char *argv[])
 	if (anchoropt != NULL) {
 		if (anchoropt[0] == '\0')
 			errx(1, "anchor name must not be empty");
-		if (mode == O_RDONLY && showopt == NULL && tblcmdopt == NULL) {
+		if (mode == O_RDONLY && showopt == 0 && tblcmdopt == NULL) {
 			warnx("anchors apply to -f, -F, -s, and -T only");
 			usage();
 		}
@@ -2793,7 +3228,8 @@ main(int argc, char *argv[])
 		}
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
-		clearopt = showopt = debugopt = NULL;
+		clearopt = debugopt = NULL;
+		showopt = 0;
 	}
 
 	if (opts & PF_OPT_DISABLE)
@@ -2802,78 +3238,85 @@ main(int argc, char *argv[])
 
 	if ((path = calloc(1, PATH_MAX)) == NULL)
 		errx(1, "%s: calloc", __func__);
+	
+	switch (showopt) {
+	case SHOWOPT_NONE:
+		break;
 
-	if (showopt != NULL) {
-		switch (*showopt) {
-		case 'A':
-			pfctl_show_anchors(dev, opts, anchorname);
-			break;
-		case 'r':
-			pfctl_load_fingerprints(dev, opts);
-			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
-			    anchorname, 0, anchor_wildcard, shownr);
-			break;
-		case 'l':
-			pfctl_load_fingerprints(dev, opts);
-			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
-			    anchorname, 0, anchor_wildcard, shownr);
-			break;
-		case 'q':
-			pfctl_show_queues(dev, ifaceopt, opts,
-			    opts & PF_OPT_VERBOSE2);
-			break;
-		case 's':
-			pfctl_show_states(dev, ifaceopt, opts, shownr);
-			break;
-		case 'S':
-			pfctl_show_src_nodes(dev, opts);
-			break;
-		case 'i':
-			pfctl_show_status(dev, opts);
-			break;
-		case 't':
-			pfctl_show_timeouts(dev, opts);
-			break;
-		case 'm':
-			pfctl_show_limits(dev, opts);
-			break;
-		case 'a':
-			opts |= PF_OPT_SHOWALL;
-			pfctl_load_fingerprints(dev, opts);
+	case SHOWOPT_ANCHORS:
+		pfctl_show_anchors(dev, opts, anchorname);
+		break;
+	case SHOWOPT_RULES:
+		pfctl_load_fingerprints(dev, opts);
+		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
+		    anchorname, 0, anchor_wildcard, shownr);
+		break;
+	case SHOWOPT_LABELS:
+		pfctl_load_fingerprints(dev, opts);
+		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
+		    anchorname, 0, anchor_wildcard, shownr);
+		break;
+	case SHOWOPT_QUEUE:
+		pfctl_show_queues(dev, ifaceopt, opts,
+		    opts & PF_OPT_VERBOSE2);
+		break;
+	case SHOWOPT_STATES:
+		pfctl_show_states(dev, ifaceopt, opts, shownr);
+		break;
+	case SHOWOPT_SOURCES:
+		pfctl_show_src_nodes(dev, opts);
+		break;
+	case SHOWOPT_INFO:
+		pfctl_show_status(dev, opts);
+		break;
+	case SHOWOPT_TIMEOUTS:
+		pfctl_show_timeouts(dev, opts);
+		break;
+	case SHOWOPT_MEMORY:
+		pfctl_show_limits(dev, opts);
+		break;
+	case SHOWOPT_ALL:
+		opts |= PF_OPT_SHOWALL;
+		pfctl_load_fingerprints(dev, opts);
 
-			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
-			    anchorname, 0, 0, -1);
-			pfctl_show_queues(dev, ifaceopt, opts,
-			    opts & PF_OPT_VERBOSE2);
-			pfctl_show_states(dev, ifaceopt, opts, -1);
-			pfctl_show_src_nodes(dev, opts);
-			pfctl_show_status(dev, opts);
-			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
-			    anchorname, 0, 0, -1);
-			pfctl_show_timeouts(dev, opts);
-			pfctl_show_limits(dev, opts);
+		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
+		    anchorname, 0, 0, -1);
+		pfctl_show_queues(dev, ifaceopt, opts,
+		    opts & PF_OPT_VERBOSE2);
+		pfctl_show_states(dev, ifaceopt, opts, -1);
+		pfctl_show_src_nodes(dev, opts);
+		pfctl_show_status(dev, opts);
+		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
+		    anchorname, 0, 0, -1);
+		pfctl_show_timeouts(dev, opts);
+		pfctl_show_limits(dev, opts);
+		pfctl_show_tables(anchorname, opts);
+		pfctl_show_fingerprints(opts);
+		break;
+	case SHOWOPT_TABLES:
+		if (opts & PF_OPT_RECURSE) {
+			opts |= PF_OPT_CALLSHOW;
+			pfctl_recurse(dev, opts, anchorname,
+			    pfctl_call_showtables);
+		} else
 			pfctl_show_tables(anchorname, opts);
-			pfctl_show_fingerprints(opts);
-			break;
-		case 'T':
-			if (opts & PF_OPT_RECURSE) {
-				opts |= PF_OPT_CALLSHOW;
-				pfctl_recurse(dev, opts, anchorname,
-				    pfctl_call_showtables);
-			} else
-				pfctl_show_tables(anchorname, opts);
-			break;
-		case 'o':
-			pfctl_load_fingerprints(dev, opts);
-			pfctl_show_fingerprints(opts);
-			break;
-		case 'I':
-			pfctl_show_ifaces(ifaceopt, opts);
-			break;
-		}
+		break;
+	case SHOWOPT_OSFP:
+		pfctl_load_fingerprints(dev, opts);
+		pfctl_show_fingerprints(opts);
+		break;
+	case SHOWOPT_IFACES:
+		pfctl_show_ifaces(ifaceopt, opts);
+		break;
+	case SHOWOPT_STATELIMS:
+		pfctl_show_statelims(dev, PFCTL_SHOW_LABELS);
+		break;
+	case SHOWOPT_SOURCELIMS:
+		pfctl_show_sourcelims(dev, PFCTL_SHOW_LABELS, opts, idopt);
+		break;
 	}
 
-	if ((opts & PF_OPT_CLRRULECTRS) && showopt == NULL)
+	if ((opts & PF_OPT_CLRRULECTRS) && showopt == 0)
 		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_NOTHING,
 		    anchorname, 0, 0, -1);
 
@@ -2939,6 +3382,8 @@ main(int argc, char *argv[])
 			pfctl_id_kill_states(dev, opts);
 		else if (!strcmp(state_kill[0], "key"))
 			pfctl_key_kill_states(dev, ifaceopt, opts, rdomain);
+		else if (!strcmp(state_kill[0], "source"))
+			pfctl_kill_source(dev, idopt, state_kill[1], opts);
 		else
 			pfctl_net_kill_states(dev, ifaceopt, opts, rdomain);
 	}
@@ -3033,4 +3478,138 @@ pf_strerror(int errnum)
 	default:
 		return strerror(errnum);
 	}
+}
+
+static inline int
+pfctl_statelim_id_cmp(const struct pfctl_statelim *a,
+    const struct pfctl_statelim *b)
+{
+	uint32_t ida = a->ioc.id;
+	uint32_t idb = b->ioc.id;
+
+	if (ida > idb)
+		return (1);
+	if (ida < idb)
+		return (-1);
+
+	return (0);
+}
+
+RBT_GENERATE(pfctl_statelim_ids, pfctl_statelim, entry, pfctl_statelim_id_cmp);
+
+static inline int
+pfctl_statelim_nm_cmp(const struct pfctl_statelim *a,
+    const struct pfctl_statelim *b)
+{
+	return (strcmp(a->ioc.name, b->ioc.name));
+}
+
+RBT_GENERATE(pfctl_statelim_nms, pfctl_statelim, entry, pfctl_statelim_nm_cmp);
+
+int
+pfctl_add_statelim(struct pfctl *pf, struct pfctl_statelim *stlim)
+{
+	struct pfctl_statelim *ostlim;
+
+	ostlim = RBT_INSERT(pfctl_statelim_ids, &pf->statelim_ids, stlim);
+	if (ostlim != NULL)
+		return (-1);
+
+	ostlim = RBT_INSERT(pfctl_statelim_nms, &pf->statelim_nms, stlim);
+	if (ostlim != NULL) {
+		RBT_REMOVE(pfctl_statelim_ids, &pf->statelim_ids, stlim);
+		return (-1);
+	}
+
+	return (0);
+}
+
+struct pfctl_statelim *
+pfctl_get_statelim_id(struct pfctl *pf, uint32_t id)
+{
+	struct pfctl_statelim key;
+
+	key.ioc.id = id;
+
+	return (RBT_FIND(pfctl_statelim_nms, &pf->statelim_nms, &key));
+}
+
+struct pfctl_statelim *
+pfctl_get_statelim_nm(struct pfctl *pf, const char *name)
+{
+	struct pfctl_statelim key;
+
+	if (strlcpy(key.ioc.name, name, sizeof(key.ioc.name)) >=
+	    sizeof(key.ioc.name))
+		return (NULL);
+
+	return (RBT_FIND(pfctl_statelim_nms, &pf->statelim_nms, &key));
+}
+
+static inline int
+pfctl_sourcelim_id_cmp(const struct pfctl_sourcelim *a,
+    const struct pfctl_sourcelim *b)
+{
+	uint32_t ida = a->ioc.id;
+	uint32_t idb = b->ioc.id;
+
+	if (ida > idb)
+		return (1);
+	if (ida < idb)
+		return (-1);
+
+	return (0);
+}
+
+RBT_GENERATE(pfctl_sourcelim_ids, pfctl_sourcelim, entry,
+    pfctl_sourcelim_id_cmp);
+
+static inline int
+pfctl_sourcelim_nm_cmp(const struct pfctl_sourcelim *a,
+    const struct pfctl_sourcelim *b)
+{
+	return (strcmp(a->ioc.name, b->ioc.name));
+}
+
+RBT_GENERATE(pfctl_sourcelim_nms, pfctl_sourcelim, entry,
+    pfctl_sourcelim_nm_cmp);
+
+int
+pfctl_add_sourcelim(struct pfctl *pf, struct pfctl_sourcelim *srlim)
+{
+	struct pfctl_sourcelim *osrlim;
+
+	osrlim = RBT_INSERT(pfctl_sourcelim_ids, &pf->sourcelim_ids, srlim);
+	if (osrlim != NULL)
+		return (-1);
+
+	osrlim = RBT_INSERT(pfctl_sourcelim_nms, &pf->sourcelim_nms, srlim);
+	if (osrlim != NULL) {
+		RBT_REMOVE(pfctl_sourcelim_ids, &pf->sourcelim_ids, srlim);
+		return (-1);
+	}
+
+	return (0);
+}
+
+struct pfctl_sourcelim *
+pfctl_get_sourcelim_id(struct pfctl *pf, uint32_t id)
+{
+	struct pfctl_sourcelim key;
+
+	key.ioc.id = id;
+
+	return (RBT_FIND(pfctl_sourcelim_nms, &pf->sourcelim_nms, &key));
+}
+
+struct pfctl_sourcelim *
+pfctl_get_sourcelim_nm(struct pfctl *pf, const char *name)
+{
+	struct pfctl_sourcelim key;
+
+	if (strlcpy(key.ioc.name, name, sizeof(key.ioc.name)) >=
+	    sizeof(key.ioc.name))
+		return (NULL);
+
+	return (RBT_FIND(pfctl_sourcelim_nms, &pf->sourcelim_nms, &key));
 }
