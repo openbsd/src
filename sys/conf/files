@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.746 2025/07/13 05:45:21 dlg Exp $
+#	$OpenBSD: files,v 1.747 2025/11/11 11:33:25 hshoexer Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -475,7 +475,7 @@ device	ccp {}
 file	dev/ic/ccp.c			ccp
 
 # AMD Platform Security Processor
-device	psp
+device	psp: xcall
 attach	psp at ccp
 file	dev/ic/psp.c			psp	needs-flag
 

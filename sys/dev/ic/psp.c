@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.20 2025/08/14 11:18:11 hshoexer Exp $ */
+/*	$OpenBSD: psp.c,v 1.21 2025/11/11 11:33:25 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -24,6 +24,7 @@
 #include <sys/pledge.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
+#include <sys/xcall.h>
 
 #include <machine/bus.h>
 
@@ -260,6 +261,34 @@ ccp_docmd(struct psp_softc *sc, int cmd, uint64_t paddr)
 	return (0);
 }
 
+void
+psp_xc_wbinvd(void *arg)
+{
+	struct refcnt *r = arg;
+
+	wbinvd();
+
+	refcnt_rele_wake(r);
+}
+
+void
+psp_wbinvd(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	struct refcnt r = REFCNT_INITIALIZER();
+	struct xcall xc = XCALL_INITIALIZER(psp_xc_wbinvd, &r);
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (!ISSET(ci->ci_flags, CPUF_RUNNING))
+			continue;
+		refcnt_take(&r);
+		cpu_xcall(ci, &xc);
+	}
+
+	refcnt_finalize(&r, "psp_invd");
+}
+
 int
 psp_init(struct psp_softc *sc, struct psp_init *uinit)
 {
@@ -277,7 +306,7 @@ psp_init(struct psp_softc *sc, struct psp_init *uinit)
 	if (error)
 		return (error);
 
-	wbinvd_on_all_cpus_acked();
+	psp_wbinvd();
 
 	sc->sc_flags |= PSPF_INITIALIZED;
 
@@ -359,7 +388,7 @@ psp_shutdown(struct psp_softc *sc)
 		return (error);
 
 	/* wbinvd right after SHUTDOWN */
-	wbinvd_on_all_cpus_acked();
+	psp_wbinvd();
 
 	/* release TMR */
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_tmr_map);
@@ -398,7 +427,7 @@ psp_df_flush(struct psp_softc *sc)
 {
 	int error;
 
-	wbinvd_on_all_cpus_acked();
+	psp_wbinvd();
 
 	error = ccp_docmd(sc, PSP_CMD_DF_FLUSH, 0x0);
 
@@ -490,7 +519,7 @@ psp_launch_update_data(struct psp_softc *sc,
 	ludata->handle = ulud->handle;
 
 	/* Drain caches before we encrypt memory. */
-	wbinvd_on_all_cpus_acked();
+	psp_wbinvd();
 
 	/*
 	 * Launch update one physical page at a time.  We could
@@ -554,7 +583,7 @@ psp_launch_update_vmsa(struct psp_softc *sc,
 	luvmsa->length = PAGE_SIZE;
 
 	/* Drain caches before we encrypt the VMSA. */
-	wbinvd_on_all_cpus_acked();
+	psp_wbinvd();
 
 	error = ccp_docmd(sc, PSP_CMD_LAUNCH_UPDATE_VMSA,
 	    sc->sc_cmd_map->dm_segs[0].ds_addr);
