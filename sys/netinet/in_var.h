@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.41 2018/10/18 15:23:04 cheloha Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.42 2025/11/11 13:05:35 bluhm Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -75,8 +75,7 @@ struct	in_aliasreq {
 	struct	sockaddr_in ifra_mask;
 };
 
-
-#ifdef	_KERNEL
+#ifdef _KERNEL
 /*
  * Macro for finding the internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).
@@ -93,19 +92,9 @@ do {									\
 	}								\
 	(ia) = ifatoia(ifa);						\
 } while (/* CONSTCOND */ 0)
-#endif
 
-/*
- * Per-interface router version information.
- */
-struct router_info {
-	unsigned int	rti_ifidx;
-	int		rti_type;	/* type of router on this interface */
-	int		rti_age;	/* time since last v1 query */
-	LIST_ENTRY(router_info)	rti_list;
-};
+struct router_info;
 
-#ifdef _KERNEL
 /*
  * Internet multicast address structure.  There is one of these for each IP
  * multicast group to which this host belongs on a given network interface.
@@ -161,6 +150,6 @@ void	in_ifscrub(struct ifnet *, struct in_ifaddr *);
 int	in_control(struct socket *, u_long, caddr_t, struct ifnet *);
 int	in_ioctl(u_long, caddr_t, struct ifnet *, int);
 void	in_prefixlen2mask(struct in_addr *, int);
-#endif
+#endif /* _KERNEL */
 
 #endif /* _NETINET_IN_VAR_H_ */

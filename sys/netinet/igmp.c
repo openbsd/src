@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.88 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.89 2025/11/11 13:05:35 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -93,6 +93,16 @@
 #include <netinet/igmp_var.h>
 
 #define IP_MULTICASTOPTS	0
+
+/*
+ * Per-interface router version information.
+ */
+struct router_info {
+	LIST_ENTRY(router_info)	rti_list;
+	unsigned int	rti_ifidx;
+	int		rti_type;	/* type of router on this interface */
+	int		rti_age;	/* time since last v1 query */
+};
 
 int	igmp_timers_are_running;	/* [a] shortcut for fast timer */
 static LIST_HEAD(, router_info) rti_head;
