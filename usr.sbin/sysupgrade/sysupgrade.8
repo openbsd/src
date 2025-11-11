@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.22 2024/10/25 03:42:06 deraadt Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.23 2025/11/11 15:18:30 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2024 $
+.Dd $Mdocdate: November 11 2025 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -87,6 +87,30 @@ older keys.
 See
 .Xr upgrade.site 5
 for how to customize the upgrade process.
+.Sh PRUNING
+Upgrading between releases and snapshots will over time collect much detritus
+in the
+.Pa /usr
+sub-directory (which may or may not be an independent filesystem, based on
+original install-time decisions).
+.Nm sysupgrade
+will complain if
+.Xr df 1
+indicates insufficient space, and prevent the upgrade.
+.Nm sysupgrade
+does not know what historical files can be deleted, and the problem becomes
+worse if the
+.Pa /usr/local
+directory is in the same filesystem as
+.Pa /usr .
+.Pp
+When the described problem happens, manual cleaning of the
+.Pa /usr
+partition is required, and in the worst cases a reinstall will be required.
+.\" Note for above:  This may not mention or encourage use of the
+.\" exceedingly dangerous sysclean package, which in any case does not do
+.\" a good job of handling the biggest problem -- leftover lib*.so files
+.\" which may or may not be used by some programs anywhere on the system.
 .Sh FILES
 .Bl -tag -width "/auto_upgrade.conf" -compact
 .It Pa /auto_upgrade.conf
