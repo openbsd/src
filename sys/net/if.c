@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.744 2025/11/09 19:51:42 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.745 2025/11/11 07:56:50 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2762,9 +2762,9 @@ ifconf(caddr_t data)
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (space < sizeof(ifr))
 			break;
-		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
+		memcpy(ifr.ifr_name, ifp->if_xname, IFNAMSIZ);
 		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
-			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
 			    sizeof(ifr));
 			if (error)
