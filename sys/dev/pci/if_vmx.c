@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.93 2025/06/19 09:36:21 yasuoka Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.94 2025/11/11 17:43:18 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -317,7 +317,8 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 
 				isr = vmxnet3_intr_event;
 				sc->sc_intrmap = intrmap_create(&sc->sc_dev,
-				    msix, VMX_MAX_QUEUES, INTRMAP_POWEROF2);
+				    msix, MIN(VMX_MAX_QUEUES, IF_MAX_VECTORS),
+				    INTRMAP_POWEROF2);
 				sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
 			}
 			break;

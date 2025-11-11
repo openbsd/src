@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.221 2025/06/24 11:02:03 stsp Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.222 2025/11/11 17:43:18 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -36,6 +36,8 @@
 
 #include <dev/pci/if_ix.h>
 #include <dev/pci/ixgbe_type.h>
+
+#define IX_MAX_VECTORS			64
 
 /*
  * Our TCP/IP Stack is unable to handle packets greater than MAXMCLBYTES.
@@ -1851,10 +1853,12 @@ ixgbe_setup_msix(struct ix_softc *sc)
 	/* give one vector to events */
 	nmsix--;
 
+	maxq = IX_MAX_VECTORS;
 	/* XXX the number of queues is limited to what we can keep stats on */
-	maxq = (sc->hw.mac.type == ixgbe_mac_82598EB) ? 8 : 16;
-
-	sc->sc_intrmap = intrmap_create(&sc->dev, nmsix, maxq, 0);
+	if (sc->hw.mac.type == ixgbe_mac_82598EB)
+		maxq = 8;
+	sc->sc_intrmap = intrmap_create(&sc->dev, nmsix,
+	    MIN(maxq, IF_MAX_VECTORS), 0);
 	sc->num_queues = intrmap_count(sc->sc_intrmap);
 }
 

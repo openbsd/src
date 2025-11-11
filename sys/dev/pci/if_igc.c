@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.28 2025/06/24 11:00:27 stsp Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.29 2025/11/11 17:43:18 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -724,8 +724,8 @@ igc_setup_msix(struct igc_softc *sc)
 	/* Give one vector to events. */
 	nmsix--;
 
-	sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix, IGC_MAX_VECTORS,
-	    INTRMAP_POWEROF2);
+	sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix,
+	    MIN(IGC_MAX_VECTORS, IF_MAX_VECTORS), INTRMAP_POWEROF2);
 	sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
 }
 

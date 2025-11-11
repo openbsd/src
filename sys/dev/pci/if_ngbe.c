@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngbe.c,v 1.7 2025/06/24 11:04:15 stsp Exp $	*/
+/*	$OpenBSD: if_ngbe.c,v 1.8 2025/11/11 17:43:18 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015-2017 Beijing WangXun Technology Co., Ltd.
@@ -1074,8 +1074,8 @@ ngbe_setup_msix(struct ngbe_softc *sc)
 	/* Give one vector to events. */
 	nmsix--;
 
-	sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix, NGBE_MAX_VECTORS,
-	    INTRMAP_POWEROF2);
+	sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix,
+	    MIN(NGBE_MAX_VECTORS, IF_MAX_VECTORS), INTRMAP_POWEROF2);
 	sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
 
 	return 0;

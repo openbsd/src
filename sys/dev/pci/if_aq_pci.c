@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.32 2025/06/29 19:32:08 miod Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.33 2025/11/11 17:43:18 bluhm Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -1310,8 +1310,8 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 		int nmsix = pci_intr_msix_count(pa);
 		if (nmsix > 1) {
 			nmsix--;
-			sc->sc_intrmap = intrmap_create(&sc->sc_dev,
-			    nmsix, AQ_MAXQ, INTRMAP_POWEROF2);
+			sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix,
+			    MIN(AQ_MAXQ, IF_MAX_VECTORS), INTRMAP_POWEROF2);
 			sc->sc_nqueues = intrmap_count(sc->sc_intrmap);
 			KASSERT(sc->sc_nqueues > 0);
 			KASSERT(powerof2(sc->sc_nqueues));

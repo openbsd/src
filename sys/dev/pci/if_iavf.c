@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.25 2025/06/24 10:59:15 stsp Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.26 2025/11/11 17:43:18 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1034,8 +1034,9 @@ iavf_attach(struct device *parent, struct device *self, void *aux)
 		if (nmsix > 1) { /* we used 1 (the 0th) for the adminq */
 			nmsix--;
 
-			sc->sc_intrmap = intrmap_create(&sc->sc_dev,
-			    nmsix, IAVF_MAX_VECTORS, INTRMAP_POWEROF2);
+			sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix,
+			    MIN(IAVF_MAX_VECTORS, IF_MAX_VECTORS),
+			    INTRMAP_POWEROF2);
 			nqueues = intrmap_count(sc->sc_intrmap);
 			KASSERT(nqueues > 0);
 			KASSERT(powerof2(nqueues));

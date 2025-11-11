@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.64 2025/10/29 12:43:21 jan Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.65 2025/11/11 17:43:18 bluhm Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -30537,9 +30537,10 @@ ice_attach_hook(struct device *self)
 		goto deinit_hw;
 	}
 	sc->sc_nmsix = nmsix;
-	nqueues_max = MIN(sc->isc_nrxqsets_max, sc->isc_ntxqsets_max);
+	nqueues_max = MIN(MIN(sc->isc_nrxqsets_max, sc->isc_ntxqsets_max),
+	    ICE_MAX_VECTORS);
 	sc->sc_intrmap = intrmap_create(&sc->sc_dev, sc->sc_nmsix - 1,
-	    nqueues_max, INTRMAP_POWEROF2);
+	    MIN(nqueues_max, IF_MAX_VECTORS), INTRMAP_POWEROF2);
 	nqueues = intrmap_count(sc->sc_intrmap);
 	KASSERT(nqueues > 0);
 	KASSERT(powerof2(nqueues));

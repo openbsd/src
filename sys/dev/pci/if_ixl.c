@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.111 2025/10/29 12:43:21 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.112 2025/11/11 17:43:18 bluhm Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -100,7 +100,7 @@
 #define CACHE_LINE_SIZE 64
 #endif
 
-#define IXL_MAX_VECTORS			8 /* XXX this is pretty arbitrary */
+#define IXL_MAX_VECTORS			1536
 
 #define I40E_MASK(mask, shift)		((mask) << (shift))
 #define I40E_PF_RESET_WAIT_COUNT	200
@@ -1780,8 +1780,9 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 		if (nmsix > 1) { /* we used 1 (the 0th) for the adminq */
 			nmsix--;
 
-			sc->sc_intrmap = intrmap_create(&sc->sc_dev,
-			    nmsix, IXL_MAX_VECTORS, INTRMAP_POWEROF2);
+			sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix,
+			    MIN(IXL_MAX_VECTORS, IF_MAX_VECTORS),
+			    INTRMAP_POWEROF2);
 			nqueues = intrmap_count(sc->sc_intrmap);
 			KASSERT(nqueues > 0);
 			KASSERT(powerof2(nqueues));

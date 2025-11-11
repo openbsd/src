@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.119 2025/03/05 06:44:02 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.120 2025/11/11 17:43:18 bluhm Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2933,8 +2933,8 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	msix--; /* admin ops took one */
-	sc->sc_intrmap = intrmap_create(&sc->sc_dev, msix, MCX_MAX_QUEUES,
-	    INTRMAP_POWEROF2);
+	sc->sc_intrmap = intrmap_create(&sc->sc_dev, msix,
+	    MIN(MCX_MAX_QUEUES, IF_MAX_VECTORS), INTRMAP_POWEROF2);
 	if (sc->sc_intrmap == NULL) {
 		printf(": unable to create interrupt map\n");
 		goto teardown;
