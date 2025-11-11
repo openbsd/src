@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.66 2024/06/25 11:57:10 kettenis Exp $ */
+/* $OpenBSD: acpiec.c,v 1.67 2025/11/11 19:29:06 jcs Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -91,7 +91,8 @@ void
 acpiec_wait(struct acpiec_softc *sc, uint8_t mask, uint8_t val)
 {
 	static int acpiecnowait;
-	uint8_t		stat;
+	int tries = 0;
+	uint8_t	stat;
 
 	dnprintf(40, "%s: EC wait_ns for: %b == %02x\n",
 	    DEVNAME(sc), (int)mask,
@@ -100,7 +101,7 @@ acpiec_wait(struct acpiec_softc *sc, uint8_t mask, uint8_t val)
 	while (((stat = acpiec_status(sc)) & mask) != val) {
 		if (stat & EC_STAT_SCI_EVT)
 			sc->sc_gotsci = 1;
-		if (cold || (stat & EC_STAT_BURST))
+		if (cold || (stat & EC_STAT_BURST) || tries++ < 300)
 			delay(1);
 		else
 			tsleep(&acpiecnowait, PWAIT, "acpiec", 1);
