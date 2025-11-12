@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.746 2025/11/11 18:36:26 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.747 2025/11/12 10:00:27 hshoexer Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3422,10 +3422,12 @@ ifsetlro(struct ifnet *ifp, int on)
 	}
 
 	if (on && !ISSET(ifp->if_xflags, IFXF_LRO)) {
+#if NETHER > 0
 		if (ifp->if_type == IFT_ETHER && ether_brport_isset(ifp)) {
 			error = EBUSY;
 			goto out;
 		}
+#endif
 		SET(ifp->if_xflags, IFXF_LRO);
 	} else if (!on && ISSET(ifp->if_xflags, IFXF_LRO))
 		CLR(ifp->if_xflags, IFXF_LRO);

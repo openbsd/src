@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.425 2025/07/31 09:05:11 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.426 2025/11/12 10:00:27 hshoexer Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 
 #include "pf.h"
 #include "carp.h"
+#include "ether.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +229,9 @@ ip_init(void)
 	mq_init(&ipsend_mq, 64, IPL_SOFTNET);
 	mq_init(&ipsendraw_mq, 64, IPL_SOFTNET);
 
+#if NETHER > 0
 	arpinit();
+#endif
 #ifdef IPSEC
 	ipsec_init();
 #endif
@@ -1625,8 +1628,10 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct route *ro, int flags)
 	    !ISSET(rt->rt_flags, RTF_DYNAMIC|RTF_MODIFIED) &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != INADDR_ANY &&
 	    !ISSET(flags, IP_REDIRECT) &&
-	    atomic_load_int(&ip_sendredirects) &&
-	    !arpproxy(satosin(rt_key(rt))->sin_addr, rtableid)) {
+#if NETHER > 0
+	    !arpproxy(satosin(rt_key(rt))->sin_addr, rtableid) &&
+#endif
+	    atomic_load_int(&ip_sendredirects)) {
 		if ((ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_netmask) ==
 		    ifatoia(rt->rt_ifa)->ia_net) {
 		    if (rt->rt_flags & RTF_GATEWAY)
