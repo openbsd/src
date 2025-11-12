@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489var.h,v 1.21 2024/11/07 17:24:42 bluhm Exp $	*/
+/*	$OpenBSD: i82489var.h,v 1.22 2025/11/12 09:48:52 hshoexer Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -72,8 +72,7 @@ extern void Xresume_lapic_ipi(void);
 #define LAPIC_IPI_INVLTLB			(LAPIC_IPI_OFFSET + 0)
 #define LAPIC_IPI_INVLPG			(LAPIC_IPI_OFFSET + 1)
 #define LAPIC_IPI_INVLRANGE			(LAPIC_IPI_OFFSET + 2)
-#define LAPIC_IPI_WBINVD			(LAPIC_IPI_OFFSET + 3)
-#define LAPIC_IPI_INVEPT			(LAPIC_IPI_OFFSET + 4)
+#define LAPIC_IPI_INVEPT			(LAPIC_IPI_OFFSET + 3)
 
 extern void Xipi_invltlb(void);
 extern void Xipi_invltlb_pcid(void);
@@ -81,7 +80,6 @@ extern void Xipi_invlpg(void);
 extern void Xipi_invlpg_pcid(void);
 extern void Xipi_invlrange(void);
 extern void Xipi_invlrange_pcid(void);
-extern void Xipi_wbinvd(void);
 #if NVMM > 0
 extern void Xipi_invept(void);
 #endif /* NVMM > 0 */

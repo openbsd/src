@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.75 2025/08/02 07:33:28 sf Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.76 2025/11/12 09:48:52 hshoexer Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -364,8 +364,6 @@ lapic_boot_init(paddr_t lapic_base)
 		idt_vec_set(LAPIC_IPI_INVLPG, Xipi_invlpg_pcid);
 		idt_vec_set(LAPIC_IPI_INVLRANGE, Xipi_invlrange_pcid);
 	}
-	idt_allocmap[LAPIC_IPI_WBINVD] = 1;
-	idt_vec_set(LAPIC_IPI_WBINVD, Xipi_wbinvd);
 #if NVMM > 0
 	idt_allocmap[LAPIC_IPI_INVEPT] = 1;
 	idt_vec_set(LAPIC_IPI_INVEPT, Xipi_invept);

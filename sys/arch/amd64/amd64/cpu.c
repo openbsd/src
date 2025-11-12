@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.201 2025/11/10 12:34:52 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.202 2025/11/12 09:48:52 hshoexer Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1478,46 +1478,6 @@ wbinvd_on_all_cpus(void)
 	x86_broadcast_ipi(X86_IPI_WBINVD);
 	wbinvd();
 	return 0;
-}
-
-volatile long wbinvd_wait __attribute__((section(".kudata")));
-
-void
-wbinvd_on_all_cpus_acked(void)
-{
-	struct cpu_info *ci, *self = curcpu();;
-	CPU_INFO_ITERATOR cii;
-	long wait = 0;
-	u_int64_t mask = 0;
-	int s;
-
-	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
-			continue;
-		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
-	}
-
-	if (wait > 0) {
-		s = splvm();
-		while (atomic_cas_ulong(&wbinvd_wait, 0 , wait) != 0) {
-			while (wbinvd_wait != 0)
-				CPU_BUSY_CYCLE();
-		}
-
-		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
-				continue;
-			if (x86_fast_ipi(ci, LAPIC_IPI_WBINVD) != 0)
-				panic("%s: ipi failed", __func__);
-		}
-		splx(s);
-	}
-
-	wbinvd();
-
-	while (wbinvd_wait != 0)
-		CPU_BUSY_CYCLE();
 }
 #endif /* MULTIPROCESSOR */
 

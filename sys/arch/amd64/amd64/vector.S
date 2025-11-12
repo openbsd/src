@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.104 2025/11/10 12:34:52 dlg Exp $	*/
+/*	$OpenBSD: vector.S,v 1.105 2025/11/12 09:48:52 hshoexer Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -816,17 +816,6 @@ IDTVEC(ipi_invlrange_pcid)
 	popq	%rax
 	iretq
 END(Xipi_invlrange_pcid)
-
-IDTVEC(ipi_wbinvd)
-	ioapic_asm_ack()
-
-	wbinvd
-
-	lock
-	decq	wbinvd_wait
-
-	iretq
-END(Xipi_wbinvd)
 
 #endif /* MULTIPROCESSOR */
 
