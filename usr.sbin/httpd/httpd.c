@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.74 2024/04/08 12:45:18 tobhe Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.75 2025/11/12 11:24:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -277,6 +277,8 @@ parent_configure(struct httpd *env)
 	struct server		*srv;
 	struct media_type	*media;
 	struct auth		*auth;
+
+	memset(&cf, 0, sizeof(cf));
 
 	RB_FOREACH(media, mediatypes, env->sc_mediatypes) {
 		if (config_setmedia(env, media) == -1)

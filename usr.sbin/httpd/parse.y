@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.128 2022/02/27 20:30:30 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.129 2025/11/12 11:24:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1896,6 +1896,7 @@ load_config(const char *filename, struct httpd *x_conf)
 	struct media_type	 m;
 	int			 i;
 
+	memset(&m, 0, sizeof(m));
 	conf = x_conf;
 	conf->sc_flags = 0;
 
