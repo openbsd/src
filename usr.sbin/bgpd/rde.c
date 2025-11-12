@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.662 2025/11/12 15:17:43 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.663 2025/11/12 21:50:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -867,7 +867,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 	struct rde_prefixset	*ps;
 	struct rde_aspath	*asp;
 	size_t			 nmemb;
-	int			 n, fd, rv;
+	int			 n, fd;
 	uint16_t		 rid;
 
 	while (imsgbuf) {
@@ -1143,20 +1143,23 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 		case IMSG_RECONF_ROA_ITEM:
 			if (imsg_get_data(&imsg, &roa, sizeof(roa)) == -1)
 				fatalx("IMSG_RECONF_ROA_ITEM bad len");
-			rv = trie_roa_add(&last_prefixset->th, &roa);
+			if (trie_roa_add(&last_prefixset->th, &roa) != 0) {
+				log_warnx("trie_roa_add %s failed",
+				    log_roa(&roa));
+			}
 			break;
 		case IMSG_RECONF_PREFIX_SET_ITEM:
 			if (imsg_get_data(&imsg, &psi, sizeof(psi)) == -1)
 				fatalx("IMSG_RECONF_PREFIX_SET_ITEM bad len");
 			if (last_prefixset == NULL)
 				fatalx("King Bula has no prefixset");
-			rv = trie_add(&last_prefixset->th,
+			if (trie_add(&last_prefixset->th,
 			    &psi.p.addr, psi.p.len,
-			    psi.p.len_min, psi.p.len_max);
-			if (rv == -1)
+			    psi.p.len_min, psi.p.len_max) != 0) {
 				log_warnx("trie_add(%s) %s/%u failed",
 				    last_prefixset->name, log_addr(&psi.p.addr),
 				    psi.p.len);
+			}
 			break;
 		case IMSG_RECONF_AS_SET:
 			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
@@ -1289,12 +1292,8 @@ rde_dispatch_imsg_rtr(struct imsgbuf *imsgbuf)
 			if (imsg_get_data(&imsg, &roa, sizeof(roa)) == -1)
 				fatalx("IMSG_RECONF_ROA_ITEM bad len");
 			if (trie_roa_add(&roa_new.th, &roa) != 0) {
-				struct bgpd_addr p = {
-					.aid = roa.aid,
-					.v6 = roa.prefix.inet6
-				};
-				log_warnx("trie_roa_add %s/%u failed",
-				    log_addr(&p), roa.prefixlen);
+				log_warnx("trie_roa_add %s failed",
+				    log_roa(&roa));
 			}
 			break;
 		case IMSG_RECONF_ASPA_PREP:
