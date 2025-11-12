@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.52 2025/03/10 14:08:25 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.53 2025/11/12 15:18:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -933,6 +933,16 @@ json_rib_mem(struct rde_memstats *stats)
 	    UINT64_MAX);
 	json_rib_mem_element("total", UINT64_MAX,
 	    stats->aset_size + stats->pset_size, UINT64_MAX);
+	json_do_end();
+
+	json_do_object("evloop", 0);
+	json_do_uint("count", stats->rde_event_loop_count);
+	json_do_uint("loop_usec", stats->rde_event_loop_usec);
+	json_do_uint("io_usec", stats->rde_event_io_usec);
+	json_do_uint("peer_usec", stats->rde_event_peer_usec);
+	json_do_uint("ribdump_usec", stats->rde_event_ribdump_usec);
+	json_do_uint("nexthop_usec", stats->rde_event_nexthop_usec);
+	json_do_uint("update_usec", stats->rde_event_update_usec);
 	json_do_end();
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.16 2025/10/30 12:43:53 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.17 2025/11/12 15:18:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -49,6 +49,7 @@ struct ometric *peer_rr_borr_transmit, *peer_rr_borr_receive;
 struct ometric *peer_rr_eorr_transmit, *peer_rr_eorr_receive;
 struct ometric *rde_mem_size, *rde_mem_count, *rde_mem_ref_count;
 struct ometric *rde_set_size, *rde_set_count, *rde_table_count;
+struct ometric *rde_evloop_count, *rde_evloop_time;
 
 struct timespec start_time, end_time;
 
@@ -166,6 +167,11 @@ ometric_head(struct parse_result *arg)
 	    "bgpd_rde_set_usage_objects", "number of object in set");
 	rde_table_count = ometric_new(OMT_GAUGE,
 	    "bgpd_rde_set_usage_tables", "number of as_set tables");
+
+	rde_evloop_count = ometric_new(OMT_COUNTER,
+	    "bgpd_rde_evloop", "number of times the evloop ran");
+	rde_evloop_time = ometric_new(OMT_COUNTER,
+	    "bgpd_rde_evloop_seconds", "RDE evloop time usage");
 }
 
 static void
@@ -320,6 +326,26 @@ ometric_rib_mem(struct rde_memstats *stats)
 	    OKV("type"), OKV("prefix_set"), NULL);
 	ometric_rib_mem_element("set_total", UINT64_MAX,
 	    stats->aset_size + stats->pset_size, UINT64_MAX);
+
+	ometric_set_int(rde_evloop_count, stats->rde_event_loop_count, NULL);
+	ometric_set_float_with_labels(rde_evloop_time,
+	    (double)stats->rde_event_loop_usec / (1000.0 * 1000.0) ,
+	    OKV("stage"), OKV("main"), NULL);
+	ometric_set_float_with_labels(rde_evloop_time,
+	    (double)stats->rde_event_io_usec / (1000.0 * 1000.0) ,
+	    OKV("stage"), OKV("io"), NULL);
+	ometric_set_float_with_labels(rde_evloop_time,
+	    (double)stats->rde_event_peer_usec / (1000.0 * 1000.0) ,
+	    OKV("stage"), OKV("peer"), NULL);
+	ometric_set_float_with_labels(rde_evloop_time,
+	    (double)stats->rde_event_ribdump_usec / (1000.0 * 1000.0) ,
+	    OKV("stage"), OKV("ribdumps"), NULL);
+	ometric_set_float_with_labels(rde_evloop_time,
+	    (double)stats->rde_event_nexthop_usec / (1000.0 * 1000.0) ,
+	    OKV("stage"), OKV("nexthop"), NULL);
+	ometric_set_float_with_labels(rde_evloop_time,
+	    (double)stats->rde_event_update_usec / (1000.0 * 1000.0) ,
+	    OKV("stage"), OKV("update"), NULL);
 }
 
 static void

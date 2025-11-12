@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.61 2025/03/10 14:08:25 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.62 2025/11/12 15:18:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1102,6 +1102,17 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->attr_data));
 	printf("Sets using %s of memory\n", fmt_mem(stats->aset_size +
 	    stats->pset_size));
+
+	printf("\nRDE timing statistics\n");
+	printf("%10lld usec spent in the event loop for %llu rounds\n",
+	    stats->rde_event_loop_usec, stats->rde_event_loop_count);
+	printf("%10lld usec spent on io\n", stats->rde_event_io_usec);
+	printf("%10lld usec spent on peers\n", stats->rde_event_peer_usec);
+	printf("%10lld usec spent on rib dumps\n",
+	    stats->rde_event_ribdump_usec);
+	printf("%10lld usec spent on nexthops\n",
+	    stats->rde_event_nexthop_usec);
+	printf("%10lld usec spent on updates\n", stats->rde_event_update_usec);
 }
 
 static void
