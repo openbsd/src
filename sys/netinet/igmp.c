@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.89 2025/11/11 13:05:35 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.90 2025/11/12 11:37:08 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
-		IN_LOOKUP_MULTI(igmp->igmp_group, ifp, inm);
+		inm = in_lookupmulti(&igmp->igmp_group, ifp);
 		if (inm != NULL) {
 			inm->inm_timer = 0;
 			igmpstat_inc(igps_rcv_ourreports);
@@ -464,7 +464,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
-		IN_LOOKUP_MULTI(igmp->igmp_group, ifp, inm);
+		inm = in_lookupmulti(&igmp->igmp_group, ifp);
 		if (inm != NULL) {
 			inm->inm_timer = 0;
 			igmpstat_inc(igps_rcv_ourreports);

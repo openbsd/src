@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.42 2025/11/11 13:05:35 bluhm Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.43 2025/11/12 11:37:08 bluhm Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -119,33 +119,12 @@ ifmatoinm(struct ifmaddr *ifma)
        return ((struct in_multi *)(ifma));
 }
 
-/*
- * Macro for looking up the in_multi record for a given IP multicast
- * address on a given interface.  If no matching record is found, "inm"
- * returns NULL.
- */
-#define IN_LOOKUP_MULTI(addr, ifp, inm)					\
-	/* struct in_addr addr; */					\
-	/* struct ifnet *ifp; */					\
-	/* struct in_multi *inm; */					\
-do {									\
-	struct ifmaddr *ifma;						\
-									\
-	(inm) = NULL;							\
-	NET_ASSERT_LOCKED();						\
-	TAILQ_FOREACH(ifma, &(ifp)->if_maddrlist, ifma_list)		\
-		if (ifma->ifma_addr->sa_family == AF_INET &&		\
-		    ifmatoinm(ifma)->inm_addr.s_addr == (addr).s_addr) {\
-			(inm) = ifmatoinm(ifma);			\
-			break;						\
-		}							\
-} while (/* CONSTCOND */ 0)
-
 int	in_ifinit(struct ifnet *,
 	    struct in_ifaddr *, struct sockaddr_in *, int);
-struct	in_multi *in_addmulti(struct in_addr *, struct ifnet *);
+struct	in_multi *in_lookupmulti(const struct in_addr *, struct ifnet *);
+struct	in_multi *in_addmulti(const struct in_addr *, struct ifnet *);
 void	in_delmulti(struct in_multi *);
-int	in_hasmulti(struct in_addr *, struct ifnet *);
+int	in_hasmulti(const struct in_addr *, struct ifnet *);
 void	in_ifscrub(struct ifnet *, struct in_ifaddr *);
 int	in_control(struct socket *, u_long, caddr_t, struct ifnet *);
 int	in_ioctl(u_long, caddr_t, struct ifnet *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.81 2025/05/20 05:51:43 bluhm Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.82 2025/11/12 11:37:08 bluhm Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -329,32 +329,12 @@ ifmatoin6m(struct ifmaddr *ifma)
        return ((struct in6_multi *)(ifma));
 }
 
-/*
- * Macros for looking up the in6_multi record for a given IP6 multicast
- * address on a given interface. If no matching record is found, "in6m"
- * returns NULL.
- */
-#define IN6_LOOKUP_MULTI(addr, ifp, in6m)				\
-	/* struct in6_addr addr; */					\
-	/* struct ifnet *ifp; */					\
-	/* struct in6_multi *in6m; */					\
-do {									\
-	struct ifmaddr *ifma;						\
-									\
-	(in6m) = NULL;							\
-	TAILQ_FOREACH(ifma, &(ifp)->if_maddrlist, ifma_list)		\
-		if (ifma->ifma_addr->sa_family == AF_INET6 &&		\
-		    IN6_ARE_ADDR_EQUAL(&ifmatoin6m(ifma)->in6m_addr,	\
-				       &(addr))) {			\
-			(in6m) = ifmatoin6m(ifma);			\
-			break;						\
-		}							\
-} while (/* CONSTCOND */ 0)
-
-struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *, int *);
+struct	in6_multi *in6_lookupmulti(const struct in6_addr *, struct ifnet *);
+struct	in6_multi *in6_addmulti(const struct in6_addr *, struct ifnet *, int *);
 void	in6_delmulti(struct in6_multi *);
-int	in6_hasmulti(struct in6_addr *, struct ifnet *);
-struct in6_multi_mship *in6_joingroup(struct ifnet *, struct in6_addr *, int *);
+int	in6_hasmulti(const struct in6_addr *, struct ifnet *);
+struct in6_multi_mship *in6_joingroup(struct ifnet *, const struct in6_addr *,
+	    int *);
 void	in6_leavegroup(struct in6_multi_mship *);
 int	in6_control(struct socket *, u_long, caddr_t, struct ifnet *);
 int	in6_ioctl(u_long, caddr_t, struct ifnet *, int);

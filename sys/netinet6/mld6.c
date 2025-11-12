@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.68 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.69 2025/11/12 11:37:08 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ mld6_input(struct mbuf *m, int off)
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
-		IN6_LOOKUP_MULTI(mldh->mld_addr, ifp, in6m);
+		in6m = in6_lookupmulti(&mldh->mld_addr, ifp);
 		if (in6m) {
 			in6m->in6m_timer = 0; /* transit to idle state */
 			in6m->in6m_state = MLD_OTHERLISTENER; /* clear flag */
