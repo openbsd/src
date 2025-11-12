@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.434 2025/10/30 07:41:19 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.435 2025/11/12 20:41:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -282,7 +282,6 @@ struct client *
 server_client_create(int fd)
 {
 	struct client	*c;
-	u_int		 i;
 
 	setblocking(fd, 0);
 
@@ -316,11 +315,7 @@ server_client_create(int fd)
 	evtimer_set(&c->repeat_timer, server_client_repeat_timer, c);
 	evtimer_set(&c->click_timer, server_client_click_timer, c);
 
-	for (i = 0; i < INPUT_REQUEST_TYPES; i++) {
-		c->input_requests[i].c = c;
-		c->input_requests[i].type = i;
-		TAILQ_INIT(&c->input_requests[i].requests);
-	}
+	TAILQ_INIT(&c->input_requests);
 
 	TAILQ_INSERT_TAIL(&clients, c, entry);
 	log_debug("new client %p", c);
