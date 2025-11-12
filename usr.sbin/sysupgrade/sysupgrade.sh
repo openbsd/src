@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.59 2025/11/11 15:14:17 deraadt Exp $
+# $OpenBSD: sysupgrade.sh,v 1.60 2025/11/12 11:22:48 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -118,7 +118,7 @@ $FORCE_VERSION && $SNAP &&
 $FORCE && ! $SNAP &&
 	err "incompatible options: -f without -s"
 
-USED_USR=$(df /usr | awk 'NR==2 {print substr($5, 1, length($5)-1)}')
+USED_USR=$(df -P /usr | awk 'NR==2 {print substr($5, 1, length($5)-1)}')
 if (( ${USED_USR} >= 90 )) && ! $FORCE; then
     err "/usr appears too small. See sysupgrade(8) manpage about PRUNING."
 fi
