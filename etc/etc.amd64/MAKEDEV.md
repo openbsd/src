@@ -1,6 +1,6 @@
 define(MACHINE,amd64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.85 2025/09/29 01:00:14 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.86 2025/11/12 11:34:36 hshoexer Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -104,6 +104,11 @@ _DEV(psp, 101)
 dnl
 divert(__mddivert)dnl
 dnl
+vmboot)
+	_recurse ramdisk
+	M kexec		c 18 0 600
+	;;
+
 ramdisk)
 	_recurse std bpf fd0 wd0 sd0 tty00 tty01 rd0 bio diskmap
 	_recurse st0 cd0 ttyC0 wskbd0 wskbd1 wskbd2 random efi

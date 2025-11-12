@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.116 2025/09/17 18:39:50 sf Exp $
+#	$OpenBSD: files.amd64,v 1.117 2025/11/12 11:34:36 hshoexer Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -209,6 +209,10 @@ file	arch/amd64/amd64/pctr.c		pctr needs-flag
 
 pseudo-device	nvram
 file	arch/amd64/amd64/nvram.c	nvram needs-flag
+
+pseudo-device	kexec
+file	arch/amd64/amd64/kexec.c	kexec needs-flag
+file	arch/amd64/amd64/kexec_subr.S	kexec needs-flag
 
 #
 # Machine-independent HID support

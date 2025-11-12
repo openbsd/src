@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.304 2025/10/22 14:11:23 hshoexer Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.305 2025/11/12 11:34:36 hshoexer Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@
 #include <machine/kcore.h>
 #include <machine/tss.h>
 #include <machine/ghcb.h>
+#include <machine/kexec.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
@@ -1584,6 +1585,13 @@ init_x86_64(paddr_t first_avail)
 	if (avail_start < HIBERNATE_HIBALLOC_PAGE + PAGE_SIZE)
 		avail_start = HIBERNATE_HIBALLOC_PAGE + PAGE_SIZE;
 #endif /* HIBERNATE */
+
+#ifdef BOOT_KERNEL
+	if (avail_start < KEXEC_TRAMPOLINE + PAGE_SIZE)
+		avail_start = KEXEC_TRAMPOLINE + PAGE_SIZE;
+	if (avail_start < KEXEC_TRAMP_DATA + PAGE_SIZE)
+		avail_start = KEXEC_TRAMP_DATA + PAGE_SIZE;
+#endif
 
 	/*
 	 * We need to go through the BIOS memory map given, and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.83 2024/11/27 10:33:31 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.84 2025/11/12 11:34:36 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -153,6 +153,7 @@ cdev_decl(viocon);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
+#include "kexec.h"
 #include "kcov.h"
 
 #ifdef USER_PCICONF
@@ -192,7 +193,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
-	cdev_notdef(),			/* 18: was: concatenated disk driver */
+	cdev_kexec_init(NKEXEC,kexec),	/* 18: kexec */
 	cdev_kcov_init(NKCOV,kcov),	/* 19: kcov */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
 	cdev_notdef(),			/* 21 */
