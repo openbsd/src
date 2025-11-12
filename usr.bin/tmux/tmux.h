@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1273 2025/11/03 09:27:06 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1274 2025/11/12 13:47:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3561,6 +3561,9 @@ int		 popup_display(int, enum box_lines, struct cmdq_item *, u_int,
                     popup_close_cb, void *);
 int		 popup_editor(struct client *, const char *, size_t,
 		    popup_finish_edit_cb, void *);
+int		 popup_present(struct client *);
+int		 popup_modify(struct client *, const char *, const char *,
+		    const char *, enum box_lines, int);
 
 /* style.c */
 int		 style_parse(struct style *,const struct grid_cell *,
