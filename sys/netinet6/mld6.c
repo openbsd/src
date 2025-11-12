@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.69 2025/11/12 11:37:08 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.70 2025/11/12 19:11:10 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ mld6_input(struct mbuf *m, int off)
 }
 
 void
-mld6_fasttimeo(void)
+mld6_fasttimo(void)
 {
 	struct ifnet *ifp;
 	int running = 0;

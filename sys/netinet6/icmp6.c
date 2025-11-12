@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.280 2025/10/24 11:51:49 mvs Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.281 2025/11/12 19:11:10 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1182,7 +1182,7 @@ icmp6_reflect(struct mbuf **mp, size_t off, struct sockaddr *sa)
 void
 icmp6_fasttimo(void)
 {
-	mld6_fasttimeo();
+	mld6_fasttimo();
 }
 
 void
