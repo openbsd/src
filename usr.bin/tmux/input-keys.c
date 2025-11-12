@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.109 2025/03/04 08:45:04 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.110 2025/11/12 07:54:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -606,7 +606,9 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 				ud.data[0] = newkey;
 			else if ((newkey & KEYC_MASK_MODIFIERS) == KEYC_CTRL) {
 				newkey &= KEYC_MASK_KEY;
-				if (newkey >= 'A' && newkey <= 'Z')
+				if (newkey == '?')
+					ud.data[0] = 0x7f;
+				else if (newkey >= '@' && newkey <= '_')
 					ud.data[0] = newkey - 0x40;
 				else if (newkey >= 'a' && newkey <= 'z')
 					ud.data[0] = newkey - 0x60;
