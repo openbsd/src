@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.521 2025/11/04 10:47:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.522 2025/11/12 15:17:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1410,6 +1410,13 @@ struct rde_memstats {
 	long long	aset_nmemb;
 	long long	pset_cnt;
 	long long	pset_size;
+	long long	rde_event_loop_count;
+	long long	rde_event_loop_usec;
+	long long	rde_event_io_usec;
+	long long	rde_event_peer_usec;
+	long long	rde_event_ribdump_usec;
+	long long	rde_event_nexthop_usec;
+	long long	rde_event_update_usec;
 };
 
 #define	MRT_FILE_LEN	512

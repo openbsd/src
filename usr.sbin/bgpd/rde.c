@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.661 2025/11/04 15:01:09 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.662 2025/11/12 15:17:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,6 +164,7 @@ rde_main(int debug, int verbose)
 	struct passwd		*pw;
 	struct pollfd		*pfd = NULL;
 	struct rde_mrt_ctx	*mctx, *xmctx;
+	monotime_t		 loop_start, io_end, peer_end, dump_end, nh_end;
 	void			*newp;
 	u_int			 pfd_elms = 0, i, j;
 	int			 timeout;
@@ -223,6 +224,7 @@ rde_main(int debug, int verbose)
 	conf = new_config();
 	log_info("route decision engine ready");
 
+	loop_start = getmonotime();
 	while (rde_quit == 0) {
 		if (pfd_elms < PFD_PIPE_COUNT + rde_mrt_cnt) {
 			if ((newp = reallocarray(pfd,
@@ -266,11 +268,17 @@ rde_main(int debug, int verbose)
 		    nexthop_pending() || rib_dump_pending())
 			timeout = 0;
 
+		rdemem.rde_event_loop_usec +=
+		    monotime_to_usec(monotime_sub(getmonotime(), loop_start));
+
 		if (poll(pfd, i, timeout) == -1) {
 			if (errno == EINTR)
 				continue;
 			fatal("poll error");
 		}
+
+		rdemem.rde_event_loop_count++;
+		loop_start = getmonotime();
 
 		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1) {
 			log_warnx("RDE: Lost connection to parent");
@@ -312,14 +320,37 @@ rde_main(int debug, int verbose)
 			mctx = LIST_NEXT(mctx, entry);
 		}
 
+		io_end = getmonotime();
+		rdemem.rde_event_io_usec +=
+		    monotime_to_usec(monotime_sub(io_end, loop_start));
+
 		peer_foreach(rde_dispatch_imsg_peer, NULL);
 		peer_reaper(NULL);
+
+		peer_end = getmonotime();
+		rdemem.rde_event_peer_usec +=
+		    monotime_to_usec(monotime_sub(peer_end, io_end));
+
 		rib_dump_runner();
+
+		dump_end = getmonotime();
+		rdemem.rde_event_ribdump_usec +=
+		    monotime_to_usec(monotime_sub(dump_end, peer_end));
+
 		nexthop_runner();
+
+		nh_end = getmonotime();
+		rdemem.rde_event_nexthop_usec +=
+		    monotime_to_usec(monotime_sub(nh_end, dump_end));
+
 		if (ibuf_se && imsgbuf_queuelen(ibuf_se) < SESS_MSG_HIGH_MARK) {
 			for (aid = AID_MIN; aid < AID_MAX; aid++)
 				rde_update_queue_runner(aid);
 		}
+
+		rdemem.rde_event_update_usec +=
+		    monotime_to_usec(monotime_sub(getmonotime(), nh_end));
+
 		/* commit pftable once per poll loop */
 		rde_commit_pftable();
 	}

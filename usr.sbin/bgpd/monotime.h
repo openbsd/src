@@ -1,4 +1,4 @@
-/*	$OpenBSD: monotime.h,v 1.1 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: monotime.h,v 1.2 2025/11/12 15:17:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
@@ -69,6 +69,12 @@ monotime_sub(monotime_t minu, monotime_t subt)
 	monotime_t dif;
 	dif.monotime = minu.monotime - subt.monotime;
 	return dif;
+}
+
+static inline long long
+monotime_to_usec(monotime_t mt)
+{
+	return mt.monotime / (MONOTIME_RES / (1000 * 1000ULL));
 }
 
 static inline long long
