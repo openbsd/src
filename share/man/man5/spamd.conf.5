@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.23 2019/09/02 21:18:41 deraadt Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.24 2025/11/12 07:58:16 sthen Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -24,7 +24,7 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 2 2019 $
+.Dd $Mdocdate: November 12 2025 $
 .Dt SPAMD.CONF 5
 .Os
 .Sh NAME
@@ -51,14 +51,14 @@ follows the syntax of configuration databases as documented in
 Here is an example:
 .Bd -literal -offset indent
 all:\e
-	:nixspam:override:myblack:
+	:somelist:override:myblack:
 
-nixspam:\e
+somelist:\e
 	:black:\e
-	:msg="Your address %A is in the nixspam list\en\e
-	See http://www.heise.de/ix/nixspam/dnsbl_en/ for details":\e
+	:msg="Your address %A is in an anti-spam list\en\e
+	See http://www.example.org/dnsbl/ for details":\e
 	:method=https:\e
-	:file=www.openbsd.org/spamd/nixspam.gz
+	:file=www.example.org/spamd/somelist.gz
 
 override:\e
 	:white:\e
@@ -88,13 +88,13 @@ The addresses in such a list are removed from the preceding blacklist.
 In the above example,
 if an address was present in all three lists,
 blacklists
-.Ar nixspam
+.Ar somelist
 and
 .Ar myblack ,
 as well as the exceptions list
 .Ar override ,
 the address would be removed from list
-.Ar nixspam
+.Ar somelist
 by the subsequent
 .Ar override
 list.
@@ -109,7 +109,7 @@ the following configuration
 would be used instead:
 .Bd -literal -offset indent
 all:\e
-	:nixspam:override:myblack:override:
+	:somelist:override:myblack:override:
 .Ed
 .Pp
 The source of the addresses for lists is
