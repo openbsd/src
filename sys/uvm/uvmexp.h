@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.19 2025/03/10 19:52:57 miod Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.20 2025/11/12 12:19:47 mpi Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -48,6 +48,7 @@
  *	L	uvm_lock_pageq
  *	S	uvm_swap_data_lock
  *	p	copy of per-CPU counters, used only by userland.
+ *	o	updated only by the page daemon
  */
 struct uvmexp {
 	/* vm_page constants */
@@ -138,18 +139,18 @@ struct uvmexp {
 	int fltnoup;	/* [p] # of times fault upgrade failed */
 
 	/* daemon counters */
-	int pdwoke;	/* [F] # of times daemon woke up */
-	int pdrevs;	/* number of times daemon scanned for free pages */
-	int pdswout;	/* number of times daemon called for swapout */
-	int pdfreed;	/* number of pages daemon freed since boot */
-	int pdscans;	/* number of pages daemon scanned since boot */
-	int pdanscan;	/* number of anonymous pages scanned by daemon */
-	int pdobscan;	/* number of object pages scanned by daemon */
-	int pdreact;	/* number of pages daemon reactivated since boot */
-	int pdbusy;	/* number of times daemon found a busy page */
-	int pdpageouts;	/* number of times daemon started a pageout */
-	int pdpending;	/* number of times daemon got a pending pagout */
-	int pddeact;	/* number of pages daemon deactivates */
+	int pdwoke;	/* [o] # of times daemon woke up */
+	int pdrevs;	/* [o] # of times daemon scanned for free pages */
+	int pdswout;	/* [o] # of times daemon called for swapout */
+	int pdfreed;	/* [o] # of pages daemon freed since boot */
+	int pdscans;	/* [o] # of pages daemon scanned since boot */
+	int pdanscan;	/* [o] # of anonymous pages scanned by daemon */
+	int pdobscan;	/* [o] # of object pages scanned by daemon */
+	int pdreact;	/* [o] # of pages daemon reactivated since boot */
+	int pdbusy;	/* [o] # of times daemon found a busy page */
+	int pdpageouts;	/* [o] # of times daemon started a pageout */
+	int pdpending;	/* [o] # of times daemon got a pending pagout */
+	int pddeact;	/* [o] # of pages daemon deactivates */
 
 	int unused13;	/* formerly pdrevtext */
 
