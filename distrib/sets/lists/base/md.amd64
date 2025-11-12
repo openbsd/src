@@ -433,6 +433,7 @@
 ./usr/mdec/fdboot
 ./usr/mdec/mbr
 ./usr/mdec/pxeboot
+./usr/mdec/vmboot
 ./usr/sbin/ZZZ
 ./usr/sbin/acpidump
 ./usr/sbin/apm

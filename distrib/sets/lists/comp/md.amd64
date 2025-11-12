@@ -43,6 +43,7 @@
 ./usr/include/amd64/ioctl_fd.h
 ./usr/include/amd64/isa_machdep.h
 ./usr/include/amd64/kcore.h
+./usr/include/amd64/kexec.h
 ./usr/include/amd64/limits.h
 ./usr/include/amd64/loadfile_machdep.h
 ./usr/include/amd64/mpbiosreg.h
