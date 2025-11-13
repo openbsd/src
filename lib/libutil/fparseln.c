@@ -1,4 +1,4 @@
-/*	$OpenBSD: fparseln.c,v 1.8 2023/01/04 13:00:11 jsg Exp $	*/
+/*	$OpenBSD: fparseln.c,v 1.9 2025/11/13 17:42:40 jca Exp $	*/
 /*	$NetBSD: fparseln.c,v 1.7 1999/07/02 15:49:12 simonb Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3],
     int flags)
 {
 	static const char dstr[3] = { '\\', '\\', '#' };
-	char	*buf = NULL, *ptr, *cp, esc, con, nl, com;
+	char	*buf = NULL, *ptr, *cp, esc, con, com;
 	size_t	s, len = 0;
 	int	cnt = 1;
 
@@ -76,12 +76,6 @@ fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3],
 	esc = str[0];
 	con = str[1];
 	com = str[2];
-
-	/*
-	 * XXX: it would be cool to be able to specify the newline character,
-	 * but unfortunately, fgetln does not let us
-	 */
-	nl  = '\n';
 
 	while (cnt) {
 		cnt = 0;
@@ -101,10 +95,10 @@ fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3],
 				}
 		}
 
-		if (s && nl) {		/* Check and eliminate newlines */
+		if (s) {		/* Check and eliminate newlines */
 			cp = &ptr[s - 1];
 
-			if (*cp == nl)
+			if (*cp == '\n')
 				s--;	/* forget newline */
 		}
 
