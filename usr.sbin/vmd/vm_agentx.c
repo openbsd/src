@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_agentx.c,v 1.5 2025/08/13 10:26:31 dv Exp $ */
+/*	$OpenBSD: vm_agentx.c,v 1.6 2025/11/13 22:58:42 martijn Exp $ */
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -121,10 +121,9 @@ vm_agentx_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	/*
 	 * pledge in agentx process
 	 * stdio - for malloc and basic I/O including events.
-	 * recvfd - for the proc fd exchange.
 	 * unix - for access to the agentx master socket.
 	 */
-	if (pledge("stdio recvfd unix", NULL) == -1)
+	if (pledge("stdio unix", NULL) == -1)
 		fatal("pledge");
 }
 
