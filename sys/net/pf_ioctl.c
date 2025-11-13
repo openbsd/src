@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.424 2025/11/11 04:06:20 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.425 2025/11/13 12:30:05 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4059,18 +4059,6 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 	    (from->set_prio[0] > IFQ_MAXPRIO ||
 	    from->set_prio[1] > IFQ_MAXPRIO))
 		return (EINVAL);
-
-	if (from->statelim != PF_STATELIM_ID_NONE) {
-		if (from->statelim < PF_STATELIM_ID_MIN ||
-		    from->statelim > PF_STATELIM_ID_MAX)
-			return (EINVAL);
-	}
-
-	if (from->sourcelim != PF_SOURCELIM_ID_NONE) {
-		if (from->sourcelim < PF_SOURCELIM_ID_MIN ||
-		    from->sourcelim > PF_SOURCELIM_ID_MAX)
-			return (EINVAL);
-	}
 
 	to->src = from->src;
 	to->src.addr.p.tbl = NULL;
