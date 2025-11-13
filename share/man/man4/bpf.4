@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.47 2024/08/15 12:20:20 dlg Exp $
+.\"	$OpenBSD: bpf.4,v 1.48 2025/11/13 10:53:25 deraadt Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: August 15 2024 $
+.Dd $Mdocdate: November 13 2025 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -229,7 +229,6 @@ and
 Use of any other ioctl is denied with error
 .Er EPERM .
 Once a descriptor is locked, it is not possible to unlock it.
-A process with root privileges is not affected by the lock.
 .Pp
 A privileged program can open a
 .Nm
