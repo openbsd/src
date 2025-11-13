@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.111 2025/10/28 15:36:47 jcs Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.112 2025/11/13 23:04:48 jmatthew Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -198,15 +198,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 			printf("%s: unexpected endpoint\n", DEVNAME(sc));
 			return;
 		}
-	}
-
-	/*
-	 * Check that we found an input interrupt endpoint.
-	 * The output interrupt endpoint is optional
-	 */
-	if (sc->sc_iep_addr == -1) {
-		printf("%s: no input interrupt endpoint\n", DEVNAME(sc));
-		return;
 	}
 
 #ifndef SMALL_KERNEL
@@ -575,32 +566,31 @@ uhidev_open(struct uhidev *scd)
 	if (sc->sc_refcnt++)
 		return (0);
 
-	if (sc->sc_isize == 0)
-		return (0);
-
-	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
-
 	/* Set up input interrupt pipe. */
-	DPRINTF(("uhidev_open: isize=%d, ep=0x%02x\n", sc->sc_isize,
-	    sc->sc_iep_addr));
+	if (sc->sc_isize != 0) {
+		sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 
-	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_iep_addr,
-		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_ibuf,
-		  sc->sc_isize, uhidev_intr, USBD_DEFAULT_INTERVAL);
-	if (err != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("uhidopen: usbd_open_pipe_intr failed, "
-		    "error=%d\n", err));
-		error = EIO;
-		goto out1;
-	}
+		DPRINTF(("uhidev_open: isize=%d, ep=0x%02x\n", sc->sc_isize,
+		    sc->sc_iep_addr));
 
-	DPRINTF(("uhidev_open: sc->sc_ipipe=%p\n", sc->sc_ipipe));
+		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_iep_addr,
+			  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_ibuf,
+			  sc->sc_isize, uhidev_intr, USBD_DEFAULT_INTERVAL);
+		if (err != USBD_NORMAL_COMPLETION) {
+			DPRINTF(("uhidopen: usbd_open_pipe_intr failed, "
+			    "error=%d\n", err));
+			error = EIO;
+			goto out1;
+		}
 
-	sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_ixfer == NULL) {
-		DPRINTF(("uhidev_open: couldn't allocate an xfer\n"));
-		error = ENOMEM;
-		goto out1; // xxxx
+		DPRINTF(("uhidev_open: sc->sc_ipipe=%p\n", sc->sc_ipipe));
+
+		sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
+		if (sc->sc_ixfer == NULL) {
+			DPRINTF(("uhidev_open: couldn't allocate an xfer\n"));
+			error = ENOMEM;
+			goto out1; // xxxx
+		}
 	}
 
 	/*
@@ -662,7 +652,8 @@ out3:
 	usbd_close_pipe(sc->sc_opipe);
 out2:
 	/* Abort input pipe */
-	usbd_close_pipe(sc->sc_ipipe);
+	if (sc->sc_ipipe != NULL)
+		usbd_close_pipe(sc->sc_ipipe);
 out1:
 	DPRINTF(("uhidev_open: failed in someway"));
 	free(sc->sc_ibuf, M_USBDEV, sc->sc_isize);
