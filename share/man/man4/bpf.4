@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.48 2025/11/13 10:53:25 deraadt Exp $
+.\"	$OpenBSD: bpf.4,v 1.49 2025/11/13 11:15:35 deraadt Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -189,23 +189,11 @@ returned by
 .Dv BIOCGSTATS .
 .Pp
 .It Dv BIOCLOCK
-This ioctl is designed to prevent the security issues associated
-with an open
+Prevents further changes to the configuration of the
 .Nm
-descriptor in unprivileged programs.
-Even with dropped privileges, an open
-.Nm
-descriptor can be abused by a rogue program to listen on any interface
-on the system, send packets on these interfaces if the descriptor was
-opened read-write and send signals to arbitrary processes using the
-signaling mechanism of
-.Nm bpf .
-By allowing only
+descriptor by only permitting a set of 
 .Dq known safe
-ioctls, the
-.Dv BIOCLOCK
-ioctl prevents this abuse.
-The allowable ioctls are
+ioctls:
 .Dv BIOCFLUSH ,
 .Dv BIOCGBLEN ,
 .Dv BIOCGDIRFILT ,
@@ -226,22 +214,19 @@ The allowable ioctls are
 .Dv TIOCGPGRP ,
 and
 .Dv FIONREAD .
-Use of any other ioctl is denied with error
+All other ioctl operations will be denied with
 .Er EPERM .
-Once a descriptor is locked, it is not possible to unlock it.
 .Pp
-A privileged program can open a
+The purpose of this mechanism is that a privileged program can open a
 .Nm
-device, drop privileges, set the interface, filters and modes on the
-descriptor, and lock it.
-Once the descriptor is locked, the system is safe
-from further abuse through the descriptor.
-Locking a descriptor does not prevent writes.
-If the application does not need to send packets through
-.Nm bpf ,
-it can open the device read-only to prevent writing.
-If sending packets is necessary, a write-filter can be set before locking the
-descriptor to prevent arbitrary packets from being sent out.
+device, drop privileges, set the interface, provide filters and modes,
+and then lock it with
+.Dv BIOCLOCK .
+If the device is opened with write,
+.Dv BIOCLOCK 
+does not prevent writes, so a write filter is probably needed.
+If applied correctly, a bug in a program will not result in the ability to
+see or send unfiltered traffic to the network interface.
 .Pp
 .It Dv BIOCGETIF Fa "struct ifreq *"
 Returns the name of the hardware interface that the file is listening on.
