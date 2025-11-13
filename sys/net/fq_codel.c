@@ -1,4 +1,4 @@
-/* $OpenBSD: fq_codel.c,v 1.17 2025/07/07 02:28:50 jsg Exp $ */
+/* $OpenBSD: fq_codel.c,v 1.18 2025/11/13 20:05:56 bket Exp $ */
 
 /*
  * Copyright (c) 2017 Mike Belopuhov
@@ -17,16 +17,17 @@
  */
 
 /*
- * Codel - The Controlled-Delay Active Queue Management algorithm
- * IETF draft-ietf-aqm-codel-07
+ * K. Nichols, V. Jacobson, A. McGregor and J. Iyengar, Controlled Delay
+ * Active Queue Management, RFC 8289, January 2018
  *
  * Based on the algorithm by Kathleen Nichols and Van Jacobson with
  * improvements from Dave Taht and Eric Dumazet.
  */
 
 /*
- * The FlowQueue-CoDel Packet Scheduler and Active Queue Management
- * IETF draft-ietf-aqm-fq-codel-06
+ * T. Hoeiland-Joergensen, P. McKenney, D. Taht, J. Gettys and E. Dumazet,
+ * The Flow Queue CoDel Packet Scheduler and Active Queue Management
+ * Algorithm, RFC 8290, January 2018
  *
  * Based on the implementation by Rasool Al-Saadi, Centre for Advanced
  * Internet Architectures, Swinburne University of Technology, Melbourne,
@@ -68,6 +69,7 @@ struct codel {
 struct codel_params {
 	int64_t		 target;
 	int64_t		 interval;
+	int64_t		 grace;
 	int		 quantum;
 
 	uint32_t	*intervals;
@@ -80,7 +82,7 @@ void		 codel_enqueue(struct codel *, int64_t, struct mbuf *);
 struct mbuf	*codel_dequeue(struct codel *, struct codel_params *, int64_t,
 		    struct mbuf_list *, uint64_t *, uint64_t *);
 struct mbuf	*codel_commit(struct codel *, struct mbuf *);
-void		 codel_purge(struct codel *, struct mbuf_list *ml);
+void		 codel_purge(struct codel *, struct mbuf_list *);
 
 struct flow {
 	struct codel		 cd;
@@ -112,8 +114,8 @@ struct fqcodel {
 #define FQCF_FIXED_QUANTUM	  0x1
 
 	/* stats */
-	struct fqcodel_pktcntr   xmit_cnt;
-	struct fqcodel_pktcntr 	 drop_cnt;
+	struct fqcodel_pktcntr	 xmit_cnt;
+	struct fqcodel_pktcntr	 drop_cnt;
 };
 
 unsigned int	 fqcodel_idx(unsigned int, const struct mbuf *);
@@ -144,15 +146,15 @@ static const struct ifq_ops fqcodel_ops = {
 	fqcodel_free
 };
 
-const struct ifq_ops * const ifq_fqcodel_ops = &fqcodel_ops;
+const struct ifq_ops *const ifq_fqcodel_ops = &fqcodel_ops;
 
 void		*fqcodel_pf_alloc(struct ifnet *);
 int		 fqcodel_pf_addqueue(void *, struct pf_queuespec *);
 void		 fqcodel_pf_free(void *);
 int		 fqcodel_pf_qstats(struct pf_queuespec *, void *, int *);
 unsigned int	 fqcodel_pf_qlength(void *);
-struct mbuf *	 fqcodel_pf_enqueue(void *, struct mbuf *);
-struct mbuf *	 fqcodel_pf_deq_begin(void *, void **, struct mbuf_list *);
+struct mbuf	*fqcodel_pf_enqueue(void *, struct mbuf *);
+struct mbuf	*fqcodel_pf_deq_begin(void *, void **, struct mbuf_list *);
 void		 fqcodel_pf_deq_commit(void *, struct mbuf *, void *);
 void		 fqcodel_pf_purge(void *, struct mbuf_list *);
 
@@ -172,7 +174,7 @@ static const struct pfq_ops fqcodel_pf_ops = {
 	fqcodel_pf_purge
 };
 
-const struct pfq_ops * const pfq_fqcodel_ops = &fqcodel_pf_ops;
+const struct pfq_ops *const pfq_fqcodel_ops = &fqcodel_pf_ops;
 
 /* Default aggregate queue depth */
 static const unsigned int fqcodel_qlimit = 1024;
@@ -183,9 +185,6 @@ static const unsigned int fqcodel_qlimit = 1024;
 
 /* Delay target, 5ms */
 static const int64_t codel_target = 5000000;
-
-/* Grace period after last drop, 16 100ms intervals */
-static const int64_t codel_grace = 1600000000;
 
 /* First 399 "100 / sqrt(x)" intervals, ns precision */
 static const uint32_t codel_intervals[] = {
@@ -260,8 +259,11 @@ codel_initparams(struct codel_params *cp, unsigned int target,
 	 * initial interval value.
 	 */
 	if (interval > codel_intervals[0]) {
-		/* Select either specified target or 5% of an interval */
-		cp->target = MAX(target, interval / 5);
+		/*
+		 * Select either specified target or 5% of an interval
+		 * (RFC 8289, section 4.3).
+		 */
+		cp->target = MAX(target, interval / 20);
 		cp->interval = interval;
 
 		/* The coefficient is scaled up by a 1000 */
@@ -280,6 +282,9 @@ codel_initparams(struct codel_params *cp, unsigned int target,
 	}
 
 	cp->quantum = quantum;
+
+	/* Grace period for delta reuse (RFC 8289, section 5.5) */
+	cp->grace = 16 * cp->interval;
 }
 
 void
@@ -439,13 +444,10 @@ codel_dequeue(struct codel *cd, struct codel_params *cp, int64_t now,
 			 * start from the initial one.
 			 */
 			delta = cd->drops - cd->ldrops;
-			if (delta > 1) {
-				if (now < cd->next ||
-				    now - cd->next < codel_grace)
-					cd->drops = delta;
-				else
-					cd->drops = 1;
-			} else
+			if (delta > 1 && (now < cd->next ||
+			    now - cd->next < cp->grace))
+				cd->drops = delta;
+			else
 				cd->drops = 1;
 			control_law(cd, cp, now);
 			cd->ldrops = cd->drops;
@@ -549,7 +551,7 @@ fqcodel_enq(struct fqcodel *fqc, struct mbuf *m)
 	 * Check the limit for all queues and remove a packet
 	 * from the longest one.
 	 */
-	if (fqc->qlength >= fqcodel_qlimit) {
+	if (fqc->qlength > fqc->qlimit) {
 		for (i = 0; i < fqc->nflows; i++) {
 			if (codel_backlog(&fqc->flows[i].cd) > backlog) {
 				flow = &fqc->flows[i];
@@ -643,7 +645,7 @@ fqcodel_deq_begin(struct fqcodel *fqc, void **cookiep,
 	now = nsecuptime();
 
 	for (flow = first_flow(fqc, &fq); flow != NULL;
-	     flow = next_flow(fqc, flow, &fq)) {
+	    flow = next_flow(fqc, flow, &fq)) {
 		m = codel_dequeue(&flow->cd, &fqc->cparams, now, &ml,
 		    &fqc->drop_cnt.packets, &fqc->drop_cnt.bytes);
 
