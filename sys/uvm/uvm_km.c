@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.158 2025/11/10 10:35:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.159 2025/11/13 10:55:51 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -312,86 +312,6 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 	pmap_kremove(start, end - start);
 }
 
-/*
- * uvm_km_kmemalloc: lower level kernel memory allocator for malloc()
- *
- * => we map wired memory into the kernel map
- * => NOTE: we can return NULL even if we can wait if there is not enough
- *	free VM space in the map... caller should be prepared to handle
- *	this case.
- * => we return KVA of memory allocated
- * => flags: M_NOWAIT, M_CANFAIL
- * => low, high, are the corresponding parameters to uvm_pglistalloc
- * => flags: ZERO - correspond to uvm_pglistalloc flags
- */
-vaddr_t
-uvm_km_kmemalloc_pla(vsize_t size, int flags, paddr_t low, paddr_t high)
-{
-	vaddr_t kva, loopva;
-	voff_t offset;
-	struct vm_page *pg;
-	struct pglist pgl;
-	int pla_flags = 0;
-
-	/* setup for call */
-	size = round_page(size);
-	kva = vm_map_min(kmem_map);	/* hint */
-
-	/* allocate some virtual space */
-	if (__predict_false(uvm_map(kmem_map, &kva, size, NULL,
-	    UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
-	    MAP_INHERIT_NONE, MADV_RANDOM, 0)) != 0)) {
-		return 0;
-	}
-
-	/*
-	 * now allocate and map in the memory... note that we are the only ones
-	 * whom should ever get a handle on this area of VM.
-	 */
-	TAILQ_INIT(&pgl);
-	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-	if ((flags & M_NOWAIT) || ((flags & M_CANFAIL) &&
-	    uvmexp.swpages - uvmexp.swpgonly <= atop(size)))
-		pla_flags |= UVM_PLA_NOWAIT;
-	else
-		pla_flags |= UVM_PLA_WAITOK;
-	if (uvm_pglistalloc(size, low, high, 0, 0, &pgl, atop(size),
-	    pla_flags) != 0) {
-		/* Failed. */
-		uvm_unmap(kmem_map, kva, kva + size);
-		return (0);
-	}
-
-	offset = 0;
-	loopva = kva;
-	while (loopva != kva + size) {
-		pg = TAILQ_FIRST(&pgl);
-		TAILQ_REMOVE(&pgl, pg, pageq);
-		uvm_pagealloc_pg(pg, NULL, offset, NULL);
-		atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
-		UVM_PAGE_OWN(pg, NULL);
-
-		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
-		    PROT_READ | PROT_WRITE);
-		loopva += PAGE_SIZE;
-		offset += PAGE_SIZE;
-	}
-	KASSERT(TAILQ_EMPTY(&pgl));
-	pmap_update(pmap_kernel());
-
-	return kva;
-}
-
-/*
- * uvm_km_free: free an area of kernel memory
- */
-void
-uvm_km_free(vaddr_t addr, vsize_t size)
-{
-	uvm_unmap(kmem_map, trunc_page(addr), round_page(addr+size));
-}
-
 #if defined(__HAVE_PMAP_DIRECT)
 /*
  * uvm_km_page allocator, __HAVE_PMAP_DIRECT arch
@@ -651,9 +571,10 @@ km_alloc(size_t sz, const struct kmem_va_mode *kv,
 	 * allocations.
 	 */
 	if (kv->kv_singlepage || kp->kp_maxseg == 1) {
-		TAILQ_FOREACH(pg, &pgl, pageq) {
+		while ((pg = TAILQ_FIRST(&pgl)) != NULL) {
+			TAILQ_REMOVE(&pgl, pg, pageq);
 			va = pmap_map_direct(pg);
-			if (pg == TAILQ_FIRST(&pgl))
+			if (sva == 0)
 				sva = va;
 		}
 		return ((void *)sva);
@@ -716,7 +637,8 @@ try_map:
 		}
 	}
 	sva = va;
-	TAILQ_FOREACH(pg, &pgl, pageq) {
+	while ((pg = TAILQ_FIRST(&pgl)) != NULL) {
+		TAILQ_REMOVE(&pgl, pg, pageq);
 		if (kp->kp_pageable)
 			pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pg),
 			    prot, prot | PMAP_WIRED);
