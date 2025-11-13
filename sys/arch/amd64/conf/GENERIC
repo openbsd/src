@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.534 2025/11/01 15:46:40 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.535 2025/11/13 16:48:06 jan Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -534,6 +534,9 @@ em*	at pci?				# Intel Pro/1000 ethernet
 ixgb*	at pci?				# Intel Pro/10Gb ethernet
 ix*	at pci?				# Intel 82598EB 10Gb ethernet
 ixv*	at pci?				# Virtual Function of Intel 82599
+ixl*	at pci?				# Intel Ethernet 700 Series
+iavf*	at pci?				# Intel Ethernet Adaptive VF
+ice*	at pci?				# Intel Ethernet 800 Series
 myx*	at pci?				# Myricom Myri-10G 10Gb ethernet
 oce*	at pci?				# Emulex OneConnect 10Gb ethernet
 txp*	at pci?				# 3com 3CR990
@@ -563,11 +566,8 @@ ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
 bnxt*	at pci?				# Broadcom BCM573xx, BCM574xx
-ixl*	at pci?				# Intel Ethernet 700 Series
 dwqe*	at pci?				# Intel Elkhart Lake Ethernet
-ice*	at pci?				# Intel E810 100GbE
 mcx*	at pci?				# Mellanox ConnectX-4
-iavf*	at pci?				# Intel Ethernet Adaptive VF
 aq*	at pci?				# Aquantia aQtion Ethernet
 igc*	at pci?				# Intel I225 Ethernet
 ngbe*	at pci?				# WangXun WX1860 Ethernet
