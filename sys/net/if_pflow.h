@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.23 2023/12/16 22:16:02 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.24 2025/11/13 17:12:30 chris Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -33,22 +33,26 @@
 
 /* RFC 5102 Information Element Identifiers */
 
-#define PFIX_IE_octetDeltaCount			  1
-#define PFIX_IE_packetDeltaCount		  2
-#define PFIX_IE_protocolIdentifier		  4
-#define PFIX_IE_ipClassOfService		  5
-#define PFIX_IE_sourceTransportPort		  7
-#define PFIX_IE_sourceIPv4Address		  8
-#define PFIX_IE_ingressInterface		 10
-#define PFIX_IE_destinationTransportPort	 11
-#define PFIX_IE_destinationIPv4Address		 12
-#define PFIX_IE_egressInterface			 14
-#define PFIX_IE_flowEndSysUpTime		 21
-#define PFIX_IE_flowStartSysUpTime		 22
-#define PFIX_IE_sourceIPv6Address		 27
-#define PFIX_IE_destinationIPv6Address		 28
-#define PFIX_IE_flowStartMilliseconds		152
-#define PFIX_IE_flowEndMilliseconds		153
+#define PFIX_IE_octetDeltaCount				  1
+#define PFIX_IE_packetDeltaCount			  2
+#define PFIX_IE_protocolIdentifier			  4
+#define PFIX_IE_ipClassOfService			  5
+#define PFIX_IE_sourceTransportPort		 	  7
+#define PFIX_IE_sourceIPv4Address		 	  8
+#define PFIX_IE_ingressInterface		 	 10
+#define PFIX_IE_destinationTransportPort	 	 11
+#define PFIX_IE_destinationIPv4Address		 	 12
+#define PFIX_IE_egressInterface			 	 14
+#define PFIX_IE_flowEndSysUpTime		 	 21
+#define PFIX_IE_flowStartSysUpTime		 	 22
+#define PFIX_IE_sourceIPv6Address		 	 27
+#define PFIX_IE_destinationIPv6Address		 	 28
+#define PFIX_IE_flowStartMilliseconds			152
+#define PFIX_IE_flowEndMilliseconds			153
+#define PFIX_IE_postNATSourceIPv4Address		225
+#define PFIX_IE_postNATDestinationIPv4Address		226
+#define PFIX_IE_postNAPTSourceTransportPort		227
+#define PFIX_IE_postNAPTDestinationTransportPort	228
 
 struct pflow_flow {
 	u_int32_t	src_ip;
@@ -110,6 +114,28 @@ struct pflow_ipfix_tmpl_ipv4 {
 #define PFLOW_IPFIX_TMPL_IPV4_ID 256
 } __packed;
 
+struct pflow_ipfix_tmpl_nat_ipv4 {
+	struct pflow_tmpl_hdr	h;
+	struct pflow_tmpl_fspec src_ip;
+	struct pflow_tmpl_fspec dest_ip;
+	struct pflow_tmpl_fspec if_index_in;
+	struct pflow_tmpl_fspec if_index_out;
+	struct pflow_tmpl_fspec packets;
+	struct pflow_tmpl_fspec octets;
+	struct pflow_tmpl_fspec start;
+	struct pflow_tmpl_fspec finish;
+	struct pflow_tmpl_fspec post_src_ip;
+	struct pflow_tmpl_fspec post_dest_ip;
+	struct pflow_tmpl_fspec post_src_port;
+	struct pflow_tmpl_fspec post_dest_port;
+	struct pflow_tmpl_fspec src_port;
+	struct pflow_tmpl_fspec dest_port;
+	struct pflow_tmpl_fspec tos;
+	struct pflow_tmpl_fspec protocol;
+#define PFLOW_IPFIX_TMPL_NAT_IPV4_FIELD_COUNT 16
+#define PFLOW_IPFIX_TMPL_NAT_IPV4_ID 257
+} __packed;
+
 /* update pflow_clone_create() when changing pflow_ipfix_tmpl_v6 */
 struct pflow_ipfix_tmpl_ipv6 {
 	struct pflow_tmpl_hdr	h;
@@ -126,13 +152,14 @@ struct pflow_ipfix_tmpl_ipv6 {
 	struct pflow_tmpl_fspec	tos;
 	struct pflow_tmpl_fspec	protocol;
 #define PFLOW_IPFIX_TMPL_IPV6_FIELD_COUNT 12
-#define PFLOW_IPFIX_TMPL_IPV6_ID 257
+#define PFLOW_IPFIX_TMPL_IPV6_ID 258
 } __packed;
 
 struct pflow_ipfix_tmpl {
 	struct pflow_set_header	set_header;
-	struct pflow_ipfix_tmpl_ipv4	ipv4_tmpl;
-	struct pflow_ipfix_tmpl_ipv6	ipv6_tmpl;
+	struct pflow_ipfix_tmpl_ipv4		ipv4_tmpl;
+	struct pflow_ipfix_tmpl_nat_ipv4	ipv4_nat_tmpl;
+	struct pflow_ipfix_tmpl_ipv6		ipv6_tmpl;
 } __packed;
 
 struct pflow_ipfix_flow4 {
@@ -144,6 +171,26 @@ struct pflow_ipfix_flow4 {
 	u_int64_t	flow_octets;	/* octetDeltaCount */
 	int64_t		flow_start;	/* flowStartMilliseconds */
 	int64_t		flow_finish;	/* flowEndMilliseconds */
+	u_int16_t	src_port;	/* sourceTransportPort */
+	u_int16_t	dest_port;	/* destinationTransportPort */
+	u_int8_t	tos;		/* ipClassOfService */
+	u_int8_t	protocol;	/* protocolIdentifier */
+	/* XXX padding needed? */
+} __packed;
+
+struct pflow_ipfix_nat_flow4 {
+	u_int32_t	src_ip;		/* sourceIPv4Address*/
+	u_int32_t	dest_ip;	/* destinationIPv4Address */
+	u_int32_t	if_index_in;	/* ingressInterface */
+	u_int32_t	if_index_out;	/* egressInterface */
+	u_int64_t	flow_packets;	/* packetDeltaCount */
+	u_int64_t	flow_octets;	/* octetDeltaCount */
+	int64_t		flow_start;	/* flowStartMilliseconds */
+	int64_t		flow_finish;	/* flowEndMilliseconds */
+	u_int32_t	post_src_ip;	/* postNATSourceIPv4Address */
+	u_int32_t	post_dest_ip;	/* postNATDestinationIPv4Address */
+	u_int16_t	post_src_port;	/* postNAPTSourceTransportPort */
+	u_int16_t	post_dest_port;	/* postNAPTDestinationTransportPort */
 	u_int16_t	src_port;	/* sourceTransportPort */
 	u_int16_t	dest_port;	/* destinationTransportPort */
 	u_int8_t	tos;		/* ipClassOfService */
@@ -187,6 +234,7 @@ struct pflow_softc {
 
 	unsigned int		 sc_count;	/* [m] */
 	unsigned int		 sc_count4;	/* [m] */
+	unsigned int		 sc_count4_nat;	/* [m] */
 	unsigned int		 sc_count6;	/* [m] */
 	unsigned int		 sc_maxcount;	/* [m] */
 	unsigned int		 sc_maxcount4;	/* [m] */
@@ -196,6 +244,7 @@ struct pflow_softc {
 	struct timeout		 sc_tmo;
 	struct timeout		 sc_tmo6;
 	struct timeout		 sc_tmo_tmpl;
+	struct timeout		 sc_tmo_nat;
 	struct mbuf_queue	 sc_outputqueue;
 	struct task		 sc_outputtask;
 	struct socket		*so;		/* [p] */
@@ -207,6 +256,8 @@ struct pflow_softc {
 	struct mbuf		*sc_mbuf;	/* [m] current cumulative
 						    mbuf */
 	struct mbuf		*sc_mbuf6;	/* [m] current cumulative
+						    mbuf */
+	struct mbuf		*sc_mbuf_nat;	/* [m] current cumulative
 						    mbuf */
 	SMR_SLIST_ENTRY(pflow_softc) sc_next;
 };

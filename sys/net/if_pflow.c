@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.111 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.112 2025/11/13 17:12:30 chris Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -89,16 +89,21 @@ int	pflowioctl(struct ifnet *, u_long, caddr_t);
 struct mbuf	*pflow_get_mbuf(struct pflow_softc *, u_int16_t);
 void	pflow_flush(struct pflow_softc *);
 int	pflow_sendout_v5(struct pflow_softc *);
-int	pflow_sendout_ipfix(struct pflow_softc *, sa_family_t);
+int	pflow_sendout_ipfix(struct pflow_softc *, sa_family_t, size_t, u_int16_t);
 int	pflow_sendout_ipfix_tmpl(struct pflow_softc *);
 int	pflow_sendout_mbuf(struct pflow_softc *, struct mbuf *);
 void	pflow_timeout(void *);
 void	pflow_timeout6(void *);
 void	pflow_timeout_tmpl(void *);
+void	pflow_timeout_nat(void *);
 void	copy_flow_data(struct pflow_flow *, struct pflow_flow *,
 	struct pf_state *, struct pf_state_key *, int, int);
 void	copy_flow_ipfix_4_data(struct pflow_ipfix_flow4 *,
 	struct pflow_ipfix_flow4 *, struct pf_state *, struct pf_state_key *,
+	struct pflow_softc *, int, int);
+void	copy_flow_ipfix_nat_4_data(struct pflow_ipfix_nat_flow4 *,
+	struct pflow_ipfix_nat_flow4 *, struct pf_state *,
+	struct pf_state_key *, struct pf_state_key *,
 	struct pflow_softc *, int, int);
 void	copy_flow_ipfix_6_data(struct pflow_ipfix_flow6 *,
 	struct pflow_ipfix_flow6 *, struct pf_state *, struct pf_state_key *,
@@ -106,12 +111,12 @@ void	copy_flow_ipfix_6_data(struct pflow_ipfix_flow6 *,
 int	pflow_pack_flow(struct pf_state *, struct pf_state_key *,
 	struct pflow_softc *);
 int	pflow_pack_flow_ipfix(struct pf_state *, struct pf_state_key *,
-	struct pflow_softc *);
+	struct pf_state_key *, struct pflow_softc *);
 int	export_pflow_if(struct pf_state*, struct pf_state_key *,
-	struct pflow_softc *);
+	struct pf_state_key *, struct pflow_softc *);
 int	copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc);
-int	copy_flow_ipfix_4_to_m(struct pflow_ipfix_flow4 *flow,
-	struct pflow_softc *sc);
+int	copy_flow_ipfix_4_to_m(void *flow, size_t size,
+	    struct pflow_softc *sc, u_int16_t tmpl);
 int	copy_flow_ipfix_6_to_m(struct pflow_ipfix_flow6 *flow,
 	struct pflow_softc *sc);
 
@@ -172,8 +177,8 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	/* ipfix IPv4 template */
 	pflowif->sc_tmpl_ipfix.ipv4_tmpl.h.tmpl_id =
 	    htons(PFLOW_IPFIX_TMPL_IPV4_ID);
-	pflowif->sc_tmpl_ipfix.ipv4_tmpl.h.field_count
-	    = htons(PFLOW_IPFIX_TMPL_IPV4_FIELD_COUNT);
+	pflowif->sc_tmpl_ipfix.ipv4_tmpl.h.field_count =
+	    htons(PFLOW_IPFIX_TMPL_IPV4_FIELD_COUNT);
 	pflowif->sc_tmpl_ipfix.ipv4_tmpl.src_ip.field_id =
 	    htons(PFIX_IE_sourceIPv4Address);
 	pflowif->sc_tmpl_ipfix.ipv4_tmpl.src_ip.len = htons(4);
@@ -210,6 +215,60 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	pflowif->sc_tmpl_ipfix.ipv4_tmpl.protocol.field_id =
 	    htons(PFIX_IE_protocolIdentifier);
 	pflowif->sc_tmpl_ipfix.ipv4_tmpl.protocol.len = htons(1);
+
+	/* ipfix IPv4 NAT template */
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.h.tmpl_id =
+	    htons(PFLOW_IPFIX_TMPL_NAT_IPV4_ID);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.h.field_count =
+	    htons(PFLOW_IPFIX_TMPL_NAT_IPV4_FIELD_COUNT);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.src_ip.field_id =
+	    htons(PFIX_IE_sourceIPv4Address);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.src_ip.len = htons(4);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.dest_ip.field_id =
+	    htons(PFIX_IE_destinationIPv4Address);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.dest_ip.len = htons(4);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.if_index_in.field_id =
+	    htons(PFIX_IE_ingressInterface);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.if_index_in.len = htons(4);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.if_index_out.field_id =
+	    htons(PFIX_IE_egressInterface);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.if_index_out.len = htons(4);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.packets.field_id =
+	    htons(PFIX_IE_packetDeltaCount);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.packets.len = htons(8);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.octets.field_id =
+	    htons(PFIX_IE_octetDeltaCount);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.octets.len = htons(8);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.start.field_id =
+	    htons(PFIX_IE_flowStartMilliseconds);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.start.len = htons(8);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.finish.field_id =
+	    htons(PFIX_IE_flowEndMilliseconds);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.finish.len = htons(8);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.post_src_ip.field_id =
+	    htons(PFIX_IE_postNATSourceIPv4Address);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.post_src_ip.len = htons(4);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.post_dest_ip.field_id =
+	    htons(PFIX_IE_postNATDestinationIPv4Address);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.post_dest_ip.len = htons(4);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.post_src_port.field_id =
+	    htons(PFIX_IE_postNAPTSourceTransportPort);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.post_src_port.len = htons(2);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.post_dest_port.field_id =
+	    htons(PFIX_IE_postNAPTDestinationTransportPort);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.post_dest_port.len = htons(2);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.src_port.field_id =
+	    htons(PFIX_IE_sourceTransportPort);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.src_port.len = htons(2);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.dest_port.field_id =
+	    htons(PFIX_IE_destinationTransportPort);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.dest_port.len = htons(2);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.tos.field_id =
+	    htons(PFIX_IE_ipClassOfService);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.tos.len = htons(1);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.protocol.field_id =
+	    htons(PFIX_IE_protocolIdentifier);
+	pflowif->sc_tmpl_ipfix.ipv4_nat_tmpl.protocol.len = htons(1);
 
 	/* ipfix IPv6 template */
 	pflowif->sc_tmpl_ipfix.ipv6_tmpl.h.tmpl_id =
@@ -270,6 +329,7 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	timeout_set_proc(&pflowif->sc_tmo, pflow_timeout, pflowif);
 	timeout_set_proc(&pflowif->sc_tmo6, pflow_timeout6, pflowif);
 	timeout_set_proc(&pflowif->sc_tmo_tmpl, pflow_timeout_tmpl, pflowif);
+	timeout_set_proc(&pflowif->sc_tmo_nat, pflow_timeout_nat, pflowif);
 
 	task_set(&pflowif->sc_outputtask, pflow_output_process, pflowif);
 
@@ -302,6 +362,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 	timeout_del(&sc->sc_tmo);
 	timeout_del(&sc->sc_tmo6);
 	timeout_del(&sc->sc_tmo_tmpl);
+	timeout_del(&sc->sc_tmo_nat);
 
 	pflow_flush(sc);
 	taskq_del_barrier(net_tq(ifp->if_index), &sc->sc_outputtask);
@@ -618,7 +679,7 @@ int
 pflow_calc_mtu(struct pflow_softc *sc, int mtu, int hdrsz)
 {
 	sc->sc_maxcount4 = (mtu - hdrsz -
-	    sizeof(struct udpiphdr)) / sizeof(struct pflow_ipfix_flow4);
+	    sizeof(struct udpiphdr)) / sizeof(struct pflow_ipfix_nat_flow4);
 	sc->sc_maxcount6 = (mtu - hdrsz -
 	    sizeof(struct udpiphdr)) / sizeof(struct pflow_ipfix_flow6);
 	if (sc->sc_maxcount4 > PFLOW_MAXFLOWS)
@@ -626,7 +687,7 @@ pflow_calc_mtu(struct pflow_softc *sc, int mtu, int hdrsz)
 	if (sc->sc_maxcount6 > PFLOW_MAXFLOWS)
 		sc->sc_maxcount6 = PFLOW_MAXFLOWS;
 	return (hdrsz + sizeof(struct udpiphdr) +
-	    MIN(sc->sc_maxcount4 * sizeof(struct pflow_ipfix_flow4),
+	    MIN(sc->sc_maxcount4 * sizeof(struct pflow_ipfix_nat_flow4),
 	    sc->sc_maxcount6 * sizeof(struct pflow_ipfix_flow6)));
 }
 
@@ -787,6 +848,59 @@ copy_flow_ipfix_4_data(struct pflow_ipfix_flow4 *flow1,
 }
 
 void
+copy_flow_ipfix_nat_4_data(struct pflow_ipfix_nat_flow4 *flow1,
+    struct pflow_ipfix_nat_flow4 *flow2, struct pf_state *st,
+    struct pf_state_key *sk, struct pf_state_key *skw,
+    struct pflow_softc *sc, int src, int dst)
+{
+	flow1->src_ip = sk->addr[src].v4.s_addr;
+	flow1->dest_ip = sk->addr[dst].v4.s_addr;
+	flow2->src_ip = sk->addr[dst].v4.s_addr;
+	flow2->dest_ip = sk->addr[src].v4.s_addr;
+
+	flow1->post_src_ip = skw->addr[src].v4.s_addr;
+	flow1->post_dest_ip = skw->addr[dst].v4.s_addr;
+	flow1->post_src_port = skw->port[src];
+	flow1->post_dest_port = skw->port[dst];
+
+	flow2->post_src_ip = skw->addr[dst].v4.s_addr;
+	flow2->post_dest_ip = skw->addr[src].v4.s_addr;
+	flow2->post_src_port = skw->port[dst];
+	flow2->post_dest_port = skw->port[src];
+
+	flow1->if_index_in = htonl(st->if_index_in);
+	flow1->if_index_out = htonl(st->if_index_out);
+	flow2->if_index_in = htonl(st->if_index_out);
+	flow2->if_index_out = htonl(st->if_index_in);
+
+	flow1->flow_packets = htobe64(st->packets[0]);
+	flow2->flow_packets = htobe64(st->packets[1]);
+	flow1->flow_octets = htobe64(st->bytes[0]);
+	flow2->flow_octets = htobe64(st->bytes[1]);
+
+	/*
+	 * Pretend the flow was created when the machine came up when creation
+	 * is in the future of the last time a package was seen due to pfsync.
+	 */
+	if (st->creation > st->expire)
+		flow1->flow_start = flow2->flow_start = htobe64((gettime() -
+		    getuptime())*1000);
+	else
+		flow1->flow_start = flow2->flow_start = htobe64((gettime() -
+		    (getuptime() - st->creation))*1000);
+	flow1->flow_finish = flow2->flow_finish = htobe64((gettime() -
+	    (getuptime() - st->expire))*1000);
+
+	flow1->src_port = sk->port[src];
+	flow1->dest_port = sk->port[dst];
+	flow2->src_port = sk->port[dst];
+	flow2->dest_port = sk->port[src];
+
+	flow1->protocol = flow2->protocol = sk->proto;
+	flow1->tos = flow2->tos = st->rule.ptr ? st->rule.ptr->tos : 0;
+}
+
+void
 copy_flow_ipfix_6_data(struct pflow_ipfix_flow6 *flow1,
     struct pflow_ipfix_flow6 *flow2, struct pf_state *st,
     struct pf_state_key *sk, struct pflow_softc *sc, int src, int dst)
@@ -829,20 +943,21 @@ int
 export_pflow(struct pf_state *st)
 {
 	struct pflow_softc	*sc = NULL;
-	struct pf_state_key	*sk;
+	struct pf_state_key	*sk, *skw;
 
 	sk = st->key[st->direction == PF_IN ? PF_SK_WIRE : PF_SK_STACK];
+	skw = st->key[st->direction == PF_OUT ? PF_SK_WIRE : PF_SK_STACK];
 
 	SMR_SLIST_FOREACH(sc, &pflowif_list, sc_next) {
 		mtx_enter(&sc->sc_mtx);
 		switch (sc->sc_version) {
 		case PFLOW_PROTO_5:
 			if (sk->af == AF_INET)
-				export_pflow_if(st, sk, sc);
+				export_pflow_if(st, sk, skw, sc);
 			break;
 		case PFLOW_PROTO_10:
 			if (sk->af == AF_INET || sk->af == AF_INET6)
-				export_pflow_if(st, sk, sc);
+				export_pflow_if(st, sk, skw, sc);
 			break;
 		default: /* NOTREACHED */
 			break;
@@ -855,7 +970,7 @@ export_pflow(struct pf_state *st)
 
 int
 export_pflow_if(struct pf_state *st, struct pf_state_key *sk,
-    struct pflow_softc *sc)
+    struct pf_state_key *skw, struct pflow_softc *sc)
 {
 	struct pf_state		 pfs_copy;
 	struct ifnet		*ifp = &sc->sc_if;
@@ -866,7 +981,7 @@ export_pflow_if(struct pf_state *st, struct pf_state_key *sk,
 		return (0);
 
 	if (sc->sc_version == PFLOW_PROTO_10)
-		return (pflow_pack_flow_ipfix(st, sk, sc));
+		return (pflow_pack_flow_ipfix(st, sk, skw, sc));
 
 	/* PFLOW_PROTO_5 */
 	if ((st->bytes[0] < (u_int64_t)PFLOW_MAXBYTES)
@@ -930,30 +1045,45 @@ copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc)
 }
 
 int
-copy_flow_ipfix_4_to_m(struct pflow_ipfix_flow4 *flow, struct pflow_softc *sc)
+copy_flow_ipfix_4_to_m(void *flow, size_t size, struct pflow_softc *sc,
+    u_int16_t tmpl)
 {
 	int		ret = 0;
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
-	if (sc->sc_mbuf == NULL) {
-		if ((sc->sc_mbuf =
-		    pflow_get_mbuf(sc, PFLOW_IPFIX_TMPL_IPV4_ID)) == NULL) {
-			return (ENOBUFS);
+	if (tmpl == PFLOW_IPFIX_TMPL_NAT_IPV4_ID) {
+		if (sc->sc_mbuf_nat == NULL) {
+			if ((sc->sc_mbuf_nat = pflow_get_mbuf(sc, tmpl)) == NULL)
+				return (ENOBUFS);
+			sc->sc_count4_nat = 0;
+			timeout_add_sec(&sc->sc_tmo_nat, PFLOW_TIMEOUT);
 		}
-		sc->sc_count4 = 0;
-		timeout_add_sec(&sc->sc_tmo, PFLOW_TIMEOUT);
+		m_copyback(sc->sc_mbuf_nat, PFLOW_SET_HDRLEN + 
+		    (sc->sc_count4_nat * size), size, flow, M_NOWAIT);
+		pflowstat_inc(pflow_flows);
+		sc->sc_gcounter++;
+		sc->sc_count4_nat++;
+
+		if (sc->sc_count4_nat >= sc->sc_maxcount4)
+			ret = pflow_sendout_ipfix(sc, AF_INET, size, tmpl);
+	} else {
+		if (sc->sc_mbuf == NULL) {
+			if ((sc->sc_mbuf = pflow_get_mbuf(sc, tmpl)) == NULL)
+				return (ENOBUFS);
+			sc->sc_count4 = 0;
+			timeout_add_sec(&sc->sc_tmo, PFLOW_TIMEOUT);
+		}
+		m_copyback(sc->sc_mbuf, PFLOW_SET_HDRLEN + 
+		    (sc->sc_count4 * size), size, flow, M_NOWAIT);
+		pflowstat_inc(pflow_flows);
+		sc->sc_gcounter++;
+		sc->sc_count4++;
+
+		if (sc->sc_count4 >= sc->sc_maxcount4)
+			ret = pflow_sendout_ipfix(sc, AF_INET, size, tmpl);
 	}
-	m_copyback(sc->sc_mbuf, PFLOW_SET_HDRLEN +
-	    (sc->sc_count4 * sizeof(struct pflow_ipfix_flow4)),
-	    sizeof(struct pflow_ipfix_flow4), flow, M_NOWAIT);
-
-	pflowstat_inc(pflow_flows);
-	sc->sc_gcounter++;
-	sc->sc_count4++;
-
-	if (sc->sc_count4 >= sc->sc_maxcount4)
-		ret = pflow_sendout_ipfix(sc, AF_INET);
+    
 	return(ret);
 }
 
@@ -961,6 +1091,7 @@ int
 copy_flow_ipfix_6_to_m(struct pflow_ipfix_flow6 *flow, struct pflow_softc *sc)
 {
 	int		ret = 0;
+	int		size = sizeof(struct pflow_ipfix_flow6);
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
@@ -973,15 +1104,15 @@ copy_flow_ipfix_6_to_m(struct pflow_ipfix_flow6 *flow, struct pflow_softc *sc)
 		timeout_add_sec(&sc->sc_tmo6, PFLOW_TIMEOUT);
 	}
 	m_copyback(sc->sc_mbuf6, PFLOW_SET_HDRLEN +
-	    (sc->sc_count6 * sizeof(struct pflow_ipfix_flow6)),
-	    sizeof(struct pflow_ipfix_flow6), flow, M_NOWAIT);
+	    (sc->sc_count6 * size), size, flow, M_NOWAIT);
 
 	pflowstat_inc(pflow_flows);
 	sc->sc_gcounter++;
 	sc->sc_count6++;
 
 	if (sc->sc_count6 >= sc->sc_maxcount6)
-		ret = pflow_sendout_ipfix(sc, AF_INET6);
+		ret = pflow_sendout_ipfix(sc, AF_INET6, size,
+		    PFLOW_IPFIX_TMPL_IPV6_ID);
 
 	return(ret);
 }
@@ -1013,27 +1144,60 @@ pflow_pack_flow(struct pf_state *st, struct pf_state_key *sk,
 
 int
 pflow_pack_flow_ipfix(struct pf_state *st, struct pf_state_key *sk,
-    struct pflow_softc *sc)
+    struct pf_state_key *skw, struct pflow_softc *sc)
 {
 	struct pflow_ipfix_flow4	 flow4_1, flow4_2;
+	struct pflow_ipfix_nat_flow4	 natflow4_1, natflow4_2;
 	struct pflow_ipfix_flow6	 flow6_1, flow6_2;
 	int				 ret = 0;
+	int				 is_nat;
+
+	is_nat = (sk != skw);
+
 	if (sk->af == AF_INET) {
-		bzero(&flow4_1, sizeof(flow4_1));
-		bzero(&flow4_2, sizeof(flow4_2));
+		if (is_nat) {
+			bzero(&natflow4_1, sizeof(natflow4_1));
+			bzero(&natflow4_2, sizeof(natflow4_2));
 
-		if (st->direction == PF_OUT)
-			copy_flow_ipfix_4_data(&flow4_1, &flow4_2, st, sk, sc,
-			    1, 0);
-		else
-			copy_flow_ipfix_4_data(&flow4_1, &flow4_2, st, sk, sc,
-			    0, 1);
+			if (st->direction == PF_OUT)
+				copy_flow_ipfix_nat_4_data(&natflow4_1,
+				    &natflow4_2, st, sk, skw, sc, 1, 0);
+			else
+				copy_flow_ipfix_nat_4_data(&natflow4_1,
+				    &natflow4_2, st, sk, skw, sc, 0, 1);
 
-		if (st->bytes[0] != 0) /* first flow from state */
-			ret = copy_flow_ipfix_4_to_m(&flow4_1, sc);
+			if (st->bytes[0] != 0) /* first flow from state */
+				ret = copy_flow_ipfix_4_to_m(
+				    (void *)&natflow4_1,
+				    sizeof(natflow4_1), sc,
+				    PFLOW_IPFIX_TMPL_NAT_IPV4_ID);
+			if (st->bytes[1] != 0) /* second flow from state */
+				ret = copy_flow_ipfix_4_to_m(
+				    (void *)&natflow4_2,
+				    sizeof(natflow4_2), sc,
+				    PFLOW_IPFIX_TMPL_NAT_IPV4_ID);
+		} else {
+			bzero(&flow4_1, sizeof(flow4_1));
+			bzero(&flow4_2, sizeof(flow4_2));
 
-		if (st->bytes[1] != 0) /* second flow from state */
-			ret = copy_flow_ipfix_4_to_m(&flow4_2, sc);
+			if (st->direction == PF_OUT)
+				copy_flow_ipfix_4_data(&flow4_1, &flow4_2, st,
+				    sk, sc, 1, 0);
+			else
+				copy_flow_ipfix_4_data(&flow4_1, &flow4_2, st,
+				    sk, sc, 0, 1);
+
+			if (st->bytes[0] != 0) /* first flow from state */
+				ret = copy_flow_ipfix_4_to_m(
+				    (void *)&flow4_1,
+				    sizeof(flow4_1), sc,
+				    PFLOW_IPFIX_TMPL_IPV4_ID);
+			if (st->bytes[1] != 0) /* second flow from state */
+				ret = copy_flow_ipfix_4_to_m(
+				    (void *)&flow4_2,
+				    sizeof(flow4_2), sc,
+				    PFLOW_IPFIX_TMPL_IPV4_ID);
+		}
 	} else if (sk->af == AF_INET6) {
 		bzero(&flow6_1, sizeof(flow6_1));
 		bzero(&flow6_2, sizeof(flow6_2));
@@ -1054,6 +1218,26 @@ pflow_pack_flow_ipfix(struct pf_state *st, struct pf_state_key *sk,
 	return (ret);
 }
 
+void pflow_timeout_nat(void *v)
+{
+	struct pflow_softc	*sc = v;
+
+	mtx_enter(&sc->sc_mtx);
+	switch (sc->sc_version) {
+	case PFLOW_PROTO_5:
+		pflow_sendout_v5(sc);
+		break;
+	case PFLOW_PROTO_10:
+		pflow_sendout_ipfix(sc, AF_INET,
+		    sizeof(struct pflow_ipfix_nat_flow4),
+		    PFLOW_IPFIX_TMPL_NAT_IPV4_ID);
+		break;
+	default: /* NOTREACHED */
+		break;
+	}
+	mtx_leave(&sc->sc_mtx);
+}
+
 void
 pflow_timeout(void *v)
 {
@@ -1065,7 +1249,9 @@ pflow_timeout(void *v)
 		pflow_sendout_v5(sc);
 		break;
 	case PFLOW_PROTO_10:
-		pflow_sendout_ipfix(sc, AF_INET);
+		pflow_sendout_ipfix(sc, AF_INET,
+		    sizeof(struct pflow_ipfix_flow4),
+		    PFLOW_IPFIX_TMPL_IPV4_ID);
 		break;
 	default: /* NOTREACHED */
 		break;
@@ -1079,7 +1265,9 @@ pflow_timeout6(void *v)
 	struct pflow_softc	*sc = v;
 
 	mtx_enter(&sc->sc_mtx);
-	pflow_sendout_ipfix(sc, AF_INET6);
+	pflow_sendout_ipfix(sc, AF_INET6,
+	    sizeof(struct pflow_ipfix_flow6),
+	    PFLOW_IPFIX_TMPL_IPV6_ID);
 	mtx_leave(&sc->sc_mtx);
 }
 
@@ -1102,8 +1290,15 @@ pflow_flush(struct pflow_softc *sc)
 		pflow_sendout_v5(sc);
 		break;
 	case PFLOW_PROTO_10:
-		pflow_sendout_ipfix(sc, AF_INET);
-		pflow_sendout_ipfix(sc, AF_INET6);
+		pflow_sendout_ipfix(sc, AF_INET,
+		    sizeof(struct pflow_ipfix_nat_flow4),
+		    PFLOW_IPFIX_TMPL_NAT_IPV4_ID);
+		pflow_sendout_ipfix(sc, AF_INET,
+		    sizeof(struct pflow_ipfix_flow4),
+		    PFLOW_IPFIX_TMPL_IPV4_ID);
+		pflow_sendout_ipfix(sc, AF_INET6,
+		    sizeof(struct pflow_ipfix_flow6),
+		    PFLOW_IPFIX_TMPL_IPV6_ID);
 		break;
 	default: /* NOTREACHED */
 		break;
@@ -1148,7 +1343,7 @@ pflow_sendout_v5(struct pflow_softc *sc)
 }
 
 int
-pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
+pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af, size_t size, u_int16_t tmpl)
 {
 	struct mbuf			*m;
 	struct pflow_v10_header		*h10;
@@ -1161,14 +1356,23 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 
 	switch (af) {
 	case AF_INET:
-		m = sc->sc_mbuf;
-		timeout_del(&sc->sc_tmo);
-		if (m == NULL)
-			return (0);
-		sc->sc_mbuf = NULL;
-		count = sc->sc_count4;
+		if (tmpl == PFLOW_IPFIX_TMPL_NAT_IPV4_ID) {
+			m = sc->sc_mbuf_nat;
+			timeout_del(&sc->sc_tmo_nat);
+			if (m == NULL)
+				return (0);
+			sc->sc_mbuf_nat = NULL;
+			count = sc->sc_count4_nat;
+		} else {
+			m = sc->sc_mbuf;
+			timeout_del(&sc->sc_tmo);
+			if (m == NULL)
+				return (0);
+			sc->sc_mbuf = NULL;
+			count = sc->sc_count4;
+		}
 		set_length = sizeof(struct pflow_set_header)
-		    + sc->sc_count4 * sizeof(struct pflow_ipfix_flow4);
+		    + count * size;
 		break;
 	case AF_INET6:
 		m = sc->sc_mbuf6;
@@ -1178,7 +1382,7 @@ pflow_sendout_ipfix(struct pflow_softc *sc, sa_family_t af)
 		sc->sc_mbuf6 = NULL;
 		count = sc->sc_count6;
 		set_length = sizeof(struct pflow_set_header)
-		    + sc->sc_count6 * sizeof(struct pflow_ipfix_flow6);
+		    + sc->sc_count6 * size;
 		break;
 	default:
 		unhandled_af(af);
