@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.54 2025/05/11 19:41:05 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.55 2025/11/13 20:59:14 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -138,8 +138,9 @@
 #include <sparc64/dev/fdreg.h>
 #include <sparc64/dev/fdvar.h>
 
-#define FDUNIT(dev)	((minor(dev) / MAXPARTITIONS) / 8)
-#define FDTYPE(dev)	((minor(dev) / MAXPARTITIONS) % 8)
+#define FDUNIT(dev)	((minor(dev) / MAXPARTITIONSUNIT) / 8)
+#define FDTYPE(dev)	((minor(dev) / MAXPARTITIONSUNIT) % 8)
+#define FDPART(dev)	(minor(dev) % MAXPARTITIONSUNIT)
 
 #define	FTC_FLIP \
 	do { \
@@ -959,7 +960,7 @@ fdopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if (fd->sc_dk.dk_openmask == 0)
 		fdgetdisklabel(dev, fd, fd->sc_dk.dk_label, 0);
 
-	pmask = (1 << DISKPART(dev));
+	pmask = (1 << FDPART(dev));
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -980,7 +981,7 @@ int
 fdclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
-	int pmask = (1 << DISKPART(dev));
+	int pmask = (1 << FDPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
@@ -1801,7 +1802,7 @@ fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &fd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
+		    &fd->sc_dk.dk_label->d_partitions[FDPART(dev)];
 		return 0;
 
 	case DIOCWDINFO:

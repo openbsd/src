@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.93 2025/09/17 10:16:09 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.94 2025/11/13 20:59:14 deraadt Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -50,13 +50,25 @@
 #include <sys/uuid.h>
 
 /*
+ * The dev_t split has 64 partitions, but only 52 are visible
+ * and easily useable in userland (a-z and A-Z).
+ * The MD variable MAXPARTITIONS remains 52 (or less).
+ */
+#define	MAXPARTITIONSUNIT	64
+
+/*
+ * Various situations still have structures limited to 16 partitions.
+ */
+#define MAXPARTITIONS16		16
+
+/*
  * Translate between device numbers and major/disk unit/disk partition.
  */
-#define	DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
-#define	DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
+#define	DISKUNIT(dev)	(minor(dev) / MAXPARTITIONSUNIT)
+#define	DISKPART(dev)	(minor(dev) % MAXPARTITIONSUNIT)
 #define	RAW_PART	2	/* 'c' partition */
 #define	DISKMINOR(unit, part) \
-    (((unit) * MAXPARTITIONS) + (part))
+    (((unit) * MAXPARTITIONSUNIT) + (part))
 #define	MAKEDISKDEV(maj, unit, part) \
     (makedev((maj), DISKMINOR((unit), (part))))
 #define	DISKLABELDEV(dev) \
@@ -117,7 +129,7 @@ struct disklabel {
 		u_int8_t p_fstype;	/* filesystem type, see below */
 		u_int8_t p_fragblock;	/* encoded filesystem frag/block */
 		u_int16_t p_cpg;	/* UFS: FS cylinders per group */
-	} d_partitions[MAXPARTITIONS];	/* actually may be more */
+	} d_partitions[MAXPARTITIONSUNIT]; /* maximum 52 in use */
 };
 #endif /* _LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.339 2025/09/17 10:30:10 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.340 2025/11/13 20:59:14 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -892,13 +892,11 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
 		goto exit;
 
-#if MAXPARTITIONS != 16
 	/* XXX temporary to support the transition to more partitions */
 	case O_DIOCGDINFO:
 		/* truncate the buffer, good enough */
-		bcopy(sc->sc_dk.dk_label, addr, O_sizeof_disklabel);
+		bcopy(sc->sc_dk.dk_label, addr, O_disklabel);
 		goto exit;
-#endif
 
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
