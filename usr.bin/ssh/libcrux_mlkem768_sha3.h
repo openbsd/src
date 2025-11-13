@@ -1,4 +1,4 @@
-/*  $OpenBSD: libcrux_mlkem768_sha3.h,v 1.3 2025/11/13 04:56:23 djm Exp $ */
+/*  $OpenBSD: libcrux_mlkem768_sha3.h,v 1.4 2025/11/13 05:13:06 djm Exp $ */
 
 /* Extracted from libcrux revision 026a87ab6d88ad3626b9fbbf3710d1e0483c1849 */
 
@@ -86,6 +86,16 @@ load32_le(uint8_t src[4])
 	    ((uint32_t)(src[2]) << 16) |
 	    ((uint32_t)(src[3]) << 24);
 }
+
+#ifdef MISSING_BUILTIN_POPCOUNT
+static inline unsigned int
+__builtin_popcount(unsigned int num)
+{
+  const int v[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
+  return v[num & 0xf] + v[(num >> 4) & 0xf];
+}
+#endif
+
 /* from libcrux/libcrux-ml-kem/extracts/c_header_only/generated/eurydice_glue.h */
 #pragma once
 

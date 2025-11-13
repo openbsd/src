@@ -1,5 +1,5 @@
 #!/bin/sh
-#       $OpenBSD: mlkem768.sh,v 1.4 2025/11/13 04:56:23 djm Exp $
+#       $OpenBSD: mlkem768.sh,v 1.5 2025/11/13 05:13:06 djm Exp $
 #       Placed in the Public Domain.
 #
 
@@ -104,6 +104,16 @@ load32_le(uint8_t src[4])
 	    ((uint32_t)(src[2]) $LSHIFT 16) |
 	    ((uint32_t)(src[3]) $LSHIFT 24);
 }
+
+#ifdef MISSING_BUILTIN_POPCOUNT
+static inline unsigned int
+__builtin_popcount(unsigned int num)
+{
+  const int v[16] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 };
+  return v[num & 0xf] + v[(num >> 4) & 0xf];
+}
+#endif
+
 _EOF
 
 for i in $FILES; do
@@ -186,7 +196,7 @@ int main(void) {
 	return 0;
 }
 _EOF
-cc -Wall -Wextra -Wno-unused-parameter -o libcrux_mlkem768_sha3_check \
+cc -Wall -Wextra -Wno-unused-parameter -I . -o libcrux_mlkem768_sha3_check \
 	libcrux_mlkem768_sha3_check.c
 ./libcrux_mlkem768_sha3_check
 
