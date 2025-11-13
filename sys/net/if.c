@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.748 2025/11/13 16:20:45 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.749 2025/11/13 23:30:01 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1389,6 +1389,7 @@ if_clone_destroy(const char *name)
 	if (ifc->ifc_destroy == NULL)
 		return (EOPNOTSUPP);
 
+	KERNEL_ASSERT_LOCKED();
 	rw_enter_write(&if_cloners_lock);
 
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
@@ -2732,6 +2733,8 @@ ifconf(caddr_t data)
 	struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
 	int space = ifc->ifc_len, error;
+
+	NET_ASSERT_LOCKED();
 
 	/* If ifc->ifc_len is 0, fill it in with the needed size and return. */
 	if (space == 0) {

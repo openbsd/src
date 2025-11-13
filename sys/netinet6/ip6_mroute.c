@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.155 2025/09/16 09:18:55 florian Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.156 2025/11/13 23:30:01 bluhm Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -1231,6 +1231,8 @@ mrt6_iflookupbymif(mifi_t mifi, unsigned int rtableid)
 {
 	struct mif6	*m6;
 	struct ifnet	*ifp;
+
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)

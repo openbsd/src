@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.274 2025/11/12 11:37:08 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.275 2025/11/13 23:30:01 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1357,6 +1357,8 @@ in6_ifawithscope(struct ifnet *oifp, const struct in6_addr *dst, u_int rdomain,
 		printf("%s: output interface is not specified\n", __func__);
 		return (NULL);
 	}
+
+	NET_ASSERT_LOCKED();
 
 	/* We search for all addresses on all interfaces from the beginning. */
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.188 2025/11/12 11:37:08 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.189 2025/11/13 23:30:01 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -800,6 +800,8 @@ in_broadcast(struct in_addr in, u_int rtableid)
 	struct ifnet *ifn;
 	struct ifaddr *ifa;
 	u_int rdomain;
+
+	NET_ASSERT_LOCKED();
 
 	rdomain = rtable_l2(rtableid);
 

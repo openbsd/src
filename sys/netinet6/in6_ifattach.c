@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.124 2025/07/08 00:47:41 jsg Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.125 2025/11/13 23:30:01 bluhm Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -198,6 +198,8 @@ in6_get_ifid(struct ifnet *ifp0, struct in6_addr *in6)
 	/* first, try to get it from the interface itself */
 	if (in6_get_hw_ifid(ifp0, in6) == 0)
 		return;
+
+	NET_ASSERT_LOCKED();
 
 	/* next, try to get it from some other hardware interface */
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
