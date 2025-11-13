@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.132 2025/09/11 08:21:00 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.133 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -81,8 +81,6 @@ rtype_from_file_extension(const char *fn)
 		return RTYPE_MFT;
 	if (strcasecmp(fn + sz - 4, ".roa") == 0)
 		return RTYPE_ROA;
-	if (strcasecmp(fn + sz - 4, ".gbr") == 0)
-		return RTYPE_GBR;
 	if (strcasecmp(fn + sz - 4, ".sig") == 0)
 		return RTYPE_RSC;
 	if (strcasecmp(fn + sz - 4, ".asa") == 0)
@@ -133,7 +131,6 @@ rtype_from_mftfile(const char *fn)
 	switch (type) {
 	case RTYPE_CER:
 	case RTYPE_CRL:
-	case RTYPE_GBR:
 	case RTYPE_ROA:
 	case RTYPE_ASPA:
 	case RTYPE_SPL:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.172 2025/10/23 05:16:55 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.173 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -737,46 +737,6 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 }
 
 /*
- * Parse a ghostbuster record
- */
-static struct gbr *
-proc_parser_gbr(char *file, const unsigned char *der, size_t len,
-    const struct entity *entp, X509_STORE_CTX *ctx)
-{
-	struct gbr	*gbr;
-	struct cert	*cert = NULL;
-	struct crl	*crl;
-	struct auth	*a;
-	const char	*errstr;
-
-	if ((gbr = gbr_parse(&cert, file, entp->talid, der, len)) == NULL)
-		goto out;
-
-	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
-	if (a == NULL)
-		goto out;
-	crl = crl_get(&crls, a);
-
-	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr)) {
-		warnx("%s: %s", file, errstr);
-		goto out;
-	}
-
-	gbr->talid = a->cert->talid;
-
-	gbr->expires = x509_find_expires(cert->notafter, a, &crls);
-	cert_free(cert);
-
-	return gbr;
-
- out:
-	gbr_free(gbr);
-	cert_free(cert);
-
-	return NULL;
-}
-
-/*
  * Parse an ASPA object
  */
 static struct aspa *
@@ -893,7 +853,6 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 	struct mft	*mft;
 	struct roa	*roa;
 	struct aspa	*aspa;
-	struct gbr	*gbr;
 	struct tak	*tak;
 	struct spl	*spl;
 	struct ibuf	*b;
@@ -1003,15 +962,6 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			if (roa != NULL)
 				roa_buffer(b, roa);
 			roa_free(roa);
-			break;
-		case RTYPE_GBR:
-			file = parse_load_file(entp, &f, &flen);
-			io_str_buffer(b, file);
-			gbr = proc_parser_gbr(file, f, flen, entp, ctx);
-			if (gbr != NULL)
-				mtime = gbr->signtime;
-			io_simple_buffer(b, &mtime, sizeof(mtime));
-			gbr_free(gbr);
 			break;
 		case RTYPE_ASPA:
 			file = parse_load_file(entp, &f, &flen);

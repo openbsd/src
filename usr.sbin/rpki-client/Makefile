@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2025/08/23 09:13:14 job Exp $
+#	$OpenBSD: Makefile,v 1.38 2025/11/13 15:18:53 job Exp $
 
 PROG=	rpki-client
 
@@ -11,7 +11,6 @@ SRCS+=	constraints.c
 SRCS+=	crl.c
 SRCS+=	encoding.c
 SRCS+=	filemode.c
-SRCS+=	gbr.c
 SRCS+=	geofeed.c
 SRCS+=	http.c
 SRCS+=	io.c

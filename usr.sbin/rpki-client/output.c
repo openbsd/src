@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.44 2025/10/31 07:41:36 job Exp $ */
+/*	$OpenBSD: output.c,v 1.45 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -291,12 +291,10 @@ outputheader(FILE *out, struct validation_data *vd, struct stats *st)
 	    " ]\n"
 	    "# Manifests: %u (%u failed parse)\n"
 	    "# Certificate revocation lists: %u\n"
-	    "# Ghostbuster records: %u\n"
 	    "# Repositories: %u\n"
 	    "# VRP Entries: %u (%u unique)\n",
 	    st->repo_tal_stats.mfts, st->repo_tal_stats.mfts_fail,
 	    st->repo_tal_stats.crls,
-	    st->repo_tal_stats.gbrs,
 	    st->repos,
 	    st->repo_tal_stats.vrps, st->repo_tal_stats.vrps_uniqs) < 0)
 		return -1;

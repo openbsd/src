@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.266 2025/10/30 23:18:06 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.267 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -195,7 +195,6 @@ enum rtype {
 	RTYPE_ROA,
 	RTYPE_CER,
 	RTYPE_CRL,
-	RTYPE_GBR,
 	RTYPE_REPO,
 	RTYPE_FILE,
 	RTYPE_RSC,
@@ -360,16 +359,6 @@ struct geofeed {
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* when the signature path expires */
 	int		 valid; /* all resources covered */
-};
-
-/*
- * A single Ghostbuster record
- */
-struct gbr {
-	char		*vcard;
-	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 expires; /* when the signature path expires */
-	int		 talid; /* TAL the GBR is chained up to */
 };
 
 /*
@@ -658,7 +647,6 @@ struct repotalstats {
 	uint32_t	 aspas_invalid; /* ASPAs with invalid customerASID */
 	uint32_t	 brks; /* number of BGPsec Router Key (BRK) certs */
 	uint32_t	 crls; /* revocation lists */
-	uint32_t	 gbrs; /* ghostbuster records */
 	uint32_t	 taks; /* signed TAL objects */
 	uint32_t	 vaps; /* total number of Validated ASPA Payloads */
 	uint32_t	 vaps_uniqs; /* total number of unique VAPs */
@@ -713,7 +701,6 @@ extern ASN1_OBJECT *signedobj_oid;
 extern ASN1_OBJECT *notify_oid;
 extern ASN1_OBJECT *roa_oid;
 extern ASN1_OBJECT *mft_oid;
-extern ASN1_OBJECT *gbr_oid;
 extern ASN1_OBJECT *bgpsec_oid;
 extern ASN1_OBJECT *cnt_type_oid;
 extern ASN1_OBJECT *msg_dgst_oid;
@@ -783,10 +770,6 @@ struct spl	*spl_parse(struct cert **, const char *, int,
 struct spl	*spl_read(struct ibuf *);
 void		 spl_insert_vsps(struct vsp_tree *, struct spl *,
 		    struct repo *);
-
-void		 gbr_free(struct gbr *);
-struct gbr	*gbr_parse(struct cert **, const char *, int,
-		    const unsigned char *, size_t);
 
 void		 geofeed_free(struct geofeed *);
 struct geofeed	*geofeed_parse(struct cert **, const char *, int, char *,
@@ -1011,7 +994,6 @@ void		 cert_print(const struct cert *);
 void		 crl_print(const struct crl *);
 void		 mft_print(const struct cert *, const struct mft *);
 void		 roa_print(const struct cert *, const struct roa *);
-void		 gbr_print(const struct cert *, const struct gbr *);
 void		 rsc_print(const struct cert *, const struct rsc *);
 void		 aspa_print(const struct cert *, const struct aspa *);
 void		 tak_print(const struct cert *, const struct tak *);

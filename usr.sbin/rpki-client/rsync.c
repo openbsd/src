@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.59 2025/08/01 13:46:06 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.60 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -156,7 +156,6 @@ exec_rsync(const char *prog, const char *bind_addr, char *uri, char *dst,
 		args[i++] = "--include=*/";
 		args[i++] = "--include=*.cer";
 		args[i++] = "--include=*.crl";
-		args[i++] = "--include=*.gbr";
 		args[i++] = "--include=*.mft";
 		args[i++] = "--include=*.roa";
 		args[i++] = "--include=*.asa";

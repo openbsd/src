@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.120 2025/10/16 06:46:31 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.121 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -38,7 +38,6 @@ ASN1_OBJECT	*signedobj_oid;	/* 1.3.6.1.5.5.7.48.11 (signedObject) */
 ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
 ASN1_OBJECT	*roa_oid;	/* id-ct-routeOriginAuthz CMS content type */
 ASN1_OBJECT	*mft_oid;	/* id-ct-rpkiManifest CMS content type */
-ASN1_OBJECT	*gbr_oid;	/* id-ct-rpkiGhostbusters CMS content type */
 ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
 ASN1_OBJECT	*cnt_type_oid;	/* pkcs-9 id-contentType */
 ASN1_OBJECT	*msg_dgst_oid;	/* pkcs-9 id-messageDigest */
@@ -85,10 +84,6 @@ static const struct {
 	{
 		.oid = "1.2.840.113549.1.9.16.1.26",
 		.ptr = &mft_oid,
-	},
-	{
-		.oid = "1.2.840.113549.1.9.16.1.35",
-		.ptr = &gbr_oid,
 	},
 	{
 		.oid = "1.3.6.1.5.5.7.3.30",

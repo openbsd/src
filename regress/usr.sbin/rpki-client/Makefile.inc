@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.43 2025/09/10 06:46:58 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.44 2025/11/13 15:18:53 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -7,7 +7,6 @@ CFLAGS += -Werror
 
 PROGS += test-ip
 PROGS += test-cert
-PROGS += test-gbr
 PROGS += test-geofeed
 PROGS += test-mft
 PROGS += test-roa
@@ -61,10 +60,6 @@ SRCS_test-rsc+=	test-rsc.c rsc.c ${TEST_COMMON}
 
 run-regress-test-rsc: test-rsc
 	./test-rsc -v ${.CURDIR}/../rsc/*.sig
-
-SRCS_test-gbr+=	test-gbr.c gbr.c ${TEST_COMMON}
-run-regress-test-gbr: test-gbr
-	./test-gbr -v ${.CURDIR}/../gbr/*.gbr
 
 SRCS_test-geofeed+=	test-geofeed.c geofeed.c ${TEST_COMMON}
 run-regress-test-geofeed: test-geofeed

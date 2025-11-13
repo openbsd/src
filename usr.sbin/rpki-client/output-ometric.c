@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.15 2025/07/08 14:19:21 job Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.16 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -70,8 +70,6 @@ set_common_stats(const struct repotalstats *in, struct ometric *metric,
 	    OKV("type", "state"), OKV("router_key", "valid"), ol);
 	ometric_set_int_with_labels(metric, in->crls,
 	    OKV("type", "state"), OKV("crl", "valid"), ol);
-	ometric_set_int_with_labels(metric, in->gbrs,
-	    OKV("type", "state"), OKV("gbr", "valid"), ol);
 	ometric_set_int_with_labels(metric, in->taks,
 	    OKV("type", "state"), OKV("tak", "valid"), ol);
 

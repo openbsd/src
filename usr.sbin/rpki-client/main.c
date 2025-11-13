@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.301 2025/10/30 23:18:06 job Exp $ */
+/*	$OpenBSD: main.c,v 1.302 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -694,8 +694,6 @@ entity_process(struct ibuf *b, struct validation_data *vd, struct stats *st)
 			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		roa_free(roa);
 		break;
-	case RTYPE_GBR:
-		break;
 	case RTYPE_ASPA:
 		io_read_buf(b, &ok, sizeof(ok));
 		if (ok == 0) {
@@ -816,7 +814,6 @@ sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 	out->aspas_invalid += in->aspas_invalid;
 	out->brks += in->brks;
 	out->crls += in->crls;
-	out->gbrs += in->gbrs;
 	out->taks += in->taks;
 	out->vrps += in->vrps;
 	out->vrps_uniqs += in->vrps_uniqs;
@@ -1603,7 +1600,6 @@ main(int argc, char *argv[])
 	    stats.repo_tal_stats.mfts, stats.repo_tal_stats.mfts_fail,
 	    stats.repo_tal_stats.mfts_gap);
 	printf("Certificate revocation lists: %u\n", stats.repo_tal_stats.crls);
-	printf("Ghostbuster records: %u\n", stats.repo_tal_stats.gbrs);
 	printf("Trust Anchor Keys: %u\n", stats.repo_tal_stats.taks);
 	printf("Repositories: %u\n", stats.repos);
 	printf("New files moved into validated cache: %u\n",

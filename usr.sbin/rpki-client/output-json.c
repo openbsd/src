@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.58 2025/10/30 23:18:06 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.59 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -76,7 +76,6 @@ outputheader_json(struct validation_data *vd, struct stats *st)
 	json_do_int("manifests", st->repo_tal_stats.mfts);
 	json_do_int("failedmanifests", st->repo_tal_stats.mfts_fail);
 	json_do_int("crls", st->repo_tal_stats.crls);
-	json_do_int("gbrs", st->repo_tal_stats.gbrs);
 	json_do_int("repositories", st->repos);
 	json_do_int("vrps", st->repo_tal_stats.vrps);
 	json_do_int("uniquevrps", st->repo_tal_stats.vrps_uniqs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.71 2025/10/23 05:16:55 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.72 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -369,8 +369,6 @@ rtype_from_der(const char *fn, const unsigned char *der, size_t len)
 			rtype = RTYPE_ASPA;
 		else if (OBJ_cmp(obj, mft_oid) == 0)
 			rtype = RTYPE_MFT;
-		else if (OBJ_cmp(obj, gbr_oid) == 0)
-			rtype = RTYPE_GBR;
 		else if (OBJ_cmp(obj, roa_oid) == 0)
 			rtype = RTYPE_ROA;
 		else if (OBJ_cmp(obj, rsc_oid) == 0)
@@ -422,7 +420,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct cert *cert = NULL;
 	struct ccr *ccr = NULL;
 	struct crl *crl = NULL;
-	struct gbr *gbr = NULL;
 	struct geofeed *geofeed = NULL;
 	struct mft *mft = NULL;
 	struct roa *roa = NULL;
@@ -520,15 +517,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		expires = &mft->expires;
 		notbefore = &mft->thisupdate;
 		notafter = &mft->nextupdate;
-		break;
-	case RTYPE_GBR:
-		gbr = gbr_parse(&cert, file, -1, buf, len);
-		if (gbr == NULL)
-			break;
-		aia = cert->aia;
-		expires = &gbr->expires;
-		notbefore = &cert->notbefore;
-		notafter = &cert->notafter;
 		break;
 	case RTYPE_GEOFEED:
 		geofeed = geofeed_parse(&cert, file, -1, buf, len);
@@ -649,9 +637,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		case RTYPE_CER:
 			cert_print(cert);
 			break;
-		case RTYPE_GBR:
-			gbr_print(cert, gbr);
-			break;
 		case RTYPE_GEOFEED:
 			geofeed_print(cert, geofeed);
 			break;
@@ -733,7 +718,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	cert_free(cert);
 	ccr_free(ccr);
 	crl_free(crl);
-	gbr_free(gbr);
 	geofeed_free(geofeed);
 	mft_free(mft);
 	roa_free(roa);

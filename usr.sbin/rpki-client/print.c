@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.70 2025/10/16 06:46:31 job Exp $ */
+/*	$OpenBSD: print.c,v 1.71 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -608,36 +608,6 @@ spl_print(const struct cert *c, const struct spl *s)
 	}
 	if (outformats & FORMAT_JSON)
 		json_do_end();
-}
-
-void
-gbr_print(const struct cert *c, const struct gbr *p)
-{
-	if (outformats & FORMAT_JSON) {
-		json_do_string("type", "gbr");
-		json_do_string("ski", c->ski);
-		x509_print(c->x509);
-		json_do_string("aki", c->aki);
-		json_do_string("aia", c->aia);
-		json_do_string("sia", c->signedobj);
-		json_do_int("signing_time", p->signtime);
-		json_do_int("valid_since", c->notbefore);
-		json_do_int("valid_until", c->notafter);
-		if (p->expires)
-			json_do_int("expires", p->expires);
-		json_do_string("vcard", p->vcard);
-	} else {
-		printf("Subject key identifier:   %s\n", pretty_key_id(c->ski));
-		x509_print(c->x509);
-		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
-		printf("Authority info access:    %s\n", c->aia);
-		printf("Subject info access:      %s\n", c->signedobj);
-		printf("Signing time:             %s\n", time2str(p->signtime));
-		printf("GBR not before:           %s\n",
-		    time2str(c->notbefore));
-		printf("GBR not after:            %s\n", time2str(c->notafter));
-		printf("vcard:\n%s", p->vcard);
-	}
 }
 
 void

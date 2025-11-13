@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.79 2025/08/14 15:12:00 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.80 2025/11/13 15:18:53 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1645,9 +1645,6 @@ repo_stat_inc(struct repo *rp, int talid, enum rtype type, enum stype subtype)
 		break;
 	case RTYPE_CRL:
 		rp->stats[talid].crls++;
-		break;
-	case RTYPE_GBR:
-		rp->stats[talid].gbrs++;
 		break;
 	case RTYPE_TAK:
 		rp->stats[talid].taks++;
