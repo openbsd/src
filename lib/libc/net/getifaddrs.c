@@ -1,4 +1,4 @@
-/*	$OpenBSD: getifaddrs.c,v 1.14 2021/11/29 03:20:37 deraadt Exp $	*/
+/*	$OpenBSD: getifaddrs.c,v 1.15 2025/11/13 10:34:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -25,10 +25,10 @@
  *	BSDI getifaddrs.c,v 2.12 2000/02/23 14:51:59 dab Exp
  */
 
-#include <sys/param.h>	/* ALIGN ALIGNBYTES */
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <sys/sysctl.h>
@@ -38,35 +38,32 @@
 #include <ifaddrs.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 
-#define	SALIGN	(sizeof(long) - 1)
-#define	SA_RLEN(sa)	((sa)->sa_len ? (((sa)->sa_len + SALIGN) & ~SALIGN) : (SALIGN + 1))
+#define roundup(x, y)	((((uintptr_t)(x)+((y)-1))/(y))*(y))
+#define proundup(x, y)  (void *)roundup(x,y)
+
+#define SA_RLEN(sa)	((sa)->sa_len ? \
+			    roundup((sa)->sa_len, sizeof(long)) : \
+			    roundup(1, sizeof(long)))
 
 int
 getifaddrs(struct ifaddrs **pif)
 {
-	int icnt = 1;
-	int dcnt = 0;
-	int ncnt = 0;
-	int mib[6];
+	int icnt = 1, dcnt = 0, ncnt = 0, mib[6], i;
 	size_t needed;
-	char *buf = NULL, *bufp;
-	char *next;
-	struct ifaddrs *cif = 0;
-	char *p, *p0;
+	char *buf = NULL, *bufp, *data, *names, *next, *p, *p0;
+	struct ifaddrs *cif = 0, *ifa, *ift;
 	struct rt_msghdr *rtm;
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
 	struct sockaddr_dl *dl;
 	struct sockaddr *sa;
 	u_short index = 0;
-	size_t len, alen, dlen;
-	struct ifaddrs *ifa, *ift;
-	int i;
-	char *data;
-	char *names;
+	size_t len, alen, dlen, dsize;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -95,6 +92,7 @@ getifaddrs(struct ifaddrs **pif)
 		break;
 	}
 
+	/* Calculate data buffer size */
 	for (next = buf; next < buf + needed; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
@@ -107,10 +105,15 @@ getifaddrs(struct ifaddrs **pif)
 				++icnt;
 				dl = (struct sockaddr_dl *)(next +
 				    rtm->rtm_hdrlen);
-				dcnt += SA_RLEN((struct sockaddr *)dl) +
-					ALIGNBYTES;
-				dcnt += sizeof(ifm->ifm_data);
 				ncnt += dl->sdl_nlen + 1;
+
+				/* sockaddr's need long alignment */
+				dcnt = roundup(dcnt, sizeof(long));
+				dcnt += SA_RLEN((struct sockaddr *)dl);
+
+				/* ifm_data[] needs long long alignment */
+				dcnt = roundup(dcnt, sizeof(long long));
+				dcnt += sizeof(ifm->ifm_data);
 			} else
 				index = 0;
 			break;
@@ -145,6 +148,8 @@ getifaddrs(struct ifaddrs **pif)
 					continue;
 				sa = (struct sockaddr *)p;
 				len = SA_RLEN(sa);
+				/* sockaddr's need long alignment */
+				dcnt = roundup(dcnt, sizeof(long));
 				if (i == RTAX_NETMASK && sa->sa_len == 0)
 					dcnt += alen;
 				else
@@ -155,23 +160,29 @@ getifaddrs(struct ifaddrs **pif)
 		}
 	}
 
-	if (icnt + dcnt + ncnt == 1) {
+	if (icnt + ncnt + dcnt == 1) {
 		*pif = NULL;
 		free(buf);
 		return (0);
 	}
-	data = malloc(sizeof(struct ifaddrs) * icnt + dcnt + ncnt);
+
+	dsize = sizeof(struct ifaddrs) * icnt;
+	dsize += ncnt;
+	dsize = roundup(dsize, sizeof(long long));
+	dsize += dcnt;
+
+	data = calloc(dsize, 1);
 	if (data == NULL) {
 		free(buf);
 		return(-1);
 	}
 
-	ifa = (struct ifaddrs *)data;
+	/* ifaddrs[], names, then if_data[] */
+	ift = ifa = (struct ifaddrs *)data;
 	data += sizeof(struct ifaddrs) * icnt;
-	names = data + dcnt;
-
-	memset(ifa, 0, sizeof(struct ifaddrs) * icnt);
-	ift = ifa;
+	names = data;
+	data += ncnt;
+	data = proundup(data, sizeof(long long));
 
 	index = 0;
 	for (next = buf; next < buf + needed; next += rtm->rtm_msglen) {
@@ -193,19 +204,21 @@ getifaddrs(struct ifaddrs **pif)
 				names[dl->sdl_nlen] = 0;
 				names += dl->sdl_nlen + 1;
 
+				data = proundup(data, sizeof(long));
 				ift->ifa_addr = (struct sockaddr *)data;
 				memcpy(data, dl,
 				    ((struct sockaddr *)dl)->sa_len);
 				data += SA_RLEN((struct sockaddr *)dl);
 
-				/* ifm_data needs to be aligned */
-				ift->ifa_data = data = (void *)ALIGN(data);
+				/* if_data needs long long alignment */
+				data = proundup(data, sizeof(long long));
+				ift->ifa_data = data;
 				dlen = rtm->rtm_hdrlen -
 				    offsetof(struct if_msghdr, ifm_data);
 				if (dlen > sizeof(ifm->ifm_data))
 					dlen = sizeof(ifm->ifm_data);
 				memcpy(data, &ifm->ifm_data, dlen);
- 				data += sizeof(ifm->ifm_data);
+				data += dlen;
 
 				ift = (ift->ifa_next = ift + 1);
 			} else
@@ -245,12 +258,14 @@ getifaddrs(struct ifaddrs **pif)
 				len = SA_RLEN(sa);
 				switch (i) {
 				case RTAX_IFA:
+					data = proundup(data, sizeof(long));
 					ift->ifa_addr = (struct sockaddr *)data;
 					memcpy(data, p, len);
 					data += len;
 					break;
 
 				case RTAX_NETMASK:
+					data = proundup(data, sizeof(long));
 					ift->ifa_netmask =
 					    (struct sockaddr *)data;
 					if (sa->sa_len == 0) {
@@ -263,6 +278,7 @@ getifaddrs(struct ifaddrs **pif)
 					break;
 
 				case RTAX_BRD:
+					data = proundup(data, sizeof(long));
 					ift->ifa_broadaddr =
 					    (struct sockaddr *)data;
 					memcpy(data, p, len);
@@ -276,6 +292,17 @@ getifaddrs(struct ifaddrs **pif)
 			ift = (ift->ifa_next = ift + 1);
 			break;
 		}
+	}
+
+	/* XXX temporary paranoia until we are sure it is bug free */
+	if (dsize != (char *)data - (char *)ifa) {
+		char buf[1024];
+
+                /* <10> is LOG_CRIT */
+		snprintf(buf, sizeof buf,
+		    "<10>%s: getifaddrs: allocated %lu used %lu\n",
+		    __progname, dsize, (char *)data - (char *)ifa);
+		sendsyslog(buf, strlen(buf), LOG_CONS);
 	}
 
 	free(buf);
