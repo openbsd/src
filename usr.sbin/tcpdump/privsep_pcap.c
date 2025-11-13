@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.25 2019/06/28 13:32:51 deraadt Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.26 2025/11/13 20:46:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -202,10 +202,6 @@ pcap_live(const char *device, int snaplen, int promisc, u_int dlt,
 		goto error;
 
 	if (ioctl(fd, BIOCSFILDROP, &fildrop) == -1)
-		goto error;
-
-	/* lock the descriptor */
-	if (ioctl(fd, BIOCLOCK, NULL) == -1)
 		goto error;
 	return (fd);
 

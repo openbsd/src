@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.57 2021/10/24 21:24:19 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.58 2025/11/13 20:46:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -388,7 +388,16 @@ impl_open_bpf(int fd, int *bpfd)
 		    device, strerror(errno));
 	send_fd(fd, *bpfd);
 	must_write(fd, &err, sizeof(int));
-	/* do not close bpfd until filter is set */
+	/*
+	 * The security model is that the bpf descriptor is in both
+	 * processes.  The packet parser process does pledge with only
+	 * "stdio", so it can never issue ioctls and is subject to the
+	 * bpf configuration.  The privsep process uses pledge with
+	 * "bpf", which only allows ioctl BIOCGSTATS. At process
+	 * termination, the parser needs to collect the statistics and
+	 * asks the privsep to perform ioctl BIOCGSTATS.  Therefore it
+	 * is safe for the bpf descriptor to remain open in both processes.
+	 */
 }
 
 static void
@@ -465,6 +474,10 @@ impl_init_done(int fd, int *bpfd)
 	int ret;
 
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_INIT_DONE received");
+
+	/* lock the descriptor */
+	if (ioctl(*bpfd, BIOCLOCK, NULL) == -1)
+		err(1, "BIOCLOCK");
 
 	ret = 0;
 	must_write(fd, &ret, sizeof(ret));
