@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.619 2025/09/25 07:05:11 djm Exp $ */
+/* $OpenBSD: ssh.c,v 1.620 2025/11/13 10:35:14 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1158,11 +1158,6 @@ main(int ac, char **av)
 	if (!valid_hostname(host))
 		fatal("hostname contains invalid characters");
 	options.host_arg = xstrdup(host);
-
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-	ERR_load_crypto_strings();
-#endif
 
 	/* Initialize the command to execute on remote host. */
 	if ((command = sshbuf_new()) == NULL)

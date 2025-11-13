@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.622 2025/08/29 03:50:38 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.623 2025/11/13 10:35:14 dtucker Exp $ */
 /*
  * Copyright (c) 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  * Copyright (c) 2002 Niels Provos.  All rights reserved.
@@ -1413,10 +1413,6 @@ main(int ac, char **av)
 		if ((devnull = dup(devnull)) == -1)
 			fatal("dup %s: %s", _PATH_DEVNULL, strerror(errno));
 	}
-
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-#endif
 
 	/* If requested, redirect the logs to the specified logfile. */
 	if (logfile != NULL) {

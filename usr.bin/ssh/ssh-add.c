@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-add.c,v 1.182 2025/11/06 01:31:11 djm Exp $ */
+/* $OpenBSD: ssh-add.c,v 1.183 2025/11/13 10:35:14 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -806,9 +806,6 @@ main(int argc, char **argv)
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-#endif
 	log_init(__progname, log_level, log_facility, 1);
 
 	setvbuf(stdout, NULL, _IOLBF, 0);

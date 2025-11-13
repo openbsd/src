@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.314 2025/11/07 04:33:52 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.315 2025/11/13 10:35:14 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2216,10 +2216,6 @@ main(int ac, char **av)
 
 	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
 		fatal("%s: getrlimit: %s", __progname, strerror(errno));
-
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-#endif
 
 	while ((ch = getopt(ac, av, "cDdksTuUE:a:O:P:t:")) != -1) {
 		switch (ch) {

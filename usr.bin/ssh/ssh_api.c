@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh_api.c,v 1.32 2024/10/18 05:14:51 djm Exp $ */
+/* $OpenBSD: ssh_api.c,v 1.33 2025/11/13 10:35:14 dtucker Exp $ */
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
  *
@@ -90,9 +90,6 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 	int r;
 
 	if (!called) {
-#ifdef WITH_OPENSSL
-		OpenSSL_add_all_algorithms();
-#endif
 		called = 1;
 	}
 

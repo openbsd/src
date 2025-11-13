@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keysign.c,v 1.78 2025/09/25 06:25:38 djm Exp $ */
+/* $OpenBSD: ssh-keysign.c,v 1.79 2025/11/13 10:35:14 dtucker Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -229,10 +229,6 @@ main(int argc, char **argv)
 	}
 	if (found == 0)
 		fatal("could not open any host key");
-
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-#endif
 
 	found = 0;
 	for (i = 0; i < NUM_KEYTYPES; i++) {

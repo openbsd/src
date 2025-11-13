@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd-session.c,v 1.16 2025/09/25 06:45:50 djm Exp $ */
+/* $OpenBSD: sshd-session.c,v 1.17 2025/11/13 10:35:14 dtucker Exp $ */
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -893,10 +893,6 @@ main(int ac, char **av)
 		if ((devnull = dup(devnull)) == -1)
 			fatal("dup %s: %s", _PATH_DEVNULL, strerror(errno));
 	}
-
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-#endif
 
 	/* If requested, redirect the logs to the specified logfile. */
 	if (logfile != NULL) {
