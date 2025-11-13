@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.527 2025/10/30 12:43:18 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.528 2025/11/13 12:29:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -108,10 +108,24 @@ int
 setup_listeners(u_int *la_cnt)
 {
 	int			 ttl = 255;
-	struct listen_addr	*la;
+	struct listen_addr	*la, *next;
 	u_int			 cnt = 0;
 
-	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+	/* add new listeners */
+	TAILQ_CONCAT(conf->listen_addrs, nconf->listen_addrs, entry);
+
+	TAILQ_FOREACH_SAFE(la, conf->listen_addrs, entry, next) {
+		/* check for and delete no longer used listeners */
+		if (la->reconf == RECONF_NONE) {
+			log_info("not listening on %s any more",
+			    log_sockaddr((struct sockaddr *)
+			    &la->sa, la->sa_len));
+			TAILQ_REMOVE(conf->listen_addrs, la, entry);
+			close(la->fd);
+			free(la);
+			continue;
+		}
+
 		la->reconf = RECONF_NONE;
 		cnt++;
 
@@ -1173,7 +1187,7 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 	struct mrt		*mrt;
 	struct imsgbuf		*i;
 	struct peer		*p;
-	struct listen_addr	*la, *next, nla;
+	struct listen_addr	*la, nla;
 	struct session_dependon	 sdon;
 	struct bgpd_config	 tconf;
 	uint32_t		 peerid;
@@ -1342,25 +1356,8 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 			copy_config(conf, nconf);
 			merge_peers(conf, nconf);
 
-			/* delete old listeners */
-			TAILQ_FOREACH_SAFE(la, conf->listen_addrs, entry,
-			    next) {
-				if (la->reconf == RECONF_NONE) {
-					log_info("not listening on %s any more",
-					    log_sockaddr((struct sockaddr *)
-					    &la->sa, la->sa_len));
-					TAILQ_REMOVE(conf->listen_addrs, la,
-					    entry);
-					close(la->fd);
-					free(la);
-				}
-			}
-
-			/* add new listeners */
-			TAILQ_CONCAT(conf->listen_addrs, nconf->listen_addrs,
-			    entry);
-
 			setup_listeners(listener_cnt);
+
 			free_config(nconf);
 			nconf = NULL;
 			pending_reconf = 0;
