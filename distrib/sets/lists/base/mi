@@ -758,7 +758,7 @@
 ./usr/lib/crtendS.o
 ./usr/lib/gcrt0.o
 ./usr/lib/libagentx.so.1.1
-./usr/lib/libc.so.102.1
+./usr/lib/libc.so.102.2
 ./usr/lib/libcbor.so.2.0
 ./usr/lib/libcrypto.so.57.2
 ./usr/lib/libcurses.so.16.0
@@ -783,7 +783,7 @@
 ./usr/lib/libpanelw.so.7.0
 ./usr/lib/libpcap.so.10.0
 ./usr/lib/libperl.so.26.0
-./usr/lib/libpthread.so.28.0
+./usr/lib/libpthread.so.28.1
 ./usr/lib/libradius.so.2.0
 ./usr/lib/libreadline.so.6.0
 ./usr/lib/librpcsvc.so.3.0
@@ -3167,7 +3167,7 @@
 ./usr/share/relink/usr/bin/ssh-agent
 ./usr/share/relink/usr/bin/ssh-agent/ssh-agent.tar
 ./usr/share/relink/usr/lib
-./usr/share/relink/usr/lib/libc.so.102.1.a
+./usr/share/relink/usr/lib/libc.so.102.2.a
 ./usr/share/relink/usr/lib/libcrypto.so.57.2.a
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a
