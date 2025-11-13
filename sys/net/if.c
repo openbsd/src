@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.747 2025/11/12 10:00:27 hshoexer Exp $	*/
+/*	$OpenBSD: if.c,v 1.748 2025/11/13 16:20:45 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2536,19 +2536,16 @@ ifioctl_get(u_long cmd, caddr_t data)
 		NET_UNLOCK_SHARED();
 		return (error);
 	case SIOCIFGCLONERS:
-		error = if_clone_list((struct if_clonereq *)data);
-		return (error);
+		return (if_clone_list((struct if_clonereq *)data));
 	case SIOCGIFGMEMB:
-		error = if_getgroupmembers(data);
-		return (error);
+		return (if_getgroupmembers(data));
 	case SIOCGIFGATTR:
 		NET_LOCK_SHARED();
 		error = if_getgroupattribs(data);
 		NET_UNLOCK_SHARED();
 		return (error);
 	case SIOCGIFGLIST:
-		error = if_getgrouplist(data);
-		return (error);
+		return (if_getgrouplist(data));
 	}
 
 	KERNEL_LOCK();
