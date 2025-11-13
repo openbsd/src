@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.177 2025/11/04 15:01:09 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.178 2025/11/13 09:45:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -343,21 +343,15 @@ void
 up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
     struct prefix *new, struct prefix *old)
 {
-	struct prefix		*p, *head = NULL;
-	int			all = 0;
+	struct prefix		*p;
 
 	/*
-	 * if old and new are NULL then insert all prefixes from best,
-	 * clearing old routes in the process
+	 * If old and new are NULL then re-insert all prefixes from re,
+	 * use up_generate_addpath() for that.
 	 */
 	if (old == NULL && new == NULL) {
-		/* mark all paths as stale */
-		head = prefix_adjout_first(peer, re->prefix);
-		for (p = head; p != NULL; p = prefix_adjout_next(peer, p))
-			p->flags |= PREFIX_FLAG_STALE;
-
-		new = prefix_best(re);
-		all = 1;
+		up_generate_addpath(peer, re);
+		return;
 	}
 
 	if (new != NULL && !prefix_eligible(new)) {
@@ -366,14 +360,14 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 	}
 
 	if (old != NULL) {
-		/* withdraw stale paths */
+		/* withdraw old path */
 		p = prefix_adjout_get(peer, old->path_id_tx, old->pt);
 		if (p != NULL)
 			prefix_adjout_withdraw(p);
 	}
 
-	/* add new path (or multiple if all is set) */
-	while (new != NULL) {
+	if (new != NULL) {
+		/* add new path */
 		switch (up_process_prefix(peer, new, (void *)-1)) {
 		case UP_OK:
 		case UP_FILTERED:
@@ -382,22 +376,6 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 		case UP_ERR_LIMIT:
 			/* just give up */
 			return;
-		}
-
-		if (!all)
-			break;
-
-		/* only allow valid prefixes */
-		new = TAILQ_NEXT(new, entry.list.rib);
-		if (new == NULL || !prefix_eligible(new))
-			break;
-	}
-
-	if (all) {
-		/* withdraw stale paths */
-		for (p = head; p != NULL; p = prefix_adjout_next(peer, p)) {
-			if (p->flags & PREFIX_FLAG_STALE)
-				prefix_adjout_withdraw(p);
 		}
 	}
 }
