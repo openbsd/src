@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.178 2025/11/13 09:45:16 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.179 2025/11/13 21:43:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -488,7 +488,7 @@ up_get_nexthop(struct rde_peer *peer, struct filterstate *state, uint8_t aid)
 		/*
 		 * per RFC: if remote peer address is equal to the nexthop set
 		 * the nexthop to our local address. This reduces the risk of
-		 * routing loops. This overrides NEXTHOP_NOMODIFY.
+		 * routing loops.
 		 */
 		if (memcmp(&state->nexthop->exit_nexthop,
 		    &peer->remote_addr, sizeof(peer->remote_addr)) == 0) {
