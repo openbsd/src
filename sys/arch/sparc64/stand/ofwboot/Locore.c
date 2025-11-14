@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.18 2023/06/01 17:24:56 krw Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.19 2025/11/14 19:17:13 miod Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -304,7 +304,7 @@ OF_milliseconds(void)
 }
 
 void
-OF_chain(void *virt, u_int size, void (*entry)(), void *arg, u_int len)
+OF_chain(void (*entry)(), void *arg, u_int len)
 {
 	extern int64_t romp;
 

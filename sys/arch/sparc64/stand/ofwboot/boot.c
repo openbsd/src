@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.44 2024/03/26 14:46:48 claudio Exp $	*/
+/*	$OpenBSD: boot.c,v 1.45 2025/11/14 19:17:13 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -201,13 +201,12 @@ chain(u_int64_t pentry, char *args, void *ssym, void *esym)
 	l = sizeof(newargs);
 
 #ifdef DEBUG
-	printf("chain: calling OF_chain(%x, %x, %x, %x, %x)\n",
-	    (void *)RELOC, end - (char *)RELOC, entry, args, l);
+	printf("chain: calling OF_chain(%p, %p, %x)\n",
+	    entry, args, l);
 #endif
 	/* if -D is set then pause in the PROM. */
 	if (debug > 1) OF_enter();
-	OF_chain((void *)RELOC, ((end - (char *)RELOC)+PAGE_SIZE)%PAGE_SIZE,
-	    entry, args, l);
+	OF_chain(entry, args, l);
 	panic("chain");
 }
 

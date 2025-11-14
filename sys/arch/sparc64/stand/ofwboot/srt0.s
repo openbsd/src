@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.s,v 1.7 2022/12/08 01:25:45 guenther Exp $	*/
+/*	$OpenBSD: srt0.s,v 1.8 2025/11/14 19:17:13 miod Exp $	*/
 /*	$NetBSD: srt0.s,v 1.1 2000/08/20 14:58:42 mrg Exp $	*/
 
 /*
@@ -189,12 +189,3 @@ openfirmware:
 	mov	%l7, %g7
 	ret
 	 restore	%o0, %g0, %o0
-
-#if 0
-	.data
-	.align 8
-bootstack:	
-#define STACK_SIZE	0x14000
-	.skip	STACK_SIZE
-ebootstack:			! end (top) of boot stack
-#endif
