@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.87 2025/10/15 17:53:23 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.88 2025/11/14 14:02:01 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -66,8 +66,7 @@ show_vers()dnl <-- now that all files are included, show versions
 dnl
 divert(2)dnl
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-UNITMULT=`sysctl -n kern.maxpartitions`
-[ $UNITMULT == 52 ] && UNITMULT=64
+UNITMULT=64
 T=$0
 
 # set this to echo for Echo-Only debugging
