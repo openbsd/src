@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.5 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.6 2025/11/14 17:31:19 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.3 1994/10/26 05:44:42 cgd Exp $	*/
 
 /*-
@@ -36,23 +36,35 @@
 #include <sys/disklabel.h>
 #include "stand.h"
 
+#define offsetof(s, e) ((size_t)&((s *)0)->e)
+
 char *
 getdisklabel(const char *buf, struct disklabel *lp)
 {
 	struct disklabel *dlp, *elp;
 	char *msg = NULL;
+	size_t lpsz;
 
-	elp = (struct disklabel *)(buf + DEV_BSIZE - sizeof(*dlp));
+	/*
+	 * XXX Only read the old smaller "skinny" label for now which
+	 * has 16 partitions. offsetof() is used to carve struct disklabel.
+	 * Later we'll add code to read and process the "fat" label with
+	 * 52 partitions.
+	 */
+	lpsz = offsetof(struct disklabel, d_partitions[MAXPARTITIONS16]);
+
+	elp = (struct disklabel *)(buf + DEV_BSIZE - lpsz);
 	for (dlp = (struct disklabel *)buf; dlp <= elp;
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
 				msg = "no disk label";
-		} else if (dlp->d_npartitions > MAXPARTITIONS ||
+		} else if (dlp->d_npartitions > MAXPARTITIONS16 ||
 			   dkcksum(dlp) != 0)
 			msg = "disk label corrupted";
 		else {
 			*lp = *dlp;
+			memcpy(lp, dlp, lpsz);
 			msg = NULL;
 			break;
 		}
