@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.54 2025/08/01 14:57:15 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.55 2025/11/14 22:16:15 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -304,7 +304,7 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
 	}
 
 	/*
-	 * Check that there are no CRLS in this CMS message.
+	 * Check that there are no CRLs in this CMS message.
 	 * XXX - can only error check for OpenSSL >= 3.4.
 	 */
 	crls = CMS_get1_crls(cms);
