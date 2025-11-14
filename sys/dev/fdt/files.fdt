@@ -1,9 +1,8 @@
-#	$OpenBSD: files.fdt,v 1.215 2025/09/08 19:31:04 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.216 2025/11/14 12:47:50 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
 
-define	spi {}
 define	spmi {}
 
 device	iicmux: i2cbus
