@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.51 2025/09/24 14:04:04 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.52 2025/11/14 19:34:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -520,9 +520,7 @@ peer_blast_upcall(struct prefix *p, void *ptr)
 {
 	struct rde_peer		*peer;
 
-	if (p->flags & PREFIX_FLAG_DEAD) {
-		/* ignore dead prefixes, they will go away soon */
-	} else if ((p->flags & PREFIX_FLAG_MASK) == 0) {
+	if ((p->flags & PREFIX_FLAG_MASK) == 0) {
 		peer = prefix_peer(p);
 		/* put entries on the update queue if not already on a queue */
 		p->flags |= PREFIX_FLAG_UPDATE;
