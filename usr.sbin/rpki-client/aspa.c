@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.39 2025/08/25 04:13:56 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.40 2025/11/14 08:28:03 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -70,7 +70,7 @@ aspa_parse_providers(const char *fn, struct aspa *aspa,
 		return 0;
 	}
 
-	aspa->providers = calloc(providersz, sizeof(provider));
+	aspa->providers = calloc(providersz, sizeof(aspa->providers[0]));
 	if (aspa->providers == NULL)
 		err(1, NULL);
 
