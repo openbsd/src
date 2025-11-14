@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.40 2025/11/14 08:28:03 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.41 2025/11/14 08:30:22 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -56,7 +56,6 @@ aspa_parse_providers(const char *fn, struct aspa *aspa,
     const STACK_OF(ASN1_INTEGER) *providers)
 {
 	const ASN1_INTEGER	*pa;
-	uint32_t		 provider;
 	size_t			 providersz, i;
 
 	if ((providersz = sk_ASN1_INTEGER_num(providers)) == 0) {
@@ -75,9 +74,9 @@ aspa_parse_providers(const char *fn, struct aspa *aspa,
 		err(1, NULL);
 
 	for (i = 0; i < providersz; i++) {
-		pa = sk_ASN1_INTEGER_value(providers, i);
+		uint32_t provider = 0;
 
-		memset(&provider, 0, sizeof(provider));
+		pa = sk_ASN1_INTEGER_value(providers, i);
 
 		if (!as_id_parse(pa, &provider)) {
 			warnx("%s: ASPA: malformed ProviderAS", fn);
