@@ -2576,8 +2576,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     if (TRI->hasStackRealignment(MF))
       MBBI = FirstCSPop;
     unsigned SEHFrameOffset = calculateSetFPREG(SEHStackAllocAmt);
-    uint64_t LEAAmount =
-        IsWin64Prologue ? SEHStackAllocAmt - SEHFrameOffset : -CSSize;
+    uint64_t LEAAmount = IsWin64Prologue ? SEHStackAllocAmt - SEHFrameOffset
+                                         : -(CSSize + X86FI->getSaveArgSize());
 
     if (X86FI->hasSwiftAsyncContext())
       LEAAmount -= 16;
@@ -2726,7 +2726,7 @@ StackOffset X86FrameLowering::getFrameIndexReference(const MachineFunction &MF,
            "FPDelta isn't aligned per the Win64 ABI!");
   }
 
-  if (FI >= 0)
+  if (FI >= 0 && FrameReg != TRI->getStackRegister())
     Offset -= X86FI->getSaveArgSize();
 
   if (FrameReg == TRI->getFramePtr()) {
