@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.282 2025/09/17 18:54:49 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.283 2025/11/14 11:18:37 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1166,8 +1166,6 @@ disk_detach(struct disk *diskp)
 int
 disk_openpart(struct disk *dk, int part, int fmt, int haslabel)
 {
-	KASSERT(part >= 0 && part < MAXPARTITIONS);
-
 	/* Unless opening the raw partition, check that the partition exists. */
 	if (part != RAW_PART && (!haslabel ||
 	    part >= dk->dk_label->d_npartitions ||
@@ -1191,8 +1189,6 @@ disk_openpart(struct disk *dk, int part, int fmt, int haslabel)
 void
 disk_closepart(struct disk *dk, int part, int fmt)
 {
-	KASSERT(part >= 0 && part < MAXPARTITIONS);
-
 	switch (fmt) {
 	case S_IFCHR:
 		dk->dk_copenmask &= ~(1 << part);
