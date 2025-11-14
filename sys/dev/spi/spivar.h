@@ -1,4 +1,4 @@
-/* $OpenBSD: spivar.h,v 1.2 2021/10/31 15:12:00 kettenis Exp $ */
+/* $OpenBSD: spivar.h,v 1.3 2025/11/14 01:55:07 jcs Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -14,6 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _DEV_SPI_SPIVAR_H_
+#define _DEV_SPI_SPIVAR_H_
 
 struct spi_config {
 	int		 sc_cs;
@@ -54,3 +57,5 @@ struct spi_attach_args {
 	(*(sc)->sc_acquire_bus)((sc)->sc_cookie, (flags))
 #define	spi_release_bus(sc, flags)					\
 	(*(sc)->sc_release_bus)((sc)->sc_cookie, (flags))
+
+#endif /* _DEV_SPI_SPIVAR_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_pci.c,v 1.32 2025/08/21 03:03:52 jsg Exp $ */
+/* $OpenBSD: dwiic_pci.c,v 1.33 2025/11/14 01:55:07 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  * PCI attachment
@@ -24,19 +24,9 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/lpssreg.h>
 
 #include <dev/ic/dwiicvar.h>
-
-/* 13.3: I2C Additional Registers Summary */
-#define LPSS_RESETS		0x204
-#define  LPSS_RESETS_I2C	(1 << 0) | (1 << 1)
-#define  LPSS_RESETS_IDMA	(1 << 2)
-#define LPSS_ACTIVELTR		0x210
-#define LPSS_IDLELTR		0x214
-#define LPSS_CAPS		0x2fc
-#define  LPSS_CAPS_NO_IDMA	(1 << 8)
-#define  LPSS_CAPS_TYPE_SHIFT	4
-#define  LPSS_CAPS_TYPE_MASK	(0xf << LPSS_CAPS_TYPE_SHIFT)
 
 int		dwiic_pci_match(struct device *, void *, void *);
 void		dwiic_pci_attach(struct device *, struct device *, void *);
@@ -232,7 +222,7 @@ dwiic_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* un-reset - page 958 */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPSS_RESETS,
-	    (LPSS_RESETS_I2C | LPSS_RESETS_IDMA));
+	    (LPSS_RESETS_FUNC | LPSS_RESETS_IDMA));
 
 #if NACPI > 0
 	/* fetch timing parameters from ACPI, if possible */
@@ -308,7 +298,7 @@ dwiic_pci_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		DELAY(10000);	/* 10 msec */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPSS_RESETS,
-		    (LPSS_RESETS_I2C | LPSS_RESETS_IDMA));
+		    (LPSS_RESETS_FUNC | LPSS_RESETS_IDMA));
 		DELAY(10000);	/* 10 msec */
 		break;
 	}

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.747 2025/11/11 11:33:25 hshoexer Exp $
+#	$OpenBSD: files,v 1.748 2025/11/14 01:55:07 jcs Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -20,6 +20,7 @@ define	radiobus {}
 define	i2cbus {}
 define	gpiobus {}
 define	onewirebus {}
+define	spi {}
 define	video {}
 define	intrmap {}
 define	fdt {[early = 0]}
@@ -565,6 +566,10 @@ device	qcscm
 # UFS HC
 device	ufshci: scsi
 file	dev/ic/ufshci.c			ufshci needs-flag
+
+# Intel LPSS SPI controller
+device	ispi: spi
+file	dev/ic/ispi.c			ispi
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk

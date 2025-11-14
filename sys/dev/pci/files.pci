@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.370 2025/11/01 15:46:40 kettenis Exp $
+#	$OpenBSD: files.pci,v 1.371 2025/11/14 01:55:07 jcs Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -896,6 +896,10 @@ file	dev/pci/ufshci_pci.c		ufshci_pci
 device	nhi
 attach	nhi at pci
 file	dev/pci/nhi.c			nhi
+
+# Intel LPSS SPI controller
+attach	ispi at pci with ispi_pci
+file	dev/pci/ispi_pci.c		ispi_pci
 
 include "dev/pci/files.agp"
 include "dev/pci/drm/files.drm"

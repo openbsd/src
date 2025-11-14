@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.535 2025/11/13 16:48:06 jan Exp $
+#	$OpenBSD: GENERIC,v 1.536 2025/11/14 01:55:07 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -205,6 +205,9 @@ wskbd*	at icc? mux 1
 
 skgpio0 at isa? port 0x680	# Soekris net6501 GPIO and LEDs
 gpio* at skgpio?
+
+ispi*	at acpi?		# Intel LPSS SPI controller
+ispi*	at pci?
 
 #option PCMCIAVERBOSE
 

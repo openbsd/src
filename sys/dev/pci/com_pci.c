@@ -1,4 +1,4 @@
-/* $OpenBSD: com_pci.c,v 1.4 2024/05/24 06:02:53 jsg Exp $ */
+/* $OpenBSD: com_pci.c,v 1.5 2025/11/14 01:55:07 jcs Exp $ */
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -22,43 +22,12 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/lpssreg.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
 #define com_usr 31	/* Synopsys DesignWare UART */
-
-/* Intel Low Power Subsystem */
-#define LPSS_CLK		0x200
-#define  LPSS_CLK_GATE			(1 << 0)
-#define  LPSS_CLK_MDIV_SHIFT		1
-#define  LPSS_CLK_MDIV_MASK		0x3fff
-#define  LPSS_CLK_NDIV_SHIFT		16
-#define  LPSS_CLK_NDIV_MASK		0x3fff
-#define  LPSS_CLK_UPDATE		(1U << 31)
-#define LPSS_RESETS		0x204
-#define  LPSS_RESETS_FUNC		(3 << 0)
-#define  LPSS_RESETS_IDMA		(1 << 2)
-#define LPSS_ACTIVELTR		0x210
-#define LPSS_IDLELTR		0x214
-#define  LPSS_LTR_VALUE_MASK		(0x3ff << 0)
-#define  LPSS_LTR_SCALE_MASK		(0x3 << 10)
-#define  LPSS_LTR_SCALE_1US		(2 << 10)
-#define  LPSS_LTR_SCALE_32US		(3 << 10)
-#define  LPSS_LTR_REQ			(1 << 15)
-#define LPSS_SSP		0x220
-#define  LPSS_SSP_DIS_DMA_FIN		(1 << 0)
-#define LPSS_REMAP_ADDR		0x240
-#define LPSS_CAPS		0x2fc
-#define  LPSS_CAPS_TYPE_I2C		(0 << 4)
-#define  LPSS_CAPS_TYPE_UART		(1 << 4)
-#define  LPSS_CAPS_TYPE_SPI		(2 << 4)
-#define  LPSS_CAPS_TYPE_MASK		(0xf << 4)
-#define  LPSS_CAPS_NO_IDMA		(1 << 8)
-
-#define LPSS_REG_OFF		0x200
-#define LPSS_REG_SIZE		0x100
-#define LPSS_REG_NUM		(LPSS_REG_SIZE / sizeof(uint32_t))
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc.sc_iot, (sc)->sc.sc_ioh, (reg)))
@@ -135,7 +104,8 @@ com_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
 		caps = HREAD4(sc, LPSS_CAPS);
-		if ((caps & LPSS_CAPS_TYPE_MASK) != LPSS_CAPS_TYPE_UART) {
+		if (((caps & LPSS_CAPS_TYPE_MASK) >> LPSS_CAPS_TYPE_SHIFT) !=
+		    LPSS_CAPS_TYPE_UART) {
 			bus_space_unmap(sc->sc.sc_iot, sc->sc.sc_ioh,
 			    sc->sc_ios);
 			printf(": not a UART\n");

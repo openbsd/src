@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.138 2025/09/20 17:43:28 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.139 2025/11/14 01:55:07 jcs Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -313,6 +313,8 @@ void	 acpi_unmap(struct acpi_mem_map *);
 int	 acpi_bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	     bus_space_handle_t *);
 void	 acpi_bus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+
+struct aml_node *acpi_pci_match(struct device *, struct pci_attach_args *);
 
 struct	 bios_attach_args;
 int	 acpi_probe(struct device *, struct cfdata *, struct bios_attach_args *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.454 2025/09/20 17:43:28 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.455 2025/11/14 01:55:07 jcs Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -62,7 +62,6 @@ struct pool acpiwqpool;
 
 #define ACPIEN_RETRIES 15
 
-struct aml_node *acpi_pci_match(struct device *, struct pci_attach_args *);
 pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 void	 acpi_pci_set_powerstate(pci_chipset_tag_t, pcitag_t, int, int);
 int	acpi_pci_notify(struct aml_node *, int, void *);
