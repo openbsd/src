@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2025/11/10 16:29:08 tb Exp $
+# $OpenBSD: Makefile,v 1.7 2025/11/14 05:11:09 tb Exp $
 
 EOPENSSL =	eopenssl35
 
@@ -15,7 +15,7 @@ build-check:
 	${MAKE} -C ${.CURDIR}/build
 
 sanity: build-check
-	${.OBJDIR}/build/rpki-client -f ${.CURDIR}/../mft/*.mft
+	${MAKE} -C ${.CURDIR}/build sanity
 
 REGRESS_TARGETS += build-check
 REGRESS_TARGETS += sanity

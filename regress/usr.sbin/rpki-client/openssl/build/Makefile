@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2025/11/11 09:15:53 anton Exp $
+# $OpenBSD: Makefile,v 1.3 2025/11/14 05:11:09 tb Exp $
 
 EOPENSSL =	eopenssl35
 EOPENSSL_PATH = /usr/local/lib/${EOPENSSL35}/
@@ -17,7 +17,10 @@ CFLAGS +=	-DOPENSSL_SUPPRESS_DEPRECATED
 
 .include	"${.CURDIR}/../../../../../usr.sbin/rpki-client/Makefile"
 
+sanity: all
+	./rpki-client -f ${.CURDIR}/../../mft/*.mft
 .else
 all:
+sanity:
 	@echo SKIPPED: test depends on openssl--%3.5 and libretls
 .endif
