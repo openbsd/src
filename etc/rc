@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.587 2025/10/21 15:55:35 deraadt Exp $
+#	$OpenBSD: rc,v 1.588 2025/11/14 10:08:10 jca Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -609,6 +609,9 @@ echo clearing /tmp
 # Create Unix sockets directories for X if needed and make sure they have
 # correct permissions.
 [[ -d /usr/X11R6/lib ]] && mkdir -m 1777 /tmp/.{X11,ICE}-unix
+
+# Create parent directory for XDG_RUNTIME_DIR
+mkdir -p -m 755 /tmp/run/user
 
 [[ -f /etc/rc.securelevel ]] && sh /etc/rc.securelevel
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.46 2022/12/27 17:10:06 jmc Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.47 2025/11/14 10:08:10 jca Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -566,6 +566,64 @@ gsetrl(login_cap_t *lc, int what, char *name, int type)
 	return (0);
 }
 
+/*
+ * Setup XDG_RUNTIME_DIR unless we encounter an error. Inability to
+ * create the directory is not a fatal error.
+ */
+static int
+setxdgenv(uid_t uid, struct passwd *pwd)
+{
+	char rundir[PATH_MAX];
+	struct stat sb;
+	int fd = -1;
+	int flags;
+	int ret = 0;
+
+	snprintf(rundir, sizeof(rundir), "/tmp/run/user/%u", uid);
+
+	if (mkdir(rundir, S_IRUSR|S_IWUSR|S_IXUSR) == -1 && errno != EEXIST) {
+		syslog(LOG_ERR, "could not create %s: %m", rundir);
+		goto cleanup;
+	}
+
+	fd = open(rundir, O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC|O_CLOFORK);
+	if (fd == -1)  {
+		syslog(LOG_ERR, "could not open %s: %m", rundir);
+		goto cleanup;
+	}
+	if (fstat(fd, &sb) == -1) {
+		syslog(LOG_ERR, "could not stat %s: %m", rundir);
+		goto cleanup;
+	}
+	if ((sb.st_mode & ALLPERMS) != (S_IRUSR|S_IWUSR|S_IXUSR)) {
+		syslog(LOG_ERR, "WARNING: wrong permissions %o on %s, "
+		    "ignoring", (sb.st_mode & ALLPERMS), rundir);
+		goto cleanup;
+	}
+	if (sb.st_uid == 0 && sb.st_gid == 0) {
+		if (fchown(fd, uid, pwd->pw_gid) == -1) {
+			syslog(LOG_ERR, "could not chown %s: %m", rundir);
+			goto cleanup;
+		}
+	} else if (sb.st_uid != uid || sb.st_gid != pwd->pw_gid) {
+		syslog(LOG_ERR, "WARNING: wrong ownership "
+		    "%u:%u on %s, ignoring",
+		    sb.st_uid, sb.st_gid, rundir);
+		goto cleanup;
+	}
+
+	if (login_setenv("XDG_RUNTIME_DIR", rundir, pwd, 0) != 0) {
+		syslog(LOG_ERR, "could not set XDG_RUNTIME_DIR: %m");
+		ret = -1;
+	}
+
+cleanup:
+	if (fd != -1)
+		close(fd);
+
+	return ret;
+}
+
 int
 setclasscontext(char *class, u_int flags)
 {
@@ -666,6 +724,14 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 			login_close(flc);
 			return (-1);
 		}
+
+	if ((flags & LOGIN_SETXDGENV) && !login_getcapbool(lc, "noxdg", 0)) {
+		if (setxdgenv(uid, pwd) == -1) {
+			/* Error logged in setxdgenv(). */
+			login_close(lc);
+			return (-1);
+		}
+	}
 
 	if (flags & LOGIN_SETUSER) {
 		if (setresuid(uid, uid, uid) == -1) {
