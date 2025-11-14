@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.58 2025/11/13 20:46:39 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.59 2025/11/14 21:47:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -476,7 +476,7 @@ impl_init_done(int fd, int *bpfd)
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_INIT_DONE received");
 
 	/* lock the descriptor */
-	if (ioctl(*bpfd, BIOCLOCK, NULL) == -1)
+	if (*bpfd != -1 && ioctl(*bpfd, BIOCLOCK, NULL) == -1)
 		err(1, "BIOCLOCK");
 
 	ret = 0;
