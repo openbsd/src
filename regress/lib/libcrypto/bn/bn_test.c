@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.24 2025/11/15 16:26:00 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.25 2025/11/15 16:30:10 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,9 @@
  *
  */
 
+#include <inttypes.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -474,7 +476,7 @@ test_div(BIO *bp, BN_CTX *ctx)
 static void
 print_word(BIO *bp, BN_ULONG w)
 {
-	BIO_printf(bp, BN_HEX_FMT1, w);
+	BIO_printf(bp, "%" PRIX64, (uint64_t)w);
 }
 
 int
