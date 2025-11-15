@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.140 2025/11/14 18:13:58 mvs Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.141 2025/11/15 00:07:22 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -254,7 +254,6 @@ struct ifaddr {
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* [N] list of addresses for
 					    interface */
-	TAILQ_ENTRY(ifaddr) ifa_tmplist;/* [T] temporary list */
 	u_int	ifa_flags;		/* interface flags, see below */
 	struct	refcnt ifa_refcnt;	/* number of `rt_ifa` references */
 	int	ifa_metric;		/* cost of going out this interface */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.750 2025/11/14 18:13:58 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.751 2025/11/15 00:07:22 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2532,7 +2532,10 @@ ifioctl_get(u_long cmd, caddr_t data)
 
 	switch(cmd) {
 	case SIOCGIFCONF:
-		return (ifconf(data));
+		NET_LOCK_SHARED();
+		error = ifconf(data);
+		NET_UNLOCK_SHARED();
+		return (error);
 	case SIOCIFGCLONERS:
 		return (if_clone_list((struct if_clonereq *)data));
 	case SIOCGIFGMEMB:
@@ -2750,52 +2753,31 @@ ifconf(caddr_t data)
 					space += sizeof(ifr);
 				}
 		}
-		NET_UNLOCK_SHARED();
 		ifc->ifc_len = space;
 		return (0);
 	}
 
-	TAILQ_INIT(&if_tmplist);
-	TAILQ_INIT(&addr_tmplist);
-
 	ifrp = ifc->ifc_req;
 	memset(&ifr, 0, sizeof(ifr));
-
-	rw_enter_write(&if_tmplist_lock);
-	NET_LOCK_SHARED();
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
-		if_ref(ifp);
-		TAILQ_INSERT_TAIL(&if_tmplist, ifp, if_tmplist);
-	}
-	NET_UNLOCK_SHARED();
-
-	TAILQ_FOREACH(ifp, &if_tmplist, if_tmplist) {
 		if (space < sizeof(ifr))
-			goto free;
+			break;
 		memcpy(ifr.ifr_name, ifp->if_xname, IFNAMSIZ);
-
-		NET_LOCK_SHARED();
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			ifaref(ifa);
-			TAILQ_INSERT_TAIL(&addr_tmplist, ifa, ifa_tmplist);
-		}
-		NET_UNLOCK_SHARED();
-
-		if (TAILQ_EMPTY(&addr_tmplist)) {
+		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
 			    sizeof(ifr));
 			if (error)
-				goto free;
+				return (error);
 
 			space -= sizeof(ifr);
 			ifrp++;
-		} else {
-			TAILQ_FOREACH(ifa, &addr_tmplist, ifa_tmplist) {
+		} else
+			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				struct sockaddr *sa = ifa->ifa_addr;
 
 				if (space < sizeof(ifr))
-					goto free;
+					goto out;
 				if (sa->sa_len <= sizeof(*sa)) {
 					memset(&ifr.ifr_addr, 0,
 					    sizeof(ifr.ifr_addr));
@@ -2803,7 +2785,7 @@ ifconf(caddr_t data)
 					error = copyout((caddr_t)&ifr,
 					    (caddr_t)ifrp, sizeof (ifr));
 					if (error)
-						goto free;
+						return (error);
 
 					space -= sizeof(ifr);
 					ifrp++;
@@ -2812,45 +2794,27 @@ ifconf(caddr_t data)
 					    sa->sa_len;
 
 					if (space < total)
-						goto free;
+						goto out;
 					error = copyout((caddr_t)&ifr,
 					    (caddr_t)ifrp,
 					    sizeof(ifr.ifr_name));
 					if (error)
-						goto free;
+						return (error);
 					error = copyout((caddr_t)sa,
 					    (caddr_t)&ifrp->ifr_addr,
 					    sa->sa_len);
 					if (error)
-						goto free;
+						return (error);
 
 					space -= total;
 					ifrp = (struct ifreq *)(
 					    (caddr_t)ifrp + total);
 				}
 			}
-		}
-
-		while((ifa = TAILQ_FIRST(&addr_tmplist))) {
-			TAILQ_REMOVE(&addr_tmplist, ifa, ifa_tmplist);
-			ifafree(ifa);
-		}
 	}
-
-free:
-	while((ifa = TAILQ_FIRST(&addr_tmplist))) {
-		TAILQ_REMOVE(&addr_tmplist, ifa, ifa_tmplist);
-		ifafree(ifa);
-	}
-	while ((ifp = TAILQ_FIRST(&if_tmplist))) {
-		TAILQ_REMOVE(&if_tmplist, ifp, if_tmplist);
-		if_put(ifp);
-	}
-	rw_exit_write(&if_tmplist_lock);
-
-	if (error == 0)
-		ifc->ifc_len -= space;
-	return (error);
+out:
+	ifc->ifc_len -= space;
+	return (0);
 }
 
 void
