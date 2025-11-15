@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.23 2025/02/12 21:22:15 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.24 2025/11/15 16:26:00 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -474,17 +474,6 @@ test_div(BIO *bp, BN_CTX *ctx)
 static void
 print_word(BIO *bp, BN_ULONG w)
 {
-#ifdef SIXTY_FOUR_BIT
-	if (sizeof(w) > sizeof(unsigned long)) {
-		unsigned long h = (unsigned long)(w >> 32), l = (unsigned long)(w);
-
-		if (h)
-			BIO_printf(bp, "%lX%08lX", h, l);
-		else
-			BIO_printf(bp, "%lX", l);
-		return;
-	}
-#endif
 	BIO_printf(bp, BN_HEX_FMT1, w);
 }
 
