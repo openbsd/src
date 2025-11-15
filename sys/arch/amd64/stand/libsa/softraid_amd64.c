@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_amd64.c,v 1.9 2025/09/17 20:23:58 deraadt Exp $	*/
+/*	$OpenBSD: softraid_amd64.c,v 1.10 2025/11/15 19:00:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -575,7 +575,7 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 	/* Read the disklabel. */
 	sr_strategy(bv, F_READ,
 	    start * (bv->sbv_secsize / DEV_BSIZE) + DOS_LABELSECTOR,
-	    sizeof(struct disklabel), buf, NULL);
+	    sizeof(buf), buf, NULL);
 
 #ifdef BIOS_DEBUG
 	printf("sr_getdisklabel: magic %lx\n",
