@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.74 2025/03/04 01:01:25 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.75 2025/11/16 02:20:08 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -255,6 +255,8 @@ struct bpf_hdr {
 #define		BPF_LSH		0x60
 #define		BPF_RSH		0x70
 #define		BPF_NEG		0x80
+#define		BPF_MOD		0x90
+#define		BPF_XOR		0xa0
 #define		BPF_JA		0x00
 #define		BPF_JEQ		0x10
 #define		BPF_JGT		0x20

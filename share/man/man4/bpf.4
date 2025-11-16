@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.49 2025/11/13 11:15:35 deraadt Exp $
+.\"	$OpenBSD: bpf.4,v 1.50 2025/11/16 02:20:08 dlg Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: November 13 2025 $
+.Dd $Mdocdate: November 16 2025 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -773,6 +773,12 @@ A <- A * k
 .Sm on
 A <- A / k
 .Sm off
+.It Xo Dv BPF_ALU No + BPF_MOD No +
+.Dv BPF_K
+.Xc
+.Sm on
+A <- A % k
+.Sm off
 .It Xo Dv BPF_ALU No + BPF_AND No +
 .Dv BPF_K
 .Xc
@@ -784,6 +790,12 @@ A <- A & k
 .Xc
 .Sm on
 A <- A | k
+.Sm off
+.It Xo Dv BPF_ALU No + BPF_XOR No +
+.Dv BPF_K
+.Xc
+.Sm on
+A <- A ^ k
 .Sm off
 .It Xo Dv BPF_ALU No + BPF_LSH No +
 .Dv BPF_K
@@ -821,6 +833,12 @@ A <- A * X
 .Sm on
 A <- A / X
 .Sm off
+.It Xo Dv BPF_ALU No + BPF_MOD No +
+.Dv BPF_X
+.Xc
+.Sm on
+A <- A % X
+.Sm off
 .It Xo Dv BPF_ALU No + BPF_AND No +
 .Dv BPF_X
 .Xc
@@ -832,6 +850,12 @@ A <- A & X
 .Xc
 .Sm on
 A <- A | X
+.Sm off
+.It Xo Dv BPF_ALU No + BPF_XOR No +
+.Dv BPF_X
+.Xc
+.Sm on
+A <- A ^ X
 .Sm off
 .It Xo Dv BPF_ALU No + BPF_LSH No +
 .Dv BPF_X
