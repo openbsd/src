@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: unbound,v 1.9 2024/10/09 15:42:56 kn Exp $
+# $OpenBSD: unbound,v 1.10 2025/11/16 13:27:50 kn Exp $
 
 daemon="/usr/sbin/unbound"
 daemon_flags="-c /var/unbound/etc/unbound.conf"
@@ -8,13 +8,19 @@ daemon_flags="-c /var/unbound/etc/unbound.conf"
 . /etc/rc.d/rc.subr
 
 rc_pre() {
-	local _anchor=$(/usr/sbin/unbound-checkconf -o auto-trust-anchor-file)
+	local _anchor _config _opt
+
+	while getopts :c: _opt $daemon_flags; do
+		[[ $_opt == c ]] && _config=$OPTARG
+	done
+
+	_anchor=$($daemon-checkconf -o auto-trust-anchor-file $_config)
 
 	if [[ -n $_anchor && ! -f $_anchor ]]; then
-		/usr/sbin/unbound-anchor -v
+		$daemon-anchor -v -a $_anchor
 	fi
 
-	/usr/sbin/unbound-checkconf
+	$daemon-checkconf $_config
 }
 
 rc_cmd $1
