@@ -306,6 +306,7 @@
 ./usr/include/dev/ic/iha.h
 ./usr/include/dev/ic/imxiicvar.h
 ./usr/include/dev/ic/iosfvar.h
+./usr/include/dev/ic/ispivar.h
 ./usr/include/dev/ic/lancereg.h
 ./usr/include/dev/ic/lancevar.h
 ./usr/include/dev/ic/lemacreg.h
@@ -626,6 +627,7 @@
 ./usr/include/dev/pci/ixgb_ids.h
 ./usr/include/dev/pci/ixgbe.h
 ./usr/include/dev/pci/ixgbe_type.h
+./usr/include/dev/pci/lpssreg.h
 ./usr/include/dev/pci/mpiireg.h
 ./usr/include/dev/pci/neoreg.h
 ./usr/include/dev/pci/pccbbreg.h
