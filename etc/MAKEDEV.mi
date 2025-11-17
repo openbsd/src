@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.89 2025/11/16 13:48:21 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.90 2025/11/17 14:22:24 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -72,6 +72,15 @@ T=$0
 
 # set this to echo for Echo-Only debugging
 [ "$eo" ] || eo=
+
+# Find all the disk device-names which already exist
+finddisks()
+{
+	local mode x name
+	ls -n *a | while read mode x x x x x x x x name; do
+		[[ $mode = b* ]] && echo ${name%a}
+	done
+}
 
 hex()
 {
@@ -213,7 +222,7 @@ show_devs()dnl
 dnl
 divert(9)dnl
 redodisks)
-	R `find /dev -type b -name "*a" | sed -e 's/^.dev.\(.*\)a/\1/'`
+	R `finddisks`
 	;;
 
 *)
