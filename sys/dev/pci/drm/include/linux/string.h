@@ -73,8 +73,10 @@ memdup_array_user(const void *src, size_t nemb, size_t size)
 	if (p == NULL)
 		return ERR_PTR(-ENOMEM);
 
-	if (copyin(src, p, nemb * size) != 0)
+	if (copyin(src, p, nemb * size) != 0) {
+		free(p, M_DRM, nemb * size);
 		return ERR_PTR(-EFAULT);
+	}
 	return (p);
 }
 
