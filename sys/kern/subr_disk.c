@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.283 2025/11/14 11:18:37 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.284 2025/11/17 14:27:43 jsg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -889,7 +889,7 @@ setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_int64_t openmask)
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
-		if ((openmask & (1 << i)) &&
+		if ((openmask & (1ULL << i)) &&
 		    (DL_GETPOFFSET(npp) != DL_GETPOFFSET(opp) ||
 		    DL_GETPSIZE(npp) < DL_GETPSIZE(opp)))
 			return (EBUSY);
@@ -1175,10 +1175,10 @@ disk_openpart(struct disk *dk, int part, int fmt, int haslabel)
 	/* Ensure the partition doesn't get changed under our feet. */
 	switch (fmt) {
 	case S_IFCHR:
-		dk->dk_copenmask |= (1 << part);
+		dk->dk_copenmask |= (1ULL << part);
 		break;
 	case S_IFBLK:
-		dk->dk_bopenmask |= (1 << part);
+		dk->dk_bopenmask |= (1ULL << part);
 		break;
 	}
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
@@ -1191,10 +1191,10 @@ disk_closepart(struct disk *dk, int part, int fmt)
 {
 	switch (fmt) {
 	case S_IFCHR:
-		dk->dk_copenmask &= ~(1 << part);
+		dk->dk_copenmask &= ~(1ULL << part);
 		break;
 	case S_IFBLK:
-		dk->dk_bopenmask &= ~(1 << part);
+		dk->dk_bopenmask &= ~(1ULL << part);
 		break;
 	}
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;

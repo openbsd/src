@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.340 2025/11/13 20:59:14 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.341 2025/11/17 14:27:43 jsg Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1227,7 +1227,8 @@ sdsize(dev_t dev)
 	struct disklabel		*lp;
 	struct sd_softc			*sc;
 	daddr_t				 size;
-	int				 part, omask;
+	int				 part;
+	uint64_t			 omask;
 
 	sc = sdlookup(DISKUNIT(dev));
 	if (sc == NULL)
@@ -1238,7 +1239,7 @@ sdsize(dev_t dev)
 	}
 
 	part = DISKPART(dev);
-	omask = sc->sc_dk.dk_openmask & (1 << part);
+	omask = sc->sc_dk.dk_openmask & (1ULL << part);
 
 	if (omask == 0 && sdopen(dev, 0, S_IFBLK, NULL) != 0) {
 		size = -1;

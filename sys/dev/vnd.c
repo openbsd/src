@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.182 2025/09/15 10:33:03 krw Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.183 2025/11/17 14:27:43 jsg Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -555,7 +555,7 @@ fail:
 		 * partition are open.
 		 */
 		part = DISKPART(dev);
-		pmask = (1 << part);
+		pmask = (1ULL << part);
 		if ((sc->sc_dk.dk_openmask & ~pmask) ||
 		    ((sc->sc_dk.dk_bopenmask & pmask) &&
 		    (sc->sc_dk.dk_copenmask & pmask))) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdcf.c,v 1.10 2024/05/20 23:13:33 jsg Exp $	*/
+/*	$OpenBSD: amdcf.c,v 1.11 2025/11/17 14:27:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007, Juniper Networks, Inc.
@@ -559,15 +559,16 @@ amdcfsize(dev_t dev)
 {
 	struct amdcf_softc *sc;
 	struct disklabel *lp;
-	int part, omask;
+	int part;
 	daddr_t size;
+	uint64_t omask;
 
 	sc = amdcflookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return (-1);
 
 	part = DISKPART(dev);
-	omask = sc->sc_dk.dk_openmask & (1 << part);
+	omask = sc->sc_dk.dk_openmask & (1ULL << part);
 
 	if (omask == 0 && amdcfopen(dev, 0, S_IFBLK, NULL) != 0) {
 		size = -1;

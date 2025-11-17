@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcf.c,v 1.36 2024/05/20 23:13:33 jsg Exp $ */
+/*	$OpenBSD: octcf.c,v 1.37 2025/11/17 14:27:43 jsg Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -627,8 +627,9 @@ octcfsize(dev_t dev)
 {
 	struct octcf_softc *wd;
 	struct disklabel *lp;
-	int part, omask;
+	int part;
 	daddr_t size;
+	uint64_t omask;
 
 	OCTCFDEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
@@ -637,7 +638,7 @@ octcfsize(dev_t dev)
 		return (-1);
 
 	part = DISKPART(dev);
-	omask = wd->sc_dk.dk_openmask & (1 << part);
+	omask = wd->sc_dk.dk_openmask & (1ULL << part);
 
 	if (omask == 0 && octcfopen(dev, 0, S_IFBLK, NULL) != 0) {
 		size = -1;
