@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.215 2025/10/23 19:06:10 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.216 2025/11/17 16:06:09 miod Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -20,9 +20,9 @@ GCC4_ARCH=alpha hppa m88k sh sparc64
 LLD_ARCH=aarch64 amd64 arm i386 powerpc powerpc64 riscv64
 LLDB_ARCH=aarch64 amd64
 
-# m88k: ?
-PIE_ARCH=aarch64 alpha amd64 arm hppa i386 mips64 mips64el powerpc powerpc64 riscv64 sh sparc64
-STATICPIE_ARCH=aarch64 alpha amd64 arm hppa i386 mips64 mips64el powerpc powerpc64 riscv64 sh sparc64
+# Can't use ${CLANG_ARCH} ${GCC4_ARCH} below because of sparc64
+PIE_ARCH=aarch64 alpha amd64 arm hppa i386 m88k mips64 mips64el powerpc powerpc64 riscv64 sh sparc64
+STATICPIE_ARCH=${PIE_ARCH}
 
 .for _arch in ${MACHINE_ARCH}
 .if !empty(GCC4_ARCH:M${_arch})
