@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.2 2025/10/30 18:23:30 jca Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.3 2025/11/17 00:49:13 deraadt Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.11 2005/12/11 12:19:00 christos Exp $	*/
 
 /*-
@@ -75,6 +75,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/pledge.h>
