@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.83 2025/11/10 06:21:03 dlg Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.84 2025/11/17 05:49:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -59,13 +59,8 @@ extern int ncpusfound;
 
 #ifdef MULTIPROCESSOR
 
-#include <sys/percpu.h> /* CACHELINESIZE */
 #include <sys/mplock.h>
 struct __mp_lock kernel_lock;
-
-#ifdef __USE_MI_MUTEX
-static void mtx_init_parking(void);
-#endif /* __USE_MI_MUTEX */
 
 /*
  * Functions for manipulating the kernel_lock.  We put them here
@@ -76,9 +71,6 @@ void
 _kernel_lock_init(void)
 {
 	__mp_lock_init(&kernel_lock);
-#ifdef __USE_MI_MUTEX
-	mtx_init_parking();
-#endif /* __USE_MI_MUTEX */
 }
 
 /*
@@ -247,108 +239,48 @@ __mp_lock_held(struct __mp_lock *mpl, struct cpu_info *ci)
 void
 __mtx_init(struct mutex *mtx, int wantipl)
 {
-	mtx->mtx_owner = 0;
+	mtx->mtx_owner = NULL;
 	mtx->mtx_wantipl = wantipl;
 	mtx->mtx_oldipl = IPL_NONE;
 }
 
 #ifdef MULTIPROCESSOR
-struct mtx_waiter {
-	struct mutex		*mtx;
-	volatile unsigned int	 wait;
-	TAILQ_ENTRY(mtx_waiter)	 entry;
-};
-
-TAILQ_HEAD(mtx_waitlist, mtx_waiter);
-
-struct mtx_park {
-	struct cpu_info		*volatile lock;
-	struct mtx_waitlist	 waiters;
-} __aligned(CACHELINESIZE);
-
-#define MTX_PARKING_BITS	7
-#define MTX_PARKING_LOTS	(1 << MTX_PARKING_BITS)
-#define MTX_PARKING_MASK	(MTX_PARKING_LOTS - 1)
-
-static struct mtx_park mtx_parking[MTX_PARKING_LOTS];
-
-static void
-mtx_init_parking(void)
-{
-	size_t i;
-
-	for (i = 0; i < nitems(mtx_parking); i++) {
-		struct mtx_park *p = &mtx_parking[i];
-
-		p->lock = NULL;
-		TAILQ_INIT(&p->waiters);
-	}
-}
-
-#ifdef DDB
 void
-mtx_print_parks(void)
+mtx_enter(struct mutex *mtx)
 {
-	size_t i;
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	unsigned int i, ncycle = CPU_MIN_BUSY_CYCLES;
+#ifdef MP_LOCKDEBUG
+	long nticks = __mp_lock_spinout;
+#endif
 
-	for (i = 0; i < nitems(mtx_parking); i++) {
-		struct mtx_park *p = &mtx_parking[i];
-		struct mtx_waiter *w;
+	WITNESS_CHECKORDER(MUTEX_LOCK_OBJECT(mtx),
+	    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
 
-		db_printf("park %zu @ %p lock %p\n", i, p, p->lock);
-		TAILQ_FOREACH(w, &p->waiters, entry) {
-			db_printf("\twaiter mtx %p wait %u\n",
-			    w->mtx, w->wait);
-		}
+	spc->spc_spinning++;
+	while (mtx_enter_try(mtx) == 0) {
+		do {
+			/* Busy loop with exponential backoff. */
+			for (i = ncycle; i > 0; i--)
+				CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+			if ((nticks -= ncycle) <= 0) {
+				db_printf("%s: %p lock spun out\n", __func__, mtx);
+				db_enter();
+				nticks = __mp_lock_spinout;
+			}
+#endif
+			if (ncycle < CPU_MAX_BUSY_CYCLES)
+				ncycle += ncycle;
+		} while (mtx->mtx_owner != NULL);
 	}
-}
-#endif /* DDB */
-
-static struct mtx_park *
-mtx_park(struct mutex *mtx)
-{
-	unsigned long addr = (unsigned long)mtx;
-	addr >>= 6;
-	addr ^= addr >> MTX_PARKING_BITS;
-	addr &= MTX_PARKING_MASK;
-
-	return &mtx_parking[addr];
-}
-
-static unsigned long
-mtx_enter_park(struct mtx_park *p)
-{
-	struct cpu_info *ci = curcpu();
-	struct cpu_info *owner;
-	unsigned long m;
-
-	m = intr_disable();
-	while ((owner = atomic_cas_ptr(&p->lock, NULL, ci)) != NULL)
-		CPU_BUSY_CYCLE();
-	membar_enter_after_atomic();
-
-	return (m);
-}
-
-static void
-mtx_leave_park(struct mtx_park *p, unsigned long m)
-{
-	membar_exit();
-	p->lock = NULL;
-	intr_restore(m);
-}
-
-static inline unsigned long
-mtx_cas(struct mutex *mtx, unsigned long e, unsigned long v)
-{
-	return atomic_cas_ulong(&mtx->mtx_owner, e, v);
+	spc->spc_spinning--;
 }
 
 int
 mtx_enter_try(struct mutex *mtx)
 {
-	struct cpu_info *ci = curcpu();
-	unsigned long owner, self = (unsigned long)ci;
+	struct cpu_info *owner, *ci = curcpu();
 	int s;
 
 	/* Avoid deadlocks after panic or in DDB */
@@ -358,185 +290,39 @@ mtx_enter_try(struct mutex *mtx)
 	if (mtx->mtx_wantipl != IPL_NONE)
 		s = splraise(mtx->mtx_wantipl);
 
-	owner = mtx_cas(mtx, 0, self);
-	if (owner == 0) {
-		membar_enter_after_atomic();
-		if (mtx->mtx_wantipl != IPL_NONE)
-			mtx->mtx_oldipl = s;
+	/*
+	 * Avoid unconditional atomic operation to prevent cache line
+	 * contention.
+	 */
+	owner = mtx->mtx_owner;
 #ifdef DIAGNOSTIC
-		ci->ci_mutex_level++;
+	if (__predict_false(owner == ci))
+		panic("mtx %p: locking against myself", mtx);
 #endif
-		WITNESS_LOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
-		return (1);
+	if (owner == NULL) {
+		owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
+		if (owner == NULL) {
+			membar_enter_after_atomic();
+			if (mtx->mtx_wantipl != IPL_NONE)
+				mtx->mtx_oldipl = s;
+#ifdef DIAGNOSTIC
+			ci->ci_mutex_level++;
+#endif
+			WITNESS_LOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
+			return (1);
+		}
 	}
 
 	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(s);
-
-#ifdef DIAGNOSTIC
-	if (__predict_false((owner & ~1UL) == self))
-		panic("mtx %p: locking against myself", mtx);
-#endif
 
 	return (0);
 }
-
+#else
 void
 mtx_enter(struct mutex *mtx)
 {
 	struct cpu_info *ci = curcpu();
-	struct schedstate_percpu *spc = &ci->ci_schedstate;
-	unsigned long owner, self = (unsigned long)ci;
-	struct mtx_park *p;
-	struct mtx_waiter w;
-	unsigned long m;
-	int spins = 0;
-	int s;
-#ifdef MP_LOCKDEBUG
-	long nticks = __mp_lock_spinout;
-#endif
-
-	/* Avoid deadlocks after panic or in DDB */
-	if (panicstr || db_active)
-		return;
-
-	WITNESS_CHECKORDER(MUTEX_LOCK_OBJECT(mtx),
-	    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
-
-	if (mtx->mtx_wantipl != IPL_NONE)
-		s = splraise(mtx->mtx_wantipl);
-
-	owner = mtx_cas(mtx, 0, self);
-	if (owner == 0) {
-		/* we got the lock first go. this is the fast path */
-		goto locked;
-	}
-
-#ifdef DIAGNOSTIC
-	if (__predict_false((owner & ~1ULL) == self))
-		panic("mtx %p: locking against myself", mtx);
-#endif
-
-	/* we're going to have to spin for it now */
-	spc->spc_spinning++;
-
-	for (spins = 0; spins < 40; spins++) {
-		if (ISSET(owner, 1)) {
-			/* don't spin if cpus are already parked */
-			break;
-		}
-		CPU_BUSY_CYCLE();
-		owner = mtx->mtx_owner;
-		if (owner == 0) {
-			owner = mtx_cas(mtx, 0, self);
-			if (owner == 0)
-				goto spinlocked;
-		}
-	}
-
-	/* take the really slow path */
-	p = mtx_park(mtx);
-
-	/* publish our existence in the parking lot */
-	w.mtx = mtx;
-	m = mtx_enter_park(p);
-	TAILQ_INSERT_TAIL(&p->waiters, &w, entry);
-	mtx_leave_park(p, m);
-
-	do {
-		unsigned long o;
-
-		w.wait = 1;
-		/* ensure wait is visible before attmepting the cas */
-		membar_enter(); /* StoreStore | StoreLoad */
-		o = mtx_cas(mtx, owner, owner | 1);
-		if (o == owner) {
-			while (w.wait) {
-				CPU_BUSY_CYCLE();
-#ifdef MP_LOCKDEBUG
-				if (--nticks <= 0) {
-					db_printf("%s: %p lock spun out\n",
-					    __func__, mtx);
-					db_enter();
-					nticks = __mp_lock_spinout;
-				}
-#endif
-			}
-			membar_consumer();
-		} else if (o != 0) {
-			owner = o;
-			continue;
-		}
-
-		owner = mtx_cas(mtx, 0, self | 1);
-	} while (owner != 0);
-
-	m = mtx_enter_park(p);
-	TAILQ_REMOVE(&p->waiters, &w, entry);
-	mtx_leave_park(p, m);
-spinlocked:
-	spc->spc_spinning--;
-locked:
-	membar_enter_after_atomic();
-	if (mtx->mtx_wantipl != IPL_NONE)
-		mtx->mtx_oldipl = s;
-#ifdef DIAGNOSTIC
-	ci->ci_mutex_level++;
-#endif
-	WITNESS_LOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
-}
-
-void
-mtx_leave(struct mutex *mtx)
-{
-	struct cpu_info *ci = curcpu();
-	unsigned long owner, self = (unsigned long)ci;
-	int s;
-
-	/* Avoid deadlocks after panic or in DDB */
-	if (panicstr || db_active)
-		return;
-
-	WITNESS_UNLOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
-
-#ifdef DIAGNOSTIC
-	curcpu()->ci_mutex_level--;
-#endif
-
-	s = mtx->mtx_oldipl;
-	membar_exit_before_atomic();
-	owner = atomic_cas_ulong(&mtx->mtx_owner, self, 0);
-	if (owner != self) {
-		struct mtx_park *p;
-		unsigned long m;
-		struct mtx_waiter *w;
-
-#ifdef DIAGNOSTIC
-		if (__predict_false((owner & ~1ULL) != self))
-			panic("mtx %p: not held", mtx);
-#endif
-
-		p = mtx_park(mtx);
-		m = mtx_enter_park(p);
-		mtx->mtx_owner = 0;
-		membar_producer();
-		TAILQ_FOREACH(w, &p->waiters, entry) {
-			if (w->mtx == mtx) {
-				w->wait = 0;
-				break;
-			}
-		}
-		mtx_leave_park(p, m);
-	}
-
-	if (mtx->mtx_wantipl != IPL_NONE)
-		splx(s);
-}
-#else /* MULTIPROCESSOR */
-void
-mtx_enter(struct mutex *mtx)
-{
-	unsigned long self = mtx_curcpu();
 
 	/* Avoid deadlocks after panic or in DDB */
 	if (panicstr || db_active)
@@ -546,17 +332,17 @@ mtx_enter(struct mutex *mtx)
 	    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(mtx_owner(mtx) == self))
+	if (__predict_false(mtx->mtx_owner == ci))
 		panic("mtx %p: locking against myself", mtx);
 #endif
 
 	if (mtx->mtx_wantipl != IPL_NONE)
 		mtx->mtx_oldipl = splraise(mtx->mtx_wantipl);
 
-	mtx->mtx_owner = self;
+	mtx->mtx_owner = ci;
 
 #ifdef DIAGNOSTIC
-	curcpu()->ci_mutex_level++;
+	ci->ci_mutex_level++;
 #endif
 	WITNESS_LOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
 }
@@ -567,6 +353,7 @@ mtx_enter_try(struct mutex *mtx)
 	mtx_enter(mtx);
 	return (1);
 }
+#endif
 
 void
 mtx_leave(struct mutex *mtx)
@@ -585,11 +372,13 @@ mtx_leave(struct mutex *mtx)
 #endif
 
 	s = mtx->mtx_oldipl;
-	mtx->mtx_owner = 0;
+#ifdef MULTIPROCESSOR
+	membar_exit();
+#endif
+	mtx->mtx_owner = NULL;
 	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(s);
 }
-#endif /* MULTIPROCESSOR */
 
 #ifdef DDB
 void
