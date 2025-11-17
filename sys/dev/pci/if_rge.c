@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.40 2025/11/07 02:02:47 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.41 2025/11/17 08:59:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020, 2023-2025
@@ -1079,8 +1079,6 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 			ifmr->ifm_active |= IFM_1000_T;
 		else if (status & RGE_PHYSTAT_2500MBPS)
 			ifmr->ifm_active |= IFM_2500_T;
-		else if (status & RGE_PHYSTAT_5000MBPS)
-			ifmr->ifm_active |= IFM_5000_T;
 		else if (status & RGE_PHYSTAT_5000MBPS)
 			ifmr->ifm_active |= IFM_5000_T;
 		else if (status & RGE_PHYSTAT_10000MBPS)
