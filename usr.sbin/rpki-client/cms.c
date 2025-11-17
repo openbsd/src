@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.56 2025/11/17 12:45:59 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.57 2025/11/17 12:50:29 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -60,7 +60,7 @@ static int
 cms_get_signtime(const char *fn, X509_ATTRIBUTE *attr, time_t *signtime)
 {
 	const ASN1_TIME		*at;
-	const char		*time_str = "UTCtime";
+	const char		*time_str = "UTCTime";
 	int			 time_type = V_ASN1_UTCTIME;
 
 	*signtime = 0;
@@ -73,7 +73,7 @@ cms_get_signtime(const char *fn, X509_ATTRIBUTE *attr, time_t *signtime)
 			warnx("%s: CMS signing-time issue", fn);
 			return 0;
 		}
-		warnx("%s: GeneralizedTime instead of UTCtime", fn);
+		warnx("%s: GeneralizedTime instead of UTCTime", fn);
 	}
 
 	if (!x509_get_time(at, signtime)) {
