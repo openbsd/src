@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.55 2025/11/14 22:16:15 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.56 2025/11/17 12:45:59 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -85,6 +85,87 @@ cms_get_signtime(const char *fn, X509_ATTRIBUTE *attr, time_t *signtime)
 }
 
 static int
+cms_SignerInfo_check_attributes(const char *fn, const CMS_SignerInfo *si,
+    time_t *signtime)
+{
+	char buf[128];
+	const ASN1_OBJECT *obj;
+	int i, nattrs;
+	int has_ct = 0, has_md = 0, has_st = 0;
+
+	*signtime = 0;
+
+	nattrs = CMS_signed_get_attr_count(si);
+	if (nattrs <= 0) {
+		warnx("%s: RFC 6488: error extracting signedAttrs", fn);
+		return 0;
+	}
+	for (i = 0; i < nattrs; i++) {
+		X509_ATTRIBUTE *attr;
+
+		attr = CMS_signed_get_attr(si, i);
+		if (attr == NULL || X509_ATTRIBUTE_count(attr) != 1) {
+			warnx("%s: RFC 6488: bad signed attribute encoding",
+			    fn);
+			return 0;
+		}
+
+		obj = X509_ATTRIBUTE_get0_object(attr);
+		if (obj == NULL) {
+			warnx("%s: RFC 6488: bad signed attribute", fn);
+			return 0;
+		}
+		if (OBJ_cmp(obj, cnt_type_oid) == 0) {
+			if (has_ct++ != 0) {
+				warnx("%s: RFC 6488: duplicate "
+				    "signed attribute", fn);
+				return 0;
+			}
+		} else if (OBJ_cmp(obj, msg_dgst_oid) == 0) {
+			if (has_md++ != 0) {
+				warnx("%s: RFC 6488: duplicate "
+				    "signed attribute", fn);
+				return 0;
+			}
+		} else if (OBJ_cmp(obj, sign_time_oid) == 0) {
+			if (has_st++ != 0) {
+				warnx("%s: RFC 6488: duplicate "
+				    "signed attribute", fn);
+				return 0;
+			}
+			if (!cms_get_signtime(fn, attr, signtime))
+				return 0;
+		} else {
+			OBJ_obj2txt(buf, sizeof(buf), obj, 1);
+			warnx("%s: RFC 6488: "
+			    "CMS has unexpected signed attribute %s",
+			    fn, buf);
+			return 0;
+		}
+	}
+
+	if (!has_ct || !has_md) {
+		/* RFC 9589, section 4 */
+		warnx("%s: RFC 6488: CMS missing required "
+		    "signed attribute", fn);
+		return 0;
+	}
+
+	if (!has_st) {
+		/* RFC 9589, section 4 */
+		warnx("%s: missing CMS signing-time attribute", fn);
+		return 0;
+	}
+
+	if (CMS_unsigned_get_attr_count(si) != -1) {
+		warnx("%s: RFC 6488: CMS has unsignedAttrs", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
 cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
     const unsigned char *der, size_t len, const ASN1_OBJECT *oid, BIO *bio,
     unsigned char **res, size_t *rsz, time_t *signtime)
@@ -101,8 +182,7 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
 	STACK_OF(CMS_SignerInfo)	*sinfos;
 	CMS_SignerInfo			*si;
 	X509_ALGOR			*pdig, *psig;
-	int				 i, nattrs, nid;
-	int				 has_ct = 0, has_md = 0, has_st = 0;
+	int				 nid;
 	int				 rc = 0;
 
 	assert(*out_cert == NULL);
@@ -171,72 +251,8 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
 		goto out;
 	}
 
-	nattrs = CMS_signed_get_attr_count(si);
-	if (nattrs <= 0) {
-		warnx("%s: RFC 6488: error extracting signedAttrs", fn);
+	if (!cms_SignerInfo_check_attributes(fn, si, signtime))
 		goto out;
-	}
-	for (i = 0; i < nattrs; i++) {
-		X509_ATTRIBUTE *attr;
-
-		attr = CMS_signed_get_attr(si, i);
-		if (attr == NULL || X509_ATTRIBUTE_count(attr) != 1) {
-			warnx("%s: RFC 6488: bad signed attribute encoding",
-			    fn);
-			goto out;
-		}
-
-		obj = X509_ATTRIBUTE_get0_object(attr);
-		if (obj == NULL) {
-			warnx("%s: RFC 6488: bad signed attribute", fn);
-			goto out;
-		}
-		if (OBJ_cmp(obj, cnt_type_oid) == 0) {
-			if (has_ct++ != 0) {
-				warnx("%s: RFC 6488: duplicate "
-				    "signed attribute", fn);
-				goto out;
-			}
-		} else if (OBJ_cmp(obj, msg_dgst_oid) == 0) {
-			if (has_md++ != 0) {
-				warnx("%s: RFC 6488: duplicate "
-				    "signed attribute", fn);
-				goto out;
-			}
-		} else if (OBJ_cmp(obj, sign_time_oid) == 0) {
-			if (has_st++ != 0) {
-				warnx("%s: RFC 6488: duplicate "
-				    "signed attribute", fn);
-				goto out;
-			}
-			if (!cms_get_signtime(fn, attr, signtime))
-				goto out;
-		} else {
-			OBJ_obj2txt(buf, sizeof(buf), obj, 1);
-			warnx("%s: RFC 6488: "
-			    "CMS has unexpected signed attribute %s",
-			    fn, buf);
-			goto out;
-		}
-	}
-
-	if (!has_ct || !has_md) {
-		/* RFC 9589, section 4 */
-		warnx("%s: RFC 6488: CMS missing required "
-		    "signed attribute", fn);
-		goto out;
-	}
-
-	if (!has_st) {
-		/* RFC 9589, section 4 */
-		warnx("%s: missing CMS signing-time attribute", fn);
-		goto out;
-	}
-
-	if (CMS_unsigned_get_attr_count(si) != -1) {
-		warnx("%s: RFC 6488: CMS has unsignedAttrs", fn);
-		goto out;
-	}
 
 	/* Check digest and signature algorithms (RFC 7935) */
 	CMS_SignerInfo_get0_algs(si, NULL, NULL, &pdig, &psig);
