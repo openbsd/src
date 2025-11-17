@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.66 2025/10/14 01:41:50 dlg Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.67 2025/11/17 11:19:21 jsg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -3299,7 +3299,7 @@ umb_kstat_detach(struct umb_softc *sc)
 	struct kstat *ks = sc->sc_kstat_signal;
 
 	ks = sc->sc_kstat_service;
-	if (ks == NULL) {
+	if (ks != NULL) {
 		struct umb_kstat_service *uksvc;
 
 		kstat_remove(ks);
@@ -3312,7 +3312,7 @@ umb_kstat_detach(struct umb_softc *sc)
 	}
 
 	ks = sc->sc_kstat_signal;
-	if (ks == NULL) {
+	if (ks != NULL) {
 		struct umb_kstat_signal *uks;
 
 		kstat_remove(ks);
