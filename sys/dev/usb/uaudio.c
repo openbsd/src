@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.180 2025/11/02 14:35:20 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.181 2025/11/18 09:05:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -263,7 +263,7 @@ struct uaudio_softc {
 	/*
 	 * Current clock, UAC v2.0 only
 	 */
-	struct uaudio_unit *clock;
+	struct uaudio_unit *pclock, *rclock;
 
 	/*
 	 * Number of input and output terminals
@@ -1023,7 +1023,7 @@ uaudio_alt_getrates(struct uaudio_softc *sc, struct uaudio_alt *p)
 	case UAUDIO_V1:
 		return p->v1_rates;
 	case UAUDIO_V2:
-		u = sc->clock;
+		u = p->mode == AUMODE_PLAY ? sc->pclock : sc->rclock;
 		while (1) {
 			switch (u->type) {
 			case UAUDIO_AC_CLKSRC:
@@ -1050,11 +1050,8 @@ uaudio_alt_getrates(struct uaudio_softc *sc, struct uaudio_alt *p)
  * return the clock source unit
  */
 struct uaudio_unit *
-uaudio_clock(struct uaudio_softc *sc)
+uaudio_clock(struct uaudio_unit *u)
 {
-	struct uaudio_unit *u;
-
-	u = sc->clock;
 	while (1) {
 		if (u == NULL) {
 			DPRINTF("%s: NULL clock pointer\n", __func__);
@@ -1081,13 +1078,20 @@ uaudio_clock(struct uaudio_softc *sc)
  * Return the rates bitmap of the given parameters setting
  */
 int
-uaudio_getrates(struct uaudio_softc *sc, struct uaudio_params *p)
+uaudio_getrates(struct uaudio_softc *sc, int mode, struct uaudio_params *p)
 {
+	int rates;
+
 	switch (sc->version) {
 	case UAUDIO_V1:
 		return p->v1_rates;
 	case UAUDIO_V2:
-		return uaudio_alt_getrates(sc, p->palt ? p->palt : p->ralt);
+		rates = ~0;
+		if (p->palt != NULL && (mode & AUMODE_PLAY))
+			rates &= uaudio_alt_getrates(sc, p->palt);
+		if (p->ralt != NULL && (mode & AUMODE_RECORD))
+			rates &= uaudio_alt_getrates(sc, p->ralt);
+		return rates;
 	}
 	return 0;
 }
@@ -1178,6 +1182,38 @@ uaudio_feature_addent(struct uaudio_softc *sc,
 	*pi = m;
 
 	DPRINTF("\t%s[%d]\n", m->fname, m->chan);
+}
+
+/*
+ * Compare two clock source units. According to UAC2 each clock
+ * source defines its own clock domain. However there is hardware
+ * exposing multiple clock units that are clocked by the same source
+ * and consequently are equivalent to single domain.
+ */
+int
+uaudio_clock_equiv(struct uaudio_softc *sc,
+	struct uaudio_unit *u, struct uaudio_unit *v)
+{
+	if (u == NULL || v == NULL)
+		return 1;
+
+	u = uaudio_clock(u);
+	if (u == NULL)
+		return 0;
+
+	v = uaudio_clock(v);
+	if (v == NULL)
+		return 0;
+
+	if (u->term != v->term) {
+		printf("%s: clock attributes differ\n", DEVNAME(sc));
+		return 0;
+	}
+
+	if (u != v)
+		printf("%s: warning: assuming common clock\n", DEVNAME(sc));
+
+	return 1;
 }
 
 /*
@@ -1887,7 +1923,7 @@ uaudio_conf_print(struct uaudio_softc *sc)
 			rates = p->v1_rates;
 			break;
 		case UAUDIO_V2:
-			rates = uaudio_getrates(sc, p);
+			rates = uaudio_getrates(sc, AUMODE_PLAY | AUMODE_RECORD, p);
 			break;
 		}
 		printf("pchan = %d, s%dle%d, rchan = %d, s%dle%d, rates:",
@@ -2264,34 +2300,39 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 	}
 
 	if (sc->version == UAUDIO_V2) {
+
 		/*
-		 * Find common clock unit. We assume all terminals
-		 * belong to the same clock domain (ie are connected
-		 * to the same source)
+		 * Find the clocks for the usb-streaming terminal units
 		 */
-		sc->clock = NULL;
+
 		for (u = sc->unit_list; u != NULL; u = u->unit_next) {
-			if (u->type != UAUDIO_AC_INPUT &&
-			    u->type != UAUDIO_AC_OUTPUT)
-				continue;
-			if (sc->clock == NULL) {
+			if (u->type == UAUDIO_AC_INPUT && (u->term >> 8) == 1) {
 				if (u->clock == NULL) {
-					printf("%s: terminal with no clock\n",
-					    DEVNAME(sc));
+					printf("%s: no play clock\n", DEVNAME(sc));
 					return 0;
 				}
-				sc->clock = u->clock;
-			} else if (u->clock != sc->clock) {
-				printf("%s: only one clock domain supported\n",
-				    DEVNAME(sc));
-				return 0;
+				sc->pclock = u->clock;
+				break;
 			}
 		}
 
-		if (sc->clock == NULL) {
-			printf("%s: no clock found\n", DEVNAME(sc));
-			return 0;
+		for (u = sc->unit_list; u != NULL; u = u->unit_next) {
+			if (u->type == UAUDIO_AC_OUTPUT && (u->term >> 8) == 1) {
+				if (u->clock == NULL) {
+					printf("%s: no rec clock\n", DEVNAME(sc));
+					return 0;
+				}
+				sc->rclock = u->clock;
+				break;
+			}
 		}
+
+		DPRINTF("%s: pclock = %d, rclock = %d\n", __func__,
+		    sc->pclock ? sc->pclock->id : -1,
+		    sc->rclock ? sc->rclock->id : -1);
+
+		if (!uaudio_clock_equiv(sc, sc->pclock, sc->rclock))
+			return 0;
 	}
 	return 1;
 }
@@ -3118,7 +3159,7 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		req_buf[1] = sc->rate >> 8;
 		req_buf[2] = sc->rate >> 16;
 		req_buf[3] = sc->rate >> 24;
-		clock = uaudio_clock(sc);
+		clock = uaudio_clock(dir == AUMODE_PLAY ? sc->pclock : sc->rclock);
 		if (clock == NULL) {
 			printf("%s: can't get clock\n", DEVNAME(sc));
 			goto failed;
@@ -3879,7 +3920,8 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 	sc->names = NULL;
 	sc->alts = NULL;
 	sc->params_list = NULL;
-	sc->clock = NULL;
+	sc->rclock = NULL;
+	sc->pclock = NULL;
 	sc->params = NULL;
 	sc->rate = 0;
 	sc->mode = 0;
@@ -4059,7 +4101,7 @@ uaudio_set_params(void *self, int setmode, int usemode,
 			best_mode = p;
 
 		/* test if params match the requested rate */
-		if ((uaudio_getrates(sc, p) & (1 << rateindex)) == 0)
+		if ((uaudio_getrates(sc, setmode, p) & (1 << rateindex)) == 0)
 			continue;
 		if (best_rate == NULL)
 			best_rate = p;
@@ -4105,7 +4147,7 @@ uaudio_set_params(void *self, int setmode, int usemode,
 	 * Recalculate rate index, because the chosen parameters
 	 * may not support the requested one
 	 */
-	rateindex = uaudio_rates_indexof(uaudio_getrates(sc, p), rate);
+	rateindex = uaudio_rates_indexof(uaudio_getrates(sc, setmode, p), rate);
 	if (rateindex < 0)
 		return ENOTTY;
 
