@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.3 2022/08/29 02:01:18 jsg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.4 2025/11/18 05:24:38 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -276,10 +276,10 @@ _atomic_addic_long_nv(volatile unsigned long *p, unsigned long v)
 #define __membar(_f) do { __asm volatile(_f ::: "memory"); } while (0)
 
 #if defined(MULTIPROCESSOR) || !defined(_KERNEL)
-#define membar_enter()		__membar("isync")
+#define membar_enter()		__membar("sync")
 #define membar_exit()		__membar("sync")
 #define membar_producer()	__membar("sync")
-#define membar_consumer()	__membar("isync")
+#define membar_consumer()	__membar("sync")
 #define membar_sync()		__membar("sync")
 #else
 #define membar_enter()		__membar("")
