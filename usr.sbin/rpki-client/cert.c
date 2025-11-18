@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.206 2025/10/16 06:46:31 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.207 2025/11/18 14:04:45 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -227,14 +227,14 @@ cert_check_subject_and_issuer(const char *fn, const struct cert *cert)
 		warnx("%s: X509_get_subject_name", fn);
 		return 0;
 	}
-	if (!x509_valid_name(fn, "subject", name))
+	if (!x509_valid_subject_name(fn, name))
 		return 0;
 
 	if ((name = X509_get_issuer_name(cert->x509)) == NULL) {
 		warnx("%s: X509_get_issuer_name", fn);
 		return 0;
 	}
-	if (!x509_valid_name(fn, "issuer", name))
+	if (!x509_valid_issuer_name(fn, name))
 		return 0;
 
 	return 1;

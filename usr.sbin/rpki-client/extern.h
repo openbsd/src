@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.267 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.268 2025/11/18 14:04:45 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -981,7 +981,8 @@ int		 x509_location(const char *, const char *, GENERAL_NAME *,
 		    char **);
 int		 x509_inherits(X509 *);
 int		 x509_any_inherits(X509 *);
-int		 x509_valid_name(const char *, const char *, const X509_NAME *);
+int		 x509_valid_subject_name(const char *, const X509_NAME *);
+int		 x509_valid_issuer_name(const char *, const X509_NAME *);
 time_t		 x509_find_expires(time_t, struct auth *, struct crl_tree *);
 
 /* printers */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.122 2025/11/18 09:18:20 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.123 2025/11/18 14:04:45 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -403,8 +403,8 @@ valid_printable_string(const char *fn, const char *descr, const ASN1_STRING *as)
  * Check that subject or issuer only contain commonName and serialNumber.
  * Return 0 on failure.
  */
-int
-x509_valid_name(const char *fn, const char *descr, const X509_NAME *xn)
+static int
+x509_valid_name_internal(const char *fn, const char *descr, const X509_NAME *xn)
 {
 	const X509_NAME_ENTRY *ne;
 	const ASN1_OBJECT *ao;
@@ -437,7 +437,9 @@ x509_valid_name(const char *fn, const char *descr, const X509_NAME *xn)
 			}
 			/*
 			 * XXX - For some reason RFC 8209, section 3.1.1 decided
-			 * to allow UTF8String for BGPsec Router Certificates.
+			 * to allow UTF8String for the subject of BGPsec Router
+			 * Certificates, although RECOMMENDED contents fit in
+			 * a PrintableString.
 			 */
 			if (!valid_printable_string(fn, descr, as))
 				return 0;
@@ -466,6 +468,18 @@ x509_valid_name(const char *fn, const char *descr, const X509_NAME *xn)
 	}
 
 	return 1;
+}
+
+int
+x509_valid_subject_name(const char *fn, const X509_NAME *xn)
+{
+	return x509_valid_name_internal(fn, "subject", xn);
+}
+
+int
+x509_valid_issuer_name(const char *fn, const X509_NAME *xn)
+{
+	return x509_valid_name_internal(fn, "issuer", xn);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.50 2025/07/08 13:25:54 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.51 2025/11/18 14:04:45 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -234,7 +234,7 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 		warnx("%s: X509_CRL_get_issuer", fn);
 		goto out;
 	}
-	if (!x509_valid_name(fn, "issuer", name))
+	if (!x509_valid_issuer_name(fn, name))
 		goto out;
 
 	if (!crl_check_sigalg(fn, crl))
