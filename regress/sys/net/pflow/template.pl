@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# $OpenBSD: template.pl,v 1.5 2017/03/03 21:34:14 bluhm Exp $
+# $OpenBSD: template.pl,v 1.6 2025/11/18 19:58:28 chris Exp $
 
 # Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 #
@@ -50,6 +50,10 @@ sub usage
 		151 => 'flowEndSeconds',
 		152 => 'flowStartMilliseconds',
 		153 => 'flowEndMilliseconds',
+		225 => 'postNATSourceIPv4Address',
+		226 => 'postNATDestinationIPv4Address',
+		227 => 'postNAPTSourceTransportPort',
+		228 => 'postNAPTDestinationTransportPort'
 	};
 	sub id2name { return $id2name->{$_[0]} || $_[0]; }
 }
