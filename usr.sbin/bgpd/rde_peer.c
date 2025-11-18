@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.52 2025/11/14 19:34:40 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.53 2025/11/18 16:39:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -557,9 +557,9 @@ peer_blast(struct rde_peer *peer, uint8_t aid)
 		rde_peer_send_rrefresh(peer, aid, ROUTE_REFRESH_BEGIN_RR);
 
 	/* force out all updates from the Adj-RIB-Out */
-	if (prefix_dump_new(peer, aid, 0, peer, peer_blast_upcall,
+	if (prefix_adjout_dump_new(peer, aid, 0, peer, peer_blast_upcall,
 	    peer_blast_done, NULL) == -1)
-		fatal("%s: prefix_dump_new", __func__);
+		fatal("%s: prefix_adjout_dump_new", __func__);
 }
 
 /* RIB walker callbacks for peer_dump. */

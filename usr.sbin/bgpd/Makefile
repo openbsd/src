@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2025/10/29 10:32:38 claudio Exp $
+#	$OpenBSD: Makefile,v 1.44 2025/11/18 16:39:36 claudio Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c
@@ -18,6 +18,7 @@ SRCS+=	pfkey.c
 SRCS+=	pftable.c
 SRCS+=	printconf.c
 SRCS+=	rde.c
+SRCS+=	rde_adjout.c
 SRCS+=	rde_aspa.c
 SRCS+=	rde_attr.c
 SRCS+=	rde_community.c

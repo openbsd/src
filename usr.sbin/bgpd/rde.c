@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.664 2025/11/14 19:34:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.665 2025/11/18 16:39:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3077,13 +3077,13 @@ rde_dump_done(void *arg, uint8_t aid)
 		ctx->peerid = peer->conf.id;
 		switch (ctx->req.type) {
 		case IMSG_CTL_SHOW_RIB:
-			if (prefix_dump_new(peer, ctx->req.aid,
+			if (prefix_adjout_dump_new(peer, ctx->req.aid,
 			    CTL_MSG_HIGH_MARK, ctx, rde_dump_adjout_upcall,
 			    rde_dump_done, rde_dump_throttled) == -1)
 				goto nomem;
 			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
-			if (prefix_dump_subtree(peer, &ctx->req.prefix,
+			if (prefix_adjout_dump_subtree(peer, &ctx->req.prefix,
 			    ctx->req.prefixlen, CTL_MSG_HIGH_MARK, ctx,
 			    rde_dump_adjout_upcall, rde_dump_done,
 			    rde_dump_throttled) == -1)
@@ -3152,15 +3152,16 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		ctx->peerid = peer->conf.id;
 		switch (ctx->req.type) {
 		case IMSG_CTL_SHOW_RIB:
-			if (prefix_dump_new(peer, ctx->req.aid,
+			if (prefix_adjout_dump_new(peer, ctx->req.aid,
 			    CTL_MSG_HIGH_MARK, ctx, rde_dump_adjout_upcall,
 			    rde_dump_done, rde_dump_throttled) == -1)
 				goto nomem;
 			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
 			if (req->flags & F_LONGER) {
-				if (prefix_dump_subtree(peer, &req->prefix,
-				    req->prefixlen, CTL_MSG_HIGH_MARK, ctx,
+				if (prefix_adjout_dump_subtree(peer,
+				    &req->prefix, req->prefixlen,
+				    CTL_MSG_HIGH_MARK, ctx,
 				    rde_dump_adjout_upcall,
 				    rde_dump_done, rde_dump_throttled) == -1)
 					goto nomem;
@@ -3835,7 +3836,7 @@ rde_reload_done(void)
 			rde_eval_all = 1;
 
 		if (peer->reconf_rib) {
-			if (prefix_dump_new(peer, AID_UNSPEC,
+			if (prefix_adjout_dump_new(peer, AID_UNSPEC,
 			    RDE_RUNNER_ROUNDS, NULL, rde_up_flush_upcall,
 			    rde_softreconfig_in_done, NULL) == -1)
 				fatal("%s: prefix_dump_new", __func__);
@@ -3886,8 +3887,8 @@ rde_reload_done(void)
 					if (peer->reconf_rib)
 						continue;
 
-					if (prefix_dump_new(peer, AID_UNSPEC,
-					    RDE_RUNNER_ROUNDS, NULL,
+					if (prefix_adjout_dump_new(peer,
+					    AID_UNSPEC, RDE_RUNNER_ROUNDS, NULL,
 					    rde_up_flush_upcall,
 					    rde_softreconfig_in_done,
 					    NULL) == -1)
