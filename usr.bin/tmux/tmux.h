@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1275 2025/11/12 20:41:06 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1276 2025/11/18 08:42:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2667,7 +2667,8 @@ const struct cmd_entry *cmd_get_entry(struct cmd *);
 struct args	*cmd_get_args(struct cmd *);
 u_int		 cmd_get_group(struct cmd *);
 void		 cmd_get_source(struct cmd *, const char **, u_int *);
-struct cmd	*cmd_parse(struct args_value *, u_int, const char *, u_int,
+int		 cmd_get_parse_flags(struct cmd *);
+struct cmd	*cmd_parse(struct args_value *, u_int, const char *, u_int, int,
 		     char **);
 struct cmd	*cmd_copy(struct cmd *, int, char **);
 void		 cmd_free(struct cmd *);

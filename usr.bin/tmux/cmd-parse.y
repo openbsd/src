@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.54 2025/07/19 19:30:37 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.55 2025/11/18 08:42:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -849,7 +849,7 @@ cmd_parse_build_command(struct cmd_parse_command *cmd,
 		count++;
 	}
 
-	add = cmd_parse(values, count, pi->file, pi->line, &cause);
+	add = cmd_parse(values, count, pi->file, pi->line, pi->flags, &cause);
 	if (add == NULL) {
 		pr->status = CMD_PARSE_ERROR;
 		pr->error = cmd_parse_get_error(pi->file, pi->line, cause);
