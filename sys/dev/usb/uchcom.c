@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.39 2025/08/19 00:47:43 kevlo Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.40 2025/11/18 00:33:16 kevlo Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -670,17 +670,27 @@ uchcom_set_dte_rate(struct uchcom_softc *sc, uint32_t rate, uint16_t val)
 	uint8_t factor, div;
 
 	uchcom_calc_baudrate(sc, rate, &div, &factor);
-	div |= (sc->sc_type != UCHCOM_TYPE_CH343) ? 0x80 : 0;
-	idx = (factor << 8) | div;
 
-	err = uchcom_generic_control_out(sc, UCHCOM_REQ_SET_BAUDRATE, val, idx);
-	if (err) {
-		printf("%s: cannot set DTE rate: %s\n",
-		    sc->sc_dev.dv_xname, usbd_errstr(err));
-		return EIO;
+	if (sc->sc_type != UCHCOM_TYPE_CH343) {
+		if ((err = uchcom_write_reg(sc,
+		    UCHCOM_REG_BPS_PRE, div | 0x80,
+		    UCHCOM_REG_BPS_DIV, factor)) ||
+		    (err = uchcom_write_reg(sc, UCHCOM_REG_LCR, val >> 8,
+		    UCHCOM_REG_LCR2, 0)))
+			goto failed;
+	} else {
+		idx = (factor << 8) | div;
+		if ((err = uchcom_generic_control_out(sc,
+		    UCHCOM_REQ_SET_BAUDRATE, val, idx)))
+			goto failed;
 	}
 
 	return 0;
+
+failed:
+	printf("%s: cannot set DTE rate: %s\n",
+	    sc->sc_dev.dv_xname, usbd_errstr(err));
+	return EIO;
 }
 
 uint16_t
