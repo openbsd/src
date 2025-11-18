@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.65 2025/11/11 17:43:18 bluhm Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.66 2025/11/18 09:13:55 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -643,67 +643,72 @@ ice_mdd_tx_tclan_str(uint8_t event)
 
 	switch (event) {
 	case 0:
-		str = "Wrong descriptor format/order";
+		str = "Wrong order/Format of descriptors";
 		break;
 	case 1:
-		str = "Descriptor fetch failed";
+		str = "Unsupported Requests";
 		break;
 	case 2:
-		str = "Tail descriptor not EOP/NOP";
+		str = "Tail descriptor is not DDESC with EOP/NOP";
 		break;
 	case 3:
-		str = "False scheduling error";
+		str = "False Scheduling";
 		break;
 	case 4:
-		str = "Tail value larger than ring len";
+		str = "Tail value is bigger than ring length";
 		break;
 	case 5:
-		str = "Too many data commands";
+		str = "More than 8 data commands in packet";
 		break;
 	case 6:
-		str = "Zero packets sent in quanta";
+		str = "Zero packets sent in quanta and"
+		    " no head update in this quanta";
 		break;
 	case 7:
 		str = "Packet too small or too big";
 		break;
 	case 8:
-		str = "TSO length doesn't match sum";
+		str = "TSO: TLEN is not coherent with sum";
 		break;
 	case 9:
-		str = "TSO tail reached before TLEN";
+		str = "TSO: Tail reached before TLEN ended";
 		break;
 	case 10:
-		str = "TSO max 3 descs for headers";
+		str = "TSO: Headers are spread on more than 3 descriptors";
 		break;
 	case 11:
-		str = "EOP on header descriptor";
+		str = "TSO: Sum of TSO buffers < sum of headers";
 		break;
 	case 12:
-		str = "MSS is 0 or TLEN is 0";
+		str = "TSO: Sum of headers is 0/MSS is 0/TLEN is 0";
 		break;
 	case 13:
 		str = "CTX desc invalid IPSec fields";
 		break;
 	case 14:
-		str = "Quanta invalid # of SSO packets";
+		str = "SSO: Quanta does not include a whole number"
+		    " of SSO packets";
 		break;
 	case 15:
-		str = "Quanta bytes exceeds pkt_len*64";
+		str = "SSO+TSO: Quanta bytes before additions exceed"
+		    "pkt_len*64";
 		break;
 	case 16:
-		str = "Quanta exceeds max_cmds_in_sq";
+		str = "SSO+TSO: Quanta commands exceed max_cmds_in_sq";
 		break;
 	case 17:
-		str = "incoherent last_lso_quanta";
+		str = "TSO: total_descs_in_lso is not coherent with"
+		    " last_lso_quanta";
 		break;
 	case 18:
-		str = "incoherent TSO TLEN";
+		str = "TSO: total_descs_in_lso is not coherent with TLEN";
 		break;
 	case 19:
-		str = "Quanta: too many descriptors";
+		str = "TSO: Quanta bytes is spread on more than max descriptors"
+		    " in quanta";
 		break;
 	case 20:
-		str = "Quanta: # of packets mismatch";
+		str = "Number of packets in quanta mismatch";
 		break;
 	default:
 		break;
