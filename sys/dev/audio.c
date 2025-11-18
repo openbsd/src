@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.212 2025/11/02 14:33:06 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.213 2025/11/18 09:30:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -76,7 +76,8 @@
 struct audio_buf {
 	unsigned char *data;		/* DMA memory block */
 	size_t datalen;			/* size of DMA memory block */
-	size_t len;			/* size of DMA FIFO */
+	size_t klen;			/* size of DMA FIFO */
+	size_t ulen;			/* size of the userland FIFO */
 	size_t start;			/* first byte used in the FIFO */
 	size_t used;			/* bytes used in the FIFO */
 	size_t blksz;			/* DMA block size */
@@ -345,7 +346,7 @@ audio_buf_rgetblk(struct audio_buf *buf, size_t *rsize)
 {
 	size_t count;
 
-	count = buf->len - buf->start;
+	count = buf->ulen - buf->start;
 	if (count > buf->used)
 		count = buf->used;
 	*rsize = count;
@@ -366,8 +367,8 @@ audio_buf_rdiscard(struct audio_buf *buf, size_t count)
 #endif
 	buf->used -= count;
 	buf->start += count;
-	if (buf->start >= buf->len)
-		buf->start -= buf->len;
+	if (buf->start >= buf->klen)
+		buf->start -= buf->klen;
 }
 
 /*
@@ -377,7 +378,7 @@ void
 audio_buf_wcommit(struct audio_buf *buf, size_t count)
 {
 #ifdef AUDIO_DEBUG
-	if (count > (buf->len - buf->used)) {
+	if (count > (buf->klen - buf->used)) {
 		panic("audio_buf_wcommit: bad count = %zu, "
 		    "start = %zu, used = %zu", count, buf->start, buf->used);
 	}
@@ -394,10 +395,10 @@ audio_buf_wgetblk(struct audio_buf *buf, size_t *rsize)
 	size_t end, avail, count;
 
 	end = buf->start + buf->used;
-	if (end >= buf->len)
-		end -= buf->len;
-	avail = buf->len - buf->used;
-	count = buf->len - end;
+	if (end >= buf->klen)
+		end -= buf->klen;
+	avail = buf->ulen - buf->used;
+	count = buf->klen - end;
 	if (count > avail)
 		count = avail;
 	*rsize = count;
@@ -470,12 +471,12 @@ audio_clear(struct audio_softc *sc)
 	if (sc->mode & AUMODE_PLAY) {
 		sc->play.used = sc->play.start = 0;
 		sc->play.pos = sc->play.xrun = 0;
-		audio_fill_sil(sc, sc->play.data, sc->play.len);
+		audio_fill_sil(sc, sc->play.data, sc->play.klen);
 	}
 	if (sc->mode & AUMODE_RECORD) {
 		sc->rec.used = sc->rec.start = 0;
 		sc->rec.pos = sc->rec.xrun = 0;
-		audio_fill_sil(sc, sc->rec.data, sc->rec.len);
+		audio_fill_sil(sc, sc->rec.data, sc->rec.klen);
 	}
 }
 
@@ -506,7 +507,7 @@ audio_pintr(void *addr)
 	 */
 	if ((sc->mode & AUMODE_RECORD) && sc->ops->underrun == NULL) {
 		sc->offs--;
-		nblk = sc->rec.len / sc->rec.blksz;
+		nblk = sc->rec.klen / sc->rec.blksz;
 		todo = -sc->offs;
 		if (todo >= nblk) {
 			todo -= todo % nblk;
@@ -544,7 +545,7 @@ audio_pintr(void *addr)
 		}
 	}
 
-	if (sc->play.used < sc->play.len) {
+	if (sc->play.used < sc->play.ulen) {
 		DPRINTFN(1, "%s: play wakeup, chan = %d\n",
 		    DEVNAME(sc), sc->play.blocking);
 		audio_buf_wakeup(&sc->play);
@@ -585,7 +586,7 @@ audio_rintr(void *addr)
 	 */
 	if ((sc->mode & AUMODE_PLAY) && sc->ops->underrun == NULL) {
 		sc->offs++;
-		nblk = sc->play.len / sc->play.blksz;
+		nblk = sc->play.klen / sc->play.blksz;
 		todo = sc->offs;
 		if (todo >= nblk) {
 			todo -= todo % nblk;
@@ -604,7 +605,7 @@ audio_rintr(void *addr)
 		audio_fill_sil(sc, ptr, sc->rec.blksz);
 	}
 	audio_buf_wcommit(&sc->rec, sc->rec.blksz);
-	if (sc->rec.used > sc->rec.len - sc->rec.blksz) {
+	if (sc->rec.used > sc->rec.ulen - sc->rec.blksz) {
 		DPRINTFN(1, "%s: rec overrun\n", DEVNAME(sc));
 		sc->rec.xrun += sc->rec.blksz;
 		audio_buf_rdiscard(&sc->rec, sc->rec.blksz);
@@ -650,7 +651,7 @@ audio_start_do(struct audio_softc *sc)
 			p.channels = sc->pchan;
 			error = sc->ops->trigger_output(sc->arg,
 			    sc->play.data,
-			    sc->play.data + sc->play.len,
+			    sc->play.data + sc->play.klen,
 			    sc->play.blksz,
 			    audio_pintr, sc, &p);
 		} else {
@@ -673,7 +674,7 @@ audio_start_do(struct audio_softc *sc)
 			p.channels = sc->rchan;
 			error = sc->ops->trigger_input(sc->arg,
 			    sc->rec.data,
-			    sc->rec.data + sc->rec.len,
+			    sc->rec.data + sc->rec.klen,
 			    sc->rec.blksz,
 			    audio_rintr, sc, &p);
 		} else {
@@ -728,7 +729,7 @@ audio_canstart(struct audio_softc *sc)
 		return 0;
 	if ((sc->mode & AUMODE_RECORD) && sc->rec.used != 0)
 		return 0;
-	if ((sc->mode & AUMODE_PLAY) && sc->play.used != sc->play.len)
+	if ((sc->mode & AUMODE_PLAY) && sc->play.used != sc->play.ulen)
 		return 0;
 	return 1;
 }
@@ -1031,11 +1032,13 @@ audio_setpar(struct audio_softc *sc)
 	 */
 	if (sc->mode & AUMODE_PLAY) {
 		sc->play.blksz = sc->round * sc->pchan * sc->bps;
-		sc->play.len = sc->play.nblks * sc->play.blksz;
+		sc->play.ulen = sc->play.nblks * sc->play.blksz;
+		sc->play.klen = sc->play.datalen - sc->play.datalen % sc->play.blksz;
 	}
 	if (sc->mode & AUMODE_RECORD) {
 		sc->rec.blksz = sc->round * sc->rchan * sc->bps;
-		sc->rec.len = sc->rec.nblks * sc->rec.blksz;
+		sc->rec.ulen = sc->rec.nblks * sc->rec.blksz;
+		sc->rec.klen = sc->rec.datalen - sc->rec.datalen % sc->rec.blksz;
 	}
 
 	DPRINTF("%s: setpar: new enc=%d bits=%d, bps=%d, msb=%d "
@@ -1052,7 +1055,7 @@ audio_ioc_start(struct audio_softc *sc)
 		DPRINTF("%s: can't start: already started\n", DEVNAME(sc));
 		return EBUSY;
 	}
-	if ((sc->mode & AUMODE_PLAY) && sc->play.used != sc->play.len) {
+	if ((sc->mode & AUMODE_PLAY) && sc->play.used != sc->play.ulen) {
 		DPRINTF("%s: play buffer not ready\n", DEVNAME(sc));
 		return EBUSY;
 	}
@@ -1161,13 +1164,13 @@ audio_ioc_setpar(struct audio_softc *sc, struct audio_swpar *p)
 	audio_clear(sc);
 	if ((sc->mode & AUMODE_PLAY) && sc->ops->init_output) {
 		error = sc->ops->init_output(sc->arg,
-		    sc->play.data, sc->play.len);
+		    sc->play.data, sc->play.klen);
 		if (error)
 			return error;
 	}
 	if ((sc->mode & AUMODE_RECORD) && sc->ops->init_input) {
 		error = sc->ops->init_input(sc->arg,
-		    sc->rec.data, sc->rec.len);
+		    sc->rec.data, sc->rec.klen);
 		if (error)
 			return error;
 	}
@@ -1362,11 +1365,11 @@ audio_activate(struct device *self, int act)
 				break;
 			if (sc->mode & AUMODE_PLAY) {
 				sc->play.start = 0;
-				audio_fill_sil(sc, sc->play.data, sc->play.len);
+				audio_fill_sil(sc, sc->play.data, sc->play.klen);
 			}
 			if (sc->mode & AUMODE_RECORD) {
-				sc->rec.start = sc->rec.len - sc->rec.used;
-				audio_fill_sil(sc, sc->rec.data, sc->rec.len);
+				sc->rec.start = sc->rec.ulen - sc->rec.used;
+				audio_fill_sil(sc, sc->rec.data, sc->rec.klen);
 			}
 			if (sc->active)
 				audio_start_do(sc);
@@ -1672,7 +1675,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	 */
 	mtx_enter(&audio_lock);
 	if (uio->uio_resid > 0 && (ioflag & IO_NDELAY)) {
-		if (sc->play.used == sc->play.len) {
+		if (sc->play.used == sc->play.ulen) {
 			mtx_leave(&audio_lock);
 			return EWOULDBLOCK;
 		}
@@ -2226,7 +2229,7 @@ filt_audiowrite(struct knote *kn, long hint)
 
 	MUTEX_ASSERT_LOCKED(&audio_lock);
 
-	return (sc->mode & AUMODE_PLAY) && (sc->play.used < sc->play.len);
+	return (sc->mode & AUMODE_PLAY) && (sc->play.used < sc->play.ulen);
 }
 
 void
