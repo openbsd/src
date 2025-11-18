@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.121 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.122 2025/11/18 09:18:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -353,6 +353,52 @@ x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
 	return 1;
 }
 
+static int
+valid_printable_octet(const uint8_t u8)
+{
+	/*
+	 * X.680, 41.4, Table 10 lists the allowed characters in this order.
+	 */
+
+	if ('A' <= u8 && u8 <= 'Z')
+		return 1;
+	if ('a' <= u8 && u8 <= 'z')
+		return 1;
+	if ('0' <= u8 && u8 <= '9')
+		return 1;
+
+	return u8 == ' ' || u8 == '\'' || u8 == '(' || u8 == ')' || u8 == '+' ||
+	    u8 == ',' || u8 == '-' || u8 == '.' || u8 == '/' || u8 == ':' ||
+	    u8 == '=' || u8 == '?';
+}
+
+static int
+valid_printable_string(const char *fn, const char *descr, const ASN1_STRING *as)
+{
+	int i;
+
+	/*
+	 * The following check can be enabled after AFRINIC re-issues CA certs.
+	 * https://lists.afrinic.net/pipermail/dbwg/2023-March/000436.html
+	 * https://lists.afrinic.net/pipermail/dbwg/2025-November/000546.html
+	 */
+	if (0 && ASN1_STRING_type(as) != V_ASN1_PRINTABLESTRING) {
+		warnx("%s: RFC 6487 section 4.5: commonName is"
+		    " not PrintableString", fn);
+		return 0;
+	}
+
+	for (i = 0; i < as->length; i++) {
+		if (!valid_printable_octet(as->data[i])) {
+			warnx("%s: invalid %s: PrintableString contains 0x%02x",
+			    fn, descr, as->data[i]);
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 /*
  * Check that subject or issuer only contain commonName and serialNumber.
  * Return 0 on failure.
@@ -389,21 +435,12 @@ x509_valid_name(const char *fn, const char *descr, const X509_NAME *xn)
 				    fn);
 				return 0;
 			}
-/*
- * The following check can be enabled after AFRINIC re-issues CA certs.
- * https://lists.afrinic.net/pipermail/dbwg/2023-March/000436.html
- */
-#if 0
 			/*
 			 * XXX - For some reason RFC 8209, section 3.1.1 decided
 			 * to allow UTF8String for BGPsec Router Certificates.
 			 */
-			if (ASN1_STRING_type(as) != V_ASN1_PRINTABLESTRING) {
-				warnx("%s: RFC 6487 section 4.5: commonName is"
-				    " not PrintableString", fn);
+			if (!valid_printable_string(fn, descr, as))
 				return 0;
-			}
-#endif
 			break;
 		case NID_serialNumber:
 			if (sn++ > 0) {
