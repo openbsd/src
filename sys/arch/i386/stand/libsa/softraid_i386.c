@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_i386.c,v 1.6 2025/11/15 19:00:19 deraadt Exp $	*/
+/*	$OpenBSD: softraid_i386.c,v 1.7 2025/11/18 15:24:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -413,7 +413,7 @@ sr_getdisklabel(struct sr_boot_volume *bv, struct disklabel *label)
 #ifdef BIOS_DEBUG
 	printf("sr_getdisklabel: magic %lx\n",
 	    ((struct disklabel *)buf)->d_magic);
-	for (i = 0; i < MAXPARTITIONS; i++)
+	for (i = 0; i < MAXPARTITIONS16; i++)
 		printf("part %c: type = %d, size = %d, offset = %d\n",
 		    DL_PARTNUM2NAME(i),
 		    (int)((struct disklabel *)buf)->d_partitions[i].p_fstype,

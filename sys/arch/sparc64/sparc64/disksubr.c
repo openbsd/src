@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.74 2022/10/11 23:39:08 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.75 2025/11/18 15:24:09 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -259,7 +259,7 @@ disklabel_sun_to_bsd(dev_t dev, struct sun_disklabel *sl, struct disklabel *lp)
 
 	lp->d_acylinders = sl->sl_acylinders;
 
-	lp->d_npartitions = MAXPARTITIONS;
+	lp->d_npartitions = MAXPARTITIONS16;
 
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
@@ -324,7 +324,7 @@ disklabel_sun_to_bsd(dev_t dev, struct sun_disklabel *sl, struct disklabel *lp)
 			}
 		}
 		if (sl->sl_xpmag == SL_XPMAGTYP) {
-			for (i = 0; i < MAXPARTITIONS; i++) {
+			for (i = 0; i < MAXPARTITIONS16; i++) {
 				npp = &lp->d_partitions[i];
 				npp->p_fstype = sl->sl_types[i];
 				npp->p_fragblock = sl->sl_fragblock[i];
@@ -430,7 +430,7 @@ disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)
 			spp->sdkp_nsectors = DL_GETPSIZE(npp);
 		}
 	}
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for (i = 0; i < MAXPARTITIONS16; i++) {
 		npp = &lp->d_partitions[i];
 		sl->sl_types[i] = npp->p_fstype;
 		sl->sl_fragblock[i] = npp->p_fragblock;

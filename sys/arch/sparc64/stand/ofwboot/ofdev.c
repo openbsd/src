@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.41 2025/10/17 16:54:04 deraadt Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.42 2025/11/18 15:24:09 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 
 	lp->d_acylinders = sl->sl_acylinders;
 
-	lp->d_npartitions = MAXPARTITIONS;
+	lp->d_npartitions = MAXPARTITIONS16;
 
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
@@ -371,7 +371,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 			npp->p_cpg = 16;
 		}
 		if (sl->sl_xpmag == SL_XPMAGTYP) {
-			for (i = 0; i < MAXPARTITIONS; i++) {
+			for (i = 0; i < MAXPARTITIONS16; i++) {
 				npp = &lp->d_partitions[i];
 				npp->p_fstype = sl->sl_types[i];
 				npp->p_fragblock = sl->sl_fragblock[i];
@@ -436,7 +436,7 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	/* minimal requirements for archetypal disk label */
 	if (DL_GETDSIZE(lp) == 0)
 		DL_SETDSIZE(lp, 0x1fffffff);
-	lp->d_npartitions = MAXPARTITIONS;
+	lp->d_npartitions = MAXPARTITIONS16;
 	if (DL_GETPSIZE(&lp->d_partitions[0]) == 0)
 		DL_SETPSIZE(&lp->d_partitions[0], 0x1fffffff);
 	DL_SETPOFFSET(&lp->d_partitions[0], 0);

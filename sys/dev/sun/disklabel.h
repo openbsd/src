@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.8 2010/04/25 06:15:17 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.9 2025/11/18 15:24:09 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.2 1998/08/22 14:55:28 mrg Exp $ */
 
 /*
@@ -83,15 +83,15 @@ struct sun_disklabel {			/* total size = 512 bytes */
 	u_int		sl_xpsum;	/* additive cksum, [xl_xpmag,sl_xx1) */
 	u_int		sl_xpmag;	/* "extended" magic number */
 	struct sun_dkpart sl_xpart[SUNXPART];	/* "extended" partitions i..p */
-	u_char		sl_types[MAXPARTITIONS];
-	u_int8_t	sl_fragblock[MAXPARTITIONS];
-	u_int16_t	sl_cpg[MAXPARTITIONS];
+	u_char		sl_types[MAXPARTITIONS16];
+	u_int8_t	sl_fragblock[MAXPARTITIONS16];
+	u_int16_t	sl_cpg[MAXPARTITIONS16];
 	u_char		sl_uid[8];	/* extension: unique disk label */
 	char		sl_xxx1[292 - sizeof(u_int) - sizeof(u_int) -
 			    (sizeof(struct sun_dkpart) * SUNXPART) -
-			    sizeof(u_char) * MAXPARTITIONS -
-			    sizeof(u_int8_t) * MAXPARTITIONS -
-			    sizeof(u_int16_t) * MAXPARTITIONS -
+			    sizeof(u_char) * MAXPARTITIONS16 -
+			    sizeof(u_int8_t) * MAXPARTITIONS16 -
+			    sizeof(u_int16_t) * MAXPARTITIONS16 -
 			    sizeof(u_int64_t)];
 	u_short sl_rpm;			/* rotational speed */
 	u_short	sl_pcylinders;		/* number of physical cyls */

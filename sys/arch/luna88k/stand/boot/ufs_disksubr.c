@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_disksubr.c,v 1.7 2023/04/10 04:21:20 jsg Exp $	*/
+/*	$OpenBSD: ufs_disksubr.c,v 1.8 2025/11/18 15:24:09 krw Exp $	*/
 /*	$NetBSD: ufs_disksubr.c,v 1.2 2013/01/14 01:37:57 tsutsui Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ readdisklabel(struct scsi_softc *sc, uint tgt, struct disklabel *lp)
 
 	lp->d_acylinders = slp->sl_acylinders;
 
-	lp->d_npartitions = MAXPARTITIONS;
+	lp->d_npartitions = MAXPARTITIONS16;
 
 	for (i = 0; i < 8; i++) {
 		spp = &slp->sl_part[i];
