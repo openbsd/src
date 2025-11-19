@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.120 2025/11/11 17:43:18 bluhm Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.121 2025/11/19 04:58:04 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -90,8 +90,6 @@ enum mcx_cmdq_slot {
 #define MCX_LOG_RQ_SIZE			10
 #define MCX_LOG_SQ_SIZE			11
 
-#define MCX_MAX_QUEUES			16
-
 /* completion event moderation - about 10khz, or 90% of the cq */
 #define MCX_CQ_MOD_PERIOD		50
 #define MCX_CQ_MOD_COUNTER		\
@@ -121,8 +119,8 @@ CTASSERT(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN == MCX_SQ_INLINE_SIZE);
 #define MCX_WQ_DOORBELL_BASE		MCX_PAGE_SIZE/2
 #define MCX_WQ_DOORBELL_STRIDE		64
 /* make sure the doorbells fit */
-CTASSERT(MCX_MAX_QUEUES * MCX_CQ_DOORBELL_STRIDE < MCX_WQ_DOORBELL_BASE);
-CTASSERT(MCX_MAX_QUEUES * MCX_WQ_DOORBELL_STRIDE <
+CTASSERT(IF_MAX_VECTORS * MCX_CQ_DOORBELL_STRIDE < MCX_WQ_DOORBELL_BASE);
+CTASSERT(IF_MAX_VECTORS * MCX_WQ_DOORBELL_STRIDE <
     MCX_DOORBELL_AREA_SIZE - MCX_WQ_DOORBELL_BASE);
 
 #define MCX_WQ_DOORBELL_MASK		0xffff
@@ -2482,6 +2480,7 @@ struct mcx_softc {
 
 	struct mcx_dmamem	 sc_doorbell_mem;
 
+	int			 sc_max_eqs;
 	struct mcx_eq		 sc_admin_eq;
 	struct mcx_eq		 sc_queue_eq;
 
@@ -2934,7 +2933,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 
 	msix--; /* admin ops took one */
 	sc->sc_intrmap = intrmap_create(&sc->sc_dev, msix,
-	    MIN(MCX_MAX_QUEUES, IF_MAX_VECTORS), INTRMAP_POWEROF2);
+	    MIN(sc->sc_max_eqs, IF_MAX_VECTORS), INTRMAP_POWEROF2);
 	if (sc->sc_intrmap == NULL) {
 		printf(": unable to create interrupt map\n");
 		goto teardown;
@@ -4045,6 +4044,8 @@ mcx_hca_max_caps(struct mcx_softc *sc)
 
 	sc->sc_mhz = bemtoh32(&hca->device_frequency_mhz);
 	sc->sc_khz = bemtoh32(&hca->device_frequency_khz);
+
+	sc->sc_max_eqs = 1 << (hca->log_max_eq & MCX_CAP_DEVICE_LOG_MAX_EQ);
 
 free:
 	mcx_dmamem_free(sc, &mxm);
@@ -7303,7 +7304,7 @@ mcx_up(struct mcx_softc *sc)
 	struct mcx_flow_match match_crit;
 	struct mcx_rss_rule *rss;
 	uint32_t dest;
-	int rqns[MCX_MAX_QUEUES];
+	int rqns[IF_MAX_VECTORS];
 
 	if (mcx_create_tis(sc, &sc->sc_tis) != 0)
 		goto down;
