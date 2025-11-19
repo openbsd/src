@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.55 2025/09/20 15:01:23 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.56 2025/11/19 08:19:18 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -15,11 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/wait.h>
-#include <sys/types.h>
 #include <sys/uio.h>
-
-#include <miscfs/fuse/fusefs.h>
 
 #include <errno.h>
 #include <signal.h>
@@ -118,8 +114,6 @@ fuse_loop(struct fuse *fuse)
 {
 	struct fusebuf fbuf;
 	struct fuse_context ctx;
-	struct kevent event[5];
-	struct kevent ev;
 	struct iovec iov[2];
 	size_t fb_dat_size = FUSEBUFMAXSIZE;
 	ssize_t n;
@@ -127,23 +121,6 @@ fuse_loop(struct fuse *fuse)
 
 	if (fuse == NULL)
 		return (-1);
-
-	fuse->fc->kq = kqueue();
-	if (fuse->fc->kq == -1)
-		return (-1);
-
-	EV_SET(&event[0], fuse->fc->fd, EVFILT_READ, EV_ADD |
-	    EV_ENABLE, 0, 0, 0);
-
-	/* signal events */
-	EV_SET(&event[1], SIGCHLD, EVFILT_SIGNAL, EV_ADD |
-	    EV_ENABLE, 0, 0, 0);
-	EV_SET(&event[2], SIGHUP, EVFILT_SIGNAL, EV_ADD |
-	    EV_ENABLE, 0, 0, 0);
-	EV_SET(&event[3], SIGINT, EVFILT_SIGNAL, EV_ADD |
-	    EV_ENABLE, 0, 0, 0);
-	EV_SET(&event[4], SIGTERM, EVFILT_SIGNAL, EV_ADD |
-	    EV_ENABLE, 0, 0, 0);
 
 	/* prepare the read and write data buffer */
 	fbuf.fb_dat = malloc(fb_dat_size);
@@ -155,28 +132,13 @@ fuse_loop(struct fuse *fuse)
 
 	intr = 0;
 	while (!intr && !fuse->fc->dead) {
-		ret = kevent(fuse->fc->kq, &event[0], 5, &ev, 1, NULL);
-		if (ret == -1) {
-			if (errno != EINTR)
-				DPERROR(__func__);
-		} else if (ret > 0 && ev.filter == EVFILT_SIGNAL) {
-			int signum = ev.ident;
-			switch (signum) {
-			case SIGHUP:
-			case SIGINT:
-			case SIGTERM:
-				DPRINTF("%s: %s\n", __func__,
-				    strsignal(signum));
-				intr = 1;
-				break;
-			default:
-				fprintf(stderr, "%s: %s\n", __func__,
-				    strsignal(signum));
-			}
-		} else if (ret > 0) {
 			iov[1].iov_len = fb_dat_size;
 			n = readv(fuse->fc->fd, iov, 2);
 			if (n == -1) {
+				if (errno == EINTR) {
+					intr = 1;
+					continue;
+				}
 				fprintf(stderr, "%s: bad fusebuf read: %s\n",
 				    __func__, strerror(errno));
 				free(fbuf.fb_dat);
@@ -232,7 +194,6 @@ fuse_loop(struct fuse *fuse)
 				free(fbuf.fb_dat);
 				return (-1);
 			}
-		}
 	}
 
 	free(fbuf.fb_dat);
@@ -462,30 +423,32 @@ fuse_destroy(struct fuse *fuse)
 }
 DEF(fuse_destroy);
 
+static void
+ifuse_sig_handler(int signum)
+{
+	/* empty handler to dinstinguish between SIG_IGN */
+}
+
 void
 fuse_remove_signal_handlers(unused struct fuse_session *se)
 {
 	struct sigaction old_sa;
 
 	if (sigaction(SIGHUP, NULL, &old_sa) == 0)
-		if (old_sa.sa_handler == SIG_IGN)
+		if (old_sa.sa_handler == ifuse_sig_handler)
 			signal(SIGHUP, SIG_DFL);
 
 	if (sigaction(SIGINT, NULL, &old_sa) == 0)
-		if (old_sa.sa_handler == SIG_IGN)
+		if (old_sa.sa_handler == ifuse_sig_handler)
 			signal(SIGINT, SIG_DFL);
 
 	if (sigaction(SIGTERM, NULL, &old_sa) == 0)
-		if (old_sa.sa_handler == SIG_IGN)
+		if (old_sa.sa_handler == ifuse_sig_handler)
 			signal(SIGTERM, SIG_DFL);
 
 	if (sigaction(SIGPIPE, NULL, &old_sa) == 0)
 		if (old_sa.sa_handler == SIG_IGN)
 			signal(SIGPIPE, SIG_DFL);
-
-	if (sigaction(SIGCHLD, NULL, &old_sa) == 0)
-		if (old_sa.sa_handler == SIG_IGN)
-			signal(SIGCHLD, SIG_DFL);
 }
 DEF(fuse_remove_signal_handlers);
 
@@ -497,17 +460,17 @@ fuse_set_signal_handlers(unused struct fuse_session *se)
 	if (sigaction(SIGHUP, NULL, &old_sa) == -1)
 		return (-1);
 	if (old_sa.sa_handler == SIG_DFL)
-		signal(SIGHUP, SIG_IGN);
+		signal(SIGHUP, ifuse_sig_handler);
 
 	if (sigaction(SIGINT, NULL, &old_sa) == -1)
 		return (-1);
 	if (old_sa.sa_handler == SIG_DFL)
-		signal(SIGINT, SIG_IGN);
+		signal(SIGINT, ifuse_sig_handler);
 
 	if (sigaction(SIGTERM, NULL, &old_sa) == -1)
 		return (-1);
 	if (old_sa.sa_handler == SIG_DFL)
-		signal(SIGTERM, SIG_IGN);
+		signal(SIGTERM, ifuse_sig_handler);
 
 	if (sigaction(SIGPIPE, NULL, &old_sa) == -1)
 		return (-1);

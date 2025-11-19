@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.24 2025/09/20 15:01:23 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.25 2025/11/19 08:19:18 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -19,7 +19,6 @@
 #define _FUSE_SUBR_H_
 
 #include <sys/dirent.h>
-#include <sys/event.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -67,9 +66,6 @@ struct fuse_chan {
 	int fd;
 	int init;
 	int dead;
-
-	/* kqueue stuff */
-	int kq;
 };
 
 struct fuse_config {
