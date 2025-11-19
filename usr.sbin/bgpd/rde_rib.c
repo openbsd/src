@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.277 2025/11/19 09:49:27 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.278 2025/11/19 13:30:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -456,6 +456,7 @@ rib_dump_cleanup(struct rib_entry *re)
 	if (rib_empty(re_unlock(re)))
 		rib_remove(re);
 }
+
 static void
 rib_dump_free(struct rib_context *ctx)
 {
