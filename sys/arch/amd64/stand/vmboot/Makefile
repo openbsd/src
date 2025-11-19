@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2025/11/12 11:34:36 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.2 2025/11/19 17:50:46 deraadt Exp $
 
 NOMAN=
 #MAN=		vmboot.8
@@ -26,7 +26,7 @@ mr.fs: rdboot bsd
 	install -d -o root -g wheel $@.d/mnt
 	install -d -o root -g wheel $@.d/sbin
 	install -o ${BINOWN} -g ${BINGRP} -m 555 rdboot $@.d/sbin/init
-	cd $@.d/dev && sh ${DESTDIR}/dev/MAKEDEV vmboot
+	cd $@.d/dev && MAKEDEV_PARTITIONS=16 sh ${DESTDIR}/dev/MAKEDEV vmboot
 	makefs ${MRMAKEFSARGS} $@ $@.d
 
 vmboot: mr.fs

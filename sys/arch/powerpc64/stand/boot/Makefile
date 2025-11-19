@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2023/04/28 08:45:26 krw Exp $
+#	$OpenBSD: Makefile,v 1.5 2025/11/19 17:50:46 deraadt Exp $
 
 NOMAN=
 #MAN=		boot.8
@@ -26,7 +26,7 @@ mr.fs: rdboot bsd
 	install -d -o root -g wheel $@.d/mnt
 	install -d -o root -g wheel $@.d/sbin
 	install -o ${BINOWN} -g ${BINGRP} -m 555 rdboot $@.d/sbin/init
-	cd $@.d/dev && sh ${DESTDIR}/dev/MAKEDEV boot
+	cd $@.d/dev && MAKEDEV_PARTITIONS=16 sh ${DESTDIR}/dev/MAKEDEV boot
 	makefs ${MRMAKEFSARGS} $@ $@.d
 
 boot: mr.fs
