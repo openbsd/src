@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxtreg.h,v 1.7 2025/07/15 13:40:02 jsg Exp $	*/
+/*	$OpenBSD: if_bnxtreg.h,v 1.8 2025/11/19 07:28:52 jmatthew Exp $	*/
 /*-
  *   BSD LICENSE
  *
@@ -405,7 +405,7 @@ struct tx_bd_long_hi {
 	 * Packet must be a valid FCoE format packet.
 	 */
 	#define TX_BD_LONG_LFLAGS_FCOE_CRC			UINT32_C(0x200)
-	uint16_t hdr_size;
+	uint16_t kid_or_ts_low_hdr_size;
 	/*
 	 * When LSO is '1', this field must contain the offset of the TCP
 	 * payload from the beginning of the packet in as 16b words. In case of
@@ -415,7 +415,7 @@ struct tx_bd_long_hi {
 	 */
 	#define TX_BD_LONG_HDR_SIZE_MASK			UINT32_C(0x1ff)
 	#define TX_BD_LONG_HDR_SIZE_SFT				0
-	uint32_t mss;
+	uint32_t kid_or_ts_high_mss;
 	/*
 	 * This is the MSS value that will be used to do the LSO processing. The
 	 * value is the length in bytes of the TCP payload for each segment
@@ -5534,7 +5534,7 @@ struct hwrm_ver_get_output {
 	 * the response is a valid flag that will read as '1' when the command
 	 * has been completely written to memory.
 	 */
-	uint8_t hwrm_intf_maj;
+	uint8_t hwrm_intf_maj_8b;
 	/*
 	 * This field represents the major version of HWRM interface
 	 * specification supported by the HWRM implementation. The interface
@@ -5543,7 +5543,7 @@ struct hwrm_ver_get_output {
 	 * implementation that is compliant with this specification shall
 	 * provide value of 1 in this field.
 	 */
-	uint8_t hwrm_intf_min;
+	uint8_t hwrm_intf_min_8b;
 	/*
 	 * This field represents the minor version of HWRM interface
 	 * specification supported by the HWRM implementation. A change in
@@ -5554,7 +5554,7 @@ struct hwrm_ver_get_output {
 	 * versions are compatible. A HWRM implementation that is compliant with
 	 * this specification shall provide value of 2 in this field.
 	 */
-	uint8_t hwrm_intf_upd;
+	uint8_t hwrm_intf_upd_8b;
 	/*
 	 * This field represents the update version of HWRM interface
 	 * specification supported by the HWRM implementation. The interface
@@ -5564,18 +5564,18 @@ struct hwrm_ver_get_output {
 	 * field.
 	 */
 	uint8_t hwrm_intf_rsvd;
-	uint8_t hwrm_fw_maj;
+	uint8_t hwrm_fw_maj_8b;
 	/*
 	 * This field represents the major version of HWRM firmware. A change in
 	 * firmware major version represents a major firmware release.
 	 */
-	uint8_t hwrm_fw_min;
+	uint8_t hwrm_fw_min_8b;
 	/*
 	 * This field represents the minor version of HWRM firmware. A change in
 	 * firmware minor version represents significant firmware functionality
 	 * changes.
 	 */
-	uint8_t hwrm_fw_bld;
+	uint8_t hwrm_fw_bld_8b;
 	/*
 	 * This field represents the build version of HWRM firmware. A change in
 	 * firmware build version represents bug fixes to a released firmware.
@@ -7842,11 +7842,11 @@ struct hwrm_func_drv_rgtr_input {
 	#define HWRM_FUNC_DRV_RGTR_INPUT_OS_TYPE_WIN864	UINT32_C(0x73)
 	/* Microsoft Windows Server 2012 R2 OS. */
 	#define HWRM_FUNC_DRV_RGTR_INPUT_OS_TYPE_WIN2012R2	UINT32_C(0x74)
-	uint8_t ver_maj;
+	uint8_t ver_maj_8b;
 	/* This is the major version of the driver. */
-	uint8_t ver_min;
+	uint8_t ver_min_8b;
 	/* This is the minor version of the driver. */
-	uint8_t ver_upd;
+	uint8_t ver_upd_8b;
 	/* This is the update version of the driver. */
 	uint8_t unused_0;
 	uint16_t unused_1;
@@ -10769,7 +10769,7 @@ struct hwrm_port_phy_i2c_read_input {
 	uint64_t resp_addr;
 	uint32_t flags;
 	uint32_t enables;
-#define HWRM_PORT_PHY_I2C_READ_REQ_ENABLES_PAGE_OFFSET     0x1UL
+#define HWRM_PORT_PHY_I2C_READ_INPUT_ENABLES_PAGE_OFFSET     0x1UL
 
 	uint16_t port_id;
 	uint8_t i2c_slave_addr;

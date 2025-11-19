@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.61 2025/11/11 17:43:18 bluhm Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.62 2025/11/19 07:28:52 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -242,6 +242,7 @@ struct bnxt_softc {
 	struct bnxt_dmamem	*sc_cmd_resp;
 	uint16_t		sc_cmd_seq;
 	uint16_t		sc_max_req_len;
+	uint16_t		sc_max_ext_req_len;
 	uint32_t		sc_cmd_timeo;
 	uint32_t		sc_flags;
 
@@ -1466,10 +1467,11 @@ bnxt_start(struct ifqueue *ifq)
 					tcpstat_inc(tcps_outbadtso);
 
 				hdrsize += ext.tcphlen;
-				txhi->hdr_size = htole16(hdrsize / 2);
+				txhi->kid_or_ts_low_hdr_size =
+				    htole16(hdrsize / 2);
 
 				outlen = m->m_pkthdr.ph_mss;
-				txhi->mss = htole32(outlen);
+				txhi->kid_or_ts_high_mss = htole32(outlen);
 
 				paylen = m->m_pkthdr.len - hdrsize;
 				tcpstat_add(tcps_outpkttso,
@@ -2499,12 +2501,16 @@ _hwrm_send_message(struct bnxt_softc *softc, void *msg, uint32_t msg_len)
 	req->seq_id = htole16(softc->sc_cmd_seq++);
 	memset(resp, 0, PAGE_SIZE);
 
-	if (softc->sc_flags & BNXT_FLAG_SHORT_CMD) {
+	if (msg_len > softc->sc_max_ext_req_len)
+		msg_len = softc->sc_max_ext_req_len;
+
+	if ((softc->sc_flags & BNXT_FLAG_SHORT_CMD) ||
+	    msg_len > softc->sc_max_req_len) {
 		void *short_cmd_req = BNXT_DMA_KVA(softc->sc_cmd_resp);
 
 		memcpy(short_cmd_req, req, msg_len);
 		memset((uint8_t *) short_cmd_req + msg_len, 0,
-		    softc->sc_max_req_len - msg_len);
+		    softc->sc_max_ext_req_len - msg_len);
 
 		short_input.req_type = req->req_type;
 		short_input.signature =
@@ -2638,6 +2644,7 @@ bnxt_hwrm_ver_get(struct bnxt_softc *softc)
 	uint32_t dev_caps_cfg;
 
 	softc->sc_max_req_len = HWRM_MAX_REQ_LEN;
+	softc->sc_max_ext_req_len = HWRM_MAX_REQ_LEN;
 	softc->sc_cmd_timeo = 1000;
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_VER_GET);
 
@@ -2650,11 +2657,11 @@ bnxt_hwrm_ver_get(struct bnxt_softc *softc)
 	if (rc)
 		goto fail;
 
-	printf(": fw ver %d.%d.%d, ", resp->hwrm_fw_maj, resp->hwrm_fw_min,
-	    resp->hwrm_fw_bld);
+	printf(": fw ver %d.%d.%d, ", resp->hwrm_fw_maj_8b, resp->hwrm_fw_min_8b,
+	    resp->hwrm_fw_bld_8b);
 
-	softc->sc_hwrm_ver = (resp->hwrm_intf_maj << 16) |
-	    (resp->hwrm_intf_min << 8) | resp->hwrm_intf_upd;
+	softc->sc_hwrm_ver = (resp->hwrm_intf_maj_8b << 16) |
+	    (resp->hwrm_intf_min_8b << 8) | resp->hwrm_intf_upd_8b;
 #if 0
 	snprintf(softc->ver_info->hwrm_if_ver, BNXT_VERSTR_SIZE, "%d.%d.%d",
 	    resp->hwrm_intf_maj, resp->hwrm_intf_min, resp->hwrm_intf_upd);
@@ -2740,9 +2747,9 @@ bnxt_hwrm_func_drv_rgtr(struct bnxt_softc *softc)
 	    HWRM_FUNC_DRV_RGTR_INPUT_ENABLES_OS_TYPE);
 	req.os_type = htole16(HWRM_FUNC_DRV_RGTR_INPUT_OS_TYPE_FREEBSD);
 
-	req.ver_maj = 6;
-	req.ver_min = 4;
-	req.ver_upd = 0;
+	req.ver_maj_8b = HWRM_VERSION_MAJOR;
+	req.ver_min_8b = HWRM_VERSION_MINOR;
+	req.ver_upd_8b = HWRM_VERSION_UPDATE;
 
 	return hwrm_send_message(softc, &req, sizeof(req));
 }
@@ -3605,7 +3612,7 @@ bnxt_get_sffpage(struct bnxt_softc *softc, struct if_sffpage *sff)
 	for (offset = 0; offset < 256; offset += sizeof(out->data)) {
 		req.page_offset = htole16(offset);
 		req.data_length = sizeof(out->data);
-		req.enables = htole32(HWRM_PORT_PHY_I2C_READ_REQ_ENABLES_PAGE_OFFSET);
+		req.enables = htole32(HWRM_PORT_PHY_I2C_READ_INPUT_ENABLES_PAGE_OFFSET);
 		
 		if (hwrm_send_message(softc, &req, sizeof(req))) {
 			printf("%s: failed to read i2c data\n", DEVNAME(softc));
