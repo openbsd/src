@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.17 2025/02/19 21:30:46 kettenis Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.18 2025/11/19 15:05:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -16,11 +16,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/disklabel.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -35,6 +38,14 @@ int	verbose;
 char	*root;
 char	*stage1;
 char	*stage2;
+
+/*
+ * XXX Only read the old smaller "skinny" label for now which
+ * has 16 partitions. offsetof() is used to carve struct disklabel.
+ * Later we'll add code to read and process the "fat" label with
+ * 52 partitions.
+ */
+size_t dl16sz = offsetof(struct disklabel, d_partitions[MAXPARTITIONS16]);
 
 static __dead void
 usage(void)

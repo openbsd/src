@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootstrap.c,v 1.14 2025/09/17 16:12:10 deraadt Exp $	*/
+/*	$OpenBSD: bootstrap.c,v 1.15 2025/11/19 15:05:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -112,12 +112,12 @@ bootstrap(int devfd, char *dev, char *bootfile)
 	 */
 	lp = (struct disklabel *)(boot + (LABELSECTOR * DEV_BSIZE) +
 	    LABELOFFSET);
-	for (i = 0, p = (char *)lp; i < (int)sizeof(*lp); i++)
+	for (i = 0, p = (char *)lp; i < dl16sz; i++)
 		if (p[i] != 0)
 			errx(1, "bootstrap has data in disklabel area");
 
 	/* Patch the disklabel into the bootstrap code. */
-	memcpy(lp, &dl, sizeof(dl));
+	memcpy(lp, &dl, dl16sz);
 
 	/* Write the bootstrap out to the disk. */
 	if (verbose)

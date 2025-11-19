@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.17 2025/02/19 21:30:46 kettenis Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.18 2025/11/19 15:05:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -27,6 +27,8 @@ extern int verbose;
 extern char *root;
 extern char *stage1;
 extern char *stage2;
+
+extern size_t dl16sz;
 
 #ifdef BOOTSTRAP
 void	bootstrap(int, char *, char *);
