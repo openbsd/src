@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.39 2024/01/09 03:16:00 guenther Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.40 2025/11/19 18:18:09 deraadt Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -260,6 +260,7 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 {
 	struct fs	*superblock;
 	ffs_opt_t	*ffs_opts = fsopts->fs_specific;
+	size_t dl16sz = offsetof(struct disklabel, d_partitions[MAXPARTITIONS16]);
 
 	assert(image != NULL);
 	assert(dir != NULL);
@@ -323,11 +324,11 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 			sum ^= *p++;
 		lp->d_checksum = sum;
 
-		n = pwrite(fsopts->fd, lp, sizeof(struct disklabel),
+		n = pwrite(fsopts->fd, lp, dl16sz,
 		    fsopts->offset + LABELSECTOR * DEV_BSIZE + LABELOFFSET);
 		if (n == -1)
 			err(1, "failed to write disklabel");
-		else if (n < sizeof(struct disklabel))
+		else if (n < dl16sz)
 			errx(1, "failed to write disklabel: short write");
 	}
 
