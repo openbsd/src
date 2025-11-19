@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.90 2025/11/17 14:22:24 deraadt Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.91 2025/11/19 17:49:42 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -67,7 +67,7 @@ dnl
 divert(2)dnl
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 UNITMULT=64
-PARTITIONS=`sysctl -n kern.maxpartitions`
+MAKEDEV_PARTITIONS=${MAKEDEV_PARTITIONS:-`sysctl -n kern.maxpartitions`}
 T=$0
 
 # set this to echo for Echo-Only debugging
@@ -149,7 +149,7 @@ dodisk()
 	[ "$DEBUG" ] && set -x
 	n=Add(Mult(${5}, ${7:-$UNITMULT}), ${6}) count=0
 	_extra=
-	[ $PARTITIONS == 52 ] && _extra="q r s t u v w x y z \
+	[ $MAKEDEV_PARTITIONS == 52 ] && _extra="q r s t u v w x y z \
 	    A B C D E F G H I J K L M N O P Q R S T U V W X Y Z"
 	for d in a b c d e f g h i j k l m n o p $_extra
 	do
