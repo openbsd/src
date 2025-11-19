@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.319 2025/11/18 16:39:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.320 2025/11/19 09:49:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -731,6 +731,7 @@ void		 prefix_adjout_withdraw(struct prefix *);
 void		 prefix_adjout_destroy(struct prefix *);
 void		 prefix_adjout_flush_pending(struct rde_peer *);
 int		 prefix_adjout_reaper(struct rde_peer *);
+void		 prefix_adjout_dump_cleanup(struct prefix *);
 void		 prefix_adjout_dump_r(struct rib_context *);
 int		 prefix_adjout_dump_new(struct rde_peer *, uint8_t,
 		    unsigned int, void *, void (*)(struct prefix *, void *),

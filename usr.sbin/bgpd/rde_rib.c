@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.276 2025/11/18 16:39:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.277 2025/11/19 09:49:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -75,21 +75,6 @@ static inline int
 re_is_locked(struct rib_entry *re)
 {
 	return (re->lock != 0);
-}
-
-static inline struct prefix *
-prefix_unlock(struct prefix *p)
-{
-	if ((p->flags & PREFIX_FLAG_LOCKED) == 0)
-		fatalx("%s: unlocking unlocked prefix", __func__);
-	p->flags &= ~PREFIX_FLAG_LOCKED;
-	return p;
-}
-
-static inline int
-prefix_is_dead(struct prefix *p)
-{
-	return (p->flags & PREFIX_FLAG_DEAD) != 0;
 }
 
 static inline struct rib_tree *
@@ -466,14 +451,20 @@ rib_dump_runner(void)
 }
 
 static void
+rib_dump_cleanup(struct rib_entry *re)
+{
+	if (rib_empty(re_unlock(re)))
+		rib_remove(re);
+}
+static void
 rib_dump_free(struct rib_context *ctx)
 {
 	if (ctx->ctx_done)
 		ctx->ctx_done(ctx->ctx_arg, ctx->ctx_aid);
-	if (ctx->ctx_re && rib_empty(re_unlock(ctx->ctx_re)))
-		rib_remove(ctx->ctx_re);
-	if (ctx->ctx_p && prefix_is_dead(prefix_unlock(ctx->ctx_p)))
-		prefix_adjout_destroy(ctx->ctx_p);
+	if (ctx->ctx_re)
+		rib_dump_cleanup(ctx->ctx_re);
+	if (ctx->ctx_p)
+		prefix_adjout_dump_cleanup(ctx->ctx_p);
 	LIST_REMOVE(ctx, entry);
 	free(ctx);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.1 2025/11/18 16:39:36 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.2 2025/11/19 09:49:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -444,6 +444,13 @@ prefix_restart(struct rib_context *ctx)
 	}
 	ctx->ctx_p = NULL;
 	return p;
+}
+
+void
+prefix_adjout_dump_cleanup(struct prefix *p)
+{
+	if (prefix_is_dead(prefix_unlock(p)))
+		prefix_adjout_destroy(p);
 }
 
 void
