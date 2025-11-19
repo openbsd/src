@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.4 2025/09/01 04:51:04 helg Exp $
+$OpenBSD: README,v 1.5 2025/11/19 09:15:33 helg Exp $
 
 These tests must be run as root, on a system with free vnd0 and vnd1 slots.
 The system must be single-user or set to a securelevel < 1 for all tests to
@@ -6,3 +6,19 @@ pass.
 It is also advised that /mnt be unmounted, and clean.
 The NFS tests create an entry in /etc/exports and start NFS server
 daemons for a loopback mount.
+
+The entry point to the file system tests is the run script, which takes a
+list of tests scripts as arguments. The run script assumes that the current
+directory is the root of the already mounted filesystem to be tested.
+
+  Usage: run [file ...]
+
+Each file is sourced by the run script and executed.
+
+Not all filesystems support all VFS file system calls and the behvaviour of
+the tests can be configured with environment variables.
+
+CHFLAGS
+        If this is "no", then any tests that rely on flags being implemented
+        by the file system will not be run and instead check that
+        EOPNOTSUPPORTED is returned by chflags(2).
