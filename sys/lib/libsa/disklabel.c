@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.6 2025/11/14 17:31:19 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.7 2025/11/20 14:57:39 krw Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.3 1994/10/26 05:44:42 cgd Exp $	*/
 
 /*-
@@ -63,7 +63,6 @@ getdisklabel(const char *buf, struct disklabel *lp)
 			   dkcksum(dlp) != 0)
 			msg = "disk label corrupted";
 		else {
-			*lp = *dlp;
 			memcpy(lp, dlp, lpsz);
 			msg = NULL;
 			break;
