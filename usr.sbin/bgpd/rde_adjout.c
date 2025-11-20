@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.5 2025/11/20 13:46:22 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.6 2025/11/20 14:04:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -63,7 +63,7 @@ prefix_is_dead(struct prefix_adjout *p)
 static void	 prefix_adjout_link(struct prefix_adjout *, struct pt_entry *,
 		    struct rde_peer *, uint32_t, uint32_t,
 		    struct rde_aspath *, struct rde_community *,
-		    struct nexthop *, uint8_t, uint8_t);
+		    struct nexthop *, uint8_t);
 static void	 prefix_adjout_unlink(struct prefix_adjout *);
 
 static struct prefix_adjout	*prefix_adjout_alloc(void);
@@ -101,8 +101,6 @@ prefix_cmp(struct prefix_adjout *a, struct prefix_adjout *b)
 		return (a->communities > b->communities ? 1 : -1);
 	if (a->nexthop != b->nexthop)
 		return (a->nexthop > b->nexthop ? 1 : -1);
-	if (a->nhflags != b->nhflags)
-		return (a->nhflags > b->nhflags ? 1 : -1);
 	return prefix_index_cmp(a, b);
 }
 
@@ -249,7 +247,6 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 		 * paths.
 		 */
 		if (p->path_id_tx == path_id_tx &&
-		    prefix_adjout_nhflags(p) == state->nhflags &&
 		    prefix_adjout_nexthop(p) == state->nexthop &&
 		    communities_equal(&state->communities,
 		    prefix_adjout_communities(p)) &&
@@ -296,7 +293,7 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 	}
 
 	prefix_adjout_link(p, p->pt, peer, 0, p->path_id_tx, asp, comm,
-	    state->nexthop, state->nhflags, state->vstate);
+	    state->nexthop, state->vstate);
 	peer->stats.prefix_out_cnt++;
 
 	if (p->flags & PREFIX_ADJOUT_FLAG_MASK)
@@ -572,7 +569,7 @@ static void
 prefix_adjout_link(struct prefix_adjout *p, struct pt_entry *pt,
     struct rde_peer *peer, uint32_t path_id, uint32_t path_id_tx,
     struct rde_aspath *asp, struct rde_community *comm,
-    struct nexthop *nexthop, uint8_t nhflags, uint8_t vstate)
+    struct nexthop *nexthop, uint8_t vstate)
 {
 	p->aspath = path_ref(asp);
 	p->communities = communities_ref(comm);
@@ -582,9 +579,6 @@ prefix_adjout_link(struct prefix_adjout *p, struct pt_entry *pt,
 	p->path_id_tx = path_id_tx;
 	p->validation_state = vstate;
 	p->nexthop = nexthop_ref(nexthop);
-	p->nhflags = nhflags;
-	/* All nexthops are valid in Adj-RIB-Out */
-	p->nhflags |= NEXTHOP_VALID;
 	p->lastchange = getmonotime();
 }
 
@@ -598,7 +592,6 @@ prefix_adjout_unlink(struct prefix_adjout *p)
 	/* remove nexthop ref ... */
 	nexthop_unref(p->nexthop);
 	p->nexthop = NULL;
-	p->nhflags = 0;
 	/* ... communities ... */
 	communities_unref(p->communities);
 	p->communities = NULL;

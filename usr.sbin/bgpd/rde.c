@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.668 2025/11/20 13:46:22 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.669 2025/11/20 14:04:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2994,7 +2994,6 @@ rde_dump_adjout_as(struct prefix_adjout *p, struct rde_aspath *asp, pid_t pid,
 	rib.prefixlen = p->pt->prefixlen;
 	rib.origin = asp->origin;
 	/* roa and aspa vstate skipped, they don't matter in adj-rib-out */
-	rib.dmetric = p->dmetric;
 	rib.flags = 0;
 	rib.flags |= F_PREF_ELIGIBLE;
 	if (!peer->conf.ebgp)

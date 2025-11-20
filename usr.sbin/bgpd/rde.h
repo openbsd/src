@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.323 2025/11/20 13:46:22 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.324 2025/11/20 14:04:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -314,8 +314,6 @@ struct prefix_adjout {
 	uint32_t			 path_id_tx;
 	uint8_t			 	 flags;
 	uint8_t				 validation_state;
-	uint8_t				 nhflags;
-	int8_t				 dmetric;	/* decision metric */
 };
 #define	PREFIX_ADJOUT_FLAG_WITHDRAW	0x01	/* enqueued on withdraw queue */
 #define	PREFIX_ADJOUT_FLAG_UPDATE	0x02	/* enqueued on update queue */
@@ -770,12 +768,6 @@ static inline struct nexthop *
 prefix_adjout_nexthop(struct prefix_adjout *p)
 {
 	return (p->nexthop);
-}
-
-static inline uint8_t
-prefix_adjout_nhflags(struct prefix_adjout *p)
-{
-	return (p->nhflags & NEXTHOP_MASK);
 }
 
 /* rde_update.c */

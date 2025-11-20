@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.182 2025/11/20 13:46:22 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.183 2025/11/20 14:04:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -855,7 +855,6 @@ up_dump_prefix(struct ibuf *buf, struct prefix_tree *prefix_head,
 		    np->aspath != p->aspath ||
 		    np->communities != p->communities ||
 		    np->nexthop != p->nexthop ||
-		    np->nhflags != p->nhflags ||
 		    (np->flags & PREFIX_ADJOUT_FLAG_EOR))
 			done = 1;
 
