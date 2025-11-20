@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.71 2025/08/17 08:42:21 phessler Exp $ */
+/*	$OpenBSD: localtime.c,v 1.72 2025/11/20 10:59:56 tb Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -1356,7 +1356,7 @@ gmtsub(const time_t *timep, int_fast32_t offset, struct tm *tmp)
 		tmp->tm_zone = wildabbr;
 	else {
 		if (gmtptr == NULL)
-			tmp->tm_zone = (char *)gmt;
+			tmp->tm_zone = gmt;
 		else
 			tmp->tm_zone = gmtptr->chars;
 	}
