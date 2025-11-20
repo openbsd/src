@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.54 2025/11/20 10:10:36 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.55 2025/11/20 10:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -314,7 +314,7 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 
 	pt_getaddr(re->prefix, &addr);
 	prefixlen = re->prefix->prefixlen;
-	TAILQ_FOREACH_SAFE(p, &re->prefix_h, entry.list.rib, np) {
+	TAILQ_FOREACH_SAFE(p, &re->prefix_h, rib_l, np) {
 		if (peer != prefix_peer(p))
 			continue;
 		if (monotime_valid(staletime) &&

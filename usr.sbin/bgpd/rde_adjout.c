@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.3 2025/11/20 10:10:36 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.4 2025/11/20 10:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -105,8 +105,8 @@ prefix_cmp(struct prefix_adjout *a, struct prefix_adjout *b)
 	return prefix_index_cmp(a, b);
 }
 
-RB_GENERATE(prefix_tree, prefix_adjout, entry.tree.update, prefix_cmp)
-RB_GENERATE_STATIC(prefix_index, prefix_adjout, entry.tree.index, prefix_index_cmp)
+RB_GENERATE(prefix_tree, prefix_adjout, update, prefix_cmp)
+RB_GENERATE_STATIC(prefix_index, prefix_adjout, index, prefix_index_cmp)
 
 /*
  * Search for specified prefix in the peer prefix_index.

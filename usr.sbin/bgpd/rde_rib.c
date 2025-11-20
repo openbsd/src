@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.279 2025/11/20 10:10:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.280 2025/11/20 10:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1007,12 +1007,12 @@ prefix_flowspec_update(struct rde_peer *peer, struct filterstate *state,
 
 	prefix_link(new, re, re->prefix, peer, 0, path_id_tx, asp, comm,
 	    NULL, 0, 0);
-	TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
+	TAILQ_INSERT_HEAD(&re->prefix_h, new, rib_l);
 
 	rde_generate_updates(re, new, old, EVAL_DEFAULT);
 
 	if (old != NULL) {
-		TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
+		TAILQ_REMOVE(&re->prefix_h, old, rib_l);
 		prefix_unlink(old);
 		prefix_free(old);
 		return 0;
@@ -1036,7 +1036,7 @@ prefix_flowspec_withdraw(struct rde_peer *peer, struct pt_entry *pte)
 	if (p == NULL)
 		return 0;
 	rde_generate_updates(re, NULL, p, EVAL_DEFAULT);
-	TAILQ_REMOVE(&re->prefix_h, p, entry.list.rib);
+	TAILQ_REMOVE(&re->prefix_h, p, rib_l);
 	prefix_unlink(p);
 	prefix_free(p);
 	return 1;
@@ -1069,7 +1069,7 @@ prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, uint32_t path_id)
 {
 	struct prefix	*p;
 
-	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib)
+	TAILQ_FOREACH(p, &re->prefix_h, rib_l)
 		if (prefix_peer(p) == peer && p->path_id == path_id)
 			return (p);
 	return (NULL);
@@ -1096,7 +1096,7 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct pt_entry *pt,
     struct nexthop *nexthop, uint8_t nhflags, uint8_t vstate)
 {
 	if (re)
-		p->entry.list.re = re;
+		p->re = re;
 	p->aspath = path_ref(asp);
 	p->communities = communities_ref(comm);
 	p->peer = peer;
@@ -1222,7 +1222,7 @@ nexthop_runner(void)
 	p = nh->next_prefix;
 	for (j = 0; p != NULL && j < RDE_RUNNER_ROUNDS; j++) {
 		prefix_evaluate_nexthop(p, nh->state, nh->oldstate);
-		p = LIST_NEXT(p, entry.list.nexthop);
+		p = LIST_NEXT(p, nexthop_l);
 	}
 
 	/* prep for next run, if not finished readd to tail of queue */
@@ -1337,7 +1337,7 @@ nexthop_link(struct prefix *p)
 	if (p->nexthop == NULL)
 		return;
 	p->flags |= PREFIX_NEXTHOP_LINKED;
-	LIST_INSERT_HEAD(&p->nexthop->prefix_h, p, entry.list.nexthop);
+	LIST_INSERT_HEAD(&p->nexthop->prefix_h, p, nexthop_l);
 }
 
 void
@@ -1349,7 +1349,7 @@ nexthop_unlink(struct prefix *p)
 		return;
 
 	if (p == p->nexthop->next_prefix) {
-		p->nexthop->next_prefix = LIST_NEXT(p, entry.list.nexthop);
+		p->nexthop->next_prefix = LIST_NEXT(p, nexthop_l);
 		/* remove nexthop from list if no prefixes left to update */
 		if (p->nexthop->next_prefix == NULL) {
 			TAILQ_REMOVE(&nexthop_runners, p->nexthop, runner_l);
@@ -1359,7 +1359,7 @@ nexthop_unlink(struct prefix *p)
 	}
 
 	p->flags &= ~PREFIX_NEXTHOP_LINKED;
-	LIST_REMOVE(p, entry.list.nexthop);
+	LIST_REMOVE(p, nexthop_l);
 }
 
 struct nexthop *

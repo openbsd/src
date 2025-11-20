@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.104 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.105 2025/11/20 10:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -343,7 +343,7 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 		ep = TAILQ_FIRST(&re->prefix_h);
 
 	for (xp = ep; xp != NULL; xp = np) {
-		np = TAILQ_NEXT(xp, entry.list.rib);
+		np = TAILQ_NEXT(xp, rib_l);
 
 		if ((preferred = (prefix_cmp(new, xp, &testall) > 0))) {
 			/* new is preferred over xp */
@@ -352,8 +352,8 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 				 * MED inversion, take out prefix and
 				 * put it onto redo queue.
 				 */
-				TAILQ_REMOVE(&re->prefix_h, xp, entry.list.rib);
-				TAILQ_INSERT_TAIL(&redo, xp, entry.list.rib);
+				TAILQ_REMOVE(&re->prefix_h, xp, rib_l);
+				TAILQ_INSERT_TAIL(&redo, xp, rib_l);
 				removed = 1;
 				continue;
 			}
@@ -388,7 +388,7 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 		 */
 		if (removed) {
 			prefix_set_dmetric(TAILQ_PREV(xp, prefix_queue,
-			    entry.list.rib), xp);
+			    rib_l), xp);
 			removed = 0;
 		}
 
@@ -397,18 +397,18 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 	}
 
 	if (insertp == NULL) {
-		TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
+		TAILQ_INSERT_HEAD(&re->prefix_h, new, rib_l);
 	} else {
-		TAILQ_INSERT_AFTER(&re->prefix_h, insertp, new, entry.list.rib);
+		TAILQ_INSERT_AFTER(&re->prefix_h, insertp, new, rib_l);
 	}
 
 	prefix_set_dmetric(insertp, new);
-	prefix_set_dmetric(new, TAILQ_NEXT(new, entry.list.rib));
+	prefix_set_dmetric(new, TAILQ_NEXT(new, rib_l));
 
 	/* Fixup MED order again. All elements are < new */
 	while (!TAILQ_EMPTY(&redo)) {
 		xp = TAILQ_FIRST(&redo);
-		TAILQ_REMOVE(&redo, xp, entry.list.rib);
+		TAILQ_REMOVE(&redo, xp, rib_l);
 
 		prefix_insert(xp, new, re);
 	}
@@ -430,16 +430,16 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 	struct prefix *xp, *np, *pp;
 	int testall, removed = 0;
 
-	xp = TAILQ_NEXT(old, entry.list.rib);
-	pp = TAILQ_PREV(old, prefix_queue, entry.list.rib);
-	TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
+	xp = TAILQ_NEXT(old, rib_l);
+	pp = TAILQ_PREV(old, prefix_queue, rib_l);
+	TAILQ_REMOVE(&re->prefix_h, old, rib_l);
 
 	/* check if a MED inversion could be possible */
 	prefix_cmp(old, xp, &testall);
 	if (testall > 0) {
 		/* maybe MED route, scan tail for other possible routes */
 		for (; xp != NULL; xp = np) {
-			np = TAILQ_NEXT(xp, entry.list.rib);
+			np = TAILQ_NEXT(xp, rib_l);
 
 			/* only interested in the testall result */
 			prefix_cmp(old, xp, &testall);
@@ -448,8 +448,8 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 				 * possible MED inversion, take out prefix and
 				 * put it onto redo queue.
 				 */
-				TAILQ_REMOVE(&re->prefix_h, xp, entry.list.rib);
-				TAILQ_INSERT_TAIL(&redo, xp, entry.list.rib);
+				TAILQ_REMOVE(&re->prefix_h, xp, rib_l);
+				TAILQ_INSERT_TAIL(&redo, xp, rib_l);
 				removed = 1;
 				continue;
 			}
@@ -460,7 +460,7 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 			 */
 			if (removed) {
 				prefix_set_dmetric(TAILQ_PREV(xp, prefix_queue,
-				    entry.list.rib), xp);
+				    rib_l), xp);
 				removed = 0;
 			}
 			if (testall == 0)
@@ -469,14 +469,14 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 	}
 
 	if (pp)
-		prefix_set_dmetric(pp, TAILQ_NEXT(pp, entry.list.rib));
+		prefix_set_dmetric(pp, TAILQ_NEXT(pp, rib_l));
 	else
 		prefix_set_dmetric(NULL, TAILQ_FIRST(&re->prefix_h));
 
 	/* Fixup MED order again, reinsert prefixes from the start */
 	while (!TAILQ_EMPTY(&redo)) {
 		xp = TAILQ_FIRST(&redo);
-		TAILQ_REMOVE(&redo, xp, entry.list.rib);
+		TAILQ_REMOVE(&redo, xp, rib_l);
 
 		prefix_insert(xp, NULL, re);
 	}
@@ -538,9 +538,9 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	if (rib->flags & F_RIB_NOEVALUATE) {
 		/* decision process is turned off */
 		if (old != NULL)
-			TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
+			TAILQ_REMOVE(&re->prefix_h, old, rib_l);
 		if (new != NULL) {
-			TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
+			TAILQ_INSERT_HEAD(&re->prefix_h, new, rib_l);
 			new->dmetric = PREFIX_DMETRIC_INVALID;
 		}
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.321 2025/11/20 10:10:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.322 2025/11/20 10:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -267,25 +267,21 @@ struct pt_entry {
 };
 
 struct prefix {
-	union {
-		struct {
-			TAILQ_ENTRY(prefix)	 rib;
-			LIST_ENTRY(prefix)	 nexthop;
-			struct rib_entry	*re;
-		} list;
-	}				 entry;
-	struct pt_entry			*pt;
-	struct rde_aspath		*aspath;
-	struct rde_community		*communities;
-	struct rde_peer			*peer;
-	struct nexthop			*nexthop;	/* may be NULL */
-	monotime_t			 lastchange;
-	uint32_t			 path_id;
-	uint32_t			 path_id_tx;
-	uint16_t			 flags;
-	uint8_t				 validation_state;
-	uint8_t				 nhflags;
-	int8_t				 dmetric;	/* decision metric */
+	TAILQ_ENTRY(prefix)	 rib_l;
+	LIST_ENTRY(prefix)	 nexthop_l;
+	struct rib_entry	*re;
+	struct pt_entry		*pt;
+	struct rde_aspath	*aspath;
+	struct rde_community	*communities;
+	struct rde_peer		*peer;
+	struct nexthop		*nexthop;	/* may be NULL */
+	monotime_t		 lastchange;
+	uint32_t		 path_id;
+	uint32_t		 path_id_tx;
+	uint16_t		 flags;
+	uint8_t			 validation_state;
+	uint8_t			 nhflags;
+	int8_t			 dmetric;	/* decision metric */
 };
 #define	PREFIX_FLAG_WITHDRAW	0x0001	/* enqueued on withdraw queue */
 #define	PREFIX_FLAG_UPDATE	0x0002	/* enqueued on update queue */
@@ -314,11 +310,7 @@ struct prefix {
 #define	NEXTHOP_VALID		0x80
 
 struct prefix_adjout {
-	union {
-		struct {
-			RB_ENTRY(prefix_adjout)	 index, update;
-		} tree;
-	}				 entry;
+	RB_ENTRY(prefix_adjout)		 index, update;
 	struct pt_entry			*pt;
 	struct rde_aspath		*aspath;
 	struct rde_community		*communities;
@@ -705,9 +697,7 @@ prefix_set_vstate(struct prefix *p, uint8_t roa_vstate, uint8_t aspa_vstate)
 static inline struct rib_entry *
 prefix_re(struct prefix *p)
 {
-	if (p->flags & PREFIX_FLAG_ADJOUT)
-		return NULL;
-	return (p->entry.list.re);
+	return (p->re);
 }
 
 static inline int

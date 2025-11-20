@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.180 2025/11/20 10:10:36 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.181 2025/11/20 10:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -231,7 +231,7 @@ up_generate_updates(struct rde_peer *peer, struct rib_entry *re)
 			return;
 		case UP_FILTERED:
 			if (peer->flags & PEERFLAG_EVALUATE_ALL) {
-				new = TAILQ_NEXT(new, entry.list.rib);
+				new = TAILQ_NEXT(new, rib_l);
 				if (new != NULL && prefix_eligible(new))
 					continue;
 			}
@@ -326,7 +326,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 		}
 
 		/* only allow valid prefixes */
-		new = TAILQ_NEXT(new, entry.list.rib);
+		new = TAILQ_NEXT(new, rib_l);
 		if (new == NULL || !prefix_eligible(new))
 			break;
 	}
