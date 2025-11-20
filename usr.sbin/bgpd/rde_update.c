@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.181 2025/11/20 10:47:36 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.182 2025/11/20 13:46:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -266,7 +266,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 
 	/* mark all paths as stale */
 	for (p = head; p != NULL; p = prefix_adjout_next(peer, p))
-		p->flags |= PREFIX_FLAG_STALE;
+		p->flags |= PREFIX_ADJOUT_FLAG_STALE;
 
 	/* update paths */
 	new = prefix_best(re);
@@ -333,7 +333,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 
 	/* withdraw stale paths */
 	for (p = head; p != NULL; p = prefix_adjout_next(peer, p)) {
-		if (p->flags & PREFIX_FLAG_STALE)
+		if (p->flags & PREFIX_ADJOUT_FLAG_STALE)
 			prefix_adjout_withdraw(p);
 	}
 }
@@ -797,13 +797,13 @@ up_is_eor(struct rde_peer *peer, uint8_t aid)
 	struct prefix_adjout *p;
 
 	p = RB_MIN(prefix_tree, &peer->updates[aid]);
-	if (p != NULL && (p->flags & PREFIX_FLAG_EOR)) {
+	if (p != NULL && (p->flags & PREFIX_ADJOUT_FLAG_EOR)) {
 		/*
 		 * Need to remove eor from update tree because
 		 * prefix_adjout_destroy() can't handle that.
 		 */
 		RB_REMOVE(prefix_tree, &peer->updates[aid], p);
-		p->flags &= ~PREFIX_FLAG_UPDATE;
+		p->flags &= ~PREFIX_ADJOUT_FLAG_UPDATE;
 		prefix_adjout_destroy(p);
 		return 1;
 	}
@@ -824,7 +824,7 @@ up_prefix_free(struct prefix_tree *prefix_head, struct prefix_adjout *p,
 	} else {
 		/* prefix still in Adj-RIB-Out, keep it */
 		RB_REMOVE(prefix_tree, prefix_head, p);
-		p->flags &= ~PREFIX_FLAG_UPDATE;
+		p->flags &= ~PREFIX_ADJOUT_FLAG_UPDATE;
 		peer->stats.pending_update--;
 		peer->stats.prefix_sent_update++;
 	}
@@ -856,7 +856,7 @@ up_dump_prefix(struct ibuf *buf, struct prefix_tree *prefix_head,
 		    np->communities != p->communities ||
 		    np->nexthop != p->nexthop ||
 		    np->nhflags != p->nhflags ||
-		    (np->flags & PREFIX_FLAG_EOR))
+		    (np->flags & PREFIX_ADJOUT_FLAG_EOR))
 			done = 1;
 
 		rv = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.4 2025/11/20 10:47:36 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.5 2025/11/20 13:46:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -33,31 +33,31 @@
 static inline struct prefix_adjout *
 prefix_adjout_lock(struct prefix_adjout *p)
 {
-	if (p->flags & PREFIX_FLAG_LOCKED)
+	if (p->flags & PREFIX_ADJOUT_FLAG_LOCKED)
 		fatalx("%s: locking locked prefix", __func__);
-	p->flags |= PREFIX_FLAG_LOCKED;
+	p->flags |= PREFIX_ADJOUT_FLAG_LOCKED;
 	return p;
 }
 
 static inline struct prefix_adjout *
 prefix_adjout_unlock(struct prefix_adjout *p)
 {
-	if ((p->flags & PREFIX_FLAG_LOCKED) == 0)
+	if ((p->flags & PREFIX_ADJOUT_FLAG_LOCKED) == 0)
 		fatalx("%s: unlocking unlocked prefix", __func__);
-	p->flags &= ~PREFIX_FLAG_LOCKED;
+	p->flags &= ~PREFIX_ADJOUT_FLAG_LOCKED;
 	return p;
 }
 
 static inline int
 prefix_is_locked(struct prefix_adjout *p)
 {
-	return (p->flags & PREFIX_FLAG_LOCKED) != 0;
+	return (p->flags & PREFIX_ADJOUT_FLAG_LOCKED) != 0;
 }
 
 static inline int
 prefix_is_dead(struct prefix_adjout *p)
 {
-	return (p->flags & PREFIX_FLAG_DEAD) != 0;
+	return (p->flags & PREFIX_ADJOUT_FLAG_DEAD) != 0;
 }
 
 static void	 prefix_adjout_link(struct prefix_adjout *, struct pt_entry *,
@@ -88,10 +88,11 @@ prefix_index_cmp(struct prefix_adjout *a, struct prefix_adjout *b)
 static inline int
 prefix_cmp(struct prefix_adjout *a, struct prefix_adjout *b)
 {
-	if ((a->flags & PREFIX_FLAG_EOR) != (b->flags & PREFIX_FLAG_EOR))
-		return (a->flags & PREFIX_FLAG_EOR) ? 1 : -1;
+	if ((a->flags & PREFIX_ADJOUT_FLAG_EOR) !=
+	    (b->flags & PREFIX_ADJOUT_FLAG_EOR))
+		return (a->flags & PREFIX_ADJOUT_FLAG_EOR) ? 1 : -1;
 	/* if EOR marker no need to check the rest */
-	if (a->flags & PREFIX_FLAG_EOR)
+	if (a->flags & PREFIX_ADJOUT_FLAG_EOR)
 		return 0;
 
 	if (a->aspath != b->aspath)
@@ -209,7 +210,7 @@ prefix_add_eor(struct rde_peer *peer, uint8_t aid)
 	struct prefix_adjout *p;
 
 	p = prefix_adjout_alloc();
-	p->flags = PREFIX_FLAG_ADJOUT | PREFIX_FLAG_UPDATE | PREFIX_FLAG_EOR;
+	p->flags = PREFIX_ADJOUT_FLAG_UPDATE | PREFIX_ADJOUT_FLAG_EOR;
 	if (RB_INSERT(prefix_tree, &peer->updates[aid], p) != NULL)
 		/* no need to add if EoR marker already present */
 		prefix_adjout_free(p);
@@ -229,7 +230,7 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 	if (p == NULL) {
 		p = prefix_adjout_alloc();
 		/* initially mark DEAD so code below is skipped */
-		p->flags |= PREFIX_FLAG_ADJOUT | PREFIX_FLAG_DEAD;
+		p->flags |= PREFIX_ADJOUT_FLAG_DEAD;
 
 		p->pt = pt_ref(pte);
 		p->peer = peer;
@@ -239,9 +240,8 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 			fatalx("%s: RB index invariant violated", __func__);
 	}
 
-	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
-		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
-	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
+	if ((p->flags & (PREFIX_ADJOUT_FLAG_WITHDRAW |
+	    PREFIX_ADJOUT_FLAG_DEAD)) == 0) {
 		/*
 		 * XXX for now treat a different path_id_tx like different
 		 * attributes and force out an update. It is unclear how
@@ -257,12 +257,12 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 			/* nothing changed */
 			p->validation_state = state->vstate;
 			p->lastchange = getmonotime();
-			p->flags &= ~PREFIX_FLAG_STALE;
+			p->flags &= ~PREFIX_ADJOUT_FLAG_STALE;
 			return;
 		}
 
 		/* if pending update unhook it before it is unlinked */
-		if (p->flags & PREFIX_FLAG_UPDATE) {
+		if (p->flags & PREFIX_ADJOUT_FLAG_UPDATE) {
 			RB_REMOVE(prefix_tree, &peer->updates[pte->aid], p);
 			peer->stats.pending_update--;
 		}
@@ -271,13 +271,13 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 		prefix_adjout_unlink(p);
 		peer->stats.prefix_out_cnt--;
 	}
-	if (p->flags & PREFIX_FLAG_WITHDRAW) {
+	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW) {
 		RB_REMOVE(prefix_tree, &peer->withdraws[pte->aid], p);
 		peer->stats.pending_withdraw--;
 	}
 
-	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
-	p->flags &= ~PREFIX_FLAG_MASK;
+	/* nothing needs to be done for PREFIX_ADJOUT_FLAG_DEAD and STALE */
+	p->flags &= ~PREFIX_ADJOUT_FLAG_MASK;
 
 	/* update path_id_tx now that the prefix is unlinked */
 	if (p->path_id_tx != path_id_tx) {
@@ -299,10 +299,10 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 	    state->nexthop, state->nhflags, state->vstate);
 	peer->stats.prefix_out_cnt++;
 
-	if (p->flags & PREFIX_FLAG_MASK)
+	if (p->flags & PREFIX_ADJOUT_FLAG_MASK)
 		fatalx("%s: bad flags %x", __func__, p->flags);
 	if (peer_is_up(peer)) {
-		p->flags |= PREFIX_FLAG_UPDATE;
+		p->flags |= PREFIX_ADJOUT_FLAG_UPDATE;
 		if (RB_INSERT(prefix_tree, &peer->updates[pte->aid], p) != NULL)
 			fatalx("%s: RB tree invariant violated", __func__);
 		peer->stats.pending_update++;
@@ -318,39 +318,37 @@ prefix_adjout_withdraw(struct prefix_adjout *p)
 {
 	struct rde_peer *peer = prefix_adjout_peer(p);
 
-	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
-		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
-
 	/* already a withdraw, shortcut */
-	if (p->flags & PREFIX_FLAG_WITHDRAW) {
+	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW) {
 		p->lastchange = getmonotime();
-		p->flags &= ~PREFIX_FLAG_STALE;
+		p->flags &= ~PREFIX_ADJOUT_FLAG_STALE;
 		return;
 	}
 	/* pending update just got withdrawn */
-	if (p->flags & PREFIX_FLAG_UPDATE) {
+	if (p->flags & PREFIX_ADJOUT_FLAG_UPDATE) {
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
 		peer->stats.pending_update--;
 	}
 	/* unlink prefix if it was linked (not a withdraw or dead) */
-	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
+	if ((p->flags & (PREFIX_ADJOUT_FLAG_WITHDRAW |
+	    PREFIX_ADJOUT_FLAG_DEAD)) == 0) {
 		prefix_adjout_unlink(p);
 		peer->stats.prefix_out_cnt--;
 	}
 
-	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
-	p->flags &= ~PREFIX_FLAG_MASK;
+	/* nothing needs to be done for PREFIX_ADJOUT_FLAG_DEAD and STALE */
+	p->flags &= ~PREFIX_ADJOUT_FLAG_MASK;
 	p->lastchange = getmonotime();
 
 	if (peer_is_up(peer)) {
-		p->flags |= PREFIX_FLAG_WITHDRAW;
+		p->flags |= PREFIX_ADJOUT_FLAG_WITHDRAW;
 		if (RB_INSERT(prefix_tree, &peer->withdraws[p->pt->aid],
 		    p) != NULL)
 			fatalx("%s: RB tree invariant violated", __func__);
 		peer->stats.pending_withdraw++;
 	} else {
 		/* mark prefix dead to skip unlink on destroy */
-		p->flags |= PREFIX_FLAG_DEAD;
+		p->flags |= PREFIX_ADJOUT_FLAG_DEAD;
 		prefix_adjout_destroy(p);
 	}
 }
@@ -360,35 +358,33 @@ prefix_adjout_destroy(struct prefix_adjout *p)
 {
 	struct rde_peer *peer = prefix_adjout_peer(p);
 
-	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
-		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
-
-	if (p->flags & PREFIX_FLAG_EOR) {
+	if (p->flags & PREFIX_ADJOUT_FLAG_EOR) {
 		/* EOR marker is not linked in the index */
 		prefix_adjout_free(p);
 		return;
 	}
 
-	if (p->flags & PREFIX_FLAG_WITHDRAW) {
+	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW) {
 		RB_REMOVE(prefix_tree, &peer->withdraws[p->pt->aid], p);
 		peer->stats.pending_withdraw--;
 	}
-	if (p->flags & PREFIX_FLAG_UPDATE) {
+	if (p->flags & PREFIX_ADJOUT_FLAG_UPDATE) {
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
 		peer->stats.pending_update--;
 	}
 	/* unlink prefix if it was linked (not a withdraw or dead) */
-	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
+	if ((p->flags & (PREFIX_ADJOUT_FLAG_WITHDRAW |
+	    PREFIX_ADJOUT_FLAG_DEAD)) == 0) {
 		prefix_adjout_unlink(p);
 		peer->stats.prefix_out_cnt--;
 	}
 
-	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
-	p->flags &= ~PREFIX_FLAG_MASK;
+	/* nothing needs to be done for PREFIX_ADJOUT_FLAG_DEAD and STALE */
+	p->flags &= ~PREFIX_ADJOUT_FLAG_MASK;
 
 	if (prefix_is_locked(p)) {
 		/* mark prefix dead but leave it for prefix_restart */
-		p->flags |= PREFIX_FLAG_DEAD;
+		p->flags |= PREFIX_ADJOUT_FLAG_DEAD;
 	} else {
 		RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
 		/* remove the last prefix reference before free */
@@ -408,9 +404,9 @@ prefix_adjout_flush_pending(struct rde_peer *peer)
 			prefix_adjout_destroy(p);
 		}
 		RB_FOREACH_SAFE(p, prefix_tree, &peer->updates[aid], np) {
-			p->flags &= ~PREFIX_FLAG_UPDATE;
+			p->flags &= ~PREFIX_ADJOUT_FLAG_UPDATE;
 			RB_REMOVE(prefix_tree, &peer->updates[aid], p);
-			if (p->flags & PREFIX_FLAG_EOR) {
+			if (p->flags & PREFIX_ADJOUT_FLAG_EOR) {
 				prefix_adjout_destroy(p);
 			} else {
 				peer->stats.pending_update--;

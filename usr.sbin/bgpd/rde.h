@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.322 2025/11/20 10:47:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.323 2025/11/20 13:46:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -283,16 +283,9 @@ struct prefix {
 	uint8_t			 nhflags;
 	int8_t			 dmetric;	/* decision metric */
 };
-#define	PREFIX_FLAG_WITHDRAW	0x0001	/* enqueued on withdraw queue */
-#define	PREFIX_FLAG_UPDATE	0x0002	/* enqueued on update queue */
-#define	PREFIX_FLAG_DEAD	0x0004	/* locked but removed */
-#define	PREFIX_FLAG_STALE	0x0008	/* stale entry (for addpath) */
-#define	PREFIX_FLAG_MASK	0x000f	/* mask for the prefix types */
-#define	PREFIX_FLAG_ADJOUT	0x0010	/* prefix is in the adj-out rib */
-#define	PREFIX_FLAG_EOR		0x0020	/* prefix is EoR */
-#define	PREFIX_NEXTHOP_LINKED	0x0040	/* prefix is linked onto nexthop list */
-#define	PREFIX_FLAG_LOCKED	0x0080	/* locked by rib walker */
-#define	PREFIX_FLAG_FILTERED	0x0100	/* prefix is filtered (ineligible) */
+
+#define	PREFIX_NEXTHOP_LINKED	0x01	/* prefix is linked onto nexthop list */
+#define	PREFIX_FLAG_FILTERED	0x04	/* prefix is filtered (ineligible) */
 
 #define	PREFIX_DMETRIC_NONE	0
 #define	PREFIX_DMETRIC_INVALID	1
@@ -319,11 +312,18 @@ struct prefix_adjout {
 	monotime_t			 lastchange;
 	uint32_t			 path_id;
 	uint32_t			 path_id_tx;
-	uint16_t			 flags;
+	uint8_t			 	 flags;
 	uint8_t				 validation_state;
 	uint8_t				 nhflags;
 	int8_t				 dmetric;	/* decision metric */
 };
+#define	PREFIX_ADJOUT_FLAG_WITHDRAW	0x01	/* enqueued on withdraw queue */
+#define	PREFIX_ADJOUT_FLAG_UPDATE	0x02	/* enqueued on update queue */
+#define	PREFIX_ADJOUT_FLAG_DEAD		0x04	/* locked but removed */
+#define	PREFIX_ADJOUT_FLAG_STALE	0x08	/* stale entry (for addpath) */
+#define	PREFIX_ADJOUT_FLAG_MASK		0x0f	/* mask for the prefix types */
+#define	PREFIX_ADJOUT_FLAG_EOR		0x10	/* prefix is EoR */
+#define	PREFIX_ADJOUT_FLAG_LOCKED	0x20	/* locked by rib walker */
 
 struct filterstate {
 	struct rde_aspath	 aspath;

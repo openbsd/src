@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.280 2025/11/20 10:47:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.281 2025/11/20 13:46:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -913,9 +913,6 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 {
 	struct prefix		*np;
 
-	if (p->flags & PREFIX_FLAG_ADJOUT)
-		fatalx("%s: prefix with PREFIX_FLAG_ADJOUT hit", __func__);
-
 	if (peer != prefix_peer(p))
 		fatalx("prefix_move: cross peer move");
 
@@ -963,8 +960,6 @@ prefix_withdraw(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return (0);
 
-	if (p->flags & PREFIX_FLAG_ADJOUT)
-		fatalx("%s: prefix with PREFIX_FLAG_ADJOUT hit", __func__);
 	asp = prefix_aspath(p);
 	if (asp && asp->pftableid)
 		/* only prefixes in the local RIB were pushed into pf */
@@ -1319,12 +1314,6 @@ void
 nexthop_link(struct prefix *p)
 {
 	p->nhflags &= ~NEXTHOP_VALID;
-
-	if (p->flags & PREFIX_FLAG_ADJOUT) {
-		/* All nexthops are valid in Adj-RIB-Out */
-		p->nhflags |= NEXTHOP_VALID;
-		return;
-	}
 
 	/* no need to link prefixes in RIBs that have no decision process */
 	if (re_rib(prefix_re(p))->flags & F_RIB_NOEVALUATE)
