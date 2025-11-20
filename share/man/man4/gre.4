@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.84 2025/11/05 23:33:40 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.85 2025/11/20 00:40:44 dlg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 5 2025 $
+.Dd $Mdocdate: November 20 2025 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -532,7 +532,7 @@ For example, a pair of routers separated by the internet could
 bridge several Ethernet networks using
 .Nm egre
 and
-.Xr bridge 4 .
+.Xr veb 4 .
 .Pp
 In this example the first router has a public IP of 192.0.2.1, and
 the second router has 203.0.113.2.
@@ -559,14 +559,14 @@ At the first site:
 # ifconfig egre0 vnetid 100
 # ifconfig egre0 mtu 1500 -tunneldf
 # ifconfig egre0 up
-# ifconfig bridge0 add vlan0 add egre0 up
+# ifconfig veb0 add vlan0 add egre0 up
 # ifconfig vlan1 vnetid 200
 # ifconfig egre1 create
 # ifconfig egre1 tunnel 192.0.2.1 203.0.113.2
 # ifconfig egre1 vnetid 200
 # ifconfig egre1 mtu 1500 -tunneldf
 # ifconfig egre1 up
-# ifconfig bridge1 add vlan1 add egre1 up
+# ifconfig vebe1 add vlan1 add egre1 up
 .Ed
 .Pp
 At the second site:
@@ -577,14 +577,14 @@ At the second site:
 # ifconfig egre0 vnetid 100
 # ifconfig egre0 mtu 1500 -tunneldf
 # ifconfig egre0 up
-# ifconfig bridge0 add vlan0 add egre0 up
+# ifconfig veb0 add vlan0 add egre0 up
 # ifconfig vlan1 vnetid 200
 # ifconfig egre1 create
 # ifconfig egre1 tunnel 203.0.113.2 192.0.2.1
 # ifconfig egre1 vnetid 200
 # ifconfig egre1 mtu 1500 -tunneldf
 # ifconfig egre1 up
-# ifconfig bridge1 add vlan1 add egre1 up
+# ifconfig veb1 add vlan1 add egre1 up
 .Ed
 .Ss Network Virtualization using GRE interfaces (nvgre) example
 NVGRE can be used to build a distinct logical Ethernet network
@@ -645,7 +645,7 @@ For example, if a customer has multiple virtual machines running in
 on distinct physical hosts,
 .Nm nvgre
 and
-.Xr bridge 4
+.Xr veb 4
 can be used to provide network connectivity between the
 .Xr tap 4
 interfaces connected to the virtual machines.
@@ -654,7 +654,7 @@ those hosts are connected to the same network described above,
 .Nm nvgre
 with a distinct virtual network identifier and multicast group can
 be created for them.
-The following assumes nvgre1 and bridge1 have already been created
+The following assumes nvgre1 and veb1 have already been created
 on each host, and em0 has had the MTU raised:
 .Pp
 On physical host 1:
@@ -662,7 +662,7 @@ On physical host 1:
 # ifconfig em0 inet 100.64.10.10/24
 # ifconfig nvgre1 parent em0 tunnel 100.64.10.10 239.1.1.111
 # ifconfig nvgre1 vnetid 10011
-# ifconfig bridge1 add nvgre1 add tap0 up
+# ifconfig veb1 add nvgre1 add tap0 up
 .Ed
 .Pp
 On physical host 2:
@@ -670,7 +670,7 @@ On physical host 2:
 # ifconfig em0 inet 100.64.10.11/24
 # ifconfig nvgre1 parent em0 tunnel 100.64.10.11 239.1.1.111
 # ifconfig nvgre1 vnetid 10011
-# ifconfig bridge1 add nvgre1 add tap0 up
+# ifconfig veb1 add nvgre1 add tap0 up
 .Ed
 .Pp
 On physical host 3:
@@ -678,7 +678,7 @@ On physical host 3:
 # ifconfig em0 inet 100.64.10.12/24
 # ifconfig nvgre1 parent em0 tunnel 100.64.10.12 239.1.1.111
 # ifconfig nvgre1 vnetid 10011
-# ifconfig bridge1 add nvgre1 add tap0 up
+# ifconfig veb1 add nvgre1 add tap0 up
 .Ed
 .Pp
 Being able to carry working multicast and jumbo frames over the
