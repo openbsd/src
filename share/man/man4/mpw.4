@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpw.4,v 1.9 2021/03/18 14:22:04 kn Exp $
+.\"	$OpenBSD: mpw.4,v 1.10 2025/11/20 00:03:46 dlg Exp $
 .\"
 .\" Copyright (C) 2015 Rafael Zalamena <rzalamena@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2021 $
+.Dd $Mdocdate: November 20 2025 $
 .Dt MPW 4
 .Os
 .Sh NAME
@@ -64,25 +64,28 @@ Transport of Pseudowires:
 .Nm mpw
 interfaces may be used to build a Virtual Private LAN Service
 (VPLS) with
+.Xr veb 4
+or
 .Xr bridge 4 .
 A VPLS is constructed with a full mesh of MPLS pseudowire tunnels
-between all peers, but this introduces loops in the topology.
-To prevent broadcast packets received from the VPLS being forwarded
-to its peers, all the pseudowire interfaces can be configured to
-enforce the split-horizon forwarding rule by adding them to the
-same protected bridge domain.
+bridged between all peers, but this introduces loops in the topology.
+To prevent broadcast, unknown unicast, and multicast packets received
+from the VPLS being forwarded to its peers, all the pseudowire
+interfaces can be configured to enforce the split-horizon forwarding
+rule by adding them to the same protected bridge domain.
 Different VPLS meshes can be joined together on the same bridge
 using different identifiers for their protected domains:
 .Bd -literal -offset indent
 # ifconfig mpw10 create up
 # ifconfig mpw11 create up
 # ifconfig mpw12 create up
-# ifconfig bridge0 create
-# ifconfig bridge0 add em2
-# ifconfig bridge0 add mpw10 add mpw11 add mpw12
-# ifconfig bridge0 protected mpw10 1
-# ifconfig bridge0 protected mpw11 1
-# ifconfig bridge0 protected mpw12 1
+# ifconfig veb0 create
+# ifconfig veb0 add em2
+# ifconfig veb0 add mpw10 add mpw11 add mpw12
+# ifconfig veb0 protected mpw10 1
+# ifconfig veb0 protected mpw11 1
+# ifconfig veb0 protected mpw12 1
+# ifconfig veb0 up
 .Ed
 .Sh SEE ALSO
 .Xr mpe 4 ,
