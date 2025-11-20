@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.32 2022/10/25 16:30:30 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.33 2025/11/20 10:58:11 tb Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ struct tm {
 	int	tm_yday;	/* days since January 1 [0-365] */
 	int	tm_isdst;	/* Daylight Saving Time flag */
 	long	tm_gmtoff;	/* offset from UTC in seconds */
-	char	*tm_zone;	/* timezone abbreviation */
+	const char *tm_zone;	/* timezone abbreviation */
 };
 
 __BEGIN_DECLS

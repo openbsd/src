@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.49 2025/06/23 13:53:11 millert Exp $
+.\"	$OpenBSD: ctime.3,v 1.50 2025/11/20 10:58:11 tb Exp $
 .\"
 .\"
-.Dd $Mdocdate: June 23 2025 $
+.Dd $Mdocdate: November 20 2025 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -241,7 +241,7 @@ includes the following fields:
 	int tm_yday;	/* day of year (0 \- 365) */
 	int tm_isdst;	/* is summer time in effect? */
 	long tm_gmtoff;	/* offset from UT in seconds */
-	char *tm_zone;	/* abbreviation of timezone name */
+	const char *tm_zone;	/* abbreviation of timezone name */
 .Ed
 .Pp
 The
