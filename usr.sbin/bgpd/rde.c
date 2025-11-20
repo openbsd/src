@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.665 2025/11/18 16:39:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.666 2025/11/20 10:10:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,8 +109,8 @@ static void	 flowspec_dump_upcall(struct rib_entry *, void *);
 static void	 flowspec_dump_done(void *, uint8_t);
 
 void		 rde_shutdown(void);
-static int	 ovs_match(struct prefix *, uint32_t);
-static int	 avs_match(struct prefix *, uint32_t);
+static int	 ovs_match(uint8_t, uint32_t);
+static int	 avs_match(uint8_t, uint32_t);
 
 static struct imsgbuf		*ibuf_se;
 static struct imsgbuf		*ibuf_se_ctl;
@@ -2840,8 +2840,7 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
  * control specific functions
  */
 static void
-rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
-    int adjout)
+rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 {
 	struct ctl_show_rib	 rib;
 	struct ibuf		*wbuf;
@@ -2880,7 +2879,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	rib.aspa_validation_state = prefix_aspa_vstate(p);
 	rib.dmetric = p->dmetric;
 	rib.flags = 0;
-	if (!adjout && prefix_eligible(p)) {
+	if (prefix_eligible(p)) {
 		re = prefix_re(p);
 		TAILQ_FOREACH(xp, &re->prefix_h, entry.list.rib) {
 			switch (xp->dmetric) {
@@ -2921,16 +2920,9 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	if (monotime_valid(staletime) &&
 	    monotime_cmp(p->lastchange, staletime) <= 0)
 		rib.flags |= F_PREF_STALE;
-	if (!adjout) {
-		if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_RECV)) {
-			rib.path_id = p->path_id;
-			rib.flags |= F_PREF_PATH_ID;
-		}
-	} else {
-		if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_SEND)) {
-			rib.path_id = p->path_id_tx;
-			rib.flags |= F_PREF_PATH_ID;
-		}
+	if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_RECV)) {
+		rib.path_id = p->path_id;
+		rib.flags |= F_PREF_PATH_ID;
 	}
 	aslen = aspath_length(asp->aspath);
 
@@ -2944,6 +2936,87 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 
 	if (flags & F_CTL_DETAIL) {
 		struct rde_community *comm = prefix_communities(p);
+		size_t len = comm->nentries * sizeof(struct community);
+		if (comm->nentries > 0) {
+			if (imsg_compose(ibuf_se_ctl,
+			    IMSG_CTL_SHOW_RIB_COMMUNITIES, 0, pid, -1,
+			    comm->communities, len) == -1)
+				return;
+		}
+		for (l = 0; l < asp->others_len; l++) {
+			if ((a = asp->others[l]) == NULL)
+				break;
+			if ((wbuf = imsg_create(ibuf_se_ctl,
+			    IMSG_CTL_SHOW_RIB_ATTR, 0, pid, 0)) == NULL)
+				return;
+			if (attr_writebuf(wbuf, a->flags, a->type, a->data,
+			    a->len) == -1) {
+				ibuf_free(wbuf);
+				return;
+			}
+			imsg_close(ibuf_se_ctl, wbuf);
+		}
+	}
+}
+
+static void
+rde_dump_adjout_as(struct prefix_adjout *p, struct rde_aspath *asp, pid_t pid,
+    int flags)
+{
+	struct ctl_show_rib	 rib;
+	struct ibuf		*wbuf;
+	struct attr		*a;
+	struct nexthop		*nexthop;
+	struct rde_peer		*peer;
+	size_t			 aslen;
+	uint8_t			 l;
+
+	nexthop = prefix_adjout_nexthop(p);
+	peer = prefix_adjout_peer(p);
+	memset(&rib, 0, sizeof(rib));
+	rib.lastchange = p->lastchange;
+	rib.local_pref = asp->lpref;
+	rib.med = asp->med;
+	rib.weight = asp->weight;
+	strlcpy(rib.descr, peer->conf.descr, sizeof(rib.descr));
+	memcpy(&rib.remote_addr, &peer->remote_addr,
+	    sizeof(rib.remote_addr));
+	rib.remote_id = peer->remote_bgpid;
+	if (nexthop != NULL) {
+		rib.exit_nexthop = nexthop->exit_nexthop;
+		rib.true_nexthop = nexthop->true_nexthop;
+	} else {
+		/* announced network can have a NULL nexthop */
+		rib.exit_nexthop.aid = p->pt->aid;
+		rib.true_nexthop.aid = p->pt->aid;
+	}
+	pt_getaddr(p->pt, &rib.prefix);
+	rib.prefixlen = p->pt->prefixlen;
+	rib.origin = asp->origin;
+	/* roa and aspa vstate skipped, they don't matter in adj-rib-out */
+	rib.dmetric = p->dmetric;
+	rib.flags = 0;
+	rib.flags |= F_PREF_ELIGIBLE;
+	if (!peer->conf.ebgp)
+		rib.flags |= F_PREF_INTERNAL;
+	if (asp->flags & F_PREFIX_ANNOUNCED)
+		rib.flags |= F_PREF_ANNOUNCE;
+	if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_SEND)) {
+		rib.path_id = p->path_id_tx;
+		rib.flags |= F_PREF_PATH_ID;
+	}
+	aslen = aspath_length(asp->aspath);
+
+	if ((wbuf = imsg_create(ibuf_se_ctl, IMSG_CTL_SHOW_RIB, 0, pid,
+	    sizeof(rib) + aslen)) == NULL)
+		return;
+	if (imsg_add(wbuf, &rib, sizeof(rib)) == -1 ||
+	    imsg_add(wbuf, aspath_dump(asp->aspath), aslen) == -1)
+		return;
+	imsg_close(ibuf_se_ctl, wbuf);
+
+	if (flags & F_CTL_DETAIL) {
+		struct rde_community *comm = prefix_adjout_communities(p);
 		size_t len = comm->nentries * sizeof(struct community);
 		if (comm->nentries > 0) {
 			if (imsg_compose(ibuf_se_ctl,
@@ -2986,7 +3059,7 @@ rde_match_peer(struct rde_peer *p, struct ctl_neighbor *n)
 }
 
 static void
-rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
+rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 {
 	struct rde_aspath	*asp;
 
@@ -3007,14 +3080,8 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 	    (asp->flags & F_ATTR_OTC_LEAK) == 0)
 		return;
 	if ((req->flags & F_CTL_HAS_PATHID)) {
-		/* Match against the transmit path id if adjout is used.  */
-		if (adjout) {
-			if (req->path_id != p->path_id_tx)
-				return;
-		} else {
-			if (req->path_id != p->path_id)
-				return;
-		}
+		if (req->path_id != p->path_id)
+			return;
 	}
 	if (req->as.type != AS_UNDEF &&
 	    !aspath_match(asp->aspath, &req->as, 0))
@@ -3024,11 +3091,38 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 		    NULL))
 			return;
 	}
-	if (!ovs_match(p, req->flags))
+	if (!ovs_match(prefix_roa_vstate(p), req->flags))
 		return;
-	if (!avs_match(p, req->flags))
+	if (!avs_match(prefix_aspa_vstate(p), req->flags))
 		return;
-	rde_dump_rib_as(p, asp, req->pid, req->flags, adjout);
+	rde_dump_rib_as(p, asp, req->pid, req->flags);
+}
+
+static void
+rde_dump_adjout_filter(struct prefix_adjout *p,
+     struct ctl_show_rib_request *req)
+{
+	struct rde_aspath	*asp;
+
+	if (!rde_match_peer(prefix_adjout_peer(p), &req->neighbor))
+		return;
+
+	asp = prefix_adjout_aspath(p);
+	if ((req->flags & F_CTL_HAS_PATHID)) {
+		/* Match against the transmit path id if adjout is used.  */
+		if (req->path_id != p->path_id_tx)
+			return;
+	}
+	if (req->as.type != AS_UNDEF &&
+	    !aspath_match(asp->aspath, &req->as, 0))
+		return;
+	if (req->community.flags != 0) {
+		if (!community_match(prefix_adjout_communities(p),
+		    &req->community, NULL))
+			return;
+	}
+	/* in the adj-rib-out, skip matching against roa and aspa state */
+	rde_dump_adjout_as(p, asp, req->pid, req->flags);
 }
 
 static void
@@ -3040,11 +3134,11 @@ rde_dump_upcall(struct rib_entry *re, void *ptr)
 	if (re == NULL)
 		return;
 	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib)
-		rde_dump_filter(p, &ctx->req, 0);
+		rde_dump_filter(p, &ctx->req);
 }
 
 static void
-rde_dump_adjout_upcall(struct prefix *p, void *ptr)
+rde_dump_adjout_upcall(struct prefix_adjout *p, void *ptr)
 {
 	struct rde_dump_ctx	*ctx = ptr;
 
@@ -3052,7 +3146,7 @@ rde_dump_adjout_upcall(struct prefix *p, void *ptr)
 		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 	if (p->flags & PREFIX_FLAG_WITHDRAW)
 		return;
-	rde_dump_filter(p, &ctx->req, 1);
+	rde_dump_adjout_filter(p, &ctx->req);
 }
 
 static int
@@ -3114,7 +3208,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 {
 	struct rde_dump_ctx	*ctx;
 	struct rib_entry	*re;
-	struct prefix		*p;
+	struct prefix_adjout	*p;
 	u_int			 error;
 	uint8_t			 hostplen, plen;
 	uint16_t		 rid;
@@ -3468,7 +3562,7 @@ rde_evaluate_all(void)
 
 /* flush Adj-RIB-Out by withdrawing all prefixes */
 static void
-rde_up_flush_upcall(struct prefix *p, void *ptr)
+rde_up_flush_upcall(struct prefix_adjout *p, void *ptr)
 {
 	prefix_adjout_withdraw(p);
 }
@@ -4856,10 +4950,10 @@ rde_roa_validity(struct rde_prefixset *ps, struct bgpd_addr *prefix,
 }
 
 static int
-ovs_match(struct prefix *p, uint32_t flag)
+ovs_match(uint8_t roa_vstate, uint32_t flag)
 {
 	if (flag & (F_CTL_OVS_VALID|F_CTL_OVS_INVALID|F_CTL_OVS_NOTFOUND)) {
-		switch (prefix_roa_vstate(p)) {
+		switch (roa_vstate) {
 		case ROA_VALID:
 			if (!(flag & F_CTL_OVS_VALID))
 				return 0;
@@ -4881,10 +4975,10 @@ ovs_match(struct prefix *p, uint32_t flag)
 }
 
 static int
-avs_match(struct prefix *p, uint32_t flag)
+avs_match(uint8_t aspa_vstate, uint32_t flag)
 {
 	if (flag & (F_CTL_AVS_VALID|F_CTL_AVS_INVALID|F_CTL_AVS_UNKNOWN)) {
-		switch (prefix_aspa_vstate(p) & ASPA_MASK) {
+		switch (aspa_vstate & ASPA_MASK) {
 		case ASPA_VALID:
 			if (!(flag & F_CTL_AVS_VALID))
 				return 0;

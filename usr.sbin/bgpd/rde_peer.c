@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.53 2025/11/18 16:39:36 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.54 2025/11/20 10:10:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -516,12 +516,12 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
  * Enqueue a prefix onto the update queue so it can be sent out.
  */
 static void
-peer_blast_upcall(struct prefix *p, void *ptr)
+peer_blast_upcall(struct prefix_adjout *p, void *ptr)
 {
 	struct rde_peer		*peer;
 
 	if ((p->flags & PREFIX_FLAG_MASK) == 0) {
-		peer = prefix_peer(p);
+		peer = prefix_adjout_peer(p);
 		/* put entries on the update queue if not already on a queue */
 		p->flags |= PREFIX_FLAG_UPDATE;
 		if (RB_INSERT(prefix_tree, &peer->updates[p->pt->aid],

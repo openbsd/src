@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.320 2025/11/19 09:49:27 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.321 2025/11/20 10:10:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -71,8 +71,8 @@ struct rib {
  * Currently I assume that we can do that with the neighbor_ip...
  */
 RB_HEAD(peer_tree, rde_peer);
-RB_HEAD(prefix_tree, prefix);
-RB_HEAD(prefix_index, prefix);
+RB_HEAD(prefix_tree, prefix_adjout);
+RB_HEAD(prefix_index, prefix_adjout);
 
 struct rde_peer {
 	RB_ENTRY(rde_peer)		 entry;
@@ -273,9 +273,6 @@ struct prefix {
 			LIST_ENTRY(prefix)	 nexthop;
 			struct rib_entry	*re;
 		} list;
-		struct {
-			RB_ENTRY(prefix)	 index, update;
-		} tree;
 	}				 entry;
 	struct pt_entry			*pt;
 	struct rde_aspath		*aspath;
@@ -316,6 +313,26 @@ struct prefix {
 #define	NEXTHOP_MASK		0x0f
 #define	NEXTHOP_VALID		0x80
 
+struct prefix_adjout {
+	union {
+		struct {
+			RB_ENTRY(prefix_adjout)	 index, update;
+		} tree;
+	}				 entry;
+	struct pt_entry			*pt;
+	struct rde_aspath		*aspath;
+	struct rde_community		*communities;
+	struct rde_peer			*peer;
+	struct nexthop			*nexthop;	/* may be NULL */
+	monotime_t			 lastchange;
+	uint32_t			 path_id;
+	uint32_t			 path_id_tx;
+	uint16_t			 flags;
+	uint8_t				 validation_state;
+	uint8_t				 nhflags;
+	int8_t				 dmetric;	/* decision metric */
+};
+
 struct filterstate {
 	struct rde_aspath	 aspath;
 	struct rde_community	 communities;
@@ -333,10 +350,10 @@ enum eval_mode {
 struct rib_context {
 	LIST_ENTRY(rib_context)		 entry;
 	struct rib_entry		*ctx_re;
-	struct prefix			*ctx_p;
+	struct prefix_adjout		*ctx_p;
 	uint32_t			 ctx_id;
 	void		(*ctx_rib_call)(struct rib_entry *, void *);
-	void		(*ctx_prefix_call)(struct prefix *, void *);
+	void		(*ctx_prefix_call)(struct prefix_adjout *, void *);
 	void		(*ctx_done)(void *, uint8_t);
 	int		(*ctx_throttle)(void *);
 	void				*ctx_arg;
@@ -597,6 +614,8 @@ re_rib(struct rib_entry *re)
 }
 
 void		 path_init(void);
+struct rde_aspath *path_ref(struct rde_aspath *);
+void		 path_unref(struct rde_aspath *);
 int		 path_equal(const struct rde_aspath *,
 		    const struct rde_aspath *);
 struct rde_aspath *path_getcache(struct rde_aspath *);
@@ -622,17 +641,11 @@ void		 prefix_flowspec_dump(uint8_t, void *,
 		    void (*)(struct rib_entry *, void *),
 		    void (*)(void *, uint8_t));
 
-void		 prefix_link(struct prefix *, struct rib_entry *,
-		    struct pt_entry *, struct rde_peer *, uint32_t, uint32_t,
-		    struct rde_aspath *, struct rde_community *,
-		    struct nexthop *, uint8_t, uint8_t);
-void		 prefix_unlink(struct prefix *);
-
 struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,
 		    uint32_t);
 void		 prefix_destroy(struct prefix *);
 
-RB_PROTOTYPE(prefix_tree, prefix, entry, prefix_cmp)
+RB_PROTOTYPE(prefix_tree, prefix_adjout, entry, prefix_cmp)
 
 static inline struct rde_peer *
 prefix_peer(struct prefix *p)
@@ -716,30 +729,64 @@ struct nexthop	*nexthop_ref(struct nexthop *);
 int		 nexthop_unref(struct nexthop *);
 
 /* rde_adjout.c */
-struct prefix	*prefix_adjout_get(struct rde_peer *, uint32_t,
-		    struct pt_entry *);
-struct prefix	*prefix_adjout_first(struct rde_peer *, struct pt_entry *);
-struct prefix	*prefix_adjout_next(struct rde_peer *, struct prefix *);
-struct prefix	*prefix_adjout_lookup(struct rde_peer *, struct bgpd_addr *,
-		    int);
-struct prefix	*prefix_adjout_match(struct rde_peer *, struct bgpd_addr *);
+struct prefix_adjout	*prefix_adjout_get(struct rde_peer *, uint32_t,
+			    struct pt_entry *);
+struct prefix_adjout	*prefix_adjout_first(struct rde_peer *,
+			    struct pt_entry *);
+struct prefix_adjout	*prefix_adjout_next(struct rde_peer *,
+			    struct prefix_adjout *);
+struct prefix_adjout	*prefix_adjout_lookup(struct rde_peer *,
+			    struct bgpd_addr *, int);
+struct prefix_adjout	*prefix_adjout_match(struct rde_peer *,
+			    struct bgpd_addr *);
 
 void		 prefix_add_eor(struct rde_peer *, uint8_t);
-void		 prefix_adjout_update(struct prefix *, struct rde_peer *,
+void		 prefix_adjout_update(struct prefix_adjout *, struct rde_peer *,
 		    struct filterstate *, struct pt_entry *, uint32_t);
-void		 prefix_adjout_withdraw(struct prefix *);
-void		 prefix_adjout_destroy(struct prefix *);
+void		 prefix_adjout_withdraw(struct prefix_adjout *);
+void		 prefix_adjout_destroy(struct prefix_adjout *);
 void		 prefix_adjout_flush_pending(struct rde_peer *);
 int		 prefix_adjout_reaper(struct rde_peer *);
-void		 prefix_adjout_dump_cleanup(struct prefix *);
+void		 prefix_adjout_dump_cleanup(struct prefix_adjout *);
 void		 prefix_adjout_dump_r(struct rib_context *);
 int		 prefix_adjout_dump_new(struct rde_peer *, uint8_t,
-		    unsigned int, void *, void (*)(struct prefix *, void *),
+		    unsigned int, void *,
+		    void (*)(struct prefix_adjout *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
 int		 prefix_adjout_dump_subtree(struct rde_peer *,
 		    struct bgpd_addr *, uint8_t, unsigned int, void *,
-		    void (*)(struct prefix *, void *),
+		    void (*)(struct prefix_adjout *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
+
+static inline struct rde_peer *
+prefix_adjout_peer(struct prefix_adjout *p)
+{
+	return (p->peer);
+}
+
+static inline struct rde_aspath *
+prefix_adjout_aspath(struct prefix_adjout *p)
+{
+	return (p->aspath);
+}
+
+static inline struct rde_community *
+prefix_adjout_communities(struct prefix_adjout *p)
+{
+	return (p->communities);
+}
+
+static inline struct nexthop *
+prefix_adjout_nexthop(struct prefix_adjout *p)
+{
+	return (p->nexthop);
+}
+
+static inline uint8_t
+prefix_adjout_nhflags(struct prefix_adjout *p)
+{
+	return (p->nhflags & NEXTHOP_MASK);
+}
 
 /* rde_update.c */
 void		 up_generate_updates(struct rde_peer *, struct rib_entry *);

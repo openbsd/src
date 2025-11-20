@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.278 2025/11/19 13:30:59 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.279 2025/11/20 10:10:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -624,7 +624,7 @@ CH_PROTOTYPE(path_tree, rde_aspath, path_hash);
 
 static struct path_tree	pathtable = CH_INITIALIZER(&pathtable);
 
-static inline struct rde_aspath *
+struct rde_aspath *
 path_ref(struct rde_aspath *asp)
 {
 	if ((asp->flags & F_ATTR_LINKED) == 0)
@@ -635,7 +635,7 @@ path_ref(struct rde_aspath *asp)
 	return asp;
 }
 
-static inline void
+void
 path_unref(struct rde_aspath *asp)
 {
 	if (asp == NULL)
@@ -787,6 +787,12 @@ static int	prefix_add(struct bgpd_addr *, int, struct rib *,
 static int	prefix_move(struct prefix *, struct rde_peer *,
 		    struct rde_aspath *, struct rde_community *,
 		    struct nexthop *, uint8_t, uint8_t, int);
+
+static void	 prefix_link(struct prefix *, struct rib_entry *,
+		    struct pt_entry *, struct rde_peer *, uint32_t, uint32_t,
+		    struct rde_aspath *, struct rde_community *,
+		    struct nexthop *, uint8_t, uint8_t);
+static void	 prefix_unlink(struct prefix *);
 
 static struct prefix	*prefix_alloc(void);
 static void		 prefix_free(struct prefix *);
@@ -1083,7 +1089,7 @@ prefix_destroy(struct prefix *p)
 /*
  * Link a prefix into the different parent objects.
  */
-void
+static void
 prefix_link(struct prefix *p, struct rib_entry *re, struct pt_entry *pt,
     struct rde_peer *peer, uint32_t path_id, uint32_t path_id_tx,
     struct rde_aspath *asp, struct rde_community *comm,
@@ -1107,7 +1113,7 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct pt_entry *pt,
 /*
  * Unlink a prefix from the different parent objects.
  */
-void
+static void
 prefix_unlink(struct prefix *p)
 {
 	struct rib_entry	*re = prefix_re(p);

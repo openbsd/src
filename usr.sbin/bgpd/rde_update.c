@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.179 2025/11/13 21:43:12 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.180 2025/11/20 10:10:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -158,7 +158,8 @@ up_enforce_open_policy(struct rde_peer *peer, struct filterstate *state,
  * - UP_EXCLUDED if prefix was excluded because of up_test_update()
  */
 static enum up_state
-up_process_prefix(struct rde_peer *peer, struct prefix *new, struct prefix *p)
+up_process_prefix(struct rde_peer *peer, struct prefix *new,
+    struct prefix_adjout *p)
 {
 	struct filterstate state;
 	struct bgpd_addr addr;
@@ -217,7 +218,8 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new, struct prefix *p)
 void
 up_generate_updates(struct rde_peer *peer, struct rib_entry *re)
 {
-	struct prefix		*new, *p;
+	struct prefix		*new;
+	struct prefix_adjout	*p;
 
 	p = prefix_adjout_first(peer, re->prefix);
 
@@ -255,7 +257,8 @@ done:
 void
 up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 {
-	struct prefix		*head, *new, *p;
+	struct prefix		*new;
+	struct prefix_adjout	*head, *p;
 	int			maxpaths = 0, extrapaths = 0, extra;
 	int			checkmode = 1;
 
@@ -343,7 +346,7 @@ void
 up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
     struct prefix *new, struct prefix *old)
 {
-	struct prefix		*p;
+	struct prefix_adjout	*p;
 
 	/*
 	 * If old and new are NULL then re-insert all prefixes from re,
@@ -387,7 +390,7 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 	extern struct rde_peer	*peerself;
 	struct filterstate	 state;
 	struct rde_aspath	*asp;
-	struct prefix		*p;
+	struct prefix_adjout	*p;
 	struct pt_entry		*pte;
 	struct bgpd_addr	 addr;
 
@@ -791,7 +794,7 @@ up_generate_attr(struct ibuf *buf, struct rde_peer *peer,
 int
 up_is_eor(struct rde_peer *peer, uint8_t aid)
 {
-	struct prefix *p;
+	struct prefix_adjout *p;
 
 	p = RB_MIN(prefix_tree, &peer->updates[aid]);
 	if (p != NULL && (p->flags & PREFIX_FLAG_EOR)) {
@@ -811,7 +814,7 @@ up_is_eor(struct rde_peer *peer, uint8_t aid)
 #define MIN_UPDATE_LEN	16
 
 static void
-up_prefix_free(struct prefix_tree *prefix_head, struct prefix *p,
+up_prefix_free(struct prefix_tree *prefix_head, struct prefix_adjout *p,
     struct rde_peer *peer, int withdraw)
 {
 	if (withdraw) {
@@ -836,8 +839,8 @@ static int
 up_dump_prefix(struct ibuf *buf, struct prefix_tree *prefix_head,
     struct rde_peer *peer, int withdraw)
 {
-	struct prefix	*p, *np;
-	int		 done = 0, has_ap = -1, rv = -1;
+	struct prefix_adjout	*p, *np;
+	int			 done = 0, has_ap = -1, rv = -1;
 
 	RB_FOREACH_SAFE(p, prefix_tree, prefix_head, np) {
 		if (has_ap == -1)
@@ -1079,7 +1082,8 @@ up_dump_withdraws(struct imsgbuf *imsg, struct rde_peer *peer, uint8_t aid)
  * Withdraw a single prefix after an error.
  */
 static int
-up_dump_withdraw_one(struct rde_peer *peer, struct prefix *p, struct ibuf *buf)
+up_dump_withdraw_one(struct rde_peer *peer, struct prefix_adjout *p,
+    struct ibuf *buf)
 {
 	size_t off;
 	int has_ap;
@@ -1152,7 +1156,7 @@ up_dump_update(struct imsgbuf *imsg, struct rde_peer *peer, uint8_t aid)
 {
 	struct ibuf *buf;
 	struct bgpd_addr addr;
-	struct prefix *p;
+	struct prefix_adjout *p;
 	size_t off, pkgsize = MAX_PKTSIZE;
 	uint16_t len;
 	int force_ip4mp = 0;
@@ -1162,7 +1166,7 @@ up_dump_update(struct imsgbuf *imsg, struct rde_peer *peer, uint8_t aid)
 		return;
 
 	if (aid == AID_INET && peer_has_ext_nexthop(peer, AID_INET)) {
-		struct nexthop *nh = prefix_nexthop(p);
+		struct nexthop *nh = prefix_adjout_nexthop(p);
 		if (nh != NULL && nh->exit_nexthop.aid == AID_INET6)
 			force_ip4mp = 1;
 	}
@@ -1185,8 +1189,8 @@ up_dump_update(struct imsgbuf *imsg, struct rde_peer *peer, uint8_t aid)
 	if (ibuf_add_zero(buf, sizeof(len)) == -1)
 		goto fail;
 
-	if (up_generate_attr(buf, peer, prefix_aspath(p),
-	    prefix_communities(p), prefix_nexthop(p), aid) == -1)
+	if (up_generate_attr(buf, peer, prefix_adjout_aspath(p),
+	    prefix_adjout_communities(p), prefix_adjout_nexthop(p), aid) == -1)
 		goto drop;
 
 	if (aid != AID_INET || force_ip4mp) {
@@ -1198,8 +1202,8 @@ up_dump_update(struct imsgbuf *imsg, struct rde_peer *peer, uint8_t aid)
 		 * merge the attributes together in reverse order of
 		 * creation.
 		 */
-		if (up_generate_mp_reach(buf, peer, prefix_nexthop(p), aid) ==
-		    -1)
+		if (up_generate_mp_reach(buf, peer, prefix_adjout_nexthop(p),
+		    aid) == -1)
 			goto drop;
 	}
 
