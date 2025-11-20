@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.13 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.14 2025/11/20 11:01:29 tb Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -72,7 +72,7 @@ lprint(PERSON *pn)
 	int cpr, len, maxlen;
 	struct tm *tp;
 	int oddfield;
-	char *t, *tzn;
+	const char *t, *tzn;
 
 	cpr = 0;
 	/*
