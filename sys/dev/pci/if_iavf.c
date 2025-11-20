@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.26 2025/11/11 17:43:18 bluhm Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.27 2025/11/20 01:48:52 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -91,7 +91,6 @@
 #define CACHE_LINE_SIZE 64
 #endif
 
-#define IAVF_MAX_VECTORS		4
 #define IAVF_MAX_DMA_SEG_SIZE		((16 * 1024) - 1)
 
 #define I40E_MASK(mask, shift)		((mask) << (shift))
@@ -643,6 +642,7 @@ struct iavf_softc {
 	uint32_t		 sc_vf_id;
 	uint16_t		 sc_vsi_id;
 	uint16_t		 sc_qset_handle;
+	uint16_t		 sc_num_queue_pairs;
 	unsigned int		 sc_base_queue;
 	uint32_t		 sc_rss_key_size;
 	uint32_t		 sc_rss_lut_size;
@@ -1035,7 +1035,7 @@ iavf_attach(struct device *parent, struct device *self, void *aux)
 			nmsix--;
 
 			sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix,
-			    MIN(IAVF_MAX_VECTORS, IF_MAX_VECTORS),
+			    MIN(sc->sc_num_queue_pairs, IF_MAX_VECTORS),
 			    INTRMAP_POWEROF2);
 			nqueues = intrmap_count(sc->sc_intrmap);
 			KASSERT(nqueues > 0);
@@ -2588,13 +2588,11 @@ iavf_process_vf_resources(struct iavf_softc *sc, struct iavf_aq_desc *desc,
 	if (mtu != 0)
 		ifp->if_hardmtu = MIN(IAVF_HARDMTU, mtu);
 
-	/* limit vectors to what we got here? */
-
 	/* just take the first vsi */
 	vsi_res = &vf_res->vsi_res[0];
 	sc->sc_vsi_id = letoh16(vsi_res->vsi_id);
 	sc->sc_qset_handle = letoh16(vsi_res->qset_handle);
-	/* limit number of queues to what we got here */
+	sc->sc_num_queue_pairs = letoh16(vsi_res->num_queue_pairs);
 	/* is vsi type interesting? */
 
 	sc->sc_vf_id = letoh32(desc->iaq_param[0]);
