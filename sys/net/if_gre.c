@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.191 2025/11/01 10:04:49 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.192 2025/11/21 04:44:26 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1460,7 +1460,7 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
 
 	eh = mtod(m, struct ether_header *);
 	etherbridge_map_ea(&sc->sc_eb, (void *)&key->t_dst,
-	    0, (struct ether_addr *)eh->ether_shost);
+	    0, 0, (struct ether_addr *)eh->ether_shost);
 
 	SET(m->m_pkthdr.csum_flags, M_FLOWID);
 	m->m_pkthdr.ph_flowid = bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY;
@@ -3711,7 +3711,7 @@ nvgre_add_addr(struct nvgre_softc *sc, const struct ifbareq *ifba)
 	}
 
 	return (etherbridge_add_addr(&sc->sc_eb, &endpoint,
-	    0, &ifba->ifba_dst, type));
+	    0, 0, &ifba->ifba_dst, type));
 }
 
 static int

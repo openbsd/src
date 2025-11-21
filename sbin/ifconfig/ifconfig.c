@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.478 2025/11/01 10:14:21 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.479 2025/11/21 04:44:26 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -564,6 +564,8 @@ const struct	cmd {
 	{ "-learn",	NEXTARG,	0,		unsetlearn },
 	{ "locked",	NEXTARG,	0,		setlocked },
 	{ "-locked",	NEXTARG,	0,		unsetlocked },
+	{ "pvptags",	NEXTARG,	0,		setpvptags },
+	{ "-pvptags",	NEXTARG,	0,		unsetpvptags },
 	{ "stp",	NEXTARG,	0,		setstp },
 	{ "-stp",	NEXTARG,	0,		unsetstp },
 	{ "edge",	NEXTARG,	0,		setedge },
@@ -576,6 +578,16 @@ const struct	cmd {
 	{ "-untagged",	NEXTARG,	0,		bridge_unpvid },
 	{ "tagged",	NEXTARG2,	0,		NULL, bridge_set_vidmap },
 	{ "-tagged",	NEXTARG2,	0,		bridge_unset_vidmap },
+	{ "pvlan",	NEXTARG,	0,		bridge_pvlan_primary },
+	{ "-pvlan",	NEXTARG,	0,		bridge_unpvlan_primary },
+	{ "pvlan-isolated",
+			NEXTARG2,	0,		NULL, bridge_pvlan_isolated },
+	{ "-pvlan-isolated",
+			NEXTARG2,	0,		NULL, bridge_unpvlan_isolated },
+	{ "pvlan-community",
+			NEXTARG2,	0,		NULL, bridge_pvlan_community },
+	{ "-pvlan-community",
+			NEXTARG2,	0,		NULL, bridge_unpvlan_community },
 	{ "ptp",	NEXTARG,	0,		setptp },
 	{ "-ptp",	NEXTARG,	0,		unsetptp },
 	{ "autoptp",	NEXTARG,	0,		setautoptp },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.85 2025/11/01 09:46:31 dlg Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.86 2025/11/21 04:44:26 dlg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -75,7 +75,11 @@
 #define	SIOCGLIFPHYADDR	_IOWR('i', 75, struct if_laddrreq) /* get gif addrs */
 
 #define	SIOCBRDGADD	 _IOW('i', 60, struct ifbreq)	/* add bridge ifs */
+#define	SIOCBRDGADDPV	 _IOW('i', 60, struct ifbrpvlan) /* add pvlan */
+#define	SIOCBRDGFINDPV	_IOWR('i', 60, struct ifbrpvlan) /* find pvlan */
 #define	SIOCBRDGDEL	 _IOW('i', 61, struct ifbreq)	/* del bridge ifs */
+#define	SIOCBRDGDELPV	 _IOW('i', 61, struct ifbrpvlan) /* del pvlan */
+#define	SIOCBRDGNFINDPV	_IOWR('i', 61, struct ifbrpvlan) /* nfind pvlan */
 #define	SIOCBRDGGIFFLGS	_IOWR('i', 62, struct ifbreq)	/* get brdg if flags */
 #define	SIOCBRDGSIFFLGS	 _IOW('i', 63, struct ifbreq)	/* set brdg if flags */
 #define	SIOCBRDGSCACHE	 _IOW('i', 64, struct ifbrparam)/* set cache size */

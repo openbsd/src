@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.26 2025/11/01 10:04:49 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.27 2025/11/21 04:44:26 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -710,7 +710,7 @@ bpe_add_addr(struct bpe_softc *sc, const struct ifbareq *ifba)
 	/* check endpoint for multicast or broadcast? */
 
 	return (etherbridge_add_addr(&sc->sc_eb, (void *)endpoint,
-	    0, &ifba->ifba_dst, type));
+	    0, 0, &ifba->ifba_dst, type));
 }
 
 static int
@@ -770,7 +770,7 @@ bpe_input(struct ifnet *ifp0, struct mbuf *m, struct netstack *ns)
 	ceh = (struct ether_header *)(itagp + 1);
 
 	etherbridge_map_ea(&sc->sc_eb, ceh->ether_shost,
-	    0, (struct ether_addr *)beh->ether_shost);
+	    0, 0, (struct ether_addr *)beh->ether_shost);
 
 	m_adj(m, sizeof(*beh) + sizeof(*itagp));
 

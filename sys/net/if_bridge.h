@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.76 2025/11/02 00:15:20 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.77 2025/11/21 04:44:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -82,6 +82,7 @@ struct ifbreq {
 #define	IFBIF_SPAN		0x0100	/* ifs is a span port (ro) */
 #define	IFBIF_LOCAL		0x1000	/* local port in switch(4) */
 #define	IFBIF_LOCKED		0x2000	/* restrict rx src mac with fib */
+#define	IFBIF_PVLAN_PTAGS	0x4000	/* only use tags for primary pvlans */
 #define	IFBIF_RO_MASK		0x0f00	/* read only bits */
 
 /* SIOCBRDGFLUSH */
@@ -269,6 +270,18 @@ struct ifbrvidmap {
 #define IFBRVM_OP_ANDNOT		0x2	/* kernel &= ~ifbrvm_map */
 	unsigned int		ifbrvm_gen;
 	uint8_t			ifbrvm_map[512];
+};
+
+struct ifbrpvlan {
+	char			ifbrpv_name[IFNAMSIZ];
+	uint16_t		ifbrpv_primary;
+	uint16_t		ifbrpv_secondary;
+	unsigned int		ifbrpv_type;
+#define IFBRPV_T_PRIMARY		0
+#define IFBRPV_T_SECONDARY		1	/* for searching */
+#define IFBRPV_T_ISOLATED		2
+#define IFBRPV_T_COMMUNITY		3
+	unsigned int		ifbrpv_gen;
 };
 
 #ifdef _KERNEL

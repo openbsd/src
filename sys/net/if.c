@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.752 2025/11/17 09:19:45 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.753 2025/11/21 04:44:26 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2473,6 +2473,8 @@ forceup:
 	case SIOCBRDGSTXHC:
 	case SIOCBRDGSPROTO:
 	case SIOCBRDGSVMAP:
+	case SIOCBRDGADDPV:
+	case SIOCBRDGDELPV:
 #endif
 		if ((error = suser(p)) != 0)
 			break;

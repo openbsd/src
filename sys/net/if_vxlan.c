@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.105 2025/11/01 10:04:49 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.106 2025/11/21 04:44:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -694,8 +694,8 @@ vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 
 	if (sc->sc_mode == VXLAN_TMODE_LEARNING) {
 		eh = mtod(m, struct ether_header *);
-		etherbridge_map_ea(&sc->sc_eb, &addr,
-		    0, (struct ether_addr *)eh->ether_shost);
+		etherbridge_map_ea(&sc->sc_eb, &addr, 0, 0,
+		    (struct ether_addr *)eh->ether_shost);
 	}
 
 	rxhprio = sc->sc_rxhprio;
@@ -1721,7 +1721,7 @@ vxlan_add_addr(struct vxlan_softc *sc, const struct ifbareq *ifba)
 	}
 
 	return (etherbridge_add_addr(&sc->sc_eb, &endpoint,
-	    0, &ifba->ifba_dst, type));
+	    0, 0, &ifba->ifba_dst, type));
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.42 2025/11/07 23:23:15 jsg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.43 2025/11/21 04:44:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -61,10 +61,11 @@ void bridge_badrule(int, char **, int);
 void bridge_showrule(struct ifbrlreq *);
 int bridge_arprule(struct ifbrlreq *, int *, char ***);
 void bridge_vidmap(const char *);
+void bridge_pvlans(const char *);
 
 #define	IFBAFBITS	"\020\1STATIC"
 #define	IFBIFBITS	\
-"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7PTP\10AUTOPTP\11SPAN\15LOCAL\16LOCKED"
+"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4STP\5EDGE\6AUTOEDGE\7PTP\10AUTOPTP\11SPAN\15LOCAL\16LOCKED\17PVPTAGS"
 
 #define	PV2ID(pv, epri, eaddr)	do {					\
 	epri	 = pv >> 48;						\
@@ -144,6 +145,18 @@ void
 unsetlocked(const char *val, int d)
 {
 	bridge_ifclrflag(val, IFBIF_LOCKED);
+}
+
+void
+setpvptags(const char *val, int d)
+{
+	bridge_ifsetflag(val, IFBIF_PVLAN_PTAGS);
+}
+
+void
+unsetpvptags(const char *val, int d)
+{
+	bridge_ifclrflag(val, IFBIF_PVLAN_PTAGS);
 }
 
 void
@@ -695,7 +708,94 @@ bridge_unset_vidmap(const char *ifsname, int d)
 
 	if (ioctl(sock, SIOCBRDGSVMAP, &ifbrvm) == -1)
 		err(1, "%s -tagged %s", ifname, ifsname);
+}
 
+static void
+bridge_pvlan_primary_op(const char *primary, const char *op, long cmd)
+{
+	struct ifbrpvlan ifbrpv;
+	uint16_t vid;
+	const char *errstr;
+
+	vid = strtonum(primary, EVL_VLID_MIN, EVL_VLID_MAX, &errstr);
+	if (errstr != NULL)
+		errx(1, "primary vid: %s", errstr);
+
+	memset(&ifbrpv, 0, sizeof(ifbrpv));
+
+	strlcpy(ifbrpv.ifbrpv_name, ifname, sizeof(ifbrpv.ifbrpv_name));
+	ifbrpv.ifbrpv_primary = vid;
+	ifbrpv.ifbrpv_type = IFBRPV_T_PRIMARY;
+
+	if (ioctl(sock, cmd, &ifbrpv) == -1)
+		err(1, "%s %s %s", ifname, op, primary);
+}
+
+void
+bridge_pvlan_primary(const char *primary, int d)
+{
+	bridge_pvlan_primary_op(primary, "pvlan", SIOCBRDGADDPV);
+}
+
+void
+bridge_unpvlan_primary(const char *primary, int d)
+{
+	bridge_pvlan_primary_op(primary, "-pvlan", SIOCBRDGDELPV);
+}
+
+static void
+bridge_pvlan_secondary_op(const char *primary, const char *secondary,
+    int type, const char *op, long cmd)
+{
+	struct ifbrpvlan ifbrpv;
+	uint16_t vp, vs;
+	const char *errstr;
+
+	vp = strtonum(primary, EVL_VLID_MIN, EVL_VLID_MAX, &errstr);
+	if (errstr != NULL)
+		errx(1, "primary vid: %s", errstr);
+
+	vs = strtonum(secondary, EVL_VLID_MIN, EVL_VLID_MAX, &errstr);
+	if (errstr != NULL)
+		errx(1, "secondary vid: %s", errstr);
+
+	memset(&ifbrpv, 0, sizeof(ifbrpv));
+
+	strlcpy(ifbrpv.ifbrpv_name, ifname, sizeof(ifbrpv.ifbrpv_name));
+	ifbrpv.ifbrpv_primary = vp;
+	ifbrpv.ifbrpv_secondary = vs;
+	ifbrpv.ifbrpv_type = type;
+
+	if (ioctl(sock, cmd, &ifbrpv) == -1)
+		err(1, "%s %s %s %s", ifname, op, primary, secondary);
+}
+
+void
+bridge_pvlan_isolated(const char *primary, const char *secondary)
+{
+	bridge_pvlan_secondary_op(primary, secondary, IFBRPV_T_ISOLATED,
+	    "pvlan-isolated", SIOCBRDGADDPV);
+}
+
+void
+bridge_unpvlan_isolated(const char *primary, const char *secondary)
+{
+	bridge_pvlan_secondary_op(primary, secondary, IFBRPV_T_ISOLATED,
+	    "-pvlan-isolated", SIOCBRDGDELPV);
+}
+
+void
+bridge_pvlan_community(const char *primary, const char *secondary)
+{
+	bridge_pvlan_secondary_op(primary, secondary, IFBRPV_T_COMMUNITY,
+	    "pvlan-community", SIOCBRDGADDPV);
+}
+
+void
+bridge_unpvlan_community(const char *primary, const char *secondary)
+{
+	bridge_pvlan_secondary_op(primary, secondary, IFBRPV_T_COMMUNITY,
+	    "-pvlan-community", SIOCBRDGDELPV);
 }
 
 void
@@ -1164,6 +1264,7 @@ bridge_status(void)
 		return;
 
 	bridge_cfg("\t");
+	bridge_pvlans("\t");
 	bridge_list("\t");
 
 	if (aflag && !ifaliases)
@@ -1234,6 +1335,66 @@ bridge_vidmap(const char *ifsname)
 	if (sep == ' ')
 		printf(" none");
 	printf("\n");
+}
+
+void
+bridge_pvlans(const char *delim)
+{
+	uint16_t vp = 0, vs;
+	struct ifbrpvlan ifbrpv;
+
+	for (;;) {
+		const char *sep = " community ";
+		memset(&ifbrpv, 0, sizeof(ifbrpv));
+
+		strlcpy(ifbrpv.ifbrpv_name, ifname, sizeof(ifbrpv.ifbrpv_name));
+		ifbrpv.ifbrpv_primary = ++vp; /* lucky vids start at 1 */
+		ifbrpv.ifbrpv_type = IFBRPV_T_PRIMARY;
+
+		if (ioctl(sock, SIOCBRDGNFINDPV, &ifbrpv) == -1) {
+			if (errno == ENOENT) {
+				/* all done */
+				return;
+			}
+
+			warn("%s SIOCBRDGNFINDPV %u", ifname, vp);
+			return;
+		}
+
+		printf("%spvlan %u isolated", delim, ifbrpv.ifbrpv_primary);
+		if (ifbrpv.ifbrpv_secondary != EVL_VLID_NULL)
+			printf(" %u", ifbrpv.ifbrpv_secondary);
+		else
+			printf(" none");
+
+		vp = ifbrpv.ifbrpv_primary;
+		vs = 0;
+
+		for (;;) {
+			strlcpy(ifbrpv.ifbrpv_name, ifname,
+			    sizeof(ifbrpv.ifbrpv_name));
+			ifbrpv.ifbrpv_primary = vp;
+			ifbrpv.ifbrpv_secondary = ++vs;
+			ifbrpv.ifbrpv_type = IFBRPV_T_COMMUNITY;
+
+			if (ioctl(sock, SIOCBRDGNFINDPV, &ifbrpv) == -1) {
+				if (errno == ENOENT) {
+					/* all done */
+					break;
+				}
+
+				warn("%s SIOCBRDGNFINDPV %u %u", ifname,
+				    vp, vs);
+				break;
+			}
+
+			printf("%s%u", sep, ifbrpv.ifbrpv_secondary);
+			vs = ifbrpv.ifbrpv_secondary;
+			sep = ",";
+		}
+
+		printf("\n");
+	}
 }
 
 void

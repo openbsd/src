@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.52 2025/11/07 09:57:29 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.53 2025/11/21 04:44:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -62,7 +62,7 @@
 
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
 #define VEB_IFBIF_FLAGS	\
-	(IFBIF_LOCKED|IFBIF_LEARNING|IFBIF_DISCOVER|IFBIF_BLOCKNONIP)
+	(IFBIF_PVLAN_PTAGS|IFBIF_LOCKED|IFBIF_LEARNING|IFBIF_DISCOVER|IFBIF_BLOCKNONIP)
 
 struct veb_rule {
 	TAILQ_ENTRY(veb_rule)		vr_entry;
@@ -139,6 +139,17 @@ struct veb_ports {
 	/* followed by an array of veb_port pointers */
 };
 
+struct veb_pvlan {
+	RBT_ENTRY(veb_pvlan)		 v_entry;
+	uint16_t			 v_primary;
+	uint16_t			 v_secondary;
+#define v_isolated			 v_secondary
+	unsigned int			 v_type;
+};
+
+RBT_HEAD(veb_pvlan_vp, veb_pvlan);
+RBT_HEAD(veb_pvlan_vs, veb_pvlan);
+
 struct veb_softc {
 	struct ifnet			 sc_if;
 	unsigned int			 sc_dead;
@@ -151,6 +162,51 @@ struct veb_softc {
 	struct rwlock			 sc_rule_lock;
 	struct veb_ports		*sc_ports;
 	struct veb_ports		*sc_spans;
+
+	/*
+	 * pvlan topology is stored twice:
+	 *
+	 * once in an array hanging off sc_pvlans for the forwarding path.
+	 * entries in sc_pvlans are indexed by the secondary vid (Vs), and
+	 * stores the primary vid (Vp) the Vs is associated with and the
+	 * type of relationship Vs has with Vp.
+	 *
+	 * primary vids have an entry filled with their own vid to indicate
+	 * that the vid is in use.
+	 *
+	 * vids without pvlan configuration have 0 in their sc_pvlans entry.
+	 */
+	uint16_t			*sc_pvlans;
+#define VEB_PVLAN_V_MASK	EVL_VLID_MASK
+#define VEB_PVLAN_T_PRIMARY	(0 << 12)
+#define VEB_PVLAN_T_ISOLATED	(1 << 12)
+#define VEB_PVLAN_T_COMMUNITY	(2 << 12)
+#define VEB_PVLAN_T_MASK	(3 << 12)
+
+	/*
+	 * the pvlan topology is stored again in trees for the
+	 * ioctls. technically the ioctl code could brute force through
+	 * the sc_pvlans above, but this seemed like a good idea at
+	 * the time.
+	 *
+	 * primary vids are stored in their own sc_pvlans_vp tree.
+	 * there can only be one isolaved vid (Vi) per pvlan, which
+	 * is managed using the v_isolated (v_secondary) id member
+	 * in the primary veb_vplan struct here.
+	 *
+	 * secondary vids are stored in the sc_pvlans_vs tree.
+	 * they're ordered by Vp, type, and Vs to make it easy to
+	 * find pvlans for userland.
+	 */
+	struct veb_pvlan_vp		 sc_pvlans_vp;
+	struct veb_pvlan_vs		 sc_pvlans_vs;
+
+	/*
+	 * this is incremented when the pvlan topology changes, and
+	 * copied into the FINDPV and NFINDPV ioctl results so userland
+	 * can tell if a change has happened across multiple queries.
+	 */
+	unsigned int			 sc_pvlans_gen;
 };
 
 #define DPRINTF(_sc, fmt...)    do { \
@@ -216,6 +272,11 @@ static int	veb_del_vid_addr(struct veb_softc *, const struct ifbvareq *);
 static int	veb_get_vid_map(struct veb_softc *, struct ifbrvidmap *);
 static int	veb_set_vid_map(struct veb_softc *, const struct ifbrvidmap *);
 
+static int	veb_add_pvlan(struct veb_softc *, const struct ifbrpvlan *);
+static int	veb_del_pvlan(struct veb_softc *, const struct ifbrpvlan *);
+static int	veb_find_pvlan(struct veb_softc *, struct ifbrpvlan *);
+static int	veb_nfind_pvlan(struct veb_softc *, struct ifbrpvlan *);
+
 static int	veb_rule_add(struct veb_softc *, const struct ifbrlreq *);
 static int	veb_rule_list_flush(struct veb_softc *,
 		    const struct ifbrlreq *);
@@ -238,6 +299,42 @@ static const struct etherbridge_ops veb_etherbridge_ops = {
 	veb_eb_port_ifname,
 	veb_eb_port_sa,
 };
+
+static inline int
+veb_pvlan_vp_cmp(const struct veb_pvlan *a, const struct veb_pvlan *b)
+{
+	if (a->v_primary < b->v_primary)
+		return (-1);
+	if (a->v_primary > b->v_primary)
+		return (1);
+	return (0);
+}
+
+RBT_PROTOTYPE(veb_pvlan_vp, veb_pvlan, v_entry, veb_pvlan_vp_cmp);
+
+static inline int
+veb_pvlan_vs_cmp(const struct veb_pvlan *a, const struct veb_pvlan *b)
+{
+	int rv;
+
+	rv = veb_pvlan_vp_cmp(a, b);
+	if (rv != 0)
+		return (rv);
+
+	if (a->v_type < b->v_type)
+		return (-1);
+	if (a->v_type > b->v_type)
+		return (1);
+
+	if (a->v_secondary < b->v_secondary)
+		return (-1);
+	if (a->v_secondary > b->v_secondary)
+		return (1);
+
+	return (0);
+}
+
+RBT_PROTOTYPE(veb_pvlan_vs, veb_pvlan, v_entry, veb_pvlan_vs_cmp);
 
 static struct if_clone veb_cloner =
     IF_CLONE_INITIALIZER("veb", veb_clone_create, veb_clone_destroy);
@@ -291,6 +388,8 @@ veb_clone_create(struct if_clone *ifc, int unit)
 	rw_init(&sc->sc_rule_lock, "vebrlk");
 	sc->sc_ports = NULL;
 	sc->sc_spans = NULL;
+	RBT_INIT(veb_pvlan_vp, &sc->sc_pvlans_vp);
+	RBT_INIT(veb_pvlan_vs, &sc->sc_pvlans_vs);
 
 	ifp = &sc->sc_if;
 
@@ -338,6 +437,7 @@ veb_clone_destroy(struct ifnet *ifp)
 	struct veb_ports *mp, *ms;
 	struct veb_port **ps;
 	struct veb_port *p;
+	struct veb_pvlan *v, *nv;
 	unsigned int i;
 
 	NET_LOCK();
@@ -373,8 +473,8 @@ veb_clone_destroy(struct ifnet *ifp)
 			veb_p_unlink(sc, ps[i]);
 	}
 
+	smr_barrier(); /* everything everywhere all at once */
 	if (mp != NULL || ms != NULL) {
-		smr_barrier(); /* everything everywhere all at once */
 
 		if (mp != NULL) {
 			refcnt_finalize(&mp->m_refs, "vebdtor");
@@ -408,6 +508,16 @@ veb_clone_destroy(struct ifnet *ifp)
 	NET_UNLOCK();
 
 	etherbridge_destroy(&sc->sc_eb);
+
+	RBT_FOREACH_SAFE(v, veb_pvlan_vp, &sc->sc_pvlans_vp, nv) {
+		RBT_REMOVE(veb_pvlan_vp, &sc->sc_pvlans_vp, v);
+		free(v, M_IFADDR, sizeof(*v));
+	}
+	RBT_FOREACH_SAFE(v, veb_pvlan_vs, &sc->sc_pvlans_vs, nv) {
+		RBT_REMOVE(veb_pvlan_vs, &sc->sc_pvlans_vs, v);
+		free(v, M_IFADDR, sizeof(*v));
+	}
+	free(sc->sc_pvlans, M_IFADDR, VEB_VID_COUNT * sizeof(*sc->sc_pvlans));
 
 	free(sc, M_DEVBUF, sizeof(*sc));
 
@@ -701,19 +811,52 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m, struct netstack *ns)
 }
 #endif /* NPF > 0 */
 
+struct veb_ctx {
+	struct netstack		*ns;
+	struct veb_port		*p;
+	uint64_t		 src;
+	uint64_t		 dst;
+	uint16_t		 vp;	/* primary vlan */
+	uint16_t		 vs;	/* secondary vlan */
+	uint16_t		 vt;	/* secondary vlan type */
+};
+
+static int
+veb_pvlan_filter(const struct veb_ctx *ctx, uint16_t vs)
+{
+	switch (ctx->vt) {
+	case VEB_PVLAN_T_PRIMARY:
+		/* primary ports are permitted to send to anything */
+		break;
+
+	case VEB_PVLAN_T_COMMUNITY:
+		/* same communities are permitted */
+		if (ctx->vs == vs)
+			break;
+
+		/* FALLTHROUGH */
+	case VEB_PVLAN_T_ISOLATED:
+		/* isolated (or community) can only send to a primary port */
+		if (ctx->vp == vs)
+			break;
+
+		return (1);
+	}
+
+	return (0);
+}
+
 static void
-veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
-    uint64_t src, uint64_t dst, uint16_t vid, struct netstack *ns)
+veb_broadcast(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m0)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct veb_ports *pm;
 	struct veb_port **ps;
-	struct veb_port *tp;
 	struct ifnet *ifp0;
 	struct mbuf *m;
 	unsigned int i;
 
-	if (rp->p_pvid == vid) { /* XXX which vlan is the right one? */
+	if (ctx->p->p_pvid == ctx->vs) { /* XXX which vlan is the right one? */
 #if NPF > 0
 		/*
 		 * we couldn't find a specific port to send this packet to,
@@ -721,7 +864,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 		 * let pf look at it, but use the veb interface as a proxy.
 		 */
 		if (ISSET(ifp->if_flags, IFF_LINK1) &&
-		    (m0 = veb_pf(ifp, PF_FWD, m0, ns)) == NULL)
+		    (m0 = veb_pf(ifp, PF_FWD, m0, ctx->ns)) == NULL)
 			return;
 #endif
 	}
@@ -739,9 +882,11 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 
 	ps = veb_ports_array(pm);
 	for (i = 0; i < pm->m_count; i++) {
-		tp = ps[i];
+		struct veb_port *tp = ps[i];
+		uint16_t pvid, vid;
+		unsigned int bif_flags;
 
-		if (rp == tp || (rp->p_protected & tp->p_protected)) {
+		if (ctx->p == tp || (ctx->p->p_protected & tp->p_protected)) {
 			/*
 			 * don't let Ethernet packets hairpin or
 			 * move between ports in the same protected
@@ -750,24 +895,45 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 			continue;
 		}
 
-		if (vid != tp->p_pvid) {
-			if (veb_vid_map_filter(tp, vid))
-				continue;
-		}
-
 		ifp0 = tp->p_ifp0;
 		if (!ISSET(ifp0->if_flags, IFF_RUNNING)) {
 			/* don't waste time */
 			continue;
 		}
 
-		if (!ISSET(tp->p_bif_flags, IFBIF_DISCOVER) &&
+		bif_flags = READ_ONCE(tp->p_bif_flags);
+
+		if (!ISSET(bif_flags, IFBIF_DISCOVER) &&
 		    !ISSET(m0->m_flags, M_BCAST | M_MCAST)) {
 			/* don't flood unknown unicast */
 			continue;
 		}
 
-		if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m0, src, dst, vid))
+		pvid = tp->p_pvid;
+		if (pvid < IFBR_PVID_MIN || pvid > IFBR_PVID_MAX ||
+		    veb_pvlan_filter(ctx, pvid)) {
+			if (ISSET(bif_flags, IFBIF_PVLAN_PTAGS)) {
+				/*
+				 * port is attached to something that is
+				 * vlan aware but pvlan unaware. only flood
+				 * to the primary vid.
+				 */
+				vid = ctx->vp;
+			} else {
+				/*
+				 * this must be an inter switch
+				 * trunk, so use the original vid.
+				 */
+				vid = ctx->vs;
+			}
+
+			if (veb_vid_map_filter(tp, vid))
+				continue;
+		} else
+			vid = pvid;
+
+		if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m0,
+		    ctx->src, ctx->dst, vid))
 			continue;
 
 		m = m_dup_pkt(m0, max_linkhdr + ETHER_ALIGN, M_NOWAIT);
@@ -776,7 +942,9 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 			continue;
 		}
 
-		if (vid == tp->p_pvid)
+		if (pvid != vid)
+			m->m_pkthdr.ether_vtag |= vid;
+		else
 			CLR(m->m_flags, M_VLANTAG);
 
 		m = ether_offload_ifcap(ifp0, m);
@@ -794,17 +962,17 @@ done:
 }
 
 static struct mbuf *
-veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
-    struct mbuf *m, uint64_t src, uint64_t dst, uint16_t vid,
-    struct netstack *ns)
+veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
+    struct veb_port *tp, uint16_t tvs)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
+	uint16_t pvid, vid = tvs;
 
 	if (tp == NULL)
 		return (m);
 
-	if (rp == tp || (rp->p_protected & tp->p_protected)) {
+	if (ctx->p == tp || (ctx->p->p_protected & tp->p_protected)) {
 		/*
 		 * don't let Ethernet packets hairpin or move between
 		 * ports in the same protected domain(s).
@@ -812,21 +980,43 @@ veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
 		goto drop;
 	}
 
-	/* pvid or tagged config can override address entries */
-	if (vid != tp->p_pvid) {
+	if (veb_pvlan_filter(ctx, tvs))
+		goto drop;
+
+	/* address entries are still subject to tagged config */
+	pvid = tp->p_pvid;
+	if (tvs != pvid) {
+		if (ISSET(tp->p_bif_flags, IFBIF_PVLAN_PTAGS)) {
+			/*
+			 * this port is vlan aware but pvlan unaware,
+			 * so it only understands the primary vlan.
+			 */
+			if (tvs != ctx->vp)
+				goto drop;
+		} else {
+			/*
+			 * this must be an inter switch trunk, so use the
+			 * original vid.
+			 */
+			vid = ctx->vs;
+		}
+
 		if (veb_vid_map_filter(tp, vid))
 			goto drop;
 	}
 
-	if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m, src, dst, vid))
+	if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m,
+	    ctx->src, ctx->dst, vid))
 		goto drop;
 
 	ifp0 = tp->p_ifp0;
 
-	if (vid == tp->p_pvid) {
+	if (tvs != pvid)
+		m->m_pkthdr.ether_vtag |= vid;
+	else {
 #if NPF > 0
 		if (ISSET(ifp->if_flags, IFF_LINK1) &&
-		    (m = veb_pf(ifp0, PF_FWD, m, ns)) == NULL)
+		    (m = veb_pf(ifp0, PF_FWD, m, ctx->ns)) == NULL)
 			return (NULL);
 #endif
 
@@ -857,6 +1047,28 @@ veb_vport_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	return (m);
 }
 
+static uint16_t
+veb_pvlan(struct veb_softc *sc, uint16_t vid)
+{
+	uint16_t *pvlans;
+	uint16_t pvlan;
+
+	/*
+	 * a normal non-pvlan vlan operates like the primary vid in a pvlan,
+	 * or visa versa. when doing a lookup we pretend that a non-pvlan vid
+	 * is the primary vid in a pvlan.
+	 */
+
+	pvlans = SMR_PTR_GET(&sc->sc_pvlans);
+	if (pvlans == NULL)
+		return (VEB_PVLAN_T_PRIMARY | vid);
+
+	pvlan = pvlans[vid];
+	if (pvlan == 0)
+		return (VEB_PVLAN_T_PRIMARY | vid);
+
+	return (pvlan);
+}
 
 static struct mbuf *
 veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
@@ -864,10 +1076,16 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 {
 	struct veb_port *p = brport;
 	struct veb_softc *sc = p->p_veb;
+	struct veb_ctx ctx = {
+		.ns = ns,
+		.p = p,
+		.dst = dst,
+		.vs = p->p_pvid,
+	};
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
-	uint64_t src;
-	uint16_t vid = p->p_pvid;
+	unsigned int bif_flags;
+	uint16_t pvlan;
 	int prio;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
@@ -924,12 +1142,13 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 		uint16_t tvid = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
 
 		if (tvid == EVL_VLID_NULL) {
+			/* this preserves PRIOFTAG for BPF */
 			CLR(m->m_flags, M_VLANTAG);
 		} else if (veb_vid_map_filter(p, tvid)) {
 			/* count vlan tagged drop */
 			goto drop;
 		} else
-			vid = tvid;
+			ctx.vs = tvid;
 
 		prio = sc->sc_rxprio;
 		switch (prio) {
@@ -945,27 +1164,47 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 			m->m_pkthdr.pf.prio = prio;
 			break;
 		}
-	} else if (vid == IFBR_PVID_DECLINE)
-		return (m);
+	} else {
+		/* prepare for BPF */
+		m->m_pkthdr.ether_vtag = 0;
+	}
 
-	if (vid == IFBR_PVID_NONE)
+	if (ctx.vs == IFBR_PVID_DECLINE)
+		return (m);
+	if (ctx.vs == IFBR_PVID_NONE)
 		goto drop;
 
 #ifdef DIAGNOSTIC
-	if (vid < IFBR_PVID_MIN ||
-	    vid > IFBR_PVID_MAX) {
-		panic("%s: %s vid %u is outside valid range", __func__, 
-		    ifp0->if_xname, vid);
+	if (ctx.vs < IFBR_PVID_MIN ||
+	    ctx.vs > IFBR_PVID_MAX) {
+		panic("%s: %s vid %u is outside valid range", __func__,
+		    ifp0->if_xname, ctx.vs);
 	}
 #endif
 
-	src = ether_addr_to_e64((struct ether_addr *)eh->ether_shost);
+	smr_read_enter();
+	pvlan = veb_pvlan(sc, ctx.vs);
+	smr_read_leave();
 
-	if (ISSET(p->p_bif_flags, IFBIF_LOCKED)) {
-		struct veb_port *rp;
+	ctx.vp = pvlan & VEB_PVLAN_V_MASK;
+	ctx.vt = pvlan & VEB_PVLAN_T_MASK;
+	ctx.src = ether_addr_to_e64((struct ether_addr *)eh->ether_shost);
+
+	bif_flags = READ_ONCE(p->p_bif_flags);
+
+	if (ISSET(bif_flags, IFBIF_PVLAN_PTAGS) &&
+	    ISSET(m->m_flags, M_VLANTAG) &&
+	    ctx.vt != VEB_PVLAN_T_PRIMARY)
+		goto drop;
+
+	if (ISSET(bif_flags, IFBIF_LOCKED)) {
+		struct eb_entry *ebe;
+		struct veb_port *rp = NULL;
 
 		smr_read_enter();
-		rp = etherbridge_resolve(&sc->sc_eb, vid, src);
+		ebe = etherbridge_resolve_entry(&sc->sc_eb, ctx.vp, ctx.src);
+		if (ebe != NULL && ctx.vs == etherbridge_vs(ebe))
+			rp = etherbridge_port(ebe);
 		smr_read_leave();
 
 		if (rp != p)
@@ -975,14 +1214,10 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes,
 	    m->m_pkthdr.len);
 
-	/*
-	 * set things up so we show BPF on veb which vlan this
-	 * packet is on. i can't decide if the txprio or rxprio is
-	 * better here, so i went with the third option of doing
-	 * nothing. - dlg
-	 */
-	SET(m->m_flags, M_VLANTAG);
-	m->m_pkthdr.ether_vtag = vid;
+	if (!ISSET(m->m_flags, M_VLANTAG)) {
+		SET(m->m_flags, M_VLANTAG); /* for BPF */
+		m->m_pkthdr.ether_vtag |= ctx.vs;
+	}
 
 	/* force packets into the one routing domain for pf */
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
@@ -997,7 +1232,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 
 	veb_span(sc, m);
 
-	if (ISSET(p->p_bif_flags, IFBIF_BLOCKNONIP) &&
+	if (ISSET(bif_flags, IFBIF_BLOCKNONIP) &&
 	    veb_ip_filter(m))
 		goto drop;
 
@@ -1005,39 +1240,43 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	    veb_svlan_filter(m))
 		goto drop;
 
-	if (veb_rule_filter(p, VEB_RULE_LIST_IN, m, src, dst, vid))
+	if (veb_rule_filter(p, VEB_RULE_LIST_IN, m, ctx.src, ctx.dst, ctx.vs))
 		goto drop;
 
 #if NPF > 0
 	if (ISSET(ifp->if_flags, IFF_LINK1) &&
-	    (m = veb_pf(ifp0, PF_IN, m, ns)) == NULL)
+	    (m = veb_pf(ifp0, PF_IN, m, ctx.ns)) == NULL)
 		return (NULL);
 #endif
 
 	eh = mtod(m, struct ether_header *);
 
-	if (ISSET(p->p_bif_flags, IFBIF_LEARNING))
-		etherbridge_map(&sc->sc_eb, p, vid, src);
+	if (ISSET(bif_flags, IFBIF_LEARNING))
+		etherbridge_map(&sc->sc_eb, ctx.p, ctx.vp, ctx.vs, ctx.src);
 
 	prio = sc->sc_txprio;
 	prio = (prio == IF_HDRPRIO_PACKET) ? m->m_pkthdr.pf.prio : prio;
 	/* IEEE 802.1p has prio 0 and 1 swapped */
 	if (prio <= 1)
 		prio = !prio;
-	m->m_pkthdr.ether_vtag |= (prio << EVL_PRIO_BITS);
+	m->m_pkthdr.ether_vtag = (prio << EVL_PRIO_BITS);
 
 	CLR(m->m_flags, M_BCAST|M_MCAST);
 
-	if (!ETH64_IS_MULTICAST(dst)) {
+	if (!ETH64_IS_MULTICAST(ctx.dst)) {
+		struct eb_entry *ebe;
 		struct veb_port *tp = NULL;
+		uint16_t tvs = 0;
 
 		smr_read_enter();
-		tp = etherbridge_resolve(&sc->sc_eb, vid, dst);
-		if (tp != NULL)
-			veb_eb_port_take(NULL, tp);
+		ebe = etherbridge_resolve_entry(&sc->sc_eb, ctx.vp, ctx.dst);
+		if (ebe != NULL) {
+			tp = veb_eb_port_take(NULL, etherbridge_port(ebe));
+			tvs = etherbridge_vs(ebe);
+		}
 		smr_read_leave();
 		if (tp != NULL) {
-			m = veb_transmit(sc, p, tp, m, src, dst, vid, ns);
+			m = veb_transmit(sc, &ctx, m, tp, tvs);
 			veb_eb_port_rele(NULL, tp);
 		}
 
@@ -1046,10 +1285,11 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 
 		/* unknown unicast address */
 	} else {
-		SET(m->m_flags, ETH64_IS_BROADCAST(dst) ? M_BCAST : M_MCAST);
+		SET(m->m_flags,
+		    ETH64_IS_BROADCAST(ctx.dst) ? M_BCAST : M_MCAST);
 	}
 
-	veb_broadcast(sc, p, m, src, dst, vid, ns);
+	veb_broadcast(sc, &ctx, m);
 	return (NULL);
 
 drop:
@@ -1144,6 +1384,19 @@ veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGRXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_rxprio;
+		break;
+
+	case SIOCBRDGADDPV:
+		error = veb_add_pvlan(sc, (const struct ifbrpvlan *)data);
+		break;
+	case SIOCBRDGDELPV:
+		error = veb_del_pvlan(sc, (const struct ifbrpvlan *)data);
+		break;
+	case SIOCBRDGFINDPV:
+		error = veb_find_pvlan(sc, (struct ifbrpvlan *)data);
+		break;
+	case SIOCBRDGNFINDPV:
+		error = veb_nfind_pvlan(sc, (struct ifbrpvlan *)data);
 		break;
 
 	case SIOCBRDGADD:
@@ -1662,7 +1915,7 @@ veb_chk_vid_map(const struct ifbrvidmap *ifbrvm)
 	bit = 4095 % 8;
 	if (ISSET(ifbrvm->ifbrvm_map[off], 1U << bit))
 		return (EINVAL);
-	
+
 	return (0);
 }
 
@@ -1715,7 +1968,7 @@ veb_destroy_vid_map(uint32_t *map)
 {
 	struct veb_vid_map_dtor *dtor;
 
-	dtor = malloc(sizeof(*dtor), M_TEMP, M_NOWAIT); 
+	dtor = malloc(sizeof(*dtor), M_TEMP, M_NOWAIT);
 	if (dtor == NULL) {
 		/* oh well, the proc can sleep instead */
 		smr_barrier();
@@ -1821,6 +2074,353 @@ put:
 		veb_destroy_vid_map(omap);
 	if (nmap != NULL)
 		veb_free_vid_map(nmap);
+	return (error);
+}
+
+static int
+veb_vid_inuse(struct veb_softc *sc, uint16_t vid)
+{
+	struct veb_ports *pm;
+	struct veb_port **ps;
+	unsigned int off = vid / 32;
+	unsigned int bit = vid % 32;
+	unsigned int i;
+
+	/* must be holding sc->sc_rule_lock */
+
+	pm = SMR_PTR_GET_LOCKED(&sc->sc_ports);
+	ps = veb_ports_array(pm);
+	for (i = 0; i < pm->m_count; i++) {
+		struct veb_port *p = ps[i];
+		uint32_t *map;
+
+		if (p->p_pvid == vid)
+			return (1);
+
+		map = SMR_PTR_GET_LOCKED(&p->p_vid_map);
+		if (map != NULL && ISSET(map[off], 1U << bit))
+			return (1);
+	}
+
+	return (0);
+}
+
+static int
+veb_add_pvlan(struct veb_softc *sc, const struct ifbrpvlan *ifbrpv)
+{
+	struct veb_pvlan *v;
+	uint16_t *pvlans = NULL;
+	int error;
+
+	if (ifbrpv->ifbrpv_primary < EVL_VLID_MIN ||
+	    ifbrpv->ifbrpv_primary > EVL_VLID_MAX)
+		return (EINVAL);
+
+	switch (ifbrpv->ifbrpv_type) {
+	case IFBRPV_T_PRIMARY:
+		if (ifbrpv->ifbrpv_secondary != 0)
+			return (EINVAL);
+		break;
+	case IFBRPV_T_ISOLATED:
+	case IFBRPV_T_COMMUNITY:
+		if (ifbrpv->ifbrpv_secondary < EVL_VLID_MIN ||
+		    ifbrpv->ifbrpv_secondary > EVL_VLID_MAX)
+			return (EINVAL);
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	if (sc->sc_pvlans == NULL) {
+		pvlans = mallocarray(VEB_VID_COUNT, sizeof(*pvlans),
+		    M_IFADDR, M_WAITOK|M_CANFAIL|M_ZERO);
+		if (pvlans == NULL)
+			return (ENOMEM);
+	}
+
+	v = malloc(sizeof(*v), M_IFADDR, M_WAITOK|M_CANFAIL);
+	if (v == NULL) {
+		error = ENOMEM;
+		goto freepvlans;
+	}
+
+	v->v_primary = ifbrpv->ifbrpv_primary;
+	v->v_secondary = ifbrpv->ifbrpv_secondary;
+	v->v_type = ifbrpv->ifbrpv_type;
+
+	error = rw_enter(&sc->sc_rule_lock, RW_WRITE|RW_INTR);
+	if (error != 0)
+		goto free;
+
+	if (sc->sc_pvlans == NULL) {
+		KASSERT(pvlans != NULL);
+		SMR_PTR_SET_LOCKED(&sc->sc_pvlans, pvlans);
+		pvlans = NULL;
+	}
+
+	if (ifbrpv->ifbrpv_type == IFBRPV_T_PRIMARY) {
+		struct veb_pvlan *ovp;
+
+		if (sc->sc_pvlans[v->v_primary] != 0) {
+			error = EBUSY;
+			goto err;
+		}
+
+		ovp = RBT_INSERT(veb_pvlan_vp, &sc->sc_pvlans_vp, v);
+		if (ovp != NULL) {
+			panic("%s: %s %p pvlans and pvlans_vp inconsistency\n",
+			    __func__, sc->sc_if.if_xname, sc);
+		}
+
+		sc->sc_pvlans[v->v_primary] = VEB_PVLAN_T_PRIMARY |
+		    v->v_primary;
+	} else { /* secondary */
+		struct veb_pvlan *vp, *ovs;
+		uint16_t pve = v->v_primary;
+
+		if (sc->sc_pvlans[v->v_secondary] != 0) {
+			error = EBUSY;
+			goto err;
+		}
+
+		if (sc->sc_pvlans[v->v_primary] != v->v_primary) {
+			error = ENETUNREACH; /* XXX */
+			goto err;
+		}
+
+		vp = RBT_FIND(veb_pvlan_vp, &sc->sc_pvlans_vp, v);
+		if (vp == NULL) {
+			panic("%s: %s %p pvlans and pvlans_vp inconsistency\n",
+			    __func__, sc->sc_if.if_xname, sc);
+		}
+
+		if (veb_vid_inuse(sc, v->v_secondary)) {
+			error = EADDRINUSE;
+			goto err;
+		}
+
+		if (ifbrpv->ifbrpv_type == IFBRPV_T_ISOLATED) {
+			if (vp->v_isolated != 0) {
+				error = EADDRNOTAVAIL;
+				goto err;
+			}
+			vp->v_isolated = v->v_secondary;
+			pve |= VEB_PVLAN_T_ISOLATED;
+		} else { /* IFBRPV_T_COMMUNITY */
+			pve |= VEB_PVLAN_T_COMMUNITY;
+		}
+
+		ovs = RBT_INSERT(veb_pvlan_vs, &sc->sc_pvlans_vs, v);
+		if (ovs != NULL) {
+			panic("%s: %s %p pvlans and pvlans_vs inconsistency\n",
+			    __func__, sc->sc_if.if_xname, sc);
+		}
+
+		sc->sc_pvlans[v->v_secondary] = pve;
+	}
+	sc->sc_pvlans_gen++;
+	v = NULL;
+
+err:
+	rw_exit(&sc->sc_rule_lock);
+free:
+	free(v, M_IFADDR, sizeof(*v));
+freepvlans:
+	free(pvlans, M_IFADDR, VEB_VID_COUNT * sizeof(*pvlans));
+	return (error);
+}
+
+static int
+veb_dev_pvlan_filter(struct etherbridge *eb, struct eb_entry *ebe,
+    void *cookie)
+{
+	struct veb_pvlan *vs = cookie;
+
+	return (etherbridge_vs(ebe) == vs->v_secondary);
+}
+
+static int
+veb_del_pvlan(struct veb_softc *sc, const struct ifbrpvlan *ifbrpv)
+{
+	struct veb_pvlan key;
+	struct veb_pvlan *v = NULL;
+	struct veb_pvlan *vp, *vs;
+	uint16_t *pvlans;
+	uint16_t pve;
+	int error;
+
+	if (ifbrpv->ifbrpv_primary < EVL_VLID_MIN ||
+	    ifbrpv->ifbrpv_primary > EVL_VLID_MAX)
+		return (EINVAL);
+
+	switch (ifbrpv->ifbrpv_type) {
+	case IFBRPV_T_PRIMARY:
+		if (ifbrpv->ifbrpv_secondary != 0)
+			return (EINVAL);
+		break;
+	case IFBRPV_T_ISOLATED:
+	case IFBRPV_T_COMMUNITY:
+		if (ifbrpv->ifbrpv_secondary < EVL_VLID_MIN ||
+		    ifbrpv->ifbrpv_secondary > EVL_VLID_MAX)
+			return (EINVAL);
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	key.v_primary = ifbrpv->ifbrpv_primary;
+	key.v_secondary = ifbrpv->ifbrpv_secondary;
+	key.v_type = ifbrpv->ifbrpv_type;
+
+	error = rw_enter(&sc->sc_rule_lock, RW_WRITE|RW_INTR);
+	if (error != 0)
+		return (error);
+
+	pvlans = sc->sc_pvlans;
+	if (pvlans == NULL) {
+		error = ESRCH;
+		goto err;
+	}
+
+	vp = RBT_FIND(veb_pvlan_vp, &sc->sc_pvlans_vp, &key);
+	if (vp == NULL) {
+		error = ESRCH;
+		goto err;
+	}
+
+	if (ifbrpv->ifbrpv_type == IFBRPV_T_PRIMARY) {
+		vs = RBT_NFIND(veb_pvlan_vs, &sc->sc_pvlans_vs, &key);
+		if (vs != NULL && vs->v_primary == vp->v_primary) {
+			error = EBUSY;
+			goto err;
+		}
+
+		v = vp;
+		KASSERT(v->v_isolated == 0); /* vs NFIND should found this */
+
+		pve = VEB_PVLAN_T_PRIMARY | v->v_primary;
+		if (sc->sc_pvlans[v->v_primary] != pve) {
+			panic("%s: %s %p pvlans and pvlans_vp inconsistency\n",
+			    __func__, sc->sc_if.if_xname, sc);
+		}
+
+		RBT_REMOVE(veb_pvlan_vp, &sc->sc_pvlans_vp, v);
+		sc->sc_pvlans[v->v_primary] = 0;
+	} else { /* secondary */
+		uint16_t pve;
+
+		vs = RBT_FIND(veb_pvlan_vs, &sc->sc_pvlans_vs, &key);
+		if (vs == NULL || vs->v_type != key.v_type) {
+			error = ESRCH;
+			goto err;
+		}
+
+		if (veb_vid_inuse(sc, vs->v_secondary)) {
+			error = EBUSY;
+			goto err;
+		}
+
+		v = vs;
+		pve = v->v_primary;
+		if (ifbrpv->ifbrpv_type == IFBRPV_T_ISOLATED) {
+			KASSERT(vp->v_isolated == v->v_secondary);
+			vp->v_isolated = 0;
+
+			pve |= VEB_PVLAN_T_ISOLATED;
+		} else { /* community */
+			pve |= VEB_PVLAN_T_COMMUNITY;
+		}
+
+		if (sc->sc_pvlans[v->v_secondary] != pve) {
+			panic("%s: %s %p pvlans and pvlans_vs inconsistency\n",
+			    __func__, sc->sc_if.if_xname, sc);
+		}
+
+		RBT_REMOVE(veb_pvlan_vs, &sc->sc_pvlans_vs, v);
+		sc->sc_pvlans[v->v_secondary] = 0;
+		/* XXX smr_barrier for sc_pvlans entry use to end? */
+		etherbridge_filter(&sc->sc_eb, veb_dev_pvlan_filter, v);
+	}
+	sc->sc_pvlans_gen++;
+
+err:
+	rw_exit(&sc->sc_rule_lock);
+	free(v, M_IFADDR, sizeof(*v));
+	return (error);
+}
+
+static int
+veb_find_pvlan(struct veb_softc *sc, struct ifbrpvlan *ifbrpv)
+{
+	return (ENOTTY);
+}
+
+static int
+veb_nfind_pvlan_primary(struct veb_softc *sc, struct ifbrpvlan *ifbrpv)
+{
+	struct veb_pvlan key;
+	struct veb_pvlan *vp;
+	int error;
+
+	if (ifbrpv->ifbrpv_secondary != 0)
+		return (EINVAL);
+
+	key.v_primary = ifbrpv->ifbrpv_primary;
+
+	error = rw_enter(&sc->sc_rule_lock, RW_READ|RW_INTR);
+	if (error != 0)
+		return (error);
+
+	vp = RBT_NFIND(veb_pvlan_vp, &sc->sc_pvlans_vp, &key);
+	if (vp == NULL) {
+		error = ENOENT;
+		goto err;
+	}
+
+	ifbrpv->ifbrpv_primary = vp->v_primary;
+	ifbrpv->ifbrpv_secondary = vp->v_isolated;
+	ifbrpv->ifbrpv_gen = sc->sc_pvlans_gen;
+
+err:
+	rw_exit(&sc->sc_rule_lock);
+	return (error);
+}
+
+static int
+veb_nfind_pvlan(struct veb_softc *sc, struct ifbrpvlan *ifbrpv)
+{
+	struct veb_pvlan key;
+	struct veb_pvlan *vs;
+	int error;
+
+	if (ifbrpv->ifbrpv_type == IFBRPV_T_PRIMARY)
+		return (veb_nfind_pvlan_primary(sc, ifbrpv));
+
+	if (ifbrpv->ifbrpv_primary < EVL_VLID_MIN ||
+	    ifbrpv->ifbrpv_primary > EVL_VLID_MAX)
+		return (EINVAL);
+
+	key.v_primary = ifbrpv->ifbrpv_primary;
+	key.v_secondary = ifbrpv->ifbrpv_secondary;
+	key.v_type = ifbrpv->ifbrpv_type;
+
+	error = rw_enter(&sc->sc_rule_lock, RW_READ|RW_INTR);
+	if (error != 0)
+		return (error);
+
+	vs = RBT_NFIND(veb_pvlan_vs, &sc->sc_pvlans_vs, &key);
+	if (vs == NULL ||
+	    vs->v_primary != ifbrpv->ifbrpv_primary ||
+	    vs->v_type != ifbrpv->ifbrpv_type) {
+		error = ENOENT;
+		goto err;
+	}
+
+	ifbrpv->ifbrpv_secondary = vs->v_secondary;
+	ifbrpv->ifbrpv_gen = sc->sc_pvlans_gen;
+
+err:
+	rw_exit(&sc->sc_rule_lock);
 	return (error);
 }
 
@@ -2231,7 +2831,7 @@ veb_add_addr(struct veb_softc *sc, const struct ifbareq *ifba)
 	struct veb_port *p;
 	int error = 0;
 	unsigned int type;
-	uint16_t pvid;
+	uint16_t vp, vs;
 
 	if (ISSET(ifba->ifba_flags, ~IFBAF_TYPEMASK))
 		return (EINVAL);
@@ -2253,16 +2853,21 @@ veb_add_addr(struct veb_softc *sc, const struct ifbareq *ifba)
 	if (p == NULL)
 		return (ESRCH);
 
-	pvid = p->p_pvid;
-	if (pvid < IFBR_PVID_MIN ||
-	    pvid > IFBR_PVID_MAX) {
+	vs = p->p_pvid;
+	if (vs < IFBR_PVID_MIN ||
+	    vs > IFBR_PVID_MAX) {
 		error = EADDRNOTAVAIL;
 		goto put;
 	}
 
-	error = etherbridge_add_addr(&sc->sc_eb, p,
-	    pvid, &ifba->ifba_dst, type);
+	smr_read_enter();
+	vp = veb_pvlan(sc, vs);
+	smr_read_leave();
 
+	vp &= VEB_PVLAN_V_MASK;
+
+	error = etherbridge_add_addr(&sc->sc_eb, p,
+	    vp, vs, &ifba->ifba_dst, type);
 put:
 	veb_port_put(sc, p);
 
@@ -2275,7 +2880,7 @@ veb_add_vid_addr(struct veb_softc *sc, const struct ifbvareq *ifbva)
 	struct veb_port *p;
 	int error = 0;
 	unsigned int type;
-	uint16_t vid;
+	uint16_t vp, vs;
 
 	if (ISSET(ifbva->ifbva_flags, ~IFBAF_TYPEMASK))
 		return (EINVAL);
@@ -2303,18 +2908,24 @@ veb_add_vid_addr(struct veb_softc *sc, const struct ifbvareq *ifbva)
 	if (p == NULL)
 		return (ESRCH);
 
-	vid = ifbva->ifbva_vid;
-	if (vid == EVL_VLID_NULL) {
-		vid = p->p_pvid;
-		if (vid < IFBR_PVID_MIN ||
-		    vid > IFBR_PVID_MAX) {
+	vs = ifbva->ifbva_vid;
+	if (vs == EVL_VLID_NULL) {
+		vs = p->p_pvid;
+		if (vs < IFBR_PVID_MIN ||
+		    vs > IFBR_PVID_MAX) {
 			error = EADDRNOTAVAIL;
 			goto put;
 		}
 	}
 
+	smr_read_enter();
+	vp = veb_pvlan(sc, vs);
+	smr_read_leave();
+
+	vp &= VEB_PVLAN_V_MASK;
+
 	error = etherbridge_add_addr(&sc->sc_eb, p,
-	    vid, &ifbva->ifbva_dst, type);
+	    vp, vs, &ifbva->ifbva_dst, type);
 
 put:
 	veb_port_put(sc, p);
@@ -2325,24 +2936,39 @@ put:
 static int
 veb_del_addr(struct veb_softc *sc, const struct ifbareq *ifba)
 {
-	uint16_t vid = sc->sc_dflt_pvid;
+	uint16_t vp, vs;
 
-	if (vid == IFBR_PVID_NONE)
+	vs = sc->sc_dflt_pvid;
+	if (vs == IFBR_PVID_NONE)
 		return (ESRCH);
 
-	return (etherbridge_del_addr(&sc->sc_eb,
-	    vid, &ifba->ifba_dst));
+	smr_read_enter();
+	vp = veb_pvlan(sc, vs);
+	smr_read_leave();
+
+	vp &= VEB_PVLAN_V_MASK;
+
+	return (etherbridge_del_addr(&sc->sc_eb, vp, &ifba->ifba_dst));
 }
 
 static int
 veb_del_vid_addr(struct veb_softc *sc, const struct ifbvareq *ifbva)
 {
-	if (ifbva->ifbva_vid < EVL_VLID_MIN ||
-	    ifbva->ifbva_vid > EVL_VLID_MAX)
+	uint16_t vp, vs;
+
+	vs = ifbva->ifbva_vid;
+
+	if (vs < EVL_VLID_MIN ||
+	    vs > EVL_VLID_MAX)
 		return (EINVAL);
 
-	return (etherbridge_del_addr(&sc->sc_eb,
-	    ifbva->ifbva_vid, &ifbva->ifbva_dst));
+	smr_read_enter();
+	vp = veb_pvlan(sc, vs);
+	smr_read_leave();
+
+	vp &= VEB_PVLAN_V_MASK;
+
+	return (etherbridge_del_addr(&sc->sc_eb, vp, &ifbva->ifbva_dst));
 }
 
 static int
@@ -2591,6 +3217,9 @@ veb_eb_port_sa(void *arg, struct sockaddr_storage *ss, void *port)
 {
 	ss->ss_family = AF_UNSPEC;
 }
+
+RBT_GENERATE(veb_pvlan_vp, veb_pvlan, v_entry, veb_pvlan_vp_cmp);
+RBT_GENERATE(veb_pvlan_vs, veb_pvlan, v_entry, veb_pvlan_vs_cmp);
 
 /*
  * virtual ethernet bridge port
