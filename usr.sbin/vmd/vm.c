@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.115 2025/08/02 15:16:18 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.116 2025/11/21 15:46:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -107,9 +107,8 @@ vm_main(int fd, int fd_vmm)
 	 * stdio - for malloc and basic I/O including events.
 	 * vmm - for the vmm ioctls and operations.
 	 * proc exec - fork/exec for launching devices.
-	 * recvfd - for vm send/recv and sending fd to devices.
 	 */
-	if (pledge("stdio vmm proc exec recvfd", NULL) == -1)
+	if (pledge("stdio vmm proc exec", NULL) == -1)
 		fatal("pledge");
 
 	/* Receive our vm configuration. */
@@ -282,7 +281,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	init_emulated_hw(vmc, vm->vm_cdrom, vm->vm_disks, nicfds);
 
 	/* Drop privleges further before starting the vcpu run loop(s). */
-	if (pledge("stdio vmm recvfd", NULL) == -1)
+	if (pledge("stdio vmm", NULL) == -1)
 		fatal("pledge");
 
 	/*
