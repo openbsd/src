@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.50 2025/11/16 02:20:08 dlg Exp $
+.\"	$OpenBSD: bpf.4,v 1.51 2025/11/21 14:48:34 schwarze Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: November 16 2025 $
+.Dd $Mdocdate: November 21 2025 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -191,7 +191,7 @@ returned by
 .It Dv BIOCLOCK
 Prevents further changes to the configuration of the
 .Nm
-descriptor by only permitting a set of 
+descriptor by only permitting a set of
 .Dq known safe
 ioctls:
 .Dv BIOCFLUSH ,
@@ -223,7 +223,7 @@ device, drop privileges, set the interface, provide filters and modes,
 and then lock it with
 .Dv BIOCLOCK .
 If the device is opened with write,
-.Dv BIOCLOCK 
+.Dv BIOCLOCK
 does not prevent writes, so a write filter is probably needed.
 If applied correctly, a bug in a program will not result in the ability to
 see or send unfiltered traffic to the network interface.
