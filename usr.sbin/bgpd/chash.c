@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.4 2025/11/04 13:07:14 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.5 2025/11/21 12:19:00 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -880,4 +880,43 @@ _ch_next(const struct ch_type *type, struct ch_table *t, struct ch_iter *it)
 	it->ci_ext_idx = idx;
 	table = t->ch_tables[idx];
 	return ch_sub_first(type, table, it);
+}
+
+/*
+ * Implementation of a fast non-cryptographic hash function for small inputs
+ * Based on HashLen0to16() from CityHash64.
+ */
+
+/* A prime between 2^63 and 2^64 */
+static const uint64_t prime = 0x9ae16a3b2f90404fULL;
+
+static inline uint64_t
+ch_rotate(uint64_t val, int shift)
+{
+	return shift == 0 ? val : ((val >> shift) | (val << (64 - shift)));
+}
+
+static inline uint64_t
+ch_mix(uint64_t u, uint64_t v, uint64_t mul)
+{
+	uint64_t a, b;
+
+	a = (u ^ v) * mul;
+	a ^= (a >> 47);
+	b = (v ^ a) * mul;
+	b ^= (b >> 47);
+	return b * mul;
+}
+
+uint64_t
+ch_qhash64(uint64_t hash, uint64_t value)
+{
+	uint64_t mul = prime + 2 * sizeof(value);
+	uint64_t a = value + prime;
+	uint64_t b = hash;
+	uint64_t c, d;
+
+	c = ch_rotate(b, 37) * mul + a;
+	d = (ch_rotate(a, 25) + b) * mul;
+	return ch_mix(c, d, mul);
 }

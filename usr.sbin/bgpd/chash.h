@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.h,v 1.3 2025/10/30 14:54:55 claudio Exp $	*/
+/*	$OpenBSD: chash.h,v 1.4 2025/11/21 12:19:00 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -173,3 +173,5 @@ const struct ch_type *const _name##_CH_TYPE = &_name##_CH_INFO
 	     (_e) = CH_NEXT(_name, (_head), (_iter)))
 
 #endif
+
+uint64_t	ch_qhash64(uint64_t, uint64_t);
