@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.112 2025/11/11 17:43:18 bluhm Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.113 2025/11/21 00:57:11 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -99,8 +99,6 @@
 #ifndef CACHE_LINE_SIZE
 #define CACHE_LINE_SIZE 64
 #endif
-
-#define IXL_MAX_VECTORS			1536
 
 #define I40E_MASK(mask, shift)		((mask) << (shift))
 #define I40E_PF_RESET_WAIT_COUNT	200
@@ -1641,7 +1639,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct pci_attach_args *pa = aux;
 	pcireg_t memtype;
-	uint32_t port, ari, func;
+	uint32_t port, ari, func, val;
 	uint64_t phy_types = 0;
 	unsigned int nqueues, i;
 	int tries;
@@ -1665,9 +1663,11 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_base_queue = (ixl_rd(sc, I40E_PFLAN_QALLOC) &
-	    I40E_PFLAN_QALLOC_FIRSTQ_MASK) >>
+	val = ixl_rd(sc, I40E_PFLAN_QALLOC);
+	sc->sc_base_queue = (val & I40E_PFLAN_QALLOC_FIRSTQ_MASK) >>
 	    I40E_PFLAN_QALLOC_FIRSTQ_SHIFT;
+	nqueues = ((val & I40E_PFLAN_QALLOC_LASTQ_MASK) >>
+	    I40E_PFLAN_QALLOC_LASTQ_SHIFT) - sc->sc_base_queue;
 
 	ixl_clear_hw(sc);
 	if (ixl_pf_reset(sc) == -1) {
@@ -1781,7 +1781,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 			nmsix--;
 
 			sc->sc_intrmap = intrmap_create(&sc->sc_dev, nmsix,
-			    MIN(IXL_MAX_VECTORS, IF_MAX_VECTORS),
+			    MIN(nqueues, IF_MAX_VECTORS),
 			    INTRMAP_POWEROF2);
 			nqueues = intrmap_count(sc->sc_intrmap);
 			KASSERT(nqueues > 0);
