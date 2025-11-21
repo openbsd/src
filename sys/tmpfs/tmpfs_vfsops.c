@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.20 2025/10/15 06:52:50 mvs Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.21 2025/11/21 09:49:33 mvs Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 /* MODULE(MODULE_CLASS_VFS, tmpfs, NULL); */
 
 extern uint64_t tmpfs_bytes_limit;
+extern uint64_t tmpfs_bytes_used;
 
 struct pool	tmpfs_dirent_pool;
 struct pool	tmpfs_node_pool;
@@ -137,8 +138,13 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 		return EINVAL;
 
 	/* Get the memory usage limit for this file-system. */
-	if (args->ta_size_max)
+	if (args->ta_size_max) {
 		memlimit = roundup(args->ta_size_max, PAGE_SIZE);
+
+		if ((tmpfs_bytes_limit - tmpfs_bytes_used) < memlimit)
+			return EINVAL; /* historic error */
+		tmpfs_bytes_used += memlimit;
+	}
 
 	if (args->ta_nodes_max <= 3) {
 		nodes = 3 + ((memlimit ?  memlimit : UINT64_MAX) / 1024);
@@ -241,6 +247,9 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	while ((node = LIST_FIRST(&tmp->tm_nodes)) != NULL) {
 		tmpfs_free_node(tmp, node);
 	}
+
+	if (tmp->tm_mem_limit)
+		tmpfs_bytes_used -= tmp->tm_mem_limit;
 
 	/* Throw away the tmpfs_mount structure. */
 	tmpfs_mntmem_destroy(tmp);

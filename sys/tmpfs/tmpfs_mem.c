@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_mem.c,v 1.10 2025/10/15 06:52:50 mvs Exp $	*/
+/*	$OpenBSD: tmpfs_mem.c,v 1.11 2025/11/21 09:49:33 mvs Exp $	*/
 /*	$NetBSD: tmpfs_mem.c,v 1.4 2011/05/24 01:09:47 rmind Exp $	*/
 
 /*
@@ -73,8 +73,10 @@ tmpfs_pages_total(struct tmpfs_mount *mp)
 
 	if (mp->tm_mem_limit)
 		total = mp->tm_mem_limit;
-	else
-		total = tmpfs_bytes_limit;
+	else {
+		total = tmpfs_bytes_limit - tmpfs_bytes_used +
+		    mp->tm_bytes_used;
+	}
 
 	return (total >> PAGE_SHIFT);
 }
@@ -89,7 +91,7 @@ tmpfs_pages_avail(struct tmpfs_mount *mp)
 	if (mp->tm_mem_limit)
 		free = mp->tm_mem_limit - mp->tm_bytes_used;
 	else
-		free = tmpfs_bytes_limit - mp->tm_bytes_used;
+		free = tmpfs_bytes_limit - tmpfs_bytes_used;
 
 	return (free >> PAGE_SHIFT);
 }
@@ -101,14 +103,15 @@ tmpfs_mem_incr(struct tmpfs_mount *mp, size_t sz)
 
 	rw_enter_write(&mp->tm_acc_lock);
 
-	if ((tmpfs_bytes_limit - tmpfs_bytes_used) < sz)
-		goto out;
 	if (mp->tm_mem_limit) {
 		if ((mp->tm_mem_limit - mp->tm_bytes_used) < sz)
 			goto out;
+	} else {
+		if ((tmpfs_bytes_limit - tmpfs_bytes_used) < sz)
+			goto out;
+		tmpfs_bytes_used += sz;
 	}
 
-	tmpfs_bytes_used += sz;
 	mp->tm_bytes_used += sz;
 
 	ret = 1;
@@ -123,8 +126,9 @@ tmpfs_mem_decr(struct tmpfs_mount *mp, size_t sz)
 {
 	rw_enter_write(&mp->tm_acc_lock);
 	KASSERT(mp->tm_bytes_used >= sz);
+	if (mp->tm_mem_limit == 0)
+		tmpfs_bytes_used -= sz;
 	mp->tm_bytes_used -= sz;
-	tmpfs_bytes_used -= sz;
 	rw_exit_write(&mp->tm_acc_lock);
 }
 
