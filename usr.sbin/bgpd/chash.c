@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.5 2025/11/21 12:19:00 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.6 2025/11/22 16:14:56 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -121,9 +121,13 @@ cg_meta_check_flags(const struct ch_group *g, uint8_t flag)
 }
 
 static inline void
-cg_meta_set_hash(struct ch_group *g, int slot, uint8_t hash)
+cg_meta_set_hash(struct ch_group *g, int slot, uint64_t hash)
 {
-	((uint8_t *)&g->cg_meta)[slot] = hash;
+	uint64_t newval;
+
+	newval = g->cg_meta & ~(0xffULL << (slot * 8));
+	newval |= hash << (slot * 8);
+	g->cg_meta = newval;
 }
 
 /*
