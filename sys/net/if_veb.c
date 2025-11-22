@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.53 2025/11/21 04:44:26 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.54 2025/11/22 06:07:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1862,16 +1862,12 @@ veb_get_vid_map(struct veb_softc *sc, struct ifbrvidmap *ifbrvm)
 {
 	struct veb_port *p;
 	uint32_t *map;
+	int anybits = 0;
 	int error = 0;
 
 	p = veb_port_get(sc, ifbrvm->ifbrvm_ifsname);
 	if (p == NULL)
 		return (ESRCH);
-
-	if (p->p_ifp0->if_enqueue == vport_enqueue) {
-		error = ENOTTY;
-		goto put;
-	}
 
 	smr_read_enter();
 	map = p->p_vid_map;
@@ -1887,12 +1883,17 @@ veb_get_vid_map(struct veb_softc *sc, struct ifbrvidmap *ifbrvm)
 
 			for (b = 0; b < sizeof(e); b++)
 				ifbrvm->ifbrvm_map[t + b] = e >> (b * 8);
+
+			anybits |= e;
 		}
 	}
 	smr_read_leave();
 
-put:
+	if (p->p_ifp0->if_enqueue == vport_enqueue && !anybits)
+		error = ENOENT;
+
 	veb_port_put(sc, p);
+
 	return (error);
 }
 
@@ -2046,11 +2047,6 @@ veb_set_vid_map(struct veb_softc *sc, const struct ifbrvidmap *ifbrvm)
 	p = veb_port_get(sc, ifbrvm->ifbrvm_ifsname);
 	if (p == NULL)
 		return (ESRCH);
-
-	if (p->p_ifp0->if_enqueue == vport_enqueue) {
-		error = ENOTTY;
-		goto put;
-	}
 
 	nmap = veb_new_vid_map(ifbrvm);
 	if (nmap == NULL) {

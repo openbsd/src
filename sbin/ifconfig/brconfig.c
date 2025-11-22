@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.43 2025/11/21 04:44:26 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.44 2025/11/22 06:07:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1301,8 +1301,14 @@ bridge_vidmap(const char *ifsname)
 	strlcpy(ifbrvm.ifbrvm_ifsname, ifsname, sizeof(ifbrvm.ifbrvm_ifsname));
 
 	if (ioctl(sock, SIOCBRDGGVMAP, &ifbrvm) == -1) {
-		if (errno != ENOTTY)
+		switch (errno) {
+		case ENOTTY:
+		case ENOENT:
+			break;
+		default:
 			warn("%s port %s get tagged", ifname, ifsname);
+			break;
+		}
 		return;
 	}
 
