@@ -1,4 +1,4 @@
-#	$OpenBSD: lacnic.constraints,v 1.7 2025/02/05 20:45:00 job Exp $
+#	$OpenBSD: lacnic.constraints,v 1.8 2025/11/23 00:29:18 tb Exp $
 
 # From https://www.iana.org/assignments/ipv6-unicast-address-assignments
 allow 2001:1200::/23
@@ -9,7 +9,7 @@ allow 27648 - 28671
 allow 52224 - 53247
 allow 61440 - 61951
 allow 64099 - 64197
-allow 262144 - 274844
+allow 262144 - 275868
 
 # From nro-delegated-stats 20240417
 allow 278
