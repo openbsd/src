@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.37 2025/08/01 14:41:03 sf Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.38 2025/11/23 10:32:47 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -77,7 +77,7 @@ const struct cfattach vioscsi_ca = {
 };
 
 struct cfdriver vioscsi_cd = {
-	NULL, "vioscsi", DV_DULL,
+	NULL, "vioscsi", DV_DULL, CD_COCOVM
 };
 
 const struct scsi_adapter vioscsi_switch = {
