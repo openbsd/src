@@ -1,4 +1,4 @@
-/*	$OpenBSD: iasuskbd.c,v 1.1 2025/06/23 18:42:52 kettenis Exp $	*/
+/*	$OpenBSD: iasuskbd.c,v 1.2 2025/11/23 21:28:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -30,19 +30,34 @@
 #define I2C_HID_PRODUCT_ASUS_S5507QA	0x4543	/* Vivobook S 15 */
 
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
 
 #define IASUSKBD_KBD_BACKLIGHT_SUPPORT	0x01
 
 struct iasuskbd_softc {
-	struct ihidev	 sc_hdev;
-	char		*sc_cmdbuf;
-	size_t		 sc_cmdbuflen;
-	unsigned int	 sc_backlight;
+	struct ihidev	 	sc_hdev;
+
+	/*
+	 * Only the first element is populated whereas the second
+	 * remains zeroed out since such trailing sentinel is required
+	 * by wskbd_load_keymap().
+	 */
+	struct wscons_keydesc	sc_keydesc[2];
+	struct wskbd_mapdata	sc_keymap;
+	struct device		*sc_wskbddev;
+	int			sc_lastcode;
+
+	char			*sc_cmdbuf;
+	size_t		 	sc_cmdbuflen;
+	unsigned int	 	sc_backlight;
 };
 
 int	iasuskbd_match(struct device *, void *, void *);
 void	iasuskbd_attach(struct device *, struct device *, void *);
 int	iasuskbd_activate(struct device *, int);
+void	iasuskbd_attach_wskbd(struct iasuskbd_softc *);
 void	iasuskbd_intr(struct ihidev *, void *, u_int);
 int	iasuskbd_do_set_backlight(struct iasuskbd_softc *, unsigned int);
 
@@ -131,6 +146,9 @@ iasuskbd_attach(struct device *parent, struct device *self, void *aux)
 
 	wskbd_get_backlight = iasuskbd_get_backlight;
 	wskbd_set_backlight = iasuskbd_set_backlight;
+
+	sc->sc_lastcode = -1;
+	iasuskbd_attach_wskbd(sc);
 }
 
 int
@@ -150,10 +168,81 @@ iasuskbd_activate(struct device *self, int act)
 	return 0;
 }
 
+int
+iasuskbd_enable(void *v, int on)
+{
+	struct iasuskbd_softc *sc = v;
+	int error = 0;
+
+	if (on)
+		error = ihidev_open(&sc->sc_hdev);
+	else
+		ihidev_close(&sc->sc_hdev);
+	return error;
+}
+
+int
+iasuskbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	switch (cmd) {
+	case WSKBDIO_GTYPE:
+		*(int *)data = WSKBD_TYPE_USB;
+		return 0;
+	case WSKBDIO_GETLEDS:
+		*(int *)data = 0;
+		return 0;
+	}
+
+	return -1;
+}
+
+const keysym_t iasuskbd_keydesc[] = {
+	KS_KEYCODE(0x10), KS_Cmd_BrightnessDown,
+	KS_KEYCODE(0x20), KS_Cmd_BrightnessUp,
+	KS_KEYCODE(0xc7), KS_Cmd_KbdBacklightToggle,
+};
+
+void
+iasuskbd_attach_wskbd(struct iasuskbd_softc *sc)
+{
+	static const struct wskbd_accessops accessops = {
+		.enable		= iasuskbd_enable,
+		.ioctl		= iasuskbd_ioctl,
+	};
+	struct wskbddev_attach_args a = {
+		.console	= 0,
+		.keymap		= &sc->sc_keymap,
+		.accessops	= &accessops,
+		.accesscookie	= sc,
+	};
+
+	sc->sc_keydesc[0].name = KB_US;
+	sc->sc_keydesc[0].base = 0;
+	sc->sc_keydesc[0].map = iasuskbd_keydesc;
+	sc->sc_keydesc[0].map_size = nitems(iasuskbd_keydesc);
+	sc->sc_keymap.keydesc = sc->sc_keydesc;
+	sc->sc_keymap.layout = KB_US | KB_NOENCODING;
+	sc->sc_wskbddev = config_found((struct device *)sc, &a, wskbddevprint);	
+}
+
 void
 iasuskbd_intr(struct ihidev *addr, void *data, u_int len)
 {
-	printf("%s\n", __func__);
+	struct iasuskbd_softc *sc = (struct iasuskbd_softc *)addr;
+	
+	if (len > 0) {
+		int code = *(uint8_t *)data;
+
+		if (code != sc->sc_lastcode && sc->sc_lastcode != -1) {
+			wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_UP,
+			    sc->sc_lastcode);
+		}
+		if (code != sc->sc_lastcode) {
+			wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_DOWN,
+			    code);
+			sc->sc_lastcode = code;
+		}
+	}
 }
 
 int

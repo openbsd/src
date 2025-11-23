@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.308 2025/10/09 11:18:29 claudio Exp $
+# $OpenBSD: GENERIC,v 1.309 2025/11/23 21:28:15 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -603,6 +603,7 @@ wsmouse*	at ims? mux 0
 imt*		at ihidev?		# HID-over-I2C multitouch trackpad
 wsmouse*	at imt? mux 0
 iasuskbd*	at ihidev?		# HID-over-I2C ASUS keyboard
+wskbd*		at iasuskbd? mux 1
 ipmi*		at iic?			# IPMI (SIIF)
 islrtc*		at iic?			# ISL1208 RTC
 maxrtc*		at iic?			# DS1307 RTC

@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.73 2025/06/23 18:42:52 kettenis Exp $
+# $OpenBSD: files.i2c,v 1.74 2025/11/23 21:28:15 kettenis Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -280,6 +280,6 @@ attach	icc at ihidbus
 file	dev/i2c/icc.c				icc
 
 # Asus Keyboards
-device	iasuskbd
+device	iasuskbd: wskbddev
 attach	iasuskbd at ihidbus
 file	dev/i2c/iasuskbd.c			iasuskbd
