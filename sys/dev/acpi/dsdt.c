@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.275 2025/06/22 11:19:00 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.276 2025/11/23 19:56:24 jcs Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -35,6 +35,8 @@
 #include <dev/acpi/dsdt.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#include <dev/pci/ppbreg.h>
 
 #ifdef SMALL_KERNEL
 #undef ACPI_DEBUG
@@ -2347,29 +2349,66 @@ void aml_rwindexfield(struct aml_value *, struct aml_value *val, int);
 int
 aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 {
+	struct aml_node *path[10] = { NULL };
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
 	int64_t res;
+	int n, reg;
 
-	addr->bus = 0;
-	addr->seg = 0;
-	if (aml_evalinteger(acpi_softc, pcidev, "_ADR", 0, NULL, &res) == 0) {
-		addr->fun = res & 0xFFFF;
-		addr->dev = res >> 16;
+	/* invert */
+	n = 0;
+	for (;;) {
+		path[n] = pcidev;
+		pcidev = pcidev->parent;
+		if (pcidev == NULL || n == nitems(path) - 1)
+			break;
+		n++;
 	}
-	while (pcidev != NULL) {
-		/* HID device (PCI or PCIE root): eval _SEG and _BBN */
-		if (__aml_search(pcidev, "_HID", 0)) {
-			if (aml_evalinteger(acpi_softc, pcidev, "_SEG",
-			        0, NULL, &res) == 0) {
+
+	/* start from root */
+	addr->seg = 0;
+	for (; n >= 0; n--) {
+		if (aml_evalinteger(acpi_softc, path[n], "_ADR", 0, NULL,
+		    &res) == 0) {
+			addr->dev = res >> 16;
+			addr->fun = res & 0xFFFF;
+		} else if (__aml_search(path[n], "_HID", 0)) {
+			/* HID device (PCI or PCIE root): eval _SEG and _BBN */
+			if (aml_evalinteger(acpi_softc, path[n], "_SEG", 0,
+			    NULL, &res) == 0) {
 				addr->seg = res;
+				addr->bus = 0;
+				addr->dev = 0;
+				addr->fun = 0;
 			}
-			if (aml_evalinteger(acpi_softc, pcidev, "_BBN",
-			        0, NULL, &res) == 0) {
+			if (aml_evalinteger(acpi_softc, pcidev, "_BBN", 0, NULL,
+			    &res) == 0) {
 				addr->bus = res;
-				break;
+				addr->dev = 0;
+				addr->fun = 0;
 			}
 		}
-		pcidev = pcidev->parent;
+
+		if (n == 0)
+			break;
+
+		/* an intermediate device, if it's a bridge jump busses */
+		pc = pci_lookup_segment(ACPI_PCI_SEG(addr->addr),
+		    ACPI_PCI_BUS(addr->addr));
+		tag = pci_make_tag(pc, addr->bus, addr->dev, addr->fun);
+		reg = pci_conf_read(pc, tag, PCI_CLASS_REG);
+		if (PCI_CLASS(reg) == PCI_CLASS_BRIDGE &&
+		    PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_PCI) {
+			reg = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+			addr->bus = PPB_BUSINFO_SECONDARY(reg);
+			addr->dev = 0;
+			addr->fun = 0;
+		}
 	}
+
+	dnprintf(50, "%s: %s: addr 0x%llx\n", __func__, aml_nodename(pcidev),
+	    addr->addr);
+
 	return (0);
 }
 
