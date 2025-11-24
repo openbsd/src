@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.128 2025/10/20 19:22:00 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.129 2025/11/24 21:12:14 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1216,7 +1216,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		errno = ret;
 		fatal("could not initialize vmmci mutex");
 	}
-	evtimer_set(&dev->vmmci.timeout, vmmci_timeout, NULL);
+	evtimer_set(&dev->vmmci.timeout, vmmci_timeout, dev);
 	vm_pipe_init2(&dev->vmmci.dev_pipe, vmmci_pipe_dispatch, dev);
 	event_add(&dev->vmmci.dev_pipe.read_ev, NULL);
 }
