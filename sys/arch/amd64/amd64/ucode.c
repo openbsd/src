@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucode.c,v 1.9 2024/04/03 02:01:21 guenther Exp $	*/
+/*	$OpenBSD: ucode.c,v 1.10 2025/11/24 23:14:16 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Stefan Fritsch <fritsch@genua.de>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -127,21 +127,26 @@ struct amd_equiv {
 struct amd_patch {
 	uint32_t type;
 	uint32_t len;
-	uint32_t a;
+	uint32_t date;
 	uint32_t level;
-	uint8_t c[16];
+	uint16_t data_id;
+	uint8_t data_len;
+	uint8_t flag;
+	uint32_t data_val;
+	uint32_t nb_dev;
+	uint32_t sb_dev;
 	uint16_t eid;
 } __packed;
 
 void
 cpu_ucode_amd_apply(struct cpu_info *ci)
 {
-	uint64_t level;
+	uint64_t cur_level;
 	uint32_t magic, tlen, i;
 	uint16_t eid = 0;
 	uint32_t sig, ebx, ecx, edx;
 	uint64_t start = 0;
-	uint32_t patch_len = 0;
+	uint32_t patch_len = 0, new_level = 0;
 
 	if (cpu_ucode_data == NULL || cpu_ucode_size == 0) {
 		DPRINTF(("%s: no microcode provided\n", __func__));
@@ -156,8 +161,8 @@ cpu_ucode_amd_apply(struct cpu_info *ci)
 
 	CPUID(1, sig, ebx, ecx, edx);
 
-	level = rdmsr(MSR_PATCH_LEVEL);
-	DPRINTF(("%s: cur patch level 0x%llx\n", __func__, level));
+	cur_level = rdmsr(MSR_PATCH_LEVEL);
+	DPRINTF(("%s: cur patch level 0x%llx\n", __func__, cur_level));
 
 	memcpy(&magic, cpu_ucode_data, 4);
 	if (magic != AMD_MAGIC) {
@@ -180,7 +185,10 @@ cpu_ucode_amd_apply(struct cpu_info *ci)
 			eid = ae.eid;
 	}
 
-	/* look for newer patch with the equivalence id */
+	/*
+	 * Look for newer patch with the equivalence id.  There can be
+	 * multiple patches for a given equivalence id.
+	 */
 	while (i < cpu_ucode_size) {
 		struct amd_patch ap;
 		if (i + sizeof(ap) > cpu_ucode_size) {
@@ -188,9 +196,18 @@ cpu_ucode_amd_apply(struct cpu_info *ci)
 			goto out;
 		}
 		memcpy(&ap, &cpu_ucode_data[i], sizeof(ap));
-		if (ap.type == 1 && ap.eid == eid && ap.level > level) {
-			start = (uint64_t)&cpu_ucode_data[i + 8];
-			patch_len = ap.len;
+		if (ap.type == 1 && ap.eid == eid && ap.level > cur_level &&
+		    ap.level > new_level) {
+
+			/* check minimum version for fam >= 0x19 */
+			if (ci->ci_family < 0x19 || cur_level >= ap.data_val) {
+				start = (uint64_t)&cpu_ucode_data[i + 8];
+				new_level = ap.level;
+				patch_len = ap.len;
+			} else {
+				DPRINTF(("%s: ucode %#llx < min %#x\n",
+				    __func__, cur_level, ap.data_val));
+			}
 		}
 		if (i + ap.len + 8 > cpu_ucode_size) {
 			DPRINTF(("%s: truncated patch\n", __func__));
@@ -207,8 +224,8 @@ cpu_ucode_amd_apply(struct cpu_info *ci)
 		memcpy(p, (uint8_t *)start, patch_len);
 		start = (uint64_t)p;
 		wrmsr(MSR_PATCH_LOADER, start);
-		level = rdmsr(MSR_PATCH_LEVEL);
-		DPRINTF(("%s: new patch level 0x%llx\n", __func__, level));
+		cur_level = rdmsr(MSR_PATCH_LEVEL);
+		DPRINTF(("%s: new patch level 0x%llx\n", __func__, cur_level));
 		free(p, M_TEMP, patch_len);
 	}
 out:
