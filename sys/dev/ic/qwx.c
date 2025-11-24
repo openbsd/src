@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.93 2025/09/11 11:18:29 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.94 2025/11/24 11:00:04 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -178,6 +178,7 @@ int qwx_scan(struct qwx_softc *, int);
 void qwx_scan_abort(struct qwx_softc *);
 int qwx_auth(struct qwx_softc *);
 int qwx_deauth(struct qwx_softc *);
+int qwx_assoc(struct qwx_softc *);
 int qwx_run(struct qwx_softc *);
 int qwx_run_stop(struct qwx_softc *);
 
@@ -1148,6 +1149,7 @@ next_scan:
 		break;
 
 	case IEEE80211_S_ASSOC:
+		err = qwx_assoc(sc);
 		break;
 
 	case IEEE80211_S_RUN:
@@ -26057,15 +26059,6 @@ qwx_deauth(struct qwx_softc *sc)
 		return ret;
 	}
 
-
-	ret = qwx_wmi_set_peer_param(sc, peer->addr, arvif->vdev_id,
-	    pdev_id, WMI_PEER_AUTHORIZE, 0);
-	if (ret) {
-		printf("%s: unable to deauthorize BSS peer: %d\n",
-		   sc->sc_dev.dv_xname, ret);
-		return ret;
-	}
-
 	qwx_clear_pn_replay_config(sc, peer);
 	qwx_clear_hwkeys(sc, peer);
 
@@ -26472,7 +26465,7 @@ qwx_setup_peer_smps(struct qwx_softc *sc, uint8_t pdev_id, struct qwx_vif *arvif
 }
 
 int
-qwx_run(struct qwx_softc *sc)
+qwx_assoc(struct qwx_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
@@ -26535,6 +26528,25 @@ qwx_run(struct qwx_softc *sc)
 	IEEE80211_ADDR_COPY(arvif->bssid, ni->ni_bssid);
 	sc->bss_peer_id = nq->peer_id;
 
+	/*
+	 * Enable reception of data frames now, if not already enabled.
+	 * We may need to receive EAPOL data frames very soon after the
+	 * AP sends a response to our assoc request.
+	 */
+	sc->ops.irq_enable(sc);
+
+	return 0;
+}
+
+int
+qwx_run(struct qwx_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
+	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
+	int ret;
+
 	ret = qwx_wmi_vdev_up(sc, arvif->vdev_id, pdev_id, arvif->aid,
 	    arvif->bssid, NULL, 0, 0);
 	if (ret) {
@@ -26559,7 +26571,6 @@ qwx_run(struct qwx_softc *sc)
 		return ret;
 	}
 
-	sc->ops.irq_enable(sc);
 	return 0;
 }
 
@@ -26569,10 +26580,19 @@ qwx_run_stop(struct qwx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_vif *arvif = TAILQ_FIRST(&sc->vif_list); /* XXX */
 	uint8_t pdev_id = 0; /* TODO: derive pdev ID somehow? */
-	struct qwx_node *nq = (void *)ic->ic_bss;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct qwx_node *nq = (void *)ni;
 	int ret;
 
 	sc->ops.irq_disable(sc);
+
+	ret = qwx_wmi_set_peer_param(sc, ni->ni_macaddr, arvif->vdev_id,
+	    pdev_id, WMI_PEER_AUTHORIZE, 0);
+	if (ret) {
+		printf("%s: unable to deauthorize BSS peer: %d\n",
+		   sc->sc_dev.dv_xname, ret);
+		return ret;
+	}
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		ic->ic_bss->ni_txrate = 0;
