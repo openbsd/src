@@ -1,4 +1,4 @@
-.\" $OpenBSD: veb.4,v 1.5 2025/11/24 03:01:12 dlg Exp $
+.\" $OpenBSD: veb.4,v 1.6 2025/11/24 03:43:14 dlg Exp $
 .\"
 .\" Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
 .\"
@@ -62,6 +62,12 @@ networks scoped by VLAN identifiers.
 Every packet traversing the bridge is associated with a VLAN, either
 by the identifier in 802.1Q VLAN tagged packets or by the VLAN
 identifier assigned to port interfaces for untagged packets.
+.Pp
+Multiple
+.Nm vport
+interfaces can be attached to a single bridge to connect the network
+stack to different VLANs within the bridge, or to connect multiple
+routing domains to a single VLAN.
 .Pp
 .Nm veb
 is a learning bridge that maintains a database of Ethernet addresses
