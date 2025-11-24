@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.97 2025/11/03 23:50:57 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.98 2025/11/24 23:40:00 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -220,12 +220,12 @@ do {									\
 
 #include <net/if_var.h>	/* for "struct ifnet" */
 
-struct ether_brport {
-	struct mbuf	*(*eb_input)(struct ifnet *, struct mbuf *,
+struct ether_port {
+	struct mbuf	*(*ep_input)(struct ifnet *, struct mbuf *,
 			   uint64_t, void *, struct netstack *);
-	void		(*eb_port_take)(void *);
-	void		(*eb_port_rele)(void *);
-	void		  *eb_port;
+	void		(*ep_port_take)(void *);
+	void		(*ep_port_rele)(void *);
+	void		  *ep_port;
 };
 
 /*
@@ -241,8 +241,8 @@ struct	arpcom {
 	int	 ac_multicnt;			/* length of ac_multiaddrs */
 	int	 ac_multirangecnt;		/* number of mcast ranges */
 
-	void	*ac_trunkport;
-	const struct ether_brport *ac_brport;
+	const struct ether_port *ac_trport;
+	const struct ether_port *ac_brport;
 };
 
 extern int arpt_keep;				/* arp resolved cache expire */
@@ -289,11 +289,11 @@ void	ether_rtrequest(struct ifnet *, int, struct rtentry *);
 char	*ether_sprintf(u_char *);
 
 int	ether_brport_isset(struct ifnet *);
-void	ether_brport_set(struct ifnet *, const struct ether_brport *);
+void	ether_brport_set(struct ifnet *, const struct ether_port *);
 void	ether_brport_clr(struct ifnet *);
-const struct ether_brport *
+const struct ether_port *
 	ether_brport_get(struct ifnet *);
-const struct ether_brport *
+const struct ether_port *
 	ether_brport_get_locked(struct ifnet *);
 
 uint64_t	ether_addr_to_e64(const struct ether_addr *);

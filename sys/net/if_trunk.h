@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.32 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.33 2025/11/24 23:40:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -159,6 +159,8 @@ struct trunk_softc;
 struct trunk_port {
 	struct ifnet			*tp_if;		/* physical interface */
 	struct trunk_softc		*tp_trunk;	/* parent trunk */
+	struct refcnt			tp_refs;
+	struct ether_port		tp_ether_port;
 	u_int8_t			tp_lladdr[ETHER_ADDR_LEN];
 	caddr_t				tp_psc;		/* protocol data */
 
@@ -172,7 +174,6 @@ struct trunk_port {
 	int	(*tp_ioctl)(struct ifnet *, u_long, caddr_t);
 	int	(*tp_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
-	void	(*tp_input)(struct ifnet *, struct mbuf *, struct netstack *);
 
 	SLIST_ENTRY(trunk_port)		tp_entries;
 };

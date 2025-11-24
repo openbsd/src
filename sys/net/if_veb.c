@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.54 2025/11/22 06:07:36 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.55 2025/11/24 23:40:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -117,7 +117,7 @@ struct veb_port {
 
 	struct veb_softc		*p_veb;
 
-	struct ether_brport		 p_brport;
+	struct ether_port		 p_brport;
 
 	unsigned int			 p_link_state;
 	unsigned int			 p_bif_flags;
@@ -289,8 +289,8 @@ static void	 veb_eb_port_rele(void *, void *);
 static size_t	 veb_eb_port_ifname(void *, char *, size_t, void *);
 static void	 veb_eb_port_sa(void *, struct sockaddr_storage *, void *);
 
-static void	 veb_eb_brport_take(void *);
-static void	 veb_eb_brport_rele(void *);
+static void	 veb_ep_brport_take(void *);
+static void	 veb_ep_brport_rele(void *);
 
 static const struct etherbridge_ops veb_etherbridge_ops = {
 	veb_eb_port_cmp,
@@ -1660,6 +1660,10 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 	p->p_ioctl = ifp0->if_ioctl;
 	p->p_output = ifp0->if_output;
 
+	p->p_brport.ep_port = p;
+	p->p_brport.ep_port_take = veb_ep_brport_take;
+	p->p_brport.ep_port_rele = veb_ep_brport_rele;
+
 	if (span) {
 		ports_ptr = &sc->sc_spans;
 
@@ -1668,7 +1672,7 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 			goto free;
 		}
 
-		p->p_brport.eb_input = veb_span_input;
+		p->p_brport.ep_input = veb_span_input;
 		p->p_bif_flags = IFBIF_SPAN;
 	} else {
 		ports_ptr = &sc->sc_ports;
@@ -1678,12 +1682,9 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 			goto free;
 
 		p->p_bif_flags = IFBIF_LEARNING | IFBIF_DISCOVER;
-		p->p_brport.eb_input = isvport ?
+		p->p_brport.ep_input = isvport ?
 		    veb_vport_input : veb_port_input;
 	}
-
-	p->p_brport.eb_port_take = veb_eb_brport_take;
-	p->p_brport.eb_port_rele = veb_eb_brport_rele;
 
 	om = SMR_PTR_GET_LOCKED(ports_ptr);
 	nm = veb_ports_insert(om, p);
@@ -1698,8 +1699,6 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 
 	task_set(&p->p_dtask, veb_p_detach, p);
 	if_detachhook_add(ifp0, &p->p_dtask);
-
-	p->p_brport.eb_port = p;
 
 	/* commit */
 	SMR_PTR_SET_LOCKED(ports_ptr, nm);
@@ -2970,19 +2969,19 @@ veb_del_vid_addr(struct veb_softc *sc, const struct ifbvareq *ifbva)
 static int
 veb_p_ioctl(struct ifnet *ifp0, u_long cmd, caddr_t data)
 {
-	const struct ether_brport *eb = ether_brport_get_locked(ifp0);
+	const struct ether_port *ep = ether_brport_get_locked(ifp0);
 	struct veb_port *p;
 	int error = 0;
 
-	KASSERTMSG(eb != NULL,
+	KASSERTMSG(ep != NULL,
 	    "%s: %s called without an ether_brport set",
 	    ifp0->if_xname, __func__);
-	KASSERTMSG((eb->eb_input == veb_port_input) ||
-	    (eb->eb_input == veb_span_input),
-	    "%s called %s, but eb_input (%p) seems wrong",
-	    ifp0->if_xname, __func__, eb->eb_input);
+	KASSERTMSG((ep->ep_input == veb_port_input) ||
+	    (ep->ep_input == veb_span_input),
+	    "%s called %s, but ep_input (%p) seems wrong",
+	    ifp0->if_xname, __func__, ep->ep_input);
 
-	p = eb->eb_port;
+	p = ep->ep_port;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -3003,7 +3002,7 @@ veb_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 {
 	int (*p_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *) = NULL;
-	const struct ether_brport *eb;
+	const struct ether_port *ep;
 
 	/* restrict transmission to bpf only */
 	if ((m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL)) {
@@ -3012,9 +3011,9 @@ veb_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	}
 
 	smr_read_enter();
-	eb = ether_brport_get(ifp0);
-	if (eb != NULL && eb->eb_input == veb_port_input) {
-		struct veb_port *p = eb->eb_port;
+	ep = ether_brport_get(ifp0);
+	if (ep != NULL && ep->ep_input == veb_port_input) {
+		struct veb_port *p = ep->ep_port;
 		p_output = p->p_output; /* code doesn't go away */
 	}
 	smr_read_leave();
@@ -3189,13 +3188,13 @@ veb_eb_port_rele(void *arg, void *port)
 }
 
 static void
-veb_eb_brport_take(void *port)
+veb_ep_brport_take(void *port)
 {
 	veb_eb_port_take(NULL, port);
 }
 
 static void
-veb_eb_brport_rele(void *port)
+veb_ep_brport_rele(void *port)
 {
 	veb_eb_port_rele(NULL, port);
 }
@@ -3377,7 +3376,7 @@ static int
 vport_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arpcom *ac;
-	const struct ether_brport *eb;
+	const struct ether_port *ep;
 	int error = ENETDOWN;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
@@ -3399,13 +3398,13 @@ vport_enqueue(struct ifnet *ifp, struct mbuf *m)
 	ac = (struct arpcom *)ifp;
 
 	smr_read_enter();
-	eb = SMR_PTR_GET(&ac->ac_brport);
-	if (eb != NULL)
-		eb->eb_port_take(eb->eb_port);
+	ep = SMR_PTR_GET(&ac->ac_brport);
+	if (ep != NULL)
+		ep->ep_port_take(ep->ep_port);
 	smr_read_leave();
-	if (eb != NULL) {
+	if (ep != NULL) {
 		struct mbuf *(*input)(struct ifnet *, struct mbuf *,
-		    uint64_t, void *, struct netstack *) = eb->eb_input;
+		    uint64_t, void *, struct netstack *) = ep->ep_input;
 		struct ether_header *eh;
 		uint64_t dst;
 
@@ -3423,11 +3422,11 @@ vport_enqueue(struct ifnet *ifp, struct mbuf *m)
 
 		if (input == veb_vport_input)
 			input = veb_port_input;
-		m = (*input)(ifp, m, dst, eb->eb_port, NULL);
+		m = (*input)(ifp, m, dst, ep->ep_port, NULL);
 
 		error = 0;
 
-		eb->eb_port_rele(eb->eb_port);
+		ep->ep_port_rele(ep->ep_port);
 	}
 
 	m_freem(m);

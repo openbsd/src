@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.380 2025/11/03 23:50:57 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.381 2025/11/24 23:40:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -149,7 +149,7 @@ struct niqueue bridgeintrq = NIQUEUE_INITIALIZER(1024, NETISR_BRIDGE);
 struct if_clone bridge_cloner =
     IF_CLONE_INITIALIZER("bridge", bridge_clone_create, bridge_clone_destroy);
 
-const struct ether_brport bridge_brport = {
+const struct ether_port bridge_brport = {
 	bridge_input,
 	bridge_take,
 	bridge_rele,

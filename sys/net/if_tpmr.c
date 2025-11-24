@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.38 2025/11/04 12:12:00 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.39 2025/11/24 23:40:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -81,7 +81,7 @@ struct tpmr_port {
 
 	int		 	 p_refcnt;
 
-	struct ether_brport	 p_brport;
+	struct ether_port	 p_brport;
 };
 
 struct tpmr_softc {
@@ -545,10 +545,10 @@ tpmr_add_port(struct tpmr_softc *sc, const struct ifbreq *req)
 	task_set(&p->p_dtask, tpmr_p_detach, p);
 	if_detachhook_add(ifp0, &p->p_dtask);
 
-	p->p_brport.eb_input = tpmr_input;
-	p->p_brport.eb_port_take = tpmr_p_take;
-	p->p_brport.eb_port_rele = tpmr_p_rele;
-	p->p_brport.eb_port = p;
+	p->p_brport.ep_input = tpmr_input;
+	p->p_brport.ep_port_take = tpmr_p_take;
+	p->p_brport.ep_port_rele = tpmr_p_rele;
+	p->p_brport.ep_port = p;
 
 	/* commit */
 	DPRINTF(sc, "%s %s trunkport: creating port\n",
@@ -661,18 +661,18 @@ done:
 static int
 tpmr_p_ioctl(struct ifnet *ifp0, u_long cmd, caddr_t data)
 {
-	const struct ether_brport *eb = ether_brport_get_locked(ifp0);
+	const struct ether_port *ep = ether_brport_get_locked(ifp0);
 	struct tpmr_port *p;
 	int error = 0;
 
-	KASSERTMSG(eb != NULL,
+	KASSERTMSG(ep != NULL,
 	    "%s: %s called without an ether_brport set",
 	    ifp0->if_xname, __func__);
-	KASSERTMSG(eb->eb_input == tpmr_input,
-	    "%s: %s called, but eb_input seems wrong (%p != tpmr_input())",
-	    ifp0->if_xname, __func__, eb->eb_input);
+	KASSERTMSG(ep->ep_input == tpmr_input,
+	    "%s: %s called, but ep_input seems wrong (%p != tpmr_input())",
+	    ifp0->if_xname, __func__, ep->ep_input);
 
-	p = eb->eb_port;
+	p = ep->ep_port;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -693,7 +693,7 @@ tpmr_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 {
 	int (*p_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *) = NULL;
-	const struct ether_brport *eb;
+	const struct ether_port *ep;
 
 	/* restrict transmission to bpf only */
 	if ((m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL)) {
@@ -702,9 +702,9 @@ tpmr_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	}
 
 	smr_read_enter();
-	eb = ether_brport_get(ifp0);
-	if (eb != NULL && eb->eb_input == tpmr_input) {
-		struct tpmr_port *p = eb->eb_port;
+	ep = ether_brport_get(ifp0);
+	if (ep != NULL && ep->ep_input == tpmr_input) {
+		struct tpmr_port *p = ep->ep_port;
 		p_output = p->p_output; /* code doesn't go away */
 	}
 	smr_read_leave();
