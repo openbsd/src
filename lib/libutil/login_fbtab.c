@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.20 2025/11/24 12:42:10 jca Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.21 2025/11/24 12:44:25 jca Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -145,10 +145,10 @@ login_protect(const char *path, mode_t mask, uid_t uid, gid_t gid)
 	for (n = 0; n < g.gl_matchc; n++) {
 		gpath = g.gl_pathv[n];
 
-		if (chmod(gpath, mask) && errno != ENOENT)
-			syslog(LOG_ERR, "%s: chmod(%s): %m", _PATH_FBTAB, gpath);
 		if (chown(gpath, uid, gid) && errno != ENOENT)
 			syslog(LOG_ERR, "%s: chown(%s): %m", _PATH_FBTAB, gpath);
+		if (chmod(gpath, mask) && errno != ENOENT)
+			syslog(LOG_ERR, "%s: chmod(%s): %m", _PATH_FBTAB, gpath);
 	}
 
 	globfree(&g);
