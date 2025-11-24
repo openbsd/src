@@ -1,4 +1,4 @@
-.\" $OpenBSD: veb.4,v 1.4 2025/11/24 02:56:31 dlg Exp $
+.\" $OpenBSD: veb.4,v 1.5 2025/11/24 03:01:12 dlg Exp $
 .\"
 .\" Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
 .\"
@@ -150,10 +150,25 @@ allowing for passive monitoring of traffic on a separate host.
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8
+.Sh STANDARDS
+.Rs
+.%T IEEE 802.1Q standard
+.%U https://standards.ieee.org/standard/802_1Q-2018.html
+.Re
+.Pp
+.Rs
+.%A S. HomChaudhuri
+.%A M. Foschiano
+.%D February 2010
+.%R RFC 5517
+.%T Cisco Systems' Private VLANs: Scalable Security in a Multi-Client Environment
+.Re
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Ox 6.9 .
+VLAN and PVLAN support was added in
+.Ox 7.9 .
 .Sh AUTHORS
 .An David Gwynne Aq Mt dlg@openbsd.org
