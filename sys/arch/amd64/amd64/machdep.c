@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.305 2025/11/12 11:34:36 hshoexer Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.306 2025/11/24 17:20:40 sf Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1354,8 +1354,9 @@ cpu_init_early_vctrap(paddr_t addr)
 	    GSEL(GCODE_SEL, SEL_KPL));
 	cpu_init_idt();
 
-	/* Tell vmm(4) about our GHCB. */
+	/* Tell the hypervisor about our GHCB. */
 	ghcb_paddr = addr;
+	ghcb_vaddr = addr + KERNBASE;
 	memset((void *)ghcb_vaddr, 0, 2 * PAGE_SIZE);
 	wrmsr(MSR_SEV_GHCB, ghcb_paddr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.32 2025/08/04 12:14:16 hshoexer Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.33 2025/11/24 17:20:40 sf Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -804,15 +804,6 @@ longmode_hi:
 	addq	%rsi,%rdx
 	movq	%rdx,atdevbase(%rip)
 
-	/* Relocate GHCB. */
-	movq	cpu_sev_guestmode(%rip),%rax
-	testq	$SEV_STAT_ES_ENABLED,%rax
-	jz	.Lnoghcbreloc
-	movq	$(PROC0_GHCB_OFF+KERNBASE),%rdx
-	addq	%rsi,%rdx
-	movq	%rdx,ghcb_vaddr(%rip)
-
-.Lnoghcbreloc:
 	/* Record start of symbols */
 	movq	$__kernel_bss_end, ssym(%rip)
 
