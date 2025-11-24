@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.85 2025/11/20 00:40:44 dlg Exp $
+.\" $OpenBSD: gre.4,v 1.86 2025/11/24 02:32:54 jsg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 20 2025 $
+.Dd $Mdocdate: November 24 2025 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -566,7 +566,7 @@ At the first site:
 # ifconfig egre1 vnetid 200
 # ifconfig egre1 mtu 1500 -tunneldf
 # ifconfig egre1 up
-# ifconfig vebe1 add vlan1 add egre1 up
+# ifconfig veb1 add vlan1 add egre1 up
 .Ed
 .Pp
 At the second site:
