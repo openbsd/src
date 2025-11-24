@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.19 2025/10/31 17:58:59 jca Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.20 2025/11/24 12:42:10 jca Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -81,24 +81,18 @@ void
 login_fbtab(const char *tty, uid_t uid, gid_t gid)
 {
 	FILE	*fp;
-	char	*buf, *toklast, *tbuf, *devnam, *cp;
+	char	*buf = NULL;
+	size_t	bufsize = 0;
+	char	*toklast, *devnam, *cp;
 	mode_t	prot;
-	size_t	len;
+	ssize_t	len;
 
 	if ((fp = fopen(_PATH_FBTAB, "r")) == NULL)
 		return;
 
-	tbuf = NULL;
-	while ((buf = fgetln(fp, &len)) != NULL) {
+	while ((len = getline(&buf, &bufsize, fp)) != -1) {
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
-		else {
-			if ((tbuf = malloc(len + 1)) == NULL)
-				break;
-			memcpy(tbuf, buf, len);
-			tbuf[len] = '\0';
-			buf = tbuf;
-		}
 		if ((cp = strchr(buf, '#')))
 			*cp = '\0';	/* strip comment */
 		if (buf[0] == '\0' ||
@@ -121,7 +115,7 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
 				login_protect(cp, prot, uid, gid);
 		}
 	}
-	free(tbuf);
+	free(buf);
 	fclose(fp);
 }
 
