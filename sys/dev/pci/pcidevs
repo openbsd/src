@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2115 2025/11/07 05:06:42 jsg Exp $
+$OpenBSD: pcidevs,v 1.2116 2025/11/24 12:47:43 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1387,6 +1387,7 @@ product ATI YELLOW_CARP_2	0x1681	Rembrandt
 product ATI RADEON_HD6500D_HDA	0x1714	Radeon HD 6500D HD Audio
 product ATI HAWK_POINT_1	0x1900	Hawk Point
 product ATI HAWK_POINT_2	0x1901	Hawk Point
+product ATI KRACKAN_POINT_2	0x1902	Krackan Point
 product ATI RADEON_M241P	0x3150	Mobility Radeon X600
 product ATI FIREMV_2400_1	0x3151	FireMV 2400
 product ATI RADEON_X300M24	0x3152  Mobility Radeon X300
