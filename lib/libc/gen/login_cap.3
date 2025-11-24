@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.25 2025/11/14 15:23:50 jca Exp $
+.\" $OpenBSD: login_cap.3,v 1.26 2025/11/24 12:37:15 jca Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
-.Dd $Mdocdate: November 14 2025 $
+.Dd $Mdocdate: November 24 2025 $
 .Dt LOGIN_GETCLASS 3
 .Os
 .Sh NAME
@@ -279,6 +279,8 @@ Sets the user ID to
 .Ar uid
 using
 .Xr setuid 2 .
+.It Dv LOGIN_SETALL
+Sets all of the above.
 .It Dv LOGIN_SETXDGENV
 Ensures the presence and usability of a runtime directory for
 applications run by
@@ -286,8 +288,8 @@ applications run by
 Sets the
 .Ev XDG_RUNTIME_DIR
 variable to the full path of the directory if successfully set up.
-.It Dv LOGIN_SETALL
-Sets all of the above.
+Mostly useful to login managers so not part of
+.It Dv LOGIN_SETALL .
 .El
 .Sh SEE ALSO
 .Xr setlogin 2 ,
