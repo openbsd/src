@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.17 2025/08/11 14:22:55 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.18 2025/11/24 20:57:53 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -100,8 +100,6 @@ typedef uint32_t	sdt_entry_t;
 #define	SG_SO		0x00000100
 
 #define	SDT_VALID(sdt)	(*(sdt) & SG_V)
-#define	SDT_SUP(sdt)	(*(sdt) & SG_SO)
-#define	SDT_WP(sdt)	(*(sdt) & SG_PROT)
 
 /*
  * Page table entries
@@ -123,8 +121,6 @@ typedef uint32_t	pt_entry_t;
 #define	PG_U1		0x00000800	/* U1 bit for M88110 */
 
 #define	PDT_VALID(pte)	(*(pte) & PG_V)
-#define	PDT_SUP(pte)	(*(pte) & PG_SO)
-#define	PDT_WP(pte)	(*(pte) & PG_PROT)
 
 /*
  * Number of entries in a page table.
