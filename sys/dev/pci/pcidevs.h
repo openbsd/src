@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2115 2025/11/07 05:06:42 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2116 2025/11/24 12:47:43 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1392,6 +1392,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
 #define	PCI_PRODUCT_ATI_HAWK_POINT_1	0x1900		/* Hawk Point */
 #define	PCI_PRODUCT_ATI_HAWK_POINT_2	0x1901		/* Hawk Point */
+#define	PCI_PRODUCT_ATI_KRACKAN_POINT_2	0x1902		/* Krackan Point */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Mobility Radeon X600 */
 #define	PCI_PRODUCT_ATI_FIREMV_2400_1	0x3151		/* FireMV 2400 */
 #define	PCI_PRODUCT_ATI_RADEON_X300M24	0x3152		/* Mobility Radeon X300 */
