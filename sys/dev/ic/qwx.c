@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.94 2025/11/24 11:00:04 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.95 2025/11/24 11:01:21 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16566,6 +16566,8 @@ void
 qwx_dp_rx_wbm_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
     struct qwx_rx_msdu_list *msdu_list)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 	int drop = 1;
 
 	switch (msdu->err_rel_src) {
@@ -16583,6 +16585,7 @@ qwx_dp_rx_wbm_err(struct qwx_softc *sc, struct qwx_rx_msdu *msdu,
 	if (drop) {
 		m_freem(msdu->m);
 		msdu->m = NULL;
+		ifp->if_ierrors++;
 		return;
 	}
 
