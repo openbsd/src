@@ -1,4 +1,4 @@
-.\" $OpenBSD: veb.4,v 1.3 2021/10/28 15:06:36 sthen Exp $
+.\" $OpenBSD: veb.4,v 1.4 2025/11/24 02:56:31 dlg Exp $
 .\"
 .\" Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2021 $
+.Dd $Mdocdate: November 24 2025 $
 .Dt VEB 4
 .Os
 .Sh NAME
@@ -45,17 +45,27 @@ addresses or other layer-3 features themselves.
 .Pp
 The Ethernet network managed by
 .Nm veb
-can be connected to the network stack as a whole by creating a
+can be connected to the network stack by creating a
 .Nm vport
-interface and attaching it as a port to the bridge.
+interface and adding it as a port to the bridge.
 From the perspective of the host network stack, a
 .Nm vport
 interface acts as a normal interface connected to an Ethernet
 network and can be configured with addresses.
 .Pp
 .Nm veb
-is a learning bridge that maintains a table of Ethernet addresses
-and the port that each address is reachable with.
+is an IEEE 802.1Q VLAN aware bridge.
+A single
+.Nm veb
+instance can manage multiple independent and isolated Ethernet
+networks scoped by VLAN identifiers.
+Every packet traversing the bridge is associated with a VLAN, either
+by the identifier in 802.1Q VLAN tagged packets or by the VLAN
+identifier assigned to port interfaces for untagged packets.
+.Pp
+.Nm veb
+is a learning bridge that maintains a database of Ethernet addresses
+and the port that each address in a VLAN is reachable with.
 The bridge learns about the reachability of Ethernet addresses by
 reading the source address on packets received by ports, and then
 entering the address and port into the table dynamically.
@@ -64,8 +74,8 @@ dynamic learning for that address.
 Ethernet address learning can be disabled on individual ports.
 .Pp
 When forwarding a packet, the address table is searched for the
-destination Ethernet address and the packet is sent to the associated
-port in the table entry.
+destination Ethernet address in the relevant VLAN and the packet
+is sent to the associated port in the table entry.
 If no entry is found in the table, or the packet is addressed to a
 multicast or broadcast address, the packet is flooded to all other
 ports on the bridge.
@@ -75,20 +85,41 @@ on individual ports.
 .Nm veb
 provides multiple mechanisms for filtering packets traversing the
 bridge.
-By default it filters IEEE 802.1Q VLAN and SVLAN packets, but can
-be configured to forward them by setting the link0 flag.
+.Pp
+By default
+.Nm veb
+filters IEEE 802.1Q VLAN tagged packets on a port until a set of
+allowed VLAN identifiers is configured.
+Packets without IEEE 802.1Q VLAN tags are assigned the native
+VLAN identifier configured on the port for untagged packets.
+Alternatively, a port can be configured to drop untagged packets,
+or have processing declined by the bridge and passed through to the
+network stack.
+.Pp
+Ports can be configured as members of protected domains to restrict
+communication between them.
+This can be used to construct Virtual Private LAN Service (VPLS)
+topologies with protected domains enforcing a split-horizon forwarding
+rule.
+.Nm veb
+supports RFC 5517 Private VLANs to provide isolation between ports
+within a VLAN, and as part of a larger PVLAN network toplogy.
+The PVLAN implementation also provides support for configuring ports
+with the pvptags flag to communicate with VLAN aware but PVLAN
+unaware equipment using only primary VLAN identifiers for VLAN
+tagged packets.
+.Pp
 .Nm veb
 can filter Ethernet packets entering or leaving ports using bridge
 rules.
-Ports can be configured as members of protected domains to restrict
-communication between them.
-.\" Individual ports can be configured to only allow relaying of IP
-.\" (and ARP/RARP) packets by setting the blocknonip flag.
+Ports can be configured to only allow relaying of IP
+(and ARP/RARP) packets by setting the blocknonip flag.
 .Pp
 .Xr pf 4
 can be used to filter IP packets as they enter or leave the bridge.
 By default this filtering is disabled, but can be enabled by setting
 the link1 flag.
+This filtering only applies to untagged packets on ports.
 The exception to this policy is on
 .Nm vport
 interfaces, where
@@ -102,10 +133,6 @@ travelling over other ports.
 .\" Packets traversing vport interfaces get their direction relative
 .\" to the host network stack, while other ports get their direction
 .\" from their relationship to the bridge.
-.\" .Pp
-.\" Transparent
-.\" .Xr ipsec 4
-.\" processing can be enabled by setting the link2 flag on the bridge.
 .Pp
 .Nm veb
 supports the addition of span ports to the bridge.
