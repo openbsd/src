@@ -1,4 +1,4 @@
-.\" $OpenBSD: veb.4,v 1.6 2025/11/24 03:43:14 dlg Exp $
+.\" $OpenBSD: veb.4,v 1.7 2025/11/25 11:56:49 jsg Exp $
 .\"
 .\" Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 24 2025 $
+.Dd $Mdocdate: November 25 2025 $
 .Dt VEB 4
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ topologies with protected domains enforcing a split-horizon forwarding
 rule.
 .Nm veb
 supports RFC 5517 Private VLANs to provide isolation between ports
-within a VLAN, and as part of a larger PVLAN network toplogy.
+within a VLAN, and as part of a larger PVLAN network topology.
 The PVLAN implementation also provides support for configuring ports
 with the pvptags flag to communicate with VLAN aware but PVLAN
 unaware equipment using only primary VLAN identifiers for VLAN
