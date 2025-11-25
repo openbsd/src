@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2116 2025/11/24 12:47:43 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2117 2025/11/25 07:40:33 robert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -28106,6 +28106,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7921,
 	    "MT7921",
+	},
+	{
+	    PCI_VENDOR_MEDIATEK, PCI_PRODUCT_MEDIATEK_MT7925,
+	    "MT7925",
 	},
 	{
 	    PCI_VENDOR_MEINBERG, PCI_PRODUCT_MEINBERG_PCI32,
