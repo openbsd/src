@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.141 2025/11/25 14:02:51 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.142 2025/11/25 14:18:21 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -486,7 +486,7 @@ int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
 /* {mach}_vm.c (md interface) */
 void	 create_memory_map(struct vm_create_params *);
 int	 load_firmware(struct vmd_vm *, struct vcpu_reg_state *);
-int	 init_emulated_hw(struct vmop_create_params *, int,
+void	 init_emulated_hw(struct vmop_create_params *, int,
     int[][VM_MAX_BASE_PER_DISK], int *);
 int	 vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
 void	 pause_vm_md(struct vmd_vm *);

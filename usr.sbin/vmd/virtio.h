@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.57 2025/11/25 14:02:51 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.58 2025/11/25 14:18:21 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -377,7 +377,7 @@ struct virtio_dev {
 /* virtio.c */
 extern struct virtio_dev vmmci;
 
-int virtio_init(struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK], int *);
+void virtio_init(struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK], int *);
 void virtio_vq_init(struct virtio_dev *, size_t);
 void virtio_broadcast_imsg(struct vmd_vm *, uint16_t, void *, uint16_t);
 void virtio_stop(struct vmd_vm *);

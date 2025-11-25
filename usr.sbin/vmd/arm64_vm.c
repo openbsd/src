@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.8 2025/11/25 14:02:51 dv Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.9 2025/11/25 14:18:21 dv Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -34,13 +34,12 @@ load_firmware(struct vmd_vm *vm, struct vcpu_reg_state *vrs)
 	return (-1);
 }
 
-int
+void
 init_emulated_hw(struct vmop_create_params *vcp, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
 	fatalx("%s: unimplemented", __func__);
 	/* NOTREACHED */
-	return (1);
 }
 
 void
