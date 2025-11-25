@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.116 2025/11/21 15:46:10 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.117 2025/11/25 14:02:51 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -278,7 +278,11 @@ start_vm(struct vmd_vm *vm, int fd)
 	 */
 	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
 		nicfds[i] = vm->vm_ifs[i].vif_fd;
-	init_emulated_hw(vmc, vm->vm_cdrom, vm->vm_disks, nicfds);
+	ret = init_emulated_hw(vmc, vm->vm_cdrom, vm->vm_disks, nicfds);
+	if (ret) {
+		virtio_shutdown(vm);
+		return (ret);
+	}
 
 	/* Drop privleges further before starting the vcpu run loop(s). */
 	if (pledge("stdio vmm", NULL) == -1)
