@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.11 2025/11/25 14:18:21 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.12 2025/11/25 14:20:33 dv Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -349,9 +349,11 @@ loadfile_bios(gzFile fp, off_t size, struct vcpu_reg_state *vrs)
 /*
  * init_emulated_hw
  *
- * Initializes the userspace hardware emulation
+ * Initializes the userspace hardware emulation.
+ *
+ * Returns 0 on success, 1 on failure.
  */
-void
+int
 init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
@@ -411,7 +413,8 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 	pci_init();
 
 	/* Initialize virtio devices */
-	virtio_init(current_vm, child_cdrom, child_disks, child_taps);
+	if (virtio_init(current_vm, child_cdrom, child_disks, child_taps))
+		return (1);
 
 	/*
 	 * Init QEMU fw_cfg interface. Must be done last for pci hardware
@@ -422,6 +425,8 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 	ioports_map[FW_CFG_IO_DATA] = vcpu_exit_fw_cfg;
 	ioports_map[FW_CFG_IO_DMA_ADDR_HIGH] = vcpu_exit_fw_cfg_dma;
 	ioports_map[FW_CFG_IO_DMA_ADDR_LOW] = vcpu_exit_fw_cfg_dma;
+
+	return (0);
 }
 
 void

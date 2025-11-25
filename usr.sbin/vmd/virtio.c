@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.131 2025/11/25 14:18:21 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.132 2025/11/25 14:20:33 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -983,7 +983,12 @@ vmmci_pipe_dispatch(int fd, short event, void *arg)
 	}
 }
 
-void
+/*
+ * Initialize virtio devices, launching subprocesses if needed.
+ *
+ * Returns 0 on success, 1 on failure.
+ */
+int
 virtio_init(struct vmd_vm *vm, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
@@ -1002,7 +1007,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	    PCI_PRODUCT_VIRTIO_ENTROPY, 1, 1, NULL)) {
 		log_warnx("%s: can't add PCI virtio rng device",
 		    __progname);
-		return;
+		return (1);
 	}
 	virtio_dev_init(&viornd, id, VIORND_QUEUE_SIZE_DEFAULT,
 	    VIRTIO_RND_QUEUES, VIRTIO_F_VERSION_1, vcp->vcp_id);
@@ -1012,7 +1017,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	if (bar_id == -1 || bar_id > 0xff) {
 		log_warnx("%s: can't add bar for virtio rng device",
 		    __progname);
-		return;
+		return (1);
 	}
 	virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG, bar_id, 0);
 	virtio_pci_add_cap(id, VIRTIO_PCI_CAP_ISR_CFG, bar_id, 0);
@@ -1025,7 +1030,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			if (dev == NULL) {
 				log_warn("%s: calloc failure allocating vionet",
 				    __progname);
-				return;
+				return (1);
 			}
 			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
 				PCI_PRODUCT_QUMRANET_VIO1_NET, PCI_CLASS_SYSTEM,
@@ -1033,7 +1038,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 				PCI_PRODUCT_VIRTIO_NETWORK, 1, 1, NULL)) {
 				log_warnx("%s: can't add PCI virtio net device",
 				    __progname);
-				return;
+				return (1);
 			}
 			virtio_dev_init(dev, id, VIONET_QUEUE_SIZE_DEFAULT,
 			    VIRTIO_NET_QUEUES,
@@ -1044,7 +1049,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    dev) == -1) {
 				log_warnx("%s: can't add bar for virtio net "
 				    "device", __progname);
-				return;
+				return (1);
 			}
 			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG,
 			    bar_id, 0);
@@ -1091,7 +1096,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			if (dev == NULL) {
 				log_warn("%s: failure allocating vioblk",
 				    __func__);
-				return;
+				return (1);
 			}
 			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
 			    PCI_PRODUCT_QUMRANET_VIO1_BLOCK,
@@ -1100,7 +1105,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    PCI_PRODUCT_VIRTIO_BLOCK, 1, 1, NULL)) {
 				log_warnx("%s: can't add PCI virtio block "
 				    "device", __progname);
-				return;
+				return (1);
 			}
 			virtio_dev_init(dev, id, VIOBLK_QUEUE_SIZE_DEFAULT,
 			    VIRTIO_BLK_QUEUES,
@@ -1112,7 +1117,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			if (bar_id == -1 || bar_id > 0xff) {
 				log_warnx("%s: can't add bar for virtio block "
 				    "device", __progname);
-				return;
+				return (1);
 			}
 			virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG,
 			    bar_id, 0);
@@ -1147,8 +1152,10 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	 * Launch virtio devices that support subprocess execution.
 	 */
 	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
-		if (virtio_dev_launch(vm, dev) != 0)
-			fatalx("failed to launch virtio device");
+		if (virtio_dev_launch(vm, dev) != 0) {
+			log_warnx("failed to launch virtio device");
+			return (1);
+		}
 	}
 
 	/* Virtio 1.x SCSI CD-ROM */
@@ -1157,7 +1164,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		if (dev == NULL) {
 			log_warn("%s: calloc failure allocating vioscsi",
 			    __progname);
-			return;
+			return (1);
 		}
 		if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
 		    PCI_PRODUCT_QUMRANET_VIO1_SCSI, PCI_CLASS_MASS_STORAGE,
@@ -1165,7 +1172,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		    PCI_PRODUCT_VIRTIO_SCSI, 1, 1, NULL)) {
 			log_warnx("%s: can't add PCI vioscsi device",
 			    __progname);
-			return;
+			return (1);
 		}
 		virtio_dev_init(dev, id, VIOSCSI_QUEUE_SIZE_DEFAULT,
 		    VIRTIO_SCSI_QUEUES, VIRTIO_F_VERSION_1, vcp->vcp_id);
@@ -1173,7 +1180,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		    == -1) {
 			log_warnx("%s: can't add bar for vioscsi device",
 			    __progname);
-			return;
+			return (1);
 		}
 		virtio_pci_add_cap(id, VIRTIO_PCI_CAP_COMMON_CFG, bar_id, 0);
 		virtio_pci_add_cap(id, VIRTIO_PCI_CAP_DEVICE_CFG, bar_id, 36);
@@ -1185,7 +1192,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		    &child_cdrom, 1) == -1) {
 			log_warnx("%s: unable to determine iso format",
 			    __func__);
-			return;
+			return (1);
 		}
 		dev->vioscsi.locked = 0;
 		dev->vioscsi.lba = 0;
@@ -1201,24 +1208,27 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	    PCI_VENDOR_OPENBSD, PCI_PRODUCT_VIRTIO_VMMCI, 0, 1, NULL)) {
 		log_warnx("%s: can't add PCI vmm control device",
 		    __progname);
-		return;
+		return (1);
 	}
 	virtio_dev_init(dev, id, 0, 0,
 	    VMMCI_F_TIMESYNC | VMMCI_F_ACK | VMMCI_F_SYNCRTC, vcp->vcp_id);
 	if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, vmmci_io, dev) == -1) {
 		log_warnx("%s: can't add bar for vmm control device",
 		    __progname);
-		return;
+		return (1);
 	}
 
 	ret = pthread_mutex_init(&dev->vmmci.mutex, NULL);
 	if (ret) {
 		errno = ret;
-		fatal("could not initialize vmmci mutex");
+		log_warn("could not initialize vmmci mutex");
+		return (1);
 	}
 	evtimer_set(&dev->vmmci.timeout, vmmci_timeout, dev);
 	vm_pipe_init2(&dev->vmmci.dev_pipe, vmmci_pipe_dispatch, dev);
 	event_add(&dev->vmmci.dev_pipe.read_ev, NULL);
+
+	return (0);
 }
 
 /*
