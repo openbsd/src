@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.126 2024/04/28 16:43:42 florian Exp $	 */
+/* $OpenBSD: x509.c,v 1.127 2025/11/25 05:12:44 tb Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -1098,11 +1098,11 @@ x509_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 
 /* Returns a pointer to the subjectAltName information of X509 certificate.  */
 int
-x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
+x509_cert_subjectaltname(X509 *scert, const u_int8_t **altname, u_int32_t *len)
 {
 	X509_EXTENSION		*subjectaltname;
 	ASN1_OCTET_STRING	*sanasn1data;
-	u_int8_t		*sandata;
+	const u_int8_t		*sandata;
 	int			 extpos, santype, sanlen;
 
 	extpos = X509_get_ext_by_NID(scert, NID_subject_alt_name, -1);
@@ -1114,14 +1114,15 @@ x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 	subjectaltname = X509_get_ext(scert, extpos);
 	sanasn1data = X509_EXTENSION_get_data(subjectaltname);
 
-	if (!subjectaltname || !sanasn1data || !sanasn1data->data ||
-	    sanasn1data->length < 4) {
+	if (!subjectaltname || !sanasn1data ||
+	    !ASN1_STRING_get0_data(sanasn1data) ||
+	     ASN1_STRING_length(sanasn1data) < 4) {
 		log_print("x509_cert_subjectaltname: invalid "
 		    "subjectaltname extension");
 		return 0;
 	}
 	/* SSL does not handle unknown ASN stuff well, do it by hand.  */
-	sandata = sanasn1data->data;
+	sandata = ASN1_STRING_get0_data(sanasn1data);
 	santype = sandata[2] & 0x3f;
 	sanlen = sandata[3];
 	sandata += 4;
@@ -1131,7 +1132,7 @@ x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 	 * extra stuff in subjectAltName, so we will just take the first
 	 * salen bytes, and not worry about what follows.
 	 */
-	if (sanlen + 4 > sanasn1data->length) {
+	if (sanlen + 4 > ASN1_STRING_length(sanasn1data)) {
 		log_print("x509_cert_subjectaltname: subjectaltname invalid "
 		    "length");
 		return 0;
@@ -1148,7 +1149,7 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 	X509		*cert = scert;
 	X509_NAME	*subject;
 	int		type;
-	u_int8_t	*altname;
+	const u_int8_t	*altname;
 	u_int32_t	altlen;
 	u_int8_t	*buf = 0;
 	unsigned char	*ubuf;
