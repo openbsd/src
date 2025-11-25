@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.6 2025/10/15 01:38:42 dlg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.7 2025/11/25 11:58:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -244,8 +244,13 @@ rport_start(struct ifqueue *ifq)
 	struct ifnet *ifp = ifq->ifq_if;
 	struct rport_softc *sc = ifp->if_softc;
 	struct ifnet *ifp0;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint16_t csum;
+	uint64_t packets = 0;
+	uint64_t bytes = 0;
+	struct counters_ref cr;
+	uint64_t *counters;
 
 	ifp0 = if_get(sc->sc_peer_idx);
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
@@ -254,7 +259,8 @@ rport_start(struct ifqueue *ifq)
 		return;
 	}
 
-	NET_LOCK_SHARED();
+	/* this reproduces the work that ifq_input/if_vinput do */
+
 	while ((m = ifq_dequeue(ifq)) != NULL) {
 #if NBPFILTER > 0
 		caddr_t if_bpf = READ_ONCE(ifp->if_bpf);
@@ -263,6 +269,16 @@ rport_start(struct ifqueue *ifq)
 			m_freem(m);
 			continue;
 		}
+#endif
+
+		m->m_pkthdr.ph_ifidx = ifp0->if_index;
+		m->m_pkthdr.ph_rtableid = ifp0->if_rdomain;
+
+		packets++;
+		bytes += m->m_pkthdr.len;
+
+#if NPF > 0
+		pf_pkt_addr_changed(m);
 #endif
 
 		csum = m->m_pkthdr.csum_flags;
@@ -279,9 +295,24 @@ rport_start(struct ifqueue *ifq)
 		if (ISSET(csum, M_TCP_TSO) && m->m_pkthdr.len > ifp0->if_mtu)
 			tcpstat_inc(tcps_inhwlro);
 
-		if_vinput(ifp0, m, NULL);
+#if NBPFILTER > 0
+		if_bpf = READ_ONCE(ifp0->if_bpf);
+		if (if_bpf && bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family,
+		    m, BPF_DIRECTION_IN)) {
+			m_freem(m);
+			continue;
+		}
+#endif
+
+		ml_enqueue(&ml, m);
 	}
-	NET_UNLOCK_SHARED();
+
+	counters = counters_enter(&cr, ifp0->if_counters);
+	counters[ifc_ipackets] += packets;
+	counters[ifc_ibytes] += bytes;
+	counters_leave(&cr, ifp0->if_counters);
+
+	if_input_process(ifp0, &ml, ifq->ifq_idx);
 
 	if_put(ifp0);
 }
