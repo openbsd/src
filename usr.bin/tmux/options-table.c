@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.198 2025/09/07 14:03:18 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.199 2025/11/25 21:24:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,7 +37,7 @@ static const char *options_table_mode_keys_list[] = {
 	"emacs", "vi", NULL
 };
 static const char *options_table_clock_mode_style_list[] = {
-	"12", "24", NULL
+	"12", "24", "12-with-seconds", "24-with-seconds", NULL
 };
 static const char *options_table_status_list[] = {
 	"off", "on", "2", "3", "4", "5", NULL

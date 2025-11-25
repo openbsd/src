@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1016 2025/11/12 13:47:51 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1017 2025/11/25 21:24:27 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2025 $
+.Dd $Mdocdate: November 25 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4925,7 +4925,7 @@ option is enabled.
 Set clock colour.
 .Pp
 .It Xo Ic clock-mode-style
-.Op Ic 12 | 24
+.Op Ic 12 | 24 | 12-with-seconds | 24-with-seconds
 .Xc
 Set clock hour format.
 .Pp
