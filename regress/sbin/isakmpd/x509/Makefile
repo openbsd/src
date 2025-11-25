@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2017/07/03 18:19:55 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2025/11/25 05:21:35 tb Exp $
 #	$EOM: Makefile,v 1.16 2000/09/28 12:53:27 niklas Exp $
 
 #
@@ -36,7 +36,7 @@
 #LIBLWRES=	/usr/local/lib/liblwres.a
 
 PROG=		x509test
-SRCS=		x509test.c conf.c log.c libcrypto.c sysdep.c field.c util.c \
+SRCS=		x509test.c conf.c log.c sysdep.c field.c util.c \
 		isakmp_fld.c ipsec_fld.c ipsec_num.c isakmp_num.c constants.c \
 		cert.c
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile

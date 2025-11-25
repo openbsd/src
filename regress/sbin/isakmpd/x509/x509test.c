@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.3 2021/12/13 16:56:49 deraadt Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.4 2025/11/25 05:21:35 tb Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -58,7 +58,6 @@
 #include "isakmp_fld.h"
 #include "libcrypto.h"
 #include "log.h"
-#include "math_mp.h"
 #include "x509.h"
 
 static int x509_check_subjectaltname (u_char *, u_int, X509 *);
@@ -97,7 +96,7 @@ open_file (char *name)
 static int
 x509_check_subjectaltname (u_char *id, u_int id_len, X509 *scert)
 {
-  u_int8_t *altname;
+  const u_int8_t *altname;
   u_int32_t altlen;
   int type, idtype, ret;
 
@@ -182,8 +181,6 @@ main (int argc, char *argv[])
    * EVP_get_digest_byname.
    */
 
-  libcrypto_init ();
-
   printf ("Reading private key %s\n", argv[1]);
   keyfile = BIO_new (BIO_s_file ());
   if (BIO_read_filename (keyfile, argv[1]) == -1)
@@ -224,8 +221,7 @@ main (int argc, char *argv[])
     }
 
   pkey_pub = X509_get_pubkey (cert);
-  /* XXX Violation of the interface?  */
-  pub_key = pkey_pub->pkey.rsa;
+  pub_key = EVP_PKEY_get0_RSA (pkey_pub);
   if (pub_key == NULL)
     {
       exit (1);
