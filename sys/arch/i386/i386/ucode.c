@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucode.c,v 1.7 2025/11/24 23:14:16 jsg Exp $	*/
+/*	$OpenBSD: ucode.c,v 1.8 2025/11/25 00:01:24 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Stefan Fritsch <fritsch@genua.de>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -48,7 +48,9 @@ struct intel_ucode_header {
 	uint32_t	processor_flags;
 	uint32_t	data_size;
 	uint32_t	total_size;
-	uint32_t	reserved[3];
+	uint32_t	reserved1;
+	uint32_t	min_runtime_update_rev;
+	uint32_t	reserved2;
 };
 
 struct intel_ucode_ext_sig_header {
