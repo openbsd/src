@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.55 2025/11/24 23:40:00 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.56 2025/11/25 11:56:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -106,7 +106,7 @@ struct veb_port {
 	struct ifnet			*p_ifp0;
 	struct refcnt			 p_refs;
 
-	int (*p_enqueue)(struct ifnet *, struct mbuf *);
+	int (*p_enqueue)(struct ifnet *, struct mbuf *, struct netstack *);
 
 	int (*p_ioctl)(struct ifnet *, u_long, caddr_t);
 	int (*p_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -349,7 +349,8 @@ struct vport_softc {
 	unsigned int		 sc_dead;
 };
 
-static int	vport_if_enqueue(struct ifnet *, struct mbuf *);
+static int	vport_if_enqueue(struct ifnet *, struct mbuf *,
+		    struct netstack *);
 
 static int	vport_ioctl(struct ifnet *, u_long, caddr_t);
 static int	vport_enqueue(struct ifnet *, struct mbuf *);
@@ -846,6 +847,12 @@ veb_pvlan_filter(const struct veb_ctx *ctx, uint16_t vs)
 	return (0);
 }
 
+static int
+veb_if_enqueue(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
+{
+	return (if_enqueue(ifp, m));
+}
+
 static void
 veb_broadcast(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m0)
 {
@@ -953,7 +960,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m0)
 			continue;
 		}
 
-		(*tp->p_enqueue)(ifp0, m); /* XXX count error */
+		(*tp->p_enqueue)(ifp0, m, ctx->ns); /* XXX count error */
 	}
 	refcnt_rele_wake(&pm->m_refs);
 
@@ -1032,7 +1039,7 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 		goto drop;
 	}
 
-	(*tp->p_enqueue)(ifp0, m); /* XXX count error */
+	(*tp->p_enqueue)(ifp0, m, ctx->ns); /* XXX count error */
 
 	return (NULL);
 drop:
@@ -1656,7 +1663,7 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 	SMR_TAILQ_INIT(&p->p_vr_list[0]);
 	SMR_TAILQ_INIT(&p->p_vr_list[1]);
 
-	p->p_enqueue = isvport ? vport_if_enqueue : if_enqueue;
+	p->p_enqueue = isvport ? vport_if_enqueue : veb_if_enqueue;
 	p->p_ioctl = ifp0->if_ioctl;
 	p->p_output = ifp0->if_output;
 
@@ -3344,12 +3351,17 @@ vport_down(struct vport_softc *sc)
 }
 
 static int
-vport_if_enqueue(struct ifnet *ifp, struct mbuf *m)
+vport_if_enqueue(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
 	uint16_t csum;
 
-	/* handle packets coming from a different vport into this one */
+	/*
+	 * switching an l2 packet toward a vport means pushing it
+	 * into the network stack. this function exists to make
+	 * if_vinput compat with veb calling if_enqueue.
+	 */
 
+	/* handle packets coming from a different vport into this one */
 	csum = m->m_pkthdr.csum_flags;
 	if (ISSET(csum, M_IPV4_CSUM_OUT))
 		SET(csum, M_IPV4_CSUM_IN_OK);
@@ -3361,13 +3373,7 @@ vport_if_enqueue(struct ifnet *ifp, struct mbuf *m)
 		SET(csum, M_ICMP_CSUM_IN_OK);
 	m->m_pkthdr.csum_flags = csum;
 
-	/*
-	 * switching an l2 packet toward a vport means pushing it
-	 * into the network stack. this function exists to make
-	 * if_vinput compat with veb calling if_enqueue.
-	 */
-
-	if_vinput(ifp, m, NULL);
+	if_vinput(ifp, m, ns);
 
 	return (0);
 }
