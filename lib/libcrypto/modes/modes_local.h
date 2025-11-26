@@ -1,10 +1,13 @@
-/* $OpenBSD: modes_local.h,v 1.7 2025/07/13 06:01:33 jsing Exp $ */
+/* $OpenBSD: modes_local.h,v 1.8 2025/11/26 10:19:57 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use is governed by OpenSSL license.
  * ====================================================================
  */
+
+#ifndef HEADER_MODES_LOCAL_H
+#define HEADER_MODES_LOCAL_H
 
 #include <endian.h>
 
@@ -61,3 +64,5 @@ struct ccm128_context {
 };
 
 __END_HIDDEN_DECLS
+
+#endif /* HEADER_MODES_LOCAL_H */

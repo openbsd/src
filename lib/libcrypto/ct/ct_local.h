@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_local.h,v 1.8 2021/12/20 17:19:19 jsing Exp $ */
+/*	$OpenBSD: ct_local.h,v 1.9 2025/11/26 10:19:57 tb Exp $ */
 /*
  * Written by Rob Percival (robpercival@google.com) for the OpenSSL project.
  */
@@ -50,6 +50,9 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
+
+#ifndef HEADER_CT_LOCAL_H
+#define HEADER_CT_LOCAL_H
 
 #include <stddef.h>
 
@@ -258,3 +261,5 @@ int o2i_SCT_signature(SCT *sct, CBS *cbs);
  * Handlers for Certificate Transparency X509v3/OCSP extensions
  */
 extern const X509V3_EXT_METHOD v3_ct_scts[3];
+
+#endif /* HEADER_CT_LOCAL_H */

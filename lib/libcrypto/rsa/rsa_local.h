@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_local.h,v 1.10 2025/01/05 15:39:12 tb Exp $ */
+/* $OpenBSD: rsa_local.h,v 1.11 2025/11/26 10:19:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,6 +55,9 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
+#ifndef HEADER_RSA_LOCAL_H
+#define HEADER_RSA_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
 
@@ -152,3 +155,5 @@ int BN_BLINDING_is_local(BN_BLINDING *b);
 BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *ctx);
 
 __END_HIDDEN_DECLS
+
+#endif /* HEADER_RSA_LOCAL_H */

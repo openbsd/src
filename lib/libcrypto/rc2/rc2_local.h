@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2_local.h,v 1.3 2024/03/29 05:03:48 jsing Exp $ */
+/* $OpenBSD: rc2_local.h,v 1.4 2025/11/26 10:19:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
+#ifndef HEADER_RC2_LOCAL_H
+#define HEADER_RC2_LOCAL_H
+
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    ,		\
 			 l|=((unsigned long)(*((c)++)))<< 8L,		\
@@ -110,3 +113,5 @@
 	x2=(t<<3)|(t>>13);						\
 	t=(x3+(x0& ~x2)+(x1&x2)+ *(p0++))&0xffff;			\
 	x3=(t<<5)|(t>>11);
+
+#endif /* HEADER_RC2_LOCAL_H */

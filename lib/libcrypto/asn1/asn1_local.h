@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_local.h,v 1.10 2024/03/02 09:10:42 tb Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.11 2025/11/26 10:19:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -55,6 +55,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#ifndef HEADER_ASN1_LOCAL_H
+#define HEADER_ASN1_LOCAL_H
 
 #include "bytestring.h"
 
@@ -191,3 +194,5 @@ int ASN1_time_parse(const char *_bytes, size_t _len, struct tm *_tm, int _mode);
 int ASN1_time_tm_cmp(struct tm *_tm1, struct tm *_tm2);
 
 __END_HIDDEN_DECLS
+
+#endif /* HEADER_ASN1_LOCAL_H */

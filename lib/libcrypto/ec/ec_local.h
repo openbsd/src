@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.70 2025/08/03 15:07:57 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.71 2025/11/26 10:19:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -68,6 +68,9 @@
  * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
  *
  */
+
+#ifndef HEADER_EC_LOCAL_H
+#define HEADER_EC_LOCAL_H
 
 #include <stdlib.h>
 
@@ -265,3 +268,5 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
     size_t Zlen, const unsigned char *sinfo, size_t sinfolen, const EVP_MD *md);
 
 __END_HIDDEN_DECLS
+
+#endif /* HEADER_EC_LOCAL_H */

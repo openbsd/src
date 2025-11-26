@@ -1,4 +1,4 @@
-/* $OpenBSD: cast_local.h,v 1.2 2023/07/08 07:25:43 jsing Exp $ */
+/* $OpenBSD: cast_local.h,v 1.3 2025/11/26 10:19:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,6 +55,9 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
+#ifndef HEADER_CAST_LOCAL_H
+#define HEADER_CAST_LOCAL_H
 
 #undef c2l
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
@@ -214,3 +217,5 @@ extern const CAST_LONG CAST_S_table4[256];
 extern const CAST_LONG CAST_S_table5[256];
 extern const CAST_LONG CAST_S_table6[256];
 extern const CAST_LONG CAST_S_table7[256];
+
+#endif /* HEADER_CAST_LOCAL_H */

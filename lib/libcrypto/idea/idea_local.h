@@ -1,4 +1,4 @@
-/* $OpenBSD: idea_local.h,v 1.2 2023/07/07 12:51:58 beck Exp $ */
+/* $OpenBSD: idea_local.h,v 1.3 2025/11/26 10:19:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,6 +55,9 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
+#ifndef HEADER_IDEA_LOCAL_H
+#define HEADER_IDEA_LOCAL_H
 
 /* The new form of this macro (check if the a*b == 0) was suggested by
  * Colin Plumb <colin@nyx10.cs.du.edu> */
@@ -147,3 +150,5 @@ else									\
 	ul=x2^t0; /* do the swap to x3 */				\
 	x2=x3^t1;							\
 	x3=ul;
+
+#endif /* HEADER_IDEA_LOCAL_H */

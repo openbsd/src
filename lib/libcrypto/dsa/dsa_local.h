@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_local.h,v 1.5 2024/11/29 07:42:35 tb Exp $ */
+/* $OpenBSD: dsa_local.h,v 1.6 2025/11/26 10:19:57 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
@@ -53,6 +53,9 @@
  *
  */
 
+#ifndef HEADER_DSA_LOCAL_H
+#define HEADER_DSA_LOCAL_H
+
 #include <openssl/dsa.h>
 
 __BEGIN_HIDDEN_DECLS
@@ -102,3 +105,5 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 int dsa_check_key(const DSA *dsa);
 
 __END_HIDDEN_DECLS
+
+#endif /* HEADER_DSA_LOCAL_H */
