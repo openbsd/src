@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.10 2025/06/20 07:14:38 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.11 2025/11/26 08:40:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,9 +29,15 @@ struct app {
 	int vol;
 };
 
+struct opt_alt {
+	struct opt_alt *next;
+	struct dev *dev;
+};
+
 struct opt {
 	struct opt *next;
-	struct dev *dev, *alt_first;
+	struct dev *dev;
+	struct opt_alt *alt_list;
 	struct midi *midi;
 	struct mtc *mtc;	/* if set, MMC-controlled MTC source */
 
@@ -59,11 +65,13 @@ void opt_midi_dump(struct opt *o);
 struct opt *opt_new(struct dev *, char *, int, int, int, int,
     int, int, int, unsigned int);
 void opt_del(struct opt *);
+void opt_setalt(struct opt *, struct dev *);
 struct opt *opt_byname(char *);
 struct opt *opt_bynum(int);
 void opt_init(struct opt *);
 void opt_done(struct opt *);
 int opt_setdev(struct opt *, struct dev *);
+void opt_migrate(struct opt *, struct dev *);
 struct dev *opt_ref(struct opt *);
 void opt_unref(struct opt *);
 

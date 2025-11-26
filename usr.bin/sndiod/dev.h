@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.49 2025/06/20 07:14:38 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.50 2025/11/26 08:40:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -215,11 +215,6 @@ struct dev {
 	char name[CTL_NAMEMAX];
 
 	/*
-	 * next to try if this fails
-	 */
-	struct dev *alt_next;
-
-	/*
 	 * audio device (while opened)
 	 */
 	struct dev_sio sio;
@@ -283,7 +278,7 @@ size_t chans_fmt(char *, size_t, int, int, int, int, int);
 int dev_open(struct dev *);
 void dev_close(struct dev *);
 void dev_abort(struct dev *);
-struct dev *dev_migrate(struct dev *);
+void dev_migrate(struct dev *);
 struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 struct dev *dev_bynum(int);

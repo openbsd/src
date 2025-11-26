@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.51 2025/06/19 20:16:34 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.52 2025/11/26 08:40:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -106,7 +106,7 @@ void unsetsig(void);
 struct dev *mkdev(char *, struct aparams *,
     int, int, int, int, int, int);
 struct port *mkport(char *, int);
-struct opt *mkopt(char *, struct dev *,
+struct opt *mkopt(char *, struct dev *, struct opt_alt *,
     int, int, int, int, int, int, int, int);
 
 unsigned int log_level = 0;
@@ -262,7 +262,8 @@ static void
 reopen_devs(void)
 {
 	struct opt *o;
-	struct dev *d, *a;
+	struct opt_alt *a;
+	struct dev *d;
 
 	for (o = opt_list; o != NULL; o = o->next) {
 
@@ -270,19 +271,10 @@ reopen_devs(void)
 		if (o->refcnt == 0 || strcmp(o->name, o->dev->name) == 0)
 			continue;
 
-		/* circulate to the device with the highest prio */
-		a = o->alt_first;
-		for (d = a; d->alt_next != a; d = d->alt_next) {
-			if (d->num > o->alt_first->num)
-				o->alt_first = d;
-		}
-
 		/* switch to the first working one, in pririty order */
-		d = o->alt_first;
-		while (d != o->dev) {
-			if (opt_setdev(o, d))
+		for (a = o->alt_list; a->dev != NULL; a = a->next) {
+			if (opt_setdev(o, a->dev))
 				break;
-			d = d->alt_next;
 		}
 	}
 
@@ -440,17 +432,20 @@ mkport(char *path, int hold)
 }
 
 struct opt *
-mkopt(char *path, struct dev *d,
+mkopt(char *path, struct dev *d, struct opt_alt *alt_list,
     int pmin, int pmax, int rmin, int rmax,
     int mode, int vol, int mmc, int dup)
 {
 	struct opt *o;
+	struct opt_alt *a;
 
 	o = opt_new(d, path, pmin, pmax, rmin, rmax,
 	    MIDI_TO_ADATA(vol), mmc, dup, mode);
 	if (o == NULL)
 		return NULL;
 	dev_adjpar(d, o->mode, o->pmax, o->rmax);
+	for (a = alt_list; a != NULL; a = a->next)
+		opt_setalt(o, a->dev);
 	return o;
 }
 
@@ -547,7 +542,8 @@ main(int argc, char **argv)
 	const char *str;
 	struct aparams par;
 	struct opt *o;
-	struct dev *d, *dev_first, *dev_next;
+	struct dev *d;
+	struct opt_alt *a, **pa, *alt_list;
 	struct port *p, *port_first, *port_next;
 	struct listen *l;
 	struct passwd *pw;
@@ -581,7 +577,7 @@ main(int argc, char **argv)
 	par.sig = 1;
 	par.msb = 0;
 	mode = MODE_PLAY | MODE_REC;
-	dev_first = dev_next = NULL;
+	alt_list = NULL;
 	port_first = port_next = NULL;
 	tcpaddr_list = NULL;
 	d = NULL;
@@ -641,7 +637,7 @@ main(int argc, char **argv)
 				}
 				d = dev_list;
 			}
-			if (mkopt(optarg, d, pmin, pmax, rmin, rmax,
+			if (mkopt(optarg, d, alt_list, pmin, pmax, rmin, rmax,
 				mode, vol, mmc, dup) == NULL)
 				return 1;
 			break;
@@ -678,18 +674,21 @@ main(int argc, char **argv)
 		case 'f':
 			d = mkdev(optarg, &par, 0, bufsz, round,
 			    rate, hold, autovol);
-			/* create new circulate list */
-			dev_first = dev_next = d;
+			while ((a = alt_list) != NULL) {
+				alt_list = a->next;
+				xfree(a);
+			}
 			break;
 		case 'F':
 			if (d == NULL)
 				errx(1, "-F %s: no devices defined", optarg);
-			d = mkdev(optarg, &par, 0, bufsz, round,
+			a = xmalloc(sizeof(struct opt_alt));
+			a->dev = mkdev(optarg, &par, 0, bufsz, round,
 			    rate, hold, autovol);
-			/* add to circulate list */
-			d->alt_next = dev_next;
-			dev_first->alt_next = d;
-			dev_next = d;
+			for (pa = &alt_list; *pa != NULL; pa = &(*pa)->next)
+				;
+			a->next = NULL;
+			*pa = a;
 			break;
 		default:
 			fputs(usagestr, stderr);
@@ -718,7 +717,7 @@ main(int argc, char **argv)
 	 */
 	o = opt_byname("default");
 	if (o == NULL) {
-		o = mkopt("default", dev_list, pmin, pmax, rmin, rmax,
+		o = mkopt("default", dev_list, alt_list, pmin, pmax, rmin, rmax,
 		    mode, vol, 0, dup);
 		if (o == NULL)
 			return 1;
@@ -733,6 +732,11 @@ main(int argc, char **argv)
 			o->maxweight, o->mtc != NULL, o->dup, o->mode) == NULL)
 			return 1;
 		dev_adjpar(d, o->mode, o->pmax, o->rmax);
+	}
+
+	while ((a = alt_list) != NULL) {
+		alt_list = a->next;
+		xfree(a);
 	}
 
 	setsig();

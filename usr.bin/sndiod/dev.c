@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.125 2025/06/27 06:41:52 jsg Exp $	*/
+/*	$OpenBSD: dev.c,v 1.126 2025/11/26 08:40:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -774,7 +774,6 @@ dev_new(char *path, struct aparams *par,
 	d->slot_list = NULL;
 	d->master = MIDI_MAXCTL;
 	d->master_enabled = 0;
-	d->alt_next = d;
 	snprintf(d->name, CTL_NAMEMAX, "%u", d->num);
 	for (pd = &dev_list; *pd != NULL; pd = &(*pd)->next)
 		;
@@ -1113,69 +1112,21 @@ dev_iscompat(struct dev *o, struct dev *n)
  * Close the device, but attempt to migrate everything to a new sndio
  * device.
  */
-struct dev *
+void
 dev_migrate(struct dev *odev)
 {
-	struct dev *ndev;
 	struct opt *o;
-	struct slot *s;
-	int i;
 
 	/* not opened */
 	if (odev->pstate == DEV_CFG)
-		return odev;
-
-	ndev = odev;
-	while (1) {
-		/* try next one, circulating through the list */
-		ndev = ndev->alt_next;
-		if (ndev == odev) {
-			logx(1, "%s: no fall-back device found", odev->path);
-			return NULL;
-		}
-
-
-		if (!dev_ref(ndev))
-			continue;
-
-		/* check if new parameters are compatible with old ones */
-		if (!dev_iscompat(odev, ndev)) {
-			dev_unref(ndev);
-			continue;
-		}
-
-		/* found it!*/
-		break;
-	}
-
-	logx(1, "%s: switching to %s", odev->path, ndev->path);
-
-	if (mtc_array[0].dev == odev)
-		mtc_setdev(&mtc_array[0], ndev);
+		return;
 
 	/* move opts to new device (also moves clients using the opts) */
 	for (o = opt_list; o != NULL; o = o->next) {
 		if (o->dev != odev)
 			continue;
-		if (strcmp(o->name, o->dev->name) == 0)
-			continue;
-		opt_setdev(o, ndev);
+		opt_migrate(o, odev);
 	}
-
-	/* terminate remaining clients */
-	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
-		if (s->opt == NULL || s->opt->dev != odev)
-			continue;
-		if (s->ops != NULL) {
-			s->ops->exit(s->arg);
-			s->ops = NULL;
-		}
-	}
-
-	/* slots and/or MMC hold refs, drop ours */
-	dev_unref(ndev);
-
-	return ndev;
 }
 
 /*
@@ -2019,8 +1970,10 @@ ctl_setval(struct ctl *c, int val)
 		c->curval = val;
 		return 1;
 	case CTL_OPT_DEV:
-		if (opt_setdev(c->u.opt_dev.opt, c->u.opt_dev.dev))
-			c->u.opt_dev.opt->alt_first = c->u.opt_dev.dev;
+		if (opt_setdev(c->u.opt_dev.opt, c->u.opt_dev.dev)) {
+			/* make this the prefered device */
+			opt_setalt(c->u.opt_dev.opt, c->u.opt_dev.dev);
+		}
 		return 1;
 	default:
 		logx(2, "ctl%u: not writable", c->addr);

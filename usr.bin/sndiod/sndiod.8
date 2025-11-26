@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.18 2025/06/19 20:16:34 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.19 2025/11/26 08:40:16 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 19 2025 $
+.Dd $Mdocdate: November 26 2025 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -522,11 +522,9 @@ wait for the MMC start signal and start synchronously.
 Regardless of which device a stream is connected to,
 its playback volume knob is exposed.
 .Sh HOT PLUGGING
-If devices specified with
-.Fl F
-are unavailable when needed or unplugged at runtime,
+If the current device is unavailable when needed or unplugged at runtime,
 .Nm
-will attempt to seamlessly fall back to the last device specified.
+will attempt to seamlessly fall back to the last working device.
 .Pp
 .Nm
 will not automatically switch to specified device that is plugged at runtime.
@@ -536,11 +534,7 @@ must be used to change the
 .Va server.device
 control.
 .Pp
-For instance, specifying a USB device with
-.Fl F
-following a PCI device with
-.Fl f
-allows
+For instance, switching from a PCI device to a USB device allows
 .Nm
 to use the USB one preferably when it's connected
 and to fall back to the PCI one when it's disconnected.

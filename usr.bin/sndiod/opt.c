@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.15 2025/06/20 07:14:38 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.16 2025/11/26 08:40:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <string.h>
+#include <stdio.h>
 
 #include "dev.h"
 #include "midi.h"
@@ -317,7 +318,6 @@ opt_new(struct dev *d, char *name,
     int pmin, int pmax, int rmin, int rmax,
     int maxweight, int mmc, int dup, unsigned int mode)
 {
-	struct dev *a;
 	struct opt *o, **po;
 	char str[64];
 	unsigned int len, num;
@@ -362,17 +362,10 @@ opt_new(struct dev *d, char *name,
 		logx(2, "%s: initial MTC source, controlled by MMC", d->path);
 	}
 
-	if (strcmp(d->name, name) == 0)
-		a = d;
-	else {
-		/* circulate to the first "alternate" device (greatest num) */
-		for (a = d; a->alt_next->num > a->num; a = a->alt_next)
-			;
-	}
-
 	o = xmalloc(sizeof(struct opt));
 	o->num = num;
-	o->alt_first = o->dev = a;
+	o->dev = d;
+	o->alt_list = NULL;
 	o->refcnt = 0;
 
 	/*
@@ -398,6 +391,7 @@ opt_new(struct dev *d, char *name,
 	o->dup = dup;
 	o->mode = mode;
 	memcpy(o->name, name, len + 1);
+	opt_setalt(o, d);
 	o->next = *po;
 	*po = o;
 
@@ -406,6 +400,40 @@ opt_new(struct dev *d, char *name,
 	    (o->dup) ? ", dup" : "", o->maxweight);
 
 	return o;
+}
+
+/*
+ * Make the given device the first alternate device: if it's on the list
+ * make it the first, else create a new one.
+ */
+void
+opt_setalt(struct opt *o, struct dev *d)
+{
+	struct opt_alt *a, **pa;
+
+	for (pa = &o->alt_list; ; pa = &a->next) {
+		if ((a = *pa) == NULL) {
+			a = xmalloc(sizeof(struct opt_alt));
+			a->dev = d;
+			break;
+		} else if (a->dev == d) {
+			*pa = a->next;
+			break;
+		}
+	}
+	a->next = o->alt_list;
+	o->alt_list = a;
+
+#ifdef DEBUG
+	size_t n = 0;
+	char buf[128];
+
+	for (a = o->alt_list; a != NULL; a = a->next) {
+		n += snprintf(buf + n, n >= sizeof(buf) ? 0 : sizeof(buf) - n,
+		    "%s%s", a->dev->path, (a->next != NULL) ? ", " : "");
+	}
+	logx(2, "%s: alt -> %s", o->name, buf);
+#endif
 }
 
 struct opt *
@@ -436,6 +464,7 @@ void
 opt_del(struct opt *o)
 {
 	struct opt **po;
+	struct opt_alt *a;
 
 	for (po = &opt_list; *po != o; po = &(*po)->next) {
 #ifdef DEBUG
@@ -446,6 +475,10 @@ opt_del(struct opt *o)
 #endif
 	}
 	midi_del(o->midi);
+	while ((a = o->alt_list) != NULL) {
+		o->alt_list = a->next;
+		xfree(a);
+	}
 	*po = o->next;
 	xfree(o);
 }
@@ -562,42 +595,64 @@ opt_setdev(struct opt *o, struct dev *ndev)
 }
 
 /*
+ * Move the opt structure to a new device
+ */
+void
+opt_migrate(struct opt *o, struct dev *odev)
+{
+	struct opt_alt *a;
+	struct slot *s;
+	int i;
+
+	for (a = o->alt_list; a != NULL; a = a->next) {
+		if (a->dev == odev)
+			continue;
+		if (opt_setdev(o, a->dev))
+			return;
+	}
+	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
+		if (s->opt != o)
+			continue;
+		if (s->ops) {
+			s->ops->exit(s->arg);
+			s->ops = NULL;
+		}
+	}
+}
+
+/*
  * Get a reference to opt's device
  */
 struct dev *
 opt_ref(struct opt *o)
 {
 	struct dev *d;
+	struct opt_alt *a;
 
 	if (o->refcnt == 0) {
-		if (strcmp(o->name, o->dev->name) == 0) {
-			if (!dev_ref(o->dev))
+		/* find first working one */
+		a = o->alt_list;
+		while (1) {
+			if (a == NULL)
 				return NULL;
-		} else {
-			/* find first working one */
-			d = o->alt_first;
-			while (1) {
-				if (dev_ref(d))
-					break;
-				d = d->alt_next;
-				if (d == o->alt_first)
-					return NULL;
-			}
+			if (dev_ref(a->dev))
+				break;
+			a = a->next;
+		}
 
-			/* if device changed, move everything to the new one */
-			if (d != o->dev)
-				opt_setdev(o, d);
+		/* if device changed, move everything to the new one */
+		if (a->dev != o->dev)
+			opt_setdev(o, a->dev);
 
-			/* create server.device control */
-			for (d = dev_list; d != NULL; d = d->next) {
-				d->refcnt++;
-				if (d->pstate == DEV_CFG)
-					dev_open(d);
-				ctl_new(CTL_OPT_DEV, o, d,
-				    CTL_SEL, dev_getdisplay(d),
-				    o->name, "server", -1, "device",
-				    d->name, -1, 1, o->dev == d);
-			}
+		/* create server.device control */
+		for (d = dev_list; d != NULL; d = d->next) {
+			d->refcnt++;
+			if (d->pstate == DEV_CFG)
+				dev_open(d);
+			ctl_new(CTL_OPT_DEV, o, d,
+			    CTL_SEL, dev_getdisplay(d),
+			    o->name, "server", -1, "device",
+			    d->name, -1, 1, o->dev == d);
 		}
 	}
 
