@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.7 2025/11/25 11:58:13 dlg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.8 2025/11/26 06:57:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -320,25 +320,25 @@ rport_start(struct ifqueue *ifq)
 static void
 rport_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
-        switch (m->m_pkthdr.ph_family) {
-        case AF_INET:
-                ipv4_input(ifp, m, ns);
-                break;
+	switch (m->m_pkthdr.ph_family) {
+	case AF_INET:
+		ipv4_input(ifp, m, ns);
+		break;
 #ifdef INET6
-        case AF_INET6:
-                ipv6_input(ifp, m, ns);
-                break;
+	case AF_INET6:
+		ipv6_input(ifp, m, ns);
+		break;
 #endif
 #ifdef MPLS
-        case AF_MPLS:
-                mpls_input(ifp, m, ns);
-                break;
+	case AF_MPLS:
+		mpls_input(ifp, m, ns);
+		break;
 #endif
-        default:
+	default:
 		counters_inc(ifp->if_counters, ifc_noproto);
-                m_freem(m);
-                break;
-        }
+		m_freem(m);
+		break;
+	}
 }
 
 static int
