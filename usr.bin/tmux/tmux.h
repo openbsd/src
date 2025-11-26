@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1276 2025/11/18 08:42:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1277 2025/11/26 18:57:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2898,6 +2898,7 @@ extern u_int	  status_prompt_hsize[];
 void	 status_timer_start(struct client *);
 void	 status_timer_start_all(void);
 void	 status_update_cache(struct session *);
+u_int	 status_prompt_line_at(struct client *);
 int	 status_at_line(struct client *);
 u_int	 status_line_size(struct client *);
 struct style_range *status_get_range(struct client *, u_int, u_int);
