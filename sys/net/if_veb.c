@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.56 2025/11/25 11:56:46 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.57 2025/11/26 01:43:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1251,7 +1251,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 		goto drop;
 
 #if NPF > 0
-	if (ISSET(ifp->if_flags, IFF_LINK1) &&
+	if (ISSET(ifp->if_flags, IFF_LINK1) && p->p_pvid == ctx->vs &&
 	    (m = veb_pf(ifp0, PF_IN, m, ctx.ns)) == NULL)
 		return (NULL);
 #endif
