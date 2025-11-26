@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.58 2025/11/26 02:13:54 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.59 2025/11/26 03:43:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -3262,6 +3262,7 @@ vport_clone_create(struct if_clone *ifc, int unit)
 
 	if_counters_alloc(ifp);
 	if_attach(ifp);
+	if_attach_iqueues(ifp, softnet_count());
 	ether_ifattach(ifp);
 
 	return (0);
