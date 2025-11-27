@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.16 2024/02/06 12:44:27 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.17 2025/11/27 10:17:19 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -423,7 +423,8 @@ appl_agentx_recv(int fd, short event, void *cookie)
 	case AX_PDU_TYPE_PING:
 		ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 		    pdu->ap_header.aph_transactionid,
-		    pdu->ap_header.aph_packetid, smi_getticks(),
+		    pdu->ap_header.aph_packetid,
+		    appl_sysuptime(pdu->ap_context.aos_string),
 		    APPL_ERROR_NOERROR, 0, NULL, 0);
 		event_add(&(conn->conn_wev), NULL);
 		break;
@@ -433,7 +434,8 @@ appl_agentx_recv(int fd, short event, void *cookie)
 		    ax_pdutype2string(pdu->ap_header.aph_type));
 		ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 		    pdu->ap_header.aph_transactionid,
-		    pdu->ap_header.aph_packetid, smi_getticks(),
+		    pdu->ap_header.aph_packetid,
+		    appl_sysuptime(pdu->ap_context.aos_string),
 		    APPL_ERROR_PROCESSINGERROR, 1,
 		    pdu->ap_payload.ap_vbl.ap_varbind,
 		    pdu->ap_payload.ap_vbl.ap_nvarbind);
@@ -455,8 +457,8 @@ appl_agentx_recv(int fd, short event, void *cookie)
  fail:
 	ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 	    pdu->ap_header.aph_transactionid,
-	    pdu->ap_header.aph_packetid, smi_getticks(),
-	    error, 0, NULL, 0);
+	    pdu->ap_header.aph_packetid,
+	    appl_sysuptime(pdu->ap_context.aos_string), error, 0, NULL, 0);
 	event_add(&(conn->conn_wev), NULL);
 	ax_pdu_free(pdu);
 
@@ -565,13 +567,14 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 
 	ax_response(conn->conn_ax, session->sess_id,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    smi_getticks(), APPL_ERROR_NOERROR, 0, NULL, 0);
+	    appl_sysuptime(NULL), APPL_ERROR_NOERROR, 0, NULL, 0);
 	event_add(&(conn->conn_wev), NULL);
 
 	return;
  fail:
 	ax_response(conn->conn_ax, 0, pdu->ap_header.aph_transactionid,
-	    pdu->ap_header.aph_packetid, 0, error, 0, NULL, 0);
+	    pdu->ap_header.aph_packetid, appl_sysuptime(NULL),
+	    error, 0, NULL, 0);
 	event_add(&(conn->conn_wev), NULL);
 	if (session != NULL)
 		free(session->sess_descr.aos_string);
@@ -597,7 +600,7 @@ appl_agentx_close(struct appl_agentx_session *session, struct ax_pdu *pdu)
 
 	ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    smi_getticks(), error, 0, NULL, 0);
+	    appl_sysuptime(NULL), error, 0, NULL, 0);
 	event_add(&(conn->conn_wev), NULL);
 	if (error == APPL_ERROR_NOERROR)
 		return;
@@ -676,7 +679,7 @@ appl_agentx_register(struct appl_agentx_session *session, struct ax_pdu *pdu)
  fail:
 	ax_response(session->sess_conn->conn_ax, session->sess_id,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    smi_getticks(), error, 0, NULL, 0);
+	    appl_sysuptime(pdu->ap_context.aos_string), error, 0, NULL, 0);
 	event_add(&(session->sess_conn->conn_wev), NULL);
 }
 
@@ -703,7 +706,7 @@ appl_agentx_unregister(struct appl_agentx_session *session, struct ax_pdu *pdu)
  fail:
 	ax_response(session->sess_conn->conn_ax, session->sess_id,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    smi_getticks(), error, 0, NULL, 0);
+	    appl_sysuptime(pdu->ap_context.aos_string), error, 0, NULL, 0);
 	event_add(&(session->sess_conn->conn_wev), NULL);
 }
 
@@ -835,7 +838,7 @@ appl_agentx_addagentcaps(struct appl_agentx_session *session,
  fail:
 	ax_response(session->sess_conn->conn_ax, session->sess_id,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    smi_getticks(), error, 0, NULL, 0);
+	    appl_sysuptime(pdu->ap_context.aos_string), error, 0, NULL, 0);
 	event_add(&(session->sess_conn->conn_wev), NULL);
 }
 
@@ -860,7 +863,7 @@ appl_agentx_removeagentcaps(struct appl_agentx_session *session,
  fail:
 	ax_response(session->sess_conn->conn_ax, session->sess_id,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    smi_getticks(), error, 0, NULL, 0);
+	    appl_sysuptime(pdu->ap_context.aos_string), error, 0, NULL, 0);
 	event_add(&(session->sess_conn->conn_wev), NULL);
 }
 

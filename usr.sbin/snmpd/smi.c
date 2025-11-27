@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.40 2024/02/06 12:44:27 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.41 2025/11/27 10:17:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -61,23 +61,6 @@ static struct oid smi_objects[] = MIB_TREE;
 RB_HEAD(keytree, oid);
 RB_PROTOTYPE(keytree, oid, o_keyword, smi_key_cmp);
 struct keytree smi_keytree;
-
-u_long
-smi_getticks(void)
-{
-	struct timeval	 now, run;
-	u_long		 ticks;
-
-	gettimeofday(&now, NULL);
-	if (timercmp(&now, &snmpd_env->sc_starttime, <=))
-		return (0);
-	timersub(&now, &snmpd_env->sc_starttime, &run);
-	ticks = run.tv_sec * 100;
-	if (run.tv_usec)
-		ticks += run.tv_usec / 10000;
-
-	return (ticks);
-}
 
 char *
 smi_oid2string(struct ber_oid *o, char *buf, size_t len, size_t skip)

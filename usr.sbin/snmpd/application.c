@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.43 2024/02/08 17:34:09 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.44 2025/11/27 10:17:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "application.h"
 #include "log.h"
@@ -48,7 +49,7 @@ struct appl_agentcap {
 	uint32_t aa_index;
 	struct ber_oid aa_oid;
 	char aa_descr[256];
-	int aa_uptime;
+	uint32_t aa_uptime;
 
 	TAILQ_ENTRY(appl_agentcap) aa_entry;
 };
@@ -57,9 +58,12 @@ struct appl_context {
 	char ac_name[APPL_CONTEXTNAME_MAX + 1];
 
 	RB_HEAD(appl_regions, appl_region) ac_regions;
+
 	TAILQ_HEAD(, appl_agentcap) ac_agentcaps;
 	int ac_agentcap_lastid;
-	int ac_agentcap_lastchange;
+	uint32_t ac_agentcap_lastchange;
+
+	struct timespec ac_starttime;
 
 	TAILQ_ENTRY(appl_context) ac_entries;
 };
@@ -179,6 +183,8 @@ appl(void)
 void
 appl_init(void)
 {
+	if (appl_context(NULL, 1) == NULL)
+		fatal("Failed to create default context");
 	appl_blocklist_init();
 	appl_internal_init();
 	appl_agentx_init();
@@ -220,7 +226,7 @@ appl_context(const char *name, int create)
 	}
 
 	/* Always allow the default namespace */
-	if (!create && name[0] != '\0') {
+	if (!create) {
 		errno = ENOENT;
 		return NULL;
 	}
@@ -235,6 +241,9 @@ appl_context(const char *name, int create)
 	ctx->ac_agentcap_lastchange = 0;
 
 	TAILQ_INSERT_TAIL(&contexts, ctx, ac_entries);
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ctx->ac_starttime) == -1)
+		fatal("clock_gettime");
 	return ctx;
 }
 
@@ -271,7 +280,7 @@ appl_addagentcaps(const char *ctxname, struct ber_oid *oid, const char *descr,
 	cap->aa_context = ctx;
 	cap->aa_index = ++ctx->ac_agentcap_lastid;
 	cap->aa_oid = *oid;
-	cap->aa_uptime = smi_getticks();
+	cap->aa_uptime = appl_sysuptime(ctxname);
 	if (strlcpy(cap->aa_descr, descr,
 	    sizeof(cap->aa_descr)) >= sizeof(cap->aa_descr)) {
 		log_info("%s: Can't add agent capabilities %s: "
@@ -331,8 +340,25 @@ void
 appl_agentcap_free(struct appl_agentcap *cap)
 {
 	TAILQ_REMOVE(&(cap->aa_context->ac_agentcaps), cap, aa_entry);
-	cap->aa_context->ac_agentcap_lastchange = smi_getticks();
+	cap->aa_context->ac_agentcap_lastchange =
+	    appl_sysuptime(cap->aa_context->ac_name);
 	free(cap);
+}
+
+uint32_t
+appl_sysuptime(const char *ctxname)
+{
+	struct appl_context *ctx;
+	struct timespec now, uptime;
+
+	if ((ctx = appl_context(ctxname, 0)) == NULL)
+		return 0;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
+		fatal("clock_gettime");
+
+	timespecsub(&now, &ctx->ac_starttime, &uptime);
+	return uptime.tv_sec * 100 + uptime.tv_nsec / 10000000;
 }
 
 struct ber_element *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.52 2024/04/12 14:17:42 bluhm Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.53 2025/11/27 10:17:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -218,7 +218,6 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
 
-	gettimeofday(&env->sc_starttime, NULL);
 	env->sc_engine_boots = 0;
 
 	proc_init(ps, procs, nitems(procs), debug, argc0, argv0, proc_id);

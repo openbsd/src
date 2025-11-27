@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.h,v 1.13 2023/11/12 16:07:34 martijn Exp $	*/
+/*	$OpenBSD: application.h,v 1.14 2025/11/27 10:17:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -123,6 +123,7 @@ void appl(void);
 void appl_init(void);
 void appl_shutdown(void);
 struct appl_context *appl_context(const char *, int);
+uint32_t appl_sysuptime(const char *);
 enum appl_error appl_addagentcaps(const char *, struct ber_oid *, const char *,
     struct appl_backend *);
 enum appl_error appl_removeagentcaps(const char *, struct ber_oid *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.12 2024/02/06 12:44:27 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.13 2025/11/27 10:17:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -577,7 +577,7 @@ appl_internal_system(struct ber_oid *oid)
 	else if (ober_oid_cmp(&OID(MIB_sysOID, 0), oid) == 0)
 		return ober_add_oid(NULL, &s->sys_oid);
 	else if (ober_oid_cmp(&OID(MIB_sysUpTime, 0), oid) == 0) {
-		value = ober_add_integer(NULL, smi_getticks());
+		value = ober_add_integer(NULL, appl_sysuptime(NULL));
 		ober_set_header(value, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
 	} else if (ober_oid_cmp(&OID(MIB_sysContact, 0), oid) == 0)
 		return ober_add_string(NULL, s->sys_contact);

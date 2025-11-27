@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.120 2024/05/21 05:00:48 jsg Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.121 2025/11/27 10:17:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,6 @@
 
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 #include <sys/tree.h>
 #include <sys/types.h>
 #include <sys/un.h>
@@ -402,7 +401,6 @@ struct snmpd {
 	const char		*sc_confpath;
 	struct addresslist	 sc_addresses;
 	struct axmasterlist	 sc_agentx_masters;
-	struct timeval		 sc_starttime;
 	u_int32_t		 sc_engine_boots;
 
 	char			 sc_rdcommunity[SNMPD_MAXCOMMUNITYLEN];
