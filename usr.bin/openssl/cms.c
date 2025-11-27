@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.38 2025/06/07 08:24:15 tb Exp $ */
+/* $OpenBSD: cms.c,v 1.39 2025/11/27 08:27:31 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1884,14 +1884,14 @@ receipt_request_print(BIO *out, CMS_ContentInfo *cms)
 			BIO_puts(bio_err, "  Receipt Request Parse Error\n");
 			ERR_print_errors(bio_err);
 		} else {
-			char *id;
+			const char *id;
 			int idlen;
 
 			CMS_ReceiptRequest_get0_values(rr, &scid, &allorfirst,
 			    &rlist, &rto);
 			BIO_puts(out, "  Signed Content ID:\n");
 			idlen = ASN1_STRING_length(scid);
-			id = (char *) ASN1_STRING_data(scid);
+			id = (const char *) ASN1_STRING_get0_data(scid);
 			BIO_dump_indent(out, id, idlen, 4);
 			BIO_puts(out, "  Receipts From");
 			if (rlist != NULL) {
