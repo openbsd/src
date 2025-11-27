@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.107 2025/07/07 02:28:50 jsg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.108 2025/11/27 03:06:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -52,6 +52,7 @@
 
 struct mpe_softc {
 	struct ifnet		sc_if;		/* the interface */
+	caddr_t			sc_bpf;
 	int			sc_txhprio;
 	int			sc_rxhprio;
 	unsigned int		sc_rdomain;
@@ -73,7 +74,7 @@ int	mpe_ioctl(struct ifnet *, u_long, caddr_t);
 void	mpe_start(struct ifnet *);
 int	mpe_clone_create(struct if_clone *, int);
 int	mpe_clone_destroy(struct ifnet *);
-void	mpe_input(struct ifnet *, struct mbuf *);
+void	mpe_input(struct ifnet *, struct mbuf *, struct netstack *);
 
 struct if_clone	mpe_cloner =
     IF_CLONE_INITIALIZER("mpe", mpe_clone_create, mpe_clone_destroy);
@@ -106,8 +107,8 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_mtu = MPE_MTU;
 	ifp->if_ioctl = mpe_ioctl;
-	ifp->if_bpf_mtap = p2p_bpf_mtap;
-	ifp->if_input = p2p_input;
+	ifp->if_bpf_mtap = bpf_mtap;
+	ifp->if_input = mpe_input;
 	ifp->if_output = mpe_output;
 	ifp->if_start = mpe_start;
 	ifp->if_type = IFT_MPLS;
@@ -120,7 +121,8 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
+	bpfattach(&sc->sc_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
+	bpfattach(&ifp->if_bpf, ifp, DLT_MPLS, 0);
 #endif
 
 	sc->sc_txhprio = 0;
@@ -167,76 +169,31 @@ mpe_clone_destroy(struct ifnet *ifp)
 void
 mpe_start(struct ifnet *ifp)
 {
-	struct mpe_softc	*sc = ifp->if_softc;
-	struct mbuf		*m;
-	struct sockaddr		*sa;
-	struct sockaddr		smpls = { .sa_family = AF_MPLS };
-	struct rtentry		*rt;
-	struct ifnet		*ifp0;
-
-	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
-		sa = mtod(m, struct sockaddr *);
-		rt = rtalloc(sa, RT_RESOLVE, sc->sc_rdomain);
-		if (!rtisvalid(rt)) {
-			m_freem(m);
-			rtfree(rt);
-			continue;
-		}
-
-		ifp0 = if_get(rt->rt_ifidx);
-		if (ifp0 == NULL) {
-			m_freem(m);
-			rtfree(rt);
-			continue;
-		}
-
-		m_adj(m, sa->sa_len);
-
-#if NBPFILTER > 0
-		if (ifp->if_bpf) {
-			/* remove MPLS label before passing packet to bpf */
-			m->m_data += sizeof(struct shim_hdr);
-			m->m_len -= sizeof(struct shim_hdr);
-			m->m_pkthdr.len -= sizeof(struct shim_hdr);
-			bpf_mtap_af(ifp->if_bpf, m->m_pkthdr.ph_family,
-			    m, BPF_DIRECTION_OUT);
-			m->m_data -= sizeof(struct shim_hdr);
-			m->m_len += sizeof(struct shim_hdr);
-			m->m_pkthdr.len += sizeof(struct shim_hdr);
-		}
-#endif
-
-		m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
-		CLR(m->m_flags, M_BCAST|M_MCAST);
-
-		mpls_output(ifp0, m, &smpls, rt);
-		if_put(ifp0);
-		rtfree(rt);
-	}
+	ifq_purge(&ifp->if_snd);
 }
 
 int
 mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-	struct rtentry *rt)
+    struct rtentry *rt)
 {
-	struct mpe_softc *sc;
+	struct mpe_softc *sc = ifp->if_softc;
 	struct rt_mpls	*rtmpls;
+	struct ifnet	*ifp0 = NULL;
+	struct rtentry	*rt0 = NULL;
+	struct sockaddr	smpls = { .sa_family = AF_MPLS };
 	struct shim_hdr	shim;
-	int		error;
 	int		txprio;
 	uint8_t		ttl = mpls_defttl;
 	uint8_t		tos, prio;
 	size_t		ttloff;
-	socklen_t	slen;
+	int		error;
+#if NBPFILTER > 0
+	caddr_t		if_bpf;
+#endif
 
 	if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_MPLS)) {
-		m_freem(m);
-		return (ENETUNREACH);
-	}
-
-	if (dst->sa_family == AF_LINK && ISSET(rt->rt_flags, RTF_LOCAL)) {
-		mpe_input(ifp, m);
-		return (0);
+		error = ENETUNREACH;
+		goto drop;
 	}
 
 #ifdef DIAGNOSTIC
@@ -249,8 +206,8 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	rtmpls = (struct rt_mpls *)rt->rt_llinfo;
 	if (rtmpls->mpls_operation != MPLS_OP_PUSH) {
-		m_freem(m);
-		return (ENETUNREACH);
+		error = ENETUNREACH;
+		goto drop;
 	}
 
 	error = 0;
@@ -259,7 +216,6 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		struct ip *ip = mtod(m, struct ip *);
 		tos = ip->ip_tos;
 		ttloff = offsetof(struct ip, ip_ttl);
-		slen = sizeof(struct sockaddr_in);
 		break;
 	}
 #ifdef INET6
@@ -268,14 +224,34 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		uint32_t flow = bemtoh32(&ip6->ip6_flow);
 		tos = flow >> 20;
 		ttloff = offsetof(struct ip6_hdr, ip6_hlim);
-		slen = sizeof(struct sockaddr_in6);
 		break;
 	}
 #endif
 	default:
-		m_freem(m);
-		return (EPFNOSUPPORT);
+		error = EPFNOSUPPORT;
+		goto drop;
 	}
+
+	rt0 = rtalloc(rt->rt_gateway, RT_RESOLVE, sc->sc_rdomain);
+	if (!rtisvalid(rt0)) {
+		error = EHOSTUNREACH;
+		goto rtfree;
+	}
+
+	ifp0 = if_get(rt0->rt_ifidx);
+	if (ifp0 == NULL) {
+		error = ENETUNREACH;
+		goto rtfree;
+	}
+
+	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
+	CLR(m->m_flags, M_BCAST|M_MCAST);
+
+#if NBPFILTER > 0
+	if_bpf = sc->sc_bpf;
+	if (if_bpf)
+		bpf_mtap_af(if_bpf, dst->sa_family, m, BPF_DIRECTION_OUT);
+#endif
 
 	if (mpls_mapttl_ip) {
 		/* assumes the ip header is already contig */
@@ -302,25 +278,27 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	m = m_prepend(m, sizeof(shim), M_NOWAIT);
 	if (m == NULL) {
-		error = ENOMEM;
-		goto out;
+		error = ENOBUFS;
+		goto ifput;
 	}
 	*mtod(m, struct shim_hdr *) = shim;
 
-	m = m_prepend(m, slen, M_WAITOK);
-	if (m == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
-	memcpy(mtod(m, struct sockaddr *), rt->rt_gateway, slen);
-	mtod(m, struct sockaddr *)->sa_len = slen; /* to be sure */
+#if NBPFILTER > 0
+	if_bpf = ifp->if_bpf;
+		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+#endif
 
-	m->m_pkthdr.ph_family = dst->sa_family;
+	mpls_output(ifp0, m, &smpls, rt0);
+	if_put(ifp0);
+	rtfree(rt0);
+	return (0);
 
-	error = if_enqueue(ifp, m);
-out:
-	if (error)
-		ifp->if_oerrors++;
+ifput:
+	if_put(ifp0);
+rtfree:
+	rtfree(rt0);
+drop:
+	m_freem(m);
 	return (error);
 }
 
@@ -457,7 +435,7 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 void
-mpe_input(struct ifnet *ifp, struct mbuf *m)
+mpe_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
 	struct mpe_softc *sc = ifp->if_softc;
 	struct shim_hdr	*shim;
@@ -465,6 +443,9 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 	uint8_t		 ttl, tos;
 	uint32_t	 exp;
 	int rxprio = sc->sc_rxhprio;
+#if NBPFILTER > 0
+	caddr_t		 if_bpf;
+#endif
 
 	shim = mtod(m, struct shim_hdr *);
 	exp = ntohl(shim->shim_label & MPLS_EXP_MASK) >> MPLS_EXP_OFFSET;
@@ -543,7 +524,15 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 		break;
 	}
 
-	if_vinput(ifp, m, NULL);
+#if NBPFILTER > 0
+	if_bpf = sc->sc_bpf;
+	if (if_bpf) {
+		bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family, m,
+		    BPF_DIRECTION_IN);
+	}
+#endif
+
+	p2p_input(ifp, m, ns);
 	return;
 drop:
 	m_freem(m);

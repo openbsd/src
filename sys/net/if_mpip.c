@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.20 2025/03/02 21:28:32 bluhm Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.21 2025/11/27 03:06:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -52,6 +52,7 @@ struct mpip_neighbor {
 
 struct mpip_softc {
 	struct ifnet		sc_if;
+	caddr_t			sc_bpf;
 	unsigned int		sc_dead;
 	uint32_t		sc_flow; /* xor for mbuf flowid */
 
@@ -71,6 +72,7 @@ void	mpipattach(int);
 int	mpip_clone_create(struct if_clone *, int);
 int	mpip_clone_destroy(struct ifnet *);
 int	mpip_ioctl(struct ifnet *, u_long, caddr_t);
+void	mpip_input(struct ifnet *, struct mbuf *, struct netstack *);
 int	mpip_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 void	mpip_start(struct ifnet *);
@@ -112,8 +114,8 @@ mpip_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_ioctl = mpip_ioctl;
-	ifp->if_bpf_mtap = p2p_bpf_mtap;
-	ifp->if_input = p2p_input;
+	ifp->if_bpf_mtap = bpf_mtap;
+	ifp->if_input = mpip_input;
 	ifp->if_output = mpip_output;
 	ifp->if_start = mpip_start;
 	ifp->if_rtrequest = p2p_rtrequest;
@@ -125,7 +127,8 @@ mpip_clone_create(struct if_clone *ifc, int unit)
 	if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
+	bpfattach(&sc->sc_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
+	bpfattach(&ifp->if_bpf, ifp, DLT_MPLS, 0);
 #endif
 
 	refcnt_init_trace(&sc->sc_ifa.ifa_refcnt, DT_REFCNT_IDX_IFADDR);
@@ -462,14 +465,17 @@ mpip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-static void
-mpip_input(struct mpip_softc *sc, struct mbuf *m)
+void
+mpip_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct mpip_softc *sc = ifp->if_softc;
 	int rxprio = sc->sc_rxhprio;
 	uint32_t shim, exp;
 	struct mbuf *n;
 	uint8_t ttl, tos;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		goto drop;
@@ -608,7 +614,16 @@ mpip_input(struct mpip_softc *sc, struct mbuf *m)
 		break;
 	}
 
-	if_vinput(ifp, m, NULL);
+#if NBPFILTER > 0
+	if_bpf = sc->sc_bpf;
+	if (if_bpf) {
+		if (bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family,
+		    m, BPF_DIRECTION_OUT))
+			goto drop;
+	}
+#endif /* NBPFILTER */
+
+	p2p_input(ifp, m, ns);
 	return;
 drop:
 	m_freem(m);
@@ -618,14 +633,7 @@ int
 mpip_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
-	struct mpip_softc *sc = ifp->if_softc;
 	int error;
-
-	if (dst->sa_family == AF_LINK &&
-	    rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL)) {
-		mpip_input(sc, m);
-		return (0);
-	}
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
 		error = ENETDOWN;
@@ -691,7 +699,7 @@ mpip_start(struct ifnet *ifp)
 
 	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
-		caddr_t if_bpf = sc->sc_if.if_bpf;
+		caddr_t if_bpf = sc->sc_bpf;
 		if (if_bpf) {
 			bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family,
 			    m, BPF_DIRECTION_OUT);
@@ -795,6 +803,12 @@ mpip_start(struct ifnet *ifp)
 
 		m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 		CLR(m->m_flags, M_BCAST|M_MCAST);
+
+#if NBPFILTER > 0
+		if_bpf = ifp->if_bpf;
+		if (if_bpf)
+			bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
+#endif /* NBPFILTER */
 
 		mpls_output(ifp0, m, (struct sockaddr *)&smpls, rt);
 	}

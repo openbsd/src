@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.68 2025/07/07 02:28:50 jsg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.69 2025/11/27 03:06:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -46,6 +46,7 @@ struct mpw_neighbor {
 struct mpw_softc {
 	struct arpcom		sc_ac;
 #define sc_if			sc_ac.ac_if
+	caddr_t			sc_bpf;
 
 	int			sc_txhprio;
 	int			sc_rxhprio;
@@ -66,9 +67,8 @@ void	mpwattach(int);
 int	mpw_clone_create(struct if_clone *, int);
 int	mpw_clone_destroy(struct ifnet *);
 int	mpw_ioctl(struct ifnet *, u_long, caddr_t);
-int	mpw_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-    struct rtentry *);
 void	mpw_start(struct ifnet *);
+void	mpw_input(struct ifnet *, struct mbuf *, struct netstack *);
 
 struct if_clone mpw_cloner =
     IF_CLONE_INITIALIZER("mpw", mpw_clone_create, mpw_clone_destroy);
@@ -89,26 +89,10 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	if (sc == NULL)
 		return (ENOMEM);
 
+	ifp = &sc->sc_if;
+
 	sc->sc_flow = arc4random();
 	sc->sc_neighbor = NULL;
-
-	ifp = &sc->sc_if;
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
-	    ifc->ifc_name, unit);
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_CLONED;
-	ifp->if_ioctl = mpw_ioctl;
-	ifp->if_output = mpw_output;
-	ifp->if_start = mpw_start;
-	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
-	ether_fakeaddr(ifp);
-
-	sc->sc_dead = 0;
-
-	if_counters_alloc(ifp);
-	if_attach(ifp);
-	ether_ifattach(ifp);
 
 	sc->sc_txhprio = 0;
 	sc->sc_rxhprio = IF_HDRPRIO_PACKET;
@@ -118,6 +102,30 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 	sc->sc_smpls.smpls_len = sizeof(sc->sc_smpls);
 	sc->sc_smpls.smpls_family = AF_MPLS;
+
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
+	    ifc->ifc_name, unit);
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_ioctl = mpw_ioctl;
+	ifp->if_start = mpw_start;
+	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
+	ether_fakeaddr(ifp);
+
+	sc->sc_dead = 0;
+
+	ether_ifattach(ifp);
+	ifp->if_input = mpw_input;
+
+#if NBPFILTER > 0
+	bpfdetach(ifp); /* undo bpfattach in ether_ifattach */
+	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
+	bpfattach(&ifp->if_bpf, ifp, DLT_MPLS, 0);
+#endif
+
+	if_counters_alloc(ifp);
+	if_attach(ifp);
 
 	return (0);
 }
@@ -505,15 +513,18 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-static void
-mpw_input(struct mpw_softc *sc, struct mbuf *m)
+void
+mpw_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
-	struct ifnet *ifp = &sc->sc_if;
+	struct mpw_softc *sc = ifp->if_softc;
 	struct shim_hdr *shim;
 	struct mbuf *n;
 	uint32_t exp;
 	int rxprio;
 	int off;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		goto drop;
@@ -613,25 +624,16 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 	/* packet has not been processed by PF yet. */
 	KASSERT(m->m_pkthdr.pf.statekey == NULL);
 
-	if_vinput(ifp, m, NULL);
+#if NBPFILTER > 0
+	if_bpf = sc->sc_bpf;
+	if (if_bpf)
+		bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
+	ether_input(ifp, m, ns);
 	return;
 drop:
 	m_freem(m);
-}
-
-int
-mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
-    struct rtentry *rt)
-{
-	struct mpw_softc *sc = ifp->if_softc;
-
-	if (dst->sa_family == AF_LINK &&
-	    rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL)) {
-		mpw_input(sc, m);
-		return (0);
-	}
-
-	return (ether_output(ifp, m, dst, rt));
 }
 
 void
@@ -672,8 +674,11 @@ mpw_start(struct ifnet *ifp)
 
 	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
-		if (sc->sc_if.if_bpf)
-			bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_OUT);
+		caddr_t if_bpf;
+
+		if_bpf = sc->sc_bpf;
+		if (if_bpf)
+			bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER */
 
 		m0 = m_get(M_DONTWAIT, m->m_type);
@@ -731,6 +736,12 @@ mpw_start(struct ifnet *ifp)
 		shim = mtod(m0, struct shim_hdr *);
 		shim->shim_label = htonl(mpls_defttl) & MPLS_TTL_MASK;
 		shim->shim_label |= n->n_rshim.shim_label | exp | bos;
+
+#if NBPFILTER > 0
+		if_bpf = ifp->if_bpf;
+		if (if_bpf)
+			bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
+#endif /* NBPFILTER */
 
 		m0->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 		CLR(m0->m_flags, M_BCAST|M_MCAST);

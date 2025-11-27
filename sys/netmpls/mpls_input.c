@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.80 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.81 2025/11/27 03:06:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -44,7 +44,8 @@
 #endif
 
 struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
-void		 mpls_input_local(struct rtentry *, struct mbuf *);
+static void	 mpls_input_local(struct rtentry *, struct mbuf *,
+		     struct netstack *);
 
 void
 mpls_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
@@ -186,7 +187,7 @@ do_v6:
 	switch (rt_mpls->mpls_operation) {
 	case MPLS_OP_POP:
 		if (ISSET(rt->rt_flags, RTF_LOCAL)) {
-			mpls_input_local(rt, m);
+			mpls_input_local(rt, m, ns);
 			goto done;
 		}
 
@@ -277,8 +278,8 @@ done:
 	rtfree(rt);
 }
 
-void
-mpls_input_local(struct rtentry *rt, struct mbuf *m)
+static void
+mpls_input_local(struct rtentry *rt, struct mbuf *m, struct netstack *ns)
 {
 	struct ifnet *ifp;
 
@@ -288,12 +289,7 @@ mpls_input_local(struct rtentry *rt, struct mbuf *m)
 		return;
 	}
 
-	/* shortcut sending out the packet */
-	if (!ISSET(ifp->if_xflags, IFXF_MPLS))
-		(*ifp->if_output)(ifp, m, rt->rt_gateway, rt);
-	else
-		(*ifp->if_ll_output)(ifp, m, rt->rt_gateway, rt);
-
+	if_vinput(ifp, m, ns);
 	if_put(ifp);
 }
 
