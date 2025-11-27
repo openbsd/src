@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.74 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: login.c,v 1.75 2025/11/27 17:27:22 jca Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -711,7 +711,7 @@ failed:
 		    "  You must change your password, now!\n");
 
 	if (setusercontext(lc, pwd, rootlogin ? 0 : pwd->pw_uid,
-	    LOGIN_SETALL & ~LOGIN_SETPATH) < 0) {
+	    (LOGIN_SETALL & ~LOGIN_SETPATH) | LOGIN_SETXDGENV) < 0) {
 		warn("unable to set user context");
 		quickexit(1);
 	}
