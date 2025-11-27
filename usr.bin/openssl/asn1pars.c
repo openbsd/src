@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.17 2025/01/02 12:31:44 tb Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.18 2025/11/27 08:22:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -241,7 +241,7 @@ asn1parse_main(int argc, char **argv)
 	BIO *in = NULL, *out = NULL, *b64 = NULL, *derout = NULL;
 	char *str = NULL;
 	const char *errstr = NULL;
-	unsigned char *tmpbuf;
+	const unsigned char *tmpbuf;
 	const unsigned char *ctmpbuf;
 	BUF_MEM *buf = NULL;
 	ASN1_TYPE *at = NULL;
@@ -368,8 +368,8 @@ asn1parse_main(int argc, char **argv)
 				goto end;
 			}
 			/* hmm... this is a little evil but it works */
-			tmpbuf = at->value.asn1_string->data;
-			tmplen = at->value.asn1_string->length;
+			tmpbuf = ASN1_STRING_get0_data(at->value.asn1_string);
+			tmplen = ASN1_STRING_length(at->value.asn1_string);
 		}
 		str = (char *) tmpbuf;
 		num = tmplen;
