@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.41 2025/10/30 18:23:30 jca Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.42 2025/11/27 19:15:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -816,25 +816,29 @@ initriscv(struct riscv_bootparams *rbp)
 	/*
 	 * Determine physical RAM size from the /memory nodes in the
 	 * FDT.  There can be multiple nodes and each node can contain
-	 * multiple ranges.
+	 * multiple ranges.  If there are no /memory nodes, use
+	 * information from the EFI memory map instead.
 	 */
 	node = fdt_find_node("/memory");
-	if (node == NULL)
-		panic("%s: no memory specified", __func__);
-	while (node) {
-		const char *s = fdt_node_name(node);
-		if (strncmp(s, "memory", 6) == 0 &&
-		    (s[6] == '\0' || s[6] == '@')) {
-			for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-				if (fdt_get_reg(node, i, &reg))
-					break;
-				if (reg.size == 0)
-					continue;
-				physmem += atop(reg.size);
+	if (node) {
+		while (node) {
+			const char *s = fdt_node_name(node);
+			if (strncmp(s, "memory", 6) == 0 &&
+			    (s[6] == '\0' || s[6] == '@')) {
+				for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+					if (fdt_get_reg(node, i, &reg))
+						break;
+					if (reg.size == 0)
+						continue;
+					physmem += atop(reg.size);
+				}
 			}
-		}
 
-		node = fdt_next_node(node);
+			node = fdt_next_node(node);
+		}
+	} else {
+		for (i = 0; i < nmemreg; i++)
+			physmem += atop(memreg[i].size);
 	}
 
 	kmeminit_nkmempages();
