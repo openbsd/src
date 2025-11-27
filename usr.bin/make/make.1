@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.141 2023/08/10 10:56:34 espie Exp $
+.\"	$OpenBSD: make.1,v 1.142 2025/11/27 09:08:49 tb Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 10 2023 $
+.Dd $Mdocdate: November 27 2025 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -639,19 +639,24 @@ The file prefix of the file, containing only the file portion,
 no suffix or preceding directory components.
 .El
 .Pp
-The six variables
-.Sq Va "@F" ,
-.Sq Va "@D" ,
-.Sq Va "<F" ,
-.Sq Va "<D" ,
-.Sq Va "*F" ,
+Those variables
+.Po
 and
-.Sq Va "*D"
-yield the
-.Qq filename
+.Va \&>
+.Pc
+may be suffixed with a
+.Sq D
+or a
+.Sq F ,
+to yield the filename or directory part of the corresponding variables, e.g.,
+.Sq ${ Ns Va @F Ns }
+is equivalent
+to
+.Sq ${@:T}
 and
-.Qq directory
-parts of the corresponding macros.
+.Sq ${ Ns Va @D Ns }
+is equivalent to
+.Sq ${@:H} .
 .Pp
 For maximum compatibility,
 .Sq Va \&<

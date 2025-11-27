@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.107 2024/06/18 02:11:04 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.108 2025/11/27 09:08:49 tb Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -152,16 +152,6 @@ static char *varnames[] = {
 	IMPSRC,
 	OODATE,
 	ALLSRC,
-	FTARGET,
-	DTARGET,
-	FPREFIX,
-	DPREFIX,
-	FARCHIVE,
-	DARCHIVE,
-	FMEMBER,
-	DMEMBER,
-	FIMPSRC,
-	DIMPSRC
 };
 
 static bool xtlist[] = {
@@ -173,16 +163,6 @@ static bool xtlist[] = {
 	true,	/* $< */
 	false,	/* $? */
 	false,	/* $> */
-	true,	/* ${@F} */
-	true,	/* ${@D} */
-	false,	/* ${*F} */
-	false,	/* ${*D} */
-	false,	/* ${!F} */
-	false,	/* ${!D} */
-	true,	/* ${%F} */
-	true,	/* ${%D} */
-	true,	/* ${<F} */
-	true,	/* ${<D} */
 };
 
 /* so that we can access tlist[-1] */
@@ -191,22 +171,7 @@ static bool *tlist = xtlist+1;
 /* hashed names of dynamic variables */
 #include    "varhashconsts.h"
 
-/* extended indices for System V stuff */
-#define FTARGET_INDEX	7
-#define DTARGET_INDEX	8
-#define FPREFIX_INDEX	9
-#define DPREFIX_INDEX	10
-#define FARCHIVE_INDEX	11
-#define DARCHIVE_INDEX	12
-#define FMEMBER_INDEX	13
-#define DMEMBER_INDEX	14
-#define FIMPSRC_INDEX	15
-#define DIMPSRC_INDEX	16
-
 #define GLOBAL_INDEX	-1
-
-#define EXTENDED2SIMPLE(i)	(((i)-LOCAL_SIZE)/2)
-#define IS_EXTENDED_F(i)	((i)%2 == 1)
 
 
 static struct ohash global_variables;
@@ -242,7 +207,7 @@ static struct ohash_info var_info = {
 	hash_calloc, hash_free, element_alloc
 };
 
-static int classify_var(const char *, const char **, uint32_t *);
+static int classify_var(const char *, const char **, uint32_t *, char *);
 static Var *find_global_var(const char *, const char *, uint32_t);
 static Var *find_global_var_without_env(const char *, const char *, uint32_t);
 static void fill_from_env(Var *);
@@ -269,7 +234,7 @@ typedef const char * (*find_t)(const char *);
 static find_t find_pos(int);
 static void push_used(Var *);
 static void pop_used(Var *);
-static char *get_expanded_value(const char *, const char *, int, uint32_t,
+static char *get_expanded_value(const char *, const char *, int, uint32_t, char,
     SymTable *, bool, bool *);
 static bool parse_base_variable_name(const char **, struct Name *, SymTable *);
 
@@ -279,14 +244,25 @@ static bool parse_base_variable_name(const char **, struct Name *, SymTable *);
  * GLOBAL_INDEX if name is not dynamic. Set up *pk for further use.
  */
 static int
-classify_var(const char *name, const char **enamePtr, uint32_t *pk)
+classify_var(const char *name, const char **enamePtr, uint32_t *pk, char *ext)
 {
 	size_t len;
+	uint32_t k;
+	*ext = 0;
+
 
 	*pk = ohash_interval(name, enamePtr);
 	len = *enamePtr - name;
+
+	/* special treatment: @D/@F and the likes */
+	k = *pk;
+	if (len == 2 && (name[1] == 'D' || name[1] == 'F')) {
+		*ext = name[1];
+		len--;
+		k = name[0];
+	}
 	    /* substitute short version for long local name */
-	switch (*pk % MAGICSLOTS1) {	/* MAGICSLOTS should be the    */
+	switch (k % MAGICSLOTS1) {	/* MAGICSLOTS should be the    */
 	case K_LONGALLSRC % MAGICSLOTS1:/* smallest constant yielding  */
 					/* distinct case values	   */
 		if (*pk == K_LONGALLSRC && len == strlen(LONGALLSRC) &&
@@ -350,48 +326,6 @@ classify_var(const char *name, const char **enamePtr, uint32_t *pk)
 	case K_MEMBER % MAGICSLOTS1:
 		if (name[0] == MEMBER[0] && len == 1)
 			return MEMBER_INDEX;
-		break;
-	case K_FTARGET % MAGICSLOTS1:
-		if (name[0] == FTARGET[0] && name[1] == FTARGET[1] && len == 2)
-			return FTARGET_INDEX;
-		break;
-	case K_DTARGET % MAGICSLOTS1:
-		if (name[0] == DTARGET[0] && name[1] == DTARGET[1] && len == 2)
-			return DTARGET_INDEX;
-		break;
-	case K_FPREFIX % MAGICSLOTS1:
-		if (name[0] == FPREFIX[0] && name[1] == FPREFIX[1] && len == 2)
-			return FPREFIX_INDEX;
-		break;
-	case K_DPREFIX % MAGICSLOTS1:
-		if (name[0] == DPREFIX[0] && name[1] == DPREFIX[1] && len == 2)
-			return DPREFIX_INDEX;
-		break;
-	case K_FARCHIVE % MAGICSLOTS1:
-		if (name[0] == FARCHIVE[0] && name[1] == FARCHIVE[1] &&
-		    len == 2)
-			return FARCHIVE_INDEX;
-		break;
-	case K_DARCHIVE % MAGICSLOTS1:
-		if (name[0] == DARCHIVE[0] && name[1] == DARCHIVE[1] &&
-		    len == 2)
-			return DARCHIVE_INDEX;
-		break;
-	case K_FMEMBER % MAGICSLOTS1:
-		if (name[0] == FMEMBER[0] && name[1] == FMEMBER[1] && len == 2)
-			return FMEMBER_INDEX;
-		break;
-	case K_DMEMBER % MAGICSLOTS1:
-		if (name[0] == DMEMBER[0] && name[1] == DMEMBER[1] && len == 2)
-			return DMEMBER_INDEX;
-		break;
-	case K_FIMPSRC % MAGICSLOTS1:
-		if (name[0] == FIMPSRC[0] && name[1] == FIMPSRC[1] && len == 2)
-			return FIMPSRC_INDEX;
-		break;
-	case K_DIMPSRC % MAGICSLOTS1:
-		if (name[0] == DIMPSRC[0] && name[1] == DIMPSRC[1] && len == 2)
-			return DIMPSRC_INDEX;
 		break;
 	default:
 		break;
@@ -569,7 +503,8 @@ Var_Mark(const char *name, const char *ename, unsigned int type)
 	Var   *v;
 	uint32_t	k;
 	int		idx;
-	idx = classify_var(name, &ename, &k);
+	char		ext;
+	idx = classify_var(name, &ename, &k, &ext);
 
 	if (idx != GLOBAL_INDEX) {
 		Parse_Error(PARSE_FATAL,
@@ -623,8 +558,9 @@ Var_Deletei(const char *name, const char *ename)
 	uint32_t k;
 	unsigned int slot;
 	int idx;
+	char ext;
 
-	idx = classify_var(name, &ename, &k);
+	idx = classify_var(name, &ename, &k, &ext);
 	if (idx != GLOBAL_INDEX) {
 		Parse_Error(PARSE_FATAL,
 		    "Trying to delete dynamic variable $%s", varnames[idx]);
@@ -656,8 +592,9 @@ var_set_append(const char *name, const char *ename, const char *val, int ctxt,
 	Var *v;
 	uint32_t k;
 	int idx;
+	char ext;
 
-	idx = classify_var(name, &ename, &k);
+	idx = classify_var(name, &ename, &k, &ext);
 	if (idx != GLOBAL_INDEX) {
 		Parse_Error(PARSE_FATAL, "Trying to %s dynamic variable $%s",
 		    append ? "append to" : "set", varnames[idx]);
@@ -754,8 +691,9 @@ Var_Valuei(const char *name, const char *ename)
 	Var *v;
 	uint32_t k;
 	int idx;
+	char ext;
 
-	idx = classify_var(name, &ename, &k);
+	idx = classify_var(name, &ename, &k, &ext);
 	if (idx != GLOBAL_INDEX) {
 		Parse_Error(PARSE_FATAL,
 		    "Trying to get value of dynamic variable $%s",
@@ -777,8 +715,9 @@ Var_Definedi(const char *name, const char *ename)
 	Var *v;
 	uint32_t k;
 	int idx;
+	char ext;
 
-	idx = classify_var(name, &ename, &k);
+	idx = classify_var(name, &ename, &k, &ext);
 	/* We don't bother writing an error message for dynamic variables,
 	 * these will be caught when getting set later, usually.
 	 */
@@ -952,7 +891,7 @@ pop_used(Var *v)
 
 static char *
 get_expanded_value(const char *name, const char *ename, int idx, uint32_t k,
-    SymTable *ctxt, bool err, bool *freePtr)
+    char ext, SymTable *ctxt, bool err, bool *freePtr)
 {
 	char *val;
 
@@ -984,20 +923,17 @@ get_expanded_value(const char *name, const char *ename, int idx, uint32_t k,
 		}
 	} else {
 		if (ctxt != NULL) {
-			if (idx < LOCAL_SIZE)
-				val = ctxt->locals[idx];
-			else
-				val = ctxt->locals[EXTENDED2SIMPLE(idx)];
+			val = ctxt->locals[idx];
 		} else
 			val = NULL;
 		if (val == NULL)
 			return NULL;
 
-		if (idx >= LOCAL_SIZE) {
-			if (IS_EXTENDED_F(idx))
-				val = Var_GetTail(val);
-			else
-				val = Var_GetHead(val);
+		if (ext == 'F') {
+			val = Var_GetTail(val);
+			*freePtr = true;
+		} else if (ext == 'D') {
+			val = Var_GetHead(val);
 			*freePtr = true;
 		}
 	}
@@ -1012,8 +948,6 @@ bad_dynamic_variable(int idx)
 	Location origin;
 
 	Parse_FillLocation(&origin);
-	if (idx >= LOCAL_SIZE)
-		idx = EXTENDED2SIMPLE(idx);
 	switch(idx) {
 	case IMPSRC_INDEX:
 		if (origin.fname)
@@ -1050,6 +984,7 @@ Var_Parse(const char *str,	/* The string to parse */
 	uint32_t k;
 	int idx;
 	bool has_modifier;
+	char ext;
 
 	*freePtr = false;
 
@@ -1063,8 +998,9 @@ Var_Parse(const char *str,	/* The string to parse */
 
 	has_modifier = parse_base_variable_name(&tstr, &name, ctxt);
 
-	idx = classify_var(name.s, &name.e, &k);
-	val = get_expanded_value(name.s, name.e, idx, k, ctxt, err, freePtr);
+	idx = classify_var(name.s, &name.e, &k, &ext);
+	val = get_expanded_value(name.s, name.e, idx, k, ext, ctxt, err, 
+	    freePtr);
 	if (has_modifier) {
 		val = VarModifiers_Apply(val, &name, ctxt, err, freePtr,
 		    &tstr, str[1]);
@@ -1183,6 +1119,7 @@ Var_Check_for_target(const char *str)
 		int idx;
 		bool has_modifier;
 		struct Name name;
+		char ext;
 
 		/* skip over uninteresting stuff */
 		for (; *str != '\0' && *str != '$'; str++)
@@ -1198,7 +1135,7 @@ Var_Check_for_target(const char *str)
 		tstr = str;
 
 		has_modifier = parse_base_variable_name(&tstr, &name, NULL);
-		idx = classify_var(name.s, &name.e, &k);
+		idx = classify_var(name.s, &name.e, &k, &ext);
 		if (has_modifier) {
 			bool doFree = false;
 			char *val = VarModifiers_Apply(NULL, NULL, NULL, false, 

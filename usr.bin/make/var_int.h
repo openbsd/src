@@ -1,6 +1,6 @@
 #ifndef VAR_INT_H
 #define VAR_INT_H
-/* $OpenBSD: var_int.h,v 1.2 2010/07/19 19:46:44 espie Exp $ */
+/* $OpenBSD: var_int.h,v 1.3 2025/11/27 09:08:49 tb Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -41,17 +41,5 @@
 #define LONGPREFIX	".PREFIX"
 #define LONGARCHIVE	".ARCHIVE"
 #define LONGMEMBER	".MEMBER"
-
-/* System V   extended variables (get directory/file part) */
-#define FTARGET		"@F"
-#define DTARGET		"@D"
-#define FIMPSRC		"<F"
-#define DIMPSRC		"<D"
-#define FPREFIX		"*F"
-#define DPREFIX		"*D"
-#define FARCHIVE	"!F"
-#define DARCHIVE	"!D"
-#define FMEMBER		"%F"
-#define DMEMBER		"%D"
 
 #endif

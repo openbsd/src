@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.65 2023/09/04 11:35:11 espie Exp $
+#	$OpenBSD: Makefile,v 1.66 2025/11/27 09:08:49 tb Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -27,7 +27,7 @@ CLEANFILES+=generate generate.o regress.o check
 CLEANFILES+= varhashconsts.h condhashconsts.h nodehashconsts.h
 
 # may need tweaking if you add variable synonyms or change the hash function
-MAGICVARSLOTS=82
+MAGICVARSLOTS=36
 MAGICCONDSLOTS=65
 
 varhashconsts.h: generate

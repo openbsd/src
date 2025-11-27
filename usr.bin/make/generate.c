@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.18 2016/10/14 09:27:21 natano Exp $ */
+/*	$OpenBSD: generate.c,v 1.19 2025/11/27 09:08:49 tb Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -53,16 +53,6 @@ char *table_var[] = {
 	M(LONGPREFIX),
 	M(LONGARCHIVE),
 	M(LONGMEMBER),
-	M(FTARGET),
-	M(DTARGET),
-	M(FPREFIX),
-	M(DPREFIX),
-	M(FARCHIVE),
-	M(DARCHIVE),
-	M(FMEMBER),
-	M(DMEMBER),
-	M(FIMPSRC),
-	M(DIMPSRC),
 	NULL
 };
 
