@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.30 2025/06/07 08:33:58 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.31 2025/11/27 08:26:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -88,7 +88,6 @@ static int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
     int passlen, int options, char *pempass);
 static int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     const char *name);
-static void hex_prin(BIO *out, unsigned char *buf, int len);
 static int alg_print(BIO *x, const X509_ALGOR *alg);
 static int set_pbe(BIO *err, int *ppbe, const char *str);
 
@@ -1021,6 +1020,17 @@ alg_print(BIO *x, const X509_ALGOR *alg)
 	return 1;
 }
 
+static void
+hex_print(BIO *out, const ASN1_STRING *str)
+{
+	const unsigned char *buf = ASN1_STRING_get0_data(str);
+	int len = ASN1_STRING_length(str);
+	int i;
+
+	for (i = 0; i < len; i++)
+		BIO_printf(out, "%02X ", buf[i]);
+}
+
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
 static void
 print_attribute(BIO *out, const ASN1_TYPE *av)
@@ -1030,21 +1040,19 @@ print_attribute(BIO *out, const ASN1_TYPE *av)
 	switch (av->type) {
 	case V_ASN1_BMPSTRING:
 		value = OPENSSL_uni2asc(
-		    av->value.bmpstring->data,
-		    av->value.bmpstring->length);
-		BIO_printf(out, "%s\n", value);
+		    ASN1_STRING_get0_data(av->value.bmpstring),
+		    ASN1_STRING_length(av->value.bmpstring));
+		BIO_printf(out, "%s\n", value != NULL ? value : "(null)");
 		free(value);
 		break;
 
 	case V_ASN1_OCTET_STRING:
-		hex_prin(out, av->value.octet_string->data,
-		    av->value.octet_string->length);
+		hex_print(out, av->value.octet_string);
 		BIO_printf(out, "\n");
 		break;
 
 	case V_ASN1_BIT_STRING:
-		hex_prin(out, av->value.bit_string->data,
-		    av->value.bit_string->length);
+		hex_print(out, av->value.bit_string);
 		BIO_printf(out, "\n");
 		break;
 
@@ -1094,15 +1102,6 @@ print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
 			BIO_printf(out, "<No Values>\n");
 	}
 	return 1;
-}
-
-static void
-hex_prin(BIO *out, unsigned char *buf, int len)
-{
-	int i;
-
-	for (i = 0; i < len; i++)
-		BIO_printf(out, "%02X ", buf[i]);
 }
 
 static int
