@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.19 2025/11/03 16:36:15 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.20 2025/11/28 06:03:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -676,23 +676,18 @@ nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
 
 	for (i = 0; i < sk_CONF_VALUE_num(nos); i++) {
 		cnf = sk_CONF_VALUE_value(nos, i);
-		if (!(aint = s2i_ASN1_INTEGER(NULL, cnf->name))) {
+		if ((aint = s2i_ASN1_INTEGER(NULL, cnf->name)) == NULL) {
 			X509V3error(X509V3_R_INVALID_NUMBER);
-			goto err;
+			return 0;
 		}
-		if (!sk_ASN1_INTEGER_push(nnums, aint)) {
+		if (sk_ASN1_INTEGER_push(nnums, aint) <= 0) {
+			X509V3error(ERR_R_MALLOC_FAILURE);
 			ASN1_INTEGER_free(aint);
-			goto merr;
+			return 0;
 		}
 	}
+
 	return 1;
-
- merr:
-	X509V3error(ERR_R_MALLOC_FAILURE);
-
- err:
-	sk_ASN1_INTEGER_pop_free(nnums, ASN1_INTEGER_free);
-	return 0;
 }
 
 static int
