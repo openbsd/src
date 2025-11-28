@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.28 2025/10/30 11:52:25 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.29 2025/11/28 09:42:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -263,11 +263,6 @@ environ_for_session(struct session *s, int no_TERM)
 		environ_set(env, "TERM_PROGRAM", 0, "%s", "tmux");
 		environ_set(env, "TERM_PROGRAM_VERSION", 0, "%s", getversion());
 		environ_set(env, "COLORTERM", 0, "truecolor");
-	} else {
-		environ_unset(env, "TERM");
-		environ_unset(env, "TERM_PROGRAM");
-		environ_unset(env, "TERM_PROGRAM_VERSION");
-		environ_unset(env, "COLORTERM");
 	}
 
 	if (s != NULL)
