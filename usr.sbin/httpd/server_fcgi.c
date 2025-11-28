@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.97 2023/11/08 19:19:10 millert Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.98 2025/11/28 16:10:00 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -345,6 +345,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 		goto fail;
 	}
 
+	/* RFC 3875 requires this variable always be present */
 	if (fcgi_add_param(&param, "SERVER_SOFTWARE", HTTPD_SERVERNAME,
 	    clt) == -1) {
 		errstr = "failed to encode param";
@@ -659,9 +660,12 @@ server_fcgi_header(struct client *clt, unsigned int code)
 	    kv_set(&resp->http_pathquery, "%s", error) == -1)
 		return (-1);
 
-	/* Add headers */
-	if (kv_add(&resp->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
-		return (-1);
+	/* Add server banner header to response unless suppressed */
+	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0) {
+		if (kv_add(&resp->http_headers, "Server",
+		    HTTPD_SERVERNAME) == NULL)
+			return (-1);
+	}
 
 	if (clt->clt_fcgi.type == FCGI_END_REQUEST ||
 	    EVBUFFER_LENGTH(clt->clt_srvevb) == 0) {

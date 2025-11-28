@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.66 2025/11/12 11:24:04 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.67 2025/11/28 16:10:00 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -637,6 +637,8 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		srv_conf->flags |= parent->flags & SRVFLAG_ERRDOCS;
 		(void)strlcpy(srv_conf->errdocroot, parent->errdocroot,
 		    sizeof(srv_conf->errdocroot));
+
+		srv_conf->flags |= parent->flags & SRVFLAG_NO_BANNER;
 
 		DPRINTF("%s: %s %d location \"%s\", "
 		    "parent \"%s[%u]\", flags: %s",

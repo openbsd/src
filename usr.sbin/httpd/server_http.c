@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.155 2024/12/22 13:51:42 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.156 2025/11/28 16:10:00 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -890,6 +890,7 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	char			*httpmsg, *body = NULL, *extraheader = NULL;
 	char			 tmbuf[32], hbuf[128], *hstsheader = NULL;
 	char			*clenheader = NULL;
+	char			*bannerheader = NULL, *bannertoken = NULL;
 	char			 buf[IBUF_READ_SIZE];
 	char			*escapedmsg = NULL;
 	char			 cstr[5];
@@ -981,7 +982,11 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 
 	body = replace_var(body, "$HTTP_ERROR", httperr);
 	body = replace_var(body, "$RESPONSE_CODE", cstr);
-	body = replace_var(body, "$SERVER_SOFTWARE", HTTPD_SERVERNAME);
+	/* Check if server banner is suppressed */
+	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0)
+		body = replace_var(body, "$SERVER_SOFTWARE", HTTPD_SERVERNAME);
+	else
+		body = replace_var(body, "$SERVER_SOFTWARE", "");
 	bodylen = strlen(body);
 	goto send;
 
@@ -994,6 +999,14 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	    "body { background-color: #1E1F21; color: #EEEFF1; }\n"
 	    "a { color: #BAD7FF; }\n}";
 
+	/* If banner is suppressed, don't write it to the error document */
+	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0)
+		if (asprintf(&bannertoken, "<hr>\n<address>%s</address>\n",
+		    HTTPD_SERVERNAME) == -1) {
+			bannertoken = NULL;
+			goto done;
+		}
+
 	/* Generate simple HTML error document */
 	if ((bodylen = asprintf(&body,
 	    "<!DOCTYPE html>\n"
@@ -1005,10 +1018,11 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	    "</head>\n"
 	    "<body>\n"
 	    "<h1>%03d %s</h1>\n"
-	    "<hr>\n<address>%s</address>\n"
+	    "%s"
 	    "</body>\n"
 	    "</html>\n",
-	    code, httperr, style, code, httperr, HTTPD_SERVERNAME)) == -1) {
+	    code, httperr, style, code, httperr,
+	    bannertoken == NULL ? "" : bannertoken)) == -1) {
 		body = NULL;
 		goto done;
 	}
@@ -1037,11 +1051,19 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 		}
 	}
 
+	/* If banner is suppressed, don't write a Server header */
+	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0)
+		if (asprintf(&bannerheader, "Server: %s\r\n",
+		    HTTPD_SERVERNAME) == -1) {
+			bannerheader = NULL;
+			goto done;
+		}
+
 	/* Add basic HTTP headers */
 	if (asprintf(&httpmsg,
 	    "HTTP/1.0 %03d %s\r\n"
 	    "Date: %s\r\n"
-	    "Server: %s\r\n"
+	    "%s"
 	    "Connection: close\r\n"
 	    "Content-Type: text/html\r\n"
 	    "%s"
@@ -1049,7 +1071,8 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	    "%s"
 	    "\r\n"
 	    "%s",
-	    code, httperr, tmbuf, HTTPD_SERVERNAME,
+	    code, httperr, tmbuf,
+	    bannerheader == NULL ? "" : bannerheader,
 	    clenheader == NULL ? "" : clenheader,
 	    extraheader == NULL ? "" : extraheader,
 	    hstsheader == NULL ? "" : hstsheader,
@@ -1066,6 +1089,8 @@ server_abort_http(struct client *clt, unsigned int code, const char *msg)
 	free(extraheader);
 	free(hstsheader);
 	free(clenheader);
+	free(bannerheader);
+	free(bannertoken);
 	if (msg == NULL)
 		msg = "\"\"";
 	if (asprintf(&httpmsg, "%s (%03d %s)", msg, code, httperr) == -1) {
@@ -1558,10 +1583,12 @@ server_response_http(struct client *clt, unsigned int code,
 	    kv_set(&resp->http_pathquery, "%s", error) == -1)
 		return (-1);
 
-	/* Add headers */
-	if (kv_add(&resp->http_headers, "Server", HTTPD_SERVERNAME) == NULL)
-		return (-1);
-
+	/* Add server banner header to response unless suppressed */
+	if ((srv_conf->flags & SRVFLAG_NO_BANNER) == 0) {
+		if (kv_add(&resp->http_headers, "Server",
+		    HTTPD_SERVERNAME) == NULL)
+			return (-1);
+	}
 	/* Is it a persistent connection? */
 	if (clt->clt_persist) {
 		if (kv_add(&resp->http_headers,

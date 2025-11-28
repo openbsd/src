@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.127 2025/07/08 14:26:45 schwarze Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.128 2025/11/28 16:10:00 rsadowski Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 8 2025 $
+.Dd $Mdocdate: November 28 2025 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -171,6 +171,14 @@ If not specified, it defaults to
 within the
 .Xr chroot 2
 directory.
+.It Ic no banner
+Do not send the
+.Va Server
+HTTP response header, and hide the server software name in error documents.
+The
+.Va SERVER_SOFTWARE
+CGI environment variable is always set in accordance with
+.%R RFC 3875 .
 .It Ic prefork Ar number
 Run the specified number of server processes.
 This increases the performance and prevents delays when connecting
@@ -232,6 +240,20 @@ and must be readable by the www user.
 Use the
 .Ic no authenticate
 directive to disable authentication in a location.
+.It Oo Ic no Oc Ic banner
+When prefixed with the
+.Ic no
+keyword,
+suppress the
+.Va Server
+HTTP response header, and hide the server software name in error documents for
+the current
+.Ic server.
+If
+.Ic no
+is omitted, enable the banner for the current
+.Ic server
+if it was disabled globally.
 .It Ic block drop
 Drop the connection without sending an error page.
 .It Ic block Op Ic return Ar code Op Ar uri
@@ -478,6 +500,7 @@ and for generic ones later on.
 A location section may include most of the server configuration rules
 except
 .Ic alias ,
+.Ic banner ,
 .Ic connection ,
 .Ic errdocs ,
 .Ic hsts ,
