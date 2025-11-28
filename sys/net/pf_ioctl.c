@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.426 2025/11/20 10:47:44 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.427 2025/11/28 22:55:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -290,12 +290,7 @@ pfattach(int num)
 	pf_default_rule.route.addr.type =  PF_ADDR_NONE;
 
 	pf_normalize_init();
-	memset(&pf_status, 0, sizeof(pf_status));
-	pf_status.debug = LOG_ERR;
-	pf_status.reass = PF_REASS_ENABLED;
-
-	/* XXX do our best to avoid a conflict */
-	pf_status.hostid = arc4random();
+	pf_status_init();
 
 	pf_default_rule_new = pf_default_rule;
 
@@ -2914,18 +2909,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		error = pf_states_get((struct pfioc_states *)addr);
 		break;
 
-	case DIOCGETSTATUS: {
-		struct pf_status *s = (struct pf_status *)addr;
-		NET_LOCK();
-		PF_LOCK();
-		PF_FRAG_LOCK();
-		memcpy(s, &pf_status, sizeof(struct pf_status));
-		PF_FRAG_UNLOCK();
-		pfi_update_status(s->ifname, s);
-		PF_UNLOCK();
-		NET_UNLOCK();
+	case DIOCGETSTATUS:
+		pf_status_read((struct pf_status *)addr);
 		break;
-	}
 
 	case DIOCSETSTATUSIF: {
 		struct pfioc_iface	*pi = (struct pfioc_iface *)addr;
@@ -2958,8 +2944,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			goto fail;
 		}
 
+		pf_status_clear();
 		memset(pf_status.counters, 0, sizeof(pf_status.counters));
-		memset(pf_status.fcounters, 0, sizeof(pf_status.fcounters));
 		memset(pf_status.scounters, 0, sizeof(pf_status.scounters));
 		PF_FRAG_LOCK();
 		memset(pf_status.ncounters, 0, sizeof(pf_status.ncounters));
@@ -4215,14 +4201,7 @@ pf_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	struct pf_status	pfs;
 
-	NET_LOCK_SHARED();
-	PF_LOCK();
-	PF_FRAG_LOCK();
-	memcpy(&pfs, &pf_status, sizeof(struct pf_status));
-	PF_FRAG_UNLOCK();
-	pfi_update_status(pfs.ifname, &pfs);
-	PF_UNLOCK();
-	NET_UNLOCK_SHARED();
+	pf_status_read(&pfs);
 
 	return sysctl_rdstruct(oldp, oldlenp, newp, &pfs, sizeof(pfs));
 }

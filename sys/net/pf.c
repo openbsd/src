@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1219 2025/11/11 04:06:20 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1220 2025/11/28 22:55:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -49,6 +49,7 @@
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
+#include <sys/percpu.h>
 #include <sys/syslog.h>
 
 #include <crypto/sha2.h>
@@ -101,6 +102,7 @@ struct pf_queuehead	*pf_queues_active;
 struct pf_queuehead	*pf_queues_inactive;
 
 struct pf_status	 pf_status;
+static struct cpumem	*pf_status_fcounters;
 
 struct mutex		 pf_inp_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
@@ -1337,7 +1339,7 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skwp,
 		return (-1);
 	}
 	pf_state_list_insert(&pf_state_list, st);
-	pf_status.fcounters[FCNT_STATE_INSERT]++;
+	counters_inc(pf_status_fcounters, FCNT_STATE_INSERT);
 	pf_status.states++;
 	pfi_kif_ref(kif, PFI_KIF_REF_STATE);
 	PF_STATE_EXIT_WRITE();
@@ -1355,7 +1357,7 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skwp,
 struct pf_state *
 pf_find_state_byid(struct pf_state_cmp *key)
 {
-	pf_status.fcounters[FCNT_STATE_SEARCH]++;
+	counters_inc(pf_status_fcounters, FCNT_STATE_SEARCH);
 
 	return (RBT_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
 }
@@ -1402,7 +1404,7 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	struct pf_state_item	*si;
 	struct pf_state		*st = NULL;
 
-	pf_status.fcounters[FCNT_STATE_SEARCH]++;
+	counters_inc(pf_status_fcounters, FCNT_STATE_SEARCH);
 	if (pf_status.debug >= LOG_DEBUG) {
 		log(LOG_DEBUG, "pf: key search, %s on %s: ",
 		    pd->dir == PF_OUT ? "out" : "in", pd->kif->pfik_name);
@@ -1503,7 +1505,7 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int dir, int *more)
 	struct pf_state_key	*sk;
 	struct pf_state_item	*si, *ret = NULL;
 
-	pf_status.fcounters[FCNT_STATE_SEARCH]++;
+	counters_inc(pf_status_fcounters, FCNT_STATE_SEARCH);
 
 	sk = RBT_FIND(pf_state_tree, &pf_statetbl, (struct pf_state_key *)key);
 
@@ -2226,7 +2228,7 @@ pf_free_state(struct pf_state *st)
 	if (st->tag)
 		pf_tag_unref(st->tag);
 	pf_state_unref(st);
-	pf_status.fcounters[FCNT_STATE_REMOVALS]++;
+	counters_inc(pf_status_fcounters, FCNT_STATE_REMOVALS);
 	pf_status.states--;
 }
 
@@ -9054,4 +9056,41 @@ pf_pktenqueue_delayed(void *arg)
 		m_freem(pdy->m);
 
 	pool_put(&pf_pktdelay_pl, pdy);
+}
+
+void
+pf_status_init(void)
+{
+	memset(&pf_status, 0, sizeof(pf_status));
+	pf_status.debug = LOG_ERR;
+	pf_status.reass = PF_REASS_ENABLED;
+
+	/* XXX do our best to avoid a conflict */
+	pf_status.hostid = arc4random();
+
+	pf_status_fcounters = counters_alloc(FCNT_MAX);
+}
+
+void
+pf_status_clear(void)
+{
+	PF_ASSERT_LOCKED();
+	counters_zero(pf_status_fcounters, FCNT_MAX);
+}
+
+void
+pf_status_read(struct pf_status *pfs)
+{
+	uint64_t scratch[FCNT_MAX];
+
+	NET_LOCK();
+	PF_LOCK();
+	PF_FRAG_LOCK();
+	memcpy(pfs, &pf_status, sizeof(struct pf_status));
+	PF_FRAG_UNLOCK();
+	pfi_update_status(pfs->ifname, pfs);
+	PF_UNLOCK();
+	NET_UNLOCK();
+
+	counters_read(pf_status_fcounters, pfs->fcounters, FCNT_MAX, scratch);
 }
