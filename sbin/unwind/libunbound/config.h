@@ -895,7 +895,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.24.0"
+#define PACKAGE_STRING "unbound 1.24.1"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -904,7 +904,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.24.0"
+#define PACKAGE_VERSION "1.24.1"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -927,7 +927,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,24,0,0
+#define RSRC_PACKAGE_VERSION 1,24,1,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
