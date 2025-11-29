@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: unbound,v 1.10 2025/11/16 13:27:50 kn Exp $
+# $OpenBSD: unbound,v 1.11 2025/11/29 10:44:46 kn Exp $
 
 daemon="/usr/sbin/unbound"
 daemon_flags="-c /var/unbound/etc/unbound.conf"
@@ -8,7 +8,7 @@ daemon_flags="-c /var/unbound/etc/unbound.conf"
 . /etc/rc.d/rc.subr
 
 rc_pre() {
-	local _anchor _config _opt
+	local _anchor _config _opt OPTIND=1
 
 	while getopts :c: _opt $daemon_flags; do
 		[[ $_opt == c ]] && _config=$OPTARG

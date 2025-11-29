@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: spamlogd,v 1.7 2025/11/16 13:29:02 kn Exp $
+# $OpenBSD: spamlogd,v 1.8 2025/11/29 10:44:46 kn Exp $
 
 daemon="/usr/libexec/spamlogd"
 
@@ -9,7 +9,7 @@ daemon="/usr/libexec/spamlogd"
 rc_reload=NO
 
 rc_pre() {
-	local _opt pflog=pflog0
+	local _opt pflog=pflog0 OPTIND=1
 
 	while getopts :l: _opt $daemon_flags; do
 		[[ $_opt == l ]] && pflog=$OPTARG
