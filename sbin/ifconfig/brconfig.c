@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.44 2025/11/22 06:07:36 dlg Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.45 2025/11/29 10:51:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1358,12 +1358,16 @@ bridge_pvlans(const char *delim)
 		ifbrpv.ifbrpv_type = IFBRPV_T_PRIMARY;
 
 		if (ioctl(sock, SIOCBRDGNFINDPV, &ifbrpv) == -1) {
-			if (errno == ENOENT) {
+			switch (errno) {
+			case ENOTTY:
+			case ENOENT:
 				/* all done */
-				return;
+				break;
+			default:
+				warn("%s SIOCBRDGNFINDPV %u", ifname, vp);
+				break;
 			}
 
-			warn("%s SIOCBRDGNFINDPV %u", ifname, vp);
 			return;
 		}
 
