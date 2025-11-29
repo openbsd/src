@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.44 2025/11/28 22:51:59 dlg Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.45 2025/11/29 09:25:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -786,7 +786,7 @@ esp_open(char *path, struct open_file *f)
 	UINTN pathlen, i;
 	EFI_STATUS status;
 
-	if (strcmp("esp", f->f_dev->dv_name) != 0)
+	if (strcmp("ESP", f->f_dev->dv_name) != 0)
 		return ENXIO;
 
 	if (IH == NULL)
@@ -943,14 +943,30 @@ esp_readdir(struct open_file *f, char *name)
 int
 espopen(struct open_file *f, ...)
 {
-        u_int unit;
-        va_list ap;
-        va_start(ap, f);
-        unit = va_arg(ap, u_int);
-        va_end(ap);
-        if (unit != 0)
-                return 1;
-        return 0;
+	static const char espdev[] = "esp:";
+	static const char esp0adev[] = "esp0a:";
+	size_t esplen;
+	char *fname, **fnamep;
+	va_list ap;
+
+	va_start(ap, f);
+	fnamep = va_arg(ap, char **);
+	va_end(ap);
+
+	fname = *fnamep;
+
+	esplen = sizeof(espdev) - 1;
+	if (strncmp(fname, espdev, esplen) != 0) {
+		/* provide compat for arm64 (esp0a:) */
+		esplen = sizeof(esp0adev) - 1;
+		if (strncmp(fname, esp0adev, esplen) != 0)
+			return 1;
+	}
+
+	/* remove esp: (or esp0a:) prefix */
+	*fnamep = fname + esplen;
+
+	return 0;
 }
 int
 espclose(struct open_file *f)
@@ -961,7 +977,7 @@ espclose(struct open_file *f)
 int
 espioctl(struct open_file *f, u_long cmd, void *data)
 {
-        return EOPNOTSUPP;
+	return EOPNOTSUPP;
 }
 
 int
