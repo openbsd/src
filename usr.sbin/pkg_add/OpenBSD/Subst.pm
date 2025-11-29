@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.27 2025/05/27 03:42:59 tb Exp $
+# $OpenBSD: Subst.pm,v 1.28 2025/11/29 04:00:23 gkoehler Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -63,11 +63,14 @@ sub parse_option($self, $opt)
 	}
 }
 
-sub do($self, $s)
+sub do($self, $s, $without = undef)
 {
 	return $s unless $s =~ m/\$/o;	# no need to subst if no $
 	while ( my $k = ($s =~ m/\$\{([A-Za-z_][^\}]*)\}/o)[0] ) {
 		my $v = $self->{$k};
+		if (defined $without && $without eq $k) {
+			$v = undef;
+		}
 		unless ( defined $v ) { $v = "\$\\\{$k\}"; }
 		$s =~ s/\$\{\Q$k\E\}/$v/g;
 	}
