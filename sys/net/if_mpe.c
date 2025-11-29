@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.108 2025/11/27 03:06:59 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.109 2025/11/29 10:29:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -285,6 +285,7 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 #if NBPFILTER > 0
 	if_bpf = ifp->if_bpf;
+	if (if_bpf)
 		bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
@@ -527,8 +528,9 @@ mpe_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 #if NBPFILTER > 0
 	if_bpf = sc->sc_bpf;
 	if (if_bpf) {
-		bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family, m,
-		    BPF_DIRECTION_IN);
+		if (bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family, m,
+		    BPF_DIRECTION_IN))
+			goto drop;
 	}
 #endif
 
