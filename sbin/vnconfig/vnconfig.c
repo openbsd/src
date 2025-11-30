@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.14 2024/11/09 10:57:06 sobrado Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.15 2025/11/30 23:46:03 jsg Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -73,7 +73,6 @@ main(int argc, char **argv)
 	char	*key = NULL, *rounds = NULL, *saltopt = NULL;
 	char	*file, *vnd;
 	size_t	 keylen = 0;
-	extern char *__progname;
 	struct disklabel *dp = NULL;
 
 	action = VND_CONFIG;
