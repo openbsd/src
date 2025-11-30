@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.354 2025/11/24 16:57:19 sashan Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.355 2025/11/30 23:39:45 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1459,13 +1459,14 @@ ifa_load(void)
 			copy_satopfaddr(&n->addr.v.a.addr, ifa->ifa_addr);
 			ifa->ifa_netmask->sa_family = ifa->ifa_addr->sa_family;
 			copy_satopfaddr(&n->addr.v.a.mask, ifa->ifa_netmask);
-			if (ifa->ifa_broadaddr != NULL &&
+			if (ifa->ifa_flags & IFF_BROADCAST &&
+			    ifa->ifa_broadaddr != NULL &&
 			    ifa->ifa_broadaddr->sa_len != 0) {
 				ifa->ifa_broadaddr->sa_family =
 				    ifa->ifa_addr->sa_family;
 				copy_satopfaddr(&n->bcast, ifa->ifa_broadaddr);
-			}
-			if (ifa->ifa_dstaddr != NULL &&
+			} else if (ifa->ifa_flags & IFF_POINTOPOINT &&
+			    ifa->ifa_dstaddr != NULL &&
 			    ifa->ifa_dstaddr->sa_len != 0) {
 				ifa->ifa_dstaddr->sa_family =
 				    ifa->ifa_addr->sa_family;
