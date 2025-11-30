@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.46 2025/05/21 03:15:40 kn Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.47 2025/11/30 23:07:17 jsg Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ main(int argc, char *argv[])
 	 */
 	for (;;) {
 		struct sockaddr_in	inetpeer;
-		int ret, msgsock;
+		int msgsock;
 		socklen_t len = sizeof(inetpeer);
 
 		if ((msgsock = accept(tcpsock,
