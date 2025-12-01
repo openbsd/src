@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.82 2025/03/22 07:24:08 kevlo Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.83 2025/12/01 16:07:53 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -200,6 +200,7 @@ void
 ieee80211_disable_rsn(struct ieee80211com *ic)
 {
 	ic->ic_flags &= ~(IEEE80211_F_PSK | IEEE80211_F_RSNON);
+	ic->ic_flags &= ~IEEE80211_F_MFPR;
 	explicit_bzero(ic->ic_psk, sizeof(ic->ic_psk));
 	ic->ic_rsnprotos = 0;
 	ic->ic_rsnakms = 0;
