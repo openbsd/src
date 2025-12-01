@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.119 2025/11/25 14:20:33 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.120 2025/12/01 15:12:44 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -442,14 +442,6 @@ pause_vm(struct vmd_vm *vm)
 	current_vm->vm_state |= VM_STATE_PAUSED;
 	mutex_unlock(&vm_mtx);
 
-	ret = pthread_barrier_init(&vm_pause_barrier, NULL,
-	    vm->vm_params.vmc_params.vcp_ncpus + 1);
-	if (ret) {
-		log_warnx("%s: cannot initialize pause barrier (%d)",
-		    __progname, ret);
-		return;
-	}
-
 	for (n = 0; n < vm->vm_params.vmc_params.vcp_ncpus; n++) {
 		ret = pthread_cond_broadcast(&vcpu_run_cond[n]);
 		if (ret) {
@@ -462,13 +454,6 @@ pause_vm(struct vmd_vm *vm)
 	if (ret != 0 && ret != PTHREAD_BARRIER_SERIAL_THREAD) {
 		log_warnx("%s: could not wait on pause barrier (%d)",
 		    __func__, (int)ret);
-		return;
-	}
-
-	ret = pthread_barrier_destroy(&vm_pause_barrier);
-	if (ret) {
-		log_warnx("%s: could not destroy pause barrier (%d)",
-		    __progname, ret);
 		return;
 	}
 
@@ -621,6 +606,12 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 		log_warn("%s: memory allocation error - exiting.",
 		    __progname);
 		return (ENOMEM);
+	}
+
+	ret = pthread_barrier_init(&vm_pause_barrier, NULL, vcp->vcp_ncpus + 1);
+	if (ret) {
+		log_warnx("cannot initialize pause barrier (%d)", ret);
+		return (ret);
 	}
 
 	log_debug("%s: starting %zu vcpu thread(s) for vm %s", __func__,
@@ -781,10 +772,14 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 		}
 		mutex_unlock(&vm_mtx);
 		if (i == vcp->vcp_ncpus)
-			return (ret);
+			break;
 
 		/* Some more threads to wait for, start over */
 	}
+
+	ret = pthread_barrier_destroy(&vm_pause_barrier);
+	if (ret)
+		log_warnx("could not destroy pause barrier (%d)", ret);
 
 	return (ret);
 }
