@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.51 2025/11/18 14:04:45 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.52 2025/12/01 14:40:56 tb Exp $ */
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -105,8 +105,8 @@ crl_get_aki(const char *fn, X509_CRL *x509_crl)
 		goto out;
 	}
 
-	d = os->data;
-	dsz = os->length;
+	d = ASN1_STRING_get0_data(os);
+	dsz = ASN1_STRING_length(os);
 
 	if (dsz != SHA_DIGEST_LENGTH) {
 		warnx("%s: RFC 6487 section 4.8.3: AKI: "

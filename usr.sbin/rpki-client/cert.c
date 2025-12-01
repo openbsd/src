@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.207 2025/11/18 14:04:45 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.208 2025/12/01 14:40:56 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -423,7 +423,7 @@ cert_ski(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 	ASN1_OCTET_STRING	*os = NULL;
 	unsigned char		 md[EVP_MAX_MD_SIZE];
 	unsigned int		 md_len = EVP_MAX_MD_SIZE;
-	int			 rc = 0;
+	int			 length, rc = 0;
 
 	assert(cert->ski == NULL);
 
@@ -443,14 +443,15 @@ cert_ski(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if (os->length < 0 || md_len != (unsigned int)os->length) {
+	length = ASN1_STRING_length(os);
+	if (length < 0 || md_len != (unsigned int)length) {
 		warnx("%s: RFC 6487 section 4.8.2: SKI: "
 		    "want %u bytes SHA1 hash, have %d bytes",
-		    fn, md_len, os->length);
+		    fn, md_len, length);
 		goto out;
 	}
 
-	if (memcmp(os->data, md, md_len) != 0) {
+	if (memcmp(ASN1_STRING_get0_data(os), md, md_len) != 0) {
 		warnx("%s: SKI does not match SHA1 hash of SPK", fn);
 		goto out;
 	}
@@ -467,7 +468,7 @@ static int
 cert_aki(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 {
 	AUTHORITY_KEYID	*akid = NULL;
-	int		 rc = 0;
+	int		 length, rc = 0;
 
 	assert(cert->aki == NULL);
 
@@ -487,19 +488,20 @@ cert_aki(const char *fn, struct cert *cert, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if (akid->keyid == NULL || akid->keyid->data == NULL) {
+	if (akid->keyid == NULL) {
 		warnx("%s: RFC 6487 section 4.8.3: AKI: Key Identifier missing",
 		    fn);
 		goto out;
 	}
-	if (akid->keyid->length != SHA_DIGEST_LENGTH) {
+	length = ASN1_STRING_length(akid->keyid);
+	if (length != SHA_DIGEST_LENGTH) {
 		warnx("%s: RFC 6487 section 4.8.3: AKI: "
 		    "want %d bytes SHA1 hash, have %d bytes",
-		    fn, SHA_DIGEST_LENGTH, akid->keyid->length);
+		    fn, SHA_DIGEST_LENGTH, length);
 		goto out;
 	}
 
-	cert->aki = hex_encode(akid->keyid->data, akid->keyid->length);
+	cert->aki = hex_encode(ASN1_STRING_get0_data(akid->keyid), length);
 
 	rc = 1;
  out:
