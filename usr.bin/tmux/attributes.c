@@ -1,4 +1,4 @@
-/* $OpenBSD: attributes.c,v 1.11 2020/05/16 14:13:37 nicm Exp $ */
+/* $OpenBSD: attributes.c,v 1.12 2025/12/01 08:14:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Joshua Elsasser <josh@elsasser.org>
@@ -31,7 +31,7 @@ attributes_tostring(int attr)
 	if (attr == 0)
 		return ("none");
 
-	len = xsnprintf(buf, sizeof buf, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+	len = xsnprintf(buf, sizeof buf, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	    (attr & GRID_ATTR_CHARSET) ? "acs," : "",
 	    (attr & GRID_ATTR_BRIGHT) ? "bright," : "",
 	    (attr & GRID_ATTR_DIM) ? "dim," : "",
@@ -45,7 +45,8 @@ attributes_tostring(int attr)
 	    (attr & GRID_ATTR_UNDERSCORE_3) ? "curly-underscore," : "",
 	    (attr & GRID_ATTR_UNDERSCORE_4) ? "dotted-underscore," : "",
 	    (attr & GRID_ATTR_UNDERSCORE_5) ? "dashed-underscore," : "",
-	    (attr & GRID_ATTR_OVERLINE) ? "overline," : "");
+        (attr & GRID_ATTR_OVERLINE) ? "overline," : "",
+	    (attr & GRID_ATTR_NOATTR) ? "noattr," : "");
 	if (len > 0)
 		buf[len - 1] = '\0';
 

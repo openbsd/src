@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1277 2025/11/26 18:57:18 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1278 2025/12/01 08:14:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -718,6 +718,7 @@ struct colour_palette {
 #define GRID_ATTR_UNDERSCORE_4 0x800
 #define GRID_ATTR_UNDERSCORE_5 0x1000
 #define GRID_ATTR_OVERLINE 0x2000
+#define GRID_ATTR_NOATTR 0x4000
 
 /* All underscore attributes. */
 #define GRID_ATTR_ALL_UNDERSCORE \
