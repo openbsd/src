@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.47 2025/03/27 15:12:14 jmc Exp $
+.\" $OpenBSD: iwm.4,v 1.48 2025/12/01 16:30:46 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2025 $
+.Dd $Mdocdate: December 1 2025 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -72,6 +72,12 @@ The
 .Nm
 driver offloads both encryption and decryption of unicast data frames to the
 hardware for the CCMP cipher.
+.Pp
+The
+.Nm
+driver supports protected management frames (PMF) which prevents spoofing
+of management frames such as deauthentication, disassociation, and block-ack
+negotiation, on networks using WPA.
 .Pp
 In BSS mode the driver supports background scanning;
 see

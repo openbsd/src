@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.78 2022/05/14 05:47:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.79 2025/12/01 16:30:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -486,6 +486,8 @@ struct iwm_softc {
 	struct task		newstate_task;
 	enum ieee80211_state	ns_nstate;
 	int			ns_arg;
+
+	int			deauth_sent;
 
 	/* Task for firmware BlockAck setup/teardown and its arguments. */
 	struct task		ba_task;

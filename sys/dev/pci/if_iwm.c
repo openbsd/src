@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.418 2025/02/04 09:15:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.419 2025/12/01 16:30:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9124,6 +9124,8 @@ iwm_set_key_v1(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    IWM_STA_KEY_FLG_KEYID_MSK));
 	if (k->k_flags & IEEE80211_KEY_GROUP)
 		cmd.common.key_flags |= htole16(IWM_STA_KEY_MULTICAST);
+	if (ni->ni_flags & IEEE80211_NODE_MFP)
+		cmd.common.key_flags |= htole16(IWM_STA_KEY_MFP);
 
 	memcpy(cmd.common.key, k->k_key, MIN(sizeof(cmd.common.key), k->k_len));
 	cmd.common.key_offset = 0;
@@ -9157,6 +9159,8 @@ iwm_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    IWM_STA_KEY_FLG_KEYID_MSK));
 	if (k->k_flags & IEEE80211_KEY_GROUP)
 		cmd.common.key_flags |= htole16(IWM_STA_KEY_MULTICAST);
+	if (ni->ni_flags & IEEE80211_NODE_MFP)
+		cmd.common.key_flags |= htole16(IWM_STA_KEY_MFP);
 
 	memcpy(cmd.common.key, k->k_key, MIN(sizeof(cmd.common.key), k->k_len));
 	cmd.common.key_offset = 0;
@@ -10499,6 +10503,49 @@ iwm_start(struct ifnet *ifp)
 }
 
 void
+iwm_mfp_leave_done(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+	struct ifnet *ifp = IC2IFP(&sc->sc_ic);
+
+	if ((ifp->if_flags & IFF_RUNNING) &&
+	    ic->ic_state == IEEE80211_S_RUN &&
+	    (ni->ni_flags & IEEE80211_NODE_MFP)) {
+		sc->deauth_sent = 1;
+		wakeup(&sc->deauth_sent);
+	}
+}
+
+void
+iwm_mfp_leave(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = (void *)ic->ic_bss;
+
+	ic->ic_xflags |= IEEE80211_F_TX_MGMT_ONLY;
+	sc->deauth_sent = 0;
+
+	ni->ni_unref_cb = iwm_mfp_leave_done;
+	ni->ni_unref_arg = NULL;
+	ni->ni_unref_arg_size = 0;
+
+	/*
+	 * Send an authenticated deauth frame in order to let our AP know we
+	 * are leaving. This allows our AP to tear down MFP state cleanly.
+	 * Otherwise we would remain locked out of this AP until a timeout
+	 * of stale MFP state occurs at the AP, which might take a while.
+	 */
+	if (IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+	    IEEE80211_REASON_AUTH_LEAVE) != 0) {
+		ni->ni_unref_cb = NULL;
+		return;
+	}
+
+	if (tsleep_nsec(&sc->deauth_sent, 0, "iwmlv", MSEC_TO_NSEC(500)) != 0)
+		ni->ni_unref_cb = NULL;
+}
+
+void
 iwm_stop(struct ifnet *ifp)
 {
 	struct iwm_softc *sc = ifp->if_softc;
@@ -10519,6 +10566,11 @@ iwm_stop(struct ifnet *ifp)
 	iwm_del_task(sc, systq, &sc->bgscan_done_task);
 	KASSERT(sc->task_refs.r_refs >= 1);
 	refcnt_finalize(&sc->task_refs, "iwmstop");
+
+	if (ic->ic_opmode == IEEE80211_M_STA &&
+	    ic->ic_state == IEEE80211_S_RUN &&
+	    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP))
+		iwm_mfp_leave(sc);
 
 	iwm_stop_device(sc);
 
@@ -11943,7 +11995,8 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SCANALLBAND |	/* device scans all bands at once */
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
-	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
+	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
+	    IEEE80211_C_MFP;		/* management frame protection */
 
 	ic->ic_htcaps = IEEE80211_HTCAP_SGI20 | IEEE80211_HTCAP_SGI40;
 	ic->ic_htcaps |= IEEE80211_HTCAP_CBW20_40;
