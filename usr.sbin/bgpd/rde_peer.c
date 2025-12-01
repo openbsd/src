@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.56 2025/11/20 13:46:22 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.57 2025/12/01 13:07:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -187,7 +187,8 @@ peer_add(uint32_t id, struct peer_config *p_conf, struct filter_head *rules)
 		conflict = 0;
 		peer->path_id_tx = arc4random() << 1;
 		RB_FOREACH(p, peer_tree, &peertable) {
-			if (p->path_id_tx == peer->path_id_tx) {
+			if (peer->path_id_tx == 0 ||
+			    p->path_id_tx == peer->path_id_tx) {
 				conflict = 1;
 				break;
 			}
@@ -240,8 +241,7 @@ RB_GENERATE(peer_tree, rde_peer, entry, peer_cmp);
 
 static void
 peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
-    struct prefix *newpath, struct prefix *oldpath,
-    enum eval_mode mode)
+    struct prefix *newpath, uint32_t old_pathid_tx, enum eval_mode mode)
 {
 	uint8_t		 aid;
 
@@ -271,7 +271,8 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 	/* handle peers with add-path */
 	if (peer_has_add_path(peer, aid, CAPA_AP_SEND)) {
 		if (peer->eval.mode == ADDPATH_EVAL_ALL)
-			up_generate_addpath_all(peer, re, newpath, oldpath);
+			up_generate_addpath_all(peer, re, newpath,
+			    old_pathid_tx);
 		else
 			up_generate_addpath(peer, re);
 		return;
@@ -285,12 +286,12 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 
 void
 rde_generate_updates(struct rib_entry *re, struct prefix *newpath,
-    struct prefix *oldpath, enum eval_mode mode)
+    uint32_t old_pathid_tx, enum eval_mode mode)
 {
 	struct rde_peer	*peer;
 
 	RB_FOREACH(peer, peer_tree, &peertable)
-		peer_generate_update(peer, re, newpath, oldpath, mode);
+		peer_generate_update(peer, re, newpath, old_pathid_tx, mode);
 }
 
 /*
@@ -573,7 +574,7 @@ peer_dump_upcall(struct rib_entry *re, void *ptr)
 		/* no eligible prefix, not even for 'evaluate all' */
 		return;
 
-	peer_generate_update(peer, re, NULL, NULL, 0);
+	peer_generate_update(peer, re, NULL, 0, EVAL_DEFAULT);
 }
 
 static void

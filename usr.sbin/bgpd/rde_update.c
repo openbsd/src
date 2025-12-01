@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.183 2025/11/20 14:04:36 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.184 2025/12/01 13:07:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -344,7 +344,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
  */
 void
 up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
-    struct prefix *new, struct prefix *old)
+    struct prefix *new, uint32_t old_pathid_tx)
 {
 	struct prefix_adjout	*p;
 
@@ -352,7 +352,7 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 	 * If old and new are NULL then re-insert all prefixes from re,
 	 * use up_generate_addpath() for that.
 	 */
-	if (old == NULL && new == NULL) {
+	if (old_pathid_tx == 0 && new == NULL) {
 		up_generate_addpath(peer, re);
 		return;
 	}
@@ -362,17 +362,14 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 		new = NULL;
 	}
 
-	if (old != NULL) {
-		/* withdraw old path */
-		p = prefix_adjout_get(peer, old->path_id_tx, old->pt);
-		if (p != NULL)
-			prefix_adjout_withdraw(p);
-	}
-
 	if (new != NULL) {
 		/* add new path */
 		switch (up_process_prefix(peer, new, (void *)-1)) {
 		case UP_OK:
+			/* don't remove old if an existing prefix was updated */
+			if (old_pathid_tx == new->path_id_tx)
+				old_pathid_tx = 0;
+			break;
 		case UP_FILTERED:
 		case UP_EXCLUDED:
 			break;
@@ -380,6 +377,13 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 			/* just give up */
 			return;
 		}
+	}
+
+	if (old_pathid_tx != 0) {
+		/* withdraw old path */
+		p = prefix_adjout_get(peer, old_pathid_tx, re->prefix);
+		if (p != NULL)
+			prefix_adjout_withdraw(p);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.324 2025/11/20 14:04:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.325 2025/12/01 13:07:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -394,7 +394,7 @@ struct filter_head	*peer_apply_out_filter(struct rde_peer *,
 			    struct filter_head *);
 
 void		 rde_generate_updates(struct rib_entry *, struct prefix *,
-		    struct prefix *, enum eval_mode);
+		    uint32_t, enum eval_mode);
 
 void		 peer_up(struct rde_peer *, struct session_up *);
 void		 peer_down(struct rde_peer *);
@@ -774,7 +774,7 @@ prefix_adjout_nexthop(struct prefix_adjout *p)
 void		 up_generate_updates(struct rde_peer *, struct rib_entry *);
 void		 up_generate_addpath(struct rde_peer *, struct rib_entry *);
 void		 up_generate_addpath_all(struct rde_peer *, struct rib_entry *,
-		    struct prefix *, struct prefix *);
+		    struct prefix *, uint32_t);
 void		 up_generate_default(struct rde_peer *, uint8_t);
 int		 up_is_eor(struct rde_peer *, uint8_t);
 void		 up_dump_withdraws(struct imsgbuf *, struct rde_peer *,
