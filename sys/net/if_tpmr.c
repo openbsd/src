@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.39 2025/11/24 23:40:00 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.40 2025/12/01 01:44:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -79,7 +79,7 @@ struct tpmr_port {
 	struct tpmr_softc	*p_tpmr;
 	unsigned int		 p_slot;
 
-	int		 	 p_refcnt;
+	struct refcnt		 p_refcnt;
 
 	struct ether_port	 p_brport;
 };
@@ -521,6 +521,7 @@ tpmr_add_port(struct tpmr_softc *sc, const struct ifbreq *req)
 		error = ENOMEM;
 		goto put;
 	}
+	refcnt_init(&p->p_refcnt);
 
 	ifsetlro(ifp0, 0);
 
@@ -563,7 +564,7 @@ tpmr_add_port(struct tpmr_softc *sc, const struct ifbreq *req)
 
 	p->p_slot = i;
 
-	tpmr_p_take(p);
+	/* give the ref to the SMR pointers */
 	ether_brport_set(ifp0, &p->p_brport);
 	ifp0->if_ioctl = tpmr_p_ioctl;
 	ifp0->if_output = tpmr_p_output;
@@ -718,22 +719,21 @@ tpmr_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 }
 
 static void
-tpmr_p_take(void *p)
+tpmr_p_take(void *port)
 {
-	struct tpmr_port *port = p;
+	struct tpmr_port *p = port;
 
-	atomic_inc_int(&port->p_refcnt);
+	refcnt_take(&p->p_refcnt);
 }
 
 static void
-tpmr_p_rele(void *p)
+tpmr_p_rele(void *port)
 {
-	struct tpmr_port *port = p;
-	struct ifnet *ifp0 = port->p_ifp0;
+	struct tpmr_port *p = port;
 
-	if (atomic_dec_int_nv(&port->p_refcnt) == 0) {
-		if_put(ifp0);
-		free(port, M_DEVBUF, sizeof(*port));
+	if (refcnt_rele(&p->p_refcnt)) {
+		if_put(p->p_ifp0);
+		free(p, M_DEVBUF, sizeof(*p));
 	}
 }
 
@@ -762,9 +762,10 @@ tpmr_p_dtor(struct tpmr_softc *sc, struct tpmr_port *p, const char *op)
 	if_detachhook_del(ifp0, &p->p_dtask);
 	if_linkstatehook_del(ifp0, &p->p_ltask);
 
-	tpmr_p_rele(p);
-
+	/* wait for the sc_ports and brport SMR pointers */
 	smr_barrier();
+
+	tpmr_p_rele(p);
 
 	if (ifp->if_link_state != LINK_STATE_DOWN) {
 		ifp->if_link_state = LINK_STATE_DOWN;
