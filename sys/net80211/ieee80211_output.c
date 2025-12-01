@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.142 2025/08/01 20:39:26 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.143 2025/12/01 16:13:01 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -208,7 +208,7 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
 
 	/* check if protection is required for this mgmt frame */
-	if ((ic->ic_caps & IEEE80211_C_MFP) &&
+	if ((ni->ni_flags & IEEE80211_NODE_MFP) &&
 	    (type == IEEE80211_FC0_SUBTYPE_DISASSOC ||
 	     type == IEEE80211_FC0_SUBTYPE_DEAUTH ||
 	     type == IEEE80211_FC0_SUBTYPE_ACTION)) {
