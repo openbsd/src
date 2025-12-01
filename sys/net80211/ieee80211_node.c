@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.204 2025/10/08 13:15:33 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.205 2025/12/01 16:05:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2817,6 +2817,8 @@ ieee80211_node_join_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 	ni->ni_key_count = 0;
 	ni->ni_port_valid = 0;
 	ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
+	ni->ni_flags &= ~IEEE80211_NODE_RXMGMTPROT;
+	ni->ni_flags &= ~IEEE80211_NODE_TXMGMTPROT;
 	ni->ni_flags &= ~IEEE80211_NODE_RSN_NEW_PTK;
 	ni->ni_replaycnt = -1;	/* XXX */
 	ni->ni_rsn_retries = 0;
@@ -3055,6 +3057,9 @@ ieee80211_node_leave_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	ni->ni_rsn_retries = 0;
 	ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
+	ni->ni_flags &= ~IEEE80211_NODE_RXMGMTPROT;
+	ni->ni_flags &= ~IEEE80211_NODE_TXMGMTPROT;
+	ni->ni_flags &= ~IEEE80211_NODE_RSN_NEW_PTK;
 	ni->ni_port_valid = 0;
 	(*ic->ic_delete_key)(ic, ni, &ni->ni_pairwise_key);
 }
