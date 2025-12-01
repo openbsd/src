@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.47 2025/11/14 10:08:10 jca Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.48 2025/12/01 00:12:12 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -576,7 +576,6 @@ setxdgenv(uid_t uid, struct passwd *pwd)
 	char rundir[PATH_MAX];
 	struct stat sb;
 	int fd = -1;
-	int flags;
 	int ret = 0;
 
 	snprintf(rundir, sizeof(rundir), "/tmp/run/user/%u", uid);
