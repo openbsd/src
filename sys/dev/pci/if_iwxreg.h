@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.57 2025/07/15 13:40:02 jsg Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.58 2025/12/01 16:44:13 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -8040,15 +8040,33 @@ struct iwx_rm_sta_cmd {
  * @key_id:
  * @receive_seq_cnt: initial RSC/PN needed for replay check
  */
-struct iwx_mgmt_mcast_key_cmd {
+struct iwx_mgmt_mcast_key_cmd_v1 {
 	uint32_t ctrl_flags;
-	uint8_t IGTK[16];
-	uint8_t K1[16];
-	uint8_t K2[16];
+	uint8_t igtk[16];
+	uint8_t k1[16];
+	uint8_t k2[16];
 	uint32_t key_id;
 	uint32_t sta_id;
 	uint64_t receive_seq_cnt;
 } __packed; /* SEC_MGMT_MULTICAST_KEY_CMD_API_S_VER_1 */
+
+/**
+ * struct iwx_mgmt_mcast_key_cmd - IGTK command
+ * ( MGMT_MCAST_KEY = 0x1f )
+ * @ctrl_flags: &enum iwx_sta_key_flag
+ * @igtk: IGTK master key
+ * @sta_id: station ID that support IGTK
+ * @key_id: key ID
+ * @receive_seq_cnt: initial RSC/PN needed for replay check
+ */
+struct iwx_mgmt_mcast_key_cmd {
+	uint32_t ctrl_flags;
+	uint8_t igtk[32];
+	uint32_t key_id;
+	uint32_t sta_id;
+	uint64_t receive_seq_cnt;
+} __packed; /* SEC_MGMT_MULTICAST_KEY_CMD_API_S_VER_2 */
+
 
 struct iwx_wep_key {
 	uint8_t key_index;

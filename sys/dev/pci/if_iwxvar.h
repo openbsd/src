@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.42 2024/11/08 09:12:46 kettenis Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.43 2025/12/01 16:44:13 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -652,6 +652,8 @@ struct iwx_softc {
 	enum ieee80211_state	ns_nstate;
 	int			ns_arg;
 
+	int			deauth_sent;
+
 	/* Task for firmware BlockAck setup/teardown and its arguments. */
 	struct task		ba_task;
 	struct iwx_ba_task_data	ba_rx;
@@ -660,13 +662,13 @@ struct iwx_softc {
 	/* Task for setting encryption keys and its arguments. */
 	struct task		setkey_task;
 	/*
-	 * At present we need to process at most two keys at once:
-	 * Our pairwise key and a group key.
+	 * At present we need to process at most three keys at once:
+	 * Our pairwise key, a group key, and an integrity group key.
 	 * When hostap mode is implemented this array needs to grow or
 	 * it might become a bottleneck for associations that occur at
 	 * roughly the same time.
 	 */
-	struct iwx_setkey_task_arg setkey_arg[2];
+	struct iwx_setkey_task_arg setkey_arg[3];
 	int setkey_cur;
 	int setkey_tail;
 	int setkey_nkeys;
@@ -843,9 +845,11 @@ struct iwx_node {
 	struct iwx_rxq_dup_data dup_data;
 
 	int in_flags;
-#define IWX_NODE_FLAG_HAVE_PAIRWISE_KEY	0x01
-#define IWX_NODE_FLAG_HAVE_GROUP_KEY	0x02
+#define IWX_NODE_FLAG_HAVE_PAIRWISE_KEY		0x01
+#define IWX_NODE_FLAG_HAVE_GROUP_KEY		0x02
+#define IWX_NODE_FLAG_HAVE_INTEGRITY_GROUP_KEY	0x04
 };
+
 #define IWX_STATION_ID 0
 #define IWX_AUX_STA_ID 1
 #define IWX_MONITOR_STA_ID 2
