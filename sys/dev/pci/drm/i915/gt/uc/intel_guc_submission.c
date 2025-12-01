@@ -4926,9 +4926,6 @@ int intel_guc_tlb_invalidation_done(struct intel_guc *guc,
 
 static long must_wait_woken(struct wait_queue_entry *wq_entry, long timeout)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	/*
 	 * This is equivalent to wait_woken() with the exception that
 	 * we do not wake up early if the kthread task has been completed.
@@ -4949,7 +4946,6 @@ static long must_wait_woken(struct wait_queue_entry *wq_entry, long timeout)
 	smp_store_mb(wq_entry->flags, wq_entry->flags & ~WQ_FLAG_WOKEN);
 
 	return timeout;
-#endif
 }
 
 static bool intel_gt_is_enabled(const struct intel_gt *gt)
@@ -4963,9 +4959,6 @@ static bool intel_gt_is_enabled(const struct intel_gt *gt)
 static int guc_send_invalidate_tlb(struct intel_guc *guc,
 				   enum intel_guc_tlb_invalidation_type type)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct intel_guc_tlb_wait _wq, *wq = &_wq;
 	struct intel_gt *gt = guc_to_gt(guc);
 	DEFINE_WAIT_FUNC(wait, woken_wake_function);
@@ -5038,7 +5031,6 @@ out:
 		xa_erase_irq(&guc->tlb_lookup, seqno);
 
 	return err;
-#endif
 }
 
 /* Send a H2G command to invalidate the TLBs at engine level and beyond. */
