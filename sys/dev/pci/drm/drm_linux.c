@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.127 2025/11/17 12:55:41 jca Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.128 2025/12/01 09:25:03 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -181,6 +181,15 @@ autoremove_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
 		wake_up_process(wqe->private);
 	list_del_init(&wqe->entry);
 	return 0;
+}
+
+int
+woken_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
+    int sync, void *key)
+{
+	smp_mb();
+	wqe->flags |= WQ_FLAG_WOKEN;
+	return wake_up_process(wqe->private);
 }
 
 void

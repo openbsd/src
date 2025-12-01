@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.14 2025/06/06 13:13:46 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.15 2025/12/01 09:25:03 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -35,6 +35,8 @@ struct wait_queue_entry {
 	struct list_head entry;
 };
 
+#define WQ_FLAG_WOKEN	(1 << 1)
+
 typedef struct wait_queue_entry wait_queue_entry_t;
 
 struct wait_queue_head {
@@ -56,6 +58,7 @@ init_waitqueue_head(wait_queue_head_t *wqh)
 #define __init_waitqueue_head(wqh, name, key)	init_waitqueue_head(wqh)
 
 int autoremove_wake_function(struct wait_queue_entry *, unsigned int, int, void *);
+int woken_wake_function(struct wait_queue_entry *, unsigned int, int, void *);
 
 static inline void
 init_wait_entry(wait_queue_entry_t *wqe, int flags)
