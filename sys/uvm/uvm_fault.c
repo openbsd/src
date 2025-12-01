@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.171 2025/09/11 17:04:35 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.172 2025/12/01 14:26:27 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -618,7 +618,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	flt.access_type = access_type;
 	flt.narrow = FALSE;		/* assume normal fault for now */
 	flt.wired = FALSE;		/* assume non-wired fault for now */
-#if notyet
+#if defined(__amd64__) || defined(__arm64__)
 	flt.upper_lock_type = RW_READ;
 	flt.lower_lock_type = RW_READ;	/* shared lock for now */
 #else
