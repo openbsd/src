@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qwx_pci.c,v 1.29 2025/09/17 07:41:45 stsp Exp $	*/
+/*	$OpenBSD: if_qwx_pci.c,v 1.30 2025/12/01 16:57:36 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -1084,7 +1084,8 @@ unsupported_wcn6855_soc:
 	    IEEE80211_C_MONITOR |	/* monitor mode supported */
 #endif
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
-	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
+	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
+	    IEEE80211_C_MFP;		/* management frame protection */
 
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;

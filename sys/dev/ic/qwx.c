@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.95 2025/11/24 11:01:21 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.96 2025/12/01 16:57:36 stsp Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -351,6 +351,49 @@ qwx_del_task(struct qwx_softc *sc, struct taskq *taskq, struct task *task)
 }
 
 void
+qwx_mfp_leave_done(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct qwx_softc *sc = ic->ic_softc;
+	struct ifnet *ifp = &ic->ic_if;
+
+	if ((ifp->if_flags & IFF_RUNNING) &&
+	    ic->ic_state == IEEE80211_S_RUN &&
+	    (ni->ni_flags & IEEE80211_NODE_MFP)) {
+		sc->deauth_sent = 1;
+		wakeup(&sc->deauth_sent);
+	}
+}
+
+void
+qwx_mfp_leave(struct qwx_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = (void *)ic->ic_bss;
+
+	ic->ic_xflags |= IEEE80211_F_TX_MGMT_ONLY;
+	sc->deauth_sent = 0;
+
+	ni->ni_unref_cb = qwx_mfp_leave_done;
+	ni->ni_unref_arg = NULL;
+	ni->ni_unref_arg_size = 0;
+
+	/*
+	 * Send an authenticated deauth frame in order to let our AP know we
+	 * are leaving. This allows our AP to tear down MFP state cleanly.
+	 * Otherwise we would remain locked out of this AP until a timeout
+	 * of stale MFP state occurs at the AP, which might take a while.
+	 */
+	if (IEEE80211_SEND_MGMT(ic, ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+	    IEEE80211_REASON_AUTH_LEAVE) != 0) {
+		ni->ni_unref_cb = NULL;
+		return;
+	}
+
+	if (tsleep_nsec(&sc->deauth_sent, 0, "qwxlv", MSEC_TO_NSEC(500)) != 0)
+		ni->ni_unref_cb = NULL;
+}
+
+void
 qwx_stop(struct ifnet *ifp)
 {
 	struct qwx_softc *sc = ifp->if_softc;
@@ -374,14 +417,19 @@ qwx_stop(struct ifnet *ifp)
 	qwx_del_task(sc, systq, &sc->bgscan_task);
 	refcnt_finalize(&sc->task_refs, "qwxstop");
 
+	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
+
+	if (ic->ic_opmode == IEEE80211_M_STA &&
+	    ic->ic_state == IEEE80211_S_RUN &&
+	    (ic->ic_bss->ni_flags & IEEE80211_NODE_MFP))
+		qwx_mfp_leave(sc);
+
 	qwx_setkey_clear(sc);
 
 	ifp->if_timer = sc->sc_tx_timer = 0;
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-
-	clear_bit(ATH11K_FLAG_CRASH_FLUSH, sc->sc_flags);
 
 	/*
 	 * Manually run the newstate task's code for switching to INIT state.
@@ -662,7 +710,8 @@ qwx_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags) ||
 	    k->k_cipher == IEEE80211_CIPHER_WEP40 ||
-	    k->k_cipher == IEEE80211_CIPHER_WEP104)
+	    k->k_cipher == IEEE80211_CIPHER_WEP104 ||
+	    k->k_cipher == IEEE80211_CIPHER_BIP)
 		return ieee80211_set_key(ic, ni, k);
 
 	return qwx_queue_setkey_cmd(ic, ni, k, QWX_ADD_KEY);
@@ -676,7 +725,8 @@ qwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	if (test_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, sc->sc_flags) ||
 	    k->k_cipher == IEEE80211_CIPHER_WEP40 ||
-	    k->k_cipher == IEEE80211_CIPHER_WEP104) {
+	    k->k_cipher == IEEE80211_CIPHER_WEP104 ||
+	    k->k_cipher == IEEE80211_CIPHER_BIP) {
 		ieee80211_delete_key(ic, ni, k);
 		return;
 	}
@@ -13515,23 +13565,25 @@ qwx_mgmt_rx_event(struct qwx_softc *sc, struct mbuf *m)
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
-#if 0
+
 	/* In case of PMF, FW delivers decrypted frames with Protected Bit set.
 	 * Don't clear that. Also, FW delivers broadcast management frames
 	 * (ex: group privacy action frames in mesh) as encrypted payload.
 	 */
-	if (ieee80211_has_protected(hdr->frame_control) &&
-	    !is_multicast_ether_addr(ieee80211_get_DA(hdr))) {
-		status->flag |= RX_FLAG_DECRYPTED;
-
+	if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
+	    !IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
+#if 0
 		if (!ieee80211_is_robust_mgmt_frame(skb)) {
 			status->flag |= RX_FLAG_IV_STRIPPED |
 					RX_FLAG_MMIC_STRIPPED;
 			hdr->frame_control = __cpu_to_le16(fc &
 					     ~IEEE80211_FCTL_PROTECTED);
 		}
+#endif
 	}
 
+#if 0
 	if (ieee80211_is_beacon(hdr->frame_control))
 		ath11k_mac_handle_beacon(ar, skb);
 #endif
@@ -19832,7 +19884,7 @@ qwx_wmi_mgmt_send(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 	frame_tlv->header = FIELD_PREP(WMI_TLV_TAG, WMI_TAG_ARRAY_BYTE) |
 	    FIELD_PREP(WMI_TLV_LEN, buf_len);
 
-	memcpy(frame_tlv->value, mtod(frame, void *), buf_len);
+	m_copydata(frame, 0, buf_len, frame_tlv->value);
 #if 0 /* Not needed on OpenBSD? */
 	ath11k_ce_byte_swap(frame_tlv->value, buf_len);
 #endif
@@ -25152,6 +25204,7 @@ qwx_dp_tx(struct qwx_softc *sc, struct qwx_vif *arvif, uint8_t pdev_id,
 					return ENOSPC;
 				}
 				break;
+			case IEEE80211_CIPHER_BIP:
 			default:
 				ti.encrypt_type = HAL_ENCRYPT_TYPE_OPEN;
 				break;
@@ -25345,34 +25398,65 @@ int
 qwx_mac_mgmt_tx_wmi(struct qwx_softc *sc, struct qwx_vif *arvif,
     uint8_t pdev_id, struct ieee80211_node *ni, struct mbuf *m)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct qwx_txmgmt_queue *txmgmt = &arvif->txmgmt;
 	struct qwx_tx_data *tx_data;
+	struct ieee80211_frame *wh;
 	int buf_id;
 	int ret;
+	uint8_t subtype;
 
 	buf_id = txmgmt->cur;
 
 	DNPRINTF(QWX_D_MAC, "%s: tx mgmt frame, buf id %d\n", __func__, buf_id);
 
-	if (txmgmt->queued >= nitems(txmgmt->data))
+	if (txmgmt->queued >= nitems(txmgmt->data)) {
+		m_freem(m);
 		return ENOSPC;
+	}
 
 	tx_data = &txmgmt->data[buf_id];
-#if 0
-	if (!(info->flags & IEEE80211_TX_CTL_HW_80211_ENCAP)) {
-		if ((ieee80211_is_action(hdr->frame_control) ||
-		     ieee80211_is_deauth(hdr->frame_control) ||
-		     ieee80211_is_disassoc(hdr->frame_control)) &&
-		     ieee80211_has_protected(hdr->frame_control)) {
-			skb_put(skb, IEEE80211_CCMP_MIC_LEN);
+
+	wh = mtod(m, struct ieee80211_frame *);
+	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	if ((ni->ni_flags & IEEE80211_NODE_MFP) &&
+	    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
+	    (subtype == IEEE80211_FC0_SUBTYPE_DISASSOC ||
+	     subtype == IEEE80211_FC0_SUBTYPE_DEAUTH ||
+	     subtype == IEEE80211_FC0_SUBTYPE_ACTION)) {
+		if (IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+			struct ieee80211_key *k;
+
+			/* BIP needs to be done in software crypto. */
+			k = ieee80211_get_txkey(ic, wh, ni);
+			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
+				return ENOBUFS;
+		} else {
+			int off;
+
+			/* Make space for CCMP header. */
+			if (m_makespace(m, ieee80211_get_hdrlen(wh),
+			    IEEE80211_CCMP_HDRLEN, &off) == NULL) {
+				m_freem(m);
+				return ENOMEM;
+			}
+
+			/* Add trailing space for CCMP MIC. */
+			if (m_makespace(m, m->m_pkthdr.len,
+			    IEEE80211_CCMP_MICLEN, &off) == NULL) {
+				m_freem(m);
+				return ENOMEM;
+			}
 		}
 	}
-#endif
+
 	ret = bus_dmamap_load_mbuf(sc->sc_dmat, tx_data->map,
 	    m, BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 	if (ret && ret != EFBIG) {
 		printf("%s: failed to map mgmt Tx buffer: %d\n",
 		    sc->sc_dev.dv_xname, ret);
+		m_freem(m);
 		return ret;
 	}
 	if (ret) {
@@ -25395,6 +25479,7 @@ qwx_mac_mgmt_tx_wmi(struct qwx_softc *sc, struct qwx_vif *arvif,
 	if (ret) {
 		printf("%s: failed to send mgmt frame: %d\n",
 		    sc->sc_dev.dv_xname, ret);
+		m_freem(m);
 		goto err_unmap_buf;
 	}
 	tx_data->ni = ni;
@@ -26106,12 +26191,11 @@ qwx_peer_assoc_h_crypto(struct qwx_softc *sc, struct qwx_vif *arvif,
 		if (ni->ni_rsnprotos == IEEE80211_PROTO_WPA)
 			arg->need_gtk_2_way = 1;
 	}
-#if 0
-	if (sta->mfp) {
+
+	if (ni->ni_flags & IEEE80211_NODE_MFP) {
 		/* TODO: Need to check if FW supports PMF? */
 		arg->is_pmf_enabled = true;
 	}
-#endif
 }
 
 int

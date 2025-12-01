@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwxvar.h,v 1.31 2025/09/11 11:18:29 stsp Exp $	*/
+/*	$OpenBSD: qwxvar.h,v 1.32 2025/12/01 16:57:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The Linux Foundation.
@@ -1834,6 +1834,8 @@ struct qwx_softc {
 	struct task		newstate_task;
 	enum ieee80211_state	ns_nstate;
 	int			ns_arg;
+
+	int			deauth_sent;
 
 	/* Task for setting encryption keys and its arguments. */
 	struct task		setkey_task;

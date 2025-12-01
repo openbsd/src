@@ -1,4 +1,4 @@
-.\" $OpenBSD: qwx.4,v 1.9 2025/08/04 17:57:28 schwarze Exp $
+.\" $OpenBSD: qwx.4,v 1.10 2025/12/01 16:57:36 stsp Exp $
 .\"
 .\" Copyright (c) 2022 Martin Pieuchot <mpi@openbsd.org>
 .\" Copyright (c) 2024 Stefan Sperling <stsp@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 4 2025 $
+.Dd $Mdocdate: December 1 2025 $
 .Dt QWX 4
 .Os
 .Sh NAME
@@ -63,6 +63,16 @@ The
 .Nm
 driver offloads both encryption and decryption of unicast data frames to the
 hardware for the CCMP cipher.
+.Pp
+The
+.Nm
+driver supports protected management frames (PMF) which prevents spoofing
+of management frames such as deauthentication, disassociation, and block-ack
+negotiation, on networks using WPA.
+.Pp
+In BSS mode the driver supports background scanning;
+see
+.Xr ifconfig 8 .
 .Pp
 The
 .Nm
