@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.158 2025/11/24 23:40:00 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.159 2025/12/02 03:24:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -73,8 +73,8 @@ int	 trunk_ether_delmulti(struct trunk_softc *, struct ifreq *);
 void	 trunk_ether_purgemulti(struct trunk_softc *);
 int	 trunk_ether_cmdmulti(struct trunk_port *, u_long);
 int	 trunk_ioctl_allports(struct trunk_softc *, u_long, caddr_t);
-void	 trunk_port_take(void *);
-void	 trunk_port_rele(void *);
+void	*trunk_port_take(void *);
+void	 trunk_port_rele(void *, void *);
 struct mbuf *
 	 trunk_input(struct ifnet *, struct mbuf *, uint64_t, void *,
 	     struct netstack *);
@@ -1159,15 +1159,16 @@ trunk_stop(struct ifnet *ifp)
 		(*tr->tr_stop)(tr);
 }
 
-void
+void *
 trunk_port_take(void *port)
 {
 	struct trunk_port *tp = port;
 	refcnt_take(&tp->tp_refs);
+	return (NULL);
 }
 
 void
-trunk_port_rele(void *port)
+trunk_port_rele(void *null, void *port)
 {
 	struct trunk_port *tp = port;
 	refcnt_rele_wake(&tp->tp_refs);

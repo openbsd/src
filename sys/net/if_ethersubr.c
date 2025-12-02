@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.305 2025/11/24 23:40:00 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.306 2025/12/02 03:24:19 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -380,15 +380,16 @@ ether_port_input(struct ifnet *ifp, struct mbuf *m, uint64_t dst,
     const struct ether_port **epp, struct netstack *ns)
 {
 	const struct ether_port *ep;
+	void *ref;
 
 	smr_read_enter();
 	ep = SMR_PTR_GET(epp);
 	if (ep != NULL)
-		ep->ep_port_take(ep->ep_port);
+		ref = ep->ep_port_take(ep->ep_port);
 	smr_read_leave();
 	if (ep != NULL) {
 		m = (*ep->ep_input)(ifp, m, dst, ep->ep_port, ns);
-		ep->ep_port_rele(ep->ep_port);
+		ep->ep_port_rele(ref, ep->ep_port);
 	}
 
 	return (m);

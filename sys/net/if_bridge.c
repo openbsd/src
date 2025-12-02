@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.381 2025/11/24 23:40:00 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.382 2025/12/02 03:24:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -135,8 +135,9 @@ int bridge_ipsec(struct ifnet *, struct ether_header *, int, struct llc *,
 #endif
 int     bridge_clone_create(struct if_clone *, int);
 int	bridge_clone_destroy(struct ifnet *);
-void	bridge_take(void *);
-void	bridge_rele(void *);
+
+void	*bridge_take(void *);
+void	 bridge_rele(void *, void *);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -2011,14 +2012,14 @@ bridge_send_icmp_err(struct ifnet *ifp,
 	m_freem(n);
 }
 
-void
+void *
 bridge_take(void *unused)
 {
-	return;
+	return (NULL);
 }
 
 void
-bridge_rele(void *unused)
+bridge_rele(void *null, void *unused)
 {
 	return;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.40 2025/12/01 01:44:24 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.41 2025/12/02 03:24:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -123,8 +123,11 @@ static int	tpmr_add_port(struct tpmr_softc *,
 static int	tpmr_del_port(struct tpmr_softc *,
 		    const struct ifbreq *);
 static int	tpmr_port_list(struct tpmr_softc *, struct ifbifconf *);
-static void	tpmr_p_take(void *);
-static void	tpmr_p_rele(void *);
+
+static void	 tpmr_p_take(struct tpmr_port *);
+static void	 tpmr_p_rele(struct tpmr_port *);
+static void	*tpmr_cpu_take(void *);
+static void	 tpmr_cpu_rele(void *, void *);
 
 static struct if_clone tpmr_cloner =
     IF_CLONE_INITIALIZER("tpmr", tpmr_clone_create, tpmr_clone_destroy);
@@ -547,8 +550,8 @@ tpmr_add_port(struct tpmr_softc *sc, const struct ifbreq *req)
 	if_detachhook_add(ifp0, &p->p_dtask);
 
 	p->p_brport.ep_input = tpmr_input;
-	p->p_brport.ep_port_take = tpmr_p_take;
-	p->p_brport.ep_port_rele = tpmr_p_rele;
+	p->p_brport.ep_port_take = tpmr_cpu_take;
+	p->p_brport.ep_port_rele = tpmr_cpu_rele;
 	p->p_brport.ep_port = p;
 
 	/* commit */
@@ -719,22 +722,33 @@ tpmr_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 }
 
 static void
-tpmr_p_take(void *port)
+tpmr_p_take(struct tpmr_port *p)
 {
-	struct tpmr_port *p = port;
-
 	refcnt_take(&p->p_refcnt);
 }
 
 static void
-tpmr_p_rele(void *port)
+tpmr_p_rele(struct tpmr_port *p)
 {
-	struct tpmr_port *p = port;
-
 	if (refcnt_rele(&p->p_refcnt)) {
 		if_put(p->p_ifp0);
 		free(p, M_DEVBUF, sizeof(*p));
 	}
+}
+
+static void *
+tpmr_cpu_take(void *port)
+{
+	struct tpmr_port *p = port;
+	tpmr_p_take(p);
+	return (NULL);
+}
+
+static void
+tpmr_cpu_rele(void *null, void *port)
+{
+	struct tpmr_port *p = port;
+	tpmr_p_rele(p);
 }
 
 static void

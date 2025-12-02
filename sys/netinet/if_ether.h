@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.98 2025/11/24 23:40:00 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.99 2025/12/02 03:24:19 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -223,8 +223,8 @@ do {									\
 struct ether_port {
 	struct mbuf	*(*ep_input)(struct ifnet *, struct mbuf *,
 			   uint64_t, void *, struct netstack *);
-	void		(*ep_port_take)(void *);
-	void		(*ep_port_rele)(void *);
+	void		*(*ep_port_take)(void *);
+	void		 (*ep_port_rele)(void *, void *);
 	void		  *ep_port;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.60 2025/12/02 00:12:04 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.61 2025/12/02 03:24:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -301,8 +301,8 @@ static void	 veb_eb_port_rele(void *, void *);
 static size_t	 veb_eb_port_ifname(void *, char *, size_t, void *);
 static void	 veb_eb_port_sa(void *, struct sockaddr_storage *, void *);
 
-static void	 veb_ep_brport_take(void *);
-static void	 veb_ep_brport_rele(void *);
+static void	*veb_ep_brport_take(void *);
+static void	 veb_ep_brport_rele(void *, void *);
 
 static const struct etherbridge_ops veb_etherbridge_ops = {
 	veb_eb_port_cmp,
@@ -3206,16 +3206,19 @@ veb_eb_port_rele(void *arg, void *port)
 	veb_p_rele(p);
 }
 
-static void
+static void *
 veb_ep_brport_take(void *port)
 {
-	veb_eb_port_take(NULL, port);
+	struct veb_port *p = port;
+	veb_p_take(p);
+	return (NULL);
 }
 
 static void
-veb_ep_brport_rele(void *port)
+veb_ep_brport_rele(void *null, void *port)
 {
-	veb_eb_port_rele(NULL, port);
+	struct veb_port *p = port;
+	veb_p_rele(p);
 }
 
 static size_t
@@ -3410,6 +3413,7 @@ vport_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arpcom *ac;
 	const struct ether_port *ep;
+	void *ref;
 	int error = ENETDOWN;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
@@ -3433,7 +3437,7 @@ vport_enqueue(struct ifnet *ifp, struct mbuf *m)
 	smr_read_enter();
 	ep = SMR_PTR_GET(&ac->ac_brport);
 	if (ep != NULL)
-		ep->ep_port_take(ep->ep_port);
+		ref = ep->ep_port_take(ep->ep_port);
 	smr_read_leave();
 	if (ep != NULL) {
 		struct mbuf *(*input)(struct ifnet *, struct mbuf *,
@@ -3459,7 +3463,7 @@ vport_enqueue(struct ifnet *ifp, struct mbuf *m)
 
 		error = 0;
 
-		ep->ep_port_rele(ep->ep_port);
+		ep->ep_port_rele(ref, ep->ep_port);
 	}
 
 	m_freem(m);

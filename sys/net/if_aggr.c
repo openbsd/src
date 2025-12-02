@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.51 2025/11/24 23:40:00 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.52 2025/12/02 03:24:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -758,6 +758,19 @@ aggr_port_rele(void *port)
 	refcnt_rele_wake(&p->p_refs);
 }
 
+static void *
+aggr_cpu_take(void *port)
+{
+	aggr_port_take(port);
+	return (NULL);
+}
+
+static void
+aggr_cpu_rele(void *null, void *port)
+{
+	aggr_port_rele(port);
+}
+
 static inline int
 aggr_is_lldp(struct mbuf *m, uint64_t dst)
 {
@@ -1214,8 +1227,8 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	refcnt_init(&p->p_refs);
 
 	p->p_ether_port.ep_input = aggr_port_input;
-	p->p_ether_port.ep_port_take = aggr_port_take;
-	p->p_ether_port.ep_port_rele = aggr_port_rele;
+	p->p_ether_port.ep_port_take = aggr_cpu_take;
+	p->p_ether_port.ep_port_rele = aggr_cpu_rele;
 	p->p_ether_port.ep_port = p;
 
 	CTASSERT(sizeof(p->p_lladdr) == sizeof(ac0->ac_enaddr));
