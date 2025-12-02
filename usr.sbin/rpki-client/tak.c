@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.28 2025/12/02 10:34:48 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.29 2025/12/02 12:47:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -105,12 +105,12 @@ parse_takey(const char *fn, const TAKey *takey)
 		certURI = sk_ASN1_IA5STRING_value(takey->certificateURIs, i);
 		data = ASN1_STRING_get0_data(certURI);
 		length = ASN1_STRING_length(certURI);
-		if (!valid_uri(data, length, NULL)) {
+
+		if (!valid_uri(data, length, HTTPS_PROTO) &&
+		    !valid_uri(data, length, RSYNC_PROTO)) {
 			warnx("%s: invalid TA URI", fn);
 			goto err;
 		}
-
-		/* XXX: enforce that protocol is rsync or https. */
 
 		res->uris[i] = strndup(data, length);
 		if (res->uris[i] == NULL)
