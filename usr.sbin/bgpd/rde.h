@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.326 2025/12/02 10:50:19 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.327 2025/12/02 13:03:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -71,8 +71,8 @@ struct rib {
  * Currently I assume that we can do that with the neighbor_ip...
  */
 RB_HEAD(peer_tree, rde_peer);
-RB_HEAD(prefix_tree, prefix_adjout);
-RB_HEAD(prefix_index, prefix_adjout);
+RB_HEAD(prefix_tree, adjout_prefix);
+RB_HEAD(prefix_index, adjout_prefix);
 
 struct rde_peer {
 	RB_ENTRY(rde_peer)		 entry;
@@ -310,8 +310,8 @@ struct adjout_attr {
 	int			 refcnt;
 };
 
-struct prefix_adjout {
-	RB_ENTRY(prefix_adjout)		 index, update;
+struct adjout_prefix {
+	RB_ENTRY(adjout_prefix)		 index, update;
 	struct pt_entry			*pt;
 	struct adjout_attr		*attrs;
 	uint32_t			 path_id_tx;
@@ -342,10 +342,10 @@ enum eval_mode {
 struct rib_context {
 	LIST_ENTRY(rib_context)		 entry;
 	struct rib_entry		*ctx_re;
-	struct prefix_adjout		*ctx_p;
+	struct adjout_prefix		*ctx_p;
 	uint32_t			 ctx_id;
 	void		(*ctx_rib_call)(struct rib_entry *, void *);
-	void		(*ctx_prefix_call)(struct prefix_adjout *, void *);
+	void		(*ctx_prefix_call)(struct adjout_prefix *, void *);
 	void		(*ctx_done)(void *, uint8_t);
 	int		(*ctx_throttle)(void *);
 	void				*ctx_arg;
@@ -637,7 +637,7 @@ struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,
 		    uint32_t);
 void		 prefix_destroy(struct prefix *);
 
-RB_PROTOTYPE(prefix_tree, prefix_adjout, entry, prefix_cmp)
+RB_PROTOTYPE(prefix_tree, adjout_prefix, entry, prefix_cmp)
 
 static inline struct rde_peer *
 prefix_peer(struct prefix *p)
@@ -720,51 +720,51 @@ int		 nexthop_unref(struct nexthop *);
 
 /* rde_adjout.c */
 void			 adjout_init(void);
-struct prefix_adjout	*prefix_adjout_get(struct rde_peer *, uint32_t,
+struct adjout_prefix	*adjout_prefix_get(struct rde_peer *, uint32_t,
 			    struct pt_entry *);
-struct prefix_adjout	*prefix_adjout_first(struct rde_peer *,
+struct adjout_prefix	*adjout_prefix_first(struct rde_peer *,
 			    struct pt_entry *);
-struct prefix_adjout	*prefix_adjout_next(struct rde_peer *,
-			    struct prefix_adjout *);
-struct prefix_adjout	*prefix_adjout_lookup(struct rde_peer *,
+struct adjout_prefix	*adjout_prefix_next(struct rde_peer *,
+			    struct adjout_prefix *);
+struct adjout_prefix	*adjout_prefix_lookup(struct rde_peer *,
 			    struct bgpd_addr *, int);
-struct prefix_adjout	*prefix_adjout_match(struct rde_peer *,
+struct adjout_prefix	*adjout_prefix_match(struct rde_peer *,
 			    struct bgpd_addr *);
 
 void		 prefix_add_eor(struct rde_peer *, uint8_t);
-void		 prefix_adjout_update(struct prefix_adjout *, struct rde_peer *,
+void		 adjout_prefix_update(struct adjout_prefix *, struct rde_peer *,
 		    struct filterstate *, struct pt_entry *, uint32_t);
-void		 prefix_adjout_withdraw(struct rde_peer *,
-		    struct prefix_adjout *);
-void		 prefix_adjout_destroy(struct rde_peer *,
-		    struct prefix_adjout *);
-void		 prefix_adjout_flush_pending(struct rde_peer *);
-int		 prefix_adjout_reaper(struct rde_peer *);
-void		 prefix_adjout_dump_cleanup(struct rib_context *);
-void		 prefix_adjout_dump_r(struct rib_context *);
-int		 prefix_adjout_dump_new(struct rde_peer *, uint8_t,
+void		 adjout_prefix_withdraw(struct rde_peer *,
+		    struct adjout_prefix *);
+void		 adjout_prefix_destroy(struct rde_peer *,
+		    struct adjout_prefix *);
+void		 adjout_prefix_flush_pending(struct rde_peer *);
+int		 adjout_prefix_reaper(struct rde_peer *);
+void		 adjout_prefix_dump_cleanup(struct rib_context *);
+void		 adjout_prefix_dump_r(struct rib_context *);
+int		 adjout_prefix_dump_new(struct rde_peer *, uint8_t,
 		    unsigned int, void *,
-		    void (*)(struct prefix_adjout *, void *),
+		    void (*)(struct adjout_prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
-int		 prefix_adjout_dump_subtree(struct rde_peer *,
+int		 adjout_prefix_dump_subtree(struct rde_peer *,
 		    struct bgpd_addr *, uint8_t, unsigned int, void *,
-		    void (*)(struct prefix_adjout *, void *),
+		    void (*)(struct adjout_prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
 
 static inline struct rde_aspath *
-prefix_adjout_aspath(struct prefix_adjout *p)
+adjout_prefix_aspath(struct adjout_prefix *p)
 {
 	return (p->attrs->aspath);
 }
 
 static inline struct rde_community *
-prefix_adjout_communities(struct prefix_adjout *p)
+adjout_prefix_communities(struct adjout_prefix *p)
 {
 	return (p->attrs->communities);
 }
 
 static inline struct nexthop *
-prefix_adjout_nexthop(struct prefix_adjout *p)
+adjout_prefix_nexthop(struct adjout_prefix *p)
 {
 	return (p->attrs->nexthop);
 }

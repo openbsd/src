@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.7 2025/12/02 10:50:19 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.8 2025/12/02 13:03:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -163,8 +163,8 @@ adjout_attr_get(struct filterstate *state)
 
 CH_GENERATE(adjout_attr_tree, adjout_attr, adjout_attr_eq, adjout_attr_hash);
 
-static inline struct prefix_adjout *
-prefix_adjout_lock(struct prefix_adjout *p)
+static inline struct adjout_prefix *
+adjout_prefix_lock(struct adjout_prefix *p)
 {
 	if (p->flags & PREFIX_ADJOUT_FLAG_LOCKED)
 		fatalx("%s: locking locked prefix", __func__);
@@ -172,8 +172,8 @@ prefix_adjout_lock(struct prefix_adjout *p)
 	return p;
 }
 
-static inline struct prefix_adjout *
-prefix_adjout_unlock(struct prefix_adjout *p)
+static inline struct adjout_prefix *
+adjout_prefix_unlock(struct adjout_prefix *p)
 {
 	if ((p->flags & PREFIX_ADJOUT_FLAG_LOCKED) == 0)
 		fatalx("%s: unlocking unlocked prefix", __func__);
@@ -182,28 +182,28 @@ prefix_adjout_unlock(struct prefix_adjout *p)
 }
 
 static inline int
-prefix_is_locked(struct prefix_adjout *p)
+prefix_is_locked(struct adjout_prefix *p)
 {
 	return (p->flags & PREFIX_ADJOUT_FLAG_LOCKED) != 0;
 }
 
 static inline int
-prefix_is_dead(struct prefix_adjout *p)
+prefix_is_dead(struct adjout_prefix *p)
 {
 	return (p->flags & PREFIX_ADJOUT_FLAG_DEAD) != 0;
 }
 
-static void	 prefix_adjout_link(struct prefix_adjout *, struct rde_peer *,
+static void	 adjout_prefix_link(struct adjout_prefix *, struct rde_peer *,
 		    struct adjout_attr *, struct pt_entry *, uint32_t);
-static void	 prefix_adjout_unlink(struct prefix_adjout *,
+static void	 adjout_prefix_unlink(struct adjout_prefix *,
 		    struct rde_peer *);
 
-static struct prefix_adjout	*prefix_adjout_alloc(void);
-static void			 prefix_adjout_free(struct prefix_adjout *);
+static struct adjout_prefix	*adjout_prefix_alloc(void);
+static void			 adjout_prefix_free(struct adjout_prefix *);
 
 /* RB tree comparison function */
 static inline int
-prefix_index_cmp(struct prefix_adjout *a, struct prefix_adjout *b)
+prefix_index_cmp(struct adjout_prefix *a, struct adjout_prefix *b)
 {
 	int r;
 	r = pt_prefix_cmp(a->pt, b->pt);
@@ -218,7 +218,7 @@ prefix_index_cmp(struct prefix_adjout *a, struct prefix_adjout *b)
 }
 
 static inline int
-prefix_cmp(struct prefix_adjout *a, struct prefix_adjout *b)
+prefix_cmp(struct adjout_prefix *a, struct adjout_prefix *b)
 {
 	if ((a->flags & PREFIX_ADJOUT_FLAG_EOR) !=
 	    (b->flags & PREFIX_ADJOUT_FLAG_EOR))
@@ -232,18 +232,18 @@ prefix_cmp(struct prefix_adjout *a, struct prefix_adjout *b)
 	return prefix_index_cmp(a, b);
 }
 
-RB_GENERATE(prefix_tree, prefix_adjout, update, prefix_cmp)
-RB_GENERATE_STATIC(prefix_index, prefix_adjout, index, prefix_index_cmp)
+RB_GENERATE(prefix_tree, adjout_prefix, update, prefix_cmp)
+RB_GENERATE_STATIC(prefix_index, adjout_prefix, index, prefix_index_cmp)
 
 /*
  * Search for specified prefix in the peer prefix_index.
  * Returns NULL if not found.
  */
-struct prefix_adjout *
-prefix_adjout_get(struct rde_peer *peer, uint32_t path_id_tx,
+struct adjout_prefix *
+adjout_prefix_get(struct rde_peer *peer, uint32_t path_id_tx,
     struct pt_entry *pte)
 {
-	struct prefix_adjout xp;
+	struct adjout_prefix xp;
 
 	memset(&xp, 0, sizeof(xp));
 	xp.pt = pte;
@@ -256,10 +256,10 @@ prefix_adjout_get(struct rde_peer *peer, uint32_t path_id_tx,
  * Lookup a prefix without considering path_id in the peer prefix_index.
  * Returns NULL if not found.
  */
-struct prefix_adjout *
-prefix_adjout_first(struct rde_peer *peer, struct pt_entry *pte)
+struct adjout_prefix *
+adjout_prefix_first(struct rde_peer *peer, struct pt_entry *pte)
 {
-	struct prefix_adjout xp, *np;
+	struct adjout_prefix xp, *np;
 
 	memset(&xp, 0, sizeof(xp));
 	xp.pt = pte;
@@ -273,10 +273,10 @@ prefix_adjout_first(struct rde_peer *peer, struct pt_entry *pte)
 /*
  * Return next prefix after a lookup that is actually an update.
  */
-struct prefix_adjout *
-prefix_adjout_next(struct rde_peer *peer, struct prefix_adjout *p)
+struct adjout_prefix *
+adjout_prefix_next(struct rde_peer *peer, struct adjout_prefix *p)
 {
-	struct prefix_adjout *np;
+	struct adjout_prefix *np;
 
 	np = RB_NEXT(prefix_index, &peer->adj_rib_out, p);
 	if (np == NULL || np->pt != p->pt)
@@ -288,27 +288,27 @@ prefix_adjout_next(struct rde_peer *peer, struct prefix_adjout *p)
  * Lookup addr/prefixlen in the peer prefix_index. Returns first match.
  * Returns NULL if not found.
  */
-struct prefix_adjout *
-prefix_adjout_lookup(struct rde_peer *peer, struct bgpd_addr *addr, int plen)
+struct adjout_prefix *
+adjout_prefix_lookup(struct rde_peer *peer, struct bgpd_addr *addr, int plen)
 {
-	return prefix_adjout_first(peer, pt_fill(addr, plen));
+	return adjout_prefix_first(peer, pt_fill(addr, plen));
 }
 
 /*
  * Lookup addr in the peer prefix_index. Returns first match.
  * Returns NULL if not found.
  */
-struct prefix_adjout *
-prefix_adjout_match(struct rde_peer *peer, struct bgpd_addr *addr)
+struct adjout_prefix *
+adjout_prefix_match(struct rde_peer *peer, struct bgpd_addr *addr)
 {
-	struct prefix_adjout *p;
+	struct adjout_prefix *p;
 	int i;
 
 	switch (addr->aid) {
 	case AID_INET:
 	case AID_VPN_IPv4:
 		for (i = 32; i >= 0; i--) {
-			p = prefix_adjout_lookup(peer, addr, i);
+			p = adjout_prefix_lookup(peer, addr, i);
 			if (p != NULL)
 				return p;
 		}
@@ -316,7 +316,7 @@ prefix_adjout_match(struct rde_peer *peer, struct bgpd_addr *addr)
 	case AID_INET6:
 	case AID_VPN_IPv6:
 		for (i = 128; i >= 0; i--) {
-			p = prefix_adjout_lookup(peer, addr, i);
+			p = adjout_prefix_lookup(peer, addr, i);
 			if (p != NULL)
 				return p;
 		}
@@ -333,13 +333,13 @@ prefix_adjout_match(struct rde_peer *peer, struct bgpd_addr *addr)
 void
 prefix_add_eor(struct rde_peer *peer, uint8_t aid)
 {
-	struct prefix_adjout *p;
+	struct adjout_prefix *p;
 
-	p = prefix_adjout_alloc();
+	p = adjout_prefix_alloc();
 	p->flags = PREFIX_ADJOUT_FLAG_UPDATE | PREFIX_ADJOUT_FLAG_EOR;
 	if (RB_INSERT(prefix_tree, &peer->updates[aid], p) != NULL)
 		/* no need to add if EoR marker already present */
-		prefix_adjout_free(p);
+		adjout_prefix_free(p);
 	/* EOR marker is not inserted into the adj_rib_out index */
 }
 
@@ -347,13 +347,13 @@ prefix_add_eor(struct rde_peer *peer, uint8_t aid)
  * Put a prefix from the Adj-RIB-Out onto the update queue.
  */
 void
-prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
+adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
     struct filterstate *state, struct pt_entry *pte, uint32_t path_id_tx)
 {
 	struct adjout_attr *attrs;
 
 	if (p == NULL) {
-		p = prefix_adjout_alloc();
+		p = adjout_prefix_alloc();
 		/* initially mark DEAD so code below is skipped */
 		p->flags |= PREFIX_ADJOUT_FLAG_DEAD;
 
@@ -373,10 +373,10 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 		 * paths.
 		 */
 		if (p->path_id_tx == path_id_tx &&
-		    prefix_adjout_nexthop(p) == state->nexthop &&
+		    adjout_prefix_nexthop(p) == state->nexthop &&
 		    communities_equal(&state->communities,
-		    prefix_adjout_communities(p)) &&
-		    path_equal(&state->aspath, prefix_adjout_aspath(p))) {
+		    adjout_prefix_communities(p)) &&
+		    path_equal(&state->aspath, adjout_prefix_aspath(p))) {
 			/* nothing changed */
 			p->flags &= ~PREFIX_ADJOUT_FLAG_STALE;
 			return;
@@ -389,7 +389,7 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 		}
 
 		/* unlink prefix so it can be relinked below */
-		prefix_adjout_unlink(p, peer);
+		adjout_prefix_unlink(p, peer);
 		peer->stats.prefix_out_cnt--;
 	}
 	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW) {
@@ -411,7 +411,7 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
 
 	attrs = adjout_attr_get(state);
 
-	prefix_adjout_link(p, peer, attrs, p->pt, p->path_id_tx);
+	adjout_prefix_link(p, peer, attrs, p->pt, p->path_id_tx);
 	peer->stats.prefix_out_cnt++;
 
 	if (p->flags & PREFIX_ADJOUT_FLAG_MASK)
@@ -429,7 +429,7 @@ prefix_adjout_update(struct prefix_adjout *p, struct rde_peer *peer,
  * the prefix in the RIB linked to the peer withdraw list.
  */
 void
-prefix_adjout_withdraw(struct rde_peer *peer, struct prefix_adjout *p)
+adjout_prefix_withdraw(struct rde_peer *peer, struct adjout_prefix *p)
 {
 	/* already a withdraw, shortcut */
 	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW) {
@@ -444,7 +444,7 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct prefix_adjout *p)
 	/* unlink prefix if it was linked (not a withdraw or dead) */
 	if ((p->flags & (PREFIX_ADJOUT_FLAG_WITHDRAW |
 	    PREFIX_ADJOUT_FLAG_DEAD)) == 0) {
-		prefix_adjout_unlink(p, peer);
+		adjout_prefix_unlink(p, peer);
 		peer->stats.prefix_out_cnt--;
 	}
 
@@ -460,16 +460,16 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct prefix_adjout *p)
 	} else {
 		/* mark prefix dead to skip unlink on destroy */
 		p->flags |= PREFIX_ADJOUT_FLAG_DEAD;
-		prefix_adjout_destroy(peer, p);
+		adjout_prefix_destroy(peer, p);
 	}
 }
 
 void
-prefix_adjout_destroy(struct rde_peer *peer, struct prefix_adjout *p)
+adjout_prefix_destroy(struct rde_peer *peer, struct adjout_prefix *p)
 {
 	if (p->flags & PREFIX_ADJOUT_FLAG_EOR) {
 		/* EOR marker is not linked in the index */
-		prefix_adjout_free(p);
+		adjout_prefix_free(p);
 		return;
 	}
 
@@ -484,7 +484,7 @@ prefix_adjout_destroy(struct rde_peer *peer, struct prefix_adjout *p)
 	/* unlink prefix if it was linked (not a withdraw or dead) */
 	if ((p->flags & (PREFIX_ADJOUT_FLAG_WITHDRAW |
 	    PREFIX_ADJOUT_FLAG_DEAD)) == 0) {
-		prefix_adjout_unlink(p, peer);
+		adjout_prefix_unlink(p, peer);
 		peer->stats.prefix_out_cnt--;
 	}
 
@@ -498,25 +498,25 @@ prefix_adjout_destroy(struct rde_peer *peer, struct prefix_adjout *p)
 		RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
 		/* remove the last prefix reference before free */
 		pt_unref(p->pt);
-		prefix_adjout_free(p);
+		adjout_prefix_free(p);
 	}
 }
 
 void
-prefix_adjout_flush_pending(struct rde_peer *peer)
+adjout_prefix_flush_pending(struct rde_peer *peer)
 {
-	struct prefix_adjout *p, *np;
+	struct adjout_prefix *p, *np;
 	uint8_t aid;
 
 	for (aid = AID_MIN; aid < AID_MAX; aid++) {
 		RB_FOREACH_SAFE(p, prefix_tree, &peer->withdraws[aid], np) {
-			prefix_adjout_destroy(peer, p);
+			adjout_prefix_destroy(peer, p);
 		}
 		RB_FOREACH_SAFE(p, prefix_tree, &peer->updates[aid], np) {
 			p->flags &= ~PREFIX_ADJOUT_FLAG_UPDATE;
 			RB_REMOVE(prefix_tree, &peer->updates[aid], p);
 			if (p->flags & PREFIX_ADJOUT_FLAG_EOR) {
-				prefix_adjout_destroy(peer, p);
+				adjout_prefix_destroy(peer, p);
 			} else {
 				peer->stats.pending_update--;
 			}
@@ -525,36 +525,36 @@ prefix_adjout_flush_pending(struct rde_peer *peer)
 }
 
 int
-prefix_adjout_reaper(struct rde_peer *peer)
+adjout_prefix_reaper(struct rde_peer *peer)
 {
-	struct prefix_adjout *p, *np;
+	struct adjout_prefix *p, *np;
 	int count = RDE_REAPER_ROUNDS;
 
 	RB_FOREACH_SAFE(p, prefix_index, &peer->adj_rib_out, np) {
-		prefix_adjout_destroy(peer, p);
+		adjout_prefix_destroy(peer, p);
 		if (count-- <= 0)
 			return 0;
 	}
 	return 1;
 }
 
-static struct prefix_adjout *
+static struct adjout_prefix *
 prefix_restart(struct rib_context *ctx)
 {
-	struct prefix_adjout *p = NULL;
+	struct adjout_prefix *p = NULL;
 	struct rde_peer *peer;
 
 	if ((peer = peer_get(ctx->ctx_id)) == NULL)
 		return NULL;
 
 	if (ctx->ctx_p)
-		p = prefix_adjout_unlock(ctx->ctx_p);
+		p = adjout_prefix_unlock(ctx->ctx_p);
 
 	while (p && prefix_is_dead(p)) {
-		struct prefix_adjout *next;
+		struct adjout_prefix *next;
 
 		next = RB_NEXT(prefix_index, unused, p);
-		prefix_adjout_destroy(peer, p);
+		adjout_prefix_destroy(peer, p);
 		p = next;
 	}
 	ctx->ctx_p = NULL;
@@ -562,21 +562,21 @@ prefix_restart(struct rib_context *ctx)
 }
 
 void
-prefix_adjout_dump_cleanup(struct rib_context *ctx)
+adjout_prefix_dump_cleanup(struct rib_context *ctx)
 {
-	struct prefix_adjout *p = ctx->ctx_p;
+	struct adjout_prefix *p = ctx->ctx_p;
 	struct rde_peer *peer;
 
 	if ((peer = peer_get(ctx->ctx_id)) == NULL)
 		return;
-	if (prefix_is_dead(prefix_adjout_unlock(p)))
-		prefix_adjout_destroy(peer, p);
+	if (prefix_is_dead(adjout_prefix_unlock(p)))
+		adjout_prefix_destroy(peer, p);
 }
 
 void
-prefix_adjout_dump_r(struct rib_context *ctx)
+adjout_prefix_dump_r(struct rib_context *ctx)
 {
-	struct prefix_adjout *p, *next;
+	struct adjout_prefix *p, *next;
 	struct rde_peer *peer;
 	unsigned int i;
 
@@ -606,7 +606,7 @@ prefix_adjout_dump_r(struct rib_context *ctx)
 		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
 		    !prefix_is_locked(p)) {
 			/* store and lock last element */
-			ctx->ctx_p = prefix_adjout_lock(p);
+			ctx->ctx_p = adjout_prefix_lock(p);
 			return;
 		}
 		ctx->ctx_prefix_call(p, ctx->ctx_arg);
@@ -620,8 +620,8 @@ done:
 }
 
 int
-prefix_adjout_dump_new(struct rde_peer *peer, uint8_t aid, unsigned int count,
-    void *arg, void (*upcall)(struct prefix_adjout *, void *),
+adjout_prefix_dump_new(struct rde_peer *peer, uint8_t aid, unsigned int count,
+    void *arg, void (*upcall)(struct adjout_prefix *, void *),
     void (*done)(void *, uint8_t), int (*throttle)(void *))
 {
 	struct rib_context *ctx;
@@ -640,20 +640,20 @@ prefix_adjout_dump_new(struct rde_peer *peer, uint8_t aid, unsigned int count,
 
 	/* requested a sync traversal */
 	if (count == 0)
-		prefix_adjout_dump_r(ctx);
+		adjout_prefix_dump_r(ctx);
 
 	return 0;
 }
 
 int
-prefix_adjout_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
+adjout_prefix_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
     uint8_t subtreelen, unsigned int count, void *arg,
-    void (*upcall)(struct prefix_adjout *, void *),
+    void (*upcall)(struct adjout_prefix *, void *),
     void (*done)(void *, uint8_t),
     int (*throttle)(void *))
 {
 	struct rib_context *ctx;
-	struct prefix_adjout xp;
+	struct adjout_prefix xp;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
 		return -1;
@@ -672,13 +672,13 @@ prefix_adjout_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
 	xp.pt = pt_fill(subtree, subtreelen);
 	ctx->ctx_p = RB_NFIND(prefix_index, &peer->adj_rib_out, &xp);
 	if (ctx->ctx_p)
-		prefix_adjout_lock(ctx->ctx_p);
+		adjout_prefix_lock(ctx->ctx_p);
 
 	rib_dump_insert(ctx);
 
 	/* requested a sync traversal */
 	if (count == 0)
-		prefix_adjout_dump_r(ctx);
+		adjout_prefix_dump_r(ctx);
 
 	return 0;
 }
@@ -687,7 +687,7 @@ prefix_adjout_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
  * Link a prefix into the different parent objects.
  */
 static void
-prefix_adjout_link(struct prefix_adjout *p, struct rde_peer *peer,
+adjout_prefix_link(struct adjout_prefix *p, struct rde_peer *peer,
     struct adjout_attr *attrs, struct pt_entry *pt, uint32_t path_id_tx)
 {
 	p->attrs = adjout_attr_ref(attrs, peer);
@@ -699,7 +699,7 @@ prefix_adjout_link(struct prefix_adjout *p, struct rde_peer *peer,
  * Unlink a prefix from the different parent objects.
  */
 static void
-prefix_adjout_unlink(struct prefix_adjout *p, struct rde_peer *peer)
+adjout_prefix_unlink(struct adjout_prefix *p, struct rde_peer *peer)
 {
 	/* destroy all references to other objects */
 	adjout_attr_unref(p->attrs, peer);
@@ -709,10 +709,10 @@ prefix_adjout_unlink(struct prefix_adjout *p, struct rde_peer *peer)
 }
 
 /* alloc and zero new entry. May not fail. */
-static struct prefix_adjout *
-prefix_adjout_alloc(void)
+static struct adjout_prefix *
+adjout_prefix_alloc(void)
 {
-	struct prefix_adjout *p;
+	struct adjout_prefix *p;
 
 	p = calloc(1, sizeof(*p));
 	if (p == NULL)
@@ -723,7 +723,7 @@ prefix_adjout_alloc(void)
 
 /* free a unlinked entry */
 static void
-prefix_adjout_free(struct prefix_adjout *p)
+adjout_prefix_free(struct adjout_prefix *p)
 {
 	rdemem.adjout_prefix_cnt--;
 	free(p);

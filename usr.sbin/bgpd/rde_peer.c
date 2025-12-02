@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.58 2025/12/02 10:50:19 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.59 2025/12/02 13:03:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -426,7 +426,7 @@ peer_down(struct rde_peer *peer)
 	 * and flush all pending imsg from the SE.
 	 */
 	rib_dump_terminate(peer);
-	prefix_adjout_flush_pending(peer);
+	adjout_prefix_flush_pending(peer);
 	peer_imsg_flush(peer);
 
 	/* flush Adj-RIB-In */
@@ -499,7 +499,7 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
 	 * and flush all pending imsg from the SE.
 	 */
 	rib_dump_terminate(peer);
-	prefix_adjout_flush_pending(peer);
+	adjout_prefix_flush_pending(peer);
 	peer_imsg_flush(peer);
 
 	if (flushall)
@@ -517,7 +517,7 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
  * Enqueue a prefix onto the update queue so it can be sent out.
  */
 static void
-peer_blast_upcall(struct prefix_adjout *p, void *ptr)
+peer_blast_upcall(struct adjout_prefix *p, void *ptr)
 {
 	struct rde_peer		*peer = ptr;
 
@@ -557,9 +557,9 @@ peer_blast(struct rde_peer *peer, uint8_t aid)
 		rde_peer_send_rrefresh(peer, aid, ROUTE_REFRESH_BEGIN_RR);
 
 	/* force out all updates from the Adj-RIB-Out */
-	if (prefix_adjout_dump_new(peer, aid, 0, peer, peer_blast_upcall,
+	if (adjout_prefix_dump_new(peer, aid, 0, peer, peer_blast_upcall,
 	    peer_blast_done, NULL) == -1)
-		fatal("%s: prefix_adjout_dump_new", __func__);
+		fatal("%s: adjout_prefix_dump_new", __func__);
 }
 
 /* RIB walker callbacks for peer_dump. */
@@ -642,7 +642,7 @@ peer_reaper(struct rde_peer *peer)
 	if (peer == NULL)
 		return;
 
-	if (!prefix_adjout_reaper(peer))
+	if (!adjout_prefix_reaper(peer))
 		return;
 
 	ibufq_free(peer->ibufq);

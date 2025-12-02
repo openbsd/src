@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.671 2025/12/02 10:50:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.672 2025/12/02 13:03:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2961,7 +2961,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 }
 
 static void
-rde_dump_adjout_as(struct rde_peer *peer, struct prefix_adjout *p,
+rde_dump_adjout_as(struct rde_peer *peer, struct adjout_prefix *p,
     struct rde_aspath *asp, pid_t pid, int flags)
 {
 	struct ctl_show_rib	 rib;
@@ -2971,7 +2971,7 @@ rde_dump_adjout_as(struct rde_peer *peer, struct prefix_adjout *p,
 	size_t			 aslen;
 	uint8_t			 l;
 
-	nexthop = prefix_adjout_nexthop(p);
+	nexthop = adjout_prefix_nexthop(p);
 	memset(&rib, 0, sizeof(rib));
 	rib.local_pref = asp->lpref;
 	rib.med = asp->med;
@@ -3013,7 +3013,7 @@ rde_dump_adjout_as(struct rde_peer *peer, struct prefix_adjout *p,
 	imsg_close(ibuf_se_ctl, wbuf);
 
 	if (flags & F_CTL_DETAIL) {
-		struct rde_community *comm = prefix_adjout_communities(p);
+		struct rde_community *comm = adjout_prefix_communities(p);
 		size_t len = comm->nentries * sizeof(struct community);
 		if (comm->nentries > 0) {
 			if (imsg_compose(ibuf_se_ctl,
@@ -3096,7 +3096,7 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 }
 
 static void
-rde_dump_adjout_filter(struct rde_peer *peer, struct prefix_adjout *p,
+rde_dump_adjout_filter(struct rde_peer *peer, struct adjout_prefix *p,
      struct ctl_show_rib_request *req)
 {
 	struct rde_aspath	*asp;
@@ -3104,7 +3104,7 @@ rde_dump_adjout_filter(struct rde_peer *peer, struct prefix_adjout *p,
 	if (!rde_match_peer(peer, &req->neighbor))
 		return;
 
-	asp = prefix_adjout_aspath(p);
+	asp = adjout_prefix_aspath(p);
 	if ((req->flags & F_CTL_HAS_PATHID)) {
 		/* Match against the transmit path id if adjout is used.  */
 		if (req->path_id != p->path_id_tx)
@@ -3114,7 +3114,7 @@ rde_dump_adjout_filter(struct rde_peer *peer, struct prefix_adjout *p,
 	    !aspath_match(asp->aspath, &req->as, 0))
 		return;
 	if (req->community.flags != 0) {
-		if (!community_match(prefix_adjout_communities(p),
+		if (!community_match(adjout_prefix_communities(p),
 		    &req->community, NULL))
 			return;
 	}
@@ -3135,7 +3135,7 @@ rde_dump_upcall(struct rib_entry *re, void *ptr)
 }
 
 static void
-rde_dump_adjout_upcall(struct prefix_adjout *p, void *ptr)
+rde_dump_adjout_upcall(struct adjout_prefix *p, void *ptr)
 {
 	struct rde_dump_ctx	*ctx = ptr;
 	struct rde_peer		*peer;
@@ -3170,13 +3170,13 @@ rde_dump_done(void *arg, uint8_t aid)
 		ctx->peerid = peer->conf.id;
 		switch (ctx->req.type) {
 		case IMSG_CTL_SHOW_RIB:
-			if (prefix_adjout_dump_new(peer, ctx->req.aid,
+			if (adjout_prefix_dump_new(peer, ctx->req.aid,
 			    CTL_MSG_HIGH_MARK, ctx, rde_dump_adjout_upcall,
 			    rde_dump_done, rde_dump_throttled) == -1)
 				goto nomem;
 			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
-			if (prefix_adjout_dump_subtree(peer, &ctx->req.prefix,
+			if (adjout_prefix_dump_subtree(peer, &ctx->req.prefix,
 			    ctx->req.prefixlen, CTL_MSG_HIGH_MARK, ctx,
 			    rde_dump_adjout_upcall, rde_dump_done,
 			    rde_dump_throttled) == -1)
@@ -3207,7 +3207,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 {
 	struct rde_dump_ctx	*ctx;
 	struct rib_entry	*re;
-	struct prefix_adjout	*p;
+	struct adjout_prefix	*p;
 	u_int			 error;
 	uint8_t			 hostplen, plen;
 	uint16_t		 rid;
@@ -3245,14 +3245,14 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		ctx->peerid = peer->conf.id;
 		switch (ctx->req.type) {
 		case IMSG_CTL_SHOW_RIB:
-			if (prefix_adjout_dump_new(peer, ctx->req.aid,
+			if (adjout_prefix_dump_new(peer, ctx->req.aid,
 			    CTL_MSG_HIGH_MARK, ctx, rde_dump_adjout_upcall,
 			    rde_dump_done, rde_dump_throttled) == -1)
 				goto nomem;
 			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
 			if (req->flags & F_LONGER) {
-				if (prefix_adjout_dump_subtree(peer,
+				if (adjout_prefix_dump_subtree(peer,
 				    &req->prefix, req->prefixlen,
 				    CTL_MSG_HIGH_MARK, ctx,
 				    rde_dump_adjout_upcall,
@@ -3277,28 +3277,28 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 				if (req->flags & F_SHORTER) {
 					for (plen = 0; plen <= req->prefixlen;
 					    plen++) {
-						p = prefix_adjout_lookup(peer,
+						p = adjout_prefix_lookup(peer,
 						    &req->prefix, plen);
 						/* dump all matching paths */
 						while (p != NULL) {
 							rde_dump_adjout_upcall(
 							    p, ctx);
-							p = prefix_adjout_next(
+							p = adjout_prefix_next(
 							    peer, p);
 						}
 					}
 					p = NULL;
 				} else if (req->prefixlen == hostplen) {
-					p = prefix_adjout_match(peer,
+					p = adjout_prefix_match(peer,
 					    &req->prefix);
 				} else {
-					p = prefix_adjout_lookup(peer,
+					p = adjout_prefix_lookup(peer,
 					    &req->prefix, req->prefixlen);
 				}
 				/* dump all matching paths */
 				while (p != NULL) {
 					rde_dump_adjout_upcall(p, ctx);
-					p = prefix_adjout_next(peer, p);
+					p = adjout_prefix_next(peer, p);
 				}
 			} while ((peer = peer_match(&req->neighbor,
 			    peer->conf.id)));
@@ -3561,11 +3561,11 @@ rde_evaluate_all(void)
 
 /* flush Adj-RIB-Out by withdrawing all prefixes */
 static void
-rde_up_flush_upcall(struct prefix_adjout *p, void *ptr)
+rde_up_flush_upcall(struct adjout_prefix *p, void *ptr)
 {
 	struct rde_peer *peer = ptr;
 
-	prefix_adjout_withdraw(peer, p);
+	adjout_prefix_withdraw(peer, p);
 }
 
 int
@@ -3931,7 +3931,7 @@ rde_reload_done(void)
 			rde_eval_all = 1;
 
 		if (peer->reconf_rib) {
-			if (prefix_adjout_dump_new(peer, AID_UNSPEC,
+			if (adjout_prefix_dump_new(peer, AID_UNSPEC,
 			    RDE_RUNNER_ROUNDS, peer, rde_up_flush_upcall,
 			    rde_softreconfig_in_done, NULL) == -1)
 				fatal("%s: prefix_dump_new", __func__);
@@ -3982,7 +3982,7 @@ rde_reload_done(void)
 					if (peer->reconf_rib)
 						continue;
 
-					if (prefix_adjout_dump_new(peer,
+					if (adjout_prefix_dump_new(peer,
 					    AID_UNSPEC, RDE_RUNNER_ROUNDS, peer,
 					    rde_up_flush_upcall,
 					    rde_softreconfig_in_done,
