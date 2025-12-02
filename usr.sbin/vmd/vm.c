@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.120 2025/12/01 15:12:44 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.121 2025/12/02 02:31:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -57,8 +57,6 @@ int con_fd;
 struct vmd_vm *current_vm;
 
 extern struct vmd *env;
-
-extern char *__progname;
 
 pthread_mutex_t threadmutex;
 pthread_cond_t threadcond;
@@ -601,10 +599,13 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 		return (EINVAL);
 
 	tid = calloc(vcp->vcp_ncpus, sizeof(pthread_t));
+	if (tid == NULL) {
+		log_warn("failed to allocate pthread structures");
+		return (ENOMEM);
+	}
 	vrp = calloc(vcp->vcp_ncpus, sizeof(struct vm_run_params *));
-	if (tid == NULL || vrp == NULL) {
-		log_warn("%s: memory allocation error - exiting.",
-		    __progname);
+	if (vrp == NULL) {
+		log_warn("failed to allocate vm run params array");
 		return (ENOMEM);
 	}
 
@@ -626,15 +627,13 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 	for (i = 0 ; i < vcp->vcp_ncpus; i++) {
 		vrp[i] = malloc(sizeof(struct vm_run_params));
 		if (vrp[i] == NULL) {
-			log_warn("%s: memory allocation error - "
-			    "exiting.", __progname);
+			log_warn("failed to allocate vm run parameters");
 			/* caller will exit, so skip freeing */
 			return (ENOMEM);
 		}
 		vrp[i]->vrp_exit = malloc(sizeof(struct vm_exit));
 		if (vrp[i]->vrp_exit == NULL) {
-			log_warn("%s: memory allocation error - "
-			    "exiting.", __progname);
+			log_warn("failed to allocate vm exit area");
 			/* caller will exit, so skip freeing */
 			return (ENOMEM);
 		}
@@ -642,60 +641,51 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 		vrp[i]->vrp_vcpu_id = i;
 
 		if (vcpu_reset(vcp->vcp_id, i, vrs)) {
-			log_warnx("%s: cannot reset VCPU %zu - exiting.",
-			    __progname, i);
+			log_warnx("cannot reset vcpu %zu", i);
 			return (EIO);
 		}
 
 		if (sev_activate(current_vm, i)) {
-			log_warnx("%s: SEV activatation failed for VCPU "
-			    "%zu failed - exiting.", __progname, i);
+			log_warnx("SEV activatation failed for vcpu %zu", i);
 			return (EIO);
 		}
 
 		if (sev_encrypt_memory(current_vm)) {
-			log_warnx("%s: memory encryption failed for VCPU "
-			    "%zu failed - exiting.", __progname, i);
+			log_warnx("memory encryption failed for vcpu %zu", i);
 			return (EIO);
 		}
 
 		if (sev_encrypt_state(current_vm, i)) {
-			log_warnx("%s: state encryption failed for VCPU "
-			    "%zu failed - exiting.", __progname, i);
+			log_warnx("state encryption failed for vcpu %zu", i);
 			return (EIO);
 		}
 
 		if (sev_launch_finalize(current_vm)) {
-			log_warnx("%s: encryption failed for VCPU "
-			    "%zu failed - exiting.", __progname, i);
+			log_warnx("encryption failed for vcpu %zu", i);
 			return (EIO);
 		}
 
 		ret = pthread_cond_init(&vcpu_run_cond[i], NULL);
 		if (ret) {
-			log_warnx("%s: cannot initialize cond var (%d)",
-			    __progname, ret);
+			log_warnx("cannot initialize cond var (%d)", ret);
 			return (ret);
 		}
 
 		ret = pthread_mutex_init(&vcpu_run_mtx[i], NULL);
 		if (ret) {
-			log_warnx("%s: cannot initialize mtx (%d)",
-			    __progname, ret);
+			log_warnx("cannot initialize mtx (%d)", ret);
 			return (ret);
 		}
 
 		ret = pthread_cond_init(&vcpu_unpause_cond[i], NULL);
 		if (ret) {
-			log_warnx("%s: cannot initialize unpause var (%d)",
-			    __progname, ret);
+			log_warnx("cannot initialize unpause var (%d)", ret);
 			return (ret);
 		}
 
 		ret = pthread_mutex_init(&vcpu_unpause_mtx[i], NULL);
 		if (ret) {
-			log_warnx("%s: cannot initialize unpause mtx (%d)",
-			    __progname, ret);
+			log_warnx("cannot initialize unpause mtx (%d)", ret);
 			return (ret);
 		}
 
@@ -741,8 +731,7 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 				continue;
 
 			if (pthread_join(tid[i], &exit_status)) {
-				log_warn("%s: failed to join thread %zd - "
-				    "exiting", __progname, i);
+				log_warn("failed to join thread %zd", i);
 				mutex_unlock(&vm_mtx);
 				return (EIO);
 			}
@@ -754,13 +743,12 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 		/* Did the event thread exit? => return with an error */
 		if (evdone) {
 			if (pthread_join(evtid, &exit_status)) {
-				log_warn("%s: failed to join event thread - "
-				    "exiting", __progname);
+				log_warn("failed to join event thread");
 				return (EIO);
 			}
 
-			log_warnx("%s: vm %d event thread exited "
-			    "unexpectedly", __progname, vcp->vcp_id);
+			log_warnx("vm %d event thread exited unexpectedly",
+			    vcp->vcp_id);
 			return (EIO);
 		}
 

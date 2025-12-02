@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.44 2025/06/17 16:01:41 dv Exp $ */
+/* $OpenBSD: i8253.c,v 1.45 2025/12/02 02:31:10 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -29,8 +29,6 @@
 #include "i8253.h"
 #include "vmd.h"
 #include "atomicio.h"
-
-extern char *__progname;
 
 /*
  * Channel 0 is used to generate the legacy hardclock interrupt (HZ).
@@ -274,8 +272,8 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 
 			goto ret;
 		} else {
-			log_warnx("%s: i8253 PIT: read from control port "
-			    "unsupported", __progname);
+			log_warnx("i8253 PIT: read from control port "
+			    "unsupported");
 			set_return_data(vei, 0);
 		}
 	} else {

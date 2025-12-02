@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.12 2025/11/25 14:20:33 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.13 2025/12/02 02:31:10 dv Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -46,7 +46,6 @@ typedef uint8_t (*io_fn_t)(struct vm_run_params *);
 #define MAX_PORTS 65536
 
 io_fn_t	ioports_map[MAX_PORTS];
-extern char *__progname;
 
 void	 create_memory_map(struct vm_create_params *);
 int	 translate_gva(struct vm_exit*, uint64_t, uint64_t *, int);
@@ -551,8 +550,7 @@ vcpu_exit(struct vm_run_params *vrp)
 		/* reset VM */
 		return (EAGAIN);
 	default:
-		log_debug("%s: unknown exit reason 0x%x",
-		    __progname, vrp->vrp_exit_reason);
+		log_debug("unknown exit reason 0x%x", vrp->vrp_exit_reason);
 	}
 
 	return (0);
@@ -630,14 +628,13 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 #endif /* MMIO_NOTYET */
 
 	case VEE_FAULT_PROTECT:
-		log_debug("%s: EPT Violation: rip=0x%llx", __progname,
+		log_debug("EPT Violation: rip=0x%llx",
 		    ve->vrs.vrs_gprs[VCPU_REGS_RIP]);
 		ret = EFAULT;
 		break;
 
 	default:
-		fatalx("%s: invalid fault_type %d", __progname,
-		    ve->vee.vee_fault_type);
+		fatalx("invalid fault_type %d", ve->vee.vee_fault_type);
 		/* UNREACHED */
 	}
 
@@ -678,8 +675,7 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 		intr = pci_handle_io(vrp);
 		break;
 	default:
-		log_warnx("%s: unknown PCI register 0x%llx",
-		    __progname, (uint64_t)vei->vei.vei_port);
+		log_warnx("unknown PCI register 0x%04x", vei->vei.vei_port);
 		break;
 	}
 

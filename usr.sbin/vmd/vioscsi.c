@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.27 2025/10/20 19:22:00 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.28 2025/12/02 02:31:10 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -41,8 +41,6 @@
 #else
 #define DPRINTF(x...)	do {} while(0)
 #endif	/* VIOSCSI_DEBUG */
-
-extern char *__progname;
 
 static void
 vioscsi_prepare_resp(struct virtio_scsi_res_hdr *resp, uint8_t vio_status,

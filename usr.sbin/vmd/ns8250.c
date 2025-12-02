@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.41 2025/06/12 21:04:37 dv Exp $ */
+/* $OpenBSD: ns8250.c,v 1.42 2025/12/02 02:31:10 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -31,7 +31,6 @@
 #include "ns8250.h"
 #include "vmd.h"
 
-extern char *__progname;
 struct ns8250_dev com1_dev;
 
 static struct vm_dev_pipe dev_pipe;
@@ -457,8 +456,7 @@ vcpu_process_com_lsr(struct vm_exit *vei)
 	 * continue.
 	 */
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
-		log_warnx("%s: LSR UART write 0x%x unsupported",
-		    __progname, vei->vei.vei_data);
+		log_warnx("LSR UART write 0x%x unsupported", vei->vei.vei_data);
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
@@ -489,8 +487,7 @@ vcpu_process_com_msr(struct vm_exit *vei)
 	 * continue.
 	 */
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
-		log_warnx("%s: MSR UART write 0x%x unsupported",
-		    __progname, vei->vei.vei_data);
+		log_warnx("MSR UART write 0x%x unsupported", vei->vei.vei_data);
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction

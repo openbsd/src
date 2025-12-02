@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.25 2024/09/26 01:45:13 jsg Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.26 2025/12/02 02:31:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -93,8 +93,6 @@ struct qcdisk {
 	uint32_t refssz;
 	uint32_t headersz;
 };
-
-extern char *__progname;
 
 static off_t xlate(struct qcdisk *, off_t, int *);
 static void copy_cluster(struct qcdisk *, struct qcdisk *, off_t, off_t);

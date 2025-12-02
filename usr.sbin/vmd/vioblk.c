@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.25 2025/10/20 19:21:59 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.26 2025/12/02 02:31:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -33,7 +33,6 @@
 #include "virtio.h"
 #include "vmd.h"
 
-extern char *__progname;
 extern struct vmd_vm *current_vm;
 struct iovec io_v[VIRTIO_QUEUE_SIZE_MAX];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.27 2025/10/20 19:22:00 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.28 2025/12/02 02:31:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -54,7 +54,6 @@
 #define RXQ	0
 #define TXQ	1
 
-extern char *__progname;
 extern struct vmd_vm *current_vm;
 
 struct packet {
@@ -1085,8 +1084,7 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 			pci_cfg->device_feature_select = data;
 		break;
 	case VIO1_PCI_DEVICE_FEATURE:
-		log_warnx("%s: illegal write to device feature "
-		    "register", __progname);
+		log_warnx("illegal write to device feature register");
 		break;
 	case VIO1_PCI_DRIVER_FEATURE_SELECT:
 		if (sz != 4)
@@ -1122,8 +1120,7 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 		/* Ignore until we support MSIX. */
 		break;
 	case VIO1_PCI_NUM_QUEUES:
-		log_warnx("%s: illegal write to num queues register",
-		    __progname);
+		log_warnx("illegal write to num queues register");
 		break;
 	case VIO1_PCI_DEVICE_STATUS:
 		if (sz != 1) {
@@ -1169,8 +1166,7 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 		    "[failed]" : "");
 		break;
 	case VIO1_PCI_CONFIG_GENERATION:
-		log_warnx("%s: illegal write to config generation "
-		    "register", __progname);
+		log_warnx("illegal write to config generation register");
 		break;
 	case VIO1_PCI_QUEUE_SELECT:
 		pci_cfg->queue_select = data;
@@ -1193,8 +1189,7 @@ vionet_cfg_write(struct virtio_dev *dev, struct viodev_msg *msg)
 		virtio_update_qa(dev);
 		break;
 	case VIO1_PCI_QUEUE_NOTIFY_OFF:
-		log_warnx("%s: illegal write to queue notify offset "
-		    "register", __progname);
+		log_warnx("illegal write to queue notify offset register");
 		break;
 	case VIO1_PCI_QUEUE_DESC:
 		if (sz != 4) {

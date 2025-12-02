@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.52 2025/11/27 11:11:27 hshoexer Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.53 2025/12/02 02:31:10 dv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ static void marc4random_buf(paddr_t, int);
 static void mbzero(paddr_t, int);
 static void mbcopy(void *, paddr_t, int);
 
-extern char *__progname;
 extern int vm_id;
 
 /*
@@ -456,8 +455,7 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 			errstr = gzerror(fp, &errnum);
 			if (errnum == Z_ERRNO)
 				errnum = errno;
-			log_warnx("%s: error %d in mread, %s", __progname,
-			    errnum, errstr);
+			log_warnx("error %d in mread, %s", errnum, errstr);
 			return (0);
 		}
 
@@ -483,8 +481,7 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 			errstr = gzerror(fp, &errnum);
 			if (errnum == Z_ERRNO)
 				errnum = errno;
-			log_warnx("%s: error %d in mread, %s", __progname,
-			    errnum, errstr);
+			log_warnx("error %d in mread, %s", errnum, errstr);
 			return (0);
 		}
 

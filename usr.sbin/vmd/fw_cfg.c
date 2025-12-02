@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.11 2025/06/12 21:04:37 dv Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.12 2025/12/02 02:31:10 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -54,8 +54,6 @@ struct fw_cfg_file {
 	uint16_t	reserved;
 	char		name[56];
 };
-
-extern char *__progname;
 
 static struct fw_cfg_state {
 	size_t offset;
@@ -219,8 +217,8 @@ vcpu_exit_fw_cfg(struct vm_run_params *vrp)
 	switch (vei->vei.vei_port) {
 	case FW_CFG_IO_SELECT:
 		if (vei->vei.vei_dir == VEI_DIR_IN) {
-			log_warnx("%s: fw_cfg: read from selector port "
-			    "unsupported", __progname);
+			log_warnx("fw_cfg: read from selector port "
+			    "unsupported");
 			set_return_data(vei, 0);
 			break;
 		}
@@ -229,8 +227,8 @@ vcpu_exit_fw_cfg(struct vm_run_params *vrp)
 		break;
 	case FW_CFG_IO_DATA:
 		if (vei->vei.vei_dir == VEI_DIR_OUT) {
-			log_debug("%s: fw_cfg: discarding data written to "
-			    "data port", __progname);
+			log_debug("fw_cfg: discarding data written to "
+			    "data port");
 			break;
 		}
 		/* fw_cfg only defines 1-byte reads via IO port */
@@ -255,8 +253,8 @@ vcpu_exit_fw_cfg_dma(struct vm_run_params *vrp)
 	struct vm_exit *vei = vrp->vrp_exit;
 
 	if (vei->vei.vei_size != 4) {
-		log_debug("%s: fw_cfg_dma: discarding data written to "
-		    "dma addr", __progname);
+		log_debug("fw_cfg_dma: discarding data written to "
+		    "dma addr");
 		if (vei->vei.vei_dir == VEI_DIR_OUT)
 			fw_cfg_dma_addr = 0;
 		return 0xFF;
@@ -333,7 +331,7 @@ fw_cfg_add_file(const char *name, const void *data, size_t len)
 	struct fw_cfg_file_entry *f;
 
 	if (fw_cfg_lookup_file(name))
-		fatalx("%s: fw_cfg: file %s exists", __progname, name);
+		fatalx("fw_cfg: file %s exists", name);
 
 	if ((f = calloc(1, sizeof(*f))) == NULL)
 		fatal("%s", __func__);
@@ -343,7 +341,7 @@ fw_cfg_add_file(const char *name, const void *data, size_t len)
 
 	if (strlcpy(f->file.name, name, sizeof(f->file.name)) >=
 	    sizeof(f->file.name))
-		fatalx("%s: fw_cfg: file name too long", __progname);
+		fatalx("fw_cfg: file name too long");
 
 	f->file.size = htobe32(len);
 	f->file.selector = htobe16(file_id++);

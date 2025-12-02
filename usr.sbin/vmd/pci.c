@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.39 2025/08/02 15:16:18 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.40 2025/12/02 02:31:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -33,7 +33,6 @@
 struct pci pci;
 
 extern struct vmd_vm current_vm;
-extern char *__progname;
 
 /* PIC IRQs, assigned to devices in order */
 const uint8_t pci_pic_irqs[PCI_MAX_PIC_IRQS] = {3, 5, 6, 7, 9, 10, 11, 12,
@@ -97,8 +96,8 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 		pci.pci_next_io_bar += VM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
-		DPRINTF("%s: adding pci bar cookie for dev %d bar %d = %p",
-		    __progname, id, bar_ct, cookie);
+		DPRINTF("adding pci bar cookie for dev %d bar %d = %p", id,
+		    bar_ct, cookie);
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_IO;
 		pci.pci_devices[id].pd_barsize[bar_ct] = VM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_bar_ct++;
@@ -259,7 +258,7 @@ pci_init(void)
 	if (pci_add_device(&id, PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
 	    PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_HOST,
 	    PCI_VENDOR_OPENBSD, 0, 0, 0, NULL)) {
-		log_warnx("%s: can't add PCI host bridge", __progname);
+		log_warnx("can't add PCI host bridge");
 		return;
 	}
 }
@@ -316,8 +315,8 @@ pci_handle_io(struct vm_run_params *vrp)
 	}
 found:
 	if (fn == NULL) {
-		DPRINTF("%s: no pci i/o function for reg 0x%llx (dir=%d "
-		    "guest %%rip=0x%llx", __progname, (uint64_t)reg, dir,
+		DPRINTF("no pci i/o function for reg 0x%llx (dir=%d guest "
+		    "%%rip=0x%llx)", (uint64_t)reg, dir,
 		    vei->vrs.vrs_gprs[VCPU_REGS_RIP]);
 		/* Reads from undefined ports return 0xFF */
 		if (dir == VEI_DIR_IN)
@@ -326,7 +325,7 @@ found:
 	}
 
 	if (fn(dir, reg, &vei->vei.vei_data, &intr, cookie, sz))
-		log_warnx("%s: pci i/o access function failed", __progname);
+		log_warnx("pci i/o access function failed");
 	if (intr != 0xFF)
 		intr = irq;
 
