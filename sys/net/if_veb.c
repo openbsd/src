@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.61 2025/12/02 03:24:19 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.62 2025/12/02 04:03:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -102,9 +102,14 @@ SMR_TAILQ_HEAD(veb_rule_list, veb_rule);
 
 struct veb_softc;
 
+struct veb_port_cpu {
+	struct refcnt			 c_refs;
+};
+
 struct veb_port {
 	struct ifnet			*p_ifp0;
 	struct refcnt			 p_refs;
+	struct cpumem			*p_percpu;
 
 	int (*p_enqueue)(struct ifnet *, struct mbuf *, struct netstack *);
 
@@ -1285,18 +1290,20 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	if (!ETH64_IS_MULTICAST(ctx.dst)) {
 		struct eb_entry *ebe;
 		struct veb_port *tp = NULL;
+		struct veb_port_cpu *tc;
 		uint16_t tvs = 0;
 
 		smr_read_enter();
 		ebe = etherbridge_resolve_entry(&sc->sc_eb, ctx.vp, ctx.dst);
 		if (ebe != NULL) {
-			tp = veb_eb_port_take(NULL, etherbridge_port(ebe));
+			tp = etherbridge_port(ebe);
+			tc = veb_ep_brport_take(tp);
 			tvs = etherbridge_vs(ebe);
 		}
 		smr_read_leave();
 		if (tp != NULL) {
 			m = veb_transmit(sc, &ctx, m, tp, tvs);
-			veb_eb_port_rele(NULL, tp);
+			veb_ep_brport_rele(tc, tp);
 		}
 
 		if (m == NULL)
@@ -1631,6 +1638,8 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 	struct veb_ports **ports_ptr;
 	struct veb_ports *om, *nm;
 	struct veb_port *p;
+	struct veb_port_cpu *c;
+	struct cpumem_iter cmi;
 	int isvport;
 	int error;
 
@@ -1674,6 +1683,13 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 	TAILQ_INIT(&p->p_vrl);
 	SMR_TAILQ_INIT(&p->p_vr_list[0]);
 	SMR_TAILQ_INIT(&p->p_vr_list[1]);
+
+	p->p_percpu = cpumem_malloc(sizeof(*c), M_DEVBUF);
+	CPUMEM_FOREACH(c, &cmi, p->p_percpu) {
+		/* use a per cpu refcnt as a proxy to the port refcnt */
+		veb_p_take(p);
+		refcnt_init(&c->c_refs);
+	}
 
 	p->p_enqueue = isvport ? vport_if_enqueue : veb_if_enqueue;
 	p->p_ioctl = ifp0->if_ioctl;
@@ -1743,6 +1759,7 @@ unpromisc:
 	if (!span)
 		ifpromisc(ifp0, 0);
 free:
+	cpumem_free(p->p_percpu, M_DEVBUF, sizeof(*c));
 	free(p, M_DEVBUF, sizeof(*p));
 put:
 	if_put(ifp0);
@@ -3078,12 +3095,17 @@ static void
 veb_p_fini(struct veb_port *p)
 {
 	struct ifnet *ifp0 = p->p_ifp0;
+	struct veb_port_cpu *c;
+	struct cpumem_iter cmi;
 
+	CPUMEM_FOREACH(c, &cmi, p->p_percpu)
+		veb_ep_brport_rele(c, p);
 	refcnt_finalize(&p->p_refs, "vebpdtor");
 	veb_rule_list_free(TAILQ_FIRST(&p->p_vrl));
 
 	if_put(ifp0);
 	veb_free_vid_map(p->p_vid_map);
+	cpumem_free(p->p_percpu, M_DEVBUF, sizeof(*c));
 	free(p, M_DEVBUF, sizeof(*p)); /* hope you didn't forget smr_barrier */
 }
 
@@ -3210,15 +3232,22 @@ static void *
 veb_ep_brport_take(void *port)
 {
 	struct veb_port *p = port;
-	veb_p_take(p);
-	return (NULL);
+	struct veb_port_cpu *c;
+
+	c = cpumem_enter(p->p_percpu);
+	refcnt_take(&c->c_refs);
+	cpumem_leave(p->p_percpu, c);
+
+	return (c);
 }
 
 static void
-veb_ep_brport_rele(void *null, void *port)
+veb_ep_brport_rele(void *cpu, void *port)
 {
-	struct veb_port *p = port;
-	veb_p_rele(p);
+	struct veb_port_cpu *c = cpu;
+
+	if (refcnt_rele(&c->c_refs))
+		veb_p_rele(port);
 }
 
 static size_t
