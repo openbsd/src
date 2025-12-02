@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.59 2025/11/26 03:43:29 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.60 2025/12/02 00:12:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -131,6 +131,18 @@ struct veb_port {
 #define VEB_RULE_LIST_OUT			0
 #define VEB_RULE_LIST_IN			1
 };
+
+static inline void
+veb_p_take(struct veb_port *p)
+{
+	refcnt_take(&p->p_refs);
+}
+
+static inline void
+veb_p_rele(struct veb_port *p)
+{
+	refcnt_rele_wake(&p->p_refs);
+}
 
 struct veb_ports {
 	struct refcnt			 m_refs;
@@ -484,7 +496,7 @@ veb_clone_destroy(struct ifnet *ifp)
 			for (i = 0; i < mp->m_count; i++) {
 				p = ps[i];
 				/* the ports map holds a port ref */
-				refcnt_rele(&p->p_refs);
+				veb_p_rele(p);
 				/* now we can finalize the port */
 				veb_p_fini(p);
 			}
@@ -498,7 +510,7 @@ veb_clone_destroy(struct ifnet *ifp)
 			for (i = 0; i < ms->m_count; i++) {
 				p = ps[i];
 				/* the ports map holds a port ref */
-				refcnt_rele(&p->p_refs);
+				veb_p_rele(p);
 				/* now we can finalize the port */
 				veb_p_fini(p);
 			}
@@ -1545,13 +1557,13 @@ veb_ports_insert(struct veb_ports *om, struct veb_port *p)
 		ops = veb_ports_array(om);
 		for (i = 0; i < ocount; i++) {
 			struct veb_port *op = ops[i];
-			refcnt_take(&op->p_refs);
+			veb_p_take(op);
 			nps[i] = op;
 		}
 	} else
 		i = 0;
 
-	refcnt_take(&p->p_refs);
+	veb_p_take(p);
 	nps[i] = p;
 
 	return (nm);
@@ -1583,7 +1595,7 @@ veb_ports_remove(struct veb_ports *om, struct veb_port *p)
 		if (op == p)
 			continue;
 
-		refcnt_take(&op->p_refs);
+		veb_p_take(op);
 		nps[j++] = op;
 	}
 	KASSERT(j == ncount);
@@ -1605,7 +1617,7 @@ veb_ports_destroy(struct veb_ports *m)
 
 	for (i = 0; i < m->m_count; i++) {
 		struct veb_port *p = ps[i];
-		refcnt_rele_wake(&p->p_refs);
+		veb_p_rele(p);
 	}
 
 	veb_ports_free(m);
@@ -1794,7 +1806,7 @@ veb_port_get(struct veb_softc *sc, const char *name)
 		p = ps[i];
 
 		if (strncmp(p->p_ifp0->if_xname, name, IFNAMSIZ) == 0) {
-			refcnt_take(&p->p_refs);
+			veb_p_take(p);
 			return (p);
 		}
 	}
@@ -1805,7 +1817,7 @@ veb_port_get(struct veb_softc *sc, const char *name)
 static void
 veb_port_put(struct veb_softc *sc, struct veb_port *p)
 {
-	refcnt_rele_wake(&p->p_refs);
+	veb_p_rele(p);
 }
 
 static int
@@ -3181,7 +3193,7 @@ veb_eb_port_take(void *arg, void *port)
 {
 	struct veb_port *p = port;
 
-	refcnt_take(&p->p_refs);
+	veb_p_take(p);
 
 	return (p);
 }
@@ -3191,7 +3203,7 @@ veb_eb_port_rele(void *arg, void *port)
 {
 	struct veb_port *p = port;
 
-	refcnt_rele_wake(&p->p_refs);
+	veb_p_rele(p);
 }
 
 static void
