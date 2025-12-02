@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.27 2025/10/30 23:18:06 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.28 2025/12/02 12:21:39 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -34,7 +34,7 @@
 #include "rpki-asn1.h"
 
 /*
- * CCR definition in draft-spaghetti-sidrops-rpki-ccr-04, section 3.
+ * CCR definition in draft-ietf-sidrops-rpki-ccr-01, section 3.
  */
 
 ASN1_ITEM_EXP EncapContentInfo_it;

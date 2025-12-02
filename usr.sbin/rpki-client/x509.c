@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.124 2025/12/02 10:34:48 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.125 2025/12/02 12:21:39 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -122,7 +122,7 @@ static const struct {
 		.ptr = &spl_oid,
 	},
 	{
-		.oid = "1.3.6.1.4.1.41948.828",
+		.oid = "1.2.840.113549.1.9.16.1.54",
 		.ptr = &ccr_oid,
 	},
 };
