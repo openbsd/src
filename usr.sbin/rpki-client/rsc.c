@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.42 2025/08/24 12:34:39 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.43 2025/12/02 10:34:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -228,7 +228,6 @@ rsc_parse_checklist(const char *fn, struct rsc *rsc,
     const STACK_OF(FileNameAndHash) *checkList)
 {
 	FileNameAndHash		*fh;
-	ASN1_IA5STRING		*fileName;
 	struct rscfile		*file;
 	size_t			 num_files, i;
 
@@ -249,25 +248,33 @@ rsc_parse_checklist(const char *fn, struct rsc *rsc,
 	rsc->num_files = num_files;
 
 	for (i = 0; i < num_files; i++) {
+		const unsigned char *data;
+		int length;
+
 		fh = sk_FileNameAndHash_value(checkList, i);
 
 		file = &rsc->files[i];
 
-		if (fh->hash->length != SHA256_DIGEST_LENGTH) {
+		data = ASN1_STRING_get0_data(fh->hash);
+		length = ASN1_STRING_length(fh->hash);
+		if (length != SHA256_DIGEST_LENGTH) {
 			warnx("%s: RSC Digest: invalid SHA256 length", fn);
 			return 0;
 		}
-		memcpy(file->hash, fh->hash->data, SHA256_DIGEST_LENGTH);
+		memcpy(file->hash, data, length);
 
-		if ((fileName = fh->fileName) == NULL)
+		if (fh->fileName == NULL)
 			continue;
 
-		if (!valid_filename(fileName->data, fileName->length)) {
+		data = ASN1_STRING_get0_data(fh->fileName);
+		length = ASN1_STRING_length(fh->fileName);
+
+		if (!valid_filename(data, length)) {
 			warnx("%s: RSC FileNameAndHash: bad filename", fn);
 			return 0;
 		}
 
-		file->filename = strndup(fileName->data, fileName->length);
+		file->filename = strndup(data, length);
 		if (file->filename == NULL)
 			err(1, NULL);
 	}

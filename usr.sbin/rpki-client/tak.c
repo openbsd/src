@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.27 2025/08/19 11:30:20 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.28 2025/12/02 10:34:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -68,9 +68,10 @@ parse_takey(const char *fn, const TAKey *takey)
 	const ASN1_IA5STRING	*certURI;
 	X509_PUBKEY		*pubkey;
 	struct takey		*res = NULL;
+	const unsigned char	*data;
 	unsigned char		*der = NULL;
 	size_t			 i;
-	int			 der_len;
+	int			 der_len, length;
 
 	if ((res = calloc(1, sizeof(struct takey))) == NULL)
 		err(1, NULL);
@@ -83,11 +84,12 @@ parse_takey(const char *fn, const TAKey *takey)
 
 		for (i = 0; i < res->num_comments; i++) {
 			comment = sk_ASN1_UTF8STRING_value(takey->comments, i);
-			res->comments[i] = calloc(comment->length + 1, 4);
+			data = ASN1_STRING_get0_data(comment);
+			length = ASN1_STRING_length(comment);
+			res->comments[i] = calloc(length + 1, 4);
 			if (res->comments[i] == NULL)
 				err(1, NULL);
-			(void)strvisx(res->comments[i], comment->data,
-			    comment->length, VIS_SAFE);
+			(void)strvisx(res->comments[i], data, length, VIS_SAFE);
 		}
 	}
 
@@ -101,14 +103,16 @@ parse_takey(const char *fn, const TAKey *takey)
 
 	for (i = 0; i < res->num_uris; i++) {
 		certURI = sk_ASN1_IA5STRING_value(takey->certificateURIs, i);
-		if (!valid_uri(certURI->data, certURI->length, NULL)) {
+		data = ASN1_STRING_get0_data(certURI);
+		length = ASN1_STRING_length(certURI);
+		if (!valid_uri(data, length, NULL)) {
 			warnx("%s: invalid TA URI", fn);
 			goto err;
 		}
 
 		/* XXX: enforce that protocol is rsync or https. */
 
-		res->uris[i] = strndup(certURI->data, certURI->length);
+		res->uris[i] = strndup(data, length);
 		if (res->uris[i] == NULL)
 			err(1, NULL);
 	}

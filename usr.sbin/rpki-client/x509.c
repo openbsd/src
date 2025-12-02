@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.123 2025/11/18 14:04:45 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.124 2025/12/02 10:34:48 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -312,7 +312,7 @@ int
 x509_get_generalized_time(const char *fn, const char *descr,
     const ASN1_TIME *at, time_t *t)
 {
-	if (at->length != GENTIME_LENGTH) {
+	if (ASN1_STRING_length(at) != GENTIME_LENGTH) {
 		warnx("%s: %s time format invalid", fn, descr);
 		return 0;
 	}
@@ -331,7 +331,8 @@ int
 x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
     char **out)
 {
-	ASN1_IA5STRING	*uri;
+	const unsigned char *data;
+	int length;
 
 	assert(*out == NULL);
 
@@ -340,14 +341,15 @@ x509_location(const char *fn, const char *descr, GENERAL_NAME *location,
 		return 0;
 	}
 
-	uri = location->d.uniformResourceIdentifier;
+	data = ASN1_STRING_get0_data(location->d.uniformResourceIdentifier);
+	length = ASN1_STRING_length(location->d.uniformResourceIdentifier);
 
-	if (!valid_uri(uri->data, uri->length, NULL)) {
+	if (!valid_uri(data, length, NULL)) {
 		warnx("%s: RFC 6487 section 4.8: %s bad location", fn, descr);
 		return 0;
 	}
 
-	if ((*out = strndup(uri->data, uri->length)) == NULL)
+	if ((*out = strndup(data, length)) == NULL)
 		err(1, NULL);
 
 	return 1;
@@ -375,7 +377,8 @@ valid_printable_octet(const uint8_t u8)
 static int
 valid_printable_string(const char *fn, const char *descr, const ASN1_STRING *as)
 {
-	int i;
+	const unsigned char *data;
+	int i, length;
 
 	/*
 	 * The following check can be enabled after AFRINIC re-issues CA certs.
@@ -388,10 +391,12 @@ valid_printable_string(const char *fn, const char *descr, const ASN1_STRING *as)
 		return 0;
 	}
 
-	for (i = 0; i < as->length; i++) {
-		if (!valid_printable_octet(as->data[i])) {
+	data = ASN1_STRING_get0_data(as);
+	length = ASN1_STRING_length(as);
+	for (i = 0; i < length; i++) {
+		if (!valid_printable_octet(data[i])) {
 			warnx("%s: invalid %s: PrintableString contains 0x%02x",
-			    fn, descr, as->data[i]);
+			    fn, descr, data[i]);
 			return 0;
 		}
 	}
