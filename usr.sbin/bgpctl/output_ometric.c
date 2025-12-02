@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.18 2025/12/02 10:51:20 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.19 2025/12/02 13:03:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -294,7 +294,7 @@ ometric_rib_mem(struct rde_memstats *stats)
 	ometric_rib_mem_element("prefix", stats->prefix_cnt,
 	    stats->prefix_cnt * sizeof(struct prefix), UINT64_MAX);
 	ometric_rib_mem_element("adjout_prefix", stats->adjout_prefix_cnt,
-	    stats->adjout_prefix_cnt * sizeof(struct prefix_adjout),
+	    stats->adjout_prefix_cnt * sizeof(struct adjout_prefix),
 	    UINT64_MAX);
 	ometric_rib_mem_element("adjout_attr", stats->adjout_attr_cnt,
 	    stats->adjout_attr_cnt * sizeof(struct adjout_attr),
