@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.52 2025/12/02 03:24:19 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.53 2025/12/02 03:50:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -348,6 +348,7 @@ struct aggr_port {
 	struct mutex		 p_mtx;
 	struct ether_port	 p_ether_port;
 	struct refcnt		 p_refs;
+	struct cpumem		*p_cpurefs;
 
 	uint8_t			 p_lladdr[ETHER_ADDR_LEN];
 	uint32_t		 p_mtu;
@@ -750,7 +751,7 @@ aggr_port_take(void *port)
 	struct aggr_port *p = port;
 	refcnt_take(&p->p_refs);
 }
- 
+
 static void
 aggr_port_rele(void *port)
 {
@@ -761,14 +762,23 @@ aggr_port_rele(void *port)
 static void *
 aggr_cpu_take(void *port)
 {
-	aggr_port_take(port);
-	return (NULL);
-}
+	struct aggr_port *p = port;
+	struct refcnt *r;
 
+	r = cpumem_enter(p->p_cpurefs);
+	refcnt_take(r);
+	cpumem_leave(p->p_cpurefs, r);
+
+	return (r);
+}
+ 
 static void
-aggr_cpu_rele(void *null, void *port)
+aggr_cpu_rele(void *ref, void *port)
 {
-	aggr_port_rele(port);
+	struct refcnt *r = ref;
+
+	if (refcnt_rele(r))
+		aggr_port_rele(port);
 }
 
 static inline int
@@ -1172,6 +1182,8 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	struct arpcom *ac0;
 	struct aggr_port *p;
 	struct aggr_multiaddr *ma;
+	struct cpumem_iter cmi;
+	struct refcnt *r;
 	int past = ticks - (hz * LACP_TIMEOUT_FACTOR);
 	int i;
 	int error;
@@ -1225,6 +1237,13 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	p->p_mtu = ifp0->if_mtu;
 	mtx_init(&p->p_mtx, IPL_SOFTNET);
 	refcnt_init(&p->p_refs);
+
+	/* each per cpu refcnt acts as a proxy for the port refcnt */
+	p->p_cpurefs = cpumem_malloc(sizeof(*r), M_DEVBUF);
+	CPUMEM_FOREACH(r, &cmi, p->p_cpurefs) {
+		aggr_port_take(p);
+		refcnt_init(r);
+	}
 
 	p->p_ether_port.ep_input = aggr_port_input;
 	p->p_ether_port.ep_port_take = aggr_cpu_take;
@@ -1332,6 +1351,7 @@ ungroup:
 		    ifp->if_xname, ifp0->if_xname);
 	}
 free:
+	cpumem_free(p->p_cpurefs, M_DEVBUF, sizeof(*r));
 	free(p, M_DEVBUF, sizeof(*p));
 put:
 	if_put(ifp0);
@@ -1533,6 +1553,8 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0 = p->p_ifp0;
 	struct arpcom *ac0 = (struct arpcom *)ifp0;
+	struct cpumem_iter cmi;
+	struct refcnt *r;
 	struct aggr_multiaddr *ma;
 	enum aggr_port_selected selected;
 	struct smr_entry smrdtor;
@@ -1563,8 +1585,13 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	ifp0->if_ioctl = p->p_ioctl;
 	ifp0->if_output = p->p_output;
 	SMR_PTR_SET_LOCKED(&ac0->ac_trport, NULL);
-	smr_call(&smrdtor, aggr_port_rele, p);
 
+	/* fold the per cpu refcnt back into the port refcnt */
+	CPUMEM_FOREACH(r, &cmi, p->p_cpurefs)
+		aggr_cpu_rele(r, p);
+
+	/* wait for all the refs to finalize */
+	smr_call(&smrdtor, aggr_port_rele, p);
 	refcnt_finalize(&p->p_refs, "aggrdtor");
 
 #if NKSTAT > 0
@@ -1614,6 +1641,7 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	if_detachhook_del(ifp0, &p->p_dhook);
 	if_linkstatehook_del(ifp0, &p->p_lhook);
 	if_put(ifp0);
+	cpumem_free(p->p_cpurefs, M_DEVBUF, sizeof(*r));
 	free(p, M_DEVBUF, sizeof(*p));
 
 	/* XXX this is a pretty ugly place to update this */
