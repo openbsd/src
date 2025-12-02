@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.184 2025/12/01 13:07:28 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.185 2025/12/02 10:50:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -244,7 +244,7 @@ up_generate_updates(struct rde_peer *peer, struct rib_entry *re)
 done:
 	/* withdraw prefix */
 	if (p != NULL)
-		prefix_adjout_withdraw(p);
+		prefix_adjout_withdraw(peer, p);
 }
 
 /*
@@ -334,7 +334,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 	/* withdraw stale paths */
 	for (p = head; p != NULL; p = prefix_adjout_next(peer, p)) {
 		if (p->flags & PREFIX_ADJOUT_FLAG_STALE)
-			prefix_adjout_withdraw(p);
+			prefix_adjout_withdraw(peer, p);
 	}
 }
 
@@ -383,7 +383,7 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 		/* withdraw old path */
 		p = prefix_adjout_get(peer, old_pathid_tx, re->prefix);
 		if (p != NULL)
-			prefix_adjout_withdraw(p);
+			prefix_adjout_withdraw(peer, p);
 	}
 }
 
@@ -808,7 +808,7 @@ up_is_eor(struct rde_peer *peer, uint8_t aid)
 		 */
 		RB_REMOVE(prefix_tree, &peer->updates[aid], p);
 		p->flags &= ~PREFIX_ADJOUT_FLAG_UPDATE;
-		prefix_adjout_destroy(p);
+		prefix_adjout_destroy(peer, p);
 		return 1;
 	}
 	return 0;
@@ -823,7 +823,7 @@ up_prefix_free(struct prefix_tree *prefix_head, struct prefix_adjout *p,
 {
 	if (withdraw) {
 		/* prefix no longer needed, remove it */
-		prefix_adjout_destroy(p);
+		prefix_adjout_destroy(peer, p);
 		peer->stats.prefix_sent_withdraw++;
 	} else {
 		/* prefix still in Adj-RIB-Out, keep it */
@@ -856,9 +856,7 @@ up_dump_prefix(struct ibuf *buf, struct prefix_tree *prefix_head,
 
 		/* make sure we only dump prefixes which belong together */
 		if (np == NULL ||
-		    np->aspath != p->aspath ||
-		    np->communities != p->communities ||
-		    np->nexthop != p->nexthop ||
+		    np->attrs != p->attrs ||
 		    (np->flags & PREFIX_ADJOUT_FLAG_EOR))
 			done = 1;
 

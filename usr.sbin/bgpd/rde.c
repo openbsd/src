@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.670 2025/12/01 13:07:28 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.671 2025/12/02 10:50:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -215,6 +215,7 @@ rde_main(int debug, int verbose)
 	pt_init();
 	attr_init();
 	path_init();
+	adjout_init();
 	communities_init();
 	peer_init(out_rules);
 
@@ -356,7 +357,7 @@ rde_main(int debug, int verbose)
 	}
 
 	/* do not clean up on shutdown on production, it takes ages. */
-	if (debug)
+	if (0 && debug)
 		rde_shutdown();
 
 	free_config(conf);
@@ -2960,21 +2961,18 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 }
 
 static void
-rde_dump_adjout_as(struct prefix_adjout *p, struct rde_aspath *asp, pid_t pid,
-    int flags)
+rde_dump_adjout_as(struct rde_peer *peer, struct prefix_adjout *p,
+    struct rde_aspath *asp, pid_t pid, int flags)
 {
 	struct ctl_show_rib	 rib;
 	struct ibuf		*wbuf;
 	struct attr		*a;
 	struct nexthop		*nexthop;
-	struct rde_peer		*peer;
 	size_t			 aslen;
 	uint8_t			 l;
 
 	nexthop = prefix_adjout_nexthop(p);
-	peer = prefix_adjout_peer(p);
 	memset(&rib, 0, sizeof(rib));
-	rib.lastchange = p->lastchange;
 	rib.local_pref = asp->lpref;
 	rib.med = asp->med;
 	rib.weight = asp->weight;
@@ -3098,12 +3096,12 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 }
 
 static void
-rde_dump_adjout_filter(struct prefix_adjout *p,
+rde_dump_adjout_filter(struct rde_peer *peer, struct prefix_adjout *p,
      struct ctl_show_rib_request *req)
 {
 	struct rde_aspath	*asp;
 
-	if (!rde_match_peer(prefix_adjout_peer(p), &req->neighbor))
+	if (!rde_match_peer(peer, &req->neighbor))
 		return;
 
 	asp = prefix_adjout_aspath(p);
@@ -3121,7 +3119,7 @@ rde_dump_adjout_filter(struct prefix_adjout *p,
 			return;
 	}
 	/* in the adj-rib-out, skip matching against roa and aspa state */
-	rde_dump_adjout_as(p, asp, req->pid, req->flags);
+	rde_dump_adjout_as(peer, p, asp, req->pid, req->flags);
 }
 
 static void
@@ -3140,10 +3138,14 @@ static void
 rde_dump_adjout_upcall(struct prefix_adjout *p, void *ptr)
 {
 	struct rde_dump_ctx	*ctx = ptr;
+	struct rde_peer		*peer;
 
+	if ((peer = peer_get(ctx->peerid)) == NULL)
+		return;
 	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW)
 		return;
-	rde_dump_adjout_filter(p, &ctx->req);
+
+	rde_dump_adjout_filter(peer, p, &ctx->req);
 }
 
 static int
@@ -3561,7 +3563,9 @@ rde_evaluate_all(void)
 static void
 rde_up_flush_upcall(struct prefix_adjout *p, void *ptr)
 {
-	prefix_adjout_withdraw(p);
+	struct rde_peer *peer = ptr;
+
+	prefix_adjout_withdraw(peer, p);
 }
 
 int
@@ -3928,7 +3932,7 @@ rde_reload_done(void)
 
 		if (peer->reconf_rib) {
 			if (prefix_adjout_dump_new(peer, AID_UNSPEC,
-			    RDE_RUNNER_ROUNDS, NULL, rde_up_flush_upcall,
+			    RDE_RUNNER_ROUNDS, peer, rde_up_flush_upcall,
 			    rde_softreconfig_in_done, NULL) == -1)
 				fatal("%s: prefix_dump_new", __func__);
 			log_peer_info(&peer->conf, "flushing Adj-RIB-Out");
@@ -3979,7 +3983,7 @@ rde_reload_done(void)
 						continue;
 
 					if (prefix_adjout_dump_new(peer,
-					    AID_UNSPEC, RDE_RUNNER_ROUNDS, NULL,
+					    AID_UNSPEC, RDE_RUNNER_ROUNDS, peer,
 					    rde_up_flush_upcall,
 					    rde_softreconfig_in_done,
 					    NULL) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.57 2025/12/01 13:07:28 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.58 2025/12/02 10:50:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -519,10 +519,9 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
 static void
 peer_blast_upcall(struct prefix_adjout *p, void *ptr)
 {
-	struct rde_peer		*peer;
+	struct rde_peer		*peer = ptr;
 
 	if ((p->flags & PREFIX_ADJOUT_FLAG_MASK) == 0) {
-		peer = prefix_adjout_peer(p);
 		/* put entries on the update queue if not already on a queue */
 		p->flags |= PREFIX_ADJOUT_FLAG_UPDATE;
 		if (RB_INSERT(prefix_tree, &peer->updates[p->pt->aid],

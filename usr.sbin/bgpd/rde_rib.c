@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.282 2025/12/01 13:07:28 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.283 2025/12/02 10:50:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -451,8 +451,9 @@ rib_dump_runner(void)
 }
 
 static void
-rib_dump_cleanup(struct rib_entry *re)
+rib_dump_cleanup(struct rib_context *ctx)
 {
+	struct rib_entry *re = ctx->ctx_re;
 	if (rib_empty(re_unlock(re)))
 		rib_remove(re);
 }
@@ -463,9 +464,9 @@ rib_dump_free(struct rib_context *ctx)
 	if (ctx->ctx_done)
 		ctx->ctx_done(ctx->ctx_arg, ctx->ctx_aid);
 	if (ctx->ctx_re)
-		rib_dump_cleanup(ctx->ctx_re);
+		rib_dump_cleanup(ctx);
 	if (ctx->ctx_p)
-		prefix_adjout_dump_cleanup(ctx->ctx_p);
+		prefix_adjout_dump_cleanup(ctx);
 	LIST_REMOVE(ctx, entry);
 	free(ctx);
 }
