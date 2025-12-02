@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.133 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.134 2025/12/02 06:54:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -149,23 +149,31 @@ static int
 mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
     int *found_crl)
 {
+	const unsigned char	*data;
 	char			*file = NULL;
-	int			 rc = 0;
+	int			 length, rc = 0;
 	struct mftfile		*fent;
 	enum rtype		 type;
 	size_t			 new_idx = 0;
 
-	if (!valid_mft_filename(fh->file->data, fh->file->length)) {
+	data = ASN1_STRING_get0_data(fh->file);
+	length = ASN1_STRING_length(fh->file);
+
+	if (!valid_mft_filename(data, length)) {
 		warnx("%s: RFC 9286 section 4.2.2: bad filename", fn);
 		goto out;
 	}
-	file = strndup(fh->file->data, fh->file->length);
+	file = strndup(data, length);
 	if (file == NULL)
 		err(1, NULL);
 
-	if (fh->hash->length != SHA256_DIGEST_LENGTH) {
+	/* XXX - malleability: ensure unused bits are 0. */
+	data = ASN1_STRING_get0_data(fh->hash);
+	length = ASN1_STRING_length(fh->hash);
+
+	if (length != SHA256_DIGEST_LENGTH) {
 		warnx("%s: RFC 9286 section 4.2.1: hash: "
-		    "invalid SHA256 length, have %d", fn, fh->hash->length);
+		    "invalid SHA256 length, have %d", fn, length);
 		goto out;
 	}
 
@@ -181,7 +189,7 @@ mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
 			goto out;
 		}
 		/* remember the filehash for the CRL in struct mft */
-		memcpy(mft->crlhash, fh->hash->data, SHA256_DIGEST_LENGTH);
+		memcpy(mft->crlhash, data, length);
 		*found_crl = 1;
 	}
 
@@ -197,7 +205,7 @@ mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
 	fent->type = type;
 	fent->file = file;
 	file = NULL;
-	memcpy(fent->hash, fh->hash->data, SHA256_DIGEST_LENGTH);
+	memcpy(fent->hash, data, length);
 
 	rc = 1;
  out:
@@ -208,21 +216,13 @@ mft_parse_filehash(const char *fn, struct mft *mft, const FileAndHash *fh,
 static int
 mft_fh_cmp_name(const FileAndHash *const *a, const FileAndHash *const *b)
 {
-	if ((*a)->file->length < (*b)->file->length)
-		return -1;
-	if ((*a)->file->length > (*b)->file->length)
-		return 1;
-
-	return memcmp((*a)->file->data, (*b)->file->data, (*b)->file->length);
+	return ASN1_STRING_cmp((*a)->file, (*b)->file);
 }
 
 static int
 mft_fh_cmp_hash(const FileAndHash *const *a, const FileAndHash *const *b)
 {
-	assert((*a)->hash->length == SHA256_DIGEST_LENGTH);
-	assert((*b)->hash->length == SHA256_DIGEST_LENGTH);
-
-	return memcmp((*a)->hash->data, (*b)->hash->data, (*b)->hash->length);
+	return ASN1_STRING_cmp((*a)->hash, (*b)->hash);
 }
 
 /*
@@ -247,7 +247,8 @@ mft_has_unique_names_and_hashes(const char *fn, const Manifest *mft)
 
 		if (mft_fh_cmp_name(&curr, &next) == 0) {
 			warnx("%s: duplicate name: %.*s", fn,
-			    curr->file->length, curr->file->data);
+			    ASN1_STRING_length(curr->file),
+			    ASN1_STRING_get0_data(curr->file));
 			goto err;
 		}
 	}
@@ -261,8 +262,10 @@ mft_has_unique_names_and_hashes(const char *fn, const Manifest *mft)
 
 		if (mft_fh_cmp_hash(&curr, &next) == 0) {
 			warnx("%s: duplicate hash for %.*s and %.*s", fn,
-			    curr->file->length, curr->file->data,
-			    next->file->length, next->file->data);
+			    ASN1_STRING_length(curr->file),
+			    ASN1_STRING_get0_data(curr->file),
+			    ASN1_STRING_length(next->file),
+			    ASN1_STRING_get0_data(next->file));
 			goto err;
 		}
 	}
