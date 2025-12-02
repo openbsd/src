@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.43 2025/11/12 11:37:08 bluhm Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.44 2025/12/02 15:52:04 bluhm Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -76,23 +76,6 @@ struct	in_aliasreq {
 };
 
 #ifdef _KERNEL
-/*
- * Macro for finding the internet address structure (in_ifaddr) corresponding
- * to a given interface (ifnet structure).
- */
-#define IFP_TO_IA(ifp, ia)						\
-	/* struct ifnet *ifp; */					\
-	/* struct in_ifaddr *ia; */					\
-do {									\
-	struct ifaddr *ifa;						\
-	NET_ASSERT_LOCKED();						\
-	TAILQ_FOREACH(ifa, &(ifp)->if_addrlist, ifa_list) {		\
-		if (ifa->ifa_addr->sa_family == AF_INET)		\
-			break;						\
-	}								\
-	(ia) = ifatoia(ifa);						\
-} while (/* CONSTCOND */ 0)
-
 struct router_info;
 
 /*
@@ -119,6 +102,7 @@ ifmatoinm(struct ifmaddr *ifma)
        return ((struct in_multi *)(ifma));
 }
 
+struct	in_ifaddr *in_ifp2ia(struct ifnet *);
 int	in_ifinit(struct ifnet *,
 	    struct in_ifaddr *, struct sockaddr_in *, int);
 struct	in_multi *in_lookupmulti(const struct in_addr *, struct ifnet *);

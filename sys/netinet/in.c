@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.189 2025/11/13 23:30:01 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.190 2025/12/02 15:52:04 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -191,6 +191,28 @@ in_sa2sin(struct sockaddr *sa, struct sockaddr_in **sin)
 	*sin = satosin(sa);
 
 	return 0;
+}
+
+/*
+ * Find the internet address structure (in_ifaddr) corresponding
+ * to a given interface (ifnet structure).
+ */
+struct in_ifaddr *
+in_ifp2ia(struct ifnet *ifp)
+{
+	struct in_ifaddr *ia = NULL;
+	struct ifaddr *ifa;
+
+	NET_ASSERT_LOCKED();
+
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		ia = ifatoia(ifa);
+		break;
+	}
+
+	return (ia);
 }
 
 int

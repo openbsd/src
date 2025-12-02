@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.92 2025/11/17 23:53:57 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.93 2025/12/02 15:52:04 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 		 * determine the arrival interface of an incoming packet.
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
-			IFP_TO_IA(ifp, ia);
+			ia = in_ifp2ia(ifp);
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_net;
 		}
@@ -466,7 +466,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 		 * leave requires knowing that we are the only member of a
 		 * group.
 		 */
-		IFP_TO_IA(ifp, ia);
+		ia = in_ifp2ia(ifp);
 		if (ia && ip->ip_src.s_addr == ia->ia_addr.sin_addr.s_addr)
 			break;
 #endif
@@ -494,7 +494,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 #ifndef MROUTING
-			IFP_TO_IA(ifp, ia);
+			ia = in_ifp2ia(ifp);
 #endif
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_net;

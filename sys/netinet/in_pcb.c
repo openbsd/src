@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.321 2025/10/24 15:09:56 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.322 2025/12/02 15:52:04 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -1024,7 +1024,7 @@ in_pcbselsrc(struct in_addr *insrc, const struct sockaddr_in *dstsock,
 		ifp = if_get(mopts->imo_ifidx);
 		if (ifp != NULL) {
 			if (ifp->if_rdomain == rtable_l2(rtableid))
-				IFP_TO_IA(ifp, ia);
+				ia = in_ifp2ia(ifp);
 			if (ia == NULL) {
 				if_put(ifp);
 				return (EADDRNOTAVAIL);

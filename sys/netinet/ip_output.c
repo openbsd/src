@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.414 2025/11/11 16:57:06 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.415 2025/12/02 15:52:04 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ reroute:
 		if (ip->ip_src.s_addr == INADDR_ANY) {
 			struct in_ifaddr *ia;
 
-			IFP_TO_IA(ifp, ia);
+			ia = in_ifp2ia(ifp);
 			if (ia != NULL)
 				ip->ip_src = ia->ia_addr.sin_addr;
 		}
@@ -293,7 +293,7 @@ reroute:
 		if (ip->ip_src.s_addr == INADDR_ANY) {
 			struct in_ifaddr *ia;
 
-			IFP_TO_IA(ifp, ia);
+			ia = in_ifp2ia(ifp);
 			if (ia != NULL)
 				ip->ip_src = ia->ia_addr.sin_addr;
 		}
@@ -1702,9 +1702,9 @@ ip_getmoptions(int optname, struct ip_moptions *imo, struct mbuf *m)
 		if (imo == NULL || (ifp = if_get(imo->imo_ifidx)) == NULL)
 			addr->s_addr = INADDR_ANY;
 		else {
-			IFP_TO_IA(ifp, ia);
-			addr->s_addr = (ia == NULL) ? INADDR_ANY
-					: ia->ia_addr.sin_addr.s_addr;
+			ia = in_ifp2ia(ifp);
+			addr->s_addr = (ia == NULL) ? INADDR_ANY :
+			    ia->ia_addr.sin_addr.s_addr;
 			if_put(ifp);
 		}
 		return (0);
