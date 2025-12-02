@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.53 2025/06/28 04:21:15 kevlo Exp $
+#	$OpenBSD: GENERIC,v 1.54 2025/12/02 19:57:29 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -61,6 +61,9 @@ mpfgpio*	at fdt?
 gpio*		at mpfgpio?
 mpfiic*		at fdt?
 iic*		at mpfiic?
+
+# Sophgo SoCs
+sgmsi*		at fdt?
 
 # SiFive SoCs
 sfclock*	at fdt? early 1 # PRCI

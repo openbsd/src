@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.46 2025/06/28 12:43:17 kevlo Exp $
+#	$OpenBSD: RAMDISK,v 1.47 2025/12/02 19:57:29 kettenis Exp $
 
 machine		riscv64
 maxusers	4
@@ -54,6 +54,9 @@ mpfgpio*	at fdt?
 gpio*		at mpfgpio?
 mpfiic*		at fdt?
 iic*		at mpfiic?
+
+# Sophgo SoCs
+sgmsi*		at fdt?
 
 # SiFive SoCs
 sfclock*	at fdt? early 1 # PRCI
