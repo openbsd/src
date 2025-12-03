@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.62 2025/12/02 04:03:42 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.63 2025/12/03 01:49:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include "bpfilter.h"
+#include "kstat.h"
 #include "pf.h"
 #include "vlan.h"
 
@@ -32,6 +33,7 @@
 #include <sys/percpu.h>
 #include <sys/smr.h>
 #include <sys/task.h>
+#include <sys/kstat.h>
 #include <sys/pool.h>
 
 #include <net/if.h>
@@ -102,14 +104,38 @@ SMR_TAILQ_HEAD(veb_rule_list, veb_rule);
 
 struct veb_softc;
 
+enum veb_port_counters {
+	veb_c_double_tag,
+	veb_c_tagged_filter_in,
+	veb_c_untagged_none,
+	veb_c_pvptags_in,
+	veb_c_locked,
+	veb_c_bpfilter,
+	veb_c_blocknonip,
+	veb_c_svlan,
+	veb_c_rule_in,
+
+	veb_c_hairpin,
+	veb_c_protected,
+	veb_c_pvlan,
+	veb_c_pvptags_out,
+	veb_c_tagged_filter_out,
+	veb_c_rule_out,
+
+	veb_c_ncounters
+};
+
 struct veb_port_cpu {
 	struct refcnt			 c_refs;
+	struct pc_lock			 c_lock;
+	uint64_t			 c_counters[veb_c_ncounters];
 };
 
 struct veb_port {
 	struct ifnet			*p_ifp0;
 	struct refcnt			 p_refs;
 	struct cpumem			*p_percpu;
+	struct kstat			*p_kstat;
 
 	int (*p_enqueue)(struct ifnet *, struct mbuf *, struct netstack *);
 
@@ -308,6 +334,11 @@ static void	 veb_eb_port_sa(void *, struct sockaddr_storage *, void *);
 
 static void	*veb_ep_brport_take(void *);
 static void	 veb_ep_brport_rele(void *, void *);
+
+#if NKSTAT > 0
+static void	 veb_port_kstat_attach(struct veb_port *);
+static void	 veb_port_kstat_detach(struct veb_port *);
+#endif
 
 static const struct etherbridge_ops veb_etherbridge_ops = {
 	veb_eb_port_cmp,
@@ -810,7 +841,7 @@ veb_pf(struct ifnet *ifp0, int dir, struct mbuf *m, struct netstack *ns)
 	if (dir == PF_IN && ISSET(m->m_pkthdr.pf.flags, PF_TAG_DIVERTED)) {
 		pf_mbuf_unlink_state_key(m);
 		pf_mbuf_unlink_inpcb(m);
-		(*fam->ip_input)(ifp0, m, ns);
+		if_input_proto(ifp0, m, fam->ip_input, ns);
 		return (NULL);
 	}
 
@@ -868,6 +899,19 @@ static int
 veb_if_enqueue(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 {
 	return (if_enqueue(ifp, m));
+}
+
+static void
+veb_port_count(struct veb_port *p, enum veb_port_counters counter)
+{
+	struct veb_port_cpu *c;
+	unsigned int gen;
+
+	c = cpumem_enter(p->p_percpu);
+	gen = pc_sprod_enter(&c->c_lock);
+	c->c_counters[counter]++;
+	pc_sprod_leave(&c->c_lock, gen);
+	cpumem_leave(p->p_percpu, c);
 }
 
 static void
@@ -957,8 +1001,10 @@ veb_broadcast(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m0)
 			vid = pvid;
 
 		if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m0,
-		    ctx->src, ctx->dst, vid))
+		    ctx->src, ctx->dst, vid)) {
+			veb_port_count(tp, veb_c_rule_out);
 			continue;
+		}
 
 		m = m_dup_pkt(m0, max_linkhdr + ETHER_ALIGN, M_NOWAIT);
 		if (m == NULL) {
@@ -992,20 +1038,26 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
 	uint16_t pvid, vid = tvs;
+	enum veb_port_counters c;
 
-	if (tp == NULL)
-		return (m);
+	/*
+	 * don't let Ethernet packets hairpin or move between
+	 * ports in the same protected domain(s).
+	 */
 
-	if (ctx->p == tp || (ctx->p->p_protected & tp->p_protected)) {
-		/*
-		 * don't let Ethernet packets hairpin or move between
-		 * ports in the same protected domain(s).
-		 */
+	if (ctx->p == tp) {
+		c = veb_c_hairpin;
+		goto drop;
+	}
+	if (ctx->p->p_protected & tp->p_protected) {
+		c = veb_c_protected;
 		goto drop;
 	}
 
-	if (veb_pvlan_filter(ctx, tvs))
+	if (veb_pvlan_filter(ctx, tvs)) {
+		c = veb_c_pvlan;
 		goto drop;
+	}
 
 	/* address entries are still subject to tagged config */
 	pvid = tp->p_pvid;
@@ -1015,8 +1067,10 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 			 * this port is vlan aware but pvlan unaware,
 			 * so it only understands the primary vlan.
 			 */
-			if (tvs != ctx->vp)
+			if (tvs != ctx->vp) {
+				c = veb_c_pvptags_out;
 				goto drop;
+			}
 		} else {
 			/*
 			 * this must be an inter switch trunk, so use the
@@ -1025,13 +1079,17 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 			vid = ctx->vs;
 		}
 
-		if (veb_vid_map_filter(tp, vid))
+		if (veb_vid_map_filter(tp, vid)) {
+			c = veb_c_tagged_filter_out;
 			goto drop;
+		}
 	}
 
 	if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m,
-	    ctx->src, ctx->dst, vid))
+	    ctx->src, ctx->dst, vid)) {
+		c = veb_c_rule_out;
 		goto drop;
+	}
 
 	ifp0 = tp->p_ifp0;
 
@@ -1053,13 +1111,14 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 	m = ether_offload_ifcap(ifp0, m);
 	if (m == NULL) {
 		counters_inc(ifp->if_counters, ifc_oerrors);
-		goto drop;
+		return (NULL);
 	}
 
 	(*tp->p_enqueue)(ifp0, m, ctx->ns); /* XXX count error */
 
 	return (NULL);
 drop:
+	veb_port_count(tp, c);
 	m_freem(m);
 	return (NULL);
 }
@@ -1109,6 +1168,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
 	unsigned int bif_flags;
+	enum veb_port_counters c;
 	uint16_t pvlan;
 	int prio;
 #if NBPFILTER > 0
@@ -1159,6 +1219,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 
 	if (eh->ether_type == htons(ETHERTYPE_VLAN)) {
 		/* don't allow double tagging as it enables vlan hopping */
+		c = veb_c_double_tag;
 		goto drop;
 	}
 
@@ -1169,7 +1230,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 			/* this preserves PRIOFTAG for BPF */
 			CLR(m->m_flags, M_VLANTAG);
 		} else if (veb_vid_map_filter(p, tvid)) {
-			/* count vlan tagged drop */
+			c = veb_c_tagged_filter_in;
 			goto drop;
 		} else
 			ctx.vs = tvid;
@@ -1195,8 +1256,10 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 
 	if (ctx.vs == IFBR_PVID_DECLINE)
 		return (m);
-	if (ctx.vs == IFBR_PVID_NONE)
+	if (ctx.vs == IFBR_PVID_NONE) {
+		c = veb_c_untagged_none;
 		goto drop;
+	}
 
 #ifdef DIAGNOSTIC
 	if (ctx.vs < IFBR_PVID_MIN ||
@@ -1218,8 +1281,10 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 
 	if (ISSET(bif_flags, IFBIF_PVLAN_PTAGS) &&
 	    ISSET(m->m_flags, M_VLANTAG) &&
-	    ctx.vt != VEB_PVLAN_T_PRIMARY)
+	    ctx.vt != VEB_PVLAN_T_PRIMARY) {
+		c = veb_c_pvptags_in;
 		goto drop;
+	}
 
 	if (ISSET(bif_flags, IFBIF_LOCKED)) {
 		struct eb_entry *ebe;
@@ -1231,8 +1296,10 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 			rp = etherbridge_port(ebe);
 		smr_read_leave();
 
-		if (rp != p)
+		if (rp != p) {
+			c = veb_c_locked;
 			goto drop;
+		}
 	}
 
 	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes,
@@ -1249,23 +1316,32 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 #if NBPFILTER > 0
 	if_bpf = READ_ONCE(ifp->if_bpf);
 	if (if_bpf != NULL) {
-		if (bpf_mtap_ether(if_bpf, m, 0) != 0)
+		if (bpf_mtap_ether(if_bpf, m, 0) != 0) {
+			c = veb_c_bpfilter;
 			goto drop;
+		}
 	}
 #endif
 
 	veb_span(sc, m);
 
 	if (ISSET(bif_flags, IFBIF_BLOCKNONIP) &&
-	    veb_ip_filter(m))
+	    veb_ip_filter(m)) {
+		c = veb_c_blocknonip;
 		goto drop;
+	}
 
 	if (!ISSET(ifp->if_flags, IFF_LINK0) &&
-	    veb_svlan_filter(m))
+	    veb_svlan_filter(m)) {
+		c = veb_c_svlan;
 		goto drop;
+	}
 
-	if (veb_rule_filter(p, VEB_RULE_LIST_IN, m, ctx.src, ctx.dst, ctx.vs))
+	if (veb_rule_filter(p, VEB_RULE_LIST_IN, m,
+	    ctx.src, ctx.dst, ctx.vs)) {
+		c = veb_c_rule_in;
 		goto drop;
+	}
 
 #if NPF > 0
 	if (ISSET(ifp->if_flags, IFF_LINK1) && p->p_pvid == ctx.vs &&
@@ -1319,6 +1395,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 	return (NULL);
 
 drop:
+	veb_port_count(p, c);
 	m_freem(m);
 	return (NULL);
 }
@@ -1689,6 +1766,8 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 		/* use a per cpu refcnt as a proxy to the port refcnt */
 		veb_p_take(p);
 		refcnt_init(&c->c_refs);
+
+		pc_lock_init(&c->c_lock);
 	}
 
 	p->p_enqueue = isvport ? vport_if_enqueue : veb_if_enqueue;
@@ -1752,6 +1831,10 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 		refcnt_finalize(&om->m_refs, "vebports");
 		veb_ports_destroy(om);
 	}
+
+#if NKSTAT > 0
+	veb_port_kstat_attach(p);
+#endif
 
 	return (0);
 
@@ -3105,6 +3188,9 @@ veb_p_fini(struct veb_port *p)
 
 	if_put(ifp0);
 	veb_free_vid_map(p->p_vid_map);
+#if NKSTAT > 0
+	veb_port_kstat_detach(p);
+#endif
 	cpumem_free(p->p_percpu, M_DEVBUF, sizeof(*c));
 	free(p, M_DEVBUF, sizeof(*p)); /* hope you didn't forget smr_barrier */
 }
@@ -3266,6 +3352,128 @@ veb_eb_port_sa(void *arg, struct sockaddr_storage *ss, void *port)
 
 RBT_GENERATE(veb_pvlan_vp, veb_pvlan, v_entry, veb_pvlan_vp_cmp);
 RBT_GENERATE(veb_pvlan_vs, veb_pvlan, v_entry, veb_pvlan_vs_cmp);
+
+#if NKSTAT > 0
+static const char * const veb_port_counter_names[veb_c_ncounters] = {
+	[veb_c_double_tag]		= "double-tagged",
+	[veb_c_tagged_filter_in]	= "tagged-in",
+	[veb_c_untagged_none]		= "untagged",
+	[veb_c_pvptags_in]		= "pvptags-in",
+	[veb_c_locked]			= "locked",
+	[veb_c_bpfilter]		= "bpfilter",
+	[veb_c_blocknonip]		= "blocknonip",
+	[veb_c_svlan]			= "svlan",
+	[veb_c_rule_in]			= "rules-in",
+
+	[veb_c_hairpin]			= "hairpin",
+	[veb_c_protected]		= "protected",
+	[veb_c_pvlan]			= "pvlan",
+	[veb_c_pvptags_out]		= "pvptags-out",
+	[veb_c_tagged_filter_out]	= "tagged-out",
+	[veb_c_rule_out]		= "rules-out",
+};
+
+struct veb_port_kstat {
+	struct kstat_kv		interface;
+	struct kstat_kv		counters[veb_c_ncounters];
+};
+
+static int
+veb_port_kstat_read(struct kstat *ks)
+{
+	struct veb_port *p = ks->ks_softc;
+	struct veb_port_kstat *kvs = ks->ks_data;
+	struct veb_port_cpu *c;
+	uint64_t counters[veb_c_ncounters];
+	struct cpumem_iter cmi;
+	unsigned int gen, i;
+
+	for (i = 0; i < veb_c_ncounters; i++)
+		kstat_kv_u64(&kvs->counters[i]) = 0;
+
+	CPUMEM_FOREACH(c, &cmi, p->p_percpu) {
+		pc_cons_enter(&c->c_lock, &gen);
+		do {
+			for (i = 0; i < veb_c_ncounters; i++)
+				counters[i] = c->c_counters[i];
+		} while (pc_cons_leave(&c->c_lock, &gen) != 0);
+
+		for (i = 0; i < veb_c_ncounters; i++)
+			kstat_kv_u64(&kvs->counters[i]) += counters[i];
+	}
+
+	nanouptime(&ks->ks_updated);
+
+	return (0);
+}
+
+
+static void
+veb_port_kstat_attach(struct veb_port *p)
+{
+	static const char veb_port_kstat_name[] = "veb-port";
+	struct veb_softc *sc = p->p_veb;
+	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp0 = p->p_ifp0;
+	struct kstat *ks;
+	struct veb_port_kstat *kvs;
+	unsigned int i;
+
+	kvs = malloc(sizeof(*kvs), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (kvs == NULL) {
+		log(LOG_WARNING, "%s %s: unable to allocate %s kstat\n",
+		    ifp->if_xname, ifp0->if_xname, veb_port_kstat_name);
+		return;
+	}
+
+	ks = kstat_create(ifp->if_xname, 0,
+	    veb_port_kstat_name, ifp0->if_index,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		log(LOG_WARNING, "%s %s: unable to create %s kstat\n",
+		    ifp->if_xname, ifp0->if_xname, veb_port_kstat_name);
+		free(kvs, M_DEVBUF, sizeof(*kvs));
+		return;
+	}
+
+	kstat_kv_init(&kvs->interface, "interface", KSTAT_KV_T_ISTR);
+	strlcpy(kstat_kv_istr(&kvs->interface), ifp0->if_xname,
+	    sizeof(kstat_kv_istr(&kvs->interface)));
+
+	for (i = 0; i < veb_c_ncounters; i++) {
+		kstat_kv_unit_init(&kvs->counters[i],
+		    veb_port_counter_names[i],
+		    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS);
+	}
+
+	ks->ks_softc = p;
+	ks->ks_data = kvs;
+	ks->ks_datalen = sizeof(*kvs);
+	ks->ks_read = veb_port_kstat_read;
+
+	kstat_install(ks);
+
+	p->p_kstat = ks;
+}
+
+static void
+veb_port_kstat_detach(struct veb_port *p)
+{
+	struct kstat *ks = p->p_kstat;
+	struct veb_port_kstat *kvs;
+
+	if (ks == NULL)
+		return;
+
+	p->p_kstat = NULL;
+
+	kstat_remove(ks);
+	kvs = ks->ks_data;
+	kstat_destroy(ks);
+
+	free(kvs, M_DEVBUF, sizeof(*kvs));
+}
+#endif /* NKSTAT > 0 */
 
 /*
  * virtual ethernet bridge port
