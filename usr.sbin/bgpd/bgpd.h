@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.523 2025/12/02 10:50:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.524 2025/12/03 12:20:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1299,19 +1299,19 @@ enum action_types {
 struct nexthop;
 struct filter_set {
 	TAILQ_ENTRY(filter_set)		entry;
+	enum action_types		type;
 	union {
 		uint8_t				 prepend;
+		uint8_t				 origin;
 		uint16_t			 id;
 		uint32_t			 metric;
 		int32_t				 relative;
-		struct bgpd_addr		 nexthop;
 		struct nexthop			*nh_ref;
 		struct community		 community;
+		struct bgpd_addr		 nexthop;
 		char				 pftable[PFTABLE_LEN];
 		char				 rtlabel[ROUTELABEL_LEN];
-		uint8_t				 origin;
 	}				action;
-	enum action_types		type;
 };
 
 struct roa_set {
@@ -1577,6 +1577,8 @@ int	filterset_cmp(struct filter_set *, struct filter_set *);
 void	filterset_move(struct filter_set_head *, struct filter_set_head *);
 void	filterset_copy(struct filter_set_head *, struct filter_set_head *);
 const char	*filterset_name(enum action_types);
+int	filterset_send(struct imsgbuf *, struct filter_set_head *);
+void	filterset_recv(struct imsg *, struct filter_set_head *);
 
 /* rde_sets.c */
 struct as_set	*as_sets_lookup(struct as_set_head *, const char *);

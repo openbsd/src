@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.672 2025/12/02 13:03:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.673 2025/12/03 12:20:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -412,7 +412,6 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 	struct peer_config	 pconf;
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp;
-	struct filter_set	*s;
 	struct as_set		*aset;
 	struct rde_prefixset	*pset;
 	ssize_t			 n;
@@ -698,20 +697,7 @@ badnetdel:
 			    flowspec_flush_upcall, NULL);
 			break;
 		case IMSG_FILTER_SET:
-			if ((s = malloc(sizeof(struct filter_set))) == NULL)
-				fatal(NULL);
-			if (imsg_get_data(&imsg, s, sizeof(struct filter_set))
-			    == -1) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				free(s);
-				break;
-			}
-			if (s->type == ACTION_SET_NEXTHOP) {
-				s->action.nh_ref =
-				    nexthop_get(&s->action.nexthop);
-				s->type = ACTION_SET_NEXTHOP_REF;
-			}
-			TAILQ_INSERT_TAIL(&session_set, s, entry);
+			filterset_recv(&imsg, &session_set);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 		case IMSG_CTL_SHOW_RIB:
@@ -863,7 +849,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 	struct imsgbuf		*i;
 	struct filter_head	*nr;
 	struct filter_rule	*r;
-	struct filter_set	*s;
 	struct rib		*rib;
 	struct rde_prefixset	*ps;
 	struct rde_aspath	*asp;
@@ -1231,16 +1216,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			nexthop_update(&knext);
 			break;
 		case IMSG_FILTER_SET:
-			if ((s = malloc(sizeof(*s))) == NULL)
-				fatal(NULL);
-			if (imsg_get_data(&imsg, s, sizeof(*s)) == -1)
-				fatalx("IMSG_FILTER_SET bad len");
-			if (s->type == ACTION_SET_NEXTHOP) {
-				s->action.nh_ref =
-				    nexthop_get(&s->action.nexthop);
-				s->type = ACTION_SET_NEXTHOP_REF;
-			}
-			TAILQ_INSERT_TAIL(&parent_set, s, entry);
+			filterset_recv(&imsg, &parent_set);
 			break;
 		case IMSG_MRT_OPEN:
 		case IMSG_MRT_REOPEN:

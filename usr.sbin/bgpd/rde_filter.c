@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.136 2023/05/09 13:11:19 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.137 2025/12/03 12:20:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -741,6 +741,37 @@ filterset_name(enum action_types type)
 	}
 
 	fatalx("filterset_name: got lost");
+}
+
+int
+filterset_send(struct imsgbuf *imsgbuf, struct filter_set_head *set)
+{
+	struct filter_set	*s;
+
+	TAILQ_FOREACH(s, set, entry)
+		if (imsg_compose(imsgbuf, IMSG_FILTER_SET, 0, 0, -1, s,
+		    sizeof(*s)) == -1)
+			return (-1);
+	return (0);
+}
+
+void
+filterset_recv(struct imsg *imsg, struct filter_set_head *set)
+{
+	struct filter_set	*s;
+
+	if ((s = malloc(sizeof(*s))) == NULL)
+		fatal(NULL);
+	if (imsg_get_data(imsg, s, sizeof(*s)) == -1) {
+		log_warnx("rde_dispatch: wrong imsg len");
+		free(s);
+		return;
+	}
+	if (s->type == ACTION_SET_NEXTHOP) {
+		s->action.nh_ref = nexthop_get(&s->action.nexthop);
+		s->type = ACTION_SET_NEXTHOP_REF;
+	}
+	TAILQ_INSERT_TAIL(set, s, entry);
 }
 
 /*
