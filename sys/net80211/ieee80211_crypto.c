@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.80 2025/12/01 16:02:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.81 2025/12/03 10:21:12 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -62,6 +62,8 @@ ieee80211_crypto_attach(struct ifnet *ifp)
 	if (ic->ic_caps & IEEE80211_C_RSN) {
 		ic->ic_rsnprotos = IEEE80211_PROTO_RSN;
 		ic->ic_rsnakms = IEEE80211_AKM_PSK;
+		if (ic->ic_caps & IEEE80211_C_MFP)
+			ic->ic_rsnakms |= IEEE80211_AKM_SHA256_PSK;
 		ic->ic_rsnciphers = IEEE80211_CIPHER_CCMP;
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_CCMP;
 		ic->ic_rsngroupmgmtcipher = IEEE80211_CIPHER_BIP;

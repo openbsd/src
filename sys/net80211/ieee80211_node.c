@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.205 2025/12/01 16:05:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.206 2025/12/03 10:21:12 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -143,6 +143,11 @@ ieee80211_print_ess(struct ieee80211_ess *ess)
 		if (ess->rsnprotos & IEEE80211_PROTO_WPA)
 			printf(",wpa1");
 
+		if (ess->rsnakms & IEEE80211_AKM_PSK)
+			printf(",psk");
+		if (ess->rsnakms & IEEE80211_AKM_SHA256_PSK)
+			printf(",sha256-psk");
+
 		if (ess->rsnakms & IEEE80211_AKM_8021X ||
 		    ess->rsnakms & IEEE80211_AKM_SHA256_8021X)
 			printf(",802.1x");
@@ -264,7 +269,7 @@ ieee80211_ess_setnwkeys(struct ieee80211_ess *ess,
 
 /* Keep in sync with ieee80211_ioctl.c:ieee80211_ioctl_setwpaparms() */
 static int
-ieee80211_ess_setwpaparms(struct ieee80211_ess *ess,
+ieee80211_ess_setwpaparms(struct ieee80211com *ic, struct ieee80211_ess *ess,
     const struct ieee80211_wpaparams *wpa)
 {
 	if (!wpa->i_enabled) {
@@ -297,8 +302,11 @@ ieee80211_ess_setwpaparms(struct ieee80211_ess *ess,
 		ess->rsnakms |= IEEE80211_AKM_SHA256_8021X;
 	if (wpa->i_akms & IEEE80211_WPA_AKM_SAE)
 		ess->rsnakms |= IEEE80211_AKM_SAE;
-	if (ess->rsnakms == 0)	/* set to default (PSK) */
+	if (ess->rsnakms == 0)	{ /* set to default (PSK) */
 		ess->rsnakms = IEEE80211_AKM_PSK;
+		if (ic->ic_caps & IEEE80211_C_MFP)
+			ess->rsnakms = IEEE80211_AKM_SHA256_PSK;
+	}
 
 	if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP40)
 		ess->rsngroupcipher = IEEE80211_CIPHER_WEP40;
@@ -399,7 +407,7 @@ ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 				free(ess, M_DEVBUF, sizeof(*ess));
 				return ENODEV;
 			}
-			ieee80211_ess_setwpaparms(ess,
+			ieee80211_ess_setwpaparms(ic, ess,
 			    &join->i_wpaparams);
 			if (join->i_flags & IEEE80211_JOIN_WPAPSK) {
 				ess->flags |= IEEE80211_F_PSK;
