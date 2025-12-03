@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.35 2025/12/03 10:26:52 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.36 2025/12/03 13:17:51 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -170,17 +170,21 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
  * Return zero on failure, non-zero on success.
  */
 int
-ip_addr_parse(const ASN1_BIT_STRING *p,
+ip_addr_parse(const ASN1_BIT_STRING *abs,
     enum afi afi, const char *fn, struct ip_addr *addr)
 {
-	long	 unused = 0;
+	const unsigned char *data;
+	int length, unused = 0;
+
+	data = ASN1_STRING_get0_data(abs);
+	length = ASN1_STRING_length(abs);
 
 	/* Weird OpenSSL-ism to get unused bit count. */
 
-	if ((p->flags & ASN1_STRING_FLAG_BITS_LEFT))
-		unused = p->flags & 0x07;
+	if ((abs->flags & ASN1_STRING_FLAG_BITS_LEFT))
+		unused = abs->flags & 0x07;
 
-	if (p->length == 0 && unused != 0) {
+	if (length == 0 && unused != 0) {
 		warnx("%s: RFC 3779 section 2.2.3.8: "
 		    "unused bit count must be zero if length is zero", fn);
 		return 0;
@@ -192,8 +196,7 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 	 * of the [minimum] address ranges.
 	 */
 
-	if (p->length != 0 &&
-	    (p->data[p->length - 1] & ((1 << unused) - 1))) {
+	if (length != 0 && (data[length - 1] & ((1 << unused) - 1))) {
 		warnx("%s: RFC 3779 section 2.2.3.8: "
 		    "unused bits must be set to zero", fn);
 		return 0;
@@ -201,16 +204,16 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 
 	/* Limit possible sizes of addresses. */
 
-	if ((afi == AFI_IPV4 && p->length > 4) ||
-	    (afi == AFI_IPV6 && p->length > 16)) {
+	if ((afi == AFI_IPV4 && length > 4) ||
+	    (afi == AFI_IPV6 && length > 16)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: "
 		    "IP address too long", fn);
 		return 0;
 	}
 
 	memset(addr, 0, sizeof(struct ip_addr));
-	addr->prefixlen = p->length * 8 - unused;
-	memcpy(addr->addr, p->data, p->length);
+	addr->prefixlen = length * 8 - unused;
+	memcpy(addr->addr, data, length);
 	return 1;
 }
 
