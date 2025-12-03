@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.305 2025/11/12 08:06:33 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.306 2025/12/03 07:38:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1769,7 +1769,7 @@ window_pane_mode(struct window_pane *wp)
 int
 window_pane_show_scrollbar(struct window_pane *wp, int sb_option)
 {
-	if (SCREEN_IS_ALTERNATE(wp->screen))
+	if (SCREEN_IS_ALTERNATE(&wp->base))
 		return (0);
 	if (sb_option == PANE_SCROLLBARS_ALWAYS ||
 	    (sb_option == PANE_SCROLLBARS_MODAL &&
