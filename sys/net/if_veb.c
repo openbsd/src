@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.63 2025/12/03 01:49:40 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.64 2025/12/03 01:55:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -111,7 +111,7 @@ enum veb_port_counters {
 	veb_c_pvptags_in,
 	veb_c_locked,
 	veb_c_bpfilter,
-	veb_c_blocknonip,
+	veb_c_blocknonip_in,
 	veb_c_svlan,
 	veb_c_rule_in,
 
@@ -121,6 +121,7 @@ enum veb_port_counters {
 	veb_c_pvptags_out,
 	veb_c_tagged_filter_out,
 	veb_c_rule_out,
+	veb_c_blocknonip_out,
 
 	veb_c_ncounters
 };
@@ -1006,6 +1007,10 @@ veb_broadcast(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m0)
 			continue;
 		}
 
+		if (ISSET(bif_flags, IFBIF_BLOCKNONIP) &&
+		    veb_ip_filter(m))
+			continue;
+
 		m = m_dup_pkt(m0, max_linkhdr + ETHER_ALIGN, M_NOWAIT);
 		if (m == NULL) {
 			/* XXX count error? */
@@ -1038,6 +1043,7 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
 	uint16_t pvid, vid = tvs;
+	unsigned int bif_flags = READ_ONCE(tp->p_bif_flags);
 	enum veb_port_counters c;
 
 	/*
@@ -1062,7 +1068,7 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 	/* address entries are still subject to tagged config */
 	pvid = tp->p_pvid;
 	if (tvs != pvid) {
-		if (ISSET(tp->p_bif_flags, IFBIF_PVLAN_PTAGS)) {
+		if (ISSET(bif_flags, IFBIF_PVLAN_PTAGS)) {
 			/*
 			 * this port is vlan aware but pvlan unaware,
 			 * so it only understands the primary vlan.
@@ -1088,6 +1094,12 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 	if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m,
 	    ctx->src, ctx->dst, vid)) {
 		c = veb_c_rule_out;
+		goto drop;
+	}
+
+	if (ISSET(bif_flags, IFBIF_BLOCKNONIP) &&
+	    veb_ip_filter(m)) {
+		c = veb_c_blocknonip_out;
 		goto drop;
 	}
 
@@ -1327,7 +1339,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport,
 
 	if (ISSET(bif_flags, IFBIF_BLOCKNONIP) &&
 	    veb_ip_filter(m)) {
-		c = veb_c_blocknonip;
+		c = veb_c_blocknonip_in;
 		goto drop;
 	}
 
@@ -3361,7 +3373,7 @@ static const char * const veb_port_counter_names[veb_c_ncounters] = {
 	[veb_c_pvptags_in]		= "pvptags-in",
 	[veb_c_locked]			= "locked",
 	[veb_c_bpfilter]		= "bpfilter",
-	[veb_c_blocknonip]		= "blocknonip",
+	[veb_c_blocknonip_in]		= "blocknonip-in",
 	[veb_c_svlan]			= "svlan",
 	[veb_c_rule_in]			= "rules-in",
 
@@ -3371,6 +3383,7 @@ static const char * const veb_port_counter_names[veb_c_ncounters] = {
 	[veb_c_pvptags_out]		= "pvptags-out",
 	[veb_c_tagged_filter_out]	= "tagged-out",
 	[veb_c_rule_out]		= "rules-out",
+	[veb_c_blocknonip_out]		= "blocknonip-out",
 };
 
 struct veb_port_kstat {
