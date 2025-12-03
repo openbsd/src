@@ -2043,6 +2043,7 @@
 ./usr/share/man/man4/riscv64/sfclock.4
 ./usr/share/man/man4/riscv64/sfgpio.4
 ./usr/share/man/man4/riscv64/sfuart.4
+./usr/share/man/man4/riscv64/sgmsi.4
 ./usr/share/man/man4/riscv64/stfclock.4
 ./usr/share/man/man4/riscv64/stfpcie.4
 ./usr/share/man/man4/riscv64/stfpciephy.4
