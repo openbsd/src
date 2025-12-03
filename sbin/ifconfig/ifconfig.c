@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.479 2025/11/21 04:44:26 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.480 2025/12/03 10:19:27 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2118,6 +2118,8 @@ setifwpaakms(const char *val, int d)
 	while (str != NULL) {
 		if (strcasecmp(str, "psk") == 0)
 			rval |= IEEE80211_WPA_AKM_PSK;
+		else if (strcasecmp(str, "sha256-psk") == 0)
+			rval |= IEEE80211_WPA_AKM_SHA256_PSK;
 		else if (strcasecmp(str, "802.1x") == 0)
 			rval |= IEEE80211_WPA_AKM_8021X;
 		else
@@ -2563,6 +2565,10 @@ ieee80211_status(void)
 			fputs("psk", stdout);
 			sep = ",";
 		}
+		if (wpa.i_akms & IEEE80211_WPA_AKM_SHA256_PSK) {
+			printf("%ssha256-psk", sep);
+			sep = ",";
+		}
 		if (wpa.i_akms & IEEE80211_WPA_AKM_8021X)
 			printf("%s802.1x", sep);
 
@@ -2676,6 +2682,11 @@ join_status(void)
 				printf(" wpaakms "); sep = "";
 				if (wpa->i_akms & IEEE80211_WPA_AKM_PSK) {
 					printf("psk");
+					sep = ",";
+				}
+				if (wpa->i_akms &
+				    IEEE80211_WPA_AKM_SHA256_PSK) {
+					printf("%ssha256-psk", sep);
 					sep = ",";
 				}
 				if (wpa->i_akms & IEEE80211_WPA_AKM_8021X)

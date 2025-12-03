@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.412 2025/11/23 11:58:53 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.413 2025/12/03 10:19:27 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 23 2025 $
+.Dd $Mdocdate: December 3 2025 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1261,7 +1261,8 @@ Set the comma-separated list of allowed authentication and key management
 protocols.
 .Pp
 The supported values are
-.Dq psk
+.Dq psk ,
+.Dq sha256-psk ,
 and
 .Dq 802.1x .
 .Ar psk
@@ -1271,8 +1272,13 @@ authentication (also known as enterprise mode) is used with
 an external IEEE 802.1X authentication server,
 such as wpa_supplicant.
 The default value is
-.Dq psk .
+.Dq psk ,
+or
+.Dq psk,sha256-psk
+if the driver for the interface supports protected management frames (PMF).
 .Dq psk
+and
+.Dq sha256-psk
 can only be used if a pre-shared key is configured using the
 .Cm wpakey
 option.
