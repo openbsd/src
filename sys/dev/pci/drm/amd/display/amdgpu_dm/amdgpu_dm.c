@@ -5121,10 +5121,10 @@ static int amdgpu_dm_initialize_drm_device(struct amdgpu_device *adev)
 				kfree(wbcon);
 				continue;
 			}
+#endif
 
 			link->psr_settings.psr_feature_enabled = false;
 			link->psr_settings.psr_version = DC_PSR_VERSION_UNSUPPORTED;
-#endif
 
 			continue;
 		}
