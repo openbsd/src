@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.83 2024/10/08 09:05:40 claudio Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.84 2025/12/03 17:05:53 kurt Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -1157,10 +1157,12 @@ sys_setthrname(struct proc *curp, void *v, register_t *retval)
                 return ESRCH;
 
 	error = copyinstr(SCARG(uap, name), buf, sizeof buf, NULL);
+	if (error == ENAMETOOLONG) {
+		buf[sizeof(buf) - 1] = '\0';
+		error = 0;
+	}
 	if (error == 0)
 		strlcpy(p->p_name, buf, sizeof(p->p_name));
-	else if (error == ENAMETOOLONG)
-		error = EINVAL;
 	*retval = error;
 	return 0;
 }
