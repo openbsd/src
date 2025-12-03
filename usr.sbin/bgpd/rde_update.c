@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.186 2025/12/02 13:03:35 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.187 2025/12/03 10:00:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -258,7 +258,7 @@ void
 up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 {
 	struct prefix		*new;
-	struct adjout_prefix	*head, *p;
+	struct adjout_prefix	*head, *p, *np;
 	int			maxpaths = 0, extrapaths = 0, extra;
 	int			checkmode = 1;
 
@@ -332,7 +332,8 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 	}
 
 	/* withdraw stale paths */
-	for (p = head; p != NULL; p = adjout_prefix_next(peer, p)) {
+	for (p = head; p != NULL; p = np) {
+		np = adjout_prefix_next(peer, p);
 		if (p->flags & PREFIX_ADJOUT_FLAG_STALE)
 			adjout_prefix_withdraw(peer, p);
 	}
