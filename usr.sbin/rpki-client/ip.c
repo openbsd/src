@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.34 2024/11/12 09:23:07 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.35 2025/12/03 10:26:52 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,17 +35,25 @@
  * Return zero on failure, non-zero on success.
  */
 int
-ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *p, enum afi *afi)
+ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *astr, enum afi *afi)
 {
+	const unsigned char *buf;
+	int len;
 	uint16_t v;
 
-	if (p->length == 0 || p->length > 3) {
-		warnx("%s: invalid field length, want 1--3, have %d",
-		    fn, p->length);
+	buf = ASN1_STRING_get0_data(astr);
+	len = ASN1_STRING_length(astr);
+
+	if (len == 3) {
+		warnx("%s: SAFI not allowed", fn);
+		return 0;
+	}
+	if (len != sizeof(v)) {
+		warnx("%s: invalid AFI length, want 2, have %d", fn, len);
 		return 0;
 	}
 
-	memcpy(&v, p->data, sizeof(v));
+	memcpy(&v, buf, sizeof(v));
 	v = ntohs(v);
 
 	/* Only accept IPv4 and IPv6 AFIs. */
@@ -56,12 +64,6 @@ ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *p, enum afi *afi)
 		return 0;
 	}
 
-	/* Disallow the optional SAFI. */
-
-	if (p->length == 3) {
-		warnx("%s: SAFI not allowed", fn);
-		return 0;
-	}
 
 	*afi = v;
 	return 1;
