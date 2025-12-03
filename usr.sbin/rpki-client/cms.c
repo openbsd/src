@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.58 2025/11/19 23:21:56 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.59 2025/12/03 10:19:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,15 +43,24 @@ cms_extract_econtent(const char *fn, CMS_ContentInfo *cms, unsigned char **res,
 		return 0;
 	}
 
+	if ((*rsz = ASN1_STRING_length(*os)) == 0) {
+		warnx("%s: RFC 6488 section 2.1.4: "
+		    "eContent: zero-length content", fn);
+		return 0;
+	}
+	if (*rsz > MAX_FILE_SIZE) {
+		warnx("%s: overlong eContent of length %zu", fn, *rsz);
+		return 0;
+	}
+
 	/*
 	 * The eContent in os is owned by the cms object and it has to outlive
 	 * it for further processing by the signedObject handlers. Since there
 	 * is no convenient API for this purpose, duplicate it by hand.
 	 */
-	if ((*res = malloc((*os)->length)) == NULL)
+	if ((*res = malloc(*rsz)) == NULL)
 		err(1, NULL);
-	memcpy(*res, (*os)->data, (*os)->length);
-	*rsz = (*os)->length;
+	memcpy(*res, ASN1_STRING_get0_data(*os), *rsz);
 
 	return 1;
 }
