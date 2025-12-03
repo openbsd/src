@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthread_set_name_np.3,v 1.9 2025/06/07 00:16:52 schwarze Exp $
+.\" $OpenBSD: pthread_set_name_np.3,v 1.10 2025/12/03 17:09:23 kurt Exp $
 .\" David Leonard <d@openbsd.org>, 1999. Public domain.
-.Dd $Mdocdate: June 7 2025 $
+.Dd $Mdocdate: December 3 2025 $
 .Dt PTHREAD_SET_NAME_NP 3
 .Os
 .Sh NAME
@@ -9,7 +9,6 @@
 .Nd set the name of a thread
 .Sh SYNOPSIS
 .Lb libpthread
-.In pthread.h
 .In pthread_np.h
 .Ft void
 .Fn pthread_set_name_np "pthread_t thread" "const char *name"
@@ -30,6 +29,11 @@ signal.
 The string pointed to by
 .Fa name
 is copied, and so need not be valid for the life of the thread.
+A maximum of
+.Dv _MAXCOMLEN
+- 1 bytes of
+.Fa name
+will be copied.
 .Pp
 The
 .Fn pthread_get_name_np
@@ -37,6 +41,17 @@ function retrieves
 .Fa name
 associated with
 .Fa thread .
+The
+.Fa len
+of buffer
+.Fa name
+should be at least
+.Dv _MAXCOMLEN
+bytes otherwise
+.Fa name
+will be truncated to fit in a buffer
+.Fa len
+bytes long.
 .Sh SEE ALSO
 .Xr pthreads 3
 .Sh STANDARDS
