@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.28 2025/12/02 12:21:39 job Exp $ */
+/*	$OpenBSD: ccr.c,v 1.29 2025/12/03 10:21:53 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -540,7 +540,7 @@ generate_routerkeystate(struct validation_data *vd)
 	RouterKeyState *rks;
 	RouterKeySet *rkset;
 	RouterKey *rk;
-	struct brk *brk, *prev;
+	struct brk *brk, *prev = NULL;
 	unsigned char *pk_der = NULL;
 	size_t pk_len;
 	const unsigned char *der;
