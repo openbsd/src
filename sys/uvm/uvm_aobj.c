@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.119 2025/11/10 10:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.120 2025/12/03 09:47:44 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ struct uvm_aobj {
 struct pool uvm_aobj_pool;
 
 static struct uao_swhash_elt	*uao_find_swhash_elt(struct uvm_aobj *, int,
-				     boolean_t);
+				     boolean_t, boolean_t);
 static boolean_t		 uao_flush(struct uvm_object *, voff_t,
 				     voff_t, int);
 static void			 uao_free(struct uvm_aobj *);
@@ -197,10 +197,12 @@ static struct mutex uao_list_lock = MUTEX_INITIALIZER(IPL_MPFLOOR);
  * offset.
  */
 static struct uao_swhash_elt *
-uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
+uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create,
+    boolean_t wait)
 {
 	struct uao_swhash *swhash;
 	struct uao_swhash_elt *elt;
+	int waitf = wait ? PR_WAITOK : PR_NOWAIT;
 	voff_t page_tag;
 
 	swhash = UAO_SWHASH_HASH(aobj, pageidx); /* first hash to get bucket */
@@ -220,17 +222,9 @@ uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
 	/*
 	 * allocate a new entry for the bucket and init/insert it in
 	 */
-	elt = pool_get(&uao_swhash_elt_pool, PR_NOWAIT | PR_ZERO);
-	/*
-	 * XXX We cannot sleep here as the hash table might disappear
-	 * from under our feet.  And we run the risk of deadlocking
-	 * the pagedeamon.  In fact this code will only be called by
-	 * the pagedaemon and allocation will only fail if we
-	 * exhausted the pagedeamon reserve.  In that case we're
-	 * doomed anyway, so panic.
-	 */
+	elt = pool_get(&uao_swhash_elt_pool, waitf | PR_ZERO);
 	if (elt == NULL)
-		panic("%s: can't allocate entry", __func__);
+		return NULL;
 	LIST_INSERT_HEAD(swhash, elt, list);
 	elt->tag = page_tag;
 
@@ -258,7 +252,7 @@ uao_find_swslot(struct uvm_object *uobj, int pageidx)
 	 */
 	if (UAO_USES_SWHASH(aobj)) {
 		struct uao_swhash_elt *elt =
-		    uao_find_swhash_elt(aobj, pageidx, FALSE);
+		    uao_find_swhash_elt(aobj, pageidx, FALSE, FALSE);
 
 		if (elt)
 			return UAO_SWHASH_ELT_PAGESLOT(elt, pageidx);
@@ -284,6 +278,7 @@ int
 uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
+	struct uao_swhash_elt *elt;
 	int oldslot;
 
 	KASSERT(rw_write_held(uobj->vmobjlock) || uobj->uo_refs == 0);
@@ -310,11 +305,9 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 		 * the page had not swap slot in the first place, and
 		 * we are freeing.
 		 */
-		struct uao_swhash_elt *elt =
-		    uao_find_swhash_elt(aobj, pageidx, slot ? TRUE : FALSE);
+		elt = uao_find_swhash_elt(aobj, pageidx, slot != 0, FALSE);
 		if (elt == NULL) {
-			KASSERT(slot == 0);
-			return 0;
+			return slot ? - 1 : 0;
 		}
 
 		oldslot = UAO_SWHASH_ELT_PAGESLOT(elt, pageidx);
@@ -465,7 +458,7 @@ uao_shrink_convert(struct uvm_object *uobj, int pages)
 
 	/* Convert swap slots from hash to array.  */
 	for (i = 0; i < pages; i++) {
-		elt = uao_find_swhash_elt(aobj, i, FALSE);
+		elt = uao_find_swhash_elt(aobj, i, FALSE, FALSE);
 		if (elt != NULL) {
 			new_swslots[i] = UAO_SWHASH_ELT_PAGESLOT(elt, i);
 			if (new_swslots[i] != 0)
@@ -622,12 +615,12 @@ uao_grow_convert(struct uvm_object *uobj, int pages)
 
 	/* Set these now, so we can use uao_find_swhash_elt(). */
 	old_swslots = aobj->u_swslots;
-	aobj->u_swhash = new_swhash;		
+	aobj->u_swhash = new_swhash;
 	aobj->u_swhashmask = new_hashmask;
 
 	for (i = 0; i < aobj->u_pages; i++) {
 		if (old_swslots[i] != 0) {
-			elt = uao_find_swhash_elt(aobj, i, TRUE);
+			elt = uao_find_swhash_elt(aobj, i, TRUE, TRUE);
 			elt->count++;
 			UAO_SWHASH_ELT_PAGESLOT(elt, i) = old_swslots[i];
 		}

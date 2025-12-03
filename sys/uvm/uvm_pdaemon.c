@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.138 2025/10/05 14:13:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.139 2025/12/03 09:47:44 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -414,6 +414,94 @@ uvmpd_trylockowner(struct vm_page *pg)
 	return slock;
 }
 
+struct swapcluster {
+	int swc_slot;
+	int swc_nallocated;
+	int swc_nused;
+	struct vm_page *swc_pages[SWCLUSTPAGES];
+};
+
+void
+swapcluster_init(struct swapcluster *swc)
+{
+	swc->swc_slot = 0;
+	swc->swc_nused = 0;
+}
+
+int
+swapcluster_allocslots(struct swapcluster *swc)
+{
+	int slot, npages;
+
+	if (swc->swc_slot != 0)
+		return 0;
+
+	npages = SWCLUSTPAGES;
+	slot = uvm_swap_alloc(&npages, TRUE);
+	if (slot == 0)
+		return ENOMEM;
+
+	swc->swc_slot = slot;
+	swc->swc_nallocated = npages;
+	swc->swc_nused = 0;
+
+	return 0;
+}
+
+int
+swapcluster_add(struct swapcluster *swc, struct vm_page *pg)
+{
+	int slot;
+	struct uvm_object *uobj;
+
+	KASSERT(swc->swc_slot != 0);
+	KASSERT(swc->swc_nused < swc->swc_nallocated);
+	KASSERT((pg->pg_flags & PQ_SWAPBACKED) != 0);
+
+	slot = swc->swc_slot + swc->swc_nused;
+	uobj = pg->uobject;
+	if (uobj == NULL) {
+		KASSERT(rw_write_held(pg->uanon->an_lock));
+		pg->uanon->an_swslot = slot;
+	} else {
+		int result;
+
+		KASSERT(rw_write_held(uobj->vmobjlock));
+		result = uao_set_swslot(uobj, pg->offset >> PAGE_SHIFT, slot);
+		if (result == -1)
+			return ENOMEM;
+	}
+	swc->swc_pages[swc->swc_nused] = pg;
+	swc->swc_nused++;
+
+	return 0;
+}
+
+void
+swapcluster_flush(struct swapcluster *swc)
+{
+	int slot;
+	int nused;
+	int nallocated;
+
+	if (swc->swc_slot == 0)
+		return;
+	KASSERT(swc->swc_nused <= swc->swc_nallocated);
+
+	slot = swc->swc_slot;
+	nused = swc->swc_nused;
+	nallocated = swc->swc_nallocated;
+
+	if (nused < nallocated)
+		uvm_swap_free(slot + nused, nallocated - nused);
+}
+
+static inline int
+swapcluster_nused(struct swapcluster *swc)
+{
+	return swc->swc_nused;
+}
+
 /*
  * uvmpd_dropswap: free any swap allocated to this page.
  *
@@ -497,10 +585,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 	struct uvm_object *uobj;
 	struct vm_page *pps[SWCLUSTPAGES], **ppsp;
 	int npages;
-	struct vm_page *swpps[SWCLUSTPAGES]; 	/* XXX: see below */
+	struct swapcluster swc;
 	struct rwlock *slock;
-	int swnpages, swcpages;				/* XXX: see below */
-	int swslot;
 	struct vm_anon *anon;
 	boolean_t swap_backed;
 	vaddr_t start;
@@ -511,8 +597,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 	 * to stay in the loop while we have a page to scan or we have
 	 * a swap-cluster to build.
 	 */
-	swslot = 0;
-	swnpages = swcpages = 0;
+	swapcluster_init(&swc);
 	dirtyreacts = 0;
 	p = NULL;
 
@@ -532,7 +617,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 
 	/* Insert iterator. */
 	TAILQ_INSERT_AFTER(pglst, p, &iter, pageq);
-	for (; p != NULL || swslot != 0; p = uvmpd_iterator(pglst, p, &iter)) {
+	for (; p != NULL || swc.swc_slot != 0; p = uvmpd_iterator(pglst, p, &iter)) {
 		/*
 		 * note that p can be NULL iff we have traversed the whole
 		 * list and need to do one final swap-backed clustered pageout.
@@ -544,9 +629,10 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 			 * see if we've met our target
 			 */
 			if ((uvmpd_pma_done(pma) &&
-			    (uvmexp.paging >= (shortage - freed))) ||
+			    (uvmexp.paging + swapcluster_nused(&swc)
+			    >= (shortage - freed))) ||
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
-				if (swslot == 0) {
+				if (swc.swc_slot == 0) {
 					/* exit now if no swap-i/o pending */
 					break;
 				}
@@ -701,35 +787,30 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 				uvmpd_dropswap(p);
 
 				/* start new cluster (if necessary) */
-				if (swslot == 0) {
-					swnpages = SWCLUSTPAGES;
-					swslot = uvm_swap_alloc(&swnpages,
-					    TRUE);
-					if (swslot == 0) {
-						/* no swap?  give up! */
-						atomic_clearbits_int(
-						    &p->pg_flags,
-						    PG_BUSY);
-						UVM_PAGE_OWN(p, NULL);
-						rw_exit(slock);
-						continue;
-					}
-					swcpages = 0;	/* cluster is empty */
+				if (swapcluster_allocslots(&swc)) {
+					atomic_clearbits_int(&p->pg_flags,
+					    PG_BUSY);
+					UVM_PAGE_OWN(p, NULL);
+					dirtyreacts++;
+					uvm_pageactivate(p);
+					rw_exit(slock);
+					continue;
 				}
 
 				/* add block to cluster */
-				swpps[swcpages] = p;
-				if (anon)
-					anon->an_swslot = swslot + swcpages;
-				else
-					uao_set_swslot(uobj,
-					    p->offset >> PAGE_SHIFT,
-					    swslot + swcpages);
-				swcpages++;
+				if (swapcluster_add(&swc, p)) {
+					atomic_clearbits_int(&p->pg_flags,
+					    PG_BUSY);
+					UVM_PAGE_OWN(p, NULL);
+					dirtyreacts++;
+					uvm_pageactivate(p);
+					rw_exit(slock);
+					continue;
+				}
 				rw_exit(slock);
 
 				/* cluster not full yet? */
-				if (swcpages < swnpages)
+				if (swc.swc_nused < swc.swc_nallocated)
 					continue;
 			}
 		} else {
@@ -748,17 +829,14 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 		 */
 		if (swap_backed) {
 			/* starting I/O now... set up for it */
-			npages = swcpages;
-			ppsp = swpps;
+			npages = swc.swc_nused;
+			ppsp = swc.swc_pages;
 			/* for swap-backed pages only */
-			start = (vaddr_t) swslot;
+			start = (vaddr_t) swc.swc_slot;
 
 			/* if this is final pageout we could have a few
 			 * extra swap blocks */
-			if (swcpages < swnpages) {
-				uvm_swap_free(swslot + swcpages,
-				    (swnpages - swcpages));
-			}
+			swapcluster_flush(&swc);
 		} else {
 			/* normal object pageout */
 			ppsp = pps;
@@ -794,9 +872,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 		 * if we did i/o to swap, zero swslot to indicate that we are
 		 * no longer building a swap-backed cluster.
 		 */
-
 		if (swap_backed)
-			swslot = 0;		/* done with this cluster */
+			swapcluster_init(&swc);	/* done with this cluster */
 
 		/*
 		 * first, we check for VM_PAGER_PEND which means that the
