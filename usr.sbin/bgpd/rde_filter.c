@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.137 2025/12/03 12:20:19 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.138 2025/12/03 14:16:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -134,8 +134,6 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 			state->aspath.aspath = aspath_get(np, nl);
 			free(np);
 			break;
-		case ACTION_SET_NEXTHOP:
-			fatalx("unexpected filter action in RDE");
 		case ACTION_SET_NEXTHOP_REF:
 		case ACTION_SET_NEXTHOP_REJECT:
 		case ACTION_SET_NEXTHOP_BLACKHOLE:
@@ -152,20 +150,10 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 			community_delete(&state->communities,
 			    &set->action.community, peer);
 			break;
-		case ACTION_PFTABLE:
-			/* convert pftable name to an id */
-			set->action.id = pftable_name2id(set->action.pftable);
-			set->type = ACTION_PFTABLE_ID;
-			/* FALLTHROUGH */
 		case ACTION_PFTABLE_ID:
 			pftable_unref(state->aspath.pftableid);
 			state->aspath.pftableid = pftable_ref(set->action.id);
 			break;
-		case ACTION_RTLABEL:
-			/* convert the route label to an id for faster access */
-			set->action.id = rtlabel_name2id(set->action.rtlabel);
-			set->type = ACTION_RTLABEL_ID;
-			/* FALLTHROUGH */
 		case ACTION_RTLABEL_ID:
 			rtlabel_unref(state->aspath.rtlabelid);
 			state->aspath.rtlabelid = rtlabel_ref(set->action.id);
@@ -173,6 +161,10 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 		case ACTION_SET_ORIGIN:
 			state->aspath.origin = set->action.origin;
 			break;
+		case ACTION_SET_NEXTHOP:
+		case ACTION_PFTABLE:
+		case ACTION_RTLABEL:
+			fatalx("unexpected filter action in RDE");
 		}
 	}
 }
@@ -767,9 +759,23 @@ filterset_recv(struct imsg *imsg, struct filter_set_head *set)
 		free(s);
 		return;
 	}
-	if (s->type == ACTION_SET_NEXTHOP) {
+	switch (s->type) {
+	case ACTION_SET_NEXTHOP:
 		s->action.nh_ref = nexthop_get(&s->action.nexthop);
 		s->type = ACTION_SET_NEXTHOP_REF;
+		break;
+	case ACTION_RTLABEL:
+		/* convert the route label to an id for faster access */
+		s->action.id = rtlabel_name2id(s->action.rtlabel);
+		s->type = ACTION_RTLABEL_ID;
+		break;
+	case ACTION_PFTABLE:
+		/* convert pftable name to an id */
+		s->action.id = pftable_name2id(s->action.pftable);
+		s->type = ACTION_PFTABLE_ID;
+		break;
+	default:
+		break;
 	}
 	TAILQ_INSERT_TAIL(set, s, entry);
 }
