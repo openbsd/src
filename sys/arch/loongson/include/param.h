@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2013/03/23 16:12:23 deraadt Exp $ */
+/*	$OpenBSD: param.h,v 1.4 2025/12/03 11:59:18 miod Exp $ */
 
 /* Public Domain */
 
@@ -13,8 +13,6 @@
 #define	_MACHINE_CPU	mips64
 #define	MID_MACHINE	MID_MIPS64
 
-#ifdef _KERNEL
-
 /*
  * The Loongson level 1 cache expects software to prevent virtual
  * aliases. Unfortunately, since this cache is physically tagged,
@@ -23,8 +21,6 @@
  * kernel can guarantee unless the page size is at least 16KB.
  */
 #define	PAGE_SHIFT	14
-
-#endif /* _KERNEL */
 
 #include <mips64/param.h>
 
