@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.25 2025/10/30 13:21:29 miod Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.26 2025/12/03 17:06:48 kurt Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -53,10 +53,13 @@ void
 pthread_get_name_np(pthread_t thread, char *name, size_t len)
 {
 	pid_t tid = 0;
+	int ret;
 
 	if (thread != pthread_self())
 		tid = thread->tib->tib_tid;
-	getthrname(tid, name, len);
+	ret = getthrname(tid, name, len);
+	if (ret == ERANGE && len > 0)
+		name[len-1] = '\0';
 }
 
 int
