@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.96 2024/04/05 13:51:47 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.97 2025/12/03 14:43:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -224,7 +224,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 
 	/* Entire mapping can become immutable, minus exceptions chosen later */
-	_dl_push_range_size(&imut, loff, maxva - minva);
+	_dl_push_range_size(&imut, libaddr, maxva - minva);
 
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		switch (phdp->p_type) {
