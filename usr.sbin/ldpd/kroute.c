@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.71 2023/03/08 04:43:13 guenther Exp $ */
+/*	$OpenBSD: kroute.c,v 1.72 2025/12/04 14:13:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -103,7 +103,7 @@ static void		 kroute_clear(void);
 static __inline int	 kif_compare(struct kif_node *, struct kif_node *);
 static struct kif_node	*kif_find(unsigned short);
 static struct kif_node	*kif_insert(unsigned short);
-static int		 kif_remove(struct kif_node *);
+static int		 kif_remove(struct kif_node *, int);
 static struct kif_node	*kif_update(unsigned short, int, struct if_data *,
 			    struct sockaddr_dl *, int *);
 static struct kroute_priority	*kroute_match(int, union ldpd_addr *);
@@ -769,7 +769,6 @@ kroute_clear(void)
 	while ((kp = RB_MIN(kroute_tree, &krt)) != NULL) {
 		while ((kprio = TAILQ_FIRST(&kp->priorities)) != NULL) {
 			while ((kn = TAILQ_FIRST(&kprio->nexthops)) != NULL) {
-				kr_redist_remove(&kn->r);
 				kroute_uninstall(kn);
 				TAILQ_REMOVE(&kprio->nexthops, kn, entry);
 				free(kn);
@@ -830,7 +829,7 @@ kif_insert(unsigned short ifindex)
 }
 
 static int
-kif_remove(struct kif_node *kif)
+kif_remove(struct kif_node *kif, int notify)
 {
 	struct kif_addr	*ka;
 
@@ -840,7 +839,9 @@ kif_remove(struct kif_node *kif)
 	}
 
 	while ((ka = TAILQ_FIRST(&kif->addrs)) != NULL) {
-		main_imsg_compose_ldpe(IMSG_DELADDR, 0, &ka->a, sizeof(ka->a));
+		if (notify)
+			main_imsg_compose_ldpe(IMSG_DELADDR, 0, &ka->a,
+			    sizeof(ka->a));
 		TAILQ_REMOVE(&kif->addrs, ka, entry);
 		free(ka);
 	}
@@ -854,7 +855,7 @@ kif_clear(void)
 	struct kif_node	*kif;
 
 	while ((kif = RB_MIN(kif_tree, &kit)) != NULL)
-		kif_remove(kif);
+		kif_remove(kif, 0);
 }
 
 static struct kif_node *
@@ -1152,7 +1153,7 @@ if_announce(void *msg)
 	case IFAN_DEPARTURE:
 		kif = kif_find(ifan->ifan_index);
 		if (kif)
-			kif_remove(kif);
+			kif_remove(kif, 1);
 		break;
 	}
 }
