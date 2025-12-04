@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.29 2025/05/22 07:43:38 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.30 2025/12/04 20:49:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1104,8 +1104,6 @@ format_width(const char *expanded)
 				more = utf8_append(&ud, *cp);
 			if (more == UTF8_DONE)
 				width += ud.width;
-			else
-				cp -= ud.have;
 		} else if (*cp > 0x1f && *cp < 0x7f) {
 			width++;
 			cp++;
