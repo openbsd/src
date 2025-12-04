@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.106 2025/08/14 06:44:50 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.107 2025/12/04 14:45:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1023,6 +1023,11 @@ screen_redraw_draw_scrollbar(struct screen_redraw_ctx *ctx,
 	int			 px, py, ox = ctx->ox, oy = ctx->oy;
 	int			 sx = ctx->sx, sy = ctx->sy, xoff = wp->xoff;
 	int			 yoff = wp->yoff;
+
+	if (ctx->statustop) {
+		sb_y += ctx->statuslines;
+		sy += ctx->statuslines;
+	}
 
 	/* Set up style for slider. */
 	gc = sb_style->gc;

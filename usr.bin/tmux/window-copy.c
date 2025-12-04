@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.377 2025/11/12 07:53:22 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.378 2025/12/04 14:45:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -627,7 +627,7 @@ window_copy_scroll1(struct window_mode_entry *wme, struct window_pane *wp,
 		new_slider_y = sb_top - wp->yoff + (sb_height - slider_height);
 	} else {
 		/* Slider is somewhere in the middle. */
-		new_slider_y = my - wp->yoff - sl_mpos + 1;
+		new_slider_y = my - wp->yoff - sl_mpos;
 	}
 
 	if (TAILQ_FIRST(&wp->modes) == NULL ||
