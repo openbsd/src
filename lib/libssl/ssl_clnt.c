@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.169 2025/03/09 15:53:36 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.170 2025/12/04 21:03:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1195,7 +1195,7 @@ ssl3_get_server_kex_dhe(SSL *s, CBS *cbs)
 		}
 		goto err;
 	}
-	if (!tls_key_share_peer_public(s->s3->hs.key_share, cbs,
+	if (!tls_key_share_client_peer_public(s->s3->hs.key_share, cbs,
 	    &decode_error, &invalid_key)) {
 		if (decode_error) {
 			SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
@@ -1264,7 +1264,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, CBS *cbs)
 	if ((s->s3->hs.key_share = tls_key_share_new(group_id)) == NULL)
 		goto err;
 
-	if (!tls_key_share_peer_public(s->s3->hs.key_share, &public,
+	if (!tls_key_share_client_peer_public(s->s3->hs.key_share, &public,
 	    &decode_error, NULL)) {
 		if (decode_error)
 			goto decode_err;
@@ -1859,7 +1859,7 @@ ssl3_send_client_kex_dhe(SSL *s, CBB *cbb)
 		goto err;
 	}
 
-	if (!tls_key_share_generate(s->s3->hs.key_share))
+	if (!tls_key_share_client_generate(s->s3->hs.key_share))
 		goto err;
 	if (!tls_key_share_public(s->s3->hs.key_share, cbb))
 		goto err;
@@ -1898,7 +1898,7 @@ ssl3_send_client_kex_ecdhe(SSL *s, CBB *cbb)
 		goto err;
 	}
 
-	if (!tls_key_share_generate(s->s3->hs.key_share))
+	if (!tls_key_share_client_generate(s->s3->hs.key_share))
 		goto err;
 
 	if (!CBB_add_u8_length_prefixed(cbb, &public))

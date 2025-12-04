@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.94 2025/05/03 08:37:28 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.95 2025/12/04 21:03:42 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3665,7 +3665,7 @@ test_tlsext_keyshare_client(void)
 	if ((ssl->s3->hs.key_share =
 	    tls_key_share_new_nid(NID_X25519)) == NULL)
 		errx(1, "failed to create key share");
-	if (!tls_key_share_generate(ssl->s3->hs.key_share))
+	if (!tls_key_share_client_generate(ssl->s3->hs.key_share))
 		errx(1, "failed to generate key share");
 
 	ssl->s3->hs.our_max_tls_version = TLS1_2_VERSION;
@@ -3890,14 +3890,14 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	if (!tls_key_share_generate(ssl->s3->hs.key_share)) {
+	if (!tls_key_share_server_generate(ssl->s3->hs.key_share)) {
 		FAIL("failed to generate key share");
 		goto done;
 	}
 
 	CBS_init(&cbs, bogokey, sizeof(bogokey));
 
-	if (!tls_key_share_peer_public(ssl->s3->hs.key_share, &cbs,
+	if (!tls_key_share_server_peer_public(ssl->s3->hs.key_share, &cbs,
 	    &decode_error, NULL)) {
 		FAIL("failed to load peer public key\n");
 		goto done;
@@ -3926,7 +3926,7 @@ test_tlsext_keyshare_server(void)
 		FAIL("failed to create key share");
 		goto done;
 	}
-	if (!tls_key_share_generate(ssl->s3->hs.key_share)) {
+	if (!tls_key_share_server_generate(ssl->s3->hs.key_share)) {
 		FAIL("failed to generate key share");
 		goto done;
 	}

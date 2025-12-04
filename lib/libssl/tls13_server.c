@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.111 2025/10/25 12:31:44 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.112 2025/12/04 21:03:42 beck Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -502,7 +502,7 @@ tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	if (ctx->hs->key_share == NULL)
 		return 0;
-	if (!tls_key_share_generate(ctx->hs->key_share))
+	if (!tls_key_share_server_generate(ctx->hs->key_share))
 		return 0;
 	if (!tls13_servername_process(ctx))
 		return 0;

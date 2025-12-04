@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.166 2025/03/09 15:53:36 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.167 2025/12/04 21:03:42 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1357,7 +1357,7 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 			goto err;
 	}
 
-	if (!tls_key_share_generate(s->s3->hs.key_share))
+	if (!tls_key_share_server_generate(s->s3->hs.key_share))
 		goto err;
 
 	if (!tls_key_share_params(s->s3->hs.key_share, cbb))
@@ -1393,7 +1393,7 @@ ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
 	if ((s->s3->hs.key_share = tls_key_share_new_nid(nid)) == NULL)
 		goto err;
 
-	if (!tls_key_share_generate(s->s3->hs.key_share))
+	if (!tls_key_share_server_generate(s->s3->hs.key_share))
 		goto err;
 
 	/*
@@ -1744,7 +1744,7 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 		goto err;
 	}
 
-	if (!tls_key_share_peer_public(s->s3->hs.key_share, cbs,
+	if (!tls_key_share_server_peer_public(s->s3->hs.key_share, cbs,
 	    &decode_error, &invalid_key)) {
 		if (decode_error) {
 			SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
@@ -1792,7 +1792,7 @@ ssl3_get_client_kex_ecdhe(SSL *s, CBS *cbs)
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 		goto err;
 	}
-	if (!tls_key_share_peer_public(s->s3->hs.key_share, &public,
+	if (!tls_key_share_server_peer_public(s->s3->hs.key_share, &public,
 	    &decode_error, NULL)) {
 		if (decode_error) {
 			SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
