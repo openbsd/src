@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.29 2025/12/03 10:21:53 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.30 2025/12/04 12:07:01 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -190,6 +190,35 @@ ASN1_SEQUENCE(RouterKey) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(RouterKey);
 
+static char *
+hex_encode_asn1_string(const ASN1_STRING *str)
+{
+	return hex_encode(ASN1_STRING_get0_data(str), ASN1_STRING_length(str));
+}
+
+static int
+base64_encode_asn1_string(const ASN1_OCTET_STRING *astr, char **out)
+{
+	const unsigned char *data = ASN1_STRING_get0_data(astr);
+	int length = ASN1_STRING_length(astr);
+
+	return base64_encode(data, length, out) == 0;
+}
+
+static int
+copy_asn1_string(const ASN1_STRING *astr, unsigned char *buf, size_t len)
+{
+	const unsigned char *data = ASN1_STRING_get0_data(astr);
+	int length = ASN1_STRING_length(astr);
+
+	if (length < 0 || (size_t)length != len)
+		return 0;
+
+	memcpy(buf, data, length);
+
+	return 1;
+}
+
 static void
 hash_asn1_item(ASN1_OCTET_STRING *astr, const ASN1_ITEM *it, void *val)
 {
@@ -219,7 +248,7 @@ validate_asn1_hash(const char *fn, const char *descr,
 		goto out;
 	}
 
-	hex = hex_encode(hash->data, hash->length);
+	hex = hex_encode_asn1_string(hash);
  out:
 	ASN1_OCTET_STRING_free(astr);
 	return hex;
@@ -316,12 +345,6 @@ append_cached_manifest(STACK_OF(ManifestInstance) *mis, struct ccr_mft *cm)
 		errx(1, "sk_ManifestInstance_push");
 }
 
-static int
-base64_encode_asn1str(const ASN1_OCTET_STRING *astr, char **out)
-{
-	return base64_encode(astr->data, astr->length, out) == 0;
-}
-
 static ManifestState *
 generate_manifeststate(struct validation_data *vd)
 {
@@ -346,8 +369,8 @@ generate_manifeststate(struct validation_data *vd)
 
 	hash_asn1_item(ms->hash, ASN1_ITEM_rptr(ManifestInstances), ms->mis);
 
-	if (!base64_encode_asn1str(ms->hash, &ccr->mfts_hash))
-		errx(1, "base64_encode_asn1str");
+	if (!base64_encode_asn1_string(ms->hash, &ccr->mfts_hash))
+		errx(1, "base64_encode_asn1_string");
 
 	return ms;
 }
@@ -440,8 +463,8 @@ generate_roapayloadstate(struct validation_data *vd)
 
 	hash_asn1_item(vrps->hash, ASN1_ITEM_rptr(ROAPayloadSets), vrps->rps);
 
-	if (!base64_encode_asn1str(vrps->hash, &ccr->vrps_hash))
-		errx(1, "base64_encode_asn1str");
+	if (!base64_encode_asn1_string(vrps->hash, &ccr->vrps_hash))
+		errx(1, "base64_encode_asn1_string");
 
 	return vrps;
 }
@@ -491,8 +514,8 @@ generate_aspapayloadstate(struct validation_data *vd)
 
 	hash_asn1_item(vaps->hash, ASN1_ITEM_rptr(ASPAPayloadSets), vaps->aps);
 
-	if (!base64_encode_asn1str(vaps->hash, &ccr->vaps_hash))
-		errx(1, "base64_encode_asn1str");
+	if (!base64_encode_asn1_string(vaps->hash, &ccr->vaps_hash))
+		errx(1, "base64_encode_asn1_string");
 
 	return vaps;
 }
@@ -528,8 +551,8 @@ generate_trustanchorstate(struct validation_data *vd)
 	hash_asn1_item(tas->hash, ASN1_ITEM_rptr(SubjectKeyIdentifiers),
 	    tas->skis);
 
-	if (!base64_encode_asn1str(tas->hash, &vd->ccr.tas_hash))
-		errx(1, "base64_encode_asn1str");
+	if (!base64_encode_asn1_string(tas->hash, &vd->ccr.tas_hash))
+		errx(1, "base64_encode_asn1_string");
 
 	return tas;
 }
@@ -593,8 +616,8 @@ generate_routerkeystate(struct validation_data *vd)
 
 	hash_asn1_item(rks->hash, ASN1_ITEM_rptr(RouterKeySets), rks->rksets);
 
-	if (!base64_encode_asn1str(rks->hash, &vd->ccr.brks_hash))
-		errx(1, "base64_encode_asn1str");
+	if (!base64_encode_asn1_string(rks->hash, &vd->ccr.brks_hash))
+		errx(1, "base64_encode_asn1_string");
 
 	return rks;
 }
@@ -981,11 +1004,11 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 
 		mi = sk_ManifestInstance_value(mis, i);
 
-		if (mi->hash->length != sizeof(ccr_mft->hash)) {
+		if (!copy_asn1_string(mi->hash,
+		    ccr_mft->hash, sizeof(ccr_mft->hash))) {
 			warnx("%s: manifest instance #%d corrupted", fn, i);
 			goto out;
 		}
-		memcpy(ccr_mft->hash, mi->hash->data, mi->hash->length);
 
 		if (prev != NULL) {
 			if (ccr_mft_cmp(ccr_mft, prev) <= 0) {
@@ -994,11 +1017,11 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 			}
 		}
 
-		if (mi->aki->length != sizeof(ccr_mft->aki)) {
+		if (!copy_asn1_string(mi->aki,
+		    ccr_mft->aki, sizeof(ccr_mft->aki))) {
 			warnx("%s: manifest instance #%d corrupted", fn, i);
 			goto out;
 		}
-		memcpy(ccr_mft->aki, mi->aki->data, mi->aki->length);
 
 		if (!ASN1_INTEGER_get_uint64(&size, mi->size)) {
 			warnx("%s: manifest instance #%d corrupted", fn, i);
@@ -1039,12 +1062,11 @@ parse_mft_instances(const char *fn, struct ccr *ccr,
 				err(1, NULL);
 
 			s = sk_SubjectKeyIdentifier_value(mi->subordinates, j);
-			if (s->length != sizeof(sub->ski)) {
+			if (!copy_asn1_string(s, sub->ski, sizeof(sub->ski))) {
 				warnx("%s: manifest instance #%d corrupted",
-				    fn, j);
+				    fn, i);
 				goto out;
 			}
-			memcpy(sub->ski, s->data, sizeof(sub->ski));
 			SLIST_INSERT_HEAD(&ccr_mft->subordinates, sub, entry);
 			sub = NULL;
 		}
@@ -1391,12 +1413,10 @@ parse_tas_skis(const char *fn, struct ccr *ccr,
 
 		ski = sk_SubjectKeyIdentifier_value(skis, i);
 
-		if (ski->length != sizeof(cts->keyid)) {
+		if (!copy_asn1_string(ski, cts->keyid, sizeof(cts->keyid))) {
 			warnx("%s: TAS SKI #%d corrupted", fn, i);
 			goto out;
 		}
-
-		memcpy(cts->keyid, ski->data, ski->length);
 
 		if (prev != NULL) {
 			if (ccr_tas_ski_cmp(cts, prev) <= 0) {
@@ -1463,12 +1483,12 @@ parse_routerkeys(const char *fn, struct ccr *ccr, uint32_t asid,
 
 		rk = sk_RouterKey_value(routerkeys, i);
 
-		if (rk->ski->length != SHA_DIGEST_LENGTH) {
+		if (ASN1_STRING_length(rk->ski) != SHA_DIGEST_LENGTH) {
 			warnx("%s: AS%d RouterKey SKI corrupted", fn, asid);
 			goto out;
 		}
 
-		brk->ski = hex_encode(rk->ski->data, rk->ski->length);
+		brk->ski = hex_encode_asn1_string(rk->ski);
 
 		der = NULL;
 		if ((der_len = i2d_X509_PUBKEY(rk->spki, &der)) <= 0) {
