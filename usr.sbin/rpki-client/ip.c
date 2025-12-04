@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.36 2025/12/03 13:17:51 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.37 2025/12/04 06:11:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -63,7 +63,6 @@ ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *astr, enum afi *afi)
 		    "have %hd", fn, v);
 		return 0;
 	}
-
 
 	*afi = v;
 	return 1;
