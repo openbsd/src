@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.79 2025/12/04 22:20:20 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.80 2025/12/04 22:21:22 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -271,7 +271,12 @@ do {									\
 									\
 	if (__ci->ci_ipis != 0) {					\
 		__s = splipi();						\
-		alpha_ipi_process_with_frame(__ci);			\
+		/*							\
+		 * Skip processing ipis if within an intr_disable()	\
+		 * block. mtx_enter_park() depends on this.		\
+		 */							\
+		if (__s != ALPHA_PSL_IPL_MASK)				\
+			alpha_ipi_process_with_frame(__ci);		\
 		splx(__s);						\
 	}								\
 } while (0)
