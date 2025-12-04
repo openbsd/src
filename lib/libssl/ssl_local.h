@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.34 2025/10/24 09:23:06 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.35 2025/12/04 21:16:17 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -489,6 +489,9 @@ typedef struct ssl_handshake_tls13_st {
 
 	/* Certificate selected for use (static pointer). */
 	const SSL_CERT_PKEY *cpk;
+
+	/* Client's extra predicted key share */
+	struct tls_key_share *key_share;
 
 	/* Version proposed by peer server. */
 	uint16_t server_version;

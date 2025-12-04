@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.206 2025/05/31 15:17:11 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.207 2025/12/04 21:16:17 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -306,6 +306,11 @@ static const struct supported_group nid_list[] = {
 		.nid = NID_X25519,
 		.bits = 128,
 	},
+	{
+		.group_id = 4588,
+		.nid = NID_X25519MLKEM768,
+		.bits = 128,
+	},
 };
 
 #define NID_LIST_LEN (sizeof(nid_list) / sizeof(nid_list[0]))
@@ -322,41 +327,21 @@ static const uint8_t ecformats_default[] = {
 	TLSEXT_ECPOINTFORMAT_uncompressed,
 };
 
-#if 0
-static const uint16_t ecgroups_list[] = {
+static const uint16_t ecgroups_tls12_client_default[] = {
 	29,			/* X25519 (29) */
-	14,			/* sect571r1 (14) */
-	13,			/* sect571k1 (13) */
-	25,			/* secp521r1 (25) */
-	28,			/* brainpoolP512r1 (28) */
-	11,			/* sect409k1 (11) */
-	12,			/* sect409r1 (12) */
-	27,			/* brainpoolP384r1 (27) */
-	24,			/* secp384r1 (24) */
-	9,			/* sect283k1 (9) */
-	10,			/* sect283r1 (10) */
-	26,			/* brainpoolP256r1 (26) */
-	22,			/* secp256k1 (22) */
 	23,			/* secp256r1 (23) */
-	8,			/* sect239k1 (8) */
-	6,			/* sect233k1 (6) */
-	7,			/* sect233r1 (7) */
-	20,			/* secp224k1 (20) */
-	21,			/* secp224r1 (21) */
-	4,			/* sect193r1 (4) */
-	5,			/* sect193r2 (5) */
-	18,			/* secp192k1 (18) */
-	19,			/* secp192r1 (19) */
-	1,			/* sect163k1 (1) */
-	2,			/* sect163r1 (2) */
-	3,			/* sect163r2 (3) */
-	15,			/* secp160k1 (15) */
-	16,			/* secp160r1 (16) */
-	17,			/* secp160r2 (17) */
+	24,			/* secp384r1 (24) */
+	25,			/* secp521r1 (25) */
 };
-#endif
+
+static const uint16_t ecgroups_tls12_server_default[] = {
+	29,			/* X25519 (29) */
+	23,			/* secp256r1 (23) */
+	24,			/* secp384r1 (24) */
+};
 
 static const uint16_t ecgroups_client_default[] = {
+	4588,			/* X25519MLKEM768 (4588) */
 	29,			/* X25519 (29) */
 	23,			/* secp256r1 (23) */
 	24,			/* secp384r1 (24) */
@@ -364,6 +349,7 @@ static const uint16_t ecgroups_client_default[] = {
 };
 
 static const uint16_t ecgroups_server_default[] = {
+	4588,			/* X25519MLKEM768 (4588) */
 	29,			/* X25519 (29) */
 	23,			/* secp256r1 (23) */
 	24,			/* secp384r1 (24) */
@@ -478,11 +464,21 @@ tls1_get_group_list(const SSL *s, int client_groups, const uint16_t **pgroups,
 		return;
 
 	if (!s->server) {
-		*pgroups = ecgroups_client_default;
-		*pgroupslen = sizeof(ecgroups_client_default) / 2;
+		if (s->s3->hs.our_max_tls_version >= TLS1_3_VERSION) {
+			*pgroups = ecgroups_client_default;
+			*pgroupslen = sizeof(ecgroups_client_default) / 2;
+		} else {
+			*pgroups = ecgroups_tls12_client_default;
+			*pgroupslen = sizeof(ecgroups_tls12_client_default) / 2;
+		}
 	} else {
-		*pgroups = ecgroups_server_default;
-		*pgroupslen = sizeof(ecgroups_server_default) / 2;
+		if (s->s3->hs.our_max_tls_version >= TLS1_3_VERSION) {
+			*pgroups = ecgroups_server_default;
+			*pgroupslen = sizeof(ecgroups_server_default) / 2;
+		} else {
+			*pgroups = ecgroups_tls12_server_default;
+			*pgroupslen = sizeof(ecgroups_tls12_server_default) / 2;
+		}
 	}
 }
 

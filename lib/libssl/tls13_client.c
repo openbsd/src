@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.105 2025/12/04 21:03:42 beck Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.106 2025/12/04 21:16:17 beck Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -55,6 +55,18 @@ tls13_client_init(struct tls13_ctx *ctx)
 		return 0;
 	if (!tls_key_share_client_generate(ctx->hs->key_share))
 		return 0;
+
+	/*
+	 * Generate a second key share prediction if we have another
+	 * supported group
+	 */
+	if (groups_len > 1) {
+		if ((ctx->hs->tls13.key_share = tls_key_share_new(groups[1])) ==
+		    NULL)
+			return 0;
+		if (!tls_key_share_client_generate(ctx->hs->tls13.key_share))
+			return 0;
+	}
 
 	arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
 
