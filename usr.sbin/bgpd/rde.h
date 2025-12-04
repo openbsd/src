@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.327 2025/12/02 13:03:35 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.328 2025/12/04 22:55:17 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -611,7 +611,6 @@ void		 path_unref(struct rde_aspath *);
 int		 path_equal(const struct rde_aspath *,
 		    const struct rde_aspath *);
 struct rde_aspath *path_getcache(struct rde_aspath *);
-struct rde_aspath *path_lookup(struct rde_aspath *);
 struct rde_aspath *path_copy(struct rde_aspath *, const struct rde_aspath *);
 struct rde_aspath *path_prep(struct rde_aspath *);
 struct rde_aspath *path_get(void);

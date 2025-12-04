@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.16 2025/09/22 07:49:43 sashan Exp $ */
+/*	$OpenBSD: btrace.h,v 1.17 2025/12/04 22:55:17 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -35,12 +35,10 @@ const char *		 ba_name(struct bt_arg *);
 long			 ba2long(struct bt_arg *, struct dt_evt *);
 const char		*ba2str(struct bt_arg *, struct dt_evt *);
 long			 bacmp(struct bt_arg *, struct bt_arg *);
-unsigned long		 dt_get_offset(pid_t);
 
 /* ksyms.c */
 struct syms;
 struct syms		*kelf_open_kernel(const char *);
-struct syms		*kelf_load_syms(void  *, struct syms *);
 void			 kelf_close(struct syms *);
 int			 kelf_snprintsym_proc(int, pid_t, char *, size_t,
 			    unsigned long);
