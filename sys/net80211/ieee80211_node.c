@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.206 2025/12/03 10:21:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.207 2025/12/04 09:38:15 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -303,9 +303,9 @@ ieee80211_ess_setwpaparms(struct ieee80211com *ic, struct ieee80211_ess *ess,
 	if (wpa->i_akms & IEEE80211_WPA_AKM_SAE)
 		ess->rsnakms |= IEEE80211_AKM_SAE;
 	if (ess->rsnakms == 0)	{ /* set to default (PSK) */
-		ess->rsnakms = IEEE80211_AKM_PSK;
+		ess->rsnakms |= IEEE80211_AKM_PSK;
 		if (ic->ic_caps & IEEE80211_C_MFP)
-			ess->rsnakms = IEEE80211_AKM_SHA256_PSK;
+			ess->rsnakms |= IEEE80211_AKM_SHA256_PSK;
 	}
 
 	if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP40)
