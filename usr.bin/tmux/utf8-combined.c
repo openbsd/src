@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8-combined.c,v 1.7 2025/11/03 09:27:06 nicm Exp $ */
+/* $OpenBSD: utf8-combined.c,v 1.8 2025/12/04 06:04:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2023 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -122,6 +122,7 @@ utf8_should_combine(const struct utf8_data *with, const struct utf8_data *add)
 	case 0x1F47C:
 	case 0x1F481:
 	case 0x1F482:
+	case 0x1F483:
 	case 0x1F485:
 	case 0x1F486:
 	case 0x1F487:
