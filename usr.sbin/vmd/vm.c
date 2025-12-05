@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.121 2025/12/02 02:31:10 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.122 2025/12/05 15:59:30 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -765,9 +765,8 @@ run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 		/* Some more threads to wait for, start over */
 	}
 
-	ret = pthread_barrier_destroy(&vm_pause_barrier);
-	if (ret)
-		log_warnx("could not destroy pause barrier (%d)", ret);
+	if (pthread_barrier_destroy(&vm_pause_barrier))
+		log_warnx("could not destroy pause barrier");
 
 	return (ret);
 }
