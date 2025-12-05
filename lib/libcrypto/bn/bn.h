@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.84 2025/12/05 14:12:32 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.85 2025/12/05 17:25:55 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -145,16 +145,12 @@ extern "C" {
 #define BN_ULONG	uint64_t
 #define BN_BYTES	8
 #define BN_BITS2	64
-#define BN_DEC_FMT1	"%" PRIu64
-#define BN_HEX_FMT1	"%" PRIX64
 #else
 #define BN_ULLONG	uint64_t
 #define	BN_LLONG
 #define BN_ULONG	uint32_t
 #define BN_BYTES	4
 #define BN_BITS2	32
-#define BN_DEC_FMT1	"%" PRIu32
-#define BN_HEX_FMT1	"%" PRIX32
 #endif
 
 #define BN_FLG_MALLOCED		0x01
