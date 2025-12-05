@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.72 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.73 2025/12/05 08:41:32 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -342,7 +342,7 @@ rtype_from_der(const char *fn, const unsigned char *der, size_t len)
 	const unsigned char	*p;
 	enum rtype		 rtype = RTYPE_INVALID;
 
-	/* Does der parse as a CMS signed object? */
+	/* Does der parse as a CMS ContentInfo? Is it a known signed object? */
 	p = der;
 	if ((cms = d2i_CMS_ContentInfo(NULL, &p, len)) != NULL) {
 		const ASN1_OBJECT *obj;
