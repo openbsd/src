@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.24 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.25 2025/12/05 14:12:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,6 +70,14 @@
 #include "bytestring.h"
 #include "crypto_internal.h"
 #include "err_local.h"
+
+#if BN_BYTES == 8
+#define BN_DEC_CONV	UINT64_C(10000000000000000000)
+#define BN_DEC_NUM	19
+#else
+#define BN_DEC_CONV	UINT32_C(1000000000)
+#define BN_DEC_NUM	9
+#endif
 
 static int bn_dec2bn_cbs(BIGNUM **bnp, CBS *cbs);
 static int bn_hex2bn_cbs(BIGNUM **bnp, CBS *cbs);

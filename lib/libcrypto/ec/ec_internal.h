@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_internal.h,v 1.2 2025/08/02 15:44:09 jsing Exp $	*/
+/*	$OpenBSD: ec_internal.h,v 1.3 2025/12/05 14:12:32 tb Exp $	*/
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -24,7 +24,7 @@
 #define EC_FIELD_ELEMENT_MAX_BYTES \
     (EC_FIELD_ELEMENT_MAX_BITS + 7) / 8
 #define EC_FIELD_ELEMENT_MAX_WORDS \
-    ((EC_FIELD_ELEMENT_MAX_BYTES + BN_BYTES - 1) / BN_BYTES)
+    ((EC_FIELD_ELEMENT_MAX_BYTES + sizeof(BN_ULONG) - 1) / sizeof(BN_ULONG))
 
 typedef struct {
 	BN_ULONG w[EC_FIELD_ELEMENT_MAX_WORDS];

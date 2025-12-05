@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.20 2025/08/02 16:20:00 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.21 2025/12/05 14:12:32 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <openssl/bn.h>
 
 #include "bn_arch.h"
+#include "bn_local.h"
 
 #ifndef HEADER_BN_INTERNAL_H
 #define HEADER_BN_INTERNAL_H

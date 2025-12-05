@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.60 2025/09/07 05:21:29 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.61 2025/12/05 14:12:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,6 +115,20 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/bn.h>
+
+#if BN_BYTES == 8
+#define BN_MASK2	UINT64_C(0xffffffffffffffff)
+#define BN_MASK2l	UINT64_C(0xffffffff)
+#define BN_MASK2h	UINT64_C(0xffffffff00000000)
+#define BN_BITS		128
+#define BN_BITS4	32
+#else
+#define BN_MASK2	UINT32_C(0xffffffff)
+#define BN_MASK2l	UINT32_C(0xffff)
+#define BN_MASK2h	UINT32_C(0xffff0000)
+#define BN_BITS		64
+#define BN_BITS4	16
+#endif
 
 __BEGIN_HIDDEN_DECLS
 
