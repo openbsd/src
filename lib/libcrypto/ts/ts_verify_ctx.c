@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_verify_ctx.c,v 1.15 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: ts_verify_ctx.c,v 1.16 2025/12/05 14:19:27 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2003.
  */
@@ -215,7 +215,7 @@ TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
 	ret->imprint_len = ASN1_STRING_length(msg);
 	if (!(ret->imprint = malloc(ret->imprint_len)))
 		goto err;
-	memcpy(ret->imprint, ASN1_STRING_data(msg), ret->imprint_len);
+	memcpy(ret->imprint, ASN1_STRING_get0_data(msg), ret->imprint_len);
 
 	/* Setting nonce. */
 	if ((nonce = TS_REQ_get_nonce(req)) != NULL) {

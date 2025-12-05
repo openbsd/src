@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_lib.c,v 1.15 2025/01/07 14:22:19 tb Exp $ */
+/* $OpenBSD: ts_lib.c,v 1.16 2025/12/05 14:19:27 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -155,7 +155,7 @@ TS_MSG_IMPRINT_print_bio(BIO *bio, TS_MSG_IMPRINT *a)
 
 	BIO_printf(bio, "Message data:\n");
 	msg = TS_MSG_IMPRINT_get_msg(a);
-	BIO_dump_indent(bio, (const char *)ASN1_STRING_data(msg),
+	BIO_dump_indent(bio, (const char *)ASN1_STRING_get0_data(msg),
 	    ASN1_STRING_length(msg), 4);
 
 	return 1;

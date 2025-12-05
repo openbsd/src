@@ -1,4 +1,4 @@
-/* $OpenBSD: a_type.c,v 1.28 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: a_type.c,v 1.29 2025/12/05 14:19:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,14 +227,14 @@ int
 ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_len)
 {
 	int ret, num;
-	unsigned char *p;
+	const unsigned char *p;
 
 	if ((a->type != V_ASN1_OCTET_STRING) ||
 	    (a->value.octet_string == NULL)) {
 		ASN1error(ASN1_R_DATA_IS_WRONG);
 		return (-1);
 	}
-	p = ASN1_STRING_data(a->value.octet_string);
+	p = ASN1_STRING_get0_data(a->value.octet_string);
 	ret = ASN1_STRING_length(a->value.octet_string);
 	if (ret < max_len)
 		num = ret;
@@ -298,7 +298,7 @@ ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *at, long *num, unsigned char *dat
 		len = ASN1_STRING_length(ios->value);
 		if (len > max_len)
 			len = max_len;
-		memcpy(data, ASN1_STRING_data(ios->value), len);
+		memcpy(data, ASN1_STRING_get0_data(ios->value), len);
 	}
 
 	ret = ASN1_STRING_length(ios->value);

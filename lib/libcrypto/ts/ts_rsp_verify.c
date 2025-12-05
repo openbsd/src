@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.31 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.32 2025/12/05 14:19:27 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -667,7 +667,7 @@ TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 		ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
 		if (i > 0)
 			strlcat(result, "/", length);
-		strlcat(result, (const char *)ASN1_STRING_data(current), length);
+		strlcat(result, (const char *)ASN1_STRING_get0_data(current), length);
 	}
 	return result;
 }
@@ -771,7 +771,7 @@ TS_check_imprints(X509_ALGOR *algor_a, unsigned char *imprint_a, unsigned len_a,
 
 	/* Compare octet strings. */
 	ret = len_a == (unsigned) ASN1_STRING_length(b->hashed_msg) &&
-	    memcmp(imprint_a, ASN1_STRING_data(b->hashed_msg), len_a) == 0;
+	    memcmp(imprint_a, ASN1_STRING_get0_data(b->hashed_msg), len_a) == 0;
 
 err:
 	if (!ret)

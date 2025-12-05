@@ -1,4 +1,4 @@
-/* $OpenBSD: p8_pkey.c,v 1.25 2024/07/08 14:48:49 beck Exp $ */
+/* $OpenBSD: p8_pkey.c,v 1.26 2025/12/05 14:19:27 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -168,7 +168,7 @@ PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg, const unsigned char **pk,
 	if (ppkalg != NULL)
 		*ppkalg = p8->pkeyalg->algorithm;
 	if (pk != NULL) {
-		*pk = ASN1_STRING_data(p8->pkey);
+		*pk = ASN1_STRING_get0_data(p8->pkey);
 		*ppklen = ASN1_STRING_length(p8->pkey);
 	}
 	if (pa != NULL)
