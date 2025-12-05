@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.235 2025/10/11 15:46:06 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.236 2025/12/05 17:48:47 phessler Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1650,6 +1650,7 @@ process_tos_opt(char *s, int *val)
 		{ "cs6",		IPTOS_DSCP_CS6 },
 		{ "cs7",		IPTOS_DSCP_CS7 },
 		{ "ef",			IPTOS_DSCP_EF },
+		{ "va",			IPTOS_DSCP_VA },
 		{ "inetcontrol",	IPTOS_PREC_INTERNETCONTROL },
 		{ "lowdelay",		IPTOS_LOWDELAY },
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },

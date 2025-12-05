@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.249 2024/04/23 13:34:50 jsg Exp $	*/
+/*	$OpenBSD: ping.c,v 1.250 2025/12/05 17:48:47 phessler Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1822,6 +1822,7 @@ map_tos(char *key, int *val)
 		{ "cs6",		IPTOS_DSCP_CS6 },
 		{ "cs7",		IPTOS_DSCP_CS7 },
 		{ "ef",			IPTOS_DSCP_EF },
+		{ "va",			IPTOS_DSCP_VA },
 		{ "inetcontrol",	IPTOS_PREC_INTERNETCONTROL },
 		{ "lowdelay",		IPTOS_LOWDELAY },
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },

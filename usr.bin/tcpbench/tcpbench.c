@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.74 2025/11/26 07:27:13 dlg Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.75 2025/12/05 17:48:47 phessler Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -1023,6 +1023,7 @@ map_tos(char *s, int *val)
 		{ "cs6",		IPTOS_DSCP_CS6 },
 		{ "cs7",		IPTOS_DSCP_CS7 },
 		{ "ef",			IPTOS_DSCP_EF },
+		{ "va",			IPTOS_DSCP_VA },
 		{ "inetcontrol",	IPTOS_PREC_INTERNETCONTROL },
 		{ "lowdelay",		IPTOS_LOWDELAY },
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },

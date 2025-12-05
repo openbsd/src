@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.720 2025/11/11 04:06:20 dlg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.721 2025/12/05 17:48:47 phessler Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -6347,6 +6347,7 @@ map_tos(char *s, int *val)
 		{ "cs6",		IPTOS_DSCP_CS6 },
 		{ "cs7",		IPTOS_DSCP_CS7 },
 		{ "ef",			IPTOS_DSCP_EF },
+		{ "va",			IPTOS_DSCP_VA },
 		{ "inetcontrol",	IPTOS_PREC_INTERNETCONTROL },
 		{ "lowdelay",		IPTOS_LOWDELAY },
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
