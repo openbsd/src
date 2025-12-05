@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.2 2024/08/23 12:56:26 anton Exp $ */
+/* $OpenBSD: bn_word.c,v 1.3 2025/12/05 14:07:01 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -19,6 +19,8 @@
 #include <string.h>
 
 #include <openssl/bn.h>
+
+#include "bn_local.h"
 
 struct bn_word_test {
 	const char *in_hex;
