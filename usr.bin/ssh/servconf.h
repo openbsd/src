@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.h,v 1.169 2024/10/14 01:57:50 djm Exp $ */
+/* $OpenBSD: servconf.h,v 1.170 2025/12/05 07:49:45 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -73,13 +73,13 @@ struct per_source_penalty {
 	int	max_sources6;
 	int	overflow_mode;
 	int	overflow_mode6;
-	int	penalty_crash;
-	int	penalty_grace;
-	int	penalty_authfail;
-	int	penalty_noauth;
-	int	penalty_refuseconnection;
-	int	penalty_max;
-	int	penalty_min;
+	double	penalty_crash;
+	double	penalty_grace;
+	double	penalty_authfail;
+	double	penalty_noauth;
+	double	penalty_refuseconnection;
+	double	penalty_max;
+	double	penalty_min;
 };
 
 typedef struct {
