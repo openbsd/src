@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.20 2021/12/14 23:47:36 dtucker Exp $	*/
+/*	$OpenBSD: ip.h,v 1.21 2025/12/05 17:42:29 phessler Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ struct ip {
 #define	IPTOS_DSCP_LE		0x04
 #define	IPTOS_DSCP_CS1		0x20
 #define	IPTOS_DSCP_AF11		0x28
+#define	IPTOS_DSCP_VA		0x2c
 #define	IPTOS_DSCP_AF12		0x30
 #define	IPTOS_DSCP_AF13		0x38
 #define	IPTOS_DSCP_CS2		0x40
