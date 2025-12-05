@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.11 2025/10/16 07:49:36 job Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.12 2025/12/05 07:26:42 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -215,7 +215,7 @@ DECLARE_ASN1_FUNCTIONS(RouterKey);
 
 typedef struct {
 	ASN1_INTEGER *version;
-	ASN1_OBJECT *hashAlg;
+	X509_ALGOR *hashAlg;
 	ASN1_GENERALIZEDTIME *producedAt;
 	ManifestState *mfts;
 	ROAPayloadState *vrps;
@@ -228,10 +228,10 @@ DECLARE_ASN1_FUNCTIONS(CanonicalCacheRepresentation);
 
 typedef struct {
 	ASN1_OBJECT *contentType;
-	ASN1_OCTET_STRING *content;
-} EncapContentInfo;
+	CanonicalCacheRepresentation *content;
+} ContentInfo;
 
-DECLARE_ASN1_FUNCTIONS(EncapContentInfo);
+DECLARE_ASN1_FUNCTIONS(ContentInfo);
 
 
 /*

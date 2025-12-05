@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.30 2025/12/04 12:07:01 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.31 2025/12/05 07:26:42 tb Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
+#include <openssl/x509.h>
 
 #include "extern.h"
 #include "rpki-asn1.h"
@@ -37,7 +38,7 @@
  * CCR definition in draft-ietf-sidrops-rpki-ccr-01, section 3.
  */
 
-ASN1_ITEM_EXP EncapContentInfo_it;
+ASN1_ITEM_EXP ContentInfo_it;
 ASN1_ITEM_EXP CanonicalCacheRepresentation_it;
 ASN1_ITEM_EXP ManifestInstances_it;
 ASN1_ITEM_EXP ManifestInstance_it;
@@ -51,16 +52,16 @@ ASN1_ITEM_EXP RouterKeySets_it;
 ASN1_ITEM_EXP RouterKeySet_it;
 ASN1_ITEM_EXP RouterKey_it;
 
-ASN1_SEQUENCE(EncapContentInfo) = {
-	ASN1_SIMPLE(EncapContentInfo, contentType, ASN1_OBJECT),
-	ASN1_EXP(EncapContentInfo, content, ASN1_OCTET_STRING, 0),
-} ASN1_SEQUENCE_END(EncapContentInfo);
+ASN1_SEQUENCE(ContentInfo) = {
+	ASN1_SIMPLE(ContentInfo, contentType, ASN1_OBJECT),
+	ASN1_EXP(ContentInfo, content, CanonicalCacheRepresentation, 0),
+} ASN1_SEQUENCE_END(ContentInfo);
 
-IMPLEMENT_ASN1_FUNCTIONS(EncapContentInfo);
+IMPLEMENT_ASN1_FUNCTIONS(ContentInfo);
 
 ASN1_SEQUENCE(CanonicalCacheRepresentation) = {
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, version, ASN1_INTEGER, 0),
-	ASN1_SIMPLE(CanonicalCacheRepresentation, hashAlg, ASN1_OBJECT),
+	ASN1_SIMPLE(CanonicalCacheRepresentation, hashAlg, X509_ALGOR),
 	ASN1_SIMPLE(CanonicalCacheRepresentation, producedAt,
 	    ASN1_GENERALIZEDTIME),
 	ASN1_EXP_OPT(CanonicalCacheRepresentation, mfts, ManifestState, 1),
@@ -626,13 +627,16 @@ static CanonicalCacheRepresentation *
 generate_ccr(struct validation_data *vd)
 {
 	CanonicalCacheRepresentation *ccr = NULL;
+	ASN1_OBJECT *oid;
 
 	if ((ccr = CanonicalCacheRepresentation_new()) == NULL)
 		errx(1, "CanonicalCacheRepresentation_new");
 
-	ASN1_OBJECT_free(ccr->hashAlg);
-	if ((ccr->hashAlg = OBJ_nid2obj(NID_sha256)) == NULL)
+	if ((oid = OBJ_nid2obj(NID_sha256)) == NULL)
 		errx(1, "OBJ_nid2obj");
+
+	if (!X509_ALGOR_set0(ccr->hashAlg, oid, V_ASN1_UNDEF, NULL))
+		errx(1, "X509_ALGOR_set0");
 
 	if (ASN1_GENERALIZEDTIME_set(ccr->producedAt, vd->buildtime) == NULL)
 		errx(1, "ASN1_GENERALIZEDTIME_set");
@@ -658,40 +662,25 @@ generate_ccr(struct validation_data *vd)
 void
 serialize_ccr_content(struct validation_data *vd)
 {
-	CanonicalCacheRepresentation *ccr;
-	EncapContentInfo *ci = NULL;
-	unsigned char *out;
-	int out_len, ci_der_len;
+	ContentInfo *ci = NULL;
+	int ci_der_len;
 
-	if ((ci = EncapContentInfo_new()) == NULL)
-		errx(1, "EncapContentInfo_new");
+	if ((ci = ContentInfo_new()) == NULL)
+		errx(1, "ContentInfo_new");
 
-	/*
-	 * At some point the below PEN OID should be replaced by one from IANA.
-	 */
 	ASN1_OBJECT_free(ci->contentType);
 	if ((ci->contentType = OBJ_dup(ccr_oid)) == NULL)
 		errx(1, "OBJ_dup");
 
-	ccr = generate_ccr(vd);
-
-	out = NULL;
-	if ((out_len = i2d_CanonicalCacheRepresentation(ccr, &out)) <= 0)
-		errx(1, "i2d_CanonicalCacheRepresentation");
-
-	CanonicalCacheRepresentation_free(ccr);
-
-	if (!ASN1_OCTET_STRING_set(ci->content, out, out_len))
-		errx(1, "ASN1_OCTET_STRING_set");
-
-	free(out);
+	CanonicalCacheRepresentation_free(ci->content);
+	ci->content = generate_ccr(vd);
 
 	vd->ccr.der = NULL;
-	if ((ci_der_len = i2d_EncapContentInfo(ci, &vd->ccr.der)) <= 0)
-		errx(1, "i2d_EncapContentInfo");
+	if ((ci_der_len = i2d_ContentInfo(ci, &vd->ccr.der)) <= 0)
+		errx(1, "i2d_ContentInfo");
 	vd->ccr.der_len = ci_der_len;
 
-	EncapContentInfo_free(ci);
+	ContentInfo_free(ci);
 }
 
 static inline int
@@ -1583,17 +1572,18 @@ struct ccr *
 ccr_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	const unsigned char *oder;
-	EncapContentInfo *ci = NULL;
+	ContentInfo *ci = NULL;
 	CanonicalCacheRepresentation *ccr_asn1 = NULL;
+	const ASN1_OBJECT *oid;
 	struct ccr *ccr = NULL;
-	int nid, rc = 0;
+	int nid, ptype, rc = 0;
 
 	if (der == NULL)
 		return NULL;
 
 	oder = der;
-	if ((ci = d2i_EncapContentInfo(NULL, &der, len)) == NULL) {
-		warnx("%s: d2i_EncapContentInfo", fn);
+	if ((ci = d2i_ContentInfo(NULL, &der, len)) == NULL) {
+		warnx("%s: d2i_ContentInfo", fn);
 		goto out;
 	}
 	if (der != oder + len) {
@@ -1610,26 +1600,15 @@ ccr_parse(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	der = ASN1_STRING_get0_data(ci->content);
-	len = ASN1_STRING_length(ci->content);
-
-	oder = der;
-	ccr_asn1 = d2i_CanonicalCacheRepresentation(NULL, &der, len);
-	if (ccr_asn1 == NULL) {
-		warnx("%s: d2i_CanonicalCacheRepresentation failed", fn);
-		goto out;
-	}
-	if (der != oder + len) {
-		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
-		goto out;
-	}
+	ccr_asn1 = ci->content;
 
 	if (!valid_econtent_version(fn, ccr_asn1->version, 0))
 		goto out;
 
-	if ((nid = OBJ_obj2nid(ccr_asn1->hashAlg)) != NID_sha256) {
-		warnx("%s: hashAlg: want SHA256 object, have %s", fn,
-		    nid2str(nid));
+	X509_ALGOR_get0(&oid, &ptype, NULL, ccr_asn1->hashAlg);
+	if ((nid = OBJ_obj2nid(oid)) != NID_sha256 || ptype != V_ASN1_UNDEF) {
+		warnx("%s: hashAlg: want SHA256 object without parameters "
+		    "have %s with parameter type %d", fn, nid2str(nid), ptype);
 		goto out;
 	}
 
@@ -1674,8 +1653,7 @@ ccr_parse(const char *fn, const unsigned char *der, size_t len)
 
 	rc = 1;
  out:
-	CanonicalCacheRepresentation_free(ccr_asn1);
-	EncapContentInfo_free(ci);
+	ContentInfo_free(ci);
 
 	if (rc == 0) {
 		ccr_free(ccr);
