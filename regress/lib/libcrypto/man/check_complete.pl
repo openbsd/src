@@ -25,7 +25,7 @@ my %internal = (
 	CHARTYPE_FIRST_ESC_2253 CHARTYPE_LAST_ESC_2253 CHARTYPE_PRINTABLESTRING
     )],
     bn => [qw(
-	BN_BYTES BN_DEC_FMT1 BN_LLONG BN_ULLONG
+	BN_BYTES BN_LLONG BN_ULLONG
     )],
     conf => [qw(
 	conf_st conf_method_st
@@ -68,9 +68,6 @@ my %obsolete = (
 	BIO_get_proxy_header BIO_get_url
 	BIO_set_filter_bio BIO_set_no_connect_return BIO_set_proxies
 	BIO_set_proxy_cb BIO_set_proxy_header BIO_set_url
-    )],
-    bn => [qw(
-	BN_HEX_FMT1
     )],
     evp => [qw(
 	EVP_CIPH_FLAG_FIPS EVP_CIPH_FLAG_NON_FIPS_ALLOW
