@@ -5076,6 +5076,15 @@ static int amdgpu_dm_initialize_drm_device(struct amdgpu_device *adev)
 		}
 	}
 
+#ifdef __OpenBSD__
+	/*
+	 * ThinkPad X13 Gen 6 (21RM) with GC 11.5.2, DCN 3.5.0
+	 * hangs if reboot is attempted after X is started when
+	 * PSR is enabled.
+	 */
+	psr_feature_enabled = false;
+#endif
+
 	/* Determine whether to enable Replay support by default. */
 	if (!(amdgpu_dc_debug_mask & DC_DISABLE_REPLAY)) {
 		switch (amdgpu_ip_version(adev, DCE_HWIP, 0)) {
