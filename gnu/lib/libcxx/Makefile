@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2025/08/21 15:26:58 rsadowski Exp $
+# $OpenBSD: Makefile,v 1.9 2025/12/06 09:27:54 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -94,9 +94,6 @@ CPPFLAGS+=	-D_LIBCPP_BUILDING_LIBRARY
 CPPFLAGS+=	-DLIBCXX_BUILDING_LIBCXXABI
 CPPFLAGS+=	-D_LIBCPP_HAS_NO_TIME_ZONE_DATABASE
 CPPFLAGS+=	-D_LIBCPP_PSTL_BACKEND_STD_THREAD
-
-# This is required because our __string directory has been moved
-CPPFLAGS+=	-I${HDRDIR}/__string/
 
 CXXFLAGS+=	-nostdlib -nostdinc++
 .if empty(CXXFLAGS:M-std=*)
@@ -1124,13 +1121,6 @@ STD_HEADERS=	\
 	wchar.h \
 	wctype.h
 
-# __string has moved from a file to a directory which CVS cannot
-# handle so we have to do some trickery with these
-STRING_HEADERS=	\
-	char_traits.h \
-	constexpr_c_functions.h \
-	extern_template_lists.h
-
 includes:
 	@echo installing ${STD_HEADERS}
 .	for hdr in ${STD_HEADERS}
@@ -1144,12 +1134,6 @@ includes:
 	cmp -s ${ASSERTION_H} ${DESTDIR}/${CXXINCLUDEDIR}/${ASSERTION_H:T} || \
 		${INSTALL} ${INSTALL_COPY} -D -m 444 ${ASSERTION_H} \
 			${DESTDIR}/${CXXINCLUDEDIR}/${ASSERTION_H:T}
-	@echo installing ${STRING_HEADERS}
-.	for hdr in ${STRING_HEADERS}
-		cmp -s ${HDRDIR}/__string/${hdr} ${DESTDIR}/${CXXINCLUDEDIR}/${hdr} || \
-			${INSTALL} ${INSTALL_COPY} -D -m 444 ${HDRDIR}/__string/${hdr} \
-				${DESTDIR}/${CXXINCLUDEDIR}/${hdr};
-.	endfor
 
 .include <bsd.lib.mk>
 
