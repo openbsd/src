@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.455 2025/11/14 01:55:07 jcs Exp $ */
+/* $OpenBSD: acpi.c,v 1.456 2025/12/06 13:18:07 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -548,6 +548,53 @@ acpi_getsta(struct acpi_softc *sc, struct aml_node *node)
 	return sta;
 }
 
+int
+acpi_storaged3enable(struct acpi_softc *sc, struct aml_node *node)
+{
+	struct aml_value dsd;
+	int i;
+
+	/* 5025030f-842f-4ab4-a561-99a5189762d0 */
+	static uint8_t prop_guid[] = {
+		0x0f, 0x03, 0x25, 0x50, 0x2f, 0x84, 0xb4, 0x4a,
+		0xa5, 0x61, 0x99, 0xa5, 0x18, 0x97, 0x62, 0xd0,
+	};
+
+	if (aml_evalname(sc, node, "_DSD", 0, NULL, &dsd))
+		return 0;
+
+	if (dsd.type != AML_OBJTYPE_PACKAGE || dsd.length != 2 ||
+	    dsd.v_package[0]->type != AML_OBJTYPE_BUFFER ||
+	    dsd.v_package[1]->type != AML_OBJTYPE_PACKAGE)
+		return 0;
+
+	/* Check UUID. */
+	if (dsd.v_package[0]->length != sizeof(prop_guid) ||
+	    memcmp(dsd.v_package[0]->v_buffer, prop_guid,
+	    sizeof(prop_guid)) != 0)
+		return 0;
+
+	/* Check properties. */
+	for (i = 0; i < dsd.v_package[1]->length; i++) {
+		struct aml_value *res = dsd.v_package[1]->v_package[i];
+		struct aml_value *val;
+
+		if (res->type != AML_OBJTYPE_PACKAGE || res->length != 2 ||
+		    res->v_package[0]->type != AML_OBJTYPE_STRING ||
+		    strcmp(res->v_package[0]->v_string, "StorageD3Enable") != 0)
+			continue;
+
+		val = res->v_package[1];
+		if (val->type == AML_OBJTYPE_OBJREF)
+			val = val->v_objref.ref;
+
+		if (val->type == AML_OBJTYPE_INTEGER)
+			return val->v_integer;
+	}
+
+	return 0;
+}
+
 /* Map ACPI device node to PCI */
 int
 acpi_getpci(struct aml_node *node, void *arg)
@@ -639,6 +686,7 @@ acpi_getpci(struct aml_node *node, void *arg)
 		pci->_s4w = val;
 	else
 		pci->_s4w = -1;
+	pci->d3cold = acpi_storaged3enable(sc, node);
 
 	/* Check if PCI device exists */
 	if (pci->dev > 0x1F || pci->fun > 7) {
@@ -797,6 +845,13 @@ acpi_pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state, int pre)
 		if (pr->p_state == state)
 			continue;
 
+		/*
+		 * If the device supports D3cold, ignore the Resource
+		 * for the D3 state.
+		 */
+		if (pr->p_res_state == ACPI_STATE_D3 && pdev->d3cold)
+			continue;
+
 		if (pre) {
 			/*
 			 * If a Resource is dependent on this device for
@@ -821,7 +876,6 @@ acpi_pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, int state, int pre)
 
 			pr->p_state = state;
 		}
-
 	}
 #endif /* NACPIPWRRES > 0 */
 
