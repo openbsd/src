@@ -1906,7 +1906,6 @@
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeEnumGlobals.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeEnumInjectedSources.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeEnumLineNumbers.h
-./usr/include/c++/v1/char_traits.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeEnumModules.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeEnumSymbols.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeEnumTypes.h
@@ -1920,7 +1919,6 @@
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeSourceFile.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeSymbolEnumerator.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeTypeArray.h
-./usr/include/c++/v1/constexpr_c_functions.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeTypeBuiltin.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeTypeEnum.h
 ./usr/include/llvm/DebugInfo/PDB/Native/NativeTypeFunctionSig.h
@@ -1969,7 +1967,6 @@
 ./usr/include/llvm/DebugInfo/PDB/PDBSymbolTypeFriend.h
 ./usr/include/llvm/DebugInfo/PDB/PDBSymbolTypeFunctionArg.h
 ./usr/include/llvm/DebugInfo/PDB/PDBSymbolTypeFunctionSig.h
-./usr/include/c++/v1/extern_template_lists.h
 ./usr/include/llvm/DebugInfo/PDB/PDBSymbolTypeManaged.h
 ./usr/include/llvm/DebugInfo/PDB/PDBSymbolTypePointer.h
 ./usr/include/llvm/DebugInfo/PDB/PDBSymbolTypeTypedef.h
