@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.63 2023/03/08 04:43:10 guenther Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.64 2025/12/06 06:40:49 tb Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -24,6 +24,10 @@
 #include <string.h>
 
 #include "extern.h"
+
+#ifndef BN_MASK2
+#define BN_MASK2	(BN_ULONG)-1
+#endif
 
 /* #define	DEBUGGING */
 
