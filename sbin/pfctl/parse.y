@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.721 2025/12/05 17:48:47 phessler Exp $	*/
+/*	$OpenBSD: parse.y,v 1.722 2025/12/06 10:41:07 phessler Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -6347,12 +6347,12 @@ map_tos(char *s, int *val)
 		{ "cs6",		IPTOS_DSCP_CS6 },
 		{ "cs7",		IPTOS_DSCP_CS7 },
 		{ "ef",			IPTOS_DSCP_EF },
-		{ "va",			IPTOS_DSCP_VA },
 		{ "inetcontrol",	IPTOS_PREC_INTERNETCONTROL },
 		{ "lowdelay",		IPTOS_LOWDELAY },
 		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
 		{ "reliability",	IPTOS_RELIABILITY },
-		{ "throughput",		IPTOS_THROUGHPUT }
+		{ "throughput",		IPTOS_THROUGHPUT },
+		{ "va",			IPTOS_DSCP_VA },
 	};
 	const struct keywords	*p;
 
