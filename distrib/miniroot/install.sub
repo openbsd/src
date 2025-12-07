@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1281 2025/11/16 13:15:31 kn Exp $
+#	$OpenBSD: install.sub,v 1.1282 2025/12/07 00:25:59 afresh1 Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3122,7 +3122,7 @@ pick_keydisk() {
 	_disk=$resp
 
 	make_dev $_disk
-	_parts=$(disklabel $_disk | sed -En "/.*RAID.*/s/^  \(.\): .*/\1/p")
+	_parts=$(disklabel $_disk | sed -En "/RAID/s/^  ([$PARTITIONS]): .*/\1/p")
 	if [[ -n $_parts ]]; then
 		echo "$_disk must contain a RAID partition."
 		return 1
