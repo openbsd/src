@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2118 2025/11/29 23:12:28 jsg Exp $
+$OpenBSD: pcidevs,v 1.2119 2025/12/07 21:58:35 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1016,6 +1016,7 @@ product AMD 600SERIES_PCIE_1	0x43f4	600 Series PCIE
 product AMD 600SERIES_PCIE_2	0x43f5	600 Series PCIE
 product AMD 600SERIES_AHCI	0x43f6	600 Series AHCI
 product AMD 600SERIES_XHCI	0x43f7	600 Series xHCI
+product AMD 800SERIES_XHCI	0x43fc	800 Series xHCI
 product AMD 500SERIES_PCIE_3	0x57a3	500 Series PCIE
 product AMD 500SERIES_PCIE_4	0x57a4	500 Series PCIE
 product AMD 500SERIES_PCIE_5	0x57ad	500 Series PCIE
@@ -2480,6 +2481,7 @@ product ATI RADEON_PRO_HDA	0xaae0	Radeon Pro Audio
 product ATI VEGA10_HDA_1	0xaaf8	Radeon Rx Vega HD Audio
 product ATI NAVI2X_HDA		0xab28	Navi 2x HD Audio
 product ATI NAVI10_HDA_1	0xab38	Navi 10 HD Audio
+product ATI NAVI4X_HDA		0xab40	Navi 4x HD Audio
 product ATI RS100_AGP		0xcab0	RS100 AGP
 product ATI RS200_AGP		0xcab2	RS200 AGP
 product ATI RS250_AGP		0xcab3	RS250 AGP
