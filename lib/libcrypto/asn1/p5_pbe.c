@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbe.c,v 1.30 2025/05/24 02:57:14 tb Exp $ */
+/* $OpenBSD: p5_pbe.c,v 1.31 2025/12/07 09:27:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -129,7 +129,6 @@ PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 {
 	PBEPARAM *pbe = NULL;
 	ASN1_STRING *pbe_str = NULL;
-	unsigned char *sstr;
 
 	if ((pbe = PBEPARAM_new()) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
@@ -141,17 +140,24 @@ PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!saltlen)
-		saltlen = PKCS5_PBE1_SALT_LEN;
-	if (!ASN1_STRING_set(pbe->salt, NULL, saltlen)) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
+	if (saltlen < 0)
 		goto err;
-	}
-	sstr = ASN1_STRING_data(pbe->salt);
-	if (salt)
-		memcpy(sstr, salt, saltlen);
-	else
+	if (saltlen == 0)
+		saltlen = PKCS5_PBE1_SALT_LEN;
+	if (salt != NULL) {
+		if (!ASN1_STRING_set(pbe->salt, salt, saltlen))
+			goto err;
+	} else {
+		unsigned char *sstr = NULL;
+
+		if ((sstr = malloc(saltlen)) == NULL) {
+			ASN1error(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 		arc4random_buf(sstr, saltlen);
+		ASN1_STRING_set0(pbe->salt, sstr, saltlen);
+		sstr = NULL;
+	}
 
 	if (!ASN1_item_pack(pbe, &PBEPARAM_it, &pbe_str)) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
@@ -165,9 +171,9 @@ PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 		return 1;
 
  err:
-	if (pbe != NULL)
-		PBEPARAM_free(pbe);
+	PBEPARAM_free(pbe);
 	ASN1_STRING_free(pbe_str);
+
 	return 0;
 }
 
