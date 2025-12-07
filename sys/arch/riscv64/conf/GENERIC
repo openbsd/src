@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 2025/12/02 19:57:29 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.55 2025/12/07 23:02:25 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -109,6 +109,8 @@ iic*		at dwiic?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
 
+cdpcie*		at fdt?
+pci*		at cdpcie?
 dwpcie*		at fdt?
 pci*		at dwpcie?
 pciecam*	at fdt?

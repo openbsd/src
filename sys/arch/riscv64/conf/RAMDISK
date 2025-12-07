@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.47 2025/12/02 19:57:29 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.48 2025/12/07 23:02:25 kettenis Exp $
 
 machine		riscv64
 maxusers	4
@@ -98,6 +98,8 @@ dwxe*		at fdt?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
 
+cdpcie*		at fdt?
+pci*		at cdpcie?
 dwpcie*		at fdt?
 pci*		at dwpcie?
 pciecam*	at fdt?
