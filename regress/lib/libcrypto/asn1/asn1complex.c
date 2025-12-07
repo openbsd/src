@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1complex.c,v 1.4 2022/09/05 21:06:31 tb Exp $ */
+/* $OpenBSD: asn1complex.c,v 1.5 2025/12/07 09:35:20 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -190,7 +190,7 @@ do_asn1_constructed_test(const struct asn1_constructed_test *act)
 		ERR_print_errors_fp(stderr);
 		goto failed;
 	}
-	if (!asn1_compare_bytes(act->name, ASN1_STRING_data(aos),
+	if (!asn1_compare_bytes(act->name, ASN1_STRING_get0_data(aos),
 	    ASN1_STRING_length(aos), act->want, act->want_len))
 		goto failed;
 
@@ -285,7 +285,7 @@ do_asn1_sequence_string_tests(void)
 		goto failed;
 	}
 
-	if (!asn1_compare_bytes("sequence", ASN1_STRING_data(astr),
+	if (!asn1_compare_bytes("sequence", ASN1_STRING_get0_data(astr),
 	    ASN1_STRING_length(astr), asn1_sequence_content,
 	    sizeof(asn1_sequence_content)))
 		goto failed;
@@ -299,7 +299,7 @@ do_asn1_sequence_string_tests(void)
 		goto failed;
 	}
 
-	if (!asn1_compare_bytes("sequence indefinite", ASN1_STRING_data(astr),
+	if (!asn1_compare_bytes("sequence indefinite", ASN1_STRING_get0_data(astr),
 	    ASN1_STRING_length(astr), asn1_sequence_indefinite_content,
 	    sizeof(asn1_sequence_indefinite_content)))
 		goto failed;
