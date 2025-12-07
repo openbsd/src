@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1_test.c,v 1.40 2025/09/17 16:13:11 tb Exp $ */
+/* $OpenBSD: ec_asn1_test.c,v 1.41 2025/12/07 11:39:00 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2024, 2025 Theo Buehler <tb@openbsd.org>
@@ -2589,7 +2589,7 @@ ec_group_check_seed(const EC_builtin_curve *curve, BN_CTX *ctx)
 		errx(1, "BN_nnmod");
 
 	/*
-	 * Steps 4 - 6: for i from 1 to s do Wi = SHA-1(SEED + i mod 2^g),
+	 * Steps 4 - 6: for i from 1 to s do Wi = SHA-1(SEED + i mod 2^g).
 	 * With W0 = r as already computed, let r = W0 || W1 || ... || Ws.
 	 */
 
