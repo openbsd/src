@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2118 2025/11/29 23:12:28 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2119 2025/12/07 21:58:35 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1021,6 +1021,7 @@
 #define	PCI_PRODUCT_AMD_600SERIES_PCIE_2	0x43f5		/* 600 Series PCIE */
 #define	PCI_PRODUCT_AMD_600SERIES_AHCI	0x43f6		/* 600 Series AHCI */
 #define	PCI_PRODUCT_AMD_600SERIES_XHCI	0x43f7		/* 600 Series xHCI */
+#define	PCI_PRODUCT_AMD_800SERIES_XHCI	0x43fc		/* 800 Series xHCI */
 #define	PCI_PRODUCT_AMD_500SERIES_PCIE_3	0x57a3		/* 500 Series PCIE */
 #define	PCI_PRODUCT_AMD_500SERIES_PCIE_4	0x57a4		/* 500 Series PCIE */
 #define	PCI_PRODUCT_AMD_500SERIES_PCIE_5	0x57ad		/* 500 Series PCIE */
@@ -2485,6 +2486,7 @@
 #define	PCI_PRODUCT_ATI_VEGA10_HDA_1	0xaaf8		/* Radeon Rx Vega HD Audio */
 #define	PCI_PRODUCT_ATI_NAVI2X_HDA	0xab28		/* Navi 2x HD Audio */
 #define	PCI_PRODUCT_ATI_NAVI10_HDA_1	0xab38		/* Navi 10 HD Audio */
+#define	PCI_PRODUCT_ATI_NAVI4X_HDA	0xab40		/* Navi 4x HD Audio */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
 #define	PCI_PRODUCT_ATI_RS250_AGP	0xcab3		/* RS250 AGP */
