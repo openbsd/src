@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.25 2025/09/08 08:43:39 jsg Exp $ */
+/*	$OpenBSD: agentx.c,v 1.26 2025/12/08 10:22:19 jsg Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -402,6 +402,7 @@ agentx_session(struct agentx *ax, uint32_t oid[],
 #ifdef AX_DEBUG
 			agentx_log_ax_fatalx(ax, "%s: %s", __func__, errstr);
 #else
+			free(axs);
 			return NULL;
 #endif
 		}
@@ -894,6 +895,7 @@ agentx_agentcaps(struct agentx_context *axc, uint32_t oid[],
 		agentx_log_axc_fatalx(axc, "%s: %s", __func__, errstr);
 #else
 		agentx_log_axc_warnx(axc, "%s: %s", __func__, errstr);
+		free(axa);
 		return NULL;
 #endif
 	}
