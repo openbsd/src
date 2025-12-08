@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.66 2025/12/08 07:13:18 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.67 2025/12/08 09:30:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1019,7 +1019,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m0)
 		}
 
 		if (ISSET(bif_flags, IFBIF_BLOCKNONIP) &&
-		    veb_ip_filter(m))
+		    veb_ip_filter(m0))
 			continue;
 
 		m = m_dup_pkt(m0, max_linkhdr + ETHER_ALIGN, M_NOWAIT);
