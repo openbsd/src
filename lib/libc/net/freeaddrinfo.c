@@ -1,4 +1,4 @@
-/*	$OpenBSD: freeaddrinfo.c,v 1.9 2016/09/21 04:38:56 guenther Exp $	*/
+/*	$OpenBSD: freeaddrinfo.c,v 1.10 2025/12/08 13:30:08 jca Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, Craig Metz, All rights reserved.
@@ -40,11 +40,15 @@ freeaddrinfo(struct addrinfo *ai)
 {
 	struct addrinfo *p;
 
-	do {
+	/*
+	 * Calling freeaddrinfo() with a NULL pointer is unspecified,
+	 * but try to cope with it anyway for compatibility.
+	 */
+	while (ai != NULL) {
 		p = ai;
 		ai = ai->ai_next;
 		free(p->ai_canonname);
 		free(p);
-	} while (ai);
+	}
 }
 DEF_WEAK(freeaddrinfo);
