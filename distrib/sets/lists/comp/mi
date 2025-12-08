@@ -917,8 +917,11 @@
 ./usr/include/fstab.h
 ./usr/include/fts.h
 ./usr/include/ftw.h
-./usr/include/fuse.h
-./usr/include/fuse_opt.h
+./usr/include/fuse
+./usr/include/fuse/fuse.h
+./usr/include/fuse/fuse_common.h
+./usr/include/fuse/fuse_lowlevel.h
+./usr/include/fuse/fuse_opt.h
 ./usr/include/gelf.h
 ./usr/include/getopt.h
 ./usr/include/glob.h
