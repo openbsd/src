@@ -1524,6 +1524,7 @@
 ./usr/share/man/man4/ccpmic.4
 ./usr/share/man/man4/cd.4
 ./usr/share/man/man4/cdce.4
+./usr/share/man/man4/cdpcie.4
 ./usr/share/man/man4/cdsdhc.4
 ./usr/share/man/man4/cduart.4
 ./usr/share/man/man4/cfxga.4

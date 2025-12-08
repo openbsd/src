@@ -946,7 +946,6 @@
 ./usr/include/c++/v1/cerrno
 ./usr/include/c++/v1/cfenv
 ./usr/include/c++/v1/cfloat
-./usr/include/c++/v1/char_traits.h
 ./usr/include/c++/v1/charconv
 ./usr/include/c++/v1/chrono
 ./usr/include/c++/v1/cinttypes
@@ -960,7 +959,6 @@
 ./usr/include/c++/v1/complex.h
 ./usr/include/c++/v1/concepts
 ./usr/include/c++/v1/condition_variable
-./usr/include/c++/v1/constexpr_c_functions.h
 ./usr/include/c++/v1/coroutine
 ./usr/include/c++/v1/csetjmp
 ./usr/include/c++/v1/csignal
@@ -1005,7 +1003,6 @@
 ./usr/include/c++/v1/ext/__hash
 ./usr/include/c++/v1/ext/hash_map
 ./usr/include/c++/v1/ext/hash_set
-./usr/include/c++/v1/extern_template_lists.h
 ./usr/include/c++/v1/fenv.h
 ./usr/include/c++/v1/filesystem
 ./usr/include/c++/v1/float.h
