@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.65 2025/12/03 05:53:51 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.66 2025/12/08 07:13:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -320,6 +320,7 @@ static int	veb_add_pvlan(struct veb_softc *, const struct ifbrpvlan *);
 static int	veb_del_pvlan(struct veb_softc *, const struct ifbrpvlan *);
 static int	veb_find_pvlan(struct veb_softc *, struct ifbrpvlan *);
 static int	veb_nfind_pvlan(struct veb_softc *, struct ifbrpvlan *);
+static uint16_t	veb_pvlan(struct veb_softc *, uint16_t);
 
 static int	veb_rule_add(struct veb_softc *, const struct ifbrlreq *);
 static int	veb_rule_list_flush(struct veb_softc *,
@@ -872,8 +873,18 @@ struct veb_ctx {
 };
 
 static int
-veb_pvlan_filter(const struct veb_ctx *ctx, uint16_t vs)
+veb_pvlan_filter(struct veb_softc *sc, const struct veb_ctx *ctx, uint16_t vs)
 {
+	uint16_t pvlan;
+
+	smr_read_enter();
+	pvlan = veb_pvlan(sc, vs);
+	smr_read_leave();
+
+	/* are we in the same pvlan? */
+	if (ctx->vp != (pvlan & VEB_PVLAN_V_MASK))
+		return (1);
+
 	switch (ctx->vt) {
 	case VEB_PVLAN_T_PRIMARY:
 		/* primary ports are permitted to send to anything */
@@ -980,7 +991,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m0)
 
 		pvid = tp->p_pvid;
 		if (pvid < IFBR_PVID_MIN || pvid > IFBR_PVID_MAX ||
-		    veb_pvlan_filter(ctx, pvid)) {
+		    veb_pvlan_filter(sc, ctx, pvid)) {
 			if (ISSET(bif_flags, IFBIF_PVLAN_PTAGS)) {
 				/*
 				 * port is attached to something that is
@@ -1060,7 +1071,7 @@ veb_transmit(struct veb_softc *sc, struct veb_ctx *ctx, struct mbuf *m,
 		goto drop;
 	}
 
-	if (veb_pvlan_filter(ctx, tvs)) {
+	if (veb_pvlan_filter(sc, ctx, tvs)) {
 		c = veb_c_pvlan;
 		goto drop;
 	}
