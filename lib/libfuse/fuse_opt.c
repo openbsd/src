@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.27 2022/01/16 20:06:18 naddy Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.28 2025/12/08 06:37:05 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -126,6 +126,7 @@ fuse_opt_add_opt(char **opts, const char *opt)
 	ret = add_opt(opts, opt);
 	return (ret);
 }
+DEF(fuse_opt_add_opt);
 
 int
 fuse_opt_add_opt_escaped(char **opts, const char *opt)
@@ -177,6 +178,7 @@ fuse_opt_add_opt_escaped(char **opts, const char *opt)
 	free(escaped_opt);
 	return (ret);
 }
+DEF(fuse_opt_add_opt_escaped);
 
 int
 fuse_opt_add_arg(struct fuse_args *args, const char *name)

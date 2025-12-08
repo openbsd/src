@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.56 2025/11/19 08:19:18 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.57 2025/12/08 06:37:04 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -24,7 +24,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "fuse_opt.h"
 #include "fuse_private.h"
 #include "debug.h"
 
@@ -297,15 +296,7 @@ fuse_is_lib_option(const char *opt)
 {
 	return (fuse_opt_match(fuse_lib_opts, opt));
 }
-
-int
-fuse_chan_fd(struct fuse_chan *ch)
-{
-	if (ch == NULL)
-		return (-1);
-
-	return (ch->fd);
-}
+DEF(fuse_is_lib_option);
 
 struct fuse_session *
 fuse_get_session(struct fuse *f)
@@ -319,6 +310,7 @@ fuse_loop_mt(unused struct fuse *fuse)
 {
 	return (-1);
 }
+DEF(fuse_loop_mt);
 
 static int
 ifuse_lib_opt_proc(void *data, const char *arg, int key,
@@ -479,6 +471,7 @@ fuse_set_signal_handlers(unused struct fuse_session *se)
 
 	return (0);
 }
+DEF(fuse_set_signal_handlers);
 
 static void
 dump_help(void)
@@ -592,6 +585,7 @@ fuse_version(void)
 {
 	return (FUSE_VERSION);
 }
+DEF(fuse_version);
 
 void
 fuse_teardown(struct fuse *fuse, char *mp)
@@ -603,12 +597,14 @@ fuse_teardown(struct fuse *fuse, char *mp)
 	fuse_unmount(mp, fuse->fc);
 	fuse_destroy(fuse);
 }
+DEF(fuse_teardown);
 
 int
 fuse_invalidate(unused struct fuse *f, unused const char *path)
 {
 	return (EINVAL);
 }
+DEF(fuse_invalidate);
 
 struct fuse *
 fuse_setup(int argc, char **argv, const struct fuse_operations *ops,
@@ -675,3 +671,4 @@ fuse_main(int argc, char **argv, const struct fuse_operations *ops, void *data)
 
 	return (ret == -1 ? 1 : 0);
 }
+DEF(fuse_main);

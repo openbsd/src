@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.2 2013/06/15 11:40:56 jasper Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.3 2025/12/08 06:37:05 helg Exp $
 #
 # Copyright (c) 2010,2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
@@ -59,7 +59,7 @@ cat > ${pc_file} << __EOF__
 prefix=/usr
 exec_prefix=\${prefix}
 libdir=\${exec_prefix}/lib
-includedir=\${prefix}/include
+includedir=\${prefix}/include/fuse
 
 Name: fuse
 Description: fuse filesystem library
