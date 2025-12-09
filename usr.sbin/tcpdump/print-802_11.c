@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.44 2022/07/22 20:37:56 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.45 2025/12/09 09:48:13 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -187,6 +187,7 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) ==
 	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS));
 	u_char *esrc = NULL, *edst = NULL;
+	uint16_t qos = 0;
 
 	if (hasqos) {
 		struct ieee80211_qosframe *wq;
@@ -195,6 +196,7 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 		TCHECK(*wq);
 		t += sizeof(*wq);
 		datalen = len - sizeof(*wq);
+		memcpy(&qos, wq->i_qos, sizeof(qos));
 	} else {
 		TCHECK(*wh);
 		t += sizeof(*wh);
@@ -224,6 +226,7 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 			datalen = len - sizeof(*w4);
 			esrc = w4->i_addr4;
 			edst = w4->i_addr3;
+			memcpy(&qos, w4->i_qos, sizeof(qos));
 		} else {
 			struct ieee80211_frame_addr4 *w4;
 
@@ -236,6 +239,9 @@ ieee80211_data(struct ieee80211_frame *wh, u_int len)
 		}
 		break;
 	}
+
+	if (hasqos && vflag)
+		printf("TID %u ", le16toh(qos) & IEEE80211_QOS_TID);
 
 	if (data && esrc)
 		llc_print(t, datalen, datalen, esrc, edst);
