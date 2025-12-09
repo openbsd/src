@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhi.c,v 1.1 2025/11/01 15:46:40 kettenis Exp $ */
+/*	$OpenBSD: nhi.c,v 1.2 2025/12/09 20:27:24 kettenis Exp $ */
 
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
@@ -425,9 +425,9 @@ nhi_rx_dequeue(struct nhi_softc *sc)
 	struct nhi_desc *rxd;
 	struct nhi_dmamem *rxb;
 
-	rxb = sc->sc_rx_buf[sc->sc_tx_prod];
+	rxb = sc->sc_rx_buf[sc->sc_rx_prod];
 
-	rxd = &sc->sc_rx_desc[sc->sc_tx_prod];
+	rxd = &sc->sc_rx_desc[sc->sc_rx_prod];
 	rxd->nd_addr_lo = NHI_DMA_DVA(rxb);
 	rxd->nd_addr_hi = NHI_DMA_DVA(rxb) >> 32;
 	rxd->nd_flags = NHI_DESC_RS | NHI_DESC_IE;
