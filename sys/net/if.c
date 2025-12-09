@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.754 2025/12/09 03:33:06 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.755 2025/12/09 03:47:30 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -999,8 +999,6 @@ if_output_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	unsigned int flow = 0;
 
 	m->m_pkthdr.ph_family = af;
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	if (ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
 		flow = m->m_pkthdr.ph_flowid;
