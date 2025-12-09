@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.196 2025/12/02 08:20:32 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.197 2025/12/09 08:13:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -909,9 +909,15 @@ first_key:
 	 * used. termios should have a better idea.
 	 */
 	bspace = tty->tio.c_cc[VERASE];
-	if (bspace != _POSIX_VDISABLE && key == bspace) {
-		log_debug("%s: key %#llx is backspace", c->name, key);
-		key = KEYC_BSPACE;
+	if (bspace != _POSIX_VDISABLE) {
+		if (key == bspace) {
+			log_debug("%s: key %#llx is BSpace", c->name, key);
+			key = KEYC_BSPACE;
+		}
+		if (key == (bspace|KEYC_META)) {
+			log_debug("%s: key %#llx is M-BSpace", c->name, key);
+			key = KEYC_BSPACE|KEYC_META;
+		}
 	}
 
 	/*
@@ -1304,7 +1310,7 @@ tty_keys_clipboard(struct tty *tty, const char *buf, size_t len, size_t *size)
 	struct client				*c = tty->client;
 	size_t					 end, terminator = 0, needed;
 	char					*copy, *out;
-	int			 		 outlen;
+	int					 outlen;
 	struct input_request_clipboard_data	 cd;
 
 	*size = 0;
