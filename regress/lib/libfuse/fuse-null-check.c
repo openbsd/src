@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse-null-check.c,v 1.2 2018/07/20 12:05:08 helg Exp $ */
+/* $OpenBSD: fuse-null-check.c,v 1.3 2025/12/09 16:38:52 helg Exp $ */
 /*
  * Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <fuse.h>
+#include <fuse_lowlevel.h>
 #include <stdlib.h>
 
 int

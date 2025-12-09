@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.4 2021/09/12 07:06:59 anton Exp $
+#       $OpenBSD: Makefile,v 1.5 2025/12/09 16:38:52 helg Exp $
 
 REGRESS_TARGETS=  run-fuse-opt-add-opt
 REGRESS_TARGETS+= run-fuse-opt-add-opt-escaped
@@ -12,7 +12,9 @@ REGRESS_TARGETS+= run-fuse-mount
 
 REGRESS_ROOT_TARGETS+= run-fuse-mount
 
-LDFLAGS+= -lfuse
+CFLAGS +!= pkg-config --cflags fuse
+LDFLAGS+!= pkg-config --libs fuse
+
 CLEANFILES= fuse-opt-add-opt
 CLEANFILES+=fuse-opt-add-opt-escaped
 CLEANFILES+=fuse-opt-add-arg
