@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.222 2025/07/07 02:28:50 jsg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.223 2025/12/09 03:38:11 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -296,8 +296,9 @@ vlan_enqueue(struct ifnet *ifp, struct mbuf *m)
 		return (if_enqueue_ifq(ifp, m));
 
 	sc = ifp->if_softc;
-	ifp0 = if_get(sc->sc_ifidx0);
 
+	smr_read_enter();
+	ifp0 = if_get_smr(sc->sc_ifidx0);
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
 		m_freem(m);
 		error = ENETDOWN;
@@ -306,8 +307,7 @@ vlan_enqueue(struct ifnet *ifp, struct mbuf *m)
 		    ifc_opackets, ifc_obytes, m->m_pkthdr.len);
 		vlan_transmit(sc, ifp0, m);
 	}
-
-	if_put(ifp0);
+	smr_read_leave();
 
 	return (error);
 }
@@ -320,7 +320,8 @@ vlan_start(struct ifqueue *ifq)
 	struct ifnet *ifp0;
 	struct mbuf *m;
 
-	ifp0 = if_get(sc->sc_ifidx0);
+	smr_read_enter();
+	ifp0 = if_get_smr(sc->sc_ifidx0);
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
 		ifq_purge(ifq);
 		goto leave;
@@ -330,7 +331,7 @@ vlan_start(struct ifqueue *ifq)
 		vlan_transmit(sc, ifp0, m);
 
 leave:
-	if_put(ifp0);
+	smr_read_leave();
 }
 
 struct mbuf *
