@@ -126,7 +126,7 @@ getdiskbyname(const char *name)
 			maxpartnum = partnum;
 		}
 	}
-	dp->d_npartitions = maxpartnum;
+	dp->d_npartitions = maxpartnum + 1;
 	dp->d_magic = DISKMAGIC;
 	dp->d_magic2 = DISKMAGIC;
 	free(buf);
