@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.753 2025/11/21 04:44:26 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.754 2025/12/09 03:33:06 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -477,6 +477,22 @@ if_idxmap_remove(struct ifnet *ifp)
 
 	smr_barrier();
 	if_put(ifp);
+}
+
+static inline struct ifnet *
+if_idxmap_get(unsigned int index)
+{
+	struct ifnet **if_map;
+	struct ifnet *ifp = NULL;
+
+	if (index == 0)
+		return (NULL);
+
+	if_map = SMR_PTR_GET(&if_idxmap.map);
+	if (index < if_idxmap_limit(if_map))
+		ifp = SMR_PTR_GET(&if_map[index]);
+
+	return (ifp);
 }
 
 /*
@@ -1912,27 +1928,31 @@ if_unit(const char *name)
 /*
  * Map interface index to interface structure pointer.
  */
+
 struct ifnet *
 if_get(unsigned int index)
 {
-	struct ifnet **if_map;
-	struct ifnet *ifp = NULL;
+	struct ifnet *ifp;
 
 	if (index == 0)
 		return (NULL);
 
 	smr_read_enter();
-	if_map = SMR_PTR_GET(&if_idxmap.map);
-	if (index < if_idxmap_limit(if_map)) {
-		ifp = SMR_PTR_GET(&if_map[index]);
-		if (ifp != NULL) {
-			KASSERT(ifp->if_index == index);
-			if_ref(ifp);
-		}
+	ifp = if_idxmap_get(index);
+	if (ifp != NULL) {
+		KASSERT(ifp->if_index == index);
+		if_ref(ifp);
 	}
 	smr_read_leave();
 
 	return (ifp);
+}
+
+struct ifnet *
+if_get_smr(unsigned int index)
+{
+	SMR_ASSERT_CRITICAL();
+	return if_idxmap_get(index);
 }
 
 struct ifnet *
