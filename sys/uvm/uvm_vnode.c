@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.148 2025/11/10 15:53:06 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.149 2025/12/10 08:38:18 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -663,9 +663,9 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		/* if we don't need a clean, deactivate/free pages then cont. */
 		if (!needs_clean) {
 			if (flags & PGO_DEACTIVATE) {
-				if (pp->wire_count == 0) {
-					uvm_pagedeactivate(pp);
-				}
+				uvm_unlock_pageq();
+				uvm_pagedeactivate(pp);
+				uvm_lock_pageq();
 			} else if (flags & PGO_FREE) {
 				if (pp->pg_flags & PG_BUSY) {
 					uvm_unlock_pageq();
@@ -788,9 +788,9 @@ ReTry:
 
 			/* dispose of page */
 			if (flags & PGO_DEACTIVATE) {
-				if (ptmp->wire_count == 0) {
-					uvm_pagedeactivate(ptmp);
-				}
+				uvm_unlock_pageq();
+				uvm_pagedeactivate(ptmp);
+				uvm_lock_pageq();
 			} else if (flags & PGO_FREE &&
 			    result != VM_PAGER_PEND) {
 				if (result != VM_PAGER_OK) {

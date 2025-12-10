@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.120 2025/12/03 09:47:44 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.121 2025/12/10 08:38:18 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -912,18 +912,10 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		 * XXX in the future.
 		 */
 		case PGO_CLEANIT|PGO_FREE:
-			/* FALLTHROUGH */
 		case PGO_CLEANIT|PGO_DEACTIVATE:
-			/* FALLTHROUGH */
 		case PGO_DEACTIVATE:
  deactivate_it:
-			if (pg->wire_count != 0)
-				continue;
-
-			uvm_lock_pageq();
 			uvm_pagedeactivate(pg);
-			uvm_unlock_pageq();
-
 			continue;
 		case PGO_FREE:
 			/*
@@ -1400,9 +1392,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	/*
 	 * deactivate the page (to put it on a page queue).
 	 */
-	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
-	uvm_unlock_pageq();
 
 	return FALSE;
 }

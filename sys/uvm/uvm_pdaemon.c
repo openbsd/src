@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.139 2025/12/03 09:47:44 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.140 2025/12/10 08:38:18 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -678,8 +678,10 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 			 * and skip to next page.
 			 */
 			if (pmap_is_referenced(p)) {
+				uvm_unlock_pageq();
 				uvm_pageactivate(p);
 				rw_exit(slock);
+				uvm_lock_pageq();
 				uvmexp.pdreact++;
 				continue;
 			}
@@ -750,8 +752,10 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 			 */
 			if ((p->pg_flags & PQ_SWAPBACKED) && uvm_swapisfull()) {
 				dirtyreacts++;
+				uvm_unlock_pageq();
 				uvm_pageactivate(p);
 				rw_exit(slock);
+				uvm_lock_pageq();
 				continue;
 			}
 
@@ -944,13 +948,9 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 				uvm_anfree(anon);	/* kills anon */
 				pmap_page_protect(p, PROT_NONE);
 				anon = NULL;
-				uvm_lock_pageq();
-				/* dequeue first to prevent lock recursion */
-				uvm_pagedequeue(p);
 				/* free released page */
 				uvm_pagefree(p);
 			} else {	/* page was not released during I/O */
-				uvm_lock_pageq();
 				if (result != VM_PAGER_OK) {
 					/* pageout was a failure... */
 					if (result != VM_PAGER_AGAIN)
@@ -965,13 +965,12 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 				}
 			}
 			rw_exit(slock);
-		} else {
-			/*
-			 * lock page queues here just so they're always locked
-			 * at the end of the loop.
-			 */
-			uvm_lock_pageq();
 		}
+		/*
+		 * lock page queues here just so they're always locked
+		 * at the end of the loop.
+		 */
+		uvm_lock_pageq();
 	}
 	TAILQ_REMOVE(pglst, &iter, pageq);
 
@@ -1081,8 +1080,9 @@ uvmpd_scan_active(struct uvm_pmalloc *pma, int swap_shortage,
 		 * inactive pages.
 		 */
 		if (inactive_shortage > 0) {
-			/* no need to check wire_count as pg is "active" */
+			uvm_unlock_pageq();
 			uvm_pagedeactivate(p);
+			uvm_lock_pageq();
 			uvmexp.pddeact++;
 			inactive_shortage--;
 		}

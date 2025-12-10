@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.27 2025/03/10 14:13:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.28 2025/12/10 08:38:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -161,13 +161,11 @@ uvm_obj_wire(struct uvm_object *uobj, voff_t start, voff_t end,
 		}
 
 		/* Wire the pages */
-		uvm_lock_pageq();
 		for (i = 0; i < npages; i++) {
 			uvm_pagewire(pgs[i]);
 			if (pageq != NULL)
 				TAILQ_INSERT_TAIL(pageq, pgs[i], pageq);
 		}
-		uvm_unlock_pageq();
 
 		/* Unbusy the pages */
 		uvm_page_unbusy(pgs, npages);
@@ -198,7 +196,6 @@ uvm_obj_unwire(struct uvm_object *uobj, voff_t start, voff_t end)
 	off_t offset;
 
 	rw_enter(uobj->vmobjlock, RW_WRITE | RW_DUPOK);
-	uvm_lock_pageq();
 	for (offset = start; offset < end; offset += PAGE_SIZE) {
 		pg = uvm_pagelookup(uobj, offset);
 
@@ -207,7 +204,6 @@ uvm_obj_unwire(struct uvm_object *uobj, voff_t start, voff_t end)
 
 		uvm_pageunwire(pg);
 	}
-	uvm_unlock_pageq();
 	rw_exit(uobj->vmobjlock);
 }
 #endif /* !SMALL_KERNEL */

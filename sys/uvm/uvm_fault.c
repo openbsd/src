@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.172 2025/12/01 14:26:27 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.173 2025/12/10 08:38:18 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -182,11 +182,7 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 		KASSERT(rw_lock_held(anons[lcv]->an_lock));
 		pg = anons[lcv]->an_page;
 		if (pg && (pg->pg_flags & PG_BUSY) == 0) {
-			uvm_lock_pageq();
-			if (pg->wire_count == 0) {
-				uvm_pagedeactivate(pg);
-			}
-			uvm_unlock_pageq();
+			uvm_pagedeactivate(pg);
 		}
 	}
 }
@@ -398,9 +394,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * We have successfully read the page, activate it.
 			 */
 			pmap_clear_modify(pg);
-			uvm_lock_pageq();
 			uvm_pageactivate(pg);
-			uvm_unlock_pageq();
 			atomic_clearbits_int(&pg->pg_flags,
 			    PG_WANTED|PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(pg, NULL);
@@ -979,9 +973,7 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 		 */
 		if (pg && (pg->pg_flags & (PG_RELEASED|PG_BUSY)) == 0 &&
 		    !pmap_extract(ufi->orig_map->pmap, currva, &pa)) {
-			uvm_lock_pageq();
 			uvm_pageactivate(pg);	/* reactivate */
-			uvm_unlock_pageq();
 			counters_inc(uvmexp_counters, flt_namap);
 
 			/* No fault-ahead when wired. */
@@ -1163,13 +1155,11 @@ retry:
 	/*
 	 * ... update the page queues.
 	 */
-	uvm_lock_pageq();
 	if (flt->wired) {
 		uvm_pagewire(pg);
 	} else {
 		uvm_pageactivate(pg);
 	}
-	uvm_unlock_pageq();
 
 	if (flt->wired) {
 		/*
@@ -1254,11 +1244,7 @@ uvm_fault_lower_lookup(
 		 * are neither busy nor released, so we don't need to check
 		 * for this.  we can just directly enter the pages.
 		 */
-		if (pages[lcv]->wire_count == 0) {
-			uvm_lock_pageq();
-			uvm_pageactivate(pages[lcv]);
-			uvm_unlock_pageq();
-		}
+		uvm_pageactivate(pages[lcv]);
 		counters_inc(uvmexp_counters, flt_nomap);
 
 		/* No fault-ahead when wired. */
@@ -1389,9 +1375,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		/* update rusage counters */
 		curproc->p_ru.ru_minflt++;
 		if (uobjpage != PGO_DONTCARE) {
-			uvm_lock_pageq();
 			uvm_pageactivate(uobjpage);
-			uvm_unlock_pageq();
 		}
 	} else {
 		error = uvm_fault_lower_io(ufi, flt, &uobj, &uobjpage);
@@ -1546,7 +1530,6 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		return ERESTART;
 	}
 
-	uvm_lock_pageq();
 	if (flt->wired) {
 		uvm_pagewire(pg);
 		if (pg->pg_flags & PQ_AOBJ) {
@@ -1568,7 +1551,6 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	} else {
 		uvm_pageactivate(pg);
 	}
-	uvm_unlock_pageq();
 
 	if (dropswap)
 		uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
@@ -1675,9 +1657,7 @@ uvm_fault_lower_io(
 
 	/* release the page now, still holding object lock */
 	if (pg != PGO_DONTCARE) {
-		uvm_lock_pageq();
 		uvm_pageactivate(pg);
-		uvm_unlock_pageq();
 
 		if (pg->pg_flags & PG_WANTED)
 			wakeup(pg);
@@ -1807,9 +1787,7 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg) {
-			uvm_lock_pageq();
 			uvm_pageunwire(pg);
-			uvm_unlock_pageq();
 		}
 	}
 

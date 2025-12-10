@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.348 2025/11/09 15:53:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.349 2025/12/10 08:38:18 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4438,16 +4438,8 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			case PGO_CLEANIT|PGO_DEACTIVATE:
 			case PGO_DEACTIVATE:
 deactivate_it:
-				/* skip the page if it's wired */
-				if (pg->wire_count != 0)
-					break;
-
-				uvm_lock_pageq();
-
 				KASSERT(pg->uanon == anon);
 				uvm_pagedeactivate(pg);
-
-				uvm_unlock_pageq();
 				break;
 			case PGO_FREE:
 				/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.97 2025/05/25 01:52:00 gnezdo Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.98 2025/12/10 08:38:18 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -805,9 +805,7 @@ ReStart:
 			 */
 			atomic_clearbits_int(&npg->pg_flags, PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(npg, NULL);
-			uvm_lock_pageq();
 			uvm_pageactivate(npg);
-			uvm_unlock_pageq();
 		}
 	}
 	amap_unlock(amap);
