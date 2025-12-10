@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1222 2025/12/10 03:51:51 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1223 2025/12/10 04:18:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7182,14 +7182,15 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 				ret = 1;
 #if NCARP > 0
 			} else {
-				struct ifnet	*ifp;
+				struct ifnet *ifp;
 
-				ifp = if_get(rt->rt_ifidx);
+				smr_read_enter();
+				ifp = if_get_smr(rt->rt_ifidx);
 				if (ifp != NULL && ifp->if_type == IFT_CARP &&
 				    ifp->if_carpdevidx ==
 				    kif->pfik_ifp->if_index)
 					ret = 1;
-				if_put(ifp);
+				smr_read_leave();
 #endif /* NCARP */
 			}
 
