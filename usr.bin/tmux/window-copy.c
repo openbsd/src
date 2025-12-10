@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.378 2025/12/04 14:45:32 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.379 2025/12/10 21:24:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1477,6 +1477,20 @@ window_copy_cmd_scroll_middle(struct window_copy_cmd_state *cs)
 
 	mid_value = (screen_size_y(&data->screen) - 1) / 2;
 	return (window_copy_cmd_scroll_to(cs, mid_value));
+}
+
+/* Scroll the pane to the mouse in the scrollbar. */
+static enum window_copy_cmd_action
+window_copy_cmd_scroll_to_mouse(struct window_copy_cmd_state *cs)
+{
+	struct window_mode_entry	*wme = cs->wme;
+	struct window_pane		*wp = wme->wp;
+	struct client			*c = cs->c;
+	struct mouse_event		*m = cs->m;
+	int				 scroll_exit = args_has(cs->wargs, 'e');
+
+	window_copy_scroll(wp, c->tty.mouse_slider_mpos, m->y, scroll_exit);
+	return (WINDOW_COPY_CMD_NOTHING);
 }
 
 /* Scroll line containing the cursor to the top. */
@@ -3043,6 +3057,11 @@ static const struct {
 	  .args = { "", 0, 0, NULL },
 	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  .f = window_copy_cmd_scroll_middle
+	},
+	{ .command = "scroll-to-mouse",
+	  .args = { "e", 0, 0, NULL },
+	  .clear = WINDOW_COPY_CMD_CLEAR_EMACS_ONLY,
+	  .f = window_copy_cmd_scroll_to_mouse
 	},
 	{ .command = "scroll-top",
 	  .args = { "", 0, 0, NULL },
