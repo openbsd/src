@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.34 2025/08/13 16:21:32 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.35 2025/12/10 19:09:17 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -975,9 +975,6 @@ ENTRY(m88110_zeropage)
  * PSR initialization code, invoked from locore on every processor startup.
  */
 ASENTRY(setup_psr)
-	ldcr	%r2,  PID
-	extu	%r3,  %r2, 8<8>
-
 	/*
 	 * Ensure that the PSR is as we like:
 	 *	supervisor mode
@@ -1004,10 +1001,14 @@ ASENTRY(setup_psr)
 	 *	jfriedl@omron.co.jp
 	 */
 
-	cmp	%r4, %r3, CPU_88110
-	bb1	eq,  %r4, 1f	/* if it's a mc88110, skip SSBR */
+#if defined(M88100)
+#if defined(M88110)
+	ldcr	%r2,  PID
+	bb1	8, %r2, 1f	/* if it's a mc88110, skip SSBR */
+#endif
 	stcr	%r0, SSBR	/* clear this for later */
 1:
+#endif
 	stcr	%r0, SR1	/* clear the CPU flags */
 
 	or.u	%r2, %r0, %hi16(KERNEL_PSR)
@@ -1033,9 +1034,7 @@ GLOBAL(set_vbr)
 
 #if defined(M88100) && defined(M88110)
 	ldcr	%r2, PID
-	extu	%r5, %r2, 8<8>
-	cmp	%r4, %r5, CPU_88110
-	bb1	eq,  %r4, 1f
+	bb1	8,  %r2, 1f
 #endif
 #ifdef M88100
 	/* 88100 */

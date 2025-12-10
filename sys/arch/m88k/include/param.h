@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.22 2023/12/14 13:26:49 claudio Exp $ */
+/*	$OpenBSD: param.h,v 1.23 2025/12/10 19:09:17 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -80,18 +80,23 @@
 #if !defined(_LOCORE)
 extern void delay(int);
 extern int cputyp;
-#endif
-
-/*
- * Values for the cputyp variable.
- */
-#define CPU_88100	0x00
-#define CPU_88110	0x01
 
 #ifdef M88100
 #ifdef M88110
-#define	CPU_IS88100	(cputyp == CPU_88100)
-#define	CPU_IS88110	(cputyp != CPU_88100)
+/*
+ * On kernels with support for both 88100 and 88110, simply check for bit 8
+ * of the processor identification register being zero on 88100 and nonzero
+ * on 88110. That's smaller and simpler code than fetching cputyp and
+ * comparing against a constant.
+ */
+static inline unsigned int __pure __get_cpu_pid()
+{
+	unsigned int pid;
+	asm("ldcr %0, %%cr0" : "=r"(pid));
+	return pid;
+}
+#define	CPU_IS88100	((__get_cpu_pid() & 0x100) == 0)
+#define	CPU_IS88110	((__get_cpu_pid() & 0x100) != 0)
 #else
 #define	CPU_IS88100	1
 #define	CPU_IS88110	0
@@ -101,6 +106,7 @@ extern int cputyp;
 #define	CPU_IS88110	1
 #endif
 
+#endif	/* !_LOCORE */
 #endif	/* _KERNEL */
 
 #endif /* _M88K_PARAM_H_ */

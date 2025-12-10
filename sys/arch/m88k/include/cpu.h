@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.83 2025/07/31 15:14:38 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.84 2025/12/10 19:09:17 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -53,6 +53,12 @@
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "cputype", CTLTYPE_INT }, \
 }
+
+/*
+ * Values for the machdep.cputype sysctl.
+ */
+#define CPU_88100	0x00
+#define CPU_88110	0x01
 
 #ifdef _KERNEL
 
