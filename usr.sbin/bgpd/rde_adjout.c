@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.8 2025/12/02 13:03:35 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.9 2025/12/10 12:36:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -29,6 +29,228 @@
 #include "rde.h"
 #include "log.h"
 #include "chash.h"
+
+static struct adjout_attr	*adjout_attr_ref(struct adjout_attr *);
+static void			 adjout_attr_unref(struct adjout_attr *);
+
+static uint64_t		pendkey;
+
+static inline uint64_t
+pend_prefix_hash(const struct pend_prefix *pp)
+{
+	uint64_t	h = pendkey;
+
+	h = ch_qhash64(h, (uintptr_t)pp->pt);
+	h = ch_qhash64(h, pp->path_id_tx);
+	return h;
+}
+
+static inline uint64_t
+pend_attr_hash(const struct pend_attr *pa)
+{
+	uint64_t	h = pendkey;
+
+	h = ch_qhash64(h, (uintptr_t)pa->attrs);
+	h = ch_qhash64(h, pa->aid);
+	return h;
+}
+
+CH_PROTOTYPE(pend_prefix_hash, pend_prefix, pend_prefix_hash);
+CH_PROTOTYPE(pend_attr_hash, pend_attr, pend_attr_hash);
+
+/* pending prefix queue functions */
+static struct pend_attr *
+pend_attr_alloc(struct adjout_attr *attrs, uint8_t aid,
+    struct rde_peer *peer)
+{
+	struct pend_attr *pa;
+
+	if ((pa = calloc(1, sizeof(*pa))) == NULL)
+		fatal(__func__);
+	rdemem.pend_attr_cnt++;
+	TAILQ_INIT(&pa->prefixes);
+	if (attrs)
+		pa->attrs = adjout_attr_ref(attrs);
+	pa->aid = aid;
+
+	TAILQ_INSERT_TAIL(&peer->updates[aid], pa, entry);
+	if (CH_INSERT(pend_attr_hash, &peer->pend_attrs, pa, NULL) != 1)
+		fatalx("corrupted pending attr hash table");
+	return pa;
+}
+
+static void
+pend_attr_free(struct pend_attr *pa, struct rde_peer *peer)
+{
+	if (!TAILQ_EMPTY(&pa->prefixes)) {
+		log_warnx("freeing not empty pending attribute");
+		abort();
+	}
+
+	TAILQ_REMOVE(&peer->updates[pa->aid], pa, entry);
+	CH_REMOVE(pend_attr_hash, &peer->pend_attrs, pa);
+
+	if (pa->attrs != NULL)
+		adjout_attr_unref(pa->attrs);
+
+	rdemem.pend_attr_cnt--;
+	free(pa);
+}
+
+void
+pend_attr_done(struct pend_attr *pa, struct rde_peer *peer)
+{
+	if (pa == NULL)
+		return;
+	if (TAILQ_EMPTY(&pa->prefixes))
+		pend_attr_free(pa, peer);
+}
+
+static struct pend_attr *
+pend_attr_lookup(struct rde_peer *peer, struct adjout_attr *attrs, uint8_t aid)
+{
+	struct pend_attr needle = { .attrs = attrs, .aid = aid };
+
+	return CH_FIND(pend_attr_hash, &peer->pend_attrs, &needle);
+}
+
+static inline int
+pend_attr_eq(const struct pend_attr *a, const struct pend_attr *b)
+{
+	if (a->attrs != b->attrs)
+		return 0;
+	if (a->aid != b->aid)
+		return 0;
+	return 1;
+}
+
+CH_GENERATE(pend_attr_hash, pend_attr, pend_attr_eq, pend_attr_hash);
+
+/*
+ * Insert an End-of-RIB marker into the update queue.
+ */
+void
+pend_eor_add(struct rde_peer *peer, uint8_t aid)
+{
+	struct pend_attr *pa;
+
+	pa = pend_attr_lookup(peer, NULL, aid);
+	if (pa == NULL)
+		pa = pend_attr_alloc(NULL, aid, peer);
+}
+
+
+static struct pend_prefix	*pend_prefix_alloc(struct pend_attr *,
+				    struct pt_entry *, uint32_t);
+
+static struct pend_prefix *
+pend_prefix_lookup(struct rde_peer *peer, struct pt_entry *pt,
+    uint32_t path_id_tx)
+{
+	struct pend_prefix needle = { .pt = pt, .path_id_tx = path_id_tx };
+
+	return CH_FIND(pend_prefix_hash, &peer->pend_prefixes, &needle);
+}
+
+static void
+pend_prefix_remove(struct pend_prefix *pp, struct pend_prefix_queue *head,
+    struct rde_peer *peer)
+{
+	if (CH_REMOVE(pend_prefix_hash, &peer->pend_prefixes, pp) != pp) {
+		log_warnx("missing pending prefix in hash table");
+		abort();
+	}
+	TAILQ_REMOVE(head, pp, entry);
+
+	if (pp->attrs == NULL) {
+		peer->stats.pending_withdraw--;
+	} else {
+		peer->stats.pending_update--;
+	}
+	pp->attrs = NULL;
+}
+
+void
+pend_prefix_add(struct rde_peer *peer, struct adjout_attr *attrs,
+    struct pt_entry *pt, uint32_t path_id_tx)
+{
+	struct pend_attr *pa = NULL, *oldpa = NULL;
+	struct pend_prefix *pp;
+	struct pend_prefix_queue *head;
+
+	if (attrs != NULL) {
+		pa = pend_attr_lookup(peer, attrs, pt->aid);
+		if (pa == NULL)
+			pa = pend_attr_alloc(attrs, pt->aid, peer);
+	}
+
+	pp = pend_prefix_lookup(peer, pt, path_id_tx);
+	if (pp == NULL) {
+		pp = pend_prefix_alloc(pa, pt, path_id_tx);
+	} else {
+		if (pp->attrs == NULL)
+			head = &peer->withdraws[pt->aid];
+		else
+			head = &pp->attrs->prefixes;
+		oldpa = pp->attrs;
+		pend_prefix_remove(pp, head, peer);
+		pp->attrs = pa;
+	}
+
+	if (pa == NULL) {
+		head = &peer->withdraws[pt->aid];
+		peer->stats.pending_withdraw++;
+	} else {
+		head = &pa->prefixes;
+		peer->stats.pending_update++;
+	}
+
+	TAILQ_INSERT_TAIL(head, pp, entry);
+	if (CH_INSERT(pend_prefix_hash, &peer->pend_prefixes, pp, NULL) != 1) {
+		log_warnx("corrupted pending prefix hash table");
+		abort();
+	}
+
+	pend_attr_done(oldpa, peer);
+}
+
+static struct pend_prefix *
+pend_prefix_alloc(struct pend_attr *attrs, struct pt_entry *pt,
+    uint32_t path_id_tx)
+{
+	struct pend_prefix *pp;
+
+	if ((pp = calloc(1, sizeof(*pp))) == NULL)
+		fatal(__func__);
+	rdemem.pend_prefix_cnt++;
+	pp->pt = pt_ref(pt);
+	pp->attrs = attrs;
+	pp->path_id_tx = path_id_tx;
+
+	return pp;
+}
+
+void
+pend_prefix_free(struct pend_prefix *pp, struct pend_prefix_queue *head,
+    struct rde_peer *peer)
+{
+	pend_prefix_remove(pp, head, peer);
+	pt_unref(pp->pt);
+	rdemem.pend_prefix_cnt--;
+	free(pp);
+}
+
+static inline int
+pend_prefix_eq(const struct pend_prefix *a, const struct pend_prefix *b)
+{
+	if (a->pt != b->pt)
+		return 0;
+	if (a->path_id_tx != b->path_id_tx)
+		return 0;
+	return 1;
+}
+
+CH_GENERATE(pend_prefix_hash, pend_prefix, pend_prefix_eq, pend_prefix_hash);
 
 /* adj-rib-out specific functions */
 static uint64_t		attrkey;
@@ -68,6 +290,7 @@ void
 adjout_init(void)
 {
 	arc4random_buf(&attrkey, sizeof(attrkey));
+	arc4random_buf(&pendkey, sizeof(pendkey));
 }
 
 /* Alloc, init and add a new entry into the has table. May not fail. */
@@ -77,8 +300,7 @@ adjout_attr_alloc(struct rde_aspath *asp, struct rde_community *comm,
 {
 	struct adjout_attr *a;
 
-	a = calloc(1, sizeof(*a));
-	if (a == NULL)
+	if ((a = calloc(1, sizeof(*a))) == NULL)
 		fatal(__func__);
 	rdemem.adjout_attr_cnt++;
 
@@ -115,7 +337,7 @@ adjout_attr_free(struct adjout_attr *a)
 }
 
 static struct adjout_attr *
-adjout_attr_ref(struct adjout_attr *attrs, struct rde_peer *peer)
+adjout_attr_ref(struct adjout_attr *attrs)
 {
 	attrs->refcnt++;
 	rdemem.adjout_attr_refs++;
@@ -123,7 +345,7 @@ adjout_attr_ref(struct adjout_attr *attrs, struct rde_peer *peer)
 }
 
 static void
-adjout_attr_unref(struct adjout_attr *attrs, struct rde_peer *peer)
+adjout_attr_unref(struct adjout_attr *attrs)
 {
 	attrs->refcnt--;
 	rdemem.adjout_attr_refs--;
@@ -217,22 +439,6 @@ prefix_index_cmp(struct adjout_prefix *a, struct adjout_prefix *b)
 	return 0;
 }
 
-static inline int
-prefix_cmp(struct adjout_prefix *a, struct adjout_prefix *b)
-{
-	if ((a->flags & PREFIX_ADJOUT_FLAG_EOR) !=
-	    (b->flags & PREFIX_ADJOUT_FLAG_EOR))
-		return (a->flags & PREFIX_ADJOUT_FLAG_EOR) ? 1 : -1;
-	/* if EOR marker no need to check the rest */
-	if (a->flags & PREFIX_ADJOUT_FLAG_EOR)
-		return 0;
-
-	if (a->attrs != b->attrs)
-		return (a->attrs > b->attrs ? 1 : -1);
-	return prefix_index_cmp(a, b);
-}
-
-RB_GENERATE(prefix_tree, adjout_prefix, update, prefix_cmp)
 RB_GENERATE_STATIC(prefix_index, adjout_prefix, index, prefix_index_cmp)
 
 /*
@@ -328,22 +534,6 @@ adjout_prefix_match(struct rde_peer *peer, struct bgpd_addr *addr)
 }
 
 /*
- * Insert an End-of-RIB marker into the update queue.
- */
-void
-prefix_add_eor(struct rde_peer *peer, uint8_t aid)
-{
-	struct adjout_prefix *p;
-
-	p = adjout_prefix_alloc();
-	p->flags = PREFIX_ADJOUT_FLAG_UPDATE | PREFIX_ADJOUT_FLAG_EOR;
-	if (RB_INSERT(prefix_tree, &peer->updates[aid], p) != NULL)
-		/* no need to add if EoR marker already present */
-		adjout_prefix_free(p);
-	/* EOR marker is not inserted into the adj_rib_out index */
-}
-
-/*
  * Put a prefix from the Adj-RIB-Out onto the update queue.
  */
 void
@@ -364,37 +554,27 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 			fatalx("%s: RB index invariant violated", __func__);
 	}
 
-	if ((p->flags & (PREFIX_ADJOUT_FLAG_WITHDRAW |
-	    PREFIX_ADJOUT_FLAG_DEAD)) == 0) {
+	if ((p->flags & PREFIX_ADJOUT_FLAG_DEAD) == 0) {
 		/*
 		 * XXX for now treat a different path_id_tx like different
 		 * attributes and force out an update. It is unclear how
 		 * common it is to have equivalent updates from alternative
 		 * paths.
 		 */
+		attrs = p->attrs;
 		if (p->path_id_tx == path_id_tx &&
-		    adjout_prefix_nexthop(p) == state->nexthop &&
+		    attrs->nexthop == state->nexthop &&
 		    communities_equal(&state->communities,
-		    adjout_prefix_communities(p)) &&
-		    path_equal(&state->aspath, adjout_prefix_aspath(p))) {
+		    attrs->communities) &&
+		    path_equal(&state->aspath, attrs->aspath)) {
 			/* nothing changed */
 			p->flags &= ~PREFIX_ADJOUT_FLAG_STALE;
 			return;
 		}
 
-		/* if pending update unhook it before it is unlinked */
-		if (p->flags & PREFIX_ADJOUT_FLAG_UPDATE) {
-			RB_REMOVE(prefix_tree, &peer->updates[pte->aid], p);
-			peer->stats.pending_update--;
-		}
-
 		/* unlink prefix so it can be relinked below */
 		adjout_prefix_unlink(p, peer);
 		peer->stats.prefix_out_cnt--;
-	}
-	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW) {
-		RB_REMOVE(prefix_tree, &peer->withdraws[pte->aid], p);
-		peer->stats.pending_withdraw--;
 	}
 
 	/* nothing needs to be done for PREFIX_ADJOUT_FLAG_DEAD and STALE */
@@ -417,10 +597,7 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 	if (p->flags & PREFIX_ADJOUT_FLAG_MASK)
 		fatalx("%s: bad flags %x", __func__, p->flags);
 	if (peer_is_up(peer)) {
-		p->flags |= PREFIX_ADJOUT_FLAG_UPDATE;
-		if (RB_INSERT(prefix_tree, &peer->updates[pte->aid], p) != NULL)
-			fatalx("%s: RB tree invariant violated", __func__);
-		peer->stats.pending_update++;
+		pend_prefix_add(peer, p->attrs, p->pt, p->path_id_tx);
 	}
 }
 
@@ -431,59 +608,17 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 void
 adjout_prefix_withdraw(struct rde_peer *peer, struct adjout_prefix *p)
 {
-	/* already a withdraw, shortcut */
-	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW) {
-		p->flags &= ~PREFIX_ADJOUT_FLAG_STALE;
-		return;
-	}
-	/* pending update just got withdrawn */
-	if (p->flags & PREFIX_ADJOUT_FLAG_UPDATE) {
-		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
-		peer->stats.pending_update--;
-	}
-	/* unlink prefix if it was linked (not a withdraw or dead) */
-	if ((p->flags & (PREFIX_ADJOUT_FLAG_WITHDRAW |
-	    PREFIX_ADJOUT_FLAG_DEAD)) == 0) {
-		adjout_prefix_unlink(p, peer);
-		peer->stats.prefix_out_cnt--;
-	}
+	if (peer_is_up(peer))
+		pend_prefix_add(peer, NULL, p->pt, p->path_id_tx);
 
-	/* nothing needs to be done for PREFIX_ADJOUT_FLAG_DEAD and STALE */
-	p->flags &= ~PREFIX_ADJOUT_FLAG_MASK;
-
-	if (peer_is_up(peer)) {
-		p->flags |= PREFIX_ADJOUT_FLAG_WITHDRAW;
-		if (RB_INSERT(prefix_tree, &peer->withdraws[p->pt->aid],
-		    p) != NULL)
-			fatalx("%s: RB tree invariant violated", __func__);
-		peer->stats.pending_withdraw++;
-	} else {
-		/* mark prefix dead to skip unlink on destroy */
-		p->flags |= PREFIX_ADJOUT_FLAG_DEAD;
-		adjout_prefix_destroy(peer, p);
-	}
+	adjout_prefix_destroy(peer, p);
 }
 
 void
 adjout_prefix_destroy(struct rde_peer *peer, struct adjout_prefix *p)
 {
-	if (p->flags & PREFIX_ADJOUT_FLAG_EOR) {
-		/* EOR marker is not linked in the index */
-		adjout_prefix_free(p);
-		return;
-	}
-
-	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW) {
-		RB_REMOVE(prefix_tree, &peer->withdraws[p->pt->aid], p);
-		peer->stats.pending_withdraw--;
-	}
-	if (p->flags & PREFIX_ADJOUT_FLAG_UPDATE) {
-		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
-		peer->stats.pending_update--;
-	}
-	/* unlink prefix if it was linked (not a withdraw or dead) */
-	if ((p->flags & (PREFIX_ADJOUT_FLAG_WITHDRAW |
-	    PREFIX_ADJOUT_FLAG_DEAD)) == 0) {
+	/* unlink prefix if it was linked (not dead) */
+	if ((p->flags & PREFIX_ADJOUT_FLAG_DEAD) == 0) {
 		adjout_prefix_unlink(p, peer);
 		peer->stats.prefix_out_cnt--;
 	}
@@ -505,21 +640,19 @@ adjout_prefix_destroy(struct rde_peer *peer, struct adjout_prefix *p)
 void
 adjout_prefix_flush_pending(struct rde_peer *peer)
 {
-	struct adjout_prefix *p, *np;
+	struct pend_attr *pa, *npa;
+	struct pend_prefix *pp, *npp;
 	uint8_t aid;
 
 	for (aid = AID_MIN; aid < AID_MAX; aid++) {
-		RB_FOREACH_SAFE(p, prefix_tree, &peer->withdraws[aid], np) {
-			adjout_prefix_destroy(peer, p);
+		TAILQ_FOREACH_SAFE(pp, &peer->withdraws[aid], entry, npp) {
+			pend_prefix_free(pp, &peer->withdraws[aid], peer);
 		}
-		RB_FOREACH_SAFE(p, prefix_tree, &peer->updates[aid], np) {
-			p->flags &= ~PREFIX_ADJOUT_FLAG_UPDATE;
-			RB_REMOVE(prefix_tree, &peer->updates[aid], p);
-			if (p->flags & PREFIX_ADJOUT_FLAG_EOR) {
-				adjout_prefix_destroy(peer, p);
-			} else {
-				peer->stats.pending_update--;
+		TAILQ_FOREACH_SAFE(pa, &peer->updates[aid], entry, npa) {
+			TAILQ_FOREACH_SAFE(pp, &pa->prefixes, entry, npp) {
+				pend_prefix_free(pp, &pa->prefixes, peer);
 			}
+			pend_attr_done(pa, peer);
 		}
 	}
 }
@@ -690,7 +823,7 @@ static void
 adjout_prefix_link(struct adjout_prefix *p, struct rde_peer *peer,
     struct adjout_attr *attrs, struct pt_entry *pt, uint32_t path_id_tx)
 {
-	p->attrs = adjout_attr_ref(attrs, peer);
+	p->attrs = adjout_attr_ref(attrs);
 	p->pt = pt_ref(pt);
 	p->path_id_tx = path_id_tx;
 }
@@ -702,7 +835,7 @@ static void
 adjout_prefix_unlink(struct adjout_prefix *p, struct rde_peer *peer)
 {
 	/* destroy all references to other objects */
-	adjout_attr_unref(p->attrs, peer);
+	adjout_attr_unref(p->attrs);
 	p->attrs = NULL;
 	pt_unref(p->pt);
 	/* must keep p->pt valid since there is an extra ref */
@@ -727,4 +860,17 @@ adjout_prefix_free(struct adjout_prefix *p)
 {
 	rdemem.adjout_prefix_cnt--;
 	free(p);
+}
+
+void
+adjout_peer_init(struct rde_peer *peer)
+{
+	unsigned int i;
+
+	CH_INIT(pend_attr_hash, &peer->pend_attrs);
+	CH_INIT(pend_prefix_hash, &peer->pend_prefixes);
+	for (i = 0; i < nitems(peer->updates); i++)
+		TAILQ_INIT(&peer->updates[i]);
+	for (i = 0; i < nitems(peer->withdraws); i++)
+		TAILQ_INIT(&peer->withdraws[i]);
 }

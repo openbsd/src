@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.673 2025/12/03 12:20:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.674 2025/12/10 12:36:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2938,16 +2938,18 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 
 static void
 rde_dump_adjout_as(struct rde_peer *peer, struct adjout_prefix *p,
-    struct rde_aspath *asp, pid_t pid, int flags)
+    struct adjout_attr *attrs, pid_t pid, int flags)
 {
 	struct ctl_show_rib	 rib;
 	struct ibuf		*wbuf;
 	struct attr		*a;
+	struct rde_aspath	*asp;
 	struct nexthop		*nexthop;
 	size_t			 aslen;
 	uint8_t			 l;
 
-	nexthop = adjout_prefix_nexthop(p);
+	nexthop = attrs->nexthop;
+	asp = attrs->aspath;
 	memset(&rib, 0, sizeof(rib));
 	rib.local_pref = asp->lpref;
 	rib.med = asp->med;
@@ -2989,7 +2991,7 @@ rde_dump_adjout_as(struct rde_peer *peer, struct adjout_prefix *p,
 	imsg_close(ibuf_se_ctl, wbuf);
 
 	if (flags & F_CTL_DETAIL) {
-		struct rde_community *comm = adjout_prefix_communities(p);
+		struct rde_community *comm = attrs->communities;
 		size_t len = comm->nentries * sizeof(struct community);
 		if (comm->nentries > 0) {
 			if (imsg_compose(ibuf_se_ctl,
@@ -3073,14 +3075,14 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 
 static void
 rde_dump_adjout_filter(struct rde_peer *peer, struct adjout_prefix *p,
-     struct ctl_show_rib_request *req)
+     struct adjout_attr *attrs, struct ctl_show_rib_request *req)
 {
 	struct rde_aspath	*asp;
 
 	if (!rde_match_peer(peer, &req->neighbor))
 		return;
 
-	asp = adjout_prefix_aspath(p);
+	asp = attrs->aspath;
 	if ((req->flags & F_CTL_HAS_PATHID)) {
 		/* Match against the transmit path id if adjout is used.  */
 		if (req->path_id != p->path_id_tx)
@@ -3090,12 +3092,11 @@ rde_dump_adjout_filter(struct rde_peer *peer, struct adjout_prefix *p,
 	    !aspath_match(asp->aspath, &req->as, 0))
 		return;
 	if (req->community.flags != 0) {
-		if (!community_match(adjout_prefix_communities(p),
-		    &req->community, NULL))
+		if (!community_match(attrs->communities, &req->community, NULL))
 			return;
 	}
 	/* in the adj-rib-out, skip matching against roa and aspa state */
-	rde_dump_adjout_as(peer, p, asp, req->pid, req->flags);
+	rde_dump_adjout_as(peer, p, attrs, req->pid, req->flags);
 }
 
 static void
@@ -3115,13 +3116,13 @@ rde_dump_adjout_upcall(struct adjout_prefix *p, void *ptr)
 {
 	struct rde_dump_ctx	*ctx = ptr;
 	struct rde_peer		*peer;
+	struct adjout_attr	*attrs;
 
 	if ((peer = peer_get(ctx->peerid)) == NULL)
 		return;
-	if (p->flags & PREFIX_ADJOUT_FLAG_WITHDRAW)
-		return;
 
-	rde_dump_adjout_filter(peer, p, &ctx->req);
+	attrs = p->attrs;
+	rde_dump_adjout_filter(peer, p, attrs, &ctx->req);
 }
 
 static int
@@ -3561,8 +3562,8 @@ rde_update_queue_pending(void)
 		if (peer->throttled)
 			continue;
 		for (aid = AID_MIN; aid < AID_MAX; aid++) {
-			if (!RB_EMPTY(&peer->updates[aid]) ||
-			    !RB_EMPTY(&peer->withdraws[aid]))
+			if (!TAILQ_EMPTY(&peer->updates[aid]) ||
+			    !TAILQ_EMPTY(&peer->withdraws[aid]))
 				return 1;
 		}
 	}
@@ -3585,7 +3586,7 @@ rde_update_queue_runner(uint8_t aid)
 				continue;
 			if (peer->throttled)
 				continue;
-			if (RB_EMPTY(&peer->withdraws[aid]))
+			if (TAILQ_EMPTY(&peer->withdraws[aid]))
 				continue;
 
 			up_dump_withdraws(ibuf_se, peer, aid);
@@ -3605,7 +3606,7 @@ rde_update_queue_runner(uint8_t aid)
 				continue;
 			if (peer->throttled)
 				continue;
-			if (RB_EMPTY(&peer->updates[aid]))
+			if (TAILQ_EMPTY(&peer->updates[aid]))
 				continue;
 
 			if (up_is_eor(peer, aid)) {

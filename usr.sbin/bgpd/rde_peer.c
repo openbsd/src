@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.59 2025/12/02 13:03:35 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.60 2025/12/10 12:36:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -175,6 +175,7 @@ peer_add(uint32_t id, struct peer_config *p_conf, struct filter_head *rules)
 	if ((peer->ibufq = ibufq_new()) == NULL)
 		fatal(NULL);
 
+	adjout_peer_init(peer);
 	peer_apply_out_filter(peer, rules);
 
 	/*
@@ -520,15 +521,11 @@ static void
 peer_blast_upcall(struct adjout_prefix *p, void *ptr)
 {
 	struct rde_peer		*peer = ptr;
+	struct adjout_attr	*attrs = NULL;
 
-	if ((p->flags & PREFIX_ADJOUT_FLAG_MASK) == 0) {
-		/* put entries on the update queue if not already on a queue */
-		p->flags |= PREFIX_ADJOUT_FLAG_UPDATE;
-		if (RB_INSERT(prefix_tree, &peer->updates[p->pt->aid],
-		    p) != NULL)
-			fatalx("%s: RB tree invariant violated", __func__);
-		peer->stats.pending_update++;
-	}
+	attrs = p->attrs;
+
+	pend_prefix_add(peer, attrs, p->pt, p->path_id_tx);
 }
 
 /*
@@ -543,7 +540,7 @@ peer_blast_done(void *ptr, uint8_t aid)
 	/* Adj-RIB-Out ready, unthrottle peer and inject EOR */
 	peer->throttled = 0;
 	if (peer->capa.grestart.restart)
-		prefix_add_eor(peer, aid);
+		pend_eor_add(peer, aid);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.524 2025/12/03 12:20:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.525 2025/12/10 12:36:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1392,6 +1392,8 @@ struct rde_memstats {
 	long long	path_refs;
 	long long	prefix_cnt;
 	long long	adjout_prefix_cnt;
+	long long	pend_prefix_cnt;
+	long long	pend_attr_cnt;
 	long long	rib_cnt;
 	long long	pt_cnt[AID_MAX];
 	long long	pt_size[AID_MAX];
