@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1220 2025/11/28 22:55:21 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1221 2025/12/10 00:59:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -8218,9 +8218,6 @@ pf_counters_inc(int action, struct pf_pdesc *pd, struct pf_state *st,
 int
 pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 {
-#if NCARP > 0
-	struct ifnet		*ifp0;
-#endif
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
@@ -8235,14 +8232,18 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	if (!pf_status.running)
 		return (PF_PASS);
 
+	kif = (struct pfi_kif *)ifp->if_pf_kif;
 #if NCARP > 0
-	if (ifp->if_type == IFT_CARP &&
-		(ifp0 = if_get(ifp->if_carpdevidx)) != NULL) {
-		kif = (struct pfi_kif *)ifp0->if_pf_kif;
-		if_put(ifp0);
-	} else
+	if (ifp->if_type == IFT_CARP) {
+		struct ifnet *ifp0;
+
+		smr_read_enter();
+		ifp0 = if_get_smr(ifp->if_carpdevidx);
+		if (ifp0 != NULL)
+			kif = (struct pfi_kif *)ifp0->if_pf_kif;
+		smr_read_leave();
+	}
 #endif /* NCARP */
-		kif = (struct pfi_kif *)ifp->if_pf_kif;
 
 	if (kif == NULL) {
 		DPFPRINTF(LOG_ERR,
