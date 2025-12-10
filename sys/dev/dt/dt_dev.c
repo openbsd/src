@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.46 2025/09/22 07:49:43 sashan Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.47 2025/12/10 09:38:41 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -711,7 +711,6 @@ dt_ioctl_rd_vnode(struct dt_softc *sc, struct dtioc_rdvn *dtrv)
 			fp->f_type = DTYPE_VNODE;
 			fp->f_ops = &vnops;
 			fp->f_data = vn;
-			fp->f_offset = 0;
 			dtrv->dtrv_fd = fd;
 			fdplock(p->p_fd);
 			fdinsert(p->p_fd, fd, UF_EXCLOSE, fp);
