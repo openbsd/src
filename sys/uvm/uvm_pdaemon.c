@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.140 2025/12/10 08:38:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.141 2025/12/10 08:49:14 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -796,8 +796,10 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 					    PG_BUSY);
 					UVM_PAGE_OWN(p, NULL);
 					dirtyreacts++;
+					uvm_unlock_pageq();
 					uvm_pageactivate(p);
 					rw_exit(slock);
+					uvm_lock_pageq();
 					continue;
 				}
 
@@ -807,8 +809,10 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 					    PG_BUSY);
 					UVM_PAGE_OWN(p, NULL);
 					dirtyreacts++;
+					uvm_unlock_pageq();
 					uvm_pageactivate(p);
 					rw_exit(slock);
+					uvm_lock_pageq();
 					continue;
 				}
 				rw_exit(slock);
