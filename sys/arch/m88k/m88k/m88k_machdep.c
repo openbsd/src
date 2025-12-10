@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.74 2025/04/30 12:35:37 visa Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.75 2025/12/10 19:06:23 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -404,11 +404,8 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list,
 	u_int num;
 	u_int32_t vec;
 
-	switch (cputyp) {
-	default:
 #ifdef M88110
-	case CPU_88110:
-	    {
+	if (CPU_IS88110) {
 		extern void m88110_sigsys(void);
 		extern void m88110_syscall_handler(void);
 		extern void m88110_cache_flush_handler(void);
@@ -433,12 +430,10 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list,
 		SET_VECTOR_88110(503, vector_init_list[8]);
 		SET_VECTOR_88110(504, m88110_stepbpt);
 		SET_VECTOR_88110(511, m88110_userbpt);
-	    }
-		break;
+	}
 #endif
 #ifdef M88100
-	case CPU_88100:
-	    {
+	if (CPU_IS88100) {
 		extern void sigsys(void);
 		extern void syscall_handler(void);
 		extern void cache_flush_handler(void);
@@ -463,10 +458,8 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list,
 		SET_VECTOR_88100(503, vector_init_list[8]);
 		SET_VECTOR_88100(504, stepbpt);
 		SET_VECTOR_88100(511, userbpt);
-	    }
-		break;
-#endif
 	}
+#endif
 
 	return vbr;
 }
@@ -484,7 +477,7 @@ void
 atomic_init()
 {
 #if defined(M88100) && defined(M88110)
-	if (cputyp == CPU_88100) {
+	if (CPU_IS88100) {
 		extern uint32_t __atomic_lock[];
 		extern uint32_t __atomic_lock_88100[], __atomic_lock_88100_end[];
 		extern uint32_t __atomic_unlock[];
@@ -496,13 +489,13 @@ atomic_init()
 		s = __atomic_lock_88100;
 		e = __atomic_lock_88100_end;
 		while (s != e)
-				*d++ = *s++;
+			*d++ = *s++;
 
 		d = __atomic_unlock;
 		s = __atomic_unlock_88100;
 		e = __atomic_unlock_88100_end;
 		while (s != e)
-				*d++ = *s++;
+			*d++ = *s++;
 	}
 #endif	/* M88100 && M88110 */
 }
