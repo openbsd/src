@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.66 2025/11/19 10:40:04 gnezdo Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.67 2025/12/10 15:10:55 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3344,7 +3344,7 @@ vm_run(struct vm_run_params *vrp)
 {
 	struct vm *vm;
 	struct vcpu *vcpu;
-	int ret = 0;
+	int ret = 0, vcpu_rv = 0;
 	u_int old, next;
 
 	/*
@@ -3389,25 +3389,22 @@ vm_run(struct vm_run_params *vrp)
 	WRITE_ONCE(vcpu->vc_curcpu, curcpu());
 	/* Run the VCPU specified in vrp */
 	if (vcpu->vc_virt_mode == VMM_MODE_EPT) {
-		ret = vcpu_run_vmx(vcpu, vrp);
+		vcpu_rv = vcpu_run_vmx(vcpu, vrp);
 	} else if (vcpu->vc_virt_mode == VMM_MODE_RVI) {
-		ret = vcpu_run_svm(vcpu, vrp);
+		vcpu_rv = vcpu_run_svm(vcpu, vrp);
 	}
 	WRITE_ONCE(vcpu->vc_curcpu, NULL);
 
-	if (ret == 0 || ret == EAGAIN) {
-		/* If we are exiting, populate exit data so vmd can help. */
-		vrp->vrp_exit_reason = (ret == 0) ? VM_EXIT_NONE
+	if (vcpu_rv == 0 || vcpu_rv == EAGAIN) {
+		/* vcpu requires useland assist or is yielding */
+		vrp->vrp_exit_reason = (vcpu_rv == 0) ? VM_EXIT_NONE
 		    : vcpu->vc_gueststate.vg_exit_reason;
 		vrp->vrp_irqready = vcpu->vc_irqready;
 		vcpu->vc_state = VCPU_STATE_STOPPED;
-
-		if (copyout(&vcpu->vc_exit, vrp->vrp_exit,
-		    sizeof(struct vm_exit)) == EFAULT) {
-			ret = EFAULT;
-		} else
-			ret = 0;
+		ret = copyout(&vcpu->vc_exit, vrp->vrp_exit,
+		    sizeof(struct vm_exit));
 	} else {
+		/* vcpu is in a terminal state */
 		vrp->vrp_exit_reason = VM_EXIT_TERMINATED;
 		vcpu->vc_state = VCPU_STATE_TERMINATED;
 	}
@@ -3647,6 +3644,7 @@ vmm_translate_gva(struct vcpu *vcpu, uint64_t va, uint64_t *pa, int mode)
  *  0: The run loop exited and no help is needed from vmd
  *  EAGAIN: The run loop exited and help from vmd is needed
  *  EINVAL: an error occurred
+ *  EIO: the vcpu halted without interrupts enabled
  */
 int
 vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
