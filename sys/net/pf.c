@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1221 2025/12/10 00:59:56 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1222 2025/12/10 03:51:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3914,25 +3914,21 @@ int
 pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 {
 	struct ifnet *ifp;
-#if NCARP > 0
-	struct ifnet *ifp0;
-#endif
-	struct pfi_kif *kif;
+	struct pfi_kif *kif = NULL;
 
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp == NULL)
-		return (0);
-
-#if NCARP > 0
-	if (ifp->if_type == IFT_CARP &&
-	    (ifp0 = if_get(ifp->if_carpdevidx)) != NULL) {
-		kif = (struct pfi_kif *)ifp0->if_pf_kif;
-		if_put(ifp0);
-	} else
-#endif /* NCARP */
+	smr_read_enter();
+	ifp = if_get_smr(m->m_pkthdr.ph_ifidx);
+	if (ifp != NULL) {
 		kif = (struct pfi_kif *)ifp->if_pf_kif;
-
-	if_put(ifp);
+#if NCARP > 0
+		if (ifp->if_type == IFT_CARP) {
+			struct ifnet *ifp0 = if_get_smr(ifp->if_carpdevidx);
+			if (ifp0 != NULL)
+				kif = (struct pfi_kif *)ifp0->if_pf_kif;
+		}
+#endif /* NCARP */
+	}
+	smr_read_leave();
 
 	if (kif == NULL) {
 		DPFPRINTF(LOG_ERR,
