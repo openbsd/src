@@ -276,5 +276,5 @@ static const struct pci_matchid amdgpu_devices[] = {
 
 	/* GC 12.0.1, DCN 4.0.1, dGPU, "Navi 48" */
 	{0x1002, 0x7550 },	/* Radeon RX 9070, 9070 XT, 9070 GRE */
-	{0x1002, 0x7551 },	/* Radeon AI PRO R9700 */
+	{0x1002, 0x7551 },	/* Radeon AI PRO R9700, R9700S, R9600D */
 };
