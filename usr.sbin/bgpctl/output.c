@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.64 2025/12/02 13:03:54 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.65 2025/12/10 12:37:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1097,6 +1097,12 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->attr_refs);
 	printf("%10lld BGP attributes using %s of memory\n",
 	    stats->attr_dcnt, fmt_mem(stats->attr_data));
+	printf("%10lld pending attribute entries using %s of memory\n",
+	    stats->pend_attr_cnt, fmt_mem(stats->pend_attr_cnt *
+	    sizeof(struct pend_attr)));
+	printf("%10lld pending prefix entries using %s of memory\n",
+	    stats->pend_prefix_cnt, fmt_mem(stats->pend_prefix_cnt *
+	    sizeof(struct pend_prefix)));
 	printf("%10lld as-set elements in %lld tables using "
 	    "%s of memory\n", stats->aset_nmemb, stats->aset_cnt,
 	    fmt_mem(stats->aset_size));
@@ -1104,6 +1110,10 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->pset_cnt, fmt_mem(stats->pset_size));
 	printf("RIB using %s of memory\n", fmt_mem(pts +
 	    stats->prefix_cnt * sizeof(struct prefix) +
+	    stats->adjout_prefix_cnt * sizeof(struct adjout_prefix) +
+	    stats->adjout_attr_cnt * sizeof(struct adjout_attr) +
+	    stats->pend_prefix_cnt * sizeof(struct pend_prefix) +
+	    stats->pend_attr_cnt * sizeof(struct pend_attr) +
 	    stats->rib_cnt * sizeof(struct rib_entry) +
 	    stats->path_cnt * sizeof(struct rde_aspath) +
 	    stats->aspath_size + stats->attr_cnt * sizeof(struct attr) +

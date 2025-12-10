@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.19 2025/12/02 13:03:54 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.20 2025/12/10 12:37:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -296,6 +296,10 @@ ometric_rib_mem(struct rde_memstats *stats)
 	ometric_rib_mem_element("adjout_prefix", stats->adjout_prefix_cnt,
 	    stats->adjout_prefix_cnt * sizeof(struct adjout_prefix),
 	    UINT64_MAX);
+	ometric_rib_mem_element("pend_attr", stats->pend_attr_cnt,
+	    stats->pend_attr_cnt * sizeof(struct pend_attr), UINT64_MAX);
+	ometric_rib_mem_element("pend_prefix", stats->pend_prefix_cnt,
+	    stats->pend_prefix_cnt * sizeof(struct pend_prefix), UINT64_MAX);
 	ometric_rib_mem_element("adjout_attr", stats->adjout_attr_cnt,
 	    stats->adjout_attr_cnt * sizeof(struct adjout_attr),
 	    stats->adjout_attr_refs);
@@ -315,6 +319,10 @@ ometric_rib_mem(struct rde_memstats *stats)
 
 	ometric_rib_mem_element("total", UINT64_MAX,
 	    pts + stats->prefix_cnt * sizeof(struct prefix) +
+	    stats->adjout_prefix_cnt * sizeof(struct adjout_prefix) +
+	    stats->adjout_attr_cnt * sizeof(struct adjout_attr) +
+	    stats->pend_prefix_cnt * sizeof(struct pend_prefix) +
+	    stats->pend_attr_cnt * sizeof(struct pend_attr) +
 	    stats->rib_cnt * sizeof(struct rib_entry) +
 	    stats->path_cnt * sizeof(struct rde_aspath) +
 	    stats->aspath_size + stats->attr_cnt * sizeof(struct attr) +
