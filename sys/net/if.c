@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.758 2025/12/11 06:13:10 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.759 2025/12/11 06:52:31 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1023,6 +1023,7 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml, unsigned int idx)
 {
 	struct mbuf *m;
 	struct softnet *sn;
+	struct netstack *ns;
 
 	if (ml_empty(ml))
 		return;
@@ -1038,21 +1039,46 @@ if_input_process(struct ifnet *ifp, struct mbuf_list *ml, unsigned int idx)
 	 */
 
 	sn = net_sn(idx);
-	ml_init(&sn->sn_netstack.ns_tcp_ml);
+	ns = &sn->sn_netstack;
+	ml_init(&ns->ns_input);
+	ml_init(&ns->ns_proto);
+
+	ml_init(&ns->ns_tcp_ml);
 #ifdef INET6
-	ml_init(&sn->sn_netstack.ns_tcp6_ml);
+	ml_init(&ns->ns_tcp6_ml);
 #endif
 
 	NET_LOCK_SHARED();
-
 	while ((m = ml_dequeue(ml)) != NULL)
-		(*ifp->if_input)(ifp, m, &sn->sn_netstack);
+		(*ifp->if_input)(ifp, m, ns);
 
-	tcp_input_mlist(&sn->sn_netstack.ns_tcp_ml, AF_INET);
+	do {
+		while ((m = ml_dequeue(&ns->ns_input)) != NULL) {
+			smr_read_enter();
+			ifp = if_idxmap_get(m->m_pkthdr.ph_ifidx);
+			smr_read_leave();
+			if (ifp != NULL)
+				(*ifp->if_input)(ifp, m, ns);
+			else
+				m_freem(m);
+		}
+
+		while ((m = ml_dequeue(&ns->ns_proto)) != NULL) {
+			smr_read_enter();
+			ifp = if_idxmap_get(m->m_pkthdr.ph_ifidx);
+			smr_read_leave();
+			if (ifp != NULL)
+				if_input_process_proto(ifp, m, ns);
+			else
+				m_freem(m);
+
+		}
+
+		tcp_input_mlist(&ns->ns_tcp_ml, AF_INET);
 #ifdef INET6
-	tcp_input_mlist(&sn->sn_netstack.ns_tcp6_ml, AF_INET6);
+		tcp_input_mlist(&ns->ns_tcp6_ml, AF_INET6);
 #endif
-
+	} while (!ml_empty(&ns->ns_input));
 	NET_UNLOCK_SHARED();
 }
 
