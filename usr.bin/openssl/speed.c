@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.48 2025/12/11 11:28:34 kenjiro Exp $ */
+/* $OpenBSD: speed.c,v 1.49 2025/12/11 11:34:08 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -160,7 +160,6 @@ static int do_multi(int multi);
 #define MAX_ECDH_SIZE	256
 
 enum {
-	D_MD2,
 	D_MD4,
 	D_MD5,
 	D_HMAC,
@@ -170,9 +169,7 @@ enum {
 	D_CBC_DES,
 	D_EDE3_DES,
 	D_CBC_IDEA,
-	D_CBC_SEED,
 	D_CBC_RC2,
-	D_CBC_RC5,
 	D_CBC_BF,
 	D_CBC_CAST,
 	D_CBC_128_AES,
@@ -218,9 +215,9 @@ enum {
 };
 
 static const char *names[ALGOR_NUM] = {
-	"md2", "md4", "md5", "hmac(md5)", "sha1", "rmd160",
-	"rc4", "des cbc", "des ede3", "idea cbc", "seed cbc",
-	"rc2 cbc", "rc5-32/12 cbc", "blowfish cbc", "cast cbc",
+	"md4", "md5", "hmac(md5)", "sha1", "rmd160",
+	"rc4", "des cbc", "des ede3", "idea cbc",
+	"rc2 cbc", "blowfish cbc", "cast cbc",
 	"aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
 	"camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
 	"evp", "sha256", "sha512",
