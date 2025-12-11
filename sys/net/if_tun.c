@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.253 2025/11/04 12:02:39 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.254 2025/12/11 06:06:56 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1059,24 +1059,8 @@ tun_input(struct ifnet *ifp, struct mbuf *m0, struct netstack *ns)
 	/* strip the tunnel header */
 	m_adj(m0, sizeof(af));
 
-	switch (ntohl(af)) {
-	case AF_INET:
-		ipv4_input(ifp, m0, ns);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		ipv6_input(ifp, m0, ns);
-		break;
-#endif
-#ifdef MPLS
-	case AF_MPLS:
-		mpls_input(ifp, m0, ns);
-		break;
-#endif
-	default:
-		m_freem(m0);
-		break;
-	}
+	m0->m_pkthdr.ph_family = ntohl(af);
+	p2p_input(ifp, m0, ns);
 }
 
 int
