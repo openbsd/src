@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.142 2025/11/17 09:19:45 mvs Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.143 2025/12/11 05:50:00 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -338,6 +338,9 @@ int	if_enqueue_ifq(struct ifnet *, struct mbuf *);
 void	if_input(struct ifnet *, struct mbuf_list *);
 void	if_vinput(struct ifnet *, struct mbuf *, struct netstack *);
 void	if_input_process(struct ifnet *, struct mbuf_list *, unsigned int);
+void	if_input_proto(struct ifnet *, struct mbuf *,
+	    void (*)(struct ifnet *, struct mbuf *, struct netstack *),
+	    struct netstack *);
 int	if_input_local(struct ifnet *, struct mbuf *, sa_family_t,
 	    struct netstack *);
 int	if_output_ml(struct ifnet *, struct mbuf_list *,
