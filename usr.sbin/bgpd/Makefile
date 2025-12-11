@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.44 2025/11/18 16:39:36 claudio Exp $
+#	$OpenBSD: Makefile,v 1.45 2025/12/11 12:18:27 claudio Exp $
 
 PROG=	bgpd
 SRCS=	bgpd.c
+SRCS+=	bitmap.c
 SRCS+=	carp.c
 SRCS+=	chash.c
 SRCS+=	config.c
