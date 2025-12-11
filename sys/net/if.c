@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.759 2025/12/11 06:52:31 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.760 2025/12/11 07:09:20 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1015,7 +1015,15 @@ if_input_proto(struct ifnet *ifp, struct mbuf *m,
     void (*input)(struct ifnet *, struct mbuf *, struct netstack *),
     struct netstack *ns)
 {
-	(*input)(ifp, m, NULL);
+	if (ns == NULL) {
+		NET_ASSERT_LOCKED();
+		(*input)(ifp, m, NULL);
+		return;
+	}
+
+	m->m_pkthdr.ph_ifidx = ifp->if_index;
+	m->m_pkthdr.ph_cookie = input;
+	ml_enqueue(&ns->ns_proto, m);
 }
 
 void
@@ -1089,15 +1097,20 @@ if_vinput(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 	caddr_t if_bpf;
 #endif
 
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
+	if (ns == NULL) {
+		ifiq_enqueue(&ifp->if_rcv, m);
+		return;
+	}
+
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	counters_pkt(ifp->if_counters,
 	    ifc_ipackets, ifc_ibytes, m->m_pkthdr.len);
-
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
 
 #if NBPFILTER > 0
 	if_bpf = ifp->if_bpf;
@@ -1110,7 +1123,7 @@ if_vinput(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 #endif
 
 	if (__predict_true(!ISSET(ifp->if_xflags, IFXF_MONITOR)))
-		(*ifp->if_input)(ifp, m, ns);
+		ml_enqueue(&ns->ns_input, m);
 	else
 		m_freem(m);
 }
