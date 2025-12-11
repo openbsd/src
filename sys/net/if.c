@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.757 2025/12/11 05:50:00 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.758 2025/12/11 06:13:10 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -811,6 +811,7 @@ int
 if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af,
     struct netstack *ns)
 {
+	void (*input)(struct ifnet *, struct mbuf *, struct netstack *);
 	int keepflags, keepcksum;
 	uint16_t keepmss;
 	uint16_t keepflowid;
@@ -880,16 +881,16 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af,
 	case AF_INET:
 		if (ISSET(keepcksum, M_IPV4_CSUM_OUT))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
-		ipv4_input(ifp, m, ns);
+		input = ipv4_input;
 		break;
 #ifdef INET6
 	case AF_INET6:
-		ipv6_input(ifp, m, ns);
+		input = ipv6_input;
 		break;
 #endif /* INET6 */
 #ifdef MPLS
 	case AF_MPLS:
-		mpls_input(ifp, m, ns);
+		input = mpls_input;
 		break;
 #endif /* MPLS */
 	default:
@@ -898,6 +899,7 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af,
 		return (EAFNOSUPPORT);
 	}
 
+	if_input_proto(ifp, m, input, ns);
 	return (0);
 }
 
@@ -1754,7 +1756,7 @@ p2p_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 		return;
 	}
 
-	(*input)(ifp, m, ns);
+	if_input_proto(ifp, m, input, ns);
 }
 
 /*
