@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.755 2025/12/09 03:47:30 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.756 2025/12/11 05:42:21 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1169,6 +1169,9 @@ if_remove(struct ifnet *ifp)
 
 	/* Remove the interface from the interface index map. */
 	if_idxmap_remove(ifp);
+
+	/* Make sure softnet threads have finished with it */
+	net_tq_barriers("ifrmnet");
 
 	/* Sleep until the last reference is released. */
 	refcnt_finalize(&ifp->if_refcnt, "ifrm");
