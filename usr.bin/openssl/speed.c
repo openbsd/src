@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.47 2025/12/11 11:01:04 kenjiro Exp $ */
+/* $OpenBSD: speed.c,v 1.48 2025/12/11 11:28:34 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,13 +156,66 @@ pkey_print_message(const char *str, const char *str2,
 static void print_result(int alg, int run_no, int count, double time_used);
 static int do_multi(int multi);
 
-#define ALGOR_NUM	31
 #define SIZE_NUM	5
-#define RSA_NUM		4
-#define DSA_NUM		3
+#define MAX_ECDH_SIZE	256
 
-#define EC_NUM		4
-#define MAX_ECDH_SIZE 256
+enum {
+	D_MD2,
+	D_MD4,
+	D_MD5,
+	D_HMAC,
+	D_SHA1,
+	D_RMD160,
+	D_RC4,
+	D_CBC_DES,
+	D_EDE3_DES,
+	D_CBC_IDEA,
+	D_CBC_SEED,
+	D_CBC_RC2,
+	D_CBC_RC5,
+	D_CBC_BF,
+	D_CBC_CAST,
+	D_CBC_128_AES,
+	D_CBC_192_AES,
+	D_CBC_256_AES,
+	D_CBC_128_CML,
+	D_CBC_192_CML,
+	D_CBC_256_CML,
+	D_EVP,
+	D_SHA256,
+	D_SHA512,
+	D_IGE_128_AES,
+	D_IGE_192_AES,
+	D_IGE_256_AES,
+	D_GHASH,
+	D_AES_128_GCM,
+	D_AES_256_GCM,
+	D_CHACHA20_POLY1305,
+	ALGOR_NUM,
+};
+
+enum {
+	R_DSA_512,
+	R_DSA_1024,
+	R_DSA_2048,
+	DSA_NUM,
+};
+
+enum {
+	R_RSA_512,
+	R_RSA_1024,
+	R_RSA_2048,
+	R_RSA_4096,
+	RSA_NUM,
+};
+
+enum {
+	R_EC_P224,
+	R_EC_P256,
+	R_EC_P384,
+	R_EC_P521,
+	EC_NUM,
+};
 
 static const char *names[ALGOR_NUM] = {
 	"md2", "md4", "md5", "hmac(md5)", "sha1", "rmd160",
@@ -984,50 +1037,7 @@ speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_CAMELLIA
 	CAMELLIA_KEY camellia_ks1, camellia_ks2, camellia_ks3;
 #endif
-#define	D_MD2		0
-#define	D_MD4		1
-#define	D_MD5		2
-#define	D_HMAC		3
-#define	D_SHA1		4
-#define D_RMD160	5
-#define	D_RC4		6
-#define	D_CBC_DES	7
-#define	D_EDE3_DES	8
-#define	D_CBC_IDEA	9
-#define	D_CBC_SEED	10
-#define	D_CBC_RC2	11
-#define	D_CBC_RC5	12
-#define	D_CBC_BF	13
-#define	D_CBC_CAST	14
-#define D_CBC_128_AES	15
-#define D_CBC_192_AES	16
-#define D_CBC_256_AES	17
-#define D_CBC_128_CML   18
-#define D_CBC_192_CML   19
-#define D_CBC_256_CML   20
-#define D_EVP		21
-#define D_SHA256	22
-#define D_SHA512	23
-#define D_IGE_128_AES   24
-#define D_IGE_192_AES   25
-#define D_IGE_256_AES   26
-#define D_GHASH		27
-#define D_AES_128_GCM	28
-#define D_AES_256_GCM	29
-#define D_CHACHA20_POLY1305	30
 	double d = 0.0;
-#define	R_DSA_512	0
-#define	R_DSA_1024	1
-#define	R_DSA_2048	2
-#define	R_RSA_512	0
-#define	R_RSA_1024	1
-#define	R_RSA_2048	2
-#define	R_RSA_4096	3
-
-#define R_EC_P224    0
-#define R_EC_P256    1
-#define R_EC_P384    2
-#define R_EC_P521    3
 
 	RSA *rsa_key[RSA_NUM];
 	static unsigned int rsa_bits[RSA_NUM] = {512, 1024, 2048, 4096};
