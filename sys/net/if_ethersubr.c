@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.306 2025/12/02 03:24:19 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.307 2025/12/11 06:11:42 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -597,7 +597,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 	}
 
 	m_adj(m, sizeof(*eh));
-	(*input)(ifp, m, ns);
+	if_input_proto(ifp, m, input, ns);
 	return;
 dropanyway:
 	m_freem(m);
