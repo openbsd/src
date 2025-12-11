@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.9 2025/12/10 12:36:51 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.10 2025/12/11 19:26:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -412,7 +412,7 @@ prefix_is_locked(struct adjout_prefix *p)
 static inline int
 prefix_is_dead(struct adjout_prefix *p)
 {
-	return (p->flags & PREFIX_ADJOUT_FLAG_DEAD) != 0;
+	return p->attrs == NULL;
 }
 
 static void	 adjout_prefix_link(struct adjout_prefix *, struct rde_peer *,
@@ -545,16 +545,13 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 	if (p == NULL) {
 		p = adjout_prefix_alloc();
 		/* initially mark DEAD so code below is skipped */
-		p->flags |= PREFIX_ADJOUT_FLAG_DEAD;
 
 		p->pt = pt_ref(pte);
 		p->path_id_tx = path_id_tx;
 
 		if (RB_INSERT(prefix_index, &peer->adj_rib_out, p) != NULL)
 			fatalx("%s: RB index invariant violated", __func__);
-	}
-
-	if ((p->flags & PREFIX_ADJOUT_FLAG_DEAD) == 0) {
+	} else {
 		/*
 		 * XXX for now treat a different path_id_tx like different
 		 * attributes and force out an update. It is unclear how
@@ -577,8 +574,8 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 		peer->stats.prefix_out_cnt--;
 	}
 
-	/* nothing needs to be done for PREFIX_ADJOUT_FLAG_DEAD and STALE */
-	p->flags &= ~PREFIX_ADJOUT_FLAG_MASK;
+	/* clear PREFIX_ADJOUT_FLAG_STALE for up_generate_addpath() */
+	p->flags &= ~PREFIX_ADJOUT_FLAG_STALE;
 
 	/* update path_id_tx now that the prefix is unlinked */
 	if (p->path_id_tx != path_id_tx) {
@@ -594,11 +591,8 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 	adjout_prefix_link(p, peer, attrs, p->pt, p->path_id_tx);
 	peer->stats.prefix_out_cnt++;
 
-	if (p->flags & PREFIX_ADJOUT_FLAG_MASK)
-		fatalx("%s: bad flags %x", __func__, p->flags);
-	if (peer_is_up(peer)) {
+	if (peer_is_up(peer))
 		pend_prefix_add(peer, p->attrs, p->pt, p->path_id_tx);
-	}
 }
 
 /*
@@ -618,18 +612,15 @@ void
 adjout_prefix_destroy(struct rde_peer *peer, struct adjout_prefix *p)
 {
 	/* unlink prefix if it was linked (not dead) */
-	if ((p->flags & PREFIX_ADJOUT_FLAG_DEAD) == 0) {
+	if (!prefix_is_dead(p)) {
 		adjout_prefix_unlink(p, peer);
 		peer->stats.prefix_out_cnt--;
 	}
 
-	/* nothing needs to be done for PREFIX_ADJOUT_FLAG_DEAD and STALE */
-	p->flags &= ~PREFIX_ADJOUT_FLAG_MASK;
+	/* clear PREFIX_ADJOUT_FLAG_STALE just in case */
+	p->flags &= ~PREFIX_ADJOUT_FLAG_STALE;
 
-	if (prefix_is_locked(p)) {
-		/* mark prefix dead but leave it for prefix_restart */
-		p->flags |= PREFIX_ADJOUT_FLAG_DEAD;
-	} else {
+	if (!prefix_is_locked(p)) {
 		RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
 		/* remove the last prefix reference before free */
 		pt_unref(p->pt);
