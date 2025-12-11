@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.254 2025/12/11 06:06:56 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.255 2025/12/11 07:26:02 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -59,6 +59,11 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
+/* for tun_input_process */
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -114,6 +119,8 @@ int	tun_dev_ioctl(dev_t, u_long, void *);
 int	tun_dev_read(dev_t, struct uio *, int);
 int	tun_dev_write(dev_t, struct uio *, int, int);
 int	tun_dev_kqfilter(dev_t, struct knote *);
+
+void	tun_input_process(struct ifnet *, struct mbuf *);
 
 int	tun_ioctl(struct ifnet *, u_long, caddr_t);
 void	tun_input(struct ifnet *, struct mbuf *, struct netstack *);
@@ -1034,9 +1041,7 @@ tun_dev_write(dev_t dev, struct uio *uio, int ioflag, int align)
 		m = n;
 	}
 
-	NET_LOCK();
-	if_vinput(ifp, m0, NULL);
-	NET_UNLOCK();
+	tun_input_process(ifp, m0);
 
 	tun_put(sc);
 	return (0);
@@ -1046,6 +1051,84 @@ drop:
 put:
 	tun_put(sc);
 	return (error);
+}
+
+void
+tun_input_process(struct ifnet *ifp, struct mbuf *m)
+{
+	struct netstack netstack = {
+		.ns_input = MBUF_LIST_INITIALIZER(),
+		.ns_proto = MBUF_LIST_INITIALIZER(),
+		.ns_tcp_ml = MBUF_LIST_INITIALIZER(),
+#ifdef INET6
+		.ns_tcp6_ml = MBUF_LIST_INITIALIZER(),
+#endif
+	};
+	struct netstack *ns = &netstack; /* stupid . vs -> */
+
+	/* this is from if_vinput */
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
+
+	m->m_pkthdr.ph_ifidx = ifp->if_index;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+
+	counters_pkt(ifp->if_counters,
+	    ifc_ipackets, ifc_ibytes, m->m_pkthdr.len);
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
+#if NBPFILTER > 0
+	if_bpf = ifp->if_bpf;
+	if (if_bpf) {
+		if ((*ifp->if_bpf_mtap)(if_bpf, m, BPF_DIRECTION_IN)) {
+			m_freem(m);
+			return;
+		}
+	}
+#endif
+
+	if (__predict_false(ISSET(ifp->if_xflags, IFXF_MONITOR))) {
+		m_freem(m);
+		return;
+	}
+
+	NET_LOCK_SHARED();
+	/* use the ref we already have to process this first packet */
+	(*ifp->if_input)(ifp, m, ns);
+	/* if_vinput ends here */
+
+	/* the rest is if_input_process but with real ifnet references */
+	do {
+		while ((m = ml_dequeue(&ns->ns_input)) != NULL) {
+			ifp = if_get(m->m_pkthdr.ph_ifidx);
+			if (ifp != NULL)
+				(*ifp->if_input)(ifp, m, ns);
+			else
+				m_freem(m);
+			if_put(ifp);
+		}
+
+		while ((m = ml_dequeue(&ns->ns_proto)) != NULL) {
+			ifp = if_get(m->m_pkthdr.ph_ifidx);
+			if (ifp != NULL)
+				if_input_process_proto(ifp, m, ns);
+			else
+				m_freem(m);
+			if_put(ifp);
+		}
+
+		tcp_input_mlist(&ns->ns_tcp_ml, AF_INET);
+#ifdef INET6
+		tcp_input_mlist(&ns->ns_tcp6_ml, AF_INET6);
+#endif
+	} while (!ml_empty(&ns->ns_input));
+	NET_UNLOCK_SHARED();
+
+	rtfree(ns->ns_route.ro_rt);
 }
 
 void
