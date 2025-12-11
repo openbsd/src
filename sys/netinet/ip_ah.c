@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.178 2025/08/04 14:03:32 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.179 2025/12/11 05:06:02 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -878,13 +878,11 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		encif->if_obytes += m->m_pkthdr.len;
 
 		if (encif->if_bpf) {
-			struct enchdr hdr;
-
-			memset(&hdr, 0, sizeof(hdr));
-
-			hdr.af = tdb->tdb_dst.sa.sa_family;
-			hdr.spi = tdb->tdb_spi;
-			hdr.flags |= M_AUTH;
+			struct enchdr hdr = {
+				.af = htonl(tdb->tdb_dst.sa.sa_family),
+				.spi = tdb->tdb_spi,
+				.flags = htonl(M_AUTH),
+			};
 
 			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
 			    ENC_HDRLEN, m, BPF_DIRECTION_OUT);

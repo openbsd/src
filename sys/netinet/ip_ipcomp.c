@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.95 2025/07/08 00:47:41 jsg Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.96 2025/12/11 05:06:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -325,12 +325,10 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		encif->if_obytes += m->m_pkthdr.len;
 
 		if (encif->if_bpf) {
-			struct enchdr hdr;
-
-			memset(&hdr, 0, sizeof(hdr));
-
-			hdr.af = tdb->tdb_dst.sa.sa_family;
-			hdr.spi = tdb->tdb_spi;
+			struct enchdr hdr = {
+				.af = htonl(tdb->tdb_dst.sa.sa_family),
+				.spi = tdb->tdb_spi,
+			};
 
 			bpf_mtap_hdr(encif->if_bpf, (char *)&hdr,
 			    ENC_HDRLEN, m, BPF_DIRECTION_OUT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.199 2025/07/08 00:47:41 jsg Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.200 2025/12/11 05:06:02 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -707,12 +707,11 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		encif->if_obytes += m->m_pkthdr.len;
 
 		if (encif->if_bpf) {
-			struct enchdr hdr;
+			struct enchdr hdr = {
+				.af = htonl(tdb->tdb_dst.sa.sa_family),
+				.spi = tdb->tdb_spi,
+			};
 
-			memset(&hdr, 0, sizeof(hdr));
-
-			hdr.af = tdb->tdb_dst.sa.sa_family;
-			hdr.spi = tdb->tdb_spi;
 			if (espx)
 				hdr.flags |= M_CONF;
 			if (esph)
