@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.106 2025/02/17 15:45:55 claudio Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.107 2025/12/11 14:13:18 kurt Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -605,8 +605,11 @@ ptrace_kstate(struct proc *p, int req, pid_t pid, void *addr)
 
 		if (t == NULL)
 			pts->pts_tid = -1;
-		else
+		else {
 			pts->pts_tid = t->p_tid + THREAD_PID_OFFSET;
+			CTASSERT(sizeof(pts->pts_name) >= sizeof(t->p_name));
+			strlcpy(pts->pts_name, t->p_name, sizeof(pts->pts_name));
+		}
 		return 0;
 	      }
 	}

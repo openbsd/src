@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.16 2020/03/16 11:58:46 mpi Exp $	*/
+/*	$OpenBSD: ptrace.h,v 1.17 2025/12/11 14:13:18 kurt Exp $	*/
 /*	$NetBSD: ptrace.h,v 1.21 1996/02/09 18:25:26 christos Exp $	*/
 
 /*-
@@ -82,8 +82,11 @@ typedef struct ptrace_state {
 #define PT_GET_THREAD_FIRST	15
 #define PT_GET_THREAD_NEXT	16
 
+#define PT_PTS_NAMELEN	32
+
 struct ptrace_thread_state {
 	pid_t	pts_tid;
+	char	pts_name[PT_PTS_NAMELEN];
 };
 
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
