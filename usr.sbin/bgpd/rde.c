@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.674 2025/12/10 12:36:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.675 2025/12/12 21:42:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2937,8 +2937,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 }
 
 static void
-rde_dump_adjout_as(struct rde_peer *peer, struct adjout_prefix *p,
-    struct adjout_attr *attrs, pid_t pid, int flags)
+rde_dump_adjout_as(struct rde_peer *peer, struct pt_entry *pte,
+    struct adjout_prefix *p, struct adjout_attr *attrs, pid_t pid, int flags)
 {
 	struct ctl_show_rib	 rib;
 	struct ibuf		*wbuf;
@@ -2963,11 +2963,11 @@ rde_dump_adjout_as(struct rde_peer *peer, struct adjout_prefix *p,
 		rib.true_nexthop = nexthop->true_nexthop;
 	} else {
 		/* announced network can have a NULL nexthop */
-		rib.exit_nexthop.aid = p->pt->aid;
-		rib.true_nexthop.aid = p->pt->aid;
+		rib.exit_nexthop.aid = pte->aid;
+		rib.true_nexthop.aid = pte->aid;
 	}
-	pt_getaddr(p->pt, &rib.prefix);
-	rib.prefixlen = p->pt->prefixlen;
+	pt_getaddr(pte, &rib.prefix);
+	rib.prefixlen = pte->prefixlen;
 	rib.origin = asp->origin;
 	/* roa and aspa vstate skipped, they don't matter in adj-rib-out */
 	rib.flags = 0;
@@ -2976,7 +2976,7 @@ rde_dump_adjout_as(struct rde_peer *peer, struct adjout_prefix *p,
 		rib.flags |= F_PREF_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_PREF_ANNOUNCE;
-	if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_SEND)) {
+	if (peer_has_add_path(peer, pte->aid, CAPA_AP_SEND)) {
 		rib.path_id = p->path_id_tx;
 		rib.flags |= F_PREF_PATH_ID;
 	}
@@ -3074,15 +3074,15 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 }
 
 static void
-rde_dump_adjout_filter(struct rde_peer *peer, struct adjout_prefix *p,
-     struct adjout_attr *attrs, struct ctl_show_rib_request *req)
+rde_dump_adjout_filter(struct rde_peer *peer, struct pt_entry *pte,
+     struct adjout_prefix *p, struct ctl_show_rib_request *req)
 {
-	struct rde_aspath	*asp;
+	struct adjout_attr *attrs = p->attrs;
+	struct rde_aspath *asp = attrs->aspath;
 
 	if (!rde_match_peer(peer, &req->neighbor))
 		return;
 
-	asp = attrs->aspath;
 	if ((req->flags & F_CTL_HAS_PATHID)) {
 		/* Match against the transmit path id if adjout is used.  */
 		if (req->path_id != p->path_id_tx)
@@ -3096,7 +3096,7 @@ rde_dump_adjout_filter(struct rde_peer *peer, struct adjout_prefix *p,
 			return;
 	}
 	/* in the adj-rib-out, skip matching against roa and aspa state */
-	rde_dump_adjout_as(peer, p, attrs, req->pid, req->flags);
+	rde_dump_adjout_as(peer, pte, p, attrs, req->pid, req->flags);
 }
 
 static void
@@ -3112,17 +3112,12 @@ rde_dump_upcall(struct rib_entry *re, void *ptr)
 }
 
 static void
-rde_dump_adjout_upcall(struct adjout_prefix *p, void *ptr)
+rde_dump_adjout_upcall(struct rde_peer *peer, struct pt_entry *pte,
+    struct adjout_prefix *p, void *ptr)
 {
 	struct rde_dump_ctx	*ctx = ptr;
-	struct rde_peer		*peer;
-	struct adjout_attr	*attrs;
 
-	if ((peer = peer_get(ctx->peerid)) == NULL)
-		return;
-
-	attrs = p->attrs;
-	rde_dump_adjout_filter(peer, p, attrs, &ctx->req);
+	rde_dump_adjout_filter(peer, pte, p, &ctx->req);
 }
 
 static int
@@ -3251,30 +3246,39 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			}
 
 			do {
+				struct pt_entry *pte;
+
 				if (req->flags & F_SHORTER) {
 					for (plen = 0; plen <= req->prefixlen;
 					    plen++) {
-						p = adjout_prefix_lookup(peer,
-						    &req->prefix, plen);
+						pte = pt_get(&req->prefix,
+						    plen);
+						if (pte == NULL)
+							continue;
 						/* dump all matching paths */
+						p = adjout_prefix_first(peer,
+						    pte);
 						while (p != NULL) {
 							rde_dump_adjout_upcall(
-							    p, ctx);
+							    peer, pte, p, ctx);
 							p = adjout_prefix_next(
 							    peer, p);
 						}
 					}
-					p = NULL;
+					continue;
 				} else if (req->prefixlen == hostplen) {
-					p = adjout_prefix_match(peer,
-					    &req->prefix);
+					pte = pt_lookup(&req->prefix);
 				} else {
-					p = adjout_prefix_lookup(peer,
-					    &req->prefix, req->prefixlen);
+					pte = pt_get(&req->prefix,
+					    req->prefixlen);
 				}
+				if (pte == NULL)
+					continue;
+
 				/* dump all matching paths */
+				p = adjout_prefix_first(peer, pte);
 				while (p != NULL) {
-					rde_dump_adjout_upcall(p, ctx);
+					rde_dump_adjout_upcall(peer, pte, p, ctx);
 					p = adjout_prefix_next(peer, p);
 				}
 			} while ((peer = peer_match(&req->neighbor,
@@ -3538,10 +3542,9 @@ rde_evaluate_all(void)
 
 /* flush Adj-RIB-Out by withdrawing all prefixes */
 static void
-rde_up_flush_upcall(struct adjout_prefix *p, void *ptr)
+rde_up_flush_upcall(struct rde_peer *peer, struct pt_entry *pte,
+    struct adjout_prefix *p, void *ptr)
 {
-	struct rde_peer *peer = ptr;
-
 	adjout_prefix_withdraw(peer, p);
 }
 

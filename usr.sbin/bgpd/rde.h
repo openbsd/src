@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.330 2025/12/11 19:26:11 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.331 2025/12/12 21:42:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -361,7 +361,8 @@ struct rib_context {
 	struct adjout_prefix		*ctx_p;
 	uint32_t			 ctx_id;
 	void		(*ctx_rib_call)(struct rib_entry *, void *);
-	void		(*ctx_prefix_call)(struct adjout_prefix *, void *);
+	void		(*ctx_prefix_call)(struct rde_peer *,
+			    struct pt_entry *, struct adjout_prefix *, void *);
 	void		(*ctx_done)(void *, uint8_t);
 	int		(*ctx_throttle)(void *);
 	void				*ctx_arg;
@@ -739,10 +740,6 @@ struct adjout_prefix	*adjout_prefix_first(struct rde_peer *,
 			    struct pt_entry *);
 struct adjout_prefix	*adjout_prefix_next(struct rde_peer *,
 			    struct adjout_prefix *);
-struct adjout_prefix	*adjout_prefix_lookup(struct rde_peer *,
-			    struct bgpd_addr *, int);
-struct adjout_prefix	*adjout_prefix_match(struct rde_peer *,
-			    struct bgpd_addr *);
 
 void		 prefix_add_eor(struct rde_peer *, uint8_t);
 void		 adjout_prefix_update(struct adjout_prefix *, struct rde_peer *,
@@ -757,11 +754,13 @@ void		 adjout_prefix_dump_cleanup(struct rib_context *);
 void		 adjout_prefix_dump_r(struct rib_context *);
 int		 adjout_prefix_dump_new(struct rde_peer *, uint8_t,
 		    unsigned int, void *,
-		    void (*)(struct adjout_prefix *, void *),
+		    void (*)(struct rde_peer *, struct pt_entry *,
+			struct adjout_prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
 int		 adjout_prefix_dump_subtree(struct rde_peer *,
 		    struct bgpd_addr *, uint8_t, unsigned int, void *,
-		    void (*)(struct adjout_prefix *, void *),
+		    void (*)(struct rde_peer *, struct pt_entry *,
+			struct adjout_prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
 void		 adjout_peer_init(struct rde_peer *);
 

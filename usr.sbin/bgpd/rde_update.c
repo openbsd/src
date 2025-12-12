@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.188 2025/12/10 12:36:51 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.189 2025/12/12 21:42:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -417,7 +417,6 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 
 	memset(&addr, 0, sizeof(addr));
 	addr.aid = aid;
-	p = adjout_prefix_lookup(peer, &addr, 0);
 
 	/* outbound filter as usual */
 	if (rde_filter(peer->out_rules, peer, peerself, &addr, 0, &state) ==
@@ -431,6 +430,7 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 	pte = pt_get(&addr, 0);
 	if (pte == NULL)
 		pte = pt_add(&addr, 0);
+	p = adjout_prefix_first(peer, pte);
 	adjout_prefix_update(p, peer, &state, pte, 0);
 	rde_filterstate_clean(&state);
 

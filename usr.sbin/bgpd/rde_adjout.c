@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.10 2025/12/11 19:26:11 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.11 2025/12/12 21:42:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -491,49 +491,6 @@ adjout_prefix_next(struct rde_peer *peer, struct adjout_prefix *p)
 }
 
 /*
- * Lookup addr/prefixlen in the peer prefix_index. Returns first match.
- * Returns NULL if not found.
- */
-struct adjout_prefix *
-adjout_prefix_lookup(struct rde_peer *peer, struct bgpd_addr *addr, int plen)
-{
-	return adjout_prefix_first(peer, pt_fill(addr, plen));
-}
-
-/*
- * Lookup addr in the peer prefix_index. Returns first match.
- * Returns NULL if not found.
- */
-struct adjout_prefix *
-adjout_prefix_match(struct rde_peer *peer, struct bgpd_addr *addr)
-{
-	struct adjout_prefix *p;
-	int i;
-
-	switch (addr->aid) {
-	case AID_INET:
-	case AID_VPN_IPv4:
-		for (i = 32; i >= 0; i--) {
-			p = adjout_prefix_lookup(peer, addr, i);
-			if (p != NULL)
-				return p;
-		}
-		break;
-	case AID_INET6:
-	case AID_VPN_IPv6:
-		for (i = 128; i >= 0; i--) {
-			p = adjout_prefix_lookup(peer, addr, i);
-			if (p != NULL)
-				return p;
-		}
-		break;
-	default:
-		fatalx("%s: unknown af", __func__);
-	}
-	return NULL;
-}
-
-/*
  * Put a prefix from the Adj-RIB-Out onto the update queue.
  */
 void
@@ -733,7 +690,7 @@ adjout_prefix_dump_r(struct rib_context *ctx)
 			ctx->ctx_p = adjout_prefix_lock(p);
 			return;
 		}
-		ctx->ctx_prefix_call(p, ctx->ctx_arg);
+		ctx->ctx_prefix_call(peer, p->pt, p, ctx->ctx_arg);
 	}
 
 done:
@@ -744,9 +701,12 @@ done:
 }
 
 int
-adjout_prefix_dump_new(struct rde_peer *peer, uint8_t aid, unsigned int count,
-    void *arg, void (*upcall)(struct adjout_prefix *, void *),
-    void (*done)(void *, uint8_t), int (*throttle)(void *))
+adjout_prefix_dump_new(struct rde_peer *peer, uint8_t aid,
+    unsigned int count, void *arg,
+    void (*upcall)(struct rde_peer *, struct pt_entry *,
+	struct adjout_prefix *, void *),
+    void (*done)(void *, uint8_t),
+    int (*throttle)(void *))
 {
 	struct rib_context *ctx;
 
@@ -772,7 +732,8 @@ adjout_prefix_dump_new(struct rde_peer *peer, uint8_t aid, unsigned int count,
 int
 adjout_prefix_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
     uint8_t subtreelen, unsigned int count, void *arg,
-    void (*upcall)(struct adjout_prefix *, void *),
+    void (*upcall)(struct rde_peer *, struct pt_entry *,
+	struct adjout_prefix *, void *),
     void (*done)(void *, uint8_t),
     int (*throttle)(void *))
 {
