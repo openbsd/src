@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetname.c,v 1.3 2017/01/21 11:32:04 guenther Exp $	*/
+/*	$OpenBSD: inetname.c,v 1.4 2025/12/12 21:49:01 kn Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -53,6 +53,16 @@ inet6name(struct in6_addr *in6)
         memset(&sin6, 0, sizeof(sin6));
         sin6.sin6_family = AF_INET6;
         sin6.sin6_addr = *in6;
+#ifdef __KAME__
+	if (IN6_IS_ADDR_LINKLOCAL(in6) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(in6) ||
+	    IN6_IS_ADDR_MC_INTFACELOCAL(in6)) {
+		sin6.sin6_scope_id =
+		    ntohs(*(u_int16_t *)&in6->s6_addr[2]);
+		sin6.sin6_addr.s6_addr[2] = 0;
+		sin6.sin6_addr.s6_addr[3] = 0;
+	}
+#endif
         if (getnameinfo((struct sockaddr *)&sin6, sizeof(struct sockaddr_in6),
             line, sizeof(line), NULL, 0, flags) == 0)
                 return line;
