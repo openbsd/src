@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1224 2025/12/11 04:59:26 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1225 2025/12/12 23:50:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3915,6 +3915,9 @@ pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 {
 	struct ifnet *ifp;
 	struct pfi_kif *kif = NULL;
+
+	if (m->m_pkthdr.ph_ifidx == 0)
+		return (0);
 
 	smr_read_enter();
 	ifp = if_get_smr(m->m_pkthdr.ph_ifidx);
