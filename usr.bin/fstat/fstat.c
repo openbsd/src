@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.103 2022/06/20 01:39:44 visa Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.104 2025/12/12 06:33:18 tb Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -337,10 +337,10 @@ fstat_header(void)
 {
 	if (nflg)
 		printf("%s",
-"USER     CMD          PID   FD  DEV      INUM        MODE   R/W    SZ|DV");
+"USER     CMD          PID   FD  DEV      INUM        MODE    R/W    SZ|DV");
 	else
 		printf("%s",
-"USER     CMD          PID   FD MOUNT        INUM  MODE         R/W    SZ|DV");
+"USER     CMD          PID   FD MOUNT        INUM  MODE          R/W    SZ|DV");
 	if (oflg)
 		printf("%s", ":OFFSET  ");
 	if (checkfile && fsflg == 0)
@@ -427,7 +427,7 @@ void
 vtrans(struct kinfo_file *kf)
 {
 	const char *badtype = NULL;
-	char rwep[5], mode[12];
+	char rwep[6], mode[12];
 	char *filename = NULL;
 
 	if (kf->v_type == VNON)
@@ -482,9 +482,11 @@ vtrans(struct kinfo_file *kf)
 		strlcat(rwep, "w", sizeof rwep);
 	if (kf->fd_ofileflags & UF_EXCLOSE)
 		strlcat(rwep, "e", sizeof rwep);
+	if (kf->fd_ofileflags & UF_FORKCLOSE)
+		strlcat(rwep, "f", sizeof rwep);
 	if (kf->fd_ofileflags & UF_PLEDGED)
 		strlcat(rwep, "p", sizeof rwep);
-	printf(" %4s", rwep);
+	printf(" %5s", rwep);
 	switch (kf->v_type) {
 	case VBLK:
 	case VCHR: {

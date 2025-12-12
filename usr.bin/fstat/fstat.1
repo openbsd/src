@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.59 2019/03/31 06:40:26 jmc Exp $
+.\"	$OpenBSD: fstat.1,v 1.60 2025/12/12 06:33:18 tb Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)fstat.1	8.3 (Berkeley) 2/25/94
 .\"
-.Dd $Mdocdate: March 31 2019 $
+.Dd $Mdocdate: December 12 2025 $
 .Dt FSTAT 1
 .Os
 .Sh NAME
@@ -175,6 +175,8 @@ Open for reading
 Open for writing
 .It e
 close-on-exec flag is set
+.It f
+close-on-fork flag is set
 .It p
 Opened after
 .Xr pledge 2
