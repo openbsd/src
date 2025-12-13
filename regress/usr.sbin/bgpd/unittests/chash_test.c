@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash_test.c,v 1.1 2025/10/29 13:15:22 claudio Exp $ */
+/*	$OpenBSD: chash_test.c,v 1.2 2025/12/13 19:27:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
@@ -108,6 +108,12 @@ main(int argc, char **argv)
 	printf("all walked: sum %d\n", sum);
 	if (sum != (11000 * 10999 / 2))
 		errx(1, "incorrect sum of peer ids, not %d", 11000 * 10999 / 2);
+
+	CH_DESTROY(test, &head);
+
+	/* check that after destroy it is possible to reinsert an element */
+	if (CH_INSERT(test, &head, &peers[0], NULL) != 1)
+		err(1, "insert %d failed", i);
 
 	return 0;
 }
