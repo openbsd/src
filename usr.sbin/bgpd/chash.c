@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.6 2025/11/22 16:14:56 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.7 2025/12/13 07:55:34 jsg Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -735,7 +735,6 @@ _ch_destroy(const struct ch_type *type, struct ch_table *t)
 
 		table = t->ch_tables[idx];
 		ch_sub_free(t->ch_tables[idx], t->ch_metas[idx]);
-		free(t->ch_metas[idx]);
 	}
 	free(t->ch_tables);
 	free(t->ch_metas);
