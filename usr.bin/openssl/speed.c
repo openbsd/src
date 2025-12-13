@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.49 2025/12/11 11:34:08 kenjiro Exp $ */
+/* $OpenBSD: speed.c,v 1.50 2025/12/13 01:58:53 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,7 +215,7 @@ enum {
 };
 
 static const char *names[ALGOR_NUM] = {
-	"md4", "md5", "hmac(md5)", "sha1", "rmd160",
+	"md4", "md5", "hmac(sha256)", "sha1", "rmd160",
 	"rc4", "des cbc", "des ede3", "idea cbc",
 	"rc2 cbc", "blowfish cbc", "cast cbc",
 	"aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
@@ -1605,7 +1605,7 @@ speed_main(int argc, char **argv)
 	}
 #endif
 
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_HMAC)
+#if !defined(OPENSSL_NO_SHA256) && !defined(OPENSSL_NO_HMAC)
 	if (doit[D_HMAC]) {
 		HMAC_CTX *hctx;
 
@@ -1615,7 +1615,7 @@ speed_main(int argc, char **argv)
 		}
 
 		HMAC_Init_ex(hctx, (unsigned char *) "This is a key...",
-		    16, EVP_md5(), NULL);
+		    16, EVP_sha256(), NULL);
 
 		for (j = 0; j < SIZE_NUM; j++) {
 			print_message(names[D_HMAC], lengths[j]);
