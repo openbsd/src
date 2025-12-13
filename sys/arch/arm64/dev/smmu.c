@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.24 2025/08/24 19:49:16 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.25 2025/12/13 21:31:46 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -1993,7 +1993,7 @@ smmu_v3_domain_create(struct smmu_domain *dom)
 	vaddr_t l0va;
 	uint32_t iovabits;
 
-	if (dom->sd_sid >= (1 << sc->v3.sc_sidsize))
+	if (dom->sd_sid >= (1ULL << sc->v3.sc_sidsize))
 		return EINVAL;
 
 	if (dom->sd_stage != 1)
