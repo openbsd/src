@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.61 2025/12/12 21:42:58 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.62 2025/12/13 19:26:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -427,7 +427,7 @@ peer_down(struct rde_peer *peer)
 	 * and flush all pending imsg from the SE.
 	 */
 	rib_dump_terminate(peer);
-	adjout_prefix_flush_pending(peer);
+	adjout_peer_flush_pending(peer);
 	peer_imsg_flush(peer);
 
 	/* flush Adj-RIB-In */
@@ -441,8 +441,8 @@ peer_delete(struct rde_peer *peer)
 	if (peer->state != PEER_DOWN)
 		peer_down(peer);
 
-	/* free filters */
 	filterlist_free(peer->out_rules);
+	adjout_peer_free(peer);
 
 	RB_REMOVE(peer_tree, &peertable, peer);
 	while (RB_INSERT(peer_tree, &zombietable, peer) != NULL) {
@@ -500,7 +500,7 @@ peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
 	 * and flush all pending imsg from the SE.
 	 */
 	rib_dump_terminate(peer);
-	adjout_prefix_flush_pending(peer);
+	adjout_peer_flush_pending(peer);
 	peer_imsg_flush(peer);
 
 	if (flushall)

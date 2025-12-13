@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.11 2025/12/12 21:42:58 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.12 2025/12/13 19:26:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -585,26 +585,6 @@ adjout_prefix_destroy(struct rde_peer *peer, struct adjout_prefix *p)
 	}
 }
 
-void
-adjout_prefix_flush_pending(struct rde_peer *peer)
-{
-	struct pend_attr *pa, *npa;
-	struct pend_prefix *pp, *npp;
-	uint8_t aid;
-
-	for (aid = AID_MIN; aid < AID_MAX; aid++) {
-		TAILQ_FOREACH_SAFE(pp, &peer->withdraws[aid], entry, npp) {
-			pend_prefix_free(pp, &peer->withdraws[aid], peer);
-		}
-		TAILQ_FOREACH_SAFE(pa, &peer->updates[aid], entry, npa) {
-			TAILQ_FOREACH_SAFE(pp, &pa->prefixes, entry, npp) {
-				pend_prefix_free(pp, &pa->prefixes, peer);
-			}
-			pend_attr_done(pa, peer);
-		}
-	}
-}
-
 int
 adjout_prefix_reaper(struct rde_peer *peer)
 {
@@ -825,4 +805,32 @@ adjout_peer_init(struct rde_peer *peer)
 		TAILQ_INIT(&peer->updates[i]);
 	for (i = 0; i < nitems(peer->withdraws); i++)
 		TAILQ_INIT(&peer->withdraws[i]);
+}
+
+void
+adjout_peer_flush_pending(struct rde_peer *peer)
+{
+	struct pend_attr *pa, *npa;
+	struct pend_prefix *pp, *npp;
+	uint8_t aid;
+
+	for (aid = AID_MIN; aid < AID_MAX; aid++) {
+		TAILQ_FOREACH_SAFE(pp, &peer->withdraws[aid], entry, npp) {
+			pend_prefix_free(pp, &peer->withdraws[aid], peer);
+		}
+		TAILQ_FOREACH_SAFE(pa, &peer->updates[aid], entry, npa) {
+			TAILQ_FOREACH_SAFE(pp, &pa->prefixes, entry, npp) {
+				pend_prefix_free(pp, &pa->prefixes, peer);
+			}
+			pend_attr_done(pa, peer);
+		}
+	}
+}
+
+void
+adjout_peer_free(struct rde_peer *peer)
+{
+	adjout_peer_flush_pending(peer);	/* not strictly needed */
+	CH_DESTROY(pend_attr_hash, &peer->pend_attrs);
+	CH_DESTROY(pend_prefix_hash, &peer->pend_prefixes);
 }

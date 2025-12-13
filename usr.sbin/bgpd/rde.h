@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.331 2025/12/12 21:42:58 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.332 2025/12/13 19:26:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -748,7 +748,6 @@ void		 adjout_prefix_withdraw(struct rde_peer *,
 		    struct adjout_prefix *);
 void		 adjout_prefix_destroy(struct rde_peer *,
 		    struct adjout_prefix *);
-void		 adjout_prefix_flush_pending(struct rde_peer *);
 int		 adjout_prefix_reaper(struct rde_peer *);
 void		 adjout_prefix_dump_cleanup(struct rib_context *);
 void		 adjout_prefix_dump_r(struct rib_context *);
@@ -763,6 +762,8 @@ int		 adjout_prefix_dump_subtree(struct rde_peer *,
 			struct adjout_prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
 void		 adjout_peer_init(struct rde_peer *);
+void		 adjout_peer_flush_pending(struct rde_peer *);
+void		 adjout_peer_free(struct rde_peer *);
 
 void		 pend_attr_done(struct pend_attr *, struct rde_peer *);
 void		 pend_eor_add(struct rde_peer *, uint8_t);

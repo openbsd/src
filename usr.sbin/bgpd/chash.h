@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.h,v 1.4 2025/11/21 12:19:00 claudio Exp $	*/
+/*	$OpenBSD: chash.h,v 1.5 2025/12/13 19:26:17 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -158,6 +158,7 @@ static const struct ch_type _name##_CH_INFO = {				\
 const struct ch_type *const _name##_CH_TYPE = &_name##_CH_INFO
 
 #define CH_INIT(_name, _head)		_name##_CH_INIT(_head)
+#define CH_DESTROY(_name, _head)	_name##_CH_DESTROY(_head)
 #define CH_INSERT(_name, _head, _elm, _prev)				\
 					_name##_CH_INSERT(_head, _elm, _prev)
 #define CH_REMOVE(_name, _head, _elm)	_name##_CH_REMOVE(_head, _elm)
