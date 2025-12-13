@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.303 2025/07/25 20:04:47 mvs Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.304 2025/12/13 00:55:02 jsg Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2835,7 +2835,7 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	struct in6_addr dst;
 	u_int len;
 	int ifidx, tso = 0, ip_mtudisc_local =  atomic_load_int(&ip_mtudisc);
-	int error;
+	int error = 0;
 
 #if NPF > 0
 	/*

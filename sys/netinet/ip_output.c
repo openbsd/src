@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.415 2025/12/02 15:52:04 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.416 2025/12/13 00:55:02 jsg Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -583,7 +583,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro,
 	struct in_addr dst;
 	u_int len;
 	int tso = 0, ip_mtudisc_local = atomic_load_int(&ip_mtudisc);
-	int error;
+	int error = 0;
 
 #if NPF > 0
 	/*
