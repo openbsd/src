@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.22 2024/04/14 19:08:09 miod Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.23 2025/12/14 12:28:39 kettenis Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -124,10 +124,9 @@ void
 sun4v_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
 	struct cpu_info *ci = curcpu();
-	u_int64_t s;
-	int err, i;
+	int err, i, s;
 
-	s = intr_disable();
+	s = splhigh();
 
 	stha(ci->ci_cpuset, ASI_PHYS_CACHED, itid);
 	stxa(ci->ci_mondo, ASI_PHYS_CACHED, (vaddr_t)func);
@@ -141,7 +140,7 @@ sun4v_send_ipi(int itid, void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		delay(10);
 	}
 
-	intr_restore(s);
+	splx(s);
 
 	if (err != H_EOK)
 		panic("Unable to send mondo %llx to cpu %d: %d",
@@ -179,7 +178,9 @@ sun4v_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 {
 	struct cpu_info *ci = curcpu();
 	paddr_t cpuset = ci->ci_cpuset;
-	int err, i, ncpus = 0;
+	int err, i, s, ncpus = 0;
+
+	s = splhigh();
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (ci->ci_cpuid == cpu_number())
@@ -191,8 +192,10 @@ sun4v_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 		ncpus++;
 	}
 
-	if (ncpus == 0)
+	if (ncpus == 0) {
+		splx(s);
 		return;
+	}
 
 	ci = curcpu();
 	stxa(ci->ci_mondo, ASI_PHYS_CACHED, (vaddr_t)func);
@@ -205,6 +208,9 @@ sun4v_broadcast_ipi(void (*func)(void), u_int64_t arg0, u_int64_t arg1)
 			break;
 		delay(10);
 	}
+
+	splx(s);
+
 	if (err != H_EOK)
 		panic("Unable to broadcast mondo %llx: %d",
 		    (u_int64_t)func, err);
