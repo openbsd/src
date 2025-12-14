@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndisreg.h,v 1.20 2016/09/16 11:13:37 mikeb Exp $ */
+/*	$OpenBSD: if_urndisreg.h,v 1.21 2025/12/14 00:00:39 canacar Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -21,7 +21,7 @@
 
 #define RNDIS_RX_LIST_CNT	1
 #define RNDIS_TX_LIST_CNT	1
-#define RNDIS_BUFSZ		1562
+#define RNDIS_BUFSZ		0x4000
 
 struct urndis_chain {
 	struct urndis_softc	*sc_softc;
