@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.9 2024/05/22 08:44:02 martijn Exp $	*/
+/*	$OpenBSD: mib.c,v 1.10 2025/12/14 02:32:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -2377,6 +2377,7 @@ mib_carpiftable(struct agentx_varbind *vb)
 
 	if (req == AGENTX_REQUEST_TYPE_GET && cif->kif.if_index != idx) {
 		agentx_varbind_notfound(vb);
+		free(cif);
 		return;
 	}
 	agentx_varbind_set_index_integer(vb, carpIfIdx, cif->kif.if_index);
