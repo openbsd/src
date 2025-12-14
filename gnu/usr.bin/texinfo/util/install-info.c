@@ -1,5 +1,5 @@
 /* install-info -- create Info directory entry(ies) for an Info file.
-   $Id: install-info.c,v 1.9 2015/11/14 23:06:06 deraadt Exp $
+   $Id: install-info.c,v 1.10 2025/12/14 12:37:28 sthen Exp $
 
    Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -628,10 +628,19 @@ open_possibly_compressed_file (char *filename,
     *compression_program = NULL;
 
   if (*compression_program)
-    { /* It's compressed, so fclose the file and then open a pipe.  */
-      char *command = concat (*compression_program," -cd <", *opened_filename);
+    { 
+      /* avoid crafting an exploit by passing the filename to the shell:
+       * just uncompress from stdin, and use freopen to get the right file
+       * XXX key point: install-info doesn't need stdin.
+       */
+      FILE *real;
+
+      char *command = concat (*compression_program," -cd", "");
       if (fclose (f) < 0)
         pfatal_with_name (*opened_filename);
+      real = freopen (*opened_filename, FOPEN_RBIN, stdin);
+      if (!real)
+      	return 0;
       f = popen (command, "r");
       if (f)
         *is_pipe = 1;
