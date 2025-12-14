@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.255 2025/12/11 07:26:02 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.256 2025/12/14 01:51:26 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -1076,10 +1076,6 @@ tun_input_process(struct ifnet *ifp, struct mbuf *m)
 
 	counters_pkt(ifp->if_counters,
 	    ifc_ipackets, ifc_ibytes, m->m_pkthdr.len);
-
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
 
 #if NBPFILTER > 0
 	if_bpf = ifp->if_bpf;
