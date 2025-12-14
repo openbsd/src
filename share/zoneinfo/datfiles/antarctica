@@ -1,16 +1,13 @@
-# $OpenBSD: antarctica,v 1.50 2025/01/19 22:03:27 millert Exp $
+# $OpenBSD: antarctica,v 1.51 2025/12/14 16:10:38 millert Exp $
 # tzdb data for Antarctica and environs
 
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
-# From Paul Eggert (1999-11-15):
-# To keep things manageable, we list only locations occupied year-round; see
-# COMNAP - Stations and Bases
-# http://www.comnap.aq/comnap/comnap.nsf/P/Stations/
-# and
-# Summary of the Peri-Antarctic Islands (1998-07-23)
-# http://www.spri.cam.ac.uk/bob/periant.htm
+# From Paul Eggert (2025-08-16):
+# To keep things manageable, list only locations occupied year-round; see
+# Antarctic Facilities Information
+# https://www.comnap.aq/antarctic-facilities-information
 # for information.
 # Unless otherwise specified, we have no time zone information.
 
@@ -145,6 +142,7 @@ Zone Antarctica/Mawson	0	-	-00	1954 Feb 13
 # China - year-round bases
 # Great Wall, King George Island, -6213-05858, since 1985-02-20
 # Zhongshan, Larsemann Hills, Prydz Bay, -6922+07623, since 1989-02-26
+# Qinling, Inexpressible I, Terra Nova Bay, -7456+16343, since 2024-02-07
 
 # France - year-round bases (also see "France & Italy")
 #
