@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.34 2025/12/15 01:39:32 dlg Exp $ */
+/* $OpenBSD: ampintc.c,v 1.35 2025/12/15 12:59:24 dlg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -20,6 +20,9 @@
  * DDI0407E_cortex_a9_mpcore_r2p0_trm with the
  * IHI0048A_gic_architecture_spec_v1_0 underlying specification
  */
+
+#include "xcall.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>

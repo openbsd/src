@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.19 2025/12/15 01:39:32 dlg Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.20 2025/12/15 12:59:24 dlg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "xcall.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

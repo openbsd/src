@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.144 2025/12/15 01:39:32 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.145 2025/12/15 12:59:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -18,6 +18,7 @@
  */
 
 #include "kstat.h"
+#include "xcall.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
