@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1020 2025/12/10 21:24:43 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1021 2025/12/15 21:21:25 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 10 2025 $
+.Dd $Mdocdate: December 15 2025 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1661,9 +1661,10 @@ is used,
 option will not be applied.
 .Pp
 .Fl T
-sets the client's key table; the next key from the client will be interpreted
-from
+sets the client's key table; the next key will be looked up using
 .Ar key-table .
+After that key, the client is returned to its default key table (normally
+.Em root ) .
 This may be used to configure multiple prefix keys, or to bind commands to
 sequences of keys.
 For example, to make typing
