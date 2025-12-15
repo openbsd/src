@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.189 2025/12/12 21:42:58 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.190 2025/12/15 12:16:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -258,15 +258,19 @@ void
 up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 {
 	struct prefix		*new;
-	struct adjout_prefix	*head, *p, *np;
+	struct adjout_prefix	*head, *p;
+	uint32_t		addpath_prefix_list[2000];	/* XXX */
 	int			maxpaths = 0, extrapaths = 0, extra;
 	int			checkmode = 1;
+	unsigned int		pidx = 0, i;
 
+	/* collect all current paths */
 	head = adjout_prefix_first(peer, re->prefix);
-
-	/* mark all paths as stale */
-	for (p = head; p != NULL; p = adjout_prefix_next(peer, p))
-		p->flags |= PREFIX_ADJOUT_FLAG_STALE;
+	for (p = head; p != NULL; p = adjout_prefix_next(peer, p)) {
+		addpath_prefix_list[pidx++] = p->path_id_tx;
+		if (pidx >= nitems(addpath_prefix_list))
+			fatalx("too many addpath paths to select from");
+	}
 
 	/* update paths */
 	new = prefix_best(re);
@@ -316,6 +320,12 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 		case UP_OK:
 			maxpaths++;
 			extrapaths += extra;
+			for (i = 0; i < pidx; i++) {
+				if (addpath_prefix_list[i] == new->path_id_tx) {
+					addpath_prefix_list[i] = 0;
+					break;
+				}
+			}
 			break;
 		case UP_FILTERED:
 		case UP_EXCLUDED:
@@ -332,10 +342,13 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 	}
 
 	/* withdraw stale paths */
-	for (p = head; p != NULL; p = np) {
-		np = adjout_prefix_next(peer, p);
-		if (p->flags & PREFIX_ADJOUT_FLAG_STALE)
-			adjout_prefix_withdraw(peer, p);
+	for (i = 0; i < pidx; i++) {
+		if (addpath_prefix_list[i] != 0) {
+			p = adjout_prefix_get(peer, addpath_prefix_list[i],
+			    re->prefix);
+			if (p != NULL)
+				adjout_prefix_withdraw(peer, p);
+		}
 	}
 }
 

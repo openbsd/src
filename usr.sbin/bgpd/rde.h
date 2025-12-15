@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.332 2025/12/13 19:26:17 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.333 2025/12/15 12:16:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -324,8 +324,7 @@ struct adjout_prefix {
 	uint32_t			 path_id_tx;
 	uint8_t			 	 flags;
 };
-#define	PREFIX_ADJOUT_FLAG_STALE	0x01	/* stale entry (for addpath) */
-#define	PREFIX_ADJOUT_FLAG_LOCKED	0x20	/* locked by rib walker */
+#define	PREFIX_ADJOUT_FLAG_LOCKED	0x01	/* locked by rib walker */
 
 struct pend_attr {
 	TAILQ_ENTRY(pend_attr)		 entry;
