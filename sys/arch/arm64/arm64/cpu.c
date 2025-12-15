@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.143 2025/09/11 05:54:08 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.144 2025/12/15 01:39:32 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1603,6 +1603,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		}
 #ifdef MULTIPROCESSOR
 	}
+
+#if NXCALL > 0
+	cpu_xcall_establish(ci);
+#endif
 #endif
 
 #if NKSTAT > 0

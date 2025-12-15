@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.19 2025/07/06 12:22:31 dlg Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.20 2025/12/15 01:39:32 dlg Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -689,6 +689,10 @@ aplintc_handle_ipi(struct aplintc_softc *sc)
 #endif
 		if (ISSET(reasons, 1 << ARM_IPI_HALT))
 			cpu_halt();
+#if NXCALL > 0
+		if (ISSET(reasons, 1 << ARM_IPI_XCALL))
+			arm_cpu_xcall_dispatch();
+#endif
 	}
 
 	sc->sc_ipi_count.ec_count++;

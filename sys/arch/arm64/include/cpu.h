@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.51 2025/02/11 22:27:09 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.52 2025/12/15 01:39:32 dlg Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -57,6 +57,8 @@
 
 #ifdef _KERNEL
 
+#include "xcall.h"
+
 /*
  * Kernel-only definitions
  */
@@ -112,6 +114,9 @@ void cpu_identify_cleanup(void);
 #include <sys/sched.h>
 #include <sys/srp.h>
 #include <uvm/uvm_percpu.h>
+#if NXCALL > 0
+#include <sys/xcall.h>
+#endif
 
 struct cpu_info {
 	struct device		*ci_dev; /* Device corresponding to this CPU */
@@ -167,6 +172,9 @@ struct cpu_info {
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+#if NXCALL > 0
+	struct xcall_cpu	ci_xcall;
+#endif
 #define __HAVE_UVM_PERCPU
 	struct uvm_pmr_cache	ci_uvm;
 	volatile int		ci_flags;

@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.18 2025/12/15 01:28:01 dlg Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.19 2025/12/15 01:39:32 dlg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -643,6 +643,10 @@ bcm_intc_handle_ipi(void)
 		/* XXX */
 		db_enter();
 	}
+#endif
+#if NXCALL > 0
+	if (ISSET(mbox_val, 1 << ARM_IPI_XCALL))
+		arm_cpu_xcall_dispatch();
 #endif
 }
 

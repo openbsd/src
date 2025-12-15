@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.33 2025/07/06 12:22:31 dlg Exp $ */
+/* $OpenBSD: ampintc.c,v 1.34 2025/12/15 01:39:32 dlg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -1033,6 +1033,10 @@ ampintc_ipi_handler(void *v)
 			ampintc_ipi_ddb(v);
 		if (ISSET(reasons, 1 << ARM_IPI_HALT))
 			ampintc_ipi_halt(v);
+#if NXCALL > 0
+		if (ISSET(reasons, 1 << ARM_IPI_XCALL))
+			arm_cpu_xcall_dispatch();
+#endif
 	}
 
 	return (1);

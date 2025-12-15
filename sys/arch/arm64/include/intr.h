@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.25 2025/06/30 14:19:20 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.26 2025/12/15 01:39:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -83,6 +83,8 @@
 
 #ifndef _LOCORE
 #include <sys/queue.h>
+
+#define SOFTINTR_XCALL		NSOFTINTR
 
 void	softintr(int);
 
@@ -199,6 +201,12 @@ extern void (*intr_send_ipi_func)(struct cpu_info *, int);
 #define ARM_IPI_NOP	0
 #define ARM_IPI_DDB	1
 #define ARM_IPI_HALT	2
+#define ARM_IPI_XCALL	3
+
+/* kern_xcall calls this to dispatch xcalls */
+#define cpu_xcall_ipi(_ci) arm_send_ipi((_ci), ARM_IPI_XCALL)
+/* interrupt controllers call this to get cpu_xcall_dispatch run */
+#define arm_cpu_xcall_dispatch() softintr(SOFTINTR_XCALL)
 
 #ifdef DIAGNOSTIC
 /*
