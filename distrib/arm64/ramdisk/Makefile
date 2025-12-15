@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2025/09/03 01:39:28 jsg Exp $
+#	$OpenBSD: Makefile,v 1.35 2025/12/15 07:35:15 deraadt Exp $
 #
 # Install media requires the following packages:
 # - raspberrypi-firmware
@@ -108,10 +108,10 @@ ${CDROM}: ${BASE} ${XBASE} cdbr bsd.rd
 	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${.OBJDIR}/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
-	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
+	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/${MACHINE}   ${OSREV} Install CD" \
+	    -V "OpenBSD/${MACHINE}   ${OSREV} boot-only CD" \
 	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
 	    ${.OBJDIR}/cd-dir
 
