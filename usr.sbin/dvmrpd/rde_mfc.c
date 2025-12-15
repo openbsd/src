@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.11 2024/05/18 11:17:30 jsg Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.12 2025/12/15 23:38:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -436,7 +436,7 @@ mfc_add_prune(struct mfc_node *mn, struct prune *p)
 	struct prune_node	*pn;
 	struct timeval		 tv;
 
-	pn = calloc(1, sizeof(struct prune));
+	pn = calloc(1, sizeof(*pn));
 	if (pn == NULL)
 		fatal("prune_add");
 
