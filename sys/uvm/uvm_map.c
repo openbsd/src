@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.349 2025/12/10 08:38:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.350 2025/12/15 22:50:20 jsg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4052,7 +4052,7 @@ out:
 }
 
 #ifdef PMAP_CHECK_COPYIN
-static void inline
+static inline void
 check_copyin_add(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
 	if (PMAP_CHECK_COPYIN == 0 ||
