@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2023/12/15 06:03:00 jmatthew Exp $
+#	$OpenBSD: Makefile,v 1.40 2025/12/15 16:02:47 deraadt Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		11392
@@ -59,7 +59,7 @@ ${CDROM}: bsd.rd ${EFICDBOOT}
 	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/${MACHINE}   ${OSREV} boot-only CD" \
+	    -V "OpenBSD/${MACHINE}   ${OSREV} bootonly CD" \
 	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
 	    -e ${OSREV}/${MACHINE}/${EFICDBOOT} \
 	    ${.OBJDIR}/cd-dir

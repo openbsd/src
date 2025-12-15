@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2024/01/19 20:06:00 miod Exp $
+#	$OpenBSD: Makefile,v 1.33 2025/12/15 16:02:47 deraadt Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		6400
@@ -50,7 +50,7 @@ ${CDROM}: bsd.rd ${FS}
 	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/${MACHINE} ${OSREV} boot-only CD" \
+	    -V "OpenBSD/${MACHINE} ${OSREV} bootonly CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
 	vnconfig -v ${CDROM} > vnd
 	disklabel -w `cat vnd` fakecdrom "OpenBSD${OSrev}${MACHINE}"

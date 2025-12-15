@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2025/12/15 07:35:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.36 2025/12/15 16:02:47 deraadt Exp $
 #
 # Install media requires the following packages:
 # - raspberrypi-firmware
@@ -111,7 +111,7 @@ ${CDROM}: ${BASE} ${XBASE} cdbr bsd.rd
 	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/${MACHINE}   ${OSREV} boot-only CD" \
+	    -V "OpenBSD/${MACHINE}   ${OSREV} bootonly CD" \
 	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
 	    ${.OBJDIR}/cd-dir
 

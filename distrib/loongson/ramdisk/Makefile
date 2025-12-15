@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2025/12/15 07:35:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.36 2025/12/15 16:02:47 deraadt Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		18432
@@ -44,7 +44,7 @@ ${CDROM}: bsd.rd
 	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/${MACHINE} ${OSREV} boot-only CD" \
+	    -V "OpenBSD/${MACHINE} ${OSREV} bootonly CD" \
 	    ${.OBJDIR}/cd-dir
 
 bsd.strip: bsd.rd

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2023/08/14 08:16:26 miod Exp $
+#	$OpenBSD: Makefile,v 1.29 2025/12/15 16:02:47 deraadt Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		6080
@@ -49,7 +49,7 @@ ${CDROM}: bsd.gz
 	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/${MACHINE}   ${OSREV} boot-only CD" \
+	    -V "OpenBSD/${MACHINE}   ${OSREV} bootonly CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log
 	vnconfig -v ${CDROM} > vnd
 	mount -t cd9660 /dev/`cat vnd`a ${MOUNT_POINT}
