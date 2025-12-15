@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_zero.3,v 1.15 2025/06/14 06:48:47 tb Exp $
+.\" $OpenBSD: BN_zero.3,v 1.16 2025/12/15 12:09:46 tb Exp $
 .\" full merge up to: OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL b713c4ff Jan 22 14:41:09 2018 -0500
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2025 $
+.Dd $Mdocdate: December 15 2025 $
 .Dt BN_ZERO 3
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ This constant is useful for comparisons and assignments.
 .Fn BN_get_word
 returns the value
 .Fa a ,
-or a number with all bits set if
+or (BN_ULONG)\-1 if
 .Fa a
 cannot be represented as a
 .Vt BN_ULONG .

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.94 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.95 2025/12/15 12:09:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -349,7 +349,7 @@ BN_ULONG
 BN_get_word(const BIGNUM *a)
 {
 	if (a->top > 1)
-		return BN_MASK2;
+		return (BN_ULONG)-1;
 	else if (a->top == 1)
 		return a->d[0];
 	/* a->top == 0 */
