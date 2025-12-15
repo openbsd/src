@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.17 2025/08/11 17:37:04 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.18 2025/12/15 01:28:01 dlg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -123,8 +123,10 @@ void	*l1_intc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
 void	 bcm_intc_intr_disestablish(void *);
 void	 bcm_intc_irq_handler(void *);
 void	 bcm_intc_intr_route(void *, int , struct cpu_info *);
+#ifdef MULTIPROCESSOR
 void	 bcm_intc_handle_ipi(void);
 void	 bcm_intc_send_ipi(struct cpu_info *, int);
+#endif
 
 const struct cfattach	bcmintc_ca = {
 	sizeof (struct bcm_intc_softc), bcm_intc_match, bcm_intc_attach
@@ -229,7 +231,9 @@ bcm_intc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_l1_intc.ic_route = bcm_intc_intr_route;
 	arm_intr_register_fdt(&sc->sc_l1_intc);
 
+#ifdef MULTIPROCESSOR
 	intr_send_ipi_func = bcm_intc_send_ipi;
+#endif
 	
 	bcm_intc_setipl(IPL_HIGH);  /* XXX ??? */
 	intr_enable();
@@ -621,6 +625,7 @@ bcm_intc_intr_route(void *cookie, int enable, struct cpu_info *ci)
 	}
 }
 
+#ifdef MULTIPROCESSOR
 void
 bcm_intc_handle_ipi(void)
 {
@@ -651,3 +656,4 @@ bcm_intc_send_ipi(struct cpu_info *ci, int id)
 	bus_space_write_4(sc->sc_iot, sc->sc_lioh,
 	    ARM_LOCAL_INT_MAILBOX_SET(ci->ci_cpuid), 1 << id);
 }
+#endif
