@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.426 2025/10/27 12:46:34 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.427 2025/12/16 01:42:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -1245,7 +1245,7 @@ edit_packname(struct disklabel *lp)
 const struct partition **
 sort_partitions(const struct disklabel *lp, int ignore)
 {
-	const static struct partition *spp[MAXPARTITIONS+2];
+	static const struct partition *spp[MAXPARTITIONS+2];
 	int i, npartitions;
 
 	memset(spp, 0, sizeof(spp));
