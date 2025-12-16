@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.31 2024/09/13 09:57:34 jmatthew Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.32 2025/12/16 00:24:55 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -42,13 +42,14 @@ struct nvme_ccb {
 
 	void			*ccb_cookie;
 	void			(*ccb_done)(struct nvme_softc *sc,
-				    struct nvme_ccb *, struct nvme_cqe *);
+				    struct nvme_ccb *);
 
 	bus_addr_t		ccb_prpl_off;
 	u_int64_t		ccb_prpl_dva;
 	u_int64_t		*ccb_prpl;
 
 	u_int16_t		ccb_id;
+	u_int16_t		ccb_cqe_flags;
 };
 SIMPLEQ_HEAD(nvme_ccb_list, nvme_ccb);
 

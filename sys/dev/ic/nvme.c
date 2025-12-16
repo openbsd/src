@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.124 2024/10/08 19:41:23 kettenis Exp $ */
+/*	$OpenBSD: nvme.c,v 1.125 2025/12/16 00:24:55 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -73,11 +73,9 @@ void	nvme_ccb_put(void *, void *);
 int	nvme_poll(struct nvme_softc *, struct nvme_queue *, struct nvme_ccb *,
 	    void (*)(struct nvme_softc *, struct nvme_ccb *, void *), u_int32_t);
 void	nvme_poll_fill(struct nvme_softc *, struct nvme_ccb *, void *);
-void	nvme_poll_done(struct nvme_softc *, struct nvme_ccb *,
-	    struct nvme_cqe *);
+void	nvme_poll_done(struct nvme_softc *, struct nvme_ccb *);
 void	nvme_sqe_fill(struct nvme_softc *, struct nvme_ccb *, void *);
-void	nvme_empty_done(struct nvme_softc *, struct nvme_ccb *,
-	    struct nvme_cqe *);
+void	nvme_empty_done(struct nvme_softc *, struct nvme_ccb *);
 
 struct nvme_queue *
 	nvme_q_alloc(struct nvme_softc *, u_int16_t, u_int, u_int);
@@ -125,13 +123,11 @@ const struct scsi_adapter nvme_switch = {
 
 void	nvme_scsi_io(struct scsi_xfer *, int);
 void	nvme_scsi_io_fill(struct nvme_softc *, struct nvme_ccb *, void *);
-void	nvme_scsi_io_done(struct nvme_softc *, struct nvme_ccb *,
-	    struct nvme_cqe *);
+void	nvme_scsi_io_done(struct nvme_softc *, struct nvme_ccb *);
 
 void	nvme_scsi_sync(struct scsi_xfer *);
 void	nvme_scsi_sync_fill(struct nvme_softc *, struct nvme_ccb *, void *);
-void	nvme_scsi_sync_done(struct nvme_softc *, struct nvme_ccb *,
-	    struct nvme_cqe *);
+void	nvme_scsi_sync_done(struct nvme_softc *, struct nvme_ccb *);
 
 void	nvme_scsi_inq(struct scsi_xfer *);
 void	nvme_scsi_inquiry(struct scsi_xfer *);
@@ -745,12 +741,10 @@ nvme_scsi_io_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 }
 
 void
-nvme_scsi_io_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
-    struct nvme_cqe *cqe)
+nvme_scsi_io_done(struct nvme_softc *sc, struct nvme_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_cookie;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
-	u_int16_t flags;
 
 	if (dmap->dm_nsegs > 2) {
 		bus_dmamap_sync(sc->sc_dmat,
@@ -766,10 +760,8 @@ nvme_scsi_io_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 
-	flags = lemtoh16(&cqe->flags);
-
-	xs->error = (NVME_CQE_SC(flags) == NVME_CQE_SC_SUCCESS) ?
-	    XS_NOERROR : XS_DRIVER_STUFFUP;
+	xs->error = (NVME_CQE_SC(ccb->ccb_cqe_flags) ==
+	    NVME_CQE_SC_SUCCESS) ? XS_NOERROR : XS_DRIVER_STUFFUP;
 	xs->status = SCSI_OK;
 	xs->resid = 0;
 	scsi_done(xs);
@@ -805,16 +797,12 @@ nvme_scsi_sync_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 }
 
 void
-nvme_scsi_sync_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
-    struct nvme_cqe *cqe)
+nvme_scsi_sync_done(struct nvme_softc *sc, struct nvme_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_cookie;
-	u_int16_t flags;
 
-	flags = lemtoh16(&cqe->flags);
-
-	xs->error = (NVME_CQE_SC(flags) == NVME_CQE_SC_SUCCESS) ?
-	    XS_NOERROR : XS_DRIVER_STUFFUP;
+	xs->error = (NVME_CQE_SC(ccb->ccb_cqe_flags) ==
+	    NVME_CQE_SC_SUCCESS) ? XS_NOERROR : XS_DRIVER_STUFFUP;
 	xs->status = SCSI_OK;
 	xs->resid = 0;
 	scsi_done(xs);
@@ -1129,10 +1117,9 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
     void (*fill)(struct nvme_softc *, struct nvme_ccb *, void *), u_int32_t ms)
 {
 	struct nvme_poll_state state;
-	void (*done)(struct nvme_softc *, struct nvme_ccb *, struct nvme_cqe *);
+	void (*done)(struct nvme_softc *, struct nvme_ccb *);
 	void *cookie;
 	int64_t us;
-	u_int16_t flags;
 
 	memset(&state, 0, sizeof(state));
 	(*fill)(sc, ccb, &state.s);
@@ -1145,7 +1132,7 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 
 	nvme_q_submit(sc, q, ccb, nvme_poll_fill);
 	for (us = ms * 1000; ms == 0 || us > 0; us -= NVME_TIMO_DELAYNS) {
-		if (ISSET(state.c.flags, htole16(NVME_CQE_PHASE)))
+		if (ISSET(state.c.flags, NVME_CQE_PHASE))
 			break;
 		if (nvme_q_complete(sc, q) == 0)
 			delay(NVME_TIMO_DELAYNS);
@@ -1153,11 +1140,9 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 	}
 
 	ccb->ccb_cookie = cookie;
-	done(sc, ccb, &state.c);
+	done(sc, ccb);
 
-	flags = lemtoh16(&state.c.flags);
-
-	return (flags & ~NVME_CQE_PHASE);
+	return (ccb->ccb_cqe_flags & ~NVME_CQE_PHASE);
 }
 
 void
@@ -1170,13 +1155,12 @@ nvme_poll_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 }
 
 void
-nvme_poll_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
-    struct nvme_cqe *cqe)
+nvme_poll_done(struct nvme_softc *sc, struct nvme_ccb *ccb)
 {
 	struct nvme_poll_state *state = ccb->ccb_cookie;
 
-	state->c = *cqe;
-	SET(state->c.flags, htole16(NVME_CQE_PHASE));
+	state->c.flags = ccb->ccb_cqe_flags;
+	SET(state->c.flags, NVME_CQE_PHASE);
 }
 
 void
@@ -1189,8 +1173,7 @@ nvme_sqe_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 }
 
 void
-nvme_empty_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
-    struct nvme_cqe *cqe)
+nvme_empty_done(struct nvme_softc *sc, struct nvme_ccb *ccb)
 {
 }
 
@@ -1204,15 +1187,17 @@ nvme_op_cq_done(struct nvme_softc *sc,
 int
 nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 {
-	struct nvme_ccb *ccb;
+	struct nvme_ccb *ccb, *ccbtmp;
 	struct nvme_cqe *ring = NVME_DMA_KVA(q->q_cq_dmamem), *cqe;
 	u_int32_t head;
 	u_int16_t flags;
+	struct nvme_ccb_list done_list;
 	int rv = 0;
 
 	if (!mtx_enter_try(&q->q_cq_mtx))
 		return (-1);
 
+	SIMPLEQ_INIT(&done_list);
 	head = q->q_cq_head;
 
 	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_POSTREAD);
@@ -1226,7 +1211,9 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 
 		ccb = &sc->sc_ccbs[cqe->cid];
 		sc->sc_ops->op_cq_done(sc, q, ccb);
-		ccb->ccb_done(sc, ccb, cqe);
+
+		ccb->ccb_cqe_flags = lemtoh16(&cqe->flags);
+		SIMPLEQ_INSERT_TAIL(&done_list, ccb, ccb_entry);
 
 		if (++head >= q->q_entries) {
 			head = 0;
@@ -1240,6 +1227,10 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 	if (rv)
 		nvme_write4(sc, q->q_cqhdbl, q->q_cq_head = head);
 	mtx_leave(&q->q_cq_mtx);
+
+	SIMPLEQ_FOREACH_SAFE(ccb, &done_list, ccb_entry, ccbtmp) {
+		ccb->ccb_done(sc, ccb);
+	}
 
 	return (rv);
 }
