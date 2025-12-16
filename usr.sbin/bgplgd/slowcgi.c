@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.7 2024/01/26 18:11:49 job Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.8 2025/12/16 15:46:46 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -405,7 +405,7 @@ slowcgi_listen(char *path, struct passwd *pw)
 	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		lerr(1,"slowcgi_listen: bind: %s", path);
+		lerr(1, "slowcgi_listen: bind: %s", path);
 
 	umask(old_umask);
 
@@ -1202,7 +1202,7 @@ cleanup_request(struct request *c)
 		free(resp);
 	}
 	LIST_REMOVE(c, entry);
-	if (! c->inflight_fds_accounted)
+	if (!c->inflight_fds_accounted)
 		cgi_inflight--;
 	free(c);
 }
