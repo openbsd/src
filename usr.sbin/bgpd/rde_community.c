@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.20 2025/12/16 12:08:11 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.21 2025/12/16 15:04:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -648,7 +648,7 @@ communities_calc_hash(struct rde_community *comm)
 		comm->hash = SipHash24_End(&ctx);
 	}
 }
-	
+
 CH_HEAD(comm_tree, rde_community);
 CH_PROTOTYPE(comm_tree, rde_community, communities_hash);
 CH_GENERATE(comm_tree, rde_community, communities_equal, communities_hash);
