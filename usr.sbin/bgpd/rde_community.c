@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.19 2025/11/13 15:52:47 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.20 2025/12/16 12:08:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -228,9 +228,9 @@ insert_community(struct rde_community *comm, struct community *c)
 		int newsize = comm->size + 8;
 
 		if ((new = reallocarray(comm->communities, newsize,
-		    sizeof(struct community))) == NULL)
+		    sizeof(*new))) == NULL)
 			fatal(__func__);
-		memset(&new[comm->size], 0, sizeof(struct community) * 8);
+		memset(&new[comm->size], 0, sizeof(*new) * 8);
 		comm->communities = new;
 		comm->size = newsize;
 	}
