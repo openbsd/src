@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.132 2025/11/20 10:47:36 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.133 2025/12/16 12:23:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1227,7 +1227,7 @@ mrt_handler(struct mrt_head *mrt)
 		     m->type == MRT_TABLE_DUMP_V2)) {
 			if (mrt_open(m) == -1)
 				continue;
-			timer_set(&MRT2MC(m)->timer, Timer_Mrt_Reopen, 
+			timer_set(&MRT2MC(m)->timer, Timer_Mrt_Reopen,
 			    MRT2MC(m)->ReopenTimerInterval);
 		}
 	}
