@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.52 2024/12/12 17:29:33 pascal Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.53 2025/12/16 02:57:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -117,7 +117,7 @@ void		 ca_setenv(const char *, const char *);
 void		 ca_clrenv(void);
 void		 ca_setcnf(struct ca *, const char *);
 void		 ca_create_index(struct ca *);
-int static	 ca_execv(char *const []);
+static int	 ca_execv(char *const []);
 
 /* util.c */
 int		 expand_string(char *, size_t, const char *, const char *);
@@ -1145,7 +1145,7 @@ ca_setup(char *caname, int create, int quiet, char *pass)
 	return (ca);
 }
 
-int static
+static int
 ca_execv(char *const argv[])
 {
 	pid_t pid, cpid;
