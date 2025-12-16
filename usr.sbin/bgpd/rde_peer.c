@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.62 2025/12/13 19:26:17 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.63 2025/12/16 16:07:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -572,10 +572,7 @@ peer_dump_upcall(struct rib_entry *re, void *ptr)
 static void
 peer_dump_done(void *ptr, uint8_t aid)
 {
-	struct rde_peer		*peer = ptr;
-
-	/* Adj-RIB-Out is ready, blast it out */
-	peer_blast(peer, aid);
+	peer_blast_done(ptr, aid);
 }
 
 /*
