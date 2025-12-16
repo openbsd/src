@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.190 2025/12/15 12:16:19 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.191 2025/12/16 12:16:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -244,7 +244,7 @@ up_generate_updates(struct rde_peer *peer, struct rib_entry *re)
 done:
 	/* withdraw prefix */
 	if (p != NULL)
-		adjout_prefix_withdraw(peer, p);
+		adjout_prefix_withdraw(peer, re->prefix, p);
 }
 
 /*
@@ -266,7 +266,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 
 	/* collect all current paths */
 	head = adjout_prefix_first(peer, re->prefix);
-	for (p = head; p != NULL; p = adjout_prefix_next(peer, p)) {
+	for (p = head; p != NULL; p = adjout_prefix_next(peer, re->prefix, p)) {
 		addpath_prefix_list[pidx++] = p->path_id_tx;
 		if (pidx >= nitems(addpath_prefix_list))
 			fatalx("too many addpath paths to select from");
@@ -347,7 +347,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 			p = adjout_prefix_get(peer, addpath_prefix_list[i],
 			    re->prefix);
 			if (p != NULL)
-				adjout_prefix_withdraw(peer, p);
+				adjout_prefix_withdraw(peer, re->prefix, p);
 		}
 	}
 }
@@ -397,7 +397,7 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 		/* withdraw old path */
 		p = adjout_prefix_get(peer, old_pathid_tx, re->prefix);
 		if (p != NULL)
-			adjout_prefix_withdraw(peer, p);
+			adjout_prefix_withdraw(peer, re->prefix, p);
 	}
 }
 

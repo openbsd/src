@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.13 2025/12/15 12:16:19 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.14 2025/12/16 12:16:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -480,7 +480,8 @@ adjout_prefix_first(struct rde_peer *peer, struct pt_entry *pte)
  * Return next prefix after a lookup that is actually an update.
  */
 struct adjout_prefix *
-adjout_prefix_next(struct rde_peer *peer, struct adjout_prefix *p)
+adjout_prefix_next(struct rde_peer *peer, struct pt_entry *pte,
+    struct adjout_prefix *p)
 {
 	struct adjout_prefix *np;
 
@@ -553,10 +554,11 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
  * the prefix in the RIB linked to the peer withdraw list.
  */
 void
-adjout_prefix_withdraw(struct rde_peer *peer, struct adjout_prefix *p)
+adjout_prefix_withdraw(struct rde_peer *peer, struct pt_entry *pte,
+    struct adjout_prefix *p)
 {
 	if (peer_is_up(peer))
-		pend_prefix_add(peer, NULL, p->pt, p->path_id_tx);
+		pend_prefix_add(peer, NULL, pte, p->path_id_tx);
 
 	adjout_prefix_destroy(peer, p);
 }

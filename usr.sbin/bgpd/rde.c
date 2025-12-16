@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.676 2025/12/16 12:13:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.677 2025/12/16 12:16:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3260,7 +3260,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 						    peer, pte);
 						    p != NULL;
 						    p = adjout_prefix_next(
-						    peer, p)) {
+						    peer, pte, p)) {
 							rde_dump_adjout_upcall(
 							    peer, pte, p, ctx);
 						}
@@ -3278,7 +3278,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 				/* dump all matching paths */
 				for (p = adjout_prefix_first(peer, pte);
 				    p != NULL;
-				    p = adjout_prefix_next(peer, p)) {
+				    p = adjout_prefix_next(peer, pte, p)) {
 					rde_dump_adjout_upcall(peer, pte, p,
 					    ctx);
 				}
@@ -3546,7 +3546,7 @@ static void
 rde_up_flush_upcall(struct rde_peer *peer, struct pt_entry *pte,
     struct adjout_prefix *p, void *ptr)
 {
-	adjout_prefix_withdraw(peer, p);
+	adjout_prefix_withdraw(peer, pte, p);
 }
 
 int
