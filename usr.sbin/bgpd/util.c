@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.96 2025/10/23 18:55:30 miod Exp $ */
+/*	$OpenBSD: util.c,v 1.97 2025/12/16 15:38:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 #include <endian.h>
 #include <errno.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -1294,4 +1295,47 @@ get_baudrate(unsigned long long baudrate, char *unit)
 		    baudrate, unit);
 
 	return (bbuf);
+}
+
+/* internal functions needed for bucket sizing, stolen from omalloc.c */
+
+/* using built-in function version */
+__attribute__((const)) static inline unsigned int
+lb(unsigned int x)
+{
+	/* I need an extension just for integer-length (: */
+	return (sizeof(x) * CHAR_BIT - 1) - __builtin_clz(x);
+}
+
+/*
+ * https://pvk.ca/Blog/2015/06/27/linear-log-bucketing-fast-versatile-simple/
+ * via Tony Finch
+ */
+static inline unsigned int
+bin_of(unsigned int size, unsigned int linear, unsigned int subbin)
+{
+	unsigned int mask, rounded, rounded_size;
+	unsigned int n_bits, shift;
+
+	n_bits = lb(size | (1U << linear));
+	shift = n_bits - subbin;
+	mask = (1U << shift) - 1;
+	rounded = size + mask; /* XXX: overflow. */
+
+	rounded_size = rounded & ~mask;
+	return rounded_size;
+}
+
+unsigned int
+bin_of_attrs(unsigned int count)
+{
+	/* 4, 8, 12, ... 60, 64, 72, 80, ... */
+	return bin_of(count, 5, 3);
+}
+
+unsigned int
+bin_of_communities(unsigned int count)
+{
+	/* 8, 16, 24, ... 56, 64, 80, 96, ... */
+	return bin_of(count, 5, 2);
 }

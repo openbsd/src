@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.526 2025/12/11 12:18:27 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.527 2025/12/16 15:38:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1673,6 +1673,9 @@ int		 af2aid(sa_family_t, uint8_t, uint8_t *);
 struct sockaddr	*addr2sa(const struct bgpd_addr *, uint16_t, socklen_t *);
 void		 sa2addr(struct sockaddr *, struct bgpd_addr *, uint16_t *);
 const char	*get_baudrate(unsigned long long, char *);
+
+unsigned int	 bin_of_attrs(unsigned int);
+unsigned int	 bin_of_communities(unsigned int);
 
 /* flowspec.c */
 int	flowspec_valid(const uint8_t *, int, int);
