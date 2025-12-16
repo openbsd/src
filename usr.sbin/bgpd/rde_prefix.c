@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.58 2025/02/27 14:03:32 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.59 2025/12/16 12:11:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -329,6 +329,15 @@ pt_get(struct bgpd_addr *prefix, int prefixlen)
 }
 
 struct pt_entry *
+pt_get_next(struct bgpd_addr *prefix, int prefixlen)
+{
+	struct pt_entry	*pte;
+
+	pte = pt_fill(prefix, prefixlen);
+	return RB_NFIND(pt_tree, &pttable, pte);
+}
+
+struct pt_entry *
 pt_add(struct bgpd_addr *prefix, int prefixlen)
 {
 	struct pt_entry		*p = NULL;
@@ -382,6 +391,25 @@ pt_add_flow(struct flowspec *f)
 		fatalx("pt_add: insert failed");
 
 	return (p);
+}
+
+struct pt_entry *
+pt_first(uint8_t aid)
+{
+	struct pt_entry	*pte;
+	struct bgpd_addr addr = { .aid = aid };
+
+	if (aid == AID_UNSPEC)
+		return RB_MIN(pt_tree, &pttable);
+
+	pte = pt_fill(&addr, 0);
+	return RB_NFIND(pt_tree, &pttable, pte);
+}
+
+struct pt_entry *
+pt_next(struct pt_entry *pte)
+{
+	return RB_NEXT(pt_tree, &pttable, pte);
 }
 
 void

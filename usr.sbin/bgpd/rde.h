@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.333 2025/12/15 12:16:19 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.334 2025/12/16 12:11:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -558,9 +558,12 @@ void	 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
 int	 pt_getflowspec(struct pt_entry *, uint8_t **);
 struct pt_entry	*pt_fill(struct bgpd_addr *, int);
 struct pt_entry	*pt_get(struct bgpd_addr *, int);
-struct pt_entry *pt_add(struct bgpd_addr *, int);
+struct pt_entry	*pt_get_next(struct bgpd_addr *, int);
+struct pt_entry	*pt_add(struct bgpd_addr *, int);
 struct pt_entry	*pt_get_flow(struct flowspec *);
 struct pt_entry	*pt_add_flow(struct flowspec *);
+struct pt_entry	*pt_first(uint8_t);
+struct pt_entry	*pt_next(struct pt_entry *);
 void	 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct bgpd_addr *);
 int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
