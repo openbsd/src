@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2025/12/11 12:19:59 claudio Exp $
+# $OpenBSD: Makefile,v 1.16 2025/12/17 14:27:47 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/bgpd
 
@@ -41,9 +41,9 @@ run-regress-rde_trie_test-${n}: rde_trie_test
 	    diff -u ${.CURDIR}/rde_trie_test.${n}.out /dev/stdin
 .endfor
 
-SRCS_rde_community_test=	rde_community_test.c rde_community.c chash.c
+SRCS_rde_community_test=	rde_community_test.c rde_community.c chash.c util.c
 
-SRCS_rde_decide_test=	rde_decide_test.c rde_decide.c rde_attr.c util.c chash.c
+SRCS_rde_decide_test=	rde_decide_test.c rde_decide.c rde_attr.c chash.c util.c
 
 SRCS_rde_flowspec_test=	rde_flowspec_test.c flowspec.c util.c
 
