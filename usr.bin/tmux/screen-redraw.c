@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.108 2025/12/08 21:32:50 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.109 2025/12/17 11:49:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -897,6 +897,9 @@ screen_redraw_draw_pane(struct screen_redraw_ctx *ctx, struct window_pane *wp)
 	struct colour_palette	*palette = &wp->palette;
 	struct grid_cell	 defaults;
 	u_int			 i, j, top, x, y, width;
+
+	if (wp->base.mode & MODE_SYNC)
+		screen_write_stop_sync(wp);
 
 	log_debug("%s: %s @%u %%%u", __func__, c->name, w->id, wp->id);
 

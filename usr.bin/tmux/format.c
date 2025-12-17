@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.339 2025/12/04 20:49:57 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.340 2025/12/17 11:49:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1947,6 +1947,18 @@ format_cb_origin_flag(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for synchronized_output_flag. */
+static void *
+format_cb_synchronized_output_flag(struct format_tree *ft)
+{
+	if (ft->wp != NULL) {
+		if (ft->wp->base.mode & MODE_SYNC)
+			return (xstrdup("1"));
+		return (xstrdup("0"));
+	}
+	return (NULL);
+}
+
 /* Callback for pane_active. */
 static void *
 format_cb_pane_active(struct format_tree *ft)
@@ -3438,6 +3450,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "start_time", FORMAT_TABLE_TIME,
 	  format_cb_start_time
+	},
+	{ "synchronized_output_flag", FORMAT_TABLE_STRING,
+	  format_cb_synchronized_output_flag
 	},
 	{ "tree_mode_format", FORMAT_TABLE_STRING,
 	  format_cb_tree_mode_format
