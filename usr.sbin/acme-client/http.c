@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.36 2025/11/18 00:54:11 dlg Exp $ */
+/*	$Id: http.c,v 1.37 2025/12/17 12:40:40 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -233,10 +233,10 @@ again:
 	}
 
 	if (c < 0) {
-		warn("%s: inet_ntop", addrs[cur].ip);
+		warn("%s: inet_pton", addrs[cur].ip);
 		goto again;
 	} else if (c == 0) {
-		warnx("%s: inet_ntop", addrs[cur].ip);
+		warnx("%s: inet_pton", addrs[cur].ip);
 		goto again;
 	}
 
