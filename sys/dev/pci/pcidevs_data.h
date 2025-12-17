@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2119 2025/12/07 21:58:35 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2120 2025/12/17 01:14:42 kevlo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -18224,6 +18224,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I225-K2",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_K,
+	    "I226-K",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3124,
 	    "3124 SATA",
 	},
@@ -21764,8 +21768,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I225-LMvP",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_K,
-	    "I226-K",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_LMVP,
+	    "I226-LMvP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM18,
