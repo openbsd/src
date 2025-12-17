@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1225 2025/12/12 23:50:27 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1226 2025/12/17 01:42:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5244,9 +5244,9 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 
 	srlim = ctx->sourcelim;
 	if (srlim != NULL) {
-		struct pf_source *sr = ctx->source;
 		unsigned int gen;
 
+		sr = ctx->source;
 		if (sr == NULL) {
 			sr = pool_get(&pf_source_pl, PR_NOWAIT|PR_ZERO);
 			if (sr == NULL) {
