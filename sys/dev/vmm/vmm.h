@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.12 2025/11/19 10:40:04 gnezdo Exp $ */
+/* $OpenBSD: vmm.h,v 1.13 2025/12/17 19:26:25 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -187,6 +187,7 @@ struct vm {
 
 	char			 vm_name[VMM_MAX_NAME_LEN];
 	struct refcnt		 vm_refcnt;		/* [a] */
+	unsigned int		 vm_dying;		/* [a] */
 
 	struct vcpu_head	 vm_vcpu_list;		/* [v] */
 	uint32_t		 vm_vcpu_ct;		/* [v] */

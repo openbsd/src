@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.7 2025/10/28 14:26:24 dv Exp $ */
+/* $OpenBSD: vmm.c,v 1.8 2025/12/17 19:26:25 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -483,6 +483,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	vcp->vcp_id = vm->vm_id;
 
 	/* Publish the vm into the list and update counts. */
+	vm->vm_dying = 0;
 	refcnt_init(&vm->vm_refcnt);
 	SLIST_INSERT_HEAD(&vmm_softc->vm_list, vm, vm_link);
 	vmm_softc->vm_ct++;
@@ -722,6 +723,12 @@ vm_terminate(struct vm_terminate_params *vtp)
 	error = vm_find(vtp->vtp_vm_id, &vm);
 	if (error)
 		return (error);
+
+	/* Only proceed through remove and teardown once. */
+	if (atomic_cas_uint(&vm->vm_dying, 0, 1) == 1) {
+		refcnt_rele_wake(&vm->vm_refcnt);
+		return (EBUSY);
+	}
 
 	/* Pop the vm out of the global vm list. */
 	rw_enter_write(&vmm_softc->vm_lock);
