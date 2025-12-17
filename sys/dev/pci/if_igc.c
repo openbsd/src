@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.29 2025/11/11 17:43:18 bluhm Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.30 2025/12/17 01:14:42 kevlo Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -81,6 +81,7 @@ const struct pci_matchid igc_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_BLANK_NVM },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_IT },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_LM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_LMVP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_K },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_V }
 };

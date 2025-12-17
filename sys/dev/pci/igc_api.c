@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_api.c,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_api.c,v 1.2 2025/12/17 01:14:42 kevlo Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -117,6 +117,7 @@ igc_set_mac_type(struct igc_hw *hw)
 	case PCI_PRODUCT_INTEL_I226_BLANK_NVM:
 	case PCI_PRODUCT_INTEL_I226_IT:
 	case PCI_PRODUCT_INTEL_I226_LM:
+	case PCI_PRODUCT_INTEL_I226_LMVP:
 	case PCI_PRODUCT_INTEL_I226_K:
 	case PCI_PRODUCT_INTEL_I226_V:
 		mac->type = igc_i225;
