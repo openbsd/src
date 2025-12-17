@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.200 2025/12/02 08:20:32 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.201 2025/12/17 10:20:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -959,7 +959,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "prompt-cursor-colour",
 	  .type = OPTIONS_TABLE_COLOUR,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_num = 6,
+	  .default_num = -1,
 	  .text = "Colour of the cursor when in the command prompt."
 	},
 
