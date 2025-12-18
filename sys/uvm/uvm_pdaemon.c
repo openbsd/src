@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.142 2025/12/18 16:05:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.143 2025/12/18 16:50:42 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -730,7 +730,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 				/* zap all mappings with pmap_page_protect... */
 				pmap_page_protect(p, PROT_NONE);
 				/* dequeue first to prevent lock recursion */
-				uvm_pagedequeue(p);
+				if (p->pg_flags & (PQ_ACTIVE|PQ_INACTIVE))
+					uvm_pagedequeue(p);
 				uvm_pagefree(p);
 				freed++;
 

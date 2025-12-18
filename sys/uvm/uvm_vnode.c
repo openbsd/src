@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.149 2025/12/10 08:38:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.150 2025/12/18 16:50:42 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -678,7 +678,9 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				} else {
 					pmap_page_protect(pp, PROT_NONE);
 					/* dequeue to prevent lock recursion */
-					uvm_pagedequeue(pp);
+					if (pp->pg_flags &
+					    (PQ_ACTIVE|PQ_INACTIVE))
+						uvm_pagedequeue(pp);
 					uvm_pagefree(pp);
 				}
 			}
@@ -812,7 +814,8 @@ ReTry:
 				}
 				pmap_page_protect(ptmp, PROT_NONE);
 				/* dequeue first to prevent lock recursion */
-				uvm_pagedequeue(ptmp);
+				if (ptmp->pg_flags & (PQ_ACTIVE|PQ_INACTIVE))
+					uvm_pagedequeue(ptmp);
 				uvm_pagefree(ptmp);
 			}
 
