@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.26 2022/02/06 00:29:02 jsg Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.27 2025/12/18 10:00:19 helg Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: February 6 2022 $
+.Dd $Mdocdate: December 18 2025 $
 .Dt WSCONSCTL 8
 .Os
 .Sh NAME
@@ -96,6 +96,28 @@ value can be changed, and the keyboard encoding can be modified
 to switch keys, should the user find a keyboard's default layout
 difficult to use.
 .Pp
+Alternatively, the mapping can be modified or an entirely new mapping
+created for an unsupported keyboard layout. The current mapping can be
+printed with
+.Nm
+.Ar keyboard.map .
+The value for each keycode specifies the keysym that is output when
+each of
+.Ar Key ,
+.Ar Shift
++
+.Ar Key ,
+.Ar AltGr
++
+.Ar Key ,
+or
+.Ar Shift
++
+.Ar AltrGr
++
+.Ar Key
+is pressed.
+.Pp
 There are also definitions relating to video
 control and cursor control, which are not applicable to
 all display types, and to text emulation and graphics
@@ -106,7 +128,7 @@ Use the
 utility to determine which keyboard encodings are available for your
 country.
 .Pp
-A keyboard mapping can also be specified in
+A keyboard encoding can also be specified in
 .Pa /etc/kbdtype .
 .Sh FILES
 .Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
@@ -176,6 +198,21 @@ by the
 key is enough \- see the previous example for details.
 .Pp
 .Dl # wsconsctl keyboard.encoding=us.swapctrlcaps
+.Pp
+Update the keyboard mapping so that the @ symbol is output when the
+key combination
+.Ar AltGr
++
+.Ar L
+is pressed as well as a few other tweaks for a German Apple keyboard.
+Note that the 7 key defines behaviour for all key combinations.
+.Pp
+.Dl # wsconsctl keyboard.map+="keycode 15 = l L at"
+.Dl # wsconsctl keyboard.map+="keycode 34 = 5 percent bracketleft"
+.Dl # wsconsctl keyboard.map+="keycode 35 = 6 ampersand bracketright"
+.Dl # wsconsctl keyboard.map+="keycode 36 = 7 slash bar backslash"
+.Dl # wsconsctl keyboard.map+="keycode 37 = 8 parenleft braceleft"
+.Dl # wsconsctl keyboard.map+="keycode 38 = 9 parenright braceright"
 .Pp
 Set the bell pitch to be 1200:
 .Pp
