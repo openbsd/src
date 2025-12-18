@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.184 2025/12/10 08:38:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.185 2025/12/18 16:56:36 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1233,6 +1233,7 @@ uvm_pagewire(struct vm_page *pg)
 		uvm_unlock_pageq();
 		atomic_inc_int(&uvmexp.wired);
 	}
+	KASSERT((pg->pg_flags & (PQ_INACTIVE|PQ_ACTIVE)) == 0);
 	pg->wire_count++;
 }
 
@@ -1277,11 +1278,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 	/* Make sure next access to this page will fault. */
 	pmap_page_protect(pg, PROT_NONE);
 
-	if (pg->pg_flags & PQ_ACTIVE) {
-		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
-		uvmexp.active--;
-	}
+	uvm_pagedequeue(pg);
 	TAILQ_INSERT_TAIL(&uvm.page_inactive, pg, pageq);
 	atomic_setbits_int(&pg->pg_flags, PQ_INACTIVE);
 	uvmexp.inactive++;
@@ -1326,6 +1323,7 @@ uvm_pagedequeue(struct vm_page *pg)
 {
 	KASSERT(uvm_page_owner_locked_p(pg, FALSE));
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+	KASSERT(pg->wire_count == 0);
 
 	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);

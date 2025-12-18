@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.78 2025/11/13 10:49:49 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.79 2025/12/18 16:56:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -2337,6 +2337,10 @@ uvm_pmr_cache_put(struct vm_page *pg)
 		uvm_pmr_freepages(pg, 1);
 		return;
 	}
+
+	KASSERT(pg->wire_count == 0);
+	KASSERT(pg->uanon == (void*)0xdeadbeef || pg->uanon == NULL);
+	KASSERT(pg->uobject == (void*)0xdeadbeef || pg->uobject == NULL);
 
 	/*
 	 * XXX The buffer flipper (incorrectly?) allocates & frees pages
