@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.h,v 1.20 2023/10/27 19:18:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.h,v 1.21 2025/12/18 16:05:18 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.h,v 1.5 2000/01/11 06:57:51 chs Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 
 #ifdef _KERNEL
 
+int			uvm_swap_dropcluster(struct vm_page **, int, int);
 int			uvm_swap_get(struct vm_page *, int, int);
 int			uvm_swap_put(int, struct vm_page **, int, int);
 int			uvm_swap_alloc(int *, boolean_t);

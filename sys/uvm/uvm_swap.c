@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.176 2025/09/20 13:53:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.177 2025/12/18 16:05:18 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1831,8 +1831,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 
 		/* dispose of pages we dont use anymore */
 		opages = npages;
-		uvm_pager_dropcluster(NULL, NULL, pps, &opages,
-				      PGO_PDFREECLUST);
+		uvm_swap_dropcluster(pps, opages, 0);
 
 		kva = bouncekva;
 	}

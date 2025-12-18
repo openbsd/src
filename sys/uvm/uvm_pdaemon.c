@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.141 2025/12/10 08:49:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.142 2025/12/18 16:05:18 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -477,15 +477,14 @@ swapcluster_add(struct swapcluster *swc, struct vm_page *pg)
 	return 0;
 }
 
-void
+int
 swapcluster_flush(struct swapcluster *swc)
 {
-	int slot;
-	int nused;
-	int nallocated;
+	int slot, nused, nallocated;
+	int result;
 
 	if (swc->swc_slot == 0)
-		return;
+		return 0; // XXX
 	KASSERT(swc->swc_nused <= swc->swc_nallocated);
 
 	slot = swc->swc_slot;
@@ -494,6 +493,24 @@ swapcluster_flush(struct swapcluster *swc)
 
 	if (nused < nallocated)
 		uvm_swap_free(slot + nused, nallocated - nused);
+
+	uvmexp.pdpageouts++;
+	result = uvm_swap_put(slot, swc->swc_pages, nused, 0);
+	if (result != VM_PAGER_PEND) {
+		KASSERT(result == VM_PAGER_AGAIN);
+		uvm_swap_dropcluster(swc->swc_pages, nused, ENOMEM);
+		/*  for transient failures, free all the swslots */
+		/* XXX daddr_t -> int */
+		uvm_swap_free(slot, nused);
+	}
+
+	/*
+	 * zero swslot to indicate that we are
+	 * no longer building a swap-backed cluster.
+	 */
+	swapcluster_init(swc);
+
+	return result;
 }
 
 static inline int
@@ -589,7 +606,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 	struct rwlock *slock;
 	struct vm_anon *anon;
 	boolean_t swap_backed;
-	vaddr_t start;
 	int dirtyreacts;
 
 	/*
@@ -830,151 +846,41 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 		 * now consider doing the pageout.
 		 *
 		 * for swap-backed pages, we do the pageout if we have either
-		 * filled the cluster (in which case (swnpages == swcpages) or
-		 * run out of pages (p == NULL).
+		 * filled the cluster or run out of pages.
 		 *
 		 * for object pages, we always do the pageout.
 		 */
+		uvmexp.pdpageouts++;
 		if (swap_backed) {
+			uvm_unlock_pageq();
 			/* starting I/O now... set up for it */
 			npages = swc.swc_nused;
-			ppsp = swc.swc_pages;
-			/* for swap-backed pages only */
-			start = (vaddr_t) swc.swc_slot;
-
-			/* if this is final pageout we could have a few
-			 * extra swap blocks */
-			swapcluster_flush(&swc);
+			result = swapcluster_flush(&swc);
 		} else {
 			/* normal object pageout */
 			ppsp = pps;
-			npages = sizeof(pps) / sizeof(struct vm_page *);
-			/* not looked at because PGO_ALLPAGES is set */
-			start = 0;
-		}
+			npages = nitems(pps);
 
-		/*
-		 * now do the pageout.
-		 *
-		 * for swap_backed pages we have already built the cluster.
-		 * for !swap_backed pages, uvm_pager_put will call the object's
-		 * "make put cluster" function to build a cluster on our behalf.
-		 *
-		 * we pass the PGO_PDFREECLUST flag to uvm_pager_put to instruct
-		 * it to free the cluster pages for us on a successful I/O (it
-		 * always does this for un-successful I/O requests).  this
-		 * allows us to do clustered pageout without having to deal
-		 * with cluster pages at this level.
-		 *
-		 * note locking semantics of uvm_pager_put with PGO_PDFREECLUST:
-		 *  IN: locked: page queues
-		 * OUT: locked: 
-		 *     !locked: pageqs
-		 */
-
-		uvmexp.pdpageouts++;
-		result = uvm_pager_put(swap_backed ? NULL : uobj, p,
-		    &ppsp, &npages, PGO_ALLPAGES|PGO_PDFREECLUST, start, 0);
-
-		/*
-		 * if we did i/o to swap, zero swslot to indicate that we are
-		 * no longer building a swap-backed cluster.
-		 */
-		if (swap_backed)
-			swapcluster_init(&swc);	/* done with this cluster */
-
-		/*
-		 * first, we check for VM_PAGER_PEND which means that the
-		 * async I/O is in progress and the async I/O done routine
-		 * will clean up after us.   in this case we move on to the
-		 * next page.
-		 */
-		if (result == VM_PAGER_PEND) {
-			atomic_add_int(&uvmexp.paging, npages);
-			uvm_lock_pageq();
-			uvmexp.pdpending++;
-			continue;
-		}
-
-		/* clean up "p" if we have one */
-		if (p) {
 			/*
-			 * the I/O request to "p" is done and uvm_pager_put
-			 * has freed any cluster pages it may have allocated
-			 * during I/O.  all that is left for us to do is
-			 * clean up page "p" (which is still PG_BUSY).
-			 *
-			 * our result could be one of the following:
-			 *   VM_PAGER_OK: successful pageout
-			 *
-			 *   VM_PAGER_AGAIN: tmp resource shortage, we skip
-			 *     to next page
-			 *   VM_PAGER_{FAIL,ERROR,BAD}: an error.   we
-			 *     "reactivate" page to get it out of the way (it
-			 *     will eventually drift back into the inactive
-			 *     queue for a retry).
-			 *   VM_PAGER_UNLOCK: should never see this as it is
-			 *     only valid for "get" operations
+			 * uvm_pager_put() will call the object's "make put
+			 * cluster" function to build a cluster on our behalf.
+			 * we pass the PGO_PDFREECLUST flag to uvm_pager_put()
+			 * to instruct it to free the cluster pages for us on
+			 * a successful I/O (it always does this for un-
+			 * successful I/O requests).  this allows us to do
+			 * clustered pageout without having to deal with
+			 * cluster pages at this level.
 			 */
-
-			/* relock p's object: page queues not lock yet, so
-			 * no need for "try" */
-
-			/* !swap_backed case: already locked... */
-			if (swap_backed) {
-				rw_enter(slock, RW_WRITE);
-			}
-
-#ifdef DIAGNOSTIC
-			if (result == VM_PAGER_UNLOCK)
-				panic("pagedaemon: pageout returned "
-				    "invalid 'unlock' code");
-#endif
-
-			/* handle PG_WANTED now */
-			if (p->pg_flags & PG_WANTED)
-				wakeup(p);
-
-			atomic_clearbits_int(&p->pg_flags, PG_BUSY|PG_WANTED);
-			UVM_PAGE_OWN(p, NULL);
-
-			/* released during I/O? Can only happen for anons */
-			if (p->pg_flags & PG_RELEASED) {
-				KASSERT(anon != NULL);
-				/*
-				 * remove page so we can get nextpg,
-				 * also zero out anon so we don't use
-				 * it after the free.
-				 */
-				anon->an_page = NULL;
-				p->uanon = NULL;
-
-				uvm_anfree(anon);	/* kills anon */
-				pmap_page_protect(p, PROT_NONE);
-				anon = NULL;
-				/* free released page */
-				uvm_pagefree(p);
-			} else {	/* page was not released during I/O */
-				if (result != VM_PAGER_OK) {
-					/* pageout was a failure... */
-					if (result != VM_PAGER_AGAIN)
-						uvm_pageactivate(p);
-					pmap_clear_reference(p);
-				} else {
-					/* pageout was a success... */
-					pmap_clear_reference(p);
-					pmap_clear_modify(p);
-					atomic_setbits_int(&p->pg_flags,
-					    PG_CLEAN);
-				}
-			}
+			result = uvm_pager_put(uobj, p, &ppsp, &npages,
+			    PGO_ALLPAGES|PGO_PDFREECLUST, 0, 0);
 			rw_exit(slock);
 		}
-		/*
-		 * lock page queues here just so they're always locked
-		 * at the end of the loop.
-		 */
+
 		uvm_lock_pageq();
+		if (result == VM_PAGER_PEND) {
+			atomic_add_int(&uvmexp.paging, npages);
+			uvmexp.pdpending++;
+		}
 	}
 	TAILQ_REMOVE(pglst, &iter, pageq);
 

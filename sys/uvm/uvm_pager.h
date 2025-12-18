@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.33 2021/10/12 07:38:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.34 2025/12/18 16:05:18 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ struct uvm_pagerops {
 #define PGO_DOACTCLUST	0x020	/* flag to mk_pcluster to include active */
 #define PGO_LOCKED	0x040	/* fault data structures are locked [get] */
 #define PGO_PDFREECLUST	0x080	/* daemon's free cluster flag [uvm_pager_put] */
-#define PGO_REALLOCSWAP	0x100	/* reallocate swap area [pager_dropcluster] */
 #define PGO_NOWAIT	0x200	/* do not wait for inode lock */
 
 /* page we are not interested in getting */
@@ -120,8 +119,8 @@ struct uvm_pagerops {
  * prototypes
  */
 
-void		uvm_pager_dropcluster(struct uvm_object *, struct vm_page *,
-		    struct vm_page **, int *, int);
+void		uvm_pager_dropcluster(struct uvm_object *, struct vm_page **,
+		    int *, int);
 void		uvm_pager_init(void);
 int		uvm_pager_put(struct uvm_object *, struct vm_page *, 
 		    struct vm_page ***, int *, int, voff_t, voff_t);
