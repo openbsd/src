@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.51 2025/06/28 13:02:27 jsg Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.52 2025/12/18 03:16:10 jsg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -303,7 +303,7 @@ void
 dispatch(void)
 {
 	int nfds, i, to_msec;
-	struct protocol *l;
+	struct protocol *l, *next;
 	static struct pollfd *fds;
 	static int nfds_max;
 	time_t howlong;
@@ -379,7 +379,8 @@ another:
 		}
 		time(&cur_time);
 
-		for (l = protocols; l; l = l->next) {
+		for (l = protocols; l; l = next) {
+			next = l->next;
 			i = l->pfd;
 			if (i == -1)
 				continue;
