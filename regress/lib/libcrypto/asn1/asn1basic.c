@@ -1,6 +1,7 @@
-/* $OpenBSD: asn1basic.c,v 1.16 2024/02/04 13:07:02 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.17 2025/12/18 09:15:28 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2021 Google, Inc
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -170,6 +171,428 @@ asn1_bit_string_test(void)
  failed:
 	ASN1_BIT_STRING_free(abs);
 	free(p);
+
+	return failed;
+}
+
+static const uint8_t asn1_bit_string_empty[] = {
+	0x03, 0x01, 0x00,
+};
+
+static const uint8_t asn1_bit_string_1101[] = {
+	0x03, 0x02, 0x04, 0xd0,
+};
+
+static const uint8_t asn1_bit_string_1001[] = {
+	0x03, 0x02, 0x04, 0x90,
+};
+
+static const uint8_t asn1_bit_string_1[] = {
+	0x03, 0x02, 0x07, 0x80,
+};
+
+static const uint8_t asn1_bit_string_1zeroes1[] = {
+	0x03, 0x09, 0x00, 0x80, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x01,
+};
+
+static const uint8_t asn1_bit_string_10010[] = {
+	0x03, 0x02, 0x03, 0x90,
+};
+
+static int
+asn1_bit_string_set_bit_test(void)
+{
+	ASN1_BIT_STRING *abs;
+	const unsigned char *p;
+	unsigned char *der = NULL;
+	int der_len = 0;
+	int p_len;
+	int got;
+	int failed = 1;
+
+	/*
+	 * A new ASN1_BIT_STRING serializes to the empty BIT STRING
+	 */
+
+	if ((abs = ASN1_BIT_STRING_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_BIT_STRING_new()\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("new BIT STRING", der, der_len,
+	    asn1_bit_string_empty, sizeof(asn1_bit_string_empty)))
+		goto failed;
+
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 0)) != 0) {
+		fprintf(stderr, "FAIL: new BIT STRING bit 0: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 100)) != 0) {
+		fprintf(stderr, "FAIL: new BIT STRING bit 100: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+
+	/*
+	 * Now set a few bits via ASN1_BIT_STRING_set_bit()
+	 */
+
+	if (!ASN1_BIT_STRING_set_bit(abs, 0, 1) ||
+	    !ASN1_BIT_STRING_set_bit(abs, 1, 1) ||
+	    !ASN1_BIT_STRING_set_bit(abs, 2, 0) ||
+	    !ASN1_BIT_STRING_set_bit(abs, 3, 1)) {
+		fprintf(stderr, "FAIL: BIT STRING 1101 ASN1_BIT_STRING_set_bit\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 1101", der, der_len,
+	    asn1_bit_string_1101, sizeof(asn1_bit_string_1101)))
+		goto failed;
+
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 0)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1101 bit 0: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 1)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1101 bit 1: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 2)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1101 bit 2: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 3)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1101 bit 3: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 4)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1101 bit 4: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+
+	/*
+	 * Bits that were set may be cleared.
+	 */
+
+	if (!ASN1_BIT_STRING_set_bit(abs, 1, 0)) {
+		fprintf(stderr, "FAIL: BIT STRING 1101, clear bit 1\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 1001", der, der_len,
+	    asn1_bit_string_1001, sizeof(asn1_bit_string_1001)))
+		goto failed;
+
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 0)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1001 bit 0: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 1)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1001 bit 1: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 2)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1001 bit 2: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 3)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1001 bit 3: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 4)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1001 bit 4: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+
+	/*
+	 * Clearing trailing bits truncates the string.
+	 */
+
+	if (!ASN1_BIT_STRING_set_bit(abs, 3, 0)) {
+		fprintf(stderr, "FAIL: BIT STRING 1001, clear bit 3\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 1", der, der_len,
+	    asn1_bit_string_1, sizeof(asn1_bit_string_1)))
+		goto failed;
+
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 0)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1 bit 0: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 1)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1 bit 1: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 2)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1 bit 2: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 3)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1 bit 3: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 4)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1 bit 4: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+
+	/*
+	 * Bits may be set beyond the end of the string.
+	 */
+
+	if (!ASN1_BIT_STRING_set_bit(abs, 63, 1)) {
+		fprintf(stderr, "FAIL: BIT STRING 1 set bit 63\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 1zeroes1", der, der_len,
+	    asn1_bit_string_1zeroes1, sizeof(asn1_bit_string_1zeroes1)))
+		goto failed;
+
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 0)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes1 bit 0: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 1)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes1 bit 1: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 62)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes1 bit 62: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 63)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes1 bit 63: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 64)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes1 bit 64: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+
+	/*
+	 * We can truncate the string back down again.
+	 */
+
+	if (!ASN1_BIT_STRING_set_bit(abs, 63, 0)) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes1, clear bit 63\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 1zeroes", der, der_len,
+	    asn1_bit_string_1, sizeof(asn1_bit_string_1)))
+		goto failed;
+
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 0)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes bit 0: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 1)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes bit 1: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 62)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes bit 62: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 63)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes bit 63: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 64)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes bit 64: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+
+	/*
+	 * ASN1_BIT_STRING_set_bit() truncation also happens for a parsed string.
+	 */
+
+	ASN1_BIT_STRING_free(abs);
+	abs = NULL;
+
+	p = asn1_bit_string_1zeroes1;
+	p_len = sizeof(asn1_bit_string_1zeroes1);
+	if ((abs = d2i_ASN1_BIT_STRING(NULL, &p, p_len)) == NULL) {
+		fprintf(stderr, "FAIL: BIT STRING 1zereos1 d2i_ASN1_BIT_STRING\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 1zeroes1 (after d2i)", der, der_len,
+	    asn1_bit_string_1zeroes1, sizeof(asn1_bit_string_1zeroes1)))
+		goto failed;
+
+	if (!ASN1_BIT_STRING_set_bit(abs, 63, 0)) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes1 (after d2i), clear bit 63\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 1zeroes (after d2i)", der, der_len,
+	    asn1_bit_string_1, sizeof(asn1_bit_string_1)))
+		goto failed;
+
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 0)) != 1) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes (after d2i) bit 0: want %d, got %d\n",
+		    1, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 1)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes (after d2i) bit 1: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 62)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes (after d2i) bit 62: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 63)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes (after d2i) bit 63: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+	if ((got = ASN1_BIT_STRING_get_bit(abs, 64)) != 0) {
+		fprintf(stderr, "FAIL: BIT STRING 1zeroes (after d2i) bit 64: want %d, got %d\n",
+		    0, got);
+		goto failed;
+	}
+
+	/*
+	 * A parsed bit string keeps its trailing zero bits.
+	 */
+
+	ASN1_BIT_STRING_free(abs);
+	abs = NULL;
+
+	p = asn1_bit_string_10010;
+	p_len = sizeof(asn1_bit_string_10010);
+	if ((abs = d2i_ASN1_BIT_STRING(NULL, &p, p_len)) == NULL) {
+		fprintf(stderr, "FAIL: BIT STRING 10010 d2i_ASN1_BIT_STRING\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 10010", der, der_len,
+	    asn1_bit_string_10010, sizeof(asn1_bit_string_10010)))
+		goto failed;
+
+	/*
+	 * Of course, ASN1_BIT_STRING_set_bit() still truncates, even if it's
+	 * a noop.
+	 */
+
+	if (!ASN1_BIT_STRING_set_bit(abs, 0, 1)) {
+		fprintf(stderr, "FAIL: BIT STRING 10010 set bit 0 to 1\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING 10010 after set bit", der, der_len,
+	    asn1_bit_string_1001, sizeof(asn1_bit_string_1001)))
+		goto failed;
+
+	failed = 0;
+
+ failed:
+	ASN1_BIT_STRING_free(abs);
+	freezero(der, der_len);
 
 	return failed;
 }
@@ -1129,6 +1552,7 @@ main(int argc, char **argv)
 	int failed = 0;
 
 	failed |= asn1_bit_string_test();
+	failed |= asn1_bit_string_set_bit_test();
 	failed |= asn1_boolean_test();
 	failed |= asn1_integer_test();
 	failed |= asn1_string_test();
