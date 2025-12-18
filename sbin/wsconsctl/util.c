@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.70 2024/01/19 17:51:15 kettenis Exp $ */
+/*	$OpenBSD: util.c,v 1.71 2025/12/18 09:47:20 helg Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -172,7 +172,8 @@ static const struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_RADEONDRM,	"radeondrm" },
 	{ WSDISPLAY_TYPE_EFIFB,		"efifb" },
 	{ WSDISPLAY_TYPE_KMS,		"kms" },
-	{ WSDISPLAY_TYPE_ASTFB,		"astfb" }
+	{ WSDISPLAY_TYPE_ASTFB,		"astfb" },
+	{ WSDISPLAY_TYPE_VIOGPU,	"viogpu" }
 };
 
 static const struct nameint kbdenc_tab[] = {
