@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.144 2025/12/11 06:52:31 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.145 2025/12/19 02:04:13 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 #include <sys/queue.h>
 #include <sys/mbuf.h>
-#include <sys/srp.h>
+#include <sys/smr.h>
 #include <sys/refcnt.h>
 #include <sys/task.h>
 #include <sys/timeout.h>
@@ -144,6 +144,8 @@ enum if_counters {
  * (Would like to call this struct ``if'', but C isn't PL/1.)
  */
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
+struct carp_softc;
+SMR_LIST_HEAD(carp_iflist, carp_softc);
 
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* [I] lower-level data for this if */
@@ -166,9 +168,11 @@ struct ifnet {				/* and the entries */
 	caddr_t if_mcast6;		/* used by IPv6 multicast code */
 	caddr_t	if_pf_kif;		/* pf interface abstraction */
 	union {
-		struct srpl carp_s;	/* carp if list (used by !carp ifs) */
-		unsigned int carp_idx;	/* index of carpdev (used by carp
-						ifs) */
+		/* carp if list (used by IFT_ETHER) */
+		struct carp_iflist carp_s;
+
+		/* index of carpdev (used by IFT_CARP) */
+		unsigned int carp_idx;
 	} if_carp_ptr;
 #define if_carp		if_carp_ptr.carp_s
 #define if_carpdevidx	if_carp_ptr.carp_idx

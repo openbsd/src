@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.307 2025/12/11 06:11:42 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.308 2025/12/19 02:04:13 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -488,8 +488,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 		/*
 		 * If it's not for this port, it could be for carp(4).
 		 */
-		if (ifp->if_type != IFT_CARP &&
-		    !SRPL_EMPTY_LOCKED(&ifp->if_carp)) {
+		if (ifp->if_type == IFT_ETHER &&
+		    !SMR_LIST_EMPTY_LOCKED(&ifp->if_carp)) {
 			m = carp_input(ifp, m, dst, ns);
 			if (m == NULL)
 				return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.371 2025/11/08 00:25:10 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.372 2025/12/19 02:04:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -33,6 +33,8 @@
  *	- support for hardware checksum calculations;
  *
  */
+
+#include "bridge.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +129,7 @@ struct carp_softc {
 	struct task sc_itask;
 #endif /* INET6 */
 
-	SRPL_ENTRY(carp_softc) sc_list;
+	SMR_LIST_ENTRY(carp_softc) sc_list;
 	struct refcnt sc_refcnt;
 
 	int sc_suppress;
@@ -168,12 +170,6 @@ struct carp_softc {
 	LIST_HEAD(__carp_mchead, carp_mc_entry)	carp_mc_listhead;
 	struct carp_vhost_entry *cur_vhe; /* current active vhe */
 };
-
-void	carp_sc_ref(void *, void *);
-void	carp_sc_unref(void *, void *);
-
-struct srpl_rc carp_sc_rc =
-    SRPL_RC_INITIALIZER(carp_sc_ref, carp_sc_unref, NULL);
 
 int carpctl_allow = 1;		/* [a] */
 int carpctl_preempt = 0;	/* [a] */
@@ -227,7 +223,7 @@ void	carp_timer_down(void *);
 void	carp_master_down(struct carp_vhost_entry *);
 int	carp_ioctl(struct ifnet *, u_long, caddr_t);
 int	carp_vhids_ioctl(struct carp_softc *, struct carpreq *);
-int	carp_check_dup_vhids(struct carp_softc *, struct srpl *,
+int	carp_check_dup_vhids(struct carp_softc *, struct carp_iflist *,
 	    struct carpreq *);
 void	carp_ifgroup_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_ifgattr_ioctl(struct ifnet *, u_long, caddr_t);
@@ -459,7 +455,7 @@ carp_proto_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto)
 	case IFT_CARP:
 		break;
 	case IFT_ETHER:
-		if (ismulti || !SRPL_EMPTY_LOCKED(&ifp->if_carp))
+		if (ismulti || !SMR_LIST_EMPTY_LOCKED(&ifp->if_carp))
 			break;
 		/* FALLTHROUGH */
 	default:
@@ -602,27 +598,26 @@ carp_proto_input_c(struct ifnet *ifp, struct mbuf *m, struct carp_header *ch,
     int ismulti, sa_family_t af)
 {
 	struct carp_softc *sc;
-	struct ifnet *ifp0;
+	struct ifnet *ifp0 = NULL;
+	struct carp_iflist *cif;
 	struct carp_vhost_entry *vhe;
 	struct timeval sc_tv, ch_tv;
-	struct srpl *cif;
 
 	KERNEL_ASSERT_LOCKED(); /* touching if_carp + carp_vhosts */
-
-	ifp0 = if_get(ifp->if_carpdevidx);
 
 	if (ifp->if_type == IFT_CARP) {
 		/*
 		 * If the parent of this carp(4) got destroyed while
 		 * `m' was being processed, silently drop it.
 		 */
+		ifp0 = if_get(ifp->if_carpdevidx);
 		if (ifp0 == NULL)
 			goto rele;
 		cif = &ifp0->if_carp;
 	} else
 		cif = &ifp->if_carp;
 
-	SRPL_FOREACH_LOCKED(sc, cif, sc_list) {
+	SMR_LIST_FOREACH_LOCKED(sc, cif, sc_list) {
 		if (af == AF_INET &&
 		    ismulti != IN_MULTICAST(sc->sc_peer.s_addr))
 			continue;
@@ -857,7 +852,7 @@ carp_new_vhost(struct carp_softc *sc, int vhid, int advskew)
 	if (vhe == NULL)
 		return (ENOMEM);
 
-	carp_sc_ref(NULL, sc); /* give a sc ref to the vhe */
+	refcnt_take(&sc->sc_refcnt); /* give a sc ref to the vhe */
 	vhe->parent_sc = sc;
 	vhe->vhid = vhid;
 	vhe->advskew = advskew;
@@ -929,7 +924,6 @@ carpdetach(void *arg)
 {
 	struct carp_softc *sc = arg;
 	struct ifnet *ifp0;
-	struct srpl *cif;
 
 	carp_del_all_timeouts(sc);
 
@@ -949,10 +943,11 @@ carpdetach(void *arg)
 
 	KERNEL_ASSERT_LOCKED(); /* touching if_carp */
 
-	cif = &ifp0->if_carp;
-
-	SRPL_REMOVE_LOCKED(&carp_sc_rc, cif, sc, carp_softc, sc_list);
+	SMR_LIST_REMOVE_LOCKED(sc, sc_list);
 	sc->sc_carpdevidx = 0;
+
+	smr_barrier();
+	refcnt_rele_wake(&sc->sc_refcnt);
 
 	if_linkstatehook_del(ifp0, &sc->sc_ltask);
 	if_detachhook_del(ifp0, &sc->sc_dtask);
@@ -975,7 +970,7 @@ carp_destroy_vhosts(struct carp_softc *sc)
 
 	while ((vhe = nvhe) != NULL) {
 		nvhe = SMR_SLIST_NEXT_LOCKED(vhe, vhost_entries);
-		carp_sc_unref(NULL, vhe->parent_sc);
+		refcnt_rele_wake(&vhe->parent_sc->sc_refcnt);
 		free(vhe, M_DEVBUF, sizeof(*vhe));
 	}
 }
@@ -1002,8 +997,7 @@ carp_prepare_ad(struct mbuf *m, struct carp_vhost_entry *vhe,
 void
 carp_send_ad_all(void)
 {
-	struct ifnet *ifp0;
-	struct srpl *cif;
+	struct ifnet *ifp;
 	struct carp_softc *vh;
 
 	KERNEL_ASSERT_LOCKED(); /* touching if_carp */
@@ -1011,16 +1005,14 @@ carp_send_ad_all(void)
 	if (carp_send_all_recur > 0)
 		return;
 	++carp_send_all_recur;
-	TAILQ_FOREACH(ifp0, &ifnetlist, if_list) {
-		if (ifp0->if_type != IFT_ETHER)
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
+		if (ifp->if_type != IFT_CARP)
 			continue;
 
-		cif = &ifp0->if_carp;
-		SRPL_FOREACH_LOCKED(vh, cif, sc_list) {
-			if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
-			    (IFF_UP|IFF_RUNNING)) {
-				carp_vhe_send_ad_all(vh);
-			}
+		vh = ifp->if_softc;
+		if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
+		    (IFF_UP|IFF_RUNNING)) {
+			carp_vhe_send_ad_all(vh);
 		}
 	}
 	--carp_send_all_recur;
@@ -1346,18 +1338,18 @@ carp_iamatch(struct ifnet *ifp)
 	return (match);
 }
 
+#if NBRIDGE > 0
 int
-carp_ourether(struct ifnet *ifp, uint8_t *ena)
+carp_ourether(struct ifnet *ifp0, uint8_t *ena)
 {
-	struct srpl *cif = &ifp->if_carp;
 	struct carp_softc *sc;
-	struct srp_ref sr;
-	int match = 0;
 	uint64_t dst = ether_addr_to_e64((struct ether_addr *)ena);
+	int match = 0;
 
-	KASSERT(ifp->if_type == IFT_ETHER);
+	KASSERT(ifp0->if_type == IFT_ETHER);
 
-	SRPL_FOREACH(sc, &sr, cif, sc_list) {
+	smr_read_enter();
+	SMR_LIST_FOREACH(sc, &ifp0->if_carp, sc_list) {
 		if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 		    (IFF_UP|IFF_RUNNING))
 			continue;
@@ -1366,10 +1358,11 @@ carp_ourether(struct ifnet *ifp, uint8_t *ena)
 			break;
 		}
 	}
-	SRPL_LEAVE(&sr);
+	smr_read_leave();
 
 	return (match);
 }
+#endif /* NBRIDGE > 0 */
 
 int
 carp_vhe_match(struct carp_softc *sc, uint64_t dst)
@@ -1390,13 +1383,12 @@ struct mbuf *
 carp_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst,
     struct netstack *ns)
 {
-	struct srpl *cif;
 	struct carp_softc *sc;
-	struct srp_ref sr;
 
-	cif = &ifp0->if_carp;
+	KASSERT(ifp0->if_type == IFT_ETHER);
 
-	SRPL_FOREACH(sc, &sr, cif, sc_list) {
+	smr_read_enter();
+	SMR_LIST_FOREACH(sc, &ifp0->if_carp, sc_list) {
 		if ((sc->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 		    (IFF_UP|IFF_RUNNING))
 			continue;
@@ -1422,17 +1414,15 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst,
 		}
 	}
 
-	if (sc == NULL) {
-		SRPL_LEAVE(&sr);
-
-		if (!ETH64_IS_MULTICAST(dst))
-			return (m);
-
+	if (sc != NULL) {
+		if_vinput(&sc->sc_if, m, ns);
+		m = NULL;
+	} else if (ETH64_IS_MULTICAST(dst)) {
 		/*
 		 * XXX Should really check the list of multicast addresses
 		 * for each CARP interface _before_ copying.
 		 */
-		SRPL_FOREACH(sc, &sr, cif, sc_list) {
+		SMR_LIST_FOREACH(sc, &ifp0->if_carp, sc_list) {
 			struct mbuf *m0;
 
 			if (!(sc->sc_if.if_flags & IFF_UP))
@@ -1444,16 +1434,11 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst,
 
 			if_vinput(&sc->sc_if, m0, ns);
 		}
-		SRPL_LEAVE(&sr);
-
-		return (m);
 	}
-
-	if_vinput(&sc->sc_if, m, ns);
 out:
-	SRPL_LEAVE(&sr);
+	smr_read_leave();
 
-	return (NULL);
+	return (m);
 }
 
 int
@@ -1667,18 +1652,19 @@ carp_multicast_cleanup(struct carp_softc *sc)
 int
 carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 {
-	struct srpl *cif;
+	struct carp_iflist *cif;
 	struct carp_softc *vr, *last = NULL, *after = NULL;
 	int myself = 0, error = 0;
 
-	KASSERT(ifp0->if_index != sc->sc_carpdevidx);
 	KERNEL_ASSERT_LOCKED(); /* touching if_carp */
+
+	if (ifp0->if_type != IFT_ETHER)
+		return (EINVAL);
 
 	if ((ifp0->if_flags & IFF_MULTICAST) == 0)
 		return (EADDRNOTAVAIL);
 
-	if (ifp0->if_type != IFT_ETHER)
-		return (EINVAL);
+	KASSERT(ifp0->if_index != sc->sc_carpdevidx);
 
 	cif = &ifp0->if_carp;
 	if (carp_check_dup_vhids(sc, cif, NULL))
@@ -1699,7 +1685,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	sc->sc_if.if_capabilities = ifp0->if_capabilities &
 	    (IFCAP_CSUM_MASK | IFCAP_TSOv4 | IFCAP_TSOv6);
 
-	SRPL_FOREACH_LOCKED(vr, cif, sc_list) {
+	SMR_LIST_FOREACH_LOCKED(vr, cif, sc_list) {
 		struct carp_vhost_entry *vrhead, *schead;
 		last = vr;
 
@@ -1713,16 +1699,14 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	}
 
 	if (!myself) {
+		refcnt_take(&sc->sc_refcnt);
 		/* We're trying to keep things in order */
 		if (last == NULL) {
-			SRPL_INSERT_HEAD_LOCKED(&carp_sc_rc, cif,
-			    sc, sc_list);
+			SMR_LIST_INSERT_HEAD_LOCKED(cif, sc, sc_list);
 		} else if (after == NULL) {
-			SRPL_INSERT_AFTER_LOCKED(&carp_sc_rc, last,
-			    sc, sc_list);
+			SMR_LIST_INSERT_AFTER_LOCKED(last, sc, sc_list);
 		} else {
-			SRPL_INSERT_AFTER_LOCKED(&carp_sc_rc, after,
-			    sc, sc_list);
+			SMR_LIST_INSERT_AFTER_LOCKED(after, sc, sc_list);
 		}
 	}
 	if (sc->sc_naddrs || sc->sc_naddrs6)
@@ -2155,7 +2139,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 }
 
 int
-carp_check_dup_vhids(struct carp_softc *sc, struct srpl *cif,
+carp_check_dup_vhids(struct carp_softc *sc, struct carp_iflist *cif,
     struct carpreq *carpr)
 {
 	struct carp_softc *vr;
@@ -2164,7 +2148,7 @@ carp_check_dup_vhids(struct carp_softc *sc, struct srpl *cif,
 
 	KERNEL_ASSERT_LOCKED(); /* touching if_carp + carp_vhosts */
 
-	SRPL_FOREACH_LOCKED(vr, cif, sc_list) {
+	SMR_LIST_FOREACH_LOCKED(vr, cif, sc_list) {
 		if (vr == sc)
 			continue;
 		SMR_SLIST_FOREACH_LOCKED(vhe, &vr->carp_vhosts,
@@ -2197,21 +2181,19 @@ carp_vhids_ioctl(struct carp_softc *sc, struct carpreq *carpr)
 
 	memset(taken_vhids, 0, sizeof(taken_vhids));
 	for (i = 0; carpr->carpr_vhids[i]; i++) {
-		struct ifnet *ifp;
+		struct ifnet *ifp0;
 
 		if (taken_vhids[carpr->carpr_vhids[i]])
 			return (EINVAL);
 		taken_vhids[carpr->carpr_vhids[i]] = 1;
 
-		if ((ifp = if_get(sc->sc_carpdevidx)) != NULL) {
-			struct srpl *cif;
-			cif = &ifp->if_carp;
-			if (carp_check_dup_vhids(sc, cif, carpr)) {
-				if_put(ifp);
+		if ((ifp0 = if_get(sc->sc_carpdevidx)) != NULL) {
+			if (carp_check_dup_vhids(sc, &ifp0->if_carp, carpr)) {
+				if_put(ifp0);
 				return (EINVAL);
 			}
 		}
-		if_put(ifp);
+		if_put(ifp0);
 		if (carpr->carpr_advskews[i] >= 255)
 			return (EINVAL);
 	}
@@ -2658,20 +2640,4 @@ carp_ether_purgemulti(struct carp_softc *sc)
 	}
 
 	if_put(ifp0);
-}
-
-void
-carp_sc_ref(void *null, void *s)
-{
-	struct carp_softc *sc = s;
-
-	refcnt_take(&sc->sc_refcnt);
-}
-
-void
-carp_sc_unref(void *null, void *s)
-{
-	struct carp_softc *sc = s;
-
-	refcnt_rele_wake(&sc->sc_refcnt);
 }
