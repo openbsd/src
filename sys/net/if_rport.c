@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.9 2025/12/11 06:09:36 dlg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.10 2025/12/19 00:58:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -252,10 +252,16 @@ rport_start(struct ifqueue *ifq)
 	struct counters_ref cr;
 	uint64_t *counters;
 
-	ifp0 = if_get(sc->sc_peer_idx);
+	smr_read_enter();
+	ifp0 = if_get_smr(sc->sc_peer_idx);
+	/*
+	 * this code is running in a softnet thread, so it can use
+	 * ifnets without refs.
+	 */
+	smr_read_leave();
+
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
 		ifq_purge(ifq);
-		if_put(ifp0);
 		return;
 	}
 
@@ -313,8 +319,6 @@ rport_start(struct ifqueue *ifq)
 	counters_leave(&cr, ifp0->if_counters);
 
 	if_input_process(ifp0, &ml, ifq->ifq_idx);
-
-	if_put(ifp0);
 }
 
 static void
