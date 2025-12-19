@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.10 2025/12/19 00:58:33 dlg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.11 2025/12/19 01:24:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -392,7 +392,7 @@ rport_set_parent(struct rport_softc *sc, const struct if_parent *p)
 		goto leave;
 	}
 
-	if (ifp0->if_input != rport_input) {
+	if (ifp0->if_enqueue != rport_enqueue) {
 		error = EPROTONOSUPPORT;
 		goto put;
 	}
