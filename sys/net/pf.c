@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1226 2025/12/17 01:42:48 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1227 2025/12/19 00:18:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -8405,24 +8405,24 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	}
 #endif /* INET6 */
 
-	default:
-		if (pd.virtual_proto == IPPROTO_TCP) {
-			if (pd.dir == PF_IN && (pd.hdr.tcp.th_flags &
-			    (TH_SYN|TH_ACK)) == TH_SYN &&
-			    pf_synflood_check(&pd)) {
-				PF_LOCK();
-				have_pf_lock = 1;
-				pf_syncookie_send(&pd, &reason);
-				action = PF_DROP;
-				break;
-			}
-			if ((pd.hdr.tcp.th_flags & TH_ACK) && pd.p_len == 0)
-				pqid = 1;
-			action = pf_normalize_tcp(&pd);
-			if (action == PF_DROP)
-				break;
+	case IPPROTO_TCP:
+		if (pd.dir == PF_IN &&
+		    (pd.hdr.tcp.th_flags & (TH_SYN|TH_ACK)) == TH_SYN &&
+		    pf_synflood_check(&pd)) {
+			PF_LOCK();
+			have_pf_lock = 1;
+			pf_syncookie_send(&pd, &reason);
+			action = PF_DROP;
+			break;
 		}
+		if ((pd.hdr.tcp.th_flags & TH_ACK) && pd.p_len == 0)
+			pqid = 1;
+		action = pf_normalize_tcp(&pd);
+		if (action == PF_DROP)
+			break;
 
+		/* FALLTHROUGH */
+	default:
 		key.af = pd.af;
 		key.proto = pd.virtual_proto;
 		key.rdomain = pd.rdomain;
