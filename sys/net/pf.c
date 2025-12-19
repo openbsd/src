@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1227 2025/12/19 00:18:23 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1228 2025/12/19 00:30:13 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6039,7 +6039,6 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason)
 	int			 copyback = 0;
 	struct pf_state_peer	*src, *dst;
 	int			 action;
-	struct inpcb		*inp = pd->m->m_pkthdr.pf.inp;
 	u_int8_t		 psrc, pdst;
 
 	action = PF_PASS;
@@ -6073,7 +6072,6 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **stp, u_short *reason)
 				pf_update_state_timeout(*stp, PFTM_PURGE);
 				pf_state_unref(*stp);
 				*stp = NULL;
-				pf_mbuf_link_inpcb(pd->m, inp);
 				return (PF_DROP);
 			} else if (dst->state >= TCPS_ESTABLISHED &&
 			    src->state >= TCPS_ESTABLISHED) {
