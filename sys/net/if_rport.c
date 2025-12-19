@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rport.c,v 1.11 2025/12/19 01:24:43 dlg Exp $ */
+/*	$OpenBSD: if_rport.c,v 1.12 2025/12/19 01:30:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -65,7 +65,6 @@ static int	rport_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
 static int	rport_enqueue(struct ifnet *, struct mbuf *);
 static void	rport_start(struct ifqueue *);
-static void	rport_input(struct ifnet *, struct mbuf *, struct netstack *);
 
 static int	rport_up(struct rport_softc *);
 static int	rport_down(struct rport_softc *);
@@ -107,7 +106,7 @@ rport_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_output = rport_output;
 	ifp->if_enqueue = rport_enqueue;
 	ifp->if_qstart = rport_start;
-	ifp->if_input = rport_input;
+	ifp->if_input = p2p_input;
 	ifp->if_rtrequest = p2p_rtrequest;
 	ifp->if_type = IFT_TUNNEL;
 	ifp->if_softc = sc;
@@ -319,34 +318,6 @@ rport_start(struct ifqueue *ifq)
 	counters_leave(&cr, ifp0->if_counters);
 
 	if_input_process(ifp0, &ml, ifq->ifq_idx);
-}
-
-static void
-rport_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
-{
-	void (*input)(struct ifnet *, struct mbuf *, struct netstack *);
-
-	switch (m->m_pkthdr.ph_family) {
-	case AF_INET:
-		input = ipv4_input;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		input = ipv6_input;
-		break;
-#endif
-#ifdef MPLS
-	case AF_MPLS:
-		input = mpls_input;
-		break;
-#endif
-	default:
-		counters_inc(ifp->if_counters, ifc_noproto);
-		m_freem(m);
-		return;
-	}
-
-	if_input_proto(ifp, m, input, ns);
 }
 
 static int
