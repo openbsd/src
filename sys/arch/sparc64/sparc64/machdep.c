@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.218 2024/05/22 05:51:49 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.219 2025/12/19 22:13:36 jan Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -957,6 +957,11 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
  	map->dm_mapsize = 0;
  	map->dm_nsegs = 0;
 
+#ifdef DIAGNOSTIC
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("_bus_dmamap_load_mbuf: no packet header");
+#endif
+
 	if (m->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
@@ -982,9 +987,10 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 #ifdef DIAGNOSTIC
 				printf("_bus_dmamap_load_mbuf: pmap_extract failed %lx\n",
 					vaddr);
+#endif
 				map->_dm_type = 0;
 				map->_dm_source = NULL;
-#endif
+
 				return EINVAL;
 			}
 
@@ -1014,8 +1020,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		}
 	}
 
-	return (bus_dmamap_load_raw(t0, map, segs, i,
-			    (bus_size_t)len, flags));
+	return (bus_dmamap_load_raw(t0, map, segs, i, (bus_size_t)len, flags));
 }
 
 /*
