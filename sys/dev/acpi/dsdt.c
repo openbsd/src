@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.276 2025/11/23 19:56:24 jcs Exp $ */
+/* $OpenBSD: dsdt.c,v 1.277 2025/12/19 13:40:03 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -3176,6 +3176,13 @@ aml_store(struct aml_scope *scope, struct aml_value *lhs , int64_t ival,
 		}
 		aml_copyvalue(node->value, rhs);
 		break;
+	case AML_OBJTYPE_OBJREF:
+		if (lhs->v_objref.type != AMLOP_PACKAGE) {
+			aml_die("Package expected");
+		}
+		aml_freevalue(lhs->v_objref.ref);
+		aml_copyvalue(lhs->v_objref.ref, rhs);
+		break;
 	case AML_OBJTYPE_METHOD:
 		/* Method override */
 		if (rhs->type != AML_OBJTYPE_INTEGER) {
@@ -3807,6 +3814,15 @@ struct aml_value *
 aml_gettgt(struct aml_value *val, int opcode)
 {
 	while (val && val->type == AML_OBJTYPE_OBJREF) {
+		/*
+		 * Stores into package elements need to be handled
+		 * differently than other stores.  Return the
+		 * corresponding object reference such that our caller
+		 * can still recognize them as such.
+		 */
+		if (opcode == AMLOP_STORE &&
+		    val->v_objref.type == AMLOP_PACKAGE)
+			return val;
 		val = val->v_objref.ref;
 	}
 	return val;
@@ -4201,8 +4217,9 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 				my_ret = opargs[0]->v_package[idx];
 				aml_addref(my_ret, "Index.Package");
 			} else {
-				my_ret = aml_allocvalue(AML_OBJTYPE_OBJREF, AMLOP_PACKAGE,
-				    opargs[0]->v_package[idx]);
+				my_ret = aml_allocvalue(AML_OBJTYPE_OBJREF,
+				    AMLOP_PACKAGE, opargs[0]->v_package[idx]);
+				my_ret->v_objref.index = idx;
 				aml_addref(my_ret->v_objref.ref,
 				    "Index.Package");
 			}
