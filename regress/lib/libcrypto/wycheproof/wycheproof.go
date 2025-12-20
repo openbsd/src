@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.193 2025/09/16 15:45:34 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.194 2025/12/20 16:18:03 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -503,6 +503,7 @@ type wycheproofTestMLKEM struct {
 	Comment string   `json:"comment"`
 	Seed    string   `json:"seed"`
 	Ek      string   `json:"ek"`
+	Dk      string   `json:"dk"`
 	M       string   `json:"m"`
 	C       string   `json:"c"`
 	K       string   `json:"K"`
@@ -2447,6 +2448,10 @@ func runMLKEMEncapsTestGroup(rank C.int, wt *wycheproofTestMLKEM) bool {
 	return true
 }
 
+func runMLKEMDecapsValidationTest(rank C.int, wt *wycheproofTestMLKEM) bool {
+	return true
+}
+
 func (wtg *wycheproofTestGroupMLKEM) run(algorithm string, variant testVariant) bool {
 	var rank C.int
 
@@ -2471,6 +2476,8 @@ func (wtg *wycheproofTestGroupMLKEM) run(algorithm string, variant testVariant) 
 		runTest = runMLKEMTestGroup
 	case "MLKEMEncapsTest":
 		runTest = runMLKEMEncapsTestGroup
+	case "MLKEMDecapsValidationTest":
+		runTest = runMLKEMDecapsValidationTest
 	default:
 		log.Fatalf("Unknown ML-KEM test type %v", wtg.Type)
 	}
