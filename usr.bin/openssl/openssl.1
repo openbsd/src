@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.167 2025/06/07 08:29:20 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.168 2025/12/20 07:02:37 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: June 7 2025 $
+.Dd $Mdocdate: December 20 2025 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -931,7 +931,6 @@ but without cipher suite codes.
 .Op Fl certfile Ar file
 .Op Fl certsout Ar file
 .Op Fl cmsout
-.Op Fl compress
 .Op Fl content Ar file
 .Op Fl crlfeol
 .Op Fl data_create
@@ -985,7 +984,6 @@ but without cipher suite codes.
 .Op Fl subject Ar s
 .Op Fl text
 .Op Fl to Ar addr
-.Op Fl uncompress
 .Op Fl verify
 .Op Fl verify_receipt Ar file
 .Op Fl verify_retcode
@@ -996,8 +994,7 @@ but without cipher suite codes.
 The
 .Nm cms
 command handles S/MIME v3.1 mail.
-It can encrypt, decrypt, sign and verify, compress and uncompress S/MIME
-messages.
+It can encrypt, decrypt, sign and verify S/MIME messages.
 .Pp
 The MIME message must be sent without any blank lines between the headers and
 the output.
@@ -1053,12 +1050,6 @@ Output a content from the input CMS Data type.
 Create a CMS DigestedData type.
 .It Fl digest_verify
 Verify a CMS DigestedData type and output the content.
-.It Fl compress
-Create a CMS CompressedData type.
-Must be compiled with zlib support for this option to work.
-.It Fl uncompress
-Uncompress a CMS CompressedData type and output the content.
-Must be compiled with zlib support for this option to work.
 .It Fl EncryptedData_encrypt
 Encrypt a content using supplied symmetric key and algorithm using a
 CMS EncryptedData type.

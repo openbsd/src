@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.39 2025/11/27 08:27:31 tb Exp $ */
+/* $OpenBSD: cms.c,v 1.40 2025/12/20 07:02:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -89,12 +89,10 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
 #define SMIME_DATA_CREATE	(8 | SMIME_OP)
 #define SMIME_DIGEST_VERIFY	(9 | SMIME_IP)
 #define SMIME_DIGEST_CREATE	(10 | SMIME_OP)
-#define SMIME_UNCOMPRESS	(11 | SMIME_IP)
-#define SMIME_COMPRESS		(12 | SMIME_OP)
-#define SMIME_ENCRYPTED_DECRYPT	(13 | SMIME_IP)
-#define SMIME_ENCRYPTED_ENCRYPT	(14 | SMIME_OP)
-#define SMIME_SIGN_RECEIPT	(15 | SMIME_IP | SMIME_OP)
-#define SMIME_VERIFY_RECEIPT	(16 | SMIME_IP)
+#define SMIME_ENCRYPTED_DECRYPT	(11 | SMIME_IP)
+#define SMIME_ENCRYPTED_ENCRYPT	(12 | SMIME_OP)
+#define SMIME_SIGN_RECEIPT	(13 | SMIME_IP | SMIME_OP)
+#define SMIME_VERIFY_RECEIPT	(14 | SMIME_IP)
 
 int verify_err = 0;
 
@@ -602,13 +600,6 @@ static const struct option cms_options[] = {
 		.value = SMIME_CMSOUT,
 	},
 	{
-		.name = "compress",
-		.desc = "Create CMS CompressedData type",
-		.type = OPTION_VALUE,
-		.opt.value = &cfg.operation,
-		.value = SMIME_COMPRESS,
-	},
-	{
 		.name = "content",
 		.argname = "file",
 		.desc = "Supply or override content for detached signature",
@@ -998,13 +989,6 @@ static const struct option cms_options[] = {
 		.opt.arg = &cfg.to,
 	},
 	{
-		.name = "uncompress",
-		.desc = "Uncompress CMS CompressedData type",
-		.type = OPTION_VALUE,
-		.opt.value = &cfg.operation,
-		.value = SMIME_UNCOMPRESS,
-	},
-	{
 		.name = "verify",
 		.desc = "Verify signed message",
 		.type = OPTION_VALUE,
@@ -1138,7 +1122,7 @@ cms_usage(void)
 	    "    -camellia192 | -camellia256 | -des | -des3 |\n"
 	    "    -rc2-40 | -rc2-64 | -rc2-128] [-CAfile file]\n"
 	    "    [-CApath directory] [-CRLfile file] [-binary]\n"
-	    "    [-certfile file] [-certsout file] [-cmsout] [-compress]\n"
+	    "    [-certfile file] [-certsout file] [-cmsout]\n"
 	    "    [-content file] [-crlfeol] [-data_create] [-data_out]\n"
 	    "    [-debug_decrypt] [-decrypt] [-digest_create] [-digest_verify]\n"
 	    "    [-econtent_type type] [-encrypt] [-EncryptedData_decrypt]\n"
@@ -1156,7 +1140,7 @@ cms_usage(void)
 	    "    [-receipt_request_to addr] [-recip file] [-resign]\n"
 	    "    [-secretkey key] [-secretkeyid id] [-sign] [-sign_receipt]\n"
 	    "    [-signer file] [-stream | -indef | -noindef] [-subject s]\n"
-	    "    [-text] [-to addr] [-uncompress] [-verify]\n"
+	    "    [-text] [-to addr] [-verify]\n"
 	    "    [-verify_receipt file] [-verify_retcode] [cert.pem ...]\n\n");
 
 	options_usage(cms_options);
@@ -1482,8 +1466,6 @@ cms_main(int argc, char **argv)
 	} else if (cfg.operation == SMIME_DIGEST_CREATE) {
 		cms = CMS_digest_create(in, cfg.sign_md,
 		    cfg.flags);
-	} else if (cfg.operation == SMIME_COMPRESS) {
-		cms = CMS_compress(in, -1, cfg.flags);
 	} else if (cfg.operation == SMIME_ENCRYPT) {
 		int i;
 		cfg.flags |= CMS_PARTIAL;
@@ -1690,9 +1672,6 @@ cms_main(int argc, char **argv)
 		}
 	} else if (cfg.operation == SMIME_DATAOUT) {
 		if (!CMS_data(cms, out, cfg.flags))
-			goto end;
-	} else if (cfg.operation == SMIME_UNCOMPRESS) {
-		if (!CMS_uncompress(cms, indata, out, cfg.flags))
 			goto end;
 	} else if (cfg.operation == SMIME_DIGEST_VERIFY) {
 		if (CMS_digest_verify(cms, indata, out, cfg.flags) > 0)
