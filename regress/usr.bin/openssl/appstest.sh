@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.68 2025/12/04 21:30:48 beck Exp $
+# $OpenBSD: appstest.sh,v 1.69 2025/12/20 07:04:28 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1188,10 +1188,6 @@ __EOF__
 
 	diff -b $cms_dgv $cms_txt
 	check_exit_status $?
-
-	# compress
-
-	# uncompress
 
 	# EncryptedData_encrypt
 	start_message "cms ... EncryptedData_encrypt"
