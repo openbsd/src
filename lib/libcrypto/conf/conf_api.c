@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.27 2025/12/20 21:04:07 tb Exp $ */
+/* $OpenBSD: conf_api.c,v 1.28 2025/12/20 21:05:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include <openssl/conf.h>
 
 #include "conf_local.h"
