@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.26 2025/03/08 09:35:53 tb Exp $ */
+/* $OpenBSD: conf_api.c,v 1.27 2025/12/20 21:04:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,8 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* Part of the code in here was originally in conf.c, which is now removed */
-
 #ifndef CONF_DEBUG
 # undef NDEBUG /* avoid conflicting definitions */
 # define NDEBUG
@@ -77,7 +75,6 @@ static IMPLEMENT_LHASH_DOALL_ARG_FN(value_free_hash, CONF_VALUE,
     LHASH_OF(CONF_VALUE))
 static IMPLEMENT_LHASH_DOALL_FN(value_free_stack, CONF_VALUE)
 
-/* Up until OpenSSL 0.9.5a, this was get_section */
 CONF_VALUE *
 _CONF_get_section(const CONF *conf, const char *section)
 {
@@ -229,7 +226,6 @@ value_free_stack_doall(CONF_VALUE *a)
 	free(a);
 }
 
-/* Up until OpenSSL 0.9.5a, this was new_section */
 CONF_VALUE *
 _CONF_new_section(CONF *conf, const char *section)
 {
