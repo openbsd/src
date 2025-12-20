@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.156 2025/11/28 16:10:00 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.157 2025/12/20 23:12:53 tb Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -796,7 +796,7 @@ server_http_time(time_t t, char *tmbuf, size_t len)
 	if (t == -1 || gmtime_r(&t, &tm) == NULL)
 		return (-1);
 	else
-		return (strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm));
+		return (strftime(tmbuf, len, "%a, %d %h %Y %T GMT", &tm));
 }
 
 const char *
