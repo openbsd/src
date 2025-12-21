@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.37 2025/12/21 09:34:28 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.38 2025/12/21 09:44:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -404,8 +404,6 @@ int
 X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
     const unsigned char *bytes, int len)
 {
-	int i;
-
 	if ((ne == NULL) || ((bytes == NULL) && (len != 0)))
 		return (0);
 	if ((type > 0) && (type & MBSTRING_FLAG))
@@ -413,8 +411,7 @@ X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 		    OBJ_obj2nid(ne->object)) ? 1 : 0;
 	if (len < 0)
 		len = strlen((const char *)bytes);
-	i = ASN1_STRING_set(ne->value, bytes, len);
-	if (!i)
+	if (!ASN1_STRING_set(ne->value, bytes, len))
 		return (0);
 	if (type != V_ASN1_UNDEF)
 		ne->value->type = type;
