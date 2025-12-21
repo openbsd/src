@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.28 2025/12/20 21:05:28 tb Exp $ */
+/* $OpenBSD: conf_api.c,v 1.29 2025/12/21 07:31:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,11 +55,6 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-
-#ifndef CONF_DEBUG
-# undef NDEBUG /* avoid conflicting definitions */
-# define NDEBUG
-#endif
 
 #include <stdlib.h>
 #include <string.h>
