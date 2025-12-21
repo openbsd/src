@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.92 2024/04/10 14:55:12 beck Exp $ */
+/* $OpenBSD: asn1.h,v 1.93 2025/12/21 09:37:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,6 @@ extern "C" {
 #define V_ASN1_PRIMITIVE_TAG		0x1f
 #define V_ASN1_PRIMATIVE_TAG		0x1f
 
-#define V_ASN1_APP_CHOOSE		-2	/* let the recipient choose */
 #define V_ASN1_OTHER			-3	/* used in ASN1_TYPE */
 #define V_ASN1_ANY			-4	/* used in ASN1 template code */
 
