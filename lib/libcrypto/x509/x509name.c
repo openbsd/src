@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.36 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.37 2025/12/21 09:34:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -416,12 +416,9 @@ X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
 	i = ASN1_STRING_set(ne->value, bytes, len);
 	if (!i)
 		return (0);
-	if (type != V_ASN1_UNDEF) {
-		if (type == V_ASN1_APP_CHOOSE)
-			ne->value->type = ASN1_PRINTABLE_type(bytes, len);
-		else
-			ne->value->type = type;
-	}
+	if (type != V_ASN1_UNDEF)
+		ne->value->type = type;
+
 	return (1);
 }
 LCRYPTO_ALIAS(X509_NAME_ENTRY_set_data);
