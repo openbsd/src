@@ -1,4 +1,4 @@
-/* $OpenBSD: stack_local.h,v 1.1 2024/03/02 11:11:11 tb Exp $ */
+/* $OpenBSD: stack_local.h,v 1.2 2025/12/21 07:35:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,7 +61,7 @@
 
 struct stack_st {
 	int num;
-	char **data;
+	void **data;
 	int sorted;
 
 	int num_alloc;

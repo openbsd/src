@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.33 2025/01/03 08:04:16 tb Exp $ */
+/* $OpenBSD: stack.c,v 1.34 2025/12/21 07:35:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,17 +86,17 @@ _STACK *
 sk_dup(_STACK *sk)
 {
 	_STACK *ret;
-	char **s;
+	void **s;
 
 	if ((ret = sk_new(sk->comp)) == NULL)
 		goto err;
-	s = reallocarray(ret->data, sk->num_alloc, sizeof(char *));
+	s = reallocarray(ret->data, sk->num_alloc, sizeof(void *));
 	if (s == NULL)
 		goto err;
 	ret->data = s;
 
 	ret->num = sk->num;
-	memcpy(ret->data, sk->data, sizeof(char *) * sk->num);
+	memcpy(ret->data, sk->data, sizeof(void *) * sk->num);
 	ret->sorted = sk->sorted;
 	ret->num_alloc = sk->num_alloc;
 	ret->comp = sk->comp;
@@ -124,7 +124,7 @@ sk_new(int (*c)(const void *, const void *))
 
 	if ((ret = malloc(sizeof(_STACK))) == NULL)
 		goto err;
-	if ((ret->data = reallocarray(NULL, MIN_NODES, sizeof(char *))) == NULL)
+	if ((ret->data = reallocarray(NULL, MIN_NODES, sizeof(void *))) == NULL)
 		goto err;
 	for (i = 0; i < MIN_NODES; i++)
 		ret->data[i] = NULL;
@@ -143,12 +143,12 @@ LCRYPTO_ALIAS(sk_new);
 int
 sk_insert(_STACK *st, void *data, int loc)
 {
-	char **s;
+	void **s;
 
 	if (st == NULL)
 		return 0;
 	if (st->num_alloc <= st->num + 1) {
-		s = reallocarray(st->data, st->num_alloc, 2 * sizeof(char *));
+		s = reallocarray(st->data, st->num_alloc, 2 * sizeof(void *));
 		if (s == NULL)
 			return (0);
 		st->data = s;
@@ -158,7 +158,7 @@ sk_insert(_STACK *st, void *data, int loc)
 		st->data[st->num] = data;
 	else {
 		memmove(&(st->data[loc + 1]), &(st->data[loc]),
-		    sizeof(char *)*(st->num - loc));
+		    sizeof(void *) * (st->num - loc));
 		st->data[loc] = data;
 	}
 	st->num++;
@@ -182,7 +182,7 @@ LCRYPTO_ALIAS(sk_delete_ptr);
 void *
 sk_delete(_STACK *st, int loc)
 {
-	char *ret;
+	void *ret;
 
 	if (!st || (loc < 0) || (loc >= st->num))
 		return NULL;
@@ -190,7 +190,7 @@ sk_delete(_STACK *st, int loc)
 	ret = st->data[loc];
 	if (loc != st->num - 1) {
 		memmove(&(st->data[loc]), &(st->data[loc + 1]),
-		    sizeof(char *)*(st->num - 1 - loc));
+		    sizeof(void *) * (st->num - 1 - loc));
 	}
 	st->num--;
 	return (ret);
@@ -201,7 +201,7 @@ static const void *
 obj_bsearch_ex(const void *key, const void *base_, int num, int size,
     int (*cmp)(const void *, const void *))
 {
-	const char *base = base_;
+	const void *base = base_;
 	int l, h, i, c;
 
 	l = 0;
@@ -244,7 +244,7 @@ sk_find(_STACK *st, void *data)
 	r = obj_bsearch_ex(&data, st->data, st->num, sizeof(void *), st->comp);
 	if (r == NULL)
 		return (-1);
-	return (int)((char **)r - st->data);
+	return (int)((void **)r - st->data);
 }
 LCRYPTO_ALIAS(sk_find);
 
@@ -360,7 +360,7 @@ sk_sort(_STACK *st)
 		 * type** with type**, so we leave the casting until absolutely
 		 * necessary (ie. "now"). */
 		comp_func = (int (*)(const void *, const void *))(st->comp);
-		qsort(st->data, st->num, sizeof(char *), comp_func);
+		qsort(st->data, st->num, sizeof(void *), comp_func);
 		st->sorted = 1;
 	}
 }
