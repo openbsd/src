@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.90 2024/07/20 06:54:15 anton Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.91 2025/12/21 07:26:55 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1171,7 +1171,7 @@ relay_http_time(time_t t, char *tmbuf, size_t len)
 	if (t == -1 || gmtime_r(&t, &tm) == NULL)
 		return (-1);
 	else
-		return (strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm));
+		return (strftime(tmbuf, len, "%a, %d %h %Y %T GMT", &tm));
 }
 
 void
