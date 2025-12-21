@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.17 2025/06/08 22:40:30 schwarze Exp $
+.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.18 2025/12/21 09:36:35 tb Exp $
 .\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\" selective merge up to: OpenSSL ca34e08d Dec 12 07:38:07 2018 +0100
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2025 $
+.Dd $Mdocdate: December 21 2025 $
 .Dt X509_NAME_ENTRY_GET_OBJECT 3
 .Os
 .Sh NAME
@@ -253,14 +253,6 @@ argument and using the
 .Fa nid
 corresponding to
 .Fa ne .
-Otherwise, if the
-.Fa type
-argument is
-.Dv V_ASN1_APP_CHOOSE ,
-the type of
-.Fa ne
-is set to the return value of
-.Xr ASN1_PRINTABLE_type 3 .
 .Pp
 .Fn X509_NAME_ENTRY_create_by_txt ,
 .Fn X509_NAME_ENTRY_create_by_NID ,
