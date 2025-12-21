@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.98 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.99 2025/12/21 07:29:03 tb Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -1162,6 +1162,6 @@ http_time(time_t t, char *tmbuf, size_t len)
 	if (gmtime_r(&t, &tm) == NULL)
 		return 0;
 	else
-		return (strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm));
+		return (strftime(tmbuf, len, "%a, %d %h %Y %T GMT", &tm));
 }
 #endif /* !SMALL */
