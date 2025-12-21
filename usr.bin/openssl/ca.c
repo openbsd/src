@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.63 2025/11/27 08:24:30 tb Exp $ */
+/* $OpenBSD: ca.c,v 1.64 2025/12/21 07:14:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1653,6 +1653,54 @@ certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 }
 
 static int
+is_printablestring_octet(const uint8_t u8)
+{
+	/*
+	 * X.680, 41.4, Table 10 lists the allowed characters in this order.
+	 */
+
+	if (u8 >= 'A' && u8 <= 'Z')
+		return 1;
+	if (u8 >= 'a' && u8 <= 'z')
+		return 1;
+	if (u8 >= '0' && u8 <= '9')
+		return 1;
+
+	return u8 == ' ' || u8 == '\'' || u8 == '(' || u8 == ')' || u8 == '+' ||
+	    u8 == ',' || u8 == '-' || u8 == '.' || u8 == '/' || u8 == ':' ||
+	    u8 == '=' || u8 == '?';
+}
+
+/*
+ * Allows the high bit to be set only for UTF8, BMP and T61 strings, and
+ * checks that a PrintableString only contains the specified characters.
+ */
+static int
+validate_octets(const ASN1_STRING *astr)
+{
+	const uint8_t *buf = ASN1_STRING_get0_data(astr);
+	int type = ASN1_STRING_type(astr);
+	int i;
+
+	if (type == V_ASN1_BMPSTRING || type == V_ASN1_UTF8STRING ||
+	    type == V_ASN1_T61STRING)
+		return 1;
+
+	for (i = 0; i < ASN1_STRING_length(astr); i++) {
+		if (is_printablestring_octet(buf[i]))
+			continue;
+
+		if (type == V_ASN1_PRINTABLESTRING)
+			return 0;
+
+		if ((buf[i] & 0x80) != 0)
+			return 0;
+	}
+
+	return 1;
+}
+
+static int
 do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
     STACK_OF(OPENSSL_STRING) *sigopts, STACK_OF(CONF_VALUE) *policy,
     CA_DB *db, BIGNUM *serial, char *subj, unsigned long chtype, int multirdn,
@@ -1723,18 +1771,12 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 			    "\nemailAddress type needs to be of type IA5STRING\n");
 			goto err;
 		}
-		if ((ASN1_STRING_type(str) != V_ASN1_BMPSTRING) &&
-		    (ASN1_STRING_type(str) != V_ASN1_UTF8STRING)) {
-			j = ASN1_PRINTABLE_type(ASN1_STRING_get0_data(str),
-			    ASN1_STRING_length(str));
-			if (((j == V_ASN1_T61STRING) &&
-			    (ASN1_STRING_type(str) != V_ASN1_T61STRING)) ||
-			    ((j == V_ASN1_IA5STRING) &&
-			    (ASN1_STRING_type(str) == V_ASN1_PRINTABLESTRING))) {
-				BIO_printf(bio_err,
-				    "\nThe string contains characters that are illegal for the ASN.1 type\n");
-				goto err;
-			}
+
+		if (!validate_octets(str)) {
+			BIO_printf(bio_err,
+			    "\nThe string contains characters that are illegal "
+			    "for the ASN.1 type\n");
+			goto err;
 		}
 		if (default_op)
 			old_entry_print(bio_err, obj, str);
