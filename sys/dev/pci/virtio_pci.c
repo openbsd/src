@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.52 2025/08/05 09:48:44 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.53 2025/12/22 20:24:49 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -798,6 +798,7 @@ virtio_pci_negotiate_features(struct virtio_softc *vsc,
 	uint64_t host, negotiated;
 
 	vsc->sc_active_features = 0;
+	vsc->sc_driver_features |= VIRTIO_F_ANY_LAYOUT;
 
 	/*
 	 * We enable indirect descriptors by default. They can be switched

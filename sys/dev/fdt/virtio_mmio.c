@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.23 2025/01/14 14:28:38 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.24 2025/12/22 20:24:49 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -407,6 +407,7 @@ virtio_mmio_negotiate_features(struct virtio_softc *vsc,
 		vsc->sc_driver_features &= ~(VIRTIO_F_RING_EVENT_IDX);
 	}
 
+	vsc->sc_driver_features |= VIRTIO_F_ANY_LAYOUT;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 	    VIRTIO_MMIO_HOST_FEATURES_SEL, 0);
 	host = bus_space_read_4(sc->sc_iot, sc->sc_ioh,

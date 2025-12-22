@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.73 2025/11/24 14:16:17 bluhm Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.74 2025/12/22 20:24:49 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -295,8 +295,6 @@ struct vio_softc {
 #define VIO_DMAMEM_SYNC(vsc, sc, p, size, flags)		\
 	bus_dmamap_sync((vsc)->sc_dmat, (sc)->sc_dma_map,	\
 	    VIO_DMAMEM_OFFSET((sc), (p)), (size), (flags))
-#define VIO_HAVE_MRG_RXBUF(sc)					\
-	((sc)->sc_hdr_size == sizeof(struct virtio_net_hdr))
 
 /* vioq N uses the rx/tx vq pair 2*N and 2*N + 1 */
 #define VIO_VQ2Q(sc, vq)	(&sc->sc_q[vq->vq_index/2])
@@ -1398,7 +1396,9 @@ vio_populate_rx_mbufs(struct vio_softc *sc, struct vio_queue *vioq)
 	int r, done = 0;
 	u_int slots;
 	struct virtqueue *vq = vioq->viq_rxvq;
-	int mrg_rxbuf = VIO_HAVE_MRG_RXBUF(sc);
+	int no_split = virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF) ||
+		virtio_has_feature(vsc, VIRTIO_F_VERSION_1) ||
+		virtio_has_feature(vsc, VIRTIO_F_ANY_LAYOUT);
 
 	MUTEX_ASSERT_LOCKED(&vioq->viq_rxmtx);
 	for (slots = if_rxr_get(&vioq->viq_rxring, vq->vq_num);
@@ -1418,7 +1418,7 @@ vio_populate_rx_mbufs(struct vio_softc *sc, struct vio_queue *vioq)
 			}
 		}
 		r = virtio_enqueue_reserve(vq, slot,
-		    vioq->viq_rxdmamaps[slot]->dm_nsegs + (mrg_rxbuf ? 0 : 1));
+		    vioq->viq_rxdmamaps[slot]->dm_nsegs + (no_split ? 0 : 1));
 		if (r != 0) {
 			vio_free_rx_mbuf(sc, vioq, slot);
 			break;
@@ -1426,13 +1426,13 @@ vio_populate_rx_mbufs(struct vio_softc *sc, struct vio_queue *vioq)
 		bus_dmamap_sync(vsc->sc_dmat, vioq->viq_rxdmamaps[slot], 0,
 		    vioq->viq_rxdmamaps[slot]->dm_mapsize,
 		    BUS_DMASYNC_PREREAD);
-		if (mrg_rxbuf) {
+		if (no_split) {
 			virtio_enqueue(vq, slot, vioq->viq_rxdmamaps[slot], 0);
 		} else {
 			/*
-			 * Buggy kvm wants a buffer of exactly the size of
-			 * the header in this case, so we have to split in
-			 * two.
+			 * Legacy devices without VIRTIO_F_ANY_LAYOUT want a
+			 * buffer of exactly the size of the header in this
+			 * case, so we have to split in two.
 			 */
 			virtio_enqueue_p(vq, slot, vioq->viq_rxdmamaps[slot],
 			    0, sc->sc_hdr_size, 0);
@@ -1526,7 +1526,7 @@ vio_rxeof(struct vio_queue *vioq)
 				    vioq->viq_ifiq->ifiq_idx;
 				SET(m->m_pkthdr.csum_flags, M_FLOWID);
 			}
-			if (VIO_HAVE_MRG_RXBUF(sc))
+			if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF))
 				bufs_left = hdr->num_buffers - 1;
 			else
 				bufs_left = 0;
