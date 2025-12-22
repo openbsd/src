@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.254 2025/12/22 08:39:35 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.255 2025/12/22 08:41:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -804,7 +804,10 @@ status_prompt_redraw(struct client *c)
 
 	n = options_get_number(s->options, "prompt-cursor-colour");
 	sl->active->default_ccolour = n;
-	n = options_get_number(s->options, "prompt-cursor-style");
+	if (c->prompt_mode == PROMPT_COMMAND)
+		n = options_get_number(s->options, "prompt-command-cursor-style");
+	else
+		n = options_get_number(s->options, "prompt-cursor-style");
 	screen_set_cursor_style(n, &sl->active->default_cstyle,
 	    &sl->active->default_mode);
 

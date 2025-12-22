@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1023 2025/12/22 08:35:04 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1024 2025/12/22 08:41:01 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -4693,6 +4693,12 @@ Can be set to zero to disable any timeout.
 Set the colour of the cursor in the command prompt.
 .It Ic prompt-cursor-style Ar style
 Set the style of the cursor in the command prompt.
+See the
+.Ic cursor-style
+options for available styles.
+.It Ic prompt-command-cursor-style Ar style
+Set the style of the cursor in the command prompt when vi keys are enabled and
+the prompt is in command mode.
 See the
 .Ic cursor-style
 options for available styles.
