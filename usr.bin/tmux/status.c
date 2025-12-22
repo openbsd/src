@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.253 2025/11/26 18:57:18 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.254 2025/12/22 08:39:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -936,6 +936,8 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 			return (1);
 		case '\033': /* Escape */
 			c->prompt_mode = PROMPT_COMMAND;
+			if (c->prompt_index != 0)
+				c->prompt_index--;
 			c->flags |= CLIENT_REDRAWSTATUS;
 			return (0);
 		}
@@ -961,9 +963,10 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 		*new_key = 'u'|KEYC_CTRL;
 		return (1);
 	case 'i':
-	case '\033': /* Escape */
 		c->prompt_mode = PROMPT_ENTRY;
 		c->flags |= CLIENT_REDRAWSTATUS;
+		return (0);
+	case '\033': /* Escape */
 		return (0);
 	}
 
