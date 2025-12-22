@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.185 2025/12/18 16:56:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.186 2025/12/22 10:57:14 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1235,6 +1235,7 @@ uvm_pagewire(struct vm_page *pg)
 	}
 	KASSERT((pg->pg_flags & (PQ_INACTIVE|PQ_ACTIVE)) == 0);
 	pg->wire_count++;
+	KASSERT(pg->wire_count > 0);	/* detect wraparound */
 }
 
 /*
@@ -1246,6 +1247,7 @@ void
 uvm_pageunwire(struct vm_page *pg)
 {
 	KASSERT(uvm_page_owner_locked_p(pg, TRUE));
+	KASSERT(pg->wire_count != 0);
 
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
