@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.25 2025/12/13 21:31:46 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.26 2025/12/22 11:07:51 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -565,8 +565,7 @@ smmu_device_map(void *cookie, uint32_t sid, bus_dma_tag_t dmat)
 	if (dom->sd_dmat == NULL) {
 		dom->sd_dmat = malloc(sizeof(*dom->sd_dmat),
 		    M_DEVBUF, M_WAITOK);
-		memcpy(dom->sd_dmat, sc->sc_dmat,
-		    sizeof(*dom->sd_dmat));
+		memcpy(dom->sd_dmat, dmat, sizeof(*dom->sd_dmat));
 		dom->sd_dmat->_cookie = dom;
 		dom->sd_dmat->_dmamap_create = smmu_dmamap_create;
 		dom->sd_dmat->_dmamap_destroy = smmu_dmamap_destroy;
@@ -575,7 +574,6 @@ smmu_device_map(void *cookie, uint32_t sid, bus_dma_tag_t dmat)
 		dom->sd_dmat->_dmamap_load_uio = smmu_dmamap_load_uio;
 		dom->sd_dmat->_dmamap_load_raw = smmu_dmamap_load_raw;
 		dom->sd_dmat->_dmamap_unload = smmu_dmamap_unload;
-		dom->sd_dmat->_flags |= BUS_DMA_COHERENT;
 	}
 
 	return dom->sd_dmat;
