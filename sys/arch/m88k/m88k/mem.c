@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.10 2024/12/30 02:46:00 guenther Exp $ */
+/*	$OpenBSD: mem.c,v 1.11 2025/12/23 19:16:51 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,7 +53,7 @@
 #include <uvm/uvm_extern.h>
 
 caddr_t zpage;
-extern vaddr_t first_addr, last_addr;
+extern vaddr_t first_addr;
 extern caddr_t kernelstart;
 extern void *etext;
 

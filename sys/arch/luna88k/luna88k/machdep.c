@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.147 2025/10/30 18:23:30 jca Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.148 2025/12/23 19:16:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -201,7 +201,6 @@ extern int omfb_cnattach(void);	/* in dev/lunafb.c */
 extern void ws_cnattach(void);	/* in dev/lunaws.c */
 
 vaddr_t first_addr;
-vaddr_t last_addr;
 
 extern struct user *proc0paddr;
 
@@ -978,6 +977,7 @@ luna88k_bootstrap()
 	extern const struct cmmu_p cmmu8820x;
 	extern vaddr_t avail_start;
 	extern vaddr_t avail_end;
+	vaddr_t last_addr;
 #ifndef MULTIPROCESSOR
 	cpuid_t master_cpu;
 #endif
