@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.212 2025/05/21 04:13:52 jmatthew Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.213 2025/12/23 00:04:48 sthen Exp $
 
 machine		amd64
 maxusers	4
@@ -340,6 +340,7 @@ vmmci*		at virtio?		# VMM control interface
 
 pseudo-device	loop 1
 pseudo-device	vlan
+pseudo-device	aggr
 pseudo-device	trunk
 pseudo-device	bpfilter 1
 pseudo-device	rd 1
