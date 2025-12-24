@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.9 2025/12/20 13:52:45 dv Exp $ */
+/* $OpenBSD: vmm.c,v 1.10 2025/12/24 12:46:57 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -362,7 +362,6 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	struct uvm_object *uao;
 	struct vm_mem_range *vmr;
 	unsigned int uvmflags = 0;
-	uint32_t vm_id = 0;
 
 	memsize = vm_create_check_mem_ranges(vcp);
 	if (memsize == 0)
@@ -385,14 +384,13 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 		return (ENOMEM);
 	}
 	vmm_softc->vcpu_ct += vcp->vcp_ncpus;
-	vm_id = vmm_softc->vm_ct++;
+	vmm_softc->vm_ct++;
 	rw_exit_write(&vmm_softc->vm_lock);
 
 	/* Instantiate and configure the new vm. */
 	vm = pool_get(&vm_pool, PR_WAITOK | PR_ZERO);
 
 	/* Create the VM's identity. */
-	vm->vm_id = vm_id;
 	vm->vm_creator_pid = p->p_p->ps_pid;
 	strncpy(vm->vm_name, vcp->vcp_name, VMM_MAX_NAME_LEN - 1);
 
@@ -472,11 +470,12 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 		SLIST_INSERT_HEAD(&vm->vm_vcpu_list, vcpu, vc_vcpu_link);
 	}
 
-	/* Identify the vm. */
+	/* Increment the global index and insert into the list. */
+	rw_enter_write(&vmm_softc->vm_lock);
+	vmm_softc->vm_idx++;
+	vm->vm_id = vmm_softc->vm_idx;
 	vcp->vcp_id = vm->vm_id;
 
-	/* Publish the vm into the list and update counts. */
-	rw_enter_write(&vmm_softc->vm_lock);
 	refcnt_init(&vm->vm_refcnt);
 	SLIST_INSERT_HEAD(&vmm_softc->vm_list, vm, vm_link);
 	rw_exit_write(&vmm_softc->vm_lock);
@@ -490,7 +489,7 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 err:
 	vm_teardown(&vm);
 	rw_enter_write(&vmm_softc->vm_lock);
-	vmm_softc->vm_idx--;
+	vmm_softc->vm_ct--;
 	vmm_softc->vcpu_ct -= vcp->vcp_ncpus;
 	if (vmm_softc->vm_ct < 1)
 		vmm_stop();
