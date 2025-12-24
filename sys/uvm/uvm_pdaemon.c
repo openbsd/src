@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.143 2025/12/18 16:50:42 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.144 2025/12/24 10:29:22 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -484,7 +484,7 @@ swapcluster_flush(struct swapcluster *swc)
 	int result;
 
 	if (swc->swc_slot == 0)
-		return 0; // XXX
+		return 0;
 	KASSERT(swc->swc_nused <= swc->swc_nallocated);
 
 	slot = swc->swc_slot;
@@ -633,141 +633,168 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 
 	/* Insert iterator. */
 	TAILQ_INSERT_AFTER(pglst, p, &iter, pageq);
-	for (; p != NULL || swc.swc_slot != 0; p = uvmpd_iterator(pglst, p, &iter)) {
+	for (; p != NULL; p = uvmpd_iterator(pglst, p, &iter)) {
 		/*
-		 * note that p can be NULL iff we have traversed the whole
-		 * list and need to do one final swap-backed clustered pageout.
+		 * see if we've met our target
 		 */
-		uobj = NULL;
-		anon = NULL;
-		if (p) {
-			/*
-			 * see if we've met our target
-			 */
-			if ((uvmpd_pma_done(pma) &&
-			    (uvmexp.paging + swapcluster_nused(&swc)
-			    >= (shortage - freed))) ||
-			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
-				if (swc.swc_slot == 0) {
-					/* exit now if no swap-i/o pending */
-					break;
-				}
-
-				/* set p to null to signal final swap i/o */
-				p = NULL;
-			}
+		if ((uvmpd_pma_done(pma) &&
+		    (uvmexp.paging + swapcluster_nused(&swc)
+		    >= (shortage - freed))) ||
+		    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
+			break;
 		}
-		if (p) {	/* if (we have a new page to consider) */
-			/*
-			 * we are below target and have a new page to consider.
-			 */
-			uvmexp.pdscans++;
+		/*
+		 * we are below target and have a new page to consider.
+		 */
+		uvmexp.pdscans++;
 
-			/*
-			 * If we are not short on memory and only interested
-			 * in releasing pages from a given memory range, do not
-			 * bother with other pages.
-			 */
-			if (uvmexp.paging >= (shortage - freed) &&
-			    !uvmpd_pma_done(pma) &&
-			    !uvmpd_match_constraint(p, &pma->pm_constraint))
-				continue;
+		/*
+		 * If we are not short on memory and only interested
+		 * in releasing pages from a given memory range, do not
+		 * bother with other pages.
+		 */
+		if (uvmexp.paging >= (shortage - freed) &&
+		    !uvmpd_pma_done(pma) &&
+		    !uvmpd_match_constraint(p, &pma->pm_constraint))
+			continue;
 
-			anon = p->uanon;
-			uobj = p->uobject;
+		anon = p->uanon;
+		uobj = p->uobject;
 
-			/*
-			 * first we attempt to lock the object that this page
-			 * belongs to.  if our attempt fails we skip on to
-			 * the next page (no harm done).  it is important to
-			 * "try" locking the object as we are locking in the
-			 * wrong order (pageq -> object) and we don't want to
-			 * deadlock.
-			 */
-			slock = uvmpd_trylockowner(p);
-			if (slock == NULL) {
-				continue;
+		/*
+		 * first we attempt to lock the object that this page
+		 * belongs to.  if our attempt fails we skip on to
+		 * the next page (no harm done).  it is important to
+		 * "try" locking the object as we are locking in the
+		 * wrong order (pageq -> object) and we don't want to
+		 * deadlock.
+		 */
+		slock = uvmpd_trylockowner(p);
+		if (slock == NULL) {
+			continue;
+		}
+
+		/*
+		 * move referenced pages back to active queue
+		 * and skip to next page.
+		 */
+		if (pmap_is_referenced(p)) {
+			uvm_unlock_pageq();
+			uvm_pageactivate(p);
+			rw_exit(slock);
+			uvm_lock_pageq();
+			uvmexp.pdreact++;
+			continue;
+		}
+
+		if (p->pg_flags & PG_BUSY) {
+			rw_exit(slock);
+			uvmexp.pdbusy++;
+			continue;
+		}
+
+		/* does the page belong to an object? */
+		if (uobj != NULL) {
+			uvmexp.pdobscan++;
+		} else {
+			KASSERT(anon != NULL);
+			uvmexp.pdanscan++;
+		}
+
+		/*
+		 * we now have the page queues locked.
+		 * the page is not busy.   if the page is clean we
+		 * can free it now and continue.
+		 */
+		if (p->pg_flags & PG_CLEAN) {
+			if (p->pg_flags & PQ_SWAPBACKED) {
+				/* this page now lives only in swap */
+				atomic_inc_int(&uvmexp.swpgonly);
 			}
 
-			/*
-			 * move referenced pages back to active queue
-			 * and skip to next page.
-			 */
-			if (pmap_is_referenced(p)) {
-				uvm_unlock_pageq();
-				uvm_pageactivate(p);
-				rw_exit(slock);
-				uvm_lock_pageq();
-				uvmexp.pdreact++;
-				continue;
+			/* zap all mappings with pmap_page_protect... */
+			pmap_page_protect(p, PROT_NONE);
+			/* dequeue first to prevent lock recursion */
+			if (p->pg_flags & (PQ_ACTIVE|PQ_INACTIVE))
+				uvm_pagedequeue(p);
+			uvm_pagefree(p);
+			freed++;
+
+			if (anon) {
+
+				/*
+				 * an anonymous page can only be clean
+				 * if it has backing store assigned.
+				 */
+
+				KASSERT(anon->an_swslot != 0);
+
+				/* remove from object */
+				anon->an_page = NULL;
 			}
+			rw_exit(slock);
+			continue;
+		}
 
-			if (p->pg_flags & PG_BUSY) {
-				rw_exit(slock);
-				uvmexp.pdbusy++;
-				continue;
-			}
+		/*
+		 * this page is dirty, skip it if we'll have met our
+		 * free target when all the current pageouts complete.
+		 */
+		if (uvmpd_pma_done(pma) &&
+		    (uvmexp.paging > (shortage - freed))) {
+			rw_exit(slock);
+			continue;
+		}
 
-			/* does the page belong to an object? */
-			if (uobj != NULL) {
-				uvmexp.pdobscan++;
-			} else {
-				KASSERT(anon != NULL);
-				uvmexp.pdanscan++;
-			}
+		/*
+		 * this page is dirty, but we can't page it out
+		 * since all pages in swap are only in swap.
+		 * reactivate it so that we eventually cycle
+		 * all pages thru the inactive queue.
+		 */
+		if ((p->pg_flags & PQ_SWAPBACKED) && uvm_swapisfull()) {
+			dirtyreacts++;
+			uvm_unlock_pageq();
+			uvm_pageactivate(p);
+			rw_exit(slock);
+			uvm_lock_pageq();
+			continue;
+		}
 
-			/*
-			 * we now have the page queues locked.
-			 * the page is not busy.   if the page is clean we
-			 * can free it now and continue.
-			 */
-			if (p->pg_flags & PG_CLEAN) {
-				if (p->pg_flags & PQ_SWAPBACKED) {
-					/* this page now lives only in swap */
-					atomic_inc_int(&uvmexp.swpgonly);
-				}
+		/*
+		 * if the page is swap-backed and dirty and swap space
+		 * is full, free any swap allocated to the page
+		 * so that other pages can be paged out.
+		 */
+		if ((p->pg_flags & PQ_SWAPBACKED) && uvm_swapisfilled())
+			uvmpd_dropswap(p);
 
-				/* zap all mappings with pmap_page_protect... */
-				pmap_page_protect(p, PROT_NONE);
-				/* dequeue first to prevent lock recursion */
-				if (p->pg_flags & (PQ_ACTIVE|PQ_INACTIVE))
-					uvm_pagedequeue(p);
-				uvm_pagefree(p);
-				freed++;
+		/*
+		 * the page we are looking at is dirty.   we must
+		 * clean it before it can be freed.  to do this we
+		 * first mark the page busy so that no one else will
+		 * touch the page.   we write protect all the mappings
+		 * of the page so that no one touches it while it is
+		 * in I/O.
+		 */
+		swap_backed = ((p->pg_flags & PQ_SWAPBACKED) != 0);
+		atomic_setbits_int(&p->pg_flags, PG_BUSY);
+		UVM_PAGE_OWN(p, "scan_inactive");
+		pmap_page_protect(p, PROT_READ);
+		uvmexp.pgswapout++;
 
-				if (anon) {
+		/*
+		 * for swap-backed pages we need to (re)allocate
+		 * swap space.
+		 */
+		if (swap_backed) {
+			/* free old swap slot (if any) */
+			uvmpd_dropswap(p);
 
-					/*
-					 * an anonymous page can only be clean
-					 * if it has backing store assigned.
-					 */
-
-					KASSERT(anon->an_swslot != 0);
-
-					/* remove from object */
-					anon->an_page = NULL;
-				}
-				rw_exit(slock);
-				continue;
-			}
-
-			/*
-			 * this page is dirty, skip it if we'll have met our
-			 * free target when all the current pageouts complete.
-			 */
-			if (uvmpd_pma_done(pma) &&
-			    (uvmexp.paging > (shortage - freed))) {
-				rw_exit(slock);
-				continue;
-			}
-
-			/*
-			 * this page is dirty, but we can't page it out
-			 * since all pages in swap are only in swap.
-			 * reactivate it so that we eventually cycle
-			 * all pages thru the inactive queue.
-			 */
-			if ((p->pg_flags & PQ_SWAPBACKED) && uvm_swapisfull()) {
+			/* start new cluster (if necessary) */
+			if (swapcluster_allocslots(&swc)) {
+				atomic_clearbits_int(&p->pg_flags, PG_BUSY);
+				UVM_PAGE_OWN(p, NULL);
 				dirtyreacts++;
 				uvm_unlock_pageq();
 				uvm_pageactivate(p);
@@ -776,71 +803,22 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 				continue;
 			}
 
-			/*
-			 * if the page is swap-backed and dirty and swap space
-			 * is full, free any swap allocated to the page
-			 * so that other pages can be paged out.
-			 */
-			if ((p->pg_flags & PQ_SWAPBACKED) && uvm_swapisfilled())
-				uvmpd_dropswap(p);
-
-			/*
-			 * the page we are looking at is dirty.   we must
-			 * clean it before it can be freed.  to do this we
-			 * first mark the page busy so that no one else will
-			 * touch the page.   we write protect all the mappings
-			 * of the page so that no one touches it while it is
-			 * in I/O.
-			 */
-
-			swap_backed = ((p->pg_flags & PQ_SWAPBACKED) != 0);
-			atomic_setbits_int(&p->pg_flags, PG_BUSY);
-			UVM_PAGE_OWN(p, "scan_inactive");
-			pmap_page_protect(p, PROT_READ);
-			uvmexp.pgswapout++;
-
-			/*
-			 * for swap-backed pages we need to (re)allocate
-			 * swap space.
-			 */
-			if (swap_backed) {
-				/* free old swap slot (if any) */
-				uvmpd_dropswap(p);
-
-				/* start new cluster (if necessary) */
-				if (swapcluster_allocslots(&swc)) {
-					atomic_clearbits_int(&p->pg_flags,
-					    PG_BUSY);
-					UVM_PAGE_OWN(p, NULL);
-					dirtyreacts++;
-					uvm_unlock_pageq();
-					uvm_pageactivate(p);
-					rw_exit(slock);
-					uvm_lock_pageq();
-					continue;
-				}
-
-				/* add block to cluster */
-				if (swapcluster_add(&swc, p)) {
-					atomic_clearbits_int(&p->pg_flags,
-					    PG_BUSY);
-					UVM_PAGE_OWN(p, NULL);
-					dirtyreacts++;
-					uvm_unlock_pageq();
-					uvm_pageactivate(p);
-					rw_exit(slock);
-					uvm_lock_pageq();
-					continue;
-				}
+			/* add block to cluster */
+			if (swapcluster_add(&swc, p)) {
+				atomic_clearbits_int(&p->pg_flags, PG_BUSY);
+				UVM_PAGE_OWN(p, NULL);
+				dirtyreacts++;
+				uvm_unlock_pageq();
+				uvm_pageactivate(p);
 				rw_exit(slock);
-
-				/* cluster not full yet? */
-				if (swc.swc_nused < swc.swc_nallocated)
-					continue;
+				uvm_lock_pageq();
+				continue;
 			}
-		} else {
-			/* if p == NULL we must be doing a last swap i/o */
-			swap_backed = TRUE;
+			rw_exit(slock);
+
+			/* cluster not full yet? */
+			if (swc.swc_nused < swc.swc_nallocated)
+				continue;
 		}
 
 		/*
@@ -884,6 +862,18 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 		}
 	}
 	TAILQ_REMOVE(pglst, &iter, pageq);
+
+	/* final swap-backed clustered pageout */
+	if (swc.swc_slot > 0) {
+		uvm_unlock_pageq();
+		npages = swc.swc_nused;
+		result = swapcluster_flush(&swc);
+		uvm_lock_pageq();
+		if (result == VM_PAGER_PEND) {
+			atomic_add_int(&uvmexp.paging, npages);
+			uvmexp.pdpending++;
+		}
+	}
 
 	return freed;
 }
