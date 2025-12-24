@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.14 2025/12/16 12:16:03 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.15 2025/12/24 07:59:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -29,6 +29,8 @@
 #include "rde.h"
 #include "log.h"
 #include "chash.h"
+
+struct bitmap adjout_id_map;
 
 static struct adjout_attr	*adjout_attr_ref(struct adjout_attr *);
 static void			 adjout_attr_unref(struct adjout_attr *);
@@ -385,77 +387,73 @@ adjout_attr_get(struct filterstate *state)
 
 CH_GENERATE(adjout_attr_tree, adjout_attr, adjout_attr_eq, adjout_attr_hash);
 
-static inline struct adjout_prefix *
-adjout_prefix_lock(struct adjout_prefix *p)
-{
-	if (p->flags & PREFIX_ADJOUT_FLAG_LOCKED)
-		fatalx("%s: locking locked prefix", __func__);
-	p->flags |= PREFIX_ADJOUT_FLAG_LOCKED;
-	return p;
-}
-
-static inline struct adjout_prefix *
-adjout_prefix_unlock(struct adjout_prefix *p)
-{
-	if ((p->flags & PREFIX_ADJOUT_FLAG_LOCKED) == 0)
-		fatalx("%s: unlocking unlocked prefix", __func__);
-	p->flags &= ~PREFIX_ADJOUT_FLAG_LOCKED;
-	return p;
-}
-
-static inline int
-prefix_is_locked(struct adjout_prefix *p)
-{
-	return (p->flags & PREFIX_ADJOUT_FLAG_LOCKED) != 0;
-}
-
-static inline int
-prefix_is_dead(struct adjout_prefix *p)
-{
-	return p->attrs == NULL;
-}
-
-static void	 adjout_prefix_link(struct adjout_prefix *, struct rde_peer *,
-		    struct adjout_attr *, struct pt_entry *, uint32_t);
+static void	 adjout_prefix_link(struct pt_entry *, struct rde_peer *,
+		    struct adjout_attr *, uint32_t);
 static void	 adjout_prefix_unlink(struct adjout_prefix *,
-		    struct rde_peer *);
+		    struct pt_entry *, struct rde_peer *);
 
-static struct adjout_prefix	*adjout_prefix_alloc(void);
-static void			 adjout_prefix_free(struct adjout_prefix *);
+static struct adjout_prefix	*adjout_prefix_alloc(struct pt_entry *,
+				    uint32_t);
+static void			 adjout_prefix_free(struct pt_entry *,
+				    struct adjout_prefix *);
 
-/* RB tree comparison function */
-static inline int
-prefix_index_cmp(struct adjout_prefix *a, struct adjout_prefix *b)
+static inline uint32_t
+adjout_prefix_index(struct pt_entry *pte, struct adjout_prefix *p)
 {
-	int r;
-	r = pt_prefix_cmp(a->pt, b->pt);
-	if (r != 0)
-		return r;
+	ptrdiff_t idx = p - pte->adjout;
 
-	if (a->path_id_tx > b->path_id_tx)
-		return 1;
-	if (a->path_id_tx < b->path_id_tx)
-		return -1;
-	return 0;
+	if (idx < 0 || idx > pte->adjoutlen)
+		fatalx("corrupt pte adjout list");
+
+	return idx;
 }
-
-RB_GENERATE_STATIC(prefix_index, adjout_prefix, index, prefix_index_cmp)
 
 /*
- * Search for specified prefix in the peer prefix_index.
- * Returns NULL if not found.
+ * Search for specified prefix in the pte adjout array that is for the
+ * specified path_id_tx and peer. Returns NULL if not found.
  */
 struct adjout_prefix *
 adjout_prefix_get(struct rde_peer *peer, uint32_t path_id_tx,
     struct pt_entry *pte)
 {
-	struct adjout_prefix xp;
+	struct adjout_prefix *p;
+	uint32_t i;
 
-	memset(&xp, 0, sizeof(xp));
-	xp.pt = pte;
-	xp.path_id_tx = path_id_tx;
+	for (i = 0; i < pte->adjoutlen; i++) {
+		p = &pte->adjout[i];
+		if (p->path_id_tx < path_id_tx)
+			continue;
+		if (p->path_id_tx > path_id_tx)
+			break;
+		if (bitmap_test(&p->peermap, peer->adjout_bid))
+			return p;
+	}
 
-	return RB_FIND(prefix_index, &peer->adj_rib_out, &xp);
+	return NULL;
+}
+
+/*
+ * Search for specified prefix in the pte adjout array that is for the
+ * specified path_id_tx and attrs. Returns NULL if not found.
+ */
+static struct adjout_prefix *
+adjout_prefix_with_attrs(struct pt_entry *pte, uint32_t path_id_tx,
+    struct adjout_attr *attrs)
+{
+	struct adjout_prefix *p;
+	uint32_t i;
+
+	for (i = 0; i < pte->adjoutlen; i++) {
+		p = &pte->adjout[i];
+		if (p->path_id_tx < path_id_tx)
+			continue;
+		if (p->path_id_tx > path_id_tx)
+			break;
+		if (p->attrs == attrs)
+			return p;
+	}
+
+	return NULL;
 }
 
 /*
@@ -465,30 +463,48 @@ adjout_prefix_get(struct rde_peer *peer, uint32_t path_id_tx,
 struct adjout_prefix *
 adjout_prefix_first(struct rde_peer *peer, struct pt_entry *pte)
 {
-	struct adjout_prefix xp, *np;
+	struct adjout_prefix *p;
+	uint32_t i;
+	int has_add_path = 0;
 
-	memset(&xp, 0, sizeof(xp));
-	xp.pt = pte;
+	if (peer_has_add_path(peer, pte->aid, CAPA_AP_SEND))
+		has_add_path = 1;
 
-	np = RB_NFIND(prefix_index, &peer->adj_rib_out, &xp);
-	if (np == NULL || pt_prefix_cmp(np->pt, xp.pt) != 0)
-		return NULL;
-	return np;
+	for (i = 0; i < pte->adjoutlen; i++) {
+		p = &pte->adjout[i];
+		if (bitmap_test(&p->peermap, peer->adjout_bid))
+			return p;
+		if (!has_add_path && p->path_id_tx != 0)
+			return NULL;
+	}
+
+	return NULL;
 }
 
 /*
- * Return next prefix after a lookup that is actually an update.
+ * Return next prefix for peer after last.
  */
 struct adjout_prefix *
 adjout_prefix_next(struct rde_peer *peer, struct pt_entry *pte,
-    struct adjout_prefix *p)
+    struct adjout_prefix *last)
 {
-	struct adjout_prefix *np;
+	struct adjout_prefix *p;
+	uint32_t i;
 
-	np = RB_NEXT(prefix_index, &peer->adj_rib_out, p);
-	if (np == NULL || np->pt != p->pt)
+	if (!peer_has_add_path(peer, pte->aid, CAPA_AP_SEND))
 		return NULL;
-	return np;
+
+	i = adjout_prefix_index(pte, last);
+	for (; i < pte->adjoutlen; i++)
+		if (pte->adjout[i].path_id_tx != last->path_id_tx)
+			break;
+	for (; i < pte->adjoutlen; i++) {
+		p = &pte->adjout[i];
+		if (bitmap_test(&p->peermap, peer->adjout_bid))
+			return p;
+	}
+
+	return NULL;
 }
 
 /*
@@ -500,16 +516,11 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 {
 	struct adjout_attr *attrs;
 
-	if (p == NULL) {
-		p = adjout_prefix_alloc();
-		/* initially mark DEAD so code below is skipped */
+	if (p != NULL) {
+		if (p->path_id_tx != path_id_tx ||
+		    bitmap_test(&p->peermap, peer->adjout_bid) == 0)
+			fatalx("%s: king bula is unhappy", __func__);
 
-		p->pt = pt_ref(pte);
-		p->path_id_tx = path_id_tx;
-
-		if (RB_INSERT(prefix_index, &peer->adj_rib_out, p) != NULL)
-			fatalx("%s: RB index invariant violated", __func__);
-	} else {
 		/*
 		 * XXX for now treat a different path_id_tx like different
 		 * attributes and force out an update. It is unclear how
@@ -527,26 +538,16 @@ adjout_prefix_update(struct adjout_prefix *p, struct rde_peer *peer,
 		}
 
 		/* unlink prefix so it can be relinked below */
-		adjout_prefix_unlink(p, peer);
+		adjout_prefix_unlink(p, pte, peer);
 		peer->stats.prefix_out_cnt--;
 	}
 
-	/* update path_id_tx now that the prefix is unlinked */
-	if (p->path_id_tx != path_id_tx) {
-		/* path_id_tx is part of the index so remove and re-insert p */
-		RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
-		p->path_id_tx = path_id_tx;
-		if (RB_INSERT(prefix_index, &peer->adj_rib_out, p) != NULL)
-			fatalx("%s: RB index invariant violated", __func__);
-	}
-
 	attrs = adjout_attr_get(state);
-
-	adjout_prefix_link(p, peer, attrs, p->pt, p->path_id_tx);
+	adjout_prefix_link(pte, peer, attrs, path_id_tx);
 	peer->stats.prefix_out_cnt++;
 
 	if (peer_is_up(peer))
-		pend_prefix_add(peer, p->attrs, p->pt, p->path_id_tx);
+		pend_prefix_add(peer, attrs, pte, path_id_tx);
 }
 
 /*
@@ -557,115 +558,87 @@ void
 adjout_prefix_withdraw(struct rde_peer *peer, struct pt_entry *pte,
     struct adjout_prefix *p)
 {
+	if (bitmap_test(&p->peermap, peer->adjout_bid) == 0)
+		fatalx("%s: king bula is unhappy", __func__);
+
 	if (peer_is_up(peer))
 		pend_prefix_add(peer, NULL, pte, p->path_id_tx);
 
-	adjout_prefix_destroy(peer, p);
+	adjout_prefix_unlink(p, pte, peer);
+	peer->stats.prefix_out_cnt--;
 }
 
 void
-adjout_prefix_destroy(struct rde_peer *peer, struct adjout_prefix *p)
-{
-	/* unlink prefix if it was linked (not dead) */
-	if (!prefix_is_dead(p)) {
-		adjout_prefix_unlink(p, peer);
-		peer->stats.prefix_out_cnt--;
-	}
-
-	if (!prefix_is_locked(p)) {
-		RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
-		/* remove the last prefix reference before free */
-		pt_unref(p->pt);
-		adjout_prefix_free(p);
-	}
-}
-
-int
 adjout_prefix_reaper(struct rde_peer *peer)
 {
-	struct adjout_prefix *p, *np;
-	int count = RDE_REAPER_ROUNDS;
-
-	RB_FOREACH_SAFE(p, prefix_index, &peer->adj_rib_out, np) {
-		adjout_prefix_destroy(peer, p);
-		if (count-- <= 0)
-			return 0;
-	}
-	return 1;
+	bitmap_id_put(&adjout_id_map, peer->adjout_bid);
 }
 
-static struct adjout_prefix *
+static struct pt_entry *
 prefix_restart(struct rib_context *ctx)
 {
-	struct adjout_prefix *p = NULL;
+	struct pt_entry *pte = NULL;
 	struct rde_peer *peer;
 
 	if ((peer = peer_get(ctx->ctx_id)) == NULL)
 		return NULL;
 
-	if (ctx->ctx_p)
-		p = adjout_prefix_unlock(ctx->ctx_p);
-
-	while (p && prefix_is_dead(p)) {
-		struct adjout_prefix *next;
-
-		next = RB_NEXT(prefix_index, unused, p);
-		adjout_prefix_destroy(peer, p);
-		p = next;
+	/* be careful when this is the last reference to pte */
+	if (ctx->ctx_pt != NULL) {
+		pte = ctx->ctx_pt;
+		if (pte->refcnt == 1)
+			pte = pt_next(pte);
+		pt_unref(ctx->ctx_pt);
 	}
-	ctx->ctx_p = NULL;
-	return p;
+	ctx->ctx_pt = NULL;
+	return pte;
 }
 
 void
 adjout_prefix_dump_cleanup(struct rib_context *ctx)
 {
-	struct adjout_prefix *p = ctx->ctx_p;
-	struct rde_peer *peer;
-
-	if ((peer = peer_get(ctx->ctx_id)) == NULL)
-		return;
-	if (prefix_is_dead(adjout_prefix_unlock(p)))
-		adjout_prefix_destroy(peer, p);
+	if (ctx->ctx_pt != NULL)
+		pt_unref(ctx->ctx_pt);
 }
 
 void
 adjout_prefix_dump_r(struct rib_context *ctx)
 {
-	struct adjout_prefix *p, *next;
+	struct pt_entry *pte, *next;
+	struct adjout_prefix *p;
 	struct rde_peer *peer;
 	unsigned int i;
 
 	if ((peer = peer_get(ctx->ctx_id)) == NULL)
 		goto done;
 
-	if (ctx->ctx_p == NULL && ctx->ctx_subtree.aid == AID_UNSPEC)
-		p = RB_MIN(prefix_index, &peer->adj_rib_out);
+	if (ctx->ctx_pt == NULL && ctx->ctx_subtree.aid == AID_UNSPEC)
+		pte = pt_first(ctx->ctx_aid);
 	else
-		p = prefix_restart(ctx);
+		pte = prefix_restart(ctx);
 
-	for (i = 0; p != NULL; p = next) {
-		next = RB_NEXT(prefix_index, unused, p);
-		if (prefix_is_dead(p))
-			continue;
+	for (i = 0; pte != NULL; pte = next) {
+		next = pt_next(pte);
 		if (ctx->ctx_aid != AID_UNSPEC &&
-		    ctx->ctx_aid != p->pt->aid)
+		    ctx->ctx_aid != pte->aid)
 			continue;
 		if (ctx->ctx_subtree.aid != AID_UNSPEC) {
 			struct bgpd_addr addr;
-			pt_getaddr(p->pt, &addr);
+			pt_getaddr(pte, &addr);
 			if (prefix_compare(&ctx->ctx_subtree, &addr,
 			    ctx->ctx_subtreelen) != 0)
 				/* left subtree, walk is done */
 				break;
 		}
-		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
-		    !prefix_is_locked(p)) {
+		if (ctx->ctx_count && i++ >= ctx->ctx_count) {
 			/* store and lock last element */
-			ctx->ctx_p = adjout_prefix_lock(p);
+			ctx->ctx_pt = pt_ref(pte);
 			return;
 		}
-		ctx->ctx_prefix_call(peer, p->pt, p, ctx->ctx_arg);
+		p = adjout_prefix_first(peer, pte);
+		if (p == NULL)
+			continue;
+		ctx->ctx_prefix_call(peer, pte, p, ctx->ctx_arg);
 	}
 
 done:
@@ -713,7 +686,6 @@ adjout_prefix_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
     int (*throttle)(void *))
 {
 	struct rib_context *ctx;
-	struct adjout_prefix xp;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
 		return -1;
@@ -728,11 +700,9 @@ adjout_prefix_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
 	ctx->ctx_subtreelen = subtreelen;
 
 	/* lookup start of subtree */
-	memset(&xp, 0, sizeof(xp));
-	xp.pt = pt_fill(subtree, subtreelen);
-	ctx->ctx_p = RB_NFIND(prefix_index, &peer->adj_rib_out, &xp);
-	if (ctx->ctx_p)
-		adjout_prefix_lock(ctx->ctx_p);
+	ctx->ctx_pt = pt_get_next(subtree, subtreelen);
+	if (ctx->ctx_pt)
+		pt_ref(ctx->ctx_pt);	/* store and lock first element */
 
 	rib_dump_insert(ctx);
 
@@ -747,46 +717,112 @@ adjout_prefix_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
  * Link a prefix into the different parent objects.
  */
 static void
-adjout_prefix_link(struct adjout_prefix *p, struct rde_peer *peer,
-    struct adjout_attr *attrs, struct pt_entry *pt, uint32_t path_id_tx)
+adjout_prefix_link(struct pt_entry *pte, struct rde_peer *peer,
+    struct adjout_attr *attrs, uint32_t path_id_tx)
 {
-	p->attrs = adjout_attr_ref(attrs);
-	p->pt = pt_ref(pt);
-	p->path_id_tx = path_id_tx;
+	struct adjout_prefix *p;
+
+	/* assign ids on first use to keep the bitmap as small as possible */
+	if (peer->adjout_bid == 0)
+		if (bitmap_id_get(&adjout_id_map, &peer->adjout_bid) == -1)
+			fatal(__func__);
+
+	if ((p = adjout_prefix_with_attrs(pte, path_id_tx, attrs)) == NULL) {
+		p = adjout_prefix_alloc(pte, path_id_tx);
+		p->attrs = adjout_attr_ref(attrs);
+	}
+
+	if (bitmap_set(&p->peermap, peer->adjout_bid) == -1)
+		fatal(__func__);
 }
 
 /*
  * Unlink a prefix from the different parent objects.
  */
 static void
-adjout_prefix_unlink(struct adjout_prefix *p, struct rde_peer *peer)
+adjout_prefix_unlink(struct adjout_prefix *p, struct pt_entry *pte,
+    struct rde_peer *peer)
 {
-	/* destroy all references to other objects */
-	adjout_attr_unref(p->attrs);
-	p->attrs = NULL;
-	pt_unref(p->pt);
-	/* must keep p->pt valid since there is an extra ref */
+	bitmap_clear(&p->peermap, peer->adjout_bid);
+	if (bitmap_empty(&p->peermap)) {
+		/* destroy all references to other objects */
+		adjout_attr_unref(p->attrs);
+		p->attrs = NULL;
+
+		adjout_prefix_free(pte, p);
+	}
 }
 
-/* alloc and zero new entry. May not fail. */
+static void
+adjout_prefix_resize(struct pt_entry *pte)
+{
+	struct adjout_prefix *new;
+	uint32_t newlen, avail;
+
+	avail = pte->adjoutavail;
+	newlen = bin_of_adjout_prefixes(avail + 1);
+	if ((new = reallocarray(pte->adjout, newlen, sizeof(*new))) == NULL)
+		fatal(__func__);
+	rdemem.adjout_prefix_size += sizeof(*new) * (newlen - avail);
+
+	memset(&new[avail], 0, sizeof(*new) * (newlen - avail));
+	pte->adjout = new;
+	pte->adjoutavail = newlen;
+}
+
+/*
+ * Insert a new entry into the pte adjout array, extending the array if needed.
+ * May not fail.
+ */
 static struct adjout_prefix *
-adjout_prefix_alloc(void)
+adjout_prefix_alloc(struct pt_entry *pte, uint32_t path_id_tx)
 {
 	struct adjout_prefix *p;
+	uint32_t i;
 
-	p = calloc(1, sizeof(*p));
-	if (p == NULL)
-		fatal(__func__);
+	if (pte->adjoutlen + 1 > pte->adjoutavail)
+		adjout_prefix_resize(pte);
+
+	/* keep array sorted by path_id_tx */
+	for (i = 0; i < pte->adjoutlen; i++) {
+		if (pte->adjout[i].path_id_tx > path_id_tx)
+			break;
+	}
+
+	p = &pte->adjout[i];
+	/* shift reminder by one slot */
+	for (i = pte->adjoutlen; &pte->adjout[i] > p; i--)
+		pte->adjout[i] = pte->adjout[i - 1];
+
+	/* initialize new element */
+	p->attrs = NULL;
+	p->path_id_tx = path_id_tx;
+	bitmap_init(&p->peermap);
+
+	pte->adjoutlen++;
 	rdemem.adjout_prefix_cnt++;
 	return p;
 }
 
-/* free a unlinked entry */
+/* remove an entry from the pte adjout array */
 static void
-adjout_prefix_free(struct adjout_prefix *p)
+adjout_prefix_free(struct pt_entry *pte, struct adjout_prefix *p)
 {
+	uint32_t i, idx;
+
+	bitmap_reset(&p->peermap);
+
+	idx = adjout_prefix_index(pte, p);
+	for (i = idx + 1; i < pte->adjoutlen; i++)
+		pte->adjout[i - 1] = pte->adjout[i];
+
+	p = &pte->adjout[pte->adjoutlen - 1];
+	memset(p, 0, sizeof(*p));
+	pte->adjoutlen--;
+
+	/* TODO shrink array if X% empty */
+
 	rdemem.adjout_prefix_cnt--;
-	free(p);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.63 2025/12/16 16:07:31 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.64 2025/12/24 07:59:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -92,11 +92,10 @@ peer_shutdown(void)
 	RB_FOREACH_SAFE(peer, peer_tree, &peertable, np)
 		peer_delete(peer);
 
-	while (!RB_EMPTY(&zombietable))
-		peer_reaper(NULL);
-
 	if (!RB_EMPTY(&peertable))
 		log_warnx("%s: free non-free table", __func__);
+
+	/* XXX wait until all peer got reaped */
 }
 
 /*
@@ -435,6 +434,29 @@ peer_down(struct rde_peer *peer)
 	peer->stats.prefix_cnt = 0;
 }
 
+/*
+ * RIB walker callback for peer_delete / the reaper.
+ */
+static void
+peer_reaper_upcall(struct rde_peer *peer, struct pt_entry *pte,
+    struct adjout_prefix *p, void *ptr)
+{
+	adjout_prefix_withdraw(peer, pte, p);
+}
+
+/*
+ * Called after the adj-rib-out has been cleared, time to kill the zombie.
+ */
+static void
+peer_reaper_done(void *ptr, uint8_t aid)
+{
+	struct rde_peer		*peer = ptr;
+
+	adjout_prefix_reaper(peer);
+	ibufq_free(peer->ibufq);
+	free(peer);
+}
+
 void
 peer_delete(struct rde_peer *peer)
 {
@@ -445,13 +467,11 @@ peer_delete(struct rde_peer *peer)
 	adjout_peer_free(peer);
 
 	RB_REMOVE(peer_tree, &peertable, peer);
-	while (RB_INSERT(peer_tree, &zombietable, peer) != NULL) {
-		log_warnx("zombie peer conflict");
-		peer->conf.id = arc4random();
-	}
 
 	/* start reaping the zombie */
-	peer_reaper(peer);
+	if (adjout_prefix_dump_new(peer, AID_UNSPEC, RDE_RUNNER_ROUNDS, peer,
+	    peer_reaper_upcall, peer_reaper_done, NULL) == -1)
+		fatal("%s: adjout_prefix_dump_new", __func__);
 }
 
 /*
@@ -550,8 +570,8 @@ peer_blast(struct rde_peer *peer, uint8_t aid)
 		rde_peer_send_rrefresh(peer, aid, ROUTE_REFRESH_BEGIN_RR);
 
 	/* force out all updates from the Adj-RIB-Out */
-	if (adjout_prefix_dump_new(peer, aid, 0, peer, peer_blast_upcall,
-	    peer_blast_done, NULL) == -1)
+	if (adjout_prefix_dump_new(peer, aid, RDE_RUNNER_ROUNDS, peer,
+	    peer_blast_upcall, peer_blast_done, NULL) == -1)
 		fatal("%s: adjout_prefix_dump_new", __func__);
 }
 
@@ -622,22 +642,6 @@ peer_begin_rrefresh(struct rde_peer *peer, uint8_t aid)
 		struct timespec ts = { .tv_nsec = 1000 * 1000 };
 		nanosleep(&ts, NULL);
 	}
-}
-
-void
-peer_reaper(struct rde_peer *peer)
-{
-	if (peer == NULL)
-		peer = RB_ROOT(&zombietable);
-	if (peer == NULL)
-		return;
-
-	if (!adjout_prefix_reaper(peer))
-		return;
-
-	ibufq_free(peer->ibufq);
-	RB_REMOVE(peer_tree, &zombietable, peer);
-	free(peer);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.527 2025/12/16 15:38:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.528 2025/12/24 07:59:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1396,6 +1396,7 @@ struct rde_memstats {
 	long long	path_refs;
 	long long	prefix_cnt;
 	long long	adjout_prefix_cnt;
+	long long	adjout_prefix_size;
 	long long	pend_prefix_cnt;
 	long long	pend_attr_cnt;
 	long long	rib_cnt;
@@ -1676,6 +1677,7 @@ const char	*get_baudrate(unsigned long long, char *);
 
 unsigned int	 bin_of_attrs(unsigned int);
 unsigned int	 bin_of_communities(unsigned int);
+unsigned int	 bin_of_adjout_prefixes(unsigned int);
 
 /* flowspec.c */
 int	flowspec_valid(const uint8_t *, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.97 2025/12/16 15:38:55 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.98 2025/12/24 07:59:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1338,4 +1338,11 @@ bin_of_communities(unsigned int count)
 {
 	/* 8, 16, 24, ... 56, 64, 80, 96, ... */
 	return bin_of(count, 5, 2);
+}
+
+unsigned int
+bin_of_adjout_prefixes(unsigned int count)
+{
+	/* 1, 2, 3, 4, 6, 8, 12, 16, 24, ... */
+	return bin_of(count, 1, 1);
 }

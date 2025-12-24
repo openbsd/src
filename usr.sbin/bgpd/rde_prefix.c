@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.59 2025/12/16 12:11:16 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.60 2025/12/24 07:59:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -51,6 +51,9 @@ static void		 pt_free(struct pt_entry *);
 
 struct pt_entry4 {
 	RB_ENTRY(pt_entry)		pt_e;
+	struct adjout_prefix		*adjout;
+	uint32_t			adjoutlen;
+	uint32_t			adjoutavail;
 	uint8_t				aid;
 	uint8_t				prefixlen;
 	uint16_t			len;
@@ -60,6 +63,9 @@ struct pt_entry4 {
 
 struct pt_entry6 {
 	RB_ENTRY(pt_entry)		pt_e;
+	struct adjout_prefix		*adjout;
+	uint32_t			adjoutlen;
+	uint32_t			adjoutavail;
 	uint8_t				aid;
 	uint8_t				prefixlen;
 	uint16_t			len;
@@ -69,6 +75,9 @@ struct pt_entry6 {
 
 struct pt_entry_vpn4 {
 	RB_ENTRY(pt_entry)		pt_e;
+	struct adjout_prefix		*adjout;
+	uint32_t			adjoutlen;
+	uint32_t			adjoutavail;
 	uint8_t				aid;
 	uint8_t				prefixlen;
 	uint16_t			len;
@@ -83,6 +92,9 @@ struct pt_entry_vpn4 {
 
 struct pt_entry_vpn6 {
 	RB_ENTRY(pt_entry)		pt_e;
+	struct adjout_prefix		*adjout;
+	uint32_t			adjoutlen;
+	uint32_t			adjoutavail;
 	uint8_t				aid;
 	uint8_t				prefixlen;
 	uint16_t			len;
@@ -97,6 +109,9 @@ struct pt_entry_vpn6 {
 
 struct pt_entry_evpn {
 	RB_ENTRY(pt_entry)		pt_e;
+	struct adjout_prefix		*adjout;
+	uint32_t			adjoutlen;
+	uint32_t			adjoutavail;
 	uint8_t				aid;
 	uint8_t				prefixlen;
 	uint16_t			len;
@@ -117,12 +132,15 @@ struct pt_entry_evpn {
 
 struct pt_entry_flow {
 	RB_ENTRY(pt_entry)		pt_e;
+	struct adjout_prefix		*adjout;
+	uint32_t			adjoutlen;
+	uint32_t			adjoutavail;
 	uint8_t				aid;
 	uint8_t				prefixlen;	/* unused ??? */
 	uint16_t			len;
 	uint32_t			refcnt;
 	uint64_t			rd;
-	uint8_t				flow[1];	/* NLRI */
+	uint8_t				flow[0];	/* NLRI */
 };
 
 #define PT_FLOW_SIZE		(offsetof(struct pt_entry_flow, flow))

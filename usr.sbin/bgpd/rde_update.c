@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.191 2025/12/16 12:16:03 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.192 2025/12/24 07:59:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -164,6 +164,7 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new,
 	struct filterstate state;
 	struct bgpd_addr addr;
 	int excluded = 0;
+	uint32_t path_id_tx = 0;
 
 	/*
 	 * up_test_update() needs to run before the output filters
@@ -194,11 +195,13 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new,
 	}
 
 	/* from here on we know this is an update */
-	if (p == (void *)-1)
+	if (p == (void *)-1) {
+		path_id_tx = new->path_id_tx;
 		p = adjout_prefix_get(peer, new->path_id_tx, new->pt);
+	}
 
 	up_prep_adjout(peer, &state, new->pt->aid);
-	adjout_prefix_update(p, peer, &state, new->pt, new->path_id_tx);
+	adjout_prefix_update(p, peer, &state, new->pt, path_id_tx);
 	rde_filterstate_clean(&state);
 
 	/* max prefix checker outbound */
