@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcvar.h,v 1.17 2023/04/19 02:01:02 dlg Exp $	*/
+/*	$OpenBSD: sdhcvar.h,v 1.18 2025/12/24 12:34:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -47,6 +47,8 @@ void	sdhc_shutdown(void *);
 int	sdhc_intr(void *);
 
 void	sdhc_needs_discover(struct sdhc_softc *);
+
+void	sdhc_write_2(struct sdhc_host *, bus_size_t, uint16_t);
 
 /* flag values */
 #define SDHC_F_NOPWR0		(1 << 0)

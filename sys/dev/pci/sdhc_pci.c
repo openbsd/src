@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.27 2024/10/19 21:10:22 hastings Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.28 2025/12/24 12:34:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -27,6 +27,10 @@
 #include <dev/sdmmc/sdhcvar.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
+#ifdef __HAVE_FDT
+#include <dev/ofw/openfirm.h>
+#endif
+
 /*
  * 8-bit PCI configuration register that tells us how many slots there
  * are and which BAR entry corresponds to the first slot.
@@ -52,6 +56,8 @@ struct sdhc_pci_softc {
 	pcitag_t sc_tag;
 	pcireg_t sc_id;
 	void *sc_ih;
+	uint32_t sc_capmask;
+	uint32_t sc_capmask2;
 };
 
 int	sdhc_pci_match(struct device *, void *, void *);
@@ -61,6 +67,7 @@ int	sdhc_pci_activate(struct device *, int);
 void	sdhc_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, uint8_t);
 void	sdhc_takecontroller(struct pci_attach_args *);
 void	sdhc_ricohfix(struct sdhc_pci_softc *);
+void	sdhc_gl9755_init(struct sdhc_pci_softc *);
 
 const struct cfattach sdhc_pci_ca = {
 	sizeof(struct sdhc_pci_softc), sdhc_pci_match, sdhc_pci_attach,
@@ -110,6 +117,7 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t size;
+	uint64_t capmask;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -132,7 +140,12 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RICOH_R5U823))
 		sdhc_ricohfix(sc);
 
-	if (pci_intr_map(pa, &ih)) {
+	/* Genesys Logic controllers need special handling. */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_GENESYS &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_GENESYS_GL9755)
+		sdhc_gl9755_init(sc);
+
+	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": can't map interrupt\n");
 		return;
 	}
@@ -174,7 +187,9 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 
-		if (sdhc_host_found(&sc->sc, iot, ioh, size, usedma, 0, 0) != 0)
+		capmask = ((uint64_t)sc->sc_capmask2 << 32) | sc->sc_capmask;
+		if (sdhc_host_found(&sc->sc, iot, ioh, size,
+		    usedma, capmask, 0) != 0)
 			printf("%s at 0x%x: can't initialize host\n",
 			    sc->sc.sc_dev.dv_xname, reg);
 
@@ -255,4 +270,163 @@ sdhc_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, uint8_t val)
 	tmp &= ~(0xff << ((reg & 0x3) * 8));
 	tmp |= (val << ((reg & 0x3) * 8));
 	pci_conf_write(pc, tag, reg & ~0x3, tmp);
+}
+
+/* Genesys Logic GL9755 */
+
+#define GL9755_PECONF			0x044
+#define  GL9755_PECONF_LFCLK		(0x7 << 12)
+#define  GL9755_PECONF_DMACLK		(1U << 29)
+#define  GL9755_PECONF_INVERT_CD	(1U << 30)
+#define  GL9755_PECONF_INVERT_WP	(1U << 31)
+#define GL9755_PLL			0x064
+#define  GL9755_PLL_LDIV_MASK		(0x3ff << 0)
+#define  GL9755_PLL_LDIV_SHIFT		0
+#define  GL9755_PLL_PDIV_MASK		(0x7 << 12)
+#define  GL9755_PLL_PDIV_SHIFT		12
+#define  GL9755_PLL_DIR			(1U << 15)
+#define  GL9755_PLL_SSC_STEP_MASK	(0x1f << 24)
+#define  GL9755_PLL_SSC_STEP_SHIFT	24
+#define  GL9755_PLL_SSC_EN		(1U << 31)
+#define GL9755_PLLSSC			0x068
+#define  GL9755_PLLSSC_PPM_MASK		(0xffff << 0)
+#define  GL9755_PLLSSC_PPM_SHIFT	0
+#define GL9755_SERDES			0x070
+#define  GL9755_SERDES_SCP_DIS		(1U << 19)
+#define GL9755_MISC			0x078
+#define  GL9755_MISC_SSC_OFF		(1U << 26)
+#define GL9755_WT			0x800
+#define  GL9755_WT_EN			(1U << 0)
+
+void
+sdhc_gl9755_wt_enable(struct sdhc_pci_softc *sc)
+{
+	pcireg_t reg;
+
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_WT);
+	reg |= GL9755_WT_EN;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, GL9755_WT, reg);
+}
+
+void
+sdhc_gl9755_wt_disable(struct sdhc_pci_softc *sc)
+{
+	pcireg_t reg;
+
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_WT);
+	reg &= ~GL9755_WT_EN;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, GL9755_WT, reg);
+}
+
+void
+sdhc_gl9755_bus_clock_pre(struct sdhc_softc *ssc, int freq, int timing)
+{
+	struct sdhc_pci_softc *sc = (struct sdhc_pci_softc *)ssc;
+	pcireg_t misc, pll, pllssc;
+	uint8_t step, pdiv;
+	uint16_t ppm, ldiv;
+	int enable, dir;
+
+	sdhc_gl9755_wt_enable(sc);
+
+	/* Disable SSC. */
+	pll = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_PLL);
+	pll &= ~(GL9755_PLL_DIR | GL9755_PLL_SSC_EN);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, GL9755_PLL, pll);
+
+	sdhc_gl9755_wt_disable(sc);
+
+	switch (freq) {
+	case 208000:
+		step = 0xf; ppm = 0x5a1d;
+		ldiv = 0x246; pdiv = 0x0; dir = 1;
+		break;
+	case 100000:
+		step = 0xe; ppm = 0x51ec;
+		ldiv = 0x244; pdiv = 0x1; dir = 1;
+		break;
+	case 50000:
+		step = 0xe; ppm = 0x51ec;
+		ldiv = 0x244; pdiv = 0x3; dir = 1;
+		break;
+	default:
+		return;
+	}
+
+	/*
+	 * Disable the clock here before we start changing the PLL.
+	 * It will be disabled again by our caller, but that should be
+	 * a no-op.
+	 */
+	sdhc_write_2(sc->sc.sc_host[0], SDHC_CLOCK_CTL, 0);
+
+	sdhc_gl9755_wt_enable(sc);
+
+	/* Set SSC. */
+	misc = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_MISC);
+	enable = !(misc & GL9755_MISC_SSC_OFF);
+	pll = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_PLL);
+	pllssc = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_PLLSSC);
+	pll &= ~(GL9755_PLL_SSC_STEP_MASK | GL9755_PLL_SSC_EN);
+	pll |= step << GL9755_PLL_SSC_STEP_SHIFT;
+	pll |= enable ? GL9755_PLL_SSC_EN : 0;
+	pllssc &= ~GL9755_PLLSSC_PPM_MASK;
+	pllssc |= ppm << GL9755_PLLSSC_PPM_SHIFT;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, GL9755_PLLSSC, pllssc);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, GL9755_PLL, pll);
+
+	/* Set PLL. */
+	pll = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_PLL);
+	pll &= ~(GL9755_PLL_LDIV_MASK | GL9755_PLL_PDIV_MASK);
+	pll &= ~GL9755_PLL_DIR;
+	pll |= ldiv << GL9755_PLL_LDIV_SHIFT;
+	pll |= pdiv << GL9755_PLL_PDIV_SHIFT;
+	pll |= dir ? GL9755_PLL_DIR : 0;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, GL9755_PLL, pll);
+	
+	sdhc_gl9755_wt_disable(sc);
+
+	delay(1000);
+}
+
+void
+sdhc_gl9755_init(struct sdhc_pci_softc *sc)
+{
+	pcireg_t reg;
+
+	sdhc_gl9755_wt_enable(sc);
+
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_PECONF);
+	reg &= ~GL9755_PECONF_LFCLK;
+	reg &= ~GL9755_PECONF_DMACLK;
+#ifdef __HAVE_FDT
+	if (PCITAG_NODE(sc->sc_tag)) {
+		if (OF_getpropbool(PCITAG_NODE(sc->sc_tag), "cd-inverted"))
+			reg |= GL9755_PECONF_INVERT_CD;
+		if (OF_getpropbool(PCITAG_NODE(sc->sc_tag), "wp-inverted"))
+			reg |= GL9755_PECONF_INVERT_WP;
+	}
+#endif
+	pci_conf_write(sc->sc_pc, sc->sc_tag, GL9755_PECONF, reg);
+
+	/* Enable short circuit protection. */
+	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, GL9755_SERDES);
+	reg &= ~GL9755_SERDES_SCP_DIS;
+	pci_conf_write(sc->sc_pc, sc->sc_tag, GL9755_SERDES, reg);
+
+	sdhc_gl9755_wt_disable(sc);
+	
+	sc->sc.sc_bus_clock_pre = sdhc_gl9755_bus_clock_pre;
+
+	/*
+	 * We need to use 32-bit register access on Apple Silicon.
+	 * This shouldn't hurt on other platforms.
+	 */
+	sc->sc.sc_flags |= SDHC_F_32BIT_ACCESS;
+
+	/* V3-compatible 64-bit DMA isn't supported. */
+	sc->sc_capmask |= SDHC_64BIT_DMA_SUPP;
+	
+	/* DDR50 is apparently broked on this controller. */
+	sc->sc_capmask2 |= SDHC_DDR50_SUPP;
 }
