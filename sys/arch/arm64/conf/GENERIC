@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.309 2025/11/23 21:28:15 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.310 2025/12/24 12:37:16 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -436,6 +436,7 @@ mpi*		at pci?			# LSI Logic Fusion MPT Message Passing Interface
 mpii*		at pci?			# LSI Fusion MPT Message Passing Interface II
 mfi*		at pci?			# LSI MegaRAID SAS controllers
 mfii*		at pci?			# LSI MegaRAID SAS Fusion controller
+sdhc*		at pci?			# SD Host Controller
 
 # PCI Audio
 azalia*		at pci?			# High Definition Audio

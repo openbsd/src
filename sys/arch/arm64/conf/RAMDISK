@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.236 2025/12/23 00:04:48 sthen Exp $
+# $OpenBSD: RAMDISK,v 1.237 2025/12/24 12:37:16 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -341,6 +341,7 @@ qwx*		at pci?			# Qualcomm 802.11ax
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
 					# flags 0x0001 to force SATA 1 (1.5Gb/s)
 nvme*		at pci?			# NVMe controllers
+sdhc*		at pci?			# SD Host Controller
 
 # USB Controllers
 ohci*		at pci?			# Open Host Controller
