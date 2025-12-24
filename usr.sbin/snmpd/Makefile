@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.26 2024/01/27 09:53:59 martijn Exp $
+#	$OpenBSD: Makefile,v 1.27 2025/12/24 13:36:38 martijn Exp $
 
 PROG=		snmpd
 MAN=		snmpd.8 snmpd.conf.5
 SRCS=		mib.y parse.y log.c snmpe.c application.c application_blocklist.c \
 		    application_internal.c application_agentx.c ax.c \
+		    engine.c \
 		    trap.c smi.c snmpd.c \
 		    proc.c usm.c traphandler.c util.c
 

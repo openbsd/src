@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.13 2025/11/27 10:17:19 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.14 2025/12/24 13:36:38 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -530,8 +530,8 @@ struct ber_element *
 appl_internal_engine(struct ber_oid *oid)
 {
 	if (ober_oid_cmp(&OID(MIB_snmpEngineID, 0), oid) == 0)
-		return ober_add_nstring(NULL, snmpd_env->sc_engineid,
-		    snmpd_env->sc_engineid_len);
+		return ober_add_nstring(NULL, snmpd_env->sc_engineid.value,
+		    snmpd_env->sc_engineid.length);
 	else if (ober_oid_cmp(&OID(MIB_snmpEngineBoots, 0), oid) == 0)
 		return ober_add_integer(NULL, snmpd_env->sc_engine_boots);
 	else if (ober_oid_cmp(&OID(MIB_snmpEngineTime, 0), oid) == 0)

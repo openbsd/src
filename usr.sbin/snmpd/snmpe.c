@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.95 2024/05/21 05:00:48 jsg Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.96 2025/12/24 13:36:38 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -114,7 +114,7 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 		fatal("pledge");
 
 	log_info("snmpe %s: ready",
-	    tohexstr(env->sc_engineid, env->sc_engineid_len));
+	    tohexstr(env->sc_engineid.value, env->sc_engineid.length));
 	trap_init();
 }
 
@@ -305,12 +305,14 @@ snmpe_parse(struct snmp_message *msg)
 		}
 
 		if (ober_scanf_elements(a, "{xxeS$}$",
-		    &engineid, &msg->sm_ctxengineid_len, &ctxname, &len,
+		    &engineid, &msg->sm_ctxengineid.length, &ctxname, &len,
 		    &msg->sm_pdu) != 0)
 			goto parsefail;
-		if (msg->sm_ctxengineid_len > sizeof(msg->sm_ctxengineid))
+		if (msg->sm_ctxengineid.length >
+		    sizeof(msg->sm_ctxengineid.value))
 			goto parsefail;
-		memcpy(msg->sm_ctxengineid, engineid, msg->sm_ctxengineid_len);
+		memcpy(msg->sm_ctxengineid.value, engineid,
+		    msg->sm_ctxengineid.length);
 		if (len > SNMPD_MAXCONTEXNAMELEN)
 			goto parsefail;
 		memcpy(msg->sm_ctxname, ctxname, len);
@@ -456,7 +458,7 @@ badversion:
 		    "request %lld", __func__, msg->sm_host, msg->sm_port,
 		    snmpe_pdutype2string(msg->sm_pdutype), msg->sm_flags,
 		    msg->sm_secmodel, msg->sm_username,
-		    tohexstr(msg->sm_ctxengineid, msg->sm_ctxengineid_len),
+		    tohexstr(msg->sm_ctxengineid.value, msg->sm_ctxengineid.length),
 		    msg->sm_ctxname, msg->sm_request);
 	else
 		log_debug("%s: %s:%hd: SNMPv%d '%s' pdutype %s request %lld",
@@ -849,7 +851,7 @@ snmpe_encode(struct snmp_message *msg)
 	pdu = epdu = ober_add_sequence(NULL);
 	if (msg->sm_version == SNMP_V3) {
 		if ((epdu = ober_printf_elements(epdu, "xs{",
-		    snmpd_env->sc_engineid, snmpd_env->sc_engineid_len,
+		    snmpd_env->sc_engineid.value, snmpd_env->sc_engineid.length,
 		    msg->sm_ctxname)) == NULL) {
 			ober_free_elements(pdu);
 			return -1;

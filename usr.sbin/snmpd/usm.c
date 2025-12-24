@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.30 2023/12/22 13:03:16 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.31 2025/12/24 13:36:38 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -266,10 +266,11 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	off_t			 offs, offs2;
 	char			*usmparams;
 	size_t			 len;
-	size_t			 enginelen, userlen, digestlen, saltlen;
+	size_t			 userlen, digestlen, saltlen;
 	struct ber		 ber;
 	struct ber_element	*usm = NULL, *next = NULL, *decr;
-	char			*engineid;
+	struct engineid		 engineid;
+	char			*engineidv;
 	char			*user;
 	char			*digest, *salt;
 	u_long			 now;
@@ -297,7 +298,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	smi_debug_elements(usm);
 #endif
 
-	if (ober_scanf_elements(usm, "{xiixpxx$", &engineid, &enginelen,
+	if (ober_scanf_elements(usm, "{xiixpxx$", &engineidv, &engineid.length,
 	    &engine_boots, &engine_time, &user, &userlen, &offs2,
 	    &digest, &digestlen, &salt, &saltlen) != 0) {
 		*errp = "cannot decode USM params";
@@ -306,10 +307,10 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	}
 
 	log_debug("USM: engineid '%s', engine boots %lld, engine time %lld, "
-	    "user '%s'", tohexstr(engineid, enginelen), engine_boots,
+	    "user '%s'", tohexstr(engineidv, engineid.length), engine_boots,
 	    engine_time, user);
 
-	if (enginelen > SNMPD_MAXENGINEIDLEN ||
+	if (engineid.length > sizeof(engineid.value) ||
 	    userlen > SNMPD_MAXUSERNAMELEN ||
 	    !usm_valid_digestlen(digestlen) ||
 	    (saltlen != (MSG_HAS_PRIV(msg) ? SNMP_USM_SALTLEN : 0))) {
@@ -318,8 +319,8 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		goto done;
 	}
 
-	if (enginelen != snmpd_env->sc_engineid_len ||
-	    memcmp(engineid, snmpd_env->sc_engineid, enginelen) != 0) {
+	memcpy(engineid.value, engineidv, engineid.length);
+	if (engineid_cmp(&snmpd_env->sc_engineid, &engineid) != 0) {
 		*errp = "unknown engine id";
 		msg->sm_usmerr = OIDVAL_usmErrEngineId;
 		stats->snmp_usmnosuchengine++;
@@ -436,7 +437,7 @@ usm_encode(struct snmp_message *msg, struct ber_element *e)
 	msg->sm_engine_boots = (u_int32_t)snmpd_env->sc_engine_boots;
 	msg->sm_engine_time = (u_int32_t)snmpd_engine_time();
 	if ((a = ober_printf_elements(usm, "xdds",
-	    snmpd_env->sc_engineid, snmpd_env->sc_engineid_len,
+	    snmpd_env->sc_engineid.value, snmpd_env->sc_engineid.length,
 	    msg->sm_engine_boots, msg->sm_engine_time,
 	    msg->sm_username)) == NULL)
 		goto done;
@@ -720,13 +721,13 @@ usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 	assert(snmpd_env->sc_engineid_len <= SNMPD_MAXENGINEIDLEN);
 #endif
 	memcpy(pwbuf, keybuf, dlen);
-	memcpy(pwbuf + dlen, snmpd_env->sc_engineid,
-	    snmpd_env->sc_engineid_len);
-	memcpy(pwbuf + dlen + snmpd_env->sc_engineid_len, keybuf, dlen);
+	memcpy(pwbuf + dlen, snmpd_env->sc_engineid.value,
+	    snmpd_env->sc_engineid.length);
+	memcpy(pwbuf + dlen + snmpd_env->sc_engineid.length, keybuf, dlen);
 
 	if (!EVP_DigestInit_ex(ctx, md, NULL) ||
 	    !EVP_DigestUpdate(ctx, pwbuf,
-	    2 * dlen + snmpd_env->sc_engineid_len) ||
+	    2 * dlen + snmpd_env->sc_engineid.length) ||
 	    !EVP_DigestFinal_ex(ctx, keybuf, &dlen)) {
 		EVP_MD_CTX_free(ctx);
 		return NULL;
