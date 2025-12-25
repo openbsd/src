@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1025 2025/12/25 18:05:15 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1026 2025/12/25 18:07:00 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -4242,6 +4242,12 @@ passed through to applications running in
 .Nm .
 Attached clients should be detached and attached again after changing this
 option.
+.It Xo Ic focus-follows-mouse
+.Op Ic on | off
+.Xc
+When enabled and
+.Ic mouse
+is on, moving the mouse into a pane selects it.
 .It Xo Ic get-clipboard
 .Op Ic both | request | buffer | off
 .Xc

@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.202 2025/12/22 08:41:01 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.203 2025/12/25 18:07:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -663,6 +663,13 @@ const struct options_table_entry options_table[] = {
 	  .default_num = 750,
 	  .unit = "milliseconds",
 	  .text = "Time for which status line messages should appear."
+	},
+
+	{ .name = "focus-follows-mouse",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 0,
+	  .text = "Whether moving the mouse into a pane selects it."
 	},
 
 	{ .name = "history-limit",
