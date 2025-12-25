@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.72 2025/12/21 00:05:23 kettenis Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.73 2025/12/25 10:59:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -545,11 +545,28 @@ print_pcie_ls(uint8_t speed)
 }
 
 void
+print_pcie_aspm(uint8_t aspm)
+{
+	switch (aspm) {
+	case 1:
+		printf("L0s");
+		break;
+	case 2:
+		printf("L1");
+		break;
+	case 3:
+		printf("L0s, L1");
+		break;
+	}
+}
+
+void
 dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 {
 	u_int32_t dcap, dcsr;
 	u_int32_t lcap, lcsr;
 	u_int8_t cwidth, cspeed, swidth, sspeed;
+	u_int8_t caspm, saspm;
 
 	if (pci_read(bus, dev, func, ptr + PCI_PCIE_DCAP, &dcap) != 0)
 		return;
@@ -566,6 +583,7 @@ dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 		return;
 	cspeed = lcap & 0x0f;
 	cwidth = (lcap >> 4) & 0x3f;
+	caspm = (lcap >> 10) & 0x03;
 	if (cwidth == 0)
 		return;
 
@@ -573,6 +591,7 @@ dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 		return;
 	sspeed = (lcsr >> 16) & 0x0f;
 	swidth = (lcsr >> 20) & 0x3f;
+	saspm = lcsr & 0x03;
 
 	printf("\t\tLink Speed: ");
 	print_pcie_ls(sspeed);
@@ -581,6 +600,19 @@ dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 	printf(" GT/s\n");
 
 	printf("\t\tLink Width: x%d / x%d\n", swidth, cwidth);
+
+	if (caspm) {
+		printf("\t\tASPM: ");
+		print_pcie_aspm(caspm);
+		if (saspm) {
+			printf(" (");
+			print_pcie_aspm(saspm);
+			printf(" enabled)");
+		} else {
+			printf(" (disabled)");
+		}
+		printf("\n");
+	}
 }
 
 void
