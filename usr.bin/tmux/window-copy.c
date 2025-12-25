@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.379 2025/12/10 21:24:43 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.380 2025/12/25 18:05:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -954,6 +954,18 @@ window_copy_formats(struct window_mode_entry *wme, struct format_tree *ft)
 	} else {
 		format_add(ft, "selection_active", "0");
 		format_add(ft, "selection_present", "0");
+	}
+
+	switch (data->selflag) {
+	case SEL_CHAR:
+		format_add(ft, "selection_mode", "char");
+		break;
+	case SEL_WORD:
+		format_add(ft, "selection_mode", "word");
+		break;
+	case SEL_LINE:
+		format_add(ft, "selection_mode", "line");
+		break;
 	}
 
 	format_add(ft, "search_present", "%d", data->searchmark != NULL);
