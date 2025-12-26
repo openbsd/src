@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.130 2025/12/26 18:45:42 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.131 2025/12/26 18:49:13 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -915,7 +915,7 @@ EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
-	return point->meth->point_set_to_infinity(group, point);
+	return group->meth->point_set_to_infinity(group, point);
 }
 LCRYPTO_ALIAS(EC_POINT_set_to_infinity);
 
@@ -1219,7 +1219,7 @@ EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
-	return point->meth->point_is_at_infinity(group, point);
+	return group->meth->point_is_at_infinity(group, point);
 }
 LCRYPTO_ALIAS(EC_POINT_is_at_infinity);
 
