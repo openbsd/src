@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.129 2025/12/26 18:44:19 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.130 2025/12/26 18:45:42 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1340,6 +1340,12 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 
 	if (g_scalar != NULL && group->generator == NULL) {
 		ECerror(EC_R_UNDEFINED_GENERATOR);
+		goto err;
+	}
+
+	if (!ec_group_and_point_compatible(group, r) ||
+	    (point != NULL && !ec_group_and_point_compatible(group, point))) {
+		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
 
