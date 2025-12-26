@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.65 2025/05/12 23:48:12 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.66 2025/12/26 18:19:46 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -239,12 +239,25 @@ verify_existing() {
 }
 
 devices_in_dmesg() {
+	if [ "${DMESG:-}" ]; then
+		_devices_in_dmesg "$DMESG"
+		return
+	fi
+
+	dmesg > "$FD_DIR/dmesg"
+	
+	_devices_in_dmesg /var/run/dmesg.boot
+	_devices_in_dmesg "$FD_DIR/dmesg"
+}
+
+_devices_in_dmesg() {
+	local _dmesg=$1
 	local IFS
 	local _d _m _dmesgtail _last='' _nl='
 '
 
 	# The dmesg can contain multiple boots, only look in the last one
-	_dmesgtail="$( echo ; sed -n 'H;/^OpenBSD/h;${g;p;}' "$DMESG" )"
+	_dmesgtail="$( echo ; sed -n 'H;/^OpenBSD/h;${g;p;}' "$_dmesg" )"
 
 	grep -v '^[[:space:]]*#' "$FWPATTERNS" |
 	    while read -r _d _m; do
@@ -489,7 +502,7 @@ set_fw_paths() {
 	if [ ! "$_version" ]; then
 		_version=$(sed -nE \
 		    '/^OpenBSD ([0-9]+\.[0-9][^ ]*) .*/{s//\1/;h;};${g;p;}' \
-		    "$DMESG")
+		    "${DMESG:-/var/run/dmesg.boot}")
 	
 		# If VNAME was set in the environment instead of the DMESG,
 		# looking in the DMESG for "current" is wrong.
@@ -514,7 +527,6 @@ usage() {
 
 ALL=false
 LIST=false
-DMESG=/var/run/dmesg.boot
 
 while getopts :adD:Flnp:v name
 do
@@ -561,7 +573,7 @@ if [ "${FWURL:-}" ] && ! "$INSTALL" ; then
 	usage
 fi
 
-if [ ! -s "$DMESG" ]; then
+if [ "${DMESG:-}" ] && [ ! -s "$DMESG" ]; then
 	warn "${0##*/}: $DMESG: No such file or directory"
 	exit 1
 fi
