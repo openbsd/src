@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.72 2025/12/26 18:41:05 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.73 2025/12/26 18:42:33 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -196,6 +196,7 @@ int ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
     BN_CTX *ctx);
 
 int ec_group_is_builtin_curve(const EC_GROUP *group, int *out_nid);
+int ec_group_and_point_compatible(const EC_GROUP *group, const EC_POINT *point);
 
 /*
  * Wrappers around the unergonomic EC_POINT_{oct2point,point2oct}().

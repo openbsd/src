@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.127 2025/12/26 18:41:05 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.128 2025/12/26 18:42:33 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -791,6 +791,16 @@ EC_GROUP_cmp(const EC_GROUP *group1, const EC_GROUP *group2, BN_CTX *ctx_in)
 	return ret;
 }
 LCRYPTO_ALIAS(EC_GROUP_cmp);
+
+int
+ec_group_and_point_compatible(const EC_GROUP *group, const EC_POINT *point)
+{
+	if (group->meth != point->meth)
+		return 0;
+	if (group->nid == NID_undef || point->nid == NID_undef)
+		return 1;
+	return group->nid == point->nid;
+}
 
 EC_POINT *
 EC_POINT_new(const EC_GROUP *group)
