@@ -23,7 +23,7 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/XSUB.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/av.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/bitcount.h
-./usr/libdata/perl5/mips64el-openbsd/CORE/charclass_invlists.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/charclass_invlists.inc
 ./usr/libdata/perl5/mips64el-openbsd/CORE/config.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/cop.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/cv.h
@@ -85,6 +85,7 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regcomp.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regcomp_internal.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regexp.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/regexp_constants.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/reginline.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regnodes.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/sbox32_hash.h
@@ -187,6 +188,7 @@
 ./usr/libdata/perl5/mips64el-openbsd/IO
 ./usr/libdata/perl5/mips64el-openbsd/IO.pm
 ./usr/libdata/perl5/mips64el-openbsd/IO/Compress
+./usr/libdata/perl5/mips64el-openbsd/IO/Compress.pm
 ./usr/libdata/perl5/mips64el-openbsd/IO/Compress/Adapter
 ./usr/libdata/perl5/mips64el-openbsd/IO/Compress/Adapter/Bzip2.pm
 ./usr/libdata/perl5/mips64el-openbsd/IO/Compress/Adapter/Deflate.pm
@@ -260,6 +262,8 @@
 ./usr/libdata/perl5/mips64el-openbsd/PerlIO/via.pm
 ./usr/libdata/perl5/mips64el-openbsd/SDBM_File.pm
 ./usr/libdata/perl5/mips64el-openbsd/Scalar
+./usr/libdata/perl5/mips64el-openbsd/Scalar/List
+./usr/libdata/perl5/mips64el-openbsd/Scalar/List/Utils.pm
 ./usr/libdata/perl5/mips64el-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/mips64el-openbsd/Socket.pm
 ./usr/libdata/perl5/mips64el-openbsd/Storable.pm

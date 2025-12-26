@@ -259,7 +259,12 @@
 ./usr/share/man/man1/perl5380delta.1
 ./usr/share/man/man1/perl5381delta.1
 ./usr/share/man/man1/perl5382delta.1
+./usr/share/man/man1/perl5383delta.1
+./usr/share/man/man1/perl5384delta.1
 ./usr/share/man/man1/perl5400delta.1
+./usr/share/man/man1/perl5401delta.1
+./usr/share/man/man1/perl5402delta.1
+./usr/share/man/man1/perl5420delta.1
 ./usr/share/man/man1/perl561delta.1
 ./usr/share/man/man1/perl56delta.1
 ./usr/share/man/man1/perl581delta.1
@@ -695,6 +700,7 @@
 ./usr/share/man/man3p/ExtUtils::ParseXS.3p
 ./usr/share/man/man3p/ExtUtils::ParseXS::Constants.3p
 ./usr/share/man/man3p/ExtUtils::ParseXS::Eval.3p
+./usr/share/man/man3p/ExtUtils::ParseXS::Node.3p
 ./usr/share/man/man3p/ExtUtils::ParseXS::Utilities.3p
 ./usr/share/man/man3p/ExtUtils::Typemaps.3p
 ./usr/share/man/man3p/ExtUtils::Typemaps::Cmd.3p
@@ -743,6 +749,7 @@
 ./usr/share/man/man3p/I18N::LangTags::List.3p
 ./usr/share/man/man3p/I18N::Langinfo.3p
 ./usr/share/man/man3p/IO.3p
+./usr/share/man/man3p/IO::Compress.3p
 ./usr/share/man/man3p/IO::Compress::Base.3p
 ./usr/share/man/man3p/IO::Compress::Bzip2.3p
 ./usr/share/man/man3p/IO::Compress::Deflate.3p
@@ -908,6 +915,7 @@
 ./usr/share/man/man3p/Pod::Usage.3p
 ./usr/share/man/man3p/SDBM_File.3p
 ./usr/share/man/man3p/Safe.3p
+./usr/share/man/man3p/Scalar::List::Utils.3p
 ./usr/share/man/man3p/Scalar::Util.3p
 ./usr/share/man/man3p/Search::Dict.3p
 ./usr/share/man/man3p/SelectSaver.3p
@@ -1018,6 +1026,7 @@
 ./usr/share/man/man3p/Test2::Compare::String.3p
 ./usr/share/man/man3p/Test2::Compare::Undef.3p
 ./usr/share/man/man3p/Test2::Compare::Wildcard.3p
+./usr/share/man/man3p/Test2::Env.3p
 ./usr/share/man/man3p/Test2::Event.3p
 ./usr/share/man/man3p/Test2::Event::Bail.3p
 ./usr/share/man/man3p/Test2::Event::Diag.3p
@@ -1061,13 +1070,13 @@
 ./usr/share/man/man3p/Test2::Manual::Anatomy.3p
 ./usr/share/man/man3p/Test2::Manual::Anatomy::API.3p
 ./usr/share/man/man3p/Test2::Manual::Anatomy::Context.3p
+./usr/share/man/man3p/Test2::Manual::Anatomy::EndToEnd.3p
 ./usr/share/man/man3p/Test2::Manual::Anatomy::Event.3p
 ./usr/share/man/man3p/Test2::Manual::Anatomy::Hubs.3p
 ./usr/share/man/man3p/Test2::Manual::Anatomy::IPC.3p
 ./usr/share/man/man3p/Test2::Manual::Anatomy::Utilities.3p
 ./usr/share/man/man3p/Test2::Manual::Concurrency.3p
 ./usr/share/man/man3p/Test2::Manual::Contributing.3p
-./usr/share/man/man3p/Test2::Manual::EndToEnd.3p
 ./usr/share/man/man3p/Test2::Manual::Testing.3p
 ./usr/share/man/man3p/Test2::Manual::Testing::Introduction.3p
 ./usr/share/man/man3p/Test2::Manual::Testing::Migrating.3p
@@ -1137,6 +1146,7 @@
 ./usr/share/man/man3p/Test2::Util::HashBase.3p
 ./usr/share/man/man3p/Test2::Util::Importer.3p
 ./usr/share/man/man3p/Test2::Util::Ref.3p
+./usr/share/man/man3p/Test2::Util::Sig.3p
 ./usr/share/man/man3p/Test2::Util::Stash.3p
 ./usr/share/man/man3p/Test2::Util::Sub.3p
 ./usr/share/man/man3p/Test2::Util::Table.3p
@@ -1153,7 +1163,6 @@
 ./usr/share/man/man3p/Test2::Workflow::Task::Group.3p
 ./usr/share/man/man3p/Test::Builder.3p
 ./usr/share/man/man3p/Test::Builder::Formatter.3p
-./usr/share/man/man3p/Test::Builder::IO::Scalar.3p
 ./usr/share/man/man3p/Test::Builder::Module.3p
 ./usr/share/man/man3p/Test::Builder::Tester.3p
 ./usr/share/man/man3p/Test::Builder::Tester::Color.3p
@@ -1253,6 +1262,7 @@
 ./usr/share/man/man3p/re.3p
 ./usr/share/man/man3p/sigtrap.3p
 ./usr/share/man/man3p/sort.3p
+./usr/share/man/man3p/source::encoding.3p
 ./usr/share/man/man3p/stable.3p
 ./usr/share/man/man3p/strict.3p
 ./usr/share/man/man3p/subs.3p

@@ -23,7 +23,7 @@
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/XSUB.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/av.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/bitcount.h
-./usr/libdata/perl5/powerpc64-openbsd/CORE/charclass_invlists.h
+./usr/libdata/perl5/powerpc64-openbsd/CORE/charclass_invlists.inc
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/config.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/cop.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/cv.h
@@ -85,6 +85,7 @@
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/regcomp.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/regcomp_internal.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/regexp.h
+./usr/libdata/perl5/powerpc64-openbsd/CORE/regexp_constants.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/reginline.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/regnodes.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/sbox32_hash.h
@@ -187,6 +188,7 @@
 ./usr/libdata/perl5/powerpc64-openbsd/IO
 ./usr/libdata/perl5/powerpc64-openbsd/IO.pm
 ./usr/libdata/perl5/powerpc64-openbsd/IO/Compress
+./usr/libdata/perl5/powerpc64-openbsd/IO/Compress.pm
 ./usr/libdata/perl5/powerpc64-openbsd/IO/Compress/Adapter
 ./usr/libdata/perl5/powerpc64-openbsd/IO/Compress/Adapter/Bzip2.pm
 ./usr/libdata/perl5/powerpc64-openbsd/IO/Compress/Adapter/Deflate.pm
@@ -260,6 +262,8 @@
 ./usr/libdata/perl5/powerpc64-openbsd/PerlIO/via.pm
 ./usr/libdata/perl5/powerpc64-openbsd/SDBM_File.pm
 ./usr/libdata/perl5/powerpc64-openbsd/Scalar
+./usr/libdata/perl5/powerpc64-openbsd/Scalar/List
+./usr/libdata/perl5/powerpc64-openbsd/Scalar/List/Utils.pm
 ./usr/libdata/perl5/powerpc64-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/powerpc64-openbsd/Socket.pm
 ./usr/libdata/perl5/powerpc64-openbsd/Storable.pm

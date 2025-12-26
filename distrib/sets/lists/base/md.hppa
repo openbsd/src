@@ -25,7 +25,7 @@
 ./usr/libdata/perl5/hppa-openbsd/CORE/XSUB.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/av.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/bitcount.h
-./usr/libdata/perl5/hppa-openbsd/CORE/charclass_invlists.h
+./usr/libdata/perl5/hppa-openbsd/CORE/charclass_invlists.inc
 ./usr/libdata/perl5/hppa-openbsd/CORE/config.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/cop.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/cv.h
@@ -87,6 +87,7 @@
 ./usr/libdata/perl5/hppa-openbsd/CORE/regcomp.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/regcomp_internal.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/regexp.h
+./usr/libdata/perl5/hppa-openbsd/CORE/regexp_constants.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/reginline.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/regnodes.h
 ./usr/libdata/perl5/hppa-openbsd/CORE/sbox32_hash.h
@@ -189,6 +190,7 @@
 ./usr/libdata/perl5/hppa-openbsd/IO
 ./usr/libdata/perl5/hppa-openbsd/IO.pm
 ./usr/libdata/perl5/hppa-openbsd/IO/Compress
+./usr/libdata/perl5/hppa-openbsd/IO/Compress.pm
 ./usr/libdata/perl5/hppa-openbsd/IO/Compress/Adapter
 ./usr/libdata/perl5/hppa-openbsd/IO/Compress/Adapter/Bzip2.pm
 ./usr/libdata/perl5/hppa-openbsd/IO/Compress/Adapter/Deflate.pm
@@ -262,6 +264,8 @@
 ./usr/libdata/perl5/hppa-openbsd/PerlIO/via.pm
 ./usr/libdata/perl5/hppa-openbsd/SDBM_File.pm
 ./usr/libdata/perl5/hppa-openbsd/Scalar
+./usr/libdata/perl5/hppa-openbsd/Scalar/List
+./usr/libdata/perl5/hppa-openbsd/Scalar/List/Utils.pm
 ./usr/libdata/perl5/hppa-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/hppa-openbsd/Socket.pm
 ./usr/libdata/perl5/hppa-openbsd/Storable.pm
