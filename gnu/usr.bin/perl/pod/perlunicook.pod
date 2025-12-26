@@ -16,7 +16,7 @@ value in them.
 
 =head2 ℞ 0: Standard preamble
 
-Unless otherwise notes, all examples below require this standard preamble
+Unless otherwise noted, all examples below require this standard preamble
 to work correctly, with the C<#!> adjusted to work on your system:
 
  #!/usr/bin/env perl
@@ -383,9 +383,9 @@ scope, or in just one regex.
  my($num) = $str =~ /(\d+)/a;
 
 Or use specific un-Unicode properties, like C<\p{ahex}>
-and C<\p{POSIX_Digit>}.  Properties still work normally
+and C<\p{POSIX_Digit}>.  Properties still work normally
 no matter what charset modifiers (C</d /u /l /a /aa>)
-should be effect.
+are in effect.
 
 =head2 ℞ 25: Match Unicode properties in regex with \p, \P
 
@@ -419,7 +419,7 @@ properties for use in regexes.
  &utf8::IsTitle
  END_OF_SET
 
- if (/\p{Is_GraecoRoman_Title}/ { ... }
+ if (/\p{Is_GraecoRoman_Title}/) { ... }
 
 =head2 ℞ 27: Unicode normalization
 
@@ -439,27 +439,29 @@ canonical combining classes and weeds out singletons.
 
 Unless you’ve used C</a> or C</aa>, C<\d> matches more than
 ASCII digits only, but Perl’s implicit string-to-number
-conversion does not current recognize these.  Here’s how to
+conversion does not currently recognize these.  Here’s how to
 convert such strings manually.
 
+ use utf8;
  use v5.14;  # needed for num() function
  use Unicode::UCD qw(num);
- my $str = "got Ⅻ and ४५६७ and ⅞ and here";
+ my $str = "got Ⅻ and ४५६७ and ⅞ and 兆 here";
  my @nums = ();
  while ($str =~ /(\d+|\N)/g) {  # not just ASCII!
     push @nums, num($1);
  }
- say "@nums";   #     12      4567      0.875
+ say "@nums";   # 12 4567 0.875 1000000000000
 
  use charnames qw(:full);
- my $nv = num("\N{RUMI DIGIT ONE}\N{RUMI DIGIT TWO}");
+ my $nv = num("\N{VAI DIGIT ONE}\N{VAI DIGIT TWO}");
+ say $nv;  # 12
 
 =head2 ℞ 29: Match Unicode grapheme cluster in regex
 
 Programmer-visible “characters” are codepoints matched by C</./s>,
 but user-visible “characters” are graphemes matched by C</\X/>.
 
- # Find vowel *plus* any combining diacritics,underlining,etc.
+ # Find vowel *plus* any combining diacritics, underlining, etc.
  my $nfd = NFD($orig);
  $nfd =~ / (?=[aeiou]) \X /xi
 
@@ -519,7 +521,7 @@ we print out both forms:
      my $gcs = Unicode::GCString->new($str);
      my $cols = $gcs->columns;
      my $pad = " " x (10 - $cols);
-     say str, $pad, " |";
+     say $str, $pad, " |";
  }
 
 generates this to show that it pads correctly no matter
@@ -735,7 +737,7 @@ Here's that program.
      "crème brûlée"      => 2.00, # crema catalana
      "fideuà"            => 4.20, # more noodles, Valencian
                                   # (Catalan=fideuada)
-     "pâté"              => 4.15, # gooseliver paste, French
+     "pâté"              => 4.15, # goose liver paste, French
      "お好み焼き"        => 8.00, # okonomiyaki, Japanese
  );
 

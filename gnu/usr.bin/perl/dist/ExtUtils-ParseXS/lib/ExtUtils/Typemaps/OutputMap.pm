@@ -2,7 +2,7 @@ package ExtUtils::Typemaps::OutputMap;
 use 5.006001;
 use strict;
 use warnings;
-our $VERSION = '3.51';
+our $VERSION = '3.57';
 
 =head1 NAME
 
@@ -93,28 +93,22 @@ sub cleaned_code {
   return $code;
 }
 
-=head2 targetable
+=head2 targetable_legacy
 
-This is an obscure but effective optimization that used to
-live in C<ExtUtils::ParseXS> directly. Not implementing it
-should never result in incorrect use of typemaps, just less
-efficient code.
+Do not use for new code.
 
-In a nutshell, this will check whether the output code
-involves calling C<sv_setiv>, C<sv_setuv>, C<sv_setnv>, C<sv_setpv> or
-C<sv_setpvn> to set the special C<$arg> placeholder to a new value
-B<AT THE END OF THE OUTPUT CODE>. If that is the case, the code is
-eligible for using the C<TARG>-related macros to optimize this.
-Thus the name of the method: C<targetable>.
+This is the original version of the targetable() method, whose behaviour
+has been frozen for backwards compatibility. It is used to determine
+whether to emit an early C<dXSTARG>, which will be in scope for most of
+the XSUB. More recent XSUB code generation emits a C<dXSTARG> in a tighter
+scope if one has not already been emitted. Some XS code assumes that
+C<TARG> has been declared, so continue to declare it under the same
+conditions as before. The newer C<targetable> method may be true under
+additional circumstances.
 
-If this optimization is applicable, C<ExtUtils::ParseXS> will
-emit a C<dXSTARG;> definition at the start of the generated XSUB code,
-and type (see below) dependent code to set C<TARG> and push it on
-the stack at the end of the generated XSUB code.
-
-If the optimization can not be applied, this returns undef.
-If it can be applied, this method returns a hash reference containing
-the following information:
+If the optimization can not be applied, this returns undef.  If it can be
+applied, this method returns a hash reference containing the following
+information:
 
   type:      Any of the characters i, u, n, p
   with_size: Bool indicating whether this is the sv_setpvn variant
@@ -122,11 +116,12 @@ the following information:
   what_size: If "with_size", this has the string length (as code,
              not constant, including leading comma)
 
+
 =cut
 
-sub targetable {
+sub targetable_legacy {
   my $self = shift;
-  return $self->{targetable} if exists $self->{targetable};
+  return $self->{targetable_legacy} if exists $self->{targetable_legacy};
 
   our $bal; # ()-balanced
   $bal = qr[
@@ -184,8 +179,128 @@ sub targetable {
       what_size => $sarg,
     };
   }
-  $self->{targetable} = $rv;
+  $self->{targetable_legacy} = $rv;
   return $rv;
+}
+
+=head2 targetable
+
+Class method.
+
+Return a boolean indicating whether the supplied code snippet is suitable
+for using TARG as the destination SV rather than an new mortal.
+
+In principle most things are, except expressions which would set the SV
+to a ref value. That can cause the referred value to never be freed, as
+targs aren't freed (at least for the lifetime of their CV). So in
+practice, we restrict it to an approved list of sv_setfoo() forms, and
+only where there is no extra code following the sv_setfoo() (so we have to
+match the closing bracket, allowing for nested brackets etc within).
+
+=cut
+
+my %targetable_cache;
+
+sub targetable {
+  my ($class, $code) = @_;
+
+  return $targetable_cache{$code} if exists $targetable_cache{$code};
+
+  # Match a string with zero or more balanced/nested parentheses
+  # within it, e.g.
+  #
+  #   "aa,bb(cc,dd)ee(ff,gg(hh,ii)jj,kk)ll"
+
+  our $bal;
+  $bal = qr[
+    (?:
+      (?>[^()]+)
+      |
+      " ([^"] | \\")* "
+      |
+      \( (??{ $bal }) \)
+    )*
+  ]x;
+
+  # Like $bal, but doesn't allow commas at the *top* level; e.g.
+  #
+  #       "aabb(cc,dd)ee(ff,gg(hh,ii)jj,kk)ll"
+  #
+  # Something like "aa,bb(cc,dd)" will just match/consume the "aa"
+  # part of the string.
+
+  my $bal_no_comma = qr[
+    (?:
+      (?>[^(),]+)
+      |
+      " ([^"] | \\")* "
+      |
+      \( (??{ $bal }) \)
+    )+
+  ]x;
+
+  # the SV whose value is to be set (typically arg 1)
+  # Note that currently ParseXS will always call with $arg expanded
+  # to 'RETVALSV', but also match other possibilities too for future
+  # use.
+
+  my $target = qr[
+    (?:
+      \( \s* SV \s* \* \s* \) \s*   # optional SV* cast
+    )?
+    (?:
+        \$arg
+    |
+        RETVAL
+    |
+        RETVALSV
+    |
+        ST\(\d+\)
+    )
+    \s*
+  ]x;
+
+  # We can still bootstrap compile 're', because in code re.pm is
+  # available to miniperl, and does not attempt to load the XS code.
+  use re 'eval';
+
+  my $match =
+    ($code =~
+      m[^
+        \s*
+        (?:
+            # 1-arg functions
+            sv_set_(?:undef|true|false)
+            \s*
+            \( \s*
+              $target                # arg 1: SV to set
+        |
+            # 2-arg functions
+            sv_set(?:iv|iv_mg|uv|uv_mg|nv|nv_mg|pv|pv_mg|_bool)
+            \s*
+            \( \s*
+              $target                # arg 1: SV to set
+              , \s*
+              $bal_no_comma          # arg 2: value to use
+        |
+            # 3-arg functions
+            sv_set(?:pvn|pvn_mg)
+            \s*
+            \( \s*
+              $target                # arg 1: SV to set
+              , \s*
+              $bal_no_comma          # arg 2: value to use
+              , \s*
+              $bal_no_comma          # arg 3: length
+        )
+        \s* \)
+        \s* ; \s*
+        $
+      ]xo
+  );
+
+  $targetable_cache{$code} = $match;
+  return $match;
 }
 
 =head1 SEE ALSO

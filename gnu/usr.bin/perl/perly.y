@@ -86,7 +86,7 @@
 %token <opval> PLUGEXPR PLUGSTMT
 %token <opval> LABEL
 %token <ival> LOOPEX DOTDOT YADAYADA
-%token <ival> FUNC0 FUNC1 FUNC UNIOP LSTOP
+%token <ival> FUNC0 FUNC1 FUNC UNIOP LSTOP BLKLSTOP
 %token <ival> POWOP MULOP ADDOP
 %token <ival> DOLSHARP HASHBRACK NOAMP
 %token <ival> COLONATTR FORMLBRACK FORMRBRACK
@@ -115,7 +115,7 @@
 %type <opval> termbinop termunop anonymous termdo
 %type <opval> termrelop relopchain termeqop eqopchain
 %type <ival>  sigslurpsigil
-%type <opval> sigvarname sigdefault sigscalarelem sigslurpelem
+%type <opval> sigvarname sigscalarelem sigslurpelem
 %type <opval> sigelem siglist optsiglist subsigguts subsignature optsubsignature
 %type <opval> subbody optsubbody sigsubbody optsigsubbody
 %type <opval> formstmtseq formline formarg
@@ -127,7 +127,7 @@
 %left <ival> OROP <pval> PLUGIN_LOGICAL_OR_LOW_OP
 %left <ival> ANDOP <pval> PLUGIN_LOGICAL_AND_LOW_OP
 %right <ival> NOTOP
-%nonassoc LSTOP LSTOPSUB
+%nonassoc LSTOP LSTOPSUB BLKLSTOP
 %left PERLY_COMMA
 %right <ival> ASSIGNOP <pval> PLUGIN_ASSIGN_OP
 %right <ival> PERLY_QUESTION_MARK PERLY_COLON
@@ -835,99 +835,39 @@ sigslurpsigil:
                         { $$ = '%'; }
 
 /* @, %, @foo, %foo */
-sigslurpelem: sigslurpsigil sigvarname sigdefault/* def only to catch errors */ 
+sigslurpelem: sigslurpsigil sigvarname
                         {
-                            I32 sigil = $sigslurpsigil;
-                            OP *var   = $sigvarname;
-                            OP *defop = $sigdefault;
-
-                            if (parser->sig_slurpy)
-                                yyerror("Multiple slurpy parameters not allowed");
-                            parser->sig_slurpy = (char)sigil;
-
-                            if (defop)
-                                yyerror("A slurpy parameter may not have "
-                                        "a default value");
-
-                            $$ = var ? newSTATEOP(0, NULL, var) : NULL;
+                            subsignature_append_slurpy($sigslurpsigil, $sigvarname);
+                            $$ = NULL;
                         }
-	;
-
-/* default part of sub signature scalar element: i.e. '= default_expr' */
-sigdefault
-	:	empty
-        |       ASSIGNOP
-                        { $$ = newARGDEFELEMOP(0, newOP(OP_NULL, 0), parser->sig_elems); }
-        |       ASSIGNOP term
+        |     sigslurpsigil sigvarname ASSIGNOP
                         {
-                            I32 flags = 0;
-                            if ($ASSIGNOP == OP_DORASSIGN)
-                                flags |= OPpARG_IF_UNDEF << 8;
-                            if ($ASSIGNOP == OP_ORASSIGN)
-                                flags |= OPpARG_IF_FALSE << 8;
-                            $$ = newARGDEFELEMOP(flags, $term, parser->sig_elems);
+			    yyerror("A slurpy parameter may not have a default value");
                         }
-
+        |     sigslurpsigil sigvarname ASSIGNOP term
+                        {
+			    yyerror("A slurpy parameter may not have a default value");
+                        }
+        ;
 
 /* subroutine signature scalar element: e.g. '$x', '$=', '$x = $default' */
 sigscalarelem:
-                PERLY_DOLLAR sigvarname sigdefault
+                PERLY_DOLLAR sigvarname
                         {
-                            OP *var   = $sigvarname;
-                            OP *defop = $sigdefault;
-
-                            if (parser->sig_slurpy)
-                                yyerror("Slurpy parameter not last");
-
-                            parser->sig_elems++;
-
-                            if (defop) {
-                                parser->sig_optelems++;
-
-                                OP *defexpr = cLOGOPx(defop)->op_first;
-
-                                if (   defexpr->op_type == OP_NULL
-                                    && !(defexpr->op_flags & OPf_KIDS))
-                                {
-                                    /* handle '$=' special case */
-                                    if (var)
-                                        yyerror("Optional parameter "
-                                                    "lacks default expression");
-                                    op_free(defop);
-                                }
-                                else { 
-                                    /* a normal '=default' expression */ 
-                                    if (var) {
-                                        var->op_flags |= OPf_STACKED;
-                                        (void)op_sibling_splice(var,
-                                                        NULL, 0, defop);
-                                        scalar(defop);
-                                    }
-                                    else
-                                        var = newUNOP(OP_NULL, 0, defop);
-
-                                    LINKLIST(var);
-                                    /* NB: normally the first child of a
-                                     * logop is executed before the logop,
-                                     * and it pushes a boolean result
-                                     * ready for the logop. For ARGDEFELEM,
-                                     * the op itself does the boolean
-                                     * calculation, so set the first op to
-                                     * it instead.
-                                     */
-                                    var->op_next = defop;
-                                    defexpr->op_next = var;
-                                }
-                            }
-                            else {
-                                if (parser->sig_optelems)
-                                    yyerror("Mandatory parameter "
-                                            "follows optional parameter");
-                            }
-
-                            $$ = var ? newSTATEOP(0, NULL, var) : NULL;
+                            subsignature_append_positional($sigvarname, 0, NULL);
+                            $$ = NULL;
                         }
-	;
+        |       PERLY_DOLLAR sigvarname ASSIGNOP
+                        {
+                            subsignature_append_positional($sigvarname, $ASSIGNOP, newOP(OP_NULL, 0));
+                            $$ = NULL;
+                        }
+        |       PERLY_DOLLAR sigvarname ASSIGNOP term[defop]
+                        {
+                            subsignature_append_positional($sigvarname, $ASSIGNOP, $defop);
+                            $$ = NULL;
+                        }
+        ;
 
 
 /* subroutine signature element: e.g. '$x = $default' or '%h' */
@@ -937,16 +877,13 @@ sigelem:        sigscalarelem
                         { parser->in_my = KEY_sigvar; $$ = $sigslurpelem; }
 	;
 
-/* list of subroutine signature elements */
+/* list of subroutine signature elements
+ * These parser tokens no longer emit anything; they are combined just for
+ * their side-effect on the parser structures. */
 siglist:
 	 	siglist[list] PERLY_COMMA
-			{ $$ = $list; }
 	|	siglist[list] PERLY_COMMA sigelem[element]
-			{
-			  $$ = op_append_list(OP_LINESEQ, $list, $element);
-			}
         |	sigelem[element]  %prec PREC_LOW
-			{ $$ = $element; }
 	;
 
 /* () or (....) */
@@ -968,51 +905,17 @@ subsignature:	PERLY_PAREN_OPEN subsigguts PERLY_PAREN_CLOSE
 subsigguts:
                         {
                             ENTER;
-                            SAVEIV(parser->sig_elems);
-                            SAVEIV(parser->sig_optelems);
-                            SAVEI8(parser->sig_slurpy);
-                            parser->sig_elems    = 0;
-                            parser->sig_optelems = 0;
-                            parser->sig_slurpy   = 0;
-                            parser->in_my        = KEY_sigvar;
+                            subsignature_start();
+                            parser->in_my = KEY_sigvar;
                         }
                 optsiglist
 			{
-                            OP            *sigops = $optsiglist;
-                            struct op_argcheck_aux *aux;
-                            OP            *check;
-
 			    if (!FEATURE_SIGNATURES_IS_ENABLED && !CvIsMETHOD(PL_compcv))
-			        Perl_croak(aTHX_ "Experimental "
+			        croak("Experimental "
                                     "subroutine signatures not enabled");
 
                             /* We shouldn't get here otherwise */
-                            aux = (struct op_argcheck_aux*)
-                                    PerlMemShared_malloc(
-                                        sizeof(struct op_argcheck_aux));
-                            aux->params     = parser->sig_elems;
-                            aux->opt_params = parser->sig_optelems;
-                            aux->slurpy     = parser->sig_slurpy;
-                            check = newUNOP_AUX(OP_ARGCHECK, 0, NULL,
-                                            (UNOP_AUX_item *)aux);
-                            sigops = op_prepend_elem(OP_LINESEQ, check, sigops);
-                            sigops = op_prepend_elem(OP_LINESEQ,
-                                                newSTATEOP(0, NULL, NULL),
-                                                sigops);
-                            /* a nextstate at the end handles context
-                             * correctly for an empty sub body */
-                            sigops = op_append_elem(OP_LINESEQ,
-                                                sigops,
-                                                newSTATEOP(0, NULL, NULL));
-                            /* wrap the list of arg ops in a NULL aux op.
-                              This serves two purposes. First, it makes
-                              the arg list a separate subtree from the
-                              body of the sub, and secondly the null op
-                              may in future be upgraded to an OP_SIGNATURE
-                              when implemented. For now leave it as
-                              ex-argcheck */
-                            $$ = newUNOP_AUX(OP_ARGCHECK, 0, sigops, NULL);
-                            op_null($$);
+                            $$ = subsignature_finish();
 
 			    CvSIGNATURE_on(PL_compcv);
 
@@ -1096,6 +999,10 @@ listop	:	LSTOP indirob listexpr /* map {...} @args or print $fh @args */
 			{ $$ = op_convert_list($LSTOP, OPf_STACKED,
 				op_prepend_elem(OP_LIST, newGVREF($LSTOP,$indirob), $listexpr) );
 			}
+        |       BLKLSTOP block listexpr /* all/any { ... } @args */
+                        { $$ = op_convert_list($BLKLSTOP, OPf_STACKED,
+                                op_prepend_elem(OP_LIST, newUNOP(OP_NULL, 0, op_scope($block)), $listexpr) );
+                        }
 	|	FUNC PERLY_PAREN_OPEN indirob expr PERLY_PAREN_CLOSE      /* print ($fh @args */
 			{ $$ = op_convert_list($FUNC, OPf_STACKED,
 				op_prepend_elem(OP_LIST, newGVREF($FUNC,$indirob), $expr) );
@@ -1110,6 +1017,18 @@ listop	:	LSTOP indirob listexpr /* map {...} @args or print $fh @args */
 			{ $$ = op_convert_list(OP_ENTERSUB, OPf_STACKED,
 				op_append_elem(OP_LIST, scalar($term),
 				    newMETHOP(OP_METHOD, 0, $methodname)));
+			}
+	|       term ARROW PERLY_AMPERSAND subname[method] PERLY_PAREN_OPEN optexpr PERLY_PAREN_CLOSE /* $foo->&bar(list) */
+			{ $$ = op_convert_list(OP_ENTERSUB, OPf_STACKED,
+				op_append_elem(OP_LIST,
+				    op_prepend_elem(OP_LIST, scalar($term), $optexpr),
+				    newCVREF(0, $method)));
+			}
+	|       term ARROW PERLY_AMPERSAND subname[method] /* $foo->&bar */
+			{ $$ = op_convert_list(OP_ENTERSUB, OPf_STACKED,
+				op_append_elem(OP_LIST,
+				    scalar($term),
+				    newCVREF(0, $method)));
 			}
 	|	METHCALL0 indirob optlistexpr           /* new Class @args */
 			{ $$ = op_convert_list(OP_ENTERSUB, OPf_STACKED,

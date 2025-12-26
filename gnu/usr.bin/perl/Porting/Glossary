@@ -947,6 +947,11 @@ d_fmin (d_fmin.U):
 	This variable conditionally defines the HAS_FMIN symbol, which
 	indicates to the C program that the fmin() routine is available.
 
+d_fdopendir (d_fdopendir.U):
+	This variable conditionally defines the HAS_FORK symbol, which
+	indicates that the fdopen routine is available to open a
+	directory descriptor.
+
 d_fork (d_fork.U):
 	This variable conditionally defines the HAS_FORK symbol, which
 	indicates to the C program that the fork() routine is available.

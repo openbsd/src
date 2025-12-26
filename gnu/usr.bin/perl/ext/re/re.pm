@@ -4,7 +4,7 @@ package re;
 use strict;
 use warnings;
 
-our $VERSION     = "0.47";
+our $VERSION     = "0.48";
 our @ISA         = qw(Exporter);
 our @EXPORT_OK   = qw{
 	is_regexp regexp_pattern
@@ -409,7 +409,7 @@ things, which may be legal, but have a reasonable possibility of not being the
 programmer's actual intent.  This automatically turns on the C<"regexp">
 warnings category (if not already on) within its scope.
 
-As an example of something that is caught under C<"strict'>, but not
+As an example of something that is caught under C<'strict'>, but not
 otherwise, is the pattern
 
  qr/\xABC/

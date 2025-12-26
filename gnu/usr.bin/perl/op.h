@@ -296,9 +296,16 @@ struct pmop {
     OP *	op_code_list;	/* list of (?{}) code blocks */
 };
 
+/* The PM_GETRE_raw/PM_SETRE_raw variants get/set the slot without any
+ * processing or asserts */
 #ifdef USE_ITHREADS
+#define PM_GETRE_raw(o)	(REGEXP*)(PL_regex_pad[(o)->op_pmoffset])
 #define PM_GETRE(o)	(SvTYPE(PL_regex_pad[(o)->op_pmoffset]) == SVt_REGEXP \
                          ? (REGEXP*)(PL_regex_pad[(o)->op_pmoffset]) : NULL)
+
+#define PM_SETRE_raw(o,r)	STMT_START {					\
+                            PL_regex_pad[(o)->op_pmoffset] = MUTABLE_SV(r); \
+                        } STMT_END
 /* The assignment is just to enforce type safety (or at least get a warning).
  */
 /* With first class regexps not via a reference one needs to assign
@@ -313,7 +320,9 @@ struct pmop {
                             PL_regex_pad[(o)->op_pmoffset] = MUTABLE_SV(_pm_setre); \
                         } STMT_END
 #else
+#define PM_GETRE_raw(o) ((o)->op_pmregexp)
 #define PM_GETRE(o)     ((o)->op_pmregexp)
+#define PM_SETRE_raw(o,r) ((o)->op_pmregexp = (r))
 #define PM_SETRE(o,r)   ((o)->op_pmregexp = (r))
 #endif
 
@@ -921,6 +930,7 @@ struct custom_op {
     const char	   *xop_desc;
     U32		    xop_class;
     void	  (*xop_peep)(pTHX_ OP *o, OP *oldop);
+    void          (*xop_dump)(pTHX_ const OP *o, struct Perl_OpDumpContext *ctx);
 };
 
 /* return value of Perl_custom_op_get_field, similar to void * then casting but
@@ -931,6 +941,7 @@ typedef union {
     const char	   *xop_desc;
     U32		    xop_class;
     void	  (*xop_peep)(pTHX_ OP *o, OP *oldop);
+    void	  (*xop_dump)(pTHX_ const OP *o, struct Perl_OpDumpContext *ctx);
     XOP            *xop_ptr;
 } XOPRETANY;
 
@@ -940,6 +951,7 @@ typedef union {
 #define XOPf_xop_desc	0x02
 #define XOPf_xop_class	0x04
 #define XOPf_xop_peep	0x08
+#define XOPf_xop_dump	0x10
 
 /* used by Perl_custom_op_get_field for option checking */
 typedef enum {
@@ -947,13 +959,15 @@ typedef enum {
     XOPe_xop_name = XOPf_xop_name,
     XOPe_xop_desc = XOPf_xop_desc,
     XOPe_xop_class = XOPf_xop_class,
-    XOPe_xop_peep = XOPf_xop_peep
+    XOPe_xop_peep = XOPf_xop_peep,
+    XOPe_xop_dump = XOPf_xop_dump,
 } xop_flags_enum;
 
 #define XOPd_xop_name	PL_op_name[OP_CUSTOM]
 #define XOPd_xop_desc	PL_op_desc[OP_CUSTOM]
 #define XOPd_xop_class	OA_BASEOP
 #define XOPd_xop_peep	((Perl_cpeep_t)0)
+#define XOPd_xop_dump   NULL
 
 #define XopENTRY_set(xop, which, to) \
     STMT_START { \
@@ -1072,6 +1086,9 @@ C<sib> is non-null. For a higher-level interface, see C<L</op_sibling_splice>>.
 
 #define OP_TYPE_ISNT_AND_WASNT(o, type) \
     ( (o) && OP_TYPE_ISNT_AND_WASNT_NN(o, type) )
+
+#define OP_TYPE_IS_COP_NN(o) \
+    (OP_TYPE_IS_NN(o, OP_NEXTSTATE) || OP_TYPE_IS_NN(o, OP_DBSTATE))
 
 /* should match anything that uses ck_ftst in regen/opcodes */
 #define OP_IS_STAT(op) (OP_IS_FILETEST(op) || (op) == OP_LSTAT || (op) == OP_STAT)

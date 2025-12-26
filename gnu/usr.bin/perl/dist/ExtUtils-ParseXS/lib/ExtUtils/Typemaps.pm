@@ -2,7 +2,7 @@ package ExtUtils::Typemaps;
 use 5.006001;
 use strict;
 use warnings;
-our $VERSION = '3.51';
+our $VERSION = '3.57';
 
 require ExtUtils::ParseXS;
 require ExtUtils::ParseXS::Constants;
@@ -926,10 +926,12 @@ sub clone {
 
 =head2 tidy_type
 
-Function to (heuristically) canonicalize a C type. Works to some
-degree with C++ types.
+Function to (heuristically) canonicalize a C type in terms of white space.
+Works to some degree with C++ types. For example,
 
-    $halfway_canonical_type = tidy_type($ctype);
+    $halfway_canonical_type = tidy_type('  int *  * const   *  ');
+
+returns C<'int ** const *'>.
 
 Moved from C<ExtUtils::ParseXS>.
 
@@ -1012,13 +1014,16 @@ sub _parse {
       my($type, $kind, $proto) = /^(.*?\S)\s+(\S+)\s*($ExtUtils::ParseXS::Constants::PrototypeRegexp*)$/o
         or warn("Warning: File '$filename' Line $lineno '$line' TYPEMAP entry needs 2 or 3 columns\n"),
            next;
-      # prototype defaults to '$'
-      $proto = '$' unless $proto;
-      warn("Warning: File '$filename' Line $lineno '$line' Invalid prototype '$proto'\n")
-        unless _valid_proto_string($proto);
+
+      if (length($proto)) {
+          warn("Warning: File '$filename' Line $lineno '$line' Invalid prototype '$proto'\n")
+            unless _valid_proto_string($proto);
+      }
       $self->add_typemap(
         ExtUtils::Typemaps::Type->new(
-          xstype => $kind, proto => $proto, ctype => $type
+          xstype => $kind,
+          (length($proto) ? (prototype => $proto) : ()),
+          ctype => $type
         ),
         @add_params
       );

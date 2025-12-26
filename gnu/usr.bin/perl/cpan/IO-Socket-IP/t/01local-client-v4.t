@@ -3,7 +3,7 @@
 use v5.14;
 use warnings;
 
-use Test::More;
+use Test2::V0;
 
 use IO::Socket::IP;
 
@@ -52,13 +52,13 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
    ok( $socket->connected, "\$socket is connected for $socktype" );
    ok( $socket->blocking, "\$socket is in blocking mode after connect for $socktype" );
 
-   is_deeply( [ unpack_sockaddr_in $socket->sockname ],
-              [ unpack_sockaddr_in $testclient->peername ],
-              "\$socket->sockname for $socktype" );
+   is( [ unpack_sockaddr_in $socket->sockname ],
+       [ unpack_sockaddr_in $testclient->peername ],
+       "\$socket->sockname for $socktype" );
 
-   is_deeply( [ unpack_sockaddr_in $socket->peername ],
-              [ unpack_sockaddr_in $testclient->sockname ],
-              "\$socket->peername for $socktype" );
+   is( [ unpack_sockaddr_in $socket->peername ],
+       [ unpack_sockaddr_in $testclient->sockname ],
+       "\$socket->peername for $socktype" );
 
    is( $socket->peerhost, $INADDR_LOOPBACK_HOST, "\$socket->peerhost for $socktype" );
    is( $socket->peerport, $testserver->sockport, "\$socket->peerport for $socktype" );

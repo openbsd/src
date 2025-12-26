@@ -3,7 +3,7 @@ package ExtUtils::Mkbootstrap;
 use strict;
 use warnings;
 
-our $VERSION = '7.70';
+our $VERSION = '7.76';
 $VERSION =~ tr/_//d;
 
 require Exporter;
@@ -40,12 +40,6 @@ sub Mkbootstrap {
 	unshift @INC, ".";
 	require $_;
 	shift @INC;
-    }
-
-    if ($Config{'dlsrc'} =~ /^dl_dld/){
-	package DynaLoader;
-	no strict 'vars';
-	push(@dl_resolve_using, dl_findfile('-lc'));
     }
 
     my(@all) = (@bsloadlibs, @DynaLoader::dl_resolve_using);

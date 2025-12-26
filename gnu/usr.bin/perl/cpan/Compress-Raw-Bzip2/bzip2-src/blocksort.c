@@ -764,6 +764,9 @@ void mainSort ( UInt32* ptr,
    UChar  c1;
    Int32  numQSorted;
    UInt16 s;
+
+   ((void)numQSorted); /* Silence variable ‘numQSorted’ set but not used warning */
+
    if (verb >= 4) VPrintf0 ( "        main sort initialise ...\n" );
 
    /*-- set up the 2-byte frequency table --*/

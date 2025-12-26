@@ -46,7 +46,7 @@ sub testop {
     my ($op, $opname, $code) = @_;
     pass("$op : skipped") and return if $code =~ /^SKIP/;
     pass("$op : skipped") and return if $code =~ m://|~~: && $] < 5.010;
-    my $c = new Safe;
+    my $c = Safe->new;
     $c->deny_only($op);
     $c->reval($code);
     like($@, qr/'\Q$opname\E' trapped by operation mask/, $op);

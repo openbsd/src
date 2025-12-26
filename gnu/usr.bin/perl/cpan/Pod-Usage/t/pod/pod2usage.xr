@@ -1,4 +1,3 @@
-###### begin =include pod2usage.PL #####
 NAME
     pod2usage - print usage messages from embedded pod docs in files
 
@@ -8,9 +7,9 @@ SYNOPSIS
                 *module*] [-utf8] *file*
 
 OPTIONS AND ARGUMENTS
-    -help   Print a brief help message and exit.
+    -help   Prints a brief help message and exit.
 
-    -man    Print this command's manual page and exit.
+    -man    Prints this command's manual page and exit.
 
     -exit *exitval*
             The exit status value to return.
@@ -34,18 +33,16 @@ OPTIONS AND ARGUMENTS
             on MSWin32 and DOS).
 
     -formatter *module*
-            Which text formatter to use. Default is the Pod::Text manpage,
-            or for very old Perl versions the Pod::PlainText manpage. An
-            alternative would be e.g. the Pod::Text::Termcap manpage.
+            Which text formatter to use. Default is Pod::Text. An
+            alternative would be e.g. Pod::Text::Termcap.
 
     -utf8   This option assumes that the formatter (see above) understands
             the option "utf8". It turns on generation of utf8 output.
 
     *file*  The pathname of a file containing pod documentation to be output
             in usage message format. If omitted, standard input is read -
-            but the output is then formatted with the Pod::Text manpage only
-            - unless a specific formatter has been specified with
-            -formatter.
+            but the output is then formatted with Pod::Text only - unless a
+            specific formatter has been specified with -formatter.
 
 DESCRIPTION
     pod2usage will read the given input file looking for pod documentation
@@ -53,18 +50,16 @@ DESCRIPTION
     specified then standard input is read.
 
     pod2usage invokes the pod2usage() function in the Pod::Usage module.
-    Please see the pod2usage() entry in the Pod::Usage manpage.
+    Please see "pod2usage()" in Pod::Usage.
 
 SEE ALSO
-    the Pod::Usage manpage, the pod2text manpage, the Pod::Text manpage, the
-    Pod::Text::Termcap manpage, the perldoc manpage
+    Pod::Usage, pod2text, Pod::Text, Pod::Text::Termcap, perldoc
 
 AUTHOR
-    Please report bugs using http://rt.cpan.org.
+    Please report bugs using <http://rt.cpan.org>.
 
     Brad Appleton <bradapp@enteract.com>
 
     Based on code for pod2text(1) written by Tom Christiansen
     <tchrist@mox.perl.com>
 
-###### end =include pod2usage.PL #####

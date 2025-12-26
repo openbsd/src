@@ -1,7 +1,7 @@
 #!./perl -w
 
+use Config;
 BEGIN {
-    require Config; import Config;
     if (!$Config{'d_fork'}
        # open2/3 supported on win32
        && $^O ne 'MSWin32')
@@ -14,7 +14,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 45;
+use Test::More tests => 53;
 
 use IO::Handle;
 use IPC::Open3;
@@ -88,6 +88,17 @@ close PIPE_WRITE;
 like(scalar <READ>, qr/\Adup writer\r?\n\z/);
 waitpid $pid, 0;
 
+{
+    is(pipe(my $PIPE_READ, my $PIPE_WRITE), 1);
+    $pid = open3 ['&', $PIPE_READ], my $READ, '',
+            $perl, '-e', cmd_line('print scalar <STDIN>');
+    close $PIPE_READ;
+    print $PIPE_WRITE "lex dup writer\n";
+    close $PIPE_WRITE;
+    like(scalar <$READ>, qr/\Alex dup writer\r?\n\z/);
+    waitpid $pid, 0;
+}
+
 my $TB = Test::Builder->new();
 my $test = $TB->current_test;
 # dup reader
@@ -96,6 +107,14 @@ $pid = open3 'WRITE', '>&STDOUT', 'ERROR',
 ++$test;
 print WRITE "ok $test\n";
 waitpid $pid, 0;
+
+{
+    $pid = open3 my $WRITE, ['&', *STDOUT], ['&', *STDERR],
+            $perl, '-e', cmd_line('print scalar <STDIN>');
+    ++$test;
+    print $WRITE "ok $test\n";
+    waitpid $pid, 0;
+}
 
 {
     package YAAH;
@@ -116,18 +135,32 @@ $pid = open3 'WRITE', 'READ', '>&STDOUT',
 print WRITE "ok $test\n";
 waitpid $pid, 0;
 
-foreach (['>&STDOUT', 'both named'],
-	 ['', 'error empty'],
-	) {
-    my ($err, $desc) = @$_;
-    $pid = open3 'WRITE', '>&STDOUT', $err, $perl, '-e', cmd_line(<<'EOF');
+{
+    $pid = open3 my $WRITE, my $READ, ['&', \*STDOUT],
+            $perl, '-e', cmd_line('print STDERR scalar <STDIN>');
+    ++$test;
+    print $WRITE "ok $test\n";
+    waitpid $pid, 0;
+}
+
+foreach my $spec (
+    ['>&STDOUT', 'string'],
+    [['&', \*STDOUT], 'arrayref'],
+) {
+    my ($dupout, $desc) = @$spec;
+    foreach ([$dupout, "both named ($desc)"],
+             ['', "error empty ($desc)"],
+            ) {
+        my ($err, $desc) = @$_;
+        $pid = open3 my $WRITE, $dupout, $err, $perl, '-e', cmd_line(<<'EOF');
     $| = 1;
     print STDOUT scalar <STDIN>;
     print STDERR scalar <STDIN>;
 EOF
-    printf WRITE "ok %d # dup reader and error together, $desc\n", ++$test
-	for 0, 1;
-    waitpid $pid, 0;
+        printf $WRITE "ok %d # dup reader and error together, $desc\n", ++$test
+            for 0, 1;
+        waitpid $pid, 0;
+    }
 }
 
 # command line in single parameter variant of open3

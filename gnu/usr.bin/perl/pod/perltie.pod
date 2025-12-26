@@ -243,7 +243,7 @@ ARRAY reference, we'll choose a HASH reference to represent our object.
 A HASH works out well as a generic record type: the C<{ELEMSIZE}> field will
 store the maximum element size allowed, and the C<{ARRAY}> field will hold the
 true ARRAY ref.  If someone outside the class tries to dereference the
-object returned (doubtless thinking it an ARRAY ref), they'll blow up.
+object returned (doubtless thinking it is an ARRAY ref), they'll blow up.
 This just goes to show you that you should respect an object's privacy.
 
     sub TIEARRAY {
@@ -1127,7 +1127,7 @@ This is the output when it is executed:
     The End
 
 So far so good.  Those of you who have been paying attention will have
-spotted that the tied object hasn't been used so far.  So lets add an
+spotted that the tied object hasn't been used so far.  So let's add an
 extra method to the Remember class to allow comments to be included in
 the file; say, something like this:
 

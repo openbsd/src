@@ -6,31 +6,19 @@
 #
 # SPDX-License-Identifier: MIT
 
-package Test::RRA::ModuleVersion;
+package Test::RRA::ModuleVersion v11.0.0;
 
-use 5.010;
-use base qw(Exporter);
-use strict;
+use 5.012;
+use autodie;
 use warnings;
 
+use Exporter qw(import);
 use File::Find qw(find);
 use Test::More;
 use Test::RRA::Config qw(@MODULE_VERSION_IGNORE);
 
-# Declare variables that should be set in BEGIN for robustness.
-our (@EXPORT_OK, $VERSION);
-
-# Set $VERSION and everything export-related in a BEGIN block for robustness
-# against circular module loading (not that we load any modules, but
-# consistency is good).
-BEGIN {
-    @EXPORT_OK = qw(test_module_versions update_module_versions);
-
-    # This version should match the corresponding rra-c-util release, but with
-    # two digits for the minor version, including a leading zero if necessary,
-    # so that it will sort properly.
-    $VERSION = '10.03';
-}
+# Exports.
+our @EXPORT_OK = qw(test_module_versions update_module_versions);
 
 # A regular expression matching the version string for a module using the
 # package syntax from Perl 5.12 and later.  $1 will contain all of the line
@@ -45,26 +33,6 @@ our $REGEX_VERSION_PACKAGE = qr{
     ( v? [\d._]+ )              # the version number itself ($2)
     (                           # suffix ($3)
         \s* ;
-    )
-}xms;
-
-# A regular expression matching a $VERSION string in a module.  $1 will
-# contain all of the line contents prior to the actual version string, $2 will
-# contain the version itself, and $3 will contain the rest of the line.
-our $REGEX_VERSION_OLD = qr{
-    (                           # prefix ($1)
-        \A .*                   # any prefix, such as "our"
-        [\$*]                   # scalar or typeglob
-        [\w\:\']*\b             # optional package name
-        VERSION\b               # version variable
-        \s* = \s*               # assignment
-    )
-    [\"\']?                     # optional leading quote
-    ( v? [\d._]+ )              # the version number itself ($2)
-    [\"\']?                     # optional trailing quote
-    (                           # suffix ($3)
-        \s*
-        ;
     )
 }xms;
 
@@ -101,15 +69,15 @@ sub _module_files {
 #  Throws: Text exception on I/O failure or inability to find version
 sub _module_version {
     my ($file) = @_;
-    open(my $data, q{<}, $file) or die "$0: cannot open $file: $!\n";
+    open(my $data, q{<}, $file);
     while (defined(my $line = <$data>)) {
-        if ($line =~ $REGEX_VERSION_PACKAGE || $line =~ $REGEX_VERSION_OLD) {
+        if ($line =~ $REGEX_VERSION_PACKAGE) {
             my ($prefix, $version, $suffix) = ($1, $2, $3);
-            close($data) or die "$0: error reading from $file: $!\n";
+            close($data);
             return $version;
         }
     }
-    close($data) or die "$0: error reading from $file: $!\n";
+    close($data);
     die "$0: cannot find version number in $file\n";
 }
 
@@ -124,23 +92,12 @@ sub _module_version {
 sub _update_module_version {
     my ($file, $version) = @_;
 
-    # The old-style syntax may require different quoting.  If the version
-    # starts with v, use it without quotes.  Otherwise, quote it to prevent
-    # removal of trailing zeroes.
-    my $old_version = $version;
-    if ($old_version !~ m{ \A v }xms) {
-        $old_version = "'$old_version'";
-    }
-
     # Scan for the version and replace it.
-    open(my $in, q{<}, $file) or die "$0: cannot open $file: $!\n";
-    open(my $out, q{>}, "$file.new")
-      or die "$0: cannot create $file.new: $!\n";
+    open(my $in, q{<}, $file);
+    open(my $out, q{>}, "$file.new");
   SCAN:
     while (defined(my $line = <$in>)) {
-        if ($line =~ s{ $REGEX_VERSION_PACKAGE }{$1$version$3}xms
-            || $line =~ s{ $REGEX_VERSION_OLD }{$1$old_version$3}xms)
-        {
+        if ($line =~ s{ $REGEX_VERSION_PACKAGE }{$1$version$3}xms) {
             print {$out} $line or die "$0: cannot write to $file.new: $!\n";
             last SCAN;
         }
@@ -149,12 +106,11 @@ sub _update_module_version {
 
     # Copy the rest of the input file to the output file.
     print {$out} <$in> or die "$0: cannot write to $file.new: $!\n";
-    close($out) or die "$0: cannot flush $file.new: $!\n";
-    close($in) or die "$0: error reading from $file: $!\n";
+    close($out);
+    close($in);
 
     # All done.  Rename the new file over top of the old file.
-    rename("$file.new", $file)
-      or die "$0: cannot rename $file.new to $file: $!\n";
+    rename("$file.new", $file);
     return;
 }
 
@@ -219,11 +175,11 @@ Test::RRA::ModuleVersion - Check Perl module versions for consistency
     use Test::RRA::ModuleVersion
       qw(test_module_versions update_module_versions);
 
-    # Ensure all modules under perl/lib have a version of 3.12.
-    test_module_versions('perl/lib', '3.12');
+    # Ensure all modules under perl/lib have a version of v3.1.2.
+    test_module_versions('perl/lib', 'v3.1.2');
 
-    # Update the version of those modules to 3.12.
-    update_module_versions('perl/lib', 3.12');
+    # Update the version of those modules to v3.1.2.
+    update_module_versions('perl/lib', 'v3.1.2');
 
 =head1 DESCRIPTION
 
@@ -243,17 +199,21 @@ should be explicitly imported.
 =item test_module_versions(ROOT, VERSION)
 
 Tests the version of all Perl modules under ROOT to ensure they match VERSION,
-reporting the results with Test::More.  If the test configuration loaded by
-Test::RRA::Config contains a @MODULE_VERSION_EXCLUDE variable, the module
-files listed there will be ignored for this test.  This function also sets up
-a plan based on the number of modules, so should be the only testing function
-called in a test script.
+reporting the results with Test::More.  VERSION should include any leading
+C<v>.
+
+If the test configuration loaded by Test::RRA::Config contains a
+@MODULE_VERSION_EXCLUDE variable, the module files listed there will be
+ignored for this test.
+
+This function sets up a plan based on the number of modules, so should be the
+only testing function called in a test script.
 
 =item update_module_versions(ROOT, VERSION)
 
 Update the version of all Perl modules found under ROOT to VERSION, except for
 any listed in a @MODULE_VERSION_EXCLUDE variable set in the test configuration
-loaded by Test::RRA::Config.
+loaded by Test::RRA::Config.  VERSION should include any leading C<v>.
 
 =back
 
@@ -263,7 +223,7 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2016, 2018-2020, 2022 Russ Allbery <eagle@eyrie.org>
+Copyright 2016, 2018-2020, 2022, 2024 Russ Allbery <eagle@eyrie.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

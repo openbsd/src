@@ -1,8 +1,8 @@
-# DerivedJoiningGroup-15.0.0.txt
-# Date: 2022-02-26, 00:38:32 GMT
-# © 2022 Unicode®, Inc.
+# DerivedJoiningGroup-16.0.0.txt
+# Date: 2024-07-30, 21:15:55 GMT
+# © 2024 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see https://www.unicode.org/terms_of_use.html
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
 #   For documentation, see https://www.unicode.org/reports/tr44/
@@ -72,8 +72,9 @@
 06EE          ; Dal # Lo       ARABIC LETTER DAL WITH INVERTED V
 0759..075A    ; Dal # Lo   [2] ARABIC LETTER DAL WITH TWO DOTS VERTICALLY BELOW AND SMALL TAH..ARABIC LETTER DAL WITH INVERTED SMALL V BELOW
 08AE          ; Dal # Lo       ARABIC LETTER DAL WITH THREE DOTS BELOW
+10EC2         ; Dal # Lo       ARABIC LETTER DAL WITH TWO DOTS VERTICALLY BELOW
 
-# Total code points: 15
+# Total code points: 16
 
 # ================================================
 
@@ -177,8 +178,9 @@
 06AC..06AE    ; Kaf # Lo   [3] ARABIC LETTER KAF WITH DOT ABOVE..ARABIC LETTER KAF WITH THREE DOTS BELOW
 077F          ; Kaf # Lo       ARABIC LETTER KAF WITH TWO DOTS ABOVE
 08B4          ; Kaf # Lo       ARABIC LETTER KAF WITH DOT BELOW
+10EC4         ; Kaf # Lo       ARABIC LETTER KAF WITH TWO DOTS VERTICALLY BELOW
 
-# Total code points: 6
+# Total code points: 7
 
 # ================================================
 
@@ -331,8 +333,9 @@
 069F          ; Tah # Lo       ARABIC LETTER TAH WITH THREE DOTS ABOVE
 088B..088C    ; Tah # Lo   [2] ARABIC LETTER TAH WITH DOT BELOW..ARABIC LETTER TAH WITH THREE DOTS BELOW
 08A3          ; Tah # Lo       ARABIC LETTER TAH WITH TWO DOTS ABOVE
+10EC3         ; Tah # Lo       ARABIC LETTER TAH WITH TWO DOTS VERTICALLY BELOW
 
-# Total code points: 6
+# Total code points: 7
 
 # ================================================
 
@@ -374,7 +377,6 @@
 
 # ================================================
 
-0620          ; Yeh # Lo       ARABIC LETTER KASHMIRI YEH
 0626          ; Yeh # Lo       ARABIC LETTER YEH WITH HAMZA ABOVE
 0649..064A    ; Yeh # Lo   [2] ARABIC LETTER ALEF MAKSURA..ARABIC LETTER YEH
 0678          ; Yeh # Lo       ARABIC LETTER HIGH HAMZA YEH
@@ -383,7 +385,7 @@
 08A8..08A9    ; Yeh # Lo   [2] ARABIC LETTER YEH WITH TWO DOTS BELOW AND HAMZA ABOVE..ARABIC LETTER YEH WITH TWO DOTS BELOW AND DOT ABOVE
 08BA          ; Yeh # Lo       ARABIC LETTER YEH WITH TWO DOTS BELOW AND SMALL NOON ABOVE
 
-# Total code points: 11
+# Total code points: 10
 
 # ================================================
 
@@ -739,6 +741,12 @@
 # ================================================
 
 088E          ; Vertical_Tail # Lo       ARABIC VERTICAL TAIL
+
+# Total code points: 1
+
+# ================================================
+
+0620          ; Kashmiri_Yeh # Lo       ARABIC LETTER KASHMIRI YEH
 
 # Total code points: 1
 

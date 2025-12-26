@@ -728,11 +728,14 @@ for (@o) {
 ok(@o > 100);
 is($fail, 0);
 
-ok(exists $p{utf8_distance});
-is($p{utf8_distance}, '5.6.0');
+ok(exists $p{utf8_distance},
+   "found API utf8_distance");
+is($p{utf8_distance}, '5.6.0',
+   "utf8_distance introduced in 5.6.0");
 
-ok(exists $p{save_generic_svref});
-is($p{save_generic_svref}, '5.005_03');
+ok(exists $p{save_generic_svref}, "found API save_generic_svref");
+is($p{save_generic_svref}, '5.005_03',
+   "save_generic_svref introduced in 5.005_03");
 
 ===============================================================================
 

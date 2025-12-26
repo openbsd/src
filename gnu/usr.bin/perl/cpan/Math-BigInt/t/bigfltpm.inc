@@ -158,8 +158,9 @@ while (<DATA>) {
         }
     }
 
+    note "\n$try\n\n";
     $got = eval $try;
-    print "# Error: $@\n" if $@;
+    diag "Error: $@\n" if $@;
 
     if ($want =~ m|^/(.*)$|) {
         my $pat = $1;
@@ -512,7 +513,7 @@ abc:+0:NaN
 abc:abc:NaN
 abc:+0:NaN
 +0:abc:NaN
-+0:+0:NaN
++0:+0:0
 +1:+0:0
 +0:+1:0
 +27:+90:270
@@ -1814,10 +1815,10 @@ invalid:-inf:NaN
 9:4:2,1
 9:5:1,4
 # bug in v1.74 with bdiv in list context, when $y is 1 or -1
-2.1:-1:-2.1,0
-2.1:1:2.1,0
--2.1:-1:2.1,0
--2.1:1:-2.1,0
+2.1:-1:-3,-0.9
+2.1:1:2,0.1
+-2.1:-1:2,-0.1
+-2.1:1:-3,0.9
 
 &bdiv
 $div_scale = 40; $round_mode = "even"

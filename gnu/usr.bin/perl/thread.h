@@ -82,6 +82,10 @@
 #  endif
 #endif
 
+#ifndef PTHREAD_INIT_SELF
+#  define PTHREAD_INIT_SELF(var) (var = pthread_self())
+#endif
+
 #ifdef __VMS
   /* Default is 1024 on VAX, 8192 otherwise */
 #  ifdef __ia64

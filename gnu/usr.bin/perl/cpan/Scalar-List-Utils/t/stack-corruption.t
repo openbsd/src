@@ -1,7 +1,7 @@
 #!./perl
 
 BEGIN {
-    if ($] eq "5.008009" or $] eq "5.010000" or $] le "5.006002") {
+    if ("$]" == 5.008009 or "$]" == 5.010000 or "$]" <= 5.006002) {
         print "1..0 # Skip: known to fail on $]\n";
         exit 0;
     }

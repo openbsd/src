@@ -118,8 +118,4 @@ BOOT:
         cv = newXS("Fcntl::S_ISWHT", XS_Fcntl_S_ISREG, file);
         XSANY.any_i32 = S_IFWHT;
 #endif
-#ifdef S_ENFMT
-        cv = newXS("Fcntl::S_ISENFMT", XS_Fcntl_S_ISREG, file);
-        XSANY.any_i32 = S_ENFMT;
-#endif
     }

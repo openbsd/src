@@ -15,7 +15,10 @@
 #include <mntent.h>
 #include <alloca.h>
 #include <dlfcn.h>
-#if (CYGWIN_VERSION_API_MINOR >= 181)
+#define HAVE_CYGWIN_VERSION(MAJOR, MINOR) \
+    (CYGWIN_VERSION_API_MAJOR > (MAJOR) || \
+        (CYGWIN_VERSION_API_MAJOR == (MAJOR) && CYGWIN_VERSION_API_MINOR >= (MINOR)))
+#if HAVE_CYGWIN_VERSION(0, 181)
 #include <wchar.h>
 #endif
 
@@ -38,9 +41,8 @@ do_spawnvp (const char *path, const char * const *argv)
     childpid = spawnvp(_P_NOWAIT,path,argv);
     if (childpid < 0) {
         status = -1;
-        if(ckWARN(WARN_EXEC))
-            Perl_warner(aTHX_ packWARN(WARN_EXEC),"Can't spawn \"%s\": %s",
-                    path,Strerror (errno));
+        ck_warner(packWARN(WARN_EXEC), "Can't spawn \"%s\": %s",
+                  path, Strerror(errno));
     } else {
         do {
             result = wait4pid(childpid, &status, 0);
@@ -158,7 +160,7 @@ leave:
     return result;
 }
 
-#if (CYGWIN_VERSION_API_MINOR >= 181)
+#if HAVE_CYGWIN_VERSION(0, 181)
 char*
 wide_to_utf8(const wchar_t *wsrc)
 {
@@ -170,13 +172,13 @@ wide_to_utf8(const wchar_t *wsrc)
 
     char *buf = (char *) safemalloc(blen);
 
-    utf16_to_utf8((U8 *) wsrc, buf, wlen, &blen);
+    utf16_to_utf8((U8 *) wsrc, (U8 *) buf, wlen, &blen);
 
     return buf;
 }
 
 wchar_t*
-utf8_to_wide_extra_len(const char *buf, Size_t *extra_len)
+utf8_to_wide_extra_len(const char *buf, Size_t extra_len)
 {
     /* Return the conversion to UTF-16 of the UTF-8 string 'buf'
      * (terminated by a NUL), making sure to have space for at least *extra_len
@@ -191,7 +193,7 @@ utf8_to_wide_extra_len(const char *buf, Size_t *extra_len)
 
     wchar_t* wsrc = (wchar_t *) safemalloc(wlen);
 
-    utf8_to_utf16(buf, (U8 *) wsrc, len, &wlen);
+    utf8_to_utf16((U8 *) buf, (U8 *) wsrc, len, &wlen);
 
     return wsrc;
 }
@@ -199,9 +201,7 @@ utf8_to_wide_extra_len(const char *buf, Size_t *extra_len)
 wchar_t*
 utf8_to_wide(const char *buf)
 {
-    Size_t extra_len = 0;
-
-    return utf8_to_wide_extra_len(buf, &extra_len);
+    return utf8_to_wide_extra_len(buf, 0);
 }
 
 #endif /* cygwin 1.7 */
@@ -216,7 +216,7 @@ XS(Cygwin_cwd)
        There is Cwd->cwd() usage in the wild, and previous versions didn't die.
      */
     if(items > 1)
-        Perl_croak(aTHX_ "Usage: Cwd::cwd()");
+        croak("Usage: Cwd::cwd()");
     if((cwd = getcwd(NULL, -1))) {
         ST(0) = sv_2mortal(newSVpv(cwd, 0));
         free(cwd);
@@ -233,7 +233,7 @@ XS(XS_Cygwin_pid_to_winpid)
     pid_t pid, RETVAL;
 
     if (items != 1)
-        Perl_croak(aTHX_ "Usage: Cygwin::pid_to_winpid(pid)");
+        croak("Usage: Cygwin::pid_to_winpid(pid)");
 
     pid = (pid_t)SvIV(ST(0));
 
@@ -251,11 +251,11 @@ XS(XS_Cygwin_winpid_to_pid)
     pid_t pid, RETVAL;
 
     if (items != 1)
-        Perl_croak(aTHX_ "Usage: Cygwin::winpid_to_pid(pid)");
+        croak("Usage: Cygwin::winpid_to_pid(pid)");
 
     pid = (pid_t)SvIV(ST(0));
 
-#if (CYGWIN_VERSION_API_MINOR >= 181)
+#if HAVE_CYGWIN_VERSION(0, 181)
     RETVAL = cygwin_winpid_to_pid(pid);
 #else
     RETVAL = cygwin32_winpid_to_pid(pid);
@@ -289,10 +289,10 @@ S_convert_path_common(pTHX_ const direction_t direction)
     int isutf8 = 0;
 
     if (items < 1 || items > 2) {
-        char *name = (direction == to_posix)
+        const char *name = (direction == to_posix)
                      ? "win::win_to_posix_path"
                      : "posix_to_win_path";
-        Perl_croak(aTHX_ "Usage: Cygwin::%s(pathname, [absolute])", name);
+        croak("Usage: Cygwin::%s(pathname, [absolute])", name);
     }
 
     src_path = SvPVx(ST(0), len);
@@ -300,10 +300,10 @@ S_convert_path_common(pTHX_ const direction_t direction)
         absolute_flag = SvTRUE(ST(1));
 
     if (!len)
-        Perl_croak(aTHX_ "can't convert empty path");
+        croak("can't convert empty path");
     isutf8 = SvUTF8(ST(0));
 
-#if (CYGWIN_VERSION_API_MINOR >= 181)
+#if HAVE_CYGWIN_VERSION(0, 181)
     /* Check utf8 flag and use wide api then.
        Size calculation: On overflow let cygwin_conv_path calculate the final size.
      */
@@ -322,7 +322,7 @@ S_convert_path_common(pTHX_ const direction_t direction)
 
         if (LIKELY(! IN_BYTES)) {    /* Normal case, convert UTF-8 to UTF-16 */
             wlen = PATH_LEN_GUESS;
-            wsrc = utf8_to_wide_extra_len(src_path, &wlen);
+            wsrc = utf8_to_wide_extra_len(src_path, wlen);
             which_src = wsrc;
         }
         else { /* use bytes; assume already UTF-16 encoded bytestream */
@@ -336,7 +336,7 @@ S_convert_path_common(pTHX_ const direction_t direction)
 
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
             int newlen = cygwin_conv_path(what, which_src, wconverted, 0);
-            wconverted = (wchar_t *) realloc(&wconverted, newlen);
+            wconverted = (wchar_t *) realloc(wconverted, newlen);
             err = cygwin_conv_path(what, which_src, wconverted, newlen);
         }
 
@@ -354,7 +354,7 @@ S_convert_path_common(pTHX_ const direction_t direction)
         err = cygwin_conv_path(what, src_path, converted_path, len + PATH_LEN_GUESS);
         if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
             int newlen = cygwin_conv_path(what, src_path, converted_path, 0);
-            converted_path = (char *) realloc(&converted_path, newlen);
+            converted_path = (char *) realloc(converted_path, newlen);
             err = cygwin_conv_path(what, src_path, converted_path, newlen);
         }
     }
@@ -410,7 +410,7 @@ XS(XS_Cygwin_mount_table)
     struct mntent *mnt;
 
     if (items != 0)
-        Perl_croak(aTHX_ "Usage: Cygwin::mount_table");
+        croak("Usage: Cygwin::mount_table");
     /* => array of [mnt_dir mnt_fsname mnt_type mnt_opts] */
 
     setmntent (0, 0);
@@ -434,7 +434,7 @@ XS(XS_Cygwin_mount_flags)
     flags[0] = '\0';
 
     if (items != 1)
-        Perl_croak(aTHX_ "Usage: Cygwin::mount_flags( mnt_dir | '/cygdrive' )");
+        croak("Usage: Cygwin::mount_flags( mnt_dir | '/cygdrive' )");
 
     pathname = SvPV_nolen(ST(0));
 
@@ -512,7 +512,7 @@ XS(XS_Cygwin_is_binmount)
     char *pathname;
 
     if (items != 1)
-        Perl_croak(aTHX_ "Usage: Cygwin::is_binmount(pathname)");
+        croak("Usage: Cygwin::is_binmount(pathname)");
 
     pathname = SvPV_nolen(ST(0));
 

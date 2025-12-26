@@ -139,7 +139,7 @@ You might want to keep these desktop references close by your keyboard:
 =item I<Mastering Perl>
 
     by brian d foy
- ISBN 9978-1-4493-9311-3 [2st edition January 2014]
+ ISBN 9978-1-4493-9311-3 [2nd edition January 2014]
  ISBN 978-1-4493-6487-8 [ebook]
  https://www.masteringperl.org/
 
@@ -289,7 +289,7 @@ Perl book (which came later) is not completely accidental:
 =item I<Programming Pearls>
 
  by Jon Bentley
- ISBN 978-0-201-65788-3 [2 edition, October 1999]
+ ISBN 978-0-201-65788-3 [2nd edition, October 1999]
 
 =item I<More Programming Pearls>
 

@@ -3,7 +3,7 @@
 use v5.14;
 use warnings;
 
-use Test::More;
+use Test2::V0;
 
 use IO::Socket;
 use IO::Socket::IP -register;
@@ -18,7 +18,7 @@ use IO::Socket::IP -register;
       GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
 
-   isa_ok( $sock, "IO::Socket::IP", 'IO::Socket->new( Domain => AF_INET )' ) or
+   isa_ok( $sock, [ "IO::Socket::IP" ], 'IO::Socket->new( Domain => AF_INET )' ) or
       diag( "  error was $IO::Socket::errstr" );
 
    $sock = IO::Socket->new(
@@ -45,7 +45,7 @@ SKIP: {
       GetAddrInfoFlags => 0, # disable AI_ADDRCONFIG
    );
 
-   isa_ok( $sock, "IO::Socket::IP", 'IO::Socket->new( Domain => AF_INET6 )' ) or
+   isa_ok( $sock, [ "IO::Socket::IP" ], 'IO::Socket->new( Domain => AF_INET6 )' ) or
       diag( "  error was $IO::Socket::errstr" );
 
    $sock = IO::Socket->new(

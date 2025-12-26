@@ -47,6 +47,13 @@ static const char * Perl_prescan_version2(pTHX_ const char *s, bool strict, cons
 #  define is_STRICT_VERSION(a,b) \
 	(a != Perl_prescan_version2(aTHX_ a, TRUE, b, NULL, NULL, NULL, NULL))
 
+#if PERL_VERSION_LT(5, 19, 1)
+#undef LIKELY
+#define LIKELY(cond)                        EXPECT(cBOOL(cond),TRUE)
+#undef UNLIKELY
+#define UNLIKELY(cond)                      EXPECT(cBOOL(cond),FALSE)
+#endif
+
 #else
 
 const char * Perl_scan_version(pTHX_ const char *s, SV *rv, bool qv);

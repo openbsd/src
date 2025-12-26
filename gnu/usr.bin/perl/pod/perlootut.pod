@@ -227,8 +227,8 @@ B<Inheritance> lets you create a specialized version of an existing
 class. Inheritance lets the new class reuse the methods and attributes
 of another class.
 
-For example, we could create an C<File::MP3> class which B<inherits>
-from C<File>. An C<File::MP3> B<is-a> I<more specific> type of C<File>.
+For example, we could create a C<File::MP3> class which B<inherits>
+from C<File>. A C<File::MP3> B<is-a> I<more specific> type of C<File>.
 All mp3 files are files, but not all files are mp3 files.
 
 We often refer to inheritance relationships as B<parent-child> or
@@ -260,7 +260,7 @@ distinguish between different types of mp3 file.
 Inheritance allows two classes to share code. By default, every method
 in the parent class is also available in the child. The child can
 explicitly B<override> a parent's method to provide its own
-implementation. For example, if we have an C<File::MP3> object, it has
+implementation. For example, if we have a C<File::MP3> object, it has
 the C<print_info()> method from C<File>:
 
   my $cage = File::MP3->new(
@@ -677,13 +677,13 @@ As we mentioned before, roles provide an alternative to inheritance,
 but Perl does not have any built-in role support. If you choose to use
 Moose, it comes with a full-fledged role implementation. However, if
 you use one of our other recommended OO modules, you can still use
-roles with L<Role::Tiny>
+roles with L<Role::Tiny>.
 
 C<Role::Tiny> provides some of the same features as Moose's role
 system, but in a much smaller package. Most notably, it doesn't support
 any sort of attribute declaration, so you have to do that by hand.
 Still, it's useful, and works well with C<Class::Accessor> and
-C<Class::Tiny>
+C<Class::Tiny>.
 
 =head2 OO System Summary
 

@@ -4,7 +4,7 @@ use strict;
 use warnings;
 # ABSTRACT: A small, simple, correct HTTP/1.1 client
 
-our $VERSION = '0.088';
+our $VERSION = '0.090';
 
 sub _croak { require Carp; Carp::croak(@_) }
 
@@ -65,7 +65,8 @@ sub _croak { require Carp; Carp::croak(@_) }
 #pod the persistent connection will be dropped.  If you want persistent connections
 #pod across multiple destinations, use multiple HTTP::Tiny objects.
 #pod
-#pod See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
+#pod See L</TLS/SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options>
+#pod attributes.
 #pod
 #pod =cut
 
@@ -243,7 +244,7 @@ HERE
 #pod form data hash or array reference to the given URL with a C<content-type> of
 #pod C<application/x-www-form-urlencoded>.  If data is provided as an array
 #pod reference, the order is preserved; if provided as a hash reference, the terms
-#pod are sorted on key and value for consistency.  See documentation for the
+#pod are sorted by key for consistency.  See documentation for the
 #pod C<www_form_urlencode> method for details on the encoding.
 #pod
 #pod The URL must have unsafe characters escaped and international domain names
@@ -509,7 +510,10 @@ sub www_form_urlencode {
     (ref $data eq 'HASH' || ref $data eq 'ARRAY')
         or _croak("form data must be a hash or array reference\n");
 
-    my @params = ref $data eq 'HASH' ? %$data : @$data;
+    my @params
+        = ref $data eq 'HASH'
+        ? map { ($_ => $data->{$_}) } sort keys %$data
+        : @$data;
     @params % 2 == 0
         or _croak("form data reference must have an even number of terms\n");
 
@@ -526,7 +530,7 @@ sub www_form_urlencode {
         }
     }
 
-    return join("&", (ref $data eq 'ARRAY') ? (@terms) : (sort @terms) );
+    return join("&", @terms);
 }
 
 #pod =method can_ssl
@@ -551,18 +555,18 @@ sub can_ssl {
 
     my($ok, $reason) = (1, '');
 
-    # Need IO::Socket::SSL 1.42 for SSL_create_ctx_callback
+    # Need IO::Socket::SSL 1.968 for default_ca()
     local @INC = @INC;
     pop @INC if $INC[-1] eq '.';
-    unless (eval {require IO::Socket::SSL; IO::Socket::SSL->VERSION(1.42)}) {
+    unless (eval {require IO::Socket::SSL; IO::Socket::SSL->VERSION(1.968)}) {
         $ok = 0;
-        $reason .= qq/IO::Socket::SSL 1.42 must be installed for https support\n/;
+        $reason .= qq/IO::Socket::SSL 1.968 or later must be installed for https support\n/;
     }
 
     # Need Net::SSLeay 1.49 for MODE_AUTO_RETRY
     unless (eval {require Net::SSLeay; Net::SSLeay->VERSION(1.49)}) {
         $ok = 0;
-        $reason .= qq/Net::SSLeay 1.49 must be installed for https support\n/;
+        $reason .= qq/Net::SSLeay 1.49 or later must be installed for https support\n/;
     }
 
     # If an object, check that SSL config lets us get a CA if necessary
@@ -571,7 +575,7 @@ sub can_ssl {
             SSL_options => $self->{SSL_options},
             verify_SSL  => $self->{verify_SSL},
         );
-        unless ( eval { $handle->_find_CA_file; 1 } ) {
+        unless ( eval { $handle->_find_CA; 1 } ) {
             $ok = 0;
             $reason .= "$@";
         }
@@ -1637,29 +1641,29 @@ sub can_reuse {
         return 1;
 }
 
-# Try to find a CA bundle to validate the SSL cert,
-# prefer Mozilla::CA or fallback to a system file
-sub _find_CA_file {
-    my $self = shift();
+sub _find_CA {
+    my $self = shift;
 
-    my $ca_file =
-      defined( $self->{SSL_options}->{SSL_ca_file} )
-      ? $self->{SSL_options}->{SSL_ca_file}
-      : $ENV{SSL_CERT_FILE};
+    my $ca_file = $self->{SSL_options}->{SSL_ca_file};
 
     if ( defined $ca_file ) {
         unless ( -r $ca_file ) {
             die qq/SSL_ca_file '$ca_file' not found or not readable\n/;
         }
-        return $ca_file;
+        return ( SSL_ca_file => $ca_file );
     }
 
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
-    return Mozilla::CA::SSL_ca_file()
-        if eval { require Mozilla::CA; 1 };
+    # Return default_ca() parameters from IO::Socket::SSL. It looks for the
+    # default bundle and directory from Net::SSLeay, handles $ENV{SSL_CERT_FILE}
+    # and $ENV{SSL_CERT_DIR}, and finally fails over to Mozilla::CA
+    #
+    my %default_ca = IO::Socket::SSL::default_ca();
+    return %default_ca if %default_ca;
 
-    # cert list copied from golang src/crypto/x509/root_unix.go
+    # If IO::Socket::SSL::default_ca() was unable to find a CA bundle, look for
+    # one in well known locations as a last resort. Cert list copied from golang
+    # src/crypto/x509/root_unix.go
+    #
     foreach my $ca_bundle (
         "/etc/ssl/certs/ca-certificates.crt",     # Debian/Ubuntu/Gentoo etc.
         "/etc/pki/tls/certs/ca-bundle.crt",       # Fedora/RHEL
@@ -1670,11 +1674,18 @@ sub _find_CA_file {
         "/etc/pki/tls/cacert.pem",                # OpenELEC
         "/etc/certs/ca-certificates.crt",         # Solaris 11.2+
     ) {
-        return $ca_bundle if -e $ca_bundle;
+        return ( SSL_ca_file => $ca_bundle ) if -e $ca_bundle;
     }
 
     die qq/Couldn't find a CA bundle with which to verify the SSL certificate.\n/
-      . qq/Try installing Mozilla::CA from CPAN\n/;
+      . qq/Try installing one from your OS vendor, or Mozilla::CA from CPAN\n/;
+}
+
+# not for internal use; backcompat shim only
+sub _find_CA_file {
+    my $self = shift;
+    my %res = $self->_find_CA();
+    return $res{SSL_ca_file};
 }
 
 # for thread safety, we need to know thread id if threads are loaded
@@ -1698,7 +1709,8 @@ sub _ssl_args {
         $ssl_args{SSL_verifycn_scheme}  = 'http'; # enable CN validation
         $ssl_args{SSL_verifycn_name}    = $host;  # set validation hostname
         $ssl_args{SSL_verify_mode}      = 0x01;   # enable cert validation
-        $ssl_args{SSL_ca_file}          = $self->_find_CA_file;
+
+        %ssl_args = ( %ssl_args, $self->_find_CA );
     }
     else {
         $ssl_args{SSL_verifycn_scheme}  = 'none'; # disable CN validation
@@ -1727,7 +1739,7 @@ HTTP::Tiny - A small, simple, correct HTTP/1.1 client
 
 =head1 VERSION
 
-version 0.088
+version 0.090
 
 =head1 SYNOPSIS
 
@@ -1847,7 +1859,8 @@ attributes are modified via accessor, or if the process ID or thread ID change,
 the persistent connection will be dropped.  If you want persistent connections
 across multiple destinations, use multiple HTTP::Tiny objects.
 
-See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
+See L</TLS/SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options>
+attributes.
 
 =head2 get|head|put|post|patch|delete
 
@@ -1870,7 +1883,7 @@ This method executes a C<POST> request and sends the key/value pairs from a
 form data hash or array reference to the given URL with a C<content-type> of
 C<application/x-www-form-urlencoded>.  If data is provided as an array
 reference, the order is preserved; if provided as a hash reference, the terms
-are sorted on key and value for consistency.  See documentation for the
+are sorted by key for consistency.  See documentation for the
 C<www_form_urlencode> method for details on the encoding.
 
 The URL must have unsafe characters escaped and international domain names
@@ -2112,16 +2125,17 @@ certificate has been verified by a CA. Assuming you trust the CA, this will
 protect against L<machine-in-the-middle
 attacks|http://en.wikipedia.org/wiki/Machine-in-the-middle_attack>.
 
-Certificate verification requires a file containing trusted CA certificates.
+Certificate verification requires a file or directory containing trusted CA
+certificates.
 
-If the environment variable C<SSL_CERT_FILE> is present, HTTP::Tiny
-will try to find a CA certificate file in that location.
+C<IO::Socket::SSL::default_ca()> is called to detect the default location of
+your CA certificates. This also supports the environment variables
+C<SSL_CERT_FILE> and C<SSL_CERT_DIR>, and will fail over to L<Mozilla::CA> if no
+certs are found.
 
-If the L<Mozilla::CA> module is installed, HTTP::Tiny will use the CA file
-included with it as a source of trusted CA's.
-
-If that module is not available, then HTTP::Tiny will search several
-system-specific default locations for a CA certificate file:
+If C<IO::Socket::SSL::default_ca()> is not able to find usable CA certificates,
+HTTP::Tiny will search several well-known system-specific default locations for
+a CA certificate file as a last resort:
 
 =over 4
 
@@ -2336,10 +2350,6 @@ L<LWP::UserAgent> - If HTTP::Tiny isn't enough for you, this is the "standard" w
 
 =item *
 
-L<Mozilla::CA> - Required if you want to validate SSL certificates
-
-=item *
-
 L<Net::SSLeay> - Required for SSL support
 
 =back
@@ -2422,10 +2432,6 @@ Clinton Gormley <clint@traveljury.com>
 =item *
 
 Craig A. Berry <craigberry@mac.com>
-
-=item *
-
-Craig Berry <cberry@cpan.org>
 
 =item *
 
@@ -2567,7 +2573,7 @@ Xavier Guimard <yadd@debian.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2023 by Christian Hansen.
+This software is copyright (c) 2024 by Christian Hansen.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

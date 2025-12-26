@@ -1,10 +1,9 @@
 use 5.008;
 package fields;
 
-require 5.005;
 use strict;
 no strict 'refs';
-unless( eval q{require warnings::register; warnings::register->import; 1} ) {
+unless( eval {require warnings::register; warnings::register->import; 1} ) {
     *warnings::warnif = sub { 
         require Carp;
         Carp::carp(@_);
@@ -12,7 +11,7 @@ unless( eval q{require warnings::register; warnings::register->import; 1} ) {
 }
 our %attr;
 
-our $VERSION = '2.25';
+our $VERSION = '2.27';
 $VERSION =~ tr/_//d;
 
 # constant.pm is slow
@@ -252,7 +251,7 @@ to subclasses.
 
 Also, B<in Perl 5.8.x and earlier>, this pragma uses pseudo-hashes, the
 effect being that you can have objects with named fields which are as
-compact and as fast arrays to access, as long as the objects are
+compact and fast as arrays to access, as long as the objects are
 accessed through properly typed variables.
 
 The following functions are supported:
@@ -293,7 +292,7 @@ pseudo-hashes directly.
 If the first argument is a reference to an array, the pseudo-hash will
 be created with keys from that array.  If a second argument is supplied,
 it must also be a reference to an array whose elements will be used as
-the values.  If the second array contains less elements than the first,
+the values.  If the second array contains fewer elements than the first,
 the trailing elements of the pseudo-hash will not be initialized.
 This makes it particularly useful for creating a pseudo-hash from
 subroutine arguments:

@@ -2,7 +2,7 @@ package ExtUtils::MM_Any;
 
 use strict;
 use warnings;
-our $VERSION = '7.70';
+our $VERSION = '7.76';
 $VERSION =~ tr/_//d;
 
 use Carp;
@@ -225,7 +225,7 @@ sub is_make_type {
         if $type eq 'gmake' and $minus_v =~ /GNU make/i;
     return $maketype2true{$type} = 1
         if $type eq 'bsdmake'
-      and $minus_v =~ /^usage: make \[-BeikNnqrstWwX\]/im;
+      and $minus_v =~ /^usage:.*make\s*\[-B/im;
     $maketype2true{$type} = 0; # it wasn't whatever you asked
 }
 
@@ -287,7 +287,8 @@ the args.  Collectively they will process all the arguments.  Each
 individual line in @cmds will not be longer than the
 $self->max_exec_len being careful to take into account macro expansion.
 
-$cmd should include any switches and repeated initial arguments.
+$cmd should include any switches and repeated initial arguments. If it
+has newlines, they should be already escaped.
 
 If no @args are given, no @cmds will be returned.
 
@@ -334,7 +335,7 @@ sub split_command {
         }
         chop $arg_str;
 
-        push @cmds, $self->escape_newlines("$cmd \n$arg_str");
+        push @cmds, $cmd . $self->escape_newlines(" \n$arg_str");
     } while @args;
 
     return @cmds;
@@ -520,7 +521,7 @@ bareword. For example:
     # Assign the value of the $(VERSION_FROM) make macro to $vf.
     $oneliner = $MM->oneliner('$vf = "$(VERSION_FROM)"');
 
-Its currently very simple and may be expanded sometime in the figure
+It's currently very simple, and may be expanded sometime in the future
 to include more flexible code and switches.
 
 
@@ -1302,7 +1303,8 @@ sub metafile_data {
     $meta_merge ||= {};
 
     my $version = _normalize_version($self->{VERSION});
-    my $release_status = ($version =~ /_/) ? 'unstable' : 'stable';
+    my $unstable = $version =~ /_/ || $self->{DISTVNAME} =~ /-TRIAL\d*$/;
+    my $release_status = $unstable ? 'unstable' : 'stable';
     my %meta = (
         # required
         abstract     => $self->{ABSTRACT} || 'unknown',
@@ -2431,13 +2433,12 @@ sub init_others {
     $self->{LIBS} = $self->_fix_libs($self->{LIBS});
 
     # Compute EXTRALIBS, BSLOADLIBS and LDLOADLIBS from $self->{LIBS}
-    foreach my $libs ( @{$self->{LIBS}} ){
+    foreach my $libs ( @{$self->{LIBS}} ) {
         $libs =~ s/^\s*(.*\S)\s*$/$1/; # remove leading and trailing whitespace
-        my(@libs) = $self->extliblist($libs);
-        if ($libs[0] or $libs[1] or $libs[2]){
+        my @libs = $self->extliblist($libs);
+        if (grep $_, @libs[0..2]) {
             # LD_RUN_PATH now computed by ExtUtils::Liblist
-            ($self->{EXTRALIBS},  $self->{BSLOADLIBS},
-             $self->{LDLOADLIBS}, $self->{LD_RUN_PATH}) = @libs;
+            @$self{qw(EXTRALIBS BSLOADLIBS LDLOADLIBS LD_RUN_PATH)} = @libs;
             last;
         }
     }
@@ -2498,6 +2499,10 @@ sub tools_other {
     my($self) = shift;
     my @m;
 
+    my $is_nmake = $self->is_make_type('nmake');
+    push @m, <<'EOF' if $is_nmake;
+EUMM_NMAKE_HASH = ^# # to get hash character into strings - yes, horrible
+EOF
     # We set PM_FILTER as late as possible so it can see all the earlier
     # on macro-order sensitive makes such as nmake.
     for my $tool (qw{ SHELL CHMOD CP MV NOOP NOECHO RM_F RM_RF TEST_F TOUCH
@@ -2514,8 +2519,14 @@ sub tools_other {
                       CP_NONEMPTY
                     } )
     {
-        next unless defined $self->{$tool};
-        push @m, "$tool = $self->{$tool}\n";
+        next unless defined(my $value = $self->{$tool});
+        # https://learn.microsoft.com/en-us/cpp/build/reference/contents-of-a-makefile?view=msvc-170#special-characters-in-a-makefile
+        if ($is_nmake) {
+          $value =~ s/#/\$(EUMM_NMAKE_HASH)/g
+        } else {
+          $value =~ s/#/\\#/g
+        }
+        push @m, "$tool = $value\n";
     }
 
     return join "", @m;

@@ -1,11 +1,12 @@
 #!/usr/bin/perl
 #
-# Special wrapper script to generate the actual pod2man script.  This is
+# Special wrapper script to generate the actual pod2man script. This is
 # required for proper start-up code on non-UNIX platforms, and is used inside
 # Perl core.
 
-use 5.008;
-use strict;
+# Do not use autodie here.  When podlators is built as part of Perl core, it
+# is built before autodie is available.
+use 5.012;
 use warnings;
 
 use Config qw(%Config);
@@ -14,7 +15,7 @@ use File::Basename qw(basename dirname);
 
 # List explicitly here the variables you want Configure to generate.
 # Metaconfig only looks for shell variables, so you have to mention them as if
-# they were shell variables, not %Config entries.  Thus you write
+# they were shell variables, not %Config entries. Thus you write
 #  $startperl
 # to ensure Configure will look for $Config{startperl}.
 
@@ -27,18 +28,16 @@ if ($^O eq 'VMS') {
 }
 
 # Create the generated script.
-## no critic (InputOutput::RequireBriefOpen)
-## no critic (InputOutput::RequireCheckedSyscalls)
 open(my $out, '>', $file) or die "Cannot create $file: $!\n";
-print "Extracting $file (with variable substitutions)\n";
-## use critic
+print "Extracting $file (with variable substitutions)\n"
+  or die "$0: cannot write to stdout: $!\n";
 
 # In this section, Perl variables will be expanded during extraction.  You can
 # use $Config{...} to use Configure variables.
 print {$out} <<"PREAMBLE" or die "Cannot write to $file: $!\n";
 $Config{startperl}
-    eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
-        if 0; # ^ Run only under a shell
+eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
+  if 0;    # ^ Run only under a shell
 PREAMBLE
 
 # In the following, Perl variables are not expanded during extraction.
@@ -50,78 +49,117 @@ print {$out} <<'SCRIPT_BODY' or die "Cannot write to $file: $!\n";
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.006;
-use strict;
+use 5.012;
 use warnings;
 
 use Getopt::Long qw(GetOptions);
 use Pod::Man ();
 use Pod::Usage qw(pod2usage);
 
-use strict;
+# Format a single POD file.
+#
+# $parser  - Pod::Man object to use
+# $input   - Input file, - or undef for standard input
+# $output  - Output file, - or undef for standard output
+# $verbose - Whether to print each file to standard output when converted
+#
+# Returns: 0 on no errors, 1 if there was an error
+sub format_file {
+    my ($parser, $input, $output, $verbose) = @_;
+    my $to_stdout = !defined($output) || $output eq q{-};
+    if ($verbose && !$to_stdout) {
+        print "  $output\n" or warn "$0: cannot write to stdout: $!\n";
+    }
+    $parser->parse_from_file($input, $output);
+    if ($parser->{CONTENTLESS}) {
+        if (defined($input) && $input ne q{-}) {
+            warn "$0: unable to format $input\n";
+        } else {
+            warn "$0: unable to format standard input\n";
+        }
+        if (!$to_stdout && !-s $output) {
+            unlink($output);
+        }
+        return 1;
+    }
+    return 0;
+}
 
 # Clean up $0 for error reporting.
-$0 =~ s%.*/%%;
+$0 =~ s{ .*/ }{}xms;
 
 # Insert -- into @ARGV before any single dash argument to hide it from
 # Getopt::Long; we want to interpret it as meaning stdin.
 my $stdin;
-@ARGV = map { $_ eq '-' && !$stdin++ ? ('--', $_) : $_ } @ARGV;
+local @ARGV = map { $_ eq q{-} && !$stdin++ ? (q{--}, $_) : $_ } @ARGV;
 
 # Parse our options, trying to retain backward compatibility with pod2man but
 # allowing short forms as well.  --lax is currently ignored.
 my %options;
-Getopt::Long::config ('bundling_override');
-GetOptions (\%options, 'center|c=s', 'date|d=s', 'encoding|e=s', 'errors=s',
-            'fixed=s', 'fixedbold=s', 'fixeditalic=s', 'fixedbolditalic=s',
-            'guesswork=s', 'help|h', 'lax|l', 'language=s', 'lquote=s',
-            'name|n=s', 'nourls', 'official|o', 'quotes|q=s', 'release|r=s',
-            'rquote=s', 'section|s=s', 'stderr', 'verbose|v', 'utf8|u')
-    or exit 1;
-pod2usage (0) if $options{help};
+Getopt::Long::config('bundling_override');
+GetOptions(
+    \%options,
+    'center|c=s',
+    'date|d=s',
+    'encoding|e=s',
+    'errors=s',
+    'fixed=s',
+    'fixedbold=s',
+    'fixeditalic=s',
+    'fixedbolditalic=s',
+    'guesswork=s',
+    'help|h',
+    'lax|l',
+    'language=s',
+    'lquote=s',
+    'name|n=s',
+    'nourls',
+    'official|o',
+    'quotes|q=s',
+    'release|r=s',
+    'rquote=s',
+    'section|s=s',
+    'stderr',
+    'verbose|v',
+    'utf8|u',
+) or exit 1;
+if ($options{help}) {
+    pod2usage(0);
+}
 
 # Official sets --center, but don't override things explicitly set.
-if ($options{official} && !defined $options{center}) {
+if ($options{official} && !defined($options{center})) {
     $options{center} = 'Perl Programmers Reference Guide';
 }
 
-# Verbose is only our flag, not a Pod::Man flag.
+# Delete flags that are only used in pod2man, not in Pod::Man. lax is accepted
+# only for backward compatibility and does nothing.
 my $verbose = $options{verbose};
-delete $options{verbose};
+delete @options{qw(verbose lax official)};
 
-# This isn't a valid Pod::Man option and is only accepted for backward
-# compatibility.
-delete $options{lax};
-
-# If neither stderr nor errors is set, default to errors = die.
-if (!defined $options{stderr} && !defined $options{errors}) {
+# If neither stderr nor errors is set, default to errors = die rather than the
+# Pod::Man default of pod.
+if (!defined($options{stderr}) && !defined($options{errors})) {
     $options{errors} = 'die';
 }
 
+# If given no arguments, read from stdin and write to stdout.
+if (!@ARGV) {
+    push(@ARGV, q{-});
+}
+
 # Initialize and run the formatter, pulling a pair of input and output off at
-# a time.  For each file, we check whether the document was completely empty
+# a time. For each file, we check whether the document was completely empty
 # and, if so, will remove the created file and exit with a non-zero exit
 # status.
-my $parser = Pod::Man->new (%options);
+my $parser = Pod::Man->new(%options);
 my $status = 0;
-my @files;
-do {
-    @files = splice (@ARGV, 0, 2);
-    print "  $files[1]\n" if $verbose;
-    $parser->parse_from_file (@files);
-    if ($parser->{CONTENTLESS}) {
-        $status = 1;
-        if (defined $files[0]) {
-            warn "$0: unable to format $files[0]\n";
-        } else {
-            warn "$0: unable to format standard input\n";
-        }
-        if (defined ($files[1]) and $files[1] ne '-') {
-            unlink $files[1] unless (-s $files[1]);
-        }
-    }
-} while (@ARGV);
-exit $status;
+while (@ARGV) {
+    my ($input, $output) = splice(@ARGV, 0, 2);
+    my $result = format_file($parser, $input, $output, $verbose);
+    $status ||= $result;
+}
+exit($status);
 
 __END__
 
@@ -172,6 +210,9 @@ providing multiple pairs of I<input> and I<output> files on the command line.
 B<--section>, B<--release>, B<--center>, B<--date>, and B<--official> can be
 used to set the headers and footers to use.  If not given, Pod::Man will
 assume various defaults.  See below for details.
+
+For specific details and caveats about the translation from POD to *roff, see
+L<Pod::Man/CAVEATS>.
 
 =head1 OPTIONS
 
@@ -381,6 +422,8 @@ recommended to set a meaningful manual page name.
 [2.5.0] Normally, LZ<><> formatting codes with a URL but anchor text are
 formatted to show both the anchor text and the URL.  In other words:
 
+=for ProhibitVerbatimMarkup allow next
+
     L<foo|http://example.com/>
 
 is formatted as:
@@ -496,7 +539,7 @@ and Tom Christiansen.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999-2001, 2004, 2006, 2008, 2010, 2012-2019, 2022 Russ Allbery
+Copyright 1999-2001, 2004, 2006, 2008, 2010, 2012-2019, 2022-2024 Russ Allbery
 <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
@@ -505,10 +548,10 @@ under the same terms as Perl itself.
 =head1 SEE ALSO
 
 L<Pod::Man>, L<Pod::Simple>, L<man(1)>, L<nroff(1)>, L<perlpod(1)>,
-L<podchecker(1)>, L<perlpodstyle(1)>, L<troff(1)>, L<man(7)>
+L<podchecker(1)>, L<perlpodstyle(1)>, L<troff(1)>
 
-The man page documenting the an macro set may be L<man(5)> instead of
-L<man(7)> on your system.
+The man page documenting the C<an> macro set is usually either L<man(7)> or
+L<man(5)> depending on the system.
 
 The current version of this script is always available from its web site at
 L<https://www.eyrie.org/~eagle/software/podlators/>.  It is also part of the

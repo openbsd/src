@@ -7,7 +7,7 @@
 # This is based on the module of the same name by Malcolm Beattie,
 # but essentially none of his code remains.
 
-package B::Deparse 1.76;
+package B::Deparse 1.85;
 use strict;
 use Carp;
 use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
@@ -28,7 +28,7 @@ use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
          OPpARG_IF_UNDEF OPpARG_IF_FALSE
 	 SVf_IOK SVf_NOK SVf_ROK SVf_POK SVf_FAKE SVs_RMG SVs_SMG
 	 SVs_PADTMP
-         CVf_NOWARN_AMBIGUOUS CVf_LVALUE
+         CVf_NOWARN_AMBIGUOUS CVf_LVALUE CVf_IsMETHOD
 	 PMf_KEEP PMf_GLOBAL PMf_CONTINUE PMf_EVAL PMf_ONCE
 	 PMf_MULTILINE PMf_SINGLELINE PMf_FOLD PMf_EXTENDED PMf_EXTENDED_MORE
 	 PADNAMEf_OUTER PADNAMEf_OUR PADNAMEf_TYPED
@@ -66,7 +66,8 @@ BEGIN {
     # List version-specific constants here.
     # Easiest way to keep this code portable between version looks to
     # be to fake up a dummy constant that will never actually be true.
-    foreach (qw(OPpSORT_INPLACE OPpSORT_DESCEND OPpITER_REVERSED OPpCONST_NOVER
+    foreach (qw(OPpSORT_INPLACE OPpSORT_DESCEND OPpITER_INDEXED
+		OPpITER_REVERSED OPpCONST_NOVER
 		OPpPAD_STATE PMf_SKIPWHITE RXf_SKIPWHITE
 		PMf_CHARSET PMf_KEEPCOPY PMf_NOCAPTURE CVf_ANONCONST
 		CVf_LOCKED OPpREVERSE_INPLACE OPpSUBSTR_REPL_FIRST
@@ -479,7 +480,8 @@ sub next_todo {
 	# XXX We would do $self->keyword("sub"), but ‘my CORE::sub’
 	#     doesn’t work and ‘my sub’ ignores a &sub in scope.  I.e.,
 	#     we have a core bug here.
-	push @text, "sub " . substr $name->PVX, 1;
+	my $kw = $cv ? $self->kw_sub_or_method($cv) : "sub";
+	push @text, "$kw " . substr $name->PVX, 1;
 	if ($cv) {
 	    # my sub foo { }
 	    push @text,  " " . $self->deparse_sub($cv);
@@ -553,7 +555,7 @@ sub next_todo {
         } elsif (defined $stash) {
             $name =~ s/^\Q$stash\E::(?!\z|.*::)//;
         }
-	my $ret = "$pragmata${p}${l}" . $self->keyword("sub") . " $name "
+	my $ret = "$pragmata${p}${l}" . $self->keyword($self->kw_sub_or_method($cv)) . " $name "
 	      . $self->deparse_sub($cv);
 	$self->{'subs_declared'}{$name} = 1;
 	return $ret;
@@ -1303,6 +1305,12 @@ sub deparse_argops {
 }
 
 
+sub kw_sub_or_method {
+    my $self = shift;
+    my $cv = shift;
+    return ($cv->CvFLAGS & CVf_IsMETHOD) ? "method" : "sub";
+}
+
 # Deparse a sub. Returns everything except the 'sub foo',
 # e.g.  ($$) : method { ...; }
 # or    : prototype($$) lvalue ($a, $b) { ...; };
@@ -1328,10 +1336,13 @@ Carp::confess("SPECIAL in deparse_sub") if $cv->isa("B::SPECIAL");
             $proto = $myproto;
         }
     }
-    if ($cv->CvFLAGS & (CVf_NOWARN_AMBIGUOUS|CVf_LOCKED|CVf_LVALUE|CVf_ANONCONST)) {
-        push @attrs, "lvalue" if $cv->CvFLAGS & CVf_LVALUE;
-        push @attrs, "method" if $cv->CvFLAGS & CVf_NOWARN_AMBIGUOUS;
-        push @attrs, "const"  if $cv->CvFLAGS & CVf_ANONCONST;
+    my $cv_flags = $cv->CvFLAGS;
+    my $is_method = $cv_flags & CVf_IsMETHOD;
+
+    if ($cv_flags & (CVf_NOWARN_AMBIGUOUS|CVf_LOCKED|CVf_LVALUE|CVf_ANONCONST)) {
+        push @attrs, "lvalue" if $cv_flags & CVf_LVALUE;
+        push @attrs, "method" if $cv_flags & CVf_NOWARN_AMBIGUOUS and !$is_method;
+        push @attrs, "const"  if $cv_flags & CVf_ANONCONST;
     }
 
     local($self->{'curcv'}) = $cv;
@@ -1349,6 +1360,10 @@ Carp::confess("SPECIAL in deparse_sub") if $cv->isa("B::SPECIAL");
         # stub sub may have single op rather than list of ops
         my $is_list = ($lineseq->name eq "lineseq");
         my $firstop = $is_list ? $lineseq->first : $lineseq;
+
+        if ($is_method and $firstop->name eq "methstart") {
+            $firstop = $firstop->sibling;
+        }
 
         # Try to deparse first subtree as a signature if possible.
         # Top of signature subtree has an ex-argcheck as a placeholder
@@ -2337,6 +2352,8 @@ my %feature_keywords = (
    finally  => 'try',
    defer    => 'defer',
    signatures => 'signatures',
+   any      => 'any',
+   all      => 'all',
 );
 
 # keywords that are strong and also have a prototype
@@ -2843,8 +2860,9 @@ sub pp_refgen {
 
 sub e_anoncode {
     my ($self, $info) = @_;
-    my $text = $self->deparse_sub($info->{code});
-    return $self->keyword("sub") . " $text";
+    my $cv = $info->{code};
+    my $text = $self->deparse_sub($cv);
+    return $self->keyword($self->kw_sub_or_method($cv)) . " $text";
 }
 
 sub pp_anoncode {
@@ -3066,6 +3084,25 @@ sub deparse_binop_right {
     }
 }
 
+my %can_warn_about_lhs_not;
+BEGIN {
+    %can_warn_about_lhs_not = map +($_ => 1), qw(
+        ==
+        !=
+        <
+        <=
+        >
+        >=
+        eq
+        ne
+        lt
+        le
+        gt
+        ge
+        isa
+    );
+}
+
 sub binop {
     my $self = shift;
     my ($op, $cx, $opname, $prec, $flags) = (@_, 0);
@@ -3081,15 +3118,21 @@ sub binop {
     }
     my $leftop = $left;
     $left = $self->deparse_binop_left($op, $left, $prec);
-    $left = "($left)" if $flags & LIST_CONTEXT
-		     and    $left !~ /^(my|our|local|state|)\s*[\@%\(]/
-			 || do {
-				# Parenthesize if the left argument is a
-				# lone repeat op.
-				my $left = $leftop->first->sibling;
-				$left->name eq 'repeat'
-				    && null($left->sibling);
-			    };
+    $left = "($left)"
+        if $flags & LIST_CONTEXT
+            and $left !~ /^(my|our|local|state|)\s*[\@%\(]/
+                || do {
+                    # Parenthesize if the left argument is a
+                    # lone repeat op.
+                    my $left = $leftop->first->sibling;
+                    $left->name eq 'repeat'
+                    && null($left->sibling);
+                }
+        or
+            $can_warn_about_lhs_not{$opname}
+            and $leftop->name eq 'not'
+            and $leftop->flags & OPf_PARENS
+            and $left !~ /\(/;
     $right = $self->deparse_binop_right($op, $right, $prec);
     return $self->maybe_parens("$left $opname$eq $right", $cx, $prec);
 }
@@ -3275,9 +3318,16 @@ sub pp_and { logop(@_, "and", 3, "&&", 11, "if") }
 sub pp_or  { logop(@_, "or",  2, "||", 10, "unless") }
 sub pp_dor { logop(@_, "//", 10) }
 
-# xor is syntactically a logop, but it's really a binop (contrary to
-# old versions of opcode.pl). Syntax is what matters here.
-sub pp_xor { logop(@_, "xor", 2, "",   0,  "") }
+sub pp_xor {
+    my $self = shift;
+    my ($op, $cx) = @_;
+    if ($cx > 2 or $op->flags & OPf_STACKED) {
+        binop($self, @_, "^^", 10, ASSIGN);
+    }
+    else {
+        binop($self, @_, "xor", 2);
+    }
+}
 
 sub logassignop {
     my $self = shift;
@@ -3433,6 +3483,25 @@ sub pp_substr {
 	 . $self->deparse($op->first->sibling, 7);
     }
     maybe_local(@_, listop(@_, "substr"))
+}
+
+sub pp_substr_left {
+    my ($self,$op,$cx) = @_;
+
+   my $lex  = ($op->private & OPpTARGET_MY);
+
+   my $val = 'substr(' . $self->deparse($op->first->sibling, $cx)
+             . ', 0, ' . $self->deparse($op->first->sibling->sibling->sibling, $cx)
+             . ( (($op->private & 7) == 3) ? ')' : ", '')" );
+
+    if ($lex) {
+        my $targ = $op->targ;
+        my $var = $self->maybe_my($op, $cx, $self->padname($op->targ),
+            $self->padname_sv($targ),
+            0);
+        $val = $self->maybe_parens("$var = $val", $cx, 7);
+    }
+    $val;
 }
 
 sub pp_index {
@@ -3653,9 +3722,10 @@ sub pp_sort { indirop(@_, "sort") }
 
 sub mapop {
     my $self = shift;
-    my($op, $cx, $name) = @_;
+    my($op, $cx) = @_;
     my($expr, @exprs);
-    my $kid = $op->first; # this is the (map|grep)start
+    my $kid = $op->first; # this is the (map|grep|any|all)start
+    my ( $name ) = $kid->name =~ m/(.*)start/; # anystart and allstart share anywhile
     $kid = $kid->first->sibling; # skip a pushmark
     my $code = $kid->first; # skip a null
     if (is_scope $code) {
@@ -3673,8 +3743,9 @@ sub mapop {
 				    $code . join(", ", @exprs), $cx, 5);
 }
 
-sub pp_mapwhile { mapop(@_, "map") }
-sub pp_grepwhile { mapop(@_, "grep") }
+sub pp_mapwhile { mapop(@_) }
+sub pp_grepwhile { mapop(@_) }
+sub pp_anywhile { mapop(@_) }
 sub pp_mapstart { baseop(@_, "map") }
 sub pp_grepstart { baseop(@_, "grep") }
 
@@ -4035,6 +4106,7 @@ sub loop_common {
     } elsif ($enter->name eq "enteriter") { # foreach
 	my $ary = $enter->first->sibling; # first was pushmark
 	my $var = $ary->sibling;
+	my $iter = $kid->first->first;
 	if ($ary->name eq 'null' and $enter->private & OPpITER_REVERSED) {
 	    # "reverse" was optimised away
 	    $ary = listop($self, $ary->first->sibling, 1, 'reverse');
@@ -4045,6 +4117,10 @@ sub loop_common {
 	      $self->deparse($ary->first->sibling->sibling, 9);
 	} else {
 	    $ary = $self->deparse($ary, 1);
+	}
+
+	if ($iter->private & OPpITER_INDEXED) {
+	    $ary = "builtin::indexed $ary";
 	}
 
         if ($enter->flags & OPf_PARENS) {
@@ -4074,7 +4150,7 @@ sub loop_common {
 	} else {
 	    $var = $self->deparse($var, 1);
 	}
-	$body = $kid->first->first->sibling; # skip OP_AND and OP_ITER
+	$body = $iter->sibling;
 	if (!is_state $body->first and $body->first->name !~ /^(?:stub|leave|scope)$/) {
 	    confess unless $var eq '$_';
 	    $body = $body->first;
@@ -4256,7 +4332,12 @@ sub pp_null {
     } elsif (!null($op->first->sibling) and
 	     $op->first->sibling->name =~ /^transr?\z/ and
 	     $op->first->sibling->flags & OPf_STACKED) {
-	return $self->maybe_parens($self->deparse($op->first, 20) . " =~ "
+        my $lhs = $self->deparse($op->first, 20);
+        $lhs = "($lhs)"
+            if $op->first->name eq 'not'
+                and $op->first->flags & OPf_PARENS
+                and $lhs !~ /\(/;
+        return $self->maybe_parens( "$lhs =~ "
 				   . $self->deparse($op->first->sibling, 20),
 				   $cx, 20);
     } elsif ($op->flags & OPf_SPECIAL && $cx < 1 && !$op->targ) {
@@ -5651,7 +5732,7 @@ sub const {
 		 $self->{curcv}->object_2svref == $ref->object_2svref) {
 		return $self->keyword("__SUB__");
 	    }
-	    return "sub " . $self->deparse_sub($ref);
+	    return $self->kw_sub_or_method($ref) . " " . $self->deparse_sub($ref);
 	}
 	if ($class ne 'SPECIAL' and $ref->FLAGS & SVs_SMG) {
 	    for (my $mg = $ref->MAGIC; $mg; $mg = $mg->MOREMAGIC) {
@@ -6282,7 +6363,7 @@ sub code_list {
 	local(@$self{qw'curstash warnings hints hinthash curcop'})
 	    = @$self{qw'curstash warnings hints hinthash curcop'};
 
-    my $re;
+    my $re = "";
     for ($op = $op->first->sibling; !null($op); $op = $op->sibling) {
 	if ($op->name eq 'null' and $op->flags & OPf_SPECIAL) {
 	    my $scope = $op->first;
@@ -6404,6 +6485,10 @@ sub matchop {
     if ($op->name ne 'split' && $op->flags & OPf_STACKED) {
 	$binop = 1;
 	$var = $self->deparse($kid, 20);
+        $var = "($var)"
+            if $kid->name eq 'not'
+                and $kid->flags & OPf_PARENS
+                and $var !~ /\(/;
 	$kid = $kid->sibling;
     }
            # not $name; $name will be 'm' for both match and split
@@ -6565,6 +6650,10 @@ sub pp_subst {
     if ($op->flags & OPf_STACKED) {
 	$binop = 1;
 	$var = $self->deparse($kid, 20);
+        $var = "($var)"
+            if $kid->name eq 'not'
+                and $kid->flags & OPf_PARENS
+                and $var !~ /\(/;
 	$kid = $kid->sibling;
     }
     elsif (my $targ = $op->targ) {
@@ -6762,7 +6851,7 @@ sub pp_pushdefer {
 sub builtin1 {
     my $self = shift;
     my ($op, $cx, $name) = @_;
-    my $arg = $self->deparse($op->first);
+    my $arg = $self->deparse($op->first, 6);
     # TODO: work out if lexical alias is present somehow...
     return "builtin::$name($arg)";
 }

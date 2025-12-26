@@ -1779,6 +1779,22 @@
         code    => 'index $x, "b"',
     },
 
+    # SUBSTR
+    'func::substr::nibble_void' => {
+        desc    => 'substr with a zero offset, empty replacement pattern (void)',
+        setup   => 'my $z = "JAPH"x1000',
+        code    => 'substr($z, 0, 2, "")',
+    },
+    'func::substr::nibble_lex' => {
+        desc    => 'substr with a zero offset, empty replacement pattern (lex assign)',
+        setup   => 'my $x; my $z = "JAPH"x1000',
+        code    => '$x = substr($z, 0, 2, "")',
+    },
+    'func::substr::nibble_gvsv' => {
+        desc    => 'substr with a zero offset, empty replacement pattern (global assign)',
+        setup   => 'our $x; my $z = "JAPH"x1000',
+        code    => '$x = substr($z, 0, 2, "")',
+    },
 
     # JOIN
 
@@ -1922,6 +1938,18 @@
         code    => '$p = pos($s);',
     },
 
+    # func::print::iv_stringify should outperform func::print::iv_strings
+    'func::print::iv_stringify' => {
+        desc    => 'do_print stringification of SVt_IV integers',
+        setup   => 'open(my $fh, ">", \$x) or die $!;',
+        code    => 'print $fh 1,2,3,4,5,6,7,8,9,0;',
+    },
+    'func::print::iv_strings' => {
+        desc    => 'do_print pre-stringified SVt_IV integers',
+        setup   => 'open(my $fh, ">", \$x) or die $!;',
+        code    => 'print $fh "1","2","3","4","5","6","7","8","9","0";',
+    },
+
     'func::ref::notaref_bool' => {
         desc    => 'ref($notaref) in boolean context',
         setup   => 'my $r = "boo"',
@@ -1953,8 +1981,6 @@
         setup   => 'my $x; my $r = bless []',
         code    => '$x = ref $r',
     },
-
-
 
     'func::sort::num' => {
         desc    => 'plain numeric sort',
@@ -2017,7 +2043,6 @@
         setup   => 'sub f { ($a . "") cmp ($b . "") } my @a = reverse  "a".."j";',
         code    => '@a = sort f @a',
     },
-
 
     'func::split::vars' => {
         desc    => 'split into two lexical vars',

@@ -117,6 +117,13 @@ foreach my $type ('script_run', 'sr', 'atomic_script_run', 'asr') {
     like("\x{1d7ce}αβγ", qr/^(*sr:.{4})/,
          "Non-ASCII Common digits work with Greek"); # perl #133547
 
+    # GH #22535
+    unlike("A\x{1d7f5}\x{1d7ff}B", qr/^(*sr:.{4})/,
+           "Verify works when Unicode has multiple adjacent \\d runs,"
+         . " in different runs");
+    like("A\x{1d7f6}\x{1d7ff}B", qr/^(*sr:.{4})/,
+         "Verify works when Unicode has multiple adjacent \\d runs, same run");
+
     fresh_perl_is('print scalar "0" =~ m!(((*sr:()|)0)(*sr:)0|)!;',
                   1, {}, '[perl #133997]');
 

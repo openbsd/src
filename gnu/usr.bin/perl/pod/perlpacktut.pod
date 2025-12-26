@@ -495,7 +495,7 @@ L</"Packing and Unpacking C Structures"> for more on that.
 For packing floating point numbers you have the choice between the
 pack codes C<f>, C<d>, C<F> and C<D>. C<f> and C<d> pack into (or unpack
 from) single-precision or double-precision representation as it is provided
-by your system. If your systems supports it, C<D> can be used to pack and
+by your system. If your system supports it, C<D> can be used to pack and
 unpack (C<long double>) values, which can offer even more resolution
 than C<f> or C<d>.  B<Note that there are different long double formats.>
 

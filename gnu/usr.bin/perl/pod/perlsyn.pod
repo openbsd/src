@@ -60,7 +60,7 @@ the beginning or the end of the script.  However, if you're using
 lexically-scoped private variables created with C<my()>,
 C<state()>, or C<our()>, you'll have to make sure
 your format or subroutine definition is within the same block scope
-as the my if you expect to be able to access those private variables.
+as the my() if you expect to be able to access those private variables.
 
 Declaring a subroutine allows a subroutine name to be used as if it were a
 list operator from that point forward in the program.  You can declare a
@@ -330,7 +330,9 @@ If the LABEL is omitted, the loop control statement
 refers to the innermost enclosing loop.  This may include dynamically
 searching through your call-stack at run time to find the LABEL.  Such
 desperate behavior triggers a warning if you use the C<use warnings>
-pragma or the B<-w> flag.
+pragma or the B<-w> flag.  If more than one label with the same name
+occurs, any reference to that name refers to the one labelling the
+innermost enclosing loop.
 
 If the condition expression of a C<while> statement is based
 on any of a group of iterative expression types then it gets
@@ -568,7 +570,7 @@ If the size of the LIST is not an exact multiple of the number of iterator
 variables, then on the last iteration the "excess" iterator variables are
 aliases to C<undef>, as if the LIST had C<, undef> appended as many times as
 needed for its length to become an exact multiple.  This happens whether
-LIST is a literal LIST or an array - ie arrays are not extended if their
+LIST is a literal LIST or an array - i.e. arrays are not extended if their
 size is not a multiple of the iteration size, consistent with iterating an
 array one-at-a-time.  As these padding elements are not lvalues, attempting
 to modify them will fail, consistent with the behaviour when iterating a
@@ -748,7 +750,7 @@ X<block>
 A BLOCK by itself (labeled or not) is semantically equivalent to a
 loop that executes once.  Thus you can use any of the loop control
 statements in it to leave or restart the block.  (Note that this is
-I<NOT> true in C<eval{}>, C<sub{}>, or contrary to popular belief
+I<NOT> true in C<eval{}>, C<sub{}>, or, contrary to popular belief,
 C<do{}> blocks, which do I<NOT> count as loops.)  The C<continue>
 block is optional.
 
@@ -861,12 +863,15 @@ C<defer>.
 
 X<switch> X<case> X<given> X<when> X<default>
 
+The C<switch> feature is discouraged for new code and is retained for
+backward compatibility.
+
 Starting from Perl 5.10.1 (well, 5.10.0, but it didn't work
 right), you can say
 
     use feature "switch";
 
-to enable an experimental switch feature.  This is loosely based on an
+to enable the switch feature.  This is loosely based on an
 old version of a Raku proposal, but it no longer resembles the Raku
 construct.  You also get the switch feature whenever you declare that your
 code prefers to run under a version of Perl between 5.10 and 5.34.  For
@@ -874,7 +879,7 @@ example:
 
     use v5.14;
 
-Under the "switch" feature, Perl gains the experimental keywords
+Under the "switch" feature, Perl gains the keywords
 C<given>, C<when>, C<default>, C<continue>, and C<break>.
 Starting from Perl 5.16, one can prefix the switch
 keywords with C<CORE::> to access the feature without a C<use feature>
@@ -891,8 +896,8 @@ in the previous section could be rewritten as
         default       { $nothing = 1 }
     }
 
-The C<foreach> is the non-experimental way to set a topicalizer.
-If you wish to use the highly experimental C<given>, that could be
+The C<foreach> is another way to set a topicalizer.
+If you wish to use C<given>, that could be
 written like this:
 
     use v5.10.1;

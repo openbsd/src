@@ -177,12 +177,11 @@ See C<L</PUSHMARK>> and L<perlcall> for other uses.
 =for apidoc Amn|SV*|POPs
 Pops an SV off the stack.
 
-=for apidoc Amn|char*|POPp
-Pops a string off the stack.
+=for apidoc      Amn|char*|POPp
+=for apidoc_item    |char*|POPpx
 
-=for apidoc Amn|char*|POPpx
-Pops a string off the stack.  Identical to POPp.  There are two names for
-historical reasons.
+These each pop a string off the stack.
+There are two names for historical reasons.
 
 =for apidoc Amn|char*|POPpbytex
 Pops a string off the stack which must consist of bytes i.e. characters < 256.
@@ -634,6 +633,8 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 #define ARGTARG		PL_op->op_targ
 
 #define MAXARG		(PL_op->op_private & OPpARG4_MASK)
+#define MAXARG3         (PL_op->op_private & OPpARG3_MASK)
+
 
 /* for backcompat - use switch_argstack() instead */
 
@@ -700,14 +701,7 @@ True if this op will be the return value of an lvalue subroutine
 =cut */
 #define LVRET ((PL_op->op_private & OPpMAYBE_LVSUB) && is_lvalue_sub())
 
-#define SvCANEXISTDELETE(sv) \
- (!SvRMAGICAL(sv)            \
-  || !(mg = mg_find((const SV *) sv, PERL_MAGIC_tied))           \
-  || (   (stash = SvSTASH(SvRV(SvTIED_obj(MUTABLE_SV(sv), mg)))) \
-      && gv_fetchmethod_autoload(stash, "EXISTS", TRUE)          \
-      && gv_fetchmethod_autoload(stash, "DELETE", TRUE)          \
-     )                       \
-  )
+#define SvCANEXISTDELETE(sv) Perl_sv_can_existdelete(aTHX_ MUTABLE_SV(sv))
 
 #ifdef PERL_CORE
 

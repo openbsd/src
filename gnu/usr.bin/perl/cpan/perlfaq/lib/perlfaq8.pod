@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq8 - System Interaction
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -215,9 +219,7 @@ C<Cls> method:
     Win32::Console;
 
     my $OUT = Win32::Console->new(STD_OUTPUT_HANDLE);
-    my $clear_string = $OUT->Cls;
-
-    print $clear_screen;
+    $OUT->Cls;
 
 If you have a command-line program that does the job, you can call
 it in backticks to capture whatever it outputs so you can use it
@@ -917,8 +919,7 @@ causes many inefficiencies.
 
 =head2 Can I use perl to run a telnet or ftp session?
 
-Try the L<Net::FTP>, L<TCP::Client>, and L<Net::Telnet> modules
-(available from CPAN).
+Try the L<Net::FTP> and L<Net::Telnet> modules (available from CPAN).
 L<http://www.cpan.org/scripts/netstuff/telnet.emul.shar> will also help
 for emulating the telnet protocol, but L<Net::Telnet> is quite
 probably easier to use.
@@ -995,7 +996,7 @@ module for other solutions.
 
 =item *
 
-Open /dev/tty and use the TIOCNOTTY ioctl on it. See L<tty(1)>
+Open /dev/tty and use the TIOCNOTTY ioctl on it. See L<tty(4)>
 for details. Or better yet, you can just use the C<POSIX::setsid()>
 function, so you don't have to worry about process groups.
 
@@ -1126,7 +1127,7 @@ C<sysopen()>:
 
     use Fcntl;
     sysopen(my $fh, "/foo/somefile", O_WRONLY|O_NDELAY|O_CREAT, 0644)
-        or die "can't open /foo/somefile: $!":
+        or die "can't open /foo/somefile: $!";
 
 =head2 How do I tell the difference between errors from the shell and perl?
 
@@ -1316,7 +1317,7 @@ L<ExtUtils::MakeMaker> advocated. INSTALL_BASE does not support
 installing modules for multiple versions of Perl or different
 architectures under the same directory. You should consider whether you
 really want that and, if you do, use the older PREFIX and LIB
-settings. See the L<ExtUtils::Makemaker> documentation for more details.
+settings. See the L<ExtUtils::MakeMaker> documentation for more details.
 
 =head2 How do I add the directory my program lives in to the module/library search path?
 
@@ -1440,3 +1441,5 @@ are hereby placed into the public domain. You are permitted and
 encouraged to use this code in your own programs for fun
 or for profit as you see fit. A simple comment in the code giving
 credit would be courteous but is not required.
+
+=cut

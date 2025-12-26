@@ -74,6 +74,14 @@ true)
 		;;
 	cygwin*)
 		shrpldflags="$shrpldflags -Wl,--out-implib=libperl.dll.a"
+		# The cygperl dll can be large and has conflicted with
+		# other DLLs as its name has changed from release to release.
+		# Give it its own space (and a lot of it) to work in.
+		# 32-bit (untested) gets less space since it is 32-bit.
+		case "$myarchname" in
+			"x86_64-cygwin") shrpldflags="$shrpldflags -Wl,--image-base=0x00380000000" ;;
+			*)  shrpldflags="$shrpldflags -Wl,--image-base=0x60500000" ;;
+		esac
 		linklibperl="-L. -lperl"
 		;;
 	sunos*)
@@ -209,7 +217,6 @@ extra_dep='
 cpan/Pod-Simple/pm_to_blib: dist/if/pm_to_blib
 ext/Pod-Functions/pm_to_blib: cpan/Pod-Simple/pm_to_blib cpan/Pod-Escapes/pm_to_blib pod/perlfunc.pod
 cpan/IO-Compress/pm_to_blib: dist/lib/pm_to_blib
-lib/auto/Term/ReadKey/ReadKey.so: lib/auto/Cwd/Cwd.so
 '
 for f in $dynamic_ext; do
     : the dependency named here will never exist
@@ -497,7 +504,7 @@ shextract=`SH_to_target $SH`
 ## In the following dollars and backticks do not need the extra backslash.
 $spitshell >>$Makefile <<!GROK!THIS!
 
-private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) lib/buildcustomize.pl
+private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) git_version.h lib/buildcustomize.pl
 
 # Files to be built with variable substitution before miniperl
 # is available.
@@ -531,11 +538,11 @@ unidatadirs = lib/unicore/To lib/unicore/lib
 
 h = \
     EXTERN.h INTERN.h XSUB.h \
-    av.h charclass_invlists.h cop.h cv.h dosish.h embed.h form.h gv.h \
-    handy.h hv.h hv_func.h iperlsys.h keywords.h l1_char_class_tab.h \
-    mg.h mydtrace.h op.h op_reg_common.h opcode.h pad.h patchlevel.h \
-    perl.h perlapi.h perly.h pp.h proto.h regcomp.h regcomp_internal.h \
-    regexp.h scope.h sv.h thread.h unixish.h utf8.h util.h warnings.h \
+    av.h cop.h cv.h dosish.h embed.h form.h gv.h handy.h hv.h hv_func.h \
+    iperlsys.h keywords.h l1_char_class_tab.h mg.h mydtrace.h op.h \
+    op_reg_common.h opcode.h pad.h patchlevel.h perl.h perlapi.h perly.h pp.h \
+    proto.h regcomp.h regcomp_internal.h regexp.h regexp_constants.h scope.h \
+    sv.h thread.h unixish.h utf8.h util.h warnings.h \
     $(CONFIGH)
 
 c_base = \
@@ -545,7 +552,7 @@ c_base = \
     pp.c pp_ctl.c pp_hot.c pp_pack.c pp_sort.c pp_sys.c \
     reentr.c regcomp.c regcomp_debug.c regcomp_invlist.c regcomp_study.c \
     regcomp_trie.c regexec.c run.c scope.c sv.c taint.c time64.c toke.c \
-    universal.c utf8.c util.c syscall_emulator.c \
+    universal.c utf8.c util.c \
     $(mallocsrc)
 
 !NO!SUBS!
@@ -576,7 +583,7 @@ common_objs = \
     regcomp_invlist$(OBJ_EXT) regcomp_study$(OBJ_EXT) regcomp_trie$(OBJ_EXT) \
     regexec$(OBJ_EXT) run$(OBJ_EXT) scope$(OBJ_EXT) sv$(OBJ_EXT) \
     taint$(OBJ_EXT) time64$(OBJ_EXT) toke$(OBJ_EXT) utf8$(OBJ_EXT) \
-    util$(OBJ_EXT) syscall_emulator$(OBJ_EXT) \
+    util$(OBJ_EXT) \
     $(mallocobj) $(ARCHOBJS)
 
 miniperl_objs_nodt = $(mini_only_objs) $(common_objs) miniperlmain$(OBJ_EXT)
@@ -628,7 +635,7 @@ esac
 
 $spitshell >>$Makefile <<'!NO!SUBS!'
 
-perltoc_pod_prereqs = extra.pods pod/perl5401delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod
+perltoc_pod_prereqs = extra.pods pod/perl5420delta.pod pod/perlapi.pod pod/perlintern.pod pod/perlmodlib.pod pod/perluniprops.pod
 generated_pods = pod/perltoc.pod $(perltoc_pod_prereqs)
 generated_headers = uudmap.h bitcount.h mg_data.h
 
@@ -687,16 +694,15 @@ $(MANIFEST_SRT):	MANIFEST $(PERL_EXE)
 
 .PHONY: all utilities
 
-# OpenBSD uses pre-generated lib/Config_git.pl and git_version.h files
 # Both git_version.h and lib/Config_git.pl are built
 # by make_patchnum.pl.
-#git_version.h: lib/Config_git.pl
-#
-#lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
-#	$(MINIPERL) make_patchnum.pl
-#
-## make sure that we recompile perl.c if the git version changes
-#perl$(OBJ_EXT): git_version.h
+git_version.h: lib/Config_git.pl
+
+lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
+	$(MINIPERL) make_patchnum.pl
+
+# make sure that we recompile perl.c if the git version changes
+perl$(OBJ_EXT): git_version.h
 
 !NO!SUBS!
 
@@ -1119,7 +1125,10 @@ $(CONFIGPOD): config.sh $(MINIPERL_EXE) configpm Porting/Glossary lib/Config_git
 unidatafiles $(unidatafiles) pod/perluniprops.pod: uni.data
 
 uni.data: $(MINIPERL_EXE) $(CONFIGPM) lib/unicore/mktables $(nonxs_ext)
-	touch uni.data
+	$(MINIPERL) lib/unicore/mktables -C lib/unicore -P pod -maketest -makenormtest -makelist -p
+#	Commented out so always runs, mktables looks at far more files than we
+#	can in this makefile to decide if needs to run or not
+#	touch uni.data
 
 # $(PERL_EXE) and ext because pod_lib.pl needs Digest::MD5
 # But also this ensures that all extensions are built before we try to scan
@@ -1135,9 +1144,9 @@ pod/perlintern.pod: $(MINIPERL_EXE) autodoc.pl embed.fnc
 pod/perlmodlib.pod: $(MINIPERL_EXE) pod/perlmodlib.PL MANIFEST
 	$(MINIPERL) pod/perlmodlib.PL -q
 
-pod/perl5401delta.pod: pod/perldelta.pod
-	$(RMS) pod/perl5401delta.pod
-	$(LNS) perldelta.pod pod/perl5401delta.pod
+pod/perl5420delta.pod: pod/perldelta.pod
+	$(RMS) pod/perl5420delta.pod
+	$(LNS) perldelta.pod pod/perl5420delta.pod
 
 extra.pods: $(MINIPERL_EXE)
 	-@test ! -f extra.pods || rm -f `cat extra.pods`
@@ -1366,7 +1375,7 @@ _mopup:
 	-rm -f *perl.xok
 	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
 	-rm -f $(PERL_EXE) $(MINIPERL_EXE) $(LIBPERL) libperl.*
-	-rm -f $(DTRACE_H)
+	-rm -f config.arch config.over $(DTRACE_H)
 
 _cleaner1:
 	-cd os2; rm -f Makefile
@@ -1429,16 +1438,16 @@ _cleaner2:
 	-rmdir lib/Test2/Bundle lib/Test2/AsyncSubtest/Event
 	-rmdir lib/Test2/AsyncSubtest lib/Test2/API/InterceptResult
 	-rmdir lib/Test2/API lib/Test2 lib/Test/use lib/Test/Tester
-	-rmdir lib/Test/Builder/Tester lib/Test/Builder/IO lib/Test/Builder
-	-rmdir lib/Test lib/Term/Table lib/Term lib/TAP/Parser/YAMLish
+	-rmdir lib/Test/Builder/Tester lib/Test/Builder lib/Test
+	-rmdir lib/Term/Table lib/Term lib/TAP/Parser/YAMLish
 	-rmdir lib/TAP/Parser/SourceHandler lib/TAP/Parser/Scheduler
 	-rmdir lib/TAP/Parser/Result lib/TAP/Parser/Iterator lib/TAP/Parser
 	-rmdir lib/TAP/Harness lib/TAP/Formatter/File
 	-rmdir lib/TAP/Formatter/Console lib/TAP/Formatter lib/TAP
-	-rmdir lib/Sys/Syslog lib/Sys lib/Sub lib/Search lib/Scalar
-	-rmdir lib/Pod/Text lib/Pod/Simple lib/Pod/Perldoc lib/Pod/Html
-	-rmdir lib/PerlIO/via lib/PerlIO lib/Perl lib/Parse/CPAN lib/Parse
-	-rmdir lib/Params lib/OpenBSD lib/Net/FTP lib/Module/Load
+	-rmdir lib/Sys/Syslog lib/Sys lib/Sub lib/Search lib/Scalar/List
+	-rmdir lib/Scalar lib/Pod/Text lib/Pod/Simple lib/Pod/Perldoc
+	-rmdir lib/Pod/Html lib/PerlIO/via lib/PerlIO lib/Perl lib/Parse/CPAN
+	-rmdir lib/Parse lib/Params lib/Net/FTP lib/Module/Load
 	-rmdir lib/Module/CoreList lib/Module lib/Memoize lib/Math/BigRat
 	-rmdir lib/Math/BigInt lib/Math/BigFloat lib/Math lib/MIME
 	-rmdir lib/Locale/Maketext lib/Locale lib/List/Util lib/List
@@ -1749,7 +1758,7 @@ TAGS: $(c_base) $(h)
 $spitshell >>$Makefile <<!GROK!THIS!
 
 ctags:
-	ctags -f Tags -N --totals --languages=c --langmap=c:+.h $ctags_exclude *.c *.h
+	ctags -N --languages=c --langmap=c:+.h.inc $ctags_exclude *.c *.h *.inc
 
 # AUTOMATICALLY GENERATED MAKE DEPENDENCIES--PUT NOTHING BELOW THIS LINE
 # If this runs make out of memory, delete /usr/include lines.

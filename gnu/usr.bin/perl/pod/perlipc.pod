@@ -204,11 +204,15 @@ info to show that it works; it should be replaced with the real code.
   my $script = File::Basename::basename($0);
   my $SELF  = catfile($FindBin::Bin, $script);
 
-  # POSIX unmasks the sigprocmask properly
   $SIG{HUP} = sub {
       print "got SIGHUP\n";
-      exec($SELF, @ARGV)        || die "$0: couldn't restart: $!";
+      exec($SELF, @ARGV) || die "$0: couldn't restart: $!";
   };
+
+  # Make sure SIGHUP isn't blocked (as it normally would be, due to the
+  # handler function calling exec rather than returning)
+  POSIX::sigprocmask(&POSIX::SIG_UNBLOCK,
+    POSIX::SigSet->new(&POSIX::SIGHUP));
 
   code();
 
@@ -969,7 +973,7 @@ Here's a sample TCP client using Internet-domain sockets:
 
 And here's a corresponding server to go along with it.  We'll
 leave the address as C<INADDR_ANY> so that the kernel can choose
-the appropriate interface on multihomed hosts.  If you want sit
+the appropriate interface on multihomed hosts.  If you want to sit
 on a particular interface (like the external side of a gateway
 or firewall machine), fill this in with your real address instead.
 
@@ -1441,7 +1445,7 @@ simultaneously copies everything from standard input to the socket.
 To accomplish the same thing using just one process would be I<much>
 harder, because it's easier to code two processes to do one thing than it
 is to code one process to do two things.  (This keep-it-simple principle
-a cornerstones of the Unix philosophy, and good software engineering as
+is a cornerstone of the Unix philosophy, and good software engineering as
 well, which is probably why it's spread to other systems.)
 
 Here's the code:

@@ -162,7 +162,17 @@ More detailed information about Perl syntax can be found in L<perlsyn>.
 
 =head2 Perl variable types
 
-Perl has three main variable types: scalars, arrays, and hashes.
+You may have noticed the strange character string <$name> above.  That
+denotes a variable, which is generally pronounced as "name".  The dollar
+sign is called a "sigil", and indicates that "name" is a variable.
+Unlike many other computer languages where variables are just strings of
+typically only alphabetic and numeric characters, all Perl variables are
+preceded by a sigil.
+
+Perl has three main variable types: scalars, arrays, and hashes.  The
+particular sigil used for a variable name indicates the type of that
+variable.  We've already seen the dollar sign used as a sigil, C<$name>.
+The dollar sign indicates this variable is a scalar.
 
 =over 4
 
@@ -195,16 +205,29 @@ it's set implicitly by certain looping constructs.
 
 =item Arrays
 
-An array represents a list of values:
+An array represents a list of values.  A C<@> sigil indicates a variable
+is an array:
 
  my @animals = ("camel", "llama", "owl");
  my @numbers = (23, 42, 69);
  my @mixed   = ("camel", 42, 1.23);
 
-Arrays are zero-indexed.  Here's how you get at elements in an array:
+Each of these arrays is an aggregation of individual values.  And each
+value is actually a scalar.
+
+Arrays are zero-indexed.  Here's how you get at the individual scalar
+elements in an array:
 
  print $animals[0];              # prints "camel"
  print $animals[1];              # prints "llama"
+
+In Perl, scalars are always referenced with the C<$> sigil.  Thus we
+wrote C<$animals[0]> above to get the 0th scalar variable inside the
+C<@animals> array.  The square brackets C<[...]> indicate that it is an
+array that we are getting the value from.
+This is a major point of confusion for newcomers to
+Perl.  When you are looking at a single value, you need to use C<$>,
+even though that value is part of a larger aggregation.
 
 The special variable C<$#array> tells you the index of the last element
 of an array:
@@ -228,7 +251,8 @@ To get multiple values from an array:
  @animals[0..2];                # gives ("camel", "llama", "owl");
  @animals[1..$#animals];        # gives all except the first element
 
-This is called an "array slice".
+This is called an "array slice".  We used the C<@> sigil here because
+we want multiple values; C<$> is reserved for referencing single values.
 
 You can do various useful things to lists:
 
@@ -241,7 +265,8 @@ subroutine).  These are documented in L<perlvar>.
 
 =item Hashes
 
-A hash represents a set of key/value pairs:
+A hash represents a set of key/value pairs.  A C<%> sigil indicates a
+variable is a hash:
 
  my %fruit_color = ("apple", "red", "banana", "yellow");
 
@@ -251,13 +276,27 @@ nicely:
  my %fruit_color = (
      apple  => "red",
      banana => "yellow",
+     lime   => "green",
  );
 
 To get at hash elements:
 
  $fruit_color{"apple"};           # gives "red"
 
-You can get at lists of keys and values with C<keys()> and
+Note again the use of the C<$> sigil to access a single hash element.
+The curly braces C<{...}> indicate that it is an hash that we are
+getting the value from.
+
+And we can get multiple values using a slice
+
+    my @non_red = @fruit_color{"banana", "lime"};
+    print $non_red[0], "\n";    # yellow
+    print $non_red[1], "\n";    # green
+
+Note again that multiple values use the sigil C<@>, and single ones use
+C<$>.
+
+You can get at lists of the keys and values with C<keys()> and
 C<values()>.
 
  my @fruits = keys %fruit_color;
@@ -274,6 +313,15 @@ L<perlvar>.
 =back
 
 Scalars, arrays and hashes are documented more fully in L<perldata>.
+
+Note that C<$name>, C<@name>, and C<%name> are three different
+variables.  It can be confusing to use the same alphanumerics to
+represent different variables, but in some situations it might be
+clarifying; one such could be to use C<$name> to represent the
+particular element currently of interest within the array C<@name>.
+The naming choice is yours; the Perl interpreter doesn't care.
+When multiple variables have the same name, using square brackets versus
+curly braces tells the interpreter which one is meant.
 
 More complex data types can be constructed using references, which allow
 you to build lists and hashes within lists and hashes.
@@ -569,8 +617,7 @@ expressions.  These are documented at great length in L<perlre>, but for
 the meantime, here's a quick cheat sheet:
 
  .                   a single character
- \s                  a whitespace character (space, tab, newline,
-                     ...)
+ \s                  a whitespace character (space, tab, newline, ...)
  \S                  non-whitespace character
  \d                  a digit (0-9)
  \D                  a non-digit
@@ -584,10 +631,32 @@ the meantime, here's a quick cheat sheet:
  ^                   start of string
  $                   end of string
 
-Quantifiers can be used to specify how many of the previous thing you
-want to match on, where "thing" means either a literal character, one
-of the metacharacters listed above, or a group of characters or
-metacharacters in parentheses.
+Note that in the above, C<$> doesn't match a dollar sign.  Similarly
+C<.>, C<\>, C<[>, C<]>, C<(>, C<)>, and C<^> don't match the characters
+you might expect.  These are called "metacharacters".  In contrast, the
+characters C<a>, C<e>, C<i>, C<o>, and C<u>, for example, are not
+metacharacters.  They match themselves literally.  Metacharacters
+normally match something that isn't their literal value.  There are a few
+more metacharacters than the ones above.  Some quantifier ones are
+given below, and the full list is in L<perlre/Metacharacters>.
+
+To make a metacharacter match its literal value, you "escape" (or "quote")
+it, by preceding it with a backslash.  Hence, C<\$> does match a dollar sign,
+and C<\\> matches a literal backslash.
+
+Note also that above, the string C<\s>, for example, doesn't match a
+backslash followed by the letter C<s>.  In this case, preceding the
+non-metacharacter C<s> with a backslash turns it into something that
+doesn't match its literal value.  Such a sequence is called an "escape
+sequence".  L<perlrebackslash> documents all of the current ones.
+
+A warning is raised if you escape a character that isn't a metacharacter
+and isn't part of a currently defined escape sequence.
+
+You can specify how many of the previous thing you want to match on by
+using quantifiers (where "thing" means one of: a literal character, one
+of the constructs listed above, or a group of either of them in
+parentheses).
 
  *                   zero or more of the previous thing
  +                   one or more of the previous thing

@@ -183,6 +183,11 @@ scope has the given name. C<name> must be a literal string.
 #define SAVESETSVFLAGS(sv,mask,val) save_set_svflags(sv,mask,val)
 #define SAVEFREECOPHH(h)            save_pushptr((void *)(h), SAVEt_FREECOPHH)
 
+#if defined(PERL_CORE) || defined(PERL_EXT)
+#  define SAVE_FREE_REXC_STATE(p) \
+        save_pushptr((void *)(p), SAVEt_FREE_REXC_STATE)
+#endif
+
 #define SAVEDELETE(h,k,l) \
           save_delete(MUTABLE_HV(h), (char*)(k), (I32)(l))
 #define SAVEHDELETE(h,s) \

@@ -1,8 +1,8 @@
-# ArabicShaping-15.0.0.txt
-# Date: 2022-02-14, 18:50:00 GMT [KW, RP]
-# © 2022 Unicode®, Inc.
+# ArabicShaping-16.0.0.txt
+# Date: 2024-07-30
+# © 2024 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see https://www.unicode.org/terms_of_use.html
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
@@ -10,21 +10,33 @@
 # This file defines the Joining_Type and Joining_Group property
 # values for Arabic, Syriac, N'Ko, Mandaic, and Manichaean positional
 # shaping, repeating in machine readable form the information
-# exemplified in Tables 9-3, 9-8, 9-9, 9-10, 9-14, 9-15, 9-16, 9-19,
-# 9-20, 10-4, 10-5, 10-6, 10-7, and 19-5 of The Unicode Standard core
-# specification. This file also defines Joining_Type values for
+# exemplified in various tables of The Unicode Standard core specification.
+#
+# This file also defines Joining_Type values for
 # Mongolian, Phags-pa, Psalter Pahlavi, Sogdian, Old Uyghur, Chorasmian, 
 # and Adlam positional shaping,
 # and Joining_Type and Joining_Group values for Hanifi Rohingya positional shaping,
-# which are not listed in tables in the standard.
+# which are not listed in tables in the core specification.
 #
-# See Sections 9.2, 9.3, 9.5, 10.5, 10.6, 13.5, 14.4, 14.10, 14.11, 16.14, 19.4, and 19.9
-# of The Unicode Standard core specification for more information.
+# Script          Section  Table(s)
+#
+# Arabic           9.2      9-3, 9-4, 9-5, 9-7, 9-8, 9-9, 9-10, 9-11
+# Syriac           9.3      9-15, 9-16, 9-17, 9-18, 9-19
+# Mandaic          9.5      9-21, 9-22
+# Manichaean      10.5      10-4, 10-5, 10-6, 10-7
+# Psalter Pahlavi 10.6      --
+# Chorasmian      10.8      --
+# Mongolian       13.5      --
+# Phags-pa        14.4      --
+# Sogdian         14.10     --
+# Old Uyghur      14.11     --
+# Hanifi Rohingya 16.14     --
+# N'Ko            19.4      19-5
+# Adlam           19.9      --
 #
 # Each line contains four fields, separated by a semicolon.
 #
-# Field 0: the code point, in 4-digit hexadecimal
-#   form, of a character.
+# Field 0: the code point of a character, in hexadecimal form.
 #
 # Field 1: gives a short schematic name for that character.
 #   The schematic name is descriptive of the shape, based as
@@ -89,14 +101,18 @@
 # assigns jg=No_Joining_Group to all the singletons.
 #
 # Note: Code points that are not explicitly listed in this file are
-# either of joining type T or U:
+# either of Joining_Type T or U:
 #
-# - Those that are not explicitly listed and that are of General Category Mn, Me, or Cf
-#   have joining type T.
-# - All others not explicitly listed have joining type U.
+# - Those that are not explicitly listed and that are of General_Category Mn, Me, or Cf
+#   are Joining_Type=T.
+# - All others not explicitly listed are Joining_Type=U.
 #
-# For an explicit listing of all characters of joining type T, see
+# For an explicit listing of all characters of Joining_Type=T, see
 # the derived property file DerivedJoiningType.txt.
+# For an implementation that needs to parse for the values of
+# Joining_Type, it is recommended to use DerivedJoiningType.txt
+# instead of ArabicShaping.txt, to avoid the separate required step of
+# calculating the set for Joining_Type=T based on General_Category values.
 #
 # #############################################################
 
@@ -112,7 +128,7 @@
 0605; ARABIC NUMBER MARK ABOVE; U; No_Joining_Group
 0608; ARABIC RAY; U; No_Joining_Group
 060B; AFGHANI SIGN; U; No_Joining_Group
-0620; DOTLESS YEH WITH SEPARATE RING BELOW; D; YEH
+0620; KASHMIRI YEH; D; KASHMIRI YEH
 0621; HAMZA; U; No_Joining_Group
 0622; ALEF WITH MADDA ABOVE; R; ALEF
 0623; ALEF WITH HAMZA ABOVE; R; ALEF
@@ -608,7 +624,7 @@
 1875; MONGOLIAN MANCHU RA; D; No_Joining_Group
 1876; MONGOLIAN MANCHU FA; D; No_Joining_Group
 1877; MONGOLIAN MANCHU ZHA; D; No_Joining_Group
-1878; MONGOLIAN MANCHU CHA WITH 2 DOTS; D; No_Joining_Group
+1878; MONGOLIAN CHA WITH 2 DOTS; D; No_Joining_Group
 1880; MONGOLIAN ALI GALI ANUSVARA ONE; U; No_Joining_Group
 1881; MONGOLIAN ALI GALI VISARGA ONE; U; No_Joining_Group
 1882; MONGOLIAN ALI GALI DAMARU; U; No_Joining_Group
@@ -828,6 +844,12 @@ A873; PHAGS-PA CANDRABINDU; U; No_Joining_Group
 10D21; HANIFI ROHINGYA VOWEL O; D; No_Joining_Group
 10D22; HANIFI ROHINGYA SAKIN; R; No_Joining_Group
 10D23; HANIFI ROHINGYA DOTLESS KINNA YA WITH DOT ABOVE; D; HANIFI ROHINGYA KINNA YA
+
+# Arabic Extended-C Characters
+
+10EC2; DAL WITH VERTICAL 2 DOTS BELOW; R; DAL
+10EC3; TAH WITH VERTICAL 2 DOTS BELOW; D; TAH
+10EC4; KAF WITH VERTICAL 2 DOTS BELOW; D; KAF
 
 # Sogdian Characters
 

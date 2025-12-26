@@ -17,7 +17,7 @@ use warnings;
 BEGIN {
     eval { require POSIX; POSIX->import("locale_h") };
     if ($@) {
-	skip_all("could not load the POSIX module"); # running minitest?
+        skip_all("could not load the POSIX module"); # running minitest?
     }
 }
 use Config;
@@ -584,11 +584,82 @@ else {
 EOF
 }
 
-SKIP: {   # GH #20085
-    my @utf8_locales = find_utf8_ctype_locales();
-    skip "didn't find a UTF-8 locale", 1 unless @utf8_locales;
+@locales = find_locales( [ qw(LC_CTYPE LC_COLLATE) ] );
+my ($utf8_ref, $non_utf8_ref) = classify_locales_wrt_utf8ness(\@locales);
+my @non_utf8_locales = grep { $_ !~ / \b C \b | POSIX /x } $non_utf8_ref->@*;
 
-    local $ENV{LC_CTYPE} = $utf8_locales[0];
+SKIP:
+{
+    skip "didn't find a suitable non-UTF-8 locale", 1 unless
+                                                            @non_utf8_locales;
+    my $locale = $non_utf8_locales[0];
+
+    fresh_perl_is(<<"EOF", "ok\n", {}, "cmp() handles above Latin1 and NUL in non-UTF8 locale");
+use locale;
+use POSIX qw(setlocale LC_COLLATE);
+if (setlocale(LC_COLLATE, '$locale')) {
+     my \$x = "A\\xB5\\x00B";
+     utf8::upgrade(\$x);
+     my \$y = "\\x{100}";
+     my \$cmp = \$x cmp \$y;
+     print \$cmp <= 0 ? "ok\n" : "not ok\n";
+}
+else {
+     print "ok\n";
+}
+EOF
+}
+
+SKIP:
+{
+    skip "didn't find a suitable UTF-8 locale", 1
+                                            unless $utf8_ref && $utf8_ref->@*;
+    my $locale = $utf8_ref->[0];
+
+    fresh_perl_is(<<"EOF", "ok\n", {}, "Handles above Unicode in a UTF8 locale");
+use locale;
+use POSIX qw(setlocale LC_COLLATE);
+if (setlocale(LC_COLLATE, '$locale')) {
+     my \$x = "a\\x{10FFFF}\\x{110000}a\\x{10FFFF}a\\x{110000}";
+     my \$y = "a\\x{10FFFF}\\x{10FFFF}a\\x{10FFFF}a\\x{10FFFF}";
+     my \$cmp = \$x cmp \$y;
+     print \$cmp >= 0 ? "ok\n" : "not ok\n";
+}
+else {
+     print "ok\n";
+}
+EOF
+}
+
+SKIP:
+{
+    skip "didn't find a suitable UTF-8 locale", 1
+                                            unless $utf8_ref && $utf8_ref->@*;
+    my $is64bit = length sprintf("%x", ~0) > 8;
+    skip "32-bit ASCII platforms can't physically have extended UTF-8", 1
+                                                   if $::IS_ASCII  && ! $is64bit;
+    my $locale = $utf8_ref->[0];
+
+    fresh_perl_is(<<"EOF", "ok\n", {}, "cmp() handles Perl extended UTF-8");
+use locale;
+use POSIX qw(setlocale LC_COLLATE);
+if (setlocale(LC_COLLATE, '$locale')) {
+     no warnings qw(non_unicode portable);
+     my \$x = "\\x{10FFFF}";
+     my \$y = "\\x{100000000}";
+     my \$cmp = \$x cmp \$y;
+     print \$cmp <= 0 ? "ok\n" : "not ok\n";
+}
+else {
+     print "ok\n";
+}
+EOF
+}
+
+SKIP: {   # GH #20085
+    skip "didn't find a suitable UTF-8 locale", 1
+                                            unless $utf8_ref && $utf8_ref->@*;
+    local $ENV{LC_CTYPE} = $utf8_ref->[0];
     local $ENV{LC_ALL} = undef;
     fresh_perl_is(<<~'EOF', "ok\n", {}, "check that setlocale overrides startup");
         use POSIX;
@@ -614,7 +685,7 @@ SKIP: {   # GH #20054
     skip "Even illegal locale names are accepted", 1
                     if $Config{d_setlocale_accepts_any_locale_name}
                     && $Config{d_setlocale_accepts_any_locale_name} eq 'define';
-	
+
     my @lc_all_locales = find_locales('LC_ALL');
     my $locale = $lc_all_locales[0];
     skip "LC_ALL not enabled on this platform", 1 unless $locale;

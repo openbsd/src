@@ -182,13 +182,12 @@ Intel*) ;; # # Is that you, Intel C++?
 #   longer then the ANSI C99 minimum of 4095 bytes.
 #
 # NOTE 3: the relative order of these options matters:
-# -Wextra before -W
-# -W before -Wno-long-long -Wno-declaration-after-statement
+# -Wextra before -Wno-long-long -Wno-declaration-after-statement
 #
 *) warns="$pedantic \
 	-Werror=pointer-arith \
 	-Werror=vla \
-	-Wextra -W \
+	-Wextra \
 	-Wno-long-long -Wno-declaration-after-statement \
 	-Wc++-compat -Wwrite-strings"
    case " $ccflags " in
@@ -220,17 +219,6 @@ Intel*) ;; # # Is that you, Intel C++?
                -std*)
                  echo "cflags.SH: Adding $opt."
                  stdflags="$stdflags $opt"
-                 ;;
-               -W)
-                 # -Wextra is the modern form of -W, so add
-                 # -W only if -Wextra is not there already.
-                 case " $warn " in
-                 *-Wextra*) ;;
-                 *)
-                   echo "cflags.SH: Adding $opt."
-                   warn="$warn $opt"
-                   ;;
-                 esac
                  ;;
                -Werror=pointer-arith)
                   # -pedantic* covers -Werror=p-a

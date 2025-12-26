@@ -76,7 +76,7 @@ names in the current package.  Some even have medium names, generally
 borrowed from B<awk>.  For more info, please see L<English>.
 
 Before you continue, note the sort order for variables.  In general, we
-first list the variables in case-insensitive, almost-lexigraphical
+first list the variables in case-insensitive, almost-lexicographical
 order (ignoring the C<{> or C<^> preceding words, as in C<${^UNICODE}>
 or C<$^T>), although C<$_> and C<@_> move up to the top of the pile.
 For variables with the same identifier, we list it in order of scalar,
@@ -594,7 +594,7 @@ Then
     $^M = 'a' x (1 << 16);
 
 would allocate a 64K buffer for use in an emergency.  See the
-L<INSTALL> file in the Perl distribution for information on how to
+F<INSTALL> file in the Perl distribution for information on how to
 add custom C compilation flags when compiling perl.  To discourage casual
 use of this advanced feature, there is no L<English|English> long name for
 this variable.
@@ -737,11 +737,10 @@ empty subroutine:
 The routine indicated by C<$SIG{__DIE__}> is called when a fatal
 exception is about to be thrown.  The error message is passed as the
 first argument.  When a C<__DIE__> hook routine returns, the exception
-processing continues as it would have in the absence of the hook,
-unless the hook routine itself exits via a C<goto &sub>, a loop exit,
-or a C<die()>.  The C<__DIE__> handler is explicitly disabled during
-the call, so that you can die from a C<__DIE__> handler.  Similarly
-for C<__WARN__>.
+processing continues as it would have in the absence of the hook, unless
+the hook routine itself throws an exception.  The C<__DIE__> handler is
+explicitly disabled during the call, so that you can die from a
+C<__DIE__> handler.  Similarly for C<__WARN__>.
 
 The C<$SIG{__DIE__}> hook is called even inside an C<eval()>. It was
 never intended to happen this way, but an implementation glitch made
@@ -750,7 +749,7 @@ at a distance like rewriting a pending exception in C<$@>. Plans to
 rectify this have been scrapped, as users found that rewriting a
 pending exception is actually a useful feature, and not a bug.
 
-The C<$SIG{__DIE__}> doesn't support C<'IGNORE'>; it has the same
+The C<$SIG{__DIE__}> hook doesn't support C<'IGNORE'>; it has the same
 effect as C<'DEFAULT'>.
 
 C<__DIE__>/C<__WARN__> handlers are very special in one respect: they
@@ -787,7 +786,7 @@ which are hard or impossible to wrap are called. The keys of this hash
 are named after the keyword that is being hooked, followed by two
 underbars and then a phase term; either "before" or "after".
 
-Perl will throw an error if you attempt modify a key which is not
+Perl will throw an error if you attempt to modify a key which is not
 documented to exist, or if you attempt to store anything other than a
 code reference or undef in the hash.  If you wish to use an object to
 implement a hook you can use currying to embed the object into an
@@ -812,7 +811,7 @@ In order to make it easy to perform an action with shared state both
 before and after the require keyword was executed the C<require__before>
 hook may return a "post-action" coderef which will in turn be executed when
 the C<require> completes.  This coderef will be executed regardless as to
-whether the require completed succesfully or threw an exception.  It will
+whether the require completed successfully or threw an exception.  It will
 be called with the filename that was required.  You can check %INC to
 determine if the require was successful.  Any other return from the
 C<require__before> hook will be silently ignored.
@@ -821,7 +820,7 @@ C<require__before> hooks are called in FIFO order, and if the hook
 returns a code reference those code references will be called in FILO
 order.  In other words if A requires B requires C, then
 C<require__before> will be called first for A, then B and then C, and
-the post-action code reference will executed first for C, then B and
+the post-action code reference will be executed first for C, then B and
 then finally A.
 
 Well behaved code should ensure that when setting up a
@@ -1017,7 +1016,7 @@ Consider the following code:
 Notice that each successful match in the exact same scope overrides the
 match context of the previous successful match, but that unsuccessful
 matches do not. Also note that in an inner nested scope the previous
-state from an outer dynamic scope persists until it has been overriden
+state from an outer dynamic scope persists until it has been overridden
 by another successful match, but that when the inner nested scope exits
 whatever match context was in effect before the inner successful match
 is restored when the scope concludes.
@@ -1118,7 +1117,7 @@ variable form, for instance
 see L<perldata/"Demarcated variable names using braces"> for more
 information on this form and its uses.
 
-This variable was added in 5.25.7
+This variable was added in 5.25.7.
 
 If you need access to this functionality in older Perls you can use this
 function immediately after your regexp.
@@ -1524,28 +1523,25 @@ This variable was added in Perl v5.10.0.
 
 Variables that depend on the currently selected filehandle may be set
 by calling an appropriate object method on the C<IO::Handle> object,
-although this is less efficient than using the regular built-in
+although this is slightly less efficient than using the regular built-in
 variables.  (Summary lines below for this contain the word HANDLE.)
-First you must say
+
+In Perl versions before v5.14.0, you had to say
 
     use IO::Handle;
 
-after which you may use either
-
-    method HANDLE EXPR
-
-or more safely,
+before using
 
     HANDLE->method(EXPR)
+
+Since Perl v5.14.0, you can use all filehandles as objects without manually
+loading any modules first.
 
 Each method returns the old value of the C<IO::Handle> attribute.  The
 methods each take an optional EXPR, which, if supplied, specifies the
 new value for the C<IO::Handle> attribute in question.  If not
 supplied, most methods do nothing to the current value--except for
 C<autoflush()>, which will assume a 1 for you, just to be different.
-
-Because loading in the C<IO::Handle> class is an expensive operation,
-you should learn how to use the regular built-in variables.
 
 A few of these variables are considered "read-only".  This means that
 if you try to assign to this variable, either directly or indirectly
@@ -1570,12 +1566,12 @@ But the following code is quite bad:
     my $content = <$fh>;
     close $fh;
 
-since some other module, may want to read data from some file in the
+since some other module may want to read data from some file in the
 default "line mode", so if the code we have just presented has been
 executed, the global value of C<$/> is now changed for any other code
 running inside the same Perl interpreter.
 
-Usually when a variable is localized you want to make sure that this
+Usually when a variable is localized, you want to make sure that this
 change affects the shortest scope possible.  So unless you are already
 inside some short C<{}> block, you should create one yourself.  For
 example:
@@ -1639,7 +1635,7 @@ command name itself.  See L</$0> for the command name.
 X<ARGV>
 
 The special filehandle that iterates over command-line filenames in
-C<@ARGV>.  Usually written as the null filehandle in the angle operator
+C<@ARGV>.  Usually written as the null filehandle in the diamond operator
 C<< <> >>.  Note that currently C<ARGV> only has its magical effect
 within the C<< <> >> operator; elsewhere it is just a plain filehandle
 corresponding to the last file opened by C<< <> >>.  In particular,
@@ -2459,7 +2455,8 @@ The functions C<accept()>, C<open()>, C<pipe()>, C<readpipe()> (as well
 as the related C<qx> and C<`STRING`> operators), C<socket()>,
 C<socketpair()>, and C<sysopen()> are affected by the lexical value of
 this variable.  The implicit L</ARGV> handle opened by C<readline()> (or
-the related C<< <> >> and C<<< <<>> >>> operators) on passed filenames is
+the related C<< <> >> (diamond) and C<<< <<>> >>> (double diamond)
+operators) on passed filenames is
 also affected (but not if it opens C<STDIN>).  If this variable is not
 set, these functions will set the default layers as described in
 L<PerlIO/Defaults and how to override them>.
@@ -2626,11 +2623,12 @@ X<$#>
 
 C<$#> was a variable that could be used to format printed numbers.
 After a deprecation cycle, its magic was removed in Perl v5.10.0 and
-using it now triggers a warning: C<$# is no longer supported>.
+using it now triggers a compilation error: C<$# is no longer supported>.
 
 This is not the sigil you use in front of an array name to get the
 last index, like C<$#array>.  That's still how you get the last index
-of an array in Perl.  The two have nothing to do with each other.
+of an array in Perl.  (See L<perlintro/Arrays>.)
+The two have nothing to do with each other.
 
 Deprecated in Perl 5.
 
@@ -2641,7 +2639,7 @@ X<$*>
 
 C<$*> was a variable that you could use to enable multiline matching.
 After a deprecation cycle, its magic was removed in Perl v5.10.0.
-Using it now triggers a warning: C<$* is no longer supported>.
+Using it now triggers a compilation error: C<$* is no longer supported>.
 You should use the C</s> and C</m> regexp modifiers instead.
 
 Deprecated in Perl 5.

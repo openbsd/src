@@ -110,7 +110,62 @@
 #  define PERL_STATIC_FORCE_INLINE_NO_RET __declspec(noreturn) __forceinline static
 #endif
 
-#define  WIN32_LEAN_AND_MEAN
+#ifdef PERL_CORE
+#  ifndef PERL_CORE_NO_CPAN_W32_H /* unsanctioned unsupported bypass for CPAN */
+#    define NOATOM            /* GUI IPC RPC strings */
+#    define NOCLIPBOARD
+#    define NOCOLOR           /* Widget colors */
+#    define NOCOMM            /* Serial ports*/
+#    define NOCRYPT           /* Encryption and employee auth tap cards */
+#    define NOCTLMGR          /* "Control and Dialog routines" */
+#    define NODEFERWINDOWPOS  /* Z index resize app windows */
+#    define NODRAWTEXT        /* Fonts "DrawText() and DT_*" */
+#    define NOGDI             /* wikipedia "Computer_graphics_algorithms" */
+#    define NOGDICAPMASKS     /* PNP Monitors/Screens */
+#    define NOHELP            /* Help engine */
+#    define NOICONS           /* Icon Img Objs */
+#    define NOIMAGE           /* MS .h says #def for perf, but OBSOL/UNIMPL/FUT */
+#    define NOKANJI
+#    define NOKERNEL          /* MS .h says #def for perf, but OBSOL/UNIMPL/FUT */
+#    define NOKEYSTATES       /* Mouse */
+#    define NOMB              /* popup MessageBox() */
+#    define NOMCX             /* Dialup Modem */
+#    define NOMEMMGR          /* GUI IPC RPC malloc buffers */
+#    define NOMENUS           /* GUI Menu obj */
+#    define NOMETAFILE        /* file format for half rendered graphics */
+#    define NOMINMAX          /* "Macros min(a,b) and max(a,b)" OBSOL/UNIMPL/FUT */
+#    define NOMSG             /* GUI Message loop */
+/* #define NONLS              "Wide" Code Page conversion APIs */
+/* OBSOL/UNIMPL/FUT "OpenFile(), OemToAnsi, AnsiToOem" etc */
+#    define NOOPENFILE
+#    define NOPROFILER        /* "Profiler interface." OBSOL/UNIMPL/FUT */
+#    define NOPROXYSTUB       /* MS COM DCOM RPC probably, undoced, unimpl */
+#    define NORASTEROPS       /* see NOGDI */
+#    define NORPC
+#    define NOSCROLL          /* App Window Objs */
+#    define NOSERVICE         /* root/semi kernel service processes */
+#    define NOSHOWWINDOW      /* App Window Objs */
+#    define NOSOUND
+#    define NOSYSCOMMANDS     /* App Window Objs */
+#    define NOSYSMETRICS      /* Screen resolution */
+#    define NOTAPE            /* Tape drives */
+#    define NOTEXTMETRIC      /* Fonts */
+#    ifndef PERL_IN_WIN32_PERLLIB_C
+#      define NOUSER          /* high level GUI/IPC/RPC */
+#    endif
+#    define NOVIRTUALKEYCODES /* Keyboards */
+#    define NOWH              /* SetWindowsHook */
+#    ifndef PERL_IN_WIN32_PERLLIB_C
+#      define NOWINMESSAGES   /* GUI Message loop IPC/RPC */
+#    endif
+#    define NOWINOFFSETS      /* App Window Obj themes */
+#    define NOWINSTYLES       /* App Window Obj themes */
+#    define OEMRESOURCE       /* Mouse cursor file format */
+#    define VC_EXTRALEAN      /* "MFC" VC 2010s or older??? */
+#  endif
+#endif
+
+#define  WIN32_LEAN_AND_MEAN /* Day 1 Win32 Perl port, CPAN expects this. */
 #include <windows.h>
 
 /*
@@ -523,6 +578,9 @@ struct interp_intern {
     HWND        message_hwnd;
     UINT	timerid;
     unsigned 	poll_count;
+#ifdef USE_ITHREADS
+    DWORD       cur_tid;
+#endif
     Sighandler_t sigtable[SIG_SIZE];
 };
 

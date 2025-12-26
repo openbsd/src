@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-[ this is a template for a new perldelta file.  Any text flagged as XXX needs
+[ this is a template for a new perldelta file. Any text flagged as XXX needs
 to be processed before release. ]
 
 perldelta - what is new for perl v5.tXXX.cXXX
@@ -21,15 +21,15 @@ XXX Any important notices here
 
 =head1 Core Enhancements
 
-XXX New core language features go here.  Summarize user-visible core language
-enhancements.  Particularly prominent performance optimisations could go
+XXX New core language features go here. Summarize user-visible core language
+enhancements. Particularly prominent performance optimisations could go
 here, but most should go in the L</Performance Enhancements> section.
 
 [ List each enhancement as a =head2 entry ]
 
 =head1 Security
 
-XXX Any security-related notices go here.  In particular, any security
+XXX Any security-related notices go here. In particular, any security
 vulnerabilities closed should be noted here rather than in the
 L</Selected Bug Fixes> section.
 
@@ -41,7 +41,7 @@ XXX For a release on a stable branch, this section aspires to be:
 
     There are no changes intentionally incompatible with 5.XXX.XXX
     If any exist, they are bugs, and we request that you submit a
-    report.  See L</Reporting Bugs> below.
+    report. See L</Reporting Bugs> below.
 
 [ List each incompatible change as a =head2 entry ]
 
@@ -59,11 +59,11 @@ Distributions on CPAN which require these modules will need to list them as
 prerequisites.
 
 The core versions of these modules will now issue C<deprecated>-category
-warnings to alert you to this fact.  To silence these deprecation warnings,
+warnings to alert you to this fact. To silence these deprecation warnings,
 install the modules in question from CPAN.
 
 Note that these are (with rare exceptions) fine modules that you are encouraged
-to continue to use.  Their disinclusion from core primarily hinges on their
+to continue to use. Their disinclusion from core primarily hinges on their
 necessity to bootstrapping a fully functional, CPAN-capable Perl installation,
 not usually on concerns over their design.
 
@@ -96,9 +96,9 @@ XXX
 =head1 Modules and Pragmata
 
 XXX All changes to installed files in F<cpan/>, F<dist/>, F<ext/> and F<lib/>
-go here.  If L<Module::CoreList> is updated, generate an initial draft of the
-following sections using F<Porting/corelist-perldelta.pl>.  A paragraph summary
-for important changes should then be added by hand.  In an ideal world,
+go here. If L<Module::CoreList> is updated, generate an initial draft of the
+following sections using F<Porting/corelist-perldelta.pl>. A paragraph summary
+for important changes should then be added by hand. In an ideal world,
 dual-life modules would have a F<Changes> file that could be cribbed.
 
 The list of new and updated modules is modified automatically as part of
@@ -143,7 +143,7 @@ XXX Remove this section if F<Porting/corelist-perldelta.pl> did not add any cont
 
 =head1 Documentation
 
-XXX Changes to files in F<pod/> go here.  Consider grouping entries by
+XXX Changes to files in F<pod/> go here. Consider grouping entries by
 file and be sure to link to the appropriate page, e.g. L<perlfunc>.
 
 =head2 New Documentation
@@ -157,7 +157,7 @@ XXX Description of the purpose of the new file here
 =head2 Changes to Existing Documentation
 
 We have attempted to update the documentation to reflect the changes
-listed in this document.  If you find any we have missed, open an issue
+listed in this document. If you find any we have missed, open an issue
 at L<https://github.com/Perl/perl5/issues>.
 
 XXX Changes which significantly change existing files in F<pod/> go here.
@@ -179,10 +179,10 @@ XXX Description of the change here
 =head1 Diagnostics
 
 The following additions or changes have been made to diagnostic output,
-including warnings and fatal error messages.  For the complete list of
+including warnings and fatal error messages. For the complete list of
 diagnostic messages, see L<perldiag>.
 
-XXX New or changed warnings emitted by the core's C<C> code go here.  Also
+XXX New or changed warnings emitted by the core's C<C> code go here. Also
 include any changes in L<perldiag> that reconcile it to the C<C> code.
 
 =head2 New Diagnostics
@@ -229,9 +229,9 @@ Most of these are built within the directory F<utils>.
 
 [ List utility changes as a =head2 entry for each utility and =item
 entries for each change
-Use L<XXX> with program names to get proper documentation linking. ]
+Use F<XXX> with program names to get proper documentation linking. ]
 
-=head2 L<XXX>
+=head2 F<XXX>
 
 =over 4
 
@@ -244,7 +244,7 @@ XXX
 =head1 Configuration and Compilation
 
 XXX Changes to F<Configure>, F<installperl>, F<installman>, and analogous tools
-go here.  Any other changes to the Perl build process should be listed here.
+go here. Any other changes to the Perl build process should be listed here.
 However, any platform-specific changes should be listed in the
 L</Platform Support> section, instead.
 
@@ -261,7 +261,7 @@ XXX
 =head1 Testing
 
 XXX Any significant changes to the testing of a freshly built perl should be
-listed here.  Changes which create B<new> files in F<t/> go here as do any
+listed here. Changes which create B<new> files in F<t/> go here as do any
 large changes to the testing harness (e.g. when parallel testing was added).
 Changes to existing files in F<t/> aren't worth summarizing, although the bugs
 that they represent may be covered elsewhere.
@@ -274,7 +274,7 @@ in this release.
 XXX If instead there were significant changes, say this:
 
 Tests were added and changed to reflect the other additions and
-changes in this release.  Furthermore, these significant changes were
+changes in this release. Furthermore, these significant changes were
 made:
 
 [ List each test improvement as an =item entry ]
@@ -297,7 +297,7 @@ changes as paragraphs below it. ]
 =head2 New Platforms
 
 XXX List any platforms that this version of perl compiles on, that previous
-versions did not.  These will either be enabled by new files in the F<hints/>
+versions did not. These will either be enabled by new files in the F<hints/>
 directories, or new subdirectories and F<README> files at the top level of the
 source tree.
 
@@ -323,8 +323,8 @@ XXX
 
 =head2 Platform-Specific Notes
 
-XXX List any changes for specific platforms.  This could include configuration
-and compilation changes or changes in portability/compatibility.  However,
+XXX List any changes for specific platforms. This could include configuration
+and compilation changes or changes in portability/compatibility. However,
 changes within modules for platforms should generally be listed in the
 L</Modules and Pragmata> section.
 
@@ -338,7 +338,7 @@ XXX
 
 =head1 Internal Changes
 
-XXX Changes which affect the interface available to C<XS> code go here.  Other
+XXX Changes which affect the interface available to C<XS> code go here. Other
 significant internal changes for future core maintainers should be noted as
 well.
 
@@ -354,7 +354,7 @@ XXX
 
 =head1 Selected Bug Fixes
 
-XXX Important bug fixes in the core language are summarized here.  Bug fixes in
+XXX Important bug fixes in the core language are summarized here. Bug fixes in
 files in F<ext/> and F<lib/> are best summarized in L</Modules and Pragmata>.
 
 XXX Include references to GitHub issues and PRs as: [GH #12345] and the release
@@ -372,8 +372,8 @@ XXX
 
 =head1 Known Problems
 
-XXX Descriptions of platform agnostic bugs we know we can't fix go here.  Any
-tests that had to be C<TODO>ed for the release would be noted here.  Unfixed
+XXX Descriptions of platform agnostic bugs we know we can't fix go here. Any
+tests that had to be C<TODO>ed for the release would be noted here. Unfixed
 platform specific bugs also go here.
 
 [ List each fix as an =item entry ]
@@ -406,16 +406,16 @@ died, add a short obituary here.
 
 XXX Generate this with:
 
-  perl Porting/acknowledgements.pl v5.40.0..HEAD
+  perl Porting/acknowledgements.pl v5.42.0..HEAD
 
 =head1 Reporting Bugs
 
 If you find what you think is a bug, you might check the perl bug database
-at L<https://github.com/Perl/perl5/issues>.  There may also be information at
+at L<https://github.com/Perl/perl5/issues>. There may also be information at
 L<https://www.perl.org/>, the Perl Home Page.
 
 If you believe you have an unreported bug, please open an issue at
-L<https://github.com/Perl/perl5/issues>.  Be sure to trim your bug down to a
+L<https://github.com/Perl/perl5/issues>. Be sure to trim your bug down to a
 tiny but sufficient test case.
 
 If the bug you are reporting has security implications which make it

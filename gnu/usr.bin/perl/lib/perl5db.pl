@@ -532,7 +532,7 @@ BEGIN {
 use vars qw($VERSION $header);
 
 # bump to X.XX in blead, only use X.XX_XX in maint
-$VERSION = '1.80';
+$VERSION = '1.82';
 
 $header = "perl5db.pl version $VERSION";
 
@@ -1799,17 +1799,6 @@ our (
     @old_watch,
 );
 
-sub _DB__use_full_path
-{
-	# If running in the perl test suite, don't use old system libs
-	return &{$_[0]} if $ENV{PERL_CORE};
-	local @INC = @INC;
-	eval { require Config; };
-	unshift(@INC, 
-	    @Config::Config{qw(archlibexp privlibexp sitearchexp sitelibexp)});
-	&{$_[0]};
-}
-
 sub _DB__determine_if_we_should_break
 {
     # if we have something here, see if we should break.
@@ -1972,10 +1961,7 @@ sub _DB__handle_y_command {
         if (!eval {
             local @INC = @INC;
             pop @INC if $INC[-1] eq '.';
-	    _DB__use_full_path(sub {
-	    	require PadWalker;
-	    });
-	    PadWalker->VERSION(0.08) }) {
+            require PadWalker; PadWalker->VERSION(0.08) }) {
             my $Err = $@;
             _db_warn(
                 $Err =~ /locate/
@@ -2047,19 +2033,12 @@ sub _DB__handle_c_command {
             # Qualify it to the current package unless it's
             # already qualified.
             $subname = $package . "::" . $subname
-            unless $subname =~ /::/;
+              unless $subname =~ /::/;
 
-            # find_sub will return "file:line_number" corresponding
-            # to where the subroutine is defined; we call find_sub,
-            # break up the return value, and assign it in one
-            # operation.
-            ( $file, $i ) = ( find_sub($subname) =~ /^(.*):(.*)$/ );
-
-            # Force the line number to be numeric.
-            $i = $i + 0;
+            my ($file, $line) = eval { subroutine_first_breakable_line($subname) };
 
             # If we got a line number, we found the sub.
-            if ($i) {
+            if ($line) {
 
                 # Switch all the debugger's internals around so
                 # we're actually working with that file.
@@ -2069,22 +2048,13 @@ sub _DB__handle_c_command {
                 # Mark that there's a breakpoint in this file.
                 $had_breakpoints{$filename} |= 1;
 
-                # Scan forward to the first executable line
-                # after the 'sub whatever' line.
-                $max = $#dbline;
-                my $_line_num = $i;
-                while ($dbline[$_line_num] == 0 && $_line_num< $max)
-                {
-                    $_line_num++;
-                }
-                $i = $_line_num;
-            } ## end if ($i)
-
-            # We didn't find a sub by that name.
+                $i = $line;
+            } ## end if ($line)
             else {
-                print $OUT "Subroutine $subname not found.\n";
+                print $OUT $@;
                 next CMD;
             }
+
         } ## end if ($subname =~ /\D/)
 
         # At this point, either the subname was all digits (an
@@ -2505,8 +2475,7 @@ sub _DB__handle_watch_expressions
 
             # Fix context DB::eval() wants to return an array, but
             # we need a scalar here.
-            my ($val) = join( "', '", DB::eval(@_) );
-            $val = ( ( defined $val ) ? "'$val'" : 'undef' );
+            my $val = join( ", ", map { defined ? "'$_'" : "undef" } DB::eval(@_) );
 
             # Did it change?
             if ( $val ne $DB::old_watch[$n] ) {
@@ -4829,7 +4798,7 @@ sub cmd_a {
     $line =~ s/\A\./$dbline/;
 
     # Should be a line number followed by an expression.
-    if ( my ($lineno, $expr) = $line =~ /^\s*(\d*)\s*(\S.+)/ ) {
+    if ( my ($lineno, $expr) = $line =~ /^\s*(\d*)\s*(\S.*)/ ) {
 
         if (! length($lineno)) {
             $lineno = $dbline;
@@ -4857,7 +4826,7 @@ sub cmd_a {
                 _set_breakpoint_enabled_status($filename, $lineno, 1);
             }
         } ## end if (length $expr)
-    } ## end if ($line =~ /^\s*(\d*)\s*(\S.+)/)
+    } ## end if ($line =~ /^\s*(\d*)\s*(\S.*)/)
     else {
 
         # Syntax wrong.
@@ -5403,6 +5372,65 @@ sub subroutine_filename_lines {
     return (find_sub($subname) =~ /^(.*):(\d+)-(\d+)$/);
 } ## end sub subroutine_filename_lines
 
+=head2 subroutine_first_breakable_line(subname)
+
+Attempts to find the filename and first breakable line by execution
+order for the subroutine specified by C<subname>.
+
+If this isn't possible, such as when debugging with C<miniperl>, finds
+the first breakable line by line order for the subroutine specified by
+C<subname>.
+
+Return the filename and breakable line number:
+
+  my ($file, $line) = subroutine_first_breakable_line(subname);
+
+Throws an error message if C<subname> cannot be found or is not
+breakable.
+
+=cut
+
+sub _first_breakable_via_B {
+    my ( $subname ) = @_;
+
+    my $cv = do {
+        no strict "refs";
+        *$subname{CODE};
+    };
+    ref $cv eq "CODE"
+      or return;
+
+    eval { require B; 1 }
+      or return;
+
+    my $bcv = B::svref_2object($cv);
+
+    $bcv->XSUB
+      and die "Cannot break on XSUB $subname\n";
+
+    for (my $op = $bcv->START; !$op->isa("B::NULL"); $op = $op->next) {
+        $op->name eq "dbstate"
+          and return ( $op->file, $op->line, $op->line );
+    }
+
+    return;
+}
+
+sub subroutine_first_breakable_line {
+    my ( $subname ) = @_;
+
+    my ($file, $line) = _first_breakable_via_B($subname);
+    unless ($file) {
+        # at the very least this allows miniperl to debug
+        ( $file, my ($s, $e) ) = subroutine_filename_lines($subname)
+          or die "Subroutine $subname not found.\n";
+
+        $line = breakable_line_in_filename($file, $s, $e);
+    }
+
+    return ($file, $line );
+}
+
 =head3 break_subroutine(subname) (API)
 
 Places a break on the first line possible in the specified subroutine. Uses
@@ -5415,16 +5443,14 @@ sub break_subroutine {
     my $subname = shift;
 
     # Get filename, start, and end.
-    my ( $file, $s, $e ) = subroutine_filename_lines($subname)
-      or die "Subroutine $subname not found.\n";
-
+    my ( $file, $line ) = subroutine_first_breakable_line($subname);
 
     # Null condition changes to '1' (always true).
     my $cond = @_ ? shift(@_) : 1;
 
     # Put a break the first place possible in the range of lines
     # that make up this subroutine.
-    break_on_filename_line_range( $file, $s, $e, $cond );
+    break_on_filename_line_range( $file, $line, $line, $cond );
 
     return;
 } ## end sub break_subroutine
@@ -6075,8 +6101,7 @@ sub _add_watch_expr {
     # return a list value.
     $evalarg = $expr;
     # The &-call is here to ascertain the mutability of @_.
-    my ($val) = join( ' ', &DB::eval);
-    $val = ( defined $val ) ? "'$val'" : 'undef';
+    my $val = join( ", ", map { defined ? "'$_'" : "undef" } &DB::eval );
 
     # Save the current value of the expression.
     push @old_watch, $val;
@@ -6246,13 +6271,23 @@ sub postponed_sub {
 
         # find_sub's value is 'fullpath-filename:start-stop'. It's
         # possible that the filename might have colons in it too.
-        my ( $file, $i ) = ( find_sub($subname) =~ /^(.*):(\d+)-.*$/ );
+        my ($file, $i);
+        local $\ = '';
+        if ( $offset =~ /^\+?0$/) {
+            ( $file, $i ) = eval { subroutine_first_breakable_line($subname) }
+              or print $OUT $@;
+        }
+        else {
+            if (( $file, $i ) = ( find_sub($subname) =~ /^(.*):(\d+)-.*$/ )) {
+                # We got the start line. Add the offset '+<n>' from
+                # $postponed{subname}.
+                $i += $offset;
+            }
+            else {
+                print $OUT "Subroutine $subname not found.\n";
+            }
+        }
         if ($i) {
-
-            # We got the start line. Add the offset '+<n>' from
-            # $postponed{subname}.
-            $i += $offset;
-
             # Switch to the file this sub is in, temporarily.
             local *dbline = $main::{ '_<' . $file };
 
@@ -6271,13 +6306,9 @@ sub postponed_sub {
 
             # Copy the breakpoint in and delete it from %postponed.
             $dbline{$i} = delete $postponed{$subname};
-        } ## end if ($i)
 
-        # find_sub didn't find the sub.
-        else {
-            local $\ = '';
-            print $OUT "Subroutine $subname not found.\n";
-        }
+            _set_breakpoint_enabled_status($file, $i, 1);
+        } ## end if ($i)
         return;
     } ## end if ($postponed{$subname...
     elsif ( $postponed{$subname} eq 'compile' ) { $signal = 1 }
@@ -6837,15 +6868,13 @@ the appropriate attributes. We then
 
 use vars qw($ornaments);
 use vars qw($rl_attribs);
+
 sub setterm {
 
     # Load Term::Readline, but quietly; don't debug it and don't trace it.
     local $frame = 0;
     local $doret = -2;
-    _DB__use_full_path(sub {
-	require Term::ReadLine;
-    });
-    
+    require Term::ReadLine;
 
     # If noTTY is set, but we have a TTY name, go ahead and hook up to it.
     if ($notty) {
@@ -7020,9 +7049,7 @@ qq[3>&1 xterm -title "Daughter Perl debugger $pids $name" -e sh -c 'tty 1>&3;\
 
     # We need $term defined or we can not switch to the newly created xterm
     if ($tty ne '' && !defined $term) {
-    	_DB__use_full_path(sub {
-	    require Term::ReadLine;
-	});
+        require Term::ReadLine;
         if ( !$rl ) {
             $term = Term::ReadLine::Stub->new( 'perldb', $IN, $OUT );
         }
@@ -8855,7 +8882,7 @@ sub CvGV_name_or_bust {
     return if $skipCvGV;    # Backdoor to avoid problems if XS broken...
     return unless ref $in;
     $in = \&$in;            # Hard reference...
-    eval { _DB__use_full_path(sub { require Devel::Peek; 1; }); } or return;
+    eval { require Devel::Peek; 1 } or return;
     my $gv = Devel::Peek::CvGV($in) or return;
     *$gv{PACKAGE} . '::' . *$gv{NAME};
 } ## end sub CvGV_name_or_bust
@@ -8865,9 +8892,9 @@ sub CvGV_name_or_bust {
 A utility routine used in various places; finds the file where a subroutine
 was defined, and returns that filename and a line-number range.
 
-Tries to use C<@sub> first; if it can't find it there, it tries building a
+Tries to use C<%sub> first; if it can't find it there, it tries building a
 reference to the subroutine and uses C<CvGV_name_or_bust> to locate it,
-loading it into C<@sub> as a side effect (XXX I think). If it can't find it
+loading it into C<%sub> as a side effect (XXX I think). If it can't find it
 this way, it brute-force searches C<%sub>, checking for identical references.
 
 =cut

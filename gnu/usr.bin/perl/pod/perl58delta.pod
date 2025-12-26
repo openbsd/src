@@ -270,7 +270,7 @@ ugly, but the current implementation slows down normal array and hash
 use quite noticeably. The C<fields> pragma interface will remain
 available.  The I<restricted hashes> interface is expected to
 be the replacement interface (see L<Hash::Util>).  If your existing
-programs depends on the underlying implementation, consider using
+programs depend on the underlying implementation, consider using
 L<Class::PseudoHash> from CPAN.
 
 =item *
@@ -2898,7 +2898,7 @@ The C<-M> and C<-m> options now warn if you didn't supply the module name.
 =item *
 
 If you in C<use> specify a required minimum version, modules matching
-the name and but not defining a $VERSION will cause a fatal failure.
+the name but not defining a $VERSION will cause a fatal failure.
 
 =item *
 

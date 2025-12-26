@@ -15,10 +15,10 @@ require  5.006;    ## requires this Perl version or later
 
 use Carp;
 use Config;
-use Exporter;
+use Exporter qw(import);
 use File::Spec;
 
-our $VERSION = '2.03';
+our $VERSION = '2.05';
 
 our @EXPORT = qw(&pod2usage);
 our @ISA;
@@ -843,7 +843,7 @@ things:
 
     =item B<-help>
 
-    Print a brief help message and exits.
+    Prints a brief help message and exits.
 
     =item B<-man>
 

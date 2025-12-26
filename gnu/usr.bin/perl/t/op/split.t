@@ -10,6 +10,7 @@ BEGIN {
 plan tests => 219;
 
 $FS = ':';
+our $IS_ASCII;
 
 $_ = 'a:b:c';
 
@@ -719,7 +720,7 @@ SKIP: {
 	) {
 		my($pattern, $flag) = @$_;
 		my $prog = "split $pattern";
-		my $expect = qr{^r->extflags:.*\b$flag\b}m;
+		my $expect = qr{^r->extflags:.*\b$flag\b}ms;
 		fresh_perl_like($prog, $expect, {
 			switches => [ '-Mre=Debug,COMPILE', '-c' ],
 		}, "special-case pattern for $prog");
@@ -728,8 +729,12 @@ SKIP: {
 
 # gh18032: check that `split " "` does not get converted to `split ""`
 SKIP: {
-    my @skipwhite= ('split " "', 'split "\x20"', 'split "\N{SPACE}"',
-        'split "$e$sp$e"', 'split');
+    my @skipwhite = ( 'split " "',
+                       ($::IS_ASCII) ? 'split "\x20"' : 'split "\x40"',
+                      'split "\N{SPACE}"',
+                      'split "$e$sp$e"',
+                      'split'
+                    );
     my @noskipwhite= (
         'split / /', 'split m/ /', 'split qr/ /',
         'split /$e$sp$e/', 'split m/$e$sp$e/', 'split qr/$e$sp$e/'
@@ -741,7 +746,7 @@ SKIP: {
 
     for my $prog ( @skipwhite ) {
         fresh_perl_like("use re qw(/$modifiers); \$sp=qq( ); \$e=qq(); $prog;",
-            qr{^r->extflags:.*\bSKIPWHITE\b\s\bWHITE\b}m,
+            qr{^r->extflags:.*\bSKIPWHITE\b\s\n?\bWHITE\b}ms,
             {switches => [ '-Mre=Debug,COMPILE' ]},
             "$prog sets SKIPWHITE|WHITE under `use re qw(/$modifiers)`");
 
@@ -753,12 +758,12 @@ SKIP: {
     }
     for my $prog ( @noskipwhite) {
         fresh_perl_like("use re qw(/$modifiers); \$sp=qq( ); \$e=qq(); $prog;",
-            qr{^r->extflags:.*\bNULL\b}m,
+            qr{^r->extflags:.*\bNULL\b}ms,
             {switches => [ '-Mre=Debug,COMPILE' ]},
             "$prog does not set SKIPWHITE|WHITE under `use re qw(/$modifiers)`");
         fresh_perl_like("use re qw(/$modifiers); \$sp=qq( ); \$e=qq();"
                        ."\$_=qq( 1  1 ); \@c=$prog; print 0+\@c, qq(<\@c>)",
-            qr{^6<  1     1  >}m,
+            qr{^6<  1     1  >}ms,
             {},
             "$prog matches expected under `use re qw(/$modifiers)`");
     }

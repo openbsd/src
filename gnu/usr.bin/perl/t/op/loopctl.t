@@ -36,7 +36,7 @@ BEGIN {
     set_up_inc(qw(. ../lib));
 }
 
-plan( tests => 67 );
+plan( tests => 69 );
 
 my $ok;
 
@@ -922,6 +922,23 @@ TEST41: {
 }
 cmp_ok($ok,'==',1,'dynamically scoped');
 
+TEST42: {   # GH #18369
+    my $outer = 0;
+    my $inner = 0;
+  L:
+    for my $i (0 .. 0) {
+        $outer++;
+
+      L:
+        for my $j (0 .. 0) {
+            $inner++;
+            redo L if $inner < 10;
+        }
+    }
+
+    is ($inner, 10, "redo label refers to innermost enclosing one");
+    is ($outer, 1,  "redo label doesn't refer to outermost enclosing one");
+}
 
 # [perl #27206] Memory leak in continue loop
 # Ensure that the temporary object is freed each time round the loop,

@@ -2209,7 +2209,7 @@ this model, the less likely conflicts will occur.
 =head1 XS VERSION
 
 This document covers features supported by C<ExtUtils::ParseXS>
-(also known as C<xsubpp>) 3.51
+(also known as C<xsubpp>) 3.57.
 
 =head1 AUTHOR DIAGNOSTICS
 

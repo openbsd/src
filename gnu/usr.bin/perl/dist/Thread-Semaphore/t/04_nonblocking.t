@@ -12,14 +12,7 @@ BEGIN {
 use threads;
 use threads::shared;
 use Thread::Semaphore;
-
-if ($] == 5.008) {
-    require './t/test.pl';   # Test::More work-alike for Perl 5.8.0
-} else {
-    require Test::More;
-}
-Test::More->import();
-plan('tests' => 12);
+use Test::More 'tests' => 12;
 
 ### Basic usage with multiple threads ###
 

@@ -10,7 +10,7 @@ C<libc>.  This document gives some guidance on interfacing with that
 library.
 
 One thing Perl porters should note is that F<perl> doesn't tend to use that
-much of the C standard library internally; you'll see very little use of, 
+much of the C standard library internally; you'll see very little use of,
 for example, the F<ctype.h> functions in there. This is because Perl
 tends to reimplement or abstract standard library functions, so that we
 know exactly how they're going to operate.
@@ -104,7 +104,7 @@ C<sv>, C<av>, C<hv>, etc. represent variables of their respective types.
 
 Instead of the F<stdio.h> functions, you should use the Perl abstraction
 layer. Instead of C<FILE*> types, you need to be handling C<PerlIO*>
-types.  Don't forget that with the new PerlIO layered I/O abstraction 
+types.  Don't forget that with the new PerlIO layered I/O abstraction
 C<FILE*> types may not even be available. See also the C<perlapio>
 documentation for more information about the following functions:
 
@@ -138,7 +138,8 @@ different from their C library counterparts:
 
   fputs(s, stream)            PerlIO_puts(perlio, s)
 
-There is no equivalent to C<fgets>; one should use C<sv_gets> instead:
+There is no equivalent to C<fgets> (or the deprecated C<gets>); one
+should use C<sv_gets> instead:
 
   fgets(s, n, stream)         sv_gets(sv, perlio, append)
 
@@ -163,9 +164,20 @@ There is no equivalent to C<fgets>; one should use C<sv_gets> instead:
   t* p = malloc(n)               Newx(p, n, t)
   t* p = calloc(n, s)            Newxz(p, n, t)
   p = realloc(p, n)              Renew(p, n, t)
+
+It is not portable to try to allocate 0 bytes; allocating 1 or more is
+portable.  Never pass pointers between C<Newx>, C<Renew>, C<Safefree> and
+I<libc> equivalents C<malloc>, C<realloc>, C<free>.  They are not from the
+same memory pool or allocator.  Either an instant or delayed I<SEGV> will
+occur, or subtle memory leaks or subtle heap corruption.
+
   memcpy(dst, src, n)            Copy(src, dst, n, t)
   memmove(dst, src, n)           Move(src, dst, n, t)
   memcpy(dst, src, sizeof(t))    StructCopy(src, dst, t)
+
+Notice the different order of arguments to C<Copy> and C<Move> than used
+in C<memcpy> and C<memmove>.
+
   memset(dst, 0, n * sizeof(t))  Zero(dst, n, t)
   memzero(dst, 0)                Zero(dst, n, char)
   free(p)                        Safefree(p)
@@ -173,38 +185,6 @@ There is no equivalent to C<fgets>; one should use C<sv_gets> instead:
   strdup(p)                      savepv(p)
   strndup(p, n)                  savepvn(p, n) (Hey, strndup doesn't
                                                 exist!)
-
-  strstr(big, little)            instr(big, little)
-  memmem(big, blen, little, len) ninstr(big, bigend, little, little_end)
-  strcmp(s1, s2)                 strLE(s1, s2) / strEQ(s1, s2)
-                                               / strGT(s1,s2)
-  strncmp(s1, s2, n)             strnNE(s1, s2, n) / strnEQ(s1, s2, n)
-
-  memcmp(p1, p2, n)              memNE(p1, p2, n)
-  !memcmp(p1, p2, n)             memEQ(p1, p2, n)
-
-Notice the different order of arguments to C<Copy> and C<Move> than used
-in C<memcpy> and C<memmove>.
-
-Most of the time, though, you'll want to be dealing with SVs internally
-instead of raw C<char *> strings:
-
-  strlen(s)                   sv_len(sv)
-  strcpy(dt, src)             sv_setpv(sv, s)
-  strncpy(dt, src, n)         sv_setpvn(sv, s, n)
-  strcat(dt, src)             sv_catpv(sv, s)
-  strncat(dt, src)            sv_catpvn(sv, s)
-  sprintf(s, fmt, ...)        sv_setpvf(sv, fmt, ...)
-
-If you do need raw strings, some platforms have safer interfaces, and
-Perl makes sure a version of these are available on all platforms:
-
-  strlcat(dt, src, sizeof(dt)) my_strlcat(dt, src, sizeof(dt))
-  strlcpy(dt, src, sizeof(dt)) my_strlcpy(dt, src, sizeof(dt))
-  strnlen(s)                   my_strnlen(s, maxlen)
-
-Note also the existence of C<sv_catpvf> and C<sv_vcatpvfn>, combining
-concatenation with formatting.
 
 Sometimes instead of zeroing the allocated heap by using Newxz() you
 should consider "poisoning" the data.  This means writing a bit
@@ -218,6 +198,52 @@ macros, which have similar arguments to Zero():
   PoisonNew(dst, n, t)        equal to PoisonWith(dst, n, t, 0xAB)
   PoisonFree(dst, n, t)       equal to PoisonWith(dst, n, t, 0xEF)
   Poison(dst, n, t)           equal to PoisonFree(dst, n, t)
+
+  strstr(big, little)            instr(big, little)
+  memmem(big, blen, little, len) ninstr(big, bigend, little, little_end)
+  strcmp(s1, s2)                 strLE(s1, s2) / strEQ(s1, s2)
+                                               / strGT(s1,s2)
+  strncmp(s1, s2, n)             strnNE(s1, s2, n) / strnEQ(s1, s2, n)
+
+  memcmp(p1, p2, n)              memNE(p1, p2, n)
+  !memcmp(p1, p2, n)             memEQ(p1, p2, n)
+
+Most of the time, though, you'll want to be dealing with SVs internally
+instead of raw C<char *> strings:
+
+  strlen(s)                   sv_len(sv)
+  strcpy(dt, src)             sv_setpv(sv, s)
+  strncpy(dt, src, n)         sv_setpvn(sv, s, n)
+  strcat(dt, src)             sv_catpv(sv, s)
+  strncat(dt, src)            sv_catpvn(sv, s)
+
+If you do need raw strings, use these instead:
+
+  my_strnlen(s, maxlen)
+  my_strlcpy(dt, src, sizeof(dt))
+  my_strlcat(dt, src, sizeof(dt))
+
+Similiarly, you can use SVs for creating strings from formats
+
+  sprintf(s, fmt, ...)         sv_setpvf(sv, fmt, ...)
+  vsprintf(str, fmt, va_list)  sv_vsetpvf(sv, fmt, va_list)
+
+Or for raw strings,
+
+  my_snprintf(dt, len, fmt, ...)
+  my_vsnprintf(dt, len, fmt, va_list)
+  vsprintf(str, fmt, va_list)  sv_vsnprintf(sv, fmt, va_list)
+
+Note also the existence of C<sv_catpvf> and C<sv_vcatpvfn>, combining
+concatenation with formatting; and L<C<Perl_form>()|perlapi/form> for
+another form of formatted populating.
+
+Note that glibc C<printf()>, C<sprintf()>, etc. are buggy before glibc
+version 2.17.  They won't allow a C<%.s> format with a precision to
+create a string that isn't valid UTF-8 if the current underlying locale
+of the program is UTF-8.  What happens is that the C<%s> and its
+operand are simply skipped without any notice.
+L<https://sourceware.org/bugzilla/show_bug.cgi?id=6530>.
 
 =head2 Character Class Tests
 
@@ -288,7 +314,8 @@ for collation.
   strtol(s, &p, n)            Strtol(s, &p, b)
   strtoul(s, &p, n)           Strtoul(s, &p, b)
 
-But note that these are subject to locale; see L</Dealing with locales>.
+But note that even the alternative functions are subject to locale; see
+L</Dealing with locales>.
 
 Typical use is to do range checks on C<uv> before casting:
 
@@ -381,9 +408,9 @@ think you do, use the C<JMPENV> stack in F<scope.h> instead.
   strftime()             Perl_sv_strftime_tm()
   strtod()               my_strtod() or Strtod()
   system(s)              Don't. Look at pp_system or use my_popen.
- ~tempnam()              mkstemp() or tmpfile()
- ~tmpnam()               mkstemp() or tmpfile()
-  tmpnam_r()             mkstemp() or tmpfile()
+ ~tempnam()              mkstemp()
+ ~tmpnam()               mkstemp()
+  tmpnam_r()             mkstemp()
   uselocale()            Perl_setlocale()
   vsnprintf()            my_vsnprintf()
   wctob()                wcrtomb()
@@ -580,7 +607,7 @@ your language very well.
 
 Earlier we mentioned that explicit action is required to have your code
 get called with the numeric portions of the locale not meeting the
-the typical expectations of having a dot for the radix character and no
+typical expectations of having a dot for the radix character and no
 punctuation separating groups of digits.  That action is to call the
 function L<perlapi/C<switch_to_global_locale>>.
 
@@ -628,7 +655,7 @@ MULTIPLICITY, but not the other way around.
 MULTIPLICITY without threading means that only one thing runs at a time,
 so there are no concurrency issues, but each component or instance can
 affect the global state, potentially interfering with the execution of
-other instance.  This can happen if one instance:
+other instances.  This can happen if one instance:
 
 =over
 
@@ -988,7 +1015,7 @@ Some of these reentrant functions that are available on all platforms
 should always be used anyway; they are in the lists directly under
 L<libc functions to avoid>.
 
-Others may not be available on some platforms, or have issues that makes
+Others may not be available on some platforms, or have issues that make
 them undesirable to use even when they are available.  Or it may just be
 more complicated and tedious to use the reentrant version.  For these,
 perl has a mechanism for automatically substituting that reentrant
@@ -1022,7 +1049,7 @@ L<libc functions to avoid>.
 
 Even so, some of the preferred alternatives are considered obsolete or
 otherwise unwise to use on some platforms.  These are marked with a '?'.
-Also, some alternatives aren't Perl-defined functions and aren't in in
+Also, some alternatives aren't Perl-defined functions and aren't in
 the POSIX Standard, so won't be widely available.  These are marked with
 '~'.  (Remember that the automatic substitution only happens when they
 are available and desirable, so you can just use the unpreferred

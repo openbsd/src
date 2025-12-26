@@ -63,7 +63,7 @@ platforms where they are available.  And Unicode supports a database of
 more types of information than the basic locale systems have.  This
 database is called C<CLDR>, the "Common Locale Data Repository",
 L<http://cldr.unicode.org/>.  There are various CPAN modules that
-provides access to this XML-encoded data, such as L<Locale::CLDR>,
+provide access to this XML-encoded data, such as L<Locale::CLDR>,
 L<CLDR::Number>, and L<DateTime::Format::CLDR>.
 
 =head1 WHAT IS A LOCALE
@@ -1095,7 +1095,7 @@ currency values.)
 
 Perl essentially takes no notice of this category.  On POSIX systems, you
 can call C<strfmon()> from XS code to create formatted strings, and/or you
-you can query the C<LC_MONETARY> locale-specific values with
+can query the C<LC_MONETARY> locale-specific values with
 L</The localeconv function> and use the information that it returns in your
 application's own formatting of currency amounts.  However, you may well
 find that the information, voluminous and complex though it may be, still
@@ -1104,7 +1104,7 @@ to crack.
 
 See also C<CRNCYSTR> in L<I18N::Langinfo>.
 
-=head2 Category C<LC_TIME>: Respresentation of time
+=head2 Category C<LC_TIME>: Representation of time
 
 Output produced by C<POSIX::strftime()>, which builds a formatted
 human-readable date/time string, is affected by the current C<LC_TIME>
@@ -1251,7 +1251,7 @@ C<LC_CTYPE> is in effect, and the subpattern
 regular expression contains a locale-dependent construct.  These
 constructs include C<\w> (to match an alphanumeric character), C<\W>
 (non-alphanumeric character), C<\b> and C<\B> (word-boundary and
-non-boundardy, which depend on what C<\w> and C<\W> match), C<\s>
+non-boundary, which depend on what C<\w> and C<\W> match), C<\s>
 (whitespace character), C<\S> (non whitespace character), C<\d> and
 C<\D> (digits and non-digits), and the POSIX character classes, such as
 C<[:alpha:]> (see L<perlrecharclass/POSIX Character Classes>).

@@ -1,20 +1,13 @@
 #!./perl
 #
 #  Copyright (c) 1995-2000, Raphael Manfredi
-#  
+#
 #  You may redistribute only under the same terms as Perl 5, as specified
 #  in the README file that comes with the distribution.
-#  
-use Config;
+#
 
-sub BEGIN {
-    unshift @INC, 't';
-    unshift @INC, 't/compat' if $] < 5.006002;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
-}
+use strict;
+use warnings;
 
 use Storable qw(freeze thaw dclone);
 
@@ -26,7 +19,7 @@ package OBJ_REAL;
 
 use Storable qw(freeze thaw);
 
-@x = ('a', 1);
+my @x = ('a', 1);
 
 sub make { bless [], shift }
 
@@ -106,9 +99,9 @@ package OBJ_REAL2;
 
 use Storable qw(freeze thaw);
 
-$MAX = 20;
-$recursed = 0;
-$hook_called = 0;
+our $MAX = 20;
+our $recursed = 0;
+our $hook_called = 0;
 
 sub make { bless [], shift }
 
@@ -196,10 +189,10 @@ sub new {
     my $class = shift;
     return bless {
         a => 'dummy',
-        b => [ 
+        b => [
             Foo->new(1),
-            Foo->new(2), # Second instance of a Foo 
-          ]
+            Foo->new(2), # Second instance of a Foo
+        ]
     }, $class;
 }
 
@@ -216,7 +209,7 @@ sub STORABLE_thaw {
 
 package main;
 
-my $bar = new Bar;
+my $bar = Bar->new;
 my $bar2 = thaw freeze $bar;
 
 is(ref($bar2), 'Bar');
@@ -351,7 +344,7 @@ eval {
     dclone $t;
 };
 like $@, qr/Max\. recursion depth with nested structures exceeded/,
-      'Caught aref stack overflow '.MAX_DEPTH*2;
+    'Caught aref stack overflow '.MAX_DEPTH*2;
 
 if ($ENV{APPVEYOR} and length(pack "p", "") >= 8) {
     # TODO: need to repro this fail on a small machine.
@@ -366,7 +359,7 @@ else {
         dclone $t;
     };
     like $@, qr/Max\. recursion depth with nested structures exceeded/,
-      'Caught href stack overflow '.MAX_DEPTH_HASH*2;
+        'Caught href stack overflow '.MAX_DEPTH_HASH*2;
 }
 
 {
@@ -378,5 +371,5 @@ else {
         push @tt, $t;
     }
     ok(eval { dclone \@tt; 1 },
-       "low depth structure shouldn't be treated as nested");
+        "low depth structure shouldn't be treated as nested");
 }

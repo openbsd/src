@@ -290,7 +290,7 @@ typedef struct regnode                           tregnode_WHILEM;
 
 #define NBOUNDU                      14        /* 0x0e Match "" at any
                                                   non-boundary of a given type
-                                                  using using /u rules. */
+                                                  using /u rules. */
 #define NBOUNDU_tb                      28     /*      0x01c */
 #define NBOUNDU_t8                      29     /*      0x01d */
 #define NBOUNDU_tb_pb                      56  /*      0x038 */
@@ -298,7 +298,7 @@ typedef struct regnode                           tregnode_WHILEM;
 #define NBOUNDU_t8_pb                      58  /*      0x03a */
 #define NBOUNDU_t8_p8                      59  /*      0x03b */
 
-#define NBOUNDA                      15        /* 0x0f Match "" betweeen any
+#define NBOUNDA                      15        /* 0x0f Match "" between any
                                                   \w\w or \W\W, where \w is
                                                   [_a-zA-Z0-9] */
 #define NBOUNDA_tb                      30     /*      0x01e */
@@ -912,7 +912,7 @@ typedef struct regnode                           tregnode_WHILEM;
 #define REFFL_t8_p8                       303  /*      0x12f */
 
 #define REFFU                        76        /* 0x4c Match already matched
-                                                  string, usng /ui. */
+                                                  string, using /ui. */
 #define REFFU_tb                       152     /*      0x098 */
 #define REFFU_t8                       153     /*      0x099 */
 #define REFFU_tb_pb                       304  /*      0x130 */

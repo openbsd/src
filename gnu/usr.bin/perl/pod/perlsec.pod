@@ -274,14 +274,17 @@ default.
 
 For "Insecure C<$ENV{PATH}>" messages, you need to set C<$ENV{'PATH'}> to
 a known value, and each directory in the path must be absolute and
-non-writable by others than its owner and group.  You may be surprised to
-get this message even if the pathname to your executable is fully
-qualified.  This is I<not> generated because you didn't supply a full path
-to the program; instead, it's generated because you never set your PATH
-environment variable, or you didn't set it to something that was safe.
-Because Perl can't guarantee that the executable in question isn't itself
-going to turn around and execute some other program that is dependent on
-your PATH, it makes sure you set the PATH.
+non-writable by others than its owner and group. Notice that, at least on
+Unix-like environments, an empty component of the PATH may be interpreted
+as if it were C<.> (the local directory), which will also trigger this
+message.  You may be surprised to get this message even if the pathname
+to your executable is fully qualified.  This is I<not> generated because
+you didn't supply a full path to the program; instead, it's generated
+because you never set your PATH environment variable, or you didn't set
+it to something that was safe.  Because Perl can't guarantee that the
+executable in question isn't itself going to turn around and execute some
+other program that is dependent on your PATH, it makes sure you set the
+PATH.
 
 The PATH isn't the only environment variable which can cause problems.
 Because some shells may use the variables IFS, CDPATH, ENV, and

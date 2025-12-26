@@ -6,7 +6,7 @@ no strict 'refs';
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.78';
+our $VERSION = '5.79';
 our %Cache;
 
 sub as_heavy {

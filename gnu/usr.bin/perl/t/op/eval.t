@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan(tests => 169);
+plan(tests => 172);
 
 eval 'pass();';
 
@@ -379,6 +379,7 @@ our $x = 1;
     is(db6(),      4);
 
     # [GH #19370]
+    local $TODO = "outside not available when needed";
     my sub d6 {
         DB::db3();
     }
@@ -389,6 +390,57 @@ our $x = 1;
         DB::db3();
     };
     is($d7->(), 3);
+}
+
+{
+    # github 22547
+    # these produce the expected results with 5.40.0
+    local $TODO = "eval from DB outside chain is broken";
+    fresh_perl_is(<<'CODE', "1.1\n1.2\n2\n", {}, "lexical lookup from DB::");
+use builtin qw(ceil);
+use strict;
+
+package DB {
+  sub do_eval { eval shift or $@; }
+}
+
+{
+  my $xx = 1.2;
+  my sub f {
+    print DB::do_eval(shift), "\n";
+  }
+  f('1.1');
+  f('$xx');
+  f('ceil(1.1)');
+}
+CODE
+
+    # subtley different, one of the suggested solutions was to make
+    # CvOUTSIDE a weak reference, but in the case below $f exits before
+    # the eval is called, so the outside link from the closure it returns
+    # would break for a weak reference.
+    fresh_perl_is(<<'CODE', "1.1\n1.2\n2\n", {}, "lexical lookup from DB::");
+use strict;
+
+package DB {
+  sub do_eval { eval shift or $@; }
+}
+
+sub g {
+  my $yy;
+  my $f = sub {
+    $yy; # closure
+    use builtin qw(ceil);
+    our $xx = 1.2;
+    my $yy = shift;
+    return sub { print DB::do_eval($yy) || $@, "\n" };
+  };
+  return $f->(shift);
+}
+g('1.1')->();
+g('$xx')->();
+g('ceil(1.1)')->();
+CODE
 }
 
 # [perl #19022] used to end up with shared hash warnings
@@ -610,7 +662,7 @@ EOP
 
 # [perl #70151]
 {
-    BEGIN { eval 'require re; import re "/x"' }
+    BEGIN { eval 'require re; re->import("/x")' }
     ok "ab" =~ /a b/, 'eval does not localise %^H at run time';
 }
 
@@ -767,4 +819,21 @@ pass("eval in freed package does not crash");
             "test that nested eval '$fragment' calls sig die as expected"
         );
     }
+}
+
+# The first inner eval finds the $v and adds a fake entry to the
+# outer eval's pad. The second inner eval finds the fake $c entry,
+# but was incorrectly concluding that the outer eval was in fact a
+# non-live anon prototype and issuing the warning
+# 'Variable "$v" is not available'/
+
+{
+    use warnings;
+    my $w = 0;
+    local $SIG{__WARN__} = sub { $w++ };
+    sub {
+        my $v;
+        eval q( eval '$v'; eval '$v';);
+    }->();
+    is($w, 0, "nested eval and closure");
 }

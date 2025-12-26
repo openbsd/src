@@ -77,8 +77,8 @@ BOUNDA      BOUND,      no        ; Match "" at any boundary between \w\W or \W\
 # All NBOUND nodes are required by code in regexec.c to be greater than all BOUND ones
 NBOUND      NBOUND,     no        ; Like NBOUNDA for non-utf8, otherwise like BOUNDU
 NBOUNDL     NBOUND,     no        ; Like NBOUND/NBOUNDU, but \w and \W are defined by current locale
-NBOUNDU     NBOUND,     no        ; Match "" at any non-boundary of a given type using using /u rules.
-NBOUNDA     NBOUND,     no        ; Match "" betweeen any \w\w or \W\W, where \w is [_a-zA-Z0-9]
+NBOUNDU     NBOUND,     no        ; Match "" at any non-boundary of a given type using /u rules.
+NBOUNDA     NBOUND,     no        ; Match "" between any \w\w or \W\W, where \w is [_a-zA-Z0-9]
 
 #* [Special] alternatives:
 REG_ANY     REG_ANY,    no 0 S    ; Match any one character (except newline).
@@ -106,9 +106,9 @@ ANYOFRb     ANYOFR,     packed 1  S ; Like ANYOFR, but all matches share the sam
 # the range.  The fast DFA we now use to do the conversion is slower than
 # comparing the strings, but not by much, and negligible in 2 or 3 byte
 # operations.  (We don't have to compare the final byte as it has to be
-# different or else this wouldn't be a range.)  So we might as well displense
+# different or else this wouldn't be a range.)  So we might as well dispense
 # with the comparisons that ANYOFRs would do, and go directly to do the
-# conversion .
+# conversion.
 
 ANYOFHbbm   ANYOFHbbm   none bbm S ; Like ANYOFHb, but only for 2-byte UTF-8 characters; uses a bitmap to match the continuation byte
 
@@ -125,7 +125,7 @@ NPOSIXD     NPOSIXD,    none 0 S   ; complement of POSIXD, [[:^class:]]
 NPOSIXL     NPOSIXD,    none 0 S   ; complement of POSIXL, [[:^class:]]
 NPOSIXU     NPOSIXD,    none 0 S   ; complement of POSIXU, [[:^class:]]
 NPOSIXA     NPOSIXD,    none 0 S   ; complement of POSIXA, [[:^class:]]
-# End of order is important
+# End of order being important
 
 CLUMP       CLUMP,      no 0 V    ; Match any extended grapheme cluster sequence
 
@@ -239,7 +239,7 @@ REFFL       REF,        num 2 V   ; Match already matched string, using /li rule
 # N?REFF[AU] could have been implemented using the FLAGS field of the
 # regnode, but by having a separate node type, we can use the existing switch
 # statement to avoid some tests
-REFFU       REF,        num 2 V   ; Match already matched string, usng /ui.
+REFFU       REF,        num 2 V   ; Match already matched string, using /ui.
 REFFA       REF,        num 2 V   ; Match already matched string, using /aai rules.
 
 #*Named references.  Code in regcomp.c assumes that these all are after
@@ -315,7 +315,7 @@ OPTIMIZED   NOTHING,    off       ; Placeholder for dump.
 #* Special opcode with the property that no opcode in a compiled program
 #* will ever be of this type. Thus it can be used as a flag value that
 #* no other opcode has been seen. END is used similarly, in that an END
-#* node cant be optimized. So END implies "unoptimizable" and PSEUDO
+#* node can't be optimized. So END implies "unoptimizable" and PSEUDO
 #* mean "not seen anything to optimize yet".
 PSEUDO      PSEUDO,     off       ; Pseudo opcode for internal use.
 

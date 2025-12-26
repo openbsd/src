@@ -264,13 +264,15 @@ checkOptree ( name	=> 'sub {my $a=()}',
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 1  <;> nextstate(main -439 optree.t:105) v:>,<,%
 2  <0> stub sP
-3  <1> padsv_store[$a:1516,1517] sKS/LVINTRO
-4  <1> leavesub[1 ref] K/REFC,1
+3  <0> padsv[$a:1567,1568] sRM*/LVINTRO
+4  <2> sassign sKS/2
+5  <1> leavesub[1 ref] K/REFC,1
 EOT_EOT
 # 1  <;> nextstate(main 438 optree_varinit.t:247) v:>,<,%
 # 2  <0> stub sP
-# 3  <1> padsv_store[$a:1516,1517] sKS/LVINTRO
-# 4  <1> leavesub[1 ref] K/REFC,1
+# 3  <0> padsv[$a:1567,1568] sRM*/LVINTRO
+# 4  <2> sassign sKS/2
+# 5  <1> leavesub[1 ref] K/REFC,1
 EONT_EONT
 
 checkOptree ( name	=> 'sub {our $a=()}',
@@ -403,8 +405,6 @@ checkOptree ( name	=> 'void context state',
 # 3  <|> once(other->4)[$:2,3] vK/1
 # 4      <$> const[IV 1] s
 # 5      <1> padsv_store[$x:2,3] vKS/LVINTRO,STATE
-#            goto 6
-# 8  <0> padsv[$x:2,3] vRM*/STATE
 # 6  <;> nextstate(main 3 -e:1) v:%,{,fea=15
 # 7  <@> leave[1 ref] vKP/REFC
 EOT_EOT
@@ -413,8 +413,6 @@ EOT_EOT
 # 3  <|> once(other->4)[$:2,3] vK/1
 # 4      <$> const(IV 1) s
 # 5      <1> padsv_store[$x:2,3] vKS/LVINTRO,STATE
-#            goto 6
-# 8  <0> padsv[$x:2,3] vRM*/STATE
 # 6  <;> nextstate(main 3 -e:1) v:%,{,fea=15
 # 7  <@> leave[1 ref] vKP/REFC
 EONT_EONT
@@ -428,21 +426,23 @@ checkOptree ( name	=> 'scalar context state',
 # 2  <;> nextstate(main 2 -e:1) v:%,{,fea=15
 # 3  <|> once(other->4)[$:2,3] sK/1
 # 4      <$> const[IV 1] s
-# 5      <1> padsv_store[$x:2,3] sKS/LVINTRO,STATE
-#            goto 6
-# 9  <0> padsv[$x:2,3] sRM*/STATE
-# 6  <1> padsv_store[$y:2,3] vKS/LVINTRO
-# 7  <;> nextstate(main 3 -e:1) v:%,{,fea=15
-# 8  <@> leave[1 ref] vKP/REFC
+# 5      <0> padsv[$x:2,3] sRM*/LVINTRO,STATE
+# 6      <2> sassign sKS/2
+#            goto 7
+# a  <0> padsv[$x:2,3] s
+# 7  <1> padsv_store[$y:2,3] vKS/LVINTRO
+# 8  <;> nextstate(main 3 -e:1) v:%,{,fea=15
+# 9  <@> leave[1 ref] vKP/REFC
 EOT_EOT
 # 1  <0> enter v
 # 2  <;> nextstate(main 2 -e:1) v:%,{,fea=15
 # 3  <|> once(other->4)[$:2,3] sK/1
 # 4      <$> const(IV 1) s
-# 5      <1> padsv_store[$x:2,3] sKS/LVINTRO,STATE
-#            goto 6
-# 9  <0> padsv[$x:2,3] sRM*/STATE
-# 6  <1> padsv_store[$y:2,3] vKS/LVINTRO
-# 7  <;> nextstate(main 3 -e:1) v:%,{,fea=15
-# 8  <@> leave[1 ref] vKP/REFC
+# 5      <0> padsv[$x:2,3] sRM*/LVINTRO,STATE
+# 6      <2> sassign sKS/2
+#            goto 7
+# a  <0> padsv[$x:2,3] s
+# 7  <1> padsv_store[$y:2,3] vKS/LVINTRO
+# 8  <;> nextstate(main 3 -e:1) v:%,{,fea=15
+# 9  <@> leave[1 ref] vKP/REFC
 EONT_EONT

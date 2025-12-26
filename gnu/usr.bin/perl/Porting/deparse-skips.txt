@@ -243,9 +243,9 @@ uni/variables.t
 #    #line 10 ....
 #    }
 #
-../cpan/Test2-Suite/t/behavior/filtering.t
-../cpan/Test2-Suite/t/modules/Tools/Compare.t
-../cpan/Test2-Suite/t/modules/Tools/Subtest.t
+../cpan/Test-Simple/t/behavior/filtering.t
+../cpan/Test-Simple/t/modules/Tools/Compare.t
+../cpan/Test-Simple/t/modules/Tools/Subtest.t
 
 ../dist/Attribute-Handlers/t/constants.t
 ../dist/Attribute-Handlers/t/data_convert.t
@@ -273,7 +273,11 @@ uni/variables.t
 ../ext/XS-APItest/t/call_checker.t
 ../ext/XS-APItest/t/cleanup.t
 ../ext/XS-APItest/t/fetch_pad_names.t
+../ext/XS-APItest/t/regex_global_pos.t  # string literals under 'use utf8'
+                                        # are deparsed wrongly
 ../ext/XS-APItest/t/synthetic_scope.t
+../ext/XS-APItest/t/valid_identifier.t  # string literals under 'use utf8'
+                                        # are deparsed wrongly
 ../lib/Config.t                         # Config_heavy.pl fns getting output
 ../lib/charnames.t
 ../lib/dumpvar.t

@@ -16,6 +16,24 @@ struct xpvcv {
 };
 
 /*
+=for apidoc_section $CV
+
+=for apidoc      Am|CV *|CvREFCNT_inc|CV *cv
+=for apidoc_item   |CV *|CvREFCNT_inc_simple|CV *cv
+=for apidoc_item   |CV *|CvREFCNT_inc_simple_NN|CV *cv
+
+These all increment the reference count of the given SV, which must be a CV.
+They are useful when assigning the result into a typed pointer as they avoid
+the need to cast the result to the appropriate type.
+
+=cut
+*/
+
+#define CvREFCNT_inc(cv)            ((CV *)SvREFCNT_inc((SV *)cv))
+#define CvREFCNT_inc_simple(cv)     ((CV *)SvREFCNT_inc_simple((SV *)cv))
+#define CvREFCNT_inc_simple_NN(cv)  ((CV *)SvREFCNT_inc_simple_NN((SV *)cv))
+
+/*
 =for apidoc Ayh||CV
 
 =for apidoc ADmnU||Nullcv
@@ -129,7 +147,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #endif
 #define CVf_DYNFILE	0x1000	/* The filename is malloced  */
 #define CVf_AUTOLOAD	0x2000	/* SvPVX contains AUTOLOADed sub name  */
-/* 0x4000 previously CVf_HASEVAL  */
+#define CVf_HASEVAL	0x4000	/* contains string eval  */
 #define CVf_NAMED	0x8000  /* Has a name HEK */
 #define CVf_LEXICAL	0x10000 /* Omit package from name */
 #define CVf_ANONCONST	0x20000 /* :const - create anonconst op */
@@ -140,6 +158,7 @@ See L<perlguts/Autoloading with XSUBs>.
                                    CVf_METHOD; now CVf_NOWARN_AMBIGUOUS */
 #define CVf_XS_RCSTACK  0x200000 /* the XS function understands a
                                     reference-counted stack */
+#define CVf_EVAL_COMPILED 0x400000 /* an eval CV is fully compiled */
 
 /* This symbol for optimised communication between toke.c and op.c: */
 #define CVf_BUILTIN_ATTRS	(CVf_NOWARN_AMBIGUOUS|CVf_LVALUE|CVf_ANONCONST)
@@ -213,6 +232,10 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvAUTOLOAD_on(cv)	(CvFLAGS(cv) |= CVf_AUTOLOAD)
 #define CvAUTOLOAD_off(cv)	(CvFLAGS(cv) &= ~CVf_AUTOLOAD)
 
+#define CvHASEVAL(cv)		(CvFLAGS(cv) & CVf_HASEVAL)
+#define CvHASEVAL_on(cv)	(CvFLAGS(cv) |= CVf_HASEVAL)
+#define CvHASEVAL_off(cv)	(CvFLAGS(cv) &= ~CVf_HASEVAL)
+
 #define CvNAMED(cv)		(CvFLAGS(cv) & CVf_NAMED)
 #define CvNAMED_on(cv)		(CvFLAGS(cv) |= CVf_NAMED)
 #define CvNAMED_off(cv)		(CvFLAGS(cv) &= ~CVf_NAMED)
@@ -265,6 +288,10 @@ Helper macro to turn off the C<CvREFCOUNTED_ANYSV> flag.
 #define CvXS_RCSTACK(cv)        (CvFLAGS(cv) & CVf_XS_RCSTACK)
 #define CvXS_RCSTACK_on(cv)     (CvFLAGS(cv) |= CVf_XS_RCSTACK)
 #define CvXS_RCSTACK_off(cv)    (CvFLAGS(cv) &= ~CVf_XS_RCSTACK)
+
+#define CvEVAL_COMPILED(cv)     (CvFLAGS(cv) & CVf_EVAL_COMPILED)
+#define CvEVAL_COMPILED_on(cv)  (CvFLAGS(cv) |= CVf_EVAL_COMPILED)
+#define CvEVAL_COMPILED_off(cv) (CvFLAGS(cv) &= ~CVf_EVAL_COMPILED)
 
 /* Back-compat */
 #ifndef PERL_CORE

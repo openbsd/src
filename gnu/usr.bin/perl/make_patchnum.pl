@@ -135,7 +135,7 @@ if (my $patch_file= read_file(".patch")) {
 }
 elsif ($git_patch_file = read_file(".git_patch") and $git_patch_file !~ /\A\$Format:%H/) {
     chomp $git_patch_file;
-    ($commit_id, my $commit_date, my $names)
+    ($commit_id, my $commit_date, $describe, my $names)
         = split /\|/, $git_patch_file;
 
     my @names = split /,\s*/, $names;
@@ -146,7 +146,6 @@ elsif ($git_patch_file = read_file(".git_patch") and $git_patch_file !~ /\A\$For
     }
     if (!$branch) {
         ($branch) = map m{^tag: (.*)}, @names;
-        $describe = $branch;
     }
     if (!$branch) {
         my ($pr) = map m{^refs/pull/([0-9]+)/}, @names;
@@ -156,7 +155,6 @@ elsif ($git_patch_file = read_file(".git_patch") and $git_patch_file !~ /\A\$For
         $branch = $names[0] || $commit_id;
     }
 
-    $describe ||= $commit_id;
     $extra_info = "git_commit_date='$commit_date'\n";
     $extra_info .= "git_snapshot_date='$commit_date'\n";
     $commit_title = "Snapshot of:";

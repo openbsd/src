@@ -4,8 +4,8 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib');
-    require Config; Config->import;
 }
+use Config;
 if (!$Config{'d_fork'}) {
     skip_all("fork required to pipe");
 }
@@ -260,7 +260,7 @@ SKIP: {
     my $prog = <<PROG;
 \$SIG{ALRM}=sub{die};
 alarm 1;
-\$Perl = "$Perl";
+\$Perl = q\0$Perl\0;
 my \$cmd = qq(\$Perl -e "sleep 3");
 my \$pid = open my \$fh, "|\$cmd" or die "\$!\n";
 close \$fh;

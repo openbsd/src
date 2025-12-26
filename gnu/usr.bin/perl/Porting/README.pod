@@ -177,13 +177,6 @@ id.
 
 This script creates a tag for every p4raw-id.
 
-=head2 F<GitUtils.pm>
-
-This script contains the subroutine to generate a F<.patch file> for a
-committish (the SHA1 checksum of a commit, a number made of 40 hexadecimal
-digits which acts the internal unique identifier for this commit
-(lilypond.org).  Related file: F<make_dot_patch.pl>
-
 =head2 F<Glossary>
 
 This file is built by F<metaconfig>. This file contains a description of all
@@ -225,8 +218,7 @@ associated with maintainers.  Related files: F<Maintainers>, F<Maintainers.pl>
 
 =head2 F<make_dot_patch.pl>
 
-Generate a F<.patch> file to STDOUT for a commit ID specified on the
-command-line.
+Generate a F<.patch> file to STDOUT.
 
 =head2 F<makemeta>
 
@@ -239,11 +231,6 @@ This script builds a Perl release tarball.
 =head2 F<make-rmg-checklist>
 
 This script creates a release checklist as a simple HTML document.
-
-=head2 F<make_snapshot.pl>
-
-This script is a quick and dirty snapshot generator for the perl5.git.perl.org
-web page to use to generate the snapshot files. 
 
 =head2 F<manicheck>
 

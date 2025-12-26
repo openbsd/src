@@ -14,9 +14,6 @@
 #ifndef sv_dup_inc
 #  define sv_dup_inc(s,t) SvREFCNT_inc(sv_dup(s,t))
 #endif
-#ifndef SvREFCNT_dec_NN
-#  define SvREFCNT_dec_NN(x)  SvREFCNT_dec(x)
-#endif
 #ifndef PERL_UNUSED_RESULT
 #  if defined(__GNUC__) && defined(HASATTRIBUTE_WARN_UNUSED_RESULT)
 #    define PERL_UNUSED_RESULT(v) STMT_START { __typeof__(v) z = (v); (void)sizeof(z); } STMT_END
@@ -358,10 +355,19 @@ S_exit_warning(pTHX)
 {
     int veto_cleanup, warn;
     dMY_POOL;
+    IV running_threads;
+    IV joinable_threads;
+    IV detached_threads;
 
     MUTEX_LOCK(&MY_POOL.create_destruct_mutex);
-    veto_cleanup = (MY_POOL.total_threads > 0);
-    warn         = (MY_POOL.running_threads || MY_POOL.joinable_threads);
+
+    running_threads  = MY_POOL.running_threads;
+    joinable_threads = MY_POOL.joinable_threads;
+    detached_threads = MY_POOL.detached_threads;
+
+    veto_cleanup     = (MY_POOL.total_threads > 0);
+    warn             = (running_threads || joinable_threads);
+
     MUTEX_UNLOCK(&MY_POOL.create_destruct_mutex);
 
     if (warn) {
@@ -370,9 +376,9 @@ S_exit_warning(pTHX)
                             IVdf " running and unjoined\n\t%"
                             IVdf " finished and unjoined\n\t%"
                             IVdf " running and detached\n",
-                            MY_POOL.running_threads,
-                            MY_POOL.joinable_threads,
-                            MY_POOL.detached_threads);
+                            running_threads,
+                            joinable_threads,
+                            detached_threads);
         }
     }
 
@@ -587,7 +593,9 @@ S_ithread_run(void * arg)
     S_set_sigmask(&thread->initial_sigmask);
 #endif
 
+#if PERL_VERSION_GE(5, 27, 9)
     thread_locale_init();
+#endif
 
     PL_perl_destruct_level = 2;
 
@@ -689,7 +697,9 @@ S_ithread_run(void * arg)
     MUTEX_UNLOCK(&thread->mutex);
     MUTEX_UNLOCK(&MY_POOL.create_destruct_mutex);
 
+#if PERL_VERSION_GE(5, 27, 9)
     thread_locale_term();
+#endif
 
     /* Exit application if required */
     if (exit_app) {

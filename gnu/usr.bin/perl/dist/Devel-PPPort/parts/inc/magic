@@ -23,6 +23,9 @@ SvUV_nomg
 SvNV_nomg
 SvTRUE_nomg
 
+sv_vstring_get
+SvVSTRING
+
 =implementation
 
 #undef  SvGETMAGIC
@@ -254,10 +257,36 @@ sv_unmagicext(pTHX_ SV *const sv, const int type, const MGVTBL *vtbl)
 #endif
 #endif
 
+__UNDEFINED__ SvVSTRING(sv, len)  (sv_vstring_get(sv, &(len)))
+__UNDEFINED__ SvVOK(sv) (FALSE)
+
+#if !defined(sv_vstring_get)
+
+#if { NEED sv_vstring_get }
+
+const char *
+sv_vstring_get(pTHX_ SV *sv, STRLEN *lenp)
+{
+#ifdef SvVSTRING_mg
+    MAGIC *mg = SvVSTRING_mg(sv);
+    if (!mg) return NULL;
+
+    if (lenp) *lenp = mg->mg_len;
+    return mg->mg_ptr;
+#else
+    return NULL;
+#endif
+}
+
+#endif
+
+#endif
+
 =xsinit
 
 #define NEED_mg_findext
 #define NEED_sv_unmagicext
+#define NEED_sv_vstring_get
 
 #ifndef STATIC
 #define STATIC static
@@ -580,7 +609,26 @@ magic_SvPV_nomg_nolen(sv)
 
 #endif
 
-=tests plan => 63
+int
+SvVOK(sv)
+    SV *sv
+
+SV *
+SvVSTRING(sv)
+    SV *sv
+    CODE:
+    {
+        const char *vstr_pv;
+        STRLEN vstr_len;
+        if((vstr_pv = SvVSTRING(sv, vstr_len)))
+            RETVAL = newSVpvn(vstr_pv, vstr_len);
+        else
+            RETVAL = &PL_sv_undef;
+    }
+    OUTPUT:
+        RETVAL
+
+=tests plan => 64
 
 # Find proper magic
 ok(my $obj1 = Devel::PPPort->new_with_mg());
@@ -724,6 +772,18 @@ if (ivers($]) >= ivers("5.6")) {
 }
 is tied($big)->{fetch}, 1;
 is tied($big)->{store}, 0;
+
+SKIP:
+{
+    my $vstr = eval "v1.23.456";
+
+    if (!Devel::PPPort::SvVOK($vstr)) {
+        skip "No vstring magic", 1;
+        last SKIP; # testutil skip() doesn't "last SKIP"
+    }
+
+    is Devel::PPPort::SvVSTRING($vstr), "v1.23.456", 'SvVSTRING()';
+}
 
 package TieScalarCounter;
 

@@ -8,8 +8,6 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require Config; Config->import;
-    require File::Temp; import File::Temp qw/:POSIX/;
 
     require Win32;
     ($::os_id, $::os_major) = ( Win32::GetOSVersion() )[ 4, 1 ];
@@ -22,6 +20,8 @@ BEGIN {
 
     require './test.pl';
 }
+use Config;
+use File::Temp qw/:POSIX/;
 
 skip_all "requires compilation with PERL_IMPLICIT_SYS"
   unless $Config{ccflags} =~/(?:\A|\s)-DPERL_IMPLICIT_SYS\b/;

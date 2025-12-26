@@ -5,15 +5,15 @@ use strict ;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.212 qw(:Status );
-use IO::Compress::Zlib::Constants 2.212 ;
+use IO::Compress::Base::Common  2.213 qw(:Status );
+use IO::Compress::Zlib::Constants 2.213 ;
 
-use IO::Uncompress::RawInflate  2.212 ;
+use IO::Uncompress::RawInflate  2.213 ;
 
 require Exporter ;
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $InflateError);
 
-$VERSION = '2.212';
+$VERSION = '2.213';
 $InflateError = '';
 
 @ISA    = qw(IO::Uncompress::RawInflate Exporter);

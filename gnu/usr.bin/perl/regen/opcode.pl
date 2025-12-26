@@ -142,7 +142,7 @@ my @raw_alias = (
                                          spwent epwent sgrent egrent)],
                  Perl_pp_shostent => [qw(snetent sprotoent sservent)],
                  Perl_pp_aelemfast => ['aelemfast_lex'],
-                 Perl_pp_grepstart => ['mapstart'],
+                 Perl_pp_grepstart => ['mapstart', 'anystart', 'allstart'],
                 );
 
 while (my ($func, $names) = splice @raw_alias, 0, 2) {
@@ -1234,6 +1234,16 @@ sub generate_opnames_h_opcode_enum {
 
     print "\t", tab(3,"OP_max"), "\n";
     print "} opcode;\n";
+    print <<~EOT;
+
+        /*
+        =for apidoc Ay||opcode
+        An enum of all the legal Perl opcodes, defined in F<opnames.h>
+
+        =cut
+        */
+        EOT
+
     print "\n#define MAXO ", scalar @ops, "\n";
     print "#define OP_FREED MAXO\n";
 }

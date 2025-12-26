@@ -725,8 +725,7 @@ Perl_do_aspawn(pTHX_ SV *really, SV **mark, SV **sp)
     }
     else {
         if (status < 0) {
-            if (ckWARN(WARN_EXEC))
-                Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't spawn \"%s\": %s", argv[0], strerror(errno));
+            ck_warner(packWARN(WARN_EXEC), "Can't spawn \"%s\": %s", argv[0], strerror(errno));
             status = 255 * 256;
         }
         else
@@ -844,10 +843,9 @@ do_spawn2_handles(pTHX_ const char *cmd, int exectype, const int *handles)
     }
     else {
         if (status < 0) {
-            if (ckWARN(WARN_EXEC))
-                Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s \"%s\": %s",
-                     (exectype == EXECF_EXEC ? "exec" : "spawn"),
-                     cmd, strerror(errno));
+            ck_warner(packWARN(WARN_EXEC), "Can't %s \"%s\": %s",
+                      (exectype == EXECF_EXEC ? "exec" : "spawn"),
+                      cmd, strerror(errno));
             status = 255 * 256;
         }
         else
@@ -1436,7 +1434,7 @@ get_hwnd_delay(pTHX, long child, DWORD tries)
         }
     }
 
-    Perl_croak(aTHX_ "panic: child pseudo-process was never scheduled");
+    croak("panic: child pseudo-process was never scheduled");
 }
 #endif
 
@@ -2745,7 +2743,7 @@ do_raise(pTHX_ int sig)
 void
 sig_terminate(pTHX_ int sig)
 {
-    Perl_warn(aTHX_ "Terminating on signal SIG%s(%d)\n",PL_sig_name[sig], sig);
+    warn("Terminating on signal SIG%s(%d)\n",PL_sig_name[sig], sig);
     /* exit() seems to be safe, my_exit() or die() is a problem in ^C 
        thread 
      */
@@ -3024,7 +3022,7 @@ win32_sleep(unsigned int t)
     dTHX;
     /* Win32 times are in ms so *1000 in and /1000 out */
     if (t > UINT_MAX / 1000) {
-        Perl_ck_warner(aTHX_ packWARN(WARN_OVERFLOW),
+        ck_warner(packWARN(WARN_OVERFLOW),
                         "sleep(%lu) too large", t);
     }
     return win32_msgwait(aTHX_ 0, NULL, t * 1000, NULL) / 1000;
@@ -5502,6 +5500,7 @@ Perl_win32_init(int *argcp, char ***argvp)
 void
 Perl_win32_term(void)
 {
+    SHUTDOWN_TERM;
     HINTS_REFCNT_TERM;
     OP_REFCNT_TERM;
     PERLIO_TERM;
@@ -5668,7 +5667,7 @@ win32_csighandler(int sig)
 {
 #if 0
     dTHXa(PERL_GET_SIG_CONTEXT);
-    Perl_warn(aTHX_ "Got signal %d",sig);
+    warn("Got signal %d",sig);
 #endif
     PERL_UNUSED_ARG(sig);
     /* Does nothing */
@@ -5695,7 +5694,8 @@ Perl_sys_intern_init(pTHX)
     w32_pseudo_id		= 0;
     Newx(w32_pseudo_children, 1, pseudo_child_tab);
     w32_num_pseudo_children	= 0;
-#  endif
+    PL_sys_intern.cur_tid = GetCurrentThreadId();
+#endif
     w32_timerid                 = 0;
     w32_message_hwnd            = CAST_HWND__(INVALID_HANDLE_VALUE);
     w32_poll_count              = 0;
@@ -5738,6 +5738,15 @@ Perl_sys_intern_clear(pTHX)
     }
     if (w32_message_hwnd != NULL && w32_message_hwnd != INVALID_HANDLE_VALUE)
         DestroyWindow(w32_message_hwnd);
+
+/*  "win32_checkTLS()" executes very late in perl_destruct() and/or perl_free().
+    Field cur_tid must be working to the very end of the
+    interp struct/mem alloc/process.
+#ifdef USE_ITHREADS
+    PL_sys_intern.cur_tid = 0;
+#endif
+*/
+
 #  ifdef MULTIPLICITY
     if (my_perl == PL_curinterp) {
 #  else
@@ -5763,6 +5772,7 @@ Perl_sys_intern_dup(pTHX_ struct interp_intern *src, struct interp_intern *dst)
     dst->fdpid			= newAV();
     Newxz(dst->children, 1, child_tab);
     dst->pseudo_id		= 0;
+    dst->cur_tid = 0;
     Newxz(dst->pseudo_children, 1, pseudo_child_tab);
     dst->timerid                = 0;
     dst->message_hwnd		= CAST_HWND__(INVALID_HANDLE_VALUE);

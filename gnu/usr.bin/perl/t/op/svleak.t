@@ -15,7 +15,7 @@ BEGIN {
 
 use Config;
 
-plan tests => 156;
+plan tests => 157;
 
 # run some code N times. If the number of SVs at the end of loop N is
 # greater than (N-1)*delta at the end of loop 1, we've got a leak
@@ -683,3 +683,30 @@ leak 2, 0,  sub {
                                 } } 1..2;
             },
             'sort block return';
+
+
+# Avoid leaks when overloading causes a compile-time pattern code block
+# to be recompiled at runtime.
+
+package myconcat {
+    use overload
+        '""' => sub { ${$_[0]} },
+        '.' =>  sub {
+                        my ($x, $y) = @_[ $_[2] ? (1,0) : (0,1) ];
+                        my ($xx, $yy) = ("$x", "$y");
+                        "$xx$yy";
+                    }
+        ;
+
+    ::leak(2, 0,
+        sub {
+           my $r1 = qr/(?{1})/;
+           my $r2 = qr/(?{2})/;
+           bless $r2, 'myconcat';
+           use re "eval";
+           qr/$r1$r2/;
+           1;
+        },
+        'overloaded pattern with code block'
+    );
+}

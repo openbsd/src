@@ -21,6 +21,7 @@ NVTYPE
 PERLIO_FUNCS_CAST
 PERLIO_FUNCS_DECL
 PERL_STATIC_INLINE
+PERL_STACK_REALIGN
 PERL_UNUSED_ARG
 PERL_UNUSED_CONTEXT
 PERL_UNUSED_DECL
@@ -47,6 +48,13 @@ PERL_STACK_OFFSET_DEFINED
 __UNDEFINED__ PERL_STATIC_INLINE static inline
 #else
 __UNDEFINED__ PERL_STATIC_INLINE static
+#endif
+
+/* work around a stack alignment bug in 32-bit GCC on Windows */
+#if defined(WIN32) && !defined(WIN64) && defined(__GNUC__)
+__UNDEFINED__ PERL_STACK_REALIGN __attribute__((force_align_arg_pointer))
+#else
+__UNDEFINED__ PERL_STACK_REALIGN
 #endif
 
 __UNDEFINED__ cBOOL(cbool) ((cbool) ? (bool)1 : (bool)0)
@@ -1164,6 +1172,9 @@ XS(XS_Devel__PPPort_dAXMARK)
   mPUSHi(iv);
   XSRETURN(1);
 }
+
+/* just test the syntax */
+PERL_STACK_REALIGN void foo(void);
 
 =xsboot
 

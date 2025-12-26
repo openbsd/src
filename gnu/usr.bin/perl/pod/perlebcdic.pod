@@ -105,7 +105,7 @@ Portuguese, Spanish, and Swedish.  Dutch is covered albeit without
 the ij ligature.  French is covered too but without the oe ligature.
 German can use ISO 8859-1 but must do so without German-style
 quotation marks.  This set is based on Western European extensions
-to ASCII and is commonly encountered in world wide web work.
+to ASCII and is commonly encountered in World Wide Web work.
 In IBM character code set identification terminology, ISO 8859-1 is
 also known as CCSID 819 (or sometimes 0819 or even 00819).
 
@@ -1581,7 +1581,7 @@ characters then apply:
 then C<sort()>.  If you have a choice, it's better to lowercase things
 to avoid the problems of the two Latin-1 characters whose uppercase is
 outside Latin-1: "E<yuml>" (small C<y WITH DIAERESIS>) and "E<micro>"
-(C<MICRO SIGN>).  If you do need to upppercase, you can; with a
+(C<MICRO SIGN>).  If you do need to uppercase, you can; with a
 Unicode-enabled Perl, do:
 
     tr/ÿ/\x{178}/;

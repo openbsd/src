@@ -74,7 +74,7 @@ my @CLASSES = (
    'Lowercase Letter'         => ["h", "!H"],
 
     Common                    => ["!i", "3"],
-    Inherited                 => ["!j", '\x{300}'],
+    Inherited                 => ["!j", '\x{31A}'],
 
     InBasicLatin              => ['\N{LATIN CAPITAL LETTER A}'],
     InLatin1Supplement        => ['\N{LATIN CAPITAL LETTER A WITH GRAVE}'],

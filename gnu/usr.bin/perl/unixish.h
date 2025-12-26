@@ -155,10 +155,10 @@ int afstat(int fd, struct stat *statb);
  * to work, but must NOT be retained in production code. */
 #ifndef PERL_SYS_TERM_BODY
 #  define PERL_SYS_TERM_BODY()                                          \
-                    ENV_TERM; USER_PROP_MUTEX_TERM; LOCALE_TERM;        \
-                    HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;       \
-                    OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM;                \
-                    PERLIO_TERM; MALLOC_TERM;                           \
+                    SHUTDOWN_TERM; ENV_TERM; USER_PROP_MUTEX_TERM;      \
+                    LOCALE_TERM; HINTS_REFCNT_TERM;                     \
+                    KEYWORD_PLUGIN_MUTEX_TERM; OP_CHECK_MUTEX_TERM;     \
+                    OP_REFCNT_TERM; PERLIO_TERM; MALLOC_TERM;           \
                     PLATFORM_SYS_TERM_;
 #endif
 

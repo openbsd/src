@@ -220,6 +220,8 @@ my @death =
  '/\g/' => 'Unterminated \g... pattern {#} m/\g{#}/',
  '/\g{1/' => 'Unterminated \g{...} pattern {#} m/\g{1{#}/',
  '/\g{-abc}/' => 'Group name must start with a non-digit word character {#} m/\g{-{#}abc}/',
+ '/\g{1-1}/'  => 'Sequence \g{... not terminated {#} m/\g{1{#}-1}/',
+ '/\g{ -1 foo }/'  => 'Sequence \g{... not terminated {#} m/\g{ -1 {#}foo }/',
  '/(?<;x/' => 'Group name must start with a non-digit word character {#} m/(?<;{#}x/',
 
  'my $m = "\\\"; $m =~ $m', => 'Trailing \ in regex m/\/',

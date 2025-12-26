@@ -31,7 +31,7 @@ my $tests = 28; # I can't see a clean way to calculate this automatically.
 
 my %skip = ("regen_perly.pl"    => [qw(perly.act perly.h perly.tab)],
             "regen/keywords.pl" => [qw(keywords.c keywords.h)],
-            "regen/mk_invlists.pl" => [qw(charclass_invlists.h uni_keywords.h)],
+            "regen/mk_invlists.pl" => [qw(charclass_invlists.inc regexp_constants.h uni_keywords.h)],
             "regen/regcharclass.pl" => [qw(regcharclass.h)],
            );
 

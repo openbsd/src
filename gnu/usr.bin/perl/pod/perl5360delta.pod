@@ -1178,7 +1178,7 @@ PERL_IMPLICIT_CONTEXT will remain defined for compatibility with XS modules.
 =item *
 
 The API constant formerly named C<G_ARRAY>, indicating list context, has now
-been renamed to a more accurate C<G_LIST>.  A compatibilty macro C<G_ARRAY> has
+been renamed to a more accurate C<G_LIST>.  A compatibility macro C<G_ARRAY> has
 been added to allow existing code to work unaffected.  New code should be
 written using the new constant instead.  This is supported by C<Devel::PPPort>
 version 3.63.
@@ -1476,7 +1476,7 @@ could cause a memory write to a freed C<dbstate> op.
 =item *
 
 When bareword filehandles are disabled, the parser was interpreting
-any bareword as a filehandle, even when immediatey followed by parens.
+any bareword as a filehandle, even when immediately followed by parens.
 
 =back
 

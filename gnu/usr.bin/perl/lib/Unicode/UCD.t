@@ -4,7 +4,7 @@ BEGIN {
     $::IS_EBCDIC = (ord("A") == 193) ? 1 : 0;
     chdir 't' if -d 't';
     @INC = '../lib';
-    require Config; import Config;
+    require Config; Config->import;
     if ($Config{'extensions'} !~ /\bStorable\b/) {
         print "1..0 # Skip: Storable was not built; Unicode::UCD uses Storable\n";
         exit 0;
@@ -19,7 +19,7 @@ use Test::More;
 
 use Unicode::UCD qw(charinfo charprop charprops_all);
 
-my $expected_version = '15.0.0';
+my $expected_version = '16.0.0';
 my $current_version = Unicode::UCD::UnicodeVersion;
 my $v_unicode_version = pack "C*", split /\./, $current_version;
 my $unknown_script = ($v_unicode_version lt v5.0.0)
@@ -878,8 +878,10 @@ if ($v_unicode_version ge v5.2.0) {
 }
 if ($v_unicode_version gt v3.2.0) { # Is missing from non-Unihan files before
                                     # this
-    is(num("\N{U+5146}"), 1000000000000,
-                                'Verify num("\N{U+5146}") == 1000000000000');
+    # Extrapolating from Unicode documentation, they moved away here from
+    # Taiwanese/Japanese usage in favor of mainland China usage.
+    my $value = ($v_unicode_version lt v15.1.0) ? 1000000000000 : 1000000;
+    is(num("\N{U+5146}"), $value, 'Verify num("\N{U+5146}") == ' . $value);
 }
 
 # Create a user-defined property
@@ -1284,6 +1286,13 @@ foreach my $hash (\%Unicode::UCD::loose_to_file_of, \%Unicode::UCD::stricter_to_
             is_deeply(\@l_, \@LC, "prop_value_aliases('$mod_prop', '$mod_value) returns the same list as prop_value_aliases('gc', 'lc')");
         }
         else {
+            use Scalar::Util qw(looks_like_number);
+
+            # This test is not valid if the value is a number which gets
+            # converted to scientific notation on this machine (this would be
+            # because it doesn't fit in the word size).
+            next if looks_like_number($value) && (0 + $value) =~ /e\+/;
+
             ok((grep { &Unicode::UCD::loose_name(lc $_) eq &Unicode::UCD::loose_name(lc $value) }
                 prop_value_aliases($mod_prop, $mod_value)),
                 "'$value' is listed as an alias for prop_value_aliases('$mod_prop', '$mod_value')");
@@ -1543,13 +1552,29 @@ foreach my $set_of_tables (\%Unicode::UCD::stricter_to_file_of, \%Unicode::UCD::
         chomp $official;
         $/ = $input_record_separator;
 
-        # If we are to test against an inverted file, it is easier to invert
-        # our array than the file.
         if ($invert) {
-            if (@tested && $tested[0] == 0) {
-                shift @tested;
-            } else {
-                unshift @tested, 0;
+
+            # Special case an inverted empty file
+            if (@tested == 0) {
+                if ($official ne 'V0') {
+                    fail_with_diff($mod_table, $official, 'V0',
+                                   "prop_invlist");
+                }
+                else {
+                    pass("prop_invlist('$mod_table')");
+                }
+
+                next;
+            }
+            else {
+
+                # If we are to test against an inverted file, it is easier to
+                # invert our array than the file.
+                if ($tested[0] == 0) {
+                    shift @tested;
+                } else {
+                    unshift @tested, 0;
+                }
             }
         }
 
@@ -1602,6 +1627,7 @@ is(@list, 0, "prop_invmap('Is_Is_Any') returns <undef> since two is's");
 # applications use them (though such use is deprecated).
 my @legacy_file_format = (qw( Bidi_Mirroring_Glyph
                               NFKC_Casefold
+                              NFKC_Simple_Casefold
                            )
                           );
 
@@ -2078,9 +2104,18 @@ foreach my $prop (sort(keys %props)) {
         # it's an error
         my %specials = %$specials_ref if $specials_ref;
 
+        # Special case an expected and gotten empty return
+        if (     @$invlist_ref - $upper_limit_subtract == 1
+            && $official =~ / ^ ( V0 | !Unicode::UCD::All ) \z /x)
+        {
+            pass("prop_invmap('$display_prop')");
+            next PROPERTY;
+        }
+
         # The extra -$upper_limit_subtract is because the final element may
         # have been tested above to be for anything above Unicode, in which
-        # case the file may not go that high.
+        # case the file may not go that high.  The upper bound may be changed
+        # in the loop, so can't pre-calculate it.
         for (my $i = 0; $i < @$invlist_ref - $upper_limit_subtract; $i++) {
 
             # If the map element is a reference, have to stringify it (but

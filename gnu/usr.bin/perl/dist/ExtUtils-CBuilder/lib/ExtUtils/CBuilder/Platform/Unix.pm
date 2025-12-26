@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use ExtUtils::CBuilder::Base;
 
-our $VERSION = '0.280240'; # VERSION
+our $VERSION = '0.280242'; # VERSION
 our @ISA = qw(ExtUtils::CBuilder::Base);
 
 sub link_executable {

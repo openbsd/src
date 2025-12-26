@@ -11,7 +11,7 @@ use 5.006;
 
 use strict;
 use warnings;
-our $VERSION = '7.70';
+our $VERSION = '7.76';
 $VERSION =~ tr/_//d;
 
 use ExtUtils::MakeMaker::Config;
@@ -20,9 +20,29 @@ use File::Basename;
 use File::Spec;
 
 sub ext {
-    if    ( $^O eq 'VMS' )     { return &_vms_ext; }
-    elsif ( $^O eq 'MSWin32' ) { return &_win32_ext; }
-    else                       { return &_unix_os2_ext; }
+    if    ( $^O eq 'VMS' )     { goto &_vms_ext; }
+    elsif ( $^O eq 'MSWin32' ) { goto &_win32_ext; }
+    else                       { goto &_unix_os2_ext; }
+}
+
+sub _space_dirs_split {
+  my ($libpth) = @_;
+  return if !length $libpth;
+  my (@chunks, @ret);
+  push @chunks, [$1,$2] while $libpth =~ /(\S+)(\s*)/g;
+  CHUNK: while (@chunks) {
+    my ($c, $ind) = (shift(@chunks), 0);
+    if (-d $c->[0]) { push @ret, $c->[0]; next CHUNK; }
+    my $sofar = join '', @$c;
+    while ($ind < @chunks) {
+      my ($this_word, $this_space) = @{ $chunks[$ind] };
+      $sofar .= $this_word;
+      if (-d $sofar) { push @ret, $sofar; next CHUNK; }
+      $sofar .= $this_space;
+      $ind++;
+    }
+  }
+  @ret;
 }
 
 sub _unix_os2_ext {
@@ -51,23 +71,23 @@ sub _unix_os2_ext {
 
     require Text::ParseWords;
 
-    my ( @searchpath );    # from "-L/path" entries in $potential_libs
-    my ( @libpath ) = Text::ParseWords::shellwords( $Config{'libpth'} || '' );
+    my @searchpath;    # from "-L/path" entries in $potential_libs
+    my @libpath = _space_dirs_split($Config{libpth} || '');
     my ( @ldloadlibs, @bsloadlibs, @extralibs, @ld_run_path, %ld_run_path_seen );
     my ( @libs,       %libs_seen );
     my ( $fullname,   @fullname );
     my ( $pwd )   = cwd();    # from Cwd.pm
     my ( $found ) = 0;
-	if ($Config{gccversion}) {
-		chomp(my @incpath = grep s/^ //, grep { /^#include </ .. /^End of search / } `$Config{cc} -E -v - </dev/null 2>&1 >/dev/null`);
-		unshift @libpath, map { s{/include[^/]*}{/lib}; $_ } @incpath
-	}
-	@libpath = grep -d, @libpath;
+    if ($Config{gccversion}) {
+        chomp(my @incpath = grep s/^ //, grep { /^#include </ .. /^End of search / } `$Config{cc} -E -v - </dev/null 2>&1 >/dev/null`);
+        unshift @libpath, map { s{/include[^/]*}{/lib}; $_ } @incpath
+    }
+    @libpath = grep -d, @libpath;
 
-    if ( $^O eq 'darwin' or $^O eq 'next' )  {
+    if ($^O eq 'darwin')  {
         # 'escape' Mach-O ld -framework and -F flags, so they aren't dropped later on
-        $potential_libs =~ s/(^|\s)(-(?:weak_|reexport_|lazy_)?framework)\s+(\S+)/$1-Wl,$2 -Wl,$3/g;
-        $potential_libs =~ s/(^|\s)(-F)\s*(\S+)/$1-Wl,$2 -Wl,$3/g;
+        $found++ if $potential_libs =~ s/(^|\s)(-(?:weak_|reexport_|lazy_)?framework)\s+(\S+)/$1-Wl,$2 -Wl,$3/g;
+        $found++ if $potential_libs =~ s/(^|\s)(-F)\s*(\S+)/$1-Wl,$2 -Wl,$3/g;
     }
 
     foreach my $thislib ( Text::ParseWords::shellwords($potential_libs) ) {
@@ -164,8 +184,7 @@ sub _unix_os2_ext {
                       } @fullname
                 )[0];
             }
-            elsif ( -f ( $fullname = "$thispth/lib$thislib.$so" )
-                && ( ( $Config{'dlsrc'} ne "dl_dld.xs" ) || ( $thislib eq "m" ) ) )
+            elsif ( -f ( $fullname = "$thispth/lib$thislib.$so" ) )
             {
             }
             elsif (-f ( $fullname = "$thispth/lib${thislib}_s$Config_libext" )
@@ -233,42 +252,18 @@ sub _unix_os2_ext {
 
             # Do not add it into the list if it is already linked in
             # with the main perl executable.
-            # We have to special-case the NeXT, because math and ndbm
-            # are both in libsys_s
-            unless (
-                $in_perl
-                || ( $Config{'osname'} eq 'next'
-                    && ( $thislib eq 'm' || $thislib eq 'ndbm' ) )
-              )
-            {
-                push( @extralibs, "-l$custom_name$thislib" );
-            }
+            push( @extralibs, "-l$custom_name$thislib" )
+                unless $in_perl;
 
-            # We might be able to load this archive file dynamically
-            if (   ( $Config{'dlsrc'} =~ /dl_next/ && $Config{'osvers'} lt '4_0' )
-                || ( $Config{'dlsrc'} =~ /dl_dld/ ) )
-            {
+            if ( $is_dyna ) {
 
-                # We push -l$thislib instead of $fullname because
-                # it avoids hardwiring a fixed path into the .bs file.
-                # Mkbootstrap will automatically add dl_findfile() to
-                # the .bs file if it sees a name in the -l format.
-                # USE THIS, when dl_findfile() is fixed:
-                # push(@bsloadlibs, "-l$thislib");
-                # OLD USE WAS while checking results against old_extliblist
-                push( @bsloadlibs, "$fullname" );
+                # For SunOS4, do not add in this shared library if
+                # it is already linked in the main perl executable
+                push( @ldloadlibs, "-l$custom_name$thislib" )
+                  unless ( $in_perl and $^O eq 'sunos' );
             }
             else {
-                if ( $is_dyna ) {
-
-                    # For SunOS4, do not add in this shared library if
-                    # it is already linked in the main perl executable
-                    push( @ldloadlibs, "-l$custom_name$thislib" )
-                      unless ( $in_perl and $^O eq 'sunos' );
-                }
-                else {
-                    push( @ldloadlibs, "-l$custom_name$thislib" );
-                }
+                push( @ldloadlibs, "-l$custom_name$thislib" );
             }
             last;    # found one here so don't bother looking further
         }
@@ -276,12 +271,8 @@ sub _unix_os2_ext {
           unless $found_lib > 0;
     }
 
-    unless ( $found ) {
-        return ( '', '', '', '', ( $give_libs ? \@libs : () ) );
-    }
-    else {
-        return ( "@extralibs", "@bsloadlibs", "@ldloadlibs", join( ":", @ld_run_path ), ( $give_libs ? \@libs : () ) );
-    }
+    return ( '', '', '', '', ( $give_libs ? \@libs : () ) ) unless $found;
+    ( "@extralibs", "@bsloadlibs", "@ldloadlibs", join( ":", @ld_run_path ), ( $give_libs ? \@libs : () ) );
 }
 
 sub _win32_ext {
@@ -378,19 +369,9 @@ sub _win32_ext {
 
 sub _win32_make_lib_search_list {
     my ( $potential_libs, $verbose ) = @_;
-
-    # If Config.pm defines a set of default libs, we always
-    # tack them on to the user-supplied list, unless the user
-    # specified :nodefault
-    my $libs = $Config{'perllibs'};
-    $potential_libs = join( ' ', $potential_libs, $libs ) if $libs and $potential_libs !~ /:nodefault/i;
     _debug( "Potential libraries are '$potential_libs':\n", $verbose );
-
     $potential_libs =~ s,\\,/,g;    # normalize to forward slashes
-
-    my @list = Text::ParseWords::quotewords( '\s+', 0, $potential_libs );
-
-    return @list;
+    Text::ParseWords::quotewords( '\s+', 0, $potential_libs );
 }
 
 sub _win32_default_search_paths {
@@ -399,11 +380,12 @@ sub _win32_default_search_paths {
     my $libpth = $Config{'libpth'} || '';
     $libpth =~ s,\\,/,g;            # normalize to forward slashes
 
-    my @libpath = Text::ParseWords::quotewords( '\s+', 0, $libpth );
+    my @libpath = _space_dirs_split($libpth);
     push @libpath, "$Config{installarchlib}/CORE";    # add "$Config{installarchlib}/CORE" to default search path
 
     push @libpath, split /;/, $ENV{LIB}          if $VC and $ENV{LIB};
     push @libpath, split /;/, $ENV{LIBRARY_PATH} if $GC and $ENV{LIBRARY_PATH};
+    push @libpath, "$ENV{SYSTEMROOT}\\system32"  if $ENV{SYSTEMROOT};
 
     return @libpath;
 }
@@ -460,8 +442,8 @@ sub _win32_try_attach_extension {
 }
 
 sub _win32_lib_extensions {
-    my @extensions;
-    push @extensions, $Config{'lib_ext'} if $Config{'lib_ext'};
+    my @extensions = grep $_, @Config{qw(lib_ext)};
+    push @extensions, map ".$_", grep $_, @Config{qw(dlext so)};
     push @extensions, '.dll.a' if grep { m!^\.a$! } @extensions;
     push @extensions, '.lib' unless grep { m!^\.lib$! } @extensions;
     return \@extensions;

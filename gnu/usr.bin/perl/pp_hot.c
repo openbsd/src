@@ -256,8 +256,6 @@ PP(pp_null)
     return NORMAL;
 }
 
-/* This is sometimes called directly by pp_coreargs, pp_grepstart and
-   amagic_call. */
 PP(pp_pushmark)
 {
     PUSHMARK(PL_stack_sp);
@@ -332,12 +330,11 @@ PP(pp_padsv_store)
       UNLIKELY(SvTEMP(targ)) && !SvSMAGICAL(targ) && SvREFCNT(targ) == 1 &&
       (!isGV_with_GP(targ) || SvFAKE(targ)) && ckWARN(WARN_MISC)
     )
-        Perl_warner(aTHX_
-            packWARN(WARN_MISC), "Useless assignment to a temporary"
-        );
+        warner(packWARN(WARN_MISC), "Useless assignment to a temporary");
     SvSetMagicSV(targ, val);
 
-    rpp_replace_1_1_NN(targ);
+    assert(GIMME_V == G_VOID);
+    rpp_popfree_1_NN();
     return NORMAL;
 }
 
@@ -495,9 +492,7 @@ PP(pp_sassign)
       rpp_is_lone(left) && !SvSMAGICAL(left) &&
       (!isGV_with_GP(left) || SvFAKE(left)) && ckWARN(WARN_MISC)
     )
-        Perl_warner(aTHX_
-            packWARN(WARN_MISC), "Useless assignment to a temporary"
-        );
+        warner(packWARN(WARN_MISC), "Useless assignment to a temporary");
     SvSetMagicSV(left, right);
     if (LIKELY(GIMME_V == G_VOID))
         rpp_popfree_2_NN(); /* pop left and right */
@@ -1143,7 +1138,6 @@ PP(pp_multiconcat)
             Copy(svpv_p->pv, targ_pv, len, char);
             targ_pv += len;
         }
-        const_lens += (svpv_end - svpv_base + 1);
     }
     else {
         /* Note that we iterate the loop nargs+1 times: to append nargs
@@ -1657,7 +1651,7 @@ PP(pp_readline)
     /* is it *FOO, $fh, or 'FOO' ? */
     if (!isGV_with_GP(PL_last_in_gv)) {
         if (SvROK(PL_last_in_gv) && isGV_with_GP(SvRV(PL_last_in_gv)))
-            PL_last_in_gv = MUTABLE_GV(SvRV(PL_last_in_gv));
+            PL_last_in_gv = GV_FROM_REF((SV *)PL_last_in_gv);
         else {
             rpp_xpush_1(MUTABLE_SV(PL_last_in_gv));
             Perl_pp_rv2gv(aTHX);
@@ -1937,9 +1931,7 @@ PP(pp_add)
                         auv = aiv;
                         auvok = 1;	/* Now acting as a sign flag.  */
                     } else {
-                        /* Using 0- here and later to silence bogus warning
-                         * from MS VC */
-                        auv = (UV) (0 - (UV) aiv);
+                        auv = NEGATE_2UV(aiv);
                     }
                 }
                 a_valid = 1;
@@ -1959,7 +1951,7 @@ PP(pp_add)
                     buv = biv;
                     buvok = 1;
                 } else
-                    buv = (UV) (0 - (UV) biv);
+                    buv = NEGATE_2UV(biv);
             }
             /* ?uvok if value is >= 0. basically, flagged as UV if it's +ve,
                else "IV" now, independent of how it came in.
@@ -1998,9 +1990,8 @@ PP(pp_add)
                     TARGu(result,1);
                 else {
                     /* Negate result */
-                    if (result <= (UV)IV_MIN)
-                        TARGi(result == (UV)IV_MIN
-                                ? IV_MIN : -(IV)result, 1);
+                    if (result <= ABS_IV_MIN)
+                        TARGi(NEGATE_2IV(result), 1);
                     else {
                         /* result valid, but out of range for IV.  */
                         TARGn(-(NV)result, 1);
@@ -2335,7 +2326,7 @@ PP(pp_padav)
         if (flags && !(flags & OPpENTERSUB_INARGS)) {
             if (GIMME_V == G_SCALAR)
                 /* diag_listed_as: Can't return %s to lvalue scalar context */
-                Perl_croak(aTHX_ "Can't return array to lvalue scalar context");
+                croak("Can't return array to lvalue scalar context");
             goto ret;
        }
     }
@@ -2389,7 +2380,7 @@ PP(pp_padhv)
         if (flags && !(flags & OPpENTERSUB_INARGS)) {
             if (GIMME_V == G_SCALAR)
                 /* diag_listed_as: Can't return %s to lvalue scalar context */
-                Perl_croak(aTHX_ "Can't return hash to lvalue scalar context");
+                croak("Can't return hash to lvalue scalar context");
             rpp_push_1(TARG);
             return NORMAL;
         }
@@ -2427,7 +2418,7 @@ PP(pp_rv2av)
             DIE(aTHX_ "Not %s reference", is_pp_rv2av ? an_array : a_hash);
         else if (UNLIKELY(PL_op->op_flags & OPf_MOD
                 && PL_op->op_private & OPpLVAL_INTRO))
-            Perl_croak(aTHX_ "%s", PL_no_localize_ref);
+            croak("%s", PL_no_localize_ref);
     }
     else if (UNLIKELY(SvTYPE(sv) != type)) {
             GV *gv;
@@ -2502,7 +2493,7 @@ PP(pp_rv2av)
     return NORMAL;
 
  croak_cant_return:
-    Perl_croak(aTHX_ "Can't return %s to lvalue scalar context",
+    croak("Can't return %s to lvalue scalar context",
                is_pp_rv2av ? "array" : "hash");
 }
 
@@ -2524,7 +2515,7 @@ S_do_oddball(pTHX_ SV **oddkey, SV **firstkey)
             }
             else
                 err = "Odd number of elements in hash assignment";
-            Perl_warner(aTHX_ packWARN(WARN_MISC), "%s", err);
+            warner(packWARN(WARN_MISC), "%s", err);
         }
 
     }
@@ -2646,7 +2637,7 @@ S_aassign_copy_common(pTHX_ SV **firstlelem, SV **lastlelem,
 #ifdef DEBUGGING
             if (fake) {
                 /* op_dump(PL_op); */
-                Perl_croak(aTHX_
+                croak(
                     "panic: aassign skipped needed copy of common RH elem %"
                         UVuf, (UV)(relem - firstrelem));
             }
@@ -2663,7 +2654,7 @@ S_aassign_copy_common(pTHX_ SV **firstlelem, SV **lastlelem,
                (It's relying on a panic, not a "semi-panic" from newSVsv()
                and then an assertion failure below.)  */
             if (UNLIKELY(SvIS_FREED(svr))) {
-                Perl_croak(aTHX_ "panic: attempt to copy freed scalar %p",
+                croak("panic: attempt to copy freed scalar %p",
                            (void*)svr);
             }
 #endif
@@ -2753,7 +2744,7 @@ S_aassign_uid(pTHX)
 #  endif /* HAS_SETEUID */
         if (PL_delaymagic & DM_UID) {
             if (PL_delaymagic_uid != PL_delaymagic_euid)
-                Perl_die(aTHX_ "No setreuid available");
+                die("No setreuid available");
             PERL_UNUSED_RESULT(PerlProc_setuid(PL_delaymagic_uid));
         }
 #endif /* HAS_SETRESUID */
@@ -2788,7 +2779,7 @@ S_aassign_uid(pTHX)
 #  endif /* HAS_SETEGID */
         if (PL_delaymagic & DM_GID) {
             if (PL_delaymagic_gid != PL_delaymagic_egid)
-                Perl_die(aTHX_ "No setregid available");
+                die("No setregid available");
             PERL_UNUSED_RESULT(PerlProc_setgid(PL_delaymagic_gid));
         }
 #endif /* HAS_SETRESGID */
@@ -3461,10 +3452,8 @@ PP(pp_aassign)
                     rpp_is_lone(lsv) && !SvSMAGICAL(lsv) &&
                   (!isGV_with_GP(lsv) || SvFAKE(lsv)) && ckWARN(WARN_MISC)
                 ))
-                    Perl_warner(aTHX_
-                       packWARN(WARN_MISC),
-                      "Useless assignment to a temporary"
-                    );
+                    warner(packWARN(WARN_MISC),
+                           "Useless assignment to a temporary");
 
 #ifndef PERL_RC_STACK
                 /* avoid freeing $$lsv if it might be needed for further
@@ -3768,7 +3757,7 @@ PP(pp_match)
         if (PL_curpm == PL_reg_curpm) {
             if (PL_curpm_under) {
                 if (PL_curpm_under == PL_reg_curpm) {
-                    Perl_croak(aTHX_ "Infinite recursion via empty pattern");
+                    croak("Infinite recursion via empty pattern");
                 } else {
                     pm = PL_curpm_under;
                 }
@@ -3996,6 +3985,21 @@ PP(pp_match)
     return NORMAL;
 }
 
+/* errno can be either EAGAIN or EWOULDBLOCK for a socket() read that
+   is non-blocking but would have blocked if blocking
+*/
+PERL_STATIC_INLINE bool
+error_is_would_block(int err) {
+#ifdef EAGAIN
+    if (err == EAGAIN)
+        return true;
+#endif
+#ifdef EWOULDBLOCK
+    if (err == EWOULDBLOCK)
+        return true;
+#endif
+    return false;
+}
 
 /* Perl_do_readline(): implement <$fh>, readline($fh) and glob('*.h')
  *
@@ -4194,7 +4198,8 @@ Perl_do_readline(pTHX)
     }
     else {
         /* XXX on RC builds, push on stack rather than mortalize ? */
-        sv = sv_2mortal(newSV(80));
+        sv = newSV_type_mortal(SVt_PV);
+        sv_grow_fresh(sv, 81);
         offset = 0;
     }
 
@@ -4232,11 +4237,14 @@ Perl_do_readline(pTHX)
                 */
                 PerlIO_clearerr(fp);
                 if (!do_close(PL_last_in_gv, FALSE)) {
-                    Perl_ck_warner(aTHX_ packWARN(WARN_GLOB),
-                                   "glob failed (child exited with status %d%s)",
-                                   (int)(STATUS_CURRENT >> 8),
-                                   (STATUS_CURRENT & 0x80) ? ", core dumped" : "");
+                    ck_warner(packWARN(WARN_GLOB),
+                              "glob failed (child exited with status %d%s)",
+                              (int)(STATUS_CURRENT >> 8),
+                              (STATUS_CURRENT & 0x80) ? ", core dumped" : "");
                 }
+            }
+            else if (error_is_would_block(errno)) {
+                PerlIO_clearerr(fp);
             }
 
             if (gimme == G_SCALAR) {
@@ -4310,9 +4318,9 @@ Perl_do_readline(pTHX)
 
                 if (!is_utf8_string_loc(s, len, &f))
                     /* Emulate :encoding(utf8) warning in the same case. */
-                    Perl_warner(aTHX_ packWARN(WARN_UTF8),
-                                "utf8 \"\\x%02X\" does not map to Unicode",
-                                f < (U8*)SvEND(sv) ? *f : 0);
+                    warner(packWARN(WARN_UTF8),
+                           "utf8 \"\\x%02X\" does not map to Unicode",
+                           f < (U8*)SvEND(sv) ? *f : 0);
              }
         }
 
@@ -4321,7 +4329,8 @@ Perl_do_readline(pTHX)
                 SvPV_shrink_to_cur(sv);
             }
             /* XXX on RC builds, push on stack rather than mortalize ? */
-            sv = sv_2mortal(newSV(80));
+            sv = newSV_type_mortal(SVt_PV);
+            sv_grow_fresh(sv, 81);
             continue;
         }
 
@@ -4360,9 +4369,6 @@ PP(pp_helem)
     }
 
     if (localizing) {
-        MAGIC *mg;
-        HV *stash;
-
         /* Try to preserve the existence of a tied hash
          * element by using EXISTS and DELETE if possible.
          * Fall back to FETCH and STORE otherwise. */
@@ -4435,13 +4441,13 @@ S_softref2xv_lite(pTHX_ SV *const sv, const char *const what,
 {
     if (PL_op->op_private & HINT_STRICT_REFS) {
         if (SvOK(sv))
-            Perl_die(aTHX_ PL_no_symref_sv, sv,
+            die(PL_no_symref_sv, sv,
                      (SvPOKp(sv) && SvCUR(sv)>32 ? "..." : ""), what);
         else
-            Perl_die(aTHX_ PL_no_usym, what);
+            die(PL_no_usym, what);
     }
     if (!SvOK(sv))
-        Perl_die(aTHX_ PL_no_usym, what);
+        die(PL_no_usym, what);
     return gv_fetchsv_nomg(sv, GV_ADD, type);
 }
 
@@ -4560,9 +4566,9 @@ PP(pp_multideref)
                 check_elem:
                     if (UNLIKELY(SvROK(elemsv) && !SvGAMAGIC(elemsv)
                                             && ckWARN(WARN_MISC)))
-                        Perl_warner(aTHX_ packWARN(WARN_MISC),
-                                "Use of reference \"%" SVf "\" as array index",
-                                SVfARG(elemsv));
+                        warner(packWARN(WARN_MISC),
+                               "Use of reference \"%" SVf "\" as array index",
+                               SVfARG(elemsv));
                     /* the only time that S_find_uninit_var() needs this
                      * is to determine which index value triggered the
                      * undef warning. So just update it here. Note that
@@ -4608,9 +4614,6 @@ PP(pp_multideref)
                     SV** svp;
 
                     if (UNLIKELY(localizing)) {
-                        MAGIC *mg;
-                        HV *stash;
-
                         /* Try to preserve the existence of a tied array
                          * element by using EXISTS and DELETE if possible.
                          * Fall back to FETCH and STORE otherwise. */
@@ -4801,9 +4804,6 @@ PP(pp_multideref)
                     HE* he;
 
                     if (UNLIKELY(localizing)) {
-                        MAGIC *mg;
-                        HV *stash;
-
                         /* Try to preserve the existence of a tied hash
                          * element by using EXISTS and DELETE if possible.
                          * Fall back to FETCH and STORE otherwise. */
@@ -4870,6 +4870,7 @@ PP(pp_iter)
     PERL_CONTEXT *cx = CX_CUR();
     SV **itersvp = CxITERVAR(cx);
     const U8 type = CxTYPE(cx);
+    U8 pflags = PL_op->op_private;
 
     /* Classic "for" syntax iterates one-at-a-time.
        Many-at-a-time for loops are only for lexicals declared as part of the
@@ -5016,7 +5017,7 @@ PP(pp_iter)
         case CXt_LOOP_LIST: /* for (1,2,3) */
 
             assert(OPpITER_REVERSED == 2); /* so inc becomes -1 or 1 */
-            inc = (IV)1 - (IV)(PL_op->op_private & OPpITER_REVERSED);
+            inc = (IV)1 - (IV)(pflags & OPpITER_REVERSED);
             ix = (cx->blk_loop.state_u.stack.ix += inc);
             if (UNLIKELY(inc > 0
                          ? ix > cx->blk_oldsp
@@ -5032,13 +5033,23 @@ PP(pp_iter)
                 sv = PL_stack_base[ix];
             }
 
+            if (UNLIKELY(pflags & OPpITER_INDEXED) && (i == 0)) {
+                SvREFCNT_dec(*itersvp);
+                /* here ix is really a stack pointer offset; we have to
+                 * calculate the real index */
+                *itersvp = newSViv(ix - cx->blk_loop.state_u.stack.basesp - 1);
+
+                ++i;
+                ++itersvp;
+            }
+
             av = NULL;
             goto loop_ary_common;
 
         case CXt_LOOP_ARY: /* for (@ary) */
 
             av = cx->blk_loop.state_u.ary.ary;
-            inc = (IV)1 - (IV)(PL_op->op_private & OPpITER_REVERSED);
+            inc = (IV)1 - (IV)(pflags & OPpITER_REVERSED);
             ix = (cx->blk_loop.state_u.ary.ix += inc);
             if (UNLIKELY(inc > 0
                          ? ix > AvFILL(av)
@@ -5057,6 +5068,14 @@ PP(pp_iter)
                 sv = AvARRAY(av)[ix];
             }
 
+            if (UNLIKELY(pflags & OPpITER_INDEXED) && (i == 0)) {
+                SvREFCNT_dec(*itersvp);
+                *itersvp = newSViv(ix);
+
+                ++i;
+                ++itersvp;
+            }
+
         loop_ary_common:
 
             if (UNLIKELY(cx->cx_type & CXp_FOR_LVREF)) {
@@ -5067,7 +5086,7 @@ PP(pp_iter)
             if (LIKELY(sv)) {
                 if (UNLIKELY(SvIS_FREED(sv))) {
                     *itersvp = NULL;
-                    Perl_croak(aTHX_ "Use of freed value in iteration");
+                    croak("Use of freed value in iteration");
                 }
                 if (SvPADTMP(sv)) {
                     sv = newSVsv(sv);
@@ -5273,7 +5292,7 @@ PP(pp_subst)
                 || ( ((SvTYPE(TARG) == SVt_PVGV && isGV_with_GP(TARG))
                       || SvTYPE(TARG) > SVt_PVLV)
                      && !(SvTYPE(TARG) == SVt_PVGV && SvFAKE(TARG)))))
-            Perl_croak_no_modify();
+            croak_no_modify();
     }
 
     orig = SvPV_nomg(TARG, len);
@@ -5314,7 +5333,7 @@ PP(pp_subst)
         if (PL_curpm == PL_reg_curpm) {
             if (PL_curpm_under) {
                 if (PL_curpm_under == PL_reg_curpm) {
-                    Perl_croak(aTHX_ "Infinite recursion via empty pattern");
+                    croak("Infinite recursion via empty pattern");
                 } else {
                     pm = PL_curpm_under;
                 }
@@ -5488,7 +5507,7 @@ PP(pp_subst)
                    However, I suspect it isn't worth the complexity of
                    unravelling the C<goto force_it> for the small number of
                    cases where it would be viable to drop into the copy code. */
-                TARG = sv_2mortal(newSVsv(TARG));
+                TARG = sv_mortalcopy_flags(TARG, SV_GMAGIC|SV_NOSTEAL);
             }
             orig = SvPV_force_nomg(TARG, len);
             goto force_it;
@@ -5992,15 +6011,22 @@ Perl_leave_adjust_stacks(pTHX_ SV **from_sp, SV **to_sp, U8 gimme, int pass)
                  *    ++PL_tmps_ix, moving the previous occupant there
                  *    instead.
                  */
-                SV *newsv = newSV_type(SVt_NULL);
+
+                /* A newsv of type SVt_NULL will always be upgraded to
+                 * SvTYPE(sv), where that is a SVt_PVNV or below. It is
+                 * more efficient to create such types directly than
+                 * upgrade to them via sv_upgrade() within sv_setsv_flags. */
+                SV *newsv = (SvTYPE(sv) <= SVt_PVNV)
+                            ? newSV_type(SvTYPE(sv))
+                            : newSV_type(SVt_NULL);
 
                 PL_tmps_stack[++PL_tmps_ix] = *tmps_basep;
                 /* put it on the tmps stack early so it gets freed if we die */
                 *tmps_basep++ = newsv;
 
-                if (SvTYPE(sv) <= SVt_IV) {
-                    /* arg must be one of undef, IV/UV, or RV: skip
-                     * sv_setsv_flags() and do the copy directly */
+                if (SvTYPE(sv) <= (NVSIZE <= IVSIZE ? SVt_NV : SVt_IV)) {
+                    /* arg must be one of undef/IV/UV/RV - maybe NV depending on
+                     * config, skip sv_setsv_flags() and do the copy directly */
                     U32 dstflags;
                     U32 srcflags = SvFLAGS(sv);
 
@@ -6028,6 +6054,21 @@ Perl_leave_adjust_stacks(pTHX_ SV **from_sp, SV **to_sp, U8 gimme, int pass)
                                             |(srcflags & SVf_IVisUV));
                         }
                     }
+#if NVSIZE <= IVSIZE
+                    else if (srcflags & SVf_NOK) {
+                        SET_SVANY_FOR_BODYLESS_NV(newsv);
+                        dstflags = (SVt_NV|SVf_NOK|SVp_NOK|SVs_TEMP);
+
+                        /* both src and dst are <= SVt_MV, so sv_any points to the
+                         * head; so access the head directly
+                         */
+                        assert(    &(sv->sv_u.svu_nv)
+                                == &(((XPVNV*) SvANY(sv))->xnv_u.xnv_nv));
+                        assert(    &(newsv->sv_u.svu_nv)
+                                == &(((XPVNV*) SvANY(newsv))->xnv_u.xnv_nv));
+                        newsv->sv_u.svu_nv = sv->sv_u.svu_nv;
+                    }
+#endif
                     else {
                         assert(!(srcflags & SVf_OK));
                         dstflags = (SVt_NULL|SVs_TEMP); /* SV type plus flags */
@@ -6173,6 +6214,34 @@ Perl_clear_defarray(pTHX_ AV* av, bool abandon)
     }
 }
 
+/* S_croak_undefined_subroutine is a helper function for pp_entersub.
+ * It takes assorted DIE() logic out of that hot function.
+ */
+static void
+S_croak_undefined_subroutine(pTHX_ CV const *cv, GV const *gv)
+{
+    if (cv) {
+        if (CvLEXICAL(cv) && CvHASGV(cv))
+            croak("Undefined subroutine &%" SVf " called",
+                       SVfARG(cv_name((CV*)cv, NULL, 0)));
+        else /* pp_entersub triggers when (CvANON(cv) || !CvHASGV(cv)) */
+            croak("Undefined subroutine called");
+    } else { /* pp_entersub triggers when (!cv) after `try_autoload` */
+        SV *sub_name = newSV_type_mortal(SVt_PV);
+        gv_efullname3(sub_name, gv, NULL);
+
+        /* Heuristic to spot BOOP:boop() typo, when the intention was
+         * to call BOOP::boop(). */
+        const char * label = CopLABEL(PL_curcop);
+        if (label && OpSIBLING(PL_curcop) == PL_op) {
+            croak("Undefined subroutine &%" SVf " called, close to label '%s'",
+                SVfARG(sub_name), label);
+        }
+
+        croak("Undefined subroutine &%" SVf " called", SVfARG(sub_name));
+    }
+    NOT_REACHED; /* NOTREACHED */
+}
 
 PP(pp_entersub)
 {
@@ -6194,7 +6263,7 @@ PP(pp_entersub)
 
     /* a non-magic-RV -> CV ? */
     if (LIKELY( (SvFLAGS(sv) & (SVf_ROK|SVs_GMG)) == SVf_ROK)) {
-        cv = MUTABLE_CV(SvRV(sv));
+        cv = MUTABLE_CV(SvRV(sv));  /* might not actually be a CV */
         if (UNLIKELY(SvOBJECT(cv))) /* might be overloaded */
             goto do_ref;
     }
@@ -6242,7 +6311,7 @@ PP(pp_entersub)
                 cv = get_cvn_flags(sym, len, GV_ADD|SvUTF8(sv));
                 break;
             }
-            cv = MUTABLE_CV(SvRV(sv));
+            cv = MUTABLE_CV(SvRV(sv));  /* might not actually be a CV */
             if (LIKELY(SvTYPE(cv) == SVt_PVCV))
                 break;
             /* FALLTHROUGH */
@@ -6267,15 +6336,12 @@ PP(pp_entersub)
     assert((void*)&CvROOT(cv) == (void*)&CvXSUB(cv));
     while (UNLIKELY(!CvROOT(cv))) {
         GV* autogv;
-        SV* sub_name;
 
         /* anonymous or undef'd function leaves us no recourse */
         if (CvLEXICAL(cv) && CvHASGV(cv))
-            DIE(aTHX_ "Undefined subroutine &%" SVf " called",
-                       SVfARG(cv_name(cv, NULL, 0)));
-        if (CvANON(cv) || !CvHASGV(cv)) {
-            DIE(aTHX_ "Undefined subroutine called");
-        }
+            S_croak_undefined_subroutine(aTHX_ cv, NULL);
+        if (CvANON(cv) || !CvHASGV(cv))
+            S_croak_undefined_subroutine(aTHX_ cv, NULL);
 
         /* autoloaded stub? */
         if (cv != GvCV(gv = CvGV(cv))) {
@@ -6291,11 +6357,8 @@ PP(pp_entersub)
                                        : 0));
             cv = autogv ? GvCV(autogv) : NULL;
         }
-        if (!cv) {
-            sub_name = sv_newmortal();
-            gv_efullname3(sub_name, gv, NULL);
-            DIE(aTHX_ "Undefined subroutine &%" SVf " called", SVfARG(sub_name));
-        }
+        if (!cv)
+            S_croak_undefined_subroutine(aTHX_ NULL, gv);
     }
 
     /* unrolled "CvCLONE(cv) && ! CvCLONED(cv)" */
@@ -6372,7 +6435,7 @@ PP(pp_entersub)
 
             defavp = &GvAV(PL_defgv);
             cx->blk_sub.savearray = *defavp;
-            *defavp = MUTABLE_AV(SvREFCNT_inc_simple_NN(av));
+            *defavp = AvREFCNT_inc_simple_NN(av);
 
             /* it's the responsibility of whoever leaves a sub to ensure
              * that a clean, empty AV is left in pad[0]. This is normally
@@ -6502,7 +6565,7 @@ PP(pp_entersub)
          * in scalar context.
         */
         if (PL_curstackinfo->si_stack_hwm < PL_stack_sp - PL_stack_base)
-            Perl_croak_nocontext(
+            croak(
                 "panic: XSUB %s::%s (%s) failed to extend arg stack: "
                 "base=%p, sp=%p, hwm=%p\n",
                     HvNAME(GvSTASH(CvGV(cv))), GvNAME(CvGV(cv)), CvFILE(cv),
@@ -6541,9 +6604,9 @@ Perl_sub_crush_depth(pTHX_ CV *cv)
     PERL_ARGS_ASSERT_SUB_CRUSH_DEPTH;
 
     if (CvANON(cv))
-        Perl_warner(aTHX_ packWARN(WARN_RECURSION), "Deep recursion on anonymous subroutine");
+        warner(packWARN(WARN_RECURSION), "Deep recursion on anonymous subroutine");
     else {
-        Perl_warner(aTHX_ packWARN(WARN_RECURSION), "Deep recursion on subroutine \"%" SVf "\"",
+        warner(packWARN(WARN_RECURSION), "Deep recursion on subroutine \"%" SVf "\"",
                     SVfARG(cv_name(cv,NULL,0)));
     }
 }
@@ -6583,19 +6646,16 @@ PP(pp_aelem)
     SV *sv;
     SV *retsv;
 
-    if (UNLIKELY(SvROK(elemsv) && !SvGAMAGIC(elemsv) && ckWARN(WARN_MISC)))
-        Perl_warner(aTHX_ packWARN(WARN_MISC),
-                    "Use of reference \"%" SVf "\" as array index",
-                    SVfARG(elemsv));
+    if (UNLIKELY(SvROK(elemsv) && !SvGAMAGIC(elemsv)))
+        ck_warner(packWARN(WARN_MISC),
+                  "Use of reference \"%" SVf "\" as array index",
+                  SVfARG(elemsv));
     if (UNLIKELY(SvTYPE(av) != SVt_PVAV)) {
         retsv = &PL_sv_undef;
         goto ret;
     }
 
     if (UNLIKELY(localizing)) {
-        MAGIC *mg;
-        HV *stash;
-
         /* Try to preserve the existence of a tied array
          * element by using EXISTS and DELETE if possible.
          * Fall back to FETCH and STORE otherwise. */
@@ -6664,7 +6724,7 @@ Perl_vivify_ref(pTHX_ SV *sv, U32 to_what)
     SvGETMAGIC(sv);
     if (!SvOK(sv)) {
         if (SvREADONLY(sv))
-            Perl_croak_no_modify();
+            croak_no_modify();
         prepare_SV_for_RV(sv);
         switch (to_what) {
         case OPpDEREF_SV:
@@ -6684,8 +6744,7 @@ Perl_vivify_ref(pTHX_ SV *sv, U32 to_what)
     if (SvGMAGICAL(sv)) {
         /* copy the sv without magic to prevent magic from being
            executed twice */
-        SV* msv = sv_newmortal();
-        sv_setsv_nomg(msv, sv);
+        SV* msv = sv_mortalcopy_flags(sv, SV_DO_COW_SVSETSV);
         return msv;
     }
     return sv;
@@ -6698,7 +6757,7 @@ S_opmethod_stash(pTHX_ SV* meth)
     HV* stash;
 
     SV* const sv = PL_stack_base + TOPMARK == PL_stack_sp
-        ? (Perl_croak(aTHX_ "Can't call method \"%" SVf "\" without a "
+        ? (croak("Can't call method \"%" SVf "\" without a "
                             "package or object reference", SVfARG(meth)),
            (SV *)NULL)
         : *(PL_stack_base + TOPMARK + 1);
@@ -6707,7 +6766,7 @@ S_opmethod_stash(pTHX_ SV* meth)
 
     if (UNLIKELY(!sv))
        undefined:
-        Perl_croak(aTHX_ "Can't call method \"%" SVf "\" on an undefined value",
+        croak("Can't call method \"%" SVf "\" on an undefined value",
                    SVfARG(meth));
 
     if (UNLIKELY(SvGMAGICAL(sv))) mg_get(sv);
@@ -6721,7 +6780,7 @@ S_opmethod_stash(pTHX_ SV* meth)
     else if (!SvOK(sv)) goto undefined;
     else if (isGV_with_GP(sv)) {
         if (!GvIO(sv))
-            Perl_croak(aTHX_ "Can't call method \"%" SVf "\" "
+            croak("Can't call method \"%" SVf "\" "
                              "without a package or object reference",
                               SVfARG(meth));
         ob = sv;
@@ -6762,7 +6821,7 @@ S_opmethod_stash(pTHX_ SV* meth)
             /* this isn't the name of a filehandle either */
             if (!packlen)
             {
-                Perl_croak(aTHX_ "Can't call method \"%" SVf "\" "
+                croak("Can't call method \"%" SVf "\" "
                                  "without a package or object reference",
                                   SVfARG(meth));
             }
@@ -6793,7 +6852,7 @@ S_opmethod_stash(pTHX_ SV* meth)
                      && (ob = MUTABLE_SV(GvIO((const GV *)ob)))
                      && SvOBJECT(ob))))
     {
-        Perl_croak(aTHX_ "Can't call method \"%" SVf "\" on unblessed reference",
+        croak("Can't call method \"%" SVf "\" on unblessed reference",
                    SVfARG((SvPOK(meth) && SvPVX(meth) == PL_isa_DOES)
                                         ? newSVpvs_flags("DOES", SVs_TEMP)
                                         : meth));

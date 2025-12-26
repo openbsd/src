@@ -143,7 +143,7 @@ if ($cwd =~ /^([a-zA-Z]:)/) {
 SKIP: {
     require Config;
     skip "no XS::APItest"
-     unless eval { require XS::APItest; import XS::APItest "sv_count"; 1 };
+     unless eval { require XS::APItest; XS::APItest->import("sv_count"); 1 };
     # Use a random number of ops, so that the glob op does not reuse the
     # same address each time, giving us false passes.
     my($count,$count2);

@@ -1,7 +1,7 @@
 #!./perl -T
 
+use Config;
 BEGIN {
-    require Config; import Config;
     if ($Config{'extensions'} !~ /\bDevel\/Peek\b/) {
         print "1..0 # Skip: Devel::Peek was not built\n";
         exit 0;
@@ -364,8 +364,8 @@ do_test('reference to named subroutine without prototype',
   RV = $ADDR
   SV = PVCV\\($ADDR\\) at $ADDR
     REFCNT = (3|4)
-    FLAGS = \\((?:HASEVAL,)?(?:NAMED)?\\)	# $] < 5.015 || !thr
-    FLAGS = \\(DYNFILE(?:,HASEVAL)?(?:,NAMED)?\\) # $] >= 5.015 && thr
+    FLAGS = \\((?:HASEVAL(?:,NAMED)?)?\\)	# $] < 5.015 || !thr
+    FLAGS = \\(DYNFILE(?:,HASEVAL(?:,NAMED)?)?\\) # $] >= 5.015 && thr
     COMP_STASH = $ADDR\\t"main"
     START = $ADDR ===> \\d+
     ROOT = $ADDR
@@ -375,8 +375,8 @@ do_test('reference to named subroutine without prototype',
     DEPTH = 1(?:
     MUTEXP = $ADDR
     OWNER = $ADDR)?
-    FLAGS = 0x(?:[c84]00)?0			# $] < 5.015 || !thr
-    FLAGS = 0x[cd1459]000			# $] >= 5.015 && thr
+    FLAGS = 0x(?:[c4]00)?0			# $] < 5.015 || !thr
+    FLAGS = 0x[cd145]000			# $] >= 5.015 && thr
     OUTSIDE_SEQ = \\d+
     PADLIST = $ADDR
     PADNAME = $ADDR\\($ADDR\\) PAD = $ADDR\\($ADDR\\)
@@ -534,7 +534,7 @@ do_test('string with Unicode',
                 . '"\\\0 \[UTF8 "\\\x\{100\}\\\x\{0\}\\\x\{200\}"\]
   CUR = 5
   LEN = \\d+
-  COW_REFCNT = 1					# $] < 5.019007
+  COW_REFCNT = 1					# $] < 5.019007 || $] >=5.041000
 ');
 
 do_test('reference to hash containing Unicode',
@@ -558,7 +558,7 @@ do_test('reference to hash containing Unicode',
       PV = $ADDR "' . $cp200_bytes . '"\\\0 \[UTF8 "\\\x\{200\}"\]
       CUR = 2
       LEN = \\d+
-      COW_REFCNT = 1				# $] < 5.019007
+      COW_REFCNT = 1				# $] < 5.019007 || $] >=5.041000
 ',      '',
 	$] >= 5.015
 	    ? undef
@@ -1673,6 +1673,47 @@ EODUMP
             $head . 'NV = 1\.00000000\d+' . $tail);
     do_test('NV 1.0 - epsilon', 1.0 - $epsilon_n,
             $head . 'NV = 0\.99999999\d+' . $tail);
+}
+
+{
+    use experimental "class";
+    # this could crash [github #22959]
+    class Foo {
+    };
+    do_test('class object with no fields', Foo->new, <<~'EOS');
+    SV = IV\($ADDR\) at $ADDR
+      REFCNT = \d+
+      FLAGS = \(ROK\)
+      RV = $ADDR
+      SV = PVOBJ\($ADDR\) at $ADDR
+        REFCNT = 1
+        FLAGS = \(OBJECT\)
+        STASH = $ADDR\s+"Foo"
+        MAXFIELD = -1
+        FIELDS = 0x0
+    EOS
+
+    # test object with fields too
+    class Foo2 {
+        field $x = 0;
+    };
+    do_test('class object with a field', Foo2->new, <<~'EOS');
+    SV = IV\($ADDR\) at $ADDR
+      REFCNT = \d+
+      FLAGS = \(ROK\)
+      RV = $ADDR
+      SV = PVOBJ\($ADDR\) at $ADDR
+        REFCNT = 1
+        FLAGS = \(OBJECT\)
+        STASH = $ADDR\s+"Foo2"
+        MAXFIELD = 0
+        FIELDS = $ADDR
+        Field No\. 0 \(\$x\)
+        SV = IV\($ADDR\) at $ADDR
+          REFCNT = 1
+          FLAGS = \(IOK,pIOK\)
+          IV = 0
+    EOS
 }
 
 done_testing();

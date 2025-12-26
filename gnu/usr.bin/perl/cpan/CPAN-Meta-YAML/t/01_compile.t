@@ -11,7 +11,7 @@ BEGIN {
 use Test::More 0.88;
 
 # Check their perl version
-ok( $] ge '5.008001', "Your perl is new enough" );
+ok( "$]" >= 5.008001, "Your perl is new enough" );
 
 # Does the module load
 require_ok( 'CPAN::Meta::YAML' );

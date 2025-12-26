@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq3 - Programming Tools
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -99,7 +103,7 @@ Have you read the appropriate manpages? Here's a brief index:
 
 =item L<perlre> - Perl regular expressions
 
-=item L<perlfunc> - Perl builtin functions>
+=item L<perlfunc> - Perl builtin functions
 
 =item L<perlop> - Perl operators and precedence
 
@@ -173,7 +177,7 @@ that C<CPAN.pm> understands and can use to re-install every module:
     $ cpan -a
 
 Inside a Perl program, you can use the L<ExtUtils::Installed> module to
-show all installed distributions, although it can take awhile to do
+show all installed distributions, although it can take a while to do
 its magic. The standard library which comes with Perl just shows up
 as "Perl" (although you can get those with L<Module::CoreList>).
 
@@ -296,8 +300,8 @@ or I<Mastering Perl>, chapter 5.
 L<perldebguts> documents creating a custom debugger if you need to
 create a special sort of profiler. brian d foy describes the process
 in I<The Perl Journal>, "Creating a Perl Debugger",
-L<http://www.ddj.com/184404522> , and "Profiling in Perl"
-L<http://www.ddj.com/184404580> .
+L<https://drdobbs.com/creating-a-perl-debugger/184404522> , and
+"Profiling in Perl" L<https://drdobbs.com/profiling-in-perl/184404580> .
 
 Perl.com has two interesting articles on profiling: "Profiling Perl",
 by Simon Cozens, L<https://www.perl.com/pub/2004/06/25/profiling.html/>
@@ -362,12 +366,12 @@ L<http://e-p-i-c.sf.net/>
 The Eclipse Perl Integration Project integrates Perl
 editing/debugging with Eclipse.
 
-=item Enginsite
+=item EngInSite
 
 L<http://www.enginsite.com/>
 
 Perl Editor by EngInSite is a complete integrated development
-environment (IDE) for creating, testing, and  debugging  Perl scripts;
+environment (IDE) for creating, testing, and debugging Perl scripts;
 the tool runs on Windows 9x/NT/2000/XP or later.
 
 =item IntelliJ IDEA
@@ -406,7 +410,7 @@ under Windows 95/98/NT/2000.
 
 =item OptiPerl
 
-L<http://www.optiperl.com/>
+L<https://www.uptiv.com/free/optiperl/>
 
 OptiPerl is a Windows IDE with simulated CGI environment, including
 debugger and syntax-highlighting editor.
@@ -575,7 +579,7 @@ Note that the perl-mode of emacs will have fits with C<"main'foo">
 are probably using C<"main::foo"> in new Perl code anyway, so this
 shouldn't be an issue.
 
-For CPerlMode, see L<http://www.emacswiki.org/cgi-bin/wiki/CPerlMode>
+For CPerlMode, see L<https://www.emacswiki.org/emacs/CPerlMode>
 
 =head2 How can I use curses with Perl?
 
@@ -1141,3 +1145,5 @@ domain. You are permitted and encouraged to use this code and any
 derivatives thereof in your own programs for fun or for profit as you
 see fit. A simple comment in the code giving credit to the FAQ would
 be courteous but is not required.
+
+=cut

@@ -49,6 +49,10 @@ sub BaseTests {
     $version = $CLASS->$method("v1.2.3_4");
     is ( "$version" , "v1.2.3_4" , 'alpha version 1.2.3_4 eq v1.2.3_4' );
 
+    my $version = $CLASS->$method("v1.2.3.4");
+    is_deeply ([ $version->tuple ], [1, 2, 3, 4], 'Tuple seems to work');
+    is_deeply ($version, $CLASS->from_tuple(1, 2, 3, 4), 'Equals from_tuple');
+
     # test illegal formats
     eval {my $version = $CLASS->$method("1.2_3_4")};
     like($@, qr/multiple underscores/,
@@ -632,6 +636,19 @@ SKIP: {
     { # https://rt.cpan.org/Ticket/Display.html?id=98744
 	$v = $CLASS->new("1.02_003");
 	is $v->numify, '1.020030', 'Ignore underscores for numify';
+    }
+
+    {
+	$v = $CLASS->parse("v1.2.3");
+	$v2 = $v->to_decimal;
+	isa_ok $v2, $CLASS;
+	is $v2, "1.002003";
+    }
+    {
+	$v = $CLASS->parse("1.002003");
+	$v2 = $v->to_dotted_decimal;
+	isa_ok $v2, $CLASS;
+	is "$v2", "v1.2.3";
     }
 }
 

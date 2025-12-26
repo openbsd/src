@@ -23,6 +23,24 @@ struct gp {
     HEK *	gp_file_hek;	/* file first declared in (for -w) */
 };
 
+/*
+=for apidoc_section $GV
+
+=for apidoc      Am|GV *|GvREFCNT_inc|GV *gv
+=for apidoc_item   |GV *|GvREFCNT_inc_simple|GV *gv
+=for apidoc_item   |GV *|GvREFCNT_inc_simple_NN|GV *gv
+
+These all increment the reference count of the given SV, which must be a GV.
+They are useful when assigning the result into a typed pointer as they avoid
+the need to cast the result to the appropriate type.
+
+=cut
+*/
+
+#define GvREFCNT_inc(gv)            ((GV *)SvREFCNT_inc((SV *)gv))
+#define GvREFCNT_inc_simple(gv)     ((GV *)SvREFCNT_inc_simple((SV *)gv))
+#define GvREFCNT_inc_simple_NN(gv)  ((GV *)SvREFCNT_inc_simple_NN((SV *)gv))
+
 #define GvXPVGV(gv)	((XPVGV*)SvANY(gv))
 
 
@@ -262,7 +280,8 @@ Return the CV from the GV.
 #define GV_NOUNIVERSAL  0x2000  /* Skip UNIVERSAL lookup */
 
 /* Flags for gv_autoload_*/
-#define GV_AUTOLOAD_ISMETHOD 1	/* autoloading a method? */
+#define GV_AUTOLOAD_ISMETHOD 1	/* autoloading a method?  gv_autoload4 will
+                                   break if this is changed from being 1 */
 
 /*      SVf_UTF8 (more accurately the return value from SvUTF8) is also valid
         as a flag to various gv_* functions, so ensure it lies
@@ -281,7 +300,13 @@ Return the CV from the GV.
 #define gv_fullname3(sv,gv,prefix) gv_fullname4(sv,gv,prefix,TRUE)
 #define gv_efullname3(sv,gv,prefix) gv_efullname4(sv,gv,prefix,TRUE)
 #define gv_fetchmethod(stash, name) gv_fetchmethod_autoload(stash, name, TRUE)
+
+/*
+=for apidoc_defn Am|GV *|gv_fetchsv_nomg|SV *name|I32 flags|const svtype sv_type
+=cut
+*/
 #define gv_fetchsv_nomg(n,f,t) gv_fetchsv(n,(f)|GV_NO_SVGMAGIC,t)
+
 #define gv_init(gv,stash,name,len,multi) \
         gv_init_pvn(gv,stash,name,len,GV_ADDMULTI*cBOOL(multi))
 #define gv_fetchmeth(stash,name,len,level) gv_fetchmeth_pvn(stash, name, len, level, 0)
@@ -289,10 +314,12 @@ Return the CV from the GV.
 #define gv_fetchmethod_flags(stash,name,flags) gv_fetchmethod_pv_flags(stash, name, flags)
 
 /*
-=for apidoc gv_autoload4
-Equivalent to C<L</gv_autoload_pvn>>.
-
+=for apidoc_defn ARmd|GV *|gv_autoload4|NULLOK HV *stash                    \
+                                       |NN const char *name                 \
+                                       |STRLEN len                          \
+                                       |I32 method
 =cut
+
 */
 #define gv_autoload4(stash, name, len, autoload) \
         gv_autoload_pvn(stash, name, len, cBOOL(autoload))

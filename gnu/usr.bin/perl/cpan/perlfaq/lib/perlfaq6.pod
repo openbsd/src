@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq6 - Regular Expressions
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -401,7 +405,7 @@ need the C</o>.
 You can watch Perl's regular expression engine at work to verify for
 yourself if Perl is recompiling a regular expression. The C<use re
 'debug'> pragma (comes with Perl 5.005 and later) shows the details.
-With Perls before 5.6, you should see C<re> reporting that its
+With Perls before 5.6, you should see C<re> reporting that it's
 compiling the regular expression on each iteration. With Perl 5.6 or
 later, you should only see C<re> report that for the first iteration.
 
@@ -1117,3 +1121,5 @@ are hereby placed into the public domain. You are permitted and
 encouraged to use this code in your own programs for fun
 or for profit as you see fit. A simple comment in the code giving
 credit would be courteous but is not required.
+
+=cut

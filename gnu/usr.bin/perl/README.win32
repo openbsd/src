@@ -233,7 +233,7 @@ Be sure to read the instructions near the top of the makefiles carefully.
 Type C<gmake> (or C<nmake> if you are using that version of C<make>).
 
 This should build everything.  Specifically, it will create F<perl.exe>,
-F<perl540.dll> at the perl toplevel, and various other extension DLL's
+F<perl542.dll> at the perl toplevel, and various other extension DLL's
 under the F<lib\auto> directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
@@ -482,7 +482,7 @@ important that one of the following values appears in Config.pm:
 
     make='nmake'	# MakeMaker emits nmake syntax
     any other value	# MakeMaker emits generic make syntax
-    			    (e.g GNU make, or Perl make)
+                        #   (e.g., GNU make, or Perl make)
 
 If the value doesn't match the 'make' program you want to use,
 edit Config.pm to fix it.

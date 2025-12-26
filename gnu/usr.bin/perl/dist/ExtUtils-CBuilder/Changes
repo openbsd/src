@@ -1,5 +1,22 @@
 Revision history for Perl extension ExtUtils::CBuilder.
 
+0.280242
+
+ Fix:
+
+ - account for possibility of envvar $CC being defined
+   https://github.com/Perl/perl5/issues/23355
+
+0.280241
+
+ Fix:
+
+ - finding the correct cplusplus compiler
+
+0.280240
+
+ - make ExtUtils::CBuilder throw an exception on Windows on linker errors
+
 0.280239
 
  - make the definition of boot_compilet() in the probe code generated

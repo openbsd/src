@@ -1623,6 +1623,10 @@ invalid:+inf:NaN
 invalid:+inf:NaN
 +inf:invalid:NaN
 -inf:invalid:NaN
++inf:1:inf
+-inf:1:-inf
+1:+inf:inf
+1:-inf:-inf
 0:0:0
 1:0:1
 0:1:1
@@ -1686,6 +1690,10 @@ abc:+0:NaN
 -inf:+inf:-inf
 +inf:+inf:NaN
 -inf:-inf:NaN
++inf:1:inf
+-inf:1:-inf
+1:+inf:-inf
+1:-inf:inf
 +0:+0:0
 +1:+0:1
 +0:+1:-1

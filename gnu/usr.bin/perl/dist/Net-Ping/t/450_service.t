@@ -78,7 +78,7 @@ is($p->ping("127.0.0.1"), 1, 'first port is reachable');
 $p->{port_num} = $port2;
 
 {
-    local $TODO = "Believed not to work on $^O" if $^O =~ /^(?:MSWin32|os390)$/;
+    local $TODO = "Believed not to work on $^O" if $^O =~ /^(?:MSWin32|os390|cygwin)$/;
     is($p->ping("127.0.0.1"), 1, 'second port is reachable');
 }
 
@@ -133,7 +133,7 @@ SKIP: {
 
   {
     local $TODO = "Believed not to work on $^O"
-      if $^O =~ /^(?:MSWin32|os390)$/;
+      if $^O =~ /^(?:MSWin32|os390|cygwin)$/;
     is($p->ack(), '127.0.0.1', 'IP should be reachable');
   }
 }

@@ -8,14 +8,14 @@
 #
 # SPDX-License-Identifier: MIT
 
-package Test::RRA;
+package Test::RRA v11.0.0;
 
-use 5.010;
-use base qw(Exporter);
-use strict;
+use 5.012;
+use autodie;
 use warnings;
 
 use Carp qw(croak);
+use Exporter qw(import);
 use File::Temp;
 
 # Abort if Test::More was loaded before Test::RRA to be sure that we get the
@@ -38,22 +38,10 @@ if ($@) {
     exit 0;
 }
 
-# Declare variables that should be set in BEGIN for robustness.
-our (@EXPORT_OK, $VERSION);
-
-# Set $VERSION and everything export-related in a BEGIN block for robustness
-# against circular module loading (not that we load any modules, but
-# consistency is good).
-BEGIN {
-    @EXPORT_OK = qw(
-        is_file_contents skip_unless_author skip_unless_automated use_prereq
-    );
-
-    # This version should match the corresponding rra-c-util release, but with
-    # two digits for the minor version, including a leading zero if necessary,
-    # so that it will sort properly.
-    $VERSION = '10.03';
-}
+# Exports.
+our @EXPORT_OK = qw(
+    is_file_contents skip_unless_author skip_unless_automated use_prereq
+);
 
 # Compare a string to the contents of a file, similar to the standard is()
 # function, but to show the line-based unified diff between them if they
@@ -69,9 +57,9 @@ sub is_file_contents {
     my ($got, $expected, $message) = @_;
 
     # If they're equal, this is simple.
-    open(my $fh, '<', $expected) or BAIL_OUT("Cannot open $expected: $!\n");
+    open(my $fh, '<', $expected);
     my $data = do { local $/ = undef; <$fh> };
-    close($fh) or BAIL_OUT("Cannot close $expected: $!\n");
+    close($fh);
     if ($got eq $data) {
         is($got, $data, $message);
         return;
@@ -283,7 +271,7 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2016, 2018-2019, 2021 Russ Allbery <eagle@eyrie.org>
+Copyright 2016, 2018-2019, 2021, 2024 Russ Allbery <eagle@eyrie.org>
 
 Copyright 2013-2014 The Board of Trustees of the Leland Stanford Junior
 University

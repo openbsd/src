@@ -105,11 +105,18 @@ For the start of a new stable branch, follows this formula:
 This clearly sets the scope of which changes are to be summarized in the
 rest of the document.
 
-For all releases, a second paragraph points to the previous perldelta:
+For all releases, a second paragraph points to the previous perldelta
+and the preceding version from which that perldelta describes changes:
 
     If you are upgrading from an earlier release such as 5.rXXX.aXXX,
     first read perl5XXXdelta, which describes differences between
     5.rXXX.aXXX and 5.sXXX.bXXX.
+
+For a release on a stable branch, this will reference the two preceding
+stable releases. For example, the 5.12.1 perldelta will reference the
+5.12.0 perldelta describing differences between 5.10.0 and 5.12.0;
+the 5.12.4 perldelta will reference the 5.12.3 perldelta describing
+differences between 5.12.2 and 5.12.3.
 
 =item Notice
 

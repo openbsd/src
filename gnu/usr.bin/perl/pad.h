@@ -542,10 +542,7 @@ instead of a string/length pair.
     Perl_pad_add_name_pvn(aTHX_ STR_WITH_LEN(name), flags, typestash, ourstash)
 
 /*
-=for apidoc Am|PADOFFSET|pad_findmy_pvs|"name"|U32 flags
-
-Exactly like L</pad_findmy_pvn>, but takes a literal string
-instead of a string/length pair.
+=for apidoc_defn Am|PADOFFSET|pad_findmy_pvs|"name"|U32 flags
 
 =cut
 */

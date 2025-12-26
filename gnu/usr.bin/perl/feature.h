@@ -12,28 +12,67 @@
 
 #define HINT_FEATURE_SHIFT	26
 
-#define FEATURE_BAREWORD_FILEHANDLES_BIT    0x0001
-#define FEATURE_BITWISE_BIT                 0x0002
-#define FEATURE_CLASS_BIT                   0x0004
-#define FEATURE___SUB___BIT                 0x0008
-#define FEATURE_MYREF_BIT                   0x0010
-#define FEATURE_DEFER_BIT                   0x0020
-#define FEATURE_EVALBYTES_BIT               0x0040
-#define FEATURE_MORE_DELIMS_BIT             0x0080
-#define FEATURE_FC_BIT                      0x0100
-#define FEATURE_INDIRECT_BIT                0x0200
-#define FEATURE_ISA_BIT                     0x0400
-#define FEATURE_MODULE_TRUE_BIT             0x0800
-#define FEATURE_MULTIDIMENSIONAL_BIT        0x1000
-#define FEATURE_POSTDEREF_QQ_BIT            0x2000
-#define FEATURE_REFALIASING_BIT             0x4000
-#define FEATURE_SAY_BIT                     0x8000
-#define FEATURE_SIGNATURES_BIT              0x10000
-#define FEATURE_STATE_BIT                   0x20000
-#define FEATURE_SWITCH_BIT                  0x40000
-#define FEATURE_TRY_BIT                     0x80000
-#define FEATURE_UNIEVAL_BIT                 0x100000
-#define FEATURE_UNICODE_BIT                 0x200000
+/* Index 0 */
+#define FEATURE_APOS_AS_NAME_SEP_BIT                0x00000001
+#define FEATURE_BAREWORD_FILEHANDLES_BIT            0x00000002
+#define FEATURE_BITWISE_BIT                         0x00000004
+#define FEATURE_CLASS_BIT                           0x00000008
+#define FEATURE___SUB___BIT                         0x00000010
+#define FEATURE_MYREF_BIT                           0x00000020
+#define FEATURE_DEFER_BIT                           0x00000040
+#define FEATURE_EVALBYTES_BIT                       0x00000080
+#define FEATURE_MORE_DELIMS_BIT                     0x00000100
+#define FEATURE_FC_BIT                              0x00000200
+#define FEATURE_INDIRECT_BIT                        0x00000400
+#define FEATURE_ISA_BIT                             0x00000800
+#define FEATURE_KEYWORD_ALL_BIT                     0x00001000
+#define FEATURE_KEYWORD_ANY_BIT                     0x00002000
+#define FEATURE_MODULE_TRUE_BIT                     0x00004000
+#define FEATURE_MULTIDIMENSIONAL_BIT                0x00008000
+#define FEATURE_POSTDEREF_QQ_BIT                    0x00010000
+#define FEATURE_REFALIASING_BIT                     0x00020000
+#define FEATURE_SAY_BIT                             0x00040000
+#define FEATURE_SIGNATURES_BIT                      0x00080000
+#define FEATURE_SMARTMATCH_BIT                      0x00100000
+#define FEATURE_STATE_BIT                           0x00200000
+#define FEATURE_SWITCH_BIT                          0x00400000
+#define FEATURE_TRY_BIT                             0x00800000
+#define FEATURE_UNIEVAL_BIT                         0x01000000
+#define FEATURE_UNICODE_BIT                         0x02000000
+
+#define FEATURE_APOS_AS_NAME_SEP_INDEX                0
+#define FEATURE_BAREWORD_FILEHANDLES_INDEX            0
+#define FEATURE_BITWISE_INDEX                         0
+#define FEATURE_CLASS_INDEX                           0
+#define FEATURE___SUB___INDEX                         0
+#define FEATURE_MYREF_INDEX                           0
+#define FEATURE_DEFER_INDEX                           0
+#define FEATURE_EVALBYTES_INDEX                       0
+#define FEATURE_MORE_DELIMS_INDEX                     0
+#define FEATURE_FC_INDEX                              0
+#define FEATURE_INDIRECT_INDEX                        0
+#define FEATURE_ISA_INDEX                             0
+#define FEATURE_KEYWORD_ALL_INDEX                     0
+#define FEATURE_KEYWORD_ANY_INDEX                     0
+#define FEATURE_MODULE_TRUE_INDEX                     0
+#define FEATURE_MULTIDIMENSIONAL_INDEX                0
+#define FEATURE_POSTDEREF_QQ_INDEX                    0
+#define FEATURE_REFALIASING_INDEX                     0
+#define FEATURE_SAY_INDEX                             0
+#define FEATURE_SIGNATURES_INDEX                      0
+#define FEATURE_SMARTMATCH_INDEX                      0
+#define FEATURE_STATE_INDEX                           0
+#define FEATURE_SWITCH_INDEX                          0
+#define FEATURE_TRY_INDEX                             0
+#define FEATURE_UNIEVAL_INDEX                         0
+#define FEATURE_UNICODE_INDEX                         0
+
+#define REAL_COP_FEATURE_SIZE 1
+
+/* If the following errors, update COP_FEATURE_SIZE in cop.h */
+#if defined(COP_FEATURE_SIZE) && COP_FEATURE_SIZE != REAL_COP_FEATURE_SIZE
+#  error "COP_FEATURE_SIZE and REAL_COP_FEATURE_SIZE don't match"
+#endif
 
 #define FEATURE_BUNDLE_DEFAULT	0
 #define FEATURE_BUNDLE_510	1
@@ -44,6 +83,7 @@
 #define FEATURE_BUNDLE_535	6
 #define FEATURE_BUNDLE_537	7
 #define FEATURE_BUNDLE_539	8
+#define FEATURE_BUNDLE_541	9
 #define FEATURE_BUNDLE_CUSTOM	(HINT_FEATURE_MASK >> HINT_FEATURE_SHIFT)
 
 /* this is preserved for testing and asserts */
@@ -56,9 +96,9 @@
 #define CURRENT_FEATURE_BUNDLE \
     ((CURRENT_HINTS & HINT_FEATURE_MASK) >> HINT_FEATURE_SHIFT)
 
-#define FEATURE_IS_ENABLED_MASK(mask)                   \
+#define FEATURE_IS_ENABLED_MASK(index, mask)                   \
   ((CURRENT_HINTS & HINT_LOCALIZE_HH)                \
-    ? (PL_curcop->cop_features & (mask)) : FALSE)
+    ? (PL_curcop->cop_features.bits[index] & (mask)) : FALSE)
 
 /* The longest string we pass in.  */
 #define MAX_FEATURE_LEN (sizeof("bareword_filehandles")-1)
@@ -66,52 +106,53 @@
 #define FEATURE_FC_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_515 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_FC_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_FC_INDEX, FEATURE_FC_BIT)) \
     )
 
 #define FEATURE_ISA_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_535 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_ISA_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_ISA_INDEX, FEATURE_ISA_BIT)) \
     )
 
 #define FEATURE_SAY_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_510 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_SAY_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_SAY_INDEX, FEATURE_SAY_BIT)) \
     )
 
 #define FEATURE_TRY_IS_ENABLED \
     ( \
-	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_539 \
+	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_539 && \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_TRY_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_TRY_INDEX, FEATURE_TRY_BIT)) \
     )
 
 #define FEATURE_CLASS_IS_ENABLED \
     ( \
 	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_CLASS_BIT) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_CLASS_INDEX, FEATURE_CLASS_BIT) \
     )
 
 #define FEATURE_DEFER_IS_ENABLED \
     ( \
 	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_DEFER_BIT) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_DEFER_INDEX, FEATURE_DEFER_BIT) \
     )
 
 #define FEATURE_STATE_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_510 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_STATE_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_STATE_INDEX, FEATURE_STATE_BIT)) \
     )
 
 #define FEATURE_SWITCH_IS_ENABLED \
@@ -119,116 +160,146 @@
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_510 && \
 	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_527) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_SWITCH_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_SWITCH_INDEX, FEATURE_SWITCH_BIT)) \
     )
 
 #define FEATURE_BITWISE_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_527 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_BITWISE_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_BITWISE_INDEX, FEATURE_BITWISE_BIT)) \
     )
 
 #define FEATURE_INDIRECT_IS_ENABLED \
     ( \
 	CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_527 \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_INDIRECT_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_INDIRECT_INDEX, FEATURE_INDIRECT_BIT)) \
     )
 
 #define FEATURE_EVALBYTES_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_515 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_EVALBYTES_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_EVALBYTES_INDEX, FEATURE_EVALBYTES_BIT)) \
     )
 
 #define FEATURE_SIGNATURES_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_535 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_SIGNATURES_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_SIGNATURES_INDEX, FEATURE_SIGNATURES_BIT)) \
+    )
+
+#define FEATURE_SMARTMATCH_IS_ENABLED \
+    ( \
+	CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539 \
+     || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_SMARTMATCH_INDEX, FEATURE_SMARTMATCH_BIT)) \
     )
 
 #define FEATURE___SUB___IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_515 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE___SUB___BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE___SUB___INDEX, FEATURE___SUB___BIT)) \
+    )
+
+#define FEATURE_KEYWORD_ALL_IS_ENABLED \
+    ( \
+	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_KEYWORD_ALL_INDEX, FEATURE_KEYWORD_ALL_BIT) \
+    )
+
+#define FEATURE_KEYWORD_ANY_IS_ENABLED \
+    ( \
+	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_KEYWORD_ANY_INDEX, FEATURE_KEYWORD_ANY_BIT) \
     )
 
 #define FEATURE_MODULE_TRUE_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_537 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_MODULE_TRUE_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_MODULE_TRUE_INDEX, FEATURE_MODULE_TRUE_BIT)) \
     )
 
 #define FEATURE_REFALIASING_IS_ENABLED \
     ( \
 	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_REFALIASING_BIT) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_REFALIASING_INDEX, FEATURE_REFALIASING_BIT) \
     )
 
 #define FEATURE_POSTDEREF_QQ_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_523 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_POSTDEREF_QQ_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_POSTDEREF_QQ_INDEX, FEATURE_POSTDEREF_QQ_BIT)) \
     )
 
 #define FEATURE_UNIEVAL_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_515 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_UNIEVAL_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_UNIEVAL_INDEX, FEATURE_UNIEVAL_BIT)) \
     )
 
 #define FEATURE_MYREF_IS_ENABLED \
     ( \
 	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_MYREF_BIT) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_MYREF_INDEX, FEATURE_MYREF_BIT) \
     )
 
 #define FEATURE_UNICODE_IS_ENABLED \
     ( \
 	(CURRENT_FEATURE_BUNDLE >= FEATURE_BUNDLE_511 && \
-	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539) \
+	 CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_541) \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_UNICODE_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_UNICODE_INDEX, FEATURE_UNICODE_BIT)) \
     )
 
 #define FEATURE_MULTIDIMENSIONAL_IS_ENABLED \
     ( \
 	CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_527 \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_MULTIDIMENSIONAL_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_MULTIDIMENSIONAL_INDEX, FEATURE_MULTIDIMENSIONAL_BIT)) \
     )
 
 #define FEATURE_BAREWORD_FILEHANDLES_IS_ENABLED \
     ( \
 	CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_535 \
      || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_BAREWORD_FILEHANDLES_BIT)) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_BAREWORD_FILEHANDLES_INDEX, FEATURE_BAREWORD_FILEHANDLES_BIT)) \
     )
 
 #define FEATURE_MORE_DELIMS_IS_ENABLED \
     ( \
 	CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
-	 FEATURE_IS_ENABLED_MASK(FEATURE_MORE_DELIMS_BIT) \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_MORE_DELIMS_INDEX, FEATURE_MORE_DELIMS_BIT) \
+    )
+
+#define FEATURE_APOS_AS_NAME_SEP_IS_ENABLED \
+    ( \
+	CURRENT_FEATURE_BUNDLE <= FEATURE_BUNDLE_539 \
+     || (CURRENT_FEATURE_BUNDLE == FEATURE_BUNDLE_CUSTOM && \
+	 FEATURE_IS_ENABLED_MASK(FEATURE_APOS_AS_NAME_SEP_INDEX, FEATURE_APOS_AS_NAME_SEP_BIT)) \
     )
 
 
-#define SAVEFEATUREBITS() SAVEI32(PL_compiling.cop_features)
+#define SAVEFEATUREBITS() \
+    STMT_START {  \
+        SAVEI32(PL_compiling.cop_features.bits[0]);  \
+    } STMT_END
 
-#define CLEARFEATUREBITS() (PL_compiling.cop_features = 0)
+#define CLEARFEATUREBITS() \
+    (PL_compiling.cop_features.bits[0] = 0)
 
 #define FETCHFEATUREBITSHH(hh) S_fetch_feature_bits_hh(aTHX_ (hh))
 
@@ -241,6 +312,9 @@ S_enable_feature_bundle(pTHX_ SV *ver)
     SV *comp_ver = sv_newmortal();
     PL_hints = (PL_hints &~ HINT_FEATURE_MASK)
 	     | (
+		  (sv_setnv(comp_ver, 5.041),
+		   vcmp(ver, upg_version(comp_ver, FALSE)) >= 0)
+			? FEATURE_BUNDLE_541 :
 		  (sv_setnv(comp_ver, 5.039),
 		   vcmp(ver, upg_version(comp_ver, FALSE)) >= 0)
 			? FEATURE_BUNDLE_539 :
@@ -287,11 +361,22 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
     if (memBEGINs(keypv, keylen, "feature_")) {
         const char *subf = keypv + (sizeof("feature_")-1);
         U32 mask = 0;
+        int index = 0;
         switch (*subf) {
         case '_':
             if (keylen == sizeof("feature___SUB__")-1
                  && memcmp(subf+1, "_SUB__", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE___SUB___BIT;
+                index = FEATURE___SUB___INDEX;
+                break;
+            }
+            return;
+
+        case 'a':
+            if (keylen == sizeof("feature_apos_as_name_sep")-1
+                 && memcmp(subf+1, "pos_as_name_sep", keylen - sizeof("feature_")) == 0) {
+                mask = FEATURE_APOS_AS_NAME_SEP_BIT;
+                index = FEATURE_APOS_AS_NAME_SEP_INDEX;
                 break;
             }
             return;
@@ -300,11 +385,13 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_bareword_filehandles")-1
                  && memcmp(subf+1, "areword_filehandles", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_BAREWORD_FILEHANDLES_BIT;
+                index = FEATURE_BAREWORD_FILEHANDLES_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_bitwise")-1
                  && memcmp(subf+1, "itwise", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_BITWISE_BIT;
+                index = FEATURE_BITWISE_INDEX;
                 break;
             }
             return;
@@ -313,6 +400,7 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_class")-1
                  && memcmp(subf+1, "lass", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_CLASS_BIT;
+                index = FEATURE_CLASS_INDEX;
                 break;
             }
             return;
@@ -321,6 +409,7 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_defer")-1
                  && memcmp(subf+1, "efer", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_DEFER_BIT;
+                index = FEATURE_DEFER_INDEX;
                 break;
             }
             return;
@@ -329,6 +418,7 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_evalbytes")-1
                  && memcmp(subf+1, "valbytes", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_EVALBYTES_BIT;
+                index = FEATURE_EVALBYTES_INDEX;
                 break;
             }
             return;
@@ -337,6 +427,7 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_fc")-1
                  && memcmp(subf+1, "c", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_FC_BIT;
+                index = FEATURE_FC_INDEX;
                 break;
             }
             return;
@@ -345,11 +436,28 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_indirect")-1
                  && memcmp(subf+1, "ndirect", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_INDIRECT_BIT;
+                index = FEATURE_INDIRECT_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_isa")-1
                  && memcmp(subf+1, "sa", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_ISA_BIT;
+                index = FEATURE_ISA_INDEX;
+                break;
+            }
+            return;
+
+        case 'k':
+            if (keylen == sizeof("feature_keyword_all")-1
+                 && memcmp(subf+1, "eyword_all", keylen - sizeof("feature_")) == 0) {
+                mask = FEATURE_KEYWORD_ALL_BIT;
+                index = FEATURE_KEYWORD_ALL_INDEX;
+                break;
+            }
+            else if (keylen == sizeof("feature_keyword_any")-1
+                 && memcmp(subf+1, "eyword_any", keylen - sizeof("feature_")) == 0) {
+                mask = FEATURE_KEYWORD_ANY_BIT;
+                index = FEATURE_KEYWORD_ANY_INDEX;
                 break;
             }
             return;
@@ -358,21 +466,25 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_module_true")-1
                  && memcmp(subf+1, "odule_true", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_MODULE_TRUE_BIT;
+                index = FEATURE_MODULE_TRUE_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_more_delims")-1
                  && memcmp(subf+1, "ore_delims", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_MORE_DELIMS_BIT;
+                index = FEATURE_MORE_DELIMS_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_multidimensional")-1
                  && memcmp(subf+1, "ultidimensional", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_MULTIDIMENSIONAL_BIT;
+                index = FEATURE_MULTIDIMENSIONAL_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_myref")-1
                  && memcmp(subf+1, "yref", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_MYREF_BIT;
+                index = FEATURE_MYREF_INDEX;
                 break;
             }
             return;
@@ -381,6 +493,7 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_postderef_qq")-1
                  && memcmp(subf+1, "ostderef_qq", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_POSTDEREF_QQ_BIT;
+                index = FEATURE_POSTDEREF_QQ_INDEX;
                 break;
             }
             return;
@@ -389,6 +502,7 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_refaliasing")-1
                  && memcmp(subf+1, "efaliasing", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_REFALIASING_BIT;
+                index = FEATURE_REFALIASING_INDEX;
                 break;
             }
             return;
@@ -397,21 +511,31 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_say")-1
                  && memcmp(subf+1, "ay", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_SAY_BIT;
+                index = FEATURE_SAY_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_signatures")-1
                  && memcmp(subf+1, "ignatures", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_SIGNATURES_BIT;
+                index = FEATURE_SIGNATURES_INDEX;
+                break;
+            }
+            else if (keylen == sizeof("feature_smartmatch")-1
+                 && memcmp(subf+1, "martmatch", keylen - sizeof("feature_")) == 0) {
+                mask = FEATURE_SMARTMATCH_BIT;
+                index = FEATURE_SMARTMATCH_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_state")-1
                  && memcmp(subf+1, "tate", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_STATE_BIT;
+                index = FEATURE_STATE_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_switch")-1
                  && memcmp(subf+1, "witch", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_SWITCH_BIT;
+                index = FEATURE_SWITCH_INDEX;
                 break;
             }
             return;
@@ -420,6 +544,7 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_try")-1
                  && memcmp(subf+1, "ry", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_TRY_BIT;
+                index = FEATURE_TRY_INDEX;
                 break;
             }
             return;
@@ -428,11 +553,13 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             if (keylen == sizeof("feature_unicode")-1
                  && memcmp(subf+1, "nicode", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_UNICODE_BIT;
+                index = FEATURE_UNICODE_INDEX;
                 break;
             }
             else if (keylen == sizeof("feature_unieval")-1
                  && memcmp(subf+1, "nieval", keylen - sizeof("feature_")) == 0) {
                 mask = FEATURE_UNIEVAL_BIT;
+                index = FEATURE_UNIEVAL_INDEX;
                 break;
             }
             return;
@@ -441,9 +568,9 @@ S_magic_sethint_feature(pTHX_ SV *keysv, const char *keypv, STRLEN keylen,
             return;
         }
         if (valsv ? SvTRUE(valsv) : valbool)
-            PL_compiling.cop_features |= mask;
+            PL_compiling.cop_features.bits[index] |= mask;
         else
-            PL_compiling.cop_features &= ~mask;
+            PL_compiling.cop_features.bits[index] &= ~mask;
     }
 }
 #endif /* PERL_IN_MG_C */
@@ -453,6 +580,7 @@ struct perl_feature_bit {
   const char *name;
   STRLEN namelen;
   U32 mask;
+  int index;
 };
 
 #ifdef PERL_IN_PP_CTL_C
@@ -460,154 +588,218 @@ struct perl_feature_bit {
 static const struct perl_feature_bit
 PL_feature_bits[] = {
     {
+        /* feature apostrophe_as_package_separator */
+        "feature_apos_as_name_sep",
+        STRLENs("feature_apos_as_name_sep"),
+        FEATURE_APOS_AS_NAME_SEP_BIT,
+        FEATURE_APOS_AS_NAME_SEP_INDEX
+    },
+    {
         /* feature bareword_filehandles */
         "feature_bareword_filehandles",
         STRLENs("feature_bareword_filehandles"),
-        FEATURE_BAREWORD_FILEHANDLES_BIT
+        FEATURE_BAREWORD_FILEHANDLES_BIT,
+        FEATURE_BAREWORD_FILEHANDLES_INDEX
     },
     {
         /* feature bitwise */
         "feature_bitwise",
         STRLENs("feature_bitwise"),
-        FEATURE_BITWISE_BIT
+        FEATURE_BITWISE_BIT,
+        FEATURE_BITWISE_INDEX
     },
     {
         /* feature class */
         "feature_class",
         STRLENs("feature_class"),
-        FEATURE_CLASS_BIT
+        FEATURE_CLASS_BIT,
+        FEATURE_CLASS_INDEX
     },
     {
         /* feature current_sub */
         "feature___SUB__",
         STRLENs("feature___SUB__"),
-        FEATURE___SUB___BIT
+        FEATURE___SUB___BIT,
+        FEATURE___SUB___INDEX
     },
     {
         /* feature declared_refs */
         "feature_myref",
         STRLENs("feature_myref"),
-        FEATURE_MYREF_BIT
+        FEATURE_MYREF_BIT,
+        FEATURE_MYREF_INDEX
     },
     {
         /* feature defer */
         "feature_defer",
         STRLENs("feature_defer"),
-        FEATURE_DEFER_BIT
+        FEATURE_DEFER_BIT,
+        FEATURE_DEFER_INDEX
     },
     {
         /* feature evalbytes */
         "feature_evalbytes",
         STRLENs("feature_evalbytes"),
-        FEATURE_EVALBYTES_BIT
+        FEATURE_EVALBYTES_BIT,
+        FEATURE_EVALBYTES_INDEX
     },
     {
         /* feature extra_paired_delimiters */
         "feature_more_delims",
         STRLENs("feature_more_delims"),
-        FEATURE_MORE_DELIMS_BIT
+        FEATURE_MORE_DELIMS_BIT,
+        FEATURE_MORE_DELIMS_INDEX
     },
     {
         /* feature fc */
         "feature_fc",
         STRLENs("feature_fc"),
-        FEATURE_FC_BIT
+        FEATURE_FC_BIT,
+        FEATURE_FC_INDEX
     },
     {
         /* feature indirect */
         "feature_indirect",
         STRLENs("feature_indirect"),
-        FEATURE_INDIRECT_BIT
+        FEATURE_INDIRECT_BIT,
+        FEATURE_INDIRECT_INDEX
     },
     {
         /* feature isa */
         "feature_isa",
         STRLENs("feature_isa"),
-        FEATURE_ISA_BIT
+        FEATURE_ISA_BIT,
+        FEATURE_ISA_INDEX
+    },
+    {
+        /* feature keyword_all */
+        "feature_keyword_all",
+        STRLENs("feature_keyword_all"),
+        FEATURE_KEYWORD_ALL_BIT,
+        FEATURE_KEYWORD_ALL_INDEX
+    },
+    {
+        /* feature keyword_any */
+        "feature_keyword_any",
+        STRLENs("feature_keyword_any"),
+        FEATURE_KEYWORD_ANY_BIT,
+        FEATURE_KEYWORD_ANY_INDEX
     },
     {
         /* feature module_true */
         "feature_module_true",
         STRLENs("feature_module_true"),
-        FEATURE_MODULE_TRUE_BIT
+        FEATURE_MODULE_TRUE_BIT,
+        FEATURE_MODULE_TRUE_INDEX
     },
     {
         /* feature multidimensional */
         "feature_multidimensional",
         STRLENs("feature_multidimensional"),
-        FEATURE_MULTIDIMENSIONAL_BIT
+        FEATURE_MULTIDIMENSIONAL_BIT,
+        FEATURE_MULTIDIMENSIONAL_INDEX
     },
     {
         /* feature postderef_qq */
         "feature_postderef_qq",
         STRLENs("feature_postderef_qq"),
-        FEATURE_POSTDEREF_QQ_BIT
+        FEATURE_POSTDEREF_QQ_BIT,
+        FEATURE_POSTDEREF_QQ_INDEX
     },
     {
         /* feature refaliasing */
         "feature_refaliasing",
         STRLENs("feature_refaliasing"),
-        FEATURE_REFALIASING_BIT
+        FEATURE_REFALIASING_BIT,
+        FEATURE_REFALIASING_INDEX
     },
     {
         /* feature say */
         "feature_say",
         STRLENs("feature_say"),
-        FEATURE_SAY_BIT
+        FEATURE_SAY_BIT,
+        FEATURE_SAY_INDEX
     },
     {
         /* feature signatures */
         "feature_signatures",
         STRLENs("feature_signatures"),
-        FEATURE_SIGNATURES_BIT
+        FEATURE_SIGNATURES_BIT,
+        FEATURE_SIGNATURES_INDEX
+    },
+    {
+        /* feature smartmatch */
+        "feature_smartmatch",
+        STRLENs("feature_smartmatch"),
+        FEATURE_SMARTMATCH_BIT,
+        FEATURE_SMARTMATCH_INDEX
     },
     {
         /* feature state */
         "feature_state",
         STRLENs("feature_state"),
-        FEATURE_STATE_BIT
+        FEATURE_STATE_BIT,
+        FEATURE_STATE_INDEX
     },
     {
         /* feature switch */
         "feature_switch",
         STRLENs("feature_switch"),
-        FEATURE_SWITCH_BIT
+        FEATURE_SWITCH_BIT,
+        FEATURE_SWITCH_INDEX
     },
     {
         /* feature try */
         "feature_try",
         STRLENs("feature_try"),
-        FEATURE_TRY_BIT
+        FEATURE_TRY_BIT,
+        FEATURE_TRY_INDEX
     },
     {
         /* feature unicode_eval */
         "feature_unieval",
         STRLENs("feature_unieval"),
-        FEATURE_UNIEVAL_BIT
+        FEATURE_UNIEVAL_BIT,
+        FEATURE_UNIEVAL_INDEX
     },
     {
         /* feature unicode_strings */
         "feature_unicode",
         STRLENs("feature_unicode"),
-        FEATURE_UNICODE_BIT
+        FEATURE_UNICODE_BIT,
+        FEATURE_UNICODE_INDEX
     },
-    { NULL, 0, 0U }
+    { NULL, 0, 0U, 0 }
 };
 
 PERL_STATIC_INLINE void
 S_fetch_feature_bits_hh(pTHX_ HV *hh) {
-    PL_compiling.cop_features = 0;
+    CLEARFEATUREBITS();
 
     const struct perl_feature_bit *fb = PL_feature_bits;
     while (fb->name) {
         SV **svp = hv_fetch(hh, fb->name, (I32)fb->namelen, 0);
         if (svp && SvTRUE(*svp))
-               PL_compiling.cop_features |= fb->mask;
+               PL_compiling.cop_features.bits[fb->index] |= fb->mask;
         ++fb;
     }
 }
 
-#endif
+#endif /* PERL_IN_PP_CTL_C */
+
+#ifdef PERL_IN_DUMP_C
+
+#define ANY_FEATURE_BITS_SET(cop)  \
+    (                              \
+      cop->cop_features.bits[0]    \
+    )
+
+#define DUMP_FEATURE_BITS(file, cop) \
+    STMT_START { \
+        PerlIO_printf(file, "0x%" U32xf, cop->cop_features.bits[0]); \
+    } STMT_END
+
+#endif /* PERL_IN_DUMP_C */
 
 #endif /* PERL_FEATURE_H_ */
 

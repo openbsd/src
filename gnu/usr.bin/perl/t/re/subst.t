@@ -4,12 +4,11 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib');
-    require Config; Config->import;
-    require constant;
-    constant->import(constcow => *Config::{NAME});
     require './charset_tools.pl';
     require './loc_tools.pl';
 }
+use Config;
+use constant constcow => *Config::{NAME};
 
 plan(tests => 281);
 

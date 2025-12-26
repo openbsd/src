@@ -2,15 +2,14 @@
 #
 # Test Pod::Man with a document that produces only errors.
 #
-# Copyright 2013, 2016, 2018-2019, 2022 Russ Allbery <rra@cpan.org>
+# Copyright 2013, 2016, 2018-2019, 2022, 2024 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.010;
-use strict;
+use 5.012;
 use warnings;
 
 use Test::More tests => 8;
@@ -41,7 +40,8 @@ is($@, q{}, '...with no errors');
 # With recent Pod::Simple, there will be a POD ERRORS section.  With older
 # versions of Pod::Simple, we have to skip the test since it doesn't trigger
 # this problem.
-SKIP: {
+SKIP:
+{
     if ($output eq q{}) {
         skip('Pod::Simple does not produce errors for invalid commands', 1);
     }
@@ -57,7 +57,8 @@ ok(eval { $parser->parse_string_document('=cut') }, 'Parsed =cut document');
 is($@, q{}, '...with no errors');
 
 # Same check for a POD ERRORS section.
-SKIP: {
+SKIP:
+{
     if ($output eq q{}) {
         skip('Pod::Simple does not produce errors for invalid commands', 1);
     }

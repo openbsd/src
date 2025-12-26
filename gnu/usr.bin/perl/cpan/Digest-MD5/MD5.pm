@@ -3,7 +3,7 @@ package Digest::MD5;
 use strict;
 use warnings;
 
-our $VERSION = '2.58_01';
+our $VERSION = '2.59';
 
 require Exporter;
 *import = \&Exporter::import;
@@ -27,15 +27,15 @@ eval {
 if ($@) {
     my $olderr = $@;
     eval {
-	# Try to load the pure perl version
-	require Digest::Perl::MD5;
+        # Try to load the pure perl version
+        require Digest::Perl::MD5;
 
-	Digest::Perl::MD5->import(qw(md5 md5_hex md5_base64));
-	unshift(@ISA, "Digest::Perl::MD5");  # make OO interface work
+        Digest::Perl::MD5->import(qw(md5 md5_hex md5_base64));
+        unshift(@ISA, "Digest::Perl::MD5");  # make OO interface work
     };
     if ($@) {
-	# restore the original error
-	die $olderr;
+        # restore the original error
+        die $olderr;
     }
 }
 else {
@@ -51,24 +51,24 @@ Digest::MD5 - Perl interface to the MD5 Algorithm
 
 =head1 SYNOPSIS
 
- # Functional style
- use Digest::MD5 qw(md5 md5_hex md5_base64);
+    # Functional style
+    use Digest::MD5 qw(md5 md5_hex md5_base64);
 
- $digest = md5($data);
- $digest = md5_hex($data);
- $digest = md5_base64($data);
+    my $digest = md5($data);
+    my $digest = md5_hex($data);
+    my $digest = md5_base64($data);
 
- # OO style
- use Digest::MD5;
+    # OO style
+    use Digest::MD5;
 
- $ctx = Digest::MD5->new;
+    my $ctx = Digest::MD5->new;
 
- $ctx->add($data);
- $ctx->addfile($file_handle);
+    $ctx->add($data);
+    $ctx->addfile($file_handle);
 
- $digest = $ctx->digest;
- $digest = $ctx->hexdigest;
- $digest = $ctx->b64digest;
+    $digest = $ctx->digest;
+    $digest = $ctx->hexdigest;
+    $digest = $ctx->b64digest;
 
 =head1 DESCRIPTION
 
@@ -157,8 +157,8 @@ stream.  Example:
 
     my $md5 = Digest::MD5->new;
     while (<>) {
-	$md5->add($_);
-	print "Line $.: ", $md5->clone->hexdigest, "\n";
+        $md5->add($_);
+        print "Line $.: ", $md5->clone->hexdigest, "\n";
     }
 
 =item $md5->add($data,...)
@@ -258,12 +258,10 @@ The above example would print out the message:
 The same checksum can also be calculated in OO style:
 
     use Digest::MD5;
-    
-    $md5 = Digest::MD5->new;
+    my $md5 = Digest::MD5->new;
     $md5->add('foo', 'bar');
     $md5->add('baz');
-    $digest = $md5->hexdigest;
-    
+    my $digest = $md5->hexdigest;
     print "Digest is $digest\n";
 
 With OO style, you can break the message arbitrarily.  This means that we
@@ -278,7 +276,7 @@ This is useful when calculating checksum for files:
     open (my $fh, '<', $filename) or die "Can't open '$filename': $!";
     binmode($fh);
 
-    $md5 = Digest::MD5->new;
+    my $md5 = Digest::MD5->new;
     while (<$fh>) {
         $md5->add($_);
     }

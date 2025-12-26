@@ -1,7 +1,7 @@
 #!./perl -w
 $|=1;
+use Config;
 BEGIN {
-    require Config; import Config;
     if ($Config{'extensions'} !~ /\bOpcode\b/ && $Config{'osname'} ne 'VMS') {
         print "1..0\n";
         exit 0;
@@ -28,10 +28,10 @@ $Root::foo .= "";
 
 my $cpt;
 # create and destroy a couple of automatic Safe compartments first
-$cpt = new Safe or die;
-$cpt = new Safe or die;
+$cpt = Safe->new or die;
+$cpt = Safe->new or die;
 
-$cpt = new Safe "Root";
+$cpt = Safe->new("Root");
 
 $cpt->permit(qw(:base_io));
 

@@ -8,7 +8,7 @@ perlfaq2 - Obtaining and Learning about Perl
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -27,7 +27,7 @@ all known and current Unix derivatives are supported (perl's native
 platform), as are other systems like VMS, DOS, OS/2, Windows,
 QNX, BeOS, OS X, MPE/iX and the Amiga.
 
-Binary distributions for some proprietary platforms can be found
+Binary distributions for some proprietary platforms can be found in the
 L<http://www.cpan.org/ports/> directory. Because these are not part of
 the standard distribution, they may and in fact do differ from the
 base perl port in a variety of ways. You'll have to check their
@@ -120,8 +120,8 @@ L<view online|http://perldoc.perl.org/perl.html>.
 (Some operating system distributions may ship the documentation in a different
 package; for instance, on Debian, you need to install the C<perl-doc> package.)
 
-Many good books have been written about Perl--see the section later in
-L<perlfaq2> for more details.
+Many good books have been written about Perl--see the L</"Perl Books"> section
+for more details.
 
 =head2 What is perl.com? Perl Mongers? pm.org? perl.org? cpan.org?
 
@@ -162,7 +162,7 @@ See L<What is CPAN?|/"What modules and extensions are available for Perl? What i
 
 =head2 Where can I post questions?
 
-There are many Perl L<mailing lists|lists.perl.org> for various
+There are many Perl L<mailing lists|https://lists.perl.org> for various
 topics, specifically the L<beginners list|http://lists.perl.org/list/beginners.html>
 may be of use.
 
@@ -229,13 +229,13 @@ To determine if a module came with your version of Perl, you can
 install and use L<Module::CoreList>. It knows the modules (with their
 versions) included with each release of Perl:
 
-	$ corelist File::Copy
-	Data for 2023-07-02
-	File::Copy was first released with perl 5.002
+    $ corelist File::Copy
+    Data for 2023-07-02
+    File::Copy was first released with perl 5.002
 
-	$ corelist Business::ISBN
-	Data for 2023-07-02
-	Business::ISBN was not in CORE (or so I think)
+    $ corelist Business::ISBN
+    Data for 2023-07-02
+    Business::ISBN was not in CORE (or so I think)
 
 If the module does not come with Perl, report its issues
 using the tool that the particular module author decided to use, such as
@@ -252,14 +252,14 @@ Use the directions you find.
 Sometimes the module author does not declare a bugtracker. For a long
 time, everyone assumed that the CPAN Request Tracker
 (L<https://rt.cpan.org>) was the bugtracker since every distribution had
-an RT queue generated automatically. In somes cases, the author might
+an RT queue generated automatically. In some cases, the author might
 use CPAN RT. They also might have not declared a different
 bugtracker but don't use CPAN RT.
 
 Submit bugs to RT either through its web interface,
 L<https://rt.cpan.org>, or by email. Send email to I<<
 bug-E<lt>distribution-nameE<gt>@rt.cpan.org >>. For example, if you
-wanted to report a bug in the example module L<Foo::Bar>, you could send
+wanted to report a bug in the example module C<Foo::Bar>, you could send
 a message to I<bug-Foo-Bar@rt.cpan.org>.
 
 =head1 AUTHOR AND COPYRIGHT

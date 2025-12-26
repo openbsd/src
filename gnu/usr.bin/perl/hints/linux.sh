@@ -486,3 +486,10 @@ case "$libdb_needs_pthread" in
     libswanted="$libswanted pthread"
     ;;
 esac
+
+# Detect case-insensitive file systems
+echo X >UU/casesense.tmp
+if test -f UU/CASESENSE.TMP && test -f UU/CaSeSeNsE.tMp; then
+    firstmakefile='GNUmakefile'
+fi
+rm -f UU/casesense.tmp

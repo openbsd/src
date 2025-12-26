@@ -128,8 +128,7 @@ everywhere.  It's fine to probe for additional C99 features and use
 them where available, providing there is also a fallback for compilers
 that don't support the feature.  For example, we use C11 thread local
 storage when available, but fall back to POSIX thread specific APIs
-otherwise, and we use C<char> for booleans if C<< <stdbool.h> >> isn't
-available.
+otherwise.
 
 Code can use (and rely on) the following C99 features being present
 
@@ -233,6 +232,13 @@ C<//> comments
 All compilers we tested support their use. Not all humans we tested
 support their use.
 
+=item *
+
+booleans
+
+You can use C<bool>, C<true>, and C<false> as provided by C<< <stdbool.h> >>
+(or natively in C++).
+
 =back
 
 Code explicitly should not use any other C99 features. For example
@@ -262,7 +268,7 @@ C<snprintf> in the VMS libc only added support for C<PRIdN> etc very
 recently, meaning that there are live supported installations without
 this, or formats such as C<%zu>.
 
-(perl's C<sv_catpvf> etc use parser code code in F<sv.c>, which
+(perl's C<sv_catpvf> etc use parser code in F<sv.c>, which
 supports the C<z> modifier, along with perl-specific formats such as
 C<SVf>.)
 
@@ -362,8 +368,11 @@ It's best then to:
 
 =over
 
-=item B<Don't begin a symbol name with an underscore>; (I<e.g.>, don't
+=item B<Don't begin a file-level symbol name with an underscore>; (I<e.g.>, don't
 use: C<_FOOBAR>)
+
+It is fine to have a symbol in a function or block like C<_ref>,
+beginning with an underscore followed by a lowercase letter.
 
 =item B<Don't use two consecutive underscores in a symbol name>;
 (I<e.g.>, don't use C<FOO__BAR>)
@@ -376,7 +385,7 @@ Perl also has conflicts with that.
 
 Perl reserves for its use any symbol beginning with C<Perl>, C<perl>,
 or C<PL_>.  Any time you introduce a macro into a header file that
-doesn't follow that convention, you are creating the possiblity of a
+doesn't follow that convention, you are creating the possibility of a
 namespace clash with an existing XS module, unless you restrict it by,
 say,
 
@@ -398,7 +407,7 @@ the issues.
 
 =head3 Choosing good symbol names
 
-Ideally, a symbol name name should correctly and precisely describe its
+Ideally, a symbol name should correctly and precisely describe its
 intended purpose.  But there is a tension between that and getting
 names that are overly long and hence awkward to type and read.
 Metaphors could be helpful (a poetic name), but those tend to be
@@ -453,6 +462,7 @@ functions are fully supported in modern compilers.
 Nevertheless, there are situations where a function won't do, and a
 macro is required.  One example is when a parameter can be any of
 several types.  A function has to be declared with a single explicit
+parameter type, so a macro may be called for.
 
 Or maybe the code involved is so trivial that a function would be just
 complicating overkill, such as when the macro simply creates a mnemonic
@@ -512,7 +522,7 @@ restrictions on what names you can use.)
 
 This kind of name collision doesn't happen with the macro's formal
 parameters, so they don't need to have complicated names.  But there
-are pitfalls when a a parameter is an expression, or has some Perl
+are pitfalls when a parameter is an expression, or has some Perl
 magic attached.  When calling a function, C will evaluate the parameter
 once, and pass the result to the function.  But when calling a macro,
 the parameter is copied as-is by the C preprocessor to each instance
@@ -550,7 +560,7 @@ L<https://perlmonks.org/?node_id=11144355>.
 =head2 Portability problems
 
 The following are common causes of compilation and/or execution
-failures, not common to Perl as such.  The C FAQ is good bedtime
+failures, not specific to Perl as such.  The C FAQ is good bedtime
 reading.  Please test your changes with as many C compilers and
 platforms as possible; we will, anyway, and it's nice to save oneself
 from public embarrassment.
@@ -601,7 +611,7 @@ C<long long> is not even guaranteed to be any wider than C<long>.)
 
 Instead, use the definitions C<IV>, C<UV>, C<IVSIZE>, C<I32SIZE>, and
 so forth. Avoid things like C<I32> because they are B<not> guaranteed
-to be I<exactly> 32 bits, they are I<at least> 32 bits, nor are they
+to be I<exactly> 32 bits (they are I<at least> 32 bits), nor are they
 guaranteed to be C<int> or C<long>.  If you explicitly need 64-bit
 variables, use C<I64> and C<U64>.
 
@@ -879,7 +889,8 @@ intelligence, but for many types the right format is available as with
 either 'f' or '_f' suffix, for example:
 
    IVdf /* IV in decimal */
-   UVxf /* UV is hexadecimal */
+   UVxf /* UV in hexadecimal */
+   U32of /* A U32 in octal */
 
    printf("i = %"IVdf"\n", i); /* The IVdf is a string constant. */
 
@@ -990,30 +1001,28 @@ L<https://sourceforge.net/p/predef/wiki/Home/>.
 Assuming the contents of static memory pointed to by the return values
 of Perl wrappers for C library functions doesn't change.  Many C
 library functions return pointers to static storage that can be
-overwritten by subsequent calls to the same or related functions.  Perl
-has wrappers for some of these functions.  Originally many of those
-wrappers returned those volatile pointers.  But over time almost all of
-them have evolved to return stable copies.  To cope with the remaining
-ones, do a L<perlapi/savepv> to make a copy, thus avoiding these
-problems.  You will have to free the copy when you're done to avoid
-memory leaks.  If you don't have control over when it gets freed,
-you'll need to make the copy in a mortal scalar, like so
+overwritten by subsequent calls to the same or related functions.  If
+you handle those returns before one of those functions that share the
+storage gets called, this is fine, but in embedded perls, or when using
+threads, such a function may get called before you get a chance to
+handle it.
 
- SvPVX(sv_2mortal(newSVpv(volatile_string, 0)))
+L<perlclib/Dealing with embedded perls and threads> contains a list of
+problematic functions with good advice as to how to cope with them.
 
 =back
 
 =head2 Problematic System Interfaces
 
-=over 4
+There are lots of issues with using various C library functions,
+including security ones.  You should read L<perlclib> which covers
+things in detail.
 
-=item *
-
-Perl strings are NOT the same as C strings:  They may contain C<NUL>
-characters, whereas a C string is terminated by the first C<NUL>. That
-is why Perl API functions that deal with strings generally take a
-pointer to the first byte and either a length or a pointer to the byte
-just beyond the final one.
+Remember that Perl strings are NOT the same as C strings:  They may
+contain C<NUL> characters, whereas a C string is terminated by the first
+C<NUL>. That is why Perl API functions that deal with strings generally
+take a pointer to the first byte and either a length or a pointer to the
+byte just beyond the final one.
 
 And this is the reason that many of the C library string handling
 functions should not be used.  They don't cope with the full generality
@@ -1039,84 +1048,6 @@ if C<c> is in C<"list"> and works even if C<c> is C<NUL>.  These
 functions need an additional parameter to give the string length. In
 the case of literal string parameters, perl has defined macros that
 calculate the length for you.  See L<perlapi/String Handling>.
-
-=item *
-
-malloc(0), realloc(0), calloc(0, 0) are non-portable.  To be portable
-allocate at least one byte.  (In general you should rarely need to work
-at this low level, but instead use the various malloc wrappers.)
-
-=item *
-
-snprintf() - the return type is unportable.  Use my_snprintf() instead.
-
-=back
-
-=head2 Security problems
-
-Last but not least, here are various tips for safer coding. See also
-L<perlclib> for libc/stdio replacements one should use.
-
-=over 4
-
-=item *
-
-Do not use gets()
-
-Or we will publicly ridicule you.  Seriously.
-
-=item *
-
-Do not use tmpfile()
-
-Use mkstemp() instead.
-
-=item *
-
-Do not use strcpy() or strcat() or strncpy() or strncat()
-
-Use my_strlcpy() and my_strlcat() instead: they either use the native
-implementation, or Perl's own implementation (borrowed from the public
-domain implementation of INN).
-
-=item *
-
-Do not use sprintf() or vsprintf()
-
-If you really want just plain byte strings, use my_snprintf() and
-my_vsnprintf() instead, which will try to use snprintf() and
-vsnprintf() if those safer APIs are available.  If you want something
-fancier than a plain byte string, use L<C<Perl_form>()|perlapi/form> or
-SVs and L<C<Perl_sv_catpvf()>|perlapi/sv_catpvf>.
-
-Note that glibc C<printf()>, C<sprintf()>, etc. are buggy before glibc
-version 2.17.  They won't allow a C<%.s> format with a precision to
-create a string that isn't valid UTF-8 if the current underlying locale
-of the program is UTF-8.  What happens is that the C<%s> and its
-operand are simply skipped without any notice.
-L<https://sourceware.org/bugzilla/show_bug.cgi?id=6530>.
-
-=item *
-
-Do not use atoi()
-
-Use grok_atoUV() instead.  atoi() has ill-defined behavior on
-overflows, and cannot be used for incremental parsing.  It is also
-affected by locale, which is bad.
-
-=item *
-
-Do not use strtol() or strtoul()
-
-Use grok_atoUV() instead.  strtol() or strtoul() (or their
-IV/UV-friendly macro disguises, Strtol() and Strtoul(), or Atol() and
-Atoul() are affected by locale, which is bad.
-
-=for apidoc_section $numeric
-=for apidoc AmhD||Atol|const char * nptr
-=for apidoc AmhD||Atoul|const char * nptr
-
-=back
 
 =head1 DEBUGGING
 
@@ -1900,7 +1831,7 @@ will need to build perl with C<CFG=Debug> or C<CFG=DebugSymbols>.
 
 The Visual Studio profiler is a sampling profiler.
 
-See L<the visual studio
+See L<the Visual Studio
 documentation|https://github.com/MicrosoftDocs/visualstudio-docs/blob/main/docs/profiling/beginners-guide-to-performance-profiling.md>
 to get started.
 
@@ -2190,7 +2121,7 @@ C99, and so some workarounds were created.  The C<TRUE> and C<FALSE>
 macros are still available as alternatives for C<true> and C<false>.
 And the C<cBOOL> macro was created to correctly cast to a true/false
 value in all circumstances, but should no longer be necessary.  Using
-S<C<(bool)> I<expr>>> should now always work.
+S<C<(bool)> I<expr>> should now always work.
 
 There are no plans to remove any of C<TRUE>, C<FALSE>, nor C<cBOOL>.
 

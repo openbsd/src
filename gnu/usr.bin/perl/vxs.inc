@@ -46,6 +46,8 @@
     {VXS_CLASS "::(0+", VXSp(version_numify), VXSXSDP(NULL)},
     {VXS_CLASS "::numify", VXSp(version_numify), VXSXSDP(NULL)},
     {VXS_CLASS "::normal", VXSp(version_normal), VXSXSDP(NULL)},
+    {VXS_CLASS "::to_decimal", VXSp(version_to_decimal), VXSXSDP(NULL)},
+    {VXS_CLASS "::to_dotted_decimal", VXSp(version_to_dotted_decimal), VXSXSDP(NULL)},
     {VXS_CLASS "::(cmp", VXSp(version_vcmp), VXSXSDP(NULL)},
     {VXS_CLASS "::(<=>", VXSp(version_vcmp), VXSXSDP(NULL)},
 #  ifdef PERL_CORE
@@ -70,6 +72,8 @@
     {VXS_CLASS "::qv", VXSp(version_qv), VXSXSDP(NULL)},
     {VXS_CLASS "::declare", VXSp(version_qv), VXSXSDP(NULL)},
     {VXS_CLASS "::is_qv", VXSp(version_is_qv), VXSXSDP(NULL)},
+    {VXS_CLASS "::tuple", VXSp(version_tuple), VXSXSDP(NULL)},
+    {VXS_CLASS "::from_tuple", VXSp(version_from_tuple), VXSXSDP(NULL)},
 #else
 
 #ifndef dVAR
@@ -296,6 +300,37 @@ VXS(version_normal)
      }
 }
 
+VXS(version_to_decimal)
+{
+     dXSARGS;
+     SV* self = ST(0);
+     if (items < 1)
+	 croak_xs_usage(cv, "lobj, ...");
+     SP -= items;
+     {
+	  SV *lobj, *rv;
+	  VTYPECHECK(lobj, self, "lobj");
+          rv = NEW_VERSION(VNUMIFY(lobj));
+	  VXS_RETURN_M_SV(sv_bless(rv, SvSTASH(SvRV(self))));
+     }
+}
+
+VXS(version_to_dotted_decimal)
+{
+     dXSARGS;
+     SV* self = ST(0);
+     if (items != 1)
+	 croak_xs_usage(cv, "ver");
+     SP -= items;
+     {
+	  SV *lobj, *rv;
+	  VTYPECHECK(lobj, self, "lobj");
+          rv = NEW_VERSION(VNORMAL(lobj));
+          sv_bless(rv, SvSTASH(SvRV(self)));
+	  VXS_RETURN_M_SV(sv_bless(rv, SvSTASH(SvRV(self))));
+     }
+}
+
 VXS(version_vcmp)
 {
      dXSARGS;
@@ -444,6 +479,69 @@ VXS(version_qv)
 VXS(version_is_qv)
 {
     S_version_check_key(aTHX_ cv, "qv", 2);
+}
+
+VXS(version_tuple)
+{
+    dXSARGS;
+    if (items != 1)
+	croak_xs_usage(cv, "lobj");
+    SP -= items;
+    {
+	SV * lobj;
+	size_t i;
+	VTYPECHECK(lobj, ST(0), "lobj");
+
+	SV** avptr = hv_fetchs(MUTABLE_HV(lobj), "version", 0);
+	if (!avptr || !SvROK(*avptr) || SvTYPE(SvRV(*avptr)) != SVt_PVAV) {
+	    PUTBACK;
+	    return;
+	}
+	AV* version = MUTABLE_AV(SvRV(*avptr));
+	for (i = 0; i < av_count(version); ++i) {
+	    SV** svptr = av_fetch(version, i, 0);
+	    if (!svptr || !*svptr) {
+		PUTBACK;
+		return;
+	    }
+	    XPUSHs(*svptr);
+	}
+	PUTBACK;
+     }
+}
+
+VXS(version_from_tuple)
+{
+    dXSARGS;
+    SV *lobj;
+    int i;
+    if (items < 2)
+	croak_xs_usage(cv, "lobj, ...");
+    lobj = ST(0);
+    SP -= items;
+
+    AV* versions = newAV();
+    SV* original = newSVpvs("v");
+
+    for (i = 1; i < items; ++i) {
+	if (SvIV(ST(i)) < 0)
+	    Perl_croak(aTHX_ "Value %" IVdf " in version is negative", SvIV(ST(i)));
+	UV value = SvUV(ST(i));
+	av_push(versions, newSVuv(value));
+	if (i != 1)
+	    sv_catpvs(original, ".");
+	sv_catpvf(original, "%" UVuf, value);
+    }
+
+    HV* hash = newHV();
+    (void)hv_stores(hash, "version", newRV_noinc(MUTABLE_SV(versions)));
+    (void)hv_stores(hash, "original", original);
+    (void)hv_stores(hash, "qv", newSVsv(&PL_sv_yes));
+
+    HV* stash = SvROK(lobj) ? SvSTASH(lobj) : gv_stashsv(lobj, GV_ADD);
+    SV* result = sv_bless(newRV_noinc(MUTABLE_SV(hash)), stash);
+    XPUSHs(result);
+    PUTBACK;
 }
 
 #endif

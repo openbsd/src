@@ -1188,33 +1188,33 @@ SKIP:
                                     # of bytes on ASCII and EBCDIC: 5
     utf8::encode($utf_ch);
     my $utf_ch_len = length $utf_ch;
-    note "utf_ch_len $utf_ch_len";
+    note "bytes in each \$utf_ch $utf_ch_len";
     my $utf = $utf_ch x 10;
     my $bad_start = substr($utf, 1);
     # $bad_end ends with a start byte and a single continuation
     my $bad_end = substr($utf, 0, length($utf)-$utf_ch_len+2);
 
     my @hop_tests =
-      (  #           start byte      chars
-       # string      in 'string'     to hop      expected         name
-       [ $simple,    0,               5,         5,               "simple in range, forward" ],
+      (  #           start byte      chars       expected
+       # string      in 'string'     to hop      new pos          name
+       [ $simple,    0,                5,        5,               "simple in range, forward" ],
        [ $simple,    10,              -5,        5,               "simple in range, backward" ],
-       [ $simple,    5,               10,        10,              "simple out of range, forward" ],
-       [ $simple,    5,               -10,       0,               "simple out of range, backward" ],
-       [ $utf,       $utf_ch_len * 5, 5,         length($utf),    "utf in range, forward" ],
+       [ $simple,    5,               10,       10,               "simple out of range, forward" ],
+       [ $simple,    5,              -10,        0,               "simple out of range, backward" ],
+       [ $utf,       $utf_ch_len * 5,  5,        length($utf),    "utf in range, forward" ],
        [ $utf,       $utf_ch_len * 5, -5,        0,               "utf in range, backward" ],
-       [ $utf,       $utf_ch_len * 5, 4,         $utf_ch_len * 9, "utf in range b, forward" ],
+       [ $utf,       $utf_ch_len * 5,  4,        $utf_ch_len * 9, "utf in range b, forward" ],
        [ $utf,       $utf_ch_len * 5, -4,        $utf_ch_len,     "utf in range b, backward" ],
-       [ $utf,       $utf_ch_len * 5, 6,         length($utf),    "utf out of range, forward" ],
+       [ $utf,       $utf_ch_len * 5,  6,        length($utf),    "utf out of range, forward" ],
        [ $utf,       $utf_ch_len * 5, -6,        0,               "utf out of range, backward"  ],
-       [ $bad_start, 0,               1,         $utf_ch_len-1,   "bad start, forward 1 from 0" ],
-       [ $bad_start, 0,               5,         5 * $utf_ch_len-1, "bad start, forward 5 chars from 0" ],
+       [ $bad_start, 0,                1,        $utf_ch_len-1,   "bad start, forward 1 from 0" ],
+       [ $bad_start, 0,                5,        5 * $utf_ch_len-1, "bad start, forward 5 chars from 0" ],
        [ $bad_start, 0,                9,        length($bad_start)-$utf_ch_len, "bad start, forward 9 chars from 0" ],
        [ $bad_start, 0,               10,        length $bad_start, "bad start, forward 10 chars from 0" ],
-       [ $bad_start, $utf_ch_len-1,   -1,        0,                "bad start, back 1 from first start byte" ],
-       [ $bad_start, $utf_ch_len-2,   -1,        0,                "bad start, back 1 from before first start byte" ],
-       [ $bad_start, 0,               -1,        0,                "bad start, back 1 from 0" ],
-       [ $bad_start, length $bad_start, -10,     0,                "bad start, back 10 from end" ],
+       [ $bad_start, $utf_ch_len-1,   -1,        0,               "bad start, back 1 from first start byte" ],
+       [ $bad_start, $utf_ch_len-2,   -1,        0,               "bad start, back 1 from before first start byte" ],
+       [ $bad_start, 0,               -1,        0,               "bad start, back 1 from 0" ],
+       [ $bad_start, length $bad_start, -10,     0,               "bad start, back 10 from end" ],
        [ $bad_end,   0,               10,        length $bad_end, "bad end, forward 10 from 0" ],
        [ $bad_end,   length($bad_end)-1, 10,     length $bad_end, "bad end, forward 1 from end-1" ],
        );

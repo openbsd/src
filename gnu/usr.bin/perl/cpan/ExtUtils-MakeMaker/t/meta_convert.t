@@ -16,32 +16,33 @@ chdir $tmpdir or die "chdir $tmpdir: $!";
 my $EMPTY = qr/['"]?version['"]?\s*:\s*['"]['"]/;
 my @DATA = (
     [
-        [ DISTNAME => 'Net::FTP::Recursive', VERSION  => 'Recursive.pm', ],
+        [ DISTNAME => 'Net-FTP-Recursive', VERSION  => 'Recursive.pm', ],
         qr{Can't parse version 'Recursive.pm'},
         'VERSION => filename',
         $EMPTY,
     ],
     [
-        [ DISTNAME => 'Image::Imgur', VERSION  => 'undef', ],
+        [ DISTNAME => 'Image-Imgur', VERSION  => 'undef', ],
         qr{Can't parse version 'undef'},
         'no $VERSION in file -> VERSION=>"undef"',
         $EMPTY,
     ],
     [
-        [ DISTNAME => 'SQL::Library', VERSION  => 0.0.3, ],
+        [ DISTNAME => 'SQL-Library', VERSION  => 0.0.3, ],
         qr{Can't parse version '\x00\x00\x03'},
         "x.y.z version",
         $EMPTY,
     ],
     [
-        [ DISTNAME => 'Array::Suffix', VERSION  => '.5', ],
+        [ DISTNAME => 'Array-Suffix', VERSION  => '.5', ],
         qr{Can't parse version '.5'},
         ".5 version",
         $EMPTY,
     ],
     [
         [
-            DISTNAME   => 'Attribute::Signature',
+            DISTNAME   => 'Attribute-Signature',
+            DISTVNAME  => 'Attribute-Signature-1.23.tar.gz',
             META_MERGE => {
                 resources => {
                     repository         => 'http://github.com/chorny/Attribute-Signature',
@@ -55,7 +56,8 @@ my @DATA = (
     ],
     [
         [
-            DISTNAME   => 'CPAN::Testers::ParseReport',
+            DISTNAME   => 'CPAN-Testers-ParseReport',
+            DISTVNAME  => 'CPAN-Testers-ParseReport-2.34.tar.gz',
             VERSION    => '2.34',
             META_ADD => {
                 provides => {
@@ -72,7 +74,7 @@ my @DATA = (
     ],
     [
         [
-            DISTNAME   => 'Bad::License',
+            DISTNAME   => 'Bad-License',
             VERSION    => '2.34',
             LICENSE   => 'death and retribution',
         ],

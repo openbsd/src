@@ -3,8 +3,8 @@ BEGIN {
   @INC = '../lib' if -d '../lib' && -d '../ext';
 
   require "./test.pl";
-  require Config; Config->import;
 }
+use Config;
 
 use strict;
 use warnings;

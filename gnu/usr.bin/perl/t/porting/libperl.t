@@ -56,7 +56,7 @@ if ($Config{cc} =~ /g\+\+/) {
 }
 
 # ccname is gcc for both gcc and clang
-if ($Config{ccname} eq "gcc" && $Config{ccflags} =~ /-flto\b/) {
+if ($Config{ccname} eq "gcc" && "$Config{ccflags} $Config{optimize}" =~ /-flto\b/) {
     # If we compile with gcc nm marks PL_no_mem as "D" (normal data) rather than a R (read only)
     # but the symbol still ends up in the .rodata section of the image on linking.
     # If we compile with clang 14, nm marks PL_no_mem as "T" (text, aka code) rather than R
@@ -81,6 +81,12 @@ print "# \$^O = $^O\n";
 print "# \$Config{archname} = $Config{archname}\n";
 print "# \$Config{cc} = $Config{cc}\n";
 print "# libperl = $libperl_a\n";
+
+my $common = $Config{ccflags} =~ /-fcommon/ ? 1 : 0;
+my $nocommon = $Config{ccflags} =~ /-fno-common/ ? 1 : 0;
+print "# common = $common\n";
+print "# nocommon = $nocommon\n";
+
 
 my $nm;
 my $nm_opt = '';
@@ -197,6 +203,18 @@ sub is_perlish_symbol {
     $_[0] =~ /^(?:PL_|Perl|PerlIO)/;
 }
 
+# Generate a cross-ref of every line each symbol appears in,
+# for diagnostics.
+
+sub xref {
+    my ($symbols, $line) = @_;
+    for my $sym (grep !/^[[:xdigit:]]\z/, $line =~ /(\w{2,})/g) {
+        push @{$symbols->{xref}{$sym}},
+            sprintf "%20s: %s", $symbols->{o}, $line;
+    }
+}
+
+
 # XXX Implement "internal test" for this script (option -t?)
 # to verify that the parsing does what it's intended to.
 
@@ -211,6 +229,9 @@ sub nm_parse_gnu {
     } else {
         die "$0: undefined current object: $line"
             unless defined $symbols->{o};
+
+        xref($symbols, $line);
+
         # 64-bit systems have 16 hexdigits, 32-bit systems have 8.
         if (s/^[0-9a-f]{8}(?:[0-9a-f]{8})? //) {
             if (/^[Rr] (\w+)$/) {
@@ -237,12 +258,16 @@ sub nm_parse_gnu {
                 print "# Unknown type: $line ($symbols->{o})\n";
             }
             return;
+        } elsif (/^ {8}(?: {8})? [wW] _?(\w+)$/) {
+            # weak symbol "not tagged as a weak object symbol"
+            # don't bother saving - perl symbols shouldn't be here
+            return;
         } elsif (/^ {8}(?: {8})? U _?(\w+)$/) {
             my ($symbol) = $1;
             return if is_perlish_symbol($symbol);
             $symbols->{undef}{$symbol}{$symbols->{o}}++;
             return;
-	}
+        }
     }
     print "# Unexpected nm output '$line' ($symbols->{o})\n";
 }
@@ -258,6 +283,9 @@ sub nm_parse_darwin {
         return;
     } else {
         die "$0: undefined current object: $line" unless defined $symbols->{o};
+
+        xref($symbols, $line);
+
         # 64-bit systems have 16 hexdigits, 32-bit systems have 8.
         if (s/^[0-9a-f]{8}(?:[0-9a-f]{8})? //) {
             # String literals can live in different sections
@@ -328,6 +356,75 @@ while (<$nm_fh>) {
 
 # use Data::Dumper; print Dumper(\%symbols);
 
+# %symbols looks like:
+#
+#   (
+#     # hash of seen object files
+#
+#     'obj' => {
+#                'pp_hot.o' => 1,
+#                ...
+#              },
+#
+#     'data' => {
+#                 'bss' => {
+#                              'PL_current_context' => { 'globals.o' => 1 },
+#                              ...
+#                          },
+#                 'common' => {
+#                                # some bss symbols may be here instead
+#                                # on older gcc/clang where -fno-common
+#                                # isn't the default. Even if it is the
+#                                # default, clang with ASAN may still
+#                                # put some private values in it.
+#                             },
+#                 'data' => {
+#                              'my_cxt_index' => { 'DynaLoader.o' => 1 },
+#                              ...
+#                           },
+#                 'const' => {
+#                              'UNI_BOPO_invlist' => { 'regcomp.o' => 1 },
+#                              ...
+#                            }
+#               },
+#
+#     # the last seen object file name
+#
+#     'o' => 'DynaLoader.o',
+#
+#     # for each symbol, which files the symbol is undefined in:
+#
+#     'undef' => {
+#                  'memcpy' => {
+#                                'pp.o' => 1,
+#                                'perl.o' => 1,
+#                                ...
+#                              },
+#                   ...
+#                },
+#
+#     # for each text symbol, which file(s) the symbols is defined in
+#     # and whether as a t or T (local or global text symbol)
+#
+#     'text' => {
+#                 'Perl_sv_nolocking' => { 'mathoms.o' => { 'T' => 1 } },
+#               }
+#
+#     # cross-ref hash for diagnostics. For each symbol, list
+#     # every nm entry which refers to that symbol, and in which object
+#     # file:
+#
+#     'xref' => {
+#                 'Perl_av_fetch' => [
+#                        '        op.o:                  U Perl_av_fetch',
+#                        '      perl.o:                  U Perl_av_fetch',
+#                        ' universal.o:                  U Perl_av_fetch',
+#                        '        av.o: 0000000000002621 T Perl_av_fetch',
+#                        ...
+#                  ],
+#   )
+
+
 # Something went awfully wrong.  Wrong nm?  Wrong options?
 unless (keys %symbols) {
     skip_all "no symbols\n";
@@ -336,16 +433,38 @@ unless (exists $symbols{text}) {
     skip_all "no text symbols\n";
 }
 
+# do an ok(), but on failure, print some diagnostic info about that symbol
+
+sub has_symbol {
+    my ($sym, $ok, $desc) = @_;
+    ok($ok, $desc);
+    return if $ok;
+    my $xref = $symbols{xref}{$sym};
+    if ($xref) {
+        diag "Didn't find the symbol '$sym' where expected,",
+            "but it was seen in these places in the nm output:",
+            @{$xref};
+    }
+    else {
+        diag "Didn't find the symbol '$sym' where expected,",
+            "nor was it seen elsewhere in the nm output";
+    }
+    diag "-fcommon "    . ($common   ? "present" : "not present");
+    diag "-fno-common " . ($nocommon ? "present" : "not present");
+}
+
+
 # These should always be true for everyone.
 
 ok($symbols{obj}{'util.o'}, "has object util.o");
-ok($symbols{text}{'Perl_croak'}{'util.o'}, "has text Perl_croak in util.o");
+
+has_symbol('Perl_croak', $symbols{text}{'Perl_croak'}{'util.o'},
+            "has text Perl_croak in util.o");
+
 ok(exists $symbols{data}{const}, "has data const symbols");
-ok($symbols{data}{const}{PL_no_modify}{'globals.o'}, "has PL_no_modify");
 
-my $nocommon = $Config{ccflags} =~ /-fno-common/ ? 1 : 0;
-
-print "# nocommon = $nocommon\n";
+has_symbol('PL_no_modify', $symbols{data}{const}{PL_no_modify}{'globals.o'},
+            "has PL_no_modify");
 
 my %data_symbols;
 
@@ -355,18 +474,19 @@ for my $dtype (sort keys %{$symbols{data}}) {
     }
 }
 
-if ( !$symbols{data}{common} ) {
-    # This is likely because Perl was compiled with
-    # -Accflags="-fno-common"
-    $symbols{data}{common} = $symbols{data}{bss};
-}
+has_symbol('PL_hash_seed_w',
+           $symbols{data}{bss}{PL_hash_seed_w}{'globals.o'}
+        || $symbols{data}{common}{PL_hash_seed_w}{'globals.o'},
+        "has PL_hash_seed_w");
 
-ok($symbols{data}{common}{PL_hash_seed_w}{'globals.o'}, "has PL_hash_seed_w");
-ok($symbols{data}{data}{PL_ppaddr}{'globals.o'}, "has PL_ppaddr");
+has_symbol('PL_ppaddr', $symbols{data}{data}{PL_ppaddr}{'globals.o'},
+            "has PL_ppaddr");
 
 # See the comments in the beginning for what "undefined symbols"
 # really means.  We *should* have many of those, that is a good thing.
 ok(keys %{$symbols{undef}}, "has undefined symbols");
+
+# -------------------------------------------------------------------
 
 # There are certain symbols we expect to see.
 
@@ -406,6 +526,9 @@ for my $symbol (sort keys %expected) {
         sort keys %{ $symbols{undef}{$symbol} } : ();
     ok(@o, "uses $symbol (@o)");
 }
+
+
+# -------------------------------------------------------------------
 
 # There are certain symbols we expect NOT to see.
 #

@@ -1083,8 +1083,8 @@ L<Sequence (?PE<gt>... not terminated in regex; marked by E<lt>-- HERE in mE<sol
 
 =item *
 
-L<Assuming NOT a POSIX class since %s in regex; marked by E<lt>-- HERE in mE<sol>%sE<sol>|
-perldiag/Assuming NOT a POSIX class since %s in regex; marked by <-- HERE in mE<sol>%sE<sol>>
+L<Assuming NOT a POSIX class since %s in regex; marked by E<lt>-- HERE in
+mE<sol>%sE<sol>|perldiag/Assuming NOT a POSIX class since %s in regex; marked by <-- HERE in mE<sol>%sE<sol>>
 
 =item *
 

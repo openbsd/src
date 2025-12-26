@@ -3,7 +3,7 @@
 
 package Devel::Peek;
 
-$VERSION = '1.34';
+$VERSION = '1.36';
 $XS_VERSION = $VERSION;
 $VERSION = eval $VERSION;
 
@@ -556,8 +556,7 @@ it has no prototype (C<PROTOTYPE> field is missing).
 
 C<Dump>, C<mstat>, C<DeadCode>, C<DumpArray>, C<DumpWithOP> and
 C<DumpProg>, C<fill_mstats>, C<mstats_fillhash>, C<mstats2hash> by
-default. Additionally available C<SvREFCNT>, C<SvREFCNT_inc> and
-C<SvREFCNT_dec>.
+default. Additionally available is C<SvREFCNT>.
 
 =head1 BUGS
 

@@ -16,7 +16,7 @@ our @EXPORT_OK  = qw(
   sample shuffle uniq uniqint uniqnum uniqstr zip zip_longest zip_shortest mesh mesh_longest mesh_shortest
   head tail pairs unpairs pairkeys pairvalues pairmap pairgrep pairfirst
 );
-our $VERSION    = "1.63";
+our $VERSION    = "1.68_01";
 our $XS_VERSION = $VERSION;
 $VERSION =~ tr/_//d;
 
@@ -57,7 +57,7 @@ List::Util - A selection of general-utility list subroutines
 
       pairs unpairs pairkeys pairvalues pairfirst pairgrep pairmap
 
-      shuffle uniq uniqint uniqnum uniqstr zip mesh
+      shuffle uniq uniqint uniqnum uniqstr head tail zip mesh
     );
 
 =head1 DESCRIPTION
@@ -410,7 +410,7 @@ list; e.g.:
 I<Since version 1.29.>
 
 A convenient shortcut to operating on even-sized lists of pairs, this function
-returns a list of the the first values of each of the pairs in the given list.
+returns a list of the first values of each of the pairs in the given list.
 It is a more efficient version of
 
     @keys = pairmap { $a } @kvlist
@@ -422,7 +422,7 @@ It is a more efficient version of
 I<Since version 1.29.>
 
 A convenient shortcut to operating on even-sized lists of pairs, this function
-returns a list of the the second values of each of the pairs in the given list.
+returns a list of the second values of each of the pairs in the given list.
 It is a more efficient version of
 
     @values = pairmap { $b } @kvlist

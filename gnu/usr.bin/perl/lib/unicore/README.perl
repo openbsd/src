@@ -162,7 +162,7 @@ mv Unihan_Variants.txt UnihanVariants.txt
 #
 # perl regen/mk_L_charclass.pl
 #
-# and, regen charclass_invlists.h by
+# and, regen charclass_invlists.inc by
 #
 # perl regen/mk_invlists.pl
 #

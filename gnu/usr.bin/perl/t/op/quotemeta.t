@@ -4,9 +4,9 @@ BEGIN {
     chdir 't' if -d 't';
     require "./test.pl";
     set_up_inc(  qw(../lib .) );
-    require Config; Config->import;
     require "./loc_tools.pl";
 }
+use Config;
 
 plan tests => 60;
 

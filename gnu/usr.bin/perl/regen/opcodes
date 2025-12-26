@@ -153,12 +153,12 @@ i_ne		integer ne (!=)		ck_cmp		ifs2	S S<
 ncmp		numeric comparison (<=>)	ck_null		Iifst2	S S<
 i_ncmp		integer comparison (<=>)	ck_null		ifst2	S S<
 
-slt		string lt		ck_null		ifs2	S S
-sgt		string gt		ck_null		ifs2	S S
-sle		string le		ck_null		ifs2	S S
-sge		string ge		ck_null		ifs2	S S
-seq		string eq		ck_null		ifs2	S S
-sne		string ne		ck_null		ifs2	S S
+slt		string lt		ck_scmp		ifs2	S S
+sgt		string gt		ck_scmp		ifs2	S S
+sle		string le		ck_scmp		ifs2	S S
+sge		string ge		ck_scmp		ifs2	S S
+seq		string eq		ck_scmp		ifs2	S S
+sne		string ne		ck_scmp		ifs2	S S
 scmp		string comparison (cmp)	ck_null		ifst2	S S
 
 bit_and		bitwise and (&)		ck_bitop	fst2	S S|
@@ -202,6 +202,7 @@ abs		abs			ck_fun		fsTu%	S?
 
 length		length			ck_length	ifsTu%	S?
 substr		substr			ck_substr	st@	S S S? S?
+substr_left	substr left		ck_substr	sT@	S S S? S?
 vec		vec			ck_fun		ist@	S S S
 
 index		index			ck_index	isT@	S S S?
@@ -273,6 +274,11 @@ reverse		reverse			ck_fun		mt@	L
 
 grepstart	grep			ck_grep		m@	C L
 grepwhile	grep iterator		ck_null		t|	
+
+anystart	any			ck_grep		m@	C L
+allstart	all			ck_grep		m@	C L
+
+anywhile	any/all iterator	ck_null		t|	
 
 mapstart	map			ck_grep		m@	C L
 mapwhile	map iterator		ck_null		t|
@@ -435,7 +441,7 @@ ftbinary	-B			ck_ftst		isu-	F-
 # File calls.
 
 # chdir really behaves as if it had both "S?" and "F?"
-chdir		chdir			ck_trunc	isT%	S?
+chdir		chdir			ck_trunc	is%	S?
 chown		chown			ck_fun		imsT@	L
 chroot		chroot			ck_fun		isTu%	S?
 unlink		unlink			ck_fun		imsTu@	L

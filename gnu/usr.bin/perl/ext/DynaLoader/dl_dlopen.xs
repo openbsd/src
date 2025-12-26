@@ -171,7 +171,7 @@ BOOT:
     (void)dl_private_init(aTHX);
 
 
-void
+SV *
 dl_load_file(filename, flags=0)
     char *	filename
     int		flags
@@ -207,12 +207,15 @@ dl_load_file(filename, flags=0)
     DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s,%x):\n", filename,flags));
     handle = dlopen(filename, mode) ;
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, " libref=%lx\n", (unsigned long) handle));
-    ST(0) = newSV_type_mortal(SVt_IV);
+    RETVAL = newSV_type(SVt_IV);
     if (handle == NULL)
 	SaveError(aTHX_ "%s",dlerror()) ;
     else
-	sv_setiv( ST(0), PTR2IV(handle));
+	sv_setiv(RETVAL, PTR2IV(handle));
 }
+
+  OUTPUT:
+    RETVAL
 
 
 int
@@ -228,7 +231,7 @@ dl_unload_file(libref)
     RETVAL
 
 
-void
+SV *
 dl_find_symbol(libhandle, symbolname, ign_err=0)
     void *	libhandle
     char *	symbolname
@@ -245,12 +248,15 @@ dl_find_symbol(libhandle, symbolname, ign_err=0)
     sym = dlsym(libhandle, symbolname);
     DLDEBUG(2, PerlIO_printf(Perl_debug_log,
 			     "  symbolref = %lx\n", (unsigned long) sym));
-    ST(0) = newSV_type_mortal(SVt_IV);
+    RETVAL = newSV_type(SVt_IV);
     if (sym == NULL) {
         if (!ign_err)
 	    SaveError(aTHX_ "%s", dlerror());
     } else
-	sv_setiv( ST(0), PTR2IV(sym));
+	sv_setiv(RETVAL, PTR2IV(sym));
+
+    OUTPUT:
+        RETVAL
 
 
 void
@@ -261,7 +267,7 @@ dl_undef_symbols()
 
 # These functions should not need changing on any platform:
 
-void
+SV *
 dl_install_xsub(perl_name, symref, filename="$Package")
     char *		perl_name
     void *		symref 
@@ -269,10 +275,12 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     CODE:
     DLDEBUG(2,PerlIO_printf(Perl_debug_log, "dl_install_xsub(name=%s, symref=%" UVxf ")\n",
 		perl_name, PTR2UV(symref)));
-    ST(0) = sv_2mortal(newRV((SV*)newXS_flags(perl_name,
+    RETVAL = newRV((SV*)newXS_flags(perl_name,
 					      DPTR2FPTR(XSUBADDR_t, symref),
 					      filename, NULL,
-					      XS_DYNAMIC_FILENAME)));
+					      XS_DYNAMIC_FILENAME));
+    OUTPUT:
+        RETVAL
 
 
 SV *

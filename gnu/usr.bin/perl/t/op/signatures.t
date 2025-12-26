@@ -1725,6 +1725,29 @@ SKIP: {
         diag("Error was $@");
 }
 
+SKIP: {
+    use Config;
+    $Config{useithreads} or skip "No threads", 1;
+
+    ok(eval <<'EOPERL',
+        no warnings 'closure';
+        sub signature_thread_test (
+            $x = do {
+                my $thr;
+                BEGIN {
+                    use threads;
+                    $thr = threads->create( sub { "OK" } );
+                }
+                $thr;
+            }
+        ) {
+            return $x->join;
+        }
+        signature_thread_test() eq "OK"
+EOPERL
+        'thread cloning during signature parse does not crash');
+}
+
 done_testing;
 
 1;

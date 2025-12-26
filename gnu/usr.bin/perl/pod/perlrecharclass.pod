@@ -1027,7 +1027,10 @@ either construct raises an exception.
 
 =head3 Extended Bracketed Character Classes
 X<character class>
+X<regex_sets>
 X<set operations>
+
+(Also called C<regex_sets>.)
 
 This is a fancy bracketed character class that can be used for more
 readable and less error-prone classes, and to perform set operations,
@@ -1040,7 +1043,7 @@ This will match all the digit characters that are in the Thai script.
 This feature became available in Perl 5.18, as experimental; accepted in
 5.36.
 
-The rules used by L<C<use re 'strict>|re/'strict' mode> apply to this
+The rules used by L<C<use re 'strict'>|re/'strict' mode> apply to this
 construct.
 
 We can extend the example above:
@@ -1069,7 +1072,7 @@ There is one unary operator:
 
  !    complement
 
-All the binary operators left associate; C<"&"> is higher precedence
+All the binary operators left associate; C<&> is higher precedence
 than the others, which all have equal precedence.  The unary operator
 right associates, and has highest precedence.  Thus this follows the
 normal Perl precedence rules for logical operators.  Use parentheses to
@@ -1102,7 +1105,7 @@ All the other escapes accepted by normal bracketed character classes are
 accepted here as well.
 
 Because this construct compiles under
-L<C<use re 'strict>|re/'strict' mode>,  unrecognized escapes that
+L<C<use re 'strict'>|re/'strict' mode>, unrecognized escapes that
 generate warnings in normal classes are fatal errors here, as well as
 all other warnings from these class elements, as well as some
 practices that don't currently warn outside C<re 'strict'>.  For example
@@ -1120,7 +1123,7 @@ raised, as the result is not Unicode-defined.  No such warning will come
 when using this extended form.
 
 The final difference between regular bracketed character classes and
-these, is that it is not possible to get these to match a
+these is that it is not possible to get these to match a
 multi-character fold.  Thus,
 
  /(?[ [\xDF] ])/iu
@@ -1133,7 +1136,7 @@ hence both of the following work:
  /(?[ [:word:] - [:lower:] ])/
  /(?[ [[:word:]] - [[:lower:]] ])/
 
-Any contained POSIX character classes, including things like C<\w> and C<\D>
+Any contained POSIX character classes, including things like C<\w> and C<\D>,
 respect the C<E<sol>a> (and C<E<sol>aa>) modifiers.
 
 Note that C<< (?[ ]) >> is a regex-compile-time construct.  Any attempt
@@ -1145,7 +1148,7 @@ just three limitations:
 
 =item 1
 
-When compiled within the scope of C<use locale> (or the C<E<sol>l> regex
+When compiled within the scope of L<C<use locale>|locale> (or the C<E<sol>l> regex
 modifier), this construct assumes that the execution-time locale will be
 a UTF-8 one, and the generated pattern always uses Unicode rules.  What
 gets matched or not thus isn't dependent on the actual runtime locale, so
@@ -1163,7 +1166,7 @@ properties).
 =item 3
 
 A regular expression that otherwise would compile
-using C<E<sol>d> rules, and which uses this construct will instead
+using C<E<sol>d> rules and which uses this construct will instead
 use C<E<sol>u>.  Thus this construct tells Perl that you don't want
 C<E<sol>d> rules for the entire regular expression containing it.
 
@@ -1171,7 +1174,7 @@ C<E<sol>d> rules for the entire regular expression containing it.
 
 Note that skipping white space applies only to the interior of this
 construct.  There must not be any space between any of the characters
-that form the initial C<(?[>.  Nor may there be space between the
+that form the initial C<(?[>, nor may there be space between the
 closing C<])> characters.
 
 Just as in all regular expressions, the pattern can be built up by

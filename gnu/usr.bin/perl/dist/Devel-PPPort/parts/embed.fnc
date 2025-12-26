@@ -1960,6 +1960,9 @@ Apd	|void	|sv_vcatpvfn_flags|NN SV *const sv|NN const char *const pat|const STRL
 Apd	|void	|sv_vsetpvfn	|NN SV *const sv|NN const char *const pat|const STRLEN patlen \
 				|NULLOK va_list *const args|NULLOK SV **const svargs \
 				|const Size_t sv_count|NULLOK bool *const maybe_tainted
+Adp	|const char *|sv_vstring_get					\
+				|NN SV * const sv			\
+				|NULLOK STRLEN *lenp
 CpR	|NV	|str_to_version	|NN SV *sv
 Ap	|void	|regdump	|NN const regexp* r
 CiTop	|struct regexp *|ReANY	|NN const REGEXP * const re

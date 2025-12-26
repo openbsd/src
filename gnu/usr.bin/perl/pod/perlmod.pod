@@ -81,8 +81,12 @@ the $s variable in package C<owner>, which is probably not what you meant.
 Use braces to disambiguate, as in C<"This is ${owner}'s house">.
 X<::> X<'>
 
-Using C<'> as a package separator is deprecated and will be removed in
-Perl 5.40.
+
+Use of C<'> as a package delimiter can be disabled with:
+
+  no feature 'apostrophe_as_package_separator';
+
+and is also disabled by C<use v5.42;> or later.
 
 Packages may themselves contain package separators, as in
 C<$OUTER::INNER::var>.  This implies nothing about the order of
@@ -183,7 +187,7 @@ refer to the same scalar value. This means that the following code:
         print $foo;     # Prints '1'!
     }
 
-Would print '1', because C<$foo> holds a reference to the I<original>
+would print '1', because C<$foo> holds a reference to the I<original>
 C<$bar>. The one that was stuffed away by C<local()> and which will be
 restored when the block ends. Because variables are accessed through the
 typeglob, you can use C<*foo = *bar> to create an alias which can be

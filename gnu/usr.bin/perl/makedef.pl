@@ -177,6 +177,7 @@ if ($define{USE_LOCALE_THREADS} && ! $define{NO_THREAD_SAFE_LOCALE}) {
 if (    $define{USE_POSIX_2008_LOCALE}
     && (   $define{HAS_QUERYLOCALE}
         || (     $Config{cppsymbols} =~ /__GLIBC__/
+            && ! $define{NO_USE_NL_LOCALE_NAME}
             &&   $define{HAS_NL_LANGINFO_L}
             && ! $define{SETLOCALE_ACCEPTS_ANY_LOCALE_NAME})))
 {
@@ -417,7 +418,8 @@ unless ($define{'USE_ITHREADS'}) {
 		    PL_regex_padav
 		    PL_dollarzero_mutex
 		    PL_env_mutex
-		    PL_hints_mutex
+                    PL_env_mutex_depth
+                    PL_hints_mutex
 		    PL_locale_mutex
 		    PL_locale_mutex_depth
 		    PL_my_ctx_mutex
@@ -457,6 +459,10 @@ unless ($define{'USE_ITHREADS'}) {
 unless ($define{'USE_THREADS'}) {
     ++$skip{Perl_thread_locale_init};
     ++$skip{Perl_thread_locale_term};
+}
+
+if (!$define{USE_ITHREADS} || $define{WIN32}) {
+    ++$skip{PL_main_thread};
 }
 
 unless ($define{USE_POSIX_2008_LOCALE})
@@ -1183,6 +1189,14 @@ if (PLATFORM eq 'os2') {
     @missing = grep { !exists $exportperlmalloc{$_} } @missing;
     delete $export{$_} foreach @missing;
 }
+
+
+if (ord "A" != 65) {
+    for my $symbol (qw( PL_a2e PL_e2a PL_e2utf PL_utf2e )) {
+        try_symbols($symbol);
+    }
+}
+
 
 ###############################################################################
 

@@ -1284,6 +1284,21 @@ S_shared_signal_hook(pTHX) {
 }
 #endif
 
+#ifdef noshutdownhook
+
+static shutdown_proc_t old_shutdownhook;
+
+static void
+shared_shutdown() {
+    PerlInterpreter* my_perl;
+    SHARED_CONTEXT;
+    perl_destruct(PL_sharedsv_space);
+    perl_free(PL_sharedsv_space);
+    PL_sharedsv_space = NULL;
+    old_shutdownhook();
+}
+#endif
+
 /* Saves a space for keeping SVs wider than an interpreter. */
 
 static void
@@ -1299,6 +1314,12 @@ Perl_sharedsv_init(pTHX)
         LEAVE; /* This balances the ENTER at the end of perl_construct.  */
         PERL_SET_CONTEXT((aTHX = caller_perl));
         recursive_lock_init(aTHX_ &PL_sharedsv_lock);
+#ifdef noshutdownhook
+		OP_CHECK_MUTEX_LOCK;
+        old_shutdownhook = PL_shutdownhook;
+        PL_shutdownhook = &shared_shutdown;
+		OP_CHECK_MUTEX_UNLOCK;
+#endif
     }
     PL_lockhook = &Perl_sharedsv_locksv;
     PL_sharehook = &Perl_sharedsv_share;

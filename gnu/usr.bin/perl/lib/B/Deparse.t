@@ -13,7 +13,7 @@ BEGIN {
 use warnings;
 use strict;
 
-my $tests = 52; # not counting those in the __DATA__ section
+my $tests = 53; # not counting those in the __DATA__ section
 
 use B::Deparse;
 my $deparse = B::Deparse->new();
@@ -570,6 +570,19 @@ is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
     prog => 'package Foo; sub f { 1; } BEGIN { *Bar::f = \&f; }'),
     "package Foo;\nsub f {\n    1;\n}\nsub BEGIN {\n    *Bar::f = \\&f;\n}\n",
     "sub glob alias in separate package shouldn't impede emitting original sub";
+
+# method declarations (GH#22777)
+like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+    prog => <<'EOF',
+        use feature qw( class signatures );
+        class C {
+            field $x;
+            method m () { $x++ }
+        }
+EOF
+    ),
+    qr/ +method m \(\) \{\n +\$x\+\+;\n +\}/,
+    "feature class method deparses as method";
 
 
 done_testing($tests);
@@ -1812,6 +1825,22 @@ print sort(foo('bar'));
 substr(my $a, 0, 0) = (foo(), bar());
 $a++;
 ####
+# 3-arg substr (non-chop)
+my $str = 'ABCD';
+my $bbb = substr($str, 1, 1);
+####
+# 3-arg substr (chop)
+my $str = 'ABCD';
+my $aaa = substr($str, 0, 1);
+####
+# 4-arg substr (non-chop)
+my $str = 'ABCD';
+my $bbb = substr($str, 1, 1, '');
+####
+# 4-arg substr (chop)
+my $str = 'ABCD';
+my $aaa = substr($str, 0, 1, '');
+####
 # This following line works around an unfixed bug that we are not trying to 
 # test for here:
 # CONTEXT BEGIN { $^H{a} = "b"; delete $^H{a} } # make %^H localised
@@ -1879,10 +1908,10 @@ CORE::do({});
 >>>>
 () = (return 1);
 () = (return ($1 + $2) * $3);
-() = (return ($a xor $b));
+() = (return $a ^^ $b);
 () = (do 'file') + time;
 () = (do ($1 + $2) * $3) + time;
-() = (do ($1 xor $2)) + time;
+() = (do ($1 ^^ $2)) + time;
 () = (goto 1);
 () = (require 'foo') + 3;
 () = (require foo) + 3;
@@ -1911,6 +1940,8 @@ require v5.16;
 ####
 # [perl #97476] not() *does* follow the llafr
 $_ = ($a xor not +($1 || 2) ** 2);
+>>>>
+$_ = $a ^^ !($1 || 2) ** 2;
 ####
 # Precedence conundrums with argument-less function calls
 () = (eof) + 1;
@@ -2203,6 +2234,7 @@ my sub g {
     sub f { }
 }
 ####
+# TODO only partially fixed
 # lexical state subroutine with outer declaration and inner definition
 # CONTEXT use feature 'lexical_subs', 'state'; no warnings 'experimental::lexical_subs';
 ();
@@ -2661,6 +2693,15 @@ foreach \&a (sub { 9; } , sub { 10; } ) {
 my %hash;
 foreach my ($key, $value) (%hash) {
     study $_;
+}
+####
+my @arr;
+foreach my ($idx, $elem) (builtin::indexed @arr) {
+    die;
+}
+####
+foreach my ($idx, $elem) (builtin::indexed 'x', 'y', 'z') {
+    die;
 }
 ####
 my @ducks;
@@ -3397,3 +3438,20 @@ my $z = __PACKAGE__;
 # CONTEXT use feature "state";
 state sub FOO () { 42 }
 print 42, "\n";
+####
+# CONTEXT use feature 'isa';
+# GH #22661 ! vs comparisons
+my $p;
+$_ = (!$p) == 1;
+$_ = (!$p) != 1;
+$_ = (!$p) eq '';
+$_ = (!$p) ne '';
+$_ = (!$p) isa 'Some::Class';
+$_ = (!$p) =~ tr/1//;
+$_ = (!$p) =~ /1/;
+$_ = (!$p) =~ s/1//r;
+####
+# xor operator
+my($x, $y, $z);
+$z = 1 + ($x ^^ $y);
+$z = ($x ^^= $y);

@@ -36,6 +36,7 @@ while (<DATA>) {
 # If this hash changes, make sure the equivalent hash in
 # lib/B/Deparse.pm (%feature_keywords) is also updated.
 my %feature_kw = (
+    # keyword => feature name
     state     => 'state',
     say       => 'say',
     given     => 'switch',
@@ -56,6 +57,8 @@ my %feature_kw = (
     method    => 'class',
     ADJUST    => 'class',
     __CLASS__ => 'class',
+    any       => 'keyword_any',
+    all       => 'keyword_all',
 );
 
 my %pos = map { ($_ => 1) } @{$by_strength{'+'}};
@@ -95,7 +98,7 @@ sub perl_keyword
 
   if ($k eq 'elseif') {
     return <<END;
-Perl_ck_warner_d(aTHX_ packWARN(WARN_SYNTAX), "elseif should be elsif");
+ck_warner_d(packWARN(WARN_SYNTAX), "elseif should be elsif");
 END
   }
   elsif (my $feature = $feature_kw{$k}) {
@@ -136,7 +139,9 @@ __END__
 -abs
 -accept
 -alarm
+-all
 -and
+-any
 -atan2
 -bind
 -binmode

@@ -3,7 +3,7 @@
 use v5.14;
 use warnings;
 
-use Test::More;
+use Test2::V0;
 
 use Socket qw(PF_INET6 PF_INET IPPROTO_IPV6 IPV6_V6ONLY);
 use IO::Socket::IP;

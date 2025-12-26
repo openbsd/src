@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Extra warnings, used e.g. for gcc.
-warn="-Wall   -W -Wextra -Wendif-labels -Wc++-compat"
+warn="-Wall -Wextra -Wendif-labels -Wc++-compat"
 # Extra standardness.
 stdflags=" -std=c99"
 # Extra extra.

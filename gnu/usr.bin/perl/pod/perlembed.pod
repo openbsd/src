@@ -927,16 +927,27 @@ perl_construct resets it to C<0>.
 
 Now suppose we have more than one interpreter instance running at the
 same time.  This is feasible, but only if you used the Configure option
-C<-Dusemultiplicity> or the options C<-Dusethreads -Duseithreads> when
-building perl.  By default, enabling one of these Configure options
-sets the per-interpreter global variable C<PL_perl_destruct_level> to
-C<1>, so that thorough cleaning is automatic and interpreter variables
-are initialized correctly.  Even if you don't intend to run two or
-more interpreters at the same time, but to run them sequentially, like
-in the above example, it is recommended to build perl with the
-C<-Dusemultiplicity> option otherwise some interpreter variables may
-not be initialized correctly between consecutive runs and your
-application may crash.
+C<-Dusemultiplicity> or either of the options C<-Dusethreads
+-Duseithreads> when building perl.  By default, enabling one of these
+Configure options sets the per-interpreter global variable
+C<PL_perl_destruct_level> to C<1>, so that thorough cleaning is
+automatic and interpreter variables are initialized correctly.  Even if
+you don't intend to run two or more interpreters at the same time, but
+to run them sequentially, like in the above example, it is recommended
+to build perl with the C<-Dusemultiplicity> option otherwise some
+interpreter variables may not be initialized correctly between
+consecutive runs and your application may crash.
+
+(It used to be that there were two forms of threads, with C<ithreads>
+appearing later.  But C<ithreads> proved to be superior, and support for
+the older model was removed in Perl v5.10.  But the documentation and
+code have never been purged of the earlier terminology; and perhaps some
+newer model will come along to supplant C<ithreads>, so it seems best to
+retain both.  If you don't care about the threading model used, use
+plain C<usethreads> to protect your code from having to change with future
+developments.  If your code is dependent on the C<ithreads> model, use
+C<useithreads> to make sure you will always get that.  This applies as well
+to the C language symbols C<USE_THREADS> and C<USE_ITHREADS>.)
 
 See also L<perlclib/Dealing with embedded perls and threads>.
 

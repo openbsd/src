@@ -49,7 +49,14 @@ sub full_name ($$) { # Returns the function name with potentially the
                      # prefixes 'S_' or 'Perl_'
     my ($func, $flags) = @_;
 
-    return "Perl_$func" if $flags =~ /[ps]/;
+    if ($flags =~ /[ps]/) {
+
+	# An all uppercase macro name gets an uppercase prefix.
+	return ($flags =~ /m/ && $flags =~ /p/ && $func !~ /[[:lower:]]/)
+	       ? "PERL_$func"
+	       : "Perl_$func";
+    }
+
     return "S_$func" if $flags =~ /[SIi]/;
     return $func;
 }
@@ -81,6 +88,20 @@ sub open_buf_out {
     return $fh;
 }
 
+my %type_asserts = (
+    # Templates for argument type checking for different argument types.
+    # __arg__ will be replaced by the parameter variable name
+
+    'AV*' => "SvTYPE(__arg__) == SVt_PVAV",
+    'HV*' => "SvTYPE(__arg__) == SVt_PVHV",
+
+    # Any CV* might point at a PVCV or PVFM
+    'CV*' => "SvTYPE(__arg__) == SVt_PVCV || SvTYPE(__arg__) == SVt_PVFM",
+
+    # We don't check GV*s for now because too many functions
+    # take non-initialised GV pointers
+);
+
 # generate proto.h
 sub generate_proto_h {
     my ($all)= @_;
@@ -110,10 +131,11 @@ sub generate_proto_h {
         my $has_context = ( $flags !~ /T/ );
         my $never_returns = ( $flags =~ /r/ );
         my $binarycompat = ( $flags =~ /b/ );
-        my $commented_out = ( $flags =~ /m/ );
+        my $has_mflag = ( $flags =~ /m/ );
         my $is_malloc = ( $flags =~ /a/ );
         my $can_ignore = ( $flags !~ /R/ ) && ( $flags !~ /P/ ) && !$is_malloc;
         my @names_of_nn;
+        my @typed_args;
         my $func;
 
         if (! $can_ignore && $retval eq 'void') {
@@ -122,11 +144,14 @@ sub generate_proto_h {
 
         die_at_end "$plain_func: S and p flags are mutually exclusive"
                                             if $flags =~ /S/ && $flags =~ /p/;
-        die_at_end "$plain_func: m and $1 flags are mutually exclusive"
-                                        if $flags =~ /m/ && $flags =~ /([pS])/;
-
-        die_at_end "$plain_func: u flag only usable with m" if $flags =~ /u/
-                                                            && $flags !~ /m/;
+	if ($has_mflag) {
+	    if ($flags =~ /S/) {
+		die_at_end "$plain_func: m and S flags are mutually exclusive";
+	    }
+	}
+	else {
+	    die_at_end "$plain_func: u flag only usable with m" if $flags =~ /u/;
+	}
 
         my ($static_flag, @extra_static_flags)= $flags =~/([SsIi])/g;
 
@@ -187,11 +212,11 @@ sub generate_proto_h {
         die_at_end "For '$plain_func', X flag requires one of [Iip] flags"
                                             if $flags =~ /X/ && $flags !~ /[Iip]/;
         die_at_end "For '$plain_func', X and m flags are mutually exclusive"
-                                            if $flags =~ /X/ && $flags =~ /m/;
+                                            if $flags =~ /X/ && $has_mflag;
         die_at_end "For '$plain_func', [Ii] with [ACX] requires p flag"
                         if $flags =~ /[Ii]/ && $flags =~ /[ACX]/ && $flags !~ /p/;
         die_at_end "For '$plain_func', b and m flags are mutually exclusive"
-                 . " (try M flag)" if $flags =~ /b/ && $flags =~ /m/;
+                 . " (try M flag)" if $flags =~ /b/ && $has_mflag;
         die_at_end "For '$plain_func', b flag without M flag requires D flag"
                             if $flags =~ /b/ && $flags !~ /M/ && $flags !~ /D/;
         die_at_end "For '$plain_func', I and i flags are mutually exclusive"
@@ -219,7 +244,7 @@ sub generate_proto_h {
 
                     $arg = "const char * const $name";
                     die_at_end 'm flag required for "literal" argument'
-                                                            unless $flags =~ /m/;
+							    unless $has_mflag;
                 }
                 elsif (   $args_assert_line
                        && $arg =~ /\*/
@@ -234,8 +259,13 @@ sub generate_proto_h {
 
                 my $nullok = ( $arg =~ s/\s*\bNULLOK\b\s+// ); # strip NULLOK with no effect
 
+                my $nocheck = ( $arg =~ s/\s*\bNOCHECK\b\s+// );
+
                 # Make sure each arg has at least a type and a var name.
                 # An arg of "int" is valid C, but want it to be "int foo".
+                my $argtype = ( $arg =~ m/^(\w+(?:\s*\*+)?)/ )[0];
+                defined $argtype and $argtype =~ s/\s+//g;
+
                 my $temp_arg = $arg;
                 $temp_arg =~ s/\*//g;
                 $temp_arg =~ s/\s*\bstruct\b\s*/ /g;
@@ -243,8 +273,12 @@ sub generate_proto_h {
                      && ($temp_arg !~ /\w+\s+(\w+)(?:\[\d+\])?\s*$/) ) {
                     die_at_end "$func: $arg ($n) doesn't have a name\n";
                 }
-                if (defined $1 && ($nn||$nz) && !($commented_out && !$binarycompat)) {
-                    push @names_of_nn, $1;
+                my $argname = $1;
+                if (!$nocheck and defined $argtype and exists $type_asserts{$argtype}) {
+                    push @typed_args, [ $argtype, $argname ];
+                }
+                if (defined $argname && ($nn||$nz) && !($has_mflag && !$binarycompat)) {
+                    push @names_of_nn, $argname;
                 }
             }
             $ret .= join ", ", @$args;
@@ -319,25 +353,43 @@ sub generate_proto_h {
             $ret .= join( "\n", map { (" " x 8) . $_ } @attrs );
         }
         $ret .= ";";
-        $ret = "/* $ret */" if $commented_out;
+        $ret = "/* $ret */" if $has_mflag;
 
         if ($args_assert_line || @names_of_nn) {
             $ret .= "\n#${ind}define PERL_ARGS_ASSERT_\U$plain_func\E";
             if (@names_of_nn) {
                 $ret .= " \\\n";
-                my $def = " " x 8;
+
+                my @asserts;
                 foreach my $ix (0..$#names_of_nn) {
-                    $def .= "assert($names_of_nn[$ix])";
-                    if ($ix == $#names_of_nn) {
-                        $def .= "\n";
-                    } elsif (length $def > 70) {
-                        $ret .= $def . "; \\\n";
-                        $def = " " x 8;
-                    } else {
-                        $def .= "; ";
-                    }
+                    push @asserts, "assert($names_of_nn[$ix])";
                 }
-                $ret .= $def;
+                foreach (@typed_args) {
+                    my ($argtype, $argname) = @$_;
+                    my $nullok = !grep { $_ eq $argname } @names_of_nn;
+                    my $type_assert =
+                        $type_asserts{$argtype} =~ s/__arg__/$argname/gr;
+                    push @asserts,
+                        $nullok ? "assert(!$argname || $type_assert)"
+                                : "assert($type_assert)";
+                }
+
+                my $line = "";
+                while(@asserts) {
+                    my $assert = shift @asserts;
+
+                    if(length($line) + length($assert) > 78) {
+                        $ret .= $line . "; \\\n";
+                        $line = "";
+                    }
+
+                    $line .= " " x 8 if !length $line;
+                    $line .= "; " if $line =~ m/\S/;
+                    $line .= $assert;
+                }
+
+                $ret .= $line if length $line;
+                $ret .= "\n";
             }
         }
         $ret .= "\n";
@@ -458,9 +510,9 @@ sub embed_h {
         my $ind= $level ? " " : "";
         $ind .= "  " x ($level-1) if $level>1;
         my $inner_ind= $ind ? "  " : " ";
-        unless ($flags =~ /[omM]/) {
+        if ($flags !~ /[omM]/ or ($flags =~ /m/ && $flags =~ /p/)) {
             my $argc = scalar @$args;
-            if ($flags =~ /T/) {
+            if ($flags =~ /[T]/) {
                 my $full_name = full_name($func, $flags);
                 next if $full_name eq $func;    # Don't output a no-op.
                 $ret = indent_define($func, $full_name, $ind);
@@ -483,8 +535,11 @@ sub embed_h {
                     $use_va_list ? ("__VA_ARGS__") : ());
                 $ret = "#${ind}define $func($paramlist) ";
                 add_indent($ret,full_name($func, $flags) . "(aTHX");
-                $ret .= "_ " if $replacelist;
-                $ret .= $replacelist;
+		if ($replacelist) {
+                    $ret .= ($flags =~ /m/) ? "," : "_ ";
+                    $ret .= $replacelist;
+                }
+
                 if ($flags =~ /W/) {
                     if ($replacelist) {
                         $ret .= " comma_aDEPTH";
@@ -596,7 +651,7 @@ sub generate_embed_h {
        provides a set of compatibility functions that don't take an
        extra argument but grab the context pointer using the macro dTHX.
      */
-    #if defined(MULTIPLICITY) && !defined(PERL_NO_SHORT_NAMES)
+    #if defined(MULTIPLICITY) && !defined(PERL_NO_SHORT_NAMES) && !defined(PERL_WANT_VARARGS)
     END
 
     foreach (@nocontext) {

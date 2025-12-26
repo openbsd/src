@@ -22,7 +22,7 @@ subtest "default exports" => sub {
 
 subtest "all exports" => sub {
     package main::all_exports;
-    use Test::More;
+    use Test::More 0.88;
     use CPAN::Meta::YAML qw/Load Dump LoadFile DumpFile freeze thaw/;
     ok( defined(&Load),         'Found exported Load function'     );
     ok( defined(&Dump),         'Found exported Dump function'     );

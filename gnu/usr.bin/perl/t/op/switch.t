@@ -8,7 +8,6 @@ BEGIN {
 
 use strict;
 use warnings;
-no warnings 'deprecated';
 
 plan tests => 197;
 

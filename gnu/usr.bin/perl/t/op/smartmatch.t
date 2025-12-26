@@ -8,7 +8,6 @@ BEGIN {
 use strict;
 use warnings;
 no warnings 'uninitialized';
-no warnings 'deprecated';    # smartmatch is deprecated and will be removed in 5.042
 
 ++$|;
 

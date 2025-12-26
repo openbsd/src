@@ -373,9 +373,6 @@ new(className, appendOut=1, blockSize100k=1, workfactor=0, verbosity=0)
             s = NULL ;
 	}
 	else {
-            int flags = 0 ;
-            if (appendOut)
-                flags |= FLAG_APPEND_OUTPUT;
             PostInitStream(s, appendOut ? FLAG_APPEND_OUTPUT :0) ;
         }
     }

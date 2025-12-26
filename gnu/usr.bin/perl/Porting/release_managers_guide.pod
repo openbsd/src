@@ -15,14 +15,41 @@ document that starts with a checklist for your release.
 
 This script is run as:
 
- perl Porting/make-rmg-checklist \
-     --version [5.X.Y-RC#] > /tmp/rmg.pod
+ $ perl Porting/make-rmg-checklist --version [5.X.Y-RC#] > /tmp/rmg.pod
 
 You can also pass the C<--html> flag to generate an HTML document instead of
 POD.
 
- perl Porting/make-rmg-checklist --html \
-     --version [5.X.Y-RC#] > /tmp/rmg.html
+ $ perl Porting/make-rmg-checklist --html --version [5.X.Y-RC#] > /tmp/rmg.html
+
+This file serves as a template for the checklist. In particular, the following
+placeholders in the instructions below are recognized and expanded by
+F<Porting/make-rmg-checklist>:
+
+=over
+
+=item C<5.X.Y>
+
+The perl version whose release is being prepared (e.g. C<5.41.9>).
+
+=item C<5.X>
+
+The perl version whose release is being prepared, but without the final
+component (e.g. C<5.41>).
+
+=item C<5.LAST>
+
+The "previous" perl version. Normally, this is just C<5.X.(Y-1)>, but if the
+last component is 0, it subtracts 2 from the middle component:
+
+    5.X.Y       5.LAST
+    ======      ======
+    5.41.9  ->  5.41.8
+    5.40.1  ->  5.40.0
+    5.40.0  ->  5.38.0
+    5.41.0  ->  5.39.0
+
+=back
 
 =head1 SYNOPSIS
 
@@ -150,14 +177,17 @@ Andreas' email address at:
 
 =head3 GitHub access
 
-You will need a working C<git> installation, checkout of the perl
-git repository and perl commit bit.  For information about working
-with perl and git, see L<perlgit>.
+You will need a working C<git> installation and a checkout of the perl
+git repository.  For information about working with perl and git, see
+L<perlgit>.
 
-If you are not yet a perl committer, you won't be able to make a
-release.  You will need to have a GitHub account (if you don't have one)
-and contact the Steering Council with your username to get membership in the
-L<< Perl-Releasers|https://github.com/orgs/Perl/teams/perl-releasers >> team.
+You will also need a L<GitHub account|https://github.com/>, a perl commit bit
+and be a member of the L<Perl
+Releasers|https://github.com/orgs/Perl/teams/perl-releasers> team.  If you are
+not yet a perl committer, you won't be able to commit changes to the main
+repository; if you are not in Perl Releasers, you won't be able to push new
+version tags.  Contact the Steering Council with your GitHub username to be
+added to the Perl Releasers team.
 
 =head3 Web-based file share
 
@@ -251,7 +281,7 @@ Additionally, all files listed as "modified" but not "customized for blead"
 should have entries added under the C<CUSTOMIZED> key in
 F<Porting/Maintainers.pl>, as well as checksums updated via:
 
- cd t; ../perl -I../lib porting/customized.t --regen
+ $ cd t; ../perl -I../lib porting/customized.t --regen
 
 =head4 Sync CPAN modules with the corresponding cpanE<sol> distro
 
@@ -259,7 +289,7 @@ In most cases, once a new version of a distribution shipped with core has been
 uploaded to CPAN, the core version thereof can be synchronized automatically
 with the program F<Porting/sync-with-cpan>. For example:
 
- perl Porting/sync-with-cpan Archive::Tar
+ $ perl Porting/sync-with-cpan Archive::Tar
 
 (But see the comments at the beginning of that program.  In particular, it has
 not yet been exercised on Windows as much as it has on Unix-like platforms.)
@@ -374,10 +404,9 @@ This comes down to:
 =head3 Monitor smoke tests for failures
 
 Similarly, monitor the smoking of core tests, and try to fix.  See
-L<https://tux.nl/perl5/smoke/index.html>, L<https://perl5.test-smoke.org/>
-and L<http://perl.develop-help.com> for a summary. See also
-L<https://www.nntp.perl.org/group/perl.daily-build.reports/> which has
-the raw reports.
+L<CoreSmokeDB Web|https://perl5.test-smoke.org/>, L<Perl Smoke Web|http://perl.develop-help.com> 
+and L<Smoke Status Report|https://tux.nl/perl5/smoke/index.html> for a summary. See also
+L<Raw Reports Mailing List|https://www.nntp.perl.org/group/perl.daily-build.reports/> which has emailed raw reports.
 
 Similarly, monitor the smoking of perl for compiler warnings, and try to
 fix.
@@ -406,7 +435,7 @@ problems in pods.  However, it can be taught to ignore problems, and
 sometimes people do so for problems that really should be fixed before
 release.  To see what it is ignoring, run
 
- ./perl -Ilib t/porting/podcheck.t --counts
+ $ ./perl -Ilib t/porting/podcheck.t --counts
 
 Any problems listed as pedantic aren't worth your time investigating.
 These have a C<?> at the beginning of the text, or are for the too-long
@@ -417,13 +446,13 @@ mean that someone clicking on the pod in a web page will get a 404.
 
 To find out more about any real problems, capture the output from
 
- ./perl -Ilib t/porting/podcheck.t --show-all
+ $ ./perl -Ilib t/porting/podcheck.t --show-all
 
 and grep for those real problems.  (It can take a minute or so to run.)
 
 If you decide any should be fixed, after that gets done, run
 
- ./perl -Ilib t/porting/podcheck.t
+ $ ./perl -Ilib t/porting/podcheck.t
 
 to make sure those fixes were successful, and follow the directions in
 the output about regenerating the data base.
@@ -629,7 +658,7 @@ need to freeze blead during the release. This is less important for
 BLEAD-FINAL, MAINT, and RC releases, since blead will already be frozen in
 those cases. Create the branch by running
 
- git checkout -b release-5.X.Y
+ $ git checkout -b release-5.X.Y
 
 =head3 Build a clean perl
 
@@ -712,7 +741,7 @@ modules on CPAN. It can use a full, local CPAN mirror and/or fall back
 on HTTP::Tiny to fetch package metadata remotely.
 
 (If you'd prefer to have a full CPAN mirror, see
-L<https://www.cpan.org/misc/cpan-faq.html#How_mirror_CPAN>)
+L<How to mirror CPAN|https://www.cpan.org/misc/how-to-mirror.html>)
 
 Change to your perl checkout, and if necessary,
 
@@ -742,7 +771,7 @@ Check those files over carefully:
 Also edit Module::CoreList's new version number in its F<Changes> file.
 This file is F<dist/Module-CoreList/Changes>.
 (BLEAD-POINT releases should have had this done already as a post-release
-action from the last commit.)
+action from the last commit, but double-check the listed date.)
 
 =head4 Add Module::CoreList version bump to perldelta
 
@@ -756,7 +785,7 @@ will be automatically filled in below in L</"Finalize perldelta">.
 =head4 Update C<%Module::CoreList::released>
 
 For any release except an RC: Update this version's entry in the C<%released>
-hash within dist/Module-Corelist/lib/Module/Corelist.pm with today's date.
+hash within F<dist/Module-CoreList/lib/Module/CoreList.pm> with today's date.
 
 (BLEAD-POINT releases that happen on the expected date may not have to make
 any changes to this file at this point. If the release happens not on the
@@ -768,10 +797,7 @@ Finally, commit the new version of Module::CoreList:
 (unless this is for MAINT; in which case commit it to blead first, then
 cherry-pick it back).
 
- $ git commit -m 'Update Module::CoreList for 5.X.Y' \
-     dist/Module-CoreList/Changes \
-     dist/Module-CoreList/lib/Module/CoreList.pm \
-     dist/Module-CoreList/lib/Module/CoreList/Utils.pm
+ $ git commit -m 'Update Module::CoreList for 5.X.Y' dist/Module-CoreList/Changes dist/Module-CoreList/lib/Module/CoreList.pm dist/Module-CoreList/lib/Module/CoreList/Utils.pm
 
 =head4 Rebuild and test
 
@@ -788,20 +814,18 @@ section, which can be generated with something like:
 For non-MAINT releases, fill in the "New/Updated Modules" sections now
 that Module::CoreList is updated:
 
- $ ./perl -Ilib Porting/corelist-perldelta.pl \
-     --mode=update pod/perldelta.pod
+ $ ./perl -Ilib Porting/corelist-perldelta.pl --mode=update pod/perldelta.pod
 
 For a MAINT release use something like this instead:
 
- $ ./perl -Ilib Porting/corelist-perldelta.pl 5.020001 5.020002 \
-     --mode=update pod/perldelta.pod
+ $ ./perl -Ilib Porting/corelist-perldelta.pl 5.020001 5.020002 --mode=update pod/perldelta.pod
 
 Ideally, also fill in a summary of the major changes to each module for which
 an entry has been added by F<corelist-perldelta.pl>.
 
 You should add pod links for GitHub issue references thusly:
 
- $ perl -gpi -e 's{\b(?:GH|github)\s*#(\d+)}{L<GH #$1|https://github.com/Perl/perl5/issues/$1>}ig' pod/perldelta.pod
+ $ perl -gpi -e 's{(?<!<)\b(?:GH|github)\s*#(\d+)}{L<GH #$1|https://github.com/Perl/perl5/issues/$1>}ig' pod/perldelta.pod
 
 Re-read the perldelta to try to find any embarrassing typos and thinkos;
 remove any C<TODO> or C<XXX> flags; update the "Known Problems" section
@@ -815,8 +839,7 @@ run through pod and spell checkers, e.g.
 Also, you may want to generate and view an HTML version of it to check
 formatting, e.g.
 
- $ ./perl -Ilib ext/Pod-Html/bin/pod2html pod/perldelta.pod > \
-     ~/perldelta.html
+ $ ./perl -Ilib ext/Pod-Html/bin/pod2html pod/perldelta.pod > ~/perldelta.html
 
 If you make changes, be sure to commit them.
 
@@ -982,7 +1005,7 @@ Then delete the temporary installation.
 
 Create the I<annotated> tag identifying this release (e.g.):
 
- $ git tag v5.11.0 -m 'First release of the v5.11 series!'
+ $ git tag v5.21.4 -m 'Perl 5.21.4'
 
 It is B<VERY> important that from this point forward, you not push
 your git changes to the Perl master repository.  If anything goes
@@ -997,8 +1020,9 @@ Verify that your tag is annotated:
 The output must look similar to the following:
 
  tag v5.X.Y
- Tagger: Jesse Vincent <jesse@bestpractical.com>
- Date:   Fri Oct 2 16:29:56 2009 -0400
+ Tagger: Steve Hay <steve.m.hay@googlemail.com>
+ Date:   2014-09-20 11:09:51 +0100
+ ...
 
 =head3 Build the tarball
 
@@ -1084,8 +1108,7 @@ Check that basic configuration and tests work on each test machine:
 Check that the test harness and install work on each test machine:
 
  $ make distclean
- $ ./Configure -des -Dprefix=/install/path && \
-       make all test_harness install
+ $ ./Configure -des -Dprefix=/install/path && make all test_harness install
  $ cd /install/path
 
 (Remember C<-Dusedevel> above, for a development release.)
@@ -1101,9 +1124,10 @@ which is why you should test from the tarball.
 
 =head4 Run the Installation Verification Procedure utility
 
- $ ./perl -Ilib ./utils/perlivp
+ $ bin/perlivp
+
  # Or, perhaps:
- $ ./perl5.X.Y ./utils/perlivp5.X.Y
+ $ bin/perlivp5.X.Y
  ...
  All tests successful.
  $
@@ -1117,11 +1141,11 @@ for files in the wrong place, or files no longer included which should be.
 For example, suppose the about-to-be-released version is 5.10.1 and the
 previous is 5.10.0:
 
- cd installdir-5.10.0/
- find . -type f | perl -pe's/5\.10\.0/5.10.1/g' | sort > /tmp/f1
- cd installdir-5.10.1/
- find . -type f | sort > /tmp/f2
- diff -u /tmp/f[12]
+ $ cd installdir-5.10.0/
+ $ find . -type f | perl -pe's/5\.10\.0/5.10.1/g' | sort > /tmp/f1
+ $ cd installdir-5.10.1/
+ $ find . -type f | sort > /tmp/f2
+ $ diff -u /tmp/f[12]
 
 =head4 Disable C<local::lib> if it's turned on
 
@@ -1149,7 +1173,7 @@ has dependencies; for example:
 
 Check that your perl can run this:
 
- $ bin/perl -Ilib -lwe "use Inline C => q[int f() { return 42;}]; print f"
+ $ bin/perl -lwe "use Inline C => q[int f() { return 42;}]; print f"
  42
  $
 
@@ -1198,7 +1222,7 @@ Once smoking is okay, upload it to PAUSE. This is the point of no return.
 If anything goes wrong after this point, you will need to re-prepare
 a new release with a new minor version or RC number.
 
- https://pause.perl.org/
+L<https://pause.perl.org/>
 
 (Log in, then select 'Upload a file to CPAN')
 
@@ -1218,8 +1242,8 @@ Upload the .gz and .xz versions of the tarball.
 Note: You can also use the command-line utility to upload your tarballs, if
 you have it configured:
 
- cpan-upload perl-5.X.Y.tar.gz
- cpan-upload perl-5.X.Y.tar.xz
+ $ cpan-upload perl-5.X.Y.tar.gz
+ $ cpan-upload perl-5.X.Y.tar.xz
 
 Do not proceed any further until you are sure that your tarballs are on CPAN.
 Check your authors directory metacpan.org to confirm that your uploads have
@@ -1279,11 +1303,11 @@ either, check that the email you are sending from is subscribed to the list.
 
 Merge the (local) release branch back into master now, and delete it.
 
- git checkout blead
- git pull
- git merge release-5.X.Y
- git push
- git branch -d release-5.X.Y
+ $ git checkout blead
+ $ git pull
+ $ git merge release-5.X.Y
+ $ git push
+ $ git branch -d release-5.X.Y
 
 Note: The merge will create a merge commit if other changes have been pushed
 to blead while you've been working on your release branch. Do NOT rebase your
@@ -1305,11 +1329,6 @@ Add your quote to F<Porting/epigraphs.pod> and commit it.
 You can include the customary link to the release announcement even before your
 message reaches the web-visible archives by looking for the X-List-Archive
 header in your message after receiving it back via perl5-porters.
-
-=head3 Blog about your epigraph
-
-If you have a blog, please consider writing an entry in your blog explaining
-why you chose that particular quote for your epigraph.
 
 =head3 Update the link to the latest perl on perlweb
 
@@ -1372,7 +1391,7 @@ Skip to the end of its test output to see the options it offers you.
 
 When C<make test_porting> passes, commit the new perldelta.
 
- git commit -m'New perldelta for 5.X.Y'
+ $ git commit -m'Archive perldelta 5.X.Y'
 
 =back
 
@@ -1478,22 +1497,6 @@ Assuming you're using git 1.7.x or newer:
  $ git checkout -b maint-5.X v5.X.0
  $ git push origin -u maint-5.X
 
-
-=for checklist skip BLEAD-POINT MAINT RC
-
-=head3 Make the maint branch available in the APC
-
-Clone the new branch into /srv/gitcommon/branches on camel so the APC will
-receive its changes.
-
- $ git clone --branch maint-5.14 /gitroot/perl.git \
- ?  /srv/gitcommon/branches/perl-5.14.x
- $ chmod -R g=u /srv/gitcommon/branches/perl-5.14.x
-
-And nag the sysadmins to make this directory available via rsync.
-
-XXX Who are the sysadmins?  Contact info?
-
 =for checklist skip BLEAD-POINT RC
 
 =head3 Copy perldelta.pod to blead
@@ -1594,8 +1597,7 @@ test_porting makefile target to check that they're ok.
 
 Run
 
- $ ./perl -Ilib -MModule::CoreList \
- -le 'print Module::CoreList->find_version($]) ? "ok" : "not ok"'
+ $ ./perl -Ilib -MModule::CoreList -le 'print Module::CoreList->find_version($]) ? "ok" : "not ok"'
 
 and check that it outputs "ok" to prove that Module::CoreList now knows
 about blead's current version.
@@ -1605,7 +1607,7 @@ about blead's current version.
 Commit and push your changes.
 
  $ git add -u
- $ git commit -m "Prepare Module::Corelist for 5.X.Y"
+ $ git commit -m "Prepare Module::Corelist"
  $ git push origin
 
 =back
@@ -1670,7 +1672,7 @@ be considered.
 =head1 SOURCE
 
 Based on
-L<https://www.nntp.perl.org/group/perl.perl5.porters/2009/05/msg146638.html>,
+L<git, process and progress (Nicholas Clark)|https://www.nntp.perl.org/group/perl.perl5.porters/2009/05/msg146638.html>,
 plus a whole bunch of other sources, including private correspondence.
 
 =cut

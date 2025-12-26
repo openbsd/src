@@ -282,7 +282,7 @@ sub columnarize_list {
     # can accommodate all the data.  This algorithm doesn't require the
     # resulting columns to all have the same width.  This can allow for
     # as tight of packing as the data will possibly allow.
-    for ($columns = 7; $columns >= 1; $columns--) {
+    for ($columns = $max_columns; $columns >= 1; $columns--) {
 
         # For this many columns, we will need this many rows (final row might
         # not be completely filled)

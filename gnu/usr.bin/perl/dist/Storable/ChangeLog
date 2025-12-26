@@ -1,5 +1,15 @@
 Release history for Storable
 
+  - reorganize files to match modern standards
+  - use strict in library
+  - use strict and warnings in tests
+  - normaize whitespace in code
+  - other minor cleanups
+
+3.33 - 2024-07-11 00:41:35
+
+  - add some test names to t/utf8.t
+
 3.32 - 2023-05-26 21:36:00 demerphq
 
   - Update security advisory to be more clear

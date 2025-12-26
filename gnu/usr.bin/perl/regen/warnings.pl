@@ -16,7 +16,7 @@
 #
 # This script is normally invoked from regen.pl.
 
-$VERSION = '1.70';
+$VERSION = '1.74';
 
 BEGIN {
     require './regen/regen_lib.pl';
@@ -80,9 +80,6 @@ our $WARNING_TREE = {
                                 'deprecated::dot_in_inc'               => [ 5.025011, DEFAULT_ON],
                                 'deprecated::version_downgrade'        => [ 5.035009, DEFAULT_ON],
                                 'deprecated::delimiter_will_be_paired' => [ 5.035010, DEFAULT_ON],
-                                'deprecated::apostrophe_as_package_separator'
-                                                                       => [ 5.037009, DEFAULT_ON],
-                                'deprecated::smartmatch'               => [ 5.037010, DEFAULT_ON],
                                 'deprecated::missing_import_called_with_args'   
                                                                        => [ 5.039002, DEFAULT_ON],
                                 'deprecated::subsequent_use_version'   => [ 5.039008, DEFAULT_ON],
@@ -160,6 +157,10 @@ our $WARNING_TREE = {
                                     [ 5.035, DEFAULT_ON],
                                 'experimental::class' =>
                                     [ 5.037, DEFAULT_ON ],
+                                'experimental::keyword_any' =>
+                                    [ 5.041, DEFAULT_ON ],
+                                'experimental::keyword_all' =>
+                                    [ 5.041, DEFAULT_ON ],
                         }],
 
         'missing'       => [ 5.021, DEFAULT_OFF],
@@ -186,6 +187,7 @@ my %NAME_TO_VALUE; # ('NAME'       => index_number,       ....);
 # the experiments were successful (or abandonned),
 # so no warning bit is needed anymore
 my %NO_BIT_FOR = map { ( uc $_ => 1, $_ => 1 ) } qw(
+  deprecated::smartmatch
   experimental::lexical_subs
   experimental::postderef
   experimental::signatures

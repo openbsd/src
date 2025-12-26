@@ -7,7 +7,7 @@ require Tie::Hash;
 require XSLoader;
 
 our @ISA = qw(Tie::Hash);
-our $VERSION = "1.17";
+our $VERSION = "1.18";
 
 XSLoader::load();
 
@@ -114,7 +114,7 @@ portable across platforms.
 The GDBM documentation doesn't imply that files from untrusted sources
 can be safely used with C<libgdbm>.
 
-Systems that don't use GDBM compatibilty for ndbm support will be
+Systems that don't use GDBM compatibility for ndbm support will be
 using a platform specific library, possibly inherited from BSD
 systems, where it may or may not be safe to use an untrusted file.
 

@@ -7,7 +7,7 @@ other interesting bits.
 .ie n .SH "This ""is"" a ""level 1"" heading"
 .el .SH "This \f(CWis\fP a ""level 1"" heading"
 .IX Header "This is a ""level 1"" heading"
-.SS "``Level'' ""2 \fIheading\fP"
+.SS "\`\`Level\*(Aq\*(Aq ""2 \fIheading\fP"
 .IX Subsection "``Level'' ""2 heading"
 \fILevel 3 \fR\f(BIheading with \fR\f(CB\*(C`weird stuff "" (double quote)\*(C'\fR
 .IX Subsection "Level 3 heading with weird stuff """" (double quote)"
@@ -20,7 +20,7 @@ Now try again with \fBintermixed\fR \fItext\fR.
 .el .SH "This \f(CWis\fP a ""level 1"" heading"
 .IX Header "This is a ""level 1"" heading"
 Text.
-.SS "``Level'' 2 \fIheading\fP"
+.SS "\`\`Level\*(Aq\*(Aq 2 \fIheading\fP"
 .IX Subsection "``Level'' 2 heading"
 Text.
 .PP
@@ -144,21 +144,21 @@ for one paragraph are properly compacted.
 .el .IP \f(CWbaz\fR 4
 .IX Item "baz"
 .PD
-There shouldn't be any spaces between any of these item tags; this idiom
+There shouldn\*(Aqt be any spaces between any of these item tags; this idiom
 is used in perlfunc.
 .IP "Some longer item text" 4
 .IX Item "Some longer item text"
-Just to make sure that we test paragraphs where the item text doesn't fit
+Just to make sure that we test paragraphs where the item text doesn\*(Aqt fit
 in the margin of the paragraph (and make sure that this paragraph fills a
 few lines).
 .Sp
-Let's also make it multiple paragraphs to be sure that works.
+Let\*(Aqs also make it multiple paragraphs to be sure that works.
 .PP
 Test use of =over without =item as a block "quote" or block paragraph.
 .Sp
 .RS 4
 This should be indented four spaces but otherwise formatted the same as
-any other regular text paragraph.  Make sure it's long enough to see the
+any other regular text paragraph.  Make sure it\*(Aqs long enough to see the
 results of the formatting.....
 .RE
 .PP
@@ -174,9 +174,9 @@ This paragraph should be doubly indented.
 .Sp
 This paragraph should only be singly indented.
 .IP \(bu 4
-This is an item in the middle of a block-quote, which should be allowed.
+This is an item in the middle of a block\-quote, which should be allowed.
 .IP \(bu 4
-We're also testing tagless item commands.
+We\*(Aqre also testing tagless item commands.
 .RE
 .RS 4
 .Sp
@@ -187,7 +187,7 @@ Should be back to regular indentation.
 .PP
 Now also check the transformation of * into real bullets for man pages.
 .IP \(bu 4
-An item.  We're also testing using =over without a number, and making sure
+An item.  We\*(Aqre also testing using =over without a number, and making sure
 that item text wraps properly.
 .IP \(bu 4
 Another item.
@@ -204,7 +204,7 @@ Another test taken from Pod::Parser.
 This is a test to see if I can do not only \f(CW$self\fR and \f(CWmethod()\fR, but
 also \f(CW\*(C`$self\->method()\*(C'\fR and \f(CW\*(C`$self\->{FIELDNAME}\*(C'\fR and
 \&\f(CW\*(C`$Foo <=> $Bar\*(C'\fR without resorting to escape sequences. If 
-I want to refer to the right-shift operator I can do something
+I want to refer to the right\-shift operator I can do something
 like \f(CW\*(C`$x >> 3\*(C'\fR or even \f(CW\*(C`$y >> 5\*(C'\fR.
 .PP
 Now for the grand finale of \f(CW\*(C`$self\->method()\->{FIELDNAME} = {FOO=>BAR}\*(C'\fR.
@@ -215,12 +215,12 @@ Of course I should still be able to do all this \fIwith\fR escape sequences
 too: \f(CW\*(C`$self\->method()\*(C'\fR and \f(CW\*(C`$self\->{FIELDNAME}\*(C'\fR and
 \&\f(CW\*(C`{FOO=>BAR}\*(C'\fR.
 .PP
-Don't forget \f(CW\*(C`$self\->method()\->{FIELDNAME} = {FOO=>BAR}\*(C'\fR.
+Don\*(Aqt forget \f(CW\*(C`$self\->method()\->{FIELDNAME} = {FOO=>BAR}\*(C'\fR.
 .PP
 And make sure that \f(CW0\fR works too!
 .PP
 Now, if I use << or >> as my delimiters, then I have to use whitespace.
-So things like \f(CW\*(C`<$self\-\*(C'\fR\fBmethod()\fR>> and \f(CW\*(C`<$self\-\*(C'\fR{FIELDNAME}>> won't end
+So things like \f(CW\*(C`<$self\-\*(C'\fR\fBmethod()\fR>> and \f(CW\*(C`<$self\-\*(C'\fR{FIELDNAME}>> won\*(Aqt end
 up doing what you might expect since the first > will still terminate
 the first < seen.
 .PP
@@ -233,25 +233,26 @@ quotation from Winston Churchill.
 The following tests are added to those:
 .PP
 Make sure that a few other odd \fIthings\fR still work.  This should be
-a vertical bar:  |.  Here's a test of a few more special escapes
+a vertical bar:  |.  Here\*(Aqs a test of a few more special escapes
 that have to be supported:
 .IP & 3
 An ampersand.
-.IP ' 3
+.IP \*(Aq 3
+.IX Item "'"
 An apostrophe.
 .IP < 3
-A less-than sign.
+A less\-than sign.
 .IP > 3
-A greater-than sign.
+A greater\-than sign.
 .IP """" 3
 A double quotation mark.
 .IP / 3
 A forward slash.
 .PP
-Try to get this bit of text over towards the edge so |that\ all\ of\ this\ text\ inside\ S<>\ won't| be wrapped.  Also test the
-|same\ thing\ with\ non-breaking\ spaces.|
+Try to get this bit of text over towards the edge so |that\ all\ of\ this\ text\ inside\ S<>\ won\*(Aqt| be wrapped.  Also test the
+|same\ thing\ with\ non\-breaking\ spaces.|
 .PP
-There is a soft hy\%phen in hyphen at hy-phen.
+There is a soft hy\%phen in hyphen at hy\-phen.
 .PP
 This is a test of an index entry.
 .IX Xref "index entry"
@@ -273,7 +274,7 @@ Throw in a few verbatim paragraphs.
 \&    print uncolor \*(Aq01;31\*(Aq, "\en";
 .Ve
 .PP
-But this isn't verbatim (make sure it wraps properly), and the next
+But this isn\*(Aqt verbatim (make sure it wraps properly), and the next
 paragraph is again:
 .PP
 .Vb 2
@@ -283,7 +284,7 @@ paragraph is again:
 \&    use Term::ANSIColor qw(:constants); $Term::ANSIColor::AUTORESET = 1; print BOLD BLUE "This text is in bold blue.\en"; print "This text is normal.\en";
 .Ve
 .PP
-(Ugh, that's obnoxiously long.)  Try different spacing:
+(Ugh, that\*(Aqs obnoxiously long.)  Try different spacing:
 .PP
 .Vb 7
 \&        Starting with a tab.
@@ -295,7 +296,7 @@ paragraph is again:
 \& As should this.
 .Ve
 .PP
-This isn't.
+This isn\*(Aqt.
 .PP
 .Vb 2
 \& This is.  And this:    is an internal tab.  It should be:
@@ -315,14 +316,14 @@ up.)
 .Ve
 .SH CONCLUSION
 .IX Header "CONCLUSION"
-That's all, folks!
+That\*(Aqs all, folks!
 .SH "COPYRIGHT AND LICENSE"
 .IX Header "COPYRIGHT AND LICENSE"
 Copyright 2001, 2004, 2016, 2018 Russ Allbery <rra@cpan.org>
 .PP
 Copying and distribution of this file, with or without modification, are
 permitted in any medium without royalty provided the copyright notice and
-this notice are preserved.  This file is offered as-is, without any
+this notice are preserved.  This file is offered as\-is, without any
 warranty.
 .PP
-SPDX-License-Identifier: FSFAP
+SPDX\-License\-Identifier: FSFAP

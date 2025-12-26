@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..120\n";
+print "1..129\n";
 
 $x = 'x';
 
@@ -586,3 +586,124 @@ $test++;
 print "not " unless ref $::{bas} eq 'SCALAR';
 print "ok $test - second constant in 'const1 const2' is not upgraded\n";
 $test++;
+
+# Test various "not quite =cut" POD directives, which should not terminate a
+# POD section.
+
+$foo = "";
+
+=pod
+
+=cute
+$foo = "not ";
+
+=pod
+
+=cut
+
+print $foo, "ok $test - =cute does not end POD\n";
+$test++;
+
+$foo = "";
+
+=pod
+
+=cut2
+$foo = "not ";
+
+=pod
+
+=cut
+
+print $foo, "ok $test - =cut2 does not end POD\n";
+$test++;
+
+$foo = "";
+
+=pod
+
+=cut_
+$foo = "not ";
+
+=pod
+
+=cut
+
+print $foo, "ok $test - =cut_ does not end POD\n";
+$test++;
+
+$foo = "not ";
+
+=pod
+
+=cut$cene
+$foo = "";
+
+=pod
+
+=cut
+
+print $foo, "ok $test - =cut\$cene ends POD\n";
+$test++;
+
+# Same as above, but in string eval.
+
+eval q{
+$foo = "";
+
+=pod
+
+=cute
+$foo = "not ";
+
+=pod
+
+=cut
+
+print $foo, "ok $test - =cute does not end POD in string eval\n";
+$test++;
+
+$foo = "";
+
+=pod
+
+=cut2
+$foo = "not ";
+
+=pod
+
+=cut
+
+print $foo, "ok $test - =cut2 does not end POD in string eval\n";
+$test++;
+
+$foo = "";
+
+=pod
+
+=cut_
+$foo = "not ";
+
+=pod
+
+=cut
+
+print $foo, "ok $test - =cut_ does not end POD in string eval\n";
+$test++;
+
+$foo = "not ";
+
+=pod
+
+=cut$cene
+$foo = "";
+
+=pod
+
+=cut
+
+print $foo, "ok $test - =cut\$cene ends POD in string eval\n";
+$test++;
+};
+
+print $@ eq "" ? "" : "not ", "ok $test - did not throw an error\n# $@\n";

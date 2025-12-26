@@ -46,7 +46,7 @@ Perl_grok_bslash_c(pTHX_ const char   source,
         const char control = toCTRL('{');
         if (isPRINT_A(control)) {
             /* diag_listed_as: Use "%s" instead of "%s" */
-            *message = Perl_form(aTHX_ PERL_DIAG_DIE_SYNTAX("Use \"%c\" instead of \"\\c{\""), control);
+            *message = form(PERL_DIAG_DIE_SYNTAX("Use \"%c\" instead of \"\\c{\""), control);
         }
         else {
             *message = "Sequence \"\\c{\" invalid";
@@ -67,11 +67,11 @@ Perl_grok_bslash_c(pTHX_ const char   source,
         clearer[i++] = '\0';
 
         if (packed_warn) {
-            *message = Perl_form(aTHX_ format, source, clearer);
+            *message = form(format, source, clearer);
             *packed_warn = packWARN(WARN_SYNTAX);
         }
         else {
-            Perl_warner(aTHX_ packWARN(WARN_SYNTAX), format, source, clearer);
+            warner(packWARN(WARN_SYNTAX), format, source, clearer);
         }
     }
 
@@ -117,7 +117,7 @@ Perl_form_alien_digit_msg(pTHX_
 
         /* It also isn't a UTF-8 invariant character, so no display shortcuts
          * are available.  Use \\x{...} */
-        Perl_sv_setpvf(aTHX_ display_char, "\\x{%02x}", *first_bad);
+        sv_setpvf(display_char, "\\x{%02x}", *first_bad);
     }
 
     /* Ready to start building the message */
@@ -144,7 +144,7 @@ Perl_form_alien_digit_msg(pTHX_
     if (isPRINT(*first_bad)) {
         sv_catpvs(message_sv, "'");
     }
-    Perl_sv_catpvf(aTHX_ message_sv, " terminates \\%c early.  Resolved as "
+    sv_catpvf(message_sv, " terminates \\%c early.  Resolved as "
                                      "\"\\%c", symbol, symbol);
     if (braced) {
         sv_catpvs(message_sv, "{");
@@ -216,15 +216,15 @@ Perl_form_cp_too_large_msg(pTHX_
         prefix = "0x";
     }
 
-    Perl_sv_setpvf(aTHX_ message_sv, "Use of code point %s", prefix);
+    sv_setpvf(message_sv, "Use of code point %s", prefix);
     if (string) {
-        Perl_sv_catpvf(aTHX_ message_sv, "%.*s", (int) len, string);
+        sv_catpvf(message_sv, "%.*s", (int) len, string);
     }
     else {
-        Perl_sv_catpvf(aTHX_ message_sv, format, cp);
+        sv_catpvf(message_sv, format, cp);
     }
-    Perl_sv_catpvf(aTHX_ message_sv, " is not allowed; the permissible max is %s", prefix);
-    Perl_sv_catpvf(aTHX_ message_sv, format, MAX_LEGAL_CP);
+    sv_catpvf(message_sv, " is not allowed; the permissible max is %s", prefix);
+    sv_catpvf(message_sv, format, MAX_LEGAL_CP);
 
     return SvPVX_const(message_sv);
 }
@@ -360,7 +360,7 @@ Perl_grok_bslash_o(pTHX_ char **s, const char * const send, UV *uv,
                 *packed_warn = packWARN(WARN_DIGIT);
             }
             else {
-                Perl_warner(aTHX_ packWARN(WARN_DIGIT), "%s", failure);
+                warner(packWARN(WARN_DIGIT), "%s", failure);
             }
         }
     }
@@ -467,7 +467,7 @@ Perl_grok_bslash_x(pTHX_ char ** s, const char * const send, UV *uv,
                                                               send, UTF, FALSE);
 
                 if (! packed_warn) {
-                    Perl_warner(aTHX_ packWARN(WARN_DIGIT), "%s", failure);
+                    warner(packWARN(WARN_DIGIT), "%s", failure);
                 }
                 else {
                     *message = failure;
@@ -546,7 +546,7 @@ Perl_grok_bslash_x(pTHX_ char ** s, const char * const send, UV *uv,
             const char * failure = form_alien_digit_msg(16, numbers_len, *s,
                                                                 send, UTF, TRUE);
             if (! packed_warn) {
-                Perl_warner(aTHX_ packWARN(WARN_DIGIT), "%s", failure);
+                warner(packWARN(WARN_DIGIT), "%s", failure);
             }
             else {
                 *message = failure;

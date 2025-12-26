@@ -72,7 +72,7 @@ perlapio - perl's IO abstraction interface.
 
 =for apidoc_section $io
 
-=for apidoc    Amh|int      |PerlIO_apply_layers|PerlIO *f|const char *mode|const char *layers
+=for apidoc     Ah|int      |PerlIO_apply_layers|PerlIO *f|const char *mode|const char *layers
 =for apidoc_item  |int      |PerlIO_binmode|PerlIO *f|int ptype|int imode|const char *layers
 =for apidoc_item T|int      |PerlIO_canset_cnt|PerlIO *f
 =for apidoc_item  |         |PerlIO_clearerr

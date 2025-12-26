@@ -5,13 +5,13 @@ use strict;
 
 =head1 NAME
 
-Benchmark - benchmark running times of Perl code
+Benchmark - Benchmark running times of Perl code
 
 =head1 SYNOPSIS
 
-    use Benchmark qw(:all) ;
+    use Benchmark qw(:all);
 
-    timethis ($count, "code");
+    timethis($count, "code");
 
     # Use Perl code in strings...
     timethese($count, {
@@ -44,32 +44,32 @@ Benchmark - benchmark running times of Perl code
         },
 	'none'
     );
-    cmpthese( $results ) ;
+    cmpthese( $results );
 
-    $t = timeit($count, '...other code...')
-    print "$count loops of other code took:",timestr($t),"\n";
+    my $t1 = timeit($count, '...other code...');
+    print "$count loops of other code took:", timestr($t1),"\n";
 
-    $t = countit($time, '...other code...')
-    $count = $t->iters ;
-    print "$count loops of other code took:",timestr($t),"\n";
+    my $t2 = countit($time, '...other code...');
+    $count = $t2->iters;
+    print "$count loops of other code took:", timestr($t2),"\n";
 
-    # enable hires wallclock timing if possible
+    # Enable hires wallclock timing if possible
     use Benchmark ':hireswallclock';
 
 =head1 DESCRIPTION
 
-The Benchmark module encapsulates a number of routines to help you
-figure out how long it takes to execute some code.
+The C<Benchmark> module encapsulates a number of routines to
+help you figure out how long it takes to execute some code.
 
-timethis - run a chunk of code several times
+C<timethis> - Run a chunk of code several times
 
-timethese - run several chunks of code several times
+C<timethese> - Run several chunks of code several times
 
-cmpthese - print results of timethese as a comparison chart
+C<cmpthese> - Print results of C<timethese> as a comparison chart
 
-timeit - run a chunk of code and see how long it goes
+C<timeit> - Run a chunk of code and see how long it goes
 
-countit - see how many times a chunk of code runs in a given time
+C<countit> - See how many times a chunk of code runs in a given time
 
 
 =head2 Methods
@@ -81,10 +81,10 @@ countit - see how many times a chunk of code runs in a given time
 Returns the current time.   Example:
 
     use Benchmark;
-    $t0 = Benchmark->new;
+    my $t0 = Benchmark->new;
     # ... your code here ...
-    $t1 = Benchmark->new;
-    $td = timediff($t1, $t0);
+    my $t1 = Benchmark->new;
+    my $td = timediff($t1, $t0);
     print "the code took:",timestr($td),"\n";
 
 =item debug
@@ -92,7 +92,7 @@ Returns the current time.   Example:
 Enables or disable debugging by setting the C<$Benchmark::Debug> flag:
 
     Benchmark->debug(1);
-    $t = timeit(10, ' 5 ** $Global ');
+    my $t = timeit(10, ' 5 ** $Global ');
     Benchmark->debug(0);
 
 =item iters
@@ -128,11 +128,11 @@ The COUNT can be zero or negative: this means the I<minimum number of
 CPU seconds> to run.  A zero signifies the default of 3 seconds.  For
 example to run at least for 10 seconds:
 
-	timethis(-10, $code)
+	timethis(-10, $code);
 
 or to run two pieces of code tests for at least 3 seconds:
 
-	timethese(0, { test1 => '...', test2 => '...'})
+	timethese(0, { test1 => '...', test2 => '...'});
 
 CPU seconds is, in UNIX terms, the user time plus the system time of
 the process itself, as opposed to the real (wallclock) time and the
@@ -155,7 +155,7 @@ and either a string to eval or a code reference for each value.
 For each (KEY, VALUE) pair in the CODEHASHREF, this routine will
 call
 
-	timethis(COUNT, VALUE, KEY, STYLE)
+	timethis(COUNT, VALUE, KEY, STYLE);
 
 The routines are called in string comparison order of KEY.
 
@@ -208,7 +208,7 @@ Clear all cached times.
 
 Optionally calls timethese(), then outputs comparison chart.  This:
 
-    cmpthese( -1, { a => "++\$i", b => "\$i *= 2" } ) ;
+    cmpthese( -1, { a => "++\$i", b => "\$i *= 2" } );
 
 outputs a chart like:
 
@@ -221,8 +221,8 @@ difference between each pair of tests.
 
 C<cmpthese> can also be passed the data structure that timethese() returns:
 
-    $results = timethese( -1,
-        { a => "++\$i", b => "\$i *= 2" } ) ;
+    my $results = timethese( -1,
+        { a => "++\$i", b => "\$i *= 2" } );
     cmpthese( $results );
 
 in case you want to see both sets of results.
@@ -329,7 +329,7 @@ Number of iterations run.
 
 The following illustrates use of the Benchmark object:
 
-    $result = timethis(100000, sub { ... });
+    my $result = timethis(100000, sub { ... });
     print "total CPU = ", $result->cpu_a, "\n";
 
 =head1 NOTES
@@ -367,7 +367,7 @@ accuracy and does not usually noticeably affect runtimes.
 For example,
 
     use Benchmark qw( cmpthese ) ;
-    $x = 3;
+    my $x = 3;
     cmpthese( -5, {
         a => sub{$x*$x},
         b => sub{$x**2},
@@ -384,8 +384,8 @@ outputs something like this:
 while
 
     use Benchmark qw( timethese cmpthese ) ;
-    $x = 3;
-    $r = timethese( -5, {
+    my $x = 3;
+    my $r = timethese( -5, {
         a => sub{$x*$x},
         b => sub{$x**2},
     } );
@@ -482,7 +482,7 @@ our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
 	      clearcache clearallcache disablecache enablecache);
 %EXPORT_TAGS=( all => [ @EXPORT, @EXPORT_OK ] ) ;
 
-$VERSION = 1.25;
+$VERSION = 1.27;
 
 # --- ':hireswallclock' special handling
 
@@ -492,9 +492,8 @@ sub mytime () { time }
 
 init();
 
-sub BEGIN {
-    if (eval 'require Time::HiRes') {
-	Time::HiRes->import('time');
+BEGIN {
+    if (eval { require Time::HiRes }) {
 	$hirestime = \&Time::HiRes::time;
     }
 }

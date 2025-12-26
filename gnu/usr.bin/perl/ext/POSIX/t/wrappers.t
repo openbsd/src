@@ -164,7 +164,7 @@ SKIP: {
 
 is(-e NOT_HERE, undef, NOT_HERE . ' does not exist');
 
-foreach ([undef, 0, 'chdir', NOT_HERE],
+foreach ([undef, !!0, 'chdir', NOT_HERE],
 	 [undef, 0, 'chmod', 0, NOT_HERE],
 	 ['d_chown', 0, 'chown', 0, 0, NOT_HERE],
 	 [undef, undef, 'creat', NOT_HERE . '/crash', 0],

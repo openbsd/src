@@ -816,7 +816,7 @@ PP(pp_sort)
         (void)POPMARK; /* remove mark associated with ex-OP_AASSIGN */
         av = MUTABLE_AV((*PL_stack_sp));
         if (SvREADONLY(av))
-            Perl_croak_no_modify();
+            croak_no_modify();
         max = AvFILL(av) + 1;
 
         I32 oldmark = MARK - PL_stack_base;
@@ -923,12 +923,12 @@ PP(pp_sort)
                 /* standard perl sub with values passed as $a and $b */
                 SAVEGENERICSV(PL_firstgv);
                 SAVEGENERICSV(PL_secondgv);
-                PL_firstgv = MUTABLE_GV(SvREFCNT_inc(
+                PL_firstgv = GvREFCNT_inc(
                     gv_fetchpvs("a", GV_ADD|GV_NOTQUAL, SVt_PV)
-                ));
-                PL_secondgv = MUTABLE_GV(SvREFCNT_inc(
+                );
+                PL_secondgv = GvREFCNT_inc(
                     gv_fetchpvs("b", GV_ADD|GV_NOTQUAL, SVt_PV)
-                ));
+                );
                 /* make sure the GP isn't removed out from under us for
                  * the SAVESPTR() */
                 save_gp(PL_firstgv, 0);
@@ -959,7 +959,7 @@ PP(pp_sort)
                         AV * const av0 = MUTABLE_AV(PAD_SVl(0));
 
                         cx->blk_sub.savearray = GvAV(PL_defgv);
-                        GvAV(PL_defgv) = MUTABLE_AV(SvREFCNT_inc_simple(av0));
+                        GvAV(PL_defgv) = AvREFCNT_inc_simple(av0);
                     }
 
                 }

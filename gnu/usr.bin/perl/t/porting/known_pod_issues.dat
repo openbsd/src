@@ -1,4 +1,4 @@
-# This file is the data file for t/porting/podcheck.t.
+# This file is the data file for porting/podcheck.t.
 # There are three types of lines.
 # Comment lines are white-space only or begin with a '#', like this one.  Any
 #   changes you make to the comment lines will be lost when the file is
@@ -40,6 +40,7 @@ bc(1)
 Benchmark::Perl::Formance
 bind(2)
 BSD::Resource
+builtin::compat
 ByteLoader
 bzip2(1)
 Carp::Always
@@ -75,7 +76,8 @@ Cpanel::JSON::XS
 cpanp(1)
 CPANPLUS
 crypt(3)
-Crypt::Random
+Crypt::PRNG
+Crypt::URandom
 ctime(3)
 curl(1)
 Dancer
@@ -106,7 +108,6 @@ Devel::DTrace::Provider
 Devel::InnerPackage
 Devel::NYTProf
 Devel::NYTProf::Apache
-Devel::PPPort
 Devel::ptkdb
 Devel::SawAmpersand
 Devel::Spy
@@ -155,7 +156,6 @@ Future
 gcc(1)
 gdbm(3)
 getitimer(2)
-Getopt::Std
 getpgrp(2)
 getpriority(2)
 getpwnam(3)
@@ -171,7 +171,6 @@ Importer
 indirect
 inetd(8)
 invoker
-IO::Compress
 IO::Pty
 IO::Socket::IP
 ioctl(2)
@@ -218,7 +217,6 @@ Math::BigInt::Constant
 Math::BigInt::GMP
 Math::BigInt::Pari
 Math::Random::MT::Perl
-Math::Random::Secure
 Math::TrulyRandom
 mbrlen(3)
 mbrtowc(3)
@@ -344,6 +342,7 @@ String::Base
 String::Scanf
 String::Util
 strstr(3)
+strtod(3)
 strtok(3)
 strtol(3)
 Switch
@@ -357,6 +356,7 @@ Term::UI::History
 Test::Harness::TAP
 Test::Inline
 Test::MockObject
+Test::Smoke
 Test::Unit
 Test::Vars
 Text::Autoformat
@@ -427,13 +427,12 @@ pod/perlos2.pod	? Should you be using L<...> instead of	1
 pod/perlos2.pod	Verbatim line length including indents exceeds 78 by	5
 pod/perlos390.pod	Verbatim line length including indents exceeds 78 by	1
 pod/perlperf.pod	Verbatim line length including indents exceeds 78 by	-1
-pod/perlport.pod	? Should you be using L<...> instead of	1
 pod/perlrun.pod	Verbatim line length including indents exceeds 78 by	3
 pod/perlsolaris.pod	Verbatim line length including indents exceeds 78 by	-1
 pod/perltie.pod	Verbatim line length including indents exceeds 78 by	3
 pod/perltru64.pod	Verbatim line length including indents exceeds 78 by	1
 porting/bisect-runner.pl	Verbatim line length including indents exceeds 78 by	2
 porting/epigraphs.pod	Verbatim line length including indents exceeds 78 by	-1
-porting/release_managers_guide.pod	Verbatim line length including indents exceeds 78 by	1
+porting/release_managers_guide.pod	Verbatim line length including indents exceeds 78 by	8
 lib/benchmark.pm	Verbatim line length including indents exceeds 78 by	2
 lib/config.pod	? Should you be using L<...> instead of	-1

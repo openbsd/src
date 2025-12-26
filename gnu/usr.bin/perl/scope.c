@@ -36,7 +36,7 @@ Perl_stack_grow(pTHX_ SV **sp, SV **p, SSize_t n)
     PERL_ARGS_ASSERT_STACK_GROW;
 
     if (UNLIKELY(n < 0))
-        Perl_croak(aTHX_
+        croak(
             "panic: stack_grow() negative count (%" IVdf ")", (IV)n);
 
     PL_stack_sp = sp;
@@ -53,7 +53,7 @@ Perl_stack_grow(pTHX_ SV **sp, SV **p, SSize_t n)
                  || current + extra > Stack_off_t_MAX - n
     ))
         /* diag_listed_as: Out of memory during %s extend */
-        Perl_croak(aTHX_ "Out of memory during stack extend");
+        croak("Out of memory during stack extend");
 
     av_extend(PL_curstack, current + n + extra);
 #ifdef PERL_USE_HWM
@@ -205,7 +205,7 @@ Perl_savestack_grow_cnt(pTHX_ I32 need)
      * and we have rolled over from I32_MAX to a small value */
     if (new_max > I32_MAX || new_max < PL_savestack_max) {
         if (new_floor > I32_MAX || new_floor < PL_savestack_max) {
-            Perl_croak(aTHX_ "panic: savestack overflows I32_MAX");
+            croak("panic: savestack overflows I32_MAX");
         }
         new_max = new_floor;
     }
@@ -803,7 +803,7 @@ Perl_save_clearsv(pTHX_ SV **svp)
     assert(*svp);
     SvPADSTALE_off(*svp); /* mark lexical as active */
     if (UNLIKELY((offset_shifted >> SAVE_TIGHT_SHIFT) != offset)) {
-        Perl_croak(aTHX_ "panic: pad offset %" UVuf " out of range (%p-%p)",
+        croak("panic: pad offset %" UVuf " out of range (%p-%p)",
                    offset, svp, PL_curpad);
     }
 
@@ -1078,7 +1078,7 @@ Perl_save_alloc(pTHX_ SSize_t size, I32 pad)
     const UV elems_shifted = elems << SAVE_TIGHT_SHIFT;
 
     if (UNLIKELY((elems_shifted >> SAVE_TIGHT_SHIFT) != elems))
-        Perl_croak(aTHX_
+        croak(
             "panic: save_alloc elems %" UVuf " out of range (%" IVdf "-%" IVdf ")",
                    elems, (IV)size, (IV)pad);
 
@@ -1107,7 +1107,7 @@ Perl_leave_scope(pTHX_ I32 base)
     bool was = TAINT_get;
 
     if (UNLIKELY(base < -1))
-        Perl_croak(aTHX_ "panic: corrupt saved stack index %ld", (long) base);
+        croak("panic: corrupt saved stack index %ld", (long) base);
     DEBUG_l(Perl_deb(aTHX_ "savestack: releasing items %ld -> %ld\n",
                         (long)PL_savestack_ix, (long)base));
     while (PL_savestack_ix > base) {
@@ -1389,6 +1389,12 @@ Perl_leave_scope(pTHX_ I32 base)
         case SAVEt_FREEPV:
             a0 = ap[0];
             Safefree(a0.any_ptr);
+            break;
+
+        case SAVEt_FREE_REXC_STATE:
+            a0 = ap[0];
+            if (a0.any_ptr)
+                release_RExC_state(a0.any_ptr);
             break;
 
         case SAVEt_CLEARPADRANGE:
@@ -1684,11 +1690,6 @@ Perl_leave_scope(pTHX_ I32 base)
             (void)sv_clear(a0.any_sv);
             break;
 
-        case SAVEt_LONG:			/* long reference */
-            a0 = ap[0]; a1 = ap[1];
-            *(long*)a1.any_ptr = a0.any_long;
-            break;
-
         case SAVEt_IV:				/* IV reference */
             a0 = ap[0]; a1 = ap[1];
             *(IV*)a1.any_ptr = a0.any_iv;
@@ -1736,7 +1737,7 @@ Perl_leave_scope(pTHX_ I32 base)
             break;
 
         default:
-            Perl_croak(aTHX_ "panic: leave_scope inconsistency %u",
+            croak("panic: leave_scope inconsistency %u",
                     (U8)uv & SAVE_MASK);
         }
     }
@@ -1899,10 +1900,10 @@ the code reference.
 
 When operating in a C callback mode the C<args> parameter will be passed
 directly to the C function as a C<void *> pointer. No additional
-processing of the argument will be peformed, and it is the callers
+processing of the argument will be performed, and it is the callers
 responsibility to free the C<args> parameter if necessary.
 
-Be aware that there is a signficant difference in timing between the
+Be aware that there is a significant difference in timing between the
 I<end of the current statement> and the I<end of the current pseudo
 block>. If you are looking for a mechanism to trigger a function at the
 end of the B<current pseudo block> you should look at
@@ -1915,7 +1916,7 @@ B<end of the current statement> with the arguments provided. It is a
 wrapper around C<mortal_destructor_sv()> which ensures that the latter
 function is called appropriately.
 
-Be aware that there is a signficant difference in timing between the
+Be aware that there is a significant difference in timing between the
 I<end of the current statement> and the I<end of the current pseudo
 block>. If you are looking for a mechanism to trigger a function at the
 end of the B<current pseudo block> you should look at
@@ -1925,7 +1926,7 @@ L<perlapi/C<SAVEDESTRUCTOR_X>> instead of this function.
 
 This function is called via magic to implement the
 C<mortal_destructor_sv()> and C<mortal_destructor_x()> functions. It
-should not be called directly and has no user servicable parts.
+should not be called directly and has no user serviceable parts.
 
 =cut
 */
@@ -1965,7 +1966,7 @@ Perl_magic_freedestruct(pTHX_ SV* sv, MAGIC* mg) {
 
     IV nargs = 0;
     if (PL_phase == PERL_PHASE_DESTRUCT) {
-        Perl_warn(aTHX_ "Can't call destructor for 0x%p in global destruction\n", sv);
+        warn("Can't call destructor for 0x%p in global destruction\n", sv);
         return 1;
     }
 

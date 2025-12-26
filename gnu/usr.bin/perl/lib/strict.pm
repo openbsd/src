@@ -1,6 +1,6 @@
 package strict;
 
-$strict::VERSION = "1.13";
+$strict::VERSION = "1.14";
 
 my ( %bitmask, %explicit_bitmask );
 
@@ -12,12 +12,15 @@ BEGIN {
         if __FILE__ !~ ( '(?x) \b     '.__PACKAGE__.'  \.pmc? \z' )
         && __FILE__ =~ ( '(?x) \b (?i:'.__PACKAGE__.') \.pmc? \z' );
 
+    # which strictures are actually in force
     %bitmask = (
         refs => 0x00000002,
         subs => 0x00000200,
         vars => 0x00000400,
     );
 
+    # which strictures have at some point been turned on or off explicitly
+    # and must therefore not be touched by any subsequent `use VERSION` or `no VERSION`
     %explicit_bitmask = (
         refs => 0x00000020,
         subs => 0x00000040,
@@ -38,12 +41,12 @@ BEGIN {
 }
 
 sub bits {
+    my $do_explicit = caller eq __PACKAGE__;
     my $bits = 0;
     my @wrong;
     foreach my $s (@_) {
         if (exists $bitmask{$s}) {
-            $^H |= $explicit_bitmask{$s};
-
+            $bits |= $explicit_bitmask{$s} if $do_explicit;
             $bits |= $bitmask{$s};
         }
         else {
@@ -66,7 +69,9 @@ sub unimport {
     shift;
 
     if (@_) {
-        $^H &= ~&bits;
+        my $bits = &bits;
+        $^H &= ~$bits;
+        $^H |= all_explicit_bits & $bits;
     }
     else {
         $^H &= ~all_bits;
@@ -75,6 +80,7 @@ sub unimport {
 }
 
 1;
+
 __END__
 
 =head1 NAME

@@ -1046,7 +1046,7 @@ succeeds a positive value but is infixed, by replacing the radix
 character.
 
 Prior to Perl v5.37.7, empty string fields and numeric fields with value
--1 were omittted from the returned hash.
+-1 were omitted from the returned hash.
 
 =item C<localtime>
 
@@ -1132,7 +1132,7 @@ Not implemented.  C<malloc()> is C-specific.  Perl does memory management transp
 
 This is the same as the C function C<mblen()> on unthreaded perls.  On
 threaded perls, it transparently (almost) substitutes the more
-thread-safe L<C<mbrlen>(3)>, if available, instead of C<mblen>.
+thread-safe C<L<mbrlen(3)>>, if available, instead of C<mblen>.
 
 Core Perl does not have any support for wide and multibyte locales,
 except Unicode UTF-8 locales.  This function, in conjunction with
@@ -1161,7 +1161,7 @@ actual length of the first parameter string.
 
 This is the same as the C function C<mbtowc()> on unthreaded perls.  On
 threaded perls, it transparently (almost) substitutes the more
-thread-safe L<C<mbrtowc>(3)>, if available, instead of C<mbtowc>.
+thread-safe C<L<mbrtowc(3)>>, if available, instead of C<mbtowc>.
 
 Core Perl does not have any support for wide and multibyte locales,
 except Unicode UTF-8 locales.  This function, in conjunction with
@@ -1872,7 +1872,7 @@ Returns the string.
 Synopsis:
 
 	strftime(fmt, sec, min, hour, mday, mon, year,
-		 wday = -1, yday = -1, isdst = -1)
+		 wday = -1, yday = -1, isdst = 0)
 
 The month (C<mon>) begins at zero,
 I<e.g.>, January is 0, not 1.  The
@@ -1880,7 +1880,11 @@ year (C<year>) is given in years since 1900, I<e.g.>, the year 1995 is 95; the
 year 2001 is 101.  Consult your system's C<strftime()> manpage for details
 about these and the other arguments.
 
-The C<wday>, C<yday>, and C<isdst> parameters are all ignored.
+The C<wday> and C<yday> parameters are both ignored.  Their values are
+always determinable from the other parameters.
+
+C<isdst> should be C<1> or C<0>, depending on whether or not daylight
+savings time is in effect for the given time or not.
 
 If you want your code to be portable, your format (C<fmt>) argument
 should use only the conversion specifiers defined by the ANSI C
@@ -1895,11 +1899,10 @@ The C<Z> specifier is notoriously unportable since the names of
 timezones are non-standard. Sticking to the numeric specifiers is the
 safest route.
 
-The given arguments are made consistent as though by calling
-C<mktime()> before calling your system's C<strftime()> function,
-except that the C<isdst> value is not affected, so that the returned
-value will always be as if the locale doesn't have daylight savings
-time.
+The arguments, except for C<isdst>, are made consistent as though by
+calling C<mktime()> before calling your system's C<strftime()> function.
+To get correct results, you must set C<isdst> to be the proper value.
+When omitted, the function assumes daylight savings is not in effect.
 
 The string for Tuesday, December 12, 1995 in the C<C> locale.
 
@@ -2262,7 +2265,7 @@ See L</mblen>.
 
 This is the same as the C function C<wctomb()> on unthreaded perls.  On
 threaded perls, it transparently (almost) substitutes the more
-thread-safe L<C<wcrtomb>(3)>, if available, instead of C<wctomb>.
+thread-safe C<L<wcrtomb(3)>>, if available, instead of C<wctomb>.
 
 Core Perl does not have any support for wide and multibyte locales,
 except Unicode UTF-8 locales.  This function, in conjunction with

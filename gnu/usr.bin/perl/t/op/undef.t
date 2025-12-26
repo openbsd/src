@@ -165,7 +165,9 @@ SKIP: {
     my $out = runperl(stderr => 1,
                   progs => [ split /\n/, <<'EOS' ]);
     require Devel::Peek;
-    my $f = q(x) x 40; $f = undef;
+    my $f = q(x) x 40;
+    chop $f; # Make sure that the PV buffer is not COWed
+    $f = undef;
     Devel::Peek::Dump($f);
     undef $f;
     Devel::Peek::Dump($f);

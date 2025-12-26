@@ -656,11 +656,7 @@ VER_NV:
 
         /* may get too much accuracy */
         char tbuf[64];
-#ifdef __vax__
-	SV *sv = SvNVX(ver) > 10e37 ? newSV(64) : 0;
-#else
         SV *sv = SvNVX(ver) > 10e50 ? newSV(64) : 0;
-#endif
         char *buf;
 
 #if PERL_VERSION_GE(5,19,0)
@@ -1017,7 +1013,7 @@ Perl_vnumify(pTHX_ SV *vs)
     {
         SV * tsv = *av_fetch(av, i, 0);
         digit = SvIV(tsv);
-        Perl_sv_catpvf(aTHX_ sv, "%03d", (int)digit);
+        sv_catpvf(sv, "%03d", (int)digit);
     }
 
     if ( len == 0 ) {
@@ -1075,7 +1071,7 @@ Perl_vnormal(pTHX_ SV *vs)
     for ( i = 1 ; i <= len ; i++ ) {
         SV * tsv = *av_fetch(av, i, 0);
         digit = SvIV(tsv);
-        Perl_sv_catpvf(aTHX_ sv, ".%" IVdf, (IV)digit);
+        sv_catpvf(sv, ".%" IVdf, (IV)digit);
     }
 
     if ( len <= 2 ) { /* short version, must be at least three */

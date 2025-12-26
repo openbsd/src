@@ -274,6 +274,16 @@
  *          correct results.  This is known to be a problem in earlier AIX
  *          versions
  *
+ *      -Accflags=-DHAS_BROKEN_LANGINFO_CODESET
+ *          This would be set in a hints file to tell perl that doing a libc
+ *              nl_langinfo(CODESET)
+ *          can give empty results.  This causes perl to be compiled to not use
+ *          nl_langinfo() to determine if the current locale is a UTF-8 one or
+ *          not.  Perl continues to presume that a non-empty return from
+ *          nl_langinfo() is correct, and empty returns are just passed on to
+ *          the caller.  khw can't figure out a workaround for this portion of
+ *          the bug.  The bug exists on Darwin.
+ *
  *      -Accflags=-DHAS_LF_IN_SETLOCALE_RETURN
  *          This would be set in a hints file to tell perl that a libc
  *          setlocale() can return results containing \n characters that need
@@ -337,11 +347,11 @@ static int debug_initialization = 0;
         const char * errno_string;                                          \
         if (GET_ERRNO == 0) { /* Skip output if both errno types are 0 */   \
             if (LIKELY(extended == 0)) errno_string = "";                   \
-            else errno_string = Perl_form(aTHX_ "; $^E=%d", extended);      \
+            else errno_string = form("; $^E=%d", extended);                 \
         }                                                                   \
         else if (LIKELY(extended == GET_ERRNO))                             \
-            errno_string = Perl_form(aTHX_ "; $!=%d", GET_ERRNO);           \
-        else errno_string = Perl_form(aTHX_ "; $!=%d, $^E=%d",              \
+            errno_string = form("; $!=%d", GET_ERRNO);                      \
+        else errno_string = form("; $!=%d, $^E=%d",                         \
                                                     GET_ERRNO, extended);
 #  else
      /* Output the errno, if non-zero */
@@ -350,7 +360,7 @@ static int debug_initialization = 0;
         const char * errno_string = "";                                     \
         if (GET_ERRNO != 0) {                                               \
             dTHX;                                                           \
-            errno_string = Perl_form(aTHX_ "; $!=%d", GET_ERRNO);           \
+            errno_string = form("; $!=%d", GET_ERRNO);                      \
         }
 #  endif
 
@@ -935,7 +945,7 @@ S_get_displayable_string(pTHX_
 
     while (t < e) {
         UV cp = (is_utf8)
-                ?  utf8_to_uvchr_buf((U8 *) t, e, NULL)
+                ?  utf8_to_uv_or_die((const U8 *) t, (const U8 *) e, NULL)
                 : * (U8 *) t;
         if (isPRINT(cp)) {
             if (! prev_was_printable) {
@@ -946,14 +956,14 @@ S_get_displayable_string(pTHX_
             if (cp == ' ' || cp == '\\') {
                 my_strlcat(ret, "\\", size);
             }
-            my_strlcat(ret, Perl_form(aTHX_ "%c", (U8) cp), size);
+            my_strlcat(ret, form("%c", (U8) cp), size);
             prev_was_printable = TRUE;
         }
         else {
             if (! first_time) {
                 my_strlcat(ret, " ", size);
             }
-            my_strlcat(ret, Perl_form(aTHX_ "%02" UVXf, cp), size);
+            my_strlcat(ret, form("%02" UVXf, cp), size);
             prev_was_printable = FALSE;
         }
         t += (is_utf8) ? UTF8SKIP(t) : 1;
@@ -1011,7 +1021,7 @@ S_get_category_index_helper(pTHX_ const int category, bool * succeeded,
         return LC_ALL_INDEX_;   /* Arbitrary */
     }
 
-    locale_panic_via_(Perl_form(aTHX_ "Unknown locale category %d", category),
+    locale_panic_via_(form("Unknown locale category %d", category),
                       __FILE__, caller_line);
     NOT_REACHED; /* NOTREACHED */
 }
@@ -1086,7 +1096,7 @@ Perl_locale_panic(const char * msg,
     if (   strNE(__FILE__, higher_caller_file)
         || immediate_caller_line != higher_caller_line)
     {
-        called_by = Perl_form(aTHX_ "\nCalled by %s: %" LINE_Tf "\n",
+        called_by = form("\nCalled by %s: %" LINE_Tf "\n",
                                     higher_caller_file, higher_caller_line);
     }
 
@@ -1098,7 +1108,7 @@ Perl_locale_panic(const char * msg,
 
     const int extended_errnum = get_extended_os_errno();
     if (errno != extended_errnum) {
-        errno_text = Perl_form(aTHX_ "; errno=%d, $^E=%d",
+        errno_text = form("; errno=%d, $^E=%d",
                                      errno, extended_errnum);
     }
     else
@@ -1106,11 +1116,11 @@ Perl_locale_panic(const char * msg,
 #endif
 
     {
-        errno_text = Perl_form(aTHX_ "; errno=%d", errno);
+        errno_text = form("; errno=%d", errno);
     }
 
     /* diag_listed_as: panic: %s */
-    Perl_croak(aTHX_ "%s: %" LINE_Tf ": panic: %s%s%s\n",
+    croak("%s: %" LINE_Tf ": panic: %s%s%s\n",
                      __FILE__, immediate_caller_line,
                      msg, errno_text, called_by);
 }
@@ -1148,7 +1158,7 @@ Perl_locale_panic(const char * msg,
                 const char * temp = savepvn(s, len);                        \
                 result = savepv(override_ignored_category(i, temp));        \
                 if (action == check_that_overridden && strNE(result, temp)) { \
-                    locale_panic_(Perl_form(aTHX_                           \
+                    locale_panic_(form(                                     \
                                 "%s expected to be '%s', instead is '%s'",  \
                                 category_names[i], result, temp));          \
                 }                                                           \
@@ -1303,6 +1313,16 @@ S_parse_LC_ALL_string(pTHX_ const char * string,
 
     Size_t index;           /* Our internal index for the current category */
     const char * s = string;
+
+    /* Solaris setlocale(3C) returns composite locale prefixed by slash. For example
+     * "/en_US.UTF-8/C/C/C/C/C". See man page. We must remove it or this
+     * function will think that there is additional empty locale at the
+     * beginning of the string and the number of detected locales will not
+     * match expected LC_ALL_INDEX_. */
+    if (strnEQ(s, separator, separator_len)) {
+        s += separator_len;
+    }
+
     const char * e = s + strlen(string);
     const char * category_end = NULL;
     const char * saved_first = NULL;
@@ -1470,7 +1490,7 @@ S_parse_LC_ALL_string(pTHX_ const char * string,
             break;
     }
 
-    msg = Perl_form(aTHX_ "'%.*s' %s\n",
+    msg = form("'%.*s' %s\n",
                           (int) (display_end - display_start),
                           display_start, msg);
 
@@ -1491,7 +1511,7 @@ S_parse_LC_ALL_string(pTHX_ const char * string,
  * the differences between platforms.
  *
  * base_posix_setlocale_() presents a consistent POSIX-compliant interface to
- * setlocale().   Windows requres a customized base-level setlocale().  This
+ * setlocale().   Windows requires a customized base-level setlocale().  This
  * layer should only be used by the next level up: the plain posix_setlocale
  * layer.  Any necessary mutex locking needs to be done at a higher level.  The
  * return may be overwritten by the next call to this function */
@@ -2061,6 +2081,10 @@ S_querylocale_2008_i(pTHX_ const locale_category_index index,
     const locale_t cur_obj = uselocale((locale_t) 0);
     const char * retval;
 
+#  ifdef MULTIPLICITY
+    assert(cur_obj== LC_GLOBAL_LOCALE || cur_obj == PL_cur_locale_obj);
+#  endif
+
     DEBUG_Lv(PerlIO_printf(Perl_debug_log, "querylocale_2008_i(%s) on %p;"
                                            " called from %" LINE_Tf "\n",
                                            category_names[index], cur_obj,
@@ -2260,12 +2284,17 @@ S_bool_setlocale_2008_i(pTHX_
 
     int mask = category_masks[index];
     const locale_t entry_obj = uselocale((locale_t) 0);
+
+#  ifdef MULTIPLICITY
+    assert(entry_obj== LC_GLOBAL_LOCALE || entry_obj == PL_cur_locale_obj);
+#  endif
+
     const char * locale_on_entry = querylocale_i(index);
 
     DEBUG_Lv(PerlIO_printf(Perl_debug_log,
                            "bool_setlocale_2008_i: input=%d (%s), mask=0x%x,"
                            " new locale=\"%s\", current locale=\"%s\","
-                           " index=%d, entry object=%p;"
+                           " index=%d, entry object=0x%p;"
                            " called from %" LINE_Tf "\n",
                            categories[index], category_names[index], mask,
                            ((new_locale == NULL) ? "(nil)" : new_locale),
@@ -2377,7 +2406,7 @@ S_bool_setlocale_2008_i(pTHX_
 
     DEBUG_Lv(PerlIO_printf(Perl_debug_log,
                            "bool_setlocale_2008_i: now using C"
-                           " object=%p\n", PL_C_locale_obj));
+                           " object=0x%p\n", PL_C_locale_obj));
 
     /* These two objects are special:
      *  LC_GLOBAL_LOCALE    because it is undefined behavior to call
@@ -2431,21 +2460,21 @@ S_bool_setlocale_2008_i(pTHX_
             }
 
             DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                                   "bool_setlocale_2008_i created %p by"
+                                   "bool_setlocale_2008_i created 0x%p by"
                                    " duping the input\n", basis_obj));
         }
 
 #  define DEBUG_NEW_OBJECT_CREATED(category, locale, new, old, caller_line) \
       DEBUG_Lv(PerlIO_printf(Perl_debug_log,                                \
-                             "bool_setlocale_2008_i(%s, %s): created %p"    \
-                             " while freeing %p; called from %" LINE_Tf     \
+                             "bool_setlocale_2008_i(%s, %s): created 0x%p"  \
+                             " while freeing 0x%p; called from %" LINE_Tf   \
                              " via %" LINE_Tf "\n",                         \
                              category, locale, new, old,                    \
                              caller_line, (line_t)__LINE__))
 #  define DEBUG_NEW_OBJECT_FAILED(category, locale, basis_obj)              \
       DEBUG_L(PerlIO_printf(Perl_debug_log,                                 \
                             "bool_setlocale_2008_i: creating new object"    \
-                            " for (%s '%s') from %p failed; called from %"  \
+                            " for (%s '%s') from 0x%p failed; called from %"\
                             LINE_Tf " via %" LINE_Tf "\n",                  \
                             category, locale, basis_obj,                    \
                             caller_line, (line_t)__LINE__));
@@ -2568,14 +2597,14 @@ S_bool_setlocale_2008_i(pTHX_
      * now switch into it */
     if (! uselocale(new_obj)) {
         freelocale(new_obj);
-        locale_panic_(Perl_form(aTHX_ "(called from %" LINE_Tf "):"
+        locale_panic_(form("(called from %" LINE_Tf "):"
                                       " bool_setlocale_2008_i: switching"
                                       " into new locale failed",
                                       caller_line));
     }
 
     DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                           "bool_setlocale_2008_i: now using %p\n", new_obj));
+                           "bool_setlocale_2008_i: now using 0x%p\n", new_obj));
 
 #  ifdef MULTIPLICITY   /* Unlikely, but POSIX 2008 functions could be
                            Configured to be used on unthreaded perls, in which
@@ -2585,7 +2614,7 @@ S_bool_setlocale_2008_i(pTHX_
         if (PL_cur_locale_obj != new_obj) {
             PerlIO_printf(Perl_debug_log,
                           "bool_setlocale_2008_i: PL_cur_locale_obj"
-                          " was %p, now is %p\n",
+                          " was 0x%p, now is 0x%p\n",
                           PL_cur_locale_obj, new_obj);
         }
     }
@@ -3123,7 +3152,7 @@ S_calculate_LC_ALL_string(pTHX_ const char ** category_locales_list,
             }
 
             /* If would have overflowed, panic */
-            locale_panic_via_(Perl_form(aTHX_
+            locale_panic_via_(form(
                                         "Internal length calculation wrong.\n"
                                         "\"%s\" was not entirely added to"
                                         " \"%.*s\"; needed=%zu, had=%zu",
@@ -3232,7 +3261,11 @@ S_find_locale_from_environment(pTHX_ const locale_category_index index)
     const char * locale_names[LC_ALL_INDEX_] = { NULL };
 
     /* Use any "LC_ALL" environment variable, as it overrides everything else.
-     * */
+     * This may not work correctly if LC_ALL is heterogeneous.  It is a simple
+     * matter to handle such a case, and GH #21398 would do so.  But in
+     * developing a test for that, khw couldn't get libc to handle a disparate
+     * LC_ALL environment variable, so that pull request was closed without
+     * merging, but the patch is attached to it. */
     if (lc_all && strNE(lc_all, "")) {
         return lc_all;
     }
@@ -3376,14 +3409,14 @@ S_setlocale_failure_panic_via_i(pTHX_
     const char * proxy_text = "";
     if (proxy_caller_line != 0 && proxy_caller_line != immediate_caller_line)
     {
-        proxy_text = Perl_form(aTHX_ "\nCalled via %s: %" LINE_Tf,
+        proxy_text = form("\nCalled via %s: %" LINE_Tf,
                                       __FILE__, proxy_caller_line);
     }
     if (   strNE(__FILE__, higher_caller_file)
         || (   immediate_caller_line != 0
             && immediate_caller_line != higher_caller_line))
     {
-        proxy_text = Perl_form(aTHX_ "%s\nCalled via %s: %" LINE_Tf,
+        proxy_text = form("%s\nCalled via %s: %" LINE_Tf,
                                       proxy_text, __FILE__,
                                       immediate_caller_line);
     }
@@ -3391,7 +3424,7 @@ S_setlocale_failure_panic_via_i(pTHX_
     /* 'false' in the get_displayable_string() calls makes it not think the
      * locale is UTF-8, so just dumps bytes.  Actually figuring it out can be
      * too complicated for a panic situation. */
-    const char * msg = Perl_form(aTHX_
+    const char * msg = form(
                             "Can't change locale for %s (%d) from '%s' to '%s'"
                             " %s",
                             name, cat,
@@ -3818,6 +3851,9 @@ S_new_ctype(pTHX_ const char *newctype, bool force)
 
     const int mb_cur_max = MB_CUR_MAX;
 
+    DEBUG_Lv(PerlIO_printf(Perl_debug_log, "MB_CUR_MAX=%d, utf8?=%d\n",
+                                        mb_cur_max, PL_in_utf8_CTYPE_locale));
+
     if (mb_cur_max > 1 && ! PL_in_utf8_CTYPE_locale
 
             /* Some platforms return MB_CUR_MAX > 1 for even the "C" locale.
@@ -3831,12 +3867,12 @@ S_new_ctype(pTHX_ const char *newctype, bool force)
                               "Unsupported, MB_CUR_MAX=%d\n", mb_cur_max));
 
         if (! IN_LC(LC_CTYPE) || ckWARN_d(WARN_LOCALE)) {
-            char * msg = Perl_form(aTHX_
+            char * msg = form(
                                    "Locale '%s' is unsupported, and may hang"
                                    " or crash the interpreter",
                                      newctype);
             if (IN_LC(LC_CTYPE)) {
-                Perl_warner(aTHX_ packWARN(WARN_LOCALE), "%s", msg);
+                warner(packWARN(WARN_LOCALE), "%s", msg);
             }
             else {
                 PL_warn_locale = newSV(0);
@@ -4012,14 +4048,14 @@ S_new_ctype(pTHX_ const char *newctype, bool force)
             }
 
             if (PL_in_utf8_CTYPE_locale) {
-                Perl_sv_catpvf(aTHX_ PL_warn_locale,
+                sv_catpvf(PL_warn_locale,
                      "Locale '%s' contains (at least) the following characters"
                      " which have\nunexpected meanings: %s\nThe Perl program"
                      " will use the expected meanings",
                       newctype, bad_chars_list);
             }
             else {
-                Perl_sv_catpvf(aTHX_ PL_warn_locale,
+                sv_catpvf(PL_warn_locale,
                                   "\nThe following characters (and maybe"
                                   " others) may not have the same meaning as"
                                   " the Perl program expects: %s\n",
@@ -4029,12 +4065,12 @@ S_new_ctype(pTHX_ const char *newctype, bool force)
 
 #    if defined(HAS_SOME_LANGINFO) || defined(WIN32)
 
-            Perl_sv_catpvf(aTHX_ PL_warn_locale, "; codeset=%s",
+            sv_catpvf(PL_warn_locale, "; codeset=%s",
                                  langinfo_c(CODESET, LC_CTYPE, newctype, NULL));
 
 #    endif
 
-            Perl_sv_catpvf(aTHX_ PL_warn_locale, "\n");
+            sv_catpvf(PL_warn_locale, "\n");
 
             /* If we are actually in the scope of the locale or are debugging,
              * output the message now.  If not in that scope, we save the
@@ -4044,8 +4080,7 @@ S_new_ctype(pTHX_ const char *newctype, bool force)
             if (IN_LC(LC_CTYPE) || UNLIKELY(DEBUG_L_TEST)) {
 
                 /* The '0' below suppresses a bogus gcc compiler warning */
-                Perl_warner(aTHX_ packWARN(WARN_LOCALE), SvPVX(PL_warn_locale),
-                                                                            0);
+                warner(packWARN(WARN_LOCALE), SvPVX(PL_warn_locale), 0);
                 if (IN_LC(LC_CTYPE)) {
                     SvREFCNT_dec_NN(PL_warn_locale);
                     PL_warn_locale = NULL;
@@ -4065,9 +4100,9 @@ Perl_warn_problematic_locale()
      * CHECK_AND_WARN_PROBLEMATIC_LOCALE_ */
 
     if (PL_warn_locale) {
-        Perl_ck_warner(aTHX_ packWARN(WARN_LOCALE),
-                             SvPVX(PL_warn_locale),
-                             0 /* dummy to avoid compiler warning */ );
+        ck_warner(packWARN(WARN_LOCALE),
+                  SvPVX(PL_warn_locale),
+                  0 /* dummy to avoid compiler warning */ );
         SvREFCNT_dec_NN(PL_warn_locale);
         PL_warn_locale = NULL;
     }
@@ -4401,7 +4436,7 @@ S_native_querylocale_i(pTHX_ const locale_category_index cat_index)
 /*
 =for apidoc Perl_setlocale
 
-This is an (almost) drop-in replacement for the system L<C<setlocale(3)>>,
+This is an (almost) drop-in replacement for the system C<L<setlocale(3)>>,
 taking the same parameters, and returning the same information, except that it
 returns the correct underlying C<LC_NUMERIC> locale.  Regular C<setlocale> will
 instead return C<C> if the underlying locale has a non-dot decimal point
@@ -4475,10 +4510,9 @@ Perl_setlocale(const int category, const char * locale)
             }
 
             /* diag_listed_as: Unknown locale category %d; can't set it to %s */
-            Perl_warner(aTHX_
-                           packWARN(WARN_LOCALE),
-                           "Unknown locale category %d%s%s",
-                           category, conditional_warn_text, locale);
+            warner(packWARN(WARN_LOCALE),
+                   "Unknown locale category %d%s%s",
+                   category, conditional_warn_text, locale);
         }
 
         SET_EINVAL;
@@ -4589,14 +4623,14 @@ S_my_setlocale_debug_string_i(pTHX_
     }
 
 #  ifdef MULTIPLICITY
-#    define THREAD_FORMAT "%p:"
+#    define THREAD_FORMAT "0x%p:"
 #    define THREAD_ARGUMENT aTHX_
 #  else
 #    define THREAD_FORMAT
 #    define THREAD_ARGUMENT
 #  endif
 
-    return Perl_form(aTHX_
+    return form(
                      "%s:%" LINE_Tf ": " THREAD_FORMAT
                      " setlocale(%s[%d], %s%s%s) returned %s%s%s\n",
 
@@ -4641,7 +4675,7 @@ S_toggle_locale_i(pTHX_ const locale_category_index cat_index,
                            caller_line));
 
     if (! locale_to_restore_to) {
-        locale_panic_via_(Perl_form(aTHX_
+        locale_panic_via_(form(
                                     "Could not find current %s locale",
                                     category_names[cat_index]),
                          __FILE__, caller_line);
@@ -4833,11 +4867,12 @@ S_is_locale_utf8(pTHX_ const char * locale)
         return false;
     }
 
-#    if ! defined(HAS_SOME_LANGINFO) && ! defined(WIN32)
+#    if  ! defined(WIN32)                                                   \
+     && (! defined(HAS_SOME_LANGINFO) || defined HAS_BROKEN_LANGINFO_CODESET)
 
-    /* On non-Windows without nl_langinfo(), we have to do some digging to get
-     * the answer.  First, toggle to the desired locale so can query its state
-     * */
+    /* On non-Windows without a fully functioning nl_langinfo(), we have to do
+     * some digging to get the answer.  First, toggle to the desired locale so
+     * can query its state */
     const char * orig_CTYPE_locale = toggle_locale_c(LC_CTYPE, locale);
 
 #      define TEARDOWN_FOR_IS_LOCALE_UTF8                                   \
@@ -4887,10 +4922,10 @@ S_is_locale_utf8(pTHX_ const char * locale)
 #      endif
 #    else
 
-     /* On Windows or on platforms with nl_langinfo(), there is a direct way to
-      * get the locale's codeset, which will be some form of 'UTF-8' for a
-      * UTF-8 locale.  langinfo_c() handles this, and we will call that
-      * below */
+     /* On Windows or on platforms with a fully functioning nl_langinfo(),
+      * there is a direct way to get the locale's codeset, which will be some
+      * form of 'UTF-8' for a UTF-8 locale.  langinfo_c() handles this, and we
+      * will call that below */
 #      define HAS_DEFINITIVE_UTF8NESS_DETERMINATION
 #      define USE_LANGINFO_FOR_UTF8NESS
 #      define TEARDOWN_FOR_IS_LOCALE_UTF8
@@ -5049,7 +5084,7 @@ S_save_to_buffer(pTHX_ const char * string, char **buf, Size_t *buf_size)
 #  ifdef DEBUGGING
 
     DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                         "Copying '%s' to %p\n",
+                         "Copying '%s' to 0x%p\n",
                          ((is_strict_utf8_string((U8 *) string, 0))
                           ? string
                           :_byte_dump_string((U8 *) string, strlen(string), 0)),
@@ -5060,7 +5095,7 @@ S_save_to_buffer(pTHX_ const char * string, char **buf, Size_t *buf_size)
     /* Catch glitches.  Usually this is because LC_CTYPE needs to be the same
      * locale as whatever is being worked on */
     if (UNLIKELY(instr(string, REPLACEMENT_CHARACTER_UTF8))) {
-        locale_panic_(Perl_form(aTHX_
+        locale_panic_(form(
                                 "Unexpected REPLACEMENT_CHARACTER in '%s'\n%s",
                                 string, get_LC_ALL_display()));
     }
@@ -5419,7 +5454,7 @@ S_my_localeconv(pTHX_ const int item)
 
         switch (item) {
           default:
-            locale_panic_(Perl_form(aTHX_
+            locale_panic_(form(
                           "Unexpected item passed to my_localeconv: %d", item));
             break;
 
@@ -6030,29 +6065,35 @@ S_populate_hash_from_localeconv(pTHX_ HV * hv,
 
 /*
 
-=for apidoc      Perl_langinfo
+=for apidoc_section $locale
+=for apidoc      sv_langinfo
+=for apidoc_item Perl_langinfo
 =for apidoc_item Perl_langinfo8
 
-C<Perl_langinfo> is an (almost) drop-in replacement for the system
-C<L<nl_langinfo(3)>>, taking the same C<item> parameter values, and returning
-the same information.  But it is more thread-safe than regular
-C<nl_langinfo()>, and hides the quirks of Perl's locale handling from your
-code, and can be used on systems that lack a native C<nl_langinfo>.
+These perform the equivalent functionality as the system C<L<nl_langinfo(3)>>,
+taking the same C<item> parameter values, but are preferred over calling that
+directly because they are portable to platforms lacking that function, are
+thread-safe, and can automatically handle UTF-8 strings.
 
-However, you should instead use either the improved version of this,
-L</Perl_langinfo8>, or even better, L</sv_langinfo>.  The latter returns an SV,
-handling all the possible non-standard returns of C<nl_langinfo()>, including
-the UTF8ness of any returned string.
+The simplest to use is C<sv_langinfo>.  It returns an SV containing the correct
+PV and UTF8ness, requiring no extra muss or fuss from you.  New code should use
+this form.
+
+C<Perl_langinfo> and C<Perl_langinfo8> are retained for backwards
+compatibility.  C<Perl_langinfo> is an (almost) drop-in replacement for the
+system C<L<nl_langinfo(3)>>, but exists on systems that lack a native
+C<nl_langinfo>.
 
 C<Perl_langinfo8> is identical to C<Perl_langinfo> except for an additional
-parameter, a pointer to a variable declared as L</C<utf8ness_t>>, into which it
+parameter, a pointer to a variable declared as C<L</utf8ness_t>>, into which it
 returns to you how you should treat the returned string with regards to it
 being encoded in UTF-8 or not.
 
-These two functions share private per-thread memory that will be changed the
-next time either one of them is called with any input, but not before.
+C<Perl_langinfo> and C<Perl_langinfo8> share private per-thread memory that
+will be changed the next time either one of them is called with any input, but
+not before.
 
-Concerning the differences between these and plain C<nl_langinfo()>:
+Concerning the differences between these functions and plain C<nl_langinfo()>:
 
 =over
 
@@ -6081,14 +6122,15 @@ the other advantages of C<Perl_langinfo()>; not keeping C<LC_NUMERIC> in the C
 
 The system function they replace can have its static return buffer trashed,
 not only by a subsequent call to that function, but by a C<freelocale>,
-C<setlocale>, or other locale change.  The returned buffer of these functions
-is not changed until the next call to one or the other, so the buffer is never
-in a trashed state.
+C<setlocale>, or other locale change.  C<sv_langinfo> sidesteps this problem
+entirely; the returned buffer of the other two is not changed until the next
+call to one or the other, so the buffer is never in a trashed state.
 
 =item d.
 
-The return buffer is per-thread, so it also is never overwritten by a call to
-these functions from another thread;  unlike the function it replaces.
+The return buffer of C<Perl_langinfo> and C<Perl_langinfo8> is per-thread  so
+it also is never overwritten by a call to these functions from another thread;
+unlike the function they replace.
 
 =item e.
 
@@ -6119,22 +6161,6 @@ L<C<POSIX::localeconv()>|POSIX/localeconv>, which is also thread-safe.
 The details for those items which may deviate from what this emulation returns
 and what a native C<nl_langinfo()> would return are specified in
 L<I18N::Langinfo>.
-
-=for apidoc  sv_langinfo
-
-This is the preferred interface for accessing the data that L<nl_langinfo(3)>
-provides (or Perl's emulation of it on platforms lacking it), returning an SV.
-Unlike, the earlier-defined interfaces to this (L</Perl_langinfo> and
-L</Perl_langinfo8>), which return strings, the UTF8ness of the result is
-automatically handled for you.  And like them, it is thread-safe and
-automatically handles getting the proper values for the C<RADIXCHAR> and
-C<THOUSEP> items (that calling the plain libc C<nl_langinfo()> could give the
-wrong results for).  Like them, this also doesn't play well with the libc
-C<localeconv()>; use L<C<POSIX::localeconv()>|POSIX/localeconv> instead.
-
-There are a few deviations from what a native C<nl_langinfo()> would return and
-what this returns on platforms that don't implement that function.  These are
-detailed in L<I18N::Langinfo>.
 
 =cut
 
@@ -6563,6 +6589,49 @@ S_langinfo_sv_i(pTHX_
         retval = nl_langinfo(item);
         Size_t total_len = strlen(retval);
 
+        /* nl_langinfo() is not supposed to return empty for the items below
+         * when the locale is legal.  But we have experienced it happening.
+         * THe panic below includes enough information to do further debugging.
+         * */
+        if (UNLIKELY(total_len == 0)) switch (item) {
+            case RADIXCHAR:
+            case ABDAY_1: case ABDAY_2: case ABDAY_3: case ABDAY_4:
+            case ABDAY_5: case ABDAY_6: case ABDAY_7:
+            case ABMON_1: case ABMON_2: case ABMON_3: case ABMON_4:
+            case ABMON_5: case ABMON_6: case ABMON_7: case ABMON_8:
+            case ABMON_9: case ABMON_10: case ABMON_11: case ABMON_12:
+            case DAY_1: case DAY_2: case DAY_3: case DAY_4:
+            case DAY_5: case DAY_6: case DAY_7:
+            case MON_1: case MON_2: case MON_3: case MON_4: case MON_5:
+            case MON_6: case MON_7: case MON_8: case MON_9: case MON_10:
+            case MON_11: case MON_12:
+
+#  ifndef HAS_BROKEN_LANGINFO_CODESET
+            /* On Darwin, this can easily happen, so don't panic.  The code in
+             * this file looks at the above #define, and institutes a
+             * workaround for finding if the codeset is UTF-8.  In many cases,
+             * the function works properly; but otherwise you are at the mercy
+             * of this bug */
+            case CODESET:
+#  endif
+                locale_panic_(form(
+                                        "nl_langinfo returned empty for %ld"
+                                        " in supposed locale \n'%s';"
+                                        " which really is\n'%s'\n"
+                                        " codeset is '%s';"
+                                        " radix='%s';"
+                                        " January='%s';"
+                                        " strtod(1,5)=%g, strtod(1.5)=%g\n",
+                                        (long) item,
+                                        locale, querylocale_c(LC_ALL),
+                                        nl_langinfo(CODESET),
+                                        nl_langinfo(RADIXCHAR),
+                                        nl_langinfo(MON_1),
+                                        strtod("1,5", NULL),
+                                        strtod("1.5", NULL)
+                                      ));
+        }
+
         /* Initialized only to silence some dumber compilers warning that
          * might be uninitialized */
         char separator = ';';
@@ -6621,7 +6690,7 @@ S_langinfo_sv_i(pTHX_
                  * represents even only the first 10 alternative digits, it
                  * will be much longer than that.  So to reach here, the
                  * separator must be some other byte. */
-                locale_panic_(Perl_form(aTHX_
+                locale_panic_(form(
                                         "Can't find separator in ALT_DIGITS"
                                         " representation '%s' for locale '%s'",
                                         _byte_dump_string((U8 *) retval,
@@ -7017,7 +7086,7 @@ S_emulate_langinfo(pTHX_ const PERL_INTMAX_T item,
 
         const char * orig_CTYPE_locale;
         orig_CTYPE_locale = toggle_locale_c(LC_CTYPE, locale);
-        Perl_sv_setpvf(aTHX_ sv, CODE_PAGE_FORMAT, CODE_PAGE_FUNCTION);
+        sv_setpvf(sv, CODE_PAGE_FORMAT, CODE_PAGE_FUNCTION);
         retval_type = RETVAL_IN_sv;
 
         /* We just assume the codeset is ASCII; no need to check for it being
@@ -7258,7 +7327,7 @@ S_emulate_langinfo(pTHX_ const PERL_INTMAX_T item,
              * invalid. */;
 #  if defined(I_LANGINFO)
 
-            Perl_croak_nocontext("panic: Unexpected nl_langinfo() item %jd",
+            croak("panic: Unexpected nl_langinfo() item %jd",
                                  item);
 
 #  else
@@ -7504,7 +7573,7 @@ S_emulate_langinfo(pTHX_ const PERL_INTMAX_T item,
         /* The year was deliberately chosen so that January 1 is on the
         * first day of the week.  Since we're only getting one thing at a
         * time, it all works */
-        ints_to_tm(&mytm, locale, 30, 30, hour, mday, mon, 2011, 0, 0, 0);
+        ints_to_tm(&mytm, locale, 30, 30, hour, mday, mon, 2011, 0);
         bool succeeded;
         if (utf8ness) {
             succeeded = strftime8(format,
@@ -7603,7 +7672,7 @@ S_emulate_langinfo(pTHX_ const PERL_INTMAX_T item,
 
         /* Many of the remaining digits have representations that include at
          * least two 0-sized strings */
-        SV* alt_dig_sv = newSV(2 * alt0_len);
+        SV* alt_dig_sv = newSVpvz(2 * alt0_len);
 
         /* Various %O formats can be used to derive the alternate digits.  Only
          * %Oy can go up to the full 100 values.  If it doesn't work, we try
@@ -7648,7 +7717,7 @@ S_emulate_langinfo(pTHX_ const PERL_INTMAX_T item,
             /* Do the strftime.  Once we have determined the UTF8ness (if
             * we want it), assume the rest will be the same, and use
             * strftime_tm(), which doesn't recalculate UTF8ness */
-            ints_to_tm(&mytm, locale, sec, min, hour, mday, mon, year, 0, 0, 0);
+            ints_to_tm(&mytm, locale, sec, min, hour, mday, mon, year, 0);
             if (utf8ness && is_utf8 != UTF8NESS_NO && is_utf8 != UTF8NESS_YES) {
                 succeeded = strftime8(fmts[j],
                                       alt_dig_sv,
@@ -8075,16 +8144,25 @@ S_maybe_override_codeset(pTHX_ const char * codeset,
 /*
 =for apidoc_section $time
 =for apidoc      sv_strftime_tm
+=for apidoc_item sv_strftime_ints
 =for apidoc_item my_strftime
 
 These implement the libc strftime().
 
 On failure, they return NULL, and set C<errno> to C<EINVAL>.
 
-C<sv_strftime_tm> is preferred, as it transparently handles the UTF-8ness of
-the current locale, the input C<fmt>, and the returned result.  Only if the
-current C<LC_TIME> locale is a UTF-8 one (and S<C<use bytes>> is not in effect)
-will the result be marked as UTF-8.
+C<sv_strftime_tm> and C<sv_strftime_ints> are preferred, as they transparently
+handle the UTF-8ness of the current locale, the input C<fmt>, and the returned
+result.  Only if the current C<LC_TIME> locale is a UTF-8 one (and S<C<use
+bytes>> is not in effect) will the result be marked as UTF-8.
+
+C<my_strftime> is kept for backwards compatibility.  Knowing if its result
+should be considered UTF-8 or not requires significant extra logic.
+
+Note that all three functions are always executed in the underlying
+C<LC_TIME> locale of the program, giving results based on that locale.
+
+The functions differ as follows:
 
 C<sv_strftime_tm> takes a pointer to a filled-in S<C<struct tm>> parameter.  It
 ignores the values of the C<wday> and C<yday> fields in it.  The other fields
@@ -8093,22 +8171,55 @@ that purpose.
 
 The caller assumes ownership of the returned SV with a reference count of 1.
 
-C<my_strftime> is kept for backwards compatibility.  Knowing if its result
-should be considered UTF-8 or not requires significant extra logic.
+C<sv_strftime_ints> takes a bunch of integer parameters that together
+completely define a given time.  It calculates the S<C<struct tm>> to pass to
+libc strftime(), and calls that function.
 
-The return value is a pointer to the formatted result (which MUST be arranged
-to be FREED BY THE CALLER).  This allows this function to increase the buffer
-size as needed, so that the caller doesn't have to worry about that, unlike
-libc C<strftime()>.
+The value of C<isdst> is used as follows:
 
-The C<wday>, C<yday>, and C<isdst> parameters are ignored by C<my_strftime>.
-Daylight savings time is never considered to exist, and the values returned for
-the other two fields (if C<fmt> even calls for them) are calculated from the
-other parameters, without need for referencing these.
+=over
 
-Note that both functions are always executed in the underlying
-C<LC_TIME> locale of the program, giving results based on that locale.
+=item 0
 
+No daylight savings time is in effect
+
+=item E<gt>0
+
+Check if daylight savings time is in effect, and adjust the results
+accordingly.
+
+=item E<lt>0
+
+This value is reserved for internal use by the L<POSIX> module for backwards
+compatibility purposes.
+
+=back
+
+The caller assumes ownership of the returned SV with a reference count of 1.
+
+C<my_strftime> is like C<sv_strftime_ints> except that:
+
+=over
+
+=item The C<fmt> parameter and the return are S<C<char *>> instead of
+S<C<SV *>>.
+
+This means the UTF-8ness of the result is unspecified.  The result MUST be
+arranged to be FREED BY THE CALLER).
+
+=item The C<is_dst> parameter is ignored.
+
+Daylight savings time is never considered to be in effect.
+
+=item It has extra parameters C<yday> and C<wday> that are ignored.
+
+These exist only for historical reasons; the values for the corresponding
+fields in S<C<struct tm>> are calculated from the other arguments.
+
+=back
+
+Note that all three functions are always executed in the underlying C<LC_TIME>
+locale of the program, giving results based on that locale.
 =cut
  */
 
@@ -8118,6 +8229,9 @@ Perl_my_strftime(pTHX_ const char *fmt, int sec, int min, int hour,
                        int isdst)
 {   /* Documented above */
     PERL_ARGS_ASSERT_MY_STRFTIME;
+    PERL_UNUSED_ARG(wday);
+    PERL_UNUSED_ARG(yday);
+    PERL_UNUSED_ARG(isdst);
 
 #ifdef USE_LOCALE_TIME
     const char * locale = querylocale_c(LC_TIME);
@@ -8126,8 +8240,7 @@ Perl_my_strftime(pTHX_ const char *fmt, int sec, int min, int hour,
 #endif
 
     struct tm  mytm;
-    ints_to_tm(&mytm, locale, sec, min, hour, mday, mon, year, wday, yday,
-               isdst);
+    ints_to_tm(&mytm, locale, sec, min, hour, mday, mon, year, 0);
     if (! strftime_tm(fmt, PL_scratch_langinfo, locale, &mytm)) {
         return NULL;
     }
@@ -8137,8 +8250,7 @@ Perl_my_strftime(pTHX_ const char *fmt, int sec, int min, int hour,
 
 SV *
 Perl_sv_strftime_ints(pTHX_ SV * fmt, int sec, int min, int hour,
-                            int mday, int mon, int year, int wday,
-                            int yday, int isdst)
+                            int mday, int mon, int year, int isdst)
 {   /* Documented above */
     PERL_ARGS_ASSERT_SV_STRFTIME_INTS;
 
@@ -8148,9 +8260,15 @@ Perl_sv_strftime_ints(pTHX_ SV * fmt, int sec, int min, int hour,
     const char * locale = "C";
 #endif
 
+    /* A negative 'isdst' triggers backwards compatibility mode for
+     * POSIX::strftime(), in which 0 is always passed to ints_to_tm() so that
+     * the possibility of daylight savings time is never considered,  But, a 1
+     * is eventually passed to libc strftime() so that it returns the results
+     * it always has for a non-zero 'isdst'.  See GH #22351 */
     struct tm  mytm;
-    ints_to_tm(&mytm, locale, sec, min, hour, mday, mon, year, wday, yday,
-               isdst);
+    ints_to_tm(&mytm, locale, sec, min, hour, mday, mon, year,
+                              MAX(0, isdst));
+    mytm.tm_isdst = MIN(1, abs(isdst));
     return sv_strftime_common(fmt, locale, &mytm);
 }
 
@@ -8191,7 +8309,7 @@ S_sv_strftime_common(pTHX_ SV * fmt,
      * to get almost all the typical returns to fit without the called function
      * having to realloc; this is a somewhat educated guess, but feel free to
      * tweak it. */
-    SV* sv = newSV(MAX(fmt_cur * 2, 64));
+    SV* sv = newSVpvz(MAX(fmt_cur * 2, 64));
     if (! strftime8(fmt_str,
                     sv,
                     locale,
@@ -8215,10 +8333,14 @@ STATIC void
 S_ints_to_tm(pTHX_ struct tm * mytm,
                    const char * locale,
                    int sec, int min, int hour, int mday, int mon, int year,
-                   int wday, int yday, int isdst)
+                   int isdst)
 {
     /* Create a struct tm structure from the input time-related integer
-     * variables for 'locale' */
+     * variables for 'locale'.  Unlike mini_mktime(), this populates the
+     * tm_gmtoff and tm_zone fields of the structure if the platform has those;
+     * and unlike mktime(), it allows you to specify to not consider the
+     * possibility of there being daylight savings time.  This is done by
+     * calling with 'isdst' set to 0 */
 
     /* Override with the passed-in values */
     Zero(mytm, 1, struct tm);
@@ -8228,34 +8350,84 @@ S_ints_to_tm(pTHX_ struct tm * mytm,
     mytm->tm_mday = mday;
     mytm->tm_mon = mon;
     mytm->tm_year = year;
-    mytm->tm_wday = wday;
-    mytm->tm_yday = yday;
-    mytm->tm_isdst = isdst;
 
-    /* Long-standing behavior is to ignore the effects of locale (in
-     * particular, daylight savings time) on the input, so we use mini_mktime.
-     * See GH #22062. */
+    struct tm * which_tm = mytm;
+    struct tm aux_tm;
+
+#ifndef HAS_MKTIME
+
     mini_mktime(mytm);
 
-    /* But some of those effect are deemed desirable, so use libc to get the
-     * values for tm_gmtoff and tm_zone on platforms that have them [perl
-     * #18238] */
-#if  defined(HAS_MKTIME)                                      \
- && (defined(HAS_TM_TM_GMTOFF) || defined(HAS_TM_TM_ZONE))
+#else
 
-    const char * orig_TIME_locale = toggle_locale_c(LC_TIME, locale);
-    struct tm mytm2 = *mytm;
-    MKTIME_LOCK;
-    mktime(&mytm2);
-    MKTIME_UNLOCK;
-    restore_toggled_locale_c(LC_TIME, orig_TIME_locale);
+    /* On platforms that have either of these two fields, we have to run the
+     * libc mktime() in order to set them, as mini_mktime() doesn't deal with
+     * them.  [perl #18238] */
+#  if defined(HAS_TM_TM_GMTOFF) || defined(HAS_TM_TM_ZONE)
+#    define ALWAYS_RUN_MKTIME
+#  endif
 
-#  ifdef HAS_TM_TM_GMTOFF
-    mytm->tm_gmtoff = mytm2.tm_gmtoff;
+    /* When isdst is 0, it means to consider daylight savings time as never
+     * being in effect.  Many libc implementations of mktime() do not allow
+     * this; they always consider the possibility of dst.  But mini_mktime()
+     * never considers dst, so use it under this condition. */
+    if (isdst == 0) {
+        mini_mktime(mytm);
+
+#  ifndef ALWAYS_RUN_MKTIME
+
+    /* When we don't always need libc mktime(), we call it only when we didn't
+     * call mini_mktime() */
+    } else {
+
+#  else
+        /* Here will have to run libc mktime() in order to get the values of
+         * some fields that mini_mktime doesn't populate.  We don't want
+         * mktime's side effect of looking for dst, so we have to have a
+         * separate tm structure from which we copy just those fields into the
+         * returned structure.  Initialize its values.  mytm should now be a
+         * normalized version of the input. */
+        aux_tm = *mytm;
+        aux_tm.tm_isdst = isdst;
+        which_tm = &aux_tm;
+
 #  endif
-#  ifdef HAS_TM_TM_ZONE
-    mytm->tm_zone = mytm2.tm_zone;
+
+        /* Here, we need to run libc mktime(), either because we want to take
+         * dst into consideration, or because it calculates one or two fields
+         * that we need that mini_mktime() doesn't handle.
+         *
+         * Unlike mini_mktime(), it does consider the locale, so have to switch
+         * to the correct one. */
+        const char * orig_TIME_locale = toggle_locale_c(LC_TIME, locale);
+        MKTIME_LOCK;
+
+        /* which_tm points to an auxiliary copy if we ran mini_mktime().
+         * Otherwise it points to the passed-in one which now gets populated
+         * directly. */
+        (void) mktime(which_tm);
+
+        MKTIME_UNLOCK;
+        restore_toggled_locale_c(LC_TIME, orig_TIME_locale);
+    }
+
+#  if defined(HAS_TM_TM_GMTOFF) || defined(HAS_TM_TM_ZONE)
+
+    /* And use the saved libc values for tm_gmtoff and tm_zone if we used an
+     * auxiliary struct to get them */
+    if (which_tm != mytm) {
+
+#    ifdef HAS_TM_TM_GMTOFF
+        mytm->tm_gmtoff = aux_tm.tm_gmtoff;
+#    endif
+#    ifdef HAS_TM_TM_ZONE
+        mytm->tm_zone = aux_tm.tm_zone;
+#    endif
+
+    }
+
 #  endif
+#  undef ALWAYS_RUN_MKTIME
 #endif
 
     return;
@@ -8289,7 +8461,7 @@ S_strftime_tm(pTHX_ const char *fmt,
     bool succeeded = false;
 
 #ifndef HAS_STRFTIME
-    Perl_croak(aTHX_ "panic: no strftime");
+    croak("panic: no strftime");
 #endif
 
     start_DEALING_WITH_MISMATCHED_CTYPE(locale);
@@ -8440,6 +8612,8 @@ S_strftime8(pTHX_ const char * fmt,
 
 #endif
 
+    void * free_me = NULL;
+
     switch (fmt_utf8ness) {
       case UTF8NESS_IMMATERIAL:
         break;
@@ -8458,15 +8632,12 @@ S_strftime8(pTHX_ const char * fmt,
         if (! is_locale_utf8(locale)) {
             locale_utf8ness = LOCALE_NOT_UTF8;
 
-            bool is_utf8 = true;
             Size_t fmt_len = strlen(fmt);
-            fmt = (char *) bytes_from_utf8((U8 *) fmt, &fmt_len, &is_utf8);
-            if (is_utf8) {
+            if (! utf8_to_bytes_new_pv((const U8 **) &fmt, &fmt_len, &free_me))
+            {
                 SET_EINVAL;
                 return false;
             }
-
-            SAVEFREEPV(fmt);
         }
         else {
             locale_utf8ness = LOCALE_IS_UTF8;
@@ -8488,8 +8659,8 @@ S_strftime8(pTHX_ const char * fmt,
                  * locale would find any UTF-8 variant characters to be
                  * malformed */
                 Size_t fmt_len = strlen(fmt);
-                fmt = (char *) bytes_to_utf8((U8 *) fmt, &fmt_len);
-                SAVEFREEPV(fmt);
+                fmt = (char *) bytes_to_utf8_free_me((U8 *) fmt,
+                                                     &fmt_len, &free_me);
             }
         }
 
@@ -8497,6 +8668,7 @@ S_strftime8(pTHX_ const char * fmt,
     }
 
     if (! strftime_tm(fmt, sv, locale, mytm)) {
+        Safefree(free_me);
         return false;
     }
 
@@ -8511,6 +8683,7 @@ S_strftime8(pTHX_ const char * fmt,
                            ? SvPVX(sv)
                            :_byte_dump_string((U8 *) SvPVX(sv), SvCUR(sv) ,0)),
                           *result_utf8ness));
+    Safefree(free_me);
     return true;
 
 #undef INDEX_TO_USE
@@ -8868,8 +9041,8 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
      * malloc'd in the interim.  We arbitrarily switch to the C locale,
      * overridden below  */
     if (! uselocale(PL_C_locale_obj)) {
-        locale_panic_(Perl_form(aTHX_
-                                "Can't uselocale(%p), LC_ALL supposed to"
+        locale_panic_(form(
+                                "Can't uselocale(0x%p), LC_ALL supposed to"
                                 " be 'C'",
                                 PL_C_locale_obj));
     }
@@ -9264,8 +9437,8 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
 #  endif
 #  if defined(USE_POSIX_2008_LOCALE) && defined(MULTIPLICITY)
     DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                           "finished Perl_init_i18nl10n; actual obj=%p,"
-                           " expected obj=%p, initial=%s\n",
+                           "finished Perl_init_i18nl10n; actual obj=0x%p,"
+                           " expected obj=0x%p, initial=%s\n",
                            uselocale(0), PL_cur_locale_obj,
                            get_LC_ALL_display()));
 #  endif
@@ -9281,11 +9454,32 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
 #undef GET_DESCRIPTION
 #ifdef USE_LOCALE_COLLATE
 
-STATIC void
+STATIC bool
 S_compute_collxfrm_coefficients(pTHX)
 {
-
-    /* A locale collation definition includes primary, secondary, tertiary,
+    /* This is called from mem_collxfrm() the first time the latter is called
+     * on the current locale to do initialization for it.
+     *
+     * This returns true and initializes the coefficients for a linear equation
+     * that, given a string of some length, predicts how much memory it will
+     * take to hold the result of calling mem_collxfrm() on that string.  The
+     * equation is of the form:
+     *      m * length + b
+     * where m = PL_collxfrm_mult and b = PL_collxfrm_base
+     *
+     * It returns false if the locale does not appear to be sane.
+     *
+     * The prediction is just an educated guess to save time and,
+     * mem_collxrfm() may adjust it based on experience with strings it
+     * encounters.
+     *
+     * This function also:
+     *      sets 'PL_in_utf8_COLLATE_locale' to indicate if the locale is a
+     *          UTF-8 one
+     *      initializes 'PL_strxfrm_NUL_replacement' to NUL
+     *      initializes 'PL_strxfrm_max_cp' = 0;
+     *
+     * A locale collation definition includes primary, secondary, tertiary,
      * etc. weights for each character.  To sort, the primary weights are used,
      * and only if they compare equal, then the secondary weights are used, and
      * only if they compare equal, then the tertiary, etc.
@@ -9347,13 +9541,13 @@ S_compute_collxfrm_coefficients(pTHX)
     PL_strxfrm_NUL_replacement = '\0';
     PL_strxfrm_max_cp = 0;
 
-    /* mem_collxfrm_() is used get the transformation (though here we are
-     * interested only in its length).  It is used because it has the
-     * intelligence to handle all cases, but to work, it needs some values of
-     * 'm' and 'b' to get it started.  For the purposes of this calculation we
-     * use a very conservative estimate of 'm' and 'b'.  This assumes a weight
-     * can be multiple bytes, enough to hold any UV on the platform, and there
-     * are 5 levels, 4 weight bytes, and a trailing NUL.  */
+    /* mem_collxfrm_() is used recursively to get the transformation (though
+     * here we are interested only in its length).  It is used because it has
+     * the intelligence to handle all cases, but to work, it needs some values
+     * of 'm' and 'b' to get it started.  For the purposes of this calculation
+     * we use a very conservative estimate of 'm' and 'b'.  This assumes a
+     * weight can be multiple bytes, enough to hold any UV on the platform, and
+     * there are 5 levels, 4 weight bytes, and a trailing NUL.  */
     PL_collxfrm_base = 5;
     PL_collxfrm_mult = 5 * sizeof(UV);
 
@@ -9394,40 +9588,39 @@ S_compute_collxfrm_coefficients(pTHX)
                 "Disabling locale collation for LC_COLLATE='%s';"
                 " length for shorter sample=%zu; longer=%zu\n",
                 PL_collation_name, x_len_shorter, x_len_longer));
+        return false;
+    }
+
+    SSize_t base;       /* Temporary */
+
+    /* We have both: m * strlen(longer)  + b = x_len_longer
+     *               m * strlen(shorter) + b = x_len_shorter;
+     * subtracting yields:
+     *          m * (strlen(longer) - strlen(shorter))
+     *                              = x_len_longer - x_len_shorter
+     * But we have set things up so that 'shorter' is 1 byte smaller than
+     * 'longer'.  Hence:
+     *          m = x_len_longer - x_len_shorter
+     *
+     * But if something went wrong, make sure the multiplier is at least 1.
+     */
+    if (x_len_longer > x_len_shorter) {
+        PL_collxfrm_mult = (STRLEN) x_len_longer - x_len_shorter;
     }
     else {
-        SSize_t base;       /* Temporary */
-
-        /* We have both: m * strlen(longer)  + b = x_len_longer
-         *               m * strlen(shorter) + b = x_len_shorter;
-         * subtracting yields:
-         *          m * (strlen(longer) - strlen(shorter))
-         *                             = x_len_longer - x_len_shorter
-         * But we have set things up so that 'shorter' is 1 byte smaller than
-         * 'longer'.  Hence:
-         *          m = x_len_longer - x_len_shorter
-         *
-         * But if something went wrong, make sure the multiplier is at least 1.
-         */
-        if (x_len_longer > x_len_shorter) {
-            PL_collxfrm_mult = (STRLEN) x_len_longer - x_len_shorter;
-        }
-        else {
-            PL_collxfrm_mult = 1;
-        }
-
-        /*     mx + b = len
-         * so:      b = len - mx
-         * but in case something has gone wrong, make sure it is non-negative
-         * */
-        base = x_len_longer - PL_collxfrm_mult * (sizeof(longer) - 1);
-        if (base < 0) {
-            base = 0;
-        }
-
-        /* Add 1 for the trailing NUL */
-        PL_collxfrm_base = base + 1;
+        PL_collxfrm_mult = 1;
     }
+
+    /*     mx + b = len
+     * so:      b = len - mx
+     * but in case something has gone wrong, make sure it is non-negative */
+    base = x_len_longer - PL_collxfrm_mult * (sizeof(longer) - 1);
+    if (base < 0) {
+        base = 0;
+    }
+
+    /* Add 1 for the trailing NUL */
+    PL_collxfrm_base = base + 1;
 
     DEBUG_L(PerlIO_printf(Perl_debug_log,
                           "?UTF-8 locale=%d; x_len_shorter=%zu, "
@@ -9436,6 +9629,7 @@ S_compute_collxfrm_coefficients(pTHX)
                           PL_in_utf8_COLLATE_locale,
                           x_len_shorter, x_len_longer,
                           PL_collxfrm_mult, PL_collxfrm_base));
+    return true;
 }
 
 char *
@@ -9447,6 +9641,8 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
                          bool utf8      /* Is the input in UTF-8? */
                    )
 {
+    PERL_ARGS_ASSERT_MEM_COLLXFRM_;
+
     /* mem_collxfrm_() is like strxfrm() but with two important differences.
      * First, it handles embedded NULs. Second, it allocates a bit more memory
      * than needed for the transformed data itself.  The real transformed data
@@ -9475,21 +9671,30 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
     locale_t constructed_locale = (locale_t) 0;
 #  endif
 
-    PERL_ARGS_ASSERT_MEM_COLLXFRM_;
-
     /* Must be NUL-terminated */
     assert(*(input_string + len) == '\0');
+
+    /* We may have to allocate memory to hold modified versions of the input.
+     * Initialize to NULL here, and before any return, free them all.  Those
+     * that do get allocated will be non-NULL then, and get freed */
+    char * sans_nuls = NULL;       /* NULs changed to lowest collating ctrl */
+    char * sans_highs = NULL;   /* >0xFF changed to highest collating byte
+                                      for non-UTF8 locales */
+    void * free_me = NULL;  /* some called functions may allocate memory that
+                               this function then is required to free */
 
     if (PL_collxfrm_mult == 0) {     /* unknown or bad */
         if (PL_collxfrm_base != 0) { /* bad collation => skip */
             DEBUG_L(PerlIO_printf(Perl_debug_log,
                           "mem_collxfrm_: locale's collation is defective\n"));
-            goto bad;
+            goto bad_no_strxfrm;
         }
 
         /* (mult, base) == (0,0) means we need to calculate mult and base
          * before proceeding */
-        S_compute_collxfrm_coefficients(aTHX);
+        if (! S_compute_collxfrm_coefficients(aTHX)) {
+            return NULL;    /* locale collation not sane */
+        }
     }
 
     /* Replace any embedded NULs with the control that sorts before any others.
@@ -9497,10 +9702,10 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
      * otherwise contain that character, but otherwise there may be
      * less-than-perfect results with that character and NUL.  This is
      * unavoidable unless we replace strxfrm with our own implementation. */
+
     if (UNLIKELY(s_strlen < len)) {   /* Only execute if there is an embedded
                                          NUL */
         char * e = s + len;
-        char * sans_nuls;
         STRLEN sans_nuls_len;
         int try_non_controls;
         char this_replacement_char[] = "?\0";   /* Room for a two-byte string,
@@ -9562,7 +9767,7 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
                     /* Create a 1-char string of the current code point */
                     cur_source[0] = (char) j;
 
-                    /* Then transform it */
+                    /* Then transform it using a recursive call */
                     x = mem_collxfrm_(cur_source, trial_len, &x_len,
                                       0 /* The string is not in UTF-8 */);
 
@@ -9610,7 +9815,7 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
                 DEBUG_L(PerlIO_printf(Perl_debug_log,
                     "mem_collxfrm_: Couldn't find any character to replace"
                     " embedded NULs in locale %s with", PL_collation_name));
-                goto bad;
+                goto bad_no_strxfrm;
             }
 
             DEBUG_L(PerlIO_printf(Perl_debug_log,
@@ -9663,146 +9868,237 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
         len = strlen(s);
     } /* End of replacing NULs */
 
-    /* Make sure the UTF8ness of the string and locale match */
-    if (utf8 != PL_in_utf8_COLLATE_locale) {
-        /* XXX convert above Unicode to 10FFFF? */
-        const char * const t = s;   /* Temporary so we can later find where the
-                                       input was */
+    if (! utf8) {
 
-        /* Here they don't match.  Change the string's to be what the locale is
-         * expecting */
-
-        if (! utf8) { /* locale is UTF-8, but input isn't; upgrade the input */
-            s = (char *) bytes_to_utf8((const U8 *) s, &len);
+        /* When the locale is UTF-8, strxfrm() is expecting a UTF-8 string.
+         * Here, the string isn't.  Convert it to be so. */
+        if (PL_in_utf8_COLLATE_locale) {
+            s = (char *) bytes_to_utf8_free_me((const U8 *) s, &len, &free_me);
             utf8 = TRUE;
         }
-        else {   /* locale is not UTF-8; but input is; downgrade the input */
 
-            s = (char *) bytes_from_utf8((const U8 *) s, &len, &utf8);
+        /* We are ready to call strxfrm() */
+    }
+    else if (! PL_in_utf8_COLLATE_locale) {
 
-            /* If the downgrade was successful we are done, but if the input
-             * contains things that require UTF-8 to represent, have to do
-             * damage control ... */
-            if (UNLIKELY(utf8)) {
+        /* Here, the string is UTF-8, but the locale isn't.  strxfrm() is
+         * expecting a non-UTF-8 string.  Convert the string to bytes.  If
+         * that succeeds, we are ready to call strxfrm() */
+        utf8 = FALSE;
+        if (UNLIKELY(! utf8_to_bytes_new_pv((const U8 **) &s, &len, &free_me)))
+        {
+            /* But here, it didn't succeed; have to do damage control ...
+             *
+             * What we do is construct a non-UTF-8 string with
+             *  1) the characters representable by a single byte converted to
+             *     be so (if not already);
+             *  2) and the rest converted to collate the same as the highest
+             *     collating representable character.  That makes them collate
+             *     at the end.  This is similar to how we handle embedded NULs,
+             *     but we use the highest collating code point instead of the
+             *     smallest.  Like the NUL case, this isn't perfect, but is the
+             *     best we can reasonably do.  Every above-255 code point will
+             *     sort the same as the highest-sorting 0-255 code point.  If
+             *     that code point can combine in a sequence with some other
+             *     code points for weight calculations, us changing something
+             *     to be it can adversely affect the results.  But in most
+             *     cases, it should work reasonably.  And note that this is
+             *     really an illegal situation: using code points above 255 on
+             *     a locale where only 0-255 are valid.  If two strings sort
+             *     entirely equal, then the sort order for the above-255 code
+             *     points will be in code point order.
+             *
+             * If we haven't calculated the code point with the maximum
+             * collating order for this locale, do so now */
+            if (! PL_strxfrm_max_cp) {
+                int j;
 
-                /* What we do is construct a non-UTF-8 string with
-                 *  1) the characters representable by a single byte converted
-                 *     to be so (if necessary);
-                 *  2) and the rest converted to collate the same as the
-                 *     highest collating representable character.  That makes
-                 *     them collate at the end.  This is similar to how we
-                 *     handle embedded NULs, but we use the highest collating
-                 *     code point instead of the smallest.  Like the NUL case,
-                 *     this isn't perfect, but is the best we can reasonably
-                 *     do.  Every above-255 code point will sort the same as
-                 *     the highest-sorting 0-255 code point.  If that code
-                 *     point can combine in a sequence with some other code
-                 *     points for weight calculations, us changing something to
-                 *     be it can adversely affect the results.  But in most
-                 *     cases, it should work reasonably.  And note that this is
-                 *     really an illegal situation: using code points above 255
-                 *     on a locale where only 0-255 are valid.  If two strings
-                 *     sort entirely equal, then the sort order for the
-                 *     above-255 code points will be in code point order. */
+                /* The current transformed string that collates the
+                 * highest (except it also includes the prefixed collation
+                 * index. */
+                char * cur_max_x = NULL;
 
-                utf8 = FALSE;
+                /* Look through all legal code points (NUL isn't) */
+                for (j = 1; j < 256; j++) {
+                    char * x;
+                    STRLEN x_len;
+                    char cur_source[] = { '\0', '\0' };
 
-                /* If we haven't calculated the code point with the maximum
-                 * collating order for this locale, do so now */
-                if (! PL_strxfrm_max_cp) {
-                    int j;
+                    /* Create a 1-char string of the current code point */
+                    cur_source[0] = (char) j;
 
-                    /* The current transformed string that collates the
-                     * highest (except it also includes the prefixed collation
-                     * index. */
-                    char * cur_max_x = NULL;
+                    /* Then transform it (recursively) */
+                    x = mem_collxfrm_(cur_source, 1, &x_len, FALSE);
 
-                    /* Look through all legal code points (NUL isn't) */
-                    for (j = 1; j < 256; j++) {
-                        char * x;
-                        STRLEN x_len;
-                        char cur_source[] = { '\0', '\0' };
-
-                        /* Create a 1-char string of the current code point */
-                        cur_source[0] = (char) j;
-
-                        /* Then transform it */
-                        x = mem_collxfrm_(cur_source, 1, &x_len, FALSE);
-
-                        /* If something went wrong (which it shouldn't), just
-                         * ignore this code point */
-                        if (! x) {
-                            continue;
-                        }
-
-                        /* If this character's transformation is higher than
-                         * the current highest, this one becomes the highest */
-                        if (   cur_max_x == NULL
-                            || strGT(x         + COLLXFRM_HDR_LEN,
-                                     cur_max_x + COLLXFRM_HDR_LEN))
-                        {
-                            PL_strxfrm_max_cp = j;
-                            Safefree(cur_max_x);
-                            cur_max_x = x;
-                        }
-                        else {
-                            Safefree(x);
-                        }
+                    /* If something went wrong (which it shouldn't), just
+                     * ignore this code point */
+                    if (! x) {
+                        continue;
                     }
 
-                    if (! cur_max_x) {
-                        DEBUG_L(PerlIO_printf(Perl_debug_log,
-                            "mem_collxfrm_: Couldn't find any character to"
-                            " replace above-Latin1 chars in locale %s with",
-                            PL_collation_name));
-                        goto bad;
+                    /* If this character's transformation is higher than
+                     * the current highest, this one becomes the highest */
+                    if (   cur_max_x == NULL
+                        || strGT(x         + COLLXFRM_HDR_LEN,
+                                 cur_max_x + COLLXFRM_HDR_LEN))
+                    {
+                        PL_strxfrm_max_cp = j;
+                        Safefree(cur_max_x);
+                        cur_max_x = x;
                     }
+                    else {
+                        Safefree(x);
+                    }
+                }
 
+                if (! cur_max_x) {
                     DEBUG_L(PerlIO_printf(Perl_debug_log,
-                            "mem_collxfrm_: highest 1-byte collating character"
-                            " in locale %s is 0x%02X\n",
-                            PL_collation_name,
-                            PL_strxfrm_max_cp));
-
-                    Safefree(cur_max_x);
+                        "mem_collxfrm_: Couldn't find any character to"
+                        " replace above-Latin1 chars in locale %s with",
+                        PL_collation_name));
+                    goto bad_no_strxfrm;
                 }
 
-                /* Here we know which legal code point collates the highest.
-                 * We are ready to construct the non-UTF-8 string.  The length
-                 * will be at least 1 byte smaller than the input string
-                 * (because we changed at least one 2-byte character into a
-                 * single byte), but that is eaten up by the trailing NUL */
-                Newx(s, len, char);
+                DEBUG_L(PerlIO_printf(Perl_debug_log,
+                        "mem_collxfrm_: highest 1-byte collating character"
+                        " in locale %s is 0x%02X\n",
+                        PL_collation_name,
+                        PL_strxfrm_max_cp));
 
-                {
-                    STRLEN i;
-                    STRLEN d= 0;
-                    char * e = (char *) t + len;
-
-                    for (i = 0; i < len; i+= UTF8SKIP(t + i)) {
-                        U8 cur_char = t[i];
-                        if (UTF8_IS_INVARIANT(cur_char)) {
-                            s[d++] = cur_char;
-                        }
-                        else if (UTF8_IS_NEXT_CHAR_DOWNGRADEABLE(t + i, e)) {
-                            s[d++] = EIGHT_BIT_UTF8_TO_NATIVE(cur_char, t[i+1]);
-                        }
-                        else {  /* Replace illegal cp with highest collating
-                                   one */
-                            s[d++] = PL_strxfrm_max_cp;
-                        }
-                    }
-                    s[d++] = '\0';
-                    Renew(s, d, char);   /* Free up unused space */
-                }
+                Safefree(cur_max_x);
             }
-        }
 
-        /* Here, we have constructed a modified version of the input.  It could
-         * be that we already had a modified copy before we did this version.
-         * If so, that copy is no longer needed */
-        if (t != input_string) {
-            Safefree(t);
+            /* Here we know which legal code point collates the highest.  We
+             * are ready to construct the non-UTF-8 string.  The length will be
+             * at least 1 byte smaller than the input string (because we
+             * changed at least one 2-byte character into a single byte), but
+             * that is eaten up by the trailing NUL
+             *
+             * May shrink; will never grow */
+            Newx(sans_highs, len, char);
+            char * d = sans_highs;
+
+            const char * const e = s + len;
+            while (s < e) {
+                if (UTF8_IS_INVARIANT(*s)) {
+                    *d++ = *s++;
+                    continue;
+                }
+
+                if (UTF8_IS_NEXT_CHAR_DOWNGRADEABLE(s, e)) {
+                    *d++ = EIGHT_BIT_UTF8_TO_NATIVE(*s, *(s + 1));
+                }
+                else {  /* Replace illegal cp's with highest collating one */
+                    *d++ = PL_strxfrm_max_cp;
+                }
+
+                s+= UTF8SKIP(s);
+            }
+
+            len = d - sans_highs;
+            *d = '\0';
+
+            s = sans_highs;
+        }
+    }
+    else {  /* Here both the locale and string are UTF-8 */
+
+        /* In a UTF-8 locale, we can reasonably expect strxfrm() to properly
+         * handle any legal Unicode code point, including the non-character
+         * code points that are affirmed legal in Corrigendum #9.  Less certain
+         * is its handling of the surrogate characters, and those code points
+         * above the Unicode maximum of U+10FFFF.  It definitely won't know
+         * about Perl's invented UTF-8 extension for very large code points.
+         * Since surrogates and above-Unicode code points were formerly legal
+         * UTF-8, it very well may be that strxfrm() handles them, rather than
+         * going to the likely extra trouble of detecting and excluding them.
+         * This is especially true of surrogates where the code points the
+         * UTF-8 represents are listed in the Unicode Standard as being in a
+         * subset of the General Category "Other".  Indeed, glibc looks like it
+         * returns the identical collation sequence for all "Other" code points
+         * that have the same number of bytes in their representation.  That
+         * is, all such code points collate to the same spot.  glibc does the
+         * same for the above-Unicode code points, but it gets a little weird,
+         * as might be expected, when presented with Perl's invented UTF-8
+         * extension, but still serviceable.  But it is really undefined
+         * behavior, and we therefore should not present strxfrm with such
+         * input.  The code below does that.  And it is just about as easy to
+         * exclude all above-Unicode code points, as that is really undefined
+         * behavior as well, so the code below does that too.  These all are
+         * effectively permanently unassigned by Unicode, so the code below
+         * maps them all to the highest legal permanently unassigned code
+         * point, U+10FFFF.  XXX Could use find_next_masked() instead of
+         * strpbrk() on ASCII platforms to do per-word scanning */
+
+#  ifdef EBCDIC               /* Native; known valid only for IBM-1047, 037 */
+#    define SUPER_START_BYTES "\xEE\xEF\xFA\xFB\xFC\xFD\xFE"
+#  else
+#    define SUPER_START_BYTES                                               \
+                          "\xF4\xF5\xF6\xF7\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFF"
+#  endif
+
+        const char * const e = s + len;
+
+        /* Scan the input to find something that could be the start byte for an
+         * above-Unicode code point.  If none found, we are done. */
+        char * candidate = s;
+        while ((candidate = strpbrk(candidate, SUPER_START_BYTES))) {
+            char * next_char_start = candidate + UTF8SKIP(candidate);
+            assert(next_char_start <= e);
+
+            /* It may require more than the single start byte to determine if a
+             * sequence is for an above-Unicode code point.  Look to determine
+             * for sure.  If the sequence isn't for an above-Unicode code
+             * point, continue scanning for the next possible one. */
+            if (! UTF8_IS_SUPER_NO_CHECK_(candidate)) {
+                candidate = next_char_start;
+                continue;
+            }
+
+            /* Here, is above-Unicode.  Need to make a copy to translate this
+             * code code point (and any others that follow) to be within the
+             * Unicode range */
+            Newx(sans_highs, len + 1, char); /* May shrink; will never grow */
+            Size_t initial_length = candidate - s;
+
+            /* Copy as-is any initial portion that is Unicode */
+            Copy(s, sans_highs, initial_length, U8);
+
+            /* Replace this first above-Unicode character */
+            char * d = sans_highs + initial_length;
+            Copy(MAX_UNICODE_UTF8, d, STRLENs(MAX_UNICODE_UTF8), U8);
+            d += STRLENs(MAX_UNICODE_UTF8);
+
+            /* Then go through the rest of the string */
+            s = next_char_start;
+            while (s < e) {
+                if (UTF8_IS_INVARIANT(*s)) {
+                    *d++ = *s++;
+                    continue;
+                }
+
+                const Size_t this_len = UTF8SKIP(s);
+                next_char_start = s + this_len;
+                assert(next_char_start <= e);
+
+                if (UTF8_IS_SUPER_NO_CHECK_(s)) {
+                    Copy(MAX_UNICODE_UTF8, d, STRLENs(MAX_UNICODE_UTF8), U8);
+                    d += STRLENs(MAX_UNICODE_UTF8);
+                }
+                else {
+                    Copy(s, d, this_len, U8);
+                    d += this_len;
+                }
+
+                s = next_char_start;
+            }
+
+            len = d - sans_highs;
+            *d = '\0';
+
+            /* The rest of the routine will look at this modified copy */
+            s = sans_highs;
+            break;
         }
     }
 
@@ -9820,11 +10116,18 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
     if (UNLIKELY(! xbuf)) {
         DEBUG_L(PerlIO_printf(Perl_debug_log,
                       "mem_collxfrm_: Couldn't malloc %zu bytes\n", xAlloc));
-        goto bad;
+        goto bad_no_strxfrm;
     }
 
     /* Store the collation id */
     *(PERL_UINTMAX_T *)xbuf = PL_collation_ix;
+
+#  define CLEANUP_NON_STRXFRM                                           \
+        STMT_START {                                                    \
+            Safefree(free_me);                                          \
+            Safefree(sans_nuls);                                        \
+            Safefree(sans_highs);                                       \
+        } STMT_END
 
 #  if defined(USE_POSIX_2008_LOCALE) && defined HAS_STRXFRM_L
 #    ifdef USE_LOCALE_CTYPE
@@ -9850,9 +10153,7 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
     orig_CTYPE_locale = toggle_locale_c(LC_CTYPE, PL_collation_name);
 
 #      define CLEANUP_STRXFRM                                           \
-                restore_toggled_locale_c(LC_CTYPE, orig_CTYPE_locale)
-#    else
-#      define CLEANUP_STRXFRM  NOOP
+            restore_toggled_locale_c(LC_CTYPE, orig_CTYPE_locale);
 #    endif
 #  endif
 
@@ -9922,7 +10223,7 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
                     PL_collxfrm_mult = new_m;
                     PL_collxfrm_base = 1;   /* +1 For trailing NUL */
                     computed_guess = PL_collxfrm_base
-                                    + (PL_collxfrm_mult * length_in_chars);
+                                   + (PL_collxfrm_mult * length_in_chars);
                     if (computed_guess < needed) {
                         PL_collxfrm_base += needed - computed_guess;
                     }
@@ -9992,30 +10293,26 @@ Perl_mem_collxfrm_(pTHX_ const char *input_string,
         first_time = FALSE;
     }
 
-    CLEANUP_STRXFRM;
-
     DEBUG_L(print_collxfrm_input_and_return(s, s + len, xbuf, *xlen, utf8));
+    CLEANUP_STRXFRM;
+    CLEANUP_NON_STRXFRM;
 
     /* Free up unneeded space; retain enough for trailing NUL */
     Renew(xbuf, COLLXFRM_HDR_LEN + *xlen + 1, char);
-
-    if (s != input_string) {
-        Safefree(s);
-    }
 
     return xbuf;
 
   bad:
 
+    DEBUG_L(print_collxfrm_input_and_return(s, s + len, NULL, 0, utf8));
     CLEANUP_STRXFRM;
+
+  bad_no_strxfrm:   /* Found a problem before strxfrm() got called */
     DEBUG_L(print_collxfrm_input_and_return(s, s + len, NULL, 0, utf8));
 
     Safefree(xbuf);
-    if (s != input_string) {
-        Safefree(s);
-    }
     *xlen = 0;
-
+    CLEANUP_NON_STRXFRM;
     return NULL;
 }
 
@@ -10348,8 +10645,15 @@ Perl_my_strerror(pTHX_ const int errnum, utf8ness_t * utf8ness)
 #endif   /* end of all the my_strerror() implementations */
 
 bool
-Perl__is_in_locale_category(pTHX_ const bool compiling, const int category)
+Perl_is_in_locale_category_(pTHX_ const bool compiling, const int category)
 {
+
+#ifndef USE_LOCALE
+
+    return false;
+
+#else
+
     /* Internal function which returns if we are in the scope of a pragma that
      * enables the locale category 'category'.  'compiling' should indicate if
      * this is during the compilation phase (TRUE) or not (FALSE). */
@@ -10361,10 +10665,17 @@ Perl__is_in_locale_category(pTHX_ const bool compiling, const int category)
         return FALSE;
     }
 
+    if (category == PERL_IN_UNRESTRICTED_LOCALE_) {
+        return SvUV(these_categories) == 0;
+    }
+
     /* The pseudo-category 'not_characters' is -1, so just add 1 to each to get
      * a valid unsigned */
     assert(category >= -1);
     return cBOOL(SvUV(these_categories) & (1U << (category + 1)));
+
+#endif
+
 }
 
 /*
@@ -10549,7 +10860,7 @@ change the locale (though changing the locale is antisocial and dangerous on
 multi-threaded systems that don't have multi-thread safe locale operations.
 (See L<perllocale/Multi-threaded operation>).
 
-Using the libc L<C<setlocale(3)>> function should be avoided.  Nevertheless,
+Using the libc C<L<setlocale(3)>> function should be avoided.  Nevertheless,
 certain non-Perl libraries called from XS, do call it, and their behavior may
 not be able to be changed.  This function, along with
 C<L</switch_to_global_locale>>, can be used to get seamless behavior in these
@@ -10671,8 +10982,8 @@ Perl_switch_locale_context(pTHX)
 #  ifdef USE_POSIX_2008_LOCALE
 
     if (! uselocale(PL_cur_locale_obj)) {
-        locale_panic_(Perl_form(aTHX_
-                                "Can't uselocale(%p), LC_ALL supposed to"
+        locale_panic_(form(
+                                "Can't uselocale(0x%p), LC_ALL supposed to"
                                 " be '%s'",
                                 PL_cur_locale_obj, get_LC_ALL_display()));
     }
@@ -10680,7 +10991,7 @@ Perl_switch_locale_context(pTHX)
 #  elif defined(WIN32)
 
     if (! bool_setlocale_c(LC_ALL, PL_cur_LC_ALL)) {
-        locale_panic_(Perl_form(aTHX_ "Can't setlocale(%s)", PL_cur_LC_ALL));
+        locale_panic_(form("Can't setlocale(%s)", PL_cur_LC_ALL));
     }
 
 #  endif
@@ -10712,8 +11023,8 @@ Perl_thread_locale_init(pTHX)
 
         /* Not being able to change to the C locale is severe; don't keep
          * going.  */
-        locale_panic_(Perl_form(aTHX_
-                                "Can't uselocale(%p), 'C'", PL_C_locale_obj));
+        locale_panic_(form(
+                                "Can't uselocale(0x%p), 'C'", PL_C_locale_obj));
         NOT_REACHED; /* NOTREACHED */
     }
 

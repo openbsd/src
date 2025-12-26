@@ -4,7 +4,7 @@ use strict;
 use warnings;
 require ExtUtils::Typemaps;
 
-our $VERSION = '3.51';
+our $VERSION = '3.57';
 
 =head1 NAME
 
@@ -31,7 +31,8 @@ into the in- and output mapping tables.
 
 Requires C<xstype> and C<ctype> parameters.
 
-Optionally takes C<prototype> parameter.
+Optionally takes C<prototype> parameter.  Note however that the method to
+get/set the value is called C<proto> rather than <prototype>.
 
 =cut
 

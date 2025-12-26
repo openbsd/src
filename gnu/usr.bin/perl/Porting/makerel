@@ -273,6 +273,8 @@ exit if $opts{n};
 
 my $src = (-e $perl) ? $perl : 'perl'; # 'perl' in maint branch
 
+my $tar_cmd = "tar cf - --format=ustar $reldir";
+
 my $output_7z;
 my $have_7z;
 if (! $opts{e}) {
@@ -285,18 +287,13 @@ print "Checking if you have advdef...\n";
 my $output_advdef = `advdef --version 2>&1`;
 my $have_advdef = defined $output_advdef && $output_advdef =~ /advancecomp/;
 
-if (! $opts{e} && $have_7z) {
+if ($have_7z) {
     print "Creating and compressing the tar.gz file with 7z...\n";
-    $cmd = "tar cf - $reldir | 7z a -tgzip -mx9 -bd -si $reldir.tar.gz";
+    $cmd = "$tar_cmd | 7z a -tgzip -mx9 -bd -si $reldir.tar.gz";
     system($cmd) == 0 or die "$cmd failed";
 } else {
     print "Creating and compressing the tar.gz file...\n";
-    my $extra_opts = "";
-    if ($opts{e}) {
-        print "(Using ustar format since is for an EBCDIC box)\n";
-        $extra_opts = ' --format=ustar';
-    }
-    $cmd = "tar cf - $extra_opts $reldir | gzip --best > $reldir.tar.gz";
+    $cmd = "$tar_cmd | gzip --best > $reldir.tar.gz";
     system($cmd) == 0 or die "$cmd failed";
     if ($have_advdef) {
         print "Recompressing the tar.gz file with advdef...\n";
@@ -307,7 +304,7 @@ if (! $opts{e} && $have_7z) {
 
 if ($opts{x}) {
     print "Creating and compressing the tar.xz file with xz...\n";
-    $cmd = "tar cf - $reldir | xz -z -c > $reldir.tar.xz";
+    $cmd = "$tar_cmd | xz -z -c > $reldir.tar.xz";
     system($cmd) == 0 or die "$cmd failed";
 }
 

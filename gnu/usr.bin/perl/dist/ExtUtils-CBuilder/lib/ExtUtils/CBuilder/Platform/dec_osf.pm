@@ -5,7 +5,7 @@ use strict;
 use ExtUtils::CBuilder::Platform::Unix;
 use File::Spec;
 
-our $VERSION = '0.280240'; # VERSION
+our $VERSION = '0.280242'; # VERSION
 our @ISA = qw(ExtUtils::CBuilder::Platform::Unix);
 
 sub link_executable {

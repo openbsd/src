@@ -1,7 +1,7 @@
 package Test::Builder::Tester;
 
 use strict;
-our $VERSION = '1.302199';
+our $VERSION = '1.302210';
 
 use Test::Builder;
 use Symbol;
@@ -280,7 +280,7 @@ Actually performs the output check testing the tests, comparing the
 data (with C<eq>) that we have captured from L<Test::Builder> against
 what was declared with C<test_out> and C<test_err>.
 
-This takes name/value pairs that effect how the test is run.
+This takes name/value pairs that affect how the test is run.
 
 =over
 
@@ -438,8 +438,8 @@ sub color {
 
 Test::Builder::Tester does not handle plans well. It has never done anything
 special with plans. This means that plans from outside Test::Builder::Tester
-will effect Test::Builder::Tester, worse plans when using Test::Builder::Tester
-will effect overall testing. At this point there are no plans to fix this bug
+will affect Test::Builder::Tester, worse plans when using Test::Builder::Tester
+will affect overall testing. At this point there are no plans to fix this bug
 as people have come to depend on it, and Test::Builder::Tester is now
 discouraged in favor of C<Test2::API::intercept()>. See
 L<https://github.com/Test-More/test-more/issues/667>

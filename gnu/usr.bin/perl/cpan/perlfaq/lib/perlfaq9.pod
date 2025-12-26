@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq9 - Web, Email and Networking
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -27,7 +31,7 @@ so maintenance of your HTML files (and other assets) is easier.
 X<framework> X<CGI.pm> X<CGI> X<Catalyst> X<Dancer>
 
 There is no simple answer to this question. Perl frameworks can run everything
-from basic file servers and small scale intranets to massive multinational
+from basic file servers and small-scale intranets to massive multinational
 multilingual websites that are the core to international businesses.
 
 Below is a list of a few frameworks with comments which might help you in
@@ -44,7 +48,7 @@ applications, where you have full control over the server.
 
 =item L<Dancer2>
 
-Free of legacy weight, providing a lightweight and easy to learn API.
+Free of legacy weight, providing a lightweight and easy-to-learn API.
 Has a growing addon ecosystem. It is best used for smaller projects and
 very easy to learn for beginners.
 
@@ -191,7 +195,7 @@ redirect.
 See if the web framework you are using has an
 authentication system and if that fits your needs.
 
-Alternativly look at L<Plack::Middleware::Auth::Basic>,
+Alternatively, look at L<Plack::Middleware::Auth::Basic>,
 or one of the other L<Plack authentication|https://metacpan.org/search?q=plack+auth>
 options.
 
@@ -207,7 +211,7 @@ try to use SQL injection or other sorts of attacks (and you should
 want to), you have to not trust any data that enter your program.
 
 The L<perlsec> documentation has general advice about data security.
-If you are using the L<DBI> module, use placeholder to fill in data.
+If you are using the L<DBI> module, use placeholders to fill in data.
 If you are running external programs with C<system> or C<exec>, use
 the list forms. There are many other precautions that you should take,
 too many to list here, and most of them fall under the category of not
@@ -303,7 +307,7 @@ By default, L<Email::Sender::Simple> (the C<send> and C<send_or_die> methods
 use this under the hood) will try C<sendmail> first, if it exists
 in your $PATH. This generally isn't the case. If there's a remote mail
 server you use to send mail, consider investigating one of the Transport
-classes. At time of writing, the available transports include:
+classes. At the time of writing, the available transports include:
 
 =over 4
 
@@ -419,3 +423,5 @@ are hereby placed into the public domain. You are permitted and
 encouraged to use this code in your own programs for fun
 or for profit as you see fit. A simple comment in the code giving
 credit would be courteous but is not required.
+
+=cut

@@ -548,7 +548,10 @@ SKIP: {
 }
 
 # [perl #4253]
+SKIP:
 {
+    skip "AFS", 3 # github 22067
+      if $Config{afs} eq "true" && ($Curdir eq '.' || $Curdir =~ /^\Q$Config{afsroot}/);
     ok(open(F, ">", $tmpfile), 'can create temp file');
     close F;
     chmod 0077, $tmpfile;

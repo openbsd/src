@@ -4,7 +4,7 @@ perlfaq - Frequently asked questions about Perl
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -1380,7 +1380,7 @@ patches and corrections over the years.
 =head1 AUTHOR AND COPYRIGHT
 
 Tom Christiansen wrote the original version of this document.
-brian d foy C<< <bdfoy@cpan.org> >> wrote this version. See the
+brian d foy C<< <briandfoy@pobox.com> >> wrote this version. See the
 individual perlfaq documents for additional copyright information.
 
 This document is available under the same terms as Perl itself. Code

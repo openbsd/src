@@ -5,7 +5,7 @@ use 5.008;
 use strict;
 use warnings;
 
-our $VERSION = '2.40';      # remember to update version in POD!
+our $VERSION = '2.43';      # remember to update version in POD!
 my $XS_VERSION = $VERSION;
 #$VERSION = eval $VERSION;
 
@@ -56,7 +56,7 @@ sub import
             }
 
         } elsif ($sym =~ /^str/i) {
-            import overload ('""' => \&tid);
+            overload->import('""' => \&tid);
 
         } elsif ($sym =~ /^(?::all|yield)$/) {
             push(@EXPORT, qw(yield));
@@ -134,7 +134,7 @@ threads - Perl interpreter-based threads
 
 =head1 VERSION
 
-This document describes threads version 2.40
+This document describes threads version 2.43
 
 =head1 WARNING
 

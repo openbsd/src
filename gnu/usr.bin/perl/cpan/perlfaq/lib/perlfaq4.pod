@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq4 - Data Manipulation
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -70,7 +74,7 @@ are in base 10:
     print $string + 44; # prints 688, certainly not octal!
 
 This problem usually involves one of the Perl built-ins that has the
-same name a Unix command that uses octal numbers as arguments on the
+same name as a Unix command that uses octal numbers as arguments on the
 command line. In this example, C<chmod> on the command line knows that
 its first argument is octal because that's what it does:
 
@@ -293,17 +297,17 @@ bitvector 0b0011_0011.
 These operations have different results even though you might think they
 look like the same "number":
 
-	 11  &  3;   # 0b0000_1011 & 0b0000_0011
-	             #     -> 0b0000_0011   (number 3)
-	"11" & "3";  # 0b0011_0001_0011_0001 & 0b0011_0011
-	             #     -> 0b0011_0001   (ASCII char "1")
+     11  &  3;   # 0b0000_1011 & 0b0000_0011
+                 #     -> 0b0000_0011   (number 3)
+    "11" & "3";  # 0b0011_0001_0011_0001 & 0b0011_0011
+                 #     -> 0b0011_0001   (ASCII char "1")
 
 Note that if any operand has a numeric value, perl uses numeric
 semantics (although you should not count on this):
 
-	my($i, $j) = ( 11,   3 );   # $i & $j  # 11  &  3 -> 3
- 	my($i, $j) = ("11",  3 );   # $i & $j  # 11  &  3 -> 3
- 	my($i, $j) = ("11", "3");   # $i & $j  # "11"  &  "3" -> 1
+    my($i, $j) = ( 11,   3 );   # $i & $j  # 11  &  3 -> 3
+    my($i, $j) = ("11",  3 );   # $i & $j  # 11  &  3 -> 3
+    my($i, $j) = ("11", "3");   # $i & $j  # "11"  &  "3" -> 1
 
 Remember that a perl scalar can have both string and numeric values at
 the same time. A value that starts as a string and has never encountered
@@ -313,13 +317,13 @@ it might never use as a number. In that case, string semantics wins. But,
 if there is a numeric value already, numeric semantics win. Force perl
 to compute the numeric value by adding 0:
 
-    my($i, $j) = ("11", "3"); $j += 0  # $i & $j  # "11"  &  3 -> 3
+    my($i, $j) = ("11", "3"); $j += 0;  # $i & $j  # "11"  &  3 -> 3
 
 However, this is not a documented feature, or as L<perlop> says, it "is not
-well defined". One way to fix ensure numeric semantics is to explicitly
+well defined". One way to ensure numeric semantics is to explicitly
 convert both of values to numbers:
 
-	(0+$i) & (0+$j)
+    (0+$i) & (0+$j)
 
 To fix this annoyance, Perl v5.22 separated the string and number
 behavior. The C<bitwise> feature introduced four new operators that
@@ -329,11 +333,11 @@ only numeric semantics.
 
 Enable this feature explicitly with L<feature>:
 
-	use feature qw(bitwise);
+    use feature qw(bitwise);
 
 Or, as of v5.28, require the minimum version of perl with C<use>:
 
-	use v5.28;  # bitwise feature for free
+    use v5.28;  # bitwise feature for free
 
 =head2 How do I multiply matrices?
 
@@ -405,15 +409,19 @@ course, living in a state of sin."
 
 Perl relies on the underlying system for the implementation of
 C<rand> and C<srand>; on some systems, the generated numbers are
-not random enough (especially on Windows : see
+not random enough (especially on Windows: see
 L<http://www.perlmonks.org/?node_id=803632>).
 Several CPAN modules in the C<Math> namespace implement better
 pseudorandom generators; see for example
-L<Math::Random::MT> ("Mersenne Twister", fast), or
-L<Math::TrulyRandom> (uses the imperfections in the system's
-timer to generate random numbers, which is rather slow).
+L<Math::Random::MT> ("Mersenne Twister", fast).
 More algorithms for random numbers are described in
 "Numerical Recipes in C" at L<http://www.nr.com/>
+
+There are several modules to sample system sources of random numbers,
+which are useful for security tokens and cryptography. For example,
+L<Crypt::URandom>.
+See the "CPAN Author's Guide to Random Data for Security" at
+L<https://security.metacpan.org/docs/guides/random-data-for-security.html>
 
 =head2 How do I get a random number between X and Y?
 
@@ -463,7 +471,7 @@ To get the day of year for any date, use L<POSIX>'s C<mktime> to get
 a time in epoch seconds for the argument to C<localtime>.
 
     use POSIX qw/mktime strftime/;
-    my $week_of_year = strftime "%j",
+    my $day_of_year = strftime "%j",
         localtime( mktime( 0, 0, 0, 18, 11, 87 ) );
 
 You can also use L<Time::Piece>, which comes with Perl and provides a
@@ -505,7 +513,7 @@ millennium.
 You could just store all your dates as a number and then subtract.
 Life isn't always that simple though.
 
-The L<Time::Piece> module, which comes with Perl, replaces L<localtime>
+The L<Time::Piece> module, which comes with Perl, replaces C<localtime>
 with a version that returns an object. It also overloads the comparison
 operators so you can compare them directly:
 
@@ -580,7 +588,7 @@ X<timelocal>
 
 To do it correctly, you can use one of the C<Date> modules since they
 work with calendars instead of times. The L<DateTime> module makes it
-simple, and give you the same time of day, only the day before,
+simple, and gives you the same time of day, only the day before,
 despite daylight saving time changes:
 
     use DateTime;
@@ -893,25 +901,25 @@ for you:
 
     printf "%-10s %s\n", "original:", $s;
     for my $style (qw( sentence title highlight )) {
-    	printf "%-10s %s\n",
-        	"$style:",
-			autoformat($s, { case => $style }) =~ s/\R+\z//r;
+        printf "%-10s %s\n",
+            "$style:",
+            autoformat($s, { case => $style }) =~ s/\R+\z//r;
     }
 
-Each style has a different idea of what if should do with small words:
+Each style has a different idea of what it should do with small words:
 
-	original:  Going to the desert with a camel
-	sentence:  Going to the desert with a camel
-	title:     Going To The Desert With A Camel
-	highlight: Going to the Desert with a Camel
+    original:  Going to the desert with a camel
+    sentence:  Going to the desert with a camel
+    title:     Going To The Desert With A Camel
+    highlight: Going to the Desert with a Camel
 
 Trying this yourself in a simple regex has more than a few pitfalls.
 Perl "words" are groups of C<\w+>, but that's not what you want to
 capitalize. Some of those characters aren't even letters. What if you
 used a word boundary, C<\b>?
 
-	my $string = "A camel's journey";
-	$string =~ s/\b(\w)/\U$1/g;  # A Camel'S Journey
+    my $string = "A camel's journey";
+    $string =~ s/\b(\w)/\U$1/g;  # A Camel'S Journey
 
 How is Perl supposed to know not to capitalize that C<s>? You could work
 harder to look for preceding whitespace or the beginning of the string:
@@ -928,9 +936,9 @@ Unicode word and sentence boundaries to fix this sort of problem. The
 C<\b{wb}> word boundary ignores some things that it doesn't think start
 or end "human" words:
 
-	use v5.22;
-	my $string = "A camel's journey";
-	$string =~ s/\b{wb}(\w)/\U$1/g;  # A Camel's Journey
+    use v5.22;
+    my $string = "A camel's journey";
+    $string =~ s/\b{wb}(\w)/\U$1/g;  # A Camel's Journey
 
 The details are in Unicode Technical Report #29
 (L<https://unicode.org/reports/tr29/>), and you should make sure that
@@ -1103,7 +1111,7 @@ C<unpack> with the A (ASCII) format. By using a number after the format
 specifier, you can denote the column width. See the C<pack> and C<unpack>
 entries in L<perlfunc> for more details.
 
-    my @fields = unpack( $line, "A8 A8 A8 A16 A4" );
+    my @fields = unpack( "A8 A8 A8 A16 A4", $line );
 
 Note that spaces in the format argument to C<unpack> do not denote literal
 spaces. If you have space separated data, you may want C<split> instead.
@@ -1196,7 +1204,7 @@ When you want a list to be expanded per C<$">, use C<@{[ ... ]}>.
     my $scalar = 'STRING';
     my @array = ( 'zorro', 'a', 1, 'B', 3 );
 
-    # Print the current date and time and then Tommorrow
+    # Print the current date and time and then Tomorrow
     my $t = Time::Piece->new;
     say "Now is: ${\ $t->cdate() }";
     say "Tomorrow: ${\ do{ my $T=Time::Piece->new + ONE_DAY ; $T->fullday }}";
@@ -1536,7 +1544,7 @@ array. This kind of an array will take up less space:
     my @primes = (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31);
     my @is_tiny_prime = ();
     for (@primes) { $is_tiny_prime[$_] = 1 }
-    # or simply  @istiny_prime[@primes] = (1) x @primes;
+    # or simply  @is_tiny_prime[@primes] = (1) x @primes;
 
 Now you check whether $is_tiny_prime[$some_number].
 
@@ -1639,7 +1647,7 @@ two different answers:
     cmpStrHard(\%a, \%b) == 0 ? "the same" : "different";
 
 
-The first reports that both those the hashes contain the same data,
+The first reports that both hashes contain the same data,
 while the second reports that they do not. Which you prefer is left as
 an exercise to the reader.
 
@@ -2088,7 +2096,7 @@ all of the keys of the hash and gives them back to you as a list. You
 can then get the value through the particular key you're processing:
 
     foreach my $key ( keys %hash ) {
-        my $value = $hash{$key}
+        my $value = $hash{$key};
         ...
     }
 
@@ -2097,7 +2105,7 @@ process the hash elements. For instance, you can sort the keys so you
 can process them in lexical order:
 
     foreach my $key ( sort keys %hash ) {
-        my $value = $hash{$key}
+        my $value = $hash{$key};
         ...
     }
 
@@ -2106,7 +2114,7 @@ to deal with the keys that start with C<text:>, you can select just
 those using C<grep>:
 
     foreach my $key ( grep /^text:/, keys %hash ) {
-        my $value = $hash{$key}
+        my $value = $hash{$key};
         ...
     }
 
@@ -2140,7 +2148,7 @@ the original hashes as they were.
 
 If you want to preserve the original hashes, copy one hash (C<%hash1>)
 to a new hash (C<%new_hash>), then add the keys from the other hash
-(C<%hash2> to the new hash. Checking that the key already exists in
+(C<%hash2>) to the new hash. Checking that the key already exists in
 C<%new_hash> gives you a chance to decide what to do with the
 duplicates:
 
@@ -2525,7 +2533,7 @@ back the reference from the stringified form, at least without doing
 some extra work on your own.
 
 Remember that the entry in the hash will still be there even if
-the referenced variable  goes out of scope, and that it is entirely
+the referenced variable goes out of scope, and that it is entirely
 possible for Perl to subsequently allocate a different variable at
 the same address. This will mean a new variable might accidentally
 be associated with the value for an old.
@@ -2728,7 +2736,7 @@ you wanted to copy.
 You can use the C<UNIVERSAL> class (see L<UNIVERSAL>). However, please
 be very careful to consider the consequences of doing this: adding
 methods to every object is very likely to have unintended
-consequences. If possible, it would be better to have all your object
+consequences. If possible, it would be better to have all your objects
 inherit from some common base class, or to use an object system like
 Moose that supports roles.
 
@@ -2758,3 +2766,5 @@ are hereby placed into the public domain. You are permitted and
 encouraged to use this code in your own programs for fun
 or for profit as you see fit. A simple comment in the code giving
 credit would be courteous but is not required.
+
+=cut

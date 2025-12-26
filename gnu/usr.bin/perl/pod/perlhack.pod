@@ -857,7 +857,7 @@ Run F<miniperl> on F<t/base>, F<t/comp>, F<t/cmd>, F<t/run>, F<t/io>,
 F<t/op>, F<t/uni> and F<t/mro> tests.
 
 F<miniperl> is a minimalistic perl built to bootstrap building
-extensions, utilties, documentation etc.  It doesn't support dynamic
+extensions, utilities, documentation etc.  It doesn't support dynamic
 loading and depending on the point in the build process will only have
 access to a limited set of core modules.  F<miniperl> is not intended
 for day to day use.

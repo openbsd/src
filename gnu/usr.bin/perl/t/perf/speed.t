@@ -11,36 +11,30 @@
 # run, rather than actually timing out.
 #
 
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = ('../lib');
+    require './test.pl';
+}
+use Config;
+
 use strict;
 use warnings;
 use 5.010;
 
-sub run_tests;
-
 $| = 1;
 
-
-BEGIN {
-    chdir 't' if -d 't';
-    @INC = ('../lib');
-    require Config; Config->import;
-    require './test.pl';
-}
-
 plan tests => 1;
-
-use warnings;
-use strict;
 
 watchdog(60);
 
 SKIP: {
-    # RT #121975 COW speedup lost after e8c6a474
+    # RT #121975 / GH #13878 COW speedup lost after e8c6a474
 
     # without COW, this test takes minutes; with COW, its less than a
     # second
     #
-    skip  "PERL_NO_COW", 1 if $Config{ccflags} =~ /PERL_NO_COW/;
+    skip "PERL_NO_COW", 1 if $Config{ccflags} =~ /PERL_NO_COW/;
 
     my ($x, $y);
     $x = "x" x 1_000_000;

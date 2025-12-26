@@ -17,11 +17,24 @@ our @EXPORT_OK = qw(
   dualvar isdual isvstring looks_like_number openhandle readonly set_prototype
   tainted
 );
-our $VERSION    = "1.63";
+our $VERSION    = "1.68_01";
 $VERSION =~ tr/_//d;
 
 require List::Util; # List::Util loads the XS
 List::Util->VERSION( $VERSION ); # Ensure we got the right XS version (RT#100863)
+
+if( $] >= 5.040 ) {
+  # On Perl 5.40 and above, these builtins are stable, so we can use them
+  # instead of our own XS implementation
+
+  # Using this instead of a globref means we don't create an empty
+  # "builtins::" glob on older perls
+  no strict 'refs';
+  my $builtins = \%{"builtin::"};
+
+  *$_ = \&{ $builtins->{$_} } for (qw( blessed refaddr reftype weaken unweaken ));
+  *isweak = \&{ $builtins->{is_weak} };  # renamed
+}
 
 # populating @EXPORT_FAIL is done in the XS code
 sub export_fail {

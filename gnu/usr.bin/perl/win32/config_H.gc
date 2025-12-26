@@ -1943,12 +1943,12 @@
 #define	HAS_SOCKET		/**/
 /*#define	HAS_SOCKETPAIR	/ **/
 /*#define	HAS_SOCKADDR_SA_LEN	/ **/
-/*#define	HAS_SOCKADDR_IN6	/ **/
+#define	HAS_SOCKADDR_IN6	/**/
 #define	HAS_SOCKADDR_STORAGE	/**/
 #define	HAS_SIN6_SCOPE_ID	/**/
-/*#define	HAS_IP_MREQ	/ **/
-/*#define	HAS_IP_MREQ_SOURCE	/ **/
-/*#define	HAS_IPV6_MREQ	/ **/
+#define	HAS_IP_MREQ	/**/
+#define	HAS_IP_MREQ_SOURCE	/**/
+#define	HAS_IPV6_MREQ	/**/
 /*#define	HAS_IPV6_MREQ_SOURCE	/ **/
 
 /* USE_STAT_BLOCKS:
@@ -2712,13 +2712,13 @@
  *	is available to translate error codes returned by getaddrinfo()
  *	into human readable strings.
  */
-/*#define HAS_GAI_STRERROR	/ **/
+#define HAS_GAI_STRERROR	/**/
 
 /* HAS_GETADDRINFO:
  *	This symbol, if defined, indicates that the getaddrinfo() function
  *	is available for use.
  */
-/*#define HAS_GETADDRINFO		/ **/
+#define HAS_GETADDRINFO		/**/
 
 /* HAS_GETCWD:
  *	This symbol, if defined, indicates that the getcwd routine is
@@ -2760,7 +2760,7 @@
  *	This symbol, if defined, indicates that the getnameinfo() function
  *	is available for use.
  */
-/*#define HAS_GETNAMEINFO		/ **/
+#define HAS_GETNAMEINFO		/**/
 
 /* HAS_GETPRPWNAM:
  *	This symbol, if defined, indicates that the getprpwnam system call is
@@ -2827,7 +2827,7 @@
  *	This symbol, if defined, indicates that the isfinite routine is
  *	available to check whether a double is finite (non-infinity non-NaN).
  */
-/*#define HAS_ISFINITE		/ **/
+#define HAS_ISFINITE		/ **/
 
 /* HAS_ISFINITEL:
  *	This symbol, if defined, indicates that the isfinitel routine is

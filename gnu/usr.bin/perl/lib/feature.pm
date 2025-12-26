@@ -4,44 +4,49 @@
 # Any changes made here will be lost!
 
 package feature;
-our $VERSION = '1.89';
+our $VERSION = '1.97';
 
 our %feature = (
-    fc                      => 'feature_fc',
-    isa                     => 'feature_isa',
-    say                     => 'feature_say',
-    try                     => 'feature_try',
-    class                   => 'feature_class',
-    defer                   => 'feature_defer',
-    state                   => 'feature_state',
-    switch                  => 'feature_switch',
-    bitwise                 => 'feature_bitwise',
-    indirect                => 'feature_indirect',
-    evalbytes               => 'feature_evalbytes',
-    signatures              => 'feature_signatures',
-    current_sub             => 'feature___SUB__',
-    module_true             => 'feature_module_true',
-    refaliasing             => 'feature_refaliasing',
-    postderef_qq            => 'feature_postderef_qq',
-    unicode_eval            => 'feature_unieval',
-    declared_refs           => 'feature_myref',
-    unicode_strings         => 'feature_unicode',
-    multidimensional        => 'feature_multidimensional',
-    bareword_filehandles    => 'feature_bareword_filehandles',
-    extra_paired_delimiters => 'feature_more_delims',
+    fc                              => 'feature_fc',
+    isa                             => 'feature_isa',
+    say                             => 'feature_say',
+    try                             => 'feature_try',
+    class                           => 'feature_class',
+    defer                           => 'feature_defer',
+    state                           => 'feature_state',
+    switch                          => 'feature_switch',
+    bitwise                         => 'feature_bitwise',
+    indirect                        => 'feature_indirect',
+    evalbytes                       => 'feature_evalbytes',
+    signatures                      => 'feature_signatures',
+    smartmatch                      => 'feature_smartmatch',
+    current_sub                     => 'feature___SUB__',
+    keyword_all                     => 'feature_keyword_all',
+    keyword_any                     => 'feature_keyword_any',
+    module_true                     => 'feature_module_true',
+    refaliasing                     => 'feature_refaliasing',
+    postderef_qq                    => 'feature_postderef_qq',
+    unicode_eval                    => 'feature_unieval',
+    declared_refs                   => 'feature_myref',
+    unicode_strings                 => 'feature_unicode',
+    multidimensional                => 'feature_multidimensional',
+    bareword_filehandles            => 'feature_bareword_filehandles',
+    extra_paired_delimiters         => 'feature_more_delims',
+    apostrophe_as_package_separator => 'feature_apos_as_name_sep',
 );
 
 our %feature_bundle = (
-    "5.10"    => [qw(bareword_filehandles indirect multidimensional say state switch)],
-    "5.11"    => [qw(bareword_filehandles indirect multidimensional say state switch unicode_strings)],
-    "5.15"    => [qw(bareword_filehandles current_sub evalbytes fc indirect multidimensional say state switch unicode_eval unicode_strings)],
-    "5.23"    => [qw(bareword_filehandles current_sub evalbytes fc indirect multidimensional postderef_qq say state switch unicode_eval unicode_strings)],
-    "5.27"    => [qw(bareword_filehandles bitwise current_sub evalbytes fc indirect multidimensional postderef_qq say state switch unicode_eval unicode_strings)],
-    "5.35"    => [qw(bareword_filehandles bitwise current_sub evalbytes fc isa postderef_qq say signatures state unicode_eval unicode_strings)],
-    "5.37"    => [qw(bitwise current_sub evalbytes fc isa module_true postderef_qq say signatures state unicode_eval unicode_strings)],
-    "5.39"    => [qw(bitwise current_sub evalbytes fc isa module_true postderef_qq say signatures state try unicode_eval unicode_strings)],
-    "all"     => [qw(bareword_filehandles bitwise class current_sub declared_refs defer evalbytes extra_paired_delimiters fc indirect isa module_true multidimensional postderef_qq refaliasing say signatures state switch try unicode_eval unicode_strings)],
-    "default" => [qw(bareword_filehandles indirect multidimensional)],
+    "5.10"    => [qw(apostrophe_as_package_separator bareword_filehandles indirect multidimensional say smartmatch state switch)],
+    "5.11"    => [qw(apostrophe_as_package_separator bareword_filehandles indirect multidimensional say smartmatch state switch unicode_strings)],
+    "5.15"    => [qw(apostrophe_as_package_separator bareword_filehandles current_sub evalbytes fc indirect multidimensional say smartmatch state switch unicode_eval unicode_strings)],
+    "5.23"    => [qw(apostrophe_as_package_separator bareword_filehandles current_sub evalbytes fc indirect multidimensional postderef_qq say smartmatch state switch unicode_eval unicode_strings)],
+    "5.27"    => [qw(apostrophe_as_package_separator bareword_filehandles bitwise current_sub evalbytes fc indirect multidimensional postderef_qq say smartmatch state switch unicode_eval unicode_strings)],
+    "5.35"    => [qw(apostrophe_as_package_separator bareword_filehandles bitwise current_sub evalbytes fc isa postderef_qq say signatures smartmatch state unicode_eval unicode_strings)],
+    "5.37"    => [qw(apostrophe_as_package_separator bitwise current_sub evalbytes fc isa module_true postderef_qq say signatures smartmatch state unicode_eval unicode_strings)],
+    "5.39"    => [qw(apostrophe_as_package_separator bitwise current_sub evalbytes fc isa module_true postderef_qq say signatures smartmatch state try unicode_eval unicode_strings)],
+    "5.41"    => [qw(bitwise current_sub evalbytes fc isa module_true postderef_qq say signatures state try unicode_eval unicode_strings)],
+    "all"     => [qw(apostrophe_as_package_separator bareword_filehandles bitwise class current_sub declared_refs defer evalbytes extra_paired_delimiters fc indirect isa keyword_all keyword_any module_true multidimensional postderef_qq refaliasing say signatures smartmatch state switch try unicode_eval unicode_strings)],
+    "default" => [qw(apostrophe_as_package_separator bareword_filehandles indirect multidimensional smartmatch)],
 );
 
 $feature_bundle{"5.12"} = $feature_bundle{"5.11"};
@@ -67,6 +72,7 @@ $feature_bundle{"5.34"} = $feature_bundle{"5.27"};
 $feature_bundle{"5.36"} = $feature_bundle{"5.35"};
 $feature_bundle{"5.38"} = $feature_bundle{"5.37"};
 $feature_bundle{"5.40"} = $feature_bundle{"5.39"};
+$feature_bundle{"5.42"} = $feature_bundle{"5.41"};
 $feature_bundle{"5.9.5"} = $feature_bundle{"5.10"};
 my %noops = (
     postderef => 1,
@@ -78,7 +84,7 @@ my %removed = (
 
 our $hint_shift   = 26;
 our $hint_mask    = 0x3c000000;
-our @hint_bundles = qw( default 5.10 5.11 5.15 5.23 5.27 5.35 5.37 5.39 );
+our @hint_bundles = qw( default 5.10 5.11 5.15 5.23 5.27 5.35 5.37 5.39 5.41 );
 
 # This gets set (for now) in $^H as well as in %^H,
 # for runtime speed of the uc/lc/ucfirst/lcfirst functions.
@@ -171,23 +177,33 @@ See L<perlsub/"Persistent Private Variables"> for details.
 
 This feature is available starting with Perl 5.10.
 
+=head2 The 'smartmatch' feature
+
+C<use feature 'smartmatch'> tells the compiler to enable the
+smartmatch operator C<~~>.  It is enabled by default, but can be
+turned off to disallow the C<~~> operator.
+
+This feature is disabled by default in the 5.42 feature bundle
+onwards:
+
+  $x ~~ $y; # fine
+  use v5.42;
+  $x ~~ $y; # error
+
+This has no effect on the implicit smartmatches done by C<when>.
+
+See L<perlop/"Smartmatch Operator"> for details.
+
 =head2 The 'switch' feature
-
-B<WARNING>: This feature is still experimental and the implementation may
-change or be removed in future versions of Perl.  For this reason, Perl will
-warn when you use the feature, unless you have explicitly disabled the warning:
-
-    no warnings "experimental::smartmatch";
 
 C<use feature 'switch'> tells the compiler to enable the Raku
 given/when construct.
 
 See L<perlsyn/"Switch Statements"> for details.
 
-This feature is available starting with Perl 5.10.
-It is deprecated starting with Perl 5.38, and using
-C<given>, C<when> or smartmatch will throw a warning.
-It will be removed in Perl 5.42.
+This feature is available starting with Perl 5.10.  It is enabled by
+feature bundles 5.10 through 5.34, and disabled from the 5.36 feature
+bundle onwards.
 
 =head2 The 'unicode_strings' feature
 
@@ -405,7 +421,7 @@ disallow indirect object syntax.
 This feature is available under this name from Perl 5.32 onwards. In
 previous versions, it was simply on all the time.  To disallow (or
 warn on) indirect object syntax on older Perls, see the L<indirect>
-CPAN module.
+CPAN module.  It is disabled from the 5.36 feature bundle onwards.
 
 =head2 The 'multidimensional' feature
 
@@ -419,7 +435,8 @@ When this feature is disabled the syntax that is normally replaced
 will report a compilation error.
 
 This feature is available under this name from Perl 5.34 onwards. In
-previous versions, it was simply on all the time.
+previous versions, it was simply on all the time.  It is disabled from
+the 5.36 feature bundle onwards.
 
 You can use the L<multidimensional> module on CPAN to disable
 multidimensional array emulation for older versions of Perl.
@@ -435,7 +452,8 @@ The perl built-in filehandles C<STDIN>, C<STDOUT>, C<STDERR>, C<DATA>,
 C<ARGV>, C<ARGVOUT> and the special C<_> are always enabled.
 
 This feature is available under this name from Perl 5.34 onwards.  In
-previous versions it was simply on all the time.
+previous versions it was simply on all the time.  It is disabled from
+the 5.38 feature bundle onwards.
 
 You can use the L<bareword::filehandles> module on CPAN to disable
 bareword filehandles for older versions of perl.
@@ -515,6 +533,43 @@ warn when you use the feature, unless you have explicitly disabled the warning:
 This feature enables the C<class> block syntax and other associated keywords
 which implement the "new" object system, previously codenamed "Corinna".
 
+=head2 The 'apostrophe_as_package_separator' feature
+
+This feature enables use C<'> (apostrophe) as an alternative to using
+C<::> as a separate in package and other global names.
+
+This is enabled by default, but disabled from the 5.42 feature bundle
+onwards.  In previous versions it was enabled all the time.
+
+This only disables C<'> in symbols in your source code, the internal
+conversion from C<'> to C<::>, including for symbolic references, is
+always enabled.
+
+=head2 The 'keyword_any' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change or be removed in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the warning:
+
+    no warnings "experimental::keyword_any";
+
+This feature enables the L<C<any>|perlfunc/any BLOCK LIST> operator keyword.
+This allow testing whether any of the values in a list satisfy a given
+condition, with short-circuiting behaviour as soon as it finds one.
+
+=head2 The 'keyword_all' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change or be removed in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the warning:
+
+    no warnings "experimental::keyword_all";
+
+This feature enables the L<C<all>|perlfunc/all BLOCK LIST> operator keyword.
+This allow testing whether all of the values in a list satisfy a given
+condition, with short-circuiting behaviour as soon as it finds one that does
+not.
+
 =head1 FEATURE BUNDLES
 
 It's possible to load multiple features together, using
@@ -529,73 +584,95 @@ The following feature bundles are available:
   --------- -----------------
   :default  indirect multidimensional
             bareword_filehandles
+            apostrophe_as_package_separator smartmatch
 
-  :5.10     bareword_filehandles indirect
-            multidimensional say state switch
+  :5.10     apostrophe_as_package_separator
+            bareword_filehandles indirect
+            multidimensional say smartmatch state switch
 
-  :5.12     bareword_filehandles indirect
-            multidimensional say state switch
+  :5.12     apostrophe_as_package_separator
+            bareword_filehandles indirect
+            multidimensional say smartmatch state switch
             unicode_strings
 
-  :5.14     bareword_filehandles indirect
-            multidimensional say state switch
+  :5.14     apostrophe_as_package_separator
+            bareword_filehandles indirect
+            multidimensional say smartmatch state switch
             unicode_strings
 
-  :5.16     bareword_filehandles current_sub evalbytes
-            fc indirect multidimensional say state
-            switch unicode_eval unicode_strings
+  :5.16     apostrophe_as_package_separator
+            bareword_filehandles current_sub evalbytes
+            fc indirect multidimensional say smartmatch
+            state switch unicode_eval unicode_strings
 
-  :5.18     bareword_filehandles current_sub evalbytes
-            fc indirect multidimensional say state
-            switch unicode_eval unicode_strings
+  :5.18     apostrophe_as_package_separator
+            bareword_filehandles current_sub evalbytes
+            fc indirect multidimensional say smartmatch
+            state switch unicode_eval unicode_strings
 
-  :5.20     bareword_filehandles current_sub evalbytes
-            fc indirect multidimensional say state
-            switch unicode_eval unicode_strings
+  :5.20     apostrophe_as_package_separator
+            bareword_filehandles current_sub evalbytes
+            fc indirect multidimensional say smartmatch
+            state switch unicode_eval unicode_strings
 
-  :5.22     bareword_filehandles current_sub evalbytes
-            fc indirect multidimensional say state
-            switch unicode_eval unicode_strings
+  :5.22     apostrophe_as_package_separator
+            bareword_filehandles current_sub evalbytes
+            fc indirect multidimensional say smartmatch
+            state switch unicode_eval unicode_strings
 
-  :5.24     bareword_filehandles current_sub evalbytes
+  :5.24     apostrophe_as_package_separator
+            bareword_filehandles current_sub evalbytes
             fc indirect multidimensional postderef_qq
-            say state switch unicode_eval
+            say smartmatch state switch unicode_eval
             unicode_strings
 
-  :5.26     bareword_filehandles current_sub evalbytes
+  :5.26     apostrophe_as_package_separator
+            bareword_filehandles current_sub evalbytes
             fc indirect multidimensional postderef_qq
-            say state switch unicode_eval
+            say smartmatch state switch unicode_eval
             unicode_strings
 
-  :5.28     bareword_filehandles bitwise current_sub
+  :5.28     apostrophe_as_package_separator
+            bareword_filehandles bitwise current_sub
             evalbytes fc indirect multidimensional
-            postderef_qq say state switch unicode_eval
-            unicode_strings
+            postderef_qq say smartmatch state switch
+            unicode_eval unicode_strings
 
-  :5.30     bareword_filehandles bitwise current_sub
+  :5.30     apostrophe_as_package_separator
+            bareword_filehandles bitwise current_sub
             evalbytes fc indirect multidimensional
-            postderef_qq say state switch unicode_eval
-            unicode_strings
+            postderef_qq say smartmatch state switch
+            unicode_eval unicode_strings
 
-  :5.32     bareword_filehandles bitwise current_sub
+  :5.32     apostrophe_as_package_separator
+            bareword_filehandles bitwise current_sub
             evalbytes fc indirect multidimensional
-            postderef_qq say state switch unicode_eval
-            unicode_strings
+            postderef_qq say smartmatch state switch
+            unicode_eval unicode_strings
 
-  :5.34     bareword_filehandles bitwise current_sub
+  :5.34     apostrophe_as_package_separator
+            bareword_filehandles bitwise current_sub
             evalbytes fc indirect multidimensional
-            postderef_qq say state switch unicode_eval
-            unicode_strings
+            postderef_qq say smartmatch state switch
+            unicode_eval unicode_strings
 
-  :5.36     bareword_filehandles bitwise current_sub
+  :5.36     apostrophe_as_package_separator
+            bareword_filehandles bitwise current_sub
             evalbytes fc isa postderef_qq say signatures
-            state unicode_eval unicode_strings
+            smartmatch state unicode_eval
+            unicode_strings
 
-  :5.38     bitwise current_sub evalbytes fc isa
-            module_true postderef_qq say signatures
-            state unicode_eval unicode_strings
+  :5.38     apostrophe_as_package_separator bitwise
+            current_sub evalbytes fc isa module_true
+            postderef_qq say signatures smartmatch state
+            unicode_eval unicode_strings
 
-  :5.40     bitwise current_sub evalbytes fc isa
+  :5.40     apostrophe_as_package_separator bitwise
+            current_sub evalbytes fc isa module_true
+            postderef_qq say signatures smartmatch state
+            try unicode_eval unicode_strings
+
+  :5.42     bitwise current_sub evalbytes fc isa
             module_true postderef_qq say signatures
             state try unicode_eval unicode_strings
 

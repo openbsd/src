@@ -1057,7 +1057,7 @@ do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inic
                     if (flag == P_NOWAIT)
                         flag = P_PM;
                     else if ((flag & 7) != P_PM && (flag & 7) != P_SESSION && ckWARN(WARN_EXEC))
-                        Perl_warner(aTHX_ packWARN(WARN_EXEC), "Starting PM process with flag=%d, mytype=%d",
+                        warner(packWARN(WARN_EXEC), "Starting PM process with flag=%d, mytype=%d",
                              flag, os2_mytype);
                 }
             }
@@ -1068,7 +1068,7 @@ do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inic
                     if (flag == P_NOWAIT)
                         flag = P_SESSION;
                     else if ((flag & 7) != P_SESSION && ckWARN(WARN_EXEC))
-                        Perl_warner(aTHX_ packWARN(WARN_EXEC), "Starting Full Screen process with flag=%d, mytype=%d",
+                        warner(packWARN(WARN_EXEC), "Starting Full Screen process with flag=%d, mytype=%d",
                              flag, os2_mytype);
                 }
             }
@@ -1165,9 +1165,8 @@ do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inic
                     }
                     if (PerlIO_close(file) != 0) { /* Failure */
                       panic_file:
-                        if (ckWARN(WARN_EXEC))
-                           Perl_warner(aTHX_ packWARN(WARN_EXEC), "Error reading \"%s\": %s", 
-                             scr, Strerror(errno));
+                        ck_warner(packWARN(WARN_EXEC), "Error reading \"%s\": %s",
+                                  scr, Strerror(errno));
                         buf = "";	/* Not #! */
                         goto doshell_args;
                     }
@@ -1210,7 +1209,7 @@ do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inic
                         *s++ = 0;
                     }
                     if (nargs == -1) {
-                        Perl_warner(aTHX_ packWARN(WARN_EXEC), "Too many args on %.*s line of \"%s\"",
+                        warner(packWARN(WARN_EXEC), "Too many args on %.*s line of \"%s\"",
                              s1 - buf, buf, scr);
                         nargs = 4;
                         argsp = fargs;
@@ -1300,18 +1299,18 @@ do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inic
                 errno = err;
             }
           } else if (errno == ENOEXEC) { /* Cannot transfer `real_name' via shell. */
-                if (rc < 0 && ckWARN(WARN_EXEC))
-                    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s script `%s' with ARGV[0] being `%s'", 
-                         ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
-                          ? "spawn" : "exec"),
-                         real_name, argv[0]);
+                if (rc < 0)
+                    ck_warner(packWARN(WARN_EXEC), "Can't %s script `%s' with ARGV[0] being `%s'",
+                              ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC)
+                               ? "spawn" : "exec"),
+                              real_name, argv[0]);
                 goto warned;
           } else if (errno == ENOENT) { /* Cannot transfer `real_name' via shell. */
-                if (rc < 0 && ckWARN(WARN_EXEC))
-                    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s `%s' with ARGV[0] being `%s' (looking for executables only, not found)", 
-                         ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
-                          ? "spawn" : "exec"),
-                         real_name, argv[0]);
+                if (rc < 0))
+                    ck_warner(packWARN(WARN_EXEC), "Can't %s `%s' with ARGV[0] being `%s' (looking for executables only, not found)",
+                              ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC)
+                               ? "spawn" : "exec"),
+                              real_name, argv[0]);
                 goto warned;
           }
         } else if (rc < 0 && pass == 2 && errno == ENOENT) { /* File not found */
@@ -1325,11 +1324,11 @@ do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inic
                 goto retry;
             }
         }
-        if (rc < 0 && ckWARN(WARN_EXEC))
-            Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s \"%s\": %s\n", 
-                 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
-                  ? "spawn" : "exec"),
-                 real_name, Strerror(errno));
+        if (rc < 0))
+            ck_warner(packWARN(WARN_EXEC), "Can't %s \"%s\": %s\n",
+                      ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC)
+                       ? "spawn" : "exec"),
+                      real_name, Strerror(errno));
       warned:
         if (rc < 0 && (execf != EXECF_SPAWN_NOWAIT) 
             && ((trueflag & 0xFF) == P_WAIT)) 
@@ -1436,10 +1435,10 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
                 else
                    rc = result(aTHX_ P_WAIT,
                                spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0));
-                if (rc < 0 && ckWARN(WARN_EXEC))
-                    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s \"%s\": %s", 
-                         (execf == EXECF_SPAWN ? "spawn" : "exec"),
-                         shell, Strerror(errno));
+                if (rc < 0)
+                    ck_warner(packWARN(WARN_EXEC), "Can't %s \"%s\": %s",
+                              (execf == EXECF_SPAWN ? "spawn" : "exec"),
+                              shell, Strerror(errno));
                 if (rc < 0)
                     rc = -1;
             }
@@ -1652,7 +1651,7 @@ my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
     SV *sv;
 
     if (cnt)
-        Perl_croak(aTHX_ "List form of piped open not implemented");
+        croak("List form of piped open not implemented");
 
 #  ifdef TRYSHELL
     res = popen(cmd, mode);
@@ -1890,7 +1889,7 @@ XS(XS_OS2_replaceModule)
 {
     dXSARGS;
     if (items < 1 || items > 3)
-        Perl_croak(aTHX_ "Usage: OS2::replaceModule(target [, source [, backup]])");
+        croak("Usage: OS2::replaceModule(target [, source [, backup]])");
     {
         char *	target = (char *)SvPV_nolen(ST(0));
         char *	source = (items < 2) ? NULL : (char *)SvPV_nolen(ST(1));
@@ -1946,7 +1945,7 @@ XS(XS_OS2_perfSysCall)
 {
     dXSARGS;
     if (items < 0 || items > 4)
-        Perl_croak(aTHX_ "Usage: OS2::perfSysCall(ulCommand = CMD_KI_RDCNT, ulParm1= 0, ulParm2= 0, ulParm3= 0)");
+        croak("Usage: OS2::perfSysCall(ulCommand = CMD_KI_RDCNT, ulParm1= 0, ulParm2= 0, ulParm3= 0)");
     SP -= items;
     {
         dXSTARG;
@@ -2901,7 +2900,7 @@ XS(XS_OS2_DevCap)
             hScreenDC = (HDC)SvIV(ST(0));
         else {				/* DevCap_hwnd */
             if (!Perl_hmq)
-                Perl_croak(aTHX_ "Getting a window's device context without a message queue would lock PM");
+                croak("Getting a window's device context without a message queue would lock PM");
             hwnd = (HWND)SvIV(ST(0));
             hScreenDC = pWinOpenWindowDC(hwnd); /* No need to DevCloseDC() */
             if (CheckWinError(hScreenDC))
@@ -3234,7 +3233,7 @@ XS(XS_OS2_SysInfoFor)
         int start = (int)SvIV(ST(0));
 
         if (count > C_ARRAY_LENGTH(si) || count <= 0)
-            Perl_croak(aTHX_ "unexpected count %d for OS2::SysInfoFor()", count);
+            croak("unexpected count %d for OS2::SysInfoFor()", count);
         if (CheckOSError(DosQuerySysInfo(start,
                                          start + count - 1,
                                          (PVOID)si,
@@ -3793,7 +3792,7 @@ module_name_at(void *pp, enum module_name_how how)
 
     if (how & mod_name_HMODULE) {
         if ((how & ~mod_name_HMODULE) == mod_name_shortname)
-            Perl_croak(aTHX_ "Can't get short module name from a handle");
+            croak("Can't get short module name from a handle");
         mod = (HMODULE)pp;
         how &= ~mod_name_HMODULE;
     } else if (!_DosQueryModFromEIP(&mod, &obj, sizeof(buf), buf, &offset, addr))
@@ -3822,7 +3821,7 @@ module_name_of_cv(SV *cv, enum module_name_how how)
             return module_name_at((void*)SvIV(cv), how & ~mod_name_C_function);
         else if (how & mod_name_HMODULE)
             return module_name_at((void*)SvIV(cv), how);
-        Perl_croak(aTHX_ "Not an XSUB reference");
+        croak("Not an XSUB reference");
     }
     return module_name_at(CvXSUB(SvRV(cv)), how);
 }
@@ -3831,7 +3830,7 @@ XS(XS_OS2_DLLname)
 {
     dXSARGS;
     if (items > 2)
-        Perl_croak(aTHX_ "Usage: OS2::DLLname( [ how, [\\&xsub] ] )");
+        croak("Usage: OS2::DLLname( [ how, [\\&xsub] ] )");
     {
         SV *	RETVAL;
         int	how;
@@ -3859,7 +3858,7 @@ XS(XS_OS2__headerInfo)
 {
     dXSARGS;
     if (items > 4 || items < 2)
-        Perl_croak(aTHX_ "Usage: OS2::_headerInfo(req,size[,handle,[offset]])");
+        croak("Usage: OS2::_headerInfo(req,size[,handle,[offset]])");
     {
         ULONG	req = (ULONG)SvIV(ST(0));
         STRLEN	size = (STRLEN)SvIV(ST(1)), n_a;
@@ -3867,13 +3866,13 @@ XS(XS_OS2__headerInfo)
         ULONG	offset = (items >= 4 ? (ULONG)SvIV(ST(3)) : 0);
 
         if (size <= 0)
-            Perl_croak(aTHX_ "OS2::_headerInfo(): unexpected size: %d", (int)size);
+            croak("OS2::_headerInfo(): unexpected size: %d", (int)size);
         ST(0) = newSVpvs("");
         SvGROW(ST(0), size + 1);
         sv_2mortal(ST(0));
 
         if (!_Dos32QueryHeaderInfo(handle, offset, SvPV(ST(0), n_a), size, req)) 
-            Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
+            croak("OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
                        req, size, handle, offset, os2error(Perl_rc));
         SvCUR_set(ST(0), size);
         *SvEND(ST(0)) = 0;
@@ -3888,14 +3887,14 @@ XS(XS_OS2_libPath)
 {
     dXSARGS;
     if (items != 0)
-        Perl_croak(aTHX_ "Usage: OS2::libPath()");
+        croak("Usage: OS2::libPath()");
     {
         ULONG	size;
         STRLEN	n_a;
 
         if (!_Dos32QueryHeaderInfo(0, 0, &size, sizeof(size), 
                                    DQHI_QUERYLIBPATHSIZE)) 
-            Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
+            croak("OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
                        DQHI_QUERYLIBPATHSIZE, sizeof(size), 0, 0,
                        os2error(Perl_rc));
         ST(0) = newSVpvs("");
@@ -3907,7 +3906,7 @@ XS(XS_OS2_libPath)
            unrelated data! */
         if (!_Dos32QueryHeaderInfo(0, 0, SvPV(ST(0), n_a), size,
                                    DQHI_QUERYLIBPATH)) 
-            Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
+            croak("OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
                        DQHI_QUERYLIBPATH, size, 0, 0, os2error(Perl_rc));
         SvCUR_set(ST(0), size);
         *SvEND(ST(0)) = 0;
@@ -3922,7 +3921,7 @@ XS(XS_OS2__control87)
 {
     dXSARGS;
     if (items != 2)
-        Perl_croak(aTHX_ "Usage: OS2::_control87(new,mask)");
+        croak("Usage: OS2::_control87(new,mask)");
     {
         unsigned	new = (unsigned)SvIV(ST(0));
         unsigned	mask = (unsigned)SvIV(ST(1));
@@ -3941,7 +3940,7 @@ XS(XS_OS2_mytype)
     int which = 0;
 
     if (items < 0 || items > 1)
-        Perl_croak(aTHX_ "Usage: OS2::mytype([which])");
+        croak("Usage: OS2::mytype([which])");
     if (items == 1)
         which = (int)SvIV(ST(0));
     {
@@ -3962,7 +3961,7 @@ XS(XS_OS2_mytype)
             RETVAL = my_type();		/* Morphed type */
             break;
         default:
-            Perl_croak(aTHX_ "OS2::mytype(which): unknown which=%d", which);
+            croak("OS2::mytype(which): unknown which=%d", which);
         }
         XSprePUSH; PUSHi((IV)RETVAL);
     }
@@ -3978,7 +3977,7 @@ XS(XS_OS2_mytype_set)
     if (items == 1)
         type = (int)SvIV(ST(0));
     else
-        Perl_croak(aTHX_ "Usage: OS2::mytype_set(type)");
+        croak("Usage: OS2::mytype_set(type)");
     my_type_set(type);
     XSRETURN_YES;
 }
@@ -3988,7 +3987,7 @@ XS(XS_OS2_get_control87)
 {
     dXSARGS;
     if (items != 0)
-        Perl_croak(aTHX_ "Usage: OS2::get_control87()");
+        croak("Usage: OS2::get_control87()");
     {
         unsigned	RETVAL;
         dXSTARG;
@@ -4004,7 +4003,7 @@ XS(XS_OS2_set_control87)
 {
     dXSARGS;
     if (items < 0 || items > 2)
-        Perl_croak(aTHX_ "Usage: OS2::set_control87(new=MCW_EM, mask=MCW_EM)");
+        croak("Usage: OS2::set_control87(new=MCW_EM, mask=MCW_EM)");
     {
         unsigned	new;
         unsigned	mask;
@@ -4033,7 +4032,7 @@ XS(XS_OS2_incrMaxFHandles)		/* DosSetRelMaxFH */
 {
     dXSARGS;
     if (items < 0 || items > 1)
-        Perl_croak(aTHX_ "Usage: OS2::incrMaxFHandles(delta = 0)");
+        croak("Usage: OS2::incrMaxFHandles(delta = 0)");
     {
         LONG	delta;
         ULONG	RETVAL, rc;
@@ -4098,7 +4097,7 @@ XS(XS_OS2_pipe)
 {
     dXSARGS;
     if (items < 2 || items > 8)
-        Perl_croak(aTHX_ "Usage: OS2::pipe(pszName, ulOpenMode, connect= 1, count= 1, ulInbufLength= 8192, ulOutbufLength= ulInbufLength, ulPipeMode= count | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE, ulTimeout= 0)");
+        croak("Usage: OS2::pipe(pszName, ulOpenMode, connect= 1, count= 1, ulInbufLength= 8192, ulOutbufLength= ulInbufLength, ulPipeMode= count | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE, ulTimeout= 0)");
     {
         ULONG	RETVAL;
         PCSZ	pszName = ( SvOK(ST(0)) ? (PCSZ)SvPV_nolen(ST(0)) : NULL );
@@ -4113,7 +4112,7 @@ XS(XS_OS2_pipe)
         double	timeout;
 
         if (!pszName || !*pszName)
-            Perl_croak(aTHX_ "OS2::pipe(): empty pipe name");
+            croak("OS2::pipe(): empty pipe name");
         s = SvPV(OpenMode, len);
         if (memEQs(s, len, "wait")) {	/* DosWaitNPipe() */
             ULONG ms = 0xFFFFFFFF, ret = ERROR_INTERRUPT; /* Indefinite */
@@ -4126,7 +4125,7 @@ XS(XS_OS2_pipe)
                 else if (timeout && !ms)
                     ms = 1;
             } else if (items > 3)
-                Perl_croak(aTHX_ "OS2::pipe(): too many arguments for wait-for-connect: %ld", (long)items);
+                croak("OS2::pipe(): too many arguments for wait-for-connect: %ld", (long)items);
 
             while (ret == ERROR_INTERRUPT)
                 ret = DosWaitNPipe(pszName, ms);	/* XXXX Update ms? */
@@ -4142,7 +4141,7 @@ XS(XS_OS2_pipe)
             char *b = buf;
 
             if (items < 3 || items > 5)
-                Perl_croak(aTHX_ "usage: OS2::pipe(pszName, 'call', write [, timeout= 0xFFFFFFFF, buffsize = 8192])");
+                croak("usage: OS2::pipe(pszName, 'call', write [, timeout= 0xFFFFFFFF, buffsize = 8192])");
             s = SvPV(ST(2), l);
             if (items >= 4) {
                 timeout = (double)SvNV(ST(3));
@@ -4175,7 +4174,7 @@ XS(XS_OS2_pipe)
             W = strchr(s, 'W') != 0;
             b = strchr(s, 'b') != 0;
             if (r + w + R + W + b != len || (r && R) || (w && W))
-                Perl_croak(aTHX_ "OS2::pipe(): unknown OpenMode argument: `%s'", s);
+                croak("OS2::pipe(): unknown OpenMode argument: `%s'", s);
             if ((r || R) && (w || W))
                 ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_DUPLEX;
             else if (r || R)
@@ -4187,7 +4186,7 @@ XS(XS_OS2_pipe)
             if (W)
                 message = 1;
             else if (w && R)
-                Perl_croak(aTHX_ "OS2::pipe(): can't have message read mode for non-message pipes");
+                croak("OS2::pipe(): can't have message read mode for non-message pipes");
         } else
             ulOpenMode = (ULONG)SvUV(OpenMode);	/* ST(1) */
 
@@ -4217,7 +4216,7 @@ XS(XS_OS2_pipe)
             else if (memEQs(s, len, "wait"))
                 connect = 1;			/* wait */
             else
-                Perl_croak(aTHX_ "OS2::pipe(): unknown connect argument: `%s'", s);
+                croak("OS2::pipe(): unknown connect argument: `%s'", s);
         }
 
         if (items < 4)
@@ -4236,7 +4235,7 @@ XS(XS_OS2_pipe)
             ulOutbufLength = (ULONG)SvUV(ST(5));
 
         if (count < -1 || count == 0 || count >= 255)
-            Perl_croak(aTHX_ "OS2::pipe(): count should be -1 or between 1 and 254: %ld", (long)count);
+            croak("OS2::pipe(): count should be -1 or between 1 and 254: %ld", (long)count);
         if (count < 0 )
             count = 255;		/* Unlimited */
 
@@ -4285,7 +4284,7 @@ XS(XS_OS2_pipeCntl)
 {
     dXSARGS;
     if (items < 2 || items > 3)
-        Perl_croak(aTHX_ "Usage: OS2::pipeCntl(pipe, op [, wait])");
+        croak("Usage: OS2::pipeCntl(pipe, op [, wait])");
     {
         ULONG	rc;
         PerlIO *perlio = IoIFP(sv_2io(ST(0)));
@@ -4297,7 +4296,7 @@ XS(XS_OS2_pipeCntl)
         int	peek = 0, state = 0, info = 0;
 
         if (fn < 0)
-            Perl_croak(aTHX_ "OS2::pipeCntl(): not a pipe");	
+            croak("OS2::pipeCntl(): not a pipe");	
         if (items == 3)
             wait = (SvTRUE(ST(2)) ? 1 : -1);
 
@@ -4340,12 +4339,12 @@ XS(XS_OS2_pipeCntl)
             break;
         default:
           unknown:
-            Perl_croak(aTHX_ "OS2::pipeCntl(): unknown argument: `%s'", s);
+            croak("OS2::pipeCntl(): unknown argument: `%s'", s);
             break;
         }
 
         if (items == 3 && !connect)
-            Perl_croak(aTHX_ "OS2::pipeCntl(): no wait argument for `%s'", s);
+            croak("OS2::pipeCntl(): no wait argument for `%s'", s);
 
         XSprePUSH;		/* Do not need arguments any more */
         if (disconnect) {
@@ -4454,7 +4453,7 @@ XS(XS_OS2_open)
 {
     dXSARGS;
     if (items < 2 || items > 6)
-        Perl_croak(aTHX_ "Usage: OS2::open(pszFileName, ulOpenMode, ulOpenFlags= OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW, ulAttribute= FILE_NORMAL, ulFileSize= 0, pEABuf= NULL)");
+        croak("Usage: OS2::open(pszFileName, ulOpenMode, ulOpenFlags= OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW, ulAttribute= FILE_NORMAL, ulFileSize= 0, pEABuf= NULL)");
     {
 #line 39 "pipe.xs"
         ULONG rc;

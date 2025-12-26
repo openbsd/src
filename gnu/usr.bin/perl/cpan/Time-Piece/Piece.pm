@@ -19,7 +19,7 @@ our %EXPORT_TAGS = (
     ':override' => 'internal',
     );
 
-our $VERSION = '1.3401_01';
+our $VERSION = '1.36';
 
 XSLoader::load( 'Time::Piece', $VERSION );
 
@@ -124,12 +124,7 @@ sub _mktime {
     $class = blessed($class) || $class;
 
     if ($class->_is_time_struct($time)) {
-        my @new_time = @$time;
-        my @tm_parts = (@new_time[c_sec .. c_mon], $new_time[c_year]+1900);
-
-        $new_time[c_epoch] = $islocal ? timelocal(@tm_parts) : timegm(@tm_parts);
-
-        return wantarray ? @new_time : bless [@new_time[0..9], $islocal], $class;
+        return wantarray ? @$time : bless [@$time[0..8], undef, $islocal], $class;
     }
     _tzset();
     my @time = $islocal ?
@@ -477,8 +472,7 @@ sub month_last_day {
     return $MON_LAST[$_mon] + ($_mon == 1 ? _is_leap_year($year) : 0);
 }
 
-my $trans_map_common = {
-
+my $strftime_trans_map = {
     'c' => sub {
         my ( $format ) = @_;
         if($LOCALE->{PM} && $LOCALE->{AM}){
@@ -487,6 +481,21 @@ my $trans_map_common = {
         else{
             $format =~ s/%c/%a %d %b %Y %H:%M:%S/;
         }
+        return $format;
+    },
+    'e' => sub {
+        my ( $format ) = @_;
+        $format =~ s/%e/%d/ if $IS_WIN32;
+        return $format;
+    },
+    'D' => sub {
+        my ( $format ) = @_;
+        $format =~ s/%D/%m\/%d\/%y/;
+        return $format;
+    },
+    'F' => sub {
+        my ( $format ) = @_;
+        $format =~ s/%F/%Y-%m-%d/;
         return $format;
     },
     'r' => sub {
@@ -499,38 +508,8 @@ my $trans_map_common = {
         }
         return $format;
     },
-    'X' => sub {
-        my ( $format ) = @_;
-        if($LOCALE->{PM} && $LOCALE->{AM}){
-            $format =~ s/%X/%I:%M:%S %p/;
-        }
-        else{
-            $format =~ s/%X/%H:%M:%S/;
-        }
-        return $format;
-    },
-};
-
-my $strftime_trans_map = {
-    %{$trans_map_common},
-
-    'e' => sub {
-        my ( $format, $time ) = @_;
-        $format =~ s/%e/%d/ if $IS_WIN32;
-        return $format;
-    },
-    'D' => sub {
-        my ( $format, $time ) = @_;
-        $format =~ s/%D/%m\/%d\/%y/;
-        return $format;
-    },
-    'F' => sub {
-        my ( $format, $time ) = @_;
-        $format =~ s/%F/%Y-%m-%d/;
-        return $format;
-    },
     'R' => sub {
-        my ( $format, $time ) = @_;
+        my ( $format ) = @_;
         $format =~ s/%R/%H:%M/;
         return $format;
     },
@@ -538,16 +517,17 @@ my $strftime_trans_map = {
         #%s not portable if time parts are from gmtime since %s will
         #cause a call to native mktime (and thus uses local TZ)
         my ( $format, $time ) = @_;
-        $format =~ s/%s/$time->[c_epoch]/;
+        my $e = $time->epoch();
+        $format =~ s/%s/$e/;
         return $format;
     },
     'T' => sub {
-        my ( $format, $time ) = @_;
+        my ( $format ) = @_;
         $format =~ s/%T/%H:%M:%S/ if $IS_WIN32;
         return $format;
     },
     'u' => sub {
-        my ( $format, $time ) = @_;
+        my ( $format ) = @_;
         $format =~ s/%u/%w/ if $IS_WIN32;
         return $format;
     },
@@ -558,8 +538,18 @@ my $strftime_trans_map = {
         return $format;
     },
     'x' => sub {
-        my ( $format, $time ) = @_;
+        my ( $format ) = @_;
         $format =~ s/%x/%a %d %b %Y/;
+        return $format;
+    },
+    'X' => sub {
+        my ( $format ) = @_;
+        if($LOCALE->{PM} && $LOCALE->{AM}){
+            $format =~ s/%X/%I:%M:%S %p/;
+        }
+        else{
+            $format =~ s/%X/%H:%M:%S/;
+        }
         return $format;
     },
     'z' => sub {    #%[zZ] not portable if time parts are from gmtime
@@ -584,17 +574,13 @@ sub strftime {
     return _strftime($format, $time->epoch, $time->[c_islocal]);
 }
 
-my $strptime_trans_map = {
-    %{$trans_map_common},
-};
-
 sub strptime {
     my $time = shift;
     my $string = shift;
     my $format = @_ ? shift(@_) : "%a, %d %b %Y %H:%M:%S %Z";
     my $islocal = (ref($time) ? $time->[c_islocal] : 0);
     my $locales = $LOCALE || &Time::Piece::_default_locale();
-    $format = _translate_format($format, $strptime_trans_map);
+
     my @vals = _strptime($string, $format, $islocal, $locales);
 #    warn(sprintf("got vals: %d-%d-%d %d:%d:%d\n", reverse(@vals[c_sec..c_year])));
     return scalar $time->_mktime(\@vals, $islocal);
@@ -680,6 +666,9 @@ sub subtract {
 	return $rhs - "$time";
     }
 
+    #TODO: handle math with objects where one is DST and the other isn't
+    #so either convert both to a gmtime object, subtract and then convert to localtime object (would have to add ->to_gmt and ->to_local methods)
+    #or check the tzoffset on each object, if they are different, add in the differing seconds.
     if (blessed($rhs) && $rhs->isa('Time::Piece')) {
         return Time::Seconds->new($time->epoch - $rhs->epoch);
     }
@@ -771,10 +760,17 @@ sub truncate {
         $time->[c_islocal]);
 }
 
+my $_format_cache = {};
+
 #Given a format and a translate map, replace format flags in
 #accordance with the logic from the translation map subroutines
 sub _translate_format {
     my ( $format, $trans_map, $time ) = @_;
+    my $can_cache = ($format !~ /%([sVzZ])/) ? 1 : 0;
+
+    if ( $can_cache && exists $_format_cache->{$format} ){
+        return $_format_cache->{$format};
+    }
 
     $format =~ s/%%/\e\e/g; #escape the escape
     my $lexer = _build_format_lexer($format);
@@ -785,6 +781,8 @@ sub _translate_format {
 	}
 
     $format =~ s/\e\e/%%/g;
+    $_format_cache->{$_[0]} = $format if $can_cache;
+
     return $format;
 }
 
@@ -855,7 +853,7 @@ sub use_locale {
 
 #$Time::Piece::LOCALE is used by strptime and thus needs to be
 #in sync with what ever users change to via day_list() and mon_list().
-#Should probably deprecate this use of gloabl state, but oh well...
+#Should probably deprecate this use of global state, but oh well...
 sub _default_locale {
     my $locales = {};
 

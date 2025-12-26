@@ -1,7 +1,7 @@
 use strict; use warnings;
 
 package Memoize::NDBM_File;
-our $VERSION = '1.16';
+our $VERSION = '1.17';
 
 use NDBM_File;
 our @ISA = qw(NDBM_File);
@@ -33,6 +33,7 @@ This class provides L<EXISTS|perltie/C<EXISTS>> support for L<NDBM_File>.
 
 L<In Perl 5.37.3|https://github.com/Perl/perl5/commit/c0a1a377c02ed789f5eff667f46a2314a05c5a4c>,
 support for C<EXISTS> was added to L<NDBM_File> itself.
-Code which requires such a perl should simply use L<NBDM_File> directly.
+Any code which already requires perl >= 5.37.3 should be rewritten to use
+L<NDBM_File> directly.
 
 =cut

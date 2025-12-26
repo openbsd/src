@@ -1,7 +1,7 @@
 use strict; use warnings;
 
 package Memoize::AnyDBM_File;
-our $VERSION = '1.16';
+our $VERSION = '1.17';
 
 our @ISA = qw(DB_File GDBM_File Memoize::NDBM_File SDBM_File ODBM_File) unless @ISA;
 

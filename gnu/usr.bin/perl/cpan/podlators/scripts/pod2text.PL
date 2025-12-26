@@ -4,8 +4,9 @@
 # required for proper start-up code on non-UNIX platforms, and is used inside
 # Perl core.
 
-use 5.008;
-use strict;
+# Do not use autodie here.  When podlators is built as part of Perl core, it
+# is built before autodie is available.
+use 5.012;
 use warnings;
 
 use Config qw(%Config);
@@ -27,11 +28,8 @@ if ($^O eq 'VMS') {
 }
 
 # Create the generated script.
-## no critic (InputOutput::RequireBriefOpen)
-## no critic (InputOutput::RequireCheckedSyscalls)
 open(my $out, '>', $file) or die "Cannot create $file: $!\n";
 print "Extracting $file (with variable substitutions)\n";
-## use critic
 
 # In this section, Perl variables will be expanded during extraction.  You can
 # use $Config{...} to use Configure variables.
@@ -51,8 +49,7 @@ print {$out} <<'SCRIPT_BODY' or die "Cannot write to $file: $!\n";
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.006;
-use strict;
+use 5.012;
 use warnings;
 
 use Getopt::Long qw(GetOptions);
@@ -86,7 +83,7 @@ GetOptions (\%options, 'alt|a', 'code', 'color|c', 'encoding|e=s', 'errors=s',
             'margin|left-margin|m=i', 'nourls', 'overstrike|o', 'quotes|q=s',
             'sentence|s', 'stderr', 'termcap|t', 'utf8|u', 'width|w=i')
     or exit 1;
-pod2usage (1) if $options{help};
+pod2usage (0) if $options{help};
 
 # Figure out what formatter we're going to use.  -c overrides -t.
 my $formatter = 'Pod::Text';
@@ -392,8 +389,8 @@ Russ Allbery <rra@cpan.org>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999-2001, 2004, 2006, 2008, 2010, 2012-2019, 2022 Russ Allbery
-<rra@cpan.org>
+Copyright 1999-2001, 2004, 2006, 2008, 2010, 2012-2019, 2022, 2024 Russ
+Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

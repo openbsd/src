@@ -79,3 +79,93 @@ Use of uninitialized value $3 in oct at - line 3.
 use warnings 'uninitialized';
 $ENV{FOO} = undef; # should not warn
 EXPECT
+########
+# NAME Use of uninitialized value $_[0] in defined operator
+# github 22423
+use warnings 'uninitialized';
+sub f { defined $_[0] }
+my $s;
+my %h;
+f($h{$s});
+EXPECT
+Use of uninitialized value $s in hash element at - line 6.
+########
+# NAME Use of uninitialized value $_[0] in defined operator (tied)
+# github 22423
+# should we allow tied hashes to distinguish between undef and ""
+# without warning?  For now test the current behaviour, this
+# didn't produce the warning described in github #22423 since
+# if the hash is tied for the call the PVLV uses packelem (tie)
+# magic rather than defelem magic
+use v5.36;
+++$|;
+sub f { defined $_[0] }
+my $s;
+tie my %h, "Foo";
+f($h{$s});
+$h{+undef} = 1;
+$h{""} = 2;
+say $h{+undef};
+f($h{$s});
+
+package Foo;
+
+sub TIEHASH {
+  bless {}, shift;
+}
+sub STORE {
+  my ($self, $index, $val) = @_;
+  $self->{defined $index ? $index : "+undef"} = $val;
+}
+sub FETCH {
+  my ($self, $index) = @_;
+  $self->{defined $index ? $index : "+undef"};
+}
+sub EXISTS {
+  my ($self, $index) = @_;
+  exists $self->{defined $index ? $index : "+undef"};
+}
+
+EXPECT
+Use of uninitialized value $s in hash element at - line 12.
+Use of uninitialized value in hash element at - line 13.
+Use of uninitialized value in hash element at - line 15.
+1
+Use of uninitialized value $s in hash element at - line 16.
+########
+# NAME Use of uninitialized value $_[0] in defined operator (tied2)
+# github 22423
+# In this case we have a tied hash, but it's only tied after the
+# PVLV is created for the element. This *does* produce the warning
+# complained about in #22423
+use v5.36;
+++$|;
+my %h;
+sub f {
+  tie %h, "Foo";
+  defined $_[0];
+}
+my $s;
+say f($h{$s}) ? "defined" : "undefined";
+
+package Foo;
+
+sub TIEHASH {
+  bless { "+undef" => "tied-undef" }, shift;
+}
+sub STORE($self, $index, $val) {
+  $self->{defined $index ? $index : "+undef"} = $val;
+}
+sub FETCH($self, $index) {
+  $self->{defined $index ? $index : "+undef"};
+}
+sub EXISTS($self, $index) {
+  exists $self->{defined $index ? $index : "+undef"};
+}
+sub DELETE($self, $index) {
+  delete $self->{defined $index ? $index : "+undef"};
+}
+EXPECT
+Use of uninitialized value $s in hash element at - line 13.
+Use of uninitialized value $_[0] in defined operator at - line 10.
+defined

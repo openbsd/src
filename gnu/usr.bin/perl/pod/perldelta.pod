@@ -2,21 +2,318 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.40.1
+perldelta - what is new for perl v5.42.0
 
 =head1 DESCRIPTION
 
-This document describes differences between the 5.40.0 release and the 5.40.1
+This document describes differences between the 5.42.0 release and the 5.40.0
 release.
 
-If you are upgrading from an earlier release such as 5.39.0, first read
-L<perl5400delta>, which describes differences between 5.39.0 and 5.40.0.
+=head1 Core Enhancements
+
+=head2 More CORE:: subs
+
+C<chdir> has been added as a subroutine to the C<CORE::> namespace.
+
+Previously, code like C<&CORE::chdir($dir)> or C<< my $ref = \&CORE::chdir;
+$ref->($dir) >> would throw an error saying C<&CORE::chdir cannot be called
+directly>. These cases are now fully supported.
+
+=head2 New pragma C<L<source::encoding>>
+
+This allows you to declare that the portion of a program for the
+remainder of the lexical scope of this pragma is encoded either entirely
+in ASCII (for S<C<use source::encoding 'ascii'>>) or if UTF-8 is allowed
+as well (for S<C<use source::encoding 'utf8'>>). No other encodings are
+accepted. The second form is entirely equivalent to S<C<use utf8>>, and
+may be used interchangeably with that.
+
+The purpose of this pragma is to catch cases early where you forgot to
+specify S<C<use utf8>>.
+
+S<C<use source::encoding 'ascii'>> is automatically enabled within the
+lexical scope of a S<C<use v5.41.0>> or higher.
+
+S<C<no source::encoding>> turns off all this checking for the remainder of
+its lexical scope. The meaning of non-ASCII characters is then undefined.
+
+=head2 New C<:writer> attribute on field variables
+
+Classes defined using C<use feature 'class'> are now able to automatically
+create writer accessors for scalar fields, by using the C<:writer> attribute,
+similar to the way that C<:reader> already creates reader accessors.
+
+    class Point {
+        field $x :reader :writer :param;
+        field $y :reader :writer :param;
+    }
+
+    my $p = Point->new( x => 20, y => 40 );
+    $p->set_x(60);
+
+=head2 New C<any> and C<all> operators
+
+Two new experimental features have been added, which introduce the
+list-processing operators C<any> and C<all>.
+
+    use v5.42;
+    use feature 'keyword_all';
+    no warnings 'experimental::keyword_all';
+
+    my @numbers = ...
+
+    if ( all { $_ % 2 == 0 } @numbers ) {
+        say "All the numbers are even";
+    }
+
+These keywords operate similarly to C<grep> except that they only
+ever return true or false, testing if any (or all) of the elements in
+the list make the testing block yield true.  Because of this they can
+short-circuit, avoiding the need to test any further elements if a given
+element determines the eventual result.
+
+These are inspired by the same-named functions in the L<List::Util> module,
+except that they are implemented as direct core operators, and thus perform
+faster, and do not produce an additional subroutine call stack frame for
+invoking the code block.
+
+The feature flags enabling those keywords have been named
+L<C<keyword_any>|feature/"The 'keyword_any' feature">
+and L<C<keyword_all>|feature/"The 'keyword_all' feature">
+to avoid confusion with the ability of the C<feature> module
+to refer to all of its features by using the C<:all>
+export tag.  [L<GH #23104|https://github.com/Perl/perl5/issues/23104>]
+
+The related experimental warning flags are consequently named
+C<experimental::keyword_any> and C<experimental::keyword_all>.
+
+=head2 Apostrophe as a global name separator can be disabled
+
+This was deprecated in Perl 5.38 and removed as scheduled in perl
+5.41.3, but after some discussion has been reinstated by default.
+
+This can be controlled with the C<apostrophe_as_package_separator>
+feature which is enabled by default, but is disabled from the 5.41
+feature bundle onwards.
+
+If you want to disable use within your own code you can explicitly
+disable the feature:
+
+  no feature "apostrophe_as_package_separator";
+
+Note that disabling this feature only prevents use of apostrophe as a
+package separator within code; symbolic references still treat C<'> as
+C<::> with the feature disabled:
+
+  my $symref = "My'Module'Var";
+  # default features
+  my $x = $My'Module'Var; # fine
+  no feature "apostrophe_as_package_separator";
+  no strict "refs";
+  my $y = $$symref;       # like $My::Module::Var
+  my $z = $My'Module'Var; # syntax error
+
+[L<GH #22644|https://github.com/Perl/perl5/issues/22644>]
+
+=head2 Lexical method declaration using C<my method>
+
+Like C<sub> since Perl version 5.18, C<method> can now be prefixed with the
+C<my> keyword.  This declares a subroutine that has lexical, rather than
+package visibility.  See L<perlclass> for more detail.
+
+=head2 Lexical method invocation operator C<< ->& >>
+
+Along with the ability to declare methods lexically, this release also permits
+invoking a lexical subroutine as if it were a method, bypassing the usual
+name-based method resolution.
+
+Combined with lexical method declaration, these two new abilities create the
+effect of having private methods.
+
+=head2 Switch and Smart Match operator kept, behind a feature
+
+The "switch" feature and the smartmatch operator, C<~~>, were introduced in
+v5.10.  Their behavior was significantly changed in v5.10.1.  When the
+"experiment" system was added in v5.18.0, switch and smartmatch were
+retroactively declared experimental.  Over the years, proposals to fix or
+supplement the features have come and gone.
+
+They were deprecated in Perl v5.38.0 and scheduled for removal in
+Perl v5.42.0. After extensive discussion their removal has been indefinitely
+postponed. Using them no longer produces a deprecation warning.
+
+Switch itself still requires the C<switch> feature, which is enabled
+by default for feature bundles from v5.9.5 through to v5.34.  Switch
+remains disabled in feature bundles 5.35 and later, but can be
+separately enabled:
+
+  # no switch here
+  use v5.10;
+  # switch here
+  use v5.36;
+  # no switch here
+  use feature "switch";
+  # switch here
+
+Smart match now requires the C<smartmatch> feature, which is enabled
+by default and included in all feature bundles up to 5.40.  It is
+disabled for the 5.41 feature bundle and later, but can be separately
+enabled:
+
+  # smartmatch here
+  use v5.41;
+  # no smartmatch here
+  use feature "smartmatch";
+  # smartmatch here
+
+[L<GH #22752|https://github.com/Perl/perl5/issues/22752>]
+
+=head2 Unicode 16.0 supported
+
+Perl now supports Unicode 16.0
+L<https://www.unicode.org/versions/Unicode16.0.0/> including the changes
+introduced in 15.1 L<https://www.unicode.org/versions/Unicode15.1.0/>.
+
+=head2 Assigning logical xor C<^^=> operator
+
+Perl 5.40.0 introduced the logical medium-precedence exclusive-or operator
+C<^^>.  It was not noticed at the time that the assigning variant C<^^=> was
+also missing.  This is now added.
+
+=head1 Security
+
+=head2 [CVE-2024-56406] Heap buffer overflow vulnerability with tr//
+
+A heap buffer overflow vulnerability was discovered in Perl.
+
+When there are non-ASCII bytes in the left-hand-side of the C<tr> operator,
+C<S_do_trans_invmap()> can overflow the destination pointer C<d>.
+
+  $ perl -e '$_ = "\x{FF}" x 1000000; tr/\xFF/\x{100}/;'
+  Segmentation fault (core dumped)
+
+It is believed that this vulnerability can enable Denial of Service or
+Arbitrary Code Execution attacks on platforms that lack sufficient defenses.
+
+This problem was discovered by Nathan Mills and assigned
+[L<CVE-2024-56406|https://lists.security.metacpan.org/cve-announce/msg/28708725/>]
+by the L<CPAN Security Group|https://security.metacpan.org/>.
+
+The patch to fix this issue (L<87f42aa0e0096e9a346c9672aa3a0bd3bef8c1dd|https://github.com/Perl/perl5/commit/87f42aa0e0096e9a346c9672aa3a0bd3bef8c1dd>) is applicable to all perls that are vulnerable, including those
+out-of-support.
+
+=head2 [CVE-2025-40909] Perl threads have a working directory race condition where file operations may target unintended paths
+
+Perl thread cloning had a working directory race condition where file
+operations may target unintended paths. Perl 5.42 will no longer chdir
+to each handle.
+
+This problem was discovered by Vincent Lefèvre via [L<GH #23010|https://github.com/Perl/perl5/issues/23010>]
+and assigned [L<CVE-2025-40909|https://lists.security.metacpan.org/cve-announce/msg/30017499/>]
+by the L<CPAN Security Group|https://security.metacpan.org/>.
+
+Fixes were provided via [L<GH #23019|https://github.com/Perl/perl5/pull/23019>]
+and [L<GH #23361|https://github.com/Perl/perl5/pull/23361>].
 
 =head1 Incompatible Changes
 
-There are no changes intentionally incompatible with 5.40.0.  If any exist,
-they are bugs, and we request that you submit a report.  See L</Reporting Bugs>
-below.
+=head2 Removed containing function references for functions without eval
+
+Perl 5.40 reintroduced unconditional references from functions to their
+containing functions to fix a bug introduced in Perl 5.18 that broke the
+special behaviour of C<eval EXPR> in package C<DB> which is used by the
+debugger.
+
+In some cases this change led to circular reference chains between closures and
+other existing references, resulting in memory leaks.
+
+This change has been reverted, fixing
+[L<GH #22547|https://github.com/Perl/perl5/issues/22547>] but re-breaking
+[L<GH #19370|https://github.com/Perl/perl5/issues/19370>].
+
+This means the reference loops won't occur, and that lexical variables and
+functions from enclosing functions may not be visible in the debugger.
+
+Note that calling C<eval EXPR> in a function unconditionally causes a function
+to reference its enclosing functions as it always has.
+
+=head1 Performance Enhancements
+
+=over 4
+
+=item *
+
+Constant-folded strings are now shareable via the Copy-on-Write mechanism.
+[L<GH #22163|https://github.com/Perl/perl5/pull/22163>]
+
+The following code would previously have allocated eleven string buffers,
+each containing one million "A"s:
+
+    my @scalars; push @scalars, ("A" x 1_000_000) for 0..9;
+
+Now a single buffer is allocated and shared between a CONST OP and
+the ten scalar elements of C<@scalars>.
+
+Note that any code using this sort of constant to simulate memory leaks
+(perhaps in test files) must now permute the string in order to trigger
+a string copy and the allocation of separate buffers. For example,
+C<("A" x 1_000_000).time> might be a suitable small change.
+
+=item *
+
+C<tr///> now runs at the same speed regardless of the internal
+representation of its operand, as long as the only characters being
+translated are ASCII-range, for example C<tr/A-Z/a-z/>.  Previously, if
+the internal encoding was UTF-8, a slower, more general implementation
+was used.
+
+=item *
+
+Code that uses the C<indexed> function from the L<builtin> module to generate
+a list of index/value pairs out of an array or list which is then passed into
+a two-variable C<foreach> list to unpack those again is now optimised to be
+more efficient.
+
+    my @array = (...);
+
+    foreach my ($idx, $val) (builtin::indexed @array) {
+        ...
+    }
+
+Z<>
+
+    foreach my ($idx, $val) (builtin::indexed LIST...) {
+        ...
+    }
+
+In particular, a temporary list twice the size of the original is no longer
+generated.  Instead, the loop iterates down the original array or list
+in-place directly, in the same way that C<foreach (@array)> or
+C<foreach (LIST)> would do.
+
+=item *
+
+The peephole optimizer recognises the following zero-offset C<substr> patterns
+and swaps in a new dedicated operator (C<OP_SUBSTR_LEFT>).
+[L<GH #22785|https://github.com/Perl/perl5/issues/22785>]
+
+    substr($x, 0, ...)
+    substr($x, 0, ..., '')
+
+=item *
+
+The stringification of integers by L<perlfunc/print> and L<perlfunc/say>,
+when coming from an C<SVt_IV>, is now more efficient.
+[L<GH #22927|https://github.com/Perl/perl5/issues/22927>]
+
+=item *
+
+String reversal from a single argument, when the string buffer is not
+"swiped", is now done in a single pass and is noticeably faster.
+The extent of the improvement is compiler & hardware dependent.
+[L<GH #23012|https://github.com/Perl/perl5/issues/23012>]
+
+=back
 
 =head1 Modules and Pragmata
 
@@ -26,15 +323,287 @@ below.
 
 =item *
 
-L<File::Spec> has been upgraded from version 3.90 to 3.91.
+L<Archive::Tar> has been upgraded from version 3.02_001 to 3.04.
 
 =item *
 
-L<Module::CoreList> has been upgraded from version 5.20240609 to 5.20250118_40.
+L<B::Deparse> has been upgraded from version 1.76 to 1.85.
 
 =item *
 
-L<warnings> has been upgraded from version 1.69 to 1.70.
+L<Benchmark> has been upgraded from version 1.25 to 1.27.
+
+=item *
+
+L<builtin> has been upgraded from version 0.014 to 0.019.
+
+=item *
+
+L<Compress::Raw::Bzip2> has been upgraded from version 2.212 to 2.213.
+
+=item *
+
+L<Compress::Raw::Zlib> has been upgraded from version 2.212 to 2.213.
+
+=item *
+
+L<Config::Perl::V> has been upgraded from version 0.36 to 0.38.
+
+=item *
+
+L<CPAN> has been upgraded from version 2.36 to 2.38.
+
+=item *
+
+L<CPAN::Meta::YAML> has been upgraded from version 0.018 to 0.020.
+
+=item *
+
+L<Data::Dumper> has been upgraded from version 2.189 to 2.192.
+
+=item *
+
+L<DB> has been upgraded from version 1.08 to 1.09.
+
+=item *
+
+L<DBM_Filter> has been upgraded from version 0.06 to 0.07.
+
+=item *
+
+L<Devel::Peek> has been upgraded from version 1.34 to 1.36.
+
+=item *
+
+L<Devel::PPPort> has been upgraded from version 3.72 to 3.73.
+
+=item *
+
+L<Digest::MD5> has been upgraded from version 2.58_01 to 2.59.
+
+=item *
+
+L<DynaLoader> has been upgraded from version 1.56 to 1.57.
+
+=item *
+
+L<experimental> has been upgraded from version 0.032 to 0.035.
+
+=item *
+
+L<Exporter> has been upgraded from version 5.78 to 5.79.
+
+=item *
+
+L<ExtUtils::CBuilder> has been upgraded from version 0.280240 to 0.280242.
+
+=item *
+
+L<ExtUtils::MakeMaker> has been upgraded from version 7.70 to 7.76.
+
+=item *
+
+L<ExtUtils::ParseXS> has been upgraded from version 3.51 to 3.57.
+
+=item *
+
+L<ExtUtils::Typemaps> has been upgraded from version 3.51 to 3.57.
+
+=item *
+
+L<Fcntl> has been upgraded from version 1.18 to 1.20.
+
+=item *
+
+L<feature> has been upgraded from version 1.89 to 1.97.
+
+=item *
+
+L<fields> has been upgraded from version 2.25 to 2.27.
+
+=item *
+
+L<File::Spec> has been upgraded from version 3.90 to 3.94.
+
+=item *
+
+L<Getopt::Long> has been upgraded from version 2.57 to 2.58.
+
+=item *
+
+L<HTTP::Tiny> has been upgraded from version 0.088 to 0.090.
+
+=item *
+
+L<IO::Compress> has been upgraded from version 2.212 to 2.213.
+
+=item *
+
+L<IO::Socket::IP> has been upgraded from version 0.42 to 0.43.
+
+=item *
+
+L<IPC::Open3> has been upgraded from version 1.22 to 1.24.
+
+=item *
+
+L<locale> has been upgraded from version 1.12 to 1.13.
+
+=item *
+
+L<Math::BigInt> has been upgraded from version 2.003002 to 2.005002.
+
+=item *
+
+L<Math::BigInt::FastCalc> has been upgraded from version 0.5018 to 0.5020.
+
+=item *
+
+L<Math::Complex> has been upgraded from version 1.62 to 1.63.
+
+=item *
+
+L<Memoize> has been upgraded from version 1.16 to 1.17.
+
+=item *
+
+L<Module::CoreList> has been upgraded from version 5.20240609 to 5.20250702.
+
+=item *
+
+L<NDBM_File> has been upgraded from version 1.17 to 1.18.
+
+=item *
+
+L<ODBM_File> has been upgraded from version 1.18 to 1.20.
+
+=item *
+
+L<Opcode> has been upgraded from version 1.65 to 1.69.
+
+=item *
+
+L<overload> has been upgraded from version 1.37 to 1.40.
+
+=item *
+
+L<parent> has been upgraded from version 0.241 to 0.244.
+
+=item *
+
+L<perlfaq> has been upgraded from version 5.20240218 to 5.20250619.
+
+=item *
+
+L<Pod::Usage> has been upgraded from version 2.03 to 2.05.
+
+=item *
+
+L<podlators> has been upgraded from version 5.01_02 to v6.0.2.
+
+=item *
+
+L<POSIX> has been upgraded from version 2.20 to 2.23.
+
+=item *
+
+L<re> has been upgraded from version 0.47 to 0.48.
+
+=item *
+
+L<Safe> has been upgraded from version 2.46 to 2.47.
+
+=item *
+
+L<Scalar::Util> has been upgraded from version 1.63 to 1.68_01.
+
+=item *
+
+L<Search::Dict> has been upgraded from version 1.07 to 1.08.
+
+=item *
+
+L<SelfLoader> has been upgraded from version 1.27 to 1.28.
+
+=item *
+
+L<sort> has been upgraded from version 2.05 to 2.06.
+
+=item *
+
+L<Storable> has been upgraded from version 3.32 to 3.37.
+
+=item *
+
+L<strict> has been upgraded from version 1.13 to 1.14.
+
+=item *
+
+L<Term::Table> has been upgraded from version 0.018 to 0.024.
+
+=item *
+
+L<Test::Harness> has been upgraded from version 3.48 to 3.50.
+
+=item *
+
+L<Test::Simple> has been upgraded from version 1.302199 to 1.302210.
+
+=item *
+
+L<Thread> has been upgraded from version 3.05 to 3.06.
+
+=item *
+
+L<threads> has been upgraded from version 2.40 to 2.43.
+
+=item *
+
+L<threads::shared> has been upgraded from version 1.69 to 1.70.
+
+=item *
+
+L<Tie::File> has been upgraded from version 1.09 to 1.10.
+
+=item *
+
+L<Tie::RefHash> has been upgraded from version 1.40 to 1.41.
+
+=item *
+
+L<Time::HiRes> has been upgraded from version 1.9777 to 1.9778.
+
+=item *
+
+L<Time::Piece> has been upgraded from version 1.3401_01 to 1.36.
+
+=item *
+
+L<Unicode::UCD> has been upgraded from version 0.78 to 0.81.
+
+=item *
+
+L<utf8> has been upgraded from version 1.25 to 1.27.
+
+=item *
+
+L<version> has been upgraded from version 0.9930 to 0.9933.
+
+=item *
+
+L<VMS::Filespec> has been upgraded from version 1.13 to 1.15.
+
+=item *
+
+L<warnings> has been upgraded from version 1.69 to 1.74.
+
+=item *
+
+L<Win32> has been upgraded from version 0.59 to 0.59_01.
+
+=item *
+
+L<XS::APItest> has been upgraded from version 1.36 to 1.43.
 
 =back
 
@@ -42,9 +611,290 @@ L<warnings> has been upgraded from version 1.69 to 1.70.
 
 =head2 Changes to Existing Documentation
 
-We have attempted to update the documentation to reflect the changes listed in
-this document.  If you find any we have missed, open an issue at
-L<https://github.com/Perl/perl5/issues>.
+We have attempted to update the documentation to reflect the changes
+listed in this document. If you find any we have missed, open an issue
+at L<https://github.com/Perl/perl5/issues>.
+
+Additionally, the following selected changes have been made:
+
+=head3 L<perlapi>
+
+=over 4
+
+=item *
+
+Combined the documentation for several groups of related functions
+into single entries.
+
+=item *
+
+All forms of C<gv_fetchmeth()> are now documented together.
+
+=item *
+
+C<gv_autoload4> is now documented with C<gv_autoload_pv> and additional notes added.
+The long C<Perl_> forms are now listed when available.
+
+=back
+
+=head3 L<perldata>
+
+=over 4
+
+=item *
+
+Binary and octal floating-point constants (such as C<012.345p-2> and
+C<0b101.11p-1>) are now documented. This feature was first introduced in perl
+5.22.0 together with hexadecimal floating-point constants and had a few bug
+fixes in perl 5.28.0, but it was never formally documented.
+[L<GH #18664|https://github.com/Perl/perl5/issues/18664>]
+
+=back
+
+=head3 L<perlfunc>
+
+=over 4
+
+=item *
+
+Clarified the description of C<ref> and C<reftype> in relation
+to built-in types and class names.
+
+=item *
+
+Clarified that perl C<sort> is stable (and has been since v5.8.0).
+
+=item *
+
+The recommended alternatives to the C<rand()> function were updated to modern modules
+recommended by the L<CPAN Security Group|https://security.metacpan.org/>.
+[L<GH #22873|https://github.com/Perl/perl5/pull/22873>]
+
+=back
+
+=head3 L<perlgov>
+
+=over 4
+
+=item *
+
+The list of Steering Council and Core Team members have been updated, following the conclusion of
+the latest election on 2024-07-17.
+
+=back
+
+=head3 L<perlguts>
+
+=over 4
+
+=item *
+
+Added some description of "real" C<AV>s compared to "fake" C<AV>s.
+
+=item *
+
+Documentation was updated to reflect that mixing C<Newx>, C<Renew>, and
+C<Safefree> vs C<malloc>, C<realloc>, and C<free> are not allowed, and mixing
+pointers between the 2 classes of APIs is not allowed. Updates made in
+L<perlguts> and L<perlclib>.
+
+=item *
+
+Additional caveats have been added to the description of C<TARG>.
+
+=back
+
+=head3 L<perlop>
+
+=over 4
+
+=item *
+
+Portions of perlop are supposed to be ordered so that all the operators
+wth the same precedence are in a single section, and the sections are
+ordered so that the highest precedence operators appear first.
+This ordering has now been restored.  Other reorganization was done to
+improve clarity, with more basic operations described before ones that
+depend on them.
+
+=item *
+
+The documentation for here-docs has been cleaned up and reorganized.
+Indented here-docs were formerly documented separately, now the two
+types have interwoven documentation which is more compact, and easier to
+understand.
+
+=item *
+
+The documentation of the C<xor> operator has been expanded.
+
+=item *
+
+Outdated advice about using relational string operators in UTF-8 locales
+has been removed.  Use L<Unicode::Collate> for the best results, but
+these operators will give adequate results on many platforms.
+
+=item *
+
+Normalized alignment of verbatim sections, fixing how they are displayed by
+some Pod viewers that strip indentation.
+
+=back
+
+=head3 L<perlvar>
+
+=over 4
+
+=item *
+
+Entries for C<$#> and C<$*> have been amended to note that use of them result in a compilation
+error, not a warning.
+
+=back
+
+=head1 Diagnostics
+
+The following additions or changes have been made to diagnostic output,
+including warnings and fatal error messages. For the complete list of
+diagnostic messages, see L<perldiag>.
+
+=head2 New Diagnostics
+
+=head3 New Errors
+
+=over 4
+
+=item *
+
+L<Use of non-ASCII character 0x%X illegal when 'use source::encoding "ascii"' is in effect|perldiag/Use of non-ASCII character 0x%X illegal when 'use source::encoding "ascii"' is in effect>
+
+(F) This pragma forbids non-ASCII characters within its scope.
+
+=item *
+
+L<Undefined subroutine &%s called, close to label '%s'|perldiag/"Undefined subroutine &%s called, close to label '%s'">
+
+(F) The subroutine indicated hasn't been defined, or if it was, it has
+since been undefined.
+
+This error could also indicate a mistyped package separator, when a
+single colon was typed instead of two colons. For example, C<Foo:bar()>
+would be parsed as the label C<Foo> followed by an unqualified function
+name: C<foo: bar()>. [L<GH #22860|https://github.com/Perl/perl5/issues/22860>]
+
+=back
+
+=head3 New Warnings
+
+=over 4
+
+=item *
+
+L<__CLASS__ is experimental|perldiag/"__CLASS__ is experimental">
+
+(S experimental::class) This warning is emitted if you use the C<__CLASS__>
+keyword of C<use feature 'class'>. This keyword is currently
+experimental and its behaviour may change in future releases of Perl.
+
+=item *
+
+L<%s() attempted on handle %s opened with open()|perldiag/"%s() attempted on handle %s opened with open()">
+
+(W io) You called readdir(), telldir(), seekdir(), rewinddir() or
+closedir() on a handle that was opened with open().  If you want to
+use these functions to traverse the contents of a directory, you need
+to open the handle with opendir().
+
+[L<GH #22394|https://github.com/Perl/perl5/issues/22394>]
+
+=item *
+
+L<Possible precedence problem between ! and %s|perldiag/"Possible precedence problem between ! and %s">
+
+(W precedence) You wrote something like
+
+    !$x < $y               # parsed as: (!$x) < $y
+    !$x eq $y              # parsed as: (!$x) eq $y
+    !$x =~ /regex/         # parsed as: (!$x) =~ /regex/
+    !$obj isa Some::Class  # parsed as: (!$obj) isa Some::Class
+
+but because C<!> has higher precedence than comparison operators, C<=~>, and
+C<isa>, this is interpreted as comparing/matching the logical negation of the
+first operand, instead of negating the result of the comparison/match.
+
+To disambiguate, either use a negated comparison/binding operator:
+
+    $x >= $y
+    $x ne $y
+    $x !~ /regex/
+
+... or parentheses:
+
+    !($x < $y)
+    !($x eq $y)
+    !($x =~ /regex/)
+    !($obj isa Some::Class)
+
+... or the low-precedence C<not> operator:
+
+    not $x < $y
+    not $x eq $y
+    not $x =~ /regex/
+    not $obj isa Some::Class
+
+(If you did mean to compare the boolean result of negating the first operand,
+parenthesize as C<< (!$x) < $y >>, C<< (!$x) eq $y >>, etc.)
+
+Note: this warning does not trigger for code like C<!!$x == $y>,
+i.e. where double negation (C<!!>) is used as a convert-to-boolean operator.
+
+=back
+
+=head2 Changes to Existing Diagnostics
+
+=over 4
+
+=item *
+
+L<%s() attempted on invalid dirhandle %s|perldiag/"%s() attempted on invalid dirhandle %s">
+
+This was consolidated from separate messages for readdir(), telldir(),
+seekdir(), rewinddir() and closedir() as part of refactoring for
+[L<GH #22394|https://github.com/Perl/perl5/issues/22394>].
+
+=item *
+
+L<Useless use of %s in void context|perldiag/"Useless use of %s in void context">
+
+This warning now triggers for use of a chained comparison like C<< 0 < $x < 1 >>.
+[L<GH #22969|https://github.com/Perl/perl5/issues/22969>]
+
+=item *
+
+L<Use of uninitialized value%s|perldiag/"Use of uninitialized value%s">
+
+Prevent this warning when accessing a function parameter in C<@_> that
+is an lvalue reference to an untied hash element where the key was
+undefined.  This warning is still produced at the point of call.
+[L<GH #22423|https://github.com/Perl/perl5/issues/22423>]
+
+=back
+
+=head1 Utility Changes
+
+=head2 F<Porting/test-dist-modules.pl>
+
+=over 4
+
+=item *
+
+Separate installation (without overwriting installed modules) is now the default.
+
+=item *
+
+Documentation is significantly enhanced.
+
+=back
 
 =head1 Configuration and Compilation
 
@@ -52,22 +902,276 @@ L<https://github.com/Perl/perl5/issues>.
 
 =item *
 
-Fixed compilation on platforms (e.g. "Gentoo Prefix") with only a C locale.
-[L<GH #22569|https://github.com/Perl/perl5/issues/22569>]
-Bug first reported downstream at
-L<bugs.gentoo.org/939014|https://bugs.gentoo.org/939014>.
+Fix compilation on platforms (e.g. "Gentoo Prefix") with only a C locale [L<GH #22569|https://github.com/Perl/perl5/issues/22569>]
+Bug first reported downstream L<bugs.gentoo.org/939014|https://bugs.gentoo.org/939014>
 
 =item *
 
-Fixed compilation error on some systems due to a typo in a printf() format.
-[L<GH #22793|https://github.com/Perl/perl5/issues/22793>]
+The (mostly undocumented) configuration macro C<PERL_STRICT_CR> has been
+removed. When enabled (e.g. with C<./Configure -A ccflags=-DPERL_STRICT_CR>),
+it would make the perl parser throw a fatal error when it encountered a CR
+(carriage return) character in source files. The default (and now only)
+behavior of the perl parser is to strip CRs paired with newline characters and
+otherwise treat them as whitespace.
+
+(C<PERL_STRICT_CR> was originally introduced in perl 5.005 to optionally
+restore backward compatibility with perl 5.004, which had made CR in source
+files an error. Before that, CR was accepted, but retained literally in quoted
+multi-line constructs such as here-documents, even at the end of a line.)
+
+=item *
+
+Similarly, the (even less documented) configuration macro C<PERL_CR_FILTER> has
+been removed. When enabled, it would install a default source filter to strip
+carriage returns from source code before the parser proper got to see it.
 
 =back
 
 =head1 Testing
 
-Tests were added and changed to reflect the other additions and changes in this
-release.
+Tests were added and changed to reflect the other additions and
+changes in this release.  Furthermore, these significant changes were
+made:
+
+=over 4
+
+=item *
+
+A new F<t/run/todo.t> test script was added as a place for TODO tests
+for known unfixed bugs. Patches are welcome to add to this file.
+
+=item *
+
+Added testing of the perl headers against the C++ compiler
+corresponding to the C compiler perl is being built with.
+[L<GH #22232|https://github.com/Perl/perl5/issues/22232>]
+
+=back
+
+=head1 Platform Support
+
+=head2 Platform-Specific Notes
+
+=over 4
+
+=item arm64 Darwin
+
+Fix arm64 darwin hints when using use64bitall with Configure [L<GH #22672|https://github.com/Perl/perl5/issues/22672>]
+
+=item Android
+
+Changes to F<perl_langinfo.h> for Android [L<GH #22650|https://github.com/Perl/perl5/issues/22650>] related to [L<GH #22627|https://github.com/Perl/perl5/issues/22627>].
+
+=item Cygwin
+
+F<cygwin.c>: fix several silly/terrible C errors. [L<GH #22724|https://github.com/Perl/perl5/issues/22724>]
+
+Supply an explicit base address for C<cygperl*.dll> that cannot
+conflict with those generated by C<--enable-auto-image-base>.  [L<GH #22695|https://github.com/Perl/perl5/issues/22695>][L<GH #22104|https://github.com/Perl/perl5/issues/22104>]
+
+=item MacOS (Darwin)
+
+Collation of strings using locales on MacOS 15 (Darwin 24) and up has
+been turned off due to a failed assertion in its libc.
+
+If earlier versions are also experiencing issues (such as failures in
+F<locale.t>), you can explicitly disable locale collation by adding the
+C<-Accflags=-DNO_LOCALE_COLLATE> option to your invocation of C<./Configure>,
+or just C<-DNO_LOCALE_COLLATE> to the C<ccflags> and C<cppflags>
+variables in F<config.sh>.
+
+=back
+
+=head1 Internal Changes
+
+=over 4
+
+=item *
+
+The L<perlapi/C<sv_strftime_ints>> function is introduced.  This is an
+enhanced version of L<perlapi/C<my_strftime>>, which is retained for
+backwards compatibility.  Both are to call L<strftime(3)> when you have
+the year, month, hour, etc.  The new function handles UTF8ness for you,
+and allows you to specify if you want the possibility of daylight
+savings time to be considered.  C<my_strftime> never considers DST.
+
+=item *
+
+The C<bytes_to_utf8>, C<bytes_from_utf8>, and C<bytes_from_utf8_loc>
+functions are no longer experimental.
+
+=item *
+
+Calls to L<call_argv()|perlapi/call_argv> with the C<G_DISCARD> flag
+set also ensure the SV parameters constructed from the C<argv>
+parameter are released before C<call_argv()> returns. Previously they
+were released on the next L<FREETMPS|perlapi/FREETMPS>. [L<GH #22255|https://github.com/Perl/perl5/issues/22255>]
+
+=item *
+
+When built with the C<-DDEBUGGING> compile option, perl API functions that
+take pointers to distinct types of SVs (AVs, HVs or CVs) will check the
+C<SvTYPE()> of the passed values to ensure they are valid.  Additionally,
+internal code within core functions that attempts to extract AVs, HVs or CVs
+from reference values passed in will also perform such checks.
+
+While this has been entirely tested by normal Perl CI testing, there may
+still be some corner-cases where these constraints are violated in
+otherwise-valid calls.  These may require further investigation if they are
+found, and specific code to be adjusted to account for it.
+
+=item *
+
+The C<op_dump()> function has been expanded to include additional information
+about the recent C<OP_METHSTART> and C<OP_INITFIELD> ops, as well as for
+C<OP_ARGCHECK> and C<OP_ARGELEM> which had not been done previously.
+
+=item *
+
+C<op_dump()> now also has the facility to print extra debugging information
+about custom operators, if those operators register a helper function via the
+new C<xop_dump> element of the C<XOP> structure. For more information, see the
+relevant additions to L<perlguts|perlguts/"Custom Operators">.
+
+=item *
+
+New API functions are introduced to convert strings encoded in UTF-8 to
+their ordinal code point equivalent.  These are safe to use by default,
+and generally more convenient to use than the existing ones.
+
+L<perlapi/C<utf8_to_uv>> and L<perlapi/C<utf8_to_uv_or_die>> replace
+L<perlapi/C<utf8_to_uvchr>> (which is retained for backwards
+compatibility), but you should convert to use the new forms, as likely
+you aren't using the old one safely.
+
+To convert in the opposite direction, you can now use
+L<perlapi/C<uv_to_utf8>>.  This is not a new function, but a new synonym
+for L<perlapi/C<uvchr_to_utf8>>.  It is added so you don't have to learn
+two sets of names.
+
+There are also two new functions, L<perlapi/C<strict_utf8_to_uv>> and
+L<perlapi/C<c9strict_utf8_to_uv>> which do the same thing except when
+the input string represents a code point that Unicode doesn't accept as
+legal for interchange, using either the strict original definition
+(C<strict_utf8_to_uv>), or the looser one given by
+L<Unicode Corrigendum #9|https://www.unicode.org/versions/corrigendum9.html>
+(C<c9strict_utf8_to_uv>).  When the input string represents one of the
+restricted code points, these functions return the Unicode
+C<REPLACEMENT CHARACTER> instead.
+
+Also L<perlapi/C<extended_utf8_to_uv>> is a synonym for C<utf8_to_uv>, for use
+when you want to emphasize that the entire range of Perl extended UTF-8
+is acceptable.
+
+There are also replacement functions for the three more specialized
+conversion functions that you are unlikely to need to use.  Again, the
+old forms are kept for backwards compatibility, but you should convert
+to use the new forms.
+
+L<perlapi/C<utf8_to_uv_flags>> replaces L<perlapi/C<utf8n_to_uvchr>>.
+
+L<perlapi/C<utf8_to_uv_errors>> replaces L<perlapi/C<utf8n_to_uvchr_error>>.
+
+L<perlapi/C<utf8_to_uv_msgs>> replaces
+L<perlapi/C<utf8n_to_uvchr_msgs>>.
+
+Also added are the inverse functions L<perlapi/C<uv_to_utf8_flags>>
+and L<perlapi/C<uv_to_utf8_msgs>>, which are synonyms for the existing
+functions, L<perlapi/C<uvchr_to_utf8_flags>> and
+L<perlapi/C<uvchr_to_utf8_flags_msgs>> respectively.  These are provided only
+so you don't have to learn two sets of names.
+
+=item *
+
+Three new API functions are introduced to convert strings encoded in
+UTF-8 to native bytes format (if possible).  These are easier to use
+than the existing ones, and they avoid unnecessary memory allocations.
+The functions are L<perlapi/C<utf8_to_bytes_overwrite>> which is used
+when it is ok for the input string to be overwritten with the converted
+result; and L<perlapi/C<utf8_to_bytes_new_pv>> and
+L<perlapi/C<utf8_to_bytes_temp_pv>> when the original string must be
+preserved intact.  C<utf8_to_bytes_temp_pv> returns the result in a
+temporary using L<perlapi>/C<SAVEFREEPV> that will automatically be
+destroyed.  With C<utf8_to_bytes_new_pv>, you are responsible for
+freeing the newly allocated memory that is returned if the conversion is
+successful.
+
+The latter two functions are designed to replace
+L<perlapi/C<bytes_from_utf8>> which creates memory unnecessarily, or
+unnecessarily large.
+
+=item *
+
+New API functions L<C<valid_identifier_pve()>|perlapi/valid_identifier_pve>,
+L<C<valid_identifier_pvn()>|perlapi/valid_identifier_pvn> and
+L<C<valid_identifier_sv()>|perlapi/valid_identifier_sv> have been added, which
+test if a string would be considered by Perl to be a valid identifier name.
+
+=item *
+
+When assigning from an SVt_IV into a SVt_NV (or vice versa), providing that
+both are "bodyless" types, Perl_sv_setsv_flags will now just change the
+destination type to match the source type. Previously, an SVt_IV would have
+been upgraded to a SVt_PVNV to store an NV, and an SVt_NV would have been
+upgraded to a SVt_PVIV to store an IV. This change prevents the need to
+allocate - and later free - the relevant body struct.
+
+=item *
+
+Two new API functions are introduced to convert strings encoded in
+native bytes format to UTF-8.  These return the string unchanged if its
+UTF-8 representation is the same as the original.  Otherwise, new memory
+is allocated to contain the converted string.  This is in contrast to
+the existing L<perlapi/C<bytes_to_utf8>> which always allocates new
+memory.  The new functions are L<perlapi/C<bytes_to_utf8_free_me>> and
+L<perlapi/C<bytes_to_utf8_temp_pv>>.
+L<perlapi/C<bytes_to_utf8_temp_pv>> arranges for the new memory to
+automatically be freed.  With C<bytes_to_utf8_free_me>, you are
+responsible for freeing any newly allocated memory.
+
+=item *
+
+The way that subroutine signatures are parsed by the parser grammar has been
+changed.
+
+Previously, when parsing individual signature parameters, the parser would
+accumulate an C<OP_ARGELEM> optree fragment for each parameter on the parser
+stack, collecting them in an C<OP_LIST> sequence, before finally building the
+complete argument handling optree itself, in a large action block defined
+directly in F<perly.y>.
+
+In the new approach, all the optree generation is handled by newly-defined
+functions in F<op.c> which are called by the action blocks in the parser.
+These do not keep state on the parser stack, but instead in a dedicated memory
+structure referenced by the main C<PL_parser> structure.  This is intended to
+be largely opaque to other code, and accessed only via the new functions.
+
+This new arrangement is intended to allow more flexible code generation and
+additional features to be developed in the future.
+
+=item *
+
+Three new API functions have been added to interact with the regexp global
+match position stored in an SV.  These are C<sv_regex_global_pos_get()>,
+C<sv_regex_global_pos_set()> and C<sv_regex_global_pos_clear()>.  Using these
+API functions avoids XS modules needing to know about or interact directly
+with the way this position is currently stored, which involves the
+C<PERL_MAGIC_regex_global> magic type.
+
+=item *
+
+New C<SvVSTRING> API macro
+
+A new API macro has been added, which is used to obtain the second string
+buffer out of a "vstring" SV, in a manner similar to the C<SvPV> macro which
+obtains the regular string buffer out of a regular SV.
+
+    STRLEN len;
+    const char *vstr_pv = SvVSTRING(sv, vstr_len);
+
+See L<perlapi/C<SvVSTRING>>.
+
+=back
 
 =head1 Selected Bug Fixes
 
@@ -75,7 +1179,43 @@ release.
 
 =item *
 
-Starting in Perl 5.39.8, L<POSIX/C<strftime>> would crash or produce odd errors
+Fix null pointer dereference in S_SvREFCNT_dec [L<GH #16627|https://github.com/Perl/perl5/issues/16627>].
+
+=item *
+
+Fix feature 'class' Segmentation fault in DESTROY [L<GH #22278|https://github.com/Perl/perl5/issues/22278>].
+
+=item *
+
+C<chdir> now returns real booleans (as its documentation describes), not
+integers. This means the result of a failed C<chdir> now stringifies to C<''>,
+not C<'0'>.
+
+[L<GH #22365|https://github.com/Perl/perl5/issues/22365>]
+
+=item *
+
+Compound assignment operators return lvalues that can be further modified:
+
+    ($x &= $y) += $z;
+    # Equivalent to:
+    #  $x &= $y;
+    #  $x += $z;
+
+However, the separate numeric/string bitwise operators provided by L<the
+C<bitwise> feature|feature/The 'bitwise' feature>, C<< &= ^= |= &.= ^.= |.= >>,
+did not return such lvalues:
+
+    use feature qw(bitwise);
+    ($x &= $y) += $z;
+    # Used to die:
+    #  Can't modify numeric bitwise and (&) in addition (+) at ...
+
+This has been corrected. [L<GH #22412|https://github.com/Perl/perl5/issues/22412>]
+
+=item *
+
+Starting in v5.39.8, L<POSIX/C<strftime>> would crash or produce odd errors
 (such as C<Out of memory in perl:util:safesysmalloc>) when given a format
 string that wasn't actually a string, but a number, C<undef>, or an object
 (even one with overloaded string conversion).
@@ -83,84 +1223,320 @@ string that wasn't actually a string, but a number, C<undef>, or an object
 Now C<strftime> stringifies its first argument, as before.
 [L<GH #22498|https://github.com/Perl/perl5/issues/22498>]
 
-=item *
-
-Builds with C<-msse> and quadmath on 32-bit x86 systems would crash with a
-misaligned access early in the build.
-[L<GH #22577|https://github.com/Perl/perl5/issues/22577>]
+Also, fix C<POSIX::strftime()> [L<GH #22369|https://github.com/Perl/perl5/issues/22369>].
 
 =item *
 
-Using C<goto> to tail call, or using the call_sv() and related APIs to call,
-any of trim(), refaddr(), reftype(), ceil(), floor() or stringify() in the
-C<builtin::> package would crash or assert due to a C<TARG> handling bug.
-[L<GH #22542|https://github.com/Perl/perl5/issues/22542>]
+C<pack("p", ...)> and C<pack("P", ...)> now SvPV_force() the supplied
+SV unless it is read only.  This will remove CoW from the SV and
+prevents code that writes through the generated pointer from modifying
+the value of other SVs that happen the share the same CoWed string
+buffer.
+
+Note: this does not make C<pack("p",... )> safe, if the SV is magical
+then any writes to the buffer will likely be discarded on the next
+read.  [L<GH #22380|https://github.com/Perl/perl5/issues/22380>]
 
 =item *
 
-Fixed an issue where C<utf8n_to_uvchr()> failed to correctly identify certain
-invalid UTF-8 sequences as invalid.  Specifically, sequences that start with
-continuation bytes or unassigned bytes could cause unexpected behaviour or a
-panic.  This fix ensures that such invalid sequences are now properly detected
-and handled.  This correction also resolves related issues in modules that
-handle UTF-8 processing, such as L<Encode>.
+Enforce C<no feature "bareword_filehandles"> for bareword file handles
+that have strictness removed because they are used in open() with a
+"dup" mode, such as in C<< open my $fh, ">&", THISHANDLE >>. [L<GH #22568|https://github.com/Perl/perl5/issues/22568>]
 
 =item *
 
-Fixed a double free error or possible memory leak when failing to compile
-certain regexps.  [L<GH #21661|https://github.com/Perl/perl5/issues/21661>]
+Using C<goto> to tail call, or using the call_sv() and related APIs to
+call, any of trim(), refaddr(), reftype(), ceil(), floor() or
+stringify() in the C<builtin::> package would crash or assert due to a
+C<TARG> handling bug. [L<GH #22542|https://github.com/Perl/perl5/issues/22542>]
+
+=item *
+
+Fix sv_gets() to accept a C<SSize_t> append offset instead of C<I32>.
+This prevents integer overflows when appending to a large C<SV> for
+C<readpipe> aka C<qx//> and C<readline>.
+L<https://www.perlmonks.org/?node_id=11161665>
+
+=item *
+
+Fixed an issue where C<utf8n_to_uvchr> failed to correctly identify
+certain invalid UTF-8 sequences as invalid. Specifically, sequences
+that start with continuation bytes or unassigned bytes could cause
+unexpected behavior or a panic. This fix ensures that such invalid
+sequences are now properly detected and handled. This correction
+also resolves related issues in modules that handle UTF-8 processing,
+such as C<Encode.pm>.
+
+=item *
+
+The perl parser would erroneously parse some POD directives
+as if they were C<=cut>. Some other POD directives
+whose names start with I<cut>, prematurely terminating an embedded POD section.
+The following cases were affected: I<cut> followed by a digit (e.g.
+C<=cut2studio>), I<cut> followed by an underscore (e.g. C<=cut_grass>), and in
+string C<eval>, any identifier starting with I<cut> (e.g. C<=cute>).
+[L<GH #22759|https://github.com/Perl/perl5/issues/22759>]
+
+=item *
+
+Builds with C<-msse> and quadmath on 32-bit x86 systems would crash
+with a misaligned access early in the build. [L<GH #22577|https://github.com/Perl/perl5/issues/22577>]
+
+=item *
+
+On threaded builds on POSIX-like systems, if the perl signal handler
+receives a signal, we now resend the signal to the main perl thread.  Previously
+this would crash.  [L<GH #22487|https://github.com/Perl/perl5/issues/22487>]
+
+=item *
+
+Declaring a lexically scoped array or hash using C<state> within a subroutine
+and then immediately returning no longer triggers a "Bizarre copy of HASH/ARRAY
+in subroutine exit" error. [L<GH #18630|https://github.com/Perl/perl5/issues/18630>]
+
+=item *
+
+C<builtin::trim()> didn't properly clear C<TARG> which could result in
+out of date cached numeric versions of the value being used on a
+second evaluation.  Properly clear any cached values. [L<GH #22784|https://github.com/Perl/perl5/issues/22784>]
+
+=item *
+
+L<perlfunc/shmread> and L<perlfunc/shmwrite> are no longer limited to 31-bit
+values and can use all the available bits on a platform for their POS and
+SIZE arguments.
+[L<GH #22895|https://github.com/Perl/perl5/issues/22895>]
+
+=item *
+
+L<perlfunc/shmread> is now better behaved if VAR is not a plain string.  If VAR
+is a tied variable, it calls C<STORE> once; previously, it would also call
+C<FETCH>, but without using the result.  If VAR is a reference, the referenced
+entity has its refcount properly decremented when VAR is turned into a string;
+previously, it would leak memory.
+[L<GH #22898|https://github.com/Perl/perl5/issues/22898>]
+
+=item *
+
+The C<$SIG{__DIE__}> and C<$SIG{__WARN__}> handlers can no longer be invoked
+recursively, either deliberately or by accident, as described in
+L<perlvar/%SIG>. That is, when an exception (or warning) triggers a call to a
+C<$SIG{__DIE__}> (or C<$SIG{__WARN__}>) handler, further exceptions (or
+warnings) are processed directly, ignoring C<%SIG> until the original
+C<$SIG{__DIE__}> (or C<$SIG{__WARN__}>) handler call returns.
+[L<GH #14527|https://github.com/Perl/perl5/issues/14527>], [L<GH #22984|https://github.com/Perl/perl5/issues/22984>], [L<GH #22987|https://github.com/Perl/perl5/issues/22987>]
+
+=item *
+
+The C<ObjectFIELDS()> for an object and C<xhv_class_fields> for the
+object's stash weren't always NULL or not-NULL, confusing C<sv_dump()>
+(and hence Devel::Peek's C<Dump()>) into crashing on an object with no
+defined fields in some cases.  [L<GH #22959|https://github.com/Perl/perl5/issues/22959>]
+
+=item *
+
+When comparing strings when using a UTF-8 locale, the behavior was
+previously undefined if either or both contained an above-Unicode code
+point, such as 0x110000.  Now all such code points will collate the same
+as the highest Unicode code point, U+10FFFF. [L<GH #22989|https://github.com/Perl/perl5/issues/22989>]
+
+=item *
+
+In regexes, the contents of C<\g{...}> backreferences are now properly
+validated. Previously, C<\g{1 FOO}> was silently parsed as C<\g{1}>, ignoring
+everything after the first number.
+[L<GH #23050|https://github.com/Perl/perl5/issues/23050>]
+
+=item *
+
+A run-time pattern which contained a code block which recursed back to the
+same bit of code which ran that match, could cause a crash.
+[L<GH #22869|https://github.com/Perl/perl5/issues/22869>]
+
+For example:
+
+    my $r = qr/... (?{ foo() if ... }) .../;
+    sub foo { $string =~ $r }
+    foo()
+
+=item *
+
+In some cases an C<eval> would not add integer parts to the source
+lines saved by the debugger. [L<GH #23151|https://github.com/Perl/perl5/issues/23151>]
+
+=item *
+
+In debugging mode, perl saves source lines from all files
+(plus an indication of whether each line is breakable)
+for use by the debugger. The internal storage format has been
+optimized to use less memory.
+This should save 24 bytes per stored line for 64-bit
+systems, more for C<-Duselongdouble> or C<-Dusequadmath> builds.
+Discussed in [L<GH #23171|https://github.com/Perl/perl5/issues/23171>].
+
+=item *
+
+Ensure cloning the save stack for fork emulation doesn't duplicate
+freeing the RExC state. [L<GH #23022|https://github.com/Perl/perl5/issues/23022>]
+
+=item *
+
+Smartmatch against a code reference that uses a loop exit such as
+C<last> would crash perl. [L<GH #16608|https://github.com/Perl/perl5/issues/16608>]
+
+=item *
+
+Class initializers and C<ADJUST> blocks, per L<perlclass>, that
+called C<last> or other loop exits would crash perl.  Same cause as
+for [L<GH #16608|https://github.com/Perl/perl5/issues/16608>].
+
+=item *
+
+Exceptions thrown and caught entirely within a C<defer {}> or C<finally {}>
+block no longer stop the outer run-loop.
+
+Code such as the following would stop running the contents of the C<defer>
+block once the inner exception in the inner C<try>/C<catch> block was caught.
+This has now been fixed, and runs as expected. ([L<GH #23064|https://github.com/Perl/perl5/issues/23064>]).
+
+    defer {
+        try { die "It breaks\n"; }
+        catch ($e) { warn $e }
+
+        say "This line would never run";
+    }
+
+=item *
+
+L<perlfunc/readline> now clears the error flag if an error occurs when
+reading and that error is C<EAGAIN> or C<EWOULDBLOCK>.  This allows
+code that depended on C<readline> to clear all errors to ignore
+these relatively harmless errors.  [L<GH #22883|https://github.com/Perl/perl5/issues/22883>]
+
+=item *
+
+L<C<open>|perlfunc/open> automatically creates an anonymous temporary file
+when passed C<undef> as a filename:
+
+    open(my $fh, "+>", undef) or die ...
+
+This is supposed to work only when the undefined value is the one returned by
+the C<undef> function.
+
+In perls before 5.41.3, this caused a problem due to the fact that the same
+undefined value can be generated by lookups of non-existent hash keys or array
+elements, which can lead to bugs in user-level code (reported as [L<GH #22385|https://github.com/Perl/perl5/issues/22385>]).
+
+In 5.41.3, additional checks based on the syntax tree of the call site were
+added, which fixed this issue for some number of common cases, though not all
+of them, at the cost of breaking the ability of APIs that wrap C<open> to
+expose its anonymous file mode. A notable example of such an API is autodie.
+
+This release reverts to the old problem in preference to the new one for the
+time being.
 
 =back
 
+=head1 Obituaries
+
+=head2 Abe Timmerman
+
+Abe Timmerman (ABELTJE) passed away on August 15, 2024.
+
+Since 2002, Abe built and maintained the L<Test::Smoke> project: "a
+set of scripts and modules that try to run the Perl core tests on as
+many configurations as possible and combine the results into an easy to
+read report". Smoking Perl on as many platforms and configurations as
+possible has been instrumental in finding bugs and developing patches
+for those bugs.
+
+Abe was a regular attendee of the Perl Toolchain Summit (née Perl QA
+Hackathon), the Dutch Perl Workshop and the Amsterdam.pm user group
+meetings. With his kindness, his smile and his laugh, he helped make
+Perl and its community better.
+
+Abeltje's memorial card said "Grab every opportunity to have a drink of
+bubbly. This is an opportunity". We'll miss you Abe, and we'll have a
+drink of bubbly in your honor.
+
+=head2 Andrew Main
+
+Andrew Main (ZEFRAM) passed away on March 10, 2025.
+
+Zefram was a brilliant person, seemingly knowledgeable in everything
+and happy to impart his knowledge and share his striking insights with a
+gentle, technical demeanor that often failed to convey the genuine care
+with which he communicated.
+
+It would be impossible to overstate the impact that Zefram has had on
+both the language and culture of Perl over the years. From his countless
+contributions to the code-base, to his often quirky but always distinctive
+appearances at conferences and gatherings, his influence and memory are
+sure to endure long into the future.
+
+Zefram wished to have no designated memorial location in
+meatspace. His designated memorial location in cyberspace is
+L<http://www.fysh.org/~zefram/personal/>.
+
 =head1 Acknowledgements
 
-Perl 5.40.1 represents approximately 7 months of development since Perl 5.40.0
-and contains approximately 5,600 lines of changes across 54 files from 15
-authors.
+Perl 5.42.0 represents approximately 13 months of development since Perl
+5.40.0 and contains approximately 280,000 lines of changes across 1,600
+files from 65 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
-approximately 1,800 lines of changes to 19 .pm, .t, .c and .h files.
+approximately 94,000 lines of changes to 860 .pm, .t, .c and .h files.
 
-Perl continues to flourish into its fourth decade thanks to a vibrant community
-of users and developers.  The following people are known to have contributed
-the improvements that became Perl 5.40.1:
+Perl continues to flourish into its fourth decade thanks to a vibrant
+community of users and developers. The following people are known to have
+contributed the improvements that became Perl 5.42.0:
 
-Andrei Horodniceanu, Chris 'BinGOs' Williams, E. Choroba, Graham Knop, James E
-Keenan, Karen Etheridge, Karl Williamson, Lukas Mai, Masahiro Honma, Max
-Maischein, Philippe Bruhat (BooK), Richard Leach, Steve Hay, Thibault
-Duponchelle, Tony Cook.
+Aaron Dill, Andrei Horodniceanu, Andrew Ruthven, Antanas Vaitkus, Aristotle
+Pagaltzis, Branislav Zahradník, brian d foy, Chad Granum, Chris 'BinGOs'
+Williams, Craig A. Berry, Dabrien 'Dabe' Murphy, Dagfinn Ilmari Mannsåker,
+Dan Book, Daniel Dragan, Dan Jacobson, David Cantrell, David Mitchell, E.
+Choroba, Ed J, Ed Sabol, Elvin Aslanov, Eric Herman, Erik Huelsmann, Gianni
+Ceccarelli, Graham Knop, hbmaclean, H.Merijn Brand, iabyn, James E Keenan,
+James Raspass, Johan Vromans, Karen Etheridge, Karl Williamson, Leon
+Timmermans, Lukas Mai, Marek Rouchal, Marin Tsanov, Mark Fowler, Masahiro
+Honma, Max Maischein, Paul Evans, Paul Johnson, Paul Marquess, Peter
+Eisentraut, Peter John Acklam, Philippe Bruhat (BooK), pyrrhlin, Reini
+Urban, Richard Leach, Robert Rothenberg, Robin Ragged, Russ Allbery, Scott
+Baker, Sergei Zhmylev, Sevan Janiyan, Sisyphus, Štěpán Němec, Steve Hay,
+TAKAI Kousuke, Thibault Duponchelle, Todd Rinaldo, Tony Cook, Unicode
+Consortium, Vladimír Marek, Yves Orton.
 
-The list above is almost certainly incomplete as it is automatically generated
-from version control history.  In particular, it does not include the names of
-the (very much appreciated) contributors who reported issues to the Perl bug
-tracker.
+The list above is almost certainly incomplete as it is automatically
+generated from version control history. In particular, it does not include
+the names of the (very much appreciated) contributors who reported issues to
+the Perl bug tracker.
 
 Many of the changes included in this version originated in the CPAN modules
-included in Perl's core.  We're grateful to the entire CPAN community for
+included in Perl's core. We're grateful to the entire CPAN community for
 helping Perl to flourish.
 
-For a more complete list of all of Perl's historical contributors, please see
-the F<AUTHORS> file in the Perl source distribution.
+For a more complete list of all of Perl's historical contributors, please
+see the F<AUTHORS> file in the Perl source distribution.
 
 =head1 Reporting Bugs
 
-If you find what you think is a bug, you might check the perl bug database at
-L<https://github.com/Perl/perl5/issues>.  There may also be information at
+If you find what you think is a bug, you might check the perl bug database
+at L<https://github.com/Perl/perl5/issues>. There may also be information at
 L<https://www.perl.org/>, the Perl Home Page.
 
 If you believe you have an unreported bug, please open an issue at
-L<https://github.com/Perl/perl5/issues>.  Be sure to trim your bug down to a
+L<https://github.com/Perl/perl5/issues>. Be sure to trim your bug down to a
 tiny but sufficient test case.
 
 If the bug you are reporting has security implications which make it
 inappropriate to send to a public issue tracker, then see
-L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION> for details of how to
-report the issue.
+L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION>
+for details of how to report the issue.
 
 =head1 Give Thanks
 
-If you wish to thank the Perl 5 Porters for the work we had done in Perl 5, you
-can do so by running the C<perlthanks> program:
+If you wish to thank the Perl 5 Porters for the work we had done in Perl 5,
+you can do so by running the C<perlthanks> program:
 
     perlthanks
 

@@ -298,7 +298,7 @@ utils : $(utils1) $(utils2) $(utils3) $(utils4) $(utils5)
 extra.pods : miniperl
 	@ @extra_pods.com
 
-PERLDELTA_CURRENT = [.pod]perl5401delta.pod
+PERLDELTA_CURRENT = [.pod]perl5420delta.pod
 
 $(PERLDELTA_CURRENT) : [.pod]perldelta.pod
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(PERLDELTA_CURRENT)
@@ -611,6 +611,8 @@ av$(O) : av.c $(h)
 builtin$(O) : builtin.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 caretx$(O) : caretx.c $(h)
+	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
+class$(O) : class.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)
 deb$(O) : deb.c $(h)
 	$(CC) $(CORECFLAGS) $(MMS$SOURCE)

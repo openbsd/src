@@ -50,7 +50,7 @@ sub NON_ASCII_PLATFORM { ord("A") != 65 }
 # expected, a warning will be generated.  If an older version is being
 # compiled, any bounds tests that fail in the generated test file (-maketest
 # option) will be marked as TODO.
-my $version_of_mk_invlist_bounds = v15.0.0;
+my $version_of_mk_invlist_bounds = v16.0.0;
 
 ##########################################################################
 #
@@ -870,6 +870,15 @@ push @tables_that_may_be_empty, 'Grapheme_Cluster_Break=Prepend'
                                                     if $v_version ge v6.1.0;
 push @tables_that_may_be_empty, 'Canonical_Combining_Class=CCC133'
                                                     if $v_version ge v6.2.0;
+
+# These properties of Egyptian hieroglyphs are not handled by Perl.  Their
+# intended audience is only specialist Egyptologists
+push @tables_that_may_be_empty, qw(kEH_Cat kEH_Desc kEH_HG kEH_IFAO
+                                   kEH_JSesh
+                                   kEH_NoMirror kEH_NoMirror=Yes
+                                   kEH_NoMirror=No
+                                   kEH_NoRotate kEH_NoRotate=Yes)
+                                                    if $v_version ge v16.0.0;
 
 # The lists below are hashes, so the key is the item in the list, and the
 # value is the reason why it is in the list.  This makes generation of
@@ -3618,6 +3627,11 @@ sub trace { return main::trace(@_); }
         return $standard_form{$addr} = main::standardize($value);
     }
 
+    sub count($self) {
+        my $addr = pack 'J', refaddr $self;
+        return $end{$addr} - $start{$addr} + 1;
+    }
+
     sub dump($self, $indent) {
         # Human, not machine readable.  For machine readable, comment out this
         # entire routine and let the standard one take effect.
@@ -4802,7 +4816,7 @@ sub trace { return main::trace(@_); }
 
         my $count = 0;
         foreach my $range (@{$ranges{$addr}}) {
-            $count += $range->end - $range->start + 1;
+            $count += $range->count;
         }
         return $count;
     }
@@ -6019,7 +6033,7 @@ END
                         # points"
                         my $count = ($set->type != 0)
                                     ? 1
-                                    : $set->end - $set->start + 1;
+                                    : $set->count;
                         $widths{$this_width} += $count;
                         $total += $count;
                         $max_map_width = $this_width
@@ -8811,7 +8825,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
     # filesystem to distinguish between, this is used to manually give short
     # names for the directory name immediately under $match_tables that the
     # match tables for this property should be placed in.
-    main::set_access('match_subdir', \%match_subdir, 'r');
+    main::set_access('match_subdir', \%match_subdir, 'r', 's');
 
     my %has_dependency;
     # A boolean that gives whether some table somewhere is defined as the
@@ -9986,7 +10000,6 @@ sub process_PropertyAliases($file) {
         for my $i (2 .. @data - 1) {
             $this->add_alias($data[$i]);
         }
-
     }
 
     my $scf = property_ref("Simple_Case_Folding");
@@ -10049,16 +10062,27 @@ sub finish_property_setup($file) {
     # file directly (it was documented in 5.12 and 5.14 as being thusly
     # usable), keep it from being adjusted.  (range_size_1 is
     # used to force the traditional format.)
-    if (defined (my $nfkc_cf = property_ref('NFKC_Casefold'))) {
-        $nfkc_cf->set_to_output_map($EXTERNAL_MAP);
-        $nfkc_cf->set_range_size_1(1);
+    foreach my $property (qw(NFKC_Casefold NFKC_Simple_Casefold)) {
+        if (defined (my $cf = property_ref($property))) {
+            $cf->set_to_output_map($EXTERNAL_MAP);
+            $cf->set_range_size_1(1);
+        }
     }
+
     if (defined (my $bmg = property_ref('Bidi_Mirroring_Glyph'))) {
         $bmg->set_to_output_map($EXTERNAL_MAP);
         $bmg->set_range_size_1(1);
     }
 
     property_ref('Numeric_Value')->set_to_output_map($OUTPUT_ADJUSTED);
+
+    # These two properties have no short names and the file names for them
+    # clash in DOS 8.3.  Work around this by creating shorter file names that
+    # work
+    my $IDCMStart = property_ref("ID_Compat_Math_Start");
+    $IDCMStart->set_match_subdir("IDCMStart") if defined $IDCMStart;
+    my $IDCMCont= property_ref("ID_Compat_Math_Continue");
+    $IDCMCont->set_match_subdir("IDCMContinue") if defined $IDCMCont;
 
     # The rest of this sub is for properties that need the Multi_Default class
     # to create objects for defaults.  As of v15.0, this is no longer needed.
@@ -13375,6 +13399,30 @@ sub filter_early_version_name_alias_line {
     return;
 }
 
+sub setup_Unikemet{
+
+    # These are provisional properties, so aren't in PropAliases.txt
+    my %properties = (
+                      Core => $ENUM,
+                      FVal => $STRING,
+                      Func => $STRING,
+                      UniK => $ENUM,
+                     );
+    for my $property (keys %properties) {
+        Property->new("kEH_$property",
+                      Default_Map => "",
+                      Type => $STRING,,
+                     );
+    }
+}
+
+sub filter_Unikemet_line {
+    $_ =~ s/;/,/g;      # mktables can't accept semi-colons
+    $_ =~ s/\t/; /g;
+    $_ =~ s/ ^ U\+ //x;
+    return;
+}
+
 sub filter_all_caps_script_names {
 
     # Some early Unicode releases had the script names in all CAPS.  This
@@ -13736,6 +13784,10 @@ END
         next if $range->start == 0x1D7CE;   # This whole range was added in 3.1
         next if $range->end == 0x19DA && $v_version eq v5.2.0;
         next if $range->end - $range->start < 9 && $v_version le 4.0.0;
+
+        # 2 sequential series of 10 each were added in 16.0
+        next if $range->start == 0x116D0 && $range->end == 0x116E3;
+
         Carp::my_carp("Range $range unexpectedly doesn't contain 10"
                     . " decimal digits.  Code in regcomp.c assumes it does,"
                     . " and will have to be fixed.  Proceeding anyway.");
@@ -14138,6 +14190,248 @@ sub handle_compare_versions () {
     $C += $gc->table('Cn');
 
     return;
+}
+
+my %gcb_components;
+my %lb_components;
+my %wb_components;
+
+sub split_property($base_property, $property, $splits)
+{
+    # Given $property that divides the possible code points into equivalence
+    # classes, this changes it to also encapsulate the criteria given by
+    # $splits.  It does this by creating more equivalence classes based on
+    # intersecting $property with $splits.  It returns a hash showing the new
+    # classes, as well as showing how the original components have been split.
+    #
+    # This function should be called just once on $property, so that the
+    # returned hash can be properly built up.  $splits is therefore an array
+    # reference in case $property needs to be divided multiple times,
+    # Each element of $splits is independent, so that a split can be further
+    # split in the next iteration, but each element of $split must be
+    # consistent with itself, with ranges that are disjoint.
+    #
+    # Each element of $split is a a hash with two keys
+    #   name => is the name to be applied to the split
+    #   ranges => is a RangeList of the ranges it has, or something that a
+    #             RangeList can be automatically extracted from using the
+    #             overloaded operators.
+    #
+    # An example should clarify.  Unicode publishes the Line Break (LB)
+    # property, where each possible code point is given a type, like
+    # Alphabetic, or Opening Parenthesis.  They also publish rules for whether
+    # it is permissible to break a line between each type.  You wouldn't break
+    # a line between two alphabetics or between an opening parenthesis and an
+    # alphabetic, but you could between a Space and almost any other type.
+    # The types are essentially equivalence classes that divide up the
+    # possible code points.
+    #
+    # In recent releases, Unicode has mostly stopped creating new equivalence
+    # classes as it has refined the rules.  The line breaking rules for East
+    # Asian languages are very differet from other scripts, for example, but
+    # instead of dividing Alphabetics into East Asian ones, and non-, Unicode
+    # has published rules that involve criteria that aren't encapsulated in
+    # the LB property.  Perl's algorithm for determining if there is a break
+    # would have to start including these foreign criteria by changing code
+    # instead of being table driven.  Instead, we use this function to create
+    # a modified LB property that incorporates these criteria, by adding new
+    # equivalence classes that do distinguish between the East Asian
+    # alphabetics vs non-East Asian alphabetics.  mk_invlists uses these to
+    # create tables that then do incorporate these criteria.  This allows the
+    # code that implements the actual algorithm to not have to have ad-hoc
+    # cases that Unicode's failure to create new equivalence classes
+    # encourages.  (Ad-hoc dfas do have to be created when context must be
+    # considered for determining the breaking or not, but there are relatively
+    # few of these.)
+    #
+    # The original property had certain maps, furnished by Unicode.  After
+    # this function is done, it will have more maps, with the new ones being
+    # each original map that has code points that are shared with the ones
+    # $split_ranges defines.
+    #
+    # LB is not only split into subclasses by East Asian or not, but by other
+    # independent criteria as well.  That is why $splits is an array ref, to
+    # allow one splitting by East Asian, and others by the other criteria.  By
+    # the time the function is done, all the splits will be applied, creating
+    # perhaps sub-sub-sub-... classes to whatever level is necessary,
+    # returning a hash that gives these and how the original classes were
+    # sub-divided.
+    #
+    # $property is going to be $base_property modified to contain the split.
+    # $base_property is passed to us because it has match tables in it that
+    # have been processed to know about all the aliases the property's
+    # equivalence classes can have.  $property is raw, and lacks that
+    # information.  And there is otherwise no need to spend the time
+    # generating them.
+    #
+    # It may well be that some classes have no code points in common with what
+    # is being split.  Or that some classes match exactly with the split ones.
+    # This makes sure not to disturb either of those, using a second pass
+    # to restore the ones it temporarily changeed.  An example of the latter
+    # is the Line Break Korean ones.  All of them are also East Asian, so no
+    # splitting is needed.
+
+    my %original_classes;
+    my %new_sub_classes;
+    my %new_composites;     # Like %new_sub_classes; used to save things so
+                            # don't interfere with future loop iterations
+
+    # We operate on each split independently.
+    foreach my $split ($splits->@*) {
+        my $split_ranges = $split->{ranges};
+        my $split_name = $split->{name};
+
+        # For each range in the property's Map, see if it should be split with
+        # respect to $split.
+        foreach my $range ($property->ranges) {
+            my $original_class = $range->value;
+
+            # Calculate what the value (the new equivalence class) the
+            # intersected ranges would have.  This is a combination of the
+            # short name this range's value has, along with the split's name.
+            # For example, if the range's value is Alphabetic, it's short name
+            # would be 'AL'.  The passed in $split_name is used as-is.  If it
+            # is EA (for East Asian), the new equivalence class would get
+            # named 'EA_AL', which can be read as "East Asian alphabetics".
+            # We need the $base_property input parameter only so as to be able
+            # to translate things like 'Alphabetic' to 'AL'.
+            my $base_match_table = $base_property->table($original_class);
+            my $short_name = (defined $base_match_table)
+                            ? $base_match_table->short_name
+                            : $original_class;
+            my $new_class = "${split_name}_"  . $short_name;
+
+            # Create an instance of $new_class if one doesn't already exist.
+            # At this point, it knows only who its parents are, and that it is
+            # empty. {original_class} is used later only in case we have to
+            # back out changes, we know what the restored value needs to be.
+            if (! defined $new_sub_classes{$new_class}) {
+                $new_sub_classes{$new_class}{original_class} = $original_class;
+                $new_sub_classes{$new_class}{new_composite} = $split_name;
+                $new_sub_classes{$new_class}{non_empty} = 0;
+            }
+
+            # Intersect the original range with the $split_ranges.
+            my $intersection = $range & $split_ranges;
+
+            # If the intersection is empty, $new_class is not part of this
+            # original range.  If it's not part of any range with this same
+            # value, it is disjoint from the class that value represents, but
+            # we don't know that yet.  It does happen that splits are entirely
+            # equivalent to original classes.  For example, the Line Break
+            # classes that are for Korean syllables are all also East Asian,
+            # so spliting them wrt to EA is a no-op.   Since this intersection
+            # is empty, we do know here that this $split isn't equivalent to
+            # this class in $property.
+            if ($intersection->is_empty) {
+                $new_sub_classes{$new_class}{differs} = 1;
+
+                # And we know this range's class is a component of $property.
+                # We set that explicitly here, as it makes the clean up at the
+                # end of the loop easier.
+                $original_classes{$original_class}{components}{$original_class} = 1;
+                next;
+            }
+
+            # Here the intersection is not empty.  If this intersection is
+            # smaller than the original, this will form a new equivalence sub
+            # class.  If it isn't smaller, and all other intersections are
+            # non-empty and also never smaller, the new subclass would be
+            # identical to the original in all respects, and hence not needed.
+            # But we cannot know that here.  So we assume the worst case, and
+            # change the intersection, be it the whole of the original or just
+            # a proper subset, to be the split class.
+            foreach my $range ($intersection->ranges) {
+                $property->replace_map($range->start, $range->end,
+                                        $new_class);
+            }
+
+            # We do know that the subclass has code points.
+            $new_sub_classes{$new_class}{non_empty} = 1;
+
+            # And that both it and the original are components of the original
+            # $property class
+            $original_classes{$original_class}{components}{$new_class} = 1;
+            $original_classes{$original_class}{components}{$original_class} = 1;
+
+            # And we can set if the intersection is smaller than the original,
+            # that this new sub class will actually be needed.
+            if ($range->count != $intersection->count) {
+                $new_sub_classes{$new_class}{differs} = 1;
+            }
+        }   # End of loop through all the property's ranges for this $split
+
+        # Here, we know if this new subclass is empty and if not, if it is
+        # identical to one of the property's classes.  If empty, it isn't
+        # needed, so just delete its record.  In this case, no ranges in the
+        # original have been changed.  If otherwise it doesn't have any
+        # differences from one of the original's classes, it isn't needed, so
+        # add it to a list of subclasses to restore back to the original.
+        my %to_delete;
+        for my $class (keys %new_sub_classes) {
+            if (! $new_sub_classes{$class}{non_empty}) {
+                delete $new_sub_classes{$class};
+            }
+            else {
+                $to_delete{$class} = 1
+                                    unless $new_sub_classes{$class}{differs};
+            }
+        }
+
+        if (keys %to_delete) {
+
+            # If there are subclasses that need to be restored to the
+            # original, do it.
+            foreach my $range ($property->ranges) {
+                my $class = $range->value;
+                if ($to_delete{$class}) {
+                    $property->replace_map($range->start, $range->end,
+                                    $new_sub_classes{$class}{original_class});
+                }
+            }
+
+            # These subclasses also need to have other traces of them be
+            # removed.
+            for my $class (keys %to_delete) {
+                my $original = $new_sub_classes{$class}{original_class};
+
+                delete $original_classes{$original}{components}{$class};
+                delete $original_classes{$class};
+
+                # The original class is also a component of $split.  For
+                # example LB=H2 is also East Asian, so the EA split contains
+                # it.
+                $new_composites{$original} = delete $new_sub_classes{$class};
+            }
+        }
+
+        # We will return the subcomponents of each original class.  But if
+        # there is exactly one subcomponent, it is the same as the class, and
+        # there is no need to return it.  So remove these.
+        for my $class (keys %original_classes) {
+            next if keys $original_classes{$class}{components}->%* > 1;
+            delete $original_classes{$class};
+        }
+    }   # End of loop through all the $splits elements
+
+    my %return;
+
+    # This function returns a hash that maps out what has been split.  On one
+    # hand, it includes the sub components of each of the original classes
+    foreach my $class (sort keys %original_classes) {
+        push $return{$class}->@*,
+             sort keys $original_classes{$class}{components}->%*;
+    }
+
+    # And on the other hand, it includes the sub components of each $split
+    for my $which (\%new_sub_classes, \%new_composites) {
+        for my $class (sort keys $which->%*) {
+            my $split_composite = $which->{$class}{new_composite};
+            push $return{$split_composite}->@*, $class;
+        }
+    }
+
+    return %return;
 }
 
 sub compile_perl() {
@@ -15179,12 +15473,13 @@ END
 
     # Perl tailors the WordBreak property so that \b{wb} doesn't split
     # adjacent spaces into separate words.  Unicode 11.0 moved in that
-    # direction, but left TAB,  FIGURE SPACE (U+2007), and (ironically) NO
-    # BREAK SPACE as breaking, so we retained the original Perl customization.
-    # To do this, in the Perl copy of WB, simply replace the mappings of
-    # horizontal space characters that otherwise would map to the default or
-    # the 11.0 'WSegSpace' to instead map to our tailoring.
-    my $perl_wb = property_ref('_Perl_WB');
+    # direction, but left TAB,  FIGURE SPACE (U+2007), and (ironically)
+    # NO_BREAK SPACE as breaking, so we retained the original Perl
+    # customization.  To do this, in the Perl copy of WB, simply replace the
+    # mappings of horizontal space characters that otherwise would map to the
+    # default or the 11.0 'WSegSpace' to instead map to our tailoring.
+    my $wb = property_ref('WB');
+    my $perl_wb = $wb;
     my $default = $perl_wb->default_map;
     for my $range ($Blank->ranges) {
         for my $i ($range->start .. $range->end) {
@@ -15199,39 +15494,52 @@ END
     # Also starting in Unicode 11.0, rules for some of the boundary types are
     # based on a non-UCD property (which we have read in if it exists).
     # Recall that these boundary properties partition the code points into
-    # equivalence classes (represented as enums).
-    #
-    # The loop below goes through each code point that matches the non-UCD
-    # property, and for each current equivalence class containing such a code
-    # point, splits it so that those that are in both are now in a newly
-    # created equivalence class whose name is a combination of the property
-    # and the old class name, leaving unchanged everything that doesn't match
-    # the non-UCD property.
-    my $ep = property_ref('ExtPict');
+    # equivalence classes (represented as enums).  The bottom line is we have
+    # to split these classes so that there are more of them.  External
+    # Pictographic was the only one used in 11.0.  It is a binary
+    # property.  If we have an original class X, we want to split that into
+    # X-with-ExtPict and X-without-ExtPict for all possible X of the original
+    # classes.  split_property() does that; and has much more detailed
+    # comments than here.
+    my $ext_pict = 'ExtPict';
+    my $ep = property_ref($ext_pict);
     $ep = $ep->table('Y') if defined $ep;
-    if (defined $ep) {
-        foreach my $base_property (property_ref('GCB'),
-                                   property_ref('WB'))
-        {
-            my $property = property_ref('_Perl_' . $base_property->name);
-            foreach my $range ($ep->ranges) {
-                foreach my $i ($range->start .. $range->end) {
-                    my $current = $property->value_of($i);
-                    $current = $property->table($current)->short_name;
-                    $property->add_map($i, $i, 'ExtPict_' . $current,
-                                       Replace => $UNCONDITIONALLY);
-                }
-            }
-        }
+    my $ep_splits = { name => $ext_pict,  ranges => $ep } if defined $ep;
+
+    my @wb_splits = $ep_splits if defined $ep && defined $perl_wb;
+    %wb_components = split_property($wb, $perl_wb, \@wb_splits)
+                                                                if @wb_splits;
+
+    # split_property() is run once on each original property;  if there are
+    # multiple splits, we set them up in an array to pass all at once.
+    my $gcb = property_ref('GCB');
+    my $perl_gcb = property_ref('_Perl_GCB');
+    my @gcb_splits;
+    push @gcb_splits, $ep_splits if defined $ep_splits && defined $perl_gcb;
+
+    # In Unicode 15.1, the Indic Conjunct Break property (InCB) was added,
+    # which causes us to have to split GCB into subclasses that match some of
+    # the subclasses of InCB
+    my $incb = property_ref('InCB');
+    if (defined $perl_gcb && defined $incb) {
+
+        # To avoid namespace clashes, we prefix our internal names with
+        # "InCB_"
+        push @gcb_splits,
+             {
+               name => "InCB_$_",
+               ranges => Range_List->new(Initialize => $incb->table($_))
+             }
+             for qw(Consonant  Linker  Extend);
     }
 
-    # Create a version of the LineBreak property with the mappings that are
-    # omitted in the default algorithm remapped to what
-    # http://www.unicode.org/reports/tr14 says they should be.
-    #
-    # First, create a plain copy, but with all property values written out in
-    # their long form, as regen/mk_invlist.pl expects that, and also fix
-    # occurrences of the typo in early Unicode versions: 'inseperable'.
+    %gcb_components = split_property($gcb, $perl_gcb, \@gcb_splits)
+                                                               if @gcb_splits;
+
+    # Line Break is the most complicated.  It needs more than splits.  First,
+    # clone it from the official one if it isn't already (this is needed in
+    # early Unicode releases.)
+    my $lb = property_ref('Line_Break');
     my $perl_lb = property_ref('_Perl_LB');
     if (! defined $perl_lb) {
         $perl_lb = Property->new('_Perl_LB',
@@ -15239,7 +15547,6 @@ END
                                  Perl_Extension => 1,
                                  Directory => $map_directory,
                                  Type => $STRING);
-        my $lb = property_ref('Line_Break');
 
         # Populate from $lb, but use full name and fix typo.
         foreach my $range ($lb->ranges) {
@@ -15250,6 +15557,14 @@ END
         }
     }
 
+    # There are several equivalence classes in it that are tailorable to user
+    # and locale preferences.  Perl doesn't have this ability, so we use the
+    # generic defaults specified in
+    #   http://www.unicode.org/reports/tr14
+    #
+    # First, create a plain copy, but with all property values written out in
+    # their long form, as regen/mk_invlist.pl expects that, and also fix
+    # occurrences of the typo in early Unicode versions: 'inseperable'.
     # What tr14 says is this:
 
     # Original 	   Resolved  General_Category
@@ -15259,11 +15574,6 @@ END
     # CJ              NS      Any
 
     $perl_lb->set_default_map('Alphabetic', 'full_name');    # XX -> AL
-
-    my $ea = property_ref('East_Asian_Width');
-    my $Cn_EP;
-    $Cn_EP = $ep & $gc->table('Unassigned') if defined $ep;
-
     for my $range ($perl_lb->ranges) {
         my $value = standardize($range->value);
         if (   $value eq standardize('Unknown')
@@ -15290,41 +15600,47 @@ END
                 }
             }
         }
-        elsif (defined $ep && $value eq standardize('Ideographic')) {
+    }
 
-            # Unicode 14 adds a rule to not break lines before any potential
-            # EBase,  They say that any unassigned code point that is ExtPict,
-            # is potentially an EBase.  In 14.0, all such ones are in the
-            # ExtPict=ID category.  We must split that category for the
-            # pairwise rule table to work.
-            for my $i ($range->start .. $range->end) {
-                if ($Cn_EP->contains($i)) {
-                    $perl_lb->add_map($i, $i,
-                                'Unassigned_Extended_Pictographic_Ideographic',
-                                Replace => $UNCONDITIONALLY);
-                }
-            }
-        }
-        elsif (    defined $ea
-               && (   $value eq standardize('Close_Parenthesis')
-                   || $value eq standardize('Open_Punctuation')))
-        {
-            # Unicode 13 splits the OP and CP properties each into East Asian,
-            # and non-.  We retain the (now somewhat misleading) names OP and
-            # CP for the non-East Asian variety, as there are very few East
-            # Asian ones.
-            my $replace = ($value eq standardize('Open_Punctuation'))
-                          ? 'East_Asian_OP'
-                          : 'East_Asian_CP';
-            for my $i ($range->start .. $range->end) {
-                my $ea_val = $ea->value_of($i);
-                if ($ea_val eq 'F' || $ea_val eq 'W' || $ea_val eq 'H') {
-                    $perl_lb->add_map($i, $i, $replace,
-                                                Replace => $UNCONDITIONALLY);
-                }
-            }
+    # What LB needs to be split into depends on the Unicode version
+    my @lb_splits;
+    if (defined $ep) {
+        push @lb_splits, $ep_splits if $v_version ge 14.0.0;
+        my $Cn_ep = $ep & $gc->table('Unassigned');
+        push @lb_splits, { name => 'Cn_ExtPict', ranges => $Cn_ep };
+    }
+
+    if ($v_version ge 13.0.0) {
+        my $ea = property_ref('East_Asian_Width');
+        if (defined $ea) {
+            my $ea_tables =
+                          $ea->table('F') + $ea->table('W') + $ea->table('H');
+            push @lb_splits, { name => 'EA', ranges => $ea_tables };
         }
     }
+
+    if ($v_version ge 15.1.0) {
+
+        # Unicode 15.1 splits LB=QU initial quotes and final quotes, and regular
+        # quotes
+        push @lb_splits, { name => 'Pi', ranges => $gc->table('Pi') };
+        push @lb_splits, { name => 'Pf', ranges => $gc->table('Pf') };
+
+        # And it treats the dotted circle specially
+        push @lb_splits, { name => 'Dotted_Circle',
+                           ranges => Range_List->new(Initialize
+                                  => Range->new(0x25cc, 0x25cc))
+                         };
+    }
+
+    if ($v_version ge 16.0.0) {
+        push @lb_splits, { name => 'U2010',
+                           ranges => Range_List->new(Initialize
+                                  => Range->new(0x2010, 0x2010))
+                         };
+    }
+
+    %lb_components = split_property($lb, $perl_lb, \@lb_splits);
 
     # This property is a modification of the scx property
     my $perl_scx = Property->new('_Perl_SCX',
@@ -17825,11 +18141,20 @@ sub make_UCD () {
     my $loose_defaults = simple_dumper(\%loose_defaults, ' ' x 4);
     chomp $loose_defaults;
 
+    my $gcb_components = simple_dumper(\%gcb_components, ' ' x 4);
+    chomp $gcb_components;
+
+    my $lb_components = simple_dumper(\%lb_components, ' ' x 4);
+    chomp $lb_components;
+
+    my $wb_components = simple_dumper(\%wb_components, ' ' x 4);
+    chomp $wb_components;
+
     my @ucd = <<END;
 $HEADER
 $INTERNAL_ONLY_HEADER
 
-# This file is for the use of Unicode::UCD
+# This file is for the use of Unicode::UCD and mk_invlists.pl
 
 # Highest legal Unicode code point
 \$Unicode::UCD::MAX_UNICODE_CODEPOINT = 0x$MAX_UNICODE_CODEPOINT_STRING;
@@ -17968,6 +18293,25 @@ $combination_property
 # file to use memory only when it was needed, in testing.
 \@Unicode::UCD::suppressed_properties = (
 $suppressed
+);
+
+# These next three are for mk_invlist.pl, not Unicode::UCD, but convenient to
+# put them here.  These contain data about the line breaking properties;
+# various equivalence classes that Unicode publishes have had to be split into
+# smaller components for perl's use.
+\%Unicode::UCD::gcb_components = (
+Extended_Pictographic => [ 'ExtPict' ],
+$gcb_components
+);
+
+\%Unicode::UCD::lb_components = (
+Extended_Pictographic => [ 'ExtPict' ],
+$lb_components
+);
+
+\%Unicode::UCD::wb_components = (
+Extended_Pictographic => [ 'ExtPict' ],
+$wb_components
 );
 
 1;
@@ -19778,13 +20122,21 @@ my @input_file_objects = (
                    ),
     Input_file->new('IdStatus.txt', v13.0.0,
                     Pre_Handler => \&setup_IdStatus,
+                    Has_Missings_Defaults => $IGNORED,
                     Property => 'Identifier_Status',
+
+                    # Part of UTS 39, so must be downloaded separately from
+                    # unicode.org
                     UCD => 0,
                    ),
     Input_file->new('IdType.txt', v13.0.0,
                     Pre_Handler => \&setup_IdType,
+                    Has_Missings_Defaults => $IGNORED,
                     Each_Line_Handler => \&filter_IdType_line,
                     Property => 'Identifier_Type',
+
+                    # Part of UTS 39, so must be downloaded separately from
+                    # unicode.org
                     UCD => 0,
                    ),
     Input_file->new('confusables.txt', v15.0.0,
@@ -19796,6 +20148,17 @@ my @input_file_objects = (
                     UCD => 0,
                    ),
     Input_file->new('intentional.txt', v15.0.0,
+                    Skip => $Unused_Skip,
+                    UCD => 0,
+                   ),
+    Input_file->new('Unikemet.txt', v16.0.0,
+                    Pre_Handler => \&setup_Unikemet,
+                    Each_Line_Handler => \&filter_Unikemet_line,
+                    UCD => 0,
+                   ),
+    Input_file->new('DoNotEmit.txt', v16.0.0,
+                    # Advice about characters that are unwise to create; not
+                    # any properties, though we could create some.
                     Skip => $Unused_Skip,
                     UCD => 0,
                    ),
@@ -20527,4 +20890,3 @@ sub Finished() {
     print "1..$Tests\n";
     exit($Fails ? -1 : 0);
 }
-

@@ -122,9 +122,6 @@ is a lexical C<$_> in scope.
  *     typedef SwigPerlWrapper *SwigPerlWrapperPtr;
  *
  * This code needs to be compilable under both C and C++.
- *
- * Don't forget to change the __attribute__unused__ version of XS()
- * below too if you change XSPROTO() here.
  */
 
 /* XS_INTERNAL is the explicit static-linkage variant of the default
@@ -141,17 +138,12 @@ is a lexical C<$_> in scope.
 #undef XS_INTERNAL
 #if defined(__CYGWIN__) && defined(USE_DYNAMIC_LOADING)
 #  define XS_EXTERNAL(name) __declspec(dllexport) XSPROTO(name)
-#  define XS_INTERNAL(name) STATIC XSPROTO(name)
 #elif defined(__cplusplus)
 #  define XS_EXTERNAL(name) extern "C" XSPROTO(name)
-#  define XS_INTERNAL(name) static XSPROTO(name)
-#elif defined(HASATTRIBUTE_UNUSED)
-#  define XS_EXTERNAL(name) void name(pTHX_ CV* cv __attribute__unused__)
-#  define XS_INTERNAL(name) STATIC void name(pTHX_ CV* cv __attribute__unused__)
 #else
 #  define XS_EXTERNAL(name) XSPROTO(name)
-#  define XS_INTERNAL(name) STATIC XSPROTO(name)
 #endif
+#define XS_INTERNAL(name) STATIC XSPROTO(name)
 
 /* We do export xsub symbols by default for the public XS macro.
  * Try explicitly using XS_INTERNAL/XS_EXTERNAL instead, please. */

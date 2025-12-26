@@ -187,7 +187,7 @@ C<"["> respectively; other gotchas apply.
 The significance of each of these will be explained
 in the rest of the tutorial, but for now, it is important only to know
 that a metacharacter can be matched as-is by putting a backslash before
-it:
+it.  This is called "escaping" or "quoting" it.  Some examples:
 
     "2+2=4" =~ /2+2/;    # doesn't match, + is a metacharacter
     "2+2=4" =~ /2\+2/;   # matches, \+ is treated like an ordinary +
@@ -633,7 +633,7 @@ that matches.
 
 Alternation allows a regexp to choose among alternatives, but by
 itself it is unsatisfying.  The reason is that each alternative is a whole
-regexp, but sometime we want alternatives for just part of a
+regexp, but sometimes we want alternatives for just part of a
 regexp.  For instance, suppose we want to search for housecats or
 housekeepers.  The regexp C<housecat|housekeeper> fits the bill, but is
 inefficient because we had to type C<house> twice.  It would be nice to
@@ -1710,8 +1710,6 @@ off.  C<\G> allows us to easily do context-sensitive matching:
 
 The combination of C</g> and C<\G> allows us to process the string a
 bit at a time and use arbitrary Perl logic to decide what to do next.
-Currently, the C<\G> anchor is only fully supported when used to anchor
-to the start of the pattern.
 
 C<\G> is also invaluable in processing fixed-length records with
 regexps.  Suppose we have a snippet of coding region DNA, encoded as
@@ -1995,7 +1993,7 @@ to know 1) how to represent Unicode characters in a regexp and 2) that
 a matching operation will treat the string to be searched as a sequence
 of characters, not bytes.  The answer to 1) is that Unicode characters
 greater than C<chr(255)> are represented using the C<\x{hex}> notation, because
-C<\x>I<XY> (without curly braces and I<XY> are two hex digits) doesn't
+C<\x>I<XY> (specified as two hex digits without curly braces) doesn't
 go further than 255.  (Starting in Perl 5.14, if you're an octal fan,
 you can also use C<\o{oct}>.)
 
@@ -2839,10 +2837,10 @@ alternative will be tried. As failing to match doesn't preserve capture
 groups or produce results, it may be necessary to use this in
 combination with embedded code.
 
-   %count = ();
-   "supercalifragilisticexpialidocious" =~
-       /([aeiou])(?{ $count{$1}++; })(*FAIL)/i;
-   printf "%3d '%s'\n", $count{$_}, $_ for (sort keys %count);
+    my %count;
+    "supercalifragilisticexpialidocious" =~
+        /([aeiou])(?{ $count{lc($1)}++; })(*FAIL)/i;
+    printf "%3d '%s'\n", $count{$_}, $_ for (sort keys %count);
 
 The pattern begins with a class matching a subset of letters.  Whenever
 this matches, a statement like C<$count{'a'}++;> is executed, incrementing
@@ -2851,12 +2849,15 @@ the regexp engine proceeds according to the book: as long as the end of
 the string hasn't been reached, the position is advanced before looking
 for another vowel. Thus, match or no match makes no difference, and the
 regexp engine proceeds until the entire string has been inspected.
-(It's remarkable that an alternative solution using something like
 
-   $count{lc($_)}++ for split('', "supercalifragilisticexpialidocious");
-   printf "%3d '%s'\n", $count2{$_}, $_ for ( qw{ a e i o u } );
+(In a real program, you might instead solve this problem using
 
-is considerably slower.)
+    my $string = "supercalifragilisticexpialidocious";
+    my %count;
+    $count{lc($1)}++ while $string =~ /([aeiou])/ig;
+    printf "%3d '%s'\n", $count{$_}, $_ for (sort keys %count);
+
+This is faster than embedded code blocks in the regex.)
 
 
 =head2 Pragmas and debugging

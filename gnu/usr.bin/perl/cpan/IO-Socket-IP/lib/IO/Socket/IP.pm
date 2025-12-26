@@ -1,9 +1,9 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2010-2023 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2010-2024 -- leonerd@leonerd.org.uk
 
-package IO::Socket::IP 0.42;
+package IO::Socket::IP 0.43;
 
 use v5.14;
 use warnings;
@@ -64,6 +64,8 @@ C<IO::Socket::IP> - Family-neutral IP socket supporting both IPv4 and IPv6
 
 =head1 SYNOPSIS
 
+=for highlighter language=perl
+
    use IO::Socket::IP;
 
    my $sock = IO::Socket::IP->new(
@@ -83,7 +85,7 @@ C<IO::Socket::IP> - Family-neutral IP socket supporting both IPv4 and IPv6
 This module provides a protocol-independent way to use IPv4 and IPv6 sockets,
 intended as a replacement for L<IO::Socket::INET>. Most constructor arguments
 and methods are provided in a backward-compatible way. For a list of known
-differences, see the C<IO::Socket::INET> INCOMPATIBILITES section below.
+differences, see the C<IO::Socket::INET> INCOMPATIBILITIES section below.
 
 It uses the C<getaddrinfo(3)> function to convert hostnames and service names
 or port numbers into sets of possible addresses to connect to or listen on.
@@ -313,7 +315,7 @@ two listening sockets, one bound to each protocol.
 =item MultiHomed
 
 This C<IO::Socket::INET>-style argument is ignored, except if it is defined
-but false. See the C<IO::Socket::INET> INCOMPATIBILITES section below.
+but false. See the C<IO::Socket::INET> INCOMPATIBILITIES section below.
 
 However, the behaviour it enables is always performed by C<IO::Socket::IP>.
 
@@ -348,7 +350,7 @@ recognised are ignored.
 
 If neither C<Family> nor any hosts or addresses are passed, nor any
 C<*AddrInfo>, then the constructor has no information on which to decide a
-socket family to create. In this case, it performs a C<getaddinfo> call with
+socket family to create. In this case, it performs a C<getaddrinfo> call with
 the C<AI_ADDRCONFIG> flag, no host name, and a service name of C<"0">, and
 uses the family of the first returned result.
 
@@ -827,7 +829,7 @@ sub _unpack_sockaddr
 
 =head2 sockhost_service
 
-   ( $host, $service ) = $sock->sockhost_service( $numeric )
+   ( $host, $service ) = $sock->sockhost_service( $numeric );
 
 Returns the hostname and service name of the local address (that is, the
 socket address given by the C<sockname> method).
@@ -852,25 +854,25 @@ sub sockhost_service
 
 =head2 sockhost
 
-   $addr = $sock->sockhost
+   $addr = $sock->sockhost;
 
 Return the numeric form of the local address as a textual representation
 
 =head2 sockport
 
-   $port = $sock->sockport
+   $port = $sock->sockport;
 
 Return the numeric form of the local port number
 
 =head2 sockhostname
 
-   $host = $sock->sockhostname
+   $host = $sock->sockhostname;
 
 Return the resolved name of the local address
 
 =head2 sockservice
 
-   $service = $sock->sockservice
+   $service = $sock->sockservice;
 
 Return the resolved name of the local port number
 
@@ -884,7 +886,7 @@ sub sockservice  { my $self = shift; scalar +( $self->_get_host_service( $self->
 
 =head2 sockaddr
 
-   $addr = $sock->sockaddr
+   $addr = $sock->sockaddr;
 
 Return the local address as a binary octet string
 
@@ -894,7 +896,7 @@ sub sockaddr { my $self = shift; _unpack_sockaddr $self->sockname }
 
 =head2 peerhost_service
 
-   ( $host, $service ) = $sock->peerhost_service( $numeric )
+   ( $host, $service ) = $sock->peerhost_service( $numeric );
 
 Returns the hostname and service name of the peer address (that is, the
 socket address given by the C<peername> method), similar to the
@@ -917,25 +919,25 @@ sub peerhost_service
 
 =head2 peerhost
 
-   $addr = $sock->peerhost
+   $addr = $sock->peerhost;
 
 Return the numeric form of the peer address as a textual representation
 
 =head2 peerport
 
-   $port = $sock->peerport
+   $port = $sock->peerport;
 
 Return the numeric form of the peer port number
 
 =head2 peerhostname
 
-   $host = $sock->peerhostname
+   $host = $sock->peerhostname;
 
 Return the resolved name of the peer address
 
 =head2 peerservice
 
-   $service = $sock->peerservice
+   $service = $sock->peerservice;
 
 Return the resolved name of the peer port number
 
@@ -949,7 +951,7 @@ sub peerservice  { my $self = shift; scalar +( $self->_get_host_service( $self->
 
 =head2 peeraddr
 
-   $addr = $peer->peeraddr
+   $addr = $peer->peeraddr;
 
 Return the peer address as a binary octet string
 
@@ -1001,7 +1003,7 @@ BEGIN {
 
 =head2 as_inet
 
-   $inet = $sock->as_inet
+   $inet = $sock->as_inet;
 
 Returns a new L<IO::Socket::INET> instance wrapping the same filehandle. This
 may be useful in cases where it is required, for backward-compatibility, to
@@ -1060,7 +1062,7 @@ called in a child process.
    use IO::Socket::IP;
    use Errno qw( EINPROGRESS EWOULDBLOCK );
 
-   my @peeraddrinfo = ... # Caller must obtain the getaddinfo result here
+   my @peeraddrinfo = ... # Caller must obtain the getaddrinfo result here
 
    my $socket = IO::Socket::IP->new(
       PeerAddrInfo => \@peeraddrinfo,
@@ -1103,9 +1105,13 @@ of the following special forms then special parsing is applied.
 The value of the C<...Host> argument will be split to give both the hostname
 and port (or service name):
 
+=for highlighter
+
    hostname.example.org:http    # Host name
    192.0.2.1:80                 # IPv4 address
    [2001:db8::1]:80             # IPv6 address
+
+=for highlighter language=perl
 
 In each case, the port or service name (e.g. C<80>) is passed as the
 C<LocalService> or C<PeerService> argument.
@@ -1132,16 +1138,16 @@ Returns a 2-element list, containing either the split hostname and port
 description if it could be parsed, or the given address and C<undef> if it was
 not recognised.
 
-   IO::Socket::IP->split_addr( "hostname:http" )
+   IO::Socket::IP->split_addr( "hostname:http" );
                                 # ( "hostname",  "http" )
 
-   IO::Socket::IP->split_addr( "192.0.2.1:80" )
+   IO::Socket::IP->split_addr( "192.0.2.1:80" );
                                 # ( "192.0.2.1", "80"   )
 
-   IO::Socket::IP->split_addr( "[2001:db8::1]:80" )
+   IO::Socket::IP->split_addr( "[2001:db8::1]:80" );
                                 # ( "2001:db8::1", "80" )
 
-   IO::Socket::IP->split_addr( "something.else" )
+   IO::Socket::IP->split_addr( "something.else" );
                                 # ( "something.else", undef )
 
 =cut
@@ -1219,7 +1225,7 @@ sub configure
    $self->configure( { %$arg, Family => Socket::AF_INET6() } );
 }
 
-=head1 C<IO::Socket::INET> INCOMPATIBILITES
+=head1 C<IO::Socket::INET> INCOMPATIBILITIES
 
 =over 4
 

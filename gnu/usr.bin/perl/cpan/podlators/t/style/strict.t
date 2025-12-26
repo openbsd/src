@@ -6,7 +6,7 @@
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2016, 2018-2021 Russ Allbery <eagle@eyrie.org>
+# Copyright 2016, 2018-2021, 2024 Russ Allbery <eagle@eyrie.org>
 # Copyright 2013-2014
 #     The Board of Trustees of the Leland Stanford Junior University
 #
@@ -30,8 +30,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.010;
-use strict;
+use 5.012;
+use autodie;
 use warnings;
 
 use lib 't/lib';
@@ -48,7 +48,7 @@ skip_unless_automated('Strictness tests');
 use_prereq('Test::Strict', '0.25');
 
 # Directories to exclude from checks.
-my %EXCLUDE = map { $_ => 1 } qw(.git blib);
+my %EXCLUDE = map { $_ => 1 } qw(.git blib local);
 
 # Determine whether we want to check the given file or top-level directory.
 # Assume that the only interesting files at the top level are directories or
@@ -71,10 +71,9 @@ sub should_check {
 # case when using dgit).  We therefore can't just point it at the root of the
 # module distribution and instead have to manually construct a list of
 # interesting files.
-opendir(my $rootdir, File::Spec->curdir)
-  or die "$0: cannot open current directory: $!\n";
+opendir(my $rootdir, File::Spec->curdir);
 my @files = File::Spec->no_upwards(readdir($rootdir));
-closedir($rootdir) or die "$0: cannot close current directory: $!\n";
+closedir($rootdir);
 my @to_check = grep { should_check($_) } @files;
 
 # Test the files and top-level directories we found, including checking for

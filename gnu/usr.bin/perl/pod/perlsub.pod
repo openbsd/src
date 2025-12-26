@@ -401,9 +401,9 @@ one parameter vary according to the earlier parameters.  For example,
         print "$first_name $surname is known as \"$nickname\"";
     }
 
-A default value expression can also be written using the C<//=> operator,
-where it will be evaluated and used if the caller omitted a value or the
-value provided was C<undef>.
+Since Perl 5.38, a default value expression can also be written using the
+C<//=> operator, where it will be evaluated and used if the caller omitted
+a value or the value provided was C<undef>.
 
     sub foo ($name //= "world") {
         print "Hello, $name";
@@ -411,9 +411,9 @@ value provided was C<undef>.
 
     foo(undef);  # will print "Hello, world"
 
-Similarly, the C<||=> operator can be used to provide a default
-expression to be used whenever the caller provided a false value (and
-remember that a missing or C<undef> value are also false).
+Similarly since Perl 5.38, the C<||=> operator can be used to provide a
+default expression to be used whenever the caller provided a false value
+(and remember that a missing or C<undef> value are also false).
 
     sub foo ($x ||= 10) {
         return 5 + $x;
@@ -439,7 +439,7 @@ is not important, it may be omitted just as the parameter's name was:
     }
 
 Optional positional parameters must come after all mandatory positional
-parameters.  (If there are no mandatory positional parameters then an
+parameters.  (If there are no mandatory positional parameters then the
 optional positional parameters can be the first thing in the signature.)
 If there are multiple optional positional parameters and not enough
 arguments are supplied to fill them all, they will be filled from left
@@ -1301,7 +1301,7 @@ in C<@Fields>.
         @Fields = split /^\s*=+\s*$/;
     }
 
-It particular, it's important to C<local>ize $_ in any routine that assigns
+In particular, it's important to C<local>ize $_ in any routine that assigns
 to it.  Look out for implicit assignments in C<while> conditionals.
 
 =item 2.
@@ -1363,7 +1363,7 @@ do that, you need to understand references as detailed in L<perlref>.
 This section may not make much sense to you otherwise.
 
 Here are a few simple examples.  First, let's pass in several arrays
-to a function and have it C<pop> all of then, returning a new list
+to a function and have it C<pop> all of them, returning a new list
 of all their former last elements:
 
     @tailings = popmany ( \@w, \@x, \@y, \@z );

@@ -13,6 +13,25 @@
 
 static int not_here(const char *s);
 
+#if defined(__MINGW32__) && !defined(USE_QUADMATH)
+
+/* If nvtype is long double, the bessel functions still
+ * operate at "double precision" only - as in the past.
+ * Mingw's math.h makes no provision for j0l, y0l, etc.
+ *
+ * Unfortunately the mingw64 supplied headers cannot be
+ * convinced to declare these functions with -std=c99.
+ */
+   double __cdecl _hypot(double x, double y);
+   double __cdecl _j0(double d);
+   double __cdecl _j1(double d);
+   double __cdecl _jn(int n, double d);
+   double __cdecl _y0(double d);
+   double __cdecl _y1(double d);
+   double __cdecl _yn(int n, double d);
+
+#endif
+
 #if defined(PERL_IMPLICIT_SYS)
 #  undef signal
 #  undef open
@@ -572,7 +591,7 @@ static int not_here(const char *s);
 #  undef c99_trunc
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || (defined(__MINGW32__) && !defined(USE_QUADMATH))
 
 /* Some APIs exist under Win32 with "underbar" names. */
 #  undef c99_hypot
@@ -1722,7 +1741,7 @@ fix_win32_tzenv(void)
         newenv = (char*)malloc((strlen(perl_tz_env) + 4) * sizeof(char));
         if (newenv != NULL) {
             sprintf(newenv, "TZ=%s", perl_tz_env);
-            putenv(newenv);
+            _putenv(newenv);
             if (oldenv != NULL)
                 free(oldenv);
             oldenv = newenv;
@@ -3569,7 +3588,7 @@ difftime(time1, time2)
 #     sv_setpv(TARG, ...) could be used rather than
 #     ST(0) = sv_2mortal(newSVpv(...))
 void
-strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
+strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = 0)
 	SV *		fmt
 	int		sec
 	int		min
@@ -3582,8 +3601,13 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
 	int		isdst
     CODE:
 	{
+            PERL_UNUSED_ARG(wday);
+            PERL_UNUSED_ARG(yday);
+
+            /* -isdst triggers backwards compatibility mode for non-zero
+             * 'isdst' */
             SV *sv = sv_strftime_ints(fmt, sec, min, hour, mday, mon, year,
-                                      wday, yday, isdst);
+                                           -abs(isdst));
 	    if (sv) {
                 sv = sv_2mortal(sv);
             }

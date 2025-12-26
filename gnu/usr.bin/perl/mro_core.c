@@ -95,7 +95,7 @@ Perl_mro_set_private_data(pTHX_ struct mro_meta *const smeta,
     if (!Perl_hv_common(aTHX_ smeta->mro_linear_all, NULL,
                         which->name, which->length, which->kflags,
                         HV_FETCH_ISSTORE, data, which->hash)) {
-        Perl_croak(aTHX_ "panic: hv_store() failed in set_mro_private_data() "
+        croak("panic: hv_store() failed in set_mro_private_data() "
                    "for '%.*s' %d", (int) which->length, which->name,
                    which->kflags);
     }
@@ -146,7 +146,7 @@ Perl_mro_register(pTHX_ const struct mro_alg *mro) {
                         mro->name, mro->length, mro->kflags,
                         HV_FETCH_ISSTORE, wrapper, mro->hash)) {
         SvREFCNT_dec_NN(wrapper);
-        Perl_croak(aTHX_ "panic: hv_store() failed in mro_register() "
+        croak("panic: hv_store() failed in mro_register() "
                    "for '%.*s' %d", (int) mro->length, mro->name, mro->kflags);
     }
 }
@@ -250,10 +250,10 @@ S_mro_get_linear_isa_dfs(pTHX_ HV *stash, U32 level)
         : HvNAME_HEK(stash);
 
     if (!stashhek)
-      Perl_croak(aTHX_ "Can't linearize anonymous symbol table");
+      croak("Can't linearize anonymous symbol table");
 
     if (level > 100)
-        Perl_croak(aTHX_
+        croak(
                   "Recursive inheritance detected in package '%" HEKf "'",
                    HEKfARG(stashhek));
 
@@ -418,11 +418,11 @@ Perl_mro_get_linear_isa(pTHX_ HV *stash)
 
     PERL_ARGS_ASSERT_MRO_GET_LINEAR_ISA;
     if(!HvHasAUX(stash))
-        Perl_croak(aTHX_ "Can't linearize anonymous symbol table");
+        croak("Can't linearize anonymous symbol table");
 
     meta = HvMROMETA(stash);
     if (!meta->mro_which)
-        Perl_croak(aTHX_ "panic: invalid MRO!");
+        croak("panic: invalid MRO!");
     isa = meta->mro_which->resolve(aTHX_ stash, 0);
 
     if (meta->mro_which != &dfs_alg) { /* skip for dfs, for speed */
@@ -521,7 +521,7 @@ Perl_mro_isa_changed_in(pTHX_ HV* stash)
     PERL_ARGS_ASSERT_MRO_ISA_CHANGED_IN;
 
     if(!stashname)
-        Perl_croak(aTHX_ "Can't call mro_isa_changed_in() on anonymous symbol table");
+        croak("Can't call mro_isa_changed_in() on anonymous symbol table");
 
 
     /* wipe out the cached linearizations for this stash */
@@ -1192,7 +1192,7 @@ S_mro_gather_and_rename(pTHX_ HV * const stashes, HV * const seen_stashes,
                             }
                         }
                         else {
-                            subname = sv_2mortal(newSVsv(namesv));
+                            subname = sv_mortalcopy_flags(namesv, SV_GMAGIC|SV_NOSTEAL);
                             if (len == 1) sv_catpvs(subname, ":");
                             else {
                                 sv_catpvs(subname, "::");
@@ -1275,7 +1275,7 @@ S_mro_gather_and_rename(pTHX_ HV * const stashes, HV * const seen_stashes,
                             }
                         }
                         else {
-                            subname = sv_2mortal(newSVsv(namesv));
+                            subname = sv_mortalcopy_flags(namesv, SV_GMAGIC|SV_NOSTEAL);
                             if (len == 1) sv_catpvs(subname, ":");
                             else {
                                 sv_catpvs(subname, "::");
@@ -1334,7 +1334,7 @@ Perl_mro_method_changed_in(pTHX_ HV *stash)
     const char * const stashname = HvENAME_get(stash);
 
     if(!stashname)
-        Perl_croak(aTHX_ "Can't call mro_method_changed_in() on anonymous symbol table");
+        croak("Can't call mro_method_changed_in() on anonymous symbol table");
 
     const STRLEN stashname_len = HvENAMELEN_get(stash);
 
@@ -1400,7 +1400,7 @@ Perl_mro_set_mro(pTHX_ struct mro_meta *const meta, SV *const name)
     PERL_ARGS_ASSERT_MRO_SET_MRO;
 
     if (!which)
-        Perl_croak(aTHX_ "Invalid mro name: '%" SVf "'", name);
+        croak("Invalid mro name: '%" SVf "'", name);
 
     if(meta->mro_which != which) {
         if (meta->mro_linear_current && !meta->mro_linear_all) {
@@ -1446,7 +1446,7 @@ XS(XS_mro_method_changed_in)
     classname = ST(0);
 
     class_stash = gv_stashsv(classname, 0);
-    if(!class_stash) Perl_croak(aTHX_ "No such class: '%" SVf "'!", SVfARG(classname));
+    if(!class_stash) croak("No such class: '%" SVf "'!", SVfARG(classname));
 
     mro_method_changed_in(class_stash);
 

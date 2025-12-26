@@ -765,7 +765,7 @@ for it (unfortunately) is "Default".
 
 Whenever you can, use the
 L<< C<unicode_strings>|feature/"The 'unicode_strings' feature" >>
-to cause X</u> to be the default instead.
+to cause C</u> to be the default instead.
 
 =head4 /a (and /aa)
 
@@ -1348,26 +1348,42 @@ their punctuation character equivalents, however at the trade-off that you
 have to tell perl when you want to use them.
 X</p> X<p modifier>
 
-=head2 Quoting metacharacters
+=head2 Quoting (escaping) metacharacters
 
-Backslashed metacharacters in Perl are alphanumeric, such as C<\b>,
-C<\w>, C<\n>.  Unlike some other regular expression languages, there
-are no backslashed symbols that aren't alphanumeric.  So anything
-that looks like C<\\>, C<\(>, C<\)>, C<\[>, C<\]>, C<\{>, or C<\}> is
-always
-interpreted as a literal character, not a metacharacter.  This was
-once used in a common idiom to disable or quote the special meanings
-of regular expression metacharacters in a string that you want to
-use for a pattern. Simply quote all non-"word" characters:
+To cause a metacharacter to match its literal self, you precede it with
+a backslash.  Unlike some other regular expression languages, any
+sequence consisting of a backslash followed by a non-alphanumeric
+matches that non-alphanumeric, literally.  So things like C<\\>, C<\(>,
+C<\)>, C<\[>, C<\]>, C<\{>, or C<\}> are always interpreted as the
+literal character that follows the backslash.
 
-    $pattern =~ s/(\W)/\\$1/g;
+(That's not true when an alphanumeric character is preceded by a
+backslash.  There are a few such "escape sequences", like C<\w>, which have
+special matching behaviors in Perl.  All such are currently limited to
+ASCII-range alphanumerics.)
 
-(If C<use locale> is set, then this depends on the current locale.)
-Today it is more common to use the C<L<quotemeta()|perlfunc/quotemeta>>
-function or the C<\Q> metaquoting escape sequence to disable all
-metacharacters' special meanings like this:
+The best method to escape metacharacters is to use the
+C<L<quotemeta()|perlfunc/quotemeta>> function, or the equivalent, but the
+more flexible, and often more convenient, C<\Q> metaquoting escape
+sequence
 
-    /$unquoted\Q$quoted\E$unquoted/
+    quotemeta $pattern;
+
+This changes C<$pattern> so that the metacharacters are quoted.  You can
+then do
+
+    $string =~ s/$pattern/foo/;
+
+and be assured that any metacharacters in C<$pattern> will match their
+literal selves.  If you instead use C<\Q>, like:
+
+    $string =~ s/\Qpattern/foo/;
+
+you don't have to have a separate C<$pattern> variable.  Further, there
+is an additional escape sequence, C<\E> that can be combined with C<\Q>
+to allow you to escape whatever portions of the pattern you desire:
+
+    $string =~ s/$unquoted\Q$quoted\E$unquoted/foo/;
 
 Beware that if you put literal backslashes (those not inside
 interpolated variables) between C<\Q> and C<\E>, double-quotish
@@ -1375,7 +1391,18 @@ backslash interpolation may lead to confusing results.  If you
 I<need> to use literal backslashes within C<\Q...\E>,
 consult L<perlop/"Gory details of parsing quoted constructs">.
 
-C<quotemeta()> and C<\Q> are fully described in L<perlfunc/quotemeta>.
+In older code, you may see something like this:
+
+    $pattern =~ s/(\W)/\\$1/g;
+    $string =~ s/$pattern/foo/;
+
+This simply adds backslashes before all non-"word" characters to disable
+any special meanings they might have.  (If S<C<use locale>> is in
+effect, the current locale can affect the results.)  This paradigm is
+inadequate for Unicode.
+
+C<quotemeta()> and C<\Q> are more fully described in
+L<perlfunc/quotemeta>.
 
 =head2 Extended Patterns
 
@@ -1689,7 +1716,7 @@ automatically if you use a variable length positive lookbehind assertion.
 
 In Perl 5.35.10 the scope of the experimental nature of this construct
 has been reduced, and experimental warnings will only be produced when
-the construct contains capturing parenthesis. The warnings will be
+the construct contains capturing parentheses. The warnings will be
 raised at pattern compilation time, unless turned off, in the
 C<experimental::vlb> category.  This is to warn you that the exact
 contents of capturing buffers in a variable length positive lookbehind
@@ -2021,7 +2048,7 @@ L</Embedded Code Execution Frequency>.
 This is a "postponed" regular subexpression.  It behaves in I<exactly> the
 same way as a C<(?{ I<code> })> code block as described above, except that
 its return value, rather than being assigned to C<$^R>, is treated as a
-pattern, compiled if it's a string (or used as-is if its a qr// object),
+pattern, compiled if it's a string (or used as-is if it's a qr// object),
 then matched as if it were inserted instead of this construct.
 
 During the matching of this sub-pattern, it has its own set of
@@ -2667,7 +2694,7 @@ could be all Cyrillic (except for the dot), or they could be a mixture
 of the two.  In the case of an internet address the C<.com> would be in
 Latin, And any Cyrillic ones would cause it to be a mixture, not a
 script run.  Someone clicking on such a link would not be directed to
-the real Paypal website, but an attacker would craft a look-alike one to
+the real PayPal website, but an attacker would craft a look-alike one to
 attempt to gather sensitive information from the person.
 
 Starting in Perl 5.28, it is now easy to detect strings that aren't
@@ -3383,6 +3410,10 @@ Backreference to a named capture group. Equivalent to C<< \g{I<NAME>} >>.
 Subroutine call to a named capture group. Equivalent to C<< (?&I<NAME>) >>.
 
 =back
+
+=head2 Quoting metacharacters
+
+This section has been replaced by L</Quoting (escaping) metacharacters>.
 
 =head1 BUGS
 

@@ -2,15 +2,15 @@
 #
 # Tests for backward compatibility with Pod::Parser.
 #
-# Copyright 2006, 2008-2009, 2012, 2015, 2018-2019 Russ Allbery <rra@cpan.org>
+# Copyright 2006, 2008-2009, 2012, 2015, 2018-2019, 2024
+#     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.008;
-use strict;
+use 5.012;
 use warnings;
 
 use lib 't/lib';

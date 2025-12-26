@@ -234,7 +234,7 @@ use strict;
                             # substr starts off with 4 bits set in
                             # ck_fun(), but since it never has more than 7
                             # args, bit 3 is later stolen
-                            qw(substr);
+                            qw(substr substr_left);
 
     $args4{$_} = 1 for  keys %maxarg,
                         grep !$args0{$_} && !$args1{$_}
@@ -534,16 +534,31 @@ for (qw(trans transr)) {
     addbits($_,
         # There is a character in the lhs representable not using UTF-8 whose
         # replacement requires UTF-8.
-        0 => qw(OPpTRANS_CAN_FORCE_UTF8 CAN_FORCE_UTF8),    # 0-255 range
-                                              # character maps to 256-INF
-        1 => qw(OPpTRANS_USE_SVOP   USE_SVOP),# This is implemented an an svop
-                                              # vs pvop
+        '0..1' =>  {
+            mask_def      => 'OPpTRANS_MASK',
+            baseshift_def => 'OPpTRANS_SHIFT',
+            bitcount_def  => 'OPpTRANS_BITS',
+            label         => 'TRANS',
+            enum          => [ qw(
+                                1   OPpTRANS_ONLY_UTF8_INVARIANTS
+                                    ONLY_UTF8_INVARIANTS
+                                2   OPpTRANS_CAN_FORCE_UTF8  CAN_FORCE_UTF8
+                                3   OPpTRANS_GROWS           GROWS
+                            )],
+
+                            # 1 => Only chars whose representation is the same
+                            #      in UTF-8 vs not are involved in the operation
+                            # 2 => Some 0-255 range char maps to 256-INF char
+                            # 3 => Some replacement chars occupy more space
+                            #      than their src
+        },
+
         2 => qw(OPpTRANS_IDENTICAL  IDENT),   # right side is same as left
         3 => qw(OPpTRANS_SQUASH     SQUASH),  # /s
         # 4 is used for OPpTARGET_MY
         5 => qw(OPpTRANS_COMPLEMENT COMPL),   # /c
-        6 => qw(OPpTRANS_GROWS      GROWS),   # replacement chars longer than
-                                              #    src chars
+        6 => qw(OPpTRANS_USE_SVOP   USE_SVOP),# This is implemented as an svop
+                                              # vs pvop
         7 => qw(OPpTRANS_DELETE     DEL),     # /d
     );
 }
@@ -675,7 +690,8 @@ addbits('enteriter',
                     1 => qw(OPpITER_REVERSED REVERSED),# for (reverse ...)
                     3 => qw(OPpITER_DEF      DEF),     # 'for $_'
 );
-addbits('iter',     1 => qw(OPpITER_REVERSED REVERSED));
+addbits('iter',     1 => qw(OPpITER_REVERSED REVERSED),
+                    2 => qw(OPpITER_INDEXED  INDEXED));
 
 
 
@@ -788,7 +804,7 @@ addbits('coreargs',
    #2 reserved for OPpDONT_INIT_GV in rv2gv
    #4 reserved for OPpALLOW_FAKE   in rv2gv
     6 => qw(OPpCOREARGS_SCALARMOD $MOD  ), # \$ rather than \[$@%*]
-    7 => qw(OPpCOREARGS_PUSHMARK  MARK  ), # Call pp_pushmark
+    7 => qw(OPpCOREARGS_PUSHMARK  MARK  ), # Call PUSHMARK
 );
 
 

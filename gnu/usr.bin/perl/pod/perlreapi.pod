@@ -660,7 +660,7 @@ values.
            the distinction between physical and logical capture buffers */
         U32 nparens;                    /* physical number of capture buffers */
         U32 logical_nparens;            /* logical_number of capture buffers */
-        I32 *logical_to_parno;          /* map logical parno to first physcial */
+        I32 *logical_to_parno;          /* map logical parno to first physical */
         I32 *parno_to_logical;          /* map every physical parno to logical */
         I32 *parno_to_logical_next;     /* map every physical parno to the next
                                            physical with the same logical id */

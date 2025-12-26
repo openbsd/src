@@ -438,7 +438,7 @@ Now a no-op.
 #  define __attribute__nonnull__(a)         __attribute__((nonnull(a)))
 #endif
 #ifdef HASATTRIBUTE_NORETURN
-#  define __attribute__noreturn__           __attribute__((noreturn))
+#  define __attribute__noreturn__           __attribute__((__noreturn__))
 #endif
 #ifdef HASATTRIBUTE_PURE
 #  define __attribute__pure__               __attribute__((pure))
@@ -789,8 +789,8 @@ Now a placeholder that declares nothing
 
 /*
 =for apidoc_section $directives
-=for apidoc AmnUu|void|STMT_END
-=for apidoc_item |    |STMT_START
+=for apidoc AmnUu|void|STMT_START
+=for apidoc_item |    |STMT_END
 
 These allow a series of statements in a macro to be used as a single statement,
 as in
@@ -955,13 +955,13 @@ symbol would not be defined on C<L</EBCDIC>> platforms.
 
 /*
 =for apidoc_section $tainting
-=for apidoc Cm|void|TAINT
+=for apidoc Cmn|void|TAINT
 
 If we aren't in taint checking mode, do nothing;
 otherwise indicate to L</C<TAINT_set>> and L</C<TAINT_PROPER>> that some
 unspecified element is tainted.
 
-=for apidoc Cm|void|TAINT_NOT
+=for apidoc Cmn|void|TAINT_NOT
 
 Remove any taintedness previously set by, I<e.g.>, C<TAINT>.
 
@@ -970,7 +970,7 @@ Remove any taintedness previously set by, I<e.g.>, C<TAINT>.
 If C<c> evaluates to true, call L</C<TAINT>> to indicate that something is
 tainted; otherwise do nothing.
 
-=for apidoc Cmn|void|TAINT_ENV
+=for apidoc Cm|void|TAINT_ENV
 
 Looks at several components of L<C<%ENV>|perlvar/%ENV> for taintedness, and
 calls L</C<taint_proper>> if any are tainted.  The components it searches are
@@ -987,11 +987,11 @@ tainting violation.  If such violations are fatal, it croaks.
 If C<s> is true, L</C<TAINT_get>> returns true;
 If C<s> is false, L</C<TAINT_get>> returns false;
 
-=for apidoc Cm|bool|TAINT_get
+=for apidoc Cmn|bool|TAINT_get
 
 Returns a boolean as to whether some element is tainted or not.
 
-=for apidoc Cm|bool|TAINTING_get
+=for apidoc Cmn|bool|TAINTING_get
 
 Returns a boolean as to whether taint checking is enabled or not.
 
@@ -999,7 +999,7 @@ Returns a boolean as to whether taint checking is enabled or not.
 
 Turn taint checking mode off/on
 
-=for apidoc Cm|bool|TAINT_WARN_get
+=for apidoc Cmn|bool|TAINT_WARN_get
 
 Returns false if tainting violations are fatal;
 Returns true if they're just warnings
@@ -1231,12 +1231,12 @@ typedef enum {
  * platform that instead uses positional notation.  By doing this, you can find
  * many bugs without trying it out on a real such platform.  It would be
  * possible to create the reverse definitions for people who have ready access
- * to a posiional notation box, but harder to get a name=value box */
+ * to a positional notation box, but harder to get a name=value box */
 #  if defined(USE_FAKE_LC_ALL_POSITIONAL_NOTATION)            \
    && defined(PERL_LC_ALL_USES_NAME_VALUE_PAIRS)
 #    undef  PERL_LC_ALL_USES_NAME_VALUE_PAIRS
 
-#    define  PERL_LC_ALL_CATEGORY_POSITIONS_INIT /* Assumes glibc cateories */\
+#    define  PERL_LC_ALL_CATEGORY_POSITIONS_INIT /* Assumes glibc categories */\
                                   { 12, 11, 10, 9, 8, 7, 5, 4, 3, 2, 1, 0 }
 #    define  PERL_LC_ALL_SEPARATOR "/ = /"
 #  endif
@@ -1694,21 +1694,7 @@ Use L</UV> to declare variables of the maximum usable size on this platform.
 #  define STRUCT_OFFSET(s,m)  offsetof(s,m)
 #endif
 
-/* ptrdiff_t is C11, so undef it under pedantic builds.  (Actually it is
- * in C89, but apparently there are platforms where it doesn't exist.  See
- * thread beginning at http://nntp.perl.org/group/perl.perl5.porters/251541.)
- * */
-#ifdef PERL_GCC_PEDANTIC
-#   undef HAS_PTRDIFF_T
-#endif
-
-#ifdef HAS_PTRDIFF_T
-#  define Ptrdiff_t ptrdiff_t
-#else
-#  define Ptrdiff_t SSize_t
-#endif
-
-#  include <string.h>
+#include <string.h>
 
 /* This comes after <stdlib.h> so we don't try to change the standard
  * library prototypes; we'll use our own in proto.h instead. */
@@ -2511,7 +2497,8 @@ typedef UVTYPE UV;
 
 /*
 =for apidoc_section $casting
-=for apidoc Cyh|type|NUM2PTR|type|int value
+=for apidoc Cmh|type|NUM2PTR|type|int value
+
 You probably want to be using L<C</INT2PTR>> instead.
 
 =cut
@@ -2559,22 +2546,7 @@ You probably want to be using L<C</INT2PTR>> instead.
 #  endif
 #endif
 
-/* On MS Windows,with 64-bit mingw-w64 compilers, we
-   need to attend to a __float128 alignment issue if
-   USE_QUADMATH is defined. Otherwise we simply:
-   typedef NVTYPE NV
-   32-bit mingw.org compilers might also require
-   aligned(32) - at least that's what I found with my
-   Math::Foat128 module. But this is as yet untested
-   here, so no allowance is being made for mingw.org
-   compilers at this stage. -- sisyphus January 2021
-*/
-#if (defined(USE_LONG_DOUBLE) || defined(USE_QUADMATH)) && defined(__MINGW64__)
-   /* 64-bit build, mingw-w64 compiler only */
-   typedef NVTYPE NV __attribute__ ((aligned(8)));
-#else
-   typedef NVTYPE NV;
-#endif
+typedef NVTYPE NV;
 
 #ifdef I_IEEEFP
 #   include <ieeefp.h>
@@ -2676,11 +2648,8 @@ extern long double Perl_my_frexpl(long double x, int *e);
 #       endif
 #   endif
 #   ifndef Perl_isnan
-#       if defined(HAS_ISNANL) && !(defined(isnan) && defined(HAS_C99))
-#           define Perl_isnan(x) isnanl(x)
-#       elif defined(__sgi) && defined(__c99)  /* XXX Configure test needed */
-#           define Perl_isnan(x) isnan(x)
-#       endif
+        /* C99 requites that isnan() also support long double */
+#       define Perl_isnan(x) isnan(x)
 #   endif
 #   ifndef Perl_isinf
 #       if defined(HAS_ISINFL) && !(defined(isinf) && defined(HAS_C99))
@@ -3113,10 +3082,7 @@ extern long double Perl_my_frexpl(long double x, int *e);
 #define my_atof2(a,b) my_atof3(a,b,0)
 
 /*
-=for apidoc AmTR|NV|Atof|NN const char * const s
-
-This is a synonym for L</C<my_atof>>.
-
+=for apidoc_defn AmTR|NV|Atof|NN const char * const s
 =cut
 
 */
@@ -3327,7 +3293,9 @@ typedef struct padname PADNAME;
 #endif
 
 #include "handy.h"
-#include "charclass_invlists.h"
+#if defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_REGEXEC_C) || defined(PERL_IN_UTF8_C)
+#  include "charclass_invlists.inc"
+#endif
 
 #if defined(USE_LARGE_FILES) && !defined(NO_64_BIT_RAWIO)
 #   if LSEEKSIZE == 8 && !defined(USE_64_BIT_RAWIO)
@@ -3610,6 +3578,8 @@ freeing any remaining Perl interpreters.
 #define PERL_SYS_INIT(argc, argv)	Perl_sys_init(argc, argv)
 #define PERL_SYS_INIT3(argc, argv, env)	Perl_sys_init3(argc, argv, env)
 #define PERL_SYS_TERM()			Perl_sys_term()
+
+#define SHUTDOWN_TERM PL_shutdownhook();
 
 #ifndef PERL_WRITE_MSG_TO_CONSOLE
 #  define PERL_WRITE_MSG_TO_CONSOLE(io, msg, len) PerlIO_write(io, msg, len)
@@ -4404,9 +4374,6 @@ intrinsic function, see its documents for more details.
 void init_os_extras(void);
 #endif
 
-#ifdef UNION_ANY_DEFINITION
-UNION_ANY_DEFINITION;
-#else
 union any {
     void*       any_ptr;
     SV*         any_sv;
@@ -4429,7 +4396,6 @@ union any {
     void        (*any_dptr) (void*);
     void        (*any_dxptr) (pTHX_ void*);
 };
-#endif
 
 typedef I32 (*filter_t) (pTHX_ int, SV *, int);
 
@@ -4514,6 +4480,8 @@ typedef        struct crypt_data {     /* straight from /usr/include/crypt.h */
 
 #include "perly.h"
 
+/* opaque struct type used to communicate between xop_dump and opdump_printf */
+struct Perl_OpDumpContext;
 
 /* macros to define bit-fields in structs. */
 #ifndef PERL_BITFIELD8
@@ -4764,6 +4732,11 @@ The largest signed integer that fits in an IV on this platform.
 =for apidoc Amn|IV|IV_MIN
 The negative signed integer furthest away from 0 that fits in an IV on this
 platform.
+
+It is easy to get undefined C behavior with this value.  The macros (currently
+only available for internal use) L<perlintern/C<NEGATE_2UV>>,
+L<perlintern/C<ABS_IV_MIN>>, and L<perlintern/C<NEGATE_2IV>> avoid
+undefined behavior when finding the opposite signed equivalent value.
 
 =for apidoc Amn|UV|UV_MAX
 The largest unsigned integer that fits in a UV on this platform.
@@ -5362,6 +5335,7 @@ typedef int  (*thrhook_proc_t) (pTHX);
 typedef OP* (*PPADDR_t[]) (pTHX);
 typedef bool (*destroyable_proc_t) (pTHX_ SV *sv);
 typedef void (*despatch_signals_proc_t) (pTHX);
+typedef void (*shutdown_proc_t)();
 
 #if defined(__DYNAMIC__) && defined(PERL_DARWIN) && defined(PERL_CORE)
 #  include <crt_externs.h>	/* for the env array */
@@ -5448,7 +5422,7 @@ string.  All you are interested in is the first character of that string.  To
 get uppercase letters (for the values 10..15), add 16 to the index.  Hence,
 C<PL_hexdigit[11]> is C<'b'>, and C<PL_hexdigit[11+16]> is C<'B'>.  Adding 16
 to an index whose representation is '0'..'9' yields the same as not adding 16.
-Indices outside the range 0..31 result in (bad) undedefined behavior.
+Indices outside the range 0..31 result in (bad) undefined behavior.
 
 =cut
 */
@@ -5555,7 +5529,7 @@ EXTCONST  unsigned char PL_fold[] = {
 
 EXTCONST  unsigned char PL_fold_latin1[] = {
     /* Full latin1 complement folding, except for three problematic code points:
-     *	Micro sign (181 = 0xB5) and y with diearesis (255 = 0xFF) have their
+     *	Micro sign (181 = 0xB5) and y with diaeresis (255 = 0xFF) have their
      *	fold complements outside the Latin1 range, so can't match something
      *	that isn't in utf8.
      *	German lower case sharp s (223 = 0xDF) folds to two characters, 'ss',
@@ -5940,7 +5914,7 @@ typedef enum {
 #define HINT_STRICT_REFS	0x00000002 /* strict pragma */
 #define HINT_LOCALE		0x00000004 /* locale pragma */
 #define HINT_BYTES		0x00000008 /* bytes pragma */
-#define HINT_LOCALE_PARTIAL	0x00000010 /* locale, but a subset of categories */
+#define HINT_ASCII_ENCODING     0x00000010 /* source::encoding */
 
 #define HINT_EXPLICIT_STRICT_REFS	0x00000020 /* strict.pm */
 #define HINT_EXPLICIT_STRICT_SUBS	0x00000040 /* strict.pm */
@@ -6386,13 +6360,17 @@ EXTCONST U8   PL_deBruijn_bitpos_tab64[];
 #  define PERL_SET_THX(t)		NOOP
 #endif
 
+/* Create a reentrant lock mechanism.  Currently these are also
+ * many-readers/1-writer locks, simply because that's all that is so far needed
+ * */
 #ifdef WIN32
     /* Windows mutexes are all general semaphores; we don't currently bother
      * with reproducing the same panic behavior as on other systems */
 #  define PERL_REENTRANT_LOCK(name, mutex, counter,                         \
                               cond_to_panic_if_already_locked)              \
-        MUTEX_LOCK(mutex)
-#  define PERL_REENTRANT_UNLOCK(name, mutex, counter)  MUTEX_UNLOCK(mutex)
+        PERL_WRITE_LOCK(mutex)
+
+#  define PERL_REENTRANT_UNLOCK(name, mutex, counter)  PERL_WRITE_UNLOCK(mutex)
 #else
 
     /* Simulate a general (or recursive) semaphore on 'mutex' whose name will
@@ -6421,7 +6399,7 @@ EXTCONST U8   PL_deBruijn_bitpos_tab64[];
                                 "%s: %d: locking " name "; lock depth=1\n", \
                                 __FILE__, __LINE__));                       \
             )                                                               \
-            MUTEX_LOCK(mutex);                                         \
+            PERL_WRITE_LOCK(mutex);                                         \
             counter = 1;                                                    \
             UNLESS_PERL_MEM_LOG(DEBUG_Lv(PerlIO_printf(Perl_debug_log,      \
                                 "%s: %d: " name " locked; lock depth=1\n",  \
@@ -6446,6 +6424,21 @@ EXTCONST U8   PL_deBruijn_bitpos_tab64[];
         CLANG_DIAG_RESTORE                                                  \
     } STMT_END
 
+#  define PERL_REENTRANT_READ_LOCK(name, mutex, counter)                    \
+    STMT_START {                                                            \
+        CLANG_DIAG_IGNORE(-Wthread-safety)                                  \
+        if (counter <= 0) {                                                 \
+            assert(counter == 0);                                           \
+            PERL_READ_LOCK(mutex);                                          \
+        }                                                                   \
+        else {                                                              \
+            /* This thread already has a write lock on this mutex.  Just    \
+             * increment the number of readers it has */                    \
+            (mutex)->readers_count++;                                       \
+        }                                                                   \
+        CLANG_DIAG_RESTORE                                                  \
+    } STMT_END
+
 #  define PERL_REENTRANT_UNLOCK(name, mutex, counter)                       \
     STMT_START {                                                            \
         if (LIKELY(counter == 1)) {                                         \
@@ -6454,7 +6447,7 @@ EXTCONST U8   PL_deBruijn_bitpos_tab64[];
                           __FILE__, __LINE__));                             \
             )                                                               \
             counter = 0;                                                    \
-            MUTEX_UNLOCK(mutex);                                       \
+            PERL_WRITE_UNLOCK(mutex);                                       \
         }                                                                   \
         else if (counter <= 0) {                                            \
             Perl_croak_nocontext("panic: %s: %d: attempting to unlock"      \
@@ -6469,6 +6462,27 @@ EXTCONST U8   PL_deBruijn_bitpos_tab64[];
                 __FILE__, __LINE__, counter));                              \
             )                                                               \
         }                                                                   \
+    } STMT_END
+
+#  define PERL_REENTRANT_READ_UNLOCK(name, mutex, counter)                  \
+    STMT_START {                                                            \
+        CLANG_DIAG_IGNORE(-Wthread-safety)                                  \
+        if (counter <= 0) {                                                 \
+            assert(count == 0);                                             \
+            PERL_READ_UNLOCK(mutex);                                        \
+        }                                                                   \
+        else if (LIKELY((mutex)->readers_count > 0)) {                      \
+            /* This thread already has a write lock on this mutex.  Just    \
+             * deccrement the number of readers it has */                   \
+            (mutex)->readers_count--;                                       \
+        }                                                                   \
+        else {                                                              \
+            Perl_croak_nocontext("panic: %s: %d: attempting to read unlock" \
+                                 " already unlocked " name "; counter was"  \
+                                 " %zd\n", __FILE__, __LINE__,              \
+                                 (mutex)->readers_count);                   \
+        }                                                                   \
+        CLANG_DIAG_RESTORE                                                  \
     } STMT_END
 
 #endif
@@ -6545,15 +6559,7 @@ static U8 utf8d_C9[] = {
  *          arbitrary class number chosen to not conflict with the above
  *          classes, and to index into the remaining table
  *
- * It would make the code simpler if start byte FF could also be handled, but
- * doing so would mean adding two more classes (one from splitting 80 from 81,
- * and one for FF), and nodes for each of 6 new continuation bytes.  The
- * current table has 436 entries; the new one would require 140 more = 576 (2
- * additional classes for each of the 10 existing nodes, and 20 for each of 6
- * new nodes.  The array would have to be made U16 instead of U8, not worth it
- * for this rarely encountered case
- *
- * The classes are
+ *      byte          class
  *      00-7F           0   Always legal, single byte sequence
  *      80-81           7   Not legal immediately after start bytes E0 F0 F8 FC
  *                          FE
@@ -6574,7 +6580,7 @@ static U8 utf8d_C9[] = {
  *      FD              6   Legal start byte for six byte sequences
  *      FE             17   Some sequences are overlong; others legal
  *                          (is 1 on 32-bit machines, since it overflows)
- *      FF              1   Need to handle specially
+ *      FF              1   Need to handle specially  (explained below)
  */
 
 EXTCONST U8 PL_extended_utf8_dfa_tab[] = {
@@ -6656,7 +6662,54 @@ EXTCONST U8 PL_extended_utf8_dfa_tab[] = {
 /*N10*/  1, 1, 1, 1, 1, 1, 1, 1,N5,N5,N5,N5,N5, 1, 1, 1, 1, 1,
 };
 
-/* And below is a version of the above table that accepts only strict UTF-8.
+/* The first portion of the table is 256 bytes.  To keep the table declarable
+ * as U8, 256 is added to the index when accessing this portion at runtime.
+ * That addition could be eliminated if we were willing to declare the table
+ * U16 and adjust the numbers accordingly.
+ *
+ * FF is handled specially because otherwise the table would need to contain
+ * elements that occupy more than 8 bits and so the table would have to be
+ * declared as U16, so not worth it for this rarely encountered case.  If you
+ * are tempted anyway, here is a sketch of what the nodes would look like:
+ * N0     The initial state, and final accepting one.
+ * N1     Any one continuation byte (80-BF) left.  This is transitioned to
+ *        immediately when the start byte indicates a two-byte sequence
+ * N2     Any two continuation bytes left.
+ * N3     Any three continuation bytes left.
+ * N4     Any four continuation bytes left.
+ * N5     Any five continuation bytes left.
+ * N6     Any six continuation bytes left.
+ * N7     Any seven continuation bytes left.
+ * N8     Any eight continuation bytes left.
+ * N9     Any nine continuation bytes left.
+ * N10    Any ten continuation bytes left.
+ * N11    Start byte is E0.  Continuation bytes 80-9F are illegal (overlong);
+ *        the other continuations transition to N1
+ * N12    Start byte is F0.  Continuation bytes 80-8F are illegal (overlong);
+ *        the other continuations transition to N2
+ * N13    Start byte is F8.  Continuation bytes 80-87 are illegal (overlong);
+ *        the other continuations transition to N3
+ * N14    Start byte is FC.  Continuation bytes 80-83 are illegal (overlong);
+ *        the other continuations transition to N4
+ * N15    Start byte is FE.  Continuation bytes 80-81 are illegal (overlong);
+ * N16    Start byte is FF.  Continuation byte 80 transitions to N17;
+ *        the other continuations are illegal (overflow)
+ * N17    sequence so far is FF 80; continuation byte 80 transitions to N18;
+ *        81-9F to N10; the other continuations are illegal (overflow)
+ * N18    sequence so far is FF 80 80; continuation byte 80 transitions to N19;
+ *        the other continuations transition to N9
+ * N19    sequence so far is FF 80 80 80; continuation byte 80 transitions to
+ *        N20; the other continuations transition to N8
+ * N20    sequence so far is FF 80 80 80 80; continuation byte 80 transitions to
+ *        N21; the other continuations transition to N7
+ * N21    sequence so far is FF 80 80 80 80 80; continuation bytes 81-BF
+ *        transition to N6; 80 is illegal (overlong)
+ *
+ * A new class, the 19th, would have to be created for FF.  Then the nodes
+ * portion of the table would have 21 * 19 = 399 slots.  The current table has
+ * 18 classes and 10 nodes = 180 slots for the nodes portion. */
+
+/* Below is a version of the above table that accepts only strict UTF-8.
  * Hence no surrogates nor non-characters, nor non-Unicode.  Thus, if the input
  * passes this dfa, it will be for a well-formed, non-problematic code point
  * that can be returned immediately.
@@ -6690,7 +6743,7 @@ EXTCONST U8 PL_extended_utf8_dfa_tab[] = {
  * classes" in the linked-to document for further explanation of the original
  * dfa.)
  *
- * The classes are
+ *      byte          class
  *      00-7F           0
  *      80-8E           9
  *      8F             10
@@ -6809,11 +6862,11 @@ EXTCONST U8 PL_strict_utf8_dfa_tab[] = {
 };
 
 /* And below is yet another version of the above tables that accepts only UTF-8
- * as defined by Corregidum #9.  Hence no surrogates nor non-Unicode, but
+ * as defined by Corrigendum #9.  Hence no surrogates nor non-Unicode, but
  * it allows non-characters.  This is isomorphic to the original table
  * in https://bjoern.hoehrmann.de/utf-8/decoder/dfa/
  *
- * The classes are
+ *      byte          class
  *      00-7F           0
  *      80-8F           9
  *      90-9F          10
@@ -7031,8 +7084,13 @@ typedef struct am_table_short AMTS;
 #endif
 
 #ifdef USE_THREADS
-#  define ENV_LOCK            PERL_WRITE_LOCK(&PL_env_mutex)
-#  define ENV_UNLOCK          PERL_WRITE_UNLOCK(&PL_env_mutex)
+#  define ENV_LOCK            PERL_REENTRANT_LOCK("env",                    \
+                                                  &PL_env_mutex,            \
+                                                  PL_env_mutex_depth,       \
+                                                  1)
+#  define ENV_UNLOCK          PERL_REENTRANT_UNLOCK("env",                  \
+                                                    &PL_env_mutex,          \
+                                                    PL_env_mutex_depth)
 #  define ENV_READ_LOCK       PERL_READ_LOCK(&PL_env_mutex)
 #  define ENV_READ_UNLOCK     PERL_READ_UNLOCK(&PL_env_mutex)
 #  define ENV_INIT            PERL_RW_MUTEX_INIT(&PL_env_mutex)
@@ -7130,7 +7188,7 @@ typedef struct am_table_short AMTS;
  * They require some sort of exclusive lock against similar functions, and a
  * read lock on both the locale and environment.  However, on systems which
  * have per-thread locales, the locale is constant during the execution of
- * these functions, and so no locale lock is necssary.  For such systems, an
+ * these functions, and so no locale lock is necessary.  For such systems, an
  * exclusive ENV lock is necessary and sufficient.  On systems where the locale
  * could change out from under us, we use an exclusive LOCALE lock to prevent
  * that, and a read ENV lock to prevent other threads that have nothing to do
@@ -7218,7 +7276,7 @@ typedef struct am_table_short AMTS;
 #define STRFTIME_LOCK                   ENVr_LOCALEr_LOCK
 #define STRFTIME_UNLOCK                 ENVr_LOCALEr_UNLOCK
 
-/* These time-related functions all requre that the environment and locale
+/* These time-related functions all require that the environment and locale
  * don't change while they are executing (at least in glibc; this appears to be
  * contrary to the POSIX standard).  tzset() writes global variables, so
  * always needs to have write locking.  ctime, localtime, mktime, and strftime
@@ -7254,7 +7312,7 @@ typedef struct am_table_short AMTS;
 #define TZSET_LOCK         gwENVr_LOCALEr_LOCK
 #define TZSET_UNLOCK       gwENVr_LOCALEr_UNLOCK
 
-/* Similiarly, these functions need a constant environment and/or locale.  And
+/* Similarly, these functions need a constant environment and/or locale.  And
  * some have a buffer that is shared with another thread executing the same or
  * a related call.  A mutex could be created for each class, but for now, share
  * the ENV mutex with everything, as none probably gets called so much that
@@ -7389,11 +7447,10 @@ typedef struct am_table_short AMTS;
                         }                                                   \
                     } STMT_END
 #  endif
-
-#  define LOCALE_INIT           MUTEX_INIT(&PL_locale_mutex)
-#  define LOCALE_TERM           STMT_START {                                \
-                                    LOCALE_TERM_POSIX_2008_;                \
-                                    MUTEX_DESTROY(&PL_locale_mutex);        \
+#  define LOCALE_INIT           PERL_RW_MUTEX_INIT(&PL_locale_mutex)
+#  define LOCALE_TERM           STMT_START {                                  \
+                                    LOCALE_TERM_POSIX_2008_;                  \
+                                    PERL_RW_MUTEX_DESTROY(&PL_locale_mutex);  \
                                 } STMT_END
 #endif
 
@@ -7401,16 +7458,23 @@ typedef struct am_table_short AMTS;
 
    /* Returns TRUE if the plain locale pragma without a parameter is in effect.
     * */
-#  define IN_LOCALE_RUNTIME	(PL_curcop                                  \
-                              && CopHINTS_get(PL_curcop) & HINT_LOCALE)
-
+#  define PERL_IN_UNRESTRICTED_LOCALE_  -2   /* Chosen so as to not conflict
+                                                with a real category number,
+                                                nor -1 already reserved */
    /* Returns TRUE if either form of the locale pragma is in effect */
 #  define IN_SOME_LOCALE_FORM_RUNTIME                                       \
-        cBOOL(CopHINTS_get(PL_curcop) & (HINT_LOCALE|HINT_LOCALE_PARTIAL))
+                     (PL_curcop && CopHINTS_get(PL_curcop) & (HINT_LOCALE))
 
-#  define IN_LOCALE_COMPILETIME	cBOOL(PL_hints & HINT_LOCALE)
-#  define IN_SOME_LOCALE_FORM_COMPILETIME                                   \
-                        cBOOL(PL_hints & (HINT_LOCALE|HINT_LOCALE_PARTIAL))
+#  define IN_LOCALE_RUNTIME                                                 \
+      (   IN_SOME_LOCALE_FORM_RUNTIME                                       \
+       && is_in_locale_category_(false, /* runtime */                       \
+                                 PERL_IN_UNRESTRICTED_LOCALE_))
+#  define IN_LOCALE_COMPILETIME	                                            \
+      (   IN_SOME_LOCALE_FORM_COMPILETIME                                  \
+       && is_in_locale_category_(true, /* is compiling */                   \
+                                 PERL_IN_UNRESTRICTED_LOCALE_ ))
+
+#  define IN_SOME_LOCALE_FORM_COMPILETIME  cBOOL(PL_hints & (HINT_LOCALE))
 
 /*
 =for apidoc_section $locale
@@ -7442,17 +7506,18 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 #  define IN_LC_ALL_COMPILETIME   IN_LOCALE_COMPILETIME
 #  define IN_LC_ALL_RUNTIME       IN_LOCALE_RUNTIME
 
-#  define IN_LC_PARTIAL_COMPILETIME   cBOOL(PL_hints & HINT_LOCALE_PARTIAL)
-#  define IN_LC_PARTIAL_RUNTIME                                             \
-              (PL_curcop && CopHINTS_get(PL_curcop) & HINT_LOCALE_PARTIAL)
+#  define IN_LC_PARTIAL_COMPILETIME   (     IN_SOME_LOCALE_FORM_COMPILETIME \
+                                       && ! IN_LOCALE_COMPILETIME)
+#  define IN_LC_PARTIAL_RUNTIME       (     IN_SOME_LOCALE_FORM_RUNTIME     \
+                                       && ! IN_LOCALE_RUNTIME)
 
 #  define IN_LC_COMPILETIME(category)                                       \
        (       IN_LC_ALL_COMPILETIME                                        \
         || (   IN_LC_PARTIAL_COMPILETIME                                    \
-            && Perl__is_in_locale_category(aTHX_ TRUE, (category))))
+            && Perl_is_in_locale_category_(aTHX_ TRUE, (category))))
 #  define IN_LC_RUNTIME(category)                                           \
       (IN_LC_ALL_RUNTIME || (IN_LC_PARTIAL_RUNTIME                          \
-                 && Perl__is_in_locale_category(aTHX_ FALSE, (category))))
+                 && Perl_is_in_locale_category_(aTHX_ FALSE, (category))))
 #  define IN_LC(category)  \
                     (IN_LC_COMPILETIME(category) || IN_LC_RUNTIME(category))
 
@@ -7480,7 +7545,7 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
       * and will do so if enabled.  The first takes a single code point
       * argument; the 2nd, is a pointer to the first byte of the UTF-8 encoded
       * string, and an end position which it won't try to read past */
-#    define _CHECK_AND_OUTPUT_WIDE_LOCALE_CP_MSG(cp)                        \
+#    define CHECK_AND_OUTPUT_WIDE_LOCALE_CP_MSG_(cp)                        \
         STMT_START {                                                        \
             if (! IN_UTF8_CTYPE_LOCALE && ckWARN(WARN_LOCALE)) {            \
                 Perl_warner(aTHX_ packWARN(WARN_LOCALE),                    \
@@ -7489,16 +7554,15 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
             }                                                               \
         }  STMT_END
 
-#    define _CHECK_AND_OUTPUT_WIDE_LOCALE_UTF8_MSG(s, send)                 \
+#    define CHECK_AND_OUTPUT_WIDE_LOCALE_UTF8_MSG_(s, send)                 \
         STMT_START { /* Check if to warn before doing the conversion work */\
             if (! IN_UTF8_CTYPE_LOCALE && ckWARN(WARN_LOCALE)) {            \
-                UV cp = utf8_to_uvchr_buf((U8 *) (s), (U8 *) (send), NULL); \
+                UV cp = utf8_to_uv_or_die((const U8 *) (s),                 \
+                                          (const U8 *) (send),              \
+                                          NULL);                            \
                 Perl_warner(aTHX_ packWARN(WARN_LOCALE),                    \
-                    "Wide character (U+%" UVXf ") in %s",                   \
-                    (cp == 0)                                               \
-                     ? UNICODE_REPLACEMENT                                  \
-                     : (UV) cp,                                             \
-                    OP_DESC(PL_op));                                        \
+                        "Wide character (U+%" UVXf ") in %s",               \
+                        (UV) cp, OP_DESC(PL_op));                           \
             }                                                               \
         }  STMT_END
 
@@ -7518,8 +7582,8 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 #  define IN_LC_RUNTIME(category)          0
 #  define IN_LC(category)                  0
 #  define CHECK_AND_WARN_PROBLEMATIC_LOCALE_
-#  define _CHECK_AND_OUTPUT_WIDE_LOCALE_UTF8_MSG(s, send)
-#  define _CHECK_AND_OUTPUT_WIDE_LOCALE_CP_MSG(c)
+#  define CHECK_AND_OUTPUT_WIDE_LOCALE_UTF8_MSG_(s, send)
+#  define CHECK_AND_OUTPUT_WIDE_LOCALE_CP_MSG_(c)
 #endif
 
 #define locale_panic_via_(m, f, l)  Perl_locale_panic((m), __LINE__, f, l)
@@ -7877,9 +7941,7 @@ END_EXTERN_C
 
 =for apidoc_section $numeric
 
-=for apidoc AmTR|NV|Strtod|NN const char * const s|NULLOK char ** e
-
-This is a synonym for L</my_strtod>.
+=for apidoc_defn AmTR|NV|Strtod|NN const char * const s|NULLOK char **e
 
 =for apidoc AmTR|NV|Strtol|NN const char * const s|NULLOK char ** e|int base
 
@@ -8197,12 +8259,7 @@ EXTERN_C int flock(int fd, int op);
 #define IS_NUMBER_TRAILING            0x40 /* number has trailing trash */
 
 /*
-=for apidoc_section $numeric
-
-=for apidoc AmdR|bool|GROK_NUMERIC_RADIX|NN const char **sp|NN const char *send
-
-A synonym for L</grok_numeric_radix>
-
+=for apidoc_defn AmdR|bool|GROK_NUMERIC_RADIX|NN const char **sp|NN const char *send
 =cut
 */
 #define GROK_NUMERIC_RADIX(sp, send) grok_numeric_radix(sp, send)
@@ -9116,7 +9173,7 @@ END_EXTERN_C
 
 #endif /* DOUBLE_HAS_NAN */
 
-/* these are used to faciliate the env var PERL_RAND_SEED,
+/* these are used to facilitate the env var PERL_RAND_SEED,
  * which allows consistent behavior from code that calls
  * srand() with no arguments, either explicitly or implicitly.
  */

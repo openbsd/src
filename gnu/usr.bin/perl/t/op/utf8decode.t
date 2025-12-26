@@ -189,9 +189,9 @@ __DATA__
 3.4	Concatenation of incomplete sequences
 3.4.1 N15 -	30	c0:e0:80:f0:80:80:f8:80:80:80:fc:80:80:80:80:df:ef:bf:f7:bf:bf:fb:bf:bf:bf:fd:bf:bf:bf:bf	-	unexpected non-continuation byte 0xe0, immediately after start byte 0xc0
 3.5	Impossible bytes (but not with Perl's extended UTF-8)
-3.5.1 n -	1	fe	-	1 byte available, need 7
-3.5.2 n -	1	ff	-	1 byte available, need 13
-3.5.3 N7 -	4	fe:fe:ff:ff	-	byte 0xfe
+3.5.1 N2,1 -	1	fe	-	1 byte available, need 7
+3.5.2 N2,1 -	1	ff	-	1 byte available, need 13
+3.5.3 N11,7 -	4	fe:fe:ff:ff	-	byte 0xfe
 4	Overlong sequences
 4.1	Examples of an overlong ASCII character
 4.1.1 n -	2	c0:af	-	overlong

@@ -1941,6 +1941,65 @@ xsreturn_empty()
     PPCODE:
         XSRETURN_EMPTY;
 
+void
+test_mismatch_xs_handshake_api_ver(...)
+    ALIAS:
+        test_mismatch_xs_handshake_bad_struct = 1
+        test_mismatch_xs_handshake_bad_struct_and_ver = 2
+    PPCODE:
+    if(ix == 0) {
+#ifdef MULTIPLICITY
+        Perl_xs_handshake(HS_KEYp(sizeof(PerlInterpreter),
+                                  TRUE, NULL, FALSE,
+                                  sizeof("v1.1337.0")-1,
+                                  sizeof("")-1),
+                                  HS_CXT, __FILE__, items, ax,
+                                  "v1.1337.0");
+#else
+        Perl_xs_handshake(HS_KEYp(sizeof(struct PerlHandShakeInterpreter),
+                                  FALSE, NULL, FALSE,
+                                  sizeof("v1.1337.0")-1,
+                                  sizeof("")-1),
+                                  HS_CXT, __FILE__, items, ax,
+                                  "v1.1337.0");
+#endif
+    }
+    else if(ix == 1) {
+#ifdef MULTIPLICITY
+        Perl_xs_handshake(HS_KEYp(sizeof(PerlInterpreter)+1,
+                                  TRUE, NULL, FALSE,
+                                  sizeof("v" PERL_API_VERSION_STRING)-1,
+                                  sizeof("")-1),
+                                  HS_CXT, __FILE__, items, ax,
+                                  "v" PERL_API_VERSION_STRING);
+#else
+        Perl_xs_handshake(HS_KEYp(sizeof(struct PerlHandShakeInterpreter)+1,
+                                  FALSE, NULL, FALSE,
+                                  sizeof("v" PERL_API_VERSION_STRING)-1,
+                                  sizeof("")-1),
+                                  HS_CXT, __FILE__, items, ax,
+                                  "v" PERL_API_VERSION_STRING);
+#endif
+    }
+    else {
+#ifdef MULTIPLICITY
+        Perl_xs_handshake(HS_KEYp(sizeof(PerlInterpreter)+1,
+                                  TRUE, NULL, FALSE,
+                                  sizeof("v1.1337.0")-1,
+                                  sizeof("")-1),
+                                  HS_CXT, __FILE__, items, ax,
+                                  "v1.1337.0");
+#else
+        Perl_xs_handshake(HS_KEYp(sizeof(struct PerlHandShakeInterpreter)+1,
+                                    FALSE, NULL, FALSE,
+                                    sizeof("v1.1337.0")-1,
+                                    sizeof("")-1),
+                                    HS_CXT, __FILE__, items, ax,
+                                    "v1.1337.0");
+#endif
+    }
+
+
 MODULE = XS::APItest:Hash               PACKAGE = XS::APItest::Hash
 
 void
@@ -2819,6 +2878,18 @@ call_argv(subname, flags, ...)
         SPAGAIN;
         EXTEND(SP, 1);
         PUSHs(sv_2mortal(newSViv(i)));
+
+bool
+call_argv_cleanup()
+  CODE:
+    IV old_count = PL_sv_count;
+    char one[] = "one"; /* non const strings */
+    char two[] = "two";
+    char *args[] = { one, two, NULL };
+    Perl_call_argv(aTHX_ "called_by_argv_cleanup", G_DISCARD | G_LIST, args);
+    RETVAL = PL_sv_count == old_count;
+  OUTPUT:
+    RETVAL
 
 void
 call_method(methname, flags, ...)
@@ -4286,6 +4357,18 @@ CODE:
     exit(0);
 }
 
+#  ifndef WIN32
+
+bool
+thread_id_matches()
+CODE:
+    /* pthread_t might not be a scalar type */
+    RETVAL = pthread_equal(pthread_self(), PL_main_thread);
+OUTPUT:
+    RETVAL
+
+#  endif /* ifndef WIN32 */
+
 #endif /* USE_ITHREADS */
 
 SV*
@@ -4929,7 +5012,34 @@ rc_add(sv1, sv2)
         rpp_replace_2_1(r);
         return;
 
+void
+modify_pv(IV pi, IV sz)
+    PPCODE:
+        /* used by op/pack.t when testing pack "p" */
+        memset(INT2PTR(char *, pi), 'y', sz);
 
+STRLEN
+sv_regex_global_pos_get(SV *sv, U32 flags = 0)
+    CODE:
+        if(!sv_regex_global_pos_get(sv, &RETVAL, flags))
+            XSRETURN_UNDEF;
+    OUTPUT:
+        RETVAL
+
+void
+sv_regex_global_pos_set(SV *sv, STRLEN pos, U32 flags = 0)
+
+void
+sv_regex_global_pos_clear(SV *sv)
+
+SV *
+newSVpvf_blank()
+    CODE:
+        GCC_DIAG_IGNORE_STMT(-Wformat-zero-length);
+        RETVAL = newSVpvf("");
+        GCC_DIAG_RESTORE_STMT;
+    OUTPUT:
+        RETVAL
 
 MODULE = XS::APItest PACKAGE = XS::APItest::AUTOLOADtest
 
@@ -7380,6 +7490,12 @@ gimme()
     OUTPUT:
         RETVAL
 
+bool
+valid_identifier(SV *s)
+    CODE:
+        RETVAL = valid_identifier_sv(s);
+    OUTPUT:
+        RETVAL
 
 MODULE = XS::APItest            PACKAGE = XS::APItest::Backrefs
 
@@ -8150,5 +8266,24 @@ IV
 get_savestack_ix()
     CODE:
         RETVAL = PL_savestack_ix;
+    OUTPUT:
+        RETVAL
+
+MODULE = XS::APItest            PACKAGE = XS::APItest::vstring
+
+bool
+SvVOK(SV *sv)
+
+SV *
+SvVSTRING(SV *sv)
+    CODE:
+    {
+        const char *vstr_pv;
+        STRLEN vstr_len;
+        if((vstr_pv = SvVSTRING(sv, vstr_len)))
+            RETVAL = newSVpvn(vstr_pv, vstr_len);
+        else
+            RETVAL = &PL_sv_undef;
+    }
     OUTPUT:
         RETVAL

@@ -90,8 +90,8 @@ as C<Not in [].>
  \o{}              Octal escape sequence.
  \p{}, \pP         Match any character with the given Unicode property.
  \P{}, \PP         Match any character without the given property.
- \Q                Quote (disable) pattern metacharacters till \E.  Not
-                   in [].
+ \Q                Quote (disable) pattern metacharacters till \E.
+                   (Also called "escape".)  Not in [].
  \r                Return character.
  \R                Generic new line.  Not in [].
  \s                Match any whitespace character.
@@ -195,7 +195,7 @@ sequences by using the L<charnames> module.  These custom names are
 lexically scoped, and so a given code point may have different names
 in different scopes.  The name used is what is in effect at the time the
 C<\N{}> is expanded.  For patterns in double-quotish context, that means
-at the time the pattern is parsed.  But for patterns that are delimitted
+at the time the pattern is parsed.  But for patterns that are delimited
 by single quotes, the expansion is deferred until pattern compilation
 time, which may very well have a different C<charnames> translator in
 effect.
@@ -350,11 +350,11 @@ them, until either the end of the pattern or the next occurrence of
 C<\E>, whichever comes first. They provide functionality similar to what
 the functions C<lc> and C<uc> provide.
 
-C<\Q> is used to quote (disable) pattern metacharacters, up to the next
-C<\E> or the end of the pattern. C<\Q> adds a backslash to any character
-that could have special meaning to Perl.  In the ASCII range, it quotes
-every character that isn't a letter, digit, or underscore.  See
-L<perlfunc/quotemeta> for details on what gets quoted for non-ASCII
+C<\Q> is used to quote or escape (disable) pattern metacharacters, up to
+the next C<\E> or the end of the pattern. C<\Q> adds a backslash to any
+character that could have special meaning to Perl.  In the ASCII range,
+it quotes every character that isn't a letter, digit, or underscore.
+See L<perlfunc/quotemeta> for details on what gets quoted for non-ASCII
 code points.  Using this ensures that any character between C<\Q> and
 C<\E> will be matched literally, not interpreted as a metacharacter by
 the regex engine.

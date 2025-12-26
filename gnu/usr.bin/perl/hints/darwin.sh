@@ -277,24 +277,25 @@ add_macosx_version_min () {
 # But starting from perl 5.8.1/Darwin 7 the default is the two-level.
 case "$osvers" in  # Note: osvers is the kernel version, not the 10.x
 1.[0-3].*) # OS X 10.0.x
-   lddlflags="${ldflags} -bundle -undefined suppress"
+   lddlflags="-bundle -undefined suppress"
    ;;
 1.*)       # OS X 10.1
    ldflags="${ldflags} -flat_namespace"
-   lddlflags="${ldflags} -bundle -undefined suppress"
+   lddlflags="-bundle -undefined suppress"
    ;;
 [2-6].*)   # OS X 10.1.x - 10.2.x (though [2-4] never existed publicly)
    ldflags="${ldflags} -flat_namespace"
-   lddlflags="${ldflags} -bundle -undefined suppress"
+   lddlflags="-bundle -undefined suppress"
    ;;
 [7-8].*)   # OS X 10.3.x - 10.4.x
-   lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
+   lddlflags="-bundle -undefined dynamic_lookup"
    case "$ld" in
        *MACOSX_DEPLOYMENT_TARGET*) ;;
        *) ld="env MACOSX_DEPLOYMENT_TARGET=10.3 ${ld}" ;;
    esac
    ;;
 *)        # OS X 10.5.x - current
+   lddlflags="-bundle -undefined dynamic_lookup"
    # The MACOSX_DEPLOYMENT_TARGET is not needed,
    # but the -mmacosx-version-min option is always used.
 
@@ -304,6 +305,7 @@ case "$osvers" in  # Note: osvers is the kernel version, not the 10.x
     [1-9][0-9].*)
       add_macosx_version_min ccflags $MACOSX_DEPLOYMENT_TARGET
       add_macosx_version_min ldflags $MACOSX_DEPLOYMENT_TARGET
+      add_macosx_version_min lddlflags $MACOSX_DEPLOYMENT_TARGET
       ;;
     '')
       # Empty MACOSX_DEPLOYMENT_TARGET is okay.
@@ -313,33 +315,11 @@ case "$osvers" in  # Note: osvers is the kernel version, not the 10.x
 
 *** Unexpected MACOSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET
 ***
-*** Please either set it to a valid macOS version number (e.g., 10.15) or to empty.
+*** Please either set it to a valid macOS version number (e.g., 10.15 or 11.0) or to empty.
 
 EOM
       exit 1
       ;;
-    esac
-
-    # Keep the prodvers leading whitespace (Configure magic).
-    # Cannot use $osvers here since that is the kernel version.
-    # sw_vers output                 what we want
-    # "ProductVersion:    10.10.5"   "10.10"
-    # "ProductVersion:    10.11"     "10.11"
-        prodvers=`sw_vers|awk '/^ProductVersion:/{print $2}'|awk -F. '{print $1"."$2}'`
-    case "$prodvers" in
-    [1-9][0-9].*)
-      add_macosx_version_min ccflags $prodvers
-      add_macosx_version_min ldflags $prodvers
-      ;;
-    *)
-      cat <<EOM >&4
-
-*** Unexpected product version $prodvers.
-***
-*** Try running sw_vers and see what its ProductVersion says.
-
-EOM
-      exit 1
     esac
 
     darwin_major=$(echo $osvers|awk -F. '{print $1}')
@@ -357,7 +337,6 @@ EOM
         esac
     fi
 
-   lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
    ;;
 esac
 
@@ -367,6 +346,15 @@ ccflags="$ccflags -DNO_THREAD_SAFE_QUERYLOCALE"
 # But it doesn't much matter because the whole implementation has bugs [GH
 # #21556]
 ccflags="$ccflags -DNO_POSIX_2008_LOCALE"
+
+# See comments in locale.c about this #define
+ccflags="$ccflags -DHAS_BROKEN_LANGINFO_CODESET"
+
+# Get: "Assertion failed: (p->val == key), function lookup_substsearch, file
+# collate.c, line 596."
+if test "$darwin_major" -ge 24 && test "$perl_revision" -ge 5 && ( test "$perl_version" -ge 42 || ( test "$perl_version" -eq 41 && test "$perl_subversion" -ge 11 ) ); then
+    ccflags="$ccflags -DNO_LOCALE_COLLATE"
+fi
 
 ldlibpthname='DYLD_LIBRARY_PATH';
 
@@ -424,11 +412,13 @@ EOM
     case `uname -p` in 
     powerpc) arch=ppc64 ;;
     i386) arch=x86_64 ;;
+    arm) arch=arm64 ;;
     *) cat <<EOM >&4
 
 *** Don't recognize processor, can't specify 64 bit compilation.
 
 EOM
+     exit 1
     ;;
     esac
     for var in ccflags cppflags ld ldflags

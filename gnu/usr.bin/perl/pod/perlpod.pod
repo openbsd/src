@@ -380,6 +380,13 @@ Used for switches ("C<perl's BE<lt>-nE<gt> switch>"), programs
 emphasis ("C<be BE<lt>careful!E<gt>>"), and so on
 ("C<and that feature is known as BE<lt>autovivificationE<gt>>").
 
+=item C<UE<lt>textE<gt>> -- underline text
+
+This is a new addition in 2024 and may not be available in all processors or
+output formats.  Note further that some output formats cannot produce both
+italic and underline formatting and therefore even if both are recognised,
+they may not be visually distinct from each other.
+
 =item C<CE<lt>codeE<gt>> -- code text
 X<C> X<< CZ<><> >> X<POD, formatting code, code> X<code>
 

@@ -594,7 +594,7 @@ may be specified.
 
 =item binmode FILEHANDLE
 
-The C<binmode> operator will attempt to insure that no translation
+The C<binmode> operator will attempt to ensure that no translation
 of carriage control occurs on input from or output to this filehandle.
 Since this involves reopening the file and then restoring its
 file position indicator, if this function returns FALSE, the
@@ -623,7 +623,7 @@ functions, in order to authenticate users.  If you're
 going to do this, remember that the encrypted password in
 the UAF was generated using uppercase username and
 password strings; you'll have to upcase the arguments to
-C<crypt> to insure that you'll get the proper value:
+C<crypt> to ensure that you'll get the proper value:
 
     sub validate_passwd {
         my($user,$passwd) = @_;
@@ -1135,7 +1135,7 @@ status value to be passed through.  The special value of 0xFFFF is
 almost a NOOP as it will cause the current native VMS status in the
 C library to become the current native Perl VMS status, and is handled
 this way as it is known to not be a valid native VMS status value.
-It is recommend that only values in the range of normal Unix parent or
+It is recommended that only values in the range of normal Unix parent or
 child status numbers, 0 to 255 are used.
 
 The pragma C<use vmsish 'status'> makes C<$?> reflect the actual 

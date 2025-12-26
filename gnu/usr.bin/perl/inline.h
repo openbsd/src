@@ -1,4 +1,4 @@
-/*    inline.h
+/*>    inline.h
  *
  *    Copyright (C) 2012 by Larry Wall and others
  *
@@ -143,22 +143,6 @@ Perl_av_fetch_simple(pTHX_ AV *av, SSize_t key, I32 lval)
         return &AvARRAY(av)[key];
     }
 }
-
-/*
-=for apidoc av_push_simple
-
-This is a cut-down version of av_push that assumes that the array is very
-straightforward - no magic, not readonly, and AvREAL - and that C<key> is
-not less than -1. This function MUST NOT be used in situations where any
-of those assumptions may not hold.
-
-Pushes an SV (transferring control of one reference count) onto the end of the
-array.  The array will grow automatically to accommodate the addition.
-
-Perl equivalent: C<push @myarray, $val;>.
-
-=cut
-*/
 
 PERL_STATIC_INLINE void
 Perl_av_push_simple(pTHX_ AV *av, SV *val)
@@ -1148,7 +1132,6 @@ in lvalue context.
 =cut
 */
 
-
 PERL_STATIC_INLINE bool
 Perl_rpp_is_lone(pTHX_ SV *sv)
 {
@@ -1161,9 +1144,9 @@ Perl_rpp_is_lone(pTHX_ SV *sv)
     assert(AvREAL(PL_curstack));
 #endif
 
-    return SvREFCNT(sv) <= cBOOL(SvTEMP(sv))
+    return SvREFCNT(sv) <= (U32)cBOOL(SvTEMP(sv))
 #ifdef PERL_RC_STACK
-                         + 1
+                         + 1u
             && !SvIMMORTAL(sv) /* PL_sv_undef etc are never stealable */
 #endif
     ;
@@ -1194,6 +1177,20 @@ Perl_rpp_invoke_xs(pTHX_ CV *cv)
 }
 
 
+/* for SvCANEXISTDELETE() macro in pp.h */
+PERL_STATIC_INLINE bool
+Perl_sv_can_existdelete(pTHX_ SV *sv)
+{
+    /* Anything without tie magic is fine */
+    MAGIC *mg;
+    if(!SvRMAGICAL(sv) || !(mg = mg_find(sv, PERL_MAGIC_tied)))
+        return true;
+
+    HV *stash = SvSTASH(SvRV(SvTIED_obj(sv, mg)));
+    return stash &&
+        gv_fetchmethod_autoload(stash, "EXISTS", TRUE) &&
+        gv_fetchmethod_autoload(stash, "DELETE", TRUE);
+}
 
 
 /* ----------------------------- regexp.h ----------------------------- */
@@ -1247,9 +1244,62 @@ Perl_append_utf8_from_native_byte(const U8 byte, U8** dest)
     }
 }
 
+PERL_STATIC_INLINE U8 *
+Perl_bytes_to_utf8(pTHX_ const U8 *s, STRLEN *lenp)
+{
+    return bytes_to_utf8_free_me(s, lenp, NULL);
+}
+
+PERL_STATIC_INLINE U8 *
+Perl_bytes_to_utf8_temp_pv(pTHX_ const U8 *s, STRLEN *lenp)
+{
+    void * free_me = NULL;
+    U8 * converted = bytes_to_utf8_free_me(s, lenp, &free_me);
+
+    if (free_me) {
+        SAVEFREEPV(free_me);
+    }
+
+    return converted;
+}
+
+PERL_STATIC_INLINE bool
+Perl_utf8_to_bytes_new_pv(pTHX_ U8 const **s_ptr, STRLEN *lenp, void ** free_me)
+{
+    /* utf8_to_bytes_() is declared to take a non-const s_ptr because it may
+     * change it, but NOT when called with PL_utf8_to_bytes_new_memory, so it
+     * is ok to cast away const */
+    return utf8_to_bytes_((U8 **) s_ptr, lenp, free_me,
+                          PL_utf8_to_bytes_new_memory);
+}
+
+PERL_STATIC_INLINE bool
+Perl_utf8_to_bytes_temp_pv(pTHX_ U8 const **s_ptr, STRLEN *lenp)
+{
+    /* utf8_to_bytes_() requires a non-NULL pointer, but doesn't use it when
+     * called with PL_utf8_to_bytes_use_temporary */
+    void* dummy = NULL;
+
+    /* utf8_to_bytes_() is declared to take a non-const s_ptr because it may
+     * change it, but NOT when called with PL_utf8_to_bytes_use_temporary, so
+     * it is ok to cast away const */
+    return utf8_to_bytes_((U8 **) s_ptr, lenp, &dummy,
+                          PL_utf8_to_bytes_use_temporary);
+}
+
+PERL_STATIC_INLINE bool
+Perl_utf8_to_bytes_overwrite(pTHX_ U8 **s_ptr, STRLEN *lenp)
+{
+    /* utf8_to_bytes_() requires a non-NULL pointer, but doesn't use it when
+     * called with PL_utf8_to_bytes_overwrite */
+    void* dummy = NULL;
+
+    return utf8_to_bytes_(s_ptr, lenp, &dummy, PL_utf8_to_bytes_overwrite);
+}
+
 /*
 =for apidoc valid_utf8_to_uvchr
-Like C<L<perlapi/utf8_to_uvchr_buf>>, but should only be called when it is
+Like C<L<perlapi/utf8_to_uv>>, but should only be called when it is
 known that the next character in the input UTF-8 string C<s> is well-formed
 (I<e.g.>, it passes C<L<perlapi/isUTF8_CHAR>>.  Surrogates, non-character code
 points, and non-Unicode code points are allowed.
@@ -1291,70 +1341,6 @@ Perl_valid_utf8_to_uvchr(const U8 *s, STRLEN *retlen)
 
 }
 
-/*
-=for apidoc is_utf8_invariant_string
-
-Returns TRUE if the first C<len> bytes of the string C<s> are the same
-regardless of the UTF-8 encoding of the string (or UTF-EBCDIC encoding on
-EBCDIC machines); otherwise it returns FALSE.  That is, it returns TRUE if they
-are UTF-8 invariant.  On ASCII-ish machines, all the ASCII characters and only
-the ASCII characters fit this definition.  On EBCDIC machines, the ASCII-range
-characters are invariant, but so also are the C1 controls.
-
-If C<len> is 0, it will be calculated using C<strlen(s)>, (which means if you
-use this option, that C<s> can't have embedded C<NUL> characters and has to
-have a terminating C<NUL> byte).
-
-See also
-C<L</is_utf8_string>>,
-C<L</is_utf8_string_flags>>,
-C<L</is_utf8_string_loc>>,
-C<L</is_utf8_string_loc_flags>>,
-C<L</is_utf8_string_loclen>>,
-C<L</is_utf8_string_loclen_flags>>,
-C<L</is_utf8_fixed_width_buf_flags>>,
-C<L</is_utf8_fixed_width_buf_loc_flags>>,
-C<L</is_utf8_fixed_width_buf_loclen_flags>>,
-C<L</is_strict_utf8_string>>,
-C<L</is_strict_utf8_string_loc>>,
-C<L</is_strict_utf8_string_loclen>>,
-C<L</is_c9strict_utf8_string>>,
-C<L</is_c9strict_utf8_string_loc>>,
-and
-C<L</is_c9strict_utf8_string_loclen>>.
-
-=cut
-
-*/
-
-#define is_utf8_invariant_string(s, len)                                    \
-                                is_utf8_invariant_string_loc(s, len, NULL)
-
-/*
-=for apidoc is_utf8_invariant_string_loc
-
-Like C<L</is_utf8_invariant_string>> but upon failure, stores the location of
-the first UTF-8 variant character in the C<ep> pointer; if all characters are
-UTF-8 invariant, this function does not change the contents of C<*ep>.
-
-=cut
-
-*/
-
-PERL_STATIC_INLINE bool
-Perl_is_utf8_invariant_string_loc(const U8* const s, STRLEN len, const U8 ** ep)
-{
-    const U8* send;
-    const U8* x = s;
-
-    PERL_ARGS_ASSERT_IS_UTF8_INVARIANT_STRING_LOC;
-
-    if (len == 0) {
-        len = strlen((const char *)s);
-    }
-
-    send = s + len;
-
 /* This looks like 0x010101... */
 #  define PERL_COUNT_MULTIPLIER   (~ (UINTMAX_C(0)) / 0xFF)
 
@@ -1371,6 +1357,64 @@ Perl_is_utf8_invariant_string_loc(const U8* const s, STRLEN len, const U8 ** ep)
                                       |   (  PTR2nat(x) >> 1)                 \
                                       | ( ( (PTR2nat(x)                       \
                                            & PERL_WORD_BOUNDARY_MASK) >> 2))))
+
+/*
+=for apidoc      is_utf8_invariant_string
+=for apidoc_item is_utf8_invariant_string_loc
+=for apidoc_item is_ascii_string
+=for apidoc_item is_invariant_string
+
+These each return TRUE if the first C<len> bytes of the string C<s> are the
+same regardless of the UTF-8 encoding of the string (or UTF-EBCDIC encoding on
+EBCDIC machines); otherwise they returns FALSE.  That is, they return TRUE if
+they are UTF-8 invariant.  On ASCII-ish machines, all the ASCII characters and
+only the ASCII characters fit this definition.  On EBCDIC machines, the
+ASCII-range characters are invariant, but so also are the C1 controls.
+
+If C<len> is 0, it will be calculated using C<strlen(s)>, (which means if you
+use this option, that C<s> can't have embedded C<NUL> characters and has to
+have a terminating C<NUL> byte).
+
+All forms except C<is_utf8_invariant_string_loc> have identical behavior.  The
+only difference with it is that it has an extra pointer parameter, C<ep>, into
+which, if it isn't NULL, the location of the first UTF-8 variant character in
+the C<ep> pointer will be stored upon failure.  If all characters are UTF-8
+invariant, this function does not change the contents of C<*ep>.
+
+C<is_invariant_string> is somewhat misleadingly named.
+C<is_utf8_invariant_string> is preferred, as it indicates under what conditions
+the string is invariant.
+
+C<is_ascii_string> is misleadingly-named.  On ASCII-ish platforms, the name
+isn't misleading: the ASCII-range characters are exactly the UTF-8 invariants.
+But EBCDIC machines have more UTF-8 invariants than just the ASCII characters,
+so the name C<is_utf8_invariant_string> is preferred.
+
+See also
+C<L</is_utf8_string>> and C<L</is_utf8_fixed_width_buf_flags>>.
+
+=for apidoc_defn ARTm|bool|is_utf8_invariant_string|NN const U8 * const s|STRLEN len
+
+=cut
+
+*/
+
+#define is_utf8_invariant_string(s, len)                                    \
+                                is_utf8_invariant_string_loc(s, len, NULL)
+
+PERL_STATIC_INLINE bool
+Perl_is_utf8_invariant_string_loc(const U8* const s, STRLEN len, const U8 ** ep)
+{
+    const U8* send;
+    const U8* x = s;
+
+    PERL_ARGS_ASSERT_IS_UTF8_INVARIANT_STRING_LOC;
+
+    if (len == 0) {
+        len = strlen((const char *)s);
+    }
+
+    send = s + len;
 
 #ifndef EBCDIC
 
@@ -1433,7 +1477,8 @@ Perl_is_utf8_invariant_string_loc(const U8* const s, STRLEN len, const U8 ** ep)
 
 #endif      /* End of ! EBCDIC */
 
-    /* Process per-byte */
+    /* Process per-byte.  (Can't use libc functions like strpbrk() because
+     * input isn't necessarily a C string) */
     while (x < send) {
         if (! UTF8_IS_INVARIANT(*x)) {
             if (ep) {
@@ -1964,33 +2009,6 @@ S_variant_under_utf8_count(const U8* const s, const U8* const e)
 #  undef PERL_VARIANTS_WORD_MASK
 #endif
 
-/*
-=for apidoc is_utf8_string
-
-Returns TRUE if the first C<len> bytes of string C<s> form a valid
-Perl-extended-UTF-8 string; returns FALSE otherwise.  If C<len> is 0, it will
-be calculated using C<strlen(s)> (which means if you use this option, that C<s>
-can't have embedded C<NUL> characters and has to have a terminating C<NUL>
-byte).  Note that all characters being ASCII constitute 'a valid UTF-8 string'.
-
-This function considers Perl's extended UTF-8 to be valid.  That means that
-code points above Unicode, surrogates, and non-character code points are
-considered valid by this function.  Use C<L</is_strict_utf8_string>>,
-C<L</is_c9strict_utf8_string>>, or C<L</is_utf8_string_flags>> to restrict what
-code points are considered valid.
-
-See also
-C<L</is_utf8_invariant_string>>,
-C<L</is_utf8_invariant_string_loc>>,
-C<L</is_utf8_string_loc>>,
-C<L</is_utf8_string_loclen>>,
-C<L</is_utf8_fixed_width_buf_flags>>,
-C<L</is_utf8_fixed_width_buf_loc_flags>>,
-C<L</is_utf8_fixed_width_buf_loclen_flags>>,
-
-=cut
-*/
-
 #define is_utf8_string(s, len)  is_utf8_string_loclen(s, len, NULL, NULL)
 
 #if defined(PERL_CORE) || defined (PERL_EXT)
@@ -2007,9 +2025,7 @@ either is a wide character not representable as a single byte, or the
 representation differs depending on whether the sequence is encoded in UTF-8 or
 not.
 
-See also
-C<L<perlapi/is_utf8_invariant_string>>,
-C<L<perlapi/is_utf8_string>>
+See also C<L<perlapi/is_utf8_invariant_string>>.
 
 =cut
 
@@ -2039,122 +2055,86 @@ Perl_is_utf8_non_invariant_string(const U8* const s, STRLEN len)
 #endif
 
 /*
-=for apidoc is_strict_utf8_string
+=for apidoc      is_utf8_string
+=for apidoc_item is_utf8_string_loc
+=for apidoc_item is_utf8_string_loclen
+=for apidoc_item is_strict_utf8_string
+=for apidoc_item is_strict_utf8_string_loc
+=for apidoc_item is_strict_utf8_string_loclen
+=for apidoc_item is_c9strict_utf8_string
+=for apidoc_item is_c9strict_utf8_string_loc
+=for apidoc_item is_c9strict_utf8_string_loclen
+=for apidoc_item is_utf8_string_flags
+=for apidoc_item is_utf8_string_loc_flags
+=for apidoc_item is_utf8_string_loclen_flags
 
-Returns TRUE if the first C<len> bytes of string C<s> form a valid
-UTF-8-encoded string that is fully interchangeable by any application using
-Unicode rules; otherwise it returns FALSE.  If C<len> is 0, it will be
-calculated using C<strlen(s)> (which means if you use this option, that C<s>
-can't have embedded C<NUL> characters and has to have a terminating C<NUL>
-byte).  Note that all characters being ASCII constitute 'a valid UTF-8 string'.
+These each return TRUE if the first C<len> bytes of string C<s> form a valid
+UTF-8 string for varying degrees of strictness, FALSE otherwise.  If C<len> is
+0, it will be calculated using C<strlen(s)> (which means if you use this
+option, that C<s> can't have embedded C<NUL> characters and has to have a
+terminating C<NUL> byte).  Note that all characters being ASCII constitute 'a
+valid UTF-8 string'.
 
-This function returns FALSE for strings containing any
-code points above the Unicode max of 0x10FFFF, surrogate code points, or
-non-character code points.
+Some of the functions also return information about the string.  Those that
+have the suffix C<_loc> in their names have an extra parameter, C<ep>.  If that
+is not NULL, the function stores into it the location of how far it got in
+parsing C<s>.  If the function is returning TRUE, this will be a pointer to the
+byte immediately after the end of C<s>.  If FALSE, it will be the location of
+the first byte that fails the criteria.
+
+The functions that instead have the suffix C<_loclen> have a second extra
+parameter, C<el>.  They act as the plain C<_loc> functions do with their C<ep>
+parameter, but if C<el> is not null, the functions store into it the number of
+UTF-8 encoded characters found at the point where parsing stopped.  If the
+function is returning TRUE, this will be the full count of the UTF-8 characters
+in C<s>; if FALSE, it will be the count before the first invalid one.
+
+C<is_utf8_string> (and C<is_utf8_string_loc> and C<is_utf8_string_loclen>)
+consider Perl's extended UTF-8 to be valid.  That means that
+code points above Unicode, surrogates, and non-character code points are
+all considered valid by this function.  Problems may arise in interchange with
+non-Perl applications, or (unlikely) between machines with different word
+sizes.
+
+C<is_strict_utf8_string> (and C<is_strict_utf8_string_loc> and
+C<is_strict_utf8_string_loclen>) consider only Unicode-range (0 to 0x10FFFF)
+code points to be valid, with the surrogates and non-character code points
+invalid.  This level of strictness is what is safe to accept from outside
+sources that use Unicode rules.
+
+The forms whose names contain C<c9strict> conform to the level of strictness
+given in
+L<Unicode Corrigendum #9|http://www.unicode.org/versions/corrigendum9.html>.
+This means Unicode-range code points including non-character ones are
+considered valid, but not the surrogates.  This level of strictness is
+considered safe for cooperating components that know how the other components
+handle non-character code points.
+
+The forms whose names contain C<_flags> allow you to customize the acceptable
+level of strictness.  They have an extra parameter, C<flags> to indicate the
+types of code points that are acceptable.  If C<flags> is 0, they give the
+same results as C<L</is_utf8_string>> (and kin); if C<flags> is
+C<UTF8_DISALLOW_ILLEGAL_INTERCHANGE>, they give the same results as
+C<L</is_strict_utf8_string>> (and kin); and if C<flags> is
+C<UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE>, they give the same results as
+C<L</is_c9strict_utf8_string>> (and kin).  Otherwise C<flags> may be any
+combination of the C<UTF8_DISALLOW_I<foo>> flags understood by
+C<L</utf8_to_uv>>, with the same meanings.
+
+It's better to use one of the non-C<_flags> functions if they give you the
+desired strictness, as those have a better chance of being inlined by the C
+compiler.
 
 See also
 C<L</is_utf8_invariant_string>>,
-C<L</is_utf8_invariant_string_loc>>,
-C<L</is_utf8_string>>,
-C<L</is_utf8_string_flags>>,
-C<L</is_utf8_string_loc>>,
-C<L</is_utf8_string_loc_flags>>,
-C<L</is_utf8_string_loclen>>,
-C<L</is_utf8_string_loclen_flags>>,
 C<L</is_utf8_fixed_width_buf_flags>>,
-C<L</is_utf8_fixed_width_buf_loc_flags>>,
-C<L</is_utf8_fixed_width_buf_loclen_flags>>,
-C<L</is_strict_utf8_string_loc>>,
-C<L</is_strict_utf8_string_loclen>>,
-C<L</is_c9strict_utf8_string>>,
-C<L</is_c9strict_utf8_string_loc>>,
-and
-C<L</is_c9strict_utf8_string_loclen>>.
 
 =cut
 */
 
 #define is_strict_utf8_string(s, len)  is_strict_utf8_string_loclen(s, len, NULL, NULL)
 
-/*
-=for apidoc is_c9strict_utf8_string
-
-Returns TRUE if the first C<len> bytes of string C<s> form a valid
-UTF-8-encoded string that conforms to
-L<Unicode Corrigendum #9|http://www.unicode.org/versions/corrigendum9.html>;
-otherwise it returns FALSE.  If C<len> is 0, it will be calculated using
-C<strlen(s)> (which means if you use this option, that C<s> can't have embedded
-C<NUL> characters and has to have a terminating C<NUL> byte).  Note that all
-characters being ASCII constitute 'a valid UTF-8 string'.
-
-This function returns FALSE for strings containing any code points above the
-Unicode max of 0x10FFFF or surrogate code points, but accepts non-character
-code points per
-L<Corrigendum #9|http://www.unicode.org/versions/corrigendum9.html>.
-
-See also
-C<L</is_utf8_invariant_string>>,
-C<L</is_utf8_invariant_string_loc>>,
-C<L</is_utf8_string>>,
-C<L</is_utf8_string_flags>>,
-C<L</is_utf8_string_loc>>,
-C<L</is_utf8_string_loc_flags>>,
-C<L</is_utf8_string_loclen>>,
-C<L</is_utf8_string_loclen_flags>>,
-C<L</is_utf8_fixed_width_buf_flags>>,
-C<L</is_utf8_fixed_width_buf_loc_flags>>,
-C<L</is_utf8_fixed_width_buf_loclen_flags>>,
-C<L</is_strict_utf8_string>>,
-C<L</is_strict_utf8_string_loc>>,
-C<L</is_strict_utf8_string_loclen>>,
-C<L</is_c9strict_utf8_string_loc>>,
-and
-C<L</is_c9strict_utf8_string_loclen>>.
-
-=cut
-*/
-
 #define is_c9strict_utf8_string(s, len)  is_c9strict_utf8_string_loclen(s, len, NULL, 0)
-
-/*
-=for apidoc is_utf8_string_flags
-
-Returns TRUE if the first C<len> bytes of string C<s> form a valid
-UTF-8 string, subject to the restrictions imposed by C<flags>;
-returns FALSE otherwise.  If C<len> is 0, it will be calculated
-using C<strlen(s)> (which means if you use this option, that C<s> can't have
-embedded C<NUL> characters and has to have a terminating C<NUL> byte).  Note
-that all characters being ASCII constitute 'a valid UTF-8 string'.
-
-If C<flags> is 0, this gives the same results as C<L</is_utf8_string>>; if
-C<flags> is C<UTF8_DISALLOW_ILLEGAL_INTERCHANGE>, this gives the same results
-as C<L</is_strict_utf8_string>>; and if C<flags> is
-C<UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE>, this gives the same results as
-C<L</is_c9strict_utf8_string>>.  Otherwise C<flags> may be any
-combination of the C<UTF8_DISALLOW_I<foo>> flags understood by
-C<L</utf8n_to_uvchr>>, with the same meanings.
-
-See also
-C<L</is_utf8_invariant_string>>,
-C<L</is_utf8_invariant_string_loc>>,
-C<L</is_utf8_string>>,
-C<L</is_utf8_string_loc>>,
-C<L</is_utf8_string_loc_flags>>,
-C<L</is_utf8_string_loclen>>,
-C<L</is_utf8_string_loclen_flags>>,
-C<L</is_utf8_fixed_width_buf_flags>>,
-C<L</is_utf8_fixed_width_buf_loc_flags>>,
-C<L</is_utf8_fixed_width_buf_loclen_flags>>,
-C<L</is_strict_utf8_string>>,
-C<L</is_strict_utf8_string_loc>>,
-C<L</is_strict_utf8_string_loclen>>,
-C<L</is_c9strict_utf8_string>>,
-C<L</is_c9strict_utf8_string_loc>>,
-and
-C<L</is_c9strict_utf8_string_loclen>>.
-
-=cut
-*/
 
 PERL_STATIC_INLINE bool
 Perl_is_utf8_string_flags(const U8 *s, STRLEN len, const U32 flags)
@@ -2162,8 +2142,7 @@ Perl_is_utf8_string_flags(const U8 *s, STRLEN len, const U32 flags)
     const U8 * first_variant;
 
     PERL_ARGS_ASSERT_IS_UTF8_STRING_FLAGS;
-    assert(0 == (flags & ~(UTF8_DISALLOW_ILLEGAL_INTERCHANGE
-                          |UTF8_DISALLOW_PERL_EXTENDED)));
+    assert(0 == (flags & ~UTF8_DISALLOW_ILLEGAL_INTERCHANGE));
 
     if (len == 0) {
         len = strlen((const char *)s);
@@ -2173,13 +2152,13 @@ Perl_is_utf8_string_flags(const U8 *s, STRLEN len, const U32 flags)
         return is_utf8_string(s, len);
     }
 
-    if ((flags & ~UTF8_DISALLOW_PERL_EXTENDED)
+    if ((flags & UTF8_DISALLOW_ILLEGAL_INTERCHANGE)
                                         == UTF8_DISALLOW_ILLEGAL_INTERCHANGE)
     {
         return is_strict_utf8_string(s, len);
     }
 
-    if ((flags & ~UTF8_DISALLOW_PERL_EXTENDED)
+    if ((flags & UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE)
                                        == UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE)
     {
         return is_c9strict_utf8_string(s, len);
@@ -2201,34 +2180,8 @@ Perl_is_utf8_string_flags(const U8 *s, STRLEN len, const U32 flags)
     return TRUE;
 }
 
-/*
-
-=for apidoc is_utf8_string_loc
-
-Like C<L</is_utf8_string>> but stores the location of the failure (in the
-case of "utf8ness failure") or the location C<s>+C<len> (in the case of
-"utf8ness success") in the C<ep> pointer.
-
-See also C<L</is_utf8_string_loclen>>.
-
-=cut
-*/
-
-#define is_utf8_string_loc(s, len, ep)  is_utf8_string_loclen(s, len, ep, 0)
-
-/*
-
-=for apidoc is_utf8_string_loclen
-
-Like C<L</is_utf8_string>> but stores the location of the failure (in the
-case of "utf8ness failure") or the location C<s>+C<len> (in the case of
-"utf8ness success") in the C<ep> pointer, and the number of UTF-8
-encoded characters in the C<el> pointer.
-
-See also C<L</is_utf8_string_loc>>.
-
-=cut
-*/
+#define Perl_is_utf8_string_loc(s, len, ep)          \
+        Perl_is_utf8_string_loclen(s, len, ep, 0)
 
 PERL_STATIC_INLINE bool
 Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
@@ -2283,7 +2236,7 @@ Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
  * conditional, same as the calling code checking for invariance ahead of time.
  * And having the calling code remove that conditional speeds up by that
  * conditional, the case where it wasn't invariant.  So there's no reason to
- * check before caling this.
+ * check before calling this.
  *
  * But we don't know this for non-core calls, so have to retain the check for
  * them. */
@@ -2342,7 +2295,7 @@ Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
  *                  immediately after it.
  */
 
-#define DFA_RETURN_SUCCESS_      return s - s0
+#define DFA_RETURN_SUCCESS_      return (s8dfa_ - s0)
 #define DFA_RETURN_FAILURE_      return 0
 #ifdef HAS_EXTRA_LONG_UTF8
 #  define DFA_TEASE_APART_FF_  goto tease_apart_FF
@@ -2355,24 +2308,23 @@ Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
                               reject_action,                                \
                               incomplete_char_action)                       \
     STMT_START {                                                            \
-        const U8 * s = s0;                                                  \
-        const U8 * e_ = e;                                                  \
-        UV state = 0;                                                       \
+        const U8 * s8dfa_ = s0;                                             \
+        const U8 * const e8dfa_ = e;                                        \
+        PERL_UINT_FAST16_T state = 0;                                        \
                                                                             \
-        PERL_NON_CORE_CHECK_EMPTY(s, e_);                                   \
+        PERL_NON_CORE_CHECK_EMPTY(s8dfa_, e8dfa_);                          \
                                                                             \
         do {                                                                \
-            state = dfa_tab[256 + state + dfa_tab[*s]];                     \
-            s++;                                                            \
+            state = dfa_tab[256 + state + dfa_tab[*s8dfa_]];                \
+        } while (++s8dfa_ < e8dfa_ && state > 1);                           \
                                                                             \
-            if (state == 0) {   /* Accepting state */                       \
-                accept_action;                                              \
-            }                                                               \
+        if (LIKELY(state == 0)) {   /* Accepting state */                   \
+            accept_action;                                                  \
+        }                                                                   \
                                                                             \
-            if (UNLIKELY(state == 1)) { /* Rejecting state */               \
-                reject_action;                                              \
-            }                                                               \
-        } while (s < e_);                                                   \
+        if (state == 1) { /* Rejecting state */                             \
+            reject_action;                                                  \
+        }                                                                   \
                                                                             \
         /* Here, dropped out of loop before end-of-char */                  \
         incomplete_char_action;                                             \
@@ -2381,40 +2333,97 @@ Perl_is_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
 
 /*
 
-=for apidoc isUTF8_CHAR
+=for apidoc      isUTF8_CHAR
+=for apidoc_item isSTRICT_UTF8_CHAR
+=for apidoc_item isC9_STRICT_UTF8_CHAR
+=for apidoc_item isUTF8_CHAR_flags
+=for apidoc_item is_utf8_char_buf
 
-Evaluates to non-zero if the first few bytes of the string starting at C<s> and
-looking no further than S<C<e - 1>> are well-formed UTF-8, as extended by Perl,
-that represents some code point; otherwise it evaluates to 0.  If non-zero, the
-value gives how many bytes starting at C<s> comprise the code point's
-representation.  Any bytes remaining before C<e>, but beyond the ones needed to
-form the first code point in C<s>, are not examined.
+These each evaluate to non-zero if the first few bytes of the string starting
+at C<s> and looking no further than S<C<e - 1>> are well-formed UTF-8 that
+represents some code point, for varying degrees of strictness.  Otherwise they
+evaluate to 0.  If non-zero, the value gives how many bytes starting at C<s>
+comprise the code point's representation.  Any bytes remaining before C<e>, but
+beyond the ones needed to form the first code point in C<s>, are not examined.
 
-The code point can be any that will fit in an IV on this machine, using Perl's
-extension to official UTF-8 to represent those higher than the Unicode maximum
-of 0x10FFFF.  That means that this macro is used to efficiently decide if the
-next few bytes in C<s> is legal UTF-8 for a single character.
+These are used to efficiently decide if the next few bytes in C<s> are
+legal UTF-8 for a single character.
 
-Use C<L</isSTRICT_UTF8_CHAR>> to restrict the acceptable code points to those
-defined by Unicode to be fully interchangeable across applications;
-C<L</isC9_STRICT_UTF8_CHAR>> to use the L<Unicode Corrigendum
-#9|http://www.unicode.org/versions/corrigendum9.html> definition of allowable
-code points; and C<L</isUTF8_CHAR_flags>> for a more customized definition.
+With C<isUTF8_CHAR>, the code point can be any that will fit in an IV on this
+machine, using Perl's extension to official UTF-8 to represent those higher
+than the Unicode maximum of 0x10FFFF.  That means that this will consider byte
+sequences to be valid that are unrecognized or considered illegal by non-Perl
+applications.
 
-Use C<L</is_utf8_string>>, C<L</is_utf8_string_loc>>, and
-C<L</is_utf8_string_loclen>> to check entire strings.
+With C<L</isSTRICT_UTF8_CHAR>>, acceptable code points are restricted to those
+defined by Unicode to be fully interchangeable across applications.
+This means code points above the Unicode range (max legal is 0x10FFFF),
+surrogates, and non-character code points are rejected.
+
+With C<L</isC9_STRICT_UTF8_CHAR>>, acceptable code points are restricted to
+those defined by Unicode to be fully interchangeable within an application.
+This means code points above the Unicode range and surrogates are rejected, but
+non-character code points are accepted.  See L<Unicode Corrigendum
+#9|http://www.unicode.org/versions/corrigendum9.html>.
+
+Use C<L</isUTF8_CHAR_flags>> to customize what code points are acceptable.
+If C<flags> is 0, this gives the same results as C<L</isUTF8_CHAR>>;
+if C<flags> is C<UTF8_DISALLOW_ILLEGAL_INTERCHANGE>, this gives the same results
+as C<L</isSTRICT_UTF8_CHAR>>;
+and if C<flags> is C<UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE>, this gives
+the same results as C<L</isC9_STRICT_UTF8_CHAR>>.
+Otherwise C<flags> may be any combination of the C<UTF8_DISALLOW_I<foo>> flags
+understood by C<L</utf8_to_uv>>, with the same meanings.
+
+The three alternative macros are for the most commonly needed validations; they
+are likely to run somewhat faster than this more general one, as they can be
+inlined into your code.
+
+Use one of the C<L</is_utf8_string>> forms to check entire strings.
 
 Note also that a UTF-8 "invariant" character (i.e. ASCII on non-EBCDIC
 machines) is a valid UTF-8 character.
 
+C<is_utf8_char_buf> is the old name for C<isUTF8_CHAR>.  Do not use it in new
+code.
+
 =cut
 
-This uses an adaptation of the table and algorithm given in
-https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
-documentation of the original version.  A copyright notice for the original
-version is given at the beginning of this file.  The Perl adaptation is
-documented at the definition of PL_extended_utf8_dfa_tab[].
+All the functions except isUTF8_CHAR_flags) use adaptations of the table and
+algorithm given in https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which
+provides comprehensive documentation of the original version.  A copyright
+notice for the original version is given at the beginning of this file.
+
+The Perl adaptation for isUTF8_CHAR is documented at the definition of
+PL_extended_utf8_dfa_tab[].
+
+The Perl adaptation for isSTRICT_UTF8_CHAR is documented at the definition of
+PL_strict_utf8_dfa_tab[];
+
+The Perl adaptation for isC9_STRICT_UTF8_CHAR is documented at the definition
+of PL_c9_utf8_dfa_tab[].
+
 */
+
+PERL_STATIC_INLINE Size_t
+Perl_isSTRICT_UTF8_CHAR(const U8 * const s0, const U8 * const e)
+{
+    PERL_ARGS_ASSERT_ISSTRICT_UTF8_CHAR;
+
+    PERL_IS_UTF8_CHAR_DFA(s0, e, PL_strict_utf8_dfa_tab,
+                          DFA_RETURN_SUCCESS_,
+                          goto check_hanguls,
+                          DFA_RETURN_FAILURE_);
+  check_hanguls:
+
+    /* Here, we didn't return success, but dropped out of the loop.  In the
+     * case of PL_strict_utf8_dfa_tab, this means the input is either
+     * malformed, or was for certain Hanguls; handle them specially */
+
+    /* The dfa above drops out for incomplete or illegal inputs, and certain
+     * legal Hanguls; check and return accordingly */
+    return is_HANGUL_ED_utf8_safe(s0, e);
+}
 
 PERL_STATIC_INLINE Size_t
 Perl_isUTF8_CHAR(const U8 * const s0, const U8 * const e)
@@ -2449,98 +2458,6 @@ Perl_isUTF8_CHAR(const U8 * const s0, const U8 * const e)
 
 }
 
-/*
-
-=for apidoc isSTRICT_UTF8_CHAR
-
-Evaluates to non-zero if the first few bytes of the string starting at C<s> and
-looking no further than S<C<e - 1>> are well-formed UTF-8 that represents some
-Unicode code point completely acceptable for open interchange between all
-applications; otherwise it evaluates to 0.  If non-zero, the value gives how
-many bytes starting at C<s> comprise the code point's representation.  Any
-bytes remaining before C<e>, but beyond the ones needed to form the first code
-point in C<s>, are not examined.
-
-The largest acceptable code point is the Unicode maximum 0x10FFFF, and must not
-be a surrogate nor a non-character code point.  Thus this excludes any code
-point from Perl's extended UTF-8.
-
-This is used to efficiently decide if the next few bytes in C<s> is
-legal Unicode-acceptable UTF-8 for a single character.
-
-Use C<L</isC9_STRICT_UTF8_CHAR>> to use the L<Unicode Corrigendum
-#9|http://www.unicode.org/versions/corrigendum9.html> definition of allowable
-code points; C<L</isUTF8_CHAR>> to check for Perl's extended UTF-8;
-and C<L</isUTF8_CHAR_flags>> for a more customized definition.
-
-Use C<L</is_strict_utf8_string>>, C<L</is_strict_utf8_string_loc>>, and
-C<L</is_strict_utf8_string_loclen>> to check entire strings.
-
-=cut
-
-This uses an adaptation of the tables and algorithm given in
-https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
-documentation of the original version.  A copyright notice for the original
-version is given at the beginning of this file.  The Perl adaptation is
-documented at the definition of strict_extended_utf8_dfa_tab[].
-
-*/
-
-PERL_STATIC_INLINE Size_t
-Perl_isSTRICT_UTF8_CHAR(const U8 * const s0, const U8 * const e)
-{
-    PERL_ARGS_ASSERT_ISSTRICT_UTF8_CHAR;
-
-    PERL_IS_UTF8_CHAR_DFA(s0, e, PL_strict_utf8_dfa_tab,
-                          DFA_RETURN_SUCCESS_,
-                          goto check_hanguls,
-                          DFA_RETURN_FAILURE_);
-  check_hanguls:
-
-    /* Here, we didn't return success, but dropped out of the loop.  In the
-     * case of PL_strict_utf8_dfa_tab, this means the input is either
-     * malformed, or was for certain Hanguls; handle them specially */
-
-    /* The dfa above drops out for incomplete or illegal inputs, and certain
-     * legal Hanguls; check and return accordingly */
-    return is_HANGUL_ED_utf8_safe(s0, e);
-}
-
-/*
-
-=for apidoc isC9_STRICT_UTF8_CHAR
-
-Evaluates to non-zero if the first few bytes of the string starting at C<s> and
-looking no further than S<C<e - 1>> are well-formed UTF-8 that represents some
-Unicode non-surrogate code point; otherwise it evaluates to 0.  If non-zero,
-the value gives how many bytes starting at C<s> comprise the code point's
-representation.  Any bytes remaining before C<e>, but beyond the ones needed to
-form the first code point in C<s>, are not examined.
-
-The largest acceptable code point is the Unicode maximum 0x10FFFF.  This
-differs from C<L</isSTRICT_UTF8_CHAR>> only in that it accepts non-character
-code points.  This corresponds to
-L<Unicode Corrigendum #9|http://www.unicode.org/versions/corrigendum9.html>.
-which said that non-character code points are merely discouraged rather than
-completely forbidden in open interchange.  See
-L<perlunicode/Noncharacter code points>.
-
-Use C<L</isUTF8_CHAR>> to check for Perl's extended UTF-8; and
-C<L</isUTF8_CHAR_flags>> for a more customized definition.
-
-Use C<L</is_c9strict_utf8_string>>, C<L</is_c9strict_utf8_string_loc>>, and
-C<L</is_c9strict_utf8_string_loclen>> to check entire strings.
-
-=cut
-
-This uses an adaptation of the tables and algorithm given in
-https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides comprehensive
-documentation of the original version.  A copyright notice for the original
-version is given at the beginning of this file.  The Perl adaptation is
-documented at the definition of PL_c9_utf8_dfa_tab[].
-
-*/
-
 PERL_STATIC_INLINE Size_t
 Perl_isC9_STRICT_UTF8_CHAR(const U8 * const s0, const U8 * const e)
 {
@@ -2552,35 +2469,8 @@ Perl_isC9_STRICT_UTF8_CHAR(const U8 * const s0, const U8 * const e)
                           DFA_RETURN_FAILURE_);
 }
 
-/*
-
-=for apidoc is_strict_utf8_string_loc
-
-Like C<L</is_strict_utf8_string>> but stores the location of the failure (in the
-case of "utf8ness failure") or the location C<s>+C<len> (in the case of
-"utf8ness success") in the C<ep> pointer.
-
-See also C<L</is_strict_utf8_string_loclen>>.
-
-=cut
-*/
-
 #define is_strict_utf8_string_loc(s, len, ep)                               \
                                 is_strict_utf8_string_loclen(s, len, ep, 0)
-
-/*
-
-=for apidoc is_strict_utf8_string_loclen
-
-Like C<L</is_strict_utf8_string>> but stores the location of the failure (in the
-case of "utf8ness failure") or the location C<s>+C<len> (in the case of
-"utf8ness success") in the C<ep> pointer, and the number of UTF-8
-encoded characters in the C<el> pointer.
-
-See also C<L</is_strict_utf8_string_loc>>.
-
-=cut
-*/
 
 PERL_STATIC_INLINE bool
 Perl_is_strict_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
@@ -2629,35 +2519,8 @@ Perl_is_strict_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN
     }
 }
 
-/*
-
-=for apidoc is_c9strict_utf8_string_loc
-
-Like C<L</is_c9strict_utf8_string>> but stores the location of the failure (in
-the case of "utf8ness failure") or the location C<s>+C<len> (in the case of
-"utf8ness success") in the C<ep> pointer.
-
-See also C<L</is_c9strict_utf8_string_loclen>>.
-
-=cut
-*/
-
 #define is_c9strict_utf8_string_loc(s, len, ep)	                            \
                             is_c9strict_utf8_string_loclen(s, len, ep, 0)
-
-/*
-
-=for apidoc is_c9strict_utf8_string_loclen
-
-Like C<L</is_c9strict_utf8_string>> but stores the location of the failure (in
-the case of "utf8ness failure") or the location C<s>+C<len> (in the case of
-"utf8ness success") in the C<ep> pointer, and the number of UTF-8 encoded
-characters in the C<el> pointer.
-
-See also C<L</is_c9strict_utf8_string_loc>>.
-
-=cut
-*/
 
 PERL_STATIC_INLINE bool
 Perl_is_c9strict_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el)
@@ -2706,19 +2569,6 @@ Perl_is_c9strict_utf8_string_loclen(const U8 *s, STRLEN len, const U8 **ep, STRL
     }
 }
 
-/*
-
-=for apidoc is_utf8_string_loc_flags
-
-Like C<L</is_utf8_string_flags>> but stores the location of the failure (in the
-case of "utf8ness failure") or the location C<s>+C<len> (in the case of
-"utf8ness success") in the C<ep> pointer.
-
-See also C<L</is_utf8_string_loclen_flags>>.
-
-=cut
-*/
-
 #define is_utf8_string_loc_flags(s, len, ep, flags)                         \
                         is_utf8_string_loclen_flags(s, len, ep, 0, flags)
 
@@ -2727,40 +2577,25 @@ See also C<L</is_utf8_string_loclen_flags>>.
  * just below, and made #defines that call it with the right 'flags'.  They are
  * currently kept separate to increase their chances of getting inlined */
 
-/*
-
-=for apidoc is_utf8_string_loclen_flags
-
-Like C<L</is_utf8_string_flags>> but stores the location of the failure (in the
-case of "utf8ness failure") or the location C<s>+C<len> (in the case of
-"utf8ness success") in the C<ep> pointer, and the number of UTF-8
-encoded characters in the C<el> pointer.
-
-See also C<L</is_utf8_string_loc_flags>>.
-
-=cut
-*/
-
 PERL_STATIC_INLINE bool
 Perl_is_utf8_string_loclen_flags(const U8 *s, STRLEN len, const U8 **ep, STRLEN *el, const U32 flags)
 {
     const U8 * first_variant;
 
     PERL_ARGS_ASSERT_IS_UTF8_STRING_LOCLEN_FLAGS;
-    assert(0 == (flags & ~(UTF8_DISALLOW_ILLEGAL_INTERCHANGE
-                          |UTF8_DISALLOW_PERL_EXTENDED)));
+    assert(0 == (flags & ~UTF8_DISALLOW_ILLEGAL_INTERCHANGE));
 
     if (flags == 0) {
         return is_utf8_string_loclen(s, len, ep, el);
     }
 
-    if ((flags & ~UTF8_DISALLOW_PERL_EXTENDED)
+    if ((flags & UTF8_DISALLOW_ILLEGAL_INTERCHANGE)
                                         == UTF8_DISALLOW_ILLEGAL_INTERCHANGE)
     {
         return is_strict_utf8_string_loclen(s, len, ep, el);
     }
 
-    if ((flags & ~UTF8_DISALLOW_PERL_EXTENDED)
+    if ((flags & UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE)
                                     == UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE)
     {
         return is_c9strict_utf8_string_loclen(s, len, ep, el);
@@ -2881,53 +2716,93 @@ Perl_utf8_hop(const U8 *s, SSize_t off)
 }
 
 /*
-=for apidoc utf8_hop_forward
+=for apidoc      utf8_hop_forward
+=for apidoc_item utf8_hop_forward_overshoot
 
-Return the UTF-8 pointer C<s> displaced by up to C<off> characters,
-forward.  C<s> does not need to be pointing to the starting byte of a
-character.  If it isn't, one count of C<off> will be used up to get to the
-start of the next character.
+These each take as input a position, C<s0>, into a string encoded as UTF-8
+which ends at the byte before C<end>, and return the position within it that is
+C<s0> displaced by up to C<off> characters forwards.
 
-C<off> must be non-negative.
+If there are fewer than C<off> characters between C<s0> and C<end>, the
+functions return C<end>.
 
-C<s> must be before or equal to C<end>.
+The functions differ in two ways
 
-When moving forward it will not move beyond C<end>.
+=over 4
 
-Will not exceed this limit even if the string is not valid "UTF-8".
+=item *
+
+C<utf8_hop_forward_overshoot> can return how many characters beyond the edge
+the request was for.  When its parameter, C<&remaining>, is not NULL, the
+function stores into it the count of the excess; zero if the request was
+completely fulfilled.  The actual number of characters that were displaced can
+then be calculated as S<C<off - remaining>>.
+
+=item *
+
+C<utf8_hop_forward> will panic if called with C<s0> already positioned at or
+beyond the edge of the string ending at C<end> and the request is to go even
+further over the edge.  C<utf8_hop_forward_overshoot> presumes the caller will
+handle any errors, and just stores C<off> into C<remaining> without doing
+anything else.
+
+=back
+
+(The above contains a slight lie.  When C<remaining> is NULL, the two functions
+act identically.)
+
+C<s0> does not need to be pointing to the starting byte of a character.  If it
+isn't, one count of C<off> will be used up to get to that start.
+
+C<off> must be non-negative, and if zero, no action is taken; C<s0> is returned
+unchanged.
 
 =cut
 */
+# define Perl_utf8_hop_forward(          s, off, end)           \
+         Perl_utf8_hop_forward_overshoot(s, off, end, NULL)
 
 PERL_STATIC_INLINE U8 *
-Perl_utf8_hop_forward(const U8 *s, SSize_t off, const U8 *end)
+Perl_utf8_hop_forward_overshoot(const U8 * s, SSize_t off,
+                                const U8 * const end, SSize_t *remaining)
 {
-    PERL_ARGS_ASSERT_UTF8_HOP_FORWARD;
-
-    /* Note: cannot use UTF8_IS_...() too eagerly here since e.g
-     * the bitops (especially ~) can create illegal UTF-8.
-     * In other words: in Perl UTF-8 is not just for Unicode. */
-
-    assert(s <= end);
+    PERL_ARGS_ASSERT_UTF8_HOP_FORWARD_OVERSHOOT;
     assert(off >= 0);
 
-    if (off && UNLIKELY(UTF8_IS_CONTINUATION(*s))) {
-        /* Get to next non-continuation byte */
-        do {
-            s++;
+    if (off != 0) {
+        if (UNLIKELY(s >= end && ! remaining)) {
+            Perl_croak_nocontext("panic: Start of forward hop (0x%p) is %zd"
+                                 " bytes beyond legal end position (0x%p)",
+                                 s, 1 + s - end, end);
         }
-        while (UTF8_IS_CONTINUATION(*s));
-        off--;
+
+        if (UNLIKELY(UTF8_IS_CONTINUATION(*s))) {
+            do {    /* Get to next non-continuation byte */
+                if (! UTF8_IS_CONTINUATION(*s)) {
+                    off--;
+                    break;
+                }
+                s++;
+            } while (s < end);
+        }
+
+        while (off > 0 && s < end) {
+            STRLEN skip = UTF8SKIP(s);
+
+            /* Quit without counting this character if it overshoots the edge.
+             * */
+            if ((STRLEN)(end - s) < skip) {
+                s = end;
+                break;
+            }
+
+            s += skip;
+            off--;
+        }
     }
 
-    while (off--) {
-        STRLEN skip = UTF8SKIP(s);
-        if ((STRLEN)(end - s) <= skip) {
-            GCC_DIAG_IGNORE(-Wcast-qual)
-            return (U8 *)end;
-            GCC_DIAG_RESTORE
-        }
-        s += skip;
+    if (remaining) {
+        *remaining = off;
     }
 
     GCC_DIAG_IGNORE(-Wcast-qual)
@@ -2936,33 +2811,48 @@ Perl_utf8_hop_forward(const U8 *s, SSize_t off, const U8 *end)
 }
 
 /*
-=for apidoc utf8_hop_back
+=for apidoc      utf8_hop_back
+=for apidoc_item utf8_hop_back_overshoot
 
-Return the UTF-8 pointer C<s> displaced by up to C<off> characters,
-backward.  C<s> does not need to be pointing to the starting byte of a
-character.  If it isn't, one count of C<off> will be used up to get to that
-start.
+These each take as input a string encoded as UTF-8 which starts at C<start>,
+and a position into it given by C<s>, and return the position within it that is
+C<s> displaced by up to C<off> characters backwards.
 
-C<off> must be non-positive.
+If there are fewer than C<off> characters between C<start> and C<s>, the
+functions return C<start>.
 
-C<s> must be after or equal to C<start>.
+The functions differ in that C<utf8_hop_back_overshoot> can return how many
+characters C<off> beyond the edge the request was for.  When its parameter,
+C<&remaining>, is not NULL, the function stores into it the count of the
+excess; zero if the request was completely fulfilled.  The actual number of
+characters that were displaced can then be calculated as S<C<off - remaining>>.
+This function acts identically to plain C<utf8_hop_back> when this parameter is
+NULL.
 
-When moving backward it will not move before C<start>.
+C<s> does not need to be pointing to the starting byte of a character.  If it
+isn't, one count of C<off> will be used up to get to that start.
 
-Will not exceed this limit even if the string is not valid "UTF-8".
+C<off> must be non-positive, and if zero, no action is taken; C<s> is returned
+unchanged.  That it otherwise must be negative means that the earlier
+description is a lie, to avoid burdening you with this detail too soon.  An
+C<off> of C<-2> means to displace two characters backwards, so the displacement
+is actually the absolute value of C<off>.  C<remaining> will also be
+non-positive.  If there was only one character between C<start> and C<s>, and a
+displacement of C<-2> was requested, C<remaining> would be set to C<-1>.  The
+subtraction formula works, yielding the result that only C<-1> character was
+displaced.
 
 =cut
 */
 
+# define Perl_utf8_hop_back(          s, off, start)            \
+         Perl_utf8_hop_back_overshoot(s, off, start, NULL)
+
 PERL_STATIC_INLINE U8 *
-Perl_utf8_hop_back(const U8 *s, SSize_t off, const U8 *start)
+Perl_utf8_hop_back_overshoot(const U8 *s, SSize_t off,
+                             const U8 * const start, SSize_t *remaining)
 {
-    PERL_ARGS_ASSERT_UTF8_HOP_BACK;
-
-    /* Note: cannot use UTF8_IS_...() too eagerly here since e.g
-     * the bitops (especially ~) can create illegal UTF-8.
-     * In other words: in Perl UTF-8 is not just for Unicode. */
-
+    PERL_ARGS_ASSERT_UTF8_HOP_BACK_OVERSHOOT;
     assert(start <= s);
     assert(off <= 0);
 
@@ -2973,10 +2863,18 @@ Perl_utf8_hop_back(const U8 *s, SSize_t off, const U8 *start)
      * moved is large, and core perl doesn't currently move more than a few
      * characters at a time.  You can reinstate it if it does become
      * advantageous. */
-    while (off++ && s > start) {
-        do {
+    while (off < 0 && s > start) {
+        do {    /* Find the beginning of this character */
             s--;
-        } while (s > start && UTF8_IS_CONTINUATION(*s));
+            if (! UTF8_IS_CONTINUATION(*s)) {
+                off++;
+                break;
+            }
+        } while (s > start);
+    }
+
+    if (remaining) {
+        *remaining = off;
     }
 
     GCC_DIAG_IGNORE(-Wcast-qual)
@@ -2985,78 +2883,59 @@ Perl_utf8_hop_back(const U8 *s, SSize_t off, const U8 *start)
 }
 
 /*
-=for apidoc utf8_hop_safe
+=for apidoc      utf8_hop_safe
+=for apidoc_item utf8_hop_overshoot
 
-Return the UTF-8 pointer C<s> displaced by up to C<off> characters,
-either forward or backward.  C<s> does not need to be pointing to the starting
-byte of a character.  If it isn't, one count of C<off> will be used up to get
-to the start of the next character for forward hops, and to the start of the
-current character for negative ones.
+These each take as input a string encoded as UTF-8 which starts at C<start>,
+ending at C<end>, and a position into it given by C<s>, and return the
+position within it that is C<s> displaced by up to C<off> characters, either
+forwards if C<off> is positive, or backwards if C<off> is negative.  (Nothing
+is done if C<off> is 0.)
 
-When moving backward it will not move before C<start>.
+If there are fewer than C<off> characters between C<s> and the respective edge,
+the functions return that edge.
 
-When moving forward it will not move beyond C<end>.
+The functions differ in that C<utf8_hop_overshoot> can return how many
+characters beyond the edge the request was for.  When its parameter,
+C<&remaining>, is not NULL, the function stores into it the count of the
+excess; zero if the request was completely fulfilled.  The actual number of
+characters that were displaced can then be calculated as S<C<off - remaining>>.
+This function acts identically to plain C<utf8_hop_safe> when this parameter is
+NULL.
 
-Will not exceed those limits even if the string is not valid "UTF-8".
+C<s> does not need to be pointing to the starting byte of a character.  If it
+isn't, one count of C<off> will be used up to get to that start.
+
+To be more precise, the displacement is by the absolute value of C<off>, and
+the excess count is the absolute value of C<remaining>.
 
 =cut
 */
 
-PERL_STATIC_INLINE U8 *
-Perl_utf8_hop_safe(const U8 *s, SSize_t off, const U8 *start, const U8 *end)
-{
-    PERL_ARGS_ASSERT_UTF8_HOP_SAFE;
+#define Perl_utf8_hop_safe(s, o, b, e)  Perl_utf8_hop_overshoot(s, o, b, e, 0)
 
-    /* Note: cannot use UTF8_IS_...() too eagerly here since e.g
-     * the bitops (especially ~) can create illegal UTF-8.
-     * In other words: in Perl UTF-8 is not just for Unicode. */
+PERL_STATIC_INLINE U8 *
+Perl_utf8_hop_overshoot(const U8 *s, SSize_t off,
+                   const U8 * const start, const U8 * const end,
+                   SSize_t * remaining)
+{
+    PERL_ARGS_ASSERT_UTF8_HOP_OVERSHOOT;
 
     assert(start <= s && s <= end);
 
     if (off >= 0) {
-        return utf8_hop_forward(s, off, end);
+        return utf8_hop_forward_overshoot(s, off, end, remaining);
     }
     else {
-        return utf8_hop_back(s, off, start);
+        return utf8_hop_back_overshoot(s, off, start, remaining);
     }
 }
-
-/*
-
-=for apidoc isUTF8_CHAR_flags
-
-Evaluates to non-zero if the first few bytes of the string starting at C<s> and
-looking no further than S<C<e - 1>> are well-formed UTF-8, as extended by Perl,
-that represents some code point, subject to the restrictions given by C<flags>;
-otherwise it evaluates to 0.  If non-zero, the value gives how many bytes
-starting at C<s> comprise the code point's representation.  Any bytes remaining
-before C<e>, but beyond the ones needed to form the first code point in C<s>,
-are not examined.
-
-If C<flags> is 0, this gives the same results as C<L</isUTF8_CHAR>>;
-if C<flags> is C<UTF8_DISALLOW_ILLEGAL_INTERCHANGE>, this gives the same results
-as C<L</isSTRICT_UTF8_CHAR>>;
-and if C<flags> is C<UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE>, this gives
-the same results as C<L</isC9_STRICT_UTF8_CHAR>>.
-Otherwise C<flags> may be any combination of the C<UTF8_DISALLOW_I<foo>> flags
-understood by C<L</utf8n_to_uvchr>>, with the same meanings.
-
-The three alternative macros are for the most commonly needed validations; they
-are likely to run somewhat faster than this more general one, as they can be
-inlined into your code.
-
-Use L</is_utf8_string_flags>, L</is_utf8_string_loc_flags>, and
-L</is_utf8_string_loclen_flags> to check entire strings.
-
-=cut
-*/
 
 PERL_STATIC_INLINE STRLEN
 Perl_isUTF8_CHAR_flags(const U8 * const s0, const U8 * const e, const U32 flags)
 {
     PERL_ARGS_ASSERT_ISUTF8_CHAR_FLAGS;
-    assert(0 == (flags & ~(UTF8_DISALLOW_ILLEGAL_INTERCHANGE
-                          |UTF8_DISALLOW_PERL_EXTENDED)));
+    assert(0 == (flags & ~UTF8_DISALLOW_ILLEGAL_INTERCHANGE));
 
     PERL_IS_UTF8_CHAR_DFA(s0, e, PL_extended_utf8_dfa_tab,
                           goto check_success,
@@ -3090,17 +2969,20 @@ Perl_isUTF8_CHAR_flags(const U8 * const s0, const U8 * const e, const U32 flags)
 
 /*
 
-=for apidoc is_utf8_valid_partial_char
+=for apidoc      is_utf8_valid_partial_char
+=for apidoc_item is_utf8_valid_partial_char_flags
 
-Returns 0 if the sequence of bytes starting at C<s> and looking no further than
-S<C<e - 1>> is the UTF-8 encoding, as extended by Perl, for one or more code
-points.  Otherwise, it returns 1 if there exists at least one non-empty
-sequence of bytes that when appended to sequence C<s>, starting at position
-C<e> causes the entire sequence to be the well-formed UTF-8 of some code point;
-otherwise returns 0.
+These each return FALSE if the sequence of bytes starting at C<s> and looking no
+further than S<C<e - 1>> is the UTF-8 encoding for one or more code points.
+That is, FALSE is returned if C<s> points to at least one entire UTF-8 encoded
+character.
 
-In other words this returns TRUE if C<s> points to a partial UTF-8-encoded code
-point.
+Otherwise, they return TRUE if there exists at least one non-empty sequence of
+bytes that when appended to sequence C<s>, starting at position C<e> causes the
+entire sequence to be the well-formed UTF-8 of some code point
+
+In other words they return TRUE if C<s> points to an incomplete UTF-8-encoded
+code point; FALSE otherwise.
 
 This is useful when a fixed-length buffer is being tested for being well-formed
 UTF-8, but the final few bytes in it don't comprise a full character; that is,
@@ -3111,38 +2993,29 @@ function is used to verify that the final bytes in the current buffer are in
 fact the legal beginning of some code point, so that if they aren't, the
 failure can be signalled without having to wait for the next read.
 
+C<is_utf8_valid_partial_char> behaves identically to
+C<is_utf8_valid_partial_char_flags> when the latter is called with a zero
+C<flags> parameter.  This parameter is used to restrict the classes of code
+points that are considered to be valid.  When zero, Perl's extended UTF-8 is
+used.  Otherwise C<flags> can be any combination of the C<UTF8_DISALLOW_I<foo>>
+flags accepted by C<L</utf8_to_uv>>.  If there is any sequence of bytes
+that can complete the input partial character in such a way that a
+non-prohibited character is formed, the function returns TRUE; otherwise FALSE.
+Non-character code points cannot be determined based on partial character
+input, so TRUE is always returned if C<s> looks like it could be the beginning
+on one of those.  But many  of the other possible excluded types can be
+determined from just the first one or two bytes.
+
 =cut
 */
 #define is_utf8_valid_partial_char(s, e)                                    \
                                 is_utf8_valid_partial_char_flags(s, e, 0)
 
-/*
-
-=for apidoc is_utf8_valid_partial_char_flags
-
-Like C<L</is_utf8_valid_partial_char>>, it returns a boolean giving whether
-or not the input is a valid UTF-8 encoded partial character, but it takes an
-extra parameter, C<flags>, which can further restrict which code points are
-considered valid.
-
-If C<flags> is 0, this behaves identically to
-C<L</is_utf8_valid_partial_char>>.  Otherwise C<flags> can be any combination
-of the C<UTF8_DISALLOW_I<foo>> flags accepted by C<L</utf8n_to_uvchr>>.  If
-there is any sequence of bytes that can complete the input partial character in
-such a way that a non-prohibited character is formed, the function returns
-TRUE; otherwise FALSE.  Non character code points cannot be determined based on
-partial character input.  But many  of the other possible excluded types can be
-determined from just the first one or two bytes.
-
-=cut
- */
-
 PERL_STATIC_INLINE bool
 Perl_is_utf8_valid_partial_char_flags(const U8 * const s0, const U8 * const e, const U32 flags)
 {
     PERL_ARGS_ASSERT_IS_UTF8_VALID_PARTIAL_CHAR_FLAGS;
-    assert(0 == (flags & ~(UTF8_DISALLOW_ILLEGAL_INTERCHANGE
-                          |UTF8_DISALLOW_PERL_EXTENDED)));
+    assert(0 == (flags & ~UTF8_DISALLOW_ILLEGAL_INTERCHANGE));
 
     PERL_IS_UTF8_CHAR_DFA(s0, e, PL_extended_utf8_dfa_tab,
                           DFA_RETURN_FAILURE_,
@@ -3171,7 +3044,7 @@ Perl_is_utf8_valid_partial_char_flags(const U8 * const s0, const U8 * const e, c
     if (   *s0 != I8_TO_NATIVE_UTF8(0xFF)
         || (flags & (UTF8_DISALLOW_SUPER|UTF8_DISALLOW_PERL_EXTENDED)))
     {
-        return 0;
+        return FALSE;
     }
 
     return is_utf8_FF_helper_(s0, e,
@@ -3183,56 +3056,43 @@ Perl_is_utf8_valid_partial_char_flags(const U8 * const s0, const U8 * const e, c
 
 /*
 
-=for apidoc is_utf8_fixed_width_buf_flags
+=for apidoc      is_utf8_fixed_width_buf_flags
+=for apidoc_item is_utf8_fixed_width_buf_loc_flags
+=for apidoc_item is_utf8_fixed_width_buf_loclen_flags
 
-Returns TRUE if the fixed-width buffer starting at C<s> with length C<len>
-is entirely valid UTF-8, subject to the restrictions given by C<flags>;
-otherwise it returns FALSE.
+These each return TRUE if the fixed-width buffer starting at C<s> with length
+C<len> is entirely valid UTF-8, subject to the restrictions given by C<flags>;
+otherwise they return FALSE.
 
 If C<flags> is 0, any well-formed UTF-8, as extended by Perl, is accepted
 without restriction.  If the final few bytes of the buffer do not form a
 complete code point, this will return TRUE anyway, provided that
 C<L</is_utf8_valid_partial_char_flags>> returns TRUE for them.
 
-If C<flags> in non-zero, it can be any combination of the
-C<UTF8_DISALLOW_I<foo>> flags accepted by C<L</utf8n_to_uvchr>>, and with the
-same meanings.
+C<flags> can be zero or any combination of the C<UTF8_DISALLOW_I<foo>> flags
+accepted by C<L</utf8_to_uv>>, and with the same meanings.
 
-This function differs from C<L</is_utf8_string_flags>> only in that the latter
+The functions differ from C<L</is_utf8_string_flags>> only in that the latter
 returns FALSE if the final few bytes of the string don't form a complete code
 point.
+
+C<is_utf8_fixed_width_buf_loc_flags>> does all the preceding, but takes an
+extra parameter, C<ep> into which it stores the location of the failure, if
+C<ep> is not NULL.  If instead the function returns TRUE, C<*ep> will point to
+the beginning of any partial character at the end of the buffer; if there is no
+partial character C<*ep> will contain C<s>+C<len>.
+
+C<is_utf8_fixed_width_buf_loclen_flags>> does all the preceding, but takes
+another extra parameter, C<el> into which it stores the number of complete,
+valid characters found, if C<el> is not NULL.
 
 =cut
  */
 #define is_utf8_fixed_width_buf_flags(s, len, flags)                        \
                 is_utf8_fixed_width_buf_loclen_flags(s, len, 0, 0, flags)
 
-/*
-
-=for apidoc is_utf8_fixed_width_buf_loc_flags
-
-Like C<L</is_utf8_fixed_width_buf_flags>> but stores the location of the
-failure in the C<ep> pointer.  If the function returns TRUE, C<*ep> will point
-to the beginning of any partial character at the end of the buffer; if there is
-no partial character C<*ep> will contain C<s>+C<len>.
-
-See also C<L</is_utf8_fixed_width_buf_loclen_flags>>.
-
-=cut
-*/
-
 #define is_utf8_fixed_width_buf_loc_flags(s, len, loc, flags)               \
                 is_utf8_fixed_width_buf_loclen_flags(s, len, loc, 0, flags)
-
-/*
-
-=for apidoc is_utf8_fixed_width_buf_loclen_flags
-
-Like C<L</is_utf8_fixed_width_buf_loc_flags>> but stores the number of
-complete, valid characters found in the C<el> pointer.
-
-=cut
-*/
 
 PERL_STATIC_INLINE bool
 Perl_is_utf8_fixed_width_buf_loclen_flags(const U8 * const s,
@@ -3255,81 +3115,24 @@ Perl_is_utf8_fixed_width_buf_loclen_flags(const U8 * const s,
            || is_utf8_valid_partial_char_flags(*ep, s + len, flags);
 }
 
-PERL_STATIC_INLINE UV
-Perl_utf8n_to_uvchr_msgs(const U8 *s,
-                         STRLEN curlen,
-                         STRLEN *retlen,
-                         const U32 flags,
-                         U32 * errors,
-                         AV ** msgs)
+PERL_STATIC_INLINE bool
+Perl_utf8_to_uv_msgs(const U8 * const s0,
+                     const U8 * const e,
+                     UV * cp_p,
+                     Size_t *advance_p,
+                     U32 flags,
+                     U32 * errors,
+                     AV ** msgs)
 {
-    /* This is the inlined portion of utf8n_to_uvchr_msgs.  It handles the
-     * simple cases, and, if necessary calls a helper function to deal with the
-     * more complex ones.  Almost all well-formed non-problematic code points
-     * are considered simple, so that it's unlikely that the helper function
-     * will need to be called.
-     *
-     * This is an adaptation of the tables and algorithm given in
-     * https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides
-     * comprehensive documentation of the original version.  A copyright notice
-     * for the original version is given at the beginning of this file.  The
-     * Perl adaptation is documented at the definition of PL_strict_utf8_dfa_tab[].
-     */
+    PERL_ARGS_ASSERT_UTF8_TO_UV_MSGS;
 
-    const U8 * const s0 = s;
-    const U8 * send = s0 + curlen;
-    UV type;
-    UV uv;
+    /* This is the inlined portion of utf8_to_uv_msgs.  It handles the simple
+     * cases, and, if necessary calls a helper function to deal with the more
+     * complex ones.  Almost all well-formed non-problematic code points are
+     * considered simple, so that it's unlikely that the helper function will
+     * need to be called. */
 
-    PERL_ARGS_ASSERT_UTF8N_TO_UVCHR_MSGS;
-
-    /* This dfa is fast.  If it accepts the input, it was for a well-formed,
-     * non-problematic code point, which can be returned immediately.
-     * Otherwise we call a helper function to figure out the more complicated
-     * cases. */
-
-    /* No calls from core pass in an empty string; non-core need a check */
-#ifdef PERL_CORE
-    assert(curlen > 0);
-#else
-    if (curlen == 0) return _utf8n_to_uvchr_msgs_helper(s0, 0, retlen,
-                                                        flags, errors, msgs);
-#endif
-
-    type = PL_strict_utf8_dfa_tab[*s];
-
-    /* The table is structured so that 'type' is 0 iff the input byte is
-     * represented identically regardless of the UTF-8ness of the string */
-    if (type == 0) {   /* UTF-8 invariants are returned unchanged */
-        uv = *s;
-    }
-    else {
-        UV state = PL_strict_utf8_dfa_tab[256 + type];
-        uv = (0xff >> type) & NATIVE_UTF8_TO_I8(*s);
-
-        while (LIKELY(state != 1) && ++s < send) {
-            type  = PL_strict_utf8_dfa_tab[*s];
-            state = PL_strict_utf8_dfa_tab[256 + state + type];
-
-            uv = UTF8_ACCUMULATE(uv, *s);
-
-            if (state == 0) {
-#ifdef EBCDIC
-                uv = UNI_TO_NATIVE(uv);
-#endif
-                goto success;
-            }
-        }
-
-        /* Here is potentially problematic.  Use the full mechanism */
-        return _utf8n_to_uvchr_msgs_helper(s0, curlen, retlen, flags,
-                                           errors, msgs);
-    }
-
-  success:
-    if (retlen) {
-        *retlen = s - s0 + 1;
-    }
+    /* Assume that isn't malformed; the vast majority of calls won't be */
     if (errors) {
         *errors = 0;
     }
@@ -3337,32 +3140,154 @@ Perl_utf8n_to_uvchr_msgs(const U8 *s,
         *msgs = NULL;
     }
 
-    return uv;
+
+    /* No calls from core pass in an empty string; non-core need a check */
+#ifdef PERL_CORE
+    assert(e > s0);
+#else
+    if (LIKELY(e > s0))
+#endif
+
+    {
+        /* UTF-8 invariants are returned unchanged.  The code below is quite
+         * capable of handling this, but this shortcuts this very common case
+         * */
+        if (UTF8_IS_INVARIANT(*s0)) {
+            if (advance_p) {
+                *advance_p = 1;
+            }
+
+            *cp_p = *s0;
+            return true;
+        }
+
+        const U8 * s = s0;
+
+        /* This dfa is fast.  If it accepts the input, it was for a
+         * well-formed, non-problematic code point, which can be returned
+         * immediately.  Otherwise we call a helper function to figure out the
+         * more complicated cases.
+         *
+         * It is an adaptation of the tables and algorithm given in
+         * https://bjoern.hoehrmann.de/utf-8/decoder/dfa/, which provides
+         * comprehensive documentation of the original version.  A copyright
+         * notice for the original version is given at the beginning of this
+         * file.  The Perl adaptation is documented at the definition of
+         * PL_strict_utf8_dfa_tab[].
+         *
+         * The terminology of the dfa refers to a 'class'.  The variable 'type'
+         * would have been named 'class' except that is a reserved word in C++
+         * 
+         * The table can be a U16 on EBCDIC platforms, so 'state' is declared
+         * as U16; 'type' is likely to never occupy more than 5 bits.  */
+        PERL_UINT_FAST8_T type = PL_strict_utf8_dfa_tab[*s];
+        PERL_UINT_FAST16_T state = PL_strict_utf8_dfa_tab[256 + type];
+        UV uv = (0xff >> type) & NATIVE_UTF8_TO_I8(*s);
+
+        while (state > 1 && ++s < e) {
+            type  = PL_strict_utf8_dfa_tab[*s];
+            state = PL_strict_utf8_dfa_tab[256 + state + type];
+
+            uv = UTF8_ACCUMULATE(uv, *s);
+        }
+
+        if (LIKELY(state == 0)) {
+            if (advance_p) {
+                *advance_p = s - s0 + 1;
+            }
+
+            *cp_p = UNI_TO_NATIVE(uv);
+            return true;
+        }
+    }
+
+    /* Here is potentially problematic.  Use the full mechanism */
+    return utf8_to_uv_msgs_helper_(s0, e, cp_p, advance_p, flags, errors, msgs);
 }
 
 PERL_STATIC_INLINE UV
-Perl_utf8_to_uvchr_buf_helper(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
+Perl_utf8_to_uv_or_die(const U8 *s, const U8 *e, STRLEN *advance_p)
 {
-    PERL_ARGS_ASSERT_UTF8_TO_UVCHR_BUF_HELPER;
+    PERL_ARGS_ASSERT_UTF8_TO_UV_OR_DIE;
 
-    assert(s < send);
+    UV cp;
+    (void) utf8_to_uv_flags(s, e, &cp, advance_p, UTF8_DIE_IF_MALFORMED);
+    return cp;
+}
 
-    if (! ckWARN_d(WARN_UTF8)) {
+PERL_STATIC_INLINE UV
+Perl_utf8n_to_uvchr_msgs(const U8 * const s0,
+                         STRLEN curlen,
+                         STRLEN *retlen,
+                         U32 flags,
+                         U32 * errors,
+                         AV ** msgs)
+{
+    PERL_ARGS_ASSERT_UTF8N_TO_UVCHR_MSGS;
 
-        /* EMPTY is not really allowed, and asserts on debugging builds.  But
-         * on non-debugging we have to deal with it, and this causes it to
-         * return the REPLACEMENT CHARACTER, as the documentation indicates */
-        return utf8n_to_uvchr(s, send - s, retlen,
-                              (UTF8_ALLOW_ANY | UTF8_ALLOW_EMPTY));
+    UV cp;
+    if (LIKELY(utf8_to_uv_msgs(s0, s0 + curlen, &cp, retlen, flags, errors,
+                                                                        msgs)))
+    {
+        return cp;
     }
-    else {
-        UV ret = utf8n_to_uvchr(s, send - s, retlen, 0);
-        if (retlen && ret == 0 && (send <= s || *s != '\0')) {
-            *retlen = (STRLEN) -1;
-        }
 
-        return ret;
+    if ((flags & UTF8_CHECK_ONLY) && retlen) {
+        *retlen = ((STRLEN) -1);
     }
+
+    return 0;
+}
+
+
+PERL_STATIC_INLINE UV
+Perl_utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
+{
+    PERL_ARGS_ASSERT_UTF8_TO_UVCHR_BUF;
+
+    UV cp;
+
+    /* When everything is legal, just return that; but when not:
+     *  1) if warnings are enabled return 0 and retlen to -1
+     *  2) if warnings are disabled, set 'flags' to accept any malformation,
+     *     but that will just cause the REPLACEMENT CHARACTER to be returned,
+     *     as the documentation indicates.  EMPTY is not really allowed, and
+     *     asserts on debugging builds.  But on non-debugging we have to deal
+     *     with it.
+     * This API means 0 can mean a legal NUL, or the input is malformed; and
+     * the caller has to know if warnings are disabled to know if it can rely on
+     * 'retlen'.  Best to use utf8_to_uv() instead */
+    U32 flags = (ckWARN_d(WARN_UTF8)) ? 0 : (UTF8_ALLOW_ANY | UTF8_ALLOW_EMPTY);
+
+    if (   LIKELY(utf8_to_uv_flags(s, send, &cp, retlen, flags))
+        || flags)
+    {
+        return cp;
+    }
+
+    if (retlen) {
+        *retlen = (STRLEN) -1;
+    }
+
+    return 0;
+}
+
+PERL_STATIC_INLINE U8 *
+Perl_uv_to_utf8(pTHX_ U8 *d, UV uv)
+{
+    return uv_to_utf8_msgs(d, uv, 0, 0);
+}
+
+PERL_STATIC_INLINE U8 *
+Perl_uv_to_utf8_flags(pTHX_ U8 *d, UV uv, UV flags)
+{
+    return uv_to_utf8_msgs(d, uv, flags, 0);
+}
+
+PERL_STATIC_INLINE U8 *
+Perl_uv_to_utf8_msgs(pTHX_ U8 *d, UV uv, UV flags , HV **msgs)
+{
+    return uvoffuni_to_utf8_flags_msgs(d, NATIVE_TO_UNI(uv), flags, msgs);
 }
 
 /* ------------------------------- perl.h ----------------------------- */
@@ -4101,13 +4026,20 @@ Perl_newPADxVOP(pTHX_ I32 type, I32 flags, PADOFFSET padix)
 /*
 =for apidoc_section $string
 
-=for apidoc foldEQ
+=for apidoc      foldEQ
+=for apidoc_item foldEQ_locale
 
-Returns true if the leading C<len> bytes of the strings C<s1> and C<s2> are the
-same
-case-insensitively; false otherwise.  Uppercase and lowercase ASCII range bytes
-match themselves and their opposite case counterparts.  Non-cased and non-ASCII
-range bytes match only themselves.
+These each return true if the leading C<len> bytes of the strings C<s1> and
+C<s2> are the same case-insensitively; false otherwise.
+
+In C<foldEQ>, uppercase and lowercase ASCII range bytes match themselves and
+their opposite case counterparts.  Non-cased and non-ASCII range bytes match
+only themselves.
+
+In C<foldEQ_locale>, the comparison is based on the current locale.
+If that locale is UTF-8, the results are the same as C<foldEQ>, leading to
+incorrect values for non-ASCII range code points.  Use C<L</foldEQ_utf8>>
+instead.
 
 =cut
 */
@@ -4158,16 +4090,6 @@ Perl_foldEQ_latin1(pTHX_ const char *s1, const char *s2, I32 len)
     return 1;
 }
 
-/*
-=for apidoc_section $locale
-=for apidoc foldEQ_locale
-
-Returns true if the leading C<len> bytes of the strings C<s1> and C<s2> are the
-same case-insensitively in the current locale; false otherwise.
-
-=cut
-*/
-
 PERL_STATIC_INLINE I32
 Perl_foldEQ_locale(pTHX_ const char *s1, const char *s2, I32 len)
 {
@@ -4213,9 +4135,9 @@ implementation stolen from PostgreSQL.
 PERL_STATIC_INLINE Size_t
 Perl_my_strnlen(const char *str, Size_t maxlen)
 {
-    const char *end = (char *) memchr(str, '\0', maxlen);
-
     PERL_ARGS_ASSERT_MY_STRNLEN;
+
+    const char *end = (const char *) memchr(str, '\0', maxlen);
 
     if (end == NULL) return maxlen;
     return end - str;
@@ -4494,19 +4416,49 @@ Perl_padnamelist_refcnt_inc(PADNAMELIST *pnl)
 
 /*
 =for apidoc_section $string
-=for apidoc savepv
+=for apidoc      savepv
+=for apidoc_item savepvn
+=for apidoc_item savepvs
+=for apidoc_item savesvpv
+=for apidoc_item savesharedpv
+=for apidoc_item savesharedpvn
+=for apidoc_item savesharedpvs
+=for apidoc_item savesharedsvpv
 
-Perl's version of C<strdup()>.  Returns a pointer to a newly allocated
-string which is a duplicate of C<pv>.  The size of the string is
-determined by C<strlen()>, which means it may not contain embedded C<NUL>
-characters and must have a trailing C<NUL>.  To prevent memory leaks, the
-memory allocated for the new string needs to be freed when no longer needed.
-This can be done with the C<L</Safefree>> function, or
-L<C<SAVEFREEPV>|perlguts/SAVEFREEPV(p)>.
+Perl's version of C<strdup()> (or C<strndup()> would be if it existed).
 
-On some platforms, Windows for example, all allocated memory owned by a thread
-is deallocated when that thread ends.  So if you need that not to happen, you
-need to use the shared memory functions, such as C<L</savesharedpv>>.
+These each return a pointer to a newly allocated string which is a duplicate of
+the input string.
+
+The forms differ in how the string to be copied is specified, and where the new
+memory is allocated from.
+
+To prevent memory leaks, the memory allocated for the new string needs to be
+freed when no longer needed.  This can be done with the C<L</Safefree>>
+function, or L<C<SAVEFREEPV>|perlguts/SAVEFREEPV(p)>.
+
+The forms whose names contain C<shared> differ from the corresponding form
+without that in its name, only in that the memory in the former comes from
+memory shared between threads.  This is needed, because on some platforms,
+Windows for example, all allocated memory owned by a thread is deallocated when
+that thread ends.  So if you need that not to happen, you need to use the
+shared memory forms.
+
+The string to copy in C<savepvs> is a C language string literal surrounded by
+double quotes.
+
+The string to copy in the forms whose name contains C<svpv> comes from the PV
+in the SV argument C<sv>, using C<SvPV()>
+
+The string to copy in the remaining forms comes from the C<pv> argument.
+
+In the case of C<savepv>, the size of the string is determined by C<strlen()>,
+which means it may not contain embedded C<NUL> characters, and must have a
+trailing C<NUL>.
+
+In the case of C<savepvn>, C<len> gives the length of C<pv>, hence it may
+contain embedded C<NUL> characters.  The copy will be guaranteed to have a
+trailing NUL added if not already present.
 
 =cut
 */
@@ -4527,22 +4479,6 @@ Perl_savepv(pTHX_ const char *pv)
 
 /* same thing but with a known length */
 
-/*
-=for apidoc savepvn
-
-Perl's version of what C<strndup()> would be if it existed.  Returns a
-pointer to a newly allocated string which is a duplicate of the first
-C<len> bytes from C<pv>, plus a trailing
-C<NUL> byte.  The memory allocated for
-the new string can be freed with the C<Safefree()> function.
-
-On some platforms, Windows for example, all allocated memory owned by a thread
-is deallocated when that thread ends.  So if you need that not to happen, you
-need to use the shared memory functions, such as C<L</savesharedpvn>>.
-
-=cut
-*/
-
 PERL_STATIC_INLINE char *
 Perl_savepvn(pTHX_ const char *pv, Size_t len)
 {
@@ -4561,19 +4497,6 @@ Perl_savepvn(pTHX_ const char *pv, Size_t len)
     }
 }
 
-/*
-=for apidoc savesvpv
-
-A version of C<savepv()>/C<savepvn()> which gets the string to duplicate from
-the passed in SV using C<SvPV()>
-
-On some platforms, Windows for example, all allocated memory owned by a thread
-is deallocated when that thread ends.  So if you need that not to happen, you
-need to use the shared memory functions, such as C<L</savesharedsvpv>>.
-
-=cut
-*/
-
 PERL_STATIC_INLINE char *
 Perl_savesvpv(pTHX_ SV *sv)
 {
@@ -4587,15 +4510,6 @@ Perl_savesvpv(pTHX_ SV *sv)
     Newx(newaddr,len,char);
     return (char *) CopyD(pv,newaddr,len,char);
 }
-
-/*
-=for apidoc savesharedsvpv
-
-A version of C<savesharedpv()> which allocates the duplicate string in
-memory which is shared between threads.
-
-=cut
-*/
 
 PERL_STATIC_INLINE char *
 Perl_savesharedsvpv(pTHX_ SV *sv)
@@ -4651,6 +4565,7 @@ Perl_get_vtbl(pTHX_ int vtbl_id)
 }
 
 /*
+=for apidoc_section $string
 =for apidoc my_strlcat
 
 The C library C<strlcat> if available, or a Perl implementation of it.

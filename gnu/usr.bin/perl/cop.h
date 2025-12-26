@@ -434,6 +434,15 @@ the octets.
 
 #include "mydtrace.h"
 
+/* keep in sync with feature.h (which will complain if this is out of sync)
+ */
+#define COP_FEATURE_SIZE 1
+
+/* make this a struct so we can copy the feature bits with assignment */
+struct cop_feature_t {
+  U32 bits[COP_FEATURE_SIZE];
+};
+
 struct cop {
     BASEOP
     /* On LP64 putting this here takes advantage of the fact that BASEOP isn't
@@ -460,12 +469,11 @@ struct cop {
     /* compile time state of %^H.  See the comment in op.c for how this is
        used to recreate a hash to return from caller.  */
     COPHH *	cop_hints_hash;
-    /* for now just a bitmask stored here.
-       If we get sufficient features this may become a pointer.
+    /*
        How these flags are stored is subject to change without
        notice.  Use the macros to test for features.
     */
-    U32		cop_features;
+    struct cop_feature_t	cop_features;
 };
 
 /*
@@ -488,11 +496,12 @@ doesn't already exist.
 =for apidoc Am|SV *|CopFILESV|const COP * c
 Returns the SV associated with the C<COP> C<c>
 
-=for apidoc Am|void|CopFILE_set|COP * c|const char * pv
-Makes C<pv> the name of the file associated with the C<COP> C<c>
-
-=for apidoc Am|void|CopFILE_setn|COP * c|const char * pv|STRLEN len
-Makes C<pv> the name of the file associated with the C<COP> C<c>
+=for apidoc   Am|void|CopFILE_set|COP * c|const char * pv
+=for apidoc_item|void|CopFILE_setn|COP * c|const char * pv|STRLEN len
+These each make C<pv> the name of the file associated with the C<COP> C<c>.
+In the plain C<CopFILE_set> form, C<pv> is a C language NUL-terminated string.
+In C<CopFILE_setn>, C<len> is the length of C<pv>, which hence may contain
+embedded NUL characters.
 
 =for apidoc Am|void|CopFILE_copy|COP * dst|COP * src
 Efficiently copies the cop file name from one COP to another. Wraps
@@ -1249,6 +1258,8 @@ struct context {
 #define PERLSI_REQUIRE		9
 #define PERLSI_MULTICALL       10
 #define PERLSI_REGCOMP         11
+#define PERLSI_SMARTMATCH      12
+#define PERLSI_CONSTRUCTOR     13
 
 struct stackinfo {
     AV *		si_stack;	/* stack for current runlevel */
@@ -1293,7 +1304,13 @@ typedef struct stackinfo PERL_SI;
 
 #ifdef DEBUGGING
 #  define SET_MARK_OFFSET \
-    PL_curstackinfo->si_markoff = PL_markstack_ptr - PL_markstack
+    STMT_START {                                                                \
+        /* ensure .si_markoff is an I32 and can hold the pointer difference */  \
+        STATIC_ASSERT_STMT(sizeof PL_curstackinfo->si_markoff == sizeof (I32)); \
+        assert(PL_markstack_ptr >= PL_markstack);                               \
+        assert(PL_markstack_ptr - PL_markstack <= (ptrdiff_t)I32_MAX);          \
+        PL_curstackinfo->si_markoff = (I32)(PL_markstack_ptr - PL_markstack);   \
+    } STMT_END
 #else
 #  define SET_MARK_OFFSET NOOP
 #endif

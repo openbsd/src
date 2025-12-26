@@ -611,3 +611,33 @@ syntax error at - line 2, near "[
 =="
   (Might be a runaway multi-line // string starting on line 1)
 Execution of - aborted due to compilation errors.
+########
+# NAME tick in names: initial character of sub name (reverted)
+sub 'Hello'_he_said (_);
+EXPECT
+OPTIONS nonfatal
+########
+# NAME tick in names: initial character of sub name (no feature)
+no feature 'apostrophe_as_package_separator';
+sub 'Hello'_he_said (_);
+EXPECT
+Illegal declaration of anonymous subroutine at - line 2.
+########
+# NAME tick in names: initial character of format name (reverted)
+    format 'one =
+ok @<< - format 'foo still works
+$test
+.
+EXPECT
+OPTIONS nonfatal
+########
+# NAME tick in names: initial character of format name (no feature_
+no feature 'apostrophe_as_package_separator';
+    format 'one =
+ok @<< - format 'foo still works
+$test
+.
+EXPECT
+syntax error at - line 3, near "ok @<< - format '"
+  (Might be a runaway multi-line '' string starting on line 2)
+Execution of - aborted due to compilation errors.

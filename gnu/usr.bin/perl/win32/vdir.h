@@ -23,12 +23,15 @@ public:
     VDir(int bManageDir = 1);
     ~VDir() {};
 
-    void Init(VDir* pDir, VMem *pMem);
+    VMEM_H_NEW_OP;
+    void Init(VDir* pDirCloneFrom);
+    void Init(VDir* pDirCloneFrom, int bManageDir);
     void SetDefaultA(char const *pDefault);
     void SetDefaultW(WCHAR const *pDefault);
     char* MapPathA(const char *pInName);
     WCHAR* MapPathW(const WCHAR *pInName);
-    int SetCurrentDirectoryA(char *lpBuffer);
+    /* CPerlHost::Chdir() is the only caller */
+    inline int SetCurrentDirectoryA(char *lpBuffer);
     int SetCurrentDirectoryW(WCHAR *lpBuffer);
     inline int GetDefault(void) { return nDefault; };
 
@@ -116,36 +119,52 @@ protected:
         return (chr | 0x20)-'a';
     };
 
-    VMem *pMem;
-    int nDefault, bManageDirectory;
-    char *dirTableA[driveCount];
-    char szLocalBufferA[MAX_PATH+1];
+/* Former "VMem *" member, just C-ptr-cast the VDir * to a CPerlHost *
+   and get the "VMem *" directly vs 2 copies of the ptr. */
+#define pMem VDToVM(this)
+
     WCHAR *dirTableW[driveCount];
+    char *dirTableA[driveCount];
+    int nDefault;
+
+    inline void * ZeroMemStart(void) {return (void *)dirTableW;};
+    inline size_t ZeroMemSize(void) {
+        return ((size_t)&nDefault)+sizeof(nDefault)-((size_t)dirTableW);
+    };
+
     WCHAR szLocalBufferW[MAX_PATH+1];
+    char szLocalBufferA[MAX_PATH+1];
+    bool bManageDirectory;
+
 };
 
+static inline VMemNL * VDToVM(VDir * vd);
 
 VDir::VDir(int bManageDir /* = 1 */)
 {
-    nDefault = 0;
+    /* combine all fields needed Nulling into 1 call */
+    memset(ZeroMemStart(), 0, ZeroMemSize());
     bManageDirectory = bManageDir;
-    memset(dirTableA, 0, sizeof(dirTableA));
-    memset(dirTableW, 0, sizeof(dirTableW));
 }
 
-void VDir::Init(VDir* pDir, VMem *p)
+void VDir::Init(VDir* pDirCloneFrom, int bManageDir)
+{
+    bManageDirectory = bManageDir;
+    VDir::Init(pDirCloneFrom);
+}
+
+void VDir::Init(VDir* pDirCloneFrom)
 {
     int index;
 
-    pMem = p;
-    if (pDir) {
+    if (pDirCloneFrom) {
         for (index = 0; index < driveCount; ++index) {
-            SetDirW(pDir->GetDirW(index), index);
+            SetDirW(pDirCloneFrom->GetDirW(index), index);
         }
-        nDefault = pDir->GetDefault();
+        nDefault = pDirCloneFrom->GetDefault();
     }
     else {
-        int bSave = bManageDirectory;
+        bool bSave = bManageDirectory;
         DWORD driveBits = GetLogicalDrives();
 
         bManageDirectory = 0;

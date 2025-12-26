@@ -3,7 +3,7 @@
 use v5.14;
 use warnings;
 
-use Test::More;
+use Test2::V0;
 
 use IO::Socket::IP;
 use Socket qw( inet_pton inet_ntop pack_sockaddr_in6 unpack_sockaddr_in6 IN6ADDR_LOOPBACK );
@@ -64,18 +64,18 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
       do { $testserver->connect( $socket->sockname ); $testserver };
 
    ok( defined $testclient, "accepted test $socktype client" );
-   isa_ok( $testclient, "IO::Socket::IP", "\$testclient for $socktype" );
+   isa_ok( $testclient, [ "IO::Socket::IP" ], "\$testclient for $socktype" );
 
    is( $testclient->sockdomain, $AF_INET6,         "\$testclient->sockdomain for $socktype" );
    is( $testclient->socktype,   Socket->$socktype, "\$testclient->socktype for $socktype" );
 
-   is_deeply( [ unpack_sockaddr_in6_addrport( $socket->sockname ) ],
-              [ unpack_sockaddr_in6_addrport( $testclient->peername ) ],
-              "\$socket->sockname for $socktype" );
+   is( [ unpack_sockaddr_in6_addrport( $socket->sockname ) ],
+       [ unpack_sockaddr_in6_addrport( $testclient->peername ) ],
+       "\$socket->sockname for $socktype" );
 
-   is_deeply( [ unpack_sockaddr_in6_addrport( $socket->peername ) ],
-              [ unpack_sockaddr_in6_addrport( $testclient->sockname ) ],
-              "\$socket->peername for $socktype" );
+   is( [ unpack_sockaddr_in6_addrport( $socket->peername ) ],
+       [ unpack_sockaddr_in6_addrport( $testclient->sockname ) ],
+       "\$socket->peername for $socktype" );
 
    my $peerport = ( Socket::unpack_sockaddr_in6 $socket->peername )[0];
    my $sockport = ( Socket::unpack_sockaddr_in6 $socket->sockname )[0];

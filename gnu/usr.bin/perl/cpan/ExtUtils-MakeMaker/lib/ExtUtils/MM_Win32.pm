@@ -27,7 +27,7 @@ use ExtUtils::MakeMaker qw(neatvalue _sprintf562);
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
 our @ISA = qw( ExtUtils::MM_Any ExtUtils::MM_Unix );
-our $VERSION = '7.70';
+our $VERSION = '7.76';
 $VERSION =~ tr/_//d;
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
@@ -123,7 +123,7 @@ Using \ for Windows, except for "gmake" where it is /.
 sub init_DIRFILESEP {
     my($self) = shift;
 
-    # The ^ makes sure its not interpreted as an escape in nmake
+    # The ^ makes sure it's not interpreted as an escape in nmake
     $self->{DIRFILESEP} = $self->is_make_type('nmake') ? '^\\' :
                           $self->is_make_type('dmake') ? '\\\\' :
                           $self->is_make_type('gmake') ? '/'
@@ -165,6 +165,7 @@ Adjustments are made for Borland's quirks needing -L to come first.
 
 =cut
 
+my @LIBS_VARNAMES = qw(EXTRALIBS BSLOADLIBS LDLOADLIBS LD_RUN_PATH);
 sub init_others {
     my $self = shift;
 
@@ -172,6 +173,18 @@ sub init_others {
     $self->{AR}     ||= 'lib';
 
     $self->SUPER::init_others;
+    # If Config.pm defines a set of default libs,
+    # add them to EXTRALIBS, BSLOADLIBS and LDLOADLIBS, unless the user
+    # specified :nodefault or gave no LIBS
+    if (grep /\S/ && !/:nodefault/i, @{$self->{LIBS}}) {
+        my @libs = $self->extliblist($Config{perllibs});
+        for my $ind (0..$#LIBS_VARNAMES) {
+          next unless my $to_add = $libs[$ind];
+          my $varname = $LIBS_VARNAMES[$ind];
+          $self->{$varname} .= ' ' if $self->{$varname};
+          $self->{$varname} .= $to_add;
+        }
+    }
 
     $self->{LDLOADLIBS} ||= $Config{libs};
     # -Lfoo must come first for Borland, so we put it in LDDLFLAGS
@@ -261,6 +274,62 @@ MAXLINELENGTH = $size
     return $prefix . $make_text;
 }
 
+=item dep_constants
+
+Makes dependencies that work for nmake.
+
+=cut
+
+sub dep_constants {
+    my ($self) = @_;
+    return $self->SUPER::dep_constants if !$self->is_make_type('nmake');
+    my @m = ();
+    for my $macro (qw(PERL_ARCHLIBDEP PERL_INCDEP)) {
+        next unless defined $self->{$macro};
+        # pathnames can have sharp signs in them; escape them so
+        # make doesn't think it is a comment-start character.
+        $self->{$macro} =~ s/#/\\#/g;
+        $self->{$macro} = $self->quote_dep($self->{$macro})
+          if $ExtUtils::MakeMaker::macro_dep{$macro};
+        push @m, "$macro = $self->{$macro}\n";
+    }
+    push @m, qq{
+\n# Dependencies info
+PERL_ARCHIVEDEP    = "$self->{PERL_ARCHIVE}"
+};
+    push @m, qq{
+# Where is the Config information that we are using/depend on
+CONFIGDEP = "\$(PERL_ARCHLIB)\$(DFSEP)Config.pm" "\$(PERL_INC)\$(DFSEP)config.h"
+} if -e $self->catfile($self->{PERL_INC}, 'config.h');
+    join '', @m;
+}
+
+sub _perl_header_files_fragment {
+  my ($self, $separator) = @_;
+  return $self->SUPER::_perl_header_files_fragment($separator)
+    if !$self->is_make_type('nmake');
+  return join("\\\n",
+    "PERL_HDRS = ",
+    map sprintf("        \"\$(PERL_INC)\\%s\"            ", $_),
+      $self->_perl_header_files
+  ) . "\n\n"
+  . "\$(OBJECT) : \$(PERL_HDRS)\n";
+}
+
+sub tool_xsubpp_emit {
+  my ($self, $xsdir, $tmdeps, $tmargs) = @_;
+  return $self->SUPER::tool_xsubpp_emit($xsdir, $tmdeps, $tmargs)
+    if !$self->is_make_type('nmake');
+  return qq{
+XSUBPPDIR = $xsdir
+XSUBPP = "\$(XSUBPPDIR)\$(DFSEP)xsubpp"
+XSUBPPRUN = \$(PERLRUN) \$(XSUBPP)
+XSPROTOARG = $self->{XSPROTOARG}
+XSUBPPDEPS = @$tmdeps \$(XSUBPP)
+XSUBPPARGS = @$tmargs
+XSUBPP_EXTRA_ARGS =
+};
+}
 
 =item special_targets
 
@@ -396,6 +465,7 @@ sub perl_script {
 
 sub can_dep_space {
     my ($self) = @_;
+    return 1 if !$self->is_make_type('dmake'); # GNU & n-make are fine
     return 0 unless $self->can_load_xs;
     require Win32;
     require File::Spec;
@@ -412,17 +482,17 @@ sub can_dep_space {
 
 sub quote_dep {
     my ($self, $arg) = @_;
-    if ($arg =~ / / and not $self->is_make_type('gmake')) {
-        require Win32;
-        $arg = Win32::GetShortPathName($arg);
-        die <<EOF if not defined $arg or $arg =~ / /;
-Tried to use make dependency with space for non-GNU make:
+    return $arg if $arg !~ / /;
+    return $self->SUPER::quote_dep($arg) if $self->is_make_type('gmake');
+    return qq{"$arg"} if $self->is_make_type('nmake');
+    require Win32; # dmake, get 8.3 name
+    $arg = Win32::GetShortPathName($arg);
+    die <<EOF if not defined $arg or $arg =~ / /;
+Tried to use make dependency with space for dmake:
   '$arg'
 Fallback to short pathname failed.
 EOF
-        return $arg;
-    }
-    return $self->SUPER::quote_dep($arg);
+    $arg;
 }
 
 

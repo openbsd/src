@@ -1,18 +1,14 @@
 #!perl -w
-$|=1;
-BEGIN {
-    require Config; import Config;
-    if ($Config{'extensions'} !~ /\bOpcode\b/ && $Config{'osname'} ne 'VMS') {
-        print "1..0\n";
-        exit 0;
-    }
-}
-
-use Test::More tests => 7;
+use Config;
+use Test::More
+    $Config{'extensions'} =~ /\bOpcode\b/ || $Config{'osname'} eq 'VMS'
+        ? (tests => 7)
+        : (skip_all => "no Opcode extension and we're not on VMS");
 
 use Safe 1.00;
 use Opcode qw(full_opset);
 
+$| = 1;
 pass;
 
 my $safe = Safe->new('PLPerl');

@@ -621,7 +621,7 @@ Restart the debugger by C<exec()>ing a new session.  We try to maintain
 your history across this, but internal settings and command-line options
 may be lost.
 
-The following setting are currently preserved: history, breakpoints,
+The following settings are currently preserved: history, breakpoints,
 actions, debugger options, and the Perl command-line
 options B<-w>, B<-I>, and B<-e>.
 
@@ -654,7 +654,7 @@ Perl debugger, use a leading semicolon, too.
 X<debugger command, m>
 
 List which methods may be called on the result of the evaluated
-expression.  The expression may evaluated to a reference to a
+expression.  The expression may be evaluated to a reference to a
 blessed object, or to a package name.
 
 =item M

@@ -12,7 +12,7 @@
 # the machinery to run small POD snippets through the specific formatter being
 # tested should probably be used instead.
 #
-# Copyright 2001-2002, 2004, 2006, 2009, 2012, 2014-2015, 2018-2019, 2022
+# Copyright 2001-2002, 2004, 2006, 2009, 2012, 2014-2015, 2018-2019, 2022-2024
 #     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -20,8 +20,7 @@
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.008;
-use strict;
+use 5.012;
 use warnings;
 
 use lib 't/lib';
@@ -39,23 +38,23 @@ BEGIN {
     use_ok('Pod::Text::Termcap');
 }
 
+# Ensure color is enabled for testing purposes.
+delete $ENV{NO_COLOR};
+
 # Flush output, since otherwise our diag messages come after other tests.
 local $| = 1;
 
 # Hard-code configuration for Term::Cap to get predictable results.
-#<<<
-local $ENV{COLUMNS}  = 80;
-local $ENV{TERM}     = 'xterm';
+local $ENV{COLUMNS} = 80;
+local $ENV{TERM} = 'xterm';
 local $ENV{TERMPATH} = File::Spec->catfile('t', 'data', 'termcap');
-local $ENV{TERMCAP}  = 'xterm:co=#80:do=^J:md=\\E[1m:us=\\E[4m:me=\\E[m';
-#>>>
+local $ENV{TERMCAP} = 'xterm:co=#80:do=^J:md=\\E[1m:us=\\E[4m:me=\\E[m';
 
 # Find the source of the test file.
 my $input = File::Spec->catfile('t', 'data', 'basic.pod');
 
 # Map of translators to the file containing the formatted output to compare
 # against.
-#<<<
 my %output = (
     'Pod::Man'              => File::Spec->catfile('t', 'data', 'basic.man'),
     'Pod::Text'             => File::Spec->catfile('t', 'data', 'basic.txt'),
@@ -63,7 +62,6 @@ my %output = (
     'Pod::Text::Overstrike' => File::Spec->catfile('t', 'data', 'basic.ovr'),
     'Pod::Text::Termcap'    => File::Spec->catfile('t', 'data', 'basic.cap'),
 );
-#>>>
 
 # Walk through teach of the modules and format the sample file, checking to
 # ensure the results match the pre-generated file.

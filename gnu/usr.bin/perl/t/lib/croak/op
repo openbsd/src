@@ -326,3 +326,19 @@ use 5.012;
 use 5.010;
 EXPECT
 Downgrading a use VERSION declaration to below v5.11 is not permitted at - line 3.
+########
+# any with deferred LIST expression
+use feature 'keyword_any';
+no warnings 'experimental::keyword_any';
+any length, qw( a b c )
+EXPECT
+syntax error at - line 4, near "any length"
+Execution of - aborted due to compilation errors.
+########
+# all with deferred LIST expression
+use feature 'keyword_all';
+no warnings 'experimental::keyword_all';
+all length, qw( a b c )
+EXPECT
+syntax error at - line 4, near "all length"
+Execution of - aborted due to compilation errors.

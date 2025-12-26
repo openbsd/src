@@ -1,11 +1,11 @@
 use 5.008001; # sane UTF-8 support
 use strict;
 use warnings;
-package CPAN::Meta::YAML; # git description: v1.68-2-gcc5324e
+package CPAN::Meta::YAML; # git description: v1.75-3-g85169f1
 # XXX-INGY is 5.8.1 too old/broken for utf8?
 # XXX-XDG Lancaster consensus was that it was sufficient until
 # proven otherwise
-$CPAN::Meta::YAML::VERSION = '0.018';
+$CPAN::Meta::YAML::VERSION = '0.020';
 ; # original $VERSION removed by Doppelgaenger
 
 #####################################################################
@@ -373,7 +373,7 @@ sub _load_scalar {
     while ( @$lines ) {
         $lines->[0] =~ /^(\s*)/;
         last unless length($1) >= $indent->[-1];
-        push @multiline, substr(shift(@$lines), length($1));
+        push @multiline, substr(shift(@$lines), $indent->[-1]);
     }
 
     my $j = (substr($string, 0, 1) eq '>') ? ' ' : "\n";
@@ -569,10 +569,8 @@ sub _dump_file {
     if ( _can_flock() ) {
         # Open without truncation (truncate comes after lock)
         my $flags = Fcntl::O_WRONLY()|Fcntl::O_CREAT();
-        sysopen( $fh, $file, $flags );
-        unless ( $fh ) {
-            $self->_error("Failed to open file '$file' for writing: $!");
-        }
+        sysopen( $fh, $file, $flags )
+            or $self->_error("Failed to open file '$file' for writing: $!");
 
         # Use no translation and strict UTF-8
         binmode( $fh, ":raw:encoding(UTF-8)");
@@ -878,7 +876,7 @@ CPAN::Meta::YAML - Read and write a subset of YAML for CPAN Meta files
 
 =head1 VERSION
 
-version 0.018
+version 0.020
 
 =head1 SYNOPSIS
 
@@ -933,6 +931,12 @@ Adam Kennedy <adamk@cpan.org>
 David Golden <dagolden@cpan.org>
 
 =back
+
+=head1 CONTRIBUTOR
+
+=for stopwords Karen Etheridge
+
+Karen Etheridge <ether@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 

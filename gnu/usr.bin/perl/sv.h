@@ -193,7 +193,7 @@ typedef enum {
 #  define HVAUX_ARENA_ROOT_IX   SVt_IV
 #endif
 #ifdef PERL_IN_SV_C
-#  define SVt_FIRST SVt_NULL	/* the type of SV that new_SV() in sv.c returns */
+#  define SVt_FIRST SVt_NULL	/* the type of SV that new_SV() in sv_inline.h returns */
 #endif
 
 #define PERL_ARENA_ROOTS_SIZE	(SVt_LAST)
@@ -297,14 +297,14 @@ struct object {
 Returns the value of the object's reference count. Exposed
 to perl code via Internals::SvREFCNT().
 
-=for apidoc            SvREFCNT_inc
-=for apidoc_item       SvREFCNT_inc_NN
-=for apidoc_item |SV* |SvREFCNT_inc_simple|SV* sv
-=for apidoc_item |SV* |SvREFCNT_inc_simple_NN|SV* sv
-=for apidoc_item |void|SvREFCNT_inc_simple_void|SV* sv
-=for apidoc_item |void|SvREFCNT_inc_simple_void_NN|SV* sv
-=for apidoc_item       SvREFCNT_inc_void
-=for apidoc_item |void|SvREFCNT_inc_void_NN|SV* sv
+=for apidoc      SvREFCNT_inc
+=for apidoc_item SvREFCNT_inc_NN
+=for apidoc_item SvREFCNT_inc_simple
+=for apidoc_item SvREFCNT_inc_simple_NN
+=for apidoc_item SvREFCNT_inc_simple_void
+=for apidoc_item SvREFCNT_inc_simple_void_NN
+=for apidoc_item SvREFCNT_inc_void
+=for apidoc_item SvREFCNT_inc_void_NN
 
 These all increment the reference count of the given SV.
 The ones without C<void> in their names return the SV.
@@ -374,12 +374,22 @@ perform the upgrade if necessary.  See C<L</svtype>>.
 #define SvFLAGS(sv)	(sv)->sv_flags
 #define SvREFCNT(sv)	(sv)->sv_refcnt
 
+/*
+=for apidoc_defn Am|SV *|SvREFCNT_inc_simple|SV *sv
+=cut
+*/
 #define SvREFCNT_inc(sv)		Perl_SvREFCNT_inc(MUTABLE_SV(sv))
 #define SvREFCNT_inc_simple(sv)		SvREFCNT_inc(sv)
 #define SvREFCNT_inc_NN(sv)		Perl_SvREFCNT_inc_NN(MUTABLE_SV(sv))
 #define SvREFCNT_inc_void(sv)		Perl_SvREFCNT_inc_void(MUTABLE_SV(sv))
 
-/* These guys don't need the curly blocks */
+/*
+=for apidoc_defn Am|void|SvREFCNT_inc_simple_void|SV *sv
+
+These guys don't need the curly blocks
+
+=cut
+*/
 #define SvREFCNT_inc_simple_void(sv)	                                \
         STMT_START {                                                    \
             SV * sv_ = MUTABLE_SV(sv);                                  \
@@ -387,6 +397,12 @@ perform the upgrade if necessary.  See C<L</svtype>>.
                 SvREFCNT(sv_)++;                                        \
         } STMT_END
 
+/*
+=for apidoc_defn Am|SV *|SvREFCNT_inc_simple_NN|SV *sv
+=for apidoc_defn Am|void|SvREFCNT_inc_void_NN|SV *sv
+=for apidoc_defn Am|void|SvREFCNT_inc_simple_void_NN|SV *sv
+=cut
+*/
 #define SvREFCNT_inc_simple_NN(sv)	(++(SvREFCNT(sv)),MUTABLE_SV(sv))
 #define SvREFCNT_inc_void_NN(sv)	(void)(++SvREFCNT(MUTABLE_SV(sv)))
 #define SvREFCNT_inc_simple_void_NN(sv)	(void)(++SvREFCNT(MUTABLE_SV(sv)))
@@ -2045,37 +2061,31 @@ END_EXTERN_C
 #define SvPVutf8x_force(sv, len) sv_pvutf8n_force(sv, &len)
 #define SvPVbytex_force(sv, len) sv_pvbyten_force(sv, &len)
 
+/*
+=for apidoc_defn Am|bool|SvTRUEx|SV *sv
+=for apidoc_defn Am|bool|SvTRUE_nomg_NN|SV *sv
+=cut
+*/
 #define SvTRUEx(sv)        SvTRUE(sv)
 #define SvTRUEx_nomg(sv)   SvTRUE_nomg(sv)
 #define SvTRUE_nomg_NN(sv) SvTRUE_common(sv, TRUE)
 
-#  define SvIVx(sv) SvIV(sv)
-#  define SvUVx(sv) SvUV(sv)
-#  define SvNVx(sv) SvNV(sv)
+#define SvIVx(sv) SvIV(sv)
+#define SvUVx(sv) SvUV(sv)
+#define SvNVx(sv) SvNV(sv)
 
-#if defined(PERL_USE_GCC_BRACE_GROUPS)
-
-#  define SvPVx(sv, len) ({SV *_sv = (sv); SvPV(_sv, len); })
-#  define SvPVx_const(sv, len) ({SV *_sv = (sv); SvPV_const(_sv, len); })
-#  define SvPVx_nolen(sv) ({SV *_sv = (sv); SvPV_nolen(_sv); })
-#  define SvPVx_nolen_const(sv) ({SV *_sv = (sv); SvPV_nolen_const(_sv); })
-#  define SvPVutf8x(sv, len) ({SV *_sv = (sv); SvPVutf8(_sv, len); })
-#  define SvPVbytex(sv, len) ({SV *_sv = (sv); SvPVbyte(_sv, len); })
-#  define SvPVbytex_nolen(sv) ({SV *_sv = (sv); SvPVbyte_nolen(_sv); })
-
-#else /* __GNUC__ */
-
-/* These inlined macros use globals, which will require a thread
- * declaration in user code, so we avoid them under threads */
-
-#  define SvPVx(sv, len) ((PL_Sv = (sv)), SvPV(PL_Sv, len))
-#  define SvPVx_const(sv, len) ((PL_Sv = (sv)), SvPV_const(PL_Sv, len))
-#  define SvPVx_nolen(sv) ((PL_Sv = (sv)), SvPV_nolen(PL_Sv))
-#  define SvPVx_nolen_const(sv) ((PL_Sv = (sv)), SvPV_nolen_const(PL_Sv))
-#  define SvPVutf8x(sv, len) ((PL_Sv = (sv)), SvPVutf8(PL_Sv, len))
-#  define SvPVbytex(sv, len) ((PL_Sv = (sv)), SvPVbyte(PL_Sv, len))
-#  define SvPVbytex_nolen(sv) ((PL_Sv = (sv)), SvPVbyte_nolen(PL_Sv))
-#endif /* __GNU__ */
+/* The following macro expansions evaluate their arguments just once. In
+ * earlier perl releases, the global variable PL_Sv was used as an intermediate
+ * in order to prevent multiple evaluations. The implementation changed in
+ * commit 1ef9039bccbfe64f47f201b6cfb7d6d23e0b08a7 to use inline functions
+ * instead. */
+#define SvPVx(sv, len)          SvPV(sv, len)
+#define SvPVx_const(sv, len)    SvPV_const(sv, len)
+#define SvPVx_nolen(sv)         SvPV_nolen(sv)
+#define SvPVx_nolen_const(sv)   SvPV_nolen_const(sv)
+#define SvPVutf8x(sv, len)      SvPVutf8(sv, len)
+#define SvPVbytex(sv, len)      SvPVbyte(sv, len)
+#define SvPVbytex_nolen(sv)     SvPVbyte_nolen(sv)
 
 #define SvIsCOW(sv)              (SvFLAGS(sv) & SVf_IsCOW)
 #define SvIsCOW_on(sv)           (SvFLAGS(sv) |= SVf_IsCOW)
@@ -2129,6 +2139,9 @@ Returns the hash for C<sv> created by C<L</newSVpvn_share>>.
 #define SV_SKIP_OVERLOAD        (1 << 13) /* 0x2000 -  8192 */
 #define SV_CATBYTES             (1 << 14) /* 0x4000 - 16384 */
 #define SV_CATUTF8              (1 << 15) /* 0x8000 - 32768 */
+
+/* sv_regex_global_pos_*() should count in bytes, not chars */
+#define SV_POSBYTES             SV_CATBYTES
 
 /* The core is safe for this COW optimisation. XS code on CPAN may not be.
    So only default to doing the COW setup if we're in the core.
@@ -2207,10 +2220,23 @@ immediately written again.
 #define sv_utf8_upgrade_nomg(sv) sv_utf8_upgrade_flags(sv, 0)
 #define sv_utf8_downgrade(sv, fail_ok) sv_utf8_downgrade_flags(sv, fail_ok, SV_GMAGIC)
 #define sv_utf8_downgrade_nomg(sv, fail_ok) sv_utf8_downgrade_flags(sv, fail_ok, 0)
+/*
+=for apidoc_defn Am|void|sv_catpvn_nomg|NN SV * const dsv               \
+                                       |NULLOK const char * sstr        \
+                                       |const STRLEN len
+=for apidoc_defn Am|void|sv_catpv_nomg|NN SV * const dsv                \
+                                      |NULLOK const char * sstr
+=cut
+*/
 #define sv_catpvn_nomg(dsv, sstr, slen) sv_catpvn_flags(dsv, sstr, slen, 0)
 #define sv_catpv_nomg(dsv, sstr) sv_catpv_flags(dsv, sstr, 0)
 #define sv_setsv(dsv, ssv) \
         sv_setsv_flags(dsv, ssv, SV_GMAGIC|SV_DO_COW_SVSETSV)
+/*
+=for apidoc_defn Am|void|sv_setsv_nomg|SV *dsv|SV *ssv
+=for apidoc_defn Am|void|sv_catsv_nomg|SV * const dsv|SV * const sstr
+=cut
+*/
 #define sv_setsv_nomg(dsv, ssv) sv_setsv_flags(dsv, ssv, SV_DO_COW_SVSETSV)
 #define sv_catsv(dsv, ssv) sv_catsv_flags(dsv, ssv, SV_GMAGIC)
 #define sv_catsv_nomg(dsv, ssv) sv_catsv_flags(dsv, ssv, 0)
@@ -2262,6 +2288,14 @@ immediately written again.
             sv_utf8_upgrade(nsv);			\
             sv_catsv_nomg(dsv, nsv);			\
         } STMT_END
+
+/*
+=for apidoc_defn Adm|void|sv_catpvn_nomg_maybeutf8|NN SV * const dsv    \
+                                                  |NN const char *sstr  \
+                                                  |const STRLEN len     \
+                                                  |const I32 flags
+=cut
+*/
 #define sv_catpvn_nomg_maybeutf8(dsv, sstr, len, is_utf8) \
         sv_catpvn_flags(dsv, sstr, len, (is_utf8)?SV_CATUTF8:SV_CATBYTES)
 
@@ -2273,8 +2307,8 @@ immediately written again.
 #endif
 
 /*
-=for apidoc newRV
-=for apidoc_item ||newRV_inc|
+=for apidoc         newRV
+=for apidoc_item m||newRV_inc|
 
 These are identical.  They create an RV wrapper for an SV.  The reference count
 for the original SV is incremented.
@@ -2720,6 +2754,21 @@ Create a new IO, setting the reference count to 1.
 #  define gv_dup(s,t)	MUTABLE_GV(sv_dup((const SV *)s,t))
 #  define gv_dup_inc(s,t)	MUTABLE_GV(sv_dup_inc((const SV *)s,t))
 #endif
+
+/*
+=for apidoc    Am|const char *|SvVSTRING       |SV* sv|STRLEN len
+
+If the given SV has vstring magic, stores the length of it into the variable
+C<len>, and returns the string pointer.  If not, returns C<NULL>.
+
+This is a wrapper around the C<sv_vstring_get> function that conveniently
+takes the address of the C<len> variable, in a form similar to the C<SvPV>
+macro family.
+
+=cut
+*/
+
+#define SvVSTRING(sv, len)  (sv_vstring_get(sv, &(len)))
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

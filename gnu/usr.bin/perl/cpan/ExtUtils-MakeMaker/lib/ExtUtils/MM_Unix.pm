@@ -15,7 +15,7 @@ use ExtUtils::MakeMaker qw($Verbose neatvalue _sprintf562);
 
 # If $VERSION is in scope, parse_version() breaks
 {
-our $VERSION = '7.70';
+our $VERSION = '7.76';
 $VERSION =~ tr/_//d;
 }
 
@@ -410,7 +410,7 @@ Prints out macros for lots of constants.
 =cut
 
 sub constants {
-    my($self) = @_;
+    my ($self) = @_;
     my @m = ();
 
     $self->{DFSEP} = '$(DIRFILESEP)';  # alias for internal use
@@ -433,17 +433,17 @@ sub constants {
                         } $self->installvars),
                    qw(
               PERL_LIB
-              PERL_ARCHLIB PERL_ARCHLIBDEP
+              PERL_ARCHLIB
               LIBPERL_A MYEXTLIB
               FIRST_MAKEFILE MAKEFILE_OLD MAKE_APERL_FILE
-              PERLMAINCC PERL_SRC PERL_INC PERL_INCDEP
+              PERLMAINCC PERL_SRC PERL_INC
               PERL            FULLPERL          ABSPERL
               PERLRUN         FULLPERLRUN       ABSPERLRUN
               PERLRUNINST     FULLPERLRUNINST   ABSPERLRUNINST
               PERL_CORE
               PERM_DIR PERM_RW PERM_RWX
 
-	      ) )
+	      ))
     {
 	next unless defined $self->{$macro};
 
@@ -493,16 +493,6 @@ SDKROOT := $(shell xcrun --show-sdk-path)
 PERL_SYSROOT = $(SDKROOT)
 } if $Is{ApplCor} && $self->{'PERL_INC'} =~ m!^/System/Library/Perl/!;
 
-    push @m, q{
-# Where is the Config information that we are using/depend on
-CONFIGDEP = $(PERL_ARCHLIBDEP)$(DFSEP)Config.pm $(PERL_SYSROOT)$(PERL_INCDEP)$(DFSEP)config.h
-} if $Is{ApplCor};
-
-    push @m, q{
-# Where is the Config information that we are using/depend on
-CONFIGDEP = $(PERL_ARCHLIBDEP)$(DFSEP)Config.pm $(PERL_INCDEP)$(DFSEP)config.h
-} if -e $self->catfile( $self->{PERL_INC}, 'config.h' ) && !$Is{ApplCor};
-
     push @m, qq{
 # Where to build things
 INST_LIBDIR      = $self->{INST_LIBDIR}
@@ -520,7 +510,6 @@ INST_BOOT        = $self->{INST_BOOT}
 # Extra linker info
 EXPORT_LIST        = $self->{EXPORT_LIST}
 PERL_ARCHIVE       = $self->{PERL_ARCHIVE}
-PERL_ARCHIVEDEP    = $self->{PERL_ARCHIVEDEP}
 PERL_ARCHIVE_AFTER = $self->{PERL_ARCHIVE_AFTER}
 };
 
@@ -528,9 +517,46 @@ PERL_ARCHIVE_AFTER = $self->{PERL_ARCHIVE_AFTER}
 
 TO_INST_PM = ".$self->wraplist(map $self->quote_dep($_), sort keys %{$self->{PM}})."\n";
 
-    join('',@m);
+    join('', @m) . $self->dep_constants;
 }
 
+=item dep_constants (o)
+
+  my $make_frag = $mm->dep_constants;
+
+Prints out macros for dependency constants.
+
+=cut
+
+sub dep_constants {
+    my ($self) = @_;
+    my @m = ();
+    for my $macro (qw(PERL_ARCHLIBDEP PERL_INCDEP)) {
+	next unless defined $self->{$macro};
+        # pathnames can have sharp signs in them; escape them so
+        # make doesn't think it is a comment-start character.
+        $self->{$macro} =~ s/#/\\#/g;
+	$self->{$macro} = $self->quote_dep($self->{$macro})
+	  if $ExtUtils::MakeMaker::macro_dep{$macro};
+	push @m, "$macro = $self->{$macro}\n";
+    }
+
+    push @m, qq{
+\n# Dependencies info
+PERL_ARCHIVEDEP    = $self->{PERL_ARCHIVEDEP}
+};
+
+    push @m, q{
+# Where is the Config information that we are using/depend on
+CONFIGDEP = $(PERL_ARCHLIBDEP)$(DFSEP)Config.pm $(PERL_SYSROOT)$(PERL_INCDEP)$(DFSEP)config.h
+} if $Is{ApplCor};
+    push @m, q{
+# Where is the Config information that we are using/depend on
+CONFIGDEP = $(PERL_ARCHLIBDEP)$(DFSEP)Config.pm $(PERL_INCDEP)$(DFSEP)config.h
+} if -e $self->catfile( $self->{PERL_INC}, 'config.h' ) && !$Is{ApplCor};
+
+    join '', @m;
+}
 
 =item depend (o)
 
@@ -1062,7 +1088,8 @@ sub xs_make_dynamic_lib {
             # both clang and gcc support -Wl,-rpath, but only clang supports
             # -rpath so by using -Wl,-rpath we avoid having to check for the
             # type of compiler
-            $ldrun = qq{-Wl,-rpath,"$self->{LD_RUN_PATH}"};
+	    my @dirs = split ':', $self->{LD_RUN_PATH};
+	    $ldrun = join " ", map(qq{-Wl,-rpath,"$_"}, @dirs);
         }
     }
 
@@ -1448,7 +1475,10 @@ sub init_dirscan {	# --- File and Directory Lists (.xs .pm .pod etc)
     foreach my $name ($self->lsdir($Curdir)){
 	next if $name =~ /\#/;
 	next if $name =~ $distprefix && -d $name;
-	$name = lc($name) if $Is{VMS};
+	if ($Is{VMS}) {
+		$name = lc($name);
+		$name = $Curdir if $name eq '.'; # don't confuse '.;1' with magic directory '.'
+	}
 	next if $name eq $Curdir or $name eq $Updir or $ignore{$name};
 	next unless $self->libscan($name);
 	if (-d $name){
@@ -1925,13 +1955,6 @@ EOP
         $once_only{$m} = 1;
     }
 
-# This is too dangerous:
-#    if ($^O eq "next") {
-#	$self->{AR} = "libtool";
-#	$self->{AR_STATIC_ARGS} = "-o";
-#    }
-# But I leave it as a placeholder
-
     $self->{AR_STATIC_ARGS} ||= "cr";
 
     # These should never be needed
@@ -2128,11 +2151,6 @@ sub init_PERL {
     # already escaped spaces.
     $self->{FULLPERL} =~ tr/"//d if $Is{VMS};
 
-    # `dmake` can fail for image (aka, executable) names which start with double-quotes
-    # * push quote inward by at least one character (or the drive prefix, if present)
-    # * including any initial directory separator preserves the `file_name_is_absolute` property
-    $self->{FULLPERL} =~ s/^"(\S(:\\|:)?)/$1"/ if $self->is_make_type('dmake');
-
     # Little hack to get around VMS's find_perl putting "MCR" in front
     # sometimes.
     $self->{ABSPERL} = $self->{PERL};
@@ -2154,11 +2172,6 @@ sub init_PERL {
     # Can't have an image name with quotes, and findperl will have
     # already escaped spaces.
     $self->{PERL} =~ tr/"//d if $Is{VMS};
-
-    # `dmake` can fail for image (aka, executable) names which start with double-quotes
-    # * push quote inward by at least one character (or the drive prefix, if present)
-    # * including any initial directory separator preserves the `file_name_is_absolute` property
-    $self->{PERL} =~ s/^"(\S(:\\|:)?)/$1"/ if $self->is_make_type('dmake');
 
     # Are we building the core?
     $self->{PERL_CORE} = $ENV{PERL_CORE} unless exists $self->{PERL_CORE};
@@ -2229,8 +2242,7 @@ Called by init_main.  Initializes PERL_*
 sub init_PERM {
     my($self) = shift;
 
-    my $perm_dir = $self->{PERL_CORE} ? 770 : 755;
-    $self->{PERM_DIR} = $perm_dir  unless defined $self->{PERM_DIR};
+    $self->{PERM_DIR} = 755  unless defined $self->{PERM_DIR};
     $self->{PERM_RW}  = 644  unless defined $self->{PERM_RW};
     $self->{PERM_RWX} = 755  unless defined $self->{PERM_RWX};
 
@@ -2897,6 +2909,8 @@ Returns true, if the argument is likely to be a command.
 
 sub maybe_command {
     my($self,$file) = @_;
+    #    $file = '' if (!defined $file or !length $file);
+    return unless defined $file and length $file;
     return $file if -x $file && ! -d $file;
     return;
 }
@@ -3136,7 +3150,7 @@ sub perldepend {
     my $make_config = $self->cd('$(PERL_SRC)', '$(MAKE) lib/Config.pm');
 
     push @m, sprintf <<'MAKE_FRAG', $make_config if $self->{PERL_SRC};
-# Check for unpropogated config.sh changes. Should never happen.
+# Check for unpropagated config.sh changes. Should never happen.
 # We do NOT just update config.h because that is not sufficient.
 # An out of date config.h is not fatal but complains loudly!
 $(PERL_INCDEP)/config.h: $(PERL_SRC)/config.sh
@@ -3177,11 +3191,17 @@ pm_to_blib : $(FIRST_MAKEFILE) $(TO_INST_PM)
 
     # VMS will swallow '' and PM_FILTER is often empty.  So use q[]
     my $pm_to_blib = $self->oneliner(<<CODE, ['-MExtUtils::Install']);
-pm_to_blib({\@ARGV}, '$autodir', q[\$(PM_FILTER)], '\$(PERM_DIR)')
+\$i=0; \$n=\$#ARGV; \$i++ until \$i > \$n or \$ARGV[\$i] eq q{--};
+die q{Failed to find -- in }.join(q{|},\@ARGV) if \$i > \$n;
+\@parts=splice \@ARGV,0,\$i+1;
+pop \@parts; \$filter=join q{ }, map qq{"\$_"}, \@parts;
+pm_to_blib({\@ARGV}, '$autodir', \$filter, '\$(PERM_DIR)')
 CODE
+    $pm_to_blib .= q[ $(PM_FILTER) --];
 
     my @cmds = $self->split_command($pm_to_blib,
-                  map { ($self->quote_literal($_) => $self->quote_literal($self->{PM}->{$_})) } sort keys %{$self->{PM}});
+      map +($self->quote_literal($_) => $self->quote_literal($self->{PM}{$_})),
+        sort keys %{$self->{PM}});
 
     $r .= join '', map { "\t\$(NOECHO) $_\n" } @cmds;
     $r .= qq{\t\$(NOECHO) \$(TOUCH) pm_to_blib\n};
@@ -3473,14 +3493,16 @@ sub replace_manpage_separator {
 
 =item cd
 
+On BSD make, will add a countervailing C<cd ..> on each command since
+parallel builds run all the commands in a recipe in the same shell.
+
 =cut
 
 sub cd {
     my($self, $dir, @cmds) = @_;
-
+    @cmds = map "$_ && cd $Updir", @cmds if $self->is_make_type('bsdmake');
     # No leading tab and no trailing newline makes for easier embedding
-    my $make_frag = join "\n\t", map { "cd $dir && $_" } @cmds;
-
+    my $make_frag = join "\n\t", map "cd $dir && $_", @cmds;
     return $make_frag;
 }
 
@@ -3946,20 +3968,23 @@ sub tool_xsubpp {
 
 
     $self->{XSPROTOARG} = "" unless defined $self->{XSPROTOARG};
+    $self->tool_xsubpp_emit($xsdir, \@tmdeps, \@tmargs);
+}
+
+sub tool_xsubpp_emit {
+    my ($self, $xsdir, $tmdeps, $tmargs) = @_;
     my $xsdirdep = $self->quote_dep($xsdir);
     # -dep for use when dependency not command
-
     return qq{
 XSUBPPDIR = $xsdir
 XSUBPP = "\$(XSUBPPDIR)\$(DFSEP)xsubpp"
 XSUBPPRUN = \$(PERLRUN) \$(XSUBPP)
 XSPROTOARG = $self->{XSPROTOARG}
-XSUBPPDEPS = @tmdeps $xsdirdep\$(DFSEP)xsubpp
-XSUBPPARGS = @tmargs
+XSUBPPDEPS = @$tmdeps $xsdirdep\$(DFSEP)xsubpp
+XSUBPPARGS = @$tmargs
 XSUBPP_EXTRA_ARGS =
 };
 }
-
 
 =item all_target
 

@@ -25,7 +25,7 @@ BEGIN {
 our @global;
 
 
-plan tests => 527;  # Update this when adding/deleting tests.
+plan tests => 528;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -1408,6 +1408,43 @@ sub run_tests {
     # rather than throwing an exception
 
     ok("" =~ m{^ (?{eval q{$x=}})}x, "GH #19390");
+
+    # GH #22869 "Perl crash with recursive sub and regex with code eval".
+    #
+    # A recursive call to a match op with a run-time pattern and which
+    # contained a code block, led to to the temporary rex stored in the
+    # OP_MATCH and PL_reg_curpm ops getting prematurely freed when updated
+    # within the inner match's OP_MATCH op.
+
+    {
+        my @got;
+
+        my $f = sub {
+            my ($s, $re) = @_;
+            $s =~ $re;
+            push @got, ',', $1, $2, ']';
+        };
+
+        my $pat;
+        $pat = qr{^
+                    (.)
+                    (?{
+                        push @got, '[', $1, $2;
+                        $f->('XY', $pat) if $1 eq 'A';
+                        push @got, ',', $1, $2;
+                    })
+                    (.)
+                    (?{
+                        push @got, ',', $1, $2;
+                    })
+                    $
+                }x;
+
+        $f->('AB',$pat);
+
+        my $got = join '', map defined ? $_ : '-', @got;
+        is($got, "[A-[X-,X-,XY,XY],A-,AB,AB]", "GH22869");
+    }
 
 } # End of sub run_tests
 

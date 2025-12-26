@@ -1605,7 +1605,8 @@ PPCODE:
         AV *av;
 
         if(!SvROK(arg) || SvTYPE(SvRV(arg)) != SVt_PVAV)
-            croak("Expected an ARRAY reference to zip");
+            croak("Expected an ARRAY reference to %s",
+                is_mesh ? "mesh" : "zip");
         av = lists[i] = (AV *)SvRV(arg);
 
         if(!i) {
@@ -1640,7 +1641,7 @@ PPCODE:
                     AvARRAY(lists[listi])[i] :
                     &PL_sv_undef;
 
-                mPUSHs(SvREFCNT_inc(item));
+                mPUSHs(newSVsv(item));
             }
         }
 
@@ -1659,7 +1660,7 @@ PPCODE:
                     AvARRAY(lists[listi])[i] :
                     &PL_sv_undef;
 
-                av_push(ret, SvREFCNT_inc(item));
+                av_push(ret, newSVsv(item));
             }
 
             mPUSHs(newRV_noinc((SV *)ret));
@@ -1717,6 +1718,7 @@ CODE:
     ST(0) = boolSV((SvPOK(sv) || SvPOKp(sv)) && (SvNIOK(sv) || SvNIOKp(sv)));
     XSRETURN(1);
 
+#if !PERL_VERSION_GE(5, 40, 0)
 SV *
 blessed(sv)
     SV *sv
@@ -1819,6 +1821,8 @@ PROTOTYPE: $
 CODE:
     ST(0) = boolSV(SvROK(sv) && SvWEAKREF(sv));
     XSRETURN(1);
+
+#endif /* !PERL_VERSION_GE(5, 40, 0) */
 
 int
 readonly(sv)

@@ -2,7 +2,7 @@ package ExtUtils::ParseXS::Eval;
 use strict;
 use warnings;
 
-our $VERSION = '3.51';
+our $VERSION = '3.57';
 
 =head1 NAME
 
@@ -41,7 +41,8 @@ sub eval_output_typemap_code {
   my ($_pxs, $_code, $_other) = @_;
 
   my ($Package, $ALIAS, $func_name, $Full_func_name, $pname)
-    = @{$_pxs}{qw(Package ALIAS func_name Full_func_name pname)};
+    = @{$_pxs}{qw(PACKAGE_name xsub_seen_ALIAS xsub_func_name
+                  xsub_func_full_C_name xsub_func_full_perl_name)};
 
   my ($var, $type, $ntype, $subtype, $arg)
     = @{$_other}{qw(var type ntype subtype arg)};
@@ -75,7 +76,8 @@ sub eval_input_typemap_code {
   my ($_pxs, $_code, $_other) = @_;
 
   my ($Package, $ALIAS, $func_name, $Full_func_name, $pname)
-    = @{$_pxs}{qw(Package ALIAS func_name Full_func_name pname)};
+    = @{$_pxs}{qw(PACKAGE_name xsub_seen_ALIAS xsub_func_name
+                  xsub_func_full_C_name xsub_func_full_perl_name)};
 
   my ($var, $type, $num, $init, $printed_name, $arg, $ntype, $argoff, $subtype)
     = @{$_other}{qw(var type num init printed_name arg ntype argoff subtype)};

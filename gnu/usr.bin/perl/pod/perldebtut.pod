@@ -287,7 +287,7 @@ to see what is happening:
 
 	DB<9> p $data{$key}
 
-Not much in there, lets have a look at our hash:
+Not much in there, let's have a look at our hash:
 
 	DB<10> p %data
 	Hello Worldziptomandwelcomejerrywelcomethisthat 

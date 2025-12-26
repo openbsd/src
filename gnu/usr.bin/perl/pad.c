@@ -53,7 +53,7 @@ AV which is C<@_>.  Other entries are storage for variables and op targets.
 
 Iterating over the PADNAMELIST iterates over all possible pad
 items.  Pad slots for targets (C<SVs_PADTMP>)
-and GVs end up having &PL_padname_undef "names", while slots for constants 
+and GVs end up having &PL_padname_undef "names", while slots for constants
 have C<&PL_padname_const> "names" (see C<L</pad_alloc>>).  That
 C<&PL_padname_undef>
 and C<&PL_padname_const> are used is an implementation detail subject to
@@ -306,6 +306,9 @@ Perl_cv_undef_flags(pTHX_ CV *cv, U32 flags)
     CV cvbody;/*CV body will never be realloced inside this func,
                so don't read it more than once, use fake CV so existing macros
                will work, the indirection and CV head struct optimized away*/
+#ifdef DEBUGGING
+    SvFLAGS(&cvbody) = SVt_PVCV;
+#endif
     SvANY(&cvbody) = SvANY(cv);
 
     PERL_ARGS_ASSERT_CV_UNDEF_FLAGS;
@@ -329,7 +332,7 @@ Perl_cv_undef_flags(pTHX_ CV *cv, U32 flags)
             assert(SvTYPE(cv) == SVt_PVCV || SvTYPE(cv) == SVt_PVFM); /*unsafe is safe */
             if (CvDEPTHunsafe(&cvbody)) {
                 assert(SvTYPE(cv) == SVt_PVCV);
-                Perl_croak_nocontext("Can't undef active subroutine");
+                croak("Can't undef active subroutine");
             }
             ENTER;
 
@@ -355,7 +358,7 @@ Perl_cv_undef_flags(pTHX_ CV *cv, U32 flags)
                 LEAVE;
             }
 #ifdef DEBUGGING
-            else Perl_warn(aTHX_ "Slab leaked from cv %p", (void*)cv);
+            else warn("Slab leaked from cv %p", (void*)cv);
 #endif
         }
     }
@@ -517,7 +520,7 @@ Perl_cv_forget_slab(pTHX_ CV *cv)
     if      (CvROOT(cv))  slab = OpSLAB(CvROOT(cv));
     else if (CvSTART(cv)) slab = (OPSLAB *)CvSTART(cv);
 #ifdef DEBUGGING
-    else if (slabbed)     Perl_warn(aTHX_ "Slab leaked from cv %p", (void*)cv);
+    else if (slabbed)     warn("Slab leaked from cv %p", (void*)cv);
 #endif
 
     if (slab) {
@@ -558,8 +561,7 @@ S_pad_alloc_name(pTHX_ PADNAME *name, U32 flags, HV *typestash,
 
     if (typestash) {
         PadnameFLAGS(name) |= PADNAMEf_TYPED;
-        PadnameTYPE(name) =
-            MUTABLE_HV(SvREFCNT_inc_simple_NN(MUTABLE_SV(typestash)));
+        PadnameTYPE(name) = HvREFCNT_inc_simple_NN(typestash);
     }
     if (ourstash) {
         PadnameFLAGS(name) |= PADNAMEf_OUR;
@@ -581,15 +583,17 @@ S_pad_alloc_name(pTHX_ PADNAME *name, U32 flags, HV *typestash,
 }
 
 /*
-=for apidoc pad_add_name_pvn
+=for apidoc      pad_add_name_pv
+=for apidoc_item pad_add_name_pvn
+=for apidoc_item pad_add_name_sv
 
-Allocates a place in the currently-compiling pad for a named lexical
-variable.  Stores the name and other metadata in the name part of the
-pad, and makes preparations to manage the variable's lexical scoping.
-Returns the offset of the allocated pad slot.
+These each allocate a place in the currently-compiling pad for a named lexical
+variable.  They store the name and other metadata in the name part of the
+pad, and make preparations to manage the variable's lexical scoping.
+They return the offset of the allocated pad slot.
 
-C<namepv>/C<namelen> specify the variable's name in UTF-8, including
-leading sigil.
+They differ only in how the input variable's name is specified.
+
 If C<typestash> is non-null, the name is for a typed lexical, and this
 identifies the type.  If C<ourstash> is non-null, it's a lexical reference
 to a package variable, and this identifies the package.  The following
@@ -599,6 +603,18 @@ flags can be OR'ed together:
  padadd_STATE        variable will retain value persistently
  padadd_NO_DUP_CHECK skip check for lexical shadowing
  padadd_FIELD        specifies that the lexical is a field for a class
+
+In all forms, the variable name must include the leading sigil.
+
+In C<pad_add_name_sv>, the input name is taken from the SV parameter using
+C<L</SvPVutf8>()>.
+
+In C<pad_add_name_pv>, the input name is a NUL-terminated string, which must be
+encoded in UTF-8.
+
+In C<pad_add_name_pvn>, C<namelen> gives the length of the input name in bytes,
+which means it may contain embedded NUL characters.  Again, it must be encoded
+in UTF-8.
 
 =cut
 */
@@ -613,7 +629,7 @@ Perl_pad_add_name_pvn(pTHX_ const char *namepv, STRLEN namelen,
     PERL_ARGS_ASSERT_PAD_ADD_NAME_PVN;
 
     if (flags & ~(padadd_OUR|padadd_STATE|padadd_NO_DUP_CHECK|padadd_FIELD))
-        Perl_croak(aTHX_ "panic: pad_add_name_pvn illegal flag bits 0x%" UVxf,
+        croak("panic: pad_add_name_pvn illegal flag bits 0x%" UVxf,
                    (UV)flags);
 
     name = newPADNAMEpvn(namepv, namelen);
@@ -654,15 +670,6 @@ Perl_pad_add_name_pvn(pTHX_ const char *namepv, STRLEN namelen,
     return offset;
 }
 
-/*
-=for apidoc pad_add_name_pv
-
-Exactly like L</pad_add_name_pvn>, but takes a nul-terminated string
-instead of a string/length pair.
-
-=cut
-*/
-
 PADOFFSET
 Perl_pad_add_name_pv(pTHX_ const char *name,
                      const U32 flags, HV *typestash, HV *ourstash)
@@ -670,15 +677,6 @@ Perl_pad_add_name_pv(pTHX_ const char *name,
     PERL_ARGS_ASSERT_PAD_ADD_NAME_PV;
     return pad_add_name_pvn(name, strlen(name), flags, typestash, ourstash);
 }
-
-/*
-=for apidoc pad_add_name_sv
-
-Exactly like L</pad_add_name_pvn>, but takes the name string in the form
-of an SV instead of a string/length pair.
-
-=cut
-*/
 
 PADOFFSET
 Perl_pad_add_name_sv(pTHX_ SV *name, U32 flags, HV *typestash, HV *ourstash)
@@ -726,7 +724,7 @@ Perl_pad_alloc(pTHX_ I32 optype, U32 tmptype)
     ASSERT_CURPAD_ACTIVE("pad_alloc");
 
     if (AvARRAY(PL_comppad) != PL_curpad)
-        Perl_croak(aTHX_ "panic: pad_alloc, %p!=%p",
+        croak("panic: pad_alloc, %p!=%p",
                    AvARRAY(PL_comppad), PL_curpad);
     if (PL_pad_reset_pending)
         pad_reset();
@@ -902,7 +900,7 @@ S_pad_check_dup(pTHX_ PADNAME *name, U32 flags, const HV *ourstash)
                     PadnameFIELDINFO(pn)->fieldstash != PL_curstash)
                 break; /* field of a different class */
             /* diag_listed_as: "%s" variable %s masks earlier declaration in same %s */
-            Perl_warner(aTHX_ packWARN(WARN_SHADOW),
+            warner(packWARN(WARN_SHADOW),
                 "\"%s\" %s %" PNf " masks earlier declaration in same %s",
                 (   is_our                         ? "our"   :
                     PL_parser->in_my == KEY_my     ? "my"    :
@@ -929,10 +927,10 @@ S_pad_check_dup(pTHX_ PADNAME *name, U32 flags, const HV *ourstash)
                 && PadnameOURSTASH(pn) == ourstash
                 && memEQ(PadnamePV(pn), PadnamePV(name), PadnameLEN(name)))
             {
-                Perl_warner(aTHX_ packWARN(WARN_SHADOW),
+                warner(packWARN(WARN_SHADOW),
                     "\"our\" variable %" PNf " redeclared", PNfARG(pn));
                 if (off <= PL_comppad_name_floor)
-                    Perl_warner(aTHX_ packWARN(WARN_SHADOW),
+                    warner(packWARN(WARN_SHADOW),
                         "\t(Did you mean \"local\" instead of \"our\"?)\n");
                 break;
             }
@@ -943,16 +941,38 @@ S_pad_check_dup(pTHX_ PADNAME *name, U32 flags, const HV *ourstash)
 
 
 /*
-=for apidoc pad_findmy_pvn
+=for apidoc      pad_findmy_pv
+=for apidoc_item pad_findmy_pvn
+=for apidoc_item pad_findmy_pvs
+=for apidoc_item pad_findmy_sv
 
-Given the name of a lexical variable, find its position in the
-currently-compiling pad.
-C<namepv>/C<namelen> specify the variable's name, including leading sigil.
-C<flags> is reserved and must be zero.
+Given the name of a lexical variable, including its leading sigil, find its
+position in the currently-compiling pad.
+
 If it is not in the current pad but appears in the pad of any lexically
 enclosing scope, then a pseudo-entry for it is added in the current pad.
-Returns the offset in the current pad,
-or C<NOT_IN_PAD> if no such lexical is in scope.
+
+These each return the offset in the current pad, or C<NOT_IN_PAD> if no such
+lexical is in scope.
+
+The forms differ only in how the variable's name is specified.
+
+In C<pad_findmy_pvs>, the variable name is a C language string literal,
+enclosed in double quotes.
+
+In plain C<pad_findmy_pv>, the variable name is a C language NUL-terminated
+string.
+
+In C<pad_findmy_pvn>, C<len> gives the length of the variable name in bytes,
+so it may contain embedded-NUL characters.  The caller must make sure C<namepv>
+contains at least C<len> bytes.
+
+In C<pad_findmy_sv>, the variable name is taken from the SV parameter using
+C<L</SvPVutf8>()>.
+
+C<flags> is reserved and must be zero.
+
+=for apidoc Amnh||NOT_IN_PAD
 
 =cut
 */
@@ -969,7 +989,7 @@ Perl_pad_findmy_pvn(pTHX_ const char *namepv, STRLEN namelen, U32 flags)
     PERL_ARGS_ASSERT_PAD_FINDMY_PVN;
 
     if (flags)
-        Perl_croak(aTHX_ "panic: pad_findmy_pvn illegal flag bits 0x%" UVxf,
+        croak("panic: pad_findmy_pvn illegal flag bits 0x%" UVxf,
                    (UV)flags);
 
     /* compilation errors can zero PL_compcv */
@@ -1005,30 +1025,12 @@ Perl_pad_findmy_pvn(pTHX_ const char *namepv, STRLEN namelen, U32 flags)
     return NOT_IN_PAD;
 }
 
-/*
-=for apidoc pad_findmy_pv
-
-Exactly like L</pad_findmy_pvn>, but takes a nul-terminated string
-instead of a string/length pair.
-
-=cut
-*/
-
 PADOFFSET
 Perl_pad_findmy_pv(pTHX_ const char *name, U32 flags)
 {
     PERL_ARGS_ASSERT_PAD_FINDMY_PV;
     return pad_findmy_pvn(name, strlen(name), flags);
 }
-
-/*
-=for apidoc pad_findmy_sv
-
-Exactly like L</pad_findmy_pvn>, but takes the name string in the form
-of an SV instead of a string/length pair.
-
-=cut
-*/
 
 PADOFFSET
 Perl_pad_findmy_sv(pTHX_ SV *name, U32 flags)
@@ -1079,8 +1081,9 @@ index into the parent pad.
 */
 
 /* the CV has finished being compiled. This is not a sufficient test for
- * all CVs (eg XSUBs), but suffices for the CVs found in a lexical chain */
-#define CvCOMPILED(cv)	CvROOT(cv)
+ * all CVs (eg XSUBs), but suffices for the CVs found in a lexical chain.
+ * Note that a fully-compiled eval doesn't get CvROOT() set. */
+#define CvCOMPILED(cv)	(CvROOT(cv) || CvEVAL_COMPILED(cv))
 
 /* the CV does late binding of its lexicals */
 #define CvLATE(cv) (CvANON(cv) || CvCLONE(cv) || SvTYPE(cv) == SVt_PVFM)
@@ -1089,12 +1092,12 @@ static void
 S_unavailable(pTHX_ PADNAME *name)
 {
     /* diag_listed_as: Variable "%s" is not available */
-    Perl_ck_warner(aTHX_ packWARN(WARN_CLOSURE),
-                        "%s \"%" PNf "\" is not available",
-                         *PadnamePV(name) == '&'
-                                         ? "Subroutine"
-                                         : "Variable",
-                         PNfARG(name));
+    ck_warner(packWARN(WARN_CLOSURE),
+              "%s \"%" PNf "\" is not available",
+               *PadnamePV(name) == '&'
+                               ? "Subroutine"
+                               : "Variable",
+               PNfARG(name));
 }
 
 STATIC PADOFFSET
@@ -1112,7 +1115,7 @@ S_pad_findlex(pTHX_ const char *namepv, STRLEN namelen, U32 flags, const CV* cv,
 
     flags &= ~(padadd_STALEOK|padfind_FIELD_OK); /* one-shot flags */
     if (flags)
-        Perl_croak(aTHX_ "panic: pad_findlex illegal flag bits 0x%" UVxf,
+        croak("panic: pad_findlex illegal flag bits 0x%" UVxf,
                    (UV)flags);
 
     *out_flags = 0;
@@ -1213,7 +1216,7 @@ S_pad_findlex(pTHX_ const char *namepv, STRLEN namelen, U32 flags, const CV* cv,
                         newwarn = 0;
                         /* diag_listed_as: Variable "%s" will not stay
                                            shared */
-                        Perl_warner(aTHX_ packWARN(WARN_CLOSURE),
+                        warner(packWARN(WARN_CLOSURE),
                             "%s \"%" UTF8f "\" will not stay shared",
                              *namepv == '&' ? "Subroutine" : "Variable",
                              UTF8fARG(1, namelen, namepv));
@@ -1371,7 +1374,7 @@ Perl_pad_sv(pTHX_ PADOFFSET po)
     ASSERT_CURPAD_ACTIVE("pad_sv");
 
     if (!po)
-        Perl_croak(aTHX_ "panic: pad_sv po");
+        croak("panic: pad_sv po");
     DEBUG_X(PerlIO_printf(Perl_debug_log,
         "Pad 0x%" UVxf "[0x%" UVxf "] sv:      %ld sv=0x%" UVxf "\n",
         PTR2UV(PL_comppad), PTR2UV(PL_curpad), (long)po, PTR2UV(PL_curpad[po]))
@@ -1513,9 +1516,9 @@ Perl_pad_leavemy(pTHX)
         for (off = PL_max_intro_pending; off >= PL_min_intro_pending; off--) {
             const PADNAME * const name = svp[off];
             if (name && PadnameLEN(name) && !PadnameOUTER(name))
-                Perl_ck_warner_d(aTHX_ packWARN(WARN_INTERNAL),
-                                      "%" PNf " never introduced",
-                                       PNfARG(name));
+                ck_warner_d(packWARN(WARN_INTERNAL),
+                            "%" PNf " never introduced",
+                            PNfARG(name));
         }
     }
     /* "Deintroduce" my variables that are leaving with this scope. */
@@ -1562,10 +1565,10 @@ Perl_pad_swipe(pTHX_ PADOFFSET po, bool refadjust)
     if (!PL_curpad)
         return;
     if (AvARRAY(PL_comppad) != PL_curpad)
-        Perl_croak(aTHX_ "panic: pad_swipe curpad, %p!=%p",
+        croak("panic: pad_swipe curpad, %p!=%p",
                    AvARRAY(PL_comppad), PL_curpad);
     if (!po || ((SSize_t)po) > AvFILLp(PL_comppad))
-        Perl_croak(aTHX_ "panic: pad_swipe po=%ld, fill=%ld",
+        croak("panic: pad_swipe po=%ld, fill=%ld",
                    (long)po, (long)AvFILLp(PL_comppad));
 
     DEBUG_X(PerlIO_printf(Perl_debug_log,
@@ -1616,7 +1619,7 @@ S_pad_reset(pTHX)
 {
 #ifdef USE_PAD_RESET
     if (AvARRAY(PL_comppad) != PL_curpad)
-        Perl_croak(aTHX_ "panic: pad_reset curpad, %p!=%p",
+        croak("panic: pad_reset curpad, %p!=%p",
                    AvARRAY(PL_comppad), PL_curpad);
 
     DEBUG_X(PerlIO_printf(Perl_debug_log,
@@ -1681,6 +1684,7 @@ Perl_pad_tidy(pTHX_ padtidy_type type)
                     "Pad clone on cv=0x%" UVxf "\n", PTR2UV(cv)));
                 CvCLONE_on(cv);
             }
+            CvHASEVAL_on(cv);
         }
     }
 
@@ -1769,10 +1773,10 @@ Perl_pad_free(pTHX_ PADOFFSET po)
     if (!PL_curpad)
         return;
     if (AvARRAY(PL_comppad) != PL_curpad)
-        Perl_croak(aTHX_ "panic: pad_free curpad, %p!=%p",
+        croak("panic: pad_free curpad, %p!=%p",
                    AvARRAY(PL_comppad), PL_curpad);
     if (!po)
-        Perl_croak(aTHX_ "panic: pad_free po");
+        croak("panic: pad_free po");
 
     DEBUG_X(PerlIO_printf(Perl_debug_log,
             "Pad 0x%" UVxf "[0x%" UVxf "] free:    %ld\n",
@@ -1972,7 +1976,8 @@ S_cv_clone_pad(pTHX_ CV *proto, CV *cv, CV *outside, HV *cloned,
     PL_compcv = cv;
     if (newcv) SAVEFREESV(cv); /* in case of fatal warnings */
 
-    CvOUTSIDE(cv)	= MUTABLE_CV(SvREFCNT_inc_simple(outside));
+    if (CvHASEVAL(cv))
+        CvOUTSIDE(cv)	= CvREFCNT_inc_simple(outside);
 
     SAVESPTR(PL_comppad_name);
     PL_comppad_name = protopad_name;
@@ -2181,7 +2186,7 @@ S_cv_clone_pad(pTHX_ CV *proto, CV *cv, CV *outside, HV *cloned,
                         ) == o
                      && !OpSIBLING(o))
                     {
-                        Perl_croak(aTHX_
+                        croak(
                             "Constants from lexical variables potentially modified "
                             "elsewhere are no longer permitted");
                     }
@@ -2272,7 +2277,7 @@ Perl_cv_clone(pTHX_ CV *proto)
 {
     PERL_ARGS_ASSERT_CV_CLONE;
 
-    if (!CvPADLIST(proto)) Perl_croak(aTHX_ "panic: no pad in cv_clone");
+    if (!CvPADLIST(proto)) croak("panic: no pad in cv_clone");
     return S_cv_clone(aTHX_ proto, NULL, NULL, NULL);
 }
 

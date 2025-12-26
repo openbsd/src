@@ -111,40 +111,55 @@ like( Føø::Bær->nèw, qr/Føø::Bær=HASH/u, 'Can access nèw as a method thr
 is( ref Føø::Bær->new, 'Føø::Bær');
 
 my $new_ascii = "new";
-my $new_latin = "nèw";
-my $e_with_grave = byte_utf8a_to_utf8n("\303\250");
-my $e_with_grave_escaped= $e_with_grave=~s/\x{a8}/\\\\x\\{a8\\}/r;
-my $new_utf8  = "n${e_with_grave}w";
-my $newoct    = "n${e_with_grave}w";
-utf8::decode($new_utf8);
+my $new_utf8 = "nèw";
+my $new_latin = $new_utf8;
+utf8::downgrade($new_latin);
 
-like( Føø::Bær->$new_ascii, qr/Føø::Bær=HASH/u, "Can access \$new_ascii, [$new_ascii], stored in a scalar, as a method, through a UTF-8 package." );
-like( Føø::Bær->$new_latin, qr/Føø::Bær=HASH/u, "Can access \$new_latin, [$new_latin], stored in a scalar, as a method, through a UTF-8 package." );
-like( Føø::Bær->$new_utf8, qr/Føø::Bær=HASH/u, "Can access \$new_utf8, [$new_utf8], stored in a scalar, as a method, through a UTF-8 package." );
+my $newoct = $new_utf8;
+utf8::encode($newoct);
+
+like( Føø::Bær->$new_ascii, qr/Føø::Bær=HASH/u,
+     "Can access \$new_ascii, [$new_ascii], stored in a scalar, as a method,"
+   . " through a UTF-8 package." );
+like( Føø::Bær->$new_latin, qr/Føø::Bær=HASH/u,
+     "Can access \$new_latin, [$new_latin], stored in a scalar, as a method,"
+   . " through a UTF-8 package." );
+like( Føø::Bær->$new_utf8, qr/Føø::Bær=HASH/u,
+     "Can access \$new_utf8, [$new_utf8], stored in a scalar, as a method,"
+   . " through a UTF-8 package." );
 {
     local $@;
     eval { Føø::Bær->$newoct };
-    like($@, qr/Can't locate object method "n${e_with_grave_escaped}w" via package "Føø::Bær"/u,
-        "Can't access [$newoct], stored in a scalar, as a method through a UTF-8 package." );
+    like($@, qr/Can't locate object method "[^"]+" via package "Føø::Bær"/u,
+         "Can't access [$newoct], stored in a scalar, as a method through a"
+       . " UTF-8 package." );
 }
 
-
-like( nèw Føø::Bær, qr/Føø::Bær=HASH/u, "Can access [nèw] as a method through a UTF-8 indirect object package.");
+like( nèw Føø::Bær, qr/Føø::Bær=HASH/u,
+     "Can access [nèw] as a method through a UTF-8 indirect object package.");
 
 my $pkg_latin_1 = 'Føø::Bær';
 
-like( $pkg_latin_1->new, qr/Føø::Bær=HASH/u, 'Can access new as a method when the UTF-8 package name is in a scalar.');
-like( $pkg_latin_1->nèw, qr/Føø::Bær=HASH/u, 'Can access nèw as a method when the UTF-8 package name is in a scalar.');
+like( $pkg_latin_1->new, qr/Føø::Bær=HASH/u,
+     'Can access new as a method when the UTF-8 package name is in a scalar.');
+like( $pkg_latin_1->nèw, qr/Føø::Bær=HASH/u,
+     'Can access nèw as a method when the UTF-8 package name is in a scalar.');
 
-like( $pkg_latin_1->$new_ascii, qr/Føø::Bær=HASH/u, "Can access \$new_ascii, [$new_ascii], stored in a scalar, as a method, when the UTF-8 package name is also in a scalar.");
-like( $pkg_latin_1->$new_latin, qr/Føø::Bær=HASH/u, "Can access \$new_latin, [$new_latin], stored in a scalar, as a method, when the UTF-8 package name is also in a scalar.");
-like( $pkg_latin_1->$new_utf8, qr/Føø::Bær=HASH/u, "Can access \$new_utf8, [$new_utf8], stored in a scalar, as a method, when the UTF-8 package name is also in a scalar." );
+like( $pkg_latin_1->$new_ascii, qr/Føø::Bær=HASH/u,
+     "Can access \$new_ascii, [$new_ascii], stored in a scalar, as a method,"
+   . " when the UTF-8 package name is also in a scalar.");
+like( $pkg_latin_1->$new_latin, qr/Føø::Bær=HASH/u,
+     "Can access \$new_latin, [$new_latin], stored in a scalar, as a method,"
+   . " when the UTF-8 package name is also in a scalar.");
+like( $pkg_latin_1->$new_utf8, qr/Føø::Bær=HASH/u,
+     "Can access \$new_utf8, [$new_utf8], stored in a scalar, as a method,"
+   . " when the UTF-8 package name is also in a scalar." );
 {
     local $@;
-
     eval { $pkg_latin_1->$newoct };
-    like($@, qr/Can't locate object method "n${e_with_grave_escaped}w" via package "Føø::Bær"/u,
-        "Can't access [$newoct], stored in a scalar, as a method, when the UTF-8 package name is also in a scalar.");
+    like($@, qr/Can't locate object method "[^"]*" via package "Føø::Bær"/u,
+         "Can't access [$newoct], stored in a scalar, as a method, when the"
+       . " UTF-8 package name is also in a scalar.");
 }
 
 ok !!Føø::Bær->can($new_ascii), "->can works for [$new_ascii]";

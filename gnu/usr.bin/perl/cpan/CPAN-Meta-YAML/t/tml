@@ -85,6 +85,8 @@ __END__
 
 =head1 NAME
 
+=for stopwords tml
+
 t/tml - run .tml files matching a pattern
 
 =head1 SYNOPSIS

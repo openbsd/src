@@ -3,17 +3,19 @@ package utf8;
 use strict;
 use warnings;
 
-our $hint_bits = 0x00800000;
+our $utf8_hint_bits  = 0x00800000;
+our $ascii_hint_bits = 0x00000010;  # Turned off when utf8 turned on
 
-our $VERSION = '1.25';
+our $VERSION = '1.27';
 our $AUTOLOAD;
 
 sub import {
-    $^H |= $hint_bits;
+    $^H |= $utf8_hint_bits;
+    $^H &= ~$ascii_hint_bits;
 }
 
 sub unimport {
-    $^H &= ~$hint_bits;
+    $^H &= ~$utf8_hint_bits;
 }
 
 sub AUTOLOAD {

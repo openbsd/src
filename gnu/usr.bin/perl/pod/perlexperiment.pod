@@ -18,22 +18,6 @@ their inception, versions, etc. There's a lot of speculation here.
 
 =over 8
 
-=item Smart match (C<~~>)
-
-Introduced in Perl 5.10.0
-
-Modified in Perl 5.10.1, 5.12.0
-
-Deprecated in 5.38.0
-
-Will be removed in 5.42.0
-
-Using this feature triggers warnings in the category
-C<deprecated>.
-
-The ticket for this experiment is
-L<[perl #13173]|https://github.com/Perl/perl5/issues/13173>.
-
 =item Pluggable keywords
 
 Introduced in Perl 5.11.2
@@ -188,6 +172,19 @@ example:
 
 The ticket for this experiment is
 L<[perl #19765]|https://github.com/Perl/perl5/issues/19765>.
+
+=item C<any> and C<all> list processing operators
+
+Introduced in Perl 5.41.7.
+
+Using these features triggers warnings in the categories C<experimental::any>
+or C<experiment::all>.
+
+This adds new list processing operators named C<any> and C<all>, each as their
+own named feature.
+
+The ticket for this experiment is
+L<[perl #22794]|https://github.com/Perl/perl5/issues/22794>.
 
 =back
 
@@ -456,19 +453,65 @@ Removed in Perl 5.36.0
 
 =back
 
+=head2 Features abandoned in place
+
+These are experiments that are considered failures, but due to mass
+use have been left in place.
+
+The switch and smartmatch features are likely to be the only ones
+which will ever fall into this category.  They were introduced before
+we had a well-defined experimental feature process.
+
+These are unlikely to be updated with behavioural changes.
+
+=over
+
+=item Smart match (C<~~>)
+
+Introduced in Perl 5.10.0
+
+Modified in Perl 5.10.1, 5.12.0
+
+Deprecated in 5.38.0
+
+Scheduled for removal in 5.42.0, but this was reversed.
+
+Enabled by default, and in all feature bundles up to 5.40, disabled by
+default in feature bundle 5.42, but can be enabled with C<use feature
+"smartmatch">.
+
+The ticket for this experiment is
+L<[perl #13173]|https://github.com/Perl/perl5/issues/13173>.
+
+=item Switch (given/when)
+
+Introduced in Perl 5.10.0
+
+Deprecated in 5.38.0
+
+Scheduled for removal in 5.42.0, but this was reversed.
+
+Enabled by feature bundles 5.10 through 5.34, but can be enabled with
+C<use feature "switch">.
+
+The ticket for this experiment is
+L<[perl #13173]|https://github.com/Perl/perl5/issues/13173>.
+
+=back
+
 =head1 SEE ALSO
 
 For a complete list of features check L<feature>.
 
 =head1 AUTHORS
 
-brian d foy C<< <brian.d.foy@gmail.com> >>
+brian d foy C<< <briandfoy@pobox.com> >>
 
 SE<eacute>bastien Aperghis-Tramoni C<< <saper@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright 2010, brian d foy C<< <brian.d.foy@gmail.com> >>
+Copyright 2010, brian d foy C<< <briandfoy@pobox.com> >>
 
 =head1 LICENSE
 

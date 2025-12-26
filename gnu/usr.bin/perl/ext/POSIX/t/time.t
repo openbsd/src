@@ -9,7 +9,7 @@ use strict;
 
 use Config;
 use POSIX;
-use Test::More tests => 30;
+use Test::More tests => 31;
 
 # For the first go to UTC to avoid DST issues around the world when testing.  SUS3 says that
 # null should get you UTC, but some environments want the explicit names.
@@ -204,6 +204,16 @@ SKIP: {
     my $time = time();
     is(mktime(CORE::localtime($time)), $time, "mktime()");
     is(mktime(POSIX::localtime($time)), $time, "mktime()");
+}
+ 
+SKIP: {
+    skip "'%s' not implemented in strftime", 1 if $^O eq "VMS"
+                                               || $^O eq "MSWin32"
+                                               || $^O eq "os390";
+    # Somewhat arbitrarily, put in 60 seconds of slack;  if this fails, it
+    # will likely be off by 1 hour
+    ok(abs(POSIX::strftime('%s', localtime) - time) < 60,
+       'GH #22351; pr: GH #22369');
 }
 
 {

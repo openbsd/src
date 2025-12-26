@@ -467,6 +467,12 @@ See the brief discussion in L<perlpod/"Formatting Codes">.
 
 See the brief discussion in L<perlpod/"Formatting Codes">.
 
+=item C<UE<lt>textE<gt>> -- underline text
+
+See the brief discussion in L<perlpod/"Formatting Codes">.
+
+This was added in 2024 and might not be supported on all Pod parsers.
+
 =item C<CE<lt>codeE<gt>> -- code text
 
 See the brief discussion in L<perlpod/"Formatting Codes">.
@@ -490,7 +496,7 @@ Discussed briefly in L<perlpod/"Formatting Codes">.
 
 This code is unusual in that it should have no content.  That is,
 a processor may complain if it sees C<ZE<lt>potatoesE<gt>>.  Whether
-or not it complains, the I<potatoes> text should ignored.
+or not it complains, the I<potatoes> text should be ignored.
 
 =item C<LE<lt>nameE<gt>> -- a hyperlink
 
@@ -569,7 +575,7 @@ two paragraphs:
   Don't make me say it again!>
 
 ...must I<not> be parsed as two paragraphs in italics (with the I
-code starting in one paragraph and starting in another.)  Instead,
+code starting in one paragraph and ending in another.)  Instead,
 the first paragraph should generate a warning, but that aside, the
 above code must parse as if it were:
 

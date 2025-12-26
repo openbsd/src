@@ -2,7 +2,7 @@
 # vim: ts=4 sts=4 sw=4:
 use strict;
 package CPAN;
-$CPAN::VERSION = '2.36';
+$CPAN::VERSION = '2.38';
 $CPAN::VERSION =~ s/_//;
 
 # we need to run chdir all over and we would get at wrong libraries
@@ -1852,22 +1852,19 @@ versions of CPAN.pm
 This commands provides a statistical overview over recent download
 activities. The data for this is collected in the YAML file
 C<FTPstats.yml> in your C<cpan_home> directory. If no YAML module is
-configured or YAML not installed, no stats are provided.
+configured or YAML not installed, or if C<ftpstats_size> is set to a
+value C<< <=0 >>, no stats are provided.
 
-=over
-
-=item install_tested
+=head2 install_tested
 
 Install all distributions that have been tested successfully but have
 not yet been installed. See also C<is_tested>.
 
-=item is_tested
+=head2 is_tested
 
 List all build directories of distributions that have been tested
 successfully but have not yet been installed. See also
 C<install_tested>.
-
-=back
 
 =head2 mkmyconfig
 
@@ -2089,6 +2086,17 @@ overridden in a user specific file: CPAN/MyConfig.pm. Such a file is
 best placed in C<$HOME/.cpan/CPAN/MyConfig.pm>, because C<$HOME/.cpan> is
 added to the search path of the CPAN module before the use() or
 require() statements. The mkmyconfig command writes this file for you.
+
+If you want to keep your own CPAN/MyConfig.pm somewhere else, you
+should load it before loading CPAN.pm, e.g.:
+
+  perl -I/tmp/somewhere -MCPAN::MyConfig -MCPAN -eshell
+
+  --or--
+
+ perl -I/tmp/somewhere -MCPAN::MyConfig -S cpan
+
+Once you are in the shell you can change your configuration as follows.
 
 The C<o conf> command has various bells and whistles:
 
@@ -3921,9 +3929,15 @@ When an install fails for some reason and then I correct the error
 condition and retry, CPAN.pm refuses to install the module, saying
 C<Already tried without success>.
 
-Use the force pragma like so
+You could use the force pragma like so
 
   force install Foo::Bar
+
+Or, to avoid a force install (which would install even if the tests
+fail), you can force only the test and then install:
+
+  force test Foo::Bar
+  install Foo::Bar
 
 Or you can use
 
@@ -4040,6 +4054,37 @@ exact desire. The two cpanpm config variables can be set with:
 probably followed by
 
   o conf commit
+
+=item 20)
+
+How do recommends_policy and suggests_policy work, exactly?
+
+The terms C<recommends> and C<suggests> have been standardized in
+https://metacpan.org/pod/CPAN::Meta::Spec
+
+In CPAN.pm, if you set C<recommands_policy> to a true value, that
+means: if you then install a distribution C<Foo> that I<recommends> a
+module C<Bar>, both C<Foo> and C<Bar> will be tested and potentially
+installed.
+
+Similarly, if you set C<suggests_policy> to a true value, it means: if
+you install a distribution C<Foo> that I<suggests> a module C<Bar>,
+both C<Foo> and C<Bar> will be tested and potentially installed.
+
+In either case, when C<Foo> passes its tests and C<Bar> does not pass
+its tests, C<Foo> will be installed nontheless. But if C<Foo> does not
+pass its tests, neither will be installed.
+
+This also works recursively for all recommends and suggests of the
+module C<Bar>.
+
+This has also been illustrated by a cpan tester, who wrote:
+
+I just tested Starlink-AST-3.03 which recommends Tk::Zinc;
+Tk-Zinc-3.306 fails with
+http://www.cpantesters.org/cpan/report/a2de7c38-810d-11ee-9ad4-e2167316189a
+; nonetheless Starlink-AST-3.03 succeeds with
+http://www.cpantesters.org/cpan/report/9352e754-810d-11ee-90e9-46117316189a
 
 =back
 

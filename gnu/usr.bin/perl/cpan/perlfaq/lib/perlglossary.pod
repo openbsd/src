@@ -1,5 +1,6 @@
+=pod
 
-=encoding utf8
+=encoding UTF-8
 
 =head1 NAME
 
@@ -7,7 +8,7 @@ perlglossary - Perl Glossary
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -2462,6 +2463,11 @@ What you get X<Pern (term)>when you do C<Perl++> twice. Doing it only once
 will curl your hair. You have to increment it eight times to shampoo your
 hair. Lather, rinse, iterate.
 
+=item phaser
+
+The lifetime (execution timeline) of a program is broken up into phases. A
+phaser is a block of code called during a specific execution phase.
+
 =item pipe
 
 A X<pipes, defined>direct B<connection> that carries the output of one
@@ -3800,3 +3806,5 @@ Based on the Glossary of I<Programming Perl>, Fourth Edition,
 by Tom Christiansen, brian d foy, Larry Wall, & Jon Orwant.
 Copyright (c) 2000, 1996, 1991, 2012 O'Reilly Media, Inc.
 This document may be distributed under the same terms as Perl itself.
+
+=cut

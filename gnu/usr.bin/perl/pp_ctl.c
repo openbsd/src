@@ -175,7 +175,7 @@ PP(pp_regcomp)
     if (!RX_PRELEN(PM_GETRE(pm)) && PL_curpm) {
         if (PL_curpm == PL_reg_curpm) {
             if (PL_curpm_under && PL_curpm_under == PL_reg_curpm) {
-                Perl_croak(aTHX_ "Infinite recursion via empty pattern");
+                croak("Infinite recursion via empty pattern");
             }
         }
     }
@@ -273,7 +273,7 @@ PP(pp_substcont)
             }
             else {
                 SV_CHECK_THINKFIRST_COW_DROP(targ);
-                if (isGV(targ)) Perl_croak_no_modify();
+                if (isGV(targ)) croak_no_modify();
                 SvPV_free(targ);
                 SvPV_set(targ, SvPVX(dstr));
                 SvCUR_set(targ, SvCUR(dstr));
@@ -634,7 +634,7 @@ PP_wrapped(pp_formline, 0, 1)
                 sv = *++MARK;
             else {
                 sv = &PL_sv_no;
-                Perl_ck_warner(aTHX_ packWARN(WARN_SYNTAX), "Not enough format arguments");
+                ck_warner(packWARN(WARN_SYNTAX), "Not enough format arguments");
             }
             if (SvTAINTED(sv))
                 SvTAINTED_on(PL_formtarget);
@@ -824,14 +824,14 @@ PP_wrapped(pp_formline, 0, 1)
              * item_is_utf8 implies source is utf8.
              * if trans, translate certain characters during the copy */
             {
-                U8 *tmp = NULL;
+                void *free_me = NULL;
                 STRLEN grow = 0;
 
                 SvCUR_set(PL_formtarget,
                           t - SvPVX_const(PL_formtarget));
 
                 if (targ_is_utf8 && !item_is_utf8) {
-                    source = tmp = bytes_to_utf8(source, &to_copy);
+                    source = bytes_to_utf8_free_me(source, &to_copy, &free_me);
                     grow = to_copy;
                 } else {
                     if (item_is_utf8 && !targ_is_utf8) {
@@ -883,8 +883,7 @@ PP_wrapped(pp_formline, 0, 1)
 
                 t += to_copy;
                 SvCUR_set(PL_formtarget, SvCUR(PL_formtarget) + to_copy);
-                if (tmp)
-                    Safefree(tmp);
+                Safefree(free_me);
                 break;
             }
 
@@ -925,13 +924,13 @@ PP_wrapped(pp_formline, 0, 1)
                 {
                     int len;
                     if (!quadmath_format_valid(fmt))
-                        Perl_croak_nocontext("panic: quadmath invalid format \"%s\"", fmt);
+                        croak("panic: quadmath invalid format \"%s\"", fmt);
                     WITH_LC_NUMERIC_SET_TO_NEEDED(
                         len = quadmath_snprintf(t, max, fmt, (int) fieldsize,
                                                (int) arg, value);
                     );
                     if (len == -1)
-                        Perl_croak_nocontext("panic: quadmath_snprintf failed, format \"%s\"", fmt);
+                        croak("panic: quadmath_snprintf failed, format \"%s\"", fmt);
                 }
 #else
                 /* we generate fmt ourselves so it is safe */
@@ -1010,7 +1009,7 @@ PP_wrapped(pp_formline, 0, 1)
     }
 }
 
-/* also used for: pp_mapstart() */
+/* also used for: pp_mapstart(), pp_anystart(), pp_allstart() */
 PP(pp_grepstart)
 {
     /* See the code comments at the start of pp_grepwhile() and
@@ -1022,10 +1021,31 @@ PP(pp_grepstart)
 
     if (PL_stack_base + TOPMARK == PL_stack_sp) {
         (void)POPMARK;
-        if (GIMME_V == G_SCALAR) {
-            rpp_extend(1);
-            *++PL_stack_sp = &PL_sv_zero;
+
+        switch(PL_op->op_type) {
+            case OP_GREPSTART:
+            case OP_MAPSTART:
+                if (GIMME_V == G_SCALAR) {
+                    rpp_extend(1);
+                    *++PL_stack_sp = &PL_sv_zero;
+                }
+                break;
+
+            case OP_ANYSTART:
+                if (GIMME_V > G_VOID) {
+                    rpp_extend(1);
+                    rpp_push_IMM(&PL_sv_no);
+                }
+                break;
+
+            case OP_ALLSTART:
+                if (GIMME_V > G_VOID) {
+                    rpp_extend(1);
+                    rpp_push_IMM(&PL_sv_yes);
+                }
+                break;
         }
+
         return PL_op->op_next->op_next;
     }
     svp = PL_stack_base + TOPMARK + 1;
@@ -1306,6 +1326,62 @@ PP(pp_mapwhile)
     }
 }
 
+PP(pp_anywhile)
+{
+    OPCODE op_type = cUNOP->op_first->op_type;
+
+    bool match = SvTRUE_NN(*PL_stack_sp);
+    rpp_popfree_1_NN();
+
+    ++*PL_markstack_ptr;
+    FREETMPS;
+    LEAVE_with_name("grep_item");
+
+    bool result;
+
+    if((op_type == OP_ANYSTART && match) || (op_type == OP_ALLSTART && !match)) {
+        /* shortcircuit; result is known. Stop here */
+        result = match;
+        goto leave_with_result;
+    }
+
+    if(UNLIKELY(PL_stack_base + *PL_markstack_ptr > PL_stack_sp)) {
+        /* Ran out of items */
+        result = (op_type == OP_ANYSTART) ? false : true;
+
+leave_with_result:
+        LEAVE_with_name("grep");
+        (void)POPMARK;				/* pop src */
+        --*PL_markstack_ptr;
+        (void)POPMARK;				/* pop dst */
+        SV **base = PL_stack_base + POPMARK;	/* pop original mark */
+
+        rpp_popfree_to_NN(base);
+        rpp_push_IMM(result ? &PL_sv_yes : &PL_sv_no);
+
+        return NORMAL;
+    }
+
+    ENTER_with_name("grep_item");
+    SAVEVPTR(PL_curpm);
+
+    SV *src = PL_stack_base[TOPMARK];
+    if (SvPADTMP(src)) {
+        SV *newsrc = sv_mortalcopy(src);
+        PL_stack_base[TOPMARK] = newsrc;
+#ifdef PERL_RC_STACK
+        SvREFCNT_inc_simple_void_NN(newsrc);
+        SvREFCNT_dec(src);
+#endif
+        src = newsrc;
+        PL_tmps_floor++;
+    }
+    SvTEMP_off(src);
+    DEFSV_set(src);
+
+    return cLOGOP->op_other;
+}
+
 /* Range stuff. */
 
 PP(pp_range)
@@ -1416,7 +1492,7 @@ PP_wrapped(pp_flop, (GIMME_V == G_LIST) ? 2 : 1, 0)
                         overflow = TRUE;
                 }
                 if (overflow)
-                    Perl_croak(aTHX_ "Out of memory during list extend");
+                    croak("Out of memory during list extend");
                 EXTEND_MORTAL(n);
                 EXTEND(SP, n);
             }
@@ -1441,7 +1517,7 @@ PP_wrapped(pp_flop, (GIMME_V == G_LIST) ? 2 : 1, 0)
                 XPUSHs(sv);
                 if (strEQ(SvPVX_const(sv),tmps))
                     break;
-                sv = sv_2mortal(newSVsv(sv));
+                sv = sv_mortalcopy_flags(sv, SV_GMAGIC|SV_NOSTEAL);
                 sv_inc(sv);
             }
         }
@@ -1514,8 +1590,8 @@ S_dopoptolabel(pTHX_ const char *label, STRLEN len, U32 flags)
         case CXt_FORMAT:
         case CXt_NULL:
             /* diag_listed_as: Exiting subroutine via %s */
-            Perl_ck_warner(aTHX_ packWARN(WARN_EXITING), "Exiting %s via %s",
-                           context_name[CxTYPE(cx)], OP_NAME(PL_op));
+            ck_warner(packWARN(WARN_EXITING), "Exiting %s via %s",
+                      context_name[CxTYPE(cx)], OP_NAME(PL_op));
             if (CxTYPE(cx) == CXt_NULL) /* sort BLOCK */
                 return -1;
             break;
@@ -1579,7 +1655,7 @@ Perl_block_gimme(pTHX)
 
     gimme = (cxstack[cxix].blk_gimme & G_WANT);
     if (!gimme)
-        Perl_croak(aTHX_ "panic: bad gimme: %d\n", gimme);
+        croak("panic: bad gimme: %d\n", gimme);
     return gimme;
 }
 
@@ -1689,8 +1765,8 @@ S_dopoptoloop(pTHX_ I32 startingblock)
         case CXt_FORMAT:
         case CXt_NULL:
             /* diag_listed_as: Exiting subroutine via %s */
-            Perl_ck_warner(aTHX_ packWARN(WARN_EXITING), "Exiting %s via %s",
-                           context_name[CxTYPE(cx)], OP_NAME(PL_op));
+            ck_warner(packWARN(WARN_EXITING), "Exiting %s via %s",
+                      context_name[CxTYPE(cx)], OP_NAME(PL_op));
             if ((CxTYPE(cx)) == CXt_NULL) /* sort BLOCK */
                 return -1;
             break;
@@ -1860,8 +1936,8 @@ Perl_qerror(pTHX_ SV *err)
     if (err!=NULL) {
         if (PL_in_eval) {
             if (PL_in_eval & EVAL_KEEPERR) {
-                    Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "\t(in cleanup) %" SVf,
-                                                        SVfARG(err));
+                    ck_warner(packWARN(WARN_MISC), "\t(in cleanup) %" SVf,
+                              SVfARG(err));
             }
             else {
                 sv_catsv(ERRSV, err);
@@ -1870,7 +1946,7 @@ Perl_qerror(pTHX_ SV *err)
         else if (PL_errors)
             sv_catsv(PL_errors, err);
         else
-            Perl_warn(aTHX_ "%" SVf, SVfARG(err));
+            warn("%" SVf, SVfARG(err));
 
         if (PL_parser) {
             ++PL_parser->error_count;
@@ -1894,10 +1970,10 @@ Perl_qerror(pTHX_ SV *err)
         else
         if (raw_error_count >= PERL_STOP_PARSING_AFTER_N_ERRORS) {
             if (errsv) {
-                Perl_croak(aTHX_ "%" SVf "%s has too many errors.\n",
+                croak("%" SVf "%s has too many errors.\n",
                     SVfARG(errsv), name);
             } else {
-                Perl_croak(aTHX_ "%s has too many errors.\n", name);
+                croak("%s has too many errors.\n", name);
             }
         }
     }
@@ -1945,7 +2021,7 @@ S_pop_eval_context_maybe_croak(pTHX_ PERL_CONTEXT *cx, SV *errsv, int action)
                 errsv = newSVpvs_flags("Unknown error\n", SVs_TEMP);
         }
 
-        Perl_croak(aTHX_ fmt, SVfARG(errsv));
+        croak(fmt, SVfARG(errsv));
     }
 }
 
@@ -2018,8 +2094,8 @@ Perl_die_unwind(pTHX_ SV *msv)
         }
 
         if (in_eval & EVAL_KEEPERR) {
-            Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "\t(in cleanup) %" SVf,
-                           SVfARG(exceptsv));
+            ck_warner(packWARN(WARN_MISC), "\t(in cleanup) %" SVf,
+                      SVfARG(exceptsv));
         }
 
         while ((cxix = dopoptoeval(cxstack_ix)) < 0
@@ -2096,11 +2172,16 @@ Perl_die_unwind(pTHX_ SV *msv)
 
 PP(pp_xor)
 {
-    SV *left  = PL_stack_sp[0];
-    SV *right = PL_stack_sp[-1];
-    rpp_replace_2_IMM_NN(SvTRUE_NN(left) != SvTRUE_NN(right)
-                    ? &PL_sv_yes
-                    : &PL_sv_no);
+    SV *left  = PL_stack_sp[-1];
+    SV *right = PL_stack_sp[0];
+    bool ret = SvTRUE_NN(left) != SvTRUE_NN(right);
+    if (PL_op->op_flags & OPf_STACKED) {
+        sv_setbool(left, ret);
+        rpp_replace_2_1(left);
+    }
+    else {
+        rpp_replace_2_IMM_NN(boolSV(ret));
+    }
     return NORMAL;
 }
 
@@ -2294,7 +2375,7 @@ PP_wrapped(pp_caller, MAXARG, 0)
             }
             else {
                 /* I think this is will always be "", but be sure */
-                PUSHs(sv_2mortal(newSVsv(cur_text)));
+                PUSHs(sv_mortalcopy_flags(cur_text, SV_GMAGIC|SV_NOSTEAL));
             }
 
             PUSHs(&PL_sv_no);
@@ -2728,7 +2809,7 @@ PP(pp_leavesublv)
                     what = "undef";
                 }
               croak:
-                Perl_croak(aTHX_
+                croak(
                           "Can't return %s from lvalue subroutine", what);
             }
 
@@ -2802,7 +2883,7 @@ PP(pp_return)
             if(CxTYPE(&cxstack[i]) == CXt_DEFER)
                 /* diag_listed_as: Can't "%s" out of a "defer" block */
                 /* diag_listed_as: Can't "%s" out of a "finally" block */
-                Perl_croak(aTHX_ "Can't \"%s\" out of a \"%s\" block",
+                croak("Can't \"%s\" out of a \"%s\" block",
                         "return", S_defer_blockname(&cxstack[i]));
         }
         if (cxix < 0) {
@@ -2929,7 +3010,7 @@ S_unwind_loop(pTHX)
         cxix = dopoptoloop(cxstack_ix);
         if (cxix < 0)
             /* diag_listed_as: Can't "last" outside a loop block */
-            Perl_croak(aTHX_ "Can't \"%s\" outside a loop block",
+            croak("Can't \"%s\" outside a loop block",
                 OP_NAME(PL_op));
     }
     else {
@@ -2953,7 +3034,7 @@ S_unwind_loop(pTHX)
         cxix = dopoptolabel(label, label_len, label_flags);
         if (cxix < 0)
             /* diag_listed_as: Label not found for "last %s" */
-            Perl_croak(aTHX_ "Label not found for \"%s %" SVf "\"",
+            croak("Label not found for \"%s %" SVf "\"",
                                        OP_NAME(PL_op),
                                        SVfARG(PL_op->op_flags & OPf_STACKED
                                               && !SvGMAGICAL(sv)
@@ -2972,7 +3053,7 @@ S_unwind_loop(pTHX)
             if(CxTYPE(&cxstack[i]) == CXt_DEFER)
                 /* diag_listed_as: Can't "%s" out of a "defer" block */
                 /* diag_listed_as: Can't "%s" out of a "finally" block */
-                Perl_croak(aTHX_ "Can't \"%s\" out of a \"%s\" block",
+                croak("Can't \"%s\" out of a \"%s\" block",
                         OP_NAME(PL_op), S_defer_blockname(&cxstack[i]));
         }
         dounwind(cxix);
@@ -3055,7 +3136,7 @@ S_dofindlabel(pTHX_ OP *o, const char *label, STRLEN len, U32 flags, OP **opstac
     PERL_ARGS_ASSERT_DOFINDLABEL;
 
     if (ops >= oplimit)
-        Perl_croak(aTHX_ "%s", too_deep);
+        croak("%s", too_deep);
     if (o->op_type == OP_LEAVE ||
         o->op_type == OP_SCOPE ||
         o->op_type == OP_LEAVELOOP ||
@@ -3083,14 +3164,14 @@ S_dofindlabel(pTHX_ OP *o, const char *label, STRLEN len, U32 flags, OP **opstac
       }
     }
     if (ops >= oplimit)
-        Perl_croak(aTHX_ "%s", too_deep);
+        croak("%s", too_deep);
     *ops = 0;
     if (o->op_flags & OPf_KIDS) {
         OP *kid;
         OP * const kid1 = cUNOPo->op_first;
         /* First try all the kids at this level, since that's likeliest. */
         for (kid = cUNOPo->op_first; kid; kid = OpSIBLING(kid)) {
-            if (kid->op_type == OP_NEXTSTATE || kid->op_type == OP_DBSTATE) {
+            if (OP_TYPE_IS_COP_NN(kid)) {
                 STRLEN kid_label_len;
                 U32 kid_label_flags;
                 const char *kid_label = CopLABEL_len_flags(kCOP,
@@ -3113,7 +3194,7 @@ S_dofindlabel(pTHX_ OP *o, const char *label, STRLEN len, U32 flags, OP **opstac
             bool first_kid_of_binary = FALSE;
             if (kid == PL_lastgotoprobe)
                 continue;
-            if (kid->op_type == OP_NEXTSTATE || kid->op_type == OP_DBSTATE) {
+            if (OP_TYPE_IS_COP_NN(kid)) {
                 if (ops == opstack)
                     *ops++ = kid;
                 else if (ops[-1] != UNENTERABLE
@@ -3129,7 +3210,7 @@ S_dofindlabel(pTHX_ OP *o, const char *label, STRLEN len, U32 flags, OP **opstac
             }
             if ((o = dofindlabel(kid, label, len, flags, ops, oplimit))) {
                 if (kid->op_type == OP_PUSHDEFER)
-                    Perl_croak(aTHX_ "Can't \"goto\" into a \"defer\" block");
+                    croak("Can't \"goto\" into a \"defer\" block");
                 return o;
             }
             if (first_kid_of_binary)
@@ -3148,13 +3229,13 @@ S_check_op_type(pTHX_ OP * const o)
      * for each op.  For now, we punt on the hard ones. */
     /* XXX This comment seems to me like wishful thinking.  --sprout */
     if (o == UNENTERABLE)
-        Perl_croak(aTHX_
+        croak(
                   "Can't \"goto\" into a binary or list expression");
     if (o->op_type == OP_ENTERITER)
-        Perl_croak(aTHX_
+        croak(
                   "Can't \"goto\" into the middle of a foreach loop");
     if (o->op_type == OP_ENTERGIVEN)
-        Perl_croak(aTHX_
+        croak(
                   "Can't \"goto\" into a \"given\" block");
 }
 
@@ -3182,7 +3263,7 @@ PP(pp_goto)
             /* This egregious kludge implements goto &subroutine */
             I32 cxix;
             PERL_CONTEXT *cx;
-            CV *cv = MUTABLE_CV(SvRV(sv));
+            CV *cv = CV_FROM_REF(sv);
             AV *arg = GvAV(PL_defgv);
             CV *old_cv = NULL;
 
@@ -3227,7 +3308,7 @@ PP(pp_goto)
             for(ix = cxstack_ix; ix > cxix; ix--) {
                 if(CxTYPE(&cxstack[ix]) == CXt_DEFER)
                     /* diag_listed_as: Can't "%s" out of a "defer" block */
-                    Perl_croak(aTHX_ "Can't \"%s\" out of a \"%s\" block",
+                    croak("Can't \"%s\" out of a \"%s\" block",
                             "goto", S_defer_blockname(&cxstack[ix]));
             }
 
@@ -3427,7 +3508,7 @@ PP(pp_goto)
                        exit, so point it at arg again. */
                     if (arg != GvAV(PL_defgv)) {
                         AV * const av = GvAV(PL_defgv);
-                        GvAV(PL_defgv) = (AV *)SvREFCNT_inc_simple(arg);
+                        GvAV(PL_defgv) = AvREFCNT_inc_simple(arg);
                         SvREFCNT_dec(av);
                     }
                 }
@@ -3659,7 +3740,7 @@ S_save_lines(pTHX_ AV *array, SV *sv)
 
     while (s && s < send) {
         const char *t;
-        SV * const tmpstr = newSV_type(SVt_PVMG);
+        SV * const tmpstr = newSV_type(SVt_PVIV);
 
         t = (const char *)memchr(s, '\n', send - s);
         if (t)
@@ -3668,6 +3749,9 @@ S_save_lines(pTHX_ AV *array, SV *sv)
             t = send;
 
         sv_setpvn_fresh(tmpstr, s, t - s);
+        /* not breakable until we compile a COP for it */
+        SvIV_set(tmpstr, 0);
+        SvIOK_on(tmpstr);
         av_store(array, line++, tmpstr);
         s = t;
     }
@@ -4008,7 +4092,7 @@ S_doeval_compile(pTHX_ U8 gimme, CV* outside, U32 seq, HV *hh)
     CX_CUR()->blk_gimme = gimme;
 
     CvOUTSIDE_SEQ(evalcv) = seq;
-    CvOUTSIDE(evalcv) = MUTABLE_CV(SvREFCNT_inc_simple(outside));
+    CvOUTSIDE(evalcv) = CvREFCNT_inc_simple(outside);
 
     /* set up a scratch pad */
 
@@ -4399,7 +4483,7 @@ S_require_version(pTHX_ SV *sv)
             SV * const pv = *hv_fetchs(MUTABLE_HV(req), "original", FALSE);
 
             /* get the left hand term */
-            lav = MUTABLE_AV(SvRV(*hv_fetchs(MUTABLE_HV(req), "version", FALSE)));
+            lav = AV_FROM_REF(*hv_fetchs(MUTABLE_HV(req), "version", FALSE));
 
             first  = SvIV(*av_fetch(lav,0,0));
             if (   first > (int)PERL_REVISION    /* probably 'use 6.0' */
@@ -4720,11 +4804,10 @@ S_require_file(pTHX_ SV *sv)
                     if (SvTYPE(SvRV(loader)) == SVt_PVAV
                         && !SvOBJECT(SvRV(loader)))
                     {
-                        loader = *av_fetch(MUTABLE_AV(SvRV(loader)), 0, TRUE);
+                        loader = *av_fetch(AV_FROM_REF(loader), 0, TRUE);
                         if (SvGMAGICAL(loader)) {
                             SvGETMAGIC(loader);
-                            SV *l = sv_newmortal();
-                            sv_setsv_nomg(l, loader);
+                            SV *l = sv_mortalcopy_flags(loader, SV_DO_COW_SVSETSV);
                             loader = l;
                         }
                     }
@@ -4784,7 +4867,7 @@ S_require_file(pTHX_ SV *sv)
                         }
                     }
 
-                    Perl_sv_setpvf(aTHX_ namesv, "/loader/0x%" UVxf "/%s",
+                    sv_setpvf(namesv, "/loader/0x%" UVxf "/%s",
                                    diruv, name);
                     tryname = SvPVX_const(namesv);
                     tryrsfp = NULL;
@@ -5024,7 +5107,7 @@ S_require_file(pTHX_ SV *sv)
                     sv_catpv(namesv, unixname);
 #else
                     /* The equivalent of		    
-                       Perl_sv_setpvf(aTHX_ namesv, "%s/%s", dir, name);
+                       sv_setpvf(namesv, "%s/%s", dir, name);
                        but without the need to parse the format string, or
                        call strlen on either pointer, and with the correct
                        allocation up front.  */
@@ -5169,10 +5252,10 @@ S_require_file(pTHX_ SV *sv)
 
             RESTORE_ERRNO;
             if (do_warn) {
-                Perl_warner(aTHX_ packWARN(WARN_DEPRECATED__DOT_IN_INC),
-                "do \"%s\" failed, '.' is no longer in @INC; "
-                "did you mean do \"./%s\"?",
-                name, name);
+                warner(packWARN(WARN_DEPRECATED__DOT_IN_INC),
+                       "do \"%s\" failed, '.' is no longer in @INC; "
+                       "did you mean do \"./%s\"?",
+                       name, name);
             }
 #endif
             CLEAR_ERRSV();
@@ -5365,7 +5448,7 @@ PP(pp_entereval)
 
     if (PERLDB_NAMEEVAL && CopLINE(PL_curcop)) {
         SV * const temp_sv = sv_newmortal();
-        Perl_sv_setpvf(aTHX_ temp_sv, "_<(eval %lu)[%s:%" LINE_Tf "]",
+        sv_setpvf(temp_sv, "_<(eval %lu)[%s:%" LINE_Tf "]",
                        (unsigned long)++PL_evalseq,
                        CopFILE(PL_curcop), CopLINE(PL_curcop));
         tmpbuf = SvPVX(temp_sv);
@@ -5844,7 +5927,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
 
     if (SvROK(e) && SvOBJECT(SvRV(e)) && (SvTYPE(SvRV(e)) != SVt_REGEXP)) {
         DEBUG_M(Perl_deb(aTHX_ "    applying rule Any-Object\n"));
-        Perl_croak(aTHX_ "Smart matching a non-overloaded object breaks encapsulation");
+        croak("Smart matching a non-overloaded object breaks encapsulation");
     }
     if (SvROK(d) && SvOBJECT(SvRV(d)) && (SvTYPE(SvRV(d)) != SVt_REGEXP))
         object_on_left = TRUE;
@@ -5863,6 +5946,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
             DEBUG_M(Perl_deb(aTHX_ "    applying rule Hash-CodeRef\n"));
             if (numkeys == 0)
                 goto ret_yes;
+            push_stackinfo(PERLSI_SMARTMATCH, 1);
             while ( (he = hv_iternext(hv)) ) {
                 DEBUG_M(Perl_deb(aTHX_ "        testing hash key...\n"));
                 ENTER_with_name("smartmatch_hash_key_test");
@@ -5875,6 +5959,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
                 FREETMPS;
                 LEAVE_with_name("smartmatch_hash_key_test");
             }
+            pop_stackinfo();
             if (andedresults)
                 goto ret_yes;
             else
@@ -5889,6 +5974,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
             DEBUG_M(Perl_deb(aTHX_ "    applying rule Array-CodeRef\n"));
             if (len == 0)
                 goto ret_yes;
+            push_stackinfo(PERLSI_SMARTMATCH, 1);
             for (i = 0; i < len; ++i) {
                 SV * const * const svp = av_fetch(av, i, FALSE);
                 DEBUG_M(Perl_deb(aTHX_ "        testing array element...\n"));
@@ -5903,6 +5989,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
                 FREETMPS;
                 LEAVE_with_name("smartmatch_array_elem_test");
             }
+            pop_stackinfo();
             if (andedresults)
                 goto ret_yes;
             else
@@ -5911,12 +5998,14 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
         else {
           sm_any_sub:
             DEBUG_M(Perl_deb(aTHX_ "    applying rule Any-CodeRef\n"));
+            push_stackinfo(PERLSI_SMARTMATCH, 1);
             ENTER_with_name("smartmatch_coderef");
             PUSHMARK(PL_stack_sp);
             rpp_xpush_1(d);
             (void)call_sv(e, G_SCALAR);
             LEAVE_with_name("smartmatch_coderef");
             SV *retsv = *PL_stack_sp--;
+            pop_stackinfo();
             rpp_replace_2_1(retsv);
 #ifdef PERL_RC_STACK
             SvREFCNT_dec(retsv);
@@ -5936,12 +6025,12 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
         else if (SvROK(d) && SvTYPE(SvRV(d)) == SVt_PVHV) {
             /* Check that the key-sets are identical */
             HE *he;
-            HV *other_hv = MUTABLE_HV(SvRV(d));
+            HV *other_hv = HV_FROM_REF(d);
             bool tied;
             bool other_tied;
             U32 this_key_count  = 0,
                 other_key_count = 0;
-            HV *hv = MUTABLE_HV(SvRV(e));
+            HV *hv = HV_FROM_REF(e);
 
             DEBUG_M(Perl_deb(aTHX_ "    applying rule Hash-Hash\n"));
             /* Tied hashes don't know how many keys they have. */
@@ -5989,10 +6078,10 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
                 goto ret_yes;
         }
         else if (SvROK(d) && SvTYPE(SvRV(d)) == SVt_PVAV) {
-            AV * const other_av = MUTABLE_AV(SvRV(d));
+            AV * const other_av = AV_FROM_REF(d);
             const Size_t other_len = av_count(other_av);
             Size_t i;
-            HV *hv = MUTABLE_HV(SvRV(e));
+            HV *hv = HV_FROM_REF(e);
 
             DEBUG_M(Perl_deb(aTHX_ "    applying rule Array-Hash\n"));
             for (i = 0; i < other_len; ++i) {
@@ -6011,7 +6100,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
             {
                 PMOP * const matcher = make_matcher((REGEXP*) SvRV(d));
                 HE *he;
-                HV *hv = MUTABLE_HV(SvRV(e));
+                HV *hv = HV_FROM_REF(e);
 
                 (void) hv_iterinit(hv);
                 while ( (he = hv_iternext(hv)) ) {
@@ -6029,7 +6118,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
         else {
           sm_any_hash:
             DEBUG_M(Perl_deb(aTHX_ "    applying rule Any-Hash\n"));
-            if (hv_exists_ent(MUTABLE_HV(SvRV(e)), d, 0))
+            if (hv_exists_ent(HV_FROM_REF(e), d, 0))
                 goto ret_yes;
             else
                 goto ret_no;
@@ -6041,7 +6130,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
             goto sm_any_array; /* Treat objects like scalars */
         }
         else if (SvROK(d) && SvTYPE(SvRV(d)) == SVt_PVHV) {
-            AV * const other_av = MUTABLE_AV(SvRV(e));
+            AV * const other_av = AV_FROM_REF(e);
             const Size_t other_len = av_count(other_av);
             Size_t i;
 
@@ -6051,16 +6140,16 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
 
                 DEBUG_M(Perl_deb(aTHX_ "        testing for key existence...\n"));
                 if (svp) {	/* ??? When can this not happen? */
-                    if (hv_exists_ent(MUTABLE_HV(SvRV(d)), *svp, 0))
+                    if (hv_exists_ent(HV_FROM_REF(d), *svp, 0))
                         goto ret_yes;
                 }
             }
             goto ret_no;
         }
         if (SvROK(d) && SvTYPE(SvRV(d)) == SVt_PVAV) {
-            AV *other_av = MUTABLE_AV(SvRV(d));
+            AV *other_av = AV_FROM_REF(d);
             DEBUG_M(Perl_deb(aTHX_ "    applying rule Array-Array\n"));
-            if (av_count(MUTABLE_AV(SvRV(e))) != av_count(other_av))
+            if (av_count(AV_FROM_REF(e)) != av_count(other_av))
                 goto ret_no;
             else {
                 Size_t i;
@@ -6073,7 +6162,7 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
                     seen_other = (HV*)newSV_type_mortal(SVt_PVHV);
                 }
                 for(i = 0; i < other_len; ++i) {
-                    SV * const * const this_elem = av_fetch(MUTABLE_AV(SvRV(e)), i, FALSE);
+                    SV * const * const this_elem = av_fetch(AV_FROM_REF(e), i, FALSE);
                     SV * const * const other_elem = av_fetch(other_av, i, FALSE);
 
                     if (!this_elem || !other_elem) {
@@ -6115,11 +6204,11 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
           sm_regex_array:
             {
                 PMOP * const matcher = make_matcher((REGEXP*) SvRV(d));
-                const Size_t this_len = av_count(MUTABLE_AV(SvRV(e)));
+                const Size_t this_len = av_count(AV_FROM_REF(e));
                 Size_t i;
 
                 for(i = 0; i < this_len; ++i) {
-                    SV * const * const svp = av_fetch(MUTABLE_AV(SvRV(e)), i, FALSE);
+                    SV * const * const svp = av_fetch(AV_FROM_REF(e), i, FALSE);
                     DEBUG_M(Perl_deb(aTHX_ "        testing element against pattern...\n"));
                     if (svp && matcher_matches_sv(matcher, *svp)) {
                         destroy_matcher(matcher);
@@ -6132,12 +6221,12 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
         }
         else if (!SvOK(d)) {
             /* undef ~~ array */
-            const Size_t this_len = av_count(MUTABLE_AV(SvRV(e)));
+            const Size_t this_len = av_count(AV_FROM_REF(e));
             Size_t i;
 
             DEBUG_M(Perl_deb(aTHX_ "    applying rule Undef-Array\n"));
             for (i = 0; i < this_len; ++i) {
-                SV * const * const svp = av_fetch(MUTABLE_AV(SvRV(e)), i, FALSE);
+                SV * const * const svp = av_fetch(AV_FROM_REF(e), i, FALSE);
                 DEBUG_M(Perl_deb(aTHX_ "        testing for undef element...\n"));
                 if (!svp || !SvOK(*svp))
                     goto ret_yes;
@@ -6148,11 +6237,11 @@ S_do_smartmatch(pTHX_ HV *seen_this, HV *seen_other, const bool copied)
           sm_any_array:
             {
                 Size_t i;
-                const Size_t this_len = av_count(MUTABLE_AV(SvRV(e)));
+                const Size_t this_len = av_count(AV_FROM_REF(e));
 
                 DEBUG_M(Perl_deb(aTHX_ "    applying rule Any-Array\n"));
                 for (i = 0; i < this_len; ++i) {
-                    SV * const * const svp = av_fetch(MUTABLE_AV(SvRV(e)), i, FALSE);
+                    SV * const * const svp = av_fetch(AV_FROM_REF(e), i, FALSE);
                     if (!svp)
                         continue;
 
@@ -6391,9 +6480,37 @@ _invoke_defer_block(pTHX_ U8 type, void *_arg)
     SAVETMPS;
 
     SAVEOP();
+    OP *was_PL_op = PL_op;
     PL_op = start;
 
-    CALLRUNOPS(aTHX);
+    dJMPENV;
+    int ret;
+    JMPENV_PUSH(ret);
+    switch (ret) {
+    case 0: /* normal start */
+redo_body:
+        CALLRUNOPS(aTHX);
+        break;
+
+    case 3: /* exception happened */
+        if (PL_restartjmpenv == PL_top_env) {
+            if (!PL_restartop)
+                break;
+            PL_restartjmpenv = NULL;
+            PL_op = PL_restartop;
+            PL_restartop = NULL;
+            goto redo_body;
+        }
+
+        /* FALLTHROUGH */
+    default:
+        JMPENV_POP;
+        PL_op = was_PL_op;
+        JMPENV_JUMP(ret);
+        NOT_REACHED;
+    }
+
+    JMPENV_POP;
 
     FREETMPS;
     LEAVE;
@@ -6469,7 +6586,7 @@ S_doparseform(pTHX_ SV *sv)
     PERL_ARGS_ASSERT_DOPARSEFORM;
 
     if (len == 0)
-        Perl_croak(aTHX_ "Null picture in formline");
+        croak("Null picture in formline");
 
     if (SvTYPE(sv) >= SVt_PVMG) {
         /* This might, of course, still return NULL.  */
@@ -6692,7 +6809,7 @@ S_doparseform(pTHX_ SV *sv)
     mg->mg_flags |= MGf_REFCOUNTED;
 
     if (unchopnum && repeat)
-        Perl_die(aTHX_ "Repeated format line will never terminate (~~ and @#)");
+        die("Repeated format line will never terminate (~~ and @#)");
 
     return mg;
 }

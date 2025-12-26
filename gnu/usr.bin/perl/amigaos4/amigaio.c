@@ -631,9 +631,8 @@ static void S_exec_failed(pTHX_ const char *cmd, int fd, int do_report)
 //    PERL_ARGS_ASSERT_EXEC_FAILED;
         if (e)
         {
-                if (ckWARN(WARN_EXEC))
-                        Perl_warner(aTHX_ packWARN(WARN_EXEC),
-                                    "Can't exec \"%s\": %s", cmd, Strerror(e));
+            ck_warner(packWARN(WARN_EXEC),
+                      "Can't exec \"%s\": %s", cmd, Strerror(e));
         }
         if (do_report)
         {

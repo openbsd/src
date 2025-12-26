@@ -163,7 +163,7 @@ object.
 You will sometimes see older books or documentation mention "blessing a
 reference" or describe an object as a "blessed reference", but this is
 incorrect. It isn't the reference that is blessed as an object; it's
-the thing the reference refers to (i.e. the referent).
+the thing the reference refers to (I<i.e.>, the referent).
 
 =head2 A Class is Simply a Package
 X<class> X<package> X<@ISA> X<inheritance>
@@ -364,7 +364,7 @@ In this example, we will get the following output:
 This demonstrates how C<SUPER> is resolved. Even though the object is
 blessed into the C<C> class, the C<speak()> method in the C<B> class
 can still call C<SUPER::speak()> and expect it to correctly look in the
-parent class of C<B> (i.e the class the method call is in), not in the
+parent class of C<B> (I<i.e.>, the class the method call is in), not in the
 parent class of C<C> (i.e. the class the object belongs to).
 
 There are rare cases where this package-based resolution can be a
@@ -792,7 +792,7 @@ contain a reference to a blessed object, the C<blessed> function
 returns C<undef>.
 
 Note that C<blessed($thing)> will also return false if C<$thing> has
-been blessed into a class named "0". This is a possible, but quite
+been blessed into a class named "0". This is possible, but quite
 pathological. Don't create a class named "0" unless you know what
 you're doing.
 
@@ -888,7 +888,7 @@ returned to the caller.
 
 The fully qualified method name that was called is available in the
 C<$AUTOLOAD> package global for your class. Since this is a global, if
-you want to refer to do it without a package name prefix under C<strict
+you want to refer to it without a package name prefix under C<strict
 'vars'>, you need to declare it.
 
   # XXX - this is a terrible way to implement accessors, but it makes
@@ -1079,7 +1079,7 @@ to support inside-out object implementations.
 The pseudo-hash feature was an experimental feature introduced in
 earlier versions of Perl and removed in 5.10.0. A pseudo-hash is an
 array reference which can be accessed using named keys like a hash. You
-may run in to some code in the wild which uses it. See the L<fields>
+may run into some code in the wild which uses it. See the L<fields>
 pragma for more information.
 
 =head1 SEE ALSO

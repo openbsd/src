@@ -240,6 +240,8 @@ B<BUT BEWARE>, if this is used in a situation where something that is using it
 is in a call stack with something else that is using it, this variable would
 get zapped, leading to hard-to-diagnose errors.
 
+These days using an inline function is generally preferred instead.
+
 =cut
 */
 PERLVAR(I, Sv,		SV *)
@@ -874,15 +876,15 @@ PERLVAR(I, psig_ptr,	SV **)
 PERLVAR(I, psig_name,	SV **)
 
 #if defined(PERL_IMPLICIT_SYS)
-PERLVAR(I, Mem,		struct IPerlMem *)
-PERLVAR(I, MemShared,	struct IPerlMem *)
-PERLVAR(I, MemParse,	struct IPerlMem *)
-PERLVAR(I, Env,		struct IPerlEnv *)
-PERLVAR(I, StdIO,	struct IPerlStdIO *)
-PERLVAR(I, LIO,		struct IPerlLIO *)
-PERLVAR(I, Dir,		struct IPerlDir *)
-PERLVAR(I, Sock,	struct IPerlSock *)
-PERLVAR(I, Proc,	struct IPerlProc *)
+PERLVAR(I, Mem,		const struct IPerlMem **)
+PERLVAR(I, MemShared,	const struct IPerlMem **)
+PERLVAR(I, MemParse,	const struct IPerlMem **)
+PERLVAR(I, Env,		const struct IPerlEnv **)
+PERLVAR(I, StdIO,	const struct IPerlStdIO **)
+PERLVAR(I, LIO,		const struct IPerlLIO **)
+PERLVAR(I, Dir,		const struct IPerlDir **)
+PERLVAR(I, Sock,	const struct IPerlSock **)
+PERLVAR(I, Proc,	const struct IPerlProc **)
 #endif
 
 PERLVAR(I, ptr_table,	PTR_TBL_t *)
@@ -902,6 +904,7 @@ PERLVAR(I, regex_padav,   AV *)		/* All regex objects, indexed via the
 PERLVAR(I, stashpad,    HV **)		/* for CopSTASH */
 PERLVARI(I, stashpadmax, PADOFFSET, 64)
 PERLVARI(I, stashpadix, PADOFFSET, 0)
+PERLVARI(I, env_mutex_depth, int, 0)     /* Emulate general semaphore */
 #endif
 
 #ifdef USE_REENTRANT_API
@@ -966,8 +969,6 @@ PERLVAR(I, registered_mros, HV *)
 PERLVAR(I, blockhooks,	AV *)
 
 PERLVAR(I, custom_ops,	HV *)		/* custom op registrations */
-
-PERLVAR(I, Xpv,		XPV *)		/* (unused) held temporary value */
 
 /* name of the scopes we've ENTERed. Only used with -DDEBUGGING, but needs to be
    present always, as -DDEBUGGING must be binary compatible with non.  */
@@ -1096,6 +1097,9 @@ PERLVARA(I, mem_log, PERL_MEM_LOG_ARYLEN,  char)
  * version object so we can fit the U16 into the uv of a SAVEHINTS and not
  * have to worry about SV refcounts during scope enter/exit. */
 PERLVAR(I, prevailing_version, U16)
+
+PERLVARI(I, in_diehook, bool, FALSE)
+PERLVARI(I, in_warnhook, bool, FALSE)
 
 /* If you are adding a U8 or U16, check to see if there are 'Space' comments
  * above on where there are gaps which currently will be structure padding.  */

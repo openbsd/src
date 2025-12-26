@@ -12,7 +12,7 @@ CPAN::HandleConfig - internal configuration handling for CPAN.pm
 
 =cut 
 
-$VERSION = "5.5012"; # see also CPAN::Config::VERSION at end of file
+$VERSION = "5.5013"; # see also CPAN::Config::VERSION at end of file
 
 %can = (
         commit   => "Commit changes to disk",
@@ -157,8 +157,8 @@ sub edit {
         unless (exists $keys{$o}) {
             $CPAN::Frontend->mywarn("Warning: unknown configuration variable '$o'\n");
         }
+        require_myconfig_or_config();
         my $changed;
-
 
         # one day I used randomize_urllist for a boolean, so we must
         # list them explicitly --ak
@@ -796,7 +796,7 @@ sub prefs_lookup {
 
     use strict;
     use vars qw($AUTOLOAD $VERSION);
-    $VERSION = "5.5012";
+    $VERSION = "5.5013";
 
     # formerly CPAN::HandleConfig was known as CPAN::Config
     sub AUTOLOAD { ## no critic

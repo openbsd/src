@@ -18,7 +18,7 @@ our $Is_FreeBSD = $^O eq 'freebsd';
 
 our @EXPORT = qw(which_perl perl_lib makefile_name makefile_backup
                  make make_run run make_macro calibrate_mtime
-                 have_compiler slurp
+                 have_compiler slurp write_file
                  $Is_VMS $Is_MacOS
                  run_ok
                  hash2files
@@ -395,6 +395,22 @@ sub slurp {
     return $text;
 }
 
+=item write_file
+
+  write_file('filename', @contents);
+
+Writes the content to the given file. Will die if errors occur.
+
+=cut
+
+sub write_file {
+  my ($file, @contents) = @_;
+  my $utf8 = ("$]" < 5.008 or !$Config{useperlio}) ? "" : ":utf8";
+  open my $fh, ">$utf8", $file or die "Can't create $file: $!";
+  print $fh @contents or die "Can't write to $file: $!";
+  close $fh or die "Can't close $file: $!";
+}
+
 =item hash2files
 
   hash2files('dirname', { 'filename' => 'some content' });
@@ -414,10 +430,7 @@ sub hash2files {
         $file = File::Spec->catfile(File::Spec->curdir, $prefix, split m{\/}, $file);
         my $dir = dirname($file);
         mkpath $dir;
-        my $utf8 = ("$]" < 5.008 or !$Config{useperlio}) ? "" : ":utf8";
-        open(FILE, ">$utf8", $file) || die "Can't create $file: $!";
-        print FILE $text;
-        close FILE;
+        write_file($file, $text);
         # ensure file at least 1 second old for makes that assume
         # files with the same time are out of date.
         my $time = calibrate_mtime();

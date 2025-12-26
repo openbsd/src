@@ -48,9 +48,9 @@ if ($^O eq "MSWin32") {
     require Win32;
     my ($str, $major, $minor) = Win32::GetOSVersion();
     if ($major < 6 || $major == 6 && $minor < 1) {
-	print "# Using defaults for older Win32\n";
-	write_limits(500, 256);
-	exit;
+        print "# Using defaults for older Win32\n";
+        write_limits(500, 256);
+        exit;
     }
 }
 my ($n, $good, $bad, $found) =

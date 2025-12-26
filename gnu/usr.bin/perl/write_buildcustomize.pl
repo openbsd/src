@@ -28,31 +28,33 @@ if ( @ARGV ) {
 # run under miniperl when nothing but miniperl will build :-(.
 # Text::ParseWords is required in ExtUtils::Liblist::Kid
 
-my @toolchain = qw(cpan/AutoLoader/lib
-		   dist/Carp/lib
-		   dist/PathTools dist/PathTools/lib
-		   cpan/ExtUtils-Install/lib
-		   cpan/ExtUtils-MakeMaker/lib
-		   cpan/ExtUtils-Manifest/lib
-		   cpan/File-Path/lib
-		   ext/re
-		   dist/Term-ReadLine/lib
-                   dist/Exporter/lib
-                   ext/File-Find/lib
-                   cpan/Text-Tabs/lib
-		   dist/constant/lib
-		   cpan/version/lib
-		   cpan/Getopt-Long/lib
-		   cpan/Text-ParseWords/lib
-                   cpan/ExtUtils-PL2Bat/lib
-		   );
+my @toolchain = qw(
+    cpan/AutoLoader/lib
+    dist/Carp/lib
+    dist/PathTools
+    dist/PathTools/lib
+    cpan/ExtUtils-Install/lib
+    cpan/ExtUtils-MakeMaker/lib
+    cpan/ExtUtils-Manifest/lib
+    cpan/File-Path/lib
+    ext/re
+    dist/Term-ReadLine/lib
+    dist/Exporter/lib
+    ext/File-Find/lib
+    cpan/Text-Tabs/lib
+    dist/constant/lib
+    cpan/version/lib
+    cpan/Getopt-Long/lib
+    cpan/Text-ParseWords/lib
+    cpan/ExtUtils-PL2Bat/lib
+);
 
 # These are for XS building on Win32, since nonxs and xs build simultaneously
 # on Win32 if parallel building
 push @toolchain, qw(
-	dist/ExtUtils-ParseXS/lib
-	cpan/parent/lib
-	cpan/ExtUtils-Constant/lib
+    dist/ExtUtils-ParseXS/lib
+    cpan/parent/lib
+    cpan/ExtUtils-Constant/lib
     dist/base/lib
 ) if $^O eq 'MSWin32';
 push @toolchain, 'ext/VMS-Filespec/lib' if $^O eq 'VMS';
@@ -64,7 +66,7 @@ require Cwd;
 my $cwd  = Cwd::getcwd();
 
 defined $cwd
-  or die "$0: Can't determine current working directory\n";
+    or die "$0: Can't determine current working directory\n";
 
 # lib must be last, as the toolchain modules write themselves into it
 # as they build, and it's important that @INC order ensures that the partially

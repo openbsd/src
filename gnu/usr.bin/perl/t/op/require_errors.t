@@ -177,9 +177,14 @@ SKIP: {
     push @INC, '../lib';
     require Cwd;
     require File::Spec::Functions;
+    require Config;
     if ($^O eq 'cygwin') {
         require Win32;
     }
+
+    my $cwd = Cwd::getcwd();
+    skip "AFS", 2 # github 22068
+      if $Config::Config{afs} eq "true" && $cwd && $cwd =~ /^\Q$Config::Config{afsroot}/;
 
     # Going to try to switch away from root.  Might not work.
     # (stolen from t/op/stat.t)
@@ -196,9 +201,9 @@ SKIP: {
 
     SKIP: {
         skip "Can't make the path absolute", 1
-            if !defined(Cwd::getcwd());
+            if !defined $cwd;
 
-        my $file = File::Spec::Functions::catfile(Cwd::getcwd(), $mod_file);
+        my $file = File::Spec::Functions::catfile($cwd, $mod_file);
         eval {
             require($file);
         };

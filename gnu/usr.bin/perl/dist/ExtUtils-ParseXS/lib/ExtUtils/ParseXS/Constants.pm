@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Symbol;
 
-our $VERSION = '3.51';
+our $VERSION = '3.57';
 
 =head1 NAME
 
@@ -25,12 +25,18 @@ Nothing is exported.  Use fully qualified variable names.
 
 =cut
 
-# FIXME: THESE ARE NOT CONSTANTS!
-our @InitFileCode;
-
 # Note that to reduce maintenance, $PrototypeRegexp is used
 # by ExtUtils::Typemaps, too!
 our $PrototypeRegexp = "[" . quotemeta('\$%&*@;[]_') . "]";
+
+# These are all the line-based keywords which can appear in an XS file,
+# except MODULE and TYPEMAP, which are handled specially by fetch_para()
+# and are thus never seen by the parser.
+# It also doesn't include non-line-based keywords such as
+# IN_OUT, NO_INIT, NO_OUTPUT.
+# This list is mainly used by the parser to delineate blocks (such as
+# blocks of CODE or lines of INPUT).
+
 our @XSKeywords      = qw( 
   REQUIRE BOOT CASE PREINIT INPUT INIT CODE PPCODE
   OUTPUT CLEANUP ALIAS ATTRS PROTOTYPES PROTOTYPE
@@ -40,5 +46,10 @@ our @XSKeywords      = qw(
 );
 
 our $XSKeywordsAlternation = join('|', @XSKeywords);
+
+
+# keywords which can appear anywhere within an XSUB.
+
+our $generic_xsub_keywords_alt = 'ALIAS|ATTRS|OVERLOAD|PROTOTYPE';
 
 1;

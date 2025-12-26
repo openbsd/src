@@ -36,7 +36,7 @@ Dominic Hargreaves, Aaron Crane, Aristotle Pagaltzis, Matthew Horsfall,
 Peter Martini, Sawyer X, Chad 'Exodist' Granum, Renee Bäcker, Eric Herman,
 John SJ Anderson, Karen Etheridge, Zak B. Elep, Tom Hukins, Richard Leach,
 Neil Bowers, Yves Orton, Paul Evans, Graham Knop, Philippe Bruhat (BooK),
-and Thibault Duponchelle.
+Thibault Duponchelle, and Lukas Mai.
 
 =head2 PUMPKIN?
 
@@ -763,6 +763,9 @@ the strings?).
  Paul E    5.38.1       2023-Nov-25
  Paul E    5.38.2       2023-Nov-29
  Steve     5.38.3-RC1   2025-Jan-05
+ Steve     5.38.3       2025-Jan-18
+ Steve     5.38.4-RC1   2025-Mar-30
+ Steve     5.38.4       2025-Apr-13
 
  Ricardo   5.39.0       2023-Jun-30     The 5.39 development track
  Steve     5.39.1       2023-Jul-20
@@ -781,6 +784,8 @@ the strings?).
  Graham K  5.40.0       2024-Jun-09
  Steve     5.40.1-RC1   2025-Jan-05
  Steve     5.40.1       2025-Jan-18
+ Steve     5.40.2-RC1   2025-Mar-30
+ Steve     5.40.2       2025-Apr-13
 
  Graham K  5.41.0       2024-Jun-10     The 5.41 development track
  Philippe  5.41.1       2024-Jul-02
@@ -790,6 +795,17 @@ the strings?).
  Richard L 5.41.5       2024-Oct-20
  Thibault  5.41.6       2024-Nov-20
  Max       5.41.7       2024-Dec-20
+ Steve     5.41.8       2025-Jan-20
+ Richard L 5.41.9       2025-Feb-24
+ Lukas     5.41.10      2025-Mar-21
+ Ether     5.41.11      2025-Apr-20
+ Ether     5.41.12      2025-Apr-21
+ Philippe  5.41.13      2025-May-28
+
+ Thibault  5.42.0-RC1   2025-Jun-24     The 5.42 maintenance track
+ Thibault  5.42.0-RC2   2025-Jun-27
+ Thibault  5.42.0-RC3   2025-Jul-01
+ Philippe  5.42.0       2025-Jul-03
 
 =head2 SELECTED RELEASE SIZES
 
@@ -881,6 +897,7 @@ explained below.
  5.36.0        15300 129  27899 1270 48275 3236  11899 2863   8858 224
  5.38.0        15793 139  29070 1270 48250 3219  11950 2863   9129 239
  5.40.0        15995 139  28627 1406 49524 3482  12448 2995   9471 234
+ 5.42.0        11659 139  33084 1464 49895 3492  12725 3016   9793 239
 
 The "core"..."doc" mean the following files from the Perl source code
 distribution.  The glob notation ** means recursively, (.) means

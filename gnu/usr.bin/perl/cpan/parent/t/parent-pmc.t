@@ -17,7 +17,7 @@ plan skip_all => ".pmc are only available with 5.6 and later" if $] < 5.006;
 # Skip this test if perl is compiled with PERL_DISABLE_PMC
 #
 my $pmc = 1;
-if (Config->can('non_bincompat_options')) { # $] ge '5.014'
+if (Config->can('non_bincompat_options')) { # "$]" ge '5.014'
     $pmc = 0
         if grep { $_ eq 'PERL_DISABLE_PMC' } Config::non_bincompat_options();
 } elsif (eval {

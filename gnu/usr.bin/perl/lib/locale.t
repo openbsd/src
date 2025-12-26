@@ -54,8 +54,8 @@ BEGIN {
 	exit;
     }
     $| = 1;
-    require Config; import Config;
 }
+use Config;
 
 use feature 'fc';
 my @langinfo;
@@ -857,7 +857,7 @@ my $final_without_setlocale = $test_num;
 
 debug "Scanning for locales...\n";
 
-require POSIX; import POSIX ':locale_h';
+require POSIX; POSIX->import(':locale_h');
 
 debug "Scanning for just perl-compatible locales";
 my $category = 'LC_CTYPE';

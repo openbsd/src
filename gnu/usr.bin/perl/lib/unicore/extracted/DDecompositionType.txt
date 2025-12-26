@@ -1,8 +1,8 @@
-# DerivedDecompositionType-15.0.0.txt
-# Date: 2022-02-26, 00:38:31 GMT
-# © 2022 Unicode®, Inc.
+# DerivedDecompositionType-16.0.0.txt
+# Date: 2024-04-30, 21:48:17 GMT
+# © 2024 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see https://www.unicode.org/terms_of_use.html
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
 #   For documentation, see https://www.unicode.org/reports/tr44/
@@ -249,20 +249,30 @@ FB3E          ; Canonical # Lo       HEBREW LETTER MEM WITH DAGESH
 FB40..FB41    ; Canonical # Lo   [2] HEBREW LETTER NUN WITH DAGESH..HEBREW LETTER SAMEKH WITH DAGESH
 FB43..FB44    ; Canonical # Lo   [2] HEBREW LETTER FINAL PE WITH DAGESH..HEBREW LETTER PE WITH DAGESH
 FB46..FB4E    ; Canonical # Lo   [9] HEBREW LETTER TSADI WITH DAGESH..HEBREW LETTER PE WITH RAFE
+105C9         ; Canonical # Lo       TODHRI LETTER EI
+105E4         ; Canonical # Lo       TODHRI LETTER U
 1109A         ; Canonical # Lo       KAITHI LETTER DDDHA
 1109C         ; Canonical # Lo       KAITHI LETTER RHA
 110AB         ; Canonical # Lo       KAITHI LETTER VA
 1112E..1112F  ; Canonical # Mn   [2] CHAKMA VOWEL SIGN O..CHAKMA VOWEL SIGN AU
 1134B..1134C  ; Canonical # Mc   [2] GRANTHA VOWEL SIGN OO..GRANTHA VOWEL SIGN AU
+11383         ; Canonical # Lo       TULU-TIGALARI LETTER II
+11385         ; Canonical # Lo       TULU-TIGALARI LETTER UU
+1138E         ; Canonical # Lo       TULU-TIGALARI LETTER AI
+11391         ; Canonical # Lo       TULU-TIGALARI LETTER AU
+113C5         ; Canonical # Mc       TULU-TIGALARI VOWEL SIGN AI
+113C7..113C8  ; Canonical # Mc   [2] TULU-TIGALARI VOWEL SIGN OO..TULU-TIGALARI VOWEL SIGN AU
 114BB..114BC  ; Canonical # Mc   [2] TIRHUTA VOWEL SIGN AI..TIRHUTA VOWEL SIGN O
 114BE         ; Canonical # Mc       TIRHUTA VOWEL SIGN AU
 115BA..115BB  ; Canonical # Mc   [2] SIDDHAM VOWEL SIGN O..SIDDHAM VOWEL SIGN AU
 11938         ; Canonical # Mc       DIVES AKURU VOWEL SIGN O
+16121..16128  ; Canonical # Mn   [8] GURUNG KHEMA VOWEL SIGN U..GURUNG KHEMA VOWEL SIGN AU
+16D68..16D6A  ; Canonical # Lo   [3] KIRAT RAI VOWEL SIGN AI..KIRAT RAI VOWEL SIGN AU
 1D15E..1D164  ; Canonical # So   [7] MUSICAL SYMBOL HALF NOTE..MUSICAL SYMBOL ONE HUNDRED TWENTY-EIGHTH NOTE
 1D1BB..1D1C0  ; Canonical # So   [6] MUSICAL SYMBOL MINIMA..MUSICAL SYMBOL FUSA BLACK
 2F800..2FA1D  ; Canonical # Lo [542] CJK COMPATIBILITY IDEOGRAPH-2F800..CJK COMPATIBILITY IDEOGRAPH-2FA1D
 
-# Total code points: 13233
+# Total code points: 13253
 
 # ================================================
 
@@ -365,6 +375,8 @@ FE4D..FE4F    ; Compat # Pc   [3] DASHED LOW LINE..WAVY LOW LINE
 2145..2149    ; Font # L&   [5] DOUBLE-STRUCK ITALIC CAPITAL D..DOUBLE-STRUCK ITALIC SMALL J
 FB20..FB28    ; Font # Lo   [9] HEBREW LETTER ALTERNATIVE AYIN..HEBREW LETTER WIDE TAV
 FB29          ; Font # Sm       HEBREW LETTER ALTERNATIVE PLUS SIGN
+1CCD6..1CCEF  ; Font # So  [26] OUTLINED LATIN CAPITAL LETTER A..OUTLINED LATIN CAPITAL LETTER Z
+1CCF0..1CCF9  ; Font # Nd  [10] OUTLINED DIGIT ZERO..OUTLINED DIGIT NINE
 1D400..1D454  ; Font # L&  [85] MATHEMATICAL BOLD CAPITAL A..MATHEMATICAL ITALIC SMALL G
 1D456..1D49C  ; Font # L&  [71] MATHEMATICAL ITALIC SMALL I..MATHEMATICAL SCRIPT CAPITAL A
 1D49E..1D49F  ; Font # L&   [2] MATHEMATICAL SCRIPT CAPITAL C..MATHEMATICAL SCRIPT CAPITAL D
@@ -441,7 +453,7 @@ FB29          ; Font # Sm       HEBREW LETTER ALTERNATIVE PLUS SIGN
 1EEAB..1EEBB  ; Font # Lo  [17] ARABIC MATHEMATICAL DOUBLE-STRUCK LAM..ARABIC MATHEMATICAL DOUBLE-STRUCK GHAIN
 1FBF0..1FBF9  ; Font # Nd  [10] SEGMENTED DIGIT ZERO..SEGMENTED DIGIT NINE
 
-# Total code points: 1194
+# Total code points: 1230
 
 # ================================================
 

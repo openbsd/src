@@ -2164,6 +2164,12 @@ AB\s+\x{100}	AB \x{100}X	y	-	-
 [^\W\S]*	a	y	$&	
 [^\W\S]?	a	y	$&	
 
+ABCF|BCDE|C	ABCDEX	y	$&	BCDE	-	# GH 22892 - AHO-CORASICK bug
+ABCF|BCDE|C	ABCDX	y	$&	C	-	# GH 22892 - AHO-CORASICK bug
+ABCF|BCDE|C(G)	ABCDE	y	$&	BCDE	-	# GH 22892 - AHO-CORASICK bug
+ABCF|BCDE|C[Gg]	ABCDE	y	$&	BCDE	-	# GH 22892 - AHO-CORASICK bug
+ABCF|BCD[Ee]|C[Gg]	ABCDE	y	$&	BCDE	-	# GH 22892 - AHO-CORASICK bug
+
 # Keep these lines at the end of the file
 # pat	string	y/n/etc	expr	expected-expr	skip-reason	comment
 # vim: softtabstop=0 noexpandtab

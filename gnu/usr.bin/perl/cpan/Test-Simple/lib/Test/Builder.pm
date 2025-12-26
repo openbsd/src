@@ -4,13 +4,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '1.302199';
-
-BEGIN {
-    if( $] < 5.008 ) {
-        require Test::Builder::IO::Scalar;
-    }
-}
+our $VERSION = '1.302210';
 
 use Scalar::Util qw/blessed reftype weaken/;
 
@@ -969,13 +963,23 @@ sub cmp_ok {
         # over it, which can lead to issues with Devel::Cover
         my $bits_code = defined $warning_bits ? qq["\Q$warning_bits\E"] : 'undef';
 
-        # This is so that warnings come out at the caller's level
+        # Make sure warnings and location matches the caller. Can't do the
+        # comparison directly in the eval, as closing over variables can
+        # capture them forever when running with Devel::Cover.
+        my $check;
         $succ = eval qq[
 BEGIN {\${^WARNING_BITS} = $bits_code};
 #line $line "(eval in cmp_ok) $file"
-\$test = (\$got $type \$expect);
+\$check = sub { \$_[0] $type \$_[1] };
 1;
 ];
+
+        if ($succ) {
+            $succ = eval {
+                $test = $check->($got, $expect);
+                1;
+            };
+        }
         $error = $@;
     }
     local $Level = $Level + 1;
@@ -1366,27 +1370,19 @@ sub todo_output {
 
 sub _new_fh {
     my $self = shift;
-    my($file_or_fh) = shift;
+    my ($file_or_fh) = shift;
 
     my $fh;
-    if( $self->is_fh($file_or_fh) ) {
+    if ($self->is_fh($file_or_fh)) {
         $fh = $file_or_fh;
     }
-    elsif( ref $file_or_fh eq 'SCALAR' ) {
-        # Scalar refs as filehandles was added in 5.8.
-        if( $] >= 5.008 ) {
-            open $fh, ">>", $file_or_fh
-              or $self->croak("Can't open scalar ref $file_or_fh: $!");
-        }
-        # Emulate scalar ref filehandles with a tie.
-        else {
-            $fh = Test::Builder::IO::Scalar->new($file_or_fh)
-              or $self->croak("Can't tie scalar ref $file_or_fh");
-        }
+    elsif (ref $file_or_fh eq 'SCALAR') {
+        open $fh, ">>", $file_or_fh
+            or $self->croak("Can't open scalar ref $file_or_fh: $!");
     }
     else {
         open $fh, ">", $file_or_fh
-          or $self->croak("Can't open test output log $file_or_fh: $!");
+            or $self->croak("Can't open test output log $file_or_fh: $!");
         _autoflush($fh);
     }
 
@@ -2572,7 +2568,7 @@ If you fail more than 254 tests, it will be reported as 254.
 
 In perl 5.8.1 and later, Test::Builder is thread-safe.  The test number is
 shared by all threads.  This means if one thread sets the test number using
-C<current_test()> they will all be effected.
+C<current_test()> they will all be affected.
 
 While versions earlier than 5.8.1 had threads they contain too many
 bugs to support.

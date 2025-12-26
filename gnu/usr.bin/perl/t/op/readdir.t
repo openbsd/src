@@ -86,4 +86,32 @@ SKIP:
   is($errno, 0, "errno preserved");
 }
 
+SKIP:
+{
+    open my $fh, "<", "op"
+      or skip "can't open a directory on this platform", 10;
+    my $warned;
+    local $SIG{__WARN__} = sub { $warned = "@_" };
+    ok(!readdir($fh), "cannot readdir file handle");
+    like($warned, qr/readdir\(\) attempted on handle \$fh opened with open/,
+         "check the message");
+    undef $warned;
+    ok(!telldir($fh), "cannot telldir file handle");
+    like($warned, qr/telldir\(\) attempted on handle \$fh opened with open/,
+         "check the message");
+    undef $warned;
+    ok(!seekdir($fh, 0), "cannot seekdir file handle");
+    like($warned, qr/seekdir\(\) attempted on handle \$fh opened with open/,
+         "check the message");
+    undef $warned;
+    ok(!rewinddir($fh), "cannot rewinddir file handle");
+    like($warned, qr/rewinddir\(\) attempted on handle \$fh opened with open/,
+         "check the message");
+    undef $warned;
+    ok(!closedir($fh), "cannot closedir file handle");
+    like($warned, qr/closedir\(\) attempted on handle \$fh opened with open/,
+         "check the message");
+    undef $warned;
+}
+
 done_testing();

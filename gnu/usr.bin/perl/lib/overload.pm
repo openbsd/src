@@ -3,7 +3,7 @@ package overload;
 use strict;
 no strict 'refs';
 
-our $VERSION = '1.37';
+our $VERSION = '1.40';
 
 our %ops = (
     with_assign         => "+ - * / % ** << >> x .",

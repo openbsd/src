@@ -427,6 +427,16 @@ my $non_pods = qr/
                            | lst      # assorted listing files
                            | bat      # Windows,OS2 batch files
                            | cmd      # Windows,OS2 command files
+                           | pdb      # Windows, C debugger symbols
+                           | dmp      # Windows, C debugger temps
+                           | nam      # Windows, C debugger temps
+                           | id0      # Windows, C debugger temps
+                           | id1      # Windows, C debugger temps
+                           | obj      # Windows .o equivalent
+                           | lib      # Windows .a equivalent
+                           | def      # Windows compiler DLL related (ASCII)
+                           | exp      # Windows compiler DLL related (binary)
+                           | pch      # Windows pre-compiled headers
                            | lis      # VMS compiler listings
                            | map      # VMS linker maps
                            | opt      # VMS linker options files
@@ -687,8 +697,6 @@ package My::Pod::Checker {      # Extend Pod::Checker
     my %in_NAME;            # true if within NAME section
     my %in_begin;           # true if within =begin section
     my %in_X;               # true if in a X<>
-    my %linkable_item;      # Bool: if the latest =item is linkable.  It isn't
-                            # for bullet and number lists
     my %linkable_nodes;     # Pod::Checker adds all =items to its node list,
                             # but not all =items are linkable-to
     my %running_CFL_text;   # The current text that is being accumulated until
@@ -716,7 +724,6 @@ package My::Pod::Checker {      # Extend Pod::Checker
         delete $in_for{$addr};
         delete $in_NAME{$addr};
         delete $in_X{$addr};
-        delete $linkable_item{$addr};
         delete $linkable_nodes{$addr};
         delete $running_CFL_text{$addr};
         delete $running_simple_text{$addr};
@@ -740,7 +747,6 @@ package My::Pod::Checker {      # Extend Pod::Checker
         $in_X{$addr} = 0;
         $in_CFL{$addr} = 0;
         $in_NAME{$addr} = 0;
-        $linkable_item{$addr} = 0;
         $seen_pod_cmd{$addr} = 0;
         return $self;
     }
@@ -914,7 +920,7 @@ package My::Pod::Checker {      # Extend Pod::Checker
         return $self->SUPER::start_Para(@_);
     }
 
-    sub start_item {
+    sub start_item {    # Pod::Checker has no corresponding method
         my $self = shift;
         check_see_but_not_link($self);
 
@@ -922,16 +928,11 @@ package My::Pod::Checker {      # Extend Pod::Checker
         $start_line{$addr} = $_[0]->{start_line};
         $running_CFL_text{$addr} = "";
         $running_simple_text{$addr} = "";
-
     }
 
     sub start_item_text {
         my $self = shift;
         start_item($self);
-        my $addr = refaddr $self;
-
-        # This is the only =item that is linkable
-        $linkable_item{$addr} = 1;
 
         return $self->SUPER::start_item_text(@_);
     }
@@ -950,7 +951,34 @@ package My::Pod::Checker {      # Extend Pod::Checker
         return $self->SUPER::start_item_bullet(@_);
     }
 
-    sub end_item {  # No difference in =item types endings
+    sub clean_up_node_name_ {
+        my $text = shift;
+        $text =~ s/\s+$//;      # strip trailing space
+        $text =~ s/\s{2,}/ /gs; # collapse whitespace
+        return $text;
+    }
+
+    sub end_head  {
+        my $self = shift;
+        my $addr = refaddr $self;
+        $running_simple_text{$addr} =
+                               clean_up_node_name_($running_simple_text{$addr});
+        $linkable_nodes{$addr}{$running_simple_text{$addr}}++;
+
+        return $self->SUPER::end_head(@_);
+    }
+
+    sub end_item_text {
+        my $self = shift;
+        my $addr = refaddr $self;
+        $running_simple_text{$addr} =
+                              clean_up_node_name_($running_simple_text{$addr});
+        $linkable_nodes{$addr}{$running_simple_text{$addr}}++;
+
+        return $self->SUPER::end_item_text(@_);
+    }
+
+    sub end_item {
         my $self = shift;
         check_see_but_not_link($self);
         return $self->SUPER::end_item(@_);
@@ -1006,15 +1034,15 @@ package My::Pod::Checker {      # Extend Pod::Checker
         return unless defined $running_CFL_text{$addr};
 
         while ($running_CFL_text{$addr} =~ m{
-                                ( (?: \w+ \s+ )* )  # The phrase before, if any
-                                \b [Ss]ee \s+
-                                ( ( [^L] )
-                                  <
-                                  ( [^<]*? )  # The not < excludes nested C<L<...
-                                  >
-                                )
-                                ( \s+ (?: under | in ) \s+ L< )?
-                            }xg)
+                ( (?: \w+ (?: ' (?: d | ll | m | re | s | ve ) )? \s+ )* )  # The phrase before, if any
+                \b [Ss]ee \s+
+                ( ( [^L] )
+                <
+                ( [^<]*? )  # The not < excludes nested C<L<...
+                >
+                )
+                ( \s+ (?: under | in ) \s+ L< )?
+            }xg)
         {
             my $prefix = $1 // "";
             my $construct = $2;     # The whole thing, like C<...>
@@ -1076,14 +1104,21 @@ package My::Pod::Checker {      # Extend Pod::Checker
         $self->SUPER::end_Para(@_);
     }
 
+    sub start_head {
+        my $self = shift;
+        my $addr = refaddr $self;
+        $running_CFL_text{$addr} = "";
+        $running_simple_text{$addr} = "";
+
+        return $self->SUPER::start_head(@_);
+    }
+
     sub start_head1 {
         my $self = shift;
         check_see_but_not_link($self);
 
         my $addr = refaddr $self;
         $start_line{$addr} = $_[0]->{start_line};
-        $running_CFL_text{$addr} = "";
-        $running_simple_text{$addr} = "";
 
         return $self->SUPER::start_head1(@_);
     }
@@ -1095,7 +1130,7 @@ package My::Pod::Checker {      # Extend Pod::Checker
         my $addr = refaddr $self;
 
         $in_NAME{$addr} = 1 if $running_simple_text{$addr} eq 'NAME';
-        return $self->SUPER::end_head(@_);
+        return $self->SUPER::end_head1(@_);
     }
 
     sub start_Verbatim {
@@ -1361,20 +1396,6 @@ package My::Pod::Checker {      # Extend Pod::Checker
         return $self->SUPER::hyperlink($link);
     }
 
-    sub node {
-        my $self = shift;
-        my $text = $_[0];
-        if($text) {
-            $text =~ s/\s+$//s; # strip trailing whitespace
-            $text =~ s/\s+/ /gs; # collapse whitespace
-            my $addr = refaddr $self;
-            push(@{$linkable_nodes{$addr}}, $text) if
-                                    ! $current_indent{$addr}
-                                    || $linkable_item{$addr};
-        }
-        return $self->SUPER::node($_[0]);
-    }
-
     sub get_current_indent {
         return $INDENT + $current_indent{refaddr $_[0]};
     }
@@ -1386,7 +1407,7 @@ package My::Pod::Checker {      # Extend Pod::Checker
     sub linkable_nodes {
         my $linkables = $linkable_nodes{refaddr $_[0]};
         return undef unless $linkables;
-        return @$linkables;
+        return $linkables;
     }
 
     sub get_skip {
@@ -1510,7 +1531,7 @@ if ($add_link) {
     }
     my_safer_print($copy_fh, $HEADER);
     foreach (sort { lc $a cmp lc $b } keys %valid_modules) {
-        my_safer_print($copy_fh, $_, "\n");
+        my_safer_print($copy_fh, $_, "\n") if $valid_modules{$_} > 0;
     }
 
     # The rest of the db file is output unchanged.
@@ -1748,6 +1769,14 @@ sub is_pod_file {
                     $checker->name($name);
                     $id_to_checker{$name} = $checker
                         if $filename =~ m{^cpan/};
+
+                    # This file is a pod with a NAME, so it is ok to link to
+                    # it.  We don't need any other confirmation to know this.
+                    # So indicate that to the rest of the program.  But, use a
+                    # negative value to indicate to not save this file in the
+                    # db.  Otherwise we get lots of unnecessary entries there.
+                    # See GH #23231
+                    $valid_modules{$name} = -1;
                 }
             }
             elsif ($filename =~ m{^cpan/}) {
@@ -2030,10 +2059,10 @@ foreach my $filename (@files) {
         }
 
         # Go through everything in the file that could be an anchor that
-        # could be a link target.  Count how many there are of the same name.
-        foreach my $node ($checker->linkable_nodes) {
-            next FILE if ! $node;        # Can be empty is like '=item *'
-            $nodes{$name}{$node}++;
+        # could be a link target.
+        my $linkables = $checker->linkable_nodes;
+        foreach my $node (keys $linkables->%*) {
+            $nodes{$name}{$node} = $linkables->{$node};
 
             # Experiments have shown that cpan search can figure out the
             # target of a link even if the exact wording is incorrect, as long
@@ -2051,7 +2080,7 @@ foreach my $filename (@files) {
 
 # Here, all files have been parsed, and all links and link targets are stored.
 # Now go through the files again and see which don't have matches.
-if (! $has_input_files) {
+if (! $has_input_files) {   # No xref unless processing all files
     foreach my $filename (@files) {
         next if $filename_to_checker{$filename}->get_skip;
 
@@ -2124,7 +2153,7 @@ if (! $has_input_files) {
 # changes.
 if ($regen) {
     foreach (sort { lc $a cmp lc $b } keys %valid_modules) {
-        my_safer_print($copy_fh, $_, "\n");
+        my_safer_print($copy_fh, $_, "\n") if $valid_modules{$_} > 0;
     }
 }
 

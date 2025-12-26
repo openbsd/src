@@ -20,7 +20,7 @@ my %known_bad_locales = (   # XXX eventually will need version info if and
     solaris => [ 'vi_VN.UTF-8', ],  # Use of U+A8 segfaults: GH #20578
 );
 
-eval { require POSIX; import POSIX 'locale_h'; };
+eval { require POSIX; POSIX->import('locale_h'); };
 my $has_locale_h = ! $@;
 
 my @known_categories = ( qw(LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY

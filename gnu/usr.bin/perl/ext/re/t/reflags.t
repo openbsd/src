@@ -126,7 +126,7 @@ is qr//, '(?^:)', 'no re "/d" is a no-op when not on';
    ok $_[0] =~ /Unknown regular expression flag "\x{100}"/,
        "warning with unknown regexp flags in use re '/flags'"
   };
-  import re "/\x{100}"
+  re->import("/\x{100}");
 }
 
 # use re '/flags' in combination with explicit flags

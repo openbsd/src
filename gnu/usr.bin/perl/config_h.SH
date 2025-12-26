@@ -142,6 +142,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_fcntl HAS_FCNTL		/**/
 
+/* HAS_FDOPENDIR:
+ * This symbol, if defined, indicates that the fdopendir routine is
+ * available to open a directory descriptor.
+ */
+#$d_fdopendir HAS_FDOPENDIR		/**/
+
 /* HAS_FGETPOS:
  *	This symbol, if defined, indicates that the fgetpos routine is
  *	available to get the file position indicator, similar to ftell().

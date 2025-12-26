@@ -1,7 +1,8 @@
 #!./perl
 
 #
-# test the bit operators '&', '|', '^', '~', '<<', and '>>'
+# test the bit operators '&', '&.', '|', '|.', '^', '^.', '~', '~.',
+# '<<', and '>>'
 #
 
 BEGIN {
@@ -14,11 +15,11 @@ BEGIN {
 
 use warnings;
 
-# Tests don't have names yet.
+# Some tests don't have names yet.
 # If you find tests are failing, please try adding names to tests to track
 # down where the failure is, and supply your new names as a patch.
 # (Just-in-time test naming)
-plan tests => 510;
+plan tests => 510 + 6 * 2;
 
 # numerics
 ok ((0xdead & 0xbeef) == 0x9ead);
@@ -363,82 +364,104 @@ SKIP: {
 
 # New string- and number-specific bitwise ops
 {
-  use feature "bitwise";
-  no warnings "experimental::bitwise";
-  is "22" & "66", 2,    'numeric & with strings';
-  is "22" | "66", 86,   'numeric | with strings';
-  is "22" ^ "66", 84,   'numeric ^ with strings';
-  is ~"22" & 0xff, 233, 'numeric ~ with string';
-  is 22 &. 66, 22,     '&. with numbers';
-  is 22 |. 66, 66,     '|. with numbers';
-  is 22 ^. 66, "\4\4", '^. with numbers';
-  if ($::IS_EBCDIC) {
-    # ord('2') is 0xF2 on EBCDIC
-    is ~.22, "\x0d\x0d", '~. with number';
-  }
-  else {
-    # ord('2') is 0x32 on ASCII
-    is ~.22, "\xcd\xcd", '~. with number';
-  }
-  $_ = "22";
-  is $_ &= "66", 2,  'numeric &= with strings';
-  $_ = "22";
-  is $_ |= "66", 86, 'numeric |= with strings';
-  $_ = "22";
-  is $_ ^= "66", 84, 'numeric ^= with strings';
-  $_ = 22;
-  is $_ &.= 66, 22,     '&.= with numbers';
-  $_ = 22;
-  is $_ |.= 66, 66,     '|.= with numbers';
-  $_ = 22;
-  is $_ ^.= 66, "\4\4", '^.= with numbers';
+    use feature "bitwise";
+    is "22" & "66", 2,    'numeric & with strings';
+    is "22" | "66", 86,   'numeric | with strings';
+    is "22" ^ "66", 84,   'numeric ^ with strings';
+    is ~"22" & 0xff, 233, 'numeric ~ with string';
+    is 22 &. 66, 22,     '&. with numbers';
+    is 22 |. 66, 66,     '|. with numbers';
+    is 22 ^. 66, "\4\4", '^. with numbers';
+    if ($::IS_EBCDIC) {
+        # ord('2') is 0xF2 on EBCDIC
+        is ~.22, "\x0d\x0d", '~. with number';
+    }
+    else {
+        # ord('2') is 0x32 on ASCII
+        is ~.22, "\xcd\xcd", '~. with number';
+    }
+    $_ = "22";
+    is $_ &= "66", 2,  'numeric &= with strings';
+    $_ = "22";
+    is $_ |= "66", 86, 'numeric |= with strings';
+    $_ = "22";
+    is $_ ^= "66", 84, 'numeric ^= with strings';
+    $_ = 22;
+    is $_ &.= 66, 22,     '&.= with numbers';
+    $_ = 22;
+    is $_ |.= 66, 66,     '|.= with numbers';
+    $_ = 22;
+    is $_ ^.= 66, "\4\4", '^.= with numbers';
 
- # signed vs. unsigned
- ok ((~0 > 0 && do { use integer; ~0 } == -1));
+    # signed vs. unsigned
+    ok ((~0 > 0 && do { use integer; ~0 } == -1));
 
- my $bits = 0;
- for (my $i = ~0; $i; $i >>= 1) { ++$bits; }
- my $cusp = 1 << ($bits - 1);
+    my $bits = 0;
+    for (my $i = ~0; $i; $i >>= 1) { ++$bits; }
+    my $cusp = 1 << ($bits - 1);
 
- ok (($cusp & -1) > 0 && do { use integer; $cusp & -1 } < 0);
- ok (($cusp | 1) > 0 && do { use integer; $cusp | 1 } < 0);
- ok (($cusp ^ 1) > 0 && do { use integer; $cusp ^ 1 } < 0);
- ok ((1 << ($bits - 1)) == $cusp &&
-     do { use integer; 1 << ($bits - 1) } == -$cusp);
- ok (($cusp >> 1) == ($cusp / 2) &&
-    do { use integer; abs($cusp >> 1) } == ($cusp / 2));
+    ok (($cusp & -1) > 0 && do { use integer; $cusp & -1 } < 0);
+    ok (($cusp | 1) > 0 && do { use integer; $cusp | 1 } < 0);
+    ok (($cusp ^ 1) > 0 && do { use integer; $cusp ^ 1 } < 0);
+    ok ((1 << ($bits - 1)) == $cusp &&
+        do { use integer; 1 << ($bits - 1) } == -$cusp);
+    ok (($cusp >> 1) == ($cusp / 2) &&
+        do { use integer; abs($cusp >> 1) } == ($cusp / 2));
+
+    # GH #22412
+    for my $op (qw( & ^ | &. ^. |. )) {
+        my ($x, $y) = $op =~ /\./
+            ? ("z", ">")
+            : (0x7a, 0x3e);
+
+        my $expected = $x;
+        my $code_simple = "\$expected $op= \$y";
+        eval $code_simple;
+        unless ($@ eq '') {
+            # sanity check
+            chomp $@;
+            die "Internal error: $code_simple failed: $@";
+        }
+        $expected .= 'x';
+
+        my $code = "(\$x $op= \$y) .= 'x';";
+        eval $code;
+        is $@, '', "$code runs without errors";
+
+        is $x, $expected, "$code produces expected results";
+    }
 }
 # Repeat some of those, with 'use v5.27'
 {
-  use v5.27;
+    use v5.27;
 
-  is "22" & "66", 2,    'numeric & with strings';
-  is "22" | "66", 86,   'numeric | with strings';
-  is "22" ^ "66", 84,   'numeric ^ with strings';
-  is ~"22" & 0xff, 233, 'numeric ~ with string';
-  is 22 &. 66, 22,     '&. with numbers';
-  is 22 |. 66, 66,     '|. with numbers';
-  is 22 ^. 66, "\4\4", '^. with numbers';
-  if ($::IS_EBCDIC) {
-    # ord('2') is 0xF2 on EBCDIC
-    is ~.22, "\x0d\x0d", '~. with number';
-  }
-  else {
-    # ord('2') is 0x32 on ASCII
-    is ~.22, "\xcd\xcd", '~. with number';
-  }
-  $_ = "22";
-  is $_ &= "66", 2,  'numeric &= with strings';
-  $_ = "22";
-  is $_ |= "66", 86, 'numeric |= with strings';
-  $_ = "22";
-  is $_ ^= "66", 84, 'numeric ^= with strings';
-  $_ = 22;
-  is $_ &.= 66, 22,     '&.= with numbers';
-  $_ = 22;
-  is $_ |.= 66, 66,     '|.= with numbers';
-  $_ = 22;
-  is $_ ^.= 66, "\4\4", '^.= with numbers';
+    is "22" & "66", 2,    'numeric & with strings';
+    is "22" | "66", 86,   'numeric | with strings';
+    is "22" ^ "66", 84,   'numeric ^ with strings';
+    is ~"22" & 0xff, 233, 'numeric ~ with string';
+    is 22 &. 66, 22,     '&. with numbers';
+    is 22 |. 66, 66,     '|. with numbers';
+    is 22 ^. 66, "\4\4", '^. with numbers';
+    if ($::IS_EBCDIC) {
+        # ord('2') is 0xF2 on EBCDIC
+        is ~.22, "\x0d\x0d", '~. with number';
+    }
+    else {
+        # ord('2') is 0x32 on ASCII
+        is ~.22, "\xcd\xcd", '~. with number';
+    }
+    $_ = "22";
+    is $_ &= "66", 2,  'numeric &= with strings';
+    $_ = "22";
+    is $_ |= "66", 86, 'numeric |= with strings';
+    $_ = "22";
+    is $_ ^= "66", 84, 'numeric ^= with strings';
+    $_ = 22;
+    is $_ &.= 66, 22,     '&.= with numbers';
+    $_ = 22;
+    is $_ |.= 66, 66,     '|.= with numbers';
+    $_ = 22;
+    is $_ ^.= 66, "\4\4", '^.= with numbers';
 }
 
 # ref tests

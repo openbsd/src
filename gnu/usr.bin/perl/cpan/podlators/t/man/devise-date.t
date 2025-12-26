@@ -1,19 +1,16 @@
 #!/usr/bin/perl
 #
-# In order for MakeMaker to build in the core, nothing can use Fcntl which
-# includes POSIX.  devise_date()'s use of strftime() was replaced.  This tests
-# that it's identical.  It also tests special handling of the POD_MAN_DATE
-# and SOURCE_DATE_EPOCH environment variables.
+# Tests the handling of the date added to the man page header in the output of
+# Pod::Man.
 #
-# Copyright 2009, 2014-2015, 2018-2019, 2022 Russ Allbery <rra@cpan.org>
+# Copyright 2009, 2014-2015, 2018-2019, 2022, 2024 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.008;
-use strict;
+use 5.012;
 use warnings;
 
 use Pod::Man;
@@ -28,11 +25,11 @@ local $ENV{POD_MAN_DATE} = undef;
 # Check that the results of device_date matches strftime.  There is no input
 # file name, so this will use the current time.
 my $parser = Pod::Man->new;
-is(
-    $parser->devise_date,
-    strftime('%Y-%m-%d', gmtime()),
-    'devise_date matches strftime',
-);
+my $expected_old = strftime('%Y-%m-%d', gmtime());
+my $seen = $parser->devise_date();
+my $expected_new = strftime('%Y-%m-%d', gmtime());
+my $expected = ($seen eq $expected_old) ? $expected_old : $expected_new;
+is($seen, $expected, 'devise_date matches strftime');
 
 # Set the override environment variable and ensure that it's honored.
 local $ENV{POD_MAN_DATE} = '2014-01-01';
@@ -47,7 +44,7 @@ local $ENV{POD_MAN_DATE} = undef;
 local $ENV{SOURCE_DATE_EPOCH} = 1439390140;
 is($parser->devise_date, '2015-08-12', 'devise_date honors SOURCE_DATE_EPOCH');
 
-# Check that POD_MAN_DATE overrides SOURCE_DATE_EPOCH
+# Check that POD_MAN_DATE overrides SOURCE_DATE_EPOCH.
 local $ENV{POD_MAN_DATE} = '2013-01-01';
 local $ENV{SOURCE_DATE_EPOCH} = 1482676620;
 is(
@@ -55,11 +52,17 @@ is(
     'devise_date honors POD_MAN_DATE over SOURCE_DATE_EPOCH',
 );
 
-# Check that an invalid SOURCE_DATE_EPOCH is not accepted
+# Check that an invalid SOURCE_DATE_EPOCH is not accepted and the code falls
+# back on using the current time.  Be careful to avoid false failures if the
+# test is run exactly at the transition from one day to the next.
 local $ENV{POD_MAN_DATE} = undef;
 local $ENV{SOURCE_DATE_EPOCH} = '1482676620B';
+$expected_old = strftime('%Y-%m-%d', gmtime());
+$seen = $parser->devise_date();
+$expected_new = strftime('%Y-%m-%d', gmtime());
+$expected = ($seen eq $expected_old) ? $expected_old : $expected_new;
 is(
     $parser->devise_date,
-    strftime('%Y-%m-%d', gmtime()),
+    $expected,
     'devise_date ignores invalid SOURCE_DATE_EPOCH',
 );

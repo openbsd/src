@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq1 - General Questions About Perl
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -212,7 +216,7 @@ and L<community|http://www.perl.org/community.html> which surrounds it.
 For comparisons to a specific language it is often best to create
 a small project in both languages and compare the results, make sure
 to use all the L<resources|http://www.cpan.org/> of each language,
-as a language is far more than just it's syntax.
+as a language is far more than just its syntax.
 
 =head2 Can I do [task] in Perl?
 
@@ -327,3 +331,5 @@ domain. You are permitted and encouraged to use this code and any
 derivatives thereof in your own programs for fun or for profit as you
 see fit. A simple comment in the code giving credit to the FAQ would
 be courteous but is not required.
+
+=cut

@@ -7,33 +7,20 @@
 #
 # SPDX-License-Identifier: MIT
 
-package Test::RRA::Config;
+package Test::RRA::Config v11.0.0;
 
-use 5.010;
-use base qw(Exporter);
-use strict;
+use 5.012;
 use warnings;
 
+use Exporter qw(import);
 use Test::More;
 
-# Declare variables that should be set in BEGIN for robustness.
-our (@EXPORT_OK, $VERSION);
-
-# Set $VERSION and everything export-related in a BEGIN block for robustness
-# against circular module loading (not that we load any modules, but
-# consistency is good).
-BEGIN {
-    @EXPORT_OK = qw(
-        $COVERAGE_LEVEL @COVERAGE_SKIP_TESTS @CRITIC_IGNORE $LIBRARY_PATH
-        $MINIMUM_VERSION %MINIMUM_VERSION @MODULE_VERSION_IGNORE
-        @POD_COVERAGE_EXCLUDE @STRICT_IGNORE @STRICT_PREREQ
-    );
-
-    # This version should match the corresponding rra-c-util release, but with
-    # two digits for the minor version, including a leading zero if necessary,
-    # so that it will sort properly.
-    $VERSION = '10.03';
-}
+# Exports.
+our @EXPORT_OK = qw(
+    $COVERAGE_LEVEL @COVERAGE_SKIP_TESTS @CRITIC_IGNORE $LIBRARY_PATH
+    $MINIMUM_VERSION %MINIMUM_VERSION @MODULE_VERSION_IGNORE
+    @POD_COVERAGE_EXCLUDE @SPDX_IGNORE @STRICT_IGNORE @STRICT_PREREQ
+);
 
 # If C_TAP_BUILD or C_TAP_SOURCE are set in the environment, look for
 # data/perl.conf under those paths for a C Automake package.  Otherwise, look
@@ -58,10 +45,11 @@ our $COVERAGE_LEVEL = 100;
 our @COVERAGE_SKIP_TESTS;
 our @CRITIC_IGNORE;
 our $LIBRARY_PATH;
-our $MINIMUM_VERSION = '5.010';
+our $MINIMUM_VERSION = '5.012';
 our %MINIMUM_VERSION;
 our @MODULE_VERSION_IGNORE;
 our @POD_COVERAGE_EXCLUDE;
+our @SPDX_IGNORE;
 our @STRICT_IGNORE;
 our @STRICT_PREREQ;
 
@@ -76,7 +64,7 @@ __END__
 
 =for stopwords
 Allbery rra-c-util Automake perlcritic .libs namespace subdirectory sublicense
-MERCHANTABILITY NONINFRINGEMENT regexes
+MERCHANTABILITY NONINFRINGEMENT regexes SPDX
 
 =head1 NAME
 
@@ -159,6 +147,12 @@ testing.  Normally, all methods have to be documented in the POD for a Perl
 module, but methods matching any of these regexes will be considered private
 and won't require documentation.
 
+=item @SPDX_IGNORE
+
+Regexes that match files that should be excluded from SPDX license header
+checks, in addition to the standard exclusions.  The regular expression is
+matched against the file path relative to the top of the source tree.
+
 =item @STRICT_IGNORE
 
 Additional directories to ignore when doing recursive Test::Strict testing for
@@ -183,10 +177,10 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2015-2016, 2019, 2021 Russ Allbery <eagle@eyrie.org>
-
 Copyright 2013-2014 The Board of Trustees of the Leland Stanford Junior
 University
+
+Copyright 2015-2016, 2019, 2021, 2023-2024 Russ Allbery <eagle@eyrie.org>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

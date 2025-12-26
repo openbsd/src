@@ -203,7 +203,7 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
           goto unknown;
       }
 
-    case 3: /* 30 tokens of length 3 */
+    case 3: /* 32 tokens of length 3 */
       switch (name[0])
       {
         case 'E':
@@ -226,13 +226,30 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
 
               goto unknown;
 
-            case 'n':
-              if (name[2] == 'd')
-              {                                   /* and              */
-                return -KEY_and;
+            case 'l':
+              if (name[2] == 'l')
+              {                                   /* all              */
+                return (all_keywords || FEATURE_KEYWORD_ALL_IS_ENABLED ? -KEY_all : 0);
               }
 
               goto unknown;
+
+            case 'n':
+              switch (name[2])
+              {
+                case 'd':
+                  {                               /* and              */
+                    return -KEY_and;
+                  }
+
+                case 'y':
+                  {                               /* any              */
+                    return (all_keywords || FEATURE_KEYWORD_ANY_IS_ENABLED ? -KEY_any : 0);
+                  }
+
+                default:
+                  goto unknown;
+              }
 
             default:
               goto unknown;
@@ -1596,7 +1613,7 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
                   name[4] == 'i' &&
                   name[5] == 'f')
               {                                   /* elseif           */
-                Perl_ck_warner_d(aTHX_ packWARN(WARN_SYNTAX), "elseif should be elsif");
+                ck_warner_d(packWARN(WARN_SYNTAX), "elseif should be elsif");
               }
 
               goto unknown;
@@ -3573,5 +3590,5 @@ unknown:
 }
 
 /* Generated from:
- * c8b75109fa56ce3ea3f30503a3b398f02e49036dc60d5fb36ea5ba9ffd6c596e regen/keywords.pl
+ * cc0991530edda2eb87e845d9347acc0f8d2debabab27608ef65ebd2b8d221c08 regen/keywords.pl
  * ex: set ro ft=c: */

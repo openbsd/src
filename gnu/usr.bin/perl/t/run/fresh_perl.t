@@ -667,7 +667,6 @@ print join '', @a, "\n";
 EXPECT
 123456789
 ######## example from Camel 5, ch. 15, pp.406 (with my)
-# SKIP: ord "A" == 193 # EBCDIC
 use strict;
 use utf8;
 my $人 = 2; # 0xe4 0xba 0xba: U+4eba, "human" in CJK ideograph
@@ -676,7 +675,6 @@ print $人, "\n";
 EXPECT
 3
 ######## example from Camel 5, ch. 15, pp.406 (with our)
-# SKIP: ord "A" == 193 # EBCDIC
 use strict;
 use utf8;
 our $人 = 2; # 0xe4 0xba 0xba: U+4eba, "human" in CJK ideograph
@@ -685,7 +683,6 @@ print $人, "\n";
 EXPECT
 3
 ######## example from Camel 5, ch. 15, pp.406 (with package vars)
-# SKIP: ord "A" == 193 # EBCDIC
 use utf8;
 $人 = 2; # 0xe4 0xba 0xba: U+4eba, "human" in CJK ideograph
 $人++; # a child is born
@@ -693,7 +690,6 @@ print $人, "\n";
 EXPECT
 3
 ######## example from Camel 5, ch. 15, pp.406 (with use vars)
-# SKIP: ord "A" == 193 # EBCDIC
 use strict;
 use utf8;
 use vars qw($人);

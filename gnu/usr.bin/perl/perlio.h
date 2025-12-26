@@ -69,7 +69,7 @@ typedef PerlIOl *PerlIO;
 Declare C<ftab> to be a PerlIO function table, that is, of type
 C<PerlIO_funcs>.
 
-=for apidoc Ay|PerlIO_funcs *|PERLIO_FUNCS_CAST|PerlIO * func
+=for apidoc Amd|PerlIO_funcs *|PERLIO_FUNCS_CAST|PerlIO * func
 Cast the pointer C<func> to be of type S<C<PerlIO_funcs *>>.
 
 =cut

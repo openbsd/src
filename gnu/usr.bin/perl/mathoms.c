@@ -22,15 +22,15 @@
 /*
  * This file contains mathoms, various binary artifacts from previous
  * versions of Perl which we cannot completely remove from the core
- * code. There are two reasons functions should be here:
+ * code. There is only one reason these days for functions should be here:
  *
  * 1) A function has been replaced by a macro within a minor release,
  *    so XS modules compiled against an older release will expect to
  *    still be able to link against the function
- * 2) A function Perl_foo(...) with #define foo Perl_foo(aTHX_ ...)
- *    has been replaced by a macro, e.g. #define foo(...) foo_flags(...,0)
- *    but XS code may still explicitly use the long form, i.e.
- *    Perl_foo(aTHX_ ...)
+ *
+ * It used to be that this was the way to handle the case were a function
+ * Perl_foo(...) had been replaced by a macro.  But see the 'm' flag discussion
+ * in embed.fnc for a better way to handle this.
  *
  * This file can't just be cleaned out periodically, because that would break
  * builds with -DPERL_NO_SHORT_NAMES
@@ -49,18 +49,13 @@
  *
  * and add the 'b' flag in embed.fnc.
  *
- * The compilation of this file can be suppressed; see INSTALL
+ * The compilation of this file and the functions within it can be suppressed
+ * by adding this option to Configure:
  *
- * Some blurb for perlapi.pod:
-
- head1 Obsolete backwards compatibility functions
-
-Some of these are also deprecated.  You can exclude these from
-your compiled Perl by adding this option to Configure:
-C<-Accflags='-DNO_MATHOMS'>
-
-=cut
-
+ *      -Accflags='-DNO_MATHOMS'
+ *
+ * Some of the functions here are also deprecated.
+ *
  */
 
 
@@ -86,18 +81,6 @@ Perl_ref(pTHX_ OP *o, I32 type)
 {
     return doref(o, type, TRUE);
 }
-
-/*
-=for apidoc_section $SV
-=for apidoc sv_unref
-
-Unsets the RV status of the SV, and decrements the reference count of
-whatever was being referenced by the RV.  This can almost be thought of
-as a reversal of C<newSVrv>.  This is C<sv_unref_flags> with the C<flag>
-being zero.  See C<L</SvROK_off>>.
-
-=cut
-*/
 
 void
 Perl_sv_unref(pTHX_ SV *sv)
@@ -228,17 +211,6 @@ Perl_sv_2pvutf8_nolen(pTHX_ SV *sv)
     return sv_2pvutf8(sv, NULL);
 }
 
-/*
-=for apidoc_section $SV
-=for apidoc sv_force_normal
-
-Undo various types of fakery on an SV: if the PV is a shared string, make
-a private copy; if we're a ref, stop refing; if we're a glob, downgrade to
-an C<xpvmg>.  See also C<L</sv_force_normal_flags>>.
-
-=cut
-*/
-
 void
 Perl_sv_force_normal(pTHX_ SV *sv)
 {
@@ -284,7 +256,7 @@ Perl_sv_catpvn_mg(pTHX_ SV *dsv, const char *sstr, STRLEN len)
  */
 
 void
-Perl_sv_catsv(pTHX_ SV *dsv, SV *sstr)
+Perl_sv_catsv(pTHX_ SV *dsv, SV * const sstr)
 {
     PERL_ARGS_ASSERT_SV_CATSV;
 
@@ -292,7 +264,7 @@ Perl_sv_catsv(pTHX_ SV *dsv, SV *sstr)
 }
 
 void
-Perl_sv_catsv_mg(pTHX_ SV *dsv, SV *sstr)
+Perl_sv_catsv_mg(pTHX_ SV *dsv, SV * const sstr)
 {
     PERL_ARGS_ASSERT_SV_CATSV_MG;
 
@@ -421,15 +393,6 @@ Perl_gv_efullname3(pTHX_ SV *sv, const GV *gv, const char *prefix)
     gv_efullname4(sv, gv, prefix, TRUE);
 }
 
-/*
-=for apidoc_section $GV
-=for apidoc gv_fetchmethod
-
-See L</gv_fetchmethod_autoload>.
-
-=cut
-*/
-
 GV *
 Perl_gv_fetchmethod(pTHX_ HV *stash, const char *name)
 {
@@ -473,14 +436,6 @@ Perl_do_aexec(pTHX_ SV *really, SV **mark, SV **sp)
     return do_aexec5(really, mark, sp, 0, 0);
 }
 #endif
-
-bool
-Perl_is_utf8_string_loc(const U8 *s, const STRLEN len, const U8 **ep)
-{
-    PERL_ARGS_ASSERT_IS_UTF8_STRING_LOC;
-
-    return is_utf8_string_loclen(s, len, ep, 0);
-}
 
 /*
 =for apidoc_section $SV
@@ -804,14 +759,6 @@ Perl_sv_copypv(pTHX_ SV *const dsv, SV *const ssv)
     sv_copypv_flags(dsv, ssv, SV_GMAGIC);
 }
 
-/*
-=for apidoc_section $unicode
-=for apidoc is_utf8_char_buf
-
-This is identical to the macro L<perlapi/isUTF8_CHAR>.
-
-=cut */
-
 STRLEN
 Perl_is_utf8_char_buf(const U8 *buf, const U8* buf_end)
 {
@@ -853,17 +800,6 @@ Perl_utf8_to_uvuni(pTHX_ const U8 *s, STRLEN *retlen)
     PERL_ARGS_ASSERT_UTF8_TO_UVUNI;
 
     return NATIVE_TO_UNI(valid_utf8_to_uvchr(s, retlen));
-}
-
-/* return ptr to little string in big string, NULL if not found */
-/* The original version of this routine was donated by Corey Satten. */
-
-char *
-Perl_instr(const char *big, const char *little)
-{
-    PERL_ARGS_ASSERT_INSTR;
-
-    return instr(big, little);
 }
 
 SV *
@@ -908,15 +844,15 @@ Perl_uvuni_to_utf8(pTHX_ U8 *d, UV uv)
 =for apidoc_section $unicode
 =for apidoc utf8n_to_uvuni
 
-Instead use L<perlapi/utf8_to_uvchr_buf>, or rarely, L<perlapi/utf8n_to_uvchr>.
+Instead use L<perlapi/utf8_to_uv>, or rarely, L<perlapi/utf8_to_uv_flags>.
 
 This function was useful for code that wanted to handle both EBCDIC and
 ASCII platforms with Unicode properties, but starting in Perl v5.20, the
 distinctions between the platforms have mostly been made invisible to most
 code, so this function is quite unlikely to be what you want.  If you do need
-this precise functionality, use instead
-C<L<NATIVE_TO_UNI(utf8_to_uvchr_buf(...))|perlapi/utf8_to_uvchr_buf>>
-or C<L<NATIVE_TO_UNI(utf8n_to_uvchr(...))|perlapi/utf8n_to_uvchr>>.
+this precise functionality, use instead L<perlapi/C<utf8_to_uv>> or
+L<perlapi/C<utf8_to_uv_flags>> to calculate the native code point, and then
+convert to Unicode using L<perlapi/C<NATIVE_TO_UNI>>.
 
 =cut
 */
@@ -928,29 +864,6 @@ Perl_utf8n_to_uvuni(pTHX_ const U8 *s, STRLEN curlen, STRLEN *retlen, U32 flags)
 
     return NATIVE_TO_UNI(utf8n_to_uvchr(s, curlen, retlen, flags));
 }
-
-/*
-=for apidoc_section $unicode
-=for apidoc utf8_to_uvchr
-
-Returns the native code point of the first character in the string C<s>
-which is assumed to be in UTF-8 encoding; C<retlen> will be set to the
-length, in bytes, of that character.
-
-Some, but not all, UTF-8 malformations are detected, and in fact, some
-malformed input could cause reading beyond the end of the input buffer, which
-is why this function is deprecated.  Use L</utf8_to_uvchr_buf> instead.
-
-If C<s> points to one of the detected malformations, and UTF8 warnings are
-enabled, zero is returned and C<*retlen> is set (if C<retlen> isn't
-C<NULL>) to -1.  If those warnings are off, the computed value if well-defined (or
-the Unicode REPLACEMENT CHARACTER, if not) is silently returned, and C<*retlen>
-is set (if C<retlen> isn't NULL) so that (S<C<s> + C<*retlen>>) is the
-next possible position in C<s> that could begin a non-malformed character.
-See L</utf8n_to_uvchr> for details on when the REPLACEMENT CHARACTER is returned.
-
-=cut
-*/
 
 UV
 Perl_utf8_to_uvchr(pTHX_ const U8 *s, STRLEN *retlen)

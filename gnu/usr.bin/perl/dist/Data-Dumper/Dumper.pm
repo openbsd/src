@@ -17,7 +17,7 @@ use warnings;
 use 5.008_001;
 require Exporter;
 
-use constant IS_PRE_516_PERL => $] < 5.016;
+use constant IS_PRE_516_PERL => "$]" < 5.016;
 use constant SUPPORTS_CORE_BOOLS => defined &builtin::is_bool;
 
 use Carp ();
@@ -30,7 +30,7 @@ our ( $Indent, $Trailingcomma, $Purity, $Pad, $Varname, $Useqq, $Terse, $Freezer
 our ( @ISA, @EXPORT, @EXPORT_OK, $VERSION );
 
 BEGIN {
-    $VERSION = '2.189'; # Don't forget to set version and release
+    $VERSION = '2.192'; # Don't forget to set version and release
                         # date in POD below!
 
     @ISA = qw(Exporter);
@@ -210,7 +210,7 @@ sub Dump {
   return &Dumpxs
     unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl})
             # Use pure perl version on earlier releases on EBCDIC platforms
-        || (! $IS_ASCII && $] lt 5.021_010);
+        || (! $IS_ASCII && "$]" < 5.021_010);
   return &Dumpperl;
 }
 
@@ -760,6 +760,7 @@ my $low_controls_re = qr/[$low_controls]/;
 # put a string value in double quotes
 sub qquote {
   local($_) = shift;
+  return qq("") unless defined && length;  # fast exit if undef/empty
   s/([\\\"\@\$])/\\$1/g;
 
   # This efficiently changes the high ordinal characters to \x{} if the utf8
@@ -1455,7 +1456,7 @@ modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.189
+Version 2.191
 
 =head1 SEE ALSO
 

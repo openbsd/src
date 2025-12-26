@@ -48,8 +48,8 @@ between(1.17, sinh(1), 1.18, 'sinh(1)');
 between(-1.18, sinh(-1), -1.17, 'sinh(-1)');
 is(tan(0), 0, "Basic tan(0) test");
 between(1.55, tan(1), 1.56, 'tan(1)');
-between(1.55, tan(1), 1.56, 'tan(-1)');
-cmp_ok(tan(1), '==', -tan(-1), 'tan(1) == -tan(-1)');
+between(-1.56, tan(-1), -1.55, 'tan(-1)');
+between(-1e-12, tan(1) + tan(-1), 1e-12, 'tan(1) + tan(-1) == (or closely approximates) 0');
 is(tanh(0), 0, "Basic tanh(0) test"); 
 between(0.76, tanh(1), 0.77, 'tanh(1)');
 between(-0.77, tanh(-1), -0.76, 'tanh(-1)');
@@ -294,6 +294,32 @@ SKIP: {
     skip('no copysign', 2) unless $Config{d_copysign};
     ok(!signbit(copysign(NAN, 1.0)), "signbit(copysign(NAN, 1.0)))");
     ok(signbit(copysign(NAN, -1.0)), "signbit(copysign(NAN, -1.0)))");
+}
+
+SKIP: {
+    # win32 msvcrt and ucrt both have these as _j0() etc, but might
+    # not make them visible in the headers
+    $Config{d_j0} || $^O eq "MSWin32"
+      or skip "No bessel functions", 1;
+    # just in case j0 etc ends up being called without a prototype
+    is_float(j0(0.5), 0.938469807240813, "j0");
+    is_float(j1(0.5), 0.242268457674874, "j1");
+    is_float(jn(1, 0.5), j1(0.5), "jn");
+    is_float(y0(0.5), -0.444518733506707, "y0");
+    is_float(y1(0.5), -1.47147239267024, "y1");
+    is_float(yn(1, 0.5), y1(0.5), "yn");
+}
+
+sub is_float {
+    my ($left, $right, $note) = @_;
+
+    my $ok = ok(abs($left - $right) < 0.00001, $note);
+    unless ($ok) {
+        diag <<EOS;
+ Expected: $left
+      Got: $right
+EOS
+    }
 }
 
 done_testing();

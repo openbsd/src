@@ -8,7 +8,7 @@ BEGIN {
     require './charset_tools.pl';
 }
 
-plan 33;
+plan 34;
 
 my @warnings;
 my $wa = []; my $ea = [];
@@ -240,3 +240,10 @@ for my $i (1..100) {
 }
 print "OK\n";
 EOF
+
+fresh_perl_is(<<~'EOF', "good\n", {}, "GH #22987 (warn)");
+    sub foo { warn "good\n" }
+    sub bar { { local $SIG{__WARN__}; } goto &foo }
+    $SIG{__WARN__} = \&bar;
+    warn "bad";
+    EOF

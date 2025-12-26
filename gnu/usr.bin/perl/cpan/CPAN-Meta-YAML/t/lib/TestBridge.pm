@@ -3,16 +3,11 @@ package TestBridge;
 use strict;
 use warnings;
 use lib 't/lib';
+use open ':std', ':encoding(UTF-8)'; # force stdin, stdout, stderr into utf8
 use Test::More 0.88;
 use SubtestCompat;
 use TestUtils;
 use TestML::Tiny;
-
-BEGIN {
-    $|  = 1;
-    binmode(Test::More->builder->$_, ":utf8")
-        for qw/output failure_output todo_output/;
-}
 
 use CPAN::Meta::YAML;
 

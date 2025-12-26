@@ -636,7 +636,7 @@ scripts, Katakana and Hiragana, but nowhere else.  The C<Script>
 property places all characters that are used in multiple scripts in the
 C<Common> script, while the C<Script_Extensions> property places those
 that are used in only a few scripts into each of those scripts; while
-still using C<Common> for those used in many scripts.  Thus both these
+still using C<Common> for those used in many scripts.  Thus both of these
 match:
 
  "0" =~ /\p{sc=Common}/     # Matches
@@ -1135,7 +1135,7 @@ in any (single) script
  # digits.  When specifying a subset of these, we must include \d to
  # prevent things like U+00B2 SUPERSCRIPT TWO from matching
  my $zero_through_255 =
-  qr/ \b (*sr:                                  # All from same sript
+  qr/ \b (*sr:                                  # All from same script
             (?[ \p{nv=0} & \d ])*               # Optional leading zeros
         (                                       # Then one of:
                                   \d{1,2}       #   0 - 99
@@ -1541,7 +1541,7 @@ UTF-8.
 
 UTF-16, UTF-16BE, UTF-16LE, Surrogates, and C<BOM>'s (Byte Order Marks)
 
-The followings items are mostly for reference and general Unicode
+The following items are mostly for reference and general Unicode
 knowledge, Perl doesn't use these constructs internally.
 
 Like UTF-8, UTF-16 is a variable-width encoding, but where
@@ -2086,7 +2086,7 @@ Download the files in the desired version of Unicode from the Unicode web
 site L<https://www.unicode.org>).  These should replace the existing files in
 F<lib/unicore> in the Perl source tree.  Follow the instructions in
 F<README.perl> in that directory to change some of their names, and then build
-perl (see L<INSTALL>).
+perl (see F<INSTALL>).
 
 =head2 Porting code from perl-5.6.X
 

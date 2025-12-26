@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq5 - Files and Formats
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -139,8 +143,8 @@ the loop that prints the existing lines.
 
 To change existing lines, insert the code to modify the lines inside
 the C<while> loop. In this case, the code finds all lowercased
-versions of "perl" and uppercases them. The happens for every line, so
-be sure that you're supposed to do that on every line!
+versions of "perl" and uppercases them. This happens for every line,
+so be sure that you're supposed to do that on every line!
 
     open my $in,  '<',  $file      or die "Can't read old file: $!";
     open my $out, '>', "$file.new" or die "Can't write new file: $!";
@@ -195,7 +199,7 @@ If, for some odd reason, you really want to see the whole file at once
 rather than processing line-by-line, you can slurp it in (as long as
 you can fit the whole thing in memory!):
 
-    open my $in,  '<',  $file      or die "Can't read old file: $!"
+    open my $in,  '<',  $file      or die "Can't read old file: $!";
     open my $out, '>', "$file.new" or die "Can't write new file: $!";
 
     my $content = do { local $/; <$in> }; # slurp!
@@ -293,7 +297,7 @@ times the input record separator, C<$/>, shows up:
     my $lines = 0;
     open my($fh), '<:raw', $filename or die "Can't open $filename: $!";
     while( sysread $fh, $buffer, 4096 ) {
-        $lines += ( $buffer =~ s|$/||g; );
+        $lines += ( $buffer =~ s|$/||g );
     }
     close $fh;
 
@@ -307,7 +311,7 @@ have an untainted filename though:
 
     my $lines;
     if( $filename =~ /^([0-9a-z_.]+)\z/ ) {
-        $lines = `/usr/bin/wc -l $1`
+        $lines = `/usr/bin/wc -l $1`;
         chomp $lines;
     }
 
@@ -559,7 +563,7 @@ or a scalar variable containing one:
 
     ($ifh, $ofh, $efh) = (*STDIN, *STDOUT, *STDERR);
     print $ofh "Type it: ";
-    my $got = <$ifh>
+    my $got = <$ifh>;
     print $efh "What was that: $got";
 
 If you're passing a filehandle to a function, you can write
@@ -734,8 +738,7 @@ commas:
 L<CLDR::Number> has many more advanced features to handle just about
 anything that you might want. Olaf Alders' article "Stop Writing Your Own
 Commify Functions" has more examples
-(L<https://www.olafalders.com/2015/09/04/stop-writing-your-own-commify-
-functions/>).
+(L<https://www.olafalders.com/2015/09/04/stop-writing-your-own-commify-functions/>).
 
 If you know exactly what you want, a simple subroutine might suffice.
 This example will add separators to your number between groups of three
@@ -853,7 +856,7 @@ To open file for update, file must not exist:
 To open a file without blocking, creating if necessary:
 
     sysopen my $fh, '/foo/somefile', O_WRONLY|O_NDELAY|O_CREAT
-        or die "can't open /foo/somefile: $!":
+        or die "can't open /foo/somefile: $!";
 
 Be warned that neither creation nor deletion of files is guaranteed to
 be an atomic operation over NFS. That is, two processes might both
@@ -1117,7 +1120,7 @@ the filesystems, not of utime().
 X<print, to multiple files>
 
 To connect one filehandle to several output filehandles,
-you can use the L<IO::Tee> or L<Tie::FileHandle::Multiplex> modules.
+you can use the L<IO::Tee> or L<Tie::FileHandle::MultiPlex> modules.
 
 If you only have to do this once, you can print individually
 to each filehandle.
@@ -1399,7 +1402,7 @@ to, you may be able to do this:
 
     require './sys/syscall.ph';
     my $rc = syscall(SYS_close(), $fd + 0);  # must force numeric
-    die "can't sysclose $fd: $!" unless $rc == -1;
+    die "can't sysclose $fd: $!" if $rc == -1;
 
 Or, just use the fdopen(3S) feature of C<open()>:
 
@@ -1597,3 +1600,5 @@ domain. You are permitted and encouraged to use this code and any
 derivatives thereof in your own programs for fun or for profit as you
 see fit. A simple comment in the code giving credit to the FAQ would
 be courteous but is not required.
+
+=cut

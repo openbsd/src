@@ -36,7 +36,8 @@ Each typedef has specific routines that manipulate the various data types.
 =head2 What is an "IV"?
 
 Perl uses a special typedef IV which is a simple signed integer type that is
-guaranteed to be large enough to hold a pointer (as well as an integer).
+guaranteed to be large enough to hold a pointer, but may be larger,
+depending on how perl is Configured.
 Additionally, there is the UV, which is simply an unsigned IV.
 
 Perl also uses several special typedefs to declare variables to hold
@@ -90,24 +91,41 @@ is documented only in this paragraph.)
 =for apidoc_section $floating
 =for apidoc Ayh||NV
 
-The seven routines are:
+There are more than a few routines that create and initialize SVs, with
+new ones occasionally added.  These are all documented in L<perlapi/SV
+Handling>; each one's name begins with C<newSV>.  Here are the basic
+ones:
 
+    SV*  newSVbool(boolean_value);
     SV*  newSViv(IV);
     SV*  newSVuv(UV);
     SV*  newSVnv(double);
     SV*  newSVpv(const char*, STRLEN);
+    SV*  newSVpvf_nocontext(const char * const pat, ...)
     SV*  newSVpvn(const char*, STRLEN);
-    SV*  newSVpvf(const char*, ...);
+    SV*  newSVpvs("literal string")
+    SV*  newSVpvz(STRLEN)
     SV*  newSVsv(SV*);
 
 C<STRLEN> is an integer type (C<Size_t>, usually defined as C<size_t> in
 F<config.h>) guaranteed to be large enough to represent the size of
 any string that perl can handle.
 
+S<C<"literal string">> is a string enclosed in double quote characters,
+and the created SV is of string type (a PV), initialized to contain a
+copy of the literal string parameter.  C<newSVpvs("")> creates an SV
+containing an empty (zero-length) string and returns a pointer to it.
+
+C<newSVpvz> is like C<newSVpvs("")>, but it reserves the number of bytes
+specified by its parameter for future growth, without having to
+reallocate memory.  It is useful in situations where you don't know what
+the string eventually will be, but you have a pretty good idea of its
+eventual minimum size.
+
 =for apidoc_section $string
 =for apidoc Ayh||STRLEN
 
-In the unlikely case of a SV requiring more complex initialization, you
+In the case of an SV requiring more complex initialization, you
 can create an empty SV with newSV(len).  If C<len> is 0 an empty SV of
 type NULL is returned, else an SV of type PV is returned with len + 1 (for
 the C<NUL>) bytes of storage allocated, accessible via SvPVX.  In both cases
@@ -117,8 +135,10 @@ the SV has the undef value.
     SV *sv = newSV(10);  /* 10 (+1) bytes of uninitialised storage
                           * allocated */
 
-To change the value of an I<already-existing> SV, there are eight routines:
+To change the value of an I<already-existing> SV, these are the basic
+routines (with more specified in L<perlapi/SV Handling>):
 
+    void  sv_setbool(SV*, bool);
     void  sv_setiv(SV*, IV);
     void  sv_setuv(SV*, UV);
     void  sv_setnv(SV*, double);
@@ -517,9 +537,99 @@ so SvIOK is false.  (In perl 5.18 onwards, tied scalars use
 the flags the same way as untied scalars.)  Another is when
 numeric conversion has occurred and precision has been lost: only the
 private flag is set on 'lossy' values.  So when an NV is converted to an
-IV with loss, SvIOKp, SvNOKp and SvNOK will be set, while SvIOK wont be.
+IV with loss, SvIOKp, SvNOKp and SvNOK will be set, while SvIOK won't be.
 
 In general, though, it's best to use the C<Sv*V> macros.
+
+=head2 Read-Only Values
+
+In Perl 5.16 and earlier, copy-on-write (see the next section) shared a
+flag bit with read-only scalars.  So the only way to test whether
+C<sv_setsv>, etc., will raise a "Modification of a read-only value" error
+in those versions is:
+
+    SvREADONLY(sv) && !SvIsCOW(sv)
+
+Under Perl 5.18 and later, SvREADONLY only applies to read-only variables,
+and, under 5.20, copy-on-write scalars can also be read-only, so the above
+check is incorrect.  You just want:
+
+    SvREADONLY(sv)
+
+If you need to do this check often, define your own macro like this:
+
+    #if PERL_VERSION >= 18
+    # define SvTRULYREADONLY(sv) SvREADONLY(sv)
+    #else
+    # define SvTRULYREADONLY(sv) (SvREADONLY(sv) && !SvIsCOW(sv))
+    #endif
+
+Or better yet, read about THINKFIRST macros below.
+
+=head2 Copy on Write
+
+Perl implements a copy-on-write (COW) mechanism for scalars, in which
+string copies are not immediately made when requested, but are deferred
+until made necessary by one or the other scalar changing.  This is mostly
+transparent, but one must take care not to modify string buffers that are
+shared by multiple SVs.
+
+You can test whether an SV is using copy-on-write with C<SvIsCOW(sv)>.
+
+You can force an SV to make its own copy of its string buffer by calling
+C<sv_force_normal(sv)> or SvPV_force_nolen(sv).
+
+If you want to make the SV drop its string buffer, use
+C<sv_force_normal_flags(sv, SV_COW_DROP_PV)> or simply
+C<sv_setsv(sv, NULL)>.
+
+All of these functions will croak on read-only scalars (see the previous
+section for more on those).
+
+To test that your code is behaving correctly and not modifying COW buffers,
+on systems that support L<mmap(2)> (e.g. Unix, Linux, BSDs, macOS) you can
+configure perl with C<-Accflags=-DPERL_DEBUG_READONLY_COW> and it will turn
+buffer violations into crashes.  You will find it to be marvellously slow,
+so you may want to skip perl's own tests.
+
+=head2 THINKFIRST before writing to a string buffer
+
+You are more likely to (and usually I<should>) see the C<SvTHINKFIRST(sv)>
+macro used to check whether an SV is ready to be written to, as this is a
+combined single check to see if the SV:
+
+=over 4
+
+=item *
+Points to a COW buffer
+
+=item *
+Is READONLY
+
+=item *
+Contains a reference
+
+=item *
+Has some relevant magic assigned
+
+=back
+
+Two related macros can be used to perform those checks and, if required,
+also perform some action:
+
+=over 4
+
+=item *
+C<SV_CHECK_THINKFIRST(sv)> calls C<sv_force_normal(sv)> to copy the
+string buffer, turning it into a mutable string.
+
+=item *
+C<SV_CHECK_THINKFIRST_COW_DROP(sv)> calls C<sv_force_normal_flags(sv, SV_COW_DROP_PV)>
+which drops any string buffer pointed to by C<sv>. This is usually
+used to avoid copying any COW string to a new buffer, prior to
+writing some completely new string to C<sv>.
+
+=back
 
 =head2 Working with AVs
 
@@ -629,7 +739,7 @@ AVs that meet the following criteria:
 
 =item * are not readonly
 
-=item * are "real" (refcounted) AVs
+=item * are "real" AVs (see next section)
 
 =item * have an av_top_index value > -2
 
@@ -644,6 +754,42 @@ Note that some interpreter functions may attach magic to an AV as part
 of normal operations. It is therefore safest, unless you are sure of the
 lifecycle of an AV, to only use these new functions close to the point
 of AV creation.
+
+=head3 Real AVs - and those that are not
+
+The standard or typical AV is sometime referred to as being a "real" AV,
+a state that can be checked for with the C<AvREAL> macro. What this state
+basically signifies is that:
+
+=over
+
+=item * Every accessible element in the array is either initialized but
+empty or contains a pointer to a live SV.
+
+=item * When a SV* is assigned to an array element, the reference count on
+the SV is incremented. Conversely, when the element is unset, or assigned
+a different SV*, the reference count of the expelled SV is decremented.
+
+=back
+
+"Fake" AVs are intended for specific, limited use cases only. Use outside
+of core perl is strongly discouraged.
+
+For example, the interpreter's argument stack is implemented as an AV,
+but it is not C<AvREAL>. Its elements were historically not reference
+counted, which gives rise to the "stack-not-refcounted" class of bugs
+when SVs are freed during the execution of a statement but still needed
+later in that statement. Efforts are currently underway to move to a
+refcounted stack to fix this class of bugs: see the L</"Reference-counted argument stack">
+section in this document.
+
+A "fake" AV can be converted into a "real" AV by C<av_reify>. Conversion
+must occur if the AV has the C<SVpav_REIFY> flag set, which can be checked
+for using the C<AvREIFY()> macro. Trying to store a SV* into, or delete
+from, an AV usually involves an C<AvREIFY()> check and conversion if needed.
+
+See comments in F<av.h> and the functions in F<av.c> if you really
+want to know more.
 
 =head2 Working with HVs
 
@@ -1214,7 +1360,6 @@ handles:
   char IoTYPE(io);
   U8 IoFLAGS(io);
 
- =for apidoc_sections $io_scn, $formats_section
 =for apidoc_section $reports
 =for apidoc Amh|IV|IoLINES|IO *io
 =for apidoc Amh|IV|IoPAGE|IO *io
@@ -1239,7 +1384,7 @@ settable with L<< IO::Handle's untaint() method|IO::Handle/"$io->untaint" >>.
 =for apidoc Amnh||IOf_FLUSH
 =for apidoc Amnh||IOf_UNTAINT
 
-The IO object may also contains a directory handle:
+The IO object may also contain a directory handle:
 
   DIR *IoDIRP(io);
 
@@ -1289,54 +1434,6 @@ following code:
 
 If the order of C<sv_setiv> and C<sv_setpv> had been reversed, then the
 macro C<SvPOK_on> would need to be called instead of C<SvIOK_on>.
-
-=head2 Read-Only Values
-
-In Perl 5.16 and earlier, copy-on-write (see the next section) shared a
-flag bit with read-only scalars.  So the only way to test whether
-C<sv_setsv>, etc., will raise a "Modification of a read-only value" error
-in those versions is:
-
-    SvREADONLY(sv) && !SvIsCOW(sv)
-
-Under Perl 5.18 and later, SvREADONLY only applies to read-only variables,
-and, under 5.20, copy-on-write scalars can also be read-only, so the above
-check is incorrect.  You just want:
-
-    SvREADONLY(sv)
-
-If you need to do this check often, define your own macro like this:
-
-    #if PERL_VERSION >= 18
-    # define SvTRULYREADONLY(sv) SvREADONLY(sv)
-    #else
-    # define SvTRULYREADONLY(sv) (SvREADONLY(sv) && !SvIsCOW(sv))
-    #endif
-
-=head2 Copy on Write
-
-Perl implements a copy-on-write (COW) mechanism for scalars, in which
-string copies are not immediately made when requested, but are deferred
-until made necessary by one or the other scalar changing.  This is mostly
-transparent, but one must take care not to modify string buffers that are
-shared by multiple SVs.
-
-You can test whether an SV is using copy-on-write with C<SvIsCOW(sv)>.
-
-You can force an SV to make its own copy of its string buffer by calling C<sv_force_normal(sv)> or SvPV_force_nolen(sv).
-
-If you want to make the SV drop its string buffer, use
-C<sv_force_normal_flags(sv, SV_COW_DROP_PV)> or simply
-C<sv_setsv(sv, NULL)>.
-
-All of these functions will croak on read-only scalars (see the previous
-section for more on those).
-
-To test that your code is behaving correctly and not modifying COW buffers,
-on systems that support L<mmap(2)> (i.e., Unix) you can configure perl with
-C<-Accflags=-DPERL_DEBUG_READONLY_COW> and it will turn buffer violations
-into crashes.  You will find it to be marvellously slow, so you may want to
-skip perl's own tests.
 
 =head2 Magic Variables
 
@@ -1865,8 +1962,6 @@ Inside such a I<pseudo-block> the following service is available:
 
 =item C<SAVEI32(I32 i)>
 
-=item C<SAVELONG(long i)>
-
 =item C<SAVEI8(I8 i)>
 
 =item C<SAVEI16(I16 i)>
@@ -1882,7 +1977,6 @@ C<i> at the end of the enclosing I<pseudo-block>.
 =for apidoc Amh||SAVEINT|int i
 =for apidoc Amh||SAVEIV|IV i
 =for apidoc Amh||SAVEI32|I32 i
-=for apidoc Amh||SAVELONG|long i
 =for apidoc Amh||SAVEI8|I8 i
 =for apidoc Amh||SAVEI16|I16 i
 =for apidoc Amh||SAVEBOOL|bool i
@@ -2016,7 +2110,7 @@ from the related C<SAVEDESTRUCTOR_X()> in that it MUST be either NULL or
 an C<SV*>.
 
 Note the I<end of the current statement> may occur much before the
-the I<end of the current pseudo-block>.  You may wish to look at the
+I<end of the current pseudo-block>.  You may wish to look at the
 C<SAVEDESTRUCTOR_X()> macro instead.
 
 =for apidoc Amh||MORTALSVFUNC_X|SVFUNC_t f|SV *sv
@@ -2029,7 +2123,7 @@ See the documentation for C<mortal_destructor_sv()> for details on
 the C<args> parameter is handled.
 
 Note the I<end of the current statement> may occur much before the
-the I<end of the current pseudo-block>.  If you wish to call a perl
+I<end of the current pseudo-block>.  If you wish to call a perl
 function at the end of the current pseudo block you should use the
 C<SAVEDESTRUCTOR_X()> API instead, which will require you create a
 C wrapper to call the Perl function.
@@ -2050,7 +2144,7 @@ provide pointers to the modifiable data explicitly (either C pointers,
 or Perlish C<GV *>s).  Where the above macros take C<int>, a similar
 function takes C<int *>.
 
-Other macros above have functions implementing them, but its probably
+Other macros above have functions implementing them, but it's probably
 best to just use the macro, and not those or the ones below.
 
 =over 4
@@ -2277,6 +2371,24 @@ need a C<dTARG> in your variable declarations so that the C<*PUSH*>
 macros can make use of the local variable C<TARG>.  See also
 C<dTARGET> and C<dXSTARG>.
 
+Be careful with TARG: each non-recursive call to your OP, or XSUB for
+dXSTARG, will use the same SV for TARG for each call, so you can't
+assume the SV is pristine since the results from the previous call to
+your OP or XSUB may still be in TARG.
+
+Other state such as a cached numeric version of a PV or the cached
+UTF-8 length may also be set.  You can avoid problems with this by
+using the normal sv_set*() APIs instead of trying to optimize by
+directly manipulating the SV.
+
+For OPs that implement the C<OA_TARGLEX> optimization, TARG may be
+special in other ways, there may be references to it, it might be
+blessed, it might be tied, or magical in other ways.
+
+You must not use TARG to return a reference, since that reference will
+be live until the next time the OP or XSUB executes non-recursively,
+or until perl exits.
+
 =head2 Scratchpads
 
 The question remains on when the SVs which are I<target>s for opcodes
@@ -2333,7 +2445,10 @@ marked with correct flags.
 All memory meant to be used with the Perl API functions should be manipulated
 using the macros described in this section.  The macros provide the necessary
 transparency between differences in the actual malloc implementation that is
-used within perl.
+used within perl. Never pass pointers between C<Newx>, C<Renew>, C<Safefree>
+and I<libc> equivalents C<malloc>, C<realloc>, C<free>.  They are not from the
+same memory pool or allocator.  Either an instant or delayed I<SEGV> will
+occur, or subtle memory leaks or subtle heap corruption.
 
 The following three macros are used to initially allocate memory :
 
@@ -2581,7 +2696,7 @@ of free()ing (i.e. their type is changed to OP_NULL).
 
 After the compile tree for a subroutine (or for an C<eval> or a file)
 is created, an additional pass over the code is performed.  This pass
-is neither top-down or bottom-up, but in the execution order (with
+is neither top-down nor bottom-up, but in the execution order (with
 additional complications for conditionals).  Optimizations performed
 at this stage are subject to the same restrictions as in the pass 2.
 
@@ -3271,7 +3386,9 @@ and
 There are also
 
  PTR2nat(pointer)   /* pointer to integer of PTRSIZE */
- PTR2ul(pointer)    /* pointer to unsigned long */
+ PTR2ul(pointer)    /* pointer to unsigned long (unsafe) */
+
+PTR2ul() is unsafe, since a pointer may be larger than unsigned long.
 
 =for apidoc Amh|IV|PTR2nat|void *
 =for apidoc Amh|unsigned long|PTR2ul|void *
@@ -3478,7 +3595,7 @@ So don't do that!
 
 (Note that we don't have to test for invariant characters in the
 examples above.  The functions work on any well-formed UTF-8 input.
-It's just that its faster to avoid the function overhead when it's not
+It's just that it's faster to avoid the function overhead when it's not
 needed.)
 
 =head2 How does Perl store UTF-8 strings?
@@ -3643,8 +3760,8 @@ in a single byte.
 
 =head2 How do I compare strings?
 
-L<perlapi/sv_cmp> and L<perlapi/sv_cmp_flags> do a lexigraphic
-comparison of two SV's, and handle UTF-8ness properly.  Note, however,
+L<perlapi/sv_cmp> and L<perlapi/sv_cmp_flags> do a lexicographic
+comparison of two SVs, and handle UTF-8ness properly.  Note, however,
 that Unicode specifies a much fancier mechanism for collation, available
 via the L<Unicode::Collate> module.
 
@@ -3813,6 +3930,17 @@ This member is of type C<Perl_cpeep_t>, which expands to C<void
 will be called from C<Perl_rpeep> when ops of this type are encountered
 by the peephole optimizer.  I<o> is the OP that needs optimizing;
 I<oldop> is the previous OP optimized, whose C<op_next> points to I<o>.
+
+=item xop_dump
+
+This member is a pointer to a function of type
+C<void (pTHX_ OP *, struct OpDumpContext *)>. If set, this function is called
+by C<op_dump()> when dumping a custom operator of this type, after the op's
+basic fields have been printed. This function may make use of
+C<opdump_printf()> to emit additional output that may be useful for debugging.
+
+The opaque structure pointer passed in as its final argument should be passed
+directly into C<opdump_printf()>.
 
 =for apidoc_section $optree_manipulation
 =for apidoc Ayh||Perl_cpeep_t
@@ -4054,7 +4182,7 @@ be invoked on scope exit. A full list of such macros can be found in
 F<scope.h>.
 
 There is no public API for popping individual values or items from the save
-stack. Instead, via the scope stack, the C<ENTER> and C<LEAVE> pair form a way
+stack. Instead, via the scope stack, the C<ENTER> and C<LEAVE> pair forms a way
 to start and stop nested scopes. Leaving a nested scope via C<LEAVE> will
 restore all of the saved values that had been pushed since the most recent
 C<ENTER>.
@@ -4390,7 +4518,7 @@ C<cx_popsub>. In part, this looks like:
     cx->blk_sub.cv = NULL;
     SvREFCNT_dec(cv);
 
-where its processing the just-executed CV. Note that before it decrements
+where it's processing the just-executed CV. Note that before it decrements
 the CV's reference count, it nulls the C<blk_sub.cv>. This means that if
 it re-enters, the CV won't be freed twice. It also means that you can't
 rely on such type-specific fields having useful values after the return
@@ -4411,7 +4539,7 @@ C<for (list) {}>), and what args (if any) it returns; and that will
 already have been sorted out earlier by C<leave_adjust_stacks()>.
 
 Finally, the context stack pointer is actually decremented by C<CX_POP(cx)>.
-After this point, it's possible that that the current context frame could
+After this point, it's possible that the current context frame could
 be overwritten by other contexts being pushed. Although things like ties
 and C<DESTROY> are supposed to work within a new context stack, it's best
 not to assume this. Indeed on debugging builds, C<CX_POP(cx)> deliberately
@@ -4461,7 +4589,7 @@ short), are called via special wrapper functions which adjust the stack
 before and after. At the moment there is no API to write an RC XS
 function, so all XS code will continue to be called via a wrapper (which
 makes them slightly slower), but means that in general, CPAN distributions
-containing XS code code continue to work without modification.
+containing XS code continue to work without modification.
 
 However, PP functions, either in perl core, or those in XS functions used
 to implement custom ops or to override the PP functions for built-in ops,
@@ -4755,7 +4883,7 @@ in summary:
  rpp_xpush_1(sv)         XPUSHs(sv)
  rpp_xpush_2(sv1, sv2))  EXTEND(SP,2); PUSHs(sv1); PUSHs(sv2);
 
- rpp_push_1_norc(sv)     mPUSHs(sv)     // on RC bulds, skips RC++;
+ rpp_push_1_norc(sv)     mPUSHs(sv)     // on RC builds, skips RC++;
                                         // on non-RC builds, mortalises
  rpp_popfree_1()         (void)POPs;
  rpp_popfree_2()         (void)POPs; (void)POPs;
@@ -5035,9 +5163,9 @@ freeing is typically of benefit only for programs that make significant use of
 string eval.
 
 =for apidoc_section $concurrency
-=for apidoc  Cmnh|    |CVf_SLABBED
-=for apidoc_item |OP *|CvROOT|CV * sv
-=for apidoc_item |OP *|CvSTART|CV * sv
+=for apidoc Cmnh|    |CVf_SLABBED
+=for apidoc Cmh |OP *|CvROOT|CV * sv
+=for apidoc Cmh |OP *|CvSTART|CV * sv
 
 When the C<CVf_SLABBED> flag is set, the CV takes responsibility for freeing
 the slab. If C<CvROOT> is not set when the CV is freed or undeffed, it is

@@ -1,3 +1,9 @@
+# This file is the standard typemap for the perl distribution
+# and is included by XS files by default.
+#
+# It contains definitions for common C types (such as char *),
+# and for basic perl-defined C types (such as IV,  SV*).
+
 # basic C types
 int			T_IV
 unsigned		T_UV
@@ -71,9 +77,9 @@ T_SVREF
 		    $var = SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak_nocontext(\"%s: %s is not a reference\",
-				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-				\"$var\");
+		    Perl_croak_nocontext("%s: %s is not a reference",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+				"$var");
 		}
 	} STMT_END
 T_SVREF_REFCOUNT_FIXED
@@ -84,9 +90,9 @@ T_SVREF_REFCOUNT_FIXED
 		    $var = SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak_nocontext(\"%s: %s is not a reference\",
-				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-				\"$var\");
+		    Perl_croak_nocontext("%s: %s is not a reference",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+				"$var");
 		}
 	} STMT_END
 T_AVREF
@@ -97,9 +103,9 @@ T_AVREF
 		    $var = (AV*)SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak_nocontext(\"%s: %s is not an ARRAY reference\",
-				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-				\"$var\");
+		    Perl_croak_nocontext("%s: %s is not an ARRAY reference",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+				"$var");
 		}
 	} STMT_END
 T_AVREF_REFCOUNT_FIXED
@@ -110,9 +116,9 @@ T_AVREF_REFCOUNT_FIXED
 		    $var = (AV*)SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak_nocontext(\"%s: %s is not an ARRAY reference\",
-				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-				\"$var\");
+		    Perl_croak_nocontext("%s: %s is not an ARRAY reference",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+				"$var");
 		}
 	} STMT_END
 T_HVREF
@@ -123,9 +129,9 @@ T_HVREF
 		    $var = (HV*)SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak_nocontext(\"%s: %s is not a HASH reference\",
-				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-				\"$var\");
+		    Perl_croak_nocontext("%s: %s is not a HASH reference",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+				"$var");
 		}
 	} STMT_END
 T_HVREF_REFCOUNT_FIXED
@@ -136,9 +142,9 @@ T_HVREF_REFCOUNT_FIXED
 		    $var = (HV*)SvRV(xsub_tmp_sv);
 		}
 		else{
-		    Perl_croak_nocontext(\"%s: %s is not a HASH reference\",
-				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-				\"$var\");
+		    Perl_croak_nocontext("%s: %s is not a HASH reference",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+				"$var");
 		}
 	} STMT_END
 T_CVREF
@@ -149,9 +155,9 @@ T_CVREF
 		SvGETMAGIC(xsub_tmp_sv);
                 $var = sv_2cv(xsub_tmp_sv, &st, &gvp, 0);
 		if (!$var) {
-		    Perl_croak_nocontext(\"%s: %s is not a CODE reference\",
-				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-				\"$var\");
+		    Perl_croak_nocontext("%s: %s is not a CODE reference",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+				"$var");
 		}
 	} STMT_END
 T_CVREF_REFCOUNT_FIXED
@@ -162,9 +168,9 @@ T_CVREF_REFCOUNT_FIXED
 		SvGETMAGIC(xsub_tmp_sv);
                 $var = sv_2cv(xsub_tmp_sv, &st, &gvp, 0);
 		if (!$var) {
-		    Perl_croak_nocontext(\"%s: %s is not a CODE reference\",
-				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-				\"$var\");
+		    Perl_croak_nocontext("%s: %s is not a CODE reference",
+				${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+				"$var");
 		}
 	} STMT_END
 T_SYSRET
@@ -209,59 +215,59 @@ T_PTRREF
 	    $var = INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak_nocontext(\"%s: %s is not a reference\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\")
+	    Perl_croak_nocontext("%s: %s is not a reference",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+			"$var")
 T_REF_IV_REF
-	if (sv_isa($arg, \"${ntype}\")) {
+	if (sv_isa($arg, "$ntype")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type *, tmp);
 	}
 	else {
-		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
-	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\",
+		const char* refstr = SvROK($arg) ? "" : SvOK($arg) ? "scalar " : "undef";
+	    Perl_croak_nocontext("%s: Expected %s to be of type %s; got %s%" SVf " instead",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+			"$var", "$ntype",
 			refstr, $arg
 		);
 	}
 T_REF_IV_PTR
-	if (sv_isa($arg, \"${ntype}\")) {
+	if (sv_isa($arg, "$ntype")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = INT2PTR($type, tmp);
 	}
 	else {
-		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
-	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\",
+		const char* refstr = SvROK($arg) ? "" : SvOK($arg) ? "scalar " : "undef";
+	    Perl_croak_nocontext("%s: Expected %s to be of type %s; got %s%" SVf " instead",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+			"$var", "$ntype",
 			refstr, $arg
 		);
 	}
 T_PTROBJ
-	if (SvROK($arg) && sv_derived_from($arg, \"${ntype}\")) {
+	if (SvROK($arg) && sv_derived_from($arg, "$ntype")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = INT2PTR($type,tmp);
 	}
 	else {
-		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
-	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\",
+		const char* refstr = SvROK($arg) ? "" : SvOK($arg) ? "scalar " : "undef";
+	    Perl_croak_nocontext("%s: Expected %s to be of type %s; got %s%" SVf " instead",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+			"$var", "$ntype",
 			refstr, $arg
 		);
 	}
 T_PTRDESC
-	if (sv_isa($arg, \"${ntype}\")) {
+	if (sv_isa($arg, "$ntype")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    ${type}_desc = (\U${type}_DESC\E*) tmp;
 	    $var = ${type}_desc->ptr;
 	}
 	else {
-		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
-	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\",
+		const char* refstr = SvROK($arg) ? "" : SvOK($arg) ? "scalar " : "undef";
+	    Perl_croak_nocontext("%s: Expected %s to be of type %s; got %s%" SVf " instead",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+			"$var", "$ntype",
 			refstr, $arg
 		);
 	}
@@ -271,19 +277,19 @@ T_REFREF
 	    $var = *INT2PTR($type,tmp);
 	}
 	else
-	    Perl_croak_nocontext(\"%s: %s is not a reference\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\")
+	    Perl_croak_nocontext("%s: %s is not a reference",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+			"$var")
 T_REFOBJ
-	if (sv_isa($arg, \"${ntype}\")) {
+	if (sv_isa($arg, "$ntype")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type,tmp);
 	}
 	else {
-		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
-	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
-			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\",
+		const char* refstr = SvROK($arg) ? "" : SvOK($arg) ? "scalar " : "undef";
+	    Perl_croak_nocontext("%s: Expected %s to be of type %s; got %s%" SVf " instead",
+			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq["$pname"]},
+			"$var", "$ntype",
 			refstr, $arg
 		);
 	}
@@ -376,13 +382,13 @@ T_PTR
 T_PTRREF
 	sv_setref_pv($arg, Nullch, (void*)$var);
 T_REF_IV_REF
-	sv_setref_pv($arg, \"${ntype}\", (void*)new $ntype($var));
+	sv_setref_pv($arg, "$ntype", (void*)new $ntype($var));
 T_REF_IV_PTR
-	sv_setref_pv($arg, \"${ntype}\", (void*)$var);
+	sv_setref_pv($arg, "$ntype", (void*)$var);
 T_PTROBJ
-	sv_setref_pv($arg, \"${ntype}\", (void*)$var);
+	sv_setref_pv($arg, "$ntype", (void*)$var);
 T_PTRDESC
-	sv_setref_pv($arg, \"${ntype}\", (void*)new\U${type}_DESC\E($var));
+	sv_setref_pv($arg, "$ntype", (void*)new\U${type}_DESC\E($var));
 T_REFREF
 	NOT_IMPLEMENTED
 T_REFOBJ

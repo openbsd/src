@@ -2827,7 +2827,7 @@
  *	This symbol, if defined, indicates that the isfinite routine is
  *	available to check whether a double is finite (non-infinity non-NaN).
  */
-/*#define HAS_ISFINITE		/ **/
+#define HAS_ISFINITE		/ **/
 
 /* HAS_ISFINITEL:
  *	This symbol, if defined, indicates that the isfinitel routine is

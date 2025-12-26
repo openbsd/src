@@ -64,7 +64,6 @@ for my $filename (@files) {
         die "p5p-controlled module $filename missing =head1 NAME\n"
             if $filename !~ m{^(dist/|cpan/)}n # under our direct control
             && $filename !~ m{/_[^/]+\z}       # not private
-            && $filename !~ m{/unicore/}       # not unicore
             && $filename ne 'lib/meta_notation.pm'      # no pod
             && $filename ne 'lib/overload/numbers.pm';  # no pod
         warn "$filename missing =head1 NAME\n" unless $Quiet;
@@ -647,7 +646,7 @@ To be fully compatible with the Exporter and MakeMaker modules you
 should store your module's version number in a non-my package
 variable called $VERSION.  This should be a positive floating point
 number with at least two digits after the decimal (i.e., hundredths,
-e.g, C<$VERSION = "0.01">).  Don't use a "1.3.2" style version.
+e.g., C<$VERSION = "0.01">).  Don't use a "1.3.2" style version.
 See L<Exporter> for details.
 
 It may be handy to add a function or method to retrieve the number.

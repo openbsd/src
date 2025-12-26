@@ -32,24 +32,20 @@ Null SV pointer.  (No longer available when C<PERL_CORE> is defined.)
 Below are signatures of functions from config.h which can't easily be gleaned
 from it, and are very unlikely to change
 
-=for apidoc_section $signals
-=for apidoc Am|int|Sigsetjmp|jmp_buf env|int savesigs
-=for apidoc Am|void|Siglongjmp|jmp_buf env|int val
+=for apidoc_defn Am|int|Sigsetjmp|jmp_buf env|int savesigs
+=for apidoc_defn Am|void|Siglongjmp|jmp_buf env|int val
 
-=for apidoc_section $filesystem
-=for apidoc Am|void *|FILE_ptr|FILE * f
-=for apidoc Am|Size_t|FILE_cnt|FILE * f
-=for apidoc Am|void *|FILE_base|FILE * f
-=for apidoc Am|Size_t|FILE_bufsiz|FILE *f
+=for apidoc_defn Am|void *|FILE_ptr|FILE * f
+=for apidoc_defn Am|Size_t|FILE_cnt|FILE * f
+=for apidoc_defn Am|void *|FILE_base|FILE * f
+=for apidoc_defn Am|Size_t|FILE_bufsiz|FILE *f
 
-=for apidoc_section $string
-=for apidoc Amu|token|CAT2|token x|token y
-=for apidoc Amu|string|STRINGIFY|token x
+=for apidoc_defn Amu|token|CAT2|token x|token y
+=for apidoc_defn Amu|string|STRINGIFY|token x
 
-=for apidoc_section $numeric
-=for apidoc Am|double|Drand01
-=for apidoc Am|void|seedDrand01|Rand_seed_t x
-=for apidoc Am|char *|Gconvert|double x|Size_t n|bool t|char * b
+=for apidoc_defn Am|double|Drand01
+=for apidoc_defn Am|void|seedDrand01|Rand_seed_t x
+=for apidoc_defn Am|char *|Gconvert|double x|Size_t n|bool t|char * b
 
 =cut
 */
@@ -112,6 +108,7 @@ blindly casts away const.
 =for apidoc_section $SV
 =for apidoc   Am |AV *|AV_FROM_REF|SV * ref
 =for apidoc_item |CV *|CV_FROM_REF|SV * ref
+=for apidoc_item |GV *|GV_FROM_REF|SV * ref
 =for apidoc_item |HV *|HV_FROM_REF|SV * ref
 
 The C<I<*>V_FROM_REF> macros extract the C<SvRV()> from a given reference SV
@@ -124,16 +121,17 @@ definitely a reference SV that refers to an SV of the right type.
 
 #if defined(DEBUGGING) && defined(PERL_USE_GCC_BRACE_GROUPS)
 #  define xV_FROM_REF(XV, ref)  \
-    ({ SV *_ref = ref; \
-       assert(SvROK(_ref)); \
-       assert(SvTYPE(SvRV(_ref)) == SVt_PV ## XV); \
-       (XV *)(SvRV(_ref)); })
+    ({ SV *ref_ = ref; \
+       assert(SvROK(ref_)); \
+       assert(SvTYPE(SvRV(ref_)) == SVt_PV ## XV); \
+       (XV *)(SvRV(ref_)); })
 #else
 #  define xV_FROM_REF(XV, ref)  ((XV *)(SvRV(ref)))
 #endif
 
 #define AV_FROM_REF(ref)  xV_FROM_REF(AV, ref)
 #define CV_FROM_REF(ref)  xV_FROM_REF(CV, ref)
+#define GV_FROM_REF(ref)  xV_FROM_REF(GV, ref)
 #define HV_FROM_REF(ref)  xV_FROM_REF(HV, ref)
 
 #ifndef __cplusplus
@@ -387,52 +385,8 @@ a string/length pair.
 Like C<newSVpvn_share>, but takes a literal string instead of
 a string/length pair and omits the hash parameter.
 
-=for apidoc Am|void|sv_catpvs_flags|SV* sv|"literal string"|I32 flags
-Like C<sv_catpvn_flags>, but takes a literal string instead
-of a string/length pair.
-
-=for apidoc Am|void|sv_catpvs_nomg|SV* sv|"literal string"
-Like C<sv_catpvn_nomg>, but takes a literal string instead of
-a string/length pair.
-
-=for apidoc Am|void|sv_catpvs|SV* sv|"literal string"
-Like C<sv_catpvn>, but takes a literal string instead of a
-string/length pair.
-
-=for apidoc Am|void|sv_catpvs_mg|SV* sv|"literal string"
-Like C<sv_catpvn_mg>, but takes a literal string instead of a
-string/length pair.
-
 =for apidoc Am|SV *|sv_setref_pvs|SV *const rv|const char *const classname|"literal string"
 Like C<sv_setref_pvn>, but takes a literal string instead of
-a string/length pair.
-
-=for apidoc_section $string
-
-=for apidoc Ama|char*|savepvs|"literal string"
-Like C<savepvn>, but takes a literal string instead of a
-string/length pair.
-
-=for apidoc Ama|char*|savesharedpvs|"literal string"
-A version of C<savepvs()> which allocates the duplicate string in memory
-which is shared between threads.
-
-=for apidoc_section $GV
-
-=for apidoc Am|HV*|gv_stashpvs|"name"|I32 create
-Like C<gv_stashpvn>, but takes a literal string instead of a
-string/length pair.
-
-=for apidoc_section $HV
-
-=for apidoc Am|SV**|hv_fetchs|HV* tb|"key"|I32 lval
-Like C<hv_fetch>, but takes a literal string instead of a
-string/length pair.
-=for apidoc_section $lexer
-
-=for apidoc Amx|void|lex_stuff_pvs|"pv"|U32 flags
-
-Like L</lex_stuff_pvn>, but takes a literal string instead of
 a string/length pair.
 
 =cut
@@ -461,30 +415,71 @@ Perl_xxx(aTHX_ ...) form for any API calls where it's used.
 #define newSVpvs_flags(str,flags)	\
     Perl_newSVpvn_flags(aTHX_ STR_WITH_LEN(str), flags)
 #define newSVpvs_share(str) Perl_newSVpvn_share(aTHX_ STR_WITH_LEN(str), 0)
-#define sv_catpvs_flags(sv, str, flags) \
-    Perl_sv_catpvn_flags(aTHX_ sv, STR_WITH_LEN(str), flags)
-#define sv_catpvs_nomg(sv, str) \
-    Perl_sv_catpvn_flags(aTHX_ sv, STR_WITH_LEN(str), 0)
-#define sv_catpvs(sv, str) \
-    Perl_sv_catpvn_flags(aTHX_ sv, STR_WITH_LEN(str), SV_GMAGIC)
-#define sv_catpvs_mg(sv, str) \
-    Perl_sv_catpvn_flags(aTHX_ sv, STR_WITH_LEN(str), SV_GMAGIC|SV_SMAGIC)
-#define sv_setpvs(sv, str) Perl_sv_setpvn(aTHX_ sv, STR_WITH_LEN(str))
-#define sv_setpvs_mg(sv, str) Perl_sv_setpvn_mg(aTHX_ sv, STR_WITH_LEN(str))
+
+/*
+=for apidoc_defn Am|void|sv_catpvs_flags|SV * const dsv|"literal string"|I32 flags
+=for apidoc_defn Am|void|sv_catpvs_nomg|SV * const dsv|"literal string"
+=for apidoc_defn Am|void|sv_catpvs|SV * const dsv|"literal string"
+=for apidoc_defn Am|void|sv_catpvs_mg|SV * const dsv|"literal string"
+=cut
+*/
+#define sv_catpvs_flags(dsv, str, flags) \
+    Perl_sv_catpvn_flags(aTHX_ dsv, STR_WITH_LEN(str), flags)
+#define sv_catpvs_nomg(dsv, str) \
+    Perl_sv_catpvn_flags(aTHX_ dsv, STR_WITH_LEN(str), 0)
+#define sv_catpvs(dsv, str) \
+    Perl_sv_catpvn_flags(aTHX_ dsv, STR_WITH_LEN(str), SV_GMAGIC)
+#define sv_catpvs_mg(dsv, str) \
+    Perl_sv_catpvn_flags(aTHX_ dsv, STR_WITH_LEN(str), SV_GMAGIC|SV_SMAGIC)
+
+/*
+=for apidoc_defn Am|void|sv_setpvs   |SV *const sv|"literal string"
+=for apidoc_defn Am|void|sv_setpvs_mg|SV *const sv|"literal string"
+=cut
+*/
+#define sv_setpvs(dsv, str) Perl_sv_setpvn(aTHX_ dsv, STR_WITH_LEN(str))
+#define sv_setpvs_mg(dsv, str) Perl_sv_setpvn_mg(aTHX_ dsv, STR_WITH_LEN(str))
+
 #define sv_setref_pvs(rv, classname, str) \
     Perl_sv_setref_pvn(aTHX_ rv, classname, STR_WITH_LEN(str))
+
+/*
+=for apidoc_defn Ama|char*|savepvs|"literal string"
+=for apidoc_defn Ama|char*|savesharedpvs|"literal string"
+=cut
+*/
 #define savepvs(str) Perl_savepvn(aTHX_ STR_WITH_LEN(str))
 #define savesharedpvs(str) Perl_savesharedpvn(aTHX_ STR_WITH_LEN(str))
+
+/*
+=for apidoc_defn Am|HV*|gv_stashpvs|"name"|I32 create
+=cut
+*/
 #define gv_stashpvs(str, create) \
     Perl_gv_stashpvn(aTHX_ STR_WITH_LEN(str), create)
 
-#define gv_fetchpvs(namebeg, flags, sv_type) \
-    Perl_gv_fetchpvn_flags(aTHX_ STR_WITH_LEN(namebeg), flags, sv_type)
+
+/*
+=for apidoc_defn Am|GV *|gv_fetchpvs|"name"|I32 flags|const svtype sv_type
+=for apidoc_defn Am|GV *|gv_fetchpvn|const char * nambeg|STRLEN full_len|I32 flags|const svtype sv_type
+=cut
+*/
+#define gv_fetchpvs(name, flags, sv_type)                                   \
+            Perl_gv_fetchpvn_flags(aTHX_ STR_WITH_LEN(name), flags, sv_type)
 #define  gv_fetchpvn  gv_fetchpvn_flags
 
 
+/*
+=for apidoc_defn mx|void|lex_stuff_pvs|"pv"|U32 flags
+
+=cut
+*/
 #define lex_stuff_pvs(pv,flags) Perl_lex_stuff_pvn(aTHX_ STR_WITH_LEN(pv), flags)
 
+/*
+=for apidoc_defn Am|CV *|get_cvs|"name"|I32 flags
+=cut
+*/
 #define get_cvs(str, flags)					\
         Perl_get_cvn_flags(aTHX_ STR_WITH_LEN(str), (flags))
 
@@ -722,16 +717,16 @@ based on the underlying C library functions):
 #define strBEGINs(s1,s2) (strncmp(s1,ASSERT_IS_LITERAL(s2), sizeof(s2)-1) == 0)
 
 #define memBEGINs(s1, l, s2)                                                \
-            (   (Ptrdiff_t) (l) >= (Ptrdiff_t) sizeof(s2) - 1               \
+            (   (ptrdiff_t) (l) >= (ptrdiff_t) sizeof(s2) - 1               \
              && memEQ(s1, ASSERT_IS_LITERAL(s2), sizeof(s2)-1))
 #define memBEGINPs(s1, l, s2)                                               \
-            (   (Ptrdiff_t) (l) > (Ptrdiff_t) sizeof(s2) - 1                \
+            (   (ptrdiff_t) (l) > (ptrdiff_t) sizeof(s2) - 1                \
              && memEQ(s1, ASSERT_IS_LITERAL(s2), sizeof(s2)-1))
 #define memENDs(s1, l, s2)                                                  \
-            (   (Ptrdiff_t) (l) >= (Ptrdiff_t) sizeof(s2) - 1               \
+            (   (ptrdiff_t) (l) >= (ptrdiff_t) sizeof(s2) - 1               \
              && memEQ(s1 + (l) - (sizeof(s2) - 1), ASSERT_IS_LITERAL(s2), sizeof(s2)-1))
 #define memENDPs(s1, l, s2)                                                 \
-            (   (Ptrdiff_t) (l) > (Ptrdiff_t) sizeof(s2)                    \
+            (   (ptrdiff_t) (l) > (ptrdiff_t) sizeof(s2)                    \
              && memEQ(s1 + (l) - (sizeof(s2) - 1), ASSERT_IS_LITERAL(s2), sizeof(s2)-1))
 #endif  /* End of making macros private */
 
@@ -880,7 +875,7 @@ That is, each returns a boolean indicating whether the specified character is
 one of C<[A-Za-z0-9]>, analogous to C<m/[[:alnum:]]/>.
 
 The C<C> suffix in the names was meant to indicate that they correspond to the
-C language L<C<isalnum(3)>>.
+C language C<L<isalnum(3)>>.
 
 =for apidoc Am|bool|isASCII|UV ch
 =for apidoc_item ||isASCII_A|UV ch
@@ -1427,6 +1422,8 @@ or casts
  * below isn't thorough for such an old compiler, so may have to be revised if
  * experience so dictates. */
 #if  ! PERL_IS_GCC || PERL_GCC_VERSION_GT(3,3,6)
+  /* The '| 0' part in ASSERT_NOT_PTR ensures a compiler error if c is not
+   * integer (like e.g., a pointer) */
 #  define ASSERT_NOT_PTR(x) ((x) | 0)
 #else
 #  define ASSERT_NOT_PTR(x) (x)
@@ -1435,7 +1432,7 @@ or casts
 /* Likewise, this is effectively a static assert to be used to guarantee the
  * parameter is a pointer
  *
- * NOT suitable for void* 
+ * NOT suitable for void*
  */
 #define ASSERT_IS_PTR(x) (__ASSERT_(sizeof(*(x))) (x))
 
@@ -1451,8 +1448,6 @@ or casts
  * of operands.  Well, they are, but that is kind of the point.
  */
 #ifndef __COVERITY__
-  /* The '| 0' part in ASSERT_NOT_PTR ensures a compiler error if c is not
-   * integer (like e.g., a pointer) */
 #  define FITS_IN_8_BITS(c) (   (sizeof(c) == 1)                            \
                              || (((WIDEST_UTYPE) ASSERT_NOT_PTR(c)) >> 8) == 0)
 #else
@@ -2252,15 +2247,15 @@ END_EXTERN_C
 
 #define isBLANK_LC_uni(c)    isBLANK_LC_uvchr(UNI_TO_NATIVE(c))
 
-/* The "_safe" macros make sure that we don't attempt to read beyond 'e', but
- * they don't otherwise go out of their way to look for malformed UTF-8.  If
- * they can return accurate results without knowing if the input is otherwise
- * malformed, they do so.  For example isASCII is accurate in spite of any
- * non-length malformations because it looks only at a single byte. Likewise
- * isDIGIT looks just at the first byte for code points 0-255, as all UTF-8
- * variant ones return FALSE.  But, if the input has to be well-formed in order
- * for the results to be accurate, the macros will test and if malformed will
- * call a routine to die
+/* The "_safe" macros make sure that we don't attempt to read the byte at 'e'
+ * or beyond, but they don't otherwise go out of their way to look for
+ * malformed UTF-8.  If they can return accurate results without knowing if the
+ * input is otherwise malformed, they do so.  For example isASCII is accurate
+ * in spite of any non-length malformations because it looks only at a single
+ * byte. Likewise isDIGIT looks just at the first byte for code points 0-255,
+ * as all UTF-8 variant ones return FALSE.  But, if the input has to be
+ * well-formed in order for the results to be accurate, the macros will test
+ * and if malformed will call a routine to die
  *
  * Except for toke.c, the macros do assume that e > p, asserting that on
  * DEBUGGING builds.  Much code that calls these depends on this being true,
@@ -2277,15 +2272,15 @@ END_EXTERN_C
 
 #define generic_utf8_safe_(classnum, p, e, above_latin1)                    \
     ((! _utf8_safe_assert(p, e))                                            \
-      ? (_force_out_malformed_utf8_message((U8 *) (p), (U8 *) (e), 0, 1), 0)\
+      ? (force_out_malformed_utf8_message_((U8 *) (p), (U8 *) (e), 0, MALFORMED_UTF8_DIE), 0)\
       : (UTF8_IS_INVARIANT(*(p)))                                           \
           ? generic_isCC_(*(p), classnum)                                   \
           : (UTF8_IS_DOWNGRADEABLE_START(*(p))                              \
              ? ((LIKELY((e) - (p) > 1 && UTF8_IS_CONTINUATION(*((p)+1))))   \
                 ? generic_isCC_(EIGHT_BIT_UTF8_TO_NATIVE(*(p), *((p)+1 )),  \
                                 classnum)                                   \
-                : (_force_out_malformed_utf8_message(                       \
-                                        (U8 *) (p), (U8 *) (e), 0, 1), 0))  \
+                : (force_out_malformed_utf8_message_(                       \
+                                        (U8 *) (p), (U8 *) (e), 0, MALFORMED_UTF8_DIE), 0))  \
              : above_latin1))
 /* Like the above, but calls 'above_latin1(p)' to get the utf8 value.
  * 'above_latin1' can be a macro */
@@ -2294,8 +2289,8 @@ END_EXTERN_C
 #define generic_non_invlist_utf8_safe_(classnum, above_latin1, p, e)        \
           generic_utf8_safe_(classnum, p, e,                                \
                              (UNLIKELY((e) - (p) < UTF8SKIP(p))             \
-                              ? (_force_out_malformed_utf8_message(         \
-                                      (U8 *) (p), (U8 *) (e), 0, 1), 0)     \
+                              ? (force_out_malformed_utf8_message_(         \
+                                      (U8 *) (p), (U8 *) (e), 0, MALFORMED_UTF8_DIE), 0) \
                               : above_latin1(p)))
 /* Like the above, but passes classnum to _isFOO_utf8(), instead of having an
  * 'above_latin1' parameter */
@@ -2384,8 +2379,8 @@ END_EXTERN_C
 #define isXDIGIT_utf8_safe(p, e)                                            \
                    generic_utf8_safe_no_upper_latin1_(CC_XDIGIT_, p, e,     \
                              (UNLIKELY((e) - (p) < UTF8SKIP(p))             \
-                              ? (_force_out_malformed_utf8_message(         \
-                                      (U8 *) (p), (U8 *) (e), 0, 1), 0)     \
+                              ? (force_out_malformed_utf8_message_(         \
+                                      (U8 *) (p), (U8 *) (e), 0, MALFORMED_UTF8_DIE), 0) \
                               : is_XDIGIT_high(p)))
 
 #define toFOLD_utf8(p,e,s,l)	toFOLD_utf8_safe(p,e,s,l)
@@ -2433,8 +2428,8 @@ END_EXTERN_C
           : (UTF8_IS_DOWNGRADEABLE_START(*(p))                              \
              ? ((LIKELY((e) - (p) > 1 && UTF8_IS_CONTINUATION(*((p)+1))))   \
                 ? macro(EIGHT_BIT_UTF8_TO_NATIVE(*(p), *((p)+1)))           \
-                : (_force_out_malformed_utf8_message(                       \
-                                        (U8 *) (p), (U8 *) (e), 0, 1), 0))  \
+                : (force_out_malformed_utf8_message_(                       \
+                                        (U8 *) (p), (U8 *) (e), 0, MALFORMED_UTF8_DIE), 0)) \
               : above_latin1))
 
 #define generic_LC_invlist_utf8_safe_(macro, classnum, p, e)                  \
@@ -2447,8 +2442,8 @@ END_EXTERN_C
 #define generic_LC_non_invlist_utf8_safe_(classnum, above_latin1, p, e)       \
           generic_LC_utf8_safe_(classnum, p, e,                             \
                              (UNLIKELY((e) - (p) < UTF8SKIP(p))             \
-                              ? (_force_out_malformed_utf8_message(         \
-                                      (U8 *) (p), (U8 *) (e), 0, 1), 0)     \
+                              ? (force_out_malformed_utf8_message_(         \
+                                      (U8 *) (p), (U8 *) (e), 0, MALFORMED_UTF8_DIE), 0) \
                               : above_latin1(p)))
 
 #define isALPHANUMERIC_LC_utf8_safe(p, e)                                   \
@@ -2698,15 +2693,12 @@ again) that hopefully catches attempts to access uninitialized memory.
 
 =for apidoc Am|void|PoisonNew|void* dest|int nitems|type
 
-PoisonWith(0xAB) for catching access to allocated but uninitialized memory.
+C<PoisonWith(0xAB)> for catching access to allocated but uninitialized memory.
 
-=for apidoc Am|void|PoisonFree|void* dest|int nitems|type
+=for apidoc   Am|void|PoisonFree|void* dest|int nitems|type
+=for apidoc_item|void|Poison    |void* dest|int nitems|type
 
-PoisonWith(0xEF) for catching access to freed memory.
-
-=for apidoc Am|void|Poison|void* dest|int nitems|type
-
-PoisonWith(0xEF) for catching access to freed memory.
+These each call C<PoisonWith(0xEF)> for catching access to freed memory.
 
 =cut */
 
@@ -3111,35 +3103,61 @@ STMT_START {                    \
     (x) ^= ((x) << 26);         \
 } STMT_END
 
-#ifdef PERL_CORE
 /* Convenience macros for dealing with IV_MIN:
    In two's complement system, the absolute value of IV_MIN (i.e. -IV_MIN)
-   cannot be represented in IV.  Thus we cannot use simple negation
+   cannot be represented in an IV.  Thus we cannot use simple negation
    (like "-iv") if "iv" might be IV_MIN or -IV_MIN.
-   Note that expressions like "iv = -(UV)iv;" is also not portable
-   as "-(UV)iv" may not fit in IV range and attempt to convert such value
-   to IV might get implementation-defined result or raise a signal.  */
+   Note that expressions like "iv = -(UV)iv;" are also not portable
+   as "-(UV)iv" may not fit in the IV range and attempting to convert such
+   a value to an IV is undefined behavior which will get an
+   implementation-defined result or raise a signal.
+   */
 
-/* Negate IV in the range [IV_MIN, 0) to positive (absolute) UV value.
-   Written this way to avoid every subexpression never cause signed integer
-   overflow (even for two's complement), and make it possible to be compiled
-   into single negation by optimizing compilers. */
-#  define NEGATE_2UV(iv) (ASSUME((iv) < 0), (UV)-((iv) + 1) + 1U)
+/*
+=for apidoc_section $integer
+=for apidoc m|UV|NEGATE_2UV|IV iv
 
-/* Absolute value of IV_MIN as UV.  */
+Returns the absolute value of C<iv>, which must be negative, while avoiding
+undefined behavior even if C<iv> is L<perlapi/C<IV_MIN>>.
+
+=cut
+
+   Negate IV in the range [IV_MIN, 0) to positive (absolute) UV value.
+   Written this way to avoid any subexpression causing signed integer
+   overflow (even for two's complement), and to make it possible to be compiled
+   into a single negation by optimizing compilers. */
+#  define NEGATE_2UV(iv) (ASSUME((iv) < 0), (UV) -((iv) + 1) + 1U)
+
+/*
+=for apidoc_section $integer
+=for apidoc mn|UV|ABS_IV_MIN
+
+Returns the absolute value of L<perlapi/C<IV_MIN>>, suitable for use in a UV
+
+=cut
+*/
 #  define ABS_IV_MIN    NEGATE_2UV(IV_MIN)
 
-/* Negate UV in the range [0, abs(IV_MIN)] to zero or negative IV value
+/*
+=for apidoc_section $integer
+=for apidoc m|IV|NEGATE_2IV|UV uv
+
+Returns the negative value of C<uv>, which must be non-negative, for use in an
+IV.  The results are undefined if that value would be less than
+L<perlapi/C<IV_MIN>>.  This macro is needed because naively saying C<-uv> gives
+undefined behavior when C<uv> is equal to C<L</ABS_IV_MIN>>.
+
+=cut
+
+   Negate UV in the range [0, abs(IV_MIN)] to zero or negative IV value
    in the range [IV_MIN, 0].  Written this way to avoid casting non-IV value
    into IV (which is either the result is implementation-defined or an
    implementation-defined signal is raised).  Note that "8" below is an
-   arbitrary value to force both branches of conditional operator to be
+   arbitrary value to force both branches of the conditional operator to be
    non-constant and eventually make it possible to be compiled into
-   single negation by optimizing compilers. */
+   a single negation by optimizing compilers. */
 #  define NEGATE_2IV(uv) (ASSUME((uv) <= ABS_IV_MIN), \
                           (uv) < 8U ? -(IV)(uv) : -(IV)((uv) - 8U) - 8)
-
-#endif  /* PERL_CORE */
 
 #endif  /* PERL_HANDY_H_ */
 

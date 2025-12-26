@@ -2,7 +2,7 @@
 #
 # Test Pod::Text::Termcap behavior with various snippets.
 #
-# Copyright 2002, 2004, 2006, 2009, 2012-2014, 2018-2019, 2022
+# Copyright 2002, 2004, 2006, 2009, 2012-2014, 2018-2019, 2022, 2024
 #     Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
@@ -10,13 +10,12 @@
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.008;
-use strict;
+use 5.012;
 use warnings;
 
 use lib 't/lib';
 
-use Test::More tests => 15;
+use Test::More tests => 17;
 use Test::Podlators qw(test_snippet);
 
 # Load the module.
@@ -35,7 +34,9 @@ my $parser = Pod::Text::Termcap->new();
 is($parser->format_regex(), "\\\e\\[1m|\\\e\\[4m|\\\e\\[m", 'Character regex');
 
 # List of snippets run by this test.
-my @snippets = qw(escape-wrapping tag-width tag-wrapping width wrapping);
+my @snippets = qw(
+    escape-wrapping nonbreaking-wrap tag-width tag-wrapping width wrapping
+);
 
 # Run all the tests.
 for my $snippet (@snippets) {

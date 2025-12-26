@@ -31,8 +31,8 @@ values, including such things as replacements for the OS's atof() function
 PERL_STATIC_INLINE NV
 S_strtod(pTHX_ const char * const s, char ** e)
 {
-    NV result;
     DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+    NV result;
 
     STORE_LC_NUMERIC_SET_TO_NEEDED();
 
@@ -76,18 +76,34 @@ S_strtod(pTHX_ const char * const s, char ** e)
 
 /*
 
-=for apidoc my_strtod
+=for apidoc      my_strtod
+=for apidoc_item Strtod
 
-This function is equivalent to the libc strtod() function, and is available
-even on platforms that lack plain strtod().  Its return value is the best
-available precision depending on platform capabilities and F<Configure>
-options.
+These are identical.
 
-It properly handles the locale radix character, meaning it expects a dot except
-when called from within the scope of S<C<use locale>>, in which case the radix
-character should be that specified by the current locale.
+They act like the libc C<L<strtod(3)>> function, with three exceptions:
 
-The synonym Strtod() may be used instead.
+=over
+
+=item 1.
+
+Their return value is an NV.  Plain C<strod> returns a double precision value.
+
+=item 2.
+
+Plain C<strtod> always is expecting the radix character (or string) to be the
+one specified by the underlying locale the program is executing in.  This is
+almost universally a dot (U+002E) or a comma (U+002C).
+
+In contrast, these expect the radix to be a dot, except when called from within
+the scope of S<C<use locale>>, in which case they act like plain C<strtod>,
+expecting the radix to be that specified by the current locale.
+
+=item 3.
+
+These are are available even on platforms that lack plain strtod().
+
+=back
 
 =cut
 
@@ -345,7 +361,7 @@ S_output_non_portable(pTHX_ const U8 base)
      * are the first word, it would be hard for a user to find them there
      * starting with a %s */
     /* diag_listed_as: Hexadecimal number > 0xffffffff non-portable */
-    Perl_ck_warner(aTHX_ packWARN(WARN_PORTABLE), "%s non-portable", which);
+    ck_warner(packWARN(WARN_PORTABLE), "%s non-portable", which);
 }
 
 UV
@@ -513,12 +529,12 @@ Perl_grok_bin_oct_hex(pTHX_ const char *start,
                 if (   ! (input_flags & PERL_SCAN_SILENT_OVERFLOW)
                     &&    ckWARN_d(WARN_OVERFLOW))
                 {
-                    Perl_warner(aTHX_ packWARN(WARN_OVERFLOW),
-                                       "Integer overflow in %s number",
-                                       (base == 16) ? "hexadecimal"
-                                                    : (base == 2)
-                                                      ? "binary"
-                                                      : "octal");
+                    warner(packWARN(WARN_OVERFLOW),
+                           "Integer overflow in %s number",
+                           (base == 16) ? "hexadecimal"
+                                        : (base == 2)
+                                          ? "binary"
+                                          : "octal");
                 }
             }
             continue;
@@ -545,12 +561,12 @@ Perl_grok_bin_oct_hex(pTHX_ const char *start,
                 &&    ckWARN(WARN_DIGIT))
             {
                 if (base != 8) {
-                    Perl_warner(aTHX_ packWARN(WARN_DIGIT),
-                                           "Illegal %s digit '%c' ignored",
-                                           ((base == 2)
-                                            ? "binary"
-                                              : "hexadecimal"),
-                                            *s);
+                    warner(packWARN(WARN_DIGIT),
+                           "Illegal %s digit '%c' ignored",
+                           ((base == 2)
+                            ? "binary"
+                            : "hexadecimal"),
+                           *s);
                 }
                 else if (isDIGIT(*s)) { /* octal base */
 
@@ -559,8 +575,8 @@ Perl_grok_bin_oct_hex(pTHX_ const char *start,
                      * complain only if someone seems to want to use the digits
                      * eight and nine.  Since we know it is not octal, then if
                      * isDIGIT, must be an 8 or 9). */
-                    Perl_warner(aTHX_ packWARN(WARN_DIGIT),
-                                       "Illegal octal digit '%c' ignored", *s);
+                    warner(packWARN(WARN_DIGIT),
+                           "Illegal octal digit '%c' ignored", *s);
                 }
             }
 
@@ -655,7 +671,10 @@ Perl_scan_hex(pTHX_ const char *start, STRLEN len, STRLEN *retlen)
 }
 
 /*
-=for apidoc grok_numeric_radix
+=for apidoc      grok_numeric_radix
+=for apidoc_item GROK_NUMERIC_RADIX
+
+These are identical.
 
 Scan and skip for a numeric decimal separator (radix).
 
@@ -975,35 +994,61 @@ Perl_grok_infnan(pTHX_ const char** sp, const char* send)
 }
 
 /*
-=for apidoc grok_number_flags
 
-Recognise (or not) a number.  The type of the number is returned
-(0 if unrecognised), otherwise it is a bit-ORed combination of
-C<IS_NUMBER_IN_UV>, C<IS_NUMBER_GREATER_THAN_UV_MAX>, C<IS_NUMBER_NOT_INT>,
-C<IS_NUMBER_NEG>, C<IS_NUMBER_INFINITY>, C<IS_NUMBER_NAN> (defined in perl.h).
+=for apidoc      grok_number
+=for apidoc_item grok_number_flags
 
-If the value of the number can fit in a UV, it is returned in C<*valuep>.
-C<IS_NUMBER_IN_UV> will be set to indicate that C<*valuep> is valid, C<IS_NUMBER_IN_UV>
-will never be set unless C<*valuep> is valid, but C<*valuep> may have been assigned
-to during processing even though C<IS_NUMBER_IN_UV> is not set on return.
-If C<valuep> is C<NULL>, C<IS_NUMBER_IN_UV> will be set for the same cases as when
-C<valuep> is non-C<NULL>, but no actual assignment (or SEGV) will occur.
+Look for a number in the C<len> bytes starting at C<pv>.  If one isn't found,
+return 0; otherwise return its type (and optionally its value).  In
+C<grok_number> all C<len> bytes must be either leading C<L</isSPACE>>
+characters or part of the number.  The same is true in C<grok_number_flags>
+unless C<flags> contains the C<PERL_SCAN_TRAILING> bit, which allows for
+trailing non-numeric text.  (This is the only difference between the two
+functions.)
 
-C<IS_NUMBER_NOT_INT> will be set with C<IS_NUMBER_IN_UV> if trailing decimals were
-seen (in which case C<*valuep> gives the true value truncated to an integer), and
-C<IS_NUMBER_NEG> if the number is negative (in which case C<*valuep> holds the
-absolute value).  C<IS_NUMBER_IN_UV> is not set if C<e> notation was used or the
-number is larger than a UV.
+The returned type is the ORing of various bits (#defined in F<perl.h>) as
+described below:
 
-C<flags> allows only C<PERL_SCAN_TRAILING>, which allows for trailing
-non-numeric text on an otherwise successful I<grok>, setting
-C<IS_NUMBER_TRAILING> on the result.
+If the number is negative, the returned type will include the C<IS_NUMBER_NEG>
+bit.
 
+If the absolute value of the integral portion of the found number fits in a UV,
+the returned type will include the C<IS_NUMBER_IN_UV> bit.  If it won't fit,
+instead the C<IS_NUMBER_GREATER_THAN_UV_MAX> bit will be included.
+
+If the found number is not an integer, the returned type will include
+the C<IS_NUMBER_NOT_INT> bit. This happens either if the number
+is expressed in exponential C<e> notation, or if it includes a decimal
+point (radix) character.  If exponential notation is used, then neither
+IS_NUMBER_IN_UV nor IS_NUMBER_GREATER_THAN_UV_MAX bits are set.
+Otherwise, the integer part of the number is used to determine the
+C<IS_NUMBER_IN_UV> and C<IS_NUMBER_GREATER_THAN_UV_MAX> bits.
+
+If the found number is a string indicating it is infinity, the
+C<IS_NUMBER_INFINITY> and C<IS_NUMBER_NOT_INT> bits are included in the
+returned type.
+
+If the found number is a string indicating it is not a number, the
+C<IS_NUMBER_NAN> and C<IS_NUMBER_NOT_INT> bits are included in the
+returned type.
+
+You can get the number's absolute integral value returned to you by calling
+these functions with a non-NULL C<valuep> argument.  If the returned type
+includes the C<IS_NUMBER_IN_UV> bit, C<*valuep> will be set to the correct
+value.  Otherwise, it could well have been zapped with garbage.
+
+In C<grok_number_flags> when C<flags> contains the C<PERL_SCAN_TRAILING>
+bit, and trailing non-numeric text was found, the returned type will include
+the C<IS_NUMBER_TRAILING> bit.
+
+=for apidoc Amnh||IS_NUMBER_GREATER_THAN_UV_MAX
+=for apidoc Amnh||IS_NUMBER_INFINITY
+=for apidoc Amnh||IS_NUMBER_IN_UV
+=for apidoc Amnh||IS_NUMBER_NAN
+=for apidoc Amnh||IS_NUMBER_NEG
+=for apidoc Amnh||IS_NUMBER_NOT_INT
+=for apidoc Amnh||IS_NUMBER_TRAILING
 =for apidoc Amnh||PERL_SCAN_TRAILING
-
-=for apidoc grok_number
-
-Identical to C<grok_number_flags()> with C<flags> set to zero.
 
 =cut
  */
@@ -1468,11 +1513,13 @@ Perl_my_atof(pTHX_ const char* s)
 {
 
 /*
-=for apidoc my_atof
+=for apidoc      my_atof
+=for apidoc_item Atof
 
-L<C<atof>(3)>, but properly works with Perl locale handling, accepting a dot
-radix character always, but also the current locale's radix character if and
-only if called from within the lexical scope of a Perl C<use locale> statement.
+These each are C<L<atof(3)>>, but properly work with Perl locale handling,
+accepting a dot radix character always, but also the current locale's radix
+character if and only if called from within the lexical scope of a Perl C<use
+locale> statement.
 
 N.B. C<s> must be NUL terminated.
 

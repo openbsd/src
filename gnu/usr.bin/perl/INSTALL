@@ -1,7 +1,7 @@
 # vim: syntax=pod
 
-If you read this file _as_is_, just ignore the funny characters you see.
-It is written in the POD format (see F<pod/perlpod.pod>) which is specially
+If you read this file _as_is_, just ignore the funny characters you see.  It is
+written in the POD format (see the file pod/perlpod.pod), which is specially
 designed to be readable as is.
 
 =head1 NAME
@@ -10,11 +10,11 @@ INSTALL - Build and Installation guide for perl 5.
 
 =head1 SYNOPSIS
 
-First, make sure you have an up-to-date version of Perl.  If you
-didn't get your Perl source from CPAN, check the latest version at
+First, make sure you have an up-to-date version of the Perl source code.  If
+you didn't get your Perl source from CPAN, check the latest version at
 L<https://www.cpan.org/src/>.  Perl uses a version scheme where even-numbered
-subreleases (like 5.8.x and 5.10.x) are stable maintenance releases and
-odd-numbered subreleases (like 5.7.x and 5.9.x) are unstable
+subreleases (like 5.40.x and 5.42.x) are stable maintenance releases and
+odd-numbered subreleases (like 5.41.x and 5.43.x) are unstable
 development releases.  Development releases should not be used in
 production environments.  Fixes and new features are first carefully
 tested in development releases and only if they prove themselves to be
@@ -33,10 +33,10 @@ Each of these is explained in further detail below.
 The above commands will install Perl to F</usr/local> (or some other
 platform-specific directory -- see the appropriate file in F<hints/>.)
 If that's not okay with you, you can run Configure interactively, by
-just typing "sh Configure" (without the -de args). You can also specify
-any prefix location by adding C<"-Dprefix='/some/dir'"> to Configure's args.
+just typing C<sh Configure> (without the C<-de> argument). You can also specify
+any prefix location by adding C<-Dprefix='/some/dir'> to Configure's arguments.
 To explicitly name the perl binary, use the command
-"make install PERLNAME=myperl".
+C<make install PERLNAME=myperl>.
 
 Building perl from source requires an ANSI compliant C compiler.
 C89 with a minimal subset of C99 features is required. Some other
@@ -92,10 +92,10 @@ to F<pod/perldelta.pod> for more detailed information.
 
 =head3 Compatibility with earlier versions
 
-B<WARNING:> This version is not binary compatible with versions of Perl
-earlier than 5.40.0.  If you have built extensions (i.e. modules that
-include C code) using an earlier version of Perl, you will need to
-rebuild and reinstall those extensions.
+B<WARNING:> This version is not binary compatible with earlier versions
+of Perl.  If you have built extensions (i.e. modules that include C code)
+using an earlier version of Perl, you will need to rebuild and reinstall
+those extensions.
 
 Pure perl modules without XS or C code should continue to work fine
 without reinstallation.  See the discussion below on
@@ -751,7 +751,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.40.1.
+By default, Configure will use the following directories for 5.42.0.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -1305,12 +1305,6 @@ $sysroot, instead of /.
 
 --sysroot is added to ccflags and friends so that make in
 ExtUtils::MakeMaker, and other extensions, will use it.
-
-=head2 Overriding an old config.sh
-
-If you want to use an old config.sh produced by a previous run of
-Configure, but override some of the items with command line options, you
-need to use B<Configure -O>.
 
 =head2 GNU-style configure
 
@@ -2581,8 +2575,8 @@ L<https://www.chiark.greenend.org.uk/~sgtatham/bugs.html>
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.40.1 is not binary compatible with versions of Perl earlier than
-5.40.0.  In other words, you will have to recompile your XS modules.
+Perl 5.42.0 is not binary compatible with earlier versions of Perl.
+In other words, you will have to recompile your XS modules.
 
 In general, you can usually safely upgrade from one stable version of Perl
 (e.g. 5.30.0) to another similar minor version (e.g. 5.30.1) without
@@ -2656,9 +2650,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.40.1
+	sh Configure -Dprefix=/opt/perl5.42.0
 
-and adding /opt/perl5.40.1/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.42.0/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2671,13 +2665,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.39.10 or earlier
+=head2 Upgrading from 5.40.0 or earlier
 
-B<Perl 5.40.1 may not be binary compatible with Perl 5.39.10 or
+B<Perl 5.42.0 may not be binary compatible with Perl 5.40.0 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.40.1.  If you find you do need to rebuild an extension with
-5.40.1, you may safely do so without disturbing the older
+used with 5.42.0.  If you find you do need to rebuild an extension with
+5.42.0, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2710,15 +2704,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.40.1 is as follows (under $Config{prefix}):
+in Linux with perl-5.42.0 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.40.1/strict.pm
-  ./lib/perl5/5.40.1/warnings.pm
-  ./lib/perl5/5.40.1/i686-linux/File/Glob.pm
-  ./lib/perl5/5.40.1/feature.pm
-  ./lib/perl5/5.40.1/XSLoader.pm
-  ./lib/perl5/5.40.1/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.42.0/strict.pm
+  ./lib/perl5/5.42.0/warnings.pm
+  ./lib/perl5/5.42.0/i686-linux/File/Glob.pm
+  ./lib/perl5/5.42.0/feature.pm
+  ./lib/perl5/5.42.0/XSLoader.pm
+  ./lib/perl5/5.42.0/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591
 files, (of which 510 are for lib/unicore) totaling about 3.5MB in its

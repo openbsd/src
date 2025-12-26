@@ -31,7 +31,7 @@ Perl_av_reify(pTHX_ AV *av)
         return;
 #ifdef DEBUGGING
     if (SvTIED_mg((const SV *)av, PERL_MAGIC_tied))
-        Perl_ck_warner_d(aTHX_ packWARN(WARN_DEBUGGING), "av_reify called on tied array");
+        ck_warner_d(packWARN(WARN_DEBUGGING), "av_reify called on tied array");
 #endif
     key = AvMAX(av) + 1;
     while (key > AvFILLp(av) + 1)
@@ -99,7 +99,7 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
     PERL_ARGS_ASSERT_AV_EXTEND_GUTS;
 
     if (key < -1) /* -1 is legal */
-        Perl_croak(aTHX_
+        croak(
             "panic: av_extend_guts() negative count (%" IVdf ")", (IV)key);
 
     if (key > *maxp) {
@@ -370,7 +370,7 @@ Perl_av_store(pTHX_ AV *av, SSize_t key, SV *val)
     }
 
     if (SvREADONLY(av) && key >= AvFILL(av))
-        Perl_croak_no_modify();
+        croak_no_modify();
 
     if (!AvREAL(av) && AvREIFY(av))
         av_reify(av);
@@ -641,12 +641,12 @@ Perl_av_clear(pTHX_ AV *av)
 
 #ifdef DEBUGGING
     if (SvREFCNT(av) == 0) {
-        Perl_ck_warner_d(aTHX_ packWARN(WARN_DEBUGGING), "Attempt to clear deleted array");
+        ck_warner_d(packWARN(WARN_DEBUGGING), "Attempt to clear deleted array");
     }
 #endif
 
     if (SvREADONLY(av))
-        Perl_croak_no_modify();
+        croak_no_modify();
 
     /* Give any tie a chance to cleanup first */
     if (SvRMAGICAL(av)) {
@@ -767,12 +767,22 @@ Perl_av_create_and_push(pTHX_ AV **const avp, SV *const val)
 }
 
 /*
-=for apidoc av_push
+=for apidoc      av_push
+=for apidoc_item av_push_simple
 
-Pushes an SV (transferring control of one reference count) onto the end of the
-array.  The array will grow automatically to accommodate the addition.
+These each push an SV (transferring control of one reference count) onto the
+end of the array.  The array will grow automatically to accommodate the
+addition.
 
 Perl equivalent: C<push @myarray, $val;>.
+
+C<av_push> is the general purpose form, suitable for all situations.
+
+C<av_push_simple> is a cut-down version of C<av_push> that assumes that the
+array is very straightforward, with no magic, not readonly, and is AvREAL
+(see L<perlguts/Real AVs - and those that are not>), and that C<key> is not
+less than -1. This function MUST NOT be used in situations where any of those
+assumptions may not hold.
 
 =cut
 */
@@ -786,7 +796,7 @@ Perl_av_push(pTHX_ AV *av, SV *val)
     assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-        Perl_croak_no_modify();
+        croak_no_modify();
 
     if ((mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied))) {
         Perl_magic_methcall(aTHX_ MUTABLE_SV(av), mg, SV_CONST(PUSH), G_DISCARD, 1,
@@ -818,7 +828,7 @@ Perl_av_pop(pTHX_ AV *av)
     assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-        Perl_croak_no_modify();
+        croak_no_modify();
     if ((mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied))) {
         retval = Perl_magic_methcall(aTHX_ MUTABLE_SV(av), mg, SV_CONST(POP), 0, 0);
         if (retval)
@@ -877,7 +887,7 @@ Perl_av_unshift(pTHX_ AV *av, SSize_t num)
     assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-        Perl_croak_no_modify();
+        croak_no_modify();
 
     if ((mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied))) {
         Perl_magic_methcall(aTHX_ MUTABLE_SV(av), mg, SV_CONST(UNSHIFT),
@@ -944,7 +954,7 @@ Perl_av_shift(pTHX_ AV *av)
     assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-        Perl_croak_no_modify();
+        croak_no_modify();
     if ((mg = SvTIED_mg((const SV *)av, PERL_MAGIC_tied))) {
         retval = Perl_magic_methcall(aTHX_ MUTABLE_SV(av), mg, SV_CONST(SHIFT), 0, 0);
         if (retval)
@@ -967,8 +977,10 @@ Perl_av_shift(pTHX_ AV *av)
 }
 
 /*
-=for apidoc av_tindex
-=for apidoc_item av_top_index
+=for apidoc      av_top_index
+=for apidoc_item av_tindex
+=for apidoc_item AvFILL
+=for apidoc_item av_len
 
 These behave identically.
 If the array C<av> is empty, these return -1; otherwise they return the maximum
@@ -979,15 +991,10 @@ They process 'get' magic.
 
 The Perl equivalent for these is C<$#av>.
 
-Use C<L</av_count>> to get the number of elements in an array.
-
-=for apidoc av_len
-
-Same as L</av_top_index>.  Note that, unlike what the name implies, it returns
+Note that, unlike what the name C<av_len> implies, it returns
 the maximum index in the array.  This is unlike L</sv_len>, which returns what
-you would expect.
-
-B<To get the true number of elements in the array, instead use C<L</av_count>>>.
+you would expect.  To get the actual number of elements in an array, use
+C<L</av_count>>.
 
 =cut
 */
@@ -1076,7 +1083,7 @@ Perl_av_delete(pTHX_ AV *av, SSize_t key, I32 flags)
     assert(SvTYPE(av) == SVt_PVAV);
 
     if (SvREADONLY(av))
-        Perl_croak_no_modify();
+        croak_no_modify();
 
     if (SvRMAGICAL(av)) {
         const MAGIC * const tied_magic

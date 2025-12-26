@@ -17,7 +17,8 @@ values indexed by their associated string key.
 
 Values are usually referred to by name, or through a named reference.
 The first character of the name tells you to what sort of data
-structure it refers.  The rest of the name tells you the particular
+structure it refers.  This character is called a "sigil".  The rest of
+the name tells you the particular
 value to which it refers.  Usually this name is a single I<identifier>,
 that is, a string beginning with a letter or underscore, and
 containing letters, underscores, and digits.  In some cases, it may
@@ -28,8 +29,9 @@ to locate the namespace in which to look up the final identifier
 on identifiers, see L</Identifier parsing>.  It's possible to
 substitute for a simple identifier, an expression that produces a reference
 to the value at runtime.   This is described in more detail below
-and in L<perlref>.
-X<identifier>
+and in L<perlref>.  It is legal, but not recommended, to separate a
+variable's sigil from its name by space and/or tab characters.
+X<identifier> X<sigil>
 
 Perl also has its own built-in variables whose names don't follow
 these rules.  They have strange names so they don't accidentally
@@ -41,8 +43,8 @@ the inner working of Perl have names containing punctuation characters.
 These are documented in L<perlvar>.
 X<variable, built-in>
 
-Scalar values are always named with '$', even when referring to a
-scalar that is part of an array or a hash.  The '$' symbol works
+Scalar values are always named with the sigil C<'$'>, even when referring to a
+scalar that is part of an array or a hash.  The C<'$'> symbol works
 semantically like the English word "the" in that it indicates a
 single value is expected.
 X<scalar>
@@ -52,8 +54,8 @@ X<scalar>
     $days{'Feb'}	# the 'Feb' value from hash %days
     $#days		# the last index of array @days
 
-Entire arrays (and slices of arrays and hashes) are denoted by '@',
-which works much as the word "these" or "those" does in English,
+Entire arrays (and slices of arrays and hashes) are denoted by the sigil
+C<'@'>, which works much as the word "these" or "those" does in English,
 in that it indicates multiple values are expected.
 X<array>
 
@@ -61,14 +63,14 @@ X<array>
     @days[3,4,5]	# same as ($days[3],$days[4],$days[5])
     @days{'a','c'}	# same as ($days{'a'},$days{'c'})
 
-Entire hashes are denoted by '%':
+Entire hashes are denoted by the sigil '%':
 X<hash>
 
     %days		# (key1, val1, key2, val2 ...)
 
-In addition, subroutines are named with an initial '&', though this
+In addition, subroutines are named with an initial sigil C<'&'>, though this
 is optional when unambiguous, just as the word "do" is often redundant
-in English.  Symbol table entries can be named with an initial '*',
+in English.  Symbol table entries can be named with an initial C<'*'>,
 but you don't really care about that yet (if ever :-).
 
 Every variable type has its own namespace, as do several
@@ -81,8 +83,9 @@ is a part of @foo, not a part of $foo.  This may seem a bit weird,
 but that's okay, because it is weird.
 X<namespace>
 
-Because variable references always start with '$', '@', or '%', the
-"reserved" words aren't in fact reserved with respect to variable
+Because variable references always start with the sigils C<'$'>, C<'@'>, or
+C<'%'>, the "reserved" words aren't in fact reserved with respect to
+variable
 names.  They I<are> reserved with respect to labels and filehandles,
 however, which don't have an initial special character.  You can't
 have a filehandle named "log", for instance.  Hint: you could say
@@ -136,21 +139,17 @@ generic characters, and identifiers should match
 That is, any word character in the ASCII range, as long as the first
 character is not a digit.
 
-There are two package separators in Perl: A double colon (C<::>) and a single
-quote (C<'>).  Use of C<'> as the package separator is deprecated and will be
-removed in Perl 5.40.  Normal identifiers can start or end with a double
-colon, and can contain several parts delimited by double colons.  Single
-quotes have similar rules, but with the exception that they are not legal at
-the end of an identifier: That is, C<$'foo> and C<$foo'bar> are legal, but
-C<$foo'bar'> is not.
+There is one package separator in Perl: A double colon (C<::>).
+Normal identifiers can start or end with a double colon, and can
+contain several parts delimited by double colons.
+
+Previously you could use C<'> as a package separator, this was removed
+in Perl 5.42.
 
 Additionally, if the identifier is preceded by a sigil --
 that is, if the identifier is part of a variable name -- it
-may optionally be enclosed in braces.
-
-While you can mix double colons with singles quotes, the quotes must come
-after the colons: C<$::::'foo> and C<$foo::'bar> are legal, but C<$::'::foo>
-and C<$foo'::bar> are not.
+may optionally be enclosed in braces. For example, C<${name}>,
+C<@{bigcats}>, C<%{pizza_toppings}>.
 
 Put together, a grammar to match a basic identifier becomes
 
@@ -164,9 +163,9 @@ Put together, a grammar to match a basic identifier becomes
           )
       )
       (?<normal_identifier>
-          (?: :: )* '?
+          (?: :: )*
            (?&basic_identifier)
-           (?: (?= (?: :: )+ '? | (?: :: )* ' ) (?&normal_identifier) )?
+           (?: (?= :: ) (?&normal_identifier) )?
           (?: :: )*
       )
       (?<basic_identifier>
@@ -176,7 +175,7 @@ Put together, a grammar to match a basic identifier becomes
             | (?aa) (?!\d) \w+
           )
       )
-      (?<sigil> [&*\$\@\%])
+      (?<sigil> \$\# | [&*\$\@%])
       (?<Perl_XIDS> (?[ ( \p{Word} & \p{XID_Start} ) + [_] ]) )
       (?<Perl_XIDC> (?[ \p{Word} & \p{XID_Continue} ]) )
   )
@@ -448,6 +447,9 @@ integer formats:
  0o12_345            # alternative octal (introduced in Perl 5.33.5)
  0b011011            # binary
  0x1.999ap-4         # hexadecimal floating point (the 'p' is required)
+ 07.65p2             # octal floating point (the 'p' is required)
+ 0o7.65p2            # alternative octal floating point
+ 0b101.01p-1         # binary floating point (the 'p' is required)
 
 You are allowed to use underscores (underbars) in numeric literals
 between digits for legibility (but not multiple underscores in a row:
@@ -481,6 +483,9 @@ platforms use the 64-bit IEEE 754 floating point, not all do.  Another
 potential source of (low-order) differences are the floating point
 rounding modes, which can differ between CPUs, operating systems,
 and compilers, and which Perl doesn't control.
+
+Octal and binary floating point numbers use the same format as hexadecimal
+floating point numbers, but limited to binary and octal digits, respectively.
 
 You can also embed newlines directly in your strings, i.e., they can end
 on a different line than they begin.  This is nice, but if you forget
@@ -1153,10 +1158,10 @@ Slices in scalar context return the last item of the slice.
     $t = @a[0, 1];                  # $t is now 'second'
     $u = @h{'first', 'second'};     # $u is now 'B'
 
-If you're confused about why you use an '@' there on a hash slice
-instead of a '%', think of it like this.  The type of bracket (square
+If you're confused about why you use an C<'@'> there on a hash slice
+instead of a C<'%'>, think of it like this.  The type of bracket (square
 or curly) governs whether it's an array or a hash being looked at.
-On the other hand, the leading symbol ('$' or '@') on the array or
+On the other hand, the leading symbol (C<'$'> or C<'@'>) on the array or
 hash indicates whether you are getting back a singular value (a
 scalar) or a plural one (a list).
 
@@ -1202,7 +1207,7 @@ it represents all types.  This used to be the preferred way to
 pass arrays and hashes by reference into a function, but now that
 we have real references, this is seldom needed.  
 
-The main use of typeglobs in modern Perl is create symbol table aliases.
+The main use of typeglobs in modern Perl is to create symbol table aliases.
 This assignment:
 
     *this = *that;

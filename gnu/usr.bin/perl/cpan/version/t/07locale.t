@@ -11,15 +11,29 @@ use Test::More tests => 8;
 use Config;
 
 BEGIN {
-    use_ok('version', 0.9930);
+    use_ok('version', 0.9933);
+}
+
+sub radix { # Returns the radix character for the current locale.
+
+    # Use localeconv() on earlier perls; if it is just a stub, assume a dot.
+    if (! $^V or $^V lt v5.37.4) {
+        return localeconv()->{decimal_point} || ".";
+    }
+
+    # localeconv() may be a stub on some platforms.  But on later perls,
+    # langinfo() will always exist and returns the best available value.
+    use if $^V && $^V ge v5.37.4, 'I18N::Langinfo' => qw(langinfo RADIXCHAR);
+    return langinfo(RADIXCHAR);
 }
 
 SKIP: {
 	skip 'No locale testing for Perl < 5.6.0', 7 if $] < 5.006;
 	skip 'No locale testing without d_setlocale', 7
 	    if(!$Config{d_setlocale});
+        eval "&POSIX::LC_NUMERIC";
 	skip 'No locale testing without LC_NUMERIC', 7
-	    if($Config{ccflags}) =~ /-DNO_LOCALE_NUMERIC\b/;
+            if $@ || $Config{ccflags} =~ /-DNO_LOCALE_NUMERIC\b/;
 
 	# test locale handling
 	my $warning = '';
@@ -37,11 +51,11 @@ SKIP: {
 
 	while (<DATA>) {
 	    chomp;
-	    $loc = setlocale( LC_ALL, $_);
-	    last if $loc && localeconv()->{decimal_point} eq ',';
+	    $loc = setlocale( LC_NUMERIC, $_);
+	    last if $loc && radix() eq ',';
 	}
 	skip 'Cannot test locale handling without a comma locale', 6
-	    unless $loc and localeconv()->{decimal_point} eq ',';
+	    unless $loc and radix() eq ',';
 
 	setlocale(LC_NUMERIC, $loc);
 	$ver = 1.23;  # has to be floating point number
@@ -57,7 +71,7 @@ SKIP: {
             $ver = 'version'->new($]);
             is "$ver", "$]", 'Use PV for dualvars';
         }
-	setlocale( LC_ALL, $orig_loc); # reset this before possible skip
+	setlocale( LC_NUMERIC, $orig_loc); # reset this before possible skip
 	skip 'Cannot test RT#46921 with Perl < 5.008', 1
 	    if ($] < 5.008);
 	my ($fh, $filename) = tempfile('tXXXXXXX', SUFFIX => '.pm', UNLINK => 1);
@@ -68,10 +82,10 @@ use locale;
 use POSIX qw(locale_h);
 \$^W = 1;
 use version;
-setlocale (LC_ALL, '$loc');
+setlocale (LC_NUMERIC, '$loc');
 use version ;
 eval "use Socket 1.7";
-setlocale( LC_ALL, '$orig_loc');
+setlocale( LC_NUMERIC, '$orig_loc');
 1;
 EOF
 	close $fh;
@@ -324,3 +338,72 @@ wa_BE
 wa_BE@euro
 wa_BE.utf8
 wa_BE.UTF-8
+Afrikaans
+Albanian
+Arabic
+Basque
+Breton
+Brezhoneg
+Bulgarian
+Bulgarski
+Chinese
+Croatian
+Cymraeg
+Czech
+Danish
+Dansk
+Deutsch
+Dutch
+Eesti
+Ellada
+Esperanto
+Estonian
+Euskaraz
+Finnish
+Flamish
+Frysk
+Gaeilge
+Galego
+Galician
+German
+Greek
+Greenlandic
+Hebrew
+Hrvatski
+Hungarian
+Indonesian
+Irish
+Italian
+Italiano
+Japanese
+Korean
+Latin
+Latine
+Latvian
+Lithuanian
+Macedonian
+Maltese
+Moldovan
+Nederlands
+Nihongo
+Norsk
+Norwegian
+Occitan
+Polish
+Polski
+Rumanian
+Russian
+Russki
+Serbian
+Serbski
+Slovak
+Slovene
+Slovenian
+Sqhip
+Suomi
+Svenska
+Swedish
+Thai
+Turkish
+Welsh
+Yiddish

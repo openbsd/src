@@ -173,6 +173,7 @@ X<list>
 
 =for Pod::Functions =LIST
 
+L<C<all>|/all BLOCK LIST>, L<C<any>|/any BLOCK LIST>,
 L<C<grep>|/grep BLOCK LIST>, L<C<join>|/join EXPR,LIST>,
 L<C<map>|/map BLOCK LIST>, L<C<qwE<sol>E<sol>>|/qwE<sol>STRINGE<sol>>,
 L<C<reverse>|/reverse LIST>, L<C<sort>|/sort SUBNAME LIST>,
@@ -775,11 +776,11 @@ arguments undefined, or you might be able to use the
 L<C<syscall>|/syscall NUMBER, LIST> interface to access L<setitimer(2)>
 if your system supports it.  See L<perlfaq8> for details.
 
-It is usually a mistake to intermix L<C<alarm>|/alarm SECONDS> and
+It is usually a mistake to intermix C<alarm> and
 L<C<sleep>|/sleep EXPR> calls, because L<C<sleep>|/sleep EXPR> may be
-internally implemented on your system with L<C<alarm>|/alarm SECONDS>.
+internally implemented on your system with C<alarm>.
 
-If you want to use L<C<alarm>|/alarm SECONDS> to time out a system call
+If you want to use C<alarm> to time out a system call
 you need to use an L<C<eval>|/eval EXPR>/L<C<die>|/die LIST> pair.  You
 can't rely on the alarm causing the system call to fail with
 L<C<$!>|perlvar/$!> set to C<EINTR> because Perl sets up signal handlers
@@ -804,6 +805,67 @@ caveats given in L<perlipc/"Signals">.
 For more information see L<perlipc>.
 
 Portability issues: L<perlport/alarm>.
+
+=item all BLOCK LIST
+
+=for Pod::Functions test if every value in a list satisfies the given condition
+
+Evaluates the BLOCK for each element of the LIST (locally setting
+L<C<$_>|perlvar/$_> to each element) and checks the truth of the result of
+that block.  Returns true if every element makes the block yield true, or
+returns false if at least one element makes the block false.
+
+As soon as any element makes the block yield false, then the result of this
+operator is determined.  It will short-circuit in that case and not consider
+any further elements.
+
+When used as a condition, this is similar to using L<C<grep>|/grep BLOCK LIST>
+to count that every value satisfies the condition, except for this
+short-circuit behaviour.
+
+    if( all { length $_ } @strings ) {
+        say "Every string is non-empty";
+    }
+
+is roughly equivalent to
+
+    if( @strings == grep { length $_ } @strings ) ...
+
+This operator is only available if the
+L<C<keyword_all> feature|feature/"The 'keyword_all' feature"> is enabled.
+
+It is currently considered B<experimental>, and will issue a compile-time
+warning in the category C<experimental::all> unless that category is silenced.
+
+=item any BLOCK LIST
+
+=for Pod::Functions test if at least one value in a list satisfies the given condition
+
+Evaluates the BLOCK for each element of the LIST (locally setting
+L<C<$_>|perlvar/$_> to each element) and checks the truth of the result of
+that block.  Returns true if at least one element makes the block yield
+true, or returns false if no element is found to make it true.
+
+As soon as any element makes the block yield true, then the result of this
+operator is determined.  It will short-circuit in that case and not consider
+any further elements.
+
+When used as a condition, this is similar to L<C<grep>|/grep BLOCK LIST>,
+except for this short-circuit behaviour.
+
+    if( any { length $_ } @strings ) {
+        say "At least one string is non-empty";
+    }
+
+is roughly equivalent to
+
+    if( grep { length $_ } @strings ) ...
+
+This operator is only available if the
+L<C<keyword_any> feature|feature/"The 'keyword_any' feature"> is enabled.
+
+It is currently considered B<experimental>, and will issue a compile-time
+warning in the category C<experimental::any> unless that category is silenced.
 
 =item atan2 Y,X
 X<atan2> X<arctangent> X<tan> X<tangent>
@@ -848,14 +910,14 @@ otherwise it returns L<C<undef>|/undef EXPR> and sets
 L<C<$!>|perlvar/$!> (errno).
 
 On some systems (in general, DOS- and Windows-based systems)
-L<C<binmode>|/binmode FILEHANDLE, LAYER> is necessary when you're not
+C<binmode> is necessary when you're not
 working with a text file.  For the sake of portability it is a good idea
 always to use it when appropriate, and never to use it when it isn't
 appropriate.  Also, people can set their I/O to be by default
 UTF8-encoded Unicode, not bytes.
 
 In other words: regardless of platform, use
-L<C<binmode>|/binmode FILEHANDLE, LAYER> on binary data, like images,
+C<binmode> on binary data, like images,
 for example.
 
 If LAYER is present it is a single string, but may contain multiple
@@ -875,7 +937,7 @@ The C<:bytes>, C<:crlf>, C<:utf8>, and any other directives of the
 form C<:...>, are called I/O I<layers>.  The L<open> pragma can be used to
 establish default I/O layers.
 
-I<The LAYER parameter of the L<C<binmode>|/binmode FILEHANDLE, LAYER>
+I<The LAYER parameter of the C<binmode>
 function is described as "DISCIPLINE" in "Programming Perl, 3rd
 Edition".  However, since the publishing of this book, by many known as
 "Camel III", the consensus of the naming of this functionality has moved
@@ -888,9 +950,9 @@ C<:utf8> just marks the data as UTF-8 without further checking,
 while C<:encoding(UTF-8)> checks the data for actually being valid
 UTF-8.  More details can be found in L<PerlIO::encoding>.
 
-In general, L<C<binmode>|/binmode FILEHANDLE, LAYER> should be called
+In general, C<binmode> should be called
 after L<C<open>|/open FILEHANDLE,MODE,EXPR> but before any I/O is done on the
-filehandle.  Calling L<C<binmode>|/binmode FILEHANDLE, LAYER> normally
+filehandle.  Calling C<binmode> normally
 flushes any pending buffered output data (and perhaps pending input
 data) on the handle.  An exception to this is the C<:encoding> layer
 that changes the default character encoding of the handle.
@@ -914,19 +976,19 @@ flavors of Mac OS, and is LINE FEED on Unix and most VMS files).  In other
 systems like OS/2, DOS, and the various flavors of MS-Windows, your program
 sees a C<\n> as a simple C<\cJ>, but what's stored in text files are the
 two characters C<\cM\cJ>.  That means that if you don't use
-L<C<binmode>|/binmode FILEHANDLE, LAYER> on these systems, C<\cM\cJ>
+C<binmode> on these systems, C<\cM\cJ>
 sequences on disk will be converted to C<\n> on input, and any C<\n> in
 your program will be converted back to C<\cM\cJ> on output.  This is
 what you want for text files, but it can be disastrous for binary files.
 
-Another consequence of using L<C<binmode>|/binmode FILEHANDLE, LAYER>
+Another consequence of using C<binmode>
 (on some systems) is that special end-of-file markers will be seen as
 part of the data stream.  For systems from the Microsoft family this
 means that, if your binary data contain C<\cZ>, the I/O subsystem will
 regard it as the end of the file, unless you use
-L<C<binmode>|/binmode FILEHANDLE, LAYER>.
+C<binmode>.
 
-L<C<binmode>|/binmode FILEHANDLE, LAYER> is important not only for
+C<binmode> is important not only for
 L<C<readline>|/readline EXPR> and L<C<print>|/print FILEHANDLE LIST>
 operations, but also when using
 L<C<read>|/read FILEHANDLE,SCALAR,LENGTH,OFFSET>,
@@ -985,7 +1047,7 @@ one-argument C<bless> is discouraged.
 See L<perlobj> for more about the blessing (and blessings) of
 objects.
 
-L<C<bless>|/bless REF,CLASSNAME> returns its first argument, the
+C<bless> returns its first argument, the
 supplied reference, as the value of the function; since C<bless>
 is commonly the last thing executed in constructors, this means
 that the reference to the object is returned as the
@@ -1000,8 +1062,8 @@ confusion.
 
 Also avoid C<bless>ing things into the class name C<0>; this
 will cause code which (erroneously) checks the result of
-L<C<ref>|/ref EXPR> to see if a reference is C<bless>ed to fail,
-as "0", a falsy value, is returned.
+C<ref> to see if a reference is C<bless>ed to fail,
+as "0", a false value, is returned.
 
 See L<perlmod/"Perl Modules"> for more details.
 
@@ -1011,7 +1073,7 @@ See L<perlmod/"Perl Modules"> for more details.
 
 Break out of a C<given> block.
 
-L<C<break>|/break> is available only if the
+C<break> is available only if the
 L<C<"switch"> feature|feature/The 'switch' feature> is enabled or if it
 is prefixed with C<CORE::>. The
 L<C<"switch"> feature|feature/The 'switch' feature> is enabled
@@ -1089,10 +1151,10 @@ detailed information: it sets the list variable C<@DB::args> to be the
 arguments with which the subroutine was invoked.
 
 Be aware that the optimizer might have optimized call frames away before
-L<C<caller>|/caller EXPR> had a chance to get the information.  That
+C<caller> had a chance to get the information.  That
 means that C<caller(N)> might not return information about the call
 frame you expect it to, for C<< N > 1 >>.  In particular, C<@DB::args>
-might have information from the previous time L<C<caller>|/caller EXPR>
+might have information from the previous time C<caller>
 was called.
 
 Be aware that setting C<@DB::args> is I<best effort>, intended for
@@ -1128,7 +1190,7 @@ Changes the working directory to EXPR, if possible.  If EXPR is omitted,
 changes to the directory specified by C<$ENV{HOME}>, if set; if not,
 changes to the directory specified by C<$ENV{LOGDIR}>.  (Under VMS, the
 variable C<$ENV{'SYS$LOGIN'}> is also checked, and used if it is set.)  If
-neither is set, L<C<chdir>|/chdir EXPR> does nothing and fails.  It
+neither is set, C<chdir> does nothing and fails.  It
 returns true on success, false otherwise.  See the example under
 L<C<die>|/die LIST>.
 
@@ -1192,7 +1254,7 @@ that the final record may be missing its newline.  When in paragraph
 mode (C<$/ = ''>), it removes all trailing newlines from the string.
 When in slurp mode (C<$/ = undef>) or fixed-length record mode
 (L<C<$E<sol>>|perlvar/$E<sol>> is a reference to an integer or the like;
-see L<perlvar>), L<C<chomp>|/chomp VARIABLE> won't remove anything.
+see L<perlvar>), C<chomp> won't remove anything.
 If VARIABLE is omitted, it chomps L<C<$_>|perlvar/$_>.  Example:
 
     while (<>) {
@@ -1238,9 +1300,9 @@ resetting the L<C<each>|/each HASH> iterator in the process.
 You can actually chop anything that's an lvalue, including an assignment.
 
 If you chop a list, each element is chopped.  Only the value of the
-last L<C<chop>|/chop VARIABLE> is returned.
+last C<chop> is returned.
 
-Note that L<C<chop>|/chop VARIABLE> returns the last character.  To
+Note that C<chop> returns the last character.  To
 return all but the last character, use C<substr($string, 0, -1)>.
 
 See also L<C<chomp>|/chomp VARIABLE>.
@@ -1325,11 +1387,11 @@ named directory the new root directory for all further pathnames that
 begin with a C</> by your process and all its children.  (It doesn't
 change your current working directory, which is unaffected.)  For security
 reasons, this call is restricted to the superuser.  If FILENAME is
-omitted, does a L<C<chroot>|/chroot FILENAME> to L<C<$_>|perlvar/$_>.
+omitted, does a C<chroot> to L<C<$_>|perlvar/$_>.
 
 B<NOTE:>  It is mandatory for security to C<chdir("/")>
 (L<C<chdir>|/chdir EXPR> to the root directory) immediately after a
-L<C<chroot>|/chroot FILENAME>, otherwise the current working directory
+C<chroot>, otherwise the current working directory
 may be outside of the new root.
 
 Portability issues: L<perlport/chroot>.
@@ -1345,9 +1407,9 @@ Portability issues: L<perlport/chroot>.
 =for Pod::Functions declare a separate global namespace that is an object class
 
 Declares the BLOCK or the rest of the compilation unit as being in the given
-namespace, which implements an object class.  This behaves similarly to
-L<C<package>|/package NAMESPACE>, except that the newly-created package behaves
-as a class.
+namespace, which implements an object class (see L<perlclass>).  This
+behaves similarly to L<C<package>|/package NAMESPACE>, except that the
+newly-created package behaves as a class.
 
 =item close FILEHANDLE
 X<close>
@@ -1373,11 +1435,11 @@ You don't have to close FILEHANDLE if you are immediately going to do
 another L<C<open>|/open FILEHANDLE,MODE,EXPR> on it, because
 L<C<open>|/open FILEHANDLE,MODE,EXPR> closes it for you.  (See
 L<C<open>|/open FILEHANDLE,MODE,EXPR>.) However, an explicit
-L<C<close>|/close FILEHANDLE> on an input file resets the line counter
+C<close> on an input file resets the line counter
 (L<C<$.>|perlvar/$.>), while the implicit close done by
 L<C<open>|/open FILEHANDLE,MODE,EXPR> does not.
 
-If the filehandle came from a piped open, L<C<close>|/close FILEHANDLE>
+If the filehandle came from a piped open, C<close>
 returns false if one of the other syscalls involved fails or if its
 program exits with non-zero status.  If the only problem was that the
 program exited non-zero, L<C<$!>|perlvar/$!> will be set to C<0>.
@@ -1387,7 +1449,7 @@ implicitly puts the exit status value of that command into
 L<C<$?>|perlvar/$?> and
 L<C<${^CHILD_ERROR_NATIVE}>|perlvar/${^CHILD_ERROR_NATIVE}>.
 
-If there are multiple threads running, L<C<close>|/close FILEHANDLE> on
+If there are multiple threads running, C<close> on
 a filehandle from a piped open returns true without waiting for the
 child process to terminate, if the filehandle is still open in another
 thread.
@@ -1441,22 +1503,22 @@ X<continue>
 
 =for Pod::Functions optional trailing block in a while or foreach
 
-When followed by a BLOCK, L<C<continue>|/continue BLOCK> is actually a
+When followed by a BLOCK, C<continue> is actually a
 flow control statement rather than a function.  If there is a
-L<C<continue>|/continue BLOCK> BLOCK attached to a BLOCK (typically in a
+C<continue> BLOCK attached to a BLOCK (typically in a
 C<while> or C<foreach>), it is always executed just before the
 conditional is about to be evaluated again, just like the third part of
 a C<for> loop in C.  Thus it can be used to increment a loop variable,
 even when the loop has been continued via the L<C<next>|/next LABEL>
-statement (which is similar to the C L<C<continue>|/continue BLOCK>
+statement (which is similar to the C C<continue>
 statement).
 
 L<C<last>|/last LABEL>, L<C<next>|/next LABEL>, or
 L<C<redo>|/redo LABEL> may appear within a
-L<C<continue>|/continue BLOCK> block; L<C<last>|/last LABEL> and
+C<continue> block; L<C<last>|/last LABEL> and
 L<C<redo>|/redo LABEL> behave as if they had been executed within the
 main block.  So will L<C<next>|/next LABEL>, but since it will execute a
-L<C<continue>|/continue BLOCK> block, it may be more entertaining.
+C<continue> block, it may be more entertaining.
 
     while (EXPR) {
         ### redo always comes here
@@ -1468,15 +1530,15 @@ L<C<continue>|/continue BLOCK> block, it may be more entertaining.
     }
     ### last always comes here
 
-Omitting the L<C<continue>|/continue BLOCK> section is equivalent to
+Omitting the C<continue> section is equivalent to
 using an empty one, logically enough, so L<C<next>|/next LABEL> goes
 directly back to check the condition at the top of the loop.
 
-When there is no BLOCK, L<C<continue>|/continue BLOCK> is a function
+When there is no BLOCK, C<continue> is a function
 that falls through the current C<when> or C<default> block instead of
 iterating a dynamically enclosing C<foreach> or exiting a lexically
 enclosing C<given>.  In Perl 5.14 and earlier, this form of
-L<C<continue>|/continue BLOCK> was only available when the
+C<continue> was only available when the
 L<C<"switch"> feature|feature/The 'switch' feature> was enabled.  See
 L<feature> and L<perlsyn/"Switch Statements"> for more information.
 
@@ -1505,7 +1567,7 @@ Creates a digest string exactly like the L<crypt(3)> function in the C
 library (assuming that you actually have a version there that has not
 been extirpated as a potential munition).
 
-L<C<crypt>|/crypt PLAINTEXT,SALT> is a one-way hash function.  The
+C<crypt> is a one-way hash function.  The
 PLAINTEXT and SALT are turned
 into a short string, called a digest, which is returned.  The same
 PLAINTEXT and SALT will always return the same string, but there is no
@@ -1520,15 +1582,15 @@ primarily used to check if two pieces of text are the same without
 having to transmit or store the text itself.  An example is checking
 if a correct password is given.  The digest of the password is stored,
 not the password itself.  The user types in a password that is
-L<C<crypt>|/crypt PLAINTEXT,SALT>'d with the same salt as the stored
+C<crypt>'d with the same salt as the stored
 digest.  If the two digests match, the password is correct.
 
 When verifying an existing digest string you should use the digest as
 the salt (like C<crypt($plain, $digest) eq $digest>).  The SALT used
 to create the digest is visible as part of the digest.  This ensures
-L<C<crypt>|/crypt PLAINTEXT,SALT> will hash the new string with the same
+C<crypt> will hash the new string with the same
 salt as the digest.  This allows your code to work with the standard
-L<C<crypt>|/crypt PLAINTEXT,SALT> and with more exotic implementations.
+C<crypt> and with more exotic implementations.
 In other words, assume nothing about the returned string itself nor
 about how many bytes of SALT may matter.
 
@@ -1544,7 +1606,7 @@ characters come from the set C<[./0-9A-Za-z]> (like C<join '', ('.',
 '/', 0..9, 'A'..'Z', 'a'..'z')[rand 64, rand 64]>).  This set of
 characters is just a recommendation; the characters allowed in
 the salt depend solely on your system's crypt library, and Perl can't
-restrict what salts L<C<crypt>|/crypt PLAINTEXT,SALT> accepts.
+restrict what salts C<crypt> accepts.
 
 Here's an example that makes sure that whoever runs this program knows
 their password:
@@ -1566,17 +1628,17 @@ their password:
 Of course, typing in your own password to whoever asks you
 for it is unwise.
 
-The L<C<crypt>|/crypt PLAINTEXT,SALT> function is unsuitable for hashing
+The C<crypt> function is unsuitable for hashing
 large quantities of data, not least of all because you can't get the
 information back.  Look at the L<Digest> module for more robust
 algorithms.
 
-If using L<C<crypt>|/crypt PLAINTEXT,SALT> on a Unicode string (which
+If using C<crypt> on a Unicode string (which
 I<potentially> has characters with codepoints above 255), Perl tries to
 make sense of the situation by trying to downgrade (a copy of) the
 string back to an eight-bit byte string before calling
-L<C<crypt>|/crypt PLAINTEXT,SALT> (on that copy).  If that works, good.
-If not, L<C<crypt>|/crypt PLAINTEXT,SALT> dies with
+C<crypt> (on that copy).  If that works, good.
+If not, C<crypt> dies with
 L<C<Wide character in crypt>|perldiag/Wide character in %s>.
 
 Portability issues: L<perlport/crypt>.
@@ -1611,9 +1673,9 @@ database does not exist, it is created with protection specified by MASK
 the database if it doesn't exist, you may specify a MASK of 0, and the
 function will return a false value if it can't find an existing
 database.  If your system supports only the older DBM functions, you may
-make only one L<C<dbmopen>|/dbmopen HASH,DBNAME,MASK> call in your
+make only one C<dbmopen> call in your
 program.  In older versions of Perl, if your system had neither DBM nor
-ndbm, calling L<C<dbmopen>|/dbmopen HASH,DBNAME,MASK> produced a fatal
+ndbm, calling C<dbmopen> produced a fatal
 error; it now falls back to L<sdbm(3)>.
 
 If you don't have write access to the DBM file, you can only read hash
@@ -1638,7 +1700,7 @@ cons of the various dbm approaches, as well as L<DB_File> for a particularly
 rich implementation.
 
 You can control which DBM library you use by loading that library
-before you call L<C<dbmopen>|/dbmopen HASH,DBNAME,MASK>:
+before you call C<dbmopen>:
 
     use DB_File;
     dbmopen(%NS_Hist, "$ENV{HOME}/.netscape/history.db")
@@ -1675,7 +1737,7 @@ may still be callable: its package may have an C<AUTOLOAD> method that
 makes it spring into existence the first time that it is called; see
 L<perlsub>.
 
-Use of L<C<defined>|/defined EXPR> on aggregates (hashes and arrays) is
+Use of C<defined> on aggregates (hashes and arrays) is
 no longer supported. It used to report whether memory for that
 aggregate had ever been allocated.  You should instead use a simple
 test for size:
@@ -1696,7 +1758,7 @@ Examples:
     sub foo { defined &$bar ? $bar->(@_) : die "No bar"; }
     $debugging = 0 unless defined $debugging;
 
-Note:  Many folks tend to overuse L<C<defined>|/defined EXPR> and are
+Note:  Many folks tend to overuse C<defined> and are
 then surprised to discover that the number C<0> and C<""> (the
 zero-length string) are, in fact, defined values.  For example, if you
 say
@@ -1708,7 +1770,7 @@ matched "nothing".  It didn't really fail to match anything.  Rather, it
 matched something that happened to be zero characters long.  This is all
 very above-board and honest.  When a function returns an undefined value,
 it's an admission that it couldn't give you an honest answer.  So you
-should use L<C<defined>|/defined EXPR> only when questioning the
+should use C<defined> only when questioning the
 integrity of what you're trying to do.  At other times, a simple
 comparison to C<0> or C<""> is what you want.
 
@@ -1721,7 +1783,7 @@ X<delete>
 =for Pod::Functions deletes a value from a hash
 
 Given an expression that specifies an element or slice of a hash,
-L<C<delete>|/delete EXPR> deletes the specified elements from that hash
+C<delete> deletes the specified elements from that hash
 so that L<C<exists>|/exists EXPR> on that element no longer returns
 true.  Setting a hash element to the undefined value does not remove its
 key, but deleting it does; see L<C<exists>|/exists EXPR>.
@@ -1734,7 +1796,7 @@ L<keyE<sol>value hash slice|perldata/KeyE<sol>Value Hash Slices> can be passed
 to C<delete>, and the return value is a list of key/value pairs (two elements
 for each item deleted from the hash).
 
-L<C<delete>|/delete EXPR> may also be used on arrays and array slices,
+C<delete> may also be used on arrays and array slices,
 but its behavior is less straightforward.  Although
 L<C<exists>|/exists EXPR> will return false for deleted entries,
 deleting array elements never changes indices of existing values; use
@@ -1745,7 +1807,7 @@ the highest element that still tests true for L<C<exists>|/exists EXPR>,
 or to 0 if none do.  In other words, an array won't have trailing
 nonexistent elements after a delete.
 
-B<WARNING:> Calling L<C<delete>|/delete EXPR> on array values is
+B<WARNING:> Calling C<delete> on array values is
 strongly discouraged.  The
 notion of deleting or checking the existence of Perl array elements is not
 conceptually coherent, and can lead to surprising behavior.
@@ -1807,7 +1869,7 @@ X<die> X<throw> X<exception> X<raise> X<$@> X<abort>
 
 =for Pod::Functions raise an exception or bail out
 
-L<C<die>|/die LIST> raises an exception.  Inside an L<C<eval>|/eval EXPR>
+C<die> raises an exception.  Inside an L<C<eval>|/eval EXPR>
 the exception is stuffed into L<C<$@>|perlvar/$@> and the L<C<eval>|/eval
 EXPR> is terminated with the undefined value.  If the exception is
 outside of all enclosing L<C<eval>|/eval EXPR>s, then the uncaught
@@ -1862,7 +1924,7 @@ C<< $@ = eval { $@->PROPAGATE(__FILE__, __LINE__) }; >> were called.
 If LIST was empty or made an empty string, and L<C<$@>|perlvar/$@>
 is also empty, then the string C<"Died"> is used.
 
-You can also call L<C<die>|/die LIST> with a reference argument, and if
+You can also call C<die> with a reference argument, and if
 this is trapped within an L<C<eval>|/eval EXPR>, L<C<$@>|perlvar/$@>
 contains that reference.  This permits more elaborate exception handling
 using objects that maintain arbitrary state about the exception.  Such a
@@ -1915,15 +1977,15 @@ The intent is to squeeze as much possible information about the likely cause
 into the limited space of the system exit code.  However, as
 L<C<$!>|perlvar/$!> is the value of C's C<errno>, which can be set by
 any system call, this means that the value of the exit code used by
-L<C<die>|/die LIST> can be non-predictable, so should not be relied
+C<die> can be non-predictable, so should not be relied
 upon, other than to be non-zero.
 
 You can arrange for a callback to be run just before the
-L<C<die>|/die LIST> does its deed, by setting the
+C<die> does its deed, by setting the
 L<C<$SIG{__DIE__}>|perlvar/%SIG> hook.  The associated handler is called
 with the exception as an argument, and can change the exception,
 if it sees fit, by
-calling L<C<die>|/die LIST> again.  See L<perlvar/%SIG> for details on
+calling C<die> again.  See L<perlvar/%SIG> for details on
 setting L<C<%SIG>|perlvar/%SIG> entries, and L<C<eval>|/eval EXPR> for some
 examples.  Although this feature was to be run only right before your
 program was to exit, this is not currently so: the
@@ -1997,20 +2059,20 @@ in perl versions 5.26.0 onwards. Instead, perl will now warn:
     do "stat.pl" failed, '.' is no longer in @INC;
     did you mean do "./stat.pl"?
 
-If L<C<do>|/do EXPR> can read the file but cannot compile it, it
+If C<do> can read the file but cannot compile it, it
 returns L<C<undef>|/undef EXPR> and sets an error message in
-L<C<$@>|perlvar/$@>.  If L<C<do>|/do EXPR> cannot read the file, it
+L<C<$@>|perlvar/$@>.  If C<do> cannot read the file, it
 returns undef and sets L<C<$!>|perlvar/$!> to the error.  Always check
 L<C<$@>|perlvar/$@> first, as compilation could fail in a way that also
 sets L<C<$!>|perlvar/$!>.  If the file is successfully compiled,
-L<C<do>|/do EXPR> returns the value of the last expression evaluated.
+C<do> returns the value of the last expression evaluated.
 
 Inclusion of library modules is better done with the
 L<C<use>|/use Module VERSION LIST> and L<C<require>|/require VERSION>
 operators, which also do automatic error checking and raise an exception
 if there's a problem.
 
-You might like to use L<C<do>|/do EXPR> to read in a program
+You might like to use C<do> to read in a program
 configuration file.  Manual error checking can be done this way:
 
     # Read in config files: system first, then user.
@@ -2058,7 +2120,7 @@ as C<CORE::dump()>.
 Unlike most named operators, this has the same precedence as assignment.
 It is also exempt from the looks-like-a-function rule, so
 C<dump ("foo")."bar"> will cause "bar" to be part of the argument to
-L<C<dump>|/dump LABEL>.
+C<dump>.
 
 Portability issues: L<perlport/dump>.
 
@@ -2068,43 +2130,57 @@ X<each> X<hash, iterator>
 =item each ARRAY
 X<array, iterator>
 
-=for Pod::Functions retrieve the next key/value pair from a hash
+=for Pod::Functions retrieve the next key/value pair from a hash or index/value from an array
 
 When called on a hash in list context, returns a 2-element list
-consisting of the key and value for the next element of a hash.  In Perl
-5.12 and later only, it will also return the index and value for the next
-element of an array so that you can iterate over it; older Perls consider
-this a syntax error.  When called in scalar context, returns only the key
-(not the value) in a hash, or the index in an array.
+consisting of the key and value for the next element of a hash.
+When called in scalar context, returns only the key (not the value).
+
+When called on an array in list context, in Perl 5.12 and later, it
+returns a 2-element list consisting of the index and value for the next
+element of the array so that you can iterate over it; older Perls
+consider this a syntax error.  When called in scalar context, returns
+only the index in the array.
 
 Hash entries are returned in an apparently random order.  The actual random
 order is specific to a given hash; the exact same series of operations
 on two hashes may result in a different order for each hash.  Any insertion
 into the hash may change the order, as will any deletion, with the exception
-that the most recent key returned by L<C<each>|/each HASH> or
+that the most recent key returned by C<each> or
 L<C<keys>|/keys HASH> may be deleted without changing the order.  So
 long as a given hash is unmodified you may rely on
 L<C<keys>|/keys HASH>, L<C<values>|/values HASH> and
-L<C<each>|/each HASH> to repeatedly return the same order
+C<each> to repeatedly return the same order
 as each other.  See L<perlsec/"Algorithmic Complexity Attacks"> for
 details on why hash order is randomized.  Aside from the guarantees
-provided here the exact details of Perl's hash algorithm and the hash
+provided here, the exact details of Perl's hash algorithm and the hash
 traversal order are subject to change in any release of Perl.
 
-After L<C<each>|/each HASH> has returned all entries from the hash or
-array, the next call to L<C<each>|/each HASH> returns the empty list in
+Array entries are returned lowest index first.
+
+ my @colors = (qw(red, green, blue));
+ while (my ($index, $value) = each @colors) {
+     print "[$index] = $value\n";
+ }
+
+ [0] = red
+ [1] = green
+ [2] = blue
+
+After C<each> has returned all entries from the hash or
+array, the next call to C<each> returns the empty list in
 list context and L<C<undef>|/undef EXPR> in scalar context; the next
 call following I<that> one restarts iteration.  Each hash or array has
-its own internal iterator, accessed by L<C<each>|/each HASH>,
+its own internal iterator, accessed by C<each>,
 L<C<keys>|/keys HASH>, and L<C<values>|/values HASH>.  The iterator is
-implicitly reset when L<C<each>|/each HASH> has reached the end as just
+implicitly reset when C<each> has reached the end as just
 described; it can be explicitly reset by calling L<C<keys>|/keys HASH>
 or L<C<values>|/values HASH> on the hash or array, or by referencing
 the hash (but not array) in list context.  If you add or delete
 a hash's elements while iterating over it, the effect on the iterator is
 unspecified; for example, entries may be skipped or duplicated--so don't
 do that.  Exception: It is always safe to delete the item most recently
-returned by L<C<each>|/each HASH>, so the following code works properly:
+returned by C<each>, so the following code works properly:
 
     while (my ($key, $value) = each %hash) {
         print $key, "\n";
@@ -2116,7 +2192,7 @@ implementation.
 
 The iterator used by C<each> is attached to the hash or array, and is
 shared between all iteration operations applied to the same hash or array.
-Thus all uses of C<each> on a single hash or array advance the same
+Thus all uses of C<each> on a particular hash or array advance the same
 iterator location.  All uses of C<each> are also subject to having the
 iterator reset by any use of C<keys> or C<values> on the same hash or
 array, or by the hash (but not array) being referenced in list context.
@@ -2126,15 +2202,33 @@ accidentally clobber the iterator state during execution of the loop body.
 It's easy enough to explicitly reset the iterator before starting a loop,
 but there is no way to insulate the iterator state used by a loop from
 the iterator state used by anything else that might execute during the
-loop body.  To avoid these problems, use a C<foreach> loop rather than
-C<while>-C<each>.
+loop body.
 
 This extends to using C<each> on the result of an anonymous hash or
 array constructor.  A new underlying array or hash is created each
 time so each will always start iterating from scratch, eg:
 
   # loops forever
-  while (my ($key, $value) = each @{ +{ a => 1 } }) {
+  while (my ($key, $value) = each %{ +{ a => 1 } }) {
+      print "$key=$value\n";
+  }
+
+To avoid these problems resulting from the hash-embedded iterator, use a
+L<C<foreach>|perlsyn/"Foreach Loops"> loop rather than C<while>-C<each>.
+As of Perl 5.36, you can iterate over both keys and values directly with
+a multiple-value C<foreach> loop.
+
+  # retrieves the keys one time for iteration
+  # iteration is unaffected by any operations on %hash within
+  foreach my $key (keys %hash) {
+      my $value = $hash{$key};
+      $hash{$key} = {keys => scalar keys %hash, outer => [%hash]};
+      some_function_that_may_mess_with(\%hash, $key, $value);
+      $hash{"new$key"} = delete $hash{$key};
+  }
+
+  # Perl 5.36+
+  foreach my ($key, $value) (%{ +{ a => 1 } }) {
       print "$key=$value\n";
   }
 
@@ -2146,10 +2240,10 @@ but in a different order:
     }
 
 Starting with Perl 5.14, an experimental feature allowed
-L<C<each>|/each HASH> to take a scalar expression. This experiment has
+C<each> to take a scalar expression. This experiment has
 been deemed unsuccessful, and was removed as of Perl 5.24.
 
-As of Perl 5.18 you can use a bare L<C<each>|/each HASH> in a C<while>
+As of Perl 5.18 you can use a bare C<each> in a C<while>
 loop, which will set L<C<$_>|perlvar/$_> on every iteration.
 If either an C<each> expression or an explicit assignment of an C<each>
 expression to a scalar is used as a C<while>/C<for> condition, then
@@ -2190,22 +2284,22 @@ interactive context.)  Do not read from a terminal file (or call
 C<eof(FILEHANDLE)> on it) after end-of-file is reached.  File types such
 as terminals may lose the end-of-file condition if you do.
 
-An L<C<eof>|/eof FILEHANDLE> without an argument uses the last file
-read.  Using L<C<eof()>|/eof FILEHANDLE> with empty parentheses is
+An C<eof> without an argument uses the last file
+read.  Using C<eof()> with empty parentheses is
 different.  It refers to the pseudo file formed from the files listed on
 the command line and accessed via the C<< <> >> operator.  Since
 C<< <> >> isn't explicitly opened, as a normal filehandle is, an
-L<C<eof()>|/eof FILEHANDLE> before C<< <> >> has been used will cause
+C<eof()> before C<< <> >> has been used will cause
 L<C<@ARGV>|perlvar/@ARGV> to be examined to determine if input is
-available.   Similarly, an L<C<eof()>|/eof FILEHANDLE> after C<< <> >>
+available.   Similarly, an C<eof()> after C<< <> >>
 has returned end-of-file will assume you are processing another
 L<C<@ARGV>|perlvar/@ARGV> list, and if you haven't set
 L<C<@ARGV>|perlvar/@ARGV>, will read input from C<STDIN>; see
 L<perlop/"I/O Operators">.
 
-In a C<< while (<>) >> loop, L<C<eof>|/eof FILEHANDLE> or C<eof(ARGV)>
+In a C<< while (<>) >> loop, C<eof> or C<eof(ARGV)>
 can be used to detect the end of each file, whereas
-L<C<eof()>|/eof FILEHANDLE> will detect the end of the very last file
+C<eof()> will detect the end of the very last file
 only.  Examples:
 
     # reset line numbering on each input file
@@ -2225,7 +2319,7 @@ only.  Examples:
         last if eof();     # needed if we're reading from a terminal
     }
 
-Practical hint: you almost never need to use L<C<eof>|/eof FILEHANDLE>
+Practical hint: you almost never need to use C<eof>
 in Perl, because the input operators typically return L<C<undef>|/undef
 EXPR> when they run out of data or encounter an error.
 
@@ -2507,7 +2601,7 @@ C<use utf8> and C<no utf8> within the string have their usual effect.
 Source filters activated within the evaluated code apply to the code
 itself.
 
-L<C<evalbytes>|/evalbytes EXPR> is available starting in Perl v5.16.  To
+C<evalbytes> is available starting in Perl v5.16.  To
 access it, you must say C<CORE::evalbytes>, but you can omit the
 C<CORE::> if the
 L<C<"evalbytes"> feature|feature/The 'unicode_eval' and 'evalbytes' features>
@@ -2521,18 +2615,18 @@ X<exec> X<execute>
 
 =for Pod::Functions abandon this program to run another
 
-The L<C<exec>|/exec LIST> function executes a system command I<and never
-returns>; use L<C<system>|/system LIST> instead of L<C<exec>|/exec LIST>
+The C<exec> function executes a system command I<and never
+returns>; use L<C<system>|/system LIST> instead of C<exec>
 if you want it to return.  It fails and
 returns false only if the command does not exist I<and> it is executed
 directly instead of via your system's command shell (see below).
 
-Since it's a common mistake to use L<C<exec>|/exec LIST> instead of
-L<C<system>|/system LIST>, Perl warns you if L<C<exec>|/exec LIST> is
+Since it's a common mistake to use C<exec> instead of
+L<C<system>|/system LIST>, Perl warns you if C<exec> is
 called in void context and if there is a following statement that isn't
 L<C<die>|/die LIST>, L<C<warn>|/warn LIST>, or L<C<exit>|/exit EXPR> (if
 L<warnings> are enabled--but you always do that, right?).  If you
-I<really> want to follow an L<C<exec>|/exec LIST> with some other
+I<really> want to follow an C<exec> with some other
 statement, you can use one of these styles to avoid the warning:
 
     exec ('foo')   or print STDERR "couldn't exec foo: $!";
@@ -2567,7 +2661,7 @@ When the arguments get executed via the system shell, results are
 subject to its quirks and capabilities.  See L<perlop/"`STRING`">
 for details.
 
-Using an indirect object with L<C<exec>|/exec LIST> or
+Using an indirect object with C<exec> or
 L<C<system>|/system LIST> is also more secure.  This usage (which also
 works fine with L<C<system>|/system LIST>) forces
 interpretation of the arguments as a multivalued list, even if the
@@ -2581,7 +2675,7 @@ expanding wildcards or splitting up words with whitespace in them.
     exec { $args[0] } @args;  # safe even with one-arg list
 
 The first version, the one without the indirect object, ran the I<echo>
-program, passing it C<"surprise"> an argument.  The second version didn't;
+program, passing it C<"surprise"> as an argument.  The second version didn't;
 it tried to run a program named I<"echo surprise">, didn't find it, and set
 L<C<$?>|perlvar/$?> to a non-zero value indicating failure.
 
@@ -2596,7 +2690,7 @@ To be safe, you may need to set L<C<$E<verbar>>|perlvar/$E<verbar>>
 L<C<IO::Handle>|IO::Handle/METHODS> on any open handles to avoid lost
 output.
 
-Note that L<C<exec>|/exec LIST> will not call your C<END> blocks, nor
+Note that C<exec> will not call your C<END> blocks, nor
 will it invoke C<DESTROY> methods on your objects.
 
 Portability issues: L<perlport/exec>.
@@ -2618,7 +2712,7 @@ exists may also be called on array elements, but its behavior is much less
 obvious and is strongly tied to the use of L<C<delete>|/delete EXPR> on
 arrays.
 
-B<WARNING:> Calling L<C<exists>|/exists EXPR> on array values is
+B<WARNING:> Calling C<exists> on array values is
 strongly discouraged.  The
 notion of deleting or checking the existence of Perl array elements is not
 conceptually coherent, and can lead to surprising behavior.
@@ -2663,7 +2757,7 @@ This happens anywhere the arrow operator is used, including even here:
     print $ref;  # prints HASH(0x80d3d5c)
 
 Use of a subroutine call, rather than a subroutine name, as an argument
-to L<C<exists>|/exists EXPR> is an error.
+to C<exists> is an error.
 
     exists &sub;    # OK
     exists &sub();  # Error
@@ -2688,12 +2782,12 @@ environment in which the Perl program is running.  For example, exiting
 69 (EX_UNAVAILABLE) from a I<sendmail> incoming-mail filter will cause
 the mailer to return the item undelivered, but that's not true everywhere.
 
-Don't use L<C<exit>|/exit EXPR> to abort a subroutine if there's any
+Don't use C<exit> to abort a subroutine if there's any
 chance that someone might want to trap whatever error happened.  Use
 L<C<die>|/die LIST> instead, which can be trapped by an
 L<C<eval>|/eval EXPR>.
 
-The L<C<exit>|/exit EXPR> function does not always exit immediately.  It
+The C<exit> function does not always exit immediately.  It
 calls any defined C<END> routines first, but these C<END> routines may
 not themselves abort the exit.  Likewise any object destructors that
 need to be called are called before the real exit.  C<END> routines and
@@ -2757,7 +2851,7 @@ If EXPR is omitted, uses L<C<$_>|perlvar/$_>.
 This function behaves the same way under various pragmas, such as within
 L<S<C<"use feature 'unicode_strings">>|feature/The 'unicode_strings' feature>,
 as L<C<lc>|/lc EXPR> does, with the single exception of
-L<C<fc>|/fc EXPR> of I<LATIN CAPITAL LETTER SHARP S> (U+1E9E) within the
+C<fc> of I<LATIN CAPITAL LETTER SHARP S> (U+1E9E) within the
 scope of L<S<C<use locale>>|locale>.  The foldcase of this character
 would normally be C<"ss">, but as explained in the L<C<lc>|/lc EXPR>
 section, case
@@ -2772,7 +2866,7 @@ one for Turkic languages and one that never maps one character into multiple
 characters, these are not provided by the Perl core.  However, the CPAN module
 L<C<Unicode::Casing>|Unicode::Casing> may be used to provide an implementation.
 
-L<C<fc>|/fc EXPR> is available only if the
+C<fc> is available only if the
 L<C<"fc"> feature|feature/The 'fc' feature> is enabled or if it is
 prefixed with C<CORE::>.  The
 L<C<"fc"> feature|feature/The 'fc' feature> is enabled automatically
@@ -2796,7 +2890,7 @@ FILEHANDLE,FUNCTION,SCALAR> below.  For example:
         or die "Can't fcntl F_GETFL: $!";
 
 You don't have to check for L<C<defined>|/defined EXPR> on the return
-from L<C<fcntl>|/fcntl FILEHANDLE,FUNCTION,SCALAR>.  Like
+from C<fcntl>.  Like
 L<C<ioctl>|/ioctl FILEHANDLE,FUNCTION,SCALAR>, it maps a C<0> return
 from the system call into C<"0 but true"> in Perl.  This string is true
 in boolean context and C<0> in numeric context.  It is also exempt from
@@ -2804,7 +2898,7 @@ the normal
 L<C<Argument "..." isn't numeric>|perldiag/Argument "%s" isn't numeric%s>
 L<warnings> on improper numeric conversions.
 
-Note that L<C<fcntl>|/fcntl FILEHANDLE,FUNCTION,SCALAR> raises an
+Note that C<fcntl> raises an
 exception if used on a machine that doesn't implement L<fcntl(2)>.  See
 the L<Fcntl> module or your L<fcntl(2)> manpage to learn what functions
 are available on your system.
@@ -2874,9 +2968,9 @@ same underlying descriptor:
             "not have a real file descriptor\n";
     }
 
-The behavior of L<C<fileno>|/fileno FILEHANDLE> on a directory handle
+The behavior of C<fileno> on a directory handle
 depends on the operating system.  On a system with L<dirfd(3)> or
-similar, L<C<fileno>|/fileno FILEHANDLE> on a directory
+similar, C<fileno> on a directory
 handle returns the underlying file descriptor associated with the
 handle; on systems with no such support, it returns the undefined value,
 and sets L<C<$!>|perlvar/$!> (errno).
@@ -2889,7 +2983,7 @@ X<flock> X<lock> X<locking>
 Calls L<flock(2)>, or an emulation of it, on FILEHANDLE.  Returns true
 for success, false on failure.  Produces a fatal error if used on a
 machine that doesn't implement L<flock(2)>, L<fcntl(2)> locking, or
-L<lockf(3)>.  L<C<flock>|/flock FILEHANDLE,OPERATION> is Perl's portable
+L<lockf(3)>.  C<flock> is Perl's portable
 file-locking interface, although it locks entire files only, not
 records.
 
@@ -2898,8 +2992,8 @@ FILEHANDLE,OPERATION> semantics are
 that it waits indefinitely until the lock is granted, and that its locks
 are B<merely advisory>.  Such discretionary locks are more flexible, but
 offer fewer guarantees.  This means that programs that do not also use
-L<C<flock>|/flock FILEHANDLE,OPERATION> may modify files locked with
-L<C<flock>|/flock FILEHANDLE,OPERATION>.  See L<perlport>,
+C<flock> may modify files locked with
+C<flock>.  See L<perlport>,
 your port's specific documentation, and your system-specific local manpages
 for details.  It's best to assume traditional behavior if you're writing
 portable programs.  (But if you're not, you should as always feel perfectly
@@ -2913,7 +3007,7 @@ you can use the symbolic names if you import them from the L<Fcntl> module,
 either individually, or as a group using the C<:flock> tag.  LOCK_SH
 requests a shared lock, LOCK_EX requests an exclusive lock, and LOCK_UN
 releases a previously requested lock.  If LOCK_NB is bitwise-or'ed with
-LOCK_SH or LOCK_EX, then L<C<flock>|/flock FILEHANDLE,OPERATION> returns
+LOCK_SH or LOCK_EX, then C<flock> returns
 immediately rather than blocking waiting for the lock; check the return
 status to see if you got it.
 
@@ -2930,7 +3024,7 @@ Note that the L<fcntl(2)> emulation of L<flock(3)> requires that FILEHANDLE
 be open with read intent to use LOCK_SH and requires that it be open
 with write intent to use LOCK_EX.
 
-Note also that some versions of L<C<flock>|/flock FILEHANDLE,OPERATION>
+Note also that some versions of C<flock>
 cannot lock things over the network; you would need to use the more
 system-specific L<C<fcntl>|/fcntl FILEHANDLE,FUNCTION,SCALAR> for
 that.  If you like you can force Perl to ignore your system's L<flock(2)>
@@ -2968,7 +3062,7 @@ L<C<fork>|/fork> calls, whereas those that must resort to the more
 capricious L<fcntl(2)> function lose their locks, making it seriously
 harder to write servers.
 
-See also L<DB_File> for other L<C<flock>|/flock FILEHANDLE,OPERATION>
+See also L<DB_File> for other C<flock>
 examples.
 
 Portability issues: L<perlport/flock>.
@@ -2995,7 +3089,7 @@ L<C<$E<verbar>>|perlvar/$E<verbar>> (C<$AUTOFLUSH> in L<English>) or
 call the C<autoflush> method of L<C<IO::Handle>|IO::Handle/METHODS> on
 any open handles to avoid duplicate output.
 
-If you L<C<fork>|/fork> without ever waiting on your children, you will
+If you C<fork> without ever waiting on your children, you will
 accumulate zombies.  On some systems, you can avoid this by setting
 L<C<$SIG{CHLD}>|perlvar/%SIG> to C<"IGNORE">.  See also L<perlipc> for
 more examples of forking and reaping moribund children.
@@ -3007,7 +3101,7 @@ backgrounded job launched from a remote shell) won't think you're done.
 You should reopen those to F</dev/null> if it's any issue.
 
 On some platforms such as Windows, where the L<fork(2)> system call is
-not available, Perl can be built to emulate L<C<fork>|/fork> in the Perl
+not available, Perl can be built to emulate C<fork> in the Perl
 interpreter.  The emulation is designed, at the level of the Perl
 program, to be as compatible as possible with the "Unix" L<fork(2)>.
 However it has limitations that have to be considered in code intended
@@ -3040,7 +3134,7 @@ X<formline>
 
 =for Pod::Functions internal function used for formats
 
-This is an internal function used by L<C<format>|/format>s, though you
+This is an internal function used by C<format>s, though you
 may call it, too.  It formats (see L<perlform>) a list of values
 according to the contents of PICTURE, placing the output into the format
 output accumulator, L<C<$^A>|perlvar/$^A> (or C<$ACCUMULATOR> in
@@ -3048,8 +3142,8 @@ L<English>).  Eventually, when a L<C<write>|/write FILEHANDLE> is done,
 the contents of L<C<$^A>|perlvar/$^A> are written to some filehandle.
 You could also read L<C<$^A>|perlvar/$^A> and then set
 L<C<$^A>|perlvar/$^A> back to C<"">.  Note that a format typically does
-one L<C<formline>|/formline PICTURE,LIST> per line of form, but the
-L<C<formline>|/formline PICTURE,LIST> function itself doesn't care how
+one C<formline> per line of form, but the
+C<formline> function itself doesn't care how
 many newlines are embedded in the PICTURE.  This means that the C<~> and
 C<~~> tokens treat the entire PICTURE as a single line.  You may
 therefore need to use multiple formlines to implement a single record
@@ -3057,7 +3151,7 @@ format, just like the L<C<format>|/format> compiler.
 
 Be careful if you put double quotes around the picture, because an C<@>
 character may be taken to mean the beginning of an array name.
-L<C<formline>|/formline PICTURE,LIST> always returns true.  See
+C<formline> always returns true.  See
 L<perlform> for other examples.
 
 If you are trying to use this instead of L<C<write>|/write FILEHANDLE>
@@ -3114,7 +3208,7 @@ returns the empty string, use L<C<getpwuid>|/getpwuid UID>.
 
     my $login = getlogin || getpwuid($<) || "Kilroy";
 
-Do not consider L<C<getlogin>|/getlogin> for authentication: it is not
+Do not consider C<getlogin> for authentication: it is not
 as secure as L<C<getpwuid>|/getpwuid UID>.
 
 Portability issues: L<perlport/getlogin>.
@@ -3395,10 +3489,10 @@ you can write this:
         $ip_address = inet_ntoa($packed_ip);
     }
 
-Make sure L<C<gethostbyname>|/gethostbyname NAME> is called in SCALAR
+Make sure C<gethostbyname> is called in SCALAR
 context and that its return value is checked for definedness.
 
-The L<C<getprotobynumber>|/getprotobynumber NUMBER> function, even
+The C<getprotobynumber> function, even
 though it only takes one argument, has the precedence of a list
 operator, so beware:
 
@@ -3526,7 +3620,7 @@ C<:nocase> parameter of the L<C<bsd_glob>|File::Glob/C<bsd_glob>> module.
 
 	my @txt = glob("readme*"); # README readme.txt Readme.md
 
-Note that L<C<glob>|/glob EXPR> splits its arguments on whitespace and
+Note that C<glob> splits its arguments on whitespace and
 treats
 each segment as separate pattern.  As such, C<glob("*.c *.h")>
 matches all files with a F<.c> or F<.h> extension.  The expression
@@ -3546,7 +3640,7 @@ If you had to get a variable through, you could do this:
     my @spacies = glob(qq("*${var}e f*"));
 
 If non-empty braces are the only wildcard characters used in the
-L<C<glob>|/glob EXPR>, no filenames are matched, but potentially many
+C<glob>, no filenames are matched, but potentially many
 strings are returned.  For example, this produces nine strings, one for
 each pairing of fruits and colors:
 
@@ -3564,7 +3658,7 @@ is used as a C<while>/C<for> condition, then the condition actually
 tests for definedness of the expression's value, not for its regular
 truth value.
 
-Internal implemenation details:
+Internal implementation details:
 
 This is the internal function implementing the C<< <*.c> >> operator,
 but you can use it directly. The C<< <*.c> >> operator is discussed in
@@ -3597,16 +3691,19 @@ X<goto> X<jump> X<jmp>
 
 =for Pod::Functions create spaghetti code
 
+C<goto> transfers execution to a specified point in the program. Unlike a
+function call, execution does not return to C<goto>.
+
 The C<goto LABEL> form finds the statement labeled with LABEL and
 resumes execution there.  It can't be used to get out of a block or
 subroutine given to L<C<sort>|/sort SUBNAME LIST>.  It can be used to go
 almost anywhere else within the dynamic scope, including out of
 subroutines, but it's usually better to use some other construct such as
 L<C<last>|/last LABEL> or L<C<die>|/die LIST>.  The author of Perl has
-never felt the need to use this form of L<C<goto>|/goto LABEL> (in Perl,
+never felt the need to use this form of C<goto> (in Perl,
 that is; C is another matter).  (The difference is that C does not offer
 named loops combined with loop control.  Perl does, and this replaces
-most structured uses of L<C<goto>|/goto LABEL> in other languages.)
+most structured uses of C<goto> in other languages.)
 
 The C<goto EXPR> form expects to evaluate C<EXPR> to a code reference or
 a label name.  If it evaluates to a code reference, it will be handled
@@ -3614,7 +3711,7 @@ like C<goto &NAME>, below.  This is especially useful for implementing
 tail recursion via C<goto __SUB__>.
 
 If the expression evaluates to a label name, its scope will be resolved
-dynamically.  This allows for computed L<C<goto>|/goto LABEL>s per
+dynamically.  This allows for computed C<goto>s per
 FORTRAN, but isn't necessarily recommended if you're optimizing for
 maintainability:
 
@@ -3639,7 +3736,7 @@ operand.)  It also can't be used to go into a
 construct that is optimized away.
 
 The C<goto &NAME> form is quite different from the other forms of
-L<C<goto>|/goto LABEL>.  In fact, it isn't a goto in the normal sense at
+C<goto>.  In fact, it isn't a goto in the normal sense at
 all, and doesn't have the stigma associated with other gotos.  Instead,
 it exits the current subroutine (losing any changes set by
 L<C<local>|/local EXPR>) and immediately calls in its place the named
@@ -3648,7 +3745,7 @@ by C<AUTOLOAD> subroutines that wish to load another subroutine and then
 pretend that the other subroutine had been called in the first place
 (except that any modifications to L<C<@_>|perlvar/@_> in the current
 subroutine are propagated to the other subroutine.) After the
-L<C<goto>|/goto LABEL>, not even L<C<caller>|/caller EXPR> will be able
+C<goto>, not even L<C<caller>|/caller EXPR> will be able
 to tell that this routine was called first.
 
 NAME needn't be the name of a subroutine; it can be a scalar variable
@@ -3684,11 +3781,11 @@ it can cause bizarre results if the elements of LIST are not variables.
 Similarly, grep returns aliases into the original list, much as a for
 loop's index variable aliases the list elements.  That is, modifying an
 element of a list returned by grep (for example, in a C<foreach>,
-L<C<map>|/map BLOCK LIST> or another L<C<grep>|/grep BLOCK LIST>)
+L<C<map>|/map BLOCK LIST> or another C<grep>)
 actually modifies the element in the original list.
 This is usually something to be avoided when writing clear code.
 
-See also L<C<map>|/map BLOCK LIST> for a list composed of the results of
+See also C<map> for a list composed of the results of
 the BLOCK or EXPR.
 
 =item hex EXPR
@@ -3722,11 +3819,11 @@ X<import>
 
 =for Pod::Functions patch a module's namespace into your own
 
-There is no builtin L<C<import>|/import LIST> function.  It is just an
+There is no builtin C<import> function.  It is just an
 ordinary method (subroutine) defined (or inherited) by modules that wish
 to export names to another module.  The
 L<C<use>|/use Module VERSION LIST> function calls the
-L<C<import>|/import LIST> method for the package used.  See also
+C<import> method for the package used.  See also
 L<C<use>|/use Module VERSION LIST>, L<perlmod>, and L<Exporter>.
 
 =item index STR,SUBSTR,POSITION
@@ -3743,7 +3840,7 @@ or after POSITION.  If POSITION is omitted, starts searching from the
 beginning of the string.  POSITION before the beginning of the string
 or after its end is treated as if it were the beginning or the end,
 respectively.  POSITION and the return value are based at zero.
-If the substring is not found, L<C<index>|/index STR,SUBSTR,POSITION>
+If the substring is not found, C<index>
 returns -1.
 
 Find characters or strings:
@@ -3778,6 +3875,9 @@ the L<C<sprintf>|/sprintf FORMAT, LIST>,
 L<C<printf>|/printf FILEHANDLE FORMAT, LIST>, or the
 L<C<POSIX::floor>|POSIX/C<floor>> and L<C<POSIX::ceil>|POSIX/C<ceil>>
 functions will serve you better than will L<C<int>|/int EXPR>.
+Moreover, C<int 'Inf'> produces Inf (see
+L<perldata/Special floating point: infinity (Inf) and not-a-number (NaN)>
+for explanation), but so do all the alternative methods mentioned above.
 
 =item ioctl FILEHANDLE,FUNCTION,SCALAR
 X<ioctl>
@@ -3796,15 +3896,15 @@ own, based on your C header files such as F<< <sys/ioctl.h> >>.
 may help you in this, but it's nontrivial.)  SCALAR will be read and/or
 written depending on the FUNCTION; a C pointer to the string value of SCALAR
 will be passed as the third argument of the actual
-L<C<ioctl>|/ioctl FILEHANDLE,FUNCTION,SCALAR> call.  (If SCALAR
+C<ioctl> call.  (If SCALAR
 has no string value but does have a numeric value, that value will be
 passed rather than a pointer to the string value.  To guarantee this to be
 true, add a C<0> to the scalar before using it.)  The
 L<C<pack>|/pack TEMPLATE,LIST> and L<C<unpack>|/unpack TEMPLATE,EXPR>
 functions may be needed to manipulate the values of structures used by
-L<C<ioctl>|/ioctl FILEHANDLE,FUNCTION,SCALAR>.
+C<ioctl>.
 
-The return value of L<C<ioctl>|/ioctl FILEHANDLE,FUNCTION,SCALAR> (and
+The return value of C<ioctl> (and
 L<C<fcntl>|/fcntl FILEHANDLE,FUNCTION,SCALAR>) is as follows:
 
     if OS returns:      then Perl returns:
@@ -3836,7 +3936,7 @@ separated by the value of EXPR, and returns that new string.  Example:
    my $rec = join(':', $login,$passwd,$uid,$gid,$gcos,$home,$shell);
 
 Beware that unlike L<C<split>|/split E<sol>PATTERNE<sol>,EXPR,LIMIT>,
-L<C<join>|/join EXPR,LIST> doesn't take a pattern as its first argument.
+C<join> doesn't take a pattern as its first argument.
 Compare L<C<split>|/split E<sol>PATTERNE<sol>,EXPR,LIMIT>.
 
 =item keys HASH
@@ -3844,33 +3944,35 @@ X<keys> X<key>
 
 =item keys ARRAY
 
-=for Pod::Functions retrieve list of indices from a hash
+=for Pod::Functions retrieve list of indices from a hash or array
 
 Called in list context, returns a list consisting of all the keys of the
-named hash, or in Perl 5.12 or later only, the indices of an array.  Perl
+named hash, or in Perl 5.12 or later, the indices of an array.  Perl
 releases prior to 5.12 will produce a syntax error if you try to use an
 array argument.  In scalar context, returns the number of keys or indices.
+
+Array entries are returned lowest index first.
 
 Hash entries are returned in an apparently random order.  The actual random
 order is specific to a given hash; the exact same series of operations
 on two hashes may result in a different order for each hash.  Any insertion
 into the hash may change the order, as will any deletion, with the exception
 that the most recent key returned by L<C<each>|/each HASH> or
-L<C<keys>|/keys HASH> may be deleted without changing the order.  So
+C<keys> may be deleted without changing the order.  So
 long as a given hash is unmodified you may rely on
-L<C<keys>|/keys HASH>, L<C<values>|/values HASH> and L<C<each>|/each
+C<keys>, L<C<values>|/values HASH> and L<C<each>|/each
 HASH> to repeatedly return the same order
 as each other.  See L<perlsec/"Algorithmic Complexity Attacks"> for
 details on why hash order is randomized.  Aside from the guarantees
-provided here the exact details of Perl's hash algorithm and the hash
+provided here, the exact details of Perl's hash algorithm and the hash
 traversal order are subject to change in any release of Perl.  Tied hashes
 may behave differently to Perl's hashes with respect to changes in order on
 insertion and deletion of items.
 
-As a side effect, calling L<C<keys>|/keys HASH> resets the internal
+As a side effect, calling C<keys> resets the internal
 iterator of the HASH or ARRAY (see L<C<each>|/each HASH>) before
 yielding the keys.  In
-particular, calling L<C<keys>|/keys HASH> in void context resets the
+particular, calling C<keys> in void context resets the
 iterator with no other overhead.
 
 Here is yet another way to print your environment:
@@ -3899,7 +4001,7 @@ sort of a hash by its values:
         printf "%4d %s\n", $hash{$key}, $key;
     }
 
-Used as an lvalue, L<C<keys>|/keys HASH> allows you to increase the
+Used as an lvalue on a hash, C<keys> allows you to increase the
 number of hash buckets
 allocated for the given hash.  This can gain you a measure of efficiency if
 you know the hash is going to get big.  (This is similar to pre-extending
@@ -3912,12 +4014,13 @@ in fact, since it rounds up to the next power of two.  These
 buckets will be retained even if you do C<%hash = ()>, use C<undef
 %hash> if you want to free the storage while C<%hash> is still in scope.
 You can't shrink the number of buckets allocated for the hash using
-L<C<keys>|/keys HASH> in this way (but you needn't worry about doing
-this by accident, as trying has no effect).  C<keys @array> in an lvalue
-context is a syntax error.
+C<keys> in this way (but you needn't worry about doing
+this by accident, as trying has no effect).
+
+C<keys @array> in an lvalue context is a syntax error.
 
 Starting with Perl 5.14, an experimental feature allowed
-L<C<keys>|/keys HASH> to take a scalar expression. This experiment has
+C<keys> to take a scalar expression. This experiment has
 been deemed unsuccessful, and was removed as of Perl 5.24.
 
 To avoid confusing would-be users of your code who are running earlier
@@ -3961,7 +4064,7 @@ the entire process group specified.  That
 means you usually want to use positive not negative signals.
 
 If SIGNAL is either the number 0 or the string C<ZERO> (or C<SIGZERO>),
-no signal is sent to the process, but L<C<kill>|/kill SIGNAL, LIST>
+no signal is sent to the process, but C<kill>
 checks whether it's I<possible> to send a signal to it
 (that means, to be brief, that the process is owned by the same user, or we are
 the super-user).  This is useful to check that a child process is still
@@ -4003,7 +4106,7 @@ X<last> X<break>
 
 =for Pod::Functions exit a block prematurely
 
-The L<C<last>|/last LABEL> command is like the C<break> statement in C
+The C<last> command is like the C<break> statement in C
 (as used in
 loops); it immediately exits the loop in question.  If the LABEL is
 omitted, the command refers to the innermost enclosing
@@ -4017,24 +4120,24 @@ L<C<continue>|/continue BLOCK> block, if any, is not executed:
         #...
     }
 
-L<C<last>|/last LABEL> cannot return a value from a block that typically
+C<last> cannot return a value from a block that typically
 returns a value, such as C<eval {}>, C<sub {}>, or C<do {}>. It will perform
 its flow control behavior, which precludes any return value. It should not be
 used to exit a L<C<grep>|/grep BLOCK LIST> or L<C<map>|/map BLOCK LIST>
 operation.
 
 Note that a block by itself is semantically identical to a loop
-that executes once.  Thus L<C<last>|/last LABEL> can be used to effect
+that executes once.  Thus C<last> can be used to effect
 an early exit out of such a block.
 
 See also L<C<continue>|/continue BLOCK> for an illustration of how
-L<C<last>|/last LABEL>, L<C<next>|/next LABEL>, and
+C<last>, L<C<next>|/next LABEL>, and
 L<C<redo>|/redo LABEL> work.
 
 Unlike most named operators, this has the same precedence as assignment.
 It is also exempt from the looks-like-a-function rule, so
 C<last ("foo")."bar"> will cause "bar" to be part of the argument to
-L<C<last>|/last LABEL>.
+C<last>.
 
 =item lc EXPR
 X<lc> X<lowercase>
@@ -4170,7 +4273,7 @@ X<local>
 =for Pod::Functions create a temporary value for a global variable (dynamic scoping)
 
 You really probably want to be using L<C<my>|/my VARLIST> instead,
-because L<C<local>|/local EXPR> isn't what most people think of as
+because C<local> isn't what most people think of as
 "local".  See L<perlsub/"Private Variables via my()"> for details.
 
 A local modifies the listed variables to be local to the enclosing
@@ -4179,9 +4282,9 @@ be placed in parentheses.  See L<perlsub/"Temporary Values via local()">
 for details, including issues with tied arrays and hashes.
 
 Like L<C<my>|/my VARLIST>, L<C<state>|/state VARLIST>, and
-L<C<our>|/our VARLIST>, L<C<local>|/local EXPR> can operate on a variable
+L<C<our>|/our VARLIST>, C<local> can operate on a variable
 anywhere it appears in an expression (aside from interpolation in strings).
-Unlike the other declarations, the effect of L<C<local>|/local EXPR> happens
+Unlike the other declarations, the effect of C<local> happens
 at runtime, and so it will apply to additional uses of the same variable
 executed after the declaration, even within the same statement. Note that
 this does not include uses within an expression assigned to the variable
@@ -4208,33 +4311,30 @@ X<localtime> X<ctime>
 =for Pod::Functions convert UNIX time into record or string using local time
 
 Converts a time as returned by the time function to a 9-element list
-with the time analyzed for the local time zone.  Typically used as
-follows:
+with the time analyzed for the local time zone.  If EXPR is omitted,
+C<localtime> uses the current time (as returned by
+L<C<time>|/time>).
+
+Typically used as follows:
 
     #     0    1    2     3     4    5     6     7     8
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
                                                 localtime(time);
 
-All list elements are numeric and come straight out of the C 'struct
-tm'.  C<$sec>, C<$min>, and C<$hour> are the seconds, minutes, and hours
+All list elements are numeric and come straight out of the C C<struct
+tm>.  C<$sec>, C<$min>, and C<$hour> are the seconds, minutes, and hours
 of the specified time.
 
-C<$mday> is the day of the month and C<$mon> the month in
-the range C<0..11>, with 0 indicating January and 11 indicating December.
-This makes it easy to get a month name from a list:
+C<$mday> is the day of the month in the range C<1..31> (i.e. 1-based).  C<$mon>
+is the month in the range C<0..11> (i.e. 0-based), with 0 indicating January
+and 11 indicating December.  This makes it easy to get a month name from a
+list:
 
     my @abbr = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
     print "$abbr[$mon] $mday";
     # $mon=9, $mday=18 gives "Oct 18"
 
-C<$year> contains the number of years since 1900.  To get the full
-year write:
-
-    $year += 1900;
-
-To get the last two digits of the year (e.g., "01" in 2001) do:
-
-    $year = sprintf("%02d", $year % 100);
+C<$year> contains the number of years since 1900 (e.g. C<129> for 2029).
 
 C<$wday> is the day of the week, with 0 indicating Sunday and 3 indicating
 Wednesday.  C<$yday> is the day of the year, in the range C<0..364>
@@ -4243,21 +4343,42 @@ Wednesday.  C<$yday> is the day of the year, in the range C<0..364>
 C<$isdst> is true if the specified time occurs when Daylight Saving
 Time is in effect, false otherwise.
 
-If EXPR is omitted, L<C<localtime>|/localtime EXPR> uses the current
-time (as returned by L<C<time>|/time>).
+To get a human-readable date/time string, use L<POSIX/C<strftime>>:
 
-In scalar context, L<C<localtime>|/localtime EXPR> returns the
+    use POSIX qw(strftime);
+    my @now = localtime;
+    my $now_string = strftime "%Y-%m-%d %H:%M:%S", @now;
+    # e.g. "2025-11-29 15:19:02"
+
+To get just the year, you can use either L<POSIX/C<strftime>>:
+
+    use POSIX qw(strftime);
+    # full year:
+    my $year = strftime "%Y", localtime;
+    # just the last two digits of the year:
+    my $ar = strftime "%y", localtime;
+
+... or manual arithmetic:
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
+                                                            localtime;
+    # full year:
+    $year += 1900;
+    # just the last two digits of the year:
+    my $ar = sprintf("%02d", $year % 100);
+
+In scalar context, C<localtime> returns the
 L<ctime(3)> value:
 
- my $now_string = localtime;  # e.g., "Thu Oct 13 04:54:34 1994"
+    my $now_string = localtime;  # e.g., "Thu Oct 13 04:54:34 1994"
 
 This scalar value is always in English, and is B<not> locale-dependent.
 To get similar but locale-dependent date strings, try for example:
 
- use POSIX qw(strftime);
- my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
- # or for GMT formatted appropriately for your locale:
- my $now_string = strftime "%a %b %e %H:%M:%S %Y", gmtime;
+    use POSIX qw(strftime);
+    my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
+    # or for GMT formatted appropriately for your locale:
+    my $now_string = strftime "%a %b %e %H:%M:%S %Y", gmtime;
 
 C<$now_string> will be formatted according to the current LC_TIME locale
 the program or thread is running in.  See L<perllocale> for how to set
@@ -4267,7 +4388,7 @@ three characters wide.
 
 The L<Time::gmtime> and L<Time::localtime> modules provide a convenient,
 by-name access mechanism to the L<C<gmtime>|/gmtime EXPR> and
-L<C<localtime>|/localtime EXPR> functions, respectively.
+C<localtime> functions, respectively.
 
 For a comprehensive date and time representation look at the
 L<DateTime> module on CPAN.
@@ -4292,7 +4413,7 @@ object contained in I<THING> until the lock goes out of scope.
 The value returned is the scalar itself, if the argument is a scalar, or a
 reference, if the argument is a hash, array or subroutine.
 
-L<C<lock>|/lock THING> is a "weak keyword"; this means that if you've
+C<lock> is a "weak keyword"; this means that if you've
 defined a function
 by this name (before any calls to it), that function will be called
 instead.  If you are not under C<use threads::shared> this does nothing.
@@ -4542,7 +4663,7 @@ X<my>
 
 =for Pod::Functions declare and assign a local variable (lexical scoping)
 
-A L<C<my>|/my VARLIST> declares the listed variables to be local
+A C<my> declares the listed variables to be local
 (lexically) to the enclosing block, file, or L<C<eval>|/eval EXPR>.  If
 more than one variable is listed, the list must be placed in
 parentheses.
@@ -4554,7 +4675,7 @@ values:
     my ( undef, $min, $hour ) = localtime;
 
 Like L<C<state>|/state VARLIST>, L<C<local>|/local EXPR>, and
-L<C<our>|/our VARLIST>, L<C<my>|/my VARLIST> can operate on a variable
+L<C<our>|/our VARLIST>, C<my> can operate on a variable
 anywhere it appears in an expression (aside from interpolation in strings).
 The declaration will not apply to additional uses of the same variable until
 the next statement. This means additional uses of that variable within the
@@ -4589,7 +4710,7 @@ X<next> X<continue>
 
 =for Pod::Functions iterate a block prematurely
 
-The L<C<next>|/next LABEL> command is like the C<continue> statement in
+The C<next> command is like the C<continue> statement in
 C; it starts the next iteration of the loop:
 
     LINE: while (<STDIN>) {
@@ -4604,24 +4725,24 @@ refers to the innermost enclosing loop.  The C<next EXPR> form, available
 as of Perl 5.18.0, allows a label name to be computed at run time, being
 otherwise identical to C<next LABEL>.
 
-L<C<next>|/next LABEL> cannot return a value from a block that typically
+C<next> cannot return a value from a block that typically
 returns a value, such as C<eval {}>, C<sub {}>, or C<do {}>. It will perform
 its flow control behavior, which precludes any return value. It should not be
 used to exit a L<C<grep>|/grep BLOCK LIST> or L<C<map>|/map BLOCK LIST>
 operation.
 
 Note that a block by itself is semantically identical to a loop
-that executes once.  Thus L<C<next>|/next LABEL> will exit such a block
+that executes once.  Thus C<next> will exit such a block
 early.
 
 See also L<C<continue>|/continue BLOCK> for an illustration of how
-L<C<last>|/last LABEL>, L<C<next>|/next LABEL>, and
+L<C<last>|/last LABEL>, C<next>, and
 L<C<redo>|/redo LABEL> work.
 
 Unlike most named operators, this has the same precedence as assignment.
 It is also exempt from the looks-like-a-function rule, so
 C<next ("foo")."bar"> will cause "bar" to be part of the argument to
-L<C<next>|/next LABEL>.
+C<next>.
 
 =item no MODULE VERSION LIST
 X<no declarations>
@@ -4638,7 +4759,7 @@ X<unimporting>
 =for Pod::Functions unimport some module symbols or semantics at compile time
 
 See the L<C<use>|/use Module VERSION LIST> function, of which
-L<C<no>|/no MODULE VERSION LIST> is the opposite.
+C<no> is the opposite.
 
 =item oct EXPR
 X<oct> X<octal> X<hex> X<hexadecimal> X<binary> X<bin>
@@ -4666,14 +4787,14 @@ L<C<printf>|/printf FILEHANDLE FORMAT, LIST>:
     my $dec_perms = (stat("filename"))[2] & 07777;
     my $oct_perm_str = sprintf "%o", $perms;
 
-The L<C<oct>|/oct EXPR> function is commonly used when a string such as
+The C<oct> function is commonly used when a string such as
 C<644> needs
 to be converted into a file mode, for example.  Although Perl
 automatically converts strings into numbers as needed, this automatic
 conversion assumes base 10.
 
 Leading white space is ignored without warning, as too are any trailing
-non-digits, such as a decimal point (L<C<oct>|/oct EXPR> only handles
+non-digits, such as a decimal point (C<oct> only handles
 non-negative integers, not negative integers or floating point).
 
 =item open FILEHANDLE,MODE,EXPR
@@ -4876,7 +4997,7 @@ is C<-|>, the filename is interpreted as a command that pipes
 output to us.  In the two-argument (and one-argument) form, one should
 replace dash (C<->) with the command.
 See L<perlipc/"Using open() for IPC"> for more examples of this.
-(You are not allowed to L<C<open>|/open FILEHANDLE,MODE,EXPR> to a command
+(You are not allowed to C<open> to a command
 that pipes both in I<and> out, but see L<IPC::Open2>, L<IPC::Open3>, and
 L<perlipc/"Bidirectional Communication with Another Process"> for
 alternatives.)
@@ -4896,14 +5017,14 @@ alternatives.)
 In the form of pipe opens taking three or more arguments, if LIST is specified
 (extra arguments after the command name) then LIST becomes arguments
 to the command invoked if the platform supports it.  The meaning of
-L<C<open>|/open FILEHANDLE,MODE,EXPR> with more than three arguments for
+C<open> with more than three arguments for
 non-pipe modes is not yet defined, but experimental "layers" may give
 extra LIST arguments meaning.
 
 If you open a pipe on the command C<-> (that is, specify either C<|-> or C<-|>
 with the one- or two-argument forms of
-L<C<open>|/open FILEHANDLE,MODE,EXPR>), an implicit L<C<fork>|/fork> is done,
-so L<C<open>|/open FILEHANDLE,MODE,EXPR> returns twice: in the parent process
+C<open>), an implicit L<C<fork>|/fork> is done,
+so C<open> returns twice: in the parent process
 it returns the pid
 of the child process, and in the child process it returns (a defined) C<0>.
 Use C<defined($pid)> or C<//> to determine whether the open was successful.
@@ -5052,7 +5173,7 @@ In the one- and two-argument forms of the call, the mode and filename
 should be concatenated (in that order), preferably separated by white
 space.  You can--but shouldn't--omit the mode in these forms when that mode
 is C<< < >>.  It is safe to use the two-argument form of
-L<C<open>|/open FILEHANDLE,MODE,EXPR> if the filename argument is a known literal.
+C<open> if the filename argument is a known literal.
 
  open(my $dbase, "+<dbase.mine")          # ditto
      or die "Can't open 'dbase.mine' for update: $!";
@@ -5139,7 +5260,7 @@ symbolic reference, so C<use strict "refs"> should I<not> be in effect.)
 =item Whitespace and special characters in the filename argument
 
 The filename passed to the one- and two-argument forms of
-L<C<open>|/open FILEHANDLE,MODE,EXPR> will
+C<open> will
 have leading and trailing whitespace deleted and normal
 redirection characters honored.  This property, known as "magic open",
 can often be used to good effect.  A user could specify a filename of
@@ -5162,7 +5283,7 @@ otherwise it's necessary to protect any leading and trailing whitespace:
 
 (this may not work on some bizarre filesystems).  One should
 conscientiously choose between the I<magic> and I<three-argument> form
-of L<C<open>|/open FILEHANDLE,MODE,EXPR>:
+of C<open>:
 
     open(my $in, $ARGV[0]) || die "Can't open $ARGV[0]: $!";
 
@@ -5181,7 +5302,7 @@ produces a filename that can be opened normally.)
 If you want a "real" C L<open(2)>, then you should use the
 L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE> function, which involves
 no such magic (but uses different filemodes than Perl
-L<C<open>|/open FILEHANDLE,MODE,EXPR>, which corresponds to C L<fopen(3)>).
+C<open>, which corresponds to C L<fopen(3)>).
 This is another way to protect your filenames from interpretation.  For
 example:
 
@@ -5250,21 +5371,21 @@ X<our> X<global>
 
 =for Pod::Functions +5.6.0 declare and assign a package variable (lexical scoping)
 
-L<C<our>|/our VARLIST> makes a lexical alias to a package (i.e. global)
+C<our> makes a lexical alias to a package (i.e. global)
 variable of the same name in the current package for use within the
 current lexical scope.
 
-L<C<our>|/our VARLIST> has the same scoping rules as
+C<our> has the same scoping rules as
 L<C<my>|/my VARLIST> or L<C<state>|/state VARLIST>, meaning that it is
 only valid within a lexical scope.  Unlike L<C<my>|/my VARLIST> and
 L<C<state>|/state VARLIST>, which both declare new (lexical) variables,
-L<C<our>|/our VARLIST> only creates an alias to an existing variable: a
+C<our> only creates an alias to an existing variable: a
 package variable of the same name.
 
 This means that when C<use strict 'vars'> is in effect, L<C<our>|/our
 VARLIST> lets you use a package variable without qualifying it with the
 package name, but only within the lexical scope of the
-L<C<our>|/our VARLIST> declaration.  This applies immediately--even
+C<our> declaration.  This applies immediately--even
 within the same statement.
 
     package Foo;
@@ -5292,7 +5413,7 @@ package variables spring into existence when first used.
     print $Foo::foo; # prints 23
 
 Because the variable becomes legal immediately under C<use strict 'vars'>, so
-long as there is no variable with that name is already in scope, you can then
+long as there is no variable with that name already in scope, you can then
 reference the package variable again even within the same statement.
 
     package Foo;
@@ -5307,7 +5428,7 @@ in parentheses.
     our($bar, $baz);
 
 Like L<C<my>|/my VARLIST>, L<C<state>|/state VARLIST>, and
-L<C<local>|/local EXPR>, L<C<our>|/our VARLIST> can operate on a variable
+L<C<local>|/local EXPR>, C<our> can operate on a variable
 anywhere it appears in an expression (aside from interpolation in strings).
 The declaration will not apply to additional uses of the same variable until
 the next statement. This means additional uses of that variable within the
@@ -5321,7 +5442,7 @@ that scope.
     foo($x, our $x = $x + 1, $x); # foo() receives (2, 3, 2)
     foo($x, our $z = 5, $z);      # foo() receives (3, 5, 5)
 
-An L<C<our>|/our VARLIST> declaration declares an alias for a package
+An C<our> declaration declares an alias for a package
 variable that will be visible
 across its entire lexical scope, even across package boundaries.  The
 package in which the variable is entered is determined at the point
@@ -5335,13 +5456,13 @@ behavior holds:
     package Bar;
     print $bar;    # prints 20, as it refers to $Foo::bar
 
-Multiple L<C<our>|/our VARLIST> declarations with the same name in the
+Multiple C<our> declarations with the same name in the
 same lexical
 scope are allowed if they are in different packages.  If they happen
 to be in the same package, Perl will emit warnings if you have asked
 for them, just like multiple L<C<my>|/my VARLIST> declarations.  Unlike
 a second L<C<my>|/my VARLIST> declaration, which will bind the name to a
-fresh variable, a second L<C<our>|/our VARLIST> declaration in the same
+fresh variable, a second C<our> declaration in the same
 package, in the same scope, is merely redundant.
 
     use warnings;
@@ -5356,7 +5477,7 @@ package, in the same scope, is merely redundant.
     our $bar;      # emits warning but has no other effect
     print $bar;    # still prints 30
 
-An L<C<our>|/our VARLIST> declaration may also have a list of attributes
+An C<our> declaration may also have a list of attributes
 associated with it.
 
 The exact semantics and interface of TYPE and ATTRS are still
@@ -5371,9 +5492,10 @@ values:
 
     our ( undef, $min, $hour ) = localtime;
 
-L<C<our>|/our VARLIST> differs from L<C<use vars>|vars>, which allows
-use of an unqualified name I<only> within the affected package, but
-across scopes.
+C<our> creates a lexically scoped alias to the package
+variable of the same name, and as such differs from L<C<use vars>|vars>,
+which allows use of an unqualified name I<only> within the affected
+package, without consideration for scopes.
 
 =item pack TEMPLATE,LIST
 X<pack>
@@ -5457,7 +5579,7 @@ of values, as follows:
        as possible.  Bit eight (the high bit) is set on each byte
        except the last.
 
-    x  A null byte (a.k.a ASCII NUL, "\000", chr(0))
+    x  A null byte (a.k.a. ASCII NUL, "\000", chr(0))
     X  Back up a byte.
     @  Null-fill or truncate to absolute position, counted from the
        start of the innermost ()-group.
@@ -5626,7 +5748,7 @@ On unpacking, bits are converted to a string of C<0>s and C<1>s.
 The C<h> and C<H> formats pack a string that many nybbles (4-bit groups,
 representable as hexadecimal digits, C<"0".."9"> C<"a".."f">) long.
 
-For each such format, L<C<pack>|/pack TEMPLATE,LIST> generates 4 bits of result.
+For each such format, C<pack> generates 4 bits of result.
 With non-alphabetical characters, the result is based on the 4 least-significant
 bits of the input character, i.e., on C<ord($char)%16>.  In particular,
 characters C<"0"> and C<"1"> generate nybbles 0 and 1, as do bytes
@@ -5636,7 +5758,7 @@ C<"A"> both generate the nybble C<0xA==10>.  Use only these specific hex
 characters with this format.
 
 Starting from the beginning of the template to
-L<C<pack>|/pack TEMPLATE,LIST>, each pair
+C<pack>, each pair
 of characters is converted to 1 character of output.  With format C<h>, the
 first character of the pair determines the least-significant nybble of the
 output character; with format C<H>, it determines the most-significant
@@ -5676,13 +5798,13 @@ the packed items themselves.  This is useful when the structure you're
 unpacking has encoded the sizes or repeat counts for some of its fields
 within the structure itself as separate fields.
 
-For L<C<pack>|/pack TEMPLATE,LIST>, you write
+For C<pack>, you write
 I<length-item>C</>I<sequence-item>, and the
 I<length-item> describes how the length value is packed.  Formats likely
 to be of most use are integer-packing ones like C<n> for Java strings,
 C<w> for ASN.1 or SNMP, and C<N> for Sun XDR.
 
-For L<C<pack>|/pack TEMPLATE,LIST>, I<sequence-item> may have a repeat
+For C<pack>, I<sequence-item> may have a repeat
 count, in which case
 the minimum of that and the number of available items is used as the argument
 for I<length-item>.  If it has no repeat count or uses a '*', the number
@@ -5699,14 +5821,14 @@ the I<length-item> is the string length, not the number of strings.  With
 an explicit repeat count for pack, the packed string is adjusted to that
 length.  For example:
 
- This code:                             gives this result:
+    This code:                              gives this result:
 
- unpack("W/a", "\004Gurusamy")          ("Guru")
- unpack("a3/A A*", "007 Bond  J ")      (" Bond", "J")
- unpack("a3 x2 /A A*", "007: Bond, J.") ("Bond, J", ".")
+    unpack("W/a", "\004Gurusamy")           ("Guru")
+    unpack("a3/A A*", "007 Bond  J ")       (" Bond", "J")
+    unpack("a3 x2 /A A*", "007: Bond, J.")  ("Bond, J", ".")
 
- pack("n/a* w/a","hello,","world")     "\000\006hello,\005world"
- pack("a/W2", ord("a") .. ord("z"))    "2ab"
+    pack("n/a* w/a", "hi,", "world")        "\000\003hi,\005world"
+    pack("a/W2", ord("a") .. ord("z"))      "2ab"
 
 The I<length-item> is not returned explicitly from
 L<C<unpack>|/unpack TEMPLATE,EXPR>.
@@ -5726,10 +5848,10 @@ may be larger.  This is mainly an issue on 64-bit platforms.  You can
 see whether using C<!> makes any difference this way:
 
     printf "format s is %d, s! is %d\n",
-	length pack("s"), length pack("s!");
+        length pack("s"), length pack("s!");
 
     printf "format l is %d, l! is %d\n",
-	length pack("l"), length pack("l!");
+        length pack("l"), length pack("l!");
 
 
 C<i!> and C<I!> are also allowed, but only for completeness' sake:
@@ -5747,11 +5869,11 @@ the command line:
 
 or programmatically via the L<C<Config>|Config> module:
 
-       use Config;
-       print $Config{shortsize},    "\n";
-       print $Config{intsize},      "\n";
-       print $Config{longsize},     "\n";
-       print $Config{longlongsize}, "\n";
+    use Config;
+    print $Config{shortsize},    "\n";
+    print $Config{intsize},      "\n";
+    print $Config{longsize},     "\n";
+    print $Config{longlongsize}, "\n";
 
 C<$Config{longlongsize}> is undefined on systems without
 long long support.
@@ -5780,14 +5902,14 @@ Peace" by Danny Cohen, USC/ISI IEN 137, April 1, 1980.
 
 Some systems may have even weirder byte orders such as
 
-   0x56 0x78 0x12 0x34
-   0x34 0x12 0x78 0x56
+    0x56 0x78 0x12 0x34
+    0x34 0x12 0x78 0x56
 
 These are called mid-endian, middle-endian, mixed-endian, or just weird.
 
 You can determine your system endianness with this incantation:
 
-   printf("%#02x ", $_) for unpack("W*", pack L=>0x12345678);
+    printf("%#02x ", $_) for unpack("W*", pack("L", 0x12345678));
 
 The byteorder on the platform where Perl was built is also available
 via L<Config>:
@@ -5913,14 +6035,14 @@ is what you want:
     C3.8E.C2.B1.C3.8F.C2.89
 
 Those examples also illustrate that you should not try to use
-L<C<pack>|/pack TEMPLATE,LIST>/L<C<unpack>|/unpack TEMPLATE,EXPR> as a
+C<pack>/L<C<unpack>|/unpack TEMPLATE,EXPR> as a
 substitute for the L<Encode> module.
 
 =item *
 
 You must yourself do any alignment or padding by inserting, for example,
 enough C<"x">es while packing.  There is no way for
-L<C<pack>|/pack TEMPLATE,LIST> and L<C<unpack>|/unpack TEMPLATE,EXPR>
+C<pack> and L<C<unpack>|/unpack TEMPLATE,EXPR>
 to know where characters are going to or coming from, so they
 handle their output and input as flat sequences of characters.
 
@@ -5932,7 +6054,9 @@ L<C<unpack>|/unpack TEMPLATE,EXPR>, also via the C</>
 template character.  Within each repetition of a group, positioning with
 C<@> starts over at 0.  Therefore, the result of
 
-    pack("@1A((@2A)@3A)", qw[X Y Z])
+    # note: single quotes around the template string to prevent
+    # array interpolation of @1, @2, @3
+    pack('@1A((@2A)@3A)', qw[X Y Z])
 
 is the string C<"\0X\0\0YZ">.
 
@@ -5940,13 +6064,13 @@ is the string C<"\0X\0\0YZ">.
 
 C<x> and C<X> accept the C<!> modifier to act as alignment commands: they
 jump forward or back to the closest position aligned at a multiple of C<count>
-characters.  For example, to L<C<pack>|/pack TEMPLATE,LIST> or
+characters.  For example, to C<pack> or
 L<C<unpack>|/unpack TEMPLATE,EXPR> a C structure like
 
     struct {
-	char   c;    /* one signed, 8-bit character */
-	double d;
-	char   cc[2];
+        char   c;    /* one signed, 8-bit character */
+        double d;
+        char   cc[2];
     }
 
 one may need to use the template C<c x![d] d c[2]>.  This assumes that
@@ -5974,8 +6098,8 @@ for complicated pattern matches.
 
 =item *
 
-If TEMPLATE requires more arguments than L<C<pack>|/pack TEMPLATE,LIST>
-is given, L<C<pack>|/pack TEMPLATE,LIST>
+If TEMPLATE requires more arguments than C<pack>
+is given, C<pack>
 assumes additional C<""> arguments.  If TEMPLATE requires fewer arguments
 than given, extra arguments are ignored.
 
@@ -6082,7 +6206,7 @@ operative through the end of the current scope, just like the
 L<C<my>|/my VARLIST>, L<C<state>|/state VARLIST>, and
 L<C<our>|/our VARLIST> operators.  All unqualified dynamic identifiers
 in this scope will be in the given namespace, except where overridden by
-another L<C<package>|/package NAMESPACE> declaration or
+another C<package> declaration or
 when they're one of the special identifiers that qualify into C<main::>,
 like C<STDOUT>, C<ARGV>, C<ENV>, and the punctuation variables.
 
@@ -6102,7 +6226,7 @@ package is assumed.  That is, C<$::sail> is equivalent to
 C<$main::sail> (as well as to C<$main'sail>, still seen in ancient
 code, mostly from Perl 4).
 
-If VERSION is provided, L<C<package>|/package NAMESPACE> sets the
+If VERSION is provided, C<package> sets the
 C<$VERSION> variable in the given
 namespace to a L<version> object with the VERSION provided.  VERSION must be a
 "strict" style version number as defined by the L<version> module: a positive
@@ -6140,7 +6264,7 @@ class methods, before the instance is fully constructed.
     }
 
 In a basic class, this value will be the same as
-L<C<__PACKAGE__>|/__PACKAGE__>.  The distinction can be seen when a subclass
+C<__PACKAGE__>.  The distinction can be seen when a subclass
 is constructed; it will give the class name of the instance being constructed,
 rather than just the package name that the actual code belongs to.
 
@@ -6203,7 +6327,7 @@ will operate on the C<@ARGV> array in C<eval STRING>, C<BEGIN {}>, C<INIT {}>,
 C<CHECK {}> blocks.
 
 Starting with Perl 5.14, an experimental feature allowed
-L<C<pop>|/pop ARRAY> to take a
+C<pop> to take a
 scalar expression. This experiment has been deemed unsuccessful, and was
 removed as of Perl 5.24.
 
@@ -6223,20 +6347,20 @@ L<C<undef>|/undef EXPR> indicates
 that the search position is reset (usually due to match failure, but
 can also be because no match has yet been run on the scalar).
 
-L<C<pos>|/pos SCALAR> directly accesses the location used by the regexp
-engine to store the offset, so assigning to L<C<pos>|/pos SCALAR> will
+C<pos> directly accesses the location used by the regexp
+engine to store the offset, so assigning to C<pos> will
 change that offset, and so will also influence the C<\G> zero-width
 assertion in regular expressions.  Both of these effects take place for
 the next match, so you can't affect the position with
-L<C<pos>|/pos SCALAR> during the current match, such as in
+C<pos> during the current match, such as in
 C<(?{pos() = 5})> or C<s//pos() = 5/e>.
 
-Setting L<C<pos>|/pos SCALAR> also resets the I<matched with
+Setting C<pos> also resets the I<matched with
 zero-length> flag, described
 under L<perlre/"Repeated Patterns Matching a Zero-length Substring">.
 
 Because a failed C<m//gc> match doesn't reset the offset, the return
-from L<C<pos>|/pos SCALAR> won't change either in this case.  See
+from C<pos> won't change either in this case.  See
 L<perlre> and L<perlop>.
 
 =item print FILEHANDLE LIST
@@ -6268,7 +6392,7 @@ each LIST item.  The current value of L<C<$\>|perlvar/$\> (if any) is
 printed after the entire LIST has been printed.  Because print takes a
 LIST, anything in the LIST is evaluated in list context, including any
 subroutines whose return lists you pass to
-L<C<print>|/print FILEHANDLE LIST>.  Be careful not to follow the print
+C<print>.  Be careful not to follow the print
 keyword with a left
 parenthesis unless you want the corresponding right parenthesis to
 terminate the arguments to the print; put parentheses around all arguments
@@ -6320,7 +6444,7 @@ L<warnings> are enabled.  Just use L<C<print>|/print FILEHANDLE LIST> if
 you want to print the contents of L<C<$_>|perlvar/$_>.
 
 Don't fall into the trap of using a
-L<C<printf>|/printf FILEHANDLE FORMAT, LIST> when a simple
+C<printf> when a simple
 L<C<print>|/print FILEHANDLE LIST> would do.  The
 L<C<print>|/print FILEHANDLE LIST> is more efficient and less error
 prone.
@@ -6341,7 +6465,7 @@ L<C<$_>|perlvar/$_> is used.
 If FUNCTION is a string starting with C<CORE::>, the rest is taken as a
 name for a Perl builtin.  If the builtin's arguments
 cannot be adequately expressed by a prototype
-(such as L<C<system>|/system LIST>), L<C<prototype>|/prototype FUNCTION>
+(such as L<C<system>|/system LIST>), C<prototype>
 returns L<C<undef>|/undef EXPR>, because the builtin
 does not really behave like a Perl function.  Otherwise, the string
 describing the equivalent prototype is returned.
@@ -6360,14 +6484,14 @@ Adds one or more items to the B<end> of an array.
 	push(@colors, ("blue", "green")); # ("red", "blue", "green")
 
 Returns the number of elements in the array following the completed
-L<C<push>|/push ARRAY,LIST>.
+C<push>.
 
 	my $color_count = push(@colors, ("yellow", "purple"));
 
 	say "There are $color_count colors in the updated array";
 
 Starting with Perl 5.14, an experimental feature allowed
-L<C<push>|/push ARRAY,LIST> to take a
+C<push> to take a
 scalar expression. This experiment has been deemed unsuccessful, and was
 removed as of Perl 5.24.
 
@@ -6412,6 +6536,11 @@ the C<\Q> escape in double-quoted strings.
 
 If EXPR is omitted, uses L<C<$_>|perlvar/$_>.
 
+The motivation behind this is to make all characters in EXPR match their
+literal selves.  Otherwise any metacharacters in it could trigger
+their "magic" matching behaviors.  The characters this function has been
+applied to are said to be "quoted" or "escaped".
+
 quotemeta (and C<\Q> ... C<\E>) are useful when interpolating strings into
 regular expressions, because by default an interpolated variable will be
 considered a mini-regular expression.  For example:
@@ -6437,7 +6566,7 @@ Or:
 
 Will both leave the sentence as is.
 Normally, when accepting literal string input from the user,
-L<C<quotemeta>|/quotemeta EXPR> or C<\Q> must be used.
+C<quotemeta> or C<\Q> must be used.
 
 Beware that if you put literal backslashes (those not inside
 interpolated variables) between C<\Q> and C<\E>, double-quotish
@@ -6516,32 +6645,57 @@ X<rand> X<random>
 
 =for Pod::Functions retrieve the next pseudorandom number
 
-Returns a random fractional number greater than or equal to C<0> and less
+Returns a random fractional number greater than or equal to C<0> and B<less>
 than the value of EXPR.  (EXPR should be positive.)  If EXPR is
-omitted, the value C<1> is used.  Currently EXPR with the value C<0> is
-also special-cased as C<1> (this was undocumented before Perl 5.8.0
-and is subject to change in future versions of Perl).  Automatically calls
-L<C<srand>|/srand EXPR> unless L<C<srand>|/srand EXPR> has already been
-called.  See also L<C<srand>|/srand EXPR>.
+omitted, the value C<1> is used.
 
-Apply L<C<int>|/int EXPR> to the value returned by L<C<rand>|/rand EXPR>
-if you want random integers instead of random fractional numbers.  For
-example,
+    my $num1 = rand();        # Random float at least 0 and below 1
+    my $num2 = rand(7);       # Random float at least 0 and below 7
+    my $num3 = int(rand(10)); # Random integer at least 0 and below 10
 
-    int(rand(10))
+B<Notes:>
 
-returns a random integer between C<0> and C<9>, inclusive.
+=over
 
-(Note: If your rand function consistently returns numbers that are too
-large or too small, then your version of Perl was probably compiled
-with the wrong number of RANDBITS.)
+=item *
 
-B<L<C<rand>|/rand EXPR> is not cryptographically secure.  You should not rely
+Calling C<rand> automatically calls L<C<srand>|/srand EXPR> unless
+srand has already been called.
+
+=item *
+
+Currently EXPR with the value C<0> is special-cased as C<1>. This was
+undocumented before Perl 5.8.0 and is subject to change in future versions of
+Perl.
+
+=item *
+
+As of Perl v5.20.0 C<rand()> uses the C<drand48> pseudorandom number generator
+to generate random numbers. As a PRNG C<drand48> should be sufficient for most
+non-cryptographic needs. If you need cryptographic random numbers check CPAN
+for crypto safe alternatives.
+
+=back
+
+=over
+
+=item B<Security:>
+
+B<C<rand> is not cryptographically secure.  You should not rely
 on it in security-sensitive situations.>  As of this writing, a
 number of third-party CPAN modules offer random number generators
 intended by their authors to be cryptographically secure,
-including: L<Data::Entropy>, L<Crypt::Random>, L<Math::Random::Secure>,
-and L<Math::TrulyRandom>.
+including:
+
+=back
+
+=over
+
+=item * L<Crypt::URandom>
+
+=item * L<Crypt::PRNG>
+
+=back
 
 =item read FILEHANDLE,SCALAR,LENGTH,OFFSET
 X<read> X<file, read>
@@ -6564,6 +6718,17 @@ placement at that many characters counting backwards from the end of
 the string.  A positive OFFSET greater than the length of SCALAR
 results in the string being padded to the required size with C<"\0">
 bytes before the result of the read is appended.
+
+    open(my $FH, "<", "input.txt") or die("Cannot open file: $!");
+
+    my $buf = "";
+    my $num = 0;
+
+    # Read 32 bytes
+    $num = read($FH, $buf, 32);
+
+    # Read 16 bytes into position 1024 of $buf
+    $num = read($FH, $buf, 16, 1024);
 
 The call is implemented in terms of either Perl's or your system's native
 L<fread(3)> library function, via the L<PerlIO> layers applied to the
@@ -6591,7 +6756,7 @@ directory.  If there are no more entries, returns the undefined value in
 scalar context and the empty list in list context.
 
 If you're planning to filetest the return values out of a
-L<C<readdir>|/readdir DIRHANDLE>, you'd better prepend the directory in
+C<readdir>, you'd better prepend the directory in
 question.  Otherwise, because we didn't L<C<chdir>|/chdir EXPR> there,
 it would have been testing the wrong file.
 
@@ -6599,7 +6764,7 @@ it would have been testing the wrong file.
     my @dots = grep { /^\./ && -f "$some_dir/$_" } readdir($dh);
     closedir $dh;
 
-As of Perl 5.12 you can use a bare L<C<readdir>|/readdir DIRHANDLE> in a
+As of Perl 5.12 you can use a bare C<readdir> in a
 C<while> loop, which will set L<C<$_>|perlvar/$_> on every iteration.
 If either a C<readdir> expression or an explicit assignment of a
 C<readdir> expression to a scalar is used as a C<while>/C<for> condition,
@@ -6636,7 +6801,7 @@ L<C<$E<sol>>|perlvar/$E<sol>> (or C<$INPUT_RECORD_SEPARATOR> in
 L<English>).  See L<perlvar/"$/">.
 
 When L<C<$E<sol>>|perlvar/$E<sol>> is set to L<C<undef>|/undef EXPR>,
-when L<C<readline>|/readline EXPR> is in scalar context (i.e., file
+when C<readline> is in scalar context (i.e., file
 slurp mode), and when an empty file is read, it returns C<''> the first
 time, followed by L<C<undef>|/undef EXPR> subsequently.
 
@@ -6647,11 +6812,11 @@ operator is discussed in more detail in L<perlop/"I/O Operators">.
     my $line = <STDIN>;
     my $line = readline(STDIN);    # same thing
 
-If L<C<readline>|/readline EXPR> encounters an operating system error,
+If C<readline> encounters an operating system error,
 L<C<$!>|perlvar/$!> will be set with the corresponding error message.
 It can be helpful to check L<C<$!>|perlvar/$!> when you are reading from
 filehandles you don't trust, such as a tty or a socket.  The following
-example uses the operator form of L<C<readline>|/readline EXPR> and dies
+example uses the operator form of C<readline> and dies
 if the result is not defined.
 
     while ( ! eof($fh) ) {
@@ -6659,7 +6824,7 @@ if the result is not defined.
         ...
     }
 
-Note that you can't handle L<C<readline>|/readline EXPR> errors
+Note that you can't handle C<readline> errors
 that way with the C<ARGV> filehandle.  In that case, you have to open
 each element of L<C<@ARGV>|perlvar/@ARGV> yourself since
 L<C<eof>|/eof FILEHANDLE> handles C<ARGV> differently.
@@ -6740,7 +6905,7 @@ X<redo>
 
 =for Pod::Functions start this loop iteration over again
 
-The L<C<redo>|/redo LABEL> command restarts the loop block without
+The C<redo> command restarts the loop block without
 evaluating the conditional again.  The L<C<continue>|/continue BLOCK>
 block, if any, is not executed.  If
 the LABEL is omitted, the command refers to the innermost enclosing
@@ -6766,24 +6931,24 @@ normally use this command:
         print;
     }
 
-L<C<redo>|/redo LABEL> cannot return a value from a block that typically
+C<redo> cannot return a value from a block that typically
 returns a value, such as C<eval {}>, C<sub {}>, or C<do {}>. It will perform
 its flow control behavior, which precludes any return value. It should not be
 used to exit a L<C<grep>|/grep BLOCK LIST> or L<C<map>|/map BLOCK LIST>
 operation.
 
 Note that a block by itself is semantically identical to a loop
-that executes once.  Thus L<C<redo>|/redo LABEL> inside such a block
+that executes once.  Thus C<redo> inside such a block
 will effectively turn it into a looping construct.
 
 See also L<C<continue>|/continue BLOCK> for an illustration of how
 L<C<last>|/last LABEL>, L<C<next>|/next LABEL>, and
-L<C<redo>|/redo LABEL> work.
+C<redo> work.
 
 Unlike most named operators, this has the same precedence as assignment.
 It is also exempt from the looks-like-a-function rule, so
 C<redo ("foo")."bar"> will cause "bar" to be part of the argument to
-L<C<redo>|/redo LABEL>.
+C<redo>.
 
 =item ref EXPR
 X<ref> X<reference>
@@ -6811,6 +6976,11 @@ results against a class name doesn't perform a class membership test:
 a class's members also include objects blessed into subclasses, for
 which C<ref> will return the name of the subclass.  Also beware that
 class names can clash with the built-in type names (described below).
+Use L<the C<isa> method|UNIVERSAL/C<< $obj->isa( TYPE ) >>> to test
+class membership of a class name or blessed object, after ensuring it
+is one of these things.  Alternatively, the
+L<C<isa> operator|perlop/"Class Instance Operator"> can test class
+membership without checking blessedness first.
 
 If the operand is a reference to an unblessed object, then the return
 value indicates the type of object.  If the unblessed referent is not
@@ -6825,15 +6995,15 @@ these built-in type names can also be used as
 class names, so C<ref> returning one of these names doesn't unambiguously
 indicate that the referent is of the kind to which the name refers.
 
-The ambiguity between built-in type names and class names significantly
-limits the utility of C<ref>.  For unambiguous information, use
-L<C<Scalar::Util::blessed()>|Scalar::Util/blessed> for information about
-blessing, and L<C<Scalar::Util::reftype()>|Scalar::Util/reftype> for
-information about physical types.  Use L<the C<isa> method|UNIVERSAL/C<<
-$obj->isa( TYPE ) >>> for class membership tests, though one must be
-sure of blessedness before attempting a method call.  Alternatively, the
-L<C<isa> operator|perlop/"Class Instance Operator"> can test class
-membership without checking blessedness first.
+The ambiguity between built-in type names and class names may limit the
+utility of C<ref>, but in practice, such clashes rarely occur unless
+intentionally engineered.  For unambiguous information, use
+L<builtin/blessed> for information about blessing, and L<builtin/reftype>
+for information about physical types.  But beware that the physical type
+returned by C<reftype> does not indicate how a blessed object is meant to
+be used, and the appropriate dereference operations for an object
+(whether to access the blessed structure directly, or via an L<overload>)
+will be described by the documentation for the object class.
 
 See also L<perlref> and L<perlobj>.
 
@@ -6889,7 +7059,7 @@ older code.
     require 5.024_001;  # ditto; older syntax compatible
                           with perl 5.6
 
-Otherwise, L<C<require>|/require VERSION> demands that a library file be
+Otherwise, C<require> demands that a library file be
 included if it hasn't already been included.  The file is included via
 the do-FILE mechanism, which is essentially just a variety of
 L<C<eval>|/eval EXPR> with the
@@ -6963,7 +7133,7 @@ affects the compilation unit within which the feature is used, and using
 it before requiring a module will not change the behavior of existing
 modules that do not themselves also use it.
 
-If EXPR is a bareword, L<C<require>|/require VERSION> assumes a F<.pm>
+If EXPR is a bareword, C<require> assumes a F<.pm>
 extension and replaces C<::> with C</> in the filename for you,
 to make it easy to load standard modules.  This form of loading of
 modules does not risk altering your namespace, however it will autovivify
@@ -6997,9 +7167,9 @@ or you could do
 Neither of these forms will autovivify any stashes at compile time and
 only have run time effects.
 
-Now that you understand how L<C<require>|/require VERSION> looks for
+Now that you understand how C<require> looks for
 files with a bareword argument, there is a little extra functionality
-going on behind the scenes.  Before L<C<require>|/require VERSION> looks
+going on behind the scenes.  Before C<require> looks
 for a F<.pm> extension, it will first look for a similar filename with a
 F<.pmc> extension.  If this file is found, it will be loaded in place of
 any file ending in a F<.pm> extension. This applies to both the explicit
@@ -7054,7 +7224,7 @@ C<AUTOLOAD> cannot be used to resolve the C<INCDIR> method, C<INC> is
 checked first, and C<AUTOLOAD> would resolve that.
 
 If an empty list, L<C<undef>|/undef EXPR>, or nothing that matches the
-first 3 values above is returned, then L<C<require>|/require VERSION>
+first 3 values above is returned, then C<require>
 looks at the remaining elements of L<C<@INC>|perlvar/@INC>.
 Note that this filehandle must be a real filehandle (strictly a typeglob
 or reference to a typeglob, whether blessed or unblessed); tied filehandles
@@ -7084,7 +7254,7 @@ If the hook is an array reference, its first element must be a
 subroutine reference or an object as described above. When the first
 element is an object that supports an C<INC> or C<INCDIR> method then
 the method will be called with the object as the first argument, the
-filename requested as the second, and the hook array reference as the
+filename requested as the second, and the hook array reference as
 the third. When the first element is a subroutine then it will be
 called with the array as the first argument, and the filename as the
 second, no third parameter will be passed in. In both forms you can
@@ -7189,7 +7359,7 @@ required code itself had thrown an exception.
 
 The C<${^HOOK}{require__before}> hook may return a code reference, in
 which case the code reference will be executed (in an eval with the
-filname as a parameter) after the require completes. It will be executed
+filename as a parameter) after the require completes. It will be executed
 regardless of how the compilation completed, and even if the require
 throws a fatal exception.  The function may consult C<%INC> to determine
 if the require failed or not.  For instance the following code will print
@@ -7284,14 +7454,14 @@ L<C<wantarray>|/wantarray>).  If no EXPR
 is given, returns an empty list in list context, the undefined value in
 scalar context, and (of course) nothing at all in void context.
 
-(In the absence of an explicit L<C<return>|/return EXPR>, a subroutine,
+(In the absence of an explicit C<return>, a subroutine,
 L<C<eval>|/eval EXPR>,
 or L<C<do FILE>|/do EXPR> automatically returns the value of the last expression
 evaluated.)
 
 Unlike most named operators, this is also exempt from the
 looks-like-a-function rule, so C<return ("foo")."bar"> will
-cause C<"bar"> to be part of the argument to L<C<return>|/return EXPR>.
+cause C<"bar"> to be part of the argument to C<return>.
 
 =item reverse LIST
 X<reverse> X<rev> X<invert>
@@ -7307,7 +7477,7 @@ in the opposite order.
 
     print scalar reverse "dlrow ,", "olleH";    # Hello, world
 
-Used without arguments in scalar context, L<C<reverse>|/reverse LIST>
+Used without arguments in scalar context, C<reverse>
 reverses L<C<$_>|perlvar/$_>.
 
     $_ = "dlrow ,olleH";
@@ -7387,7 +7557,7 @@ might have.  To use FILEHANDLE without a LIST to
 print the contents of L<C<$_>|perlvar/$_> to it, you must use a bareword
 filehandle like C<FH>, not an indirect one like C<$fh>.
 
-L<C<say>|/say FILEHANDLE LIST> is available only if the
+C<say> is available only if the
 L<C<"say"> feature|feature/The 'say' feature> is enabled or if it is
 prefixed with C<CORE::>.  The
 L<C<"say"> feature|feature/The 'say' feature> is enabled automatically
@@ -7409,7 +7579,7 @@ needed.  If you really wanted to do so, however, you could use
 the construction C<@{[ (some expression) ]}>, but usually a simple
 C<(some expression)> suffices.
 
-Because L<C<scalar>|/scalar EXPR> is a unary operator, if you
+Because C<scalar> is a unary operator, if you
 accidentally use a
 parenthesized list for the EXPR, this behaves as a scalar comma expression,
 evaluating all but the last element in void context and returning the final
@@ -7444,7 +7614,7 @@ otherwise.
 
 Note the emphasis on bytes: even if the filehandle has been set to operate
 on characters (for example using the C<:encoding(UTF-8)> I/O layer), the
-L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE>,
+C<seek>,
 L<C<tell>|/tell FILEHANDLE>, and
 L<C<sysseek>|/sysseek FILEHANDLE,POSITION,WHENCE>
 family of functions use byte offsets, not character offsets,
@@ -7453,7 +7623,7 @@ because seeking to a character offset would be very slow in a UTF-8 file.
 If you want to position the file for
 L<C<sysread>|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET> or
 L<C<syswrite>|/syswrite FILEHANDLE,SCALAR,LENGTH,OFFSET>, don't use
-L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE>, because buffering makes its
+C<seek>, because buffering makes its
 effect on the file's read-write position unpredictable and non-portable.
 Use L<C<sysseek>|/sysseek FILEHANDLE,POSITION,WHENCE> instead.
 
@@ -7466,8 +7636,8 @@ A WHENCE of C<1> (C<SEEK_CUR>) is useful for not moving the file position:
 
 This is also useful for applications emulating C<tail -f>.  Once you hit
 EOF on your read and then sleep for a while, you (probably) have to stick in a
-dummy L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE> to reset things.  The
-L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE> doesn't change the position,
+dummy C<seek> to reset things.  The
+C<seek> doesn't change the position,
 but it I<does> clear the end-of-file condition on the handle, so that the
 next C<readline FILE> makes Perl try again to read something.  (We hope.)
 
@@ -7490,7 +7660,7 @@ X<seekdir>
 
 Sets the current position for the L<C<readdir>|/readdir DIRHANDLE>
 routine on DIRHANDLE.  POS must be a value returned by
-L<C<telldir>|/telldir DIRHANDLE>.  L<C<seekdir>|/seekdir DIRHANDLE,POS>
+L<C<telldir>|/telldir DIRHANDLE>.  C<seekdir>
 also has the same caveats about possible directory compaction as the
 corresponding system library routine.
 
@@ -7596,7 +7766,7 @@ or to block until something becomes ready just do this
    select(my $rout = $rin, my $wout = $win, my $eout = $ein, undef);
 
 Most systems do not bother to return anything useful in C<$timeleft>, so
-calling L<C<select>|/select RBITS,WBITS,EBITS,TIMEOUT> in scalar context
+calling C<select> in scalar context
 just returns C<$nfound>.
 
 Any of the bit masks can also be L<C<undef>|/undef EXPR>.  The timeout,
@@ -7609,12 +7779,12 @@ You can effect a sleep of 250 milliseconds this way:
 
     select(undef, undef, undef, 0.25);
 
-Note that whether L<C<select>|/select RBITS,WBITS,EBITS,TIMEOUT> gets
+Note that whether C<select> gets
 restarted after signals (say, SIGALRM) is implementation-dependent.  See
 also L<perlport> for notes on the portability of
-L<C<select>|/select RBITS,WBITS,EBITS,TIMEOUT>.
+C<select>.
 
-On error, L<C<select>|/select RBITS,WBITS,EBITS,TIMEOUT> behaves just
+On error, C<select> behaves just
 like L<select(2)>: it returns C<-1> and sets L<C<$!>|perlvar/$!>.
 
 On some Unixes, L<select(2)> may report a socket file descriptor as
@@ -7625,13 +7795,13 @@ L<select(2)> and L<fcntl(2)> for further details.
 
 The standard L<C<IO::Select>|IO::Select> module provides a
 user-friendlier interface to
-L<C<select>|/select RBITS,WBITS,EBITS,TIMEOUT>, mostly because it does
+C<select>, mostly because it does
 all the bit-mask work for you.
 
 B<WARNING>: One should not attempt to mix buffered I/O (like
 L<C<read>|/read FILEHANDLE,SCALAR,LENGTH,OFFSET> or
 L<C<readline>|/readline EXPR>) with
-L<C<select>|/select RBITS,WBITS,EBITS,TIMEOUT>, except as permitted by
+C<select>, except as permitted by
 POSIX, and even then only on POSIX systems.  You have to use
 L<C<sysread>|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET> instead.
 
@@ -7719,7 +7889,7 @@ Sets the current process group for the specified PID, C<0> for the current
 process.  Raises an exception when used on a machine that doesn't
 implement POSIX L<setpgid(2)> or BSD L<setpgrp(2)>.  If the arguments
 are omitted, it defaults to C<0,0>.  Note that the BSD 4.2 version of
-L<C<setpgrp>|/setpgrp PID,PGRP> does not accept any arguments, so only
+C<setpgrp> does not accept any arguments, so only
 C<setpgrp(0,0)> is portable.  See also
 L<C<POSIX::setsid()>|POSIX/C<setsid>>.
 
@@ -7786,12 +7956,12 @@ program, and the C<@_> array in subroutines. C<shift> will operate on the
 C<@ARGV> array in C<eval STRING>, C<BEGIN {}>, C<INIT {}>, C<CHECK {}> blocks.
 
 Starting with Perl 5.14, an experimental feature allowed
-L<C<shift>|/shift ARRAY> to take a
+C<shift> to take a
 scalar expression. This experiment has been deemed unsuccessful, and was
 removed as of Perl 5.24.
 
 See also L<C<unshift>|/unshift ARRAY,LIST>, L<C<push>|/push ARRAY,LIST>,
-and L<C<pop>|/pop ARRAY>.  L<C<shift>|/shift ARRAY> and
+and L<C<pop>|/pop ARRAY>.  C<shift> and
 L<C<unshift>|/unshift ARRAY,LIST> do the same thing to the left end of
 an array that L<C<pop>|/pop ARRAY> and L<C<push>|/push ARRAY,LIST> do to
 the right end.
@@ -7842,7 +8012,7 @@ detaching from it.  When reading, VAR must be a variable that will
 hold the data read.  When writing, if STRING is too long, only SIZE
 bytes are used; if STRING is too short, nulls are written to fill out
 SIZE bytes.  Return true if successful, false on error.
-L<C<shmread>|/shmread ID,VAR,POS,SIZE> taints the variable.  See also
+C<shmread> taints the variable.  See also
 L<perlipc/"SysV IPC"> and the documentation for
 L<C<IPC::SysV>|IPC::SysV> and the L<C<IPC::Shareable>|IPC::Shareable>
 module from CPAN.
@@ -7897,7 +8067,7 @@ Causes the script to sleep for (integer) EXPR seconds, or forever if no
 argument is given.  Returns the integer number of seconds actually slept.
 
 EXPR should be a positive integer. If called with a negative integer,
-L<C<sleep>|/sleep EXPR> does not sleep but instead emits a warning, sets
+C<sleep> does not sleep but instead emits a warning, sets
 C<$!> (C<errno>), and returns zero.
 
 If called with a non-integer, the fractional part is ignored.
@@ -7916,7 +8086,7 @@ May be interrupted if the process receives a signal such as C<SIGALRM>.
     die $@ unless $@ eq "Alarm!\n";
 
 You probably cannot mix L<C<alarm>|/alarm SECONDS> and
-L<C<sleep>|/sleep EXPR> calls, because L<C<sleep>|/sleep EXPR> is often
+C<sleep> calls, because C<sleep> is often
 implemented using L<C<alarm>|/alarm SECONDS>.
 
 On some older systems, it may sleep up to a full second less than what
@@ -7966,7 +8136,7 @@ be set for the newly opened file descriptors, as determined by the value
 of L<C<$^F>|perlvar/$^F>.  See L<perlvar/$^F>.
 
 Some systems define L<C<pipe>|/pipe READHANDLE,WRITEHANDLE> in terms of
-L<C<socketpair>|/socketpair SOCKET1,SOCKET2,DOMAIN,TYPE,PROTOCOL>, in
+C<socketpair>, in
 which a call to C<pipe($rdr, $wtr)> is essentially:
 
     use Socket;
@@ -7990,10 +8160,10 @@ X<sort>
 =for Pod::Functions sort a list of values
 
 In list context, this sorts the LIST and returns the sorted list value.
-In scalar context, the behaviour of L<C<sort>|/sort SUBNAME LIST> is
+In scalar context, the behaviour of C<sort> is
 undefined.
 
-If SUBNAME or BLOCK is omitted, L<C<sort>|/sort SUBNAME LIST>s in
+If SUBNAME or BLOCK is omitted, C<sort>s in
 standard string comparison
 order.  If SUBNAME is specified, it gives the name of a subroutine
 that returns a numeric value less than, equal to, or greater than C<0>,
@@ -8014,6 +8184,10 @@ If the subroutine is an XSUB, the elements to be compared are pushed on
 to the stack, the way arguments are usually passed to XSUBs.  C<$a> and
 C<$b> are not set.
 
+If two or more elements of LIST compare the same (i.e. the comparison
+operation returns 0 for them), they retain the relative order they had
+in LIST. In other words, sorting is stable (and has been since v5.8.0).
+
 The values to be compared are always passed by reference and should not
 be modified.
 
@@ -8025,17 +8199,13 @@ When L<C<use locale>|locale> (but not C<use locale ':not_characters'>)
 is in effect, C<sort LIST> sorts LIST according to the
 current collation locale.  See L<perllocale>.
 
-L<C<sort>|/sort SUBNAME LIST> returns aliases into the original list,
+C<sort> returns aliases into the original list,
 much as a for loop's index variable aliases the list elements.  That is,
-modifying an element of a list returned by L<C<sort>|/sort SUBNAME LIST>
+modifying an element of a list returned by C<sort>
 (for example, in a C<foreach>, L<C<map>|/map BLOCK LIST> or
 L<C<grep>|/grep BLOCK LIST>)
 actually modifies the element in the original list.  This is usually
 something to be avoided when writing clear code.
-
-Historically Perl has varied in whether sorting is stable by default.
-If stability matters, it can be controlled explicitly by using the
-L<sort> pragma.
 
 Examples:
 
@@ -8126,10 +8296,6 @@ Examples:
 
     my @new = sort function_with_signature @old;
 
-    # guarantee stability
-    use sort 'stable';
-    my @new = sort { substr($a, 3, 5) cmp substr($b, 3, 5) } @old;
-
 Warning: syntactical care is required when sorting the list returned from
 a function.  If you want to sort the list returned by the function call
 C<find_records(@key)>, you can use:
@@ -8218,8 +8384,8 @@ eliminate any C<NaN>s from the input list.
 
     my @result = sort { $a <=> $b } grep { $_ == $_ } @input;
 
-In this version of F<perl>, the C<sort> function is implemented via the
-mergesort algorithm.
+In the current version of Perl, the C<sort> function is implemented via
+the mergesort algorithm.
 
 =item splice ARRAY,OFFSET,LENGTH,LIST
 X<splice>
@@ -8254,7 +8420,7 @@ The following equivalences hold (assuming C<< $#a >= $i >> )
     unshift(@a,$x,$y)   splice(@a,0,0,$x,$y)
     $a[$i] = $y         splice(@a,$i,1,$y)
 
-L<C<splice>|/splice ARRAY,OFFSET,LENGTH,LIST> can be used, for example,
+C<splice> can be used, for example,
 to implement n-ary queue processing:
 
     sub nary_print {
@@ -8271,7 +8437,7 @@ to implement n-ary queue processing:
     #   g -- h
 
 Starting with Perl 5.14, an experimental feature allowed
-L<C<splice>|/splice ARRAY,OFFSET,LENGTH,LIST> to take a
+C<splice> to take a
 scalar expression. This experiment has been deemed unsuccessful, and was
 removed as of Perl 5.24.
 
@@ -8315,7 +8481,7 @@ However, this:
 uses empty string matches as separators; thus, the empty string
 may be used to split EXPR into a list of its component characters.
 
-As a special case for L<C<split>|/split E<sol>PATTERNE<sol>,EXPR,LIMIT>,
+As a special case for C<split>PATTERNE<sol>,EXPR,LIMIT>,
 the empty pattern given in
 L<match operator|perlop/"m/PATTERN/msixpodualngc"> syntax (C<//>)
 specifically matches the empty string, which is contrary to its usual
@@ -8330,7 +8496,7 @@ C<E<sol>m> and any of the other pattern modifiers valid for C<qr>
 specified explicitly.
 
 As another special case,
-L<C<split>|/split E<sol>PATTERNE<sol>,EXPR,LIMIT> emulates the default
+C<split>PATTERNE<sol>,EXPR,LIMIT> emulates the default
 behavior of the
 command line tool B<awk> when the PATTERN is either omitted or a
 string composed of a single space character (such as S<C<' '>> or
@@ -8366,7 +8532,7 @@ string's internal encoding.
 
 As of Perl 5.39.9 the C</x> default modifier does NOT affect
 C<split STRING> but does affect C<split PATTERN>, this means that
-C<split " "> will produces the expected I<awk> emulation regardless as
+C<split " "> will produce the expected I<awk> emulation regardless as
 to whether it is used in the scope of a C<use re "/x"> statement. If you
 want to split by spaces under C<use re "/x"> you must do something like
 C<split /(?-x: )/> or C<split /\x{20}/> instead of C<split / />.
@@ -8467,8 +8633,8 @@ X<sprintf>
 =for Pod::Functions formatted print into a string
 
 Returns a string formatted by the usual
-L<C<printf>|/printf FILEHANDLE FORMAT, LIST> conventions of the C
-library function L<C<sprintf>|/sprintf FORMAT, LIST>.  See below for
+C<printf> conventions of the C
+library function C<sprintf>.  See below for
 more details and see L<sprintf(3)> or L<printf(3)> on your system for an
 explanation of the general principles.
 
@@ -8480,22 +8646,22 @@ For example:
         # Round number to 3 digits after decimal point
         my $rounded = sprintf("%.3f", $number);
 
-Perl does its own L<C<sprintf>|/sprintf FORMAT, LIST> formatting: it
+Perl does its own C<sprintf> formatting: it
 emulates the C
 function L<sprintf(3)>, but doesn't use it except for floating-point
 numbers, and even then only standard modifiers are allowed.
 Non-standard extensions in your local L<sprintf(3)> are
 therefore unavailable from Perl.
 
-Unlike L<C<printf>|/printf FILEHANDLE FORMAT, LIST>,
-L<C<sprintf>|/sprintf FORMAT, LIST> does not do what you probably mean
+Unlike C<printf>,
+C<sprintf> does not do what you probably mean
 when you pass it an array as your first argument.
 The array is given scalar context,
 and instead of using the 0th element of the array as the format, Perl will
 use the count of elements in the array as the format, which is almost never
 useful.
 
-Perl's L<C<sprintf>|/sprintf FORMAT, LIST> permits the following
+Perl's C<sprintf> permits the following
 universally-known conversions:
 
    %%    a percent sign
@@ -8790,7 +8956,7 @@ integer or floating-point number", which is the default.
 
 =item order of arguments
 
-Normally, L<C<sprintf>|/sprintf FORMAT, LIST> takes the next unused
+Normally, C<sprintf> takes the next unused
 argument as the value to
 format for each format specification.  If the format specification
 uses C<*> to require additional arguments, these are consumed from
@@ -8857,33 +9023,33 @@ operator.
 The point of the function is to "seed" the L<C<rand>|/rand EXPR>
 function so that L<C<rand>|/rand EXPR> can produce a different sequence
 each time you run your program.  When called with a parameter,
-L<C<srand>|/srand EXPR> uses that for the seed; otherwise it
+C<srand> uses that for the seed; otherwise it
 (semi-)randomly chooses a seed (see below).  In either case, starting with Perl 5.14,
 it returns the seed.  To signal that your code will work I<only> on Perls
 of a recent vintage:
 
     use v5.14;	# so srand returns the seed
 
-If L<C<srand>|/srand EXPR> is not called explicitly, it is called
+If C<srand> is not called explicitly, it is called
 implicitly without a parameter at the first use of the
 L<C<rand>|/rand EXPR> operator.  However, there are a few situations
-where programs are likely to want to call L<C<srand>|/srand EXPR>.  One
+where programs are likely to want to call C<srand>.  One
 is for generating predictable results, generally for testing or
 debugging.  There, you use C<srand($seed)>, with the same C<$seed> each
-time.  Another case is that you may want to call L<C<srand>|/srand EXPR>
+time.  Another case is that you may want to call C<srand>
 after a L<C<fork>|/fork> to avoid child processes sharing the same seed
 value as the parent (and consequently each other).
 
 Do B<not> call C<srand()> (i.e., without an argument) more than once per
 process.  The internal state of the random number generator should
 contain more entropy than can be provided by any seed, so calling
-L<C<srand>|/srand EXPR> again actually I<loses> randomness.
+C<srand> again actually I<loses> randomness.
 
-Most implementations of L<C<srand>|/srand EXPR> take an integer and will
+Most implementations of C<srand> take an integer and will
 silently
 truncate decimal numbers.  This means C<srand(42)> will usually
 produce the same results as C<srand(42.1)>.  To be safe, always pass
-L<C<srand>|/srand EXPR> an integer.
+C<srand> an integer.
 
 A typical use of the returned seed is for a test program which has too many
 combinations to test comprehensively in the time available to it each run.  It
@@ -8905,11 +9071,8 @@ startup, and changing it during the program flow will not affect the
 currently running process. See L<perlrun> for more details.
 
 B<L<C<rand>|/rand EXPR> is not cryptographically secure.  You should not rely
-on it in security-sensitive situations.>  As of this writing, a
-number of third-party CPAN modules offer random number generators
-intended by their authors to be cryptographically secure,
-including: L<Data::Entropy>, L<Crypt::Random>, L<Math::Random::Secure>,
-and L<Math::TrulyRandom>.
+on it in security-sensitive situations.> See documentation of C<rand> for
+a list of suitable alternatives.
 
 =item stat FILEHANDLE
 X<stat> X<file, status> X<ctime>
@@ -8925,7 +9088,7 @@ X<stat> X<file, status> X<ctime>
 Returns a 13-element list giving the status info for a file, either
 the file opened via FILEHANDLE or DIRHANDLE, or named by EXPR.  If EXPR is
 omitted, it stats L<C<$_>|perlvar/$_> (not C<_>!).  Returns the empty
-list if L<C<stat>|/stat FILEHANDLE> fails.  Typically
+list if C<stat> fails.  Typically
 used as follows:
 
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
@@ -8957,9 +9120,9 @@ meanings of the fields:
 ctime field is non-portable.  In particular, you cannot expect it to be a
 "creation time"; see L<perlport/"Files and Filesystems"> for details.
 
-If L<C<stat>|/stat FILEHANDLE> is passed the special filehandle
+If C<stat> is passed the special filehandle
 consisting of an underline, no stat is done, but the current contents of
-the stat structure from the last L<C<stat>|/stat FILEHANDLE>,
+the stat structure from the last C<stat>,
 L<C<lstat>|/lstat FILEHANDLE>, or filetest are returned.  Example:
 
     if (-x $file && (($d) = stat(_)) && $d < 0) {
@@ -8985,7 +9148,7 @@ if you want to see the real permissions.
     my $mode = (stat($filename))[2];
     printf "Permissions are %04o\n", $mode & 07777;
 
-In scalar context, L<C<stat>|/stat FILEHANDLE> returns a boolean value
+In scalar context, C<stat> returns a boolean value
 indicating success
 or failure, and, if successful, sets the information associated with
 the special filehandle C<_>.
@@ -9054,11 +9217,9 @@ and the C<S_I*> functions are
     S_ISREG($mode) S_ISDIR($mode) S_ISLNK($mode)
     S_ISBLK($mode) S_ISCHR($mode) S_ISFIFO($mode) S_ISSOCK($mode)
 
-    # No direct -X operator counterpart, but for the first one
-    # the -g operator is often equivalent.  The ENFMT stands for
-    # record flocking enforcement, a platform-dependent feature.
+    # No direct -X operator counterpart.
 
-    S_ISENFMT($mode) S_ISWHT($mode)
+    S_ISWHT($mode)
 
 See your native L<chmod(2)> and L<stat(2)> documentation for more details
 about the C<S_I*> constants.  To get status info for a symbolic link
@@ -9078,7 +9239,7 @@ X<state>
 
 =for Pod::Functions +state declare and assign a persistent lexical variable
 
-L<C<state>|/state VARLIST> declares a lexically scoped variable, just
+C<state> declares a lexically scoped variable, just
 like L<C<my>|/my VARLIST>.
 However, those variables will never be reinitialized, contrary to
 lexical variables that are reinitialized each time their enclosing block
@@ -9092,7 +9253,7 @@ dummy placeholder.  However, since initialization of state variables in
 such lists is currently not possible this would serve no purpose.
 
 Like L<C<my>|/my VARLIST>, L<C<local>|/local EXPR>, and
-L<C<our>|/our VARLIST>, L<C<state>|/state VARLIST> can operate on a variable
+L<C<our>|/our VARLIST>, C<state> can operate on a variable
 anywhere it appears in an expression (aside from interpolation in strings).
 The declaration will not apply to additional uses of the same variable until
 the next statement. This means additional uses of that variable within the
@@ -9110,7 +9271,7 @@ previous declaration, creating a new instance and preventing access to
 the previous one. This is usually undesired and, if warnings are enabled,
 will result in a warning in the C<shadow> category.
 
-L<C<state>|/state VARLIST> is available only if the
+C<state> is available only if the
 L<C<"state"> feature|feature/The 'state' feature> is enabled or if it is
 prefixed with C<CORE::>.  The
 L<C<"state"> feature|feature/The 'state' feature> is enabled
@@ -9191,7 +9352,7 @@ many characters off the end of the string.
     my $tail   = substr $s, -4;        # tree
     my $z      = substr $s, -4, 2;     # tr
 
-You can use the L<C<substr>|/substr EXPR,OFFSET,LENGTH,REPLACEMENT>
+You can use the C<substr>
 function as an lvalue, in which case EXPR
 must itself be an lvalue.  If you assign something shorter than LENGTH,
 the string will shrink, and if you assign something longer than LENGTH,
@@ -9202,7 +9363,7 @@ L<C<sprintf>|/sprintf FORMAT, LIST>.
 If OFFSET and LENGTH specify a substring that is partly outside the
 string, only the part within the string is returned.  If the substring
 is beyond either end of the string,
-L<C<substr>|/substr EXPR,OFFSET,LENGTH,REPLACEMENT> returns the undefined
+C<substr> returns the undefined
 value and produces a warning.  When used as an lvalue, specifying a
 substring that is entirely outside the string raises an exception.
 Here's an example showing the behavior for boundary cases:
@@ -9214,7 +9375,7 @@ Here's an example showing the behavior for boundary cases:
     substr($name, 7) = 'gap';        # raises an exception
 
 An alternative to using
-L<C<substr>|/substr EXPR,OFFSET,LENGTH,REPLACEMENT> as an lvalue is to
+C<substr> as an lvalue is to
 specify the
 REPLACEMENT string as the 4th argument.  This allows you to replace
 parts of the EXPR and return what was there before in one operation,
@@ -9226,7 +9387,7 @@ L<C<splice>|/splice ARRAY,OFFSET,LENGTH,LIST>.
     # $s is now "The black cat jumped from the green tree"
 
 Note that the lvalue returned by the three-argument version of
-L<C<substr>|/substr EXPR,OFFSET,LENGTH,REPLACEMENT> acts as
+C<substr> acts as
 a 'magic bullet'; each time it is assigned to, it remembers which part
 of the original string is being modified; for example:
 
@@ -9279,7 +9440,7 @@ an int.  If not, the pointer to the string value is passed.  You are
 responsible to make sure a string is pre-extended long enough to
 receive any result that might be written into a string.  You can't use a
 string literal (or other read-only string) as an argument to
-L<C<syscall>|/syscall NUMBER, LIST> because Perl has to assume that any
+C<syscall> because Perl has to assume that any
 string pointer might be written through.  If your
 integer arguments are not literals and have never been interpreted in a
 numeric context, you may need to add C<0> to them to force them to look
@@ -9295,12 +9456,12 @@ Note that Perl supports passing of up to only 14 arguments to your syscall,
 which in practice should (usually) suffice.
 
 Syscall returns whatever value returned by the system call it calls.
-If the system call fails, L<C<syscall>|/syscall NUMBER, LIST> returns
+If the system call fails, C<syscall> returns
 C<-1> and sets L<C<$!>|perlvar/$!> (errno).
 Note that some system calls I<can> legitimately return C<-1>.  The proper
 way to handle such calls is to assign C<$! = 0> before the call, then
 check the value of L<C<$!>|perlvar/$!> if
-L<C<syscall>|/syscall NUMBER, LIST> returns C<-1>.
+C<syscall> returns C<-1>.
 
 There's a problem with C<syscall(SYS_pipe())>: it returns the file
 number of the read end of the pipe it creates, but there is no way
@@ -9354,7 +9515,7 @@ If the file named by FILENAME does not exist and the
 L<C<open>|/open FILEHANDLE,MODE,EXPR> call creates
 it (typically because MODE includes the C<O_CREAT> flag), then the value of
 PERMS specifies the permissions of the newly created file.  If you omit
-the PERMS argument to L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE>,
+the PERMS argument to C<sysopen>,
 Perl uses the octal value C<0666>.
 These permission values need to be in octal, and are modified by your
 process's current L<C<umask>|/umask EXPR>.
@@ -9363,7 +9524,7 @@ X<O_CREAT>
 In many systems the C<O_EXCL> flag is available for opening files in
 exclusive mode.  This is B<not> locking: exclusiveness means here that
 if the file already exists,
-L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE> fails.  C<O_EXCL> may
+C<sysopen> fails.  C<O_EXCL> may
 not work
 on network filesystems, and has no effect unless the C<O_CREAT> flag
 is set as well.  Setting C<O_CREAT|O_EXCL> prevents the file from
@@ -9377,7 +9538,7 @@ C<O_TRUNC> with C<O_RDONLY> is undefined.
 X<O_TRUNC>
 
 You should seldom if ever use C<0644> as argument to
-L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE>, because
+C<sysopen>, because
 that takes away the user's option to have a more permissive umask.
 Better to omit it.  See L<C<umask>|/umask EXPR> for more on this.
 
@@ -9389,7 +9550,7 @@ this function can be used with buffered IO just as one opened with
 L<C<open>|/open FILEHANDLE,MODE,EXPR> can be used with unbuffered IO.
 
 Note that under Perls older than 5.8.0,
-L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE> depends on the
+C<sysopen> depends on the
 L<fdopen(3)> C library function.  On many Unix systems, L<fdopen(3)> is known
 to fail when file descriptors exceed a certain value, typically 255.  If
 you need more file descriptors than that, consider using the
@@ -9429,9 +9590,20 @@ the string.  A positive OFFSET greater than the length of SCALAR
 results in the string being padded to the required size with C<"\0">
 bytes before the result of the read is appended.
 
+    open(my $FH, "<", "input.txt") or die("Cannot open file: $!");
+
+    my $buf = "";
+    my $num = 0;
+
+    # Read up to 64 bytes
+    $num = sysread($FH, $buf, 64);
+
+    # Read up to 32 bytes into position 512 of $buf
+    $num = sysread($FH, $buf, 32, 512);
+
 There is no syseof() function, which is ok, since
 L<C<eof>|/eof FILEHANDLE> doesn't work well on device files (like ttys)
-anyway.  Use L<C<sysread>|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET> and
+anyway.  Use C<sysread> and
 check for a return value of 0 to decide whether you're done.
 
 Note that if the filehandle has been marked as C<:utf8>, C<sysread> will
@@ -9455,11 +9627,11 @@ Note the emphasis on bytes: even if the filehandle has been set to operate
 on characters (for example using the C<:encoding(UTF-8)> I/O layer), the
 L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE>,
 L<C<tell>|/tell FILEHANDLE>, and
-L<C<sysseek>|/sysseek FILEHANDLE,POSITION,WHENCE>
+C<sysseek>
 family of functions use byte offsets, not character offsets,
 because seeking to a character offset would be very slow in a UTF-8 file.
 
-L<C<sysseek>|/sysseek FILEHANDLE,POSITION,WHENCE> bypasses normal
+C<sysseek> bypasses normal
 buffered IO, so mixing it with reads other than
 L<C<sysread>|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET> (for example
 L<C<readline>|/readline EXPR> or
@@ -9479,7 +9651,7 @@ than relying on 0, 1, and 2.  For example to define a "systell" function:
 
 Returns the new position, or the undefined value on failure.  A position
 of zero is returned as the string C<"0 but true">; thus
-L<C<sysseek>|/sysseek FILEHANDLE,POSITION,WHENCE> returns
+C<sysseek> returns
 true on success and false on failure, yet you can still easily determine
 the new position.
 
@@ -9523,15 +9695,15 @@ L<perlop/"`STRING`">.  Return value of -1 indicates a failure to start
 the program or an error of the L<wait(2)> system call (inspect
 L<C<$!>|perlvar/$!> for the reason).
 
-If you'd like to make L<C<system>|/system LIST> (and many other bits of
+If you'd like to make C<system> (and many other bits of
 Perl) die on error, have a look at the L<autodie> pragma.
 
-Like L<C<exec>|/exec LIST>, L<C<system>|/system LIST> allows you to lie
+Like L<C<exec>|/exec LIST>, C<system> allows you to lie
 to a program about its name if you use the C<system PROGRAM LIST>
 syntax.  Again, see L<C<exec>|/exec LIST>.
 
 Since C<SIGINT> and C<SIGQUIT> are ignored during the execution of
-L<C<system>|/system LIST>, if you expect your program to terminate on
+C<system>, if you expect your program to terminate on
 receipt of these signals you will need to arrange to do so yourself
 based on the return value.
 
@@ -9539,7 +9711,7 @@ based on the return value.
     system(@args) == 0
         or die "system @args failed: $?";
 
-If you'd like to manually inspect L<C<system>|/system LIST>'s failure,
+If you'd like to manually inspect C<system>'s failure,
 you can check all possible failure modes by inspecting
 L<C<$?>|perlvar/$?> like this:
 
@@ -9558,11 +9730,11 @@ Alternatively, you may inspect the value of
 L<C<${^CHILD_ERROR_NATIVE}>|perlvar/${^CHILD_ERROR_NATIVE}> with the
 L<C<W*()>|POSIX/C<WIFEXITED>> calls from the L<POSIX> module.
 
-When L<C<system>|/system LIST>'s arguments are executed indirectly by
+When C<system>'s arguments are executed indirectly by
 the shell, results and return codes are subject to its quirks.
 See L<perlop/"`STRING`"> and L<C<exec>|/exec LIST> for details.
 
-Since L<C<system>|/system LIST> does a L<C<fork>|/fork> and
+Since C<system> does a L<C<fork>|/fork> and
 L<C<wait>|/wait> it may affect a C<SIGCHLD> handler.  See L<perlipc> for
 details.
 
@@ -9620,25 +9792,25 @@ last read.
 Note the emphasis on bytes: even if the filehandle has been set to operate
 on characters (for example using the C<:encoding(UTF-8)> I/O layer), the
 L<C<seek>|/seek FILEHANDLE,POSITION,WHENCE>,
-L<C<tell>|/tell FILEHANDLE>, and
+C<tell>, and
 L<C<sysseek>|/sysseek FILEHANDLE,POSITION,WHENCE>
 family of functions use byte offsets, not character offsets,
 because seeking to a character offset would be very slow in a UTF-8 file.
 
-The return value of L<C<tell>|/tell FILEHANDLE> for the standard streams
+The return value of C<tell> for the standard streams
 like the STDIN depends on the operating system: it may return -1 or
-something else.  L<C<tell>|/tell FILEHANDLE> on pipes, fifos, and
+something else.  C<tell> on pipes, fifos, and
 sockets usually returns -1.
 
 There is no C<systell> function.  Use
 L<C<sysseek($fh, 0, 1)>|/sysseek FILEHANDLE,POSITION,WHENCE> for that.
 
-Do not use L<C<tell>|/tell FILEHANDLE> (or other buffered I/O
+Do not use C<tell> (or other buffered I/O
 operations) on a filehandle that has been manipulated by
 L<C<sysread>|/sysread FILEHANDLE,SCALAR,LENGTH,OFFSET>,
 L<C<syswrite>|/syswrite FILEHANDLE,SCALAR,LENGTH,OFFSET>, or
 L<C<sysseek>|/sysseek FILEHANDLE,POSITION,WHENCE>.  Those functions
-ignore the buffering, while L<C<tell>|/tell FILEHANDLE> does not.
+ignore the buffering, while C<tell> does not.
 
 =item telldir DIRHANDLE
 X<telldir>
@@ -9648,7 +9820,7 @@ X<telldir>
 Returns the current position of the L<C<readdir>|/readdir DIRHANDLE>
 routines on DIRHANDLE.  Value may be given to
 L<C<seekdir>|/seekdir DIRHANDLE,POS> to access a particular location in
-a directory.  L<C<telldir>|/telldir DIRHANDLE> has the same caveats
+a directory.  C<telldir> has the same caveats
 about possible directory compaction as the corresponding system library
 routine.
 
@@ -9666,7 +9838,7 @@ method of the class (meaning C<TIESCALAR>, C<TIEHANDLE>, C<TIEARRAY>,
 or C<TIEHASH>).  Typically these are arguments such as might be passed
 to the L<dbm_open(3)> function of C.  The object returned by the
 constructor is also returned by the
-L<C<tie>|/tie VARIABLE,CLASSNAME,LIST> function, which would be useful
+C<tie> function, which would be useful
 if you want to access other methods in CLASSNAME.
 
 Note that functions such as L<C<keys>|/keys HASH> and
@@ -9745,11 +9917,11 @@ Not all methods indicated above need be implemented.  See L<perltie>,
 L<Tie::Hash>, L<Tie::Array>, L<Tie::Scalar>, and L<Tie::Handle>.
 
 Unlike L<C<dbmopen>|/dbmopen HASH,DBNAME,MASK>, the
-L<C<tie>|/tie VARIABLE,CLASSNAME,LIST> function will not
+C<tie> function will not
 L<C<use>|/use Module VERSION LIST> or L<C<require>|/require VERSION> a
 module for you; you need to do that explicitly yourself.  See L<DB_File>
 or the L<Config> module for interesting
-L<C<tie>|/tie VARIABLE,CLASSNAME,LIST> implementations.
+C<tie> implementations.
 
 For further details see L<perltie>, L<C<tied>|/tied VARIABLE>.
 
@@ -9796,7 +9968,7 @@ seconds for this process and any exited children of this process.
 
     my ($user,$system,$cuser,$csystem) = times;
 
-In scalar context, L<C<times>|/times> returns C<$user>.
+In scalar context, C<times> returns C<$user>.
 
 Children's times are only included for terminated children.
 
@@ -9887,7 +10059,7 @@ If EXPR is omitted, merely returns the current umask.
 
 The Unix permission C<rwxr-x---> is represented as three sets of three
 bits, or three octal digits: C<0750> (the leading 0 indicates octal
-and isn't one of the digits).  The L<C<umask>|/umask EXPR> value is such
+and isn't one of the digits).  The C<umask> value is such
 a number representing disabled permissions bits.  The permission (or
 "mode") values you pass L<C<mkdir>|/mkdir FILENAME,MODE> or
 L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE> are modified by your
@@ -9895,7 +10067,7 @@ umask, so even if you tell
 L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE> to create a file with
 permissions C<0777>, if your umask is C<0022>, then the file will
 actually be created with permissions C<0755>.  If your
-L<C<umask>|/umask EXPR> were C<0027> (group can't write; others can't
+C<umask> were C<0027> (group can't write; others can't
 read, write, or execute), then passing
 L<C<sysopen>|/sysopen FILEHANDLE,FILENAME,MODE> C<0666> would create a
 file with mode C<0640> (because C<0666 &~ 027> is C<0640>).
@@ -9968,7 +10140,7 @@ L<C<$!>|perlvar/$!> (errno):
     unlink @goners;
     unlink glob "*.bak";
 
-On error, L<C<unlink>|/unlink LIST> will not tell you which files it
+On error, C<unlink> will not tell you which files it
 could not remove.
 If you want to know which files you could not remove, try them one
 at a time:
@@ -9977,15 +10149,15 @@ at a time:
          unlink $file or warn "Could not unlink $file: $!";
      }
 
-Note: L<C<unlink>|/unlink LIST> will not attempt to delete directories
+Note: C<unlink> will not attempt to delete directories
 unless you are
 superuser and the B<-U> flag is supplied to Perl.  Even if these
 conditions are met, be warned that unlinking a directory can inflict
-damage on your filesystem.  Finally, using L<C<unlink>|/unlink LIST> on
+damage on your filesystem.  Finally, using C<unlink> on
 directories is not supported on many operating systems.  Use
 L<C<rmdir>|/rmdir FILENAME> instead.
 
-If LIST is omitted, L<C<unlink>|/unlink LIST> uses L<C<$_>|perlvar/$_>.
+If LIST is omitted, C<unlink> uses L<C<$_>|perlvar/$_>.
 
 =item unpack TEMPLATE,EXPR
 X<unpack>
@@ -9994,7 +10166,7 @@ X<unpack>
 
 =for Pod::Functions convert binary structure into normal perl variables
 
-L<C<unpack>|/unpack TEMPLATE,EXPR> does the reverse of
+C<unpack> does the reverse of
 L<C<pack>|/pack TEMPLATE,LIST>: it takes a string
 and expands it out into a list of values.
 (In scalar context, it returns merely the first value produced.)
@@ -10041,14 +10213,14 @@ The following efficiently counts the number of set bits in a bit vector:
 
 The C<p> and C<P> formats should be used with care.  Since Perl
 has no way of checking whether the value passed to
-L<C<unpack>|/unpack TEMPLATE,EXPR>
+C<unpack>
 corresponds to a valid memory location, passing a pointer value that's
 not known to be valid is likely to have disastrous consequences.
 
 If there are more pack codes or if the repeat count of a field or a group
 is larger than what the remainder of the input string allows, the result
 is not well defined: the repeat count may be decreased, or
-L<C<unpack>|/unpack TEMPLATE,EXPR> may produce empty strings or zeros,
+C<unpack> may produce empty strings or zeros,
 or it may raise an exception.
 If the input string is longer than one described by the TEMPLATE,
 the remainder of that input string is ignored.
@@ -10081,7 +10253,7 @@ prepended elements stay in the same order.  Use
 L<C<reverse>|/reverse LIST> to do the reverse.
 
 Starting with Perl 5.14, an experimental feature allowed
-L<C<unshift>|/unshift ARRAY,LIST> to take
+C<unshift> to take
 a scalar expression. This experiment has been deemed unsuccessful, and was
 removed as of Perl 5.24.
 
@@ -10139,7 +10311,7 @@ That is exactly equivalent to
     BEGIN { require Module }
 
 If the VERSION argument is present between Module and LIST, then the
-L<C<use>|/use Module VERSION LIST> will call the C<VERSION> method in
+C<use> will call the C<VERSION> method in
 class Module with the given version as an argument:
 
     use Module 12.34;
@@ -10173,20 +10345,20 @@ pragmas are:
     use constant;
     use diagnostics;
     use integer;
+    use feature  qw(say signatures bitwise);
     use sigtrap  qw(SEGV BUS);
     use strict   qw(subs vars refs);
     use subs     qw(afunc blurfl);
     use warnings qw(all);
-    use sort     qw(stable);
 
 Some of these pseudo-modules import semantics into the current
 block scope (like L<C<strict>|strict> or L<C<integer>|integer>, unlike
 ordinary modules, which import symbols into the current package (which
 are effective through the end of the file).
 
-Because L<C<use>|/use Module VERSION LIST> takes effect at compile time,
+Because C<use> takes effect at compile time,
 it doesn't respect the ordinary flow control of the code being compiled.
-In particular, putting a L<C<use>|/use Module VERSION LIST> inside the
+In particular, putting a C<use> inside the
 false branch of a conditional doesn't prevent it
 from being processed.  If a module or pragma only needs to be loaded
 conditionally, this can be done using the L<if> pragma:
@@ -10195,7 +10367,7 @@ conditionally, this can be done using the L<if> pragma:
     use if WANT_WARNINGS, warnings => qw(all);
 
 There's a corresponding L<C<no>|/no MODULE VERSION LIST> declaration
-that unimports meanings imported by L<C<use>|/use Module VERSION LIST>,
+that unimports meanings imported by C<use>,
 i.e., it calls C<< Module->unimport(LIST) >> instead of
 L<C<import>|/import LIST>.  It behaves just as L<C<import>|/import LIST>
 does with VERSION, an omitted or empty LIST,
@@ -10207,7 +10379,7 @@ or no unimport method being found.
 
 See L<perlmodlib> for a list of standard modules and pragmas.  See
 L<perlrun|perlrun/-m[-]module> for the C<-M> and C<-m> command-line
-options to Perl that give L<C<use>|/use Module VERSION LIST>
+options to Perl that give C<use>
 functionality from the command-line.
 
 =item use VERSION
@@ -10266,7 +10438,7 @@ older code.
     use 5.024_001;  # ditto; older syntax compatible with perl 5.6
 
 This is often useful if you need to check the current Perl version before
-L<C<use>|/use Module VERSION LIST>ing library modules that won't work
+C<use>ing library modules that won't work
 with older versions of Perl.
 (We try not to do this more than we have to.)
 
@@ -10283,7 +10455,7 @@ infrastructure, this feature is now little used in practice and should be
 avoided in newly-written code.
 
 Care should be taken when using the C<no VERSION> form, as it is I<only>
-meant to be used to assert that the running Perl is of a earlier version
+meant to be used to assert that the running Perl is of an earlier version
 than its argument and I<not> to undo the feature-enabling side effects
 of C<use VERSION>.
 
@@ -10340,12 +10512,14 @@ X<values>
 
 =item values ARRAY
 
-=for Pod::Functions return a list of the values in a hash
+=for Pod::Functions return a list of the values in a hash or array
 
-In list context, returns a list consisting of all the values of the named
-hash.  In Perl 5.12 or later only, will also return a list of the values of
-an array; prior to that release, attempting to use an array argument will
-produce a syntax error.  In scalar context, returns the number of values.
+Called in list context, returns a list consisting of all the value of the
+named hash, or in Perl 5.12 or later, the values of an array.  Perl
+releases prior to 5.12 will produce a syntax error if you try to use an
+array argument.  In scalar context, returns the number of keys or indices.
+
+Array entries are returned in the order of lowest index first.
 
 Hash entries are returned in an apparently random order.  The actual random
 order is specific to a given hash; the exact same series of operations
@@ -10354,19 +10528,19 @@ into the hash may change the order, as will any deletion, with the exception
 that the most recent key returned by L<C<each>|/each HASH> or
 L<C<keys>|/keys HASH> may be deleted without changing the order.  So
 long as a given hash is unmodified you may rely on
-L<C<keys>|/keys HASH>, L<C<values>|/values HASH> and
+L<C<keys>|/keys HASH>, C<values> and
 L<C<each>|/each HASH> to repeatedly return the same order
 as each other.  See L<perlsec/"Algorithmic Complexity Attacks"> for
 details on why hash order is randomized.  Aside from the guarantees
-provided here the exact details of Perl's hash algorithm and the hash
+provided here, the exact details of Perl's hash algorithm and the hash
 traversal order are subject to change in any release of Perl.  Tied hashes
 may behave differently to Perl's hashes with respect to changes in order on
 insertion and deletion of items.
 
-As a side effect, calling L<C<values>|/values HASH> resets the HASH or
+As a side effect, calling C<values> resets the HASH or
 ARRAY's internal iterator (see L<C<each>|/each HASH>) before yielding the
 values.  In particular,
-calling L<C<values>|/values HASH> in void context resets the iterator
+calling C<values> in void context resets the iterator
 with no other overhead.
 
 Apart from resetting the iterator,
@@ -10382,7 +10556,7 @@ modify the contents of the hash:
     for (@hash{keys %hash}) { s/foo/bar/g }  # same
 
 Starting with Perl 5.14, an experimental feature allowed
-L<C<values>|/values HASH> to take a
+C<values> to take a
 scalar expression. This experiment has been deemed unsuccessful, and was
 removed as of Perl 5.24.
 
@@ -10423,7 +10597,7 @@ C<0x04>, C<0x08>, C<0x10>, C<0x20>, C<0x40>, C<0x80>.  For example,
 breaking the single input byte C<chr(0x36)> into two groups gives a list
 C<(0x6, 0x3)>; breaking it into 4 groups gives C<(0x2, 0x1, 0x3, 0x0)>.
 
-L<C<vec>|/vec EXPR,OFFSET,BITS> may also be assigned to, in which case
+C<vec> may also be assigned to, in which case
 parentheses are needed
 to give the expression the correct precedence as in
 
@@ -10435,12 +10609,12 @@ extend the string with sufficiently many zero bytes.   It is an error
 to try to write off the beginning of the string (i.e., negative OFFSET).
 
 If the string happens to be encoded as UTF-8 internally (and thus has
-the UTF8 flag set), L<C<vec>|/vec EXPR,OFFSET,BITS> tries to convert it
+the UTF8 flag set), C<vec> tries to convert it
 to use a one-byte-per-character internal representation. However, if the
 string contains characters with values of 256 or higher, a fatal error
 will occur.
 
-Strings created with L<C<vec>|/vec EXPR,OFFSET,BITS> can also be
+Strings created with C<vec> can also be
 manipulated with the logical
 operators C<|>, C<&>, C<^>, and C<~>.  These operators will assume a bit
 vector operation is desired when both operands are strings.
@@ -10653,7 +10827,7 @@ L<C<${^CHILD_ERROR_NATIVE}>|perlvar/${^CHILD_ERROR_NATIVE}>.
 Note that a return value of C<-1> could mean that child processes are
 being automatically reaped, as described in L<perlipc>.
 
-If you use L<C<wait>|/wait> in your handler for
+If you use C<wait> in your handler for
 L<C<$SIG{CHLD}>|perlvar/%SIG>, it may accidentally wait for the child
 created by L<C<qx>|/qxE<sol>STRINGE<sol>> or L<C<system>|/system LIST>.
 See L<perlipc> for details.
@@ -10721,7 +10895,7 @@ looking for no value (void context).
     my @a = complex_calculation();
     return wantarray ? @a : "@a";
 
-L<C<wantarray>|/wantarray>'s result is unspecified in the top level of a file,
+C<wantarray>'s result is unspecified in the top level of a file,
 in a C<BEGIN>, C<UNITCHECK>, C<CHECK>, C<INIT> or C<END> block, or
 in a C<DESTROY> method.
 
@@ -10749,7 +10923,7 @@ as it sees fit (like, for instance, converting it into a
 L<C<die>|/die LIST>).  Most
 handlers must therefore arrange to actually display the
 warnings that they are not prepared to deal with, by calling
-L<C<warn>|/warn LIST>
+C<warn>
 again in the handler.  Note that this is quite safe and will not
 produce an endless loop, since C<__WARN__> hooks are not called from
 inside one.

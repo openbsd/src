@@ -1838,7 +1838,6 @@ DebugWrap->new({
             [
                 'n',
                 'w $foo',
-                'W $foo',
                 'c',
                 'print "\nIDX=<$idx>\n"',
                 'q',
@@ -1847,16 +1846,45 @@ DebugWrap->new({
         }
     );
 
-    $wrapper->contents_unlike(qr#
-        \$foo\ changed:
+
+    $wrapper->contents_like(qr#
+        \$foo\ changed:\n
+        \s+old\ value:\s+'1'\n
+        \s+new\ value:\s+'2'\n
         #msx,
-        'W command - watchpoint was deleted',
+        'w command - watchpoint changed',
+    );
+    $wrapper->output_like(qr#
+        \nIDX=<20>\n
+        #msx,
+        "w command - correct output from IDX",
+    );
+}
+
+{
+    my $wrapper = DebugWrap->new(
+        {
+            cmds =>
+            [
+                'w @foo',
+                'c',
+                'q',
+            ],
+            prog => \<<'PROG',
+my @foo;
+push @foo, undef;
+push @foo, "x";
+print @foo;
+PROG
+        }
     );
 
-    $wrapper->output_like(qr#
-        \nIDX=<>\n
+    $wrapper->contents_like(qr#
+        Watchpoint\ 0:\s+\@foo\ changed:\n
+        \s+old\ value:\s+\n
+        \s+new\ value:\s+undef\n
         #msx,
-        "W command - stopped at end.",
+        'w command - distinguish () from (undef)',
     );
 }
 
@@ -3489,6 +3517,149 @@ EOS
         }
     );
     $wrapper->output_like(qr/\bOK\b/, "check the line is IOK");
+}
+
+{
+    # https://github.com/Perl/perl5/issues/799
+    my $prog = <<'EOS';
+sub problem {
+    $SIG{__DIE__} = sub {
+        die "<b problem> will set a break point here.\n";
+    };    # The break point _should_ be set here.
+    warn "This line will run even if you enter <c problem>.\n";
+}
+&problem;
+EOS
+
+    my $wrapper = DebugWrap->new(
+        {
+            cmds =>
+            [
+                "b problem",
+                "c",
+                "q"
+            ],
+            prog => \$prog
+        }
+    );
+    $wrapper->contents_like(qr/The break point _should_/, "break at right place (b)");
+    $wrapper->output_unlike(qr/This line will run even if you enter <c problem>\./,
+                            "didn't run the wrong code (b)");
+
+    $wrapper = DebugWrap->new(
+        {
+            cmds =>
+            [
+                "c problem",
+                "q"
+            ],
+            prog => \$prog
+        }
+    );
+    $wrapper->contents_like(qr/The break point _should_/, "break at right place (c)");
+    $wrapper->output_unlike(qr/This line will run even if you enter <c problem>\./,
+                            "didn't run the wrong code (c)");
+
+    $wrapper = DebugWrap->new(
+        {
+            cmds =>
+            [
+                "c unknown",
+                "q"
+            ],
+            prog => \$prog
+        }
+    );
+    $wrapper->contents_like(qr/Subroutine main::unknown not found/, "fail to continue to unknown");
+    $wrapper->contents_unlike(qr/DB::subroutine_first_breakable_line/,
+                              "no backtrace for the error message");
+
+}
+
+{
+    my $wrapper = DebugWrap->new(
+        {
+            cmds =>
+            [
+                "b B::svref_2object",
+                "q"
+            ],
+            prog => \<<'EOS'
+use B;
+print "Hello\n";
+EOS
+        }
+    );
+    $wrapper->contents_like(qr/Cannot break on XSUB B::svref_2object/, "can't break on XSUB");
+}
+
+{
+    my $wrapper = DebugWrap->new(
+        {
+            cmds =>
+            [
+                "b problem", # should fail
+                "b postpone problem",
+                "L",
+                "c",
+                "q"
+            ],
+            prog => \<<'EOS'
+print "1\n";
+eval <<'EOC';
+sub problem {
+    $SIG{__DIE__} = sub {
+        die "<b problem> will set a break point here.\n";
+    };    # The break point _should_ be set here.
+    warn "This line will run even if you enter <c problem>.\n";
+}
+EOC
+print "2\n";
+problem();
+print "3\n";
+EOS
+        }
+    );
+    $wrapper->contents_like(qr/Subroutine main::problem not found/,
+                            "problem not defined yet");
+    $wrapper->contents_like(qr/Postponed\ breakpoints\ in\ subroutines:
+                               \s+main::problem\s+break\s\+0\sif\s1/x,
+                            "check postponed breakpoint present");
+    $wrapper->contents_like(qr/The break point _should_/, "break at right place (c)");
+    $wrapper->output_unlike(qr/This line will run even if you enter <c problem>\./,
+                            "didn't run the wrong code");
+}
+
+{
+    my $wrapper = DebugWrap->new(
+        {
+            cmds =>
+            [
+                "b compile problem",
+                "L",
+                "c",
+                "q"
+            ],
+            prog => \<<'EOS'
+print "1\n";
+eval <<'EOC';
+sub problem {
+    $SIG{__DIE__} = sub {
+        die "<b problem> will set a break point here.\n";
+    };    # The break point _should_ be set here.
+    warn "This line will run even if you enter <c problem>.\n";
+}
+EOC
+print "2\n";
+problem();
+print "3\n";
+EOS
+        }
+    );
+    $wrapper->contents_like(qr/Postponed\ breakpoints\ in\ subroutines:
+                               \s+main::problem\s+compile/x,
+                            "check compiled breakpoint present");
+    $wrapper->contents_like(qr/print "2\\n"/, "break immediately after defining problem");
 }
 
 done_testing();

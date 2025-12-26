@@ -4,7 +4,7 @@ use strict;
 use Cwd ();
 require File::Spec::Unix;
 
-our $VERSION = '3.91';
+our $VERSION = '3.94';
 $VERSION =~ tr/_//d;
 
 our @ISA = qw(File::Spec::Unix);
@@ -25,7 +25,7 @@ sub file_name_is_absolute {
 sub path {
     my $path = $ENV{PATH};
     $path =~ s:\\:/:g;
-    my @path = split(';',$path);
+    my @path = split(';',$path,-1);
     foreach (@path) { $_ = '.' if $_ eq '' }
     return @path;
 }

@@ -1,10 +1,14 @@
+=pod
+
+=encoding UTF-8
+
 =head1 NAME
 
 perlfaq7 - General Perl Language Issues
 
 =head1 VERSION
 
-version 5.20240218
+version 5.20250619
 
 =head1 DESCRIPTION
 
@@ -672,7 +676,7 @@ Now the output shows that C<foo> doesn't get the C<@_> from its caller.
 However, using C<&> in the call still overrides the prototype of C<foo> if
 present:
 
-    sub foo ($$$) { print "Args infoo are: @_\n"; }
+    sub foo ($$$) { print "Args in foo are: @_\n"; }
 
     sub bar_1 { &foo; }
     sub bar_2 { &foo(); }
@@ -772,7 +776,7 @@ A totally different approach is to create a hash of function references.
 
     my %commands = (
         "happy" => \&joy,
-        "sad",  => \&sullen,
+        "sad"   => \&sullen,
         "done"  => sub { die "See ya!" },
         "mad"   => \&angry,
     );
@@ -841,7 +845,7 @@ diagnostics as L<Carp> does, use the C<caller> built-in:
         my( $package, $filename, $line ) = caller;
 
         print "I was called from package $package\n";
-        );
+    };
 
 By default, your program starts in package C<main>, so you will
 always be in some package.
@@ -1087,3 +1091,5 @@ are hereby placed into the public domain. You are permitted and
 encouraged to use this code in your own programs for fun
 or for profit as you see fit. A simple comment in the code giving
 credit would be courteous but is not required.
+
+=cut

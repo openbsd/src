@@ -629,7 +629,7 @@ string is effectively quoted.
 =head2 Pseudo-hashes: Using an array as a hash
 X<pseudo-hash> X<pseudo hash> X<pseudohash>
 
-Pseudo-hashes have been removed from Perl.  The 'fields' pragma
+Pseudo-hashes have been removed from Perl.  The L<fields> pragma
 remains available.
 
 =head2 Function Templates
@@ -731,6 +731,8 @@ For example:
 
     $r = [ 1, [ 2, 3 ], 4 ];
     $r->[1]->@*;  # equivalent to @{ $r->[1] }
+
+    $aref->@* = (1, 2, 3);  # same as @{ $aref } = (1, 2, 3)
 
 In Perl 5.20 and 5.22, this syntax must be enabled with C<use feature
 'postderef'>. As of Perl 5.24, no feature declarations are required to make

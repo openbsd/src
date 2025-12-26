@@ -111,12 +111,12 @@ find(
         $version =~ /\d/ and $version = "'$version'";
 
         # some heuristics to figure out the module name from the file name
+        $module =~ s/(\.pm|_pm\.PL)$//;
         $module =~ s{^(lib|cpan|dist|ext|os2/OS2)/}{}
 			and $1 ne 'lib'
             and (
             $module =~ s{\b(\w+)/\1\b}{$1},
             $module =~ s{^B/O}{O},
-            $module =~ s{^Devel-PPPort}{Devel},
             $module =~ s{^libnet/}{},
             $module =~ s{^PathTools/}{},
             $module =~ s{REXX/DLL}{DLL},
@@ -131,7 +131,6 @@ find(
         $module =~ s{/}{::}g;
         $module =~ s{-}{::}g;
 		$module =~ s{^.*::lib::}{}; # turns Foo/lib/Foo.pm into Foo.pm
-        $module =~ s/(\.pm|_pm\.PL)$//;
         $lines{$module}          = $version;
         $module_to_file{$module} = $File::Find::name;
     },

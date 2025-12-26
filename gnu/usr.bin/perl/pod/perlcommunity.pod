@@ -118,9 +118,8 @@ in a variety of ways. At the workshops, subjects range from a beginner's
 introduction (such as the Pittsburgh Perl Workshop's "Zero To Perl") to much
 more advanced subjects.
 
-There are several great resources for locating workshops: the
-L<websites|"Websites"> mentioned above, the
-L<calendar|"Calendar of Perl Events"> mentioned below, and the YAPC Europe
+There are a couple of great resources for locating workshops: the
+L<websites|"Websites"> mentioned above, and the YAPC Europe
 website, L<http://www.yapceurope.org/>, which is probably the best resource for
 European Perl events.
 
@@ -169,17 +168,6 @@ An additional conference franchise with a large Perl portion was the
 Open Source Developers Conference or OSDC. First held in Australia, it
 also spread to Israel and France. More information can be found at:
 L<http://www.osdc.org.il> for Israel, and L<http://www.osdc.fr/> for France.
-
-=head2 Calendar of Perl Events
-
-The Perl Review, L<http://www.theperlreview.com> maintains a website
-and Google calendar for tracking
-workshops, hackathons, Perl Mongers meetings, and other events. A view
-of this calendar is available at L<https://www.perl.org/events.html>.
-
-Not every event or Perl Mongers group is on that calendar, so don't lose
-heart if you don't see yours posted. To have your event or group listed,
-contact brian d foy (brian@theperlreview.com).
 
 =head1 AUTHOR
 

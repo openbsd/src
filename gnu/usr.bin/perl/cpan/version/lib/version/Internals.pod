@@ -300,58 +300,6 @@ determine whether the v-string encoding was used.
 form that has a leading 'v' character, for the simple reason that sometimes
 it is impossible to tell whether one was present initially.
 
-=head2 Version Object Internals
-
-version.pm provides an overloaded version object that is designed to both
-encapsulate the author's intended $VERSION assignment as well as make it
-completely natural to use those objects as if they were numbers (e.g. for
-comparisons).  To do this, a version object contains both the original
-representation as typed by the author, as well as a parsed representation
-to ease comparisons.  Version objects employ L<overload> methods to
-simplify code that needs to compare, print, etc the objects.
-
-The internal structure of version objects is a blessed hash with several
-components:
-
-    bless( {
-      'original' => 'v1.2.3_4',
-      'alpha' => 1,
-      'qv' => 1,
-      'version' => [
-	1,
-	2,
-	3,
-	4
-      ]
-    }, 'version' );
-
-=over 4
-
-=item original
-
-A faithful representation of the value used to initialize this version
-object.  The only time this will not be precisely the same characters
-that exist in the source file is if a short dotted-decimal version like
-v1.2 was used (in which case it will contain 'v1.2').  This form is
-B<STRONGLY> discouraged, in that it will confuse you and your users.
-
-=item qv
-
-A boolean that denotes whether this is a decimal or dotted-decimal version.
-See L<version/is_qv()>.
-
-=item alpha
-
-A boolean that denotes whether this is an alpha version.  NOTE: that the
-underscore can only appear in the last position.  See L<version/is_alpha()>.
-
-=item version
-
-An array of non-negative integers that is used for comparison purposes with
-other version objects.
-
-=back
-
 =head2 Replacement UNIVERSAL::VERSION
 
 In addition to the version objects, this modules also replaces the core

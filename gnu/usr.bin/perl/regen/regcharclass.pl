@@ -93,7 +93,7 @@ C<what_len_WHATEVER_utf8(s,len)>.
 These forms should not be used I<except> on small sets of mostly widely
 separated code points; otherwise the code generated is inefficient.  For these
 cases, it is best to use the C<is_> forms, and then find the code point with
-C<utf8_to_uvchr_buf>().  This program can fail with a "deep recursion"
+L<perlapi/C<utf8_to_uv>>.  This program can fail with a "deep recursion"
 message on the worst of the inappropriate sets.  Examine the generated macro
 to see if it is acceptable.
 

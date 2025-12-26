@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc( qw(. ../lib) );
 }
 
-require Config; Config->import;
+use Config;
 plan(tests => 1);
 
 SKIP: {

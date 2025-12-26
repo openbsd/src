@@ -20,7 +20,7 @@ my $is_ascii = ord("A") == 65;
 
 run_tests_for_quotekeys();
 SKIP: {
-    skip "XS version was unavailable, so we already ran with pure Perl", 5
+    skip "XS version was unavailable, so we already ran with pure Perl", 9
         if $Data::Dumper::Useperl;
     local $Data::Dumper::Useperl = 1;
     run_tests_for_quotekeys();

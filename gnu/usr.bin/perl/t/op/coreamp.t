@@ -405,6 +405,35 @@ sub {
   ::caller_test();
 }->();
 
+use if !is_miniperl, File::Spec::Functions, qw(curdir);
+
+test_proto 'chdir';
+unless (is_miniperl) {
+    $tests += 7;
+    my ($false, $true) = (!!0, !!1);
+    my $good_dir = curdir();
+    my $bad_dir = 'no_such_dir+*?~';
+    is mychdir($good_dir), $true, 'mychdir(".") succeeds';
+    is mychdir($bad_dir), $false, 'mychdir($bad_dir) fails';
+    is &CORE::chdir($good_dir), $true, '&chdir(".") succeeds';
+    is &CORE::chdir($bad_dir), $false, '&chdir($bad_dir) fails';
+    {
+        local $ENV{HOME} = $good_dir;
+        is &CORE::chdir(), $true, '&chdir() succeeds with $ENV{HOME} = "."';
+        $ENV{HOME} = $bad_dir;
+        is &CORE::chdir(), $false, '&chdir() fails with $ENV{HOME} = $bad_dir';
+    }
+    SKIP: {
+        # I don't know enough about VMS to tell whether it is possible to
+        # delete $ENV{'SYS$LOGIN'} and what that would mean, so just be
+        # cautious and skip this test there until someone can verify.
+        skip 'not messing with SYS$LOGIN on VMS', 1
+            if $^O eq 'VMS';
+        delete local @ENV{qw(HOME LOGDIR SYS$LOGIN)};
+        is &CORE::chdir(), $false, '&chdir() fails with @ENV{qw(HOME LOGDIR SYS$LOGIN)} unset';
+    }
+}
+
 test_proto 'chmod';
 $tests += 3;
 is &CORE::chmod(), 0, '&chmod with no args';
@@ -1161,7 +1190,8 @@ like $@, qr'^Undefined format "STDOUT" called',
   my %nottest_words = map { $_ => 1 } qw(
     ADJUST AUTOLOAD BEGIN CHECK CORE DESTROY END INIT UNITCHECK
     __DATA__ __END__
-    and catch class cmp default defer do dump else elsif eq eval field finally
+    all and any catch class cmp default defer do dump else elsif
+    eq eval field finally
     for foreach format ge given goto grep gt if isa last le local lt m map
     method my ne next no or our package print printf q qq qr qw qx redo require
     return s say sort state sub tr try unless until use when while x xor y
@@ -1187,7 +1217,7 @@ like $@, qr'^Undefined format "STDOUT" called',
 {
   last if is_miniperl;
   require Cwd;
-  import Cwd;
+  Cwd->import;
   $tests += 3;
   require File::Temp ;
   my $dir = File::Temp::tempdir(uc cleanup => 1);

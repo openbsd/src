@@ -6,7 +6,7 @@
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2019, 2021 Russ Allbery <eagle@eyrie.org>
+# Copyright 2019, 2021, 2024 Russ Allbery <eagle@eyrie.org>
 # Copyright 2013-2014
 #     The Board of Trustees of the Leland Stanford Junior University
 #
@@ -30,8 +30,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.010;
-use strict;
+use 5.012;
 use warnings;
 
 use lib 't/lib';

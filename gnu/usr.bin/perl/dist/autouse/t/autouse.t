@@ -91,7 +91,7 @@ SKIP: {
     is $w, undef,
        'no redefinition warning when clobbering autouse stub with new sub';
     undef $w;
-    import MyTestModule2 'test_function2';
+    MyTestModule2->import('test_function2');
     is $w, undef,
        'no redefinition warning when clobbering autouse stub via *a=\&b';
 }

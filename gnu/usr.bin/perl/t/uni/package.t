@@ -9,6 +9,9 @@ BEGIN {
 
 plan (tests => 18);
 
+# Works on either ASCII or EBCDIC
+my $prefix = ("a" lt "A") ? "bar:BEGIN" : "BEGIN:bar";
+
 use utf8;
 use open qw( :utf8 :std );
 
@@ -44,7 +47,7 @@ ok 1, "sanity check. If we got this far, UTF-8 in package names is legal.";
     $ꑭʑ = join(':', sort(keys %ꑭʑ::));
     $압Ƈ = join(':', sort(keys %압Ƈ::));
     
-    ::is $ꑭʑ, 'BEGIN:bar:ニュー:ꑭʑ:압Ƈ', "comp/stash.t test 1";
+    ::is $ꑭʑ, "$prefix:ニュー:ꑭʑ:압Ƈ", "comp/stash.t test 1";
     ::is $압Ƈ, "d읯ⱪ:ㄅĽuṞfⳐ", "comp/stash.t test 2";
 
     {

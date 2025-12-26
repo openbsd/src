@@ -18,7 +18,7 @@ use B;
 
 my %unsupported = map +($_=>1), qw (
  __DATA__ __END__ ADJUST AUTOLOAD BEGIN UNITCHECK CORE DESTROY END INIT CHECK
-  and catch class cmp default defer do dump else elsif eq eval field
+  all and any catch class cmp default defer do dump else elsif eq eval field
   finally for foreach format ge given goto grep gt if isa last le local
   lt m map method my ne next no or our package print printf q qq qr qw qx
   redo require return s say sort state sub tr try unless until use
@@ -170,8 +170,13 @@ $tests++;
 # This subroutine is outside the warnings scope:
 sub foo { goto &CORE::abs }
 use warnings;
-$SIG{__WARN__} = sub { like shift, qr\^Use of uninitialized\ };
-foo(undef);
+{
+  local $SIG{__WARN__} = sub { like shift, qr\^Use of uninitialized\ };
+  foo(undef);
+}
+
+$tests++;
+is eval('mychdir(curdir())'), 1, "inlined chdir with parenthesized args accepts a string";
 
 $tests+=2;
 is runperl(prog => 'print CORE->lc, qq-\n-'), "core\n",

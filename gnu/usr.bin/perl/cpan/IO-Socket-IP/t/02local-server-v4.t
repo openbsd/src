@@ -3,7 +3,7 @@
 use v5.14;
 use warnings;
 
-use Test::More;
+use Test2::V0;
 
 use IO::Socket::IP;
 
@@ -43,8 +43,8 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
    ok( eval { $testserver->peerport; 1 }, "\$testserver->peerport does not die for $socktype" )
       or do { chomp( my $e = $@ ); diag( "Exception was: $e" ) };
 
-   is_deeply( { host => $testserver->peerhost, port => $testserver->peerport },
-              { host => undef, port => undef },
+   is( { host => $testserver->peerhost, port => $testserver->peerport },
+       { host => undef, port => undef },
       'peerhost/peersock yield scalar' );
 
    my $socket = IO::Socket::INET->new(
@@ -59,18 +59,18 @@ foreach my $socktype (qw( SOCK_STREAM SOCK_DGRAM )) {
       do { $testserver->connect( $socket->sockname ); $testserver };
 
    ok( defined $testclient, "accepted test $socktype client" );
-   isa_ok( $testclient, "IO::Socket::IP", "\$testclient for $socktype" );
+   isa_ok( $testclient, [ "IO::Socket::IP" ], "\$testclient for $socktype" );
 
    is( $testclient->sockdomain, AF_INET,           "\$testclient->sockdomain for $socktype" );
    is( $testclient->socktype,   Socket->$socktype, "\$testclient->socktype for $socktype" );
 
-   is_deeply( [ unpack_sockaddr_in $socket->sockname ],
-              [ unpack_sockaddr_in $testclient->peername ],
-              "\$socket->sockname for $socktype" );
+   is( [ unpack_sockaddr_in $socket->sockname ],
+       [ unpack_sockaddr_in $testclient->peername ],
+       "\$socket->sockname for $socktype" );
 
-   is_deeply( [ unpack_sockaddr_in $socket->peername ],
-              [ unpack_sockaddr_in $testclient->sockname ],
-              "\$socket->peername for $socktype" );
+   is( [ unpack_sockaddr_in $socket->peername ],
+       [ unpack_sockaddr_in $testclient->sockname ],
+       "\$socket->peername for $socktype" );
 
    is( $testclient->sockport, $socket->peerport, "\$testclient->sockport for $socktype" );
    is( $testclient->peerport, $socket->sockport, "\$testclient->peerport for $socktype" );

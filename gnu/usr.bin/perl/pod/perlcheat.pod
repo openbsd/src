@@ -48,7 +48,7 @@ already be overwhelming.
   not             /u Unicode            []     character class
   and             /e evaluate /ee rpts  \b     boundary
   or xor          /g global             \z     string end
-                  /o compile pat once   ()     capture
+                  /o compile pat once   (p)    capture
   DEBUG                                 (?:p)  no capture
   -MO=Deparse     REGEX CHARCLASSES     (?#t)  comment
   -MO=Terse       .   [^\n]             (?=p)  ZW pos ahead

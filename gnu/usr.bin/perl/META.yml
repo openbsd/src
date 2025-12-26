@@ -105,5 +105,5 @@ resources:
   homepage: https://www.perl.org/
   license: https://dev.perl.org/licenses/
   repository: https://github.com/Perl/perl5
-version: '5.040001'
-x_serialization_backend: 'CPAN::Meta::YAML version 0.018'
+version: '5.042000'
+x_serialization_backend: 'CPAN::Meta::YAML version 0.020'

@@ -142,7 +142,7 @@ and L<perlunicode> for details.
            like '.' without /s modifier)
    \v      A vertical whitespace
    \V      A non vertical whitespace
-   \R      A generic newline           (?>\v|\x0D\x0A)
+   \R      A generic newline           (?>\x0D\x0A|\v)
 
    \pP     Match P-named (Unicode) property
    \p{...} Match Unicode property with name longer than 1 character
@@ -318,7 +318,7 @@ Captured groups are numbered according to their I<opening> paren.
    fc          Foldcase a string
 
    pos         Return or set current match position
-   quotemeta   Quote metacharacters
+   quotemeta   Quote metacharacters (escape their normal meaning)
    reset       Reset m?pattern? status
    study       Analyze string for optimizing matching
 

@@ -8,6 +8,14 @@ use Getopt::Std;
 use Archive::Tar;
 use Data::Dumper;
 
+# Allow (and ignore) --format=ustar, for compatibility with GNU tar
+for (my $i = 0; $i < @ARGV; ++$i) {
+    last if $ARGV[$i] eq '--';
+    splice @ARGV, $i--, 1 if $ARGV[$i] eq '--format=ustar';
+    splice @ARGV, $i--, 2 if $i < $#ARGV
+        && $ARGV[$i] eq '--format' && $ARGV[$i + 1] eq 'ustar';
+}
+
 # Allow historic support for dashless bundled options
 #  tar cvf file.tar
 # is valid (GNU) tar style

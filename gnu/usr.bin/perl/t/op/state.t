@@ -9,7 +9,7 @@ BEGIN {
 
 use strict;
 
-plan tests => 166;
+plan tests => 170;
 
 # Before loading feature.pm, test it with CORE::
 ok eval 'CORE::state $x = 1;', 'CORE::state outside of feature.pm scope';
@@ -516,7 +516,18 @@ for (1,2) {
         or diag "got these warnings:\n@warnings";
 }
 
+#  [GH #18630] Returning state hash-assign risks "Bizarre copy of HASH in subroutine exit"
+{
+    sub gh_18630H {state %h=(a=>1)}
+    my $res = join '', gh_18630H, gh_18630H;
+    is($res, "a1a1", 'HASH copied successfully in subroutine exit');
+    is(scalar gh_18630H, 1, 'gh_18630H scalar call returns key count');
 
+    sub gh_18630A {state @a = qw(b 2)}
+    $res = join '', gh_18630A , gh_18630A;
+    is($res, "b2b2", 'ARRAY copied successfully in subroutine exit');
+    is(scalar gh_18630A, 2, 'gh_18630A scalar call returns element count');
+}
 
 __DATA__
 (state $a) = 1;

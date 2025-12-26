@@ -5,7 +5,7 @@ use warnings;
 no warnings 'surrogate';    # surrogates can be inputs to this
 use charnames ();
 
-our $VERSION = '0.78';
+our $VERSION = '0.81';
 
 sub DEBUG () { 0 }
 $|=1 if DEBUG;
@@ -113,7 +113,7 @@ Unicode::UCD - Unicode character database
     my $unicode_version = Unicode::UCD::UnicodeVersion();
 
     my $convert_to_numeric =
-              Unicode::UCD::num("\N{RUMI DIGIT ONE}\N{RUMI DIGIT TWO}");
+              Unicode::UCD::num("\N{VAI DIGIT ONE}\N{VAI DIGIT TWO}");
 
 =head1 DESCRIPTION
 
@@ -2496,6 +2496,30 @@ match them.  A single-character string containing one of these digits will
 have its decimal value returned by C<num>, but any longer string containing
 only these digits will return C<undef>.
 
+To illustrate further, the Rumi numeric symbols were used in centuries past in
+and around North Africa and the Iberian peninsula.  In order to be able to
+digitize the many historical documents that use them, Unicode has encoded the
+set.  There is no character representing zero.  There are characters for one
+through nine, ten, twenty, and so forth. C<num> correctly returns the values
+of these in isolation.
+
+ my $rumi_one = num("\N{RUMI DIGIT ONE}");
+ my $rumi_two = num("\N{RUMI DIGIT TWO}");
+ my $rumi_twenty = num("\N{RUMI NUMBER TWENTY}");
+ say "$rumi_one $rumi_two $rumi_twenty";     # 1 2 20
+
+Because these do not follow modern decimal positional notation, stringing more
+than one of these together doesn't mean what you likely would think it means.
+So, C<num> correctly returns C<undef> if you try.   If you request the length
+of the valid initial substring in this case, that length would be one.
+
+ my $len;
+ my $value = num("\N{RUMI DIGIT ONE}\N{RUMI DIGIT TWO}", \$len);
+ say $len, " ", (defined $value) ? $value : "undef";  # 1 undef
+
+How to represent numbers like twelve gets complicated, and Unicode doesn't
+give any guidance, so C<num> can't either.
+
 Strings of multiple sub- and superscripts are not recognized as numbers.  You
 can use either of the compatibility decompositions in Unicode::Normalize to
 change these into digits, and then call C<num> on the result.
@@ -3554,8 +3578,8 @@ format is the empty string.
 
 is a combination of the C<"al"> type and the C<"ae"> type.  Some of
 the map array elements have the forms given by C<"al">, and
-the rest are the empty string.  The property C<NFKC_Casefold> has this form.
-An example slice is:
+the rest are the empty string.  The properties C<NFKC_Casefold> and
+C<NFKC_Simple_Casefold> have this form.  An example slice is:
 
  @$ranges_ref  @$maps_ref         Note
     ...
@@ -3846,9 +3870,9 @@ RETRY:
     # in the new-style, and this routine is supposed to return old-style block
     # names.  The Name table is valid, but we need to execute the special code
     # below to add in the algorithmic-defined name entries.
-    # And NFKCCF needs conversion, so handle that here too.
+    # And NFKCCF NFKCSCF need conversion, so handle those here too.
     if (ref $swash eq ""
-        || $swash->{'TYPE'} =~ / ^ To (?: Blk | Na | NFKCCF ) $ /x)
+        || $swash->{'TYPE'} =~ / ^ To (?: Blk | Na | NFKCS?CF ) \z /x)
     {
 
         # Get the short name of the input property, in standard form
@@ -3993,7 +4017,7 @@ RETRY:
                 $decomps{'TYPE'} = "ToDt";
                 $SwashInfo{'ToDt'}{'missing'} = "None";
                 $SwashInfo{'ToDt'}{'format'} = "s";
-            }   # 'dm' is handled below, with 'nfkccf'
+            }   # 'dm' is handled below, with 'nfkcs?cf'
 
             $decomps{'LIST'} = "";
 
@@ -4045,11 +4069,11 @@ RETRY:
             }
             $swash = \%decomps;
         }
-        elsif ($second_try ne 'nfkccf') { # Don't know this property. Fail.
+        elsif ($second_try !~ /^nfkcs?cf\z/) { # Don't know this property. Fail.
             return;
         }
 
-        if ($second_try eq 'nfkccf' || $second_try eq 'dm') {
+        if ($second_try =~ / ^ (?: nfkcs?cf | dm ) \z /x) {
 
             # The 'nfkccf' property is stored in the old format for backwards
             # compatibility for any applications that has read its file
@@ -4180,7 +4204,9 @@ RETRY:
             } # End of loop constructing the converted list
 
             # Finish up the data structure for our converted swash
-            my $type = ($second_try eq 'nfkccf') ? 'ToNFKCCF' : 'ToDm';
+            my $type = ($second_try =~ / ^ ( nfkcs?cf ) \z /x)
+                       ? 'To' . uc $1
+                       : 'ToDm';
             $revised_swash{'LIST'} = $list;
             $revised_swash{'TYPE'} = $type;
             $revised_swash{'SPECIALS'} = $swash->{'SPECIALS'};
@@ -4265,6 +4291,10 @@ RETRY:
         # assumed to be 'Y'.
 
         foreach my $range (split "\n", $swash->{'LIST'}) {
+
+            # No code points matched
+            last if $range eq '!Unicode::UCD::All';
+
             $range =~ s/ \s* (?: \# .* )? $ //xg; # rmv trailing space, comments
 
             # Find the beginning and end of the range on the line

@@ -7,7 +7,7 @@ use constant IS_VMS => ( $^O eq 'VMS' );
 use TAP::Object;
 use Text::ParseWords qw/shellwords/;
 
-our $VERSION = '3.48';
+our $VERSION = '3.50';
 
 # Get the parts of @INC which are changed from the stock list AND
 # preserve reordering of stock directories.
@@ -126,7 +126,7 @@ TAP::Harness::Env - Parsing harness related environmental variables where approp
 
 =head1 VERSION
 
-Version 3.48
+Version 3.50
 
 =head1 SYNOPSIS
 

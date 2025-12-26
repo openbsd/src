@@ -1,7 +1,8 @@
-# CJKRadicals-15.0.0.txt
-# Date: 2022-05-03, 18:49:00 GMT [RC, KW, LI]
-# © 2022 Unicode®, Inc.
-# For terms of use, see https://www.unicode.org/terms_of_use.html
+# CJKRadicals-16.0.0.txt
+# Date: 2024-02-02
+# © 2024 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
 # For documentation, see https://www.unicode.org/reports/tr44/
@@ -16,11 +17,13 @@
 #
 # There is one line per CJK radical number. Each line contains three
 # fields, separated by a semicolon (';'). The first field is the
-# CJK radical number. The second field is the CJK radical character.
+# CJK radical number. The second field is the CJK radical character,
+# which may be empty if the CJK radical character is not included in
+# the Kangxi Radicals block or the CJK Radicals Supplement block.
 # The third field is the CJK unified ideograph.
 #
-# CJK radical numbers match the regular expression [1-9][0-9]{0,2}\'?
-# and in particular they can end with a U+0027 ' APOSTROPHE.
+# CJK radical numbers match the regular expression [1-9][0-9]{0,2}\'{0,2}
+# and in particular they can end with one or two U+0027 ' APOSTROPHE characters.
 #
 # For more information, see UAX #38: Unicode Han Database (Unihan),
 # at https://www.unicode.org/reports/tr38/
@@ -200,7 +203,6 @@
 160; 2F9F; 8F9B
 161; 2FA0; 8FB0
 162; 2FA1; 8FB5
-162'; 2ECC; 8FB6
 163; 2FA2; 9091
 164; 2FA3; 9149
 165; 2FA4; 91C6
@@ -227,6 +229,7 @@
 181'; 2EDA; 9875
 182; 2FB5; 98A8
 182'; 2EDB; 98CE
+182''; ; 322C4
 183; 2FB6; 98DB
 183'; 2EDC; 98DE
 184; 2FB7; 98DF
@@ -262,15 +265,21 @@
 206; 2FCD; 9F0E
 207; 2FCE; 9F13
 208; 2FCF; 9F20
+208''; ; 9F21
 209; 2FD0; 9F3B
 210; 2FD1; 9F4A
 210'; 2EEC; 9F50
+210''; 2EEB; 6589
 211; 2FD2; 9F52
 211'; 2EEE; 9F7F
+211''; 2EED; 6B6F
 212; 2FD3; 9F8D
 212'; 2EF0; 9F99
+212''; 2EEF; 7ADC
+212'''; ; 31DE5
 213; 2FD4; 9F9C
 213'; 2EF3; 9F9F
+213''; 2EF2; 4E80
 214; 2FD5; 9FA0
 
 # EOF

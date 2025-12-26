@@ -44,17 +44,20 @@ Perl_deb_nocontext(const char *pat, ...)
 /*
 =for apidoc      deb
 =for apidoc_item deb_nocontext
+=for apidoc_item vdeb
 
-When perl is compiled with C<-DDEBUGGING>, this prints to STDERR the
+When perl is compiled with C<-DDEBUGGING>, these each print to STDERR the
 information given by the arguments, prefaced by the name of the file containing
 the script causing the call, and the line number within that file.
 
 If the C<v> (verbose) debugging option is in effect, the process id is also
 printed.
 
-The two forms differ only in that C<deb_nocontext> does not take a thread
-context (C<aTHX>) parameter, so is used in situations where the caller doesn't
-already have the thread context.
+C<deb> and C<deb_nocontext> differ only in that C<deb_nocontext> does not take
+a thread context (C<aTHX>) parameter, so is used in situations where the caller
+doesn't already have the thread context.
+
+C<vdeb> is the same as C<deb> except C<args> are an encapsulated argument list.
 
 =cut
 */
@@ -72,14 +75,6 @@ Perl_deb(pTHX_ const char *pat, ...)
 #endif /* DEBUGGING */
     va_end(args);
 }
-
-/*
-=for apidoc vdeb
-
-This is like C<L</deb>>, but C<args> are an encapsulated argument list.
-
-=cut
-*/
 
 void
 Perl_vdeb(pTHX_ const char *pat, va_list *args)
@@ -241,7 +236,10 @@ static const char * const si_names[] = {
     "WARNHOOK",
     "DIEHOOK",
     "REQUIRE",
-    "MULTICALL"
+    "MULTICALL",
+    "REGCOMP",
+    "SMARTMATCH",
+    "CONSTRUCTOR"
 };
 #endif
 

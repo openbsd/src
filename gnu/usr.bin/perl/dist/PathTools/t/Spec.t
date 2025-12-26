@@ -854,5 +854,27 @@ for ( @tests ) {
 }
 
 is +File::Spec::Unix->canonpath(), undef;
+# Test that trailing empty path components are removed
+# See Perl/perl5#22346
+my @path_tests = (
+  [ 'File::Spec::Unix->path()', "", '' ],
+  [ 'File::Spec::Unix->path()', ":", '.,.' ],
+  [ 'File::Spec::Unix->path()', "/some/path:", '/some/path,.' ],
+  [ 'File::Spec::Unix->path()', "/some/path::", '/some/path,.,.' ],
+  [ 'File::Spec::Unix->path()', ":/some/path:", '.,/some/path,.' ],
+
+  [ 'File::Spec::OS2->path()', "", '' ],
+  [ 'File::Spec::OS2->path()', ";", '.,.' ],
+  [ 'File::Spec::OS2->path()', "/some/path;", '/some/path,.' ],
+  [ 'File::Spec::OS2->path()', "/some/path;;", '/some/path,.,.' ],
+  [ 'File::Spec::OS2->path()', ";/some/path;", '.,/some/path,.' ],
+);
+
+for ( @path_tests ) {
+  my ($function, $path, $expected) = @$_;
+  local $ENV{PATH} = $path;
+  my $got = join ',', eval $function;
+  is $got, $expected, $function . " with PATH=$path";
+}
 
 done_testing();

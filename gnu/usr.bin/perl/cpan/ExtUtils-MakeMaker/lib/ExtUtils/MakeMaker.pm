@@ -21,11 +21,11 @@ our @Get_from_Config;   # referenced by MM_Unix
 our @MM_Sections;
 our @Overridable;
 my @Prepend_parent;
-my %Recognized_Att_Keys;
+our %Recognized_Att_Keys;
 our %macro_fsentity; # whether a macro is a filesystem name
 our %macro_dep; # whether a macro is a dependency
 
-our $VERSION = '7.70';
+our $VERSION = '7.76';
 $VERSION =~ tr/_//d;
 
 # Emulate something resembling CVS $Revision$
@@ -624,7 +624,7 @@ END
         elsif (
             $cmr
                 ? !$cmr->accepts_module($prereq, $pr_version)
-                : $required_version > $pr_version
+                : version->new($required_version) > version->new($pr_version)
         ) {
             warn sprintf "Warning: prerequisite %s %s not found. We have %s.\n",
               $prereq, $required_version, ($pr_version || 'unknown version')
@@ -693,7 +693,6 @@ END
             } else {
                 my $value = $self->{$key};
                 # not going to test in FS so only stripping start
-                $value =~ s/"// if $key =~ /PERL$/ and $self->is_make_type('dmake');
                 $value =~ s/^"// if $key =~ /PERL$/;
                 $value = $self->catdir("..", $value)
                   unless $self->file_name_is_absolute($value);
@@ -865,27 +864,27 @@ sub WriteEmptyMakefile {
     }
     open my $mfh, '>', $new or die "open $new for write: $!";
     print $mfh <<'EOP';
-all :
+all ::
 
 manifypods :
 
-subdirs :
+subdirs ::
 
-dynamic :
+dynamic ::
 
-static :
+static ::
 
-clean :
+clean ::
 
-install :
+install ::
 
 makemakerdflt :
 
-test :
+test ::
 
-test_dynamic :
+test_dynamic ::
 
-test_static :
+test_static ::
 
 EOP
     close $mfh or die "close $new for write: $!";
@@ -1356,6 +1355,7 @@ sub selfdocument {
 # gmake will silently still work if any are .PHONY-ed but nmake won't
 EOF
     push @m, join "\n", map "$_ ::\n\t\$(NOECHO) \$(NOOP)\n",
+        qw(test_static test_dynamic),
         # config is so manifypods won't puke if no subdirs
         grep !$self->{SKIPHASH}{$_},
         qw(static dynamic config);
@@ -1767,6 +1767,11 @@ recommends it (or you know what you're doing).
 The following attributes may be specified as arguments to WriteMakefile()
 or as NAME=VALUE pairs on the command line. Attributes that became
 available with later versions of MakeMaker are indicated.
+
+A computer-readable list of recognized attributes is available as
+C<%ExtUtils::MakeMakers::Recognized_Att_Keys>, supported since 7.72.  You
+can check whether a particular parameter is supported by the current
+version of ExtUtils::MakeMaker by checking whether it exists in the hash.
 
 In order to maintain portability of attributes with older versions of
 MakeMaker you may want to use L<App::EUMM::Upgrade> with your C<Makefile.PL>.
@@ -2644,17 +2649,13 @@ to stdout) that is passed on each .pm file during the build (in the
 pm_to_blib() phase).  It is empty by default, meaning no filtering is done.
 You could use:
 
-  PM_FILTER => 'perl -ne "print unless /^\\#/"',
+  PM_FILTER => 'perl -ne "print unless /^#/"',
 
 to remove all the leading comments on the fly during the build.  In order
 to be as portable as possible, please consider using a Perl one-liner
-rather than Unix (or other) utilities, as above.  The # is escaped for
-the Makefile, since what is going to be generated will then be:
-
-  PM_FILTER = perl -ne "print unless /^\#/"
-
-Without the \ before the #, we'd have the start of a Makefile comment,
-and the macro would be incorrectly defined.
+rather than Unix (or other) utilities, as above. MakeMaker will escape the
+C<#> for the Makefile, since what goes in the Makefile will depend on
+which C<make> implementation is being targeted.
 
 You will almost certainly be better off using the C<PL_FILES> system,
 instead. See above, or the L<ExtUtils::MakeMaker::FAQ> entry.

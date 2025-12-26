@@ -506,7 +506,7 @@ Perl_do_openn(pTHX_ GV *gv, const char *oname, I32 len, int as_raw,
         /* sysopen style args, i.e. integer mode and permissions */
 
         if (num_svs != 0) {
-            Perl_croak(aTHX_ "panic: sysopen with multiple args, num_svs=%ld",
+            croak("panic: sysopen with multiple args, num_svs=%ld",
                        (long) num_svs);
         }
         return do_open_raw(gv, oname, len, rawmode, rawperm, NULL);
@@ -635,9 +635,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
             /* New style explicit name, type is just mode and layer info */
 #ifdef USE_STDIO
             if (SvROK(*svp) && !memchr(oname, '&', len)) {
-                if (ckWARN(WARN_IO))
-                    Perl_warner(aTHX_ packWARN(WARN_IO),
-                            "Can't open a reference");
+                ck_warner(packWARN(WARN_IO), "Can't open a reference");
                 SETERRNO(EINVAL, LIB_INVARG);
                 fp = NULL;
                 goto say_false;
@@ -671,7 +669,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
             if (num_svs) {
                 if (type[1] != IoTYPE_STD) {
                   unknown_open_mode:
-                    Perl_croak(aTHX_ "Unknown open() mode '%.*s'", (int)olen, oname);
+                    croak("Unknown open() mode '%.*s'", (int)olen, oname);
                 }
                 type++;
             }
@@ -684,8 +682,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
             }
             if (*name == '\0') {
                 /* command is missing 19990114 */
-                if (ckWARN(WARN_PIPE))
-                    Perl_warner(aTHX_ packWARN(WARN_PIPE), "Missing command in piped open");
+                ck_warner(packWARN(WARN_PIPE), "Missing command in piped open");
                 errno = EPIPE;
                 fp = NULL;
                 goto say_false;
@@ -695,8 +692,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
             TAINT_PROPER("piped open");
             if (!num_svs && name[len-1] == '|') {
                 name[--len] = '\0' ;
-                if (ckWARN(WARN_PIPE))
-                    Perl_warner(aTHX_ packWARN(WARN_PIPE), "Can't open bidirectional pipe");
+                ck_warner(packWARN(WARN_PIPE), "Can't open bidirectional pipe");
             }
             mode[0] = 'w';
             writing = 1;
@@ -754,7 +750,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
                     UV uv;
                     if (num_svs > 1) {
                         /* diag_listed_as: More than one argument to '%s' open */
-                        Perl_croak(aTHX_ "More than one argument to '%c&' open",IoTYPE(io));
+                        croak("More than one argument to '%c&' open",IoTYPE(io));
                     }
                     while (isSPACE(*type))
                         type++;
@@ -844,7 +840,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
                     IoTYPE(io) = IoTYPE_STD;
                     if (num_svs > 1) {
                         /* diag_listed_as: More than one argument to '%s' open */
-                        Perl_croak(aTHX_ "More than one argument to '>%c' open",IoTYPE_STD);
+                        croak("More than one argument to '>%c' open",IoTYPE_STD);
                     }
                 }
                 else {
@@ -879,7 +875,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
                 IoTYPE(io) = IoTYPE_STD;
                 if (num_svs > 1) {
                     /* diag_listed_as: More than one argument to '%s' open */
-                    Perl_croak(aTHX_ "More than one argument to '<%c' open",IoTYPE_STD);
+                    croak("More than one argument to '<%c' open",IoTYPE_STD);
                 }
             }
             else {
@@ -912,8 +908,7 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
             }
             if (*name == '\0') {
                 /* command is missing 19990114 */
-                if (ckWARN(WARN_PIPE))
-                    Perl_warner(aTHX_ packWARN(WARN_PIPE), "Missing command in piped open");
+                ck_warner(packWARN(WARN_PIPE), "Missing command in piped open");
                 errno = EPIPE;
                 fp = NULL;
                 goto say_false;
@@ -965,14 +960,9 @@ Perl_do_open6(pTHX_ GV *gv, const char *oname, STRLEN len,
                 IoTYPE(io) = IoTYPE_STD;
             }
             else {
-                if (num_svs) {
-                    fp = PerlIO_openn(aTHX_ type,mode,-1,0,0,NULL,num_svs,svp);
-                }
-                else {
-                    SV *namesv = newSVpvn_flags(type, tend - type, SVs_TEMP);
-                    type = NULL;
-                    fp = PerlIO_openn(aTHX_ type,mode,-1,0,0,NULL,1,&namesv);
-                }
+                SV *namesv = newSVpvn_flags(type, tend - type, SVs_TEMP);
+                type = NULL;
+                fp = PerlIO_openn(aTHX_ type,mode,-1,0,0,NULL,1,&namesv);
             }
         }
     }
@@ -1003,7 +993,7 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
         )
         {
             GCC_DIAG_IGNORE_STMT(-Wformat-nonliteral); /* PL_warn_nl is constant */
-            Perl_warner(aTHX_ packWARN(WARN_NEWLINE), PL_warn_nl, "open");
+            warner(packWARN(WARN_NEWLINE), PL_warn_nl, "open");
             GCC_DIAG_RESTORE_STMT;
         }
         goto say_false;
@@ -1012,17 +1002,16 @@ S_openn_cleanup(pTHX_ GV *gv, IO *io, PerlIO *fp, char *mode, const char *oname,
     if (ckWARN(WARN_IO)) {
         if ((IoTYPE(io) == IoTYPE_RDONLY) &&
             (fp == PerlIO_stdout() || fp == PerlIO_stderr())) {
-                Perl_warner(aTHX_ packWARN(WARN_IO),
-                            "Filehandle STD%s reopened as %" HEKf
-                            " only for input",
-                            ((fp == PerlIO_stdout()) ? "OUT" : "ERR"),
-                            HEKfARG(GvENAME_HEK(gv)));
+                warner(packWARN(WARN_IO),
+                       "Filehandle STD%s reopened as %" HEKf
+                       " only for input",
+                       ((fp == PerlIO_stdout()) ? "OUT" : "ERR"),
+                       HEKfARG(GvENAME_HEK(gv)));
         }
         else if ((IoTYPE(io) == IoTYPE_WRONLY) && fp == PerlIO_stdin()) {
-                Perl_warner(aTHX_ packWARN(WARN_IO),
-                    "Filehandle STDIN reopened as %" HEKf " only for output",
-                     HEKfARG(GvENAME_HEK(gv))
-                );
+                warner(packWARN(WARN_IO),
+                       "Filehandle STDIN reopened as %" HEKf " only for output",
+                       HEKfARG(GvENAME_HEK(gv)));
         }
     }
 
@@ -1439,9 +1428,9 @@ Perl_nextargv(pTHX_ GV *gv, bool nomagicopen)
             }
             else {
                 if (is_fork_open(PL_oldname)) {
-                    Perl_ck_warner_d(aTHX_ packWARN(WARN_INPLACE),
-                                     "Forked open '%s' not meaningful in <>",
-                                     PL_oldname);
+                    ck_warner_d(packWARN(WARN_INPLACE),
+                                "Forked open '%s' not meaningful in <>",
+                                PL_oldname);
                     continue;
                 }
 
@@ -1484,9 +1473,9 @@ Perl_nextargv(pTHX_ GV *gv, bool nomagicopen)
                 fileuid = statbuf.st_uid;
                 filegid = statbuf.st_gid;
                 if (!S_ISREG(PL_filemode)) {
-                    Perl_ck_warner_d(aTHX_ packWARN(WARN_INPLACE),
-                                     "Can't do inplace edit: %s is not a regular file",
-                                     PL_oldname );
+                    ck_warner_d(packWARN(WARN_INPLACE),
+                                "Can't do inplace edit: %s is not a regular file",
+                                PL_oldname );
                     do_close(gv,FALSE);
                     continue;
                 }
@@ -1513,10 +1502,10 @@ Perl_nextargv(pTHX_ GV *gv, bool nomagicopen)
                          && statbuf.st_ino == fileino)
                       )
                     {
-                        Perl_ck_warner_d(aTHX_ packWARN(WARN_INPLACE),
-                                         "Can't do inplace edit: %"
-                                         SVf " would not be unique",
-                                         SVfARG(sv));
+                        ck_warner_d(packWARN(WARN_INPLACE),
+                                    "Can't do inplace edit: %"
+                                    SVf " would not be unique",
+                                    SVfARG(sv));
                         goto cleanup_argv;
                     }
 #endif
@@ -1529,8 +1518,8 @@ Perl_nextargv(pTHX_ GV *gv, bool nomagicopen)
                 if (!S_openindirtemp(aTHX_ PL_argvoutgv, GvSV(gv), temp_name_sv)) {
                     SvREFCNT_dec(temp_name_sv);
                     /* diag_listed_as: Can't do inplace edit on %s: %s */
-                    Perl_ck_warner_d(aTHX_ packWARN(WARN_INPLACE), "Can't do inplace edit on %s: Cannot make temp name: %s",
-                                     PL_oldname, Strerror(errno) );
+                    ck_warner_d(packWARN(WARN_INPLACE), "Can't do inplace edit on %s: Cannot make temp name: %s",
+                                PL_oldname, Strerror(errno) );
 #ifndef FLEXFILENAMES
                 cleanup_argv:
 #endif
@@ -1582,13 +1571,13 @@ Perl_nextargv(pTHX_ GV *gv, bool nomagicopen)
             Stat_t statbuf;
             if (PerlLIO_stat(PL_oldname, &statbuf) >= 0
                 && !S_ISREG(statbuf.st_mode)) {
-                Perl_warner(aTHX_ packWARN(WARN_INPLACE),
-                            "Can't do inplace edit: %s is not a regular file",
-                            PL_oldname);
+                warner(packWARN(WARN_INPLACE),
+                       "Can't do inplace edit: %s is not a regular file",
+                       PL_oldname);
             }
             else {
-                Perl_warner(aTHX_ packWARN(WARN_INPLACE), "Can't open %s: %s",
-                            PL_oldname, Strerror(eno));
+                warner(packWARN(WARN_INPLACE), "Can't open %s: %s",
+                       PL_oldname, Strerror(eno));
             }
         }
     }
@@ -1651,7 +1640,7 @@ S_dir_unchanged(pTHX_ const char *orig_pv, MAGIC *mg) {
         && PerlLIO_stat(".", &statbuf) >= 0
         && ( statbuf.st_dev != orig_cwd_stat->st_dev
                      || statbuf.st_ino != orig_cwd_stat->st_ino)) {
-        Perl_croak(aTHX_ "Cannot complete in-place edit of %s: %s",
+        croak("Cannot complete in-place edit of %s: %s",
                    orig_pv, "Current directory has changed");
     }
 #else
@@ -1662,7 +1651,7 @@ S_dir_unchanged(pTHX_ const char *orig_pv, MAGIC *mg) {
     */
     if (!PERL_FILE_IS_ABSOLUTE(orig_pv)
         && PerlLIO_stat(SvPVX(*temp_psv), &statbuf) < 0) {
-        Perl_croak(aTHX_ "Cannot complete in-place edit of %s: %s",
+        croak("Cannot complete in-place edit of %s: %s",
                    orig_pv,
                    "Work file is missing - did you change directory?");
     }
@@ -1776,7 +1765,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool is_explict) {
 #  else
                             UNLINK(SvPVX(*temp_psv));
 #  endif
-                            Perl_croak(aTHX_ "Can't rename %s to %s: %s, skipping file",
+                            croak("Can't rename %s to %s: %s, skipping file",
                                        SvPVX(*orig_psv), SvPVX(*back_psv), Strerror(errno));
                         }
                         /* should we warn here? */
@@ -1786,7 +1775,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool is_explict) {
                     (void)UNLINK(SvPVX(*back_psv));
                     if (link(orig_pv, SvPVX(*back_psv))) {
                         if (!is_explict) {
-                            Perl_croak(aTHX_ "Can't rename %s to %s: %s, skipping file",
+                            croak("Can't rename %s to %s: %s, skipping file",
                                        SvPVX(*orig_psv), SvPVX(*back_psv), Strerror(errno));
                         }
                         goto abort_inplace;
@@ -1823,7 +1812,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool is_explict) {
                     UNLINK(SvPVX(*temp_psv));
 #endif
                     /* diag_listed_as: Cannot complete in-place edit of %s: %s */
-                    Perl_croak(aTHX_ "Cannot complete in-place edit of %s: failed to rename work file '%s' to '%s': %s",
+                    croak("Cannot complete in-place edit of %s: failed to rename work file '%s' to '%s': %s",
                                orig_pv, SvPVX(*temp_psv), orig_pv, Strerror(errno));
                 }
             abort_inplace:
@@ -1844,7 +1833,7 @@ S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool is_explict) {
             UNLINK(SvPVX_const(*temp_psv));
 #endif
             if (!is_explict) {
-                Perl_croak(aTHX_ "Failed to close in-place work file %s: %s",
+                croak("Failed to close in-place work file %s: %s",
                            SvPVX(*temp_psv), Strerror(errno));
             }
         }
@@ -1963,16 +1952,16 @@ Perl_io_close(pTHX_ IO *io, GV *gv, bool is_explict, bool warn_on_fail)
 
         if (warn_on_fail && !retval) {
             if (gv)
-                Perl_ck_warner_d(aTHX_ packWARN(WARN_IO),
-                                "Warning: unable to close filehandle %"
-                                 HEKf " properly: %" SVf,
-                                 HEKfARG(GvNAME_HEK(gv)),
-                                 SVfARG(get_sv("!",GV_ADD)));
+                ck_warner_d(packWARN(WARN_IO),
+                            "Warning: unable to close filehandle %"
+                            HEKf " properly: %" SVf,
+                            HEKfARG(GvNAME_HEK(gv)),
+                            SVfARG(get_sv("!",GV_ADD)));
             else
-                Perl_ck_warner_d(aTHX_ packWARN(WARN_IO),
-                                "Warning: unable to close filehandle "
-                                "properly: %" SVf,
-                                 SVfARG(get_sv("!",GV_ADD)));
+                ck_warner_d(packWARN(WARN_IO),
+                            "Warning: unable to close filehandle "
+                            "properly: %" SVf,
+                            SVfARG(get_sv("!",GV_ADD)));
         }
     }
     else if (is_explict) {
@@ -2122,7 +2111,7 @@ Perl_mode_from_discipline(pTHX_ const char *s, STRLEN len)
                 if (!end)
                     end = s+len;
 #ifndef PERLIO_LAYERS
-                Perl_croak(aTHX_ "IO layers (like '%.*s') unavailable", end-s, s);
+                croak("IO layers (like '%.*s') unavailable", end-s, s);
 #else
                 len -= end-s;
                 s = end;
@@ -2204,49 +2193,53 @@ Perl_do_print(pTHX_ SV *sv, PerlIO *fp)
         return TRUE;
     if (SvTYPE(sv) == SVt_IV && SvIOK(sv)) {
         assert(!SvGMAGICAL(sv));
-        if (SvIsUV(sv))
-            PerlIO_printf(fp, "%" UVuf, (UV)SvUVX(sv));
-        else
-            PerlIO_printf(fp, "%" IVdf, (IV)SvIVX(sv));
-        return !PerlIO_error(fp);
+
+        /* Adapted from Perl_sv_2pv_flags */
+        const U32 isUIOK = SvIsUV(sv);
+        /* The purpose of this union is to ensure that arr is aligned on
+           a 2 byte boundary, because that is what uiv_2buf() requires */
+        union {
+            char arr[TYPE_CHARS(UV)];
+            U16 dummy;
+        } buf;
+        char *ebuf, *ptr;
+        STRLEN len;
+        UV tempuv = SvUVX(sv);
+        ptr = uiv_2buf(buf.arr, SvIVX(sv), tempuv, isUIOK, &ebuf);
+        len = ebuf - ptr;
+
+        bool happy = !(len && (PerlIO_write(fp,ptr,len) == 0));
+        return happy && !PerlIO_error(fp);
     }
     else {
         STRLEN len;
         /* Do this first to trigger any overloading.  */
-        const char *tmps = SvPV_const(sv, len);
-        U8 *tmpbuf = NULL;
-        bool happy = TRUE;
+        const U8 *tmps = (const U8 *) SvPV_const(sv, len);
+
+        /* If 'tmps' doesn't need converting, this will remain NULL and
+         * Safefree(free_me) will do nothing;  Otherwise it points to the newly
+         * allocated memory that tmps will also be changed to point to, so
+         * Safefree(free_me) will free it.  This saves having to have extra
+         * logic. */
+        void *free_me = NULL;
 
         if (PerlIO_isutf8(fp)) { /* If the stream is utf8 ... */
             if (!SvUTF8(sv)) {	/* Convert to utf8 if necessary */
-                /* We don't modify the original scalar.  */
-                tmpbuf = bytes_to_utf8((const U8*) tmps, &len);
-                tmps = (char *) tmpbuf;
+                /* This doesn't modify the original scalar.  */
+                tmps = bytes_to_utf8_free_me(tmps, &len, &free_me);
             }
             else if (ckWARN4_d(WARN_UTF8, WARN_SURROGATE, WARN_NON_UNICODE, WARN_NONCHAR)) {
-                (void) check_utf8_print((const U8*) tmps, len);
+                (void) check_utf8_print(tmps, len);
             }
         } /* else stream isn't utf8 */
         else if (DO_UTF8(sv)) { /* But if is utf8 internally, attempt to
                                    convert to bytes */
-            STRLEN tmplen = len;
-            bool utf8 = TRUE;
-            U8 * const result = bytes_from_utf8((const U8*) tmps, &tmplen, &utf8);
-            if (!utf8) {
-
-                /* Here, succeeded in downgrading from utf8.  Set up to below
-                 * output the converted value */
-                tmpbuf = result;
-                tmps = (char *) tmpbuf;
-                len = tmplen;
-            }
-            else {  /* Non-utf8 output stream, but string only representable in
-                       utf8 */
-                assert((char *)result == tmps);
-                Perl_ck_warner_d(aTHX_ packWARN(WARN_UTF8),
-                                 "Wide character in %s",
-                                   PL_op ? OP_DESC(PL_op) : "print"
-                                );
+            if (! utf8_to_bytes_new_pv(&tmps, &len, &free_me)) {
+                /* Non-utf8 output stream, but string only representable in
+                   utf8 */
+                ck_warner_d(packWARN(WARN_UTF8),
+                            "Wide character in %s",
+                            PL_op ? OP_DESC(PL_op) : "print");
                     /* Could also check that isn't one of the things to avoid
                      * in utf8 by using check_utf8_print(), but not doing so,
                      * since the stream isn't a UTF8 stream */
@@ -2258,10 +2251,9 @@ Perl_do_print(pTHX_ SV *sv, PerlIO *fp)
          * but only until the system hard limit/the filesystem limit,
          * at which we would get EPERM.  Note that when using buffered
          * io the write failure can be delayed until the flush/close. --jhi */
-        if (len && (PerlIO_write(fp,tmps,len) == 0))
-            happy = FALSE;
-        Safefree(tmpbuf);
-        return happy ? !PerlIO_error(fp) : FALSE;
+        bool happy = !(len && (PerlIO_write(fp,tmps,len) == 0));
+        Safefree(free_me);
+        return happy && !PerlIO_error(fp);
     }
 }
 
@@ -2332,7 +2324,7 @@ Perl_my_stat_flags(pTHX_ const U32 flags)
         }
         if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && should_warn_nl(s)) {
             GCC_DIAG_IGNORE_STMT(-Wformat-nonliteral); /* PL_warn_nl is constant */
-            Perl_warner(aTHX_ packWARN(WARN_NEWLINE), PL_warn_nl, "stat");
+            warner(packWARN(WARN_NEWLINE), PL_warn_nl, "stat");
             GCC_DIAG_RESTORE_STMT;
         }
         return PL_laststatval;
@@ -2351,25 +2343,23 @@ Perl_my_lstat_flags(pTHX_ const U32 flags)
     if (PL_op->op_flags & OPf_REF) {
         if (cGVOP_gv == PL_defgv) {
             if (PL_laststype != OP_LSTAT)
-                Perl_croak(aTHX_ "%s", no_prev_lstat);
+                croak("%s", no_prev_lstat);
             if (PL_laststatval < 0)
                 SETERRNO(EBADF,RMS_IFI);
             return PL_laststatval;
         }
         PL_laststatval = -1;
-        if (ckWARN(WARN_IO)) {
-            /* diag_listed_as: Use of -l on filehandle%s */
-            Perl_warner(aTHX_ packWARN(WARN_IO),
-                              "Use of -l on filehandle %" HEKf,
-                              HEKfARG(GvENAME_HEK(cGVOP_gv)));
-        }
+        /* diag_listed_as: Use of -l on filehandle%s */
+        ck_warner(packWARN(WARN_IO),
+                  "Use of -l on filehandle %" HEKf,
+                  HEKfARG(GvENAME_HEK(cGVOP_gv)));
         SETERRNO(EBADF,RMS_IFI);
         return -1;
     }
     if ((PL_op->op_private & (OPpFT_STACKED|OPpFT_AFTER_t))
              == OPpFT_STACKED) {
       if (PL_laststype != OP_LSTAT)
-        Perl_croak(aTHX_ "%s", no_prev_lstat);
+        croak("%s", no_prev_lstat);
       return PL_laststatval;
     }
 
@@ -2383,14 +2373,14 @@ Perl_my_lstat_flags(pTHX_ const U32 flags)
       && ckWARN(WARN_IO)) {
         if (isio)
             /* diag_listed_as: Use of -l on filehandle%s */
-            Perl_warner(aTHX_ packWARN(WARN_IO),
-                             "Use of -l on filehandle");
+            warner(packWARN(WARN_IO),
+                   "Use of -l on filehandle");
         else
             /* diag_listed_as: Use of -l on filehandle%s */
-            Perl_warner(aTHX_ packWARN(WARN_IO),
-                             "Use of -l on filehandle %" HEKf,
-                              HEKfARG(GvENAME_HEK((const GV *)
-                                          (SvROK(sv) ? SvRV(sv) : sv))));
+            warner(packWARN(WARN_IO),
+                   "Use of -l on filehandle %" HEKf,
+                   HEKfARG(GvENAME_HEK((const GV *)
+                                       (SvROK(sv) ? SvRV(sv) : sv))));
     }
     file = SvPV_flags_const(sv, len, flags);
     sv_setpv(PL_statname,file);
@@ -2402,7 +2392,7 @@ Perl_my_lstat_flags(pTHX_ const U32 flags)
     }
     if (PL_laststatval < 0 && ckWARN(WARN_NEWLINE) && should_warn_nl(file)) {
         GCC_DIAG_IGNORE_STMT(-Wformat-nonliteral); /* PL_warn_nl is constant */
-        Perl_warner(aTHX_ packWARN(WARN_NEWLINE), PL_warn_nl, "lstat");
+        warner(packWARN(WARN_NEWLINE), PL_warn_nl, "lstat");
         GCC_DIAG_RESTORE_STMT;
     }
     return PL_laststatval;
@@ -2414,9 +2404,8 @@ S_exec_failed(pTHX_ const char *cmd, int fd, int do_report)
     const int e = errno;
     PERL_ARGS_ASSERT_EXEC_FAILED;
 
-    if (ckWARN(WARN_EXEC))
-        Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't exec \"%s\": %s",
-                    cmd, Strerror(e));
+    ck_warner(packWARN(WARN_EXEC), "Can't exec \"%s\": %s",
+              cmd, Strerror(e));
     if (do_report) {
         /* XXX silently ignore failures */
         PERL_UNUSED_RESULT(PerlLIO_write(fd, (void*)&e, sizeof(int)));
@@ -2430,7 +2419,7 @@ Perl_do_aexec5(pTHX_ SV *really, SV **mark, SV **sp,
 {
     PERL_ARGS_ASSERT_DO_AEXEC5;
 #if defined(__LIBCATAMOUNT__)
-    Perl_croak(aTHX_ "exec? I'm not *that* kind of operating system");
+    croak("exec? I'm not *that* kind of operating system");
 #else
     assert(sp >= mark);
     ENTER;
@@ -2627,11 +2616,11 @@ Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
        platforms where kill was not defined.  */
 #ifndef HAS_KILL
     if (type == OP_KILL)
-        Perl_die(aTHX_ PL_no_func, what);
+        die(PL_no_func, what);
 #endif
 #ifndef HAS_CHOWN
     if (type == OP_CHOWN)
-        Perl_die(aTHX_ PL_no_func, what);
+        die(PL_no_func, what);
 #endif
 
 
@@ -2670,7 +2659,7 @@ Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
                         } else if (fchmod(fd, val))
                             tot--;
 #else
-                        Perl_die(aTHX_ PL_no_func, "fchmod");
+                        die(PL_no_func, "fchmod");
 #endif
                     }
                     else {
@@ -2711,7 +2700,7 @@ Perl_apply(pTHX_ I32 type, SV **mark, SV **sp)
                         } else if (fchown(fd, val, val2))
                             tot--;
 #else
-                        Perl_die(aTHX_ PL_no_func, "fchown");
+                        die(PL_no_func, "fchown");
 #endif
                     }
                     else {
@@ -2755,7 +2744,7 @@ nothing in the core.
                 len -= 3;
             }
            if ((val = whichsig_pvn(s, len)) < 0)
-               Perl_croak(aTHX_ "Unrecognized signal name \"%" SVf "\"",
+               croak("Unrecognized signal name \"%" SVf "\"",
                                 SVfARG(*mark));
         }
         else
@@ -2774,7 +2763,7 @@ nothing in the core.
             Pid_t proc;
             SvGETMAGIC(*mark);
             if (!(SvNIOK(*mark) || looks_like_number(*mark)))
-                Perl_croak(aTHX_ "Can't kill a non-numeric process ID");
+                croak("Can't kill a non-numeric process ID");
             proc = SvIV_nomg(*mark);
             APPLY_TAINT_PROPER();
 #ifdef HAS_KILLPG
@@ -2903,7 +2892,7 @@ nothing in the core.
                         } else if (futimes(fd, (struct timeval *) utbufp))
                             tot--;
 #else
-                        Perl_die(aTHX_ PL_no_func, "futimes");
+                        die(PL_no_func, "futimes");
 #endif
                     }
                     else {
@@ -3069,7 +3058,7 @@ Perl_do_ipcget(pTHX_ I32 optype, SV **mark, SV **sp)
 #if !defined(HAS_MSG) || !defined(HAS_SEM) || !defined(HAS_SHM)
     default:
         /* diag_listed_as: msg%s not implemented */
-        Perl_croak(aTHX_ "%s not implemented", PL_op_desc[optype]);
+        croak("%s not implemented", PL_op_desc[optype]);
 #endif
     }
     return -1;			/* should never happen */
@@ -3129,14 +3118,14 @@ Perl_do_ipcctl(pTHX_ I32 optype, SV **mark, SV **sp)
         }
 #else
         /* diag_listed_as: sem%s not implemented */
-        Perl_croak(aTHX_ "%s not implemented", PL_op_desc[optype]);
+        croak("%s not implemented", PL_op_desc[optype]);
 #endif
         break;
 #endif
 #if !defined(HAS_MSG) || !defined(HAS_SEM) || !defined(HAS_SHM)
     default:
         /* diag_listed_as: shm%s not implemented */
-        Perl_croak(aTHX_ "%s not implemented", PL_op_desc[optype]);
+        croak("%s not implemented", PL_op_desc[optype]);
 #endif
     }
 
@@ -3156,7 +3145,7 @@ Perl_do_ipcctl(pTHX_ I32 optype, SV **mark, SV **sp)
             STRLEN len;
             a = SvPVbyte(astr, len);
             if (len != infosize)
-                Perl_croak(aTHX_ "Bad arg length for %s, is %lu, should be %ld",
+                croak("Bad arg length for %s, is %lu, should be %ld",
                       PL_op_desc[optype],
                       (unsigned long)len,
                       (long)infosize);
@@ -3203,7 +3192,7 @@ Perl_do_ipcctl(pTHX_ I32 optype, SV **mark, SV **sp)
             ret = Semctl(id, n, cmd, unsemds);
 #else
             /* diag_listed_as: sem%s not implemented */
-            Perl_croak(aTHX_ "%s not implemented", PL_op_desc[optype]);
+            croak("%s not implemented", PL_op_desc[optype]);
 #endif
         }
         break;
@@ -3237,7 +3226,7 @@ Perl_do_msgsnd(pTHX_ SV **mark, SV **sp)
     const char * const mbuf = SvPVbyte(mstr, len);
 
     if (len < sizeof(long))
-        Perl_croak(aTHX_ "Arg too short for msgsnd");
+        croak("Arg too short for msgsnd");
 
     const STRLEN msize = len - sizeof(long);
 
@@ -3252,7 +3241,7 @@ Perl_do_msgsnd(pTHX_ SV **mark, SV **sp)
     PERL_UNUSED_ARG(sp);
     PERL_UNUSED_ARG(mark);
     /* diag_listed_as: msg%s not implemented */
-    Perl_croak(aTHX_ "msgsnd not implemented");
+    croak("msgsnd not implemented");
     return -1;
 #endif
 }
@@ -3301,7 +3290,7 @@ Perl_do_msgrcv(pTHX_ SV **mark, SV **sp)
     PERL_UNUSED_ARG(sp);
     PERL_UNUSED_ARG(mark);
     /* diag_listed_as: msg%s not implemented */
-    Perl_croak(aTHX_ "msgrcv not implemented");
+    croak("msgrcv not implemented");
     return -1;
 #endif
 }
@@ -3347,7 +3336,7 @@ Perl_do_semop(pTHX_ SV **mark, SV **sp)
     }
 #else
     /* diag_listed_as: sem%s not implemented */
-    Perl_croak(aTHX_ "semop not implemented");
+    croak("semop not implemented");
 #endif
 }
 
@@ -3355,54 +3344,83 @@ I32
 Perl_do_shmio(pTHX_ I32 optype, SV **mark, SV **sp)
 {
 #ifdef HAS_SHM
-    char *shm;
-    struct shmid_ds shmds;
-    const I32 id = SvIVx(*++mark);
-    SV * const mstr = *++mark;
-    const I32 mpos = SvIVx(*++mark);
-    const I32 msize = SvIVx(*++mark);
-
     PERL_ARGS_ASSERT_DO_SHMIO;
     PERL_UNUSED_ARG(sp);
 
-    SETERRNO(0,0);
-    if (shmctl(id, IPC_STAT, &shmds) == -1)
-        return -1;
-    if (mpos < 0 || msize < 0
-        || (size_t)mpos + msize > (size_t)shmds.shm_segsz) {
-        SETERRNO(EFAULT,SS_ACCVIO);		/* can't do as caller requested */
-        return -1;
-    }
-    if (id >= 0) {
-        shm = (char *)shmat(id, NULL, (optype == OP_SHMREAD) ? SHM_RDONLY : 0);
-    } else {
+    const IV iv_id = SvIVx(*++mark);
+    SV *const mstr = *++mark;
+    const IV iv_mpos = SvIVx(*++mark);
+    const IV iv_msize = SvIVx(*++mark);
+
+    /* must fit in int */
+    if (
+        iv_id < 0
+        || (sizeof (IV) > sizeof (int) && iv_id > PERL_INT_MAX)
+    ) {
         SETERRNO(EINVAL,LIB_INVARG);
         return -1;
     }
-    if (shm == (char *)-1)	/* I hate System V IPC, I really do */
-        return -1;
-    if (optype == OP_SHMREAD) {
-        char *mbuf;
-        /* suppress warning when reading into undef var (tchrist 3/Mar/00) */
-        SvGETMAGIC(mstr);
-        SvUPGRADE(mstr, SVt_PV);
-        if (! SvOK(mstr))
-            SvPVCLEAR(mstr);
-        SvPOK_only(mstr);
-        mbuf = SvGROW(mstr, (STRLEN)msize+1);
+    const int id = iv_id;
 
-        Copy(shm + mpos, mbuf, msize, char);
-        SvCUR_set(mstr, msize);
-        *SvEND(mstr) = '\0';
+    /* must fit in both size_t and STRLEN (a.k.a Size_t) */
+    if (
+        iv_mpos < 0
+        || (sizeof (IV) > sizeof (size_t) && iv_mpos > (IV)SIZE_MAX)
+        || (sizeof (IV) > sizeof (STRLEN) && iv_mpos > (IV)(STRLEN)-1)
+    ) {
+        SETERRNO(EFAULT,SS_ACCVIO);
+        return -1;
+    }
+    const size_t mpos = iv_mpos;
+
+    /* must fit in both size_t and STRLEN (a.k.a Size_t) */
+    if (
+        iv_msize < 0
+        || (sizeof (IV) > sizeof (size_t) && iv_msize > (IV)SIZE_MAX)
+        || (sizeof (IV) > sizeof (STRLEN) && iv_msize > (IV)(STRLEN)-1)
+        /* for shmread(), we need one extra byte for the NUL terminator */
+        || (optype == OP_SHMREAD && (STRLEN)iv_msize > (STRLEN)-1 - 1)
+    ) {
+        SETERRNO(EFAULT,SS_ACCVIO);
+        return -1;
+    }
+    const size_t msize = iv_msize;
+
+    if (SIZE_MAX - mpos < msize) {
+        /* overflow */
+        SETERRNO(EFAULT,SS_ACCVIO);
+        return -1;
+    }
+    const size_t mpos_end = mpos + msize;
+
+    SETERRNO(0,0);
+
+    struct shmid_ds shmds;
+    if (shmctl(id, IPC_STAT, &shmds) == -1)
+        return -1;
+
+    if (mpos_end > (size_t)shmds.shm_segsz) {
+        SETERRNO(EFAULT,SS_ACCVIO);
+        return -1;
+    }
+
+    char *const shm = (char *)shmat(id, NULL, (optype == OP_SHMREAD) ? SHM_RDONLY : 0);
+    if (shm == (char *)-1)      /* I hate System V IPC, I really do */
+        return -1;
+
+    if (optype == OP_SHMREAD) {
+        sv_setpvn(mstr, shm + mpos, msize);
+        SvUTF8_off(mstr);
         SvSETMAGIC(mstr);
         /* who knows who has been playing with this shared memory? */
         SvTAINTED_on(mstr);
     }
     else {
-        STRLEN len;
+        assert(optype == OP_SHMWRITE);
 
-        const char *mbuf = SvPVbyte(mstr, len);
-        const I32 n = ((I32)len > msize) ? msize : (I32)len;
+        STRLEN len;
+        const char *const mbuf = SvPVbyte(mstr, len);
+        const STRLEN n = (len > msize) ? msize : len;
         Copy(mbuf, shm + mpos, n, char);
         if (n < msize)
             memzero(shm + mpos + n, msize - n);
@@ -3410,7 +3428,7 @@ Perl_do_shmio(pTHX_ I32 optype, SV **mark, SV **sp)
     return shmdt(shm);
 #else
     /* diag_listed_as: shm%s not implemented */
-    Perl_croak(aTHX_ "shm I/O not implemented");
+    croak("shm I/O not implemented");
     return -1;
 #endif
 }
@@ -3488,9 +3506,9 @@ Perl_vms_start_glob
 #endif /* !VMS */
     LEAVE;
 
-    if (!fp && ckWARN(WARN_GLOB)) {
-        Perl_warner(aTHX_ packWARN(WARN_GLOB), "glob failed (can't start child: %s)",
-                    Strerror(errno));
+    if (!fp) {
+        ck_warner(packWARN(WARN_GLOB), "glob failed (can't start child: %s)",
+                  Strerror(errno));
     }
 
     return fp;

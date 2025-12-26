@@ -12,7 +12,7 @@ use IO::Handle;
 use Exporter ();
 
 our @ISA = qw(Exporter);
-our $VERSION = "1.55";
+our $VERSION = "1.56";
 
 our @EXPORT = qw( POLLIN
 	      POLLOUT
@@ -186,7 +186,7 @@ Remove IO from the list of file descriptors for the next poll.
 Returns a list of handles. If EVENT_MASK is not given then a list of all
 handles known will be returned. If EVENT_MASK is given then a list
 of handles will be returned which had one of the events specified by
-EVENT_MASK happen during the last call ti C<poll>
+EVENT_MASK happen during the last call to C<poll>.
 
 =back
 

@@ -5,7 +5,7 @@ use warnings;
 
 use base 'TAP::Object';
 
-our $VERSION = '3.48';
+our $VERSION = '3.50';
 
                              # No EBCDIC support on early perls
 *from_native = (ord "A" == 65 || $] < 5.008)
@@ -155,7 +155,7 @@ TAP::Parser::YAMLish::Writer - Write YAMLish data
 
 =head1 VERSION
 
-Version 3.48
+Version 3.50
 
 =head1 SYNOPSIS
 

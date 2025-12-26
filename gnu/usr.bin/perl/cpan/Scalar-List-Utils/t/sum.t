@@ -98,7 +98,7 @@ SKIP: {
   cmp_ok($t, 'gt', 1152921504606846976, 'sum uses IV where it can'); # string comparison because Perl 5.6 does not compare it numerically correctly
 
   SKIP: {
-    skip "known to fail on $]", 1 if $] le "5.006002";
+    skip "known to fail on $]", 1 if "$]" <= 5.006002;
     $t = sum(1<<60, 1);
     cmp_ok($t, '>', 1<<60, 'sum uses IV where it can');
   }

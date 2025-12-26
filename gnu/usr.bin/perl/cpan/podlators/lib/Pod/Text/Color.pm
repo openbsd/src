@@ -10,18 +10,13 @@
 # Modules and declarations
 ##############################################################################
 
-package Pod::Text::Color;
+package Pod::Text::Color v6.0.2;
 
-use 5.010;
-use strict;
+use 5.012;
+use parent qw(Pod::Text);
 use warnings;
 
-use Pod::Text ();
 use Term::ANSIColor qw(color colored);
-
-our @ISA = qw(Pod::Text);
-our $VERSION = '5.01_02';
-$VERSION =~ tr/_//d;
 
 ##############################################################################
 # Overrides
@@ -97,7 +92,7 @@ sub wrap {
     # $chars, used when we have to truncate and hard wrap.
     my $code = '(?:\e\[[\d;]+m)';
     my $char = "(?>$code*[^\\n])";
-    my $shortchar = '^(' . $char . "{0,$width}(?>$code*)" . ')(?:\s+|\z)';
+    my $shortchar = '^(' . $char . "{0,$width}(?>$code*)" . ')(?:[ \t\n]+|\z)';
     my $longchar = '^(' . $char . "{$width})";
     while (length > $width) {
         if (s/$shortchar// || s/$longchar//) {
@@ -178,12 +173,17 @@ Pod::Text::Color 2.01 was included in Perl 5.9.3, the first version of Perl to
 incorporate those changes.
 
 Several problems with wrapping and line length were fixed as recently as
-Pod::Text::Color 4.11, included in Perl 5.29.1.
+Pod::Text::Color 6.0.0.
 
 This module inherits its API and most behavior from Pod::Text, so the details
 in L<Pod::Text/COMPATIBILITY> also apply.  Pod::Text and Pod::Text::Color have
 had the same module version since 4.00, included in Perl 5.23.7.  (They
 unfortunately diverge in confusing ways prior to that.)
+
+=head1 CAVEATS
+
+Line wrapping is done only at ASCII spaces and tabs, rather than using a
+correct Unicode-aware line wrapping algorithm.
 
 =head1 AUTHOR
 
@@ -191,8 +191,8 @@ Russ Allbery <rra@cpan.org>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2001, 2004, 2006, 2008, 2009, 2018-2019, 2022 Russ Allbery
-<rra@cpan.org>
+Copyright 1999, 2001, 2004, 2006, 2008, 2009, 2018-2019, 2022, 2024 Russ
+Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

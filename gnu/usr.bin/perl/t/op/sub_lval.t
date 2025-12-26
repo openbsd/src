@@ -5,7 +5,7 @@ BEGIN {
     require './test.pl';
     set_up_inc('../lib');
 }
-plan tests=>211;
+plan tests=>213;
 
 sub a : lvalue { my $a = 34; ${\(bless \$a)} }  # Return a temporary
 sub b : lvalue { ${\shift} }
@@ -1095,4 +1095,26 @@ is "@119797", "4 5 6", 'writing to array returned by bare block';
     }
     junkreturn = "b";
     is($x, "b", "junkreturn");
+}
+
+# v5.18 fails to return correct value from lvalue subroutine which returns
+# vec() and is called twice in rvalue context of one expression
+{
+    my $vec = '';
+    sub wrap_vec : lvalue {
+        vec($vec, $_[0], 8);
+    }
+    wrap_vec(0) = 3;
+    wrap_vec(1) = wrap_vec(0) + 2;
+    cmp_ok(wrap_vec(0) + wrap_vec(1), '==', 8, 'wrap_vec');
+}
+
+# Ditto for returning substr()
+{
+    my $str = 'hijk';
+    sub wrap_substr : lvalue {
+        substr($str, $_[0], 1);
+    }
+    wrap_substr(1) = 'o';
+    is(wrap_substr(1) . wrap_substr(3), 'ok', 'wrap_substr');
 }

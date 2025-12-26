@@ -74,12 +74,6 @@ foreach my $file (@ext) {
                 $package = $1;
                 last;
             }
-            elsif (/^\s*package\s*$/) {
-                # If they're hiding their package name, we ignore them
-                ++$ignore{"/$path"};
-                $package='';
-                last;
-            }
         }
         close $fh
             or die "Can't close $file: $!";
@@ -124,6 +118,7 @@ sub edit_makefile_SH {
     my ($desc, $contents) = @_;
     my $start_re = qr/(\trm -f so_locations[^\n]+)/;
     my ($start) = $contents =~ $start_re;
+    # verify_contiguous() is defined in Porting/pod_lib.pl
     $contents = verify_contiguous($desc, $contents,
                                   qr/$start_re\n(?:\t-rmdir [^\n]+\n)+/sm,
                                   'lib directory rmdir rules');
@@ -159,6 +154,7 @@ sub edit_win32_makefile {
     $contents;
 }
 
+# process() is defined in Porting/pod_lib.pl
 process('Makefile.SH', 'Makefile.SH', \&edit_makefile_SH, $TAP && '', $Verbose);
 foreach ('win32/Makefile', 'win32/GNUmakefile') {
     process($_, $_, \&edit_win32_makefile, $TAP && '', $Verbose);
@@ -175,6 +171,7 @@ if ($ENV{'PERL_BUILD_PACKAGING'}) {
     exit 0;
 }
 
+# open_new() is defined in ./regen/regen_lib.pl.
 $fh = open_new('lib/.gitignore', '>',
                { by => $0,
                  from => 'MANIFEST and parsing files in cpan/ dist/ and ext/'});
@@ -188,4 +185,5 @@ EOT
 
 print $fh "$_\n" foreach sort keys %ignore;
 
+# read_only_bottom_close_and_rename() is defined in ./regen/regen_lib.pl.
 read_only_bottom_close_and_rename($fh);

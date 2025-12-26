@@ -40,7 +40,6 @@ struct magic {
 #define MGf_DUP     0x10 	/* has an svt_dup   MGVTBL entry */
 #define MGf_LOCAL   0x20	/* has an svt_local MGVTBL entry */
 #define MGf_BYTES   0x40        /* PERL_MAGIC_regex_global only */
-#define MGf_PERSIST    0x80     /* PERL_MAGIC_lvref only */
 
 #define MgTAINTEDDIR(mg)	(mg->mg_flags & MGf_TAINTEDDIR)
 #define MgTAINTEDDIR_on(mg)	(mg->mg_flags |= MGf_TAINTEDDIR)
