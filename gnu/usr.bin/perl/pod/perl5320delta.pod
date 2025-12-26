@@ -1661,7 +1661,7 @@ floating point number. L<[GH #17062]|https://github.com/Perl/perl5/issues/17062>
 =item *
 
 Matching a non-C<SVf_UTF8> string against a regular expression
-containing unicode literals could leak a SV on each match attempt.
+containing Unicode literals could leak a SV on each match attempt.
 L<[GH #17140]|https://github.com/Perl/perl5/issues/17140>
 
 =item *

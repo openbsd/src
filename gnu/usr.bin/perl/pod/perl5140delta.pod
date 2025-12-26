@@ -1022,7 +1022,7 @@ L<Unicode::Casing>, which provides improved functionality.
 The following module will be removed from the core distribution in a
 future release, and should be installed from CPAN instead.  Distributions
 on CPAN that require this should add it to their prerequisites.  The
-core version of these module now issues a deprecation warning.
+core version of this module now issues a deprecation warning.
 
 If you ship a packaged version of Perl, either alone or as part of a
 larger system, then you should carefully consider the repercussions of
@@ -1085,7 +1085,7 @@ the regex to utf8 is necessary but this isn't known when the compilation begins.
 =head2 String appending is 100 times faster
 
 When doing a lot of string appending, perls built to use the system's
-C<malloc> could end up allocating a lot more memory than needed in a
+C<malloc> could end up allocating a lot more memory than needed in an
 inefficient way.
 
 C<sv_grow>, the function used to allocate more memory if necessary

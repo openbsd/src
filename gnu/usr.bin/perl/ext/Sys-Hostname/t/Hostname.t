@@ -1,7 +1,7 @@
 #!./perl
 
+use Config;
 BEGIN {
-    require Config; import Config;
     if ($Config{'extensions'} !~ /\bSys\/Hostname\b/) {
       print "1..0 # Skip: Sys::Hostname was not built\n";
       exit 0;

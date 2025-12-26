@@ -1,0 +1,19 @@
+--indent-columns=4               # size of indentation
+--nt                             # no tabs
+--entab-leading-whitespace=4     # 4 spaces to a tab when converting to tabs
+--continuation-indentation=4     # indentation of wrapped lines
+--maximum-line-length=0          # max line length before wrapping (turn it off)
+--nooutdent-long-quotes          # do not outdent overly long quotes
+--paren-tightness=2              # no spacing for parentheses
+--square-bracket-tightness=2     # no spacing for square brackets
+--brace-tightness=2              # no spacing for hash curly braces
+--block-brace-tightness=0        # spacing for coderef curly braces
+--comma-arrow-breakpoints=1      # break long key/value pair lists
+--break-at-old-comma-breakpoints # this attempts to retain list break points
+--no-blanks-before-comments      # do not insert blank lines before comments
+--indent-spaced-block-comments   # no blanks before comments
+--nocuddled-else                 # Do not cuddle else
+--nospace-for-semicolon          # no space before semicolons in loops
+--nospace-terminal-semicolon     # no space before termonal semicolons
+--notrim-qw                      # Do not mess with qw{} whitespace
+

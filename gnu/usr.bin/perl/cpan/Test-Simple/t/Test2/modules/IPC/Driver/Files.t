@@ -6,7 +6,7 @@ use List::Util qw/shuffle/;
 use strict;
 use warnings;
 
-if ($] lt "5.008") {
+if ("$]" < 5.008) {
     print "1..0 # SKIP Test cannot run on perls below 5.8.0\n";
     exit 0;
 }

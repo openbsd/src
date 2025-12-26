@@ -4,9 +4,8 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    require Config;
-    Config->import;
 }
+use Config;
 
 skip_all_without_config('d_fork');
 skip_all("This perl is built with NO_PERL_RAND_SEED")
@@ -16,13 +15,13 @@ use warnings;
 
 for (1..2) {
     local $ENV{PERL_RAND_SEED} = 1;
-    fresh_perl_is("print map { chr(rand(26)+65) } 1..10",
+    fresh_perl_is("print map { chr(utf8::unicode_to_native(rand(26)+65)) } 1..10",
                   "BLVIOAEZTJ", undef, "Test randomness with PERL_RAND_SEED=1");
 }
 
 for (1..2) {
     local $ENV{PERL_RAND_SEED} = 2;
-    fresh_perl_is("print map { chr(rand(26)+65) } 1..10",
+    fresh_perl_is("print map { chr(utf8::unicode_to_native(rand(26)+65)) } 1..10",
                   "XEOUOFRPQZ", undef, "Test randomness with PERL_RAND_SEED=2");
 }
 
@@ -46,7 +45,7 @@ for (1..2) {
                 elsif (!defined $pid) {
                     print "$l:failed fork";
                 } elsif (!$pid) {
-                    print "$l:", map { chr(rand(26)+65) } 1..10;
+                    print "$l:", map { chr(utf8::unicode_to_native(rand(26)+65)) } 1..10;
                     exit;
                 }
             }

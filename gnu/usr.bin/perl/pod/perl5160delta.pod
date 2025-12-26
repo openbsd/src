@@ -2124,7 +2124,7 @@ OPs are freed.  C<MADPROP>s are now allocated with C<PerlMemShared_malloc()>
 
 =item *
 
-F<makedef.pl> has been refactored.  This should have no noticeable affect on
+F<makedef.pl> has been refactored.  This should have no noticeable effect on
 any of the platforms that use it as part of their build (AIX, VMS, Win32).
 
 =item *

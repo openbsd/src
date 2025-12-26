@@ -68,13 +68,16 @@
 SV* Perl_more_sv(pTHX);
 
 /* new_SV(): return a new, empty SV head */
-
-#ifdef DEBUG_LEAKING_SCALARS
-/* provide a real function for a debugger to play with */
-STATIC SV*
-S_new_SV(pTHX_ const char *file, int line, const char *func)
+PERL_STATIC_INLINE SV*
+Perl_new_sv(pTHX_ const char *file, int line, const char *func)
 {
     SV* sv;
+#if !defined(DEBUG_LEAKING_SCALARS) || \
+     (!defined(DEBUGGING) && !defined(PERL_MEM_LOG))
+    PERL_UNUSED_ARG(file);
+    PERL_UNUSED_ARG(line);
+    PERL_UNUSED_ARG(func);
+#endif
 
     if (PL_sv_root)
         uproot_SV(sv);
@@ -83,6 +86,7 @@ S_new_SV(pTHX_ const char *file, int line, const char *func)
     SvANY(sv) = 0;
     SvREFCNT(sv) = 1;
     SvFLAGS(sv) = 0;
+#ifdef DEBUG_LEAKING_SCALARS
     sv->sv_debug_optype = PL_op ? PL_op->op_type : 0;
     sv->sv_debug_line = (U16) (PL_parser && PL_parser->copline != NOLINE
                 ? PL_parser->copline
@@ -99,25 +103,10 @@ S_new_SV(pTHX_ const char *file, int line, const char *func)
     MEM_LOG_NEW_SV(sv, file, line, func);
     DEBUG_m(PerlIO_printf(Perl_debug_log, "0x%" UVxf ": (%05ld) new_SV (from %s:%d [%s])\n",
             PTR2UV(sv), (long)sv->sv_debug_serial, file, line, func));
-
+#endif
     return sv;
 }
-#  define new_SV(p) (p)=S_new_SV(aTHX_ __FILE__, __LINE__, FUNCTION__)
-
-#else
-#  define new_SV(p) \
-    STMT_START {                                       \
-        if (PL_sv_root)                                        \
-            uproot_SV(p);                              \
-        else                                           \
-            (p) = Perl_more_sv(aTHX);                     \
-        SvANY(p) = 0;                                  \
-        SvREFCNT(p) = 1;                               \
-        SvFLAGS(p) = 0;                                        \
-        MEM_LOG_NEW_SV(p, __FILE__, __LINE__, FUNCTION__);  \
-    } STMT_END
-#endif
-
+#  define new_SV(p) (p)=Perl_new_sv(aTHX_ __FILE__, __LINE__, FUNCTION__)
 
 typedef struct xpvhv_with_aux XPVHV_WITH_AUX;
 
@@ -779,9 +768,9 @@ Perl_SvPADSTALE_off(SV *sv)
 
 /*
 =for apidoc_section $SV
-=for apidoc      SvIV
-=for apidoc_item SvIV_nomg
-=for apidoc_item SvIVx
+=for apidoc         SvIV
+=for apidoc_item    SvIV_nomg
+=for apidoc_item m||SvIVx
 
 These each coerce the given SV to IV and return it.  The returned value in many
 circumstances will get stored in C<sv>'s IV slot, but not in all cases.  (Use
@@ -794,9 +783,9 @@ guaranteed to evaluate C<sv> only once.
 
 C<SvIV_nomg> is the same as C<SvIV>, but does not perform 'get' magic.
 
-=for apidoc      SvNV
-=for apidoc_item SvNV_nomg
-=for apidoc_item SvNVx
+=for apidoc         SvNV
+=for apidoc_item    SvNV_nomg
+=for apidoc_item m||SvNVx
 
 These each coerce the given SV to NV and return it.  The returned value in many
 circumstances will get stored in C<sv>'s NV slot, but not in all cases.  (Use
@@ -809,9 +798,9 @@ guaranteed to evaluate C<sv> only once.
 
 C<SvNV_nomg> is the same as C<SvNV>, but does not perform 'get' magic.
 
-=for apidoc      SvUV
-=for apidoc_item SvUV_nomg
-=for apidoc_item SvUVx
+=for apidoc         SvUV
+=for apidoc_item    SvUV_nomg
+=for apidoc_item m||SvUVx
 
 These each coerce the given SV to UV and return it.  The returned value in many
 circumstances will get stored in C<sv>'s UV slot, but not in all cases.  (Use

@@ -11,6 +11,8 @@ perlnumber - semantics of numbers and numeric operations in Perl
     $n = 12.34e-56;	    # exponential notation
     $n = "-12.34e56";	    # number specified as a string
     $n = "1234";	    # number specified as a string
+    $n = "01234";	    # Same as "1234"; a leading 0 in a string
+                            # does not indicate that it is octal
 
 =head1 DESCRIPTION
 

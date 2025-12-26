@@ -32,7 +32,7 @@ isnt( "foo", "bar",     'foo isnt bar');
     is($warning, "Use of apostrophe as package separator was deprecated in Perl 5.37.9,\n"
                . "and will be removed in Perl 5.42.0.  You should change code that uses\n"
                . "Test::More::isn't() to use Test::More::isnt() as a replacement"
-               . " at t/Legacy/More.t line 31\n",
+               . " at ${ \__FILE__ } line 31\n",
             "Got expected warning from isn::t() under use warnings");
 }
 {

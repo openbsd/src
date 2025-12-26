@@ -6,7 +6,7 @@ use Test2::Util qw/CAN_REALLY_FORK/;
 BEGIN {
     skip_all "Set AUTHOR_TESTING to run this test" unless $ENV{AUTHOR_TESTING};
     skip_all "System cannot fork" unless CAN_REALLY_FORK;
-    skip_all "known to fail on $]" if $] le "5.006002";
+    skip_all "known to fail on $]" if "$]" <= 5.006002;
 }
 
 use IPC::Open3 qw/open3/;

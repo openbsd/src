@@ -43,9 +43,9 @@ determination of whether it is likely to fit the scope of issues the
 team handles. General guidelines about how this is determined are
 detailed in the L</WHAT ARE SECURITY ISSUES> section.
 
-If your report meets the team's criteria, an issue will be opened in the
-team's private issue tracker and you will be provided the issue's ID number.
-Issue identifiers have the form perl-security#NNN. Include this identifier
+If your report meets the team's criteria, you will be provided the issue's
+CVE ID(s). Issue identifiers have the form CVE-YYYY-NNNNN, where YYYY is the
+year the CVE was reported, and NNNNN is a unique number. Include this identifier
 with any subsequent messages you send.
 
 The security team will send periodic updates about the status of your
@@ -317,16 +317,20 @@ If the security report cannot be reproduced or does not meet the team's
 criteria for handling as a security issue, you will be notified by email
 and given an opportunity to respond.
 
-=head3 Issue ID assignment
+=head3 CVE assignment
 
-Security reports that pass initial triage analysis are turned into issues
-in the security team's private issue tracker. When a report progresses to
-this point you will be provided the issue ID for future reference. These
-identifiers have the format perl-security#NNN or Perl/perl-security#NNN.
+Security reports that pass initial triage analysis are turned into CVEs.
+When a report progresses to this point, one or more CVEs are reserved by
+the security team. Issue identifiers have the form CVE-YYYY-NNNNN, where
+YYYY is the year the CVE was reported, and NNNNN is a unique number. The
+CVE will be used in any subsequent communications about the issue.
 
-The assignment of an issue ID does not confirm that a security report
-represents a vulnerability in Perl. Many reports require further analysis
-to reach that determination.
+The assignment of these IDs do not confirm that a security report represents
+a vulnerability in Perl. Many reports require further analysis to reach that
+determination. The vulnerability should not be discussed publicly at this stage.
+
+An internal ticket will also be opened. These identifiers have the format
+perl-security#NNN or Perl/perl-security#NNN.
 
 Issues in the security team's private tracker are used to collect details
 about the problem and track progress towards a resolution. These notes and
@@ -344,32 +348,31 @@ criteria at this stage, you will be notified by email and given an
 opportunity to respond before the issue is closed.
 
 The team may discuss potential fixes with you or provide you with
-patches for testing purposes during this time frame. No information
-should be shared publicly at this stage.
+patches for testing purposes during this time frame.
 
-=head3 CVE ID assignment
+=head3 The CVE is drafted
 
 Once an issue is fully confirmed and a potential fix has been found,
-the security team will request a CVE identifier for the issue to use
-in public announcements.
+the security team will communicate with the
+L<CPAN Security Group CNA|https://security.metacpan.org/>.
 
 Details like the range of vulnerable Perl versions and identities
-of the people that discovered the flaw need to be collected to submit
-the CVE ID request.
+of the people that discovered the flaw need to be collected.
 
 The security team may ask you to clarify the exact name we should use
 when crediting discovery of the issue. The
 L</Vulnerability credit and bounties> section of this document
 explains our preferred format for this credit.
 
-Once a CVE ID has been assigned, you will be notified by email.
-The vulnerability should not be discussed publicly at this stage.
-
 =head3 Pre-release notifications
 
 When the security team is satisfied that the fix for a security issue
-is ready to release publicly, a pre-release notification
-announcement is sent to the major redistributors of Perl.
+is ready to release publicly, a pre-release notification announcement
+is sent to the L<Openwall Distros List|https://oss-security.openwall.org/wiki/mailing-lists/distros>.
+Additional other repackagers are notified.
+
+NOTE: Any embargoed information sent to the Openwall Distros List
+expires within 2 weeks of disclosure to that location.
 
 This pre-release announcement includes a list of Perl versions that
 are affected by the flaw, an analysis of the risks to users, patches
@@ -381,8 +384,8 @@ The pre-release announcement will include a specific target date
 when the issue will be announced publicly. The time frame between
 the pre-release announcement and the release date allows redistributors
 to prepare and test their own updates and announcements. During this
-period the vulnerability details and fixes are embargoed and should not
-be shared publicly. This embargo period may be extended further if
+period the vulnerability details and fixes are embargoed (see L</Embargo Period> )
+and should not be shared publicly. This L</Embargo Period> may be extended further if
 problems are discovered during testing.
 
 You will be sent the portions of pre-release announcements that are
@@ -401,14 +404,14 @@ rather than applying patches to an older release. The security
 team works with Perl's release managers to make this possible.
 
 New official releases of Perl are generally produced and tested
-on private systems during the pre-release embargo period.
+on private systems during the pre-release L</Embargo Period>.
 
 =head3 Release of fixes and announcements
 
-At the end of the embargo period the security fixes will be
-committed to Perl's public git repository and announcements will be
-sent to the L<perl5-porters|https://lists.perl.org/list/perl5-porters.html>
-and L<oss-security|https://oss-security.openwall.org/wiki/mailing-lists/oss-security>
+The L</Embargo Period> ends when the security fixes are committed to Perl's
+public git repository. Announcements will be sent to the 
+L<perl5-porters|https://lists.perl.org/list/perl5-porters.html> and 
+L<oss-security|https://oss-security.openwall.org/wiki/mailing-lists/oss-security>
 mailing lists.
 
 If official Perl releases are ready, they will be published at this time
@@ -416,7 +419,7 @@ and announced on the L<perl5-porters|https://lists.perl.org/list/perl5-porters.h
 mailing list.
 
 The security team will send a follow-up notification to everyone that
-participated in the pre-release embargo period once the release process is
+participated in the pre-release L</Embargo Period> once the release process is
 finished. Vulnerability reporters and Perl redistributors should not publish
 their own announcements or fixes until the Perl security team's release process
 is complete.
@@ -455,12 +458,11 @@ request a CVE ID and send an announcement to inform users.
 
 =head2 Vulnerability credit and bounties
 
-The Perl project appreciates the effort security researchers
-invest in making Perl safe and secure.
+The Perl project appreciates the effort security researchers invest in making
+Perl safe and secure.
 
-Since much of this work is hidden from the public, crediting
-researchers publicly is an important part of the vulnerability
-remediation process.
+Since much of this work is hidden from the public, crediting researchers
+publicly is an important part of the vulnerability remediation process.
 
 =head3 Credits in vulnerability announcements
 
@@ -487,5 +489,145 @@ omitted from announcements.
 
 The Perl project is a non-profit volunteer effort. We do not provide
 any monetary rewards for reporting security issues in Perl.
+
+=head2 Embargo Period
+
+In the context of Perl's coordinated vulnerability disclosure process, an "embargo"
+refers to the period of time during which information about a reported vulnerability
+is kept confidential. This embargo begins when a security issue is reported to the
+Perl security team and lasts until a fix has been developed and a fix is provided
+in a public location.
+
+The purpose of the embargo is to allow the security team to work on a fix
+and prepare a coordinated release without the risk of the vulnerability being
+exploited or disclosed prematurely. This helps ensure that users of Perl
+and its modules are protected from potential attacks while the security
+issue is being addressed.
+
+Embargo lengths can vary depending on the complexity of the issue and the
+time required to develop a fix. The security team will communicate
+the expected duration of the embargo to the reporter and any other
+parties involved in the process. 
+
+As a goal, the security team aims to keep the total embargo period to less
+than 60 days. This may be extended due to the following factors: 
+
+=over 4
+
+=item *
+
+The complexity of the issue
+
+=item *
+
+The time required to develop a fix
+
+=item *
+
+The need for additional testing or validation
+
+=item *
+
+The availability of resources to address the issue
+
+=item *
+
+Public holidays which might affect the ability of end users to apply the fix.
+
+=back
+
+During this period:
+
+=over 4
+
+=item *
+
+Details of the vulnerability are shared only with a restricted group of trusted contributors
+(such as core maintainers, toolchain maintainers, and packagers), solely for the purpose
+of preparing and testing a fix.
+
+=item *
+
+Reporters are asked not to disclose the issue publicly or share details with third parties
+until the embargo is lifted.
+
+=item *
+
+The duration of the embargo may vary depending on the severity and complexity of the issue,
+but typically lasts until the relevant security patch is released and announced.
+
+=item *
+
+Breaking the embargo — by prematurely disclosing details — undermines the coordinated
+disclosure process and can hinder the coordinated effort to protect users effectively.
+
+=back
+
+The Perl security team strives to resolve vulnerabilities promptly and encourages all parties
+to respect the embargo period to help protect users and downstream distributions.
+
+=head2 Example Release Process
+
+This section provides an example of how a security issue reported by a third
+party might be handled by the Perl security team, from the initial report to
+the final release.
+
+=head3 Step 1: Reporting the Vulnerability
+
+A security researcher discovers a vulnerability in the Perl interpreter that
+allows an attacker to cause a denial of service under specific conditions. The
+researcher emails the details of the issue to
+L<perl-security@perl.org|mailto:perl-security@perl.org>, including a
+proof-of-concept script and a description of the impact.
+
+=head3 Step 2: Initial Response
+
+Within 72 hours, the security team acknowledges receipt of the report and
+confirms that the issue is under investigation. The researcher is informed of
+the expected timeline for triage.
+
+=head3 Step 3: Initial Triage
+
+The security team reproduces the issue using the provided proof-of-concept and
+determines that it meets the criteria for handling as a security issue. One or
+more CVEs are reserved in coordination with the
+L<CPAN Security Group CNA|https://security.metacpan.org/2025/02/25/cpansec-is-cna-for-perl-and-cpan.html>.
+The team notifies the researcher referencing the CVE IDs.
+
+=head3 Step 4: Development of a Fix
+
+The security team analyzes the affected code and develops a patch to address
+the vulnerability. The patch is tested against various scenarios to ensure it
+resolves the issue without introducing regressions. The researcher is invited
+to test the patch privately and provide feedback.
+
+=head3 Step 5: Pre-Release Notification
+
+The security team prepares a pre-release notification, including details of
+the vulnerability, the affected Perl versions, and the patch. This notification
+is sent to major redistributors of Perl under embargo, giving them time to
+prepare their own updates.
+
+=head3 Step 6: Pre-Release Testing
+
+During the remaining embargo period, pre-notified redistributors prepare packages
+for release and test the patch to ensure compatibility with their systems.
+
+=head3 Step 7: Public Release
+
+On the scheduled release date, the patch is committed to Perl's public git
+repository. An official announcement is sent to the
+L<perl5-porters|https://lists.perl.org/list/perl5-porters.html> and
+L<oss-security|https://oss-security.openwall.org/wiki/mailing-lists/oss-security>
+mailing lists. If applicable, a new Perl release containing the fix is
+published.
+
+The security team will notify CPAN Security Group CNA to publish the CVE.
+
+=head3 Step 8: Vendor and Third-Party Updates
+
+Vendors and third-party maintainers incorporate the patch or updated Perl
+release into their distributions. The security team follows up with all
+parties involved to ensure the issue is resolved and users are protected.
 
 =cut

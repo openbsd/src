@@ -1,0 +1,188 @@
+=encoding utf8
+
+=head1 NAME
+
+perl5383delta - what is new for perl v5.38.3
+
+=head1 DESCRIPTION
+
+This document describes differences between the 5.38.2 release and the 5.38.3
+release.
+
+If you are upgrading from an earlier release such as 5.38.1, first read
+L<perl5382delta>, which describes differences between 5.38.1 and 5.38.2.
+
+=head1 Incompatible Changes
+
+There are no changes intentionally incompatible with 5.38.2.  If any exist,
+they are bugs, and we request that you submit a report.  See L</Reporting Bugs>
+below.
+
+=head1 Modules and Pragmata
+
+=head2 Updated Modules and Pragmata
+
+=over 4
+
+=item *
+
+L<DynaLoader> has been upgraded from version 1.54 to 1.54_01.
+
+This fixes an error when building Perl on OS X 10.3.
+[L<GH #21751|https://github.com/Perl/perl5/issues/21751>]
+
+=item *
+
+L<Module::CoreList> has been upgraded from version 5.20231129 to 5.20250118_38.
+
+=back
+
+=head1 Documentation
+
+=head2 Changes to Existing Documentation
+
+We have attempted to update the documentation to reflect the changes listed in
+this document.  If you find any we have missed, open an issue at
+L<https://github.com/Perl/perl5/issues>.
+
+=head1 Testing
+
+Tests were added and changed to reflect the other additions and changes in this
+release.
+
+=head1 Selected Bug Fixes
+
+=over 4
+
+=item *
+
+C<use 5.36;> or later didn't enable the post parse reporting of L<Name "%s::%s"
+used only once: possible typo|perldiag/"Name "%s::%s" used only once: possible
+typo"> warnings when enabling warnings.
+[L<GH #21271|https://github.com/Perl/perl5/issues/21271>]
+
+=item *
+
+Fixed a crash or assertion when cleaning up a closure that refers to an outside
+C<our> sub.  [L<GH #21067|https://github.com/Perl/perl5/issues/21067>]
+
+=item *
+
+Don't clear the integer flag C<IOK> from lines in the C<< @{"_<$sourcefile"} >>
+array when a C<dbstate> op is removed for that line.  This was broken when
+fixing [L<GH #19198|https://github.com/Perl/perl5/issues/19198>].
+[L<GH #21564|https://github.com/Perl/perl5/issues/21564>]
+
+=item *
+
+Fixed an issue where C<utf8n_to_uvchr()> failed to correctly identify certain
+invalid UTF-8 sequences as invalid.  Specifically, sequences that start with
+continuation bytes or unassigned bytes could cause unexpected behaviour or a
+panic.  This fix ensures that such invalid sequences are now properly detected
+and handled.  This correction also resolves related issues in modules that
+handle UTF-8 processing, such as L<Encode>.
+
+=item *
+
+Builds with C<-msse> and quadmath on 32-bit x86 systems would crash with a
+misaligned access early in the build.
+[L<GH #22577|https://github.com/Perl/perl5/issues/22577>]
+
+=item *
+
+Fixed a bug introduced in Perl 5.34 whereby uninitialized data in the
+underlying array of an AV after it has been unshifted and resized could lead to
+segmentation faults or other errors depending on the data.
+[L<GH #21235|https://github.com/Perl/perl5/issues/21235>]
+
+=item *
+
+Fixed an issue where Perl sometimes failed to correctly toggle into a dot radix
+locale.  [L<GH #21746|https://github.com/Perl/perl5/issues/21746>]
+[L<GH #22176|https://github.com/Perl/perl5/issues/22176>]
+
+=item *
+
+Stopped certain syntax errors from provoking core dumps due to a double free of
+an OP.  [L<GH #21724|https://github.com/Perl/perl5/issues/21724>]
+
+=item *
+
+Fixed a double free error or possible memory leak when failing to compile
+certain regexps.  [L<GH #21661|https://github.com/Perl/perl5/issues/21661>]
+
+=item *
+
+Fixed the initialization of Perl's querylocale() emulation so that the locale
+is set correctly if the environment specifies a non-C locale.
+[L<GH #21366|https://github.com/Perl/perl5/issues/21366>]
+
+=back
+
+=head1 Acknowledgements
+
+Perl 5.38.3 represents approximately 14 months of development since Perl 5.38.2
+and contains approximately 5,600 lines of changes across 62 files from 22
+authors.
+
+Excluding auto-generated files, documentation and release tools, there were
+approximately 2,600 lines of changes to 20 .pm, .t, .c and .h files.
+
+Perl continues to flourish into its fourth decade thanks to a vibrant community
+of users and developers.  The following people are known to have contributed
+the improvements that became Perl 5.38.3:
+
+Anton Voloshin, Chris 'BinGOs' Williams, Dagfinn Ilmari Mannsåker, E. Choroba,
+Elvin Aslanov, Graham Knop, James E Keenan, Karen Etheridge, Karl Williamson,
+Lukas Mai, Masahiro Honma, Matthew Horsfall, Max Maischein, Paul Evans,
+Philippe Bruhat (BooK), Renee Baecker, Ricardo Signes, Richard Leach, Steve
+Hay, Thibault Duponchelle, Tony Cook, Yves Orton.
+
+The list above is almost certainly incomplete as it is automatically generated
+from version control history.  In particular, it does not include the names of
+the (very much appreciated) contributors who reported issues to the Perl bug
+tracker.
+
+Many of the changes included in this version originated in the CPAN modules
+included in Perl's core.  We're grateful to the entire CPAN community for
+helping Perl to flourish.
+
+For a more complete list of all of Perl's historical contributors, please see
+the F<AUTHORS> file in the Perl source distribution.
+
+=head1 Reporting Bugs
+
+If you find what you think is a bug, you might check the perl bug database at
+L<https://github.com/Perl/perl5/issues>.  There may also be information at
+L<http://www.perl.org/>, the Perl Home Page.
+
+If you believe you have an unreported bug, please open an issue at
+L<https://github.com/Perl/perl5/issues>.  Be sure to trim your bug down to a
+tiny but sufficient test case.
+
+If the bug you are reporting has security implications which make it
+inappropriate to send to a public issue tracker, then see
+L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION> for details of how to
+report the issue.
+
+=head1 Give Thanks
+
+If you wish to thank the Perl 5 Porters for the work we had done in Perl 5, you
+can do so by running the C<perlthanks> program:
+
+    perlthanks
+
+This will send an email to the Perl 5 Porters list with your show of thanks.
+
+=head1 SEE ALSO
+
+The F<Changes> file for an explanation of how to view exhaustive details on
+what changed.
+
+The F<INSTALL> file for how to build Perl.
+
+The F<README> file for general stuff.
+
+The F<Artistic> and F<Copying> files for copyright information.
+
+=cut

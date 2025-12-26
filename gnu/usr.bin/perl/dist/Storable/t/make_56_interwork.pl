@@ -1,5 +1,6 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 use strict;
+use warnings;
 
 use Config;
 use Storable qw(freeze thaw);
@@ -8,10 +9,11 @@ use Storable qw(freeze thaw);
 # Belfuscu welcomed the rebels who wanted to eat big end first.
 my $kingdom = $Config{byteorder} =~ /23/ ? "Lillput" : "Belfuscu";
 
-my $frozen = freeze
-  ["This file was written with $Storable::VERSION on perl $]",
-   "$kingdom was correct", (~0 ^ (~0 >> 1) ^ 2),
-   "The End"];
+my $frozen = freeze [
+    "This file was written with $Storable::VERSION on perl $]",
+    "$kingdom was correct", (~0 ^ (~0 >> 1) ^ 2),
+    "The End"
+];
 
 my $ivsize = $Config{ivsize} || $Config{longsize};
 
@@ -19,8 +21,8 @@ my $storesize = unpack 'xxC', $frozen;
 my $storebyteorder = unpack "xxxA$storesize", $frozen;
 
 if ($Config{byteorder} eq $storebyteorder) {
-  my $ivtype = $Config{ivtype} || 'long';
-  print <<"EOM";
+    my $ivtype = $Config{ivtype} || 'long';
+    print <<"EOM";
 You only need to run this generator program where Config.pm's byteorder string
 is not the same length as the size of IVs.
 
@@ -31,17 +33,17 @@ MS Windows)
 This is perl $], sizeof(long) is $Config{longsize}, IVs are '$ivtype', sizeof(IV) is $ivsize,
 byteorder is '$Config{byteorder}', Storable $Storable::VERSION writes a byteorder of '$storebyteorder'
 EOM
-  exit; # Grr '
+    exit; # Grr '
 }
 
 my ($i, $l, $p, $n) = unpack "xxxx${storesize}CCCC", $frozen;
 
 print <<"EOM";
-# byteorder	 '$storebyteorder'
-# sizeof(int)	 $i
-# sizeof(long)	 $l
+# byteorder      '$storebyteorder'
+# sizeof(int)    $i
+# sizeof(long)   $l
 # sizeof(char *) $p
-# sizeof(NV)	 $n
+# sizeof(NV)     $n
 EOM
 
 my $uu = pack 'u', $frozen;

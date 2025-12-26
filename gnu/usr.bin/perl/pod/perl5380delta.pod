@@ -216,7 +216,7 @@ have a constant target label, and that label is found within the block.
 
 =head2 New regexp variable ${^LAST_SUCCESSFUL_PATTERN}
 
-This allows access to the last succesful pattern that matched in the current
+This allows access to the last successful pattern that matched in the current
 scope.  Many aspects of the regex engine refer to the "last successful
 pattern". The empty pattern reuses it, and all of the magic regex vars relate
 to it. This allows access to its pattern. The following code
@@ -1367,11 +1367,11 @@ output double quoted strings with various characters escaped so as to
 make the exact value clear to a reader. The exact rules on which
 characters are escaped may change over time but currently are that
 printable ASCII codepoints, with the exception of C<"> and C<\>, and
-unicode word characters whose codepoint is over 255 are output raw, and
+Unicode word characters whose codepoint is over 255 are output raw, and
 any other symbols are escaped much as Data::Dumper might escape them,
 using C<\n> for newline and C<\"> for double quotes, etc. Codepoints in
 the range 128-255 are always escaped as they can cause trouble on
-unicode terminals when output raw.
+Unicode terminals when output raw.
 
 In older versions of perl the one liner
 
@@ -1428,7 +1428,7 @@ account.
 
 Removed C<< Complex regular subexpression recursion limit (%d) exceeded >>
 
-The regular expresion engine has not used recursion in some time. This
+The regular expression engine has not used recursion in some time. This
 warning no longer makes sense.
 
 See [L<GH #19636|https://github.com/Perl/perl5/pull/19636>].
@@ -1568,7 +1568,7 @@ Unicode normalization tests have been added.
 
 =item *
 
-t/test.pl: Add ability to cancel an watchdog timer
+t/test.pl: Add ability to cancel a watchdog timer
 
 =back
 

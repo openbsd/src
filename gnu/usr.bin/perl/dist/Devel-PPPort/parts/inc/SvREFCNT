@@ -76,6 +76,9 @@ __UNDEFINED__
 #  endif
 #endif
 
+/* not as efficient as the real thing, but it works */
+__UNDEFINED__  SvREFCNT_dec_NN(sv) SvREFCNT_dec(sv)
+
 __UNDEFINED__  SvREFCNT_inc_simple_void(sv)     STMT_START { if (sv) SvREFCNT(sv)++; } STMT_END
 __UNDEFINED__  SvREFCNT_inc_simple_NN(sv)       (++SvREFCNT(sv), (SV*)(sv))
 __UNDEFINED__  SvREFCNT_inc_void_NN(sv)         (void)(++SvREFCNT((SV*)(sv)))
@@ -110,13 +113,15 @@ SvREFCNT()
                 mXPUSHi(SvREFCNT(sv) == 8);
                 SvREFCNT_inc_simple_void_NN(sv);
                 mXPUSHi(SvREFCNT(sv) == 9);
+                SvREFCNT_dec_NN(sv);
+                mXPUSHi(SvREFCNT(sv) == 8);
                 while (SvREFCNT(sv) > 1)
                   SvREFCNT_dec(sv);
                 mXPUSHi(SvREFCNT(sv) == 1);
                 SvREFCNT_dec(sv);
-                XSRETURN(14);
+                XSRETURN(15);
 
-=tests plan => 14
+=tests plan => 15
 
 for (Devel::PPPort::SvREFCNT()) {
   ok(defined $_ and $_);

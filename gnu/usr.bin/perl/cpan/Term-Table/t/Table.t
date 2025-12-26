@@ -1,7 +1,17 @@
 use Term::Table;
 use Term::Table::Util qw/USE_GCS/;
 
-use Test2::Tools::Tiny;
+BEGIN {
+    if (eval { require Test2::Tools::Tiny }) {
+        print "# Using Test2::Tools::Tiny\n";
+        Test2::Tools::Tiny->import();
+    }
+    else {
+        print "1..0 # SKIP Test2::Tools::Tiny is not installed\n";
+        exit(0);
+    }
+}
+
 
 use utf8;
 use strict;

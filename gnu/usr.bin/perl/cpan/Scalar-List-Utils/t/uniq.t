@@ -44,7 +44,7 @@ is_deeply( [ uniqstr qw( 1 1.0 1E0 ) ],
 }
 
 SKIP: {
-    skip 'Perl 5.007003 with utf8::encode is required', 3 if $] lt "5.007003";
+    skip 'Perl 5.007003 with utf8::encode is required', 3 if "$]" < 5.007003;
     my $warnings = "";
     local $SIG{__WARN__} = sub { $warnings .= join "", @_ };
 
@@ -99,7 +99,7 @@ is_deeply( [ uniqint 6.1, 6.2, 6.3 ],
 }
 
 SKIP: {
-    skip('UVs are not reliable on this perl version', 2) unless $] ge "5.008000";
+    skip('UVs are not reliable on this perl version', 2) unless "$]" >= 5.008000;
 
     my $maxbits = $Config{ivsize} * 8 - 1;
 
@@ -153,7 +153,7 @@ is( scalar( uniqstr qw( a b c d a b e ) ), 5, 'uniqstr() in scalar context' );
 }
 
 SKIP: {
-    skip('int overload requires perl version 5.8.0', 1) unless $] ge "5.008000";
+    skip('int overload requires perl version 5.8.0', 1) unless "$]" >= 5.008000;
 
     package Googol;
 

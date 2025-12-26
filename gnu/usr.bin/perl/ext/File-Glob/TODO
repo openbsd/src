@@ -3,7 +3,7 @@ Some issues left to take care of:
   o sane ~ handling on non-Unix platforms
 
      Currently on non-Unix, when the glob code encounters a tilde glob
-     (.e.g ~user/foo or ~/.cshrc), it simply returns that pattern
+     (e.g., ~user/foo or ~/.cshrc), it simply returns that pattern
      without doing any expansion (meaning perl will weed it out since a
      file of that name isn't likely to exist).
 

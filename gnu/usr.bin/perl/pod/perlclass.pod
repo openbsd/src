@@ -70,8 +70,8 @@ used within the scope of this declaration.
 
 Classes can be declared in either block or statement syntax. If a block is
 used, the body of the block contains the implementation of the class. If the
-statement form is used, the remainder of the file is used up until the next
-C<class> or C<package> statement.
+statement form is used, the remainder of the current scope or file is used up
+until the next C<class> or C<package> statement.
 
 A C<class> declaration can optionally have a version number, similar to the
 C<package> keyword. It can also optionally have attributes. If both are
@@ -185,6 +185,28 @@ Just like regular subroutines, methods I<can> be anonymous:
         }
     }
 
+Methods can also be declared as lexical subroutines, using the C<my> prefix.
+This creates a subroutine that is lexically visible within the current scope,
+but does not appear in the symbol table.  The effect is that of a I<private>
+method; one that can be called from within the class's own code, but not from
+outside.
+
+To invoke these lexical subroutines as methods, it is best to use the
+C<< ->& >> operator.  This bypasses method lookup by name, and directly
+invokes a lexical subroutine as if it was a method.
+
+    class LexicalMethod {
+        my method abc ($x, $y) {
+            say "Internal method abc invoked with x=$x y=$y";
+        }
+
+        method xyz {
+            $self->&abc("x", "y");
+        }
+    }
+
+    # The `abc` method is not visible from here
+
 =head1 ATTRIBUTES
 
 Specific aspects of the keywords mentioned above are managed using
@@ -259,6 +281,33 @@ context.
     ...
 
     scalar $instance->users;
+
+=head3 :writer
+
+A field with a C<:writer> attribute will generate a writer accessor method
+automatically.  The generated method will have a signature that consumes
+exactly one argument, and its body will assign that scalar argument to the
+field and return the invocant object itself.
+
+    field $s :writer;
+
+    # Equivalent to
+    field $s;
+    method set_s($new) { $s = $new; return $self; }
+
+By default the accessor method will have the name of the field minus the
+leading sigil with the string C<set_> prefixed to it, but a different name
+can be specified in the attribute's value.
+
+    field $x :writer(write_x);
+
+    # Generates a method
+    method write_x ($new) { ... }
+
+Currently, writer accessors can only be applied to scalar fields.  Attempts
+to apply this attribute to a non-scalar field will result in a fatal exception
+at compile-time.  This may be relaxed in a future version to allow writers on
+array or hash fields.  For now, these will have to be created manually.
 
 =head2 Method attributes
 

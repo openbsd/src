@@ -1,51 +1,48 @@
 #!./perl
 #
 #  Copyright (c) 1995-2000, Raphael Manfredi
-#  
+#
 #  You may redistribute only under the same terms as Perl 5, as specified
 #  in the README file that comes with the distribution.
 #
+
+my %immortals;
 
 BEGIN {
     # Do this as the very first thing, in order to avoid problems with the
     # PADTMP flag on pre-5.19.3 threaded Perls.  On those Perls, compiling
     # code that contains a constant-folded canonical truth value breaks
     # the ability to take a reference to that canonical truth value later.
-    $::false = 0;
-    %::immortals = (
-	'u' => \undef,
-	'y' => \!$::false,
-	'n' => \!!$::false,
+    my $false = 0;
+    %immortals = (
+        'u' => \undef,
+        'y' => \!$false,
+        'n' => \!!$false,
     );
 }
 
-sub BEGIN {
-    if ($ENV{PERL_CORE}) {
-        chdir 'dist/Storable' if -d 'dist/Storable';
-        @INC = ('../../lib', 't');
-    } else {
-        unshift @INC, 't';
-        unshift @INC, 't/compat' if $] < 5.006002;
-    }
-    require Config; import Config;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
+use strict;
+use warnings;
+
+BEGIN {
+    unshift @INC, 't/lib';
 }
 
+use Config;
 use Test::More;
+use STTestLib qw(tempfilename);
 
 use Storable qw(freeze thaw store retrieve fd_retrieve);
 
-%::weird_refs = 
-  (REF            => \(my $aref    = []),
-   VSTRING        => \(my $vstring = v1.2.3),
-   'long VSTRING' => \(my $lvstring = eval "v" . 0 x 300),
-   LVALUE         => \(my $substr  = substr((my $str = "foo"), 0, 3)));
+my %weird_refs = (
+    REF            => \(my $aref    = []),
+    VSTRING        => \(my $vstring = v1.2.3),
+    'long VSTRING' => \(my $lvstring = eval "v" . 0 x 300),
+    LVALUE         => \(my $substr  = substr((my $str = "foo"), 0, 3))
+);
 
 my $test = 18;
-my $tests = $test + 41 + (2 * 6 * keys %::immortals) + (3 * keys %::weird_refs);
+my $tests = $test + 41 + (2 * 6 * keys %immortals) + (3 * keys %weird_refs);
 plan(tests => $tests);
 
 package SHORT_NAME;
@@ -57,36 +54,36 @@ package SHORT_NAME_WITH_HOOK;
 sub make { bless [], shift }
 
 sub STORABLE_freeze {
-	my $self = shift;
-	return ("", $self);
+    my $self = shift;
+    return ("", $self);
 }
 
 sub STORABLE_thaw {
-	my $self = shift;
-	my $cloning = shift;
-	my ($x, $obj) = @_;
-	die "STORABLE_thaw" unless $obj eq $self;
+    my $self = shift;
+    my $cloning = shift;
+    my ($x, $obj) = @_;
+    die "STORABLE_thaw" unless $obj eq $self;
 }
 
 package main;
 
 # Still less than 256 bytes, so long classname logic not fully exercised
 #   Identifier too long - 5.004
-#   parser.h: char	tokenbuf[256]: cperl5.24 => 1024
+#   parser.h: char      tokenbuf[256]: cperl5.24 => 1024
 my $m = ($Config{usecperl} and $] >= 5.024) ? 56 : 14;
 my $longname = "LONG_NAME_" . ('xxxxxxxxxxxxx::' x $m) . "final";
 
 eval <<EOC;
 package $longname;
 
-\@ISA = ("SHORT_NAME");
+our \@ISA = ("SHORT_NAME");
 EOC
 is($@, '');
 
 eval <<EOC;
 package ${longname}_WITH_HOOK;
 
-\@ISA = ("SHORT_NAME_WITH_HOOK");
+our \@ISA = ("SHORT_NAME_WITH_HOOK");
 EOC
 is($@, '');
 
@@ -136,7 +133,7 @@ sub STORABLE_freeze {
     # Some reference some number of times.
     my $self = shift;
     my ($what, $times) = @$self;
-    return ("$what$times", ($::immortals{$what}) x $times);
+    return ("$what$times", ($immortals{$what}) x $times);
 }
 
 sub STORABLE_thaw {
@@ -146,7 +143,7 @@ sub STORABLE_thaw {
     my ($what, $times) = $x =~ /(.)(\d+)/;
     die "'$x' didn't match" unless defined $times;
     main::is(scalar @refs, $times);
-    my $expect = $::immortals{$what};
+    my $expect = $immortals{$what};
     die "'$x' did not give a reference" unless ref $expect;
     my $fail;
     foreach (@refs) {
@@ -162,37 +159,37 @@ package main;
 # $Storable::DEBUGME = 1;
 my $count;
 foreach $count (1..3) {
-  my $immortal;
-  foreach $immortal (keys %::immortals) {
-    print "# $immortal x $count\n";
-    my $i =  RETURNS_IMMORTALS->make ($immortal, $count);
+    my $immortal;
+    foreach $immortal (keys %immortals) {
+        print "# $immortal x $count\n";
+        my $i =  RETURNS_IMMORTALS->make ($immortal, $count);
 
-    my $f = freeze ($i);
-  TODO: {
-      # ref sv_true is not always sv_true, at least in older threaded perls.
-      local $TODO = "Some 5.10/12 do not preserve ref identity with freeze \\(1 == 1)"
-        if !defined($f) and $] < 5.013 and $] > 5.009 and $immortal eq 'y';
-      isnt($f, undef);
+        my $f = freeze ($i);
+        TODO: {
+            # ref sv_true is not always sv_true, at least in older threaded perls.
+            local $TODO = "Some 5.10/12 do not preserve ref identity with freeze \\(1 == 1)"
+                if !defined($f) and $] < 5.013 and $] > 5.009 and $immortal eq 'y';
+            isnt($f, undef);
+        }
+        my $t = thaw $f;
+        pass("thaw didn't crash");
     }
-    my $t = thaw $f;
-    pass("thaw didn't crash");
-  }
 }
 
 # Test automatic require of packages to find thaw hook.
 
 package HAS_HOOK;
 
-$loaded_count = 0;
-$thawed_count = 0;
+our $loaded_count = 0;
+our $thawed_count = 0;
 
 sub make {
-  bless [];
+    bless [];
 }
 
 sub STORABLE_freeze {
-  my $self = shift;
-  return '';
+    my $self = shift;
+    return '';
 }
 
 package main;
@@ -220,26 +217,29 @@ is(ref $t, 'HAS_HOOK');
 {
     package STRESS_THE_STACK;
 
+    our $freeze_count = 0;
+    our $thaw_count = 0;
+
     my $stress;
     sub make {
-	bless [];
+        bless [];
     }
 
     sub no_op {
-	0;
+        0;
     }
 
     sub STORABLE_freeze {
-	my $self = shift;
-	++$freeze_count;
-	return no_op(1..(++$stress * 2000)) ? die "can't happen" : '';
+        my $self = shift;
+        ++$freeze_count;
+        return no_op(1..(++$stress * 2000)) ? die "can't happen" : '';
     }
 
     sub STORABLE_thaw {
-	my $self = shift;
-	++$thaw_count;
-	no_op(1..(++$stress * 2000)) && die "can't happen";
-	return;
+        my $self = shift;
+        ++$thaw_count;
+        no_op(1..(++$stress * 2000)) && die "can't happen";
+        return;
     }
 }
 
@@ -257,10 +257,7 @@ is($STRESS_THE_STACK::thaw_count, 1);
 isnt($t, undef);
 is(ref $t, 'STRESS_THE_STACK');
 
-my $file = "storable-testfile.$$";
-die "Temporary file '$file' already exists" if -e $file;
-
-END { while (-f $file) {unlink $file or die "Can't unlink '$file': $!" }}
+my $file = tempfilename();
 
 $STRESS_THE_STACK::freeze_count = 0;
 $STRESS_THE_STACK::thaw_count = 0;
@@ -282,7 +279,7 @@ is(ref $t, 'STRESS_THE_STACK');
     my $o= {str=>bless {}};
     my $f= ::freeze($o);
     ::is ref $o->{str}, __PACKAGE__,
-	'assignment to $_[0] in STORABLE_freeze does not corrupt things';
+        'assignment to $_[0] in STORABLE_freeze does not corrupt things';
 }
 
 # [perl #113880]
@@ -307,15 +304,18 @@ is(ref $t, 'STRESS_THE_STACK');
             # It is not just Storable that did not support vstrings. :-)
             # See https://rt.cpan.org/Ticket/Display.html?id=78678
             my $newver = "version"->can("new")
-                           ? sub { "version"->new(shift) }
-                           : sub { "" };
+                            ? sub {
+                              no warnings;
+                              "version"->new(shift)
+                            }
+                            : sub { "" };
             if (!ok
-                  $$thawn eq $$obj && &$newver($$thawn) eq &$newver($$obj),
-                 "get the right value back"
+                $$thawn eq $$obj && &$newver($$thawn) eq &$newver($$obj),
+                "get the right value back"
             ) {
                 diag "$$thawn vs $$obj";
                 diag &$newver($$thawn) eq &$newver($$obj) if &$newver(1);
-             }
+            }
         }
         else {
             is_deeply($thawn, $obj, "get the right value back");
@@ -365,16 +365,16 @@ is(ref $t, 'STRESS_THE_STACK');
             die ${$_[0]}
         }
 
-	package ThawHookDies;
-	sub STORABLE_freeze {
-	    my ($self, $cloning) = @_;
-	    my $tmp = $$self;
-	    return "a", \$tmp;
-	}
-	sub STORABLE_thaw {
-	    my ($self, $cloning, $str, $obj) = @_;
-	    die $$obj;
-	}
+        package ThawHookDies;
+        sub STORABLE_freeze {
+            my ($self, $cloning) = @_;
+            my $tmp = $$self;
+            return "a", \$tmp;
+        }
+        sub STORABLE_thaw {
+            my ($self, $cloning, $str, $obj) = @_;
+            die $$obj;
+        }
     }
     my $x = bless \(my $tmpx = "Foo"), "FreezeHookDies";
     my $y = bless \(my $tmpy = []), "FreezeHookDies";
@@ -434,13 +434,13 @@ is(ref $t, 'STRESS_THE_STACK');
     };
     my $msg = $@;
     like($msg, qr/Unexpected object type \(GLOB\) of class 'GlobHooked' in store_hook\(\) calling GlobHookedBase::STORABLE_freeze/,
-         "check we get the verbose message");
+        "check we get the verbose message");
 }
 
 SKIP:
 {
     $] < 5.012
-      and skip "Can't assign regexps directly before 5.12", 4;
+        and skip "Can't assign regexps directly before 5.12", 4;
     my $hook_called;
     # store regexp via hook
     {

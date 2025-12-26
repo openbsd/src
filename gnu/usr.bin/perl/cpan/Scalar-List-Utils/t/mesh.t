@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 use List::Util qw(mesh mesh_longest mesh_shortest);
 
 is_deeply( [mesh ()], [],
@@ -29,3 +29,13 @@ ok( !defined eval { mesh 1, 2, 3 },
 
 ok( !defined eval { mesh +{ one => 1 } },
   'reference to non array throws exception' );
+
+# related to RT156183
+{
+  my @inp = ( [1,2,3], [4,5,6] );
+  foreach my $x ( mesh @inp ) {
+    $x++;
+  }
+  is_deeply( \@inp, [ [1,2,3], [4,5,6] ],
+    'original values unchanged by modification of mesh() output' );
+}

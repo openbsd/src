@@ -3,6 +3,7 @@
 use strict;
 use Config;
 use Test::More;
+use Cwd "getcwd";
 
 BEGIN {
     plan skip_all => "POSIX is unavailable"
@@ -47,6 +48,10 @@ foreach (undef, qw(STDIN STDOUT STDERR)) {
     }
 }
 
+my $cwd = getcwd;
+my $is_afs_path = $Config{afs} eq "true" &&
+  $cwd && $cwd =~ /^\Q$Config{afsroot}/;
+
 open my $not_a_tty, '<', $^X or die "Can't open $^X: $!";
 
 if (defined $termios) {
@@ -75,6 +80,8 @@ if (defined $termios) {
         # https://bugs.dragonflybsd.org/issues/3252
         local $TODO = "dragonfly returns bad errno"
             if $^O eq 'dragonfly';
+        local $TODO = "AFS doesn't report ENOTTY as it should"
+            if $is_afs_path;
         cmp_ok($!, '==', POSIX::ENOTTY, 'and set errno to ENOTTY');
     }
 
@@ -85,6 +92,8 @@ if (defined $termios) {
         # https://bugs.dragonflybsd.org/issues/3252
         local $TODO = "dragonfly returns bad errno"
             if $^O eq 'dragonfly';
+        local $TODO = "AFS doesn't report ENOTTY as it should"
+            if $is_afs_path;
         cmp_ok($!, '==', POSIX::ENOTTY, 'and set errno to ENOTTY');
     }
 }
@@ -174,6 +183,8 @@ is(tcdrain(fileno $not_a_tty), undef, 'tcdrain on a non tty should fail');
     # https://bugs.dragonflybsd.org/issues/3252
     local $TODO = "dragonfly returns bad errno"
         if $^O eq 'dragonfly';
+    local $TODO = "AFS doesn't report ENOTTY as it should"
+        if $is_afs_path;
     cmp_ok($!, '==', POSIX::ENOTTY, 'and set errno to ENOTTY');
 }
 
@@ -183,6 +194,8 @@ is(tcflow(fileno $not_a_tty, TCOON), undef, 'tcflow on a non tty should fail');
     # https://bugs.dragonflybsd.org/issues/3252
     local $TODO = "dragonfly returns bad errno"
         if $^O eq 'dragonfly';
+    local $TODO = "AFS doesn't report ENOTTY as it should"
+        if $is_afs_path;
     cmp_ok($!, '==', POSIX::ENOTTY, 'and set errno to ENOTTY');
 }
 
@@ -193,6 +206,8 @@ is(tcflush(fileno $not_a_tty, TCOFLUSH), undef,
     # https://bugs.dragonflybsd.org/issues/3252
     local $TODO = "dragonfly returns bad errno"
         if $^O eq 'dragonfly';
+    local $TODO = "AFS doesn't report ENOTTY as it should"
+        if $is_afs_path;
     cmp_ok($!, '==', POSIX::ENOTTY, 'and set errno to ENOTTY');
 }
 
@@ -203,6 +218,8 @@ is(tcsendbreak(fileno $not_a_tty, 0), undef,
     # https://bugs.dragonflybsd.org/issues/3252
     local $TODO = "dragonfly returns bad errno"
         if $^O eq 'dragonfly';
+    local $TODO = "AFS doesn't report ENOTTY as it should"
+        if $is_afs_path;
     cmp_ok($!, '==', POSIX::ENOTTY, 'and set errno to ENOTTY');
 }
 

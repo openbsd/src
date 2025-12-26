@@ -354,7 +354,7 @@ subtest '$x = $inf -> copy() -> bdec();' => sub {
 };
 
 $x = $nan -> copy() -> bdec();
-subtest '' => sub {
+subtest '$x = $nan -> copy() -> bdec();' => sub {
     plan tests => 2;
     is($x, 'NaN', 'bdec(NaN)');
     is(ref($x), 'Math::BigInt', 'bdec(NaN) => Math::BigInt');
@@ -506,8 +506,8 @@ subtest '$x = $nan -> copy() -> bmul($four);' => sub {
     is(ref($x), 'Math::BigInt', 'bmul(NaN, 4) => Math::BigInt');
 };
 
-$x = $four -> copy() -> bmul('0.5');
-subtest '' => sub {
+$x = $four -> copy() -> bmul("0.5");
+subtest '$four -> copy() -> bmul("0.5");' => sub {
     plan tests => 2;
     cmp_ok($x, '==', 2, 'bmul(4, 0.5) = 2');
     is(ref($x), 'Math::BigInt', 'bmul(4, 0.5) => Math::BigInt');

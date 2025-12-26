@@ -140,8 +140,8 @@ S__invlist_array_init(SV* const invlist, const bool will_have_0)
      * array begins depends on whether the list has the code point U+0000 in it
      * or not.  The other parameter tells it whether the code that follows this
      * call is about to put a 0 in the inversion list or not.  The first
-     * element is either the element reserved for 0, if TRUE, or the element
-     * after it, if FALSE */
+     * element is either the element reserved for 0, if true, or the element
+     * after it, if false */
 
     bool* offset = get_invlist_offset_addr(invlist);
     UV* zero_addr = (UV *) SvPVX(invlist);
@@ -350,7 +350,7 @@ Perl__new_invlist_C_array(pTHX_ const UV* const list)
     PERL_ARGS_ASSERT__NEW_INVLIST_C_ARRAY;
 
     if (version_id != INVLIST_VERSION_ID) {
-        Perl_croak(aTHX_ "panic: Incorrect version for previously generated inversion list");
+        croak("panic: Incorrect version for previously generated inversion list");
     }
 
     /* The generated array passed in includes header elements that aren't part
@@ -409,7 +409,9 @@ S__append_range_to_invlist(pTHX_ SV* const invlist,
         if (   array[final_element] > start
             || ELEMENT_RANGE_MATCHES_INVLIST(final_element))
         {
-            Perl_croak(aTHX_ "panic: attempting to append to an inversion list, but wasn't at the end of the list, final=%" UVuf ", start=%" UVuf ", match=%c",
+            croak("panic: attempting to append to an inversion list, but "
+                             "wasn't at the end of the list, final = %" UVuf 
+                             ", start = %" UVuf ", match = %c",
                      array[final_element], start,
                      ELEMENT_RANGE_MATCHES_INVLIST(final_element) ? 't' : 'f');
         }
@@ -566,7 +568,7 @@ Perl__invlist_union_maybe_complement_2nd(pTHX_ SV* const a, SV* const b,
      * even 'a' or 'b').  If to an inversion list, the contents of the original
      * list will be replaced by the union.  The first list, 'a', may be
      * NULL, in which case a copy of the second list is placed in '*output'.
-     * If 'complement_b' is TRUE, the union is taken of the complement
+     * If 'complement_b' is true, the union is taken of the complement
      * (inversion) of 'b' instead of b itself.
      *
      * The basis for this comes from "Unicode Demystified" Chapter 13 by
@@ -844,7 +846,7 @@ Perl__invlist_intersection_maybe_complement_2nd(pTHX_ SV* const a, SV* const b,
      * even 'a' or 'b').  If to an inversion list, the contents of the original
      * list will be replaced by the intersection.  The first list, 'a', may be
      * NULL, in which case '*i' will be an empty list.  If 'complement_b' is
-     * TRUE, the result will be the intersection of 'a' and the complement (or
+     * true, the result will be the intersection of 'a' and the complement (or
      * inversion) of 'b' instead of 'b' directly.
      *
      * The basis for this comes from "Unicode Demystified" Chapter 13 by
@@ -942,7 +944,7 @@ Perl__invlist_intersection_maybe_complement_2nd(pTHX_ SV* const a, SV* const b,
 
     /* Size the intersection for the worst case: that the intersection ends up
      * fragmenting everything to be completely disjoint */
-    r= _new_invlist(len_a + len_b);
+    r = _new_invlist(len_a + len_b);
 
     /* Will contain U+0000 iff both components do */
     array_r = _invlist_array_init(r,    len_a > 0 && array_a[0] == 0
@@ -975,7 +977,7 @@ Perl__invlist_intersection_maybe_complement_2nd(pTHX_ SV* const a, SV* const b,
         }
         else {
             cp_in_set = ELEMENT_RANGE_MATCHES_INVLIST(i_b);
-            cp= array_b[i_b++];
+            cp = array_b[i_b++];
         }
 
         /* Here, have chosen which of the two inputs to look at.  Only output
@@ -1473,7 +1475,7 @@ bool
 Perl__invlistEQ(pTHX_ SV* const a, SV* const b, const bool complement_b)
 {
     /* Return a boolean as to if the two passed in inversion lists are
-     * identical.  The final argument, if TRUE, says to take the complement of
+     * identical.  The final argument, if true, says to take the complement of
      * the second inversion list before doing the comparison */
 
     const UV len_a = _invlist_len(a);

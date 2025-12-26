@@ -61,7 +61,7 @@ fresh_perl_like
   '
     BEGIN { *CORE::GLOBAL::kill = sub {} }
     require sigtrap;
-    import sigtrap "INT";
+    sigtrap->import("INT");
     sub { $SIG{INT}->("INT") } -> (3)
   ',
    qr/\$ = main::__ANON__\(3\) called/,

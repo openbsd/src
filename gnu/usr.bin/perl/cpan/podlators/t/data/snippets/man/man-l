@@ -1,0 +1,24 @@
+[name]
+Formatting of man page references in L<>
+
+[input]
+=head1 MAN REFERENCE
+
+L<Pod::Man(3pm)>
+
+L<B<ls> program|ls(1)>
+
+L<apt-get(1)>
+
+L<@@RXVT_NAME@@perl(3)>
+
+[output]
+.SH "MAN REFERENCE"
+.IX Header "MAN REFERENCE"
+\&\fBPod::Man\fR\|(3pm)
+.PP
+\&\fBls\fR program
+.PP
+\&\fBapt\-get\fR\|(1)
+.PP
+\&\fB@@RXVT_NAME@@perl\fR\|(3)

@@ -6,7 +6,7 @@ use strict;
 
 our @ISA = ('Test2::EventFacet::Trace');
 
-our $VERSION = '1.302199';
+our $VERSION = '1.302210';
 
 1;
 
@@ -18,7 +18,7 @@ __END__
 
 =head1 NAME
 
-Test2::Util::Trace - Legacy wrapper fro L<Test2::EventFacet::Trace>.
+Test2::Util::Trace - Legacy wrapper for L<Test2::EventFacet::Trace>.
 
 =head1 DESCRIPTION
 
@@ -48,7 +48,7 @@ L<https://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

@@ -2,7 +2,7 @@ package Test2::Util::HashBase;
 use strict;
 use warnings;
 
-our $VERSION = '1.302199';
+our $VERSION = '1.302210';
 
 #################################################################
 #                                                               #
@@ -463,7 +463,7 @@ L<https://github.com/Test-More/HashBase/>.
 
 =head1 COPYRIGHT
 
-Copyright 2017 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

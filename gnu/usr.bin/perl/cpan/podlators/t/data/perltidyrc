@@ -6,7 +6,7 @@
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2021-2022 Russ Allbery <eagle@eyrie.org>
+# Copyright 2021-2024 Russ Allbery <eagle@eyrie.org>
 # Copyright 2012-2013
 #     The Board of Trustees of the Leland Stanford Junior University
 #
@@ -17,14 +17,23 @@
 #
 # SPDX-License-Identifier: FSFAP
 
+-bal=1          # put line breaks after a label
 -bbao           # put line breaks before any operator
+-bfvt=2         # no newline before "or" after closing brace
 -nbbc           # don't force blank lines before comments (bad for else blocks)
 -boc            # do not re-break lists, since perltidy is awful at this
+-cpb            # put opening brace on same line as closing paren
 -ce             # cuddle braces around else
 -l=79           # usually use 78, but don't want 79-long lines reformatted
 -nlop           # disable vertical alignment of logical and ternary expressions
+-vil='=>'       # enable vertical alignment for hash definitions
 -pt=2           # don't add extra whitespace around parentheses
 -sbt=2          # ...or square brackets
 -nsfs           # no space before semicolon in for (not that I use this form)
--nvc            # disable vertical alignment of = and similar symbols
 -xci            # improve indentation of nested structures
+-drc            # delete repeated commas in a list
+-wtc=m          # add trailing commas to all multi-line lists
+-atc            # add trailing commas where needed
+-dtc            # delete trailing commas where needed
+-dwic           # remove commas interfering with welds
+-viu            # align trailing unless with if (not that I use unless)

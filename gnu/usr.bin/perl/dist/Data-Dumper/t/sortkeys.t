@@ -11,7 +11,7 @@ use Testing qw( _dumptostr );
 
 run_tests_for_sortkeys();
 SKIP: {
-    skip "XS version was unavailable, so we already ran with pure Perl", 13 
+    skip "XS version was unavailable, so we already ran with pure Perl", 11
         if $Data::Dumper::Useperl;
     local $Data::Dumper::Useperl = 1;
     run_tests_for_sortkeys();

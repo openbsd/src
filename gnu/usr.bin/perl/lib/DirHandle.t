@@ -3,7 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require Config; import Config;
+    require Config; Config->import;
     if (not $Config{'d_readdir'}) {
 	print "1..0\n";
 	exit 0;

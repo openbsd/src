@@ -281,3 +281,18 @@ sub plus_one { (shift) + 1 }
 
 is 0x1p60 - 1.0, 0x1p60 - 1,
     "(0x1p60 - 1) and (0x1p60 - 1.0) should be identical";
+
+my @iv_min_test;
+BEGIN {
+    @iv_min_test = ('2147483647', '2147483648',
+                    '9223372036854775807', '9223372036854775808');
+    $::additional_tests += @iv_min_test;
+}
+
+foreach my $str (@iv_min_test) {
+    my $x = "-$str";
+    my $y = $x + 1.23;
+    my $z = $x + 0;
+    my $w = "-$str" + 0;
+    is $z, $w, "previously NV-ified '-$str' has correct numeric value";
+}

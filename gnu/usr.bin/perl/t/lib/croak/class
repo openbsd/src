@@ -145,7 +145,7 @@ no warnings 'experimental::class';
 eval "class C {";
 C->new;
 EXPECT
-Cannot create an object of incomplete class "C" at - line 5.
+Can't locate object method "new" via package "C" at - line 5.
 ########
 # NAME try to create an object of incomplete class (compile-time)
 use v5.36;
@@ -155,3 +155,61 @@ class C { BEGIN { C->new; } };
 EXPECT
 Cannot create an object of incomplete class "C" at - line 4.
 BEGIN failed--compilation aborted at - line 4.
+########
+# Invalid method name for :reader attribute
+use v5.36;
+use feature 'class';
+no warnings 'experimental::class';
+class XXX {
+  field $x :reader(abc-def);
+}
+EXPECT
+"abc-def" is not a valid name for a generated method at - line 6.
+########
+# Invalid method name for :writer attribute
+use v5.36;
+use feature 'class';
+no warnings 'experimental::class';
+class XXX {
+  field $x :writer(set-abc-def);
+}
+EXPECT
+"set-abc-def" is not a valid name for a generated method at - line 6.
+########
+# Writer on non-scalar field
+use v5.36;
+use feature 'class';
+no warnings 'experimental::class';
+class XXX {
+  field @things :writer;
+}
+EXPECT
+Cannot apply a :writer attribute to a non-scalar field at - line 6.
+########
+use v5.36;
+use feature 'class';
+no warnings 'experimental::class';
+sub f { last }
+class X {
+    field $x = ::f();
+}
+# two warnings since we exit the initfields cv and f()
+X->new for 0;
+EXPECT
+Exiting subroutine via last at - line 4.
+Exiting subroutine via last at - line 4.
+Can't "last" outside a loop block at - line 4.
+########
+use v5.36;
+use feature 'class';
+no warnings 'experimental::class';
+class X {
+    field $x;
+    ADJUST {
+        last;
+    }
+}
+X->new for 0;
+EXPECT
+Exiting subroutine via last at - line 7.
+Can't "last" outside a loop block at - line 7.

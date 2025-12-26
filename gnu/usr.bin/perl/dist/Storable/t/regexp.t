@@ -1,4 +1,4 @@
-#!perl -w
+#!./perl -w
 use strict;
 use Storable "dclone";
 use Test::More;
@@ -6,7 +6,7 @@ use Test::More;
 my $version = int(($]-5)*1000);
 
 $version >= 8
-  or plan skip_all => "regexps not supported before 5.8";
+    or plan skip_all => "regexps not supported before 5.8";
 
 my @tests;
 while (<DATA>) {
@@ -30,9 +30,9 @@ while (<DATA>) {
     }
     my @match = split /\s*,\s*/, $match;
     for my $m (@match) {
-	my $not = $m =~ s/^!//;
-	my $cmatch = eval $m;
-	die if $@;
+        my $not = $m =~ s/^!//;
+        my $cmatch = eval $m;
+        die if $@;
         push @tests, [ $code, $not, $cmatch, $m, $name ];
     }
 }
@@ -42,7 +42,7 @@ plan tests => 10 + 3*scalar(@tests);
 SKIP:
 {
     $version >= 14 && $version < 20
-      or skip "p introduced in 5.14, pointless from 5.20", 4;
+        or skip "p introduced in 5.14, pointless from 5.20", 4;
     my $q1 = eval "qr/b/p";
     my $q2 = eval "qr/b/";
     my $c1 = dclone($q1);
@@ -56,7 +56,7 @@ SKIP:
 SKIP:
 {
     $version >= 24
-      or skip "n introduced in 5.22", 4;
+        or skip "n introduced in 5.22", 4;
     my $c1 = dclone(eval "qr/(\\w)/");
     my $c2 = dclone(eval "qr/(\\w)/n");
     ok("a" =~ $c1, "a matches $c1");
@@ -68,7 +68,7 @@ SKIP:
 SKIP:
 {
     $version >= 8
-      or skip "Cannot retrieve before 5.8", 1;
+        or skip "Cannot retrieve before 5.8", 1;
     my $x;
     my $re = qr/a(?{ $x = 1 })/;
     use re 'eval';
@@ -82,27 +82,27 @@ for my $test (@tests) {
     my $qr = eval $code;
     die "Could not compile $code: $@" if $@;
     if ($not) {
-	unlike($match, $qr, "$name: pre(not) match $matchc");
+        unlike($match, $qr, "$name: pre(not) match $matchc");
     }
     else {
-	like($match, $qr, "$name: prematch $matchc");
+        like($match, $qr, "$name: prematch $matchc");
     }
     my $qr2 = dclone($qr);
     if ($not) {
-	unlike($match, $qr2, "$name: (not) match $matchc");
+        unlike($match, $qr2, "$name: (not) match $matchc");
     }
     else {
-	like($match, $qr2, "$name: match $matchc");
+        like($match, $qr2, "$name: match $matchc");
     }
 
     # this is unlikely to be a problem, but make sure regexps are frozen sanely
     # as part of a data structure
     my $a2 = dclone([ $qr ]);
     if ($not) {
-	unlike($match, $a2->[0], "$name: (not) match $matchc (array)");
+        unlike($match, $a2->[0], "$name: (not) match $matchc (array)");
     }
     else {
-	like($match, $a2->[0], "$name: match $matchc (array)");
+        like($match, $a2->[0], "$name: match $matchc (array)");
     }
 }
 

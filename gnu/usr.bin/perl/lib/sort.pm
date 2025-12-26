@@ -3,7 +3,7 @@ package sort;
 use strict;
 use warnings;
 
-our $VERSION = '2.05';
+our $VERSION = '2.06';
 
 sub import {
     shift;
@@ -51,9 +51,9 @@ sort - perl pragma to control sort() behaviour
 The sort pragma is now a no-op, and its use is discouraged. These three
 operations are valid, but have no effect:
 
-    use sort 'stable';		# guarantee stability
-    use sort 'defaults';	# revert to default behavior
-    no  sort 'stable';		# stability not important
+    use sort 'stable';          # guarantee stability
+    use sort 'defaults';        # revert to default behavior
+    no  sort 'stable';          # stability not important
 
 =head1 DESCRIPTION
 
@@ -63,7 +63,7 @@ C<sort()> function.
 Prior to v5.28.0 there were two other options:
 
     use sort '_mergesort';
-    use sort '_qsort';		# or '_quicksort'
+    use sort '_qsort';          # or '_quicksort'
 
 If you try and specify either of these in v5.28+ it will croak.
 

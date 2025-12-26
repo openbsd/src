@@ -11,15 +11,14 @@
 # for any changes to Pod::Man.  It doubles as a test that the preamble is
 # emitted correctly.
 #
-# Copyright 2022 Russ Allbery <rra@cpan.org>
+# Copyright 2022, 2024 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.008;
-use strict;
+use 5.012;
 use warnings;
 
 use lib 't/lib';
@@ -38,21 +37,19 @@ local $ENV{SOURCE_DATE_EPOCH} = 1664146047;
 
 # Get the path to the input and output files.
 my $input = File::Spec->catfile('t', 'data', 'man', 'encoding.pod');
-#<<<
 my %output = (
     groff => File::Spec->catfile('t', 'data', 'man', 'encoding.groff'),
     roff  => File::Spec->catfile('t', 'data', 'man', 'encoding.roff'),
     utf8  => File::Spec->catfile('t', 'data', 'man', 'encoding.utf8'),
 );
-#>>>
 
 # For each encoding, load the input, generate the output, and check that the
 # output matches.
 for my $encoding (sort(keys(%output))) {
     my $parser = Pod::Man->new(
         encoding => $encoding,
-        center => 'podlators',
-        release => 'testing',
+        center   => 'podlators',
+        release  => 'testing',
     );
     my $got;
     $parser->output_string(\$got);

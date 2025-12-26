@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = '3.05';
+our $VERSION = '3.06';
 $VERSION = eval $VERSION;
 
 BEGIN {
@@ -61,7 +61,7 @@ In Perl 5.005, the thread model was that all data is implicitly shared, and
 shared access to data has to be explicitly synchronized.  This model is called
 I<5005threads>.
 
-In Perl 5.6, a new model was introduced in which all is was thread local and
+In Perl 5.6, a new model was introduced in which all data is thread local and
 shared access to data has to be explicitly declared.  This model is called
 I<ithreads>, for "interpreter threads".
 

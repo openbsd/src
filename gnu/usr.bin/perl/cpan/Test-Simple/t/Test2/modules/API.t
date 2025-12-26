@@ -114,7 +114,7 @@ like(
     "got warning about adding driver too late"
 );
 };
-if ($] le "5.006002") {
+if ("$]" <= 5.006002) {
     todo("TODO known to fail on $]", $sub1);
 } else {
     $sub1->();

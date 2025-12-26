@@ -62,5 +62,18 @@ unless ( Test::More->can("subtest") ) {
     };
     push @EXPORT, 'subtest';
 }
+elsif ( !eval { Test::More->VERSION(0.95_01) } ) {
+    my $subtest = \&Test::Builder::subtest;
+    no warnings 'redefine';
+    *Test::Builder::subtest = sub {
+        my ($self, $name, $subtests, @args) = @_;
+        my $sub = sub {
+            $subtests->(@_);
+            $self->done_testing
+                unless $self->{Have_Plan} || $self->{No_Plan} || $self->{Skip_All};
+        };
+        return $self->$subtest($name, $sub, @args);
+    };
+}
 
 1;

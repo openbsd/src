@@ -14,7 +14,8 @@ use warnings;
 my $file = "tf21-$$.txt";
 
 unless ($^O =~ /^(MSWin32|dos)$/) {
-  print "1..0\n";
+  my $reason = 'not Win32';
+  print "1..0 # Skip: $reason\n";
   exit;
 }
 

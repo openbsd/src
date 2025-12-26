@@ -41,8 +41,8 @@ my %params = (
             dynamic_config => 0,
             resources => {    ##
               repository => {
-                url => 'https://github.com/Scalar-List-Utils/Scalar-List-Utils.git',
-                web => 'https://github.com/Scalar-List-Utils/Scalar-List-Utils',
+                url => 'https://github.com/Dual-Life/Scalar-List-Utils.git',
+                web => 'https://github.com/Dual-Life/Scalar-List-Utils',
                 type => 'git',
               },
               bugtracker => {

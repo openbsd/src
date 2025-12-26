@@ -43,7 +43,7 @@ had been broken since version 5.10.0.
 
 =item Solaris
 
-A separate DTrace is now build for miniperl, which means that perl can be
+A separate DTrace is now built for miniperl, which means that perl can be
 compiled with -Dusedtrace on Solaris again.
 
 =item VMS

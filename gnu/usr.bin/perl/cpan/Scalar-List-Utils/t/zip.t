@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 use List::Util qw(zip zip_longest zip_shortest);
 
 is_deeply( [zip ()], [],
@@ -29,3 +29,14 @@ ok( !defined eval { zip 1, 2, 3 },
 
 ok( !defined eval { zip +{ one => 1 } },
   'reference to non array throws exception' );
+
+# RT156183
+{
+  my @inp = ( [1,2,3], [4,5,6] );
+  foreach my $pair ( zip @inp ) {
+    $pair->[0]++;
+    $pair->[1]++;
+  }
+  is_deeply( \@inp, [ [1,2,3], [4,5,6] ],
+    'original values unchanged by modification of zip() output' );
+}

@@ -16,10 +16,10 @@ didn't properly stop italic.
 =back
 
 [output]
-.SH "Fixed-width Fonts in =item"
+.SH "Fixed\-width Fonts in =item"
 .IX Header "Fixed-width Fonts in =item"
 In podlators 4.06 and earlier, italic was terminated with \ef(CW, which
-didn't properly stop italic.
+didn\*(Aqt properly stop italic.
 .ie n .IP """tar \fIoption\fR... [\fIname\fR]...""" 2
 .el .IP "\f(CWtar \fR\f(CIoption\fR\f(CW... [\fR\f(CIname\fR\f(CW]...\fR" 2
 .IX Item "tar option... [name]..."
@@ -27,3 +27,4 @@ didn't properly stop italic.
 .ie n .IP """tar \fIletter\fR... [\fIargument\fR]... [\fIoption\fR]... [\fIname\fR]...""" 2
 .el .IP "\f(CWtar \fR\f(CIletter\fR\f(CW... [\fR\f(CIargument\fR\f(CW]... [\fR\f(CIoption\fR\f(CW]... [\fR\f(CIname\fR\f(CW]...\fR" 2
 .IX Item "tar letter... [argument]... [option]... [name]..."
+.PD

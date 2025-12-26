@@ -92,6 +92,7 @@ like( $err, qr{^panic: Too many tempfile\(\)s}, 'check error string' );
     ] );
     # NOTE, on Win32 we cannot unlink an open file, so we MUST
     # close the file before the program exits.
+    $returned =~ s/\n//g; # spurious newlines writing throuh pipe on VMS
     my($filename,$opened,$existed,$closed) = split /\|/, $returned;
 
     is( $opened, 'ok', "$filename created" );

@@ -25,7 +25,7 @@ $self->{line_no} = [];
         'Delta',
     ];
     $self->{line_no} = [ 17 .. 20 ];
-    $self->{filename} = 'myfile1';
+    $self->{in_filename} = 'myfile1';
 
     my $message = 'Warning: Ignoring duplicate alias';
     
@@ -33,7 +33,7 @@ $self->{line_no} = [];
         Warn( $self, $message);
     });
     like( $stderr,
-        qr/$message in $self->{filename}, line 20/,
+        qr/$message in $self->{in_filename}, line 20/,
         "Got expected Warn output",
     );
 }
@@ -47,14 +47,14 @@ $self->{line_no} = [];
         'Epsilon',
     ];
     $self->{line_no} = [ 17 .. 20 ];
-    $self->{filename} = 'myfile2';
+    $self->{in_filename} = 'myfile2';
 
     my $message = 'Warning: Ignoring duplicate alias';
     my $stderr = PrimitiveCapture::capture_stderr(sub {
         Warn( $self, $message);
     });
     like( $stderr,
-        qr/$message in $self->{filename}, line 19/,
+        qr/$message in $self->{in_filename}, line 19/,
         "Got expected Warn output",
     );
 }
@@ -67,14 +67,14 @@ $self->{line_no} = [];
         'Delta',
     ];
     $self->{line_no} = [ 17 .. 21 ];
-    $self->{filename} = 'myfile1';
+    $self->{in_filename} = 'myfile1';
 
     my $message = 'Warning: Ignoring duplicate alias';
     my $stderr = PrimitiveCapture::capture_stderr(sub {
         Warn( $self, $message);
     });
     like( $stderr,
-        qr/$message in $self->{filename}, line 17/,
+        qr/$message in $self->{in_filename}, line 17/,
         "Got expected Warn output",
     );
 }
@@ -87,8 +87,8 @@ $self->{line_no} = [];
         'Delta',
     ];
     $self->{line_no} = [ 17 .. 20 ];
-    $self->{filename} = 'myfile1';
-    $self->{errors} = 0;
+    $self->{in_filename} = 'myfile1';
+    $self->{error_count} = 0;
 
 
     my $message = 'Error: Cannot parse function definition';
@@ -96,7 +96,7 @@ $self->{line_no} = [];
         blurt( $self, $message);
     });
     like( $stderr,
-        qr/$message in $self->{filename}, line 20/,
+        qr/$message in $self->{in_filename}, line 20/,
         "Got expected blurt output",
     );
     is( $self->report_error_count, 1, "Error count incremented correctly" );
@@ -112,7 +112,7 @@ SKIP: {
         'Delta',
     ];
     $self->{line_no} = [ 17 .. 20 ];
-    $self->{filename} = 'myfile1';
+    $self->{in_filename} = 'myfile1';
 
     my $message = "Code is not inside a function";
     eval {
@@ -120,7 +120,7 @@ SKIP: {
             death( $self, $message);
         });
         like( $stderr,
-            qr/$message in $self->{filename}, line 20/,
+            qr/$message in $self->{in_filename}, line 20/,
             "Got expected death output",
         );
     };

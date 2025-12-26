@@ -152,7 +152,7 @@ OUT
 ERR
 # Use of apostrophe as package separator was deprecated in Perl 5.37.9,
 # and will be removed in Perl 5.42.0.  You should change code that uses
-# Test::More::isn't() to use Test::More::isnt() as a replacement at t/Legacy/fail-more.t line 132
+# Test::More::isn't() to use Test::More::isnt() as a replacement at ${ \__FILE__ } line 132
 WARN
 
 #line 143

@@ -11,16 +11,7 @@ BEGIN {
 
 use threads;
 use Thread::Queue;
-
-BEGIN { # perl RT 133382
-if ($] == 5.008) {
-    require 't/test.pl';   # Test::More work-alike for Perl 5.8.0
-} else {
-    require Test::More;
-}
-Test::More->import();
-} # end BEGIN
-plan('tests' => 16);
+use Test::More 'tests' => 16;
 
 my $q = Thread::Queue->new(1..10);
 ok($q, 'New queue');

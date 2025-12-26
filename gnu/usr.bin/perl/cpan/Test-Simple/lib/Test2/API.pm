@@ -10,7 +10,7 @@ BEGIN {
     $ENV{TEST2_ACTIVE} = 1;
 }
 
-our $VERSION = '1.302199';
+our $VERSION = '1.302210';
 
 
 my $INST;
@@ -74,7 +74,7 @@ sub CLONE {
 
 BEGIN {
     no warnings 'once';
-    if($] ge '5.014' || $ENV{T2_CHECK_DEPTH} || $Test2::API::DO_DEPTH_CHECK) {
+    if("$]" >= 5.014 || $ENV{T2_CHECK_DEPTH} || $Test2::API::DO_DEPTH_CHECK) {
         *DO_DEPTH_CHECK = sub() { 1 };
     }
     else {
@@ -175,8 +175,18 @@ our @EXPORT_OK = qw{
     test2_enable_trace_stamps
     test2_disable_trace_stamps
     test2_trace_stamps_enabled
+
+    test2_add_pending_diag
+    test2_get_pending_diags
+    test2_clear_pending_diags
 };
 BEGIN { require Exporter; our @ISA = qw(Exporter) }
+
+my @PENDING_DIAGS;
+
+sub test2_add_pending_diag { push @PENDING_DIAGS => @_ }
+sub test2_get_pending_diags { @PENDING_DIAGS }
+sub test2_clear_pending_diags { my @out = @PENDING_DIAGS; @PENDING_DIAGS = (); return @out }
 
 my $STACK       = $INST->stack;
 my $CONTEXTS    = $INST->contexts;
@@ -445,6 +455,7 @@ sub context {
             eval_error  => $eval_error,
             child_error => $child_error,
             _is_spawn   => [$pkg, $file, $line, $sub],
+            _start_fail_count => $hub->{failed} || 0,
         },
         'Test2::API::Context'
     ) if $current && $depth_ok;
@@ -493,15 +504,16 @@ sub context {
     my $aborted = 0;
     $current = bless(
         {
-            _aborted     => \$aborted,
-            stack        => $stack,
-            hub          => $hub,
-            trace        => $trace,
-            _is_canon    => 1,
-            _depth       => $depth,
-            errno        => $errno,
-            eval_error   => $eval_error,
-            child_error  => $child_error,
+            _aborted          => \$aborted,
+            stack             => $stack,
+            hub               => $hub,
+            trace             => $trace,
+            _is_canon         => 1,
+            _depth            => $depth,
+            errno             => $errno,
+            eval_error        => $eval_error,
+            child_error       => $child_error,
+            _start_fail_count => $hub->{failed} || 0,
             $params{on_release} ? (_on_release => [$params{on_release}]) : (),
         },
         'Test2::API::Context'
@@ -796,6 +808,39 @@ sub run_subtest {
 # called.
 require Test2::API::Context;
 
+# If the env var was set to load plugins, load them now, this is the earliest
+# safe point to do so.
+if (my $plugins = $ENV{TEST2_ENABLE_PLUGINS}) {
+    for my $p (split /\s*,\s*/, $plugins) {
+        $p = "Test2::Plugin::$p" unless $p =~ s/^\+//;
+        my $mod = "$p.pm";
+        $mod =~ s{::}{/}g;
+
+        if ($ENV{HARNESS_IS_VERBOSE} || !$ENV{HARNESS_ACTIVE}) {
+            # If the harness is verbose then just display the message for all to
+            # see. It is nice info and they already asked for noisy output.
+
+            test2_add_callback_post_load(sub {
+                test2_stack()->top; # Ensure we have at least 1 hub.
+                my ($hub) = test2_stack()->all;
+                $hub->send(
+                    Test2::Event::Note->new(
+                        trace => Test2::Util::Trace->new(frame => [__PACKAGE__, __FILE__, __LINE__, $p]),
+                        message => "Loaded plugin '$p' as specified in the TEST2_ENABLE_PLUGINS env var.",
+                    ),
+                );
+            });
+        }
+
+        eval {
+            package main;
+            require $mod;
+            $p->import;
+            1
+        } or die "Could not load plugin '$p', which was specified in the TEST2_ENABLE_PLUGINS env var ($plugins): $@";
+    }
+}
+
 1;
 
 __END__
@@ -898,6 +943,10 @@ documentation for details on how to best use it.
     my $formatter = test2_formatter();
 
     ... And others ...
+
+=head1 ENVIRONMENT VARIABLES
+
+See L<Test2::Env> for a list of meaningul environment variables.
 
 =head1 MAIN API EXPORTS
 
@@ -1251,7 +1300,7 @@ formatter being used.
 In both cases events are generated and stored in an array. This array is
 eventually used to populate the C<subevents> attribute on the
 L<Test2::Event::Subtest> event that is generated at the end of the subtest.
-This flag has no effect on this part, it always happens.
+This flag has no effect on this part; it always happens.
 
 At the end of the subtest, the final L<Test2::Event::Subtest> event is sent to
 the formatter.
@@ -1531,6 +1580,24 @@ The sub will receive exactly 1 argument, the type of thing being tagged
 which case new strings will be passed in. These are purely informative, you can
 (and usually should) ignore them.
 
+=item test2_add_pending_diag($diag)
+
+=item test2_add_pending_diag($diag1, $diag2)
+
+Add a diagnostics message that will be issued the next time a context in which
+a failure occured is released.
+
+This can also be thought of like this: "If the next bit causes a failed
+assertion, add this diagnostics message".
+
+=item @diags = test2_get_pending_diags()
+
+Get all the current pending diagnostics messages.
+
+=item @diags = test2_clear_pending_diags()
+
+Clear any pending diagnostics, returning them.
+
 =back
 
 =head2 IPC AND CONCURRENCY
@@ -1708,7 +1775,7 @@ L<https://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

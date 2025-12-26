@@ -1,19 +1,18 @@
 package Search::Dict;
-require 5.000;
-require Exporter;
+use strict;
+use Exporter;
 
-my $fc_available;
 BEGIN {
-  $fc_available = '5.015008';
-  if ( $] ge $fc_available ) {
-    require feature;
-    'feature'->import('fc'); # string avoids warning on old Perls <sigh>
-  }
+    if ("$]" >= 5.015008) {
+        require feature;
+        'feature'->import('fc'); # string avoids warning on old Perls <sigh>
+    } else {
+        # ($) prototype, not (_), for perl 5.8 compatibility, just in case
+        *fc = sub ($) { lc $_[0] };
+    }
 }
 
-use strict;
-
-our $VERSION = '1.07';
+our $VERSION = '1.08';
 our @ISA = qw(Exporter);
 our @EXPORT = qw(look);
 
@@ -27,7 +26,7 @@ Search::Dict - look - search for key in dictionary file
     look *FILEHANDLE, $key, $dict, $fold;
 
     use Search::Dict;
-    look *FILEHANDLE, $params;
+    look *FILEHANDLE, $key, $params;
 
 =head1 DESCRIPTION
 
@@ -80,7 +79,7 @@ sub look {
     $blksize ||= 8192;
     $key =~ s/[^\w\s]//g if $dict;
     if ( $fold ) {
-      $key = $] ge $fc_available ? fc($key) : lc($key);
+      $key = fc($key);
     }
     # find the right block
     my($min, $max) = (0, int($size / $blksize));
@@ -95,7 +94,7 @@ sub look {
 	chomp;
 	s/[^\w\s]//g if $dict;
         if ( $fold ) {
-          $_ = $] ge $fc_available ? fc($_) : lc($_);
+          $_ = fc($_);
         }
 	if (defined($_) && $comp->($_, $key) < 0) {
 	    $min = $mid;
@@ -117,7 +116,7 @@ sub look {
 	chomp;
 	s/[^\w\s]//g if $dict;
         if ( $fold ) {
-          $_ = $] ge $fc_available ? fc($_) : lc($_);
+          $_ = fc($_);
         }
 	last if $comp->($_, $key) >= 0;
     }

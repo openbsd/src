@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Test::More tests =>  16;
+use Test::More tests => 16;
 use lib qw( ./t/lib );
 use Testing qw( _dumptostr );
 
@@ -14,11 +14,18 @@ use Testing qw( _dumptostr );
 
 note("\$Data::Dumper::Deparse and Deparse()");
 
-for my $useperl (0, 1) {
-    local $Data::Dumper::Useperl = $useperl;
+run_tests_for_deparse();
+SKIP: {
+    skip "XS version was unavailable, so we already ran with pure Perl", 8
+        if $Data::Dumper::Useperl;
+    local $Data::Dumper::Useperl = 1;
+    run_tests_for_deparse();
+}
+
+sub run_tests_for_deparse {
+    my $useperl = $Data::Dumper::Useperl ? 1 : 0;
 
     my ($obj, %dumps, $deparse, $starting);
-    use strict;
     my $struct = { foo => "bar\nbaz", quux => sub { "fleem" } };
     $obj = Data::Dumper->new( [ $struct ] );
     $dumps{'noprev'} = _dumptostr($obj);

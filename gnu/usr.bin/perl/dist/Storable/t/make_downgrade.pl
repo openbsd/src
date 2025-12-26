@@ -1,5 +1,6 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/env perl
 use strict;
+use warnings;
 
 use 5.007003;
 use Hash::Util qw(lock_hash unlock_hash lock_keys);
@@ -7,14 +8,14 @@ use Storable qw(nfreeze);
 
 # If this looks like a hack, it's probably because it is :-)
 sub uuencode_it {
-  my ($data, $name) = @_;
-  my $frozen = nfreeze $data;
+    my ($data, $name) = @_;
+    my $frozen = nfreeze $data;
 
-  my $uu = pack 'u', $frozen;
+    my $uu = pack 'u', $frozen;
 
-  printf "begin %3o $name\n", ord 'A';
-  print $uu;
-  print "\nend\n\n";
+    printf "begin %3o $name\n", ord 'A';
+    print $uu;
+    print "\nend\n\n";
 }
 
 
@@ -93,11 +94,11 @@ uuencode_it (\%uhash, "Locked hash with utf8 keys");
 my %pre58;
 
 while (my ($key, $val) = each %uhash) {
-  # hash keys are always stored downgraded to bytes if possible, with a flag
-  # to say "promote back to utf8"
-  # Whereas scalars are stored as is.
-  utf8::encode ($key) if ord $key > 256;
-  $pre58{$key} = $val;
+    # hash keys are always stored downgraded to bytes if possible, with a flag
+    # to say "promote back to utf8"
+    # Whereas scalars are stored as is.
+    utf8::encode ($key) if ord $key > 256;
+    $pre58{$key} = $val;
 
 }
 uuencode_it (\%pre58, "Hash with utf8 keys for 5.6");

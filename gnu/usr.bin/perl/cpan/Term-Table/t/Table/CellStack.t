@@ -1,6 +1,20 @@
 use Term::Table;
 use Term::Table::Util;
-use Test2::Tools::Tiny;
+
+BEGIN {
+    if (eval { require Test2::Tools::Tiny }) {
+        print "# Using Test2::Tools::Tiny\n";
+        Test2::Tools::Tiny->import();
+    }
+    elsif (eval { require Test::More; Test::More->can('done_testing') ? 1 : 0 }) {
+        print "# Using Test::More " . Test::More->VERSION . "\n";
+        Test::More->import();
+    }
+    else {
+        print "1..0 # SKIP Neither Test2::Tools::Tiny nor a sufficient Test::More is installed\n";
+        exit(0);
+    }
+}
 
 use utf8;
 use strict;

@@ -6,7 +6,7 @@ use warnings;
 
 use Carp;
 use Data::Dumper;
-use Test::More tests => 31;
+use Test::More tests => 11;
 use lib qw( ./t/lib );
 use Testing qw( _dumptostr );
 
@@ -20,23 +20,7 @@ $Data::Dumper::Indent=1;
     run_tests_for_pure_perl_implementations();
 }
 
-{
-    local $Data::Dumper::Useperl=0;
-    local $Data::Dumper::Useqq=1;
-    local $Data::Dumper::Deparse=0;
-    note('$Data::Dumper::Useqq => 1');
-    run_tests_for_pure_perl_implementations();
-}
-    
-{
-    local $Data::Dumper::Useperl=0;
-    local $Data::Dumper::Useqq=0;
-    local $Data::Dumper::Deparse=1;
-    note('$Data::Dumper::Deparse => 1');
-    run_tests_for_pure_perl_implementations();
-}
-    
-    
+
 
 sub run_tests_for_pure_perl_implementations {
 

@@ -7,8 +7,8 @@
 # the Perl one.  So we run the tests in a separate "fresh_perl" process
 # with the correct LC_CTYPE set in the environment.
 
+use Config;
 BEGIN {
-    require Config; import Config;
     if ($^O ne 'VMS' and $Config{'extensions'} !~ /\bPOSIX\b/) {
 	print "1..0\n";
 	exit 0;

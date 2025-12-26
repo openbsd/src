@@ -2642,7 +2642,7 @@ so it was truncated to the string shown.
 
 =item Can't declare class for non-scalar %s in "%s"
 
-(S) Currently, only scalar variables can declared with a specific class
+(S) Currently, only scalar variables can be declared with a specific class
 qualifier in a "my" or "our" declaration.  The semantics may be extended
 for other types of variables in future.
 

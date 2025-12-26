@@ -1,10 +1,13 @@
 #!./perl
 
+use strict;
+use warnings;
+
 use Test::More;
 use Storable ();
 BEGIN {
-eval "use Test::LeakTrace";
-plan 'skip_all' => 'Test::LeakTrace required for this tests' if $@;
+    eval "use Test::LeakTrace";
+    plan 'skip_all' => 'Test::LeakTrace required for this tests' if $@;
 }
 plan 'tests' => 1;
 
@@ -33,17 +36,17 @@ plan 'tests' => 1;
 }
 
 { # [cpan #97316]
-  package TestClass;
+    package TestClass;
 
-  sub new {
-    my $class = shift;
-    return bless({}, $class);
-  }
-  sub STORABLE_freeze {
-    die;
-  }
+    sub new {
+        my $class = shift;
+        return bless({}, $class);
+    }
+    sub STORABLE_freeze {
+        die;
+    }
 
-  package main;
-  my $obj = TestClass->new;
-  eval { freeze($obj); };
+    package main;
+    my $obj = TestClass->new;
+    eval { freeze($obj); };
 }

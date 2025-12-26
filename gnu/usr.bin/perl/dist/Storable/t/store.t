@@ -6,86 +6,83 @@
 #  in the README file that comes with the distribution.
 #
 
+use strict;
+use warnings;
+
 sub BEGIN {
-    unshift @INC, 't';
-    unshift @INC, 't/compat' if $] < 5.006002;
-    require Config; import Config;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
-    require 'st-dump.pl';
+    unshift @INC, 't/lib';
 }
 
+use STDump;
 # $Storable::DEBUGME = 1;
 use Storable qw(store retrieve store_fd nstore_fd fd_retrieve);
 
 use Test::More tests => 25;
 
-$a = 'toto';
-$b = \$a;
-$c = bless {}, CLASS;
+my $a = 'toto';
+my $b = \$a;
+my $c = bless {}, 'CLASS';
 $c->{attribute} = 'attrval';
-%a = ('key', 'value', 1, 0, $a, $b, 'cvar', \$c);
-@a = ('first', undef, 3, -4, -3.14159, 456, 4.5,
-	$b, \$a, $a, $c, \$c, \%a);
+my %a = ('key', 'value', 1, 0, $a, $b, 'cvar', \$c);
+my @a = ('first', undef, 3, -4, -3.14159, 456, 4.5,
+    $b, \$a, $a, $c, \$c, \%a);
 
 isnt(store(\@a, "store$$"), undef);
 
-$dumped = &dump(\@a);
+my $dumped = stdump(\@a);
 isnt($dumped, undef);
 
-$root = retrieve("store$$");
+my $root = retrieve("store$$");
 isnt($root, undef);
 
-$got = &dump($root);
+my $got = stdump($root);
 isnt($got, undef);
 
 is($got, $dumped);
 
 1 while unlink "store$$";
 
-package FOO; @ISA = qw(Storable);
+package FOO; our @ISA = qw(Storable);
 
 sub make {
-	my $self = bless {};
-	$self->{key} = \%main::a;
-	return $self;
+    my $self = bless {};
+    $self->{key} = \%a;
+    return $self;
 };
 
 package main;
 
-$foo = FOO->make;
+my $foo = FOO->make;
 isnt($foo->store("store$$"), undef);
 
-isnt(open(OUT, '>>', "store$$"), undef);
-binmode OUT;
+isnt(open(my $OUT, '>>', "store$$"), undef);
+binmode $OUT;
 
-isnt(store_fd(\@a, ::OUT), undef);
-isnt(nstore_fd($foo, ::OUT), undef);
-isnt(nstore_fd(\%a, ::OUT), undef);
+isnt(store_fd(\@a, $OUT), undef);
+isnt(nstore_fd($foo, $OUT), undef);
+isnt(nstore_fd(\%a, $OUT), undef);
 
-isnt(close(OUT), undef);
+isnt(close($OUT), undef);
 
-isnt(open(OUT, "store$$"), undef);
+isnt(open($OUT, '<', "store$$"), undef);
 
-$r = fd_retrieve(::OUT);
+my $r = fd_retrieve($OUT);
 isnt($r, undef);
-is(&dump($r), &dump($foo));
+is(stdump($r), stdump($foo));
 
-$r = fd_retrieve(::OUT);
+$r = fd_retrieve($OUT);
 isnt($r, undef);
-is(&dump($r), &dump(\@a));
+is(stdump($r), stdump(\@a));
 
-$r = fd_retrieve(main::OUT);
+$r = fd_retrieve($OUT);
 isnt($r, undef);
-is(&dump($r), &dump($foo));
+is(stdump($r), stdump($foo));
 
-$r = fd_retrieve(::OUT);
+$r = fd_retrieve($OUT);
 isnt($r, undef);
-is(&dump($r), &dump(\%a));
+is(stdump($r), stdump(\%a));
 
-eval { $r = fd_retrieve(::OUT); };
+eval { $r = fd_retrieve($OUT); };
 isnt($@, '');
 
 {
@@ -105,12 +102,12 @@ isnt($@, '');
 {
 
     my $frozen =
-      "\x70\x73\x74\x30\x04\x0a\x08\x31\x32\x33\x34\x35\x36\x37\x38\x04\x08\x08\x08\x03\xff\x00\x00\x00\x19\x08\xff\x00\x00\x00\x08\x08\xf9\x16\x16\x13\x16\x10\x10\x10\xff\x15\x16\x16\x16\x1e\x16\x16\x16\x16\x16\x16\x16\x16\x16\x16\x13\xf0\x16\x16\x16\xfe\x16\x41\x41\x41\x41\xe8\x03\x41\x41\x41\x41\x41\x41\x41\x41\x51\x41\xa9\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xb8\xac\xac\xac\xac\xac\xac\xac\xac\x9a\xac\xac\xac\xac\xac\xac\xac\xac\xac\x93\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\x00\x64\xac\xa8\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\x2c\xac\x41\x41\x41\x41\x41\x41\x41\x41\x41\x00\x80\x41\x80\x41\x41\x41\x41\x41\x41\x51\x41\xac\xac\xac";
+        "\x70\x73\x74\x30\x04\x0a\x08\x31\x32\x33\x34\x35\x36\x37\x38\x04\x08\x08\x08\x03\xff\x00\x00\x00\x19\x08\xff\x00\x00\x00\x08\x08\xf9\x16\x16\x13\x16\x10\x10\x10\xff\x15\x16\x16\x16\x1e\x16\x16\x16\x16\x16\x16\x16\x16\x16\x16\x13\xf0\x16\x16\x16\xfe\x16\x41\x41\x41\x41\xe8\x03\x41\x41\x41\x41\x41\x41\x41\x41\x51\x41\xa9\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xb8\xac\xac\xac\xac\xac\xac\xac\xac\x9a\xac\xac\xac\xac\xac\xac\xac\xac\xac\x93\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\x00\x64\xac\xa8\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\xac\x2c\xac\x41\x41\x41\x41\x41\x41\x41\x41\x41\x00\x80\x41\x80\x41\x41\x41\x41\x41\x41\x51\x41\xac\xac\xac";
     open my $fh, '<', \$frozen;
     eval { Storable::fd_retrieve($fh); };
     pass('RT 130635:  no stack smashing error when retrieving hook');
 
 }
 
-close OUT or die "Could not close: $!";
+close $OUT or die "Could not close: $!";
 END { 1 while unlink "store$$" }

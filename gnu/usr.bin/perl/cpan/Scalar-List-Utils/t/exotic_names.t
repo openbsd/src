@@ -45,7 +45,7 @@ sub caller3_ok {
         ),
     );
 
-    $expected =~ s/'/::/g;
+    $expected =~ s/'/::/g if $] < 5.037009 || $] >= 5.041_004;
 
     # this is apparently how things worked before 5.16
     utf8::encode($expected) if $] < 5.016 and $ord > 255;
@@ -67,25 +67,31 @@ sub caller3_ok {
 
 use Sub::Util 'set_subname';
 
-my @ordinal = ( 1 .. 255 );
+my @ordinal = (
+    # 5.14 is the first perl to start properly handling \0 in identifiers
+    ($] >= 5.014 ? ( 0 ) : ()),
+    1 .. 38,
+    # single quote ' separators are deprecated in 5.37.9
+    ($] < 5.037009 || $] >= 5.041_004 ? ( 39 ) : ()),
+    40 .. 255,
+    # Unicode in 5.6 is not sane (crashes etc)
+    ($] >= 5.008 ? (
+        0x100,    # LATIN CAPITAL LETTER A WITH MACRON
+        0x498,    # CYRILLIC CAPITAL LETTER ZE WITH DESCENDER
+        0x2122,   # TRADE MARK SIGN
+        0x1f4a9,  # PILE OF POO
+    ) : ()),
+);
 
-# 5.14 is the first perl to start properly handling \0 in identifiers
-unshift @ordinal, 0
-    unless $] < 5.014;
-
-# Unicode in 5.6 is not sane (crashes etc)
-push @ordinal,
-    0x100,    # LATIN CAPITAL LETTER A WITH MACRON
-    0x498,    # CYRILLIC CAPITAL LETTER ZE WITH DESCENDER
-    0x2122,   # TRADE MARK SIGN
-    0x1f4a9,  # PILE OF POO
-    unless $] < 5.008;
+my $legal_ident_char = join('',
+    "A-Z_a-z0-9",
+    ($] < 5.037009 || $] >= 5.041_004 ? q['] : ()),
+    ($] > 5.008 ? (
+        map chr, 0x100, 0x498
+    ) : ()),
+);
 
 plan tests => @ordinal * 2 * 3;
-
-my $legal_ident_char = "A-Z_a-z0-9'";
-$legal_ident_char .= join '', map chr, 0x100, 0x498
-    unless $] < 5.008;
 
 my $uniq = 'A000';
 for my $ord (@ordinal) {

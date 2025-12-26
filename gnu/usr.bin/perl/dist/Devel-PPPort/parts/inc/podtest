@@ -24,7 +24,7 @@ else {
     use Test::Pod;
     $Test::Pod::VERSION >= 1.41
         or die "Test::Pod version only $Test::Pod::VERSION";
-    import Test::Pod tests => scalar @pods;
+    Test::Pod->import(tests => scalar @pods);
   };
   $reason = 'Test::Pod >= 1.41 required' if $@;
 }

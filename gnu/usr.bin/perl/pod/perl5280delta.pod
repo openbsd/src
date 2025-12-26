@@ -1711,7 +1711,7 @@ applicable.
 =item *
 
 Perl now includes a default F<.travis.yml> file for Travis CI testing
-on github mirrors.
+on GitHub mirrors.
 L<[GH #14558]|https://github.com/Perl/perl5/issues/14558>
 
 =item *
@@ -1868,7 +1868,7 @@ A new function, L<C<Perl_langinfo()>|perlapi/Perl_langinfo> has been
 added.  It is an (almost) drop-in replacement for the system
 C<nl_langinfo(3)>, but works on platforms that lack that; as well as
 being more thread-safe, and hiding some gotchas with locale handling
-from the caller.  Code that uses this, needn't use L<C<localeconv(3)>>
+from the caller.  Code that uses this, needn't use C<L<localeconv(3)>>
 (and be affected by the gotchas) to find the decimal point, thousands
 separator, or currency symbol.  See L<perlapi/Perl_langinfo>.
 

@@ -6,5 +6,5 @@ use Config;
 unless ($Config{gccversion}) {
     my $optimize = $Config{optimize};
     $optimize =~ s/(^| )[-+]O[2-9]( |$)/$1+O1$2/ and
-	$self->{OPTIMIZE} = $optimize;
-    }
+        $self->{OPTIMIZE} = $optimize;
+}

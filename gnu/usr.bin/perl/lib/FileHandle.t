@@ -3,7 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require Config; import Config;
+    require Config; Config->import;
     if ($Config{'extensions'} !~ /\bIO\b/ && $^O ne 'VMS') {
 	print "1..0\n";
 	exit 0;
@@ -90,6 +90,10 @@ ok($|, "handle auto-flushing current output channel");
     }
 }
 
-ok(!FileHandle->new('', 'r'), "Can't open empty filename");
+SKIP: {
+    skip "Empty filename perfectly legal on VMS", 1 if $^O eq 'VMS';
+    ok(!FileHandle->new('', 'r'), "Can't open empty filename");
+}
+
 
 done_testing();

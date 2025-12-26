@@ -8,6 +8,12 @@ use Test::More;
 use lib qw( lib );
 use ExtUtils::Typemaps;
 
+# Test the  targetable() and targetable_legacy() methods from
+# ExtUtils::Typemaps::OutputMap
+
+
+# First, test the targetable_legacy() method
+
 my $output_expr_ref = {
   'T_CALLBACK' => '	sv_setpvn($arg, $var.context.value().chp(),
 		$var.context.value().size());
@@ -131,7 +137,6 @@ my $output_expr_ref = {
 ',
 };
 
-plan tests => scalar(keys %$output_expr_ref);
 
 my %results = (
   T_UV        => { type => 'u', with_size => undef, what => '(UV)$var', what_size => undef },
@@ -157,7 +162,7 @@ foreach my $xstype (sort keys %$output_expr_ref) {
     xstype => $xstype,
     code => $output_expr_ref->{$xstype}
   );
-  my $targetable = $om->targetable;
+  my $targetable = $om->targetable_legacy;
   if (not exists($results{$xstype})) {
     ok(not(defined($targetable)), "$xstype not targetable")
       or diag(join ", ", map {defined($_) ? $_ : "<undef>"} %$targetable);
@@ -169,3 +174,74 @@ foreach my $xstype (sort keys %$output_expr_ref) {
   }
 }
 
+
+# Now, test the targetable() boolean class method
+
+{
+    my @tests = (
+        # check that the basic set_foo functions are recognised
+        1,  'sv_set_undef($arg);',
+        1,  'sv_set_true($arg);',
+        1,  'sv_set_false($arg);',
+
+        1,  'sv_set_bool($arg,  (bool)RETVAL);',
+        1,  'sv_setiv($arg,     (IV)RETVAL);',
+        1,  'sv_setiv_mg($arg,  (IV)RETVAL);',
+        1,  'sv_setuv($arg,     (UV)RETVAL);',
+        1,  'sv_setuv_mg($arg,  (UV)RETVAL);',
+        1,  'sv_setnv($arg,     (NV)RETVAL);',
+        1,  'sv_setnv_mg($arg,  (NV)RETVAL);',
+        1,  'sv_setpv($arg,     (char*)RETVAL);',
+        1,  'sv_setpv_mg($arg,  (char*)RETVAL);',
+
+        1,  'sv_setpvn($arg,    (char*)RETVAL, strlen(RETVAL));',
+        1,  'sv_setpvn_mg($arg, (char*)RETVAL, strlen(RETVAL));',
+
+
+        # variants of the SV to set
+
+        1,  'sv_setiv((SV*)$arg,               (IV)RETVAL);',
+        1,  'sv_setuv(  (  SV  *  )  $arg,     (UV)RETVAL);',
+        1,  'sv_setnv((SV*)RETVALSV,           (NV)RETVAL);',
+        1,  'sv_setpv(RETVAL,                  (char*)RETVAL);',
+        1,  'sv_setpvn(ST(0),                  (char*)RETVAL, strlen(RETVAL));',
+
+        # too few arguments
+
+        '', 'sv_setiv($arg);',
+        '', 'sv_setuv($arg);',
+        '', 'sv_setnv($arg);',
+        '', 'sv_setpv($arg);',
+        '', 'sv_setpvn($arg, (char*)RETVAL);',
+
+        # too many arguments
+
+        '', 'sv_setiv($arg,     (IV)RETVAL, 1);',
+        '', 'sv_setuv($arg,     (UV)RETVAL, 1);',
+        '', 'sv_setnv($arg,     (NV)RETVAL, 1);',
+        '', 'sv_setpv($arg,     (char*)RETVAL, 1);',
+        '', 'sv_setpvn($arg,    (char*)RETVAL, strlen(RETVAL), 1);',
+
+        # check that nested strings, parentheses etc are parsed
+        1,  'sv_setpv($arg,     (char*) foo(a,(b,(c))));',
+        1,  'sv_setpv($arg,     (char*)"a,\"b,c");',
+        1,  'sv_setpv($arg,     (char*)"a,b,(c,(d,(e)))");',
+        1,  'sv_setpvn($arg,    (char*)foo, "a,b,(c,(d,(e)))");',
+
+        # RV setting is not allowed
+        '', 'sv_setrv_inc($arg,   RETVAL);',
+        '', 'sv_setrv_noinc($arg, RETVAL);',
+        '', 'sv_setref_pv($arg,   RETVAL);',
+    );
+
+    while (@tests) {
+        my $exp  = shift @tests;
+        my $code = shift @tests;
+        is(ExtUtils::Typemaps::OutputMap->targetable($code),
+           $exp,
+           "targetable($code)"
+        );
+    };
+}
+
+done_testing;

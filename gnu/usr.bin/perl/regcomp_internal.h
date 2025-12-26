@@ -148,7 +148,7 @@ struct RExC_state_t {
     int         code_index;             /* next code_blocks[] slot */
     struct reg_code_blocks *code_blocks;/* positions of literal (?{})
                                             within pattern */
-    SSize_t     maxlen;                        /* mininum possible number of chars in string to match */
+    SSize_t     maxlen;                        /* minimum possible number of chars in string to match */
     scan_frame *frame_head;
     scan_frame *frame_last;
     U32         frame_count;
@@ -430,7 +430,7 @@ struct RExC_state_t {
 #define TRYAGAIN        0x10    /* Weeded out a declaration. */
 #define RESTART_PARSE   0x20    /* Need to redo the parse */
 #define NEED_UTF8       0x40    /* In conjunction with RESTART_PARSE, need to
-                                   calcuate sizes as UTF-8 */
+                                   calculate sizes as UTF-8 */
 
 #define REG_NODE_NUM(x) ((x) ? (int)((x)-RExC_emit_start) : -1)
 
@@ -563,7 +563,7 @@ struct RExC_state_t {
                  _invlist_intersection_maybe_complement_2nd(a, b, TRUE, output)
 
 /* We add a marker if we are deferring expansion of a property that is both
- * 1) potentiallly user-defined; and
+ * 1) potentially user-defined; and
  * 2) could also be an official Unicode property.
  *
  * Without this marker, any deferred expansion can only be for a user-defined
@@ -856,7 +856,7 @@ static const scan_data_t zero_scan_data = {
               ? eI - sI   /* Length before the <--HERE */                   \
               : ((xI_offset(xC) >= 0)                                       \
                  ? xI_offset(xC)                                            \
-                 : (Perl_croak(aTHX_ "panic: %s: %d: negative offset: %"    \
+                 : (croak("panic: %s: %d: negative offset: %"               \
                                     IVdf " trying to output message for "   \
                                     " pattern %.*s",                        \
                                     __FILE__, __LINE__, (IV) xI_offset(xC), \
@@ -869,21 +869,6 @@ static const scan_data_t zero_scan_data = {
 /* Used to point after bad bytes for an error message, but avoid skipping
  * past a nul byte. */
 #define SKIP_IF_CHAR(s, e) (!*(s) ? 0 : UTF ? UTF8_SAFE_SKIP(s, e) : 1)
-
-/* Set up to clean up after our imminent demise */
-#define PREPARE_TO_DIE                                                      \
-    STMT_START {                                                            \
-        if (RExC_rx_sv)                                                     \
-            SAVEFREESV(RExC_rx_sv);                                         \
-        if (RExC_open_parens)                                               \
-            SAVEFREEPV(RExC_open_parens);                                   \
-        if (RExC_close_parens)                                              \
-            SAVEFREEPV(RExC_close_parens);                                  \
-        if (RExC_logical_to_parno)                                          \
-            SAVEFREEPV(RExC_logical_to_parno);                              \
-        if (RExC_parno_to_logical)                                          \
-            SAVEFREEPV(RExC_parno_to_logical);                              \
-    } STMT_END
 
 /*
  * Calls SAVEDESTRUCTOR_X if needed, then calls Perl_croak with the given
@@ -903,74 +888,40 @@ static const scan_data_t zero_scan_data = {
 } STMT_END
 
 #define FAIL(msg) _FAIL(                            \
-    Perl_croak(aTHX_ "%s in regex m/%" UTF8f "%s/",         \
+    croak("%s in regex m/%" UTF8f "%s/",         \
             msg, UTF8fARG(UTF, len, RExC_precomp), ellipses))
 
 #define FAIL2(msg,arg) _FAIL(                       \
-    Perl_croak(aTHX_ msg " in regex m/%" UTF8f "%s/",       \
+    croak(msg " in regex m/%" UTF8f "%s/",       \
             arg, UTF8fARG(UTF, len, RExC_precomp), ellipses))
 
 #define FAIL3(msg,arg1,arg2) _FAIL(                         \
-    Perl_croak(aTHX_ msg " in regex m/%" UTF8f "%s/",       \
+    croak(msg " in regex m/%" UTF8f "%s/",                  \
      arg1, arg2, UTF8fARG(UTF, len, RExC_precomp), ellipses))
 
 /*
  * Simple_vFAIL -- like FAIL, but marks the current location in the scan
  */
 #define Simple_vFAIL(m) STMT_START {                                    \
-    Perl_croak(aTHX_ "%s" REPORT_LOCATION,                              \
+    croak("%s" REPORT_LOCATION,                                         \
             m, REPORT_LOCATION_ARGS(RExC_parse));                       \
 } STMT_END
 
-/*
- * Calls SAVEDESTRUCTOR_X if needed, then Simple_vFAIL()
- */
-#define vFAIL(m) STMT_START {                           \
-    Simple_vFAIL(m);                                    \
-} STMT_END
+#define vFAIL(m) Simple_vFAIL(m)
 
 /*
- * Like Simple_vFAIL(), but accepts two arguments.
+ * Like Simple_vFAIL(), but accepts extra arguments.
  */
-#define Simple_vFAIL2(m,a1) STMT_START {                        \
-    S_re_croak(aTHX_ UTF, m REPORT_LOCATION, a1,                \
-                      REPORT_LOCATION_ARGS(RExC_parse));        \
+#define Simple_vFAILn(m, ...) STMT_START {                              \
+    S_re_croak(aTHX_ UTF, m REPORT_LOCATION, __VA_ARGS__,               \
+                      REPORT_LOCATION_ARGS(RExC_parse));                \
 } STMT_END
 
-/*
- * Calls SAVEDESTRUCTOR_X if needed, then Simple_vFAIL2().
- */
-#define vFAIL2(m,a1) STMT_START {                       \
-    Simple_vFAIL2(m, a1);                               \
-} STMT_END
+#define vFAIL2(m,a1) Simple_vFAILn(m, a1)
 
+#define vFAIL3(m,a1,a2) Simple_vFAILn(m, a1, a2)
 
-/*
- * Like Simple_vFAIL(), but accepts three arguments.
- */
-#define Simple_vFAIL3(m, a1, a2) STMT_START {                   \
-    S_re_croak(aTHX_ UTF, m REPORT_LOCATION, a1, a2,            \
-            REPORT_LOCATION_ARGS(RExC_parse));                  \
-} STMT_END
-
-/*
- * Calls SAVEDESTRUCTOR_X if needed, then Simple_vFAIL3().
- */
-#define vFAIL3(m,a1,a2) STMT_START {                    \
-    Simple_vFAIL3(m, a1, a2);                           \
-} STMT_END
-
-/*
- * Like Simple_vFAIL(), but accepts four arguments.
- */
-#define Simple_vFAIL4(m, a1, a2, a3) STMT_START {               \
-    S_re_croak(aTHX_ UTF, m REPORT_LOCATION, a1, a2, a3,        \
-            REPORT_LOCATION_ARGS(RExC_parse));                  \
-} STMT_END
-
-#define vFAIL4(m,a1,a2,a3) STMT_START {                 \
-    Simple_vFAIL4(m, a1, a2, a3);                       \
-} STMT_END
+#define vFAIL4(m,a1,a2,a3) Simple_vFAILn(m, a1, a2, a3)
 
 /* A specialized version of vFAIL2 that works with UTF8f */
 #define vFAIL2utf8f(m, a1) STMT_START {             \
@@ -998,7 +949,7 @@ static const scan_data_t zero_scan_data = {
  * generate any warnings */
 #define TO_OUTPUT_WARNINGS(loc)                                         \
   (   RExC_copy_start_in_constructed                                    \
-   && ((xI(loc)) - RExC_precomp) > (Ptrdiff_t) RExC_latest_warn_offset)
+   && ((xI(loc)) - RExC_precomp) > (ptrdiff_t) RExC_latest_warn_offset)
 
 /* After we've emitted a warning, we save the position in the input so we don't
  * output it again */
@@ -1014,7 +965,7 @@ static const scan_data_t zero_scan_data = {
 #define _WARN_HELPER(loc, warns, code)                                  \
     STMT_START {                                                        \
         if (! RExC_copy_start_in_constructed) {                         \
-            Perl_croak( aTHX_ "panic! %s: %d: Tried to warn when none"  \
+            croak("panic! %s: %d: Tried to warn when none"              \
                               " expected at '%s'",                      \
                               __FILE__, __LINE__, loc);                 \
         }                                                               \

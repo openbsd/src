@@ -3,10 +3,10 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    require Config; import Config;
-    require Test::More; import Test::More;
-    plan(tests, 12);
 }
+use Config;
+use Test::More;
+plan(tests, 12);
 
 require AnyDBM_File;
 use Fcntl;

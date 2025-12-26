@@ -995,7 +995,7 @@ replaced by C<->, so that F<ext/Data/Dumper/> is now F<ext/Data-Dumper/>,
 etc.  The names of the extensions as specified to F<Configure>, and as
 reported by C<%Config::Config> under the keys C<dynamic_ext>,
 C<known_extensions>, C<nonxs_ext> and C<static_ext> have not changed, and
-still use C</>. Hence this change will not have any affect once perl is
+still use C</>. Hence this change will not have any effect once perl is
 installed. However, C<Attribute::Handlers>, C<Safe> and C<mro> have now
 become extensions in their own right, so if you run F<Configure> with
 options to specify an exact list of extensions to build, you will need to
@@ -1449,7 +1449,7 @@ Two flag bits are currently supported.
 
 =item C<SVf_UTF8>
 
-This will call C<SvUTF8_on()> for you. (Note that this does not convert an
+This will call C<SvUTF8_on()> for you. (Note that this does not convert a
 sequence of ISO 8859-1 characters to UTF-8). A wrapper, C<newSVpvn_utf8()>
 is available for this.
 

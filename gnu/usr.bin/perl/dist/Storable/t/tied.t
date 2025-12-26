@@ -1,130 +1,126 @@
 #!./perl
 #
 #  Copyright (c) 1995-2000, Raphael Manfredi
-#  
+#
 #  You may redistribute only under the same terms as Perl 5, as specified
 #  in the README file that comes with the distribution.
 #
 
-sub BEGIN {
-    unshift @INC, 't';
-    unshift @INC, 't/compat' if $] < 5.006002;
-    require Config; import Config;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
-    require 'st-dump.pl';
-}
+use strict;
+use warnings;
 
+sub BEGIN {
+    unshift @INC, 't/lib';
+}
+use STDump;
 use Storable qw(freeze thaw);
 $Storable::flags = Storable::FLAGS_COMPAT;
 
 use Test::More tests => 25;
 
-($scalar_fetch, $array_fetch, $hash_fetch) = (0, 0, 0);
+my ($scalar_fetch, $array_fetch, $hash_fetch) = (0, 0, 0);
 
 package TIED_HASH;
 
 sub TIEHASH {
-	my $self = bless {}, shift;
-	return $self;
+    my $self = bless {}, shift;
+    return $self;
 }
 
 sub FETCH {
-	my $self = shift;
-	my ($key) = @_;
-	$main::hash_fetch++;
-	return $self->{$key};
+    my $self = shift;
+    my ($key) = @_;
+    $hash_fetch++;
+    return $self->{$key};
 }
 
 sub STORE {
-	my $self = shift;
-	my ($key, $value) = @_;
-	$self->{$key} = $value;
+    my $self = shift;
+    my ($key, $value) = @_;
+    $self->{$key} = $value;
 }
 
 sub FIRSTKEY {
-	my $self = shift;
-	scalar keys %{$self};
-	return each %{$self};
+    my $self = shift;
+    scalar keys %{$self};
+    return each %{$self};
 }
 
 sub NEXTKEY {
-	my $self = shift;
-	return each %{$self};
+    my $self = shift;
+    return each %{$self};
 }
 
 package TIED_ARRAY;
 
 sub TIEARRAY {
-	my $self = bless [], shift;
-	return $self;
+    my $self = bless [], shift;
+    return $self;
 }
 
 sub FETCH {
-	my $self = shift;
-	my ($idx) = @_;
-	$main::array_fetch++;
-	return $self->[$idx];
+    my $self = shift;
+    my ($idx) = @_;
+    $array_fetch++;
+    return $self->[$idx];
 }
 
 sub STORE {
-	my $self = shift;
-	my ($idx, $value) = @_;
-	$self->[$idx] = $value;
+    my $self = shift;
+    my ($idx, $value) = @_;
+    $self->[$idx] = $value;
 }
 
 sub FETCHSIZE {
-	my $self = shift;
-	return @{$self};
+    my $self = shift;
+    return @{$self};
 }
 
 package TIED_SCALAR;
 
 sub TIESCALAR {
-	my $scalar;
-	my $self = bless \$scalar, shift;
-	return $self;
+    my $scalar;
+    my $self = bless \$scalar, shift;
+    return $self;
 }
 
 sub FETCH {
-	my $self = shift;
-	$main::scalar_fetch++;
-	return $$self;
+    my $self = shift;
+    $scalar_fetch++;
+    return $$self;
 }
 
 sub STORE {
-	my $self = shift;
-	my ($value) = @_;
-	$$self = $value;
+    my $self = shift;
+    my ($value) = @_;
+    $$self = $value;
 }
 
 package FAULT;
 
-$fault = 0;
+our $fault = 0;
 
 sub TIESCALAR {
-	my $pkg = shift;
-	return bless [@_], $pkg;
+    my $pkg = shift;
+    return bless [@_], $pkg;
 }
 
 sub FETCH {
-	my $self = shift;
-	my ($href, $key) = @$self;
-	$fault++;
-	untie $href->{$key};
-	return $href->{$key} = 1;
+    my $self = shift;
+    my ($href, $key) = @$self;
+    $fault++;
+    untie $href->{$key};
+    return $href->{$key} = 1;
 }
 
 package main;
 
-$a = 'toto';
-$b = \$a;
+my $a = 'toto';
+my $b = \$a;
 
-$c = tie %hash, TIED_HASH;
-$d = tie @array, TIED_ARRAY;
-tie $scalar, TIED_SCALAR;
+my $c = tie my %hash, 'TIED_HASH';
+my $d = tie my @array, 'TIED_ARRAY';
+tie my $scalar, 'TIED_SCALAR';
 
 #$scalar = 'foo';
 #$hash{'attribute'} = \$d;
@@ -133,30 +129,30 @@ tie $scalar, TIED_SCALAR;
 
 ### If I say
 ###   $hash{'attribute'} = $d;
-### below, then dump() incorrectly dumps the hash value as a string the second
+### below, then stdump() incorrectly dumps the hash value as a string the second
 ### time it is reached. I have not investigated enough to tell whether it's
-### a bug in my dump() routine or in the Perl tieing mechanism.
+### a bug in my stdump() routine or in the Perl tieing mechanism.
 $scalar = 'foo';
 $hash{'attribute'} = 'plain value';
 $array[0] = \$scalar;
 $array[1] = $c;
 $array[2] = \@array;
 
-@tied = (\$scalar, \@array, \%hash);
-%a = ('key', 'value', 1, 0, $a, $b, 'cvar', \$a, 'scalarref', \$scalar);
-@a = ('first', 3, -4, -3.14159, 456, 4.5, $d, \$d,
-	$b, \$a, $a, $c, \$c, \%a, \@array, \%hash, \@tied);
+my @tied = (\$scalar, \@array, \%hash);
+my %a = ('key', 'value', 1, 0, $a, $b, 'cvar', \$a, 'scalarref', \$scalar);
+my @a = ('first', 3, -4, -3.14159, 456, 4.5, $d, \$d,
+    $b, \$a, $a, $c, \$c, \%a, \@array, \%hash, \@tied);
 
 my $f = freeze(\@a);
 isnt($f, undef);
 
-$dumped = &dump(\@a);
+my $dumped = stdump(\@a);
 isnt($dumped, undef);
 
-$root = thaw($f);
+my $root = thaw($f);
 isnt($root, undef);
 
-$got = &dump($root);
+my $got = stdump($root);
 isnt($got, undef);
 
 ### Used to see the manifestation of the bug documented above.
@@ -167,25 +163,25 @@ isnt($got, undef);
 
 is($got, $dumped);
 
-$g = freeze($root);
+my $g = freeze($root);
 is(length $f, length $g);
 
 # Ensure the tied items in the retrieved image work
-@old = ($scalar_fetch, $array_fetch, $hash_fetch);
-@tied = ($tscalar, $tarray, $thash) = @{$root->[$#{$root}]};
-@type = qw(SCALAR  ARRAY  HASH);
+my @old = ($scalar_fetch, $array_fetch, $hash_fetch);
+@tied = my ($tscalar, $tarray, $thash) = @{$root->[$#{$root}]};
+my @type = qw(SCALAR  ARRAY  HASH);
 
 is(ref tied $$tscalar, 'TIED_SCALAR');
 is(ref tied @$tarray, 'TIED_ARRAY');
 is(ref tied %$thash, 'TIED_HASH');
 
-@new = ($$tscalar, $tarray->[0], $thash->{'attribute'});
+my @new = ($$tscalar, $tarray->[0], $thash->{'attribute'});
 @new = ($scalar_fetch, $array_fetch, $hash_fetch);
 
 # Tests 10..15
-for ($i = 0; $i < @new; $i++) {
-	is($new[$i], $old[$i] + 1);
-	is(ref $tied[$i], $type[$i]);
+for (my $i = 0; $i < @new; $i++) {
+    is($new[$i], $old[$i] + 1);
+    is(ref $tied[$i], $type[$i]);
 }
 
 # Check undef ties
@@ -208,14 +204,14 @@ is($FAULT::fault, 2);
     our ($a, $b);
     $b = "not ok ";
     sub TIESCALAR { bless \$a } sub FETCH { "ok " }
-    tie $a, P; my $r = thaw freeze \$a; $b = $$r;
+    tie $a, 'P'; my $r = thaw freeze \$a; $b = $$r;
     main::is($b, "ok ");
 }
 
 {
     # blessed ref to tied object should be thawed blessed
     my @a;
-    tie @a, TIED_ARRAY;
+    tie @a, 'TIED_ARRAY';
     my $r = bless \@a, 'FOO99';
     my $f = freeze($r);
     my $t = thaw($f);

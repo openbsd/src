@@ -19,7 +19,7 @@ sub capture(&) {
 }
 
 {
-local $TODO = "known to fail on $]" if $] le "5.006002";
+local $TODO = "known to fail on $]" if "$]" <= 5.006002;
 my $file = __FILE__;
 my $line = __LINE__ + 4;
 like(

@@ -24,4 +24,4 @@ Bar.
 Hey! \fBThe above document had some coding errors, which are explained below:\fR
 .IP "Around line 7:" 4
 .IX Item "Around line 7:"
-You forgot a '=back' before '=head1'
+You forgot a \*(Aq=back\*(Aq before \*(Aq=head1\*(Aq

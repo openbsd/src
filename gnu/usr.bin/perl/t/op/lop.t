@@ -10,7 +10,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 47;
+plan tests => 58;
 
 for my $i (undef, 0 .. 2, "", "0 but true") {
     my $true = 1;
@@ -105,7 +105,15 @@ for my $test (
     my ($a,$b, $exp) = @$test;
     is(($a xor $b), $exp, "($a xor $b) == '$exp'");
     is(($a ^^ $b), $exp, "($a ^^ $b) == '$exp'");
+
+    my ($lhs, $rhs) = @$test;
+    $lhs ^^= $rhs;
+    is($lhs, $exp, "$a ^^= $b gives '$exp'");
 }
+
+my $var = 123;
+($var ^^= 456) ^^= 456;
+is($var, 1, '^^= yields mutable lvalue');
 
 # precedence
 is((1 xor 1 and 0), 1, '(1 xor 1 and 0) == 1');

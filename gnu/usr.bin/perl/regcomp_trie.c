@@ -52,8 +52,8 @@ S_dump_trie(pTHX_ const struct _reg_trie_data *trie, HV *widecharmap,
             AV *revcharmap, U32 depth)
 {
     U32 state;
-    SV *sv=sv_newmortal();
-    int colwidth= widecharmap ? 6 : 4;
+    SV *sv = sv_newmortal();
+    int colwidth = widecharmap ? 6 : 4;
     U16 word;
     DECLARE_AND_GET_RE_DEBUG_FLAGS;
 
@@ -128,7 +128,7 @@ S_dump_trie(pTHX_ const struct _reg_trie_data *trie, HV *widecharmap,
     }
     Perl_re_indentf( aTHX_  "word_info N:(prev,len)=",
                                 depth);
-    for (word=1; word <= trie->wordcount; word++) {
+    for (word = 1; word <= trie->wordcount; word++) {
         Perl_re_printf( aTHX_  " %d:(%d,%d)",
             (int)word, (int)(trie->wordinfo[word].prev),
             (int)(trie->wordinfo[word].len));
@@ -147,8 +147,8 @@ S_dump_trie_interim_list(pTHX_ const struct _reg_trie_data *trie,
                          U32 depth)
 {
     U32 state;
-    SV *sv=sv_newmortal();
-    int colwidth= widecharmap ? 6 : 4;
+    SV *sv = sv_newmortal();
+    int colwidth = widecharmap ? 6 : 4;
     DECLARE_AND_GET_RE_DEBUG_FLAGS;
 
     PERL_ARGS_ASSERT_DUMP_TRIE_INTERIM_LIST;
@@ -159,7 +159,7 @@ S_dump_trie_interim_list(pTHX_ const struct _reg_trie_data *trie,
     Perl_re_indentf( aTHX_  "%s",
             depth+1, "------:-----+-----------------\n" );
 
-    for( state=1 ; state < next_alloc ; state ++ ) {
+    for( state = 1; state < next_alloc; state++ ) {
         U16 charid;
 
         Perl_re_indentf( aTHX_  " %4" UVXf " :",
@@ -208,8 +208,8 @@ S_dump_trie_interim_table(pTHX_ const struct _reg_trie_data *trie,
 {
     U32 state;
     U16 charid;
-    SV *sv=sv_newmortal();
-    int colwidth= widecharmap ? 6 : 4;
+    SV *sv = sv_newmortal();
+    int colwidth = widecharmap ? 6 : 4;
     DECLARE_AND_GET_RE_DEBUG_FLAGS;
 
     PERL_ARGS_ASSERT_DUMP_TRIE_INTERIM_TABLE;
@@ -238,20 +238,20 @@ S_dump_trie_interim_table(pTHX_ const struct _reg_trie_data *trie,
     Perl_re_printf( aTHX_ "\n");
     Perl_re_indentf( aTHX_  "State+-", depth+1 );
 
-    for( charid=0 ; charid < trie->uniquecharcount ; charid++ ) {
+    for( charid = 0; charid < trie->uniquecharcount; charid++ ) {
         Perl_re_printf( aTHX_  "%.*s", colwidth,"--------");
     }
 
     Perl_re_printf( aTHX_  "\n" );
 
-    for( state=1 ; state < next_alloc ; state += trie->uniquecharcount ) {
+    for( state = 1; state < next_alloc; state += trie->uniquecharcount ) {
 
         Perl_re_indentf( aTHX_  "%4" UVXf " : ",
             depth+1,
             (UV)TRIE_NODENUM( state ) );
 
         for( charid = 0 ; charid < trie->uniquecharcount ; charid++ ) {
-            UV v=(UV)SAFE_TRIE_NODENUM( trie->trans[ state + charid ].next );
+            UV v = (UV)SAFE_TRIE_NODENUM( trie->trans[ state + charid ].next );
             if (v)
                 Perl_re_printf( aTHX_  "%*" UVXf, colwidth, v );
             else
@@ -304,7 +304,7 @@ will be in parenthesis.
       |
       +-s->(3)-+-h->(4)-+-e->[5]
 
-      Accept Word Mapping: 3=>1 (he),5=>2 (she), 7=>3 (his), 9=>4 (hers)
+      Accept Word Mapping: 3 => 1 (he), 5 => 2 (she), 7 => 3 (his), 9 => 4 (hers)
 
 This shows that when matching against the string 'hers' we will begin at state 1
 read 'h' and move to state 2, read 'e' and move to state 3 which is accepting,
@@ -347,7 +347,7 @@ The regexp /(ac|ad|ab)+/ will produce the following debug output:
   17:   NOTHING(18)
   18: END(0)
 
-This would be optimizable with startbranch=5, first=5, last=16, tail=16
+This would be optimizable with startbranch = 5, first = 5, last = 16, tail = 16
 and should turn into:
 
    1: CURLYM[1] {1,32767}(18)
@@ -370,7 +370,7 @@ Cases where tail != last would be like /(?foo|bar)baz/:
    8: EXACT <baz>(10)
   10: END(0)
 
-which would be optimizable with startbranch=1, first=1, last=7, tail=8
+which would be optimizable with startbranch = 1, first = 1, last = 7, tail = 8
 and would end up looking like:
 
     1: TRIE(8)
@@ -381,7 +381,7 @@ and would end up looking like:
    8: EXACT <baz>(10)
   10: END(0)
 
-    d = uvchr_to_utf8_flags(d, uv, 0);
+    d = uv_to_utf8(d, uv);
 
 is the recommended Unicode-aware way of saying
 
@@ -393,7 +393,7 @@ is the recommended Unicode-aware way of saying
         if (UTF) {                                                         \
             SV *zlopp = newSV(UTF8_MAXBYTES);                              \
             unsigned char *flrbbbbb = (unsigned char *) SvPVX(zlopp);      \
-            unsigned char *const kapow = uvchr_to_utf8(flrbbbbb, val);     \
+            unsigned char *const kapow = uv_to_utf8(flrbbbbb, val);     \
             *kapow = '\0';                                                 \
             SvCUR_set(zlopp, kapow - flrbbbbb);                            \
             SvPOK_on(zlopp);                                               \
@@ -450,7 +450,7 @@ is the recommended Unicode-aware way of saying
 } STMT_END
 
 #define TRIE_HANDLE_WORD(state) STMT_START {                    \
-    U16 dupe= trie->states[ state ].wordnum;                    \
+    U16 dupe = trie->states[ state ].wordnum;                    \
     regnode * const noper_next = regnext( noper );              \
                                                                 \
     DEBUG_r({                                                   \
@@ -492,7 +492,7 @@ is the recommended Unicode-aware way of saying
         if (!jumper)                                            \
             jumper = noper_next;                                \
         if (!nextbranch)                                        \
-            nextbranch= regnext(cur);                           \
+            nextbranch = regnext(cur);                           \
     }                                                           \
                                                                 \
     if ( dupe ) {                                               \
@@ -514,7 +514,7 @@ is the recommended Unicode-aware way of saying
          && state == trie->trans[ base - ucharcount + charid ].check    \
          && trie->trans[ base - ucharcount + charid ].next )            \
            ? trie->trans[ base - ucharcount + charid ].next             \
-           : ( state==1 ? special : 0 )                                 \
+           : ( state == 1 ? special : 0 )                                 \
       )
 
 /* Helper function for make_trie(): set a trie bit for both the character
@@ -578,7 +578,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
      */
 #else
     const U32 data_slot = reg_add_data( pRExC_state, STR_WITH_LEN("tu"));
-    STRLEN trie_charcount=0;
+    STRLEN trie_charcount = 0;
 #endif
     SV *re_trie_maxbuff;
     DECLARE_AND_GET_RE_DEBUG_FLAGS;
@@ -595,7 +595,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
         case EXACTFU:
         case EXACTFLU8: folder = PL_fold_latin1; break;
         case EXACTF:  folder = PL_fold; break;
-        default: Perl_croak( aTHX_ "panic! In trie construction, unknown node type %u %s", (unsigned) flags, REGNODE_NAME(flags) );
+        default: croak("panic! In trie construction, unknown node type %u %s", (unsigned) flags, REGNODE_NAME(flags) );
     }
 
     /* create the trie struct, all zeroed */
@@ -621,7 +621,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
     }
     DEBUG_TRIE_COMPILE_r({
         Perl_re_indentf( aTHX_
-          "make_trie start==%d, first==%d, last==%d, tail==%d depth=%d\n",
+          "make_trie start == %d, first == %d, last == %d, tail == %d depth = %d\n",
           depth+1,
           REG_NODE_NUM(startbranch), REG_NODE_NUM(first),
           REG_NODE_NUM(last), REG_NODE_NUM(tail), (int)depth);
@@ -690,7 +690,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
 
             regnode *noper_next= regnext(noper);
             if (noper_next < tail)
-                noper= noper_next;
+                noper = noper_next;
         }
 
         if (    noper < tail
@@ -699,15 +699,15 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                 || (flags == EXACTFU && (   OP(noper) == EXACTFU_REQ8
                                          || OP(noper) == EXACTFUP))))
         {
-            uc= (U8*)STRING(noper);
-            e= uc + STR_LEN(noper);
+            uc = (U8*)STRING(noper);
+            e = uc + STR_LEN(noper);
         } else {
             trie->minlen= 0;
             continue;
         }
 
 
-        if ( set_bit ) { /* bitmap only alloced when !(UTF&&Folding) */
+        if ( set_bit ) { /* bitmap only alloced when !(UTF && Folding) */
             TRIE_BITMAP_SET(trie,*uc); /* store the raw first byte
                                           regardless of encoding */
             if (OP( noper ) == EXACTFUP) {
@@ -784,7 +784,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
              * branch */
             if ( uvc < 256 ) {
                 if ( folder ) {
-                    U8 folded= folder[ (U8) uvc ];
+                    U8 folded = folder[ (U8) uvc ];
                     if ( !trie->charmap[ folded ] ) {
                         trie->charmap[ folded ]=( ++trie->uniquecharcount );
                         TRIE_STORE_REVCHAR( folded );
@@ -816,7 +816,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                 svpp = hv_fetch( widecharmap, (char*)&uvc, sizeof( UV ), 1 );
 
                 if ( !svpp )
-                    Perl_croak( aTHX_ "error creating/fetching widecharmap entry for 0x%" UVXf, uvc );
+                    croak("error creating/fetching widecharmap entry for 0x%" UVXf, uvc );
 
                 if ( !SvTRUE( *svpp ) ) {
                     sv_setiv( *svpp, ++trie->uniquecharcount );
@@ -913,7 +913,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
             if (OP(noper) == NOTHING) {
                 regnode *noper_next= regnext(noper);
                 if (noper_next < tail)
-                    noper= noper_next;
+                    noper = noper_next;
                 /* we will undo this assignment if noper does not
                  * point at a trieable type in the else clause of
                  * the following statement. */
@@ -942,7 +942,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                         if ( !svpp ) {
                             charid = 0;
                         } else {
-                            charid=(U16)SvIV( *svpp );
+                            charid = (U16)SvIV( *svpp );
                         }
                     }
                     /* charid is now 0 if we dont know the char read, or
@@ -975,7 +975,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                         }
                         state = newstate;
                     } else {
-                        Perl_croak( aTHX_ "panic! In trie construction, no char mapping for %" IVdf, uvc );
+                        croak("panic! In trie construction, no char mapping for %" IVdf, uvc );
                     }
                 }
             } else {
@@ -983,7 +983,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                  * on a trieable type. So we need to reset noper back to point at the first regop
                  * in the branch before we call TRIE_HANDLE_WORD()
                 */
-                noper= REGNODE_AFTER(cur);
+                noper = REGNODE_AFTER(cur);
             }
             TRIE_HANDLE_WORD(state);
 
@@ -1010,8 +1010,8 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
             U32 zp = 0;
 
 
-            for( state=1 ; state < next_alloc ; state ++ ) {
-                U32 base=0;
+            for( state = 1; state < next_alloc; state ++ ) {
+                U32 base = 0;
 
                 /*
                 DEBUG_TRIE_COMPILE_MORE_r(
@@ -1020,16 +1020,16 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                 */
 
                 if (trie->states[state].trans.list) {
-                    U16 minid=TRIE_LIST_ITEM( state, 1).forid;
-                    U16 maxid=minid;
+                    U16 minid = TRIE_LIST_ITEM( state, 1).forid;
+                    U16 maxid = minid;
                     U16 idx;
 
                     for( idx = 2 ; idx <= TRIE_LIST_USED( state ) ; idx++ ) {
                         const U16 forid = TRIE_LIST_ITEM( state, idx).forid;
                         if ( forid < minid ) {
-                            minid=forid;
+                            minid = forid;
                         } else if ( forid > maxid ) {
-                            maxid=forid;
+                            maxid = forid;
                         }
                     }
                     if ( transcount < tp + maxid - minid + 1) {
@@ -1063,7 +1063,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                             zp = tp;
                         }
                     } else {
-                        for ( idx=1; idx <= TRIE_LIST_USED( state ) ; idx++ ) {
+                        for ( idx = 1; idx <= TRIE_LIST_USED( state ) ; idx++ ) {
                             const U32 tid = base
                                            - trie->uniquecharcount
                                            + TRIE_LIST_ITEM( state, idx ).forid;
@@ -1080,7 +1080,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                     Perl_re_printf( aTHX_  " base: %d\n",base);
                 );
                 */
-                trie->states[ state ].trans.base=base;
+                trie->states[ state ].trans.base = base;
             }
             trie->lasttrans = tp + 1;
         }
@@ -1147,7 +1147,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
             if (OP(noper) == NOTHING) {
                 regnode *noper_next= regnext(noper);
                 if (noper_next < tail)
-                    noper= noper_next;
+                    noper = noper_next;
                 /* we will undo this assignment if noper does not
                  * point at a trieable type in the else clause of
                  * the following statement. */
@@ -1186,7 +1186,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                         }
                         state = trie->trans[ state + charid ].next;
                     } else {
-                        Perl_croak( aTHX_ "panic! In trie construction, no char mapping for %" IVdf, uvc );
+                        croak("panic! In trie construction, no char mapping for %" IVdf, uvc );
                     }
                     /* charid is now 0 if we dont know the char read, or
                      * nonzero if we do */
@@ -1196,7 +1196,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                  * on a trieable type. So we need to reset noper back to point at the first regop
                  * in the branch before we call TRIE_HANDLE_WORD().
                 */
-                noper= REGNODE_AFTER(cur);
+                noper = REGNODE_AFTER(cur);
             }
             accept_state = TRIE_NODENUM( state );
             TRIE_HANDLE_WORD(accept_state);
@@ -1272,7 +1272,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
         */
         const U32 laststate = TRIE_NODENUM( next_alloc );
         U32 state, charid;
-        U32 pos = 0, zp=0;
+        U32 pos = 0, zp = 0;
         trie->statecount = laststate;
 
         for ( state = 1 ; state < laststate ; state++ ) {
@@ -1349,7 +1349,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
 
     {   /* Modify the program and insert the new TRIE node */
         U8 nodetype =(U8) flags;
-        char *str=NULL;
+        char *str = NULL;
 
 #ifdef DEBUGGING
         regnode *optimize = NULL;
@@ -1413,7 +1413,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                                 /* clear the bitmap */
                                 Zero(trie->bitmap, ANYOF_BITMAP_SIZE, char);
                                 DEBUG_OPTIMISE_r(
-                                    Perl_re_indentf( aTHX_  "New Start State=%" UVuf " Class: [",
+                                    Perl_re_indentf( aTHX_  "New Start State = %" UVuf " Class: [",
                                         depth+1,
                                         (UV)state));
                                 if (first_ofs >= 0) {
@@ -1441,8 +1441,8 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                     STRLEN len;
                     char *ch = SvPV( *tmp, len );
                     DEBUG_OPTIMISE_r({
-                        SV *sv=sv_newmortal();
-                        Perl_re_indentf( aTHX_  "Prefix State: %" UVuf " Ofs:%" UVuf " Char='%s'\n",
+                        SV *sv = sv_newmortal();
+                        Perl_re_indentf( aTHX_  "Prefix State: %" UVuf " Ofs: %" UVuf " Char: '%s'\n",
                             depth+1,
                             (UV)state, (UV)first_ofs,
                             pv_pretty(sv, SvPV_nolen_const(*tmp), SvCUR(*tmp), 6,
@@ -1452,9 +1452,9 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                             )
                         );
                     });
-                    if ( state==1 ) {
+                    if ( state == 1 ) {
                         OP( convert ) = nodetype;
-                        str=STRING(convert);
+                        str = STRING(convert);
                         setSTR_LEN(convert, 0);
                     }
                     assert( ( STR_LEN(convert) + len ) < 256 );
@@ -1463,7 +1463,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
                         *str++ = *ch++;
                 } else {
 #ifdef DEBUGGING
-                    if (state>1)
+                    if (state > 1)
                         DEBUG_OPTIMISE_r(Perl_re_printf( aTHX_ "]\n"));
 #endif
                     break;
@@ -1572,7 +1572,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
         U32 state;
         U16 prev;
 
-        for (word=1; word <= trie->wordcount; word++) {
+        for (word = 1; word <= trie->wordcount; word++) {
             prev = 0;
             if (trie->wordinfo[word].prev)
                 continue;
@@ -1603,7 +1603,7 @@ Perl_make_trie(pTHX_ RExC_state_t *pRExC_state, regnode *startbranch,
 #endif
     return trie->jump
            ? MADE_JUMP_TRIE
-           : trie->startstate>1
+           : trie->startstate > 1
              ? MADE_EXACT_TRIE
              : MADE_TRIE;
 }
@@ -1635,7 +1635,7 @@ Perl_construct_ahocorasick_from_trie(pTHX_ RExC_state_t *pRExC_state, regnode *s
  */
  /* add a fail transition */
     const U32 trie_offset = ARG1u(source);
-    reg_trie_data *trie=(reg_trie_data *)RExC_rxi->data->data[trie_offset];
+    reg_trie_data *trie = (reg_trie_data *)RExC_rxi->data->data[trie_offset];
     U32 *q;
     const U32 ucharcount = trie->uniquecharcount;
     const U32 numstates = trie->statecount;
@@ -1672,8 +1672,8 @@ Perl_construct_ahocorasick_from_trie(pTHX_ RExC_state_t *pRExC_state, regnode *s
     ARG1u_SET( stclass, data_slot );
     aho = (reg_ac_data *) PerlMemShared_calloc( 1, sizeof(reg_ac_data) );
     RExC_rxi->data->data[ data_slot ] = (void*)aho;
-    aho->trie=trie_offset;
-    aho->states=(reg_trie_state *)PerlMemShared_malloc( numstates * sizeof(reg_trie_state) );
+    aho->trie = trie_offset;
+    aho->states = (reg_trie_state *)PerlMemShared_malloc( numstates * sizeof(reg_trie_state) );
     Copy( trie->states, aho->states, numstates, reg_trie_state );
     Newx( q, numstates, U32);
     aho->fail = (U32 *) PerlMemShared_calloc( numstates, sizeof(U32) );
@@ -1726,7 +1726,7 @@ Perl_construct_ahocorasick_from_trie(pTHX_ RExC_state_t *pRExC_state, regnode *s
         Perl_re_indentf( aTHX_  "Stclass Failtable (%" UVuf " states): 0",
                       depth, (UV)numstates
         );
-        for( q_read=1; q_read<numstates; q_read++ ) {
+        for( q_read = 1; q_read < numstates; q_read++ ) {
             Perl_re_printf( aTHX_  ", %" UVuf, (UV)fail[q_read]);
         }
         Perl_re_printf( aTHX_  "\n");

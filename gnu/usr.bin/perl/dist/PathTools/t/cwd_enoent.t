@@ -10,6 +10,8 @@ if($^O eq "cygwin") {
     # This test skipping should be removed when the Cygwin bug is fixed.
     plan skip_all => "getcwd() fails to fail on Cygwin [perl #132733]";
 }
+my $prefix = $Config{prefix};
+my $osvers = $Config{osvers};
 
 my $tmp = tempdir(CLEANUP => 1);
 unless(mkdir("$tmp/testdir") && chdir("$tmp/testdir") && rmdir("$tmp/testdir")){
@@ -24,11 +26,11 @@ foreach my $type (qw(regular perl)) {
     SKIP: {
 	skip "_perl_abs_path() not expected to work", 4
 	    if $type eq "perl" &&
-		!(($Config{prefix} =~ m/\//) && $^O ne "cygwin");
+		!(($prefix =~ m/\//) && $^O ne "cygwin");
 
         # https://github.com/Perl/perl5/issues/16525
         # https://bugs.dragonflybsd.org/issues/3250
-        my @vlist = ($Config{osvers} =~ /(\d+)/g);
+        my @vlist = ($osvers =~ /(\d+)/g);
         my $osver = sprintf("%d%03d", map { defined() ? $_ : '0' } @vlist[0,1]);
 	skip "getcwd() doesn't fail on non-existent directories on this platform", 4
 	    if $type eq 'regular' && $^O eq 'dragonfly' && $osver < 6002;

@@ -17,10 +17,10 @@ BEGIN {
    print "bundle: ", feature::feature_bundle(0) // "undef", "\n";
 }
 EXPECT
-default: bareword_filehandles indirect multidimensional
+default: apostrophe_as_package_separator bareword_filehandles indirect multidimensional smartmatch
 unicode_strings is not enabled
 bundle: default
-5.12: bareword_filehandles indirect multidimensional say state switch unicode_strings
+5.12: apostrophe_as_package_separator bareword_filehandles indirect multidimensional say smartmatch state switch unicode_strings
 unicode_strings is enabled
 bundle: 5.11
 ########
@@ -40,9 +40,9 @@ BEGIN {
    print "bundle: ", feature::feature_bundle(0) // "undef", "\n";
 }
 EXPECT
-no feature indirect: bareword_filehandles multidimensional
+no feature indirect: apostrophe_as_package_separator bareword_filehandles multidimensional smartmatch
 indirect is not enabled
 bundle: undef
-added unicode_strings: bareword_filehandles multidimensional unicode_strings
+added unicode_strings: apostrophe_as_package_separator bareword_filehandles multidimensional smartmatch unicode_strings
 unicode_strings is enabled
 bundle: undef

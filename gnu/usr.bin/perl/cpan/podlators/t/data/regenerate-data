@@ -7,15 +7,14 @@
 # helper program regenerates those files using the local installation of
 # podlators.  The output can then be reviewed with normal Git tools.
 #
-# Copyright 2022 Russ Allbery <rra@cpan.org>
+# Copyright 2022, 2024 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
 #
 # SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
-use 5.008;
-use strict;
+use 5.012;
 use warnings;
 
 use lib 'blib/lib';
@@ -28,16 +27,13 @@ use Pod::Text::Overstrike;
 use Pod::Text::Termcap;
 
 # Hard-code configuration for Term::Cap to get predictable results.
-#<<<
-local $ENV{COLUMNS}  = 80;
-local $ENV{TERM}     = 'xterm';
+local $ENV{COLUMNS} = 80;
+local $ENV{TERM} = 'xterm';
 local $ENV{TERMPATH} = File::Spec->catfile('t', 'data', 'termcap');
-local $ENV{TERMCAP}  = 'xterm:co=#80:do=^J:md=\\E[1m:us=\\E[4m:me=\\E[m';
-#>>>
+local $ENV{TERMCAP} = 'xterm:co=#80:do=^J:md=\\E[1m:us=\\E[4m:me=\\E[m';
 
 # Map of translators to the file containing the formatted output for the
 # general/basic.t test.
-#<<<
 my %output = (
     'Pod::Man'              => File::Spec->catfile('t', 'data', 'basic.man'),
     'Pod::Text'             => File::Spec->catfile('t', 'data', 'basic.txt'),
@@ -45,7 +41,6 @@ my %output = (
     'Pod::Text::Overstrike' => File::Spec->catfile('t', 'data', 'basic.ovr'),
     'Pod::Text::Termcap'    => File::Spec->catfile('t', 'data', 'basic.cap'),
 );
-#>>>
 
 # Regenerate those output files.
 my $input = File::Spec->catfile('t', 'data', 'basic.pod');
@@ -75,21 +70,19 @@ for my $module (keys(%output)) {
 
 # Now switch to the files for the man/encoding.t test.
 $input = File::Spec->catfile('t', 'data', 'man', 'encoding.pod');
-#<<<
 %output = (
     groff => File::Spec->catfile('t', 'data', 'man', 'encoding.groff'),
     roff  => File::Spec->catfile('t', 'data', 'man', 'encoding.roff'),
     utf8  => File::Spec->catfile('t', 'data', 'man', 'encoding.utf8'),
 );
-#>>>
 
 # For each encoding, load the input, generate the output, and check that the
 # output matches.
 for my $encoding (keys(%output)) {
     my $parser = Pod::Man->new(
         encoding => $encoding,
-        center => 'podlators',
-        release => 'testing',
+        center   => 'podlators',
+        release  => 'testing',
     );
     my $output;
     $parser->output_string(\$output);

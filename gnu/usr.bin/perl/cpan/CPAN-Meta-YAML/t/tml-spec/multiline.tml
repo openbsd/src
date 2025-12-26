@@ -1,0 +1,33 @@
+=== basic multiline
+# This is just a simple one key hash.
+--- yaml
+a: |
+   ciao
+   a tutti
+--- json
+{"a":"ciao\na tutti\n"}
+
+=== multiline with inner indentation
+# This is just a simple one key hash.
+--- yaml
+a: |
+   ciao
+         a
+   tutti
+--- json
+{"a":"ciao\n      a\ntutti\n"}
+
+=== two multilines with variable inner indentation
+# This is just a simple one key hash.
+--- yaml
+- |
+   ciao
+         a
+      tutti
+- |
+      quanti
+         voi
+      amici
+--- json
+["ciao\n      a\n   tutti\n","quanti\n   voi\namici\n"]
+

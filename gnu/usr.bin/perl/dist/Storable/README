@@ -27,7 +27,7 @@ complex and circular it is, provided it contains only SCALAR, ARRAY,
 HASH (possibly tied) and references (possibly blessed) to those items.
 
 At a later stage, or in another program, you may retrieve data from
-the stored file and recreate the same hiearchy in memory. If you
+the stored file and recreate the same hierarchy in memory. If you
 had blessed references, the retrieved references are blessed into
 the same package, so you must make sure you have access to the
 same perl class than the one used to create the relevant objects.

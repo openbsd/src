@@ -30,7 +30,7 @@ To build perl from its source code on the Stratus V Series platform
 you must have OpenVOS Release 17.1.0 or later, GNU Tools Release
 3.5 or later, and the C/POSIX Runtime Libraries.
 
-Follow the normal instructions for building perl; e.g, enter bash, run
+Follow the normal instructions for building perl; e.g., enter bash, run
 the Configure script, then use "gmake" to build perl.
 
 =head1 INSTALLING PERL IN OPENVOS

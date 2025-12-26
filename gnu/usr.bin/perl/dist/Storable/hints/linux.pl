@@ -10,7 +10,7 @@ if ($Config{gccversion} and !$Config{usethreads}) {
     my $optimize = $Config{optimize};
     # works fine with gcc 4 or clang
     if ($optimize =~ s/(^| )-O[3-9]( |$)/$1-O2$2/ and $Config{gccversion} =~ /^[23]\./) {
-	$self->{OPTIMIZE} = $optimize;
+        $self->{OPTIMIZE} = $optimize;
     }
 }
 

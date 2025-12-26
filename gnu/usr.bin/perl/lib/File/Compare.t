@@ -62,7 +62,7 @@ is(compare_text($TEST,$README,sub {$_[0] ne $_[1]}), 1,
 
 my @donetests;
 eval {
-  require File::Temp; import File::Temp qw/ tempfile unlink0 /;
+  require File::Temp; File::Temp->import(qw/ tempfile unlink0 /);
 
   my($tfh,$filename) = tempfile('fcmpXXXX', TMPDIR => 1);
   # NB. The trailing space is intentional (see [perl #37716])

@@ -2,15 +2,15 @@
 # stdio: open(), tell(), seek(), print(), read() is tested in t/op/lfs.t.
 # If you modify/add tests here, remember to update also t/op/lfs.t.
 
+use Config;
 BEGIN {
-	require Config; import Config;
 	# Don't bother if there are no quad offsets.
 	if ($Config{lseeksize} < 8) {
 		print "1..0 # Skip: no 64-bit file offsets\n";
 		exit(0);
 	}
-	require Fcntl; import Fcntl qw(/^O_/ /^SEEK_/);
 }
+use Fcntl qw(/^O_/ /^SEEK_/);
 
 use strict;
 use File::Temp 'tempfile';

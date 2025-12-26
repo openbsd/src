@@ -79,7 +79,7 @@ BEGIN {
         @cmpop,    # include the numerical comparison operators.
         '<< >>',
         '+ -',
-        '* / %',    # highest prcedence operators.
+        '* / %',    # highest precedence operators.
     );
 
     my @unop= qw( ! ~ + - );
@@ -107,6 +107,12 @@ BEGIN {
     $commutative{$_}++ for qw( || && + *);
 
     $binop_pat= $make_pat->(keys %precedence);
+
+    # Note below that we don't use the 'multichar' capture currently
+    # but, in a future patch we will add support for warning about
+    # non-portable constructs like multichar constants, so I have added
+    # the tokenizer support for it here so it is ready later.
+    my $sq_const_pat = qr/[^\\']|\\(?:['"\\?abfnrtv]|[0-7]{1,3}|x[0-9A-Fa-f]+)/;
     $tokenize_pat= qr/
      ^(?:
         (?<comment> \/\*.*?\*\/ )
@@ -115,7 +121,12 @@ BEGIN {
             (?<literal>
                 (?<define> defined\(\w+\) )
             |   (?<func>   \w+\s*\(\s*\w+(?:\s*,\s*\w+)*\s*\) )
-            |   (?<const>  (?:0x[a-fA-F0-9]+|\d+[LU]*|'.') )
+            |   (?<const>  (?:0x[a-fA-F0-9]+
+                           |-?\d+[LUlu]*
+                           |'$sq_const_pat
+                             (?<multichar>$sq_const_pat+)?'
+                           )
+                )
             |   (?<sym>    \w+ )
             )
         |   (?<op> $binop_pat | $unop_pat )
@@ -184,6 +195,8 @@ sub new {
     $args{add_commented_expr_after} //= 10;
     $args{max_width} //= 78;
     $args{min_break_width} //= 70;
+    $args{indent_define} //= 1;
+    $args{hug_define} //= 0;
     return bless \%args,;
 }
 
@@ -220,7 +233,7 @@ sub _count_ops {
 # in a sensible order. Anything starting with PERL_IN_
 # should be on the left in alphabetical order. Digits
 # should be on the right (eg 0), and ties are resolved
-# by stripping non-alpha-numerc, thus removing underbar
+# by stripping non-alpha-numeric, thus removing underbar
 # parens, spaces, logical operators, etc, and then by
 # lc comparison of the result.
 sub _sort_terms {
@@ -343,7 +356,7 @@ sub _pt_as_str {
 }
 
 # Returns the precedence of an operator, returns 0 if there is no token
-# or the next token is not an op, or confesss if it encounters an op it does not
+# or the next token is not an op, or confess if it encounters an op it does not
 # know.
 sub _precedence {
     my $self= shift;
@@ -361,8 +374,9 @@ sub _precedence {
 sub parse_expr {
     my ($self, $expr)= @_;
     if (defined $expr) {
-        $expr =~ s/\s*\\\n\s*/ /g;
-        $expr =~ s/defined\s+(\w+)/defined($1)/g;
+        $expr =~ s/\\\n//g;
+        $expr =~ s/\bdefined\s+\(/defined(/g;
+        $expr =~ s/\bdefined\s+(\w+)/defined($1)/g;
         $self->_tokenize_expr($expr);
     }
     my $ret= $self->_parse_expr();
@@ -558,20 +572,20 @@ sub parse_fh {
     while (defined(my $line= readline($fh))) {
         my $start_line_num= $line_num++;
         $self->{orig_content} .= $line;
-        while ($line =~ /\\\n\z/ or $line =~ m</\*(?:(?!\*/).)*\s*\z>s) {
+        while ($line =~ /\\\n\z/ or $line =~ m</(?:\\\n)*\*(?:(?!\*(?:\\\n)*/).)*\s*\z>s) {
             defined(my $read_line= readline($fh))
                 or last;
             $self->{orig_content} .= $read_line;
             $line_num++;
             $line .= $read_line;
         }
-        while ($line =~ m!/\*(.*?)(\*/|\z)!gs) {
+        while ($line =~ m!/(?:\\\n)*\*(.*?)(\*(?:\\\n)*/|\z)!gs) {
             my ($inner, $tail)= ($1, $2);
-            if ($tail ne "*/") {
+            if ($tail eq "") {
                 confess
                     "Unterminated comment starting at line $start_line_num\n";
             }
-            elsif ($inner =~ m!/\*!) {
+            elsif ($inner =~ m!/(?:\\\n)*\*!) {
                 confess
                     "Nested/broken comment starting at line $start_line_num\n";
             }
@@ -583,7 +597,7 @@ sub parse_fh {
         my $level= @cond;
         my $do_pop= 0;
         my $flat= $line;
-        $flat =~ s/\s*\\\n\s*/ /g;
+        $flat =~ s/\\\n//g;
         $flat =~ s!/\*.*?\*/! !gs;
         $flat =~ s/\s+/ /g;
         $flat =~ s/\s+\z//;
@@ -601,7 +615,7 @@ sub parse_fh {
                     s/^(#(?:el)?if)(n?)def\s+(\w+)/$if ${not}defined($sym)/;
             }
             my $cond;    # used in various expressions below
-            if ($flat =~ /^#endif/) {
+            if ($flat =~ /^#endif\b/) {
                 if (!@cond) {
                     confess "Not expecting $flat";
                 }
@@ -639,25 +653,32 @@ sub parse_fh {
                 $type= "cond";
                 $sub_type= "#else";
             }
-            elsif ($flat =~ /#undef/) {
+            elsif ($flat =~ /^#undef\b/) {
                 $type= "content";
                 $sub_type= "#undef";
             }
-            elsif ($flat =~ /#pragma\b/) {
+            elsif ($flat =~ /^#pragma\b/) {
                 $type= "content";
                 $sub_type= "#pragma";
             }
-            elsif ($flat =~ /#include\b/) {
+            elsif ($flat =~ /^#include\b/) {
                 $type= "content";
                 $sub_type= "#include";
             }
-            elsif ($flat =~ /#define\b/) {
+            elsif ($flat =~ /^#define\b/) {
                 $type= "content";
                 $sub_type= "#define";
             }
-            elsif ($flat =~ /#error\b/) {
+            elsif ($flat =~ /^#error\b/) {
                 $type= "content";
                 $sub_type= "#error";
+            }
+            elsif ($flat =~ /^#\s*\z/) {
+                # deal with the null directive
+                # see: https://en.cppreference.com/w/c/preprocessor
+                # and: https://stackoverflow.com/questions/35207515
+                $type= "content";
+                $sub_type= "text";
             }
             else {
                 confess "Do not know what to do with $line";
@@ -1051,11 +1072,21 @@ sub lines_as_str {
     #warn $self->dd($lines);
     foreach my $line_data (@$lines) {
         my $line= $line_data->{line};
-        if ($line_data->{type} ne "content" or $line_data->{sub_type} ne "text")
+        my $is_define = $line_data->is_define();
+        if (
+               $line_data->{type} ne "content"
+            or $line_data->{sub_type} ne "text"
+            or $is_define
+        )
         {
             my $level= $line_data->{level};
             my $ind= $self->indent_chars($level);
-            $line =~ s/^#(\s*)/#$ind/;
+
+            if ($self->{indent_define} and $self->{hug_define} and $is_define) {
+                $line =~ s/^\s*#(\s*)/$ind#/;
+            } elsif (!$is_define or $self->{indent_define}) {
+                $line =~ s/^\s*#(\s*)/#$ind/;
+            }
         }
         if ($line_data->{type} eq "cond") {
             my $add_commented_expr_after= $self->{add_commented_expr_after};
@@ -1065,7 +1096,7 @@ sub lines_as_str {
                 my $cond_txt= $self->tidy_cond($joined);
                 $cond_txt= "if $cond_txt" if $line_data->{sub_type} eq "#else";
                 $line =~ s!\s*\z! /* $cond_txt */\n!
-                    if $line_data->{inner_lines} >= $add_commented_expr_after;
+                    if ($line_data->{inner_lines}||0) >= $add_commented_expr_after;
             }
             elsif ($line_data->{sub_type} eq "#elif") {
                 my $last_frame= $line_data->{cond}[-1];
@@ -1073,7 +1104,7 @@ sub lines_as_str {
                     map { "($_)" } @$last_frame[ 0 .. ($#$last_frame - 1) ];
                 my $cond_txt= $self->tidy_cond($joined);
                 $line =~ s!\s*\z! /* && $cond_txt */\n!
-                    if $line_data->{inner_lines} >= $add_commented_expr_after;
+                    if ($line_data->{inner_lines}||0) >= $add_commented_expr_after;
             }
         }
         $line =~ s/\s*\z/\n/;
@@ -1585,8 +1616,9 @@ C preprocessor files are a bit tricky to parse properly, especially with a
 =item Line Continuations
 
 Any line ending in "\\\n" (that is backslash newline) is considered to be part
-of a longer string which continues on the next line. Processors should replace
-the "\\\n" typically with a space when converting to a "real" line.
+of a longer string which continues on the next line. Processors should delete
+the "\\\n" early on when converting to a "real" line, before doing any further
+parsing.
 
 =item Comments Acting As A Line Continuation
 
@@ -1604,11 +1636,11 @@ is the same as
 This type of comment usage is often overlooked by people writing header file
 parsers for the first time.
 
-=item Indented pre processor directives.
+=item Indented preprocessor directives
 
 It is easy to forget that there may be multiple spaces between the "#"
 character and the directive. It also easy to forget that there may be spaces
-in *front* of the "#" character. Both of these cases are often overlooked.
+in I<front> of the "#" character. Both of these cases are often overlooked.
 
 =back
 
@@ -1617,6 +1649,51 @@ parsing the content of our header files in a consistent manner. A secondary
 purpose it to make various tasks we want to do easier, such as normalizing
 content or preprocessor expressions, or just extracting the real "content" of
 the file properly.
+
+=head2 new
+
+Construct a new HeaderParser. Options are as follows
+
+=over 4
+
+=item add_commented_expr_after
+
+Specifies the number of lines between conditional clause lines that will trigger
+a comment being generated on the close of the clause that shows what expession
+that close is for.
+
+=item max_width
+
+Maximum number of columns expected per line.
+
+=item min_break_width
+
+If a conditional clause is longer than this width HeaderParser will try to
+rearrange its terms so that each line is not longer than this.
+
+=item indent_define
+
+Should #define clauses be indented when contained a clause expression that is
+indented.
+
+=item hug_define
+
+Should the # hug the define or not? When not set (the default) an indented #define
+looks like this:
+
+    #if whatever
+    # define X
+    #endif
+
+When set it looks like this:
+
+    #if whatever
+     #define X
+    #endif
+
+That is the # is indented, and the define comes immediately afterwards.
+
+=back
 
 =head2 parse_fh
 
@@ -1657,7 +1734,7 @@ conditional blocks which include the line. Each line has its own copy of the
 conditions it was operated on currently, but that may change so dont alter
 this data. The inner arrays may contain more than one element. If so then the
 line is part of an "#else" or "#elsif" and the clauses should be considered to
-be a conjuction when considering "when is this line included", however when
+be a conjunction when considering "when is this line included", however when
 considered as part of an if/elsif/else, each added clause represents the most
 recent condition. In the following you can see how:
 
@@ -1832,7 +1909,7 @@ style and form. For example:
     # endif /* !defined(BAR) */
     #endif /* defined(FOO) */
 
-HeaderParser uses two space tab stops for indenting C pre-processor
+HeaderParser uses two space tab stops for indenting C preprocessor
 directives. It puts the spaces between the "#" and the directive. The "#" is
 considered "part" of the indent, even though the space comes after it. This
 means the first indent level "looks" like one space, and following indents

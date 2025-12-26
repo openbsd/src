@@ -1,21 +1,16 @@
 #!perl
 
-BEGIN {
-    require Config;
-    import Config;
-    if ($Config{'extensions'} !~ /\bOpcode\b/) {
-	print "1..0\n";
-	exit 0;
-    }
-}
+use Config;
+use Test::More
+    $Config{'extensions'} =~ /\bOpcode\b/
+        ? (tests => 6)
+        : (skip_all => "no Opcode extension");
 
 use strict;
 use warnings;
-use Test::More;
 use Safe;
-plan(tests => 6);
 
-my $c = new Safe;
+my $c = Safe->new;
 $c->permit(qw(require caller));
 
 my $no_warn_redef = ($] != 5.008009)

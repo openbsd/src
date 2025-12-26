@@ -45,9 +45,8 @@ BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
     require './test.pl';
-    require Config;
-    Config->import;
 }
+use Config;
 
 skip_all_without_config('d_fork');
 skip_all("NO_PERL_HASH_ENV or NO_PERL_HASH_SEED_DEBUG set")

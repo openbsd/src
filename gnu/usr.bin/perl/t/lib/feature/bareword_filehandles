@@ -556,3 +556,15 @@ Beta
 stdout
 >Delta
 >Epsilon
+########
+# NAME bareword handle in open dup handle calls
+use strict;
+open BAREWORD, ">&", STDOUT;
+open my $fh2, ">&", BAREWORD;
+no feature "bareword_filehandles";
+open my $fh3, ">&", STDOUT;
+open my $fh4, ">&", BAREWORD;
+EXPECT
+OPTIONS fatal
+Bareword filehandle "BAREWORD" not allowed under 'no feature "bareword_filehandles"' at - line 6.
+Execution of - aborted due to compilation errors.

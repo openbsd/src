@@ -20,11 +20,16 @@ text.
 use strict;
 use warnings;
 use autodie;
+use Encode qw(decode_utf8);
 use POSIX qw(ceil);
 use Text::Wrap;
 use Time::Piece;
 use Time::Seconds;
 use version;
+
+binmode STDOUT, ':encoding(UTF-8)';
+binmode STDERR, ':encoding(UTF-8)';
+
 $Text::Wrap::columns = 77;
 
 my $since_until = shift;
@@ -162,6 +167,6 @@ sub commify {
 
 # returns a list of the authors
 sub authors {
-    return
+    return decode_utf8
         qx($^X Porting/updateAUTHORS.pl --who $since_until);
 }

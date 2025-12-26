@@ -1,20 +1,13 @@
 #!./perl
 #
 #  Copyright (c) 1995-2000, Raphael Manfredi
-#  
+#
 #  You may redistribute only under the same terms as Perl 5, as specified
 #  in the README file that comes with the distribution.
 #
 
-BEGIN {
-    unshift @INC, 't';
-    unshift @INC, 't/compat' if $] < 5.006002;
-    require Config; import Config;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
-}
+use strict;
+use warnings;
 
 use Test::More tests => 8;
 
@@ -22,51 +15,53 @@ use Storable qw(freeze nfreeze thaw);
 
 package TIED_HASH;
 
+our $hash_fetch;
+
 sub TIEHASH {
-	my $self = bless {}, shift;
-	return $self;
+    my $self = bless {}, shift;
+    return $self;
 }
 
 sub FETCH {
-	my $self = shift;
-	my ($key) = @_;
-	$main::hash_fetch++;
-	return $self->{$key};
+    my $self = shift;
+    my ($key) = @_;
+    $hash_fetch++;
+    return $self->{$key};
 }
 
 sub STORE {
-	my $self = shift;
-	my ($key, $val) = @_;
-	$self->{$key} = $val;
+    my $self = shift;
+    my ($key, $val) = @_;
+    $self->{$key} = $val;
 }
 
 package SIMPLE;
 
 sub make {
-	my $self = bless [], shift;
-	my ($x) = @_;
-	$self->[0] = $x;
-	return $self;
+    my $self = bless [], shift;
+    my ($x) = @_;
+    $self->[0] = $x;
+    return $self;
 }
 
 package ROOT;
 
 sub make {
-	my $self = bless {}, shift;
-	my $h = tie %hash, TIED_HASH;
-	$self->{h} = $h;
-	$self->{ref} = \%hash;
-	my @pool;
-	for (my $i = 0; $i < 5; $i++) {
-		push(@pool, SIMPLE->make($i));
-	}
-	$self->{obj} = \@pool;
-	my @a = ('string', $h, $self);
-	$self->{a} = \@a;
-	$self->{num} = [1, 0, -3, -3.14159, 456, 4.5];
-	$h->{key1} = 'val1';
-	$h->{key2} = 'val2';
-	return $self;
+    my $self = bless {}, shift;
+    my $h = tie my %hash, 'TIED_HASH';
+    $self->{h} = $h;
+    $self->{ref} = \%hash;
+    my @pool;
+    for (my $i = 0; $i < 5; $i++) {
+        push(@pool, SIMPLE->make($i));
+    }
+    $self->{obj} = \@pool;
+    my @a = ('string', $h, $self);
+    $self->{a} = \@a;
+    $self->{num} = [1, 0, -3, -3.14159, 456, 4.5];
+    $h->{key1} = 'val1';
+    $h->{key2} = 'val2';
+    return $self;
 };
 
 sub num { $_[0]->{num} }
@@ -77,33 +72,33 @@ sub obj { $_[0]->{obj} }
 package main;
 
 my $is_EBCDIC = (ord('A') == 193) ? 1 : 0;
- 
+
 my $r = ROOT->make;
 
 my $data = '';
-if (!$is_EBCDIC) {			# ASCII machine
-	while (<DATA>) {
-		next if /^#/;
-	    $data .= unpack("u", $_);
-	}
+if (!$is_EBCDIC) {                      # ASCII machine
+    while (<DATA>) {
+        next if /^#/;
+        $data .= unpack("u", $_);
+    }
 } else {
-	while (<DATA>) {
-		next if /^#$/;		# skip comments
-		next if /^#\s+/;	# skip comments
-		next if /^[^#]/;	# skip uuencoding for ASCII machines
-		s/^#//;				# prepare uuencoded data for EBCDIC machines
-		$data .= unpack("u", $_);
-	}
+    while (<DATA>) {
+        next if /^#$/;          # skip comments
+        next if /^#\s+/;        # skip comments
+        next if /^[^#]/;        # skip uuencoding for ASCII machines
+        s/^#//;                 # prepare uuencoded data for EBCDIC machines
+        $data .= unpack("u", $_);
+    }
 }
 
 my $expected_length = $is_EBCDIC ? 217 : 278;
 is(length $data, $expected_length);
-  
+
 my $y = thaw($data);
 isnt($y, undef);
 is(ref $y, 'ROOT');
 
-$Storable::canonical = 1;		# Prevent "used once" warning
+$Storable::canonical = 1;               # Prevent "used once" warning
 $Storable::canonical = 1;
 # Allow for long double string conversions.
 $y->{num}->[3] += 0;
@@ -112,12 +107,12 @@ is(nfreeze($y), nfreeze($r));
 
 is($y->ref->{key1}, 'val1');
 is($y->ref->{key2}, 'val2');
-is($hash_fetch, 2);
+is($TIED_HASH::hash_fetch, 2);
 
 my $num = $r->num;
 my $ok = 1;
 for (my $i = 0; $i < @$num; $i++) {
-	do { $ok = 0; last } unless $num->[$i] == $y->num->[$i];
+    do { $ok = 0; last } unless $num->[$i] == $y->num->[$i];
 }
 is($ok, 1);
 

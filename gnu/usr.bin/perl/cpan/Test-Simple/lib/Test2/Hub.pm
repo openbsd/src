@@ -2,7 +2,7 @@ package Test2::Hub;
 use strict;
 use warnings;
 
-our $VERSION = '1.302199';
+our $VERSION = '1.302210';
 
 
 use Carp qw/carp croak confess/;
@@ -233,8 +233,8 @@ sub add_context_acquire {
 *remove_context_aquire = \&remove_context_acquire;
 sub remove_context_acquire {
     my $self = shift;
-    my %subs = map {$_ => $_} @_;
-    @{$self->{+_CONTEXT_ACQUIRE}} = grep { !$subs{$_} == $_ } @{$self->{+_CONTEXT_ACQUIRE}};
+    my %subs = map {$_ => 1} @_;
+    @{$self->{+_CONTEXT_ACQUIRE}} = grep { !$subs{$_} } @{$self->{+_CONTEXT_ACQUIRE}};
 }
 
 sub add_context_init {
@@ -251,8 +251,8 @@ sub add_context_init {
 
 sub remove_context_init {
     my $self = shift;
-    my %subs = map {$_ => $_} @_;
-    @{$self->{+_CONTEXT_INIT}} = grep { !$subs{$_} == $_ } @{$self->{+_CONTEXT_INIT}};
+    my %subs = map {$_ => 1} @_;
+    @{$self->{+_CONTEXT_INIT}} = grep { !$subs{$_} } @{$self->{+_CONTEXT_INIT}};
 }
 
 sub add_context_release {
@@ -269,8 +269,8 @@ sub add_context_release {
 
 sub remove_context_release {
     my $self = shift;
-    my %subs = map {$_ => $_} @_;
-    @{$self->{+_CONTEXT_RELEASE}} = grep { !$subs{$_} == $_ } @{$self->{+_CONTEXT_RELEASE}};
+    my %subs = map {$_ => 1} @_;
+    @{$self->{+_CONTEXT_RELEASE}} = grep { !$subs{$_} } @{$self->{+_CONTEXT_RELEASE}};
 }
 
 sub send {
@@ -899,7 +899,7 @@ L<https://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

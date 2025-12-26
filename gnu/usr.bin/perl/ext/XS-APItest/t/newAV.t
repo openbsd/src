@@ -30,8 +30,11 @@ is_deeply newAVhv($plain_hv), [key => "value"], 'newAVhv on plain hash';
 newAVhv($plain_hv)->[1] .= "X";
 is $plain_hv->{key}, "value", 'newAVhv returns fresh storage';
 
-is_deeply [ sort +newAVhv({a => 1, b => 2, c => 3})->@* ], [ 1, 2, 3, "a", "b", "c" ],
-    'newAVhv on multiple keys';
+is_deeply [ sort +newAVhv({a => 1, b => 2, c => 3})->@* ],
+            ("a" lt "0")  # Such as EBCDIC
+             ? [ "a", "b", "c", 1, 2, 3 ]
+             : [ 1, 2, 3, "a", "b", "c" ],
+            'newAVhv on multiple keys';
 
 {
     package TiedHash {

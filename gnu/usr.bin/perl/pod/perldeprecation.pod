@@ -18,7 +18,7 @@ which they will be removed.
 
 =head3 Unicode Delimiter Will be Paired
 
-Some unicode delimiters used to be allowed as single characters, but
+Some Unicode delimiters used to be allowed as single characters, but
 in the future will be part of a balanced pair. This deprecation category
 is used to mark the ones that will change from being unpaired to paired.
 
@@ -37,7 +37,7 @@ Category: "deprecated::dot_in_inc"
 
 =head3 Unicode Property Name
 
-Various types of unicode property name will generate deprecated warnings
+Various types of Unicode property name will generate deprecated warnings
 when used in a regex pattern. For instance surrogate characters will result
 in deprecation warnings.
 
@@ -71,15 +71,6 @@ Category: "deprecated::subsequent_use_version"
 
 =head2 Perl 5.42
 
-=head3 Smartmatch
-
-Smartmatch is now seen as a failed experiment and was marked as deprecated
-in Perl 5.37.10. This includes the C<when> and C<given> keywords, as well
-as the smartmatch operator C<~~>. The feature will be removed entirely in the
-Perl 5.42.0 production release.
-
-Category: "deprecated::smartmatch"
-
 =head3 Goto Block Construct
 
 C<goto LABEL;> will produce a deprecated warning when jumping into the body
@@ -96,16 +87,6 @@ just avoid doing this; the people that maintain your code will be grateful for
 your restraint.
 
 Category: "deprecated::goto_construct"
-
-=head3 Use of C<'> as a global name separator
-
-Perl allows use of C<'> instead of C<::> to replace the parts of a
-package or global variable name, for example C<A::B> and C<A'B> are
-equivalent.
-
-C<'> will no longer be recognized as a name separator in Perl 5.42.
-
-Category: "deprecated::apostrophe_as_package_separator"
 
 =head2 Perl 5.40
 
@@ -484,7 +465,7 @@ quantifiers, as quote delimiters in C<qI<X>...I<X>> (where I<X> is
 the C<chr()> of a large code point), and as the upper limits in
 loops.
 
-The use of out of range code points was deprecated in Perl 5.24; as of
+The use of out-of-range code points was deprecated in Perl 5.24; as of
 Perl 5.28 using a code point exceeding C<IV_MAX> throws a fatal error.
 
 If your code is to run on various platforms, keep in mind that the upper

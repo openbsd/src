@@ -161,6 +161,8 @@ END_EXTERN_C
 
 #define PTHREAD_ATFORK(prepare,parent,child)	NOOP
 
+#define PTHREAD_INIT_SELF(var) NOOP
+
 #if defined(USE_RTL_THREAD_API) && !defined(_MSC_VER)
 #define JOIN(t, avp)							\
     STMT_START {							\

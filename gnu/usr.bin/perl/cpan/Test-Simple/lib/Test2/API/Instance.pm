@@ -2,13 +2,13 @@ package Test2::API::Instance;
 use strict;
 use warnings;
 
-our $VERSION = '1.302199';
+our $VERSION = '1.302210';
 
 our @CARP_NOT = qw/Test2::API Test2::API::Instance Test2::IPC::Driver Test2::Formatter/;
 use Carp qw/confess carp/;
 use Scalar::Util qw/reftype/;
 
-use Test2::Util qw/get_tid USE_THREADS CAN_FORK pkg_to_file try CAN_SIGSYS/;
+use Test2::Util qw/get_tid USE_THREADS CAN_FORK pkg_to_file try/;
 
 use Test2::EventFacet::Trace();
 use Test2::API::Stack();
@@ -820,7 +820,7 @@ L<https://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

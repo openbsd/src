@@ -211,7 +211,7 @@ if (CAN_REALLY_FORK) {
     like($warnings[0], qr/Process .* did not exit cleanly \(wstat: \S+, exit: 0, sig: 15\)/, "Warn about exit");
 }
 
-if (CAN_THREAD && $] ge '5.010') {
+if (CAN_THREAD && "$]" >= 5.010) {
     require threads;
     my $one = $CLASS->new;
 
@@ -297,7 +297,7 @@ if (CAN_THREAD && $] ge '5.010') {
 }
 
 SKIP: {
-    last SKIP if $] lt "5.008";
+    last SKIP if "$]" < 5.008;
     my $one = $CLASS->new;
     my $stderr = "";
     {
@@ -326,7 +326,7 @@ This is not a supported configuration, you will have problems.
 }
 
 SKIP: {
-    last SKIP if $] lt "5.008";
+    last SKIP if "$]" < 5.008;
     require Test2::API::Breakage;
     no warnings qw/redefine once/;
     my $ran = 0;

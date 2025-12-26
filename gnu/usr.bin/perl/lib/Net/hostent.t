@@ -6,9 +6,9 @@ BEGIN {
 }
 
 use Test::More;
+use Config;
 
 BEGIN {
-    require Config; import Config;
     if ($Config{'extensions'} !~ /\bSocket\b/ && 
         !(($^O eq 'VMS') && $Config{d_socket})) 
     {
@@ -18,8 +18,6 @@ BEGIN {
 	plan skip_all => "Test relies on resolution of localhost, fails on $^O ($Config{osvers})";
     }
 }
-
-use Test::More;
 
 BEGIN { use_ok 'Net::hostent' }
 

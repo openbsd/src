@@ -14,7 +14,7 @@ BEGIN {
     }
 }
 
-skip_all("known to fail on $]") if $] le "5.006002";
+skip_all("known to fail on $]") if "$]" <= 5.006002;
 
 $@ = "";
 my ($file, $line) = (__FILE__, __LINE__ + 1);

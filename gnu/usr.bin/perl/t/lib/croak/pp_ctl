@@ -57,3 +57,71 @@ die;
 EXPECT
 Unmatched ) in regex; marked by <-- HERE in m/_) <-- HERE / at (eval 1) line 1.
 	...propagated at - line 2.
+########
+# NAME last from smartmatch CV
+0 ~~ sub {last} for 0
+EXPECT
+Can't "last" outside a loop block at - line 1.
+########
+# NAME redo from smartmatch CV
+0 ~~ sub {redo} for 0
+EXPECT
+Can't "redo" outside a loop block at - line 1.
+########
+# NAME next from smartmatch CV
+0 ~~ sub {next} for 0
+EXPECT
+Can't "next" outside a loop block at - line 1.
+########
+# NAME goto loop label from smartmatch CV
+FOO: 0~~sub{goto FOO} for 0
+EXPECT
+Can't find label FOO at - line 1.
+########
+# NAME last from smartmatch CV against array
+my @x = (0);
+@x ~~ sub {last} for 0
+EXPECT
+Can't "last" outside a loop block at - line 2.
+########
+# NAME redo from smartmatch CV against array
+my @x = (0);
+@x ~~ sub {redo} for 0
+EXPECT
+Can't "redo" outside a loop block at - line 2.
+########
+# NAME next from smartmatch CV against array
+my @x = (0);
+@x ~~ sub {next} for 0
+EXPECT
+Can't "next" outside a loop block at - line 2.
+########
+# NAME goto loop label from smartmatch CV against array
+my @x = (0);
+FOO:@x ~~sub{goto FOO} for 0
+EXPECT
+Can't find label FOO at - line 2.
+########
+# NAME last from smartmatch CV against hash
+my %x = qw(a b);
+%x ~~ sub {last} for 0
+EXPECT
+Can't "last" outside a loop block at - line 2.
+########
+# NAME redo from smartmatch CV against hash
+my %x = qw(a b);
+%x ~~ sub {redo} for 0
+EXPECT
+Can't "redo" outside a loop block at - line 2.
+########
+# NAME next from smartmatch CV against hash
+my %x = qw(a b);
+%x ~~ sub {next} for 0
+EXPECT
+Can't "next" outside a loop block at - line 2.
+########
+# NAME goto loop label from smartmatch CV against hash
+my %x = qw(a b);
+FOO:%x ~~sub{goto FOO} for 0
+EXPECT
+Can't find label FOO at - line 2.

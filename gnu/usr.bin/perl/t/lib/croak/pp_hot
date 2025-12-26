@@ -46,6 +46,15 @@ Undefined subroutine &main::foo called at - line 3.
 EXPECT
 Undefined subroutine &main::foo called at - line 2.
 ########
+# NAME package separator typo, creating a label by accident
+   package BEEP;
+   sub boop;
+   package main;
+   BEEP:boop();
+EXPECT
+Undefined subroutine &main::boop called, close to label 'BEEP' at - line 4.
+
+########
 # NAME calling undef scalar
    &{+undef};
 EXPECT

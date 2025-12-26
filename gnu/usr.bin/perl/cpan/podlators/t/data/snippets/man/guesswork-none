@@ -7,7 +7,7 @@ guesswork none
 [input]
 =head1 GUESSWORK
 
-The hyphens-in-compound-words shouldn't be escaped, but e-mail should be.
+Both hyphens-in-compound-words and e-mail should be escaped.
 
 Function: foo(), bar::baz(), _private::_stuff()
 
@@ -18,7 +18,7 @@ Variables: $foo, @bar::baz, %Pod::Blah
 [output]
 .SH GUESSWORK
 .IX Header "GUESSWORK"
-The hyphens-in-compound-words shouldn't be escaped, but e\-mail should be.
+Both hyphens\-in\-compound\-words and e\-mail should be escaped.
 .PP
 Function: foo(), bar::baz(), _private::_stuff()
 .PP

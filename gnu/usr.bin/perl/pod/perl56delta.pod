@@ -77,7 +77,7 @@ will be needed to complete the toolkit for dealing with Unicode.
 
 The new C<\N> escape interpolates named characters within strings.
 For example, C<"Hi! \N{WHITE SMILING FACE}"> evaluates to a string
-with a unicode smiley face at the end.
+with a Unicode smiley face at the end.
 
 =head2 "our" declarations
 
@@ -92,7 +92,7 @@ variables.  See L<perlfunc/our>.
 
 Literals of the form C<v1.2.3.4> are now parsed as a string composed
 of characters with the specified ordinals.  This is an alternative, more
-readable way to construct (possibly unicode) strings instead of
+readable way to construct (possibly Unicode) strings instead of
 interpolating characters, as in C<"\x{1}\x{2}\x{3}\x{4}">.  The leading
 C<v> may be omitted if there are more than two ordinals, so C<1.2.3> is
 parsed the same as C<v1.2.3>.
@@ -2037,7 +2037,7 @@ so it was truncated to the string shown.
 
 =item Can't declare class for non-scalar %s in "%s"
 
-(S) Currently, only scalar variables can declared with a specific class
+(S) Currently, only scalar variables can be declared with a specific class
 qualifier in a "my" or "our" declaration.  The semantics may be extended
 for other types of variables in future.
 

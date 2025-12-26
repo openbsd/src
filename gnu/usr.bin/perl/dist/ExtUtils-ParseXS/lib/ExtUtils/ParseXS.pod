@@ -64,6 +64,15 @@ The following parameters are accepted:
 
 =over 4
 
+=item filename
+
+This is the full pathname of the XS file to open and process.
+process_file() will normally chdir() to the basename of the file.
+
+The filename may be a reference to a string, in which case the lines of
+the string form the contents of the "input" file, using the standard
+C<open $fh, '<', \$string> mechanism.
+
 =item B<C++>
 
 Adds C<extern "C"> to the C code.  Default is false.

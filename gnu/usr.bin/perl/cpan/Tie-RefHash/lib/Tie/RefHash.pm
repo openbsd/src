@@ -1,7 +1,7 @@
-package Tie::RefHash; # git description: Tie-RefHash-1.39-10-g2cfa4bd
+package Tie::RefHash; # git description: v1.40-9-g23812d9
 # ABSTRACT: Use references as hash keys
 
-our $VERSION = '1.40';
+our $VERSION = '1.41';
 
 #pod =head1 SYNOPSIS
 #pod
@@ -76,34 +76,16 @@ our @ISA = qw(Tie::Hash);
 use strict;
 use Carp ();
 
+# Tie::RefHash::Weak (until at least 0.09) assumes we define a refaddr()
+# function, so just import the one from Scalar::Util
+use Scalar::Util qw(refaddr);
+
 BEGIN {
-  local $@;
   # determine whether we need to take care of threads
   use Config ();
   my $usethreads = $Config::Config{usethreads}; # && exists $INC{"threads.pm"}
   *_HAS_THREADS = $usethreads ? sub () { 1 } : sub () { 0 };
-  *_HAS_SCALAR_UTIL = eval { require Scalar::Util; 1 } ? sub () { 1 } : sub () { 0 };
   *_HAS_WEAKEN = defined(&Scalar::Util::weaken) ? sub () { 1 } : sub () { 0 };
-}
-
-BEGIN {
-  # create a refaddr function
-
-  local $@;
-
-  if ( _HAS_SCALAR_UTIL ) {
-    *refaddr = sub { goto \&Scalar::Util::refaddr }
-  } else {
-    require overload;
-
-    *refaddr = sub {
-      if ( overload::StrVal($_[0]) =~ /\( 0x ([a-zA-Z0-9]+) \)$/x) {
-          return $1;
-      } else {
-        die "couldn't parse StrVal: " . overload::StrVal($_[0]);
-      }
-    };
-  }
 }
 
 my (@thread_object_registry, $count); # used by the CLONE method to rehash the keys after their refaddr changed
@@ -127,6 +109,7 @@ sub TIEHASH {
       if ( ++$count > 1000 ) {
         # this ensures we don't fill up with a huge array dead weakrefs
         @thread_object_registry = grep defined, @thread_object_registry;
+        Scalar::Util::weaken( $_ ) for @thread_object_registry;
         $count = 0;
       }
     } else {
@@ -164,19 +147,20 @@ sub CLONE {
   # when the thread has been cloned all the objects need to be updated.
   # dead weakrefs are undefined, so we filter them out
   @thread_object_registry = grep defined && do { $_->_reindex_keys; 1 }, @thread_object_registry;
+  Scalar::Util::weaken( $_ ) for @thread_object_registry;
   $count = 0; # we just cleaned up
 }
 
 sub _reindex_keys {
   my ( $self, $extra_keys ) = @_;
   # rehash all the ref keys based on their new StrVal
-  %{ $self->[0] } = map +(Scalar::Util::refaddr($_->[0]) => $_), (values(%{ $self->[0] }), @{ $extra_keys || [] });
+  %{ $self->[0] } = map +(refaddr($_->[0]) => $_), (values(%{ $self->[0] }), @{ $extra_keys || [] });
 }
 
 sub FETCH {
   my($s, $k) = @_;
   if (ref $k) {
-      my $kstr = Scalar::Util::refaddr($k);
+      my $kstr = refaddr($k);
       if (defined $s->[0]{$kstr}) {
         $s->[0]{$kstr}[1];
       }
@@ -192,7 +176,7 @@ sub FETCH {
 sub STORE {
   my($s, $k, $v) = @_;
   if (ref $k) {
-    $s->[0]{Scalar::Util::refaddr($k)} = [$k, $v];
+    $s->[0]{refaddr($k)} = [$k, $v];
   }
   else {
     $s->[1]{$k} = $v;
@@ -203,13 +187,13 @@ sub STORE {
 sub DELETE {
   my($s, $k) = @_;
   (ref $k)
-    ? (delete($s->[0]{Scalar::Util::refaddr($k)}) || [])->[1]
+    ? (delete($s->[0]{refaddr($k)}) || [])->[1]
     : delete($s->[1]{$k});
 }
 
 sub EXISTS {
   my($s, $k) = @_;
-  (ref $k) ? exists($s->[0]{Scalar::Util::refaddr($k)}) : exists($s->[1]{$k});
+  (ref $k) ? exists($s->[0]{refaddr($k)}) : exists($s->[1]{$k});
 }
 
 sub FIRSTKEY {
@@ -268,7 +252,7 @@ Tie::RefHash - Use references as hash keys
 
 =head1 VERSION
 
-version 1.40
+version 1.41
 
 =head1 SYNOPSIS
 
@@ -343,7 +327,7 @@ Tie::RefHash::Nestable by Ed Avis <ed@membled.com>
 
 =head1 CONTRIBUTORS
 
-=for stopwords Yuval Kogman Karen Etheridge Florian Ragwitz Jerry D. Hedden
+=for stopwords Yuval Kogman Karen Etheridge Florian Ragwitz Lukas Mai Jerry D. Hedden tusooa
 
 =over 4
 
@@ -361,7 +345,15 @@ Florian Ragwitz <rafl@debian.org>
 
 =item *
 
+Lukas Mai <lukasmai.403@gmail.com>
+
+=item *
+
 Jerry D. Hedden <jdhedden@cpan.org>
+
+=item *
+
+tusooa <tusooa@kazv.moe>
 
 =back
 

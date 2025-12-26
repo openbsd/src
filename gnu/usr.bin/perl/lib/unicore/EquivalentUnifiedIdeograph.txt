@@ -1,8 +1,8 @@
-# EquivalentUnifiedIdeograph-15.0.0.txt
-# Date: 2022-04-26, 20:42:00 GMT [KL, KW]
-# © 2022 Unicode®, Inc.
+# EquivalentUnifiedIdeograph-16.0.0.txt
+# Date: 2024-02-02
+# © 2024 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see https://www.unicode.org/terms_of_use.html
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
 #
 # For documentation, see UAX #44: Unicode Character Database,
 # at https://www.unicode.org/reports/tr44/
@@ -404,5 +404,7 @@
 # 31CE; CJK STROKE HZZZ
 # 31E2; CJK STROKE PG
 # 31E3; CJK STROKE Q
+# 31E4; CJK STROKE HXG
+# 31E5; CJK STROKE SZP
 
 # EOF

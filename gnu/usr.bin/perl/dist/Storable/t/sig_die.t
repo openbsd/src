@@ -6,17 +6,8 @@
 #  in the README file that comes with the distribution.
 #
 
-sub BEGIN {
-    unshift @INC, 't';
-    unshift @INC, 't/compat' if $] < 5.006002;
-    require Config; import Config;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
-}
-
 use strict;
+use warnings;
 use Test::More tests => 1;
 
 my @warns;

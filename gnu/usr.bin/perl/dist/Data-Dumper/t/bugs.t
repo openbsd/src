@@ -83,6 +83,7 @@ SKIP: {
 
 # writing out of bounds with malformed utf8
 SKIP: {
+    skip("No XS available", 1) if !defined &Data::Dumper::Dumpxs;
     eval { require Encode };
     skip("Encode not available", 1) if $@;
     local $^W=1;

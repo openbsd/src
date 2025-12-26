@@ -16,14 +16,11 @@
 # Storable::init_perinterp() to create a new context for each new
 # thread when it starts
 
+use strict;
+use warnings;
+
+use Config;
 sub BEGIN {
-    unshift @INC, 't';
-    unshift @INC, 't/compat' if $] < 5.006002;
-    require Config; import Config;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
     unless ($Config{'useithreads'} and eval { require threads; 1 }) {
         print "1..0 # Skip: no threads\n";
         exit 0;
@@ -35,15 +32,13 @@ sub BEGIN {
     # - is \W, so can't use \b at start. Negative look ahead and look behind
     # works at start/end of string, or where preceded/followed by spaces
     if ($] == 5.008002 and eval q{ $Config{'ccflags'} =~ /(?<!\S)-DDEBUGGING(?!\S)/ }) {
-	# Bug caused by change 21610, fixed by change 21849
+        # Bug caused by change 21610, fixed by change 21849
         print "1..0 # Skip: tickles bug in threads combined with -DDEBUGGING on 5.8.2\n";
         exit 0;
     }
 }
 
 use Test::More;
-
-use strict;
 
 use threads;
 use Storable qw(nfreeze);

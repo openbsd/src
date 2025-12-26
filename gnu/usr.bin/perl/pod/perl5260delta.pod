@@ -1637,7 +1637,7 @@ L<[GH #15291]|https://github.com/Perl/perl5/issues/15291>
 
 Experimental "%s" subs not enabled
 
-This warning was been removed, as lexical subs are no longer experimental.
+This warning has been removed, as lexical subs are no longer experimental.
 
 =item *
 
@@ -1926,7 +1926,7 @@ L<[perl #128020]|https://rt.perl.org/Public/Bug/Display.html?id=128020>
 
 =item *
 
-C<-Ddefault_inc_excludes_dot> has added, and enabled by default.
+C<-Ddefault_inc_excludes_dot> was added, and enabled by default.
 
 =item *
 
@@ -2622,7 +2622,7 @@ L<[GH #15657]|https://github.com/Perl/perl5/issues/15657>
 
 =item *
 
-Occasionally C<local()>s in a code block within a patterns weren't being
+Occasionally C<local()>s in a code block within a pattern weren't being
 undone when the pattern matching backtracked over the code block.
 L<[GH #15056]|https://github.com/Perl/perl5/issues/15056>
 
@@ -2828,7 +2828,7 @@ L<[GH #15606]|https://github.com/Perl/perl5/issues/15606>
 
 =item *
 
-Avoid a heap-after-use error in the parser when creating an error messge
+Avoid a heap-after-use error in the parser when creating an error message
 for a syntactically invalid heredoc.
 L<[GH #15527]|https://github.com/Perl/perl5/issues/15527>
 

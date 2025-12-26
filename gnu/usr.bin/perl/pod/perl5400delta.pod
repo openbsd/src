@@ -728,7 +728,7 @@ of them will destroy the previous returns from any.  This hasn't been true
 since 5.6.0, except it does remain true if these are called during global
 destruction.  With that caveat, the return of each of these is a fresh
 string in a temporary that will automatically be freed by a call to
-L<perlapi/C<FREETMPS>> or at at places such as statement boundaries.
+L<perlapi/C<FREETMPS>> or at places such as statement boundaries.
 
 =item *
 

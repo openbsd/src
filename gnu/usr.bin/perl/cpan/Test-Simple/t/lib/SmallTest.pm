@@ -5,9 +5,8 @@ package SmallTest;
 
 require Exporter;
 
-use vars qw( @ISA @EXPORT );
-@ISA = qw( Exporter );
-@EXPORT = qw( ok is_eq is_num );
+our @ISA = qw( Exporter );
+our @EXPORT = qw( ok is_eq is_num );
 
 use Test::Builder;
 

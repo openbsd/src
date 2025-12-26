@@ -18,7 +18,7 @@ S<L<RFC4034|https://tools.ietf.org/html/rfc4034>>
 .SH URLS
 .IX Header "URLS"
 S<> wrapping L<> should make the space between the anchor and URL
-non-breaking and thus keep them together.
+non\-breaking and thus keep them together.
 .PP
 perl Net::DNS Net::DNS::RR Net::DNS::SEC
 RFC2535\ <https://tools.ietf.org/html/rfc2535>

@@ -4,9 +4,9 @@ Quote escaping
 [input]
 =head1 Quote escaping
 
-Don't escape `this' but do escape C<`this'> (and don't surround it in quotes).
+Escape both `this' and C<`this'> (and don't surround it in quotes).
 
 [output]
 .SH "Quote escaping"
 .IX Header "Quote escaping"
-Don't escape `this' but do escape \f(CW\`this\*(Aq\fR (and don't surround it in quotes).
+Escape both \`this\*(Aq and \f(CW\`this\*(Aq\fR (and don\*(Aqt surround it in quotes).

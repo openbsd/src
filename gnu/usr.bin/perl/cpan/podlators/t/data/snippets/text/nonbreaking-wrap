@@ -1,0 +1,15 @@
+[name]
+Wrapping with non-breaking space
+
+[input]
+=head1 blahblah
+
+Blah blah blah.  The following formula should not be folded:
+S<a + b + c + d + e + f + g + h + i>
+
+=cut
+
+[output]
+blahblah
+    Blah blah blah. The following formula should not be folded:
+    a + b + c + d + e + f + g + h + i

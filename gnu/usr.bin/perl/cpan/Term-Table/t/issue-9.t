@@ -1,6 +1,20 @@
-use Test2::Tools::Tiny;
 use warnings FATAL => 'all';
 use strict;
+
+BEGIN {
+    if (eval { require Test2::Tools::Tiny }) {
+        print "# Using Test2::Tools::Tiny\n";
+        Test2::Tools::Tiny->import();
+    }
+    elsif (eval { require Test::More; Test::More->can('done_testing') ? 1 : 0 }) {
+        print "# Using Test::More " . Test::More->VERSION . "\n";
+        Test::More->import();
+    }
+    else {
+        print "1..0 # SKIP Neither Test2::Tools::Tiny nor a sufficient Test::More is installed\n";
+        exit(0);
+    }
+}
 
 use Term::Table;
 
@@ -19,8 +33,8 @@ my $ok = eval {
     1;
 };
 
-ok($@ !~ m/timeout/, "Did not timeout", $@);
-ok($@ =~ m/Table is too large \(9 including 4 padding\) to fit into max-width \(4\)/, "Threw proper exception", $@);
+ok($@ !~ m/timeout/, "Did not timeout");
+ok($@ =~ m/Table is too large \(9 including 4 padding\) to fit into max-width \(4\)/, "Threw proper exception");
 ok(!@table, "Did not render");
 
 
@@ -34,8 +48,8 @@ $ok = eval {
     1;
 };
 
-ok($@ !~ m/timeout/, "Did not timeout", $@);
-ok($@ =~ m/Table is too large \(5 including 0 padding\) to fit into max-width \(4\)/, "Threw proper exception", $@);
+ok($@ !~ m/timeout/, "Did not timeout");
+ok($@ =~ m/Table is too large \(5 including 0 padding\) to fit into max-width \(4\)/, "Threw proper exception");
 ok(!@table, "Did not render");
 
 
@@ -49,8 +63,8 @@ $ok = eval {
     1;
 };
 
-ok($ok, "Did not die", $@);
-ok($@ !~ m/timeout/, "Did not timeout", $@);
+ok($ok, "Did not die");
+ok($@ !~ m/timeout/, "Did not timeout");
 ok(@table, "rendered");
 ok(length($table[0]) == 5, "overflow in rendering");
 

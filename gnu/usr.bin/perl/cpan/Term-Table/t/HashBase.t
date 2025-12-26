@@ -1,23 +1,35 @@
 use strict;
 use warnings;
 
-use Test::More;
+BEGIN {
+    if (eval { require Test2::Tools::Tiny; 0 }) {
+        print "# Using Test2::Tools::Tiny\n";
+        Test2::Tools::Tiny->import();
+    }
+    elsif (eval { require Test::More; Test::More->can('done_testing') ? 1 : 0 }) {
+        print "# Using Test::More " . Test::More->VERSION . "\n";
+        Test::More->import();
 
+        *warnings = sub(&) {
+            my $code = shift;
+            my @warnings;
+            local $SIG{__WARN__} = sub { push @warnings => @_ };
+            $code->();
+            return \@warnings;
+        };
 
-sub warnings(&) {
-    my $code = shift;
-    my @warnings;
-    local $SIG{__WARN__} = sub { push @warnings => @_ };
-    $code->();
-    return \@warnings;
-}
-
-sub exception(&) {
-    my $code = shift;
-    local ($@, $!, $SIG{__DIE__});
-    my $ok = eval { $code->(); 1 };
-    my $error = $@ || 'SQUASHED ERROR';
-    return $ok ? undef : $error;
+        *exception = sub (&) {
+            my $code = shift;
+            local ($@, $!, $SIG{__DIE__});
+            my $ok = eval { $code->(); 1 };
+            my $error = $@ || 'SQUASHED ERROR';
+            return $ok ? undef : $error;
+        };
+    }
+    else {
+        print "1..0 # SKIP Neither Test2::Tools::Tiny nor a sufficient Test::More is installed\n";
+        exit(0);
+    }
 }
 
 BEGIN {

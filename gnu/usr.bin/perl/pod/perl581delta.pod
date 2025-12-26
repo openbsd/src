@@ -831,7 +831,7 @@ sv_setsv, are again available.
 Certain Perl core C APIs like cxinc and regatom are no longer
 available at all to code outside the Perl core of the Perl core
 extensions.  This is intentional.  They never should have been
-available with the shorter names, and if you application depends on
+available with the shorter names, and if your application depends on
 them, you should (be ashamed and) contact perl5-porters to discuss
 what are the proper APIs.
 

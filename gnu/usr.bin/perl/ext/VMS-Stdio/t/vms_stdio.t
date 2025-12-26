@@ -1,6 +1,6 @@
 # Tests for VMS::Stdio v2.2
 use VMS::Stdio;
-import VMS::Stdio qw(&flush &getname &rewind &sync &tmpnam);
+VMS::Stdio->import(qw(&flush &getname &rewind &sync &tmpnam));
 
 print "1..19\n";
 print +(defined(&getname) ? '' : 'not '), "ok 1\n";

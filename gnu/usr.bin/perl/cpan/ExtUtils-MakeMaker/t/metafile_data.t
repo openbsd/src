@@ -35,7 +35,9 @@ sub mymeta_ok {
 }
 
 my $new_mm = sub {
-    return bless { ARGS => {@_}, @_ }, 'ExtUtils::MM_Any';
+    my %args = @_;
+    $args{DISTVNAME} ||= "$args{DISTNAME}-$args{VERSION}.tar.gz";
+    return bless { ARGS => \%args, %args }, 'ExtUtils::MM_Any';
 };
 my @METASPEC14 = (
     'meta-spec'  => {
@@ -456,7 +458,7 @@ my @GENERIC_OUT = (
 note "CPAN::Meta bug using the module version instead of the meta spec version";
 {
     my $mm = $new_mm->(
-        NAME      => 'GD::Barcode::Code93',
+        DISTNAME  => 'GD-Barcode-Code93',
         AUTHOR    => 'Chris DiMartino',
         ABSTRACT  => 'Code 93 implementation of GD::Barcode family',
         PREREQ_PM => {

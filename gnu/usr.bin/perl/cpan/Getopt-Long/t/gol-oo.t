@@ -17,7 +17,7 @@ die("Getopt::Long version $want_version required--this is only version ".
 print "1..14\n";
 
 @ARGV = qw(-Foo -baR --foo bar);
-my $p = new Getopt::Long::Parser (config => ["no_ignore_case"]);
+my $p = Getopt::Long::Parser->new(config => ["no_ignore_case"]);
 undef $opt_baR;
 undef $opt_bar;
 print "ok 1\n" if $p->getoptions ("foo", "Foo=s");

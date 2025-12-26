@@ -235,7 +235,7 @@ Here's an example of how to copy a binary file:
 
     my $BUFSIZ   = 64 * (2 ** 10);
     my $name_in  = "/some/input/file";
-    my $name_out = "/some/output/flie";
+    my $name_out = "/some/output/file";
 
     my($in_fh, $out_fh, $buffer);
 
@@ -312,7 +312,7 @@ separate program, rather than an ordinary filehandle into a file.
 
 Note that the third argument to C<open> is a string containing the
 program name (C<sort>) plus all its arguments: in this case, C<-u> to
-specify unqiue sort, and then a fileglob specifying the files to sort.
+specify unique sort, and then a fileglob specifying the files to sort.
 The resulting filehandle C<$sort_fh> works just like a read-only (C<<
 "<" >>) filehandle, and your program can subsequently read data
 from it as if it were opened onto an ordinary, single file.
@@ -364,7 +364,7 @@ the first example like this:
 When you call C<open> this way, Perl invokes the given command directly,
 bypassing the shell. As such, the shell won't try to interpret any
 special characters within the command's argument list, which might
-overwise have unwanted effects. This can make for safer, less
+otherwise have unwanted effects. This can make for safer, less
 error-prone C<open> calls, useful in cases such as passing in variables
 as arguments, or even just referring to filenames with spaces in them.
 

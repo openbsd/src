@@ -11,6 +11,8 @@ ALIAS:
     docks = 1
     dachs => lox
     xunx = 0
+    do   = 0
+    xunx2 = 0
     xukes => do
 CODE:
 {

@@ -9,15 +9,8 @@
 # Tests freezing/thawing structures containing Singleton objects,
 # which should see both structs pointing to the same object.
 
-sub BEGIN {
-    unshift @INC, 't';
-    unshift @INC, 't/compat' if $] < 5.006002;
-    require Config; import Config;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
-}
+use strict;
+use warnings;
 
 use Test::More tests => 16;
 use Storable ();
@@ -66,25 +59,25 @@ package My::Singleton;
 my $SINGLETON = undef;
 
 sub new {
-	$SINGLETON or
-	$SINGLETON = bless { value => 'Hello World!' }, $_[0];
+    $SINGLETON or
+    $SINGLETON = bless { value => 'Hello World!' }, $_[0];
 }
 
 sub STORABLE_freeze {
-	my $self = shift;
+    my $self = shift;
 
-	# We don't actually need to return anything, but provide a null string
-	# to avoid the null-list-return behaviour.
-	return ('foo');
+    # We don't actually need to return anything, but provide a null string
+    # to avoid the null-list-return behaviour.
+    return ('foo');
 }
 
 sub STORABLE_attach {
-	my ($class, $clone, $string) = @_;
-	Test::More::ok( ! ref $class, 'STORABLE_attach passed class, and not an object' );
-	Test::More::is( $class, 'My::Singleton', 'STORABLE_attach is passed the correct class name' );
-	Test::More::is( $clone, 0, 'We are not in a dclone' );
-	Test::More::is( $string, 'foo', 'STORABLE_attach gets the string back' );
+    my ($class, $clone, $string) = @_;
+    Test::More::ok( ! ref $class, 'STORABLE_attach passed class, and not an object' );
+    Test::More::is( $class, 'My::Singleton', 'STORABLE_attach is passed the correct class name' );
+    Test::More::is( $clone, 0, 'We are not in a dclone' );
+    Test::More::is( $string, 'foo', 'STORABLE_attach gets the string back' );
 
-	# Get the Singleton object and return it
-	return $class->new;
+    # Get the Singleton object and return it
+    return $class->new;
 }

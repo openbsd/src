@@ -26,7 +26,7 @@ for my $meth (qw/send cull add_hub drop_hub waiting is_viable/) {
 }
 
 SKIP: {
-    last SKIP if $] lt "5.008";
+    last SKIP if "$]" < 5.008;
 tests abort => sub {
     my $one = Test2::IPC::Driver->new(no_fatal => 1);
     my ($err, $out) = ("", "");

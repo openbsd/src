@@ -32,7 +32,7 @@ S_unwind_scan_frames(pTHX_ const void *p)
     do {
         scan_frame *n= f->next_frame;
         Safefree(f);
-        f= n;
+        f = n;
     } while (f);
 }
 
@@ -143,7 +143,7 @@ S_make_exactf_invlist(pTHX_ RExC_state_t *pRExC_state, regnode *node)
         const U8* e = s + bytelen;
         IV fc;
 
-        fc = uc = utf8_to_uvchr_buf(s, s + bytelen, NULL);
+        fc = uc = utf8_to_uv_or_die(s, s + bytelen, NULL);
 
         /* The only code points that aren't folded in a UTF EXACTFish
          * node are the problematic ones in EXACTFL nodes */
@@ -317,9 +317,9 @@ S_ssc_anything(pTHX_ regnode_ssc *ssc)
 STATIC int
 S_ssc_is_anything(const regnode_ssc *ssc)
 {
-    /* Returns TRUE if the SSC 'ssc' can match the empty string and any code
-     * point; FALSE otherwise.  Thus, this is used to see if using 'ssc' buys
-     * us anything: if the function returns TRUE, 'ssc' hasn't been restricted
+    /* Returns true if the SSC 'ssc' can match the empty string and any code
+     * point; false otherwise.  Thus, this is used to see if using 'ssc' buys
+     * us anything: if the function returns true, 'ssc' hasn't been restricted
      * in any way, so there's no point in using it */
 
     UV start = 0, end = 0;  /* Initialize due to messages from dumb compiler */
@@ -330,7 +330,7 @@ S_ssc_is_anything(const regnode_ssc *ssc)
     assert(is_ANYOF_SYNTHETIC(ssc));
 
     if (! (ANYOF_FLAGS(ssc) & SSC_MATCHES_EMPTY_STRING)) {
-        return FALSE;
+        return false;
     }
 
     /* See if the list consists solely of the range 0 - Infinity */
@@ -342,7 +342,7 @@ S_ssc_is_anything(const regnode_ssc *ssc)
     invlist_iterfinish(ssc->invlist);
 
     if (ret) {
-        return TRUE;
+        return true;
     }
 
     /* If e.g., both \w and \W are set, matches everything */
@@ -350,12 +350,12 @@ S_ssc_is_anything(const regnode_ssc *ssc)
         int i;
         for (i = 0; i < ANYOF_POSIXL_MAX; i += 2) {
             if (ANYOF_POSIXL_TEST(ssc, i) && ANYOF_POSIXL_TEST(ssc, i+1)) {
-                return TRUE;
+                return true;
             }
         }
     }
 
-    return FALSE;
+    return false;
 }
 
 void
@@ -390,7 +390,7 @@ STATIC int
 S_ssc_is_cp_posixl_init(const RExC_state_t *pRExC_state,
                         const regnode_ssc *ssc)
 {
-    /* Returns TRUE if the SSC 'ssc' is in its initial state with regard only
+    /* Returns true if the SSC 'ssc' is in its initial state with regard only
      * to the list of code points matched, and locale posix classes; hence does
      * not check its flags) */
 
@@ -409,14 +409,14 @@ S_ssc_is_cp_posixl_init(const RExC_state_t *pRExC_state,
     invlist_iterfinish(ssc->invlist);
 
     if (! ret) {
-        return FALSE;
+        return false;
     }
 
     if (RExC_contains_locale && ! ANYOF_POSIXL_SSC_TEST_ALL_SET(ssc)) {
-        return FALSE;
+        return false;
     }
 
-    return TRUE;
+    return true;
 }
 
 
@@ -432,7 +432,7 @@ S_get_ANYOF_cp_list_for_ssc(pTHX_ const RExC_state_t *pRExC_state,
 
     SV* invlist = NULL;
     SV* only_utf8_locale_invlist = NULL;
-    bool new_node_has_latin1 = FALSE;
+    bool new_node_has_latin1 = false;
     const U8 flags = (REGNODE_TYPE(OP(node)) == ANYOF)
                       ? ANYOF_FLAGS(node)
                       : 0;
@@ -447,7 +447,7 @@ S_get_ANYOF_cp_list_for_ssc(pTHX_ const RExC_state_t *pRExC_state,
     else if (ANYOF_HAS_AUX(node)) {
         const U32 n = ARG1u(node);
         SV * const rv = MUTABLE_SV(RExC_rxi->data->data[n]);
-        AV * const av = MUTABLE_AV(SvRV(rv));
+        AV * const av = AV_FROM_REF(rv);
         SV **const ary = AvARRAY(av);
 
         if (av_tindex_skip_len_mg(av) >= DEFERRED_USER_DEFINED_INDEX) {
@@ -503,7 +503,7 @@ S_get_ANYOF_cp_list_for_ssc(pTHX_ const RExC_state_t *pRExC_state,
                     /* empty */
                 }
                 invlist = _add_range_to_invlist(invlist, start, i-1);
-                new_node_has_latin1 = TRUE;
+                new_node_has_latin1 = true;
             }
         }
     }
@@ -670,7 +670,7 @@ S_ssc_and(pTHX_ const RExC_state_t *pRExC_state, regnode_ssc *ssc,
 
         ssc_intersection(ssc,
                          anded_cp_list,
-                         FALSE /* Has already been inverted */
+                         false /* Has already been inverted */
                          );
 
         /* If either P1 or P2 is empty, the intersection will be also; can skip
@@ -747,10 +747,10 @@ S_ssc_and(pTHX_ const RExC_state_t *pRExC_state, regnode_ssc *ssc,
             if (and_with_flags & ANYOF_MATCHES_POSIXL) {
                 ANYOF_POSIXL_AND((regnode_charclass_posixl*) and_with, ssc);
             }
-            ssc_union(ssc, anded_cp_list, FALSE);
+            ssc_union(ssc, anded_cp_list, false);
         }
         else { /* P1 = P2 = empty */
-            ssc_intersection(ssc, anded_cp_list, FALSE);
+            ssc_intersection(ssc, anded_cp_list, false);
         }
     }
 }
@@ -834,7 +834,7 @@ S_ssc_or(pTHX_ const RExC_state_t *pRExC_state, regnode_ssc *ssc,
 
     ssc_union(ssc,
               ored_cp_list,
-              FALSE /* Already has been inverted */
+              false /* Already has been inverted */
               );
 }
 
@@ -889,7 +889,7 @@ S_ssc_cp_and(pTHX_ regnode_ssc *ssc, const UV cp)
 
     cp_list = add_cp_to_invlist(cp_list, cp);
     ssc_intersection(ssc, cp_list,
-                     FALSE /* Not inverted */
+                     false /* Not inverted */
                      );
     SvREFCNT_dec_NN(cp_list);
 }
@@ -1252,7 +1252,7 @@ Perl_join_exact(pTHX_ RExC_state_t *pRExC_state, regnode *scan,
     }
 
     *min_subtract = 0;
-    *unfolded_multi_char = FALSE;
+    *unfolded_multi_char = false;
 
     /* Here, all the adjacent mergeable EXACTish nodes have been merged.  We
      * can now analyze for sequences of problematic code points.  (Prior to
@@ -1302,7 +1302,7 @@ Perl_join_exact(pTHX_ RExC_state_t *pRExC_state, regnode *scan,
                         d += s_len;
                     }
                     else if (is_FOLDS_TO_MULTI_utf8(s)) {
-                        *unfolded_multi_char = TRUE;
+                        *unfolded_multi_char = true;
                         Copy(s, d, s_len, U8);
                         d += s_len;
                     }
@@ -1394,7 +1394,7 @@ Perl_join_exact(pTHX_ RExC_state_t *pRExC_state, regnode *scan,
             while (s < s_end) {
                 if (*s == LATIN_SMALL_LETTER_SHARP_S) {
                     OP(scan) = EXACTFAA_NO_TRIE;
-                    *unfolded_multi_char = TRUE;
+                    *unfolded_multi_char = true;
                     break;
                 }
                 s++;
@@ -1418,7 +1418,7 @@ Perl_join_exact(pTHX_ RExC_state_t *pRExC_state, regnode *scan,
                     if (*s == LATIN_SMALL_LETTER_SHARP_S
                         && (OP(scan) == EXACTF || OP(scan) == EXACTFL))
                     {
-                        *unfolded_multi_char = TRUE;
+                        *unfolded_multi_char = true;
                     }
                     s++;
                     continue;
@@ -1483,8 +1483,8 @@ Perl_study_chunk(pTHX_
     regnode_ssc *and_withp, /* Valid if flags & SCF_DO_STCLASS_OR */
     U32 flags,              /* flags controlling this call, see SCF_ flags */
     U32 depth,              /* how deep have we recursed period */
-    bool was_mutate_ok      /* TRUE if in-place optimizations are allowed.
-                               FALSE only if the caller (recursively) was
+    bool was_mutate_ok      /* true if in-place optimizations are allowed.
+                               false only if the caller (recursively) was
                                prohibited from modifying the regops, because
                                a higher caller is holding a ptr to them. */
 )
@@ -1527,13 +1527,13 @@ Perl_study_chunk(pTHX_
     DECLARE_AND_GET_RE_DEBUG_FLAGS;
 
     PERL_ARGS_ASSERT_STUDY_CHUNK;
-    RExC_study_started= 1;
+    RExC_study_started = 1;
 
     Zero(&data_fake, 1, scan_data_t);
 
     if ( depth == 0 ) {
         while (first_non_open && OP(first_non_open) == OPEN)
-            first_non_open=regnext(first_non_open);
+            first_non_open = regnext(first_non_open);
     }
 
   fake_study_recurse:
@@ -1542,7 +1542,8 @@ Perl_study_chunk(pTHX_
     );
     DEBUG_OPTIMISE_MORE_r(
     {
-        Perl_re_indentf( aTHX_  "study_chunk stopparen=%ld recursed_count=%lu depth=%lu recursed_depth=%lu scan=%p last=%p",
+        Perl_re_indentf( aTHX_  "study_chunk stopparen = %ld recursed_count = %lu "
+                                "depth = %lu recursed_depth = %lu scan = %p last = %p",
             depth, (long)stopparen,
             (unsigned long)RExC_study_chunk_recursed_count,
             (unsigned long)depth, (unsigned long)recursed_depth,
@@ -1570,7 +1571,7 @@ Perl_study_chunk(pTHX_
         UV min_subtract = 0;    /* How mmany chars to subtract from the minimum
                                    node length to get a real minimum (because
                                    the folded version may be shorter) */
-        bool unfolded_multi_char = FALSE;
+        bool unfolded_multi_char = false;
         /* avoid mutating ops if we are anywhere within the recursed or
          * enframed handling for a GOSUB: the outermost level will handle it.
          */
@@ -1621,7 +1622,7 @@ Perl_study_chunk(pTHX_
             DEBUG_PEEP("scan", scan, depth, flags);
             DEBUG_PEEP("next", next, depth, flags);
 
-            /* we suppose the run is continuous, last=next...
+            /* we suppose the run is continuous, last = next...
              * NOTE we dont use the return here! */
             /* DEFINEP study_chunk() recursion */
             (void)study_chunk(pRExC_state, &scan, &minlen,
@@ -1649,7 +1650,7 @@ Perl_study_chunk(pTHX_
                  * check there too. */
                 SSize_t max1 = 0, min1 = OPTIMIZE_INFTY, num = 0;
                 regnode_ssc accum;
-                regnode * const startbranch=scan;
+                regnode * const startbranch = scan;
 
                 if (flags & SCF_DO_SUBSTR) {
                     /* Cannot merge strings after this. */
@@ -1692,7 +1693,7 @@ Perl_study_chunk(pTHX_
                     if (flags & SCF_WHILEM_VISITED_POS)
                         f |= SCF_WHILEM_VISITED_POS;
 
-                    /* we suppose the run is continuous, last=next...*/
+                    /* we suppose the run is continuous, last = next...*/
                     /* recurse study_chunk() for each BRANCH in an alternation */
                     minnext = study_chunk(pRExC_state, &scan, minlenp,
                                       &deltanext, next, &data_fake, stopparen,
@@ -1777,8 +1778,8 @@ Perl_study_chunk(pTHX_
                    whatever it is. We now start at the beginning of the
                    sequence and look for subsequences of
 
-                   BRANCH->EXACT=>x1
-                   BRANCH->EXACT=>x2
+                   BRANCH->EXACT => x1
+                   BRANCH->EXACT => x2
                    tail
 
                    which would be constructed from a pattern like
@@ -1813,7 +1814,7 @@ Perl_study_chunk(pTHX_
 
                 */
 
-                    int made=0;
+                    int made = 0;
                     if (!re_trie_maxbuff) {
                         re_trie_maxbuff = get_sv(RE_TRIE_MAXBUF_NAME, 1);
                         if (!SvIOK(re_trie_maxbuff))
@@ -1825,7 +1826,7 @@ Perl_study_chunk(pTHX_
                         regnode *prev = (regnode *)NULL;
                         regnode *tail = scan;
                         U8 trietype = 0;
-                        U32 count=0;
+                        U32 count = 0;
 
                         /* var tail is used because there may be a TAIL
                            regop in the way. Ie, the exacts will point to the
@@ -1952,7 +1953,7 @@ Perl_study_chunk(pTHX_
                                   Perl_re_printf( aTHX_ "\t=> %d:%s\t",
                                     REG_NODE_NUM(noper_next), SvPV_nolen_const(RExC_mysv));
                                 }
-                                Perl_re_printf( aTHX_  "(First==%d,Last==%d,Cur==%d,tt==%s,ntt==%s,nntt==%s)\n",
+                                Perl_re_printf( aTHX_  "(First == %d,Last == %d,Cur == %d,tt == %s,ntt == %s,nntt == %s)\n",
                                    REG_NODE_NUM(first), REG_NODE_NUM(prev), REG_NODE_NUM(cur),
                                    REGNODE_NAME(trietype), REGNODE_NAME(noper_trietype), REGNODE_NAME(noper_next_trietype)
                                 );
@@ -2050,7 +2051,7 @@ Perl_study_chunk(pTHX_
                             regprop(RExC_rx, RExC_mysv, cur, NULL, pRExC_state);
                             Perl_re_indentf( aTHX_  "- %s (%d) <SCAN FINISHED> ",
                               depth+1, SvPV_nolen_const( RExC_mysv ), REG_NODE_NUM(cur));
-                            Perl_re_printf( aTHX_  "(First==%d, Last==%d, Cur==%d, tt==%s)\n",
+                            Perl_re_printf( aTHX_  "(First == %d, Last == %d, Cur == %d, tt == %s)\n",
                                REG_NODE_NUM(first), REG_NODE_NUM(prev), REG_NODE_NUM(cur),
                                REGNODE_NAME(trietype)
                             );
@@ -2061,14 +2062,14 @@ Perl_study_chunk(pTHX_
                                 /* the last branch of the sequence was part of
                                  * a trie, so we have to construct it here
                                  * outside of the loop */
-                                made= make_trie( pRExC_state, startbranch,
+                                made = make_trie( pRExC_state, startbranch,
                                                  first, scan, tail, count,
                                                  trietype, depth+1 );
 #ifdef TRIE_STUDY_OPT
                                 if ( ((made == MADE_EXACT_TRIE &&
                                      startbranch == first)
                                      || ( first_non_open == first )) &&
-                                     depth==0 ) {
+                                     depth == 0 ) {
                                     flags |= SCF_TRIE_RESTUDY;
                                     if ( startbranch == first
                                          && scan >= tail )
@@ -2097,7 +2098,7 @@ Perl_study_chunk(pTHX_
                                     });
                                     OP(startbranch)= NOTHING;
                                     NEXT_OFF(startbranch)= tail - startbranch;
-                                    for ( opt= startbranch + 1; opt < tail ; opt++ )
+                                    for ( opt = startbranch + 1; opt < tail ; opt++ )
                                         OP(opt)= OPTIMIZED;
                                 }
                             }
@@ -2113,7 +2114,7 @@ Perl_study_chunk(pTHX_
             I32 paren = 0;
             regnode *start = NULL;
             regnode *end = NULL;
-            U32 my_recursed_depth= recursed_depth;
+            U32 my_recursed_depth = recursed_depth;
 
             if (OP(scan) != SUSPEND) { /* GOSUB */
                 /* Do setup, note this code has side effects beyond
@@ -2153,7 +2154,7 @@ Perl_study_chunk(pTHX_
                      * enclosing scope - see GH 18096, for example.
                      */
                     is_inf = is_inf_internal = 1;
-                    scan= regnext(scan);
+                    scan = regnext(scan);
                     continue;
                 }
 
@@ -2181,7 +2182,7 @@ Perl_study_chunk(pTHX_
                     /* we havent recursed into this paren yet, so recurse into it */
                     DEBUG_STUDYDATA("gosub-set", data, depth, is_inf, min, stopmin, delta);
                     PAREN_SET(recursed_depth, paren);
-                    my_recursed_depth= recursed_depth + 1;
+                    my_recursed_depth = recursed_depth + 1;
                 } else {
                     DEBUG_STUDYDATA("gosub-inf", data, depth, is_inf, min, stopmin, delta);
                     /* some form of infinite recursion, assume infinite length
@@ -2195,7 +2196,7 @@ Perl_study_chunk(pTHX_
                         ssc_anything(data->start_class);
                     flags &= ~SCF_DO_STCLASS;
 
-                    start= NULL; /* reset start so we dont recurse later on. */
+                    start = NULL; /* reset start so we dont recurse later on. */
                 }
             } else {
                 paren = stopparen;
@@ -2208,7 +2209,7 @@ Perl_study_chunk(pTHX_
                 if (!RExC_frame_last) {
                     Newxz(newframe, 1, scan_frame);
                     SAVEDESTRUCTOR_X(S_unwind_scan_frames, newframe);
-                    RExC_frame_head= newframe;
+                    RExC_frame_head = newframe;
                     RExC_frame_count++;
                 } else if (!RExC_frame_last->next_frame) {
                     Newxz(newframe, 1, scan_frame);
@@ -2216,9 +2217,9 @@ Perl_study_chunk(pTHX_
                     newframe->prev_frame= RExC_frame_last;
                     RExC_frame_count++;
                 } else {
-                    newframe= RExC_frame_last->next_frame;
+                    newframe = RExC_frame_last->next_frame;
                 }
-                RExC_frame_last= newframe;
+                RExC_frame_last = newframe;
 
                 newframe->next_regnode = regnext(scan);
                 newframe->last_regnode = last;
@@ -2237,7 +2238,7 @@ Perl_study_chunk(pTHX_
                 stopparen = paren;
                 last = end;
                 depth = depth + 1;
-                recursed_depth= my_recursed_depth;
+                recursed_depth = my_recursed_depth;
 
                 continue;
             }
@@ -2248,7 +2249,7 @@ Perl_study_chunk(pTHX_
             assert(bytelen);
             if (UTF) {
                 const U8 * const s = (U8*)STRING(scan);
-                uc = utf8_to_uvchr_buf(s, s + bytelen, NULL);
+                uc = utf8_to_uv_or_die(s, s + bytelen, NULL);
                 charlen = utf8_length(s, s + bytelen);
             } else {
                 uc = *((U8*)STRING(scan));
@@ -2368,10 +2369,10 @@ Perl_study_chunk(pTHX_
                         ssc_clear_locale(data->start_class);
                     ANYOF_FLAGS(data->start_class) &= ~SSC_MATCHES_EMPTY_STRING;
                     ANYOF_POSIXL_ZERO(data->start_class);
-                    ssc_intersection(data->start_class, EXACTF_invlist, FALSE);
+                    ssc_intersection(data->start_class, EXACTF_invlist, false);
                 }
                 else {  /* SCF_DO_STCLASS_OR */
-                    ssc_union(data->start_class, EXACTF_invlist, FALSE);
+                    ssc_union(data->start_class, EXACTF_invlist, false);
                     ssc_and(pRExC_state, data->start_class, (regnode_charclass *) and_withp);
 
                     /* See commit msg 749e076fceedeb708a624933726e7989f2302f6a */
@@ -2463,7 +2464,7 @@ Perl_study_chunk(pTHX_
                 scan = regnext(scan);
                 goto optimize_curly_tail;
             case CURLY:
-                if (stopparen>0 && (OP(scan)==CURLYN || OP(scan)==CURLYM)
+                if (stopparen > 0 && (OP(scan) == CURLYN || OP(scan) == CURLYM)
                     && (FLAGS(scan) == stopparen))
                 {
                     mincount = 1;
@@ -2810,14 +2811,14 @@ Perl_study_chunk(pTHX_
                     /* It is counted once already... */
                     data->pos_min += minnext * (mincount - counted);
 #if 0
-    Perl_re_printf( aTHX_  "counted=%" UVuf " deltanext=%" UVuf
-                              " OPTIMIZE_INFTY=%" UVuf " minnext=%" UVuf
-                              " maxcount=%" UVuf " mincount=%" UVuf
-                              " data->pos_delta=%" UVuf "\n",
+    Perl_re_printf( aTHX_  "counted = %" UVuf " deltanext = %" UVuf
+                              " OPTIMIZE_INFTY = %" UVuf " minnext = %" UVuf
+                              " maxcount = %" UVuf " mincount = %" UVuf
+                              " data->pos_delta = %" UVuf "\n",
         (UV)counted, (UV)deltanext, (UV)OPTIMIZE_INFTY, (UV)minnext,
         (UV)maxcount, (UV)mincount, (UV)data->pos_delta);
     if (deltanext != OPTIMIZE_INFTY)
-        Perl_re_printf( aTHX_  "LHS=%" UVuf " RHS=%" UVuf "\n",
+        Perl_re_printf( aTHX_  "LHS = %" UVuf " RHS = %" UVuf "\n",
             (UV)(-counted * deltanext + (minnext + deltanext) * maxcount
             - minnext * mincount), (UV)(OPTIMIZE_INFTY - data->pos_delta));
 #endif
@@ -2857,7 +2858,7 @@ Perl_study_chunk(pTHX_
                 continue;
 
             default:
-                Perl_croak(aTHX_ "panic: unexpected varying REx opcode %d",
+                croak("panic: unexpected varying REx opcode %d",
                                                                     OP(scan));
             case REF:
             case CLUMP:
@@ -2885,7 +2886,7 @@ Perl_study_chunk(pTHX_
             if (flags & SCF_DO_STCLASS) {
                 if (flags & SCF_DO_STCLASS_AND) {
                     ssc_intersection(data->start_class,
-                                    PL_XPosix_ptrs[CC_VERTSPACE_], FALSE);
+                                    PL_XPosix_ptrs[CC_VERTSPACE_], false);
                     ssc_clear_locale(data->start_class);
                     ANYOF_FLAGS(data->start_class)
                                                 &= ~SSC_MATCHES_EMPTY_STRING;
@@ -2893,7 +2894,7 @@ Perl_study_chunk(pTHX_
                 else if (flags & SCF_DO_STCLASS_OR) {
                     ssc_union(data->start_class,
                               PL_XPosix_ptrs[CC_VERTSPACE_],
-                              FALSE);
+                              false);
                     ssc_and(pRExC_state, data->start_class, (regnode_charclass *) and_withp);
 
                     /* See commit msg for
@@ -2937,7 +2938,7 @@ Perl_study_chunk(pTHX_
 
                 default:
 #ifdef DEBUGGING
-                   Perl_croak(aTHX_ "panic: unexpected simple REx opcode %d",
+                   croak("panic: unexpected simple REx opcode %d",
                                                                      OP(scan));
 #endif
                 case SANY:
@@ -2953,14 +2954,14 @@ Perl_study_chunk(pTHX_
                         if (flags & SCF_DO_STCLASS_OR) {
                             ssc_union(data->start_class,
                                       REG_ANY_invlist,
-                                      TRUE /* TRUE => invert, hence all but \n
+                                      true /* true => invert, hence all but \n
                                             */
                                       );
                         }
                         else if (flags & SCF_DO_STCLASS_AND) {
                             ssc_intersection(data->start_class,
                                              REG_ANY_invlist,
-                                             TRUE  /* TRUE => invert */
+                                             true  /* true => invert */
                                              );
                             ssc_clear_locale(data->start_class);
                         }
@@ -3001,7 +3002,7 @@ Perl_study_chunk(pTHX_
 
                 case NANYOFM: /* NANYOFM already contains the inversion of the
                                  input ANYOF data, so, unlike things like
-                                 NPOSIXA, don't change 'invert' to TRUE */
+                                 NPOSIXA, don't change 'invert' to true */
                     /* FALLTHROUGH */
                 case ANYOFM:
                   {
@@ -3164,7 +3165,7 @@ Perl_study_chunk(pTHX_
                  * we are dealing with variable length lookbehind that
                  * contains capturing buffers, which are considered
                  * experimental */
-                cur_last_close_op= *(data_fake.last_close_opp);
+                cur_last_close_op = *(data_fake.last_close_opp);
 
                 data_fake.pos_delta = delta;
                 if ( flags & SCF_DO_STCLASS && !FLAGS(scan)
@@ -3274,7 +3275,7 @@ Perl_study_chunk(pTHX_
                         f |= SCF_DO_SUBSTR;
                         if (FLAGS(scan))
                             scan_commit(pRExC_state, &data_fake, minlenp, is_inf);
-                        data_fake.last_found=newSVsv(data->last_found);
+                        data_fake.last_found = newSVsv(data->last_found);
                     }
                 }
                 else {
@@ -3447,13 +3448,13 @@ Perl_study_chunk(pTHX_
                 ssc_init_zero(pRExC_state, &accum);
 
             if (!trie->jump) {
-                min1= trie->minlen;
-                max1= trie->maxlen;
+                min1 = trie->minlen;
+                max1 = trie->maxlen;
             } else {
                 const regnode *nextbranch= NULL;
                 U32 word;
 
-                for ( word=1 ; word <= trie->wordcount ; word++)
+                for ( word = 1 ; word <= trie->wordcount ; word++)
                 {
                     SSize_t deltanext = 0, minnext = 0;
                     U32 f = (flags & SCF_TRIE_DOING_RESTUDY);
@@ -3483,7 +3484,7 @@ Perl_study_chunk(pTHX_
                     if (trie->jump[word]) {
                         if (!nextbranch)
                             nextbranch = trie_node + trie->jump[0];
-                        scan= trie_node + trie->jump[word];
+                        scan = trie_node + trie->jump[word];
                         /* We go from the jump point to the branch that follows
                            it. Note this means we need the vestigal unused
                            branches even though they arent otherwise used. */
@@ -3494,7 +3495,7 @@ Perl_study_chunk(pTHX_
                             mutate_ok);
                     }
                     if (nextbranch && REGNODE_TYPE(OP(nextbranch))==BRANCH)
-                        nextbranch= regnext((regnode*)nextbranch);
+                        nextbranch = regnext((regnode*)nextbranch);
 
                     if (min1 > (SSize_t)(minnext + trie->minlen))
                         min1 = minnext + trie->minlen;
@@ -3558,14 +3559,14 @@ Perl_study_chunk(pTHX_
                     flags |= SCF_DO_STCLASS_OR;
                 }
             }
-            scan= tail;
+            scan = tail;
             DEBUG_STUDYDATA("after TRIE study", data, depth, is_inf, min, stopmin, delta);
             continue;
         }
 #else
         else if (REGNODE_TYPE(OP(scan)) == TRIE) {
             reg_trie_data *trie = (reg_trie_data*)RExC_rxi->data->data[ ARG1u(scan) ];
-            U8*bang=NULL;
+            U8 *bang = NULL;
 
             min += trie->minlen;
             delta += (trie->maxlen - trie->minlen);
@@ -3586,7 +3587,7 @@ Perl_study_chunk(pTHX_
 #endif /* TRIE_STUDY_OPT */
 
         else if (OP(scan) == REGEX_SET) {
-            Perl_croak(aTHX_ "panic: %s regnode should be resolved"
+            croak("panic: %s regnode should be resolved"
                              " before optimization", REGNODE_NAME(REGEX_SET));
         }
 
@@ -3703,7 +3704,7 @@ Perl_study_chunk(pTHX_
         data->pos_delta = OPTIMIZE_INFTY - data->pos_min;
     if (is_par > (I32)U8_MAX)
         is_par = 0;
-    if (is_par && pars==1 && data) {
+    if (is_par && pars == 1 && data) {
         data->flags |= SF_IN_PAR;
         data->flags &= ~SF_HAS_PAR;
     }

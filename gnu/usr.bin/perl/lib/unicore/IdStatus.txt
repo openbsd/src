@@ -1,11 +1,11 @@
-﻿# IdentifierStatus.txt
-# Date: 2022-05-18, 21:51:57 GMT
-# © 2022 Unicode®, Inc.
+# IdentifierStatus.txt
+# Date: 2024-05-04, 21:31:06 GMT
+# © 2024 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
-# For terms of use, see https://www.unicode.org/terms_of_use.html
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Security Mechanisms for UTS #39
-# Version: 15.0.0
+# Version: 16.0.0
 #
 # For documentation and usage, see https://www.unicode.org/reports/tr39
 #
@@ -14,16 +14,17 @@
 # Field 0: code point
 # Field 1: Identifier_Status value (see Table 1 of http://www.unicode.org/reports/tr39)
 #
-# Any missing code points have the Identifier_Status value Restricted
-#
 # For the purpose of regular expressions, the property Identifier_Status is defined as
 # an enumerated property of code points.
-# The short name of Identifier_Status is the same as the long name.
+# The short name of Identifier_Status is ID_Status.
 # The possible values are:
 #   Allowed, Restricted
 # The short name of each value is the same as its long name.
-# The default property value for all Unicode code points U+0000..U+10FFFF
-# not mentioned in this data file is Restricted.
+
+# All code points not explicitly listed for Identifier_Status
+# have the value Restricted.
+
+# @missing: 0000..10FFFF; Restricted
 
 
 #	Identifier_Status:	Allowed
@@ -531,8 +532,6 @@ A788          ; Allowed    # 5.1        MODIFIER LETTER LOW CIRCUMFLEX ACCENT
 A78D          ; Allowed    # 6.0        LATIN CAPITAL LETTER TURNED H
 A792..A793    ; Allowed    # 6.1    [2] LATIN CAPITAL LETTER C WITH BAR..LATIN SMALL LETTER C WITH BAR
 A7AA          ; Allowed    # 6.1        LATIN CAPITAL LETTER H WITH HOOK
-A7AE          ; Allowed    # 9.0        LATIN CAPITAL LETTER SMALL CAPITAL I
-A7B8..A7B9    ; Allowed    # 11.0   [2] LATIN CAPITAL LETTER U WITH STROKE..LATIN SMALL LETTER U WITH STROKE
 A7C0..A7C1    ; Allowed    # 14.0   [2] LATIN CAPITAL LETTER OLD POLISH O..LATIN SMALL LETTER OLD POLISH O
 A7C2..A7C6    ; Allowed    # 12.0   [5] LATIN CAPITAL LETTER ANGLICANA W..LATIN CAPITAL LETTER Z WITH PALATAL HOOK
 A7C7..A7CA    ; Allowed    # 13.0   [4] LATIN CAPITAL LETTER D WITH SHORT STROKE OVERLAY..LATIN SMALL LETTER S WITH SHORT STROKE OVERLAY
@@ -583,7 +582,8 @@ FA27..FA29    ; Allowed    # 1.1    [3] CJK COMPATIBILITY IDEOGRAPH-FA27..CJK CO
 2B740..2B81D  ; Allowed    # 6.0  [222] CJK UNIFIED IDEOGRAPH-2B740..CJK UNIFIED IDEOGRAPH-2B81D
 2B820..2CEA1  ; Allowed    # 8.0 [5762] CJK UNIFIED IDEOGRAPH-2B820..CJK UNIFIED IDEOGRAPH-2CEA1
 2CEB0..2EBE0  ; Allowed    # 10.0 [7473] CJK UNIFIED IDEOGRAPH-2CEB0..CJK UNIFIED IDEOGRAPH-2EBE0
+2EBF0..2EE5D  ; Allowed    # 15.1 [622] CJK UNIFIED IDEOGRAPH-2EBF0..CJK UNIFIED IDEOGRAPH-2EE5D
 30000..3134A  ; Allowed    # 13.0 [4939] CJK UNIFIED IDEOGRAPH-30000..CJK UNIFIED IDEOGRAPH-3134A
 31350..323AF  ; Allowed    # 15.0 [4192] CJK UNIFIED IDEOGRAPH-31350..CJK UNIFIED IDEOGRAPH-323AF
 
-# Total code points: 112159
+# Total code points: 112778

@@ -50,6 +50,9 @@
 .    \}
 .\}
 .rr rF
+.\"
+.\" Required to disable full justification in groff 1.23.0.
+.if n .ds AD l
 .\" ========================================================================
 .\"
 .IX Title "ENCODING 1"
@@ -72,7 +75,7 @@ Combining accent: nai\[u0308]ve
 .PP
 SMP plane character: \[u1F600]
 .PP
-Non-breaking space: foo\ bar, foo\ bar
+Non\-breaking space: foo\ bar, foo\ bar
 .PP
 Soft hyphen: fac\%tory
 .SH LICENSE
@@ -81,7 +84,7 @@ Copyright 2022 Russ Allbery <rra@cpan.org>
 .PP
 Copying and distribution of this file, with or without modification, are
 permitted in any medium without royalty provided the copyright notice and
-this notice are preserved.  This file is offered as-is, without any
+this notice are preserved.  This file is offered as\-is, without any
 warranty.
 .PP
-SPDX-License-Identifier: FSFAP
+SPDX\-License\-Identifier: FSFAP

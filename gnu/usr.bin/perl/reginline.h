@@ -14,7 +14,7 @@ Perl_regnext(pTHX_ const regnode *p)
         return(NULL);
 
     if (OP(p) > REGNODE_MAX) {                /* regnode.type is unsigned */
-        Perl_croak(aTHX_ "Corrupted regexp opcode %d > %d",
+        croak("Corrupted regexp opcode %d > %d",
                                                 (int)OP(p), (int)REGNODE_MAX);
     }
 

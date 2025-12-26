@@ -2,7 +2,7 @@ package Test2::API::InterceptResult;
 use strict;
 use warnings;
 
-our $VERSION = '1.302199';
+our $VERSION = '1.302210';
 
 use Scalar::Util qw/blessed/;
 use Test2::Util  qw/pkg_to_file/;
@@ -501,7 +501,7 @@ B<Important Notes about Events>:
 L<Test2::API::InterceptResult::Event> was tailor-made to be used in
 event-lists. Most methods that are not applicable to a given event will return
 an empty list, so you normally do not need to worry about unwanted C<undef>
-values or exceptions being thrown. Mapping over event methods is an entended
+values or exceptions being thrown. Mapping over event methods is an intended
 use, so it works well to produce lists.
 
 B<Exceptions to the rule:>
@@ -624,7 +624,7 @@ L<https://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

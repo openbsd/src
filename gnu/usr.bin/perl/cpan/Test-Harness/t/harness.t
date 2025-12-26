@@ -541,6 +541,12 @@ for my $test_args ( get_arg_sets() ) {
 
         @output = ();
         _runtests( $harness_failures, "$sample_tests/segfault" );
+        # On machines where 'ulimit -c' does not return '0', a perl.core
+        # file is created here.  We don't need to examine it, and it's
+        # annoying to have it subsequently show up as an untracked file in
+        # `git status`, so simply get rid of it per suggestion by Karen
+        # Etheridge.
+        END { unlink 'perl.core' }
 
         my $out_str = join q<>, @output;
 

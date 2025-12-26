@@ -3,7 +3,7 @@
 use v5.14;
 use warnings;
 
-use Test::More;
+use Test2::V0;
 
 use IO::Socket::IP;
 use Socket 1.95 qw(
@@ -36,11 +36,11 @@ no warnings 'redefine';
 
 IO::Socket::IP->new( LocalPort => "zyxxyblarg(80)" );
 
-is_deeply( \@gai_args,
-           [ 
-              [ undef, "zyxxyblarg", { flags => AI_PASSIVE|$AI_ADDRCONFIG, socktype => SOCK_STREAM, protocol => IPPROTO_TCP } ],
-              [ undef, "80",         { flags => AI_PASSIVE|$AI_ADDRCONFIG, socktype => SOCK_STREAM, protocol => IPPROTO_TCP } ],
-           ],
-           '@gai_args for LocalPort => "zyxxyblarg(80)"' );
+is( \@gai_args,
+    [
+       [ undef, "zyxxyblarg", { flags => AI_PASSIVE|$AI_ADDRCONFIG, socktype => SOCK_STREAM, protocol => IPPROTO_TCP } ],
+       [ undef, "80",         { flags => AI_PASSIVE|$AI_ADDRCONFIG, socktype => SOCK_STREAM, protocol => IPPROTO_TCP } ],
+    ],
+    '@gai_args for LocalPort => "zyxxyblarg(80)"' );
 
 done_testing;

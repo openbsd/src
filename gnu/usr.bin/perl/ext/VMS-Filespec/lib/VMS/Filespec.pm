@@ -37,7 +37,7 @@ which determines whether you have delete access to a file.
 If you're running under VMS, the routines in this package are special,
 in that they're automatically made available to any Perl script,
 whether you're running F<miniperl> or the full F<perl>.  The C<use
-VMS::Filespec> or C<require VMS::Filespec; import VMS::Filespec ...>
+VMS::Filespec> or C<< require VMS::Filespec; VMS::Filespec->import(...) >>
 statement can be used to import the function names into the current
 package, but they're always available if you use the fully qualified
 name, whether or not you've mentioned the F<.pm> file in your script. 
@@ -53,7 +53,7 @@ string manipulations; the routines do not check the details of syntax
 when running under VMS, conversions from VMS syntax use the $PARSE
 service to expand specifications, so illegal syntax, or a relative
 directory specification which extends above the tope of the current
-directory path (e.g [---.foo] when in dev:[dir.sub]) will cause
+directory path (e.g., [---.foo] when in dev:[dir.sub]) will cause
 errors.  In general, any legal file specification will be converted
 properly, but garbage input tends to produce garbage output.  
 
@@ -223,7 +223,7 @@ This document was last revised 8-DEC-2007, for Perl 5.10.0
 package VMS::Filespec;
 require 5.006;
 
-our $VERSION = '1.13';
+our $VERSION = '1.15';
 
 # If you want to use this package on a non-VMS system,
 # uncomment the following line.

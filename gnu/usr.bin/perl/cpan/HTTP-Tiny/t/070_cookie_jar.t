@@ -34,10 +34,10 @@ my $dog = BrokenCookieJar2->new();
     my $ua = eval { HTTP::Tiny->new(cookie_jar => $mug) };
     my $err = $@;
     like( $err, qr/must provide .* 'add' method/
-	  => 'invalid jar does not support add method' );
-    
+          => 'invalid jar does not support add method' );
+
     $ua = eval { HTTP::Tiny->new(cookie_jar => $dog) };
     $err = $@;
     like( $err, qr/must provide .* 'cookie_header' method/
-	  => 'invalid jar does not support cookie_header method' );
+          => 'invalid jar does not support cookie_header method' );
 }

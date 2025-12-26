@@ -1,8 +1,18 @@
-use Test2::Tools::Tiny;
 use Term::Table::LineBreak;
 use strict;
 use warnings;
 use utf8;
+
+BEGIN {
+    if (eval { require Test2::Tools::Tiny }) {
+        print "# Using Test2::Tools::Tiny\n";
+        Test2::Tools::Tiny->import();
+    }
+    else {
+        print "1..0 # SKIP Test2::Tools::Tiny is not installed\n";
+        exit(0);
+    }
+}
 
 use Test2::API qw/test2_stack/;
 test2_stack->top->format->encoding('utf8');

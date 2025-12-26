@@ -2,12 +2,11 @@ package DBM_Filter ;
 
 use strict;
 use warnings;
-our $VERSION = '0.06';
 
-package Tie::Hash ;
+our $VERSION = '0.07';
 
-use strict;
-use warnings;
+package
+    Tie::Hash ;
 
 use Carp;
 

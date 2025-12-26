@@ -10,7 +10,7 @@ sub new {
 
 sub add {
     my ($self, $url, $cookie) = @_;
-    
+
     my ($kv) = split qr/;/, $cookie;
     my ($k, $v) = split qr/\s*=\s*/, $kv, 2;
 

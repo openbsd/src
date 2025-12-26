@@ -84,7 +84,7 @@ is($pkg->do_it, 'const', "worked as expected");
 }
 ok(!$pkg->FOO, "overrode const sub");
 {
-local $TODO = "known to fail on $]" if $] le "5.006002";
+local $TODO = "known to fail on $]" if "$]" <= 5.006002;
 is($pkg->do_it, 'const', "worked as expected, const was constant");
 }
 

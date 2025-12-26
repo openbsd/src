@@ -1,8 +1,8 @@
 use strict;
 use warnings;
 
+use Config;
 BEGIN {
-    use Config;
     if (! $Config{'useithreads'}) {
         print("1..0 # SKIP Perl not compiled with 'useithreads'\n");
         exit(0);
@@ -12,16 +12,7 @@ BEGIN {
 use threads;
 use threads::shared;
 use Thread::Queue;
-
-BEGIN { # perl RT 133382
-if ($] == 5.008) {
-    require 't/test.pl';   # Test::More work-alike for Perl 5.8.0
-} else {
-    require Test::More;
-}
-Test::More->import();
-} # end BEGIN
-plan('tests' => 46);
+use Test::More 'tests' => 46;
 
 # Regular array
 my @ary1 = qw/foo bar baz/;

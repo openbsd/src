@@ -1,0 +1,58 @@
+# Avoid version control files.
+\bRCS\b
+\bCVS\b
+\bSCCS\b
+,v$
+\B\.svn\b
+\B\.git\b
+^\.github\b
+\B\.gitignore\b
+\b_darcs\b
+\B\.cvsignore$
+\B\.bzr\b
+\B\.bzrignore$
+
+# Avoid VMS specific MakeMaker generated files
+\bDescrip.MMS$
+\bDESCRIP.MMS$
+\bdescrip.mms$
+
+# Avoid Makemaker generated and utility files.
+\bMANIFEST\.bak
+\bMakefile$
+\bblib/
+\bMakeMaker-\d
+\bpm_to_blib\.ts$
+\bpm_to_blib$
+\bblibdirs\.ts$         # 6.18 through 6.25 generated this
+\b_eumm/                # 7.05_05 and above
+
+# Avoid temp and backup files.
+~$
+\.old$
+\#$
+\b\.#
+\.bak$
+\.tmp$
+\.#
+\.rej$
+\..*\.sw.?$
+\.~\d+~$
+
+\B\.DS_Store
+\B\._
+\.i[cC]loud$
+
+\bcover_db\b
+\bcovered\b
+
+\B\.prove$
+
+^MYMETA\.
+^META_new\.(?:json|yml)
+
+^Storable-[0-9.]+
+
+\.bs$
+\.c$
+\.o$

@@ -1,0 +1,39 @@
+[name]
+Spacing of =item without body
+
+[input]
+=over 4
+
+=item A
+
+Line
+
+=over 4
+
+=item 1
+
+=item 2
+
+=back
+
+=item B
+
+Line
+
+=back
+
+[output]
+.IP A 4
+.IX Item "A"
+Line
+.RS 4
+.IP 1. 4
+.PD 0
+.IP 2. 4
+.PD
+.RE
+.RS 4
+.RE
+.IP B 4
+.IX Item "B"
+Line

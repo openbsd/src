@@ -1,40 +1,44 @@
 #! perl
 
-# Parser.pm -- Getopt::Long object oriented interface
+# Parser.pm -- Getopt::Long object-oriented interface
 # Author          : Johan Vromans
 # Created On      : Thu Nov  9 10:37:00 2023
-# Last Modified On: Sat Nov 11 17:48:49 2023
-# Update Count    : 13
+# Last Modified On: Tue Jun 11 13:17:57 2024
+# Update Count    : 16
 # Status          : Released
+
+use strict;
+use warnings;
 
 package Getopt::Long::Parser;
 
-our $VERSION = 2.57;
+# Must match Getopt::Long::VERSION!
+our $VERSION = 2.58;
 
 =head1 NAME
 
-Getopt::Long::Parser - Getopt::Long object oriented interface
+Getopt::Long::Parser - Getopt::Long object-oriented interface
 
 =head1 SYNOPSIS
 
     use Getopt::Long::Parser;
     my $p = Getopt::Long::Parser->new;
-    $p->configure( ...configuration options... );
-    if ( $p->getoptions( ...options descriptions... ) ) ...
-    if ( $p->getoptionsfromarray( \@array, ...options descriptions... ) ) ...
+    $p->configure( %options );
+    if ( $p->getoptions( @options ) ) { ... }
+    if ( $p->getoptionsfromarray( \@array, @options ) ) { ... }
 
 Configuration options can be passed to the constructor:
 
-    my $p = Getopt::Long::Parser->new
-             config => [...configuration options...];
+    my $p = Getopt::Long::Parser->new( config => [ %options ] );
 
 =head1 DESCRIPTION
 
-Getopt::Long::Parser is an object oriented interface to
+C<Getopt::Long::Parser> is an object-oriented interface to
 L<Getopt::Long>. See its documentation for configuration and use.
 
-Note that Getopt::Long and Getopt::Long::Parser are not object
-oriented. Getopt::Long::Parser emulates an object oriented interface,
+Note that C<Getopt::Long> and C<Getopt::Long::Parser> are not
+object-oriented.
+C<Getopt::Long::Parser> emulates an object-oriented interface,
 which should be okay for most purposes.
 
 =head1 CONSTRUCTOR
@@ -93,7 +97,7 @@ use warnings 'redefine';
 
 =head1 METHODS
 
-In the examples, $p is assumed to be the result of a call to the constructor.
+In the examples, C<$p> is assumed to be the result of a call to the constructor.
 
 =head2 configure
 
@@ -116,13 +120,13 @@ sub configure {
 
 =head2 getoptionsfromarray
 
-    $res = $p->getoptionsfromarray( $aref, @opts );
+    my $res = $p->getoptionsfromarray( $aref, @opts );
 
 =head2 getoptions
 
-    $res = $p->getoptions( @opts );
+    my $res = $p->getoptions( @opts );
 
-The same as getoptionsfromarray( \@ARGV, @opts ).
+The same as C<getoptionsfromarray( \@ARGV, @opts )>.
 
 =cut
 

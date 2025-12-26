@@ -1307,7 +1307,7 @@ char-classes as an escaping mechanism will see a speedup. (Yves Orton)
 
 =item *
 
-Creating anonymous array and hash references (ie. C<[]> and C<{}>) now incurs
+Creating anonymous array and hash references (i.e. C<[]> and C<{}>) now incurs
 no more overhead than creating an anonymous list or hash. Nicholas Clark
 provided changes with a saving of two ops and one stack push, which was measured
 as a slightly better than 5% improvement for these operations.

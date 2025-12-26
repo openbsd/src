@@ -20,7 +20,7 @@ BEGIN {
 
 use Test::More;
 
-plan skip_all => "known to crash on $]" if $] le "5.006002";
+plan skip_all => "known to crash on $]" if "$]" <= 5.006002;
 
 plan tests => 5;
 

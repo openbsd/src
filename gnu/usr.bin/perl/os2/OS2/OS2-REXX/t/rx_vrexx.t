@@ -1,7 +1,7 @@
 BEGIN {
     chdir 't' if -d 't/lib';
     @INC = '../lib' if -d 'lib';
-    require Config; import Config;
+    require Config; Config->import;
     if (-d 'lib' and $Config{'extensions'} !~ /\bOS2(::|\/)REXX\b/) {
 	print "1..0 # skipped: OS2::REXX not built\n";
 	exit 0;

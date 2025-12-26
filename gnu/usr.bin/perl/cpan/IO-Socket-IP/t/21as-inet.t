@@ -3,7 +3,7 @@
 use v5.14;
 use warnings;
 
-use Test::More;
+use Test2::V0;
 
 use IO::Socket::IP;
 
@@ -23,7 +23,7 @@ my $accepted = $server->accept
 
 my $inet_client = $client->as_inet;
 
-isa_ok( $inet_client, "IO::Socket::INET", '->as_inet returns IO::Socket::INET' );
+isa_ok( $inet_client, [ "IO::Socket::INET" ], '->as_inet returns IO::Socket::INET' );
 
 is( $inet_client->fileno, $client->fileno, '->as_inet socket wraps the same fileno' );
 

@@ -7,7 +7,7 @@
 # files, junk, and any files explicitly configured to be ignored.
 #
 # Written by Russ Allbery <eagle@eyrie.org>
-# Copyright 2019-2022 Russ Allbery <eagle@eyrie.org>
+# Copyright 2019-2024 Russ Allbery <eagle@eyrie.org>
 # Copyright 2013-2014
 #     The Board of Trustees of the Leland Stanford Junior University
 #
@@ -31,8 +31,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.010;
-use strict;
+use 5.012;
 use warnings;
 
 use lib 't/lib';
@@ -58,12 +57,18 @@ Test::Perl::Critic->import(-profile => 't/data/perlcriticrc');
 
 # By default, Test::Perl::Critic only checks blib.  We also want to check t,
 # Build.PL, and examples.
-my @files = Perl::Critic::Utils::all_perl_files('blib');
-if (!@files) {
+my @files;
+if (-d 'blib') {
+    @files = Perl::Critic::Utils::all_perl_files('blib');
+}
+if (!@files && -d 'lib') {
     @files = Perl::Critic::Utils::all_perl_files('lib');
 }
 if (-e 'Build.PL') {
     push(@files, 'Build.PL');
+}
+if (-e 'Makefile.PL') {
+    push(@files, 'Makefile.PL');
 }
 for my $dir (qw(examples usr t)) {
     if (-d $dir) {

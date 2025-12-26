@@ -1,35 +1,23 @@
-#!/usr/bin/perl
+#!./perl
 
 # This is a test suite to cover all the nasty and horrible data
 # structures that cause bizarre corner cases.
 
 #  Everyone's invited! :-D
 
-sub BEGIN {
-    unshift @INC, 't';
-    unshift @INC, 't/compat' if $] < 5.006002;
-    require Config; import Config;
-    if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bStorable\b/) {
-        print "1..0 # Skip: Storable was not built\n";
-        exit 0;
-    }
-}
-
 use strict;
+use warnings;
+
+use Test::More;
+use File::Spec;
+
 BEGIN {
     if (!eval q{
-        use Test::More;
         use B::Deparse 0.61;
-        use 5.006;
         1;
     }) {
-        print "1..0 # skip: tests only work with B::Deparse 0.61 and at least perl 5.6.0\n";
+        print "1..0 # skip: tests only work with B::Deparse 0.61\n";
         exit;
-    }
-    require File::Spec;
-    if ($File::Spec::VERSION < 0.8) {
-        print "1..0 # Skip: newer File::Spec needed\n";
-        exit 0;
     }
 }
 
@@ -44,11 +32,11 @@ BEGIN {
 
 {
     package Banana;
-    use overload   
-	'<=>' => \&compare,
-	    '==' => \&equal,
-		'""' => \&real,
-		fallback => 1;
+    use overload
+        '<=>' => \&compare,
+        '==' => \&equal,
+        '""' => \&real,
+        fallback => 1;
     sub compare { return int(rand(3))-1 };
     sub equal { return 1 if rand(1) > 0.5 }
     sub real { return "keep it so" }
@@ -56,14 +44,14 @@ BEGIN {
 
 my (@a);
 
-for my $dbun (1, 0) {  # dbun - don't be utterly nasty - being utterly
-                       # nasty means having a reference to the object
-                       # directly within itself. otherwise it's in the
-                       # second array.
+for my $dbun (1, 0) {   # dbun - don't be utterly nasty - being utterly
+                        # nasty means having a reference to the object
+                        # directly within itself. otherwise it's in the
+                        # second array.
     my $nasty = [
-		 ($a[0] = bless [ ], "Banana"),
-		 ($a[1] = [ ]),
-		];
+        ($a[0] = bless [ ], "Banana"),
+        ($a[1] = [ ]),
+    ];
 
     $a[$dbun]->[0] = $a[0];
 
@@ -135,8 +123,8 @@ for my $dbun (1, 0) {  # dbun - don't be utterly nasty - being utterly
 
 sub headit {
 
-    return;  # comment out to get headings - useful for scanning
-             # output with $Storable::DEBUGME = 1
+    return;     # comment out to get headings - useful for scanning
+                # output with $Storable::DEBUGME = 1
 
     my $title = shift;
 
@@ -144,6 +132,6 @@ sub headit {
     my $size_right = (67 - length($title)) >> 1;
 
     print "# ".("-" x $size_left). " $title "
-	.("-" x $size_right)."\n";
+        .("-" x $size_right)."\n";
 }
 

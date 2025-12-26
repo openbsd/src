@@ -9,8 +9,8 @@ perl5361delta - what is new for perl v5.36.1
 This document describes differences between the 5.36.0 release and the 5.36.1
 release.
 
-If you are upgrading from an earlier release such as 5.35.0, first read
-L<perl5360delta>, which describes differences between 5.35.0 and 5.36.0.
+If you are upgrading from an earlier release such as 5.34.0, first read
+L<perl5360delta>, which describes differences between 5.34.0 and 5.36.0.
 
 =head1 Incompatible Changes
 
@@ -68,7 +68,7 @@ interpreter panic; e.g.
 =item *
 
 An C<eval EXPR> referring to a lexical sub defined in grandparent scope no
-longer produces an assertion failures.
+longer produces an assertion failure.
 [L<GH #19857|https://github.com/Perl/perl5/issues/19857>]
 
 =item *

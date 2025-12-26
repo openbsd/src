@@ -21,7 +21,7 @@ my %want = (    RADIXCHAR => qr/ ^ \. $ /x,
                 # Can be empty; otherwise first character must be one of
                 # these.  In the C locale, there is nothing after the first
                 # character.
-                CRNCYSTR  => qr/ ^ [+-.]? $ /x,
+                CRNCYSTR  => qr/ ^ [-+.]? $ /x,
 
                 _NL_ADDRESS_COUNTRY_NUM => qr/^ 0 $/x,
                 _NL_IDENTIFICATION_TERRITORY => qr/ ^ ISO $/x,

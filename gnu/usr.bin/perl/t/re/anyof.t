@@ -16,9 +16,9 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib','.','../ext/re');
-    require Config; Config->import;
     skip_all('no re module') unless defined &DynaLoader::boot_DynaLoader;
 }
+use Config;
 
 # An array is used instead of a hash, so that the tests are carried out in the
 # order given by this file.  Even-numbered indices are the regexes to compile.

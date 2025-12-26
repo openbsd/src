@@ -3,8 +3,7 @@ package Exporter::Heavy;
 use strict;
 no strict 'refs';
 
-# On one line so MakeMaker will see it.
-our $VERSION = '5.78';
+our $VERSION = '5.79';
 
 =head1 NAME
 
@@ -39,20 +38,18 @@ sub _rebuild_cache {
 sub heavy_export {
 
     # Save the old __WARN__ handler in case it was defined
-    my $oldwarn = $SIG{__WARN__};
+    my $oldwarn = $SIG{__WARN__} || sub { warn $_[0] };
 
     # First make import warnings look like they're coming from the "use".
     local $SIG{__WARN__} = sub {
-	# restore it back so proper stacking occurs
-	local $SIG{__WARN__} = $oldwarn;
 	my $text = shift;
 	if ($text =~ s/ at \S*Exporter\S*.pm line \d+.*\n//) {
 	    require Carp;
 	    local $Carp::CarpLevel = 1;	# ignore package calling us too.
-	    Carp::carp($text);
+	    $oldwarn->(Carp::shortmess($text));
 	}
 	else {
-	    warn $text;
+	    $oldwarn->($text);
 	}
     };
     local $SIG{__DIE__} = sub {

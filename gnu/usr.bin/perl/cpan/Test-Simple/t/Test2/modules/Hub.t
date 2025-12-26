@@ -141,7 +141,7 @@ tests IPC => sub {
         }
     }
 
-    if (CAN_THREAD && $] ge '5.010') {
+    if (CAN_THREAD && "$]" >= 5.010) {
         require threads;
         my $thr = threads->new(sub { $do_send->() });
         $thr->join;

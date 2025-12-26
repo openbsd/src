@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan 28;
+plan 29;
 
 use feature 'defer';
 no warnings 'experimental::defer';
@@ -284,4 +284,19 @@ no warnings 'experimental::defer';
     ok(!$ok, 'defer BLOCK finalizes optree');
     like($e, qr/^Bareword "foo" not allowed while "strict subs" in use at /,
         'Error from finalization');
+}
+
+# GH#23604
+{
+    my $ok;
+    {
+        defer {
+            eval { die "Ignore this error\n" };
+            $ok .= "k";
+        }
+
+        $ok .= "o";
+    }
+
+    is($ok, "ok", 'eval{die} inside defer does not stop runloop');
 }

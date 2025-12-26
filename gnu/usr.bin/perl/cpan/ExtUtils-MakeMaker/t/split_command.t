@@ -15,7 +15,7 @@ use MakeMaker::Test::Utils;
 my $Is_VMS   = $^O eq 'VMS';
 my $Is_Win32 = $^O eq 'MSWin32';
 
-use Test::More tests => 7;
+use Test::More tests => 9;
 
 my $perl = which_perl;
 my $mm = bless { NAME => "Foo", MAKE => $Config{make} }, "MM";
@@ -36,28 +36,31 @@ isnt( @cmds, 0 );
 my @results = _run(@cmds);
 is( join('', @results), join('', @test_args));
 
-
 my %test_args = ( foo => 42, bar => 23, car => 'har' );
 my $even_args = $mm->oneliner(q{print !(@ARGV % 2)});
 @cmds = $mm->split_command($even_args, %test_args);
 isnt( @cmds, 0 );
-
 @results = _run(@cmds);
 like( join('', @results ), qr/^1+$/,         'pairs preserved' );
 
-is( $mm->split_command($echo), 0,  'no args means no commands' );
+%test_args = ( foo => 42, bar => 23, car => 'har' );
+$even_args = $mm->oneliner(qq{\$x="";\n}.q{print !(@ARGV % 2)});
+my @save = @cmds = $mm->split_command($even_args, %test_args);
+isnt @cmds, 0 or diag explain \@cmds;
+@results = _run(@cmds);
+like join('', @results), qr/^1+$/, 'pairs preserved'
+  or diag explain [$even_args, \@save, \@cmds, \@results];
 
+is( $mm->split_command($echo), 0,  'no args means no commands' );
 
 sub _run {
     my @cmds = @_;
-
     s{\$\(ABSPERLRUN\)}{$perl} foreach @cmds;
     if( $Is_VMS ) {
-        s{-\n}{} foreach @cmds
+        s{-\n}{}g foreach @cmds
     }
     elsif( $Is_Win32 ) {
-        s{\\\n}{} foreach @cmds;
+        s{\\\n}{}g foreach @cmds;
     }
-
-    return map { s/\n+$//; $_ } map { `$_` } @cmds
+    map { s/\n+$//; $_ } map { `$_` } @cmds
 }

@@ -9,18 +9,16 @@ BEGIN {
 # directory.
 
 if (! $ENV{PERL_DEBUG_FULL_TEST}) {
-    print "1..0 # skipped: Lengthy Tests Disabled; to enable set environment",
-          "variable \$ENV{PERL_DEBUG_FULL_TEST} to a true value\n";
-    0
+    print "1..0 # SKIP Lengthy Tests Disabled; to enable set environment"
+        . " variable PERL_DEBUG_FULL_TEST to a true value\n";
+    exit;
 }
-else {
-    my $file = '../lib/unicore/TestNorm.pl';
-    if (-e $file) {
-        do $file;
-    }
-    else {
-        print "1..0 # Skip $file not built (perhaps build options don't"
-            . " build it)\n";
-        0
-    }
+
+my $file = '../lib/unicore/TestNorm.pl';
+if (! -e $file) {
+    print "1..0 # SKIP $file not built (perhaps build options don't"
+        . " build it)\n";
+    exit;
 }
+
+do $file;

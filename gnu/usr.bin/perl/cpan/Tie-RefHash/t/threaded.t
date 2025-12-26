@@ -13,7 +13,6 @@ use strict;
 BEGIN {
     # this is sucky because threads.pm has to be loaded before Test::Builder
   use Config;
-  eval { require Scalar::Util };
 
   if ( $^O eq 'MSWin32' ) {
     print "1..0 # Skip -- this test is generally broken on windows for unknown reasons. If you can help debug this patches would be very welcome.\n";
@@ -22,13 +21,14 @@ BEGIN {
   if ( $Config{usethreads} and !$Config{use5005threads}
       and eval { +require threads; threads->import; 1 }
   ) {
-    print "1..14\n";
+    print "1..18\n";
   } else {
     print "1..0 # Skip -- threads aren't enabled in your perl";
     exit 0;
   }
 }
 
+use Scalar::Util qw(weaken);
 use Tie::RefHash;
 
 $\ = "\n";
@@ -74,3 +74,28 @@ $th->join;
 is( $hash{$v1}, "string", "fetch by string after clone, orig thread ($v1)" );
 is( $hash{$r1}, "hash", "fetch by ref after clone ($r1)" );
 is( $hash{$r2}, "array", "fetch by ref after clone ($r2)" );
+
+{
+    # RT 64025
+
+    my $ref;
+    {
+        tie my %local_hash, "Tie::RefHash";
+        $ref = tied %local_hash;
+        weaken $ref;
+        is( ref($ref), "Tie::RefHash", "[attempt 1] tie object exists" );
+    }
+    ok( !defined($ref), "[attempt 2] tie object is gone after hash goes out of scope" );
+
+    {
+        tie my %local_hash, "Tie::RefHash";
+        $ref = tied %local_hash;
+        weaken $ref;
+        is( ref($ref), "Tie::RefHash", "[attempt 2] tie object exists" );
+
+        for my $i (1 .. 1_000) {
+            tie my %tmp, "Tie::RefHash";  # churn
+        }
+    }
+    ok( !defined($ref), "[attempt 2] tie object is gone after hash goes out of scope" );
+}

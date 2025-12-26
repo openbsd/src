@@ -1,0 +1,34 @@
+Check apostrophe_as_package_separator feature
+
+__END__
+# NAME check default and 5.41 bundle
+$foo'bar = 1;
+use v5.41;
+$foo'bar = 2;
+EXPECT
+OPTIONS fatal
+Global symbol "$foo" requires explicit package name (did you forget to declare "my $foo"?) at - line 3.
+Can't find string terminator "'" anywhere before EOF at - line 3.
+########
+# NAME no feature apostrophe_as_package_separator
+$foo'bar = 1;
+no feature 'apostrophe_as_package_separator';
+$foo'bar = 2;
+EXPECT
+OPTIONS fatal
+Can't find string terminator "'" anywhere before EOF at - line 3.
+########
+# NAME use feature apostrophe_as_package_separator
+use v5.41;
+use feature 'apostrophe_as_package_separator';
+$foo'bar = 2;
+$foo'bar = 3; # suppress used only once
+EXPECT
+########
+# NAME ' in symbolic refs always works and is treated as ::
+my $x = "foo'bar";
+no feature 'apostrophe_as_package_separator';
+$$x = "Hello\n";
+print $foo::bar;
+EXPECT
+Hello

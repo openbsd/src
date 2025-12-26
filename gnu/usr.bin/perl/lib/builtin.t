@@ -8,6 +8,7 @@ BEGIN {
 
 use v5.36;
 no warnings 'experimental::builtin';
+use Config;
 
 package FetchStoreCounter {
     sub TIESCALAR($class, @args) { bless \@args, $class }
@@ -55,19 +56,31 @@ package FetchStoreCounter {
 {
     use builtin qw( inf nan );
 
-    ok(inf, 'inf is true');
-    ok(inf > 1E10, 'inf is bigger than 1E10');
-    ok(inf == inf, 'inf is equal to inf');
-    ok(inf == inf + 1, 'inf is equal to inf + 1');
+    if ($Config{d_double_has_inf}) {
+        ok(inf, 'inf is true');
+        ok(inf > 1E10, 'inf is bigger than 1E10');
+        ok(inf == inf, 'inf is equal to inf');
+        ok(inf == inf + 1, 'inf is equal to inf + 1');
 
-    # Invoke the real XSUB
-    my $inf = ( \&builtin::inf )->();
-    ok($inf == $inf + 1, 'inf returned by real xsub');
+        # Invoke the real XSUB
+        my $inf = ( \&builtin::inf )->();
+        ok($inf == $inf + 1, 'inf returned by real xsub');
+    } else {
+        is(eval { inf }, undef, 'inf throws');
+        my $e = $@;
+        like($e, qr/^builtin::inf not implemented at/, 'inf fails with correct error');
+    }
 
-    ok(nan != nan, 'NaN is not equal to NaN');
+    if ($Config{d_double_has_nan}) {
+        ok(nan != nan, 'NaN is not equal to NaN');
 
-    my $nan = ( \&builtin::nan )->();
-    ok($nan != $nan, 'NaN returned by real xsub');
+        my $nan = ( \&builtin::nan )->();
+        ok($nan != $nan, 'NaN returned by real xsub');
+    } else {
+        is(eval { nan }, undef, 'nan throws');
+        my $e = $@;
+        like($e, qr/^builtin::nan not implemented at/, 'nan fails with correct error');
+    }
 }
 
 # weakrefs
@@ -345,6 +358,39 @@ package FetchStoreCounter {
     }
 
     is(prototype(\&builtin::indexed), '@', 'indexed prototype');
+}
+
+# indexed + foreach loop optimisation appears transparent
+{
+    my @output;
+    my @input = qw( zero one two three four five );
+
+    foreach my ( $idx, $val ) ( builtin::indexed @input ) {
+        push @output, "[$idx]=$val";
+    }
+
+    ok(eq_array(\@output, [qw( [0]=zero [1]=one [2]=two [3]=three [4]=four [5]=five )] ),
+        'foreach + builtin::indexed ARRAY' );
+
+    undef @output;
+
+    use builtin qw( indexed );
+
+    foreach my ( $idx, $val ) ( indexed @input ) {
+        push @output, "[$idx]=$val";
+    }
+
+    ok(eq_array(\@output, [qw( [0]=zero [1]=one [2]=two [3]=three [4]=four [5]=five )] ),
+        'foreach + imported indexed ARRAY' );
+
+    undef @output;
+
+    foreach my ( $idx, $val ) ( builtin::indexed qw( six seven eight nine ) ) {
+        push @output, "[$idx]=$val";
+    }
+
+    ok(eq_array(\@output, [qw( [0]=six [1]=seven [2]=eight [3]=nine )] ),
+        'foreach + builtin::indexed LIST' );
 }
 
 # Vanilla trim tests
@@ -643,6 +689,14 @@ f($arg);
 print "ok";
 EOS
     }
+}
+
+# github #22784
+{
+    use builtin qw( trim );
+    sub f { 0+trim($_[0]) }
+    is(f(4), 4, "populate TARG.iv");
+    is(f(123), 123, "check TARG.IOK is reset properly");
 }
 
 # vim: tabstop=4 shiftwidth=4 expandtab autoindent softtabstop=4

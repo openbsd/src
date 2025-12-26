@@ -855,7 +855,7 @@ down to a single op and are hence faster than before.
 A new C preprocessor define C<NO_TAINT_SUPPORT> was added that, if set,
 disables Perl's taint support altogether.  Using the -T or -t command
 line flags will cause a fatal error.  Beware that both core tests as
-well as many a CPAN distribution's tests will fail with this change.  On
+well as many CPAN distribution's tests will fail with this change.  On
 the upside, it provides a small performance benefit due to reduced
 branching.
 
@@ -1922,7 +1922,7 @@ C<< Can't do {n,m} with n > m in regex; marked by <-- HERE in m/%s/ >>
 
 This fatal error has been turned into a warning that reads:
 
-L<< Quantifier {n,m} with n > m can't match in regex | perldiag/Quantifier {n,m} with n > m can't match in regex >>
+L<< Quantifier {n,m} with n > m can't match in regex|perldiag/Quantifier {n,m} with n > m can't match in regex >>
 
 (W regexp) Minima should be less than or equal to maxima.  If you really want
 your regexp to match something 0 times, just put {0}.
@@ -2291,7 +2291,7 @@ C<PL_glob_index> is gone.
 
 =item *
 
-The private Perl_croak_no_modify has had its context parameter removed.  It is
+The private Perl_croak_no_modify has had its context parameter removed.  It
 now has a void prototype.  Users of the public API croak_no_modify remain
 unaffected.
 
@@ -2340,7 +2340,7 @@ C<mg_length> has been deprecated.
 
 C<sv_len> now always returns a byte count and C<sv_len_utf8> a character
 count.  Previously, C<sv_len> and C<sv_len_utf8> were both buggy and would
-sometimes returns bytes and sometimes characters.  C<sv_len_utf8> no longer
+sometimes return bytes and sometimes characters.  C<sv_len_utf8> no longer
 assumes that its argument is in UTF-8.  Neither of these creates UTF-8 caches
 for tied or overloaded values or for non-PVs any more.
 

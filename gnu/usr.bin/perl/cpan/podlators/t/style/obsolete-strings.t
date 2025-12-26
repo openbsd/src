@@ -9,7 +9,7 @@
 # The canonical version of this file is maintained in the rra-c-util package,
 # which can be found at <https://www.eyrie.org/~eagle/software/rra-c-util/>.
 #
-# Copyright 2016, 2018-2021 Russ Allbery <eagle@eyrie.org>
+# Copyright 2016, 2018-2021, 2024 Russ Allbery <eagle@eyrie.org>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -31,8 +31,8 @@
 #
 # SPDX-License-Identifier: MIT
 
-use 5.010;
-use strict;
+use 5.012;
+use autodie;
 use warnings;
 
 use lib 't/lib';
@@ -43,7 +43,10 @@ use File::Find qw(find);
 use Test::More;
 
 # Bad patterns to search for.
-my @BAD_REGEXES = (qr{ http:// \S+ [.]eyrie[.]org }xms);
+my @BAD_REGEXES = (
+    qr{ http:// \S+ [.]eyrie[.]org }xms,
+    qr{ \$VERSION \s+ = \s+ }xms,
+);
 my @BAD_STRINGS = qw(rra@stanford.edu RRA_MAINTAINER_TESTS);
 
 # File or directory names to always skip.
@@ -69,24 +72,24 @@ sub check_file {
     return if !-T $filename;
 
     # Scan the file.
-    open(my $fh, '<', $filename) or BAIL_OUT("Cannot open $File::Find::name");
+    open(my $fh, '<', $filename);
     while (defined(my $line = <$fh>)) {
         for my $regex (@BAD_REGEXES) {
             if ($line =~ $regex) {
                 ok(0, "$File::Find::name contains $regex");
-                close($fh) or BAIL_OUT("Cannot close $File::Find::name");
+                close($fh);
                 return;
             }
         }
         for my $string (@BAD_STRINGS) {
             if (index($line, $string) != -1) {
                 ok(0, "$File::Find::name contains $string");
-                close($fh) or BAIL_OUT("Cannot close $File::Find::name");
+                close($fh);
                 return;
             }
         }
     }
-    close($fh) or BAIL_OUT("Cannot close $File::Find::name");
+    close($fh);
     ok(1, $File::Find::name);
     return;
 }
