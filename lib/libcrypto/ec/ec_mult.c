@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.60 2025/08/26 14:14:52 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.61 2025/12/26 18:44:19 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -287,8 +287,9 @@ ec_wnaf_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar1,
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
-	if (group->meth != r->meth || group->meth != point1->meth ||
-	    group->meth != point2->meth) {
+	if (!ec_group_and_point_compatible(group, r) ||
+	    !ec_group_and_point_compatible(group, point1) ||
+	    !ec_group_and_point_compatible(group, point2)) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}

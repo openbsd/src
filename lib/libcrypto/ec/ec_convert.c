@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_convert.c,v 1.15 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: ec_convert.c,v 1.16 2025/12/26 18:44:19 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -452,7 +452,7 @@ EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth != point->meth) {
+	if (!ec_group_and_point_compatible(group, point)) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
@@ -478,7 +478,7 @@ EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth != point->meth) {
+	if (!ec_group_and_point_compatible(group, point)) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		goto err;
 	}
