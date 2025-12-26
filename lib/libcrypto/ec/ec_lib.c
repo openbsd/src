@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.126 2025/08/02 15:47:27 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.127 2025/12/26 18:41:05 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -815,6 +815,7 @@ EC_POINT_new(const EC_GROUP *group)
 		goto err;
 
 	point->meth = group->meth;
+	point->nid = group->nid;
 
 	return point;
 
@@ -855,6 +856,8 @@ EC_POINT_copy(EC_POINT *dst, const EC_POINT *src)
 	}
 	if (dst == src)
 		return 1;
+
+	dst->nid = src->nid;
 
 	if (!bn_copy(dst->X, src->X))
 		return 0;

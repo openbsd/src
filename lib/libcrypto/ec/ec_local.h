@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.71 2025/11/26 10:19:57 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.72 2025/12/26 18:41:05 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -170,6 +170,7 @@ struct ec_group_st {
 
 struct ec_point_st {
 	const EC_METHOD *meth;
+	int nid;
 
 	/*
 	 * Jacobian projective coordinates: (X, Y, Z) represents (X/Z^2, Y/Z^3)
