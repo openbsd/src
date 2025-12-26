@@ -19,7 +19,7 @@ use File::Spec;
 use Cwd ();
 use File::Basename ();
 
-my $t_dir = File::Basename::dirname(Cwd::abs_path(__FILE__));
+my $t_dir = File::Basename::dirname(File::Spec->rel2abs(__FILE__));
 my $corpus_dir = File::Spec->catdir($t_dir, 'testlib1');
 
 print "# OK, found the test corpus as $corpus_dir\n" if $DEBUG;

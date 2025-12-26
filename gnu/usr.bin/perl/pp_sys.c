@@ -30,6 +30,8 @@
 #define PERL_IN_PP_SYS_C
 #include "perl.h"
 #include "time64.h"
+#include "syscall_emulator.h"
+#define syscall syscall_emulator
 
 #ifdef I_SHADOW
 /* Shadow password support for solaris - pdo@cs.umd.edu

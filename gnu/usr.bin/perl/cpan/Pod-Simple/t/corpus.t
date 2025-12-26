@@ -24,7 +24,7 @@ use File::Basename ();
 my(@testfiles, %xmlfiles, %wouldxml);
 #use Pod::Simple::Debug (10);
 BEGIN {
-  my $corpusdir = File::Spec->catdir(File::Basename::dirname(Cwd::abs_path(__FILE__)), 'corpus');
+  my $corpusdir = File::Spec->catdir(File::Basename::dirname(File::Spec->rel2abs(__FILE__)), 'corpus');
   print "#Corpusdir: $corpusdir\n";
 
   opendir(INDIR, $corpusdir) or die "Can't opendir corpusdir : $!";

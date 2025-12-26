@@ -5,8 +5,10 @@ use Test::More tests => 1;
 
 use File::Basename;
 use File::Spec;
+use File::Temp;
 use Cwd qw(abs_path);
 my $THISDIR;
+my $TMPDIR = File::Temp->newdir(basename(__FILE__) . '-XXXXXXXXX');
 BEGIN {
     $THISDIR = dirname(abs_path(__FILE__));
     unshift @INC, $THISDIR;
@@ -18,7 +20,7 @@ use Pod::Text;
 
 my $infile = File::Spec->catfile($THISDIR, (File::Spec->updir) x 2, 'scripts', 'pod2usage.PL');
 my $cmpfile = File::Spec->catfile($THISDIR, 'pod2usage.xr');
-my $outfile = File::Spec->catfile($THISDIR, 'pod2usage.OUT');
+my $outfile = File::Spec->catfile($TMPDIR,  'pod2usage.OUT');
 
 my $text_parser = Pod::Text->new;
 $text_parser->parse_from_file($infile, $outfile);

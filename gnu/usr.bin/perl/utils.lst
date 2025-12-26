@@ -9,20 +9,14 @@ utils/encguess
 utils/h2ph
 utils/h2xs
 utils/instmodsh
-utils/json_pp
 utils/libnetcfg
-utils/perlbug	# link = utils/perlthanks
+utils/perlbug
 utils/perldoc
 utils/perlivp
 utils/piconv
 utils/pl2pm
 utils/pod2html
 utils/prove
-utils/ptar
-utils/ptardiff
-utils/ptargrep
-utils/shasum
 utils/splain
 utils/streamzip
 utils/xsubpp
-utils/zipdetails

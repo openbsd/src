@@ -95,7 +95,12 @@ _quick3p=
     perl5380delta 1			pod/perl5380delta.pod \
     perl5381delta 1			pod/perl5381delta.pod \
     perl5382delta 1			pod/perl5382delta.pod \
+    perl5383delta 1			pod/perl5383delta.pod \
+    perl5384delta 1			pod/perl5384delta.pod \
     perl5400delta 1			pod/perl5400delta.pod \
+    perl5401delta 1			pod/perl5401delta.pod \
+    perl5402delta 1			pod/perl5402delta.pod \
+    perl5420delta 1			pod/perl5420delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -409,6 +414,7 @@ _quick3p=
     ExtUtils::ParseXS 3p		lib/ExtUtils/ParseXS.pod \
     ExtUtils::ParseXS::Constants 3p	lib/ExtUtils/ParseXS/Constants.pm \
     ExtUtils::ParseXS::Eval 3p		lib/ExtUtils/ParseXS/Eval.pm \
+    ExtUtils::ParseXS::Node 3p		lib/ExtUtils/ParseXS/Node.pm \
     ExtUtils::ParseXS::Utilities 3p	lib/ExtUtils/ParseXS/Utilities.pm \
     ExtUtils::PL2Bat 3p			lib/ExtUtils/PL2Bat.pm \
     ExtUtils::testlib 3p		lib/ExtUtils/testlib.pm \
@@ -463,6 +469,7 @@ _quick3p=
     if 3p				lib/if.pm \
     integer 3p				lib/integer.pm \
     IO 3p				lib/IO.pm \
+    IO::Compress 3p			lib/IO/Compress.pm \
     IO::Compress::Base 3p		lib/IO/Compress/Base.pm \
     IO::Compress::Bzip2 3p		lib/IO/Compress/Bzip2.pm \
     IO::Compress::Deflate 3p		lib/IO/Compress/Deflate.pm \
@@ -624,6 +631,7 @@ _quick3p=
     POSIX 3p				lib/POSIX.pod \
     re 3p				lib/re.pm \
     Safe 3p				lib/Safe.pm \
+    Scalar::List::Utils 3p		lib/Scalar/List/Utils.pm \
     Scalar::Util 3p			lib/Scalar/Util.pm \
     SDBM_File 3p			lib/SDBM_File.pm \
     Search::Dict 3p			lib/Search/Dict.pm \
@@ -632,6 +640,7 @@ _quick3p=
     sigtrap 3p				lib/sigtrap.pm \
     Socket 3p				lib/Socket.pm \
     sort 3p				lib/sort.pm \
+    source::encoding 3p			lib/source/encoding.pm \
     stable 3p				lib/stable.pm \
     Storable 3p				lib/Storable.pm \
     strict 3p				lib/strict.pm \
@@ -740,6 +749,7 @@ _quick3p=
     Test2::Compare::String 3p		lib/Test2/Compare/String.pm \
     Test2::Compare::Undef 3p		lib/Test2/Compare/Undef.pm \
     Test2::Compare::Wildcard 3p		lib/Test2/Compare/Wildcard.pm \
+    Test2::Env 3p			lib/Test2/Env.pm \
     Test2::Event 3p			lib/Test2/Event.pm \
     Test2::Event::Bail 3p		lib/Test2/Event/Bail.pm \
     Test2::Event::Diag 3p		lib/Test2/Event/Diag.pm \
@@ -783,13 +793,13 @@ _quick3p=
     Test2::Manual::Anatomy 3p		lib/Test2/Manual/Anatomy.pm \
     Test2::Manual::Anatomy::API 3p	lib/Test2/Manual/Anatomy/API.pm \
     Test2::Manual::Anatomy::Context 3p	lib/Test2/Manual/Anatomy/Context.pm \
+    Test2::Manual::Anatomy::EndToEnd 3p	lib/Test2/Manual/Anatomy/EndToEnd.pm \
     Test2::Manual::Anatomy::Event 3p	lib/Test2/Manual/Anatomy/Event.pm \
     Test2::Manual::Anatomy::Hubs 3p	lib/Test2/Manual/Anatomy/Hubs.pm \
     Test2::Manual::Anatomy::IPC 3p	lib/Test2/Manual/Anatomy/IPC.pm \
     Test2::Manual::Anatomy::Utilities 3p	lib/Test2/Manual/Anatomy/Utilities.pm \
     Test2::Manual::Concurrency 3p	lib/Test2/Manual/Concurrency.pm \
     Test2::Manual::Contributing 3p	lib/Test2/Manual/Contributing.pm \
-    Test2::Manual::EndToEnd 3p		lib/Test2/Manual/Anatomy/EndToEnd.pm \
     Test2::Manual::Testing 3p		lib/Test2/Manual/Testing.pm \
     Test2::Manual::Testing::Introduction 3p	lib/Test2/Manual/Testing/Introduction.pm \
     Test2::Manual::Testing::Migrating 3p	lib/Test2/Manual/Testing/Migrating.pm \
@@ -859,6 +869,7 @@ _quick3p=
     Test2::Util::HashBase 3p		lib/Test2/Util/HashBase.pm \
     Test2::Util::Importer 3p		lib/Test2/Util/Importer.pm \
     Test2::Util::Ref 3p			lib/Test2/Util/Ref.pm \
+    Test2::Util::Sig 3p			lib/Test2/Util/Sig.pm \
     Test2::Util::Stash 3p		lib/Test2/Util/Stash.pm \
     Test2::Util::Sub 3p			lib/Test2/Util/Sub.pm \
     Test2::Util::Table 3p		lib/Test2/Util/Table.pm \
@@ -875,7 +886,6 @@ _quick3p=
     Test2::Workflow::Task::Group 3p	lib/Test2/Workflow/Task/Group.pm \
     Test::Builder 3p			lib/Test/Builder.pm \
     Test::Builder::Formatter 3p		lib/Test/Builder/Formatter.pm \
-    Test::Builder::IO::Scalar 3p	lib/Test/Builder/IO/Scalar.pm \
     Test::Builder::Module 3p		lib/Test/Builder/Module.pm \
     Test::Builder::Tester 3p		lib/Test/Builder/Tester.pm \
     Test::Builder::Tester::Color 3p	lib/Test/Builder/Tester/Color.pm \

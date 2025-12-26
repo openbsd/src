@@ -64,6 +64,7 @@ for my $filename (@files) {
         die "p5p-controlled module $filename missing =head1 NAME\n"
             if $filename !~ m{^(dist/|cpan/)}n # under our direct control
             && $filename !~ m{/_[^/]+\z}       # not private
+            && $filename !~ m{/unicore/}       # not unicore
             && $filename ne 'lib/meta_notation.pm'      # no pod
             && $filename ne 'lib/overload/numbers.pm';  # no pod
         warn "$filename missing =head1 NAME\n" unless $Quiet;

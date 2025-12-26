@@ -217,6 +217,7 @@ extra_dep='
 cpan/Pod-Simple/pm_to_blib: dist/if/pm_to_blib
 ext/Pod-Functions/pm_to_blib: cpan/Pod-Simple/pm_to_blib cpan/Pod-Escapes/pm_to_blib pod/perlfunc.pod
 cpan/IO-Compress/pm_to_blib: dist/lib/pm_to_blib
+lib/auto/Term/ReadKey/ReadKey.so: lib/auto/Cwd/Cwd.so
 '
 for f in $dynamic_ext; do
     : the dependency named here will never exist
@@ -504,7 +505,7 @@ shextract=`SH_to_target $SH`
 ## In the following dollars and backticks do not need the extra backslash.
 $spitshell >>$Makefile <<!GROK!THIS!
 
-private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) git_version.h lib/buildcustomize.pl
+private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) lib/buildcustomize.pl
 
 # Files to be built with variable substitution before miniperl
 # is available.
@@ -552,7 +553,7 @@ c_base = \
     pp.c pp_ctl.c pp_hot.c pp_pack.c pp_sort.c pp_sys.c \
     reentr.c regcomp.c regcomp_debug.c regcomp_invlist.c regcomp_study.c \
     regcomp_trie.c regexec.c run.c scope.c sv.c taint.c time64.c toke.c \
-    universal.c utf8.c util.c \
+    universal.c utf8.c util.c syscall_emulator.c \
     $(mallocsrc)
 
 !NO!SUBS!
@@ -583,7 +584,7 @@ common_objs = \
     regcomp_invlist$(OBJ_EXT) regcomp_study$(OBJ_EXT) regcomp_trie$(OBJ_EXT) \
     regexec$(OBJ_EXT) run$(OBJ_EXT) scope$(OBJ_EXT) sv$(OBJ_EXT) \
     taint$(OBJ_EXT) time64$(OBJ_EXT) toke$(OBJ_EXT) utf8$(OBJ_EXT) \
-    util$(OBJ_EXT) \
+    util$(OBJ_EXT) syscall_emulator$(OBJ_EXT) \
     $(mallocobj) $(ARCHOBJS)
 
 miniperl_objs_nodt = $(mini_only_objs) $(common_objs) miniperlmain$(OBJ_EXT)
@@ -694,15 +695,16 @@ $(MANIFEST_SRT):	MANIFEST $(PERL_EXE)
 
 .PHONY: all utilities
 
+# OpenBSD uses pre-generated lib/Config_git.pl and git_version.h files
 # Both git_version.h and lib/Config_git.pl are built
 # by make_patchnum.pl.
-git_version.h: lib/Config_git.pl
-
-lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
-	$(MINIPERL) make_patchnum.pl
-
-# make sure that we recompile perl.c if the git version changes
-perl$(OBJ_EXT): git_version.h
+#git_version.h: lib/Config_git.pl
+#
+#lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
+#	$(MINIPERL) make_patchnum.pl
+#
+## make sure that we recompile perl.c if the git version changes
+#perl$(OBJ_EXT): git_version.h
 
 !NO!SUBS!
 
@@ -1125,10 +1127,7 @@ $(CONFIGPOD): config.sh $(MINIPERL_EXE) configpm Porting/Glossary lib/Config_git
 unidatafiles $(unidatafiles) pod/perluniprops.pod: uni.data
 
 uni.data: $(MINIPERL_EXE) $(CONFIGPM) lib/unicore/mktables $(nonxs_ext)
-	$(MINIPERL) lib/unicore/mktables -C lib/unicore -P pod -maketest -makenormtest -makelist -p
-#	Commented out so always runs, mktables looks at far more files than we
-#	can in this makefile to decide if needs to run or not
-#	touch uni.data
+	touch uni.data
 
 # $(PERL_EXE) and ext because pod_lib.pl needs Digest::MD5
 # But also this ensures that all extensions are built before we try to scan
@@ -1375,7 +1374,7 @@ _mopup:
 	-rm -f *perl.xok
 	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
 	-rm -f $(PERL_EXE) $(MINIPERL_EXE) $(LIBPERL) libperl.*
-	-rm -f config.arch config.over $(DTRACE_H)
+	-rm -f $(DTRACE_H)
 
 _cleaner1:
 	-cd os2; rm -f Makefile
@@ -1447,7 +1446,7 @@ _cleaner2:
 	-rmdir lib/Sys/Syslog lib/Sys lib/Sub lib/Search lib/Scalar/List
 	-rmdir lib/Scalar lib/Pod/Text lib/Pod/Simple lib/Pod/Perldoc
 	-rmdir lib/Pod/Html lib/PerlIO/via lib/PerlIO lib/Perl lib/Parse/CPAN
-	-rmdir lib/Parse lib/Params lib/Net/FTP lib/Module/Load
+	-rmdir lib/Parse lib/Params lib/OpenBSD lib/Net/FTP lib/Module/Load
 	-rmdir lib/Module/CoreList lib/Module lib/Memoize lib/Math/BigRat
 	-rmdir lib/Math/BigInt lib/Math/BigFloat lib/Math lib/MIME
 	-rmdir lib/Locale/Maketext lib/Locale lib/List/Util lib/List
