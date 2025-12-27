@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.56 2025/12/10 12:37:52 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.57 2025/12/27 14:51:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -904,8 +904,7 @@ json_rib_mem(struct rde_memstats *stats)
 	json_rib_mem_element("prefix", stats->prefix_cnt,
 	    stats->prefix_cnt * sizeof(struct prefix), UINT64_MAX);
 	json_rib_mem_element("adjout_prefix", stats->adjout_prefix_cnt,
-	    stats->adjout_prefix_cnt * sizeof(struct adjout_prefix),
-	    UINT64_MAX);
+	    stats->adjout_prefix_size, UINT64_MAX);
 	json_rib_mem_element("adjout_attr", stats->adjout_attr_cnt,
 	    stats->adjout_attr_cnt * sizeof(struct adjout_attr),
 	    stats->adjout_attr_refs);

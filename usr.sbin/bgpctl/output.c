@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.65 2025/12/10 12:37:52 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.66 2025/12/27 14:51:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1069,9 +1069,10 @@ show_rib_mem(struct rde_memstats *stats)
 	printf("%10lld prefix entries using %s of memory\n",
 	    stats->prefix_cnt, fmt_mem(stats->prefix_cnt *
 	    sizeof(struct prefix)));
-	printf("%10lld adjout_prefix entries using %s of memory\n",
-	    stats->adjout_prefix_cnt, fmt_mem(stats->adjout_prefix_cnt *
-	    sizeof(struct adjout_prefix)));
+	printf("%10lld adjout_prefix entries using %s out of",
+	    stats->adjout_prefix_cnt,
+	    fmt_mem(stats->adjout_prefix_cnt * sizeof(struct adjout_prefix)));
+	printf(" %s memory\n", fmt_mem(stats->adjout_prefix_size));
 	printf("%10lld adjout attribute entries using %s of memory\n",
 	    stats->adjout_attr_cnt, fmt_mem(stats->adjout_attr_cnt *
 	    sizeof(struct adjout_attr)));
