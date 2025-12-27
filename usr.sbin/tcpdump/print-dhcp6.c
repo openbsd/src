@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.14 2025/12/27 11:19:55 dlg Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.15 2025/12/27 23:51:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -65,6 +65,7 @@ static void	dhcp6opt_duid(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_oro(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_elapsed(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_status_code(uint16_t, const u_char *, u_int);
+static void	dhcp6opt_dns_servers(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_ia_pd(uint16_t, const u_char *, u_int);
 
 static const struct dhcp6opt dhcp6opts[] = {
@@ -75,7 +76,7 @@ static const struct dhcp6opt dhcp6opts[] = {
 	{ 8,	"Elapsed-Time",		dhcp6opt_elapsed },
 	{ 13,	"Status-Code",		dhcp6opt_status_code },
 	{ 14,	"Rapid-Commit",		dhcp6opt_default },
-	{ 23,	"DNS-Servers",		dhcp6opt_default },
+	{ 23,	"DNS-Servers",		dhcp6opt_dns_servers },
 	{ 24,	"Domain-List",		dhcp6opt_default },
 	{ 25,	"IA_PD",		dhcp6opt_ia_pd },
 };
@@ -310,6 +311,35 @@ dhcp6opt_status_code(uint16_t code, const u_char *p, u_int l)
 		printf("%c", ch);
 	}
 	printf("\"");
+}
+
+static void
+dhcp6opt_dns_servers(uint16_t code, const u_char *p, u_int l)
+{
+	const struct in6_addr *ia;
+	char n[NI_MAXHOST];
+
+	for (;;) {
+		if (l < sizeof(*ia)) {
+			printf("[|dns-server]");
+			return;
+		}
+		ia = (const struct in6_addr *)p;
+		p += sizeof(*ia);
+		l -= sizeof(*ia);
+
+		if (inet_ntop(AF_INET6, ia, n, sizeof(n)) == NULL) {
+			printf("dns-server ?");
+			return;
+		}
+
+		printf("%s", n);
+
+		if (l == 0)
+			break;
+
+		printf(", ");
+	}
 }
 
 static void
