@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.13 2020/12/27 17:27:50 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.14 2025/12/27 22:14:40 kn Exp $
 
-SUBDIR+= disklabel ifconfig iked isakmpd newfs route slaacd
+SUBDIR+= disklabel ifconfig iked isakmpd newfs route slaacd sysctl
 
 .if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
 SUBDIR+= ipsecctl pfctl
