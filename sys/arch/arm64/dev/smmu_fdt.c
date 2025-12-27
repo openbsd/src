@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.10 2025/12/27 19:36:20 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.11 2025/12/27 19:37:00 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -69,8 +69,9 @@ smmu_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "arm,smmu-v2") ||
-	    OF_is_compatible(faa->fa_node, "arm,mmu-500"));
+	return (OF_is_compatible(faa->fa_node, "arm,mmu-500") ||
+	    OF_is_compatible(faa->fa_node, "arm,smmu-v2") ||
+	    OF_is_compatible(faa->fa_node, "arm,smmu-v3"));
 }
 
 void
