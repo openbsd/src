@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.352 2025/12/22 10:55:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.353 2025/12/27 08:43:58 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2116,14 +2116,18 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 	vm_map_unlock(map);
 
 	error = 0;
-	for (iter = first; error == 0 && iter != end;
+	for (iter = first; iter != end;
 	    iter = RBT_NEXT(uvm_map_addr, iter)) {
 		if (UVM_ET_ISHOLE(iter) || iter->start == iter->end ||
 		    iter->protection == PROT_NONE)
 			continue;
 
-		error = uvm_fault_wire(map, iter->start, iter->end,
-		    iter->protection);
+		if (iter->wired_count == 1) {
+			error = uvm_fault_wire(map, iter->start, iter->end,
+			    iter->protection);
+			if (error)
+				break;
+		}
 	}
 
 	vm_map_lock(map);
@@ -2137,7 +2141,8 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 
 		/*
 		 * first is no longer needed to restart loops.
-		 * Use it as iterator to unmap successful mappings.
+		 * Use it as iterator to unwire entries that were
+		 * successfully wired above.
 		 */
 		for (; first != iter;
 		    first = RBT_NEXT(uvm_map_addr, first)) {
