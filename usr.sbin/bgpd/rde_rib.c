@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.285 2025/12/24 07:59:55 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.286 2025/12/27 19:30:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -52,6 +52,7 @@ RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 
 LIST_HEAD(, rib_context) rib_dumps = LIST_HEAD_INITIALIZER(rib_dumps);
+static struct rib_context *rib_dump_ctx;
 
 static inline struct rib_entry *
 re_lock(struct rib_entry *re)
@@ -439,8 +440,19 @@ void
 rib_dump_runner(void)
 {
 	struct rib_context *ctx, *next;
+	monotime_t start;
 
-	LIST_FOREACH_SAFE(ctx, &rib_dumps, entry, next) {
+	start = getmonotime();
+
+	if (rib_dump_ctx != NULL)
+		ctx = rib_dump_ctx;
+	else
+		ctx = LIST_FIRST(&rib_dumps);
+
+	for (; ctx != NULL; ctx = next) {
+		next = LIST_NEXT(ctx, entry);
+		if (monotime_to_msec(monotime_sub(getmonotime(), start)) > 10)
+			break;
 		if (ctx->ctx_throttle && ctx->ctx_throttle(ctx->ctx_arg))
 			continue;
 		if (ctx->ctx_rib_call != NULL)
@@ -448,6 +460,7 @@ rib_dump_runner(void)
 		else
 			adjout_prefix_dump_r(ctx);
 	}
+	rib_dump_ctx = ctx;
 }
 
 static void
@@ -467,6 +480,8 @@ rib_dump_free(struct rib_context *ctx)
 		rib_dump_cleanup(ctx);
 	if (ctx->ctx_pt)
 		adjout_prefix_dump_cleanup(ctx);
+	if (ctx == rib_dump_ctx)
+		rib_dump_ctx = LIST_NEXT(ctx, entry);
 	LIST_REMOVE(ctx, entry);
 	free(ctx);
 }
