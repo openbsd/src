@@ -1,6 +1,6 @@
-/* $OpenBSD: acpihid.c,v 1.4 2022/05/29 22:03:44 jca Exp $ */
+/* $OpenBSD: inthid.c,v 1.1 2025/12/27 12:58:23 kettenis Exp $ */
 /*
- * ACPI HID event and 5-button array driver
+ * Intel HID event and 5-button array driver
  *
  * Copyright (c) 2018, 2020 joshua stein <jcs@jcs.org>
  *
@@ -35,15 +35,15 @@
 #include "audio.h"
 #include "wskbd.h"
 
-/* #define ACPIHID_DEBUG */
+/* #define INTHID_DEBUG */
 
-#ifdef ACPIHID_DEBUG
+#ifdef INTHID_DEBUG
 #define DPRINTF(x) printf x
 #else
 #define DPRINTF(x)
 #endif
 
-struct acpihid_softc {
+struct inthid_softc {
 	struct device		sc_dev;
 
 	bus_space_tag_t		sc_iot;
@@ -88,20 +88,20 @@ struct acpihid_softc {
 };
 
 enum {
-	ACPIHID_FUNC_INVALID,
-	ACPIHID_FUNC_BTNL,
-	ACPIHID_FUNC_HDMM,
-	ACPIHID_FUNC_HDSM,
-	ACPIHID_FUNC_HDEM,
-	ACPIHID_FUNC_BTNS,
-	ACPIHID_FUNC_BTNE,
-	ACPIHID_FUNC_HEBC_V1,
-	ACPIHID_FUNC_VGBS,
-	ACPIHID_FUNC_HEBC_V2,
-	ACPIHID_FUNC_MAX,
+	INTHID_FUNC_INVALID,
+	INTHID_FUNC_BTNL,
+	INTHID_FUNC_HDMM,
+	INTHID_FUNC_HDSM,
+	INTHID_FUNC_HDEM,
+	INTHID_FUNC_BTNS,
+	INTHID_FUNC_BTNE,
+	INTHID_FUNC_HEBC_V1,
+	INTHID_FUNC_VGBS,
+	INTHID_FUNC_HEBC_V2,
+	INTHID_FUNC_MAX,
 };
 
-static const char *acpihid_dsm_funcs[] = {
+static const char *inthid_dsm_funcs[] = {
 	NULL,
 	"BTNL",
 	"HDMM",
@@ -114,53 +114,53 @@ static const char *acpihid_dsm_funcs[] = {
 	"HEBC",
 };
 
-int	acpihid_match(struct device *, void *, void *);
-void	acpihid_attach(struct device *, struct device *, void *);
-void	acpihid_init_dsm(struct acpihid_softc *);
-int	acpihid_button_array_enable(struct acpihid_softc *, int);
-int	acpihid_eval(struct acpihid_softc *, int, int64_t, int64_t *);
-int	acpihid_notify(struct aml_node *, int, void *);
+int	inthid_match(struct device *, void *, void *);
+void	inthid_attach(struct device *, struct device *, void *);
+void	inthid_init_dsm(struct inthid_softc *);
+int	inthid_button_array_enable(struct inthid_softc *, int);
+int	inthid_eval(struct inthid_softc *, int, int64_t, int64_t *);
+int	inthid_notify(struct aml_node *, int, void *);
 
 #if NAUDIO > 0 && NWSKBD > 0
 extern int wskbd_set_mixervolume(long, long);
 #endif
 
-const struct cfattach acpihid_ca = {
-	sizeof(struct acpihid_softc),
-	acpihid_match,
-	acpihid_attach,
+const struct cfattach inthid_ca = {
+	sizeof(struct inthid_softc),
+	inthid_match,
+	inthid_attach,
 	NULL,
 	NULL,
 };
 
-struct cfdriver acpihid_cd = {
-	NULL, "acpihid", DV_DULL
+struct cfdriver inthid_cd = {
+	NULL, "inthid", DV_DULL
 };
 
-const char *acpihid_hids[] = {
+const char *inthid_hids[] = {
 	"INT33D5",
 	NULL
 };
 
 /* eeec56b3-4442-408f-a792-4edd4d758054 */
-static uint8_t acpihid_guid[] = {
+static uint8_t inthid_guid[] = {
 	0xB3, 0x56, 0xEC, 0xEE, 0x42, 0x44, 0x8F, 0x40,
 	0xA7, 0x92, 0x4E, 0xDD, 0x4D, 0x75, 0x80, 0x54,
 };
 
 int
-acpihid_match(struct device *parent, void *match, void *aux)
+inthid_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
 
-	return (acpi_matchhids(aa, acpihid_hids, cf->cf_driver->cd_name));
+	return (acpi_matchhids(aa, inthid_hids, cf->cf_driver->cd_name));
 }
 
 void
-acpihid_attach(struct device *parent, struct device *self, void *aux)
+inthid_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct acpihid_softc	*sc = (struct acpihid_softc *)self;
+	struct inthid_softc	*sc = (struct inthid_softc *)self;
 	struct acpi_attach_args *aa = aux;
 	uint64_t		 val;
 
@@ -169,9 +169,9 @@ acpihid_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s", sc->sc_devnode->name);
 
-	acpihid_init_dsm(sc);
+	inthid_init_dsm(sc);
 
-	if (acpihid_eval(sc, ACPIHID_FUNC_HDMM, 0, &val) != 0) {
+	if (inthid_eval(sc, INTHID_FUNC_HDMM, 0, &val) != 0) {
 		printf(", failed reading mode\n");
 		return;
 	} else if (val != 0) {
@@ -179,22 +179,22 @@ acpihid_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if ((acpihid_eval(sc, ACPIHID_FUNC_HEBC_V2, 0, &val) == 0 &&
+	if ((inthid_eval(sc, INTHID_FUNC_HEBC_V2, 0, &val) == 0 &&
 	    (val & 0x60000)) ||
-	    (acpihid_eval(sc, ACPIHID_FUNC_HEBC_V1, 0, &val) == 0 &&
+	    (inthid_eval(sc, INTHID_FUNC_HEBC_V1, 0, &val) == 0 &&
 	    (val & 0x20000)))
 		sc->sc_5_button = 1;
 
-	aml_register_notify(sc->sc_devnode, aa->aaa_dev, acpihid_notify,
+	aml_register_notify(sc->sc_devnode, aa->aaa_dev, inthid_notify,
 	    sc, ACPIDEV_NOPOLL);
 
 	/* enable hid set */
-	acpihid_eval(sc, ACPIHID_FUNC_HDSM, 1, NULL);
+	inthid_eval(sc, INTHID_FUNC_HDSM, 1, NULL);
 
 	if (sc->sc_5_button) {
-		acpihid_button_array_enable(sc, 1);
+		inthid_button_array_enable(sc, 1);
 
-		if (acpihid_eval(sc, ACPIHID_FUNC_BTNL, 0, NULL) == 0)
+		if (inthid_eval(sc, INTHID_FUNC_BTNL, 0, NULL) == 0)
 			printf(", 5 button array");
 		else
 			printf(", failed enabling HID power button");
@@ -204,7 +204,7 @@ acpihid_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-acpihid_init_dsm(struct acpihid_softc *sc)
+inthid_init_dsm(struct inthid_softc *sc)
 {
 	struct aml_value cmd[4], res;
 
@@ -217,8 +217,8 @@ acpihid_init_dsm(struct acpihid_softc *sc)
 
 	bzero(&cmd, sizeof(cmd));
 	cmd[0].type = AML_OBJTYPE_BUFFER;
-	cmd[0].v_buffer = (uint8_t *)&acpihid_guid;
-	cmd[0].length = sizeof(acpihid_guid);
+	cmd[0].v_buffer = (uint8_t *)&inthid_guid;
+	cmd[0].length = sizeof(inthid_guid);
 	/* rev */
 	cmd[1].type = AML_OBJTYPE_INTEGER;
 	cmd[1].v_integer = 1;
@@ -253,19 +253,19 @@ acpihid_init_dsm(struct acpihid_softc *sc)
 }
 
 int
-acpihid_eval(struct acpihid_softc *sc, int idx, int64_t arg, int64_t *ret)
+inthid_eval(struct inthid_softc *sc, int idx, int64_t arg, int64_t *ret)
 {
 	struct aml_value cmd[4], pkg, *ppkg;
 	int64_t tret;
 	const char *dsm_func;
 
-	if (idx <= ACPIHID_FUNC_INVALID || idx >= ACPIHID_FUNC_MAX) {
+	if (idx <= INTHID_FUNC_INVALID || idx >= INTHID_FUNC_MAX) {
 		printf("%s: _DSM func index %d out of bounds\n",
 		    sc->sc_dev.dv_xname, idx);
 		return 1;
 	}
 
-	dsm_func = acpihid_dsm_funcs[idx];
+	dsm_func = inthid_dsm_funcs[idx];
 
 	DPRINTF(("%s: executing _DSM %s\n", sc->sc_dev.dv_xname, dsm_func));
 
@@ -283,8 +283,8 @@ acpihid_eval(struct acpihid_softc *sc, int idx, int64_t arg, int64_t *ret)
 
 	bzero(&cmd, sizeof(cmd));
 	cmd[0].type = AML_OBJTYPE_BUFFER;
-	cmd[0].v_buffer = (uint8_t *)&acpihid_guid;
-	cmd[0].length = sizeof(acpihid_guid);
+	cmd[0].v_buffer = (uint8_t *)&inthid_guid;
+	cmd[0].length = sizeof(inthid_guid);
 	/* rev */
 	cmd[1].type = AML_OBJTYPE_INTEGER;
 	cmd[1].v_integer = 1;
@@ -332,7 +332,7 @@ eval_direct:
 }
 
 int
-acpihid_button_array_enable(struct acpihid_softc *sc, int enable)
+inthid_button_array_enable(struct inthid_softc *sc, int enable)
 {
 	int64_t cap;
 
@@ -343,7 +343,7 @@ acpihid_button_array_enable(struct acpihid_softc *sc, int enable)
 		return 1;
 	}
 
-	if (acpihid_eval(sc, ACPIHID_FUNC_BTNE, enable ? cap : 1, NULL) != 0) {
+	if (inthid_eval(sc, INTHID_FUNC_BTNE, enable ? cap : 1, NULL) != 0) {
 		printf("%s: failed enabling button array\n",
 		    sc->sc_dev.dv_xname);
 		return 1;
@@ -353,10 +353,10 @@ acpihid_button_array_enable(struct acpihid_softc *sc, int enable)
 }
 
 int
-acpihid_notify(struct aml_node *node, int notify_type, void *arg)
+inthid_notify(struct aml_node *node, int notify_type, void *arg)
 {
-#ifdef ACPIHID_DEBUG
-	struct acpihid_softc *sc = arg;
+#ifdef INTHID_DEBUG
+	struct inthid_softc *sc = arg;
 
 	DPRINTF(("%s: %s: %.2x\n", sc->sc_dev.dv_xname, __func__,
 	    notify_type));

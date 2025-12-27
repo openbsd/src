@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.536 2025/11/14 01:55:07 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.537 2025/12/27 12:58:23 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -81,7 +81,7 @@ asmc*		at acpi?	# Apple SMC
 tpm*		at acpi?
 acpihve*	at acpi?
 acpisurface*	at acpi?
-acpihid*	at acpi?
+inthid*		at acpi?
 ipmi0		at acpi? disable
 ccpmic*		at iic?
 tipmic*		at iic?
