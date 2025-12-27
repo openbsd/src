@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.93 2025/05/17 13:29:49 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.94 2025/12/27 14:55:18 patrick Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4525,6 +4525,11 @@ const struct rkclock rk3588_clocks[] = {
 		{ RK3588_CLK_UART0 }
 	},
 	{
+		RK3588_CLK_USBDPPHY_MIPIDCPPHY_REF, RK3588_CRU_CLKSEL_CON(14),
+		SEL(8, 7), DIV(6, 0),
+		{ RK3588_XIN24M, RK3588_PLL_PPLL, RK3588_PLL_SPLL }
+	},
+	{
 		RK3588_CLK_REF_PIPE_PHY0_OSC_SRC, 0, 0, 0,
 		{ RK3588_XIN24M }
 	},
@@ -4777,6 +4782,38 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 	uint32_t bit, mask, reg;
 
 	switch (idx) {
+	case RK3588_SRST_USBDP_COMBO_PHY0_INIT:
+		reg = RK3588_CRU_SOFTRST_CON(2);
+		bit = 8;
+		break;
+	case RK3588_SRST_USBDP_COMBO_PHY0_CMN:
+		reg = RK3588_CRU_SOFTRST_CON(2);
+		bit = 9;
+		break;
+	case RK3588_SRST_USBDP_COMBO_PHY0_LANE:
+		reg = RK3588_CRU_SOFTRST_CON(2);
+		bit = 10;
+		break;
+	case RK3588_SRST_USBDP_COMBO_PHY0_PCS:
+		reg = RK3588_CRU_SOFTRST_CON(2);
+		bit = 11;
+		break;
+	case RK3588_SRST_USBDP_COMBO_PHY1_INIT:
+		reg = RK3588_CRU_SOFTRST_CON(2);
+		bit = 15;
+		break;
+	case RK3588_SRST_USBDP_COMBO_PHY1_CMN:
+		reg = RK3588_CRU_SOFTRST_CON(3);
+		bit = 0;
+		break;
+	case RK3588_SRST_USBDP_COMBO_PHY1_LANE:
+		reg = RK3588_CRU_SOFTRST_CON(3);
+		bit = 1;
+		break;
+	case RK3588_SRST_USBDP_COMBO_PHY1_PCS:
+		reg = RK3588_CRU_SOFTRST_CON(3);
+		bit = 2;
+		break;
 	case RK3588_SRST_P_TSADC:
 		reg = RK3588_CRU_SOFTRST_CON(12);
 		bit = 0;
@@ -4864,6 +4901,22 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 	case RK3588_SRST_A_USB3OTG1:
 		reg = RK3588_CRU_SOFTRST_CON(42);
 		bit = 7;
+		break;
+	case RK3588_SRST_P_USBDPGRF0:
+		reg = RK3588_CRU_SOFTRST_CON(72);
+		bit = 1;
+		break;
+	case RK3588_SRST_P_USBDPPHY0:
+		reg = RK3588_CRU_SOFTRST_CON(72);
+		bit = 2;
+		break;
+	case RK3588_SRST_P_USBDPGRF1:
+		reg = RK3588_CRU_SOFTRST_CON(72);
+		bit = 3;
+		break;
+	case RK3588_SRST_P_USBDPPHY1:
+		reg = RK3588_CRU_SOFTRST_CON(72);
+		bit = 4;
 		break;
 	case RK3588_SRST_REF_PIPE_PHY0:
 		reg = RK3588_CRU_SOFTRST_CON(77);
