@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpihid.4,v 1.2 2020/06/02 16:47:11 jmc Exp $
+.\"	$OpenBSD: inthid.4,v 1.1 2025/12/27 13:01:48 kettenis Exp $
 .\"
 .\" Copyright (c) 2020 joshua stein <jcs@openbsd.org>
 .\"
@@ -14,18 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2020 $
-.Dt ACPIHID 4
+.Dd $Mdocdate: December 27 2025 $
+.Dt INTHID 4
 .Os
 .Sh NAME
-.Nm acpihid
-.Nd ACPI HID event and 5-button array
+.Nm inthid
+.Nd Intel HID event and 5-button array
 .Sh SYNOPSIS
-.Cd "acpihid* at acpi?"
+.Cd "inthid* at acpi?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports ACPI HID events and 5-button array devices found on some
+driver supports Intel HID event and 5-button array devices found on some
 tablet devices.
 .Sh SEE ALSO
 .Xr acpi 4
