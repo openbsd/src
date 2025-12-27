@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.9 2025/08/24 19:49:16 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.10 2025/12/27 19:36:20 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -160,10 +160,17 @@ int
 smmu_v3_fdt_attach(struct smmu_fdt_softc *fsc, int node)
 {
 	struct smmu_softc *sc = &fsc->sc_smmu;
+	char buf[32];
 	int idx;
 
 	if (OF_getproplen(node, "dma-coherent") == 0)
 		sc->sc_coherent = 1;
+
+	if (OF_getprop(node, "status", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "reserved") == 0) {
+		printf(": reserved\n");
+		return ENXIO;
+	}
 
 	if (smmu_v3_attach(sc) != 0)
 		return ENXIO;
