@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.194 2025/12/20 16:18:03 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.195 2025/12/27 03:23:57 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -1755,7 +1755,7 @@ func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 
 	shared, sharedLen := mustDecodeHexString(wt.Shared, "shared secret")
 
-	// XXX The shared fields of the secp224k1 test cases have a 0 byte preprended.
+	// XXX The shared fields of the secp224k1 test cases have a 0 byte prepended.
 	if sharedLen == int(secLen)+1 && shared[0] == 0 {
 		fmt.Printf("INFO: %s - prepending 0 byte.\n", wt)
 		// shared = shared[1:];
