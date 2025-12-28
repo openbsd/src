@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.16 2025/12/28 00:01:58 dlg Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.17 2025/12/28 00:16:17 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -65,6 +65,7 @@ static void	dhcp6opt_default(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_string(uint16_t, const u_char *, u_int);
 
 static void	dhcp6opt_duid(uint16_t, const u_char *, u_int);
+static void	dhcp6opt_ia_na(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_oro(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_elapsed(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_status_code(uint16_t, const u_char *, u_int);
@@ -74,7 +75,7 @@ static void	dhcp6opt_ia_pd(uint16_t, const u_char *, u_int);
 static const struct dhcp6opt dhcp6opts[] = {
 	{ 1,	"Client-Id",		dhcp6opt_duid },
 	{ 2,	"Server-Id",		dhcp6opt_duid },
-	{ 3,	"IA_NA",		dhcp6opt_default },
+	{ 3,	"IA_NA",		dhcp6opt_ia_na },
 	{ 6,	"Option-Request",	dhcp6opt_oro },
 	{ 8,	"Elapsed-Time",		dhcp6opt_elapsed },
 	{ 13,	"Status-Code",		dhcp6opt_status_code },
@@ -118,6 +119,44 @@ dhcp6opt_string(uint16_t code, const u_char *cp, u_int len)
 		vis(dst, cp[i], VIS_TAB|VIS_NL, 0);
 		printf("%s", dst);
 	}
+}
+
+static int
+dhcp6_iaid(const u_char *p, u_int l)
+{
+	uint32_t iaid, t1, t2;
+
+	if (l < sizeof(iaid)) {
+		printf("[|iaid]");
+		return (-1);
+	}
+	iaid = EXTRACT_32BITS(p);
+	p += sizeof(iaid);
+	l -= sizeof(iaid);
+
+	printf("IAID: %u, ", iaid);
+
+	if (l < sizeof(t1)) {
+		printf("[|t1]");
+		return (-1);
+	}
+	t1 = EXTRACT_32BITS(p);
+	p += sizeof(t1);
+	l -= sizeof(t1);
+
+	printf("T1: %us, ", t1);
+
+	if (l < sizeof(t2)) {
+		printf("[|t2]");
+		return (-1);
+	}
+	t2 = EXTRACT_32BITS(p);
+	p += sizeof(t2);
+	l -= sizeof(t2);
+
+	printf("T2: %us", t2);
+
+	return (sizeof(iaid) + sizeof(t1) + sizeof(t2));
 }
 
 #define DH6_DUID_LLT		1
@@ -236,6 +275,127 @@ dhcp6opt_duid(uint16_t code, const u_char *p, u_int l)
 	}
 
 	dhcp6opt_default(code, p, l);
+}
+
+static void
+dhcp6opt_ia_na_opt_iaaddr(const u_char *p, u_int l)
+{
+	const struct in6_addr *ia;
+	uint32_t pltime, vltime;
+	char n[NI_MAXHOST];
+
+	if (l < sizeof(*ia)) {
+		printf("[|prefix]");
+		return;
+	}
+	ia = (const struct in6_addr *)p;
+	p += sizeof(*ia);
+	l -= sizeof(*ia);
+
+        if (inet_ntop(AF_INET6, ia, n, sizeof(n)) == NULL) {
+		printf("address ?");
+		return;
+	}
+	printf("%s, ", n);
+
+	if (l < sizeof(pltime)) {
+		printf("[|pltime]");
+		return;
+	}
+	pltime = EXTRACT_32BITS(p);
+	p += sizeof(pltime);
+	l -= sizeof(pltime);
+
+	printf("preferred-lifetime ");
+	if (pltime == 0xffffffff)
+		printf("infinity");
+	else
+		printf("%us", pltime);
+	printf(", ");
+
+	if (l < sizeof(vltime)) {
+		printf("[|vltime]");
+		return;
+	}
+	vltime = EXTRACT_32BITS(p);
+	p += sizeof(vltime);
+	l -= sizeof(vltime);
+
+	printf("valid-lifetime ");
+	if (vltime == 0xffffffff)
+		printf("infinity");
+	else
+		printf("%us", vltime);
+
+	if (l > 0) {
+		printf(", ");
+		dhcp6opt_default(0, p, l);
+	}
+}
+
+static uint16_t
+dhcp6opt_ia_na_opt(const u_char *p, u_int l)
+{
+	uint16_t opt, len;
+
+	if (l < sizeof(opt)) {
+		printf("[|opt]");
+		return (-1);
+	}
+	opt = EXTRACT_16BITS(p);
+	p += sizeof(opt);
+	l -= sizeof(opt);
+
+	if (l < sizeof(len)) {
+		printf("[|option-len]");
+		return (-1);
+	}
+	len = EXTRACT_16BITS(p);
+	p += sizeof(len);
+	l -= sizeof(len);
+
+	printf("\n\t\t");
+	if (l < len) {
+		printf("[|ia_pd_opt]");
+		return (-1);
+	}
+
+	if (opt == 5)
+		dhcp6opt_ia_na_opt_iaaddr(p, len);
+	else {
+		printf("option %u", opt);
+		if (len > 0) {
+			printf(" ");
+			dhcp6opt_default(opt, p, len);
+		}
+	}
+
+	return (sizeof(opt) + sizeof(len) + len);
+}
+
+static void
+dhcp6opt_ia_na(uint16_t code, const u_char *p, u_int l)
+{
+	int len;
+
+	len = dhcp6_iaid(p, l);
+	if (len == -1)
+		return;
+
+	p += len;
+	l -= len;
+
+	if (l == 0)
+		return;
+
+	while (l > 0) {
+		len = dhcp6opt_ia_na_opt(p, l);
+		if (len == -1)
+			return;
+
+		p += len;
+		l -= len;
+	}
 }
 
 static void
@@ -468,37 +628,14 @@ dhcp6opt_ia_pd_opt(const u_char *p, u_int l)
 static void
 dhcp6opt_ia_pd(uint16_t code, const u_char *p, u_int l)
 {
-	uint32_t iaid, t1, t2;
+	int len;
 
-	if (l < sizeof(iaid)) {
-		printf("[|iaid]");
+	len = dhcp6_iaid(p, l);
+	if (len == -1)
 		return;
-	}
-	iaid = EXTRACT_32BITS(p);
-	p += sizeof(iaid);
-	l -= sizeof(iaid);
 
-	printf("IAID: %u, ", iaid);
-
-	if (l < sizeof(t1)) {
-		printf("[|t1]");
-		return;
-	}
-	t1 = EXTRACT_32BITS(p);
-	p += sizeof(t1);
-	l -= sizeof(t1);
-
-	printf("T1: %us, ", t1);
-
-	if (l < sizeof(t2)) {
-		printf("[|t2]");
-		return;
-	}
-	t2 = EXTRACT_32BITS(p);
-	p += sizeof(t2);
-	l -= sizeof(t2);
-
-	printf("T2: %us", t2);
+	p += len;
+	l -= len;
 
 	while (l > 0) {
 		int len = dhcp6opt_ia_pd_opt(p, l);
