@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.11 2024/11/07 16:02:29 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.12 2025/12/28 14:52:33 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $	*/
 
 /*-
@@ -29,8 +29,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
 #include <machine/db_machdep.h>
+#include <machine/pcb.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
@@ -79,16 +82,36 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 {
 	vaddr_t callpc, frame, lastframe;
 	uint32_t vbr;
+	struct proc *p = NULL;
 
-	if (have_addr) {
-		(*print)("sh trace requires a trap frame... giving up\n");
-		return;
+	{
+		char *cp = modif;
+		char c;
+
+		while ((c = *cp++) != '\0') {
+			if (c == 't') {
+				p = tfind((pid_t)addr);
+				if (p == NULL) {
+					(*print)("proc not found\n");
+					return;
+				}
+			}
+			if (c == 'u') {
+				(*print)("/u option is not supported yet\n");
+				return;
+			}
+		}
 	}
 
 	__asm volatile("stc vbr, %0" : "=r"(vbr));
 
-	frame = ddb_regs.tf_r14;
-	callpc = ddb_regs.tf_spc;
+	if (p != NULL) {
+		frame = p->p_addr->u_pcb.pcb_sf.sf_r14;
+		callpc = p->p_addr->u_pcb.pcb_sf.sf_pr - 4;
+	} else {
+		frame = ddb_regs.tf_r14;
+		callpc = ddb_regs.tf_spc;
+	}
 
 	if (count == 0 || count == -1)
 		count = INT_MAX;
@@ -131,6 +154,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			(*print)("\n");
 
 			if (lastframe == 0 && offset == 0) {
+				if (p != NULL)
+					break;
 				callpc = ddb_regs.tf_pr;
 				continue;
 			}
@@ -139,8 +164,11 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			DPRINTF("    (2)newpc 0x%lx, newfp 0x%lx\n",
 				callpc, frame);
 
-			if (callpc == 0 && lastframe == 0)
+			if (callpc == 0 && lastframe == 0) {
+				if (p != NULL)
+					break;
 				callpc = (vaddr_t)ddb_regs.tf_pr;
+			}
 			DPRINTF("    (3)newpc 0x%lx, newfp 0x%lx\n",
 				callpc, frame);
 		}
