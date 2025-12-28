@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.164 2025/03/01 14:43:03 kirill Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.165 2025/12/28 14:50:57 kettenis Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -229,9 +229,11 @@ usbd_cache_devinfo(struct usbd_device *dev)
 	if (dev->vendor == NULL)
 		return (ENOMEM);
 
-	if (usbd_get_string(dev, udd->iManufacturer, dev->vendor, USB_MAX_STRING_LEN) != NULL) {
+	if (usbd_get_string(dev, udd->iManufacturer, dev->vendor, USB_MAX_STRING_LEN) != NULL)
 		usbd_trim_spaces(dev->vendor);
-	} else {
+	else
+		dev->vendor[0] = 0;
+	if (strlen(dev->vendor) == 0) {
 #ifdef USBVERBOSE
 		const struct usb_known_vendor *ukv;
 
@@ -252,9 +254,11 @@ usbd_cache_devinfo(struct usbd_device *dev)
 	if (dev->product == NULL)
 		return (ENOMEM);
 
-	if (usbd_get_string(dev, udd->iProduct, dev->product, USB_MAX_STRING_LEN) != NULL) {
+	if (usbd_get_string(dev, udd->iProduct, dev->product, USB_MAX_STRING_LEN) != NULL)
 		usbd_trim_spaces(dev->product);
-	} else {
+	else
+		dev->product[0] = 0;
+	if (strlen(dev->product) == 0) {
 #ifdef USBVERBOSE
 		const struct usb_known_product *ukp;
 
