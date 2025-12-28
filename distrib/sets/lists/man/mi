@@ -1292,7 +1292,6 @@
 ./usr/share/man/man4/acpidock.4
 ./usr/share/man/man4/acpiec.4
 ./usr/share/man/man4/acpige.4
-./usr/share/man/man4/acpihid.4
 ./usr/share/man/man4/acpihpet.4
 ./usr/share/man/man4/acpihve.4
 ./usr/share/man/man4/acpimadt.4
@@ -1739,6 +1738,7 @@
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
 ./usr/share/man/man4/intelpmc.4
+./usr/share/man/man4/inthid.4
 ./usr/share/man/man4/iophy.4
 ./usr/share/man/man4/iosf.4
 ./usr/share/man/man4/ip.4
