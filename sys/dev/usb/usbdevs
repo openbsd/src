@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.783 2025/10/14 00:39:21 dlg Exp $
+$OpenBSD: usbdevs,v 1.784 2025/12/28 14:48:54 kettenis Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -576,6 +576,7 @@ vendor WIENERPLEINBAUS	0x16dc	WIENER Plein & Baus
 vendor AXESSTEL		0x1726	Axesstel
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
+vendor DMAX		0x174f	D-Max
 vendor ASUS2		0x1761	ASUS
 vendor STRAWBERRYLINUX	0x1774	Strawberry linux Co., Ltd.
 vendor SWEEX2		0x177f	Sweex
