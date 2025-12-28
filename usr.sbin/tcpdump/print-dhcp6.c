@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.15 2025/12/27 23:51:28 dlg Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.16 2025/12/28 00:01:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <vis.h>
 #include <netdb.h>
 #include <uuid.h>
 #include <arpa/inet.h>
@@ -61,6 +62,8 @@ struct dhcp6opt {
 };
 
 static void	dhcp6opt_default(uint16_t, const u_char *, u_int);
+static void	dhcp6opt_string(uint16_t, const u_char *, u_int);
+
 static void	dhcp6opt_duid(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_oro(uint16_t, const u_char *, u_int);
 static void	dhcp6opt_elapsed(uint16_t, const u_char *, u_int);
@@ -79,6 +82,7 @@ static const struct dhcp6opt dhcp6opts[] = {
 	{ 23,	"DNS-Servers",		dhcp6opt_dns_servers },
 	{ 24,	"Domain-List",		dhcp6opt_default },
 	{ 25,	"IA_PD",		dhcp6opt_ia_pd },
+	{ 59,	"BootFile-URL",		dhcp6opt_string },
 };
 
 static const struct dhcp6opt *
@@ -102,6 +106,18 @@ dhcp6opt_default(uint16_t code, const u_char *cp, u_int len)
 
 	for (i = 0; i < len; i++)
 		printf("%02x", cp[i]);
+}
+
+static void
+dhcp6opt_string(uint16_t code, const u_char *cp, u_int len)
+{
+	u_int i;
+	char dst[5];
+
+	for (i = 0; i < len; i++) {
+		vis(dst, cp[i], VIS_TAB|VIS_NL, 0);
+		printf("%s", dst);
+	}
 }
 
 #define DH6_DUID_LLT		1
