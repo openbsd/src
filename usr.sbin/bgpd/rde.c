@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.678 2025/12/24 07:59:55 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.679 2025/12/28 17:52:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -326,6 +326,7 @@ rde_main(int debug, int verbose)
 		    monotime_to_usec(monotime_sub(io_end, loop_start));
 
 		peer_foreach(rde_dispatch_imsg_peer, NULL);
+		peer_foreach(peer_process_updates, NULL);
 
 		peer_end = getmonotime();
 		rdemem.rde_event_peer_usec +=

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.286 2025/12/27 19:30:46 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.287 2025/12/28 17:52:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -76,6 +76,12 @@ static inline int
 re_is_locked(struct rib_entry *re)
 {
 	return (re->lock != 0);
+}
+
+static inline int
+re_is_queued(struct rib_entry *re)
+{
+	return (re->pq_mode != EVAL_NONE);
 }
 
 static inline struct rib_tree *
@@ -317,6 +323,7 @@ rib_add(struct rib *rib, struct pt_entry *pte)
 	TAILQ_INIT(&re->prefix_h);
 	re->prefix = pt_ref(pte);
 	re->rib_id = rib->id;
+	re->pq_mode = EVAL_NONE;
 
 	if (RB_INSERT(rib_tree, rib_tree(rib), re) != NULL) {
 		log_warnx("rib_add: insert failed");
@@ -335,8 +342,8 @@ rib_remove(struct rib_entry *re)
 	if (!rib_empty(re))
 		fatalx("rib_remove: entry not empty");
 
-	if (re_is_locked(re))
-		/* entry is locked, don't free it. */
+	if (re_is_locked(re) || re_is_queued(re))
+		/* entry is locked or queued, don't free it. */
 		return;
 
 	pt_unref(re->prefix);
@@ -352,6 +359,14 @@ static inline int
 rib_empty(struct rib_entry *re)
 {
 	return TAILQ_EMPTY(&re->prefix_h);
+}
+
+void
+rib_dequeue(struct rib_entry *re)
+{
+	re->pq_mode = EVAL_NONE;
+	if (rib_empty(re))
+		rib_remove(re);
 }
 
 static struct rib_entry *
