@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.150 2025/12/18 16:50:42 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.151 2025/12/29 16:07:14 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -687,6 +687,7 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			continue;
 		}
 
+ReTry:
 		/*
 		 * pp points to a page in the object that we are
 		 * working on.  if it is !PG_CLEAN,!PG_BUSY and we asked
@@ -698,10 +699,6 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		atomic_setbits_int(&pp->pg_flags, PG_BUSY);
 		UVM_PAGE_OWN(pp, "uvn_flush");
 		pmap_page_protect(pp, PROT_READ);
-		/* if we're async, free the page in aiodoned */
-		if ((flags & (PGO_FREE|PGO_SYNCIO)) == PGO_FREE)
-			atomic_setbits_int(&pp->pg_flags, PG_RELEASED);
-ReTry:
 		ppsp = pps;
 		npages = sizeof(pps) / sizeof(struct vm_page *);
 
@@ -724,22 +721,8 @@ ReTry:
 		 * of vm space.   if this happens we drop back to sync I/O.
 		 */
 		if (result == VM_PAGER_AGAIN) {
-			/*
-			 * it is unlikely, but page could have been released
-			 * we ignore this now and retry the I/O.
-			 * we will detect and
-			 * handle the released page after the syncio I/O
-			 * completes.
-			 */
-#ifdef DIAGNOSTIC
-			if (flags & PGO_SYNCIO)
-	panic("%s: PGO_SYNCIO return 'try again' error (impossible)", __func__);
-#endif
+			KASSERT((flags & PGO_SYNCIO) == 0);
 			flags |= PGO_SYNCIO;
-			if (flags & PGO_FREE)
-				atomic_clearbits_int(&pp->pg_flags,
-				    PG_RELEASED);
-
 			goto ReTry;
 		}
 
