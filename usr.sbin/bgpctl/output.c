@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.66 2025/12/27 14:51:38 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.67 2025/12/29 07:49:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1127,6 +1127,7 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->rde_event_loop_usec, stats->rde_event_loop_count);
 	printf("%10lld usec spent on io\n", stats->rde_event_io_usec);
 	printf("%10lld usec spent on peers\n", stats->rde_event_peer_usec);
+	printf("%10lld usec spent on adj-out\n", stats->rde_event_adjout_usec);
 	printf("%10lld usec spent on rib dumps\n",
 	    stats->rde_event_ribdump_usec);
 	printf("%10lld usec spent on nexthops\n",

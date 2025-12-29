@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.21 2025/12/27 14:51:38 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.22 2025/12/29 07:49:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -350,6 +350,9 @@ ometric_rib_mem(struct rde_memstats *stats)
 	ometric_set_float_with_labels(rde_evloop_time,
 	    (double)stats->rde_event_peer_usec / (1000.0 * 1000.0) ,
 	    OKV("stage"), OKV("peer"), NULL);
+	ometric_set_float_with_labels(rde_evloop_time,
+	    (double)stats->rde_event_adjout_usec / (1000.0 * 1000.0) ,
+	    OKV("stage"), OKV("adjout"), NULL);
 	ometric_set_float_with_labels(rde_evloop_time,
 	    (double)stats->rde_event_ribdump_usec / (1000.0 * 1000.0) ,
 	    OKV("stage"), OKV("ribdumps"), NULL);
