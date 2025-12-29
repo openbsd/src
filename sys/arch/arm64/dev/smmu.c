@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.26 2025/12/22 11:07:51 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.27 2025/12/29 23:18:12 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -851,6 +851,15 @@ smmu_reserve_region(void *cookie, uint32_t sid, bus_addr_t addr,
 	dom = smmu_domain_lookup(sc, sid);
 	if (dom == NULL)
 		return;
+
+	/*
+	 * Some reserved regions, like PCI BARs, might not be inside our VA map.
+	 * If it lies outside completely: skip it; if partially: clamp it.
+	 */
+	if (addr > dom->sd_iovamap->ex_end)
+		return;
+	if (addr + size > dom->sd_iovamap->ex_end)
+		size = (dom->sd_iovamap->ex_end - addr) + 1;
 
 	extent_alloc_region(dom->sd_iovamap, addr, size,
 	    EX_WAITOK | EX_CONFLICTOK);
