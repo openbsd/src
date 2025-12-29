@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.22 2024/06/05 10:19:55 stsp Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.23 2025/12/29 22:53:32 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -370,14 +370,10 @@ dwqe_start(struct ifqueue *ifq)
 	struct mbuf *m;
 	int error, idx, left, used;
 
-	if (!(ifp->if_flags & IFF_RUNNING))
+	if (!sc->sc_link) {
+		ifq_purge(ifq);
 		return;
-	if (ifq_is_oactive(&ifp->if_snd))
-		return;
-	if (ifq_empty(&ifp->if_snd))
-		return;
-	if (!sc->sc_link)
-		return;
+	}
 
 	idx = sc->sc_tx_prod;
 	left = sc->sc_tx_cons;
