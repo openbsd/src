@@ -1,4 +1,4 @@
-/* $OpenBSD: smmuvar.h,v 1.10 2025/08/24 19:49:16 patrick Exp $ */
+/* $OpenBSD: smmuvar.h,v 1.11 2025/12/29 23:25:32 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -101,6 +101,7 @@ struct smmu_softc {
 			int			  sc_2lvl_strtab;
 			int			  sc_has_asid16s;
 			int			  sc_has_pri;
+			struct mutex		  sc_cmdq_mtx;
 			struct smmu_v3_queue	  sc_cmdq;
 			struct smmu_v3_queue	  sc_eventq;
 			struct smmu_v3_queue	  sc_priq;
