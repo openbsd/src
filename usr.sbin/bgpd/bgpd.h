@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.528 2025/12/24 07:59:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.529 2025/12/29 07:48:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1424,6 +1424,7 @@ struct rde_memstats {
 	long long	rde_event_loop_usec;
 	long long	rde_event_io_usec;
 	long long	rde_event_peer_usec;
+	long long	rde_event_adjout_usec;
 	long long	rde_event_ribdump_usec;
 	long long	rde_event_nexthop_usec;
 	long long	rde_event_update_usec;
