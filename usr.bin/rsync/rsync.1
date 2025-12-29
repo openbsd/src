@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.35 2023/11/27 11:32:34 claudio Exp $
+.\"	$OpenBSD: rsync.1,v 1.36 2025/12/29 15:57:01 op Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2023 $
+.Dd $Mdocdate: December 29 2025 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -56,7 +56,8 @@ or the destination
 .Ar directory
 may be remote,
 but not both.
-The arguments are as follows:
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a , -archive
 Shorthand for
@@ -94,6 +95,8 @@ not found in
 directories.
 Only applicable with
 .Fl r .
+.It Fl -devices
+Also transfer device files.
 .It Fl e Ar program , Fl -rsh Ns = Ns Ar program
 Specify alternative communication program, defaults to
 .Xr ssh 1 .
@@ -107,8 +110,6 @@ and
 .Em rules
 from
 .Em file .
-.It Fl -devices
-Also transfer device files.
 .It Fl g , -group
 Set the group name to match the source.
 For example, group
@@ -211,13 +212,13 @@ on the remote host instead of the default
 Skip files based only on size, don't check timestamp.
 .It Fl -specials
 Also transfer fifo and unix domain socket files.
+.It Fl t , -times
+Set destination file and directory modification time to match the source
+when it is updated or created.
 .It Fl -timeout Ns = Ns Ar seconds
 Set the I/O timeout in seconds.
 Exit if no data was transferred for the specified time.
 The default is 0, which means no timeout.
-.It Fl t , -times
-Set destination file and directory modification time to match the source
-when it is updated or created.
 .It Fl V , -version
 Print version and exit.
 .It Fl v , -verbose
