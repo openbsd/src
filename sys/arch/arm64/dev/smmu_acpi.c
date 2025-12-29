@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.11 2025/12/13 22:52:40 patrick Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.12 2025/12/29 21:11:46 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -219,8 +219,14 @@ smmu_v3_acpi_attach(struct smmu_acpi_softc *asc, struct acpi_iort_node *node)
 		return ENXIO;
 	}
 
-	if (ACPI_IORT_SMMU_V3_COHACC_OVERRIDE(smmu->flags))
+	if (ACPI_IORT_SMMU_V3_COHACC_OVERRIDE(smmu->flags)) {
+		bus_dma_tag_t dmat = malloc(sizeof(*sc->sc_dmat), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+		memcpy(dmat, sc->sc_dmat, sizeof(*dmat));
+		dmat->_flags |= BUS_DMA_COHERENT;
+		sc->sc_dmat = dmat;
 		sc->sc_coherent = 1;
+	}
 
 	/* Check for QCOM devices to enable quirk. */
 	aml_find_node(acpi_softc->sc_root, "_HID", smmu_acpi_foundqcom, sc);
