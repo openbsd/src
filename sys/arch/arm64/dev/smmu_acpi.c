@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.12 2025/12/29 21:11:46 patrick Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.13 2025/12/29 21:23:51 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -244,24 +244,24 @@ smmu_v3_acpi_attach(struct smmu_acpi_softc *asc, struct acpi_iort_node *node)
 		asc->v3.sc_eih = acpi_intr_establish(smmu->event,
 		    LR_EXTIRQ_MODE, IPL_TTY, smmu_v3_event_irq,
 		    sc, sc->sc_dev.dv_xname);
-	if (asc->v3.sc_eih == NULL)
-		return ENXIO;
-
 	if (smmu->gerr)
 		asc->v3.sc_gih = acpi_intr_establish(smmu->gerr,
 		    LR_EXTIRQ_MODE, IPL_TTY, smmu_v3_gerr_irq,
 		    sc, sc->sc_dev.dv_xname);
-	if (asc->v3.sc_gih == NULL)
-		return ENXIO;
-
 	if (sc->v3.sc_has_pri) {
 		if (smmu->pri)
 			asc->v3.sc_pih = acpi_intr_establish(smmu->pri,
 			    LR_EXTIRQ_MODE, IPL_TTY, smmu_v3_priq_irq,
 			    sc, sc->sc_dev.dv_xname);
-		if (asc->v3.sc_pih == NULL)
-			return ENXIO;
 	}
+
+	if (asc->v3.sc_eih == NULL || asc->v3.sc_gih == NULL ||
+	   (sc->v3.sc_has_pri && asc->v3.sc_pih == NULL))
+		printf("%s: couldn't establish all interrupts:%s%s%s\n",
+		    sc->sc_dev.dv_xname,
+		    asc->v3.sc_eih == NULL ? " event" : "",
+		    asc->v3.sc_gih == NULL ? " gerr" : "",
+		    asc->v3.sc_pih == NULL ? " pri" : "");
 
 	return 0;
 }
