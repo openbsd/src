@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.76 2025/11/12 09:48:52 hshoexer Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.77 2025/12/30 15:21:05 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -691,6 +691,7 @@ x2apic_ipi(int vec, int target, int dl)
 
 	lo = (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT;
 
+	__asm volatile("mfence; lfence" ::: "memory");
 	x2apic_writeicr(hi, lo);
 }
 
