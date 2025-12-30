@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.229 2025/08/15 13:40:43 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.230 2025/12/30 16:18:37 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2642,6 +2642,31 @@ volatile int tlb_shoot_wait __attribute__((section(".kudata")));
 volatile vaddr_t tlb_shoot_addr1 __attribute__((section(".kudata")));
 volatile vaddr_t tlb_shoot_addr2 __attribute__((section(".kudata")));
 
+/* Obtain the "lock" for TLB shooting */
+static inline int
+pmap_start_tlb_shoot(int wait, const char *func)
+{
+	int s = splvm();
+
+	while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
+#ifdef MP_LOCKDEBUG
+		long nticks = __mp_lock_spinout;
+#endif
+		while (tlb_shoot_wait != 0) {
+			CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+			if (--nticks <= 0) {
+				db_printf("%s: spun out", func);
+				db_enter();
+				nticks = __mp_lock_spinout;
+			}
+#endif
+		}
+	}
+
+	return s;
+}
+
 void
 pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 {
@@ -2659,12 +2684,8 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 	}
 
 	if (wait > 0) {
-		int s = splvm();
+		int s = pmap_start_tlb_shoot(wait, __func__);
 
-		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
-			while (tlb_shoot_wait != 0)
-				CPU_BUSY_CYCLE();
-		}
 		tlb_shoot_addr1 = va;
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
@@ -2697,12 +2718,8 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 	}
 
 	if (wait > 0) {
-		int s = splvm();
+		int s = pmap_start_tlb_shoot(wait, __func__);
 
-		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
-			while (tlb_shoot_wait != 0)
-				CPU_BUSY_CYCLE();
-		}
 		tlb_shoot_addr1 = sva;
 		tlb_shoot_addr2 = eva;
 		CPU_INFO_FOREACH(cii, ci) {
@@ -2734,13 +2751,8 @@ pmap_tlb_shoottlb(void)
 		wait++;
 	}
 
-	if (wait) {
-		int s = splvm();
-
-		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
-			while (tlb_shoot_wait != 0)
-				CPU_BUSY_CYCLE();
-		}
+	if (wait > 0) {
+		int s = pmap_start_tlb_shoot(wait, __func__);
 
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
@@ -2770,13 +2782,8 @@ pmap_tlb_droppmap(struct pmap *pm)
 		wait++;
 	}
 
-	if (wait) {
-		int s = splvm();
-
-		while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
-			while (tlb_shoot_wait != 0)
-				CPU_BUSY_CYCLE();
-		}
+	if (wait > 0) {
+		int s = pmap_start_tlb_shoot(wait, __func__);
 
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
@@ -2796,8 +2803,19 @@ pmap_tlb_droppmap(struct pmap *pm)
 void
 pmap_tlb_shootwait(void)
 {
-	while (tlb_shoot_wait != 0)
-		CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+        long nticks = __mp_lock_spinout;
+#endif
+        while (tlb_shoot_wait != 0) {
+                CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+                if (--nticks <= 0) {
+                        db_printf("%s: spun out", __func__);
+                        db_enter();
+                        nticks = __mp_lock_spinout;
+                }
+#endif
+        }
 }
 
 #else
