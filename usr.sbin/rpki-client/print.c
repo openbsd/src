@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.71 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: print.c,v 1.72 2025/12/30 09:04:09 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -861,21 +861,17 @@ print_ccr_mftstate(struct ccr *ccr)
 	struct ccr_mft *ccr_mft;
 	struct ccr_mft_sub_ski *sub;
 
-	if (base64_encode(ccr->mfts_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
-		errx(1, "base64_encode");
-
 	if (outformats & FORMAT_JSON) {
 		json_do_object("manifest_state", 0);
 		json_do_int("most_recent_update", ccr->most_recent_update);
-		json_do_string("hash", hash);
+		json_do_string("hash", ccr->mfts_hash);
 		json_do_array("mft_instances");
 	} else {
-		printf("Manifest state hash:      %s\n", hash);
+		printf("Manifest state hash:      %s\n", ccr->mfts_hash);
 		printf("Manifest last update:     %s\n",
 		    time2str(ccr->most_recent_update));
 		printf("Manifest instances:\n");
 	}
-	free(hash);
 
 	RB_FOREACH(ccr_mft, ccr_mft_tree, &ccr->mfts) {
 		if (base64_encode(ccr_mft->hash, SHA256_DIGEST_LENGTH, &hash)
@@ -939,21 +935,17 @@ print_ccr_mftstate(struct ccr *ccr)
 static void
 print_ccr_roastate(struct ccr *ccr)
 {
-	char buf[64], *hash;
+	char buf[64];
 	struct vrp *vrp;
-
-	if (base64_encode(ccr->vrps_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
-		errx(1, "base64_encode");
 
 	if (outformats & FORMAT_JSON) {
 		json_do_object("roapayload_state", 0);
-		json_do_string("hash", hash);
+		json_do_string("hash", ccr->vrps_hash);
 		json_do_array("vrps");
 	} else {
-		printf("ROA payload state hash:   %s\n", hash);
+		printf("ROA payload state hash:   %s\n", ccr->vrps_hash);
 		printf("ROA payload entries:\n");
 	}
-	free(hash);
 
 	RB_FOREACH(vrp, ccr_vrp_tree, &ccr->vrps) {
 		ip_addr_print(&vrp->addr, vrp->afi, buf, sizeof(buf));
@@ -982,22 +974,17 @@ print_ccr_roastate(struct ccr *ccr)
 static void
 print_ccr_aspastate(struct ccr *ccr)
 {
-	char *hash;
 	struct vap *vap;
 	size_t i;
 
-	if (base64_encode(ccr->vaps_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
-		errx(1, "base64_encode");
-
 	if (outformats & FORMAT_JSON) {
 		json_do_object("aspapayload_state", 0);
-		json_do_string("hash", hash);
+		json_do_string("hash", ccr->vaps_hash);
 		json_do_array("vaps");
 	} else {
-		printf("ASPA payload state hash:  %s\n", hash);
+		printf("ASPA payload state hash:  %s\n", ccr->vaps_hash);
 		printf("ASPA payload entries:\n");
 	}
-	free(hash);
 
 	RB_FOREACH(vap, vap_tree, &ccr->vaps) {
 		if (outformats & FORMAT_JSON) {
@@ -1034,23 +1021,18 @@ print_ccr_aspastate(struct ccr *ccr)
 static void
 print_ccr_tastate(struct ccr *ccr)
 {
-	char *hash, *ski;
+	char *ski;
 	struct ccr_tas_ski *cts;
 	int i = 0;
 
-	if (base64_encode(ccr->tas_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
-		errx(1, "base64_encode");
-
 	if (outformats & FORMAT_JSON) {
 		json_do_object("trustanchor_state", 0);
-		json_do_string("hash", hash);
+		json_do_string("hash", ccr->tas_hash);
 		json_do_array("skis");
 	} else {
-		printf("Trust anchor state hash:  %s\n", hash);
+		printf("Trust anchor state hash:  %s\n", ccr->tas_hash);
 		printf("Trust anchor keyids:      ");
 	}
-
-	free(hash);
 
 	RB_FOREACH(cts, ccr_tas_tree, &ccr->tas) {
 		ski = hex_encode(cts->keyid, sizeof(cts->keyid));
@@ -1077,15 +1059,11 @@ print_ccr_tastate(struct ccr *ccr)
 static void
 print_ccr_rkstate(struct ccr *ccr)
 {
-	char *hash;
 	struct brk *brk;
-
-	if (base64_encode(ccr->brks_hash, SHA256_DIGEST_LENGTH, &hash) == -1)
-		errx(1, "base64_encode");
 
 	if (outformats & FORMAT_JSON) {
 		json_do_object("routerkey_state", 0);
-		json_do_string("hash", hash);
+		json_do_string("hash", ccr->brks_hash);
 		json_do_array("routerkeys");
 		RB_FOREACH(brk, brk_tree, &ccr->brks) {
 			json_do_object("brk", 0);
@@ -1097,7 +1075,7 @@ print_ccr_rkstate(struct ccr *ccr)
 		json_do_end(); /* routerkeys */
 		json_do_end(); /* routerkey_state */
 	} else {
-		printf("Router key state hash:    %s\n", hash);
+		printf("Router key state hash:    %s\n", ccr->brks_hash);
 		printf("Router keys:\n");
 		RB_FOREACH(brk, brk_tree, &ccr->brks) {
 			printf("%26s", "");
@@ -1106,8 +1084,6 @@ print_ccr_rkstate(struct ccr *ccr)
 			printf("pubkey:%s\n", brk->pubkey);
 		}
 	}
-
-	free(hash);
 }
 
 void

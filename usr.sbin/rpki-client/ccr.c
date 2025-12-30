@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccr.c,v 1.31 2025/12/05 07:26:42 tb Exp $ */
+/*	$OpenBSD: ccr.c,v 1.32 2025/12/30 09:04:09 job Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  *
@@ -237,7 +237,7 @@ validate_asn1_hash(const char *fn, const char *descr,
     const ASN1_OCTET_STRING *hash, const ASN1_ITEM *it, void *val)
 {
 	ASN1_OCTET_STRING *astr = NULL;
-	char *hex = NULL;
+	char *b64 = NULL;
 
 	if ((astr = ASN1_OCTET_STRING_new()) == NULL)
 		errx(1, "ASN1_OCTET_STRING_new");
@@ -249,10 +249,12 @@ validate_asn1_hash(const char *fn, const char *descr,
 		goto out;
 	}
 
-	hex = hex_encode_asn1_string(hash);
+	if (!base64_encode_asn1_string(astr, &b64))
+		errx(1, "base64_encode_asn1_string");
+
  out:
 	ASN1_OCTET_STRING_free(astr);
-	return hex;
+	return b64;
 }
 
 static void
