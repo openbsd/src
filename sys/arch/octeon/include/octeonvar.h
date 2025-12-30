@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.54 2022/08/29 02:01:18 jsg Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.55 2025/12/30 22:55:07 jsg Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -334,32 +334,6 @@ int	octeon_ioclock_speed(void);
 
 #endif /* _KERNEL */
 #endif /* _KERNEL || _STANDALONE */
-
-static inline int
-ffs64(uint64_t val)
-{
-	int ret;
-
-	__asm volatile ( \
-		_ASM_PROLOGUE_MIPS64
-		"	dclz	%0, %1			\n"
-		_ASM_EPILOGUE
-		: "=r"(ret) : "r"(val));
-	return 64 - ret;
-}
-
-static inline int
-ffs32(uint32_t val)
-{
-	int ret;
-
-	__asm volatile ( \
-		_ASM_PROLOGUE_MIPS64
-		"	clz	%0, %1			\n"
-		_ASM_EPILOGUE
-		: "=r"(ret) : "r"(val));
-	return 32 - ret;
-}
 
 static inline uint64_t
 octeon_xkphys_read_8(paddr_t address)
