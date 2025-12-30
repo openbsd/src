@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.46 2025/11/12 09:48:52 hshoexer Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.47 2025/12/30 03:19:15 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -249,7 +249,7 @@ rdmsr(u_int msr)
 	return (((uint64_t)hi << 32) | (uint64_t) lo);
 }
 
-static __inline int
+static __inline uint32_t
 rdpkru(u_int ecx)
 {
 	uint32_t edx, pkru;
