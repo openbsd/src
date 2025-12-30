@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.202 2025/11/12 09:48:52 hshoexer Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.203 2025/12/30 10:59:08 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1218,7 +1218,7 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 #endif	/* MULTIPROCESSOR */
 
 typedef void (vector)(void);
-extern vector Xsyscall_meltdown, Xsyscall, Xsyscall32;
+extern vector Xsyscall_meltdown, Xsyscall;
 
 void
 cpu_init_msrs(struct cpu_info *ci)
