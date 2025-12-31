@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.128 2025/09/16 09:19:16 florian Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.129 2025/12/31 04:10:00 jsg Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -280,7 +280,6 @@ extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
 extern int	ip6_mforwarding;	/* act as multicast router? */
 extern int	ip6_multipath;		/* use multipath routes */
-extern int	ip6_sendredirect;	/* send ICMPv6 redirect? */
 extern int	ip6_mcast_pmtu;		/* path MTU discovery for multicast */
 extern int	ip6_neighborgcthresh; /* Threshold # of NDP entries for GC */
 extern int	ip6_maxdynroutes; /* Max # of routes created via redirect */
