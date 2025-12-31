@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.73 2025/12/05 08:41:32 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.74 2025/12/31 09:31:56 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -413,8 +413,9 @@ rtype_from_der(const char *fn, const unsigned char *der, size_t len)
  * Parse file passed with -f option.
  */
 static void
-proc_parser_file(char *file, unsigned char *buf, size_t len)
+proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 {
+	unsigned char *buf = in_buf;
 	static int num;
 	struct aspa *aspa = NULL;
 	struct cert *cert = NULL;
@@ -714,6 +715,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	}
 
  out:
+	if (buf != in_buf)
+		free(buf);
 	aspa_free(aspa);
 	cert_free(cert);
 	ccr_free(ccr);
