@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_extensions_test.c,v 1.3 2024/06/17 05:04:54 tb Exp $ */
+/*	$OpenBSD: x509_extensions_test.c,v 1.4 2025/12/31 17:04:22 tb Exp $ */
 
 /*
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -215,7 +215,7 @@ test_x509v3_add1_i2d_single_nid(STACK_OF(X509_EXTENSION) **extensions)
 	}
 
 	if ((got = X509v3_get_ext_count(*extensions)) != 1) {
-		fprintf(stderr, "%s: FAIL: X509V3_ADD_DEFAULT second contraints "
+		fprintf(stderr, "%s: FAIL: X509V3_ADD_DEFAULT second constraints "
 		    "expected 1 extension, have %d.\n", __func__, got);
 		goto err;
 	}
