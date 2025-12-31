@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_cpu_caps.c,v 1.6 2025/07/22 09:18:02 jsing Exp $ */
+/*	$OpenBSD: crypto_cpu_caps.c,v 1.7 2025/12/31 10:06:41 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -93,8 +93,10 @@ crypto_cpu_caps_init(void)
 		caps |= CPUCAP_MASK_MMX;
 		crypto_cpu_caps_i386 |= CRYPTO_CPU_CAPS_I386_MMX;
 	}
-	if ((edx & IA32CAP_MASK0_SSE) != 0)
+	if ((edx & IA32CAP_MASK0_SSE) != 0) {
 		caps |= CPUCAP_MASK_SSE;
+		crypto_cpu_caps_i386 |= CRYPTO_CPU_CAPS_I386_SSE;
+	}
 	if ((edx & IA32CAP_MASK0_SSE2) != 0)
 		caps |= CPUCAP_MASK_SSE2;
 
