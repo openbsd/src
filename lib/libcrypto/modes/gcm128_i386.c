@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128_i386.c,v 1.1 2025/06/28 12:39:10 jsing Exp $ */
+/* $OpenBSD: gcm128_i386.c,v 1.2 2025/12/31 10:16:24 jsing Exp $ */
 /*
  * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
@@ -43,7 +43,7 @@ gcm128_init(GCM128_CONTEXT *ctx)
 		return;
 	}
 
-	if ((crypto_cpu_caps_i386 & CRYPTO_CPU_CAPS_I386_MMX) != 0) {
+	if ((crypto_cpu_caps_i386 & CRYPTO_CPU_CAPS_I386_SSE) != 0) {
 		gcm_init_4bit(ctx->Htable, ctx->H.u);
 		ctx->gmult = gcm_gmult_4bit_mmx;
 		ctx->ghash = gcm_ghash_4bit_mmx;
