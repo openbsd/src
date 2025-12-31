@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.302 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: main.c,v 1.303 2025/12/31 12:51:52 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1485,9 +1485,15 @@ main(int argc, char *argv[])
 	 */
 
 	close(procfd);
+	msgbuf_free(procq);
 	close(rsyncfd);
+	msgbuf_free(rsyncq);
 	close(httpfd);
+	msgbuf_free(httpq);
 	close(rrdpfd);
+	msgbuf_free(rrdpq);
+	procq = rsyncq = httpq = rrdpq = NULL;
+	memset(queues, 0, sizeof(queues));
 
 	rc = 0;
 	for (;;) {
