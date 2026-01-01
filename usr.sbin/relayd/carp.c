@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.12 2016/08/18 00:45:52 jsg Exp $ */
+/*	$OpenBSD: carp.c,v 1.13 2026/01/01 08:30:33 rsadowski Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -61,29 +61,28 @@ carp_demote_init(char *group, int force)
 	struct carpgroup	*c;
 	int			 level;
 
-	if ((c = carp_group_find(group)) == NULL) {
-		if ((c = calloc(1, sizeof(struct carpgroup))) == NULL) {
-			log_warn("%s: calloc", __func__);
-			return (-1);
-		}
-		if ((c->group = strdup(group)) == NULL) {
-			log_warn("%s: strdup", __func__);
-			free(c);
-			return (-1);
-		}
+	if (carp_group_find(group) != NULL)
+		return (0);
 
-		/* only demote if this group already is demoted */
-		if ((level = carp_demote_get(group)) == -1) {
-			free(c->group);
-			free(c);
-			return (-1);
-		}
-		if (level > 0 || force)
-			c->do_demote = 1;
-
-		TAILQ_INSERT_TAIL(&carpgroups, c, entry);
+	if ((c = calloc(1, sizeof(struct carpgroup))) == NULL) {
+		log_warn("%s: calloc", __func__);
+		return (-1);
 	}
+	if ((c->group = strdup(group)) == NULL) {
+		log_warn("%s: strdup", __func__);
+		free(c);
+		return (-1);
+	}
+	/* only demote if this group already is demoted */
+	if ((level = carp_demote_get(group)) == -1) {
+		free(c->group);
+		free(c);
+		return (-1);
+	}
+	if (level > 0 || force)
+		c->do_demote = 1;
 
+	TAILQ_INSERT_TAIL(&carpgroups, c, entry);
 	return (0);
 }
 
