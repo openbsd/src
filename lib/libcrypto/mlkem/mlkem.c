@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.c,v 1.5 2026/01/01 12:47:52 tb Exp $ */
+/*	$OpenBSD: mlkem.c,v 1.6 2026/01/01 13:36:09 tb Exp $ */
 /*
  * Copyright (c) 2025, Bob Beck <beck@obtuse.com>
  *
@@ -14,9 +14,12 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <stdlib.h>
+#include <string.h>
 
 #include <openssl/mlkem.h>
+
 #include "mlkem_internal.h"
 
 static inline int
@@ -229,11 +232,14 @@ MLKEM_encap(const MLKEM_public_key *public_key,
     uint8_t **out_shared_secret, size_t *out_shared_secret_len)
 {
 	uint8_t entropy[MLKEM_ENCAP_ENTROPY];
+	int ret;
 
-	arc4random_buf(entropy, MLKEM_ENCAP_ENTROPY);
-
-	return MLKEM_encap_external_entropy(public_key, entropy, out_ciphertext,
+	arc4random_buf(entropy, sizeof(entropy));
+	ret = MLKEM_encap_external_entropy(public_key, entropy, out_ciphertext,
 	    out_ciphertext_len, out_shared_secret, out_shared_secret_len);
+	explicit_bzero(entropy, sizeof(entropy));
+
+	return ret;
 }
 LCRYPTO_ALIAS(MLKEM_encap);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_internal.c,v 1.4 2026/01/01 12:47:52 tb Exp $ */
+/* $OpenBSD: mlkem_internal.c,v 1.5 2026/01/01 13:36:09 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, 2025 Bob Beck <beck@obtuse.com>
@@ -887,10 +887,14 @@ mlkem_generate_key(uint8_t *out_encoded_public_key,
 	uint8_t entropy_buf[MLKEM_SEED_LENGTH];
 	uint8_t *entropy = optional_out_seed != NULL ? optional_out_seed :
 	    entropy_buf;
+	int ret;
 
 	arc4random_buf(entropy, MLKEM_SEED_LENGTH);
-	return mlkem_generate_key_external_entropy(out_encoded_public_key,
+	ret = mlkem_generate_key_external_entropy(out_encoded_public_key,
 	    out_private_key, entropy);
+	explicit_bzero(entropy_buf, sizeof(entropy_buf));
+
+	return ret;
 }
 
 int
@@ -978,6 +982,10 @@ mlkem_generate_key_external_entropy(uint8_t *out_encoded_public_key,
 
  err:
 	CBB_cleanup(&cbb);
+	explicit_bzero(&priv, sizeof(priv));
+	explicit_bzero(augmented_seed, sizeof(augmented_seed));
+	explicit_bzero(error, sizeof(error));
+	explicit_bzero(hashed, sizeof(hashed));
 
 	return ret;
 }
@@ -1042,6 +1050,11 @@ encrypt_cpa(uint8_t *out, const struct public_key *pub,
 	vector_encode(out, &u[0], u_bits, rank);
 	scalar_compress(&v, v_bits);
 	scalar_encode(out + compressed_vector_size(rank), &v, v_bits);
+
+	explicit_bzero(secret, sizeof(secret));
+	explicit_bzero(error, sizeof(error));
+	explicit_bzero(u, sizeof(u));
+	explicit_bzero(input, sizeof(input));
 }
 
 /* Calls mlkem_encap_external_entropy| with random bytes */
@@ -1055,6 +1068,7 @@ mlkem_encap(const MLKEM_public_key *public_key,
 	arc4random_buf(entropy, MLKEM_ENCAP_ENTROPY);
 	mlkem_encap_external_entropy(out_ciphertext,
 	    out_shared_secret, public_key, entropy);
+	explicit_bzero(entropy, sizeof(entropy));
 }
 
 /* See section 6.2 of the spec. */
@@ -1076,6 +1090,9 @@ mlkem_encap_external_entropy(uint8_t *out_ciphertext,
 	encrypt_cpa(out_ciphertext, &pub, entropy, key_and_randomness + 32,
 	    public_key->rank);
 	memcpy(out_shared_secret, key_and_randomness, 32);
+
+	explicit_bzero(key_and_randomness, sizeof(key_and_randomness));
+	explicit_bzero(input, sizeof(input));
 }
 
 static void
@@ -1101,6 +1118,8 @@ decrypt_cpa(uint8_t out[32], const struct private_key *priv,
 	scalar_sub(&v, &mask);
 	scalar_compress(&v, 1);
 	scalar_encode_1(out, &v);
+
+	explicit_bzero(u, sizeof(u));
 }
 
 /* See section 6.3 */
@@ -1149,6 +1168,8 @@ mlkem_decap(const MLKEM_private_key *private_key, const uint8_t *ciphertext,
 
  err:
 	freezero(expected_ciphertext, expected_ciphertext_length);
+	explicit_bzero(key_and_randomness, sizeof(key_and_randomness));
+	explicit_bzero(decrypted, sizeof(decrypted));
 
 	return ret;
 }
@@ -1249,6 +1270,7 @@ mlkem_marshal_private_key(const MLKEM_private_key *private_key,
 
  err:
 	CBB_cleanup(&cbb);
+	explicit_bzero(&priv, sizeof(priv));
 
 	return ret;
 }
@@ -1259,28 +1281,34 @@ mlkem_parse_private_key(const uint8_t *input, size_t input_len,
 {
 	struct private_key priv;
 	CBS cbs, s_bytes;
+	int ret = 0;
 
 	private_key_from_external(out_private_key, &priv);
 	CBS_init(&cbs, input, input_len);
 
 	if (!CBS_get_bytes(&cbs, &s_bytes,
 	    encoded_vector_size(out_private_key->rank)))
-		return 0;
+		goto err;
 	if (!vector_decode(priv.s, CBS_data(&s_bytes), kLog2Prime,
 	    out_private_key->rank))
-		return 0;
+		goto err;
 	if (!mlkem_parse_public_key_no_hash(&priv.pub, &cbs,
 	    out_private_key->rank))
-		return 0;
+		goto err;
 
 	memcpy(priv.pub.public_key_hash, CBS_data(&cbs), 32);
 	if (!CBS_skip(&cbs, 32))
-		return 0;
+		goto err;
 	memcpy(priv.fo_failure_secret, CBS_data(&cbs), 32);
 	if (!CBS_skip(&cbs, 32))
-		return 0;
+		goto err;
 	if (CBS_len(&cbs) != 0)
-		return 0;
+		goto err;
 
-	return 1;
+	ret = 1;
+
+ err:
+	explicit_bzero(&priv, sizeof(priv));
+
+	return ret;
 }
