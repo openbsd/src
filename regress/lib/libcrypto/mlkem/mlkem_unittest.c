@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_unittest.c,v 1.15 2025/08/17 19:26:35 tb Exp $ */
+/*	$OpenBSD: mlkem_unittest.c,v 1.16 2026/01/01 12:47:52 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -300,8 +300,8 @@ main(void)
 {
 	int failed = 0;
 
-	failed |= MlKemUnitTest(RANK768);
-	failed |= MlKemUnitTest(RANK1024);
+	failed |= MlKemUnitTest(MLKEM768_RANK);
+	failed |= MlKemUnitTest(MLKEM1024_RANK);
 
 	return failed;
 }

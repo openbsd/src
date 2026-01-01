@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.h,v 1.8 2025/08/19 21:37:08 tb Exp $ */
+/*	$OpenBSD: mlkem.h,v 1.9 2026/01/01 12:47:52 tb Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
@@ -29,8 +29,8 @@ extern "C" {
  * ML-KEM constants
  */
 
-#define RANK768 3
-#define RANK1024 4
+#define MLKEM768_RANK	3
+#define MLKEM1024_RANK	4
 
 /*
  * ML-KEM keys
@@ -41,8 +41,8 @@ typedef struct MLKEM_public_key_st MLKEM_public_key;
 
 /*
  * MLKEM_private_key_new allocates a new uninitialized ML-KEM private key for
- * |rank|, which must be RANK768 or RANK1024. It returns a pointer to an
- * allocated structure suitable for holding a generated private key of the
+ * |rank|, which must be MLKEM768_RANK or MLKEM1024_RANK. It returns a pointer
+ * to an allocated structure suitable for holding a generated private key of the
  * corresponding rank on success, NULL is returned on failure. The caller is
  * responsible for deallocating the resulting key with |MLKEM_private_key_free|.
  */
@@ -71,8 +71,8 @@ size_t MLKEM_private_key_ciphertext_length(const MLKEM_private_key *key);
 
 /*
  * MLKEM_public_key_new allocates a new uninitialized ML-KEM public key for
- * |rank|, which must be RANK768 or RANK1024. It returns a pointer to an
- * allocated structure suitable for holding a generated public key of the
+ * |rank|, which must be MLKEM768_RANK or MLKEM1024_RANK. It returns a pointer
+ * to an allocated structure suitable for holding a generated public key of the
  * corresponding rank on success, NULL is returned on failure. The caller is
  * responsible for deallocating the resulting key with |MLKEM_public_key_free|.
  */
@@ -94,8 +94,8 @@ size_t MLKEM_public_key_encoded_length(const MLKEM_public_key *key);
 
 /*
  * MLKEM_public_key_cipertext_length returns the number of bytes produced as the
- * ciphertext when encrypting a shared secret with |key| using |MLKEM_encap|. Zero
- * is returned if |key| is NULL or has an invalid rank.
+ * ciphertext when encrypting a shared secret with |key| using |MLKEM_encap|.
+ * Zero is returned if |key| is NULL or has an invalid rank.
  */
 size_t MLKEM_public_key_ciphertext_length(const MLKEM_public_key *key);
 

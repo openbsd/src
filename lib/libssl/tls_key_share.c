@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.9 2025/12/04 21:03:42 beck Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.10 2026/01/01 12:47:52 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -285,7 +285,7 @@ tls_key_share_generate_mlkem(struct tls_key_share *ks, int rank)
 static int
 tls_key_share_client_generate_mlkem768x25519(struct tls_key_share *ks)
 {
-	if (!tls_key_share_generate_mlkem(ks, RANK768))
+	if (!tls_key_share_generate_mlkem(ks, MLKEM768_RANK))
 		return 0;
 
 	if (!tls_key_share_generate_x25519(ks))
@@ -586,7 +586,7 @@ tls_key_share_server_peer_public_mlkem768x25519(struct tls_key_share *ks,
 		return 0;
 
 	/* Nein, ist nur normal (1024 ist gigantisch) */
-	if ((ks->mlkem_peer_public = MLKEM_public_key_new(RANK768)) == NULL)
+	if ((ks->mlkem_peer_public = MLKEM_public_key_new(MLKEM768_RANK)) == NULL)
 		goto err;
 
 	if (!CBS_get_bytes(cbs, &mlkem768_cbs,

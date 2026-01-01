@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.c,v 1.4 2025/09/05 23:30:12 beck Exp $ */
+/*	$OpenBSD: mlkem.c,v 1.5 2026/01/01 12:47:52 tb Exp $ */
 /*
  * Copyright (c) 2025, Bob Beck <beck@obtuse.com>
  *
@@ -24,7 +24,7 @@ private_key_is_new(const MLKEM_private_key *key)
 {
 	return (key != NULL &&
 	    key->state == MLKEM_PRIVATE_KEY_UNINITIALIZED &&
-	    (key->rank == RANK768 || key->rank == RANK1024));
+	    (key->rank == MLKEM768_RANK || key->rank == MLKEM1024_RANK));
 }
 
 static inline int
@@ -32,7 +32,7 @@ private_key_is_valid(const MLKEM_private_key *key)
 {
 	return (key != NULL &&
 	    key->state == MLKEM_PRIVATE_KEY_INITIALIZED &&
-	    (key->rank == RANK768 || key->rank == RANK1024));
+	    (key->rank == MLKEM768_RANK || key->rank == MLKEM1024_RANK));
 }
 
 static inline int
@@ -40,7 +40,7 @@ public_key_is_new(const MLKEM_public_key *key)
 {
 	return (key != NULL &&
 	    key->state == MLKEM_PUBLIC_KEY_UNINITIALIZED &&
-	    (key->rank == RANK768 || key->rank == RANK1024));
+	    (key->rank == MLKEM768_RANK || key->rank == MLKEM1024_RANK));
 }
 
 static inline int
@@ -48,7 +48,7 @@ public_key_is_valid(const MLKEM_public_key *key)
 {
 	return (key != NULL &&
 	    key->state == MLKEM_PUBLIC_KEY_INITIALIZED &&
-	    (key->rank == RANK768 || key->rank == RANK1024));
+	    (key->rank == MLKEM768_RANK || key->rank == MLKEM1024_RANK));
 }
 
 /*
@@ -71,7 +71,7 @@ MLKEM_generate_key_external_entropy(MLKEM_private_key *private_key,
 		goto err;
 
 	k_len = MLKEM768_PUBLIC_KEY_BYTES;
-	if (private_key->rank == RANK1024)
+	if (private_key->rank == MLKEM1024_RANK)
 		k_len = MLKEM1024_PUBLIC_KEY_BYTES;
 
 	if ((k = calloc(1, k_len)) == NULL)

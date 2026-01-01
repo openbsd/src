@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_key.c,v 1.4 2025/09/16 06:10:24 tb Exp $ */
+/* $OpenBSD: mlkem_key.c,v 1.5 2026/01/01 12:47:52 tb Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
@@ -32,11 +32,11 @@ MLKEM_private_key_new(int rank)
 		goto err;
 
 	switch (rank) {
-	case RANK768:
+	case MLKEM768_RANK:
 		if ((key->key_768 = calloc(1, sizeof(*key->key_768))) == NULL)
 			goto err;
 		break;
-	case RANK1024:
+	case MLKEM1024_RANK:
 		if ((key->key_1024 = calloc(1, sizeof(*key->key_1024))) == NULL)
 			goto err;
 		break;
@@ -75,9 +75,9 @@ MLKEM_private_key_encoded_length(const MLKEM_private_key *key)
 		return 0;
 
 	switch (key->rank) {
-	case RANK768:
+	case MLKEM768_RANK:
 		return MLKEM768_PRIVATE_KEY_BYTES;
-	case RANK1024:
+	case MLKEM1024_RANK:
 		return MLKEM1024_PRIVATE_KEY_BYTES;
 	default:
 		return 0;
@@ -93,9 +93,9 @@ MLKEM_private_key_ciphertext_length(const MLKEM_private_key *key)
 		return 0;
 
 	switch (key->rank) {
-	case RANK768:
+	case MLKEM768_RANK:
 		return MLKEM768_CIPHERTEXT_BYTES;
-	case RANK1024:
+	case MLKEM1024_RANK:
 		return MLKEM1024_CIPHERTEXT_BYTES;
 	default:
 		return 0;
@@ -114,11 +114,11 @@ MLKEM_public_key_new(int rank)
 		goto err;
 
 	switch (rank) {
-	case RANK768:
+	case MLKEM768_RANK:
 		if ((key->key_768 = calloc(1, sizeof(*key->key_768))) == NULL)
 			goto err;
 		break;
-	case RANK1024:
+	case MLKEM1024_RANK:
 		if ((key->key_1024 = calloc(1, sizeof(*key->key_1024))) == NULL)
 			goto err;
 		break;
@@ -158,9 +158,9 @@ MLKEM_public_key_encoded_length(const MLKEM_public_key *key)
 		return 0;
 
 	switch (key->rank) {
-	case RANK768:
+	case MLKEM768_RANK:
 		return MLKEM768_PUBLIC_KEY_BYTES;
-	case RANK1024:
+	case MLKEM1024_RANK:
 		return MLKEM1024_PUBLIC_KEY_BYTES;
 	default:
 		return 0;
@@ -176,9 +176,9 @@ MLKEM_public_key_ciphertext_length(const MLKEM_public_key *key)
 		return 0;
 
 	switch (key->rank) {
-	case RANK768:
+	case MLKEM768_RANK:
 		return MLKEM768_CIPHERTEXT_BYTES;
-	case RANK1024:
+	case MLKEM1024_RANK:
 		return MLKEM1024_CIPHERTEXT_BYTES;
 	default:
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_iteration_tests.c,v 1.8 2025/08/17 19:26:35 tb Exp $ */
+/*	$OpenBSD: mlkem_iteration_tests.c,v 1.9 2026/01/01 12:47:52 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Bob Beck <beck@obtuse.com>
@@ -78,10 +78,10 @@ MlkemIterativeTest(int rank)
 	start = kExpectedSeedStart;
 	start_len = sizeof(kExpectedSeedStart);
 	switch(rank){
-	case RANK768:
+	case MLKEM768_RANK:
 		expected = kExpectedAdam768;
 		break;
-	case RANK1024:
+	case MLKEM1024_RANK:
 		expected = kExpectedAdam1024;
 		break;
 	default:
@@ -196,8 +196,8 @@ main(void)
 {
 	int failed = 0;
 
-	failed |= MlkemIterativeTest(RANK768);
-	failed |= MlkemIterativeTest(RANK1024);
+	failed |= MlkemIterativeTest(MLKEM768_RANK);
+	failed |= MlkemIterativeTest(MLKEM1024_RANK);
 
 	return failed;
 }

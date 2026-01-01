@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.195 2025/12/27 03:23:57 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.196 2026/01/01 12:47:52 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -2460,9 +2460,9 @@ func (wtg *wycheproofTestGroupMLKEM) run(algorithm string, variant testVariant) 
 		fmt.Printf("INFO: skipping %v test group of type %v for %s\n", algorithm, wtg.Type, wtg.ParameterSet)
 		return true
 	case "ML-KEM-768":
-		rank = C.RANK768
+		rank = C.MLKEM768_RANK
 	case "ML-KEM-1024":
-		rank = C.RANK1024
+		rank = C.MLKEM1024_RANK
 	default:
 		log.Fatalf("Unknown ML-KEM parameterSet %v", wtg.ParameterSet)
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_tests.c,v 1.10 2025/08/15 21:47:39 tb Exp $ */
+/*	$OpenBSD: mlkem_tests.c,v 1.11 2026/01/01 12:47:52 tb Exp $ */
 /*
  * Copyright (c) 2024 Google Inc.
  * Copyright (c) 2024 Theo Buehler <tb@openbsd.org>
@@ -686,27 +686,27 @@ static int
 run_mlkem_test(const char *test, const char *fn)
 {
 	if (strcmp(test, "mlkem768_decap_tests") == 0)
-		return mlkem_decap_tests(fn, RANK768, TEST_TYPE_NORMAL);
+		return mlkem_decap_tests(fn, MLKEM768_RANK, TEST_TYPE_NORMAL);
 	if (strcmp(test, "mlkem768_nist_decap_tests") == 0)
-		return mlkem_decap_tests(fn, RANK768, TEST_TYPE_NIST);
+		return mlkem_decap_tests(fn, MLKEM768_RANK, TEST_TYPE_NIST);
 	if (strcmp(test, "mlkem1024_decap_tests") == 0)
-		return mlkem_decap_tests(fn, RANK1024, TEST_TYPE_NORMAL);
+		return mlkem_decap_tests(fn, MLKEM1024_RANK, TEST_TYPE_NORMAL);
 	if (strcmp(test, "mlkem1024_nist_decap_tests") == 0)
-		return mlkem_decap_tests(fn, RANK1024, TEST_TYPE_NIST);
+		return mlkem_decap_tests(fn, MLKEM1024_RANK, TEST_TYPE_NIST);
 
 	if (strcmp(test, "mlkem768_encap_tests") == 0)
-		return mlkem_encap_tests(fn, RANK768);
+		return mlkem_encap_tests(fn, MLKEM768_RANK);
 	if (strcmp(test, "mlkem1024_encap_tests") == 0)
-		return mlkem_encap_tests(fn, RANK1024);
+		return mlkem_encap_tests(fn, MLKEM1024_RANK);
 
 	if (strcmp(test, "mlkem768_keygen_tests") == 0)
-		return mlkem_keygen_tests(fn, RANK768, TEST_TYPE_NORMAL);
+		return mlkem_keygen_tests(fn, MLKEM768_RANK, TEST_TYPE_NORMAL);
 	if (strcmp(test, "mlkem768_nist_keygen_tests") == 0)
-		return mlkem_keygen_tests(fn, RANK768, TEST_TYPE_NIST);
+		return mlkem_keygen_tests(fn, MLKEM768_RANK, TEST_TYPE_NIST);
 	if (strcmp(test, "mlkem1024_keygen_tests") == 0)
-		return mlkem_keygen_tests(fn, RANK1024, TEST_TYPE_NORMAL);
+		return mlkem_keygen_tests(fn, MLKEM1024_RANK, TEST_TYPE_NORMAL);
 	if (strcmp(test, "mlkem1024_nist_keygen_tests") == 0)
-		return mlkem_keygen_tests(fn, RANK1024, TEST_TYPE_NIST);
+		return mlkem_keygen_tests(fn, MLKEM1024_RANK, TEST_TYPE_NIST);
 
 	errx(1, "unknown test %s (test file %s)", test, fn);
 }
