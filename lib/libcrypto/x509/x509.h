@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.125 2025/12/11 13:05:22 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.126 2026/01/01 06:51:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,6 +244,7 @@ typedef struct X509_crl_info_st X509_CRL_INFO;
 
 DECLARE_STACK_OF(X509_CRL)
 
+/* www/apache2 reaches into this. */
 typedef struct private_key_st {
 	EVP_PKEY *dec_pkey;
 } X509_PKEY;
