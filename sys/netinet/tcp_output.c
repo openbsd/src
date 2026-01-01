@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.157 2025/09/16 17:29:35 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.158 2026/01/01 05:28:23 jsg Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -95,10 +95,6 @@
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcp_debug.h>
-
-#ifdef notyet
-extern struct mbuf *m_copypack();
-#endif
 
 #ifdef TCP_SACK_DEBUG
 void tcp_print_holes(struct tcpcb *tp);
@@ -670,18 +666,6 @@ send:
 		} else {
 			tcpstat_pkt(tcps_sndpack, tcps_sndbyte, len);
 		}
-#ifdef notyet
-		if ((m = m_copypack(so->so_snd.sb_mb, off,
-		    (int)len, max_linkhdr + hdrlen)) == 0) {
-			error = ENOBUFS;
-			goto out;
-		}
-		/*
-		 * m_copypack left space for our hdr; use it.
-		 */
-		m->m_len += hdrlen;
-		m->m_data -= hdrlen;
-#else
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m != NULL && max_linkhdr + hdrlen > MHLEN) {
 			MCLGET(m, M_DONTWAIT);
@@ -712,7 +696,6 @@ send:
 		if (so->so_snd.sb_mb->m_flags & M_PKTHDR)
 			m->m_pkthdr.ph_loopcnt =
 			    so->so_snd.sb_mb->m_pkthdr.ph_loopcnt;
-#endif
 		/*
 		 * If we're sending everything we've got, set PUSH.
 		 * (This will keep happy those implementations which only
