@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.34 2023/06/17 19:35:54 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.35 2026/01/01 08:40:11 rsadowski Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2023 $
+.Dd $Mdocdate: January 1 2026 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -1185,6 +1185,9 @@ Wipe out an existing lock: clean up the corresponding
 .Ar fullpkgpath
 on the appropriate host, then remove all lock and affinity info pertaining
 to the port.
+.It Cm wipe-all
+Wipe out all existing packages with an error state. This operates like the
+wipe control.
 .It Cm wipehost Ar hostname ...
 Remove all information relevant to a given host from
 .Nm ,
