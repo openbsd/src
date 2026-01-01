@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.195 2025/08/01 08:16:31 deraadt Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.196 2026/01/01 14:34:57 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1310,7 +1310,6 @@ relay_load_fd(int fd, off_t *len)
 	char		*buf = NULL;
 	struct stat	 st;
 	off_t		 size;
-	ssize_t		 rv;
 	int		 err;
 
 	if (fstat(fd, &st) != 0)
@@ -1318,7 +1317,7 @@ relay_load_fd(int fd, off_t *len)
 	size = st.st_size;
 	if ((buf = calloc(1, size + 1)) == NULL)
 		goto fail;
-	if ((rv = pread(fd, buf, size, 0)) != size)
+	if (pread(fd, buf, size, 0) != size)
 		goto fail;
 
 	close(fd);
@@ -1478,7 +1477,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		log_debug("%s: calloc", __func__);
 		return (-1);
 	}
-	p = q = label;
+	p = label;
 	while ((q = strstr(p, srch)) != NULL) {
 		*q = '\0';
 		if ((strlcat(tmp, p, len) >= len) ||
