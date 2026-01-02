@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.182 2025/08/15 13:40:43 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.183 2026/01/02 01:40:17 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3184,7 +3184,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
 #include <ddb/db_output.h>
 #endif
 
-volatile long tlb_shoot_wait __attribute__((section(".kudata")));
+volatile int tlb_shoot_wait __attribute__((section(".kudata")));
 
 volatile vaddr_t tlb_shoot_addr1 __attribute__((section(".kudata")));
 volatile vaddr_t tlb_shoot_addr2 __attribute__((section(".kudata")));
@@ -3198,11 +3198,11 @@ volatile struct vmx_invept_descriptor ept_shoot_vid
 
 /* Obtain the "lock" for TLB shooting */
 static inline int
-pmap_start_tlb_shoot(long wait, const char *func)
+pmap_start_tlb_shoot(int wait, const char *func)
 {
 	int s = splvm();
 
-	while (atomic_cas_ulong(&tlb_shoot_wait, 0, wait) != 0) {
+	while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
 #ifdef MP_LOCKDEBUG
 		long nticks = __mp_lock_spinout;
 #endif
@@ -3226,7 +3226,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	long wait = 0;
+	int wait = 0;
 	u_int64_t mask = 0;
 	int is_kva = va >= VM_MIN_KERNEL_ADDRESS;
 
@@ -3271,7 +3271,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	long wait = 0;
+	int wait = 0;
 	u_int64_t mask = 0;
 	int is_kva = sva >= VM_MIN_KERNEL_ADDRESS;
 	vaddr_t va;
@@ -3328,7 +3328,7 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	long wait = 0;
+	int wait = 0;
 	u_int64_t mask = 0;
 
 	KASSERT(pm != pmap_kernel());
@@ -3374,7 +3374,7 @@ pmap_shootept(struct pmap *pm, int shootself)
 	struct cpu_info *ci, *self = curcpu();
 	struct vmx_invept_descriptor vid;
 	CPU_INFO_ITERATOR cii;
-	long wait = 0;
+	int wait = 0;
 	u_int64_t mask = 0;
 
 	KASSERT(pmap_is_ept(pm));
