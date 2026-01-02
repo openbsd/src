@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.98 2025/11/28 16:10:00 rsadowski Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.99 2026/01/02 08:45:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -645,7 +645,7 @@ server_fcgi_header(struct client *clt, unsigned int code)
 	struct http_descriptor	*resp = clt->clt_descresp;
 	const char		*error;
 	char			 tmbuf[32];
-	struct kv		*kv, *cl, key;
+	struct kv		*cl, key;
 
 	clt->clt_fcgi.headerssent = 1;
 
@@ -675,7 +675,7 @@ server_fcgi_header(struct client *clt, unsigned int code)
 		/* But then we need a Content-Length unless method is HEAD... */
 		if (desc->http_method != HTTP_METHOD_HEAD) {
 			key.kv_key = "Content-Length";
-			if ((kv = kv_find(&resp->http_headers, &key)) == NULL) {
+			if (kv_find(&resp->http_headers, &key) == NULL) {
 				if (kv_add(&resp->http_headers,
 				    "Content-Length", "0") == NULL)
 					return (-1);
@@ -687,7 +687,7 @@ server_fcgi_header(struct client *clt, unsigned int code)
 	if (clt->clt_fcgi.chunked) {
 		/* but only if no Content-Length header is supplied */
 		key.kv_key = "Content-Length";
-		if ((kv = kv_find(&resp->http_headers, &key)) != NULL) {
+		if (kv_find(&resp->http_headers, &key) != NULL) {
 			clt->clt_fcgi.chunked = 0;
 		} else {
 			/*

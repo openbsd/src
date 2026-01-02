@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.75 2025/11/12 11:24:04 deraadt Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.76 2026/01/02 08:45:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -530,7 +530,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		log_debug("%s: calloc", __func__);
 		return (-1);
 	}
-	p = q = label;
+	p = label;
 	while ((q = strstr(p, srch)) != NULL) {
 		*q = '\0';
 		if ((strlcat(tmp, p, len) >= len) ||

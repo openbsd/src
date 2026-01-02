@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.129 2023/11/08 19:19:10 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.130 2026/01/02 08:45:16 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -887,8 +887,6 @@ void
 server_input(struct client *clt)
 {
 	struct server_config	*srv_conf = clt->clt_srv_conf;
-	evbuffercb		 inrd = server_read;
-	evbuffercb		 inwr = server_write;
 	socklen_t		 slen;
 
 	if (server_httpdesc_init(clt) == -1) {
@@ -897,7 +895,6 @@ server_input(struct client *clt)
 	}
 
 	clt->clt_toread = TOREAD_HTTP_HEADER;
-	inrd = server_read_http;
 
 	slen = sizeof(clt->clt_sndbufsiz);
 	if (getsockopt(clt->clt_s, SOL_SOCKET, SO_SNDBUF,
@@ -909,8 +906,8 @@ server_input(struct client *clt)
 	/*
 	 * Client <-> Server
 	 */
-	clt->clt_bev = bufferevent_new(clt->clt_s, inrd, inwr,
-	    server_error, clt);
+	clt->clt_bev = bufferevent_new(clt->clt_s, server_read_http,
+	    server_write, server_error, clt);
 	if (clt->clt_bev == NULL) {
 		server_close(clt, "failed to allocate input buffer event");
 		return;
