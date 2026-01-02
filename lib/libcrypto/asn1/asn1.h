@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.94 2025/12/31 13:48:00 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.95 2026/01/02 08:03:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -198,9 +198,6 @@ typedef struct ASN1_ENCODING_st {
 	long len;		/* Length of encoding */
 	int modified;		 /* set to 1 if 'enc' is invalid */
 } ASN1_ENCODING;
-
-/* Used with ASN1 LONG type: if a long is set to this it is omitted */
-#define ASN1_LONG_UNDEF	0x7fffffffL
 
 /* Used by security/xca */
 #define STABLE_NO_MASK		0x02

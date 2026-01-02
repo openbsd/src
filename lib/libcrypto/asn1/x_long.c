@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.22 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: x_long.c,v 1.23 2026/01/02 08:03:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -69,6 +69,9 @@
  * Custom primitive type for long handling. This converts between an
  * ASN1_INTEGER and a long directly.
  */
+
+/* Used with ASN1 LONG type: if a long is set to this it is omitted */
+#define ASN1_LONG_UNDEF 0x7fffffffL
 
 static int long_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
@@ -159,8 +162,9 @@ long_i2c(ASN1_VALUE **pval, unsigned char *content, int *putype,
 	long_get(pval, &val);
 
 	/*
-	 * The zero value for this type (stored in the overloaded it->size
-	 * field) is considered to be invalid.
+	 * Omit this field if it has the zero value for this type (stored
+	 * in the overloaded it->size field) - asn1_i2d_ex_primitive()
+	 * specifically checks for a -1 return value.
 	 */
 	if (val == it->size)
 		return -1;
