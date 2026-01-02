@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.21 2023/03/06 14:32:05 tb Exp $ */
+/* $OpenBSD: dgst.c,v 1.22 2026/01/02 00:05:48 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,6 @@ static struct {
 	char *hmac_key;
 	char *keyfile;
 	int keyform;
-	const EVP_MD *m;
 	char *mac_name;
 	STACK_OF(OPENSSL_STRING) *macopts;
 	const EVP_MD *md;
@@ -122,10 +121,8 @@ dgst_opt_md(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((cfg.m = EVP_get_digestbyname(name)) == NULL)
+	if ((cfg.md = EVP_get_digestbyname(name)) == NULL)
 		return (1);
-
-	cfg.md = cfg.m;
 
 	*argsused = 1;
 	return (0);
