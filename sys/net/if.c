@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.760 2025/12/11 07:09:20 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.761 2026/01/02 13:13:29 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -662,6 +662,7 @@ if_attach_common(struct ifnet *ifp)
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INIT(&ifp->if_maddrlist);
 	TAILQ_INIT(&ifp->if_groups);
+	rw_init(&ifp->if_maddrlock, "maddr");
 
 	if (!ISSET(ifp->if_xflags, IFXF_MPSAFE)) {
 		KASSERTMSG(ifp->if_qstart == NULL,

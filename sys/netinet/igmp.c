@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.93 2025/12/02 15:52:04 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.94 2026/01/02 13:13:29 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -341,6 +341,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 			 * except those that are already running and those
 			 * that belong to a "local" group (224.0.0.X).
 			 */
+			rw_enter_write(&ifp->if_maddrlock);
 			TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 				if (ifma->ifma_addr->sa_family != AF_INET)
 					continue;
@@ -353,6 +354,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 					running = 1;
 				}
 			}
+			rw_exit_write(&ifp->if_maddrlock);
 		} else {
 			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
 				igmpstat_inc(igps_rcv_badqueries);
@@ -372,6 +374,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 			 * timers already running, check if they need to be
 			 * reset.
 			 */
+			rw_enter_write(&ifp->if_maddrlock);
 			TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 				if (ifma->ifma_addr->sa_family != AF_INET)
 					continue;
@@ -400,6 +403,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 					}
 				}
 			}
+			rw_exit_write(&ifp->if_maddrlock);
 		}
 
 		break;
@@ -436,6 +440,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
+		rw_enter_write(&ifp->if_maddrlock);
 		inm = in_lookupmulti(&igmp->igmp_group, ifp);
 		if (inm != NULL) {
 			inm->inm_timer = 0;
@@ -456,6 +461,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 				break;
 			}
 		}
+		rw_exit_write(&ifp->if_maddrlock);
 
 		break;
 
@@ -504,6 +510,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
+		rw_enter_write(&ifp->if_maddrlock);
 		inm = in_lookupmulti(&igmp->igmp_group, ifp);
 		if (inm != NULL) {
 			inm->inm_timer = 0;
@@ -520,6 +527,7 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 				break;
 			}
 		}
+		rw_exit_write(&ifp->if_maddrlock);
 
 		break;
 
@@ -541,6 +549,8 @@ void
 igmp_joingroup(struct in_multi *inm, struct ifnet *ifp)
 {
 	int i, running = 0;
+
+	rw_assert_wrlock(&ifp->if_maddrlock);
 
 	inm->inm_state = IGMP_IDLE_MEMBER;
 
@@ -564,6 +574,8 @@ igmp_joingroup(struct in_multi *inm, struct ifnet *ifp)
 void
 igmp_leavegroup(struct in_multi *inm, struct ifnet *ifp)
 {
+	rw_assert_anylock(&ifp->if_maddrlock);
+
 	switch (inm->inm_state) {
 	case IGMP_DELAYING_MEMBER:
 	case IGMP_IDLE_MEMBER:
@@ -598,7 +610,7 @@ igmp_fasttimo(void)
 		return;
 	membar_consumer();
 
-	NET_LOCK();
+	NET_LOCK_SHARED();
 
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (igmp_checktimer(ifp))
@@ -608,7 +620,7 @@ igmp_fasttimo(void)
 	membar_producer();
 	atomic_store_int(&igmp_timers_are_running, running);
 
-	NET_UNLOCK();
+	NET_UNLOCK_SHARED();
 }
 
 int
@@ -618,8 +630,7 @@ igmp_checktimer(struct ifnet *ifp)
 	struct ifmaddr *ifma;
 	int running = 0;
 
-	NET_ASSERT_LOCKED();
-
+	rw_enter_write(&ifp->if_maddrlock);
 	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 		if (ifma->ifma_addr->sa_family != AF_INET)
 			continue;
@@ -640,6 +651,7 @@ igmp_checktimer(struct ifnet *ifp)
 			running = 1;
 		}
 	}
+	rw_exit_write(&ifp->if_maddrlock);
 
 	return (running);
 }

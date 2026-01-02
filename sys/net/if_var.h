@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.145 2025/12/19 02:04:13 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.146 2026/01/02 13:13:29 bluhm Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -81,6 +81,7 @@
  *	K	kernel lock
  *	N	net lock
  *	T	if_tmplist_lock
+ *	m	interface multicast rwlock if_maddrlock
  *
  *  For SRP related structures that allow lock-free reads, the write lock
  *  is indicated below.
@@ -153,8 +154,9 @@ struct ifnet {				/* and the entries */
 	TAILQ_ENTRY(ifnet) if_list;	/* [NK] all struct ifnets are chained */
 	TAILQ_ENTRY(ifnet) if_tmplist;	/* [T] temporary list */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* [N] list of addresses per if */
-	TAILQ_HEAD(, ifmaddr) if_maddrlist; /* [N] list of multicast records */
+	TAILQ_HEAD(, ifmaddr) if_maddrlist; /* [m] list of multicast records */
 	TAILQ_HEAD(, ifg_list) if_groups; /* [N] list of groups per if */
+	struct rwlock if_maddrlock;
 	struct task_list if_addrhooks;	/* [I] address change callbacks */
 	struct task_list if_linkstatehooks; /* [I] link change callbacks*/
 	struct task_list if_detachhooks; /* [I] detach callbacks */
@@ -273,10 +275,10 @@ struct ifaddr {
  * Interface multicast address.
  */
 struct ifmaddr {
-	struct sockaddr		*ifma_addr;	/* Protocol address */
-	unsigned int		 ifma_ifidx;	/* Index of the interface */
+	TAILQ_ENTRY(ifmaddr)	 ifma_list;	/* [m] Per-interface list */
+	struct sockaddr		*ifma_addr;	/* [I] Protocol address */
 	struct refcnt		 ifma_refcnt;	/* Count of references */
-	TAILQ_ENTRY(ifmaddr)	 ifma_list;	/* Per-interface list */
+	unsigned int		 ifma_ifidx;	/* [I] Index of the interface */
 };
 
 /*
