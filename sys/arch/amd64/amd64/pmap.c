@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.183 2026/01/02 01:40:17 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.184 2026/01/02 03:37:35 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3198,11 +3198,11 @@ volatile struct vmx_invept_descriptor ept_shoot_vid
 
 /* Obtain the "lock" for TLB shooting */
 static inline int
-pmap_start_tlb_shoot(int wait, const char *func)
+pmap_start_tlb_shoot(int targets, const char *func)
 {
 	int s = splvm();
 
-	while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
+	while (atomic_cas_uint(&tlb_shoot_wait, 0, targets) != 0) {
 #ifdef MP_LOCKDEBUG
 		long nticks = __mp_lock_spinout;
 #endif
@@ -3226,7 +3226,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	int wait = 0;
+	int targets = 0;
 	u_int64_t mask = 0;
 	int is_kva = va >= VM_MIN_KERNEL_ADDRESS;
 
@@ -3236,11 +3236,11 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 		if (!is_kva && !pmap_is_active(pm, ci))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
+		targets++;
 	}
 
-	if (wait > 0) {
-		int s = pmap_start_tlb_shoot(wait, __func__);
+	if (targets) {
+		int s = pmap_start_tlb_shoot(targets, __func__);
 
 		tlb_shoot_first_pcid = is_kva ? PCID_KERN : PCID_PROC;
 		tlb_shoot_addr1 = va;
@@ -3271,7 +3271,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	int wait = 0;
+	int targets = 0;
 	u_int64_t mask = 0;
 	int is_kva = sva >= VM_MIN_KERNEL_ADDRESS;
 	vaddr_t va;
@@ -3282,11 +3282,11 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 		if (!is_kva && !pmap_is_active(pm, ci))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
+		targets++;
 	}
 
-	if (wait > 0) {
-		int s = pmap_start_tlb_shoot(wait, __func__);
+	if (targets) {
+		int s = pmap_start_tlb_shoot(targets, __func__);
 
 		tlb_shoot_first_pcid = is_kva ? PCID_KERN : PCID_PROC;
 		tlb_shoot_addr1 = sva;
@@ -3328,7 +3328,7 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	int wait = 0;
+	int targets = 0;
 	u_int64_t mask = 0;
 
 	KASSERT(pm != pmap_kernel());
@@ -3338,11 +3338,11 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 		    !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
+		targets++;
 	}
 
-	if (wait) {
-		int s = pmap_start_tlb_shoot(wait, __func__);
+	if (targets) {
+		int s = pmap_start_tlb_shoot(targets, __func__);
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
@@ -3374,7 +3374,7 @@ pmap_shootept(struct pmap *pm, int shootself)
 	struct cpu_info *ci, *self = curcpu();
 	struct vmx_invept_descriptor vid;
 	CPU_INFO_ITERATOR cii;
-	int wait = 0;
+	int targets = 0;
 	u_int64_t mask = 0;
 
 	KASSERT(pmap_is_ept(pm));
@@ -3385,11 +3385,11 @@ pmap_shootept(struct pmap *pm, int shootself)
 		    !(ci->ci_flags & CPUF_VMM))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
+		targets++;
 	}
 
-	if (wait) {
-		int s = pmap_start_tlb_shoot(wait, __func__);
+	if (targets) {
+		int s = pmap_start_tlb_shoot(targets, __func__);
 
 		ept_shoot_mode = self->ci_vmm_cap.vcc_vmx.vmx_invept_mode;
 		ept_shoot_vid.vid_eptp = pm->eptp;

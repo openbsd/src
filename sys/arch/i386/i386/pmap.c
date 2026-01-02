@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.230 2025/12/30 16:18:37 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.231 2026/01/02 03:37:35 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2644,11 +2644,11 @@ volatile vaddr_t tlb_shoot_addr2 __attribute__((section(".kudata")));
 
 /* Obtain the "lock" for TLB shooting */
 static inline int
-pmap_start_tlb_shoot(int wait, const char *func)
+pmap_start_tlb_shoot(int targets, const char *func)
 {
 	int s = splvm();
 
-	while (atomic_cas_uint(&tlb_shoot_wait, 0, wait) != 0) {
+	while (atomic_cas_uint(&tlb_shoot_wait, 0, targets) != 0) {
 #ifdef MP_LOCKDEBUG
 		long nticks = __mp_lock_spinout;
 #endif
@@ -2672,7 +2672,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	int wait = 0;
+	int targets = 0;
 	u_int64_t mask = 0;
 
 	CPU_INFO_FOREACH(cii, ci) {
@@ -2680,11 +2680,11 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 		    !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
+		targets++;
 	}
 
-	if (wait > 0) {
-		int s = pmap_start_tlb_shoot(wait, __func__);
+	if (targets) {
+		int s = pmap_start_tlb_shoot(targets, __func__);
 
 		tlb_shoot_addr1 = va;
 		CPU_INFO_FOREACH(cii, ci) {
@@ -2705,7 +2705,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	int wait = 0;
+	int targets = 0;
 	u_int64_t mask = 0;
 	vaddr_t va;
 
@@ -2714,11 +2714,11 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 		    !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
+		targets++;
 	}
 
-	if (wait > 0) {
-		int s = pmap_start_tlb_shoot(wait, __func__);
+	if (targets) {
+		int s = pmap_start_tlb_shoot(targets, __func__);
 
 		tlb_shoot_addr1 = sva;
 		tlb_shoot_addr2 = eva;
@@ -2741,18 +2741,18 @@ pmap_tlb_shoottlb(void)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	int wait = 0;
+	int targets = 0;
 	u_int64_t mask = 0;
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
+		targets++;
 	}
 
-	if (wait > 0) {
-		int s = pmap_start_tlb_shoot(wait, __func__);
+	if (targets) {
+		int s = pmap_start_tlb_shoot(targets, __func__);
 
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
@@ -2771,7 +2771,7 @@ pmap_tlb_droppmap(struct pmap *pm)
 {
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
-	int wait = 0;
+	int targets = 0;
 	u_int64_t mask = 0;
 
 	CPU_INFO_FOREACH(cii, ci) {
@@ -2779,11 +2779,11 @@ pmap_tlb_droppmap(struct pmap *pm)
 		    ci->ci_curpmap != pm)
 			continue;
 		mask |= (1ULL << ci->ci_cpuid);
-		wait++;
+		targets++;
 	}
 
-	if (wait > 0) {
-		int s = pmap_start_tlb_shoot(wait, __func__);
+	if (targets) {
+		int s = pmap_start_tlb_shoot(targets, __func__);
 
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
