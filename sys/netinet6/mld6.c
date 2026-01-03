@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.71 2026/01/02 13:13:29 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.72 2026/01/03 14:10:04 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -112,13 +112,11 @@ mld6_init(void)
 }
 
 void
-mld6_start_listening(struct in6_multi *in6m, struct ifnet *ifp)
+mld6_start_listening(struct in6_multi *in6m)
 {
 	/* XXX: These are necessary for KAME's link-local hack */
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 	int running = 0;
-
-	rw_assert_wrlock(&ifp->if_maddrlock);
 
 	/*
 	 * RFC2710 page 10:
@@ -149,13 +147,11 @@ mld6_start_listening(struct in6_multi *in6m, struct ifnet *ifp)
 }
 
 void
-mld6_stop_listening(struct in6_multi *in6m, struct ifnet *ifp)
+mld6_stop_listening(struct in6_multi *in6m)
 {
 	/* XXX: These are necessary for KAME's link-local hack */
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 	struct in6_addr all_routers = IN6ADDR_LINKLOCAL_ALLROUTERS_INIT;
-
-	rw_assert_anylock(&ifp->if_maddrlock);
 
 	all_nodes.s6_addr16[1] = htons(in6m->in6m_ifidx);
 	/* XXX: necessary when mrouting */
@@ -258,7 +254,6 @@ mld6_input(struct mbuf *m, int off)
 			timer = 1;
 		all_nodes.s6_addr16[1] = htons(ifp->if_index);
 
-		rw_enter_write(&ifp->if_maddrlock);
 		TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 			if (ifma->ifma_addr->sa_family != AF_INET6)
 				continue;
@@ -286,7 +281,6 @@ mld6_input(struct mbuf *m, int off)
 				}
 			}
 		}
-		rw_exit_write(&ifp->if_maddrlock);
 
 		if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld_addr))
 			mldh->mld_addr.s6_addr16[1] = 0; /* XXX */
@@ -314,13 +308,11 @@ mld6_input(struct mbuf *m, int off)
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
-		rw_enter_write(&ifp->if_maddrlock);
 		in6m = in6_lookupmulti(&mldh->mld_addr, ifp);
 		if (in6m) {
 			in6m->in6m_timer = 0; /* transit to idle state */
 			in6m->in6m_state = MLD_OTHERLISTENER; /* clear flag */
 		}
-		rw_exit_write(&ifp->if_maddrlock);
 
 		if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld_addr))
 			mldh->mld_addr.s6_addr16[1] = 0; /* XXX */
@@ -363,7 +355,7 @@ mld6_fasttimo(void)
 		return;
 	membar_consumer();
 
-	NET_LOCK_SHARED();
+	NET_LOCK();
 
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (mld6_checktimer(ifp))
@@ -373,7 +365,7 @@ mld6_fasttimo(void)
 	membar_producer();
 	atomic_store_int(&mld6_timers_are_running, running);
 
-	NET_UNLOCK_SHARED();
+	NET_UNLOCK();
 }
 
 int
@@ -383,7 +375,8 @@ mld6_checktimer(struct ifnet *ifp)
 	struct ifmaddr *ifma;
 	int running = 0;
 
-	rw_enter_write(&ifp->if_maddrlock);
+	NET_ASSERT_LOCKED();
+
 	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 		if (ifma->ifma_addr->sa_family != AF_INET6)
 			continue;
@@ -397,7 +390,6 @@ mld6_checktimer(struct ifnet *ifp)
 			running = 1;
 		}
 	}
-	rw_exit_write(&ifp->if_maddrlock);
 
 	return (running);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.45 2026/01/02 13:13:29 bluhm Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.46 2026/01/03 14:10:04 bluhm Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -34,12 +34,6 @@
 
 #ifndef _NETINET_IN_VAR_H_
 #define _NETINET_IN_VAR_H_
-
-/*
- *  Locks used to protect struct members in this file:
- *	I	immutable after creation
- *	m	multicast if_maddrlock rwlock of parent interface
- */
 
 #include <sys/queue.h>
 
@@ -93,11 +87,11 @@ struct in_multi {
 #define inm_refcnt		inm_ifma.ifma_refcnt
 #define inm_ifidx		inm_ifma.ifma_ifidx
 
-	struct sockaddr_in	inm_sin;   /* [I] IPv4 multicast address */
+	struct sockaddr_in	inm_sin;   /* IPv4 multicast address */
 #define inm_addr		inm_sin.sin_addr
 
-	u_int			inm_state; /* [m] state of membership */
-	u_int			inm_timer; /* [m] IGMP membership report */
+	u_int			inm_state; /* state of membership */
+	u_int			inm_timer; /* IGMP membership report timer */
 
 	struct router_info	*inm_rti;  /* router version info */
 };

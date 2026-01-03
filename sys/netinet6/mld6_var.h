@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6_var.h,v 1.8 2026/01/02 13:13:29 bluhm Exp $	*/
+/*	$OpenBSD: mld6_var.h,v 1.9 2026/01/03 14:10:04 bluhm Exp $	*/
 /*	$KAME: mld6_var.h,v 1.4 2000/03/25 07:23:54 sumikawa Exp $	*/
 
 /*
@@ -45,8 +45,8 @@
 
 void	mld6_init(void);
 void	mld6_input(struct mbuf *, int);
-void	mld6_start_listening(struct in6_multi *, struct ifnet *);
-void	mld6_stop_listening(struct in6_multi *, struct ifnet *);
+void	mld6_start_listening(struct in6_multi *);
+void	mld6_stop_listening(struct in6_multi *);
 void	mld6_fasttimo(void);
 #endif /* _KERNEL */
 

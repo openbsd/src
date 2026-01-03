@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.276 2026/01/02 13:13:29 bluhm Exp $	*/
+/*	$OpenBSD: in6.c,v 1.277 2026/01/03 14:10:04 bluhm Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1007,7 +1007,7 @@ in6_lookupmulti(const struct in6_addr *addr, struct ifnet *ifp)
 	struct in6_multi *in6m = NULL;
 	struct ifmaddr *ifma;
 
-	rw_assert_anylock(&ifp->if_maddrlock);
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 		if (ifma->ifma_addr->sa_family == AF_INET6 &&
@@ -1026,71 +1026,62 @@ in6_lookupmulti(const struct in6_addr *addr, struct ifnet *ifp)
 struct in6_multi *
 in6_addmulti(const struct in6_addr *addr, struct ifnet *ifp, int *errorp)
 {
-	struct	in6_multi *in6m, *new_in6m = NULL;
 	struct	in6_ifreq ifr;
+	struct	in6_multi *in6m;
+
+	NET_ASSERT_LOCKED();
 
 	*errorp = 0;
 	/*
 	 * See if address already in list.
 	 */
-	rw_enter_write(&ifp->if_maddrlock);
 	in6m = in6_lookupmulti(addr, ifp);
-	if (in6m != NULL)
-		goto found;
-	rw_exit_write(&ifp->if_maddrlock);
+	if (in6m != NULL) {
+		/*
+		 * Found it; just increment the reference count.
+		 */
+		refcnt_take(&in6m->in6m_refcnt);
+	} else {
+		/*
+		 * New address; allocate a new multicast record
+		 * and link it into the interface's multicast list.
+		 */
+		in6m = malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT | M_ZERO);
+		if (in6m == NULL) {
+			*errorp = ENOBUFS;
+			return (NULL);
+		}
 
-	/*
-	 * New address; allocate a new multicast record
-	 * and link it into the interface's multicast list.
-	 */
-	new_in6m = malloc(sizeof(*in6m), M_IPMADDR, M_NOWAIT | M_ZERO);
-	if (new_in6m == NULL) {
-		*errorp = ENOBUFS;
-		return (NULL);
+		in6m->in6m_sin.sin6_len = sizeof(struct sockaddr_in6);
+		in6m->in6m_sin.sin6_family = AF_INET6;
+		in6m->in6m_sin.sin6_addr = *addr;
+		refcnt_init_trace(&in6m->in6m_refcnt, DT_REFCNT_IDX_IFMADDR);
+		in6m->in6m_ifidx = ifp->if_index;
+		in6m->in6m_ifma.ifma_addr = sin6tosa(&in6m->in6m_sin);
+
+		/*
+		 * Ask the network driver to update its multicast reception
+		 * filter appropriately for the new address.
+		 */
+		memcpy(&ifr.ifr_addr, &in6m->in6m_sin, sizeof(in6m->in6m_sin));
+		KERNEL_LOCK();
+		*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
+		KERNEL_UNLOCK();
+		if (*errorp) {
+			free(in6m, M_IPMADDR, sizeof(*in6m));
+			return (NULL);
+		}
+
+		TAILQ_INSERT_HEAD(&ifp->if_maddrlist, &in6m->in6m_ifma,
+		    ifma_list);
+
+		/*
+		 * Let MLD6 know that we have joined a new IP6 multicast
+		 * group.
+		 */
+		mld6_start_listening(in6m);
 	}
 
-	/*
-	 * Ask the network driver to update its multicast reception
-	 * filter appropriately for the new address.
-	 */
-	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
-	ifr.ifr_addr.sin6_family = AF_INET6;
-	ifr.ifr_addr.sin6_addr = *addr;
-	KERNEL_LOCK();
-	*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
-	KERNEL_UNLOCK();
-	if (*errorp)
-		goto out;
-
-        rw_enter_write(&ifp->if_maddrlock);
-        /* check again after unlock and lock */
-        in6m = in6_lookupmulti(addr, ifp);
-        if (in6m != NULL)
-                goto found;
-        in6m = new_in6m;
-	in6m->in6m_sin.sin6_len = sizeof(struct sockaddr_in6);
-	in6m->in6m_sin.sin6_family = AF_INET6;
-	in6m->in6m_sin.sin6_addr = *addr;
-	refcnt_init_trace(&in6m->in6m_refcnt, DT_REFCNT_IDX_IFMADDR);
-	in6m->in6m_ifidx = ifp->if_index;
-	in6m->in6m_ifma.ifma_addr = sin6tosa(&in6m->in6m_sin);
-	
-	TAILQ_INSERT_HEAD(&ifp->if_maddrlist, &in6m->in6m_ifma, ifma_list);
-
-	/*
-	 * Let MLD6 know that we have joined a new IP6 multicast group.
-	 */
-	mld6_start_listening(in6m, ifp);
-	rw_exit_write(&ifp->if_maddrlock);
-
-	return (in6m);
-
- found:
-	refcnt_take(&in6m->in6m_refcnt);
-	rw_exit_write(&ifp->if_maddrlock);
- out:
-	free(new_in6m, M_IPMADDR, sizeof(*in6m));
 	return (in6m);
 }
 
@@ -1103,37 +1094,36 @@ in6_delmulti(struct in6_multi *in6m)
 	struct	in6_ifreq ifr;
 	struct	ifnet *ifp;
 
-	if (refcnt_rele(&in6m->in6m_refcnt) == 0)
-		return;
+	NET_ASSERT_LOCKED();
 
-	ifp = if_get(in6m->in6m_ifidx);
-	if (ifp != NULL) {
-		rw_enter_write(&ifp->if_maddrlock);
+	if (refcnt_rele(&in6m->in6m_refcnt) != 0) {
 		/*
 		 * No remaining claims to this record; let MLD6 know
 		 * that we are leaving the multicast group.
 		 */
-		mld6_stop_listening(in6m, ifp);
-
-		TAILQ_REMOVE(&ifp->if_maddrlist, &in6m->in6m_ifma, ifma_list);
-		rw_exit_write(&ifp->if_maddrlock);
+		mld6_stop_listening(in6m);
+		ifp = if_get(in6m->in6m_ifidx);
 
 		/*
 		 * Notify the network driver to update its multicast
 		 * reception filter.
 		 */
-		memset(&ifr, 0, sizeof(ifr));
-		ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
-		ifr.ifr_addr.sin6_family = AF_INET6;
-		ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
-		KERNEL_LOCK();
-		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
-		KERNEL_UNLOCK();
+		if (ifp != NULL) {
+			bzero(&ifr.ifr_addr, sizeof(struct sockaddr_in6));
+			ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
+			ifr.ifr_addr.sin6_family = AF_INET6;
+			ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
+			KERNEL_LOCK();
+			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+			KERNEL_UNLOCK();
 
+			TAILQ_REMOVE(&ifp->if_maddrlist, &in6m->in6m_ifma,
+			    ifma_list);
+		}
 		if_put(ifp);
-	}
 
-	free(in6m, M_IPMADDR, sizeof(*in6m));
+		free(in6m, M_IPMADDR, sizeof(*in6m));
+	}
 }
 
 /*
@@ -1146,10 +1136,8 @@ in6_hasmulti(const struct in6_addr *addr, struct ifnet *ifp)
 	struct in6_multi *in6m;
 	int joined;
 
-	rw_enter_read(&ifp->if_maddrlock);
 	in6m = in6_lookupmulti(addr, ifp);
 	joined = (in6m != NULL);
-	rw_exit_read(&ifp->if_maddrlock);
 
 	return (joined);
 }
