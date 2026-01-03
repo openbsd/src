@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.144 2025/12/24 10:29:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.145 2026/01/03 13:02:36 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -923,15 +923,18 @@ void
 uvmpd_scan_active(struct uvm_pmalloc *pma, int swap_shortage,
     int inactive_shortage)
 {
-	struct vm_page *p, *nextpg;
+	struct pglist *pglst = &uvm.page_active;
+	struct vm_page *p, iter = { .pg_flags = PQ_ITER };
 	struct rwlock *slock;
 
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
-	for (p = TAILQ_FIRST(&uvm.page_active);
-	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
-	     p = nextpg) {
-		nextpg = TAILQ_NEXT(p, pageq);
+	p = TAILQ_FIRST(pglst);
+
+	/* Insert iterator. */
+	TAILQ_INSERT_AFTER(pglst, p, &iter, pageq);
+	for (; p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
+	     p = uvmpd_iterator(pglst, p, &iter)) {
 		if (p->pg_flags & PG_BUSY) {
 			continue;
 		}
@@ -993,6 +996,7 @@ uvmpd_scan_active(struct uvm_pmalloc *pma, int swap_shortage,
 		 */
 		rw_exit(slock);
 	}
+	TAILQ_REMOVE(pglst, &iter, pageq);
 }
 
 #ifdef HIBERNATE
