@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2024/02/29 20:03:47 tb Exp $
+#	$OpenBSD: Makefile,v 1.29 2026/01/04 09:42:32 tb Exp $
 
 PROGS = \
 	asn1api \
@@ -21,6 +21,8 @@ CFLAGS+=	-DLIBRESSL_INTERNAL
 CFLAGS+=	-Wall -Wundef -Werror
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libcrypto/asn1
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
+
+REGRESS_EXPECTED_FAILURES += run-regress-asn1basic
 
 LDADD_asn1basic = ${CRYPTO_INT}
 LDADD_asn1object = ${CRYPTO_INT}

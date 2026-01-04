@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.18 2026/01/04 09:36:34 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.19 2026/01/04 09:42:32 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2021 Google, Inc
@@ -71,7 +71,7 @@ static const uint8_t asn1_bit_string_trailing_zeroes[] = {
 };
 
 static const uint8_t asn1_bit_string_trailing_zeroes_encoded[] = {
-	0x03, 0x03, 0x02, 0x04, 0x00,
+	0x03, 0x02, 0x02, 0x04,
 };
 
 static int
@@ -175,7 +175,7 @@ asn1_bit_string_test(void)
 		goto failed;
 
 	/*
-	 * ASN1_STRING_set() attempts to truncate and picks up wrong unused bits
+	 * ASN1_STRING_set() truncates and determines unused bits
 	 */
 
 	ASN1_BIT_STRING_free(abs);
