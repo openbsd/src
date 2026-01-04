@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.19 2026/01/04 09:42:32 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.20 2026/01/04 09:43:52 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2021 Google, Inc
@@ -236,6 +236,8 @@ static const uint8_t asn1_bit_string_1zeroes1[] = {
 static const uint8_t asn1_bit_string_10010[] = {
 	0x03, 0x02, 0x03, 0x90,
 };
+
+static const uint8_t asn1_bit_string_zeroes[64] = { 0 };
 
 static int
 asn1_bit_string_set_bit_test(void)
@@ -623,6 +625,35 @@ asn1_bit_string_set_bit_test(void)
 	}
 	if (!asn1_compare_bytes("BIT STRING 10010 after set bit", der, der_len,
 	    asn1_bit_string_1001, sizeof(asn1_bit_string_1001)))
+		goto failed;
+
+	/*
+	 * ASN1_BIT_STRING_set() also truncates
+	 */
+
+	ASN1_BIT_STRING_free(abs);
+	abs = NULL;
+
+	if ((abs = ASN1_BIT_STRING_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_BIT_STRING_new\n");
+		goto failed;
+	}
+
+	if (!ASN1_STRING_set(abs, asn1_bit_string_zeroes,
+	    sizeof(asn1_bit_string_zeroes))) {
+		fprintf(stderr, "FAIL: ASN1_BIT_STRING_set zeroes\n");
+		goto failed;
+	}
+
+	freezero(der, der_len);
+	der = NULL;
+	if ((der_len = i2d_ASN1_BIT_STRING(abs, &der)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		der_len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING all zeroes", der, der_len,
+	    asn1_bit_string_empty, sizeof(asn1_bit_string_empty)))
 		goto failed;
 
 	failed = 0;
