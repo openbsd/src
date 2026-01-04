@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.57 2025/05/10 09:54:17 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.58 2026/01/04 23:51:12 jsg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -64,7 +64,6 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 #include <sys/evcount.h>
-#include <machine/atomic.h>
 
 #define	PPC_NIRQ	66
 #define	PPC_CLK_IRQ	64
@@ -110,8 +109,6 @@ void splassert_check(int, const char *);
 #define splassert(wantipl)	do { /* nada */ } while (0)
 #define splsoftassert(wantipl)	do { /* nada */ } while (0)
 #endif
-
-#define	set_sint(p)	atomic_setbits_int(&curcpu()->ci_ipending, p)
 
 #define	splbio()	splraise(IPL_BIO)
 #define	splnet()	splraise(IPL_NET)
