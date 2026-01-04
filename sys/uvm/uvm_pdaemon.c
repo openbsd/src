@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.146 2026/01/04 21:00:18 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.147 2026/01/04 21:04:46 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ uvm_pageout(void *arg)
 		long size;
 
 		uvm_lock_fpageq();
-		if (TAILQ_EMPTY(&uvm.pmr_control.allocs) || uvmexp.paging > 0) {
+		if (TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
 			msleep_nsec(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
 			    "pgdaemon", INFSLP);
 			uvmexp.pdwoke++;
