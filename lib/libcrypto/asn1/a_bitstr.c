@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.44 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.45 2026/01/04 09:29:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,7 +227,7 @@ i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	} else
 		bits = 0;
 
-	p= *pp;
+	p = *pp;
 
 	*(p++) = (unsigned char)bits;
 	d = a->data;
