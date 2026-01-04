@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.17 2025/12/18 09:15:28 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.18 2026/01/04 09:36:34 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2021 Google, Inc
@@ -64,6 +64,14 @@ asn1_compare_bytes(const char *label, const unsigned char *d1, int len1,
 const uint8_t asn1_bit_string_primitive[] = {
 	0x03, 0x07,
 	0x04, 0x0a, 0x3b, 0x5f, 0x29, 0x1c, 0xd0,
+};
+
+static const uint8_t asn1_bit_string_trailing_zeroes[] = {
+	0x04, 0x00
+};
+
+static const uint8_t asn1_bit_string_trailing_zeroes_encoded[] = {
+	0x03, 0x03, 0x02, 0x04, 0x00,
 };
 
 static int
@@ -164,6 +172,35 @@ asn1_bit_string_test(void)
 
 	if (!asn1_compare_bytes("BIT_STRING set", p, len, asn1_bit_string_primitive,
 	    sizeof(asn1_bit_string_primitive)))
+		goto failed;
+
+	/*
+	 * ASN1_STRING_set() attempts to truncate and picks up wrong unused bits
+	 */
+
+	ASN1_BIT_STRING_free(abs);
+	abs = NULL;
+	if ((abs = ASN1_BIT_STRING_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_BIT_STRING_new\n");
+		goto failed;
+	}
+
+	if (!ASN1_STRING_set(abs, asn1_bit_string_trailing_zeroes,
+	    sizeof(asn1_bit_string_trailing_zeroes))) {
+		fprintf(stderr, "FAIL: BIT STRING ASN1_BIT_STRING_set trailing zeroes\n");
+		goto failed;
+	}
+
+	freezero(p, len);
+	p = NULL;
+	if ((len = i2d_ASN1_BIT_STRING(abs, &p)) <= 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		len = 0;
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT STRING trailing zeroes", p, len,
+	    asn1_bit_string_trailing_zeroes_encoded,
+	    sizeof(asn1_bit_string_trailing_zeroes_encoded)))
 		goto failed;
 
 	failed = 0;
