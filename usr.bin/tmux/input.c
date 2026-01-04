@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.244 2025/12/17 11:49:29 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.245 2026/01/04 08:05:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3395,14 +3395,19 @@ input_cancel_requests(struct client *c)
 static void
 input_report_current_theme(struct input_ctx *ictx)
 {
-	switch (window_pane_get_theme(ictx->wp)) {
+	struct window_pane	*wp = ictx->wp;
+
+	switch (window_pane_get_theme(wp)) {
 		case THEME_DARK:
+			log_debug("%s: %%%u dark theme", __func__, wp->id);
 			input_reply(ictx, 0, "\033[?997;1n");
 			break;
 		case THEME_LIGHT:
+			log_debug("%s: %%%u light theme", __func__, wp->id);
 			input_reply(ictx, 0, "\033[?997;2n");
 			break;
 		case THEME_UNKNOWN:
+			log_debug("%s: %%%u unknown theme", __func__, wp->id);
 			break;
 	}
 }

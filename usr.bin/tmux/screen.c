@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.91 2025/12/01 08:14:29 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.92 2026/01/04 08:05:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -739,6 +739,8 @@ screen_mode_to_string(int mode)
 		strlcat(tmp, "KEYS_EXTENDED,", sizeof tmp);
 	if (mode & MODE_KEYS_EXTENDED_2)
 		strlcat(tmp, "KEYS_EXTENDED_2,", sizeof tmp);
+	if (mode & MODE_THEME_UPDATES)
+		strlcat(tmp, "THEME_UPDATES,", sizeof tmp);
 	tmp[strlen(tmp) - 1] = '\0';
 	return (tmp);
 }

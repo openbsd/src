@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.307 2025/12/17 11:49:29 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.308 2026/01/04 08:05:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1932,17 +1932,18 @@ window_pane_send_theme_update(struct window_pane *wp)
 		return;
 	if (~wp->screen->mode & MODE_THEME_UPDATES)
 		return;
-
 	switch (window_pane_get_theme(wp)) {
 	case THEME_LIGHT:
+		log_debug("%s: %%%u light theme", __func__, wp->id);
 		input_key_pane(wp, KEYC_REPORT_LIGHT_THEME, NULL);
 		break;
 	case THEME_DARK:
+		log_debug("%s: %%%u dark theme", __func__, wp->id);
 		input_key_pane(wp, KEYC_REPORT_DARK_THEME, NULL);
 		break;
 	case THEME_UNKNOWN:
+		log_debug("%s: %%%u unknown theme", __func__, wp->id);
 		break;
 	}
-
 	wp->flags &= ~PANE_THEMECHANGED;
 }

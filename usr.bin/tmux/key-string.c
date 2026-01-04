@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.75 2024/08/23 13:25:39 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.76 2026/01/04 08:05:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -380,6 +380,14 @@ key_string_lookup_key(key_code key, int with_flags)
 	}
 	if (key == KEYC_PASTE_END) {
 		s = "PasteEnd";
+		goto append;
+	}
+	if (key == KEYC_REPORT_DARK_THEME) {
+		s = "ReportDarkTheme";
+		goto append;
+	}
+	if (key == KEYC_REPORT_LIGHT_THEME) {
+		s = "ReportLightTheme";
 		goto append;
 	}
 	if (key == KEYC_MOUSE) {
