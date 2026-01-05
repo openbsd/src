@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.96 2025/12/01 16:57:36 stsp Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.97 2026/01/05 21:07:12 kettenis Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -21193,7 +21193,8 @@ qwx_hal_alloc_cont_rdp(struct qwx_softc *sc)
 			return ENOMEM;
 
 		}
-	}
+	} else
+		memset(QWX_DMA_KVA(hal->rdpmem), 0, size);
 
 	hal->rdp.vaddr = QWX_DMA_KVA(hal->rdpmem);
 	hal->rdp.paddr = QWX_DMA_DVA(hal->rdpmem);
@@ -21228,7 +21229,8 @@ qwx_hal_alloc_cont_wrp(struct qwx_softc *sc)
 			return ENOMEM;
 
 		}
-	}
+	} else
+		memset(QWX_DMA_KVA(hal->wrpmem), 0, size);
 
 	hal->wrp.vaddr = QWX_DMA_KVA(hal->wrpmem);
 	hal->wrp.paddr = QWX_DMA_DVA(hal->wrpmem);
@@ -26832,6 +26834,10 @@ qwx_activate(struct device *self, int act)
 		}
 		break;
 	case DVACT_RESUME:
+		err = qwx_hal_srng_init(sc);
+		if (err)
+			printf("%s: could not initialize hal\n",
+			    sc->sc_dev.dv_xname);
 		break;
 	case DVACT_WAKEUP:
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_UP) {
