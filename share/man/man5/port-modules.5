@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.279 2026/01/05 17:36:09 sthen Exp $
+.\"	$OpenBSD: port-modules.5,v 1.280 2026/01/05 17:36:52 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -566,20 +566,20 @@ Changes
 to `test' as this is standard for CMake projects.
 Also this module has the following knobs:
 .Bl -tag -width Ds
-.It MODCMAKE_WANTCOLOR
-If set to `Yes', CMake will colorize its output.
-Should not be used in ports Makefiles.
+.It MODCMAKE_DEBUG
+If set to `Yes', CMake will produce a debug build instead of a release
+build.
+The exact effects on the build process depend on settings specified in
+the CMake config files.
 Default value is `No'.
 .It MODCMAKE_VERBOSE
 If set to `Yes', CMake will print details during configure and build
 stages about exact command being run, etc.
 Should not be used in ports Makefiles.
 Default value is `Yes'.
-.It MODCMAKE_DEBUG
-If set to `Yes', CMake will produce a debug build instead of a release
-build.
-The exact effects on the build process depend on settings specified in
-the CMake config files.
+.It MODCMAKE_WANTCOLOR
+If set to `Yes', CMake will colorize its output.
+Should not be used in ports Makefiles.
 Default value is `No'.
 .It USE_NINJA
 If set to `Yes', CMake will use the ninja build system.
