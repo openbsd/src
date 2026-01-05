@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.38 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.39 2026/01/05 05:22:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -385,7 +385,7 @@ pkey_pubkey_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
 	return pubkey_ex_i2d(EVP_PKEY_NONE, pval, out, it);
 }
 
-const ASN1_EXTERN_FUNCS pkey_pubkey_asn1_ff = {
+static const ASN1_EXTERN_FUNCS pkey_pubkey_asn1_ff = {
 	.app_data = NULL,
 	.asn1_ex_new = pkey_pubkey_ex_new,
 	.asn1_ex_free = pkey_pubkey_ex_free,
@@ -485,7 +485,7 @@ rsa_pubkey_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
 	return pubkey_ex_i2d(EVP_PKEY_RSA, pval, out, it);
 }
 
-const ASN1_EXTERN_FUNCS rsa_pubkey_asn1_ff = {
+static const ASN1_EXTERN_FUNCS rsa_pubkey_asn1_ff = {
 	.app_data = NULL,
 	.asn1_ex_new = rsa_pubkey_ex_new,
 	.asn1_ex_free = rsa_pubkey_ex_free,
@@ -581,7 +581,7 @@ dsa_pubkey_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
 	return pubkey_ex_i2d(EVP_PKEY_DSA, pval, out, it);
 }
 
-const ASN1_EXTERN_FUNCS dsa_pubkey_asn1_ff = {
+static const ASN1_EXTERN_FUNCS dsa_pubkey_asn1_ff = {
 	.app_data = NULL,
 	.asn1_ex_new = dsa_pubkey_ex_new,
 	.asn1_ex_free = dsa_pubkey_ex_free,
@@ -678,7 +678,7 @@ ec_pubkey_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
 	return pubkey_ex_i2d(EVP_PKEY_EC, pval, out, it);
 }
 
-const ASN1_EXTERN_FUNCS ec_pubkey_asn1_ff = {
+static const ASN1_EXTERN_FUNCS ec_pubkey_asn1_ff = {
 	.app_data = NULL,
 	.asn1_ex_new = ec_pubkey_ex_new,
 	.asn1_ex_free = ec_pubkey_ex_free,

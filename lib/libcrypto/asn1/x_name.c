@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.46 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: x_name.c,v 1.47 2026/01/05 05:22:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,7 +194,7 @@ static const ASN1_ITEM X509_NAME_INTERNAL_it = {
  * to the external form.
  */
 
-const ASN1_EXTERN_FUNCS x509_name_ff = {
+static const ASN1_EXTERN_FUNCS x509_name_ff = {
 	.app_data = NULL,
 	.asn1_ex_new = x509_name_ex_new,
 	.asn1_ex_free = x509_name_ex_free,
