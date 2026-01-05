@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.8 2024/11/05 18:58:59 miod Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.9 2026/01/05 11:47:04 mvs Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -792,11 +792,6 @@ genet_start(struct ifnet *ifp)
 	struct mbuf *m;
 	const int qid = GENET_DMA_DEFAULT_QUEUE;
 	int nsegs, index, cnt;
-
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return;
-	if (ifq_is_oactive(&ifp->if_snd))
-		return;
 
 	index = sc->sc_tx.pidx & (TX_DESC_COUNT - 1);
 	cnt = 0;
