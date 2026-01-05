@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.144 2026/01/05 12:04:45 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.145 2026/01/05 13:41:03 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1049,6 +1049,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	const u_int8_t *oui = wpa ? MICROSOFT_OUI : IEEE80211_OUI;
 	u_int8_t *pcount;
 	u_int16_t count, rsncaps;
+	int pmf = 0;
 
 	/* write Version field */
 	LE_WRITE_2(frm, 1); frm += 2;
@@ -1123,10 +1124,22 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 	if (wpa)
 		return frm;
 
+	if (ic->ic_caps & IEEE80211_C_MFP) {
+		/*
+		 * When acting as client station, only announce PMF support
+		 * to access points which support PMF. There are access points
+		 * out there which do not support PMF and won't even initiate
+		 * the 4-way handshake with us if the PMF-capable bit is set.
+		 */
+		if (ic->ic_opmode != IEEE80211_M_STA ||
+		    (ni->ni_rsncaps & IEEE80211_RSNCAP_MFPC))
+			pmf = 1;
+	}
+
 	/* write RSN Capabilities field */
 	rsncaps = (ni->ni_rsncaps & (IEEE80211_RSNCAP_PTKSA_RCNT_MASK |
 	    IEEE80211_RSNCAP_GTKSA_RCNT_MASK));
-	if (ic->ic_caps & IEEE80211_C_MFP) {
+	if (pmf) {
 		rsncaps |= IEEE80211_RSNCAP_MFPC;
 		if (ic->ic_flags & IEEE80211_F_MFPR)
 			rsncaps |= IEEE80211_RSNCAP_MFPR;
@@ -1143,7 +1156,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 		frm += IEEE80211_PMKID_LEN;
 	}
 
-	if (!(ic->ic_caps & IEEE80211_C_MFP))
+	if (!pmf)
 		return frm;
 
 	if ((ni->ni_flags & IEEE80211_NODE_PMKID) == 0) {
