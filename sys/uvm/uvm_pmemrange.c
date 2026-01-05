@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.79 2025/12/18 16:56:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.80 2026/01/05 20:57:30 beck Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -1186,7 +1186,11 @@ fail:
 
 		if (!(nowait_pma.pm_flags & UVM_PMA_LINKED)) {
 			nowait_pma.pm_flags = UVM_PMA_LINKED;
-			TAILQ_INSERT_TAIL(&uvm.pmr_control.allocs, pma, pmq);
+			/*
+			 * Ensure this is processed first by the page daemon
+			 * to avoid starvation behind non-constrained requests.
+			 */
+			TAILQ_INSERT_HEAD(&uvm.pmr_control.allocs, pma, pmq);
 			wakeup(&uvm.pagedaemon);
 		}
 	}
