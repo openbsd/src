@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.39 2026/01/05 05:22:09 tb Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.40 2026/01/05 05:23:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -395,7 +395,7 @@ static const ASN1_EXTERN_FUNCS pkey_pubkey_asn1_ff = {
 	.asn1_ex_print = NULL,
 };
 
-const ASN1_ITEM EVP_PKEY_PUBKEY_it = {
+static const ASN1_ITEM EVP_PKEY_PUBKEY_it = {
 	.itype = ASN1_ITYPE_EXTERN,
 	.utype = 0,
 	.templates = NULL,
@@ -495,7 +495,7 @@ static const ASN1_EXTERN_FUNCS rsa_pubkey_asn1_ff = {
 	.asn1_ex_print = NULL,
 };
 
-const ASN1_ITEM RSA_PUBKEY_it = {
+static const ASN1_ITEM RSA_PUBKEY_it = {
 	.itype = ASN1_ITYPE_EXTERN,
 	.utype = 0,
 	.templates = NULL,
@@ -591,7 +591,7 @@ static const ASN1_EXTERN_FUNCS dsa_pubkey_asn1_ff = {
 	.asn1_ex_print = NULL,
 };
 
-const ASN1_ITEM DSA_PUBKEY_it = {
+static const ASN1_ITEM DSA_PUBKEY_it = {
 	.itype = ASN1_ITYPE_EXTERN,
 	.utype = 0,
 	.templates = NULL,
@@ -688,7 +688,7 @@ static const ASN1_EXTERN_FUNCS ec_pubkey_asn1_ff = {
 	.asn1_ex_print = NULL,
 };
 
-const ASN1_ITEM EC_PUBKEY_it = {
+static const ASN1_ITEM EC_PUBKEY_it = {
 	.itype = ASN1_ITYPE_EXTERN,
 	.utype = 0,
 	.templates = NULL,
