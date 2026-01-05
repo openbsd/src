@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.143 2025/12/01 16:13:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.144 2026/01/05 12:04:45 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -416,6 +416,45 @@ ieee80211_up_to_ac(struct ieee80211com *ic, int up)
 	return ac;
 }
 
+enum ieee80211_edca_ac
+ieee80211_classify_limit(struct ieee80211com *ic, enum ieee80211_edca_ac ac)
+{
+	const suseconds_t txop_interval = 100 * 1000; /* 100 msec, in usec */
+	/* Maximum amounts of high-prio Tx opportunities, per 100ms. */
+	static const int txop_limit[EDCA_NUM_AC] = {
+		0,	/* Best Effort */
+		0,	/* Background */
+		4,	/* Video */
+		2	/* Voice */
+	};
+
+	if (txop_limit[ac] <= 0) /* not rate-limited */
+		return ac;
+
+	if (ic->ic_edca_txop_count[ac] < txop_limit[ac]) {
+		if (ic->ic_edca_txop_count[ac] == 0)
+			getmicrouptime(&ic->ic_edca_txop_time[ac]);
+		ic->ic_edca_txop_count[ac]++;
+	} else {
+		struct timeval now, delta;
+
+		getmicrouptime(&now);
+		timersub(&now, &ic->ic_edca_txop_time[ac], &delta);
+
+		/*
+		 * Fall back on best-effort if the limit has been exceeded
+		 * within the current rate-limiting window.
+		 */
+		if (delta.tv_sec == 0 && delta.tv_usec < txop_interval)
+			return EDCA_AC_BE;
+
+		ic->ic_edca_txop_count[ac] = 1;
+		ic->ic_edca_txop_time[ac] = now;
+	}
+
+	return ac;
+}
+
 /*
  * Get mbuf's user-priority: if mbuf is not VLAN tagged, select user-priority
  * based on the DSCP (Differentiated Services Codepoint) field.
@@ -425,16 +464,28 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 {
 	struct ether_header eh;
 	u_int8_t ds_field;
+	enum ieee80211_edca_ac ac;
+
+	/* Map EDCA categories (0-3) to User Priority TIDs (0-7) */
+	static const int edca_to_up[EDCA_NUM_AC] = {
+		0,	/* Best Effort */
+		1,	/* Background */
+		5,	/* Video (primary) */
+		6	/* Voice (primary) */
+	};
+
 #if NVLAN > 0
-	if (m->m_flags & M_VLANTAG)	/* use VLAN 802.1D user-priority */
-		return EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
+	if (m->m_flags & M_VLANTAG) {	/* use VLAN 802.1D user-priority */
+		ac = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
+		return edca_to_up[ieee80211_classify_limit(ic, ac)];
+	}
 #endif
 	m_copydata(m, 0, sizeof(eh), (caddr_t)&eh);
 	if (eh.ether_type == htons(ETHERTYPE_IP)) {
 		struct ip ip;
 		m_copydata(m, sizeof(eh), sizeof(ip), (caddr_t)&ip);
 		if (ip.ip_v != 4)
-			return 0;
+			return edca_to_up[EDCA_AC_BE];
 		ds_field = ip.ip_tos;
 	}
 #ifdef INET6
@@ -444,31 +495,44 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 		m_copydata(m, sizeof(eh), sizeof(ip6), (caddr_t)&ip6);
 		flowlabel = ntohl(ip6.ip6_flow);
 		if ((flowlabel >> 28) != 6)
-			return 0;
+			return edca_to_up[EDCA_AC_BE];
 		ds_field = (flowlabel >> 20) & 0xff;
 	}
 #endif	/* INET6 */
 	else	/* neither IPv4 nor IPv6 */
-		return 0;
+		return edca_to_up[EDCA_AC_BE];
 
 	/*
-	 * Map Differentiated Services Codepoint field (see RFC2474).
+	 * Map Differentiated Services Codepoint field (see RFC8325).
 	 * Preserves backward compatibility with IP Precedence field.
 	 */
 	switch (ds_field & 0xfc) {
-	case IPTOS_PREC_PRIORITY:
-		return EDCA_AC_VI;
-	case IPTOS_PREC_IMMEDIATE:
-		return EDCA_AC_BK;
-	case IPTOS_PREC_FLASH:
-	case IPTOS_PREC_FLASHOVERRIDE:
-	case IPTOS_PREC_CRITIC_ECP:
-	case IPTOS_PREC_INTERNETCONTROL:
-	case IPTOS_PREC_NETCONTROL:
-		return EDCA_AC_VO;
+	case IPTOS_DSCP_CS7:
+	case IPTOS_DSCP_CS6:
+	case IPTOS_DSCP_EF:
+	case IPTOS_DSCP_VA:
+		ac = EDCA_AC_VO;
+		break;
+	case IPTOS_DSCP_CS5:
+	case IPTOS_DSCP_AF41:
+	case IPTOS_DSCP_AF42:
+	case IPTOS_DSCP_AF43:
+	case IPTOS_DSCP_CS4:
+	case IPTOS_DSCP_AF31:
+	case IPTOS_DSCP_AF32:
+	case IPTOS_DSCP_AF33:
+	case IPTOS_DSCP_CS3:
+		ac = EDCA_AC_VI;
+		break;
+	case IPTOS_DSCP_CS1:
+		ac = EDCA_AC_BK;
+		break;
 	default:
-		return EDCA_AC_BE;
+		/* unused, or explicitly mapped to UP 0 */
+		return edca_to_up[EDCA_AC_BE];
 	}
+
+	return edca_to_up[ieee80211_classify_limit(ic, ac)];
 }
 
 int
