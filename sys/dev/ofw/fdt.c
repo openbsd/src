@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.35 2024/03/27 23:05:27 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.36 2026/01/05 20:05:11 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -1085,6 +1085,21 @@ OF_is_compatible(int handle, const char *name)
 {
 	void *node = (char *)tree.header + handle;
 	return (fdt_is_compatible(node, name));
+}
+
+int
+OF_is_enabled(int handle)
+{
+	char status[32];
+
+	if (OF_getprop(handle, "status", status, sizeof(status)) > 0) {
+		if (strcmp(status, "disabled") == 0)
+			return 0;
+		if (strcmp(status, "reserved") == 0)
+			return 0;
+	}
+
+	return 1;
 }
 
 int

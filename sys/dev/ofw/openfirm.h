@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.20 2024/11/08 12:48:00 miod Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.21 2026/01/05 20:05:11 patrick Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ int OF_setprop(int, char *, const void *, int);
 int OF_nextprop(int, char *, void *);
 int OF_finddevice(char *name);
 int OF_is_compatible(int, const char *);
+int OF_is_enabled(int);
 int OF_call_method_1(char *method, int ihandle, int nargs, ...);
 int OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...);
 int OF_open(char *dname);
