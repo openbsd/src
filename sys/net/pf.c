@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1228 2025/12/19 00:30:13 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1229 2026/01/05 00:55:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1403,6 +1403,7 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	struct pf_state_key	*sk, *pkt_sk;
 	struct pf_state_item	*si;
 	struct pf_state		*st = NULL;
+	int			 didx;
 
 	counters_inc(pf_status_fcounters, FCNT_STATE_SEARCH);
 	if (pf_status.debug >= LOG_DEBUG) {
@@ -1467,20 +1468,38 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	if (pd->dir == PF_OUT)
 		pf_pkt_addr_changed(pd->m);
 
+	didx = (pd->dir == PF_IN) ? PF_SK_WIRE : PF_SK_STACK;
+
 	/* list is sorted, if-bound states before floating ones */
 	TAILQ_FOREACH(si, &sk->sk_states, si_entry) {
 		struct pf_state *sist = si->si_st;
-		if (sist->timeout != PFTM_PURGE &&
-		    (sist->kif == pfi_all || sist->kif == pd->kif) &&
-		    ((sist->key[PF_SK_WIRE]->af == sist->key[PF_SK_STACK]->af &&
-		      sk == (pd->dir == PF_IN ? sist->key[PF_SK_WIRE] :
-		    sist->key[PF_SK_STACK])) ||
-		    (sist->key[PF_SK_WIRE]->af != sist->key[PF_SK_STACK]->af
-		    && pd->dir == PF_IN && (sk == sist->key[PF_SK_STACK] ||
-		    sk == sist->key[PF_SK_WIRE])))) {
-			st = sist;
-			break;
+		if (sist->timeout == PFTM_PURGE)
+			continue;
+		if (sist->kif != pfi_all && sist->kif != pd->kif)
+			continue;
+
+		/* af-to needs to handled specially */
+		if (sist->key[PF_SK_WIRE]->af == sist->key[PF_SK_STACK]->af) {
+			if (sk != sist->key[didx])
+				continue;
+
+		/* af-to case */
+		} else {
+			/*
+			 * af-to creates state for incoming (PF_IN)
+			 * connections, and then forces forwarding without
+			 * creating an outgoing state. this means the one
+			 * state covers both sides of the stack, so should
+			 * only match when pd dir is PF_IN.
+			 */
+			if (pd->dir != PF_IN)
+				continue;
+
+			/* one of the sist keys has to be sk */
 		}
+
+		st = sist;
+		break;
 	}
 
 	if (st == NULL)
