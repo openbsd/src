@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.145 2025/12/15 12:59:24 dlg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.146 2026/01/05 19:39:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1367,29 +1367,39 @@ cpu_identify_cleanup(void)
 	/* HWCAP2 */
 	if (ID_AA64ISAR1_DPB(cpu_id_aa64isar1) >= ID_AA64ISAR1_DPB_DCCVADP)
 		hwcap2 |= HWCAP2_DCPODP;
-	if (ID_AA64ZFR0_SVEVER(cpu_id_aa64zfr0) >= ID_AA64ZFR0_SVEVER_SVE2)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_SVEVER(cpu_id_aa64zfr0) >= ID_AA64ZFR0_SVEVER_SVE2)
 		hwcap2 |= HWCAP2_SVE2;
-	if (ID_AA64ZFR0_AES(cpu_id_aa64zfr0) >= ID_AA64ZFR0_AES_BASE)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_AES(cpu_id_aa64zfr0) >= ID_AA64ZFR0_AES_BASE)
 		hwcap2 |= HWCAP2_SVEAES;
-	if (ID_AA64ZFR0_AES(cpu_id_aa64zfr0) >= ID_AA64ZFR0_AES_PMULL)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_AES(cpu_id_aa64zfr0) >= ID_AA64ZFR0_AES_PMULL)
 		hwcap2 |= HWCAP2_SVEPMULL;
-	if (ID_AA64ZFR0_BITPERM(cpu_id_aa64zfr0) >= ID_AA64ZFR0_BITPERM_IMPL)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_BITPERM(cpu_id_aa64zfr0) >= ID_AA64ZFR0_BITPERM_IMPL)
 		hwcap2 |= HWCAP2_SVEBITPERM;
-	if (ID_AA64ZFR0_SHA3(cpu_id_aa64zfr0) >= ID_AA64ZFR0_SHA3_IMPL)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_SHA3(cpu_id_aa64zfr0) >= ID_AA64ZFR0_SHA3_IMPL)
 		hwcap2 |= HWCAP2_SVESHA3;
-	if (ID_AA64ZFR0_SM4(cpu_id_aa64zfr0) >= ID_AA64ZFR0_SM4_IMPL)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_SM4(cpu_id_aa64zfr0) >= ID_AA64ZFR0_SM4_IMPL)
 		hwcap2 |= HWCAP2_SVESM4;
 	if (ID_AA64ISAR0_TS(cpu_id_aa64isar0) >= ID_AA64ISAR0_TS_AXFLAG)
 		hwcap2 |= HWCAP2_FLAGM2;
 	if (ID_AA64ISAR1_FRINTTS(cpu_id_aa64isar1) >= ID_AA64ISAR1_FRINTTS_IMPL)
 		hwcap2 |= HWCAP2_FRINT;
-	if (ID_AA64ZFR0_I8MM(cpu_id_aa64zfr0) >= ID_AA64ZFR0_I8MM_IMPL)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_I8MM(cpu_id_aa64zfr0) >= ID_AA64ZFR0_I8MM_IMPL)
 		hwcap2 |= HWCAP2_SVEI8MM;
-	if (ID_AA64ZFR0_F32MM(cpu_id_aa64zfr0) >= ID_AA64ZFR0_F32MM_IMPL)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_F32MM(cpu_id_aa64zfr0) >= ID_AA64ZFR0_F32MM_IMPL)
 		hwcap2 |= HWCAP2_SVEF32MM;
-	if (ID_AA64ZFR0_F64MM(cpu_id_aa64zfr0) >= ID_AA64ZFR0_F64MM_IMPL)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_F64MM(cpu_id_aa64zfr0) >= ID_AA64ZFR0_F64MM_IMPL)
 		hwcap2 |= HWCAP2_SVEF64MM;
-	if (ID_AA64ZFR0_BF16(cpu_id_aa64zfr0) >= ID_AA64ZFR0_BF16_BASE)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_BF16(cpu_id_aa64zfr0) >= ID_AA64ZFR0_BF16_BASE)
 		hwcap2 |= HWCAP2_SVEBF16;
 	if (ID_AA64ISAR1_I8MM(cpu_id_aa64isar1) >= ID_AA64ISAR1_I8MM_IMPL)
 		hwcap2 |= HWCAP2_I8MM;
@@ -1421,13 +1431,15 @@ cpu_identify_cleanup(void)
 		hwcap2 |= HWCAP2_WFXT;
 	if (ID_AA64ISAR1_BF16(cpu_id_aa64isar1) >= ID_AA64ISAR1_BF16_EBF)
 		hwcap2 |= HWCAP2_EBF16;
-	if (ID_AA64ZFR0_BF16(cpu_id_aa64zfr0) >= ID_AA64ZFR0_BF16_EBF)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_BF16(cpu_id_aa64zfr0) >= ID_AA64ZFR0_BF16_EBF)
 		hwcap2 |= HWCAP2_SVE_EBF16;
 	if (ID_AA64ISAR2_CSSC(cpu_id_aa64isar2) >= ID_AA64ISAR2_CSSC_IMPL)
 		hwcap2 |= HWCAP2_CSSC;
 	if (ID_AA64ISAR2_RPRFM(cpu_id_aa64isar2) >= ID_AA64ISAR2_RPRFM_IMPL)
 		hwcap2 |= HWCAP2_RPRFM;
-	if (ID_AA64ZFR0_SVEVER(cpu_id_aa64zfr0) >= ID_AA64ZFR0_SVEVER_SVE2P1)
+	if ((hwcap & HWCAP_SVE) &&
+	    ID_AA64ZFR0_SVEVER(cpu_id_aa64zfr0) >= ID_AA64ZFR0_SVEVER_SVE2P1)
 		hwcap2 |= HWCAP2_SVE2P1;
 	/* HWCAP2_SME2: OpenBSD kernel doesn't provide SME support */
 	/* HWCAP2_SME2P1: OpenBSD kernel doesn't provide SME support */
