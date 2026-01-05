@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.19 2024/02/03 10:37:25 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.20 2026/01/05 20:06:15 patrick Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -440,7 +440,6 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 void
 aplpcie_init_port(struct aplpcie_softc *sc, int node)
 {
-	char status[32];
 	uint32_t reg[5];
 	uint32_t *pwren_gpio;
 	uint32_t *reset_gpio;
@@ -448,8 +447,7 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 	uint32_t stat;
 	int idx, port, timo;
 
-	if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
-	    strcmp(status, "disabled") == 0)
+	if (!OF_is_enabled(node))
 		return;
 
 	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
@@ -563,7 +561,6 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 void
 aplpcie_t6020_init_port(struct aplpcie_softc *sc, int node)
 {
-	char status[32];
 	uint32_t reg[5];
 	uint32_t *pwren_gpio;
 	uint32_t *reset_gpio;
@@ -571,8 +568,7 @@ aplpcie_t6020_init_port(struct aplpcie_softc *sc, int node)
 	uint32_t stat;
 	int idx, msi, port, timo;
 
-	if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
-	    strcmp(status, "disabled") == 0)
+	if (!OF_is_enabled(node))
 		return;
 
 	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))

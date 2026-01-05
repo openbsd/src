@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplaudio.c,v 1.6 2023/01/14 23:35:09 kettenis Exp $	*/
+/*	$OpenBSD: aplaudio.c,v 1.7 2026/01/05 20:06:15 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -106,7 +106,6 @@ aplaudio_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t fmt, pol, clk;
 	uint32_t node, cpu, codec;
 	uint32_t *dais;
-	char status[32];
 	int count = 0;
 	int i, ncells;
 	int len;
@@ -114,8 +113,7 @@ aplaudio_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
-		if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
-		    strcmp(status, "disabled") == 0)
+		if (!OF_is_enabled(node))
 			continue;
 
 		cpu = OF_getnodebyname(node, "cpu");

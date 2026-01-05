@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkusbphy.c,v 1.8 2025/05/11 02:17:19 jcs Exp $ */
+/*	$OpenBSD: rkusbphy.c,v 1.9 2026/01/05 20:06:15 patrick Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -408,15 +408,13 @@ static void
 rkusbphy_register(struct rkusbphy_softc *sc, struct phy_device *pd,
     const struct rkusbphy_port_config *pc)
 {
-	char status[32];
 	int node;
 
 	node = OF_getnodebyname(sc->sc_node, pc->pc_name);
 	if (node == 0)
 		return;
 
-	if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
-	    strcmp(status, "disabled") == 0)
+	if (!OF_is_enabled(node))
 		return;
 
 	pd->pd_node = node;

@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.26 2025/08/11 07:18:40 miod Exp $ */
+/* $OpenBSD: mainbus.c,v 1.27 2026/01/05 20:06:15 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -221,10 +221,8 @@ mainbus_match_status(struct device *parent, void *match, void *aux)
 	struct mainbus_softc *sc = (struct mainbus_softc *)parent;
 	struct fdt_attach_args *fa = aux;
 	struct cfdata *cf = match;
-	char buf[32];
 
-	if (OF_getprop(fa->fa_node, "status", buf, sizeof(buf)) > 0 &&
-	    strcmp(buf, "disabled") == 0)
+	if (!OF_is_enabled(fa->fa_node))
 		return 0;
 
 	if (cf->cf_loc[0] == sc->sc_early)

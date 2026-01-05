@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.53 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.54 2026/01/05 20:06:15 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1311,13 +1311,8 @@ int
 mvpp2_port_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct mvpp2_attach_args *maa = aux;
-	char buf[32];
 
-	if (OF_getprop(maa->ma_node, "status", buf, sizeof(buf)) > 0 &&
-	    strcmp(buf, "disabled") == 0)
-		return 0;
-
-	return 1;
+	return OF_is_enabled(maa->ma_node);
 }
 
 void

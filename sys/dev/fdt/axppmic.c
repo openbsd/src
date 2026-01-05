@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.21 2024/10/06 03:46:48 jsg Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.22 2026/01/05 20:06:15 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -649,10 +649,7 @@ axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
 void
 axppmic_attach_node(struct axppmic_softc *sc, int node)
 {
-	char status[32];
-
-	if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
-	    strcmp(status, "disabled") == 0)
+	if (!OF_is_enabled(node))
 		return;
 
 	if (OF_is_compatible(node, "x-powers,axp803-battery-power-supply"))

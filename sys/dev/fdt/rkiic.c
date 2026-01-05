@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkiic.c,v 1.7 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: rkiic.c,v 1.8 2026/01/05 20:06:15 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -376,22 +376,20 @@ rkiic_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *arg)
 {
 	int iba_node = *(int *)arg;
 	struct i2c_attach_args ia;
-	char name[32], status[32];
+	char name[32];
 	uint32_t reg[1];
 	int node;
 
 	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
 		memset(name, 0, sizeof(name));
-		memset(status, 0, sizeof(status));
 		memset(reg, 0, sizeof(reg));
+
+		if (!OF_is_enabled(node))
+			continue;
 
 		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
 			continue;
 		if (name[0] == '\0')
-			continue;
-
-		if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
-		    strcmp(status, "disabled") == 0)
 			continue;
 
 		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))

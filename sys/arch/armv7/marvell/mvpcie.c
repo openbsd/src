@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvpcie.c,v 1.6 2022/02/13 16:44:50 tobhe Exp $	*/
+/*	$OpenBSD: mvpcie.c,v 1.7 2026/01/05 20:06:15 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -212,7 +212,6 @@ mvpcie_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t bus_range[2];
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
-	char buf[32];
 	int node;
 
 	sc->sc_iot = faa->fa_iot;
@@ -295,10 +294,7 @@ mvpcie_attach(struct device *parent, struct device *self, void *aux)
 	    mvmbus_pcie_io_aperture[1], EX_NOWAIT);
 
 	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node)) {
-		if (OF_getproplen(node, "status") <= 0)
-			continue;
-		OF_getprop(node, "status", buf, sizeof(buf));
-		if (strcmp(buf, "disabled") == 0)
+		if (!OF_is_enabled(node))
 			continue;
 		sc->sc_nports++;
 	}
@@ -311,10 +307,7 @@ mvpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	i = 0;
 	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node)) {
-		if (OF_getproplen(node, "status") <= 0)
-			continue;
-		OF_getprop(node, "status", buf, sizeof(buf));
-		if (strcmp(buf, "disabled") == 0)
+		if (!OF_is_enabled(node))
 			continue;
 		mvpcie_port_attach(sc, &sc->sc_ports[i++], node);
 	}
