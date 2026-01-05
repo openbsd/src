@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.280 2026/01/05 17:36:52 sthen Exp $
+.\"	$OpenBSD: port-modules.5,v 1.281 2026/01/05 17:38:38 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -572,6 +572,9 @@ build.
 The exact effects on the build process depend on settings specified in
 the CMake config files.
 Default value is `No'.
+.It MODCMAKE_LDFLAGS
+If set, the contents will be passed to CMake in the environment variable
+.Ev LDFLAGS .
 .It MODCMAKE_VERBOSE
 If set to `Yes', CMake will print details during configure and build
 stages about exact command being run, etc.
