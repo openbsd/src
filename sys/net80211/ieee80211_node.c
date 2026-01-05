@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.207 2025/12/04 09:38:15 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.208 2026/01/05 11:43:58 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -81,6 +81,10 @@ void ieee80211_node_addba_request_ac_be_to(void *);
 void ieee80211_node_addba_request_ac_bk_to(void *);
 void ieee80211_node_addba_request_ac_vi_to(void *);
 void ieee80211_node_addba_request_ac_vo_to(void *);
+void ieee80211_node_addba_request_tid4(void *);
+void ieee80211_node_addba_request_tid5(void *);
+void ieee80211_node_addba_request_tid6(void *);
+void ieee80211_node_addba_request_tid7(void *);
 void ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
 void ieee80211_node_join_ht(struct ieee80211com *, struct ieee80211_node *);
@@ -1798,6 +1802,14 @@ ieee80211_node_set_timeouts(struct ieee80211_node *ni)
 	    ieee80211_node_addba_request_ac_vi_to, ni);
 	timeout_set(&ni->ni_addba_req_to[EDCA_AC_VO],
 	    ieee80211_node_addba_request_ac_vo_to, ni);
+	timeout_set(&ni->ni_addba_req_to[4],
+	    ieee80211_node_addba_request_tid4, ni);
+	timeout_set(&ni->ni_addba_req_to[5],
+	    ieee80211_node_addba_request_tid5, ni);
+	timeout_set(&ni->ni_addba_req_to[6],
+	    ieee80211_node_addba_request_tid6, ni);
+	timeout_set(&ni->ni_addba_req_to[7],
+	    ieee80211_node_addba_request_tid7, ni);
 	for (i = 0; i < nitems(ni->ni_addba_req_intval); i++)
 		ni->ni_addba_req_intval[i] = 1;
 }
@@ -2094,10 +2106,10 @@ ieee80211_ba_del(struct ieee80211_node *ni)
 	for (tid = 0; tid < nitems(ni->ni_tx_ba); tid++)
 		ieee80211_node_tx_ba_clear(ni, tid);
 
-	timeout_del(&ni->ni_addba_req_to[EDCA_AC_BE]);
-	timeout_del(&ni->ni_addba_req_to[EDCA_AC_BK]);
-	timeout_del(&ni->ni_addba_req_to[EDCA_AC_VI]);
-	timeout_del(&ni->ni_addba_req_to[EDCA_AC_VO]);
+	for (tid = 0; tid < IEEE80211_NUM_TID; tid++) {
+		if (timeout_initialized(&ni->ni_addba_req_to[tid]))
+			timeout_del(&ni->ni_addba_req_to[tid]);
+	}
 }
 
 void
@@ -2771,6 +2783,34 @@ ieee80211_node_addba_request_ac_vo_to(void *arg)
 {
 	struct ieee80211_node *ni = arg;
 	ieee80211_node_addba_request(ni, EDCA_AC_VO);
+}
+
+void
+ieee80211_node_addba_request_tid4(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	ieee80211_node_addba_request(ni, 4);
+}
+
+void
+ieee80211_node_addba_request_tid5(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	ieee80211_node_addba_request(ni, 5);
+}
+
+void
+ieee80211_node_addba_request_tid6(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	ieee80211_node_addba_request(ni, 6);
+}
+
+void
+ieee80211_node_addba_request_tid7(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	ieee80211_node_addba_request(ni, 7);
 }
 
 #ifndef IEEE80211_STA_ONLY
