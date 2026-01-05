@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.19 2018/06/19 12:36:18 martijn Exp $	*/
+/*	$OpenBSD: re.c,v 1.20 2026/01/05 03:34:18 jsg Exp $	*/
 /*	$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
@@ -30,7 +30,6 @@
  */
 
 #include <regex.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

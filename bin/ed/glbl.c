@@ -1,4 +1,4 @@
-/*	$OpenBSD: glbl.c,v 1.20 2018/06/04 13:26:21 martijn Exp $	*/
+/*	$OpenBSD: glbl.c,v 1.21 2026/01/05 03:34:18 jsg Exp $	*/
 /*	$NetBSD: glbl.c,v 1.2 1995/03/21 09:04:41 cgd Exp $	*/
 
 /* glob.c: This file contains the global command routines for the ed line
@@ -29,11 +29,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/ioctl.h>
-#include <sys/wait.h>
-
 #include <regex.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

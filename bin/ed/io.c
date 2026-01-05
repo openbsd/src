@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.26 2024/07/16 05:01:10 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.27 2026/01/05 03:34:18 jsg Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -28,9 +28,6 @@
  * SUCH DAMAGE.
  */
 
-#include <regex.h>
-#include <signal.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

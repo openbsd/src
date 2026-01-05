@@ -1,4 +1,4 @@
-/*	$OpenBSD: undo.c,v 1.14 2016/03/22 17:58:28 mmcc Exp $	*/
+/*	$OpenBSD: undo.c,v 1.15 2026/01/05 03:34:18 jsg Exp $	*/
 /*	$NetBSD: undo.c,v 1.2 1995/03/21 09:04:52 cgd Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
@@ -28,8 +28,6 @@
  * SUCH DAMAGE.
  */
 
-#include <regex.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 

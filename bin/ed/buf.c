@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.25 2024/04/23 13:34:50 jsg Exp $	*/
+/*	$OpenBSD: buf.c,v 1.26 2026/01/05 03:34:18 jsg Exp $	*/
 /*	$NetBSD: buf.c,v 1.15 1995/04/23 10:07:28 cgd Exp $	*/
 
 /* buf.c: This file contains the scratch-file buffer routines for the
@@ -30,11 +30,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
-#include <limits.h>
-#include <regex.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
