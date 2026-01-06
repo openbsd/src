@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.43 2025/01/23 11:24:34 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.44 2026/01/06 11:51:33 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -225,8 +225,10 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pmemex = sc->sc_memex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
-	if (sc->sc_msi_ic)
+	if (sc->sc_msi_ic) {
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+		pba.pba_flags |= PCI_FLAGS_MSIVEC_ENABLED;
+	}
 
 	config_found(self, &pba, NULL);
 }
