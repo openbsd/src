@@ -20,4 +20,32 @@ DDEESSCCRRIIPPTTIIOONN
      This is a longer text after switching to an invalid line length.  In
      ASCII mode, it is expected to break at column 78.
 
-OpenBSD                          July 4, 2017                      LL-BASIC(1)
+     This is another long text after reducing the line
+     length (-18n).  In ASCII mode, it is expected to break
+     at column 60.
+
+     This is another long text after increasing the line length again (+18n).
+     In ASCII mode, it is again expected to break at column 78.
+
+     Now the line length was reduced using two signs
+     (-+18n).  In ASCII mode, this paragraph is expected to
+     break at column 60.
+
+     Now the line length was increased using two signs (++18n).  In ASCII
+     mode, this paragraph is expected to break at column 78.
+
+     Now the line length was reduced using two signs in the
+     opposite order (+-18n).  In ASCII mode, this paragraph
+     is expected to break at column 60.
+
+     Now the line length was increased using double minus (--18n).  In ASCII
+     mode, this paragraph is expected to break at column 78.
+
+     Now the line length was reduced using triple minus
+     (---18n).  In ASCII mode, this paragraph is expected to
+     break at column 60.
+
+     And finally, the line length was increased using tree signs (-+-18n).  In
+     ASCII mode, this paragraph is again expected to break at column 78.
+
+OpenBSD                         January 6, 2026                    LL-BASIC(1)
