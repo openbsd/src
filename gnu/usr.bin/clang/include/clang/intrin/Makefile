@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.29 2025/06/13 17:11:09 jca Exp $
+# $OpenBSD: Makefile,v 1.30 2026/01/06 22:27:48 jca Exp $
 
 .include <bsd.own.mk>
 
@@ -31,6 +31,9 @@ GEN+=		arm_mve.h
 GEN+=		arm_cde.h
 GEN+=		arm_vector_types.h
 HEADERS+=	arm_acle.h arm_cmse.h ${GEN}
+.if ${MACHINE_ARCH} == "aarch64"
+HEADERS+=	arm_neon_sve_bridge.h
+.endif
 .elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 HEADERS+=	__wmmintrin_aes.h \
 		__wmmintrin_pclmul.h \
