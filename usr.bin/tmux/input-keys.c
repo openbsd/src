@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.110 2025/11/12 07:54:52 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.111 2026/01/06 20:05:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -313,12 +313,6 @@ static struct input_key_entry input_key_defaults[] = {
 	},
 	{ .key = KEYC_DC|KEYC_BUILD_MODIFIERS,
 	  .data = "\033[3;_~"
-	},
-	{ .key = KEYC_REPORT_DARK_THEME,
-	  .data = "\033[?997;1n"
-	},
-	{ .key = KEYC_REPORT_LIGHT_THEME,
-	  .data = "\033[?997;2n"
 	},
 };
 static const key_code input_key_modifiers[] = {
