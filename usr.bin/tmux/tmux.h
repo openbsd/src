@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1280 2025/12/17 11:49:29 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1281 2026/01/06 10:17:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2689,6 +2689,8 @@ void		 cmd_list_append(struct cmd_list *, struct cmd *);
 void		 cmd_list_append_all(struct cmd_list *, struct cmd_list *);
 void		 cmd_list_move(struct cmd_list *, struct cmd_list *);
 void		 cmd_list_free(struct cmd_list *);
+#define CMD_LIST_PRINT_ESCAPED 0x1
+#define CMD_LIST_PRINT_NO_GROUPS 0x2
 char		*cmd_list_print(const struct cmd_list *, int);
 struct cmd	*cmd_list_first(struct cmd_list *);
 struct cmd	*cmd_list_next(struct cmd *);
