@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.17 2023/11/22 18:19:25 tobhe Exp $
+#	$OpenBSD: makemap.awk,v 1.18 2026/01/06 18:42:18 helg Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,11 +31,12 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.17 2023/11/22 18:19:25 tobhe Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.18 2026/01/06 18:42:18 helg Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
 	haskeys = 0
+	kbde = 0
 	kbfr = 0
 	nmaps = 0
 
@@ -360,6 +361,18 @@ $1 == "#define" || $1 == "#undef" {
 		# Apple black USB keyboards use a slightly different
 		# layout. We define them here.
 		#
+		if (mapname == "ukbd_keydesc_de[]") {
+			print $0
+			print "\nstatic const keysym_t ukbd_keydesc_de_apple[] = {"
+			print "/*  pos\t\tnormal\t\tshifted\t\taltgr\t\tshifted-altgr */"
+			print "    KC(15),\tKS_l,\t\tKS_L,\t\tKS_at,"
+			print "    KC(34),\tKS_5,\t\tKS_percent,\tKS_bracketleft,"
+			print "    KC(35),\tKS_6,\t\tKS_ampersand,\tKS_bracketright,"
+			print "    KC(36),\tKS_7,\t\tKS_slash,\tKS_bar,\t\tKS_backslash,"
+			print "    KC(37),\tKS_8,\t\tKS_parenleft,\tKS_braceleft,"
+			print "    KC(38),\tKS_9,\t\tKS_parenright,\tKS_braceright,"
+			print "    KC(17),\tKS_n,\t\tKS_N,\t\tKS_asciitilde,"
+		} else
 		if (mapname == "ukbd_keydesc_fr[]") {
 			print $0
 			print "\nstatic const keysym_t ukbd_keydesc_fr_apple[] = {"
@@ -412,6 +425,18 @@ $1 == "#define" || $1 == "#undef" {
 			print "    KC(52),\tKS_dead_tilde,\tKS_dead_circumflex"
 		}
 	}
+}
+/KB_DE/ {
+	print $0
+	kbde++
+	# Add .apple variants
+	if (kbde == 1) {
+		print "\tKBD_MAP(KB_DE | KB_APPLE,\tKB_DE,\tukbd_keydesc_de_apple),"
+	} else if (kbde == 2) {
+		print "\tKBD_MAP(KB_DE | KB_APPLE | KB_NODEAD,\tKB_DE | KB_APPLE,"
+		print "\t\tukbd_keydesc_de_nodead),"
+	}
+	next
 }
 /KB_FR/ {
 	print $0
