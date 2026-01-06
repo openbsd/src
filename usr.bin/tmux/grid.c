@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.137 2025/10/28 09:01:12 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.138 2026/01/06 14:33:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -361,9 +361,13 @@ grid_compare(struct grid *ga, struct grid *gb)
 static void
 grid_trim_history(struct grid *gd, u_int ny)
 {
+	u_int	remaining;
+
 	grid_free_lines(gd, 0, ny);
+	remaining = gd->hsize + gd->sy - ny;
 	memmove(&gd->linedata[0], &gd->linedata[ny],
-	    (gd->hsize + gd->sy - ny) * (sizeof *gd->linedata));
+	    remaining * (sizeof *gd->linedata));
+	memset(&gd->linedata[remaining], 0, ny * (sizeof *gd->linedata));
 }
 
 /*
