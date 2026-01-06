@@ -1,4 +1,4 @@
-/* $OpenBSD: term_ps.c,v 1.59 2025/09/26 12:13:24 schwarze Exp $ */
+/* $OpenBSD: term_ps.c,v 1.60 2026/01/06 21:16:12 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2017, 2020, 2025 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -106,7 +106,7 @@ static	void		  ps_printf(struct termp *, const char *, ...)
 				__attribute__((__format__ (__printf__, 2, 3)));
 static	void		  ps_putchar(struct termp *, char);
 static	void		  ps_setfont(struct termp *, enum termfont);
-static	void		  ps_setwidth(struct termp *, int, int);
+static	void		  ps_setwidth(struct termp *, int, size_t);
 static	struct termp	 *pspdf_alloc(const struct manoutput *, enum termtype);
 static	void		  pdf_obj(struct termp *, size_t);
 
@@ -619,7 +619,7 @@ pspdf_alloc(const struct manoutput *outopts, enum termtype type)
 }
 
 static void
-ps_setwidth(struct termp *p, int iop, int width)
+ps_setwidth(struct termp *p, int iop, size_t width)
 {
 	size_t	 lastwidth;
 
@@ -627,8 +627,8 @@ ps_setwidth(struct termp *p, int iop, int width)
 	if (iop > 0)
 		p->ps->width += width;
 	else if (iop == 0)
-		p->ps->width = width ? (size_t)width : p->ps->lastwidth;
-	else if (p->ps->width > (size_t)width)
+		p->ps->width = width ? width : p->ps->lastwidth;
+	else if (p->ps->width > width)
 		p->ps->width -= width;
 	else
 		p->ps->width = 0;
