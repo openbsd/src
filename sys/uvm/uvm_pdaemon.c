@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.147 2026/01/04 21:04:46 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.148 2026/01/06 07:18:48 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -906,7 +906,8 @@ uvmpd_scan(struct uvm_pmalloc *pma, int shortage, int inactive_shortage)
 		swap_shortage = shortage;
 	}
 
-	p = TAILQ_FIRST(pglst);
+	if ((p = TAILQ_FIRST(pglst)) == NULL)
+	    return;
 
 	/* Insert iterator. */
 	TAILQ_INSERT_AFTER(pglst, p, &iter, pageq);
