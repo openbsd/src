@@ -1,6 +1,7 @@
-/* $OpenBSD: mdoc_term.c,v 1.286 2025/07/27 15:21:30 schwarze Exp $ */
+/* $OpenBSD: mdoc_term.c,v 1.287 2026/01/07 08:22:24 schwarze Exp $ */
 /*
- * Copyright (c) 2010,2012-2020,2022,2025 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2020, 2022, 2025, 2026
+ *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
@@ -456,6 +457,7 @@ print_mdoc_foot(struct termp *p, const struct roff_meta *meta)
 	/* Bottom left corner: operating system. */
 
 	p->tcol->offset = 0;
+	p->maxrmargin = p->defrmargin;
 	p->tcol->rmargin = p->maxrmargin > datelen ?
 	    (p->maxrmargin + term_len(p, 1) - datelen) / 2 : 0;
 	p->trailspace = 1;

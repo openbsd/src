@@ -1,6 +1,6 @@
-/* $OpenBSD: term.h,v 1.83 2026/01/06 21:16:12 schwarze Exp $ */
+/* $OpenBSD: term.h,v 1.84 2026/01/07 08:22:24 schwarze Exp $ */
 /*
- * Copyright (c) 2011-2015, 2017, 2019, 2021, 2022, 2025
+ * Copyright (c) 2011-2015, 2017, 2019, 2021, 2022, 2025, 2026
  *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -63,9 +63,10 @@ struct	termp {
 	size_t		  lasttcol;	/* Last column currently used. */
 	size_t		  line;		/* Current output line number. */
 	size_t		  defindent;	/* Default indent for text [EN]. */
-	size_t		  defrmargin;	/* Right margin of the device [BU]. */
-	size_t		  lastrmargin;	/* Right margin before last ll [BU]. */
-	size_t		  maxrmargin;	/* Maximum right margin [BU]. */
+					/* Line lengths in basic units: */
+	size_t		  defrmargin;	/* ... as set by -O width / paper */
+	size_t		  lastrmargin;	/* ... before the last .ll request */
+	size_t		  maxrmargin;	/* ... as set by .ll / setwidth() */
 	size_t		  col;		/* Byte position in buf. */
 	size_t		  viscol;	/* Width of the current line [BU]. */
 	size_t		  trailspace;	/* Whitespace after field [EN]. */
