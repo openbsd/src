@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.76 2025/03/24 20:01:03 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.77 2026/01/07 08:16:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -749,7 +749,7 @@ options_get_number(struct options *oo, const char *name)
 	return (o->value.number);
 }
 
-const struct cmd_list *
+struct cmd_list *
 options_get_command(struct options *oo, const char *name)
 {
 	struct options_entry	*o;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1282 2026/01/06 20:05:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1283 2026/01/07 08:16:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2403,7 +2403,7 @@ struct options_entry *options_match_get(struct options *, const char *, int *,
 		     int, int *);
 const char	*options_get_string(struct options *, const char *);
 long long	 options_get_number(struct options *, const char *);
-const struct cmd_list *options_get_command(struct options *, const char *);
+struct cmd_list *options_get_command(struct options *, const char *);
 struct options_entry * printflike(4, 5) options_set_string(struct options *,
 		     const char *, int, const char *, ...);
 struct options_entry *options_set_number(struct options *, const char *,
