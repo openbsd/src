@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.105 2025/11/12 09:48:52 hshoexer Exp $	*/
+/*	$OpenBSD: vector.S,v 1.106 2026/01/07 02:21:04 chris Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -764,6 +764,13 @@ IDTVEC(ipi_invlpg_pcid)
 	addl	$1,(%rsp)
 	invpcid	(%rsp),%rax
 
+	/* Kernel VAs are also cached under PCID_TEMP */
+	cmpl	$PCID_PROC,(%rsp)
+	jne	.Lskip_temp_invlpg_pcid
+	movl	$PCID_TEMP,(%rsp)
+	invpcid	(%rsp),%rax
+.Lskip_temp_invlpg_pcid:
+
 	lock
 	decq	tlb_shoot_wait
 
@@ -801,6 +808,14 @@ IDTVEC(ipi_invlrange_pcid)
 	invpcid	(%rsp),%rcx
 	addl	$1,(%rsp)
 	invpcid	(%rsp),%rcx
+
+	/* Kernel VAs are also cached under PCID_TEMP */
+	cmpl	$PCID_PROC,(%rsp)
+	jne	.Lskip_temp_invlrange_pcid
+	movl	$PCID_TEMP,(%rsp)
+	invpcid	(%rsp),%rcx
+	movl	$PCID_PROC,(%rsp)
+.Lskip_temp_invlrange_pcid:
 	subl	$1,(%rsp)
 	addq	$PAGE_SIZE,%rax
 	cmpq	%rdx,%rax

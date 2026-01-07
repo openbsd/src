@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.185 2026/01/02 04:13:12 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.186 2026/01/07 02:21:04 chris Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3240,6 +3240,11 @@ pmap_tlb_shootwait(void)
 }
 #endif /* MULTIPROCESSOR */
 
+/*
+ * KVA TLB entries can exist under PCID_TEMP (pmap_map_ptes() + interrupts/traps),
+ * so KVA shootdowns must invalidate PCID_TEMP too.
+ */
+
 void
 pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 {
@@ -3280,6 +3285,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 	} else if (is_kva) {
 		invpcid(INVPCID_ADDR, PCID_PROC, va);
 		invpcid(INVPCID_ADDR, PCID_KERN, va);
+		invpcid(INVPCID_ADDR, PCID_TEMP, va);
 	} else if (shootself) {
 		invpcid(INVPCID_ADDR, PCID_PROC, va);
 		if (cpu_meltdown)
@@ -3332,6 +3338,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 		for (va = sva; va < eva; va += PAGE_SIZE) {
 			invpcid(INVPCID_ADDR, PCID_PROC, va);
 			invpcid(INVPCID_ADDR, PCID_KERN, va);
+			invpcid(INVPCID_ADDR, PCID_TEMP, va);
 		}
 	} else if (shootself) {
 		if (cpu_meltdown) {
