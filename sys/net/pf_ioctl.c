@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.427 2025/11/28 22:55:21 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.428 2026/01/07 13:50:05 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4029,6 +4029,23 @@ pf_validate_range(u_int8_t op, u_int16_t port[2], int order)
 }
 
 int
+pf_chk_limiter_action(int limiter_action)
+{
+	int	rv;
+
+	switch (limiter_action) {
+	case PF_LIMITER_NOMATCH:
+	case PF_LIMITER_BLOCK:
+		rv = 0;
+		break;
+	default:
+		rv = 1;
+	}
+
+	return rv;
+}
+
+int
 pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 {
 	int i;
@@ -4164,6 +4181,10 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 	to->set_prio[1] = from->set_prio[1];
 	to->statelim = from->statelim;
 	to->sourcelim = from->sourcelim;
+
+	if (pf_chk_limiter_action(to->statelim.limiter_action) ||
+	    pf_chk_limiter_action(to->sourcelim.limiter_action))
+		return (EINVAL);
 
 	return (0);
 }

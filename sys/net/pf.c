@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1229 2026/01/05 00:55:03 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1230 2026/01/07 13:50:05 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -127,6 +127,7 @@ struct pf_test_ctx {
 	int			  icmp_dir;
 	int			  state_icmp;
 	int			  tag;
+	int			  limiter_drop;
 	u_short			  reason;
 	struct pf_rule_item	 *ri;
 	struct pf_src_node	 *sns[PF_SN_MAX];
@@ -4590,8 +4591,8 @@ enter_ruleset:
 		    ctx->pd->m->m_pkthdr.pf.prio),
 			TAILQ_NEXT(r, entries));
 
-		if (r->statelim != PF_STATELIM_ID_NONE) {
-			stlim = pf_statelim_find(r->statelim);
+		if (r->statelim.id != PF_STATELIM_ID_NONE) {
+			stlim = pf_statelim_find(r->statelim.id);
 
 			/*
 			 * Treat a missing limiter like an exhausted limiter.
@@ -4609,6 +4610,12 @@ enter_ruleset:
 				gen = pf_statelim_enter(stlim);
 				stlim->pfstlim_counters.hardlimited++;
 				pf_statelim_leave(stlim, gen);
+				if (r->statelim.limiter_action == PF_LIMITER_BLOCK) {
+					ctx->limiter_drop = 1;
+					REASON_SET(&ctx->reason, PFRES_MAXSTATES);
+					break;	/* stop rule processing */
+				}
+
 				r = TAILQ_NEXT(r, entries);
 				continue;
 			}
@@ -4624,6 +4631,14 @@ enter_ruleset:
 					gen = pf_statelim_enter(stlim);
 					stlim->pfstlim_counters.ratelimited++;
 					pf_statelim_leave(stlim, gen);
+					if (r->statelim.limiter_action ==
+					    PF_LIMITER_BLOCK) {
+						ctx->limiter_drop = 1;
+						REASON_SET(&ctx->reason,
+						    PFRES_MAXSTATES);
+						/* stop rule processing */
+						break;
+					}
 					r = TAILQ_NEXT(r, entries);
 					continue;
 				}
@@ -4635,10 +4650,10 @@ enter_ruleset:
 			}
 		}
 
-		if (r->sourcelim != PF_SOURCELIM_ID_NONE) {
+		if (r->sourcelim.id != PF_SOURCELIM_ID_NONE) {
 			struct pf_source key;
 
-			srlim = pf_sourcelim_find(r->sourcelim);
+			srlim = pf_sourcelim_find(r->sourcelim.id);
 
 			/*
 			 * Treat a missing pool like an overcommitted pool.
@@ -4661,6 +4676,14 @@ enter_ruleset:
 					gen = pf_sourcelim_enter(srlim);
 					srlim->pfsrlim_counters.hardlimited++;
 					pf_sourcelim_leave(srlim, gen);
+					if (r->sourcelim.limiter_action ==
+					    PF_LIMITER_BLOCK) {
+						ctx->limiter_drop = 1;
+						REASON_SET(&ctx->reason,
+						    PFRES_SRCLIMIT);
+						/* stop rule processing */
+						break;
+					}
 					r = TAILQ_NEXT(r, entries);
 					continue;
 				}
@@ -4677,6 +4700,14 @@ enter_ruleset:
 						gen = pf_sourcelim_enter(srlim);
 						srlim->pfsrlim_counters.ratelimited++;
 						pf_sourcelim_leave(srlim, gen);
+						if (r->sourcelim.limiter_action ==
+						    PF_LIMITER_BLOCK) {
+							ctx->limiter_drop = 1;
+							REASON_SET(&ctx->reason,
+							    PFRES_SRCLIMIT);
+							/* stop rules */
+							break;
+						}
 						r = TAILQ_NEXT(r, entries);
 						continue;
 					}
@@ -4697,6 +4728,14 @@ enter_ruleset:
 					gen = pf_sourcelim_enter(srlim);
 					srlim->pfsrlim_counters.addrlimited++;
 					pf_sourcelim_leave(srlim, gen);
+					if (r->sourcelim.limiter_action ==
+					    PF_LIMITER_BLOCK) {
+						ctx->limiter_drop = 1;
+						REASON_SET(&ctx->reason,
+							    PFRES_SRCLIMIT);
+						/* stop rules processing */
+						break;
+					}
 					r = TAILQ_NEXT(r, entries);
 					continue;
 				}
@@ -4905,10 +4944,8 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 	ruleset = &pf_main_ruleset;
 	rv = pf_match_rule(&ctx, ruleset);
-	if (rv == PF_TEST_FAIL) {
-		/*
-		 * Reason has been set in pf_match_rule() already.
-		 */
+	if (rv == PF_TEST_FAIL || ctx.limiter_drop == 1) {
+		REASON_SET(reason, ctx.reason);
 		goto cleanup;
 	}
 

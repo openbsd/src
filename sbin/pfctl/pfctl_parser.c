@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.355 2025/11/30 23:39:45 sashan Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.356 2026/01/07 13:50:05 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1000,7 +1000,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 		}
 		printf(" probability %s%%", buf);
 	}
-	if (r->statelim != PF_STATELIM_ID_NONE) {
+	if (r->statelim.id != PF_STATELIM_ID_NONE) {
 #if 0 /* XXX need pf to find statelims */
 		struct pfctl_statelim *stlim =
 		    pfctl_get_statelim_id(pf, r->statelim);
@@ -1009,9 +1009,11 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 			printf(" state limiter %s", stlim->ioc.name);
 		else
 #endif
-			printf(" state limiter id %u", r->statelim);
+			printf(" state limiter id %u (%s)", r->statelim.id,
+			    (r->statelim.limiter_action == PF_LIMITER_BLOCK) ?
+				"block" : "no-match");
 	}
-	if (r->sourcelim != PF_SOURCELIM_ID_NONE) {
+	if (r->sourcelim.id != PF_SOURCELIM_ID_NONE) {
 #if 0 /* XXX need pf to find sourcelims */
 		struct pfctl_sourcelim *srlim =
 		    pfctl_get_sourcelim_id(pf, r->sourcelim);
@@ -1020,7 +1022,9 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 			printf(" source limiter %s", srlim->ioc.name);
 		else
 #endif
-			printf(" source limiter id %u", r->sourcelim);
+			printf(" source limiter id %u (%s)", r->sourcelim.id,
+			    (r->sourcelim.limiter_action == PF_LIMITER_BLOCK) ?
+				"block" : "no-match");
 	}
 	if (ropts) {
 		printf(" (");

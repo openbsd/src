@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.544 2025/11/11 04:06:20 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.545 2026/01/07 13:50:05 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -479,6 +479,11 @@ union pf_rule_ptr {
 #define	PF_ANCHOR_HIWAT		 512
 #define	PF_OPTIMIZER_TABLE_PFX	"__automatic_"
 
+enum {
+	PF_LIMITER_NOMATCH,
+	PF_LIMITER_BLOCK
+};
+
 struct pf_rule {
 	struct pf_rule_addr	 src;
 	struct pf_rule_addr	 dst;
@@ -591,8 +596,14 @@ struct pf_rule {
 	u_int8_t		 set_prio[2];
 	sa_family_t		 naf;
 	u_int8_t		 rcvifnot;
-	uint8_t			 statelim;
-	uint8_t			 sourcelim;
+	struct {
+		u_int8_t	 id;
+		int		 limiter_action;
+	} 			 statelim;
+	struct {
+		u_int8_t	 id;
+		int		 limiter_action;
+	}			 sourcelim;
 
 	struct {
 		struct pf_addr		addr;

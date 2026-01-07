@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.722 2025/12/06 10:41:07 phessler Exp $	*/
+/*	$OpenBSD: parse.y,v 1.723 2026/01/07 13:50:05 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -232,6 +232,11 @@ struct redirspec {
 	int			 af;
 };
 
+struct limiterspec {
+	u_int32_t		 id;
+	int			 limiter_action;
+};
+
 struct filter_opts {
 	int			 marker;
 #define FOM_FLAGS	0x0001
@@ -260,8 +265,8 @@ struct filter_opts {
 	struct node_icmp	*icmpspec;
 	u_int32_t		 tos;
 	u_int32_t		 prob;
-	u_int32_t		 statelim;
-	u_int32_t		 sourcelim;
+	struct limiterspec	 statelim;
+	struct limiterspec	 sourcelim;
 	struct {
 		int			 action;
 		struct node_state_opt	*options;
@@ -507,6 +512,7 @@ typedef struct {
 		struct statelim_opts	*statelim_opts;
 		struct sourcelim_opts	*sourcelim_opts;
 		struct pfctl_watermarks	*watermarks;
+		struct limiterspec	 limiterspec;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -538,7 +544,7 @@ int	parseport(char *, struct range *r, int);
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH SLOPPY PFLOW MAXPKTRATE
 %token	TAGGED TAG IFBOUND FLOATING STATEPOLICY STATEDEFAULTS ROUTE
 %token	DIVERTTO DIVERTREPLY DIVERTPACKET NATTO AFTO RDRTO RECEIVEDON NE LE GE
-%token	LIMITER ID RATE SOURCE ENTRIES ABOVE BELOW MASK
+%token	LIMITER ID RATE SOURCE ENTRIES ABOVE BELOW MASK NOMATCH
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %token	<v.i>			PORTBINARY
@@ -586,8 +592,8 @@ int	parseport(char *, struct range *r, int);
 %type	<v.table_opts>		table_opts table_opt table_opts_l
 %type	<v.pool_opts>		pool_opts pool_opt pool_opts_l
 %type	<v.string>		statelim_nm sourcelim_nm
-%type	<v.number>		statelim_id sourcelim_id
-%type	<v.number>		statelim_filter_opt sourcelim_filter_opt
+%type	<v.number>		statelim_id sourcelim_id limiter_opt limiter_opt_spec
+%type	<v.limiterspec>		statelim_filter_opt sourcelim_filter_opt
 %type	<v.statelim_opts>	statelim_opts
 %type	<v.sourcelim_opts>	sourcelim_opts
 %type	<v.watermarks>		syncookie_opts
@@ -1749,20 +1755,21 @@ statelim_opt	: statelim_id {
 		;
 
 statelim_filter_opt
-		: statelim_nm {
+		: STATE LIMITER STRING limiter_opt_spec {
 			struct pfctl_statelim *stlim;
 
-			stlim = pfctl_get_statelim_nm(pf, $1);
-			free($1);
+			stlim = pfctl_get_statelim_nm(pf, $3);
+			free($3);
 			if (stlim == NULL) {
 				yyerror("state limiter not found");
 				YYERROR;
 			}
-
-			$$ = stlim->ioc.id;
+			$$.id = stlim->ioc.id;
+			$$.limiter_action = $4;
 		}
-		| STATE LIMITER statelim_id {
-			$$ = $3;
+		| STATE LIMITER statelim_id limiter_opt_spec {
+			$$.id = $3;
+			$$.limiter_action = $4;
 		}
 		;
 
@@ -1995,20 +2002,34 @@ sourcelim_opt_below
 		;
 
 sourcelim_filter_opt
-		: sourcelim_nm {
+		: SOURCE LIMITER STRING limiter_opt_spec {
 			struct pfctl_sourcelim *srlim;
 
-			srlim = pfctl_get_sourcelim_nm(pf, $1);
-			free($1);
+			srlim = pfctl_get_sourcelim_nm(pf, $3);
+			free($3);
 			if (srlim == NULL) {
 				yyerror("source limiter not found");
 				YYERROR;
 			}
 
-			$$ = srlim->ioc.id;
+			$$.id = srlim->ioc.id;
+			$$.limiter_action = $4;
 		}
-		| SOURCE LIMITER sourcelim_id {
-			$$ = $3;
+		| SOURCE LIMITER sourcelim_id limiter_opt_spec {
+			$$.id = $3;
+			$$.limiter_action = $4;
+		}
+		;
+
+limiter_opt_spec: /* empty */ { $$ = PF_LIMITER_NOMATCH; }
+		| '(' limiter_opt ')' { $$ = $2; }
+		;
+
+limiter_opt:	BLOCK {
+			$$ = PF_LIMITER_BLOCK;
+		}
+		| NOMATCH {
+			$$ = PF_LIMITER_NOMATCH;
 		}
 		;
 
@@ -2319,16 +2340,20 @@ pfrule		: action dir logquick interface af proto fromto
 
 filter_opts	:	{
 				bzero(&filter_opts, sizeof filter_opts);
-				filter_opts.statelim = PF_STATELIM_ID_NONE;
-				filter_opts.sourcelim = PF_SOURCELIM_ID_NONE;
+				filter_opts.statelim.id = PF_STATELIM_ID_NONE;
+				filter_opts.statelim.limiter_action = PF_LIMITER_NOMATCH;
+				filter_opts.sourcelim.id = PF_SOURCELIM_ID_NONE;
+				filter_opts.sourcelim.limiter_action = PF_LIMITER_NOMATCH;
 				filter_opts.rtableid = -1;
 			}
 		    filter_opts_l
 			{ $$ = filter_opts; }
 		| /* empty */	{
 			bzero(&filter_opts, sizeof filter_opts);
-			filter_opts.statelim = PF_STATELIM_ID_NONE;
-			filter_opts.sourcelim = PF_SOURCELIM_ID_NONE;
+			filter_opts.statelim.id = PF_STATELIM_ID_NONE;
+			filter_opts.statelim.limiter_action = PF_LIMITER_NOMATCH;
+			filter_opts.sourcelim.id = PF_SOURCELIM_ID_NONE;
+			filter_opts.sourcelim.limiter_action = PF_LIMITER_NOMATCH;
 			filter_opts.rtableid = -1;
 			$$ = filter_opts;
 		}
@@ -2436,14 +2461,14 @@ filter_opt	: USER uids {
 				filter_opts.prob = 1;
 		}
 		| statelim_filter_opt			{
-			if (filter_opts.statelim != PF_STATELIM_ID_NONE) {
+			if (filter_opts.statelim.id != PF_STATELIM_ID_NONE) {
 				yyerror("state limiter already specified");
 				YYERROR;
 			}
 			filter_opts.statelim = $1;
 		}
 		| sourcelim_filter_opt			{
-			if (filter_opts.sourcelim != PF_SOURCELIM_ID_NONE) {
+			if (filter_opts.sourcelim.id != PF_SOURCELIM_ID_NONE) {
 				yyerror("source limiter already specified");
 				YYERROR;
 			}
@@ -5523,6 +5548,7 @@ lookup(char *s)
 		{ "nat-to",		NATTO},
 		{ "no",			NO},
 		{ "no-df",		NODF},
+		{ "no-match",		NOMATCH},
 		{ "no-route",		NOROUTE},
 		{ "no-sync",		NOSYNC},
 		{ "on",			ON},
@@ -6408,11 +6434,11 @@ filteropts_to_rule(struct pf_rule *r, struct filter_opts *opts)
 		r->rule_flag |= PFRULE_ONCE;
 	}
 
-	if (opts->statelim != PF_STATELIM_ID_NONE && r->action != PF_PASS) {
+	if (opts->statelim.id != PF_STATELIM_ID_NONE && r->action != PF_PASS) {
 		yyerror("state limiter only applies to pass rules");
 		return (1);
 	}
-	if (opts->sourcelim != PF_SOURCELIM_ID_NONE && r->action != PF_PASS) {
+	if (opts->sourcelim.id != PF_SOURCELIM_ID_NONE && r->action != PF_PASS) {
 		yyerror("source limiter only applies to pass rules");
 		return (1);
 	}
@@ -6421,8 +6447,10 @@ filteropts_to_rule(struct pf_rule *r, struct filter_opts *opts)
 	r->pktrate.limit = opts->pktrate.limit;
 	r->pktrate.seconds = opts->pktrate.seconds;
 	r->prob = opts->prob;
-	r->statelim = opts->statelim;
-	r->sourcelim = opts->sourcelim;
+	r->statelim.id = opts->statelim.id;
+	r->statelim.limiter_action = opts->statelim.limiter_action;
+	r->sourcelim.id = opts->sourcelim.id;
+	r->sourcelim.limiter_action = opts->sourcelim.limiter_action;
 	r->rtableid = opts->rtableid;
 	r->tos = opts->tos;
 

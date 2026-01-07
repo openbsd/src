@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.606 2025/12/05 11:39:59 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.607 2026/01/07 13:50:05 sashan Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2025 $
+.Dd $Mdocdate: January 7 2026 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -681,20 +681,28 @@ For example, the following rule will drop 20% of incoming ICMP packets:
 .Pp
 .Dl block in proto icmp probability 20%
 .Pp
-.It Cm state limiter Ar name
+.It Cm state limiter Ar name Oo Cm (limiter options) Oc
 Use the specified state limiter to restrict the creation of states
 by this rule.
-If capacity is not available, the rule does not match and evaluation
-of the ruleset continues.
+By default if capacity is not available, the rule is ignored
+and ruleset evaluation continues with next rule..
+Use
+.Ic block
+option to change default behavior such packet is blocked
+when limit is reached.
 See the
 .Sx State Limiters
 section for more information.
 .Pp
-.It Cm source limiter Ar name
+.It Cm source limiter Ar name Oo Cm (limiter options) Oc
 Use the specified source limiter to restrict the creation of states
 by this rule.
-If capacity is not available, the rule does not match and evaluation
-of the ruleset continues.
+By default if capacity is not available, the rule is ignored
+and ruleset evaluation continues with next rule..
+Use
+.Ic block
+option to change default behavior such packet is blocked
+when limit is reached.
 See the
 .Sx Source Limiters
 section for more information.
@@ -2988,7 +2996,10 @@ filteropt      = user | group | flags | icmp-type | icmp6-type |
                  "set prio" ( number | "(" number [ [ "," ] number ] ")" ) |
                  "set queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%" |
-                 "state limiter" name | "source limiter" name | "prio" number |
+                 "state limiter" name |
+                 "state limiter" name "(" limiter-opts ")" |
+                 "source limiter" name |
+                 "source limiter" name "(" limiter-opts ")" | "prio" number |
                  "af-to" af "from" ( redirhost | "{" redirhost-list "}" )
                  [ "to" ( redirhost | "{" redirhost-list "}" ) ] |
                  "binat-to" ( redirhost | "{" redirhost-list "}" )
@@ -3126,6 +3137,8 @@ pooltype       = ( "bitmask" | "least-states" |
                  "random" | "round-robin" |
                  "source-hash" [ ( hex-key | string-key ) ] )
                  [ "sticky-address" ]
+
+limiter-opts   = "block" | "no-match"
 
 include        = "include" filename
 .Ed
