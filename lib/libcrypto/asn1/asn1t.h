@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.24 2024/07/08 16:24:22 beck Exp $ */
+/* $OpenBSD: asn1t.h,v 1.25 2026/01/07 10:18:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -430,13 +430,12 @@ extern "C" {
 #define ASN1_ADB(name) \
 	static const ASN1_ADB_TABLE name##_adbtbl[]
 
-
-#define ASN1_ADB_END(name, flags, field, app_table, def, none) \
+/* In 5b70372d OpenSSL added adb_cb. Ignore this until someone complains. */
+#define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
 	;\
 	static const ASN1_ADB name##_adb = {\
 		flags,\
 		offsetof(name, field),\
-		app_table,\
 		name##_adbtbl,\
 		sizeof(name##_adbtbl) / sizeof(ASN1_ADB_TABLE),\
 		def,\
