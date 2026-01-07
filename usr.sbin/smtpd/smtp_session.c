@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.445 2026/01/07 07:44:31 martijn Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.446 2026/01/07 07:54:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -82,7 +82,6 @@ enum smtp_command {
 	CMD_RSET,
 	CMD_QUIT,
 	CMD_HELP,
-	CMD_WIZ,
 	CMD_NOOP,
 	CMD_COMMIT,
 };
@@ -228,7 +227,6 @@ static void smtp_proceed_rcpt_to(struct smtp_session *, const char *);
 static void smtp_proceed_data(struct smtp_session *, const char *);
 static void smtp_proceed_noop(struct smtp_session *, const char *);
 static void smtp_proceed_help(struct smtp_session *, const char *);
-static void smtp_proceed_wiz(struct smtp_session *, const char *);
 static void smtp_proceed_quit(struct smtp_session *, const char *);
 static void smtp_proceed_commit(struct smtp_session *, const char *);
 static void smtp_proceed_rollback(struct smtp_session *, const char *);
@@ -279,7 +277,6 @@ static struct {
 	{ CMD_QUIT,             FILTER_QUIT,            "QUIT",         smtp_check_noparam,     smtp_proceed_quit },
 	{ CMD_NOOP,             FILTER_NOOP,            "NOOP",         smtp_check_noop,        smtp_proceed_noop },
 	{ CMD_HELP,             FILTER_HELP,            "HELP",         smtp_check_noparam,     smtp_proceed_help },
-	{ CMD_WIZ,              FILTER_WIZ,             "WIZ",          smtp_check_noparam,     smtp_proceed_wiz },
 	{ CMD_COMMIT,  		FILTER_COMMIT,		".",		smtp_check_noparam,	smtp_proceed_commit },
 	{ -1,                   0,                      NULL,           NULL },
 };
@@ -1358,12 +1355,6 @@ smtp_command(struct smtp_session *s, char *line)
 		smtp_proceed_help(s, NULL);
 		break;
 
-	case CMD_WIZ:
-		if (!smtp_check_noparam(s, args))
-			break;
-		smtp_proceed_wiz(s, NULL);
-		break;
-
 	default:
 		smtp_reply(s, "500 %s %s: Command unrecognized",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
@@ -1898,14 +1889,6 @@ smtp_proceed_help(struct smtp_session *s, const char *args)
 	    "please contact bugs@openbsd.org", code);
 	smtp_reply(s, "214-%s with full details", code);
 	smtp_reply(s, "214 %s End of HELP info", code);
-}
-
-static void
-smtp_proceed_wiz(struct smtp_session *s, const char *args)
-{
-	smtp_reply(s, "500 %s %s: this feature is not supported yet ;-)",
-	    esc_code(ESC_STATUS_PERMFAIL, ESC_INVALID_COMMAND),
-	    esc_description(ESC_INVALID_COMMAND));
 }
 
 static void
