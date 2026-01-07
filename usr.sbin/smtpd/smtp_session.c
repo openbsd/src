@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.444 2025/05/13 14:52:42 op Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.445 2026/01/07 07:44:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1593,7 +1593,7 @@ smtp_check_rcpt_to(struct smtp_session *s, const char *args)
 	}
 
 	if (s->tx->rcptcount >= env->sc_session_max_rcpt) {
-		smtp_reply(s->tx->session, "451 %s %s: Too many recipients",
+		smtp_reply(s->tx->session, "452 %s %s: Too many recipients",
 		    esc_code(ESC_STATUS_TEMPFAIL, ESC_TOO_MANY_RECIPIENTS),
 		    esc_description(ESC_TOO_MANY_RECIPIENTS));
 		return 0;
@@ -2434,7 +2434,7 @@ smtp_tx_rcpt_to(struct smtp_tx *tx, const char *line)
 	copy = tmp;
 
 	if (tx->rcptcount >= env->sc_session_max_rcpt) {
-		smtp_reply(tx->session, "451 %s %s: Too many recipients",
+		smtp_reply(tx->session, "452 %s %s: Too many recipients",
 		    esc_code(ESC_STATUS_TEMPFAIL, ESC_TOO_MANY_RECIPIENTS),
 		    esc_description(ESC_TOO_MANY_RECIPIENTS));
 		return;
