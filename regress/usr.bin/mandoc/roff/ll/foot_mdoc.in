@@ -1,0 +1,19 @@
+.\" $OpenBSD: foot_mdoc.in,v 1.1 2026/01/07 08:30:51 schwarze Exp $
+.Dd $Mdocdate: January 7 2026 $
+.Dt LL-FOOT_MDOC 1
+.Os
+.Sh NAME
+.ll 40n
+.Nm ll-foot_mdoc
+.Nd line length in page headers and footers
+.Sh DESCRIPTION
+The right margin is reset after the end of a section,
+so this text is full width again.
+.Pp
+.ll 40n
+The line length set with
+.Pf . Ic ll
+only takes effect after the page header,
+and it is reset to the
+.Fl O Cm width No / Cm paper
+default before the page footer.

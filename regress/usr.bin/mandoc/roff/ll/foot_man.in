@@ -1,0 +1,14 @@
+.\" $OpenBSD: foot_man.in,v 1.1 2026/01/07 08:30:51 schwarze Exp $
+.TH LL-FOOT_MAN 1 2026-01-07
+.SH NAME
+.ll 40n
+ll-foot_man - line length in page headers and footers
+.SH DESCRIPTION
+The line length set with
+.RB . ll
+only takes effect after the page header,
+and it is reset to the
+.B -O width
+/
+.B paper
+default before the page footer.

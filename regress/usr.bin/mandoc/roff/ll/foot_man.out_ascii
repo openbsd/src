@@ -1,0 +1,14 @@
+LL-FOOT_MAN(1)              General Commands Manual             LL-FOOT_MAN(1)
+
+NNAAMMEE
+     ll-foot_man - line length in page
+     headers and footers
+
+DDEESSCCRRIIPPTTIIOONN
+     The line length set with .llll only
+     takes effect after the page header,
+     and it is reset to the --OO wwiiddtthh /
+     ppaappeerr default before the page
+     footer.
+
+OpenBSD                           2026-01-07                    LL-FOOT_MAN(1)
