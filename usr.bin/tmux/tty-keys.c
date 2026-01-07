@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.198 2026/01/06 20:09:42 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.199 2026/01/07 20:03:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -956,7 +956,8 @@ partial_key:
 	if (delay == 0)
 		delay = 1;
 	if ((tty->flags & (TTY_WAITFG|TTY_WAITBG) ||
-	    (tty->flags & TTY_ALL_REQUEST_FLAGS) != TTY_ALL_REQUEST_FLAGS)) {
+	    (tty->flags & TTY_ALL_REQUEST_FLAGS) != TTY_ALL_REQUEST_FLAGS) ||
+	    !TAILQ_EMPTY(&c->input_requests)) {
 		log_debug("%s: increasing delay for active query", c->name);
 		if (delay < 500)
 			delay = 500;
