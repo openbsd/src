@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.452 2025/12/02 08:20:32 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.453 2026/01/07 18:29:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2111,6 +2111,12 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 	if (!tty_is_visible(tty, ctx, ctx->ocx, ctx->ocy, 1, 1) ||
 	    (gcp->data.width == 1 && !tty_check_overlay(tty, px, py)))
 		return;
+
+	if (ctx->num == 2) {
+		tty_draw_line(tty, s, 0, s->cy, screen_size_x(s),
+		    ctx->xoff - ctx->wox, py, &ctx->defaults, ctx->palette);
+		return;
+	}
 
 	/* Handle partially obstructed wide characters. */
 	if (gcp->data.width > 1) {
