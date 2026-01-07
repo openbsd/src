@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpicpu.c,v 1.1 2025/06/07 15:11:12 kettenis Exp $	*/
+/*	$OpenBSD: acpicpu.c,v 1.2 2026/01/07 17:02:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis
  *
@@ -249,30 +249,42 @@ acpicpu_setperf(int level)
 	task_add(systq, &acpicpu_setperf_task);
 }
 
+uint64_t
+acpicpu_calcfreq(struct acpicpu_softc *sc, uint64_t perf)
+{
+	uint64_t delta_perf;
+	uint64_t delta_freq;
+
+	delta_freq = sc->sc_nominal_freq - sc->sc_lowest_freq;
+	delta_perf = sc->sc_nominal_perf - sc->sc_lowest_perf;
+	if (delta_perf == 0)
+		return sc->sc_nominal_freq;
+	
+	return sc->sc_lowest_freq +
+	    (perf - sc->sc_lowest_perf) * delta_freq / delta_perf;
+}
+
 int
 acpicpu_cpuspeed(int *freq)
 {
 	struct acpicpu_softc *sc = NULL;
-	uint64_t delta_perf, perf = 0;
-	uint64_t delta_freq;
+	uint64_t perf = 0;
 	int i;
 
+	/* Find the first CPU for which we know the nominal frequency. */
 	for (i = 0; i < acpicpu_cd.cd_ndevs; i++) {
 		sc = acpicpu_cd.cd_devs[i];
-		if (sc == NULL || sc->sc_nominal_perf == 0)
-			continue;
+		if (sc && sc->sc_nominal_freq > 0)
+			break;
 	}
-	KASSERT(sc != NULL);
+	if (sc == NULL)
+		return EOPNOTSUPP;
 
 	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 	    sc->sc_desired_perf.address_space_id, sc->sc_desired_perf.address,
 	    (1 << (sc->sc_desired_perf.access_size - 1)),
 	    sc->sc_desired_perf.register_bit_width / 8, &perf);
-
-	delta_freq = sc->sc_nominal_freq - sc->sc_lowest_freq;
-	delta_perf = sc->sc_nominal_perf - sc->sc_lowest_perf;
-	*freq = sc->sc_lowest_freq +
-	    (perf - sc->sc_lowest_perf) * delta_freq / delta_perf;
+	*freq = acpicpu_calcfreq(sc, perf);
 	return 0;
 }
 
@@ -287,8 +299,7 @@ acpicpu_kstat_read(struct kstat *ks)
 	struct acpicpu_softc *sc = ks->ks_softc;
 	struct acpicpu_kstats *ak = ks->ks_data;
 	struct timespec now, diff;
-	uint64_t delta_perf, perf;
-	uint64_t delta_freq, freq;
+	uint64_t freq, perf = 0;
 
 	/* rate limit */
 	getnanouptime(&now);
@@ -296,20 +307,16 @@ acpicpu_kstat_read(struct kstat *ks)
 	if (diff.tv_sec < 1)
 		return 0;
 
-	perf = 0;
 	acpi_gasio(sc->sc_acpi, ACPI_IOREAD,
 	    sc->sc_desired_perf.address_space_id, sc->sc_desired_perf.address,
 	    (1 << (sc->sc_desired_perf.access_size - 1)),
 	    sc->sc_desired_perf.register_bit_width / 8, &perf);
-	if (perf == 0)
-		return 0;
 	kstat_kv_u64(&ak->ak_perf) = perf;
 
-	delta_freq = sc->sc_nominal_freq - sc->sc_lowest_freq;
-	delta_perf = sc->sc_nominal_perf - sc->sc_lowest_perf;
-	freq = sc->sc_lowest_freq +
-	    (perf - sc->sc_lowest_perf) * delta_freq / delta_perf;
-	kstat_kv_freq(&ak->ak_freq) = freq * 1000000;
+	if (sc->sc_nominal_freq > 0) {
+		freq = acpicpu_calcfreq(sc, perf);
+		kstat_kv_freq(&ak->ak_freq) = freq * 1000000;
+	}
 
 	ks->ks_updated = now;
 
@@ -341,7 +348,8 @@ acpicpu_kstat_attach(struct acpicpu_softc *sc)
 	ak = malloc(sizeof(*ak), M_DEVBUF, M_WAITOK);
 
 	kstat_kv_init(&ak->ak_perf, "perf", KSTAT_KV_T_UINT64);
-	kstat_kv_init(&ak->ak_freq, "freq", KSTAT_KV_T_FREQ);
+	if (sc->sc_nominal_freq > 0)
+		kstat_kv_init(&ak->ak_freq, "freq", KSTAT_KV_T_FREQ);
 
 	ks->ks_softc = sc;
 	ks->ks_data = ak;
