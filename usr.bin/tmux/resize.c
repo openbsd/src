@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.52 2024/11/27 10:12:20 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.53 2026/01/08 12:05:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -127,7 +127,7 @@ clients_calculate_size(int type, int current, struct client *c,
 	if (type == WINDOW_SIZE_LARGEST) {
 		*sx = 0;
 		*sy = 0;
-	} else if (type == WINDOW_SIZE_MANUAL) {
+	} else if (w != NULL && type == WINDOW_SIZE_MANUAL) {
 		*sx = w->manual_sx;
 		*sy = w->manual_sy;
 		log_debug("%s: manual size %ux%u", __func__, *sx, *sy);
