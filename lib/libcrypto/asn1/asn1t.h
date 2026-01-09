@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.25 2026/01/07 10:18:35 tb Exp $ */
+/* $OpenBSD: asn1t.h,v 1.26 2026/01/09 03:34:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -573,7 +573,7 @@ struct ASN1_ITEM_st {
 	const ASN1_TEMPLATE *templates;	/* If SEQUENCE or CHOICE this contains the contents */
 	long tcount;			/* Number of templates if SEQUENCE or CHOICE */
 	const void *funcs;		/* functions that handle this type */
-	long size;			/* Structure size (usually)*/
+	long size;			/* Structure size (usually) */
 	const char *sname;		/* Structure name */
 };
 
