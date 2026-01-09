@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.62 2025/03/12 16:01:31 job Exp $	*/
+/*	$OpenBSD: df.c,v 1.63 2026/01/09 19:54:57 job Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -298,6 +298,60 @@ prthuman(struct statfs *sfsp, unsigned long long used)
 }
 
 /*
+ * Human readable output using SI symbols and multiples of thousand.
+ */
+static const struct scale {
+	char symbol;
+	unsigned long long factor;
+} scale[] = {
+	{ ' ', 1LL },
+	{ 'k', 1000LL },					/* kilo */
+	{ 'M', 1000LL * 1000 },					/* mega */
+	{ 'G', 1000LL * 1000 * 1000 },				/* giga */
+	{ 'T', 1000LL * 1000 * 1000 * 1000 },			/* tera */
+	{ 'P', 1000LL * 1000 * 1000 * 1000 * 1000 },		/* peta */
+	{ 'E', 1000LL * 1000 * 1000 * 1000 * 1000 * 1000 }	/*  exa */
+};
+#define SCALE_LENGTH	(sizeof(scale) / sizeof(scale[0]))
+
+static void
+prtscaleddecimal(unsigned long long num)
+{
+	long long fract = 0;
+	unsigned long i;
+	int unit = 0;
+
+	if (num < 1000 || num / 1000 >= scale[SCALE_LENGTH - 1].factor) {
+		(void)printf(" %6llu", num);
+		return;
+	}
+
+	for (i = 0; i < SCALE_LENGTH; i++) {
+		if (num / 1000 < scale[i].factor) {
+			unit = i;
+			fract = (i == 0) ? 0 : num % scale[i].factor;
+			num /= scale[i].factor;
+			if (i > 0)
+				fract /= scale[i - 1].factor;
+			break;
+		}
+	}
+
+	fract = (10 * fract + 500) / 1000;
+	if (fract >= 10) {
+		num++;
+		fract = 0;
+	}
+
+	if (num >= 100) {
+		if (fract >= 5)
+			num++;
+		(void)printf(" %5llu%c", num, scale[unit].symbol);
+	} else
+		(void)printf(" %3llu.%1llu%c", num, fract, scale[unit].symbol);
+}
+
+/*
  * Convert statfs returned filesystem size into BLOCKSIZE units.
  * Attempts to avoid overflow for large filesystems.
  */
@@ -328,8 +382,16 @@ prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %8llu %8llu %4d%% ", used, sfsp->f_ffree,
-		   percent(used, inodes));
+
+		if (hflag) {
+			(void)printf(" ");
+			prtscaleddecimal(used);
+			prtscaleddecimal(sfsp->f_ffree);
+			(void)printf(" %4d%% ", percent(used, inodes));
+		} else {
+			(void)printf(" %8llu %8llu %4d%% ", used, sfsp->f_ffree,
+			   percent(used, inodes));
+		}
 	} else
 		(void)printf("  ");
 	(void)printf("  %s\n", sfsp->f_mntonname);
@@ -362,8 +424,12 @@ bsdprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 		(void)printf("%-*.*s %s      Used     Avail Capacity",
 			     maxwidth, maxwidth, "Filesystem", header);
 	}
-	if (iflag)
-		(void)printf("  iused    ifree %%iused");
+	if (iflag) {
+		if (hflag)
+			(void)printf(" iused  ifree %%iused");
+		else
+			(void)printf("  iused    ifree %%iused");
+	}
 	(void)printf("  Mounted on\n");
 
 
