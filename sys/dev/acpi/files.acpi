@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.78 2025/12/27 12:58:23 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.79 2026/01/10 16:12:36 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -53,6 +53,11 @@ file	dev/acpi/acpiec.c		acpiec
 device	acpige
 attach	acpige at acpi
 file	dev/acpi/acpige.c		acpige
+
+# Generic Buttons device
+device	acpihid
+attach	acpihid at acpi
+file	dev/acpi/acpihid.c		acpihid
 
 # Thermal Zone
 device	acpitz

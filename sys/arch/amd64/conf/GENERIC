@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.537 2025/12/27 12:58:23 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.538 2026/01/10 16:12:36 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,6 +48,7 @@ acpicmos*	at acpi?
 acpidock*	at acpi?
 acpidmar0	at acpi? disable
 acpiec*		at acpi?
+acpihid*	at acpi?
 acpipci*	at acpi?
 acpiprt*	at acpi?
 acpisbs*	at acpi?

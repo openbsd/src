@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.139 2025/11/14 01:55:07 jcs Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.140 2026/01/10 16:12:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -42,6 +42,11 @@ extern int acpi_debug;
 #define dprintf(x...)
 #define dnprintf(n,x...)
 #endif
+
+#define ACPI_UUID(a, b, c, d, e) \
+    { (a), (a) >> 8, (a) >> 16, (a) >> 24, \
+      (b), (b) >> 8, (c), (c) >> 8, (d) >> 8, (d), \
+      (e) >> 40, (e) >> 32, (e) >> 24, (e) >> 16, (e) >> 8, (e) }
 
 extern int acpi_hasprocfvs;
 extern int acpi_haspci;
