@@ -498,4 +498,17 @@ is($continue, 'xx', 'continue reached twice');
     is("@have", "Pointy end Up Flamey end Down", 'for my ($one, $two)');
 }
 
+# GH #23405 - segfaults when compiling 2-var for loops
+{
+    my $dummy = sub {};
+    for my ($x, $y) (main->$dummy) {}
+    pass '2-var for does not crash on method calls';
+
+    my sub dummy {}
+    sub {
+        for my ($x, $y) (dummy) {}
+    }->();
+    pass '2-var for does not crash on lexical sub calls';
+}
+
 done_testing();

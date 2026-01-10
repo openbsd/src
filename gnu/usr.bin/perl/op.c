@@ -9665,7 +9665,7 @@ S_op_is_cv_xsub(pTHX_ OP *o, XSUBADDR_t xsub)
         }
 
         case OP_PADCV:
-            cv = (CV *)PAD_SVl(o->op_targ);
+            cv = find_lexical_cv(o->op_targ);
             assert(cv && SvTYPE(cv) == SVt_PVCV);
             break;
 
@@ -9683,10 +9683,18 @@ S_op_is_cv_xsub(pTHX_ OP *o, XSUBADDR_t xsub)
 static bool
 S_op_is_call_to_cv_xsub(pTHX_ OP *o, XSUBADDR_t xsub)
 {
-    if(o->op_type != OP_ENTERSUB)
+    if (o->op_type != OP_ENTERSUB)
         return false;
 
-    OP *cvop = cLISTOPx(cUNOPo->op_first)->op_last;
+    /* entersub may be a UNOP, not a LISTOP, so we can't just use op_last */
+    OP *aop = cUNOPo->op_first;
+    if (!OpHAS_SIBLING(aop)) {
+        aop = cUNOPx(aop)->op_first;
+    }
+    aop = OpSIBLING(aop);
+    OP *cvop;
+    for (cvop = aop; OpHAS_SIBLING(cvop); cvop = OpSIBLING(cvop)) ;
+
     return op_is_cv_xsub(cvop, xsub);
 }
 
