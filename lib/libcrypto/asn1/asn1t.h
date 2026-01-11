@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.27 2026/01/09 03:46:44 tb Exp $ */
+/* $OpenBSD: asn1t.h,v 1.28 2026/01/11 07:52:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -362,114 +362,144 @@ extern "C" {
 
 /* This helps with the template wrapper form of ASN1_ITEM */
 
-#define ASN1_EX_TEMPLATE_TYPE(flags, tag, name, type) { \
-	(flags), (tag), 0,\
-	#name, ASN1_ITEM_ref(type) }
+#define ASN1_EX_TEMPLATE_TYPE(flagsval, tagval, name, type)		\
+	{								\
+		.flags = (flagsval),					\
+		.tag = (tagval),					\
+		.offset = 0,						\
+		.field_name = #name,					\
+		.item = ASN1_ITEM_ref(type),				\
+	}
 
 /* These help with SEQUENCE or CHOICE components */
 
 /* used to declare other types */
 
-#define ASN1_EX_TYPE(flags, tag, stname, field, type) { \
-	(flags), (tag), offsetof(stname, field),\
-	#field, ASN1_ITEM_ref(type) }
+#define ASN1_EX_TYPE(flagsval, tagval, stname, field, type)		\
+	{								\
+		.flags = (flagsval),					\
+		.tag = (tagval),					\
+		.offset = offsetof(stname, field),			\
+		.field_name = #field,					\
+		.item = ASN1_ITEM_ref(type),				\
+	}
 
 /* implicit and explicit helper macros */
 
-#define ASN1_IMP_EX(stname, field, type, tag, ex) \
-		ASN1_EX_TYPE(ASN1_TFLG_IMPLICIT | ex, tag, stname, field, type)
+#define ASN1_IMP_EX(stname, field, type, tag, ex)			\
+	ASN1_EX_TYPE(ASN1_TFLG_IMPLICIT | ex, tag, stname, field, type)
 
-#define ASN1_EXP_EX(stname, field, type, tag, ex) \
-		ASN1_EX_TYPE(ASN1_TFLG_EXPLICIT | ex, tag, stname, field, type)
+#define ASN1_EXP_EX(stname, field, type, tag, ex)			\
+	ASN1_EX_TYPE(ASN1_TFLG_EXPLICIT | ex, tag, stname, field, type)
 
 /* Any defined by macros: the field used is in the table itself */
 
-#define ASN1_ADB_OBJECT(tblname) { ASN1_TFLG_ADB_OID, -1, 0, #tblname, (const ASN1_ITEM *)&(tblname##_adb) }
-#define ASN1_ADB_INTEGER(tblname) { ASN1_TFLG_ADB_INT, -1, 0, #tblname, (const ASN1_ITEM *)&(tblname##_adb) }
+#define ASN1_ADB_OBJECT(tblname)					\
+	{								\
+		.flags = ASN1_TFLG_ADB_OID,				\
+		.tag = -1,						\
+		.offset = 0,						\
+		.field_name = #tblname,					\
+		.item = (const ASN1_ITEM *)&(tblname##_adb),		\
+	}
+#define ASN1_ADB_INTEGER(tblname)					\
+	{								\
+		.flags = ASN1_TFLG_ADB_INT,				\
+		.tag = -1,						\
+		.offset = 0,						\
+		.field_name = #tblname,					\
+		.item = (const ASN1_ITEM *)&(tblname##_adb),		\
+	}
+
 /* Plain simple type */
-#define ASN1_SIMPLE(stname, field, type) ASN1_EX_TYPE(0,0, stname, field, type)
+#define ASN1_SIMPLE(stname, field, type)				\
+	ASN1_EX_TYPE(0, 0, stname, field, type)
 
 /* OPTIONAL simple type */
-#define ASN1_OPT(stname, field, type) ASN1_EX_TYPE(ASN1_TFLG_OPTIONAL, 0, stname, field, type)
+#define ASN1_OPT(stname, field, type)					\
+	ASN1_EX_TYPE(ASN1_TFLG_OPTIONAL, 0, stname, field, type)
 
 /* IMPLICIT tagged simple type */
-#define ASN1_IMP(stname, field, type, tag) ASN1_IMP_EX(stname, field, type, tag, 0)
+#define ASN1_IMP(stname, field, type, tag)				\
+	ASN1_IMP_EX(stname, field, type, tag, 0)
 
 /* IMPLICIT tagged OPTIONAL simple type */
-#define ASN1_IMP_OPT(stname, field, type, tag) ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL)
+#define ASN1_IMP_OPT(stname, field, type, tag)				\
+	ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL)
 
 /* Same as above but EXPLICIT */
 
-#define ASN1_EXP(stname, field, type, tag) ASN1_EXP_EX(stname, field, type, tag, 0)
-#define ASN1_EXP_OPT(stname, field, type, tag) ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL)
+#define ASN1_EXP(stname, field, type, tag)				\
+	ASN1_EXP_EX(stname, field, type, tag, 0)
+#define ASN1_EXP_OPT(stname, field, type, tag)				\
+	ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL)
 
 /* SEQUENCE OF type */
-#define ASN1_SEQUENCE_OF(stname, field, type) \
-		ASN1_EX_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, stname, field, type)
+#define ASN1_SEQUENCE_OF(stname, field, type)				\
+	ASN1_EX_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, stname, field, type)
 
 /* OPTIONAL SEQUENCE OF */
-#define ASN1_SEQUENCE_OF_OPT(stname, field, type) \
-		ASN1_EX_TYPE(ASN1_TFLG_SEQUENCE_OF|ASN1_TFLG_OPTIONAL, 0, stname, field, type)
+#define ASN1_SEQUENCE_OF_OPT(stname, field, type)			\
+	ASN1_EX_TYPE(ASN1_TFLG_SEQUENCE_OF|ASN1_TFLG_OPTIONAL, 0, stname, field, type)
 
 /* Same as above but for SET OF */
 
-#define ASN1_SET_OF(stname, field, type) \
-		ASN1_EX_TYPE(ASN1_TFLG_SET_OF, 0, stname, field, type)
+#define ASN1_SET_OF(stname, field, type)				\
+	ASN1_EX_TYPE(ASN1_TFLG_SET_OF, 0, stname, field, type)
 
-#define ASN1_SET_OF_OPT(stname, field, type) \
-		ASN1_EX_TYPE(ASN1_TFLG_SET_OF|ASN1_TFLG_OPTIONAL, 0, stname, field, type)
+#define ASN1_SET_OF_OPT(stname, field, type)				\
+	ASN1_EX_TYPE(ASN1_TFLG_SET_OF|ASN1_TFLG_OPTIONAL, 0, stname, field, type)
 
 /* Finally compound types of SEQUENCE, SET, IMPLICIT, EXPLICIT and OPTIONAL */
 
-#define ASN1_IMP_SET_OF(stname, field, type, tag) \
-			ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_SET_OF)
+#define ASN1_IMP_SET_OF(stname, field, type, tag)			\
+	ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_SET_OF)
 
-#define ASN1_EXP_SET_OF(stname, field, type, tag) \
-			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SET_OF)
+#define ASN1_EXP_SET_OF(stname, field, type, tag)			\
+	ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SET_OF)
 
-#define ASN1_IMP_SET_OF_OPT(stname, field, type, tag) \
-			ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_SET_OF|ASN1_TFLG_OPTIONAL)
+#define ASN1_IMP_SET_OF_OPT(stname, field, type, tag)			\
+	ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_SET_OF|ASN1_TFLG_OPTIONAL)
 
-#define ASN1_EXP_SET_OF_OPT(stname, field, type, tag) \
-			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SET_OF|ASN1_TFLG_OPTIONAL)
+#define ASN1_EXP_SET_OF_OPT(stname, field, type, tag)			\
+	ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SET_OF|ASN1_TFLG_OPTIONAL)
 
-#define ASN1_IMP_SEQUENCE_OF(stname, field, type, tag) \
-			ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF)
+#define ASN1_IMP_SEQUENCE_OF(stname, field, type, tag)			\
+	ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF)
 
-#define ASN1_IMP_SEQUENCE_OF_OPT(stname, field, type, tag) \
-			ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF|ASN1_TFLG_OPTIONAL)
+#define ASN1_IMP_SEQUENCE_OF_OPT(stname, field, type, tag)		\
+	ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF|ASN1_TFLG_OPTIONAL)
 
-#define ASN1_EXP_SEQUENCE_OF(stname, field, type, tag) \
-			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF)
+#define ASN1_EXP_SEQUENCE_OF(stname, field, type, tag)			\
+	ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF)
 
-#define ASN1_EXP_SEQUENCE_OF_OPT(stname, field, type, tag) \
-			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF|ASN1_TFLG_OPTIONAL)
+#define ASN1_EXP_SEQUENCE_OF_OPT(stname, field, type, tag)		\
+	ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF|ASN1_TFLG_OPTIONAL)
 
 /* EXPLICIT using indefinite length constructed form */
-#define ASN1_NDEF_EXP(stname, field, type, tag) \
-			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_NDEF)
+#define ASN1_NDEF_EXP(stname, field, type, tag)				\
+	ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_NDEF)
 
 /* EXPLICIT OPTIONAL using indefinite length constructed form */
-#define ASN1_NDEF_EXP_OPT(stname, field, type, tag) \
-			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL|ASN1_TFLG_NDEF)
+#define ASN1_NDEF_EXP_OPT(stname, field, type, tag)			\
+	ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL|ASN1_TFLG_NDEF)
 
 /* Macros for the ASN1_ADB structure */
 
-#define ASN1_ADB(name) \
+#define ASN1_ADB(name)							\
 	static const ASN1_ADB_TABLE name##_adbtbl[]
 
 /* In 5b70372d OpenSSL added adb_cb. Ignore this until someone complains. */
-#define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
-	;\
-	static const ASN1_ADB name##_adb = {\
-		flags,\
-		offsetof(name, field),\
-		name##_adbtbl,\
-		sizeof(name##_adbtbl) / sizeof(ASN1_ADB_TABLE),\
-		def,\
-		none\
+#define ASN1_ADB_END(name, flagsval, field, adb_cb, def, none)		\
+	;								\
+	static const ASN1_ADB name##_adb = {				\
+		.flags = flagsval,					\
+		.offset = offsetof(name, field),			\
+		.tbl = name##_adbtbl,					\
+		.tblcount = sizeof(name##_adbtbl) / sizeof(ASN1_ADB_TABLE),\
+		.default_tt = def,					\
+		.null_tt = none,					\
 	}
-
 
 #define ADB_ENTRY(val, template) {val, template}
 
