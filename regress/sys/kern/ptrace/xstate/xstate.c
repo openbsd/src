@@ -1,4 +1,4 @@
-/* $OpenBSD: xstate.c,v 1.2 2025/05/22 04:34:18 bluhm Exp $ */
+/* $OpenBSD: xstate.c,v 1.3 2026/01/12 08:23:06 cludwig Exp $ */
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -18,7 +18,7 @@ struct cpuid {
 
 struct xstate {
 	struct {
-		uint8_t		buf[1024];
+		uint8_t		*buf;
 		uint32_t	size;
 	} area;
 
@@ -73,8 +73,8 @@ xstate_init(struct xstate *xstate, pid_t pid)
 	if (ptrace(PT_GETXSTATE_INFO, pid,
 	    (caddr_t)&info, sizeof(info)) == -1)
 		err(1, "ptrace: PT_GETXSTATE_INFO");
-	if (info.xsave_len > sizeof(xstate->area.buf))
-		errx(1, "xstate buffer too small");
+
+	xstate->area.buf = malloc(info.xsave_len);
 	xstate->area.size = info.xsave_len;
 
 	if ((info.xsave_mask & XCR0_XMM_MASK) == 0 ||
@@ -94,6 +94,12 @@ xstate_init(struct xstate *xstate, pid_t pid)
 	xstate->components[XSTATE_COMPONENT_AVX].size = leaf.a;
 
 	return 0;
+}
+
+static void
+xstate_free(struct xstate *xstate)
+{
+	free(xstate->area.buf);
 }
 
 static void
@@ -181,6 +187,7 @@ test_ymm_get(struct xstate *xstate)
 		err(1, "ptrace: PT_GETXSTATE");
 	for (i = 0; i < 16; i++)
 		xstate_ymm_read(xstate, i, &ymm[i]);
+	xstate_free(xstate);
 	return check_ymm(ymm);
 }
 
@@ -223,6 +230,7 @@ test_ymm_set(struct xstate *xstate)
 		err(1, "ptrace: PT_CONTINUE");
 	if (waitpid(pid, &status, 0) == -1)
 		err(1, "waitpid");
+	xstate_free(xstate);
 	return WIFEXITED(status) && WEXITSTATUS(status) == 0 ? 0 : 1;
 }
 
