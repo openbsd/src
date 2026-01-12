@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.12 2025/01/16 10:33:27 sf Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.13 2026/01/12 18:15:33 helg Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -539,6 +539,7 @@ int
 viogpu_transfer_to_host_2d(struct viogpu_softc *sc, int resource_id,
     uint32_t width, uint32_t height)
 {
+	struct virtio_softc *vsc = sc->sc_virtio;
 	struct virtio_gpu_transfer_to_host_2d tth = { 0 };
 	struct virtio_gpu_ctrl_hdr resp = { 0 };
 
@@ -547,6 +548,9 @@ viogpu_transfer_to_host_2d(struct viogpu_softc *sc, int resource_id,
 	tth.r.width = width;
 	tth.r.height = height;
 
+	bus_dmamap_sync(vsc->sc_dmat, sc->sc_fb_dma_map, 0, sc->sc_fb_dma_size,
+	    BUS_DMASYNC_PREWRITE);
+
 	viogpu_send_cmd(sc, &tth, sizeof(tth), &resp, sizeof(resp));
 
 	if (resp.type != VIRTIO_GPU_RESP_OK_NODATA) {
@@ -554,6 +558,9 @@ viogpu_transfer_to_host_2d(struct viogpu_softc *sc, int resource_id,
 		    resp.type);
 		return 1;
 	}
+
+	bus_dmamap_sync(vsc->sc_dmat, sc->sc_fb_dma_map, 0, sc->sc_fb_dma_size,
+	    BUS_DMASYNC_POSTWRITE);
 
 	return 0;
 }
@@ -632,12 +639,15 @@ viogpu_wsmmap(void *v, off_t off, int prot)
 {
 	struct rasops_info *ri = v;
 	struct viogpu_softc *sc = ri->ri_hw;
+	struct virtio_softc *vsc = sc->sc_virtio;
 	size_t size = sc->sc_fb_dma_size;
+	bus_dma_segment_t segs = sc->sc_fb_dma_seg;
 
 	if (off < 0 || off >= size)
 		return -1;
 
-	return (((paddr_t)sc->sc_fb_dma_kva + off) | PMAP_NOCACHE);
+	return bus_dmamem_mmap(vsc->sc_dmat, &segs, 1, off, prot,
+	    BUS_DMA_WAITOK);
 }
 
 int
