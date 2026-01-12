@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1283 2026/01/07 08:16:20 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1284 2026/01/12 07:48:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1942,6 +1942,8 @@ struct client {
 	struct event		 repeat_timer;
 
 	struct event		 click_timer;
+	int			 click_where;
+	int			 click_wp;
 	u_int			 click_button;
 	struct mouse_event	 click_event;
 
