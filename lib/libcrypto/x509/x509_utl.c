@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.27 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.28 2026/01/12 22:08:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -147,8 +147,6 @@ X509V3_add_value_uchar(const char *name, const unsigned char *value,
 {
 	return X509V3_add_value(name, (const char *)value, extlist);
 }
-
-/* Free function for STACK_OF(CONF_VALUE) */
 
 void
 X509V3_conf_free(CONF_VALUE *conf)
@@ -353,8 +351,6 @@ X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
 
 #define HDR_NAME	1
 #define HDR_VALUE	2
-
-/*#define DEBUG*/
 
 STACK_OF(CONF_VALUE) *
 X509V3_parse_list(const char *line)
