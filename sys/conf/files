@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.748 2025/11/14 01:55:07 jcs Exp $
+#	$OpenBSD: files,v 1.749 2026/01/12 04:38:15 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -868,7 +868,6 @@ file net/slcompress.c			ppp
 file net/if_enc.c			enc
 file net/if_gre.c			gre			needs-count
 file net/if_trunk.c			trunk
-file net/trunklacp.c			trunk
 file net/if_aggr.c			aggr
 file net/if_tpmr.c			tpmr
 file net/if_mpe.c			mpe

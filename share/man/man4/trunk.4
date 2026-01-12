@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.31 2020/08/24 07:34:00 kn Exp $
+.\"	$OpenBSD: trunk.4,v 1.32 2026/01/12 04:38:15 dlg Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2020 $
+.Dd $Mdocdate: January 12 2026 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -38,7 +38,6 @@ command.
 The driver currently supports the trunk protocols
 .Ic broadcast ,
 .Ic failover ,
-.Ic lacp ,
 .Ic loadbalance ,
 .Ic none ,
 and
@@ -58,17 +57,6 @@ If the master port becomes unavailable,
 the next active port is used.
 The first interface added is the master port;
 any interfaces added after that are used as failover devices.
-.It Ic lacp
-Uses the IEEE 802.3ad (renamed to 802.1AX in 2014)
-Link Aggregation Control Protocol (LACP)
-and the Marker Protocol
-to increase link speed and provide redundancy.
-LACP trunk groups are composed of ports of the same speed,
-set to full-duplex operation.
-This protocol requires a switch which supports LACP.
-By default, the LACP implementation uses active-mode LACP,
-slow timeout, and 0x8000 (medium) priority as system and port
-priorities.
 .It Ic loadbalance
 Distributes outgoing traffic through all active ports
 and accepts incoming traffic from any active port.
@@ -90,6 +78,12 @@ The configuration can be done at runtime or by setting up a
 .Xr hostname.if 5
 configuration file for
 .Xr netstart 8 .
+.Pp
+.Nm
+does not implement
+IEEE 802.1AX (formerly 802.3ad) Link Aggregation,
+it is supported by
+.Xr aggr 4 .
 .Sh EXAMPLES
 Create a simple round robin trunk with two
 .Xr bge 4
@@ -113,6 +107,7 @@ device will be used:
 	192.168.1.1 netmask 255.255.255.0
 .Ed
 .Sh SEE ALSO
+.Xr aggr 4 ,
 .Xr inet 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
@@ -122,6 +117,10 @@ The
 .Nm
 device first appeared in
 .Ox 3.8 .
+Support for 802.3ad Link Aggregation was added in
+.Ox 4.4
+and removed in
+.Ox 7.9 .
 .Sh AUTHORS
 The
 .Nm
