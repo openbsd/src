@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.173 2025/11/13 15:18:53 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.174 2026/01/12 10:48:20 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -589,6 +589,13 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 	if (cert == NULL)
 		goto out;
 
+	if (cert->purpose != CERT_PURPOSE_CA &&
+	    cert->purpose != CERT_PURPOSE_BGPSEC_ROUTER) {
+		warnx("%s: %s not allowed in a manifest", file,
+		    purpose2str(cert->purpose));
+		goto out;
+	}
+
 	a = find_issuer(file, entp->certid, cert->aki, entp->mftaki);
 	if (a == NULL)
 		goto out;
@@ -892,6 +899,7 @@ parse_entity(struct entityq *q, struct ibufqueue *msgq, X509_STORE_CTX *ctx,
 			/*
 			 * If entp->datasz == SHA256_DIGEST_LENGTH, we have a
 			 * cert added from a manifest, so it is not a root cert.
+			 * proc_parser_cert() will also make sure of this.
 			 */
 			if (entp->data != NULL &&
 			    entp->datasz != SHA256_DIGEST_LENGTH) {
