@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.268 2025/11/18 14:04:45 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.269 2026/01/13 21:36:17 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -200,7 +200,6 @@ enum rtype {
 	RTYPE_RSC,
 	RTYPE_ASPA,
 	RTYPE_TAK,
-	RTYPE_GEOFEED,
 	RTYPE_SPL,
 	RTYPE_CCR,
 };
@@ -340,25 +339,6 @@ struct tak {
 	struct takey	*successor;
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* when the signature path expires */
-};
-
-/*
- * A single geofeed record
- */
-struct geoip {
-	struct cert_ip	*ip;
-	char		*loc;
-};
-
-/*
- * A geofeed file
- */
-struct geofeed {
-	struct geoip	*geoips; /* Prefix + location entry in the CSV */
-	size_t		 num_geoips;
-	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 expires; /* when the signature path expires */
-	int		 valid; /* all resources covered */
 };
 
 /*
@@ -708,7 +688,6 @@ extern ASN1_OBJECT *sign_time_oid;
 extern ASN1_OBJECT *rsc_oid;
 extern ASN1_OBJECT *aspa_oid;
 extern ASN1_OBJECT *tak_oid;
-extern ASN1_OBJECT *geofeed_oid;
 extern ASN1_OBJECT *spl_oid;
 extern ASN1_OBJECT *ccr_oid;
 
@@ -771,10 +750,6 @@ struct spl	*spl_read(struct ibuf *);
 void		 spl_insert_vsps(struct vsp_tree *, struct spl *,
 		    struct repo *);
 
-void		 geofeed_free(struct geofeed *);
-struct geofeed	*geofeed_parse(struct cert **, const char *, int, char *,
-		    size_t);
-
 void		 rsc_free(struct rsc *);
 struct rsc	*rsc_parse(struct cert **, const char *, int,
 		    const unsigned char *, size_t);
@@ -814,7 +789,6 @@ int		 valid_rsc(const char *, struct cert *, struct rsc *);
 int		 valid_econtent_version(const char *, const ASN1_INTEGER *,
 		    uint64_t);
 int		 valid_aspa(const char *, struct cert *, struct aspa *);
-int		 valid_geofeed(const char *, struct cert *, struct geofeed *);
 int		 valid_uuid(const char *);
 int		 valid_spl(const char *, struct cert *, struct spl *);
 
@@ -998,7 +972,6 @@ void		 roa_print(const struct cert *, const struct roa *);
 void		 rsc_print(const struct cert *, const struct rsc *);
 void		 aspa_print(const struct cert *, const struct aspa *);
 void		 tak_print(const struct cert *, const struct tak *);
-void		 geofeed_print(const struct cert *, const struct geofeed *);
 void		 spl_print(const struct cert *, const struct spl *);
 
 /* Missing RFC 3779 API */

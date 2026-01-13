@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.134 2025/12/02 06:54:08 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.135 2026/01/13 21:36:17 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -87,8 +87,6 @@ rtype_from_file_extension(const char *fn)
 		return RTYPE_ASPA;
 	if (strcasecmp(fn + sz - 4, ".tak") == 0)
 		return RTYPE_TAK;
-	if (strcasecmp(fn + sz - 4, ".csv") == 0)
-		return RTYPE_GEOFEED;
 	if (strcasecmp(fn + sz - 4, ".spl") == 0)
 		return RTYPE_SPL;
 	if (strcasecmp(fn + sz - 4, ".ccr") == 0)

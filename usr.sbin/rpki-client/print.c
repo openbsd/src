@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.72 2025/12/30 09:04:09 job Exp $ */
+/*	$OpenBSD: print.c,v 1.73 2026/01/13 21:36:17 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -797,58 +797,6 @@ tak_print(const struct cert *c, const struct tak *p)
 		takey_print("predecessor", p->predecessor);
 	if (p->successor != NULL)
 		takey_print("successor", p->successor);
-
-	if (outformats & FORMAT_JSON)
-		json_do_end();
-}
-
-void
-geofeed_print(const struct cert *c, const struct geofeed *p)
-{
-	char	 buf[128];
-	size_t	 i;
-
-	if (outformats & FORMAT_JSON) {
-		json_do_string("type", "geofeed");
-		json_do_string("ski", c->ski);
-		x509_print(c->x509);
-		json_do_string("aki", c->aki);
-		json_do_string("aia", c->aia);
-		json_do_int("signing_time", p->signtime);
-		json_do_int("valid_since", c->notbefore);
-		json_do_int("valid_until", c->notafter);
-		if (p->expires)
-			json_do_int("expires", p->expires);
-		json_do_array("records");
-	} else {
-		printf("Subject key identifier:   %s\n", pretty_key_id(c->ski));
-		x509_print(c->x509);
-		printf("Authority key identifier: %s\n", pretty_key_id(c->aki));
-		printf("Authority info access:    %s\n", c->aia);
-		printf("Signing time:             %s\n", time2str(p->signtime));
-		printf("Geofeed not before:       %s\n",
-		    time2str(c->notbefore));
-		printf("Geofeed not after:        %s\n", time2str(c->notafter));
-		printf("Geofeed CSV records:      ");
-	}
-
-	for (i = 0; i < p->num_geoips; i++) {
-		if (p->geoips[i].ip->type != CERT_IP_ADDR)
-			continue;
-
-		ip_addr_print(&p->geoips[i].ip->ip, p->geoips[i].ip->afi, buf,
-		    sizeof(buf));
-		if (outformats & FORMAT_JSON) {
-			json_do_object("geoip", 1);
-			json_do_string("prefix", buf);
-			json_do_string("location", p->geoips[i].loc);
-			json_do_end();
-		} else {
-			if (i > 0)
-				printf("%26s", "");
-			printf("IP: %s (%s)\n", buf, p->geoips[i].loc);
-		}
-	}
 
 	if (outformats & FORMAT_JSON)
 		json_do_end();

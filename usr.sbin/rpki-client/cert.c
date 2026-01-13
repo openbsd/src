@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.209 2026/01/12 10:56:16 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.210 2026/01/13 21:36:17 job Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1704,16 +1704,13 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 
 	if (sia == 0) {
 		/*
-		 * Allow two special snowflakes to omit the SIA in EE certs
+		 * Allow one special snowflake to omit the SIA in EE certs
 		 * even though this extension is mandated by RFC 6487, 4.8.8.2.
 		 * RFC 9323, 2 clarifies: it is because RSCs are not distributed
-		 * through the RPKI repository system. Same goes for Geofeed.
-		 * RFC 9092 had an EE cert sporting an rpkiNotify SIA (!).
-		 * RFC 9632 fixed this and pleads the Fifth on SIAs...
+		 * through the RPKI repository system.
 		 */
 		if (filemode && cert->purpose == CERT_PURPOSE_EE) {
-			if (rtype_from_file_extension(fn) != RTYPE_GEOFEED &&
-			    rtype_from_file_extension(fn) != RTYPE_RSC) {
+			if (rtype_from_file_extension(fn) != RTYPE_RSC) {
 				warnx("%s: RFC 6487, 4.8.8: cert without SIA",
 				    fn);
 				goto out;
