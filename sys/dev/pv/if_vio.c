@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.75 2026/01/13 10:10:14 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.76 2026/01/13 10:15:07 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -74,7 +74,8 @@
 #define VIRTIO_NET_CONFIG_DUPLEX	16 /*  8 bit */
 #define VIRTIO_NET_CONFIG_RSS_SIZE	17 /*  8 bit */
 #define VIRTIO_NET_CONFIG_RSS_LEN	18 /* 16 bit */
-#define VIRTIO_NET_CONFIG_HASH_TYPES	20 /* 16 bit */
+#define VIRTIO_NET_CONFIG_HASH_TYPES	20 /* 32 bit */
+#define VIRTIO_NET_CONFIG_TUNNEL_TYPES	24 /* 32 bit */
 
 /* Feature bits */
 #define VIRTIO_NET_F_CSUM			(1ULL<<0)
@@ -82,7 +83,6 @@
 #define VIRTIO_NET_F_CTRL_GUEST_OFFLOADS	(1ULL<<2)
 #define VIRTIO_NET_F_MTU			(1ULL<<3)
 #define VIRTIO_NET_F_MAC			(1ULL<<5)
-#define VIRTIO_NET_F_GSO			(1ULL<<6)
 #define VIRTIO_NET_F_GUEST_TSO4			(1ULL<<7)
 #define VIRTIO_NET_F_GUEST_TSO6			(1ULL<<8)
 #define VIRTIO_NET_F_GUEST_ECN			(1ULL<<9)
@@ -100,6 +100,12 @@
 #define VIRTIO_NET_F_GUEST_ANNOUNCE		(1ULL<<21)
 #define VIRTIO_NET_F_MQ				(1ULL<<22)
 #define VIRTIO_NET_F_CTRL_MAC_ADDR		(1ULL<<23)
+#define VIRTIO_NET_F_DEVICE_STATS		(1ULL<<50)
+#define VIRTIO_NET_F_HASH_TUNNEL		(1ULL<<51)
+#define VIRTIO_NET_F_VQ_NOTF_COAL		(1ULL<<52)
+#define VIRTIO_NET_F_NOTF_COAL			(1ULL<<53)
+#define VIRTIO_NET_F_GUEST_USO4			(1ULL<<54)
+#define VIRTIO_NET_F_GUEST_USO6			(1ULL<<55)
 #define VIRTIO_NET_F_HOST_USO			(1ULL<<56)
 #define VIRTIO_NET_F_HASH_REPORT		(1ULL<<57)
 #define VIRTIO_NET_F_GUEST_HDRLEN		(1ULL<<59)
@@ -121,7 +127,6 @@ static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_CTRL_GUEST_OFFLOADS,	"CtrlGuestOffl" },
 	{ VIRTIO_NET_F_MTU,			"MTU", },
 	{ VIRTIO_NET_F_MAC,			"MAC" },
-	{ VIRTIO_NET_F_GSO,			"GSO" },
 	{ VIRTIO_NET_F_GUEST_TSO4,		"GuestTSO4" },
 	{ VIRTIO_NET_F_GUEST_TSO6,		"GuestTSO6" },
 	{ VIRTIO_NET_F_GUEST_ECN,		"GuestECN" },
@@ -139,6 +144,12 @@ static const struct virtio_feature_name virtio_net_feature_names[] = {
 	{ VIRTIO_NET_F_GUEST_ANNOUNCE,		"GuestAnnounce" },
 	{ VIRTIO_NET_F_MQ,			"MQ" },
 	{ VIRTIO_NET_F_CTRL_MAC_ADDR,		"CtrlMAC" },
+	{ VIRTIO_NET_F_DEVICE_STATS,		"DevStats" },
+	{ VIRTIO_NET_F_HASH_TUNNEL,		"HashTun" },
+	{ VIRTIO_NET_F_VQ_NOTF_COAL,		"VqNotfCoal" },
+	{ VIRTIO_NET_F_NOTF_COAL,		"NotfCoal" },
+	{ VIRTIO_NET_F_GUEST_USO4,		"GuestUso4" },
+	{ VIRTIO_NET_F_GUEST_USO6,		"GuestUso6" },
 	{ VIRTIO_NET_F_HOST_USO,		"HostUso" },
 	{ VIRTIO_NET_F_HASH_REPORT,		"HashRpt" },
 	{ VIRTIO_NET_F_GUEST_HDRLEN,		"GuestHdrlen" },
