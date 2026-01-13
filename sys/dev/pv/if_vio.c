@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.74 2025/12/22 20:24:49 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.75 2026/01/13 10:10:14 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -624,7 +624,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
 	struct virtio_attach_args *va = aux;
-	int i, r, tx_max_segments;
+	int i, r, tx_max_segments, want_tso = 1;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (vsc->sc_child != NULL) {
@@ -637,23 +637,47 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_NET | IPL_MPSAFE;
-	vsc->sc_driver_features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
-	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |
-	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM |
-	    VIRTIO_F_RING_EVENT_IDX | VIRTIO_NET_F_GUEST_CSUM;
 
+negotiate:
+	vsc->sc_driver_features = VIRTIO_F_RING_EVENT_IDX;
+	vsc->sc_driver_features |= VIRTIO_NET_F_MAC;
+	vsc->sc_driver_features |= VIRTIO_NET_F_STATUS;
+	vsc->sc_driver_features |= VIRTIO_NET_F_CTRL_VQ;
+	vsc->sc_driver_features |= VIRTIO_NET_F_CTRL_RX;
+	vsc->sc_driver_features |= VIRTIO_NET_F_MRG_RXBUF;
+	vsc->sc_driver_features |= VIRTIO_NET_F_CSUM;
+	vsc->sc_driver_features |= VIRTIO_NET_F_GUEST_CSUM;
+	if (want_tso) {
+		vsc->sc_driver_features |= VIRTIO_NET_F_CTRL_GUEST_OFFLOADS;
+		vsc->sc_driver_features |= VIRTIO_NET_F_GUEST_TSO4;
+		vsc->sc_driver_features |= VIRTIO_NET_F_GUEST_TSO6;
+		vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO4;
+		vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO6;
+	}
 	if (va->va_nintr > 3 && ncpus > 1)
 		vsc->sc_driver_features |= VIRTIO_NET_F_MQ;
 
-	vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO4;
-	vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO6;
-
-	vsc->sc_driver_features |= VIRTIO_NET_F_CTRL_GUEST_OFFLOADS;
-	vsc->sc_driver_features |= VIRTIO_NET_F_GUEST_TSO4;
-	vsc->sc_driver_features |= VIRTIO_NET_F_GUEST_TSO6;
-
 	if (virtio_negotiate_features(vsc, virtio_net_feature_names) != 0)
 		goto err;
+
+	if ((virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4) ||
+	     virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6)) &&
+	    (!virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_GUEST_OFFLOADS) ||
+	     !virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF))) {
+		/*
+		 * We only support VIRTIO_NET_F_GUEST_TSO4/6 if we also have
+		 * both VIRTIO_NET_F_CTRL_GUEST_OFFLOADS and
+		 * VIRTIO_NET_F_MRG_RXBUF. In order to make this known to the
+		 * hypervisor, we need to redo feature negotiation.
+		 *
+		 * Unfortunately, Apple Virtualisation does not work with
+		 * only VIRTIO_NET_F_HOST_TSO4/6. Therefore we disable all TSO
+		 * in the fallback case.
+		 */
+		want_tso = 0;
+		virtio_reset(vsc);
+		goto negotiate;
+	}
 
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ)) {
 		i = virtio_read_device_config_2(vsc,
