@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1284 2026/01/12 07:48:36 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1285 2026/01/14 19:43:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2054,6 +2054,7 @@ struct client {
 #define PROMPT_KEY 0x10
 #define PROMPT_ACCEPT 0x20
 #define PROMPT_QUOTENEXT 0x40
+#define PROMPT_BSPACE_EXIT 0x80
 	int			 prompt_flags;
 	enum prompt_type	 prompt_type;
 	int			 prompt_cursor;

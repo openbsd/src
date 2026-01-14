@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.255 2025/12/22 08:41:01 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.256 2026/01/14 19:43:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1383,6 +1383,11 @@ process_key:
 		break;
 	case KEYC_BSPACE:
 	case 'h'|KEYC_CTRL:
+		if (c->prompt_flags & PROMPT_BSPACE_EXIT && size == 0) {
+			if (c->prompt_inputcb(c, c->prompt_data, NULL, 1) == 0)
+				status_prompt_clear(c);
+			break;
+		}
 		if (c->prompt_index != 0) {
 			if (c->prompt_index == size)
 				c->prompt_buffer[--c->prompt_index].size = 0;
