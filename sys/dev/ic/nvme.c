@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.125 2025/12/16 00:24:55 jmatthew Exp $ */
+/*	$OpenBSD: nvme.c,v 1.126 2026/01/14 01:07:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -959,9 +959,8 @@ nvme_passthrough_cmd(struct nvme_softc *sc, struct nvme_pt_cmd *pt, int dv_unit,
 	int				 flags;
 	int				 rv = 0;
 
-	ccb = nvme_ccb_get(sc);
-	if (ccb == NULL)
-		panic("nvme_passthrough_cmd: nvme_ccb_get returned NULL");
+	ccb = scsi_io_get(&sc->sc_iopool, 0);
+	KASSERT(ccb != NULL);
 
 	memset(&sqe, 0, sizeof(sqe));
 	sqe.opcode = pt->pt_opcode;
@@ -1041,7 +1040,9 @@ nvme_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 	if ((pt->pt_cdw10 & 0xff) == 0)
 		pt->pt_nsid = link->target;
 
+	rw_enter_write(&sc->sc_lock);
 	rv = nvme_passthrough_cmd(sc, pt, sc->sc_dev.dv_unit, link->target);
+	rw_exit_write(&sc->sc_lock);
 	if (rv)
 		goto done;
 
