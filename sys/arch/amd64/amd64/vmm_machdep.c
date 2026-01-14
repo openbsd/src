@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.67 2025/12/10 15:10:55 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.68 2026/01/14 22:42:34 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6141,6 +6141,7 @@ svm_handle_msr(struct vcpu *vcpu)
 		case MSR_BIOS_SIGN:
 		case MSR_INT_PEN_MSG:
 		case MSR_PLATFORM_ID:
+		case MSR_SYS_CFG:
 			/* Ignored */
 			*rax = 0;
 			*rdx = 0;
