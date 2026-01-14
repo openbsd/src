@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.182 2025/11/10 12:34:52 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.183 2026/01/14 21:31:03 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -291,7 +291,7 @@ extern void need_resched(struct cpu_info *);
 
 #if defined(MULTIPROCESSOR)
 
-#define MAXCPUS		64	/* bitmask */
+#define MAXCPUS		255
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
