@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.76 2026/01/13 10:15:07 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.77 2026/01/14 12:19:36 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -551,8 +551,7 @@ vio_alloc_mem(struct vio_softc *sc, int tx_max_segments)
 
 		for (i = 0; i < rxqsize; i++) {
 			r = bus_dmamap_create(vsc->sc_dmat,
-			    sc->sc_rx_mbuf_size + sc->sc_hdr_size, 2,
-			    sc->sc_rx_mbuf_size, 0,
+			    sc->sc_rx_mbuf_size, 2, sc->sc_rx_mbuf_size, 0,
 			    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 			    &vioq->viq_rxdmamaps[i]);
 			if (r != 0)
