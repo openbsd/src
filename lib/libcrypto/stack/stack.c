@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.34 2025/12/21 07:35:11 tb Exp $ */
+/* $OpenBSD: stack.c,v 1.35 2026/01/14 17:43:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,7 +201,7 @@ static const void *
 obj_bsearch_ex(const void *key, const void *base_, int num, int size,
     int (*cmp)(const void *, const void *))
 {
-	const void *base = base_;
+	const char *base = base_;
 	int l, h, i, c;
 
 	l = 0;
