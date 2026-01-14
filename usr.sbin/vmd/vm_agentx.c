@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_agentx.c,v 1.6 2025/11/13 22:58:42 martijn Exp $ */
+/*	$OpenBSD: vm_agentx.c,v 1.7 2026/01/14 03:09:05 dv Exp $ */
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -183,14 +183,14 @@ vm_agentx_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    vmIndex);
 			rtype = agentx_varbind_request(vminfo[i]);
 			for (j = 0; j < nvir; j++) {
-				if (vir[j].vir_info.vir_id < index)
+				if (vir[j].vir_id < index)
 					continue;
-				if (vir[j].vir_info.vir_id == index &&
+				if (vir[j].vir_id == index &&
 				    (rtype == AGENTX_REQUEST_TYPE_GET ||
 				    rtype ==
 				    AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE))
 					break;
-				if (vir[j].vir_info.vir_id > index &&
+				if (vir[j].vir_id > index &&
 				    (rtype == AGENTX_REQUEST_TYPE_GETNEXT ||
 				    rtype ==
 				    AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE))
@@ -202,10 +202,10 @@ vm_agentx_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			}
 			mvir = &(vir[j]);
 			agentx_varbind_set_index_integer(vminfo[i], vmIndex,
-			    mvir->vir_info.vir_id);
+			    mvir->vir_id);
 			if (reqObject == vmName)
 				agentx_varbind_string(vminfo[i],
-				    mvir->vir_info.vir_name);
+				    mvir->vir_name);
 			else if (reqObject == vmUUID)
 				agentx_varbind_string(vminfo[i], "");
 			else if (reqObject == vmOSType)
@@ -228,17 +228,17 @@ vm_agentx_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    reqObject == vmMinCpuNumber ||
 			    reqObject == vmMaxCpuNumber)
 				agentx_varbind_integer(vminfo[i],
-				    mvir->vir_info.vir_ncpus);
+				    mvir->vir_ncpus);
 			else if (reqObject == vmMemUnit)
 				agentx_varbind_integer(vminfo[i], MEM_SCALE);
 			else if (reqObject == vmCurMem)
 				agentx_varbind_integer(vminfo[i],
-				    mvir->vir_info.vir_used_size / MEM_SCALE);
+				    mvir->vir_used_size / MEM_SCALE);
 			else if (reqObject == vmMinMem)
 				agentx_varbind_integer(vminfo[i], -1);
 			else if (reqObject == vmMaxMem)
 				agentx_varbind_integer(vminfo[i],
-				    mvir->vir_info.vir_memory_size / MEM_SCALE);
+				    mvir->vir_memory_size / MEM_SCALE);
 /* We probably had a reload */
 			else
 				agentx_varbind_notfound(vminfo[i]);
@@ -433,8 +433,7 @@ vm_agentx_sortvir(const void *c1, const void *c2)
 {
 	const struct vmop_info_result *v1 = c1, *v2 = c2;
 
-	return (v1->vir_info.vir_id < v2->vir_info.vir_id ? -1 :
-	    v1->vir_info.vir_id > v2->vir_info.vir_id);
+	return (v1->vir_id < v2->vir_id ? -1 : v1->vir_id > v2->vir_id);
 }
 
 static int

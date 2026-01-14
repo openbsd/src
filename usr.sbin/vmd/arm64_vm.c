@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm64_vm.c,v 1.10 2025/11/25 14:20:33 dv Exp $	*/
+/*	$OpenBSD: arm64_vm.c,v 1.11 2026/01/14 03:09:05 dv Exp $	*/
 /*
  * Copyright (c) 2024 Dave Voutila <dv@openbsd.org>
  *
@@ -20,7 +20,7 @@
 #include "vmm.h"
 
 void
-create_memory_map(struct vm_create_params *vcp)
+create_memory_map(struct vmd_vm *vm)
 {
 	fatalx("%s: unimplemented", __func__);
 	/* NOTREACHED */
@@ -35,7 +35,7 @@ load_firmware(struct vmd_vm *vm, struct vcpu_reg_state *vrs)
 }
 
 int
-init_emulated_hw(struct vmop_create_params *vcp, int child_cdrom,
+init_emulated_hw(struct vmd_vm *vm, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
 	fatalx("%s: unimplemented", __func__);

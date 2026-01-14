@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.12 2025/12/02 02:31:10 dv Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.13 2026/01/14 03:09:05 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -79,8 +79,8 @@ fw_cfg_init(struct vmop_create_params *vmc)
 
 	/* Define e820 memory ranges. */
 	memset(&e820, 0, sizeof(e820));
-	for (i = 0; i < vmc->vmc_params.vcp_nmemranges; i++) {
-		struct vm_mem_range *range = &vmc->vmc_params.vcp_memranges[i];
+	for (i = 0; i < vmc->vmc_nmemranges; i++) {
+		struct vm_mem_range *range = &vmc->vmc_memranges[i];
 		bios_memmap_t *entry = &e820[i];
 		entry->addr = range->vmr_gpa;
 		entry->size = range->vmr_size;

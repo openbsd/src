@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2025/06/03 20:13:42 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.73 2026/01/14 03:09:05 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -92,7 +92,6 @@ int		 parse_disk(char *, int);
 unsigned int	 parse_format(const char *);
 
 static struct vmop_create_params vmc;
-static struct vm_create_params	*vcp;
 static struct vmd_switch	*vsw;
 static char			*kernel = NULL;
 static char			 vsw_type[IF_NAMESIZE];
@@ -323,7 +322,6 @@ vm		: VM string vm_instance		{
 			memset(&vmc, 0, sizeof(vmc));
 			vmc.vmc_kernel = -1;
 
-			vcp = &vmc.vmc_params;
 			vmc_disable = 0;
 			vmc_nnics = 0;
 
@@ -349,8 +347,8 @@ vm		: VM string vm_instance		{
 				vmc.vmc_ifflags[i] |= IFF_UP;
 			}
 
-			if (strlcpy(vcp->vcp_name, name,
-			    sizeof(vcp->vcp_name)) >= sizeof(vcp->vcp_name)) {
+			if (strlcpy(vmc.vmc_name, name,
+			    sizeof(vmc.vmc_name)) >= sizeof(vmc.vmc_name)) {
 				yyerror("vm name too long");
 				free($2);
 				free($3);
@@ -375,12 +373,12 @@ vm		: VM string vm_instance		{
 					log_debug("%s:%d: vm \"%s\""
 					    " skipped (%s)",
 					    file->name, yylval.lineno,
-					    vcp->vcp_name,
+					    vmc.vmc_name,
 					    (vm->vm_state & VM_STATE_RUNNING) ?
 					    "running" : "already exists");
 				} else if (ret == -1) {
 					yyerror("vm \"%s\" failed: %s",
-					    vcp->vcp_name, strerror(errno));
+					    vmc.vmc_name, strerror(errno));
 					YYERROR;
 				} else {
 					if (vmc_disable)
@@ -390,7 +388,7 @@ vm		: VM string vm_instance		{
 					log_debug("%s:%d: vm \"%s\" "
 					    "registered (%s)",
 					    file->name, yylval.lineno,
-					    vcp->vcp_name,
+					    vmc.vmc_name,
 					    vmc_disable ?
 					    "disabled" : "enabled");
 				}
@@ -414,10 +412,10 @@ vm_opts		: disable			{
 			vmc_disable = $1;
 		}
 		| sev				{
-			vcp->vcp_sev = 1;
+			vmc.vmc_sev = 1;
 		}
 		| seves				{
-			vcp->vcp_sev = vcp->vcp_seves = 1;
+			vmc.vmc_sev = vmc.vmc_seves = 1;
 		}
 		| DISK string image_format	{
 			if (parse_disk($2, $3) != 0) {
@@ -518,7 +516,7 @@ vm_opts		: disable			{
 		}
 		| MEMORY NUMBER			{
 			ssize_t	 res;
-			if (vcp->vcp_memranges[0].vmr_size != 0) {
+			if (vmc.vmc_memranges[0].vmr_size != 0) {
 				yyerror("memory specified more than once");
 				YYERROR;
 			}
@@ -526,12 +524,12 @@ vm_opts		: disable			{
 				yyerror("failed to parse size: %lld", $2);
 				YYERROR;
 			}
-			vcp->vcp_memranges[0].vmr_size = (size_t)res;
+			vmc.vmc_memranges[0].vmr_size = (size_t)res;
 			vmc.vmc_flags |= VMOP_CREATE_MEMORY;
 		}
 		| MEMORY STRING			{
 			ssize_t	 res;
-			if (vcp->vcp_memranges[0].vmr_size != 0) {
+			if (vmc.vmc_memranges[0].vmr_size != 0) {
 				yyerror("argument specified more than once");
 				free($2);
 				YYERROR;
@@ -541,7 +539,7 @@ vm_opts		: disable			{
 				free($2);
 				YYERROR;
 			}
-			vcp->vcp_memranges[0].vmr_size = (size_t)res;
+			vmc.vmc_memranges[0].vmr_size = (size_t)res;
 			vmc.vmc_flags |= VMOP_CREATE_MEMORY;
 		}
 		| OWNER owner_id		{

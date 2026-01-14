@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.28 2025/12/02 02:31:10 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.29 2026/01/14 03:09:05 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -112,7 +112,6 @@ vionet_main(int fd, int fd_vmm)
 	struct vionet_dev	*vionet = NULL;
 	struct viodev_msg 	 msg;
 	struct vmd_vm	 	 vm;
-	struct vm_create_params	*vcp;
 	ssize_t			 sz;
 	int			 ret;
 
@@ -154,10 +153,9 @@ vionet_main(int fd, int fd_vmm)
 		log_warnx("failed to receive vm details");
 		goto fail;
 	}
-	vcp = &vm.vm_params.vmc_params;
 	current_vm = &vm;
-	setproctitle("%s/vionet%d", vcp->vcp_name, vionet->idx);
-	log_procinit("vm/%s/vionet%d", vcp->vcp_name, vionet->idx);
+	setproctitle("%s/vionet%d", vm.vm_params.vmc_name, vionet->idx);
+	log_procinit("vm/%s/vionet%d", vm.vm_params.vmc_name, vionet->idx);
 
 	/* Now that we have our vm information, we can remap memory. */
 	ret = remap_guest_mem(&vm, fd_vmm);
@@ -238,7 +236,8 @@ vionet_main(int fd, int fd_vmm)
 	imsg_event_add2(&dev.sync_iev, ev_base_main);
 
 	/* Send a ready message over the sync channel. */
-	log_debug("%s: telling vm %s device is ready", __func__, vcp->vcp_name);
+	log_debug("%s: telling vm %s device is ready", __func__,
+	    vm.vm_params.vmc_name);
 	memset(&msg, 0, sizeof(msg));
 	msg.type = VIODEV_MSG_READY;
 	imsg_compose_event2(&dev.sync_iev, IMSG_DEVOP_MSG, 0, 0, -1, &msg,

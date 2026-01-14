@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.143 2025/11/25 14:20:33 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.144 2026/01/14 03:09:05 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -159,7 +159,14 @@ struct vmop_result {
 };
 
 struct vmop_info_result {
-	struct vm_info_result	 vir_info;
+	size_t			 vir_memory_size;
+	size_t			 vir_used_size;
+	size_t			 vir_ncpus;
+	uint8_t			 vir_vcpu_state[VMM_MAX_VCPUS_PER_VM];
+	pid_t			 vir_creator_pid;
+	uint32_t		 vir_id;
+	char			 vir_name[VMM_MAX_NAME_LEN];
+
 	char			 vir_ttyname[VM_TTYNAME_MAX];
 	uid_t			 vir_uid;
 	int64_t			 vir_gid;
@@ -200,7 +207,11 @@ struct vmop_owner {
 };
 
 struct vmop_create_params {
-	struct vm_create_params	 vmc_params;
+	/* vm identifying information */
+	uint32_t		 vmc_id;
+	char			 vmc_name[VMM_MAX_NAME_LEN];
+	struct vmop_owner	 vmc_owner;
+
 	unsigned int		 vmc_flags;
 #define VMOP_CREATE_CPU		0x01
 #define VMOP_CREATE_KERNEL	0x02
@@ -209,41 +220,52 @@ struct vmop_create_params {
 #define VMOP_CREATE_DISK	0x10
 #define VMOP_CREATE_CDROM	0x20
 #define VMOP_CREATE_INSTANCE	0x40
-
-	/* same flags; check for access to these resources */
+	/* same flags as vmc_flags; check for access to these resources */
 	unsigned int		 vmc_checkaccess;
 
-	/* userland-only part of the create params */
+	/* vcpu count and features */
+	size_t			 vmc_ncpus;
+	uint32_t		 vmc_asid[VMM_MAX_VCPUS];
+
+	/* AMD SEV support */
+	uint32_t		 vmc_poscbit;
+	int			 vmc_sev;
+	int			 vmc_seves;
+
+	/* guest memory */
+	size_t			 vmc_nmemranges;
+	struct vm_mem_range	 vmc_memranges[VMM_MAX_MEM_RANGES];
+
+	/* Boot device and firmware */
+	int			 vmc_kernel;
 	unsigned int		 vmc_bootdevice;
 #define VMBOOTDEV_AUTO		0
 #define VMBOOTDEV_DISK		1
 #define VMBOOTDEV_CDROM		2
 #define VMBOOTDEV_NET		3
-	unsigned int		 vmc_ifflags[VM_MAX_NICS_PER_VM];
-#define VMIFF_UP		0x01
-#define VMIFF_LOCKED		0x02
-#define VMIFF_LOCAL		0x04
-#define VMIFF_RDOMAIN		0x08
-#define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL|VMIFF_RDOMAIN)
 
+	/* Emulated disk and cdrom drives */
 	size_t			 vmc_ndisks;
 	char			 vmc_disks[VM_MAX_DISKS_PER_VM][PATH_MAX];
 	unsigned int		 vmc_disktypes[VM_MAX_DISKS_PER_VM];
 	unsigned int		 vmc_diskbases[VM_MAX_DISKS_PER_VM];
 #define VMDF_RAW		0x01
 #define VMDF_QCOW2		0x02
-
 	char			 vmc_cdrom[PATH_MAX];
-	int			 vmc_kernel;
 
+	/* Emulated network devices */
 	size_t			 vmc_nnics;
 	char			 vmc_ifnames[VM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	unsigned int		 vmc_ifrdomain[VM_MAX_NICS_PER_VM];
 	uint8_t			 vmc_macs[VM_MAX_NICS_PER_VM][6];
-
-	struct vmop_owner	 vmc_owner;
+	unsigned int		 vmc_ifflags[VM_MAX_NICS_PER_VM];
+#define VMIFF_UP		0x01
+#define VMIFF_LOCKED		0x02
+#define VMIFF_LOCAL		0x04
+#define VMIFF_RDOMAIN		0x08
+#define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL|VMIFF_RDOMAIN)
 
 	/* instance template params */
 	char			 vmc_instance[VMM_MAX_NAME_LEN];
@@ -275,11 +297,18 @@ TAILQ_HEAD(switchlist, vmd_switch);
 
 struct vmd_vm {
 	struct vmop_create_params vm_params;
+
+	/* Owner and identifier information */
 	pid_t			 vm_pid;
-	uint32_t		 vm_vmid;
+	uid_t			 vm_uid;
+	uint32_t		 vm_vmid;	/* vmd(8) identifier */
+	uint32_t		 vm_vmmid;	/* vmm(4) identifier */
+	uint32_t		 vm_peerid;
+
+	/* AMD SEV features */
 	uint32_t		 vm_sev_handle;
 	uint32_t		 vm_sev_asid[VMM_MAX_VCPUS_PER_VM];
-
+	uint32_t		 vm_poscbit;
 #define VM_SEV_NSEGMENTS	128
 	size_t			 vm_sev_nmemsegments;
 	struct vm_mem_range	 vm_sev_memsegments[VM_SEV_NSEGMENTS];
@@ -287,16 +316,18 @@ struct vmd_vm {
 	int			 vm_kernel;
 	char			*vm_kernel_path; /* Used by vm.conf. */
 
+	/* Device and disk image file descriptors */
 	int			 vm_cdrom;
 	int			 vm_disks[VM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
 	struct vmd_if		 vm_ifs[VM_MAX_NICS_PER_VM];
+
+	/* Serial port */
 	char			 vm_ttyname[VM_TTYNAME_MAX];
 	int			 vm_tty;
-	uint32_t		 vm_peerid;
+
 	/* When set, VM was defined in a config file */
 	int			 vm_from_config;
 	struct imsgev		 vm_iev;
-	uid_t			 vm_uid;
 	unsigned int		 vm_state;
 /* When set, VM is running now (PROC_PARENT only) */
 #define VM_STATE_RUNNING	0x01
@@ -484,16 +515,16 @@ int	 fd_hasdata(int);
 int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
 
 /* {mach}_vm.c (md interface) */
-void	 create_memory_map(struct vm_create_params *);
+void	 create_memory_map(struct vmd_vm *);
 int	 load_firmware(struct vmd_vm *, struct vcpu_reg_state *);
-int	 init_emulated_hw(struct vmop_create_params *, int,
-    int[][VM_MAX_BASE_PER_DISK], int *);
+int	 init_emulated_hw(struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK],
+    int *);
 int	 vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
 void	 pause_vm_md(struct vmd_vm *);
 void	 unpause_vm_md(struct vmd_vm *);
 void	*hvaddr_mem(paddr_t, size_t);
 struct vm_mem_range *
-	 find_gpa_range(struct vm_create_params *, paddr_t, size_t);
+	 find_gpa_range(struct vmop_create_params *, paddr_t, size_t);
 int	 write_mem(paddr_t, const void *, size_t);
 int	 read_mem(paddr_t, void *, size_t);
 int	 intr_ack(struct vmd_vm *);

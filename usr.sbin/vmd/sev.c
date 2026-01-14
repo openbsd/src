@@ -1,4 +1,4 @@
-/*	$OpenBSD: sev.c,v 1.7 2025/06/04 08:21:29 bluhm Exp $	*/
+/*	$OpenBSD: sev.c,v 1.8 2026/01/14 03:09:05 dv Exp $	*/
 
 /*
  * Copyright (c) 2023-2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -41,12 +41,11 @@ int
 sev_init(struct vmd_vm *vm)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_create_params	*vcp = &vmc->vmc_params;
 	uint32_t		 handle;
 	uint16_t		 pstate;
 	uint8_t			 gstate;
 
-	if (!vcp->vcp_sev)
+	if (!vmc->vmc_sev)
 		return (0);
 
 	if (psp_get_pstate(&pstate, NULL, NULL, NULL, NULL)) {
@@ -58,7 +57,7 @@ sev_init(struct vmd_vm *vm)
 		return (-1);
 	}
 
-	if (psp_launch_start(&handle, vcp->vcp_seves) < 0) {
+	if (psp_launch_start(&handle, vmc->vmc_seves) < 0) {
 		log_warnx("%s: launch failed", __func__);
 		return (-1);
 	}
@@ -83,15 +82,13 @@ int
 sev_register_encryption(vaddr_t addr, size_t size)
 {
 	struct vmop_create_params *vmc;
-	struct vm_create_params *vcp;
 	struct vm_mem_range	*vmr;
 	size_t			 off;
 	int			 i;
 
 	vmc = &current_vm->vm_params;
-	vcp = &vmc->vmc_params;
 
-	if (!vcp->vcp_sev)
+	if (!vmc->vmc_sev)
 		return (0);
 
 	if (size == 0)
@@ -103,7 +100,7 @@ sev_register_encryption(vaddr_t addr, size_t size)
 		addr &= ~(AES_XTS_BLOCKSIZE - 1);
 	}
 
-	vmr = find_gpa_range(&current_vm->vm_params.vmc_params, addr, size);
+	vmr = find_gpa_range(&current_vm->vm_params, addr, size);
 	if (vmr == NULL) {
 		log_warnx("%s: failed - invalid memory range addr = 0x%lx, "
 		    "len = 0x%zx", __func__, addr, size);
@@ -145,11 +142,10 @@ int
 sev_encrypt_memory(struct vmd_vm *vm)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_create_params *vcp = &vmc->vmc_params;
 	struct vm_mem_range	*vmr;
 	size_t			 i;
 
-	if (!vcp->vcp_sev)
+	if (!vmc->vmc_sev)
 		return (0);
 
 	for (i = 0; i < vm->vm_sev_nmemsegments; i++) {
@@ -178,10 +174,9 @@ int
 sev_activate(struct vmd_vm *vm, int vcpu_id)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_create_params *vcp = &vmc->vmc_params;
 	uint8_t			 gstate;
 
-	if (!vcp->vcp_sev)
+	if (!vmc->vmc_sev)
 		return (0);
 
 	if (psp_df_flush() ||
@@ -208,13 +203,12 @@ int
 sev_encrypt_state(struct vmd_vm *vm, int vcpu_id)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_create_params *vcp = &vmc->vmc_params;
 
-	if (!vcp->vcp_seves)
+	if (!vmc->vmc_seves)
 		return (0);
 
 	if (psp_encrypt_state(vm->vm_sev_handle, vm->vm_sev_asid[vcpu_id],
-	    vcp->vcp_id, vcpu_id)) {
+	    vm->vm_vmmid, vcpu_id)) {
 		log_warnx("%s: failed to encrypt state: 0x%x 0x%x 0x%0x 0x%0x",
 		    __func__, vm->vm_sev_handle, vm->vm_sev_asid[vcpu_id],
 		    vm->vm_vmid, vcpu_id);
@@ -228,10 +222,9 @@ int
 sev_launch_finalize(struct vmd_vm *vm)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_create_params *vcp = &vmc->vmc_params;
 	uint8_t		gstate;
 
-	if (!vcp->vcp_sev)
+	if (!vmc->vmc_sev)
 		return (0);
 
 	if (psp_launch_measure(vm->vm_sev_handle)) {
@@ -262,9 +255,8 @@ int
 sev_shutdown(struct vmd_vm *vm)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_create_params *vcp = &vmc->vmc_params;
 
-	if (!vcp->vcp_sev)
+	if (!vmc->vmc_sev)
 		return (0);
 
 	if (psp_guest_shutdown(vm->vm_sev_handle)) {

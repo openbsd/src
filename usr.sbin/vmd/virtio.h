@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.59 2025/11/25 14:20:33 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.60 2026/01/14 03:09:05 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -358,7 +358,6 @@ struct virtio_dev {
 	uint64_t 	driver_feature;		/* driver features [rw] */
 
 	uint8_t		pci_id;			/* pci device id [r] */
-	uint32_t	vm_id;			/* vmm(4) vm identifier [r] */
 	int		irq;			/* assigned irq [r] */
 
 	/* Multi-process emulation fields. */
@@ -368,7 +367,8 @@ struct virtio_dev {
 	int sync_fd;				/* fd for synchronous channel */
 	int async_fd;				/* fd for async channel */
 
-	uint32_t	vm_vmid;		/* vmd(8) vm identifier [r] */
+	uint32_t	vm_id;			/* vmd(8) vm identifier [r] */
+	uint32_t	vmm_id;			/* vmm(4) vm identifier [r] */
 	pid_t		dev_pid;		/* pid of emulator process */
 	char		dev_type;		/* device type (as char) */
 	SLIST_ENTRY(virtio_dev) dev_next;
