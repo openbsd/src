@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.39 2025/04/26 17:49:55 kettenis Exp $ */
+/* $OpenBSD: apicvec.s,v 1.40 2026/01/14 20:43:56 deraadt Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -68,8 +68,13 @@ IDTVEC(intripi_invltlb)
 	movl	%cr3, %eax
 	movl	%eax, %cr3
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decl	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%eax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl	%eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	popl	%ds
 	popl	%eax
@@ -87,8 +92,13 @@ IDTVEC(intripi_invlpg)
 	movl	tlb_shoot_addr1, %eax
 	invlpg	(%eax)
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decl	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%eax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl	%eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	popl	%ds
 	popl	%eax
@@ -111,8 +121,13 @@ IDTVEC(intripi_invlrange)
 	cmpl	%edx, %eax
 	jb	1b
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decl	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%eax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl	%eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	popl	%ds
 	popl	%edx
@@ -137,8 +152,13 @@ IDTVEC(intripi_reloadcr3)
 	movl	PM_PDIRPA(%eax), %eax
 	movl	%eax, %cr3
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decl	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%eax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl	%eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	popl	%fs
 	popl	%ds

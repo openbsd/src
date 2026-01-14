@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.186 2026/01/07 02:21:04 chris Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.187 2026/01/14 20:43:56 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3162,11 +3162,12 @@ pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
 /*
  * Locking for tlb shootdown.
  *
- * We lock by setting tlb_shoot_wait to the number of cpus that will
- * receive our tlb shootdown. After sending the IPIs, we don't need to
- * worry about locking order or interrupts spinning for the lock because
- * the call that grabs the "lock" isn't the one that releases it. And
- * there is nothing that can block the IPI that releases the lock.
+ * We lock by grabbing tlb_shoot_lock.lock, then setting per-cpu
+ * tlb_shoot_counts[] to the number of cpus that will receive our tlb
+ * shootdown. After sending the IPIs, we don't need to worry about
+ * locking order or interrupts spinning for the lock because the call
+ * that grabs the "lock" isn't the one that releases it. And there is
+ * nothing that can block the IPI that releases the lock.
  *
  * The functions are organized so that we first count the number of
  * cpus we need to send the IPI to, then we grab the counter, then
@@ -3184,7 +3185,14 @@ pmap_steal_memory(vsize_t size, vaddr_t *start, vaddr_t *end)
 #include <ddb/db_output.h>
 #endif
 
-volatile int tlb_shoot_wait __attribute__((section(".kudata")));
+struct {
+	volatile int lock __attribute__((aligned(64)));
+} tlb_shoot_lock __attribute__((section(".kudata")));
+struct {
+	volatile int cpu __attribute__((aligned(64)));
+} tlb_shoot_cpu __attribute__((section(".kudata")));
+
+volatile u_int tlb_shoot_counts[MAXCPUS] __attribute__((section(".kudata")));
 
 volatile vaddr_t tlb_shoot_addr1 __attribute__((section(".kudata")));
 volatile vaddr_t tlb_shoot_addr2 __attribute__((section(".kudata")));
@@ -3197,16 +3205,16 @@ volatile struct vmx_invept_descriptor ept_shoot_vid
 #endif /* NVMM > 0 */
 
 /* Obtain the "lock" for TLB shooting */
-static inline int
-pmap_start_tlb_shoot(int targets, const char *func)
+static inline void
+pmap_start_tlb_shoot(u_int targets, const char *func)
 {
-	int s = splvm();
+	u_int cpuid = curcpu()->ci_cpuid;
 
-	while (atomic_cas_uint(&tlb_shoot_wait, 0, targets) != 0) {
+	while (atomic_cas_uint(&tlb_shoot_lock.lock, 0, 1) != 0) {
 #ifdef MP_LOCKDEBUG
 		long nticks = __mp_lock_spinout;
 #endif
-		while (tlb_shoot_wait != 0) {
+		while (tlb_shoot_lock.lock != 0) {
 			CPU_BUSY_CYCLE();
 #ifdef MP_LOCKDEBUG
 			if (--nticks <= 0) {
@@ -3217,17 +3225,18 @@ pmap_start_tlb_shoot(int targets, const char *func)
 #endif
 		}
 	}
-
-	return s;
+	tlb_shoot_cpu.cpu = cpuid;
+	atomic_swap_uint(&tlb_shoot_counts[cpuid], targets);
 }
 
 void
 pmap_tlb_shootwait(void)
 {
+	u_int cpuid = curcpu()->ci_cpuid;
 #ifdef MP_LOCKDEBUG
 	long nticks = __mp_lock_spinout;
 #endif
-	while (tlb_shoot_wait != 0) {
+	while (tlb_shoot_counts[cpuid] > 0) {
 		CPU_BUSY_CYCLE();
 #ifdef MP_LOCKDEBUG
 		if (--nticks <= 0) {
@@ -3265,8 +3274,9 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 	}
 
 	if (targets) {
-		int s = pmap_start_tlb_shoot(targets, __func__);
+		int s = splvm();
 
+		pmap_start_tlb_shoot(targets, __func__);
 		tlb_shoot_first_pcid = is_kva ? PCID_KERN : PCID_PROC;
 		tlb_shoot_addr1 = va;
 		CPU_INFO_FOREACH(cii, ci) {
@@ -3314,8 +3324,9 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 	}
 
 	if (targets) {
-		int s = pmap_start_tlb_shoot(targets, __func__);
+		int s = splvm();
 
+		pmap_start_tlb_shoot(targets, __func__);
 		tlb_shoot_first_pcid = is_kva ? PCID_KERN : PCID_PROC;
 		tlb_shoot_addr1 = sva;
 		tlb_shoot_addr2 = eva;
@@ -3373,7 +3384,9 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 	}
 
 	if (targets) {
-		int s = pmap_start_tlb_shoot(targets, __func__);
+		int s = splvm();
+
+		pmap_start_tlb_shoot(targets, __func__);
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
@@ -3422,12 +3435,12 @@ pmap_shootept(struct pmap *pm, int shootself)
 	}
 
 	if (targets) {
-		int s = pmap_start_tlb_shoot(targets, __func__);
+		int s = splvm();
 
+		pmap_start_tlb_shoot(targets, __func__);
 		ept_shoot_mode = self->ci_vmm_cap.vcc_vmx.vmx_invept_mode;
 		ept_shoot_vid.vid_eptp = pm->eptp;
 		ept_shoot_vid.vid_reserved = 0;
-
 		CPU_INFO_FOREACH(cii, ci) {
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;

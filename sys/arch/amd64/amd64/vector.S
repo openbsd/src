@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.106 2026/01/07 02:21:04 chris Exp $	*/
+/*	$OpenBSD: vector.S,v 1.107 2026/01/14 20:43:56 deraadt Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -637,8 +637,13 @@ IDTVEC(ipi_invltlb)
 	movq	%cr3, %rax
 	movq	%rax, %cr3
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decq	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%rax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl    %eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	popq	%rax
 	iretq
@@ -656,8 +661,13 @@ IDTVEC(ipi_invept)
 	movq	ept_shoot_mode, %rdx
 	invept	(%rax), %rdx
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decq	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%rax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl    %eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	popq	%rdx
 	popq	%rax
@@ -674,8 +684,13 @@ IDTVEC(ipi_invlpg)
 	movq	tlb_shoot_addr1, %rax
 	invlpg	(%rax)
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decq	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%rax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl    %eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	popq	%rax
 	iretq
@@ -695,8 +710,13 @@ IDTVEC(ipi_invlrange)
 	cmpq	%rdx, %rax
 	jb	1b
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decq	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%rax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl    %eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	popq	%rdx
 	popq	%rax
@@ -727,8 +747,13 @@ IDTVEC(ipi_invltlb_pcid)
 	movl	$PCID_PROC_INTEL,(%rsp)
 	invpcid	(%rsp),%rax
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decq	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%rax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl    %eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	/* restore the stack */
 	popq	%rax
@@ -771,8 +796,13 @@ IDTVEC(ipi_invlpg_pcid)
 	invpcid	(%rsp),%rax
 .Lskip_temp_invlpg_pcid:
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decq	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%rax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl    %eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	/* restore the stack */
 	addq	$16,%rsp
@@ -821,8 +851,13 @@ IDTVEC(ipi_invlrange_pcid)
 	cmpq	%rdx,%rax
 	jb	1b
 
+	movl	tlb_shoot_cpu, %eax
 	lock
-	decq	tlb_shoot_wait
+	decl	tlb_shoot_counts(,%rax,4)	# decrement outstanding shoots
+	jnz	9f
+	xorl    %eax, %eax
+	movl	%eax, tlb_shoot_lock		# release lock for next shooter
+9:
 
 	/* restore the stack */
 	addq	$16,%rsp
