@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.187 2026/01/14 20:43:56 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.188 2026/01/14 21:25:26 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3262,14 +3262,14 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 	int targets = 0;
-	u_int64_t mask = 0;
+	u_int8_t mask[howmany(MAXCPUS, 8)] = { 0 };
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		if (!is_kva && !pmap_is_active(pm, ci))
 			continue;
-		mask |= (1ULL << ci->ci_cpuid);
+		setbit(mask, ci->ci_cpuid);
 		targets++;
 	}
 
@@ -3280,7 +3280,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va, int shootself)
 		tlb_shoot_first_pcid = is_kva ? PCID_KERN : PCID_PROC;
 		tlb_shoot_addr1 = va;
 		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
+			if (isclr(mask, ci->ci_cpuid))
 				continue;
 			if (x86_fast_ipi(ci, LAPIC_IPI_INVLPG) != 0)
 				panic("%s: ipi failed", __func__);
@@ -3312,14 +3312,14 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 	int targets = 0;
-	u_int64_t mask = 0;
+	u_int8_t mask[howmany(MAXCPUS, 8)] = { 0 };
 
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self || !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		if (!is_kva && !pmap_is_active(pm, ci))
 			continue;
-		mask |= (1ULL << ci->ci_cpuid);
+		setbit(mask, ci->ci_cpuid);
 		targets++;
 	}
 
@@ -3331,7 +3331,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva, int shootself)
 		tlb_shoot_addr1 = sva;
 		tlb_shoot_addr2 = eva;
 		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
+			if (isclr(mask, ci->ci_cpuid))
 				continue;
 			if (x86_fast_ipi(ci, LAPIC_IPI_INVLRANGE) != 0)
 				panic("%s: ipi failed", __func__);
@@ -3371,7 +3371,7 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 	struct cpu_info *ci, *self = curcpu();
 	CPU_INFO_ITERATOR cii;
 	int targets = 0;
-	u_int64_t mask = 0;
+	u_int8_t mask[howmany(MAXCPUS, 8)] = { 0 };
 
 	KASSERT(pm != pmap_kernel());
 
@@ -3379,7 +3379,7 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 		if (ci == self || !pmap_is_active(pm, ci) ||
 		    !(ci->ci_flags & CPUF_RUNNING))
 			continue;
-		mask |= (1ULL << ci->ci_cpuid);
+		setbit(mask, ci->ci_cpuid);
 		targets++;
 	}
 
@@ -3388,7 +3388,7 @@ pmap_tlb_shoottlb(struct pmap *pm, int shootself)
 
 		pmap_start_tlb_shoot(targets, __func__);
 		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
+			if (isclr(mask, ci->ci_cpuid))
 				continue;
 			if (x86_fast_ipi(ci, LAPIC_IPI_INVLTLB) != 0)
 				panic("%s: ipi failed", __func__);
@@ -3421,7 +3421,7 @@ pmap_shootept(struct pmap *pm, int shootself)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 	int targets = 0;
-	u_int64_t mask = 0;
+	u_int8_t mask[howmany(MAXCPUS, 8)] = { 0 };
 
 	KASSERT(pmap_is_ept(pm));
 
@@ -3430,7 +3430,7 @@ pmap_shootept(struct pmap *pm, int shootself)
 		    !(ci->ci_flags & CPUF_RUNNING) ||
 		    !(ci->ci_flags & CPUF_VMM))
 			continue;
-		mask |= (1ULL << ci->ci_cpuid);
+		setbit(mask, ci->ci_cpuid);
 		targets++;
 	}
 
@@ -3442,7 +3442,7 @@ pmap_shootept(struct pmap *pm, int shootself)
 		ept_shoot_vid.vid_eptp = pm->eptp;
 		ept_shoot_vid.vid_reserved = 0;
 		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
+			if (isclr(mask, ci->ci_cpuid))
 				continue;
 			if (x86_fast_ipi(ci, LAPIC_IPI_INVEPT) != 0)
 				panic("%s: ipi failed", __func__);
