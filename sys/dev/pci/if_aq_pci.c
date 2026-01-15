@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.33 2025/11/11 17:43:18 bluhm Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.34 2026/01/15 06:41:21 dlg Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -3261,6 +3261,11 @@ aq_start(struct ifqueue *ifq)
 	struct mbuf *m;
 	uint32_t idx, free, used, ctl1, ctl2;
 	int error, i;
+
+	if (!LINK_STATE_IS_UP(sc->sc_arpcom.ac_if.if_link_state)) {
+		ifq_purge(ifq);
+		return;
+	}
 
 	idx = tx->tx_prod;
 	free = tx->tx_cons + AQ_TXD_NUM - tx->tx_prod;
