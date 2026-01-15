@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8259.c,v 1.12 2024/01/19 18:38:16 kettenis Exp $	*/
+/*	$OpenBSD: i8259.c,v 1.13 2026/01/15 15:43:44 sf Exp $	*/
 /*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
@@ -112,27 +112,14 @@ i8259_default_setup(void)
 
 	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
 	outb(IO_ICU1+1, 1 << IRQ_SLAVE); /* slave on line 2 */
-#ifdef AUTO_EOI_1
-	outb(IO_ICU1+1, 2 | 1);		/* auto EOI, 8086 mode */
-#else
 	outb(IO_ICU1+1, 1);		/* 8086 mode */
-#endif
 	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU1, 0x68);		/* special mask mode (if available) */
 	outb(IO_ICU1, 0x0a);		/* Read IRR by default. */
-#ifdef REORDER_IRQ
-	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
-#endif
-
 	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
-
 	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
 	outb(IO_ICU2+1, IRQ_SLAVE);
-#ifdef AUTO_EOI_2
-	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */
-#else
 	outb(IO_ICU2+1, 1);		/* 8086 mode */
-#endif
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 	outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
 	outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
@@ -145,9 +132,6 @@ i8259_hwmask(struct pic *pic, int pin)
 	u_int8_t byte;
 
 	i8259_imen |= (1 << pin);
-#ifdef PIC_MASKDELAY
-	delay(10);
-#endif
 	if (pin > 7) {
 		port = IO_ICU2 + 1;
 		byte = i8259_imen >> 8;
@@ -167,9 +151,6 @@ i8259_hwunmask(struct pic *pic, int pin)
 
 	s = intr_disable();
 	i8259_imen &= ~(1 << pin);
-#ifdef PIC_MASKDELAY
-	delay(10);
-#endif
 	if (pin > 7) {
 		port = IO_ICU2 + 1;
 		byte = i8259_imen >> 8;
