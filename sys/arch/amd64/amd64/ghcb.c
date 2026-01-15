@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.c,v 1.6 2025/09/17 18:37:44 sf Exp $	*/
+/*	$OpenBSD: ghcb.c,v 1.7 2026/01/15 12:11:51 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -271,7 +271,7 @@ _ghcb_mem_rw(vaddr_t addr, int valsz, void *val, bool read)
 	struct ghcb_sync	 syncout, syncin;
 	struct ghcb_sa		*ghcb;
 	unsigned long		 s;
-	struct ghcb_extra_regs	 ghcb_regs;
+	struct ghcb_extra_regs	 ghcb_regs, *pregs = NULL;
 
 	KASSERT(val != NULL);
 
@@ -334,14 +334,14 @@ _ghcb_mem_rw(vaddr_t addr, int valsz, void *val, bool read)
 		panic("invalid hypervisor response");
 	}
 
-	memset(&ghcb_regs, 0, sizeof(ghcb_regs));
-
 	if (read) {
+		memset(&ghcb_regs, 0, sizeof(ghcb_regs));
 		ghcb_regs.data = val;
 		ghcb_regs.data_sz = size;
-
-		ghcb_sync_in(NULL, &ghcb_regs, ghcb, &syncin);
+		pregs = &ghcb_regs;
 	}
+
+	ghcb_sync_in(NULL, pregs, ghcb, &syncin);
 
 	intr_restore(s);
 }
