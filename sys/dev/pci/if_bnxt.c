@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.62 2025/11/19 07:28:52 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.63 2026/01/15 04:38:41 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -512,6 +512,11 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		goto free_resp;
 	}
 
+	if (bnxt_hwrm_func_reset(sc) != 0) {
+		printf(": reset failed\n");
+		goto free_resp;
+	}
+
 	if (bnxt_hwrm_nvm_get_dev_info(sc, NULL, NULL, NULL, NULL, NULL, NULL)
 	    != 0) {
 		printf(": failed to get nvram info\n");
@@ -530,6 +535,11 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bnxt_hwrm_func_qcaps(sc) != 0) {
 		printf(": failed to get queue capabilities\n");
+		goto free_resp;
+	}
+
+	if (bnxt_hwrm_queue_qportcfg(sc) != 0) {
+		printf(": failed to query port config\n");
 		goto free_resp;
 	}
 
@@ -581,16 +591,6 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bnxt_hwrm_func_qcfg(sc) != 0) {
 		printf("%s: failed to query function config\n", DEVNAME(sc));
-		goto deintr;
-	}
-
-	if (bnxt_hwrm_queue_qportcfg(sc) != 0) {
-		printf("%s: failed to query port config\n", DEVNAME(sc));
-		goto deintr;
-	}
-
-	if (bnxt_hwrm_func_reset(sc) != 0) {
-		printf("%s: reset failed\n", DEVNAME(sc));
 		goto deintr;
 	}
 
