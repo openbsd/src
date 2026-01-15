@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_sdhost.c,v 1.2 2022/04/06 18:59:28 naddy Exp $ */
+/*     $OpenBSD: bcm2835_sdhost.c,v 1.3 2026/01/15 14:36:43 cludwig Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -274,9 +274,9 @@ bcmsdhost_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %u MHz base clock\n", sc->sc_rate / 1000000);
 
 	bcmsdhost_write(sc, SDHCFG, SDHCFG_BUSY_EN);
-	bcmsdhost_bus_clock(sc, 400, false);
 	bcmsdhost_host_reset(sc);
 	bcmsdhost_bus_width(sc, 1);
+	bcmsdhost_bus_clock(sc, 400, false);
 
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_busname = "sdmmc";
