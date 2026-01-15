@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.607 2026/01/07 13:50:05 sashan Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.608 2026/01/15 09:23:37 sashan Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 7 2026 $
+.Dd $Mdocdate: January 15 2026 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -684,12 +684,12 @@ For example, the following rule will drop 20% of incoming ICMP packets:
 .It Cm state limiter Ar name Oo Cm (limiter options) Oc
 Use the specified state limiter to restrict the creation of states
 by this rule.
-By default if capacity is not available, the rule is ignored
-and ruleset evaluation continues with next rule..
+By default if capacity is not available, the packet gets blocked
+and ruleset evaluation stops.
 Use
-.Ic block
-option to change default behavior such packet is blocked
-when limit is reached.
+.Ic no-match
+option to change default behavior such rule is ignored and ruleset
+evaluation continues with next rule.
 See the
 .Sx State Limiters
 section for more information.
@@ -697,12 +697,12 @@ section for more information.
 .It Cm source limiter Ar name Oo Cm (limiter options) Oc
 Use the specified source limiter to restrict the creation of states
 by this rule.
-By default if capacity is not available, the rule is ignored
-and ruleset evaluation continues with next rule..
+By default if capacity is not available, the packet gets blocked
+and ruleset evaluation stops.
 Use
-.Ic block
-option to change default behavior such packet is blocked
-when limit is reached.
+.Ic no-match
+option to change default behavior such rule is ignored and ruleset
+evaluation continues with next rule.
 See the
 .Sx Source Limiters
 section for more information.

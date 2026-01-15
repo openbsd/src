@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.545 2026/01/07 13:50:05 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.546 2026/01/15 09:23:37 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -483,6 +483,8 @@ enum {
 	PF_LIMITER_NOMATCH,
 	PF_LIMITER_BLOCK
 };
+
+#define	PF_LIMITER_DEFAULT	PF_LIMITER_BLOCK
 
 struct pf_rule {
 	struct pf_rule_addr	 src;

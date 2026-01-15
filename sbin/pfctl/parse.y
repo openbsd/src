@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.723 2026/01/07 13:50:05 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.724 2026/01/15 09:23:37 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2021,7 +2021,7 @@ sourcelim_filter_opt
 		}
 		;
 
-limiter_opt_spec: /* empty */ { $$ = PF_LIMITER_NOMATCH; }
+limiter_opt_spec: /* empty */ { $$ = PF_LIMITER_DEFAULT; }
 		| '(' limiter_opt ')' { $$ = $2; }
 		;
 
