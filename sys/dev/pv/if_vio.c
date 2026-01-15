@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.77 2026/01/14 12:19:36 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.78 2026/01/15 09:06:19 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -294,6 +294,7 @@ struct vio_softc {
 	struct intrmap		*sc_intrmap;
 	struct vio_queue	*sc_q;
 	uint16_t		sc_nqueues;
+	uint16_t		sc_rxr_lwm;
 	int			sc_tx_slots_per_req;
 	int			sc_rx_mbuf_size;
 
@@ -367,7 +368,7 @@ int	vio_ctrl_start(struct vio_softc *, uint8_t, uint8_t, int, int *);
 int	vio_ctrl_submit(struct vio_softc *, int);
 void	vio_ctrl_finish(struct vio_softc *);
 void	vio_ctrl_wakeup(struct vio_softc *, enum vio_ctrl_state);
-int	vio_alloc_mem(struct vio_softc *, int);
+int	vio_alloc_mem(struct vio_softc *, int, bus_size_t);
 int	vio_alloc_dmamem(struct vio_softc *);
 void	vio_free_dmamem(struct vio_softc *);
 
@@ -466,12 +467,10 @@ vio_free_dmamem(struct vio_softc *sc)
  *   viq_txmbufs[slot]:		mbuf pointer array for sent frames
  */
 int
-vio_alloc_mem(struct vio_softc *sc, int tx_max_segments)
+vio_alloc_mem(struct vio_softc *sc, int tx_max_segments, bus_size_t txsize)
 {
 	struct virtio_softc	*vsc = sc->sc_virtio;
-	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	size_t			 allocsize, rxqsize, txqsize, offset = 0;
-	bus_size_t		 txsize;
 	caddr_t			 kva;
 	int			 i, qidx, r;
 
@@ -528,11 +527,6 @@ vio_alloc_mem(struct vio_softc *sc, int tx_max_segments)
 	}
 	KASSERT(offset == allocsize);
 
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4) ||
-	    virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
-		txsize = MAXMCLBYTES + sc->sc_hdr_size + ETHER_HDR_LEN;
-	else
-		txsize = ifp->if_hardmtu + sc->sc_hdr_size + ETHER_HDR_LEN;
 
 	for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
 		struct vio_queue *vioq = &sc->sc_q[qidx];
@@ -634,7 +628,9 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
 	struct virtio_attach_args *va = aux;
-	int i, r, tx_max_segments, want_tso = 1;
+	int i, r, tx_max_segments, want_tso = 1, want_mtu = 1;
+	unsigned int device_mtu = 0;
+	bus_size_t txsize, rxsize;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	if (vsc->sc_child != NULL) {
@@ -664,6 +660,8 @@ negotiate:
 		vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO4;
 		vsc->sc_driver_features |= VIRTIO_NET_F_HOST_TSO6;
 	}
+	if (want_mtu)
+		vsc->sc_driver_features |= VIRTIO_NET_F_MTU;
 	if (va->va_nintr > 3 && ncpus > 1)
 		vsc->sc_driver_features |= VIRTIO_NET_F_MQ;
 
@@ -687,6 +685,24 @@ negotiate:
 		want_tso = 0;
 		virtio_reset(vsc);
 		goto negotiate;
+	}
+
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MTU)) {
+		device_mtu = virtio_read_device_config_2(vsc,
+		    VIRTIO_NET_CONFIG_MTU);
+		if (device_mtu > ETHER_MAX_HARDMTU_LEN) {
+			/*
+			 * According to the standard we MUST supply rx buffers
+			 * for the MTU length, but we only support up to
+			 * ETHER_MAX_HARDMTU_LEN.
+			 */
+			printf("%s: mtu %u not supported\n",
+			    sc->sc_dev.dv_xname, device_mtu);
+			device_mtu = 0;
+			want_mtu = 0;
+			virtio_reset(vsc);
+			goto negotiate;
+		}
 	}
 
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_MQ)) {
@@ -723,7 +739,7 @@ negotiate:
 		vio_get_lladdr(&sc->sc_ac, vsc);
 	else
 		ether_fakeaddr(ifp);
-	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
+	printf(", address %s", ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF) ||
 	    vsc->sc_version_1) {
@@ -756,11 +772,31 @@ negotiate:
 		sc->sc_rx_mbuf_size = 4 * 1024;
 	}
 
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF))
-		ifp->if_hardmtu = MAXMCLBYTES;
-	else
-		ifp->if_hardmtu = sc->sc_rx_mbuf_size - sc->sc_hdr_size -
-		    ETHER_HDR_LEN;
+	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
+	if (device_mtu) {
+		printf(", mtu %u", device_mtu);
+		ifp->if_hardmtu = device_mtu;
+	}
+	if (!virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF)) {
+		if (device_mtu)
+			sc->sc_rx_mbuf_size = MAX(sc->sc_rx_mbuf_size,
+			    device_mtu + sc->sc_hdr_size + ETHER_HDR_LEN);
+		ifp->if_hardmtu = MIN(ifp->if_hardmtu,
+		    sc->sc_rx_mbuf_size - sc->sc_hdr_size - ETHER_HDR_LEN);
+	}
+
+	txsize = ifp->if_hardmtu + sc->sc_hdr_size + ETHER_HDR_LEN;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO4) ||
+	    virtio_has_feature(vsc, VIRTIO_NET_F_HOST_TSO6))
+		txsize = MAXMCLBYTES + sc->sc_hdr_size;
+
+	rxsize = ifp->if_hardmtu + sc->sc_hdr_size + ETHER_HDR_LEN;
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO4) ||
+	    virtio_has_feature(vsc, VIRTIO_NET_F_GUEST_TSO6))
+		rxsize = MAXMCLBYTES + sc->sc_hdr_size;
+
+	printf("\n");
+	sc->sc_rxr_lwm = 2 * howmany(rxsize, sc->sc_rx_mbuf_size);
 
 	/* defrag for longer mbuf chains */
 	tx_max_segments = 16;
@@ -863,7 +899,7 @@ negotiate:
 		}
 	}
 
-	if (vio_alloc_mem(sc, tx_max_segments) < 0)
+	if (vio_alloc_mem(sc, tx_max_segments, txsize) < 0)
 		goto err;
 
 	strlcpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
@@ -890,6 +926,8 @@ negotiate:
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	vio_link_state(ifp);
+	if (device_mtu)
+		ifp->if_mtu = device_mtu;
 
 	if_attach_queues(ifp, sc->sc_nqueues);
 	if_attach_iqueues(ifp, sc->sc_nqueues);
@@ -1024,8 +1062,7 @@ vio_init(struct ifnet *ifp)
 		struct vio_queue *vioq = &sc->sc_q[qidx];
 
 		mtx_enter(&vioq->viq_rxmtx);
-		if_rxr_init(&vioq->viq_rxring,
-		    2 * ((ifp->if_hardmtu / sc->sc_rx_mbuf_size) + 1),
+		if_rxr_init(&vioq->viq_rxring, sc->sc_rxr_lwm,
 		    vioq->viq_rxvq->vq_num);
 		vio_populate_rx_mbufs(sc, vioq);
 		ifq_clr_oactive(vioq->viq_ifq);
