@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenetvar.h,v 1.1 2020/04/14 21:02:39 kettenis Exp $ */
+/* $OpenBSD: bcmgenetvar.h,v 1.2 2026/01/15 03:12:49 mvs Exp $ */
 /* $NetBSD: bcmgenetvar.h,v 1.1 2020/02/22 00:28:35 jmcneill Exp $ */
 
 /*-
@@ -51,7 +51,7 @@ struct genet_bufmap {
 struct genet_ring {
 	bus_dma_tag_t		buf_tag;
 	struct genet_bufmap	buf_map[GENET_DMA_DESC_COUNT];
-	u_int			next, queued;
+	u_int			next;
 	uint32_t		cidx, pidx;
 };
 

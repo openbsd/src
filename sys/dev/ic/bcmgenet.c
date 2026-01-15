@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.10 2026/01/05 11:49:01 mvs Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.11 2026/01/15 03:12:49 mvs Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -195,7 +195,6 @@ genet_setup_txdesc(struct genet_softc *sc, int index, int flags,
 	uint32_t status;
 
 	status = flags | __SHIFTIN(len, GENET_TX_DESC_STATUS_BUFLEN);
-	++sc->sc_tx.queued;
 
 	WR4(sc, GENET_TX_DESC_ADDRESS_LO(index), (uint32_t)paddr);
 	WR4(sc, GENET_TX_DESC_ADDRESS_HI(index), (uint32_t)(paddr >> 32));
@@ -206,7 +205,7 @@ int
 genet_setup_txbuf(struct genet_softc *sc, int index, struct mbuf *m)
 {
 	bus_dma_segment_t *segs;
-	int error, nsegs, cur, i;
+	int error, queued, nsegs, cur, i;
 	uint32_t flags;
 
 	/*
@@ -233,8 +232,9 @@ genet_setup_txbuf(struct genet_softc *sc, int index, struct mbuf *m)
 
 	segs = sc->sc_tx.buf_map[index].map->dm_segs;
 	nsegs = sc->sc_tx.buf_map[index].map->dm_nsegs;
+	queued = (sc->sc_tx.pidx - sc->sc_tx.cidx) & 0xffff;
 
-	if (sc->sc_tx.queued >= GENET_DMA_DESC_COUNT - nsegs) {
+	if (queued >= GENET_DMA_DESC_COUNT - nsegs) {
 		bus_dmamap_unload(sc->sc_tx.buf_tag,
 		    sc->sc_tx.buf_map[index].map);
 		return -1;
@@ -520,7 +520,6 @@ genet_init_rings(struct genet_softc *sc, int qid)
 	/* TX ring */
 
 	sc->sc_tx.next = 0;
-	sc->sc_tx.queued = 0;
 	sc->sc_tx.cidx = sc->sc_tx.pidx = 0;
 
 	WR4(sc, GENET_TX_SCB_BURST_SIZE, 0x08);
@@ -657,6 +656,7 @@ genet_stop(struct genet_softc *sc)
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
 
+	ifq_barrier(&ifp->if_snd);
 	intr_barrier(sc->sc_ih);
 
 	/* Clean RX ring. */
@@ -749,17 +749,15 @@ genet_txintr(struct genet_softc *sc, int qid)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct genet_bufmap *bmap;
-	uint32_t cidx, total;
-	int i;
+	uint32_t queued;
 
-	cidx = RD4(sc, GENET_TX_DMA_CONS_INDEX(qid)) & 0xffff;
-	total = (cidx - sc->sc_tx.cidx) & 0xffff;
+	queued = (RD4(sc, GENET_TX_DMA_PROD_INDEX(qid)) -
+	    sc->sc_tx.cidx) & 0xffff;
 
-	for (i = sc->sc_tx.next; sc->sc_tx.queued > 0 && total > 0;
-	     i = TX_NEXT(i), total--) {
+	while (queued > 0) {
 		/* XXX check for errors */
 
-		bmap = &sc->sc_tx.buf_map[i];
+		bmap = &sc->sc_tx.buf_map[sc->sc_tx.next];
 		if (bmap->mbuf != NULL) {
 			bus_dmamap_sync(sc->sc_tx.buf_tag, bmap->map,
 			    0, bmap->map->dm_mapsize,
@@ -769,21 +767,20 @@ genet_txintr(struct genet_softc *sc, int qid)
 			bmap->mbuf = NULL;
 		}
 
-		--sc->sc_tx.queued;
+		queued--;
+
+		sc->sc_tx.cidx++;
+		sc->sc_tx.next = TX_NEXT(sc->sc_tx.next);
 	}
 
-	if (sc->sc_tx.cidx != cidx) {
-		sc->sc_tx.next = i;
-		sc->sc_tx.cidx = cidx;
-
-		if (ifq_is_oactive(&ifp->if_snd))
-			ifq_restart(&ifp->if_snd);
-	}
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 void
-genet_start(struct ifnet *ifp)
+genet_qstart(struct ifqueue *ifq)
 {
+	struct ifnet *ifp = ifq->ifq_if;
 	struct genet_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	const int qid = GENET_DMA_DEFAULT_QUEUE;
@@ -971,7 +968,8 @@ genet_attach(struct genet_softc *sc)
 	ifp->if_softc = sc;
 	snprintf(ifp->if_xname, IFNAMSIZ, "%s", sc->sc_dev.dv_xname);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_start = genet_start;
+	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_qstart = genet_qstart;
 	ifp->if_ioctl = genet_ioctl;
 	ifq_init_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
