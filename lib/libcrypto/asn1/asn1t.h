@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.29 2026/01/16 09:19:20 tb Exp $ */
+/* $OpenBSD: asn1t.h,v 1.30 2026/01/16 09:21:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -598,7 +598,7 @@ struct ASN1_ADB_TABLE_st {
 #define ASN1_TFLG_EXPLICIT	ASN1_TFLG_EXPTAG|ASN1_TFLG_CONTEXT
 
 /*
- * If tagging is in force these determine the type of tag to use. Otherwiser
+ * If tagging is in force these determine the type of tag to use. Otherwise
  * the tag is determined by the underlying type. These values reflect the
  * actual octet format.
  */
