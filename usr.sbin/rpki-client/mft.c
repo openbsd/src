@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.135 2026/01/13 21:36:17 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.136 2026/01/16 11:25:27 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -91,6 +91,8 @@ rtype_from_file_extension(const char *fn)
 		return RTYPE_SPL;
 	if (strcasecmp(fn + sz - 4, ".ccr") == 0)
 		return RTYPE_CCR;
+	if (strcasecmp(fn + sz - 3, ".gz") == 0)
+		return RTYPE_GZ;
 
 	return RTYPE_INVALID;
 }

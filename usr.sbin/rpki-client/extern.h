@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.269 2026/01/13 21:36:17 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.270 2026/01/16 11:25:27 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -202,6 +202,7 @@ enum rtype {
 	RTYPE_TAK,
 	RTYPE_SPL,
 	RTYPE_CCR,
+	RTYPE_GZ,
 };
 
 enum location {
@@ -911,9 +912,12 @@ void		 rrdp_fetch(unsigned int, const char *, const char *,
 void		 rrdp_abort(unsigned int);
 void		 rrdp_http_done(unsigned int, enum http_result, const char *);
 
-/* Encoding functions for hex and base64. */
 
+/* File loading and decompression functions. */
 unsigned char	*load_file(const char *, size_t *);
+unsigned char	*inflate_buffer(uint8_t *, size_t, size_t *);
+
+/* Encoding functions for hex and base64. */
 int		 base64_decode_len(size_t, size_t *);
 int		 base64_decode(const unsigned char *, size_t,
 		    unsigned char **, size_t *);
@@ -992,11 +996,11 @@ int		 outputfiles(struct validation_data *, struct stats *);
 int		 outputheader(FILE *, struct validation_data *, struct stats *);
 int		 output_bgpd(FILE *, struct validation_data *, struct stats *);
 int		 output_bird(FILE *, struct validation_data *, struct stats *);
+int		 output_ccr_der(FILE *, struct validation_data *, struct stats *);
 int		 output_csv(FILE *, struct validation_data *, struct stats *);
 int		 output_json(FILE *, struct validation_data *, struct stats *);
 int		 output_ometric(FILE *, struct validation_data *,
 		    struct stats *);
-int		 output_ccr_der(FILE *, struct validation_data *, struct stats *);
 
 /*
  * Canonical Cache Representation

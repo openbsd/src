@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.14 2025/09/09 08:23:24 job Exp $ */
+/*	$OpenBSD: encoding.c,v 1.15 2026/01/16 11:25:27 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <zlib.h>
 
 #include <openssl/evp.h>
 
@@ -70,6 +71,60 @@ err:
 	close(fd);
 	free(buf);
 	errno = saved_errno;
+	return NULL;
+}
+
+#define GZIP_CHUNK_SIZE	(32 * 1024)
+
+/*
+ * One-shot gzip data decompressor.
+ * On success return the inflated object, or NULL on error.
+ * Caller must free the newly allocated object.
+ */
+unsigned char *
+inflate_buffer(uint8_t *inbuf, size_t inlen, size_t *outlen)
+{
+	z_stream zs;
+	uint8_t *buf = NULL, *nbuf;
+	size_t buf_len;
+	int zret;
+
+	memset(&zs, 0, sizeof(zs));
+
+	zs.avail_in = inlen;
+	zs.next_in = inbuf;
+
+	if (inflateInit2(&zs, MAX_WBITS + 16) != Z_OK)
+		goto err;
+
+	buf_len = inlen * 2;
+	do {
+		buf_len += GZIP_CHUNK_SIZE;
+		if ((nbuf = realloc(buf, buf_len)) == NULL)
+			err(1, NULL);
+		buf = nbuf;
+		zs.next_out = buf + zs.total_out;
+		zs.avail_out = buf_len - zs.total_out;
+
+		zret = inflate(&zs, Z_NO_FLUSH);
+		if (zret != Z_OK && zret != Z_STREAM_END)
+			goto err;
+	} while (zs.avail_out == 0);
+
+	if (inflateEnd(&zs) != Z_OK)
+		goto err;
+
+	/* shrink to right size */
+	if ((nbuf = realloc(buf, zs.total_out)) == NULL)
+		err(1, NULL);
+	buf = nbuf;
+
+	*outlen = zs.total_out;
+	return buf;
+
+ err:
+	inflateEnd(&zs);
+	free(buf);
 	return NULL;
 }
 

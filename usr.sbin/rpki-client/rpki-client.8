@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.135 2026/01/13 21:36:17 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.136 2026/01/16 11:25:27 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2026 $
+.Dd $Mdocdate: January 16 2026 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -116,11 +116,12 @@ and
 .Fl -address
 flags and connect with rsync-protocol locations.
 .It Fl f Ar
-Attempt to decode and validate the RPKI object in
+Attempt to decode and validate the signed RPKI object or CCR in
 .Ar file
 using the cache stored in
 .Ar cachedir
 and print human-readable information about the object.
+Gzip compressed files are inflated on the fly.
 If
 .Ar file
 is an rsync:// URI, the corresponding file from the cache will be used.
@@ -245,9 +246,8 @@ Defaults to
 .Pp
 By default
 .Nm
-outputs validated payloads in
-.Fl o
-(OpenBGPD compatible) format.
+outputs validated payloads in OpenBGPD format and in canonical cache
+representation format.
 .Pp
 .Nm
 should be run hourly by

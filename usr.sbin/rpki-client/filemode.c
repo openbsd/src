@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.75 2026/01/13 21:36:17 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.76 2026/01/16 11:25:27 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -455,6 +455,24 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 			warn("parse file %s", file);
 			return;
 		}
+	}
+
+	if (rtype_from_file_extension(file) == RTYPE_GZ) {
+		size_t full_len;
+		char *gz_ext;
+
+		if ((buf = inflate_buffer(buf, len, &full_len)) == NULL) {
+			warnx("%s: gzip decompression failed", file);
+			goto out;
+		}
+		len = full_len;
+
+		/* zap trailing .gz */
+		if ((gz_ext = strrchr(file, '.')) == NULL) {
+			warnx("%s: unreachable: missing . in filename?", file);
+			goto out;
+		}
+		*gz_ext = '\0';
 	}
 
 	if (!EVP_Digest(buf, len, filehash, NULL, EVP_sha256(), NULL))
