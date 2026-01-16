@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.h,v 1.9 2026/01/01 12:47:52 tb Exp $ */
+/*	$OpenBSD: mlkem.h,v 1.10 2026/01/16 18:28:04 tb Exp $ */
 /*
  * Copyright (c) 2025 Bob Beck <beck@obtuse.com>
  *
@@ -56,7 +56,7 @@ void MLKEM_private_key_free(MLKEM_private_key *key);
 
 /*
  * MLKEM_private_key_encoded_length the number of bytes used by the encoded form
- * of |key|. Thie corresponds to the length of the buffer allocated for the
+ * of |key|. This corresponds to the length of the buffer allocated for the
  * encoded_public_key from |MLKEM_marshal_private_key|. Zero is returned if
  * |key| is NULL or has an invalid rank.
  */
@@ -86,7 +86,7 @@ void MLKEM_public_key_free(MLKEM_public_key *key);
 
 /*
  * MLKEM_public_key_encoded_length the number of bytes used by the encoded form
- * of |key|. Thie corresponds to the length of the buffer allocated for the
+ * of |key|. This corresponds to the length of the buffer allocated for the
  * encoded_public_key from |MLKEM_generate_key| or |MLKEM_marshal_public_key|.
  * Zero is returned if |key| is NULL or has an invalid rank.
  */
