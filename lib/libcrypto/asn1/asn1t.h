@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.30 2026/01/16 09:21:48 tb Exp $ */
+/* $OpenBSD: asn1t.h,v 1.31 2026/01/16 09:25:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -336,7 +336,7 @@ extern "C" {
 	;								\
 	ASN1_ITEM_start(tname)						\
 		.itype = ASN1_ITYPE_CHOICE,				\
-		.utype = offsetof(stname,selname),			\
+		.utype = offsetof(stname, selname),			\
 		.templates = tname##_ch_tt,				\
 		.tcount = sizeof(tname##_ch_tt) / sizeof(ASN1_TEMPLATE),\
 		.funcs = NULL,						\
@@ -348,7 +348,7 @@ extern "C" {
 	;								\
 	static_ASN1_ITEM_start(tname)					\
 		.itype = ASN1_ITYPE_CHOICE,				\
-		.utype = offsetof(stname,selname),			\
+		.utype = offsetof(stname, selname),			\
 		.templates = tname##_ch_tt,				\
 		.tcount = sizeof(tname##_ch_tt) / sizeof(ASN1_TEMPLATE),\
 		.funcs = NULL,						\
@@ -360,7 +360,7 @@ extern "C" {
 	;								\
 	ASN1_ITEM_start(tname)						\
 		.itype = ASN1_ITYPE_CHOICE,				\
-		.utype = offsetof(stname,selname),			\
+		.utype = offsetof(stname, selname),			\
 		.templates = tname##_ch_tt,				\
 		.tcount = sizeof(tname##_ch_tt) / sizeof(ASN1_TEMPLATE),\
 		.funcs = &tname##_aux,					\
@@ -543,16 +543,16 @@ typedef struct ASN1_ADB_TABLE_st ASN1_ADB_TABLE;
 typedef struct ASN1_ADB_st ASN1_ADB;
 
 struct ASN1_ADB_st {
-	unsigned long flags;	/* Various flags */
-	unsigned long offset;	/* Offset of selector field */
+	unsigned long flags;		/* Various flags */
+	unsigned long offset;		/* Offset of selector field */
 	const ASN1_ADB_TABLE *tbl;	/* Table of possible types */
-	long tblcount;		/* Number of entries in tbl */
+	long tblcount;			/* Number of entries in tbl */
 	const ASN1_TEMPLATE *default_tt;  /* Type to use if no match */
-	const ASN1_TEMPLATE *null_tt;  /* Type to use if selector is NULL */
+	const ASN1_TEMPLATE *null_tt;	/* Type to use if selector is NULL */
 };
 
 struct ASN1_ADB_TABLE_st {
-	long value;		/* NID for an object or value for an int */
+	long value;			/* NID for an object or value for an int */
 	const ASN1_TEMPLATE tt;		/* item for this value */
 };
 
@@ -567,9 +567,9 @@ struct ASN1_ADB_TABLE_st {
 /* Field is a SEQUENCE OF */
 #define ASN1_TFLG_SEQUENCE_OF	(0x2 << 1)
 
-/* Special case: this refers to a SET OF that
- * will be sorted into DER order when encoded *and*
- * the corresponding STACK will be modified to match
+/*
+ * Special case: this refers to a SET OF that will be sorted into DER order
+ * when encoded *and* the corresponding STACK will be modified to match
  * the new order.
  */
 #define ASN1_TFLG_SET_ORDER	(0x3 << 1)
@@ -577,9 +577,9 @@ struct ASN1_ADB_TABLE_st {
 /* Mask for SET OF or SEQUENCE OF */
 #define ASN1_TFLG_SK_MASK	(0x3 << 1)
 
-/* These flags mean the tag should be taken from the
- * tag field. If EXPLICIT then the underlying type
- * is used for the inner tag.
+/*
+ * These flags mean the tag should be taken from the tag field. If EXPLICIT
+ * then the underlying type is used for the inner tag.
  */
 
 /* IMPLICIT tagging */
@@ -615,10 +615,9 @@ struct ASN1_ADB_TABLE_st {
 #define ASN1_TFLG_TAG_CLASS	(0x3<<6)
 
 /*
- * These are for ANY DEFINED BY type. In this case
- * the 'item' field points to an ASN1_ADB structure
- * which contains a table of values to decode the
- * relevant type
+ * These are for ANY DEFINED BY type. In this case the 'item' field points
+ * to an ASN1_ADB structure which contains a table of values to decode the
+ * relevant type.
  */
 
 #define ASN1_TFLG_ADB_MASK	(0x3<<8)
@@ -628,9 +627,8 @@ struct ASN1_ADB_TABLE_st {
 #define ASN1_TFLG_ADB_INT	(0x1<<9)
 
 /*
- * This flag when present in a SEQUENCE OF, SET OF
- * or EXPLICIT causes indefinite length constructed
- * encoding to be used if required.
+ * This flag when present in a SEQUENCE OF, SET OF or EXPLICIT causes
+ * indefinite length constructed encoding to be used if required.
  */
 
 #define ASN1_TFLG_NDEF		(0x1<<11)
@@ -638,52 +636,43 @@ struct ASN1_ADB_TABLE_st {
 /* This is the actual ASN1 item itself */
 
 struct ASN1_ITEM_st {
-	char itype;			/* The item type, primitive, SEQUENCE, CHOICE or extern */
+	char itype; /* The item type, primitive, SEQUENCE, CHOICE or extern */
 	long utype;			/* underlying type */
-	const ASN1_TEMPLATE *templates;	/* If SEQUENCE or CHOICE this contains the contents */
+	const ASN1_TEMPLATE *templates;	/* contents for SEQUENCE or CHOICE */
 	long tcount;			/* Number of templates if SEQUENCE or CHOICE */
 	const void *funcs;		/* functions that handle this type */
 	long size;			/* Structure size (usually) */
 	const char *sname;		/* Structure name */
 };
 
-/* These are values for the itype field and
- * determine how the type is interpreted.
+/*
+ * These are values for the itype field and determine how the type is
+ * interpreted.
  *
- * For PRIMITIVE types the underlying type
- * determines the behaviour if items is NULL.
+ * For PRIMITIVE types the underlying type determines the behaviour if
+ * items is NULL.
  *
- * Otherwise templates must contain a single
- * template and the type is treated in the
- * same way as the type specified in the template.
+ * Otherwise templates must contain a single template and the type is
+ * treated in the same way as the type specified in the template.
  *
- * For SEQUENCE types the templates field points
- * to the members, the size field is the
- * structure size.
+ * For SEQUENCE types the templates field points to the members, the
+ * size field is the structure size.
  *
- * For CHOICE types the templates field points
- * to each possible member (typically a union)
- * and the 'size' field is the offset of the
- * selector.
+ * For CHOICE types the templates field points to each possible member
+ * (typically a union) and the 'size' field is the offset of the selector.
  *
- * The 'funcs' field is used for application
- * specific functions.
+ * The 'funcs' field is used for application specific functions.
  *
- * The EXTERN type uses a new style d2i/i2d.
- * The new style should be used where possible
- * because it avoids things like the d2i IMPLICIT
- * hack.
+ * The EXTERN type uses a new style d2i/i2d.  The new style should be used
+ * where possible because it avoids things like the d2i IMPLICIT hack.
  *
- * MSTRING is a multiple string type, it is used
- * for a CHOICE of character strings where the
- * actual strings all occupy an ASN1_STRING
- * structure. In this case the 'utype' field
- * has a special meaning, it is used as a mask
- * of acceptable types using the B_ASN1 constants.
+ * MSTRING is a multiple string type, it is used for a CHOICE of character
+ * strings where the actual strings all occupy an ASN1_STRING structure.
+ * In this case the 'utype' field has a special meaning, it is used as a
+ * mask of acceptable types using the B_ASN1 constants.
  *
- * NDEF_SEQUENCE is the same as SEQUENCE except
- * that it will use indefinite length constructed
- * encoding if requested.
+ * NDEF_SEQUENCE is the same as SEQUENCE except that it will use
+ * indefinite length constructed encoding if requested.
  *
  */
 
@@ -717,23 +706,27 @@ struct ASN1_TLC_st {
 
 typedef ASN1_VALUE * ASN1_new_func(void);
 typedef void ASN1_free_func(ASN1_VALUE *a);
-typedef ASN1_VALUE * ASN1_d2i_func(ASN1_VALUE **a, const unsigned char ** in, long length);
+typedef ASN1_VALUE * ASN1_d2i_func(ASN1_VALUE **a, const unsigned char ** in,
+    long length);
 typedef int ASN1_i2d_func(ASN1_VALUE * a, unsigned char **in);
 
-typedef int ASN1_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_ITEM *it,
-					int tag, int aclass, char opt, ASN1_TLC *ctx);
+typedef int ASN1_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+    const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx);
 
-typedef int ASN1_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it, int tag, int aclass);
+typedef int ASN1_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
+    const ASN1_ITEM *it, int tag, int aclass);
 typedef int ASN1_ex_new_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
 typedef void ASN1_ex_free_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-typedef int ASN1_ex_print_func(BIO *out, ASN1_VALUE **pval,
-						int indent, const char *fname,
-						const ASN1_PCTX *pctx);
+typedef int ASN1_ex_print_func(BIO *out, ASN1_VALUE **pval, int indent,
+    const char *fname, const ASN1_PCTX *pctx);
 
-typedef int ASN1_primitive_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const ASN1_ITEM *it);
-typedef int ASN1_primitive_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it);
-typedef int ASN1_primitive_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it, int indent, const ASN1_PCTX *pctx);
+typedef int ASN1_primitive_i2c(ASN1_VALUE **pval, unsigned char *cont,
+    int *putype, const ASN1_ITEM *it);
+typedef int ASN1_primitive_c2i(ASN1_VALUE **pval, const unsigned char *cont,
+    int len, int utype, char *free_cont, const ASN1_ITEM *it);
+typedef int ASN1_primitive_print(BIO *out, ASN1_VALUE **pval,
+    const ASN1_ITEM *it, int indent, const ASN1_PCTX *pctx);
 
 typedef struct ASN1_EXTERN_FUNCS_st {
 	void *app_data;
@@ -756,25 +749,25 @@ typedef struct ASN1_PRIMITIVE_FUNCS_st {
 	ASN1_primitive_print *prim_print;
 } ASN1_PRIMITIVE_FUNCS;
 
-/* This is the ASN1_AUX structure: it handles various
- * miscellaneous requirements. For example the use of
- * reference counts and an informational callback.
+/*
+ * This is the ASN1_AUX structure: it handles various miscellaneous
+ * requirements. For example the use of reference counts and an
+ * informational callback.
  *
- * The "informational callback" is called at various
- * points during the ASN1 encoding and decoding. It can
- * be used to provide minor customisation of the structures
- * used. This is most useful where the supplied routines
- * *almost* do the right thing but need some extra help
- * at a few points. If the callback returns zero then
- * it is assumed a fatal error has occurred and the
- * main operation should be abandoned.
+ * The "informational callback" is called at various points during
+ * the ASN1 encoding and decoding. It can be used to provide minor
+ * customisation of the structures used. This is most useful where
+ * the supplied routines *almost* do the right thing but need some
+ * extra help at a few points. If the callback returns zero then it
+ * is assumed a fatal error has occurred and the main operation
+ * should be abandoned.
  *
- * If major changes in the default behaviour are required
- * then an external type is more appropriate.
+ * If major changes in the default behaviour are required then an
+ * external type is more appropriate.
  */
 
 typedef int ASN1_aux_cb(int operation, ASN1_VALUE **in, const ASN1_ITEM *it,
-				void *exarg);
+    void *exarg);
 
 typedef struct ASN1_AUX_st {
 	void *app_data;
@@ -992,10 +985,10 @@ DECLARE_STACK_OF(ASN1_VALUE)
 
 int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
-int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_ITEM *it,
-				int tag, int aclass, char opt, ASN1_TLC *ctx);
-
-int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it, int tag, int aclass);
+int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+    const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx);
+int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
+    const ASN1_ITEM *it, int tag, int aclass);
 
 #ifdef  __cplusplus
 }
