@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem.c,v 1.6 2026/01/01 13:36:09 tb Exp $ */
+/*	$OpenBSD: mlkem.c,v 1.7 2026/01/16 18:27:22 tb Exp $ */
 /*
  * Copyright (c) 2025, Bob Beck <beck@obtuse.com>
  *
@@ -293,7 +293,7 @@ MLKEM_marshal_public_key(const MLKEM_public_key *public_key, uint8_t **out,
 LCRYPTO_ALIAS(MLKEM_marshal_public_key);
 
 /*
- * Not exposed publicly, becuase the NIST private key format is gigantisch, and
+ * Not exposed publicly, because the NIST private key format is gigantisch, and
  * seeds should be used instead.  Used for the NIST tests.
  */
 int
