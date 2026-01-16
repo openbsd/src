@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.28 2026/01/11 07:52:34 tb Exp $ */
+/* $OpenBSD: asn1t.h,v 1.29 2026/01/16 09:19:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -88,7 +88,6 @@ extern "C" {
 	};
 
 
-
 /* Macros to aid ASN1 template writing */
 
 #define ASN1_ITEM_TEMPLATE(tname)					\
@@ -145,9 +144,11 @@ extern "C" {
 #define ASN1_SEQUENCE(tname)						\
 	static const ASN1_TEMPLATE tname##_seq_tt[]
 
-#define ASN1_SEQUENCE_END(stname) ASN1_SEQUENCE_END_name(stname, stname)
+#define ASN1_SEQUENCE_END(stname)					\
+	ASN1_SEQUENCE_END_name(stname, stname)
 
-#define static_ASN1_SEQUENCE_END(stname) static_ASN1_SEQUENCE_END_name(stname, stname)
+#define static_ASN1_SEQUENCE_END(stname)				\
+	static_ASN1_SEQUENCE_END_name(stname, stname)
 
 #define ASN1_SEQUENCE_END_name(stname, tname)				\
 	;								\
@@ -236,11 +237,14 @@ extern "C" {
 		.sname = #tname,					\
 	ASN1_ITEM_end(tname)
 
-#define ASN1_SEQUENCE_END_enc(stname, tname) ASN1_SEQUENCE_END_ref(stname, tname)
+#define ASN1_SEQUENCE_END_enc(stname, tname)				\
+	ASN1_SEQUENCE_END_ref(stname, tname)
 
-#define ASN1_SEQUENCE_END_cb(stname, tname) ASN1_SEQUENCE_END_ref(stname, tname)
+#define ASN1_SEQUENCE_END_cb(stname, tname)				\
+	ASN1_SEQUENCE_END_ref(stname, tname)
 
-#define static_ASN1_SEQUENCE_END_cb(stname, tname) static_ASN1_SEQUENCE_END_ref(stname, tname)
+#define static_ASN1_SEQUENCE_END_cb(stname, tname)			\
+	static_ASN1_SEQUENCE_END_ref(stname, tname)
 
 #define ASN1_SEQUENCE_END_ref(stname, tname)				\
 	;								\
@@ -316,13 +320,17 @@ extern "C" {
 	};								\
 	ASN1_CHOICE(tname)
 
-#define ASN1_CHOICE_END(stname) ASN1_CHOICE_END_name(stname, stname)
+#define ASN1_CHOICE_END(stname)						\
+	ASN1_CHOICE_END_name(stname, stname)
 
-#define static_ASN1_CHOICE_END(stname) static_ASN1_CHOICE_END_name(stname, stname)
+#define static_ASN1_CHOICE_END(stname)					\
+	static_ASN1_CHOICE_END_name(stname, stname)
 
-#define ASN1_CHOICE_END_name(stname, tname) ASN1_CHOICE_END_selector(stname, tname, type)
+#define ASN1_CHOICE_END_name(stname, tname)				\
+	ASN1_CHOICE_END_selector(stname, tname, type)
 
-#define static_ASN1_CHOICE_END_name(stname, tname) static_ASN1_CHOICE_END_selector(stname, tname, type)
+#define static_ASN1_CHOICE_END_name(stname, tname)			\
+	static_ASN1_CHOICE_END_selector(stname, tname, type)
 
 #define ASN1_CHOICE_END_selector(stname, tname, selname)		\
 	;								\
@@ -501,7 +509,11 @@ extern "C" {
 		.null_tt = none,					\
 	}
 
-#define ADB_ENTRY(val, template) {val, template}
+#define ADB_ENTRY(val, template)					\
+	{								\
+		.value = val,						\
+		.tt = template,						\
+	}
 
 #define ASN1_ADB_TEMPLATE(name) \
 	static const ASN1_TEMPLATE name##_tt
@@ -853,93 +865,111 @@ typedef struct ASN1_STREAM_ARG_st {
 
 /* Macro to implement standard functions in terms of ASN1_ITEM structures */
 
-#define IMPLEMENT_ASN1_FUNCTIONS(stname) IMPLEMENT_ASN1_FUNCTIONS_fname(stname, stname, stname)
+#define IMPLEMENT_ASN1_FUNCTIONS(stname)				\
+	IMPLEMENT_ASN1_FUNCTIONS_fname(stname, stname, stname)
 
-#define IMPLEMENT_ASN1_FUNCTIONS_name(stname, itname) IMPLEMENT_ASN1_FUNCTIONS_fname(stname, itname, itname)
+#define IMPLEMENT_ASN1_FUNCTIONS_name(stname, itname)			\
+	IMPLEMENT_ASN1_FUNCTIONS_fname(stname, itname, itname)
 
-#define IMPLEMENT_ASN1_FUNCTIONS_ENCODE_name(stname, itname) \
-			IMPLEMENT_ASN1_FUNCTIONS_ENCODE_fname(stname, itname, itname)
+#define IMPLEMENT_ASN1_FUNCTIONS_ENCODE_name(stname, itname)		\
+	IMPLEMENT_ASN1_FUNCTIONS_ENCODE_fname(stname, itname, itname)
 
-#define IMPLEMENT_STATIC_ASN1_ALLOC_FUNCTIONS(stname) \
-		IMPLEMENT_ASN1_ALLOC_FUNCTIONS_pfname(static, stname, stname, stname)
+#define IMPLEMENT_STATIC_ASN1_ALLOC_FUNCTIONS(stname)			\
+	IMPLEMENT_ASN1_ALLOC_FUNCTIONS_pfname(static, stname, stname, stname)
 
-#define IMPLEMENT_ASN1_ALLOC_FUNCTIONS(stname) \
-		IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, stname, stname)
+#define IMPLEMENT_ASN1_ALLOC_FUNCTIONS(stname)				\
+	IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, stname, stname)
 
 #define IMPLEMENT_ASN1_ALLOC_FUNCTIONS_pfname(pre, stname, itname, fname) \
-	pre stname *fname##_new(void) \
-	{ \
-		return (stname *)ASN1_item_new(ASN1_ITEM_rptr(itname)); \
-	} \
-	pre void fname##_free(stname *a) \
-	{ \
+	pre stname *							\
+	fname##_new(void)						\
+	{								\
+		return (stname *)ASN1_item_new(ASN1_ITEM_rptr(itname));	\
+	}								\
+	pre void							\
+	fname##_free(stname *a)						\
+	{								\
 		ASN1_item_free((ASN1_VALUE *)a, ASN1_ITEM_rptr(itname)); \
 	}
 
-#define IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, itname, fname) \
-	stname *fname##_new(void) \
-	{ \
-		return (stname *)ASN1_item_new(ASN1_ITEM_rptr(itname)); \
-	} \
-	void fname##_free(stname *a) \
-	{ \
+#define IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, itname, fname)	\
+	stname *							\
+	fname##_new(void)						\
+	{								\
+		return (stname *)ASN1_item_new(ASN1_ITEM_rptr(itname));	\
+	}								\
+	void								\
+	fname##_free(stname *a)						\
+	{								\
 		ASN1_item_free((ASN1_VALUE *)a, ASN1_ITEM_rptr(itname)); \
 	}
 
-#define IMPLEMENT_ASN1_FUNCTIONS_fname(stname, itname, fname) \
-	IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(stname, itname, fname) \
+#define IMPLEMENT_ASN1_FUNCTIONS_fname(stname, itname, fname)		\
+	IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(stname, itname, fname)	\
 	IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, itname, fname)
 
-#define IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(stname, itname, fname) \
-	stname *d2i_##fname(stname **a, const unsigned char **in, long len) \
-	{ \
-		return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(itname));\
-	} \
-	int i2d_##fname(stname *a, unsigned char **out) \
-	{ \
-		return ASN1_item_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
+#define IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(stname, itname, fname)	\
+	stname *							\
+	d2i_##fname(stname **a, const unsigned char **in, long len)	\
+	{								\
+		return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in,	\
+		    len, ASN1_ITEM_rptr(itname));			\
+	}								\
+	int								\
+	i2d_##fname(stname *a, unsigned char **out)			\
+	{								\
+		return ASN1_item_i2d((ASN1_VALUE *)a, out,		\
+		    ASN1_ITEM_rptr(itname));				\
 	}
 
-#define IMPLEMENT_ASN1_NDEF_FUNCTION(stname) \
-	int i2d_##stname##_NDEF(stname *a, unsigned char **out) \
-	{ \
-		return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(stname));\
+#define IMPLEMENT_ASN1_NDEF_FUNCTION(stname)				\
+	int								\
+	i2d_##stname##_NDEF(stname *a, unsigned char **out)		\
+	{								\
+		return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out,		\
+		    ASN1_ITEM_rptr(stname));				\
 	}
 
 /* This includes evil casts to remove const: they will go away when full
  * ASN1 constification is done.
  */
 #define IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(stname, itname, fname) \
-	stname *d2i_##fname(stname **a, const unsigned char **in, long len) \
-	{ \
-		return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(itname));\
-	} \
-	int i2d_##fname(const stname *a, unsigned char **out) \
-	{ \
-		return ASN1_item_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
+	stname *							\
+	d2i_##fname(stname **a, const unsigned char **in, long len)	\
+	{								\
+		return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in,	\
+		    len, ASN1_ITEM_rptr(itname));			\
+	}								\
+	int								\
+	i2d_##fname(const stname *a, unsigned char **out)		\
+	{								\
+		return ASN1_item_i2d((ASN1_VALUE *)a, out,		\
+		    ASN1_ITEM_rptr(itname));				\
 	}
 
-#define IMPLEMENT_ASN1_DUP_FUNCTION(stname) \
-	stname * stname##_dup(stname *x) \
-        { \
-        return ASN1_item_dup(ASN1_ITEM_rptr(stname), x); \
-        }
+#define IMPLEMENT_ASN1_DUP_FUNCTION(stname)				\
+	stname *							\
+	stname##_dup(stname *x)						\
+	{								\
+		return ASN1_item_dup(ASN1_ITEM_rptr(stname), x);	\
+	}
 
-#define IMPLEMENT_ASN1_PRINT_FUNCTION(stname) \
+#define IMPLEMENT_ASN1_PRINT_FUNCTION(stname)				\
 	IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, stname, stname)
 
-#define IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, itname, fname) \
-	int fname##_print_ctx(BIO *out, stname *x, int indent, \
-						const ASN1_PCTX *pctx) \
-	{ \
-		return ASN1_item_print(out, (ASN1_VALUE *)x, indent, \
-			ASN1_ITEM_rptr(itname), pctx); \
+#define IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, itname, fname)	\
+	int								\
+	fname##_print_ctx(BIO *out, stname *x, int indent,		\
+	    const ASN1_PCTX *pctx)					\
+	{								\
+		return ASN1_item_print(out, (ASN1_VALUE *)x, indent,	\
+		    ASN1_ITEM_rptr(itname), pctx);			\
 	}
 
-#define IMPLEMENT_ASN1_FUNCTIONS_const(name) \
-		IMPLEMENT_ASN1_FUNCTIONS_const_fname(name, name, name)
+#define IMPLEMENT_ASN1_FUNCTIONS_const(name)				\
+	IMPLEMENT_ASN1_FUNCTIONS_const_fname(name, name, name)
 
-#define IMPLEMENT_ASN1_FUNCTIONS_const_fname(stname, itname, fname) \
+#define IMPLEMENT_ASN1_FUNCTIONS_const_fname(stname, itname, fname)	\
 	IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(stname, itname, fname) \
 	IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, itname, fname)
 
