@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_amd64_generic.S,v 1.1 2024/11/16 14:56:39 jsing Exp $ */
+/* $OpenBSD: sha512_amd64_generic.S,v 1.2 2026/01/17 06:31:45 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -144,7 +144,7 @@
 	sha512_message_schedule_update(idx, %rsp, tmp0) \
 	sha512_round(idx, a, b, c, d, e, f, g, h, k512, %rsp, tmp0)
 
-.text
+.section .text
 
 /*
  * void sha512_block_generic(SHA512_CTX *ctx, const void *in, size_t num);
@@ -277,10 +277,11 @@ sha512_block_generic:
 
 	ret
 
+.section .rodata
+
 /*
  * SHA-512 constants - see FIPS 180-4 section 4.2.3.
  */
-.rodata
 .align	64
 .type	K512,@object
 K512:

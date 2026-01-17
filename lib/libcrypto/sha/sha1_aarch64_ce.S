@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64_ce.S,v 1.2 2026/01/17 06:23:42 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64_ce.S,v 1.3 2026/01/17 06:31:45 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -99,7 +99,7 @@
 
 .arch	armv8-a+sha2
 
-.text
+.section .text
 
 /*
  * void sha1_block_ce(SHA256_CTX *ctx, const void *in, size_t num);

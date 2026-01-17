@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64_shani.S,v 1.1 2024/11/16 15:31:36 jsing Exp $ */
+/* $OpenBSD: sha256_amd64_shani.S,v 1.2 2026/01/17 06:31:45 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -80,7 +80,7 @@
 	movdqa	xmt0, xmsg;						\
 	sha256_shani_round(idx);
 
-.text
+.section .text
 
 /*
  * void sha256_block_shani(SHA256_CTX *ctx, const void *in, size_t num);
@@ -173,7 +173,7 @@ sha256_block_shani:
 
 	ret
 
-.rodata
+.section .rodata
 
 /*
  * Shuffle mask - little endian to big endian word conversion.

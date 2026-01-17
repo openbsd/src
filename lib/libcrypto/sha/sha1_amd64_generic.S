@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_generic.S,v 1.2 2025/01/18 02:56:07 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_generic.S,v 1.3 2026/01/17 06:31:45 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -156,7 +156,7 @@
 	sha1_message_schedule_update(idx, %rsp, tmp0) \
 	sha1_round_parity(a, b, c, d, e, 0xca62c1d6, tmp0)
 
-.text
+.section .text
 
 /*
  * void sha1_block_generic(SHA1_CTX *ctx, const void *in, size_t num);

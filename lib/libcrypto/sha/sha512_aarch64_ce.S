@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_aarch64_ce.S,v 1.2 2026/01/17 06:23:42 jsing Exp $ */
+/* $OpenBSD: sha512_aarch64_ce.S,v 1.3 2026/01/17 06:31:45 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -151,7 +151,7 @@
 
 .arch	armv8-a+sha3
 
-.text
+.section .text
 
 /*
  * void sha512_block_ce(SHA512_CTX *ctx, const void *in, size_t num);
@@ -282,10 +282,11 @@ sha512_block_ce:
 
 	ret
 
+.section .rodata
+
 /*
  * SHA-512 constants - see FIPS 180-4 section 4.2.3.
  */
-.rodata
 .align	4
 .type	K512,@object
 K512:
