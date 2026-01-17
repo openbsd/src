@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_aarch64_ce.S,v 1.1 2025/03/12 14:13:41 jsing Exp $ */
+/* $OpenBSD: sha512_aarch64_ce.S,v 1.2 2026/01/17 06:23:42 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -177,7 +177,7 @@ sha512_block_ce:
 	 */
 	ld1	{hc0.2d, hc1.2d, hc2.2d, hc3.2d}, [ctx]
 
-block_loop:
+.Lblock_loop:
 	mov	k512, k512_base
 
 	/* Copy current hash state. */
@@ -271,7 +271,7 @@ block_loop:
 	add	hc3.2d, hc3.2d, hs3.2d
 
 	sub	num, num, #1
-	cbnz	num, block_loop
+	cbnz	num, .Lblock_loop
 
 	/* Store hash state to context. */
 	st1	{hc0.2d, hc1.2d, hc2.2d, hc3.2d}, [ctx]

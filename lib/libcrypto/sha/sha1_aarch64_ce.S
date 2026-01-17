@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64_ce.S,v 1.1 2025/06/28 12:51:08 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64_ce.S,v 1.2 2026/01/17 06:23:42 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -138,7 +138,7 @@ sha1_block_ce:
 	ld1	{hc0.4s}, [ctx]
 	ldr	hc1s, [ctx, #(4*4)]
 
-block_loop:
+.Lblock_loop:
 	/* Copy current hash state. */
 	mov	hs0.4s, hc0.4s
 	mov	hs1s, hc1.s[0]
@@ -205,7 +205,7 @@ block_loop:
 	add	hc1.4s, hc1.4s, hs1.4s
 
 	sub	num, num, #1
-	cbnz	num, block_loop
+	cbnz	num, .Lblock_loop
 
 	/* Store hash state to context. */
 	st1	{hc0.4s}, [ctx]
