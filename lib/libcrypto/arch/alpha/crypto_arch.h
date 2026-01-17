@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_arch.h,v 1.3 2026/01/17 14:30:37 jsing Exp $ */
+/*	$OpenBSD: crypto_arch.h,v 1.4 2026/01/17 16:18:32 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -20,11 +20,15 @@
 
 #ifndef OPENSSL_NO_ASM
 
+#ifdef LIBRESSL_USE_GCM_ASSEMBLY
 #define HAVE_GCM_GHASH_4BIT
 #define HAVE_GCM_GMULT_4BIT
+#endif
 
+#ifdef LIBRESSL_USE_SHA_ASSEMBLY
 #define HAVE_SHA1_BLOCK_DATA_ORDER
 #define HAVE_SHA1_BLOCK_GENERIC
+#endif
 
 #endif
 

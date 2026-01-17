@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_arch.h,v 1.17 2026/01/17 14:53:09 jsing Exp $ */
+/*	$OpenBSD: crypto_arch.h,v 1.18 2026/01/17 16:18:32 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -33,11 +33,11 @@ extern uint64_t crypto_cpu_caps_amd64;
 
 #ifndef OPENSSL_NO_ASM
 
+#ifdef LIBRESSL_USE_AES_ASSEMBLY
 #define HAVE_AES_SET_ENCRYPT_KEY_GENERIC
 #define HAVE_AES_SET_DECRYPT_KEY_GENERIC
 #define HAVE_AES_ENCRYPT_GENERIC
 #define HAVE_AES_DECRYPT_GENERIC
-
 #define HAVE_AES_SET_ENCRYPT_KEY_INTERNAL
 #define HAVE_AES_SET_DECRYPT_KEY_INTERNAL
 #define HAVE_AES_ENCRYPT_INTERNAL
@@ -47,24 +47,31 @@ extern uint64_t crypto_cpu_caps_amd64;
 #define HAVE_AES_CTR32_ENCRYPT_INTERNAL
 #define HAVE_AES_ECB_ENCRYPT_INTERNAL
 #define HAVE_AES_XTS_ENCRYPT_INTERNAL
+#endif
 
+#ifdef LIBRESSL_USE_GCM_ASSEMBLY
 #define HAVE_GCM128_INIT
 #define HAVE_GCM_GHASH_4BIT
 #define HAVE_GCM_GMULT_4BIT
+#endif
 
+#ifdef LIBRESSL_USE_MD5_ASSEMBLY
 #define HAVE_MD5_BLOCK_DATA_ORDER
+#endif
 
+#ifdef LIBRESSL_USE_RC4_ASSEMBLY
 #define HAVE_RC4_INTERNAL
 #define HAVE_RC4_SET_KEY_INTERNAL
+#endif
 
+#ifdef LIBRESSL_USE_SHA_ASSEMBLY
 #define HAVE_SHA1_BLOCK_DATA_ORDER
 #define HAVE_SHA1_BLOCK_GENERIC
-
 #define HAVE_SHA256_BLOCK_DATA_ORDER
 #define HAVE_SHA256_BLOCK_GENERIC
-
 #define HAVE_SHA512_BLOCK_DATA_ORDER
 #define HAVE_SHA512_BLOCK_GENERIC
+#endif
 
 #endif
 

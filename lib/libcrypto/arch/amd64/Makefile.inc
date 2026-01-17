@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.45 2026/01/17 14:53:09 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.46 2026/01/17 16:18:32 jsing Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -8,6 +8,7 @@ EXTRA_PL =	${LCRYPTO_SRC}/perlasm/x86_64-xlate.pl
 SRCS += crypto_cpu_caps.c
 
 # aes
+CFLAGS+= -DLIBRESSL_USE_AES_ASSEMBLY
 SSLASM+= aes aes-x86_64
 SSLASM+= aes aesni-x86_64
 SRCS += aes_amd64.c
@@ -20,6 +21,7 @@ CFLAGS+= -DOPENSSL_BN_ASM_MONT5
 SSLASM+= bn x86_64-mont5
 
 # bn s2n-bignum
+CFLAGS+= -DLIBRESSL_USE_BN_ASSEMBLY
 SRCS += bn_arch.c
 SRCS += bignum_add.S
 SRCS += bignum_cmadd.S
@@ -44,17 +46,20 @@ SRCS += bignum_sub.S
 SRCS += word_clz.S
 
 # md5
+CFLAGS+= -DLIBRESSL_USE_MD5_ASSEMBLY
 SRCS+= md5_amd64_generic.S
 
 # modes
+CFLAGS+= -DLIBRESSL_USE_GCM_ASSEMBLY
 SSLASM+= modes ghash-x86_64
 SRCS += gcm128_amd64.c
 
 # rc4
+CFLAGS+= -DLIBRESSL_USE_RC4_ASSEMBLY
 SSLASM+= rc4 rc4-x86_64
 
-# ripemd
 # sha
+CFLAGS+= -DLIBRESSL_USE_SHA_ASSEMBLY
 SRCS+= sha1_amd64.c
 SRCS+= sha1_amd64_generic.S
 SRCS+= sha1_amd64_shani.S
