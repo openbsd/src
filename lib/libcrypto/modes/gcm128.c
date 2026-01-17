@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.54 2025/06/28 12:39:10 jsing Exp $ */
+/* $OpenBSD: gcm128.c,v 1.55 2026/01/17 14:30:37 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -52,6 +52,7 @@
 
 #include <openssl/crypto.h>
 
+#include "crypto_arch.h"
 #include "crypto_internal.h"
 #include "modes_local.h"
 
@@ -84,17 +85,17 @@ gcm_init_4bit(u128 Htable[16], uint64_t H[2])
 	}
 }
 
-#ifdef GHASH_ASM
-void gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16]);
-void gcm_ghash_4bit(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
-    size_t len);
-
-#else
+#if !defined(HAVE_GCM_GHASH_4BIT) && !defined(HAVE_GCM_GMULT_4BIT)
 static const uint16_t rem_4bit[16] = {
 	0x0000, 0x1c20, 0x3840, 0x2460, 0x7080, 0x6ca0, 0x48c0, 0x54e0,
 	0xe100, 0xfd20, 0xd940, 0xc560, 0x9180, 0x8da0, 0xa9c0, 0xb5e0,
 };
+#endif
 
+#ifdef HAVE_GCM_GMULT_4BIT
+void gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16]);
+
+#else
 static void
 gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16])
 {
@@ -135,7 +136,13 @@ gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16])
 	Xi[0] = htobe64(Z.hi);
 	Xi[1] = htobe64(Z.lo);
 }
+#endif
 
+#ifdef HAVE_GCM_GHASH_4BIT
+void gcm_ghash_4bit(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
+    size_t len);
+
+#else
 static void
 gcm_ghash_4bit(uint64_t Xi[2], const u128 Htable[16],
     const uint8_t *inp, size_t len)
