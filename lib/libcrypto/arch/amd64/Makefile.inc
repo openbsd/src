@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.42 2025/08/14 15:12:53 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.43 2026/01/17 13:55:30 jsing Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -8,13 +8,11 @@ EXTRA_PL =	${LCRYPTO_SRC}/perlasm/x86_64-xlate.pl
 SRCS += crypto_cpu_caps.c
 
 # aes
-CFLAGS+= -DAES_ASM
 SSLASM+= aes aes-x86_64
 SSLASM+= aes aesni-x86_64
 SRCS += aes_amd64.c
 
 # bn
-CFLAGS+= -DRSA_ASM
 SSLASM+= bn modexp512-x86_64
 CFLAGS+= -DOPENSSL_BN_ASM_MONT
 SSLASM+= bn x86_64-mont

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.31 2025/06/28 12:39:10 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.32 2026/01/17 13:55:30 jsing Exp $
 
 # i386-specific libcrypto build rules
 
@@ -8,7 +8,6 @@ EXTRA_PL =  ${LCRYPTO_SRC}/perlasm/x86gas.pl ${LCRYPTO_SRC}/perlasm/x86asm.pl
 SRCS += crypto_cpu_caps.c
 
 # aes
-CFLAGS+= -DAES_ASM
 SSLASM+= aes aes-586
 SSLASM+= aes aesni-x86
 SRCS += aes_i386.c

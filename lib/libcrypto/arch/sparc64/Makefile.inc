@@ -1,9 +1,8 @@
-# $OpenBSD: Makefile.inc,v 1.21 2025/02/14 12:01:58 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.22 2026/01/17 13:55:31 jsing Exp $
 
 # sparc64-specific libcrypto build rules
 
 # aes
-CFLAGS+= -DAES_ASM
 SSLASM+= aes aes-sparcv9 aes-sparcv9
 # bn
 # modes
