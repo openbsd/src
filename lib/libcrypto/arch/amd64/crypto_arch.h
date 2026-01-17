@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_arch.h,v 1.16 2026/01/17 14:30:37 jsing Exp $ */
+/*	$OpenBSD: crypto_arch.h,v 1.17 2026/01/17 14:53:09 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -51,6 +51,8 @@ extern uint64_t crypto_cpu_caps_amd64;
 #define HAVE_GCM128_INIT
 #define HAVE_GCM_GHASH_4BIT
 #define HAVE_GCM_GMULT_4BIT
+
+#define HAVE_MD5_BLOCK_DATA_ORDER
 
 #define HAVE_RC4_INTERNAL
 #define HAVE_RC4_SET_KEY_INTERNAL

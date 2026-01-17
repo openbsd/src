@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.25 2025/01/24 13:35:04 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.26 2026/01/17 14:53:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,11 +70,11 @@
 /* Ensure that MD5_LONG and uint32_t are equivalent size. */
 CTASSERT(sizeof(MD5_LONG) == sizeof(uint32_t));
 
-#ifdef MD5_ASM
+#ifdef HAVE_MD5_BLOCK_DATA_ORDER
 void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 #endif
 
-#ifndef MD5_ASM
+#ifndef HAVE_MD5_BLOCK_DATA_ORDER
 static inline uint32_t
 md5_F(uint32_t x, uint32_t y, uint32_t z)
 {

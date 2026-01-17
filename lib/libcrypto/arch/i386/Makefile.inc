@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.33 2026/01/17 14:30:37 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.34 2026/01/17 14:53:09 jsing Exp $
 
 # i386-specific libcrypto build rules
 
@@ -19,7 +19,6 @@ CFLAGS+= -DOPENSSL_BN_ASM_MONT
 SSLASM+= bn x86-mont
 
 # md5
-CFLAGS+= -DMD5_ASM
 SSLASM+= md5 md5-586
 
 # modes
