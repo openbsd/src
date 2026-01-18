@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_internal.c,v 1.5 2026/01/01 13:36:09 tb Exp $ */
+/* $OpenBSD: mlkem_internal.c,v 1.6 2026/01/18 08:49:42 tb Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, 2025 Bob Beck <beck@obtuse.com>
@@ -875,28 +875,6 @@ private_key_from_external(const MLKEM_private_key *external,
 	offset += 32;
 }
 
-/*
- * Calls |mlkem_generate_key_external_entropy| with random bytes from
- * |RAND_bytes|.
- */
-int
-mlkem_generate_key(uint8_t *out_encoded_public_key,
-    uint8_t optional_out_seed[MLKEM_SEED_LENGTH],
-    MLKEM_private_key *out_private_key)
-{
-	uint8_t entropy_buf[MLKEM_SEED_LENGTH];
-	uint8_t *entropy = optional_out_seed != NULL ? optional_out_seed :
-	    entropy_buf;
-	int ret;
-
-	arc4random_buf(entropy, MLKEM_SEED_LENGTH);
-	ret = mlkem_generate_key_external_entropy(out_encoded_public_key,
-	    out_private_key, entropy);
-	explicit_bzero(entropy_buf, sizeof(entropy_buf));
-
-	return ret;
-}
-
 int
 mlkem_private_key_from_seed(const uint8_t *seed, size_t seed_len,
     MLKEM_private_key *out_private_key)
@@ -1055,20 +1033,6 @@ encrypt_cpa(uint8_t *out, const struct public_key *pub,
 	explicit_bzero(error, sizeof(error));
 	explicit_bzero(u, sizeof(u));
 	explicit_bzero(input, sizeof(input));
-}
-
-/* Calls mlkem_encap_external_entropy| with random bytes */
-void
-mlkem_encap(const MLKEM_public_key *public_key,
-    uint8_t *out_ciphertext,
-    uint8_t out_shared_secret[MLKEM_SHARED_SECRET_LENGTH])
-{
-	uint8_t entropy[MLKEM_ENCAP_ENTROPY];
-
-	arc4random_buf(entropy, MLKEM_ENCAP_ENTROPY);
-	mlkem_encap_external_entropy(out_ciphertext,
-	    out_shared_secret, public_key, entropy);
-	explicit_bzero(entropy, sizeof(entropy));
 }
 
 /* See section 6.2 of the spec. */
