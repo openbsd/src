@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.6 2025/08/23 16:48:17 gkoehler Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.7 2026/01/18 07:54:36 kn Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -48,6 +48,7 @@ static int Xhelp(void);
 static int Xls(void);
 static int Xnop(void);
 static int Xreboot(void);
+static int Xtime(void);
 #ifdef MACHINE_CMD
 static int Xmachine(void);
 extern const struct cmd_table MACHINE_CMD[];
@@ -70,6 +71,7 @@ const struct cmd_table cmd_table[] = {
 #endif
 	{"reboot", CMDT_CMD, Xreboot},
 	{"set",    CMDT_SET, Xset},
+	{"time",   CMDT_CMD, Xtime},
 	{NULL, 0},
 };
 
@@ -491,6 +493,12 @@ Xreboot(void)
 	printf("Rebooting...\n");
 	reboot(0);
 	return 0; /* just in case */
+}
+
+static int
+Xtime(void)
+{
+	return 0;
 }
 
 int
