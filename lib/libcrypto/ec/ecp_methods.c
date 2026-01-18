@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.47 2025/05/24 08:25:58 jsing Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.48 2026/01/18 10:07:44 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -283,6 +283,65 @@ ec_point_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 }
 
 /*
+ * Compare a and b under the assumption that exactly one of them is affine.
+ * This avoids needless multiplications by one, which are expensive in the
+ * Montgomery domain.
+ */
+
+static int
+ec_point_cmp_one_affine(const EC_GROUP *group, const EC_POINT *a,
+    const EC_POINT *b, BN_CTX *ctx)
+{
+	const EC_POINT *tmp;
+	BIGNUM *az, *bn;
+	int ret = -1;
+
+	BN_CTX_start(ctx);
+
+	if (a->Z_is_one == b->Z_is_one)
+		goto err;
+
+	/* Ensure b is the affine point. */
+	if (a->Z_is_one) {
+		tmp = a;
+		a = b;
+		b = tmp;
+	}
+
+	if ((az = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bn = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/* a->X == b->X * a->Z^2 ? */
+	if (!ec_field_sqr(group, az, a->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, bn, b->X, az, ctx))
+		goto err;
+	if (BN_cmp(a->X, bn) != 0) {
+		ret = 1;
+		goto err;
+	}
+
+	/* a->Y == b->Y * a->Z^3 ? */
+	if (!ec_field_mul(group, az, az, a->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, bn, b->Y, az, ctx))
+		goto err;
+	if (BN_cmp(a->Y, bn) != 0) {
+		ret = 1;
+		goto err;
+	}
+
+	ret = 0;
+
+ err:
+	BN_CTX_end(ctx);
+
+	return ret;
+}
+
+/*
  * Returns -1 on error, 0 if the points are equal, 1 if the points are distinct.
  */
 
@@ -290,8 +349,7 @@ static int
 ec_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
     BN_CTX *ctx)
 {
-	BIGNUM *tmp1, *tmp2, *Za23, *Zb23;
-	const BIGNUM *tmp1_, *tmp2_;
+	BIGNUM *az, *bz, *bn1, *bn2;
 	int ret = -1;
 
 	if (EC_POINT_is_at_infinity(group, a) && EC_POINT_is_at_infinity(group, b))
@@ -301,71 +359,51 @@ ec_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
 
 	if (a->Z_is_one && b->Z_is_one)
 		return BN_cmp(a->X, b->X) != 0 || BN_cmp(a->Y, b->Y) != 0;
+	if (a->Z_is_one || b->Z_is_one)
+		return ec_point_cmp_one_affine(group, a, b, ctx);
 
 	BN_CTX_start(ctx);
 
-	if ((tmp1 = BN_CTX_get(ctx)) == NULL)
-		goto end;
-	if ((tmp2 = BN_CTX_get(ctx)) == NULL)
-		goto end;
-	if ((Za23 = BN_CTX_get(ctx)) == NULL)
-		goto end;
-	if ((Zb23 = BN_CTX_get(ctx)) == NULL)
-		goto end;
+	if ((az = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bz = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bn1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bn2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
 
-	/*
-	 * Decide whether (X_a/Z_a^2, Y_a/Z_a^3) = (X_b/Z_b^2, Y_b/Z_b^3), or
-	 * equivalently, (X_a*Z_b^2, Y_a*Z_b^3) = (X_b*Z_a^2, Y_b*Z_a^3).
-	 */
-
-	if (!b->Z_is_one) {
-		if (!ec_field_sqr(group, Zb23, b->Z, ctx))
-			goto end;
-		if (!ec_field_mul(group, tmp1, a->X, Zb23, ctx))
-			goto end;
-		tmp1_ = tmp1;
-	} else
-		tmp1_ = a->X;
-	if (!a->Z_is_one) {
-		if (!ec_field_sqr(group, Za23, a->Z, ctx))
-			goto end;
-		if (!ec_field_mul(group, tmp2, b->X, Za23, ctx))
-			goto end;
-		tmp2_ = tmp2;
-	} else
-		tmp2_ = b->X;
-
-	/* compare  X_a*Z_b^2  with  X_b*Z_a^2 */
-	if (BN_cmp(tmp1_, tmp2_) != 0) {
-		ret = 1;	/* points differ */
-		goto end;
+	/* a->X * b->Z^2 == b->X * a->Z^2 ? */
+	if (!ec_field_sqr(group, bz, b->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, bn1, a->X, bz, ctx))
+		goto err;
+	if (!ec_field_sqr(group, az, a->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, bn2, b->X, az, ctx))
+		goto err;
+	if (BN_cmp(bn1, bn2) != 0) {
+		ret = 1;
+		goto err;
 	}
-	if (!b->Z_is_one) {
-		if (!ec_field_mul(group, Zb23, Zb23, b->Z, ctx))
-			goto end;
-		if (!ec_field_mul(group, tmp1, a->Y, Zb23, ctx))
-			goto end;
-		/* tmp1_ = tmp1 */
-	} else
-		tmp1_ = a->Y;
-	if (!a->Z_is_one) {
-		if (!ec_field_mul(group, Za23, Za23, a->Z, ctx))
-			goto end;
-		if (!ec_field_mul(group, tmp2, b->Y, Za23, ctx))
-			goto end;
-		/* tmp2_ = tmp2 */
-	} else
-		tmp2_ = b->Y;
 
-	/* compare  Y_a*Z_b^3  with  Y_b*Z_a^3 */
-	if (BN_cmp(tmp1_, tmp2_) != 0) {
-		ret = 1;	/* points differ */
-		goto end;
+	/* a->Y * b->Z^3 == b->Y * a->Z^3 ? */
+	if (!ec_field_mul(group, bz, bz, b->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, bn1, a->Y, bz, ctx))
+		goto err;
+	if (!ec_field_mul(group, az, az, a->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, bn2, b->Y, az, ctx))
+		goto err;
+	if (BN_cmp(bn1, bn2) != 0) {
+		ret = 1;
+		goto err;
 	}
-	/* points are equal */
+
 	ret = 0;
 
- end:
+ err:
 	BN_CTX_end(ctx);
 
 	return ret;
