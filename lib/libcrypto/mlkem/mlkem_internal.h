@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlkem_internal.h,v 1.13 2026/01/18 08:49:42 tb Exp $ */
+/*	$OpenBSD: mlkem_internal.h,v 1.14 2026/01/18 08:58:31 tb Exp $ */
 /*
  * Copyright (c) 2023, Google Inc.
  * Copyright (c) 2025, Bob Beck <beck@obtuse.com>
@@ -251,8 +251,7 @@ int mlkem_parse_private_key(const uint8_t *input, size_t input_len,
  * regular callers should use the non-deterministic |MLKEM_generate_key|
  * directly.
  */
-int mlkem_generate_key_external_entropy(
-    uint8_t out_encoded_public_key[MLKEM768_PUBLIC_KEY_BYTES],
+int mlkem_generate_key_external_entropy(uint8_t *out_encoded_public_key,
     MLKEM_private_key *out_private_key,
     const uint8_t entropy[MLKEM_SEED_LENGTH]);
 
@@ -271,8 +270,7 @@ int mlkem_marshal_private_key(const MLKEM_private_key *private_key,
  * used for tests, regular callers should use the non-deterministic
  * |MLKEM_encap| directly.
  */
-void mlkem_encap_external_entropy(
-    uint8_t out_ciphertext[MLKEM768_CIPHERTEXT_BYTES],
+void mlkem_encap_external_entropy(uint8_t *out_ciphertext,
     uint8_t out_shared_secret[MLKEM_SHARED_SECRET_LENGTH],
     const MLKEM_public_key *public_key,
     const uint8_t entropy[MLKEM_ENCAP_ENTROPY]);
