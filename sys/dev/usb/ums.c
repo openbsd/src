@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.53 2024/05/26 20:06:27 mglocker Exp $ */
+/*	$OpenBSD: ums.c,v 1.54 2026/01/19 12:20:43 helg Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -89,10 +89,25 @@ ums_match(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	int size;
+	u_int i;
 	void *desc;
 
-	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha)) {
+		/*
+		 * The virtual USB digitizer exposed under Apple Virtualization
+		 * uses several report IDs, but only the pointer report is
+		 * relevant here. We still claim them all to prevent other
+		 * drivers from binding.
+		 */
+		if (uha->uaa->vendor == USB_VENDOR_APPLE && uha->uaa->product ==
+		    USB_PRODUCT_APPLE_VIRTUAL_DIGITIZER) {
+			for (i = 0; i < uha->nreports; i++)
+				uha->claimed[i] = 1;
+
+			return (UMATCH_VENDOR_PRODUCT);
+		}
 		return (UMATCH_NONE);
+	}
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 
@@ -129,7 +144,16 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_intr = ums_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_udev = uaa->device;
-	sc->sc_hdev.sc_report_id = uha->reportid;
+
+	/*
+	 * Use only the pointer report ID for the Apple Virtual USB Digitizer.
+	 * The remaining report IDs are claimed but ignored.
+	 */
+	if (uaa->vendor == USB_VENDOR_APPLE && uaa->product ==
+	    USB_PRODUCT_APPLE_VIRTUAL_DIGITIZER)
+		sc->sc_hdev.sc_report_id = uha->reportid = 1;
+	else
+		sc->sc_hdev.sc_report_id = uha->reportid;
 
 	usbd_set_idle(uha->parent->sc_udev, uha->parent->sc_ifaceno, 0, 0);
 

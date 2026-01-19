@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.784 2025/12/28 14:48:54 kettenis Exp $
+$OpenBSD: usbdevs,v 1.785 2026/01/19 12:20:43 helg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1025,6 +1025,8 @@ product APPLE IPAD2		0x129f	iPad 2
 product APPLE IPHONE_4S		0x12a0	iPhone 4S
 product APPLE IPHONE_6		0x12a8	iPhone 6
 product APPLE ETHERNET		0x1402	Ethernet A1277
+product APPLE VIRTUAL_KEYBOARD	0x8105	Virtual USB Keyboard
+product APPLE VIRTUAL_DIGITIZER	0x8106	Virtual USB Digitizer
 product APPLE BLUETOOTH2	0x8205	Bluetooth
 product APPLE BLUETOOTH3	0x8207	Bluetooth
 product APPLE BLUETOOTH		0x8300	Bluetooth
