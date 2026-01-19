@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhi.c,v 1.3 2026/01/10 12:36:13 kettenis Exp $ */
+/*	$OpenBSD: nhi.c,v 1.4 2026/01/19 21:12:49 kettenis Exp $ */
 
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
@@ -183,6 +183,10 @@ static const struct pci_matchid nhi_devices[] = {
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_19_4X_USB4_2 },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_19_7X_USB4_1 },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_19_7X_USB4_2 },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_1A_2X_USB4_1 },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_1A_2X_USB4_2 },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_1A_6X_USB4_1 },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_1A_6X_USB4_2 },
 };
 
 int
