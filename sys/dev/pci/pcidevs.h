@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2120 2025/12/17 01:14:42 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.2121 2026/01/19 21:11:31 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -708,6 +708,9 @@
 #define	PCI_PRODUCT_AMD_0F_ADDR	0x1101		/* 0Fh Address Map */
 #define	PCI_PRODUCT_AMD_0F_DRAM	0x1102		/* 0Fh DRAM Cfg */
 #define	PCI_PRODUCT_AMD_0F_MISC	0x1103		/* 0Fh Misc Cfg */
+#define	PCI_PRODUCT_AMD_1A_6X_USB4_1	0x1120		/* 1Ah/6xh USB4 */
+#define	PCI_PRODUCT_AMD_1A_6X_USB4_2	0x1121		/* 1Ah/6xh USB4 */
+#define	PCI_PRODUCT_AMD_1A_6X_RC	0x1122		/* 1Ah/6xh Root Complex */
 #define	PCI_PRODUCT_AMD_10_HT	0x1200		/* 10h HyperTransport */
 #define	PCI_PRODUCT_AMD_10_ADDR	0x1201		/* 10h Address Map */
 #define	PCI_PRODUCT_AMD_10_DRAM	0x1202		/* 10h DRAM Cfg */
@@ -851,6 +854,7 @@
 #define	PCI_PRODUCT_AMD_19_7X_DF_7	0x14f6		/* 19h/7xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_7X_DF_8	0x14f7		/* 19h/7xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_7X_IPU	0x1502		/* 19h/7xh IPU */
+#define	PCI_PRODUCT_AMD_1A_2X_RC	0x1507		/* 1Ah/2xh Root Complex */
 #define	PCI_PRODUCT_AMD_14_HB	0x1510		/* 14h Host */
 #define	PCI_PRODUCT_AMD_14_PCIE_1	0x1512		/* 14h PCIE */
 #define	PCI_PRODUCT_AMD_14_PCIE_2	0x1513		/* 14h PCIE */
@@ -885,6 +889,8 @@
 #define	PCI_PRODUCT_AMD_16_3X_MISC	0x1583		/* 16h Misc Cfg */
 #define	PCI_PRODUCT_AMD_16_3X_CPU_PM	0x1584		/* 16h CPU Power */
 #define	PCI_PRODUCT_AMD_16_3X_MISC_2	0x1585		/* 16h Misc Cfg */
+#define	PCI_PRODUCT_AMD_1A_2X_USB4_1	0x158d		/* 1Ah/2xh USB4 */
+#define	PCI_PRODUCT_AMD_1A_2X_USB4_2	0x158e		/* 1Ah/2xh USB4 */
 #define	PCI_PRODUCT_AMD_19_6X_XHCI_1	0x15b6		/* 19h/6xh xHCI */
 #define	PCI_PRODUCT_AMD_19_6X_XHCI_2	0x15b7		/* 19h/6xh xHCI */
 #define	PCI_PRODUCT_AMD_19_6X_XHCI_3	0x15b8		/* 19h/6xh xHCI */

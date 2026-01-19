@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2120 2025/12/17 01:14:42 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.2121 2026/01/19 21:11:31 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1060,6 +1060,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "0Fh Misc Cfg",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_1A_6X_USB4_1,
+	    "1Ah/6xh USB4",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_1A_6X_USB4_2,
+	    "1Ah/6xh USB4",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_1A_6X_RC,
+	    "1Ah/6xh Root Complex",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_10_HT,
 	    "10h HyperTransport",
 	},
@@ -1632,6 +1644,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "19h/7xh IPU",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_1A_2X_RC,
+	    "1Ah/2xh Root Complex",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_14_HB,
 	    "14h Host",
 	},
@@ -1766,6 +1782,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_16_3X_MISC_2,
 	    "16h Misc Cfg",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_1A_2X_USB4_1,
+	    "1Ah/2xh USB4",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_1A_2X_USB4_2,
+	    "1Ah/2xh USB4",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_6X_XHCI_1,
