@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.277 2025/12/19 13:40:03 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.278 2026/01/19 20:37:46 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2623,7 +2623,7 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 	i2c_op_t op;
 	i2c_addr_t addr;
 	int cmdlen, buflen;
-	uint8_t cmd[2];
+	uint8_t cmd;
 	uint8_t *buf;
 	int err;
 
@@ -2631,8 +2631,7 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 	    AML_CRSTYPE(crs) != LR_SERBUS || AML_CRSLEN(crs) > conn->length ||
 	    crs->lr_i2cbus.revid != 1 || crs->lr_i2cbus.type != LR_SERBUS_I2C)
 		aml_die("Invalid GenericSerialBus");
-	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC ||
-	    bpos & 0x3 || (blen % 8) != 0 || blen > 16)
+	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC || bpos & 0x3)
 		aml_die("Invalid GenericSerialBus access");
 
 	node = aml_searchname(conn->node,
@@ -2650,15 +2649,15 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 			buflen = 1;
 			break;
 		case 0x06:	/* AttribByte */
-			cmdlen = blen / 8;
+			cmdlen = 1;
 			buflen = 1;
 			break;
 		case 0x08:	/* AttribWord */
-			cmdlen = blen / 8;
+			cmdlen = 1;
 			buflen = 2;
 			break;
 		case 0x0b:	/* AttribBytes */
-			cmdlen = blen / 8;
+			cmdlen = 1;
 			buflen = len;
 			break;
 		case 0x0e:	/* AttribRawBytes */
@@ -2681,7 +2680,7 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 		}
 		break;
 	case 1:			/* AttribBytes */
-		cmdlen = blen / 8;
+		cmdlen = 1;
 		buflen = AML_FIELD_ATTR(flag);
 		break;
 	case 2:			/* AttribRawBytes */
@@ -2713,8 +2712,7 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 
 	tag = node->i2c;
 	addr = crs->lr_i2cbus._adr;
-	cmd[0] = bpos >> 3;
-	cmd[1] = bpos >> 11;
+	cmd = bpos >> 3;
 
 	iic_acquire_bus(tag, 0);
 	err = iic_exec(tag, op, addr, &cmd, cmdlen, &buf[2], buflen, 0);
@@ -2743,8 +2741,7 @@ aml_rwgsb(struct aml_value *conn, int len, int bpos, int blen,
 	int buflen;
 	uint8_t *buf;
 
-	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC ||
-	    bpos & 0x3 || (blen % 8) != 0 || blen > 16)
+	if (AML_FIELD_ACCESS(flag) != AML_FIELD_BUFFERACC || bpos & 0x3)
 		aml_die("Invalid GenericSerialBus access");
 
 	switch (((flag >> 6) & 0x3)) {
