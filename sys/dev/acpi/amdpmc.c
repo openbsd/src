@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpmc.c,v 1.2 2025/10/10 16:12:58 kettenis Exp $	*/
+/*	$OpenBSD: amdpmc.c,v 1.3 2026/01/19 21:13:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,6 +40,7 @@
 #define SMN_DATA		0x64
 
 #define PMC_MSG			0x538
+#define PMC_MSG_1A		0x938
 #define PMC_RESP		0x980
 #define  PMC_RESP_OK		0x01
 #define  PMC_RESP_BUSY		0xfc
@@ -96,6 +97,34 @@ const char *smu_blocks[] = {
 	"VPE",
 };
 
+const char *smu_blocks_1a_7x[] = {
+	"DISPLAY",
+	"CPU",
+	"GFX",
+	"VDD",
+	"VDD_CTX",
+	"ACP",
+	"VCN_0",
+	"VCN_1",
+	"ISP",
+	"NBIO",
+	"DF",
+	"USB3_0",
+	"USB3_1",
+	"LAPIC",
+	"USB3_2",
+	"USB4_RT0",
+	"USB4_RT1",
+	"USB4_0",
+	"USB4_1",
+	"MPM",
+	"JPEG_0",
+	"JPEG_1",
+	"IPU",
+	"UMSCH",
+	"VPE",
+};
+
 /* Low Power S0 Idle DSM methods */
 #define ACPI_LPS0_ENUM_FUNCTIONS 	0
 #define ACPI_LPS0_GET_CONSTRAINTS	1
@@ -111,6 +140,9 @@ struct amdpmc_softc {
 
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_node;
+	bus_addr_t		sc_pmc_msg;
+	const char		**sc_smu_blocks;
+	u_int			sc_smu_nblocks;
 
 	struct smu_metrics	*sc_metrics;
 	uint32_t		sc_active_blocks;
@@ -188,7 +220,20 @@ amdpmc_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_AMD_19_4X_RC: /* YC */
 	case PCI_PRODUCT_AMD_19_6X_RC: /* CB */
 	case PCI_PRODUCT_AMD_19_7X_RC: /* PS */
-		/* Supported */
+		sc->sc_pmc_msg = PMC_MSG;
+		sc->sc_smu_blocks = smu_blocks;
+		sc->sc_smu_nblocks = nitems(smu_blocks);
+		break;
+	case PCI_PRODUCT_AMD_1A_2X_RC: /* Strix Point */
+	case PCI_PRODUCT_AMD_1A_6X_RC: /* Krackan Point */
+		sc->sc_pmc_msg = PMC_MSG_1A;
+		if (curcpu()->ci_model == 0x70) {
+			sc->sc_smu_blocks = smu_blocks_1a_7x;
+			sc->sc_smu_nblocks = nitems(smu_blocks_1a_7x);
+		} else {
+			sc->sc_smu_blocks = smu_blocks;
+			sc->sc_smu_nblocks = nitems(smu_blocks);
+		}
 		break;
 	case PCI_PRODUCT_AMD_17_1X_RC: /* RV/PCO */
 	case PCI_PRODUCT_AMD_19_1X_RC: /* SP */
@@ -299,12 +344,12 @@ amdpmc_smu_log_print(struct amdpmc_softc *sc)
 	    sc->sc_metrics->timein_s0i3_lastcapture);
 	printf("%s: SMU timeto_resume_to_os_lastcapture %llu\n", devname,
 	    sc->sc_metrics->timeto_resume_to_os_lastcapture);
-	for (i = 0; i < nitems(smu_blocks); i++) {
+	for (i = 0; i < sc->sc_smu_nblocks; i++) {
 		if ((sc->sc_active_blocks & (1U << i)) == 0)
 			continue;
 		if (sc->sc_metrics->timecondition_notmet_lastcapture[i] == 0)
 			continue;
-		printf("%s: SMU %s: %llu\n", devname, smu_blocks[i],
+		printf("%s: SMU %s: %llu\n", devname, sc->sc_smu_blocks[i],
 		    sc->sc_metrics->timecondition_notmet_lastcapture[i]);
 	}
 }
@@ -418,7 +463,7 @@ amdpmc_send_msg(struct amdpmc_softc *sc, uint8_t msg, uint32_t arg,
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PMC_RESP, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PMC_ARG, arg);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PMC_MSG, msg);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, sc->sc_pmc_msg, msg);
 
 	for (timo = 1000000; timo > 0; timo -= 50) {
 		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, PMC_RESP);
