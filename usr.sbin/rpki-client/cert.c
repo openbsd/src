@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.210 2026/01/13 21:36:17 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.211 2026/01/19 10:12:20 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1738,6 +1738,19 @@ cert_parse_extensions(const char *fn, struct cert *cert)
 		goto out;
 	}
 
+	if (cert->purpose == CERT_PURPOSE_TA) {
+		if (x509_any_inherits(cert->x509)) {
+			warnx("%s: RFC 8630, 2.3: Trust Anchor INRs "
+			    "must not inherit", fn);
+			goto out;
+		}
+		if (cert->num_ips == 0 && cert->num_ases == 0) {
+			warnx("%s: RFC 8630, 2.3: Trust Anchor INR set "
+			    "must not be empty", fn);
+			goto out;
+		}
+	}
+
 	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		if (ip != 0) {
 			warnx("%s: RFC 8209, 3.1.3.4: BGPsec Router cert "
@@ -1915,15 +1928,17 @@ cert_parse(const char *fn, const unsigned char *der, size_t len)
 	return NULL;
 }
 
-struct cert *
-ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
+/*
+ * Check that the subjectPublicKeyInfo from the TAL matches the one in the cert.
+ * Verify that this key signed the cert.
+ * Returns 1 on success and 0 on failure.
+ */
+static int
+ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *pkey,
     size_t pkeysz)
 {
 	EVP_PKEY	*pk, *opk;
-	time_t		 now = get_current_time();
-
-	if (p == NULL)
-		return NULL;
+	int		 rv = 0;
 
 	/* first check pubkey against the one from the TAL */
 	pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
@@ -1931,7 +1946,7 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		warnx("%s: RFC 6487 (trust anchor): bad TAL pubkey", fn);
 		goto badcert;
 	}
-	if ((opk = X509_get0_pubkey(p->x509)) == NULL) {
+	if ((opk = X509_get0_pubkey(cert->x509)) == NULL) {
 		warnx("%s: RFC 6487 (trust anchor): missing pubkey", fn);
 		goto badcert;
 	}
@@ -1941,6 +1956,39 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		goto badcert;
 	}
 
+	/*
+	 * Do not replace with a <= 0 check since OpenSSL 3 broke that:
+	 * https://github.com/openssl/openssl/issues/24575
+	 */
+	if (X509_verify(cert->x509, pk) != 1) {
+		warnx("%s: failed to verify signature", fn);
+		goto badcert;
+	}
+
+	rv = 1;
+ badcert:
+	EVP_PKEY_free(pk);
+	return rv;
+}
+
+struct cert *
+ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
+    size_t pkeysz)
+{
+	time_t		 now = get_current_time();
+
+	if (p == NULL)
+		return NULL;
+
+	if (p->purpose != CERT_PURPOSE_TA) {
+		warnx("%s: expected trust anchor purpose, got %s", fn,
+		    purpose2str(p->purpose));
+		goto badcert;
+	}
+
+	if (!ta_check_pubkey(fn, p, pkey, pkeysz))
+		goto badcert;
+
 	if (p->notbefore > now) {
 		warnx("%s: certificate not yet valid", fn);
 		goto badcert;
@@ -1949,29 +1997,10 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		warnx("%s: certificate has expired", fn);
 		goto badcert;
 	}
-	if (p->purpose != CERT_PURPOSE_TA) {
-		warnx("%s: expected trust anchor purpose, got %s", fn,
-		    purpose2str(p->purpose));
-		goto badcert;
-	}
-	/*
-	 * Do not replace with a <= 0 check since OpenSSL 3 broke that:
-	 * https://github.com/openssl/openssl/issues/24575
-	 */
-	if (X509_verify(p->x509, pk) != 1) {
-		warnx("%s: failed to verify signature", fn);
-		goto badcert;
-	}
-	if (x509_any_inherits(p->x509)) {
-		warnx("%s: Trust anchor IP/AS resources may not inherit", fn);
-		goto badcert;
-	}
 
-	EVP_PKEY_free(pk);
 	return p;
 
  badcert:
-	EVP_PKEY_free(pk);
 	cert_free(p);
 	return NULL;
 }
