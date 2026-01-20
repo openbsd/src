@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.23 2023/03/08 04:43:05 guenther Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.24 2026/01/20 14:16:04 yasuoka Exp $	*/
 /*	$NetBSD: refresh.c,v 1.50 2016/05/02 16:35:17 christos Exp $	*/
 
 /*-
@@ -1163,16 +1163,24 @@ re_clear_display(EditLine *el)
 protected void
 re_clear_lines(EditLine *el)
 {
+	int i;
 
 	if (EL_CAN_CEOL) {
-		int i;
 		for (i = el->el_refresh.r_oldcv; i >= 0; i--) {
+			if (i > 0) {
+				terminal__putc(el, '\r');
+				terminal__putc(el, '\n');
+			}
 			/* for each line on the screen */
 			terminal_move_to_line(el, i);
 			terminal_move_to_char(el, 0);
 			terminal_clear_EOL(el, el->el_terminal.t_size.h);
 		}
 	} else {
+		for (i = el->el_refresh.r_oldcv; i > 0; i--) {
+			terminal__putc(el, '\r');
+			terminal__putc(el, '\n');
+		}
 		terminal_move_to_line(el, el->el_refresh.r_oldcv);
 					/* go to last line */
 		terminal__putc(el, '\r');	/* go to BOL */
