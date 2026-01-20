@@ -697,6 +697,11 @@ int ttm_bo_vm_access(struct vm_area_struct *vma, unsigned long addr,
 	if (ret)
 		return ret;
 
+	if (!bo->resource) {
+		ret = -ENODATA;
+		goto unlock;
+	}
+
 	switch (bo->resource->mem_type) {
 	case TTM_PL_SYSTEM:
 		fallthrough;
@@ -711,6 +716,7 @@ int ttm_bo_vm_access(struct vm_area_struct *vma, unsigned long addr,
 			ret = -EIO;
 	}
 
+unlock:
 	ttm_bo_unreserve(bo);
 
 	return ret;
