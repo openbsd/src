@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.63 2026/01/15 04:38:41 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.64 2026/01/20 05:08:04 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -138,8 +138,6 @@ struct bnxt_cp_ring {
 	int			v_bit;
 	uint32_t		commit_cons;
 	int			commit_v_bit;
-	struct ctx_hw_stats	*stats;
-	uint32_t		stats_ctx_id;
 	struct bnxt_dmamem	*ring_mem;
 };
 
@@ -222,6 +220,7 @@ struct bnxt_queue {
 	struct bnxt_rx_queue	q_rx;
 	struct bnxt_tx_queue	q_tx;
 	struct bnxt_grp_info	q_rg;
+	uint32_t		q_stat_ctx_id;
 };
 
 struct bnxt_softc {
@@ -256,6 +255,7 @@ struct bnxt_softc {
 	int			sc_tx_queue_id;
 
 	struct bnxt_vnic_info	sc_vnic;
+	int			sc_stats_ctx_stride;
 	struct bnxt_dmamem	*sc_stats_ctx_mem;
 	struct bnxt_dmamem	*sc_rx_cfg;
 
@@ -353,9 +353,9 @@ int		bnxt_hwrm_vnic_cfg(struct bnxt_softc *,
 int		bnxt_hwrm_vnic_cfg_placement(struct bnxt_softc *,
 		    struct bnxt_vnic_info *vnic);
 int		bnxt_hwrm_stat_ctx_alloc(struct bnxt_softc *,
-		    struct bnxt_cp_ring *, uint64_t);
+		    uint32_t *, uint64_t);
 int		bnxt_hwrm_stat_ctx_free(struct bnxt_softc *,
-		    struct bnxt_cp_ring *);
+		    uint32_t *);
 int		bnxt_hwrm_ring_grp_alloc(struct bnxt_softc *,
 		    struct bnxt_grp_info *);
 int		bnxt_hwrm_ring_grp_free(struct bnxt_softc *,
@@ -599,7 +599,6 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 	else
 		cpr = &sc->sc_cp_ring;
 
-	cpr->stats_ctx_id = HWRM_NA_SIGNATURE;
 	cpr->ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
 	cpr->softc = sc;
 	cpr->ring.id = 0;
@@ -676,6 +675,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 
 		bq->q_index = i;
 		bq->q_sc = sc;
+		bq->q_stat_ctx_id = HWRM_NA_SIGNATURE;
 
 		rx->rx_softc = sc;
 		rx->rx_ifiq = ifiq;
@@ -687,7 +687,6 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		ifq->ifq_softc = tx;
 
 		if (sc->sc_intrmap != NULL) {
-			cp->stats_ctx_id = HWRM_NA_SIGNATURE;
 			cp->ring.phys_id = (uint16_t)HWRM_NA_SIGNATURE;
 			cp->ring.id = i + 1;	/* first cp ring is async only */
 			cp->softc = sc;
@@ -839,9 +838,9 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 		bnxt_write_cp_doorbell(sc, &cp->ring, 1);
 	}
 
-	if (bnxt_hwrm_stat_ctx_alloc(sc, &bq->q_cp,
+	if (bnxt_hwrm_stat_ctx_alloc(sc, &bq->q_stat_ctx_id,
 	    BNXT_DMA_DVA(sc->sc_stats_ctx_mem) +
-	    (bq->q_index * sizeof(struct ctx_hw_stats))) != 0) {
+	    (bq->q_index * sc->sc_stats_ctx_stride)) != 0) {
 		printf("%s: failed to set up stats context\n", DEVNAME(sc));
 		goto free_cp_ring;
 	}
@@ -853,7 +852,7 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	tx->tx_ring.vaddr = BNXT_DMA_KVA(tx->tx_ring_mem);
 	tx->tx_ring.paddr = BNXT_DMA_DVA(tx->tx_ring_mem);
 	if (bnxt_hwrm_ring_alloc(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_TX,
-	    &tx->tx_ring, cp->ring.phys_id, HWRM_NA_SIGNATURE, 1) != 0) {
+	    &tx->tx_ring, cp->ring.phys_id, bq->q_stat_ctx_id, 1) != 0) {
 		printf("%s: failed to set up tx ring\n",
 		    DEVNAME(sc));
 		goto dealloc_stats;
@@ -867,7 +866,7 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	rx->rx_ring.vaddr = BNXT_DMA_KVA(rx->rx_ring_mem);
 	rx->rx_ring.paddr = BNXT_DMA_DVA(rx->rx_ring_mem);
 	if (bnxt_hwrm_ring_alloc(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
-	    &rx->rx_ring, cp->ring.phys_id, HWRM_NA_SIGNATURE, 1) != 0) {
+	    &rx->rx_ring, cp->ring.phys_id, bq->q_stat_ctx_id, 1) != 0) {
 		printf("%s: failed to set up rx ring\n",
 		    DEVNAME(sc));
 		goto dealloc_tx;
@@ -881,7 +880,7 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	rx->rx_ag_ring.vaddr = BNXT_DMA_KVA(rx->rx_ring_mem) + PAGE_SIZE;
 	rx->rx_ag_ring.paddr = BNXT_DMA_DVA(rx->rx_ring_mem) + PAGE_SIZE;
 	if (bnxt_hwrm_ring_alloc(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
-	    &rx->rx_ag_ring, cp->ring.phys_id, HWRM_NA_SIGNATURE, 1) != 0) {
+	    &rx->rx_ag_ring, cp->ring.phys_id, bq->q_stat_ctx_id, 1) != 0) {
 		printf("%s: failed to set up rx ag ring\n",
 		    DEVNAME(sc));
 		goto dealloc_rx;
@@ -889,7 +888,7 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	bnxt_write_rx_doorbell(sc, &rx->rx_ag_ring, 0);
 
 	rg->grp_id = HWRM_NA_SIGNATURE;
-	rg->stats_ctx = cp->stats_ctx_id;
+	rg->stats_ctx = bq->q_stat_ctx_id;
 	rg->rx_ring_id = rx->rx_ring.phys_id;
 	rg->ag_ring_id = rx->rx_ag_ring.phys_id;
 	rg->cp_ring_id = cp->ring.phys_id;
@@ -1004,7 +1003,7 @@ dealloc_rx:
 	bnxt_hwrm_ring_free(sc, HWRM_RING_ALLOC_INPUT_RING_TYPE_RX,
 	    &rx->rx_ring);
 dealloc_stats:
-	bnxt_hwrm_stat_ctx_free(sc, cp);
+	bnxt_hwrm_stat_ctx_free(sc, &bq->q_stat_ctx_id);
 free_cp_ring:
 	if (sc->sc_intrmap != NULL) {
 		bnxt_hwrm_ring_free(sc,
@@ -1044,7 +1043,7 @@ bnxt_queue_down(struct bnxt_softc *sc, struct bnxt_queue *bq)
 	rx->rx_slots = NULL;
 
 	bnxt_hwrm_ring_grp_free(sc, &bq->q_rg);
-	bnxt_hwrm_stat_ctx_free(sc, &bq->q_cp);
+	bnxt_hwrm_stat_ctx_free(sc, &bq->q_stat_ctx_id);
 
 	/* may need to wait for 500ms here before we can free the rings */
 
@@ -1077,8 +1076,10 @@ bnxt_up(struct bnxt_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int i, ret = 0;
 
+	sc->sc_stats_ctx_stride = roundup(sizeof(struct ctx_hw_stats_ext), 128);
+
 	sc->sc_stats_ctx_mem = bnxt_dmamem_alloc(sc,
-	    sizeof(struct ctx_hw_stats) * sc->sc_nqueues);
+	    sc->sc_stats_ctx_stride * sc->sc_nqueues);
 	if (sc->sc_stats_ctx_mem == NULL) {
 		printf("%s: failed to allocate stats contexts\n", DEVNAME(sc));
 		return ENOMEM;
@@ -3152,16 +3153,16 @@ fail:
 
 
 int
-bnxt_hwrm_stat_ctx_alloc(struct bnxt_softc *softc, struct bnxt_cp_ring *cpr,
+bnxt_hwrm_stat_ctx_alloc(struct bnxt_softc *softc, uint32_t *stat_ctx_id,
     uint64_t paddr)
 {
 	struct hwrm_stat_ctx_alloc_input req = {0};
 	struct hwrm_stat_ctx_alloc_output *resp;
 	int rc = 0;
 
-	if (cpr->stats_ctx_id != HWRM_NA_SIGNATURE) {
+	if (*stat_ctx_id != HWRM_NA_SIGNATURE) {
 		printf("%s: attempt to re-allocate stats ctx %08x\n",
-		    DEVNAME(softc), cpr->stats_ctx_id);
+		    DEVNAME(softc), *stat_ctx_id);
 		return EINVAL;
 	}
 
@@ -3170,13 +3171,14 @@ bnxt_hwrm_stat_ctx_alloc(struct bnxt_softc *softc, struct bnxt_cp_ring *cpr,
 
 	req.update_period_ms = htole32(1000);
 	req.stats_dma_addr = htole64(paddr);
+	req.stats_dma_length = htole16(sizeof(struct ctx_hw_stats));
 
 	BNXT_HWRM_LOCK(softc);
 	rc = _hwrm_send_message(softc, &req, sizeof(req));
 	if (rc)
 		goto fail;
 
-	cpr->stats_ctx_id = le32toh(resp->stat_ctx_id);
+	*stat_ctx_id = le32toh(resp->stat_ctx_id);
 
 fail:
 	BNXT_HWRM_UNLOCK(softc);
@@ -3185,26 +3187,26 @@ fail:
 }
 
 int
-bnxt_hwrm_stat_ctx_free(struct bnxt_softc *softc, struct bnxt_cp_ring *cpr)
+bnxt_hwrm_stat_ctx_free(struct bnxt_softc *softc, uint32_t *stat_ctx_id)
 {
 	struct hwrm_stat_ctx_free_input req = {0};
 	int rc = 0;
 
-	if (cpr->stats_ctx_id == HWRM_NA_SIGNATURE) {
+	if (*stat_ctx_id == HWRM_NA_SIGNATURE) {
 		printf("%s: attempt to free stats ctx %08x\n",
-		    DEVNAME(softc), cpr->stats_ctx_id);
+		    DEVNAME(softc), *stat_ctx_id);
 		return EINVAL;
 	}
 
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_STAT_CTX_FREE);
-	req.stat_ctx_id = htole32(cpr->stats_ctx_id);
+	req.stat_ctx_id = htole32(*stat_ctx_id);
 
 	BNXT_HWRM_LOCK(softc);
 	rc = _hwrm_send_message(softc, &req, sizeof(req));
 	BNXT_HWRM_UNLOCK(softc);
 
 	if (rc == 0)
-		cpr->stats_ctx_id = HWRM_NA_SIGNATURE;
+		*stat_ctx_id = HWRM_NA_SIGNATURE;
 
 	return (rc);
 }
