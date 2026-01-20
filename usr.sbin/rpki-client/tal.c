@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.44 2026/01/20 16:49:03 tb Exp $ */
+/*	$OpenBSD: tal.c,v 1.45 2026/01/20 16:51:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -140,6 +140,11 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 		warnx("%s: RFC 8630 section 2.1: subjectPublicKeyInfo: "
 		    "failed public key parse", fn);
 		goto out;
+	}
+	if (der != tal->spki + tal->spkisz) {
+		warnx("%s: RFC 8630 section 2.1: subjectPublicKeyInfo: "
+		    "%td bytes of trailing garbage", fn,
+		    tal->spki + tal->spkisz - der);
 	}
 	rc = 1;
 out:
