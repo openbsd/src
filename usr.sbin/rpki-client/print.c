@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.73 2026/01/13 21:36:17 job Exp $ */
+/*	$OpenBSD: print.c,v 1.74 2026/01/20 16:49:03 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -106,8 +106,8 @@ tal_print(const struct tal *p)
 	X509_PUBKEY		*pubkey;
 	size_t			 i;
 
-	der = p->pkey;
-	if ((pubkey = d2i_X509_PUBKEY(NULL, &der, p->pkeysz)) == NULL)
+	der = p->spki;
+	if ((pubkey = d2i_X509_PUBKEY(NULL, &der, p->spkisz)) == NULL)
 		errx(1, "d2i_X509_PUBKEY failed");
 
 	if ((ski = x509_pubkey_get_ski(pubkey, p->descr)) == NULL)

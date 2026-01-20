@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.271 2026/01/20 16:41:38 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.272 2026/01/20 16:49:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -178,8 +178,8 @@ RB_PROTOTYPE(nca_tree, nonfunc_ca, entry, ncacmp);
 struct tal {
 	char		**uri; /* well-formed rsync URIs */
 	size_t		 num_uris;
-	unsigned char	*pkey; /* DER-encoded public key */
-	size_t		 pkeysz; /* length of pkey */
+	unsigned char	*spki; /* DER-encoded subjectPublicKeyInfo */
+	size_t		 spkisz; /* length of SPKI */
 	char		*descr; /* basename of tal file */
 	int		 id; /* ID of this TAL */
 };

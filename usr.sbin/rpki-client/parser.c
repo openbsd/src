@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.174 2026/01/12 10:48:20 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.175 2026/01/20 16:49:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -692,8 +692,8 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 {
 	struct cert		*cert1 = NULL, *cert2 = NULL;
 	char			*file1 = NULL, *file2 = NULL;
-	unsigned char		*der = NULL, *pkey = entp->data;
-	size_t			 der_len = 0, pkeysz = entp->datasz;
+	unsigned char		*der = NULL, *spki = entp->data;
+	size_t			 der_len = 0, spkisz = entp->datasz;
 	int			 cmp;
 
 	*out_cert = NULL;
@@ -702,7 +702,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 	der = load_file(file2, &der_len);
 	cert2 = cert_parse(file2, der, der_len);
 	free(der);
-	cert2 = ta_parse(file2, cert2, pkey, pkeysz);
+	cert2 = ta_parse(file2, cert2, spki, spkisz);
 
 	if (!noop) {
 		file1 = parse_filepath(entp->repoid, entp->path, entp->file,
@@ -710,7 +710,7 @@ proc_parser_root_cert(struct entity *entp, struct cert **out_cert)
 		der = load_file(file1, &der_len);
 		cert1 = cert_parse(file1, der, der_len);
 		free(der);
-		cert1 = ta_parse(file1, cert1, pkey, pkeysz);
+		cert1 = ta_parse(file1, cert1, spki, spkisz);
 	}
 
 	if ((cmp = proc_parser_ta_cmp(cert1, cert2)) > 0) {

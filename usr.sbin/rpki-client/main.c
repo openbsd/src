@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.303 2025/12/31 12:51:52 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.304 2026/01/20 16:49:03 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -500,11 +500,11 @@ queue_add_from_tal(struct tal *tal)
 		return;
 	}
 
-	/* steal the pkey from the tal structure */
-	data = tal->pkey;
-	tal->pkey = NULL;
+	/* steal the spki from the tal structure */
+	data = tal->spki;
+	tal->spki = NULL;
 	entityq_add(NULL, nfile, RTYPE_CER, DIR_UNKNOWN, repo, data,
-	    tal->pkeysz, tal->id, tal->id, NULL);
+	    tal->spkisz, tal->id, tal->id, NULL);
 }
 
 /*

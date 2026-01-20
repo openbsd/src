@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.211 2026/01/19 10:12:20 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.212 2026/01/20 16:49:03 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1934,14 +1934,14 @@ cert_parse(const char *fn, const unsigned char *der, size_t len)
  * Returns 1 on success and 0 on failure.
  */
 static int
-ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *pkey,
-    size_t pkeysz)
+ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *spki,
+    size_t spkisz)
 {
 	EVP_PKEY	*pk, *opk;
 	int		 rv = 0;
 
 	/* first check pubkey against the one from the TAL */
-	pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
+	pk = d2i_PUBKEY(NULL, &spki, spkisz);
 	if (pk == NULL) {
 		warnx("%s: RFC 6487 (trust anchor): bad TAL pubkey", fn);
 		goto badcert;
@@ -1972,8 +1972,8 @@ ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *pkey,
 }
 
 struct cert *
-ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
-    size_t pkeysz)
+ta_parse(const char *fn, struct cert *p, const unsigned char *spki,
+    size_t spkisz)
 {
 	time_t		 now = get_current_time();
 
@@ -1986,7 +1986,7 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		goto badcert;
 	}
 
-	if (!ta_check_pubkey(fn, p, pkey, pkeysz))
+	if (!ta_check_pubkey(fn, p, spki, spkisz))
 		goto badcert;
 
 	if (p->notbefore > now) {

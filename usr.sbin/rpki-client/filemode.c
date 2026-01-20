@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.76 2026/01/16 11:25:27 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.77 2026/01/20 16:49:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -262,7 +262,7 @@ parse_load_ta(struct tal *tal)
 
 	/* Extract certificate data. */
 	cert = cert_parse(file, f, flen);
-	cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
+	cert = ta_parse(file, cert, tal->spki, tal->spkisz);
 	if (cert == NULL)
 		goto out;
 
@@ -291,13 +291,13 @@ find_tal(struct cert *cert)
 		return NULL;
 
 	for (i = 0; i < TALSZ_MAX; i++) {
-		const unsigned char *pkey;
+		const unsigned char *spki;
 
 		if (talobj[i] == NULL)
 			break;
 		tal = talobj[i];
-		pkey = tal->pkey;
-		pk = d2i_PUBKEY(NULL, &pkey, tal->pkeysz);
+		spki = tal->spki;
+		pk = d2i_PUBKEY(NULL, &spki, tal->spkisz);
 		if (pk == NULL)
 			continue;
 		if (EVP_PKEY_cmp(pk, opk) == 1) {
@@ -613,7 +613,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		expires = NULL;
 		notafter = NULL;
 		if ((tal = find_tal(cert)) != NULL) {
-			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
+			cert = ta_parse(file, cert, tal->spki, tal->spkisz);
 			status = (cert != NULL);
 			if (status) {
 				expires = &cert->expires;
