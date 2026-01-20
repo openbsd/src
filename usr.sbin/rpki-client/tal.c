@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.42 2025/08/01 13:46:06 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.43 2026/01/20 16:41:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -126,7 +126,7 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 
 	/* Now the Base64-encoded public key. */
 	if ((base64_decode(buf, len, &der, &dersz)) == -1) {
-		warnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
+		warnx("%s: RFC 8630 section 2.1: subjectPublicKeyInfo: "
 		    "bad public key", fn);
 		goto out;
 	}
@@ -137,7 +137,7 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 	/* Make sure it's a valid public key. */
 	pkey = d2i_PUBKEY(NULL, (const unsigned char **)&der, dersz);
 	if (pkey == NULL) {
-		warnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
+		warnx("%s: RFC 8630 section 2.1: subjectPublicKeyInfo: "
 		    "failed public key parse", fn);
 		goto out;
 	}
@@ -152,7 +152,7 @@ out:
 }
 
 /*
- * Parse a TAL from "buf" conformant to RFC 7730 originally from a file
+ * Parse a TAL from "buf" conformant to RFC 8630 originally from a file
  * named "fn".
  * Returns the encoded data or NULL on syntax failure.
  */

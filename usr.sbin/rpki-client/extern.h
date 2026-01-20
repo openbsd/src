@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.270 2026/01/16 11:25:27 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.271 2026/01/20 16:41:38 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -169,7 +169,7 @@ RB_HEAD(nca_tree, nonfunc_ca);
 RB_PROTOTYPE(nca_tree, nonfunc_ca, entry, ncacmp);
 
 /*
- * The TAL file conforms to RFC 7730.
+ * The TAL file conforms to RFC 8630.
  * It is the top-level structure of RPKI and defines where we can find
  * certificates for TAs (trust anchors).
  * It also includes the public key for verifying those trust anchor
