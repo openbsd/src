@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.13 2024/08/23 12:56:26 anton Exp $ */
+/* $OpenBSD: policy.c,v 1.14 2026/01/22 10:15:53 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2023 Bob Beck <beck@openbsd.org>
@@ -587,7 +587,7 @@ struct verify_cert_test verify_cert_tests[] = {
 	},
 	/*
 	 * BoringSSL tests just a trust anchor but behaves differently in this corner case.
-	 * than libressl for reasons that have nothing to do with policy (because parital
+	 * than libressl for reasons that have nothing to do with policy (because partial
 	 * chains and legacy verifier horror)
 	 */
 };
