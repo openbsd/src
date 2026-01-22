@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.442 2026/01/20 22:50:08 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.443 2026/01/22 07:39:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2417,16 +2417,6 @@ server_client_key_callback(struct cmdq_item *item, void *data)
 		event->key = key;
 	}
 
-	/* Handle theme reporting keys. */
-	if (key == KEYC_REPORT_LIGHT_THEME) {
-		server_client_report_theme(c, THEME_LIGHT);
-		goto out;
-	}
-	if (key == KEYC_REPORT_DARK_THEME) {
-		server_client_report_theme(c, THEME_DARK);
-		goto out;
-	}
-
 	/* Find affected pane. */
 	if (!KEYC_IS_MOUSE(key) || cmd_find_from_mouse(&fs, m, 0) != 0)
 		cmd_find_from_client(&fs, c, 0);
@@ -2644,6 +2634,19 @@ server_client_handle_key(struct client *c, struct key_event *event)
 	/* Check the client is good to accept input. */
 	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
 		return (0);
+
+	/*
+	 * Handle theme reporting keys before overlays so they work even when a
+	 * popup is open.
+	 */
+	if (event->key == KEYC_REPORT_LIGHT_THEME) {
+		server_client_report_theme(c, THEME_LIGHT);
+		return (0);
+	}
+	if (event->key == KEYC_REPORT_DARK_THEME) {
+		server_client_report_theme(c, THEME_DARK);
+		return (0);
+	}
 
 	/*
 	 * Key presses in overlay mode and the command prompt are a special
