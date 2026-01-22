@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.148 2026/01/06 07:18:48 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.149 2026/01/22 02:09:37 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -244,8 +244,7 @@ uvm_pageout(void *arg)
 			constraint = no_constraint;
 		}
 		/* How many pages do we need to free during this round? */
-		shortage = uvmexp.freetarg -
-		    (uvmexp.free + uvmexp.paging) + BUFPAGES_DEFICIT;
+		shortage = uvmexp.freetarg - uvmexp.free + BUFPAGES_DEFICIT;
 		uvm_unlock_fpageq();
 
 		/*
@@ -290,7 +289,8 @@ uvm_pageout(void *arg)
 		 * wake up any waiters.
 		 */
 		uvm_lock_fpageq();
-		if (uvmexp.free > uvmexp.reserve_kernel || uvmexp.paging == 0) {
+		if (uvmexp.free > uvmexp.reserve_kernel ||
+		    uvmexp.paging == 0) {
 			wakeup(&uvmexp.free);
 		}
 
@@ -326,7 +326,7 @@ uvm_pageout(void *arg)
 void
 uvm_aiodone_daemon(void *arg)
 {
-	int s, npages;
+	int s, free;
 	struct buf *bp, *nbp;
 
 	uvm.aiodoned_proc = curproc;
@@ -346,11 +346,11 @@ uvm_aiodone_daemon(void *arg)
 		mtx_leave(&uvm.aiodoned_lock);
 
 		/* process each i/o that's done. */
-		npages = 0;
 		KERNEL_LOCK();
+		free = uvmexp.free;
 		while (bp != NULL) {
 			if (bp->b_flags & B_PDAEMON) {
-				npages += bp->b_bufsize >> PAGE_SHIFT;
+				uvmexp.paging -= bp->b_bufsize >> PAGE_SHIFT;
 			}
 			nbp = TAILQ_NEXT(bp, b_freelist);
 			s = splbio();	/* b_iodone must by called at splbio */
@@ -361,14 +361,9 @@ uvm_aiodone_daemon(void *arg)
 			sched_pause(yield);
 		}
 		KERNEL_UNLOCK();
-
 		uvm_lock_fpageq();
-		atomic_sub_int(&uvmexp.paging, npages);
-		if (uvmexp.free <= uvmexp.reserve_kernel ||
-		    !TAILQ_EMPTY(&uvm.pmr_control.allocs))
-			wakeup(&uvm.pagedaemon);
-		else
-			wakeup(&uvmexp.free);
+		wakeup(free <= uvmexp.reserve_kernel ? &uvm.pagedaemon :
+		    &uvmexp.free);
 		uvm_unlock_fpageq();
 	}
 }
@@ -844,7 +839,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 
 		uvm_lock_pageq();
 		if (result == VM_PAGER_PEND) {
-			atomic_add_int(&uvmexp.paging, npages);
+			uvmexp.paging += npages;
 			uvmexp.pdpending++;
 		}
 	}
