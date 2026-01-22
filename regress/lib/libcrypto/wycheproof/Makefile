@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.11 2025/09/05 14:41:29 tb Exp $
+# $OpenBSD: Makefile,v 1.12 2026/01/22 11:40:25 tb Exp $
 
 WYCHEPROOF_TESTVECTORS = /usr/local/share/wycheproof/testvectors_v1/
 
 .if !exists(${WYCHEPROOF_TESTVECTORS})
 regress:
-	@echo package wycheproof-testvectors is required for this regress
+	@echo package wycheproof is required for this regress
 	@echo package go should be installed if available
 	@echo SKIPPED
 .else
