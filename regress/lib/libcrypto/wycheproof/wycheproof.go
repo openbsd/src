@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.199 2026/01/22 09:02:34 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.200 2026/01/22 09:05:15 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -20,7 +20,9 @@
 package main
 
 /*
-#cgo LDFLAGS: -lcrypto
+#cgo CFLAGS: -I"../../../../lib/libcrypto/bytestring"
+#cgo CFLAGS: -I"../../../../lib/libcrypto/mlkem"
+#cgo LDFLAGS: -lcrypto -static
 
 #include <limits.h>
 #include <string.h>
@@ -41,6 +43,8 @@ package main
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
+
+#include "mlkem_internal.h"
 
 int
 wp_EVP_PKEY_CTX_set_hkdf_md(EVP_PKEY_CTX *pctx, const EVP_MD *md)
@@ -2446,8 +2450,46 @@ func runMLKEMEncapsTestGroup(rank C.int, wt *wycheproofTestMLKEM) bool {
 
 	ek, ekLen := mustDecodeHexString(wt.Ek, "eK")
 
-	if C.MLKEM_parse_public_key(pubKey, (*C.uchar)(unsafe.Pointer(&ek[0])), (C.size_t)(ekLen)) != 0 || wt.Result != "invalid" {
-		fmt.Printf("FAIL: %s MLKEM_parse_public_key succeeded\n", wt)
+	if C.MLKEM_parse_public_key(pubKey, (*C.uchar)(unsafe.Pointer(&ek[0])), (C.size_t)(ekLen)) != 1 {
+		if wt.Result != "invalid" {
+			fmt.Printf("FAIL: %s: MLKEM_parse_public_key failed !!!\n", wt)
+			return false;
+		}
+		return true
+	}
+
+	m, _ := mustDecodeHexString(wt.M, "m")
+
+	var cipherText, sharedSecret *C.uint8_t
+	var cipherTextLen, sharedSecretLen C.size_t
+	defer C.free(unsafe.Pointer(cipherText))
+	defer C.free(unsafe.Pointer(sharedSecret))
+
+	if C.MLKEM_encap_external_entropy(pubKey, (*C.uchar)(unsafe.Pointer(&m[0])), &cipherText, &cipherTextLen, &sharedSecret, &sharedSecretLen) != 1 {
+		fmt.Printf("FAIL: %s: MLKEM_encap_external_entropy\n", wt)
+		return false
+	}
+
+	if cipherTextLen != C.MLKEM_public_key_ciphertext_length(pubKey) {
+		fmt.Printf("FAIL: %s: ciphertext length mismatch\n", wt)
+		return false
+	}
+	gotC := unsafe.Slice((*byte)(unsafe.Pointer(cipherText)), cipherTextLen)
+
+	c, _ := mustDecodeHexString(wt.C, "c")
+	if bytes.Equal(c, gotC) != (wt.Result != "invalid") {
+		fmt.Printf("%s: ciphertext mismatch\nwant:\n%s\ngot:\n%s\n", wt, hex.Dump(c), hex.Dump(gotC))
+	}
+
+	if sharedSecretLen != C.MLKEM_SHARED_SECRET_LENGTH {
+		fmt.Printf("FAIL: %s: shared secret length mismatch\n", wt)
+		return false
+	}
+	gotK := unsafe.Slice((*byte)(unsafe.Pointer(sharedSecret)), sharedSecretLen)
+
+	k, _ := mustDecodeHexString(wt.K, "k")
+	if bytes.Equal(k, gotK) != (wt.Result != "invalid") {
+		fmt.Printf("%s: shared secret mismatch\nwant:\n%s\ngot:\n%s\n", wt, hex.Dump(k), hex.Dump(gotK))
 		return false
 	}
 
