@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.196 2026/01/01 12:47:52 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.197 2026/01/22 08:59:40 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -2387,8 +2387,11 @@ func runMLKEMTestGroup(rank C.int, wt *wycheproofTestMLKEM) bool {
 	ek, _ := mustDecodeHexString(wt.Ek, "ek")
 
 	if C.MLKEM_private_key_from_seed(privKey, (*C.uchar)(unsafe.Pointer(&seed[0])), C.size_t(seedLen)) != 1 {
-		fmt.Printf("%s - MLKEM_private_key_from_seed failed\n", wt)
-		return false
+		if wt.Result != "invalid" {
+			fmt.Printf("%s - MLKEM_private_key_from_seed failed\n", wt)
+			return false;
+		}
+		return true
 	}
 
 	if C.MLKEM_public_from_private(privKey, pubKey) != 1 {
@@ -2416,8 +2419,11 @@ func runMLKEMTestGroup(rank C.int, wt *wycheproofTestMLKEM) bool {
 	var sharedSecretLen C.size_t
 	defer C.free(unsafe.Pointer(sharedSecret))
 	if C.MLKEM_decap(privKey, (*C.uchar)(unsafe.Pointer(&c[0])), C.size_t(cLen), (**C.uchar)(unsafe.Pointer(&sharedSecret)), (*C.size_t)(unsafe.Pointer(&sharedSecretLen))) != 1 {
-		fmt.Printf("%s - MLKEM_decap failed\n", wt)
-		return false
+		if wt.Result != "invalid" {
+			fmt.Printf("%s - MLKEM_decap failed\n", wt)
+			return false
+		}
+		return true
 	}
 	gotK := unsafe.Slice((*byte)(unsafe.Pointer(sharedSecret)), sharedSecretLen)
 
