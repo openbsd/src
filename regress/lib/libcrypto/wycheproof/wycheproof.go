@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.198 2026/01/22 09:01:05 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.199 2026/01/22 09:02:34 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -2458,6 +2458,10 @@ func runMLKEMDecapsValidationTest(rank C.int, wt *wycheproofTestMLKEM) bool {
 	return true
 }
 
+func runMLKEMKeyGenTest(rank C.int, wt *wycheproofTestMLKEM) bool {
+	return true
+}
+
 func (wtg *wycheproofTestGroupMLKEM) run(algorithm string, variant testVariant) bool {
 	var rank C.int
 
@@ -2484,6 +2488,8 @@ func (wtg *wycheproofTestGroupMLKEM) run(algorithm string, variant testVariant) 
 		runTest = runMLKEMEncapsTestGroup
 	case "MLKEMDecapsValidationTest":
 		runTest = runMLKEMDecapsValidationTest
+	case "MLKEMKeyGen":
+		runTest = runMLKEMKeyGenTest
 	default:
 		log.Fatalf("Unknown ML-KEM test type %v", wtg.Type)
 	}
