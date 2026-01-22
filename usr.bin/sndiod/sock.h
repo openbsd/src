@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.9 2024/05/24 15:16:09 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.10 2026/01/22 09:24:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -50,6 +50,8 @@ struct sock {
 #define SOCK_STOP	4		/* draining rec buffers */
 	unsigned int pstate;		/* one of the above */
 	int tickpending;		/* tick waiting to be transmitted */
+	int xrunpending;		/* xrun waiting to be transmitted */
+	int xrunnotify;			/* client subscribed to xrun messages */
 	int fillpending;		/* flowctl waiting to be transmitted */
 	int stoppending;		/* last STOP ack to be sent */
 	unsigned int walign;		/* align written data to this */

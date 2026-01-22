@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.58 2025/06/13 18:34:00 schwarze Exp $
+.\" $OpenBSD: sio_open.3,v 1.59 2026/01/22 09:24:26 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2025 $
+.Dd $Mdocdate: January 22 2026 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -29,6 +29,7 @@
 .Nm sio_read ,
 .Nm sio_write ,
 .Nm sio_onmove ,
+.Nm sio_onxrun ,
 .Nm sio_nfds ,
 .Nm sio_pollfd ,
 .Nm sio_revents ,
@@ -65,6 +66,12 @@
 .Fo sio_onmove
 .Fa "struct sio_hdl *hdl"
 .Fa "void (*cb)(void *arg, int delta)"
+.Fa "void *arg"
+.Fc
+.Ft void
+.Fo sio_onxrun
+.Fa "struct sio_hdl *hdl"
+.Fa "void (*cb)(void *arg)"
 .Fa "void *arg"
 .Fc
 .Ft int
@@ -588,6 +595,21 @@ might overrun; in this case recorded data is lost.
 Similarly if the application cannot provide data to play
 fast enough, the play buffer underruns and silence is played
 instead.
+.Pp
+The
+.Fn sio_onxrun
+function can be used to register the
+.Fn cb
+callback function called at buffer underrun or overrun.
+It is called by
+.Fn sio_read ,
+.Fn sio_write ,
+and
+.Fn sio_revents .
+The value of the
+.Fa arg
+pointer is passed to the callback and can contain anything.
+.Pp
 Depending on the
 .Fa xrun
 parameter of the

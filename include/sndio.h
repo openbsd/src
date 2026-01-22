@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.15 2024/05/24 15:10:26 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.16 2026/01/22 09:24:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -169,6 +169,7 @@ int sio_setpar(struct sio_hdl *, struct sio_par *);
 int sio_getpar(struct sio_hdl *, struct sio_par *);
 int sio_getcap(struct sio_hdl *, struct sio_cap *);
 void sio_onmove(struct sio_hdl *, void (*)(void *, int), void *);
+void sio_onxrun(struct sio_hdl *, void (*)(void *), void *);
 size_t sio_write(struct sio_hdl *, const void *, size_t);
 size_t sio_read(struct sio_hdl *, void *, size_t);
 int sio_start(struct sio_hdl *);

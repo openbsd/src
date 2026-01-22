@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.16 2024/05/24 15:16:09 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.17 2026/01/22 09:24:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -80,6 +80,7 @@ struct amsg {
 #define AMSG_CTLSET	14	/* set control value */
 #define AMSG_CTLSYNC	15	/* end of controls descriptions */
 #define AMSG_CTLSUB	16	/* ondesc/onctl subscription */
+#define AMSG_XRUN	17	/* notification about xruns */
 	uint32_t cmd;
 	uint32_t __pad;
 	union {
@@ -104,6 +105,9 @@ struct amsg {
 #define AMSG_DATAMAX	0x1000
 			uint32_t size;
 		} data;
+		struct amsg_start {
+			uint8_t xrunnotify;
+		} start;
 		struct amsg_stop {
 			uint8_t drain;
 		} stop;

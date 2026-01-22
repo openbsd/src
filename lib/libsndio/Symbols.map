@@ -7,6 +7,7 @@
 		sio_getpar;
 		sio_getcap;
 		sio_onmove;
+		sio_onxrun;
 		sio_write;
 		sio_read;
 		sio_start;

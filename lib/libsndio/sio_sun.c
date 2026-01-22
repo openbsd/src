@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.32 2025/11/11 11:08:10 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.33 2026/01/22 09:24:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -542,6 +542,9 @@ sio_sun_xrun(struct sio_sun_hdl *hdl)
 	 */
 	if (!sio_sun_flush(&hdl->sio))
 		return 0;
+
+	_sio_onxrun_cb(&hdl->sio);
+
 	if (!sio_sun_start(&hdl->sio))
 		return 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.21 2022/04/29 08:30:48 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.22 2026/01/22 09:24:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -115,6 +115,10 @@ sio_aucat_runmsg(struct sio_aucat_hdl *hdl)
 			hdl->delta = 0;
 		}
 		break;
+	case AMSG_XRUN:
+		DPRINTFN(3, "aucat: xrun\n");
+		_sio_onxrun_cb(&hdl->sio);
+		break;
 	case AMSG_SETVOL:
 		ctl = ntohl(hdl->aucat.rmsg.u.vol.ctl);
 		hdl->curvol = hdl->reqvol = ctl;
@@ -196,6 +200,7 @@ sio_aucat_start(struct sio_hdl *sh)
 
 	AMSG_INIT(&hdl->aucat.wmsg);
 	hdl->aucat.wmsg.cmd = htonl(AMSG_START);
+	hdl->aucat.wmsg.u.start.xrunnotify = 1;
 	hdl->aucat.wtodo = sizeof(struct amsg);
 	if (!_aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
