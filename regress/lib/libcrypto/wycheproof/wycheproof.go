@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.200 2026/01/22 09:05:15 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.201 2026/01/22 09:08:56 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -2501,6 +2501,55 @@ func runMLKEMDecapsValidationTest(rank C.int, wt *wycheproofTestMLKEM) bool {
 }
 
 func runMLKEMKeyGenTest(rank C.int, wt *wycheproofTestMLKEM) bool {
+	privKey := C.MLKEM_private_key_new(rank)
+	defer C.MLKEM_private_key_free(privKey)
+	if privKey == nil {
+		log.Fatal("MLKEM_private_key_new failed")
+	}
+
+	pubKey := C.MLKEM_public_key_new(rank)
+	defer C.MLKEM_public_key_free(pubKey)
+	if pubKey == nil {
+		log.Fatal("MLKEM_public_key_new failed")
+	}
+
+	seed, seedLen := mustDecodeHexString(wt.Seed, "seed")
+
+	if C.MLKEM_private_key_from_seed(privKey, (*C.uchar)(unsafe.Pointer(&seed[0])), (C.size_t)(seedLen)) != 1 {
+		fmt.Printf("FAIL: %s - MLKEM_private_key_from_seed failed\n", wt)
+		return false
+	}
+
+	if C.MLKEM_public_from_private(privKey, pubKey) != 1 {
+		fmt.Printf("FAIL: %s - MLKEM_private_key_from_seed failed\n", wt)
+		return false
+	}
+
+	var encodedPrivateKey, encodedPublicKey *C.uint8_t
+	var encodedPrivateKeyLen, encodedPublicKeyLen C.size_t
+	defer C.free(unsafe.Pointer(encodedPrivateKey))
+	defer C.free(unsafe.Pointer(encodedPublicKey))
+
+	if C.MLKEM_marshal_private_key(privKey, &encodedPrivateKey, &encodedPrivateKeyLen) != 1 {
+		fmt.Printf("FAIL: %s - MLKEM_marshal_private_key failed\n", wt)
+		return false
+	}
+	if C.MLKEM_marshal_public_key(pubKey, &encodedPublicKey, &encodedPublicKeyLen) != 1 {
+		fmt.Printf("FAIL: %s - MLKEM_marshal_public_key failed\n", wt)
+		return false
+	}
+
+	gotDk := unsafe.Slice((*byte)(unsafe.Pointer(encodedPrivateKey)), encodedPrivateKeyLen)
+	gotEk := unsafe.Slice((*byte)(unsafe.Pointer(encodedPublicKey)), encodedPublicKeyLen)
+
+	dK, _ := mustDecodeHexString(wt.Dk, "dK")
+	eK, _ := mustDecodeHexString(wt.Ek, "eK")
+	
+	if (bytes.Equal(dK, gotDk) && bytes.Equal(eK, gotEk)) != (wt.Result != "invalid") {
+		fmt.Printf("FAIL: %s - encoded keys differ", wt);
+		return false
+	}
+
 	return true
 }
 
