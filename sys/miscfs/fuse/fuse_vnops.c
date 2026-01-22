@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.74 2025/09/26 05:35:40 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.75 2026/01/22 11:53:31 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -224,13 +224,13 @@ filt_fusefsvnode(struct knote *kn, long int hint)
 
 /*
  * FUSE file systems can maintain a file handle for each VFS file descriptor
- * that is opened. The OpenBSD VFS does not make file descriptors visible to 
+ * that is opened. The OpenBSD VFS does not make file descriptors visible to
  * us so we fake it by mapping open flags to file handles.
  * There is no way for FUSE to know which file descriptor is being used
  * by an application for a file operation. We only maintain 3 descriptors,
  * one each for O_RDONLY, O_WRONLY and O_RDWR. When reading and writing, the
  * first open descriptor is used and this may well not be the one that was set
- * by FUSE open and may have even been opened by another application.
+ * by FUSE open and may have even been opened by another process.
  */
 int
 fusefs_open(void *v)
@@ -411,7 +411,7 @@ fusefs_getattr(void *v)
 	ip = VTOI(vp);
 	fmp = (struct fusefs_mnt *)ip->i_ump;
 
-	/* 
+	/*
 	 * Only user that mounted the file system can access it unless
 	 * allow_other mount option was specified. Return dummy values
 	 * for the root inode in this situation.
@@ -450,6 +450,14 @@ fusefs_getattr(void *v)
 	}
 
 	st = &fbuf->fb_attr;
+
+	/* opendir(3) expects blocksize to be greater than zero. */
+	if (st->st_blksize == 0)
+		st->st_blksize = S_BLKSIZE;
+
+	/* calculate blocks of held disk space if fs didn't do it */
+	if (st->st_blocks == 0 && st->st_size > 0)
+		st->st_blocks = (st->st_size + S_BLKSIZE - 1) / S_BLKSIZE;
 
 	memset(vap, 0, sizeof(*vap));
 	vap->va_type = IFTOVT(st->st_mode);
@@ -776,6 +784,10 @@ fusefs_readdir(void *v)
 	if (!fmp->sess_init)
 		return (ENXIO);
 
+	/*
+	 * Basic check to ensure buffer is large enough for at least one
+	 * dirent with maximum allowed name length.
+	 */
 	if (uio->uio_resid < sizeof(struct dirent))
 		return (EINVAL);
 
@@ -793,6 +805,10 @@ fusefs_readdir(void *v)
 		fbuf->fb_io_fd = ip->fufh[FUFH_RDONLY].fh_id;
 		fbuf->fb_io_off = uio->uio_offset;
 		fbuf->fb_io_len = MIN(uio->uio_resid, fmp->max_read);
+
+		/* might not have enough space for another dirent */
+		if (fbuf->fb_io_len < sizeof(struct dirent))
+			break;
 
 		error = fb_queue(fmp->dev, fbuf);
 
@@ -819,20 +835,28 @@ fusefs_readdir(void *v)
 		dp = (struct dirent *)fbuf->fb_dat;
 		edp = fbuf->fb_dat + fbuf->fb_len;
 		while ((char *)dp < edp) {
+			/* check for partial dirent */
 			if ((char *)dp + offsetof(struct dirent, d_name) >= edp
 			    || dp->d_reclen <= offsetof(struct dirent, d_name)
 			    || (char *)dp + dp->d_reclen > edp) {
 				error = EINVAL;
 				break;
 			}
+			/* check name doesn't extend past end of dirent */
 			if (dp->d_namlen + offsetof(struct dirent, d_name) >=
 			    dp->d_reclen) {
 				error = EINVAL;
 				break;
 			}
+			/*
+			 * If name doesn't extend to end of dirent then set
+			 * remaining space to NULL. This is not usually the
+			 * case but we can't trust userspace.
+			 */
 			memset(dp->d_name + dp->d_namlen, 0, dp->d_reclen -
 			    dp->d_namlen - offsetof(struct dirent, d_name));
 
+			/* check for illegal character in file name */
 			if (memchr(dp->d_name, '/', dp->d_namlen) != NULL) {
 				error = EINVAL;
 				break;
@@ -881,7 +905,7 @@ fusefs_inactive(void *v)
 
 			/*
 			 * FUSE file systems expect the same flags to be sent
-			 * on release that were sent on open. We don't have a 
+			 * on release that were sent on open. We don't have a
 			 * record of them so make a best guess.
 			 */
 			switch (type) {
@@ -925,10 +949,10 @@ fusefs_readlink(void *v)
 
 	if (!fmp->sess_init)
 		return (ENXIO);
-        if (uio->uio_resid == 0)
-                return (0);
-        if (uio->uio_offset < 0)
-                return (EINVAL);
+	if (uio->uio_resid == 0)
+		return (0);
+	if (uio->uio_offset < 0)
+		return (EINVAL);
 
 	if (fmp->undef_op & UNDEF_READLINK)
 		return (ENOSYS);
@@ -1076,7 +1100,7 @@ fusefs_create(void *v)
 	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp)))
 		goto out;
 
-	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
+	tdp->v_type = IFTOVT(fbuf->fb_attr.st_mode);
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -1135,7 +1159,7 @@ fusefs_mknod(void *v)
 	if ((error = VFS_VGET(fmp->mp, fbuf->fb_ino, &tdp)))
 		goto out;
 
-	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
+	tdp->v_type = IFTOVT(fbuf->fb_attr.st_mode);
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -1453,7 +1477,7 @@ fusefs_mkdir(void *v)
 		goto out;
 	}
 
-	tdp->v_type = IFTOVT(fbuf->fb_io_mode);
+	tdp->v_type = IFTOVT(fbuf->fb_attr.st_mode);
 
 	*vpp = tdp;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
@@ -1488,6 +1512,13 @@ fusefs_rmdir(void *v)
 
 	if (fmp->undef_op & UNDEF_RMDIR) {
 		error = ENOSYS;
+		goto out;
+	}
+
+	/* Don't delete parent since it's clearly not empty. */
+	if (cnp->cn_namelen == 2 && cnp->cn_nameptr[0] == '.' &&
+	    cnp->cn_nameptr[1] == '.') {
+		error = ENOTEMPTY;
 		goto out;
 	}
 

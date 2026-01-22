@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.40 2025/09/20 15:01:23 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.41 2026/01/22 11:53:31 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -502,28 +502,17 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 	DPRINTF("Opcode: lookup\t");
 	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
 
-	if (strcmp((const char *)fbuf->fb_dat, "..") == 0) {
-		vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-		if (vn == NULL || vn->parent == NULL) {
-			fbuf->fb_err = -ENOENT;
+	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
+	if (vn == NULL) {
+		vn = alloc_vn(f, (const char *)fbuf->fb_dat, -1,
+		    fbuf->fb_ino);
+		if (vn == NULL) {
+			fbuf->fb_err = -errno;
 			return (0);
 		}
-		vn = vn->parent;
-		if (vn->ino != FUSE_ROOT_INO)
-			ref_vn(vn);
-	} else {
-		vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
-		if (vn == NULL) {
-			vn = alloc_vn(f, (const char *)fbuf->fb_dat, -1,
-			    fbuf->fb_ino);
-			if (vn == NULL) {
-				fbuf->fb_err = -errno;
-				return (0);
-			}
-			set_vn(f, vn); /*XXX*/
-		} else if (vn->ino != FUSE_ROOT_INO)
-			ref_vn(vn);
-	}
+		set_vn(f, vn); /*XXX*/
+	} else if (vn->ino != FUSE_ROOT_INO)
+		ref_vn(vn);
 
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {

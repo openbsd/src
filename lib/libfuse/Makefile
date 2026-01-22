@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2025/12/08 06:37:04 helg Exp $
+#	$OpenBSD: Makefile,v 1.19 2026/01/22 11:53:31 helg Exp $
 
 LIB=	fuse
 MAN=	fuse_chan_fd.3 fuse_daemonize.3 fuse_destroy.3 fuse_get_context.3 \
@@ -14,11 +14,10 @@ CDIAGFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations
 CDIAGFLAGS+=	-Wwrite-strings -Wshadow -Wpointer-arith -Wsign-compare
 CDIAGFLAGS+=	-Wundef -Wbad-function-cast -Winline -Wcast-align
 
-# XXX Shouldn't we use a common fuse.h with proper ifdef _KERNEL part?
 CFLAGS+=	-I${.CURDIR}
 
 SRCS=	debug.c dict.c fuse.c fuse_ops.c fuse_opt.c fuse_subr.c tree.c \
-	fuse_chan.c
+	fuse_chan.c fuse_session.c fuse_lowlevel.c
 HDRS=	fuse.h fuse_opt.h fuse_common.h fuse_lowlevel.h
 
 VERSION_SCRIPT=	${.CURDIR}/Symbols.map

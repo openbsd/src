@@ -1,6 +1,22 @@
 {
 	global:
 		fuse_chan_fd;
+		fuse_chan_recv;
+		fuse_chan_send;
+		fuse_req_ctx;
+		fuse_req_userdata;
+		fuse_reply_err;
+		fuse_reply_entry;
+		fuse_reply_attr;
+		fuse_reply_open;
+		fuse_reply_write;
+		fuse_reply_buf;
+		fuse_reply_readlink;
+		fuse_reply_statfs;
+		fuse_reply_create;
+		fuse_reply_bmap;
+		fuse_reply_none;
+		fuse_add_direntry;
 		fuse_daemonize;
 		fuse_destroy;
 		fuse_get_context;
@@ -26,6 +42,15 @@
 		fuse_teardown;
 		fuse_unmount;
 		fuse_version;
+		fuse_lowlevel_new;
+		fuse_session_destroy;
+		fuse_session_add_chan;
+		fuse_session_remove_chan;
+		fuse_session_loop;
+		fuse_session_exit;
+		fuse_session_exited;
+		fuse_session_reset;
+		fuse_session_process;
 	local:
 		*;
 };

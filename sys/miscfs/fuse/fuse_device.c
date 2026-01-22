@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.48 2025/11/19 09:12:38 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.49 2026/01/22 11:53:31 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -439,8 +439,10 @@ fusewrite(dev_t dev, struct uio *uio, int ioflag)
 	/* Check for corrupted fbufs */
 	if ((fbuf->fb_len && fbuf->fb_err) || fbuf->fb_len > fbuf->fb_io_len ||
 	    SIMPLEQ_EMPTY(&fd->fd_fbufs_wait)) {
-		printf("fuse: dropping corrupted fusebuf\n");
+		printf("fuse: dropping corrupted fusebuf: %zu: %zu: %d\n",
+		    fbuf->fb_io_len, fbuf->fb_len, fbuf->fb_err);
 		error = EINVAL;
+		fbuf->fb_err = EIO;
 		goto end;
 	}
 

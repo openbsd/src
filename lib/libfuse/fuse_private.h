@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.26 2025/12/08 06:37:05 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.27 2026/01/22 11:53:31 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -56,16 +56,21 @@ SPLAY_HEAD(dict, dictentry);
 SPLAY_HEAD(tree, treeentry);
 
 struct fuse_session {
-	void *args;
+	struct fuse_lowlevel_ops llops;
+	struct fuse_chan	*chan;
+	void			*userdata;
+	void			*args;
+	int			 init;
+	int			 exit;
 };
 
 struct fuse_chan {
-	char *dir;
-	struct fuse_args *args;
+	char			*dir;
+	struct fuse_session	*se;
 
-	int fd;
-	int init;
-	int dead;
+	int			fd;
+	int			init;
+	int			dead;
 };
 
 struct fuse_config {
@@ -107,6 +112,14 @@ struct fuse {
 
 	struct fuse_config	conf;
 	struct fuse_session	se;
+};
+
+/* fuse_lowlevel.h */
+struct fuse_req {
+	struct fuse_ctx		ctx;
+	struct fusebuf		*fbuf;
+	struct fuse_session	*se;
+	struct fuse_chan	*ch;
 };
 
 #define	FUSE_MAX_OPS	39
@@ -174,5 +187,32 @@ PROTO(fuse_is_lib_option);
 
 /* FUSE low-level */
 PROTO(fuse_chan_fd);
+PROTO(fuse_chan_recv);
+PROTO(fuse_chan_send);
+PROTO(fuse_req_ctx);
+PROTO(fuse_req_userdata);
+PROTO(fuse_reply_err);
+PROTO(fuse_reply_buf);
+PROTO(fuse_reply_attr);
+PROTO(fuse_reply_entry);
+PROTO(fuse_reply_open);
+PROTO(fuse_reply_write);
+PROTO(fuse_reply_readlink);
+PROTO(fuse_reply_statfs);
+PROTO(fuse_reply_none);
+PROTO(fuse_add_direntry);
+PROTO(fuse_lowlevel_new);
+PROTO(fuse_session_destroy);
+PROTO(fuse_session_add_chan);
+PROTO(fuse_session_remove_chan);
+PROTO(fuse_session_exit);
+PROTO(fuse_session_exited);
+PROTO(fuse_session_reset);
+PROTO(fuse_session_loop);
+PROTO(fuse_session_process);
+
+/* Unsupported */
+PROTO(fuse_reply_create);
+PROTO(fuse_reply_bmap);
 
 #endif /* _FUSE_SUBR_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.22 2024/10/31 13:55:21 claudio Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.23 2026/01/22 11:53:31 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -66,9 +66,17 @@ fusefs_lookup(void *v)
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
 
-	if (cnp->cn_namelen == 1 && *(cnp->cn_nameptr) == '.') {
+	/*
+	 * FUSE doesn't send . or .. lookups to userland so they must be
+	 * handled here. The parent node id is only cached for directories
+	 * and will be refreshed below the next time the directory is looked
+	 * up by name.
+	 */
+	if (cnp->cn_namelen == 1 && *(cnp->cn_nameptr) == '.')
 		nid = dp->i_number;
-	} else {
+	else if (flags & ISDOTDOT)
+		nid = dp->i_parent_cache;
+	else {
 		if (!fmp->sess_init)
 			return (ENOENT);
 
@@ -96,7 +104,7 @@ fusefs_lookup(void *v)
 				 */
 				if ((error = VOP_ACCESS(vdp, VWRITE, cred,
 				    cnp->cn_proc)) != 0)
-					return (error); 
+					return (error);
 
 				cnp->cn_flags |= SAVENAME;
 
@@ -114,6 +122,15 @@ fusefs_lookup(void *v)
 		nid = fbuf->fb_ino;
 		nvtype = IFTOVT(fbuf->fb_attr.st_mode);
 		fb_delete(fbuf);
+
+		/*
+		 * An error of ENOENT or an inode value of 0 mean the entry
+		 * was not found. The difference is that 0 indicates that the
+		 * result may be cached. We don't support caching yet so just
+		 * return.
+		 */
+		if (nid == 0)
+			return (ENOENT);
 	}
 
 	if (nameiop == DELETE && (flags & ISLASTCN)) {
@@ -154,14 +171,18 @@ fusefs_lookup(void *v)
 
 		error = VFS_VGET(fmp->mp, nid, &tdp);
 
+		if (!error && tdp->v_type != VDIR) {
+			printf("%s: parent not dir: %s\n", __func__,
+			    cnp->cn_nameptr);
+			error = EIO;
+		}
+
 		if (error) {
 			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 
 			goto reclaim;
 		}
-
-		tdp->v_type = nvtype;
 
 		if (lockparent && (flags & ISLASTCN)) {
 			if ((error = vn_lock(vdp, LK_EXCLUSIVE))) {
@@ -182,6 +203,13 @@ fusefs_lookup(void *v)
 			goto reclaim;
 
 		tdp->v_type = nvtype;
+
+		/*
+		 * Cache the parent if it's a directory so that we can resolve
+		 * any .. lookups later.
+		 */
+		if (tdp->v_type == VDIR)
+			VTOI(tdp)->i_parent_cache = dp->i_number;
 
 		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(vdp);

@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs_node.h,v 1.5 2024/10/31 13:55:21 claudio Exp $ */
+/* $OpenBSD: fusefs_node.h,v 1.6 2026/01/22 11:53:31 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -40,6 +40,7 @@ struct fusefs_node {
 	struct	fusefs_mnt	*i_ump;
 	dev_t			 i_dev;	 /* Device associated with the inode. */
 	ino_t			 i_number;	/* The identity of the inode. */
+	ino_t			 i_parent_cache;/* Parent inode (only dirs). */
 	struct	lockf_state	*i_lockf;	/* Byte-level lock state. */
 	struct	rrwlock		 i_lock;	/* Inode lock */
 
