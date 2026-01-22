@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.381 2026/01/19 08:20:51 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.382 2026/01/22 08:55:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2707,6 +2707,11 @@ window_copy_cmd_refresh_from_pane(struct window_copy_cmd_state *cs)
 	free(data->backing);
 	data->backing = window_copy_clone_screen(&wp->base, &data->screen, NULL,
 	    NULL, wme->swp != wme->wp);
+
+	if (data->oy > screen_hsize(data->backing)) {
+		data->cy = 0;
+		data->oy = screen_hsize(data->backing);
+	}
 
 	window_copy_size_changed(wme);
 	return (WINDOW_COPY_CMD_REDRAW);

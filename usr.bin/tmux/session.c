@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.100 2025/03/30 22:01:55 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.101 2026/01/22 08:55:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -765,6 +765,32 @@ session_theme_changed(struct session *s)
 		RB_FOREACH(wl, winlinks, &s->windows) {
 			TAILQ_FOREACH(wp, &wl->window->panes, entry)
 			    wp->flags |= PANE_THEMECHANGED;
+		}
+	}
+}
+
+/* Update history for all panes. */
+void
+session_update_history(struct session *s)
+{
+	struct winlink		*wl;
+	struct window_pane	*wp;
+	struct grid		*gd;
+	u_int			 limit, osize;
+
+	limit = options_get_number(s->options, "history-limit");
+	RB_FOREACH(wl, winlinks, &s->windows) {
+		TAILQ_FOREACH(wp, &wl->window->panes, entry) {
+			gd = wp->base.grid;
+
+			osize = gd->hsize;
+			gd->hlimit = limit;
+			grid_collect_history(gd, 1);
+
+			if (gd->hsize != osize) {
+				log_debug("%s: %%%u %u -> %u", __func__, wp->id,
+				    osize, gd->hsize);
+			}
 		}
 	}
 }

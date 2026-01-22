@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.78 2026/01/22 07:42:30 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.79 2026/01/22 08:55:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1252,6 +1252,10 @@ options_push_changes(const char *name)
 		utf8_update_width_cache();
 	if (strcmp(name, "input-buffer-size") == 0)
 		input_set_buffer_size(options_get_number(global_options, name));
+	if (strcmp(name, "history-limit") == 0) {
+		RB_FOREACH(s, sessions, &sessions)
+			session_update_history(s);
+	}
 	RB_FOREACH(s, sessions, &sessions)
 		status_update_cache(s);
 
