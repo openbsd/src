@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.197 2026/01/22 08:59:40 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.198 2026/01/22 09:01:05 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022-2025 Theo Buehler <tb@openbsd.org>
@@ -2444,7 +2444,7 @@ func runMLKEMEncapsTestGroup(rank C.int, wt *wycheproofTestMLKEM) bool {
 		log.Fatal("MLKEM_public_key_new failed")
 	}
 
-	ek, ekLen := mustDecodeHexString(wt.C, "eK")
+	ek, ekLen := mustDecodeHexString(wt.Ek, "eK")
 
 	if C.MLKEM_parse_public_key(pubKey, (*C.uchar)(unsafe.Pointer(&ek[0])), (C.size_t)(ekLen)) != 0 || wt.Result != "invalid" {
 		fmt.Printf("FAIL: %s MLKEM_parse_public_key succeeded\n", wt)
