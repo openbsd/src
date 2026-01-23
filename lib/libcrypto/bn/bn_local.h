@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.61 2025/12/05 14:12:32 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.62 2026/01/23 08:29:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -343,6 +343,12 @@ int bn_printf(BIO *bio, const BIGNUM *bn, int indent, const char *fmt, ...)
 
 int bn_bn2hex_nosign(const BIGNUM *bn, char **out, size_t *out_len);
 int bn_bn2hex_nibbles(const BIGNUM *bn, char **out, size_t *out_len);
+
+BIGNUM *BN_get_rfc7919_prime_2048(BIGNUM *bn);
+BIGNUM *BN_get_rfc7919_prime_3072(BIGNUM *bn);
+BIGNUM *BN_get_rfc7919_prime_4096(BIGNUM *bn);
+BIGNUM *BN_get_rfc7919_prime_6144(BIGNUM *bn);
+BIGNUM *BN_get_rfc7919_prime_8192(BIGNUM *bn);
 
 __END_HIDDEN_DECLS
 #endif /* !HEADER_BN_LOCAL_H */
