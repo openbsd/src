@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_ffdh.c,v 1.1 2026/01/23 07:24:48 tb Exp $ */
+/*	$OpenBSD: bn_ffdh.c,v 1.2 2026/01/23 08:31:20 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -24,7 +24,6 @@
 
 #include "bn_local.h"
 
-#define HAVE_RFC7919_PRIMES	0
 #define HAVE_SCAPY_SPECIAL	0
 
 /*
@@ -191,8 +190,6 @@ static const char *rfc3526_prime_8192 =
 	"60C980DD" "98EDD3DF" "FFFFFFFF" "FFFFFFFF"
 ;
 
-#if HAVE_RFC7919_PRIMES
-
 static const char *rfc7919_prime_2048 =
 	"FFFFFFFF" "FFFFFFFF" "ADF85458" "A2BB4A9A" "AFDC5620" "273D3CF1"
 	"D8B9C583" "CE2D3695" "A9E13641" "146433FB" "CC939DCE" "249B3EF9"
@@ -327,8 +324,6 @@ static const char *rfc7919_prime_8192 =
 	"97D11D49" "F7A8443D" "0822E506" "A9F4614E" "011E2A94" "838FF88C"
 	"D68C8BB7" "C5C6424C" "FFFFFFFF" "FFFFFFFF";
 
-#endif /* HAVE_RFC7919_PRIMES */
-
 typedef BIGNUM *(*get_p_fn)(BIGNUM *);
 
 static const struct ffdh_test {
@@ -376,7 +371,6 @@ static const struct ffdh_test {
 		.str = &rfc3526_prime_8192,
 		.fn = BN_get_rfc3526_prime_8192,
 	},
-#if HAVE_RFC7919_PRIMES
 	{
 		.name = "RFC 7919, 2048 bit",
 		.str = &rfc7919_prime_2048,
@@ -402,7 +396,6 @@ static const struct ffdh_test {
 		.str = &rfc7919_prime_8192,
 		.fn = BN_get_rfc7919_prime_8192,
 	},
-#endif /* HAVE_RFC7919_PRIMES */
 };
 
 #define N_TESTS (sizeof(ffdh_tests) / sizeof(ffdh_tests[0]))
