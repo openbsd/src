@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.32 2026/01/23 08:21:52 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.33 2026/01/23 08:32:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,6 +115,11 @@ static const get_p_fn get_well_known_p[] = {
 	BN_get_rfc3526_prime_4096,
 	BN_get_rfc3526_prime_6144,
 	BN_get_rfc3526_prime_8192,
+	BN_get_rfc7919_prime_2048,
+	BN_get_rfc7919_prime_3072,
+	BN_get_rfc7919_prime_4096,
+	BN_get_rfc7919_prime_6144,
+	BN_get_rfc7919_prime_8192,
 };
 
 #define N_WELL_KNOWN_P_FN (sizeof(get_well_known_p) / sizeof(get_well_known_p[0]))
