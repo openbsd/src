@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.38 2024/04/09 14:59:57 jsing Exp $
+#	$OpenBSD: Makefile,v 1.39 2026/01/23 07:24:48 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_bits
 PROGS +=	bn_cmp
 PROGS +=	bn_convert
+PROGS +=	bn_ffdh
 PROGS +=	bn_gcd
 PROGS +=	bn_general
 PROGS +=	bn_isqrt
@@ -20,6 +21,7 @@ PROGS +=	bn_to_string
 PROGS +=	bn_unit
 PROGS +=	bn_word
 
+STATIC_LINK +=	bn_ffdh
 STATIC_LINK +=	bn_gcd
 STATIC_LINK +=	bn_isqrt
 STATIC_LINK +=	bn_mod_exp
