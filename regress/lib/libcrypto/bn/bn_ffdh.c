@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_ffdh.c,v 1.2 2026/01/23 08:31:20 tb Exp $ */
+/*	$OpenBSD: bn_ffdh.c,v 1.3 2026/01/23 08:34:08 tb Exp $ */
 
 /*
  * Copyright (c) 2026 Theo Buehler <tb@openbsd.org>
@@ -23,8 +23,6 @@
 #include <openssl/dh.h>
 
 #include "bn_local.h"
-
-#define HAVE_SCAPY_SPECIAL	0
 
 /*
  * The strings below were copied from RFCs 2409, 3526, 7919,
@@ -434,7 +432,6 @@ ffdh_test_case(const struct ffdh_test *t, BN_CTX *ctx)
 static int
 ffdh_check(const struct ffdh_test *t)
 {
-#if HAVE_SCAPY_SPECIAL
 	DH *dh = NULL;
 	BIGNUM *p = NULL, *g = NULL;
 	int codes = 0;
@@ -469,9 +466,6 @@ ffdh_check(const struct ffdh_test *t)
 	DH_free(dh);
 
 	return failed;
-#else
-	return 0;
-#endif /* HAVE_SCAPY_SPECIAL */
 }
 
 int
