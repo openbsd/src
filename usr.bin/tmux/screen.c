@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.93 2026/01/20 16:32:05 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.94 2026/01/23 10:45:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -564,12 +564,12 @@ screen_check_selection(struct screen *s, u_int px, u_int py)
 }
 
 /* Get selected grid cell. */
-void
+int
 screen_select_cell(struct screen *s, struct grid_cell *dst,
     const struct grid_cell *src)
 {
 	if (s->sel == NULL || s->sel->hidden)
-		return;
+		return (0);
 
 	memcpy(dst, &s->sel->cell, sizeof *dst);
 	if (COLOUR_DEFAULT(dst->fg))
@@ -583,6 +583,7 @@ screen_select_cell(struct screen *s, struct grid_cell *dst,
 		dst->attr |= (src->attr & GRID_ATTR_CHARSET);
 	else
 		dst->attr |= src->attr;
+	return (1);
 }
 
 /* Reflow wrapped lines. */
