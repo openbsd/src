@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2121 2026/01/19 21:11:31 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2122 2026/01/24 18:16:06 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -31950,6 +31950,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP8432,
 	    "ISP8432",
+	},
+	{
+	    PCI_VENDOR_QUALCOMM, PCI_PRODUCT_QUALCOMM_SC7280_PCIE,
+	    "SC7280 PCIe",
 	},
 	{
 	    PCI_VENDOR_QUALCOMM, PCI_PRODUCT_QUALCOMM_SC8280XP_PCIE,

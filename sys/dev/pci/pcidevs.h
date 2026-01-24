@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2121 2026/01/19 21:11:31 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2122 2026/01/24 18:16:06 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8837,6 +8837,7 @@
 #define	PCI_PRODUCT_QLOGIC_ISP8432	0x8432		/* ISP8432 */
 
 /* Qualcomm products */
+#define	PCI_PRODUCT_QUALCOMM_SC7280_PCIE	0x010b		/* SC7280 PCIe */
 #define	PCI_PRODUCT_QUALCOMM_SC8280XP_PCIE	0x010e		/* SC8280XP PCIe */
 #define	PCI_PRODUCT_QUALCOMM_X1E80100_PCIE	0x0111		/* X1E80100 PCIe */
 #define	PCI_PRODUCT_QUALCOMM_QCNFA765	0x1103		/* QCNFA765 */
