@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.213 2026/01/24 08:13:10 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.214 2026/01/24 08:14:08 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1944,16 +1944,16 @@ ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *spki,
 	tal_pkey = d2i_PUBKEY(NULL, &spki, spkisz);
 	if (tal_pkey == NULL) {
 		warnx("%s: RFC 6487 (trust anchor): bad TAL pubkey", fn);
-		goto badcert;
+		goto out;
 	}
 	if ((cert_pkey = X509_get0_pubkey(cert->x509)) == NULL) {
 		warnx("%s: RFC 6487 (trust anchor): missing pubkey", fn);
-		goto badcert;
+		goto out;
 	}
 	if (EVP_PKEY_cmp(cert_pkey, tal_pkey) != 1) {
 		warnx("%s: RFC 6487 (trust anchor): "
 		    "pubkey does not match TAL pubkey", fn);
-		goto badcert;
+		goto out;
 	}
 
 	/*
@@ -1962,11 +1962,11 @@ ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *spki,
 	 */
 	if (X509_verify(cert->x509, tal_pkey) != 1) {
 		warnx("%s: failed to verify signature", fn);
-		goto badcert;
+		goto out;
 	}
 
 	rv = 1;
- badcert:
+ out:
 	EVP_PKEY_free(tal_pkey);
 	return rv;
 }
@@ -1983,24 +1983,24 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *spki,
 	if (p->purpose != CERT_PURPOSE_TA) {
 		warnx("%s: expected trust anchor purpose, got %s", fn,
 		    purpose2str(p->purpose));
-		goto badcert;
+		goto out;
 	}
 
 	if (!ta_check_pubkey(fn, p, spki, spkisz))
-		goto badcert;
+		goto out;
 
 	if (p->notbefore > now) {
 		warnx("%s: certificate not yet valid", fn);
-		goto badcert;
+		goto out;
 	}
 	if (p->notafter < now) {
 		warnx("%s: certificate has expired", fn);
-		goto badcert;
+		goto out;
 	}
 
 	return p;
 
- badcert:
+ out:
 	cert_free(p);
 	return NULL;
 }
