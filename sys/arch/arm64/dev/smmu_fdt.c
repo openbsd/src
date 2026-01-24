@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.12 2026/01/05 20:06:15 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.13 2026/01/24 16:07:09 kettenis Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -123,7 +123,8 @@ smmu_v2_fdt_attach(struct smmu_fdt_softc *fsc, int node)
 		sc->sc_is_mmu500 = 1;
 	if (OF_is_compatible(node, "marvell,ap806-smmu-500"))
 		sc->sc_is_ap806 = 1;
-	if (OF_is_compatible(node, "qcom,sc8280xp-smmu-500") ||
+	if (OF_is_compatible(node, "qcom,sc7280-smmu-500") ||
+	    OF_is_compatible(node, "qcom,sc8280xp-smmu-500") ||
 	    OF_is_compatible(node, "qcom,x1e80100-smmu-500"))
 		sc->sc_is_qcom = 1;
 	if (OF_getproplen(node, "dma-coherent") == 0)
