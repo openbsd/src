@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2121 2026/01/19 21:11:31 kettenis Exp $
+$OpenBSD: pcidevs,v 1.2122 2026/01/24 18:16:06 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -8832,6 +8832,7 @@ product QLOGIC ISP6322		0x6322	ISP6322
 product QLOGIC ISP8432		0x8432	ISP8432
 
 /* Qualcomm products */
+product QUALCOMM SC7280_PCIE	0x010b	SC7280 PCIe
 product QUALCOMM SC8280XP_PCIE	0x010e	SC8280XP PCIe
 product QUALCOMM X1E80100_PCIE	0x0111	X1E80100 PCIe
 product QUALCOMM QCNFA765	0x1103	QCNFA765
