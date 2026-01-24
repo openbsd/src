@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.272 2026/01/20 16:49:03 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.273 2026/01/24 08:11:26 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -797,9 +797,6 @@ int		 valid_spl(const char *, struct cert *, struct spl *);
 unsigned char	*cms_parse_validate(struct cert **, const char *, int,
 		    const unsigned char *, size_t, const ASN1_OBJECT *,
 		    size_t *, time_t *);
-int		 cms_parse_validate_detached(struct cert **, const char *, int,
-		    const unsigned char *, size_t, const ASN1_OBJECT *, BIO *,
-		    time_t *);
 
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 

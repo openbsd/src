@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.59 2025/12/03 10:19:28 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.60 2026/01/24 08:11:26 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,7 +22,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <openssl/bio.h>
 #include <openssl/cms.h>
 
 #include "extern.h"
@@ -32,10 +31,6 @@ cms_extract_econtent(const char *fn, CMS_ContentInfo *cms, unsigned char **res,
     size_t *rsz)
 {
 	ASN1_OCTET_STRING		**os = NULL;
-
-	/* Detached signature case: no eContent to extract, so do nothing. */
-	if (res == NULL || rsz == NULL)
-		return 1;
 
 	if ((os = CMS_get0_content(cms)) == NULL || *os == NULL) {
 		warnx("%s: RFC 6488 section 2.1.4: "
@@ -176,7 +171,7 @@ cms_SignerInfo_check_attributes(const char *fn, const CMS_SignerInfo *si,
 
 static int
 cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
-    const unsigned char *der, size_t len, const ASN1_OBJECT *oid, BIO *bio,
+    const unsigned char *der, size_t len, const ASN1_OBJECT *oid,
     unsigned char **res, size_t *rsz, time_t *signtime)
 {
 	struct cert			*cert = NULL;
@@ -218,7 +213,7 @@ cms_parse_validate_internal(struct cert **out_cert, const char *fn, int talid,
 	 * The CMS is self-signed with a signing certificate.
 	 * Verify that the self-signage is correct.
 	 */
-	if (!CMS_verify(cms, NULL, NULL, bio, NULL,
+	if (!CMS_verify(cms, NULL, NULL, NULL, NULL,
 	    CMS_NO_SIGNER_CERT_VERIFY)) {
 		warnx("%s: CMS verification error", fn);
 		goto out;
@@ -398,22 +393,8 @@ cms_parse_validate(struct cert **out_cert, const char *fn, int talid,
 	unsigned char *res = NULL;
 
 	if (!cms_parse_validate_internal(out_cert, fn, talid, der, derlen, oid,
-	    NULL, &res, rsz, st))
+	    &res, rsz, st))
 		return NULL;
 
 	return res;
-}
-
-/*
- * Parse and validate a detached CMS signature.
- * bio must contain the original message, der must contain the CMS.
- * Return the 1 on success, 0 on failure.
- */
-int
-cms_parse_validate_detached(struct cert **out_cert, const char *fn, int talid,
-    const unsigned char *der, size_t derlen, const ASN1_OBJECT *oid, BIO *bio,
-    time_t *st)
-{
-	return cms_parse_validate_internal(out_cert, fn, talid, der, derlen,
-	    oid, bio, NULL, NULL, st);
 }
