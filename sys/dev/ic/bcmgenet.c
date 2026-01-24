@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.11 2026/01/15 03:12:49 mvs Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.12 2026/01/24 05:33:11 mvs Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -70,7 +70,7 @@ CTASSERT(MCLBYTES == 2048);
 #define	TX_NEXT(n)		TX_SKIP(n, 1)
 #define	RX_NEXT(n)		(((n) + 1) & (GENET_DMA_DESC_COUNT - 1))
 
-#define	TX_MAX_SEGS		128
+#define	TX_MAX_SEGS		20
 #define	TX_DESC_COUNT		GENET_DMA_DESC_COUNT
 #define	RX_DESC_COUNT		GENET_DMA_DESC_COUNT
 #define	MII_BUSY_RETRY		1000
@@ -205,7 +205,7 @@ int
 genet_setup_txbuf(struct genet_softc *sc, int index, struct mbuf *m)
 {
 	bus_dma_segment_t *segs;
-	int error, queued, nsegs, cur, i;
+	int error, nsegs, cur, i;
 	uint32_t flags;
 
 	/*
@@ -232,13 +232,6 @@ genet_setup_txbuf(struct genet_softc *sc, int index, struct mbuf *m)
 
 	segs = sc->sc_tx.buf_map[index].map->dm_segs;
 	nsegs = sc->sc_tx.buf_map[index].map->dm_nsegs;
-	queued = (sc->sc_tx.pidx - sc->sc_tx.cidx) & 0xffff;
-
-	if (queued >= GENET_DMA_DESC_COUNT - nsegs) {
-		bus_dmamap_unload(sc->sc_tx.buf_tag,
-		    sc->sc_tx.buf_map[index].map);
-		return -1;
-	}
 
 	flags = GENET_TX_DESC_STATUS_SOP |
 		GENET_TX_DESC_STATUS_CRC |
@@ -784,29 +777,27 @@ genet_qstart(struct ifqueue *ifq)
 	struct genet_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	const int qid = GENET_DMA_DEFAULT_QUEUE;
-	int nsegs, index, cnt;
+	int queued, nsegs, index, cnt;
 
 	index = sc->sc_tx.pidx & (TX_DESC_COUNT - 1);
 	cnt = 0;
 
 	for (;;) {
-		m = ifq_deq_begin(&ifp->if_snd);
+		queued = (sc->sc_tx.pidx - sc->sc_tx.cidx) & 0xffff;
+		if (queued >= TX_DESC_COUNT - TX_MAX_SEGS)
+			break;
+
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
 		nsegs = genet_setup_txbuf(sc, index, m);
-		if (nsegs == -1) {
-			ifq_deq_rollback(&ifp->if_snd, m);
-			ifq_set_oactive(&ifp->if_snd);
-			break;
-		}
 		if (nsegs == 0) {
-			ifq_deq_commit(&ifp->if_snd, m);
 			m_freem(m);
 			ifp->if_oerrors++;
 			continue;
 		}
-		ifq_deq_commit(&ifp->if_snd, m);
+
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 
