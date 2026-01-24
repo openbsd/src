@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.212 2026/01/20 16:49:03 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.213 2026/01/24 08:13:10 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1937,20 +1937,20 @@ static int
 ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *spki,
     size_t spkisz)
 {
-	EVP_PKEY	*pk, *opk;
+	EVP_PKEY	*cert_pkey, *tal_pkey;
 	int		 rv = 0;
 
 	/* first check pubkey against the one from the TAL */
-	pk = d2i_PUBKEY(NULL, &spki, spkisz);
-	if (pk == NULL) {
+	tal_pkey = d2i_PUBKEY(NULL, &spki, spkisz);
+	if (tal_pkey == NULL) {
 		warnx("%s: RFC 6487 (trust anchor): bad TAL pubkey", fn);
 		goto badcert;
 	}
-	if ((opk = X509_get0_pubkey(cert->x509)) == NULL) {
+	if ((cert_pkey = X509_get0_pubkey(cert->x509)) == NULL) {
 		warnx("%s: RFC 6487 (trust anchor): missing pubkey", fn);
 		goto badcert;
 	}
-	if (EVP_PKEY_cmp(pk, opk) != 1) {
+	if (EVP_PKEY_cmp(cert_pkey, tal_pkey) != 1) {
 		warnx("%s: RFC 6487 (trust anchor): "
 		    "pubkey does not match TAL pubkey", fn);
 		goto badcert;
@@ -1960,14 +1960,14 @@ ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *spki,
 	 * Do not replace with a <= 0 check since OpenSSL 3 broke that:
 	 * https://github.com/openssl/openssl/issues/24575
 	 */
-	if (X509_verify(cert->x509, pk) != 1) {
+	if (X509_verify(cert->x509, tal_pkey) != 1) {
 		warnx("%s: failed to verify signature", fn);
 		goto badcert;
 	}
 
 	rv = 1;
  badcert:
-	EVP_PKEY_free(pk);
+	EVP_PKEY_free(tal_pkey);
 	return rv;
 }
 
