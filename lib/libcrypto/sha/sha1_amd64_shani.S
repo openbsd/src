@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_shani.S,v 1.2 2026/01/17 06:31:45 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_shani.S,v 1.3 2026/01/24 14:20:52 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -50,25 +50,25 @@
 
 #define sha1_message_schedule_load(idx, m, xmsg) \
 	movdqu	(idx*16)(m), xmsg;					\
-	pshufb	xshufmask, xmsg;
+	pshufb	xshufmask, xmsg
 
 #define sha1_message_schedule_update(xm0, xm1, xm2, xm3) \
 	sha1msg1 xm1, xm0;						\
 	pxor	xm2, xm0;						\
-	sha1msg2 xm3, xm0;
+	sha1msg2 xm3, xm0
 
 #define sha1_shani_round(fn, xmsg, xe, xe_next) \
 	sha1nexte xmsg, xe;						\
 	movdqa	xabcd, xe_next;						\
-	sha1rnds4 fn, xe, xabcd;
+	sha1rnds4 fn, xe, xabcd
 
 #define sha1_shani_round_load(fn, idx, m, xmsg, xe, xe_next) \
 	sha1_message_schedule_load(idx, m, xmsg);			\
-	sha1_shani_round(fn, xmsg, xe, xe_next);
+	sha1_shani_round(fn, xmsg, xe, xe_next)
 
 #define sha1_shani_round_update(fn, xm0, xm1, xm2, xm3, xe, xe_next) \
 	sha1_message_schedule_update(xm0, xm1, xm2, xm3);		\
-	sha1_shani_round(fn, xm0, xe, xe_next);
+	sha1_shani_round(fn, xm0, xe, xe_next)
 
 
 .section .text
@@ -109,14 +109,14 @@ sha1_block_shani:
 	movdqa	xe0, xe_save
 
 	/* Rounds 0 through 15 (four rounds at a time). */
-	sha1_message_schedule_load(0, in, xmsg0);
+	sha1_message_schedule_load(0, in, xmsg0)
 	paddd	xmsg0, xe0
 	movdqa	xabcd, xe1
 	sha1rnds4 $0, xe0, xabcd
 
-	sha1_shani_round_load($0, 1, in, xmsg1, xe1, xe0);
-	sha1_shani_round_load($0, 2, in, xmsg2, xe0, xe1);
-	sha1_shani_round_load($0, 3, in, xmsg3, xe1, xe0);
+	sha1_shani_round_load($0, 1, in, xmsg1, xe1, xe0)
+	sha1_shani_round_load($0, 2, in, xmsg2, xe0, xe1)
+	sha1_shani_round_load($0, 3, in, xmsg3, xe1, xe0)
 
 	/* Rounds 16 through 79 (four rounds at a time). */
 	sha1_shani_round_update($0, xmsg0, xmsg1, xmsg2, xmsg3, xe0, xe1)

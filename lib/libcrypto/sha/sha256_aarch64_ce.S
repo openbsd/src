@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_aarch64_ce.S,v 1.4 2026/01/17 06:31:45 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64_ce.S,v 1.5 2026/01/24 14:20:52 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -65,7 +65,7 @@
  */
 #define sha256_message_schedule_update(m0, m1, m2, m3) \
 	sha256su0 m0.4s, m1.4s;						\
-	sha256su1 m0.4s, m2.4s, m3.4s;
+	sha256su1 m0.4s, m2.4s, m3.4s
 
 /*
  * Compute four SHA-256 rounds by adding W0:W1:W2:W3 + K0:K1:K2:K3, then
@@ -76,10 +76,10 @@
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1.4s, h0.4s;						\
 	sha256h	h0, h1, tmp0.4s;					\
-	sha256h2 h1, tmp1, tmp0.4s;
+	sha256h2 h1, tmp1, tmp0.4s
 
 #define sha256_round_update(h0, h1, m0, m1, m2, m3, k) \
-	sha256_message_schedule_update(m0, m1, m2, m3)			\
+	sha256_message_schedule_update(m0, m1, m2, m3);			\
 	sha256_round(h0, h1, m0, k)
 
 .arch	armv8-a+sha2

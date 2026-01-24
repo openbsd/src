@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64_generic.S,v 1.4 2026/01/17 06:31:45 jsing Exp $ */
+/* $OpenBSD: sha256_amd64_generic.S,v 1.5 2026/01/24 14:20:52 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -51,7 +51,7 @@
 #define sha256_message_schedule_load(idx, m, w, wt) \
 	movl	(m, round, 4), wt;				\
 	bswapl	wt;						\
-	movl	wt, ((idx&0xf)*4)(w);
+	movl	wt, ((idx&0xf)*4)(w)
 
 /*
  * Update message schedule and return current value in wt:
@@ -82,7 +82,7 @@
 	xorl	tmp3, tmp2;			/* sigma0 */	\
 	addl	tmp2, wt;			/* sigma0 */	\
 	\
-	movl	wt, ((idx&0xf)*4)(w);
+	movl	wt, ((idx&0xf)*4)(w)
 
 /*
  * Compute a SHA-256 round:
@@ -133,14 +133,14 @@
 	xorl	tmp2, tmp3;			/* T2 Maj */	\
 	addl	tmp3, h;			/* T2 Maj */	\
 	\
-	addq	$1, round;
+	addq	$1, round
 
 #define sha256_round_load(idx, a, b, c, d, e, f, g, h) \
-	sha256_message_schedule_load(idx, in, %rsp, tmp0) \
+	sha256_message_schedule_load(idx, in, %rsp, tmp0); \
 	sha256_round(idx, a, b, c, d, e, f, g, h, k256, %rsp, tmp0)
 
 #define sha256_round_update(idx, a, b, c, d, e, f, g, h) \
-	sha256_message_schedule_update(idx, %rsp, tmp0) \
+	sha256_message_schedule_update(idx, %rsp, tmp0); \
 	sha256_round(idx, a, b, c, d, e, f, g, h, k256, %rsp, tmp0)
 
 .section .text

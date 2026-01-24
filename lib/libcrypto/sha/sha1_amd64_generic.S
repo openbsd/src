@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_amd64_generic.S,v 1.3 2026/01/17 06:31:45 jsing Exp $ */
+/* $OpenBSD: sha1_amd64_generic.S,v 1.4 2026/01/24 14:20:52 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -46,7 +46,7 @@
 #define sha1_message_schedule_load(idx, m, w, wt) \
 	movl	((idx&0xf)*4)(m), wt;				\
 	bswapl	wt;						\
-	movl	wt, ((idx&0xf)*4)(w);
+	movl	wt, ((idx&0xf)*4)(w)
 
 /*
  * Update message schedule and return current value in wt:
@@ -60,7 +60,7 @@
 	xorl	(((idx)&0xf)*4)(w), wt;		/* W0 */	\
 	roll	$1, wt;						\
 	\
-	movl	wt, ((idx&0xf)*4)(w);
+	movl	wt, ((idx&0xf)*4)(w)
 
 /*
  * Compute a SHA-1 round without logic function:
@@ -97,7 +97,7 @@
 	xorl	d, tmp2;			/* Ch */	\
 	addl	tmp2, e;			/* Ch */	\
 	\
-	sha1_round(a, b, c, d, e, kt, wt);
+	sha1_round(a, b, c, d, e, kt, wt)
 
 /*
  * Compute a SHA-1 round with Parity:
@@ -114,7 +114,7 @@
 	xorl	d, tmp2;			/* Parity */	\
 	addl	tmp2, e;			/* Parity */	\
 	\
-	sha1_round(a, b, c, d, e, kt, wt);
+	sha1_round(a, b, c, d, e, kt, wt)
 
 /*
  * Compute a SHA-1 round with Maj:
@@ -134,26 +134,26 @@
 	xorl	tmp2, tmp3;			/* Maj */	\
 	addl	tmp3, e;			/* Maj */	\
 	\
-	sha1_round(a, b, c, d, e, kt, wt);
+	sha1_round(a, b, c, d, e, kt, wt)
 
 #define sha1_round1_load(idx, a, b, c, d, e) \
-	sha1_message_schedule_load(idx, in, %rsp, tmp0) \
+	sha1_message_schedule_load(idx, in, %rsp, tmp0); \
 	sha1_round_ch(a, b, c, d, e, 0x5a827999, tmp0)
 
 #define sha1_round1_update(idx, a, b, c, d, e) \
-	sha1_message_schedule_update(idx, %rsp, tmp0) \
+	sha1_message_schedule_update(idx, %rsp, tmp0); \
 	sha1_round_ch(a, b, c, d, e, 0x5a827999, tmp0)
 
 #define sha1_round2_update(idx, a, b, c, d, e) \
-	sha1_message_schedule_update(idx, %rsp, tmp0) \
+	sha1_message_schedule_update(idx, %rsp, tmp0); \
 	sha1_round_parity(a, b, c, d, e, 0x6ed9eba1, tmp0)
 
 #define sha1_round3_update(idx, a, b, c, d, e) \
-	sha1_message_schedule_update(idx, %rsp, tmp0) \
+	sha1_message_schedule_update(idx, %rsp, tmp0); \
 	sha1_round_maj(a, b, c, d, e, 0x8f1bbcdc, tmp0)
 
 #define sha1_round4_update(idx, a, b, c, d, e) \
-	sha1_message_schedule_update(idx, %rsp, tmp0) \
+	sha1_message_schedule_update(idx, %rsp, tmp0); \
 	sha1_round_parity(a, b, c, d, e, 0xca62c1d6, tmp0)
 
 .section .text
@@ -215,76 +215,76 @@ sha1_block_generic:
 	sha1_round1_load(15, hs0, hs1, hs2, hs3, hs4)
 
 	/* Round 16 through 31. */
-	sha1_round1_update(16, hs4, hs0, hs1, hs2, hs3);
-	sha1_round1_update(17, hs3, hs4, hs0, hs1, hs2);
-	sha1_round1_update(18, hs2, hs3, hs4, hs0, hs1);
-	sha1_round1_update(19, hs1, hs2, hs3, hs4, hs0);
-	sha1_round2_update(20, hs0, hs1, hs2, hs3, hs4);
-	sha1_round2_update(21, hs4, hs0, hs1, hs2, hs3);
-	sha1_round2_update(22, hs3, hs4, hs0, hs1, hs2);
-	sha1_round2_update(23, hs2, hs3, hs4, hs0, hs1);
-	sha1_round2_update(24, hs1, hs2, hs3, hs4, hs0);
-	sha1_round2_update(25, hs0, hs1, hs2, hs3, hs4);
-	sha1_round2_update(26, hs4, hs0, hs1, hs2, hs3);
-	sha1_round2_update(27, hs3, hs4, hs0, hs1, hs2);
-	sha1_round2_update(28, hs2, hs3, hs4, hs0, hs1);
-	sha1_round2_update(29, hs1, hs2, hs3, hs4, hs0);
-	sha1_round2_update(30, hs0, hs1, hs2, hs3, hs4);
-	sha1_round2_update(31, hs4, hs0, hs1, hs2, hs3);
+	sha1_round1_update(16, hs4, hs0, hs1, hs2, hs3)
+	sha1_round1_update(17, hs3, hs4, hs0, hs1, hs2)
+	sha1_round1_update(18, hs2, hs3, hs4, hs0, hs1)
+	sha1_round1_update(19, hs1, hs2, hs3, hs4, hs0)
+	sha1_round2_update(20, hs0, hs1, hs2, hs3, hs4)
+	sha1_round2_update(21, hs4, hs0, hs1, hs2, hs3)
+	sha1_round2_update(22, hs3, hs4, hs0, hs1, hs2)
+	sha1_round2_update(23, hs2, hs3, hs4, hs0, hs1)
+	sha1_round2_update(24, hs1, hs2, hs3, hs4, hs0)
+	sha1_round2_update(25, hs0, hs1, hs2, hs3, hs4)
+	sha1_round2_update(26, hs4, hs0, hs1, hs2, hs3)
+	sha1_round2_update(27, hs3, hs4, hs0, hs1, hs2)
+	sha1_round2_update(28, hs2, hs3, hs4, hs0, hs1)
+	sha1_round2_update(29, hs1, hs2, hs3, hs4, hs0)
+	sha1_round2_update(30, hs0, hs1, hs2, hs3, hs4)
+	sha1_round2_update(31, hs4, hs0, hs1, hs2, hs3)
 
 	/* Round 32 through 47. */
-	sha1_round2_update(32, hs3, hs4, hs0, hs1, hs2);
-	sha1_round2_update(33, hs2, hs3, hs4, hs0, hs1);
-	sha1_round2_update(34, hs1, hs2, hs3, hs4, hs0);
-	sha1_round2_update(35, hs0, hs1, hs2, hs3, hs4);
-	sha1_round2_update(36, hs4, hs0, hs1, hs2, hs3);
-	sha1_round2_update(37, hs3, hs4, hs0, hs1, hs2);
-	sha1_round2_update(38, hs2, hs3, hs4, hs0, hs1);
-	sha1_round2_update(39, hs1, hs2, hs3, hs4, hs0);
-	sha1_round3_update(40, hs0, hs1, hs2, hs3, hs4);
-	sha1_round3_update(41, hs4, hs0, hs1, hs2, hs3);
-	sha1_round3_update(42, hs3, hs4, hs0, hs1, hs2);
-	sha1_round3_update(43, hs2, hs3, hs4, hs0, hs1);
-	sha1_round3_update(44, hs1, hs2, hs3, hs4, hs0);
-	sha1_round3_update(45, hs0, hs1, hs2, hs3, hs4);
-	sha1_round3_update(46, hs4, hs0, hs1, hs2, hs3);
-	sha1_round3_update(47, hs3, hs4, hs0, hs1, hs2);
+	sha1_round2_update(32, hs3, hs4, hs0, hs1, hs2)
+	sha1_round2_update(33, hs2, hs3, hs4, hs0, hs1)
+	sha1_round2_update(34, hs1, hs2, hs3, hs4, hs0)
+	sha1_round2_update(35, hs0, hs1, hs2, hs3, hs4)
+	sha1_round2_update(36, hs4, hs0, hs1, hs2, hs3)
+	sha1_round2_update(37, hs3, hs4, hs0, hs1, hs2)
+	sha1_round2_update(38, hs2, hs3, hs4, hs0, hs1)
+	sha1_round2_update(39, hs1, hs2, hs3, hs4, hs0)
+	sha1_round3_update(40, hs0, hs1, hs2, hs3, hs4)
+	sha1_round3_update(41, hs4, hs0, hs1, hs2, hs3)
+	sha1_round3_update(42, hs3, hs4, hs0, hs1, hs2)
+	sha1_round3_update(43, hs2, hs3, hs4, hs0, hs1)
+	sha1_round3_update(44, hs1, hs2, hs3, hs4, hs0)
+	sha1_round3_update(45, hs0, hs1, hs2, hs3, hs4)
+	sha1_round3_update(46, hs4, hs0, hs1, hs2, hs3)
+	sha1_round3_update(47, hs3, hs4, hs0, hs1, hs2)
 
 	/* Round 48 through 63. */
-	sha1_round3_update(48, hs2, hs3, hs4, hs0, hs1);
-	sha1_round3_update(49, hs1, hs2, hs3, hs4, hs0);
-	sha1_round3_update(50, hs0, hs1, hs2, hs3, hs4);
-	sha1_round3_update(51, hs4, hs0, hs1, hs2, hs3);
-	sha1_round3_update(52, hs3, hs4, hs0, hs1, hs2);
-	sha1_round3_update(53, hs2, hs3, hs4, hs0, hs1);
-	sha1_round3_update(54, hs1, hs2, hs3, hs4, hs0);
-	sha1_round3_update(55, hs0, hs1, hs2, hs3, hs4);
-	sha1_round3_update(56, hs4, hs0, hs1, hs2, hs3);
-	sha1_round3_update(57, hs3, hs4, hs0, hs1, hs2);
-	sha1_round3_update(58, hs2, hs3, hs4, hs0, hs1);
-	sha1_round3_update(59, hs1, hs2, hs3, hs4, hs0);
-	sha1_round4_update(60, hs0, hs1, hs2, hs3, hs4);
-	sha1_round4_update(61, hs4, hs0, hs1, hs2, hs3);
-	sha1_round4_update(62, hs3, hs4, hs0, hs1, hs2);
-	sha1_round4_update(63, hs2, hs3, hs4, hs0, hs1);
+	sha1_round3_update(48, hs2, hs3, hs4, hs0, hs1)
+	sha1_round3_update(49, hs1, hs2, hs3, hs4, hs0)
+	sha1_round3_update(50, hs0, hs1, hs2, hs3, hs4)
+	sha1_round3_update(51, hs4, hs0, hs1, hs2, hs3)
+	sha1_round3_update(52, hs3, hs4, hs0, hs1, hs2)
+	sha1_round3_update(53, hs2, hs3, hs4, hs0, hs1)
+	sha1_round3_update(54, hs1, hs2, hs3, hs4, hs0)
+	sha1_round3_update(55, hs0, hs1, hs2, hs3, hs4)
+	sha1_round3_update(56, hs4, hs0, hs1, hs2, hs3)
+	sha1_round3_update(57, hs3, hs4, hs0, hs1, hs2)
+	sha1_round3_update(58, hs2, hs3, hs4, hs0, hs1)
+	sha1_round3_update(59, hs1, hs2, hs3, hs4, hs0)
+	sha1_round4_update(60, hs0, hs1, hs2, hs3, hs4)
+	sha1_round4_update(61, hs4, hs0, hs1, hs2, hs3)
+	sha1_round4_update(62, hs3, hs4, hs0, hs1, hs2)
+	sha1_round4_update(63, hs2, hs3, hs4, hs0, hs1)
 
 	/* Round 64 through 79. */
-	sha1_round4_update(64, hs1, hs2, hs3, hs4, hs0);
-	sha1_round4_update(65, hs0, hs1, hs2, hs3, hs4);
-	sha1_round4_update(66, hs4, hs0, hs1, hs2, hs3);
-	sha1_round4_update(67, hs3, hs4, hs0, hs1, hs2);
-	sha1_round4_update(68, hs2, hs3, hs4, hs0, hs1);
-	sha1_round4_update(69, hs1, hs2, hs3, hs4, hs0);
-	sha1_round4_update(70, hs0, hs1, hs2, hs3, hs4);
-	sha1_round4_update(71, hs4, hs0, hs1, hs2, hs3);
-	sha1_round4_update(72, hs3, hs4, hs0, hs1, hs2);
-	sha1_round4_update(73, hs2, hs3, hs4, hs0, hs1);
-	sha1_round4_update(74, hs1, hs2, hs3, hs4, hs0);
-	sha1_round4_update(75, hs0, hs1, hs2, hs3, hs4);
-	sha1_round4_update(76, hs4, hs0, hs1, hs2, hs3);
-	sha1_round4_update(77, hs3, hs4, hs0, hs1, hs2);
-	sha1_round4_update(78, hs2, hs3, hs4, hs0, hs1);
-	sha1_round4_update(79, hs1, hs2, hs3, hs4, hs0);
+	sha1_round4_update(64, hs1, hs2, hs3, hs4, hs0)
+	sha1_round4_update(65, hs0, hs1, hs2, hs3, hs4)
+	sha1_round4_update(66, hs4, hs0, hs1, hs2, hs3)
+	sha1_round4_update(67, hs3, hs4, hs0, hs1, hs2)
+	sha1_round4_update(68, hs2, hs3, hs4, hs0, hs1)
+	sha1_round4_update(69, hs1, hs2, hs3, hs4, hs0)
+	sha1_round4_update(70, hs0, hs1, hs2, hs3, hs4)
+	sha1_round4_update(71, hs4, hs0, hs1, hs2, hs3)
+	sha1_round4_update(72, hs3, hs4, hs0, hs1, hs2)
+	sha1_round4_update(73, hs2, hs3, hs4, hs0, hs1)
+	sha1_round4_update(74, hs1, hs2, hs3, hs4, hs0)
+	sha1_round4_update(75, hs0, hs1, hs2, hs3, hs4)
+	sha1_round4_update(76, hs4, hs0, hs1, hs2, hs3)
+	sha1_round4_update(77, hs3, hs4, hs0, hs1, hs2)
+	sha1_round4_update(78, hs2, hs3, hs4, hs0, hs1)
+	sha1_round4_update(79, hs1, hs2, hs3, hs4, hs0)
 
 	/* Add intermediate state to hash state. */
 	addl	(0*4)(ctx), hs0

@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_amd64_generic.S,v 1.2 2026/01/17 06:31:45 jsing Exp $ */
+/* $OpenBSD: sha512_amd64_generic.S,v 1.3 2026/01/24 14:20:52 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -51,7 +51,7 @@
 #define sha512_message_schedule_load(idx, m, w, wt) \
 	movq	(m, round, 8), wt;				\
 	bswapq	wt;						\
-	movq	wt, ((idx&0xf)*8)(w);
+	movq	wt, ((idx&0xf)*8)(w)
 
 /*
  * Update message schedule and return current value in wt:
@@ -83,7 +83,7 @@
 	xorq	tmp3, tmp2;			/* sigma0 */	\
 	addq	tmp2, wt;			/* sigma0 */	\
 	\
-	movq	wt, ((idx&0xf)*8)(w);
+	movq	wt, ((idx&0xf)*8)(w)
 
 /*
  * Compute a SHA-512 round:
@@ -134,14 +134,14 @@
 	xorq	tmp2, tmp3;			/* T2 Maj */	\
 	addq	tmp3, h;			/* T2 Maj */	\
 	\
-	addq	$1, round;
+	addq	$1, round
 
 #define sha512_round_load(idx, a, b, c, d, e, f, g, h) \
-	sha512_message_schedule_load(idx, in, %rsp, tmp0) \
+	sha512_message_schedule_load(idx, in, %rsp, tmp0); \
 	sha512_round(idx, a, b, c, d, e, f, g, h, k512, %rsp, tmp0)
 
 #define sha512_round_update(idx, a, b, c, d, e, f, g, h) \
-	sha512_message_schedule_update(idx, %rsp, tmp0) \
+	sha512_message_schedule_update(idx, %rsp, tmp0); \
 	sha512_round(idx, a, b, c, d, e, f, g, h, k512, %rsp, tmp0)
 
 .section .text

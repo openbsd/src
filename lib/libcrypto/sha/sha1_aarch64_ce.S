@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64_ce.S,v 1.3 2026/01/17 06:31:45 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64_ce.S,v 1.4 2026/01/24 14:20:52 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -65,7 +65,7 @@
  */
 #define sha1_message_schedule_update(m0, m1, m2, m3) \
 	sha1su0 m0.4s, m1.4s, m2.4s;					\
-	sha1su1 m0.4s, m3.4s;
+	sha1su1 m0.4s, m3.4s
 
 /*
  * Compute four SHA-1 rounds by adding W0:W1:W2:W3 + K0:K1:K2:K3, then
@@ -77,25 +77,25 @@
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1, h0.s[0];						\
 	sha1c	h0, h1, tmp0.4s;					\
-	sha1h	h1, tmp1;
+	sha1h	h1, tmp1
 
 #define sha1_round2(h0, h1, w, k) \
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1, h0.s[0];						\
 	sha1p	h0, h1, tmp0.4s;					\
-	sha1h	h1, tmp1;
+	sha1h	h1, tmp1
 
 #define sha1_round3(h0, h1, w, k) \
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1, h0.s[0];						\
 	sha1m	h0, h1, tmp0.4s;					\
-	sha1h	h1, tmp1;
+	sha1h	h1, tmp1
 
 #define sha1_round4(h0, h1, w, k) \
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1, h0.s[0];						\
 	sha1p	h0, h1, tmp0.4s;					\
-	sha1h	h1, tmp1;
+	sha1h	h1, tmp1
 
 .arch	armv8-a+sha2
 

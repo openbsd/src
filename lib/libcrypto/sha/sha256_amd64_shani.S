@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64_shani.S,v 1.2 2026/01/17 06:31:45 jsing Exp $ */
+/* $OpenBSD: sha256_amd64_shani.S,v 1.3 2026/01/24 14:20:52 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -56,29 +56,29 @@
 #define sha256_message_schedule_load(idx, m, xmsgtmp) \
 	movdqu	(idx*16)(m), xmsg;					\
 	pshufb	xshufmask, xmsg;					\
-	movdqa	xmsg, xmsgtmp;
+	movdqa	xmsg, xmsgtmp
 
 #define sha256_message_schedule_update(xmt0, xmt1, xmt2, xmt3) \
 	sha256msg1 xmt1, xmt0;						\
 	movdqa	xmt3, xmsgtmp4;						\
 	palignr	$4, xmt2, xmsgtmp4;					\
 	paddd	xmsgtmp4, xmt0;						\
-	sha256msg2 xmt3, xmt0;
+	sha256msg2 xmt3, xmt0
 
 #define sha256_shani_round(idx) \
 	paddd	(idx*16)(k256), xmsg;					\
 	sha256rnds2 xmsg, xhs0, xhs1;					\
 	pshufd	$0x0e, xmsg, xmsg;					\
-	sha256rnds2 xmsg, xhs1, xhs0;
+	sha256rnds2 xmsg, xhs1, xhs0
 
 #define sha256_shani_round_load(idx, m, xmsgtmp) \
 	sha256_message_schedule_load(idx, m, xmsgtmp);			\
-	sha256_shani_round(idx);
+	sha256_shani_round(idx)
 
 #define sha256_shani_round_update(idx, xmt0, xmt1, xmt2, xmt3) \
 	sha256_message_schedule_update(xmt0, xmt1, xmt2, xmt3);		\
 	movdqa	xmt0, xmsg;						\
-	sha256_shani_round(idx);
+	sha256_shani_round(idx)
 
 .section .text
 
