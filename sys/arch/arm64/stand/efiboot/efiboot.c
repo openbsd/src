@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.67 2026/01/11 13:34:19 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.68 2026/01/25 18:19:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1140,10 +1140,20 @@ struct smbios_dtb {
 	  "qcom/x1p42100-asus-zenbook-a14.dtb" },
 	{ "ASUS", "ASUS Zenbook A14 UX3407RA",
 	  "qcom/x1e80100-asus-zenbook-a14.dtb" },
+	{ "Dell", "Inspiron 14 Plus 7441",
+	  "qcom/x1e80100-dell-inspiron-14-plus-7441.dtb" },
+	{ "Dell", "Latitude 7455",
+	  "qcom/x1e80100-dell-latitude-7455.dtb" },
+	{ "Dell", "XPS 13 9345",
+	  "qcom/x1e80100-dell-xps13-9345.dtb" },
 	{ "HONOR", "MRO-XXX",
 	  "qcom/x1e80100-honor-magicbook-art-14.dtb" },
+	{ "HP", "HP EliteBook Ultra G1q",
+	  "qcom/x1e80100-hp-elitebook-ultra-g1q.dtb" },
 	{ "HP", "HP OmniBook X Laptop 14-fe0xxx",
 	  "qcom/x1e80100-hp-omnibook-x14.dtb" },
+	{ "HP", "HP OmniBook X Laptop 14-fe1xxx",
+	  "qcom/x1p42100-hp-omnibook-x14.dtb" },
 	{ "LENOVO", "21BX",
 	  "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb" },
 	{ "LENOVO", "21BY",
@@ -1152,6 +1162,8 @@ struct smbios_dtb {
 	  "qcom/x1e78100-lenovo-thinkpad-t14s.dtb" },
 	{ "LENOVO", "21N2",
 	  "qcom/x1e78100-lenovo-thinkpad-t14s.dtb" },
+	{ "LENOVO", "21NH",
+	  "qcom/x1p42100-lenovo-thinkbook-16.dtb" },
 	{ "LENOVO", "83ED",
 	  "qcom/x1e80100-lenovo-yoga-slim7x.dtb" },
 	{ "Microsoft Corporation", "Windows Dev Kit 2023",
