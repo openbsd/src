@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512_aarch64_ce.S,v 1.3 2026/01/17 06:31:45 jsing Exp $ */
+/* $OpenBSD: sha512_aarch64_ce.S,v 1.4 2026/01/25 08:22:17 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -83,8 +83,14 @@
 #define k7		v27
 
 #define tmp0		v8
+#define tmp0q		q8
 #define tmp1		v9
 #define tmp2		v18
+
+#define v0q		q0
+#define v1q		q1
+#define v4q		q4
+#define v6q		q6
 
 /*
  * Update message schedule for m0 (W0:W1), using m1 (W2:W3), m4 (W8:W9),
@@ -141,9 +147,12 @@
 	add	h4.2d, h4.2d, h3.2d;			/* W1:W0 += g:h */	\
 	ext	tmp0.16b, h2.16b, h3.16b, #8;		/* f:g */		\
 	ext	tmp1.16b, h1.16b, h2.16b, #8;		/* d:e */		\
-	sha512h	h4, tmp0, tmp1.2d;			/* T1 */		\
+	sha512h	h4##q, tmp0##q, tmp1.2d;		/* T1 */		\
 	add	h5.2d, h1.2d, h4.2d;			/* c:d + T1 */		\
-	sha512h2 h4, h1, h0.2d;				/* T1 + T2 */
+	sha512h2 h4##q, h1##q, h0.2d;			/* T1 + T2 */
+
+#define sha512_round_initial(h0, h1, h2, h3, h4, h5, w, k) \
+	sha512_round(h0, h1, h2, h3, h4, h5, w, k)
 
 #define sha512_round_update(h0, h1, h2, h3, h4, h5, m0, m1, m2, m3, m4, k) \
 	sha512_message_schedule_update(m0, m1, m2, m3, m4) \
@@ -181,10 +190,10 @@ sha512_block_ce:
 	mov	k512, k512_base
 
 	/* Copy current hash state. */
-	mov	hs0.2d, hc0.2d
-	mov	hs1.2d, hc1.2d
-	mov	hs2.2d, hc2.2d
-	mov	hs3.2d, hc3.2d
+	mov	hs0.16b, hc0.16b
+	mov	hs1.16b, hc1.16b
+	mov	hs2.16b, hc2.16b
+	mov	hs3.16b, hc3.16b
 
 	/* Load and byte swap message schedule. */
 	ld1	{w0.16b, w1.16b, w2.16b, w3.16b}, [in], #64
@@ -203,14 +212,14 @@ sha512_block_ce:
 	ld1	{k0.2d, k1.2d, k2.2d, k3.2d}, [k512], #64
 	ld1	{k4.2d, k5.2d, k6.2d, k7.2d}, [k512], #64
 
-	sha512_round(hs0, hs1, hs2, hs3, hs4, hs5, w0, k0)
-	sha512_round(hs4, hs0, hs5, hs2, hs6, hs7, w1, k1)
-	sha512_round(hs6, hs4, hs7, hs5, hs1, hs3, w2, k2)
-	sha512_round(hs1, hs6, hs3, hs7, hs0, hs2, w3, k3)
-	sha512_round(hs0, hs1, hs2, hs3, hs4, hs5, w4, k4)
-	sha512_round(hs4, hs0, hs5, hs2, hs6, hs7, w5, k5)
-	sha512_round(hs6, hs4, hs7, hs5, hs1, hs3, w6, k6)
-	sha512_round(hs1, hs6, hs3, hs7, hs0, hs2, w7, k7)
+	sha512_round_initial(hs0, hs1, hs2, hs3, hs4, hs5, w0, k0)
+	sha512_round_initial(hs4, hs0, hs5, hs2, hs6, hs7, w1, k1)
+	sha512_round_initial(hs6, hs4, hs7, hs5, hs1, hs3, w2, k2)
+	sha512_round_initial(hs1, hs6, hs3, hs7, hs0, hs2, w3, k3)
+	sha512_round_initial(hs0, hs1, hs2, hs3, hs4, hs5, w4, k4)
+	sha512_round_initial(hs4, hs0, hs5, hs2, hs6, hs7, w5, k5)
+	sha512_round_initial(hs6, hs4, hs7, hs5, hs1, hs3, w6, k6)
+	sha512_round_initial(hs1, hs6, hs3, hs7, hs0, hs2, w7, k7)
 
 	/* Rounds 16 through 31 (two rounds at a time). */
 	ld1	{k0.2d, k1.2d, k2.2d, k3.2d}, [k512], #64

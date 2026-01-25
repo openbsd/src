@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_aarch64_ce.S,v 1.5 2026/01/24 14:20:52 jsing Exp $ */
+/* $OpenBSD: sha256_aarch64_ce.S,v 1.6 2026/01/25 08:22:17 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -54,6 +54,10 @@
 
 #define tmp0		v28
 #define tmp1		v29
+#define tmp1q		q29
+
+#define v18q		q18
+#define v19q		q19
 
 /*
  * Update message schedule for m0 (W0:W1:W2:W3), using m1 (W4:W5:W6:W7),
@@ -74,9 +78,12 @@
  */
 #define sha256_round(h0, h1, w, k) \
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
-	mov	tmp1.4s, h0.4s;						\
-	sha256h	h0, h1, tmp0.4s;					\
-	sha256h2 h1, tmp1, tmp0.4s
+	mov	tmp1.16b, h0.16b;					\
+	sha256h	h0##q, h1##q, tmp0.4s;					\
+	sha256h2 h1##q, tmp1##q, tmp0.4s
+
+#define sha256_round_initial(h0, h1, w, k) \
+	sha256_round(h0, h1, w, k)
 
 #define sha256_round_update(h0, h1, m0, m1, m2, m3, k) \
 	sha256_message_schedule_update(m0, m1, m2, m3);			\
@@ -109,8 +116,8 @@ sha256_block_ce:
 	mov	k256, k256_base
 
 	/* Copy current hash state. */
-	mov	hs0.4s, hc0.4s
-	mov	hs1.4s, hc1.4s
+	mov	hs0.16b, hc0.16b
+	mov	hs1.16b, hc1.16b
 
 	/* Load and byte swap message schedule. */
 	ld1	{w0.16b, w1.16b, w2.16b, w3.16b}, [in], #64
@@ -122,10 +129,10 @@ sha256_block_ce:
 	/* Rounds 0 through 15 (four rounds at a time). */
 	ld1	{k0.4s, k1.4s, k2.4s, k3.4s}, [k256], #64
 
-	sha256_round(hs0, hs1, w0, k0)
-	sha256_round(hs0, hs1, w1, k1)
-	sha256_round(hs0, hs1, w2, k2)
-	sha256_round(hs0, hs1, w3, k3)
+	sha256_round_initial(hs0, hs1, w0, k0)
+	sha256_round_initial(hs0, hs1, w1, k1)
+	sha256_round_initial(hs0, hs1, w2, k2)
+	sha256_round_initial(hs0, hs1, w3, k3)
 
 	/* Rounds 16 through 31 (four rounds at a time). */
 	ld1	{k0.4s, k1.4s, k2.4s, k3.4s}, [k256], #64

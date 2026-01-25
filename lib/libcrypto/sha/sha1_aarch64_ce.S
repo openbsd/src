@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1_aarch64_ce.S,v 1.4 2026/01/24 14:20:52 jsing Exp $ */
+/* $OpenBSD: sha1_aarch64_ce.S,v 1.5 2026/01/25 08:22:17 jsing Exp $ */
 /*
  * Copyright (c) 2023,2025 Joel Sing <jsing@openbsd.org>
  *
@@ -40,6 +40,7 @@
 #define hc1s		s17
 
 #define hs0		v18
+#define hs0q		q18
 #define hs1		v19
 #define hs1s		s19
 
@@ -76,26 +77,26 @@
 #define sha1_round1(h0, h1, w, k) \
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1, h0.s[0];						\
-	sha1c	h0, h1, tmp0.4s;					\
-	sha1h	h1, tmp1
+	sha1c	h0##q, h1##s, tmp0.4s;					\
+	sha1h	h1##s, tmp1
 
 #define sha1_round2(h0, h1, w, k) \
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1, h0.s[0];						\
-	sha1p	h0, h1, tmp0.4s;					\
-	sha1h	h1, tmp1
+	sha1p	h0##q, h1##s, tmp0.4s;					\
+	sha1h	h1##s, tmp1
 
 #define sha1_round3(h0, h1, w, k) \
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1, h0.s[0];						\
-	sha1m	h0, h1, tmp0.4s;					\
-	sha1h	h1, tmp1
+	sha1m	h0##q, h1##s, tmp0.4s;					\
+	sha1h	h1##s, tmp1
 
 #define sha1_round4(h0, h1, w, k) \
 	add	tmp0.4s, w.4s, k.4s;		/* Tt = Wt + Kt */	\
 	mov	tmp1, h0.s[0];						\
-	sha1p	h0, h1, tmp0.4s;					\
-	sha1h	h1, tmp1
+	sha1p	h0##q, h1##s, tmp0.4s;					\
+	sha1h	h1##s, tmp1
 
 .arch	armv8-a+sha2
 
@@ -140,7 +141,7 @@ sha1_block_ce:
 
 .Lblock_loop:
 	/* Copy current hash state. */
-	mov	hs0.4s, hc0.4s
+	mov	hs0.16b, hc0.16b
 	mov	hs1s, hc1.s[0]
 
 	/* Load and byte swap message schedule. */
@@ -151,10 +152,10 @@ sha1_block_ce:
 	rev32	w3.16b, w3.16b
 
 	/* Rounds 0 through 15 (four rounds at a time). */
-	sha1_round1(hs0, hs1s, w0, k0)
-	sha1_round1(hs0, hs1s, w1, k0)
-	sha1_round1(hs0, hs1s, w2, k0)
-	sha1_round1(hs0, hs1s, w3, k0)
+	sha1_round1(hs0, hs1, w0, k0)
+	sha1_round1(hs0, hs1, w1, k0)
+	sha1_round1(hs0, hs1, w2, k0)
+	sha1_round1(hs0, hs1, w3, k0)
 
 	/* Rounds 16 through 31 (four rounds at a time). */
 	sha1_message_schedule_update(w0, w1, w2, w3)
@@ -162,10 +163,10 @@ sha1_block_ce:
 	sha1_message_schedule_update(w2, w3, w0, w1)
 	sha1_message_schedule_update(w3, w0, w1, w2)
 
-	sha1_round1(hs0, hs1s, w0, k0)
-	sha1_round2(hs0, hs1s, w1, k1)
-	sha1_round2(hs0, hs1s, w2, k1)
-	sha1_round2(hs0, hs1s, w3, k1)
+	sha1_round1(hs0, hs1, w0, k0)
+	sha1_round2(hs0, hs1, w1, k1)
+	sha1_round2(hs0, hs1, w2, k1)
+	sha1_round2(hs0, hs1, w3, k1)
 
 	/* Rounds 32 through 47 (four rounds at a time). */
 	sha1_message_schedule_update(w0, w1, w2, w3)
@@ -173,10 +174,10 @@ sha1_block_ce:
 	sha1_message_schedule_update(w2, w3, w0, w1)
 	sha1_message_schedule_update(w3, w0, w1, w2)
 
-	sha1_round2(hs0, hs1s, w0, k1)
-	sha1_round2(hs0, hs1s, w1, k1)
-	sha1_round3(hs0, hs1s, w2, k2)
-	sha1_round3(hs0, hs1s, w3, k2)
+	sha1_round2(hs0, hs1, w0, k1)
+	sha1_round2(hs0, hs1, w1, k1)
+	sha1_round3(hs0, hs1, w2, k2)
+	sha1_round3(hs0, hs1, w3, k2)
 
 	/* Rounds 48 through 63 (four rounds at a time). */
 	sha1_message_schedule_update(w0, w1, w2, w3)
@@ -184,10 +185,10 @@ sha1_block_ce:
 	sha1_message_schedule_update(w2, w3, w0, w1)
 	sha1_message_schedule_update(w3, w0, w1, w2)
 
-	sha1_round3(hs0, hs1s, w0, k2)
-	sha1_round3(hs0, hs1s, w1, k2)
-	sha1_round3(hs0, hs1s, w2, k2)
-	sha1_round4(hs0, hs1s, w3, k3)
+	sha1_round3(hs0, hs1, w0, k2)
+	sha1_round3(hs0, hs1, w1, k2)
+	sha1_round3(hs0, hs1, w2, k2)
+	sha1_round4(hs0, hs1, w3, k3)
 
 	/* Rounds 64 through 79 (four rounds at a time). */
 	sha1_message_schedule_update(w0, w1, w2, w3)
@@ -195,10 +196,10 @@ sha1_block_ce:
 	sha1_message_schedule_update(w2, w3, w0, w1)
 	sha1_message_schedule_update(w3, w0, w1, w2)
 
-	sha1_round4(hs0, hs1s, w0, k3)
-	sha1_round4(hs0, hs1s, w1, k3)
-	sha1_round4(hs0, hs1s, w2, k3)
-	sha1_round4(hs0, hs1s, w3, k3)
+	sha1_round4(hs0, hs1, w0, k3)
+	sha1_round4(hs0, hs1, w1, k3)
+	sha1_round4(hs0, hs1, w2, k3)
+	sha1_round4(hs0, hs1, w3, k3)
 
 	/* Add intermediate state to hash state. */
 	add	hc0.4s, hc0.4s, hs0.4s
