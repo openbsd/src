@@ -1,6 +1,5 @@
-# $OpenBSD: Makefile,v 1.1 2026/01/25 10:18:39 jsing Exp $
+# $OpenBSD: Makefile,v 1.2 2026/01/25 14:57:43 tb Exp $
 
-ARCH ?!= arch -s
 EGCC = /usr/local/bin/egcc
 
 .if !exists(${EGCC})
@@ -9,11 +8,11 @@ regress:
 	@echo SKIPPED
 .else
 
-.if ${ARCH} == "aarch64"
+.if ${MACHINE_ARCH} == "aarch64"
 ASSEMBLY += sha/sha1_aarch64_ce.S
 ASSEMBLY += sha/sha256_aarch64_ce.S
 ASSEMBLY += sha/sha512_aarch64_ce.S
-.elif ${ARCH} == "amd64"
+.elif ${MACHINE_ARCH} == "amd64"
 ASSEMBLY += md5/md5_amd64_generic.S
 ASSEMBLY += sha/sha1_amd64_generic.S
 ASSEMBLY += sha/sha1_amd64_shani.S
