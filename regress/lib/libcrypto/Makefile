@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.61 2024/12/13 00:03:57 beck Exp $
+#	$OpenBSD: Makefile,v 1.62 2026/01/25 10:20:09 jsing Exp $
 
 SUBDIR += aead
 SUBDIR += aes
 SUBDIR += aeswrap
+SUBDIR += assembly
 SUBDIR += asn1
 SUBDIR += base64
 SUBDIR += bf
