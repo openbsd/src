@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.57 2024/09/01 03:08:56 jsg Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.58 2026/01/25 12:09:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -317,6 +317,7 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mm-pcie") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-pcie") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada8k-pcie") ||
+	    OF_is_compatible(faa->fa_node, "qcom,pcie-sc7280") ||
 	    OF_is_compatible(faa->fa_node, "qcom,pcie-sc8280xp") ||
 	    OF_is_compatible(faa->fa_node, "qcom,pcie-x1e80100") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie") ||
@@ -351,7 +352,7 @@ void	*dwpcie_rk3568_intr_establish(void *, int *, int,
 void	dwpcie_rk3568_intr_disestablish(void *);
 void	dwpcie_rk3568_intr_barrier(void *);
 
-int	dwpcie_sc8280xp_init(struct dwpcie_softc *);
+int	dwpcie_sc7280_init(struct dwpcie_softc *);
 
 void	dwpcie_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -538,9 +539,10 @@ dwpcie_attach_deferred(struct device *self)
 	if (OF_is_compatible(sc->sc_node, "fsl,imx8mm-pcie") ||
 	    OF_is_compatible(sc->sc_node, "fsl,imx8mq-pcie"))
 		error = dwpcie_imx8mq_init(sc);
-	if (OF_is_compatible(sc->sc_node, "qcom,pcie-sc8280xp") ||
+	if (OF_is_compatible(sc->sc_node, "qcom,pcie-sc7280") ||
+	    OF_is_compatible(sc->sc_node, "qcom,pcie-sc8280xp") ||
 	    OF_is_compatible(sc->sc_node, "qcom,pcie-x1e80100"))
-		error = dwpcie_sc8280xp_init(sc);
+		error = dwpcie_sc7280_init(sc);
 	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie") ||
 	    OF_is_compatible(sc->sc_node, "rockchip,rk3588-pcie"))
 		error = dwpcie_rk3568_init(sc);
@@ -1552,7 +1554,7 @@ dwpcie_rk3568_intr_barrier(void *cookie)
 }
 
 int
-dwpcie_sc8280xp_init(struct dwpcie_softc *sc)
+dwpcie_sc7280_init(struct dwpcie_softc *sc)
 {
 	sc->sc_num_viewport = 8;
 
