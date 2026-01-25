@@ -1,4 +1,4 @@
-#	$OpenBSD: linux,v 1.6 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: linux,v 1.7 2026/01/25 22:15:43 fcambus Exp $
 
 #------------------------------------------------------------------------------
 # linux:  file(1) magic for Linux files
@@ -46,12 +46,20 @@
 2	string		LILO		Linux/i386 LILO boot/chain loader
 #
 # PSF fonts, from H. Peter Anvin <hpa@yggdrasil.com>
-0	leshort		0x0436		Linux/i386 PC Screen Font data,
->2	byte		0		256 characters, no directory,
->2	byte		1		512 characters, no directory,
->2	byte		2		256 characters, Unicode directory,
->2	byte		3		512 characters, Unicode directory,
+# Updated by Adam Buchbinder <adam.buchbinder@gmail.com>
+# See: https://www.win.tue.nl/~aeb/linux/kbd/font-formats-1.html
+0	leshort		0x0436		Linux/i386 PC Screen Font v1 data,
+>2	byte&0x01	0		256 characters,
+>2	byte&0x01	!0		512 characters,
+>2	byte&0x02	0		no directory,
+>2	byte&0x02	!0		Unicode directory,
 >3	byte		>0		8x%d
+0	string		\x72\xb5\x4a\x86\x00\x00 Linux/i386 PC Screen Font v2 data,
+>16	lelong		x		%d characters,
+>12	lelong&0x01	0		no directory,
+>12	lelong&0x01	!0		Unicode directory,
+>28	lelong		x		%d
+>24	lelong		x		\bx%d
 # Linux swap file, from Daniel Quinlan <quinlan@yggdrasil.com>
 4086	string		SWAP-SPACE	Linux/i386 swap file
 # From: Jeff Bailey <jbailey@ubuntu.com>
