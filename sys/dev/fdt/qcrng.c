@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcrng.c,v 1.1 2023/04/28 05:13:37 phessler Exp $	*/
+/*	$OpenBSD: qcrng.c,v 1.2 2026/01/25 18:13:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -59,7 +59,8 @@ qcrng_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "qcom,prng-ee");
+	return OF_is_compatible(faa->fa_node, "qcom,prng-ee") ||
+	    OF_is_compatible(faa->fa_node, "qcom,trng");
 }
 
 void
