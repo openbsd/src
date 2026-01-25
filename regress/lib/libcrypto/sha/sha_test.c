@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha_test.c,v 1.7 2025/05/22 03:35:40 joshua Exp $ */
+/*	$OpenBSD: sha_test.c,v 1.8 2026/01/25 10:20:37 jsing Exp $ */
 /*
  * Copyright (c) 2022, 2023, 2025 Joshua Sing <joshua@joshuasing.dev>
  *
@@ -772,7 +772,7 @@ test_sha_tv(struct test *t, const void *arg)
 	}
 
 	if (memcmp(st->out, out, out_len) != 0) {
-		test_errorf(t, "EVP single-shot: output diget mismatch");
+		test_errorf(t, "EVP single-shot: output digest mismatch");
 		test_hexdiff(t, out, out_len, st->out);
 	}
 
