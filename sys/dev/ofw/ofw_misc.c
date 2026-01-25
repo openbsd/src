@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.43 2023/05/17 23:25:45 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.44 2026/01/25 11:56:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -1137,16 +1137,13 @@ iommu_device_lookup_pci(int node, uint32_t rid, uint32_t *phandle,
 
 	cell = map;
 	ncells = len / sizeof(uint32_t);
-	while (ncells > 1) {
+	while (ncells > 3) {
 		node = OF_getnodebyphandle(cell[1]);
 		if (node == 0)
 			goto out;
 
 		icells = OF_getpropint(node, "#iommu-cells", 1);
-		if (ncells < icells + 3)
-			goto out;
-
-		KASSERT(icells == 1);
+		KASSERT(icells <= 2);
 
 		rid_base = cell[0];
 		sid_base = cell[2];
