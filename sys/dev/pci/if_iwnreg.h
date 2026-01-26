@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.59 2021/11/12 11:41:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.60 2026/01/26 12:38:50 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -97,7 +97,9 @@
 #define IWN_FH_TFBD_CTRL1(qid)		(0x1904 + (qid) * 8)
 #define IWN_FH_KW_ADDR			0x197c
 #define IWN_FH_SRAM_ADDR(qid)		(0x19a4 + (qid) * 4)
-#define IWN_FH_CBBC_QUEUE(qid)		(0x19d0 + (qid) * 4)
+#define IWN_FH_CBBC_QUEUE(qid)		((qid) < 16 ? (0x19d0 + (qid) * 4) : \
+					((qid) < 20 ? (0x1bf0 + ((qid) - 16) * 4) : \
+					(0x1b20 + ((qid) - 20) * 4)))
 #define IWN_FH_STATUS_WPTR		0x1bc0
 #define IWN_FH_RX_BASE			0x1bc4
 #define IWN_FH_RX_WPTR			0x1bc8
