@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.21 2026/01/22 02:09:37 beck Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.22 2026/01/26 00:06:47 beck Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -61,7 +61,7 @@ struct uvmexp {
 	int free;       /* [F] number of free pages */
 	int active;     /* [L] # of active pages */
 	int inactive;   /* [L] # of pages that we free'd but may want back */
-	int paging;	/* number of pages in the process of being paged out */
+	int paging;	/* [a] # number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
 
 	int zeropages;		/* [F] number of zero'd pages */

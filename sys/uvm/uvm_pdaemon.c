@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.149 2026/01/22 02:09:37 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.150 2026/01/26 00:06:47 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -350,7 +350,8 @@ uvm_aiodone_daemon(void *arg)
 		free = uvmexp.free;
 		while (bp != NULL) {
 			if (bp->b_flags & B_PDAEMON) {
-				uvmexp.paging -= bp->b_bufsize >> PAGE_SHIFT;
+				atomic_sub_int(&uvmexp.paging,
+				    bp->b_bufsize >> PAGE_SHIFT);
 			}
 			nbp = TAILQ_NEXT(bp, b_freelist);
 			s = splbio();	/* b_iodone must by called at splbio */
@@ -839,7 +840,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, int shortage)
 
 		uvm_lock_pageq();
 		if (result == VM_PAGER_PEND) {
-			uvmexp.paging += npages;
+			atomic_add_int(&uvmexp.paging, npages);
 			uvmexp.pdpending++;
 		}
 	}
