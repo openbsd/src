@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.214 2026/01/24 08:14:08 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.215 2026/01/27 08:27:15 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1971,12 +1971,27 @@ ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *spki,
 	return rv;
 }
 
+static int
+ta_check_validity(const char *fn, struct cert *cert)
+{
+	time_t		 now = get_current_time();
+
+	if (cert->notbefore > now) {
+		warnx("%s: certificate not yet valid", fn);
+		return 0;
+	}
+	if (cert->notafter < now) {
+		warnx("%s: certificate has expired", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
 struct cert *
 ta_parse(const char *fn, struct cert *p, const unsigned char *spki,
     size_t spkisz)
 {
-	time_t		 now = get_current_time();
-
 	if (p == NULL)
 		return NULL;
 
@@ -1988,15 +2003,8 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *spki,
 
 	if (!ta_check_pubkey(fn, p, spki, spkisz))
 		goto out;
-
-	if (p->notbefore > now) {
-		warnx("%s: certificate not yet valid", fn);
+	if (!ta_check_validity(fn, p))
 		goto out;
-	}
-	if (p->notafter < now) {
-		warnx("%s: certificate has expired", fn);
-		goto out;
-	}
 
 	return p;
 
