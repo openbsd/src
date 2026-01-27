@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.216 2026/01/27 08:32:19 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.217 2026/01/27 08:35:59 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1916,6 +1916,37 @@ cert_deserialize_and_parse(const char *fn, const unsigned char *der, size_t len)
  out:
 	cert_free(cert);
 	X509_free(x);
+	return NULL;
+}
+
+/*
+ * Parse a certificate file from its DER. Intended for .cer in a Manifest
+ * fileList, so it must be a CA cert or a BGPsec router cert.
+ * Returns cert on success or NULL on failure.
+ */
+struct cert *
+cert_parse_ca_or_brk(const char *fn, const unsigned char *der, size_t len)
+{
+	struct cert *cert = NULL;
+
+	/* Handle possible parse_load_file() failure which already warned. */
+	if (der == NULL)
+		return NULL;
+
+	if ((cert = cert_deserialize_and_parse(fn, der, len)) == NULL)
+		goto out;
+
+	if (cert->purpose != CERT_PURPOSE_CA &&
+	    cert->purpose != CERT_PURPOSE_BGPSEC_ROUTER) {
+		warnx("%s: want CA or BGPsec Router cert, got %s",
+		    fn, purpose2str(cert->purpose));
+		goto out;
+	}
+
+	return cert;
+
+ out:
+	cert_free(cert);
 	return NULL;
 }
 
