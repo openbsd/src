@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.78 2026/01/24 08:13:10 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.79 2026/01/27 08:40:29 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -261,8 +261,7 @@ parse_load_ta(struct tal *tal)
 	}
 
 	/* Extract certificate data. */
-	cert = cert_parse(file, f, flen);
-	cert = ta_parse(file, cert, tal->spki, tal->spkisz);
+	cert = cert_parse_ta(file, f, flen, tal->spki, tal->spkisz);
 	if (cert == NULL)
 		goto out;
 

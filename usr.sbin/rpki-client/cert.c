@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.217 2026/01/27 08:35:59 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.218 2026/01/27 08:40:29 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2062,6 +2062,27 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *spki,
  out:
 	cert_free(p);
 	return NULL;
+}
+
+/*
+ * Parse a TA from its DER and validate it against SPKI from the TAL and
+ * current time.
+ * Returns a validated TA cert on success or NULL on failure.
+ */
+struct cert	*
+cert_parse_ta(const char *fn, const unsigned char *der, size_t len,
+    const unsigned char *spki, size_t spkisz)
+{
+	struct cert *cert = NULL;
+
+	/* Handle possible load_file() failure. Will warn later if needed. */
+	if (der == NULL)
+		return NULL;
+
+	if ((cert = cert_deserialize_and_parse(fn, der, len)) == NULL)
+		return NULL;
+
+	return ta_parse(fn, cert, spki, spkisz);
 }
 
 /*
