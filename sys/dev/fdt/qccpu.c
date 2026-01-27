@@ -1,4 +1,4 @@
-/*	$OpenBSD: qccpu.c,v 1.4 2024/10/10 23:15:27 jsg Exp $	*/
+/*	$OpenBSD: qccpu.c,v 1.5 2026/01/27 21:33:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Dale Rahn <drahn@openbsd.org>
  *
@@ -49,7 +49,7 @@
 #define CPUF_PERF_STATE		0x320
 #define LUT_ROW_SIZE  		4
 
-#define NUM_GROUP	2
+#define MAX_GROUP	3
 #define MAX_LUT		40
 
 #define XO_FREQ_HZ	19200000
@@ -57,16 +57,17 @@
 struct qccpu_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh[NUM_GROUP];
+	bus_space_handle_t	sc_ioh[MAX_GROUP];
+	int			sc_num_group;
 
 	int			sc_node;
 
 	struct clock_device	sc_cd;
-	uint32_t		sc_freq[NUM_GROUP][MAX_LUT];
-	int			sc_num_lut[NUM_GROUP];
+	uint32_t		sc_freq[MAX_GROUP][MAX_LUT];
+	int			sc_num_lut[MAX_GROUP];
 
 	struct ksensordev       sc_sensordev;
-	struct ksensor          sc_hz_sensor[NUM_GROUP];
+	struct ksensor          sc_hz_sensor[MAX_GROUP];
 };
 
 #define DEVNAME(sc) (sc)->sc_dev.dv_xname
@@ -103,23 +104,21 @@ qccpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct qccpu_softc *sc = (struct qccpu_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	int idx;
 
-	if (faa->fa_nreg < 2) {
+	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
 		return;
 	}
 
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh[0])) {
-		printf(": can't map registers (cluster0)\n");
-		return;
-	}
-
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
-	    faa->fa_reg[1].size, 0, &sc->sc_ioh[1])) {
-		printf(": can't map registers (cluster1)\n");
-		return;
+	sc->sc_num_group = MIN(faa->fa_nreg, MAX_GROUP);
+	for (idx = 0; idx < sc->sc_num_group; idx++) {
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[idx].addr,
+		    faa->fa_reg[idx].size, 0, &sc->sc_ioh[idx])) {
+			printf(": can't map registers (cluster%d)\n", idx);
+			return;
+		}
 	}
 	sc->sc_node = faa->fa_node;
 
@@ -137,10 +136,10 @@ qccpu_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 	    sizeof(sc->sc_sensordev.xname));
 
-	sc->sc_hz_sensor[0].type = SENSOR_FREQ;
-	sensor_attach(&sc->sc_sensordev, &sc->sc_hz_sensor[0]);
-	sc->sc_hz_sensor[1].type = SENSOR_FREQ;
-	sensor_attach(&sc->sc_sensordev, &sc->sc_hz_sensor[1]);
+	for (idx = 0; idx < sc->sc_num_group; idx++) {
+		sc->sc_hz_sensor[idx].type = SENSOR_FREQ;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_hz_sensor[idx]);
+	}
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, qccpu_refresh_sensor, 1);
 }
@@ -187,7 +186,7 @@ qccpu_get_frequency(void *cookie, uint32_t *cells)
 	uint32_t		lval;
 	uint32_t		group;
 
-	if (cells[0] >= NUM_GROUP) {
+	if (cells[0] >= sc->sc_num_group) {
 		printf("%s: bad cell %d\n", __func__, cells[0]);
 		return 0;
 	}
@@ -210,7 +209,7 @@ qccpu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	int			numcores, i;
 	uint32_t		group;
 
-	if (cells[0] >= NUM_GROUP) {
+	if (cells[0] >= sc->sc_num_group) {
 		printf("%s: bad cell %d\n", __func__, cells[0]);
 		return 1;
 	}
@@ -271,7 +270,7 @@ qccpu_refresh_sensor(void *arg)
 	int		 idx;
 	uint32_t	 lval;
 
-	for (idx = 0; idx < NUM_GROUP; idx++) {
+	for (idx = 0; idx < sc->sc_num_group; idx++) {
 		ioh = sc->sc_ioh[idx];
 		
 		lval = (bus_space_read_4(iot, ioh, CPUF_DOMAIN_STATE)
