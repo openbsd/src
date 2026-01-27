@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.215 2026/01/27 08:27:15 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.216 2026/01/27 08:32:19 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1882,20 +1882,16 @@ cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 }
 
 /*
- * Parse and partially validate an RPKI X509 certificate (either a trust
- * anchor or a certificate) as defined in RFC 6487.
- * Returns the parse results or NULL on failure.
+ * This is a generic parser for resource certificates and can only do as much
+ * validation as can be extracted from the bare DER. Callers should at least
+ * check the cert->purpose and consider any further validation.
  */
-struct cert *
-cert_parse(const char *fn, const unsigned char *der, size_t len)
+static struct cert *
+cert_deserialize_and_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	struct cert		*cert = NULL;
 	const unsigned char	*oder;
 	X509			*x = NULL;
-
-	/* just fail for empty buffers, the warning was printed elsewhere */
-	if (der == NULL)
-		return NULL;
 
 	oder = der;
 	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
@@ -1914,17 +1910,41 @@ cert_parse(const char *fn, const unsigned char *der, size_t len)
 	if ((cert = cert_parse_internal(fn, x)) == NULL)
 		goto out;
 
-	if (cert->purpose == CERT_PURPOSE_EE) {
-		warnx("%s: unexpected EE cert", fn);
-		goto out;
-	}
-
 	X509_free(x);
 	return cert;
 
  out:
 	cert_free(cert);
 	X509_free(x);
+	return NULL;
+}
+
+/*
+ * Parse and partially validate an RPKI X509 certificate (either a trust
+ * anchor or a certificate) as defined in RFC 6487.
+ * Returns the parse results or NULL on failure.
+ */
+struct cert *
+cert_parse(const char *fn, const unsigned char *der, size_t len)
+{
+	struct cert		*cert = NULL;
+
+	/* just fail for empty buffers, the warning was printed elsewhere */
+	if (der == NULL)
+		return NULL;
+
+	if ((cert = cert_deserialize_and_parse(fn, der, len)) == NULL)
+		goto out;
+
+	if (cert->purpose == CERT_PURPOSE_EE) {
+		warnx("%s: unexpected EE cert", fn);
+		goto out;
+	}
+
+	return cert;
+
+ out:
+	cert_free(cert);
 	return NULL;
 }
 
