@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.177 2026/01/27 08:40:29 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.178 2026/01/27 09:41:42 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -666,7 +666,7 @@ proc_parser_ta_cmp(const struct cert *cert1, const struct cert *cert2)
 
 	/*
 	 * Both certs are valid from our perspective. If anything changed,
-	 * prefer the freshly-fetched one. We rely on cert_parse_pre() having
+	 * prefer the freshly-fetched one. We rely on cert_parse_ta() having
 	 * cached the extensions and thus libcrypto has already computed the
 	 * certs' hashes (SHA-1 for OpenSSL, SHA-512 for LibreSSL). The below
 	 * compares them.
