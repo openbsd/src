@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.19 2024/11/07 11:12:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.20 2026/01/28 21:09:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -100,7 +100,6 @@ extern struct uvm_pmalloc nowait_pma;			/* [F] */
  * uvm_pmalloc flags.
  */
 #define UVM_PMA_LINKED	0x01	/* uvm_pmalloc is on list */
-#define UVM_PMA_BUSY	0x02	/* entry is busy with fpageq unlocked */
 #define UVM_PMA_FAIL	0x10	/* page daemon cannot free pages */
 #define UVM_PMA_FREED	0x20	/* at least one page in the range was freed */
 

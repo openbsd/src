@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.80 2026/01/05 20:57:30 beck Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.81 2026/01/28 21:09:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -2152,7 +2152,7 @@ uvm_wait_pla(paddr_t low, paddr_t high, paddr_t size, int failok)
 		TAILQ_INSERT_TAIL(&uvm.pmr_control.allocs, &pma, pmq);
 
 		wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-		while (pma.pm_flags & (UVM_PMA_LINKED | UVM_PMA_BUSY))
+		while (pma.pm_flags & UVM_PMA_LINKED)
 			msleep_nsec(&pma, &uvm.fpageqlock, PVM, wmsg, INFSLP);
 
 		if (!(pma.pm_flags & UVM_PMA_FREED) &&
@@ -2186,12 +2186,9 @@ uvm_wakeup_pla(paddr_t low, psize_t len)
 		if (low < pma->pm_constraint.ucr_high &&
 		    high > pma->pm_constraint.ucr_low) {
 			pma->pm_flags |= UVM_PMA_FREED;
-			if (!(pma->pm_flags & UVM_PMA_BUSY)) {
-				pma->pm_flags &= ~UVM_PMA_LINKED;
-				TAILQ_REMOVE(&uvm.pmr_control.allocs, pma,
-				    pmq);
-				wakeup(pma);
-			}
+			pma->pm_flags &= ~UVM_PMA_LINKED;
+			TAILQ_REMOVE(&uvm.pmr_control.allocs, pma, pmq);
+			wakeup(pma);
 		}
 	}
 }
