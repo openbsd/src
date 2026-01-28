@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.79 2026/01/27 08:40:29 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.80 2026/01/28 08:28:34 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -612,7 +612,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		expires = NULL;
 		notafter = NULL;
 		if ((tal = find_tal(cert)) != NULL) {
-			cert = ta_parse(file, cert, tal->spki, tal->spkisz);
+			cert = ta_validate(file, cert, tal->spki, tal->spkisz);
 			status = (cert != NULL);
 			if (status) {
 				expires = &cert->expires;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.218 2026/01/27 08:40:29 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.219 2026/01/28 08:28:34 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2039,8 +2039,14 @@ ta_check_validity(const char *fn, struct cert *cert)
 	return 1;
 }
 
+/*
+ * Validate a TA against the subjectPublicKeyInfo from the TAL.
+ * Check that the SPKIs match, and that the cert is self-signed
+ * and currently valid.
+ * Returns cert passed in on success or NULL on failure.
+ */
 struct cert *
-ta_parse(const char *fn, struct cert *p, const unsigned char *spki,
+ta_validate(const char *fn, struct cert *p, const unsigned char *spki,
     size_t spkisz)
 {
 	if (p == NULL)
@@ -2082,7 +2088,7 @@ cert_parse_ta(const char *fn, const unsigned char *der, size_t len,
 	if ((cert = cert_deserialize_and_parse(fn, der, len)) == NULL)
 		return NULL;
 
-	return ta_parse(fn, cert, spki, spkisz);
+	return ta_validate(fn, cert, spki, spkisz);
 }
 
 /*

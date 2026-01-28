@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.275 2026/01/27 08:40:29 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.276 2026/01/28 08:28:34 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -720,7 +720,7 @@ struct cert	*cert_parse_ee_cert(const char *, int, X509 *);
 struct cert	*cert_parse_ta(const char *, const unsigned char *, size_t,
 		    const unsigned char *, size_t);
 struct cert	*cert_parse(const char *, const unsigned char *, size_t);
-struct cert	*ta_parse(const char *, struct cert *, const unsigned char *,
+struct cert	*ta_validate(const char *, struct cert *, const unsigned char *,
 		    size_t);
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
