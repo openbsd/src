@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.28 2026/01/20 16:49:44 tb Exp $ */
+/*	$Id: test-cert.c,v 1.29 2026/01/28 08:29:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 			free(buf);
 			if (p == NULL)
 				break;
-			p = ta_parse(cert_path, p, tal->spki, tal->spkisz);
+			p = ta_validate(cert_path, p, tal->spki, tal->spkisz);
 			tal_free(tal);
 			if (p == NULL)
 				break;
