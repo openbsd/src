@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.151 2026/01/28 21:09:41 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.152 2026/01/28 21:46:03 deraadt Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -259,10 +259,15 @@ uvm_pageout(void *arg)
 
 		shortage -= bufbackoff(&constraint, size * 2);
 #if NDRM > 0
-		shortage -= drmbackoff(size * 2);
+		if (shortage > 0)
+			shortage -= drmbackoff(size * 2);
 #endif
 		if (shortage > 0)
 			shortage -= uvm_pmr_cache_drain();
+
+		/* XXX remove shortage as parameter below */
+		if (shortage < 0)
+			shortage = 0;
 
 		/*
 		 * scan if needed
