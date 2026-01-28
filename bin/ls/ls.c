@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.56 2023/10/07 13:29:08 schwarze Exp $	*/
+/*	$OpenBSD: ls.c,v 1.57 2026/01/28 20:31:49 fcambus Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -494,7 +494,7 @@ display(FTSENT *p, FTSENT *list)
 			if (f_longform) {
 				if (f_numericonly) {
 					snprintf(nuser, sizeof nuser, "%u", sp->st_uid);
-					snprintf(ngroup, sizeof nuser, "%u", sp->st_gid);
+					snprintf(ngroup, sizeof ngroup, "%u", sp->st_gid);
 					user = nuser;
 					group = ngroup;
 				} else {
