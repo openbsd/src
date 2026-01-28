@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.219 2026/01/28 08:28:34 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.220 2026/01/28 08:42:07 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1991,7 +1991,11 @@ ta_check_pubkey(const char *fn, struct cert *cert, const unsigned char *spki,
 	EVP_PKEY	*cert_pkey, *tal_pkey;
 	int		 rv = 0;
 
-	/* first check pubkey against the one from the TAL */
+	/*
+	 * We should really verify that the TAL's SPKI is byte-identical with
+	 * the cert's SPKI. There's no sane way to access the original DER, so
+	 * comparing internal representations is the best thing we can do.
+	 */
 	tal_pkey = d2i_PUBKEY(NULL, &spki, spkisz);
 	if (tal_pkey == NULL) {
 		warnx("%s: RFC 6487 (trust anchor): bad TAL pubkey", fn);
