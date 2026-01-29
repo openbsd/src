@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.220 2026/01/28 08:42:07 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.221 2026/01/29 09:41:54 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2050,27 +2050,27 @@ ta_check_validity(const char *fn, struct cert *cert)
  * Returns cert passed in on success or NULL on failure.
  */
 struct cert *
-ta_validate(const char *fn, struct cert *p, const unsigned char *spki,
+ta_validate(const char *fn, struct cert *cert, const unsigned char *spki,
     size_t spkisz)
 {
-	if (p == NULL)
+	if (cert == NULL)
 		return NULL;
 
-	if (p->purpose != CERT_PURPOSE_TA) {
+	if (cert->purpose != CERT_PURPOSE_TA) {
 		warnx("%s: expected trust anchor purpose, got %s", fn,
-		    purpose2str(p->purpose));
+		    purpose2str(cert->purpose));
 		goto out;
 	}
 
-	if (!ta_check_pubkey(fn, p, spki, spkisz))
+	if (!ta_check_pubkey(fn, cert, spki, spkisz))
 		goto out;
-	if (!ta_check_validity(fn, p))
+	if (!ta_check_validity(fn, cert))
 		goto out;
 
-	return p;
+	return cert;
 
  out:
-	cert_free(p);
+	cert_free(cert);
 	return NULL;
 }
 
@@ -2100,25 +2100,25 @@ cert_parse_ta(const char *fn, const unsigned char *der, size_t len,
  * Passing NULL is a noop.
  */
 void
-cert_free(struct cert *p)
+cert_free(struct cert *cert)
 {
-	if (p == NULL)
+	if (cert == NULL)
 		return;
 
-	free(p->crl);
-	free(p->repo);
-	free(p->path);
-	free(p->mft);
-	free(p->notify);
-	free(p->signedobj);
-	free(p->ips);
-	free(p->ases);
-	free(p->aia);
-	free(p->aki);
-	free(p->ski);
-	free(p->pubkey);
-	X509_free(p->x509);
-	free(p);
+	free(cert->crl);
+	free(cert->repo);
+	free(cert->path);
+	free(cert->mft);
+	free(cert->notify);
+	free(cert->signedobj);
+	free(cert->ips);
+	free(cert->ases);
+	free(cert->aia);
+	free(cert->aki);
+	free(cert->ski);
+	free(cert->pubkey);
+	X509_free(cert->x509);
+	free(cert);
 }
 
 /*
