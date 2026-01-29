@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.79 2026/01/10 16:12:36 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.80 2026/01/29 23:02:35 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -191,6 +191,10 @@ file	dev/acpi/com_acpi.c		com_acpi
 # PL011 UART
 attach	pluart at acpi with pluart_acpi
 file	dev/acpi/pluart_acpi.c		pluart_acpi
+
+# Qualcomm UART
+attach	qcuart at acpi with qcuart_acpi
+file	dev/acpi/qcuart_acpi.c		qcuart_acpi
 
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi

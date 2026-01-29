@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.239 2026/01/29 11:23:35 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.240 2026/01/29 23:02:35 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -51,6 +51,7 @@ com*		at acpi?
 ehci*		at acpi?
 ohci*		at acpi?
 pluart*		at acpi?
+qcuart*		at acpi?
 sdhc*		at acpi?
 ufshci*		at acpi?
 xhci*		at acpi?
