@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.75 2026/01/22 11:53:31 helg Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.76 2026/01/29 06:04:27 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -811,15 +811,7 @@ fusefs_readdir(void *v)
 			break;
 
 		error = fb_queue(fmp->dev, fbuf);
-
 		if (error) {
-			/*
-			 * dirent was larger than residual space left in
-			 * buffer.
-			 */
-			if (error == ENOBUFS)
-				error = 0;
-
 			fb_delete(fbuf);
 			break;
 		}

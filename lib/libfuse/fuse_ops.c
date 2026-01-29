@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_ops.c,v 1.41 2026/01/22 11:53:31 helg Exp $ */
+/* $OpenBSD: fuse_ops.c,v 1.42 2026/01/29 06:04:27 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -22,31 +22,48 @@
 #include "fuse_private.h"
 #include "debug.h"
 
-#define CHECK_OPT(opname)	DPRINTF("Opcode: %s\t", #opname);	\
-				DPRINTF("Inode: %llu\t",		\
-				    (unsigned long long)fbuf->fb_ino);	\
-				DPRINTF("Size: %lu\t", fbuf->fb_io_len);\
-				if (!f->op.opname) {			\
-					fbuf->fb_err = -ENOSYS;		\
-					return (0);			\
+#define CHECK_OPT(opname)	if (!f->op.opname) {			\
+					err = -ENOSYS;			\
+					goto out;			\
 				}
+
+/*
+ * Store the current request so that it is available on demand for
+ * fuse_get_context(3).
+ */
+static fuse_req_t ireq;
+
+const fuse_req_t
+ifuse_req(void)
+{
+	return (ireq);
+}
+
+static void
+ictx_init(fuse_req_t req)
+{
+	ireq = req;
+}
+
+static void
+ictx_destroy(void)
+{
+	ireq = NULL;
+}
 
 static int
 update_attr(struct fuse *f, struct stat *attr, const char *realname,
-    struct fuse_vnode *vn)
+    const fuse_ino_t ino)
 {
-	int ret;
+	int err;
 
 	memset(attr, 0, sizeof(struct stat));
-	ret = f->op.getattr(realname, attr);
-
-	if (attr->st_blksize == 0)
-		attr->st_blksize = 512;
-	if (attr->st_blocks == 0)
-		attr->st_blocks = 4;
+	err = f->op.getattr(realname, attr);
+	if (err)
+		return (err);
 
 	if (!f->conf.use_ino)
-		attr->st_ino = vn->ino;
+		attr->st_ino = ino;
 
 	if (f->conf.set_mode)
 		attr->st_mode = (attr->st_mode & S_IFMT) | (0777 & ~f->conf.umask);
@@ -57,151 +74,122 @@ update_attr(struct fuse *f, struct stat *attr, const char *realname,
 	if (f->conf.set_gid)
 		attr->st_gid = f->conf.gid;
 
-	return (ret);
-}
-
-static int
-ifuse_ops_init(struct fuse *f)
-{
-	struct fuse_conn_info fci;
-
-	DPRINTF("Opcode: init\t");
-
-	if (f->op.init) {
-		memset(&fci, 0, sizeof(fci));
-		fci.proto_minor = FUSE_MINOR_VERSION;
-		fci.proto_major = FUSE_MAJOR_VERSION;
-
-		f->op.init(&fci);
-	}
-
-	f->fc->init = 1;
-
 	return (0);
 }
 
-static int
-ifuse_ops_getattr(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_init(void *userdata, struct fuse_conn_info *fci)
 {
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)userdata;
+
+	if (f->op.init)
+		f->op.init(fci);
+}
+
+static void
+ifuse_ops_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
+{
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct stat stbuf;
 	char *realname;
+	int err;
 
-	DPRINTF("Opcode: getattr\t");
-	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-
-	memset(&fbuf->fb_attr, 0, sizeof(struct stat));
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
+	ictx_init(req);
+	err = update_attr(f, &stbuf, realname, ino);
+	ictx_destroy();
 	free(realname);
 
-	return (0);
+out:
+	if (!err)
+		fuse_reply_attr(req, &stbuf, 0.0);
+	else
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_access(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_access(fuse_req_t req, fuse_ino_t ino, int mask)
 {
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	char *realname;
+	int err;
 
 	CHECK_OPT(access);
 
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	fbuf->fb_err = f->op.access(realname, fbuf->fb_io_mode);
+	ictx_init(req);
+	err = f->op.access(realname, mask);
+	ictx_destroy();
 	free(realname);
 
-	return (0);
+out:
+	fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_open(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
 {
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	char *realname;
+	int err = 0;
 
-	CHECK_OPT(open);
-
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.flags = fbuf->fb_io_flags;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
-	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	fbuf->fb_err = f->op.open(realname, &ffi);
-	free(realname);
-
-	if (!fbuf->fb_err)
-		fbuf->fb_io_fd = ffi.fh;
-
-	return (0);
-}
-
-static int
-ifuse_ops_opendir(struct fuse *f, struct fusebuf *fbuf)
-{
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
-	char *realname;
-
-	DPRINTF("Opcode: opendir\t");
-	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.flags = fbuf->fb_io_flags;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	if (f->op.opendir) {
-		realname = build_realname(f, vn->ino);
+	/* open is optional */
+	if (f->op.open) {
+		realname = build_realname(f, ino);
 		if (realname == NULL) {
-			fbuf->fb_err = -errno;
-			return (0);
+			err = -errno;
+			goto out;
 		}
 
-		fbuf->fb_err = f->op.opendir(realname, &ffi);
+		ictx_init(req);
+		err = f->op.open(realname, ffi);
+		ictx_destroy();
 		free(realname);
 	}
 
-	if (!fbuf->fb_err)
-		fbuf->fb_io_fd = ffi.fh;
+out:
+	if (!err)
+		fuse_reply_open(req, ffi);
+	else
+		fuse_reply_err(req, -err);
+}
 
-	return (0);
+static void
+ifuse_ops_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
+{
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	char *realname;
+	int err = 0;
+
+	/* opendir is optional */
+	if (f->op.opendir) {
+		realname = build_realname(f, ino);
+		if (realname == NULL) {
+			err = -errno;
+			goto out;
+		}
+
+		ictx_init(req);
+		err = f->op.opendir(realname, ffi);
+		ictx_destroy();
+		free(realname);
+	}
+
+out:
+	if (!err)
+		fuse_reply_open(req, ffi);
+	else
+		fuse_reply_err(req, -err);
 }
 
 #define GENERIC_DIRSIZ(NLEN) \
@@ -229,18 +217,17 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 	struct fuse *f;
 	struct fuse_dirhandle *fd = dh;
 	struct fuse_vnode *v;
-	struct fusebuf *fbuf;
-	struct dirent *dir;
-	uint32_t namelen;
-	uint32_t len;
+	struct stat attr;
+	char *buf;
+	uint32_t len, resid;
 
 	f = fd->fuse;
-	fbuf = fd->buf;
-	namelen = strnlen(name, MAXNAMLEN);
-	len = GENERIC_DIRSIZ(namelen);
+
+	/* calculate the size needed for the entry */
+	len = fuse_add_direntry(NULL, NULL, 0, name, stbuf, off);
 
 	/* buffer is full so ignore the remaining entries */
-	if (fd->full || (fbuf->fb_len + len > fd->size)) {
+	if (fd->full || (fd->len + len > fd->size)) {
 		fd->full = 1;
 		return (0);
 	}
@@ -251,36 +238,36 @@ ifuse_fill_readdir(void *dh, const char *name, const struct stat *stbuf,
 		return (0);
 	}
 
-	dir = (struct dirent *) &fbuf->fb_dat[fbuf->fb_len];
-
+	/* set the inode number for the entry */
 	if (stbuf != NULL && f->conf.use_ino)
-		dir->d_fileno = stbuf->st_ino;
+		attr.st_ino = stbuf->st_ino;
 	else {
 		/*
 		 * This always behaves as if readdir_ino option is set so
 		 * getcwd(3) works.
 		 */
-		v = get_vn_by_name_and_parent(f, (uint8_t *)name, fbuf->fb_ino);
+		v = get_vn_by_name_and_parent(f, name, fd->ino);
 		if (v == NULL) {
 			if (strcmp(name, ".") == 0)
-				dir->d_fileno = fbuf->fb_ino;
+				attr.st_ino = fd->ino;
 			else
-				dir->d_fileno = 0xffffffff;
+				attr.st_ino = 0xffffffff;
 		} else
-			dir->d_fileno = v->ino;
+			attr.st_ino = v->ino;
 	}
 
+	/* set the file type for the entry */
 	if (stbuf != NULL)
-		dir->d_type = IFTODT(stbuf->st_mode);
+		attr.st_mode = stbuf->st_mode;
 	else
-		dir->d_type = DT_UNKNOWN;
+		attr.st_mode = S_IFREG;
 
-	dir->d_reclen = len;
-	dir->d_off = off + len;		/* XXX */
-	strlcpy(dir->d_name, name, sizeof(dir->d_name));
-	dir->d_namlen = strlen(dir->d_name);
+	/* advance buf to start of next entry and now add it for real */
+	buf = (char *) fd->buf + fd->len;
+	resid = fd->size - fd->len;
+	len = fuse_add_direntry(ifuse_req(), buf, resid, name, &attr, off);
 
-	fbuf->fb_len += len;
+	fd->len += len;
 	fd->idx += len;
 
 	return (0);
@@ -301,214 +288,170 @@ ifuse_fill_getdir(fuse_dirh_t fd, const char *name, int type, ino_t ino)
 	return (fd->filler(fd, name, &st, 0));
 }
 
-static int
-ifuse_ops_readdir(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_readdir(struct fuse_req *req, fuse_ino_t ino, size_t size,
+    off_t offset, struct fuse_file_info *ffi)
 {
-	struct fuse_file_info ffi;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	struct fuse_dirhandle fd;
-	struct fuse_vnode *vn;
 	char *realname;
-	uint64_t offset;
-	uint32_t size;
+	int err;
 
-	DPRINTF("Opcode: readdir\t");
-	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-	DPRINTF("Offset: %llu\t", fbuf->fb_io_off);
-	DPRINTF("Size: %lu\t", fbuf->fb_io_len);
-
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.fh = fbuf->fb_io_fd;
-	offset = fbuf->fb_io_off;
-	size = fbuf->fb_io_len;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+	fd.buf = calloc(1, size);
+	if (fd.buf == NULL) {
+		err = -errno;
+		goto out;
 	}
 
-	memset(&fd, 0, sizeof(fd));
 	fd.filler = ifuse_fill_readdir;
-	fd.buf = fbuf;
 	fd.full = 0;
+	fd.len = 0;
 	fd.size = size;
-	fd.off = offset;
 	fd.idx = 0;
 	fd.fuse = f;
 	fd.start = offset;
+	fd.ino = ino;
 
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
+	ictx_init(req);
 	if (f->op.readdir)
-		fbuf->fb_err = f->op.readdir(realname, &fd, ifuse_fill_readdir,
-		    offset, &ffi);
+		err = f->op.readdir(realname, &fd, ifuse_fill_readdir,
+		    offset, ffi);
 	else if (f->op.getdir)
-		fbuf->fb_err = f->op.getdir(realname, &fd, ifuse_fill_getdir);
+		err = f->op.getdir(realname, &fd, ifuse_fill_getdir);
 	else
-		fbuf->fb_err = -ENOSYS;
+		err = -ENOSYS;
+	ictx_destroy();
 	free(realname);
 
-	if (fbuf->fb_err)
-		fbuf->fb_len = 0;
-	else if (fd.full && fbuf->fb_len == 0)
-		fbuf->fb_err = -ENOBUFS;
+out:
+	if (!err)
+		fuse_reply_buf(req, fd.buf, fd.len);
+	else
+		fuse_reply_err(req, -err);
 
-	return (0);
+	free(fd.buf);
 }
 
-static int
-ifuse_ops_releasedir(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_releasedir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
 {
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	char *realname;
+	int err = 0;
 
-	DPRINTF("Opcode: releasedir\t");
-	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.fh = fbuf->fb_io_fd;
-	ffi.fh_old = ffi.fh;
-	ffi.flags = fbuf->fb_io_flags;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
+	/* releasedir is optional */
 	if (f->op.releasedir) {
-		realname = build_realname(f, vn->ino);
+		realname = build_realname(f, ino);
 		if (realname == NULL) {
-			fbuf->fb_err = -errno;
-			return (0);
+			err = -errno;
+			goto out;
 		}
 
-		fbuf->fb_err = f->op.releasedir(realname, &ffi);
+		ictx_init(req);
+		err = f->op.releasedir(realname, ffi);
+		ictx_destroy();
 		free(realname);
 	}
 
-	return (0);
+out:
+	fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_release(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_release(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
 {
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	char *realname;
+	int err = 0;
 
-	CHECK_OPT(release);
+	/* release is optional */
+	if (f->op.release) {
+		realname = build_realname(f, ino);
+		if (realname == NULL) {
+			err = -errno;
+			goto out;
+		}
 
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.fh = fbuf->fb_io_fd;
-	ffi.fh_old = ffi.fh;
-	ffi.flags = fbuf->fb_io_flags;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		ictx_init(req);
+		err = f->op.release(realname, ffi);
+		ictx_destroy();
+		free(realname);
 	}
 
-	realname = build_realname(f, vn->ino);
-	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-	fbuf->fb_err = f->op.release(realname, &ffi);
-	free(realname);
-
-	return (0);
+out:
+	fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_fsync(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_fsync(fuse_req_t req, fuse_ino_t ino, int datasync,
+    struct fuse_file_info *ffi)
 {
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	char *realname;
-	int datasync;
+	int err;
 
 	CHECK_OPT(fsync);
 
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.fh = fbuf->fb_io_fd;
-
-	/*
-	 * fdatasync(2) is just a wrapper around fsync(2) so datasync
-	 * is always false.
-	 */
-	datasync = 0;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
-	fbuf->fb_err = f->op.fsync(realname, datasync, &ffi);
+
+	ictx_init(req);
+	err = f->op.fsync(realname, datasync, ffi);
+	ictx_destroy();
 	free(realname);
 
-	return (0);
+out:
+	fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_flush(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_flush(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *ffi)
 {
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	char *realname;
+	int err;
 
 	CHECK_OPT(flush);
 
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.fh = fbuf->fb_io_fd;
-	ffi.fh_old = ffi.fh;
-	ffi.flush = 1;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
-	fbuf->fb_err = f->op.flush(realname, &ffi);
+
+	ictx_init(req);
+	err = f->op.flush(realname, ffi);
+	ictx_destroy();
 	free(realname);
 
-	return (0);
+out:
+	fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_lookup(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_entry_param entry;
 	struct fuse_vnode *vn;
 	char *realname;
+	int err;
 
-	DPRINTF("Opcode: lookup\t");
-	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
+	vn = get_vn_by_name_and_parent(f, name, parent);
 	if (vn == NULL) {
-		vn = alloc_vn(f, (const char *)fbuf->fb_dat, -1,
-		    fbuf->fb_ino);
+		vn = alloc_vn(f, name, -1, parent);
 		if (vn == NULL) {
-			fbuf->fb_err = -errno;
-			return (0);
+			err = -errno;
+			goto out;
 		}
 		set_vn(f, vn); /*XXX*/
 	} else if (vn->ino != FUSE_ROOT_INO)
@@ -516,603 +459,542 @@ ifuse_ops_lookup(struct fuse *f, struct fusebuf *fbuf)
 
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
-	fbuf->fb_ino = vn->ino;
+	memset(&entry, 0, sizeof(entry));
+	entry.ino = vn->ino;
+	err = update_attr(f, &entry.attr, realname, vn->ino);
 	free(realname);
 
-	return (0);
+out:
+	if (!err)
+		fuse_reply_entry(req, &entry);
+	else
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_read(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t offset,
+    struct fuse_file_info *ffi)
 {
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
-	char *realname;
-	uint64_t offset;
-	uint32_t size;
-	int ret;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	char *buf = NULL;
+	char *realname = NULL;
+	int err;
 
 	CHECK_OPT(read);
 
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.fh = fbuf->fb_io_fd;
-	size = fbuf->fb_io_len;
-	offset = fbuf->fb_io_off;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	ret = f->op.read(realname, (char *)fbuf->fb_dat, size, offset, &ffi);
-	free(realname);
-	if (ret >= 0)
-		fbuf->fb_len = ret;
-	else
-		fbuf->fb_err = ret;
+	buf = calloc(1, size);
+	if (buf == NULL) {
+		err = -errno;
+		goto out;
+	}
 
-	return (0);
+	ictx_init(req);
+	err = f->op.read(realname, buf, size, offset, ffi);
+	ictx_destroy();
+
+out:
+	if (err >= 0)
+		fuse_reply_buf(req, buf, err);
+	else
+		fuse_reply_err(req, -err);
+
+	free(realname);
+	free(buf);
 }
 
-static int
-ifuse_ops_write(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_write(fuse_req_t req, fuse_ino_t ino, const char *buf,
+    size_t size, off_t offset, struct fuse_file_info *ffi)
 {
-	struct fuse_file_info ffi;
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	char *realname;
-	uint64_t offset;
-	uint32_t size;
-	int ret;
+	int err;
 
 	CHECK_OPT(write);
 
-	memset(&ffi, 0, sizeof(ffi));
-	ffi.fh = fbuf->fb_io_fd;
-	ffi.fh_old = ffi.fh;
-	ffi.writepage = fbuf->fb_io_flags & 1;
-	size = fbuf->fb_io_len;
-	offset = fbuf->fb_io_off;
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	ret = f->op.write(realname, (char *)fbuf->fb_dat, size, offset, &ffi);
+	ictx_init(req);
+	err = f->op.write(realname, buf, size, offset, ffi);
+	ictx_destroy();
 	free(realname);
 
-	if (ret >= 0)
-		fbuf->fb_io_len = ret;
+out:
+	if (err >= 0)
+		fuse_reply_write(req, err);
 	else
-		fbuf->fb_err = ret;
-
-	return (0);
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_mkdir(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name,
+    mode_t mode)
 {
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_entry_param entry;
+	struct fuse_vnode *newvn;
 	char *realname;
-	uint32_t mode;
+	int err;
 
 	CHECK_OPT(mkdir);
 
-	mode = fbuf->fb_io_mode;
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+	newvn = get_vn_by_name_and_parent(f, name, parent);
+	if (newvn == NULL) {
+		err = -errno;
+		goto out;
 	}
 
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, newvn->ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	fbuf->fb_err = f->op.mkdir(realname, mode);
+	ictx_init(req);
+	err = f->op.mkdir(realname, mode);
+	ictx_destroy();
 
-	if (!fbuf->fb_err) {
-		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
-		fbuf->fb_io_mode = fbuf->fb_attr.st_mode;
-		fbuf->fb_ino = vn->ino;
-	}
+	if (!err)
+		err = update_attr(f, &entry.attr, realname, newvn->ino);
+
 	free(realname);
 
-	return (0);
+out:
+	if (!err) {
+		entry.ino = newvn->ino;
+		fuse_reply_entry(req, &entry);
+	} else
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_rmdir(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	struct fuse_vnode *vn;
 	char *realname;
+	int err;
 
 	CHECK_OPT(rmdir);
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
+
+	vn = get_vn_by_name_and_parent(f, name, parent);
 	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	fbuf->fb_err = f->op.rmdir(realname);
+	ictx_init(req);
+	err = f->op.rmdir(realname);
+	ictx_destroy();
 	free(realname);
 
-	return (0);
+out:
+	fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_readlink(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_readlink(fuse_req_t req, fuse_ino_t ino)
 {
-	struct fuse_vnode *vn;
-	size_t bufsize;
-	char *name;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	char path[PATH_MAX];
 	char *realname;
+	int err;
 
 	CHECK_OPT(readlink);
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
 
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	bufsize = fbuf->fb_io_len + 1;
-	name = calloc(bufsize, sizeof(*name));
-	if (name == NULL) {
-		fbuf->fb_err = -errno;
-		free(realname);
-		return (0);
-	}
-
-	fbuf->fb_err = f->op.readlink(realname, name, bufsize);
-
-	if (!fbuf->fb_err) {
-		/* file system should return a NUL-terminated string */
-		fbuf->fb_len = strlcpy(fbuf->fb_dat, name, bufsize);
-		if (fbuf->fb_len >= bufsize)
-			fbuf->fb_err = -ENAMETOOLONG;
-	} else
-		fbuf->fb_len = 0;
-
+	ictx_init(req);
+	err = f->op.readlink(realname, path, sizeof(path));
+	ictx_destroy();
 	free(realname);
-	free(name);
 
-	return (0);
+out:
+	if (!err)
+		fuse_reply_readlink(req, path);
+	else
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_unlink(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_unlink(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
 	struct fuse_vnode *vn;
 	char *realname;
+	int err;
 
 	CHECK_OPT(unlink);
 
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
+	vn = get_vn_by_name_and_parent(f, name, parent);
 	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	fbuf->fb_err = f->op.unlink(realname);
+	ictx_init(req);
+	err = f->op.unlink(realname);
+	ictx_destroy();
 	free(realname);
 
-	return (0);
+out:
+	fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_statfs(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_statfs(fuse_req_t req, fuse_ino_t ino)
 {
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct statvfs stbuf;
 	char *realname;
-
-	memset(&fbuf->fb_stat, 0, sizeof(fbuf->fb_stat));
+	int err;
 
 	CHECK_OPT(statfs);
 
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	fbuf->fb_err = f->op.statfs(realname, &fbuf->fb_stat);
+	memset(&stbuf, 0, sizeof(stbuf));
+	ictx_init(req);
+	err = f->op.statfs(realname, &stbuf);
+	ictx_destroy();
 	free(realname);
 
-	return (0);
+out:
+	if (!err)
+		fuse_reply_statfs(req, &stbuf);
+	else
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_link(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_link(fuse_req_t req, fuse_ino_t ino, fuse_ino_t newparent,
+    const char *newname)
 {
-	struct fuse_vnode *vn;
-	char *realname;
-	char *realname_ln;
-	ino_t oldnodeid;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_entry_param entry;
+	struct fuse_vnode *newvn;
+	char *realname = NULL;
+	char *target = NULL;
+	int err;
 
 	CHECK_OPT(link);
-	oldnodeid = fbuf->fb_io_ino;
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+
+	newvn = get_vn_by_name_and_parent(f, newname, newparent);
+	if (newvn == NULL) {
+		err = -errno;
+		goto out;
 	}
 
-	realname = build_realname(f, oldnodeid);
+	target = build_realname(f, ino);
+	if (target == NULL) {
+		err = -errno;
+		goto out;
+	}
+
+	realname = build_realname(f, newvn->ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	realname_ln = build_realname(f, vn->ino);
-	if (realname_ln == NULL) {
-		fbuf->fb_err = -errno;
-		free(realname);
-		return (0);
-	}
+	ictx_init(req);
+	err = f->op.link(target, realname);
+	ictx_destroy();
 
-	fbuf->fb_err = f->op.link(realname, realname_ln);
+	if (!err)
+		err = update_attr(f, &entry.attr, realname, newvn->ino);
+
+out:
 	free(realname);
-	free(realname_ln);
+	free(target);
 
-	return (0);
+	if (!err) {
+		entry.ino = newvn->ino;
+		fuse_reply_entry(req, &entry);
+	} else
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_setattr(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr,
+    int flags, struct fuse_file_info *ffi)
 {
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct stat stbuf;
 	struct timespec ts[2];
 	struct utimbuf tbuf;
-	struct fb_io *io;
 	char *realname;
 	uid_t uid;
 	gid_t gid;
+	int err = 0;
 
-	DPRINTF("Opcode: setattr\t");
-	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
-	io = fbtod(fbuf, struct fb_io *);
 
-	if (io->fi_flags & FUSE_FATTR_MODE) {
+	ictx_init(req);
+	if (flags & FUSE_FATTR_MODE) {
 		if (f->op.chmod)
-			fbuf->fb_err = f->op.chmod(realname,
-			    fbuf->fb_attr.st_mode);
+			err = f->op.chmod(realname, attr->st_mode);
 		else
-			fbuf->fb_err = -ENOSYS;
+			err = ENOSYS;
 	}
 
-	if (!fbuf->fb_err && (io->fi_flags & FUSE_FATTR_UID ||
-	    io->fi_flags & FUSE_FATTR_GID) ) {
-		uid = (io->fi_flags & FUSE_FATTR_UID) ?
-		    fbuf->fb_attr.st_uid : (uid_t)-1;
-		gid = (io->fi_flags & FUSE_FATTR_GID) ?
-		    fbuf->fb_attr.st_gid : (gid_t)-1;
+	if (!err && (flags & FUSE_FATTR_UID || flags & FUSE_FATTR_GID)) {
+		uid = (flags & FUSE_FATTR_UID) ? attr->st_uid : (uid_t)-1;
+		gid = (flags & FUSE_FATTR_GID) ? attr->st_gid : (gid_t)-1;
 		if (f->op.chown)
-			fbuf->fb_err = f->op.chown(realname, uid, gid);
+			err = f->op.chown(realname, uid, gid);
 		else
-			fbuf->fb_err = -ENOSYS;
+			err = ENOSYS;
 	}
 
-	if (!fbuf->fb_err && ( io->fi_flags & FUSE_FATTR_MTIME ||
-		io->fi_flags & FUSE_FATTR_ATIME)) {
-
+	if (!err && (flags & FUSE_FATTR_MTIME || flags & FUSE_FATTR_ATIME)) {
 		if (f->op.utimens) {
-			ts[0] = fbuf->fb_attr.st_atim;
-			ts[1] = fbuf->fb_attr.st_mtim;
-			fbuf->fb_err = f->op.utimens(realname, ts);
+			ts[0] = attr->st_atim;
+			ts[1] = attr->st_mtim;
+			err = f->op.utimens(realname, ts);
 		} else if (f->op.utime) {
-			tbuf.actime = fbuf->fb_attr.st_atim.tv_sec;
-			tbuf.modtime = fbuf->fb_attr.st_mtim.tv_sec;
-			fbuf->fb_err = f->op.utime(realname, &tbuf);
+			tbuf.actime = attr->st_atim.tv_sec;
+			tbuf.modtime = attr->st_mtim.tv_sec;
+			err = f->op.utime(realname, &tbuf);
 		} else
-			fbuf->fb_err = -ENOSYS;
+			err = ENOSYS;
 	}
 
-	if (!fbuf->fb_err && (io->fi_flags & FUSE_FATTR_SIZE)) {
+	if (!err && (flags & FUSE_FATTR_SIZE)) {
 		if (f->op.truncate)
-			fbuf->fb_err = f->op.truncate(realname,
-			    fbuf->fb_attr.st_size);
+			err = f->op.truncate(realname, attr->st_size);
 		else
-			fbuf->fb_err = -ENOSYS;
+			err = ENOSYS;
 	}
 
-	memset(&fbuf->fb_attr, 0, sizeof(struct stat));
+	ictx_destroy();
 
-	if (!fbuf->fb_err)
-		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
+	if (!err)
+		err = update_attr(f, &stbuf, realname, ino);
+
 	free(realname);
 
-	return (0);
+out:
+	if (!err)
+		fuse_reply_attr(req, &stbuf, 0.0);
+	else
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_symlink(unused struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_symlink(fuse_req_t req, const char *link, fuse_ino_t parent,
+    const char *name)
 {
-	struct fuse_vnode *vn;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_entry_param entry;
+	struct fuse_vnode *newvn;
 	char *realname;
-	int len;
+	int err;
 
 	CHECK_OPT(symlink);
 
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
-	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+	newvn = get_vn_by_name_and_parent(f, name, parent);
+	if (newvn == NULL) {
+		err = -errno;
+		goto out;
 	}
 
-	len = strlen((char *)fbuf->fb_dat);
-
-	realname = build_realname(f, vn->ino);
+	realname = build_realname(f, newvn->ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	/* fuse invert the symlink params */
-	fbuf->fb_err = f->op.symlink((const char *)&fbuf->fb_dat[len + 1],
-	    realname);
-	fbuf->fb_ino = vn->ino;
+	ictx_init(req);
+	err = f->op.symlink(link, realname);
+	ictx_destroy();
+
+	if (!err)
+		err = update_attr(f, &entry.attr, realname, newvn->ino);
+
 	free(realname);
 
-	return (0);
+out:
+	if (!err) {
+		entry.ino = newvn->ino;
+		fuse_reply_entry(req, &entry);
+	} else
+		fuse_reply_err(req, -err);
 }
 
-static int
-ifuse_ops_rename(struct fuse *f, struct fusebuf *fbuf)
+static void
+ifuse_ops_rename(fuse_req_t req, fuse_ino_t parent, const char *name,
+    fuse_ino_t newparent, const char *newname)
 {
-	struct fuse_vnode *vnt;
-	struct fuse_vnode *vnf;
-	char *realnamef;
-	char *realnamet;
-	int len;
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_vnode *vn;
+	struct fuse_vnode *newvn;
+	char *realname = NULL;
+	char *newrealname = NULL;
+	int err;
 
 	CHECK_OPT(rename);
 
-	len = strlen((char *)fbuf->fb_dat);
-	vnf = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
-	if (vnf == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	vnt = get_vn_by_name_and_parent(f, &fbuf->fb_dat[len + 1],
-	    fbuf->fb_io_ino);
-	if (vnt == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realnamef = build_realname(f, vnf->ino);
-	if (realnamef == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
-	}
-
-	realnamet = build_realname(f, vnt->ino);
-	if (realnamet == NULL) {
-		fbuf->fb_err = -errno;
-		free(realnamef);
-		return (0);
-	}
-
-	fbuf->fb_err = f->op.rename(realnamef, realnamet);
-	free(realnamef);
-	free(realnamet);
-
-	return (0);
-}
-
-static int
-ifuse_ops_destroy(struct fuse *f)
-{
-	DPRINTF("Opcode: destroy\n");
-
-	f->fc->dead = 1;
-
-	return (0);
-}
-
-static int
-ifuse_ops_reclaim(struct fuse *f, struct fusebuf *fbuf)
-{
-	struct fuse_vnode *vn;
-
-	DPRINTF("Opcode: reclaim\t");
-	DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-
-	vn = tree_get(&f->vnode_tree, fbuf->fb_ino);
-	if (vn != NULL)
-		unref_vn(f, vn);
-
-	return (0);
-}
-
-static int
-ifuse_ops_mknod(struct fuse *f, struct fusebuf *fbuf)
-{
-	struct fuse_vnode *vn;
-	char *realname;
-	uint32_t mode;
-	dev_t dev;
-
-	CHECK_OPT(mknod);
-
-	mode = fbuf->fb_io_mode;
-	dev = fbuf->fb_io_rdev;
-	vn = get_vn_by_name_and_parent(f, fbuf->fb_dat, fbuf->fb_ino);
+	vn = get_vn_by_name_and_parent(f, name, parent);
 	if (vn == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
+	}
+
+	newvn = get_vn_by_name_and_parent(f, newname, newparent);
+	if (newvn == NULL) {
+		err = -errno;
+		goto out;
 	}
 
 	realname = build_realname(f, vn->ino);
 	if (realname == NULL) {
-		fbuf->fb_err = -errno;
-		return (0);
+		err = -errno;
+		goto out;
 	}
 
-	fbuf->fb_err = f->op.mknod(realname, mode, dev);
-
-	if (!fbuf->fb_err) {
-		fbuf->fb_err = update_attr(f, &fbuf->fb_attr, realname, vn);
-		fbuf->fb_io_mode = fbuf->fb_attr.st_mode;
-		fbuf->fb_ino = vn->ino;
+	newrealname = build_realname(f, newvn->ino);
+	if (newrealname == NULL) {
+		err = -errno;
+		goto out;
 	}
+
+	ictx_init(req);
+	err = f->op.rename(realname, newrealname);
+	ictx_destroy();
+
+out:
+	free(realname);
+	free(newrealname);
+
+	fuse_reply_err(req, -err);
+}
+
+static void
+ifuse_ops_destroy(void *userdata)
+{
+	struct fuse *f = (struct fuse *)userdata;
+
+	if (f->op.destroy)
+		f->op.destroy(f->private_data);
+}
+
+static void
+ifuse_ops_forget(fuse_req_t req, fuse_ino_t ino, uint64_t nlookup /* XXX */)
+{
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_vnode *vn;
+
+	vn = tree_get(&f->vnode_tree, ino);
+	if (vn != NULL)
+		unref_vn(f, vn);
+
+	fuse_reply_err(req, 0);
+}
+
+static void
+ifuse_ops_mknod(fuse_req_t req, fuse_ino_t parent, const char *name,
+    mode_t mode, dev_t dev)
+{
+	struct fuse *f = (struct fuse *)fuse_req_userdata(req);
+	struct fuse_entry_param entry;
+	struct fuse_vnode *newvn;
+	char *realname;
+	int err;
+
+	CHECK_OPT(mknod);
+
+	newvn = get_vn_by_name_and_parent(f, name, parent);
+	if (newvn == NULL) {
+		err = -errno;
+		goto out;
+	}
+
+	realname = build_realname(f, newvn->ino);
+	if (realname == NULL) {
+		err = -errno;
+		goto out;
+	}
+
+	ictx_init(req);
+	err = f->op.mknod(realname, mode, dev);
+	ictx_destroy();
+
+	if (!err)
+		err = update_attr(f, &entry.attr, realname, newvn->ino);
+
 	free(realname);
 
-	return (0);
+out:
+	if (!err) {
+		entry.ino = newvn->ino;
+		fuse_reply_entry(req, &entry);
+	} else
+		fuse_reply_err(req, -err);
 }
 
-int
-ifuse_exec_opcode(struct fuse *f, struct fusebuf *fbuf)
-{
-	int ret = 0;
-
-	fbuf->fb_len = 0;
-	fbuf->fb_err = 0;
-
-	switch (fbuf->fb_type) {
-	case FBT_LOOKUP:
-		ret = ifuse_ops_lookup(f, fbuf);
-		break;
-	case FBT_GETATTR:
-		ret = ifuse_ops_getattr(f, fbuf);
-		break;
-	case FBT_SETATTR:
-		ret = ifuse_ops_setattr(f, fbuf);
-		break;
-	case FBT_READLINK:
-		ret = ifuse_ops_readlink(f, fbuf);
-		break;
-	case FBT_MKDIR:
-		ret = ifuse_ops_mkdir(f, fbuf);
-		break;
-	case FBT_UNLINK:
-		ret = ifuse_ops_unlink(f, fbuf);
-		break;
-	case FBT_RMDIR:
-		ret = ifuse_ops_rmdir(f, fbuf);
-		break;
-	case FBT_LINK:
-		ret = ifuse_ops_link(f, fbuf);
-		break;
-	case FBT_OPEN:
-		ret = ifuse_ops_open(f, fbuf);
-		break;
-	case FBT_READ:
-		ret = ifuse_ops_read(f, fbuf);
-		break;
-	case FBT_WRITE:
-		ret = ifuse_ops_write(f, fbuf);
-		break;
-	case FBT_STATFS:
-		ret = ifuse_ops_statfs(f, fbuf);
-		break;
-	case FBT_RELEASE:
-		ret = ifuse_ops_release(f, fbuf);
-		break;
-	case FBT_FSYNC:
-		ret = ifuse_ops_fsync(f, fbuf);
-		break;
-	case FBT_FLUSH:
-		ret = ifuse_ops_flush(f, fbuf);
-		break;
-	case FBT_INIT:
-		ret = ifuse_ops_init(f);
-		break;
-	case FBT_OPENDIR:
-		ret = ifuse_ops_opendir(f, fbuf);
-		break;
-	case FBT_READDIR:
-		ret = ifuse_ops_readdir(f, fbuf);
-		break;
-	case FBT_RELEASEDIR:
-		ret = ifuse_ops_releasedir(f, fbuf);
-		break;
-	case FBT_ACCESS:
-		ret = ifuse_ops_access(f, fbuf);
-		break;
-	case FBT_SYMLINK:
-		ret = ifuse_ops_symlink(f, fbuf);
-		break;
-	case FBT_RENAME:
-		ret = ifuse_ops_rename(f, fbuf);
-		break;
-	case FBT_DESTROY:
-		ret = ifuse_ops_destroy(f);
-		break;
-	case FBT_RECLAIM:
-		ret = ifuse_ops_reclaim(f, fbuf);
-		break;
-	case FBT_MKNOD:
-		ret = ifuse_ops_mknod(f, fbuf);
-		break;
-	default:
-		DPRINTF("Opcode: %i not supported\t", fbuf->fb_type);
-		DPRINTF("Inode: %llu\t", (unsigned long long)fbuf->fb_ino);
-
-		fbuf->fb_err = -ENOSYS;
-		fbuf->fb_len = 0;
-	}
-	DPRINTF("\n");
-
-	/* fuse api use negative errno */
-	fbuf->fb_err = -fbuf->fb_err;
-	return (ret);
-}
+struct fuse_lowlevel_ops llops = {
+	.init = ifuse_ops_init,
+	.destroy = ifuse_ops_destroy,
+	.access = ifuse_ops_access,
+	.flush = ifuse_ops_flush,
+	.forget = ifuse_ops_forget,
+	.fsync = ifuse_ops_fsync,
+	.getattr = ifuse_ops_getattr,
+	.link = ifuse_ops_link,
+	.lookup = ifuse_ops_lookup,
+	.mkdir = ifuse_ops_mkdir,
+	.mknod = ifuse_ops_mknod,
+	.open = ifuse_ops_open,
+	.opendir = ifuse_ops_opendir,
+	.read = ifuse_ops_read,
+	.readdir = ifuse_ops_readdir,
+	.readlink = ifuse_ops_readlink,
+	.release = ifuse_ops_release,
+	.releasedir = ifuse_ops_releasedir,
+	.rename = ifuse_ops_rename,
+	.rmdir = ifuse_ops_rmdir,
+	.setattr = ifuse_ops_setattr,
+	.statfs = ifuse_ops_statfs,
+	.symlink = ifuse_ops_symlink,
+	.unlink = ifuse_ops_unlink,
+	.write = ifuse_ops_write,
+};

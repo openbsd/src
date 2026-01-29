@@ -1,4 +1,4 @@
-#       $OpenBSD: Makefile,v 1.5 2025/12/09 16:38:52 helg Exp $
+#       $OpenBSD: Makefile,v 1.6 2026/01/29 06:04:27 helg Exp $
 
 REGRESS_TARGETS=  run-fuse-opt-add-opt
 REGRESS_TARGETS+= run-fuse-opt-add-opt-escaped
@@ -7,7 +7,6 @@ REGRESS_TARGETS+= run-fuse-opt-insert-arg
 REGRESS_TARGETS+= run-fuse-opt-match
 REGRESS_TARGETS+= run-fuse-opt-parse
 REGRESS_TARGETS+= run-fuse-parse-cmdline
-REGRESS_TARGETS+= run-fuse-null-check
 REGRESS_TARGETS+= run-fuse-mount
 
 REGRESS_ROOT_TARGETS+= run-fuse-mount
@@ -22,7 +21,6 @@ CLEANFILES+=fuse-opt-insert-arg
 CLEANFILES+=fuse-opt-match
 CLEANFILES+=fuse-opt-parse
 CLEANFILES+=fuse-parse-cmdline
-CLEANFILES+=fuse-null-check
 CLEANFILES+=fuse-mount
 
 .PHONY: ${REGRESS_TARGETS}
@@ -41,8 +39,6 @@ run-fuse-opt-parse: fuse-opt-parse
 	./fuse-opt-parse
 run-fuse-parse-cmdline: fuse-parse-cmdline
 	./fuse-parse-cmdline
-run-fuse-null-check: fuse-null-check
-	./fuse-null-check
 run-fuse-mount: fuse-mount
 	${SUDO} ./fuse-mount
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_private.h,v 1.27 2026/01/22 11:53:31 helg Exp $ */
+/* $OpenBSD: fuse_private.h,v 1.28 2026/01/29 06:04:27 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -42,13 +42,14 @@ struct fuse_vnode {
 
 struct fuse_dirhandle {
 	struct fuse *fuse;
-	fuse_fill_dir_t filler;
-	void *buf;
-	int full;
-	uint32_t size;
-	uint32_t start;
-	uint32_t idx;
-	off_t off;
+	fuse_fill_dir_t filler; /* needed by getdir */
+	void *buf;		/* buffer for dirents */
+	int full;		/* whether the buffer is full*/
+	uint32_t size;		/* buffer size */
+	uint32_t start;		/* start offset */
+	uint32_t idx;		/* current offset */
+	uint32_t len;		/* buffer space used */
+	fuse_ino_t ino;		/* directory inode */
 };
 
 SIMPLEQ_HEAD(fuse_vn_head, fuse_vnode);
@@ -59,17 +60,13 @@ struct fuse_session {
 	struct fuse_lowlevel_ops llops;
 	struct fuse_chan	*chan;
 	void			*userdata;
-	void			*args;
 	int			 init;
 	int			 exit;
 };
 
 struct fuse_chan {
-	char			*dir;
 	struct fuse_session	*se;
-
 	int			fd;
-	int			init;
 	int			dead;
 };
 
@@ -100,7 +97,6 @@ struct fuse_mount_opts {
 };
 
 struct fuse {
-	struct fuse_chan	*fc;
 	struct fuse_operations	op;
 
 	int			compat;
@@ -111,7 +107,7 @@ struct fuse {
 	void			*private_data;
 
 	struct fuse_config	conf;
-	struct fuse_session	se;
+	struct fuse_session	*se;
 };
 
 /* fuse_lowlevel.h */
@@ -126,13 +122,13 @@ struct fuse_req {
 #define FUSE_ROOT_INO ((ino_t)1)
 
 /* fuse_ops.c */
-int	ifuse_exec_opcode(struct fuse *, struct fusebuf *);
+const fuse_req_t ifuse_req(void);
 
 /* fuse_subr.c */
 struct fuse_vnode	*alloc_vn(struct fuse *, const char *, ino_t, ino_t);
 void			 ref_vn(struct fuse_vnode *);
 void			 unref_vn(struct fuse *, struct fuse_vnode *);
-struct fuse_vnode	*get_vn_by_name_and_parent(struct fuse *, uint8_t *,
+struct fuse_vnode	*get_vn_by_name_and_parent(struct fuse *, const char *,
     ino_t);
 void			remove_vnode_from_name_tree(struct fuse *,
     struct fuse_vnode *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lowlevel.c,v 1.1 2026/01/22 11:53:31 helg Exp $ */
+/* $OpenBSD: fuse_lowlevel.c,v 1.2 2026/01/29 06:04:27 helg Exp $ */
 /*
  * Copyright (c) 2025 Helg Bredow <helg@openbsd.org>
  *
@@ -166,7 +166,7 @@ DEF(fuse_reply_buf);
 int
 fuse_reply_readlink(fuse_req_t req, char *path)
 {
-	return ifuse_reply(req, path, path == NULL ? 0 : strlen(path), 0);
+	return ifuse_reply(req, path, strlen(path), 0);
 }
 DEF(fuse_reply_readlink);
 

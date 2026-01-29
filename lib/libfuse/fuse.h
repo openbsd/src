@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.15 2025/12/08 06:37:04 helg Exp $ */
+/* $OpenBSD: fuse.h,v 1.16 2026/01/29 06:04:27 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -35,12 +35,12 @@ extern "C" {
 #endif
 
 struct fuse_context {
-	struct fuse *	fuse;
-	uid_t		uid;
-	gid_t		gid;
-	pid_t		pid;
-	void		*private_data;
-	mode_t		umask;
+	struct fuse *fuse;
+	uid_t	     uid;
+	gid_t	     gid;
+	pid_t	     pid;
+	void	     *private_data;
+	mode_t	     umask;
 };
 
 typedef int (*fuse_fill_dir_t)(void *, const char *, const struct stat *,
