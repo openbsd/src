@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.222 2026/01/29 09:44:20 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.223 2026/01/29 09:52:41 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2126,47 +2126,47 @@ cert_free(struct cert *cert)
  * See cert_read() for the other side of the pipe.
  */
 void
-cert_buffer(struct ibuf *b, const struct cert *p)
+cert_buffer(struct ibuf *b, const struct cert *cert)
 {
-	io_simple_buffer(b, &p->notafter, sizeof(p->notafter));
-	io_simple_buffer(b, &p->purpose, sizeof(p->purpose));
-	io_simple_buffer(b, &p->talid, sizeof(p->talid));
-	io_simple_buffer(b, &p->certid, sizeof(p->certid));
-	io_simple_buffer(b, &p->repoid, sizeof(p->repoid));
-	io_simple_buffer(b, &p->num_ips, sizeof(p->num_ips));
-	io_simple_buffer(b, &p->num_ases, sizeof(p->num_ases));
+	io_simple_buffer(b, &cert->notafter, sizeof(cert->notafter));
+	io_simple_buffer(b, &cert->purpose, sizeof(cert->purpose));
+	io_simple_buffer(b, &cert->talid, sizeof(cert->talid));
+	io_simple_buffer(b, &cert->certid, sizeof(cert->certid));
+	io_simple_buffer(b, &cert->repoid, sizeof(cert->repoid));
+	io_simple_buffer(b, &cert->num_ips, sizeof(cert->num_ips));
+	io_simple_buffer(b, &cert->num_ases, sizeof(cert->num_ases));
 
-	io_simple_buffer(b, p->ips, p->num_ips * sizeof(p->ips[0]));
-	io_simple_buffer(b, p->ases, p->num_ases * sizeof(p->ases[0]));
+	io_simple_buffer(b, cert->ips, cert->num_ips * sizeof(cert->ips[0]));
+	io_simple_buffer(b, cert->ases, cert->num_ases * sizeof(cert->ases[0]));
 
-	io_str_buffer(b, p->path);
+	io_str_buffer(b, cert->path);
 
-	if (p->purpose == CERT_PURPOSE_TA) {
-		io_str_buffer(b, p->mft);
-		io_opt_str_buffer(b, p->notify);
-		io_str_buffer(b, p->repo);
+	if (cert->purpose == CERT_PURPOSE_TA) {
+		io_str_buffer(b, cert->mft);
+		io_opt_str_buffer(b, cert->notify);
+		io_str_buffer(b, cert->repo);
 		/* No CRL distribution point or AIA for TA certs. */
-		io_opt_str_buffer(b, p->aki);
-		io_str_buffer(b, p->ski);
-	} else if (p->purpose == CERT_PURPOSE_CA) {
-		io_str_buffer(b, p->mft);
-		io_opt_str_buffer(b, p->notify);
-		io_str_buffer(b, p->repo);
-		io_str_buffer(b, p->crl);
-		io_str_buffer(b, p->aia);
-		io_str_buffer(b, p->aki);
-		io_str_buffer(b, p->ski);
-		io_simple_buffer(b, &p->mfthash, sizeof(p->mfthash));
-	} else if (p->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+		io_opt_str_buffer(b, cert->aki);
+		io_str_buffer(b, cert->ski);
+	} else if (cert->purpose == CERT_PURPOSE_CA) {
+		io_str_buffer(b, cert->mft);
+		io_opt_str_buffer(b, cert->notify);
+		io_str_buffer(b, cert->repo);
+		io_str_buffer(b, cert->crl);
+		io_str_buffer(b, cert->aia);
+		io_str_buffer(b, cert->aki);
+		io_str_buffer(b, cert->ski);
+		io_simple_buffer(b, &cert->mfthash, sizeof(cert->mfthash));
+	} else if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		/* No SIA, so no mft, notify, repo. */
-		io_str_buffer(b, p->crl);
-		io_str_buffer(b, p->aia);
-		io_str_buffer(b, p->aki);
-		io_str_buffer(b, p->ski);
-		io_str_buffer(b, p->pubkey);
+		io_str_buffer(b, cert->crl);
+		io_str_buffer(b, cert->aia);
+		io_str_buffer(b, cert->aki);
+		io_str_buffer(b, cert->ski);
+		io_str_buffer(b, cert->pubkey);
 	} else {
 		errx(1, "%s: unexpected %s", __func__,
-		    purpose2str(p->purpose));
+		    purpose2str(cert->purpose));
 	}
 }
 
@@ -2178,66 +2178,66 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 struct cert *
 cert_read(struct ibuf *b)
 {
-	struct cert	*p;
+	struct cert	*cert;
 
-	if ((p = calloc(1, sizeof(struct cert))) == NULL)
+	if ((cert = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
-	io_read_buf(b, &p->notafter, sizeof(p->notafter));
-	io_read_buf(b, &p->purpose, sizeof(p->purpose));
-	io_read_buf(b, &p->talid, sizeof(p->talid));
-	io_read_buf(b, &p->certid, sizeof(p->certid));
-	io_read_buf(b, &p->repoid, sizeof(p->repoid));
-	io_read_buf(b, &p->num_ips, sizeof(p->num_ips));
-	io_read_buf(b, &p->num_ases, sizeof(p->num_ases));
+	io_read_buf(b, &cert->notafter, sizeof(cert->notafter));
+	io_read_buf(b, &cert->purpose, sizeof(cert->purpose));
+	io_read_buf(b, &cert->talid, sizeof(cert->talid));
+	io_read_buf(b, &cert->certid, sizeof(cert->certid));
+	io_read_buf(b, &cert->repoid, sizeof(cert->repoid));
+	io_read_buf(b, &cert->num_ips, sizeof(cert->num_ips));
+	io_read_buf(b, &cert->num_ases, sizeof(cert->num_ases));
 
-	if (p->num_ips > 0) {
-		p->ips = calloc(p->num_ips, sizeof(p->ips[0]));
-		if (p->ips == NULL)
+	if (cert->num_ips > 0) {
+		cert->ips = calloc(cert->num_ips, sizeof(cert->ips[0]));
+		if (cert->ips == NULL)
 			err(1, NULL);
-		io_read_buf(b, p->ips,
-		    p->num_ips * sizeof(p->ips[0]));
+		io_read_buf(b, cert->ips,
+		    cert->num_ips * sizeof(cert->ips[0]));
 	}
 
-	if (p->num_ases > 0) {
-		p->ases = calloc(p->num_ases, sizeof(p->ases[0]));
-		if (p->ases == NULL)
+	if (cert->num_ases > 0) {
+		cert->ases = calloc(cert->num_ases, sizeof(cert->ases[0]));
+		if (cert->ases == NULL)
 			err(1, NULL);
-		io_read_buf(b, p->ases,
-		    p->num_ases * sizeof(p->ases[0]));
+		io_read_buf(b, cert->ases,
+		    cert->num_ases * sizeof(cert->ases[0]));
 	}
 
-	io_read_str(b, &p->path);
+	io_read_str(b, &cert->path);
 
-	if (p->purpose == CERT_PURPOSE_TA) {
-		io_read_str(b, &p->mft);
-		io_read_opt_str(b, &p->notify);
-		io_read_str(b, &p->repo);
+	if (cert->purpose == CERT_PURPOSE_TA) {
+		io_read_str(b, &cert->mft);
+		io_read_opt_str(b, &cert->notify);
+		io_read_str(b, &cert->repo);
 		/* No CRL distribution point or AIA for TA certs. */
-		io_read_opt_str(b, &p->aki);
-		io_read_str(b, &p->ski);
-	} else if (p->purpose == CERT_PURPOSE_CA) {
-		io_read_str(b, &p->mft);
-		io_read_opt_str(b, &p->notify);
-		io_read_str(b, &p->repo);
-		io_read_str(b, &p->crl);
-		io_read_str(b, &p->aia);
-		io_read_str(b, &p->aki);
-		io_read_str(b, &p->ski);
-		io_read_buf(b, &p->mfthash, sizeof(p->mfthash));
-	} else if (p->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+		io_read_opt_str(b, &cert->aki);
+		io_read_str(b, &cert->ski);
+	} else if (cert->purpose == CERT_PURPOSE_CA) {
+		io_read_str(b, &cert->mft);
+		io_read_opt_str(b, &cert->notify);
+		io_read_str(b, &cert->repo);
+		io_read_str(b, &cert->crl);
+		io_read_str(b, &cert->aia);
+		io_read_str(b, &cert->aki);
+		io_read_str(b, &cert->ski);
+		io_read_buf(b, &cert->mfthash, sizeof(cert->mfthash));
+	} else if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
 		/* No SIA, so no mft, notify, repo. */
-		io_read_str(b, &p->crl);
-		io_read_str(b, &p->aia);
-		io_read_str(b, &p->aki);
-		io_read_str(b, &p->ski);
-		io_read_str(b, &p->pubkey);
+		io_read_str(b, &cert->crl);
+		io_read_str(b, &cert->aia);
+		io_read_str(b, &cert->aki);
+		io_read_str(b, &cert->ski);
+		io_read_str(b, &cert->pubkey);
 	} else {
 		errx(1, "%s: unexpected %s", __func__,
-		    purpose2str(p->purpose));
+		    purpose2str(cert->purpose));
 	}
 
-	return p;
+	return cert;
 }
 
 static inline int
