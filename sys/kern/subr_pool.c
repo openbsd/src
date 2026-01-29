@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.242 2025/08/01 19:00:38 cludwig Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.243 2026/01/29 01:04:35 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -154,6 +154,10 @@ struct pool_page_header {
 #define POOL_PHPOISON(ph) ISSET((ph)->ph_magic, POOL_MAGICBIT)
 
 #ifdef MULTIPROCESSOR
+#define POOL_CACHE_LIST_MIN	8		/* minimum list length */
+#define POOL_CACHE_LIST_INC	8
+#define POOL_CACHE_LIST_DEC	1
+
 struct pool_cache_item {
 	struct pool_cache_item	*ci_next;	/* next item in list */
 	unsigned long		 ci_nitems;	/* number of items in list */
@@ -1736,7 +1740,7 @@ pool_cache_init(struct pool *pp)
 	TAILQ_INIT(&pp->pr_cache_lists);
 	pp->pr_cache_nitems = 0;
 	pp->pr_cache_timestamp = getnsecuptime();
-	pp->pr_cache_items = 8;
+	pp->pr_cache_items = POOL_CACHE_LIST_MIN;
 	pp->pr_cache_contention = 0;
 	pp->pr_cache_ngc = 0;
 
@@ -2043,11 +2047,12 @@ pool_cache_gc(struct pool *pp)
 	contention = pp->pr_cache_contention;
 	delta = contention - pp->pr_cache_contention_prev;
 	if (delta > 8 /* magic */) {
-		if ((ncpusfound * 8 * 2) <= pp->pr_cache_nitems)
-			pp->pr_cache_items += 8;
+		if ((ncpusfound * POOL_CACHE_LIST_MIN * 2) <=
+		    pp->pr_cache_nitems)
+			pp->pr_cache_items += POOL_CACHE_LIST_INC;
 	} else if (delta == 0) {
-		if (pp->pr_cache_items > 8)
-			pp->pr_cache_items--;
+		if (pp->pr_cache_items > POOL_CACHE_LIST_MIN)
+			pp->pr_cache_items -= POOL_CACHE_LIST_DEC;
 	}
 	pp->pr_cache_contention_prev = contention;
 }
