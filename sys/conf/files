@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.749 2026/01/12 04:38:15 dlg Exp $
+#	$OpenBSD: files,v 1.750 2026/01/29 11:23:35 kettenis Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -320,6 +320,10 @@ file	dev/ic/com.c			com & (com | com_cardbus | com_gsc |
 # ARM PrimeCell PL011 UART
 device	pluart: tty
 file	dev/ic/pluart.c			pluart
+
+# Qualcomm GENI UART
+device	qcuart: tty
+file	dev/ic/qcuart.c			qcuart
 
 # PC-like keyboard controller
 define	pckbcslot {[slot = -1]}

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.96 2025/02/11 22:27:09 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.97 2026/01/29 11:23:35 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -183,6 +183,7 @@ void	exuart_init_cons(void);
 void	imxuart_init_cons(void);
 void	mvuart_init_cons(void);
 void	pluart_init_cons(void);
+void	qcuart_init_cons(void);
 void	simplefb_init_cons(bus_space_tag_t);
 
 void
@@ -202,6 +203,7 @@ consinit(void)
 	imxuart_init_cons();
 	mvuart_init_cons();
 	pluart_init_cons();
+	qcuart_init_cons();
 	simplefb_init_cons(&arm64_bs_tag);
 }
 
