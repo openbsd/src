@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.186 2025/12/22 10:57:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.187 2026/01/29 14:44:16 deraadt Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -289,8 +289,8 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * XXX in most of the cases because the pmemrange tries hard to
 	 * XXX allocate them last.
 	 */
-	uvmexp.reserve_pagedaemon = 4;
-	uvmexp.reserve_kernel = uvmexp.reserve_pagedaemon + 4;
+	uvmexp.reserve_pagedaemon = 32;
+	uvmexp.reserve_kernel = uvmexp.reserve_pagedaemon + 32;
 
 	uvm.page_init_done = TRUE;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.152 2026/01/28 21:46:03 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.153 2026/01/29 14:44:16 deraadt Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ int		uvmpd_dropswap(struct vm_page *);
  * => should be called with all locks released
  * => should _not_ be called by the page daemon (to avoid deadlock)
  */
+volatile int uvm_wait_counter;
 
 void
 uvm_wait(const char *wmsg)
@@ -158,8 +159,10 @@ uvm_wait(const char *wmsg)
 	}
 
 	uvm_lock_fpageq();
+	atomic_inc_int(&uvm_wait_counter);
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
 	msleep_nsec(&uvmexp.free, &uvm.fpageqlock, PVM | PNORELOCK, wmsg, timo);
+	atomic_dec_int(&uvm_wait_counter);
 }
 
 /*
@@ -223,7 +226,8 @@ uvm_pageout(void *arg)
 		long size = 0;
 
 		uvm_lock_fpageq();
-		if (TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
+		if (TAILQ_EMPTY(&uvm.pmr_control.allocs) &&
+		    uvm_wait_counter == 0) {
 			msleep_nsec(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
 			    "pgdaemon", INFSLP);
 			uvmexp.pdwoke++;
