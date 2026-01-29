@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-draw.c,v 1.1 2026/01/23 10:45:53 nicm Exp $ */
+/* $OpenBSD: tty-draw.c,v 1.2 2026/01/29 09:08:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -240,6 +240,8 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int px, u_int py, u_int nx,
 			/* Work out the the empty width. */
 			if (i >= ex)
 				empty = 1;
+			else if (gcp->bg != last.bg)
+				empty = 0;
 			else
 				empty = tty_draw_line_get_empty(gcp, nx - i);
 
