@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.221 2026/01/29 09:41:54 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.222 2026/01/29 09:44:20 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -2165,7 +2165,8 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 		io_str_buffer(b, p->ski);
 		io_str_buffer(b, p->pubkey);
 	} else {
-		errx(1, "%s: unexpected %s", __func__, purpose2str(p->purpose));
+		errx(1, "%s: unexpected %s", __func__,
+		    purpose2str(p->purpose));
 	}
 }
 
@@ -2191,15 +2192,19 @@ cert_read(struct ibuf *b)
 	io_read_buf(b, &p->num_ases, sizeof(p->num_ases));
 
 	if (p->num_ips > 0) {
-		if ((p->ips = calloc(p->num_ips, sizeof(p->ips[0]))) == NULL)
+		p->ips = calloc(p->num_ips, sizeof(p->ips[0]));
+		if (p->ips == NULL)
 			err(1, NULL);
-		io_read_buf(b, p->ips, p->num_ips * sizeof(p->ips[0]));
+		io_read_buf(b, p->ips,
+		    p->num_ips * sizeof(p->ips[0]));
 	}
 
 	if (p->num_ases > 0) {
-		if ((p->ases = calloc(p->num_ases, sizeof(p->ases[0]))) == NULL)
+		p->ases = calloc(p->num_ases, sizeof(p->ases[0]));
+		if (p->ases == NULL)
 			err(1, NULL);
-		io_read_buf(b, p->ases, p->num_ases * sizeof(p->ases[0]));
+		io_read_buf(b, p->ases,
+		    p->num_ases * sizeof(p->ases[0]));
 	}
 
 	io_read_str(b, &p->path);
@@ -2228,7 +2233,8 @@ cert_read(struct ibuf *b)
 		io_read_str(b, &p->ski);
 		io_read_str(b, &p->pubkey);
 	} else {
-		errx(1, "%s: unexpected %s", __func__, purpose2str(p->purpose));
+		errx(1, "%s: unexpected %s", __func__,
+		    purpose2str(p->purpose));
 	}
 
 	return p;
