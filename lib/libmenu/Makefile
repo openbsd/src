@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.21 2025/02/21 18:16:45 sthen Exp $
+# $OpenBSD: Makefile,v 1.22 2026/01/29 16:05:27 sthen Exp $
 
 LIB=	menu
 SRCS=	m_attribs.c m_cursor.c m_driver.c m_format.c m_global.c m_hook.c \
@@ -13,7 +13,7 @@ MAN=	menu.3 menu_attributes.3 menu_cursor.3 menu_driver.3 menu_format.3 \
 	menu_pattern.3 menu_post.3 menu_requestname.3 menu_spacing.3 \
 	menu_userptr.3 menu_win.3 mitem_current.3 mitem_name.3 mitem_new.3 \
 	mitem_opts.3 mitem_userptr.3 mitem_value.3 mitem_visible.3
-PC_FILES= menu.pc
+PC_FILES= menu.pc menuw.pc
 CLEANFILES+= ${PC_FILES}
 
 includes:

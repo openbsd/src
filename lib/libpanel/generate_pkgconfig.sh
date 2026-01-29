@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: generate_pkgconfig.sh,v 1.1 2025/02/21 18:16:45 sthen Exp $
+# $OpenBSD: generate_pkgconfig.sh,v 1.2 2026/01/29 16:05:27 sthen Exp $
 #
 # Copyright (c) 2010,2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
@@ -73,6 +73,25 @@ Description: ncurses add-on library
 Version: ${lib_version}
 Requires.private: ncurses
 Libs: -lpanel
+Libs.private:
+Cflags:
+__EOF__
+
+pc_file="${objdir}/panelw.pc"
+cat > ${pc_file} << __EOF__
+prefix=/usr
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+abi_version=${abi_version}
+major_version=${abi_version}
+version=${lib_version}
+
+Name: panelw
+Description: ncurses add-on library
+Version: ${lib_version}
+Requires.private: ncursesw
+Libs: -lpanelw
 Libs.private:
 Cflags:
 __EOF__

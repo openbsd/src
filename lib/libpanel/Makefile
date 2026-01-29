@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2025/02/21 18:16:45 sthen Exp $
+# $OpenBSD: Makefile,v 1.15 2026/01/29 16:05:27 sthen Exp $
 
 LIB=	panel
 SRCS=	p_above.c p_below.c p_bottom.c p_delete.c p_hidden.c p_hide.c \
@@ -7,7 +7,7 @@ SRCS=	p_above.c p_below.c p_bottom.c p_delete.c p_hidden.c p_hide.c \
 HDRS=	panel.h
 CFLAGS+=-I${.CURDIR}/../libcurses -D_XOPEN_SOURCE_EXTENDED -DNDEBUG
 MAN=	panel.3
-PC_FILES= panel.pc
+PC_FILES= panel.pc panelw.pc
 CLEANFILES+= ${PC_FILES}
 
 includes:

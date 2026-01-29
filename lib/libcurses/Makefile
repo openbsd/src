@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.77 2025/02/21 18:16:45 sthen Exp $
+# $OpenBSD: Makefile,v 1.78 2026/01/29 16:05:27 sthen Exp $
 
 LIB=	curses
 
@@ -73,7 +73,7 @@ MAN=	curs_add_wch.3 curs_add_wchstr.3 curs_addch.3 curs_addchstr.3 \
 GENERATED= codes.c comp_captab.c comp_userdefs.c expanded.c fallback.c \
 	init_keytry.h keys.list lib_gen.c lib_keyname.c make_hash make_keys \
 	names.c unctrl.c
-PC_FILES= ncurses.pc
+PC_FILES= ncurses.pc ncursesw.pc
 
 CAPLIST	= ${.CURDIR}/Caps
 USE_BIG_STRINGS	= 1

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2025/02/21 18:16:45 sthen Exp $
+# $OpenBSD: Makefile,v 1.19 2026/01/29 16:05:27 sthen Exp $
 
 LIB=	form
 SRCS=	fld_arg.c fld_attr.c fld_current.c fld_def.c fld_dup.c \
@@ -18,7 +18,7 @@ MAN=	form.3 form_cursor.3 form_data.3 form_driver.3 form_field.3 \
 	form_hook.3 form_new.3 form_new_page.3 form_opts.3 form_page.3 \
 	form_post.3 form_requestname.3 form_userptr.3 form_variables.3 \
 	form_win.3
-PC_FILES= form.pc
+PC_FILES= form.pc formw.pc
 CLEANFILES+= ${PC_FILES}
 
 includes:
