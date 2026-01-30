@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_legacy.c,v 1.7 2025/05/10 05:54:38 tb Exp $ */
+/*	$OpenBSD: p_legacy.c,v 1.8 2026/01/30 13:42:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,17 +98,22 @@ EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
     const unsigned char *ek, int ekl, const unsigned char *iv, EVP_PKEY *priv)
 {
 	unsigned char *key = NULL;
-	int i, size = 0, ret = 0;
+	int i, size = 0;
+	int ret = 0;
 
-	if (type) {
+	if (type != NULL) {
 		if (!EVP_CIPHER_CTX_reset(ctx))
-			return 0;
+			goto err;
 		if (!EVP_DecryptInit_ex(ctx, type, NULL, NULL, NULL))
-			return 0;
+			goto err;
 	}
 
-	if (!priv)
-		return 1;
+	/*
+	 * Per manpage: "It is possible to call EVP_OpenInit() twice in
+	 * the same way as EVP_DecryptInit(3)."
+	 */
+	if (priv == NULL)
+		goto done;
 
 	if (priv->type != EVP_PKEY_RSA) {
 		EVPerror(EVP_R_PUBLIC_KEY_NOT_RSA);
@@ -131,11 +136,13 @@ EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
 	if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
 		goto err;
 
+ done:
 	ret = 1;
 
-err:
+ err:
 	freezero(key, size);
-	return (ret);
+
+	return ret;
 }
 LCRYPTO_ALIAS(EVP_OpenInit);
 
