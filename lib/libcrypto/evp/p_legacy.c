@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_legacy.c,v 1.11 2026/01/30 13:54:28 tb Exp $ */
+/*	$OpenBSD: p_legacy.c,v 1.12 2026/01/30 13:57:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,9 +57,9 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <openssl/evp.h>
-
 #include <openssl/rsa.h>
 
 #include "err_local.h"
@@ -200,6 +200,8 @@ EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 	ret = npubk;
 
  err:
+	explicit_bzero(key, sizeof(key));
+
 	return ret;
 }
 LCRYPTO_ALIAS(EVP_SealInit);
