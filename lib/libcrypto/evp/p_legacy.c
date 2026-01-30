@@ -1,4 +1,4 @@
-/*	$OpenBSD: p_legacy.c,v 1.8 2026/01/30 13:42:46 tb Exp $ */
+/*	$OpenBSD: p_legacy.c,v 1.9 2026/01/30 13:47:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,7 +188,7 @@ EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 		ekl[i] = EVP_PKEY_encrypt_old(ek[i], key,
 		    EVP_CIPHER_CTX_key_length(ctx), pubk[i]);
 		if (ekl[i] <= 0)
-			return (-1);
+			return 0;
 	}
 	return (npubk);
 }
