@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.257 2025/12/01 16:03:55 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.258 2026/01/30 04:25:52 gnezdo Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -424,7 +424,9 @@ ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		*orxseq = nrxseq;
 	}
 	if (ic->ic_state > IEEE80211_S_SCAN) {
-		ni->ni_rssi = rxi->rxi_rssi;
+		/* Only update RSSI if driver provided a valid value. */
+		if (rxi->rxi_rssi != 0)
+			ni->ni_rssi = rxi->rxi_rssi;
 		ni->ni_rstamp = rxi->rxi_tstamp;
 		ni->ni_inact = 0;
 
