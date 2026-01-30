@@ -1,4 +1,4 @@
-#	$OpenBSD: fonts,v 1.5 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: fonts,v 1.6 2026/01/30 11:22:40 fcambus Exp $
 
 #------------------------------------------------------------------------------
 # fonts:  file(1) magic for font data
@@ -63,3 +63,30 @@
 # Gürkan Sengün <gurkan@linuks.mine.nu>, www.linuks.mine.nu 
 0	string		SplineFontDB:	Spline Font Database 
 >14	string		x		version %s
+
+# Web Open Font Format (.woff)
+0	name		woff
+>4	belong		0x00010000	\b, TrueType
+>4	belong		0x4F54544F	\b, CFF
+>4	belong		0x74727565	\b, TrueType
+>4	default		x
+>>4	belong		x		\b, flavor %d
+>8	belong		x		\b, length %d
+#>12	beshort		x		\b, numTables %d
+#>14	beshort		x		\b, reserved %d
+#>16	belong		x		\b, totalSfntSize %d
+
+# https://www.w3.org/TR/WOFF/
+0	string		wOFF	Web Open Font Format
+!:mime font/woff
+>0	use		woff
+>20	beshort		x	\b, version %d
+>22	beshort		x	\b.%d
+# https://www.w3.org/TR/WOFF2/
+0	string		wOF2	Web Open Font Format (Version 2)
+!:mime font/woff2
+!:ext	woff2
+>0	use		woff
+#>20	belong		x	\b, totalCompressedSize %d
+>24	beshort		x	\b, version %d
+>26	beshort		x	\b.%d
