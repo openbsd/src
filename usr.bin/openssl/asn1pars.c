@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.19 2026/01/31 08:59:38 tb Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.20 2026/01/31 09:01:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -237,7 +237,7 @@ int
 asn1parse_main(int argc, char **argv)
 {
 	int i, j, ret = 1;
-	long num, tmplen;
+	long num;
 	BIO *in = NULL, *out = NULL, *b64 = NULL, *derout = NULL;
 	const char *errstr = NULL;
 	const unsigned char *str;
@@ -333,10 +333,10 @@ asn1parse_main(int argc, char **argv)
 	/* If any structs to parse go through in sequence */
 
 	if (sk_OPENSSL_STRING_num(cfg.osk) > 0) {
-		const unsigned char *tmpbuf = str;
 		const unsigned char *p;
+		const unsigned char *tmpbuf = str;
+		long tmplen = num;
 
-		tmplen = num;
 		for (i = 0; i < sk_OPENSSL_STRING_num(cfg.osk); i++) {
 			ASN1_TYPE *atmp;
 			int typ;
