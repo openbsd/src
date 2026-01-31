@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.18 2025/11/27 08:22:32 tb Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.19 2026/01/31 08:59:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,10 +239,8 @@ asn1parse_main(int argc, char **argv)
 	int i, j, ret = 1;
 	long num, tmplen;
 	BIO *in = NULL, *out = NULL, *b64 = NULL, *derout = NULL;
-	char *str = NULL;
 	const char *errstr = NULL;
-	const unsigned char *tmpbuf;
-	const unsigned char *ctmpbuf;
+	const unsigned char *str;
 	BUF_MEM *buf = NULL;
 	ASN1_TYPE *at = NULL;
 
@@ -330,12 +328,14 @@ asn1parse_main(int argc, char **argv)
 			num += i;
 		}
 	}
-	str = buf->data;
+	str = (const unsigned char *)buf->data;
 
 	/* If any structs to parse go through in sequence */
 
 	if (sk_OPENSSL_STRING_num(cfg.osk) > 0) {
-		tmpbuf = (unsigned char *) str;
+		const unsigned char *tmpbuf = str;
+		const unsigned char *p;
+
 		tmplen = num;
 		for (i = 0; i < sk_OPENSSL_STRING_num(cfg.osk); i++) {
 			ASN1_TYPE *atmp;
@@ -351,8 +351,8 @@ asn1parse_main(int argc, char **argv)
 			tmpbuf += j;
 			tmplen -= j;
 			atmp = at;
-			ctmpbuf = tmpbuf;
-			at = d2i_ASN1_TYPE(NULL, &ctmpbuf, tmplen);
+			p = tmpbuf;
+			at = d2i_ASN1_TYPE(NULL, &p, tmplen);
 			ASN1_TYPE_free(atmp);
 			if (!at) {
 				BIO_printf(bio_err, "Error parsing structure\n");
@@ -371,7 +371,7 @@ asn1parse_main(int argc, char **argv)
 			tmpbuf = ASN1_STRING_get0_data(at->value.asn1_string);
 			tmplen = ASN1_STRING_length(at->value.asn1_string);
 		}
-		str = (char *) tmpbuf;
+		str = tmpbuf;
 		num = tmplen;
 	}
 	if (cfg.offset >= num) {
@@ -390,8 +390,8 @@ asn1parse_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (!cfg.noout && !ASN1_parse_dump(out,
-	    (unsigned char *)&str[cfg.offset], cfg.length, cfg.indent, cfg.dump)) {
+	if (!cfg.noout && !ASN1_parse_dump(out, &str[cfg.offset], cfg.length,
+	    cfg.indent, cfg.dump)) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
