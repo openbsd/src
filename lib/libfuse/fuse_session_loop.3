@@ -1,0 +1,120 @@
+.\" $OpenBSD: fuse_session_loop.3,v 1.1 2026/02/01 20:02:58 helg Exp $
+.\"
+.\" Copyright (c) 2026 Helg Bredow <helg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 1 2026 $
+.Dt FUSE_SESSION_LOOP 3
+.Os
+.Sh NAME
+.Nm fuse_session_loop ,
+.Nm fuse_session_process ,
+.Nm fuse_session_add_chan ,
+.Nm fuse_session_remove_chan ,
+.Nm fuse_session_exit ,
+.Nm fuse_session_exited ,
+.Nm fuse_session_reset
+.Nd manage lifecycle and event handling for a FUSE session
+.Sh SYNOPSIS
+.Lb fuse
+.In fuse_lowlevel.h
+.Ft int
+.Fn fuse_session_loop "struct fuse_session *se"
+.Ft void
+.Fo fuse_session_process
+.Fa "struct fuse_session *se"
+.Fa "struct fuse_chan *ch"
+.Fa "const struct fuse_buf *buf"
+.Fa "struct fuse_buf *outbuf"
+.Fc
+.Ft void
+.Fo fuse_session_add_chan
+.Fa "struct fuse_session *se"
+.Fa "struct fuse_chan *ch"
+.Fc
+.Ft void
+.Fn fuse_session_remove_chan "struct fuse_chan *ch"
+.Ft void
+.Fn fuse_session_exit "struct fuse_session *se"
+.Ft int
+.Fn fuse_session_exited "struct fuse_session *se"
+.Ft void
+.Fn fuse_session_reset "struct fuse_session *se"
+.Sh DESCRIPTION
+These functions are part of the FUSE low-level API and are used to manage the
+lifecycle, communication channel, and event processing of a FUSE session.
+.Pp
+A fuse_session is created with
+.Xr fuse_lowlevel_new 3 .
+.Bl -tag -width Ds
+.It Fn fuse_session_loop "se"
+Run the main event loop for the session
+.Fa se .
+This function blocks and processes incoming requests until
+.Fn fuse_session_exit
+is called.
+.It Fn fuse_session_process "se" "buf" "bufsize" "ch"
+Process a single buffer
+.Fa buf
+received from channel
+.Fa ch
+in the session
+.Fa se .
+If ch is
+.Dv NULL
+then the channel added to the session is used instead.
+Used for manual request handling outside of the main loop.
+.It Fn fuse_session_add_chan "se" "ch"
+Add the communication channel
+.Fa ch
+to the session
+.Fa se .
+Channels are used to receive requests from the kernel.
+A session may be associated with only one channel at a time, and a channel
+may be associated with only one session at a time.
+.It Fn fuse_session_remove_chan "ch"
+Remove the channel
+.Fa ch
+from its associated session.
+.It Fn fuse_session_exit "se"
+Signal the session
+.Fa se
+to exit its event loop.
+This does not destroy the session or unmount the filesystem.
+.It Fn fuse_session_reset "se"
+Reset the session
+.Fa se
+to a non-exited state, allowing the loop to be restarted.
+.El
+.Sh RETURN VALUES
+.Fn fuse_session_loop
+returns 0 on success or -1 on failure.
+.Pp
+.Fn fuse_session_exited
+Returns non-zero if
+.Fn fuse_session_exit
+has been called and the session
+.Fa se
+is marked for termination.
+.Sh SEE ALSO
+.Xr fuse_chan_fd 3 ,
+.Xr fuse_lowlevel_new 3 ,
+.Xr fuse_mount 3
+.Sh STANDARDS
+These library functions conform to FUSE 2.6.
+.Sh HISTORY
+These functions have been available since
+.Ox 7.9 .
+.Sh AUTHORS
+.An Helg Bredow Aq Mt helg@openbsd.org

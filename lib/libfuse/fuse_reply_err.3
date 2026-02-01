@@ -1,0 +1,203 @@
+.\" $OpenBSD: fuse_reply_err.3,v 1.1 2026/02/01 20:02:58 helg Exp $
+.\"
+.\" Copyright (c) 2026 Helg Bredow <helg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 1 2026 $
+.Dt FUSE_REPLY_ERR 3
+.Os
+.Sh NAME
+.Nm fuse_reply_err ,
+.Nm fuse_reply_buf ,
+.Nm fuse_reply_attr ,
+.Nm fuse_reply_open ,
+.Nm fuse_reply_write ,
+.Nm fuse_reply_entry ,
+.Nm fuse_reply_statfs ,
+.Nm fuse_reply_readlink
+.Nd send replies to FUSE requests
+.Sh SYNOPSIS
+.Lb libfuse
+.In fuse_lowlevel.h
+.Ft int
+.Fo fuse_reply_err
+.Fa "fuse_req_t req"
+.Fa "int errno"
+.Fc
+.Ft int
+.Fo fuse_reply_buf
+.Fa "fuse_req_t req"
+.Fa "const char *buf"
+.Fa "off_t size"
+.Fc
+.Ft int
+.Fo fuse_reply_attr
+.Fa "fuse_req_t req"
+.Fa "const struct stat *attr"
+.Fa "double attr_timeout"
+.Fc
+.Ft int
+.Fo fuse_reply_open
+.Fa "fuse_req_t req"
+.Fa "const struct fuse_file_info *fi"
+.Fc
+.Ft int
+.Fo fuse_reply_write
+.Fa "fuse_req_t req"
+.Fa "size_t count"
+.Fc
+.Ft int
+.Fo fuse_reply_entry
+.Fa "fuse_req_t req"
+.Fa "const struct fuse_entry_param *e"
+.Fc
+.Ft int
+.Fo fuse_reply_statfs
+.Fa "fuse_req_t req"
+.Fa "const struct statvfs *stbuf"
+.Fc
+.Ft int
+.Fo fuse_reply_readlink
+.Fa "fuse_req_t req"
+.Fa "char *linkname"
+.Fc
+.Sh DESCRIPTION
+These functions are used in the FUSE low-level API to send responses to
+requests received from the kernel.
+.Pp
+Once called, the request is considered handled and must not be replied to
+again.
+.Bl -tag -width Ds
+.It Fn fuse_reply_err "req" "errno"
+Send an error response to the request
+.Fa req .
+The
+.Fa errno
+parameter must be a valid (non-negated) error number, for example
+.Er ENOENT
+or
+.Er EACCES ..
+.Pp
+This is a valid response for all file system operations.
+.It Fn fuse_reply_buf "req" "buf" "size"
+Send a buffer
+.Fa buf
+of
+.Fa size
+bytes of data to the kernel.
+.Pp
+This is a valid response for
+.Fn read
+and
+.Fn readdir
+operations.
+.It Fn fuse_reply_attr "req" "attr" "attr_timeout"
+Replies with file attributes specified in
+.Fa attr ,
+valid for
+.Fa attr_timeout
+seconds.
+The
+.Ox
+kernel does not currently support attribute caching and
+.Fa attr_timeout
+will be ignored.
+.Pp
+This is a valid response for
+.Fn getattr
+and
+.Fn setattr
+operations.
+.It Fn fuse_reply_open "req" "ffi"
+Send a response to an open request with the file info structure
+.Fa ffi .
+Only the
+.Fa fh
+member of
+.Fa ffi
+is used.
+.Pp
+This is a valid response for
+.Fn open
+and
+.Fn opendir
+operations.
+.It Fn fuse_reply_write "req" "count"
+Reply to a write request with the
+.Fa count
+of bytes written.
+.Pp
+This is a valid response for the
+.Fn write
+operation.
+.It Fn fuse_reply_entry "req" "e"
+Reply to a lookup or other request that results in new file creation with
+the details of the new directory entry
+.Fa e ,
+which is defined as follows:
+.Bd -literal
+struct fuse_entry_param {
+    ino_t          ino;           /* inode number of the entry */
+    unsigned long  generation;    /* must be non-zero */
+    struct stat    attr;          /* attributes of the entry */
+    double         attr_timeout;  /* ignored */
+    double         entry_timeout; /* ignored */
+};
+.Ed
+.Pp
+The
+.Ox
+kernel does not currently cache FUSE lookups or attributes and the
+.Fa attr_timeout
+and
+.Fa entry_timeout
+members are ignored.
+.Pp
+This is a valid response for the
+.Fn lookup ,
+.Fn mknod ,
+.Fn mkdir ,
+.Fn symlink , and
+.Fn link
+operations.
+.It Fn fuse_reply_statfs "req" "stbuf"
+Reply with file system statistics provided in
+.Fa stbuf .
+.Pp
+This is a valid response for the
+.Fn statfs
+operation.
+.It Fn fuse_reply_readlink "req" "link"
+Replies to a readlink request with the symbolic link path
+.Fa link .
+The target string cannot contain the NUL character.
+.Pp
+This is a valid response for the
+.Fn readlink
+operation.
+.El
+.Sh RETURN VALUES
+All functions return 0 on success.
+On failure, they return
+.Pf \- Va errno
+to indicate the error.
+.Sh SEE ALSO
+.Xr fuse_lowlevel_new 3
+.Sh STANDARDS
+These library functions conform to FUSE 2.6.
+.Sh HISTORY
+These library functions have been available since
+.Ox 7.9 .
+.Sh AUTHORS
+.An Helg Bredow Aq Mt helg@openbsd.org

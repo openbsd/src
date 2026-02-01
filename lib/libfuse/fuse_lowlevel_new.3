@@ -1,0 +1,597 @@
+.\" $OpenBSD: fuse_lowlevel_new.3,v 1.1 2026/02/01 20:02:58 helg Exp $
+.\"
+.\" Copyright (c) 2026 Helg Bredow <helg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 1 2026 $
+.Dt FUSE_LOWLEVEL_NEW 3
+.Os
+.Sh NAME
+.Nm fuse_lowlevel_new ,
+.Nm fuse_session_destroy ,
+.Nm fuse_add_direntry
+.Nd initialise and destroy a FUSE session
+.Sh SYNOPSIS
+.Lb libfuse
+.In fuse_lowlevel.h
+.Ft struct fuse_session *
+.Fo fuse_lowlevel_new
+.Fa "struct fuse_args *fargs"
+.Fa "const struct fuse_lowlevel_ops *ops"
+.Fa "size_t ops_size"
+.Fa "void *userdata"
+.Fc
+.Ft void
+.Fn fuse_session_destroy "struct fuse_session *se"
+.Ft size_t
+.Fo fuse_add_direntry
+.Fa "fuse_req_t req"
+.Fa "char *buf"
+.Fa "const size_t bufsize"
+.Fa "const char *name"
+.Fa "struct stat *stbuf"
+.Fa "off_t off"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn fuse_lowlevel_new
+function creates a new FUSE session using the low-level API.
+The low-level API gives the file system full control over request handling.
+This session handles communication between the kernel and the user-space
+filesystem implementation.
+The returned session must later be destroyed with
+.Fn fuse_session_destroy .
+To being processing requests, the caller must mount the file system with
+.Xr fuse_mount 3
+and then enter a loop to process kernel requests, such as with
+.Xr fuse_session_loop 3 .
+.Pp
+The
+.Fa args
+parameter points to arguments that are used to configure the session.
+These arguments can be initialised from command-line arguments using
+.Xr FUSE_ARGS_INIT 3 .
+May be
+.Dv NULL
+if no arguments need to be parsed.
+The following arguments are supported:
+.Bl -tag -width Ds
+.It Fl d , odebug
+Enable debug output that prints details of each request received to standard
+error output.
+.It Fl h , \-help
+Print a usage message to standard error output.
+.It Fl -V , \-version
+Print FUSE library version to standard error output.
+.It Fl omax_write
+The maximum number of bytes that the filesystem can handle in one write
+request.
+.El
+.Pp
+The
+.Fa ops
+Points to the file system operations supported by the user-space
+file system daemon.
+See below.
+.Pp
+The
+.Fa op_size
+parameter specifies the size of the
+.Vt struct fuse_lowlevel_ops
+structure in bytes.
+This allows forward compatibility when new operations are added.
+.Pp
+The
+.Fa userdata
+parameter is a pointer to user-defined data that will be passed to the
+.Fn init
+and
+.Fn destroy
+handlers.
+.Pp
+This function does not mount the filesystem or start the event loop.
+After creating the session,
+.Xr fuse_session_loop 3
+can be called to begin handling requests.
+.Pp
+FUSE operations work in the same way as their UNIX file system
+counterparts.
+A functional file system must implement at least
+.Fn lookup ,
+.Fn getattr ,
+.Fn readdir ,
+.Fn open ,
+.Fn read
+and
+.Fn statfs .
+The other functions are optional, and the struct members pointing to them
+can be set to
+.Dv NULL .
+.Pp
+The
+.Ft fuse_lowlevel_ops
+structure contains one function pointer to each of the functions listed
+below.
+The return type of each function pointer is
+.Ft void .
+.Pp
+The first parameter to each of these operations (except for
+.Fn init
+and
+.Fn destroy )
+is a reference to the kernel request.
+The relevant parameters from the requested file system operations are
+passed as arguments to each function.
+.Pp
+All operations can report failure with
+.Xr fuse_reply_err 3 .
+If no other response is indicated below, then operations must report
+success by passing 0 to the
+.Fa errno
+argument
+of
+.Xr fuse_reply_err 3 .
+.Pp
+The operations defined in the
+.Vt struct fuse_lowlevel_ops
+structure are:
+.Bl -tag -width Ds
+.It Xo Fo access
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "int mask"
+.Fc Xc
+Not implemented.
+.Ox
+always behaves as if the default_permissions mount option was specified.
+See
+.Xr fuse_mount 3 .
+.It Xo Fo create
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t parent"
+.Fa "const char *name"
+.Fa "most_t mode"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Not implemented.
+File systems must implement
+.Fn mknod
+instead.
+.It Fn destroy "void *userdata"
+This is the last handler called when the file system is unmounted.
+.It Xo Fo flush
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Called when a regular file is closed by the
+.Xr close 2
+system call.
+This is the only way for a file system to report an error on close.
+.Pp
+The
+.Fa ino
+argument identifies the file to be closed.
+.Pp
+The
+.Fa ffi
+argument is a
+.Va struct fuse_file_info
+that contains the following fields:
+.Pp
+.Bl -tag -compact -width indent
+.It Va fh
+The file handle returned by the file system when the file was opened.
+.It Va flush
+1 if the file should be flushed before being closed.
+0 otherwise.
+.El
+.It Xo Fo fsync
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "int datasync"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Optional function that implements
+.Xr fsync 2
+and
+.Xr fdatasync 2 .
+The
+.Fa datasync
+parameter specifies whether the operation is as a result
+of a call to
+.Xr fdatasync 2
+and is currently always 0 (false).
+.Fa ffi.fh
+is the file handle returned by the file system when
+the file was opened.
+.It Xo Fo fsyncdir
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "int datasync"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Not implemented.
+.It Xo Fo getattr
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Corresponds to the
+.Xr stat 2
+system call.
+.Pp
+On success, respond with
+.Xr fuse_reply_attr 3 .
+.It Xo Fo init
+.Fa "void *userdata"
+.Fa "struct fuse_conn_info *fci"
+.Fc Xc
+This is the first handler called by the kernel when the file system is
+mounted.
+.Fa userdata
+is a pointer to the data passed to
+.Fn fuse_lowlevel_new .
+.Fa fci
+contains connection information in the following structure:
+.Bd -literal
+struct fuse_conn_info {
+        uint32_t        proto_major;
+        uint32_t        proto_minor;
+        uint32_t        async_read;
+        uint32_t        max_write;
+        uint32_t        max_readahead;
+        uint32_t        capable;
+        uint32_t        want;
+        uint32_t        max_background;
+        uint32_t        congestion_threshold;
+        uint32_t        reserved[23];
+};
+.Ed
+.It Xo Fo link
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "fuse_ino_t newparent"
+.Fa "const char *name"
+.Fc Xc
+Create a hard link to
+.Fa ino
+in directory
+.Fa parent
+with
+.Fa name .
+.Pp
+On success, respond with
+.Xr fuse_reply_entry 3 .
+.It Xo Fo lookup
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t newparent"
+.Fa "const char *name"
+.Fc Xc
+Looks up an entry
+.Fa name
+in the directory specified by
+.Fa parent .
+.Pp
+If the entry cannot be found then this operation should reply with
+.Er ENOENT .
+Alternatively, an entry with ino = 0 can be returned.
+This is intended to indicate that the negative result can be cached for
+.Fa entry_timeout
+seconds.
+However,
+.Ox
+does not cache lookups so this is equivalent to returning
+.Er ENOENT .
+.Pp
+Valid responses are
+.Xr fuse_reply_err 3
+and
+.Xr fuse_reply_entry 3 .
+.It Xo Fo mkdir
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t parent"
+.Fa "const char *name"
+.Fa "mode_t mode"
+.Fc Xc
+Called on
+.Xr mkdir 2
+to create a new directory
+.Fa name
+in directory
+.Fa parent
+with mode
+.Fa mode .
+.Pp
+On success, respond with
+.Xr fuse_reply_entry 3 .
+.It Xo Fo mknod
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t parent"
+.Fa "const char *name"
+.Fa "mode_t mode"
+.Fa "dev_t rdev"
+.Fc Xc
+Called on
+.Xr open 2
+and
+.Xr mknod 2
+to create regular files, pipes and device special files with
+.Fa name
+in the directory
+specified by
+.Fa parent .
+.Fa mode
+specifies the file type and mode with which to create the file.
+.Fa rdev
+specifies the device number if creating a device.
+.Pp
+On success, respond with
+.Xr fuse_reply_entry 3 .
+.It Xo Fo open
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Called on
+.Xr open 2
+to open the file specified by
+.Fa ino .
+Due to the difference between FUSE and the
+.Ox
+VFS,
+open will only be called once for each file
+for every different combination of flags provided to
+.Xr open 2 .
+The
+.Dv O_CREAT
+and
+.Dv O_TRUNC
+flags are never passed from the kernel to open,
+the mknod and truncate operations will be invoked before open instead.
+The flags are available in the
+.Fa flags
+member of
+.Fa ffi .
+.Pp
+On success, respond with
+.Xr fuse_reply_open 3 .
+.It Xo Fo opendir
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Called when a directory is opened for reading.
+.Pp
+On success, respond with
+.Xr fuse_reply_open 3 .
+.It Xo Fo read
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "size_t size"
+.Fa "off_t off"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Read the contents of file
+.Fa ino
+at offset
+.Fa off .
+.Pp
+On success, respond with
+.Xr fuse_reply_buf 3 .
+.It Xo Fo readdir
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "size_t size"
+.Fa "off_t off"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Called to read the entries in a directory specified by
+.Fa ino .
+The file system implementation must use the
+.Fn fuse_add_direntry
+function to add each entry to a buffer.
+The buffer must be large enough to hold the entry but no larger than
+.Fa size .
+If the remaining space in the buffer is too small, the entry won't be
+written, but the required size will still be returned.
+To check for success, compare the buffer size (bufsize) with the returned
+entry size.
+If the entry size is greater than the buffer size, the operation failed.
+The size required can be determined by calling
+.Fn fuse_add_direntry
+with
+.Fa buf
+set to
+.Dv NULL .
+.Pp
+On success, respond with
+.Xr fuse_reply_buf 3 .
+.It Xo Fo readlink
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fc Xc
+Called to read the target of a symbolic link.
+The target must be NUL-terminated.
+.Pp
+On success, respond with
+.Xr fuse_reply_readlink 3 .
+.It Xo Fo release
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Called when there are no more references to the file specified by
+.Fa ino .
+.It Xo Fo releasedir
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Called when there are no more references to the directory specified by
+.Fa ino .
+.It Xo Fo rename
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t parent"
+.Fa "const char *name"
+.Fa "fuse_ino_t newparent"
+.Fa "const char *newname"
+.Fc Xc
+Rename the directory entry
+.Fa name
+to
+.Fa newname .
+.Fa newparent
+specifies the inode of the new parent directory.
+.It Xo Fo rmdir
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t parent"
+.Fa "const char *name"
+.Fc Xc
+Delete directory
+.Fa name
+from directory
+.Fa parent .
+.It Xo Fo symlink
+.Fa "fuse_req_t req"
+.Fa "const char *link"
+.Fa "fuse_ino_t parent"
+.Fa "const char *name"
+.Fc Xc
+Create a symbolic link with contents
+.Fa link
+in directory
+.Fa parent
+with
+.Fa name
+.Pp
+On success, respond with
+.Xr fuse_reply_entry 3 .
+.It Xo Fo setattr
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "struct stat *attr"
+.Fa "int flags"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Called when file attributes are changed such as access permissions or
+the file owner or group via
+.Xr chown 2
+and
+.Xr chmod 2
+system calls.
+.Pp
+The
+.Fa flags
+argument is the bitwise OR of one or more of the bitmasks from the
+following list, requesting that the corresponding fields in
+.Fa attr
+be set on
+.Fa ino :
+.Bd -literal
+.Dv FUSE_SET_ATTR_MODE
+.Dv FUSE_SET_ATTR_UID
+.Dv FUSE_SET_ATTR_GID
+.Dv FUSE_SET_ATTR_SIZE
+.Dv FUSE_SET_ATTR_ATIME
+.Dv FUSE_SET_ATTR_MTIME
+.Dv FUSE_SET_ATTR_ATIME_NOW
+.Dv FUSE_SET_ATTR_MTIME_NOW
+.Ed
+.Pp
+On success, return the updated attributes with
+.Xr fuse_reply_attr 3 .
+.It Xo Fo statfs
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fc Xc
+Provide file system information.
+.Pp
+On success, respond with
+.Xr fuse_reply_statfs 3 .
+.It Xo Fo unlink
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "const char *name"
+.Fc Xc
+Delete file
+.Fa name
+from directory
+.Fa parent .
+.It Xo Fo write
+.Fa "fuse_req_t req"
+.Fa "fuse_ino_t ino"
+.Fa "char char *buf"
+.Fa "size_t size"
+.Fa "off_t off"
+.Fa "struct fuse_file_info *ffi"
+.Fc Xc
+Write
+.Fa size
+bytes from
+.Fa buf
+to file
+.Fa ino
+at offset
+.Fa off .
+.Pp
+On success, respond with
+.Xr fuse_reply_write 3 .
+.El
+.Pp
+.Fn fuse_session_destroy
+destroys the FUSE session
+.Fa se ,
+freeing all associated resources.
+This should be called after the session
+loop completes and the file system has been unmounted.
+.Pp
+.Fn fuse_add_direntry
+formats a single directory entry and appends it to a buffer suitable
+for returning to the kernel.
+.Fa buf
+points to the location in the buffer where the new dirent should be added and
+.Fa bufsize
+specifies the remaining size of the buffer.
+.Fa name
+is a NUL-terminated string for the name of the new entry.
+Only the st_ino field and bits 12-15 of the st_mode field from the
+.Fa stbuf
+argument are used.
+All other fields are ignored.
+.Fa off
+is a file system specific offset of the next entry.
+.Sh RETURN VALUES
+.Fn fuse_lowlevel_new
+returns a pointer to a newly created
+.Vt struct fuse_session
+on success and
+.Dv NULL
+on failure.
+.Pp
+.Fn fuse_add_direntry
+returns the number of bytes required to store the directory entry, regardless
+of whether it was written to
+.Fa buf .
+.Sh SEE ALSO
+.Xr FUSE_ARGS_INIT 3 ,
+.Xr fuse_reply_err 3 ,
+.Xr fuse_session_loop 3
+.Sh STANDARDS
+These library functions conform to FUSE 2.6.
+.Sh HISTORY
+These function has been available since
+.Ox 7.9 .
+.Sh AUTHORS
+.An Helg Bredow Aq Mt helg@openbsd.org
