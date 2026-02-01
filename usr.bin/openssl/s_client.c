@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.67 2025/01/02 16:07:41 tb Exp $ */
+/* $OpenBSD: s_client.c,v 1.68 2026/02/01 08:45:31 martijn Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -174,6 +174,7 @@ enum {
 	PROTO_LMTP,
 	PROTO_POP3,
 	PROTO_IMAP,
+	PROTO_SIEVE,
 	PROTO_FTP,
 	PROTO_XMPP,
 };
@@ -335,6 +336,8 @@ s_client_opt_starttls(char *arg)
 		cfg.starttls_proto = PROTO_POP3;
 	else if (strcmp(arg, "imap") == 0)
 		cfg.starttls_proto = PROTO_IMAP;
+	else if (strcmp(arg, "sieve") == 0)
+		cfg.starttls_proto = PROTO_SIEVE;
 	else if (strcmp(arg, "ftp") == 0)
 		cfg.starttls_proto = PROTO_FTP;
 	else if (strcmp(arg, "xmpp") == 0)
@@ -729,7 +732,8 @@ static const struct option s_client_options[] = {
 		.name = "starttls",
 		.argname = "protocol",
 		.desc = "Use the STARTTLS command before starting TLS,\n"
-		        "smtp, lmtp, pop3, imap, ftp and xmpp are supported.",
+		        "smtp, lmtp, pop3, imap, sieve, ftp and xmpp "
+			"are supported.",
 		.type = OPTION_ARG_FUNC,
 		.opt.argfunc = s_client_opt_starttls,
 	},
@@ -832,6 +836,28 @@ sc_usage(void)
 	fprintf(stderr, "\n");
 	options_usage(s_client_options);
 	fprintf(stderr, "\n");
+}
+
+static int
+s_client_sieve_response_ok(const char *resp, int resplen)
+{
+	/* All lines need to be CRLF terminated */
+	if (resplen <= 2) {
+		BIO_printf(bio_err, "Failed to get full server line\n");
+		return 0;
+	}
+	if (resplen >= 4 && strncasecmp(resp, "OK", 2) == 0 &&
+	    (resp[2] == ' ' || resp[2] == '\r'))
+		return 1;
+	if (resplen >= 4 && strncasecmp(resp, "NO", 2) == 0 &&
+	    (resp[2] == ' ' || resp[2] == '\r'))
+		BIO_printf(bio_err, "Server rejected our connection\n");
+	else if (resplen >= 5 && strncasecmp(resp, "BYE", 3) == 0 &&
+	    (resp[3] == ' ' || resp[3] == '\r'))
+		BIO_printf(bio_err, "Server disconnected our connection\n");
+	else
+		BIO_printf(bio_err, "Server sent invalid response\n");
+	return 0;
 }
 
 int
@@ -1220,6 +1246,37 @@ s_client_main(int argc, char **argv)
 			    " try anyway...\n");
 		BIO_printf(sbio, ". STARTTLS\r\n");
 		BIO_read(sbio, sbuf, BUFSIZZ);
+	} else if (cfg.starttls_proto == PROTO_SIEVE) {
+		int foundit = 0;
+		BIO *fbio;
+
+		if ((fbio = BIO_new(BIO_f_buffer()))== NULL) {
+			BIO_printf(bio_err, "Failed to create BIO\n");
+			goto end;
+		}
+		BIO_push(fbio, sbio);
+		/* wait for multi-line CAPABILITY response */
+		while (1) {
+			mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+			if (mbuf_len > 2 && mbuf[0] == '"') {
+				if (strcasecmp(mbuf, "\"STARTTLS\"\r\n") == 0)
+					foundit = 1;
+			} else if (s_client_sieve_response_ok(mbuf, mbuf_len))
+				break;
+			else
+				goto end;
+		}
+		if (!foundit)
+			BIO_printf(bio_err,
+			    "didn't find STARTTLS in server response,"
+			    " try anyway...\n");
+		BIO_printf(sbio, "STARTTLS\r\n");
+		mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+		(void) BIO_flush(fbio);
+		BIO_pop(fbio);
+		BIO_free(fbio);
+		if (!s_client_sieve_response_ok(mbuf, mbuf_len))
+			goto end;
 	} else if (cfg.starttls_proto == PROTO_FTP) {
 		BIO *fbio = BIO_new(BIO_f_buffer());
 		BIO_push(fbio, sbio);
