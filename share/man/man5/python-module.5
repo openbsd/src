@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.21 2026/01/09 15:13:07 sthen Exp $
+.\"	$OpenBSD: python-module.5,v 1.22 2026/02/01 21:01:20 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 9 2026 $
+.Dd $Mdocdate: February 1 2026 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -131,6 +131,10 @@ adds the backend to
 .Ev MODPY_BUILD_DEPENDS ,
 and sets
 .Ev MODPY_PYTEST .
+The build is run in
+.Ev MODPY_BUILD_DIR ,
+defaulting to
+.Ev WRKSRC .
 .Pp
 Some checks are done to warn during "make fake" if
 .Ev MODPY_PYBUILD
