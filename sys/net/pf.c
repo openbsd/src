@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1233 2026/02/02 06:23:39 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1234 2026/02/02 06:33:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1407,7 +1407,8 @@ pf_compare_state_keys(struct pf_state_key *a, struct pf_state_key *b,
 }
 
 static inline struct pf_state *
-pf_find_state_lookup(struct pf_pdesc *pd, const struct pf_state_key_cmp *key)
+pf_find_state_lookup(struct pf_pdesc *pd, const struct pf_state_key_cmp *key,
+    int rdir)
 {
 	struct pf_state_key	*sk;
 	struct pf_state_item	*si;
@@ -1431,6 +1432,10 @@ pf_find_state_lookup(struct pf_pdesc *pd, const struct pf_state_key_cmp *key)
 		/* af-to needs to be handled specially */
 		if (st->key[PF_SK_WIRE]->af == st->key[PF_SK_STACK]->af) {
 			if (sk != st->key[didx])
+				continue;
+
+			/* do we have a hint about where this came from? */
+			if (st->direction == rdir)
 				continue;
 
 		/* af-to case */
@@ -1507,6 +1512,7 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	struct pf_state		*st = NULL;
 	struct pf_state		*strev = NULL;
 	struct inpcb		*inp = NULL;
+	int			 rdir = PF_FWD; /* not PF_IN or PF_OUT */
 
 	counters_inc(pf_status_fcounters, FCNT_STATE_SEARCH);
 	if (pf_status.debug >= LOG_DEBUG) {
@@ -1523,6 +1529,7 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 		/* first if block deals with outbound forwarded packet */
 		if (strev != NULL) {
 			KASSERT(inp == NULL);
+			rdir = strev->direction;
 
 			st = pf_find_state_reverse(strev);
 		} else if (inp != NULL) {
@@ -1535,7 +1542,7 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 			goto match;
 	}
 
-	st = pf_find_state_lookup(pd, key);
+	st = pf_find_state_lookup(pd, key, rdir);
 	if (st == NULL)
 		return (PF_DROP);
 	if (ISSET(st->state_flags, PFSTATE_INP_UNLINKED))
