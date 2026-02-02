@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_lowlevel_new.3,v 1.1 2026/02/01 20:02:58 helg Exp $
+.\" $OpenBSD: fuse_lowlevel_new.3,v 1.2 2026/02/02 09:20:01 helg Exp $
 .\"
 .\" Copyright (c) 2026 Helg Bredow <helg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 1 2026 $
+.Dd $Mdocdate: February 2 2026 $
 .Dt FUSE_LOWLEVEL_NEW 3
 .Os
 .Sh NAME
@@ -52,7 +52,7 @@ This session handles communication between the kernel and the user-space
 filesystem implementation.
 The returned session must later be destroyed with
 .Fn fuse_session_destroy .
-To being processing requests, the caller must mount the file system with
+To begin processing requests, the caller must mount the file system with
 .Xr fuse_mount 3
 and then enter a loop to process kernel requests, such as with
 .Xr fuse_session_loop 3 .
@@ -591,7 +591,7 @@ of whether it was written to
 .Sh STANDARDS
 These library functions conform to FUSE 2.6.
 .Sh HISTORY
-These function has been available since
+These library functions have been available since
 .Ox 7.9 .
 .Sh AUTHORS
 .An Helg Bredow Aq Mt helg@openbsd.org
