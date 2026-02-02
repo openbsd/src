@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1231 2026/02/02 00:10:04 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1232 2026/02/02 05:51:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1316,8 +1316,11 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skwp,
 
 	if (same) {
 		/* pf_state_key_attach might have swapped skw */
-		pf_state_key_unref(sks);
-		st->key[PF_SK_STACK] = sks = pf_state_key_ref(skw);
+		if (skw != sks) {
+			pf_state_key_unref(sks);
+			sks = pf_state_key_ref(skw);
+		}
+		st->key[PF_SK_STACK] = sks;
 	} else if (pf_state_key_attach(sks, st, PF_SK_STACK) == NULL) {
 		pf_state_key_detach(st, PF_SK_WIRE);
 		PF_STATE_EXIT_WRITE();
