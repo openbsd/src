@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.103 2025/06/02 12:29:50 claudio Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.104 2026/02/02 15:20:51 claudio Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -531,6 +531,22 @@ db_kill_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	/* Send uncatchable SIGABRT for coredump */
 	sigabort(p);
+}
+
+void
+db_stop_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+
+	struct process *pr;
+
+	pr = prfind(addr);
+	if (pr == NULL) {
+		db_printf("%ld: No such process", addr);
+		return;
+	}
+
+	/* Send uncatchable SIGSTOP */
+	prsignal(pr, SIGSTOP);
 }
 
 void

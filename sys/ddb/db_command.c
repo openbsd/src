@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.103 2024/11/07 16:02:29 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.104 2026/02/02 15:20:51 claudio Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -667,6 +667,7 @@ const struct db_command db_command_table[] = {
 	{ "machine",	NULL,			0, db_machine_command_table },
 #endif
 	{ "kill",	db_kill_cmd,		0,		NULL },
+	{ "stop",	db_stop_cmd,		0,		NULL },
 	{ "print",	db_print_cmd,		0,		NULL },
 	{ "p",		db_print_cmd,		0,		NULL },
 	{ "pprint",	db_ctf_pprint_cmd,	CS_OWN,		NULL },
