@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.110 2024/12/21 03:10:46 jsg Exp $
+.\"	$OpenBSD: ddb.4,v 1.111 2026/02/02 15:21:28 claudio Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: December 21 2024 $
+.Dd $Mdocdate: February 2 2026 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -540,6 +540,13 @@ command is a synonym for
 .It Ic kill Ar pid
 Send an uncatchable
 .Dv SIGABRT
+signal to the process specified by the
+.Ar pid
+argument.
+.\" --------------------
+.It Ic stop Ar pid
+Send a
+.Dv SIGSTOP
 signal to the process specified by the
 .Ar pid
 argument.
