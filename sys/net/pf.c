@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1234 2026/02/02 06:33:45 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1235 2026/02/02 06:37:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1450,7 +1450,7 @@ pf_find_state_lookup(struct pf_pdesc *pd, const struct pf_state_key_cmp *key,
 			if (pd->dir != PF_IN)
 				continue;
 
-			/* one of the sist keys has to be sk */
+			/* one of the st keys has to be sk */
 		}
 
 		return (st);
