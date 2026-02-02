@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.69 2025/11/27 03:06:59 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.70 2026/02/02 06:23:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -622,7 +622,7 @@ mpw_input(struct ifnet *ifp, struct mbuf *m, struct netstack *ns)
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	/* packet has not been processed by PF yet. */
-	KASSERT(m->m_pkthdr.pf.statekey == NULL);
+	KASSERT(m->m_pkthdr.pf.st == NULL);
 
 #if NBPFILTER > 0
 	if_bpf = sc->sc_bpf;

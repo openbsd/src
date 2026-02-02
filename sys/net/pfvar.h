@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.546 2026/01/15 09:23:37 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.547 2026/02/02 06:23:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2002,9 +2002,8 @@ int			 pf_map_addr(sa_family_t, struct pf_rule *,
 			    struct pf_pool *, enum pf_sn_types);
 int			 pf_postprocess_addr(struct pf_state *);
 
-void			 pf_mbuf_link_state_key(struct mbuf *,
-			    struct pf_state_key *);
-void			 pf_mbuf_unlink_state_key(struct mbuf *);
+void			 pf_mbuf_link_state(struct mbuf *, struct pf_state *);
+void			 pf_mbuf_unlink_state(struct mbuf *);
 void			 pf_mbuf_link_inpcb(struct mbuf *, struct inpcb *);
 void			 pf_mbuf_unlink_inpcb(struct mbuf *);
 

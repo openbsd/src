@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.40 2025/11/28 22:55:21 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.41 2026/02/02 06:23:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -41,11 +41,6 @@
 #include <sys/mutex.h>
 #include <sys/pclock.h>
 #include <sys/percpu.h>
-
-/*
- * Locks used to protect struct members in this file:
- *	L	pf_inp_mtx		link pf to inp mutex
- */
 
 struct pfsync_deferral;
 struct kstat;
@@ -114,8 +109,6 @@ struct pf_state_key {
 
 	RBT_ENTRY(pf_state_key)	 sk_entry;
 	struct pf_statelisthead	 sk_states;
-	struct pf_state_key	*sk_reverse;
-	struct inpcb		*sk_inp;	/* [L] */
 	pf_refcnt_t		 sk_refcnt;
 	u_int8_t		 sk_removed;
 };
@@ -135,7 +128,8 @@ RBT_PROTOTYPE(pf_state_tree, pf_state_key, sk_entry, pf_state_compare_key);
  *	M	pf_state mtx
  *	P	PF_STATE_LOCK
  *	S	pfsync
- *	L	pf_state_list
+ *	L	pf_inp_mtx		link pf to inp mutex
+ *	G	pf_state_list
  *	g	pf_purge gc
  */
 
@@ -147,7 +141,7 @@ struct pf_state {
 
 	TAILQ_ENTRY(pf_state)	 sync_list;	/* [S] */
 	struct pfsync_deferral	*sync_defer;	/* [S] */
-	TAILQ_ENTRY(pf_state)	 entry_list;	/* [L] */
+	TAILQ_ENTRY(pf_state)	 entry_list;	/* [G] */
 	SLIST_ENTRY(pf_state)	 gc_list;	/* [g] */
 	RBT_ENTRY(pf_state)	 entry_id;	/* [P] */
 	struct pf_state_peer	 src;
@@ -160,6 +154,8 @@ struct pf_state {
 	struct pf_sn_head	 src_nodes;	/* [I] */
 	struct pf_state_key	*key[2];	/* [I] stack and wire */
 	struct pfi_kif		*kif;		/* [I] */
+	struct pf_state		*reverse;	/* [M] */
+	struct inpcb		*inp;		/* [L] */
 	struct mutex		 mtx;
 	pf_refcnt_t		 refcnt;
 	u_int64_t		 packets[2];

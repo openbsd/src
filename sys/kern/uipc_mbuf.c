@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.302 2025/08/06 14:00:33 mvs Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.303 2026/02/02 06:23:39 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ m_clearhdr(struct mbuf *m)
 	/* delete all mbuf tags to reset the state */
 	m_tag_delete_chain(m);
 #if NPF > 0
-	pf_mbuf_unlink_state_key(m);
+	pf_mbuf_unlink_state(m);
 	pf_mbuf_unlink_inpcb(m);
 #endif	/* NPF > 0 */
 
@@ -422,7 +422,7 @@ m_free(struct mbuf *m)
 	if (m->m_flags & M_PKTHDR) {
 		m_tag_delete_chain(m);
 #if NPF > 0
-		pf_mbuf_unlink_state_key(m);
+		pf_mbuf_unlink_state(m);
 		pf_mbuf_unlink_inpcb(m);
 #endif	/* NPF > 0 */
 	}
@@ -1380,8 +1380,8 @@ m_dup_pkthdr(struct mbuf *to, struct mbuf *from, int wait)
 	to->m_pkthdr = from->m_pkthdr;
 
 #if NPF > 0
-	to->m_pkthdr.pf.statekey = NULL;
-	pf_mbuf_link_state_key(to, from->m_pkthdr.pf.statekey);
+	to->m_pkthdr.pf.st = NULL;
+	pf_mbuf_link_state(to, from->m_pkthdr.pf.st);
 	to->m_pkthdr.pf.inp = NULL;
 	pf_mbuf_link_inpcb(to, from->m_pkthdr.pf.inp);
 #endif	/* NPF > 0 */
@@ -1511,8 +1511,8 @@ m_print(void *v,
 		    m->m_pkthdr.csum_flags, MCS_BITS);
 		(*pr)("m_pkthdr.ether_vtag: %u\tm_ptkhdr.ph_rtableid: %u\n",
 		    m->m_pkthdr.ether_vtag, m->m_pkthdr.ph_rtableid);
-		(*pr)("m_pkthdr.pf.statekey: %p\tm_pkthdr.pf.inp %p\n",
-		    m->m_pkthdr.pf.statekey, m->m_pkthdr.pf.inp);
+		(*pr)("m_pkthdr.pf.st: %p\tm_pkthdr.pf.inp %p\n",
+		    m->m_pkthdr.pf.st, m->m_pkthdr.pf.inp);
 		(*pr)("m_pkthdr.pf.qid: %u\tm_pkthdr.pf.tag: %u\n",
 		    m->m_pkthdr.pf.qid, m->m_pkthdr.pf.tag);
 		(*pr)("m_pkthdr.pf.flags: %b\n",

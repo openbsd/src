@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.172 2025/10/24 15:09:56 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.173 2026/02/02 06:23:40 dlg Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -109,7 +109,7 @@
  * Protocol input only reads inp_[lf]addr/port during lookup and is safe.
  */
 
-struct pf_state_key;
+struct pf_state;
 
 union inpaddru {
 	struct in_addr iau_addr;
@@ -166,7 +166,7 @@ struct inpcb {
 
 	int	inp_cksum6;
 	struct	icmp6_filter *inp_icmp6filt;
-	struct	pf_state_key *inp_pf_sk; /* [L] */
+	struct	pf_state *inp_pf_st;	/* [L] */
 	struct	mbuf *(*inp_upcall)(void *, struct mbuf *,
 	    struct ip *, struct ip6_hdr *, void *, int, struct netstack *);
 	void	*inp_upcall_arg;
