@@ -2030,6 +2030,7 @@
 ./usr/share/man/man4/qcrng.4
 ./usr/share/man/man4/qcrtc.4
 ./usr/share/man/man4/qcspmi.4
+./usr/share/man/man4/qcuart.4
 ./usr/share/man/man4/qla.4
 ./usr/share/man/man4/qle.4
 ./usr/share/man/man4/qlw.4
