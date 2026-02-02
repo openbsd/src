@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fuse_opt.3,v 1.6 2025/09/23 09:28:28 schwarze Exp $
+.\"	$OpenBSD: fuse_opt.3,v 1.7 2026/02/02 07:14:58 helg Exp $
 .\"
 .\" Copyright (c) Ray Lai <ray@raylai.com>
 .\" Copyright (c) Helg Bredow <helg@openbsd.org>
@@ -15,13 +15,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 23 2025 $
+.Dd $Mdocdate: February 2 2026 $
 .Dt FUSE_OPT 3
 .Os
 .Sh NAME
 .Nm FUSE_ARGS_INIT ,
 .Nm FUSE_OPT_IS_OPT_KEY ,
 .Nm FUSE_OPT_KEY ,
+.Nm FUSE_OPT_END ,
 .Nm fuse_opt_add_arg ,
 .Nm fuse_opt_insert_arg ,
 .Nm fuse_opt_add_opt ,
@@ -47,6 +48,8 @@
 .Fa "const char *templ"
 .Fa "int key"
 .Fc
+.Ft struct fuse_opt
+.Fn FUSE_OPT_END
 .Ft int
 .Fo fuse_opt_add_arg
 .Fa "struct fuse_args *args"
@@ -84,6 +87,13 @@
 .Fa "const struct fuse_opt *opts"
 .Fa "fuse_opt_proc_t proc"
 .Fc
+.Ft typedef int
+.Fo (*fuse_opt_proc_t)
+.Fa "void *data"
+.Fa "const char *arg"
+.Fa "int key"
+.Fa "struct fuse_args *outargs"
+.Fc
 .Sh DESCRIPTION
 These FUSE library functions and macros provide support for complex
 argument and option parsing.
@@ -104,49 +114,6 @@ struct fuse_args {
 .Ed
 .Pp
 .Bl -tag -width Ds -compact
-.It Fn FUSE_OPT_KEY templ key
-returns a
-.Fa struct fuse_opt
-template that matches an argument or option
-.Fa templ
-with option key
-.Fa key .
-This macro is used as an element in
-.Fa struct fuse_opt
-arrays to create a template that is processed by a fuse_opt_proc_t.
-The special constants FUSE_OPT_KEEP and FUSE_OPT_DISCARD can be specified if
-proc does not need to handle this option or argument; proc is not called in
-this case.
-.Pp
-.It Fn FUSE_OPT_IS_OPT_KEY templ
-checks if
-.Fa templ
-is an option key.
-.Pp
-The last element of the
-.Fa opts
-.Ft struct fuse_opt
-option array must be
-.Dv FUSE_OPT_END .
-.Pp
-.Fa proc
-points to a function with the following signature:
-.Ft int (*fuse_opt_proc_t)
-.Fo proc
-.Fa "void *data"
-.Fa "const char *arg"
-.Fa "int key"
-.Fa "struct fuse_args *outargs"
-.Fc
-.Pp
-Special key values:
-.Bd -literal -offset indent
-FUSE_OPT_KEY_OPT	/* no match */
-FUSE_OPT_KEY_NONOPT	/* non-option */
-FUSE_OPT_KEY_KEEP	/* don't process; return 1 */
-FUSE_OPT_KEY_DISCARD	/* don't process; return 0 */
-.Ed
-.Pp
 .It Fn FUSE_ARGS_INIT
 initializes a
 .Ft struct fuse_args
@@ -186,6 +153,64 @@ shifting
 .Fa args->argv
 as needed.
 .Pp
+.It Fn fuse_opt_free_args
+If
+.Fa args
+is allocated, free
+.Fa args->argv
+and zero all members of
+.Fa args .
+Otherwise, do nothing.
+.Pp
+.It Fn FUSE_OPT_KEY templ key
+Return a
+.Fa struct fuse_opt
+template that matches an argument or option
+.Vt templ
+with option key
+.Vt key .
+This macro is used as an element in
+.Fa struct fuse_opt
+arrays to create a template that is processed by a
+.Vt fuse_opt_proc_t .
+The special constants
+.Dv FUSE_OPT_KEY_KEEP
+and
+.Dv FUSE_OPT_KEY_DISCARD
+can be specified for
+.Fa val
+if
+.Fa proc
+does not need to handle this option or argument;
+.Fa proc
+is not called in this case.
+.Bd -literal -offset indent
+struct fuse_opt {
+        const char *templ;	/* template for option */
+        unsigned long off;	/* data offset */
+        int val;		/* key value */
+};
+.Ed
+.Pp
+The following special key values can be used for
+.Fa val :
+.Bd -literal -offset indent
+FUSE_OPT_KEY_OPT	/* no match */
+FUSE_OPT_KEY_NONOPT	/* non-option */
+FUSE_OPT_KEY_KEEP	/* don't process; return 1 */
+FUSE_OPT_KEY_DISCARD	/* don't process; return 0 */
+.Ed
+.It Fn FUSE_OPT_END
+The last element of each
+.Fa "struct fuse_opt *opts"
+array passed to any function must be
+.Dv FUSE_OPT_END .
+.Pp
+.It Fn FUSE_OPT_IS_OPT_KEY templ
+Check whether
+.Fa templ
+is an option key.
+.Pp
 .It Fn fuse_opt_add_opt
 adds an option
 .Fa opt
@@ -206,13 +231,6 @@ characters in
 before adding it to
 .Fa opts .
 .Pp
-.It Fn fuse_opt_free_args
-frees
-.Fa args->argv
-if it was allocated
-.Fa args
-and initializes everything to 0.
-.Pp
 .It Fn fuse_opt_match
 tests if the argument or option
 .Fa opt
@@ -232,41 +250,75 @@ is not
 .Dv NULL ,
 then this is called for any argument that matches a template
 that has
-.Fa val
-= FUSE_OPT_KEY.
+.Fa offset No = Dv FUSE_OPT_KEY_OPT .
 .Fa opts
 is an array of
 .Ft struct fuse_opt ,
 each of which describes actions for each option:
-.Bd -literal -offset indent
-struct fuse_opt {
-        const char *templ;	/* template for option */
-        unsigned long off;	/* data offset */
-        int val;		/* key value */
-};
+.Pp
+The following templates are supported as options and must be preceeded by
+.Fl o
+in the list of arguments, with or without a space between
+.Fl o
+and the option.
+If multiple options are specified they can be comma separated or specified
+individually with
+.Fl o
+each time.
+For example, these are all valid:
+.Bd -unfilled -offset indent
+.Fl o Ar foo
+.Sm off
+.Fl o Ar bar
+.Fl o Ar foo , bar
+.Sm on
 .Ed
 .Pp
-The following templates are supported.
-foo=
+foo matches exactly
+.Pp
+foo= matches exactly
+.Pp
+foo=bar matches the option exactly (treated the same as if it didn't have an =).
 .Pp
 foo=%u %u can be any format that can be parsed by
 .Fn sscanf 3 .
 If this is %s then a copy of the string is allocated.
-foo=bar matches the option exactly (treated the same as if it didn't have an =).
 .Pp
-foo matches exactly
+Arguments
 .Pp
--b or --bar matches the argument
-"-b " or "--bar " (trailing space) argument expects a value, that is passed to
+-b or --bar matches the argument and sets the value of the struct at offset
+to key.
+.Pp
+.Qq Fl b Ns \ \&
+or
+.Qq Fl \-bar Ns \ \&
+(trailing space) argument expects a value, the whole argument,
+including -b, is passed to
 .Fa proc
 .Pp
--b %u or:w
- --bar %u Treated the same as foo=%u above
+.Qq Fl b Ar %u
+or
+.Qq Fl \-bar Ar %u
+is treated the same as foo=%u above
 .Pp
 Each argument or option is matched against every template.
 This allows more than one member of
 .Fa data
 to be set by a single argument or option (see example for gid below).
+.Pp
+.It Fn fuse_opt_proc_t
+The fuse_opt_proc_t function takes the following arguments.
+.Bl -tag -width Ds
+.It Fa data
+data argument passed to
+.Fn fuse_opt_parse
+.It Fa arg
+the whole argument or option
+.It Fa key
+is the key defined with the option or one of the special keys.
+.It Fa outargs
+The current list of arguments
+.El
 .El
 .Sh RETURN VALUES
 .Fn fuse_opt_add_arg ,
@@ -275,10 +327,75 @@ to be set by a single argument or option (see example for gid below).
 .Fn fuse_opt_add_opt_escaped ,
 and
 .Fn fuse_opt_parse
-return 0 on success or -1 on error.
+return 0 on success or \-1 on error.
 .Pp
 .Fn fuse_opt_match
 returns 1 on match or 0 if no match.
+.Sh EXAMPLES
+.Bd -literal
+#include <err.h>
+#include <fuse.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+enum {
+	KEY_FOO
+};
+
+struct foo_config {
+	char *foo;
+	int bar;
+	gid_t gid;
+	int set_gid;
+	int toggle;
+};
+
+#define FOO_OPT(t, m) {t, offsetof(struct foo_config, m), 1}
+
+struct fuse_opt opts[] = {
+	FUSE_OPT_KEY("--foo ", KEY_FOO),/* passed to foo_opt_proc() */
+	FOO_OPT("-b", bar),		/* set to 1 if present */
+	FOO_OPT("toggle", toggle),	/* set to 1 if present */
+	FOO_OPT("gid=", set_gid),	/* set to 1 if present */
+	FOO_OPT("gid=%u", gid),		/* set to parsed value of %u */
+	FUSE_OPT_END
+};
+
+int
+foo_opt_proc(void *data, const char *val, int key, struct fuse_args *args)
+{
+	struct foo_config *conf = data;
+
+	switch(key)
+	{
+	case KEY_FOO:
+		conf->foo = strdup(val);
+		return (0); /* discard */
+	}
+
+	/* didn't process, so keep the option */
+	return (1);
+}
+
+int
+main(int argc, char *argv[])
+{
+	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
+	struct foo_config config;
+
+	memset(&config, 0, sizeof(config));
+	if (fuse_opt_parse(&args, &config, opts, foo_opt_proc) == -1)
+		err(1, "Usage: prog [foo=value] [-b] "
+		    "[-o [gid=value],[toggle]]");
+
+	printf("foo=%s\en", config.foo);
+	printf("toggle=%d\en", config.toggle);
+	printf("bar=%d\en", config.bar);
+	printf("set_gid=%d\en", config.set_gid);
+	printf("gid=%u\en", config.gid);
+}
+.Ed
 .Sh ERRORS
 .Fn fuse_opt_add_arg ,
 .Fn fuse_opt_insert_arg ,
@@ -296,9 +413,9 @@ These functions first appeared in
 .Ox 5.4 .
 .Sh AUTHORS
 .An Sylvestre Gallon Aq Mt ccna.syl@gmail.com
-.An Helg Bredow Aq Mt xx404@msn.com
+.An Helg Bredow Aq Mt helg@openbsd.org
 .Pp
 This manual was written by
 .An Ray Lai Aq Mt ray@raylai.com
 and updated by
-.An Helg Bredow Aq Mt xx404@msn.com
+.An Helg Bredow Aq Mt helg@openbsd.org
