@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.97 2026/01/05 21:07:12 kettenis Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.98 2026/02/02 16:59:58 gnezdo Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -16084,6 +16084,21 @@ qwx_dp_tx_complete_msdu(struct qwx_softc *sc, struct dp_tx_ring *tx_ring,
 			tx_data->ni->ni_txrate = rateidx;
 	} else if (pkt_type == HAL_TX_RATE_STATS_PKT_TYPE_11N)
 		tx_data->ni->ni_txmcs = mcs;
+
+	/*
+	 * Update RSSI from ACK frames. The ack_rssi field contains
+	 * the signal strength of received ACK frames. If hardware
+	 * supports dB to dBm conversion, the value is already in dBm.
+	 * Otherwise, add the noise floor to convert from dB to dBm.
+	 */
+	if (ts->status == HAL_WBM_TQM_REL_REASON_FRAME_ACKED &&
+	    ts->ack_rssi != 0) {
+		int8_t rssi_dbm = (int8_t)ts->ack_rssi;
+		if (!isset(sc->wmi.svc_map,
+		    WMI_TLV_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT))
+			rssi_dbm += ATH11K_DEFAULT_NOISE_FLOOR;
+		tx_data->ni->ni_rssi = rssi_dbm;
+	}
 
 	ieee80211_release_node(ic, tx_data->ni);
 	tx_data->ni = NULL;
