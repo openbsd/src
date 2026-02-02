@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.19 2026/01/22 11:53:31 helg Exp $
+#	$OpenBSD: Makefile,v 1.20 2026/02/02 09:17:06 helg Exp $
 
 LIB=	fuse
 MAN=	fuse_chan_fd.3 fuse_daemonize.3 fuse_destroy.3 fuse_get_context.3 \
 	fuse_get_session.3 fuse_loop.3 fuse_main.3 fuse_mount.3 fuse_new.3 \
 	fuse_opt.3 fuse_parse_cmdline.3 fuse_set_signal_handlers.3 \
-	fuse_setup.3 fuse_teardown.3 fuse_version.3
+	fuse_setup.3 fuse_teardown.3 fuse_version.3 fuse_session_loop.3 \
+	fuse_lowlevel_new.3 fuse_reply_err.3
 
 CFLAGS+=	-Wall -Wshadow -Wmissing-prototypes
 CFLAGS+=	-Wstrict-prototypes -Wsign-compare
