@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1230 2026/01/07 13:50:05 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1231 2026/02/02 00:10:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5451,7 +5451,7 @@ csfailed:
 			}
 
 			TAILQ_REMOVE(list, pfl, pfl_link);
-			PF_STATE_ASSERT_LOCKED();
+			PF_ASSERT_LOCKED();
 			pool_put(&pf_state_link_pl, pfl);
 		}
 
