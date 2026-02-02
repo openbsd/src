@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.65 2025/08/01 08:40:25 mvs Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.66 2026/02/02 00:04:32 jsg Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -330,6 +330,7 @@ again:
 		    semaptr->sem_perm.seq != IPCID_TO_SEQ(semid) ||
 		    semaptr->sem_nsems != nsems) {
 			free(semval, M_TEMP, nsems * sizeof(arg.array[0]));
+			semval = NULL;
 			goto again;
 		}
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
@@ -382,6 +383,7 @@ again:
 		    semaptr->sem_perm.seq != IPCID_TO_SEQ(semid) ||
 		    semaptr->sem_nsems != nsems) {
 			free(semval, M_TEMP, nsems * sizeof(arg.array[0]));
+			semval = NULL;
 			goto again;
 		}
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
