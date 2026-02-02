@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.47 2024/10/12 08:13:52 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.48 2026/02/02 10:08:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -29,19 +29,6 @@
  * Set of paste buffers. Note that paste buffer data is not necessarily a C
  * string!
  */
-
-struct paste_buffer {
-	char		*data;
-	size_t		 size;
-
-	char		*name;
-	time_t		 created;
-	int		 automatic;
-	u_int		 order;
-
-	RB_ENTRY(paste_buffer) name_entry;
-	RB_ENTRY(paste_buffer) time_entry;
-};
 
 static u_int	paste_next_index;
 static u_int	paste_next_order;
