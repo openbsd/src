@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.185 2025/06/18 16:15:46 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.186 2026/02/02 09:08:31 tb Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1496,7 +1496,7 @@ inpcb_dump(u_long off, short protocol, int af)
 	p("%u", inp_ip_minttl, "\n ");
 	p("%d", inp_cksum6, "\n ");
 	pp("%p", inp_icmp6filt, "\n ");
-	pp("%p", inp_pf_sk, "\n ");
+	pp("%p", inp_pf_st, "\n ");
 	p("%u", inp_rtableid, "\n ");
 	p("%d", inp_pipex, "\n");
 #undef	p
