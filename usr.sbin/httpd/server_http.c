@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.157 2025/12/20 23:12:53 tb Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.158 2026/02/02 13:37:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -660,7 +660,8 @@ server_read_httpchunks(struct bufferevent *bev, void *arg)
 		goto done;
 	if (EVBUFFER_LENGTH(src))
 		bev->readcb(bev, arg);
-	bufferevent_enable(bev, EV_READ);
+	else
+		bufferevent_enable(bev, EV_READ);
 	return;
 
  done:
