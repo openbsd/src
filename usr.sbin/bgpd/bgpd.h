@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.529 2025/12/29 07:48:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.530 2026/02/03 12:25:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1583,7 +1583,8 @@ int	pftable_commit(void);
 void	filterset_free(struct filter_set_head *);
 int	filterset_cmp(struct filter_set *, struct filter_set *);
 void	filterset_move(struct filter_set_head *, struct filter_set_head *);
-void	filterset_copy(struct filter_set_head *, struct filter_set_head *);
+void	filterset_copy(const struct filter_set_head *,
+	    struct filter_set_head *);
 const char	*filterset_name(enum action_types);
 int	filterset_send(struct imsgbuf *, struct filter_set_head *);
 void	filterset_recv(struct imsg *, struct filter_set_head *);

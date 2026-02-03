@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.680 2025/12/29 07:48:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.681 2026/02/03 12:25:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -71,7 +71,6 @@ void		 rde_dump_ctx_throttle(pid_t, int);
 void		 rde_dump_ctx_terminate(pid_t);
 void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
 
-int		 rde_l3vpn_import(struct rde_community *, struct l3vpn *);
 static void	 rde_commit_pftable(void);
 void		 rde_reload_done(void);
 static void	 rde_softreconfig_in_done(void *, uint8_t);
@@ -3446,18 +3445,6 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 /*
  * kroute specific functions
  */
-int
-rde_l3vpn_import(struct rde_community *comm, struct l3vpn *rd)
-{
-	struct filter_set	*s;
-
-	TAILQ_FOREACH(s, &rd->import, entry) {
-		if (community_match(comm, &s->action.community, 0))
-			return (1);
-	}
-	return (0);
-}
-
 void
 rde_send_kroute_flush(struct rib *rib)
 {

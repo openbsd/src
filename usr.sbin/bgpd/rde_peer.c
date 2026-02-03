@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.65 2025/12/28 17:52:44 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.66 2026/02/03 12:25:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -182,7 +182,8 @@ peer_add(uint32_t id, struct peer_config *p_conf, struct filter_head *rules)
 		fatal(NULL);
 
 	adjout_peer_init(peer);
-	peer_apply_out_filter(peer, rules);
+	if (peer_apply_out_filter(peer, rules) != NULL)
+		fatalx("peer add: peer_apply_out_filter failed");
 
 	/*
 	 * Assign an even random unique transmit path id.
@@ -223,11 +224,7 @@ peer_apply_out_filter(struct rde_peer *peer, struct filter_head *rules)
 		if (rde_filter_skip_rule(peer, fr))
 			continue;
 
-		if ((new = malloc(sizeof(*new))) == NULL)
-			fatal(NULL);
-		memcpy(new, fr, sizeof(*new));
-		filterset_copy(&fr->set, &new->set);
-
+		new = rde_filter_dup(fr);
 		TAILQ_INSERT_TAIL(peer->out_rules, new, entry);
 	}
 

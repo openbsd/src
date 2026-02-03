@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.338 2026/02/03 10:10:35 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.339 2026/02/03 12:25:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -548,6 +548,8 @@ void		 prefix_evaluate_nexthop(struct prefix *, enum nexthop_state,
 /* rde_filter.c */
 void	rde_apply_set(struct filter_set_head *, struct rde_peer *,
 	    struct rde_peer *, struct filterstate *, u_int8_t);
+int	 rde_l3vpn_import(struct rde_community *, struct l3vpn *);
+struct filter_rule     *rde_filter_dup(const struct filter_rule *);
 void	rde_filterstate_init(struct filterstate *);
 void	rde_filterstate_prep(struct filterstate *, struct prefix *);
 void	rde_filterstate_copy(struct filterstate *, struct filterstate *);

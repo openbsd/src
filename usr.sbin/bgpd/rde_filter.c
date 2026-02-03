@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.138 2025/12/03 14:16:21 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.139 2026/02/03 12:25:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -167,6 +167,18 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 			fatalx("unexpected filter action in RDE");
 		}
 	}
+}
+
+int
+rde_l3vpn_import(struct rde_community *comm, struct l3vpn *rd)
+{
+	struct filter_set	*s;
+
+	TAILQ_FOREACH(s, &rd->import, entry) {
+		if (community_match(comm, &s->action.community, 0))
+			return (1);
+	}
+	return (0);
 }
 
 /* return 1 when prefix matches filter_prefix, 0 if not */
@@ -411,6 +423,18 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b)
 	return (1);
 }
 
+struct filter_rule *
+rde_filter_dup(const struct filter_rule *fr)
+{
+	struct filter_rule *new;
+
+	if ((new = malloc(sizeof(*new))) == NULL)
+		fatal(NULL);
+	*new = *fr;
+	filterset_copy(&fr->set, &new->set);
+	return new;
+}
+
 void
 rde_filterstate_init(struct filterstate *state)
 {
@@ -563,7 +587,8 @@ filterset_move(struct filter_set_head *source, struct filter_set_head *dest)
  * copy filterset from source to dest. dest will be initialized first.
  */
 void
-filterset_copy(struct filter_set_head *source, struct filter_set_head *dest)
+filterset_copy(const struct filter_set_head *source,
+    struct filter_set_head *dest)
 {
 	struct filter_set	*s, *t;
 
