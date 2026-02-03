@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.80 2026/01/28 08:28:34 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.81 2026/02/03 16:21:37 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -152,7 +152,7 @@ parse_load_cert(char *uri)
 		goto done;
 	}
 
-	cert = cert_parse(uri, f, flen);
+	cert = cert_parse_filemode(uri, f, flen);
 	free(f);
 
 	if (cert == NULL)
@@ -511,7 +511,7 @@ proc_parser_file(char *file, unsigned char *in_buf, size_t len)
 		ccr_print(ccr);
 		break;
 	case RTYPE_CER:
-		cert = cert_parse(file, buf, len);
+		cert = cert_parse_filemode(file, buf, len);
 		if (cert == NULL)
 			break;
 		is_ta = (cert->purpose == CERT_PURPOSE_TA);

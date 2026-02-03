@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.223 2026/01/29 09:52:41 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.224 2026/02/03 16:21:37 tb Exp $ */
 /*
  * Copyright (c) 2022,2025 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1951,16 +1951,16 @@ cert_parse_ca_or_brk(const char *fn, const unsigned char *der, size_t len)
 }
 
 /*
- * Parse and partially validate an RPKI X509 certificate (either a trust
- * anchor or a certificate) as defined in RFC 6487.
+ * Parse and partially validate an RPKI X.509 certificate as defined in RFC 6487
+ * from its DER encoding. This is intended to be used only from filemode.
  * Returns the parse results or NULL on failure.
  */
 struct cert *
-cert_parse(const char *fn, const unsigned char *der, size_t len)
+cert_parse_filemode(const char *fn, const unsigned char *der, size_t len)
 {
 	struct cert		*cert = NULL;
 
-	/* just fail for empty buffers, the warning was printed elsewhere */
+	/* Handle possible load_file() failure. Currently used by regress. */
 	if (der == NULL)
 		return NULL;
 
