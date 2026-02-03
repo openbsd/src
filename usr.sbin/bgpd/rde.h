@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.337 2025/12/28 17:52:44 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.338 2026/02/03 10:10:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -495,9 +495,9 @@ aspath_origin(struct aspath *aspath)
 int	community_match(struct rde_community *, struct community *,
 	    struct rde_peer *);
 int	community_count(struct rde_community *, uint8_t type);
-int	community_set(struct rde_community *, struct community *,
+int	community_set(struct rde_community *, const struct community *,
 	    struct rde_peer *);
-void	community_delete(struct rde_community *, struct community *,
+void	community_delete(struct rde_community *, const struct community *,
 	    struct rde_peer *);
 
 int	community_add(struct rde_community *, int, struct ibuf *);
@@ -740,7 +740,7 @@ void		 nexthop_modify(struct nexthop *, enum action_types, uint8_t,
 void		 nexthop_link(struct prefix *);
 void		 nexthop_unlink(struct prefix *);
 void		 nexthop_update(struct kroute_nexthop *);
-struct nexthop	*nexthop_get(struct bgpd_addr *);
+struct nexthop	*nexthop_get(const struct bgpd_addr *);
 struct nexthop	*nexthop_ref(struct nexthop *);
 int		 nexthop_unref(struct nexthop *);
 

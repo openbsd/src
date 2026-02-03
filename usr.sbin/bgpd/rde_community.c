@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.22 2025/12/16 15:38:55 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.23 2026/02/03 10:10:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -59,7 +59,7 @@ apply_flag(uint32_t in, uint8_t flag, struct rde_peer *peer, uint32_t *out,
 }
 
 static int
-fc2c(struct community *fc, struct rde_peer *peer, struct community *c,
+fc2c(const struct community *fc, struct rde_peer *peer, struct community *c,
     struct community *m)
 {
 	int type;
@@ -218,7 +218,7 @@ mask_match(struct community *a, struct community *b, struct community *m)
  * Insert a community keeping the list sorted. Don't add if already present.
  */
 static void
-insert_community(struct rde_community *comm, struct community *c)
+insert_community(struct rde_community *comm, const struct community *c)
 {
 	int l;
 	int r;
@@ -339,8 +339,8 @@ community_count(struct rde_community *comm, uint8_t type)
  * Insert a community, expanding local-as and neighbor-as if needed.
  */
 int
-community_set(struct rde_community *comm, struct community *fc,
-struct rde_peer *peer)
+community_set(struct rde_community *comm, const struct community *fc,
+    struct rde_peer *peer)
 {
 	struct community set;
 
@@ -378,8 +378,8 @@ struct rde_peer *peer)
  * neighbor-as and also mask of bits to support partial matches.
  */
 void
-community_delete(struct rde_community *comm, struct community *fc,
-struct rde_peer *peer)
+community_delete(struct rde_community *comm, const struct community *fc,
+    struct rde_peer *peer)
 {
 	struct community test, mask;
 	struct community *match;

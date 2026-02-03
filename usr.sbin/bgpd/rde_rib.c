@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.287 2025/12/28 17:52:44 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.288 2026/02/03 10:10:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1190,7 +1190,7 @@ prefix_free(struct prefix *p)
 /*
  * nexthop functions
  */
-struct nexthop		*nexthop_lookup(struct bgpd_addr *);
+static struct nexthop		*nexthop_lookup(const struct bgpd_addr *);
 
 /*
  * In BGP there exist two nexthops: the exit nexthop which was announced via
@@ -1386,7 +1386,7 @@ nexthop_unlink(struct prefix *p)
 }
 
 struct nexthop *
-nexthop_get(struct bgpd_addr *nexthop)
+nexthop_get(const struct bgpd_addr *nexthop)
 {
 	struct nexthop	*nh;
 
@@ -1475,8 +1475,8 @@ nexthop_cmp(struct nexthop *na, struct nexthop *nb)
 	return (-1);
 }
 
-struct nexthop *
-nexthop_lookup(struct bgpd_addr *nexthop)
+static struct nexthop *
+nexthop_lookup(const struct bgpd_addr *nexthop)
 {
 	struct nexthop	needle = { 0 };
 
