@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.483 2025/09/23 08:00:48 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.484 2026/02/03 20:05:07 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -100,6 +100,7 @@
 #include <netinet/tcp_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+#include <netinet/ip_divert.h>
 #include <netinet6/ip6_var.h>
 
 #ifdef DDB
@@ -1768,6 +1769,12 @@ do {									\
 			FILLINPTABLE(&rawcbtable);
 #ifdef INET6
 			FILLINPTABLE(&rawin6pcbtable);
+#endif
+#if NPF > 0
+			FILLINPTABLE(&divbtable);
+#ifdef INET6
+			FILLINPTABLE(&divb6table);
+#endif
 #endif
 		}
 		fp = NULL;
