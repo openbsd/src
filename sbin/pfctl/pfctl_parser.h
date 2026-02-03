@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.122 2025/11/11 04:06:20 dlg Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.123 2026/02/03 10:25:28 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -278,7 +278,7 @@ void	print_pool(struct pf_pool *, u_int16_t, u_int16_t, sa_family_t, int, int);
 void	print_src_node(struct pf_src_node *, int);
 void	print_statelim(const struct pfioc_statelim *);
 void	print_sourcelim(const struct pfioc_sourcelim *);
-void	print_rule(struct pf_rule *, const char *, int);
+void	print_rule(struct pfctl *pf, struct pf_rule *, const char *, int);
 void	print_tabledef(const char *, int, int, struct node_tinithead *);
 void	print_status(struct pf_status *, struct pfctl_watermarks *, int);
 void	print_queuespec(struct pf_queuespec *);

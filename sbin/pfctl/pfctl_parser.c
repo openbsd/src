@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.356 2026/01/07 13:50:05 sashan Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.357 2026/02/03 10:25:28 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -719,7 +719,7 @@ print_src_node(struct pf_src_node *sn, int opts)
 void
 print_statelim(const struct pfioc_statelim *ioc)
 {
-	printf("state limiter %s id %u limit %u",
+	printf("state limiter \"%s\" id %u limit %u",
 	    ioc->name, ioc->id, ioc->limit);
 	if (ioc->rate.limit != 0)
 		printf(" rate %u/%u", ioc->rate.limit, ioc->rate.seconds);
@@ -730,7 +730,7 @@ print_statelim(const struct pfioc_statelim *ioc)
 void
 print_sourcelim(const struct pfioc_sourcelim *ioc)
 {
-	printf("source limiter %s id %u limit %u states %u",
+	printf("source limiter \"%s\" id %u entries %u limit %u",
 	    ioc->name, ioc->id, ioc->entries, ioc->limit);
 	if (ioc->rate.limit != 0)
 		printf(" rate %u/%u", ioc->rate.limit, ioc->rate.seconds);
@@ -749,7 +749,8 @@ print_sourcelim(const struct pfioc_sourcelim *ioc)
 }
 
 void
-print_rule(struct pf_rule *r, const char *anchor_call, int opts)
+print_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call,
+    int opts)
 {
 	static const char *actiontypes[] = { "pass", "block", "scrub",
 	    "no scrub", "nat", "no nat", "binat", "no binat", "rdr", "no rdr",
@@ -881,7 +882,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 			printf(" proto %u", r->proto);
 	}
 	print_fromto(&r->src, r->os_fingerprint, &r->dst, r->af, r->proto,
-	    opts);
+	    pf->opts | opts);
 	if (r->rcv_ifname[0])
 		printf(" %sreceived-on %s", r->rcvifnot ? "!" : "",
 		    r->rcv_ifname);
@@ -1001,30 +1002,26 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 		printf(" probability %s%%", buf);
 	}
 	if (r->statelim.id != PF_STATELIM_ID_NONE) {
-#if 0 /* XXX need pf to find statelims */
-		struct pfctl_statelim *stlim =
-		    pfctl_get_statelim_id(pf, r->statelim);
-
-		if (stlim != NULL)
-			printf(" state limiter %s", stlim->ioc.name);
+		const char *nm = pfctl_statelim_id2name(pf, r->statelim.id);
+		printf(" state limiter");
+		if (nm[0] != '\0')
+			printf(" \"%s\"", nm);
 		else
-#endif
-			printf(" state limiter id %u (%s)", r->statelim.id,
-			    (r->statelim.limiter_action == PF_LIMITER_BLOCK) ?
-				"block" : "no-match");
+			printf(" id %u", r->statelim.id);
+		printf(" (%s)",
+		    (r->statelim.limiter_action == PF_LIMITER_BLOCK) ?
+			"block" : "no-match");
 	}
 	if (r->sourcelim.id != PF_SOURCELIM_ID_NONE) {
-#if 0 /* XXX need pf to find sourcelims */
-		struct pfctl_sourcelim *srlim =
-		    pfctl_get_sourcelim_id(pf, r->sourcelim);
-
-		if (srlim != NULL)
-			printf(" source limiter %s", srlim->ioc.name);
+		const char *nm = pfctl_sourcelim_id2name(pf, r->sourcelim.id);
+		printf(" source limiter");
+		if (nm[0] != '\0')
+			printf(" \"%s\"", nm);
 		else
-#endif
-			printf(" source limiter id %u (%s)", r->sourcelim.id,
-			    (r->sourcelim.limiter_action == PF_LIMITER_BLOCK) ?
-				"block" : "no-match");
+			printf(" id %u", r->sourcelim.id);
+		printf(" (%s)",
+		    (r->sourcelim.limiter_action == PF_LIMITER_BLOCK) ?
+			"block" : "no-match");
 	}
 	if (ropts) {
 		printf(" (");

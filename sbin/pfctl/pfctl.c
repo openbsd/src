@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.399 2025/11/11 04:06:20 dlg Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.400 2026/02/03 10:25:28 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -93,7 +93,8 @@ int	 pfctl_set_synflwats(struct pfctl *, u_int32_t, u_int32_t);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_statelims(int, enum pfctl_show);
 int	 pfctl_show_sourcelims(int, enum pfctl_show, int, const char *);
-int	 pfctl_show_rules(int, char *, int, enum pfctl_show, char *, int, int,
+void	 pfctl_init_show_rules(struct pfctl *, int, int);
+int	 pfctl_show_rules(struct pfctl *, char *, enum pfctl_show, char *, int, int,
 	    long);
 int	 pfctl_show_src_nodes(int, int);
 int	 pfctl_show_states(int, const char *, int, long);
@@ -896,6 +897,28 @@ pfctl_print_title(char *title)
 	printf("%s\n", title);
 }
 
+const char *
+pfctl_statelim_id2name(struct pfctl *pf, u_int8_t id)
+{
+	struct pfctl_statelim *stlim;
+
+	stlim = pfctl_get_statelim_id(pf, id);
+	if (stlim == NULL) {
+		stlim = malloc(sizeof(struct pfctl_statelim));
+		if (stlim == NULL)
+			err(1, NULL);
+		memset(stlim, 0, sizeof(struct pfctl_statelim));
+		stlim->ioc.id = id;
+		if (ioctl(pf->dev, DIOCGETSTATELIM, &stlim->ioc) == -1) {
+			if (errno != ESRCH)
+				err(1, "DIOCGETSTATELIM %u", id);
+		}
+		pfctl_add_statelim(pf, stlim);
+	}
+
+	return stlim->ioc.name;
+}
+
 int
 pfctl_show_statelims(int dev, enum pfctl_show format)
 {
@@ -1050,6 +1073,28 @@ pfctl_show_sources(int dev, const struct pfioc_sourcelim *srlim,
 	return (0);
 }
 
+const char *
+pfctl_sourcelim_id2name(struct pfctl *pf, u_int8_t id)
+{
+	struct pfctl_sourcelim *srlim;
+
+	srlim = pfctl_get_sourcelim_id(pf, id);
+	if (srlim == NULL) {
+		srlim = malloc(sizeof(struct pfctl_sourcelim));
+		if (srlim == NULL)
+			err(1, NULL);
+		memset(srlim, 0, sizeof(struct pfctl_sourcelim));
+		srlim->ioc.id = id;
+		if (ioctl(pf->dev, DIOCGETSOURCELIM, &srlim->ioc) == -1) {
+			if (errno != ESRCH)
+				err(1, "DIOCGETSTATELIM %u", id);
+		}
+		pfctl_add_sourcelim(pf, srlim);
+	}
+
+	return srlim->ioc.name;
+}
+
 int
 pfctl_show_sourcelims(int dev, enum pfctl_show format, int opts,
     const char *idopt)
@@ -1167,8 +1212,20 @@ pfctl_kill_source(int dev, const char *idopt, const char *source, int opts)
 	}
 }
 
+void
+pfctl_init_show_rules(struct pfctl *pf, int dev, int opts)
+{
+	memset(pf, 0, sizeof(*pf));
+	pf->dev = dev;
+	pf->opts = opts;
+	RBT_INIT(pfctl_statelim_ids, &pf->statelim_ids);
+	RBT_INIT(pfctl_statelim_nms, &pf->statelim_nms);
+	RBT_INIT(pfctl_sourcelim_ids, &pf->sourcelim_ids);
+	RBT_INIT(pfctl_sourcelim_nms, &pf->sourcelim_nms);
+}
+
 int
-pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
+pfctl_show_rules(struct pfctl *pf, char *path, enum pfctl_show format,
     char *anchorname, int depth, int wildcard, long shownr)
 {
 	struct pfioc_rule pr;
@@ -1182,10 +1239,10 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 	}
 
 	if (anchorname[0] == '\0') {
-		ret = pfctl_show_statelims(dev, format);
+		ret = pfctl_show_statelims(pf->dev, format);
 		if (ret != 0)
 			goto error;
-		ret = pfctl_show_sourcelims(dev, format, opts, NULL);
+		ret = pfctl_show_sourcelims(pf->dev, format, pf->opts, NULL);
 		if (ret != 0)
 			goto error;
 	}
@@ -1214,9 +1271,9 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 	}
 
 	memcpy(pr.anchor, npath, sizeof(pr.anchor));
-	if (opts & PF_OPT_SHOWALL) {
+	if (pf->opts & PF_OPT_SHOWALL) {
 		pr.rule.action = PF_PASS;
-		if (ioctl(dev, DIOCGETRULES, &pr) == -1) {
+		if (ioctl(pf->dev, DIOCGETRULES, &pr) == -1) {
 			warnx("%s", pf_strerror(errno));
 			ret = -1;
 			goto error;
@@ -1227,17 +1284,17 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		else if (format == PFCTL_SHOW_LABELS && labels)
 			pfctl_print_title("LABEL COUNTERS:");
 	}
-	if (opts & PF_OPT_CLRRULECTRS)
+	if (pf->opts & PF_OPT_CLRRULECTRS)
 		pr.action = PF_GET_CLR_CNTR;
 
 	pr.rule.action = PF_PASS;
-	if (ioctl(dev, DIOCGETRULES, &pr) == -1) {
+	if (ioctl(pf->dev, DIOCGETRULES, &pr) == -1) {
 		warnx("%s", pf_strerror(errno));
 		ret = -1;
 		goto error;
 	}
 
-	while (ioctl(dev, DIOCGETRULE, &pr) != -1) {
+	while (ioctl(pf->dev, DIOCGETRULE, &pr) != -1) {
 		if (shownr != -1 && shownr != pr.nr)
 			continue;
 
@@ -1248,7 +1305,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		switch (format) {
 		case PFCTL_SHOW_LABELS:
 			if (pr.rule.label[0]) {
-				INDENT(depth, !(opts & PF_OPT_VERBOSE));
+				INDENT(depth, !(pf->opts & PF_OPT_VERBOSE));
 				printf("%s %llu %llu %llu %llu"
 				    " %llu %llu %llu %llu\n",
 				    pr.rule.label,
@@ -1265,10 +1322,10 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 			}
 			break;
 		case PFCTL_SHOW_RULES:
-			if (pr.rule.label[0] && (opts & PF_OPT_SHOWALL))
+			if (pr.rule.label[0] && (pf->opts & PF_OPT_SHOWALL))
 				labels = 1;
-			INDENT(depth, !(opts & PF_OPT_VERBOSE));
-			print_rule(&pr.rule, pr.anchor_call, opts);
+			INDENT(depth, !(pf->opts & PF_OPT_VERBOSE));
+			print_rule(pf, &pr.rule, pr.anchor_call, pf->opts);
 
 			/*
 			 * If this is an 'unnamed' brace notation anchor OR
@@ -1278,20 +1335,21 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		        if (pr.anchor_call[0] &&
 			    (((p = strrchr(pr.anchor_call, '/')) ?
 			    p[1] == '_' : pr.anchor_call[0] == '_') ||
-			    opts & PF_OPT_RECURSE)) {
+			    pf->opts & PF_OPT_RECURSE)) {
 				printf(" {\n");
-				pfctl_print_rule_counters(&pr.rule, opts);
-				pfctl_show_rules(dev, npath, opts, format,
+				pfctl_print_rule_counters(&pr.rule, pf->opts);
+				pfctl_show_rules(pf, npath, format,
 				    pr.anchor_call, depth + 1,
 				    pr.rule.anchor_wildcard, -1);
-				INDENT(depth, !(opts & PF_OPT_VERBOSE));
+				INDENT(depth, !(pf->opts & PF_OPT_VERBOSE));
 				printf("}\n");
 			} else {
 				if ((pr.rule.rule_flag & PFRULE_EXPIRED) &&
-				    !(opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG)))
+				    !(pf->opts &
+					(PF_OPT_VERBOSE2|PF_OPT_DEBUG)))
 					break;
 				printf("\n");
-				pfctl_print_rule_counters(&pr.rule, opts);
+				pfctl_print_rule_counters(&pr.rule, pf->opts);
 			}
 			break;
 		case PFCTL_SHOW_NOTHING:
@@ -1310,25 +1368,25 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 	 * If this anchor was called with a wildcard path, go through
 	 * the rulesets in the anchor rather than the rules.
 	 */
-	if (wildcard && (opts & PF_OPT_RECURSE)) {
+	if (wildcard && (pf->opts & PF_OPT_RECURSE)) {
 		struct pfioc_ruleset	 prs;
 		u_int32_t		 mnr, nr;
 
 		memset(&prs, 0, sizeof(prs));
 		memcpy(prs.path, npath, sizeof(prs.path));
-		if (ioctl(dev, DIOCGETRULESETS, &prs) == -1)
+		if (ioctl(pf->dev, DIOCGETRULESETS, &prs) == -1)
 			errx(1, "%s", pf_strerror(errno));
 		mnr = prs.nr;
 
 		for (nr = 0; nr < mnr; ++nr) {
 			prs.nr = nr;
-			if (ioctl(dev, DIOCGETRULESET, &prs) == -1)
+			if (ioctl(pf->dev, DIOCGETRULESET, &prs) == -1)
 				errx(1, "%s", pf_strerror(errno));
-			INDENT(depth, !(opts & PF_OPT_VERBOSE));
+			INDENT(depth, !(pf->opts & PF_OPT_VERBOSE));
 			printf("anchor \"%s\" all {\n", prs.name);
-			pfctl_show_rules(dev, npath, opts,
-			    format, prs.name, depth + 1, 0, shownr);
-			INDENT(depth, !(opts & PF_OPT_VERBOSE));
+			pfctl_show_rules(pf, npath, format,
+			    prs.name, depth + 1, 0, shownr);
+			INDENT(depth, !(pf->opts & PF_OPT_VERBOSE));
 			printf("}\n");
 		}
 		path[len] = '\0';
@@ -2003,7 +2061,7 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 
 	if (pf->opts & PF_OPT_VERBOSE) {
 		INDENT(depth, !(pf->opts & PF_OPT_VERBOSE2));
-		print_rule(r, name, pf->opts);
+		print_rule(pf, r, name, pf->opts);
 	}
 	path[len] = '\0';
 	return (0);
@@ -3019,6 +3077,7 @@ main(int argc, char *argv[])
 	const char *idopt = NULL;
 	const char *errstr;
 	long	 shownr = -1;
+	struct pfctl show_rules_pf;
 
 	if (argc < 2)
 		usage();
@@ -3247,13 +3306,15 @@ main(int argc, char *argv[])
 		pfctl_show_anchors(dev, opts, anchorname);
 		break;
 	case SHOWOPT_RULES:
+		pfctl_init_show_rules(&show_rules_pf, dev, opts);
 		pfctl_load_fingerprints(dev, opts);
-		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
+		pfctl_show_rules(&show_rules_pf, path, PFCTL_SHOW_RULES,
 		    anchorname, 0, anchor_wildcard, shownr);
 		break;
 	case SHOWOPT_LABELS:
+		pfctl_init_show_rules(&show_rules_pf, dev, opts);
 		pfctl_load_fingerprints(dev, opts);
-		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
+		pfctl_show_rules(&show_rules_pf, path, PFCTL_SHOW_LABELS,
 		    anchorname, 0, anchor_wildcard, shownr);
 		break;
 	case SHOWOPT_QUEUE:
@@ -3276,17 +3337,16 @@ main(int argc, char *argv[])
 		pfctl_show_limits(dev, opts);
 		break;
 	case SHOWOPT_ALL:
-		opts |= PF_OPT_SHOWALL;
+		pfctl_init_show_rules(&show_rules_pf, dev, opts);
 		pfctl_load_fingerprints(dev, opts);
-
-		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
+		pfctl_show_rules(&show_rules_pf, path, PFCTL_SHOW_RULES,
 		    anchorname, 0, 0, -1);
 		pfctl_show_queues(dev, ifaceopt, opts,
 		    opts & PF_OPT_VERBOSE2);
 		pfctl_show_states(dev, ifaceopt, opts, -1);
 		pfctl_show_src_nodes(dev, opts);
 		pfctl_show_status(dev, opts);
-		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
+		pfctl_show_rules(&show_rules_pf, path, PFCTL_SHOW_LABELS,
 		    anchorname, 0, 0, -1);
 		pfctl_show_timeouts(dev, opts);
 		pfctl_show_limits(dev, opts);
@@ -3316,9 +3376,11 @@ main(int argc, char *argv[])
 		break;
 	}
 
-	if ((opts & PF_OPT_CLRRULECTRS) && showopt == 0)
-		pfctl_show_rules(dev, path, opts, PFCTL_SHOW_NOTHING,
+	if ((opts & PF_OPT_CLRRULECTRS) && showopt == 0) {
+		pfctl_init_show_rules(&show_rules_pf, dev, opts);
+		pfctl_show_rules(&show_rules_pf, path, PFCTL_SHOW_NOTHING,
 		    anchorname, 0, 0, -1);
+	}
 
 	if (clearopt != NULL) {
 		switch (*clearopt) {
@@ -3531,7 +3593,7 @@ pfctl_get_statelim_id(struct pfctl *pf, uint32_t id)
 
 	key.ioc.id = id;
 
-	return (RBT_FIND(pfctl_statelim_nms, &pf->statelim_nms, &key));
+	return (RBT_FIND(pfctl_statelim_ids, &pf->statelim_ids, &key));
 }
 
 struct pfctl_statelim *
@@ -3599,7 +3661,7 @@ pfctl_get_sourcelim_id(struct pfctl *pf, uint32_t id)
 
 	key.ioc.id = id;
 
-	return (RBT_FIND(pfctl_sourcelim_nms, &pf->sourcelim_nms, &key));
+	return (RBT_FIND(pfctl_sourcelim_ids, &pf->sourcelim_ids, &key));
 }
 
 struct pfctl_sourcelim *
