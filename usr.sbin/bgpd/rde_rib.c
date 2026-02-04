@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.288 2026/02/03 10:10:35 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.289 2026/02/04 13:49:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1328,7 +1328,7 @@ nexthop_modify(struct nexthop *setnh, enum action_types type, uint8_t aid,
 	case ACTION_SET_NEXTHOP_SELF:
 		*flags = NEXTHOP_SELF;
 		break;
-	case ACTION_SET_NEXTHOP_REF:
+	case ACTION_SET_NEXTHOP:
 		/*
 		 * it is possible that a prefix matches but has the wrong
 		 * address family for the set nexthop. In this case ignore it.

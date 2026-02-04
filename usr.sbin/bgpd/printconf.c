@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.183 2025/11/04 11:07:16 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.184 2026/02/04 13:49:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -364,12 +364,6 @@ print_set(struct filter_set_head *set)
 		case ACTION_SET_ORIGIN:
 			printf("origin ");
 			print_origin(s->action.origin);
-			break;
-		case ACTION_RTLABEL_ID:
-		case ACTION_PFTABLE_ID:
-		case ACTION_SET_NEXTHOP_REF:
-			/* not possible */
-			printf("king bula saiz: config broken");
 			break;
 		}
 	}

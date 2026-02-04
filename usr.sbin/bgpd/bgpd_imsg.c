@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd_imsg.c,v 1.1 2026/02/04 11:41:11 claudio Exp $	*/
+/*	$OpenBSD: bgpd_imsg.c,v 1.2 2026/02/04 13:49:23 claudio Exp $	*/
 /*
  * Copyright (c) 2026 Claudio Jeker <claudio@openbsd.org>
  *
@@ -93,10 +93,6 @@ imsg_send_filterset(struct imsgbuf *imsgbuf, struct filter_set_head *set)
 			if (ibuf_add_n8(msg, s->action.origin) == -1)
 				goto fail;
 			break;
-		case ACTION_SET_NEXTHOP_REF:
-		case ACTION_RTLABEL_ID:
-		case ACTION_PFTABLE_ID:
-			goto fail;
 		}
 	}
 
@@ -176,11 +172,6 @@ ibuf_recv_one_filterset(struct ibuf *ibuf, struct filter_set *set)
 		if (ibuf_get_n8(ibuf, &set->action.origin) == -1)
 			return -1;
 		break;
-	case ACTION_SET_NEXTHOP_REF:
-	case ACTION_RTLABEL_ID:
-	case ACTION_PFTABLE_ID:
-		errno = EBADMSG;
-		return -1;
 	}
 	return 0;
 }

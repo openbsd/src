@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.531 2026/02/04 11:41:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.532 2026/02/04 13:49:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1290,7 +1290,6 @@ enum action_types {
 	ACTION_SET_PREPEND_PEER,
 	ACTION_SET_AS_OVERRIDE,
 	ACTION_SET_NEXTHOP,
-	ACTION_SET_NEXTHOP_REF,
 	ACTION_SET_NEXTHOP_REJECT,
 	ACTION_SET_NEXTHOP_BLACKHOLE,
 	ACTION_SET_NEXTHOP_NOMODIFY,
@@ -1298,23 +1297,18 @@ enum action_types {
 	ACTION_DEL_COMMUNITY,
 	ACTION_SET_COMMUNITY,
 	ACTION_PFTABLE,
-	ACTION_PFTABLE_ID,
 	ACTION_RTLABEL,
-	ACTION_RTLABEL_ID,
 	ACTION_SET_ORIGIN
 };
 
-struct nexthop;
 struct filter_set {
 	TAILQ_ENTRY(filter_set)		entry;
 	enum action_types		type;
 	union {
 		uint8_t				 prepend;
 		uint8_t				 origin;
-		uint16_t			 id;
 		uint32_t			 metric;
 		int32_t				 relative;
-		struct nexthop			*nh_ref;
 		struct community		 community;
 		struct bgpd_addr		 nexthop;
 		char				 pftable[PFTABLE_LEN];

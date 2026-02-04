@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.141 2026/02/04 11:41:11 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.142 2026/02/04 13:49:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -163,7 +163,7 @@ rde_apply_set(const struct rde_filter_set *rfs, struct rde_peer *peer,
 			state->aspath.aspath = aspath_get(np, nl);
 			free(np);
 			break;
-		case ACTION_SET_NEXTHOP_REF:
+		case ACTION_SET_NEXTHOP:
 		case ACTION_SET_NEXTHOP_REJECT:
 		case ACTION_SET_NEXTHOP_BLACKHOLE:
 		case ACTION_SET_NEXTHOP_NOMODIFY:
@@ -179,21 +179,17 @@ rde_apply_set(const struct rde_filter_set *rfs, struct rde_peer *peer,
 			community_delete(&state->communities,
 			    &set->action.community, peer);
 			break;
-		case ACTION_PFTABLE_ID:
+		case ACTION_PFTABLE:
 			pftable_unref(state->aspath.pftableid);
 			state->aspath.pftableid = pftable_ref(set->action.id);
 			break;
-		case ACTION_RTLABEL_ID:
+		case ACTION_RTLABEL:
 			rtlabel_unref(state->aspath.rtlabelid);
 			state->aspath.rtlabelid = rtlabel_ref(set->action.id);
 			break;
 		case ACTION_SET_ORIGIN:
 			state->aspath.origin = set->action.origin;
 			break;
-		case ACTION_SET_NEXTHOP:
-		case ACTION_PFTABLE:
-		case ACTION_RTLABEL:
-			fatalx("unexpected filter action in RDE");
 		}
 	}
 }
@@ -563,12 +559,6 @@ filterset_free(struct filter_set_head *sh)
 
 	while ((s = TAILQ_FIRST(sh)) != NULL) {
 		TAILQ_REMOVE(sh, s, entry);
-		if (s->type == ACTION_RTLABEL_ID)
-			rtlabel_unref(s->action.id);
-		else if (s->type == ACTION_PFTABLE_ID)
-			pftable_unref(s->action.id);
-		else if (s->type == ACTION_SET_NEXTHOP_REF)
-			nexthop_unref(s->action.nh_ref);
 		free(s);
 	}
 }
@@ -593,7 +583,6 @@ filterset_name(enum action_types type)
 	case ACTION_SET_AS_OVERRIDE:
 		return ("as-override");
 	case ACTION_SET_NEXTHOP:
-	case ACTION_SET_NEXTHOP_REF:
 	case ACTION_SET_NEXTHOP_REJECT:
 	case ACTION_SET_NEXTHOP_BLACKHOLE:
 	case ACTION_SET_NEXTHOP_NOMODIFY:
@@ -604,10 +593,8 @@ filterset_name(enum action_types type)
 	case ACTION_DEL_COMMUNITY:
 		return ("community delete");
 	case ACTION_PFTABLE:
-	case ACTION_PFTABLE_ID:
 		return ("pftable");
 	case ACTION_RTLABEL:
-	case ACTION_RTLABEL_ID:
 		return ("rtlabel");
 	case ACTION_SET_ORIGIN:
 		return ("origin");
@@ -678,13 +665,7 @@ filterset_copy(const struct filter_set_head *source,
 	TAILQ_FOREACH(s, source, entry) {
 		if ((t = malloc(sizeof(struct filter_set))) == NULL)
 			fatal(NULL);
-		memcpy(t, s, sizeof(struct filter_set));
-		if (t->type == ACTION_RTLABEL_ID)
-			rtlabel_ref(t->action.id);
-		else if (t->type == ACTION_PFTABLE_ID)
-			pftable_ref(t->action.id);
-		else if (t->type == ACTION_SET_NEXTHOP_REF)
-			nexthop_ref(t->action.nh_ref);
+		*t = *s;
 		TAILQ_INSERT_TAIL(dest, t, entry);
 	}
 }
@@ -725,7 +706,7 @@ rde_filterset_equal(const struct rde_filter_set *afs,
 			if (a->action.relative == b->action.relative)
 				continue;
 			break;
-		case ACTION_SET_NEXTHOP_REF:
+		case ACTION_SET_NEXTHOP:
 			if (a->action.nh_ref == b->action.nh_ref)
 				continue;
 			break;
@@ -740,8 +721,8 @@ rde_filterset_equal(const struct rde_filter_set *afs,
 			    sizeof(a->action.community)) == 0)
 				continue;
 			break;
-		case ACTION_RTLABEL_ID:
-		case ACTION_PFTABLE_ID:
+		case ACTION_RTLABEL:
+		case ACTION_PFTABLE:
 			if (a->action.id == b->action.id)
 				continue;
 			break;
@@ -749,10 +730,6 @@ rde_filterset_equal(const struct rde_filter_set *afs,
 			if (a->action.origin == b->action.origin)
 				continue;
 			break;
-		case ACTION_SET_NEXTHOP:
-		case ACTION_RTLABEL:
-		case ACTION_PFTABLE:
-			fatalx("unexpected filter action in RDE");
 		}
 		/* compare failed */
 		return 0;
@@ -793,11 +770,11 @@ rde_filterset_free(struct rde_filter_set *rfs)
 
 	rfse = rfs->set;
 	for (i = 0; i < rfs->len; i++, rfse++) {
-		if (rfse->type == ACTION_RTLABEL_ID)
+		if (rfse->type == ACTION_RTLABEL)
 			rtlabel_unref(rfse->action.id);
-		else if (rfse->type == ACTION_PFTABLE_ID)
+		else if (rfse->type == ACTION_PFTABLE)
 			pftable_unref(rfse->action.id);
-		else if (rfse->type == ACTION_SET_NEXTHOP_REF)
+		else if (rfse->type == ACTION_SET_NEXTHOP)
 			nexthop_unref(rfse->action.nh_ref);
 	}
 	free(rfs);
@@ -857,20 +834,13 @@ rde_filterset_conv(const struct filter_set *set,
 		break;
 	case ACTION_SET_NEXTHOP:
 		rfse->action.nh_ref = nexthop_get(&set->action.nexthop);
-		rfse->type = ACTION_SET_NEXTHOP_REF;
 		break;
 	case ACTION_RTLABEL:
 		rfse->action.id = rtlabel_name2id(set->action.rtlabel);
-		rfse->type = ACTION_RTLABEL_ID;
 		break;
 	case ACTION_PFTABLE:
 		rfse->action.id = pftable_name2id(set->action.pftable);
-		rfse->type = ACTION_PFTABLE_ID;
 		break;
-	case ACTION_SET_NEXTHOP_REF:
-	case ACTION_RTLABEL_ID:
-	case ACTION_PFTABLE_ID:
-		fatalx("unexpected filter action in RDE");
 	}
 }
 
