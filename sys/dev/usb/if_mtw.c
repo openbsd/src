@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.12 2025/03/28 23:17:00 hastings Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.13 2026/02/04 00:58:20 kevlo Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -1248,7 +1248,7 @@ mtw_mcu_cmd(struct mtw_softc *sc, int cmd, void *buf, int len)
 	txd = (struct mtw_txd *)(data->buf);
 	txd->len = htole16(len);
 	txd->flags = htole16(MTW_TXD_CMD | MTW_TXD_MCU |
-	    (cmd & 0x1f) << MTW_TXD_CMD_SHIFT | (sc->cmd_seq & 0xf));
+	    (cmd & 0x7f) << MTW_TXD_CMD_SHIFT | (sc->cmd_seq & 0xf));
 
 	memcpy(&txd[1], buf, len);
 	memset(&txd[1] + len, 0, MTW_DMA_PAD);
