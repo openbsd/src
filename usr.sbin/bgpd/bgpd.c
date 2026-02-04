@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.286 2025/12/03 12:20:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.287 2026/02/04 11:41:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -672,7 +672,7 @@ send_config(struct bgpd_config *conf)
 			if (imsg_compose(ibuf_rde, IMSG_FLOWSPEC_ADD, 0, 0, -1,
 			    f->flow, FLOWSPEC_SIZE + f->flow->len) == -1)
 				return (-1);
-			if (filterset_send(ibuf_rde, &f->attrset) == -1)
+			if (imsg_send_filterset(ibuf_rde, &f->attrset) == -1)
 				return (-1);
 			if (imsg_compose(ibuf_rde, IMSG_FLOWSPEC_DONE, 0, 0, -1,
 			    NULL, 0) == -1)
@@ -781,7 +781,7 @@ send_config(struct bgpd_config *conf)
 	/* filters for the RDE */
 	while ((r = TAILQ_FIRST(conf->filters)) != NULL) {
 		TAILQ_REMOVE(conf->filters, r, entry);
-		if (filterset_send(ibuf_rde, &r->set) == -1)
+		if (imsg_send_filterset(ibuf_rde, &r->set) == -1)
 			return (-1);
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
@@ -806,7 +806,7 @@ send_config(struct bgpd_config *conf)
 			return (-1);
 
 		/* export targets */
-		if (filterset_send(ibuf_rde, &vpn->export) == -1)
+		if (imsg_send_filterset(ibuf_rde, &vpn->export) == -1)
 			return (-1);
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_VPN_EXPORT, 0, 0,
 		    -1, NULL, 0) == -1)
@@ -814,7 +814,7 @@ send_config(struct bgpd_config *conf)
 		filterset_free(&vpn->export);
 
 		/* import targets */
-		if (filterset_send(ibuf_rde, &vpn->import) == -1)
+		if (imsg_send_filterset(ibuf_rde, &vpn->import) == -1)
 			return (-1);
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_VPN_IMPORT, 0, 0,
 		    -1, NULL, 0) == -1)
@@ -1170,7 +1170,7 @@ send_network(int type, struct network_config *net, struct filter_set_head *h)
 	/* networks that get deleted don't need to send the filter set */
 	if (type == IMSG_NETWORK_REMOVE)
 		return (0);
-	if (filterset_send(ibuf_rde, h) == -1)
+	if (imsg_send_filterset(ibuf_rde, h) == -1)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0) == -1)
 		return (-1);

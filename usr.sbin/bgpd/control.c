@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.135 2025/03/10 14:11:38 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.136 2026/02/04 11:41:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -513,7 +513,14 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 		case IMSG_FLOWSPEC_REMOVE:
 		case IMSG_FLOWSPEC_DONE:
 		case IMSG_FLOWSPEC_FLUSH:
+			imsg_ctl_rde(&imsg);
+			break;
 		case IMSG_FILTER_SET:
+			if (imsg_check_filterset(&imsg) == -1) {
+				/* malformed request */
+				control_result(c, CTL_RES_PARSE_ERROR);
+				break;
+			}
 			imsg_ctl_rde(&imsg);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
