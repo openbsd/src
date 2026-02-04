@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.319 2025/11/04 15:30:50 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.320 2026/02/04 11:48:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -49,7 +49,6 @@
 
 int		 main(int, char *[]);
 int		 show(struct imsg *, struct parse_result *);
-void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 void		 show_mrt_dump_neighbors(struct mrt_rib *, struct mrt_peer *,
 		    void *);
 void		 show_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
@@ -329,7 +328,7 @@ main(int argc, char *argv[])
 		if (res->action == NETWORK_ADD) {
 			imsg_compose(imsgbuf, IMSG_NETWORK_ADD, 0, 0, -1,
 			    &net, sizeof(net));
-			send_filterset(imsgbuf, &res->set);
+			imsg_send_filterset(imsgbuf, &res->set);
 			imsg_compose(imsgbuf, IMSG_NETWORK_DONE, 0, 0, -1,
 			    NULL, 0);
 		} else
@@ -373,7 +372,7 @@ main(int argc, char *argv[])
 		if (res->action == FLOWSPEC_ADD) {
 			imsg_compose(imsgbuf, IMSG_FLOWSPEC_ADD, 0, 0, -1,
 			    f, FLOWSPEC_SIZE + f->len);
-			send_filterset(imsgbuf, &res->set);
+			imsg_send_filterset(imsgbuf, &res->set);
 			imsg_compose(imsgbuf, IMSG_FLOWSPEC_DONE, 0, 0, -1,
 			    NULL, 0);
 		} else
@@ -1134,19 +1133,6 @@ fmt_set_type(struct ctl_show_set *set)
 		return "ASNUM";
 	default:
 		return "BULA";
-	}
-}
-
-void
-send_filterset(struct imsgbuf *i, struct filter_set_head *set)
-{
-	struct filter_set	*s;
-
-	while ((s = TAILQ_FIRST(set)) != NULL) {
-		imsg_compose(i, IMSG_FILTER_SET, 0, 0, -1, s,
-		    sizeof(struct filter_set));
-		TAILQ_REMOVE(set, s, entry);
-		free(s);
 	}
 }
 

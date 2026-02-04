@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.67 2025/12/29 07:49:05 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.68 2026/02/04 11:48:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1104,6 +1104,10 @@ show_rib_mem(struct rde_memstats *stats)
 	printf("%10lld pending prefix entries using %s of memory\n",
 	    stats->pend_prefix_cnt, fmt_mem(stats->pend_prefix_cnt *
 	    sizeof(struct pend_prefix)));
+	printf("%10lld filter-sets using %s of memory\n",
+	    stats->filter_set_cnt, fmt_mem(stats->filter_set_size));
+	printf("\t   and holding %lld references\n",
+	    stats->filter_set_refs);
 	printf("%10lld as-set elements in %lld tables using "
 	    "%s of memory\n", stats->aset_nmemb, stats->aset_cnt,
 	    fmt_mem(stats->aset_size));
@@ -1119,8 +1123,9 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->path_cnt * sizeof(struct rde_aspath) +
 	    stats->aspath_size + stats->attr_cnt * sizeof(struct attr) +
 	    stats->attr_data));
-	printf("Sets using %s of memory\n", fmt_mem(stats->aset_size +
-	    stats->pset_size));
+	printf("Sets and filters using %s of memory\n",
+	    fmt_mem(stats->aset_size + stats->pset_size +
+	    stats->filter_set_size));
 
 	printf("\nRDE timing statistics\n");
 	printf("%10lld usec spent in the event loop for %llu rounds\n",
