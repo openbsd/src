@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.85 2025/12/11 23:34:44 dlg Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.86 2026/02/04 00:10:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -447,7 +447,7 @@ mtx_enter(struct mutex *mtx)
 		unsigned long o;
 
 		w.wait = 1;
-		/* ensure wait is visible before attmepting the cas */
+		/* ensure wait is visible before attempting the cas */
 		membar_enter(); /* StoreStore | StoreLoad */
 		o = mtx_cas(mtx, owner, owner | 1);
 		if (o == owner) {
