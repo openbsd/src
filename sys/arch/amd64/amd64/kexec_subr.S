@@ -1,4 +1,4 @@
-/*	$Openbsd: $	*/
+/*	$OpenBSD: kexec_subr.S,v 1.2 2026/02/05 06:17:50 jsg Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  * Copyright (c) 2025 Hans-Joerg Hoexer <hshoexer@yerbouti.franken.de>
