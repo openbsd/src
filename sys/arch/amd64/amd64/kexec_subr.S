@@ -1,4 +1,4 @@
-/*	$OpenBSD: kexec_subr.S,v 1.2 2026/02/05 06:17:50 jsg Exp $	*/
+/*	$OpenBSD: kexec_subr.S,v 1.3 2026/02/05 06:22:40 jsg Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  * Copyright (c) 2025 Hans-Joerg Hoexer <hshoexer@yerbouti.franken.de>
@@ -123,9 +123,9 @@ kexec32r:
 gdt:
 	.long	0, 0
 	.long	0, 0
-	/* 32bit code segement */
+	/* 32bit code segment */
 	.byte	0xff, 0xff, 0x00, 0x00, 0x00, 0x9f, 0xcf, 0x00
-	/* 32bit data segement */
+	/* 32bit data segment */
 	.byte	0xff, 0xff, 0x00, 0x00, 0x00, 0x93, 0xcf, 0x00
 gdtr:
 	.word	gdtr - gdt
