@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.268 2026/02/02 06:23:40 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.269 2026/02/05 03:26:00 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -90,11 +90,11 @@ struct m_hdr {
 };
 
 /* pf stuff */
-struct pf_state;
+struct pf_state_key;
 struct inpcb;
 
 struct pkthdr_pf {
-	struct pf_state	*st;		/* pf state */
+	struct pf_state_key *statekey;	/* pf stackside statekey */
 	struct inpcb	*inp;		/* connected pcb for outgoing packet */
 	u_int32_t	 qid;		/* queue id */
 	u_int16_t	 tag;		/* tag id */
@@ -325,7 +325,7 @@ u_int mextfree_register(void (*)(caddr_t, u_int, void *));
 	(to)->m_pkthdr = (from)->m_pkthdr;				\
 	(from)->m_flags &= ~M_PKTHDR;					\
 	SLIST_INIT(&(from)->m_pkthdr.ph_tags);				\
-	(from)->m_pkthdr.pf.st = NULL;					\
+	(from)->m_pkthdr.pf.statekey = NULL;				\
 } while (/* CONSTCOND */ 0)
 
 /*
