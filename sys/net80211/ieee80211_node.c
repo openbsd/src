@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.208 2026/01/05 11:43:58 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.209 2026/02/06 16:27:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -75,7 +75,6 @@ void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
 struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_free_unref_cb(struct ieee80211_node *);
 void ieee80211_node_tx_flushed(struct ieee80211com *, struct ieee80211_node *);
-void ieee80211_node_switch_bss(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_addba_request(struct ieee80211_node *, int);
 void ieee80211_node_addba_request_ac_be_to(void *);
 void ieee80211_node_addba_request_ac_bk_to(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.97 2025/08/01 20:39:26 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.98 2026/02/06 16:27:46 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -656,6 +656,7 @@ void ieee80211_node_join(struct ieee80211com *,
 void ieee80211_node_leave(struct ieee80211com *,
 		struct ieee80211_node *);
 int ieee80211_match_bss(struct ieee80211com *, struct ieee80211_node *, int);
+void ieee80211_node_switch_bss(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_tx_stopped(struct ieee80211com *, struct ieee80211_node *);
 struct ieee80211_node *ieee80211_node_choose_bss(struct ieee80211com *, int,
 		struct ieee80211_node **);
