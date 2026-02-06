@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-chall.c,v 1.57 2025/10/02 08:38:43 dtucker Exp $ */
+/* $OpenBSD: auth2-chall.c,v 1.58 2026/02/06 01:24:36 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -46,10 +46,10 @@ static int auth2_challenge_start(struct ssh *);
 static int send_userauth_info_request(struct ssh *);
 static int input_userauth_info_response(int, u_int32_t, struct ssh *);
 
-extern KbdintDevice bsdauth_device;
+extern KbdintDevice mm_bsdauth_device;
 
 KbdintDevice *devices[] = {
-	&bsdauth_device,
+	&mm_bsdauth_device,
 	NULL
 };
 
@@ -322,11 +322,4 @@ input_userauth_info_response(int type, u_int32_t seq, struct ssh *ssh)
 	userauth_finish(ssh, authenticated, "keyboard-interactive",
 	    devicename);
 	return 0;
-}
-
-void
-privsep_challenge_enable(void)
-{
-	extern KbdintDevice mm_bsdauth_device;
-	devices[0] = &mm_bsdauth_device;
 }
