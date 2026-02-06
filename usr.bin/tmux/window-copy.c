@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.384 2026/02/03 09:07:44 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.385 2026/02/06 10:28:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4270,6 +4270,9 @@ static void
 window_copy_clear_marks(struct window_mode_entry *wme)
 {
 	struct window_copy_mode_data	*data = wme->data;
+
+	data->searchcount = -1;
+	data->searchmore = 0;
 
 	free(data->searchmark);
 	data->searchmark = NULL;
