@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.104 2025/10/30 23:19:33 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.105 2026/02/06 23:31:29 dtucker Exp $
 
 .include <bsd.own.mk>
 
@@ -93,6 +93,7 @@ SRCS_KEY+=	cipher-chachapoly.c
 .endif
 SRCS_KEY+=	ssh-ed25519.c
 SRCS_KEY+=	ssh-ed25519-sk.c
+SRCS_KEY+=	ssherr-libcrypto.c
 
 .if (${OPENSSL:L} == "yes")
 SRCS_KEY+=	ed25519-openssl.c

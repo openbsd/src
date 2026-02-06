@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.14 2022/03/31 03:05:49 djm Exp $
+#	$OpenBSD: Makefile,v 1.15 2026/02/06 23:31:29 dtucker Exp $
 
 .PATH:		${.CURDIR}/..
 
 SRCS=	sftp-server.c sftp-common.c sftp-server-main.c sftp-realpath.c
 SRCS+=	atomicio.c fatal.c
+SRCS+=	ssherr-nolibcrypto.c
 SRCS+=	${SRCS_BASE} ${SRCS_UTL}
 
 PROG=	sftp-server
