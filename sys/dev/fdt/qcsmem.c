@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcsmem.c,v 1.1 2023/05/19 21:13:49 patrick Exp $	*/
+/*	$OpenBSD: qcsmem.c,v 1.2 2026/02/06 21:35:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -162,31 +162,48 @@ qcsmem_attach(struct device *parent, struct device *self, void *aux)
 	struct qcsmem_partition *part;
 	struct qcsmem_partition_header *phdr;
 	uint32_t version;
-	int i;
+	uint32_t memreg;
+	uint32_t reg[4];
+	int i, node;
 
-	if (faa->fa_nreg < 1) {
-		printf(": no registers\n");
-		return;
+	memreg = OF_getpropint(faa->fa_node, "memory-region", 0);
+	if (memreg) {
+		node = OF_getnodebyphandle(memreg);
+		if (node == 0) {
+			printf(": can't find memory region\n");
+			return;
+		}
+		if (OF_getpropintarray(node, "reg", reg,
+		    sizeof(reg)) != sizeof(reg)) {
+			printf(": no registers\n");
+			return;
+		}
+		sc->sc_aux_base = (bus_addr_t)reg[0] << 32 | reg[1];
+		sc->sc_aux_size = (bus_size_t)reg[2] << 32 | reg[3];
+	} else {
+		if (faa->fa_nreg < 1) {
+			printf(": no registers\n");
+			return;
+		}
+		sc->sc_aux_base = faa->fa_reg[0].addr;
+		sc->sc_aux_size = faa->fa_reg[0].size;
 	}
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc_iot, sc->sc_aux_base, sc->sc_aux_size,
+	    BUS_SPACE_MAP_LINEAR, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
 		return;
 	}
-	sc->sc_aux_base = faa->fa_reg[0].addr;
-	sc->sc_aux_size = faa->fa_reg[0].addr;
 
 	ptable = bus_space_vaddr(sc->sc_iot, sc->sc_ioh) +
-	    faa->fa_reg[0].size - PAGE_SIZE;
+	    sc->sc_aux_size - PAGE_SIZE;
 	if (ptable->magic != QCSMEM_PTABLE_MAGIC ||
 	    ptable->version != QCSMEM_PTABLE_VERSION) {
 		printf(": unsupported ptable 0x%x/0x%x\n",
 		    ptable->magic, ptable->version);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh,
-		    faa->fa_reg[0].size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_aux_size);
 		return;
 	}
 
