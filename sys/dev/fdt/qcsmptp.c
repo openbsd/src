@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcsmptp.c,v 1.2 2023/07/04 14:32:21 patrick Exp $	*/
+/*	$OpenBSD: qcsmptp.c,v 1.3 2026/02/06 21:32:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -178,31 +178,31 @@ qcsmptp_deferred(struct device *self)
 
 	sc->sc_mc = mbox_channel_idx(sc->sc_node, 0, NULL);
 	if (sc->sc_mc == NULL) {
-		printf(": can't get mailbox\n");
+		printf("%s: can't get mailbox\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (qcsmem_alloc(sc->sc_remote_pid, sc->sc_smem_id[0],
 	    sizeof(*sc->sc_in)) != 0) {
-		printf(": can't alloc smp2p item\n");
+		printf("%s: can't alloc smp2p item\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	sc->sc_in = qcsmem_get(sc->sc_remote_pid, sc->sc_smem_id[0], NULL);
 	if (sc->sc_in == NULL) {
-		printf(": can't get smp2p item\n");
+		printf("%s: can't get smp2p item\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (qcsmem_alloc(sc->sc_remote_pid, sc->sc_smem_id[1],
 	    sizeof(*sc->sc_out)) != 0) {
-		printf(": can't alloc smp2p item\n");
+		printf("%s: can't alloc smp2p item\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	sc->sc_out = qcsmem_get(sc->sc_remote_pid, sc->sc_smem_id[1], NULL);
 	if (sc->sc_out == NULL) {
-		printf(": can't get smp2p item\n");
+		printf("%s: can't get smp2p item\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
