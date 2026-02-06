@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_lowlevel_new.3,v 1.3 2026/02/02 20:54:18 schwarze Exp $
+.\" $OpenBSD: fuse_lowlevel_new.3,v 1.4 2026/02/06 15:24:36 schwarze Exp $
 .\"
 .\" Copyright (c) 2026 Helg Bredow <helg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 2 2026 $
+.Dd $Mdocdate: February 6 2026 $
 .Dt FUSE_LOWLEVEL_NEW 3
 .Os
 .Sh NAME
@@ -349,22 +349,33 @@ Called on
 .Xr open 2
 to open the file specified by
 .Fa ino .
-Due to the difference between FUSE and the
+If the same file is opened more than once with the same access mode
+.Po
+.Dv O_RDONLY , O_WRONLY ,
+or
+.Dv O_RDWR
+.Pc ,
+no matter whether by the same process or by different processes, the
 .Ox
-VFS,
-open will only be called once for each file
-for every different combination of flags provided to
-.Xr open 2 .
-The
-.Dv O_CREAT
-and
-.Dv O_TRUNC
-flags are never passed from the kernel to open,
-the mknod and truncate operations will be invoked before open instead.
+kernel only calls the
+.Fn open
+operation once, namely when the respective (file, mode) pair first occurs.
 The flags are available in the
 .Fa flags
 member of
 .Fa ffi .
+The
+.Dv O_CREAT
+and
+.Dv O_TRUNC
+flags are never passed from the kernel to
+.Fn open ;
+instead, the kernel invokes the
+.Fn mknod
+and
+.Fn truncate
+operations before
+.Fn open .
 .Pp
 On success, respond with
 .Xr fuse_reply_open 3 .
@@ -466,16 +477,16 @@ from directory
 .Fa parent .
 .It Xo Fo symlink
 .Fa "fuse_req_t req"
-.Fa "const char *link"
+.Fa "const char *target"
 .Fa "fuse_ino_t parent"
 .Fa "const char *name"
 .Fc Xc
-Create a symbolic link with contents
-.Fa link
-in directory
+Create a symbolic link in
 .Fa parent
-with
+pointing from
 .Fa name
+to the absolute or relative path
+.Fa target .
 .Pp
 On success, respond with
 .Xr fuse_reply_entry 3 .
