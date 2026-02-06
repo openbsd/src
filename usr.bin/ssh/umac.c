@@ -1,4 +1,4 @@
-/* $OpenBSD: umac.c,v 1.27 2025/09/05 10:34:35 dtucker Exp $ */
+/* $OpenBSD: umac.c,v 1.28 2026/02/06 22:59:18 dtucker Exp $ */
 /* -----------------------------------------------------------------------
  *
  * umac.c -- C Implementation UMAC Message Authentication
@@ -40,7 +40,7 @@
   * "Barreto"). The only two files needed are rijndael-alg-fst.c and
   * rijndael-alg-fst.h. Brian Gladman's version is distributed with the GNU
   * Public license at http://fp.gladman.plus.com/AES/index.htm. It
-  * includes a fast IA-32 assembly version. The OpenSSL crypo library is
+  * includes a fast IA-32 assembly version. The OpenSSL crypto library is
   * the third.
   *
   * 5) With FORCE_C_ONLY flags set to 0, incorrect results are sometimes
@@ -53,7 +53,7 @@
 /* ---------------------------------------------------------------------- */
 
 #ifndef UMAC_OUTPUT_LEN
-#define UMAC_OUTPUT_LEN     8  /* Alowable: 4, 8, 12, 16                  */
+#define UMAC_OUTPUT_LEN     8  /* Allowable: 4, 8, 12, 16                  */
 #endif
 /* #define FORCE_C_ONLY        1  ANSI C and 64-bit integers req'd        */
 /* #define AES_IMPLEMENTAION   1  1 = OpenSSL, 2 = Barreto, 3 = Gladman   */
@@ -184,7 +184,7 @@ static void kdf(void *buffer_ptr, aes_int_key key, UINT8 ndx, int nbytes)
     UINT8 *dst_buf = (UINT8 *)buffer_ptr;
     int i;
 
-    /* Setup the initial value */
+    /* Set up the initial value */
     in_buf[AES_BLOCK_LEN-9] = ndx;
     in_buf[AES_BLOCK_LEN-1] = i = 1;
 
