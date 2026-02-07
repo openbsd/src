@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_crld.c,v 1.10 2025/05/10 05:54:39 tb Exp $ */
+/* $OpenBSD: x509_crld.c,v 1.11 2026/02/07 17:12:47 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -144,7 +144,7 @@ set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx, CONF_VALUE *cnf)
 	STACK_OF(GENERAL_NAME) *fnm = NULL;
 	STACK_OF(X509_NAME_ENTRY) *rnm = NULL;
 
-	if (!strncmp(cnf->name, "fullname", 9)) {
+	if (!strcmp(cnf->name, "fullname")) {
 		fnm = gnames_from_sectname(ctx, cnf->value);
 		if (!fnm)
 			goto err;
