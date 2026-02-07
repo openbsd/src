@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2.c,v 1.170 2025/01/17 00:09:41 dtucker Exp $ */
+/* $OpenBSD: auth2.c,v 1.171 2026/02/07 17:04:22 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -49,11 +49,11 @@
 #include "auth.h"
 #include "dispatch.h"
 #include "pathnames.h"
+#include "ssherr.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif
 #include "monitor_wrap.h"
-#include "ssherr.h"
 #include "digest.h"
 #include "kex.h"
 
