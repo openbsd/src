@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2025/12/06 09:27:54 robert Exp $
+# $OpenBSD: Makefile,v 1.10 2026/02/07 15:59:32 rsadowski Exp $
 
 .include <bsd.own.mk>
 
@@ -93,7 +93,6 @@ CPPFLAGS+=	-Wall -DLIBCXXABI -I${HDRDIR} -I${SRCDIR} -I${AHDRDIR} \
 CPPFLAGS+=	-D_LIBCPP_BUILDING_LIBRARY
 CPPFLAGS+=	-DLIBCXX_BUILDING_LIBCXXABI
 CPPFLAGS+=	-D_LIBCPP_HAS_NO_TIME_ZONE_DATABASE
-CPPFLAGS+=	-D_LIBCPP_PSTL_BACKEND_STD_THREAD
 
 CXXFLAGS+=	-nostdlib -nostdinc++
 .if empty(CXXFLAGS:M-std=*)
