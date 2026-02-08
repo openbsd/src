@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.112 2025/07/24 05:44:55 djm Exp $
+#	$OpenBSD: Makefile,v 1.113 2026/02/08 15:28:01 dtucker Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -12,22 +12,7 @@ BINMODE=511
 BINDIR=	/usr/sbin
 MAN=	sshd.8 sshd_config.5
 
-.include <bsd.own.mk> # for KERBEROS and AFS
-
-KERBEROS5=no
-
-.if (${KERBEROS5:L} == "yes")
-CFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/kerberosV -DGSSAPI
-SRCS+=  auth-krb5.c auth2-gss.c gss-serv.c gss-serv-krb5.c
-.endif
-
 .include <bsd.prog.mk>
-
-.if (${KERBEROS5:L} == "yes")
-LDADD+= -lgssapi -lkrb5 -lasn1
-LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase -lkafs
-DPADD+= ${LIBGSSAPI} ${LIBKRB5}
-.endif
 
 .if (${OPENSSL:L} == "yes")
 LDADD+=	-lcrypto

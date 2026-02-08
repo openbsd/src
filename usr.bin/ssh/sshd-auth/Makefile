@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2025/05/05 02:48:06 djm Exp $
+#	$OpenBSD: Makefile,v 1.3 2026/02/08 15:28:01 dtucker Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -19,20 +19,24 @@ BINDIR=	/usr/libexec
 BINMODE=511
 NOMAN=	1
 
-.include <bsd.own.mk> # for KERBEROS and AFS
+.include <bsd.own.mk> # for KERBEROS
 
+# Enabling this requires the 'heimdal' package from ports.
 KERBEROS5=no
 
 .if (${KERBEROS5:L} == "yes")
-CFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/kerberosV -DGSSAPI
+CFLAGS+=-DKRB5 -DGSSAPI
+CFLAGS+=-I${DESTDIR}/usr/local/heimdal/include -I${DESTDIR}/usr/local/include
 SRCS+=  auth-krb5.c auth2-gss.c gss-serv.c gss-serv-krb5.c
+SRCS+=  gss-genr.c
 .endif
 
 .include <bsd.prog.mk>
 
 .if (${KERBEROS5:L} == "yes")
+LDADD+= -L${DESTDIR}/usr/local/heimdal/lib -L${DESTDIR}/usr/local/lib
 LDADD+= -lgssapi -lkrb5 -lasn1
-LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase -lkafs
+LDADD+= -lwind -lroken -lcom_err -lpthread -lheimbase
 DPADD+= ${LIBGSSAPI} ${LIBKRB5}
 .endif
 
