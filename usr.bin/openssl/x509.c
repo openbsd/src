@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.43 2026/02/08 22:25:16 kenjiro Exp $ */
+/* $OpenBSD: x509.c,v 1.44 2026/02/08 22:33:14 kenjiro Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1013,9 +1013,6 @@ x509_main(int argc, char **argv)
 		    "CA Certificate");
 		if (xca == NULL)
 			goto end;
-	}
-	if (!cfg.noout || cfg.text || cfg.next_serial) {
-		OBJ_create("2.99999.3", "SET.ex3", "SET x509v3 extension 3");
 	}
 	if (cfg.alias != NULL) {
 		if (!X509_alias_set1(x, (unsigned char *)cfg.alias, -1))
