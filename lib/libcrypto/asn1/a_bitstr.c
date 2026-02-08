@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.49 2026/02/08 10:27:00 tb Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.50 2026/02/08 17:17:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,14 +57,16 @@
  */
 
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
+#include <openssl/err.h>
 
+#include "asn1_local.h"
 #include "bytestring.h"
 #include "err_local.h"
 
