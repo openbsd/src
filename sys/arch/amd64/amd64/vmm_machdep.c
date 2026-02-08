@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.68 2026/01/14 22:42:34 dv Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.69 2026/02/08 10:03:13 sf Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6499,8 +6499,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = *((uint32_t *)&vmm_hv_signature[8]);
 		break;
 	case 0x40000001:	/* KVM hypervisor features */
-		*rax = (1 << KVM_FEATURE_CLOCKSOURCE2) |
-		    (1 << KVM_FEATURE_CLOCKSOURCE_STABLE_BIT);
+		if (tsc_frequency > 0)
+			*rax = (1 << KVM_FEATURE_CLOCKSOURCE2) |
+			    (1 << KVM_FEATURE_CLOCKSOURCE_STABLE_BIT);
+		else
+			*rax = 0;
 		*rbx = 0;
 		*rcx = 0;
 		*rdx = 0;
@@ -6512,9 +6515,10 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = *((uint32_t *)&kvm_hv_signature[8]);
 		break;
 	case 0x40000101:	/* KVM hypervisor features */
-		*rax = (1 << KVM_FEATURE_CLOCKSOURCE2) |
-		    (1 << KVM_FEATURE_CLOCKSOURCE_STABLE_BIT) |
-		    (1 << KVM_FEATURE_NOP_IO_DELAY);
+		*rax = 1 << KVM_FEATURE_NOP_IO_DELAY;
+		if (tsc_frequency > 0)
+			*rax |= (1 << KVM_FEATURE_CLOCKSOURCE2) |
+			    (1 << KVM_FEATURE_CLOCKSOURCE_STABLE_BIT);
 		*rbx = 0;
 		*rcx = 0;
 		*rdx = 0;
