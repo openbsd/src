@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_methods.c,v 1.48 2026/01/18 10:07:44 tb Exp $ */
+/* $OpenBSD: ecp_methods.c,v 1.49 2026/02/08 12:34:05 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -293,7 +293,7 @@ ec_point_cmp_one_affine(const EC_GROUP *group, const EC_POINT *a,
     const EC_POINT *b, BN_CTX *ctx)
 {
 	const EC_POINT *tmp;
-	BIGNUM *az, *bn;
+	BIGNUM *az, *bxaz2, *byaz3;
 	int ret = -1;
 
 	BN_CTX_start(ctx);
@@ -310,30 +310,78 @@ ec_point_cmp_one_affine(const EC_GROUP *group, const EC_POINT *a,
 
 	if ((az = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((bn = BN_CTX_get(ctx)) == NULL)
+	if ((bxaz2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((byaz3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/* a->X == b->X * a->Z^2 ? */
 	if (!ec_field_sqr(group, az, a->Z, ctx))
 		goto err;
-	if (!ec_field_mul(group, bn, b->X, az, ctx))
+	if (!ec_field_mul(group, bxaz2, b->X, az, ctx))
 		goto err;
-	if (BN_cmp(a->X, bn) != 0) {
-		ret = 1;
-		goto err;
-	}
 
 	/* a->Y == b->Y * a->Z^3 ? */
 	if (!ec_field_mul(group, az, az, a->Z, ctx))
 		goto err;
-	if (!ec_field_mul(group, bn, b->Y, az, ctx))
+	if (!ec_field_mul(group, byaz3, b->Y, az, ctx))
 		goto err;
-	if (BN_cmp(a->Y, bn) != 0) {
-		ret = 1;
-		goto err;
-	}
 
-	ret = 0;
+	ret = BN_cmp(a->X, bxaz2) != 0 || BN_cmp(a->Y, byaz3) != 0;
+
+ err:
+	BN_CTX_end(ctx);
+
+	return ret;
+}
+
+static int
+ec_point_cmp_none_affine(const EC_GROUP *group, const EC_POINT *a,
+    const EC_POINT *b, BN_CTX *ctx)
+{
+	BIGNUM *az, *bz, *axbz2, *aybz3, *bxaz2, *byaz3;
+	int ret = -1;
+
+	BN_CTX_start(ctx);
+
+	/* The computation below works, but we should have taken a fast path. */
+	if (a->Z_is_one || b->Z_is_one)
+		goto err;
+
+	if ((az = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bz = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((axbz2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((aybz3 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bxaz2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((byaz3 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/* a->X * b->Z^2 == b->X * a->Z^2 ? */
+	if (!ec_field_sqr(group, bz, b->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, axbz2, a->X, bz, ctx))
+		goto err;
+	if (!ec_field_sqr(group, az, a->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, bxaz2, b->X, az, ctx))
+		goto err;
+
+	/* a->Y * b->Z^3 == b->Y * a->Z^3 ? */
+	if (!ec_field_mul(group, bz, bz, b->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, aybz3, a->Y, bz, ctx))
+		goto err;
+	if (!ec_field_mul(group, az, az, a->Z, ctx))
+		goto err;
+	if (!ec_field_mul(group, byaz3, b->Y, az, ctx))
+		goto err;
+
+	ret = BN_cmp(axbz2, bxaz2) != 0 || BN_cmp(aybz3, byaz3) != 0;
 
  err:
 	BN_CTX_end(ctx);
@@ -349,9 +397,6 @@ static int
 ec_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
     BN_CTX *ctx)
 {
-	BIGNUM *az, *bz, *bn1, *bn2;
-	int ret = -1;
-
 	if (EC_POINT_is_at_infinity(group, a) && EC_POINT_is_at_infinity(group, b))
 		return 0;
 	if (EC_POINT_is_at_infinity(group, a) || EC_POINT_is_at_infinity(group, b))
@@ -362,51 +407,7 @@ ec_point_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
 	if (a->Z_is_one || b->Z_is_one)
 		return ec_point_cmp_one_affine(group, a, b, ctx);
 
-	BN_CTX_start(ctx);
-
-	if ((az = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((bz = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((bn1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((bn2 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	/* a->X * b->Z^2 == b->X * a->Z^2 ? */
-	if (!ec_field_sqr(group, bz, b->Z, ctx))
-		goto err;
-	if (!ec_field_mul(group, bn1, a->X, bz, ctx))
-		goto err;
-	if (!ec_field_sqr(group, az, a->Z, ctx))
-		goto err;
-	if (!ec_field_mul(group, bn2, b->X, az, ctx))
-		goto err;
-	if (BN_cmp(bn1, bn2) != 0) {
-		ret = 1;
-		goto err;
-	}
-
-	/* a->Y * b->Z^3 == b->Y * a->Z^3 ? */
-	if (!ec_field_mul(group, bz, bz, b->Z, ctx))
-		goto err;
-	if (!ec_field_mul(group, bn1, a->Y, bz, ctx))
-		goto err;
-	if (!ec_field_mul(group, az, az, a->Z, ctx))
-		goto err;
-	if (!ec_field_mul(group, bn2, b->Y, az, ctx))
-		goto err;
-	if (BN_cmp(bn1, bn2) != 0) {
-		ret = 1;
-		goto err;
-	}
-
-	ret = 0;
-
- err:
-	BN_CTX_end(ctx);
-
-	return ret;
+	return ec_point_cmp_none_affine(group, a, b, ctx);
 }
 
 static int
