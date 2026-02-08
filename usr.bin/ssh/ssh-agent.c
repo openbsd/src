@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.317 2026/01/27 06:48:29 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.318 2026/02/08 17:51:43 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,6 +41,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/un.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
 
 #ifdef WITH_OPENSSL
