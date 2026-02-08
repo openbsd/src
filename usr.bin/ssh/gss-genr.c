@@ -1,4 +1,4 @@
-/* $OpenBSD: gss-genr.c,v 1.30 2025/09/29 21:28:33 dtucker Exp $ */
+/* $OpenBSD: gss-genr.c,v 1.31 2026/02/08 19:54:31 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2007 Simon Wilkinson. All rights reserved.
@@ -26,9 +26,14 @@
 
 #ifdef GSSAPI
 
+#include <sys/types.h>
+
 #include <limits.h>
 #include <stdarg.h>
 #include <string.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "xmalloc.h"
 #include "ssherr.h"

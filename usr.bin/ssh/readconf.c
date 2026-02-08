@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.407 2025/11/20 05:10:11 dtucker Exp $ */
+/* $OpenBSD: readconf.c,v 1.408 2026/02/08 19:54:31 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <glob.h>
 #include <ifaddrs.h>
+#include <limits.h>
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
@@ -35,7 +36,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include <limits.h>
 #include <util.h>
 #include <vis.h>
 

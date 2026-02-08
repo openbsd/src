@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.75 2024/12/03 16:27:53 dtucker Exp $ */
+/* $OpenBSD: dh.c,v 1.76 2026/02/08 19:54:31 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -24,6 +24,7 @@
  */
 
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

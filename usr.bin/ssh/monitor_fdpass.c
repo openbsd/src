@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_fdpass.c,v 1.22 2020/10/18 11:32:01 djm Exp $ */
+/* $OpenBSD: monitor_fdpass.c,v 1.23 2026/02/08 19:54:31 dtucker Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <sys/un.h>
 
 #include <errno.h>
 #include <poll.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-krb5.c,v 1.25 2025/09/29 21:29:22 dtucker Exp $ */
+/* $OpenBSD: auth-krb5.c,v 1.26 2026/02/08 19:54:31 dtucker Exp $ */
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
  *
@@ -45,6 +45,9 @@
 #include "auth.h"
 
 #ifdef KRB5
+#include <errno.h>
+#include <unistd.h>
+#include <string.h>
 #include <krb5.h>
 
 extern ServerOptions	 options;
