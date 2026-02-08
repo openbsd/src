@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.48 2026/01/04 09:54:23 tb Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.49 2026/02/08 10:27:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,6 +108,39 @@ asn1_abs_set_unused_bits(ASN1_BIT_STRING *abs, uint8_t unused_bits)
 	return 1;
 }
 
+/*
+ * X.690, 11.2.2: [When a "NamedBitList" is used] [...], the bitstring shall
+ * have all trailing 0 bits removed before it is encoded.
+ */
+static int
+asn1_abs_trim_trailing_zero_bits(ASN1_BIT_STRING *abs)
+{
+	int unused_bits = 0;
+
+	/* Remove trailing zero octets. */
+	while (abs->length > 0 && abs->data[abs->length - 1] == 0)
+		abs->length--;
+
+	/* Remove trailing zero bits by setting the unused bits octet. */
+	if (abs->length > 0) {
+		uint8_t u8 = abs->data[abs->length - 1];
+
+		/* u8 != 0. Only keep least significant bit. */
+		u8 &= 0x100 - u8;
+
+		/* Count trailing zero bits. */
+		unused_bits = 7;
+		if ((u8 & 0x0f) != 0)
+			unused_bits -= 4;
+		if ((u8 & 0x33) != 0)
+			unused_bits -= 2;
+		if ((u8 & 0x55) != 0)
+			unused_bits -= 1;
+	}
+
+	return asn1_abs_set_unused_bits(abs, unused_bits);
+}
+
 int
 ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
@@ -133,12 +166,14 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	if (value == 0)
 		v = 0;
 
-	asn1_abs_clear_unused_bits(a);
-
 	if (a->length < w + 1 || a->data == NULL) {
-		/* Don't expand if there's no bit to set. */
+		/*
+		 * Don't expand if there's no bit to set.
+		 * XXX - switch back to return 1 here when we drop
+		 * ASN1_STRING_FLAG_BITS_LEFT?
+		 */
 		if (value == 0)
-			return 1;
+			return asn1_abs_trim_trailing_zero_bits(a);
 		if ((c = recallocarray(a->data, a->length, w + 1, 1)) == NULL) {
 			ASN1error(ERR_R_MALLOC_FAILURE);
 			return 0;
@@ -147,11 +182,9 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 		a->length = w + 1;
 	}
 
-	a->data[w] = ((a->data[w]) & iv) | v;
-	while (a->length > 0 && a->data[a->length - 1] == 0)
-		a->length--;
+	a->data[w] = (a->data[w] & iv) | v;
 
-	return 1;
+	return asn1_abs_trim_trailing_zero_bits(a);
 }
 LCRYPTO_ALIAS(ASN1_BIT_STRING_set_bit);
 
@@ -189,6 +222,7 @@ i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 		if (a->flags & ASN1_STRING_FLAG_BITS_LEFT) {
 			bits = (int)a->flags & 0x07;
 		} else {
+			/* XXX - dedup with asn1_abs_trim_trailing_zero_bits? */
 			j = 0;
 			for (; len > 0; len--) {
 				if (a->data[len - 1])
