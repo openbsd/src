@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.41 2025/11/14 08:30:22 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.42 2026/02/08 12:35:07 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -102,6 +102,11 @@ aspa_parse_providers(const char *fn, struct aspa *aspa,
 		}
 
 		aspa->providers[aspa->num_providers++] = provider;
+	}
+
+	if (aspa->num_providers > 1 && aspa->providers[0] == 0) {
+		warnx("%s: ASPA: invalid ProviderASSet", fn);
+		return 0;
 	}
 
 	return 1;
