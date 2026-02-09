@@ -1,4 +1,4 @@
-/* $OpenBSD: cipher-aesctr.c,v 1.2 2015/01/14 10:24:42 markus Exp $ */
+/* $OpenBSD: cipher-aesctr.c,v 1.3 2026/02/09 22:15:45 dtucker Exp $ */
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  * the counter is of size 'len' bytes and stored in network-byte-order.
  * (LSB at ctr[len-1], MSB at ctr[0])
  */
-static __inline__ void
+static inline void
 aesctr_inc(u8 *ctr, u32 len)
 {
 	ssize_t i;
