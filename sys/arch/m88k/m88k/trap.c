@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.139 2025/07/25 16:55:00 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.140 2026/02/09 20:14:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -680,7 +680,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 			if (copyinsn(p, (u_int32_t *)frame->tf_exip,
 			    (u_int32_t *)&instr) == 0 &&
 			    instr == 0xf400cc01) {
-				uprintf("mc88110 errata #16, exip 0x%lx enip 0x%lx",
+				printf("mc88110 errata #16, exip 0x%lx enip 0x%lx",
 				    (frame->tf_exip + 4) | 1, frame->tf_enip);
 				sig = SIGILL;
 			}

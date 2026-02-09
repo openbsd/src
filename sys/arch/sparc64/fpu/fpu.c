@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.26 2024/03/29 21:14:31 miod Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.27 2026/02/09 20:14:11 deraadt Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -217,8 +217,6 @@ fpu_cleanup(struct proc *p, struct fpstate *fs, union instr instr,
 		/* NOTREACHED */
 	case FSR_TT_HWERR:
 		log(LOG_ERR, "fpu hardware error (%s[%d])\n",
-		    p->p_p->ps_comm, p->p_p->ps_pid);
-		uprintf("%s[%d]: fpu hardware error\n",
 		    p->p_p->ps_comm, p->p_p->ps_pid);
 		trapsignal(p, SIGFPE, -1, FPE_FLTINV, sv);	/* ??? */
 		return;

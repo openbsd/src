@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.127 2024/11/08 08:43:38 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.128 2026/02/09 20:14:11 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -594,7 +594,6 @@ dopanic:
 		break;
 
 	case T_CLEANWIN:
-		uprintf("T_CLEANWIN\n");	/* XXX Should not get this */
 		ADVANCE;
 		break;
 
@@ -610,13 +609,11 @@ dopanic:
 		break;
 
 	case T_FIXALIGN:
-		uprintf("T_FIXALIGN\n");
 		ADVANCE;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);	/* XXX code? */
 		break;
 
 	case T_INTOF:
-		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
 		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP, FPE_INTOVF, sv);
 		break;
