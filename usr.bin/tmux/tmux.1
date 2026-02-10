@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1029 2026/02/02 10:08:30 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1030 2026/02/10 09:55:53 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 2 2026 $
+.Dd $Mdocdate: February 10 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3090,7 +3090,11 @@ See the
 section.
 .Fl O
 specifies the sort order: one of
-.Ql name ,
+.Ql name
+(title),
+.Ql index ,
+.Ql size
+(area),
 .Ql creation
 (time), or
 .Ql activity
@@ -3123,6 +3127,10 @@ section.
 specifies the sort order: one of
 .Ql index ,
 .Ql name ,
+.Ql size
+(area),
+.Ql creation
+(time),
 or
 .Ql activity
 (time).

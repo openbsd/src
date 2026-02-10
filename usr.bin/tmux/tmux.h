@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1291 2026/02/03 09:07:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1292 2026/02/10 09:55:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1254,6 +1254,7 @@ struct window {
 	struct event		 offset_timer;
 
 	struct timeval		 activity_time;
+	struct timeval		 creation_time;
 
 	struct window_pane	*active;
 	struct window_panes 	 last_panes;
