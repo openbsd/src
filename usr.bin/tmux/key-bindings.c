@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.160 2026/01/11 11:48:46 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.161 2026/02/10 08:28:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -297,11 +297,11 @@ key_bindings_remove_table(const char *name)
 	table = key_bindings_get_table(name, 0);
 	if (table != NULL) {
 		RB_REMOVE(key_tables, &key_tables, table);
+		TAILQ_FOREACH(c, &clients, entry) {
+			if (c->keytable == table)
+				server_client_set_key_table(c, NULL);
+		}
 		key_bindings_unref_table(table);
-	}
-	TAILQ_FOREACH(c, &clients, entry) {
-		if (c->keytable == table)
-			server_client_set_key_table(c, NULL);
 	}
 }
 
