@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.278 2026/01/19 20:37:46 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.279 2026/02/10 01:03:33 jsg Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2387,7 +2387,8 @@ aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *addr)
 				addr->dev = 0;
 				addr->fun = 0;
 			}
-		}
+		} else
+			continue;
 
 		if (n == 0)
 			break;
