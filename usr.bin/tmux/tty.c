@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.455 2026/02/10 08:30:21 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.456 2026/02/10 08:34:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2064,7 +2064,6 @@ tty_cell(struct tty *tty, const struct grid_cell *gc,
 
 	/* If it is a single character, write with putc to handle ACS. */
 	if (gcp->data.size == 1) {
-		tty_attributes(tty, gcp, defaults, palette, hl);
 		if (*gcp->data.data < 0x20 || *gcp->data.data == 0x7f)
 			return;
 		tty_putc(tty, *gcp->data.data);
