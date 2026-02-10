@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.28 2024/11/21 13:26:49 claudio Exp $	*/
+/*	$OpenBSD: eap.c,v 1.29 2026/02/10 13:01:37 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -211,7 +211,7 @@ eap_challenge_request(struct iked *env, struct iked_sa *sa,
 		    sizeof(*ms) + strlen(name));
 
 		if ((ms = ibuf_reserve(e, sizeof(*ms))) == NULL)
-			return (-1);
+			goto done;
 		ms->msc_opcode = EAP_MSOPCODE_CHALLENGE;
 		ms->msc_id = eap->eap_id;
 		ms->msc_length = htobe16(sizeof(*ms) + strlen(name));
