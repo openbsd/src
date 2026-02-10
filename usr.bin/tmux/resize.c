@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.53 2026/01/08 12:05:02 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.54 2026/02/10 10:02:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -250,7 +250,7 @@ skip:
 	/* Return whether a suitable size was found. */
 	if (type == WINDOW_SIZE_MANUAL) {
 		log_debug("%s: type is manual", __func__);
-		return (1);
+		return (w != NULL);
 	}
 	if (type == WINDOW_SIZE_LARGEST) {
 		log_debug("%s: type is largest", __func__);
