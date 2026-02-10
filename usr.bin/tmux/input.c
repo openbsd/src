@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.249 2026/02/03 09:07:44 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.250 2026/02/10 08:27:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3424,7 +3424,7 @@ input_cancel_requests(struct client *c)
 {
 	struct input_request	*ir, *ir1;
 
-	TAILQ_FOREACH_SAFE(ir, &c->input_requests, entry, ir1)
+	TAILQ_FOREACH_SAFE(ir, &c->input_requests, centry, ir1)
 		input_free_request(ir);
 }
 
