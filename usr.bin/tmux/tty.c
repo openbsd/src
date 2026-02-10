@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.454 2026/01/23 10:45:53 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.455 2026/02/10 08:30:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -628,7 +628,8 @@ tty_add(struct tty *tty, const char *buf, size_t len)
 
 	if (tty_log_fd != -1)
 		write(tty_log_fd, buf, len);
-	if (tty->flags & TTY_STARTED)
+	if ((tty->flags & TTY_STARTED) &&
+	    !event_pending(&tty->event_out, EV_WRITE, NULL))
 		event_add(&tty->event_out, NULL);
 }
 
