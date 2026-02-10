@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-draw.c,v 1.2 2026/01/29 09:08:19 nicm Exp $ */
+/* $OpenBSD: tty-draw.c,v 1.3 2026/02/10 08:31:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -262,10 +262,12 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int px, u_int py, u_int nx,
 			else
 				next_state = TTY_DRAW_LINE_NEW1;
 		}
-		log_debug("%s: cell %u empty %u, bg %u; state: current %s, "
-		    "next %s", __func__, px + i, empty, gcp->bg,
-		    tty_draw_line_states[current_state],
-		    tty_draw_line_states[next_state]);
+		if (log_get_level() != 0) {
+			log_debug("%s: cell %u empty %u, bg %u; state: "
+			    "current %s, next %s", __func__, px + i, empty,
+			    gcp->bg, tty_draw_line_states[current_state],
+			    tty_draw_line_states[next_state]);
+		}
 
 		/* If the state has changed, flush any collected data. */
 		if (next_state != current_state) {
