@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.272 2025/09/17 02:50:11 jsg Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.273 2026/02/10 20:24:34 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -102,7 +102,10 @@ static const struct sadb_alg ealgs[] = {
 	{ SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},
 	{ SADB_X_EALG_CAST, 64, 40, 128},
 	{ SADB_X_EALG_AES, 128, 128, 256},
-	{ SADB_X_EALG_AESCTR, 128, 128 + 32, 256 + 32}
+	{ SADB_X_EALG_AESCTR, 128, 128 + 32, 256 + 32},
+	{ SADB_X_EALG_AESGCM16, 64, 128 + 32, 256 + 32},
+	{ SADB_X_EALG_AESGMAC, 64, 128 + 32, 256 + 32},
+	{ SADB_X_EALG_CHACHA20POLY1305, 64, 256 + 32, 256 + 32}
 };
 
 static const struct sadb_alg aalgs[] = {
