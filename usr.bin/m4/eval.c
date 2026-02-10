@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.79 2022/12/26 19:16:01 jmc Exp $	*/
+/*	$OpenBSD: eval.c,v 1.80 2026/02/10 08:42:35 tb Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ void
 dodefine(const char *name, const char *defn)
 {
 	if (!*name && !mimic_gnu)
-		m4errx(1, "null definition.");
+		m4errx(1, "define macro with empty name.");
 	else
 		macro_define(name, defn);
 }
@@ -643,7 +643,7 @@ static void
 dopushdef(const char *name, const char *defn)
 {
 	if (!*name && !mimic_gnu)
-		m4errx(1, "null definition.");
+		m4errx(1, "pushdef macro with empty name.");
 	else
 		macro_pushdef(name, defn);
 }
