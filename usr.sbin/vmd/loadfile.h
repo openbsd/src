@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.17 2023/04/25 12:46:13 dv Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.18 2026/02/11 14:09:00 dv Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,8 +69,6 @@
 #define	COUNT_HDR	0x2000
 #define	COUNT_RANDOM	0x4000
 #define COUNT_ALL	0x7f00
-
-#define LOWMEM_KB 640
 
 #define BOOTARGS_PAGE 0x2000
 #define STACK_PAGE 0xF000

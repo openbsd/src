@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86_vm.c,v 1.14 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: x86_vm.c,v 1.15 2026/02/11 14:09:00 dv Exp $	*/
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -43,7 +43,8 @@
 
 typedef uint8_t (*io_fn_t)(struct vm_run_params *);
 
-#define MAX_PORTS 65536
+#define LOWMEM_KB	576
+#define MAX_PORTS	65536
 
 io_fn_t	ioports_map[MAX_PORTS];
 
