@@ -1,4 +1,4 @@
-/* $OpenBSD: sshpty.c,v 1.34 2019/07/04 16:20:10 deraadt Exp $ */
+/* $OpenBSD: sshpty.c,v 1.35 2026/02/11 17:05:32 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -21,7 +21,9 @@
 #include <grp.h>
 #include <paths.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>

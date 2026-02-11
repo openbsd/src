@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect.c,v 1.378 2025/12/30 00:35:37 djm Exp $ */
+/* $OpenBSD: sshconnect.c,v 1.379 2026/02/11 17:05:32 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -30,6 +30,8 @@
 #include <paths.h>
 #include <signal.h>
 #include <pwd.h>
+#include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -38,13 +40,13 @@
 #include <ifaddrs.h>
 
 #include "xmalloc.h"
+#include "hostfile.h"
 #include "ssh.h"
 #include "compat.h"
 #include "sshbuf.h"
 #include "packet.h"
 #include "sshkey.h"
 #include "sshconnect.h"
-#include "hostfile.h"
 #include "log.h"
 #include "match.h"
 #include "misc.h"

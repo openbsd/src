@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.20 2015/03/16 11:09:52 djm Exp $ */
+/*	$OpenBSD: rijndael.c,v 1.21 2026/02/11 17:05:32 dtucker Exp $ */
 
 /**
  * rijndael-alg-fst.c
@@ -27,6 +27,9 @@
  */
 
 #include <sys/types.h>
+
+#include <stdlib.h>
+#include <string.h>
 
 #include "rijndael.h"
 

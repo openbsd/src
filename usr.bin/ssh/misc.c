@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.211 2025/12/05 17:48:47 phessler Exp $ */
+/* $OpenBSD: misc.c,v 1.212 2026/02/11 17:05:32 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005-2020 Damien Miller.  All rights reserved.
@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -48,6 +49,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "xmalloc.h"
