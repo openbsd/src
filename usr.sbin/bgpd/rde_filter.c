@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.143 2026/02/11 10:24:57 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.144 2026/02/11 12:25:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1006,6 +1006,7 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 			f = TAILQ_NEXT(f, entry);
 			continue;
 		}
+		if (f->peer.ibgp && peer->conf.ebgp) {
 			f = TAILQ_NEXT(f, entry);
 			continue;
 		}
