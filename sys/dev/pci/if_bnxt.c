@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.64 2026/01/20 05:08:04 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.65 2026/02/11 09:35:07 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -307,10 +307,12 @@ void		bnxt_cpr_commit(struct bnxt_softc *, struct bnxt_cp_ring *);
 void		bnxt_cpr_rollback(struct bnxt_softc *, struct bnxt_cp_ring *);
 
 void		bnxt_mark_cpr_invalid(struct bnxt_cp_ring *);
-void		bnxt_write_cp_doorbell(struct bnxt_softc *, struct bnxt_ring *,
-		    int);
-void		bnxt_write_cp_doorbell_index(struct bnxt_softc *,
-		    struct bnxt_ring *, uint32_t, int);
+void		bnxt_write_intr_doorbell(struct bnxt_softc *,
+		    struct bnxt_cp_ring *, int);
+void		bnxt_write_intr_doorbell_index(struct bnxt_softc *,
+		    struct bnxt_cp_ring *, uint32_t, int);
+void		bnxt_write_cp_doorbell(struct bnxt_softc *,
+		    struct bnxt_cp_ring *, uint32_t);
 void		bnxt_write_rx_doorbell(struct bnxt_softc *, struct bnxt_ring *,
 		    int);
 void		bnxt_write_tx_doorbell(struct bnxt_softc *, struct bnxt_ring *,
@@ -629,7 +631,7 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 		    DEVNAME(sc));
 		goto free_cp_ring;
 	}
-	bnxt_write_cp_doorbell(sc, &cpr->ring, 1);
+	bnxt_write_intr_doorbell(sc, cpr, 1);
 
 	if (bnxt_set_cp_ring_aggint(sc, cpr) != 0) {
 		printf("%s: failed to set interrupt aggregation\n",
@@ -835,7 +837,7 @@ bnxt_queue_up(struct bnxt_softc *sc, struct bnxt_queue *bq)
 			    DEVNAME(sc), bq->q_index);
 			goto free_cp_ring;
 		}
-		bnxt_write_cp_doorbell(sc, &cp->ring, 1);
+		bnxt_write_cp_doorbell(sc, cp, 0);
 	}
 
 	if (bnxt_hwrm_stat_ctx_alloc(sc, &bq->q_stat_ctx_id,
@@ -1597,7 +1599,7 @@ bnxt_admin_intr(void *xsc)
 	struct cmpl_base *cmpl;
 	uint16_t type;
 
-	bnxt_write_cp_doorbell(sc, &cpr->ring, 0);
+	bnxt_write_intr_doorbell(sc, cpr, 0);
 	cmpl = bnxt_cpr_next_cmpl(sc, cpr);
 	while (cmpl != NULL) {
 		type = le16toh(cmpl->type) & CMPL_BASE_TYPE_MASK;
@@ -1614,7 +1616,7 @@ bnxt_admin_intr(void *xsc)
 		cmpl = bnxt_cpr_next_cmpl(sc, cpr);
 	}
 
-	bnxt_write_cp_doorbell_index(sc, &cpr->ring,
+	bnxt_write_intr_doorbell_index(sc, cpr,
 	    (cpr->commit_cons+1) % cpr->ring.ring_size, 1);
 	return (1);
 }
@@ -1634,7 +1636,7 @@ bnxt_intr(void *xq)
 	uint16_t type;
 	int rxfree, txfree, agfree, rv, rollback;
 
-	bnxt_write_cp_doorbell(sc, &cpr->ring, 0);
+	bnxt_write_intr_doorbell(sc, cpr, 0);
 	rxfree = 0;
 	txfree = 0;
 	agfree = 0;
@@ -1674,8 +1676,8 @@ bnxt_intr(void *xq)
 	 * comments in bnxtreg.h suggest we should be writing cpr->cons here,
 	 * but writing cpr->cons + 1 makes it stop interrupting.
 	 */
-	bnxt_write_cp_doorbell_index(sc, &cpr->ring,
-	    (cpr->commit_cons+1) % cpr->ring.ring_size, 1);
+	bnxt_write_cp_doorbell(sc, cpr,
+	    (cpr->commit_cons+1) % cpr->ring.ring_size);
 
 	if (rxfree != 0) {
 		int livelocked = 0;
@@ -2154,32 +2156,46 @@ bnxt_mark_cpr_invalid(struct bnxt_cp_ring *cpr)
 }
 
 void
-bnxt_write_cp_doorbell(struct bnxt_softc *sc, struct bnxt_ring *ring,
+bnxt_write_intr_doorbell(struct bnxt_softc *sc, struct bnxt_cp_ring *ring,
     int enable)
 {
 	uint32_t val = CMPL_DOORBELL_KEY_CMPL;
 	if (enable == 0)
 		val |= CMPL_DOORBELL_MASK;
 
-	bus_space_barrier(sc->sc_db_t, sc->sc_db_h, ring->doorbell, 4,
+	bus_space_barrier(sc->sc_db_t, sc->sc_db_h, ring->ring.doorbell, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 	bus_space_barrier(sc->sc_db_t, sc->sc_db_h, 0, sc->sc_db_s,
 	    BUS_SPACE_BARRIER_WRITE);
-	bus_space_write_4(sc->sc_db_t, sc->sc_db_h, ring->doorbell,
+	bus_space_write_4(sc->sc_db_t, sc->sc_db_h, ring->ring.doorbell,
 	    htole32(val));
 }
 
 void
-bnxt_write_cp_doorbell_index(struct bnxt_softc *sc, struct bnxt_ring *ring,
+bnxt_write_intr_doorbell_index(struct bnxt_softc *sc, struct bnxt_cp_ring *ring,
     uint32_t index, int enable)
 {
 	uint32_t val = CMPL_DOORBELL_KEY_CMPL | CMPL_DOORBELL_IDX_VALID |
 	    (index & CMPL_DOORBELL_IDX_MASK);
 	if (enable == 0)
 		val |= CMPL_DOORBELL_MASK;
-	bus_space_barrier(sc->sc_db_t, sc->sc_db_h, ring->doorbell, 4,
+	bus_space_barrier(sc->sc_db_t, sc->sc_db_h, ring->ring.doorbell, 4,
 	    BUS_SPACE_BARRIER_WRITE);
-	bus_space_write_4(sc->sc_db_t, sc->sc_db_h, ring->doorbell,
+	bus_space_write_4(sc->sc_db_t, sc->sc_db_h, ring->ring.doorbell,
+	    htole32(val));
+	bus_space_barrier(sc->sc_db_t, sc->sc_db_h, 0, sc->sc_db_s,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+void
+bnxt_write_cp_doorbell(struct bnxt_softc *sc, struct bnxt_cp_ring *ring,
+    uint32_t index)
+{
+	uint32_t val = CMPL_DOORBELL_KEY_CMPL | CMPL_DOORBELL_IDX_VALID |
+	    (index & CMPL_DOORBELL_IDX_MASK);
+	bus_space_barrier(sc->sc_db_t, sc->sc_db_h, ring->ring.doorbell, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+	bus_space_write_4(sc->sc_db_t, sc->sc_db_h, ring->ring.doorbell,
 	    htole32(val));
 	bus_space_barrier(sc->sc_db_t, sc->sc_db_h, 0, sc->sc_db_s,
 	    BUS_SPACE_BARRIER_WRITE);
