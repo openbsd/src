@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.13 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.14 2026/02/11 13:58:55 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -72,16 +72,20 @@ void
 fw_cfg_init(struct vmop_create_params *vmc)
 {
 	unsigned int sd = 0;
-	size_t i, e820_len = 0;
+	size_t i, j, e820_len = 0;
 	char bootorder[64];
 	const char *bootfmt;
 	int bootidx = -1;
 
 	/* Define e820 memory ranges. */
 	memset(&e820, 0, sizeof(e820));
-	for (i = 0; i < vmc->vmc_nmemranges; i++) {
+	for (i = 0, j = 0; i < vmc->vmc_nmemranges; i++) {
 		struct vm_mem_range *range = &vmc->vmc_memranges[i];
-		bios_memmap_t *entry = &e820[i];
+		if (range->vmr_type == VM_MEM_MMIO) {
+			/* Create a hole for MMIO regions. */
+			continue;
+		}
+		bios_memmap_t *entry = &e820[j++];
 		entry->addr = range->vmr_gpa;
 		entry->size = range->vmr_size;
 		if (range->vmr_type == VM_MEM_RAM)
