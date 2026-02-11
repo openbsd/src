@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.126 2026/01/13 21:36:17 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.127 2026/02/11 14:24:41 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -381,8 +381,8 @@ valid_printable_string(const char *fn, const char *descr, const ASN1_STRING *as)
 	 * https://lists.afrinic.net/pipermail/dbwg/2025-November/000546.html
 	 */
 	if (0 && ASN1_STRING_type(as) != V_ASN1_PRINTABLESTRING) {
-		warnx("%s: RFC 6487 section 4.5: commonName is"
-		    " not PrintableString", fn);
+		warnx("%s: RFC 6487 section 4.5: %s commonName is"
+		    " not PrintableString", fn, descr);
 		return 0;
 	}
 
