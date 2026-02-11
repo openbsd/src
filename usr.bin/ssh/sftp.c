@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.249 2026/02/08 19:54:31 dtucker Exp $ */
+/* $OpenBSD: sftp.c,v 1.250 2026/02/11 17:01:34 dtucker Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,10 +17,10 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/statvfs.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <errno.h>
