@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.81 2026/01/28 21:09:41 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.82 2026/02/11 22:34:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2024 Martin Pieuchot <mpi@openbsd.org>
@@ -952,9 +952,11 @@ retry:		/* Return point after sleeping. */
 	 * check to see if we need to generate some free pages waking
 	 * the pagedaemon.
 	 */
-	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
-	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
-	    (uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg))
+	if ((atomic_load_sint(&uvmexp.free) - BUFPAGES_DEFICIT) < uvmexp.freemin ||
+	    ((atomic_load_sint(&uvmexp.free) - BUFPAGES_DEFICIT) <
+	    atomic_load_sint(&uvmexp.freetarg) &&
+	    (atomic_load_sint(&uvmexp.inactive) + BUFPAGES_INACT) <
+	    atomic_load_sint(&uvmexp.inactarg)))
 		wakeup(&uvm.pagedaemon);
 
 	/*
@@ -965,13 +967,13 @@ retry:		/* Return point after sleeping. */
 	 * [3]  only pagedaemon "reserved" pages remain and
 	 *        the requestor isn't the pagedaemon nor the syncer.
 	 */
-	if ((uvmexp.free <= (uvmexp.reserve_kernel + count)) &&
+	if ((atomic_load_sint(&uvmexp.free) <= uvmexp.reserve_kernel + count) &&
 	    !(flags & UVM_PLA_USERESERVE)) {
 		uvm_unlock_fpageq();
 		return ENOMEM;
 	}
 
-	if ((uvmexp.free <= (uvmexp.reserve_pagedaemon + count)) &&
+	if ((atomic_load_sint(&uvmexp.free) <= uvmexp.reserve_pagedaemon + count) &&
 	    !in_pagedaemon(1)) {
 	    	uvm_unlock_fpageq();
 		if (flags & UVM_PLA_WAITOK) {
@@ -1200,7 +1202,7 @@ fail:
 
 out:
 	/* Allocation successful. */
-	uvmexp.free -= fcount;
+	atomic_sub_int(&uvmexp.free, fcount);
 
 	uvm_unlock_fpageq();
 
@@ -1215,16 +1217,16 @@ out:
 
 		if (found->pg_flags & PG_ZERO) {
 			uvm_lock_fpageq();
-			uvmexp.zeropages--;
-			if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
+			atomic_dec_int(&uvmexp.zeropages);
+			if (atomic_load_sint(&uvmexp.zeropages) < UVM_PAGEZERO_TARGET)
 				wakeup(&uvmexp.zeropages);
 			uvm_unlock_fpageq();
 		}
 		if (flags & UVM_PLA_ZERO) {
 			if (found->pg_flags & PG_ZERO)
-				uvmexp.pga_zerohit++;
+				atomic_inc_int(&uvmexp.pga_zerohit);
 			else {
-				uvmexp.pga_zeromiss++;
+				atomic_inc_int(&uvmexp.pga_zeromiss);
 				uvm_pagezero(found);
 			}
 		}
@@ -1334,11 +1336,11 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 		pg->fpgsz = pmr_count;
 		uvm_pmr_insert(pmr, pg, 0);
 
-		uvmexp.free += pmr_count;
+		atomic_add_int(&uvmexp.free, pmr_count);
 		pg += pmr_count;
 	}
 	wakeup(&uvmexp.free);
-	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
+	if (atomic_load_sint(&uvmexp.zeropages) < UVM_PAGEZERO_TARGET)
 		wakeup(&uvmexp.zeropages);
 
 	uvm_wakeup_pla(VM_PAGE_TO_PHYS(firstpg), ptoa(count));
@@ -1385,12 +1387,12 @@ uvm_pmr_freepageq(struct pglist *pgl)
 			pstart = VM_PAGE_TO_PHYS(TAILQ_FIRST(pgl));
 			plen = uvm_pmr_remove_1strange(pgl, 0, NULL, 0);
 		}
-		uvmexp.free += plen;
+		atomic_add_int(&uvmexp.free, plen);
 
 		uvm_wakeup_pla(pstart, ptoa(plen));
 	}
 	wakeup(&uvmexp.free);
-	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
+	if (atomic_load_sint(&uvmexp.zeropages) < UVM_PAGEZERO_TARGET)
 		wakeup(&uvmexp.zeropages);
 	uvm_unlock_fpageq();
 
@@ -2208,7 +2210,7 @@ uvm_pagezero_thread(void *arg)
 	TAILQ_INIT(&pgl);
 	for (;;) {
 		uvm_lock_fpageq();
-		while (uvmexp.zeropages >= UVM_PAGEZERO_TARGET ||
+		while (atomic_load_sint(&uvmexp.zeropages) >= UVM_PAGEZERO_TARGET ||
 		    (count = uvm_pmr_get1page(16, UVM_PMR_MEMTYPE_DIRTY,
 		     &pgl, 0, 0, 1)) == 0) {
 			msleep_nsec(&uvmexp.zeropages, &uvm.fpageqlock,
@@ -2224,7 +2226,7 @@ uvm_pagezero_thread(void *arg)
 		uvm_lock_fpageq();
 		while (!TAILQ_EMPTY(&pgl))
 			uvm_pmr_remove_1strange(&pgl, 0, NULL, 0);
-		uvmexp.zeropages += count;
+		atomic_add_int(&uvmexp.zeropages, count);
  		uvm_unlock_fpageq();
 
 		yield();

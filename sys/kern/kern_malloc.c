@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.157 2025/11/13 10:55:51 mpi Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.158 2026/02/11 22:34:41 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -217,9 +217,11 @@ malloc(size_t size, int type, int flags)
 	if (XSIMPLEQ_FIRST(&kbp->kb_freelist) == NULL) {
 		mtx_leave(&malloc_mtx);
 		npg = atop(round_page(allocsize));
-		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
+		KASSERT(atomic_load_sint(&uvmexp.swpgonly) <=
+		    atomic_load_sint(&uvmexp.swpages));
 		if ((flags & M_NOWAIT) || ((flags & M_CANFAIL) &&
-		    uvmexp.swpages - uvmexp.swpgonly <= npg))
+		    atomic_load_sint(&uvmexp.swpages) -
+		    atomic_load_sint(&uvmexp.swpgonly) <= npg))
 			kdp = &kd_nowait;
 		else
 			kdp = &kd_waitok;

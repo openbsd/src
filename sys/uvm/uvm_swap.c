@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.178 2026/01/29 00:05:36 beck Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.179 2026/02/11 22:34:41 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ uvm_swap_init(void)
 	 * the its dev_t number ("swapdev", from MD conf.c).
 	 */
 	LIST_INIT(&swap_priority);
-	uvmexp.nswapdev = 0;
+	atomic_store_int(&uvmexp.nswapdev, 0);
 
 	if (!swapdev_vp && bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
@@ -481,7 +481,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 	 */
 	sdp->swd_priority = priority;
 	TAILQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
-	uvmexp.nswapdev++;
+	atomic_inc_int(&uvmexp.nswapdev);
 }
 
 /*
@@ -509,7 +509,7 @@ swaplist_find(struct vnode *vp, boolean_t remove)
 				continue;
 			if (remove) {
 				TAILQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
-				uvmexp.nswapdev--;
+				atomic_dec_int(&uvmexp.nswapdev);
 			}
 			return (sdp);
 		}
@@ -625,7 +625,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 	 * [can also be obtained with uvmexp sysctl]
 	 */
 	if (SCARG(uap, cmd) == SWAP_NSWAP) {
-		*retval = uvmexp.nswapdev;
+		*retval = atomic_load_sint(&uvmexp.nswapdev);
 		error = 0;
 		goto out;
 	}
@@ -983,7 +983,7 @@ swap_on(struct proc *p, struct swapdev *sdp)
 	mtx_enter(&uvm_swap_data_lock);
 	sdp->swd_flags &= ~SWF_FAKE;	/* going live */
 	sdp->swd_flags |= (SWF_INUSE|SWF_ENABLE);
-	uvmexp.swpages += size;
+	atomic_add_int(&uvmexp.swpages, size);
 	mtx_leave(&uvm_swap_data_lock);
 	return (0);
 
@@ -1053,7 +1053,7 @@ swap_off(struct proc *p, struct swapdev *sdp)
 	}
 
 	mtx_enter(&uvm_swap_data_lock);
-	uvmexp.swpages -= npages;
+	atomic_sub_int(&uvmexp.swpages, npages);
 
 	if (swaplist_find(sdp->swd_vp, 1) == NULL)
 		panic("swap_off: swapdev not in list");
@@ -1422,7 +1422,7 @@ uvm_swap_alloc(int *nslots, boolean_t lessok)
 	/*
 	 * no swap devices configured yet?   definite failure.
 	 */
-	if (uvmexp.nswapdev < 1)
+	if (atomic_load_sint(&uvmexp.nswapdev) < 1)
 		return 0;
 
 	/*
@@ -1453,7 +1453,7 @@ ReTry:	/* XXXMRG */
 			TAILQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
 			TAILQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
 			sdp->swd_npginuse += *nslots;
-			uvmexp.swpginuse += *nslots;
+			atomic_add_int(&uvmexp.swpginuse, *nslots);
 			mtx_leave(&uvm_swap_data_lock);
 			/* done!  return drum slot number */
 			return result + sdp->swd_drumoffset;
@@ -1486,8 +1486,10 @@ uvm_swapisfilled(void)
 	int result;
 
 	mtx_enter(&uvm_swap_data_lock);
-	KASSERT(uvmexp.swpginuse <= uvmexp.swpages);
-	result = (uvmexp.swpginuse + SWCLUSTPAGES) >= uvmexp.swpages;
+	KASSERT(atomic_load_sint(&uvmexp.swpginuse) <=
+	    atomic_load_sint(&uvmexp.swpages));
+	result = (atomic_load_sint(&uvmexp.swpginuse) + SWCLUSTPAGES) >=
+	    atomic_load_sint(&uvmexp.swpages);
 	mtx_leave(&uvm_swap_data_lock);
 
 	return result;
@@ -1504,8 +1506,10 @@ uvm_swapisfull(void)
 	int result;
 
 	mtx_enter(&uvm_swap_data_lock);
-	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-	result = (uvmexp.swpgonly >= ((long)uvmexp.swpages * 99 / 100));
+	KASSERT(atomic_load_sint(&uvmexp.swpgonly) <=
+	    atomic_load_sint(&uvmexp.swpages));
+	result = (atomic_load_sint(&uvmexp.swpgonly) >=
+	    ((long)atomic_load_sint(&uvmexp.swpages) * 99 / 100));
 	mtx_leave(&uvm_swap_data_lock);
 
 	return result;
@@ -1562,12 +1566,12 @@ uvm_swap_free(int startslot, int nslots)
 	KERNEL_LOCK();
 	mtx_enter(&uvm_swap_data_lock);
 	sdp = swapdrum_getsdp(startslot);
-	KASSERT(uvmexp.nswapdev >= 1);
+	KASSERT(atomic_load_sint(&uvmexp.nswapdev) >= 1);
 	KASSERT(sdp != NULL);
 	KASSERT(sdp->swd_npginuse >= nslots);
 	blist_free(sdp->swd_blist, startslot - sdp->swd_drumoffset, nslots);
 	sdp->swd_npginuse -= nslots;
-	uvmexp.swpginuse -= nslots;
+	atomic_sub_int(&uvmexp.swpginuse, nslots);
 	mtx_leave(&uvm_swap_data_lock);
 
 #ifdef UVM_SWAP_ENCRYPT
@@ -2001,7 +2005,7 @@ uvm_hibswap(dev_t dev, u_long *sp, u_long *ep)
 	struct swappri *spp;
 
 	/* no swap devices configured yet? */
-	if (uvmexp.nswapdev < 1 || dev != swdevt[0])
+	if (atomic_load_sint(&uvmexp.nswapdev) < 1 || dev != swdevt[0])
 		return (1);
 
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {

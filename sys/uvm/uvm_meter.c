@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.54 2025/06/12 20:37:59 deraadt Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.55 2026/02/11 22:34:41 deraadt Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -236,11 +236,13 @@ uvm_total(struct vmtotal *totalp)
 	/*
 	 * Calculate object memory usage statistics.
 	 */
-	totalp->t_free = uvmexp.free;
-	totalp->t_vm = uvmexp.npages - uvmexp.free + uvmexp.swpginuse;
-	totalp->t_avm = uvmexp.active + uvmexp.swpginuse;	/* XXX */
-	totalp->t_rm = uvmexp.npages - uvmexp.free;
-	totalp->t_arm = uvmexp.active;
+	totalp->t_free = atomic_load_sint(&uvmexp.free);
+	totalp->t_vm = uvmexp.npages - atomic_load_sint(&uvmexp.free) +
+	    atomic_load_sint(&uvmexp.swpginuse);
+	totalp->t_avm = atomic_load_sint(&uvmexp.active) +
+	    atomic_load_sint(&uvmexp.swpginuse);	/* XXX */
+	totalp->t_rm = uvmexp.npages - atomic_load_sint(&uvmexp.free);
+	totalp->t_arm = atomic_load_sint(&uvmexp.active);
 	totalp->t_vmshr = 0;		/* XXX */
 	totalp->t_avmshr = 0;		/* XXX */
 	totalp->t_rmshr = 0;		/* XXX */

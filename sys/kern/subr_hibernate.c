@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.154 2025/09/15 14:15:54 krw Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.155 2026/02/11 22:34:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -437,7 +437,7 @@ uvm_pmr_dirty_everything(void)
 		}
 	}
 
-	uvmexp.zeropages = 0;
+	atomic_store_int(&uvmexp.zeropages, 0);
 	uvm_unlock_fpageq();
 }
 

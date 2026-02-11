@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.66 2025/12/15 13:02:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.67 2026/02/11 22:34:40 deraadt Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ uvm_anon_init(void)
 {
 	pool_init(&uvm_anon_pool, sizeof(struct vm_anon), 0, IPL_MPFLOOR,
 	    PR_WAITOK, "anonpl", NULL);
-	pool_sethiwat(&uvm_anon_pool, uvmexp.free / 16);
+	pool_sethiwat(&uvm_anon_pool, atomic_load_sint(&uvmexp.free) / 16);
 }
 
 void
@@ -112,7 +112,7 @@ uvm_anfree(struct vm_anon *anon)
 	} else {
 		if (anon->an_swslot != 0 && anon->an_swslot != SWSLOT_BAD) {
 			/* This page is no longer only in swap. */
-			KASSERT(uvmexp.swpgonly > 0);
+			KASSERT(atomic_load_sint(&uvmexp.swpgonly) > 0);
 			atomic_dec_int(&uvmexp.swpgonly);
 		}
 	}

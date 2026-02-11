@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.96 2025/08/15 09:53:53 mpi Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.97 2026/02/11 22:34:41 deraadt Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -650,7 +650,7 @@ lim_startup(struct plimit *limit0)
 	limit0->pl_rlimit[RLIMIT_NOFILE].rlim_max = MIN(NOFILE_MAX,
 	    (maxfiles - NOFILE > NOFILE) ? maxfiles - NOFILE : NOFILE);
 	limit0->pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
-	lim = ptoa(uvmexp.free);
+	lim = ptoa(atomic_load_sint(&uvmexp.free));
 	limit0->pl_rlimit[RLIMIT_RSS].rlim_max = lim;
 	lim = ptoa(64*1024);		/* Default to very low */
 	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;

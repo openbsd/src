@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.153 2026/01/29 14:44:16 deraadt Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.154 2026/02/11 22:34:41 deraadt Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ uvm_pageout(void *arg)
 		    uvm_wait_counter == 0) {
 			msleep_nsec(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
 			    "pgdaemon", INFSLP);
-			uvmexp.pdwoke++;
+			atomic_inc_int(&uvmexp.pdwoke);
 		}
 
 		if ((pma = TAILQ_FIRST(&uvm.pmr_control.allocs)) != NULL) {
@@ -240,19 +240,23 @@ uvm_pageout(void *arg)
 			constraint = no_constraint;
 		}
 		/* How many pages do we need to free during this round? */
-		shortage = uvmexp.freetarg - uvmexp.free + BUFPAGES_DEFICIT;
+		shortage = uvmexp.freetarg - atomic_load_sint(&uvmexp.free) +
+		    BUFPAGES_DEFICIT;
 		uvm_unlock_fpageq();
 
 		/*
 		 * now lock page queues and recompute inactive count
 		 */
 		uvm_lock_pageq();
-		uvmexp.inactarg = (uvmexp.active + uvmexp.inactive) / 3;
-		if (uvmexp.inactarg <= uvmexp.freetarg) {
-			uvmexp.inactarg = uvmexp.freetarg + 1;
+		atomic_store_int(&uvmexp.inactarg,
+		    (atomic_load_sint(&uvmexp.active) +
+		    atomic_load_sint(&uvmexp.inactive)) / 3);
+		if (atomic_load_sint(&uvmexp.inactarg) <= uvmexp.freetarg) {
+			atomic_store_int(&uvmexp.inactarg, uvmexp.freetarg + 1);
 		}
 		inactive_shortage =
-			uvmexp.inactarg - uvmexp.inactive - BUFPAGES_INACT;
+		    atomic_load_sint(&uvmexp.inactarg) -
+		    atomic_load_sint(&uvmexp.inactive) - BUFPAGES_INACT;
 		uvm_unlock_pageq();
 
 		/* Reclaim pages from the buffer cache if possible. */
@@ -285,7 +289,8 @@ uvm_pageout(void *arg)
 		 * wake up any waiters.
 		 */
 		uvm_lock_fpageq();
-		if (uvmexp.free > uvmexp.reserve_kernel || uvmexp.paging == 0)
+		if (atomic_load_sint(&uvmexp.free) > uvmexp.reserve_kernel ||
+		    atomic_load_sint(&uvmexp.paging) == 0)
 			wakeup(&uvmexp.free);
 		uvm_unlock_fpageq();
 
@@ -327,7 +332,7 @@ uvm_aiodone_daemon(void *arg)
 
 		/* process each i/o that's done. */
 		KERNEL_LOCK();
-		free = uvmexp.free;
+		free = atomic_load_sint(&uvmexp.free);
 		while (bp != NULL) {
 			if (bp->b_flags & B_PDAEMON) {
 				atomic_sub_int(&uvmexp.paging,
@@ -457,7 +462,7 @@ swapcluster_flush(struct swapcluster *swc)
 	if (nused < nallocated)
 		uvm_swap_free(slot + nused, nallocated - nused);
 
-	uvmexp.pdpageouts++;
+	atomic_inc_int(&uvmexp.pdpageouts);
 	result = uvm_swap_put(slot, swc->swc_pages, nused, 0);
 	if (result != VM_PAGER_PEND) {
 		KASSERT(result == VM_PAGER_AGAIN);
@@ -599,21 +604,22 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		/*
 		 * see if we've met our target
 		 */
-		if (uvmexp.paging + swapcluster_nused(&swc) >= (shortage - freed) ||
+		if (atomic_load_sint(&uvmexp.paging) + swapcluster_nused(&swc) >=
+		    (shortage - freed) ||
 		    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 			break;
 		}
 		/*
 		 * we are below target and have a new page to consider.
 		 */
-		uvmexp.pdscans++;
+		atomic_inc_int(&uvmexp.pdscans);
 
 		/*
 		 * If we are not short on memory and only interested
 		 * in releasing pages from a given memory range, do not
 		 * bother with other pages.
 		 */
-		if (uvmexp.paging >= (shortage - freed) &&
+		if (atomic_load_sint(&uvmexp.paging) >= (shortage - freed) &&
 		    !uvmpd_match_constraint(p, constraint))
 			continue;
 
@@ -642,22 +648,22 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 			uvm_pageactivate(p);
 			rw_exit(slock);
 			uvm_lock_pageq();
-			uvmexp.pdreact++;
+			atomic_inc_int(&uvmexp.pdreact);
 			continue;
 		}
 
 		if (p->pg_flags & PG_BUSY) {
 			rw_exit(slock);
-			uvmexp.pdbusy++;
+			atomic_inc_int(&uvmexp.pdbusy);
 			continue;
 		}
 
 		/* does the page belong to an object? */
 		if (uobj != NULL) {
-			uvmexp.pdobscan++;
+			atomic_inc_int(&uvmexp.pdobscan);
 		} else {
 			KASSERT(anon != NULL);
-			uvmexp.pdanscan++;
+			atomic_inc_int(&uvmexp.pdanscan);
 		}
 
 		/*
@@ -699,7 +705,7 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		 * this page is dirty, skip it if we'll have met our
 		 * free target when all the current pageouts complete.
 		 */
-		if (uvmexp.paging > (shortage - freed)) {
+		if (atomic_load_sint(&uvmexp.paging) > (shortage - freed)) {
 			rw_exit(slock);
 			continue;
 		}
@@ -739,7 +745,7 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		atomic_setbits_int(&p->pg_flags, PG_BUSY);
 		UVM_PAGE_OWN(p, "scan_inactive");
 		pmap_page_protect(p, PROT_READ);
-		uvmexp.pgswapout++;
+		atomic_inc_int(&uvmexp.pgswapout);
 
 		/*
 		 * for swap-backed pages we need to (re)allocate
@@ -787,7 +793,7 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		 *
 		 * for object pages, we always do the pageout.
 		 */
-		uvmexp.pdpageouts++;
+		atomic_inc_int(&uvmexp.pdpageouts);
 		if (swap_backed) {
 			uvm_unlock_pageq();
 			/* starting I/O now... set up for it */
@@ -816,7 +822,7 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		uvm_lock_pageq();
 		if (result == VM_PAGER_PEND) {
 			atomic_add_int(&uvmexp.paging, npages);
-			uvmexp.pdpending++;
+			atomic_inc_int(&uvmexp.pdpending);
 		}
 	}
 	TAILQ_REMOVE(pglst, &iter, pageq);
@@ -829,7 +835,7 @@ uvmpd_scan_inactive(struct uvm_constraint_range *constraint, int shortage)
 		uvm_lock_pageq();
 		if (result == VM_PAGER_PEND) {
 			atomic_add_int(&uvmexp.paging, npages);
-			uvmexp.pdpending++;
+			atomic_inc_int(&uvmexp.pdpending);
 		}
 	}
 
@@ -852,7 +858,7 @@ uvmpd_scan(struct uvm_constraint_range *constraint, int shortage, int inactive_s
 
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
-	uvmexp.pdrevs++;		/* counter */
+	atomic_inc_int(&uvmexp.pdrevs);		/* counter */
 
 	/*
 	 * now we want to work on meeting our targets.   first we work on our
@@ -861,7 +867,7 @@ uvmpd_scan(struct uvm_constraint_range *constraint, int shortage, int inactive_s
 	 * to inactive ones.
 	 */
 	pages_freed = uvmpd_scan_inactive(constraint, shortage);
-	uvmexp.pdfreed += pages_freed;
+	atomic_add_int(&uvmexp.pdfreed, pages_freed);
 	shortage -= pages_freed;
 
 	/*
@@ -935,7 +941,7 @@ uvmpd_scan(struct uvm_constraint_range *constraint, int shortage, int inactive_s
 			uvm_unlock_pageq();
 			uvm_pagedeactivate(p);
 			uvm_lock_pageq();
-			uvmexp.pddeact++;
+			atomic_inc_int(&uvmexp.pddeact);
 			inactive_shortage--;
 		}
 

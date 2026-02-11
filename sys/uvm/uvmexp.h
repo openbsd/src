@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.23 2026/01/26 00:07:58 beck Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.24 2026/02/11 22:34:41 deraadt Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -41,7 +41,7 @@
  * other than the vm system.
  *
  *  Locks used to protect struct members in this file:
- *	a	atomic operations
+ *	a	atomic operations (signed int, so use atomic_load_sint)
  *	I	immutable after creation
  *	K	kernel lock
  *	F	uvm_lock_fpageq
@@ -58,13 +58,13 @@ struct uvmexp {
 
 	/* vm_page counters */
 	int npages;     /* [I] number of pages we manage */
-	int free;       /* [F] number of free pages */
-	int active;     /* [L] # of active pages */
-	int inactive;   /* [L] # of pages that we free'd but may want back */
+	int free;       /* [aF] number of free pages */
+	int active;     /* [aL] # of active pages */
+	int inactive;   /* [aL] # of pages that we free'd but may want back */
 	int paging;	/* [a] # number of pages in the process of being paged out */
 	int wired;      /* [a] # number of wired pages */
 
-	int zeropages;		/* [F] number of zero'd pages */
+	int zeropages;		/* [aF] number of zero'd pages */
 	int reserve_pagedaemon; /* [I] # of pages reserved for pagedaemon */
 	int reserve_kernel;	/* [I] # of pages reserved for kernel */
 	int percpucaches;	/* [a] # of pages in per-CPU caches */
@@ -84,9 +84,9 @@ struct uvmexp {
 	int vnodeminpct;/* min percent vnode pages */
 
 	/* swap */
-	int nswapdev;	/* [S] number of configured swap devices in system */
-	int swpages;	/* [S] number of PAGE_SIZE'ed swap pages */
-	int swpginuse;	/* [S] number of swap pages in use */
+	int nswapdev;	/* [aS] number of configured swap devices in system */
+	int swpages;	/* [aS] number of PAGE_SIZE'ed swap pages */
+	int swpginuse;	/* [aS] number of swap pages in use */
 	int swpgonly;	/* [a] number of swap pages in use, not also in RAM */
 	int nswget;	/* [a] number of swap pages moved from disk to RAM */
 	int nanon;	/* XXX number total of anon's in system */
@@ -105,13 +105,13 @@ struct uvmexp {
 	int pcphit;		/* [a] # of pagealloc from per-CPU cache */
 	int pcpmiss;		/* [a] # of times a per-CPU cache was empty */
 	int pgswapin;		/* pages swapped in */
-	int pgswapout;		/* pages swapped out */
+	int pgswapout;		/* [a] pages swapped out */
 	int forks;  		/* forks */
 	int forks_ppwait;	/* forks where parent waits */
 	int forks_sharevm;	/* forks where vmspace is shared */
-	int pga_zerohit;	/* pagealloc where zero wanted and zero
+	int pga_zerohit;	/* [a] pagealloc where zero wanted and zero
 				   was available */
-	int pga_zeromiss;	/* pagealloc where zero wanted and zero
+	int pga_zeromiss;	/* [a] pagealloc where zero wanted and zero
 				   not available */
 	int unused09;		/* formerly zeroaborts */
 
@@ -139,24 +139,30 @@ struct uvmexp {
 	int fltnoup;	/* [p] # of times fault upgrade failed */
 
 	/* daemon counters */
-	int pdwoke;	/* [o] # of times daemon woke up */
-	int pdrevs;	/* [o] # of times daemon scanned for free pages */
+	int pdwoke;	/* [ao] # of times daemon woke up */
+	int pdrevs;	/* [ao] # of times daemon scanned for free pages */
 	int pdswout;	/* [o] # of times daemon called for swapout */
-	int pdfreed;	/* [o] # of pages daemon freed since boot */
-	int pdscans;	/* [o] # of pages daemon scanned since boot */
-	int pdanscan;	/* [o] # of anonymous pages scanned by daemon */
-	int pdobscan;	/* [o] # of object pages scanned by daemon */
-	int pdreact;	/* [o] # of pages daemon reactivated since boot */
-	int pdbusy;	/* [o] # of times daemon found a busy page */
-	int pdpageouts;	/* [o] # of times daemon started a pageout */
-	int pdpending;	/* [o] # of times daemon got a pending pagout */
-	int pddeact;	/* [o] # of pages daemon deactivates */
+	int pdfreed;	/* [ao] # of pages daemon freed since boot */
+	int pdscans;	/* [ao] # of pages daemon scanned since boot */
+	int pdanscan;	/* [ao] # of anonymous pages scanned by daemon */
+	int pdobscan;	/* [ao] # of object pages scanned by daemon */
+	int pdreact;	/* [ao] # of pages daemon reactivated since boot */
+	int pdbusy;	/* [ao] # of times daemon found a busy page */
+	int pdpageouts;	/* [ao] # of times daemon started a pageout */
+	int pdpending;	/* [ao] # of times daemon got a pending pagout */
+	int pddeact;	/* [ao] # of pages daemon deactivates */
 
 	int unused13;	/* formerly pdrevtext */
 
 	int fpswtch;	/* FPU context switches */
-	int kmapent;	/* number of kernel map entries */
+	int kmapent;	/* [a] number of kernel map entries */
 };
+
+static inline int
+atomic_load_sint(volatile const int *p)
+{
+        return *p;
+}
 
 struct _ps_strings {
 	void	*val;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.216 2025/06/08 06:23:43 rsadowski Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.217 2026/02/11 22:34:41 deraadt Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ bufinit(void)
 
 	dmapages = uvm_pagecount(&dma_constraint);
 	/* take away a guess at how much of this the kernel will consume */
-	dmapages -= (atop(physmem) - atop(uvmexp.free));
+	dmapages -= (atop(physmem) - atop(atomic_load_sint(&uvmexp.free)));
 
 	/* See if we have memory above the dma accessible region. */
 	high_constraint.ucr_low = dma_constraint.ucr_high;

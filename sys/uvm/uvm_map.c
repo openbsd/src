@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.353 2025/12/27 08:43:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.354 2026/02/11 22:34:40 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1503,7 +1503,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 		}
 		me = SLIST_FIRST(&uvm.kentry_free);
 		SLIST_REMOVE_HEAD(&uvm.kentry_free, daddrs.addr_kentry);
-		uvmexp.kmapent++;
+		atomic_inc_int(&uvmexp.kmapent);
 		mtx_leave(&uvm_kmapent_mtx);
 		me->flags = UVM_MAP_STATIC;
 	} else if (map == kernel_map) {
@@ -1536,7 +1536,7 @@ uvm_mapent_free(struct vm_map_entry *me)
 	if (me->flags & UVM_MAP_STATIC) {
 		mtx_enter(&uvm_kmapent_mtx);
 		SLIST_INSERT_HEAD(&uvm.kentry_free, me, daddrs.addr_kentry);
-		uvmexp.kmapent--;
+		atomic_dec_int(&uvmexp.kmapent);
 		mtx_leave(&uvm_kmapent_mtx);
 	} else if (me->flags & UVM_MAP_KMEM) {
 		splassert(IPL_NONE);

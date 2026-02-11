@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.94 2025/09/11 15:28:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.95 2026/02/11 22:34:40 deraadt Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -353,7 +353,7 @@ uvm_init_limits(struct plimit *limit0)
 	limit0->pl_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
 	limit0->pl_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
 	limit0->pl_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
-	limit0->pl_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
+	limit0->pl_rlimit[RLIMIT_RSS].rlim_cur = ptoa(atomic_load_sint(&uvmexp.free));
 }
 
 /*

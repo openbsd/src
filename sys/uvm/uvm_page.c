@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.187 2026/01/29 14:44:16 deraadt Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.188 2026/02/11 22:34:41 deraadt Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1283,7 +1283,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 	uvm_pagedequeue(pg);
 	TAILQ_INSERT_TAIL(&uvm.page_inactive, pg, pageq);
 	atomic_setbits_int(&pg->pg_flags, PQ_INACTIVE);
-	uvmexp.inactive++;
+	atomic_inc_int(&uvmexp.inactive);
 	uvm_unlock_pageq();
 
 	pmap_clear_reference(pg);
@@ -1313,7 +1313,7 @@ uvm_pageactivate(struct vm_page *pg)
 	uvm_pagedequeue(pg);
 	TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
 	atomic_setbits_int(&pg->pg_flags, PQ_ACTIVE);
-	uvmexp.active++;
+	atomic_inc_int(&uvmexp.active);
 	uvm_unlock_pageq();
 }
 
@@ -1330,12 +1330,12 @@ uvm_pagedequeue(struct vm_page *pg)
 	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
-		uvmexp.active--;
+		atomic_dec_int(&uvmexp.active);
 	}
 	if (pg->pg_flags & PQ_INACTIVE) {
 		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
-		uvmexp.inactive--;
+		atomic_dec_int(&uvmexp.inactive);
 	}
 }
 /*
