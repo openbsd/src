@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.443 2025/12/19 01:26:39 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.444 2026/02/11 22:57:16 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -177,7 +177,8 @@ initialize_server_options(ServerOptions *options)
 	options->chroot_directory = NULL;
 	options->authorized_keys_command = NULL;
 	options->authorized_keys_command_user = NULL;
-	options->revoked_keys_file = NULL;
+	options->revoked_keys_files = NULL;
+	options->num_revoked_keys_files = 0;
 	options->sk_provider = NULL;
 	options->trusted_user_ca_keys = NULL;
 	options->authorized_principals_file = NULL;
@@ -493,7 +494,6 @@ fill_default_server_options(ServerOptions *options)
 	CLEAR_ON_NONE(options->xauth_location);
 	CLEAR_ON_NONE(options->banner);
 	CLEAR_ON_NONE(options->trusted_user_ca_keys);
-	CLEAR_ON_NONE(options->revoked_keys_file);
 	CLEAR_ON_NONE(options->sk_provider);
 	CLEAR_ON_NONE(options->authorized_principals_file);
 	CLEAR_ON_NONE(options->adm_forced_command);
@@ -509,6 +509,8 @@ fill_default_server_options(ServerOptions *options)
 
 	CLEAR_ON_NONE_ARRAY(channel_timeouts, num_channel_timeouts, "none");
 	CLEAR_ON_NONE_ARRAY(auth_methods, num_auth_methods, "any");
+	CLEAR_ON_NONE_ARRAY(revoked_keys_files, num_revoked_keys_files, "none");
+	CLEAR_ON_NONE_ARRAY(authorized_keys_files, num_authkeys_files, "none");
 #undef CLEAR_ON_NONE
 #undef CLEAR_ON_NONE_ARRAY
 }
@@ -2122,12 +2124,24 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 	 * AuthorizedKeysFile	/etc/ssh_keys/%u
 	 */
 	case sAuthorizedKeysFile:
-		found = options->num_authkeys_files == 0;
+		uintptr = &options->num_authkeys_files;
+		chararrayptr = &options->authorized_keys_files;
+ parse_filenames:
+		found = *uintptr == 0;
 		while ((arg = argv_next(&ac, &av)) != NULL) {
 			if (*arg == '\0') {
 				error("%s line %d: keyword %s empty argument",
 				    filename, linenum, keyword);
 				goto out;
+			}
+			/* Allow "none" only in first position */
+			if (strcasecmp(arg, "none") == 0) {
+				if (nstrs > 0 || ac > 0) {
+					error("%s line %d: keyword %s \"none\" "
+					    "argument must appear alone.",
+					    filename, linenum, keyword);
+					goto out;
+				}
 			}
 			arg2 = tilde_expand_filename(arg, getuid());
 			opt_array_append(filename, linenum, keyword,
@@ -2139,8 +2153,8 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 			    filename, linenum, keyword);
 		}
 		if (found && *activep) {
-			options->authorized_keys_files = strs;
-			options->num_authkeys_files = nstrs;
+			*chararrayptr = strs;
+			*uintptr = nstrs;
 			strs = NULL; /* transferred */
 			nstrs = 0;
 		}
@@ -2431,8 +2445,9 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 		goto parse_filename;
 
 	case sRevokedKeys:
-		charptr = &options->revoked_keys_file;
-		goto parse_filename;
+		uintptr = &options->num_revoked_keys_files;
+		chararrayptr = &options->revoked_keys_files;
+		goto parse_filenames;
 
 	case sSecurityKeyProvider:
 		charptr = &options->sk_provider;
@@ -3233,7 +3248,6 @@ dump_config(ServerOptions *o)
 	dump_cfg_string(sForceCommand, o->adm_forced_command);
 	dump_cfg_string(sChrootDirectory, o->chroot_directory);
 	dump_cfg_string(sTrustedUserCAKeys, o->trusted_user_ca_keys);
-	dump_cfg_string(sRevokedKeys, o->revoked_keys_file);
 	dump_cfg_string(sSecurityKeyProvider, o->sk_provider);
 	dump_cfg_string(sAuthorizedPrincipalsFile,
 	    o->authorized_principals_file);
@@ -3261,6 +3275,8 @@ dump_config(ServerOptions *o)
 	/* string array arguments */
 	dump_cfg_strarray_oneline(sAuthorizedKeysFile, o->num_authkeys_files,
 	    o->authorized_keys_files);
+	dump_cfg_strarray_oneline(sRevokedKeys, o->num_revoked_keys_files,
+	    o->revoked_keys_files);
 	dump_cfg_strarray(sHostKeyFile, o->num_host_key_files,
 	    o->host_key_files);
 	dump_cfg_strarray(sHostCertificate, o->num_host_cert_files,
