@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.105 2025/11/12 04:45:10 kn Exp $
+#	$OpenBSD: airport,v 1.106 2026/02/11 19:24:18 mlarkin Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Only use the IATA airport codes, and only add ones you have been to.
@@ -1773,6 +1773,7 @@ UAQ:San Juan, Argentina
 UBJ:Ube, Japan
 UCA:Utica/Oneida County, New York, USA
 UCT:Ukhta, Russia
+UDD:Bermuda Dunes, California, USA
 UDJ:Uzhgorod International, Zakarpattia, Ukraine
 UDR:Udaipur, India
 UEL:Quelimane, Mozambique
