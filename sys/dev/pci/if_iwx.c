@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.196 2026/02/11 11:13:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.197 2026/02/11 11:14:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7801,6 +7801,7 @@ iwx_mld_mac_ctxt_cmd(struct iwx_softc *sc, struct iwx_node *in,
 		panic("unsupported operating mode %d", ic->ic_opmode);
 	IEEE80211_ADDR_COPY(cmd.local_mld_addr, ic->ic_myaddr);
 	cmd.client.assoc_id = htole32(IEEE80211_AID(ni->ni_associd));
+	cmd.client.is_assoc = assoc ? 1 : 0;
 
 	cmd.filter_flags = htole32(IWX_MAC_CFG_FILTER_ACCEPT_GRP);
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
