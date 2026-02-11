@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.95 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.96 2026/02/11 20:13:04 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -123,10 +123,6 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 	vmc.vmc_kernel = -1;
 	vmc.vmc_flags = flags;
 
-	/*
-	 * XXX: vmd(8) fills in the actual memory ranges. vmctl(8)
-	 * just passes in the actual memory size here.
-	 */
 	vmc.vmc_nmemranges = 1;
 	vmc.vmc_memranges[0].vmr_size = memsize;
 
