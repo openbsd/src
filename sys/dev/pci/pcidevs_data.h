@@ -1708,6 +1708,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "16h Host",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_1A_PSP,
+	    "1Ah PSP 6.0",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_15_6X_LINK,
 	    "15h Link Cfg",
 	},

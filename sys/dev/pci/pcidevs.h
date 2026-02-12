@@ -870,6 +870,7 @@
 #define	PCI_PRODUCT_AMD_16_CCP	0x1537		/* 16h Crypto */
 #define	PCI_PRODUCT_AMD_16_3X_RC	0x1566		/* 16h Root Complex */
 #define	PCI_PRODUCT_AMD_16_3X_HB	0x156b		/* 16h Host */
+#define	PCI_PRODUCT_AMD_1A_PSP	0x156e		/* 1Ah PSP 6.0 */
 #define	PCI_PRODUCT_AMD_15_6X_LINK	0x1570		/* 15h Link Cfg */
 #define	PCI_PRODUCT_AMD_15_6X_ADDR	0x1571		/* 15h Address Map */
 #define	PCI_PRODUCT_AMD_15_6X_DRAM	0x1572		/* 15h DRAM Cfg */
