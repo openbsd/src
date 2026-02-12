@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2122 2026/01/24 18:16:06 kettenis Exp $
+$OpenBSD: pcidevs,v 1.2123 2026/02/12 14:19:23 hshoexer Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -865,6 +865,7 @@ product AMD 16_HB		0x1536	16h Host
 product AMD 16_CCP		0x1537	16h Crypto
 product AMD 16_3X_RC		0x1566	16h Root Complex
 product AMD 16_3X_HB		0x156b	16h Host
+product AMD 1A_PSP		0x156e	1Ah PSP 6.0
 product AMD 15_6X_LINK		0x1570	15h Link Cfg
 product AMD 15_6X_ADDR		0x1571	15h Address Map
 product AMD 15_6X_DRAM		0x1572	15h DRAM Cfg
