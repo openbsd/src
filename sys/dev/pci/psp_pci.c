@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp_pci.c,v 1.2 2024/11/08 17:34:22 bluhm Exp $	*/
+/*	$OpenBSD: psp_pci.c,v 1.3 2026/02/12 14:24:53 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2023-2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -33,6 +33,7 @@ static const struct pci_matchid psp_pci_devices[] = {
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_17_CCP_1 },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_17_3X_CCP },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_19_1X_PSP },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_1A_PSP },
 };
 
 int
@@ -67,6 +68,9 @@ psp_pci_intr_map(struct ccp_softc *sc, struct pci_attach_args *pa)
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_17_CCP_1) {
 		reg_inten = PSPV1_REG_INTEN;
 		reg_intsts = PSPV1_REG_INTSTS;
+	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_1A_PSP) {
+		reg_inten = PSPV6_REG_INTEN;
+		reg_intsts = PSPV6_REG_INTSTS;
 	} else {
 		reg_inten = PSP_REG_INTEN;
 		reg_intsts = PSP_REG_INTSTS;
@@ -110,6 +114,10 @@ psp_pci_attach(struct ccp_softc *sc, struct pci_attach_args *pa)
 	case PCI_PRODUCT_AMD_19_1X_PSP:
 		arg.version = 4;
 		reg_capabilities = PSP_REG_CAPABILITIES;
+		break;
+	case PCI_PRODUCT_AMD_1A_PSP:
+		arg.version = 6;
+		reg_capabilities = PSPV6_REG_CAPABILITIES;
 		break;
 	default:
 		reg_capabilities = PSP_REG_CAPABILITIES;

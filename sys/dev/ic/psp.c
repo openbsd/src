@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.21 2025/11/11 11:33:25 hshoexer Exp $ */
+/*	$OpenBSD: psp.c,v 1.22 2026/02/12 14:24:53 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -132,6 +132,12 @@ psp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_reg_cmdresp = PSPV1_REG_CMDRESP;
 		sc->sc_reg_addrlo = PSPV1_REG_ADDRLO;
 		sc->sc_reg_addrhi = PSPV1_REG_ADDRHI;
+	} else if (arg->version == 6) {
+		sc->sc_reg_inten = PSPV6_REG_INTEN;
+		sc->sc_reg_intsts = PSPV6_REG_INTSTS;
+		sc->sc_reg_cmdresp = PSPV6_REG_CMDRESP;
+		sc->sc_reg_addrlo = PSPV6_REG_ADDRLO;
+		sc->sc_reg_addrhi = PSPV6_REG_ADDRHI;
 	} else {
 		sc->sc_reg_inten = PSP_REG_INTEN;
 		sc->sc_reg_intsts = PSP_REG_INTSTS;
@@ -976,6 +982,7 @@ struct ucode {
 	{ 0x17, 0x3, "amdsev/amd_sev_fam17h_model3xh.sbin" },
 	{ 0x19, 0x0, "amdsev/amd_sev_fam19h_model0xh.sbin" },
 	{ 0x19, 0x1, "amdsev/amd_sev_fam19h_model1xh.sbin" },
+	{ 0x1a, 0x0, "amdsev/amd_sev_fam1ah_model0xh.sbin" },
 	{ 0, 0, NULL }
 };
 

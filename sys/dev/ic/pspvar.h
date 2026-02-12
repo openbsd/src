@@ -1,4 +1,4 @@
-/*	$OpenBSD: pspvar.h,v 1.7 2025/04/25 19:10:50 bluhm Exp $ */
+/*	$OpenBSD: pspvar.h,v 1.8 2026/02/12 14:24:53 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -25,6 +25,14 @@
 #define PSPV1_REG_ADDRLO	0x105e0
 #define PSPV1_REG_ADDRHI	0x105e4
 #define PSPV1_REG_CAPABILITIES	0x105fc
+
+/* AMD 1Ah */
+#define PSPV6_REG_INTEN		0x10510
+#define PSPV6_REG_INTSTS	0x10514
+#define PSPV6_REG_CMDRESP	0x10980
+#define PSPV6_REG_ADDRLO	0x109e0
+#define PSPV6_REG_ADDRHI	0x109e4
+#define PSPV6_REG_CAPABILITIES	0x109fc
 
 #define PSP_REG_INTEN		0x10690
 #define PSP_REG_INTSTS		0x10694
