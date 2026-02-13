@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.532 2026/02/04 13:49:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.533 2026/02/13 12:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1420,6 +1420,9 @@ struct rde_memstats {
 	long long	aset_nmemb;
 	long long	pset_cnt;
 	long long	pset_size;
+	long long	filter_cnt;
+	long long	filter_size;
+	long long	filter_refs;
 	long long	filter_set_cnt;
 	long long	filter_set_size;
 	long long	filter_set_refs;

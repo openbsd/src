@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.682 2026/02/04 11:41:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.683 2026/02/13 12:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3772,6 +3772,7 @@ rde_reload_done(void)
 {
 	struct rde_peer		*peer;
 	struct filter_head	*fh;
+	struct rde_filter	*rf;
 	struct rde_prefixset_head prefixsets_old;
 	struct rde_prefixset_head originsets_old;
 	struct as_set_head	 as_sets_old;
@@ -3922,15 +3923,15 @@ rde_reload_done(void)
 		}
 
 		/* reapply outbound filters for this peer */
-		fh = peer_apply_out_filter(peer, out_rules);
+		rf = peer_apply_out_filter(peer, out_rules);
 
-		if (!rde_filter_equal(peer->out_rules, fh)) {
+		if (rf != peer->out_rules) {
 			char *p = log_fmt_peer(&peer->conf);
 			log_debug("out filter change: reloading peer %s", p);
 			free(p);
 			peer->reconf_out = 1;
 		}
-		filterlist_free(fh);
+		rde_filter_unref(rf);
 	}
 
 	/* bring ribs in sync */

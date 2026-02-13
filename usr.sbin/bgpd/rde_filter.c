@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.144 2026/02/11 12:25:57 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.145 2026/02/13 12:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -54,6 +54,20 @@ struct rde_filter_set {
 	size_t				len;
 	int				refcnt;
 	struct rde_filter_set_elm	set[0];
+};
+
+struct rde_filter_rule {
+	struct filter_match		 match;
+	struct rde_filter_set		*rde_set;
+	enum filter_actions		 action;
+	uint8_t				 quick;
+};
+
+struct rde_filter {
+	uint64_t			hash;
+	size_t				len;
+	int				refcnt;
+	struct rde_filter_rule		rules[0];
 };
 
 void
@@ -447,18 +461,116 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b)
 	return (1);
 }
 
-struct filter_rule *
-rde_filter_dup(const struct filter_rule *fr)
-{
-	struct filter_rule *new;
+static SIPHASH_KEY	rfkey;
 
-	if ((new = malloc(sizeof(*new))) == NULL)
-		fatal(NULL);
-	*new = *fr;
-	/* XXX think about skip table */
-	rde_filterset_ref(new->rde_set);
-	return new;
+static inline uint64_t
+rde_filter_hash(const struct rde_filter *rf)
+{
+	return rf->hash;
 }
+
+static uint64_t
+rde_filter_calc_hash(const struct rde_filter *rf)
+{
+	return SipHash24(&rfkey, rf->rules, rf->len * sizeof(rf->rules[0]));
+}
+
+CH_HEAD(rde_filtertable, rde_filter);
+CH_PROTOTYPE(rde_filtertable, rde_filter, rde_filter_hash);
+
+static struct rde_filtertable filter = CH_INITIALIZER(&filter);
+
+static void
+rde_filter_free(struct rde_filter *rf)
+{
+	if (rf == NULL)
+		return;
+
+	rdemem.filter_size -= sizeof(*rf) + rf->len * sizeof(rf->rules[0]);
+	rdemem.filter_cnt--;
+	free(rf);
+}
+
+static void
+rde_filter_ref(struct rde_filter *rf)
+{
+	rf->refcnt++;
+	rdemem.filter_refs++;
+}
+
+void
+rde_filter_unref(struct rde_filter *rf)
+{
+	rf->refcnt--;
+	rdemem.filter_refs--;
+	if (rf->refcnt <= 0) {
+		CH_REMOVE(rde_filtertable, &filter, rf);
+		rde_filter_free(rf);
+	}
+}
+
+struct rde_filter *
+rde_filter_new(size_t count)
+{
+	struct rde_filter *rf;
+
+	if ((rf = calloc(1, sizeof(*rf) + count * sizeof(rf->rules[0]))) ==
+	    NULL)
+		fatal(NULL);
+
+	rdemem.filter_size += sizeof(*rf) + count * sizeof(rf->rules[0]);
+	rdemem.filter_cnt++;
+
+	rf->len = count;
+	return rf;
+}
+
+struct rde_filter *
+rde_filter_getcache(struct rde_filter *rf)
+{
+	struct rde_filter *nrf;
+
+	rf->hash = rde_filter_calc_hash(rf);
+	if ((nrf = CH_FIND(rde_filtertable, &filter, rf)) == NULL) {
+		if (CH_INSERT(rde_filtertable, &filter, rf, NULL) != 1)
+			fatalx("%s: already present filter", __func__);
+	} else {
+		rde_filter_free(rf);
+		rf = nrf;
+	}
+	rde_filter_ref(rf);
+	return rf;
+}
+
+void
+rde_filter_fill(struct rde_filter *rf, size_t index,
+    const struct filter_rule *fr)
+{
+	struct rde_filter_rule	*rule;
+
+	if (rf->len <= index)
+		fatalx(__func__);
+
+	rule = &rf->rules[index];
+	rule->match = fr->match;
+	rule->rde_set = fr->rde_set;
+	rde_filterset_ref(rule->rde_set);
+	rule->action = fr->action;
+	rule->quick = fr->quick;
+}
+
+static int
+rde_filtertable_equal(const struct rde_filter *arf,
+    const struct rde_filter *brf)
+{
+	if (arf->len != brf->len)
+		return 0;
+	return memcmp(arf->rules, brf->rules,
+	    arf->len * sizeof(arf->rules[0])) == 0;
+}
+
+CH_GENERATE(rde_filtertable, rde_filter, rde_filtertable_equal,
+    rde_filter_hash);
 
 void
 rde_filterstate_init(struct filterstate *state)
@@ -1026,12 +1138,13 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 }
 
 enum filter_actions
-rde_filter_out(struct filter_head *rules, struct rde_peer *peer,
+rde_filter_out(struct rde_filter *rf, struct rde_peer *peer,
     struct rde_peer *from, struct bgpd_addr *prefix, uint8_t plen,
     struct filterstate *state)
 {
-	struct filter_rule	*f;
+	struct rde_filter_rule	*f;
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
+	size_t			 i;
 
 	if (state->aspath.flags & F_ATTR_PARSE_ERR)
 		/*
@@ -1040,14 +1153,11 @@ rde_filter_out(struct filter_head *rules, struct rde_peer *peer,
 		 */
 		return (ACTION_DENY);
 
-	if (rules == NULL)
-		return (action);
-
 	if (prefix->aid == AID_FLOWSPECv4 || prefix->aid == AID_FLOWSPECv6)
 		return (ACTION_ALLOW);
 
-	f = TAILQ_FIRST(rules);
-	while (f != NULL) {
+	for (i = 0; i < rf->len; i++) {
+		f = &rf->rules[i];
 		if (rde_filter_match(&f->match, peer, from, state,
 		    prefix, plen)) {
 			rde_apply_set(f->rde_set, peer, from, state,
@@ -1057,7 +1167,6 @@ rde_filter_out(struct filter_head *rules, struct rde_peer *peer,
 			if (f->quick)
 				return (action);
 		}
-		f = TAILQ_NEXT(f, entry);
 	}
 	return (action);
 }

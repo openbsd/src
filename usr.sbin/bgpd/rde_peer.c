@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.66 2026/02/03 12:25:16 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.67 2026/02/13 12:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -209,25 +209,30 @@ peer_add(uint32_t id, struct peer_config *p_conf, struct filter_head *rules)
 	return peer;
 }
 
-struct filter_head *
+struct rde_filter *
 peer_apply_out_filter(struct rde_peer *peer, struct filter_head *rules)
 {
-	struct filter_head *old;
-	struct filter_rule *fr, *new;
+	struct rde_filter *old, *new;
+	struct filter_rule *fr;
+	size_t count = 0;
 
 	old = peer->out_rules;
-	if ((peer->out_rules = malloc(sizeof(*peer->out_rules))) == NULL)
-		fatal(NULL);
-	TAILQ_INIT(peer->out_rules);
 
 	TAILQ_FOREACH(fr, rules, entry) {
 		if (rde_filter_skip_rule(peer, fr))
 			continue;
+		count++;
+	}
+	new = rde_filter_new(count);
 
-		new = rde_filter_dup(fr);
-		TAILQ_INSERT_TAIL(peer->out_rules, new, entry);
+	count = 0;
+	TAILQ_FOREACH(fr, rules, entry) {
+		if (rde_filter_skip_rule(peer, fr))
+			continue;
+		rde_filter_fill(new, count++, fr);
 	}
 
+	peer->out_rules = rde_filter_getcache(new);
 	return old;
 }
 
@@ -530,7 +535,7 @@ peer_delete(struct rde_peer *peer)
 	if (peer->state != PEER_DOWN)
 		peer_down(peer);
 
-	filterlist_free(peer->out_rules);
+	rde_filter_unref(peer->out_rules);
 	adjout_peer_free(peer);
 
 	RB_REMOVE(peer_tree, &peertable, peer);

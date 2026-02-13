@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.341 2026/02/11 10:24:57 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.342 2026/02/13 12:47:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -83,6 +83,7 @@ CH_HEAD(pend_prefix_hash, pend_prefix);
 TAILQ_HEAD(pend_prefix_queue, pend_prefix);
 CH_HEAD(pend_attr_hash, pend_prefix);
 TAILQ_HEAD(pend_attr_queue, pend_attr);
+struct rde_filter;
 
 struct rde_peer {
 	RB_ENTRY(rde_peer)		 entry;
@@ -97,7 +98,7 @@ struct rde_peer {
 	struct pend_prefix_queue	 withdraws[AID_MAX];
 	struct pend_attr_hash		 pend_attrs;
 	struct pend_prefix_hash		 pend_prefixes;
-	struct filter_head		*out_rules;
+	struct rde_filter		*out_rules;
 	struct ibufqueue		*ibufq;
 	struct rib_queue		 rib_pq_head;
 	monotime_t			 staletime[AID_MAX];
@@ -417,7 +418,7 @@ void		 peer_foreach(void (*)(struct rde_peer *, void *), void *);
 struct rde_peer	*peer_get(uint32_t);
 struct rde_peer *peer_match(struct ctl_neighbor *, uint32_t);
 struct rde_peer	*peer_add(uint32_t, struct peer_config *, struct filter_head *);
-struct filter_head	*peer_apply_out_filter(struct rde_peer *,
+struct rde_filter	*peer_apply_out_filter(struct rde_peer *,
 			    struct filter_head *);
 
 void		 rde_generate_updates(struct rib_entry *, struct prefix *,
@@ -549,7 +550,11 @@ void		 prefix_evaluate_nexthop(struct prefix *, enum nexthop_state,
 void	rde_apply_set(const struct rde_filter_set *, struct rde_peer *,
 	    struct rde_peer *, struct filterstate *, u_int8_t);
 int	rde_l3vpn_import(struct rde_community *, struct l3vpn *);
-struct filter_rule     *rde_filter_dup(const struct filter_rule *);
+void	rde_filter_unref(struct rde_filter *);
+struct rde_filter *rde_filter_new(size_t);
+struct rde_filter *rde_filter_getcache(struct rde_filter *);
+void	rde_filter_fill(struct rde_filter *, size_t,
+	    const struct filter_rule *);
 void	rde_filterstate_init(struct filterstate *);
 void	rde_filterstate_prep(struct filterstate *, struct prefix *);
 void	rde_filterstate_copy(struct filterstate *, struct filterstate *);
@@ -563,7 +568,7 @@ void	rde_filter_calc_skip_steps(struct filter_head *);
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
 	    struct rde_peer *, struct bgpd_addr *, uint8_t,
 	    struct filterstate *);
-enum filter_actions rde_filter_out(struct filter_head *, struct rde_peer *,
+enum filter_actions rde_filter_out(struct rde_filter *, struct rde_peer *,
 	    struct rde_peer *, struct bgpd_addr *, uint8_t,
 	    struct filterstate *);
 
