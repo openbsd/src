@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.24 2026/02/11 22:34:41 deraadt Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.25 2026/02/13 18:08:06 bluhm Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -158,17 +158,17 @@ struct uvmexp {
 	int kmapent;	/* [a] number of kernel map entries */
 };
 
-static inline int
-atomic_load_sint(volatile const int *p)
-{
-        return *p;
-}
-
 struct _ps_strings {
 	void	*val;
 };
 
 #ifdef _KERNEL
+
+static inline int
+atomic_load_sint(volatile const int *p)
+{
+        return *p;
+}
 
 /*
  * Per-cpu UVM counters.
