@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.68 2026/02/04 11:48:33 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.69 2026/02/13 18:27:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1104,6 +1104,10 @@ show_rib_mem(struct rde_memstats *stats)
 	printf("%10lld pending prefix entries using %s of memory\n",
 	    stats->pend_prefix_cnt, fmt_mem(stats->pend_prefix_cnt *
 	    sizeof(struct pend_prefix)));
+	printf("%10lld filters using %s of memory\n",
+	    stats->filter_cnt, fmt_mem(stats->filter_size));
+	printf("\t   and holding %lld references\n",
+	    stats->filter_refs);
 	printf("%10lld filter-sets using %s of memory\n",
 	    stats->filter_set_cnt, fmt_mem(stats->filter_set_size));
 	printf("\t   and holding %lld references\n",
