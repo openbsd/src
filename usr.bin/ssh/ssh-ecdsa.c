@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-ecdsa.c,v 1.28 2025/07/24 05:44:55 djm Exp $ */
+/* $OpenBSD: ssh-ecdsa.c,v 1.29 2026/02/14 00:18:34 jsg Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -35,7 +35,6 @@
 
 #include "sshbuf.h"
 #include "ssherr.h"
-#include "digest.h"
 #define SSHKEY_INTERNAL
 #include "sshkey.h"
 

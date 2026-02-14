@@ -1,4 +1,4 @@
-/* $OpenBSD: kexgex.c,v 1.32 2019/01/23 00:30:41 djm Exp $ */
+/* $OpenBSD: kexgex.c,v 1.33 2026/02/14 00:18:34 jsg Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -29,8 +29,6 @@
 #include <openssl/evp.h>
 #include <signal.h>
 
-#include "sshkey.h"
-#include "cipher.h"
 #include "kex.h"
 #include "ssh2.h"
 #include "ssherr.h"

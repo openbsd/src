@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.380 2026/02/05 22:05:49 djm Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.381 2026/02/14 00:18:34 jsg Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -33,14 +33,12 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <signal.h>
 #include <pwd.h>
 #include <unistd.h>
-#include <vis.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -53,7 +51,6 @@
 #include "kex.h"
 #include "sshconnect.h"
 #include "authfile.h"
-#include "dh.h"
 #include "authfd.h"
 #include "log.h"
 #include "misc.h"
@@ -63,11 +60,9 @@
 #include "canohost.h"
 #include "msg.h"
 #include "pathnames.h"
-#include "uidswap.h"
 #include "hostfile.h"
 #include "ssherr.h"
 #include "utf8.h"
-#include "ssh-sk.h"
 #include "sk-api.h"
 
 #ifdef GSSAPI
