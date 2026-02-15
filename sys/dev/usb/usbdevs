@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.785 2026/01/19 12:20:43 helg Exp $
+$OpenBSD: usbdevs,v 1.786 2026/02/15 19:09:27 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -325,6 +325,7 @@ vendor ALLIEDCABLE	0x07e6	Allied Cable
 vendor STSN		0x07ef	STSN
 vendor BEWAN		0x07fa	Bewan
 vendor ZOOM		0x0803	Zoom Telephonics
+vendor ALPHASMART	0x081e	AlphaSmart
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
 vendor PALM		0x0830	Palm Computing
@@ -900,6 +901,9 @@ product ALLWIN RT3070		0x3070	RT3070
 product ALLWIN RT3071		0x3071	RT3071
 product ALLWIN RT3072		0x3072	RT3072
 product ALLWIN RT3572		0x3572	RT3572
+
+/* AlphaSmart, Inc. */
+product ALPHASMART DANA		0xdf00	Dana
 
 /* Altec Lansing products */
 product ALTEC ADA70		0x0070	ADA70 Speakers
