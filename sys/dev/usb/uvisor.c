@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.54 2024/05/23 03:21:09 jsg Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.55 2026/02/15 19:10:15 jcs Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -163,6 +163,7 @@ struct uvisor_type {
 };
 static const struct uvisor_type uvisor_devs[] = {
 	{{ USB_VENDOR_ACEECA, USB_PRODUCT_ACEECA_MEZ1000 }, PALM4 },
+	{{ USB_VENDOR_ALPHASMART, USB_PRODUCT_ALPHASMART_DANA }, PALM4 },
 	{{ USB_VENDOR_FOSSIL, USB_PRODUCT_FOSSIL_WRISTPDA }, PALM4 },
 	{{ USB_VENDOR_GARMIN, USB_PRODUCT_GARMIN_IQUE3600 }, PALM4 },
 	{{ USB_VENDOR_HANDSPRING, USB_PRODUCT_HANDSPRING_VISOR }, VISOR },
