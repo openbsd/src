@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.116 2025/11/26 13:48:57 sf Exp $	*/
+/*	$OpenBSD: trap.c,v 1.117 2026/02/16 15:10:39 hshoexer Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -437,6 +437,14 @@ vctrap(struct trapframe *frame, int user, int *sig, int *code)
 		}
 		break;
 	    }
+	case SVM_VMEXIT_VMMCALL:
+		if (user) {
+			*sig = SIGILL;
+			*code = ILL_PRVOPC;
+			return 0;	/* not allowed from userspace */
+		}
+		panic("unexpected VMMCALL in kernelspace");
+		/* NOTREACHED */
 	case SVM_VMEXIT_NPF:
 		if (user) {
 			*sig = SIGBUS;
