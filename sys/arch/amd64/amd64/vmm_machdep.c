@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.69 2026/02/08 10:03:13 sf Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.70 2026/02/16 12:43:58 hshoexer Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3830,6 +3830,10 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				/* Software Exceptions */
 				eii |= (4ULL << 8);
 				break;
+			case VMM_EX_UD:
+				/* Hardware exception, no error code. */
+				eii |= (3ULL << 8);
+				break;
 			case VMM_EX_DF:
 			case VMM_EX_TS:
 			case VMM_EX_NP:
@@ -4296,7 +4300,7 @@ svm_handle_exit(struct vcpu *vcpu)
 		if (guest_cpl == 0 &&
 		    vcpu->vc_gueststate.vg_rax == HVCALL_FORCED_ABORT)
 			return (EINVAL);
-		DPRINTF("SVMX_EXIT_VMCALL at cpl=%d\n", guest_cpl);
+		DPRINTF("SVM_VMEXIT_VMMCALL at cpl=%d\n", guest_cpl);
 		ret = vmm_inject_ud(vcpu);
 		update_rip = 0;
 		break;
@@ -6729,6 +6733,10 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 				 * XXX check nRIP support.
 				 */
 				vmcb->v_eventinj |= (4ULL << 8);
+				break;
+			case VMM_EX_UD:
+				/* Hardware exception, no error code. */
+				vmcb->v_eventinj |= (3ULL << 8);
 				break;
 			case VMM_EX_AC:
 				vcpu->vc_inject.vie_errorcode = 0;
