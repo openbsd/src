@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.65 2026/02/11 09:35:07 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.66 2026/02/16 10:46:04 jmatthew Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -114,6 +114,18 @@
 
 /* NVRam stuff has a five minute timeout */
 #define BNXT_NVM_TIMEO	(5 * 60 * 1000)
+
+/* async events to enable */
+static const int bnxt_async_events[] = {
+	HWRM_ASYNC_EVENT_CMPL_EVENT_ID_LINK_STATUS_CHANGE,
+	HWRM_ASYNC_EVENT_CMPL_EVENT_ID_LINK_SPEED_CHANGE,
+	HWRM_ASYNC_EVENT_CMPL_EVENT_ID_LINK_SPEED_CFG_CHANGE,
+	HWRM_ASYNC_EVENT_CMPL_EVENT_ID_PORT_PHY_CFG_CHANGE,
+	HWRM_ASYNC_EVENT_CMPL_EVENT_ID_PORT_PHY_CFG_CHANGE,
+	HWRM_ASYNC_EVENT_CMPL_EVENT_ID_RESET_NOTIFY,
+	HWRM_ASYNC_EVENT_CMPL_EVENT_ID_ECHO_REQUEST,
+	HWRM_ASYNC_EVENT_CMPL_EVENT_ID_ERROR_REPORT,
+};
 
 #define NEXT_CP_CONS_V(_ring, _cons, _v_bit)		\
 do {	 						\
@@ -2757,16 +2769,26 @@ int
 bnxt_hwrm_func_drv_rgtr(struct bnxt_softc *softc)
 {
 	struct hwrm_func_drv_rgtr_input req = {0};
+	int i;
 
 	bnxt_hwrm_cmd_hdr_init(softc, &req, HWRM_FUNC_DRV_RGTR);
 
 	req.enables = htole32(HWRM_FUNC_DRV_RGTR_INPUT_ENABLES_VER |
-	    HWRM_FUNC_DRV_RGTR_INPUT_ENABLES_OS_TYPE);
+	    HWRM_FUNC_DRV_RGTR_INPUT_ENABLES_OS_TYPE |
+	    HWRM_FUNC_DRV_RGTR_INPUT_ENABLES_ASYNC_EVENT_FWD);
 	req.os_type = htole16(HWRM_FUNC_DRV_RGTR_INPUT_OS_TYPE_FREEBSD);
 
+	req.ver_maj = HWRM_VERSION_MAJOR;
+	req.ver_min = HWRM_VERSION_MINOR;
+	req.ver_upd = HWRM_VERSION_UPDATE;
 	req.ver_maj_8b = HWRM_VERSION_MAJOR;
 	req.ver_min_8b = HWRM_VERSION_MINOR;
 	req.ver_upd_8b = HWRM_VERSION_UPDATE;
+
+	for (i = 0; i < nitems(bnxt_async_events); i++) {
+		int event = bnxt_async_events[i];
+		req.async_event_fwd[event / 32] |= htole32(1 << event % 32);
+	}
 
 	return hwrm_send_message(softc, &req, sizeof(req));
 }
