@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.683 2026/02/13 12:47:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.684 2026/02/16 14:27:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -400,8 +400,7 @@ rde_main(int debug, int verbose)
 
 struct network_config	netconf_s, netconf_p;
 struct filterstate	netconf_state;
-struct rde_filter_set	*session_set;
-struct rde_filter_set	*parent_set;
+struct rde_filter_set	*session_set, *parent_set;
 
 void
 rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
@@ -531,12 +530,12 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 			break;
 		case IMSG_NETWORK_ASPATH:
 			if (imsg_get_ibuf(&imsg, &ibuf) == -1) {
-				log_warnx("rde_dispatch: bad imsg");
+				log_warnx("bad network aspath received");
 				memset(&netconf_s, 0, sizeof(netconf_s));
 				break;
 			}
 			if (ibuf_get(&ibuf, &csr, sizeof(csr)) == -1) {
-				log_warnx("rde_dispatch: wrong imsg len");
+				log_warnx("bad network aspath received");
 				memset(&netconf_s, 0, sizeof(netconf_s));
 				break;
 			}
@@ -555,14 +554,15 @@ rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 			/* parse optional path attributes */
 			if (imsg_get_ibuf(&imsg, &ibuf) == -1 ||
 			    rde_attr_add(&netconf_state, &ibuf) == -1) {
-				log_warnx("rde_dispatch: bad network "
-				    "attribute");
+				log_warnx("bad network attribute received");
 				rde_filterstate_clean(&netconf_state);
 				memset(&netconf_s, 0, sizeof(netconf_s));
 				break;
 			}
 			break;
 		case IMSG_NETWORK_DONE:
+			if (session_set == NULL)
+				goto badnet;
 			netconf_s.rde_attrset = session_set;
 			session_set = NULL;
 			switch (netconf_s.prefix.aid) {
@@ -650,17 +650,20 @@ badnetdel:
 			if (curflow == NULL) {
 				log_warnx("rde_dispatch: "
 				    "unexpected flowspec done");
-				break;
+				goto badflow;
 			}
 
 			if (flowspec_valid(curflow->data, curflow->len,
-			    curflow->aid == AID_FLOWSPECv6) == -1)
+			    curflow->aid == AID_FLOWSPECv6) == -1 ||
+			    session_set == NULL) {
 				log_warnx("invalid flowspec update received "
 				    "from bgpctl");
-			else
-				flowspec_add(curflow, &netconf_state,
-				    session_set);
+				goto badflow;
+			}
 
+			flowspec_add(curflow, &netconf_state, session_set);
+
+ badflow:
 			rde_filterstate_clean(&netconf_state);
 			rde_filterset_unref(session_set);
 			session_set = NULL;
@@ -704,6 +707,11 @@ badnetdel:
 			    flowspec_flush_upcall, NULL);
 			break;
 		case IMSG_FILTER_SET:
+			if (session_set != NULL) {
+				log_warnx("previous filterset not consumed.");
+				rde_filterset_unref(session_set);
+				session_set = NULL;
+			}
 			session_set = rde_filterset_imsg_recv(&imsg);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
@@ -922,6 +930,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			TAILQ_INIT(&netconf_p.attrset);
 			break;
 		case IMSG_NETWORK_DONE:
+			if (parent_set == NULL)
+				fatalx("network done: filter_set missing");
 			netconf_p.rde_attrset = parent_set;
 			parent_set = NULL;
 
@@ -931,7 +941,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			asp->origin = ORIGIN_IGP;
 			asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
 			    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
-
 			network_add(&netconf_p, &state);
 			rde_filterstate_clean(&state);
 			break;
@@ -970,7 +979,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			if (curflow == NULL) {
 				log_warnx("rde_dispatch: "
 				    "unexpected flowspec done");
-				break;
+				goto badflow;
 			}
 
 			rde_filterstate_init(&state);
@@ -981,12 +990,16 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
 
 			if (flowspec_valid(curflow->data, curflow->len,
-			    curflow->aid == AID_FLOWSPECv6) == -1)
+			    curflow->aid == AID_FLOWSPECv6) == -1 ||
+			    parent_set == NULL) {
 				log_warnx("invalid flowspec update received "
 				    "from parent");
-			else
-				flowspec_add(curflow, &state, parent_set);
+				goto badflow;
+			}
 
+			flowspec_add(curflow, &state, parent_set);
+
+ badflow:
 			rde_filterstate_clean(&state);
 			rde_filterset_unref(parent_set);
 			parent_set = NULL;
@@ -1094,6 +1107,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				}
 			}
 			TAILQ_INIT(&r->set);
+			if (parent_set == NULL)
+				fatalx("IMSG_RECONF_FILTER: bad filter_set");
 			r->rde_set = parent_set;
 			parent_set = NULL;
 			if ((rib = rib_byid(rib_find(r->rib))) == NULL) {
@@ -1197,6 +1212,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				    "IMSG_RECONF_VPN_EXPORT unexpected");
 				break;
 			}
+			if (parent_set == NULL)
+				fatalx("vpn export, filterset missing");
 			vpn->rde_export = parent_set;
 			parent_set = NULL;
 			break;
@@ -1206,6 +1223,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 				    "IMSG_RECONF_VPN_IMPORT unexpected");
 				break;
 			}
+			if (parent_set == NULL)
+				fatalx("vpn import, filterset missing");
 			vpn->rde_import = parent_set;
 			parent_set = NULL;
 			break;
@@ -1228,6 +1247,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			nexthop_update(&knext);
 			break;
 		case IMSG_FILTER_SET:
+			if (parent_set != NULL)
+				fatalx("previous filterset not consumed.");
 			parent_set = rde_filterset_imsg_recv(&imsg);
 			break;
 		case IMSG_MRT_OPEN:
