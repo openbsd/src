@@ -1,4 +1,4 @@
-/*	$OpenBSD: psp.c,v 1.22 2026/02/12 14:24:53 hshoexer Exp $ */
+/*	$OpenBSD: psp.c,v 1.23 2026/02/16 12:39:53 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2023, 2024 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -982,6 +982,7 @@ struct ucode {
 	{ 0x17, 0x3, "amdsev/amd_sev_fam17h_model3xh.sbin" },
 	{ 0x19, 0x0, "amdsev/amd_sev_fam19h_model0xh.sbin" },
 	{ 0x19, 0x1, "amdsev/amd_sev_fam19h_model1xh.sbin" },
+	{ 0x19, 0xa, "amdsev/amd_sev_fam19h_modelaxh.sbin" },
 	{ 0x1a, 0x0, "amdsev/amd_sev_fam1ah_model0xh.sbin" },
 	{ 0, 0, NULL }
 };
