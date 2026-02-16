@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.145 2026/02/13 12:47:36 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.146 2026/02/16 14:23:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -897,6 +897,8 @@ rde_filterset_ref(struct rde_filter_set *rfs)
 void
 rde_filterset_unref(struct rde_filter_set *rfs)
 {
+	if (rfs == NULL)
+		return;
 	rfs->refcnt--;
 	rdemem.filter_set_refs--;
 	if (rfs->refcnt <= 0) {
