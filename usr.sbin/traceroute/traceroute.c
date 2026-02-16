@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.170 2024/08/21 15:00:25 florian Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.171 2026/02/16 13:54:47 sthen Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -429,8 +429,10 @@ main(int argc, char *argv[])
 	    "ADdf:g:Ilm:nP:p:q:Ss:t:V:vw:x")) != -1)
 		switch (ch) {
 		case 'A':
-			conf->Aflag = 1;
-			conf->expected_responses++;
+			if (!conf->Aflag) {
+				conf->Aflag = 1;
+				conf->expected_responses++;
+			}
 			break;
 		case 'd':
 			conf->dflag = 1;
@@ -479,8 +481,10 @@ main(int argc, char *argv[])
 				    conf->first_ttl, MAXTTL);
 			break;
 		case 'n':
-			conf->nflag = 1;
-			conf->expected_responses--;
+			if (!conf->nflag) {
+				conf->nflag = 1;
+				conf->expected_responses--;
+			}
 			break;
 		case 'p':
 			conf->port = strtonum(optarg, 1, 65535, &errstr);
