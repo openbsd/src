@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.c,v 1.7 2026/01/15 12:11:51 hshoexer Exp $	*/
+/*	$OpenBSD: ghcb.c,v 1.8 2026/02/16 15:06:03 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -53,13 +53,29 @@ paddr_t ghcb_paddr;
 /*
  * ghcb_clear
  *
- * Clear GHCB by setting to all 0.
+ * Clear GHCB valid bitmap to all 0.  After that, the GHCB does
+ * not contain a valid request.
  * Used by host and guest.
  */
 void
 ghcb_clear(struct ghcb_sa *ghcb)
 {
-	memset(ghcb, 0, sizeof(*ghcb));
+	memset(&ghcb->valid_bitmap, 0, sizeof(ghcb->valid_bitmap));
+}
+
+/*
+ * ghcb_empty
+ *
+ * If the GHCB is all clear, it contains no requests.
+ * Used by host only.
+ */
+int
+ghcb_empty(struct ghcb_sa *ghcb)
+{
+	static const uint8_t bm_allzero[GHCB_VB_SZ];
+
+	return (memcmp(&bm_allzero, &ghcb->valid_bitmap,
+           sizeof(bm_allzero)) == 0);
 }
 
 /*

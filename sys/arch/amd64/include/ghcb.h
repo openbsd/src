@@ -1,4 +1,4 @@
-/*	$OpenBSD: ghcb.h,v 1.6 2025/09/17 18:37:44 sf Exp $	*/
+/*	$OpenBSD: ghcb.h,v 1.7 2026/02/16 15:06:03 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2024, 2025 Hans-Joerg Hoexer <hshoexer@genua.de>
@@ -128,6 +128,7 @@ int	ghcb_valbm_set(uint8_t *, int);
 int	ghcb_valbm_isset(uint8_t *, int);
 int	ghcb_verify_bm(uint8_t *, uint8_t *);
 int	ghcb_valid(struct ghcb_sa *);
+int	ghcb_empty(struct ghcb_sa *);
 
 void	ghcb_sync_val(int, int, struct ghcb_sync *);
 void	ghcb_sync_out(struct trapframe *, const struct ghcb_extra_regs *,

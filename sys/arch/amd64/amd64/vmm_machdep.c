@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.70 2026/02/16 12:43:58 hshoexer Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.71 2026/02/16 15:06:03 hshoexer Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4347,6 +4347,8 @@ svm_vmgexit_sync_host(struct vcpu *vcpu)
 		return (0);
 
 	ghcb = (struct ghcb_sa *)vcpu->vc_svm_ghcb_va;
+	if (ghcb_empty(ghcb))
+		return (0);
 	if (!ghcb_valid(ghcb))
 		return (EINVAL);
 	valid_bm = ghcb->valid_bitmap;
