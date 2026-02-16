@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.71 2026/02/16 15:06:03 hshoexer Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.72 2026/02/16 15:08:41 hshoexer Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4581,6 +4581,9 @@ svm_handle_vmgexit(struct vcpu *vcpu)
 		error = svm_handle_msr(vcpu);
 		vmcb->v_rip = vcpu->vc_gueststate.vg_rip;
 		syncout = 1;
+		break;
+	case SVM_VMEXIT_VMGEXIT:
+		error = vmm_inject_ud(vcpu);
 		break;
 	default:
 		DPRINTF("%s: unknown exit 0x%llx\n", __func__,
