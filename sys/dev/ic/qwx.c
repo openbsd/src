@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.98 2026/02/02 16:59:58 gnezdo Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.99 2026/02/16 23:37:44 jsg Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -8450,7 +8450,6 @@ qwx_qmi_mem_seg_send(struct qwx_softc *sc)
 	struct qmi_wlanfw_respond_mem_req_msg_v01 *req;
 	struct qmi_wlanfw_request_mem_ind_msg_v01 *ind;
 	uint32_t mem_seg_len;
-	const uint32_t mem_seg_len_max = 64; /* bump if needed by future fw */
 	uint16_t expected_result;
 	size_t total_size;
 	int i, ret;
@@ -8471,7 +8470,7 @@ qwx_qmi_mem_seg_send(struct qwx_softc *sc)
 
 	ind = sc->sc_req_mem_ind;
 	mem_seg_len = le32toh(ind->mem_seg_len);
-	if (mem_seg_len > mem_seg_len_max) {
+	if (mem_seg_len > nitems(ind->mem_seg)) {
 		printf("%s: firmware requested too many memory segments: %u\n",
 		    sc->sc_dev.dv_xname, mem_seg_len);
 		free(sc->sc_req_mem_ind, M_DEVBUF, sizeof(*sc->sc_req_mem_ind));
