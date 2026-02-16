@@ -1,4 +1,4 @@
-/* $OpenBSD: rpki-asn1.h,v 1.12 2025/12/05 07:26:42 tb Exp $ */
+/* $OpenBSD: rpki-asn1.h,v 1.13 2026/02/16 23:23:50 jsg Exp $ */
 /*
  * Copyright (c) 2025 Job Snijders <job@openbsd.org>
  * Copyright (c) 2025 Theo Buehler <tb@openbsd.org>
@@ -46,7 +46,7 @@ DECLARE_ASN1_FUNCTIONS(ASProviderAttestation);
  * reference: TBD
  */
 
-extern ASN1_ITEM_EXP EncapContentInfo_it;
+extern ASN1_ITEM_EXP ContentInfo_it;
 extern ASN1_ITEM_EXP CanonicalCacheRepresentation_it;
 extern ASN1_ITEM_EXP ManifestInstances_it;
 extern ASN1_ITEM_EXP ManifestInstance_it;
