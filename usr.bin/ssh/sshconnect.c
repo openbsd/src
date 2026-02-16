@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect.c,v 1.381 2026/02/14 00:18:34 jsg Exp $ */
+/* $OpenBSD: sshconnect.c,v 1.382 2026/02/16 00:45:41 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -22,10 +22,9 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <netdb.h>
 #include <limits.h>
+#include <netdb.h>
 #include <paths.h>
-#include <signal.h>
 #include <pwd.h>
 #include <poll.h>
 #include <signal.h>

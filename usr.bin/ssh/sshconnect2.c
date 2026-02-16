@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.381 2026/02/14 00:18:34 jsg Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.382 2026/02/16 00:45:41 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -33,11 +33,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include <signal.h>
-#include <pwd.h>
 #include <unistd.h>
 
 #include "xmalloc.h"
