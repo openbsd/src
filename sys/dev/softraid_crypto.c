@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.146 2025/09/15 14:15:54 krw Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.147 2026/02/17 04:51:47 asou Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -878,7 +878,6 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, struct sr_crypto *mdd_crypto,
 	/* Construct key disk chunk. */
 	key_disk = malloc(sizeof(struct sr_chunk), M_DEVBUF, M_WAITOK | M_ZERO);
 	key_disk->src_dev_mm = dev;
-	key_disk->src_vn = vn;
 	key_disk->src_size = 0;
 
 	memcpy(&key_disk->src_meta, (struct sr_meta_chunk *)(sm + 1),
@@ -900,8 +899,7 @@ sr_crypto_read_key_disk(struct sr_discipline *sd, struct sr_crypto *mdd_crypto,
 		}
 	}
 
-	open = 0;
-
+	/* keep `open = 1' to close dev */
 done:
 	for (omi = SLIST_FIRST(&som); omi != NULL; omi = omi_next) {
 		omi_next = SLIST_NEXT(omi, omi_link);
