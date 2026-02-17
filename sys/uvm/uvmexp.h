@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.25 2026/02/13 18:08:06 bluhm Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.26 2026/02/17 03:28:41 deraadt Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -151,8 +151,7 @@ struct uvmexp {
 	int pdpageouts;	/* [ao] # of times daemon started a pageout */
 	int pdpending;	/* [ao] # of times daemon got a pending pagout */
 	int pddeact;	/* [ao] # of pages daemon deactivates */
-
-	int unused13;	/* formerly pdrevtext */
+	int swpskip;	/* [ao] # of pages delayed because swap crypt busy */
 
 	int fpswtch;	/* FPU context switches */
 	int kmapent;	/* [a] number of kernel map entries */

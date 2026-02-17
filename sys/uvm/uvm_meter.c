@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.55 2026/02/11 22:34:41 deraadt Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.56 2026/02/17 03:28:41 deraadt Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -336,8 +336,8 @@ uvmexp_print(int (*pr)(const char *, ...))
 	    uexp.pdbusy, uexp.pdfreed, uexp.pdreact, uexp.pddeact);
 	(*pr)("    pageouts=%d, pending=%d, nswget=%d\n", uexp.pdpageouts,
 	    uexp.pdpending, uexp.nswget);
-	(*pr)("    nswapdev=%d\n",
-	    uexp.nswapdev);
+	(*pr)("    nswapdev=%d, swpskip=%d\n",
+	    uexp.nswapdev, uexp.swpskip);
 	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
 	    uexp.swpages, uexp.swpginuse, uexp.swpgonly, uexp.paging);
 

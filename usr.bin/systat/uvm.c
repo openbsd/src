@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.c,v 1.12 2025/02/25 11:29:17 mpi Exp $	*/
+/*	$OpenBSD: uvm.c,v 1.13 2026/02/17 03:28:42 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -129,25 +129,25 @@ struct uvmline uvmline[] = {
 	  NULL, NULL, NULL },
 	{ &uvmexp.fpswtch, &last_uvmexp.fpswtch, "fpswtch",
 	  &uvmexp.pdobscan, &last_uvmexp.pdobscan, "pdobscan",
-	  NULL, NULL, NULL },
+	  NULL, NULL, "Swap Counters" },
 	{ &uvmexp.kmapent, &last_uvmexp.kmapent, "kmapent",
 	  &uvmexp.pdreact, &last_uvmexp.pdreact, "pdreact",
-	  NULL, NULL, "Swap Counters" },
+	  &uvmexp.nswapdev, &last_uvmexp.nswapdev, "nswapdev" },
 	{ NULL, NULL, NULL,
 	  &uvmexp.pdbusy, &last_uvmexp.pdbusy, "pdbusy",
-	  &uvmexp.nswapdev, &last_uvmexp.nswapdev, "nswapdev" },
+	  &uvmexp.swpages, &last_uvmexp.swpages, "swpages" },
 	{ NULL, NULL, "Constants",
 	  &uvmexp.pdpageouts, &last_uvmexp.pdpageouts, "pdpageouts",
-	  &uvmexp.swpages, &last_uvmexp.swpages, "swpages" },
+	  &uvmexp.swpginuse, &last_uvmexp.swpginuse, "swpginuse" },
 	{ &uvmexp.pagesize, &last_uvmexp.pagesize, "pagesize",
 	  &uvmexp.pdpending, &last_uvmexp.pdpending, "pdpending",
-	  &uvmexp.swpginuse, &last_uvmexp.swpginuse, "swpginuse" },
+	  &uvmexp.swpgonly, &last_uvmexp.swpgonly, "swpgonly" },
 	{ &uvmexp.pagemask, &last_uvmexp.pagemask, "pagemask",
 	  &uvmexp.pddeact, &last_uvmexp.pddeact, "pddeact",
-	  &uvmexp.swpgonly, &last_uvmexp.swpgonly, "swpgonly" },
+	  &uvmexp.nswget, &last_uvmexp.nswget, "nswget" },
 	{ &uvmexp.pageshift, &last_uvmexp.pageshift, "pageshift",
 	  NULL, NULL, NULL,
-	  &uvmexp.nswget, &last_uvmexp.nswget, "nswget" }
+	  &uvmexp.swpskip, &last_uvmexp.swpskip, "swpskip" }
 };
 
 field_def fields_uvm[] = {
