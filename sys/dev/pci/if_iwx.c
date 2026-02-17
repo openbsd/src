@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.197 2026/02/11 11:14:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.198 2026/02/17 20:02:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1826,13 +1826,13 @@ iwx_dma_contig_alloc(bus_dma_tag_t tag, struct iwx_dma_info *dma,
 	dma->tag = tag;
 	dma->size = size;
 
-	err = bus_dmamap_create(tag, size, 1, size, 0, BUS_DMA_NOWAIT,
-	    &dma->map);
+	err = bus_dmamap_create(tag, size, 1, size, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_64BIT, &dma->map);
 	if (err)
 		goto fail;
 
 	err = bus_dmamem_alloc(tag, size, alignment, 0, &dma->seg, 1, &nsegs,
-	    BUS_DMA_NOWAIT | BUS_DMA_ZERO);
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO | BUS_DMA_64BIT);
 	if (err)
 		goto fail;
 
@@ -1930,7 +1930,8 @@ iwx_alloc_rx_ring(struct iwx_softc *sc, struct iwx_rx_ring *ring)
 
 		memset(data, 0, sizeof(*data));
 		err = bus_dmamap_create(sc->sc_dmat, IWX_RBUF_SIZE, 1,
-		    IWX_RBUF_SIZE, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    IWX_RBUF_SIZE, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 		    &data->map);
 		if (err) {
 			printf("%s: could not create RX buf DMA map\n",
@@ -2096,8 +2097,8 @@ iwx_alloc_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring, int qid)
 		else
 			mapsize = MCLBYTES;
 		err = bus_dmamap_create(sc->sc_dmat, mapsize,
-		    IWX_TFH_NUM_TBS - 2, mapsize, 0, BUS_DMA_NOWAIT,
-		    &data->map);
+		    IWX_TFH_NUM_TBS - 2, mapsize, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_64BIT, &data->map);
 		if (err) {
 			printf("%s: could not create TX buf DMA map\n",
 			    DEVNAME(sc));
