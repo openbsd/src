@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.684 2026/02/16 14:27:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.685 2026/02/17 10:51:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -976,13 +976,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			}
 			break;
 		case IMSG_FLOWSPEC_DONE:
+			rde_filterstate_init(&state);
+
 			if (curflow == NULL) {
 				log_warnx("rde_dispatch: "
 				    "unexpected flowspec done");
 				goto badflow;
 			}
 
-			rde_filterstate_init(&state);
 			asp = &state.aspath;
 			asp->aspath = aspath_get(NULL, 0);
 			asp->origin = ORIGIN_IGP;
