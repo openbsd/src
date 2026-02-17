@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.133 2025/12/16 12:23:50 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.134 2026/02/17 14:06:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1206,7 +1206,7 @@ mrt_reconfigure(struct mrt_head *mrt)
 			    IMSG_MRT_CLOSE, 0, 0, -1, m, sizeof(struct mrt)) ==
 			    -1)
 				log_warn("mrt_reconfigure");
-			timer_remove_all(&MRT2MC(xm)->timer);
+			timer_remove_all(&MRT2MC(m)->timer);
 			LIST_REMOVE(m, entry);
 			free(m);
 			continue;
@@ -1284,7 +1284,7 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 
 	/* free config */
 	while ((m = LIST_FIRST(nconf)) != NULL) {
-		timer_remove_all(&MRT2MC(xm)->timer);
+		timer_remove_all(&MRT2MC(m)->timer);
 		LIST_REMOVE(m, entry);
 		free(m);
 	}
