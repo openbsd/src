@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.30 2023/10/10 09:30:06 tb Exp $	 */
+/* $OpenBSD: engine.c,v 1.31 2026/02/17 03:26:41 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -404,9 +404,12 @@ void
 print_title(void)
 {
 	field_def **fp;
+	int nl = 0;
 
 	if (curr_view != NULL && curr_view->view != NULL) {
 		for (fp = curr_view->view; *fp != NULL; fp++) {
+			if ((*fp)->title[0] != '\0')
+				nl++;
 			switch((*fp)->align) {
 			case FLD_ALIGN_LEFT:
 			case FLD_ALIGN_RIGHT:
@@ -419,8 +422,9 @@ print_title(void)
 				break;
 			}
 		}
+		if (nl)
+			end_line();
 	}
-	end_line();
 }
 
 /* view related functions */
