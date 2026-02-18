@@ -1,4 +1,4 @@
-/*	$OpenBSD: htpasswd.c,v 1.18 2021/07/12 15:09:19 beck Exp $ */
+/*	$OpenBSD: htpasswd.c,v 1.19 2026/02/18 15:23:36 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
  *
@@ -78,7 +78,7 @@ main(int argc, char** argv)
 		if (unveil("/tmp", "rwc") == -1)
 			err(1, "unveil /tmp");
 	}
-	if (pledge("stdio rpath wpath cpath flock tmppath tty", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath flock tty", NULL) == -1)
 		err(1, "pledge");
 
 	if (batch) {
