@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.68 2023/01/05 00:00:44 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.69 2026/02/18 15:25:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
@@ -211,7 +211,11 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (pledge("stdio rpath tmppath", NULL) == -1)
+	if (unveil("/tmp", "rwc") == -1)
+		err(2, "unveil /tmp");
+	if (unveil("/", "r") == -1)
+		err(2, "unveil /");
+	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(2, "pledge");
 
 	/*
