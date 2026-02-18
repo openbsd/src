@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.38 2026/02/18 16:46:48 deraadt Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.39 2026/02/18 21:40:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -130,7 +130,8 @@ main(int argc, char *argv[])
 			err(1, "unveil /tmp");
 		if (unveil("/", "r") == -1)
 			err(1, "unveil /");
-		if (pledge("stdio rpath fattr getpw id proc exec", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath fattr getpw id proc exec",
+		    NULL) == -1)
 			err(1, "pledge");
 	} else {
 		if (pledge("stdio rpath proc exec", NULL) == -1)
