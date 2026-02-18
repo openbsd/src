@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.214 2026/01/18 16:38:02 schwarze Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.215 2026/02/18 22:27:03 kirill Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2026 $
+.Dd $Mdocdate: February 18 2026 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -673,6 +673,13 @@ option will be used as a tolerance for failed
 host connections; the connection will be retried for
 .Ar number
 more times.
+.It Ic proxy-protocol Pq Ic v1 Ns | Ns Ic v2
+Upon connection to the destination,
+.Xr relayd 8
+will prepend a PROXY protocol header of the specified version to the relayed
+data, with the IP address and port of the remote host as well as the
+.Xr relayd 8
+server.
 .El
 .It Xo
 .Ic forward to

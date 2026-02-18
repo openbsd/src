@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.258 2024/10/28 19:56:18 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.259 2026/02/18 22:27:03 kirill Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -179,13 +179,13 @@ typedef struct {
 %token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS CONTEXT ERRORS STATE CHANGES CHECKS
-%token	WEBSOCKETS PFLOG CLIENT
+%token	WEBSOCKETS PFLOG CLIENT PROXYPROTO V1 V2
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	context hostname interface table value path
 %type	<v.number>	http_type loglevel quick
 %type	<v.number>	dstmode flag forwardmode retry
-%type	<v.number>	opttls opttlsclient
+%type	<v.number>	opttls opttlsclient optproxyproto
 %type	<v.number>	redirect_proto relay_proto match pflog
 %type	<v.number>	action ruleaf key_option
 %type	<v.port>	port
@@ -1103,6 +1103,11 @@ proto		: relay_proto PROTO STRING	{
 		}
 		;
 
+optproxyproto	: /* empty */	{ $$ = 0; }
+		| PROXYPROTO V1	{ $$ = F_PROXYV1; }
+		| PROXYPROTO V2 { $$ = F_PROXYV2; }
+		;
+
 protopts_n	: /* empty */
 		| '{' '}'
 		| '{' optnl protopts_l '}'
@@ -1946,7 +1951,7 @@ relayoptsl	: LISTEN ON STRING port opttls {
 			tableport = h->port.val[0];
 			host_free(&al);
 		}
-		| forwardmode opttlsclient TO forwardspec dstaf {
+		| forwardmode opttlsclient TO forwardspec dstaf optproxyproto {
 			rlay->rl_conf.fwdmode = $1;
 			if ($1 == FWD_ROUTE) {
 				yyerror("no route for relays");
@@ -1956,6 +1961,8 @@ relayoptsl	: LISTEN ON STRING port opttls {
 				rlay->rl_conf.flags |= F_TLSCLIENT;
 				conf->sc_conf.flags |= F_TLSCLIENT;
 			}
+
+			rlay->rl_conf.flags |= $6;
 		}
 		| SESSION TIMEOUT NUMBER		{
 			if ((rlay->rl_conf.timeout.tv_sec = $3) < 0) {
@@ -1983,6 +1990,7 @@ relayoptsl	: LISTEN ON STRING port opttls {
 				free($2);
 				YYERROR;
 			}
+
 			p->flags |= F_USED;
 			rlay->rl_conf.proto = p->id;
 			rlay->rl_proto = p;
@@ -2479,6 +2487,7 @@ lookup(char *s)
 		{ "prefork",		PREFORK },
 		{ "priority",		PRIORITY },
 		{ "protocol",		PROTO },
+		{ "proxy-protocol",	PROXYPROTO },
 		{ "query",		QUERYSTR },
 		{ "quick",		QUICK },
 		{ "random",		RANDOM },
@@ -2518,6 +2527,8 @@ lookup(char *s)
 		{ "transparent",	TRANSPARENT },
 		{ "ttl",		TTL },
 		{ "url",		URL },
+		{ "v1",			V1 },
+		{ "v2",			V2 },
 		{ "value",		VALUE },
 		{ "websockets",		WEBSOCKETS },
 		{ "with",		WITH }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.276 2024/10/28 19:56:18 tb Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.277 2026/02/18 22:27:03 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -402,6 +402,8 @@ union hashkey {
 #define F_HASHKEY		0x08000000
 #define F_AGENTX_TRAPONLY	0x10000000
 #define F_PFLOG			0x20000000
+#define F_PROXYV1		0x40000000
+#define F_PROXYV2		0x80000000
 
 #define F_BITS								\
 	"\10\01DISABLE\02BACKUP\03USED\04DOWN\05ADD\06DEL\07CHANGED"	\
@@ -1475,5 +1477,9 @@ int	 config_setrelay(struct relayd *, struct relay *);
 int	 config_getrelay(struct relayd *, struct imsg *);
 int	 config_getrelaytable(struct relayd *, struct imsg *);
 int	 config_getrelayfd(struct relayd *, struct imsg *);
+
+/* proxy_protocol.c */
+int	proxy_protocol_v1(struct rsession *, struct evbuffer *);
+int	proxy_protocol_v2(struct rsession *, struct evbuffer *);
 
 #endif /* RELAYD_H */

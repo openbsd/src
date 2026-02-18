@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.260 2024/10/28 19:56:18 tb Exp $	*/
+/*	$OpenBSD: relay.c,v 1.261 2026/02/18 22:27:03 kirill Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -767,6 +767,19 @@ relay_connected(int fd, short sig, void *arg)
 		    "failed to allocate output buffer event", 0);
 		return;
 	}
+
+	error = 0;
+
+	if (rlay->rl_conf.flags & F_PROXYV1)
+		error = proxy_protocol_v1(con, bev->output);
+	else if (rlay->rl_conf.flags & F_PROXYV2)
+		error = proxy_protocol_v2(con, bev->output);
+
+	if (error) {
+		relay_abort_http(con, 500, "failed to write PROXY header", 0);
+		return;
+	}
+
 	/* write pending output buffer now */
 	if (bufferevent_write_buffer(bev, con->se_out.output)) {
 		relay_abort_http(con, 500, strerror(errno), 0);
