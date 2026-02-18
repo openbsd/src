@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.88 2022/12/04 23:50:48 cheloha Exp $	*/
+/*	$OpenBSD: main.c,v 1.89 2026/02/18 08:54:46 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 	int n;
 	char *p;
 
-	if (pledge("stdio rpath wpath cpath tmppath proc exec", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.176 2024/11/21 13:42:22 claudio Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.177 2026/02/18 08:54:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -1128,7 +1128,7 @@ sendmail_compat(int argc, char **argv)
 			err(1, "setresgid");
 
 		/* we'll reduce further down the road */
-		if (pledge("stdio rpath wpath cpath tmppath flock "
+		if (pledge("stdio rpath wpath cpath flock "
 			"dns getpw recvfd", NULL) == -1)
 			err(1, "pledge");
 
