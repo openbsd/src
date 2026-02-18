@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.123 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.124 2026/02/18 22:28:19 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -826,8 +826,8 @@ vcpu_run_loop(void *arg)
 		halted = vcpu_hlt[n];
 		mutex_unlock(&vm_mtx);
 
-		/* If we are halted and need to pause, pause */
-		if (halted && paused) {
+		/* If we need to pause, wait on the barrier. */
+		if (paused) {
 			ret = pthread_barrier_wait(&vm_pause_barrier);
 			if (ret != 0 && ret != PTHREAD_BARRIER_SERIAL_THREAD) {
 				log_warnx("%s: could not wait on pause barrier (%d)",
