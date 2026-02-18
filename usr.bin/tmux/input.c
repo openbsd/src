@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.250 2026/02/10 08:27:17 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.251 2026/02/18 09:10:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1139,11 +1139,9 @@ input_get(struct input_ctx *ictx, u_int validx, int minval, int defval)
 static void
 input_send_reply(struct input_ctx *ictx, const char *reply)
 {
-	struct bufferevent	*bev = ictx->event;
-
-	if (bev != NULL) {
+	if (ictx->event != NULL) {
 		log_debug("%s: %s", __func__, reply);
-		bufferevent_write(bev, reply, strlen(reply));
+		bufferevent_write(ictx->event, reply, strlen(reply));
 	}
 }
 
@@ -3052,8 +3050,9 @@ input_osc_133(struct input_ctx *ictx, const char *p)
 
 /* Handle OSC 52 reply. */
 static void
-input_osc_52_reply(struct input_ctx *ictx)
+input_osc_52_reply(struct input_ctx *ictx, char clip)
 {
+	struct bufferevent	*ev = ictx->event;
 	struct paste_buffer	*pb;
 	int			 state;
 	const char		*buf;
@@ -3067,9 +3066,9 @@ input_osc_52_reply(struct input_ctx *ictx)
 			return;
 		buf = paste_buffer_data(pb, &len);
 		if (ictx->input_end == INPUT_END_BEL)
-			input_reply_clipboard(ictx->event, buf, len, "\007");
+			input_reply_clipboard(ev, buf, len, "\007", clip);
 		else
-			input_reply_clipboard(ictx->event, buf, len, "\033\\");
+			input_reply_clipboard(ev, buf, len, "\033\\", clip);
 		return;
 	}
 	input_add_request(ictx, INPUT_REQUEST_CLIPBOARD, ictx->input_end);
@@ -3082,7 +3081,7 @@ input_osc_52_reply(struct input_ctx *ictx)
  */
 static int
 input_osc_52_parse(struct input_ctx *ictx, const char *p, u_char **out,
-    int *outlen, char *flags)
+    int *outlen, char *clip)
 {
 	char		*end;
 	size_t		 len;
@@ -3100,13 +3099,13 @@ input_osc_52_parse(struct input_ctx *ictx, const char *p, u_char **out,
 	log_debug("%s: %s", __func__, end);
 
 	for (i = 0; p + i != end; i++) {
-		if (strchr(allow, p[i]) != NULL && strchr(flags, p[i]) == NULL)
-			flags[j++] = p[i];
+		if (strchr(allow, p[i]) != NULL && strchr(clip, p[i]) == NULL)
+			clip[j++] = p[i];
 	}
-	log_debug("%s: %.*s %s", __func__, (int)(end - p - 1), p, flags);
+	log_debug("%s: %.*s %s", __func__, (int)(end - p - 1), p, clip);
 
 	if (strcmp(end, "?") == 0) {
-		input_osc_52_reply(ictx);
+		input_osc_52_reply(ictx, *clip);
 		return (0);
 	}
 
@@ -3132,9 +3131,9 @@ input_osc_52(struct input_ctx *ictx, const char *p)
 	struct screen_write_ctx  ctx;
 	u_char			*out;
 	int			 outlen;
-	char			 flags[sizeof "cpqs01234567"] = "";
+	char			 clip[sizeof "cpqs01234567"] = "";
 
-	if (!input_osc_52_parse(ictx, p, &out, &outlen, flags))
+	if (!input_osc_52_parse(ictx, p, &out, &outlen, clip))
 		return;
 
 	if (wp == NULL) {
@@ -3143,12 +3142,12 @@ input_osc_52(struct input_ctx *ictx, const char *p)
 			free(out);
 			return;
 		}
-		tty_set_selection(&ictx->c->tty, flags, out, outlen);
+		tty_set_selection(&ictx->c->tty, clip, out, outlen);
 		paste_add(NULL, out, outlen);
 	} else {
 		/* Normal window. */
 		screen_write_start_pane(&ctx, wp, NULL);
-		screen_write_setselection(&ctx, flags, out, outlen);
+		screen_write_setselection(&ctx, clip, out, outlen);
 		screen_write_stop(&ctx);
 		notify_pane("pane-set-clipboard", wp);
 		paste_add(NULL, out, outlen);
@@ -3196,7 +3195,7 @@ input_osc_104(struct input_ctx *ictx, const char *p)
 /* Send a clipboard reply. */
 void
 input_reply_clipboard(struct bufferevent *bev, const char *buf, size_t len,
-    const char *end)
+    const char *end, char clip)
 {
 	char	*out = NULL;
 	int	 outlen = 0;
@@ -3212,7 +3211,10 @@ input_reply_clipboard(struct bufferevent *bev, const char *buf, size_t len,
 		}
 	}
 
-	bufferevent_write(bev, "\033]52;;", 6);
+	bufferevent_write(bev, "\033]52;", 5);
+	if (clip != 0)
+		bufferevent_write(bev, &clip, 1);
+	bufferevent_write(bev, ";", 1);
 	if (outlen != 0)
 		bufferevent_write(bev, out, outlen);
 	bufferevent_write(bev, end, strlen(end));
@@ -3354,6 +3356,7 @@ static void
 input_request_clipboard_reply(struct input_request *ir, void *data)
 {
 	struct input_ctx			*ictx = ir->ictx;
+	struct bufferevent			*ev = ictx->event;
 	struct input_request_clipboard_data	*cd = data;
 	int					 state;
 	char					*copy;
@@ -3368,9 +3371,9 @@ input_request_clipboard_reply(struct input_request *ir, void *data)
 	}
 
 	if (ir->idx == INPUT_END_BEL)
-		input_reply_clipboard(ictx->event, cd->buf, cd->len, "\007");
+		input_reply_clipboard(ev, cd->buf, cd->len, "\007", cd->clip);
 	else
-		input_reply_clipboard(ictx->event, cd->buf, cd->len, "\033\\");
+		input_reply_clipboard(ev, cd->buf, cd->len, "\033\\", cd->clip);
 }
 
 /* Handle a reply to a request. */

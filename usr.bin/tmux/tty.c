@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.456 2026/02/10 08:34:43 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.457 2026/02/18 09:10:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1993,7 +1993,7 @@ tty_cmd_setselection(struct tty *tty, const struct tty_ctx *ctx)
 }
 
 void
-tty_set_selection(struct tty *tty, const char *flags, const char *buf,
+tty_set_selection(struct tty *tty, const char *clip, const char *buf,
     size_t len)
 {
 	char	*encoded;
@@ -2009,7 +2009,7 @@ tty_set_selection(struct tty *tty, const char *flags, const char *buf,
 
 	b64_ntop(buf, len, encoded, size);
 	tty->flags |= TTY_NOBLOCK;
-	tty_putcode_ss(tty, TTYC_MS, flags, encoded);
+	tty_putcode_ss(tty, TTYC_MS, clip, encoded);
 
 	free(encoded);
 }
