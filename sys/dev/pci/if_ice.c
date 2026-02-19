@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.66 2025/11/18 09:13:55 jan Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.67 2026/02/19 10:15:36 jan Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -30673,8 +30673,10 @@ ice_attach_hook(struct device *self)
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
 	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6 |
 	    IFCAP_TSOv4 | IFCAP_TSOv6;
+#ifndef SMALL_KERNEL
 	ifp->if_capabilities |= IFCAP_LRO;
 	ifp->if_xflags |= IFXF_LRO;
+#endif
 
 	if_attach(ifp);
 	ether_ifattach(ifp);

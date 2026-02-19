@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.66 2026/02/16 10:46:04 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.67 2026/02/19 10:15:36 jan Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -666,8 +666,10 @@ bnxt_attach(struct device *parent, struct device *self, void *aux)
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
+#ifndef SMALL_KERNEL
 	ifp->if_capabilities |= IFCAP_LRO;
 	ifp->if_xflags |= IFXF_LRO;
+#endif
 
 	ifq_init_maxlen(&ifp->if_snd, 1024);	/* ? */
 
