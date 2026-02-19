@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.357 2026/02/03 10:25:28 sashan Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.358 2026/02/19 16:59:15 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1200,15 +1200,18 @@ print_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call,
 			    r->rdr.proxy_port[1], r->naf ? r->naf : r->af,
 			    PF_POOL_RDR, verbose);
 		}
-	} else if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE) {
-		printf (" nat-to ");
-		print_pool(&r->nat, r->nat.proxy_port[0],
-		    r->nat.proxy_port[1], r->naf ? r->naf : r->af,
-		    PF_POOL_NAT, verbose);
-	} else if (!anchor_call[0] && r->rdr.addr.type != PF_ADDR_NONE) {
-		printf (" rdr-to ");
-		print_pool(&r->rdr, r->rdr.proxy_port[0],
-		    r->rdr.proxy_port[1], r->af, PF_POOL_RDR, verbose);
+	} else {
+		if (!anchor_call[0] && r->nat.addr.type != PF_ADDR_NONE) {
+			printf (" nat-to ");
+			print_pool(&r->nat, r->nat.proxy_port[0],
+			    r->nat.proxy_port[1], r->naf ? r->naf : r->af,
+			    PF_POOL_NAT, verbose);
+		}
+		if (!anchor_call[0] && r->rdr.addr.type != PF_ADDR_NONE) {
+			printf (" rdr-to ");
+			print_pool(&r->rdr, r->rdr.proxy_port[0],
+			    r->rdr.proxy_port[1], r->af, PF_POOL_RDR, verbose);
+		}
 	}
 	if (r->rt) {
 		if (r->rt == PF_ROUTETO)
