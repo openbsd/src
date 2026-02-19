@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.230 2024/11/27 20:11:32 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.231 2026/02/19 15:42:17 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1797,7 +1797,6 @@ datafault:
 
 	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
 Ldatafault_internal:
-	INCR uvmexp+V_FAULTS				! uvmexp.faults++ (clobbers %o0,%o1,%o2) should not fault
 	mov	%g1, %o0				! Move these to the out regs so we can save the globals
 	mov	%g2, %o4
 	mov	%g3, %o5
@@ -1965,8 +1964,6 @@ textfault:
 	membar	#Sync					! No real reason for this XXXX
 
 	TRAP_SETUP -CC64FSZ-TRAPFRAME_SIZEOF
-	INCR uvmexp+V_FAULTS				! uvmexp.faults++ (clobbers %o0,%o1,%o2)
-
 	mov	%g3, %o3
 
 	wrpr	%g0, PSTATE_KERN, %pstate		! Switch to normal globals
