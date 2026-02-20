@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.98 2024/05/23 03:21:09 jsg Exp $ */
+/*	$OpenBSD: uhub.c,v 1.99 2026/02/20 12:32:34 sthen Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -147,7 +147,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	 * parse the bits of the route-string that correspond to
 	 * their downstream port number.
 	 *
-	 * This does no apply to root hubs.
+	 * This does not apply to root hubs.
 	 */
 	if (dev->depth != 0 && dev->speed == USB_SPEED_SUPER) {
 		if (usbd_set_hub_depth(dev, dev->depth - 1)) {
