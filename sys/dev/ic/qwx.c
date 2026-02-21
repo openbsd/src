@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.100 2026/02/18 15:34:49 kettenis Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.101 2026/02/21 16:48:21 kettenis Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -26824,6 +26824,7 @@ admfree:
 void
 qwx_dmamem_free(bus_dma_tag_t dmat, struct qwx_dmamem *adm)
 {
+	bus_dmamap_unload(dmat, adm->map);
 	bus_dmamem_unmap(dmat, adm->kva, adm->size);
 	bus_dmamem_free(dmat, &adm->seg, 1);
 	bus_dmamap_destroy(dmat, adm->map);
