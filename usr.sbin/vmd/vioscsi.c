@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.28 2025/12/02 02:31:10 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.29 2026/02/22 22:54:54 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -25,9 +25,13 @@
 #include <scsi/scsiconf.h>
 #include <scsi/cd.h>
 
+#include <errno.h>
+#include <event.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "atomicio.h"
 #include "vmd.h"
 #include "vioscsi.h"
 #include "virtio.h"
@@ -41,6 +45,159 @@
 #else
 #define DPRINTF(x...)	do {} while(0)
 #endif	/* VIOSCSI_DEBUG */
+
+extern struct vmd_vm *current_vm;
+
+static void dev_dispatch_vm(int, short, void *);
+static void handle_sync_io(int, short, void *);
+static uint32_t vioscsi_io_cfg(struct virtio_dev *, int, uint8_t, uint32_t,
+    uint8_t);
+static int vioscsi_notifyq(struct virtio_dev *, uint16_t);
+static uint32_t vioscsi_read(struct virtio_dev *, struct viodev_msg *, int *);
+static int vioscsi_write(struct virtio_dev *, struct viodev_msg *);
+
+__dead void
+vioscsi_main(int fd, int fd_vmm)
+{
+	struct virtio_dev	 dev;
+	struct vioscsi_dev	*vioscsi = NULL;
+	struct viodev_msg 	 msg;
+	struct vmd_vm		 vm;
+	ssize_t			 sz;
+	int			 ret;
+
+	/*
+	 * stdio - needed for read/write to disk fds and channels to the vm.
+	 * vmm + proc - needed to create shared vm mappings.
+	 */
+	if (pledge("stdio vmm proc", NULL) == -1)
+		fatal("pledge");
+
+	/* Receive our virtio_dev, mostly preconfigured. */
+	memset(&dev, 0, sizeof(dev));
+	sz = atomicio(read, fd, &dev, sizeof(dev));
+	if (sz != sizeof(dev)) {
+		ret = errno;
+		log_warn("failed to receive vioscsi");
+		goto fail;
+	}
+	if (dev.dev_type != VMD_DEVTYPE_SCSI) {
+		ret = EINVAL;
+		log_warn("received invalid device type");
+		goto fail;
+	}
+	dev.sync_fd = fd;
+	vioscsi = &dev.vioscsi;
+
+	log_debug("%s: got vioscsi dev. cdrom fd = %d, syncfd = %d, "
+	    "asyncfd = %d, vmm fd = %d", __func__, vioscsi->cdrom_fd,
+	    dev.sync_fd, dev.async_fd, fd_vmm);
+
+	/* Receive our vm information from the vm process. */
+	memset(&vm, 0, sizeof(vm));
+	sz = atomicio(read, dev.sync_fd, &vm, sizeof(vm));
+	if (sz != sizeof(vm)) {
+		ret = EIO;
+		log_warnx("failed to receive vm details");
+		goto fail;
+	}
+	current_vm = &vm;
+
+	setproctitle("%s/vioscsi", vm.vm_params.vmc_name);
+	log_procinit("vm/%s/vioscsi", vm.vm_params.vmc_name);
+
+	/* Now that we have our vm information, we can remap memory. */
+	ret = remap_guest_mem(&vm, fd_vmm);
+	if (ret) {
+		log_warnx("failed to remap guest memory");
+		goto fail;
+	}
+
+	/*
+	 * We no longer need /dev/vmm access.
+	 */
+	close_fd(fd_vmm);
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge2");
+
+	/* Initialize the vioscsi backing file. */
+	ret = virtio_raw_init(&vioscsi->file, &vioscsi->sz,
+	    &vioscsi->cdrom_fd, 1);
+	if (ret == -1) {
+		log_warnx("%s: unable to determine iso format", __func__);
+		goto fail;
+	}
+	vioscsi->n_blocks = vioscsi->sz / VIOSCSI_BLOCK_SIZE_CDROM;
+
+	/* Initialize libevent so we can start wiring event handlers. */
+	event_init();
+
+	/* Wire up an async imsg channel. */
+	log_debug("%s: wiring in async vm event handler (fd=%d)", __func__,
+		dev.async_fd);
+	if (vm_device_pipe(&dev, dev_dispatch_vm, NULL)) {
+		ret = EIO;
+		log_warnx("vm_device_pipe");
+		goto fail;
+	}
+
+	/* Configure our sync channel event handler. */
+	log_debug("%s: wiring in sync channel handler (fd=%d)", __func__,
+		dev.sync_fd);
+	if (imsgbuf_init(&dev.sync_iev.ibuf, dev.sync_fd) == -1) {
+		log_warn("imsgbuf_init");
+		goto fail;
+	}
+	dev.sync_iev.handler = handle_sync_io;
+	dev.sync_iev.data = &dev;
+	dev.sync_iev.events = EV_READ;
+	imsg_event_add(&dev.sync_iev);
+
+	/* Send a ready message over the sync channel. */
+	log_debug("%s: telling vm %s device is ready", __func__,
+	    vm.vm_params.vmc_name);
+	memset(&msg, 0, sizeof(msg));
+	msg.type = VIODEV_MSG_READY;
+	imsg_compose_event(&dev.sync_iev, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
+	    sizeof(msg));
+
+	/* Send a ready message over the async channel. */
+	log_debug("%s: sending heartbeat", __func__);
+	ret = imsg_compose_event(&dev.async_iev, IMSG_DEVOP_MSG, 0, 0, -1,
+	    &msg, sizeof(msg));
+	if (ret == -1) {
+		log_warnx("%s: failed to send async ready message!", __func__);
+		goto fail;
+	}
+
+	/* Engage the event loop! */
+	ret = event_dispatch();
+
+	if (ret == 0) {
+		/* Clean shutdown. */
+		close_fd(dev.sync_fd);
+		close_fd(dev.async_fd);
+		close_fd(vioscsi->cdrom_fd);
+		_exit(0);
+		/* NOTREACHED */
+	}
+
+fail:
+	/* Try letting the vm know we've failed something. */
+	memset(&msg, 0, sizeof(msg));
+	msg.type = VIODEV_MSG_ERROR;
+	msg.data = ret;
+	imsg_compose(&dev.sync_iev.ibuf, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
+	    sizeof(msg));
+	imsgbuf_flush(&dev.sync_iev.ibuf);
+
+	close_fd(dev.sync_fd);
+	close_fd(dev.async_fd);
+	if (vioscsi != NULL)
+		close_fd(vioscsi->cdrom_fd);
+	_exit(ret);
+	/* NOTREACHED */
+}
 
 static void
 vioscsi_prepare_resp(struct virtio_scsi_res_hdr *resp, uint8_t vio_status,
@@ -260,6 +417,203 @@ vioscsi_handle_tur(struct virtio_dev *dev, struct virtio_vq_info *vq_info,
 	}
 
 	return (ret);
+}
+
+static void
+dev_dispatch_vm(int fd, short event, void *arg)
+{
+	struct virtio_dev	*dev = (struct virtio_dev *)arg;
+	struct imsgev		*iev = &dev->async_iev;
+	struct imsgbuf		*ibuf = &iev->ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n = 0;
+	uint32_t		 type;
+	int			 verbose;
+
+	if (event & EV_READ) {
+		if ((n = imsgbuf_read(ibuf)) == -1)
+			fatal("%s: imsgbuf_read", __func__);
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			log_debug("%s: vioscsi pipe dead (EV_READ)", __func__);
+			event_del(&iev->ev);
+			event_loopexit(NULL);
+			return;
+		}
+	}
+
+	if (event & EV_WRITE) {
+		if (imsgbuf_write(ibuf) == -1) {
+			if (errno == EPIPE) {
+				/* this pipe is dead, remove the handler */
+				log_debug("%s: pipe dead (EV_WRITE)", __func__);
+				event_del(&iev->ev);
+				event_loopexit(NULL);
+				return;
+			}
+			fatal("%s: imsgbuf_write", __func__);
+		}
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsg_get", __func__);
+		if (n == 0)
+			break;
+
+		type = imsg_get_type(&imsg);
+		switch (type) {
+		case IMSG_VMDOP_PAUSE_VM:
+			log_debug("%s: pausing", __func__);
+			break;
+		case IMSG_VMDOP_UNPAUSE_VM:
+			log_debug("%s: unpausing", __func__);
+			break;
+		case IMSG_CTL_VERBOSE:
+			verbose = imsg_int_read(&imsg);
+			log_setverbose(verbose);
+			break;
+		default:
+			log_warnx("%s: unhandled imsg type %d", __func__, type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(iev);
+}
+
+/*
+ * Synchronous IO handler.
+ */
+static void
+handle_sync_io(int fd, short event, void *arg)
+{
+	struct virtio_dev *dev = (struct virtio_dev *)arg;
+	struct imsgev *iev = &dev->sync_iev;
+	struct imsgbuf *ibuf = &iev->ibuf;
+	struct viodev_msg msg;
+	struct imsg imsg;
+	ssize_t n;
+	int deassert = 0;
+
+	if (event & EV_READ) {
+		if ((n = imsgbuf_read(ibuf)) == -1)
+			fatal("%s: imsgbuf_read", __func__);
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			log_debug("%s: vioscsi pipe dead (EV_READ)", __func__);
+			event_del(&iev->ev);
+			event_loopexit(NULL);
+			return;
+		}
+	}
+
+	if (event & EV_WRITE) {
+		if (imsgbuf_write(ibuf) == -1) {
+			if (errno == EPIPE) {
+				/* this pipe is dead, remove the handler */
+				log_debug("%s: pipe dead (EV_WRITE)", __func__);
+				event_del(&iev->ev);
+				event_loopexit(NULL);
+				return;
+			}
+			fatal("%s: imsgbuf_write", __func__);
+		}
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatalx("%s: imsg_get (n=%ld)", __func__, n);
+		if (n == 0)
+			break;
+
+		/* Unpack our message. They ALL should be dev messages! */
+		viodev_msg_read(&imsg, &msg);
+		imsg_free(&imsg);
+
+		switch (msg.type) {
+		case VIODEV_MSG_IO_READ:
+			/* Read IO: make sure to send a reply */
+			msg.data = vioscsi_read(dev, &msg, &deassert);
+			msg.data_valid = 1;
+			if (deassert) {
+				/* Inline any interrupt deassertions. */
+				msg.state = INTR_STATE_DEASSERT;
+			}
+			imsg_compose_event(iev, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
+			    sizeof(msg));
+			break;
+		case VIODEV_MSG_IO_WRITE:
+			/* Write IO: no reply needed, but maybe an irq assert */
+			if (vioscsi_write(dev, &msg))
+				virtio_assert_irq(dev, 0);
+			break;
+		case VIODEV_MSG_SHUTDOWN:
+			event_del(&dev->sync_iev.ev);
+			event_loopbreak();
+			return;
+		default:
+			fatalx("%s: invalid msg type %d", __func__, msg.type);
+		}
+	}
+	imsg_event_add(iev);
+}
+
+static int
+vioscsi_write(struct virtio_dev *dev, struct viodev_msg *msg)
+{
+	uint32_t data = msg->data;
+	uint16_t reg = msg->reg;
+	uint8_t sz = msg->io_sz;
+	int notify = 0;
+
+	switch (reg & 0xFF00) {
+	case VIO1_CFG_BAR_OFFSET:
+		(void)virtio_io_cfg(dev, VEI_DIR_OUT, (reg & 0xFF), data, sz);
+		break;
+	case VIO1_DEV_BAR_OFFSET:
+		(void)vioscsi_io_cfg(dev, VEI_DIR_OUT, (reg & 0xFF), data, sz);
+		break;
+	case VIO1_NOTIFY_BAR_OFFSET:
+		notify = vioscsi_notifyq(dev, (uint16_t)(msg->data));
+		break;
+	case VIO1_ISR_BAR_OFFSET:
+		/* Ignore writes to ISR. */
+		break;
+	default:
+		log_debug("%s: no handler for reg 0x%04x", __func__, reg);
+	}
+
+	return (notify);
+}
+
+static uint32_t
+vioscsi_read(struct virtio_dev *dev, struct viodev_msg *msg, int *deassert)
+{
+	uint32_t data = 0;
+	uint16_t reg = msg->reg;
+	uint8_t sz = msg->io_sz;
+
+	switch (reg & 0xFF00) {
+	case VIO1_CFG_BAR_OFFSET:
+		data = virtio_io_cfg(dev, VEI_DIR_IN, (reg & 0xFF), 0, sz);
+		break;
+	case VIO1_DEV_BAR_OFFSET:
+		data = vioscsi_io_cfg(dev, VEI_DIR_IN, (reg & 0xFF), 0, sz);
+		break;
+	case VIO1_NOTIFY_BAR_OFFSET:
+		/* Reads of notify register return all 1's. */
+		break;
+	case VIO1_ISR_BAR_OFFSET:
+		data = dev->isr;
+		dev->isr = 0;
+		*deassert = 1;
+		break;
+	default:
+		log_debug("%s: no handler for reg 0x%04x", __func__, reg);
+	}
+
+	return (data);
 }
 
 static int
@@ -1708,18 +2062,16 @@ get_config_out:
 	return (ret);
 }
 
-int
-vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
-    void *cookie, uint8_t sz)
+static uint32_t
+vioscsi_io_cfg(struct virtio_dev *dev, int dir, uint8_t reg, uint32_t data,
+    uint8_t sz)
 {
-	struct virtio_dev *dev = (struct virtio_dev *)cookie;
 	struct vioscsi_dev *vioscsi = NULL;
+	uint32_t res = 0;
 
 	if (dev->device_id != PCI_PRODUCT_VIRTIO_SCSI)
 		fatalx("%s: virtio device is not a scsi device", __func__);
 	vioscsi = &dev->vioscsi;
-
-	*intr = 0xFF;
 
 	DPRINTF("%s: request %s reg %s sz %u", __func__,
 	    dir ? "READ" : "WRITE", vioscsi_reg_name(reg), sz);
@@ -1728,13 +2080,13 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		switch (reg) {
 		case VIRTIO_SCSI_CONFIG_SENSE_SIZE:
 			/* Support writing to sense size register. */
-			if (*data != VIOSCSI_SENSE_LEN)
+			if (data != VIOSCSI_SENSE_LEN)
 				log_warnx("%s: guest write to sense size "
 				    "register ignored", __func__);
 			break;
 		case VIRTIO_SCSI_CONFIG_CDB_SIZE:
 			/* Support writing CDB size. */
-			if (*data != VIOSCSI_CDB_LEN)
+			if (data != VIOSCSI_CDB_LEN)
 				log_warnx("%s: guest write to cdb size "
 				    "register ignored", __func__);
 			break;
@@ -1747,63 +2099,63 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_SCSI_CONFIG_NUM_QUEUES:
 			/* Number of request queues, not number of all queues. */
 			if (sz == 4)
-				*data = (uint32_t)(VIOSCSI_NUM_REQ_QUEUES);
+				res = (uint32_t)(VIOSCSI_NUM_REQ_QUEUES);
 			else
 				log_warnx("%s: unaligned read of num queues "
 				    "register", __func__);
 			break;
 		case VIRTIO_SCSI_CONFIG_SEG_MAX:
 			if (sz == 4)
-				*data = (uint32_t)(VIOSCSI_SEG_MAX);
+				res = (uint32_t)(VIOSCSI_SEG_MAX);
 			else
 				log_warnx("%s: unaligned read of seg max "
 				    "register", __func__);
 			break;
 		case VIRTIO_SCSI_CONFIG_MAX_SECTORS:
 			if (sz == 4)
-				*data = (uint32_t)(vioscsi->max_xfer);
+				res = (uint32_t)(vioscsi->max_xfer);
 			else
 				log_warnx("%s: unaligned read of max sectors "
 				    "register", __func__);
 			break;
 		case VIRTIO_SCSI_CONFIG_CMD_PER_LUN:
 			if (sz == 4)
-				*data = (uint32_t)(VIOSCSI_CMD_PER_LUN);
+				res = (uint32_t)(VIOSCSI_CMD_PER_LUN);
 			else
 				log_warnx("%s: unaligned read of cmd per lun "
 				    "register", __func__);
 			break;
 		case VIRTIO_SCSI_CONFIG_EVENT_INFO_SIZE:
-			*data = 0;
+			res = 0;
 			break;
 		case VIRTIO_SCSI_CONFIG_SENSE_SIZE:
 			if (sz == 4)
-				*data = (uint32_t)(VIOSCSI_SENSE_LEN);
+				res = (uint32_t)(VIOSCSI_SENSE_LEN);
 			else
 				log_warnx("%s: unaligned read of sense size "
 				    "register", __func__);
 			break;
 		case VIRTIO_SCSI_CONFIG_CDB_SIZE:
 			if (sz == 4)
-				*data = (uint32_t)(VIOSCSI_CDB_LEN);
+				res = (uint32_t)(VIOSCSI_CDB_LEN);
 			else
 				log_warnx("%s: unaligned read of cdb size "
 				    "register", __func__);
 			break;
 		case VIRTIO_SCSI_CONFIG_MAX_CHANNEL:
 			/* defined by standard to be zero */
-			*data = 0;
+			res = 0;
 			break;
 		case VIRTIO_SCSI_CONFIG_MAX_TARGET:
 			if (sz == 2)
-				*data = (uint32_t)(VIOSCSI_MAX_TARGET);
+				res = (uint32_t)(VIOSCSI_MAX_TARGET);
 			else
 				log_warnx("%s: unaligned read of max target "
 				    "register", __func__);
 			break;
 		case VIRTIO_SCSI_CONFIG_MAX_LUN:
 			if (sz == 4)
-				*data = (uint32_t)(VIOSCSI_MAX_LUN);
+				res = (uint32_t)(VIOSCSI_MAX_LUN);
 			else
 				log_warnx("%s: unaligned read of max lun "
 				    "register", __func__);
@@ -1813,7 +2165,7 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		}
 	}
 
-	return (0);
+	return (res);
 }
 
 /*
@@ -1826,7 +2178,7 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
  * Return 1 if an interrupt should be generated (response written)
  *        0 otherwise
  */
-int
+static int
 vioscsi_notifyq(struct virtio_dev *dev, uint16_t vq_idx)
 {
 	size_t cnt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.60 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.61 2026/02/22 22:54:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -269,6 +269,7 @@ struct vioblk_dev {
  */
 struct vioscsi_dev {
 	struct virtio_backing file;
+	int cdrom_fd;		/* fd for iso file */
 
 	int locked;		/* is the device locked? */
 	uint64_t sz;		/* size of iso file in bytes */
@@ -411,10 +412,6 @@ const char *vioblk_cmd_name(uint32_t);
 
 /* dhcp.c */
 ssize_t dhcp_request(struct virtio_dev *, char *, size_t, char **);
-
-/* vioscsi.c */
-int vioscsi_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
-int vioscsi_notifyq(struct virtio_dev *, uint16_t);
 
 /* imsg handling */
 void	viodev_msg_read(struct imsg *, struct viodev_msg *);

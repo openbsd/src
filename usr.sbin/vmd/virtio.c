@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.134 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.135 2026/02/22 22:54:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -332,9 +332,7 @@ virtio_io_dispatch(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		*data = virtio_io_cfg(dev, dir, actual, *data, sz);
 		break;
 	case VIO1_DEV_BAR_OFFSET:
-		if (dev->device_id == PCI_PRODUCT_VIRTIO_SCSI)
-			return vioscsi_io(dir, actual, data, intr, arg, sz);
-		else if (dir == VEI_DIR_IN) {
+		if (dir == VEI_DIR_IN) {
 			log_debug("%s: no device specific handler", __func__);
 			*data = (uint32_t)(-1);
 		}
@@ -643,7 +641,8 @@ virtio_io_isr(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 
 	/* Limit to in-process devices. */
 	if (dev->device_id == PCI_PRODUCT_VIRTIO_BLOCK ||
-	    dev->device_id == PCI_PRODUCT_VIRTIO_NETWORK)
+	    dev->device_id == PCI_PRODUCT_VIRTIO_NETWORK ||
+	    dev->device_id == PCI_PRODUCT_VIRTIO_SCSI)
 		fatalx("%s: cannot use on multi-process virtio dev", __func__);
 
 	if (dir == VEI_DIR_IN) {
@@ -670,7 +669,8 @@ virtio_io_notify(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 
 	/* Limit this handler to in-process devices */
 	if (dev->device_id == PCI_PRODUCT_VIRTIO_BLOCK ||
-	    dev->device_id == PCI_PRODUCT_VIRTIO_NETWORK)
+	    dev->device_id == PCI_PRODUCT_VIRTIO_NETWORK ||
+	    dev->device_id == PCI_PRODUCT_VIRTIO_SCSI)
 		fatalx("%s: cannot use on multi-process virtio dev", __func__);
 
 	if (vq_idx >= dev->num_queues) {
@@ -687,9 +687,6 @@ virtio_io_notify(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 	switch (dev->device_id) {
 	case PCI_PRODUCT_VIRTIO_ENTROPY:
 		raise_intr = viornd_notifyq(dev, vq_idx);
-		break;
-	case PCI_PRODUCT_VIRTIO_SCSI:
-		raise_intr = vioscsi_notifyq(dev, vq_idx);
 		break;
 	case PCI_PRODUCT_VIRTIO_VMMCI:
 		/* Does not use a virtqueue. */
@@ -1138,16 +1135,6 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		}
 	}
 
-	/*
-	 * Launch virtio devices that support subprocess execution.
-	 */
-	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
-		if (virtio_dev_launch(vm, dev) != 0) {
-			log_warnx("failed to launch virtio device");
-			return (1);
-		}
-	}
-
 	/* Virtio 1.x SCSI CD-ROM */
 	if (strlen(vmc->vmc_cdrom)) {
 		dev = malloc(sizeof(struct virtio_dev));
@@ -1164,7 +1151,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		}
 		virtio_dev_init(vm, dev, id, VIOSCSI_QUEUE_SIZE_DEFAULT,
 		    VIRTIO_SCSI_QUEUES, VIRTIO_F_VERSION_1);
-		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_io_dispatch, dev)
+		if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_pci_io, dev)
 		    == -1) {
 			log_warnx("can't add bar for vioscsi device");
 			return (1);
@@ -1175,17 +1162,23 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		virtio_pci_add_cap(id, VIRTIO_PCI_CAP_NOTIFY_CFG, bar_id, 0);
 
 		/* Device specific initialization. */
-		if (virtio_raw_init(&dev->vioscsi.file, &dev->vioscsi.sz,
-		    &child_cdrom, 1) == -1) {
-			log_warnx("%s: unable to determine iso format",
-			    __func__);
-			return (1);
-		}
+		dev->dev_type = VMD_DEVTYPE_SCSI;
+		dev->vmm_id = vm->vm_vmmid;
+		dev->vioscsi.cdrom_fd = child_cdrom;
 		dev->vioscsi.locked = 0;
 		dev->vioscsi.lba = 0;
-		dev->vioscsi.n_blocks = dev->vioscsi.sz /
-		    VIOSCSI_BLOCK_SIZE_CDROM;
 		dev->vioscsi.max_xfer = VIOSCSI_BLOCK_SIZE_CDROM;
+		SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
+	}
+
+	/*
+	 * Launch virtio devices that support subprocess execution.
+	 */
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		if (virtio_dev_launch(vm, dev) != 0) {
+			log_warnx("failed to launch virtio device");
+			return (1);
+		}
 	}
 
 	/* Virtio 0.9 VMM Control Interface */
@@ -1483,6 +1476,9 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		log_debug("%s: launching vioblk%d", vm->vm_params.vmc_name,
 		    dev->vioblk.idx);
 		break;
+	case VMD_DEVTYPE_SCSI:
+		log_debug("%s: launching vioscsi", vm->vm_params.vmc_name);
+		break;
 		/* NOTREACHED */
 	default:
 		log_warn("%s: invalid device type", __func__);
@@ -1595,7 +1591,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		close_fd(vm->vm_tty);
 		vm->vm_tty = -1;
 
-		if (vm->vm_cdrom != -1) {
+		if (vm->vm_cdrom != -1 && dev->dev_type != VMD_DEVTYPE_SCSI) {
 			close_fd(vm->vm_cdrom);
 			vm->vm_cdrom = -1;
 		}
@@ -1916,6 +1912,10 @@ virtio_dev_closefds(struct virtio_dev *dev)
 		case VMD_DEVTYPE_NET:
 			close_fd(dev->vionet.data_fd);
 			dev->vionet.data_fd = -1;
+			break;
+		case VMD_DEVTYPE_SCSI:
+			close_fd(dev->vioscsi.cdrom_fd);
+			dev->vioscsi.cdrom_fd = -1;
 			break;
 	default:
 		log_warnx("%s: invalid device type", __func__);

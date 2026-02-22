@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.144 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.145 2026/02/22 22:54:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -83,6 +83,7 @@
 
 #define VMD_DEVTYPE_NET		'n'
 #define VMD_DEVTYPE_DISK	'd'
+#define VMD_DEVTYPE_SCSI	's'
 
 /* Rate-limit fast reboots */
 #define VM_START_RATE_SEC	6	/* min. seconds since last reboot */
@@ -588,6 +589,8 @@ __dead void vionet_main(int, int);
 
 /* vioblk.c */
 __dead void vioblk_main(int, int);
+/* vioscsi.c */
+__dead void vioscsi_main(int, int);
 
 /* psp.c */
 int	 psp_get_pstate(uint16_t *, uint8_t *, uint8_t *, uint8_t *, uint8_t *);

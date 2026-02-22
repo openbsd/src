@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.171 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.172 2026/02/22 22:54:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -603,6 +603,7 @@ main(int argc, char **argv)
 			switch (dev_type) {
 			case VMD_DEVTYPE_NET:
 			case VMD_DEVTYPE_DISK:
+			case VMD_DEVTYPE_SCSI:
 				break;
 			default: fatalx("invalid device type");
 			}
@@ -672,6 +673,10 @@ main(int argc, char **argv)
 		} else if (dev_type == VMD_DEVTYPE_DISK) {
 			log_procinit("vm/%s/vioblk", title);
 			vioblk_main(vm_fd, vmm_fd);
+			/* NOTREACHED */
+		} else if (dev_type == VMD_DEVTYPE_SCSI) {
+			log_procinit("vm/%s/vioscsi", title);
+			vioscsi_main(vm_fd, vmm_fd);
 			/* NOTREACHED */
 		}
 		fatalx("unsupported device type '%c'", dev_type);
