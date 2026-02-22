@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bse_acpi.c,v 1.6 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: if_bse_acpi.c,v 1.7 2026/02/22 18:44:41 mvs Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -90,7 +90,7 @@ bse_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc.sc_ih = acpi_intr_establish(aaa->aaa_irq[0],
-	    aaa->aaa_irq_flags[0], IPL_NET, genet_intr,
+	    aaa->aaa_irq_flags[0], IPL_NET | IPL_MPSAFE, genet_intr,
 	    sc, sc->sc.sc_dev.dv_xname);
 	if (sc->sc.sc_ih == NULL) {
 		printf(": can't establish interrupt\n");

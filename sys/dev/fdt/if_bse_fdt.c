@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bse_fdt.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: if_bse_fdt.c,v 1.3 2026/02/22 18:44:41 mvs Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -72,7 +72,7 @@ bse_fdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_NET,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_NET | IPL_MPSAFE,
 	    genet_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
