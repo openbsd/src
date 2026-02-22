@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.21 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: word.c,v 1.22 2026/02/22 22:16:41 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -176,6 +176,7 @@ transposeword(int f, int n)
 		curwp->w_dotline = tmp2_w_dotline;
 		curwp->w_dotp = tmp2_w_dotp;
 
+		free(word2);
 		word2 = NULL;
 	}
 	curwp->w_doto = tmp2_w_doto;
