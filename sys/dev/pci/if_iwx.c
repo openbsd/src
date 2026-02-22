@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.198 2026/02/17 20:02:43 kettenis Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.199 2026/02/22 22:24:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2718,6 +2718,7 @@ iwx_stop_device(struct iwx_softc *sc)
 	iwx_dma_contig_free(&sc->pnvm_dma);
 	for (i = 0; i < sc->pnvm_segs; i++)
 		iwx_dma_contig_free(&sc->pnvm_seg_dma[i]);
+	sc->pnvm_segs = 0;
 }
 
 void
