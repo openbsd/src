@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.354 2026/02/11 22:34:40 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.355 2026/02/22 21:53:54 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -657,6 +657,7 @@ uvm_map_findspace(struct vm_map *map, struct vm_map_entry**first,
 	struct uvm_addr_state *uaddr;
 	int i;
 
+retry:
 	/*
 	 * Allocation for sz bytes at any address,
 	 * using the addr selectors in order.
@@ -674,6 +675,11 @@ uvm_map_findspace(struct vm_map *map, struct vm_map_entry**first,
 	if (uvm_addr_invoke(map, uaddr, first, last,
 	    addr, sz, pmap_align, pmap_offset, prot, hint) == 0)
 		return 0;
+
+	if (hint != 0) {
+		hint = 0;
+		goto retry;
+	}
 
 	return ENOMEM;
 }
