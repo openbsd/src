@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.387 2026/01/21 10:18:20 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.388 2026/02/22 21:30:58 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1592,12 +1592,9 @@ somove(struct socket *so, int wait)
 	/*
 	 * By splicing sockets connected to localhost, userland might create a
 	 * loop.  Dissolve splicing with error if loop is detected by counter.
-	 *
-	 * If we deal with looped broadcast/multicast packet we bail out with
-	 * no error to suppress splice termination.
 	 */
 	if ((m->m_flags & M_PKTHDR) &&
-	    ((m->m_pkthdr.ph_loopcnt++ >= M_MAXLOOP) ||
+	    ((m->m_pkthdr.ph_loopcnt >= M_MAXLOOP) ||
 	    ((m->m_flags & M_LOOP) && (m->m_flags & (M_BCAST|M_MCAST))))) {
 		error = ELOOP;
 		goto release;
@@ -1737,6 +1734,8 @@ somove(struct socket *so, int wait)
 		} else if (oobmark) {
 			o = m_split(m, oobmark, wait);
 			if (o) {
+				if (m->m_flags & M_PKTHDR)
+					m->m_pkthdr.ph_loopcnt++;
 				solock_shared(sosp);
 				error = pru_send(sosp, m, NULL, NULL);
 				sounlock_shared(sosp);
@@ -1793,6 +1792,8 @@ somove(struct socket *so, int wait)
 
 	mtx_leave(&sosp->so_snd.sb_mtx);
 	mtx_leave(&so->so_rcv.sb_mtx);
+	if (m->m_flags & M_PKTHDR)
+		m->m_pkthdr.ph_loopcnt++;
 	solock_shared(sosp);
 	error = pru_send(sosp, m, NULL, NULL);
 	sounlock_shared(sosp);
