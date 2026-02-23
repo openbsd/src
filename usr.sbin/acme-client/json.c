@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.22 2025/09/16 15:06:02 sthen Exp $ */
+/*	$Id: json.c,v 1.23 2026/02/23 10:27:49 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -647,20 +647,31 @@ json_fmt_newacc(const char *contact)
  * Format the "newOrder" resource request
  */
 char *
-json_fmt_neworder(const char *const *alts, size_t altsz, const char *profile)
+json_fmt_neworder(struct domain_c *domain)
 {
-	size_t	 i;
-	int	 c;
-	char	*p, *t;
+	int			 c, first;
+	char			*p, *t;
+	struct altname_c	*ac;
 
 	if ((p = strdup("{ \"identifiers\": [")) == NULL)
 		goto err;
 
 	t = p;
-	for (i = 0; i < altsz; i++) {
-		c = asprintf(&p,
-		    "%s { \"type\": \"dns\", \"value\": \"%s\" }%s",
-		    t, alts[i], i + 1 == altsz ? "" : ",");
+	first = 1;
+	TAILQ_FOREACH(ac, &domain->altname_list, entry) {
+		switch (ac->idtype) {
+		case ID_DNS:
+			c = asprintf(&p, "%s%s { \"type\": \"dns\", "
+			    "\"value\": \"%s\" }", t, first ? "" : ",",
+			    ac->domain);
+			break;
+		case ID_IP:
+			c = asprintf(&p, "%s%s { \"type\": \"ip\", "
+			    "\"value\": \"%s\" }", t, first ? "" : ",",
+			    ac->domain);
+			break;
+		}
+		first = 0;
 		free(t);
 		if (c == -1) {
 			warn("asprintf");
@@ -669,10 +680,11 @@ json_fmt_neworder(const char *const *alts, size_t altsz, const char *profile)
 		}
 		t = p;
 	}
-	if (profile == NULL)
+	if (domain->profile == NULL)
 		c = asprintf(&p, "%s ] }", t);
 	else
-		c = asprintf(&p, "%s ], \"profile\": \"%s\" }", t, profile);
+		c = asprintf(&p, "%s ], \"profile\": \"%s\" }", t,
+		    domain->profile);
 	free(t);
 	if (c == -1) {
 		warn("asprintf");

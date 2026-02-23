@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.57 2025/09/16 15:06:02 sthen Exp $ */
+/*	$Id: main.c,v 1.58 2026/02/23 10:27:49 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,7 +40,6 @@ enum comp 	 proccomp;
 int
 main(int argc, char *argv[])
 {
-	const char	 **alts = NULL;
 	char		 *certdir = NULL;
 	char		 *chngdir = NULL, *auth = NULL;
 	char		 *conffile = CONF_FILE;
@@ -51,7 +50,7 @@ main(int argc, char *argv[])
 	int		  c, rc, revocate = 0;
 	int		  popts = 0;
 	pid_t		  pids[COMP__MAX];
-	size_t		  i, altsz, ne;
+	size_t		  ne;
 
 	struct acme_conf	*conf = NULL;
 	struct authority_c	*authority = NULL;
@@ -112,7 +111,7 @@ main(int argc, char *argv[])
 	if ((tmpsd = dirname(tmps)) == NULL)
 		err(EXIT_FAILURE, "dirname");
 	if ((certdir = strdup(tmpsd)) == NULL)
-		err(EXIT_FAILURE, "strdup");	
+		err(EXIT_FAILURE, "strdup");
 	free(tmps);
 	tmps = tmpsd = NULL;
 
@@ -174,15 +173,15 @@ main(int argc, char *argv[])
 		return EXIT_SUCCESS;
 
 	/* Set the zeroth altname as our domain. */
-	altsz = domain->altname_count + 1;
-	alts = calloc(altsz, sizeof(char *));
-	if (alts == NULL)
+
+	ac = calloc(1, sizeof(struct altname_c));
+	if (ac == NULL)
 		err(EXIT_FAILURE, "calloc");
-	alts[0] = domain->domain;
-	i = 1;
-	/* XXX get rid of alts[] later */
-	TAILQ_FOREACH(ac, &domain->altname_list, entry)
-		alts[i++] = ac->domain;
+
+	ac->domain = domain->domain;
+	ac->idtype = domain->idtype;
+	TAILQ_INSERT_HEAD(&domain->altname_list, ac, entry);
+	domain->altname_count++;
 
 	/*
 	 * Open channels between our components.
@@ -223,9 +222,7 @@ main(int argc, char *argv[])
 		c = netproc(key_fds[1], acct_fds[1],
 		    chng_fds[1], cert_fds[1],
 		    dns_fds[1], rvk_fds[1],
-		    revocate, authority,
-		    (const char *const *)alts, altsz,
-		    domain->profile);
+		    revocate, authority, domain);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -250,9 +247,7 @@ main(int argc, char *argv[])
 		close(chng_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = keyproc(key_fds[0], domain->key,
-		    (const char **)alts, altsz,
-		    domain->keytype);
+		c = keyproc(key_fds[0], domain);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -355,8 +350,7 @@ main(int argc, char *argv[])
 	if (pids[COMP_REVOKE] == 0) {
 		proccomp = COMP_REVOKE;
 		c = revokeproc(rvk_fds[0], domain->cert != NULL ? domain->cert :
-		    domain->fullchain, force, revocate,
-		    (const char *const *)alts, altsz);
+		    domain->fullchain, force, revocate, domain);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 

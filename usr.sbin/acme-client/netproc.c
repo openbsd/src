@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.45 2025/09/16 15:06:02 sthen Exp $ */
+/*	$Id: netproc.c,v 1.46 2026/02/23 10:27:49 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -492,15 +492,15 @@ dochkacc(struct conn *c, const struct capaths *p, const char *contact)
  * Submit a new order for a certificate.
  */
 static int
-doneworder(struct conn *c, const char *const *alts, size_t altsz,
-    struct order *order, const struct capaths *p, const char *profile)
+doneworder(struct conn *c, struct domain_c *domain, struct order *order,
+    const struct capaths *p)
 {
 	struct jsmnn	*j = NULL;
 	int		 rc = 0;
 	char		*req;
 	long		 lc;
 
-	if ((req = json_fmt_neworder(alts, altsz, profile)) == NULL)
+	if ((req = json_fmt_neworder(domain)) == NULL)
 		warnx("json_fmt_neworder");
 	else if ((lc = sreq(c, p->neworder, 1, req, &order->uri)) < 0)
 		warnx("%s: bad comm", p->neworder);
@@ -723,7 +723,7 @@ dodirs(struct conn *c, const char *addr, struct capaths *paths)
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
     int revocate, struct authority_c *authority,
-    const char *const *alts, size_t altsz, const char *profile)
+    struct domain_c *domain)
 {
 	int		 rc = 0, retries = 0;
 	size_t		 i;
@@ -828,7 +828,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 
 	memset(&order, 0, sizeof(order));
 
-	if (!doneworder(&c, alts, altsz, &order, &paths, profile))
+	if (!doneworder(&c, domain, &order, &paths))
 		goto out;
 
 	chngs = calloc(order.authsz, sizeof(struct chng));

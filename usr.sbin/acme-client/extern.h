@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.22 2025/09/16 15:06:02 sthen Exp $ */
+/*	$Id: extern.h,v 1.23 2026/02/23 10:27:49 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -204,15 +204,12 @@ int		 acctproc(int, const char *, enum keytype);
 int		 certproc(int, int);
 int		 chngproc(int, const char *);
 int		 dnsproc(int);
-int		 revokeproc(int, const char *, int, int, const char *const *,
-			size_t);
+int		 revokeproc(int, const char *, int, int, struct domain_c *);
 int		 fileproc(int, const char *, const char *, const char *,
 			const char *);
-int		 keyproc(int, const char *, const char **, size_t,
-			enum keytype);
+int		 keyproc(int, struct domain_c *);
 int		 netproc(int, int, int, int, int, int, int,
-			struct authority_c *, const char *const *,
-			size_t, const char *);
+			struct authority_c *, struct domain_c *);
 
 /*
  * Debugging functions.
@@ -263,7 +260,7 @@ char		*json_getstr(struct jsmnn *, const char *);
 char		*json_fmt_newcert(const char *);
 char		*json_fmt_chkacc(void);
 char		*json_fmt_newacc(const char *);
-char		*json_fmt_neworder(const char *const *, size_t, const char *);
+char		*json_fmt_neworder(struct domain_c *);
 char		*json_fmt_protected_rsa(const char *,
 			const char *, const char *, const char *);
 char		*json_fmt_protected_ec(const char *, const char *, const char *,

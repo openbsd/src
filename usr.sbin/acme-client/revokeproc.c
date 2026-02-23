@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.26 2025/09/18 13:22:36 florian Exp $ */
+/*	$Id: revokeproc.c,v 1.27 2026/02/23 10:27:49 sthen Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,6 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -74,19 +76,18 @@ X509notbefore(X509 *x)
 
 int
 revokeproc(int fd, const char *certfile, int force,
-    int revocate, const char *const *alts, size_t altsz)
+    int revocate, struct domain_c *domain)
 {
 	GENERAL_NAMES			*sans = NULL;
 	char				*der = NULL, *dercp, *der64 = NULL;
-	int				 rc = 0, cc, i, len;
-	size_t				*found = NULL;
+	int				 rc = 0, cc, sanidx, len, j, k;
+	int				*found_altnames = NULL;
 	FILE				*f = NULL;
 	X509				*x = NULL;
 	long				 lval;
 	enum revokeop			 op, rop;
 	time_t				 notafter, notbefore, cert_validity;
 	time_t				 remaining_validity, renew_allow;
-	size_t				 j;
 
 	/*
 	 * First try to open the certificate before we drop privileges
@@ -162,7 +163,8 @@ revokeproc(int fd, const char *certfile, int force,
 
 	/* An array of buckets: the number of entries found. */
 
-	if ((found = calloc(altsz, sizeof(size_t))) == NULL) {
+	if ((found_altnames = (int *)calloc(domain->altname_count,
+	    sizeof(int))) == NULL) {
 		warn("calloc");
 		goto out;
 	}
@@ -172,63 +174,120 @@ revokeproc(int fd, const char *certfile, int force,
 	 * configuration file and that all domains are represented only once.
 	 */
 
-	for (i = 0; i < sk_GENERAL_NAME_num(sans); i++) {
+	for (sanidx = 0; sanidx < sk_GENERAL_NAME_num(sans); sanidx++) {
 		GENERAL_NAME		*gen_name;
-		const ASN1_IA5STRING	*name;
-		const unsigned char	*name_buf;
+		char			*name_buf = NULL;
 		int			 name_len;
-		int			 name_type;
+		struct altname_c	*ac;
 
-		gen_name = sk_GENERAL_NAME_value(sans, i);
+		gen_name = sk_GENERAL_NAME_value(sans, sanidx);
 		assert(gen_name != NULL);
 
-		name = GENERAL_NAME_get0_value(gen_name, &name_type);
-		if (name_type != GEN_DNS)
+		if (gen_name->type == GEN_IPADD) {
+			char		 ip_buf[INET6_ADDRSTRLEN];
+			const char	*ip;
+
+			name_len = gen_name->d.iPAddress->length;
+			switch (name_len) {
+			case 4:
+				ip = inet_ntop(AF_INET,
+				    gen_name->d.iPAddress->data,
+				    ip_buf, INET6_ADDRSTRLEN);
+				break;
+			case 16:
+				ip = inet_ntop(AF_INET6,
+				    gen_name->d.iPAddress->data,
+				    ip_buf, INET6_ADDRSTRLEN);
+				break;
+			default:
+				ip = NULL;
+				break;
+			}
+			if (ip == NULL) {
+				warnx("invalid IP address");
+				continue;
+			}
+			name_len = asprintf(&name_buf, "%s", ip);
+		} else if (gen_name->type == GEN_DNS) {
+			name_len = gen_name->d.dNSName->length;
+			name_len = asprintf(&name_buf, "%.*s",
+			    name_len, gen_name->d.dNSName->data);
+		} else
 			continue;
 
-		/* name_buf isn't a C string and could contain embedded NULs. */
-		name_buf = ASN1_STRING_get0_data(name);
-		name_len = ASN1_STRING_length(name);
-
-		for (j = 0; j < altsz; j++) {
-			if ((size_t)name_len != strlen(alts[j]))
-				continue;
-			if (memcmp(name_buf, alts[j], name_len) == 0)
-				break;
+		if (name_len == -1) {
+			warn("asprintf");
+			continue;
 		}
-		if (j == altsz) {
+
+		j = 0;
+		TAILQ_FOREACH(ac, &domain->altname_list, entry) {
+			if (strcmp(name_buf, ac->domain) == 0) {
+				found_altnames[j]++;
+				break;
+			}
+			/* increment if didn't match */
+			j++;
+		}
+		if (j >= domain->altname_count) {
+			/* we haven't matched any */
 			if (revocate) {
 				char *visbuf;
 
 				visbuf = calloc(4, name_len + 1);
 				if (visbuf == NULL) {
-					warn("%s: unexpected SAN", certfile);
+					warn("%s: unexpected SAN in "
+					    "certificate", certfile);
+					free(name_buf);
 					goto out;
 				}
 				strvisx(visbuf, name_buf, name_len, VIS_SAFE);
-				warnx("%s: unexpected SAN entry: %s",
-				    certfile, visbuf);
+				warnx("%s: unexpected SAN entry in "
+				    "certificate: %s", certfile, visbuf);
+				free(visbuf);
+				free(name_buf);
+				goto out;
+			}
+			force = 2;
+			continue;
+		}
+		/* should not reach here if j is out of bounds */
+		if (found_altnames[j] > 1) {
+			if (revocate) {
+				char *visbuf;
+				visbuf = calloc(4, name_len + 1);
+				if (visbuf == NULL) {
+					warn("%s: duplicate SAN in "
+					    "certificate", certfile);
+					free(name_buf);
+					goto out;
+				}
+				warnx("%s: duplicate SAN entry in "
+				    "certificate: %s", certfile, visbuf);
+				free(name_buf);
 				free(visbuf);
 				goto out;
 			}
 			force = 2;
-			continue;
 		}
-		if (found[j]++) {
-			if (revocate) {
-				warnx("%s: duplicate SAN entry: %.*s",
-				    certfile, name_len, name_buf);
-				goto out;
-			}
-			force = 2;
-		}
+
+		free(name_buf);
 	}
 
-	for (j = 0; j < altsz; j++) {
-		if (found[j])
+	for (j = 0; j < domain->altname_count; j++) {
+		struct altname_c	*ac;
+
+		if (found_altnames[j])
 			continue;
 		if (revocate) {
-			warnx("%s: domain not listed: %s", certfile, alts[j]);
+			k = 0;
+			TAILQ_FOREACH(ac, &domain->altname_list, entry) {
+				if (j == k)
+					break;
+				k++;
+			}
+			warnx("%s: domain not listed: %s", certfile,
+			    ac->domain);
 			goto out;
 		}
 		force = 2;
@@ -340,7 +399,7 @@ out:
 	X509_free(x);
 	GENERAL_NAMES_free(sans);
 	free(der);
-	free(found);
+	free(found_altnames);
 	free(der64);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
