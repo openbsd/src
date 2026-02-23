@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.34 2026/02/21 19:23:45 sthen Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.35 2026/02/23 10:39:39 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 21 2026 $
+.Dd $Mdocdate: February 23 2026 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -115,6 +115,13 @@ The certificates to be obtained through ACME.
 Each domain section begins with the
 .Ic domain
 keyword followed by an identifier for this domain block.
+This is usually the domain name however, if requesting
+certificates of different types (EC and RSA) for the same name,
+the
+.Ar handle
+identifiers should be unique and the
+.Cm domain name
+directive should be used.
 .El
 .Pp
 It is followed by a block of options enclosed in curly brackets:
@@ -122,7 +129,7 @@ It is followed by a block of options enclosed in curly brackets:
 .It Ic domain name Ar name
 The
 .Ar name
-to be used as the primary Subject Alternative Name
+to be used as the primary Subject Alternative Name (SAN)
 in the X.509 certificate.
 This is optional.
 If not specified, the
@@ -132,6 +139,8 @@ of the domain block will be used.
 A list of additional names,
 comma or space separated,
 for which the certificate will be valid.
+If supported by the CA and selected profile, either fully qualified
+domain names, IPv4, or IPv6 addresses may be used.
 There is no automatic conversion/inclusion between "www." and
 plain domain name forms.
 .It Ic domain key Ar file Op Ar keytype
