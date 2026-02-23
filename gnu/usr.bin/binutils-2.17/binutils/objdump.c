@@ -2962,7 +2962,11 @@ main (int argc, char **argv)
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
-  if (pledge ("stdio rpath tmppath", NULL) == -1)
+  if (unveil ("/tmp", "rwc") == -1)
+    fatal (_("Failed to unveil /tmp"));
+  if (unveil ("/", "r") == -1)
+    fatal (_("Failed to unveil /"));
+  if (pledge ("stdio rpath wpath cpath", NULL) == -1)
     fatal (_("Failed to pledge"));
 
   program_name = *argv;
