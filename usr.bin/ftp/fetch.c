@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.221 2025/11/20 11:15:59 tb Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.222 2026/02/23 05:00:51 gnezdo Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -854,6 +854,7 @@ noslash:
 		goto cleanup_url_get;
 	case 416:	/* Requested Range Not Satisfiable */
 		warnx("File is already fully retrieved.");
+		rval = 0;
 		goto cleanup_url_get;
 #endif /* !SMALL */
 	case 503:
