@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.59 2026/01/23 10:45:53 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.60 2026/02/23 08:50:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -160,6 +160,9 @@ void
 menu_free(struct menu *menu)
 {
 	u_int	i;
+
+	if (menu == NULL)
+		return;
 
 	for (i = 0; i < menu->count; i++) {
 		free((void *)menu->items[i].name);
