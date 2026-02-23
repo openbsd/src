@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-access.c,v 1.3 2022/05/31 16:13:43 nicm Exp $ */
+/* $OpenBSD: cmd-server-access.c,v 1.4 2026/02/23 08:54:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2021 Dallas Lyons <dallasdlyons@gmail.com>
@@ -90,6 +90,7 @@ cmd_server_access_exec(struct cmd *self, struct cmdq_item *item)
 		pw = getpwnam(name);
 	if (pw == NULL) {
 		cmdq_error(item, "unknown user: %s", name);
+		free(name);
 		return (CMD_RETURN_ERROR);
 	}
 	free(name);
