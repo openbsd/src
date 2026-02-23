@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.29 2025/11/28 09:42:48 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.30 2026/02/23 08:45:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -56,6 +56,9 @@ void
 environ_free(struct environ *env)
 {
 	struct environ_entry	*envent, *envent1;
+
+	if (env == NULL)
+		return;
 
 	RB_FOREACH_SAFE(envent, environ, env, envent1) {
 		RB_REMOVE(environ, env, envent);
