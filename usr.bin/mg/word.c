@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.22 2026/02/22 22:16:41 op Exp $	*/
+/*	$OpenBSD: word.c,v 1.23 2026/02/23 09:36:50 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -204,17 +204,22 @@ transposeword(int f, int n)
 int
 grabword(char **word)
 {
-	int c;
+	size_t len = 0, cap = 0;
+	char *t;
 
 	while (inword() == TRUE) {
-		c = lgetc(curwp->w_dotp, curwp->w_doto);
-		if (*word == NULL) {
-			if (asprintf(word, "%c", c) == -1)
+		if (cap == 0 || len == cap - 1) {
+			t = recallocarray(*word, cap, cap + 8, 1);
+			if (t == NULL) {
+				free(*word);
+				*word = NULL;
 				return (errno);
-		} else {
-			if (asprintf(word, "%s%c", *word, c) == -1)
-				return (errno);
+			}
+			cap += 8;
+			*word = t;
 		}
+
+		(*word)[len++] = lgetc(curwp->w_dotp, curwp->w_doto);
 		(void)forwdel(FFRAND, 1);
 	}
 	if (*word == NULL)
