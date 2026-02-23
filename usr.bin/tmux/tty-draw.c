@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-draw.c,v 1.3 2026/02/10 08:31:45 nicm Exp $ */
+/* $OpenBSD: tty-draw.c,v 1.4 2026/02/23 08:29:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2026 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -223,6 +223,7 @@ tty_draw_line(struct tty *tty, struct screen *s, u_int px, u_int py, u_int nx,
 			 */
 			empty = 0;
 			next_state = TTY_DRAW_LINE_DONE;
+			gcp = &grid_default_cell;
 		} else {
 			/* Get the current cell. */
 			grid_view_get_cell(gd, px + i, py, &gc);
