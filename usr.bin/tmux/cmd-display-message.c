@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.64 2025/02/10 08:14:32 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.65 2026/02/23 08:46:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -131,6 +131,7 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (args_has(args, 'a')) {
 		format_each(ft, cmd_display_message_each, item);
+		format_free(ft);
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -155,6 +156,5 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 	free(msg);
 
 	format_free(ft);
-
 	return (CMD_RETURN_NORMAL);
 }
