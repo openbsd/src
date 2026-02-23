@@ -1807,14 +1807,12 @@ int amdgpu_ras_sysfs_create(struct amdgpu_device *adev,
 	if (!obj || obj->attr_inuse)
 		return -EINVAL;
 
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	get_obj(obj);
 
 	snprintf(obj->fs_data.sysfs_name, sizeof(obj->fs_data.sysfs_name),
 		"%s_err_count", head->name);
 
+#ifdef notyet
 	obj->sysfs_attr = (struct device_attribute){
 		.attr = {
 			.name = obj->fs_data.sysfs_name,
@@ -1830,11 +1828,11 @@ int amdgpu_ras_sysfs_create(struct amdgpu_device *adev,
 		put_obj(obj);
 		return -EINVAL;
 	}
+#endif
 
 	obj->attr_inuse = 1;
 
 	return 0;
-#endif
 }
 
 int amdgpu_ras_sysfs_remove(struct amdgpu_device *adev,
