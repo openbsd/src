@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.202 2026/02/18 09:10:31 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.203 2026/02/23 09:08:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1389,7 +1389,7 @@ tty_keys_clipboard(struct tty *tty, const char *buf, size_t len, size_t *size)
 		return (0);
 	}
 	out = xmalloc(needed);
-	if ((outlen = b64_pton(copy, out, len)) == -1) {
+	if ((outlen = b64_pton(copy, out, needed)) == -1) {
 		free(out);
 		free(copy);
 		return (0);
