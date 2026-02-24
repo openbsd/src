@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.113 2026/02/02 10:08:30 nicm Exp $
+# $OpenBSD: Makefile,v 1.114 2026/02/24 08:20:52 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -28,6 +28,7 @@ SRCS=	alerts.c \
 	cmd-kill-window.c \
 	cmd-list-buffers.c \
 	cmd-list-clients.c \
+	cmd-list-commands.c \
 	cmd-list-keys.c \
 	cmd-list-panes.c \
 	cmd-list-sessions.c \
