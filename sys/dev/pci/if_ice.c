@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ice.c,v 1.67 2026/02/19 10:15:36 jan Exp $	*/
+/*	$OpenBSD: if_ice.c,v 1.68 2026/02/24 20:14:29 bluhm Exp $	*/
 
 /*  Copyright (c) 2024, Intel Corporation
  *  All rights reserved.
@@ -1315,13 +1315,13 @@ ice_alloc_dma_mem(struct ice_hw *hw, struct ice_dma_mem *mem, uint64_t size)
 
 	mem->tag = sc->sc_dmat;
 
-	err = bus_dmamap_create(mem->tag, size, 1, size, 0, BUS_DMA_NOWAIT,
-	    &mem->map);
+	err = bus_dmamap_create(mem->tag, size, 1, size, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_64BIT, &mem->map);
 	if (err)
 		goto fail;
 
 	err = bus_dmamem_alloc(mem->tag, size, 1, 0, &mem->seg, 1, &nsegs,
-	    BUS_DMA_NOWAIT | BUS_DMA_ZERO);
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO | BUS_DMA_64BIT);
 	if (err || nsegs != 1)
 		goto fail_1;
 
