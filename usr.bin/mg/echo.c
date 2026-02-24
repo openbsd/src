@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.69 2022/10/15 17:01:14 op Exp $	*/
+/*	$OpenBSD: echo.c,v 1.70 2026/02/24 21:15:36 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -1002,19 +1002,24 @@ copy_list(struct list *lp)
 	last = NULL;
 	while (lp) {
 		current = malloc(sizeof(struct list));
-		if (current == NULL) {
-			/* Free what we have allocated so far */
-			for (current = last; current; current = nxt) {
-				nxt = current->l_next;
-				free(current->l_name);
-				free(current);
-			}
-			return (NULL);
+		if (current == NULL)
+			goto fail;
+		current->l_name = strdup(lp->l_name);
+		if (current->l_name == NULL) {
+			free(current);
+			goto fail;
 		}
 		current->l_next = last;
-		current->l_name = strdup(lp->l_name);
 		last = current;
 		lp = lp->l_next;
 	}
 	return (last);
+
+ fail:
+	for (current = last; current; current = nxt) {
+		nxt = current->l_next;
+		free(current->l_name);
+		free(current);
+	}
+	return (NULL);
 }
