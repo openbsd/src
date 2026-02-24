@@ -1,4 +1,4 @@
-#	$OpenBSD: kbdint.sh,v 1.1 2026/02/15 22:29:30 dtucker Exp $
+#	$OpenBSD: kbdint.sh,v 1.2 2026/02/24 00:39:59 dtucker Exp $
 #	Placed in the Public Domain.
 #
 # This tests keyboard-interactive authentication.  It does not run by default,
@@ -81,7 +81,6 @@ for i in 0 1 2 3 4 5 6 7 8 9; do printf '1\n2\n3\n4\n5\n6\n7\n8\n9\n'; done \
     >${OBJ}/replypass
 echo 1 >${OBJ}/replypass.N
 ${SSH} $opts -F $OBJ/ssh_proxy somehost true
-fail foo
 if [ $? -eq 0 ]; then
 	fail "ssh unexpectedly succeeded with password spam"
 fi
