@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.45 2024/11/21 13:21:34 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.46 2026/02/24 06:03:29 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -380,6 +380,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 				    "%s: priv%s obsolete keyop #%x", __func__,
 				    cmd == IMSG_CA_PRIVENC ? "enc" : "dec",
 				    cko.cko_cookie);
+				imsg_free(&imsg);
 				continue;
 			}
 
