@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.387 2026/02/16 08:02:04 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.388 2026/02/24 08:00:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2128,6 +2128,36 @@ window_copy_cmd_rectangle_toggle(struct window_copy_cmd_state *cs)
 }
 
 static enum window_copy_cmd_action
+window_copy_cmd_scroll_exit_on(struct window_copy_cmd_state *cs)
+{
+	struct window_copy_mode_data	*data = cs->wme->data;
+
+	data->scroll_exit = 1;
+
+	return (WINDOW_COPY_CMD_NOTHING);
+}
+
+static enum window_copy_cmd_action
+window_copy_cmd_scroll_exit_off(struct window_copy_cmd_state *cs)
+{
+	struct window_copy_mode_data	*data = cs->wme->data;
+
+	data->scroll_exit = 0;
+
+	return (WINDOW_COPY_CMD_NOTHING);
+}
+
+static enum window_copy_cmd_action
+window_copy_cmd_scroll_exit_toggle(struct window_copy_cmd_state *cs)
+{
+	struct window_copy_mode_data	*data = cs->wme->data;
+
+	data->scroll_exit = !data->scroll_exit;
+
+	return (WINDOW_COPY_CMD_NOTHING);
+}
+
+static enum window_copy_cmd_action
 window_copy_cmd_scroll_down(struct window_copy_cmd_state *cs)
 {
 	struct window_mode_entry	*wme = cs->wme;
@@ -3072,6 +3102,21 @@ static const struct {
 	  .args = { "", 0, 0, NULL },
 	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  .f = window_copy_cmd_scroll_down_and_cancel
+	},
+	{ .command = "scroll-exit-on",
+	  .args = { "", 0, 0, NULL },
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_scroll_exit_on
+	},
+	{ .command = "scroll-exit-off",
+	  .args = { "", 0, 0, NULL },
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_scroll_exit_off
+	},
+	{ .command = "scroll-exit-toggle",
+	  .args = { "", 0, 0, NULL },
+	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
+	  .f = window_copy_cmd_scroll_exit_toggle
 	},
 	{ .command = "scroll-middle",
 	  .args = { "", 0, 0, NULL },

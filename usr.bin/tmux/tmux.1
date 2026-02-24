@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1030 2026/02/10 09:55:53 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1031 2026/02/24 08:00:43 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2026 $
+.Dd $Mdocdate: February 24 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2245,6 +2245,18 @@ Same as
 .Ic scroll-down
 but also exit copy mode if the cursor reaches the bottom.
 .It Xo
+.It Xo
+.Ic scroll-exit-on
+.Xc
+Turn on exiting copy mode when scrolling to the end of the buffer.
+.It Xo
+.Ic scroll-exit-off
+.Xc
+Turn off exiting copy mode when scrolling to the end of the buffer.
+.It Xo
+.Ic scroll-exit-toggle
+.Xc
+Toggle exiting copy mode when scrolling to the end of the buffer.
 .Ic scroll-middle
 (vi: z)
 .Xc
