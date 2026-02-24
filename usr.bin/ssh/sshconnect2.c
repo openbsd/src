@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.382 2026/02/16 00:45:41 dtucker Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.383 2026/02/24 01:50:51 dtucker Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -1066,7 +1066,8 @@ input_userauth_passwd_changereq(int type, u_int32_t seqnr, struct ssh *ssh)
 	char *info = NULL, *lang = NULL, *password = NULL, *retype = NULL;
 	char prompt[256];
 	const char *host;
-	int r;
+	int r, addnl;
+	size_t len;
 
 	debug2("input_userauth_passwd_changereq");
 
@@ -1078,8 +1079,10 @@ input_userauth_passwd_changereq(int type, u_int32_t seqnr, struct ssh *ssh)
 	if ((r = sshpkt_get_cstring(ssh, &info, NULL)) != 0 ||
 	    (r = sshpkt_get_cstring(ssh, &lang, NULL)) != 0)
 		goto out;
-	if (strlen(info) > 0)
-		logit("%s", info);
+	if ((len = strlen(info)) > 0) {
+		addnl = info[len] != '\n';
+		fmprintf(stderr, "%s%s", info, addnl ? "\n" : "");
+	}
 	if ((r = sshpkt_start(ssh, SSH2_MSG_USERAUTH_REQUEST)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, authctxt->server_user)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, authctxt->service)) != 0 ||
@@ -1934,7 +1937,8 @@ input_userauth_info_req(int type, u_int32_t seq, struct ssh *ssh)
 	char *display_prompt = NULL, *response = NULL;
 	u_char echo = 0;
 	u_int num_prompts, i;
-	int r;
+	int r, addnl;
+	size_t len;
 
 	debug2_f("entering");
 
@@ -1947,10 +1951,14 @@ input_userauth_info_req(int type, u_int32_t seq, struct ssh *ssh)
 	    (r = sshpkt_get_cstring(ssh, &inst, NULL)) != 0 ||
 	    (r = sshpkt_get_cstring(ssh, &lang, NULL)) != 0)
 		goto out;
-	if (strlen(name) > 0)
-		logit("%s", name);
-	if (strlen(inst) > 0)
-		logit("%s", inst);
+	if ((len = strlen(name)) > 0) {
+		addnl = name[len] != '\n';
+		fmprintf(stderr, "%s%s", name, addnl ? "\n" : "");
+	}
+	if ((len = strlen(inst)) > 0) {
+		addnl = inst[len] != '\n';
+		fmprintf(stderr, "%s%s", inst, addnl ? "\n" : "");
+	}
 
 	if ((r = sshpkt_get_u32(ssh, &num_prompts)) != 0)
 		goto out;
