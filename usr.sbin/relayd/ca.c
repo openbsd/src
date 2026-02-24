@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.46 2026/02/24 06:03:29 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.47 2026/02/24 11:47:02 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -335,10 +335,14 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	 * Send a synchronous imsg because we cannot defer the RSA
 	 * operation in OpenSSL's engine layer.
 	 */
-	if (imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt) == -1)
+	if (imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt) == -1) {
 		log_warn("%s: imsg_composev", __func__);
-	if (imsgbuf_flush(ibuf) == -1)
+		return -1;
+	}
+	if (imsgbuf_flush(ibuf) == -1) {
 		log_warn("%s: imsgbuf_flush", __func__);
+		return -1;
+	}
 
 	pfd[0].fd = ibuf->fd;
 	pfd[0].events = POLLIN;
