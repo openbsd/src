@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.251 2026/02/18 09:10:31 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.252 2026/02/24 07:50:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1621,10 +1621,6 @@ input_csi_dispatch(struct input_ctx *ictx)
 			}
 			input_reply(ictx, 1, "\033[?12;%d$y", n);
 			break;
-		case 2004: /* bracketed paste */
-			n = (s->mode & MODE_BRACKETPASTE) ? 1 : 2;
-			input_reply(ictx, 1, "\033[?2004;%d$y", n);
-			break;
 		case 1004: /* focus reporting */
 			n = (s->mode & MODE_FOCUSON) ? 1 : 2;
 			input_reply(ictx, 1, "\033[?1004;%d$y", n);
@@ -1632,6 +1628,14 @@ input_csi_dispatch(struct input_ctx *ictx)
 		case 1006: /* SGR mouse */
 			n = (s->mode & MODE_MOUSE_SGR) ? 1 : 2;
 			input_reply(ictx, 1, "\033[?1006;%d$y", n);
+			break;
+		case 2004: /* bracketed paste */
+			n = (s->mode & MODE_BRACKETPASTE) ? 1 : 2;
+			input_reply(ictx, 1, "\033[?2004;%d$y", n);
+			break;
+		case 2026: /* synchronized output */
+			n = (s->mode & MODE_SYNC) ? 1 : 2;
+			input_reply(ictx, 1, "\033[?2026;%d$y", n);
 			break;
 		case 2031:
 			input_reply(ictx, 1, "\033[?2031;2$y");
