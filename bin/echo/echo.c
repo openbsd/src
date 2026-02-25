@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.11 2023/03/08 04:43:04 guenther Exp $	*/
+/*	$OpenBSD: echo.c,v 1.12 2026/02/25 21:57:43 jcs Exp $	*/
 /*	$NetBSD: echo.c,v 1.6 1995/03/21 09:04:27 cgd Exp $	*/
 
 /*
@@ -30,34 +30,139 @@
  * SUCH DAMAGE.
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
 
+int escape(const char *);
+
 int
 main(int argc, char *argv[])
 {
-	int nflag;
+	int nflag = 0, eflag = 0;
+	const char *p;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	/* This utility may NOT do getopt(3) option parsing. */
-	if (*++argv && !strcmp(*argv, "-n")) {
-		++argv;
-		nflag = 1;
+	for (++argv; argv[0] && *argv[0] == '-'; argv++) {
+		for (p = *argv + 1; *p != '\0'; p++) {
+			switch (*p) {
+			case 'E':
+				eflag = 0;
+				break;
+			case 'e':
+				eflag = 1;
+				break;
+			case 'n':
+				nflag = 1;
+				break;
+			default:
+				eflag = nflag = 0;
+				goto echoargs;
+			}
+		}
 	}
-	else
-		nflag = 0;
 
+echoargs:
 	while (*argv) {
-		(void)fputs(*argv, stdout);
+		if (eflag) {
+			if (escape(*argv) != 0)
+				/* \c encountered */
+				return 0;
+		} else
+			(void)fputs(*argv, stdout);
 		if (*++argv)
 			putchar(' ');
 	}
 	if (!nflag)
 		putchar('\n');
+
+	return 0;
+}
+
+/* return -1 on \c to suppress further output */
+int
+escape(const char *s)
+{
+	int ch, n;
+
+	while ((ch = *s++) != '\0') {
+		if (ch != '\\') {
+			putchar(ch);
+			continue;
+		}
+
+		switch ((ch = *s++)) {
+		case '\0':
+			putchar('\\');
+			return 0;
+		case '\\':
+			putchar('\\');
+			break;
+		case 'a':
+			putchar('\a');
+			break;
+		case 'b':
+			putchar('\b');
+			break;
+		case 'c':
+			return -1;
+		case 'e':
+			putchar('\033');
+			break;
+		case 'f':
+			putchar('\f');
+			break;
+		case 'n':
+			putchar('\n');
+			break;
+		case 'r':
+			putchar('\r');
+			break;
+		case 't':
+			putchar('\t');
+			break;
+		case 'v':
+			putchar('\v');
+			break;
+		case '0':
+			/* octal: \0nnn */
+			ch = 0;
+			for (n = 0; n < 3 && *s >= '0' && *s <= '7'; n++)
+				ch = ch * 8 + (*s++ - '0');
+			putchar(ch);
+			break;
+		case 'x':
+			/* hexadecimal: \xhh */
+			if (isxdigit((unsigned char)*s)) {
+				ch = 0;
+				for (n = 0;
+				    n < 2 && isxdigit(*s); n++) {
+					ch *= 16;
+					if (*s >= '0' && *s <= '9')
+						ch += *s - '0';
+					else if (*s >= 'a' && *s <= 'f')
+						ch += *s - 'a' + 10;
+					else
+						ch += *s - 'A' + 10;
+					s++;
+				}
+				putchar(ch);
+			} else {
+				putchar('\\');
+				putchar('x');
+			}
+			break;
+		default:
+			putchar('\\');
+			putchar(ch);
+			break;
+		}
+	}
 
 	return 0;
 }

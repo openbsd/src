@@ -1,4 +1,4 @@
-.\"	$OpenBSD: echo.1,v 1.24 2018/03/16 16:58:26 schwarze Exp $
+.\"	$OpenBSD: echo.1,v 1.25 2026/02/25 21:57:43 jcs Exp $
 .\"	$NetBSD: echo.1,v 1.7 1995/03/21 09:04:26 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)echo.1	8.1 (Berkeley) 7/22/93
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: February 25 2026 $
 .Dt ECHO 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd write arguments to the standard output
 .Sh SYNOPSIS
 .Nm echo
-.Op Fl n
+.Op Fl Een
 .Op Ar string ...
 .Sh DESCRIPTION
 The
@@ -63,6 +63,41 @@ is treated as part of
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl E
+Disable interpretation of backslash escape sequences (default).
+.It Fl e
+Enable interpretation of the following backslash escape sequences:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Cm \e\e
+A literal backslash.
+.It Cm \ea
+Alert (BEL).
+.It Cm \eb
+Backspace.
+.It Cm \ec
+Suppress further output, including the trailing newline character.
+.It Cm \ee
+Escape character.
+.It Cm \ef
+Form feed.
+.It Cm \en
+Newline.
+.It Cm \er
+Carriage return.
+.It Cm \et
+Horizontal tab.
+.It Cm \ev
+Vertical tab.
+.It Cm \e0 Ns Ar nnn
+The character whose octal value is
+.Ar nnn
+(zero to three octal digits).
+.It Cm \ex Ns Ar hh
+The character whose hexadecimal value is
+.Ar hh
+(one or two hexadecimal digits).
+.El
 .It Fl n
 Do not print the trailing newline character.
 .El
@@ -79,17 +114,17 @@ utility is compliant with the
 .St -p1003.1-2008
 specification.
 .Pp
-The flag
+The flags
+.Op Fl E ,
+.Op Fl e ,
+and
 .Op Fl n
-conflicts with the behaviour mandated by the
+conflict with the behaviour mandated by the
 X/Open System Interfaces option of the
 .St -p1003.1-2008
 specification,
-which says it should be treated as part of
+which says they should be treated as part of
 .Ar string .
-Additionally,
-.Nm
-does not support any of the backslash character sequences mandated by XSI.
 .Pp
 .Nm
 also exists as a built-in to
