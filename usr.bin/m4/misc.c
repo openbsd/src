@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.49 2025/11/05 17:10:45 tb Exp $	*/
+/*	$OpenBSD: misc.c,v 1.50 2026/02/25 05:37:25 op Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ unsigned char *endpbb;			/* end of push-back buffer     */
  * find the index of second str in the first str.
  */
 ptrdiff_t
-indx(const char *s1, const char *s2)
+doindex(const char *s1, const char *s2)
 {
 	char *t;
 
