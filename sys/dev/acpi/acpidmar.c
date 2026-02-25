@@ -1,3 +1,4 @@
+/* $OpenBSD $ */
 /*
  * Copyright (c) 2015 Jordan Hargrave <jordan_hargrave@hotmail.com>
  *
@@ -756,6 +757,7 @@ domain_load_map(struct domain *dom, bus_dmamap_t map, int flags, int pteflag,
     const char *fn)
 {
 	bus_dma_segment_t	*seg;
+	bus_size_t		align, boundary;
 	struct iommu_softc	*iommu;
 	paddr_t			base, end, idx;
 	psize_t			alen;
@@ -777,6 +779,14 @@ domain_load_map(struct domain *dom, bus_dmamap_t map, int flags, int pteflag,
 	pt_nowait = (flags & BUS_DMA_NOWAIT);
 	mapped_nsegs = 0;
 	error = 0;
+
+	/*
+	 * A boundary presented to bus_dmamem_alloc() takes precedence
+	 * over boundary in the map.
+	 */
+	if ((boundary = (map->dm_segs[0]._ds_boundary)) == 0)
+		boundary = map->_dm_boundary;
+	align = MAX(map->dm_segs[0]._ds_align, VTD_PAGE_SIZE);
 
 	for (i = 0; i < map->dm_nsegs; i++) {
 		seg = &map->dm_segs[i];
@@ -801,7 +811,7 @@ domain_load_map(struct domain *dom, bus_dmamap_t map, int flags, int pteflag,
 
 			mtx_enter(&dom->exlck);
 			if (extent_alloc_subregion(dom->iovamap, sgstart,
-			    sgend, alen, VTD_PAGE_SIZE, 0, map->_dm_boundary,
+			    sgend, alen, align, 0, boundary,
 			    EX_NOWAIT, &res)) {
 				mtx_leave(&dom->exlck);
 				error = ENOMEM;
@@ -913,6 +923,12 @@ dmar_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf,
 
 	rc = _bus_dmamap_load(tag, dmam, buf, buflen, p, flags);
 	if (!rc) {
+		/* Clear stale allocation constraints */
+		if (dmam->dm_nsegs > 0) {
+			dmam->dm_segs[0]._ds_align = 0;
+			dmam->dm_segs[0]._ds_boundary = 0;
+		}
+
 		dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs,
 		    __FUNCTION__);
 		rc = domain_load_map(dom, dmam, flags, PTE_R|PTE_W,
@@ -936,6 +952,12 @@ dmar_dmamap_load_mbuf(bus_dma_tag_t tag, bus_dmamap_t dmam, struct mbuf *chain,
 
 	rc = _bus_dmamap_load_mbuf(tag, dmam, chain, flags);
 	if (!rc) {
+		/* Clear stale allocation constraints */
+		if (dmam->dm_nsegs > 0) {
+			dmam->dm_segs[0]._ds_align = 0;
+			dmam->dm_segs[0]._ds_boundary = 0;
+		}
+
 		dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs,
 		    __FUNCTION__);
 		rc = domain_load_map(dom, dmam, flags, PTE_R|PTE_W,
@@ -959,6 +981,12 @@ dmar_dmamap_load_uio(bus_dma_tag_t tag, bus_dmamap_t dmam, struct uio *uio,
 
 	rc = _bus_dmamap_load_uio(tag, dmam, uio, flags);
 	if (!rc) {
+		/* Clear stale allocation constraints */
+		if (dmam->dm_nsegs > 0) {
+			dmam->dm_segs[0]._ds_align = 0;
+			dmam->dm_segs[0]._ds_boundary = 0;
+		}
+
 		dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs,
 		    __FUNCTION__);
 		rc = domain_load_map(dom, dmam, flags, PTE_R|PTE_W,
@@ -982,6 +1010,12 @@ dmar_dmamap_load_raw(bus_dma_tag_t tag, bus_dmamap_t dmam,
 
 	rc = _bus_dmamap_load_raw(tag, dmam, segs, nsegs, size, flags);
 	if (!rc) {
+		/* Preserve _ds_align/_ds_boundary allocation constraints */
+		if (nsegs > 0 && dmam->dm_nsegs > 0) {
+			dmam->dm_segs[0]._ds_align = segs[0]._ds_align;
+			dmam->dm_segs[0]._ds_boundary = segs[0]._ds_boundary;
+		}
+
 		dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs,
 		    __FUNCTION__);
 		rc = domain_load_map(dom, dmam, flags, PTE_R|PTE_W,
