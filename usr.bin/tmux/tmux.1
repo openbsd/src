@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.1032 2026/02/24 08:22:13 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.1033 2026/02/25 07:53:41 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 24 2026 $
+.Dd $Mdocdate: February 25 2026 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -7449,7 +7449,7 @@ is
 the contents are read from stdin.
 .Tg pasteb
 .It Xo Ic paste-buffer
-.Op Fl dpr
+.Op Fl dprS
 .Op Fl b Ar buffer-name
 .Op Fl s Ar separator
 .Op Fl t Ar target-pane
@@ -7457,9 +7457,14 @@ the contents are read from stdin.
 .D1 Pq alias: Ic pasteb
 Insert the contents of a paste buffer into the specified pane.
 If not specified, paste into the current one.
+By default, control characters are sanitized with
+.Xr vis 3 ;
+.Fl S
+disables this.
 With
 .Fl d ,
 also delete the paste buffer.
+.Pp
 When output, any linefeed (LF) characters in the paste buffer are replaced with
 a separator, by default carriage return (CR).
 A custom separator may be specified using the

@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.68 2025/11/01 16:44:24 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.69 2026/02/25 07:53:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -639,7 +639,7 @@ utf8_append(struct utf8_data *ud, u_char ch)
  * bytes available for each character from src (for \abc or UTF-8) plus space
  * for \0.
  */
-int
+size_t
 utf8_strvis(char *dst, const char *src, size_t len, int flag)
 {
 	struct utf8_data	 ud;
@@ -677,11 +677,11 @@ utf8_strvis(char *dst, const char *src, size_t len, int flag)
 }
 
 /* Same as utf8_strvis but allocate the buffer. */
-int
+size_t
 utf8_stravis(char **dst, const char *src, int flag)
 {
 	char	*buf;
-	int	 len;
+	size_t	 len;
 
 	buf = xreallocarray(NULL, 4, strlen(src) + 1);
 	len = utf8_strvis(buf, src, strlen(src), flag);
@@ -691,11 +691,11 @@ utf8_stravis(char **dst, const char *src, int flag)
 }
 
 /* Same as utf8_strvis but allocate the buffer. */
-int
+size_t
 utf8_stravisx(char **dst, const char *src, size_t srclen, int flag)
 {
 	char	*buf;
-	int	 len;
+	size_t	 len;
 
 	buf = xreallocarray(NULL, 4, srclen + 1);
 	len = utf8_strvis(buf, src, srclen, flag);
