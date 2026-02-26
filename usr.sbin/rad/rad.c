@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.38 2024/11/21 13:38:15 claudio Exp $	*/
+/*	$OpenBSD: rad.c,v 1.39 2026/02/26 07:17:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -765,7 +765,7 @@ config_new_empty(void)
 	xconf->ra_options.retrans_timer = 0;
 	xconf->ra_options.source_link_addr = 1;
 	xconf->ra_options.mtu = 0;
-	xconf->ra_options.rdns_lifetime = DEFAULT_RDNS_LIFETIME;
+	xconf->ra_options.rdns_lifetime = ADV_DEFAULT_LIFETIME;
 	SIMPLEQ_INIT(&xconf->ra_options.ra_rdnss_list);
 	SIMPLEQ_INIT(&xconf->ra_options.ra_dnssl_list);
 	SIMPLEQ_INIT(&xconf->ra_options.ra_pref64_list);

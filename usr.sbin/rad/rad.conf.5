@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.35 2025/09/15 09:01:56 florian Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.36 2026/02/26 07:17:50 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2025 $
+.Dd $Mdocdate: February 26 2026 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ is optional:
 .It Cm lifetime Ar seconds
 The number of seconds the dns options are valid after receiving a router
 advertisement message.
-The default is 1800 seconds.
+The default is 3600 seconds.
 .It Cm nameserver Pq Ar address Ns | Ns Brq Ar address ...
 IPv6 address or list of IPv6 addresses of DNS name servers.
 .It Cm search Pq Ar domain Ns | Ns Brq Ar domain ...
@@ -129,7 +129,7 @@ The number of seconds the nat64 prefix option is valid after receiving a router
 advertisement message.
 A value of zero indicates to not use the prefix anymore.
 The maximum is 65528 seconds.
-The default is 1800 seconds.
+The default is 3600 seconds.
 .El
 .It Ic other configuration Pq Cm yes Ns | Ns Cm no
 If set to
@@ -141,7 +141,7 @@ The default is
 .It Ic router lifetime Ar seconds
 The number of seconds this router is a valid default router after receiving
 a router advertisement message.
-The default is 1800 seconds.
+The default is 3600 seconds.
 .It Ic router preference Pq Cm high Ns | Ns Cm medium Ns | Ns Cm low
 Indicate whether to prefer this router over other default routers.
 The default is
@@ -211,7 +211,7 @@ and it has a lower preferred lifetime.
 .It Cm valid lifetime Ar seconds
 The valid lifetime (vltime) in seconds for addresses generated from this
 prefix.
-The default is 5400.
+The default is 3600.
 This option is ignored if the prefix is discovered from a network interface
 and it has a lower valid lifetime.
 .El
