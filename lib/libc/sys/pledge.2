@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.74 2025/07/02 15:56:32 schwarze Exp $
+.\" $OpenBSD: pledge.2,v 1.75 2026/02/26 07:42:26 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 2 2025 $
+.Dd $Mdocdate: February 26 2026 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -254,9 +254,22 @@ but special files can be created using:
 .Xr mkfifo 2 ,
 .Xr mknod 2
 .It Cm tmppath
-A number of system calls are allowed to do operations in the
+This pledge was designed to satisfy the
+.Xr mkstemp 3
+family of functions.
+The limited filesystem access it provided is now disabled, so the
+promise has been removed and will
+return
+.Er EINVAL .
+It should be replaced by either
+allowing use of the whole filesystem (meaning
+.Ar ("rpath wpath cpath" Ns
+), or use of
+.Xr unveil 2
+with path
 .Pa /tmp
-directory, including create, read, or write.
+and permissions
+.Ar "rwc" .
 .It Cm inet
 The following system calls are allowed to operate in the
 .Dv AF_INET

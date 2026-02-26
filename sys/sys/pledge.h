@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.52 2025/07/05 09:24:37 jsg Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.53 2026/02/26 07:42:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -28,7 +28,6 @@
 #define PLEDGE_WPATH	0x0000000000000002ULL	/* allow open for write */
 #define PLEDGE_CPATH	0x0000000000000004ULL	/* allow creat, mkdir, unlink etc */
 #define PLEDGE_STDIO	0x0000000000000008ULL	/* operate on own pid */
-#define PLEDGE_TMPPATH	0x0000000000000010ULL	/* for mk*temp() */
 #define PLEDGE_DNS	0x0000000000000020ULL	/* DNS services */
 #define PLEDGE_INET	0x0000000000000040ULL	/* AF_INET/AF_INET6 sockets */
 #define PLEDGE_FLOCK	0x0000000000000080ULL	/* file locking */
@@ -78,7 +77,6 @@ static const struct {
 	{ PLEDGE_WPATH,		"wpath" },
 	{ PLEDGE_CPATH,		"cpath" },
 	{ PLEDGE_DPATH,		"dpath" },
-	{ PLEDGE_TMPPATH,	"tmppath" },
 	{ PLEDGE_INET,		"inet" },
 	{ PLEDGE_MCAST,		"mcast" },
 	{ PLEDGE_FATTR,		"fattr" },

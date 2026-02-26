@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.336 2026/02/09 20:11:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.337 2026/02/26 07:42:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -296,7 +296,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_fstatat] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS_faccessat] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS_readlinkat] = PLEDGE_RPATH | PLEDGE_WPATH,
-	[SYS_lstat] = PLEDGE_RPATH | PLEDGE_WPATH | PLEDGE_TMPPATH,
+	[SYS_lstat] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS_truncate] = PLEDGE_WPATH,
 	[SYS_rename] = PLEDGE_RPATH | PLEDGE_CPATH,
 	[SYS_rmdir] = PLEDGE_CPATH,
@@ -305,7 +305,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_linkat] = PLEDGE_CPATH,
 	[SYS_symlink] = PLEDGE_CPATH,
 	[SYS_symlinkat] = PLEDGE_CPATH,
-	[SYS_unlink] = PLEDGE_CPATH | PLEDGE_TMPPATH,
+	[SYS_unlink] = PLEDGE_CPATH,
 	[SYS_unlinkat] = PLEDGE_CPATH,
 	[SYS_mkdir] = PLEDGE_CPATH,
 	[SYS_mkdirat] = PLEDGE_CPATH,
@@ -398,7 +398,6 @@ static const struct {
 	{ "settime",		PLEDGE_SETTIME },
 	{ "stdio",		PLEDGE_STDIO },
 	{ "tape",		PLEDGE_TAPE },
-	{ "tmppath",		PLEDGE_TMPPATH },
 	{ "tty",		PLEDGE_TTY },
 	{ "unix",		PLEDGE_UNIX },
 	{ "unveil",		PLEDGE_UNVEIL },
@@ -503,7 +502,7 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 		atomic_setbits_int(&pr->ps_flags, PS_PLEDGE);
 
 		if ((pr->ps_pledge & (PLEDGE_RPATH | PLEDGE_WPATH |
-		    PLEDGE_CPATH | PLEDGE_DPATH | PLEDGE_TMPPATH | PLEDGE_EXEC |
+		    PLEDGE_CPATH | PLEDGE_DPATH | PLEDGE_EXEC |
 		    PLEDGE_UNIX | PLEDGE_UNVEIL)) == 0)
 			unveil_cleanup = 1;
 	}
@@ -618,25 +617,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	error = canonpath(origpath, path, sizeof(path));
 	if (error)
 		return (error);
-
-	/* Detect what looks like a mkstemp(3) family operation */
-	if ((pledge & PLEDGE_TMPPATH) &&
-	    (p->p_pledge_syscall == SYS_open) &&
-	    (ni->ni_pledge & PLEDGE_CPATH) &&
-	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
-		ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-		return (0);
-	}
-
-	/* Allow unlinking of a mkstemp(3) file...
-	 * Good opportunity for strict checks here.
-	 */
-	if ((pledge & PLEDGE_TMPPATH) &&
-	    (p->p_pledge_syscall == SYS_unlink) &&
-	    strncmp(path, "/tmp/", sizeof("/tmp/") - 1) == 0) {
-		ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-		return (0);
-	}
 
 	/* Whitelisted paths */
 	switch (p->p_pledge_syscall) {
