@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.192 2026/01/03 14:10:04 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.193 2026/02/26 00:53:18 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -872,6 +872,7 @@ struct in_multi *
 in_addmulti(const struct in_addr *addr, struct ifnet *ifp)
 {
 	struct in_multi *inm;
+	struct igmp_pktinfo pkt;
 	struct ifreq ifr;
 
 	/*
@@ -916,7 +917,10 @@ in_addmulti(const struct in_addr *addr, struct ifnet *ifp)
 		/*
 		 * Let IGMP know that we have joined a new IP multicast group.
 		 */
-		igmp_joingroup(inm, ifp);
+		pkt.ipi_ifidx = 0;
+		igmp_joingroup(inm, ifp, &pkt);
+		if (pkt.ipi_ifidx)
+			igmp_sendpkt(&pkt);
 	}
 
 	return (inm);
@@ -928,6 +932,7 @@ in_addmulti(const struct in_addr *addr, struct ifnet *ifp)
 void
 in_delmulti(struct in_multi *inm)
 {
+	struct igmp_pktinfo pkt;
 	struct ifreq ifr;
 	struct ifnet *ifp;
 
@@ -942,7 +947,10 @@ in_delmulti(struct in_multi *inm)
 		 * No remaining claims to this record; let IGMP know that
 		 * we are leaving the multicast group.
 		 */
-		igmp_leavegroup(inm, ifp);
+		pkt.ipi_ifidx = 0;
+		igmp_leavegroup(inm, ifp, &pkt);
+		if (pkt.ipi_ifidx)
+			igmp_sendpkt(&pkt);
 
 		/*
 		 * Notify the network driver to update its multicast

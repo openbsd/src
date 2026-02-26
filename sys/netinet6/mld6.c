@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.72 2026/01/03 14:10:04 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.73 2026/02/26 00:53:18 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -86,7 +86,6 @@ static struct ip6_pktopts ip6_opts;
 int	mld6_timers_are_running;	/* [a] shortcut for fast timer */
 
 int mld6_checktimer(struct ifnet *);
-static void mld6_sendpkt(struct in6_multi *, int, const struct in6_addr *);
 
 void
 mld6_init(void)
@@ -112,7 +111,8 @@ mld6_init(void)
 }
 
 void
-mld6_start_listening(struct in6_multi *in6m)
+mld6_start_listening(struct in6_multi *in6m, struct ifnet *ifp,
+    struct mld6_pktinfo *pkt)
 {
 	/* XXX: These are necessary for KAME's link-local hack */
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
@@ -132,10 +132,12 @@ mld6_start_listening(struct in6_multi *in6m)
 		in6m->in6m_timer = 0;
 		in6m->in6m_state = MLD_OTHERLISTENER;
 	} else {
-		mld6_sendpkt(in6m, MLD_LISTENER_REPORT, NULL);
+		pkt->mpi_addr = in6m->in6m_addr;
+		pkt->mpi_rdomain = ifp->if_rdomain;
+		pkt->mpi_ifidx = in6m->in6m_ifidx;
+		pkt->mpi_type = MLD_LISTENER_REPORT;
 		in6m->in6m_timer =
-		    MLD_RANDOM_DELAY(MLD_V1_MAX_RI *
-		    PR_FASTHZ);
+		    MLD_RANDOM_DELAY(MLD_V1_MAX_RI * PR_FASTHZ);
 		in6m->in6m_state = MLD_IREPORTEDLAST;
 		running = 1;
 	}
@@ -147,7 +149,8 @@ mld6_start_listening(struct in6_multi *in6m)
 }
 
 void
-mld6_stop_listening(struct in6_multi *in6m)
+mld6_stop_listening(struct in6_multi *in6m, struct ifnet *ifp,
+    struct mld6_pktinfo *pkt)
 {
 	/* XXX: These are necessary for KAME's link-local hack */
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
@@ -160,8 +163,12 @@ mld6_stop_listening(struct in6_multi *in6m)
 	if (in6m->in6m_state == MLD_IREPORTEDLAST &&
 	    (!IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &all_nodes)) &&
 	    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) >
-	    __IPV6_ADDR_SCOPE_INTFACELOCAL)
-		mld6_sendpkt(in6m, MLD_LISTENER_DONE, &all_routers);
+	    __IPV6_ADDR_SCOPE_INTFACELOCAL) {
+		pkt->mpi_addr = all_routers;
+		pkt->mpi_rdomain = ifp->if_rdomain;
+		pkt->mpi_ifidx = in6m->in6m_ifidx;
+		pkt->mpi_type = MLD_LISTENER_DONE;
+	}
 }
 
 void
@@ -269,8 +276,13 @@ mld6_input(struct mbuf *m, int off)
 			{
 				if (timer == 0) {
 					/* send a report immediately */
-					mld6_sendpkt(in6m, MLD_LISTENER_REPORT,
-					    NULL);
+					struct mld6_pktinfo pkt;
+
+					pkt.mpi_addr = in6m->in6m_addr;
+					pkt.mpi_rdomain = ifp->if_rdomain;
+					pkt.mpi_ifidx = in6m->in6m_ifidx;
+					pkt.mpi_type = MLD_LISTENER_REPORT;
+					mld6_sendpkt(&pkt);
 					in6m->in6m_timer = 0; /* reset timer */
 					in6m->in6m_state = MLD_IREPORTEDLAST;
 				} else if (in6m->in6m_timer == 0 || /* idle */
@@ -373,10 +385,12 @@ mld6_checktimer(struct ifnet *ifp)
 {
 	struct in6_multi *in6m;
 	struct ifmaddr *ifma;
+	struct mld6_pktlist pktlist;
 	int running = 0;
 
 	NET_ASSERT_LOCKED();
 
+	STAILQ_INIT(&pktlist);
 	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 		if (ifma->ifma_addr->sa_family != AF_INET6)
 			continue;
@@ -384,18 +398,36 @@ mld6_checktimer(struct ifnet *ifp)
 		if (in6m->in6m_timer == 0) {
 			/* do nothing */
 		} else if (--in6m->in6m_timer == 0) {
-			mld6_sendpkt(in6m, MLD_LISTENER_REPORT, NULL);
+			struct mld6_pktinfo *pkt;
+
 			in6m->in6m_state = MLD_IREPORTEDLAST;
+			pkt = malloc(sizeof(*pkt), M_MRTABLE, M_NOWAIT);
+			if (pkt == NULL)
+				continue;
+			pkt->mpi_addr = in6m->in6m_addr;
+			pkt->mpi_rdomain = ifp->if_rdomain;
+			pkt->mpi_ifidx = in6m->in6m_ifidx;
+			pkt->mpi_type = MLD_LISTENER_REPORT;
+			STAILQ_INSERT_TAIL(&pktlist, pkt, mpi_list);
 		} else {
 			running = 1;
 		}
 	}
 
+	while (!STAILQ_EMPTY(&pktlist)) {
+		struct mld6_pktinfo *pkt;
+ 
+		pkt = STAILQ_FIRST(&pktlist);
+		STAILQ_REMOVE_HEAD(&pktlist, mpi_list);
+		mld6_sendpkt(pkt);
+		free(pkt, M_MRTABLE, sizeof(*pkt));
+	}
+
 	return (running);
 }
 
-static void
-mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
+void
+mld6_sendpkt(const struct mld6_pktinfo *pkt)
 {
 	struct mbuf *mh, *md;
 	struct mld_hdr *mldh;
@@ -405,7 +437,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	struct ifnet *ifp;
 	int ignflags;
 
-	ifp = if_get(in6m->in6m_ifidx);
+	ifp = if_get(pkt->mpi_ifidx);
 	if (ifp == NULL)
 		return;
 
@@ -441,8 +473,7 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	}
 	mh->m_next = md;
 
-	mh->m_pkthdr.ph_ifidx = 0;
-	mh->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+	mh->m_pkthdr.ph_rtableid = pkt->mpi_rdomain;
 	mh->m_pkthdr.len = sizeof(struct ip6_hdr) + sizeof(struct mld_hdr);
 	mh->m_len = sizeof(struct ip6_hdr);
 	m_align(mh, sizeof(struct ip6_hdr));
@@ -456,25 +487,25 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	ip6->ip6_nxt = IPPROTO_ICMPV6;
 	/* ip6_hlim will be set by im6o.im6o_hlim */
 	ip6->ip6_src = ia6 ? ia6->ia_addr.sin6_addr : in6addr_any;
-	ip6->ip6_dst = dst ? *dst : in6m->in6m_addr;
+	ip6->ip6_dst = pkt->mpi_addr;
 
 	/* fill in the MLD header */
 	md->m_len = sizeof(struct mld_hdr);
 	mldh = mtod(md, struct mld_hdr *);
-	mldh->mld_type = type;
+	mldh->mld_type = pkt->mpi_type;
 	mldh->mld_code = 0;
 	mldh->mld_cksum = 0;
 	/* XXX: we assume the function will not be called for query messages */
 	mldh->mld_maxdelay = 0;
 	mldh->mld_reserved = 0;
-	mldh->mld_addr = in6m->in6m_addr;
+	mldh->mld_addr = pkt->mpi_addr;
 	if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld_addr))
 		mldh->mld_addr.s6_addr16[1] = 0; /* XXX */
 	mh->m_pkthdr.csum_flags |= M_ICMP_CSUM_OUT;
 
 	/* construct multicast option */
 	bzero(&im6o, sizeof(im6o));
-	im6o.im6o_ifidx = ifp->if_index;
+	im6o.im6o_ifidx = pkt->mpi_ifidx;
 	im6o.im6o_hlim = 1;
 
 	/*
@@ -482,10 +513,10 @@ mld6_sendpkt(struct in6_multi *in6m, int type, const struct in6_addr *dst)
 	 * router, so that the process-level routing daemon can hear it.
 	 */
 #ifdef MROUTING
-	im6o.im6o_loop = (ip6_mrouter[ifp->if_rdomain] != NULL);
+	im6o.im6o_loop = (ip6_mrouter[pkt->mpi_rdomain] != NULL);
 #endif
 	if_put(ifp);
 
-	icmp6stat_inc(icp6s_outhist + type);
+	icmp6stat_inc(icp6s_outhist + pkt->mpi_type);
 	ip6_output(mh, &ip6_opts, NULL, ia6 ? 0 : IPV6_UNSPECSRC, &im6o, NULL);
 }

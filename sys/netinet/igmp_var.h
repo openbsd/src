@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp_var.h,v 1.16 2025/03/02 21:28:32 bluhm Exp $	*/
+/*	$OpenBSD: igmp_var.h,v 1.17 2026/02/26 00:53:18 bluhm Exp $	*/
 /*	$NetBSD: igmp_var.h,v 1.9 1996/02/13 23:41:31 christos Exp $	*/
 
 /*
@@ -105,12 +105,26 @@ igmpstat_inc(enum igmpstat_counters c)
  */
 #define	IGMP_RANDOM_DELAY(X)	(arc4random_uniform(X) + 1)
 
+struct igmp_pktinfo {
+	STAILQ_ENTRY(igmp_pktinfo)	ipi_list;
+	struct in_addr			ipi_addr;
+	unsigned int			ipi_rdomain;
+	unsigned int			ipi_ifidx;
+	int				ipi_type;
+};
+STAILQ_HEAD(igmp_pktlist, igmp_pktinfo);
+
 void	igmp_init(void);
 int	igmp_input(struct mbuf **, int *, int, int, struct netstack *);
-void	igmp_joingroup(struct in_multi *, struct ifnet *);
-void	igmp_leavegroup(struct in_multi *, struct ifnet *);
+void	igmp_joingroup(struct in_multi *, struct ifnet *,
+	    struct igmp_pktinfo *);
+void	igmp_leavegroup(struct in_multi *, struct ifnet *,
+	    struct igmp_pktinfo *);
 void	igmp_fasttimo(void);
 void	igmp_slowtimo(void);
 int	igmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	igmp_sendpkt(struct igmp_pktinfo *);
+
 #endif /* _KERNEL */
+
 #endif /* _NETINET_IGMP_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6_var.h,v 1.9 2026/01/03 14:10:04 bluhm Exp $	*/
+/*	$OpenBSD: mld6_var.h,v 1.10 2026/02/26 00:53:18 bluhm Exp $	*/
 /*	$KAME: mld6_var.h,v 1.4 2000/03/25 07:23:54 sumikawa Exp $	*/
 
 /*
@@ -43,11 +43,24 @@
 #define MLD_OTHERLISTENER			0
 #define MLD_IREPORTEDLAST			1
 
+struct mld6_pktinfo {
+	STAILQ_ENTRY(mld6_pktinfo)	mpi_list;
+	struct in6_addr			mpi_addr;
+	unsigned int			mpi_rdomain;
+	unsigned int			mpi_ifidx;
+	int				mpi_type;
+};
+STAILQ_HEAD(mld6_pktlist, mld6_pktinfo);
+
 void	mld6_init(void);
 void	mld6_input(struct mbuf *, int);
-void	mld6_start_listening(struct in6_multi *);
-void	mld6_stop_listening(struct in6_multi *);
+void	mld6_start_listening(struct in6_multi *, struct ifnet *,
+	    struct mld6_pktinfo *);
+void	mld6_stop_listening(struct in6_multi *, struct ifnet *,
+	    struct mld6_pktinfo *);
 void	mld6_fasttimo(void);
+void	mld6_sendpkt(const struct mld6_pktinfo *);
+
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_MLD6_VAR_H_ */
