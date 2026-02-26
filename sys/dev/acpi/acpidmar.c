@@ -59,6 +59,8 @@
 /* We don't want IOMMU to remap MSI */
 #define MSI_BASE_ADDRESS	0xFEE00000L
 #define MSI_BASE_SIZE		0x00100000L
+#define RESERVED_ADDRESS	0x00000000L
+#define RESERVED_SIZE		0x00100000L
 #define MAX_DEVFN		65536
 
 /* Intel Queued Invalidation queue */
@@ -2129,8 +2131,16 @@ domain_create(struct iommu_softc *iommu, int did)
 	dom->iovamap = extent_create(dom->exname, 0, (1LL << gaw)-1,
 	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_NOCOALESCE);
 
-	/* Reserve IOVA 0 */
-	extent_alloc_region(dom->iovamap, 0, VTD_PAGE_SIZE, EX_WAITOK);
+	/*
+	 * Some hardware, e.g. qwx(4), can't do DMA to low addresses.
+	 * In addition, PCI-PCI bridges may block forwarding VGA
+	 * memory addresses from the secondary to the primary
+	 * interface.  Take the easy way out and reserve the first 1MB
+	 * of the address space.  This also means we'll catch bugs
+	 * where drivers inadvertedly do DMA to/from address zero.
+	 */
+	extent_alloc_region(dom->iovamap, RESERVED_ADDRESS, RESERVED_SIZE,
+	    EX_WAITOK);
 
 	/* Reserve MSI address window from IOVA allocations */
 	extent_alloc_region(dom->iovamap, MSI_BASE_ADDRESS, MSI_BASE_SIZE,
