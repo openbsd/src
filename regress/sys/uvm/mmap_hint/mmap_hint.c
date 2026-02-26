@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmap_hint.c,v 1.6 2021/12/13 16:56:50 deraadt Exp $	*/
+/*	$OpenBSD: mmap_hint.c,v 1.7 2026/02/26 14:05:25 cludwig Exp $	*/
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
  *
@@ -52,7 +52,8 @@ mmap_hint(void *hint)
 	else
 		delta = p - hint;
 
-	if (hint != NULL && delta > MAX_HINT_DIST) {
+	if (hint != NULL && hint < (void *)VM_MAXUSER_ADDRESS &&
+	    delta > MAX_HINT_DIST) {
 		warnx("hinted allocation more than %#zx bytes away from hint: "
 		    "hint %p, result %p", delta, hint, p);
 		errors++;
@@ -100,5 +101,15 @@ main()
 	}
 
 skip4:
+	/* Check hinted allocation below PAGE_SIZE. */
+	hint = (void *)1UL;
+	fprintf(stderr, "5: Checking hint below PAGE_SIZE %p mmap\n", hint);
+	p = mmap_hint(hint);
+
+	/* Check hinted allocation above userspace. */
+	hint = (void *)VM_MAX_ADDRESS;
+	fprintf(stderr, "6: Checking hint at VM_MAX_ADDRESS %p mmap\n", hint);
+	p = mmap_hint(hint);
+
 	return errors;
 }
