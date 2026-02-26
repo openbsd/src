@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.222 2025/11/11 17:43:18 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.223 2026/02/26 23:38:10 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -2087,7 +2087,7 @@ ixgbe_dma_malloc(struct ix_softc *sc, bus_size_t size,
 
 	dma->dma_tag = os->os_pa.pa_dmat;
 	r = bus_dmamap_create(dma->dma_tag, size, 1,
-	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map);
+	    size, 0, BUS_DMA_NOWAIT | BUS_DMA_64BIT, &dma->dma_map);
 	if (r != 0) {
 		printf("%s: ixgbe_dma_malloc: bus_dmamap_create failed; "
 		       "error %u\n", ifp->if_xname, r);
@@ -2095,7 +2095,7 @@ ixgbe_dma_malloc(struct ix_softc *sc, bus_size_t size,
 	}
 
 	r = bus_dmamem_alloc(dma->dma_tag, size, PAGE_SIZE, 0, &dma->dma_seg,
-	    1, &dma->dma_nseg, BUS_DMA_NOWAIT);
+	    1, &dma->dma_nseg, BUS_DMA_NOWAIT | BUS_DMA_64BIT);
 	if (r != 0) {
 		printf("%s: ixgbe_dma_malloc: bus_dmamem_alloc failed; "
 		       "error %u\n", ifp->if_xname, r);
@@ -2293,11 +2293,11 @@ ixgbe_allocate_transmit_buffers(struct ix_txring *txr)
 		txbuf = &txr->tx_buffers[i];
 		error = bus_dmamap_create(txr->txdma.dma_tag, MAXMCLBYTES,
 			    sc->num_segs, PAGE_SIZE, 0,
-			    BUS_DMA_NOWAIT, &txbuf->map);
+			    BUS_DMA_NOWAIT | BUS_DMA_64BIT, &txbuf->map);
 
 		if (error != 0) {
-			printf("%s: Unable to create TX DMA map\n",
-			    ifp->if_xname);
+			printf("%s: Unable to create TX DMA map, error %d\n",
+			    ifp->if_xname, error);
 			goto fail;
 		}
 	}
@@ -2776,10 +2776,10 @@ ixgbe_allocate_receive_buffers(struct ix_rxring *rxr)
 	rxbuf = rxr->rx_buffers;
 	for (i = 0; i < sc->num_rx_desc; i++, rxbuf++) {
 		error = bus_dmamap_create(rxr->rxdma.dma_tag, 16 * 1024, 1,
-		    16 * 1024, 0, BUS_DMA_NOWAIT, &rxbuf->map);
+		    16 * 1024, 0, BUS_DMA_NOWAIT | BUS_DMA_64BIT, &rxbuf->map);
 		if (error) {
-			printf("%s: Unable to create Pack DMA map\n",
-			    ifp->if_xname);
+			printf("%s: Unable to create RX DMA map, error %d\n",
+			    ifp->if_xname, error);
 			goto fail;
 		}
 	}
