@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.75 2026/02/26 07:42:26 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.76 2026/02/26 07:44:18 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -254,6 +254,7 @@ but special files can be created using:
 .Xr mkfifo 2 ,
 .Xr mknod 2
 .It Cm tmppath
+Deprecated.
 This pledge was designed to satisfy the
 .Xr mkstemp 3
 family of functions.
@@ -262,14 +263,16 @@ promise has been removed and will
 return
 .Er EINVAL .
 It should be replaced by either
-allowing use of the whole filesystem (meaning
-.Ar ("rpath wpath cpath" Ns
-), or use of
+allowing use of the whole filesystem, meaning
+.Qq rpath wpath cpath ,
+or use of
 .Xr unveil 2
-with path
-.Pa /tmp
-and permissions
-.Ar "rwc" .
+with
+.Fa path
+.Qq /tmp
+and
+.Fa permissions
+.Qq rwc .
 .It Cm inet
 The following system calls are allowed to operate in the
 .Dv AF_INET
