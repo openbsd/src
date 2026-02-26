@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2025/09/15 08:43:51 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2026/02/26 18:46:57 jcs Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -332,10 +332,11 @@ force	:	FORCE acceptbogus prefopt '{' force_list optnl '}' {
 				n->acceptbogus = $2;
 				n->type = $3;
 				conf->force_resolvers[$3] = 1;
+				conf->enabled_resolvers[$3] = 1;
 				RB_REMOVE(force_tree, &$5, n);
 				if (RB_INSERT(force_tree, &conf->force,
 				    n)) {
-					yyerror("%s already in an force "
+					yyerror("%s already in a force "
 					    "list", n->domain);
 					error = 1;
 				}
