@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.252 2026/02/24 07:50:27 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.253 2026/02/26 11:01:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3156,7 +3156,6 @@ input_osc_52(struct input_ctx *ictx, const char *p)
 		notify_pane("pane-set-clipboard", wp);
 		paste_add(NULL, out, outlen);
 	}
-	free(out);
 }
 
 /* Handle the OSC 104 sequence for unsetting (multiple) palette entries. */
