@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.221 2026/02/26 09:45:39 mvs Exp $	*/
+/*	$OpenBSD: re.c,v 1.222 2026/02/26 18:57:35 brynet Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -667,7 +667,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	int		error = 0, i;
 	const struct re_revision *rr;
 	const char	*re_name = NULL;
-	int		bus_dma64 = sc->rl_flags |= RL_FLAG_PCIE ?
+	int		bus_dma64 = (sc->rl_flags & RL_FLAG_PCIE) ?
 			    BUS_DMA_64BIT : 0;
 
 	sc->sc_hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
