@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-choose-tree.c,v 1.52 2024/10/04 19:16:13 nicm Exp $ */
+/* $OpenBSD: cmd-choose-tree.c,v 1.53 2026/02/27 08:25:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Thomas Adam <thomas@xteddy.org>
@@ -98,6 +98,13 @@ cmd_choose_tree_exec(struct cmd *self, struct cmdq_item *item)
 	struct cmd_find_state		*target = cmdq_get_target(item);
 	struct window_pane		*wp = target->wp;
 	const struct window_mode	*mode;
+	enum sort_order			 order;
+
+	order = sort_order_from_string(args_get(args, 'O'));
+	if (order == SORT_END && args_has(args, 'O')) {
+		cmdq_error(item, "invalid sort order");
+		return (CMD_RETURN_ERROR);
+	}
 
 	if (cmd_get_entry(self) == &cmd_choose_buffer_entry) {
 		if (paste_is_empty())

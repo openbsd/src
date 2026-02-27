@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-panes.c,v 1.38 2026/02/02 10:08:30 nicm Exp $ */
+/* $OpenBSD: cmd-list-panes.c,v 1.39 2026/02/27 08:25:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -55,6 +55,13 @@ cmd_list_panes_exec(struct cmd *self, struct cmdq_item *item)
 	struct cmd_find_state	*target = cmdq_get_target(item);
 	struct session		*s = target->s;
 	struct winlink		*wl = target->wl;
+	enum sort_order		 order;
+
+	order = sort_order_from_string(args_get(args, 'O'));
+	if (order == SORT_END && args_has(args, 'O')) {
+		cmdq_error(item, "invalid sort order");
+		return (CMD_RETURN_ERROR);
+	}
 
 	if (args_has(args, 'a'))
 		cmd_list_panes_server(self, item);
