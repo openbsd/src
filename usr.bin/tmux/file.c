@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.17 2025/11/01 16:42:59 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.18 2026/02/27 08:23:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -58,6 +58,7 @@ file_get_path(struct client *c, const char *file)
 	if (*path == '/')
 		return (path);
 	xasprintf(&full_path, "%s/%s", server_client_get_cwd(c, NULL), path);
+	free(path);
 	return (full_path);
 }
 
