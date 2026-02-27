@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysex.h,v 1.3 2022/12/26 19:16:03 jmc Exp $	*/
+/*	$OpenBSD: sysex.h,v 1.4 2026/02/27 08:57:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -110,7 +110,7 @@ struct sysex {
 			uint8_t chan;			/* channel */
 			uint8_t vol;			/* current volume */
 #define SYSEX_NAMELEN	10				/* \0 included */
-			uint8_t name[SYSEX_NAMELEN];	/* stream name */
+			char name[SYSEX_NAMELEN];	/* stream name */
 			uint8_t end;
 		} slotdesc;
 		struct sysex_dumpreq {
