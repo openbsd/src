@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.127 2026/01/22 09:24:26 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.128 2026/02/27 08:33:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2104,7 +2104,7 @@ ctl_update(struct ctl *c)
 int
 ctl_match(struct ctl *c, int scope, void *arg0, void *arg1)
 {
-	if (c->type == CTL_NONE || c->scope != scope || c->u.any.arg0 != arg0)
+	if (c->type == CTL_NONE || c->scope != scope)
 		return 0;
 	if (arg0 != NULL && c->u.any.arg0 != arg0)
 		return 0;
