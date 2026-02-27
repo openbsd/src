@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.56 2026/01/22 09:24:26 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.57 2026/02/27 08:31:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1146,7 +1146,7 @@ sock_execmsg(struct sock *f)
 		return 0;
 	default:
 #ifdef DEBUG
-		logx(1, "sock %d: unknown command in message", f->fd);
+		logx(1, "sock %d: 0x%x: unknown command in message", f->fd, cmd);
 #endif
 		sock_close(f);
 		return 0;
