@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.79 2021/11/07 20:51:47 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.80 2026/02/27 08:26:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,7 +35,6 @@
 
 #include "aucat.h"
 #include "debug.h"
-
 
 /*
  * read a message, return 0 if not completed
