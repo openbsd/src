@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.167 2025/11/28 16:10:00 rsadowski Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.168 2026/02/28 09:36:08 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -668,7 +668,6 @@ struct server *
 SPLAY_PROTOTYPE(client_tree, client, clt_nodes, server_client_cmp);
 
 /* server_http.c */
-void	 server_http_init(struct server *);
 void	 server_http(void);
 int	 server_httpdesc_init(struct client *);
 void	 server_read_http(struct bufferevent *, void *);

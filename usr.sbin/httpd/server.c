@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.130 2026/01/02 08:45:16 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.131 2026/02/28 09:36:08 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -415,7 +415,6 @@ server_launch(void)
 		    srv->srv_conf.name);
 
 		server_tls_init(srv);
-		server_http_init(srv);
 
 		log_debug("%s: running server %s", __func__,
 		    srv->srv_conf.name);

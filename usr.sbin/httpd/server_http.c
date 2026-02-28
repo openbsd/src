@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.159 2026/02/26 19:49:41 claudio Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.160 2026/02/28 09:36:08 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -70,12 +70,6 @@ server_http(void)
 	qsort(http_errors, sizeof(http_errors) /
 	    sizeof(http_errors[0]) - 1,
 	    sizeof(http_errors[0]), server_httperror_cmp);
-}
-
-void
-server_http_init(struct server *srv)
-{
-	/* nothing */
 }
 
 int
