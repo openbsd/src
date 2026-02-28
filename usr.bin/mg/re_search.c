@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.37 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.38 2026/02/28 18:43:42 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -191,6 +191,8 @@ retry:
 			ewprintf("<SP> replace, [.] rep-end, <DEL> don't, [!] repl rest <ESC> quit");
 			goto retry;
 		}
+		if (re_pat[0] == '^' && news[0] == '\0')
+			gotoeol(FFRAND, 1);
 	}
 
 stopsearch:
@@ -224,6 +226,8 @@ re_repl(int f, int n)
 		plen = regex_match[0].rm_eo - regex_match[0].rm_so;
 		if (re_doreplace((RSIZE)plen, news) == FALSE)
 			return (FALSE);
+		if (re_pat[0] == '^' && news[0] == '\0')
+			gotoeol(FFRAND, 1);
 		rcnt++;
 	}
 
@@ -342,10 +346,9 @@ re_forwsrch(void)
 	if (tbo == clp->l_used)
 		/*
 		 * Don't start matching past end of line -- must move to
-		 * beginning of next line, unless line is empty or at
-		 * end of file.
+		 * beginning of next line, unless at end of file.
 		 */
-		if (clp != curbp->b_headp && llength(clp) != 0) {
+		if (clp != curbp->b_headp) {
 			clp = lforw(clp);
 			tdotline++;
 			tbo = 0;
