@@ -382,8 +382,6 @@ static int dmar_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *, int);
 static int dmar_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
     bus_dma_segment_t *, int, bus_size_t, int);
 static void dmar_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-static void dmar_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-    bus_size_t, int);
 static int dmar_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
     bus_dma_segment_t *, int, int *, int);
 static int dmar_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
@@ -1040,28 +1038,6 @@ dmar_dmamap_unload(bus_dma_tag_t tag, bus_dmamap_t dmam)
 	dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs, __FUNCTION__);
 	domain_unload_map(dom, dmam);
 	_bus_dmamap_unload(tag, dmam);
-}
-
-static void
-dmar_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset,
-    bus_size_t len, int ops)
-{
-#if 0
-	struct domain *dom = tag->_cookie;
-	int		flag;
-
-	flag = PTE_P;
-	if (ops == BUS_DMASYNC_PREREAD) {
-		/* make readable */
-		flag |= PTE_R;
-	}
-	else if (ops == BUS_DMASYNC_PREWRITE) {
-		/* make writeable */
-		flag |= PTE_W;
-	}
-	dmar_dumpseg(tag, dmam->dm_nsegs, dmam->dm_segs, __FUNCTION__);
-#endif
-	_bus_dmamap_sync(tag, dmam, offset, len, ops);
 }
 
 static int
@@ -2115,7 +2091,7 @@ domain_create(struct iommu_softc *iommu, int did)
 	dom->dmat._dmamap_load_uio = dmar_dmamap_load_uio;	/* lm */
 	dom->dmat._dmamap_load_raw = dmar_dmamap_load_raw;	/* lm */
 	dom->dmat._dmamap_unload = dmar_dmamap_unload;		/* um */
-	dom->dmat._dmamap_sync = dmar_dmamap_sync;		/* lm */
+	dom->dmat._dmamap_sync = _bus_dmamap_sync;		/* nop */
 	dom->dmat._dmamem_alloc = dmar_dmamem_alloc;		/* nop */
 	dom->dmat._dmamem_alloc_range = dmar_dmamem_alloc_range;	/* nop */
 	dom->dmat._dmamem_free = dmar_dmamem_free;		/* nop */
