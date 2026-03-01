@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.63 2025/06/07 15:11:12 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.64 2026/03/01 10:20:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -671,8 +671,8 @@ struct acpi_ivmd {
 	uint16_t	devid;
 	uint16_t	auxdata;
 	uint8_t		reserved[8];
-	uint64_t	base;
-	uint64_t	limit;
+	uint64_t	start_address;
+	uint64_t	block_length;
 } __packed;
 
 struct acpi_ivhd {
