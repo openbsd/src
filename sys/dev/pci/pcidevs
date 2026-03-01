@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2123 2026/02/12 14:19:23 hshoexer Exp $
+$OpenBSD: pcidevs,v 1.2124 2026/03/01 20:17:30 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -8982,6 +8982,7 @@ product REALTEK RTS5260		0x5260	RTS5260 Card Reader
 product REALTEK RTL8402		0x5286	RTL8402 Card Reader
 product REALTEK RTL8411B	0x5287	RTL8411B Card Reader
 product REALTEK RTL8411		0x5289	RTL8411 Card Reader
+product REALTEK RTS5765DL	0x5765	RTS5765DL
 product REALTEK RT8029		0x8029	8029
 product REALTEK RT8139D		0x8039	8139D
 product REALTEK RTL8125		0x8125	RTL8125
