@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.68 2026/03/02 12:00:38 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.69 2026/03/02 12:03:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -533,6 +533,8 @@ peer_delete(struct rde_peer *peer)
 
 	rde_filter_unref(peer->out_rules);
 	adjout_peer_free(peer);
+
+	TAILQ_CONCAT(&peerself->rib_pq_head, &peer->rib_pq_head, rib_queue);
 
 	RB_REMOVE(peer_tree, &peertable, peer);
 
