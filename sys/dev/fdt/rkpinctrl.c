@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpinctrl.c,v 1.16 2025/04/20 09:04:10 kettenis Exp $	*/
+/*	$OpenBSD: rkpinctrl.c,v 1.17 2026/03/02 20:45:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -126,8 +126,8 @@ struct rockchip_route_table {
 struct rkpinctrl_softc {
 	struct simplebus_softc	sc_sbus;
 
-	struct regmap		*sc_grf;
-	struct regmap		*sc_pmu;
+	uint32_t		sc_grf;
+	uint32_t		sc_pmu;
 };
 
 int	rkpinctrl_match(struct device *, void *, void *);
@@ -168,14 +168,11 @@ rkpinctrl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkpinctrl_softc *sc = (struct rkpinctrl_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	uint32_t grf, pmu;
 
-	grf = OF_getpropint(faa->fa_node, "rockchip,grf", 0);
-	pmu = OF_getpropint(faa->fa_node, "rockchip,pmu", 0);
-	sc->sc_grf = regmap_byphandle(grf);
-	sc->sc_pmu = regmap_byphandle(pmu);
+	sc->sc_grf = OF_getpropint(faa->fa_node, "rockchip,grf", 0);
+	sc->sc_pmu = OF_getpropint(faa->fa_node, "rockchip,pmu", 0);
 
-	if (sc->sc_grf == NULL && sc->sc_pmu == NULL) {
+	if (sc->sc_grf == 0 && sc->sc_pmu == 0) {
 		printf(": no registers\n");
 		return;
 	}
@@ -260,9 +257,6 @@ rk3288_pinctrl(uint32_t phandle, void *cookie)
 	uint32_t *pins;
 	int node, len, i;
 
-	KASSERT(sc->sc_grf);
-	KASSERT(sc->sc_pmu);
-
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
 		return -1;
@@ -295,12 +289,13 @@ rk3288_pinctrl(uint32_t phandle, void *cookie)
 
 		/* Bank 0 lives in the PMU. */
 		if (bank < 1) {
-			rm = sc->sc_pmu;
+			rm = regmap_byphandle(sc->sc_pmu);
 			base = RK3288_PMUGRF_GPIO0A_IOMUX;
 		} else {
-			rm = sc->sc_grf;
+			rm = regmap_byphandle(sc->sc_grf);
 			base = RK3288_GRF_GPIO1A_IOMUX - 0x10;
 		}
+		KASSERT(rm);
 
 		s = splhigh();
 
@@ -400,10 +395,11 @@ int
 rk3308_pinctrl(uint32_t phandle, void *cookie)
 {
 	struct rkpinctrl_softc *sc = cookie;
+	struct regmap *rm = regmap_byphandle(sc->sc_grf);
 	uint32_t *pins;
 	int node, len, i;
 
-	KASSERT(sc->sc_grf);
+	KASSERT(rm);
 
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
@@ -418,7 +414,6 @@ rk3308_pinctrl(uint32_t phandle, void *cookie)
 		goto fail;
 
 	for (i = 0; i < len / sizeof(uint32_t); i += 4) {
-		struct regmap *rm = sc->sc_grf;
 		bus_size_t base, off;
 		uint32_t bank, idx, mux;
 		int pull, strength;
@@ -546,10 +541,11 @@ int
 rk3328_pinctrl(uint32_t phandle, void *cookie)
 {
 	struct rkpinctrl_softc *sc = cookie;
+	struct regmap *rm = regmap_byphandle(sc->sc_grf);
 	uint32_t *pins;
 	int node, len, i;
 
-	KASSERT(sc->sc_grf);
+	KASSERT(rm);
 
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
@@ -564,7 +560,6 @@ rk3328_pinctrl(uint32_t phandle, void *cookie)
 		goto fail;
 
 	for (i = 0; i < len / sizeof(uint32_t); i += 4) {
-		struct regmap *rm = sc->sc_grf;
 		bus_size_t base, off;
 		uint32_t bank, idx, mux;
 		int pull, strength;
@@ -741,9 +736,6 @@ rk3399_pinctrl(uint32_t phandle, void *cookie)
 	uint32_t *pins;
 	int node, len, i;
 
-	KASSERT(sc->sc_grf);
-	KASSERT(sc->sc_pmu);
-
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
 		return -1;
@@ -776,12 +768,13 @@ rk3399_pinctrl(uint32_t phandle, void *cookie)
 
 		/* Bank 0 and 1 live in the PMU. */
 		if (bank < 2) {
-			rm = sc->sc_pmu;
+			rm = regmap_byphandle(sc->sc_pmu);
 			base = RK3399_PMUGRF_GPIO0A_IOMUX;
 		} else {
-			rm = sc->sc_grf;
+			rm = regmap_byphandle(sc->sc_grf);
 			base = RK3399_GRF_GPIO2A_IOMUX - 0x20;
 		}
+		KASSERT(rm);
 
 		s = splhigh();
 
@@ -883,10 +876,11 @@ int
 rk3528_pinctrl(uint32_t phandle, void *cookie)
 {
 	struct rkpinctrl_softc *sc = cookie;
+	struct regmap *rm = regmap_byphandle(sc->sc_grf);
 	uint32_t *pins;
 	int node, len, i;
 
-	KASSERT(sc->sc_grf);
+	KASSERT(rm);
 
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
@@ -901,7 +895,6 @@ rk3528_pinctrl(uint32_t phandle, void *cookie)
 		goto fail;
 
 	for (i = 0; i < len / sizeof(uint32_t); i += 4) {
-		struct regmap *rm;
 		bus_size_t iomux_base, p_base, ds_base, st_base, off;
 		uint32_t bank, idx, mux;
 		int pull, strength, schmitt;
@@ -919,7 +912,6 @@ rk3528_pinctrl(uint32_t phandle, void *cookie)
 		strength = rk3528_strength(bank, idx, pins[i + 3]);
 		schmitt = rk3528_schmitt(bank, idx, pins[i + 3]);
 
-		rm = sc->sc_grf;
 		switch (bank) {
 		case 0:
 			iomux_base = RK3528_GRF_GPIO0_IOMUX;
@@ -1148,7 +1140,12 @@ rk3568_route(struct rkpinctrl_softc *sc, uint32_t *pins)
 	if (route == NULL)
 		return;
 
-	rm = route->grf ? sc->sc_pmu : sc->sc_grf;
+	if (route->grf == ROUTE_PMU)
+		rm = regmap_byphandle(sc->sc_pmu);
+	else
+		rm = regmap_byphandle(sc->sc_grf);
+	KASSERT(rm);
+
 	regmap_write_4(rm, route->reg, route->val);
 }
 
@@ -1158,9 +1155,6 @@ rk3568_pinctrl(uint32_t phandle, void *cookie)
 	struct rkpinctrl_softc *sc = cookie;
 	uint32_t *pins;
 	int node, len, i;
-
-	KASSERT(sc->sc_grf);
-	KASSERT(sc->sc_pmu);
 
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
@@ -1195,19 +1189,20 @@ rk3568_pinctrl(uint32_t phandle, void *cookie)
 
 		/* Bank 0 lives in the PMU. */
 		if (bank < 1) {
-			rm = sc->sc_pmu;
+			rm = regmap_byphandle(sc->sc_pmu);
 			iomux_base = RK3568_PMUGRF_GPIO0A_IOMUX_L;
 			p_base = RK3568_PMUGRF_GPIO0A_P;
 			ds_base = RK3568_PMUGRF_GPIO0A_DS_0;
 			ie_base = RK3568_PMUGRF_GPIO0A_IE;
 		} else {
-			rm = sc->sc_grf;
+			rm = regmap_byphandle(sc->sc_grf);
 			iomux_base = RK3568_GRF_GPIO1A_IOMUX_L;
 			p_base = RK3568_GRF_GPIO1A_P;
 			ds_base = RK3568_GRF_GPIO1A_DS_0;
 			ie_base = RK3568_GRF_GPIO1A_IE;
 			bank = bank - 1;
 		}
+		KASSERT(rm);
 
 		s = splhigh();
 
@@ -1341,11 +1336,11 @@ int
 rk3588_pinctrl(uint32_t phandle, void *cookie)
 {
 	struct rkpinctrl_softc *sc = cookie;
-	struct regmap *rm = sc->sc_grf;
+	struct regmap *rm = regmap_byphandle(sc->sc_grf);
 	uint32_t *pins;
 	int node, len, i;
 
-	KASSERT(sc->sc_grf);
+	KASSERT(rm);
 
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
