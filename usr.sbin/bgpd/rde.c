@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.686 2026/02/18 15:54:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.687 2026/03/02 09:56:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2375,7 +2375,8 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 			a->flags |= F_ATTR_OTC_LEAK;
 			break;
 		case ROLE_PEER:
-			if (ibuf_get_n32(&attrbuf, &tmp32) == -1)
+			ibuf_from_ibuf(&tmpbuf, &attrbuf);
+			if (ibuf_get_n32(&tmpbuf, &tmp32) == -1)
 				goto bad_len;
 			if (tmp32 != peer->conf.remote_as)
 				a->flags |= F_ATTR_OTC_LEAK;
