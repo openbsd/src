@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.687 2026/03/02 09:56:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.688 2026/03/02 10:00:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2056,7 +2056,7 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 	}
 
 	if (ibuf_truncate(&attrbuf, alen) == -1)
-		goto bad_ibuf;
+		goto bad_size;
 	/* consume the attribute in buf before moving forward */
 	if (ibuf_skip(buf, hlen + alen) == -1)
 		goto bad_ibuf;
@@ -2408,11 +2408,18 @@ rde_attr_parse(struct ibuf *buf, struct rde_peer *peer,
 	rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRFLAGS, &attrbuf);
 	return (-1);
  bad_list:
-	log_peer_warnx(&peer->conf, "bad path, list error for type %d", type);
+	log_peer_warnx(&peer->conf, "bad update attributes, "
+	    "list error for attribute #%d", type);
 	rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL);
 	return (-1);
  bad_ibuf:
-	log_peer_warn(&peer->conf, "bad path, header parse error");
+	log_peer_warn(&peer->conf, "bad update attributes, "
+	    "message parse error");
+	rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL);
+	return (-1);
+ bad_size:
+	log_peer_warn(&peer->conf, "bad update attributes, "
+	    "attribute #%d [%x] with size %zu overflowed", type, flags, alen);
 	rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL);
 	return (-1);
 }
