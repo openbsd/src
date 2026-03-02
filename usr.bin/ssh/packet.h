@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.h,v 1.105 2026/02/08 17:50:49 dtucker Exp $ */
+/* $OpenBSD: packet.h,v 1.106 2026/03/02 02:40:15 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -18,6 +18,7 @@
 
 #include <sys/queue.h>
 
+#include <stdint.h>
 #include <signal.h>
 #include <termios.h>
 
@@ -68,7 +69,7 @@ struct ssh {
 	int dispatch_skip_packets;
 
 	/* datafellows */
-	int compat;
+	uint32_t compat;
 
 	/* Lists for private and public keys */
 	TAILQ_HEAD(, key_entry) private_keys;

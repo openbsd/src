@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_wrap.c,v 1.145 2026/02/08 19:54:31 dtucker Exp $ */
+/* $OpenBSD: monitor_wrap.c,v 1.146 2026/03/02 02:40:15 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -250,6 +250,21 @@ mm_choose_dh(int min, int nbits, int max)
 	return (dh_new_group(g, p));
 }
 #endif
+
+void
+mm_sshkey_setcompat(struct ssh *ssh)
+{
+	struct sshbuf *m;
+	int r;
+
+	debug3_f("entering");
+	if ((m = sshbuf_new()) == NULL)
+		fatal_f("sshbuf_new failed");
+	if ((r = sshbuf_put_u32(m, ssh->compat)) != 0)
+		fatal_fr(r, "assemble");
+
+	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_SETCOMPAT, m);
+}
 
 int
 mm_sshkey_sign(struct ssh *ssh, struct sshkey *key, u_char **sigp, size_t *lenp,

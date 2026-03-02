@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd-session.c,v 1.20 2026/02/09 21:38:14 dtucker Exp $ */
+/* $OpenBSD: sshd-session.c,v 1.21 2026/03/02 02:40:15 djm Exp $ */
 /*
  * SSH2 implementation:
  * Privilege Separation:
@@ -1131,13 +1131,6 @@ main(int ac, char **av)
 		if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
 			fatal("login grace time setitimer failed");
 	}
-
-	if ((r = kex_exchange_identification(ssh, -1,
-	    options.version_addendum)) != 0)
-		sshpkt_fatal(ssh, r, "banner exchange");
-
-	if ((ssh->compat & SSH_BUG_NOREKEY))
-		debug("client does not support rekeying");
 
 	ssh_packet_set_nonblocking(ssh);
 
