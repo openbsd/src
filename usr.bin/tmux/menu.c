@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.60 2026/02/23 08:50:00 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.61 2026/03/02 08:38:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,6 +90,7 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 	else
 		s = format_single(qitem, item->name, c, NULL, NULL, NULL);
 	if (*s == '\0') { /* no item if empty after format expanded */
+		free(s);
 		menu->count--;
 		return;
 	}
