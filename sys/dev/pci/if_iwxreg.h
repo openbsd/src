@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.59 2026/02/25 08:55:18 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.60 2026/03/02 10:00:51 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1997,6 +1997,9 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_DATA_PATH_GROUP	0x5
 #define IWX_PROT_OFFLOAD_GROUP	0xb
 #define IWX_REGULATORY_AND_NVM_GROUP	0xc
+#define IWX_XVT_GROUP		0xe
+#define IWX_DEBUG_GROUP		0xf
+#define IWX_STATISTICS_GROUP	0x10
 
 /* SYSTEM_GROUP group subcommand IDs */
 
@@ -2004,6 +2007,8 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_SOC_CONFIGURATION_CMD	0x01
 #define IWX_INIT_EXTENDED_CFG_CMD	0x03
 #define IWX_FW_ERROR_RECOVERY_CMD	0x07
+#define IWX_SYSTEM_STATISTICS_CMD	0x0f
+#define IWX_SYSTEM_STATISTICS_END_NOTIF 0xfd
 
 /* MAC_CONF group subcommand IDs */
 #define IWX_SESSION_PROTECTION_CMD	0x05
@@ -2028,6 +2033,13 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_NVM_ACCESS_COMPLETE	0x00
 #define IWX_NVM_GET_INFO	0x02
 #define IWX_PNVM_INIT_COMPLETE	0xfe
+
+/* STATISTICS group subcommand IDs */
+#define IWX_STATISTICS_OPER_NOTIF	0x0
+#define IWX_STATISTICS_OPER_PART1_NOTIF	0x1
+#define IWX_STATISTICS_OPER_PART2_NOTIF	0x2
+#define IWX_STATISTICS_OPER_PART3_NOTIF	0x3
+#define IWX_STATISTICS_OPER_PART4_NOTIF	0x4
 
 /*
  * struct iwx_dqa_enable_cmd
@@ -4143,6 +4155,235 @@ struct iwx_statistics_cmd {
 	uint32_t flags;
 } __packed; /* STATISTICS_CMD_API_S_VER_1 */
 
+/**
+ * enum iwx_statistics_notify_type_id - type_id used in system statistics
+ *	command
+ * @IWX_STATS_NTFY_TYPE_ID_OPER: request legacy statistics
+ * @IWX_STATS_NTFY_TYPE_ID_OPER_PART1: request operational part1 statistics
+ * @IWX_STATS_NTFY_TYPE_ID_OPER_PART2: request operational part2 statistics
+ * @IWX_STATS_NTFY_TYPE_ID_OPER_PART3: request operational part3 statistics
+ * @IWX_STATS_NTFY_TYPE_ID_OPER_PART4: request operational part4 statistics
+ */
+enum iwx_statistics_notify_type_id {
+	IWX_STATS_NTFY_TYPE_ID_OPER		= (1 << 0),
+	IWX_STATS_NTFY_TYPE_ID_OPER_PART1	= (1 << 1),
+	IWX_STATS_NTFY_TYPE_ID_OPER_PART2	= (1 << 2),
+	IWX_STATS_NTFY_TYPE_ID_OPER_PART3	= (1 << 3),
+	IWX_STATS_NTFY_TYPE_ID_OPER_PART4	= (1 << 4),
+};
+
+/**
+ * enum iwx_statistics_cfg_flags - cfg_mask used in system statistics command
+ * @IWX_STATS_CFG_FLG_DISABLE_NTFY_MSK: 0 for enable, 1 for disable
+ * @IWX_STATS_CFG_FLG_ON_DEMAND_NTFY_MSK: 0 for periodic, 1 for on-demand
+ * @IWX_STATS_CFG_FLG_RESET_MSK: 0 for reset statistics after
+ *	sending the notification, 1 for do not reset statistics after sending
+ *	the notification
+ */
+enum iwx_statistics_cfg_flags {
+	IWX_STATS_CFG_FLG_DISABLE_NTFY_MSK	= (1 << 0),
+	IWX_STATS_CFG_FLG_ON_DEMAND_NTFY_MSK	= (1 << 1),
+	IWX_STATS_CFG_FLG_RESET_MSK		= (1 << 2),
+};
+
+/**
+ * struct iwx_system_statistics_cmd - system statistics command
+ * @cfg_mask: configuration mask, &enum iwx_statistics_cfg_flags
+ * @config_time_sec: time in sec for periodic notification
+ * @type_id_mask: type_id masks, &enum iwx_statistics_notify_type_id
+ */
+struct iwx_system_statistics_cmd {
+	uint32_t cfg_mask;
+	uint32_t config_time_sec;
+	uint32_t type_id_mask;
+} __packed; /* STATISTICS_FW_CMD_API_S_VER_1 */
+
+/**
+ * enum iwx_fw_statistics_type - statistics type
+ *
+ * @FW_STATISTICS_OPERATIONAL: operational statistics
+ * @FW_STATISTICS_PHY: phy statistics
+ * @FW_STATISTICS_MAC: mac statistics
+ * @FW_STATISTICS_RX: rx statistics
+ * @FW_STATISTICS_TX: tx statistics
+ * @FW_STATISTICS_DURATION: duration statistics
+ * @FW_STATISTICS_HE: he statistics
+ */
+enum iwx_fw_statistics_type {
+	FW_STATISTICS_OPERATIONAL,
+	FW_STATISTICS_PHY,
+	FW_STATISTICS_MAC,
+	FW_STATISTICS_RX,
+	FW_STATISTICS_TX,
+	FW_STATISTICS_DURATION,
+	FW_STATISTICS_HE,
+}; /* FW_STATISTICS_TYPE_API_E_VER_1 */
+
+#define IWX_STATISTICS_TYPE_MSK 0x7f
+
+/**
+ * struct iwx_statistics_ntfy_hdr - statistics notification header
+ *
+ * @type: struct type
+ * @version: version of the struct
+ * @size: size in bytes
+ */
+struct iwx_statistics_ntfy_hdr {
+	uint8_t type;
+	uint8_t version;
+	uint16_t size;
+}; /* STATISTICS_NTFY_HDR_API_S_VER_1 */
+
+/**
+ * struct iwx_stats_ntfy_per_link - per-link statistics
+ *
+ * @beacon_filter_average_energy: Average energy [-dBm] of the 2
+ *	 antennas.
+ * @air_time: air time
+ * @beacon_counter: all beacons (both filtered and not filtered)
+ * @beacon_average_energy: Average energy [-dBm] of all beacons
+ *	(both filtered and not filtered)
+ * @beacon_rssi_a: beacon RSSI on antenna A
+ * @beacon_rssi_b: beacon RSSI on antenna B
+ * @rx_bytes: RX byte count
+ */
+struct iwx_stats_ntfy_per_link {
+	uint32_t beacon_filter_average_energy;
+	uint32_t air_time;
+	uint32_t beacon_counter;
+	uint32_t beacon_average_energy;
+	uint32_t beacon_rssi_a;
+	uint32_t beacon_rssi_b;
+	uint32_t rx_bytes;
+} __packed; /* STATISTICS_NTFY_PER_LINK_API_S_VER_1 */
+
+/**
+ * struct iwl_stats_ntfy_part1_per_link - part1 per link statistics
+ *
+ * @rx_time: rx time
+ * @tx_time: tx time
+ * @rx_action: action frames handled by FW
+ * @tx_action: action frames generated and transmitted by FW
+ * @cca_defers: cca defer count
+ * @beacon_filtered: filtered out beacons
+ */
+struct iwx_stats_ntfy_part1_per_link {
+	uint64_t rx_time;
+	uint64_t tx_time;
+	uint32_t rx_action;
+	uint32_t tx_action;
+	uint32_t cca_defers;
+	uint32_t beacon_filtered;
+} __packed; /* STATISTICS_FW_NTFY_OPERATIONAL_PART1_PER_LINK_API_S_VER_1 */
+
+/**
+ * struct iwx_stats_ntfy_per_mac - per MAC statistics
+ *
+ * @beacon_filter_average_energy: Average energy [-dBm] of the 2
+ *	 antennas.
+ * @air_time: air time
+ * @beacon_counter: all beacons (both filtered and not filtered)
+ * @beacon_average_energy: all beacons (both filtered and not
+ *	 filtered)
+ * @beacon_rssi_a: beacon RSSI on antenna A
+ * @beacon_rssi_b: beacon RSSI on antenna B
+ * @rx_bytes: RX byte count
+ */
+struct iwx_stats_ntfy_per_mac {
+	uint32_t beacon_filter_average_energy;
+	uint32_t air_time;
+	uint32_t beacon_counter;
+	uint32_t beacon_average_energy;
+	uint32_t beacon_rssi_a;
+	uint32_t beacon_rssi_b;
+	uint32_t rx_bytes;
+} __packed; /* STATISTICS_NTFY_PER_MAC_API_S_VER_1 */
+
+#define IWX_STATS_MAX_BW_INDEX 5
+
+/**
+ * struct iwx_stats_ntfy_per_phy - per PHY statistics
+ * @channel_load: channel load
+ * @channel_load_by_us: device contribution to MCLM
+ * @channel_load_not_by_us: other devices' contribution to MCLM
+ * @clt: CLT HW timer (TIM_CH_LOAD2)
+ * @act: active accumulator SW
+ * @elp: elapsed time accumulator SW
+ * @rx_detected_per_ch_width: number of deferred TX per channel width,
+ *	0 - 20, 1/2/3 - 40/80/160
+ * @success_per_ch_width: number of frames that got ACK/BACK/CTS
+ *	per channel BW. note, BACK counted as 1
+ * @fail_per_ch_width: number of frames that didn't get ACK/BACK/CTS
+ *	per channel BW. note BACK counted as 1
+ * @last_tx_ch_width_indx: last txed frame channel width index
+ */
+struct iwx_stats_ntfy_per_phy {
+	uint32_t channel_load;
+	uint32_t channel_load_by_us;
+	uint32_t channel_load_not_by_us;
+	uint32_t clt;
+	uint32_t act;
+	uint32_t elp;
+	uint32_t rx_detected_per_ch_width[IWX_STATS_MAX_BW_INDEX];
+	uint32_t success_per_ch_width[IWX_STATS_MAX_BW_INDEX];
+	uint32_t fail_per_ch_width[IWX_STATS_MAX_BW_INDEX];
+	uint32_t last_tx_ch_width_indx;
+} __packed; /* STATISTICS_NTFY_PER_PHY_API_S_VER_1 */
+
+/* unknown channel load (due to not being active on channel) */
+#define IWX_STATS_UNKNOWN_CHANNEL_LOAD	0xffffffff
+
+/**
+ * struct iwx_stats_ntfy_per_sta - per STA statistics
+ *
+ * @average_energy: in fact it is minus the energy..
+ */
+struct iwx_stats_ntfy_per_sta {
+	uint32_t average_energy;
+} __packed; /* STATISTICS_NTFY_PER_STA_API_S_VER_1 */
+
+
+#define IWX_FW_MAX_ACTIVE_LINKS_NUM 2
+#define IWX_FW_MAX_LINK_ID 3
+#define IWX_STATS_MAX_PHY_OPERATIONAL 3
+#define IWX_STATS_MAX_FW_LINKS	(IWX_FW_MAX_LINK_ID + 1)
+
+/**
+ * struct iwx_system_statistics_notif_oper - statistics notification
+ *
+ * @time_stamp: time when the notification is sent from firmware
+ * @per_link: per link statistics, &struct iwl_stats_ntfy_per_link
+ * @per_phy: per phy statistics, &struct iwl_stats_ntfy_per_phy
+ * @per_sta: per sta statistics, &struct iwl_stats_ntfy_per_sta
+ */
+struct iwx_system_statistics_notif_oper {
+	uint32_t time_stamp;
+	struct iwx_stats_ntfy_per_link per_link[IWX_STATS_MAX_FW_LINKS];
+	struct iwx_stats_ntfy_per_phy per_phy[IWX_STATS_MAX_PHY_OPERATIONAL];
+	struct iwx_stats_ntfy_per_sta per_sta[IWX_STATION_COUNT];
+} __packed; /* STATISTICS_FW_NTFY_OPERATIONAL_API_S_VER_3 */
+
+/**
+ * struct iwx_system_statistics_part1_notif_oper - part1 stats notification
+ *
+ * @time_stamp: time when the notification is sent from firmware
+ * @per_link: per link statistics &struct iwl_stats_ntfy_part1_per_link
+ * @per_phy_crc_error_stats: per phy crc error statistics
+ */
+struct iwx_system_statistics_part1_notif_oper {
+	uint32_t time_stamp;
+	struct iwx_stats_ntfy_part1_per_link per_link[IWX_STATS_MAX_FW_LINKS];
+	uint32_t per_phy_crc_error_stats[IWX_STATS_MAX_PHY_OPERATIONAL];
+} __packed; /* STATISTICS_FW_NTFY_OPERATIONAL_PART1_API_S_VER_4 */
+
+/**
+ * struct iwx_system_statistics_end_notif - statistics end notification
+ *
+ * @time_stamp: time when the notification is sent from firmware
+ */
+struct iwx_system_statistics_end_notif {
+	uint32_t time_stamp;
+} __packed; /* STATISTICS_FW_NTFY_END_API_S_VER_1 */
 
 /***********************************
  * Smart Fifo API

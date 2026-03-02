@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.43 2025/12/01 16:44:13 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.44 2026/03/02 10:00:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -733,6 +733,8 @@ struct iwx_softc {
 #define IWX_INIT_COMPLETE	0x01
 #define IWX_CALIB_COMPLETE	0x02
 #define IWX_PNVM_COMPLETE	0x04
+
+	int sc_system_stats_cleared;
 
 	struct iwx_ucode_status sc_uc;
 	char sc_fwver[32];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.200 2026/02/25 08:55:18 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.201 2026/03/02 10:00:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8005,7 +8005,7 @@ iwx_mld_mac_ctxt_cmd(struct iwx_softc *sc, struct iwx_node *in,
 }
 
 int
-iwx_clear_statistics(struct iwx_softc *sc)
+iwx_send_statistics_cmd_clear(struct iwx_softc *sc)
 {
 	struct iwx_statistics_cmd scmd = {
 		.flags = htole32(IWX_STATISTICS_FLG_CLEAR)
@@ -8024,6 +8024,61 @@ iwx_clear_statistics(struct iwx_softc *sc)
 		return err;
 
 	iwx_free_resp(sc, &cmd);
+	return 0;
+}
+
+int
+iwx_send_system_statistics_cmd_clear(struct iwx_softc *sc)
+{
+	struct iwx_system_statistics_cmd scmd = {
+		.cfg_mask = htole32(IWX_STATS_CFG_FLG_ON_DEMAND_NTFY_MSK),
+		.type_id_mask = htole32(IWX_STATS_NTFY_TYPE_ID_OPER |
+		    IWX_STATS_NTFY_TYPE_ID_OPER_PART1),
+	};
+	struct iwx_host_cmd cmd = {
+		.id = IWX_WIDE_ID(IWX_SYSTEM_GROUP, IWX_SYSTEM_STATISTICS_CMD),
+		.len[0] = sizeof(scmd),
+		.data[0] = &scmd,
+		.flags = IWX_CMD_ASYNC,
+	};
+	int err;
+
+	sc->sc_system_stats_cleared = 0;
+
+	err = iwx_send_cmd(sc, &cmd);
+	if (err)
+		return err;
+
+	/* Wait for SYSTEM_STATISTICS_END_NOTIF firmware notification. */
+	while (!sc->sc_system_stats_cleared) {
+		err = tsleep_nsec(&sc->sc_system_stats_cleared, 0, "iwxstat",
+		    SEC_TO_NSEC(1));
+		if (err)
+			break;
+	}
+
+	return err;
+}
+
+int
+iwx_clear_statistics(struct iwx_softc *sc)
+{
+	uint32_t version;
+
+	version = iwx_lookup_cmd_ver(sc, IWX_SYSTEM_GROUP,
+	    IWX_SYSTEM_STATISTICS_CMD);
+
+	switch (version) {
+	case IWX_FW_CMD_VER_UNKNOWN:
+		return iwx_send_statistics_cmd_clear(sc);
+	case 1:
+		return iwx_send_system_statistics_cmd_clear(sc);
+	default:
+		printf("%s: unknown statistics command version %d\n",
+		    DEVNAME(sc), version);
+		break;
+	}
+
 	return 0;
 }
 
@@ -10947,6 +11002,32 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			sc->sc_init_complete |= IWX_PNVM_COMPLETE;
 			wakeup(&sc->sc_init_complete);
 			break;
+
+		case IWX_WIDE_ID(IWX_SYSTEM_GROUP, IWX_SYSTEM_STATISTICS_CMD):
+			break;
+	
+		case IWX_WIDE_ID(IWX_SYSTEM_GROUP,
+		    IWX_SYSTEM_STATISTICS_END_NOTIF): {
+			struct iwx_system_statistics_end_notif *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+			sc->sc_system_stats_cleared = 1;
+			wakeup(&sc->sc_system_stats_cleared);
+			break;
+		}
+	
+		case IWX_WIDE_ID(IWX_STATISTICS_GROUP,
+		    IWX_STATISTICS_OPER_NOTIF): {
+			struct iwx_system_statistics_notif_oper *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+			break;
+		}
+
+		case IWX_WIDE_ID(IWX_STATISTICS_GROUP,
+		    IWX_STATISTICS_OPER_PART1_NOTIF): {
+			struct iwx_system_statistics_part1_notif_oper *notif;
+			SYNC_RESP_STRUCT(notif, pkt);
+			break;
+		}
 
 		default:
 			handled = 0;
