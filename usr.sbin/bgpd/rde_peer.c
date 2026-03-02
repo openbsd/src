@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.67 2026/02/13 12:47:36 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.68 2026/03/02 12:00:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -430,11 +430,7 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 		 * There is a race condition when doing PEER_ERR -> PEER_DOWN.
 		 * So just do a full reset of the peer here.
 		 */
-		rib_dump_terminate(peer);
-		peer_imsg_flush(peer);
-		peer_flush(peer, AID_UNSPEC, monotime_clear());
-		peer->stats.prefix_cnt = 0;
-		peer->state = PEER_DOWN;
+		peer_down(peer);
 	}
 
 	/*
