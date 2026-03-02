@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.131 2026/02/28 09:36:08 rsadowski Exp $	*/
+/*	$OpenBSD: server.c,v 1.132 2026/03/02 19:24:58 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -43,6 +43,7 @@
 #include <vis.h>
 
 #include "httpd.h"
+#include "log.h"
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 

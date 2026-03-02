@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.25 2024/01/17 08:22:40 claudio Exp $	*/
+/*	$OpenBSD: logger.c,v 1.26 2026/03/02 19:24:58 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,7 @@
 #include <imsg.h>
 
 #include "httpd.h"
+#include "log.h"
 
 int		 logger_dispatch_parent(int, struct privsep_proc *,
 		    struct imsg *);

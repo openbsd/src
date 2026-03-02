@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.160 2026/02/28 09:36:08 rsadowski Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.161 2026/03/02 19:24:58 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -42,6 +42,7 @@
 
 #include "httpd.h"
 #include "http.h"
+#include "log.h"
 #include "patterns.h"
 
 static int	 server_httpmethod_cmp(const void *, const void *);

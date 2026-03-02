@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.68 2026/01/04 06:43:34 rsadowski Exp $	*/
+/*	$OpenBSD: config.c,v 1.69 2026/03/02 19:24:58 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -31,6 +31,7 @@
 #include <imsg.h>
 
 #include "httpd.h"
+#include "log.h"
 
 int	 config_getserver_config(struct httpd *, struct server *,
 	    struct imsg *);
