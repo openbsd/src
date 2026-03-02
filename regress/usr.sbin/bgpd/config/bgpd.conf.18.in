@@ -1,0 +1,73 @@
+# $OpenBSD: bgpd.conf.18.in,v 1.1 2026/03/02 13:48:00 claudio Exp $
+# Test various authentication statements
+
+AS 1
+
+dump all in "/tmp/all.in.mrt"
+dump all out "/tmp/all.out.mrt"
+dump updates in "/tmp/updates.in.mrt" 300
+dump updates out "/tmp/updates.out.mrt" 600
+
+neighbor 127.0.0.2 {
+	remote-as 2
+}
+
+neighbor 127.0.0.3 {
+	remote-as 3
+
+	dump all in "/tmp/3.in.mrt"
+	dump all out "/tmp/3.out.mrt"
+}
+
+neighbor 127.0.0.4 {
+	remote-as 4
+
+	dump updates in "/tmp/4.in.mrt"
+	dump updates out "/tmp/4.out.mrt"
+}
+
+group "mygroup" {
+	dump all in "/tmp/mygroup.in.mrt"
+	dump all out "/tmp/mygroup.out.mrt"
+
+	neighbor 127.0.0.5 {
+		remote-as 5
+	}
+
+	neighbor 127.0.0.6 {
+		remote-as 6
+
+		dump all in "/tmp/6.in.mrt"
+		dump all out "/tmp/6.out.mrt"
+	}
+
+	neighbor 127.0.0.7 {
+		remote-as 7
+
+		dump updates in "/tmp/7.in.mrt"
+		dump updates out "/tmp/7.out.mrt"
+	}
+}
+
+group "ourgroup" {
+	dump updates in "/tmp/ourgroup.in.mrt"
+	dump updates out "/tmp/ourgroup.out.mrt"
+
+	neighbor 127.0.0.8 {
+		remote-as 8
+	}
+
+	neighbor 127.0.0.9 {
+		remote-as 9
+
+		dump all in "/tmp/9.in.mrt"
+		dump all out "/tmp/9.out.mrt"
+	}
+
+	neighbor 127.0.0.10 {
+		remote-as 10
+
+		dump updates in "/tmp/10.in.mrt"
+		dump updates out "/tmp/10.out.mrt"
+	}
+}
