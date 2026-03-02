@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.67 2023/04/21 13:39:37 op Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.68 2026/03/02 19:38:17 op Exp $	*/
 
 /* This file is in the public domain */
 
@@ -311,7 +311,11 @@ complete_function_list(const char *fname)
 				free_file_list(head);
 				return (NULL);
 			}
-			el->l_name = strdup(fn->fn_name);
+			if ((el->l_name = strdup(fn->fn_name)) == NULL) {
+				free(el);
+				free_file_list(head);
+				return (NULL);
+			}
 			el->l_next = head;
 			head = el;
 		}
