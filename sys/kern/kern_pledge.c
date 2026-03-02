@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.338 2026/03/02 16:15:29 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.339 2026/03/02 21:52:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -681,13 +681,13 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    strncmp(path, "/usr/share/zoneinfo/",
 		    sizeof("/usr/share/zoneinfo/") - 1) == 0)  {
-			int i;
+			const char *cp;
 
-			for (i = sizeof("/usr/share/zoneinfo/") - 1;
-			    path[i] && i < MAXPATHLEN - 3; i++)
-				if (path[i] == '.' && path[i+1] == '.' &&
-				    (path[i+2] == '/' || path[i+2] == '\0'))
-					goto out;
+			for (cp = path + sizeof("/usr/share/zoneinfo/") - 2;
+			    *cp; cp++)
+				if (cp[0] == '/' && cp[1] == '.' && cp[2] == '.' &&
+				    (cp[3] == '/' || cp[3] == '\0'))
+					break;
 			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
 		}
@@ -709,7 +709,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 		}
 		break;
 	}
-out:
 
 	/*
 	 * Ensure each flag of ni_pledge has counterpart allowing it in
