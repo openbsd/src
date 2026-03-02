@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.344 2026/02/24 18:06:41 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.345 2026/03/02 08:41:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4428,6 +4428,9 @@ format_loop_sessions(struct format_expand_state *es, const char *fmt)
 		strlcat(value, expanded, valuelen);
 		free(expanded);
 	}
+
+	free(active);
+	free(all);
 
 	return (value);
 }
