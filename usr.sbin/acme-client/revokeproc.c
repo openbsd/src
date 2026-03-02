@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.27 2026/02/23 10:27:49 sthen Exp $ */
+/*	$Id: revokeproc.c,v 1.28 2026/03/02 10:38:44 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -187,16 +187,16 @@ revokeproc(int fd, const char *certfile, int force,
 			char		 ip_buf[INET6_ADDRSTRLEN];
 			const char	*ip;
 
-			name_len = gen_name->d.iPAddress->length;
+			name_len = ASN1_STRING_length(gen_name->d.iPAddress);
 			switch (name_len) {
 			case 4:
 				ip = inet_ntop(AF_INET,
-				    gen_name->d.iPAddress->data,
+				    ASN1_STRING_get0_data(gen_name->d.iPAddress),
 				    ip_buf, INET6_ADDRSTRLEN);
 				break;
 			case 16:
 				ip = inet_ntop(AF_INET6,
-				    gen_name->d.iPAddress->data,
+				    ASN1_STRING_get0_data(gen_name->d.iPAddress),
 				    ip_buf, INET6_ADDRSTRLEN);
 				break;
 			default:
@@ -209,9 +209,10 @@ revokeproc(int fd, const char *certfile, int force,
 			}
 			name_len = asprintf(&name_buf, "%s", ip);
 		} else if (gen_name->type == GEN_DNS) {
-			name_len = gen_name->d.dNSName->length;
+			name_len = ASN1_STRING_length(gen_name->d.dNSName);
 			name_len = asprintf(&name_buf, "%.*s",
-			    name_len, gen_name->d.dNSName->data);
+			    name_len,
+			    ASN1_STRING_get0_data(gen_name->d.dNSName));
 		} else
 			continue;
 
