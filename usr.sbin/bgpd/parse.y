@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.487 2025/12/06 09:48:30 phessler Exp $ */
+/*	$OpenBSD: parse.y,v 1.488 2026/03/02 09:51:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4768,7 +4768,7 @@ add_mrtconfig(enum mrt_type type, char *name, int timeout, struct peer *p,
 			n->group_id = p->conf.id;
 		} else {
 			n->peer_id = p->conf.id;
-			n->group_id = p->conf.groupid;
+			n->group_id = 0;
 		}
 	}
 	if (rib) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.184 2026/02/04 13:49:23 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.185 2026/03/02 09:51:48 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1193,9 +1193,15 @@ print_mrt(struct bgpd_config *conf, uint32_t pid, uint32_t gid,
 	if (conf->mrt == NULL)
 		return;
 
+	/*
+	 * If pid == 0 then this needs to match for the any config rule
+	 * and in that case gid == 0 as well. If pid != 0 then either
+	 * match against peer_id or group_id depending which one is set.
+	 */
 	LIST_FOREACH(m, conf->mrt, entry)
-		if ((gid != 0 && m->group_id == gid) ||
-		    (m->peer_id == pid && m->group_id == gid)) {
+		if ((pid == 0 && m->peer_id == 0 && m->group_id == 0) ||
+		    (m->peer_id != 0 && m->peer_id == pid) ||
+		    (m->group_id != 0 && m->group_id == gid)) {
 			printf("%s%sdump ", prep, prep2);
 			if (m->rib[0])
 				printf("rib %s ", m->rib);
