@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa.c,v 1.6 2025/02/20 19:47:31 claudio Exp $ */
+/*	$OpenBSD: rde_aspa.c,v 1.7 2026/03/02 12:08:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -363,6 +363,9 @@ aspa_table_prep(uint32_t entries, size_t datasize)
 	ra->maxdata = datasize / sizeof(ra->data[0]);
 	ra->lastchange = getmonotime();
 
+	rdemem.aspa_cnt += ra->maxset;
+	rdemem.aspa_size += ra->maxset * sizeof(ra->sets[0]) +
+	    ra->maxdata * sizeof(ra->data[0]);
 	return ra;
 }
 
@@ -421,6 +424,9 @@ aspa_table_free(struct rde_aspa *ra)
 {
 	if (ra == NULL)
 		return;
+	rdemem.aspa_cnt -= ra->maxset;
+	rdemem.aspa_size -= ra->maxset * sizeof(ra->sets[0]) +
+	    ra->maxdata * sizeof(ra->data[0]);
 	free(ra->table);
 	free(ra->sets);
 	free(ra->data);

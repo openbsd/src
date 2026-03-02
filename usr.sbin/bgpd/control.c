@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.136 2026/02/04 11:41:11 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.137 2026/03/02 12:08:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -581,6 +581,9 @@ control_imsg_relay(struct imsg *imsg, struct peer *p)
 		peer.stats.prefix_sent_eor = stats.prefix_sent_eor;
 		peer.stats.pending_update = stats.pending_update;
 		peer.stats.pending_withdraw = stats.pending_withdraw;
+		peer.stats.rib_entry_count = stats.rib_entry_count;
+		peer.stats.ibufq_msg_count = stats.ibufq_msg_count;
+		peer.stats.ibufq_payload_size = stats.ibufq_payload_size;
 		peer.stats.msg_queue_len = msgbuf_queuelen(p->wbuf);
 
 		return imsg_compose(&c->imsgbuf, type, 0, pid, -1,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.533 2026/02/13 12:47:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.534 2026/03/02 12:08:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -548,6 +548,9 @@ struct rde_peer_stats {
 	uint64_t			 prefix_sent_update;
 	uint64_t			 prefix_sent_withdraw;
 	uint64_t			 prefix_sent_eor;
+	uint64_t			 rib_entry_count;
+	uint64_t			 ibufq_msg_count;
+	uint64_t			 ibufq_payload_size;
 	uint32_t			 prefix_cnt;
 	uint32_t			 prefix_out_cnt;
 	uint32_t			 pending_update;
@@ -1420,12 +1423,17 @@ struct rde_memstats {
 	long long	aset_nmemb;
 	long long	pset_cnt;
 	long long	pset_size;
+	long long	aspa_cnt;
+	long long	aspa_size;
 	long long	filter_cnt;
 	long long	filter_size;
 	long long	filter_refs;
 	long long	filter_set_cnt;
 	long long	filter_set_size;
 	long long	filter_set_refs;
+	long long	rde_rib_entry_count;
+	long long	rde_ibufq_msg_count;
+	long long	rde_ibufq_payload_size;
 	long long	rde_event_loop_count;
 	long long	rde_event_loop_usec;
 	long long	rde_event_io_usec;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.193 2025/11/04 10:47:25 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.194 2026/03/02 12:08:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -144,6 +144,9 @@ struct peer_stats {
 	unsigned long long	 prefix_sent_update;
 	unsigned long long	 prefix_sent_withdraw;
 	unsigned long long	 prefix_sent_eor;
+	unsigned long long	 rib_entry_count;
+	unsigned long long	 ibufq_msg_count;
+	unsigned long long	 ibufq_payload_size;
 	monotime_t		 last_updown;
 	monotime_t		 last_read;
 	monotime_t		 last_write;
