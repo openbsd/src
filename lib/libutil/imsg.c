@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.42 2025/06/16 13:56:11 claudio Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.43 2026/03/02 20:07:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -340,7 +340,8 @@ imsg_forward(struct imsgbuf *imsgbuf, struct imsg *msg)
 	size_t		 len;
 
 	ibuf_rewind(msg->buf);
-	ibuf_skip(msg->buf, sizeof(msg->hdr));
+	if (ibuf_skip(msg->buf, sizeof(msg->hdr)) == -1)
+		return (-1);
 	len = ibuf_size(msg->buf);
 
 	if ((wbuf = imsg_create(imsgbuf, msg->hdr.type, msg->hdr.peerid,
