@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.24 2026/02/13 18:27:40 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.25 2026/03/02 12:09:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -47,8 +47,10 @@ struct ometric *peer_withdraw_transmit, *peer_withdraw_pending,
 struct ometric *peer_rr_req_transmit, *peer_rr_req_receive;
 struct ometric *peer_rr_borr_transmit, *peer_rr_borr_receive;
 struct ometric *peer_rr_eorr_transmit, *peer_rr_eorr_receive;
+struct ometric *peer_queue_count, *peer_queue_size;
 struct ometric *rde_mem_size, *rde_mem_count, *rde_mem_ref_count;
 struct ometric *rde_set_size, *rde_set_count, *rde_table_count;
+struct ometric *rde_queue_size, *rde_queue_count;
 struct ometric *rde_evloop_count, *rde_evloop_time;
 
 struct timespec start_time, end_time;
@@ -152,6 +154,11 @@ ometric_head(struct parse_result *arg)
 	peer_rr_eorr_receive = ometric_new(OMT_COUNTER,
 	    "bgpd_peer_route_refresh_eorr_receive",
 	    "number of ext. route-refresh EORR messages received from peer");
+	peer_queue_count = ometric_new(OMT_GAUGE,
+	    "bgpd_peer_queue_usage_objects", "number of object on queue");
+	peer_queue_size = ometric_new(OMT_GAUGE,
+	    "bgpd_peer_queue_memory_usage_bytes",
+	    "memory usage of queue in bytes");
 
 	/* RDE memory statistics */
 	rde_mem_size = ometric_new(OMT_GAUGE,
@@ -167,6 +174,11 @@ ometric_head(struct parse_result *arg)
 	    "bgpd_rde_set_usage_objects", "number of object in set");
 	rde_table_count = ometric_new(OMT_GAUGE,
 	    "bgpd_rde_set_usage_tables", "number of as_set tables");
+
+	rde_queue_size = ometric_new(OMT_GAUGE,
+	    "bgpd_rde_queue_bytes", "memory usage of queued objects in bytes");
+	rde_queue_count = ometric_new(OMT_GAUGE,
+	    "bgpd_rde_queue_objects", "number of object in queue");
 
 	rde_evloop_count = ometric_new(OMT_COUNTER,
 	    "bgpd_rde_evloop", "number of times the evloop ran");
@@ -257,6 +269,13 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	ometric_set_int(peer_rr_eorr_transmit, p->stats.refresh_sent_eorr, ol);
 	ometric_set_int(peer_rr_eorr_receive, p->stats.refresh_rcvd_eorr, ol);
 
+	ometric_set_int_with_labels(peer_queue_count, p->stats.ibufq_msg_count,
+	    OKV("type"), OKV("ibuf_queue"), ol);
+	ometric_set_int_with_labels(peer_queue_count, p->stats.rib_entry_count,
+	    OKV("type"), OKV("rib_entry"), ol);
+	ometric_set_int_with_labels(peer_queue_size,
+	    p->stats.ibufq_payload_size, OKV("type"), OKV("ibuf_queue"), ol);
+
 	olabels_free(ol);
 	free(descr);
 }
@@ -342,10 +361,22 @@ ometric_rib_mem(struct rde_memstats *stats)
 	    OKV("type"), OKV("as_set"), NULL);
 	ometric_set_int_with_labels(rde_set_size, stats->pset_size,
 	    OKV("type"), OKV("prefix_set"), NULL);
+	ometric_set_int_with_labels(rde_set_size, stats->aspa_size,
+	    OKV("type"), OKV("aspa_set"), NULL);
 	ometric_set_int_with_labels(rde_set_count, stats->pset_cnt,
 	    OKV("type"), OKV("prefix_set"), NULL);
+	ometric_set_int_with_labels(rde_set_count, stats->aspa_cnt,
+	    OKV("type"), OKV("aspa_set"), NULL);
 	ometric_rib_mem_element("set_total", UINT64_MAX,
-	    stats->aset_size + stats->pset_size, UINT64_MAX);
+	    stats->aset_size + stats->pset_size + stats->aspa_size, UINT64_MAX);
+
+	ometric_set_int_with_labels(rde_queue_count, stats->rde_ibufq_msg_count,
+	    OKV("type"), OKV("ibuf_queue"), NULL);
+	ometric_set_int_with_labels(rde_queue_count, stats->rde_rib_entry_count,
+	    OKV("type"), OKV("rib_entry"), NULL);
+	ometric_set_int_with_labels(rde_queue_size,
+	    stats->rde_ibufq_payload_size, OKV("type"), OKV("ibuf_queue"),
+	    NULL);
 
 	ometric_set_int(rde_evloop_count, stats->rde_event_loop_count, NULL);
 	ometric_set_float_with_labels(rde_evloop_time,

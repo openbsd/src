@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.69 2026/02/13 18:27:40 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.70 2026/03/02 12:09:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -227,6 +227,7 @@ show_neighbor_msgstats(struct peer *p)
 	    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
 	    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
 	    p->stats.msg_rcvd_rrefresh);
+
 	printf("  Update statistics:\n");
 	printf("  %-15s %-10s %-10s %-10s\n", "", "Sent", "Received",
 	    "Pending");
@@ -247,6 +248,13 @@ show_neighbor_msgstats(struct peer *p)
 	    p->stats.refresh_sent_borr, p->stats.refresh_rcvd_borr);
 	printf("  %-15s %10llu %10llu\n", "End-of-RR",
 	    p->stats.refresh_sent_eorr, p->stats.refresh_rcvd_eorr);
+
+	printf("  Queue statistics:\n");
+	printf("  %-15s %-10s %-10s\n", "", "Count", "Size");
+	printf("  %-15s %10llu %10llu\n", "ibuf queue",
+	    p->stats.ibufq_msg_count, p->stats.ibufq_payload_size);
+	printf("  %-15s %10llu %-10s\n", "rib queue",
+	    p->stats.rib_entry_count, "-");
 }
 
 static void
@@ -1117,6 +1125,8 @@ show_rib_mem(struct rde_memstats *stats)
 	    fmt_mem(stats->aset_size));
 	printf("%10lld prefix-set elements using %s of memory\n",
 	    stats->pset_cnt, fmt_mem(stats->pset_size));
+	printf("%10lld aspa-set elements using %s of memory\n",
+	    stats->aspa_cnt, fmt_mem(stats->aspa_size));
 	printf("RIB using %s of memory\n", fmt_mem(pts +
 	    stats->prefix_cnt * sizeof(struct prefix) +
 	    stats->adjout_prefix_cnt * sizeof(struct adjout_prefix) +
@@ -1128,8 +1138,13 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->aspath_size + stats->attr_cnt * sizeof(struct attr) +
 	    stats->attr_data));
 	printf("Sets and filters using %s of memory\n",
-	    fmt_mem(stats->aset_size + stats->pset_size +
+	    fmt_mem(stats->aset_size + stats->pset_size + stats->aspa_size +
 	    stats->filter_set_size));
+
+	printf("\nRDE queue statistics\n");
+	printf("%10lld messages queued holding %s of data\n",
+	    stats->rde_ibufq_msg_count, fmt_mem(stats->rde_ibufq_payload_size));
+	printf("%10lld rib entries queued\n", stats->rde_rib_entry_count);
 
 	printf("\nRDE timing statistics\n");
 	printf("%10lld usec spent in the event loop for %llu rounds\n",
