@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tls.c,v 1.3 2023/07/03 09:38:08 claudio Exp $	*/
+/*	$OpenBSD: check_tls.c,v 1.4 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2017 Claudio Jeker <claudio@openbsd.org>
@@ -29,6 +29,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void	check_tls_read(int, short, void *);
 void	check_tls_write(int, short, void *);

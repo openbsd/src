@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.64 2024/11/21 13:38:45 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.65 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,6 +31,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 #define	CONTROL_BACKLOG	5
 

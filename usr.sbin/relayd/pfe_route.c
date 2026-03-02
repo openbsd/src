@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.14 2023/06/29 16:24:53 claudio Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.15 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2009 - 2011 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <errno.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void
 init_routes(struct relayd *env)

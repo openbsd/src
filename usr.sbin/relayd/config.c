@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.47 2024/10/31 13:37:44 claudio Exp $	*/
+/*	$OpenBSD: config.c,v 1.48 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 int
 config_init(struct relayd *env)

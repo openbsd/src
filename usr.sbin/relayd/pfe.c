@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.91 2024/06/17 08:36:56 sashan Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.92 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -33,6 +33,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void	 pfe_init(struct privsep *, struct privsep_proc *p, void *);
 void	 pfe_shutdown(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.92 2026/01/01 14:32:41 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.93 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -39,6 +39,7 @@
 
 #include "relayd.h"
 #include "http.h"
+#include "log.h"
 
 static int	_relay_lookup_url(struct ctl_relay_event *, char *, char *,
 		    char *, struct kv *);

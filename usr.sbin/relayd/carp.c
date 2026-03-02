@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.13 2026/01/01 08:30:33 rsadowski Exp $ */
+/*	$OpenBSD: carp.c,v 1.14 2026/03/02 19:28:01 rsadowski Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "relayd.h"
+#include "log.h"
 
 struct carpgroup {
 	TAILQ_ENTRY(carpgroup)	 entry;

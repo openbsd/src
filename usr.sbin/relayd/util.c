@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2024/09/20 02:00:46 jsg Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -27,6 +27,7 @@
 #include <ctype.h>
 
 #include "relayd.h"
+#include "log.h"
 
 const char *
 host_error(enum host_error he)

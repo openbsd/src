@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.47 2026/02/24 11:47:02 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.48 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <openssl/engine.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void	 ca_init(struct privsep *, struct privsep_proc *p, void *);
 void	 ca_launch(void);

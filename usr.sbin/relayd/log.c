@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.35 2017/03/21 12:06:56 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.36 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,30 +24,11 @@
 #include <errno.h>
 #include <time.h>
 
-static int	 debug;
-static int	 verbose;
-const char	*log_procname;
+#include "log.h"
 
-void	log_init(int, int);
-void	log_procinit(const char *);
-void	log_setverbose(int);
-int	log_getverbose(void);
-void	log_warn(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_warnx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_info(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_debug(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	logit(int, const char *, ...)
-	    __attribute__((__format__ (printf, 2, 3)));
-void	vlog(int, const char *, va_list)
-	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-__dead void fatalx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
+static int		 debug;
+static int		 verbose;
+static const char	*log_procname;
 
 void
 log_init(int n_debug, int facility)
@@ -168,7 +149,7 @@ log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
 
-	if (verbose > 1) {
+	if (verbose) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
 		va_end(ap);
@@ -189,10 +170,10 @@ vfatalc(int code, const char *emsg, va_list ap)
 		sep = "";
 	}
 	if (code)
-		logit(LOG_CRIT, "%s: %s%s%s",
+		logit(LOG_CRIT, "fatal in %s: %s%s%s",
 		    log_procname, s, sep, strerror(code));
 	else
-		logit(LOG_CRIT, "%s%s%s", log_procname, sep, s);
+		logit(LOG_CRIT, "fatal in %s%s%s", log_procname, sep, s);
 }
 
 void

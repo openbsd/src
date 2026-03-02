@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx_control.c,v 1.7 2024/01/17 10:01:24 claudio Exp $	*/
+/*	$OpenBSD: agentx_control.c,v 1.8 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
@@ -38,6 +38,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 #define RELAYD_MIB	"1.3.6.1.4.1.30155.3"
 #define SNMP_ELEMENT(x...)	do {				\

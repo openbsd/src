@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.37 2023/06/25 08:07:39 op Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.38 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,7 @@
 #include <openssl/err.h>
 
 #include "relayd.h"
+#include "log.h"
 
 int	ssl_password_cb(char *, int, int, void *);
 

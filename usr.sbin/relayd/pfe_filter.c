@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.66 2024/06/17 08:02:57 sashan Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.67 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -38,6 +38,7 @@
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #include "relayd.h"
+#include "log.h"
 
 int	 transaction_init(struct relayd *, const char *);
 int	 transaction_commit(struct relayd *);

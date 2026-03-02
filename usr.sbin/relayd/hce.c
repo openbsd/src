@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.82 2024/05/18 06:34:46 jsg Exp $	*/
+/*	$OpenBSD: hce.c,v 1.83 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -28,6 +28,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void	 hce_init(struct privsep *, struct privsep_proc *p, void *);
 void	 hce_launch_checks(int, short, void *);

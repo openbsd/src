@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_icmp.c,v 1.48 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: check_icmp.c,v 1.49 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -35,6 +35,7 @@
 #include <stdlib.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void	icmp_setup(struct relayd *, struct ctl_icmp_event *, int);
 void	check_icmp_add(struct ctl_icmp_event *, int, struct timeval *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.196 2026/01/01 14:34:57 rsadowski Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.197 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,7 @@
 #include <tls.h>
 
 #include "relayd.h"
+#include "log.h"
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 

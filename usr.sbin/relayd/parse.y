@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.259 2026/02/18 22:27:03 kirill Exp $	*/
+/*	$OpenBSD: parse.y,v 1.260 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -57,6 +57,7 @@
 
 #include "relayd.h"
 #include "http.h"
+#include "log.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {

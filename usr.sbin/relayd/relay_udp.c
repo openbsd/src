@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.51 2024/05/18 06:34:46 jsg Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.52 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2013 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 extern volatile sig_atomic_t relay_sessions;
 extern objid_t relay_conid;

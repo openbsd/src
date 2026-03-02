@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.261 2026/02/18 22:27:03 kirill Exp $	*/
+/*	$OpenBSD: relay.c,v 1.262 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -42,6 +42,7 @@
 #include <tls.h>
 
 #include "relayd.h"
+#include "log.h"
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 

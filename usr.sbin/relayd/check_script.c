@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.22 2021/02/22 01:24:59 jmatthew Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.23 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -27,6 +27,7 @@
 #include <pwd.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void	 script_sig_alarm(int);
 

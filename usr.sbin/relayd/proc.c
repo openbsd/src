@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.52 2024/11/21 13:38:45 claudio Exp $	*/
+/*	$OpenBSD: proc.c,v 1.53 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -35,6 +35,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    char **);

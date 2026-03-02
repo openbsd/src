@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.61 2023/07/03 09:38:08 claudio Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.62 2026/03/02 19:28:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -34,6 +34,7 @@
 #include <imsg.h>
 
 #include "relayd.h"
+#include "log.h"
 
 void	tcp_write(int, short, void *);
 void	tcp_host_up(struct ctl_tcp_event *);
