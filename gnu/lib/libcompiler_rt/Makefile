@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2025/09/10 03:38:56 gkoehler Exp $
+# $OpenBSD: Makefile,v 1.15 2026/03/02 20:33:49 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -303,6 +303,11 @@ SRCS+=	divxc3.c \
 	mulxc3.c \
 	powixf2.c \
 	trunctfxf2.c
+
+.if ${RTARCH} == "x86_64"
+# Quad-precision float support (for __float128)
+GEN_SRCS+=	${GEN_TF_SRCS}
+.endif
 .endif
 
 .if ${RTARCH} == "mips64" || ${RTARCH} == "mips64el"
