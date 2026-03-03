@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.258 2026/01/30 04:25:52 gnezdo Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.259 2026/03/03 14:03:44 claudio Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -1788,12 +1788,20 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		return;
 	}
 
+	if ((ni = ieee80211_find_node(ic, wh->i_addr2)) == NULL) {
+		ni = ieee80211_alloc_node(ic, wh->i_addr2);
+		if (ni == NULL)
+			return;
+		is_new = 1;
+	} else
+		is_new = 0;
+
 #ifdef IEEE80211_DEBUG
 	if (ieee80211_debug > 1 &&
-	    (ni == NULL || ic->ic_state == IEEE80211_S_SCAN ||
+	    (is_new || ic->ic_state == IEEE80211_S_SCAN ||
 	    (ic->ic_flags & IEEE80211_F_BGSCAN))) {
 		printf("%s: %s%s on chan %u (bss chan %u) ",
-		    __func__, (ni == NULL ? "new " : ""),
+		    __func__, (is_new ? "new " : ""),
 		    isprobe ? "probe response" : "beacon",
 		    chan, bchan);
 		ieee80211_print_essid(ssid + 2, ssid[1]);
@@ -1802,14 +1810,6 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			__func__, capinfo, bintval, erp);
 	}
 #endif
-
-	if ((ni = ieee80211_find_node(ic, wh->i_addr2)) == NULL) {
-		ni = ieee80211_alloc_node(ic, wh->i_addr2);
-		if (ni == NULL)
-			return;
-		is_new = 1;
-	} else
-		is_new = 0;
 
 	ni->ni_chan = &ic->ic_channels[chan];
 
