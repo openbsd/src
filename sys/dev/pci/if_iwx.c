@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.201 2026/03/02 10:00:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.202 2026/03/03 09:58:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9731,9 +9731,16 @@ iwx_send_update_mcc_cmd(struct iwx_softc *sc, const char *alpha2)
 		.data = { &mcc_cmd },
 	};
 	struct iwx_rx_packet *pkt;
-	struct iwx_mcc_update_resp *resp;
 	size_t resp_len;
-	int err;
+	int err, resp_version;
+
+	resp_version = iwx_lookup_notif_ver(sc, IWX_LONG_GROUP,
+	    IWX_MCC_UPDATE_CMD);
+	if (resp_version >= 8) {
+		printf("%s: unsupported MCC update command response "
+		    "version %u\n", DEVNAME(sc), resp_version);
+		return ENOTSUP;
+	}
 
 	memset(&mcc_cmd, 0, sizeof(mcc_cmd));
 	mcc_cmd.mcc = htole16(alpha2[0] << 8 | alpha2[1]);
@@ -9757,23 +9764,55 @@ iwx_send_update_mcc_cmd(struct iwx_softc *sc, const char *alpha2)
 	}
 
 	resp_len = iwx_rx_packet_payload_len(pkt);
-	if (resp_len < sizeof(*resp)) {
-		err = EIO;
-		goto out;
+
+
+	if (isset(sc->sc_enabled_capa,
+	    IWX_UCODE_TLV_CAPA_MCC_UPDATE_11AX_SUPPORT)) {
+		struct iwx_mcc_update_resp_v4 *resp;
+
+		if (resp_len < sizeof(*resp)) {
+			err = EIO;
+			goto out;
+		}
+
+		resp = (void *)pkt->data;
+		if (resp_len != sizeof(*resp) +
+		    resp->n_channels * sizeof(resp->channels[0])) {
+			err = EIO;
+			goto out;
+		}
+
+		DPRINTF(("MCC status=0x%x mcc=0x%x cap=0x%x time=0x%x "
+		    "geo_info=0x%x source_id=0x%d n_channels=%u\n",
+		    resp->status, resp->mcc, resp->cap, resp->time,
+		    resp->geo_info, resp->source_id, resp->n_channels));
+
+		/* Update channel map and our scan configuration. */
+		iwx_init_channel_map(sc, NULL, resp->channels,
+		    resp->n_channels);
+	} else {
+		struct iwx_mcc_update_resp *resp;
+
+		if (resp_len < sizeof(*resp)) {
+			err = EIO;
+			goto out;
+		}
+		resp = (void *)pkt->data;
+		if (resp_len != sizeof(*resp) +
+		    resp->n_channels * sizeof(resp->channels[0])) {
+			err = EIO;
+			goto out;
+		}
+
+		DPRINTF(("MCC status=0x%x mcc=0x%x cap=0x%x time=0x%x "
+		    "geo_info=0x%x source_id=0x%d n_channels=%u\n",
+		    resp->status, resp->mcc, resp->cap, resp->time,
+		    resp->geo_info, resp->source_id, resp->n_channels));
+
+		/* Update channel map and our scan configuration. */
+		iwx_init_channel_map(sc, NULL, resp->channels,
+		    resp->n_channels);
 	}
-
-	resp = (void *)pkt->data;
-	if (resp_len != sizeof(*resp) +
-	    resp->n_channels * sizeof(resp->channels[0])) {
-		err = EIO;
-		goto out;
-	}
-
-	DPRINTF(("MCC status=0x%x mcc=0x%x cap=0x%x time=0x%x geo_info=0x%x source_id=0x%d n_channels=%u\n",
-	    resp->status, resp->mcc, resp->cap, resp->time, resp->geo_info, resp->source_id, resp->n_channels));
-
-	/* Update channel map for net80211 and our scan configuration. */
-	iwx_init_channel_map(sc, NULL, resp->channels, resp->n_channels);
 
 out:
 	iwx_free_resp(sc, &hcmd);

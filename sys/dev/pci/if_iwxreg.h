@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.60 2026/03/02 10:00:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.61 2026/03/03 09:58:52 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -8515,6 +8515,34 @@ struct iwx_mcc_update_resp_v3 {
 	uint32_t channels[0];
 } __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_3 */
 
+/**
+ * struct iwx_mcc_update_resp_v4 - response to MCC_UPDATE_CMD.
+ * Contains the new channel control profile map, if changed, and the new MCC
+ * (mobile country code).
+ * The new MCC may be different than what was requested in MCC_UPDATE_CMD.
+ * @status: see &enum iwx_mcc_update_status
+ * @mcc: the new applied MCC
+ * @cap: capabilities for all channels which matches the MCC
+ * @time: time elapsed from the MCC test start (in units of 30 seconds)
+ * @geo_info: geographic specific profile information
+ *	see &enum iwl_geo_information.
+ * @source_id: the MCC source, see iwl_mcc_source
+ * @reserved: for four bytes alignment.
+ * @n_channels: number of channels in @channels_data.
+ * @channels: channel control data map, DWORD for each channel. Only the first
+ *	16bits are used.
+ */
+struct iwx_mcc_update_resp_v4 {
+	uint32_t status;
+	uint16_t mcc;
+	uint16_t cap;
+	uint16_t time;
+	uint16_t geo_info;
+	uint8_t source_id;
+	uint8_t reserved[3];
+	uint32_t n_channels;
+	uint32_t channels[];
+} __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_4 */
 /**
  * geographic information.
  * @GEO_NO_INFO: no special info for this geo profile.
