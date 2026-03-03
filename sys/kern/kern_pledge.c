@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.339 2026/03/02 21:52:16 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.340 2026/03/03 05:04:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -687,7 +687,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 			    *cp; cp++)
 				if (cp[0] == '/' && cp[1] == '.' && cp[2] == '.' &&
 				    (cp[3] == '/' || cp[3] == '\0'))
-					break;
+					goto nozoneinfo;
 			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
 		}
@@ -696,7 +696,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
 		}
-
+nozoneinfo:
 		break;
 	case SYS_stat:
 		/* XXX go library stats /etc/hosts, remove this soon */
