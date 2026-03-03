@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.209 2026/02/06 16:27:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.210 2026/03/03 14:05:20 claudio Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2144,8 +2144,11 @@ ieee80211_release_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	int s;
 	void (*ni_unref_cb)(struct ieee80211com *, struct ieee80211_node *);
 
-	DPRINTF(("%s refcnt %u\n", ether_sprintf(ni->ni_macaddr),
-	    ni->ni_refcnt));
+#ifdef IEEE80211_DEBUG
+	if (ieee80211_debug > 1)
+		DPRINTF(("%s refcnt %u\n", ether_sprintf(ni->ni_macaddr),
+		    ni->ni_refcnt));
+#endif
 	s = splnet();
 	if (ieee80211_node_decref(ni) == 0) {
 		if (ni->ni_unref_cb) {
