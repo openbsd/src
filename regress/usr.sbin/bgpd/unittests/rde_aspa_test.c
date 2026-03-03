@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa_test.c,v 1.6 2025/02/21 06:10:59 anton Exp $ */
+/*	$OpenBSD: rde_aspa_test.c,v 1.7 2026/03/03 10:10:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -21,6 +21,8 @@
 #include <stdio.h>
 
 #include "rde_aspa.c"
+
+struct rde_memstats rdemem;
 
 static struct aspath	*build_aspath(const uint32_t *, uint32_t, int);
 static const char	*print_aspath(const uint32_t *, uint32_t);
