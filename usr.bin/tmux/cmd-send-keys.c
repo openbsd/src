@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.78 2025/04/09 07:03:04 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.79 2026/03/03 12:26:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,8 @@ const struct cmd_entry cmd_send_keys_entry = {
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
-	.flags = CMD_AFTERHOOK|CMD_CLIENT_CFLAG|CMD_CLIENT_CANFAIL,
+	.flags = CMD_AFTERHOOK|CMD_CLIENT_CFLAG|CMD_CLIENT_CANFAIL|
+		 CMD_READONLY,
 	.exec = cmd_send_keys_exec
 };
 
@@ -166,6 +167,11 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 	u_int				 i, np = 1;
 	u_int				 count = args_count(args);
 	char				*cause = NULL;
+
+	if (tc->flags & CLIENT_READONLY && !args_has(args, 'X')) {
+		cmdq_error(item, "client is read-only");
+		return (CMD_RETURN_ERROR);
+	}
 
 	if (args_has(args, 'N')) {
 		np = args_strtonum_and_expand(args, 'N', 1, UINT_MAX, item,

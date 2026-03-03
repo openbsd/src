@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.49 2024/11/12 09:32:56 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.50 2026/03/03 12:26:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,7 +36,7 @@ const struct cmd_entry cmd_copy_mode_entry = {
 	.source =  { 's', CMD_FIND_PANE, 0 },
 	.target = { 't', CMD_FIND_PANE, 0 },
 
-	.flags = CMD_AFTERHOOK,
+	.flags = CMD_AFTERHOOK|CMD_READONLY,
 	.exec = cmd_copy_mode_exec
 };
 

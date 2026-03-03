@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.162 2026/02/24 08:22:13 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.163 2026/03/03 12:26:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -688,6 +688,7 @@ key_bindings_dispatch(struct key_binding *bd, struct cmdq_item *item,
 		readonly = 1;
 	else
 		readonly = cmd_list_all_have(bd->cmdlist, CMD_READONLY);
+
 	if (!readonly)
 		new_item = cmdq_get_callback(key_bindings_read_only, NULL);
 	else {
