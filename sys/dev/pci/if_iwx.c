@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.203 2026/03/03 14:10:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.204 2026/03/03 17:46:54 kirill Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -402,10 +402,7 @@ int	iwx_flush_sta(struct iwx_softc *, struct iwx_node *);
 int	iwx_beacon_filter_send_cmd(struct iwx_softc *,
 	    struct iwx_beacon_filter_cmd *);
 int	iwx_update_beacon_abort(struct iwx_softc *, struct iwx_node *, int);
-void	iwx_power_build_cmd(struct iwx_softc *, struct iwx_node *,
-	    struct iwx_mac_power_cmd *);
-int	iwx_power_mac_update_mode(struct iwx_softc *, struct iwx_node *);
-int	iwx_power_update_device(struct iwx_softc *);
+int	iwx_set_pslevel(struct iwx_softc *, int, int, int);
 int	iwx_enable_beacon_filter(struct iwx_softc *, struct iwx_node *);
 int	iwx_disable_beacon_filter(struct iwx_softc *);
 int	iwx_add_sta_cmd(struct iwx_softc *, struct iwx_node *, int);
@@ -6629,68 +6626,80 @@ iwx_update_beacon_abort(struct iwx_softc *sc, struct iwx_node *in, int enable)
 	return iwx_beacon_filter_send_cmd(sc, &cmd);
 }
 
-void
-iwx_power_build_cmd(struct iwx_softc *sc, struct iwx_node *in,
-    struct iwx_mac_power_cmd *cmd)
+int
+iwx_set_pslevel(struct iwx_softc *sc, int dtim, int level, int async)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = &in->in_ni;
+	struct iwx_device_power_cmd dcmd = { };
+	struct iwx_mac_power_cmd mcmd;
+	struct iwx_node *in;
+	struct ieee80211_node *ni;
+	const struct iwx_pmgt *pmgt;
+	int range, skip_dtim, cmd_flags, err;
 	int dtim_period, dtim_msec, keep_alive;
 
-	cmd->id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(in->in_id,
-	    in->in_color));
-	if (ni->ni_dtimperiod)
-		dtim_period = ni->ni_dtimperiod;
-	else
-		dtim_period = 1;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		return 0;
 
-	/*
-	 * Regardless of power management state the driver must set
-	 * keep alive period. FW will use it for sending keep alive NDPs
-	 * immediately after association. Check that keep alive period
-	 * is at least 3 * DTIM.
-	 */
+	if (dtim == 0) {
+		dtim = 1;
+		skip_dtim = 0;
+	} else
+		skip_dtim = -1;
+
+	if (dtim <= 2)
+		range = 0;
+	else if (dtim <= 10)
+		range = 1;
+	else
+		range = 2;
+
+	pmgt = &iwx_pmgt[range][level];
+	if (skip_dtim == -1)
+		skip_dtim = pmgt->skip_dtim;
+
+	if (level != 0)
+		dcmd.flags = htole16(IWX_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK);
+
+	cmd_flags = async ? IWX_CMD_ASYNC : 0;
+	err = iwx_send_cmd_pdu(sc, IWX_POWER_TABLE_CMD, cmd_flags,
+	    sizeof(dcmd), &dcmd);
+	if (err)
+		return err;
+
+	if ((sc->sc_flags & IWX_FLAG_MAC_ACTIVE) == 0)
+		return 0;
+
+	in = (void *)ic->ic_bss;
+	ni = &in->in_ni;
+
+	memset(&mcmd, 0, sizeof(mcmd));
+	mcmd.id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(in->in_id,
+	    in->in_color));
+	dtim_period = ni->ni_dtimperiod ? ni->ni_dtimperiod : 1;
 	dtim_msec = dtim_period * ni->ni_intval;
 	keep_alive = MAX(3 * dtim_msec, 1000 * IWX_POWER_KEEP_ALIVE_PERIOD_SEC);
 	keep_alive = roundup(keep_alive, 1000) / 1000;
-	cmd->keep_alive_seconds = htole16(keep_alive);
+	mcmd.keep_alive_seconds = htole16(keep_alive);
 
-	if (ic->ic_opmode != IEEE80211_M_MONITOR)
-		cmd->flags = htole16(IWX_POWER_FLAGS_POWER_SAVE_ENA_MSK);
-}
+	if (level != 0) {
+		mcmd.flags = htole16(IWX_POWER_FLAGS_POWER_SAVE_ENA_MSK |
+		    IWX_POWER_FLAGS_POWER_MANAGEMENT_ENA_MSK);
+		mcmd.rx_data_timeout = htole32(pmgt->rxtimeout * 1024);
+		mcmd.tx_data_timeout = htole32(pmgt->txtimeout * 1024);
+		if (skip_dtim != 0) {
+			mcmd.flags |= htole16(IWX_POWER_FLAGS_SKIP_OVER_DTIM_MSK);
+			mcmd.skip_dtim_periods = skip_dtim + 1;
+		}
+	}
 
-int
-iwx_power_mac_update_mode(struct iwx_softc *sc, struct iwx_node *in)
-{
-	int err;
-	int ba_enable;
-	struct iwx_mac_power_cmd cmd;
-
-	memset(&cmd, 0, sizeof(cmd));
-
-	iwx_power_build_cmd(sc, in, &cmd);
-
-	err = iwx_send_cmd_pdu(sc, IWX_MAC_PM_POWER_TABLE, 0,
-	    sizeof(cmd), &cmd);
+	err = iwx_send_cmd_pdu(sc, IWX_MAC_PM_POWER_TABLE, cmd_flags,
+	    sizeof(mcmd), &mcmd);
 	if (err != 0)
 		return err;
 
-	ba_enable = !!(cmd.flags &
-	    htole16(IWX_POWER_FLAGS_POWER_MANAGEMENT_ENA_MSK));
-	return iwx_update_beacon_abort(sc, in, ba_enable);
-}
-
-int
-iwx_power_update_device(struct iwx_softc *sc)
-{
-	struct iwx_device_power_cmd cmd = { };
-	struct ieee80211com *ic = &sc->sc_ic;
-
-	if (ic->ic_opmode != IEEE80211_M_MONITOR)
-		cmd.flags = htole16(IWX_DEVICE_POWER_FLAGS_POWER_SAVE_ENA_MSK);
-
-	return iwx_send_cmd_pdu(sc,
-	    IWX_POWER_TABLE_CMD, 0, sizeof(cmd), &cmd);
+	return iwx_update_beacon_abort(sc, in, !!(mcmd.flags &
+	    htole16(IWX_POWER_FLAGS_POWER_MANAGEMENT_ENA_MSK)));
 }
 
 int
@@ -8970,7 +8979,8 @@ iwx_run(struct iwx_softc *sc)
 		return err;
 	}
 
-	err = iwx_power_update_device(sc);
+	err = iwx_set_pslevel(sc, 0,
+	    (ic->ic_flags & IEEE80211_F_PMGTON) ? 3 : 0, 1);
 	if (err) {
 		printf("%s: could not send power command (error %d)\n",
 		    DEVNAME(sc), err);
@@ -8991,13 +9001,6 @@ iwx_run(struct iwx_softc *sc)
 #endif
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		return 0;
-
-	err = iwx_power_mac_update_mode(sc, in);
-	if (err) {
-		printf("%s: could not update MAC power (error %d)\n",
-		    DEVNAME(sc), err);
-		return err;
-	}
 
 	/* Start at lowest available bit-rate. Firmware will raise. */
 	in->in_ni.ni_txrate = 0;
@@ -9929,7 +9932,8 @@ iwx_init_hw(struct iwx_softc *sc)
 			goto err;
 	}
 
-	err = iwx_power_update_device(sc);
+	err = iwx_set_pslevel(sc, 0,
+	    (ic->ic_flags & IEEE80211_F_PMGTON) ? 3 : 0, 0);
 	if (err) {
 		printf("%s: could not send power command (error %d)\n",
 		    DEVNAME(sc), err);
@@ -10283,6 +10287,7 @@ int
 iwx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwx_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	int s, err = 0, generation = sc->sc_generation;
 
 	/*
@@ -10312,6 +10317,21 @@ iwx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				iwx_stop(ifp);
+		}
+		break;
+
+	case SIOCS80211POWER:
+		err = ieee80211_ioctl(ifp, cmd, data);
+		if (err != ENETRESET)
+			break;
+		if (ic->ic_state == IEEE80211_S_RUN) {
+			if (ic->ic_flags & IEEE80211_F_PMGTON)
+				err = iwx_set_pslevel(sc, 0, 3, 0);
+			else	/* back to CAM */
+				err = iwx_set_pslevel(sc, 0, 0, 0);
+		} else {
+			/* Defer until transition to IEEE80211_S_RUN. */
+			err = 0;
 		}
 		break;
 
@@ -12225,6 +12245,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_caps =
 	    IEEE80211_C_QOS | IEEE80211_C_TX_AMPDU | /* A-MPDU */
 	    IEEE80211_C_ADDBA_OFFLOAD | /* device sends ADDBA/DELBA frames */
+	    IEEE80211_C_PMGT |		/* power management */
 	    IEEE80211_C_WEP |		/* WEP */
 	    IEEE80211_C_RSN |		/* WPA/RSN */
 	    IEEE80211_C_SCANALL |	/* device scans all channels at once */
@@ -12233,6 +12254,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE |	/* short preamble supported */
 	    IEEE80211_C_MFP;		/* management frame protection */
+	ic->ic_flags |= IEEE80211_F_PMGTON;
 
 	ic->ic_htcaps = IEEE80211_HTCAP_SGI20 | IEEE80211_HTCAP_SGI40;
 	ic->ic_htcaps |= IEEE80211_HTCAP_CBW20_40;

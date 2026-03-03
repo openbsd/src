@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.61 2026/03/03 09:58:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.62 2026/03/03 17:46:54 kirill Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -5337,6 +5337,42 @@ struct iwx_mac_power_cmd {
 
 #define IWX_DEFAULT_PS_TX_DATA_TIMEOUT      (100 * 1000)
 #define IWX_DEFAULT_PS_RX_DATA_TIMEOUT      (100 * 1000)
+
+#define IWX_NDTIMRANGES		3
+#define IWX_NPOWERLEVELS	6
+static const struct iwx_pmgt {
+	uint32_t	rxtimeout;
+	uint32_t	txtimeout;
+	int		skip_dtim;
+} iwx_pmgt[IWX_NDTIMRANGES][IWX_NPOWERLEVELS] = {
+	/* DTIM <= 2 */
+	{
+	{   0,   0, 0 },	/* CAM */
+	{ 200, 500, 0 },	/* PS level 1 */
+	{ 200, 300, 0 },	/* PS level 2 */
+	{  50, 100, 0 },	/* PS level 3 */
+	{  50,  25, 1 },	/* PS level 4 */
+	{  25,  25, 2 }		/* PS level 5 */
+	},
+	/* 3 <= DTIM <= 10 */
+	{
+	{   0,   0, 0 },	/* CAM */
+	{ 200, 500, 0 },	/* PS level 1 */
+	{ 200, 300, 0 },	/* PS level 2 */
+	{  50, 100, 0 },	/* PS level 3 */
+	{  50,  25, 1 },	/* PS level 4 */
+	{  25,  25, 2 }		/* PS level 5 */
+	},
+	/* DTIM >= 11 */
+	{
+	{   0,   0, 0 },	/* CAM */
+	{ 200, 500, 0 },	/* PS level 1 */
+	{ 200, 300, 0 },	/* PS level 2 */
+	{  50, 100, 0 },	/* PS level 3 */
+	{  50,  25, 0 },	/* PS level 4 */
+	{  25,  25, 0 }		/* PS level 5 */
+	}
+};
 
 /*
  * struct iwx_uapsd_misbehaving_ap_notif - FW sends this notification when
