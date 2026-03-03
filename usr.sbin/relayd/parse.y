@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.260 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: parse.y,v 1.261 2026/03/03 19:51:41 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -922,8 +922,8 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 				YYERROR;
 			}
 			if (asprintf(&table->sendbuf,
-			    "HEAD %s HTTP/1.%c\r\n%s\r\n",
-			    $2, strlen($3) ? '1' : '0', $3) == -1)
+			    "HEAD %s HTTP/1.%c\r\nUser-Agent: %s\r\n%s\r\n",
+			    $2, strlen($3) ? '1' : '0', RELAYD_SERVERNAME, $3) == -1)
 				fatal("asprintf");
 			free($2);
 			free($3);
@@ -937,8 +937,8 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 			}
 			table->conf.check = CHECK_HTTP_DIGEST;
 			if (asprintf(&table->sendbuf,
-			    "GET %s HTTP/1.%c\r\n%s\r\n",
-			    $2, strlen($3) ? '1' : '0', $3) == -1)
+			    "GET %s HTTP/1.%c\r\nUser-Agent: %s\r\n%s\r\n",
+			    $2, strlen($3) ? '1' : '0', RELAYD_SERVERNAME, $3) == -1)
 				fatal("asprintf");
 			free($2);
 			free($3);
