@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.202 2026/03/03 09:58:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.203 2026/03/03 14:10:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1385,6 +1385,7 @@ iwx_read_firmware(struct iwx_softc *sc)
 			capa = (struct iwx_ucode_capa *)tlv_data;
 			idx = le32toh(capa->api_index);
 			if (idx >= howmany(IWX_NUM_UCODE_TLV_CAPA, 32)) {
+				err = EINVAL;
 				goto parse_out;
 			}
 			for (i = 0; i < 32; i++) {
