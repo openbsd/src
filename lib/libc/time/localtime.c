@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.72 2025/11/20 10:59:56 tb Exp $ */
+/*	$OpenBSD: localtime.c,v 1.73 2026/03/03 03:01:25 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -306,14 +306,20 @@ differ_by_repeat(time_t t1, time_t t0)
 static int
 tzpath_ok(const char *name)
 {
+	const char *cp;
+
 	/* Reject absolute paths that don't start with TZDIR.  */
 	if (name[0] == '/' && (strncmp(name, TZDIR, sizeof(TZDIR) - 1) != 0 ||
 	    name[sizeof(TZDIR) - 1] != '/'))
 		return 0;
 
-	/* Reject paths that contain "../". */
-	if (strstr(name, "../") != NULL)
-		return 0;
+	/* Reject paths that contain "/../" or end in "/..". */
+	name += sizeof(TZDIR) - 1;
+	for (cp = name; *cp != '\0'; cp++) {
+		if (cp[0] == '/' && cp[1] == '.' && cp[2] == '.' &&
+		    (cp[3] == '/' || cp[3] == '\0'))
+			return 0;
+	}
 
 	return 1;
 }
