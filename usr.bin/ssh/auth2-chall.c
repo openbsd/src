@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-chall.c,v 1.59 2026/02/06 22:59:18 dtucker Exp $ */
+/* $OpenBSD: auth2-chall.c,v 1.60 2026/03/03 09:57:25 dtucker Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -44,7 +44,7 @@
 
 static int auth2_challenge_start(struct ssh *);
 static int send_userauth_info_request(struct ssh *);
-static int input_userauth_info_response(int, u_int32_t, struct ssh *);
+static int input_userauth_info_response(int, uint32_t, struct ssh *);
 
 extern KbdintDevice mm_bsdauth_device;
 
@@ -252,7 +252,7 @@ send_userauth_info_request(struct ssh *ssh)
 }
 
 static int
-input_userauth_info_response(int type, u_int32_t seq, struct ssh *ssh)
+input_userauth_info_response(int type, uint32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	KbdintAuthctxt *kbdintctxt;

@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-gss.c,v 1.38 2026/02/08 15:28:01 dtucker Exp $ */
+/* $OpenBSD: auth2-gss.c,v 1.39 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -51,10 +51,10 @@
 extern ServerOptions options;
 extern struct authmethod_cfg methodcfg_gssapi;
 
-static int input_gssapi_token(int type, u_int32_t plen, struct ssh *ssh);
-static int input_gssapi_mic(int type, u_int32_t plen, struct ssh *ssh);
-static int input_gssapi_exchange_complete(int type, u_int32_t plen, struct ssh *ssh);
-static int input_gssapi_errtok(int, u_int32_t, struct ssh *);
+static int input_gssapi_token(int type, uint32_t plen, struct ssh *ssh);
+static int input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh);
+static int input_gssapi_exchange_complete(int type, uint32_t plen, struct ssh *ssh);
+static int input_gssapi_errtok(int, uint32_t, struct ssh *);
 
 /*
  * We only support those mechanisms that we know about (ie ones that we know
@@ -141,7 +141,7 @@ userauth_gssapi(struct ssh *ssh, const char *method)
 }
 
 static int
-input_gssapi_token(int type, u_int32_t plen, struct ssh *ssh)
+input_gssapi_token(int type, uint32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	Gssctxt *gssctxt;
@@ -205,7 +205,7 @@ input_gssapi_token(int type, u_int32_t plen, struct ssh *ssh)
 }
 
 static int
-input_gssapi_errtok(int type, u_int32_t plen, struct ssh *ssh)
+input_gssapi_errtok(int type, uint32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	Gssctxt *gssctxt;
@@ -249,7 +249,7 @@ input_gssapi_errtok(int type, u_int32_t plen, struct ssh *ssh)
  */
 
 static int
-input_gssapi_exchange_complete(int type, u_int32_t plen, struct ssh *ssh)
+input_gssapi_exchange_complete(int type, uint32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	int r, authenticated;
@@ -277,7 +277,7 @@ input_gssapi_exchange_complete(int type, u_int32_t plen, struct ssh *ssh)
 }
 
 static int
-input_gssapi_mic(int type, u_int32_t plen, struct ssh *ssh)
+input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	Gssctxt *gssctxt;

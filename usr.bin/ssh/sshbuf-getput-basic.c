@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-getput-basic.c,v 1.14 2025/11/21 01:29:06 djm Exp $	*/
+/*	$OpenBSD: sshbuf-getput-basic.c,v 1.15 2026/03/03 09:57:25 dtucker Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -41,7 +41,7 @@ sshbuf_get(struct sshbuf *buf, void *v, size_t len)
 }
 
 int
-sshbuf_get_u64(struct sshbuf *buf, u_int64_t *valp)
+sshbuf_get_u64(struct sshbuf *buf, uint64_t *valp)
 {
 	const u_char *p = sshbuf_ptr(buf);
 	int r;
@@ -54,7 +54,7 @@ sshbuf_get_u64(struct sshbuf *buf, u_int64_t *valp)
 }
 
 int
-sshbuf_get_u32(struct sshbuf *buf, u_int32_t *valp)
+sshbuf_get_u32(struct sshbuf *buf, uint32_t *valp)
 {
 	const u_char *p = sshbuf_ptr(buf);
 	int r;
@@ -67,7 +67,7 @@ sshbuf_get_u32(struct sshbuf *buf, u_int32_t *valp)
 }
 
 int
-sshbuf_get_u16(struct sshbuf *buf, u_int16_t *valp)
+sshbuf_get_u16(struct sshbuf *buf, uint16_t *valp)
 {
 	const u_char *p = sshbuf_ptr(buf);
 	int r;
@@ -88,7 +88,7 @@ sshbuf_get_u8(struct sshbuf *buf, u_char *valp)
 	if ((r = sshbuf_consume(buf, 1)) < 0)
 		return r;
 	if (valp != NULL)
-		*valp = (u_int8_t)*p;
+		*valp = (uint8_t)*p;
 	return 0;
 }
 
@@ -120,7 +120,7 @@ check_roffset(const struct sshbuf *buf, size_t offset, size_t len,
 }
 
 int
-sshbuf_peek_u64(const struct sshbuf *buf, size_t offset, u_int64_t *valp)
+sshbuf_peek_u64(const struct sshbuf *buf, size_t offset, uint64_t *valp)
 {
 	const u_char *p = NULL;
 	int r;
@@ -135,7 +135,7 @@ sshbuf_peek_u64(const struct sshbuf *buf, size_t offset, u_int64_t *valp)
 }
 
 int
-sshbuf_peek_u32(const struct sshbuf *buf, size_t offset, u_int32_t *valp)
+sshbuf_peek_u32(const struct sshbuf *buf, size_t offset, uint32_t *valp)
 {
 	const u_char *p = NULL;
 	int r;
@@ -150,7 +150,7 @@ sshbuf_peek_u32(const struct sshbuf *buf, size_t offset, u_int32_t *valp)
 }
 
 int
-sshbuf_peek_u16(const struct sshbuf *buf, size_t offset, u_int16_t *valp)
+sshbuf_peek_u16(const struct sshbuf *buf, size_t offset, uint16_t *valp)
 {
 	const u_char *p = NULL;
 	int r;
@@ -236,7 +236,7 @@ int
 sshbuf_peek_string_direct(const struct sshbuf *buf, const u_char **valp,
     size_t *lenp)
 {
-	u_int32_t len;
+	uint32_t len;
 	const u_char *p = sshbuf_ptr(buf);
 
 	if (valp != NULL)
@@ -301,7 +301,7 @@ sshbuf_get_cstring(struct sshbuf *buf, char **valp, size_t *lenp)
 int
 sshbuf_get_stringb(struct sshbuf *buf, struct sshbuf *v)
 {
-	u_int32_t len;
+	uint32_t len;
 	u_char *p;
 	int r;
 
@@ -385,7 +385,7 @@ sshbuf_putfv(struct sshbuf *buf, const char *fmt, va_list ap)
 }
 
 int
-sshbuf_put_u64(struct sshbuf *buf, u_int64_t val)
+sshbuf_put_u64(struct sshbuf *buf, uint64_t val)
 {
 	u_char *p;
 	int r;
@@ -397,7 +397,7 @@ sshbuf_put_u64(struct sshbuf *buf, u_int64_t val)
 }
 
 int
-sshbuf_put_u32(struct sshbuf *buf, u_int32_t val)
+sshbuf_put_u32(struct sshbuf *buf, uint32_t val)
 {
 	u_char *p;
 	int r;
@@ -409,7 +409,7 @@ sshbuf_put_u32(struct sshbuf *buf, u_int32_t val)
 }
 
 int
-sshbuf_put_u16(struct sshbuf *buf, u_int16_t val)
+sshbuf_put_u16(struct sshbuf *buf, uint16_t val)
 {
 	u_char *p;
 	int r;
@@ -447,7 +447,7 @@ check_woffset(struct sshbuf *buf, size_t offset, size_t len, u_char **p)
 }
 
 int
-sshbuf_poke_u64(struct sshbuf *buf, size_t offset, u_int64_t val)
+sshbuf_poke_u64(struct sshbuf *buf, size_t offset, uint64_t val)
 {
 	u_char *p = NULL;
 	int r;
@@ -459,7 +459,7 @@ sshbuf_poke_u64(struct sshbuf *buf, size_t offset, u_int64_t val)
 }
 
 int
-sshbuf_poke_u32(struct sshbuf *buf, size_t offset, u_int32_t val)
+sshbuf_poke_u32(struct sshbuf *buf, size_t offset, uint32_t val)
 {
 	u_char *p = NULL;
 	int r;
@@ -471,7 +471,7 @@ sshbuf_poke_u32(struct sshbuf *buf, size_t offset, u_int32_t val)
 }
 
 int
-sshbuf_poke_u16(struct sshbuf *buf, size_t offset, u_int16_t val)
+sshbuf_poke_u16(struct sshbuf *buf, size_t offset, uint16_t val)
 {
 	u_char *p = NULL;
 	int r;
