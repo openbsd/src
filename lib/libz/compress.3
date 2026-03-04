@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.32 2025/06/07 10:04:45 schwarze Exp $
+.\"	$OpenBSD: compress.3,v 1.33 2026/03/04 05:44:14 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -21,7 +21,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd $Mdocdate: June 7 2025 $
+.Dd $Mdocdate: March 4 2026 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -3463,7 +3463,7 @@ CRC-32 check values are calculated for each, crc1 and crc2.
 .Fn crc32_combine
 returns the CRC-32 check value of seq1 and seq2 concatenated,
 requiring only crc1, crc2, and len2.
-len2 must be non-negative.
+len2 must be non-negative, otherwise zero is returned.
 .It Xo
 .Fa uLong
 .Fn crc32_combine_gen "z_off_t len2" ;
@@ -3474,7 +3474,7 @@ The
 function returns the operator corresponding to the length len2,
 to be used with
 .Fn crc32_combine_op .
-len2 must be non-negative.
+len2 must be non-negative, otherwise zero is returned.
 .It Xo
 .Fa uLong
 .Fn crc32_combine_op "uLong crc1" "uLong crc2" "uLong op" ;
