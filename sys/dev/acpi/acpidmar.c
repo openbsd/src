@@ -1,4 +1,4 @@
-/* $OpenBSD $ */
+/* $OpenBSD: acpidmar.c,v 1.14 2026/03/04 23:19:45 jsg Exp $ */
 /*
  * Copyright (c) 2015 Jordan Hargrave <jordan_hargrave@hotmail.com>
  *
