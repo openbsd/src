@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.145 2026/01/05 13:41:03 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.146 2026/03/04 14:48:22 chris Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1359,7 +1359,7 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 		frm = ieee80211_add_wme_info(frm, ic);
 	}
 	if (ic->ic_flags & IEEE80211_F_VHTON)
-		frm = ieee80211_add_htcaps(frm, ic);
+		frm = ieee80211_add_vhtcaps(frm, ic);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
