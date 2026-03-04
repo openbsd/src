@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.73 2023/07/23 23:42:03 kn Exp $	*/
+/*	$OpenBSD: var.c,v 1.74 2026/03/04 03:54:25 deraadt Exp $	*/
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -1072,7 +1072,7 @@ setspec(struct tbl *vp)
 		break;
 	case V_TERM:
 #ifndef SMALL
-		{
+		if (Flag(FTALKING)) {
 			int ret;
 
 			vp->flag &= ~SPECIAL;
