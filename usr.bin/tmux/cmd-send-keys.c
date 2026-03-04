@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.79 2026/03/03 12:26:14 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.80 2026/03/04 07:17:01 tb Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -168,7 +168,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 	u_int				 count = args_count(args);
 	char				*cause = NULL;
 
-	if (tc->flags & CLIENT_READONLY && !args_has(args, 'X')) {
+	if (tc != NULL && tc->flags & CLIENT_READONLY && !args_has(args, 'X')) {
 		cmdq_error(item, "client is read-only");
 		return (CMD_RETURN_ERROR);
 	}
