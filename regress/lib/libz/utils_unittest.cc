@@ -1,4 +1,4 @@
-// $OpenBSD: utils_unittest.cc,v 1.5 2023/08/29 07:54:01 yasuoka Exp $
+// $OpenBSD: utils_unittest.cc,v 1.6 2026/03/04 05:45:55 tb Exp $
 //
 // Copyright 2020 The Chromium Authors. All rights reserved.
 //
@@ -1680,6 +1680,16 @@ TEST(ZlibTest, DeflateZDefaultCorruption) {
       0);
 }
 
+// Test behavior change after fix to avoid infinite loop (ZLB-01-002)
+TEST(ZlibTest, CRCCombineInfiniteLoop) {
+  uLong crc1 = crc32(0L, Z_NULL, 0);
+  uLong crc2 = crc32(0L, Z_NULL, 0);
+  z_off_t len2 = -1;
+
+  EXPECT_EQ(crc32_combine(crc1, crc2, len2), 0);
+  EXPECT_EQ(crc32_combine_op(crc1, crc2, len2), 0);
+}
+
 typedef void(*testfunc)(void);
 testfunc ZlibTest[] = {
 	StreamingInflate,
@@ -1689,6 +1699,7 @@ testfunc ZlibTest[] = {
 	DeflateRLEUninitUse,
 	DeflateZFixedCorruption,
 	DeflateZDefaultCorruption,
+	CRCCombineInfiniteLoop,
 };
 
 int
