@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.57 2025/04/09 06:27:43 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.58 2026/03/04 08:15:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -92,6 +92,7 @@ cmd_confirm_before_exec(struct cmd *self, struct cmdq_item *item)
 			cdata->confirm_key = confirm_key[0];
 		else {
 			cmdq_error(item, "invalid confirm key");
+			cmd_list_free(cdata->cmdlist);
 			free(cdata);
 			return (CMD_RETURN_ERROR);
 		}
