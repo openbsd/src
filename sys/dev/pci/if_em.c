@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.379 2025/07/14 11:52:43 jmatthew Exp $ */
+/* $OpenBSD: if_em.c,v 1.380 2026/03/04 14:15:36 bluhm Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -534,6 +534,10 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	sc->hw.min_frame_size = 
 	    ETHER_MIN_LEN + ETHER_CRC_LEN;
 
+	em_get_bus_info(&sc->hw);
+	if (sc->hw.bus_type == em_bus_type_pci_express)
+		sc->sc_dmaflags |= BUS_DMA_64BIT;
+
 	if (em_allocate_desc_rings(sc) != 0) {
 		printf("%s: Unable to allocate descriptor ring memory\n",
 		    DEVNAME(sc));
@@ -610,11 +614,10 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		    DEVNAME(sc));
 
 	/* Identify 82544 on PCI-X */
-	em_get_bus_info(&sc->hw);
 	if (sc->hw.bus_type == em_bus_type_pcix &&
 	    sc->hw.mac_type == em_82544)
 		sc->pcix_82544 = TRUE;
-        else
+	else
 		sc->pcix_82544 = FALSE;
 
 	sc->hw.icp_xxxx_is_link_up = FALSE;
@@ -2158,12 +2161,13 @@ em_dma_malloc(struct em_softc *sc, bus_size_t size, struct em_dma_alloc *dma)
 	int r;
 
 	r = bus_dmamap_create(sc->sc_dmat, size, 1,
-	    size, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &dma->dma_map);
+	    size, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
+	    &dma->dma_map);
 	if (r != 0)
 		return (r);
 
 	r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &dma->dma_seg,
-	    1, &dma->dma_nseg, BUS_DMA_WAITOK | BUS_DMA_ZERO);
+	    1, &dma->dma_nseg, BUS_DMA_WAITOK | BUS_DMA_ZERO | sc->sc_dmaflags);
 	if (r != 0)
 		goto destroy;
 
@@ -2250,10 +2254,12 @@ em_setup_transmit_structures(struct em_softc *sc)
 			pkt = &que->tx.sc_tx_pkts_ring[i];
 			error = bus_dmamap_create(sc->sc_dmat, EM_TSO_SIZE,
 			    EM_MAX_SCATTER / (sc->pcix_82544 ? 2 : 1),
-			    EM_TSO_SEG_SIZE, 0, BUS_DMA_NOWAIT, &pkt->pkt_map);
+			    EM_TSO_SEG_SIZE, 0,
+			    BUS_DMA_NOWAIT | sc->sc_dmaflags,
+			    &pkt->pkt_map);
 			if (error != 0) {
-				printf("%s: Unable to create TX DMA map\n",
-				    DEVNAME(sc));
+				printf("%s: Unable to create TX DMA map, "
+				    "error %d\n", DEVNAME(sc), error);
 				goto fail;
 			}
 		}
@@ -2772,11 +2778,11 @@ em_allocate_receive_structures(struct em_softc *sc)
 			pkt = &que->rx.sc_rx_pkts_ring[i];
 
 			error = bus_dmamap_create(sc->sc_dmat, EM_MCLBYTES, 1,
-			    EM_MCLBYTES, 0, BUS_DMA_NOWAIT, &pkt->pkt_map);
+			    EM_MCLBYTES, 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
+			    &pkt->pkt_map);
 			if (error != 0) {
-				printf("%s: em_allocate_receive_structures: "
-				    "bus_dmamap_create failed; error %u\n",
-				    DEVNAME(sc), error);
+				printf("%s: Unable to create RX DMA map, "
+				    "error %d\n", DEVNAME(sc), error);
 				goto fail;
 			}
 
