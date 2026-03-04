@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-paste-buffer.c,v 1.43 2026/02/25 07:53:41 nicm Exp $ */
+/* $OpenBSD: cmd-paste-buffer.c,v 1.44 2026/03/04 07:19:32 tb Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -50,7 +50,7 @@ cmd_paste_buffer_paste(struct window_pane *wp, const char *buf, size_t len)
 	char	*cp;
 	size_t	 n;
 
-	n = utf8_stravisx(&cp, buf, len, VIS_SAFE);
+	n = utf8_stravisx(&cp, buf, len, VIS_SAFE|VIS_NOSLASH);
 	bufferevent_write(wp->event, cp, n);
 	free(cp);
 }
