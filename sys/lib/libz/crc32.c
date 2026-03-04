@@ -1017,6 +1017,8 @@ unsigned long ZEXPORT crc32(unsigned long crc, const unsigned char FAR *buf,
 
 /* ========================================================================= */
 uLong ZEXPORT crc32_combine64(uLong crc1, uLong crc2, z_off64_t len2) {
+    if (len2 < 0)
+        return 0;
 #ifdef DYNAMIC_CRC_TABLE
     once(&made, make_crc_table);
 #endif /* DYNAMIC_CRC_TABLE */
@@ -1030,6 +1032,8 @@ uLong ZEXPORT crc32_combine(uLong crc1, uLong crc2, z_off_t len2) {
 
 /* ========================================================================= */
 uLong ZEXPORT crc32_combine_gen64(z_off64_t len2) {
+    if (len2 < 0)
+        return 0;
 #ifdef DYNAMIC_CRC_TABLE
     once(&made, make_crc_table);
 #endif /* DYNAMIC_CRC_TABLE */
