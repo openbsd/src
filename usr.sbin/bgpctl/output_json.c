@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.61 2026/03/02 12:09:10 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.62 2026/03/05 09:54:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -937,6 +937,8 @@ json_rib_mem(struct rde_memstats *stats)
 	    stats->attr_cnt * sizeof(struct attr), stats->attr_refs);
 	json_rib_mem_element("attributes", stats->attr_dcnt,
 	    stats->attr_data, UINT64_MAX);
+	json_rib_mem_element("bitmaps", stats->bitmap_cnt,
+	    stats->bitmap_size, UINT64_MAX);
 	json_rib_mem_element("total", UINT64_MAX,
 	    pts + stats->prefix_cnt * sizeof(struct prefix) +
 	    stats->adjout_prefix_cnt * sizeof(struct adjout_prefix) +
@@ -946,7 +948,7 @@ json_rib_mem(struct rde_memstats *stats)
 	    stats->rib_cnt * sizeof(struct rib_entry) +
 	    stats->path_cnt * sizeof(struct rde_aspath) +
 	    stats->aspath_size + stats->attr_cnt * sizeof(struct attr) +
-	    stats->attr_data, UINT64_MAX);
+	    stats->attr_data + stats->bitmap_size, UINT64_MAX);
 	json_do_end();
 
 	json_do_object("filters", 0);
