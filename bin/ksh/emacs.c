@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.90 2023/06/21 22:22:08 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.91 2026/03/05 05:38:58 deraadt Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1033,6 +1033,8 @@ x_redraw(int limit)
 	if (limit == -2) {
 		int cleared = 0;
 #ifndef SMALL
+		if (cur_term == NULL && Flag(FTALKING))
+			initcurses();
 		if (cur_term != NULL && clear_screen != NULL) {
 			if (tputs(clear_screen, 1, x_putc) != ERR)
 				cleared = 1;

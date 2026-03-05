@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.77 2023/06/21 22:22:08 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.78 2026/03/05 05:38:58 deraadt Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -602,4 +602,5 @@ void	change_random(void);
 int	array_ref_len(const char *);
 char *	arrayname(const char *);
 void    set_array(const char *, int, char **);
+void	initcurses(void);
 /* vi.c: see edit.h */

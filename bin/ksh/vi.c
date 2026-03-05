@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.67 2025/07/20 21:24:07 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.68 2026/03/05 05:38:58 deraadt Exp $	*/
 
 /*
  *	vi command editing
@@ -1739,6 +1739,8 @@ do_clear_screen(void)
 	int neednl = 1;
 
 #ifndef SMALL
+	if (cur_term == NULL && Flag(FTALKING))
+		initcurses();
 	if (cur_term != NULL && clear_screen != NULL) {
 		if (tputs(clear_screen, 1, x_putc) != ERR)
 			neednl = 0;
