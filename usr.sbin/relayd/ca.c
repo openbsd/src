@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.49 2026/03/05 05:30:09 tb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.50 2026/03/05 07:27:01 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -235,9 +235,21 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
 			fatalx("%s: invalid relay proc", __func__);
 		if (IMSG_DATA_SIZE(imsg) != (sizeof(cko) + cko.cko_flen))
 			fatalx("%s: invalid key operation", __func__);
-		if ((pkey = pkey_find(env, cko.cko_hash)) == NULL)
-			fatalx("%s: invalid relay hash '%s'",
+
+		if ((pkey = pkey_find(env, cko.cko_hash)) == NULL) {
+			log_warnx("%s: invalid relay hash '%s'",
 			    __func__, cko.cko_hash);
+			/* Signal failure to the waiting relay worker. */
+			cko.cko_tlen = -1;
+			iov[c].iov_base = &cko;
+			iov[c++].iov_len = sizeof(cko);
+			if (proc_composev_imsg(env->sc_ps, PROC_RELAY,
+			    cko.cko_proc, imsg->hdr.type, -1, -1, iov,
+			     c) == -1)
+				log_warn("%s: proc_composev_imsg", __func__);
+			break;
+		}
+
 		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL)
 			fatalx("%s: invalid relay key", __func__);
 
@@ -393,7 +405,11 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 				fatalx("invalid response");
 
 			ret = cko.cko_tlen;
-			if (ret > 0) {
+			if (ret == -1) {
+				log_warnx("%s: priv%s failed for key %s",
+				    __func__, cmd == IMSG_CA_PRIVENC ?
+				    "enc" : "dec", cko.cko_hash);
+			} else if (ret > 0) {
 				if (IMSG_DATA_SIZE(&imsg) !=
 				    (sizeof(cko) + ret))
 					fatalx("data size");
