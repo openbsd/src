@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.61 2024/02/13 08:03:50 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.62 2026/03/05 09:22:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -124,7 +124,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 	/* Fork the child. */
 	sigfillset(&set);
 	sigprocmask(SIG_BLOCK, &set, &oldset);
-	switch (fork()) {
+	switch ((wp->pipe_pid = fork())) {
 	case -1:
 		sigprocmask(SIG_SETMASK, &oldset, NULL);
 		cmdq_error(item, "fork error: %s", strerror(errno));
@@ -136,6 +136,9 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 		proc_clear_signals(server_proc, 1);
 		sigprocmask(SIG_SETMASK, &oldset, NULL);
 		close(pipe_fd[0]);
+
+		if (setpgid(0, 0) == -1)
+			_exit(1);
 
 		null_fd = open(_PATH_DEVNULL, O_WRONLY);
 		if (out) {

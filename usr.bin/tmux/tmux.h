@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1296 2026/02/25 07:53:41 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1297 2026/03/05 09:22:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1213,6 +1213,7 @@ struct window_pane {
 	enum client_theme last_theme;
 
 	int		 pipe_fd;
+	pid_t		 pipe_pid;
 	struct bufferevent *pipe_event;
 	struct window_pane_offset pipe_offset;
 
