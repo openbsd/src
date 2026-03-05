@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.75 2026/03/05 05:38:58 deraadt Exp $	*/
+/*	$OpenBSD: var.c,v 1.76 2026/03/05 05:40:37 deraadt Exp $	*/
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -1230,6 +1230,7 @@ set_array(const char *var, int reset, char **vals)
 	}
 }
 
+#ifndef SMALL
 void
 initcurses(void)
 {
@@ -1242,3 +1243,4 @@ initcurses(void)
 			del_curterm(cur_term);
 	}
 }
+#endif /* SMALL */
