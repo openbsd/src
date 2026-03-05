@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.71 2026/03/05 09:54:43 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.72 2026/03/05 21:30:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1138,7 +1138,7 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->rib_cnt * sizeof(struct rib_entry) +
 	    stats->path_cnt * sizeof(struct rde_aspath) +
 	    stats->aspath_size + stats->attr_cnt * sizeof(struct attr) +
-	    stats->attr_data) + stats->bitmap_size);
+	    stats->attr_data + stats->bitmap_size));
 	printf("Sets and filters using %s of memory\n",
 	    fmt_mem(stats->aset_size + stats->pset_size + stats->aspa_size +
 	    stats->filter_set_size));
