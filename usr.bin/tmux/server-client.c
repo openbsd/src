@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.446 2026/02/10 09:00:30 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.447 2026/03/05 22:50:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3712,7 +3712,7 @@ server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 		c->term_name = xstrdup("unknown");
 	}
 
-	if (c->ttyname == NULL || *c->ttyname != '\0')
+	if (c->ttyname != NULL && *c->ttyname != '\0')
 		name = xstrdup(c->ttyname);
 	else
 		xasprintf(&name, "client-%ld", (long)c->pid);
