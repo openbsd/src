@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.c,v 1.1 2025/12/11 12:18:27 claudio Exp $	*/
+/*	$OpenBSD: bitmap.c,v 1.2 2026/03/05 09:54:06 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -29,6 +29,9 @@
 #define BITMAP_SETPTR(x)	((uint64_t)(x) | 0x1)
 #define BITMAP_GETPTR(x)	(uint64_t *)((x) & ~0x1)
 
+size_t bitmap_size;
+uint64_t bitmap_cnt;
+
 static inline void
 bitmap_getset(struct bitmap *map, uint64_t **ptr, uint32_t *max)
 {
@@ -41,13 +44,27 @@ bitmap_getset(struct bitmap *map, uint64_t **ptr, uint32_t *max)
 	}
 }
 
+static void
+bitmap_free(struct bitmap *map)
+{
+	uint64_t *ptr;
+	uint32_t  max;
+
+	if (map->data[0] & 0x1) {
+		bitmap_getset(map, &ptr, &max);
+		bitmap_size -= max / 8;
+		bitmap_cnt--;
+		free(ptr);
+	}
+}
+
 static int
 bitmap_resize(struct bitmap *map, uint32_t bid)
 {
 	uint64_t *ptr, *new;
-	uint32_t elm, max, newmax;
+	uint32_t elm, size, oldmax, newmax;
 
-	bitmap_getset(map, &ptr, &max);
+	bitmap_getset(map, &ptr, &oldmax);
 
 	/* get new map */
 	newmax = BITMAP_ROUNDUP(bid + 1, BITMAP_ALLOCBITS);
@@ -55,19 +72,21 @@ bitmap_resize(struct bitmap *map, uint32_t bid)
 		return -1;
 
 	/* copy data over */
-	max /= BITMAP_BITS;
-	for (elm = 0; elm < max; elm++)
+	size = oldmax / BITMAP_BITS;
+	for (elm = 0; elm < size; elm++)
 		new[elm] = ptr[elm];
-	max = newmax / BITMAP_BITS;
-	for ( ; elm < max; elm++)
+	size = newmax / BITMAP_BITS;
+	for ( ; elm < size; elm++)
 		new[elm] = 0;
 
 	/* free old data */
-	if (map->data[0] & 0x1)
-		free(BITMAP_GETPTR(map->data[0]));
+	bitmap_free(map);
 
+	/* set new data */
 	map->data[0] = BITMAP_SETPTR(new);
 	map->data[1] = newmax;
+	bitmap_size += newmax / 8;
+	bitmap_cnt++;
 
 	return 0;
 }
@@ -222,8 +241,6 @@ bitmap_init(struct bitmap *map)
 void
 bitmap_reset(struct bitmap *map)
 {
-	if (map->data[0] & 0x1)
-		free(BITMAP_GETPTR(map->data[0]));
-
+	bitmap_free(map);
 	bitmap_init(map);
 }
