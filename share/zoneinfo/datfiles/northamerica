@@ -1,4 +1,4 @@
-# $OpenBSD: northamerica,v 1.89 2025/03/25 14:34:41 millert Exp $
+# $OpenBSD: northamerica,v 1.90 2026/03/05 17:41:23 millert Exp $
 # tzdb data for North and Central America and environs
 
 # This file is in the public domain, so clarified as of
@@ -1957,6 +1957,32 @@ Zone America/Edmonton	-7:33:52 -	LMT	1906 Sep
 # https://searcharchives.vancouver.ca/daylight-saving-1918-starts-again-july-7-1941-start-d-s-sept-27-end-of-d-s-1941
 # We have no further details, so omit them for now.
 
+# From Arthur David Olson (2026-03-02):
+# B. C. Gov News: “Adopting permanent daylight saving time: ‘Spring forward’
+# on March 8 will be the last time change, ending twice-yearly clock changes.”
+# https://news.gov.bc.ca/releases/2026AG0013-000209
+#
+# From Paul Eggert (2026-03-03):
+# The law specifies a 2026-03-08 02:00 switch from PST to PDT, then 21 hours
+# of PDT, then a 2026-03-09 switch to the new standard time Pacific Time,
+# i.e., just one clock change but two name changes separated by 21 hours.
+#
+# PT, the obvious abbreviation for Pacific Time, is one letter too short
+# to conform to TZDB’s (and POSIX’s) [-+[:alnum:]]{3,6} requirements.
+# I asked the BC government for advice, with no response yet.
+# For now, use the abbreviation -07; we can decide later what (if any)
+# conforming non-numeric abbreviation to use.  Possibilities include:
+#   MST - the most compatible with existing software and practice,
+#	and already used in parts of BC and in Yukon
+#   PDT - almost as software-friendly, but confusing because it implies
+#	it is DST and is paired with PST, whereas PT is standard time
+#   PST - straightforward but even more confusing,
+#	and will likely break much software that assumes PST is -08
+#   CPT, CPST - for Canadian Pacific (Standard) Time,
+#	by analogy with AEST in Australia
+#   P-T - conforming approximation to “PT”
+#   PT+ - like P-T but suggesting one-hour advance over PST
+
 # Rule	NAME	FROM	TO	-	IN	ON	AT	SAVE	LETTER/S
 Rule	Vanc	1918	only	-	Apr	14	2:00	1:00	D
 Rule	Vanc	1918	only	-	Oct	27	2:00	0	S
@@ -1970,7 +1996,8 @@ Rule	Vanc	1962	2006	-	Oct	lastSun	2:00	0	S
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone America/Vancouver	-8:12:28 -	LMT	1884
 			-8:00	Vanc	P%sT	1987
-			-8:00	Canada	P%sT
+			-8:00	Canada	P%sT	2026 Mar  9
+			-7:00	-	-07
 Zone America/Dawson_Creek -8:00:56 -	LMT	1884
 			-8:00	Canada	P%sT	1947
 			-8:00	Vanc	P%sT	1972 Aug 30  2:00
