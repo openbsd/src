@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.48 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: ca.c,v 1.49 2026/03/05 05:30:09 tb Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -31,7 +31,7 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
-#include <openssl/engine.h>
+#include <openssl/x509.h>
 
 #include "relayd.h"
 #include "log.h"
@@ -334,7 +334,7 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 
 	/*
 	 * Send a synchronous imsg because we cannot defer the RSA
-	 * operation in OpenSSL's engine layer.
+	 * operation in OpenSSL.
 	 */
 	if (imsg_composev(ibuf, cmd, 0, 0, -1, iov, cnt) == -1) {
 		log_warn("%s: imsg_composev", __func__);
