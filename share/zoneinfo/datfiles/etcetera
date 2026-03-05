@@ -1,4 +1,4 @@
-# $OpenBSD: etcetera,v 1.24 2025/01/19 22:03:27 millert Exp $
+# $OpenBSD: etcetera,v 1.25 2026/03/05 17:40:24 millert Exp $
 # tzdb data for ships at sea and other miscellany
 
 # This file is in the public domain, so clarified as of
@@ -21,7 +21,8 @@
 # which load the "UTC" file to handle seconds properly.
 Zone	Etc/UTC		0	-	UTC
 
-# Functions like gmtime load the "GMT" file to handle leap seconds properly.
+# If leap second support is enabled, functions like gmtime
+# load the "GMT" file to handle leap seconds properly.
 # Vanguard section, which works with most .zi parsers.
 #Zone	GMT		0	-	GMT
 # Rearguard section, for TZUpdater 2.3.2 and earlier.
