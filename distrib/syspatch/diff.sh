@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: diff.sh,v 1.6 2019/05/12 14:57:30 robert Exp $
+# $OpenBSD: diff.sh,v 1.7 2026/03/06 13:16:59 robert Exp $
 #
 # Copyright (c) 2017, 2019 Robert Nagy <robert@openbsd.org>
 #
@@ -54,7 +54,7 @@ do
 			diff -q ${_onm} ${_nnm} >/dev/null || padd ${_n}
 			rm -f ${_onm} ${_nnm}
 			;;
-		EFI|dat|db|tgz|*void|*dir|mk|cache-4)
+		EFI|dat|db|tgz|*void|*dir|mk|cache-4|tar)
 			;;
 		*)
 			padd ${_n}
