@@ -1526,7 +1526,6 @@ int ZEXPORT inflateCopy(z_streamp dest, z_streamp source) {
     struct inflate_state FAR *state;
     struct inflate_state FAR *copy;
     unsigned char FAR *window;
-    unsigned wsize;
 
     /* check input */
     if (inflateStateCheck(source) || dest == Z_NULL)
@@ -1557,10 +1556,8 @@ int ZEXPORT inflateCopy(z_streamp dest, z_streamp source) {
         copy->distcode = copy->codes + (state->distcode - state->codes);
     }
     copy->next = copy->codes + (state->next - state->codes);
-    if (window != Z_NULL) {
-        wsize = 1U << state->wbits;
-        zmemcpy(window, state->window, wsize);
-    }
+    if (window != Z_NULL)
+        zmemcpy(window, state->window, state->whave);
     copy->window = window;
     dest->state = (struct internal_state FAR *)copy;
     return Z_OK;
