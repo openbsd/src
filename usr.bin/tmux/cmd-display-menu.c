@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.49 2026/02/23 08:50:00 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.50 2026/03/06 08:19:22 tb Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -371,7 +371,7 @@ cmd_display_menu_exec(struct cmd *self, struct cmdq_item *item)
 		flags |= MENU_NOMOUSE;
 	if (menu_display(menu, flags, starting_choice, item, px, py, tc, lines,
 	    style, selected_style, border_style, target, NULL, NULL) != 0)
-		return (CMD_RETURN_NORMAL);
+		goto out;
 	return (CMD_RETURN_WAIT);
 
 out:
