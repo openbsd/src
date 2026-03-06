@@ -1,4 +1,4 @@
-/* $OpenBSD: mlkem_internal.c,v 1.6 2026/01/18 08:49:42 tb Exp $ */
+/* $OpenBSD: mlkem_internal.c,v 1.7 2026/03/06 09:22:29 kenjiro Exp $ */
 /*
  * Copyright (c) 2024, Google Inc.
  * Copyright (c) 2024, 2025 Bob Beck <beck@obtuse.com>
@@ -1121,7 +1121,7 @@ mlkem_decap(const MLKEM_private_key *private_key, const uint8_t *ciphertext,
 	encrypt_cpa(expected_ciphertext, &priv.pub, decrypted,
 	    key_and_randomness + 32, private_key->rank);
 	kdf(failure_key, priv.fo_failure_secret, ciphertext, ciphertext_len);
-	mask = constant_time_eq_int_8(memcmp(ciphertext, expected_ciphertext,
+	mask = constant_time_eq_int_8(timingsafe_memcmp(ciphertext, expected_ciphertext,
 	    expected_ciphertext_length), 0);
 	for (i = 0; i < MLKEM_SHARED_SECRET_LENGTH; i++) {
 		out_shared_secret[i] = constant_time_select_8(mask,
