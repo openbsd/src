@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2024/07/24 08:22:26 yasuoka Exp $
+#	$OpenBSD: Makefile,v 1.5 2026/03/06 07:57:59 robert Exp $
 
 LIB=    	radius
 SRCS=		radius.c radius_attr.c radius_msgauth.c radius_userpass.c \
@@ -11,6 +11,7 @@ MAN=		radius_new_request_packet.3
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
+CLEANFILES+=	${VERSION_SCRIPT}
 
 includes:
 	@cd ${.CURDIR}; for i in $(INCS); do \
