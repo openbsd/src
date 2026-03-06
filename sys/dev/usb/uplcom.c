@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.81 2024/05/23 03:21:09 jsg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.82 2026/03/06 22:33:33 kettenis Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -608,6 +608,69 @@ uplcom_set_line_coding(struct uplcom_softc *sc,
 	return (USBD_NORMAL_COMPLETION);
 }
 
+void
+uplcom_encode_speed(struct uplcom_softc *sc, int speed,
+    struct usb_cdc_line_state *state)
+{
+	u_int mantissa, exponent;
+
+	/* HXN variant devices don't use a divisor. */
+	if (sc->sc_type == UPLCOM_TYPE_HXN) {
+		USETDW(state->dwDTERate, speed);
+		return;
+	}
+
+	switch (speed) {
+	case 75:
+	case 150:
+	case 300:
+	case 600:
+	case 1200:
+	case 1800:
+	case 2400:
+	case 3600:
+	case 4800:
+	case 7200:
+	case 9600:
+	case 14400:
+	case 19200:
+	case 28800:
+	case 38400:
+	case 57600:
+	case 115200:
+	case 230400:
+	case 460800:
+	case 614400:
+	case 921600:
+	case 1228800:
+	case 2457600:
+	case 3000000:
+	case 6000000:
+		/* These specific speeds are supported directly. */
+		USETDW(state->dwDTERate, speed);
+		break;
+	default:
+		/* For other speeds we need to set the divisor. */
+		mantissa = (12000000 * 32) / speed;
+		if (mantissa == 0)
+			mantissa = 1;
+		exponent = 0;
+		while (mantissa > 0x1ff) {
+			if (exponent < 0x7) {
+				mantissa /= 4;
+				exponent++;
+			} else {
+				mantissa = 0x1ff;
+				break;
+			}
+		}
+		state->dwDTERate[3] = 0x80;
+		state->dwDTERate[2] = 0x00;
+		state->dwDTERate[1] = exponent << 1 | mantissa >> 8;
+		state->dwDTERate[0] = mantissa & 0xff;
+	}
+}
+
 int
 uplcom_param(void *addr, int portno, struct termios *t)
 {
@@ -617,7 +680,7 @@ uplcom_param(void *addr, int portno, struct termios *t)
 
 	DPRINTF(("uplcom_param: sc=%p\n", sc));
 
-	USETDW(ls.dwDTERate, t->c_ospeed);
+	uplcom_encode_speed(sc, t->c_ospeed, &ls);
 	if (ISSET(t->c_cflag, CSTOPB))
 		ls.bCharFormat = UCDC_STOP_BIT_2;
 	else
