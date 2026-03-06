@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.688 2026/03/02 10:00:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.689 2026/03/06 13:10:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -741,6 +741,8 @@ badnetdel:
 			    peerid, pid, -1, &stats, sizeof(stats));
 			break;
 		case IMSG_CTL_SHOW_RIB_MEM:
+			bitmap_get_stats(&rdemem.bitmap_cnt,
+			    &rdemem.bitmap_size);
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
 			    pid, -1, &rdemem, sizeof(rdemem));
 			break;

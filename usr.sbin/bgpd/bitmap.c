@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.c,v 1.2 2026/03/05 09:54:06 claudio Exp $	*/
+/*	$OpenBSD: bitmap.c,v 1.3 2026/03/06 13:10:14 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -243,4 +243,11 @@ bitmap_reset(struct bitmap *map)
 {
 	bitmap_free(map);
 	bitmap_init(map);
+}
+
+void
+bitmap_get_stats(long long *cnt, long long *size)
+{
+	*cnt = bitmap_cnt;
+	*size = bitmap_size;
 }

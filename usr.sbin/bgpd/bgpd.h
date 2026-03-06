@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.535 2026/03/05 09:54:06 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.536 2026/03/06 13:10:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1615,6 +1615,8 @@ void		 bitmap_id_put(struct bitmap *, uint32_t);
 
 void		 bitmap_init(struct bitmap *);
 void		 bitmap_reset(struct bitmap *);
+
+void		 bitmap_get_stats(long long *, long long *);
 
 /* rde_sets.c */
 struct as_set	*as_sets_lookup(struct as_set_head *, const char *);
