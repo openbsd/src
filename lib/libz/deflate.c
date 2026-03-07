@@ -168,6 +168,7 @@ local const config configuration_table[10] = {
         s->head[s->hash_size - 1] = NIL; \
         zmemzero((Bytef *)s->head, \
                  (unsigned)(s->hash_size - 1)*sizeof(*s->head)); \
+        s->slid = 0; \
     } while (0)
 
 /* ===========================================================================
@@ -191,8 +192,8 @@ local void slide_hash(deflate_state *s) {
         m = *--p;
         *p = (Pos)(m >= wsize ? m - wsize : NIL);
     } while (--n);
-    n = wsize;
 #ifndef FASTEST
+    n = wsize;
     p = &s->prev[n];
     do {
         m = *--p;
@@ -202,6 +203,7 @@ local void slide_hash(deflate_state *s) {
          */
     } while (--n);
 #endif
+    s->slid = 1;
 }
 
 /* ===========================================================================
@@ -427,6 +429,7 @@ int ZEXPORT deflateInit2_(z_streamp strm, int level, int method,
     if (windowBits == 8) windowBits = 9;  /* until 256-byte window bug fixed */
     s = (deflate_state *) ZALLOC(strm, 1, sizeof(deflate_state));
     if (s == Z_NULL) return Z_MEM_ERROR;
+    zmemzero(s, sizeof(deflate_state));
     strm->state = (struct internal_state FAR *)s;
     s->strm = strm;
     s->status = INIT_STATE;     /* to pass state test in deflateReset() */
@@ -1303,6 +1306,7 @@ int ZEXPORT deflateCopy(z_streamp dest, z_streamp source) {
 
     ds = (deflate_state *) ZALLOC(dest, 1, sizeof(deflate_state));
     if (ds == Z_NULL) return Z_MEM_ERROR;
+    zmemzero(ds, sizeof(deflate_state));
     dest->state = (struct internal_state FAR *) ds;
     zmemcpy((voidpf)ds, (voidpf)ss, sizeof(deflate_state));
     ds->strm = dest;
@@ -1317,18 +1321,23 @@ int ZEXPORT deflateCopy(z_streamp dest, z_streamp source) {
         deflateEnd (dest);
         return Z_MEM_ERROR;
     }
-    /* following zmemcpy do not work for 16-bit MSDOS */
-    zmemcpy(ds->window, ss->window, ds->w_size * 2 * sizeof(Byte));
-    zmemcpy((voidpf)ds->prev, (voidpf)ss->prev, ds->w_size * sizeof(Pos));
+    /* following zmemcpy's do not work for 16-bit MSDOS */
+    zmemcpy(ds->window, ss->window, ss->high_water);
+    zmemcpy((voidpf)ds->prev, (voidpf)ss->prev,
+            (ss->slid || ss->strstart - ss->insert > ds->w_size ? ds->w_size :
+                ss->strstart - ss->insert) * sizeof(Pos));
     zmemcpy((voidpf)ds->head, (voidpf)ss->head, ds->hash_size * sizeof(Pos));
-    zmemcpy(ds->pending_buf, ss->pending_buf, ds->lit_bufsize * LIT_BUFS);
 
     ds->pending_out = ds->pending_buf + (ss->pending_out - ss->pending_buf);
+    zmemcpy(ds->pending_out, ss->pending_out, ss->pending);
 #ifdef LIT_MEM
     ds->d_buf = (ushf *)(ds->pending_buf + (ds->lit_bufsize << 1));
     ds->l_buf = ds->pending_buf + (ds->lit_bufsize << 2);
+    zmemcpy(ds->d_buf, ss->d_buf, ss->sym_next * sizeof(ush));
+    zmemcpy(ds->l_buf, ss->l_buf, ss->sym_next);
 #else
     ds->sym_buf = ds->pending_buf + ds->lit_bufsize;
+    zmemcpy(ds->sym_buf, ss->sym_buf, ss->sym_next);
 #endif
 
     ds->l_desc.dyn_tree = ds->dyn_ltree;
