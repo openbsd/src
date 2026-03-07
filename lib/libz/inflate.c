@@ -669,7 +669,6 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                 strm->msg = (z_const char *)"error";
 #else
                 strm->msg = (z_const char *)"invalid window size";
-                strm->msg = (char *)"invalid window size";
 #endif
                 state->mode = BAD;
                 break;
