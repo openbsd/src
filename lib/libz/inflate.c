@@ -966,7 +966,7 @@ int ZEXPORT inflate(z_streamp strm, int flush) {
                                 &(state->lenbits), state->work);
             if (ret) {
 #ifdef SMALL
-                strm->msg = "error";
+                strm->msg = (z_const char *)"error";
 #else
                 strm->msg = (z_const char *)"invalid code lengths set";
 #endif
