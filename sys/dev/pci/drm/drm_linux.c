@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.129 2026/03/08 23:31:50 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.130 2026/03/08 23:42:34 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -782,8 +782,7 @@ RB_GENERATE(linux_root, rb_node, __entry, panic_cmp);
  * This is a fairly minimal implementation of the Linux "idr" API.  It
  * probably isn't very efficient, and definitely isn't RCU safe.  The
  * pre-load buffer is global instead of per-cpu; we rely on the kernel
- * lock to make this work.  We do randomize our IDs in order to make
- * them harder to guess.
+ * lock to make this work.
  */
 
 int idr_cmp(struct idr_entry *, struct idr_entry *);
@@ -826,7 +825,6 @@ idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp_mask)
 {
 	int flags = (gfp_mask & GFP_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 	struct idr_entry *id;
-	int begin;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -842,17 +840,13 @@ idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp_mask)
 	if (end <= 0)
 		end = INT_MAX;
 
-#ifdef notyet
-	id->id = begin = start + arc4random_uniform(end - start);
-#else
-	id->id = begin = start;
-#endif
+	id->id = start;
 	while (SPLAY_INSERT(idr_tree, &idr->tree, id)) {
 		if (id->id == end)
 			id->id = start;
 		else
 			id->id++;
-		if (id->id == begin) {
+		if (id->id == start) {
 			pool_put(&idr_pool, id);
 			return -ENOSPC;
 		}
