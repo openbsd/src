@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2019/03/21 19:31:57 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2026/03/08 17:53:36 bluhm Exp $
 
 FILES?!=	ls ${.CURDIR}/[0-9]*.out
 
@@ -11,23 +11,23 @@ REGRESS_TARGETS+=${f:C|.*/||}
 .endfor
 .for f in ${FILES}
 ${f:C|.*/||}:
-	@echo ${*}
 	@${CALENDAR} -f ${IN} -t ${f:C|.*/||:C/\..*//} | diff -u ${OUT} -
 .endfor
 
-REGRESS_TARGETS+=before after noweekend
+REGRESS_TARGETS+=before after noweekend allusers
+REGRESS_ROOT_TARGETS=allusers
 
 before:
-	@echo ${*}
-	@${CALENDAR} -f ${.CURDIR}/beforeafter.in -t 20190109 -B 5 | diff -U 7 ${.CURDIR}/before.out -
+	${CALENDAR} -f ${.CURDIR}/beforeafter.in -t 20190109 -B 5 | diff -U 7 ${.CURDIR}/before.out -
 
 after:
-	@echo ${*}
-	@${CALENDAR} -f ${.CURDIR}/beforeafter.in -t 20190111 -A 5 | diff -U 7 ${.CURDIR}/after.out -
+	${CALENDAR} -f ${.CURDIR}/beforeafter.in -t 20190111 -A 5 | diff -U 7 ${.CURDIR}/after.out -
 
 noweekend:
-	@echo ${*}
-	@${CALENDAR} -f ${.CURDIR}/beforeafter.in -t 20190111 -A 0 | diff -U 7 ${.CURDIR}/noweekend.out -
+	${CALENDAR} -f ${.CURDIR}/beforeafter.in -t 20190111 -A 0 | diff -U 7 ${.CURDIR}/noweekend.out -
+
+allusers:
+	${SUDO} ${CALENDAR} -a
 
 .PHONY:	${REGRESS_TARGETS}
 
