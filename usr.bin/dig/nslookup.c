@@ -15,6 +15,8 @@
  */
 
 #include <limits.h>
+#include <netdb.h>
+#include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -904,6 +906,11 @@ nslookup_main(int argc, char **argv) {
 	result = isc_app_start();
 	check_result(result, "isc_app_start");
 
+	if (unveil(_PATH_RESCONF, "r") == -1) {
+		perror("unveil " _PATH_RESCONF);
+		exit(1);
+	}
+
 	if (pledge("stdio rpath inet dns", NULL) == -1) {
 		perror("pledge");
 		exit(1);
@@ -911,11 +918,6 @@ nslookup_main(int argc, char **argv) {
 
 	setup_libs();
 	progname = argv[0];
-
-	if (pledge("stdio inet dns", NULL) == -1) {
-		perror("pledge");
-		exit(1);
-	}
 
 	parse_args(argc, argv);
 

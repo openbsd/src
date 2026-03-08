@@ -20,6 +20,8 @@
 #include <err.h>
 #include <limits.h>
 #include <locale.h>
+#include <netdb.h>
+#include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -827,17 +829,17 @@ host_main(int argc, char **argv) {
 	result = isc_app_start();
 	check_result(result, "isc_app_start");
 
+	if (unveil(_PATH_RESCONF, "r") == -1) {
+		perror("unveil: " _PATH_RESCONF);
+		exit(1);
+	}
+
 	if (pledge("stdio rpath inet dns", NULL) == -1) {
 		perror("pledge");
 		exit(1);
 	}
 
 	setup_libs();
-
-	if (pledge("stdio inet dns", NULL) == -1) {
-		perror("pledge");
-		exit(1);
-	}
 
 	parse_args(argc, argv);
 	setup_system(ipv4only, ipv6only);
