@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.128 2025/12/01 09:25:03 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.129 2026/03/08 23:31:50 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -952,19 +952,6 @@ void
 ida_destroy(struct ida *ida)
 {
 	idr_destroy(&ida->idr);
-}
-
-int
-ida_simple_get(struct ida *ida, unsigned int start, unsigned int end,
-    gfp_t gfp_mask)
-{
-	return idr_alloc(&ida->idr, NULL, start, end, gfp_mask);
-}
-
-void
-ida_simple_remove(struct ida *ida, unsigned int id)
-{
-	idr_remove(&ida->idr, id);
 }
 
 /* [start, end] */
