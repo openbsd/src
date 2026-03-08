@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.96 2025/12/04 23:15:55 dlg Exp $ */
+/* $OpenBSD: pmap.c,v 1.97 2026/03/08 23:00:43 jsg Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -147,7 +147,6 @@
 
 #include <uvm/uvm.h>
 
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #if defined(MULTIPROCESSOR)
 #include <machine/rpb.h>
