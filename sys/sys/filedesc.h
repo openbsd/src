@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.48 2025/08/04 04:59:30 guenther Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.49 2026/03/08 16:41:19 deraadt Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -114,8 +114,9 @@ struct filedesc0 {
  * Per-process open flags.
  */
 #define	UF_EXCLOSE 	0x01		/* auto-close on exec */
-#define	UF_PLEDGED 	0x02		/* open after pledge(2) */
+#define	UF_PLEDGED 	0x02		/* opened after pledge(2) */
 #define	UF_FORKCLOSE 	0x04		/* auto-close on fork */
+#define	UF_PLEDGEOPEN 	0x08		/* opened with __pledge_open() */
 
 /*
  * Flags on the file descriptor table.

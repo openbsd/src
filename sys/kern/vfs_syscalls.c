@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.378 2025/09/20 13:53:36 mpi Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.379 2026/03/08 16:41:21 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ void checkdirs(struct vnode *);
 
 int copyout_statfs(struct statfs *, void *, struct proc *);
 
-int doopenat(struct proc *, int, const char *, int, mode_t, register_t *);
+int doopenat(struct proc *, int, const char *, int, mode_t, int, register_t *);
 int domknodat(struct proc *, int, const char *, mode_t, dev_t);
 int dolinkat(struct proc *, int, const char *, int, const char *, int);
 int dosymlinkat(struct proc *, const char *, int, const char *);
@@ -1061,7 +1061,24 @@ sys_open(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 
 	return (doopenat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, flags),
-	    SCARG(uap, mode), retval));
+	    SCARG(uap, mode), 0, retval));
+}
+
+/*
+ * Check permissions, allocate an open file structure,
+ * and call the device open routine if any.
+ */
+int
+sys___pledge_open(struct proc *p, void *v, register_t *retval)
+{
+	struct sys___pledge_open_args /* {
+		syscallarg(const char *) path;
+		syscallarg(int) flags;
+		syscallarg(mode_t) mode;
+	} */ *uap = v;
+
+	return (doopenat(p, AT_FDCWD, SCARG(uap, path), SCARG(uap, flags),
+	    SCARG(uap, mode), UNVEIL_PLEDGEOPEN, retval));
 }
 
 int
@@ -1075,12 +1092,12 @@ sys_openat(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 
 	return (doopenat(p, SCARG(uap, fd), SCARG(uap, path),
-	    SCARG(uap, flags), SCARG(uap, mode), retval));
+	    SCARG(uap, flags), SCARG(uap, mode), 0, retval));
 }
 
 int
 doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
-    register_t *retval)
+    int pledgeopen, register_t *retval)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
@@ -1091,7 +1108,7 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	struct flock lf;
 	struct nameidata nd;
 	uint64_t ni_pledge = 0;
-	u_char ni_unveil = 0;
+	u_char ni_unveil = pledgeopen;
 
 	if (oflags & (O_EXLOCK | O_SHLOCK)) {
 		error = pledge_flock(p);
@@ -1151,6 +1168,8 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	}
 	p->p_dupfd = 0;
 	vp = nd.ni_vp;
+	if (pledgeopen && vp->v_type != VCHR)
+		fdflags |= UF_PLEDGEOPEN;
 	fp->f_flag = flags & FMASK;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;

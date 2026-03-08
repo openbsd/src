@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.270 2025/05/24 06:49:16 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.271 2026/03/08 16:41:21 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -256,7 +256,8 @@
 122	STD		{ int sys_kill(int pid, int signum); }
 123	STD		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD		{ int sys_fchmod(int fd, mode_t mode); }
-125	OBSOL		orecvfrom
+125	STD NOLOCK	{ int sys___pledge_open(const char *path, \
+			    int flags, ... mode_t mode); }
 126	STD		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	STD		{ int sys_setregid(gid_t rgid, gid_t egid); }
 128	STD		{ int sys_rename(const char *from, const char *to); }

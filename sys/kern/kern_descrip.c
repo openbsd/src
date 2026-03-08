@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.212 2025/08/04 04:59:31 guenther Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.213 2026/03/08 16:41:21 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -721,7 +721,8 @@ fdinsert(struct filedesc *fdp, int fd, int flags, struct file *fp)
 	fdp->fd_ofiles[fd] = fp;
 	mtx_leave(&fdp->fd_fplock);
 
-	fdp->fd_ofileflags[fd] |= (flags & (UF_EXCLOSE | UF_FORKCLOSE));
+	fdp->fd_ofileflags[fd] |= (flags & (UF_EXCLOSE | UF_FORKCLOSE |
+	    UF_PLEDGEOPEN));
 }
 
 void

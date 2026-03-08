@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.340 2026/03/03 05:04:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.341 2026/03/08 16:41:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -241,6 +241,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	 * checks done during pledge_namei()
 	 */
 	[SYS_open] = PLEDGE_STDIO,
+	[SYS__pledge_open] = PLEDGE_STDIO,
 	[SYS_stat] = PLEDGE_STDIO,
 	[SYS_access] = PLEDGE_STDIO,
 	[SYS_readlink] = PLEDGE_STDIO,
@@ -621,6 +622,12 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 			return (0);
 		}
 		break;
+	case SYS___pledge_open:
+		if ((ni->ni_unveil & UNVEIL_PLEDGEOPEN) == 0) {
+			printf("SYS___pledge_open != UNVEIL_PLEDGEOPEN ??\n");
+			break;
+		}
+		/* FALLTHROUGH */
 	case SYS_open:
 		/* daemon(3) or other such functions */
 		if ((ni->ni_pledge & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
