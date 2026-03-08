@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.26 2026/02/17 03:28:41 deraadt Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.27 2026/03/08 17:06:10 deraadt Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -95,11 +95,11 @@ struct uvmexp {
 
 	/* stat counters */
 	int faults;		/* [p] page fault count */
-	int traps;		/* trap count */
-	int intrs;		/* interrupt count */
+	int traps;		/* [a] trap count */
+	int intrs;		/* [a] interrupt count */
 	int swtch;		/* context switch count */
-	int softs;		/* software interrupt count */
-	int syscalls;		/* system calls */
+	int softs;		/* [a] software interrupt count */
+	int syscalls;		/* [a] system calls */
 	int pageins;		/* [p] pagein operation count */
 				/* pageouts are in pdpageouts below */
 	int pcphit;		/* [a] # of pagealloc from per-CPU cache */
@@ -153,7 +153,7 @@ struct uvmexp {
 	int pddeact;	/* [ao] # of pages daemon deactivates */
 	int swpskip;	/* [ao] # of pages delayed because swap crypt busy */
 
-	int fpswtch;	/* FPU context switches */
+	int fpswtch;	/* [a] FPU context switches */
 	int kmapent;	/* [a] number of kernel map entries */
 };
 
