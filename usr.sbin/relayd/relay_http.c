@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.93 2026/03/02 19:28:01 rsadowski Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.94 2026/03/08 11:06:30 rsadowski Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -79,6 +79,8 @@ int		 relay_match_actions(struct ctl_relay_event *,
 		    struct relay_table **);
 void		 relay_httpdesc_free(struct http_descriptor *);
 char *		 server_root_strip(char *, int);
+int		 relay_http_parse_startline(struct ctl_relay_event *, char *,
+		    enum httpmethod *);
 
 static struct relayd	*env = NULL;
 
@@ -194,8 +196,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct kv		*upgrade = NULL, *upgrade_ws = NULL;
 	struct kv		*connection_close = NULL;
 	int			 ws_response = 0;
-	struct http_method_node	*hmn;
-	struct http_session	*hs;
 	enum httpmethod		 request_method = HTTP_METHOD_NONE;
 
 	getmonotime(&con->se_tv_last);
@@ -249,137 +249,13 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			relay_abort_http(con, 400, "malformed", 0);
 			goto abort;
 		}
-
-		hs = con->se_priv;
-		DPRINTF("%s: session %d http_session %p", __func__,
-			con->se_id, hs);
-
-		/*
-		 * The first line is the GET/POST/PUT/... request,
-		 * subsequent lines are HTTP headers.
-		 */
+		/* Process the HTTP start-line (request or response status) */
 		if (++cre->line == 1) {
-			key = line;
-			if ((value = strchr(key, ' ')) == NULL) {
-				relay_abort_http(con, 400, "malformed", 0);
-				goto abort;
+			if (relay_http_parse_startline(cre, line,
+			    &request_method) == -1) {
+				free(line);
+				return;
 			}
-			*value++ = '\0';
-
-			if (cre->dir == RELAY_DIR_RESPONSE) {
-				desc->http_method = HTTP_METHOD_RESPONSE;
-				hmn = SIMPLEQ_FIRST(&hs->hs_methods);
-
-				/*
-				 * There is nothing preventing the relay from
-				 * sending an unbalanced response.  Be prepared.
-				 */
-				if (hmn == NULL) {
-					request_method = HTTP_METHOD_NONE;
-					DPRINTF("%s: session %d unbalanced "
-					    "response", __func__, con->se_id);
-				} else {
-					SIMPLEQ_REMOVE_HEAD(&hs->hs_methods,
-					    hmn_entry);
-					request_method = hmn->hmn_method;
-					DPRINTF("%s: session %d dequeuing %s",
-					    __func__, con->se_id,
-					    relay_httpmethod_byid(request_method));
-					free(hmn);
-				}
-
-				/*
-				 * Decode response path and query
-				 */
-				desc->http_version = strdup(key);
-				if (desc->http_version == NULL) {
-					free(line);
-					goto fail;
-				}
-				desc->http_rescode = strdup(value);
-				if (desc->http_rescode == NULL) {
-					free(line);
-					goto fail;
-				}
-				desc->http_resmesg = strchr(desc->http_rescode,
-				    ' ');
-				if (desc->http_resmesg == NULL) {
-					free(line);
-					goto fail;
-				}
-				*desc->http_resmesg++ = '\0';
-				desc->http_resmesg = strdup(desc->http_resmesg);
-				if (desc->http_resmesg == NULL) {
-					free(line);
-					goto fail;
-				}
-				desc->http_status = strtonum(desc->http_rescode,
-				    100, 599, &errstr);
-				if (errstr) {
-					DPRINTF(
-					    "%s: http_status %s: errno %d, %s",
-					    __func__, desc->http_rescode, errno,
-					    errstr);
-					free(line);
-					goto fail;
-				}
-				DPRINTF("http_version %s http_rescode %s "
-				    "http_resmesg %s", desc->http_version,
-				    desc->http_rescode, desc->http_resmesg);
-			} else if (cre->dir == RELAY_DIR_REQUEST) {
-				desc->http_method =
-				    relay_httpmethod_byname(key);
-				if (desc->http_method == HTTP_METHOD_NONE) {
-					free(line);
-					goto fail;
-				}
-				if ((hmn = calloc(1, sizeof *hmn)) == NULL) {
-					free(line);
-					goto fail;
-				}
-				hmn->hmn_method = desc->http_method;
-				DPRINTF("%s: session %d enqueuing %s",
-				    __func__, con->se_id,
-				    relay_httpmethod_byid(hmn->hmn_method));
-				SIMPLEQ_INSERT_TAIL(&hs->hs_methods, hmn,
-				    hmn_entry);
-				/*
-				 * Decode request path and query
-				 */
-				desc->http_path = strdup(value);
-				if (desc->http_path == NULL) {
-					free(line);
-					goto fail;
-				}
-				desc->http_version = strchr(desc->http_path,
-				    ' ');
-				if (desc->http_version == NULL) {
-					free(line);
-					goto fail;
-				}
-				*desc->http_version++ = '\0';
-				desc->http_query = strchr(desc->http_path, '?');
-				if (desc->http_query != NULL)
-					*desc->http_query++ = '\0';
-
-				/*
-				 * Have to allocate the strings because they
-				 * could be changed independently by the
-				 * filters later.
-				 */
-				if ((desc->http_version =
-				    strdup(desc->http_version)) == NULL) {
-					free(line);
-					goto fail;
-				}
-				if (desc->http_query != NULL &&
-				    (desc->http_query =
-				    strdup(desc->http_query)) == NULL) {
-					free(line);
-					goto fail;
-				}
-			}
-
 			free(line);
 			continue;
 		}
@@ -2128,3 +2004,124 @@ server_root_strip(char *path, int n)
 	return (path);
 }
 
+/*
+ * Handle the first line of an HTTP message (Request- or Status-Line).
+ */
+int
+relay_http_parse_startline(struct ctl_relay_event *cre, char *line,
+    enum httpmethod *request_method)
+{
+	struct rsession		*con = cre->con;
+	struct http_descriptor	*desc = cre->desc;
+	struct http_session	*hs = con->se_priv;
+	struct http_method_node	*hmn;
+	char			*key, *value;
+	const char		*errstr;
+
+	DPRINTF("%s: session %d http_session %p", __func__, con->se_id, hs);
+
+	key = line;
+	if ((value = strchr(key, ' ')) == NULL) {
+		relay_abort_http(con, 400, "malformed", 0);
+		return (-1);
+	}
+	*value++ = '\0';
+
+	if (cre->dir == RELAY_DIR_RESPONSE) {
+		desc->http_method = HTTP_METHOD_RESPONSE;
+		hmn = SIMPLEQ_FIRST(&hs->hs_methods);
+
+		/*
+		 * There is nothing preventing the relay from
+		 * sending an unbalanced response.  Be prepared.
+		 */
+		if (hmn == NULL) {
+			*request_method = HTTP_METHOD_NONE;
+			DPRINTF("%s: session %d unbalanced response",
+			    __func__, con->se_id);
+		} else {
+			SIMPLEQ_REMOVE_HEAD(&hs->hs_methods, hmn_entry);
+			*request_method = hmn->hmn_method;
+			DPRINTF("%s: session %d dequeuing %s",
+			    __func__, con->se_id,
+			    relay_httpmethod_byid(*request_method));
+			free(hmn);
+		}
+
+		/*
+		 * Decode response path and query
+		 */
+		desc->http_version = strdup(key);
+		if (desc->http_version == NULL)
+			goto fail;
+
+		desc->http_rescode = strdup(value);
+		if (desc->http_rescode == NULL)
+			goto fail;
+
+		desc->http_resmesg = strchr(desc->http_rescode, ' ');
+		if (desc->http_resmesg == NULL)
+			goto fail;
+
+		*desc->http_resmesg++ = '\0';
+		desc->http_resmesg = strdup(desc->http_resmesg);
+		if (desc->http_resmesg == NULL)
+			goto fail;
+
+		desc->http_status = strtonum(desc->http_rescode, 100, 599,
+		    &errstr);
+		if (errstr) {
+			DPRINTF(
+			    "%s: http_status %s: errno %d, %s",
+			    __func__, desc->http_rescode, errno,
+			    errstr);
+			goto fail;
+		}
+		DPRINTF("http_version %s http_rescode %s http_resmesg %s",
+		    desc->http_version, desc->http_rescode,
+		    desc->http_resmesg);
+	} else if (cre->dir == RELAY_DIR_REQUEST) {
+		desc->http_method = relay_httpmethod_byname(key);
+
+		if (desc->http_method == HTTP_METHOD_NONE)
+			goto fail;
+
+		if ((hmn = calloc(1, sizeof *hmn)) == NULL)
+			goto fail;
+		hmn->hmn_method = desc->http_method;
+		DPRINTF("%s: session %d enqueuing %s", __func__, con->se_id,
+		    relay_httpmethod_byid(hmn->hmn_method));
+		SIMPLEQ_INSERT_TAIL(&hs->hs_methods, hmn, hmn_entry);
+		/*
+		 * Decode request path and query
+		 */
+		desc->http_path = strdup(value);
+		if (desc->http_path == NULL)
+			goto fail;
+
+		desc->http_version = strchr(desc->http_path, ' ');
+		if (desc->http_version == NULL)
+			goto fail;
+
+		*desc->http_version++ = '\0';
+		desc->http_query = strchr(desc->http_path, '?');
+		if (desc->http_query != NULL)
+			*desc->http_query++ = '\0';
+
+		/*
+		 * Have to allocate the strings because they
+		 * could be changed independently by the
+		 * filters later.
+		 */
+		if ((desc->http_version = strdup(desc->http_version)) == NULL)
+			goto fail;
+
+		if (desc->http_query != NULL && (desc->http_query =
+		    strdup(desc->http_query)) == NULL)
+			goto fail;
+	}
+	return (0);
+fail:
+	relay_abort_http(con, 500, strerror(errno), 0);
+	return (-1);
+}
