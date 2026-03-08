@@ -1,4 +1,4 @@
-# $OpenBSD: northamerica,v 1.90 2026/03/05 17:41:23 millert Exp $
+# $OpenBSD: northamerica,v 1.91 2026/03/08 00:08:52 millert Exp $
 # tzdb data for North and Central America and environs
 
 # This file is in the public domain, so clarified as of
@@ -1962,22 +1962,32 @@ Zone America/Edmonton	-7:33:52 -	LMT	1906 Sep
 # on March 8 will be the last time change, ending twice-yearly clock changes.”
 # https://news.gov.bc.ca/releases/2026AG0013-000209
 #
-# From Paul Eggert (2026-03-03):
-# The law specifies a 2026-03-08 02:00 switch from PST to PDT, then 21 hours
-# of PDT, then a 2026-03-09 switch to the new standard time Pacific Time,
+# From Paul Eggert (2026-03-07):
+# The law says that 21 hours after the usual 2026-03-08 02:00 switch from
+# PST to PDT, the next day inaugurates the new standard time Pacific Time,
 # i.e., just one clock change but two name changes separated by 21 hours.
-#
 # PT, the obvious abbreviation for Pacific Time, is one letter too short
 # to conform to TZDB’s (and POSIX’s) [-+[:alnum:]]{3,6} requirements.
-# I asked the BC government for advice, with no response yet.
-# For now, use the abbreviation -07; we can decide later what (if any)
-# conforming non-numeric abbreviation to use.  Possibilities include:
+# I asked the BC government for advice, with no response. For now, do this:
+#   1.	As a temporary hack, pretend that the BC law takes effect
+#	not on 2026-03-09 at 00:00, but on 2026-11-01 at 02:00.
+#	This pretense works around a limitation in CLDR v48.1 (2026-01-08),
+#	which would otherwise say the interval uses “Pacific Standard Time”.
+#	(Below, this temporary hack is marked “Temporary hack; see above.”)
+#	Strictly speaking this hack is incorrect since the interval uses
+#	standard time, but it does have the right UT offset and it
+#	works around the CLDR limitation.  We should be able to remove
+#	the temporary hack after CLDR is fixed.
+#   2.	After the BC law takes effect, model the time as MST sans DST.
+#	We can change this later if another conforming non-numeric abbreviation
+#	for Pacific Time becomes more popular.  Possibilities include:
 #   MST - the most compatible with existing software and practice,
 #	and already used in parts of BC and in Yukon
 #   PDT - almost as software-friendly, but confusing because it implies
 #	it is DST and is paired with PST, whereas PT is standard time
 #   PST - straightforward but even more confusing,
 #	and will likely break much software that assumes PST is -08
+#   -07 - accurate and clear in itself, but makes BC look odd vs neighbors
 #   CPT, CPST - for Canadian Pacific (Standard) Time,
 #	by analogy with AEST in Australia
 #   P-T - conforming approximation to “PT”
@@ -1997,7 +2007,10 @@ Rule	Vanc	1962	2006	-	Oct	lastSun	2:00	0	S
 Zone America/Vancouver	-8:12:28 -	LMT	1884
 			-8:00	Vanc	P%sT	1987
 			-8:00	Canada	P%sT	2026 Mar  9
-			-7:00	-	-07
+			# Temporary hack; see above.
+			-8:00	1:00	PDT	2026 Nov  1 02:00
+			# End of temporary hack.
+			-7:00	-	MST
 Zone America/Dawson_Creek -8:00:56 -	LMT	1884
 			-8:00	Canada	P%sT	1947
 			-8:00	Vanc	P%sT	1972 Aug 30  2:00

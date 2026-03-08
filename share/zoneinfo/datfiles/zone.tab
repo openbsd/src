@@ -1,4 +1,4 @@
-# $OpenBSD: zone.tab,v 1.79 2025/03/25 14:34:41 millert Exp $
+# $OpenBSD: zone.tab,v 1.80 2026/03/08 00:08:52 millert Exp $
 # tzdb timezone descriptions (deprecated version)
 #
 # This file is in the public domain, so clarified as of
@@ -130,7 +130,7 @@ CA	+5546-12014	America/Dawson_Creek	MST - BC (Dawson Cr, Ft St John)
 CA	+5848-12242	America/Fort_Nelson	MST - BC (Ft Nelson)
 CA	+6043-13503	America/Whitehorse	MST - Yukon (east)
 CA	+6404-13925	America/Dawson	MST - Yukon (west)
-CA	+4916-12307	America/Vancouver	Pacific - BC (most areas)
+CA	+4916-12307	America/Vancouver	British Columbia (most areas)
 CC	-1210+09655	Indian/Cocos
 CD	-0418+01518	Africa/Kinshasa	Dem. Rep. of Congo (west)
 CD	-1140+02728	Africa/Lubumbashi	Dem. Rep. of Congo (east)

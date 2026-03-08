@@ -1,4 +1,4 @@
-# $OpenBSD: zone1970.tab,v 1.32 2025/03/25 14:34:41 millert Exp $
+# $OpenBSD: zone1970.tab,v 1.33 2026/03/08 00:08:52 millert Exp $
 # tzdb timezone descriptions
 #
 # This file is in the public domain.
@@ -120,7 +120,7 @@ CA	+5546-12014	America/Dawson_Creek	MST - BC (Dawson Cr, Ft St John)
 CA	+5848-12242	America/Fort_Nelson	MST - BC (Ft Nelson)
 CA	+6043-13503	America/Whitehorse	MST - Yukon (east)
 CA	+6404-13925	America/Dawson	MST - Yukon (west)
-CA	+4916-12307	America/Vancouver	Pacific - BC (most areas)
+CA	+4916-12307	America/Vancouver	British Columbia (most areas)
 CH,DE,LI	+4723+00832	Europe/Zurich	Büsingen
 CI,BF,GH,GM,GN,IS,ML,MR,SH,SL,SN,TG	+0519-00402	Africa/Abidjan
 CK	-2114-15946	Pacific/Rarotonga
