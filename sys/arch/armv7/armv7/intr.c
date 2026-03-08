@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.28 2026/03/08 17:07:31 deraadt Exp $ */
+/* $OpenBSD: intr.c,v 1.29 2026/03/08 20:44:27 matthieu Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
