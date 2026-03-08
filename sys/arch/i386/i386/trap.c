@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.165 2024/09/04 07:54:51 mglocker Exp $	*/
+/*	$OpenBSD: trap.c,v 1.166 2026/03/08 17:07:31 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -242,7 +242,7 @@ trap(struct trapframe *frame)
 	vaddr_t gdt_cs = SEGDESC_LIMIT(curcpu()->ci_gdt[GUCODE_SEL].sd);
 	uint32_t cr2 = rcr2();
 
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 
 #ifdef DEBUG
 	if (trapdebug) {
@@ -498,11 +498,11 @@ ast(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 	KASSERT(!KERNELMODE(frame->tf_cs, frame->tf_eflags));
 	p->p_md.md_regs = frame;
 	refreshcreds(p);
-	uvmexp.softs++;
+	atomic_inc_int(&uvmexp.softs);
 	mi_ast(p, curcpu()->ci_want_resched);
 	userret(p);
 }
@@ -525,7 +525,7 @@ syscall(struct trapframe *frame)
 #endif
 	short argsize;
 
-	uvmexp.syscalls++;
+	atomic_inc_int(&uvmexp.syscalls);
 #ifdef DIAGNOSTIC
 	if (!USERMODE(frame->tf_cs, frame->tf_eflags))
 		panic("syscall");

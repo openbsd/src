@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.17 2023/01/06 19:23:53 miod Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.18 2026/03/08 17:07:31 deraadt Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ undefinedinstruction(trapframe_t *frame)
 	}
 
 	/* Update vmmeter statistics */
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 
 	/* Check for coprocessor instruction */
 

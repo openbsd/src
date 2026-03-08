@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.48 2024/04/29 12:33:17 jsg Exp $	*/
+/*	$OpenBSD: fault.c,v 1.49 2026/03/08 17:07:31 deraadt Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ data_abort_handler(trapframe_t *tf)
 	ftyp = FAULT_TYPE_V7(fsr);
 
 	/* Update vmmeter statistics */
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 
 	/* Before enabling interrupts, save FPU state */
 	vfp_save();
@@ -526,7 +526,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	uint fsr, far;
 
 	/* Update vmmeter statistics */
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 
 	/* Grab FAR/FSR before enabling interrupts */
 	far = cpu_ifar();

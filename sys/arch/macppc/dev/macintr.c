@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.57 2022/07/24 00:28:09 cheloha Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.58 2026/03/08 17:07:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -471,7 +471,7 @@ mac_ext_intr(void)
 		macintr_eoi(irq);
 		macintr_setipl(pcpl);
 
-		uvmexp.intrs++;
+		atomic_inc_int(&uvmexp.intrs);
 
 		irq = macintr_read_irq();
 	}

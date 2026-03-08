@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.166 2024/04/14 03:26:25 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.167 2026/03/08 17:07:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -139,7 +139,7 @@ ast(struct proc *p)
 {
 	if (p->p_md.md_astpending) {
 		p->p_md.md_astpending = 0;
-		uvmexp.softs++;
+		atomic_inc_int(&uvmexp.softs);
 		mi_ast(p, curcpu()->ci_want_resched);
 	}
 
@@ -208,7 +208,7 @@ trap(int type, struct trapframe *frame)
 	}
 #endif
 	if (trapnum != T_INTERRUPT) {
-		uvmexp.traps++;
+		atomic_inc_int(&uvmexp.traps);
 		mtctl(frame->tf_eiem, CR_EIEM);
 	}
 
@@ -772,7 +772,7 @@ syscall(struct trapframe *frame)
 	int oldcpl = curcpu()->ci_cpl;
 #endif
 
-	uvmexp.syscalls++;
+	atomic_inc_int(&uvmexp.syscalls);
 
 	if (!USERMODE(frame->tf_iioq_head))
 		panic("syscall");

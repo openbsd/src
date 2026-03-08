@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.55 2025/07/16 07:15:42 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.56 2026/03/08 17:07:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -63,28 +63,28 @@ trap(struct trapframe *frame)
 
 	switch (type) {
 	case EXC_DECR:
-		uvmexp.intrs++;
+		atomic_inc_int(&uvmexp.intrs);
 		ci->ci_idepth++;
 		decr_intr(frame);
 		ci->ci_idepth--;
 		return;
 	case EXC_EXI:
-		uvmexp.intrs++;
+		atomic_inc_int(&uvmexp.intrs);
 		ci->ci_idepth++;
 		exi_intr(frame);
 		ci->ci_idepth--;
 		return;
 	case EXC_HVI:
-		uvmexp.intrs++;
+		atomic_inc_int(&uvmexp.intrs);
 		ci->ci_idepth++;
 		hvi_intr(frame);
 		ci->ci_idepth--;
 		return;
 	case EXC_SC:
-		uvmexp.syscalls++;
+		atomic_inc_int(&uvmexp.syscalls);
 		break;
 	default:
-		uvmexp.traps++;
+		atomic_inc_int(&uvmexp.traps);
 		break;
 	}
 
@@ -340,7 +340,7 @@ trap(struct trapframe *frame)
 
 	case EXC_AST|EXC_USER:
 		p->p_md.md_astpending = 0;
-		uvmexp.softs++;
+		atomic_inc_int(&uvmexp.softs);
 		mi_ast(p, curcpu()->ci_want_resched);
 		break;
 

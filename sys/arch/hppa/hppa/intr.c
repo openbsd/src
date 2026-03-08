@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.53 2025/11/04 19:05:03 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.54 2026/03/08 17:07:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -254,9 +254,9 @@ cpu_intr(void *v)
 			if (iv->flags & HPPA_IV_CALL)
 				continue;	/* handled in locore */
 
-			uvmexp.intrs++;
+			atomic_inc_int(&uvmexp.intrs);
 			if (iv->flags & HPPA_IV_SOFT)
-				uvmexp.softs++;
+				atomic_inc_int(&uvmexp.softs);
 
 			ci->ci_cpl = iv->pri;
 			mtctl(frame->tf_eiem, CR_EIEM);

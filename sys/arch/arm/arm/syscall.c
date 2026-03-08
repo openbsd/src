@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.28 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.29 2026/03/08 17:07:31 deraadt Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@ swi_handler(trapframe_t *frame)
 	u_int nap = 4, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
-	uvmexp.syscalls++;
+	atomic_inc_int(&uvmexp.syscalls);
 
 	/* Before enabling interrupts, save FPU state */
 	vfp_save();

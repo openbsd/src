@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.19 2025/03/25 17:40:03 tedu Exp $ */
+/* $OpenBSD: syscall.c,v 1.20 2026/03/08 17:07:31 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -34,7 +34,7 @@ svc_handler(trapframe_t *frame)
 	int code, error = ENOSYS;
 	register_t *args, rval[2];
 
-	uvmexp.syscalls++;
+	atomic_inc_int(&uvmexp.syscalls);
 
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true((frame->tf_spsr & I_bit) == 0))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.16 2025/09/14 15:09:36 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.17 2026/03/08 17:07:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -68,7 +68,7 @@ riscv_cpu_intr(void *frame)
 {
 	struct cpu_info	*ci = curcpu();
 
-	uvmexp.intrs++;
+	atomic_inc_int(&uvmexp.intrs);
 	ci->ci_idepth++;
 	(*riscv_intr_dispatch)(frame);
 	ci->ci_idepth--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ast.c,v 1.17 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: ast.c,v 1.18 2026/03/08 17:07:31 deraadt Exp $	*/
 /*	$NetBSD: ast.c,v 1.6 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
@@ -70,10 +70,10 @@ ast(struct trapframe *tf)
 {
 	struct proc *p = curproc;
 
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 	p->p_addr->u_pcb.pcb_tf = tf;
 	refreshcreds(p);
-	uvmexp.softs++;
+	atomic_inc_int(&uvmexp.softs);
 	mi_ast(p, want_resched);
 	userret(p);
 }

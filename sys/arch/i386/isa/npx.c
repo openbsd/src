@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.76 2024/05/13 01:15:50 jsg Exp $	*/
+/*	$OpenBSD: npx.c,v 1.77 2026/03/08 17:07:31 deraadt Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -421,7 +421,7 @@ npxintr(void *arg)
 	int code;
 	union sigval sv;
 
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 	IPRINTF(("%s: fp intr\n", ci->ci_dev->dv_xname));
 
 	if (p == NULL || npx_type == NPX_NONE) {
@@ -657,7 +657,7 @@ npxdna_xmm(struct cpu_info *ci)
 	ci->ci_fpcurproc = p;
 	p->p_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
-	uvmexp.fpswtch++;
+	atomic_inc_int(&uvmexp.fpswtch);
 
 	sfp = &p->p_addr->u_pcb.pcb_savefpu;
 
@@ -738,7 +738,7 @@ npxdna_s87(struct cpu_info *ci)
 	ci->ci_fpcurproc = p;
 	p->p_addr->u_pcb.pcb_fpcpu = ci;
 	splx(s);
-	uvmexp.fpswtch++;
+	atomic_inc_int(&uvmexp.fpswtch);
 
 	sfp = &p->p_addr->u_pcb.pcb_savefpu;
 
@@ -889,7 +889,7 @@ fpu_kernel_enter(void)
 
 	if (ci->ci_fpcurproc != NULL) {
 		npxsave_cpu(ci, 1);
-		uvmexp.fpswtch++;
+		atomic_inc_int(&uvmexp.fpswtch);
 	}
 
 	/* Claim the FPU */

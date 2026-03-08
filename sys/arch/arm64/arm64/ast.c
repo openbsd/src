@@ -1,4 +1,4 @@
-/* $OpenBSD: ast.c,v 1.8 2023/04/13 02:19:04 jsg Exp $ */
+/* $OpenBSD: ast.c,v 1.9 2026/03/08 17:07:31 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -41,7 +41,7 @@ ast(struct trapframe *tf)
 	p->p_addr->u_pcb.pcb_tf = tf;
 
 	refreshcreds(p);
-	uvmexp.softs++;
+	atomic_inc_int(&uvmexp.softs);
 	mi_ast(p, curcpu()->ci_want_resched);
 	userret(p);
 }

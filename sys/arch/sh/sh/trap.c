@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.57 2023/12/13 15:57:22 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.58 2026/03/08 17:07:31 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -159,7 +159,7 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	int usermode = !KERNELMODE(tf->tf_ssr);
 	union sigval sv;
 
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 
 	/*
 	 * This function is entered at splhigh. Restore the interrupt
@@ -484,7 +484,7 @@ ast(struct proc *p, struct trapframe *tf)
 	while (p->p_md.md_astpending) {
 		p->p_md.md_astpending = 0;
 		refreshcreds(p);
-		uvmexp.softs++;
+		atomic_inc_int(&uvmexp.softs);
 		mi_ast(p, curcpu()->ci_want_resched);
 		userret(p);
 	}
@@ -520,7 +520,7 @@ syscall(struct proc *p, struct trapframe *tf)
 	int argsize;
 	register_t code, args[8], rval[2];
 
-	uvmexp.syscalls++;
+	atomic_inc_int(&uvmexp.syscalls);
 
 	opc = tf->tf_spc;
 	params = (caddr_t)tf->tf_r15;

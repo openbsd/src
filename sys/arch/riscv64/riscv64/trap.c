@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.20 2025/03/01 07:42:09 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.21 2026/03/08 17:07:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Shivam Waghela <shivamwaghela@gmail.com>
@@ -80,7 +80,7 @@ do_trap_supervisor(struct trapframe *frame)
 	}
 
 	intr_enable();
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 
 	exception = (frame->tf_scause & EXCP_MASK);
 	switch (exception) {
@@ -133,7 +133,7 @@ do_trap_user(struct trapframe *frame)
 	}
 
 	intr_enable();
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 	refreshcreds(p);
 
 	exception = (frame->tf_scause & EXCP_MASK);

@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.45 2025/06/29 15:55:21 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.46 2026/03/08 17:07:31 deraadt Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -223,7 +223,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 		
 	case ALPHA_INTR_CLOCK:	/* clock interrupt */
-		atomic_add_int(&uvmexp.intrs, 1);
+		atomic_inc_int(&uvmexp.intrs);
 		if (CPU_IS_PRIMARY(ci))
 			clk_count.ec_count++;
 		if (platform.clockintr)
@@ -247,7 +247,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		KDASSERT(a1 >= SCB_IOVECBASE && a1 < SCB_SIZE);
 
 		atomic_add_ulong(&ci->ci_idepth, 1);
-		atomic_add_int(&uvmexp.intrs, 1);
+		atomic_inc_int(&uvmexp.intrs);
 		scb = &scb_iovectab[SCB_VECTOIDX(a1 - SCB_IOVECBASE)];
 		(*scb->scb_func)(scb->scb_arg, a1);
 		atomic_sub_ulong(&ci->ci_idepth, 1);

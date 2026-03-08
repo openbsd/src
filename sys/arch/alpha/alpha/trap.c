@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.112 2025/06/28 16:04:09 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.113 2026/03/08 17:07:31 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -218,7 +218,7 @@ trap(const unsigned long a0, const unsigned long a1, const unsigned long a2,
 	vm_prot_t access_type;
 	unsigned long onfault;
 
-	atomic_add_int(&uvmexp.traps, 1);
+	atomic_inc_int(&uvmexp.traps);
 	p = curproc;
 	ucode = 0;
 	v = 0;
@@ -506,7 +506,7 @@ syscall(u_int64_t code, struct trapframe *framep)
 	u_long args[6];
 	u_int nargs;
 
-	atomic_add_int(&uvmexp.syscalls, 1);
+	atomic_inc_int(&uvmexp.syscalls);
 	p = curproc;
 	p->p_md.md_tf = framep;
 	framep->tf_regs[FRAME_SP] = alpha_pal_rdusp();
@@ -624,7 +624,7 @@ alpha_enable_fp(struct proc *p, int check)
 #endif
 	p->p_addr->u_pcb.pcb_fpcpu = ci;
 	ci->ci_fpcurproc = p;
-	atomic_add_int(&uvmexp.fpswtch, 1);
+	atomic_inc_int(&uvmexp.fpswtch);
 
 	p->p_md.md_flags |= MDP_FPUSED;
 	alpha_pal_wrfen(1);
@@ -654,7 +654,7 @@ ast(struct trapframe *framep)
 #endif
 
 	refreshcreds(p);
-	atomic_add_int(&uvmexp.softs, 1);
+	atomic_inc_int(&uvmexp.softs);
 	mi_ast(p, curcpu()->ci_want_resched);
 
 	/* Do any deferred user pmap operations. */

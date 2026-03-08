@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.27 2025/09/14 15:09:36 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.28 2026/03/08 17:07:31 deraadt Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -64,7 +64,7 @@ void (*arm_intr_dispatch)(void *) = arm_dflt_intr;
 void
 arm_intr(void *frame)
 {
-	uvmexp.intrs++;
+	atomic_inc_int(&uvmexp.intrs);
 	/* XXX - change this to have irq_dispatch use function pointer */
 	(*arm_intr_dispatch)(frame);
 }

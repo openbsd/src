@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.148 2025/12/23 19:16:51 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.149 2026/03/08 17:07:31 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -817,7 +817,7 @@ luna88k_ext_int(struct trapframe *eframe)
 	    !(cur_isr & (1 << (cur_int_level + 17))))
 		goto out;
 
-	uvmexp.intrs++;
+	atomic_inc_int(&uvmexp.intrs);
 
 #ifdef MULTIPROCESSOR
 	/*

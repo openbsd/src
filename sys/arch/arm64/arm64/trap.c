@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.54 2025/08/01 10:14:59 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.55 2026/03/08 17:07:31 deraadt Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -320,7 +320,7 @@ do_el1h_sync(struct trapframe *frame)
 	far = READ_SPECIALREG(far_el1);
 
 	intr_enable();
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 
 	exception = ESR_ELx_EXCEPTION(esr);
 	switch (exception) {
@@ -381,7 +381,7 @@ do_el0_sync(struct trapframe *frame)
 	far = READ_SPECIALREG(far_el1);
 
 	intr_enable();
-	uvmexp.traps++;
+	atomic_inc_int(&uvmexp.traps);
 
 	p->p_addr->u_pcb.pcb_tf = frame;
 	refreshcreds(p);

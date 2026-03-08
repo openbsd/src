@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.19 2024/01/11 19:16:27 miod Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.20 2026/03/08 17:07:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -41,7 +41,7 @@ svc_handler(trapframe_t *frame)
 	int code, error = ENOSYS;
 	register_t *args, rval[2];
 
-	uvmexp.syscalls++;
+	atomic_inc_int(&uvmexp.syscalls);
 
 	code = frame->tf_t[0];
 	if (code <= 0 || code >= SYS_MAXSYSCALL)

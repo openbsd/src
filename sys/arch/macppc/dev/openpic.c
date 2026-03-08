@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.90 2022/07/24 00:28:09 cheloha Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.91 2026/03/08 17:07:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -673,7 +673,7 @@ openpic_ext_intr(void)
 			DPRINTF("spurious intr %d\n", irq);
 		}
 
-		uvmexp.intrs++;
+		atomic_inc_int(&uvmexp.intrs);
 		openpic_setipl(pcpl);
 
 		irq = openpic_read_irq(ci->ci_cpuid);
