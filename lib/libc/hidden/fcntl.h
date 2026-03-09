@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.2 2016/05/07 19:05:22 guenther Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.3 2026/03/09 16:26:21 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,10 +20,17 @@
 
 #include_next <fcntl.h>
 
+/*
+ * Exactly like open(2), but a seperate system call so that kernel can know
+ * the request came from the libc.
+ */
+int        __pledge_open(const char *, int, ...);
+
 PROTO_DEPRECATED(creat);
 PROTO_CANCEL(fcntl);
 PROTO_NORMAL(flock);
 PROTO_CANCEL(open);
+PROTO_NORMAL(__pledge_open);
 PROTO_CANCEL(openat);
 
 #endif /* !_LIBC_FCNTL_H_ */
