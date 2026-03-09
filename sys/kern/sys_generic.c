@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.160 2024/12/30 02:46:00 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.161 2026/03/09 02:44:04 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -347,6 +347,10 @@ dofilewritev(struct proc *p, int fd, struct uio *uio, int flags,
 
 	if ((fp = fd_getfile_mode(fdp, fd, FWRITE)) == NULL)
 		return (EBADF);
+	else if (p->p_fd->fd_ofileflags[fd] & UF_PLEDGEOPEN) {
+		error = EPERM;
+		goto done;
+	}
 
 	/* Checks for positioned write. */
 	if (flags & FO_POSITION) {

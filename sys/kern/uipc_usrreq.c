@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.221 2025/08/04 04:59:31 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.222 2026/03/09 02:44:04 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -1284,6 +1284,9 @@ morespace:
 		}
 		if (fp->f_count >= FDUP_MAX_COUNT) {
 			error = EDEADLK;
+			goto fail;
+		} else if (p->p_fd->fd_ofileflags[fd] & UF_PLEDGEOPEN) {
+			error = EPERM;
 			goto fail;
 		}
 		error = pledge_sendfd(p, fp);

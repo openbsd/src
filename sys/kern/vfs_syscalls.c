@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.379 2026/03/08 16:41:21 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.380 2026/03/09 02:44:04 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2316,6 +2316,10 @@ sys_fchflags(struct proc *p, void *v, register_t *retval)
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = fp->f_data;
+	if (p->p_fd->fd_ofileflags[SCARG(uap, fd)] & UF_PLEDGEOPEN) {
+		vput(vp);
+		return (EPERM);
+	}
 	vref(vp);
 	FRELE(fp, p);
 	return (dovchflags(p, vp, SCARG(uap, flags)));
@@ -2440,6 +2444,8 @@ sys_fchmod(struct proc *p, void *v, register_t *retval)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount && vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
+	else if (p->p_fd->fd_ofileflags[SCARG(uap, fd)] & UF_PLEDGEOPEN)
+		error = EPERM;
 	else {
 		vattr_null(&vattr);
 		vattr.va_mode = mode & ALLPERMS;
@@ -2603,6 +2609,8 @@ sys_fchown(struct proc *p, void *v, register_t *retval)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (vp->v_mount && (vp->v_mount->mnt_flag & MNT_RDONLY))
 		error = EROFS;
+	else if (p->p_fd->fd_ofileflags[SCARG(uap, fd)] & UF_PLEDGEOPEN)
+		error = EPERM;
 	else {
 		if ((error = pledge_chown(p, uid, gid)))
 			goto out;
@@ -2928,6 +2936,9 @@ sys_ftruncate(struct proc *p, void *v, register_t *retval)
 		return (error);
 	if ((fp->f_flag & FWRITE) == 0) {
 		error = EINVAL;
+		goto bad;
+	} else if (p->p_fd->fd_ofileflags[SCARG(uap, fd)] & UF_PLEDGEOPEN) {
+		error = EPERM;
 		goto bad;
 	}
 	vp = fp->f_data;
