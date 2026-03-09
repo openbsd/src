@@ -24,6 +24,13 @@ usleep_range(unsigned long min, unsigned long max)
 	DELAY((min + max) / 2);
 }
 
+/* XXX assumes state is TASK_UNINTERRUPTIBLE */
+static inline void
+usleep_range_state(unsigned long min, unsigned long max, unsigned int state)
+{
+	usleep_range(min, max);
+}
+
 static inline void
 mdelay(unsigned long msecs)
 {

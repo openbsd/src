@@ -53,4 +53,6 @@ struct pci_device_id {
 
 #define ACPI_ID_LEN	16
 
+typedef unsigned long kernel_ulong_t;
+
 #endif

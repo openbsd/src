@@ -48,6 +48,9 @@
 #include "dm_helpers.h"
 #include "clk_mgr.h"
 
+ // Offset DPCD 050Eh == 0x5A
+#define MST_HUB_ID_0x5A  0x5A
+
 #define DC_LOGGER \
 	link->ctx->logger
 #define DC_LOGGER_INIT(logger)
@@ -329,7 +332,7 @@ static void query_dp_dual_mode_adaptor(
 
 	/* Assume we have no valid DP passive dongle connected */
 	*dongle = DISPLAY_DONGLE_NONE;
-	sink_cap->max_hdmi_pixel_clock = DP_ADAPTOR_HDMI_SAFE_MAX_TMDS_CLK;
+	sink_cap->max_hdmi_pixel_clock = DP_ADAPTOR_DVI_MAX_TMDS_CLK;
 
 	/* Read DP-HDMI dongle I2c (no response interpreted as DP-DVI dongle)*/
 	if (!i2c_read(
@@ -385,6 +388,8 @@ static void query_dp_dual_mode_adaptor(
 
 		}
 	}
+	if (is_valid_hdmi_signature)
+		sink_cap->max_hdmi_pixel_clock = DP_ADAPTOR_HDMI_SAFE_MAX_TMDS_CLK;
 
 	if (is_type2_dongle) {
 		uint32_t max_tmds_clk =
@@ -590,8 +595,9 @@ static bool detect_dp(struct dc_link *link,
 
 	if (sink_caps->transaction_type == DDC_TRANSACTION_TYPE_I2C_OVER_AUX) {
 		sink_caps->signal = SIGNAL_TYPE_DISPLAY_PORT;
-		if (!detect_dp_sink_caps(link))
+		if (!detect_dp_sink_caps(link)) {
 			return false;
+		}
 
 		if (is_dp_branch_device(link))
 			/* DP SST branch */
@@ -608,6 +614,7 @@ static bool detect_dp(struct dc_link *link,
 		link->dpcd_caps.dongle_type = sink_caps->dongle_type;
 		link->dpcd_caps.is_dongle_type_one = sink_caps->is_dongle_type_one;
 		link->dpcd_caps.dpcd_rev.raw = 0;
+		link->dpcd_caps.usb4_dp_tun_info.dp_tun_cap.raw = 0;
 	}
 
 	return true;
@@ -651,7 +658,7 @@ static bool wait_for_entering_dp_alt_mode(struct dc_link *link)
 		return true;
 
 	is_in_alt_mode = link->link_enc->funcs->is_in_alt_mode(link->link_enc);
-	DC_LOG_DC("DP Alt mode state on HPD: %d\n", is_in_alt_mode);
+	DC_LOG_DC("DP Alt mode state on HPD: %d  Link=%d\n", is_in_alt_mode, link->link_index);
 
 	if (is_in_alt_mode)
 		return true;
@@ -692,6 +699,15 @@ static void apply_dpia_mst_dsc_always_on_wa(struct dc_link *link)
 			link->dpcd_caps.dsc_caps.dsc_basic_caps.fields.dsc_support.DSC_SUPPORT &&
 			!link->dc->debug.dpia_debug.bits.disable_mst_dsc_work_around)
 		link->wa_flags.dpia_mst_dsc_always_on = true;
+
+	if (link->ep_type == DISPLAY_ENDPOINT_USB4_DPIA &&
+		link->type == dc_connection_mst_branch &&
+		link->dpcd_caps.branch_dev_id == DP_BRANCH_DEVICE_ID_90CC24 &&
+		link->dpcd_caps.branch_vendor_specific_data[2] == MST_HUB_ID_0x5A &&
+		link->dpcd_caps.dsc_caps.dsc_basic_caps.fields.dsc_support.DSC_SUPPORT &&
+		!link->dc->debug.dpia_debug.bits.disable_mst_dsc_work_around) {
+			link->wa_flags.dpia_mst_dsc_always_on = true;
+	}
 }
 
 static void revert_dpia_mst_dsc_always_on_wa(struct dc_link *link)
@@ -804,7 +820,10 @@ static bool should_verify_link_capability_destructively(struct dc_link *link,
 {
 	bool destrictive = false;
 	struct dc_link_settings max_link_cap;
-	bool is_link_enc_unavailable = link->link_enc &&
+	bool is_link_enc_unavailable = false;
+
+	if (!link->dc->config.unify_link_enc_assignment)
+		is_link_enc_unavailable = link->link_enc &&
 			link->dc->res_pool->funcs->link_encs_assign &&
 			!link_enc_cfg_is_link_enc_avail(
 					link->ctx->dc,
@@ -817,7 +836,8 @@ static bool should_verify_link_capability_destructively(struct dc_link *link,
 
 		if (link->dc->debug.skip_detection_link_training ||
 				dc_is_embedded_signal(link->local_sink->sink_signal) ||
-				link->ep_type == DISPLAY_ENDPOINT_USB4_DPIA) {
+				(link->ep_type == DISPLAY_ENDPOINT_USB4_DPIA &&
+				!link->dc->config.enable_dpia_pre_training)) {
 			destrictive = false;
 		} else if (link_dp_get_encoding_format(&max_link_cap) ==
 				DP_8b_10b_ENCODING) {
@@ -991,21 +1011,11 @@ static bool detect_link_and_local_sink(struct dc_link *link,
 					link->reported_link_cap.link_rate > LINK_RATE_HIGH3)
 				link->reported_link_cap.link_rate = LINK_RATE_HIGH3;
 
-			/*
-			 * If this is DP over USB4 link then we need to:
-			 * - Enable BW ALLOC support on DPtx if applicable
-			 */
-			if (dc->config.usb4_bw_alloc_support) {
-				if (link_dp_dpia_set_dptx_usb4_bw_alloc_support(link)) {
-					/* update with non reduced link cap if bw allocation mode is supported */
-					if (link->dpia_bw_alloc_config.nrd_max_link_rate &&
-						link->dpia_bw_alloc_config.nrd_max_lane_count) {
-						link->reported_link_cap.link_rate =
-							link->dpia_bw_alloc_config.nrd_max_link_rate;
-						link->reported_link_cap.lane_count =
-							link->dpia_bw_alloc_config.nrd_max_lane_count;
-					}
-				}
+			if (link->dpcd_caps.usb4_dp_tun_info.dp_tun_cap.bits.dp_tunneling
+					&& link->dpcd_caps.usb4_dp_tun_info.dp_tun_cap.bits.dpia_bw_alloc
+					&& link->dpcd_caps.usb4_dp_tun_info.driver_bw_cap.bits.driver_bw_alloc_support) {
+				if (link_dpia_enable_usb4_dp_bw_alloc_mode(link) == false)
+					link->dpcd_caps.usb4_dp_tun_info.dp_tun_cap.bits.dpia_bw_alloc = false;
 			}
 			break;
 		}

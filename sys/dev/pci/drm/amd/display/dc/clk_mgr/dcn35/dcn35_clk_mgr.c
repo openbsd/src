@@ -44,7 +44,7 @@
 #include "dcn31/dcn31_clk_mgr.h"
 
 #include "dc_dmub_srv.h"
-#include "link.h"
+#include "link_service.h"
 #include "logger_types.h"
 
 #undef DC_LOGGER
@@ -90,6 +90,7 @@
 #define mmCLK1_CLK5_ALLOW_DS 0x16EB1
 
 #define mmCLK5_spll_field_8 0x1B24B
+#define mmCLK6_spll_field_8 0x1B24B
 #define mmDENTIST_DISPCLK_CNTL 0x0124
 #define regDENTIST_DISPCLK_CNTL 0x0064
 #define regDENTIST_DISPCLK_CNTL_BASE_IDX 1
@@ -116,6 +117,7 @@
 #define DENTIST_DISPCLK_CNTL__DENTIST_DPPCLK_WDIVIDER_MASK 0x7F000000L
 
 #define CLK5_spll_field_8__spll_ssc_en_MASK 0x00002000L
+#define CLK6_spll_field_8__spll_ssc_en_MASK 0x00002000L
 
 #define SMU_VER_THRESHOLD 0x5D4A00 //93.74.0
 #undef FN
@@ -201,26 +203,41 @@ static void dcn35_disable_otg_wa(struct clk_mgr *clk_mgr_base, struct dc_state *
 		struct pipe_ctx *pipe = safe_to_lower
 			? &context->res_ctx.pipe_ctx[i]
 			: &dc->current_state->res_ctx.pipe_ctx[i];
+		struct link_encoder *new_pipe_link_enc = new_pipe->link_res.dio_link_enc;
+		struct link_encoder *pipe_link_enc = pipe->link_res.dio_link_enc;
 		bool stream_changed_otg_dig_on = false;
+		bool has_active_hpo = false;
+
 		if (pipe->top_pipe || pipe->prev_odm_pipe)
 			continue;
+
+		if (!dc->config.unify_link_enc_assignment) {
+			if (new_pipe->stream)
+				new_pipe_link_enc = new_pipe->stream->link_enc;
+			if (pipe->stream)
+				pipe_link_enc = pipe->stream->link_enc;
+		}
+
 		stream_changed_otg_dig_on = old_pipe->stream && new_pipe->stream &&
 		old_pipe->stream != new_pipe->stream &&
 		old_pipe->stream_res.tg == new_pipe->stream_res.tg &&
-		new_pipe->stream->link_enc && !new_pipe->stream->dpms_off &&
-		new_pipe->stream->link_enc->funcs->is_dig_enabled &&
-		new_pipe->stream->link_enc->funcs->is_dig_enabled(
-		new_pipe->stream->link_enc) &&
+		new_pipe_link_enc && !new_pipe->stream->dpms_off &&
+		new_pipe_link_enc->funcs->is_dig_enabled &&
+		new_pipe_link_enc->funcs->is_dig_enabled(
+		new_pipe_link_enc) &&
 		new_pipe->stream_res.stream_enc &&
 		new_pipe->stream_res.stream_enc->funcs->is_fifo_enabled &&
 		new_pipe->stream_res.stream_enc->funcs->is_fifo_enabled(new_pipe->stream_res.stream_enc);
-		bool has_active_hpo = dccg->ctx->dc->link_srv->dp_is_128b_132b_signal(old_pipe) && dccg->ctx->dc->link_srv->dp_is_128b_132b_signal(new_pipe);
 
-		if (!has_active_hpo && !dccg->ctx->dc->link_srv->dp_is_128b_132b_signal(pipe) &&
-					(pipe->stream && (pipe->stream->dpms_off || dc_is_virtual_signal(pipe->stream->signal) ||
-					!pipe->stream->link_enc) && !stream_changed_otg_dig_on)) {
+		if (old_pipe->stream && new_pipe->stream && old_pipe->stream == new_pipe->stream) {
+			has_active_hpo =  dccg->ctx->dc->link_srv->dp_is_128b_132b_signal(old_pipe) &&
+			dccg->ctx->dc->link_srv->dp_is_128b_132b_signal(new_pipe);
 
+		}
 
+		if (!has_active_hpo && !stream_changed_otg_dig_on && pipe->stream &&
+		    (pipe->stream->dpms_off || dc_is_virtual_signal(pipe->stream->signal) || !pipe_link_enc) &&
+		    !dccg->ctx->dc->link_srv->dp_is_128b_132b_signal(pipe)) {
 			/* This w/a should not trigger when we have a dig active */
 			if (disable) {
 				if (pipe->stream_res.tg && pipe->stream_res.tg->funcs->immediate_disable_crtc)
@@ -572,9 +589,118 @@ bool dcn35_are_clock_states_equal(struct dc_clocks *a,
 	return true;
 }
 
-static void dcn35_dump_clk_registers(struct clk_state_registers_and_bypass *regs_and_bypass,
+static void dcn35_save_clk_registers_internal(struct dcn35_clk_internal *internal, struct clk_mgr *clk_mgr_base)
+{
+	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+
+	// read dtbclk
+	internal->CLK1_CLK4_CURRENT_CNT = REG_READ(CLK1_CLK4_CURRENT_CNT);
+	internal->CLK1_CLK4_BYPASS_CNTL = REG_READ(CLK1_CLK4_BYPASS_CNTL);
+
+	// read dcfclk
+	internal->CLK1_CLK3_CURRENT_CNT = REG_READ(CLK1_CLK3_CURRENT_CNT);
+	internal->CLK1_CLK3_BYPASS_CNTL = REG_READ(CLK1_CLK3_BYPASS_CNTL);
+
+	// read dcf deep sleep divider
+	internal->CLK1_CLK3_DS_CNTL = REG_READ(CLK1_CLK3_DS_CNTL);
+	internal->CLK1_CLK3_ALLOW_DS = REG_READ(CLK1_CLK3_ALLOW_DS);
+
+	// read dppclk
+	internal->CLK1_CLK1_CURRENT_CNT = REG_READ(CLK1_CLK1_CURRENT_CNT);
+	internal->CLK1_CLK1_BYPASS_CNTL = REG_READ(CLK1_CLK1_BYPASS_CNTL);
+
+	// read dprefclk
+	internal->CLK1_CLK2_CURRENT_CNT = REG_READ(CLK1_CLK2_CURRENT_CNT);
+	internal->CLK1_CLK2_BYPASS_CNTL = REG_READ(CLK1_CLK2_BYPASS_CNTL);
+
+	// read dispclk
+	internal->CLK1_CLK0_CURRENT_CNT = REG_READ(CLK1_CLK0_CURRENT_CNT);
+	internal->CLK1_CLK0_BYPASS_CNTL = REG_READ(CLK1_CLK0_BYPASS_CNTL);
+}
+
+static void dcn35_save_clk_registers(struct clk_state_registers_and_bypass *regs_and_bypass,
 		struct clk_mgr_dcn35 *clk_mgr)
 {
+	struct dcn35_clk_internal internal = {0};
+	char *bypass_clks[5] = {"0x0 DFS", "0x1 REFCLK", "0x2 ERROR", "0x3 400 FCH", "0x4 600 FCH"};
+
+	dcn35_save_clk_registers_internal(&internal, &clk_mgr->base.base);
+
+	regs_and_bypass->dcfclk = internal.CLK1_CLK3_CURRENT_CNT / 10;
+	regs_and_bypass->dcf_deep_sleep_divider = internal.CLK1_CLK3_DS_CNTL / 10;
+	regs_and_bypass->dcf_deep_sleep_allow = internal.CLK1_CLK3_ALLOW_DS;
+	regs_and_bypass->dprefclk = internal.CLK1_CLK2_CURRENT_CNT / 10;
+	regs_and_bypass->dispclk = internal.CLK1_CLK0_CURRENT_CNT / 10;
+	regs_and_bypass->dppclk = internal.CLK1_CLK1_CURRENT_CNT / 10;
+	regs_and_bypass->dtbclk = internal.CLK1_CLK4_CURRENT_CNT / 10;
+
+	regs_and_bypass->dppclk_bypass = internal.CLK1_CLK1_BYPASS_CNTL & 0x0007;
+	if (regs_and_bypass->dppclk_bypass < 0 || regs_and_bypass->dppclk_bypass > 4)
+		regs_and_bypass->dppclk_bypass = 0;
+	regs_and_bypass->dcfclk_bypass = internal.CLK1_CLK3_BYPASS_CNTL & 0x0007;
+	if (regs_and_bypass->dcfclk_bypass < 0 || regs_and_bypass->dcfclk_bypass > 4)
+		regs_and_bypass->dcfclk_bypass = 0;
+	regs_and_bypass->dispclk_bypass = internal.CLK1_CLK0_BYPASS_CNTL & 0x0007;
+	if (regs_and_bypass->dispclk_bypass < 0 || regs_and_bypass->dispclk_bypass > 4)
+		regs_and_bypass->dispclk_bypass = 0;
+	regs_and_bypass->dprefclk_bypass = internal.CLK1_CLK2_BYPASS_CNTL & 0x0007;
+	if (regs_and_bypass->dprefclk_bypass < 0 || regs_and_bypass->dprefclk_bypass > 4)
+		regs_and_bypass->dprefclk_bypass = 0;
+
+	if (clk_mgr->base.base.ctx->dc->debug.pstate_enabled) {
+		DC_LOG_SMU("clk_type,clk_value,deepsleep_cntl,deepsleep_allow,bypass\n");
+
+		DC_LOG_SMU("dcfclk,%d,%d,%d,%s\n",
+				   regs_and_bypass->dcfclk,
+				   regs_and_bypass->dcf_deep_sleep_divider,
+				   regs_and_bypass->dcf_deep_sleep_allow,
+				   bypass_clks[(int) regs_and_bypass->dcfclk_bypass]);
+
+		DC_LOG_SMU("dprefclk,%d,N/A,N/A,%s\n",
+			regs_and_bypass->dprefclk,
+			bypass_clks[(int) regs_and_bypass->dprefclk_bypass]);
+
+		DC_LOG_SMU("dispclk,%d,N/A,N/A,%s\n",
+			regs_and_bypass->dispclk,
+			bypass_clks[(int) regs_and_bypass->dispclk_bypass]);
+
+		// REGISTER VALUES
+		DC_LOG_SMU("reg_name,value,clk_type");
+
+		DC_LOG_SMU("CLK1_CLK3_CURRENT_CNT,%d,dcfclk",
+				internal.CLK1_CLK3_CURRENT_CNT);
+
+		DC_LOG_SMU("CLK1_CLK4_CURRENT_CNT,%d,dtbclk",
+					internal.CLK1_CLK4_CURRENT_CNT);
+
+		DC_LOG_SMU("CLK1_CLK3_DS_CNTL,%d,dcf_deep_sleep_divider",
+					internal.CLK1_CLK3_DS_CNTL);
+
+		DC_LOG_SMU("CLK1_CLK3_ALLOW_DS,%d,dcf_deep_sleep_allow",
+					internal.CLK1_CLK3_ALLOW_DS);
+
+		DC_LOG_SMU("CLK1_CLK2_CURRENT_CNT,%d,dprefclk",
+					internal.CLK1_CLK2_CURRENT_CNT);
+
+		DC_LOG_SMU("CLK1_CLK0_CURRENT_CNT,%d,dispclk",
+					internal.CLK1_CLK0_CURRENT_CNT);
+
+		DC_LOG_SMU("CLK1_CLK1_CURRENT_CNT,%d,dppclk",
+					internal.CLK1_CLK1_CURRENT_CNT);
+
+		DC_LOG_SMU("CLK1_CLK3_BYPASS_CNTL,%d,dcfclk_bypass",
+					internal.CLK1_CLK3_BYPASS_CNTL);
+
+		DC_LOG_SMU("CLK1_CLK2_BYPASS_CNTL,%d,dprefclk_bypass",
+					internal.CLK1_CLK2_BYPASS_CNTL);
+
+		DC_LOG_SMU("CLK1_CLK0_BYPASS_CNTL,%d,dispclk_bypass",
+					internal.CLK1_CLK0_BYPASS_CNTL);
+
+		DC_LOG_SMU("CLK1_CLK1_BYPASS_CNTL,%d,dppclk_bypass",
+					internal.CLK1_CLK1_BYPASS_CNTL);
+
+	}
 }
 
 static bool dcn35_is_spll_ssc_enabled(struct clk_mgr *clk_mgr_base)
@@ -583,7 +709,11 @@ static bool dcn35_is_spll_ssc_enabled(struct clk_mgr *clk_mgr_base)
 
 	uint32_t ssc_enable;
 
-	ssc_enable = REG_READ(CLK5_spll_field_8) & CLK5_spll_field_8__spll_ssc_en_MASK;
+	if (clk_mgr_base->ctx->dce_version == DCN_VERSION_3_51) {
+		ssc_enable = REG_READ(CLK6_spll_field_8) & CLK6_spll_field_8__spll_ssc_en_MASK;
+	} else {
+		ssc_enable = REG_READ(CLK5_spll_field_8) & CLK5_spll_field_8__spll_ssc_en_MASK;
+	}
 
 	return ssc_enable != 0;
 }
@@ -604,6 +734,7 @@ static void init_clk_states(struct clk_mgr *clk_mgr)
 void dcn35_init_clocks(struct clk_mgr *clk_mgr)
 {
 	struct clk_mgr_internal *clk_mgr_int = TO_CLK_MGR_INTERNAL(clk_mgr);
+	struct clk_mgr_dcn35 *clk_mgr_dcn35 = TO_CLK_MGR_DCN35(clk_mgr_int);
 
 	init_clk_states(clk_mgr);
 
@@ -614,6 +745,13 @@ void dcn35_init_clocks(struct clk_mgr *clk_mgr)
 	else
 		clk_mgr->dp_dto_source_clock_in_khz = clk_mgr->dprefclk_khz;
 
+	dcn35_save_clk_registers(&clk_mgr->boot_snapshot, clk_mgr_dcn35);
+
+	clk_mgr->clks.ref_dtbclk_khz =  clk_mgr->boot_snapshot.dtbclk * 10;
+	if (clk_mgr->boot_snapshot.dtbclk > 59000) {
+		/*dtbclk enabled based on */
+		clk_mgr->clks.dtbclk_en = true;
+	}
 }
 static struct clk_bw_params dcn35_bw_params = {
 	.vram_type = Ddr4MemType,
@@ -630,32 +768,32 @@ static struct wm_table ddr5_wm_table = {
 			.wm_inst = WM_A,
 			.wm_type = WM_TYPE_PSTATE_CHG,
 			.pstate_latency_us = 11.72,
-			.sr_exit_time_us = 28.0,
-			.sr_enter_plus_exit_time_us = 30.0,
+			.sr_exit_time_us = 31.0,
+			.sr_enter_plus_exit_time_us = 33.0,
 			.valid = true,
 		},
 		{
 			.wm_inst = WM_B,
 			.wm_type = WM_TYPE_PSTATE_CHG,
 			.pstate_latency_us = 11.72,
-			.sr_exit_time_us = 28.0,
-			.sr_enter_plus_exit_time_us = 30.0,
+			.sr_exit_time_us = 31.0,
+			.sr_enter_plus_exit_time_us = 33.0,
 			.valid = true,
 		},
 		{
 			.wm_inst = WM_C,
 			.wm_type = WM_TYPE_PSTATE_CHG,
 			.pstate_latency_us = 11.72,
-			.sr_exit_time_us = 28.0,
-			.sr_enter_plus_exit_time_us = 30.0,
+			.sr_exit_time_us = 31.0,
+			.sr_enter_plus_exit_time_us = 33.0,
 			.valid = true,
 		},
 		{
 			.wm_inst = WM_D,
 			.wm_type = WM_TYPE_PSTATE_CHG,
 			.pstate_latency_us = 11.72,
-			.sr_exit_time_us = 28.0,
-			.sr_enter_plus_exit_time_us = 30.0,
+			.sr_exit_time_us = 31.0,
+			.sr_enter_plus_exit_time_us = 33.0,
 			.valid = true,
 		},
 	}
@@ -699,6 +837,7 @@ static struct wm_table lpddr5_wm_table = {
 };
 
 static DpmClocks_t_dcn35 dummy_clocks;
+static DpmClocks_t_dcn351 dummy_clocks_dcn351;
 
 static struct dcn35_watermarks dummy_wms = { 0 };
 
@@ -822,6 +961,22 @@ static void dcn35_get_dpm_table_from_smu(struct clk_mgr_internal *clk_mgr,
 	dcn35_smu_transfer_dpm_table_smu_2_dram(clk_mgr);
 }
 
+static void dcn351_get_dpm_table_from_smu(struct clk_mgr_internal *clk_mgr,
+		struct dcn351_smu_dpm_clks *smu_dpm_clks)
+{
+	DpmClocks_t_dcn351 *table = smu_dpm_clks->dpm_clks;
+
+	if (!clk_mgr->smu_ver)
+		return;
+	if (!table || smu_dpm_clks->mc_address.quad_part == 0)
+		return;
+	memset(table, 0, sizeof(*table));
+	dcn35_smu_set_dram_addr_high(clk_mgr,
+			smu_dpm_clks->mc_address.high_part);
+	dcn35_smu_set_dram_addr_low(clk_mgr,
+			smu_dpm_clks->mc_address.low_part);
+	dcn35_smu_transfer_dpm_table_smu_2_dram(clk_mgr);
+}
 static uint32_t find_max_clk_value(const uint32_t clocks[], uint32_t num_clocks)
 {
 	uint32_t max = 0;
@@ -1060,11 +1215,8 @@ static void dcn35_exit_low_power_state(struct clk_mgr *clk_mgr_base)
 static bool dcn35_is_ips_supported(struct clk_mgr *clk_mgr_base)
 {
 	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	bool ips_supported = true;
 
-	ips_supported = dcn35_smu_get_ips_supported(clk_mgr) ? true : false;
-
-	return ips_supported;
+	return dcn35_smu_get_ips_supported(clk_mgr) ? true : false;
 }
 
 static void dcn35_init_clocks_fpga(struct clk_mgr *clk_mgr)
@@ -1163,6 +1315,57 @@ struct clk_mgr_funcs dcn35_fpga_funcs = {
 	.get_dtb_ref_clk_frequency = dcn31_get_dtb_ref_freq_khz,
 };
 
+static void translate_to_DpmClocks_t_dcn35(struct dcn351_smu_dpm_clks *smu_dpm_clks_a,
+		struct dcn35_smu_dpm_clks *smu_dpm_clks_b)
+{
+	/*translate two structures and only take need clock tables*/
+	uint8_t i;
+
+	if (smu_dpm_clks_a == NULL || smu_dpm_clks_b == NULL ||
+		smu_dpm_clks_a->dpm_clks == NULL || smu_dpm_clks_b->dpm_clks == NULL)
+		return;
+
+	for (i = 0; i < NUM_DCFCLK_DPM_LEVELS; i++)
+		smu_dpm_clks_b->dpm_clks->DcfClocks[i] = smu_dpm_clks_a->dpm_clks->DcfClocks[i];
+
+	for (i = 0; i < NUM_DISPCLK_DPM_LEVELS; i++)
+		smu_dpm_clks_b->dpm_clks->DispClocks[i] = smu_dpm_clks_a->dpm_clks->DispClocks[i];
+
+	for (i = 0; i < NUM_DPPCLK_DPM_LEVELS; i++)
+		smu_dpm_clks_b->dpm_clks->DppClocks[i] = smu_dpm_clks_a->dpm_clks->DppClocks[i];
+
+	for (i = 0; i < NUM_FCLK_DPM_LEVELS; i++) {
+		smu_dpm_clks_b->dpm_clks->FclkClocks_Freq[i] = smu_dpm_clks_a->dpm_clks->FclkClocks_Freq[i];
+		smu_dpm_clks_b->dpm_clks->FclkClocks_Voltage[i] = smu_dpm_clks_a->dpm_clks->FclkClocks_Voltage[i];
+	}
+	for (i = 0; i < NUM_MEM_PSTATE_LEVELS; i++) {
+		smu_dpm_clks_b->dpm_clks->MemPstateTable[i].MemClk =
+			smu_dpm_clks_a->dpm_clks->MemPstateTable[i].MemClk;
+		smu_dpm_clks_b->dpm_clks->MemPstateTable[i].UClk =
+			smu_dpm_clks_a->dpm_clks->MemPstateTable[i].UClk;
+		smu_dpm_clks_b->dpm_clks->MemPstateTable[i].Voltage =
+			smu_dpm_clks_a->dpm_clks->MemPstateTable[i].Voltage;
+		smu_dpm_clks_b->dpm_clks->MemPstateTable[i].WckRatio =
+			smu_dpm_clks_a->dpm_clks->MemPstateTable[i].WckRatio;
+	}
+	smu_dpm_clks_b->dpm_clks->MaxGfxClk = smu_dpm_clks_a->dpm_clks->MaxGfxClk;
+	smu_dpm_clks_b->dpm_clks->MinGfxClk = smu_dpm_clks_a->dpm_clks->MinGfxClk;
+	smu_dpm_clks_b->dpm_clks->NumDcfClkLevelsEnabled =
+		smu_dpm_clks_a->dpm_clks->NumDcfClkLevelsEnabled;
+	smu_dpm_clks_b->dpm_clks->NumDispClkLevelsEnabled =
+		smu_dpm_clks_a->dpm_clks->NumDispClkLevelsEnabled;
+	smu_dpm_clks_b->dpm_clks->NumFclkLevelsEnabled =
+		smu_dpm_clks_a->dpm_clks->NumFclkLevelsEnabled;
+	smu_dpm_clks_b->dpm_clks->NumMemPstatesEnabled =
+		smu_dpm_clks_a->dpm_clks->NumMemPstatesEnabled;
+	smu_dpm_clks_b->dpm_clks->NumSocClkLevelsEnabled =
+		smu_dpm_clks_a->dpm_clks->NumSocClkLevelsEnabled;
+
+	for (i = 0; i < NUM_SOC_VOLTAGE_LEVELS; i++) {
+		smu_dpm_clks_b->dpm_clks->SocClocks[i] = smu_dpm_clks_a->dpm_clks->SocClocks[i];
+		smu_dpm_clks_b->dpm_clks->SocVoltage[i] = smu_dpm_clks_a->dpm_clks->SocVoltage[i];
+	}
+}
 void dcn35_clk_mgr_construct(
 		struct dc_context *ctx,
 		struct clk_mgr_dcn35 *clk_mgr,
@@ -1170,6 +1373,7 @@ void dcn35_clk_mgr_construct(
 		struct dccg *dccg)
 {
 	struct dcn35_smu_dpm_clks smu_dpm_clks = { 0 };
+	struct dcn351_smu_dpm_clks smu_dpm_clks_dcn351 = { 0 };
 	clk_mgr->base.base.ctx = ctx;
 	clk_mgr->base.base.funcs = &dcn35_funcs;
 
@@ -1182,7 +1386,7 @@ void dcn35_clk_mgr_construct(
 	clk_mgr->base.dprefclk_ss_divider = 1000;
 	clk_mgr->base.ss_on_dprefclk = false;
 	clk_mgr->base.dfs_ref_freq_khz = 48000;
-	if (ctx->dce_version == DCN_VERSION_3_5) {
+	if (ctx->dce_version != DCN_VERSION_3_51) {
 		clk_mgr->base.regs = &clk_mgr_regs_dcn35;
 		clk_mgr->base.clk_mgr_shift = &clk_mgr_shift_dcn35;
 		clk_mgr->base.clk_mgr_mask = &clk_mgr_mask_dcn35;
@@ -1206,13 +1410,23 @@ void dcn35_clk_mgr_construct(
 				DC_MEM_ALLOC_TYPE_GART,
 				sizeof(DpmClocks_t_dcn35),
 				&smu_dpm_clks.mc_address.quad_part);
-
 	if (smu_dpm_clks.dpm_clks == NULL) {
 		smu_dpm_clks.dpm_clks = &dummy_clocks;
 		smu_dpm_clks.mc_address.quad_part = 0;
 	}
-
 	ASSERT(smu_dpm_clks.dpm_clks);
+
+	if (ctx->dce_version == DCN_VERSION_3_51) {
+		smu_dpm_clks_dcn351.dpm_clks = (DpmClocks_t_dcn351 *)dm_helpers_allocate_gpu_mem(
+				clk_mgr->base.base.ctx,
+				DC_MEM_ALLOC_TYPE_GART,
+				sizeof(DpmClocks_t_dcn351),
+				&smu_dpm_clks_dcn351.mc_address.quad_part);
+		if (smu_dpm_clks_dcn351.dpm_clks == NULL) {
+			smu_dpm_clks_dcn351.dpm_clks = &dummy_clocks_dcn351;
+			smu_dpm_clks_dcn351.mc_address.quad_part = 0;
+		}
+	}
 
 	clk_mgr->base.smu_ver = dcn35_smu_get_smu_version(&clk_mgr->base);
 
@@ -1228,7 +1442,7 @@ void dcn35_clk_mgr_construct(
 		dcn35_bw_params.wm_table = ddr5_wm_table;
 	}
 	/* Saved clocks configured at boot for debug purposes */
-	dcn35_dump_clk_registers(&clk_mgr->base.base.boot_snapshot, clk_mgr);
+	dcn35_save_clk_registers(&clk_mgr->base.base.boot_snapshot, clk_mgr);
 
 	clk_mgr->base.base.dprefclk_khz = dcn35_smu_get_dprefclk(&clk_mgr->base);
 	clk_mgr->base.base.clks.ref_dtbclk_khz = 600000;
@@ -1242,7 +1456,11 @@ void dcn35_clk_mgr_construct(
 
 	if (clk_mgr->base.base.ctx->dc->debug.pstate_enabled) {
 		int i;
-		dcn35_get_dpm_table_from_smu(&clk_mgr->base, &smu_dpm_clks);
+		if (ctx->dce_version == DCN_VERSION_3_51) {
+			dcn351_get_dpm_table_from_smu(&clk_mgr->base, &smu_dpm_clks_dcn351);
+			translate_to_DpmClocks_t_dcn35(&smu_dpm_clks_dcn351, &smu_dpm_clks);
+		} else
+			dcn35_get_dpm_table_from_smu(&clk_mgr->base, &smu_dpm_clks);
 		DC_LOG_SMU("NumDcfClkLevelsEnabled: %d\n"
 				   "NumDispClkLevelsEnabled: %d\n"
 				   "NumSocClkLevelsEnabled: %d\n"
@@ -1303,6 +1521,10 @@ void dcn35_clk_mgr_construct(
 		dm_helpers_free_gpu_mem(clk_mgr->base.base.ctx, DC_MEM_ALLOC_TYPE_GART,
 				smu_dpm_clks.dpm_clks);
 
+	if (smu_dpm_clks_dcn351.dpm_clks && smu_dpm_clks_dcn351.mc_address.quad_part != 0)
+		dm_helpers_free_gpu_mem(clk_mgr->base.base.ctx, DC_MEM_ALLOC_TYPE_GART,
+				smu_dpm_clks_dcn351.dpm_clks);
+
 	if (ctx->dc->config.disable_ips != DMUB_IPS_DISABLE_ALL) {
 		bool ips_support = false;
 
@@ -1316,7 +1538,7 @@ void dcn35_clk_mgr_construct(
 
 			/* Disable dynamic IPS2 in older PMFW (93.12) for Z8 interop. */
 			if (ctx->dc->config.disable_ips == DMUB_IPS_ENABLE &&
-			    ctx->dce_version == DCN_VERSION_3_5 &&
+			    ctx->dce_version != DCN_VERSION_3_51 &&
 			    ((clk_mgr->base.smu_ver & 0x00FFFFFF) <= 0x005d0c00))
 				ctx->dc->config.disable_ips = DMUB_IPS_RCG_IN_ACTIVE_IPS2_IN_OFF;
 		} else {

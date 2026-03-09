@@ -53,8 +53,8 @@
 #include "intel_gvt.h"
 #include "gvt.h"
 
-MODULE_IMPORT_NS(DMA_BUF);
-MODULE_IMPORT_NS(I915_GVT);
+MODULE_IMPORT_NS("DMA_BUF");
+MODULE_IMPORT_NS("I915_GVT");
 
 /* helper macros copied from vfio-pci */
 #define VFIO_PCI_OFFSET_SHIFT   40
@@ -142,7 +142,7 @@ static int gvt_pin_guest_page(struct intel_vgpu *vgpu, unsigned long gfn,
 	int ret;
 
 	/*
-	 * We pin the pages one-by-one to avoid allocating a big arrary
+	 * We pin the pages one-by-one to avoid allocating a big array
 	 * on stack to hold pfns.
 	 */
 	for (npage = 0; npage < total_pages; npage++) {

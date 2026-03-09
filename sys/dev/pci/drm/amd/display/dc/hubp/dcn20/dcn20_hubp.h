@@ -264,6 +264,7 @@
 	type HUBP_3DLUT_DONE;\
 	type HUBP_3DLUT_ADDRESSING_MODE;\
 	type HUBP_3DLUT_WIDTH;\
+	type HUBP_3DLUT_MPC_WIDTH;\
 	type HUBP_3DLUT_TMZ;\
 	type HUBP_3DLUT_CROSSBAR_SELECT_Y_G;\
 	type HUBP_3DLUT_CROSSBAR_SELECT_CB_B;\
@@ -280,9 +281,8 @@
 	type MCACHEID_MALL_PREF_1H_P0;\
 	type MCACHEID_MALL_PREF_2H_P0;\
 	type MCACHEID_MALL_PREF_1H_P1;\
-	type MCACHEID_MALL_PREF_2H_P1
-
-
+	type MCACHEID_MALL_PREF_2H_P1;\
+	type HUBP_FGCG_REP_DIS
 
 struct dcn_hubp2_registers {
 	DCN401_HUBP_REG_COMMON_VARIABLE_LIST;
@@ -382,7 +382,7 @@ void hubp2_program_pixel_format(
 void hubp2_program_surface_config(
 	struct hubp *hubp,
 	enum surface_pixel_format format,
-	union dc_tiling_info *tiling_info,
+	struct dc_tiling_info *tiling_info,
 	struct plane_size *plane_size,
 	enum dc_rotation_angle rotation,
 	struct dc_plane_dcc_param *dcc,
@@ -408,6 +408,8 @@ void hubp2_clear_underflow(struct hubp *hubp);
 void hubp2_read_state_common(struct hubp *hubp);
 
 void hubp2_read_state(struct hubp *hubp);
+
+void hubp2_clear_tiling(struct hubp *hubp);
 
 #endif /* __DC_MEM_INPUT_DCN20_H__ */
 

@@ -32,6 +32,7 @@
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/dma-buf.h>
+#include <linux/export.h>
 
 #include <drm/drm_drv.h>
 #include <drm/amdgpu_drm.h>
@@ -40,6 +41,8 @@
 #include "amdgpu_trace.h"
 #include "amdgpu_amdkfd.h"
 #include "amdgpu_vram_mgr.h"
+#include "amdgpu_vm.h"
+#include "amdgpu_dma_buf.h"
 
 /**
  * DOC: amdgpu_object
@@ -60,7 +63,7 @@ static void amdgpu_bo_destroy(struct ttm_buffer_object *tbo)
 
 	amdgpu_bo_kunmap(bo);
 
-	if (bo->tbo.base.import_attach)
+	if (drm_gem_is_imported(&bo->tbo.base))
 		drm_prime_gem_destroy(&bo->tbo.base, bo->tbo.sg);
 	drm_gem_object_release(&bo->tbo.base);
 	amdgpu_bo_unref(&bo->parent);
@@ -146,6 +149,14 @@ void amdgpu_bo_placement_from_domain(struct amdgpu_bo *abo, u32 domain)
 		places[c].fpfn = 0;
 		places[c].lpfn = 0;
 		places[c].mem_type = AMDGPU_PL_DOORBELL;
+		places[c].flags = 0;
+		c++;
+	}
+
+	if (domain & AMDGPU_GEM_DOMAIN_MMIO_REMAP) {
+		places[c].fpfn = 0;
+		places[c].lpfn = 0;
+		places[c].mem_type = AMDGPU_PL_MMIO_REMAP;
 		places[c].flags = 0;
 		c++;
 	}
@@ -323,6 +334,9 @@ error_free:
  *
  * Allocates and pins a BO for kernel internal use.
  *
+ * This function is exported to allow the V4L2 isp device
+ * external to drm device to create and access the kernel BO.
+ *
  * Note: For bo_ptr new BO is only created if bo_ptr points to NULL.
  *
  * Returns:
@@ -345,6 +359,74 @@ int amdgpu_bo_create_kernel(struct amdgpu_device *adev,
 		amdgpu_bo_unreserve(*bo_ptr);
 
 	return 0;
+}
+
+/**
+ * amdgpu_bo_create_isp_user - create user BO for isp
+ *
+ * @adev: amdgpu device object
+ * @dma_buf: DMABUF handle for isp buffer
+ * @domain: where to place it
+ * @bo:  used to initialize BOs in structures
+ * @gpu_addr: GPU addr of the pinned BO
+ *
+ * Imports isp DMABUF to allocate and pin a user BO for isp internal use. It does
+ * GART alloc to generate gpu_addr for BO to make it accessible through the
+ * GART aperture for ISP HW.
+ *
+ * This function is exported to allow the V4L2 isp device external to drm device
+ * to create and access the isp user BO.
+ *
+ * Returns:
+ * 0 on success, negative error code otherwise.
+ */
+int amdgpu_bo_create_isp_user(struct amdgpu_device *adev,
+			   struct dma_buf *dma_buf, u32 domain, struct amdgpu_bo **bo,
+			   u64 *gpu_addr)
+
+{
+	struct drm_gem_object *gem_obj;
+	int r;
+
+	gem_obj = amdgpu_gem_prime_import(&adev->ddev, dma_buf);
+	*bo = gem_to_amdgpu_bo(gem_obj);
+	if (!(*bo)) {
+		dev_err(adev->dev, "failed to get valid isp user bo\n");
+		return -EINVAL;
+	}
+
+	r = amdgpu_bo_reserve(*bo, false);
+	if (r) {
+		dev_err(adev->dev, "(%d) failed to reserve isp user bo\n", r);
+		return r;
+	}
+
+	r = amdgpu_bo_pin(*bo, domain);
+	if (r) {
+		dev_err(adev->dev, "(%d) isp user bo pin failed\n", r);
+		goto error_unreserve;
+	}
+
+	r = amdgpu_ttm_alloc_gart(&(*bo)->tbo);
+	if (r) {
+		dev_err(adev->dev, "%p bind failed\n", *bo);
+		goto error_unpin;
+	}
+
+	if (!WARN_ON(!gpu_addr))
+		*gpu_addr = amdgpu_bo_gpu_offset(*bo);
+
+	amdgpu_bo_unreserve(*bo);
+
+	return 0;
+
+error_unpin:
+	amdgpu_bo_unpin(*bo);
+error_unreserve:
+	amdgpu_bo_unreserve(*bo);
+	amdgpu_bo_unref(bo);
+
+	return r;
 }
 
 /**
@@ -422,6 +504,9 @@ error:
  * @cpu_addr: pointer to where the BO's CPU memory space address was stored
  *
  * unmaps and unpin a BO for kernel internal use.
+ *
+ * This function is exported to allow the V4L2 isp device
+ * external to drm device to free the kernel BO.
  */
 void amdgpu_bo_free_kernel(struct amdgpu_bo **bo, u64 *gpu_addr,
 			   void **cpu_addr)
@@ -445,6 +530,28 @@ void amdgpu_bo_free_kernel(struct amdgpu_bo **bo, u64 *gpu_addr,
 
 	if (cpu_addr)
 		*cpu_addr = NULL;
+}
+
+/**
+ * amdgpu_bo_free_isp_user - free BO for isp use
+ *
+ * @bo: amdgpu isp user BO to free
+ *
+ * unpin and unref BO for isp internal use.
+ *
+ * This function is exported to allow the V4L2 isp device
+ * external to drm device to free the isp user BO.
+ */
+void amdgpu_bo_free_isp_user(struct amdgpu_bo *bo)
+{
+	if (bo == NULL)
+		return;
+
+	if (amdgpu_bo_reserve(bo, true) == 0) {
+		amdgpu_bo_unpin(bo);
+		amdgpu_bo_unreserve(bo);
+	}
+	amdgpu_bo_unref(&bo);
 }
 
 /* Validate bo size is bit bigger than the request domain */
@@ -837,7 +944,7 @@ int amdgpu_bo_pin(struct amdgpu_bo *bo, u32 domain)
 		domain = bo->preferred_domains & domain;
 
 	/* A shared bo cannot be migrated to VRAM */
-	if (bo->tbo.base.import_attach) {
+	if (drm_gem_is_imported(&bo->tbo.base)) {
 		if (domain & AMDGPU_GEM_DOMAIN_GTT)
 			domain = AMDGPU_GEM_DOMAIN_GTT;
 		else
@@ -866,7 +973,7 @@ int amdgpu_bo_pin(struct amdgpu_bo *bo, u32 domain)
 	domain = amdgpu_bo_get_preferred_domain(adev, domain);
 
 #ifdef notyet
-	if (bo->tbo.base.import_attach)
+	if (drm_gem_is_imported(&bo->tbo.base))
 		dma_buf_pin(bo->tbo.base.import_attach);
 #endif
 
@@ -919,7 +1026,7 @@ void amdgpu_bo_unpin(struct amdgpu_bo *bo)
 		return;
 
 #ifdef notyet
-	if (bo->tbo.base.import_attach)
+	if (drm_gem_is_imported(&bo->tbo.base))
 		dma_buf_unpin(bo->tbo.base.import_attach);
 #endif
 
@@ -946,7 +1053,8 @@ static const char * const amdgpu_vram_names[] = {
 	"GDDR6",
 	"DDR5",
 	"LPDDR4",
-	"LPDDR5"
+	"LPDDR5",
+	"HBM3E"
 };
 
 /**
@@ -1167,7 +1275,6 @@ void amdgpu_bo_move_notify(struct ttm_buffer_object *bo,
 			   bool evict,
 			   struct ttm_resource *new_mem)
 {
-	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->bdev);
 	struct ttm_resource *old_mem = bo->resource;
 	struct amdgpu_bo *abo;
 
@@ -1175,71 +1282,19 @@ void amdgpu_bo_move_notify(struct ttm_buffer_object *bo,
 		return;
 
 	abo = ttm_to_amdgpu_bo(bo);
-	amdgpu_vm_bo_invalidate(adev, abo, evict);
+	amdgpu_vm_bo_move(abo, new_mem, evict);
 
 	amdgpu_bo_kunmap(abo);
 
 #ifdef notyet
-	if (abo->tbo.base.dma_buf && !abo->tbo.base.import_attach &&
+	if (abo->tbo.base.dma_buf && !drm_gem_is_imported(&abo->tbo.base) &&
 	    old_mem && old_mem->mem_type != TTM_PL_SYSTEM)
 		dma_buf_move_notify(abo->tbo.base.dma_buf);
 #endif
-	
+
 	/* move_notify is called before move happens */
 	trace_amdgpu_bo_move(abo, new_mem ? new_mem->mem_type : -1,
 			     old_mem ? old_mem->mem_type : -1);
-}
-
-void amdgpu_bo_get_memory(struct amdgpu_bo *bo,
-			  struct amdgpu_mem_stats *stats)
-{
-	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
-	struct ttm_resource *res = bo->tbo.resource;
-	uint64_t size = amdgpu_bo_size(bo);
-	struct drm_gem_object *obj;
-	bool shared;
-
-	/* Abort if the BO doesn't currently have a backing store */
-	if (!res)
-		return;
-
-	obj = &bo->tbo.base;
-	shared = drm_gem_object_is_shared_for_memory_stats(obj);
-
-	switch (res->mem_type) {
-	case TTM_PL_VRAM:
-		stats->vram += size;
-		if (amdgpu_res_cpu_visible(adev, res))
-			stats->visible_vram += size;
-		if (shared)
-			stats->vram_shared += size;
-		break;
-	case TTM_PL_TT:
-		stats->gtt += size;
-		if (shared)
-			stats->gtt_shared += size;
-		break;
-	case TTM_PL_SYSTEM:
-	default:
-		stats->cpu += size;
-		if (shared)
-			stats->cpu_shared += size;
-		break;
-	}
-
-	if (bo->preferred_domains & AMDGPU_GEM_DOMAIN_VRAM) {
-		stats->requested_vram += size;
-		if (bo->flags & AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED)
-			stats->requested_visible_vram += size;
-
-		if (res->mem_type != TTM_PL_VRAM) {
-			stats->evicted_vram += size;
-			if (bo->flags & AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED)
-				stats->evicted_visible_vram += size;
-		}
-	} else if (bo->preferred_domains & AMDGPU_GEM_DOMAIN_GTT) {
-		stats->requested_gtt += size;
-	}
 }
 
 /**
@@ -1286,7 +1341,8 @@ void amdgpu_bo_release_notify(struct ttm_buffer_object *bo)
 	if (r)
 		goto out;
 
-	r = amdgpu_fill_buffer(abo, 0, &bo->base._resv, &fence, true);
+	r = amdgpu_fill_buffer(abo, 0, &bo->base._resv, &fence, true,
+			       AMDGPU_KERNEL_JOB_ID_CLEAR_ON_RELEASE);
 	if (WARN_ON(r))
 		goto out;
 
@@ -1443,6 +1499,26 @@ u64 amdgpu_bo_gpu_offset(struct amdgpu_bo *bo)
 }
 
 /**
+ * amdgpu_bo_fb_aper_addr - return FB aperture GPU offset of the VRAM bo
+ * @bo:	amdgpu VRAM buffer object for which we query the offset
+ *
+ * Returns:
+ * current FB aperture GPU offset of the object.
+ */
+u64 amdgpu_bo_fb_aper_addr(struct amdgpu_bo *bo)
+{
+	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
+	uint64_t offset, fb_base;
+
+	WARN_ON_ONCE(bo->tbo.resource->mem_type != TTM_PL_VRAM);
+
+	fb_base = adev->gmc.fb_start;
+	fb_base += adev->gmc.xgmi.physical_node_id * adev->gmc.xgmi.node_segment_size;
+	offset = (bo->tbo.resource->start << PAGE_SHIFT) + fb_base;
+	return amdgpu_gmc_sign_extend(offset);
+}
+
+/**
  * amdgpu_bo_gpu_offset_no_check - return GPU offset of bo
  * @bo:	amdgpu object for which we query the offset
  *
@@ -1462,6 +1538,47 @@ u64 amdgpu_bo_gpu_offset_no_check(struct amdgpu_bo *bo)
 			amdgpu_ttm_domain_start(adev, bo->tbo.resource->mem_type);
 
 	return amdgpu_gmc_sign_extend(offset);
+}
+
+/**
+ * amdgpu_bo_mem_stats_placement - bo placement for memory accounting
+ * @bo:	the buffer object we should look at
+ *
+ * BO can have multiple preferred placements, to avoid double counting we want
+ * to file it under a single placement for memory stats.
+ * Luckily, if we take the highest set bit in preferred_domains the result is
+ * quite sensible.
+ *
+ * Returns:
+ * Which of the placements should the BO be accounted under.
+ */
+uint32_t amdgpu_bo_mem_stats_placement(struct amdgpu_bo *bo)
+{
+	uint32_t domain = bo->preferred_domains & AMDGPU_GEM_DOMAIN_MASK;
+
+	if (!domain)
+		return TTM_PL_SYSTEM;
+
+	switch (rounddown_pow_of_two(domain)) {
+	case AMDGPU_GEM_DOMAIN_CPU:
+		return TTM_PL_SYSTEM;
+	case AMDGPU_GEM_DOMAIN_GTT:
+		return TTM_PL_TT;
+	case AMDGPU_GEM_DOMAIN_VRAM:
+		return TTM_PL_VRAM;
+	case AMDGPU_GEM_DOMAIN_GDS:
+		return AMDGPU_PL_GDS;
+	case AMDGPU_GEM_DOMAIN_GWS:
+		return AMDGPU_PL_GWS;
+	case AMDGPU_GEM_DOMAIN_OA:
+		return AMDGPU_PL_OA;
+	case AMDGPU_GEM_DOMAIN_DOORBELL:
+		return AMDGPU_PL_DOORBELL;
+	case AMDGPU_GEM_DOMAIN_MMIO_REMAP:
+		return AMDGPU_PL_MMIO_REMAP;
+	default:
+		return TTM_PL_SYSTEM;
+	}
 }
 
 /**
@@ -1542,6 +1659,9 @@ u64 amdgpu_bo_print_info(int id, struct amdgpu_bo *bo, struct seq_file *m)
 			case AMDGPU_PL_DOORBELL:
 				placement = "DOORBELL";
 				break;
+			case AMDGPU_PL_MMIO_REMAP:
+				placement = "MMIO REMAP";
+				break;
 			case TTM_PL_SYSTEM:
 			default:
 				placement = "CPU";
@@ -1576,7 +1696,11 @@ u64 amdgpu_bo_print_info(int id, struct amdgpu_bo *bo, struct seq_file *m)
 	amdgpu_bo_print_flag(m, bo, VRAM_CONTIGUOUS);
 	amdgpu_bo_print_flag(m, bo, VM_ALWAYS_VALID);
 	amdgpu_bo_print_flag(m, bo, EXPLICIT_SYNC);
-
+	/* Add the gem obj resv fence dump*/
+	if (dma_resv_trylock(bo->tbo.base.resv)) {
+		dma_resv_describe(bo->tbo.base.resv, m);
+		dma_resv_unlock(bo->tbo.base.resv);
+	}
 	seq_puts(m, "\n");
 
 	return size;

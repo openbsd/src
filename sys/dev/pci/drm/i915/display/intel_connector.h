@@ -14,7 +14,6 @@ struct i2c_adapter;
 struct intel_connector;
 struct intel_encoder;
 
-int intel_connector_init(struct intel_connector *connector);
 struct intel_connector *intel_connector_alloc(void);
 void intel_connector_free(struct intel_connector *connector);
 void intel_connector_destroy(struct drm_connector *connector);
@@ -33,5 +32,7 @@ void intel_attach_aspect_ratio_property(struct drm_connector *connector);
 void intel_attach_hdmi_colorspace_property(struct drm_connector *connector);
 void intel_attach_dp_colorspace_property(struct drm_connector *connector);
 void intel_attach_scaling_mode_property(struct drm_connector *connector);
+void intel_connector_queue_modeset_retry_work(struct intel_connector *connector);
+void intel_connector_cancel_modeset_retry_work(struct intel_connector *connector);
 
 #endif /* __INTEL_CONNECTOR_H__ */

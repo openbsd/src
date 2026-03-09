@@ -26,7 +26,7 @@
 #ifndef __DC_LINK_DP_CAPABILITY_H__
 #define __DC_LINK_DP_CAPABILITY_H__
 
-#include "link.h"
+#include "link_service.h"
 
 bool detect_dp_sink_caps(struct dc_link *link);
 
@@ -48,6 +48,9 @@ enum dc_status dp_retrieve_lttpr_cap(struct dc_link *link);
 /* Convert PHY repeater count read from DPCD uint8_t. */
 uint8_t dp_parse_lttpr_repeater_count(uint8_t lttpr_repeater_count);
 
+/* Calculate embedded LTTPR address offset for vendor-specific behaviour */
+uint32_t dp_get_closest_lttpr_offset(uint8_t lttpr_count);
+
 bool dp_is_sink_present(struct dc_link *link);
 
 bool dp_is_lttpr_present(struct dc_link *link);
@@ -67,6 +70,7 @@ bool dp_is_128b_132b_signal(struct pipe_ctx *pipe_ctx);
 /* Initialize output parameter lt_settings. */
 void dp_decide_training_settings(
 	struct dc_link *link,
+	const struct link_resource *link_res,
 	const struct dc_link_settings *link_setting,
 	struct link_training_settings *lt_settings);
 
@@ -103,5 +107,11 @@ bool dp_verify_link_cap_with_retries(
 uint32_t link_bw_kbps_from_raw_frl_link_rate_data(uint8_t bw);
 
 bool dp_overwrite_extended_receiver_cap(struct dc_link *link);
+
+uint8_t dp_get_lttpr_count(struct dc_link *link);
+
+void edp_get_alpm_support(struct dc_link *link,
+	bool *auxless_support,
+	bool *auxwake_support);
 
 #endif /* __DC_LINK_DP_CAPABILITY_H__ */

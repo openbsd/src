@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.h,v 1.8 2023/03/21 09:44:35 jsg Exp $	*/
+/*	$OpenBSD: i2c.h,v 1.9 2026/03/09 23:58:03 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -21,16 +21,11 @@
 #include <sys/stdint.h>
 #include <sys/rwlock.h>
 /*
- * normally seq_file.h is indirectly included via
- *
+ * normally suspend.h is indirectly included via
  * linux/regulator/consumer.h
  * linux/suspend.h
- * linux/swap.h
- * linux/memcontrol.h
- * linux/cgroup.h
- * linux/seq_file.h
  */
-#include <linux/seq_file.h>
+#include <linux/suspend.h>
 #include <linux/acpi.h>
 #include <linux/device.h>
 
@@ -106,6 +101,13 @@ int i2c_transfer(struct i2c_adapter *, struct i2c_msg *, int);
 
 static inline int
 i2c_add_adapter(struct i2c_adapter *adap)
+{
+	return 0;
+}
+
+/* XXX cleanup on unload */
+static inline int
+devm_i2c_add_adapter(struct device *dev, struct i2c_adapter *adap)
 {
 	return 0;
 }

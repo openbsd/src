@@ -4,6 +4,7 @@
 #define _LINUX_LIMITS_H
 
 #include <sys/stdint.h>
+#include <linux/types.h>
 
 #define S8_MAX		INT8_MAX
 #define S16_MAX		INT16_MAX

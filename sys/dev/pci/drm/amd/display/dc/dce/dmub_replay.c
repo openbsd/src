@@ -3,6 +3,7 @@
 // Copyright 2024 Advanced Micro Devices, Inc.
 
 #include "dc.h"
+#include "link_service.h"
 #include "dc_dmub_srv.h"
 #include "dmub/dmub_srv.h"
 #include "core_types.h"
@@ -168,6 +169,7 @@ static bool dmub_replay_copy_settings(struct dmub_replay *dmub,
 	copy_settings_data->max_deviation_line			= link->dpcd_caps.pr_info.max_deviation_line;
 	copy_settings_data->smu_optimizations_en		= link->replay_settings.replay_smu_opt_enable;
 	copy_settings_data->replay_timing_sync_supported = link->replay_settings.config.replay_timing_sync_supported;
+	copy_settings_data->replay_support_fast_resync_in_ultra_sleep_mode = link->replay_settings.config.replay_support_fast_resync_in_ultra_sleep_mode;
 
 	copy_settings_data->debug.bitfields.enable_ips_visual_confirm = dc->dc->debug.enable_ips_visual_confirm;
 
@@ -188,6 +190,18 @@ static bool dmub_replay_copy_settings(struct dmub_replay *dmub,
 		copy_settings_data->flags.bitfields.force_wakeup_by_tps3 = 1;
 	else
 		copy_settings_data->flags.bitfields.force_wakeup_by_tps3 = 0;
+
+	copy_settings_data->flags.bitfields.alpm_mode = (enum dmub_alpm_mode)link->replay_settings.config.alpm_mode;
+	if (link->replay_settings.config.alpm_mode == DC_ALPM_AUXLESS) {
+		copy_settings_data->auxless_alpm_data.lfps_setup_ns = dc->dc->debug.auxless_alpm_lfps_setup_ns;
+		copy_settings_data->auxless_alpm_data.lfps_period_ns = dc->dc->debug.auxless_alpm_lfps_period_ns;
+		copy_settings_data->auxless_alpm_data.lfps_silence_ns = dc->dc->debug.auxless_alpm_lfps_silence_ns;
+		copy_settings_data->auxless_alpm_data.lfps_t1_t2_override_us =
+			dc->dc->debug.auxless_alpm_lfps_t1t2_us;
+		copy_settings_data->auxless_alpm_data.lfps_t1_t2_offset_us =
+			dc->dc->debug.auxless_alpm_lfps_t1t2_offset_us;
+		copy_settings_data->auxless_alpm_data.lttpr_count = link->dc->link_srv->dp_get_lttpr_count(link);
+	}
 
 	dc_wake_and_execute_dmub_cmd(dc, &cmd, DM_DMUB_WAIT_TYPE_WAIT);
 
@@ -280,7 +294,9 @@ static void dmub_replay_set_power_opt_and_coasting_vtotal(struct dmub_replay *dm
 	memset(&cmd, 0, sizeof(cmd));
 	pCmd->header.type = DMUB_CMD__REPLAY;
 	pCmd->header.sub_type = DMUB_CMD__REPLAY_SET_POWER_OPT_AND_COASTING_VTOTAL;
-	pCmd->header.payload_bytes = sizeof(struct dmub_rb_cmd_replay_set_power_opt_and_coasting_vtotal);
+	pCmd->header.payload_bytes =
+			sizeof(struct dmub_rb_cmd_replay_set_power_opt_and_coasting_vtotal) -
+			sizeof(struct dmub_cmd_header);
 	pCmd->replay_set_power_opt_data.power_opt = power_opt;
 	pCmd->replay_set_power_opt_data.panel_inst = panel_inst;
 	pCmd->replay_set_coasting_vtotal_data.coasting_vtotal = (coasting_vtotal & 0xFFFF);
@@ -319,7 +335,8 @@ static void dmub_replay_send_cmd(struct dmub_replay *dmub,
 		cmd.replay_set_timing_sync.header.sub_type =
 			DMUB_CMD__REPLAY_SET_TIMING_SYNC_SUPPORTED;
 		cmd.replay_set_timing_sync.header.payload_bytes =
-			sizeof(struct dmub_rb_cmd_replay_set_timing_sync);
+			sizeof(struct dmub_rb_cmd_replay_set_timing_sync) -
+			sizeof(struct dmub_cmd_header);
 		//Cmd Body
 		cmd.replay_set_timing_sync.replay_set_timing_sync_data.panel_inst =
 						cmd_element->sync_data.panel_inst;
@@ -331,7 +348,8 @@ static void dmub_replay_send_cmd(struct dmub_replay *dmub,
 		cmd.replay_set_frameupdate_timer.header.sub_type =
 			DMUB_CMD__REPLAY_SET_RESIDENCY_FRAMEUPDATE_TIMER;
 		cmd.replay_set_frameupdate_timer.header.payload_bytes =
-			sizeof(struct dmub_rb_cmd_replay_set_frameupdate_timer);
+			sizeof(struct dmub_rb_cmd_replay_set_frameupdate_timer) -
+			sizeof(struct dmub_cmd_header);
 		//Cmd Body
 		cmd.replay_set_frameupdate_timer.data.panel_inst =
 						cmd_element->panel_inst;
@@ -345,7 +363,8 @@ static void dmub_replay_send_cmd(struct dmub_replay *dmub,
 		cmd.replay_set_pseudo_vtotal.header.sub_type =
 			DMUB_CMD__REPLAY_SET_PSEUDO_VTOTAL;
 		cmd.replay_set_pseudo_vtotal.header.payload_bytes =
-			sizeof(struct dmub_rb_cmd_replay_set_pseudo_vtotal);
+			sizeof(struct dmub_rb_cmd_replay_set_pseudo_vtotal) -
+			sizeof(struct dmub_cmd_header);
 		//Cmd Body
 		cmd.replay_set_pseudo_vtotal.data.panel_inst =
 			cmd_element->pseudo_vtotal_data.panel_inst;
@@ -357,7 +376,8 @@ static void dmub_replay_send_cmd(struct dmub_replay *dmub,
 		cmd.replay_disabled_adaptive_sync_sdp.header.sub_type =
 			DMUB_CMD__REPLAY_DISABLED_ADAPTIVE_SYNC_SDP;
 		cmd.replay_disabled_adaptive_sync_sdp.header.payload_bytes =
-			sizeof(struct dmub_rb_cmd_replay_disabled_adaptive_sync_sdp);
+			sizeof(struct dmub_rb_cmd_replay_disabled_adaptive_sync_sdp) -
+			sizeof(struct dmub_cmd_header);
 		//Cmd Body
 		cmd.replay_disabled_adaptive_sync_sdp.data.panel_inst =
 			cmd_element->disabled_adaptive_sync_sdp_data.panel_inst;
@@ -369,7 +389,8 @@ static void dmub_replay_send_cmd(struct dmub_replay *dmub,
 		cmd.replay_set_general_cmd.header.sub_type =
 			DMUB_CMD__REPLAY_SET_GENERAL_CMD;
 		cmd.replay_set_general_cmd.header.payload_bytes =
-			sizeof(struct dmub_rb_cmd_replay_set_general_cmd);
+			sizeof(struct dmub_rb_cmd_replay_set_general_cmd) -
+			sizeof(struct dmub_cmd_header);
 		//Cmd Body
 		cmd.replay_set_general_cmd.data.panel_inst =
 			cmd_element->set_general_cmd_data.panel_inst;

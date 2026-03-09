@@ -249,6 +249,14 @@ struct smu_user_dpm_profile {
 		tables[table_id].domain = d;		\
 	} while (0)
 
+struct smu_table_cache {
+	void *buffer;
+	size_t size;
+	/* interval in ms*/
+	uint32_t interval;
+	unsigned long last_cache_time;
+};
+
 struct smu_table {
 	uint64_t size;
 	uint32_t align;
@@ -257,6 +265,7 @@ struct smu_table {
 	void *cpu_addr;
 	struct amdgpu_bo *bo;
 	uint32_t version;
+	struct smu_table_cache cache;
 };
 
 enum smu_perf_level_designation {
@@ -322,6 +331,9 @@ enum smu_table_id {
 	SMU_TABLE_ECCINFO,
 	SMU_TABLE_COMBO_PPTABLE,
 	SMU_TABLE_WIFIBAND,
+	SMU_TABLE_GPUBOARD_TEMP_METRICS,
+	SMU_TABLE_BASEBOARD_TEMP_METRICS,
+	SMU_TABLE_PMFW_SYSTEM_METRICS,
 	SMU_TABLE_COUNT,
 };
 
@@ -396,12 +408,17 @@ struct smu_dpm_context {
 	struct smu_dpm_policy_ctxt *dpm_policies;
 };
 
+struct smu_temp_context {
+	const struct smu_temp_funcs      *temp_funcs;
+};
+
 struct smu_power_gate {
 	bool uvd_gated;
 	bool vce_gated;
-	atomic_t vcn_gated;
+	atomic_t vcn_gated[AMDGPU_MAX_VCN_INSTANCES];
 	atomic_t jpeg_gated;
 	atomic_t vpe_gated;
+	atomic_t isp_gated;
 	atomic_t umsch_mm_gated;
 };
 
@@ -438,9 +455,11 @@ struct mclock_latency_table {
 };
 
 enum smu_reset_mode {
-    SMU_RESET_MODE_0,
-    SMU_RESET_MODE_1,
-    SMU_RESET_MODE_2,
+	SMU_RESET_MODE_0,
+	SMU_RESET_MODE_1,
+	SMU_RESET_MODE_2,
+	SMU_RESET_MODE_3,
+	SMU_RESET_MODE_4,
 };
 
 enum smu_baco_state {
@@ -509,6 +528,17 @@ enum smu_fw_status {
  */
 #define SMU_WBRF_EVENT_HANDLING_PACE	10
 
+enum smu_feature_cap_id {
+	SMU_FEATURE_CAP_ID__LINK_RESET = 0,
+	SMU_FEATURE_CAP_ID__SDMA_RESET,
+	SMU_FEATURE_CAP_ID__VCN_RESET,
+	SMU_FEATURE_CAP_ID__COUNT,
+};
+
+struct smu_feature_cap {
+	DECLARE_BITMAP(cap_map, SMU_FEATURE_CAP_ID__COUNT);
+};
+
 struct smu_context {
 	struct amdgpu_device            *adev;
 	struct amdgpu_irq_src		irq_source;
@@ -526,10 +556,12 @@ struct smu_context {
 	struct smu_table_context	smu_table;
 	struct smu_dpm_context		smu_dpm;
 	struct smu_power_context	smu_power;
+	struct smu_temp_context		smu_temp;
 	struct smu_feature		smu_feature;
 	struct amd_pp_display_configuration  *display_config;
 	struct smu_baco_context		smu_baco;
 	struct smu_temperature_range	thermal_range;
+	struct smu_feature_cap		fea_cap;
 	void *od_settings;
 
 	struct smu_umd_pstate_table	pstate_table;
@@ -558,6 +590,7 @@ struct smu_context {
 
 	/* asic agnostic workload mask */
 	uint32_t workload_mask;
+	bool pause_workload;
 	/* default/user workload preference */
 	uint32_t power_profile_mode;
 	uint32_t workload_refcount[PP_SMC_POWER_PROFILE_COUNT];
@@ -618,6 +651,28 @@ struct smu_context {
 };
 
 struct i2c_adapter;
+
+/**
+ * struct smu_temp_funcs - Callbacks used to get temperature data.
+ */
+struct smu_temp_funcs {
+	/**
+	 * @get_temp_metrics: Calibrate voltage/frequency curve to fit the system's
+	 *           power delivery and voltage margins. Required for adaptive
+	 * @type Temperature metrics type(baseboard/gpuboard)
+	 * Return: Size of &table
+	 */
+	ssize_t (*get_temp_metrics)(struct smu_context *smu,
+				    enum smu_temp_metric_type type, void *table);
+
+	/**
+	 * @temp_metrics_is_support: Get if specific temperature metrics is supported
+	 * @type Temperature metrics type(baseboard/gpuboard)
+	 * Return: true if supported else false
+	 */
+	bool (*temp_metrics_is_supported)(struct smu_context *smu, enum smu_temp_metric_type type);
+
+};
 
 /**
  * struct pptable_funcs - Callbacks used to interact with the SMU.
@@ -744,7 +799,7 @@ struct pptable_funcs {
 	 * @dpm_set_vcn_enable: Enable/disable VCN engine dynamic power
 	 *                      management.
 	 */
-	int (*dpm_set_vcn_enable)(struct smu_context *smu, bool enable);
+	int (*dpm_set_vcn_enable)(struct smu_context *smu, bool enable, int inst);
 
 	/**
 	 * @dpm_set_jpeg_enable: Enable/disable JPEG engine dynamic power
@@ -862,11 +917,6 @@ struct pptable_funcs {
 	 * current display configuration.
 	 */
 	int (*display_disable_memory_clock_switch)(struct smu_context *smu, bool disable_memory_clock_switch);
-
-	/**
-	 * @dump_pptable: Print the power play table to the system log.
-	 */
-	void (*dump_pptable)(struct smu_context *smu);
 
 	/**
 	 * @get_power_limit: Get the device's power limits.
@@ -1233,10 +1283,6 @@ struct pptable_funcs {
 	 * @mode1_reset_is_support: Check if GPU supports mode1 reset.
 	 */
 	bool (*mode1_reset_is_support)(struct smu_context *smu);
-	/**
-	 * @mode2_reset_is_support: Check if GPU supports mode2 reset.
-	 */
-	bool (*mode2_reset_is_support)(struct smu_context *smu);
 
 	/**
 	 * @mode1_reset: Perform mode1 reset.
@@ -1256,6 +1302,13 @@ struct pptable_funcs {
 	int (*enable_gfx_features)(struct smu_context *smu);
 
 	/**
+	 * @link_reset: Perform link reset.
+	 *
+	 * The gfx device driver reset
+	 */
+	int (*link_reset)(struct smu_context *smu);
+
+	/**
 	 * @get_dpm_ultimate_freq: Get the hard frequency range of a clock
 	 *                         domain in MHz.
 	 */
@@ -1265,7 +1318,8 @@ struct pptable_funcs {
 	 * @set_soft_freq_limited_range: Set the soft frequency range of a clock
 	 *                               domain in MHz.
 	 */
-	int (*set_soft_freq_limited_range)(struct smu_context *smu, enum smu_clk_type clk_type, uint32_t min, uint32_t max);
+	int (*set_soft_freq_limited_range)(struct smu_context *smu, enum smu_clk_type clk_type, uint32_t min, uint32_t max,
+					   bool automatic);
 
 	/**
 	 * @set_power_source: Notify the SMU of the current power source.
@@ -1377,6 +1431,16 @@ struct pptable_funcs {
 	int (*send_rma_reason)(struct smu_context *smu);
 
 	/**
+	 * @reset_sdma: message SMU to soft reset sdma instance.
+	 */
+	int (*reset_sdma)(struct smu_context *smu, uint32_t inst_mask);
+
+	/**
+	 * @reset_vcn: message SMU to soft reset vcn instance.
+	 */
+	int (*dpm_reset_vcn)(struct smu_context *smu, uint32_t inst_mask);
+
+	/**
 	 * @get_ecc_table:  message SMU to get ECC INFO table.
 	 */
 	ssize_t (*get_ecc_info)(struct smu_context *smu, void *table);
@@ -1415,6 +1479,12 @@ struct pptable_funcs {
 	int (*dpm_set_vpe_enable)(struct smu_context *smu, bool enable);
 
 	/**
+	 * @dpm_set_isp_enable: Enable/disable ISP engine dynamic power
+	 *                       management.
+	 */
+	int (*dpm_set_isp_enable)(struct smu_context *smu, bool enable);
+
+	/**
 	 * @dpm_set_umsch_mm_enable: Enable/disable UMSCH engine dynamic power
 	 *                       management.
 	 */
@@ -1445,6 +1515,12 @@ struct pptable_funcs {
 	 */
 	int (*set_wbrf_exclusion_ranges)(struct smu_context *smu,
 					struct freq_band_range *exclusion_ranges);
+	/**
+	 * @get_xcp_metrics: Get a copy of the partition metrics table from SMU.
+	 * Return: Size of table
+	 */
+	ssize_t (*get_xcp_metrics)(struct smu_context *smu, int xcp_id,
+				   void *table);
 };
 
 typedef enum {
@@ -1587,6 +1663,71 @@ typedef struct {
 struct smu_dpm_policy *smu_get_pm_policy(struct smu_context *smu,
 					 enum pp_pm_policy p_type);
 
+static inline enum smu_table_id
+smu_metrics_get_temp_table_id(enum smu_temp_metric_type type)
+{
+	switch (type) {
+	case SMU_TEMP_METRIC_BASEBOARD:
+		return SMU_TABLE_BASEBOARD_TEMP_METRICS;
+	case SMU_TEMP_METRIC_GPUBOARD:
+		return SMU_TABLE_GPUBOARD_TEMP_METRICS;
+	default:
+		return SMU_TABLE_COUNT;
+	}
+
+	return SMU_TABLE_COUNT;
+}
+
+static inline void smu_table_cache_update_time(struct smu_table *table,
+					       unsigned long time)
+{
+	table->cache.last_cache_time = time;
+}
+
+static inline bool smu_table_cache_is_valid(struct smu_table *table)
+{
+	if (!table->cache.buffer || !table->cache.last_cache_time ||
+	    !table->cache.interval || !table->cache.size ||
+	    time_after(jiffies,
+		       table->cache.last_cache_time +
+			       msecs_to_jiffies(table->cache.interval)))
+		return false;
+
+	return true;
+}
+
+static inline int smu_table_cache_init(struct smu_context *smu,
+				       enum smu_table_id table_id, size_t size,
+				       uint32_t cache_interval)
+{
+	struct smu_table_context *smu_table = &smu->smu_table;
+	struct smu_table *tables = smu_table->tables;
+
+	tables[table_id].cache.buffer = kzalloc(size, GFP_KERNEL);
+	if (!tables[table_id].cache.buffer)
+		return -ENOMEM;
+
+	tables[table_id].cache.last_cache_time = 0;
+	tables[table_id].cache.interval = cache_interval;
+	tables[table_id].cache.size = size;
+
+	return 0;
+}
+
+static inline void smu_table_cache_fini(struct smu_context *smu,
+					enum smu_table_id table_id)
+{
+	struct smu_table_context *smu_table = &smu->smu_table;
+	struct smu_table *tables = smu_table->tables;
+
+	if (tables[table_id].cache.buffer) {
+		kfree(tables[table_id].cache.buffer);
+		tables[table_id].cache.buffer = NULL;
+		tables[table_id].cache.last_cache_time = 0;
+		tables[table_id].cache.interval = 0;
+	}
+}
+
 #if !defined(SWSMU_CODE_LAYER_L2) && !defined(SWSMU_CODE_LAYER_L3) && !defined(SWSMU_CODE_LAYER_L4)
 int smu_get_power_limit(void *handle,
 			uint32_t *limit,
@@ -1594,8 +1735,9 @@ int smu_get_power_limit(void *handle,
 			enum pp_power_type pp_power_type);
 
 bool smu_mode1_reset_is_support(struct smu_context *smu);
-bool smu_mode2_reset_is_support(struct smu_context *smu);
+bool smu_link_reset_is_support(struct smu_context *smu);
 int smu_mode1_reset(struct smu_context *smu);
+int smu_link_reset(struct smu_context *smu);
 
 extern const struct amd_ip_funcs smu_ip_funcs;
 
@@ -1606,7 +1748,7 @@ int smu_write_watermarks_table(struct smu_context *smu);
 int smu_get_dpm_freq_range(struct smu_context *smu, enum smu_clk_type clk_type,
 			   uint32_t *min, uint32_t *max);
 
-int smu_set_soft_freq_range(struct smu_context *smu, enum smu_clk_type clk_type,
+int smu_set_soft_freq_range(struct smu_context *smu, enum pp_clock_type clk_type,
 			    uint32_t min, uint32_t max);
 
 int smu_set_gfx_power_up_by_imu(struct smu_context *smu);
@@ -1634,10 +1776,17 @@ void amdgpu_smu_stb_debug_fs_init(struct amdgpu_device *adev);
 int smu_send_hbm_bad_pages_num(struct smu_context *smu, uint32_t size);
 int smu_send_hbm_bad_channel_flag(struct smu_context *smu, uint32_t size);
 int smu_send_rma_reason(struct smu_context *smu);
+int smu_reset_sdma(struct smu_context *smu, uint32_t inst_mask);
+bool smu_reset_sdma_is_supported(struct smu_context *smu);
+int smu_reset_vcn(struct smu_context *smu, uint32_t inst_mask);
+bool smu_reset_vcn_is_supported(struct smu_context *smu);
 int smu_set_pm_policy(struct smu_context *smu, enum pp_pm_policy p_type,
 		      int level);
 ssize_t smu_get_pm_policy_info(struct smu_context *smu,
 			       enum pp_pm_policy p_type, char *sysbuf);
 
 #endif
+
+void smu_feature_cap_set(struct smu_context *smu, enum smu_feature_cap_id fea_id);
+bool smu_feature_cap_test(struct smu_context *smu, enum smu_feature_cap_id fea_id);
 #endif

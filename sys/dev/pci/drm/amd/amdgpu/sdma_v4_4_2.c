@@ -30,6 +30,7 @@
 #include "amdgpu_xcp.h"
 #include "amdgpu_ucode.h"
 #include "amdgpu_trace.h"
+#include "amdgpu_reset.h"
 
 #include "sdma/sdma_4_4_2_offset.h"
 #include "sdma/sdma_4_4_2_sh_mask.h"
@@ -44,6 +45,7 @@
 #include "amdgpu_ras.h"
 
 MODULE_FIRMWARE("amdgpu/sdma_4_4_2.bin");
+MODULE_FIRMWARE("amdgpu/sdma_4_4_4.bin");
 MODULE_FIRMWARE("amdgpu/sdma_4_4_5.bin");
 
 static const struct amdgpu_hwip_reg_entry sdma_reg_list_4_4_2[] = {
@@ -105,6 +107,11 @@ static void sdma_v4_4_2_set_buffer_funcs(struct amdgpu_device *adev);
 static void sdma_v4_4_2_set_vm_pte_funcs(struct amdgpu_device *adev);
 static void sdma_v4_4_2_set_irq_funcs(struct amdgpu_device *adev);
 static void sdma_v4_4_2_set_ras_funcs(struct amdgpu_device *adev);
+static void sdma_v4_4_2_update_reset_mask(struct amdgpu_device *adev);
+static int sdma_v4_4_2_stop_queue(struct amdgpu_ring *ring);
+static int sdma_v4_4_2_restore_queue(struct amdgpu_ring *ring);
+static int sdma_v4_4_2_soft_reset_engine(struct amdgpu_device *adev,
+					 u32 instance_id);
 
 static u32 sdma_v4_4_2_get_reg_offset(struct amdgpu_device *adev,
 		u32 instance, u32 offset)
@@ -189,6 +196,7 @@ static int sdma_v4_4_2_init_microcode(struct amdgpu_device *adev)
 
 	for (i = 0; i < adev->sdma.num_instances; i++) {
 		if (amdgpu_ip_version(adev, SDMA0_HWIP, 0) == IP_VERSION(4, 4, 2) ||
+		    amdgpu_ip_version(adev, SDMA0_HWIP, 0) == IP_VERSION(4, 4, 4) ||
 		    amdgpu_ip_version(adev, SDMA0_HWIP, 0) == IP_VERSION(4, 4, 5)) {
 			ret = amdgpu_sdma_init_microcode(adev, 0, true);
 			break;
@@ -670,11 +678,12 @@ static uint32_t sdma_v4_4_2_rb_cntl(struct amdgpu_ring *ring, uint32_t rb_cntl)
  *
  * @adev: amdgpu_device pointer
  * @i: instance to resume
+ * @restore: used to restore wptr when restart
  *
  * Set up the gfx DMA ring buffers and enable them.
  * Returns 0 for success, error for failure.
  */
-static void sdma_v4_4_2_gfx_resume(struct amdgpu_device *adev, unsigned int i)
+static void sdma_v4_4_2_gfx_resume(struct amdgpu_device *adev, unsigned int i, bool restore)
 {
 	struct amdgpu_ring *ring = &adev->sdma.instance[i].ring;
 	u32 rb_cntl, ib_cntl, wptr_poll_cntl;
@@ -682,6 +691,7 @@ static void sdma_v4_4_2_gfx_resume(struct amdgpu_device *adev, unsigned int i)
 	u32 doorbell;
 	u32 doorbell_offset;
 	u64 wptr_gpu_addr;
+	u64 rwptr;
 
 	wb_offset = (ring->rptr_offs * 4);
 
@@ -701,16 +711,32 @@ static void sdma_v4_4_2_gfx_resume(struct amdgpu_device *adev, unsigned int i)
 	WREG32_SDMA(i, regSDMA_GFX_RB_BASE, ring->gpu_addr >> 8);
 	WREG32_SDMA(i, regSDMA_GFX_RB_BASE_HI, ring->gpu_addr >> 40);
 
-	ring->wptr = 0;
+	if (!restore)
+		ring->wptr = 0;
 
 	/* before programing wptr to a less value, need set minor_ptr_update first */
 	WREG32_SDMA(i, regSDMA_GFX_MINOR_PTR_UPDATE, 1);
 
+	/* For the guilty queue, set RPTR to the current wptr to skip bad commands,
+	 * It is not a guilty queue, restore cache_rptr and continue execution.
+	 */
+	if (adev->sdma.instance[i].gfx_guilty)
+		rwptr = ring->wptr;
+	else
+		rwptr = ring->cached_rptr;
+
 	/* Initialize the ring buffer's read and write pointers */
-	WREG32_SDMA(i, regSDMA_GFX_RB_RPTR, 0);
-	WREG32_SDMA(i, regSDMA_GFX_RB_RPTR_HI, 0);
-	WREG32_SDMA(i, regSDMA_GFX_RB_WPTR, 0);
-	WREG32_SDMA(i, regSDMA_GFX_RB_WPTR_HI, 0);
+	if (restore) {
+		WREG32_SDMA(i, regSDMA_GFX_RB_RPTR, lower_32_bits(rwptr << 2));
+		WREG32_SDMA(i, regSDMA_GFX_RB_RPTR_HI, upper_32_bits(rwptr << 2));
+		WREG32_SDMA(i, regSDMA_GFX_RB_WPTR, lower_32_bits(rwptr << 2));
+		WREG32_SDMA(i, regSDMA_GFX_RB_WPTR_HI, upper_32_bits(rwptr << 2));
+	} else {
+		WREG32_SDMA(i, regSDMA_GFX_RB_RPTR, 0);
+		WREG32_SDMA(i, regSDMA_GFX_RB_RPTR_HI, 0);
+		WREG32_SDMA(i, regSDMA_GFX_RB_WPTR, 0);
+		WREG32_SDMA(i, regSDMA_GFX_RB_WPTR_HI, 0);
+	}
 
 	doorbell = RREG32_SDMA(i, regSDMA_GFX_DOORBELL);
 	doorbell_offset = RREG32_SDMA(i, regSDMA_GFX_DOORBELL_OFFSET);
@@ -758,11 +784,12 @@ static void sdma_v4_4_2_gfx_resume(struct amdgpu_device *adev, unsigned int i)
  *
  * @adev: amdgpu_device pointer
  * @i: instance to resume
+ * @restore: boolean to say restore needed or not
  *
  * Set up the page DMA ring buffers and enable them.
  * Returns 0 for success, error for failure.
  */
-static void sdma_v4_4_2_page_resume(struct amdgpu_device *adev, unsigned int i)
+static void sdma_v4_4_2_page_resume(struct amdgpu_device *adev, unsigned int i, bool restore)
 {
 	struct amdgpu_ring *ring = &adev->sdma.instance[i].page;
 	u32 rb_cntl, ib_cntl, wptr_poll_cntl;
@@ -770,6 +797,7 @@ static void sdma_v4_4_2_page_resume(struct amdgpu_device *adev, unsigned int i)
 	u32 doorbell;
 	u32 doorbell_offset;
 	u64 wptr_gpu_addr;
+	u64 rwptr;
 
 	wb_offset = (ring->rptr_offs * 4);
 
@@ -777,11 +805,26 @@ static void sdma_v4_4_2_page_resume(struct amdgpu_device *adev, unsigned int i)
 	rb_cntl = sdma_v4_4_2_rb_cntl(ring, rb_cntl);
 	WREG32_SDMA(i, regSDMA_PAGE_RB_CNTL, rb_cntl);
 
+	/* For the guilty queue, set RPTR to the current wptr to skip bad commands,
+	 * It is not a guilty queue, restore cache_rptr and continue execution.
+	 */
+	if (adev->sdma.instance[i].page_guilty)
+		rwptr = ring->wptr;
+	else
+		rwptr = ring->cached_rptr;
+
 	/* Initialize the ring buffer's read and write pointers */
-	WREG32_SDMA(i, regSDMA_PAGE_RB_RPTR, 0);
-	WREG32_SDMA(i, regSDMA_PAGE_RB_RPTR_HI, 0);
-	WREG32_SDMA(i, regSDMA_PAGE_RB_WPTR, 0);
-	WREG32_SDMA(i, regSDMA_PAGE_RB_WPTR_HI, 0);
+	if (restore) {
+		WREG32_SDMA(i, regSDMA_PAGE_RB_RPTR, lower_32_bits(rwptr << 2));
+		WREG32_SDMA(i, regSDMA_PAGE_RB_RPTR_HI, upper_32_bits(rwptr << 2));
+		WREG32_SDMA(i, regSDMA_PAGE_RB_WPTR, lower_32_bits(rwptr << 2));
+		WREG32_SDMA(i, regSDMA_PAGE_RB_WPTR_HI, upper_32_bits(rwptr << 2));
+	} else {
+		WREG32_SDMA(i, regSDMA_PAGE_RB_RPTR, 0);
+		WREG32_SDMA(i, regSDMA_PAGE_RB_RPTR_HI, 0);
+		WREG32_SDMA(i, regSDMA_PAGE_RB_WPTR, 0);
+		WREG32_SDMA(i, regSDMA_PAGE_RB_WPTR_HI, 0);
+	}
 
 	/* set the wb address whether it's enabled or not */
 	WREG32_SDMA(i, regSDMA_PAGE_RB_RPTR_ADDR_HI,
@@ -795,7 +838,8 @@ static void sdma_v4_4_2_page_resume(struct amdgpu_device *adev, unsigned int i)
 	WREG32_SDMA(i, regSDMA_PAGE_RB_BASE, ring->gpu_addr >> 8);
 	WREG32_SDMA(i, regSDMA_PAGE_RB_BASE_HI, ring->gpu_addr >> 40);
 
-	ring->wptr = 0;
+	if (!restore)
+		ring->wptr = 0;
 
 	/* before programing wptr to a less value, need set minor_ptr_update first */
 	WREG32_SDMA(i, regSDMA_PAGE_MINOR_PTR_UPDATE, 1);
@@ -914,12 +958,13 @@ static int sdma_v4_4_2_inst_load_microcode(struct amdgpu_device *adev,
  *
  * @adev: amdgpu_device pointer
  * @inst_mask: mask of dma engine instances to be enabled
+ * @restore: boolean to say restore needed or not
  *
  * Set up the DMA engines and enable them.
  * Returns 0 for success, error for failure.
  */
 static int sdma_v4_4_2_inst_start(struct amdgpu_device *adev,
-				  uint32_t inst_mask)
+				  uint32_t inst_mask, bool restore)
 {
 	struct amdgpu_ring *ring;
 	uint32_t tmp_mask;
@@ -930,7 +975,7 @@ static int sdma_v4_4_2_inst_start(struct amdgpu_device *adev,
 		sdma_v4_4_2_inst_enable(adev, false, inst_mask);
 	} else {
 		/* bypass sdma microcode loading on Gopher */
-		if (adev->firmware.load_type != AMDGPU_FW_LOAD_PSP &&
+		if (!restore && adev->firmware.load_type != AMDGPU_FW_LOAD_PSP &&
 		    adev->sdma.instance[0].fw) {
 			r = sdma_v4_4_2_inst_load_microcode(adev, inst_mask);
 			if (r)
@@ -949,9 +994,9 @@ static int sdma_v4_4_2_inst_start(struct amdgpu_device *adev,
 		uint32_t temp;
 
 		WREG32_SDMA(i, regSDMA_SEM_WAIT_FAIL_TIMER_CNTL, 0);
-		sdma_v4_4_2_gfx_resume(adev, i);
+		sdma_v4_4_2_gfx_resume(adev, i, restore);
 		if (adev->sdma.has_page_queue)
-			sdma_v4_4_2_page_resume(adev, i);
+			sdma_v4_4_2_page_resume(adev, i, restore);
 
 		/* set utc l1 enable flag always to 1 */
 		temp = RREG32_SDMA(i, regSDMA_CNTL);
@@ -1116,7 +1161,7 @@ static int sdma_v4_4_2_ring_test_ib(struct amdgpu_ring *ring, long timeout)
 		r = -EINVAL;
 
 err1:
-	amdgpu_ib_free(adev, &ib, NULL);
+	amdgpu_ib_free(&ib, NULL);
 	dma_fence_put(f);
 err0:
 	amdgpu_device_wb_free(adev, index);
@@ -1296,9 +1341,15 @@ static bool sdma_v4_4_2_fw_support_paging_queue(struct amdgpu_device *adev)
 	}
 }
 
-static int sdma_v4_4_2_early_init(void *handle)
+static const struct amdgpu_sdma_funcs sdma_v4_4_2_sdma_funcs = {
+	.stop_kernel_queue = &sdma_v4_4_2_stop_queue,
+	.start_kernel_queue = &sdma_v4_4_2_restore_queue,
+	.soft_reset_kernel_queue = &sdma_v4_4_2_soft_reset_engine,
+};
+
+static int sdma_v4_4_2_early_init(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	int r;
 
 	r = sdma_v4_4_2_init_microcode(adev);
@@ -1314,7 +1365,6 @@ static int sdma_v4_4_2_early_init(void *handle)
 	sdma_v4_4_2_set_vm_pte_funcs(adev);
 	sdma_v4_4_2_set_irq_funcs(adev);
 	sdma_v4_4_2_set_ras_funcs(adev);
-
 	return 0;
 }
 
@@ -1324,9 +1374,9 @@ static int sdma_v4_4_2_process_ras_data_cb(struct amdgpu_device *adev,
 		struct amdgpu_iv_entry *entry);
 #endif
 
-static int sdma_v4_4_2_late_init(void *handle)
+static int sdma_v4_4_2_late_init(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 #if 0
 	struct ras_ih_if ih_info = {
 		.cb = sdma_v4_4_2_process_ras_data_cb,
@@ -1335,14 +1385,20 @@ static int sdma_v4_4_2_late_init(void *handle)
 	if (!amdgpu_persistent_edc_harvesting_supported(adev))
 		amdgpu_ras_reset_error_count(adev, AMDGPU_RAS_BLOCK__SDMA);
 
+	/* The initialization is done in the late_init stage to ensure that the SMU
+	 * initialization and capability setup are completed before we check the SDMA
+	 * reset capability
+	 */
+	sdma_v4_4_2_update_reset_mask(adev);
+
 	return 0;
 }
 
-static int sdma_v4_4_2_sw_init(void *handle)
+static int sdma_v4_4_2_sw_init(struct amdgpu_ip_block *ip_block)
 {
 	struct amdgpu_ring *ring;
 	int r, i;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	u32 aid_id;
 	uint32_t reg_count = ARRAY_SIZE(sdma_reg_list_4_4_2);
 	uint32_t *ptr;
@@ -1390,9 +1446,21 @@ static int sdma_v4_4_2_sw_init(void *handle)
 				      &adev->sdma.srbm_write_irq);
 		if (r)
 			return r;
+
+		r = amdgpu_irq_add_id(adev, sdma_v4_4_2_seq_to_irq_id(i),
+				      SDMA0_4_0__SRCID__SDMA_CTXEMPTY,
+				      &adev->sdma.ctxt_empty_irq);
+		if (r)
+			return r;
 	}
 
 	for (i = 0; i < adev->sdma.num_instances; i++) {
+		rw_init(&adev->sdma.instance[i].engine_reset_mutex, "sdmaer");
+		/* Initialize guilty flags for GFX and PAGE queues */
+		adev->sdma.instance[i].gfx_guilty = false;
+		adev->sdma.instance[i].page_guilty = false;
+		adev->sdma.instance[i].funcs = &sdma_v4_4_2_sdma_funcs;
+
 		ring = &adev->sdma.instance[i].ring;
 		ring->ring_obj = NULL;
 		ring->use_doorbell = true;
@@ -1436,6 +1504,9 @@ static int sdma_v4_4_2_sw_init(void *handle)
 		}
 	}
 
+	adev->sdma.supported_reset =
+		amdgpu_get_soft_full_reset_mask(&adev->sdma.instance[0].ring);
+
 	if (amdgpu_sdma_ras_sw_init(adev)) {
 		dev_err(adev->dev, "fail to initialize sdma ras block\n");
 		return -EINVAL;
@@ -1448,12 +1519,16 @@ static int sdma_v4_4_2_sw_init(void *handle)
 	else
 		DRM_ERROR("Failed to allocated memory for SDMA IP Dump\n");
 
+	r = amdgpu_sdma_sysfs_reset_mask_init(adev);
+	if (r)
+		return r;
+
 	return r;
 }
 
-static int sdma_v4_4_2_sw_fini(void *handle)
+static int sdma_v4_4_2_sw_fini(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	int i;
 
 	for (i = 0; i < adev->sdma.num_instances; i++) {
@@ -1462,7 +1537,9 @@ static int sdma_v4_4_2_sw_fini(void *handle)
 			amdgpu_ring_fini(&adev->sdma.instance[i].page);
 	}
 
+	amdgpu_sdma_sysfs_reset_mask_fini(adev);
 	if (amdgpu_ip_version(adev, SDMA0_HWIP, 0) == IP_VERSION(4, 4, 2) ||
+	    amdgpu_ip_version(adev, SDMA0_HWIP, 0) == IP_VERSION(4, 4, 4) ||
 	    amdgpu_ip_version(adev, SDMA0_HWIP, 0) == IP_VERSION(4, 4, 5))
 		amdgpu_sdma_destroy_inst_ctx(adev, true);
 	else
@@ -1473,24 +1550,24 @@ static int sdma_v4_4_2_sw_fini(void *handle)
 	return 0;
 }
 
-static int sdma_v4_4_2_hw_init(void *handle)
+static int sdma_v4_4_2_hw_init(struct amdgpu_ip_block *ip_block)
 {
 	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	uint32_t inst_mask;
 
 	inst_mask = GENMASK(adev->sdma.num_instances - 1, 0);
 	if (!amdgpu_sriov_vf(adev))
 		sdma_v4_4_2_inst_init_golden_registers(adev, inst_mask);
 
-	r = sdma_v4_4_2_inst_start(adev, inst_mask);
+	r = sdma_v4_4_2_inst_start(adev, inst_mask, false);
 
 	return r;
 }
 
-static int sdma_v4_4_2_hw_fini(void *handle)
+static int sdma_v4_4_2_hw_fini(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	uint32_t inst_mask;
 	int i;
 
@@ -1511,29 +1588,27 @@ static int sdma_v4_4_2_hw_fini(void *handle)
 	return 0;
 }
 
-static int sdma_v4_4_2_set_clockgating_state(void *handle,
+static int sdma_v4_4_2_set_clockgating_state(struct amdgpu_ip_block *ip_block,
 					     enum amd_clockgating_state state);
 
-static int sdma_v4_4_2_suspend(void *handle)
+static int sdma_v4_4_2_suspend(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 
 	if (amdgpu_in_reset(adev))
-		sdma_v4_4_2_set_clockgating_state(adev, AMD_CG_STATE_UNGATE);
+		sdma_v4_4_2_set_clockgating_state(ip_block, AMD_CG_STATE_UNGATE);
 
-	return sdma_v4_4_2_hw_fini(adev);
+	return sdma_v4_4_2_hw_fini(ip_block);
 }
 
-static int sdma_v4_4_2_resume(void *handle)
+static int sdma_v4_4_2_resume(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-
-	return sdma_v4_4_2_hw_init(adev);
+	return sdma_v4_4_2_hw_init(ip_block);
 }
 
-static bool sdma_v4_4_2_is_idle(void *handle)
+static bool sdma_v4_4_2_is_idle(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	u32 i;
 
 	for (i = 0; i < adev->sdma.num_instances; i++) {
@@ -1546,11 +1621,11 @@ static bool sdma_v4_4_2_is_idle(void *handle)
 	return true;
 }
 
-static int sdma_v4_4_2_wait_for_idle(void *handle)
+static int sdma_v4_4_2_wait_for_idle(struct amdgpu_ip_block *ip_block)
 {
 	unsigned i, j;
 	u32 sdma[AMDGPU_MAX_SDMA_INSTANCES];
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 
 	for (i = 0; i < adev->usec_timeout; i++) {
 		for (j = 0; j < adev->sdma.num_instances; j++) {
@@ -1565,11 +1640,107 @@ static int sdma_v4_4_2_wait_for_idle(void *handle)
 	return -ETIMEDOUT;
 }
 
-static int sdma_v4_4_2_soft_reset(void *handle)
+static int sdma_v4_4_2_soft_reset(struct amdgpu_ip_block *ip_block)
 {
 	/* todo */
 
 	return 0;
+}
+
+static bool sdma_v4_4_2_is_queue_selected(struct amdgpu_device *adev, uint32_t instance_id, bool is_page_queue)
+{
+	uint32_t reg_offset = is_page_queue ? regSDMA_PAGE_CONTEXT_STATUS : regSDMA_GFX_CONTEXT_STATUS;
+	uint32_t context_status = RREG32(sdma_v4_4_2_get_reg_offset(adev, instance_id, reg_offset));
+
+	/* Check if the SELECTED bit is set */
+	return (context_status & SDMA_GFX_CONTEXT_STATUS__SELECTED_MASK) != 0;
+}
+
+static int sdma_v4_4_2_reset_queue(struct amdgpu_ring *ring,
+				   unsigned int vmid,
+				   struct amdgpu_fence *timedout_fence)
+{
+	struct amdgpu_device *adev = ring->adev;
+	u32 id = ring->me;
+	int r;
+
+	amdgpu_amdkfd_suspend(adev, true);
+	r = amdgpu_sdma_reset_engine(adev, id, false);
+	amdgpu_amdkfd_resume(adev, true);
+	return r;
+}
+
+static int sdma_v4_4_2_stop_queue(struct amdgpu_ring *ring)
+{
+	struct amdgpu_device *adev = ring->adev;
+	u32 instance_id = ring->me;
+	u32 inst_mask;
+	uint64_t rptr;
+
+	if (amdgpu_sriov_vf(adev))
+		return -EINVAL;
+
+	/* Check if this queue is the guilty one */
+	adev->sdma.instance[instance_id].gfx_guilty =
+		sdma_v4_4_2_is_queue_selected(adev, instance_id, false);
+	if (adev->sdma.has_page_queue)
+		adev->sdma.instance[instance_id].page_guilty =
+			sdma_v4_4_2_is_queue_selected(adev, instance_id, true);
+
+	/* Cache the rptr before reset, after the reset,
+	* all of the registers will be reset to 0
+	*/
+	rptr = amdgpu_ring_get_rptr(ring);
+	ring->cached_rptr = rptr;
+	/* Cache the rptr for the page queue if it exists */
+	if (adev->sdma.has_page_queue) {
+		struct amdgpu_ring *page_ring = &adev->sdma.instance[instance_id].page;
+		rptr = amdgpu_ring_get_rptr(page_ring);
+		page_ring->cached_rptr = rptr;
+	}
+
+	/* stop queue */
+	inst_mask = 1 << ring->me;
+	sdma_v4_4_2_inst_gfx_stop(adev, inst_mask);
+	if (adev->sdma.has_page_queue)
+		sdma_v4_4_2_inst_page_stop(adev, inst_mask);
+
+	return 0;
+}
+
+static int sdma_v4_4_2_restore_queue(struct amdgpu_ring *ring)
+{
+	struct amdgpu_device *adev = ring->adev;
+	u32 inst_mask;
+	int i, r;
+
+	inst_mask = 1 << ring->me;
+	udelay(50);
+
+	for (i = 0; i < adev->usec_timeout; i++) {
+		if (!REG_GET_FIELD(RREG32_SDMA(ring->me, regSDMA_F32_CNTL), SDMA_F32_CNTL, HALT))
+			break;
+		udelay(1);
+	}
+
+	if (i == adev->usec_timeout) {
+		dev_err(adev->dev, "timed out waiting for SDMA%d unhalt after reset\n",
+			ring->me);
+		return -ETIMEDOUT;
+	}
+
+	r = sdma_v4_4_2_inst_start(adev, inst_mask, true);
+
+	return r;
+}
+
+static int sdma_v4_4_2_soft_reset_engine(struct amdgpu_device *adev,
+					 u32 instance_id)
+{
+	/* For SDMA 4.x, use the existing DPM interface for backward compatibility
+	 * we need to convert the logical instance ID to physical instance ID before reset.
+	 */
+	return amdgpu_dpm_reset_sdma(adev, 1 << GET_INST(SDMA0, instance_id));
 }
 
 static int sdma_v4_4_2_set_trap_irq_state(struct amdgpu_device *adev,
@@ -1616,6 +1787,9 @@ static int sdma_v4_4_2_process_trap_irq(struct amdgpu_device *adev,
 	switch (entry->ring_id) {
 	case 0:
 		amdgpu_fence_process(&adev->sdma.instance[i].ring);
+		break;
+	case 1:
+		amdgpu_fence_process(&adev->sdma.instance[i].page);
 		break;
 	default:
 		break;
@@ -1708,7 +1882,7 @@ static int sdma_v4_4_2_print_iv_entry(struct amdgpu_device *adev,
 	if (task_info) {
 		dev_dbg_ratelimited(adev->dev, " for process %s pid %d thread %s pid %d\n",
 				    task_info->process_name, task_info->tgid,
-				    task_info->task_name, task_info->pid);
+				    task_info->task.comm, task_info->task.pid);
 		amdgpu_vm_put_task_info(task_info);
 	}
 
@@ -1750,6 +1924,16 @@ static int sdma_v4_4_2_process_srbm_write_irq(struct amdgpu_device *adev,
 {
 	dev_dbg_ratelimited(adev->dev,
 		"SDMA gets an Register Write SRBM_WRITE command in non-privilege command buffer\n");
+	sdma_v4_4_2_print_iv_entry(adev, entry);
+	return 0;
+}
+
+static int sdma_v4_4_2_process_ctxt_empty_irq(struct amdgpu_device *adev,
+					      struct amdgpu_irq_src *source,
+					      struct amdgpu_iv_entry *entry)
+{
+	/* There is nothing useful to be done here, only kept for debug */
+	dev_dbg_ratelimited(adev->dev, "SDMA context empty interrupt");
 	sdma_v4_4_2_print_iv_entry(adev, entry);
 	return 0;
 }
@@ -1820,10 +2004,10 @@ static void sdma_v4_4_2_inst_update_medium_grain_clock_gating(
 	}
 }
 
-static int sdma_v4_4_2_set_clockgating_state(void *handle,
+static int sdma_v4_4_2_set_clockgating_state(struct amdgpu_ip_block *ip_block,
 					  enum amd_clockgating_state state)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	uint32_t inst_mask;
 
 	if (amdgpu_sriov_vf(adev))
@@ -1838,15 +2022,15 @@ static int sdma_v4_4_2_set_clockgating_state(void *handle,
 	return 0;
 }
 
-static int sdma_v4_4_2_set_powergating_state(void *handle,
+static int sdma_v4_4_2_set_powergating_state(struct amdgpu_ip_block *ip_block,
 					  enum amd_powergating_state state)
 {
 	return 0;
 }
 
-static void sdma_v4_4_2_get_clockgating_state(void *handle, u64 *flags)
+static void sdma_v4_4_2_get_clockgating_state(struct amdgpu_ip_block *ip_block, u64 *flags)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	int data;
 
 	if (amdgpu_sriov_vf(adev))
@@ -1863,9 +2047,9 @@ static void sdma_v4_4_2_get_clockgating_state(void *handle, u64 *flags)
 		*flags |= AMD_CG_SUPPORT_SDMA_LS;
 }
 
-static void sdma_v4_4_2_print_ip_state(void *handle, struct drm_printer *p)
+static void sdma_v4_4_2_print_ip_state(struct amdgpu_ip_block *ip_block, struct drm_printer *p)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	int i, j;
 	uint32_t reg_count = ARRAY_SIZE(sdma_reg_list_4_4_2);
 	uint32_t instance_offset;
@@ -1884,9 +2068,9 @@ static void sdma_v4_4_2_print_ip_state(void *handle, struct drm_printer *p)
 	}
 }
 
-static void sdma_v4_4_2_dump_ip_state(void *handle)
+static void sdma_v4_4_2_dump_ip_state(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	int i, j;
 	uint32_t instance_offset;
 	uint32_t reg_count = ARRAY_SIZE(sdma_reg_list_4_4_2);
@@ -1894,7 +2078,6 @@ static void sdma_v4_4_2_dump_ip_state(void *handle)
 	if (!adev->sdma.ip_dump)
 		return;
 
-	amdgpu_gfx_off_ctrl(adev, false);
 	for (i = 0; i < adev->sdma.num_instances; i++) {
 		instance_offset = i * reg_count;
 		for (j = 0; j < reg_count; j++)
@@ -1902,7 +2085,6 @@ static void sdma_v4_4_2_dump_ip_state(void *handle)
 				RREG32(sdma_v4_4_2_get_reg_offset(adev, i,
 				       sdma_reg_list_4_4_2[j].reg_offset));
 	}
-	amdgpu_gfx_off_ctrl(adev, true);
 }
 
 const struct amd_ip_funcs sdma_v4_4_2_ip_funcs = {
@@ -1954,6 +2136,7 @@ static const struct amdgpu_ring_funcs sdma_v4_4_2_ring_funcs = {
 	.emit_wreg = sdma_v4_4_2_ring_emit_wreg,
 	.emit_reg_wait = sdma_v4_4_2_ring_emit_reg_wait,
 	.emit_reg_write_reg_wait = amdgpu_ring_emit_reg_write_reg_wait_helper,
+	.reset = sdma_v4_4_2_reset_queue,
 };
 
 static const struct amdgpu_ring_funcs sdma_v4_4_2_page_ring_funcs = {
@@ -1985,6 +2168,7 @@ static const struct amdgpu_ring_funcs sdma_v4_4_2_page_ring_funcs = {
 	.emit_wreg = sdma_v4_4_2_ring_emit_wreg,
 	.emit_reg_wait = sdma_v4_4_2_ring_emit_reg_wait,
 	.emit_reg_write_reg_wait = amdgpu_ring_emit_reg_write_reg_wait_helper,
+	.reset = sdma_v4_4_2_reset_queue,
 };
 
 static void sdma_v4_4_2_set_ring_funcs(struct amdgpu_device *adev)
@@ -2037,6 +2221,10 @@ static const struct amdgpu_irq_src_funcs sdma_v4_4_2_srbm_write_irq_funcs = {
 	.process = sdma_v4_4_2_process_srbm_write_irq,
 };
 
+static const struct amdgpu_irq_src_funcs sdma_v4_4_2_ctxt_empty_irq_funcs = {
+	.process = sdma_v4_4_2_process_ctxt_empty_irq,
+};
+
 static void sdma_v4_4_2_set_irq_funcs(struct amdgpu_device *adev)
 {
 	adev->sdma.trap_irq.num_types = adev->sdma.num_instances;
@@ -2045,6 +2233,7 @@ static void sdma_v4_4_2_set_irq_funcs(struct amdgpu_device *adev)
 	adev->sdma.doorbell_invalid_irq.num_types = adev->sdma.num_instances;
 	adev->sdma.pool_timeout_irq.num_types = adev->sdma.num_instances;
 	adev->sdma.srbm_write_irq.num_types = adev->sdma.num_instances;
+	adev->sdma.ctxt_empty_irq.num_types = adev->sdma.num_instances;
 
 	adev->sdma.trap_irq.funcs = &sdma_v4_4_2_trap_irq_funcs;
 	adev->sdma.illegal_inst_irq.funcs = &sdma_v4_4_2_illegal_inst_irq_funcs;
@@ -2053,6 +2242,7 @@ static void sdma_v4_4_2_set_irq_funcs(struct amdgpu_device *adev)
 	adev->sdma.doorbell_invalid_irq.funcs = &sdma_v4_4_2_doorbell_invalid_irq_funcs;
 	adev->sdma.pool_timeout_irq.funcs = &sdma_v4_4_2_pool_timeout_irq_funcs;
 	adev->sdma.srbm_write_irq.funcs = &sdma_v4_4_2_srbm_write_irq_funcs;
+	adev->sdma.ctxt_empty_irq.funcs = &sdma_v4_4_2_ctxt_empty_irq_funcs;
 }
 
 /**
@@ -2150,6 +2340,44 @@ static void sdma_v4_4_2_set_vm_pte_funcs(struct amdgpu_device *adev)
 	adev->vm_manager.vm_pte_num_scheds = adev->sdma.num_instances;
 }
 
+/**
+ * sdma_v4_4_2_update_reset_mask - update  reset mask for SDMA
+ * @adev: Pointer to the AMDGPU device structure
+ *
+ * This function update reset mask for SDMA and sets the supported
+ * reset types based on the IP version and firmware versions.
+ *
+ */
+static void sdma_v4_4_2_update_reset_mask(struct amdgpu_device *adev)
+{
+	/* per queue reset not supported for SRIOV */
+	if (amdgpu_sriov_vf(adev))
+		return;
+
+	/*
+	 * the user queue relies on MEC fw and pmfw when the sdma queue do reset.
+	 * it needs to check both of them at here to skip old mec and pmfw.
+	 */
+	switch (amdgpu_ip_version(adev, GC_HWIP, 0)) {
+	case IP_VERSION(9, 4, 3):
+	case IP_VERSION(9, 4, 4):
+		if ((adev->gfx.mec_fw_version >= 0xb0) &&
+		    amdgpu_dpm_reset_sdma_is_supported(adev) &&
+		    !adev->debug_disable_gpu_ring_reset)
+			adev->sdma.supported_reset |= AMDGPU_RESET_TYPE_PER_QUEUE;
+		break;
+	case IP_VERSION(9, 5, 0):
+		if ((adev->gfx.mec_fw_version >= 0xf) &&
+		    amdgpu_dpm_reset_sdma_is_supported(adev) &&
+		    !adev->debug_disable_gpu_ring_reset)
+			adev->sdma.supported_reset |= AMDGPU_RESET_TYPE_PER_QUEUE;
+		break;
+	default:
+		break;
+	}
+
+}
+
 const struct amdgpu_ip_block_version sdma_v4_4_2_ip_block = {
 	.type = AMD_IP_BLOCK_TYPE_SDMA,
 	.major = 4,
@@ -2166,7 +2394,7 @@ static int sdma_v4_4_2_xcp_resume(void *handle, uint32_t inst_mask)
 	if (!amdgpu_sriov_vf(adev))
 		sdma_v4_4_2_inst_init_golden_registers(adev, inst_mask);
 
-	r = sdma_v4_4_2_inst_start(adev, inst_mask);
+	r = sdma_v4_4_2_inst_start(adev, inst_mask, false);
 
 	return r;
 }
@@ -2311,11 +2539,13 @@ static int sdma_v4_4_2_aca_bank_parser(struct aca_handle *handle, struct aca_ban
 	misc0 = bank->regs[ACA_REG_IDX_MISC0];
 	switch (type) {
 	case ACA_SMU_TYPE_UE:
+		bank->aca_err_type = ACA_ERROR_TYPE_UE;
 		ret = aca_error_cache_log_bank_error(handle, &info, ACA_ERROR_TYPE_UE,
 						     1ULL);
 		break;
 	case ACA_SMU_TYPE_CE:
-		ret = aca_error_cache_log_bank_error(handle, &info, ACA_ERROR_TYPE_CE,
+		bank->aca_err_type = ACA_ERROR_TYPE_CE;
+		ret = aca_error_cache_log_bank_error(handle, &info, bank->aca_err_type,
 						     ACA_REG__MISC0__ERRCNT(misc0));
 		break;
 	default:

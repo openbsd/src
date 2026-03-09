@@ -59,13 +59,9 @@ void cm_helper_program_gamcor_xfer_func(
 	const struct pwl_params *params,
 	const struct dcn3_xfer_func_reg *reg);
 
-bool cm3_helper_translate_curve_to_hw_format(
+bool cm3_helper_translate_curve_to_hw_format(struct dc_context *ctx,
 	const struct dc_transfer_func *output_tf,
 	struct pwl_params *lut_params, bool fixpoint);
-
-bool cm3_helper_translate_curve_to_degamma_hw_format(
-				const struct dc_transfer_func *output_tf,
-				struct pwl_params *lut_params);
 
 bool cm3_helper_convert_to_custom_float(
 		struct pwl_result_data *rgb_resulted,

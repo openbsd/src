@@ -8,6 +8,7 @@
 #include <linux/list.h>
 #include <linux/spinlock_types.h>
 #include <linux/lockdep.h>
+#include <linux/cleanup.h>
 
 #define DEFINE_MUTEX(x)		struct rwlock x = RWLOCK_INITIALIZER(#x)
 
@@ -47,15 +48,18 @@ mutex_trylock_recursive(struct rwlock *rwl)
 
 int atomic_dec_and_mutex_lock(volatile int *, struct rwlock *);
 
+static inline struct rwlock *
+class_mutex_constructor(struct rwlock *rwl)
+{
+	mutex_lock(rwl);
+	return rwl;
+}
+
 static inline void
-mutex_cleanup(struct rwlock **p)
+class_mutex_destructor(struct rwlock **p)
 {
 	mutex_unlock(*p);
 }
-
-#define _guard(rwl) \
-	mutex_lock(rwl); \
-	struct rwlock *_guard_p __cleanup(mutex_cleanup) = rwl
-#define guard(type) _guard
+typedef struct rwlock * class_mutex_t;
 
 #endif

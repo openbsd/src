@@ -103,6 +103,12 @@ enum psp_gfx_cmd_id
     GFX_CMD_ID_AUTOLOAD_RLC       = 0x00000021,   /* Indicates all graphics fw loaded, start RLC autoload */
     GFX_CMD_ID_BOOT_CFG           = 0x00000022,   /* Boot Config */
     GFX_CMD_ID_SRIOV_SPATIAL_PART = 0x00000027,   /* Configure spatial partitioning mode */
+    /*IDs of performance monitoring/profiling*/
+    GFX_CMD_ID_CONFIG_SQ_PERFMON  = 0x00000046,   /* Config CGTT_SQ_CLK_CTRL */
+    /* Dynamic memory partitioninig (NPS mode change)*/
+    GFX_CMD_ID_FB_NPS_MODE        = 0x00000048,  /* Configure memory partitioning mode */
+    GFX_CMD_ID_FB_FW_RESERV_ADDR  = 0x00000050,  /* Query FW reservation addr */
+    GFX_CMD_ID_FB_FW_RESERV_EXT_ADDR = 0x00000051,  /* Query FW reservation extended addr */
 };
 
 /* PSP boot config sub-commands */
@@ -351,6 +357,20 @@ struct psp_gfx_cmd_sriov_spatial_part {
 	uint32_t override_this_aid;
 };
 
+/*Structure for sq performance monitoring/profiling enable/disable*/
+struct psp_gfx_cmd_config_sq_perfmon {
+	uint32_t        gfx_xcp_mask;
+	uint8_t         core_override;
+	uint8_t         reg_override;
+	uint8_t         perfmon_override;
+	uint8_t         reserved[5];
+};
+
+struct psp_gfx_cmd_fb_memory_part {
+	uint32_t mode; /* requested NPS mode */
+	uint32_t resvd;
+};
+
 /* All GFX ring buffer commands. */
 union psp_gfx_commands
 {
@@ -365,6 +385,8 @@ union psp_gfx_commands
     struct psp_gfx_cmd_load_toc         cmd_load_toc;
     struct psp_gfx_cmd_boot_cfg         boot_cfg;
     struct psp_gfx_cmd_sriov_spatial_part cmd_spatial_part;
+    struct psp_gfx_cmd_config_sq_perfmon config_sq_perfmon;
+    struct psp_gfx_cmd_fb_memory_part cmd_memory_part;
 };
 
 struct psp_gfx_uresp_reserved
@@ -384,11 +406,19 @@ struct psp_gfx_uresp_bootcfg {
 	uint32_t boot_cfg;	/* boot config data */
 };
 
+/* Command-specific response for fw reserve info */
+struct psp_gfx_uresp_fw_reserve_info {
+    uint32_t reserve_base_address_hi;
+    uint32_t reserve_base_address_lo;
+    uint32_t reserve_size;
+};
+
 /* Union of command-specific responses for GPCOM ring. */
 union psp_gfx_uresp {
 	struct psp_gfx_uresp_reserved		reserved;
 	struct psp_gfx_uresp_bootcfg		boot_cfg;
 	struct psp_gfx_uresp_fwar_db_info	fwar_db_info;
+	struct psp_gfx_uresp_fw_reserve_info	fw_reserve_info;
 };
 
 /* Structure of GFX Response buffer.

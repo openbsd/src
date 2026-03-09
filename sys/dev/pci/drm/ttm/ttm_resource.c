@@ -23,13 +23,16 @@
  */
 
 #include <linux/debugfs.h>
+#include <linux/export.h>
 #include <linux/io-mapping.h>
 #include <linux/iosys-map.h>
 #include <linux/scatterlist.h>
+#include <linux/cgroup_dmem.h>
 
 #include <drm/ttm/ttm_bo.h>
 #include <drm/ttm/ttm_placement.h>
 #include <drm/ttm/ttm_resource.h>
+#include <drm/ttm/ttm_tt.h>
 
 #include <drm/drm_util.h>
 
@@ -78,6 +81,23 @@ static void ttm_bulk_move_drop_cursors(struct ttm_lru_bulk_move *bulk)
 
 	list_for_each_entry_safe(cursor, next, &bulk->cursor_list, bulk_link)
 		ttm_resource_cursor_clear_bulk(cursor);
+}
+
+/**
+ * ttm_resource_cursor_init() - Initialize a struct ttm_resource_cursor
+ * @cursor: The cursor to initialize.
+ * @man: The resource manager.
+ *
+ * Initialize the cursor before using it for iteration.
+ */
+void ttm_resource_cursor_init(struct ttm_resource_cursor *cursor,
+			      struct ttm_resource_manager *man)
+{
+	cursor->priority = 0;
+	cursor->man = man;
+	ttm_lru_item_init(&cursor->hitch, TTM_LRU_HITCH);
+	INIT_LIST_HEAD(&cursor->bulk_link);
+	INIT_LIST_HEAD(&cursor->hitch.link);
 }
 
 /**
@@ -235,11 +255,31 @@ static void ttm_lru_bulk_move_del(struct ttm_lru_bulk_move *bulk,
 	}
 }
 
+static bool ttm_resource_is_swapped(struct ttm_resource *res, struct ttm_buffer_object *bo)
+{
+	/*
+	 * Take care when creating a new resource for a bo, that it is not considered
+	 * swapped if it's not the current resource for the bo and is thus logically
+	 * associated with the ttm_tt. Think a VRAM resource created to move a
+	 * swapped-out bo to VRAM.
+	 */
+	if (bo->resource != res || !bo->ttm)
+		return false;
+
+	dma_resv_assert_held(bo->base.resv);
+	return ttm_tt_is_swapped(bo->ttm);
+}
+
+static bool ttm_resource_unevictable(struct ttm_resource *res, struct ttm_buffer_object *bo)
+{
+	return bo->pin_count || ttm_resource_is_swapped(res, bo);
+}
+
 /* Add the resource to a bulk move if the BO is configured for it */
 void ttm_resource_add_bulk_move(struct ttm_resource *res,
 				struct ttm_buffer_object *bo)
 {
-	if (bo->bulk_move && !bo->pin_count)
+	if (bo->bulk_move && !ttm_resource_unevictable(res, bo))
 		ttm_lru_bulk_move_add(bo->bulk_move, res);
 }
 
@@ -247,7 +287,7 @@ void ttm_resource_add_bulk_move(struct ttm_resource *res,
 void ttm_resource_del_bulk_move(struct ttm_resource *res,
 				struct ttm_buffer_object *bo)
 {
-	if (bo->bulk_move && !bo->pin_count)
+	if (bo->bulk_move && !ttm_resource_unevictable(res, bo))
 		ttm_lru_bulk_move_del(bo->bulk_move, res);
 }
 
@@ -259,10 +299,10 @@ void ttm_resource_move_to_lru_tail(struct ttm_resource *res)
 
 	lockdep_assert_held(&bo->bdev->lru_lock);
 
-	if (bo->pin_count) {
-		list_move_tail(&res->lru.link, &bdev->pinned);
+	if (ttm_resource_unevictable(res, bo)) {
+		list_move_tail(&res->lru.link, &bdev->unevictable);
 
-	} else	if (bo->bulk_move) {
+	} else if (bo->bulk_move) {
 		struct ttm_lru_bulk_move_pos *pos =
 			ttm_lru_bulk_move_pos(bo->bulk_move, res);
 
@@ -301,8 +341,8 @@ void ttm_resource_init(struct ttm_buffer_object *bo,
 
 	man = ttm_manager_type(bo->bdev, place->mem_type);
 	spin_lock(&bo->bdev->lru_lock);
-	if (bo->pin_count)
-		list_add_tail(&res->lru.link, &bo->bdev->pinned);
+	if (ttm_resource_unevictable(res, bo))
+		list_add_tail(&res->lru.link, &bo->bdev->unevictable);
 	else
 		list_add_tail(&res->lru.link, &man->lru[bo->priority]);
 	man->usage += res->size;
@@ -334,15 +374,28 @@ EXPORT_SYMBOL(ttm_resource_fini);
 
 int ttm_resource_alloc(struct ttm_buffer_object *bo,
 		       const struct ttm_place *place,
-		       struct ttm_resource **res_ptr)
+		       struct ttm_resource **res_ptr,
+		       struct dmem_cgroup_pool_state **ret_limit_pool)
 {
 	struct ttm_resource_manager *man =
 		ttm_manager_type(bo->bdev, place->mem_type);
+	struct dmem_cgroup_pool_state *pool = NULL;
 	int ret;
 
+	if (man->cg) {
+		ret = dmem_cgroup_try_charge(man->cg, bo->base.size, &pool, ret_limit_pool);
+		if (ret)
+			return ret;
+	}
+
 	ret = man->func->alloc(man, bo, place, res_ptr);
-	if (ret)
+	if (ret) {
+		if (pool)
+			dmem_cgroup_uncharge(pool, bo->base.size);
 		return ret;
+	}
+
+	(*res_ptr)->css = pool;
 
 	spin_lock(&bo->bdev->lru_lock);
 	ttm_resource_add_bulk_move(*res_ptr, bo);
@@ -354,6 +407,7 @@ EXPORT_SYMBOL_FOR_TESTS_ONLY(ttm_resource_alloc);
 void ttm_resource_free(struct ttm_buffer_object *bo, struct ttm_resource **res)
 {
 	struct ttm_resource_manager *man;
+	struct dmem_cgroup_pool_state *pool;
 
 	if (!*res)
 		return;
@@ -361,9 +415,13 @@ void ttm_resource_free(struct ttm_buffer_object *bo, struct ttm_resource **res)
 	spin_lock(&bo->bdev->lru_lock);
 	ttm_resource_del_bulk_move(*res, bo);
 	spin_unlock(&bo->bdev->lru_lock);
+
+	pool = (*res)->css;
 	man = ttm_manager_type(bo->bdev, (*res)->mem_type);
 	man->func->free(man, *res);
 	*res = NULL;
+	if (man->cg)
+		dmem_cgroup_uncharge(pool, bo->base.size);
 }
 EXPORT_SYMBOL(ttm_resource_free);
 
@@ -491,7 +549,6 @@ int ttm_resource_manager_evict_all(struct ttm_device *bdev,
 	struct ttm_operation_ctx ctx = {
 		.interruptible = false,
 		.no_wait_gpu = false,
-		.force_alloc = true
 	};
 	struct dma_fence *fence;
 	int ret;
@@ -580,7 +637,6 @@ ttm_resource_cursor_check_bulk(struct ttm_resource_cursor *cursor,
 /**
  * ttm_resource_manager_first() - Start iterating over the resources
  * of a resource manager
- * @man: resource manager to iterate over
  * @cursor: cursor to record the position
  *
  * Initializes the cursor and starts iterating. When done iterating,
@@ -589,17 +645,16 @@ ttm_resource_cursor_check_bulk(struct ttm_resource_cursor *cursor,
  * Return: The first resource from the resource manager.
  */
 struct ttm_resource *
-ttm_resource_manager_first(struct ttm_resource_manager *man,
-			   struct ttm_resource_cursor *cursor)
+ttm_resource_manager_first(struct ttm_resource_cursor *cursor)
 {
+	struct ttm_resource_manager *man = cursor->man;
+
+	if (WARN_ON_ONCE(!man))
+		return NULL;
+
 	lockdep_assert_held(&man->bdev->lru_lock);
 
-	cursor->priority = 0;
-	cursor->man = man;
-	ttm_lru_item_init(&cursor->hitch, TTM_LRU_HITCH);
-	INIT_LIST_HEAD(&cursor->bulk_link);
-	list_add(&cursor->hitch.link, &man->lru[cursor->priority]);
-
+	list_move(&cursor->hitch.link, &man->lru[cursor->priority]);
 	return ttm_resource_manager_next(cursor);
 }
 
@@ -634,8 +689,6 @@ ttm_resource_manager_next(struct ttm_resource_cursor *cursor)
 		list_move(&cursor->hitch.link, &man->lru[cursor->priority]);
 		ttm_resource_cursor_clear_bulk(cursor);
 	}
-
-	ttm_resource_cursor_fini(cursor);
 
 	return NULL;
 }

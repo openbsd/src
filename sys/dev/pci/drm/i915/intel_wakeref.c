@@ -27,11 +27,11 @@ int __intel_wakeref_get_first(struct intel_wakeref *wf)
 	if (!atomic_read(&wf->count)) {
 		INTEL_WAKEREF_BUG_ON(wf->wakeref);
 		wf->wakeref = wakeref;
-		wakeref = 0;
+		wakeref = NULL;
 
 		ret = wf->ops->get(wf);
 		if (ret) {
-			wakeref = xchg(&wf->wakeref, 0);
+			wakeref = xchg(&wf->wakeref, NULL);
 			wake_up_var(&wf->wakeref);
 			goto unlock;
 		}
@@ -52,7 +52,7 @@ unlock:
 
 static void ____intel_wakeref_put_last(struct intel_wakeref *wf)
 {
-	intel_wakeref_t wakeref = 0;
+	intel_wakeref_t wakeref = NULL;
 
 	INTEL_WAKEREF_BUG_ON(atomic_read(&wf->count) <= 0);
 	if (unlikely(!atomic_dec_and_test(&wf->count)))
@@ -61,7 +61,7 @@ static void ____intel_wakeref_put_last(struct intel_wakeref *wf)
 	/* ops->put() must reschedule its own release on error/deferral */
 	if (likely(!wf->ops->put(wf))) {
 		INTEL_WAKEREF_BUG_ON(!wf->wakeref);
-		wakeref = xchg(&wf->wakeref, 0);
+		wakeref = xchg(&wf->wakeref, NULL);
 		wake_up_var(&wf->wakeref);
 	}
 
@@ -78,7 +78,7 @@ void __intel_wakeref_put_last(struct intel_wakeref *wf, unsigned long flags)
 	/* Assume we are not in process context and so cannot sleep. */
 	if (flags & INTEL_WAKEREF_PUT_ASYNC || !mutex_trylock(&wf->mutex)) {
 		mod_delayed_work(wf->i915->unordered_wq, &wf->work,
-				 FIELD_GET(INTEL_WAKEREF_PUT_DELAY, flags));
+				 FIELD_GET(INTEL_WAKEREF_PUT_DELAY_MASK, flags));
 		return;
 	}
 
@@ -111,14 +111,15 @@ void __intel_wakeref_init(struct intel_wakeref *wf,
 	rw_init(&wf->mutex, "wakeref.mutex");
 #endif
 	atomic_set(&wf->count, 0);
-	wf->wakeref = 0;
+	wf->wakeref = NULL;
 
 	INIT_DELAYED_WORK(&wf->work, __intel_wakeref_put_work);
 	lockdep_init_map(&wf->work.work.lockdep_map,
 			 "wakeref.work", &key->work, 0);
 
 #if IS_ENABLED(CONFIG_DRM_I915_DEBUG_WAKEREF)
-	ref_tracker_dir_init(&wf->debug, INTEL_REFTRACK_DEAD_COUNT, name);
+	if (!wf->debug.class)
+		ref_tracker_dir_init(&wf->debug, INTEL_REFTRACK_DEAD_COUNT, "intel_wakeref");
 #endif
 }
 
@@ -146,7 +147,7 @@ static void wakeref_auto_timeout(void *arg)
 	if (!refcount_dec_and_lock_irqsave(&wf->count, &wf->lock, &flags))
 		return;
 
-	wakeref = fetch_and_zero(&wf->wakeref);
+	wakeref = xchg(&wf->wakeref, NULL);
 	spin_unlock_irqrestore(&wf->lock, flags);
 
 	intel_runtime_pm_put(&wf->i915->runtime_pm, wakeref);
@@ -162,7 +163,7 @@ void intel_wakeref_auto_init(struct intel_wakeref_auto *wf,
 	timeout_set(&wf->timer, wakeref_auto_timeout, wf);
 #endif
 	refcount_set(&wf->count, 0);
-	wf->wakeref = 0;
+	wf->wakeref = NULL;
 	wf->i915 = i915;
 }
 
@@ -171,7 +172,7 @@ void intel_wakeref_auto(struct intel_wakeref_auto *wf, unsigned long timeout)
 	unsigned long flags;
 
 	if (!timeout) {
-		if (del_timer_sync(&wf->timer))
+		if (timer_delete_sync(&wf->timer))
 			wakeref_auto_timeout(&wf->timer);
 		return;
 	}

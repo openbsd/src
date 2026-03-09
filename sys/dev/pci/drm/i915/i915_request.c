@@ -292,11 +292,6 @@ i915_request_active_engine(struct i915_request *rq,
 	return ret;
 }
 
-static void __rq_init_watchdog(struct i915_request *rq)
-{
-	rq->watchdog.timer.to_func = NULL;
-}
-
 #ifdef __linux__
 
 static enum hrtimer_restart __rq_watchdog_expired(struct hrtimer *hrtimer)
@@ -333,6 +328,17 @@ __rq_watchdog_expired(void *arg)
 
 #endif
 
+static void __rq_init_watchdog(struct i915_request *rq)
+{
+	struct i915_request_watchdog *wdg = &rq->watchdog;
+
+#ifdef __linux__
+	hrtimer_setup(&wdg->timer, __rq_watchdog_expired, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+#else
+	timeout_set(&wdg->timer, __rq_watchdog_expired, rq);
+#endif
+}
+
 static void __rq_arm_watchdog(struct i915_request *rq)
 {
 	struct i915_request_watchdog *wdg = &rq->watchdog;
@@ -344,15 +350,12 @@ static void __rq_arm_watchdog(struct i915_request *rq)
 	i915_request_get(rq);
 
 #ifdef __linux__
-	hrtimer_init(&wdg->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	wdg->timer.function = __rq_watchdog_expired;
 	hrtimer_start_range_ns(&wdg->timer,
 			       ns_to_ktime(ce->watchdog.timeout_us *
 					   NSEC_PER_USEC),
 			       NSEC_PER_MSEC,
 			       HRTIMER_MODE_REL);
 #else
-	timeout_set(&wdg->timer, __rq_watchdog_expired, rq);
 	timeout_add_msec(&wdg->timer, 1);
 #endif
 }
@@ -361,7 +364,7 @@ static void __rq_cancel_watchdog(struct i915_request *rq)
 {
 	struct i915_request_watchdog *wdg = &rq->watchdog;
 
-	if (wdg->timer.to_func && hrtimer_try_to_cancel(&wdg->timer) > 0)
+	if (hrtimer_try_to_cancel(&wdg->timer) > 0)
 		i915_request_put(rq);
 }
 
@@ -516,7 +519,7 @@ static bool __request_in_flight(const struct i915_request *signal)
 	 * to avoid tearing.]
 	 *
 	 * Note that the read of *execlists->active may race with the promotion
-	 * of execlists->pending[] to execlists->inflight[], overwritting
+	 * of execlists->pending[] to execlists->inflight[], overwriting
 	 * the value at *execlists->active. This is fine. The promotion implies
 	 * that we received an ACK from the HW, and so the context is not
 	 * stuck -- if we do not see ourselves in *active, the inflight status
@@ -2273,7 +2276,7 @@ void i915_request_show(struct drm_printer *m,
 		       const char *prefix,
 		       int indent)
 {
-	const char *name = rq->fence.ops->get_timeline_name((struct dma_fence *)&rq->fence);
+	const char __rcu *timeline;
 	char buf[80] = "";
 	int x = 0;
 
@@ -2309,6 +2312,8 @@ void i915_request_show(struct drm_printer *m,
 
 	x = print_sched_attr(&rq->sched.attr, buf, x, sizeof(buf));
 
+	rcu_read_lock();
+	timeline = dma_fence_timeline_name((struct dma_fence *)&rq->fence);
 	drm_printf(m, "%s%.*s%c %llx:%lld%s%s %s @ %dms: %s\n",
 		   prefix, indent, "                ",
 		   queue_status(rq),
@@ -2317,7 +2322,8 @@ void i915_request_show(struct drm_printer *m,
 		   fence_status(rq),
 		   buf,
 		   jiffies_to_msecs(jiffies - rq->emitted_jiffies),
-		   name);
+		   rcu_dereference(timeline));
+	rcu_read_unlock();
 }
 
 static bool engine_match_ring(struct intel_engine_cs *engine, struct i915_request *rq)

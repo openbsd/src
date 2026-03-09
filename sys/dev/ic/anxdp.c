@@ -1,4 +1,4 @@
-/* $OpenBSD: anxdp.c,v 1.7 2023/01/01 01:34:33 jsg Exp $ */
+/* $OpenBSD: anxdp.c,v 1.8 2026/03/09 23:57:53 jsg Exp $ */
 /* $NetBSD: anx_dp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -338,7 +338,7 @@ struct drm_connector_helper_funcs anxdp_connector_helper_funcs = {
 };
 
 int
-anxdp_bridge_attach(struct drm_bridge *bridge,
+anxdp_bridge_attach(struct drm_bridge *bridge, struct drm_encoder *encoder,
     enum drm_bridge_attach_flags flags)
 {
 	struct anxdp_softc *sc = bridge->driver_private;
@@ -357,7 +357,7 @@ anxdp_bridge_attach(struct drm_bridge *bridge,
 	    connector->connector_type);
 	drm_connector_helper_add(connector, &anxdp_connector_helper_funcs);
 
-	error = drm_connector_attach_encoder(connector, bridge->encoder);
+	error = drm_connector_attach_encoder(connector, encoder);
 	if (error != 0)
 		return error;
 

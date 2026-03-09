@@ -412,7 +412,7 @@ static int gfx_v9_4_2_run_shader(struct amdgpu_device *adev,
 	r = amdgpu_ib_schedule(ring, 1, ib, NULL, fence_ptr);
 	if (r) {
 		dev_err(adev->dev, "ib submit failed (%d).\n", r);
-		amdgpu_ib_free(adev, ib, NULL);
+		amdgpu_ib_free(ib, NULL);
 	}
 	return r;
 }
@@ -611,16 +611,16 @@ static int gfx_v9_4_2_do_sgprs_init(struct amdgpu_device *adev)
 	}
 
 disp2_failed:
-	amdgpu_ib_free(adev, &disp_ibs[2], NULL);
+	amdgpu_ib_free(&disp_ibs[2], NULL);
 	dma_fence_put(fences[2]);
 disp1_failed:
-	amdgpu_ib_free(adev, &disp_ibs[1], NULL);
+	amdgpu_ib_free(&disp_ibs[1], NULL);
 	dma_fence_put(fences[1]);
 disp0_failed:
-	amdgpu_ib_free(adev, &disp_ibs[0], NULL);
+	amdgpu_ib_free(&disp_ibs[0], NULL);
 	dma_fence_put(fences[0]);
 pro_end:
-	amdgpu_ib_free(adev, &wb_ib, NULL);
+	amdgpu_ib_free(&wb_ib, NULL);
 
 	if (r)
 		dev_info(adev->dev, "Init SGPRS Failed\n");
@@ -687,10 +687,10 @@ static int gfx_v9_4_2_do_vgprs_init(struct amdgpu_device *adev)
 	}
 
 disp_failed:
-	amdgpu_ib_free(adev, &disp_ib, NULL);
+	amdgpu_ib_free(&disp_ib, NULL);
 	dma_fence_put(fence);
 pro_end:
-	amdgpu_ib_free(adev, &wb_ib, NULL);
+	amdgpu_ib_free(&wb_ib, NULL);
 
 	if (r)
 		dev_info(adev->dev, "Init VGPRS Failed\n");
@@ -745,6 +745,18 @@ void gfx_v9_4_2_init_golden_registers(struct amdgpu_device *adev,
 			 "invalid die id %d, ignore channel fabricid remap settings\n",
 			 die_id);
 		break;
+	}
+}
+
+void gfx_v9_4_2_init_sq(struct amdgpu_device *adev)
+{
+	uint32_t data;
+
+	if (adev->gfx.mec_fw_version >= 98) {
+		adev->gmc.xnack_flags |= AMDGPU_GMC_XNACK_FLAG_CHAIN;
+		data = RREG32_SOC15(GC, 0, regSQ_CONFIG1);
+		data = REG_SET_FIELD(data, SQ_CONFIG1, DISABLE_XNACK_CHECK_IN_RETRY_DISABLE, 1);
+		WREG32_SOC15(GC, 0, regSQ_CONFIG1, data);
 	}
 }
 
@@ -1547,7 +1559,7 @@ static void gfx_v9_4_2_log_utc_edc_count(struct amdgpu_device *adev,
 {
 	uint32_t bank, way, mem;
 	static const char * const vml2_way_str[] = { "BIGK", "4K" };
-	static const char * const utcl2_rounter_str[] = { "VMC", "APT" };
+	static const char * const utcl2_router_str[] = { "VMC", "APT" };
 
 	mem = instance % blk->num_mem_blocks;
 	way = (instance / blk->num_mem_blocks) % blk->num_ways;
@@ -1568,7 +1580,7 @@ static void gfx_v9_4_2_log_utc_edc_count(struct amdgpu_device *adev,
 		dev_info(
 			adev->dev,
 			"GFX SubBlock UTCL2_ROUTER_IFIF%d_GROUP0_%s, SED %d, DED %d\n",
-			bank, utcl2_rounter_str[mem], sec_cnt, ded_cnt);
+			bank, utcl2_router_str[mem], sec_cnt, ded_cnt);
 		break;
 	case ATC_L2_CACHE_2M:
 		dev_info(

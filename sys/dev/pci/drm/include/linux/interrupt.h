@@ -135,6 +135,13 @@ tasklet_disable_nosync(struct tasklet_struct *ts)
 	smp_mb__after_atomic();
 }
 
+static inline void 
+tasklet_disable(struct tasklet_struct *ts)
+{
+	tasklet_disable_nosync(ts);
+	tasklet_unlock_wait(ts);
+}
+
 static inline void
 tasklet_enable(struct tasklet_struct *ts)
 {

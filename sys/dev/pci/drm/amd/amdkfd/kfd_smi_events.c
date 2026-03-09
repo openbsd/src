@@ -44,7 +44,7 @@ struct kfd_smi_client {
 	bool suser;
 };
 
-#define MAX_KFIFO_SIZE	1024
+#define KFD_MAX_KFIFO_SIZE	8192
 
 static __poll_t kfd_smi_ev_poll(struct file *, struct poll_table_struct *);
 static ssize_t kfd_smi_ev_read(struct file *, char __user *, size_t, loff_t *);
@@ -86,7 +86,7 @@ static ssize_t kfd_smi_ev_read(struct file *filep, char __user *user,
 	struct kfd_smi_client *client = filep->private_data;
 	unsigned char *buf;
 
-	size = min_t(size_t, size, MAX_KFIFO_SIZE);
+	size = min_t(size_t, size, KFD_MAX_KFIFO_SIZE);
 	buf = kmalloc(size, GFP_KERNEL);
 	if (!buf)
 		return -ENOMEM;
@@ -163,10 +163,9 @@ static int kfd_smi_ev_release(struct inode *inode, struct file *filep)
 static bool kfd_smi_ev_enabled(pid_t pid, struct kfd_smi_client *client,
 			       unsigned int event)
 {
-	uint64_t all = KFD_SMI_EVENT_MASK_FROM_INDEX(KFD_SMI_EVENT_ALL_PROCESS);
 	uint64_t events = READ_ONCE(client->events);
 
-	if (pid && client->pid != pid && !(client->suser && (events & all)))
+	if (pid && client->pid != pid && !client->suser)
 		return false;
 
 	return events & KFD_SMI_EVENT_MASK_FROM_INDEX(event);
@@ -254,9 +253,9 @@ void kfd_smi_event_update_vmfault(struct kfd_node *dev, uint16_t pasid)
 	task_info = amdgpu_vm_get_task_info_pasid(dev->adev, pasid);
 	if (task_info) {
 		/* Report VM faults from user applications, not retry from kernel */
-		if (task_info->pid)
+		if (task_info->task.pid)
 			kfd_smi_event_add(0, dev, KFD_SMI_EVENT_VMFAULT, KFD_EVENT_FMT_VMFAULT(
-					  task_info->pid, task_info->task_name));
+					  task_info->task.pid, task_info->task.comm));
 		amdgpu_vm_put_task_info(task_info);
 	}
 }
@@ -292,12 +291,13 @@ void kfd_smi_event_migration_start(struct kfd_node *node, pid_t pid,
 
 void kfd_smi_event_migration_end(struct kfd_node *node, pid_t pid,
 				 unsigned long start, unsigned long end,
-				 uint32_t from, uint32_t to, uint32_t trigger)
+				 uint32_t from, uint32_t to, uint32_t trigger,
+				 int error_code)
 {
 	kfd_smi_event_add(pid, node, KFD_SMI_EVENT_MIGRATE_END,
 			  KFD_EVENT_FMT_MIGRATE_END(
 			  ktime_get_boottime_ns(), pid, start, end - start,
-			  from, to, trigger));
+			  from, to, trigger, error_code));
 }
 
 void kfd_smi_event_queue_eviction(struct kfd_node *node, pid_t pid,
@@ -344,6 +344,27 @@ void kfd_smi_event_unmap_from_gpu(struct kfd_node *node, pid_t pid,
 			  pid, address, last - address + 1, node->id, trigger));
 }
 
+void kfd_smi_event_process(struct kfd_process_device *pdd, bool start)
+{
+	struct amdgpu_task_info *task_info;
+	struct amdgpu_vm *avm;
+
+	if (!pdd->drm_priv)
+		return;
+
+	avm = drm_priv_to_vm(pdd->drm_priv);
+	task_info = amdgpu_vm_get_task_info_vm(avm);
+
+	if (task_info) {
+		kfd_smi_event_add(0, pdd->dev,
+				  start ? KFD_SMI_EVENT_PROCESS_START :
+				  KFD_SMI_EVENT_PROCESS_END,
+				  KFD_EVENT_FMT_PROCESS(task_info->task.pid,
+				  task_info->task.comm));
+		amdgpu_vm_put_task_info(task_info);
+	}
+}
+
 int kfd_smi_event_open(struct kfd_node *dev, uint32_t *fd)
 {
 	struct kfd_smi_client *client;
@@ -354,7 +375,7 @@ int kfd_smi_event_open(struct kfd_node *dev, uint32_t *fd)
 		return -ENOMEM;
 	INIT_LIST_HEAD(&client->list);
 
-	ret = kfifo_alloc(&client->fifo, MAX_KFIFO_SIZE, GFP_KERNEL);
+	ret = kfifo_alloc(&client->fifo, KFD_MAX_KFIFO_SIZE, GFP_KERNEL);
 	if (ret) {
 		kfree(client);
 		return ret;

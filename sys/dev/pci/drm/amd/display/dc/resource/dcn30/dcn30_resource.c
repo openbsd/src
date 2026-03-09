@@ -60,7 +60,7 @@
 #include "dml/display_mode_vba.h"
 #include "dcn30/dcn30_dccg.h"
 #include "dcn10/dcn10_resource.h"
-#include "link.h"
+#include "link_service.h"
 #include "dce/dce_panel_cntl.h"
 
 #include "dcn30/dcn30_dwb.h"
@@ -711,7 +711,6 @@ static const struct dc_plane_cap plane_cap = {
 static const struct dc_debug_options debug_defaults_drv = {
 	.disable_dmcu = true, //No DMCU on DCN30
 	.force_abm_enable = false,
-	.timing_trace = false,
 	.clock_trace = true,
 	.disable_pplib_clock_request = true,
 	.pipe_split_policy = MPC_SPLIT_DYNAMIC,
@@ -927,7 +926,7 @@ static struct link_encoder *dcn30_link_encoder_create(
 	struct dcn20_link_encoder *enc20 =
 		kzalloc(sizeof(struct dcn20_link_encoder), GFP_KERNEL);
 
-	if (!enc20)
+	if (!enc20 || enc_init_data->hpd_source >= ARRAY_SIZE(link_enc_hpd_regs))
 		return NULL;
 
 	dcn30_link_encoder_construct(enc20,
@@ -1320,13 +1319,13 @@ static struct clock_source *dcn30_clock_source_create(
 int dcn30_populate_dml_pipes_from_context(
 	struct dc *dc, struct dc_state *context,
 	display_e2e_pipe_params_st *pipes,
-	bool fast_validate)
+	enum dc_validate_mode validate_mode)
 {
 	int i, pipe_cnt;
 	struct resource_context *res_ctx = &context->res_ctx;
 
 	DC_FP_START();
-	dcn20_populate_dml_pipes_from_context(dc, context, pipes, fast_validate);
+	dcn20_populate_dml_pipes_from_context(dc, context, pipes, validate_mode);
 	DC_FP_END();
 
 	for (i = 0, pipe_cnt = 0; i < dc->res_pool->pipe_count; i++) {
@@ -1628,7 +1627,7 @@ noinline bool dcn30_internal_validate_bw(
 		display_e2e_pipe_params_st *pipes,
 		int *pipe_cnt_out,
 		int *vlevel_out,
-		bool fast_validate,
+		enum dc_validate_mode validate_mode,
 		bool allow_self_refresh_only)
 {
 	bool out = false;
@@ -1647,7 +1646,7 @@ noinline bool dcn30_internal_validate_bw(
 	context->bw_ctx.dml.vba.VoltageLevel = 0;
 	context->bw_ctx.dml.vba.DRAMClockChangeSupport[0][0] = dm_dram_clock_change_vactive;
 	dc->res_pool->funcs->update_soc_for_wm_a(dc, context);
-	pipe_cnt = dc->res_pool->funcs->populate_dml_pipes(dc, context, pipes, fast_validate);
+	pipe_cnt = dc->res_pool->funcs->populate_dml_pipes(dc, context, pipes, validate_mode);
 
 	if (!pipe_cnt) {
 		out = true;
@@ -1656,7 +1655,7 @@ noinline bool dcn30_internal_validate_bw(
 
 	dml_log_pipe_params(&context->bw_ctx.dml, pipes, pipe_cnt);
 
-	if (!fast_validate || !allow_self_refresh_only) {
+	if (validate_mode == DC_VALIDATE_MODE_AND_PROGRAMMING || !allow_self_refresh_only) {
 		/*
 		 * DML favors voltage over p-state, but we're more interested in
 		 * supporting p-state over voltage. We can't support p-state in
@@ -1670,7 +1669,7 @@ noinline bool dcn30_internal_validate_bw(
 			vlevel = dcn20_validate_apply_pipe_split_flags(dc, context, vlevel, split, merge);
 	}
 	if (allow_self_refresh_only &&
-	    (fast_validate || vlevel == context->bw_ctx.dml.soc.num_states ||
+	    (validate_mode != DC_VALIDATE_MODE_AND_PROGRAMMING || vlevel == context->bw_ctx.dml.soc.num_states ||
 			vba->DRAMClockChangeSupport[vlevel][vba->maxMpcComb] == dm_dram_clock_change_unsupported)) {
 		/*
 		 * If mode is unsupported or there's still no p-state support
@@ -1679,7 +1678,7 @@ noinline bool dcn30_internal_validate_bw(
 		 * We don't actually support prefetch mode 2, so require that we
 		 * at least support prefetch mode 1.
 		 */
-		context->bw_ctx.dml.validate_max_state = fast_validate;
+		context->bw_ctx.dml.validate_max_state = (validate_mode != DC_VALIDATE_MODE_AND_PROGRAMMING);
 		context->bw_ctx.dml.soc.allow_dram_self_refresh_or_dram_clock_change_in_vblank =
 			dm_allow_self_refresh;
 
@@ -1866,7 +1865,7 @@ noinline bool dcn30_internal_validate_bw(
 	}
 
 	if (repopulate_pipes)
-		pipe_cnt = dc->res_pool->funcs->populate_dml_pipes(dc, context, pipes, fast_validate);
+		pipe_cnt = dc->res_pool->funcs->populate_dml_pipes(dc, context, pipes, validate_mode);
 	context->bw_ctx.dml.vba.VoltageLevel = vlevel;
 	*vlevel_out = vlevel;
 	*pipe_cnt_out = pipe_cnt;
@@ -1892,8 +1891,6 @@ static int get_refresh_rate(struct dc_state *context)
 
 	/* check if refresh rate at least 120hz */
 	timing = &context->streams[0]->timing;
-	if (timing == NULL)
-		return 0;
 
 	h_v_total = timing->h_total * timing->v_total;
 	if (h_v_total == 0)
@@ -2038,9 +2035,9 @@ void dcn30_calculate_wm_and_dlg(
 	DC_FP_END();
 }
 
-bool dcn30_validate_bandwidth(struct dc *dc,
+enum dc_status dcn30_validate_bandwidth(struct dc *dc,
 		struct dc_state *context,
-		bool fast_validate)
+		enum dc_validate_mode validate_mode)
 {
 	bool out = false;
 
@@ -2048,7 +2045,8 @@ bool dcn30_validate_bandwidth(struct dc *dc,
 
 	int vlevel = 0;
 	int pipe_cnt = 0;
-	display_e2e_pipe_params_st *pipes = kzalloc(dc->res_pool->pipe_count * sizeof(display_e2e_pipe_params_st), GFP_KERNEL);
+	display_e2e_pipe_params_st *pipes = kcalloc(dc->res_pool->pipe_count,
+			sizeof(display_e2e_pipe_params_st), GFP_KERNEL);
 	DC_LOGGER_INIT(dc->ctx->logger);
 
 	BW_VAL_TRACE_COUNT();
@@ -2057,7 +2055,7 @@ bool dcn30_validate_bandwidth(struct dc *dc,
 		goto validate_fail;
 
 	DC_FP_START();
-	out = dcn30_internal_validate_bw(dc, context, pipes, &pipe_cnt, &vlevel, fast_validate, true);
+	out = dcn30_internal_validate_bw(dc, context, pipes, &pipe_cnt, &vlevel, validate_mode, true);
 	DC_FP_END();
 
 	if (pipe_cnt == 0)
@@ -2068,7 +2066,7 @@ bool dcn30_validate_bandwidth(struct dc *dc,
 
 	BW_VAL_TRACE_END_VOLTAGE_LEVEL();
 
-	if (fast_validate) {
+	if (validate_mode != DC_VALIDATE_MODE_AND_PROGRAMMING) {
 		BW_VAL_TRACE_SKIP(fast);
 		goto validate_out;
 	}
@@ -2094,7 +2092,7 @@ validate_out:
 
 	BW_VAL_TRACE_FINISH();
 
-	return out;
+	return out ? DC_OK : DC_FAIL_BANDWIDTH_VALIDATE;
 }
 
 void dcn30_update_bw_bounding_box(struct dc *dc, struct clk_bw_params *bw_params)
@@ -2194,7 +2192,7 @@ void dcn30_update_bw_bounding_box(struct dc *dc, struct clk_bw_params *bw_params
 		j = 0;
 		// create the final dcfclk and uclk table
 		while (i < num_dcfclk_sta_targets && j < num_uclk_states && num_states < DC__VOLTAGE_STATES) {
-			if (dcfclk_sta_targets[i] < optimal_dcfclk_for_uclk[j] && i < num_dcfclk_sta_targets) {
+			if (dcfclk_sta_targets[i] < optimal_dcfclk_for_uclk[j]) {
 				dcfclk_mhz[num_states] = dcfclk_sta_targets[i];
 				dram_speed_mts[num_states++] = optimal_uclk_for_dcfclk_sta_targets[i++];
 			} else {
@@ -2251,6 +2249,7 @@ static const struct resource_funcs dcn30_res_pool_funcs = {
 	.update_bw_bounding_box = dcn30_update_bw_bounding_box,
 	.patch_unknown_plane_state = dcn20_patch_unknown_plane_state,
 	.get_panel_config_defaults = dcn30_get_panel_config_defaults,
+	.get_vstartup_for_pipe = dcn10_get_vstartup_for_pipe
 };
 
 #define CTX ctx
@@ -2586,6 +2585,8 @@ static bool dcn30_resource_construct(
 
 	for (i = 0; i < dc->caps.max_planes; ++i)
 		dc->caps.planes[i] = plane_cap;
+
+	dc->caps.max_odm_combine_factor = 4;
 
 	dc->cap_funcs = cap_funcs;
 

@@ -28,6 +28,7 @@ struct dma_fence {
 };
 
 enum dma_fence_flag_bits {
+	DMA_FENCE_FLAG_SEQ64_BIT,
 	DMA_FENCE_FLAG_SIGNALED_BIT,
 	DMA_FENCE_FLAG_TIMESTAMP_BIT,
 	DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT,
@@ -42,7 +43,6 @@ struct dma_fence_ops {
 	long (*wait)(struct dma_fence *, bool, long);
 	void (*release)(struct dma_fence *);
 	void (*set_deadline)(struct dma_fence *, ktime_t);
-	bool use_64bit_seqno;
 };
 
 struct dma_fence_cb;
@@ -74,11 +74,17 @@ long dma_fence_wait(struct dma_fence *, bool);
 void dma_fence_enable_sw_signaling(struct dma_fence *);
 void dma_fence_init(struct dma_fence *, const struct dma_fence_ops *,
     struct mutex *, uint64_t, uint64_t);
+void dma_fence_init64(struct dma_fence *, const struct dma_fence_ops *,
+    struct mutex *, uint64_t, uint64_t);
+void dma_fence_init(struct dma_fence *, const struct dma_fence_ops *,
+    struct mutex *, uint64_t, uint64_t);
 int dma_fence_add_callback(struct dma_fence *, struct dma_fence_cb *,
     dma_fence_func_t);
 bool dma_fence_remove_callback(struct dma_fence *, struct dma_fence_cb *);
 bool dma_fence_is_container(struct dma_fence *);
 void dma_fence_set_deadline(struct dma_fence *, ktime_t);
+int dma_fence_get_status(struct dma_fence *);
+int dma_fence_get_status_locked(struct dma_fence *);
 
 struct dma_fence *dma_fence_get_stub(void);
 struct dma_fence *dma_fence_allocate_private_stub(ktime_t);
@@ -94,11 +100,11 @@ dma_fence_free(struct dma_fence *fence)
  * if a and b are the same, should return false to avoid unwanted work
  */
 static inline bool
-__dma_fence_is_later(uint64_t a, uint64_t b, const struct dma_fence_ops *ops)
+__dma_fence_is_later(struct dma_fence *f, uint64_t a, uint64_t b)
 {
 	uint32_t al, bl;
 
-	if (ops->use_64bit_seqno)
+	if (test_bit(DMA_FENCE_FLAG_SEQ64_BIT, &f->flags))
 		return a > b;
 
 	al = a & 0xffffffff;
@@ -112,7 +118,7 @@ dma_fence_is_later(struct dma_fence *a, struct dma_fence *b)
 {
 	if (a->context != b->context)
 		return false;
-	return __dma_fence_is_later(a->seqno, b->seqno, a->ops);
+	return __dma_fence_is_later(a, a->seqno, b->seqno);
 }
 
 static inline bool
@@ -138,6 +144,18 @@ dma_fence_begin_signalling(void)
 static inline void
 dma_fence_end_signalling(bool x)
 {
+}
+
+static inline const char *
+dma_fence_driver_name(struct dma_fence *fence)
+{
+	return fence->ops->get_driver_name(fence);
+}
+
+static inline const char *
+dma_fence_timeline_name(struct dma_fence *fence)
+{
+	return fence->ops->get_timeline_name(fence);
 }
 
 #endif

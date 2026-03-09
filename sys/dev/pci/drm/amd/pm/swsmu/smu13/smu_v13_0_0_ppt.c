@@ -107,6 +107,8 @@
 #define PP_OD_FEATURE_FAN_ACOUSTIC_TARGET		8
 #define PP_OD_FEATURE_FAN_TARGET_TEMPERATURE		9
 #define PP_OD_FEATURE_FAN_MINIMUM_PWM			10
+#define PP_OD_FEATURE_FAN_ZERO_RPM_ENABLE		11
+#define PP_OD_FEATURE_FAN_ZERO_RPM_STOP_TEMP		12
 
 #define LINK_SPEED_MAX					3
 
@@ -124,7 +126,7 @@ static struct cmn2asic_msg_mapping smu_v13_0_0_message_map[SMU_MSG_MAX_COUNT] = 
 	MSG_MAP(DisableSmuFeaturesHigh,		PPSMC_MSG_DisableSmuFeaturesHigh,      1),
 	MSG_MAP(GetEnabledSmuFeaturesLow,       PPSMC_MSG_GetRunningSmuFeaturesLow,    1),
 	MSG_MAP(GetEnabledSmuFeaturesHigh,	PPSMC_MSG_GetRunningSmuFeaturesHigh,   1),
-	MSG_MAP(SetWorkloadMask,		PPSMC_MSG_SetWorkloadMask,             1),
+	MSG_MAP(SetWorkloadMask,		PPSMC_MSG_SetWorkloadMask,             0),
 	MSG_MAP(SetPptLimit,			PPSMC_MSG_SetPptLimit,                 0),
 	MSG_MAP(SetDriverDramAddrHigh,		PPSMC_MSG_SetDriverDramAddrHigh,       1),
 	MSG_MAP(SetDriverDramAddrLow,		PPSMC_MSG_SetDriverDramAddrLow,        1),
@@ -138,7 +140,7 @@ static struct cmn2asic_msg_mapping smu_v13_0_0_message_map[SMU_MSG_MAX_COUNT] = 
 	MSG_MAP(ExitBaco,			PPSMC_MSG_ExitBaco,                    0),
 	MSG_MAP(SetSoftMinByFreq,		PPSMC_MSG_SetSoftMinByFreq,            1),
 	MSG_MAP(SetSoftMaxByFreq,		PPSMC_MSG_SetSoftMaxByFreq,            1),
-	MSG_MAP(SetHardMinByFreq,		PPSMC_MSG_SetHardMinByFreq,            1),
+	MSG_MAP(SetHardMinByFreq,		PPSMC_MSG_SetHardMinByFreq,            0),
 	MSG_MAP(SetHardMaxByFreq,		PPSMC_MSG_SetHardMaxByFreq,            0),
 	MSG_MAP(GetMinDpmFreq,			PPSMC_MSG_GetMinDpmFreq,               1),
 	MSG_MAP(GetMaxDpmFreq,			PPSMC_MSG_GetMaxDpmFreq,               1),
@@ -147,7 +149,7 @@ static struct cmn2asic_msg_mapping smu_v13_0_0_message_map[SMU_MSG_MAX_COUNT] = 
 	MSG_MAP(PowerDownVcn,			PPSMC_MSG_PowerDownVcn,                0),
 	MSG_MAP(PowerUpJpeg,			PPSMC_MSG_PowerUpJpeg,                 0),
 	MSG_MAP(PowerDownJpeg,			PPSMC_MSG_PowerDownJpeg,               0),
-	MSG_MAP(GetDcModeMaxDpmFreq,		PPSMC_MSG_GetDcModeMaxDpmFreq,         1),
+	MSG_MAP(GetDcModeMaxDpmFreq,		PPSMC_MSG_GetDcModeMaxDpmFreq,         0),
 	MSG_MAP(OverridePcieParameters,		PPSMC_MSG_OverridePcieParameters,      0),
 	MSG_MAP(DramLogSetDramAddrHigh,		PPSMC_MSG_DramLogSetDramAddrHigh,      0),
 	MSG_MAP(DramLogSetDramAddrLow,		PPSMC_MSG_DramLogSetDramAddrLow,       0),
@@ -570,8 +572,6 @@ static int smu_v13_0_0_set_default_dpm_table(struct smu_context *smu)
 	PPTable_t *pptable = table_context->driver_pptable;
 	SkuTable_t *skutable = &pptable->SkuTable;
 	struct smu_13_0_dpm_table *dpm_table;
-	struct smu_13_0_pcie_table *pcie_table;
-	uint32_t link_level;
 	int ret = 0;
 
 	/* socclk dpm table setup */
@@ -687,24 +687,6 @@ static int smu_v13_0_0_set_default_dpm_table(struct smu_context *smu)
 		dpm_table->max = dpm_table->dpm_levels[0].value;
 	}
 
-	/* lclk dpm table setup */
-	pcie_table = &dpm_context->dpm_tables.pcie_table;
-	pcie_table->num_of_link_levels = 0;
-	for (link_level = 0; link_level < NUM_LINK_LEVELS; link_level++) {
-		if (!skutable->PcieGenSpeed[link_level] &&
-		    !skutable->PcieLaneCount[link_level] &&
-		    !skutable->LclkFreq[link_level])
-			continue;
-
-		pcie_table->pcie_gen[pcie_table->num_of_link_levels] =
-					skutable->PcieGenSpeed[link_level];
-		pcie_table->pcie_lane[pcie_table->num_of_link_levels] =
-					skutable->PcieLaneCount[link_level];
-		pcie_table->clk_freq[pcie_table->num_of_link_levels] =
-					skutable->LclkFreq[link_level];
-		pcie_table->num_of_link_levels++;
-	}
-
 	/* dcefclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.dcef_table;
 	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCN_BIT)) {
@@ -734,19 +716,6 @@ static bool smu_v13_0_0_is_dpm_running(struct smu_context *smu)
 		return false;
 
 	return !!(feature_enabled & SMC_DPM_FEATURE);
-}
-
-static void smu_v13_0_0_dump_pptable(struct smu_context *smu)
-{
-       struct smu_table_context *table_context = &smu->smu_table;
-       PPTable_t *pptable = table_context->driver_pptable;
-       SkuTable_t *skutable = &pptable->SkuTable;
-
-       dev_info(smu->adev->dev, "Dumped PPTable:\n");
-
-       dev_info(smu->adev->dev, "Version = 0x%08x\n", skutable->Version);
-       dev_info(smu->adev->dev, "FeaturesToRun[0] = 0x%08x\n", skutable->FeaturesToRun[0]);
-       dev_info(smu->adev->dev, "FeaturesToRun[1] = 0x%08x\n", skutable->FeaturesToRun[1]);
 }
 
 static int smu_v13_0_0_system_features_control(struct smu_context *smu,
@@ -846,6 +815,10 @@ static int smu_v13_0_0_get_smu_metrics_data(struct smu_context *smu,
 		break;
 	case METRICS_AVERAGE_MEMACTIVITY:
 		*value = metrics->AverageUclkActivity;
+		break;
+	case METRICS_AVERAGE_VCNACTIVITY:
+		*value = max(metrics->Vcn0ActivityPercentage,
+			     metrics->Vcn1ActivityPercentage);
 		break;
 	case METRICS_AVERAGE_SOCKETPOWER:
 		*value = metrics->AverageSocketPower << 8;
@@ -970,6 +943,12 @@ static int smu_v13_0_0_read_sensor(struct smu_context *smu,
 	case AMDGPU_PP_SENSOR_GPU_LOAD:
 		ret = smu_v13_0_0_get_smu_metrics_data(smu,
 						       METRICS_AVERAGE_GFXACTIVITY,
+						       (uint32_t *)data);
+		*size = 4;
+		break;
+	case AMDGPU_PP_SENSOR_VCN_LOAD:
+		ret = smu_v13_0_0_get_smu_metrics_data(smu,
+						       METRICS_AVERAGE_VCNACTIVITY,
 						       (uint32_t *)data);
 		*size = 4;
 		break;
@@ -1142,6 +1121,14 @@ static void smu_v13_0_0_get_od_setting_limits(struct smu_context *smu,
 	case PP_OD_FEATURE_FAN_MINIMUM_PWM:
 		od_min_setting = overdrive_lowerlimits->FanMinimumPwm;
 		od_max_setting = overdrive_upperlimits->FanMinimumPwm;
+		break;
+	case PP_OD_FEATURE_FAN_ZERO_RPM_ENABLE:
+		od_min_setting = overdrive_lowerlimits->FanZeroRpmEnable;
+		od_max_setting = overdrive_upperlimits->FanZeroRpmEnable;
+		break;
+	case PP_OD_FEATURE_FAN_ZERO_RPM_STOP_TEMP:
+		od_min_setting = overdrive_lowerlimits->FanZeroRpmStopTemp;
+		od_max_setting = overdrive_upperlimits->FanZeroRpmStopTemp;
 		break;
 	default:
 		od_min_setting = od_max_setting = INT_MAX;
@@ -1463,6 +1450,42 @@ static int smu_v13_0_0_print_clk_levels(struct smu_context *smu,
 				      min_value, max_value);
 		break;
 
+	case SMU_OD_FAN_ZERO_RPM_ENABLE:
+		if (!smu_v13_0_0_is_od_feature_supported(smu,
+							 PP_OD_FEATURE_ZERO_FAN_BIT))
+			break;
+
+		size += sysfs_emit_at(buf, size, "FAN_ZERO_RPM_ENABLE:\n");
+		size += sysfs_emit_at(buf, size, "%d\n",
+					(int)od_table->OverDriveTable.FanZeroRpmEnable);
+
+		size += sysfs_emit_at(buf, size, "%s:\n", "OD_RANGE");
+		smu_v13_0_0_get_od_setting_limits(smu,
+						  PP_OD_FEATURE_FAN_ZERO_RPM_ENABLE,
+						  &min_value,
+						  &max_value);
+		size += sysfs_emit_at(buf, size, "ZERO_RPM_ENABLE: %u %u\n",
+				      min_value, max_value);
+		break;
+
+	case SMU_OD_FAN_ZERO_RPM_STOP_TEMP:
+		if (!smu_v13_0_0_is_od_feature_supported(smu,
+							 PP_OD_FEATURE_ZERO_FAN_BIT))
+			break;
+
+		size += sysfs_emit_at(buf, size, "FAN_ZERO_RPM_STOP_TEMPERATURE:\n");
+		size += sysfs_emit_at(buf, size, "%d\n",
+					(int)od_table->OverDriveTable.FanZeroRpmStopTemp);
+
+		size += sysfs_emit_at(buf, size, "%s:\n", "OD_RANGE");
+		smu_v13_0_0_get_od_setting_limits(smu,
+						  PP_OD_FEATURE_FAN_ZERO_RPM_STOP_TEMP,
+						  &min_value,
+						  &max_value);
+		size += sysfs_emit_at(buf, size, "ZERO_RPM_STOP_TEMPERATURE: %u %u\n",
+				      min_value, max_value);
+		break;
+
 	case SMU_OD_RANGE:
 		if (!smu_v13_0_0_is_od_feature_supported(smu, PP_OD_FEATURE_GFXCLK_BIT) &&
 		    !smu_v13_0_0_is_od_feature_supported(smu, PP_OD_FEATURE_UCLK_BIT) &&
@@ -1559,6 +1582,16 @@ static int smu_v13_0_0_od_restore_table_single(struct smu_context *smu, long inp
 					boot_overdrive_table->OverDriveTable.FanMinimumPwm;
 		od_table->OverDriveTable.FanMode = FAN_MODE_AUTO;
 		od_table->OverDriveTable.FeatureCtrlMask |= BIT(PP_OD_FEATURE_FAN_CURVE_BIT);
+		break;
+	case PP_OD_EDIT_FAN_ZERO_RPM_ENABLE:
+		od_table->OverDriveTable.FanZeroRpmEnable =
+					boot_overdrive_table->OverDriveTable.FanZeroRpmEnable;
+		od_table->OverDriveTable.FeatureCtrlMask |= BIT(PP_OD_FEATURE_ZERO_FAN_BIT);
+		break;
+	case PP_OD_EDIT_FAN_ZERO_RPM_STOP_TEMP:
+		od_table->OverDriveTable.FanZeroRpmStopTemp =
+					boot_overdrive_table->OverDriveTable.FanZeroRpmStopTemp;
+		od_table->OverDriveTable.FeatureCtrlMask |= BIT(PP_OD_FEATURE_ZERO_FAN_BIT);
 		break;
 	default:
 		dev_info(adev->dev, "Invalid table index: %ld\n", input);
@@ -1853,6 +1886,48 @@ static int smu_v13_0_0_od_edit_dpm_table(struct smu_context *smu,
 		od_table->OverDriveTable.FeatureCtrlMask |= BIT(PP_OD_FEATURE_FAN_CURVE_BIT);
 		break;
 
+	case PP_OD_EDIT_FAN_ZERO_RPM_ENABLE:
+		if (!smu_v13_0_0_is_od_feature_supported(smu, PP_OD_FEATURE_ZERO_FAN_BIT)) {
+			dev_warn(adev->dev, "Zero RPM setting not supported!\n");
+			return -ENOTSUPP;
+		}
+
+		smu_v13_0_0_get_od_setting_limits(smu,
+						  PP_OD_FEATURE_FAN_ZERO_RPM_ENABLE,
+						  &minimum,
+						  &maximum);
+		if (input[0] < minimum ||
+		    input[0] > maximum) {
+			dev_info(adev->dev, "zero RPM enable setting(%ld) must be within [%d, %d]!\n",
+				 input[0], minimum, maximum);
+			return -EINVAL;
+		}
+
+		od_table->OverDriveTable.FanZeroRpmEnable = input[0];
+		od_table->OverDriveTable.FeatureCtrlMask |= BIT(PP_OD_FEATURE_ZERO_FAN_BIT);
+		break;
+
+	case PP_OD_EDIT_FAN_ZERO_RPM_STOP_TEMP:
+		if (!smu_v13_0_0_is_od_feature_supported(smu, PP_OD_FEATURE_ZERO_FAN_BIT)) {
+			dev_warn(adev->dev, "Zero RPM setting not supported!\n");
+			return -ENOTSUPP;
+		}
+
+		smu_v13_0_0_get_od_setting_limits(smu,
+						  PP_OD_FEATURE_FAN_ZERO_RPM_STOP_TEMP,
+						  &minimum,
+						  &maximum);
+		if (input[0] < minimum ||
+		    input[0] > maximum) {
+			dev_info(adev->dev, "zero RPM stop temperature setting(%ld) must be within [%d, %d]!\n",
+				 input[0], minimum, maximum);
+			return -EINVAL;
+		}
+
+		od_table->OverDriveTable.FanZeroRpmStopTemp = input[0];
+		od_table->OverDriveTable.FeatureCtrlMask |= BIT(PP_OD_FEATURE_ZERO_FAN_BIT);
+		break;
+
 	case PP_OD_RESTORE_DEFAULT_TABLE:
 		if (size == 1) {
 			ret = smu_v13_0_0_od_restore_table_single(smu, input[0]);
@@ -1975,7 +2050,8 @@ static int smu_v13_0_0_force_clk_levels(struct smu_context *smu,
 		ret = smu_v13_0_set_soft_freq_limited_range(smu,
 							    clk_type,
 							    min_freq,
-							    max_freq);
+							    max_freq,
+							    false);
 		break;
 	case SMU_DCEFCLK:
 	case SMU_PCIE:
@@ -2122,7 +2198,11 @@ static void smu_v13_0_0_set_supported_od_feature_mask(struct smu_context *smu)
 					    OD_OPS_SUPPORT_FAN_TARGET_TEMPERATURE_RETRIEVE |
 					    OD_OPS_SUPPORT_FAN_TARGET_TEMPERATURE_SET |
 					    OD_OPS_SUPPORT_FAN_MINIMUM_PWM_RETRIEVE |
-					    OD_OPS_SUPPORT_FAN_MINIMUM_PWM_SET;
+					    OD_OPS_SUPPORT_FAN_MINIMUM_PWM_SET |
+					    OD_OPS_SUPPORT_FAN_ZERO_RPM_ENABLE_RETRIEVE |
+					    OD_OPS_SUPPORT_FAN_ZERO_RPM_ENABLE_SET |
+					    OD_OPS_SUPPORT_FAN_ZERO_RPM_STOP_TEMP_RETRIEVE |
+					    OD_OPS_SUPPORT_FAN_ZERO_RPM_STOP_TEMP_SET;
 }
 
 static int smu_v13_0_0_set_default_od_settings(struct smu_context *smu)
@@ -2188,6 +2268,10 @@ static int smu_v13_0_0_set_default_od_settings(struct smu_context *smu)
 			user_od_table_bak.OverDriveTable.FanTargetTemperature;
 		user_od_table->OverDriveTable.FanMinimumPwm =
 			user_od_table_bak.OverDriveTable.FanMinimumPwm;
+		user_od_table->OverDriveTable.FanZeroRpmEnable =
+			user_od_table_bak.OverDriveTable.FanZeroRpmEnable;
+		user_od_table->OverDriveTable.FanZeroRpmStopTemp =
+			user_od_table_bak.OverDriveTable.FanZeroRpmStopTemp;
 	}
 
 	smu_v13_0_0_set_supported_od_feature_mask(smu);
@@ -2743,10 +2827,10 @@ static int smu_v13_0_0_i2c_control_init(struct smu_context *smu)
 		control->quirks = &smu_v13_0_0_i2c_control_quirks;
 		i2c_set_adapdata(control, smu_i2c);
 
-		res = i2c_add_adapter(control);
+		res = devm_i2c_add_adapter(adev->dev, control);
 		if (res) {
 			DRM_ERROR("Failed to register hw i2c, err: %d\n", res);
-			goto Out_err;
+			return res;
 		}
 	}
 
@@ -2756,27 +2840,12 @@ static int smu_v13_0_0_i2c_control_init(struct smu_context *smu)
 	adev->pm.fru_eeprom_i2c_bus = &adev->pm.smu_i2c[0].adapter;
 
 	return 0;
-Out_err:
-	for ( ; i >= 0; i--) {
-		struct amdgpu_smu_i2c_bus *smu_i2c = &adev->pm.smu_i2c[i];
-		struct i2c_adapter *control = &smu_i2c->adapter;
-
-		i2c_del_adapter(control);
-	}
-	return res;
 }
 
 static void smu_v13_0_0_i2c_control_fini(struct smu_context *smu)
 {
 	struct amdgpu_device *adev = smu->adev;
-	int i;
 
-	for (i = 0; i < MAX_SMU_I2C_BUSES; i++) {
-		struct amdgpu_smu_i2c_bus *smu_i2c = &adev->pm.smu_i2c[i];
-		struct i2c_adapter *control = &smu_i2c->adapter;
-
-		i2c_del_adapter(control);
-	}
 	adev->pm.ras_eeprom_i2c_bus = NULL;
 	adev->pm.fru_eeprom_i2c_bus = NULL;
 }
@@ -2855,8 +2924,13 @@ static int smu_v13_0_0_mode1_reset(struct smu_context *smu)
 		break;
 	}
 
-	if (!ret)
+	if (!ret) {
+		/* disable mmio access while doing mode 1 reset*/
+		smu->adev->no_hw_access = true;
+		/* ensure no_hw_access is globally visible before any MMIO */
+		smp_mb();
 		drm_msleep(SMU13_MODE1_RESET_WAIT_TIME_IN_MS);
+	}
 
 	return ret;
 }
@@ -3048,13 +3122,96 @@ static int smu_v13_0_0_set_power_limit(struct smu_context *smu,
 	return 0;
 }
 
+static int smu_v13_0_0_update_pcie_parameters(struct smu_context *smu,
+				     uint8_t pcie_gen_cap,
+				     uint8_t pcie_width_cap)
+{
+	struct smu_13_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
+	struct smu_13_0_pcie_table *pcie_table =
+				&dpm_context->dpm_tables.pcie_table;
+	int num_of_levels;
+	uint32_t smu_pcie_arg;
+	uint32_t link_level;
+	struct smu_table_context *table_context = &smu->smu_table;
+	PPTable_t *pptable = table_context->driver_pptable;
+	SkuTable_t *skutable = &pptable->SkuTable;
+	int ret = 0;
+	int i;
+
+	pcie_table->num_of_link_levels = 0;
+
+	for (link_level = 0; link_level < NUM_LINK_LEVELS; link_level++) {
+		if (!skutable->PcieGenSpeed[link_level] &&
+		    !skutable->PcieLaneCount[link_level] &&
+		    !skutable->LclkFreq[link_level])
+			continue;
+
+		pcie_table->pcie_gen[pcie_table->num_of_link_levels] =
+					skutable->PcieGenSpeed[link_level];
+		pcie_table->pcie_lane[pcie_table->num_of_link_levels] =
+					skutable->PcieLaneCount[link_level];
+		pcie_table->clk_freq[pcie_table->num_of_link_levels] =
+					skutable->LclkFreq[link_level];
+		pcie_table->num_of_link_levels++;
+	}
+
+	num_of_levels = pcie_table->num_of_link_levels;
+	if (!num_of_levels)
+		return 0;
+
+	if (!(smu->adev->pm.pp_feature & PP_PCIE_DPM_MASK)) {
+		if (pcie_table->pcie_gen[num_of_levels - 1] < pcie_gen_cap)
+			pcie_gen_cap = pcie_table->pcie_gen[num_of_levels - 1];
+
+		if (pcie_table->pcie_lane[num_of_levels - 1] < pcie_width_cap)
+			pcie_width_cap = pcie_table->pcie_lane[num_of_levels - 1];
+
+		/* Force all levels to use the same settings */
+		for (i = 0; i < num_of_levels; i++) {
+			pcie_table->pcie_gen[i] = pcie_gen_cap;
+			pcie_table->pcie_lane[i] = pcie_width_cap;
+			smu_pcie_arg = i << 16;
+			smu_pcie_arg |= pcie_table->pcie_gen[i] << 8;
+			smu_pcie_arg |= pcie_table->pcie_lane[i];
+
+			ret = smu_cmn_send_smc_msg_with_param(smu,
+								SMU_MSG_OverridePcieParameters,
+								smu_pcie_arg,
+								NULL);
+			if (ret)
+				break;
+		}
+	} else {
+		for (i = 0; i < num_of_levels; i++) {
+			if (pcie_table->pcie_gen[i] > pcie_gen_cap ||
+				pcie_table->pcie_lane[i] > pcie_width_cap) {
+				pcie_table->pcie_gen[i] = pcie_table->pcie_gen[i] > pcie_gen_cap ?
+										  pcie_gen_cap : pcie_table->pcie_gen[i];
+				pcie_table->pcie_lane[i] = pcie_table->pcie_lane[i] > pcie_width_cap ?
+										   pcie_width_cap : pcie_table->pcie_lane[i];
+				smu_pcie_arg = i << 16;
+				smu_pcie_arg |= pcie_table->pcie_gen[i] << 8;
+				smu_pcie_arg |= pcie_table->pcie_lane[i];
+
+				ret = smu_cmn_send_smc_msg_with_param(smu,
+									SMU_MSG_OverridePcieParameters,
+									smu_pcie_arg,
+									NULL);
+				if (ret)
+					break;
+			}
+		}
+	}
+
+	return ret;
+}
+
 static const struct pptable_funcs smu_v13_0_0_ppt_funcs = {
 	.get_allowed_feature_mask = smu_v13_0_0_get_allowed_feature_mask,
 	.set_default_dpm_table = smu_v13_0_0_set_default_dpm_table,
 	.i2c_init = smu_v13_0_0_i2c_control_init,
 	.i2c_fini = smu_v13_0_0_i2c_control_fini,
 	.is_dpm_running = smu_v13_0_0_is_dpm_running,
-	.dump_pptable = smu_v13_0_0_dump_pptable,
 	.init_microcode = smu_v13_0_init_microcode,
 	.load_microcode = smu_v13_0_load_microcode,
 	.fini_microcode = smu_v13_0_fini_microcode,
@@ -3078,7 +3235,7 @@ static const struct pptable_funcs smu_v13_0_0_ppt_funcs = {
 	.feature_is_enabled = smu_cmn_feature_is_enabled,
 	.print_clk_levels = smu_v13_0_0_print_clk_levels,
 	.force_clk_levels = smu_v13_0_0_force_clk_levels,
-	.update_pcie_parameters = smu_v13_0_update_pcie_parameters,
+	.update_pcie_parameters = smu_v13_0_0_update_pcie_parameters,
 	.get_thermal_temperature_range = smu_v13_0_0_get_thermal_temperature_range,
 	.register_irq_handler = smu_v13_0_register_irq_handler,
 	.enable_thermal_alert = smu_v13_0_enable_thermal_alert,
@@ -3143,4 +3300,9 @@ void smu_v13_0_0_set_ppt_funcs(struct smu_context *smu)
 	smu->workload_map = smu_v13_0_0_workload_map;
 	smu->smc_driver_if_version = SMU13_0_0_DRIVER_IF_VERSION;
 	smu_v13_0_0_set_smu_mailbox_registers(smu);
+
+	if (amdgpu_ip_version(smu->adev, MP1_HWIP, 0) ==
+		IP_VERSION(13, 0, 10) &&
+		!amdgpu_device_has_display_hardware(smu->adev))
+		smu->adev->pm.pp_feature &= ~PP_GFXOFF_MASK;
 }

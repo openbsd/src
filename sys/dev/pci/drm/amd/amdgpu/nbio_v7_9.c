@@ -21,7 +21,6 @@
  *
  */
 #include "amdgpu.h"
-#include "amdgpu_atombios.h"
 #include "nbio_v7_9.h"
 #include "amdgpu_ras.h"
 
@@ -175,8 +174,12 @@ static void nbio_v7_9_vcn_doorbell_range(struct amdgpu_device *adev, bool use_do
 {
 	u32 doorbell_range = 0, doorbell_ctrl = 0;
 	u32 aid_id = instance;
+	u32 range_size;
 
 	if (use_doorbell) {
+		range_size = (amdgpu_ip_version(adev, GC_HWIP, 0) ==
+						IP_VERSION(9, 5, 0)) ?
+						0xb : 0x9;
 		doorbell_range = REG_SET_FIELD(doorbell_range,
 				DOORBELL0_CTRL_ENTRY_0,
 				BIF_DOORBELL0_RANGE_OFFSET_ENTRY,
@@ -184,7 +187,7 @@ static void nbio_v7_9_vcn_doorbell_range(struct amdgpu_device *adev, bool use_do
 		doorbell_range = REG_SET_FIELD(doorbell_range,
 				DOORBELL0_CTRL_ENTRY_0,
 				BIF_DOORBELL0_RANGE_SIZE_ENTRY,
-				0x9);
+				range_size);
 		if (aid_id)
 			doorbell_range = REG_SET_FIELD(doorbell_range,
 					DOORBELL0_CTRL_ENTRY_0,
@@ -202,7 +205,7 @@ static void nbio_v7_9_vcn_doorbell_range(struct amdgpu_device *adev, bool use_do
 				S2A_DOORBELL_PORT1_RANGE_OFFSET, 0x4);
 		doorbell_ctrl = REG_SET_FIELD(doorbell_ctrl,
 				S2A_DOORBELL_ENTRY_1_CTRL,
-				S2A_DOORBELL_PORT1_RANGE_SIZE, 0x9);
+				S2A_DOORBELL_PORT1_RANGE_SIZE, range_size);
 		doorbell_ctrl = REG_SET_FIELD(doorbell_ctrl,
 				S2A_DOORBELL_ENTRY_1_CTRL,
 				S2A_DOORBELL_PORT1_AWADDR_31_28_VALUE, 0x4);
@@ -398,6 +401,17 @@ static int nbio_v7_9_get_compute_partition_mode(struct amdgpu_device *adev)
 	return px;
 }
 
+static bool nbio_v7_9_is_nps_switch_requested(struct amdgpu_device *adev)
+{
+	u32 tmp;
+
+	tmp = RREG32_SOC15(NBIO, 0, regBIF_BX_PF0_PARTITION_MEM_STATUS);
+	tmp = REG_GET_FIELD(tmp, BIF_BX_PF0_PARTITION_MEM_STATUS,
+			    CHANGE_STATUE);
+
+	/* 0x8 - NPS switch requested */
+	return (tmp == 0x8);
+}
 static u32 nbio_v7_9_get_memory_partition_mode(struct amdgpu_device *adev,
 					       u32 *supp_modes)
 {
@@ -489,6 +503,7 @@ const struct amdgpu_nbio_funcs nbio_v7_9_funcs = {
 	.remap_hdp_registers = nbio_v7_9_remap_hdp_registers,
 	.get_compute_partition_mode = nbio_v7_9_get_compute_partition_mode,
 	.get_memory_partition_mode = nbio_v7_9_get_memory_partition_mode,
+	.is_nps_switch_requested = nbio_v7_9_is_nps_switch_requested,
 	.init_registers = nbio_v7_9_init_registers,
 	.set_reg_remap = nbio_v7_9_set_reg_remap,
 };

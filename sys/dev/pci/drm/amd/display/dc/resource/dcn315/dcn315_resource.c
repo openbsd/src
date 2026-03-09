@@ -858,7 +858,6 @@ static const struct dc_debug_options debug_defaults_drv = {
 	.disable_z10 = true, /*hw not support it*/
 	.disable_dmcu = true,
 	.force_abm_enable = false,
-	.timing_trace = false,
 	.clock_trace = true,
 	.disable_pplib_clock_request = false,
 	.pipe_split_policy = MPC_SPLIT_DYNAMIC,
@@ -1091,7 +1090,7 @@ static struct link_encoder *dcn31_link_encoder_create(
 	struct dcn20_link_encoder *enc20 =
 		kzalloc(sizeof(struct dcn20_link_encoder), GFP_KERNEL);
 
-	if (!enc20)
+	if (!enc20 || enc_init_data->hpd_source >= ARRAY_SIZE(link_enc_hpd_regs))
 		return NULL;
 
 	dcn31_link_encoder_construct(enc20,
@@ -1227,11 +1226,11 @@ static struct stream_encoder *dcn315_stream_encoder_create(
 	/*PHYB is wired off in HW, allow front end to remapping, otherwise needs more changes*/
 
 	/* Mapping of VPG, AFMT, DME register blocks to DIO block instance */
-	if (eng_id <= ENGINE_ID_DIGF) {
-		vpg_inst = eng_id;
-		afmt_inst = eng_id;
-	} else
+	if (eng_id < 0 || eng_id >= ARRAY_SIZE(stream_enc_regs))
 		return NULL;
+
+	vpg_inst = eng_id;
+	afmt_inst = eng_id;
 
 	enc1 = kzalloc(sizeof(struct dcn10_stream_encoder), GFP_KERNEL);
 	vpg = dcn31_vpg_create(ctx, vpg_inst);
@@ -1665,7 +1664,7 @@ static bool allow_pixel_rate_crb(struct dc *dc, struct dc_state *context)
 static int dcn315_populate_dml_pipes_from_context(
 	struct dc *dc, struct dc_state *context,
 	display_e2e_pipe_params_st *pipes,
-	bool fast_validate)
+	enum dc_validate_mode validate_mode)
 {
 	int i, pipe_cnt, crb_idx, crb_pipes;
 	struct resource_context *res_ctx = &context->res_ctx;
@@ -1675,7 +1674,7 @@ static int dcn315_populate_dml_pipes_from_context(
 	bool pixel_rate_crb = allow_pixel_rate_crb(dc, context);
 
 	DC_FP_START();
-	dcn31x_populate_dml_pipes_from_context(dc, context, pipes, fast_validate);
+	dcn31x_populate_dml_pipes_from_context(dc, context, pipes, validate_mode);
 	DC_FP_END();
 
 	for (i = 0, pipe_cnt = 0, crb_pipes = 0; i < dc->res_pool->pipe_count; i++) {
@@ -1810,6 +1809,11 @@ static void dcn315_get_panel_config_defaults(struct dc_panel_config *panel_confi
 	*panel_config = panel_config_defaults;
 }
 
+static int dcn315_get_power_profile(const struct dc_state *context)
+{
+	return !context->bw_ctx.bw.dcn.clk.p_state_change_support;
+}
+
 static struct dc_cap_funcs cap_funcs = {
 	.get_dcc_compression_cap = dcn20_get_dcc_compression_cap
 };
@@ -1838,7 +1842,11 @@ static struct resource_funcs dcn315_res_pool_funcs = {
 	.update_bw_bounding_box = dcn315_update_bw_bounding_box,
 	.patch_unknown_plane_state = dcn20_patch_unknown_plane_state,
 	.get_panel_config_defaults = dcn315_get_panel_config_defaults,
+	.get_power_profile = dcn315_get_power_profile,
 	.get_det_buffer_size = dcn31_get_det_buffer_size,
+	.get_vstartup_for_pipe = dcn10_get_vstartup_for_pipe,
+	.update_dc_state_for_encoder_switch = dcn31_update_dc_state_for_encoder_switch,
+	.build_pipe_pix_clk_params = dcn20_build_pipe_pix_clk_params
 };
 
 static bool dcn315_resource_construct(
@@ -2133,6 +2141,8 @@ static bool dcn315_resource_construct(
 
 	for (i = 0; i < dc->caps.max_planes; ++i)
 		dc->caps.planes[i] = plane_cap;
+
+	dc->caps.max_odm_combine_factor = 4;
 
 	dc->cap_funcs = cap_funcs;
 

@@ -30,7 +30,8 @@
 
 #include "i915_active_types.h"
 
-struct drm_i915_private;
+struct drm_gem_object;
+struct intel_display;
 
 enum fb_op_origin {
 	ORIGIN_CPU = 0,
@@ -44,7 +45,7 @@ struct intel_frontbuffer {
 	struct kref ref;
 	atomic_t bits;
 	struct i915_active write;
-	struct drm_i915_gem_object *obj;
+	struct drm_gem_object *obj;
 	struct rcu_head rcu;
 
 	struct work_struct flush_work;
@@ -67,17 +68,17 @@ struct intel_frontbuffer {
 	GENMASK(INTEL_FRONTBUFFER_BITS_PER_PIPE * ((pipe) + 1) - 1,	\
 		INTEL_FRONTBUFFER_BITS_PER_PIPE * (pipe))
 
-void intel_frontbuffer_flip_prepare(struct drm_i915_private *i915,
+void intel_frontbuffer_flip_prepare(struct intel_display *display,
 				    unsigned frontbuffer_bits);
-void intel_frontbuffer_flip_complete(struct drm_i915_private *i915,
+void intel_frontbuffer_flip_complete(struct intel_display *display,
 				     unsigned frontbuffer_bits);
-void intel_frontbuffer_flip(struct drm_i915_private *i915,
+void intel_frontbuffer_flip(struct intel_display *display,
 			    unsigned frontbuffer_bits);
 
 void intel_frontbuffer_put(struct intel_frontbuffer *front);
 
 struct intel_frontbuffer *
-intel_frontbuffer_get(struct drm_i915_gem_object *obj);
+intel_frontbuffer_get(struct drm_gem_object *obj);
 
 void __intel_fb_invalidate(struct intel_frontbuffer *front,
 			   enum fb_op_origin origin,

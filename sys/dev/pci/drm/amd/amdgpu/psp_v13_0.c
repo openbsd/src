@@ -53,6 +53,8 @@ MODULE_FIRMWARE("amdgpu/psp_13_0_11_toc.bin");
 MODULE_FIRMWARE("amdgpu/psp_13_0_11_ta.bin");
 MODULE_FIRMWARE("amdgpu/psp_13_0_6_sos.bin");
 MODULE_FIRMWARE("amdgpu/psp_13_0_6_ta.bin");
+MODULE_FIRMWARE("amdgpu/psp_13_0_12_sos.bin");
+MODULE_FIRMWARE("amdgpu/psp_13_0_12_ta.bin");
 MODULE_FIRMWARE("amdgpu/psp_13_0_14_sos.bin");
 MODULE_FIRMWARE("amdgpu/psp_13_0_14_ta.bin");
 MODULE_FIRMWARE("amdgpu/psp_14_0_0_toc.bin");
@@ -71,19 +73,12 @@ MODULE_FIRMWARE("amdgpu/psp_14_0_4_ta.bin");
 /* Retry times for vmbx ready wait */
 #define PSP_VMBX_POLLING_LIMIT 3000
 
-/* VBIOS gfl defines */
-#define MBOX_READY_MASK 0x80000000
-#define MBOX_STATUS_MASK 0x0000FFFF
-#define MBOX_COMMAND_MASK 0x00FF0000
-#define MBOX_READY_FLAG 0x80000000
-#define C2PMSG_CMD_SPI_UPDATE_ROM_IMAGE_ADDR_LO 0x2
-#define C2PMSG_CMD_SPI_UPDATE_ROM_IMAGE_ADDR_HI 0x3
-#define C2PMSG_CMD_SPI_UPDATE_FLASH_IMAGE 0x4
-
 /* memory training timeout define */
 #define MEM_TRAIN_SEND_MSG_TIMEOUT_US	3000000
 
 #define regMP1_PUB_SCRATCH0	0x3b10090
+
+#define PSP13_BL_STATUS_SIZE 100
 
 static int psp_v13_0_init_microcode(struct psp_context *psp)
 {
@@ -124,6 +119,7 @@ static int psp_v13_0_init_microcode(struct psp_context *psp)
 	case IP_VERSION(13, 0, 6):
 	case IP_VERSION(13, 0, 7):
 	case IP_VERSION(13, 0, 10):
+	case IP_VERSION(13, 0, 12):
 	case IP_VERSION(13, 0, 14):
 		err = psp_init_sos_microcode(psp, ucode_prefix);
 		if (err)
@@ -150,6 +146,32 @@ static bool psp_v13_0_is_sos_alive(struct psp_context *psp)
 	return sol_reg != 0x0;
 }
 
+static void psp_v13_0_bootloader_print_status(struct psp_context *psp,
+					      const char *msg)
+{
+	struct amdgpu_device *adev = psp->adev;
+	u32 bl_status_reg;
+	char bl_status_msg[PSP13_BL_STATUS_SIZE];
+	int i, at;
+
+	if (amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 6) ||
+	    amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 12) ||
+	    amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 14)) {
+		at = 0;
+		for_each_inst(i, adev->aid_mask) {
+			bl_status_reg =
+				(SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_92)
+				 << 2) +
+				adev->asic_funcs->encode_ext_smn_addressing(i);
+			at += snprintf(bl_status_msg + at,
+				       PSP13_BL_STATUS_SIZE - at,
+				       " status(%02i): 0x%08x", i,
+				       RREG32_PCIE_EXT(bl_status_reg));
+		}
+		dev_info(adev->dev, "%s - %s", msg, bl_status_msg);
+	}
+}
+
 static int psp_v13_0_wait_for_vmbx_ready(struct psp_context *psp)
 {
 	struct amdgpu_device *adev = psp->adev;
@@ -160,7 +182,7 @@ static int psp_v13_0_wait_for_vmbx_ready(struct psp_context *psp)
 		   ready having bit 31 of C2PMSG_33 set to 1 */
 		ret = psp_wait_for(
 			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_33),
-			0x80000000, 0xffffffff, false);
+			0x80000000, 0xffffffff, PSP_WAITREG_NOVERBOSE);
 
 		if (ret == 0)
 			break;
@@ -179,6 +201,7 @@ static int psp_v13_0_wait_for_bootloader(struct psp_context *psp)
 
 	retry_cnt =
 		((amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 6) ||
+		  amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 12) ||
 		  amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 14))) ?
 			PSP_VMBX_POLLING_LIMIT :
 			10;
@@ -190,10 +213,13 @@ static int psp_v13_0_wait_for_bootloader(struct psp_context *psp)
 	for (retry_loop = 0; retry_loop < retry_cnt; retry_loop++) {
 		ret = psp_wait_for(
 			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_35),
-			0x80000000, 0xffffffff, false);
+			0x80000000, 0xffffffff, PSP_WAITREG_NOVERBOSE);
 
 		if (ret == 0)
 			return 0;
+		if (retry_loop && !(retry_loop % 10))
+			psp_v13_0_bootloader_print_status(
+				psp, "Waiting for bootloader completion");
 	}
 
 	return ret;
@@ -205,6 +231,7 @@ static int psp_v13_0_wait_for_bootloader_steady_state(struct psp_context *psp)
 	int ret;
 
 	if (amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 6) ||
+	    amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 12) ||
 	    amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 14)) {
 		ret = psp_v13_0_wait_for_vmbx_ready(psp);
 		if (ret)
@@ -290,6 +317,11 @@ static int psp_v13_0_bootloader_load_ras_drv(struct psp_context *psp)
 	return psp_v13_0_bootloader_load_component(psp, &psp->ras_drv, PSP_BL__LOAD_RASDRV);
 }
 
+static int psp_v13_0_bootloader_load_spdm_drv(struct psp_context *psp)
+{
+	return psp_v13_0_bootloader_load_component(psp, &psp->spdm_drv, PSP_BL__LOAD_SPDMDRV);
+}
+
 static inline void psp_v13_0_init_sos_version(struct psp_context *psp)
 {
 	struct amdgpu_device *adev = psp->adev;
@@ -330,8 +362,8 @@ static int psp_v13_0_bootloader_load_sos(struct psp_context *psp)
 	/* there might be handshake issue with hardware which needs delay */
 	mdelay(20);
 	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_81),
-			   RREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_81),
-			   0, true);
+			   RREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_81), 0,
+			   PSP_WAITREG_CHANGED);
 
 	if (!ret)
 		psp_v13_0_init_sos_version(psp);
@@ -352,8 +384,9 @@ static int psp_v13_0_ring_stop(struct psp_context *psp,
 		/* there might be handshake issue with hardware which needs delay */
 		mdelay(20);
 		/* Wait for response flag (bit 31) */
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_101),
-				   0x80000000, 0x80000000, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_101),
+			MBOX_TOS_RESP_FLAG, MBOX_TOS_RESP_MASK, 0);
 	} else {
 		/* Write the ring destroy command*/
 		WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_64,
@@ -361,8 +394,9 @@ static int psp_v13_0_ring_stop(struct psp_context *psp,
 		/* there might be handshake issue with hardware which needs delay */
 		mdelay(20);
 		/* Wait for response flag (bit 31) */
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_64),
-				   0x80000000, 0x80000000, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_64),
+			MBOX_TOS_RESP_FLAG, MBOX_TOS_RESP_MASK, 0);
 	}
 
 	return ret;
@@ -398,13 +432,15 @@ static int psp_v13_0_ring_create(struct psp_context *psp,
 		mdelay(20);
 
 		/* Wait for response flag (bit 31) in C2PMSG_101 */
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_101),
-				   0x80000000, 0x8000FFFF, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_101),
+			MBOX_TOS_RESP_FLAG, MBOX_TOS_RESP_MASK, 0);
 
 	} else {
 		/* Wait for sOS ready for ring creation */
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_64),
-				   0x80000000, 0x80000000, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_64),
+			MBOX_TOS_READY_FLAG, MBOX_TOS_READY_MASK, 0);
 		if (ret) {
 			DRM_ERROR("Failed to wait for trust OS ready for ring creation\n");
 			return ret;
@@ -428,8 +464,9 @@ static int psp_v13_0_ring_create(struct psp_context *psp,
 		mdelay(20);
 
 		/* Wait for response flag (bit 31) in C2PMSG_64 */
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_64),
-				   0x80000000, 0x8000FFFF, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_64),
+			MBOX_TOS_RESP_FLAG, MBOX_TOS_RESP_MASK, 0);
 	}
 
 	return ret;
@@ -492,8 +529,9 @@ static int psp_v13_0_memory_training_send_msg(struct psp_context *psp, int msg)
 
 	max_wait = MEM_TRAIN_SEND_MSG_TIMEOUT_US / adev->usec_timeout;
 	for (i = 0; i < max_wait; i++) {
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_35),
-				   0x80000000, 0x80000000, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_35),
+			0x80000000, 0x80000000, PSP_WAITREG_NOVERBOSE);
 		if (ret == 0)
 			break;
 	}
@@ -645,7 +683,7 @@ static int psp_v13_0_load_usbc_pd_fw(struct psp_context *psp, uint64_t fw_pri_mc
 	WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_36, (fw_pri_mc_addr >> 20));
 
 	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_35),
-			     0x80000000, 0x80000000, false);
+			   0x80000000, 0x80000000, 0);
 	if (ret)
 		return ret;
 
@@ -682,7 +720,7 @@ static int psp_v13_0_read_usbc_pd_fw(struct psp_context *psp, uint32_t *fw_ver)
 	WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_35, C2PMSG_CMD_GFX_USB_PD_FW_VER);
 
 	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_35),
-				     0x80000000, 0x80000000, false);
+			   0x80000000, 0x80000000, 0);
 	if (!ret)
 		*fw_ver = RREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_36);
 
@@ -702,12 +740,14 @@ static int psp_v13_0_exec_spi_cmd(struct psp_context *psp, int cmd)
 	/* Ring the doorbell */
 	WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_73, 1);
 
-	if (cmd == C2PMSG_CMD_SPI_UPDATE_FLASH_IMAGE)
+	if (cmd == C2PMSG_CMD_SPI_UPDATE_FLASH_IMAGE ||
+	    cmd == C2PMSG_CMD_SPI_GET_FLASH_IMAGE)
 		ret = psp_wait_for_spirom_update(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_115),
 						 MBOX_READY_FLAG, MBOX_READY_MASK, PSP_SPIROM_UPDATE_TIMEOUT);
 	else
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_115),
-				   MBOX_READY_FLAG, MBOX_READY_MASK, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_115),
+			MBOX_READY_FLAG, MBOX_READY_MASK, 0);
 	if (ret) {
 		dev_err(adev->dev, "SPI cmd %x timed out, ret = %d", cmd, ret);
 		return ret;
@@ -731,7 +771,7 @@ static int psp_v13_0_update_spirom(struct psp_context *psp,
 
 	/* Confirm PSP is ready to start */
 	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_115),
-			   MBOX_READY_FLAG, MBOX_READY_MASK, false);
+			   MBOX_READY_FLAG, MBOX_READY_MASK, 0);
 	if (ret) {
 		dev_err(adev->dev, "PSP Not ready to start processing, ret = %d", ret);
 		return ret;
@@ -756,6 +796,37 @@ static int psp_v13_0_update_spirom(struct psp_context *psp,
 		return ret;
 
 	return 0;
+}
+
+static int psp_v13_0_dump_spirom(struct psp_context *psp,
+				 uint64_t fw_pri_mc_addr)
+{
+	struct amdgpu_device *adev = psp->adev;
+	int ret;
+
+	/* Confirm PSP is ready to start */
+	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_115),
+			   MBOX_READY_FLAG, MBOX_READY_MASK, 0);
+	if (ret) {
+		dev_err(adev->dev, "PSP Not ready to start processing, ret = %d", ret);
+		return ret;
+	}
+
+	WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_116, lower_32_bits(fw_pri_mc_addr));
+
+	ret = psp_v13_0_exec_spi_cmd(psp, C2PMSG_CMD_SPI_GET_ROM_IMAGE_ADDR_LO);
+	if (ret)
+		return ret;
+
+	WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_116, upper_32_bits(fw_pri_mc_addr));
+
+	ret = psp_v13_0_exec_spi_cmd(psp, C2PMSG_CMD_SPI_GET_ROM_IMAGE_ADDR_HI);
+	if (ret)
+		return ret;
+
+	ret = psp_v13_0_exec_spi_cmd(psp, C2PMSG_CMD_SPI_GET_FLASH_IMAGE);
+
+	return ret;
 }
 
 static int psp_v13_0_vbflash_status(struct psp_context *psp)
@@ -800,6 +871,7 @@ static bool psp_v13_0_get_ras_capability(struct psp_context *psp)
 		return false;
 
 	if ((amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 6) ||
+	     amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 12) ||
 	     amdgpu_ip_version(adev, MP0_HWIP, 0) == IP_VERSION(13, 0, 14)) &&
 	    (!(adev->flags & AMD_IS_APU))) {
 		reg_data = RREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_127);
@@ -825,6 +897,50 @@ static bool psp_v13_0_is_aux_sos_load_required(struct psp_context *psp)
 	return (pmfw_ver < 0x557300);
 }
 
+static bool psp_v13_0_is_reload_needed(struct psp_context *psp)
+{
+	uint32_t ucode_ver;
+
+	if (!psp_v13_0_is_sos_alive(psp))
+		return false;
+
+	/* Restrict reload support only to specific IP versions */
+	switch (amdgpu_ip_version(psp->adev, MP0_HWIP, 0)) {
+	case IP_VERSION(13, 0, 2):
+	case IP_VERSION(13, 0, 6):
+	case IP_VERSION(13, 0, 14):
+		/* TOS version read from microcode header */
+		ucode_ver = psp->sos.fw_version;
+		/* Read TOS version from hardware */
+		psp_v13_0_init_sos_version(psp);
+		return (ucode_ver != psp->sos.fw_version);
+	default:
+		return false;
+	}
+
+	return false;
+}
+
+static int psp_v13_0_reg_program_no_ring(struct psp_context *psp, uint32_t val,
+					 enum psp_reg_prog_id id)
+{
+	struct amdgpu_device *adev = psp->adev;
+	int ret = -EOPNOTSUPP;
+
+	/* PSP will broadcast the value to all instances */
+	if (amdgpu_sriov_vf(adev)) {
+		WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_101, GFX_CTRL_CMD_ID_GBR_IH_SET);
+		WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_102, id);
+		WREG32_SOC15(MP0, 0, regMP0_SMN_C2PMSG_103, val);
+
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, regMP0_SMN_C2PMSG_101),
+			0x80000000, 0x80000000, 0);
+	}
+
+	return ret;
+}
+
 static const struct psp_funcs psp_v13_0_funcs = {
 	.init_microcode = psp_v13_0_init_microcode,
 	.wait_for_bootloader = psp_v13_0_wait_for_bootloader_steady_state,
@@ -835,6 +951,7 @@ static const struct psp_funcs psp_v13_0_funcs = {
 	.bootloader_load_intf_drv = psp_v13_0_bootloader_load_intf_drv,
 	.bootloader_load_dbg_drv = psp_v13_0_bootloader_load_dbg_drv,
 	.bootloader_load_ras_drv = psp_v13_0_bootloader_load_ras_drv,
+	.bootloader_load_spdm_drv = psp_v13_0_bootloader_load_spdm_drv,
 	.bootloader_load_sos = psp_v13_0_bootloader_load_sos,
 	.ring_create = psp_v13_0_ring_create,
 	.ring_stop = psp_v13_0_ring_stop,
@@ -845,10 +962,13 @@ static const struct psp_funcs psp_v13_0_funcs = {
 	.load_usbc_pd_fw = psp_v13_0_load_usbc_pd_fw,
 	.read_usbc_pd_fw = psp_v13_0_read_usbc_pd_fw,
 	.update_spirom = psp_v13_0_update_spirom,
+	.dump_spirom = psp_v13_0_dump_spirom,
 	.vbflash_stat = psp_v13_0_vbflash_status,
 	.fatal_error_recovery_quirk = psp_v13_0_fatal_error_recovery_quirk,
 	.get_ras_capability = psp_v13_0_get_ras_capability,
 	.is_aux_sos_load_required = psp_v13_0_is_aux_sos_load_required,
+	.is_reload_needed = psp_v13_0_is_reload_needed,
+	.reg_program_no_ring = psp_v13_0_reg_program_no_ring,
 };
 
 void psp_v13_0_set_psp_funcs(struct psp_context *psp)

@@ -46,11 +46,7 @@ static bool kq_initialize(struct kernel_queue *kq, struct kfd_node *dev,
 	int retval;
 	union PM4_MES_TYPE_3_HEADER nop;
 
-	if (WARN_ON(type != KFD_QUEUE_TYPE_DIQ && type != KFD_QUEUE_TYPE_HIQ))
-		return false;
-
-	pr_debug("Initializing queue type %d size %d\n", KFD_QUEUE_TYPE_HIQ,
-			queue_size);
+	pr_debug("Initializing queue type %d size %d\n", type, queue_size);
 
 	memset(&prop, 0, sizeof(prop));
 	memset(&nop, 0, sizeof(nop));
@@ -69,6 +65,7 @@ static bool kq_initialize(struct kernel_queue *kq, struct kfd_node *dev,
 		kq->mqd_mgr = dev->dqm->mqd_mgrs[KFD_MQD_TYPE_HIQ];
 		break;
 	default:
+		WARN(1, "Invalid queue type %d\n", type);
 		dev_err(dev->adev->dev, "Invalid queue type %d\n", type);
 		return false;
 	}
@@ -306,12 +303,17 @@ int kq_submit_packet(struct kernel_queue *kq)
 	if (amdgpu_amdkfd_is_fed(kq->dev->adev))
 		return -EIO;
 
+	/* Make sure ring buffer is updated before wptr updated */
+	mb();
+
 	if (kq->dev->kfd->device_info.doorbell_size == 8) {
 		*kq->wptr64_kernel = kq->pending_wptr64;
+		mb(); /* Make sure wptr updated before ring doorbell */
 		write_kernel_doorbell64(kq->queue->properties.doorbell_ptr,
 					kq->pending_wptr64);
 	} else {
 		*kq->wptr_kernel = kq->pending_wptr;
+		mb(); /* Make sure wptr updated before ring doorbell */
 		write_kernel_doorbell(kq->queue->properties.doorbell_ptr,
 					kq->pending_wptr);
 	}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.144 2025/07/05 19:03:02 kn Exp $
+#	$OpenBSD: Makefile.amd64,v 1.145 2026/03/09 23:57:53 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -313,7 +313,7 @@ dml2_pmo_dcn4_fams2.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_pmo/dml
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 lib_float_math.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_standalone_libraries/lib_float_math.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
-dml_top_mcache.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_top/dml_top_mcache.c
+dml2_top_soc15.o: $S/dev/pci/drm/amd/display/dc/dml2/dml21/src/dml2_top/dml2_top_soc15.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dml2_utils.o: $S/dev/pci/drm/amd/display/dc/dml2/dml2_utils.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}

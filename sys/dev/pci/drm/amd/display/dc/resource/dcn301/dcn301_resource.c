@@ -682,7 +682,6 @@ static const struct dc_plane_cap plane_cap = {
 static const struct dc_debug_options debug_defaults_drv = {
 	.disable_dmcu = true,
 	.force_abm_enable = false,
-	.timing_trace = false,
 	.clock_trace = true,
 	.disable_dpp_power_gate = false,
 	.disable_hubp_power_gate = false,
@@ -883,7 +882,7 @@ static struct link_encoder *dcn301_link_encoder_create(
 	struct dcn20_link_encoder *enc20 =
 		kzalloc(sizeof(struct dcn20_link_encoder), GFP_KERNEL);
 
-	if (!enc20)
+	if (!enc20 || enc_init_data->hpd_source >= ARRAY_SIZE(link_enc_hpd_regs))
 		return NULL;
 
 	dcn301_link_encoder_construct(enc20,
@@ -1401,7 +1400,8 @@ static struct resource_funcs dcn301_res_pool_funcs = {
 	.acquire_post_bldn_3dlut = dcn30_acquire_post_bldn_3dlut,
 	.release_post_bldn_3dlut = dcn30_release_post_bldn_3dlut,
 	.update_bw_bounding_box = dcn301_update_bw_bounding_box,
-	.patch_unknown_plane_state = dcn20_patch_unknown_plane_state
+	.patch_unknown_plane_state = dcn20_patch_unknown_plane_state,
+	.get_vstartup_for_pipe = dcn10_get_vstartup_for_pipe
 };
 
 static bool dcn301_resource_construct(
@@ -1705,6 +1705,8 @@ static bool dcn301_resource_construct(
 
 	for (i = 0; i < dc->caps.max_planes; ++i)
 		dc->caps.planes[i] = plane_cap;
+
+	dc->caps.max_odm_combine_factor = 4;
 
 	dc->cap_funcs = cap_funcs;
 

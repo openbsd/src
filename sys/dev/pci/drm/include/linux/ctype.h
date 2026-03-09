@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.2 2025/02/07 03:03:31 jsg Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.3 2026/03/09 23:58:03 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -39,6 +39,16 @@ isprint(int c)
 	if (c == -1)
 		return (0);
 	if ((unsigned char)c >= 040 && (unsigned char)c <= 0176)
+		return (1);
+	return (0);
+}
+
+static inline int
+isgraph(int c)
+{
+	if (c == -1)
+		return (0);
+	if ((unsigned char)c >= 041 && (unsigned char)c <= 0176)
 		return (1);
 	return (0);
 }

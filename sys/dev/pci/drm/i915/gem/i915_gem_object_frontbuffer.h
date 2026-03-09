@@ -77,7 +77,7 @@ i915_gem_object_get_frontbuffer(const struct drm_i915_gem_object *obj)
  * Set object's frontbuffer pointer. If frontbuffer is already set for the
  * object keep it and return it's pointer to the caller. Please note that RCU
  * mechanism is used to handle e.g. ongoing removal of frontbuffer pointer. This
- * function is protected by i915->display.fb_tracking.lock
+ * function is protected by i915->display->fb_tracking.lock
  *
  * Return: pointer to frontbuffer which was set.
  */
@@ -89,12 +89,10 @@ i915_gem_object_set_frontbuffer(struct drm_i915_gem_object *obj,
 
 	if (!front) {
 		RCU_INIT_POINTER(obj->frontbuffer, NULL);
-		drm_gem_object_put(intel_bo_to_drm_bo(obj));
 	} else if (rcu_access_pointer(obj->frontbuffer)) {
 		cur = rcu_dereference_protected(obj->frontbuffer, true);
 		kref_get(&cur->ref);
 	} else {
-		drm_gem_object_get(intel_bo_to_drm_bo(obj));
 		rcu_assign_pointer(obj->frontbuffer, front);
 	}
 

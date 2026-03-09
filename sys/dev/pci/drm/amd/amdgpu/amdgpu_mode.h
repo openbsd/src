@@ -496,8 +496,6 @@ struct amdgpu_crtc {
 	struct drm_connector *connector;
 	/* for dpm */
 	u32 line_time;
-	u32 wm_low;
-	u32 wm_high;
 	u32 lb_vblank_lead_lines;
 	struct drm_display_mode hw_mode;
 	/* for virtual dce */
@@ -613,6 +611,7 @@ struct amdgpu_i2c_adapter {
 	struct i2c_adapter base;
 
 	struct ddc_service *ddc_service;
+	bool oem;
 };
 
 #define TO_DM_AUX(x) container_of((x), struct amdgpu_dm_dp_aux, aux)

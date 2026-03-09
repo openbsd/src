@@ -45,7 +45,7 @@ void hubp35_set_fgcg(struct hubp *hubp, bool enable)
 	REG_UPDATE(HUBP_CLK_CNTL, HUBP_FGCG_REP_DIS, !enable);
 }
 
-static void hubp35_init(struct hubp *hubp)
+void hubp35_init(struct hubp *hubp)
 {
 	hubp3_init(hubp);
 
@@ -172,7 +172,7 @@ void hubp35_program_pixel_format(
 void hubp35_program_surface_config(
 	struct hubp *hubp,
 	enum surface_pixel_format format,
-	union dc_tiling_info *tiling_info,
+	struct dc_tiling_info *tiling_info,
 	struct plane_size *plane_size,
 	enum dc_rotation_angle rotation,
 	struct dc_plane_dcc_param *dcc,
@@ -217,6 +217,10 @@ static struct hubp_funcs dcn35_hubp_funcs = {
 	.hubp_set_flip_int = hubp1_set_flip_int,
 	.hubp_in_blank = hubp1_in_blank,
 	.program_extended_blank = hubp31_program_extended_blank_value,
+	.hubp_clear_tiling = hubp3_clear_tiling,
+	.hubp_get_underflow_status = hubp3_get_underflow_status,
+	.hubp_get_current_read_line = hubp3_get_current_read_line,
+	.hubp_get_det_config_error = hubp31_get_det_config_error,
 };
 
 bool hubp35_construct(

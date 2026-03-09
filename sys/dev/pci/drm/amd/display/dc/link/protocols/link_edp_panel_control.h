@@ -25,19 +25,19 @@
 
 #ifndef __DC_LINK_EDP_PANEL_CONTROL_H__
 #define __DC_LINK_EDP_PANEL_CONTROL_H__
-#include "link.h"
+#include "link_service.h"
 
 enum dp_panel_mode dp_get_panel_mode(struct dc_link *link);
 void dp_set_panel_mode(struct dc_link *link, enum dp_panel_mode panel_mode);
 bool set_default_brightness_aux(struct dc_link *link);
+bool is_smartmux_suported(struct dc_link *link);
 void edp_panel_backlight_power_on(struct dc_link *link, bool wait_for_hpd);
 int edp_get_backlight_level(const struct dc_link *link);
 bool edp_get_backlight_level_nits(struct dc_link *link,
 		uint32_t *backlight_millinits_avg,
 		uint32_t *backlight_millinits_peak);
 bool edp_set_backlight_level(const struct dc_link *link,
-		uint32_t backlight_pwm_u16_16,
-		uint32_t frame_ramp);
+		struct set_backlight_level_params *backlight_level_params);
 bool edp_set_backlight_level_nits(struct dc_link *link,
 		bool isHDR,
 		uint32_t backlight_millinits,

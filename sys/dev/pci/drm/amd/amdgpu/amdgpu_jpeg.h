@@ -25,9 +25,17 @@
 #define __AMDGPU_JPEG_H__
 
 #include "amdgpu_ras.h"
+#include "amdgpu_cs.h"
 
 #define AMDGPU_MAX_JPEG_INSTANCES	4
-#define AMDGPU_MAX_JPEG_RINGS		8
+#define AMDGPU_MAX_JPEG_RINGS           10
+#define AMDGPU_MAX_JPEG_RINGS_4_0_3     8
+
+#define JPEG_REG_RANGE_START            0x4000
+#define JPEG_REG_RANGE_END              0x41c2
+#define JPEG_ATOMIC_RANGE_START         0x4120
+#define JPEG_ATOMIC_RANGE_END           0x412A
+
 
 #define AMDGPU_JPEG_HARVEST_JPEG0 (1 << 0)
 #define AMDGPU_JPEG_HARVEST_JPEG1 (1 << 1)
@@ -91,6 +99,14 @@
 		*adev->jpeg.inst[inst_idx].dpg_sram_curr_addr++ = value;	\
 	} while (0)
 
+struct amdgpu_hwip_reg_entry;
+
+enum amdgpu_jpeg_caps {
+	AMDGPU_JPEG_RRMT_ENABLED,
+};
+
+#define AMDGPU_JPEG_CAPS(caps) BIT(AMDGPU_JPEG_##caps)
+
 struct amdgpu_jpeg_reg{
 	unsigned jpeg_pitch[AMDGPU_MAX_JPEG_RINGS];
 };
@@ -128,6 +144,11 @@ struct amdgpu_jpeg {
 	uint16_t inst_mask;
 	uint8_t num_inst_per_aid;
 	bool	indirect_sram;
+	uint32_t supported_reset;
+	uint32_t caps;
+	u32 *ip_dump;
+	u32 reg_count;
+	const struct amdgpu_hwip_reg_entry *reg_list;
 };
 
 int amdgpu_jpeg_sw_init(struct amdgpu_device *adev);
@@ -149,5 +170,15 @@ int amdgpu_jpeg_ras_late_init(struct amdgpu_device *adev,
 int amdgpu_jpeg_ras_sw_init(struct amdgpu_device *adev);
 int amdgpu_jpeg_psp_update_sram(struct amdgpu_device *adev, int inst_idx,
 			       enum AMDGPU_UCODE_ID ucode_id);
+void amdgpu_debugfs_jpeg_sched_mask_init(struct amdgpu_device *adev);
+int amdgpu_jpeg_sysfs_reset_mask_init(struct amdgpu_device *adev);
+void amdgpu_jpeg_sysfs_reset_mask_fini(struct amdgpu_device *adev);
+int amdgpu_jpeg_reg_dump_init(struct amdgpu_device *adev,
+			       const struct amdgpu_hwip_reg_entry *reg, u32 count);
+void amdgpu_jpeg_dump_ip_state(struct amdgpu_ip_block *ip_block);
+void amdgpu_jpeg_print_ip_state(struct amdgpu_ip_block *ip_block, struct drm_printer *p);
+int amdgpu_jpeg_dec_parse_cs(struct amdgpu_cs_parser *parser,
+			     struct amdgpu_job *job,
+			     struct amdgpu_ib *ib);
 
 #endif /*__AMDGPU_JPEG_H__*/

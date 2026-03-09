@@ -3,6 +3,9 @@
  * Copyright © 2021 Intel Corporation
  */
 
+#include <kunit/test-bug.h>
+
+#include <linux/export.h>
 #include <linux/kmemleak.h>
 #include <linux/module.h>
 #include <linux/sizes.h>
@@ -413,7 +416,9 @@ void drm_buddy_fini(struct drm_buddy *mm)
 		start = drm_buddy_block_offset(mm->roots[i]);
 		__force_merge(mm, start, start + size, order);
 
-		WARN_ON(!drm_buddy_block_is_free(mm->roots[i]));
+		if (WARN_ON(!drm_buddy_block_is_free(mm->roots[i])))
+			kunit_fail_current_test("buddy_fini() root");
+
 		drm_block_free(mm, mm->roots[i]);
 
 		root_size = mm->chunk_size << order;
@@ -424,6 +429,7 @@ void drm_buddy_fini(struct drm_buddy *mm)
 
 	for_each_free_tree(i)
 		kfree(mm->free_trees[i]);
+	kfree(mm->free_trees);
 	kfree(mm->roots);
 }
 EXPORT_SYMBOL(drm_buddy_fini);
@@ -1158,6 +1164,15 @@ int drm_buddy_alloc_blocks(struct drm_buddy *mm,
 	pages = size >> ilog2(mm->chunk_size);
 	order = fls(pages) - 1;
 	min_order = ilog2(min_block_size) - ilog2(mm->chunk_size);
+
+	if (order > mm->max_order || size > mm->size) {
+		if ((flags & DRM_BUDDY_CONTIGUOUS_ALLOCATION) &&
+		    !(flags & DRM_BUDDY_RANGE_ALLOCATION))
+			return __alloc_contig_try_harder(mm, original_size,
+							 original_min_size, blocks);
+
+		return -EINVAL;
+	}
 
 	do {
 		order = min(order, (unsigned int)fls(pages) - 1);

@@ -40,21 +40,12 @@ struct dc_state;
  *
  */
 
-void pre_surface_trace(
-		struct dc *dc,
-		const struct dc_plane_state *const *plane_states,
-		int surface_count);
-
 void update_surface_trace(
 		struct dc *dc,
 		const struct dc_surface_update *updates,
 		int surface_count);
 
 void post_surface_trace(struct dc *dc);
-
-void context_timing_trace(
-		struct dc *dc,
-		struct resource_context *res_ctx);
 
 void context_clock_trace(
 		struct dc *dc,

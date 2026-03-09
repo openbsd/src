@@ -155,3 +155,10 @@ drmm_add_final_kfree(struct drm_device *dev, void *p)
 {
 	dev->managed.final_kfree = p;
 }
+
+/* rwlocks have nothing to cleanup on exit */
+void
+drmm_mutex_init(struct drm_device *dev, struct rwlock *rwl)
+{
+	rw_init(rwl, "drm_mm");
+}

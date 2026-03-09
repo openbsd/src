@@ -33,32 +33,18 @@
 #include "isp_v4_1_0.h"
 #include "isp_v4_1_1.h"
 
-static int isp_sw_init(void *handle)
-{
-	return 0;
-}
-
-static int isp_sw_fini(void *handle)
-{
-	return 0;
-}
+#define ISP_MC_ADDR_ALIGN (1024 * 32)
 
 /**
  * isp_hw_init - start and test isp block
  *
- * @handle: handle for amdgpu_device pointer
+ * @ip_block: Pointer to the amdgpu_ip_block for this hw instance.
  *
  */
-static int isp_hw_init(void *handle)
+static int isp_hw_init(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	struct amdgpu_device *adev = ip_block->adev;
 	struct amdgpu_isp *isp = &adev->isp;
-
-	const struct amdgpu_ip_block *ip_block =
-		amdgpu_device_ip_get_ip_block(adev, AMD_IP_BLOCK_TYPE_ISP);
-
-	if (!ip_block)
-		return -EINVAL;
 
 	if (isp->funcs->hw_init != NULL)
 		return isp->funcs->hw_init(isp);
@@ -69,28 +55,17 @@ static int isp_hw_init(void *handle)
 /**
  * isp_hw_fini - stop the hardware block
  *
- * @handle: handle for amdgpu_device pointer
+ * @ip_block: Pointer to the amdgpu_ip_block for this hw instance.
  *
  */
-static int isp_hw_fini(void *handle)
+static int isp_hw_fini(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct amdgpu_isp *isp = &adev->isp;
+	struct amdgpu_isp *isp = &ip_block->adev->isp;
 
 	if (isp->funcs->hw_fini != NULL)
 		return isp->funcs->hw_fini(isp);
 
 	return -ENODEV;
-}
-
-static int isp_suspend(void *handle)
-{
-	return 0;
-}
-
-static int isp_resume(void *handle)
-{
-	return 0;
 }
 
 static int isp_load_fw_by_psp(struct amdgpu_device *adev)
@@ -104,7 +79,8 @@ static int isp_load_fw_by_psp(struct amdgpu_device *adev)
 				       sizeof(ucode_prefix));
 
 	/* read isp fw */
-	r = amdgpu_ucode_request(adev, &adev->isp.fw, "amdgpu/%s.bin", ucode_prefix);
+	r = amdgpu_ucode_request(adev, &adev->isp.fw, AMDGPU_UCODE_OPTIONAL,
+				"amdgpu/%s.bin", ucode_prefix);
 	if (r) {
 		amdgpu_ucode_release(&adev->isp.fw);
 		return r;
@@ -122,9 +98,10 @@ static int isp_load_fw_by_psp(struct amdgpu_device *adev)
 	return r;
 }
 
-static int isp_early_init(void *handle)
+static int isp_early_init(struct amdgpu_ip_block *ip_block)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+
+	struct amdgpu_device *adev = ip_block->adev;
 	struct amdgpu_isp *isp = &adev->isp;
 
 	switch (amdgpu_ip_version(adev, ISP_HWIP, 0)) {
@@ -149,46 +126,204 @@ static int isp_early_init(void *handle)
 	return 0;
 }
 
-static bool isp_is_idle(void *handle)
+static bool isp_is_idle(struct amdgpu_ip_block *ip_block)
 {
 	return true;
 }
 
-static int isp_wait_for_idle(void *handle)
-{
-	return 0;
-}
-
-static int isp_soft_reset(void *handle)
-{
-	return 0;
-}
-
-static int isp_set_clockgating_state(void *handle,
+static int isp_set_clockgating_state(struct amdgpu_ip_block *ip_block,
 				     enum amd_clockgating_state state)
 {
 	return 0;
 }
 
-static int isp_set_powergating_state(void *handle,
+static int isp_set_powergating_state(struct amdgpu_ip_block *ip_block,
 				     enum amd_powergating_state state)
 {
 	return 0;
 }
 
+static int is_valid_isp_device(struct device *isp_parent, struct device *amdgpu_dev)
+{
+	if (isp_parent != amdgpu_dev)
+		return -EINVAL;
+
+	return 0;
+}
+
+/**
+ * isp_user_buffer_alloc - create user buffer object (BO) for isp
+ *
+ * @dev: isp device handle
+ * @dmabuf: DMABUF handle for isp buffer allocated in system memory
+ * @buf_obj: GPU buffer object handle to initialize
+ * @buf_addr: GPU addr of the pinned BO to initialize
+ *
+ * Imports isp DMABUF to allocate and pin a user BO for isp internal use. It does
+ * GART alloc to generate GPU addr for BO to make it accessible through the
+ * GART aperture for ISP HW.
+ *
+ * This function is exported to allow the V4L2 isp device external to drm device
+ * to create and access the isp user BO.
+ *
+ * Returns:
+ * 0 on success, negative error code otherwise.
+ */
+int isp_user_buffer_alloc(struct device *dev, void *dmabuf,
+			  void **buf_obj, u64 *buf_addr)
+{
+	struct platform_device *ispdev = to_platform_device(dev);
+	const struct isp_platform_data *isp_pdata;
+	struct amdgpu_device *adev;
+	struct mfd_cell *mfd_cell;
+	struct amdgpu_bo *bo;
+	u64 gpu_addr;
+	int ret;
+
+	if (WARN_ON(!ispdev))
+		return -ENODEV;
+
+	if (WARN_ON(!buf_obj))
+		return -EINVAL;
+
+	if (WARN_ON(!buf_addr))
+		return -EINVAL;
+
+	mfd_cell = &ispdev->mfd_cell[0];
+	if (!mfd_cell)
+		return -ENODEV;
+
+	isp_pdata = mfd_cell->platform_data;
+	adev = isp_pdata->adev;
+
+	ret = is_valid_isp_device(ispdev->dev.parent, adev->dev);
+	if (ret)
+		return ret;
+
+	ret = amdgpu_bo_create_isp_user(adev, dmabuf,
+					AMDGPU_GEM_DOMAIN_GTT, &bo, &gpu_addr);
+	if (ret) {
+		drm_err(&adev->ddev, "failed to alloc gart user buffer (%d)", ret);
+		return ret;
+	}
+
+	*buf_obj = (void *)bo;
+	*buf_addr = gpu_addr;
+
+	return 0;
+}
+EXPORT_SYMBOL(isp_user_buffer_alloc);
+
+/**
+ * isp_user_buffer_free - free isp user buffer object (BO)
+ *
+ * @buf_obj: amdgpu isp user BO to free
+ *
+ * unpin and unref BO for isp internal use.
+ *
+ * This function is exported to allow the V4L2 isp device
+ * external to drm device to free the isp user BO.
+ */
+void isp_user_buffer_free(void *buf_obj)
+{
+	amdgpu_bo_free_isp_user(buf_obj);
+}
+EXPORT_SYMBOL(isp_user_buffer_free);
+
+/**
+ * isp_kernel_buffer_alloc - create kernel buffer object (BO) for isp
+ *
+ * @dev: isp device handle
+ * @size: size for the new BO
+ * @buf_obj: GPU BO handle to initialize
+ * @gpu_addr: GPU addr of the pinned BO
+ * @cpu_addr: CPU address mapping of BO
+ *
+ * Allocates and pins a kernel BO for internal isp firmware use.
+ *
+ * This function is exported to allow the V4L2 isp device
+ * external to drm device to create and access the kernel BO.
+ *
+ * Returns:
+ * 0 on success, negative error code otherwise.
+ */
+int isp_kernel_buffer_alloc(struct device *dev, u64 size,
+			    void **buf_obj, u64 *gpu_addr, void **cpu_addr)
+{
+	struct platform_device *ispdev = to_platform_device(dev);
+	struct amdgpu_bo **bo = (struct amdgpu_bo **)buf_obj;
+	const struct isp_platform_data *isp_pdata;
+	struct amdgpu_device *adev;
+	struct mfd_cell *mfd_cell;
+	int ret;
+
+	if (WARN_ON(!ispdev))
+		return -ENODEV;
+
+	if (WARN_ON(!buf_obj))
+		return -EINVAL;
+
+	if (WARN_ON(!gpu_addr))
+		return -EINVAL;
+
+	if (WARN_ON(!cpu_addr))
+		return -EINVAL;
+
+	mfd_cell = &ispdev->mfd_cell[0];
+	if (!mfd_cell)
+		return -ENODEV;
+
+	isp_pdata = mfd_cell->platform_data;
+	adev = isp_pdata->adev;
+
+	ret = is_valid_isp_device(ispdev->dev.parent, adev->dev);
+	if (ret)
+		return ret;
+
+	/* Ensure *bo is NULL so a new BO will be created */
+	*bo = NULL;
+	ret = amdgpu_bo_create_kernel(adev,
+				      size,
+				      ISP_MC_ADDR_ALIGN,
+				      AMDGPU_GEM_DOMAIN_GTT,
+				      bo,
+				      gpu_addr,
+				      cpu_addr);
+	if (!cpu_addr || ret) {
+		drm_err(&adev->ddev, "failed to alloc gart kernel buffer (%d)", ret);
+		return ret;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(isp_kernel_buffer_alloc);
+
+/**
+ * isp_kernel_buffer_free - free isp kernel buffer object (BO)
+ *
+ * @buf_obj: amdgpu isp user BO to free
+ * @gpu_addr: GPU addr of isp kernel BO
+ * @cpu_addr: CPU addr of isp kernel BO
+ *
+ * unmaps and unpin a isp kernel BO.
+ *
+ * This function is exported to allow the V4L2 isp device
+ * external to drm device to free the kernel BO.
+ */
+void isp_kernel_buffer_free(void **buf_obj, u64 *gpu_addr, void **cpu_addr)
+{
+	struct amdgpu_bo **bo = (struct amdgpu_bo **)buf_obj;
+
+	amdgpu_bo_free_kernel(bo, gpu_addr, cpu_addr);
+}
+EXPORT_SYMBOL(isp_kernel_buffer_free);
+
 static const struct amd_ip_funcs isp_ip_funcs = {
 	.name = "isp_ip",
 	.early_init = isp_early_init,
-	.late_init = NULL,
-	.sw_init = isp_sw_init,
-	.sw_fini = isp_sw_fini,
 	.hw_init = isp_hw_init,
 	.hw_fini = isp_hw_fini,
-	.suspend = isp_suspend,
-	.resume = isp_resume,
 	.is_idle = isp_is_idle,
-	.wait_for_idle = isp_wait_for_idle,
-	.soft_reset = isp_soft_reset,
 	.set_clockgating_state = isp_set_clockgating_state,
 	.set_powergating_state = isp_set_powergating_state,
 };

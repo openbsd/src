@@ -93,12 +93,17 @@ struct dml2_soc_power_management_parameters {
 	double dram_clk_change_write_only_us;
 	double fclk_change_blackout_us;
 	double g7_ppt_blackout_us;
+	double g7_temperature_read_blackout_us;
 	double stutter_enter_plus_exit_latency_us;
 	double stutter_exit_latency_us;
+	double low_power_stutter_enter_plus_exit_latency_us;
+	double low_power_stutter_exit_latency_us;
 	double z8_stutter_enter_plus_exit_latency_us;
 	double z8_stutter_exit_latency_us;
 	double z8_min_idle_time;
 	double g6_temp_read_blackout_us[DML_MAX_CLK_TABLE_SIZE];
+	double type_b_dram_clk_change_blackout_us;
+	double type_b_ppt_blackout_us;
 };
 
 struct dml2_clk_table {
@@ -130,6 +135,7 @@ struct dml2_soc_state_table {
 
 struct dml2_soc_vmin_clock_limits {
 	unsigned long dispclk_khz;
+	unsigned long dcfclk_khz;
 };
 
 struct dml2_soc_bb {
@@ -138,6 +144,7 @@ struct dml2_soc_bb {
 	struct dml2_soc_power_management_parameters power_management_parameters;
 	struct dml2_soc_vmin_clock_limits vmin_limit;
 
+	double lower_bound_bandwidth_dchub;
 	unsigned int dprefclk_mhz;
 	unsigned int xtalclk_mhz;
 	unsigned int pcie_refclk_mhz;
@@ -167,11 +174,13 @@ struct dml2_ip_capabilities {
 	unsigned int max_num_dp2p0_streams;
 	unsigned int max_num_hdmi_frl_outputs;
 	unsigned int max_num_dp2p0_outputs;
+	unsigned int max_num_wb;
 	unsigned int rob_buffer_size_kbytes;
 	unsigned int config_return_buffer_size_in_kbytes;
 	unsigned int config_return_buffer_segment_size_in_kbytes;
 	unsigned int meta_fifo_size_in_kentries;
 	unsigned int compressed_buffer_segment_size_in_kbytes;
+	unsigned int cursor_buffer_size;
 	unsigned int max_flip_time_us;
 	unsigned int max_flip_time_lines;
 	unsigned int hostvm_mode;

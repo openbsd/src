@@ -274,6 +274,7 @@ static void xgpu_ai_mailbox_flr_work(struct work_struct *work)
 {
 	struct amdgpu_virt *virt = container_of(work, struct amdgpu_virt, flr_work);
 	struct amdgpu_device *adev = container_of(virt, struct amdgpu_device, virt);
+	struct amdgpu_reset_context reset_context = { 0 };
 
 	amdgpu_virt_fini_data_exchange(adev);
 
@@ -281,8 +282,6 @@ static void xgpu_ai_mailbox_flr_work(struct work_struct *work)
 	if (amdgpu_device_should_recover_gpu(adev)
 		&& (!amdgpu_device_has_job_running(adev) ||
 			adev->sdma_timeout == MAX_SCHEDULE_TIMEOUT)) {
-		struct amdgpu_reset_context reset_context;
-		memset(&reset_context, 0, sizeof(reset_context));
 
 		reset_context.method = AMD_RESET_METHOD_NONE;
 		reset_context.reset_req_dev = adev;
@@ -290,6 +289,37 @@ static void xgpu_ai_mailbox_flr_work(struct work_struct *work)
 		set_bit(AMDGPU_HOST_FLR, &reset_context.flags);
 
 		amdgpu_device_gpu_recover(adev, NULL, &reset_context);
+	}
+}
+
+static void xgpu_ai_mailbox_req_bad_pages_work(struct work_struct *work)
+{
+	struct amdgpu_virt *virt = container_of(work, struct amdgpu_virt, req_bad_pages_work);
+	struct amdgpu_device *adev = container_of(virt, struct amdgpu_device, virt);
+
+	if (down_read_trylock(&adev->reset_domain->sem)) {
+		amdgpu_virt_fini_data_exchange(adev);
+		amdgpu_virt_request_bad_pages(adev);
+		up_read(&adev->reset_domain->sem);
+	}
+}
+
+/**
+ * xgpu_ai_mailbox_handle_bad_pages_work - Reinitialize the data exchange region to get fresh bad page information
+ * @work: pointer to the work_struct
+ *
+ * This work handler is triggered when bad pages are ready, and it reinitializes
+ * the data exchange region to retrieve updated bad page information from the host.
+ */
+static void xgpu_ai_mailbox_handle_bad_pages_work(struct work_struct *work)
+{
+	struct amdgpu_virt *virt = container_of(work, struct amdgpu_virt, handle_bad_pages_work);
+	struct amdgpu_device *adev = container_of(virt, struct amdgpu_device, virt);
+
+	if (down_read_trylock(&adev->reset_domain->sem)) {
+		amdgpu_virt_fini_data_exchange(adev);
+		amdgpu_virt_init_data_exchange(adev);
+		up_read(&adev->reset_domain->sem);
 	}
 }
 
@@ -312,26 +342,47 @@ static int xgpu_ai_mailbox_rcv_irq(struct amdgpu_device *adev,
 				   struct amdgpu_iv_entry *entry)
 {
 	enum idh_event event = xgpu_ai_mailbox_peek_msg(adev);
+	struct amdgpu_ras *ras = amdgpu_ras_get_context(adev);
 
 	switch (event) {
-		case IDH_FLR_NOTIFICATION:
+	case IDH_RAS_BAD_PAGES_READY:
+		xgpu_ai_mailbox_send_ack(adev);
+		if (amdgpu_sriov_runtime(adev))
+			schedule_work(&adev->virt.handle_bad_pages_work);
+		break;
+	case IDH_RAS_BAD_PAGES_NOTIFICATION:
+		xgpu_ai_mailbox_send_ack(adev);
+		if (amdgpu_sriov_runtime(adev))
+			schedule_work(&adev->virt.req_bad_pages_work);
+		break;
+	case IDH_UNRECOV_ERR_NOTIFICATION:
+		xgpu_ai_mailbox_send_ack(adev);
+		ras->is_rma = true;
+		dev_err(adev->dev, "VF is in an unrecoverable state. Runtime Services are halted.\n");
 		if (amdgpu_sriov_runtime(adev))
 			WARN_ONCE(!amdgpu_reset_domain_schedule(adev->reset_domain,
-								&adev->virt.flr_work),
-				  "Failed to queue work! at %s",
-				  __func__);
+					&adev->virt.flr_work),
+					"Failed to queue work! at %s",
+					__func__);
 		break;
-		case IDH_QUERY_ALIVE:
-			xgpu_ai_mailbox_send_ack(adev);
-			break;
-		/* READY_TO_ACCESS_GPU is fetched by kernel polling, IRQ can ignore
-		 * it byfar since that polling thread will handle it,
-		 * other msg like flr complete is not handled here.
-		 */
-		case IDH_CLR_MSG_BUF:
-		case IDH_FLR_NOTIFICATION_CMPL:
-		case IDH_READY_TO_ACCESS_GPU:
-		default:
+	case IDH_FLR_NOTIFICATION:
+		if (amdgpu_sriov_runtime(adev))
+			WARN_ONCE(!amdgpu_reset_domain_schedule(adev->reset_domain,
+						&adev->virt.flr_work),
+					"Failed to queue work! at %s",
+					__func__);
+		break;
+	case IDH_QUERY_ALIVE:
+		xgpu_ai_mailbox_send_ack(adev);
+		break;
+	/* READY_TO_ACCESS_GPU is fetched by kernel polling, IRQ can ignore
+	 * it byfar since that polling thread will handle it,
+	 * other msg like flr complete is not handled here.
+	 */
+	case IDH_CLR_MSG_BUF:
+	case IDH_FLR_NOTIFICATION_CMPL:
+	case IDH_READY_TO_ACCESS_GPU:
+	default:
 		break;
 	}
 
@@ -387,6 +438,8 @@ int xgpu_ai_mailbox_get_irq(struct amdgpu_device *adev)
 	}
 
 	INIT_WORK(&adev->virt.flr_work, xgpu_ai_mailbox_flr_work);
+	INIT_WORK(&adev->virt.req_bad_pages_work, xgpu_ai_mailbox_req_bad_pages_work);
+	INIT_WORK(&adev->virt.handle_bad_pages_work, xgpu_ai_mailbox_handle_bad_pages_work);
 
 	return 0;
 }

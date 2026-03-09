@@ -572,6 +572,7 @@ struct dcn3_dpp {
 	int lb_memory_size;
 	int lb_bits_per_entry;
 	bool is_write_to_ram_a_safe;
+	bool dispclk_r_gate_disable;
 	struct scaler_data scl_data;
 	struct pwl_params pwl_data;
 };
@@ -641,4 +642,8 @@ void dpp3_program_cm_dealpha(
 
 void dpp3_cm_get_gamut_remap(struct dpp *dpp_base,
 			     struct dpp_grph_csc_adjustment *adjust);
+
+bool dpp3_should_bypass_post_csc_for_colorspace(
+		enum dc_color_space dc_color_space);
+
 #endif /* __DC_HWSS_DCN30_H__ */

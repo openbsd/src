@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.h,v 1.8 2024/01/16 23:38:13 jsg Exp $	*/
+/*	$OpenBSD: list.h,v 1.9 2026/03/09 23:58:03 jsg Exp $	*/
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
  */
@@ -73,6 +73,13 @@ list_is_last(const struct list_head *list,
     const struct list_head *head)
 {
 	return list->next == head;
+}
+
+static inline int
+list_is_head(const struct list_head *list,
+    const struct list_head *head)
+{
+	return list == head;
 }
 
 static inline void
@@ -248,6 +255,9 @@ list_del_init(struct list_head *entry) {
 #define list_last_entry(ptr, type, member) \
 	list_entry((ptr)->prev, type, member)
 
+#define list_last_entry_or_null(ptr, type, member) \
+	(list_empty(ptr) ? NULL : list_last_entry(ptr, type, member))
+
 static inline void
 __list_splice(const struct list_head *list, struct list_head *prev,
     struct list_head *next)
@@ -335,6 +345,17 @@ hlist_add_head(struct hlist_node *new, struct hlist_head *head)
 		head->first->prev = &new->next;
 	head->first = new;
 	new->prev = &head->first;
+}
+
+static inline void
+hlist_move_list(struct hlist_head *old, struct hlist_head *new)
+{
+	if (old->first == NULL)
+		new->first = NULL;
+	else {
+		new->first = old->first;
+		old->first->prev = &new->first;
+	}
 }
 
 static inline void

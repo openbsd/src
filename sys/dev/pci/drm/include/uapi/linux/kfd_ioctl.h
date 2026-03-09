@@ -43,9 +43,10 @@
  * - 1.15 - Enable managing mappings in compute VMs with GEM_VA ioctl
  * - 1.16 - Add contiguous VRAM allocation flag
  * - 1.17 - Add SDMA queue creation with target SDMA engine ID
+ * - 1.18 - Rename pad in set_memory_policy_args to misc_process_flag
  */
 #define KFD_IOCTL_MAJOR_VERSION 1
-#define KFD_IOCTL_MINOR_VERSION 17
+#define KFD_IOCTL_MINOR_VERSION 18
 
 struct kfd_ioctl_get_version_args {
 	__u32 major_version;	/* from KFD */
@@ -62,10 +63,12 @@ struct kfd_ioctl_get_version_args {
 #define KFD_MAX_QUEUE_PERCENTAGE	100
 #define KFD_MAX_QUEUE_PRIORITY		15
 
+#define KFD_MIN_QUEUE_RING_SIZE		1024
+
 struct kfd_ioctl_create_queue_args {
 	__u64 ring_base_address;	/* to KFD */
-	__u64 write_pointer_address;	/* from KFD */
-	__u64 read_pointer_address;	/* from KFD */
+	__u64 write_pointer_address;	/* to KFD */
+	__u64 read_pointer_address;	/* to KFD */
 	__u64 doorbell_offset;	/* from KFD */
 
 	__u32 ring_size;		/* to KFD */
@@ -148,6 +151,9 @@ struct kfd_dbg_device_info_entry {
 #define KFD_IOC_CACHE_POLICY_COHERENT 0
 #define KFD_IOC_CACHE_POLICY_NONCOHERENT 1
 
+/* Misc. per process flags */
+#define KFD_PROC_FLAG_MFMA_HIGH_PRECISION (1 << 0)
+
 struct kfd_ioctl_set_memory_policy_args {
 	__u64 alternate_aperture_base;	/* to KFD */
 	__u64 alternate_aperture_size;	/* to KFD */
@@ -155,7 +161,7 @@ struct kfd_ioctl_set_memory_policy_args {
 	__u32 gpu_id;			/* to KFD */
 	__u32 default_policy;		/* to KFD */
 	__u32 alternate_policy;		/* to KFD */
-	__u32 pad;
+	__u32 misc_process_flag;        /* to KFD */
 };
 
 /*
@@ -530,6 +536,8 @@ enum kfd_smi_event {
 	KFD_SMI_EVENT_QUEUE_EVICTION = 9,
 	KFD_SMI_EVENT_QUEUE_RESTORE = 10,
 	KFD_SMI_EVENT_UNMAP_FROM_GPU = 11,
+	KFD_SMI_EVENT_PROCESS_START = 12,
+	KFD_SMI_EVENT_PROCESS_END = 13,
 
 	/*
 	 * max event number, as a flag bit to get events from all processes,
@@ -609,6 +617,7 @@ struct kfd_ioctl_smi_events_args {
  *    migrate_update: GPU page fault is recovered by 'M' for migrate, 'U' for update
  *    rw: 'W' for write page fault, 'R' for read page fault
  *    rescheduled: 'R' if the queue restore failed and rescheduled to try again
+ *    error_code: migrate failure error code, 0 if no error
  */
 #define KFD_EVENT_FMT_UPDATE_GPU_RESET(reset_seq_num, reset_cause)\
 		"%x %s\n", (reset_seq_num), (reset_cause)
@@ -630,9 +639,9 @@ struct kfd_ioctl_smi_events_args {
 		"%lld -%d @%lx(%lx) %x->%x %x:%x %d\n", (ns), (pid), (start), (size),\
 		(from), (to), (prefetch_loc), (preferred_loc), (migrate_trigger)
 
-#define KFD_EVENT_FMT_MIGRATE_END(ns, pid, start, size, from, to, migrate_trigger)\
-		"%lld -%d @%lx(%lx) %x->%x %d\n", (ns), (pid), (start), (size),\
-		(from), (to), (migrate_trigger)
+#define KFD_EVENT_FMT_MIGRATE_END(ns, pid, start, size, from, to, migrate_trigger, error_code) \
+		"%lld -%d @%lx(%lx) %x->%x %d %d\n", (ns), (pid), (start), (size),\
+		(from), (to), (migrate_trigger), (error_code)
 
 #define KFD_EVENT_FMT_QUEUE_EVICTION(ns, pid, node, evict_trigger)\
 		"%lld -%d %x %d\n", (ns), (pid), (node), (evict_trigger)
@@ -643,6 +652,9 @@ struct kfd_ioctl_smi_events_args {
 #define KFD_EVENT_FMT_UNMAP_FROM_GPU(ns, pid, addr, size, node, unmap_trigger)\
 		"%lld -%d @%lx(%lx) %x %d\n", (ns), (pid), (addr), (size),\
 		(node), (unmap_trigger)
+
+#define KFD_EVENT_FMT_PROCESS(pid, task_name)\
+		"%x %s\n", (pid), (task_name)
 
 /**************************************************************************************************
  * CRIU IOCTLs (Checkpoint Restore In Userspace)

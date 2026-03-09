@@ -242,8 +242,8 @@ static void delayed_huc_load_init(struct intel_huc *huc)
 	i915_sw_fence_commit(&huc->delayed_load.fence);
 
 #ifdef __linux__
-	hrtimer_init(&huc->delayed_load.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	huc->delayed_load.timer.function = huc_delayed_load_timer_callback;
+	hrtimer_setup(&huc->delayed_load.timer, huc_delayed_load_timer_callback, CLOCK_MONOTONIC,
+		      HRTIMER_MODE_REL);
 #else
 	timeout_set(&huc->delayed_load.timer, huc_delayed_load_timer_callback,
 	    huc);
@@ -441,19 +441,6 @@ void intel_huc_fini(struct intel_huc *huc)
 		intel_uc_fw_fini(&huc->fw);
 }
 
-void intel_huc_suspend(struct intel_huc *huc)
-{
-	if (!intel_uc_fw_is_loadable(&huc->fw))
-		return;
-
-	/*
-	 * in the unlikely case that we're suspending before the GSC has
-	 * completed its loading sequence, just stop waiting. We'll restart
-	 * on resume.
-	 */
-	delayed_huc_load_complete(huc);
-}
-
 static const char *auth_mode_string(struct intel_huc *huc,
 				    enum intel_huc_authentication_type type)
 {
@@ -469,7 +456,7 @@ static const char *auth_mode_string(struct intel_huc *huc,
  * an end user should hit the timeout is in case of extreme thermal throttling.
  * And a system that is that hot during boot is probably dead anyway!
  */
-#if defined(CONFIG_DRM_I915_DEBUG_GEM)
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM)
 #define HUC_LOAD_RETRY_LIMIT   20
 #else
 #define HUC_LOAD_RETRY_LIMIT   3
@@ -516,13 +503,15 @@ int intel_huc_wait_for_auth_complete(struct intel_huc *huc,
 	if (delta_ms > 50) {
 		huc_warn(huc, "excessive auth time: %lldms! [status = 0x%08X, count = %d, ret = %d]\n",
 			 delta_ms, huc->status[type].reg.reg, count, ret);
-		huc_warn(huc, "excessive auth time: [freq = %dMHz, before = %dMHz, perf_limit_reasons = 0x%08X]\n",
-			 intel_rps_read_actual_frequency(&gt->rps), before_freq,
+		huc_warn(huc, "excessive auth time: [freq = %dMHz -> %dMHz vs %dMHz, perf_limit_reasons = 0x%08X]\n",
+			 before_freq, intel_rps_read_actual_frequency(&gt->rps),
+			 intel_rps_get_requested_frequency(&gt->rps),
 			 intel_uncore_read(uncore, intel_gt_perf_limit_reasons_reg(gt)));
 	} else {
-		huc_dbg(huc, "auth took %lldms, freq = %dMHz, before = %dMHz, status = 0x%08X, count = %d, ret = %d\n",
-			delta_ms, intel_rps_read_actual_frequency(&gt->rps),
-			before_freq, huc->status[type].reg.reg, count, ret);
+		huc_dbg(huc, "auth took %lldms, freq = %dMHz -> %dMHz vs %dMHz, status = 0x%08X, count = %d, ret = %d\n",
+			delta_ms, before_freq, intel_rps_read_actual_frequency(&gt->rps),
+			intel_rps_get_requested_frequency(&gt->rps),
+			huc->status[type].reg.reg, count, ret);
 	}
 
 	/* mark the load process as complete even if the wait failed */

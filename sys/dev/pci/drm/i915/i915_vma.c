@@ -26,7 +26,7 @@
 #include <linux/dma-fence-array.h>
 #include <drm/drm_gem.h>
 
-#include "display/intel_display.h"
+#include "display/intel_fb.h"
 #include "display/intel_frontbuffer.h"
 #include "gem/i915_gem_lmem.h"
 #include "gem/i915_gem_object_frontbuffer.h"
@@ -788,8 +788,8 @@ bool i915_gem_valid_gtt_space(struct i915_vma *vma, unsigned long color)
  * @flags: mask of PIN_* flags to use
  *
  * First we try to allocate some free space that meets the requirements for
- * the VMA. Failiing that, if the flags permit, it will evict an old VMA,
- * preferrably the oldest idle entry to make room for the new VMA.
+ * the VMA. Failing that, if the flags permit, it will evict an old VMA,
+ * preferably the oldest idle entry to make room for the new VMA.
  *
  * Returns:
  * 0 on success, negative error code otherwise.
@@ -887,7 +887,7 @@ i915_vma_insert(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
 		 * objects which need to be tightly packed into the low 32bits.
 		 *
 		 * Note that we assume that GGTT are limited to 4GiB for the
-		 * forseeable future. See also i915_ggtt_offset().
+		 * foreseeable future. See also i915_ggtt_offset().
 		 */
 		if (upper_32_bits(end - 1) &&
 		    vma->page_sizes.sg > I915_GTT_PAGE_SIZE &&
@@ -1011,7 +1011,7 @@ rotate_pages(struct drm_i915_gem_object *obj, unsigned int offset,
 
 		/*
 		 * The DE ignores the PTEs for the padding tiles, the sg entry
-		 * here is just a conenience to indicate how many padding PTEs
+		 * here is just a convenience to indicate how many padding PTEs
 		 * to insert at this spot.
 		 */
 		sg_set_page(sg, NULL, left, 0);
@@ -1629,6 +1629,26 @@ err_rpm:
 	return err;
 }
 
+int i915_vma_pin(struct i915_vma *vma, u64 size, u64 alignment, u64 flags)
+{
+	struct i915_gem_ww_ctx ww;
+	int err;
+
+	i915_gem_ww_ctx_init(&ww, true);
+retry:
+	err = i915_gem_object_lock(vma->obj, &ww);
+	if (!err)
+		err = i915_vma_pin_ww(vma, &ww, size, alignment, flags);
+	if (err == -EDEADLK) {
+		err = i915_gem_ww_ctx_backoff(&ww);
+		if (!err)
+			goto retry;
+	}
+	i915_gem_ww_ctx_fini(&ww);
+
+	return err;
+}
+
 static void flush_idle_contexts(struct intel_gt *gt)
 {
 	struct intel_engine_cs *engine;
@@ -2189,7 +2209,7 @@ static struct dma_fence *__i915_vma_unbind_async(struct i915_vma *vma)
 int i915_vma_unbind(struct i915_vma *vma)
 {
 	struct i915_address_space *vm = vma->vm;
-	intel_wakeref_t wakeref = 0;
+	intel_wakeref_t wakeref = NULL;
 	int err;
 
 	assert_object_held_shared(vma->obj);
@@ -2228,7 +2248,7 @@ int i915_vma_unbind_async(struct i915_vma *vma, bool trylock_vm)
 {
 	struct drm_i915_gem_object *obj = vma->obj;
 	struct i915_address_space *vm = vma->vm;
-	intel_wakeref_t wakeref = 0;
+	intel_wakeref_t wakeref = NULL;
 	struct dma_fence *fence;
 	int err;
 

@@ -156,7 +156,7 @@ static void _wa_add(struct i915_wa_list *wal, const struct i915_wa *wa)
 	if (IS_ALIGNED(wal->count, grow)) { /* Either uninitialized or full. */
 		struct i915_wa *list;
 
-		list = kmalloc_array(ALIGN(wal->count + 1, grow), sizeof(*wa),
+		list = kmalloc_array(ALIGN(wal->count + 1, grow), sizeof(*list),
 				     GFP_KERNEL);
 		if (!list) {
 			drm_err(&i915->drm, "No space for workaround init!\n");
@@ -337,12 +337,26 @@ static void gen6_ctx_workarounds_init(struct intel_engine_cs *engine,
 				      struct i915_wa_list *wal)
 {
 	wa_masked_en(wal, INSTPM, INSTPM_FORCE_ORDERING);
+
+	/* WaDisable_RenderCache_OperationalFlush:snb */
+	wa_masked_dis(wal, CACHE_MODE_0, RC_OP_FLUSH_ENABLE);
 }
 
 static void gen7_ctx_workarounds_init(struct intel_engine_cs *engine,
 				      struct i915_wa_list *wal)
 {
 	wa_masked_en(wal, INSTPM, INSTPM_FORCE_ORDERING);
+	/* WaDisable_RenderCache_OperationalFlush:ivb,vlv,hsw */
+	wa_masked_dis(wal, CACHE_MODE_0_GEN7, RC_OP_FLUSH_ENABLE);
+
+	/*
+	 * BSpec says this must be set, even though
+	 * WaDisable4x2SubspanOptimization:ivb,hsw
+	 * WaDisable4x2SubspanOptimization isn't listed for VLV.
+	 */
+	wa_masked_en(wal,
+		     CACHE_MODE_1,
+		     PIXEL_SUBSPAN_COLLECT_OPT_DISABLE);
 }
 
 static void gen8_ctx_workarounds_init(struct intel_engine_cs *engine,
@@ -418,7 +432,7 @@ static void bdw_ctx_workarounds_init(struct intel_engine_cs *engine,
 		     /* WaForceContextSaveRestoreNonCoherent:bdw */
 		     HDC_FORCE_CONTEXT_SAVE_RESTORE_NON_COHERENT |
 		     /* WaDisableFenceDestinationToSLM:bdw (pre-prod) */
-		     (IS_BROADWELL_GT3(i915) ? HDC_FENCE_DEST_SLM_DISABLE : 0));
+		     (INTEL_INFO(i915)->gt == 3 ? HDC_FENCE_DEST_SLM_DISABLE : 0));
 }
 
 static void chv_ctx_workarounds_init(struct intel_engine_cs *engine,
@@ -634,6 +648,8 @@ static void cfl_ctx_workarounds_init(struct intel_engine_cs *engine,
 static void icl_ctx_workarounds_init(struct intel_engine_cs *engine,
 				     struct i915_wa_list *wal)
 {
+	struct drm_i915_private *i915 = engine->i915;
+
 	/* Wa_1406697149 (WaDisableBankHangMode:icl) */
 	wa_write(wal, GEN8_L3CNTLREG, GEN8_ERRDETBCTRL);
 
@@ -669,6 +685,15 @@ static void icl_ctx_workarounds_init(struct intel_engine_cs *engine,
 
 	/* Wa_1406306137:icl,ehl */
 	wa_mcr_masked_en(wal, GEN9_ROW_CHICKEN4, GEN11_DIS_PICK_2ND_EU);
+
+	if (IS_JASPERLAKE(i915) || IS_ELKHARTLAKE(i915)) {
+		/*
+		 * Disable Repacking for Compression (masked R/W access)
+		 * before rendering compressed surfaces for display.
+		 */
+		wa_masked_en(wal, CACHE_MODE_0_GEN7,
+			     DISABLE_REPACKING_FOR_COMPRESSION);
+	}
 }
 
 /*
@@ -691,16 +716,17 @@ static void gen12_ctx_workarounds_init(struct intel_engine_cs *engine,
 	struct drm_i915_private *i915 = engine->i915;
 
 	/*
-	 * Wa_1409142259:tgl,dg1,adl-p
+	 * Wa_1409142259:tgl,dg1,adl-p,adl-n
 	 * Wa_1409347922:tgl,dg1,adl-p
 	 * Wa_1409252684:tgl,dg1,adl-p
 	 * Wa_1409217633:tgl,dg1,adl-p
 	 * Wa_1409207793:tgl,dg1,adl-p
-	 * Wa_1409178076:tgl,dg1,adl-p
-	 * Wa_1408979724:tgl,dg1,adl-p
-	 * Wa_14010443199:tgl,rkl,dg1,adl-p
-	 * Wa_14010698770:tgl,rkl,dg1,adl-s,adl-p
-	 * Wa_1409342910:tgl,rkl,dg1,adl-s,adl-p
+	 * Wa_1409178076:tgl,dg1,adl-p,adl-n
+	 * Wa_1408979724:tgl,dg1,adl-p,adl-n
+	 * Wa_14010443199:tgl,rkl,dg1,adl-p,adl-n
+	 * Wa_14010698770:tgl,rkl,dg1,adl-s,adl-p,adl-n
+	 * Wa_1409342910:tgl,rkl,dg1,adl-s,adl-p,adl-n
+	 * Wa_22010465259:tgl,rkl,dg1,adl-s,adl-p,adl-n
 	 */
 	wa_masked_en(wal, GEN11_COMMON_SLICE_CHICKEN3,
 		     GEN12_DISABLE_CPS_AWARE_COLOR_PIPE);
@@ -741,6 +767,12 @@ static void gen12_ctx_workarounds_init(struct intel_engine_cs *engine,
 		/* Wa_1606376872 */
 		wa_masked_en(wal, COMMON_SLICE_CHICKEN4, DISABLE_TDC_LOAD_BALANCING_CALC);
 	}
+
+	/*
+	 * This bit must be set to enable performance optimization for fast
+	 * clears.
+	 */
+	wa_mcr_write_or(wal, GEN8_WM_CHICKEN2, WAIT_ON_DEPTH_STALL_DONE_DISABLE);
 }
 
 static void dg1_ctx_workarounds_init(struct intel_engine_cs *engine,
@@ -1318,7 +1350,7 @@ xehp_init_mcr(struct intel_gt *gt, struct i915_wa_list *wal)
 	 * We'll do our default/implicit steering based on GSLICE (in the
 	 * sliceid field) and DSS (in the subsliceid field).  If we can
 	 * find overlap between the valid MSLICE and/or LNCF values with
-	 * a suitable GSLICE, then we can just re-use the default value and
+	 * a suitable GSLICE, then we can just reuse the default value and
 	 * skip and explicit steering at runtime.
 	 *
 	 * We only need to look for overlap between GSLICE/MSLICE/LNCF to find
@@ -2537,7 +2569,7 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 				 GEN7_FF_DS_SCHED_HW);
 
 		/* WaDisablePSDDualDispatchEnable:ivb */
-		if (IS_IVB_GT1(i915))
+		if (INTEL_INFO(i915)->gt == 1)
 			wa_masked_en(wal,
 				     GEN7_HALF_SLICE_CHICKEN1,
 				     GEN7_PSD_SINGLE_PORT_DISPATCH_ENABLE);
@@ -2548,18 +2580,6 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 		wa_masked_en(wal,
 			     RING_MODE_GEN7(RENDER_RING_BASE),
 			     GFX_TLB_INVALIDATE_EXPLICIT | GFX_REPLAY_MODE);
-
-		/* WaDisable_RenderCache_OperationalFlush:ivb,vlv,hsw */
-		wa_masked_dis(wal, CACHE_MODE_0_GEN7, RC_OP_FLUSH_ENABLE);
-
-		/*
-		 * BSpec says this must be set, even though
-		 * WaDisable4x2SubspanOptimization:ivb,hsw
-		 * WaDisable4x2SubspanOptimization isn't listed for VLV.
-		 */
-		wa_masked_en(wal,
-			     CACHE_MODE_1,
-			     PIXEL_SUBSPAN_COLLECT_OPT_DISABLE);
 
 		/*
 		 * BSpec recommends 8x4 when MSAA is used,
@@ -2626,9 +2646,6 @@ rcs_engine_wa_init(struct intel_engine_cs *engine, struct i915_wa_list *wal)
 				    GEN6_GT_MODE,
 				    GEN6_WIZ_HASHING_MASK,
 				    GEN6_WIZ_HASHING_16x4);
-
-		/* WaDisable_RenderCache_OperationalFlush:snb */
-		wa_masked_dis(wal, CACHE_MODE_0, RC_OP_FLUSH_ENABLE);
 
 		/*
 		 * From the Sandybridge PRM, volume 1 part 3, page 24:

@@ -40,6 +40,7 @@ struct dc_sink;
 struct dc_stream_state;
 struct resource_context;
 struct display_stream_compressor;
+struct dc_mcache_params;
 
 // Configuration of the MALL on the SoC
 struct dml2_soc_mall_info {
@@ -107,6 +108,7 @@ struct dml2_dc_callbacks {
 	unsigned int (*get_max_flickerless_instant_vtotal_increase)(
 			struct dc_stream_state *stream,
 			bool is_gaming);
+	bool (*allocate_mcache)(struct dc_state *context, const struct dc_mcache_params *mcache_params);
 };
 
 struct dml2_dc_svp_callbacks {
@@ -238,7 +240,7 @@ struct dml2_configuration_options {
 	bool use_clock_dc_limits;
 	bool gpuvm_enable;
 	bool force_tdlut_enable;
-	struct dml2_soc_bb *bb_from_dmub;
+	void *bb_from_dmub;
 };
 
 /*
@@ -270,7 +272,7 @@ void dml2_reinit(const struct dc *in_dc,
  * dml2_validate - Determines if a display configuration is supported or not.
  * @in_dc: dc.
  * @context: dc_state to be validated.
- * @fast_validate: Fast validate will not populate context.res_ctx.
+ * @validate_mode: DC_VALIDATE_MODE_ONLY and DC_VALIDATE_MODE_AND_STATE_INDEX will not populate context.res_ctx.
  *
  * DML1.0 compatible interface for validation.
  *
@@ -293,7 +295,7 @@ void dml2_reinit(const struct dc *in_dc,
 bool dml2_validate(const struct dc *in_dc,
 				   struct dc_state *context,
 				   struct dml2_context *dml2,
-				   bool fast_validate);
+				   enum dc_validate_mode validate_mode);
 
 /*
  * dml2_extract_dram_and_fclk_change_support - Extracts the FCLK and UCLK change support info.

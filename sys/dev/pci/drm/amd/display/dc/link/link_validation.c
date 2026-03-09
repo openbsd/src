@@ -86,6 +86,10 @@ static bool dp_active_dongle_validate_timing(
 			if (!dongle_caps->is_dp_hdmi_ycbcr420_pass_through)
 				return false;
 			break;
+		case PIXEL_ENCODING_UNDEFINED:
+			/* These color depths are currently not supported */
+			ASSERT(false);
+			break;
 		default:
 			/* Invalid Pixel Encoding*/
 			return false;
@@ -103,6 +107,10 @@ static bool dp_active_dongle_validate_timing(
 		case COLOR_DEPTH_121212:
 			if (dongle_caps->dp_hdmi_max_bpc < 12)
 				return false;
+			break;
+		case COLOR_DEPTH_UNDEFINED:
+			/* These color depths are currently not supported */
+			ASSERT(false);
 			break;
 		case COLOR_DEPTH_141414:
 		case COLOR_DEPTH_161616:
@@ -255,6 +263,14 @@ uint32_t dp_link_bandwidth_kbps(
 	return link_rate_per_lane_kbps * link_settings->lane_count / 10000 * total_data_bw_efficiency_x10000;
 }
 
+static uint32_t dp_get_timing_bandwidth_kbps(
+	const struct dc_crtc_timing *timing,
+	const struct dc_link *link)
+{
+	return dc_bandwidth_in_kbps_from_timing(timing,
+			dc_link_get_highest_encoding_format(link));
+}
+
 static bool dp_validate_mode_timing(
 	struct dc_link *link,
 	const struct dc_crtc_timing *timing)
@@ -351,61 +367,260 @@ enum dc_status link_validate_mode_timing(
 	return DC_OK;
 }
 
-/*
- * This function calculates the bandwidth required for the stream timing
- * and aggregates the stream bandwidth for the respective dpia link
- *
- * @stream: pointer to the dc_stream_state struct instance
- * @num_streams: number of streams to be validated
- *
- * return: true if validation is succeeded
- */
-bool link_validate_dpia_bandwidth(const struct dc_stream_state *stream, const unsigned int num_streams)
+static const struct dc_tunnel_settings *get_dp_tunnel_settings(const struct dc_state *context,
+		const struct dc_stream_state *stream)
 {
-	int bw_needed[MAX_DPIA_NUM] = {0};
-	struct dc_link *dpia_link[MAX_DPIA_NUM] = {0};
-	int num_dpias = 0;
+	int i;
+	const struct dc_tunnel_settings *dp_tunnel_settings = NULL;
 
-	for (unsigned int i = 0; i < num_streams; ++i) {
-		if (stream[i].signal == SIGNAL_TYPE_DISPLAY_PORT) {
-			/* new dpia sst stream, check whether it exceeds max dpia */
-			if (num_dpias >= MAX_DPIA_NUM)
-				return false;
-
-			dpia_link[num_dpias] = stream[i].link;
-			bw_needed[num_dpias] = dc_bandwidth_in_kbps_from_timing(&stream[i].timing,
-					dc_link_get_highest_encoding_format(dpia_link[num_dpias]));
-			num_dpias++;
-		} else if (stream[i].signal == SIGNAL_TYPE_DISPLAY_PORT_MST) {
-			uint8_t j = 0;
-			/* check whether its a known dpia link */
-			for (; j < num_dpias; ++j) {
-				if (dpia_link[j] == stream[i].link)
-					break;
-			}
-
-			if (j == num_dpias) {
-				/* new dpia mst stream, check whether it exceeds max dpia */
-				if (num_dpias >= MAX_DPIA_NUM)
-					return false;
-				else {
-					dpia_link[j] = stream[i].link;
-					num_dpias++;
-				}
-			}
-
-			bw_needed[j] += dc_bandwidth_in_kbps_from_timing(&stream[i].timing,
-				dc_link_get_highest_encoding_format(dpia_link[j]));
+	for (i = 0; i < MAX_PIPES; i++) {
+		if (context->res_ctx.pipe_ctx[i].stream && (context->res_ctx.pipe_ctx[i].stream == stream)) {
+			dp_tunnel_settings = &context->res_ctx.pipe_ctx[i].link_config.dp_tunnel_settings;
+			break;
 		}
 	}
 
-	/* Include dp overheads */
-	for (uint8_t i = 0; i < num_dpias; ++i) {
-		int dp_overhead = 0;
+	return dp_tunnel_settings;
+}
 
-		dp_overhead = link_dp_dpia_get_dp_overhead_in_dp_tunneling(dpia_link[i]);
-		bw_needed[i] += dp_overhead;
+/*
+ * Calculates the DP tunneling bandwidth required for the stream timing
+ * and aggregates the stream bandwidth for the respective DP tunneling link
+ *
+ * return: dc_status
+ */
+enum dc_status link_validate_dp_tunnel_bandwidth(const struct dc *dc, const struct dc_state *new_ctx)
+{
+	struct dc_validation_dpia_set dpia_link_sets[MAX_DPIA_NUM] = { 0 };
+	uint8_t link_count = 0;
+	enum dc_status result = DC_OK;
+
+	// Iterate through streams in the new context
+	for (uint8_t i = 0; (i < MAX_PIPES && i < new_ctx->stream_count); i++) {
+		const struct dc_stream_state *stream = new_ctx->streams[i];
+		const struct dc_link *link;
+		const struct dc_tunnel_settings *dp_tunnel_settings;
+		uint32_t timing_bw;
+
+		if (stream == NULL)
+			continue;
+
+		link = stream->link;
+
+		if (!(link && (stream->signal == SIGNAL_TYPE_DISPLAY_PORT
+				|| stream->signal == SIGNAL_TYPE_DISPLAY_PORT_MST)))
+			continue;
+
+		if ((link->ep_type == DISPLAY_ENDPOINT_USB4_DPIA) && (link->hpd_status == false))
+			continue;
+
+		dp_tunnel_settings = get_dp_tunnel_settings(new_ctx, stream);
+
+		if ((dp_tunnel_settings == NULL) || (dp_tunnel_settings->should_use_dp_bw_allocation == false))
+			continue;
+
+		timing_bw = dp_get_timing_bandwidth_kbps(&stream->timing, link);
+
+		// Find an existing entry for this 'link' in 'dpia_link_sets'
+		for (uint8_t j = 0; j < MAX_DPIA_NUM; j++) {
+			bool is_new_slot = false;
+
+			if (dpia_link_sets[j].link == NULL) {
+				is_new_slot = true;
+				link_count++;
+				dpia_link_sets[j].required_bw = 0;
+				dpia_link_sets[j].link = link;
+			}
+
+			if (is_new_slot || (dpia_link_sets[j].link == link)) {
+				dpia_link_sets[j].tunnel_settings = dp_tunnel_settings;
+				dpia_link_sets[j].required_bw += timing_bw;
+				break;
+			}
+		}
 	}
 
-	return dpia_validate_usb4_bw(dpia_link, bw_needed, num_dpias);
+	if (link_count && link_dpia_validate_dp_tunnel_bandwidth(dpia_link_sets, link_count) == false)
+		result = DC_FAIL_DP_TUNNEL_BW_VALIDATE;
+
+	return result;
 }
+
+struct dp_audio_layout_config {
+	uint8_t layouts_per_sample_denom;
+	uint8_t symbols_per_layout;
+	uint8_t max_layouts_per_audio_sdp;
+};
+
+static void get_audio_layout_config(
+	uint32_t channel_count,
+	enum dp_link_encoding encoding,
+	struct dp_audio_layout_config *output)
+{
+	memset(output, 0, sizeof(struct dp_audio_layout_config));
+
+	/* Assuming L-PCM audio. Current implementation uses max 1 layout per SDP,
+	 * with each layout being the same size (8ch layout).
+	 */
+	if (encoding == DP_8b_10b_ENCODING) {
+		if (channel_count == 2) {
+			output->layouts_per_sample_denom = 4;
+			output->symbols_per_layout = 40;
+			output->max_layouts_per_audio_sdp = 1;
+		} else if (channel_count == 8 || channel_count == 6) {
+			output->layouts_per_sample_denom = 1;
+			output->symbols_per_layout = 40;
+			output->max_layouts_per_audio_sdp = 1;
+		}
+	} else if (encoding == DP_128b_132b_ENCODING) {
+		if (channel_count == 2) {
+			output->layouts_per_sample_denom = 4;
+			output->symbols_per_layout = 10;
+			output->max_layouts_per_audio_sdp = 1;
+		} else if (channel_count == 8 || channel_count == 6) {
+			output->layouts_per_sample_denom = 1;
+			output->symbols_per_layout = 10;
+			output->max_layouts_per_audio_sdp = 1;
+		}
+	}
+}
+
+static uint32_t get_av_stream_map_lane_count(
+	enum dp_link_encoding encoding,
+	enum dc_lane_count lane_count,
+	bool is_mst)
+{
+	uint32_t av_stream_map_lane_count = 0;
+
+	if (encoding == DP_8b_10b_ENCODING) {
+		if (!is_mst)
+			av_stream_map_lane_count = lane_count;
+		else
+			av_stream_map_lane_count = 4;
+	} else if (encoding == DP_128b_132b_ENCODING) {
+		av_stream_map_lane_count = 4;
+	}
+
+	ASSERT(av_stream_map_lane_count != 0);
+
+	return av_stream_map_lane_count;
+}
+
+static uint32_t get_audio_sdp_overhead(
+	enum dp_link_encoding encoding,
+	enum dc_lane_count lane_count,
+	bool is_mst)
+{
+	uint32_t audio_sdp_overhead = 0;
+
+	if (encoding == DP_8b_10b_ENCODING) {
+		if (is_mst)
+			audio_sdp_overhead = 16; /* 4 * 2 + 8 */
+		else
+			audio_sdp_overhead = lane_count * 2 + 8;
+	} else if (encoding == DP_128b_132b_ENCODING) {
+		audio_sdp_overhead = 10; /* 4 x 2.5 */
+	}
+
+	ASSERT(audio_sdp_overhead != 0);
+
+	return audio_sdp_overhead;
+}
+
+/* Current calculation only applicable for 8b/10b MST and 128b/132b SST/MST.
+ */
+static uint32_t calculate_overhead_hblank_bw_in_symbols(
+	uint32_t max_slice_h)
+{
+	uint32_t overhead_hblank_bw = 0; /* in stream symbols */
+
+	overhead_hblank_bw += max_slice_h * 4; /* EOC overhead */
+	overhead_hblank_bw += 12; /* Main link overhead (VBID, BS/BE) */
+
+	return overhead_hblank_bw;
+}
+
+uint32_t dp_required_hblank_size_bytes(
+	const struct dc_link *link,
+	struct dp_audio_bandwidth_params *audio_params)
+{
+	/* Main logic from dce_audio is duplicated here, with the main
+	 * difference being:
+	 * - Pre-determined lane count of 4
+	 * - Assumed 16 dsc slices for worst case
+	 * - Assumed SDP split disabled for worst case
+	 * TODO: Unify logic from dce_audio to prevent duplicated logic.
+	 */
+
+	const struct dc_crtc_timing *timing = audio_params->crtc_timing;
+	const uint32_t channel_count = audio_params->channel_count;
+	const uint32_t sample_rate_hz = audio_params->sample_rate_hz;
+	const enum dp_link_encoding link_encoding = audio_params->link_encoding;
+
+	// 8b/10b MST and 128b/132b are always 4 logical lanes.
+	const uint32_t lane_count = 4;
+	const bool is_mst = (link->connector_signal == SIGNAL_TYPE_DISPLAY_PORT);
+	// Maximum slice count is with ODM 4:1, 4 slices per DSC
+	const uint32_t max_slices_h = 16;
+
+	const uint32_t av_stream_map_lane_count = get_av_stream_map_lane_count(
+			link_encoding, lane_count, is_mst);
+	const uint32_t audio_sdp_overhead = get_audio_sdp_overhead(
+			link_encoding, lane_count, is_mst);
+	struct dp_audio_layout_config layout_config;
+
+	if (link_encoding == DP_8b_10b_ENCODING && link->connector_signal == SIGNAL_TYPE_DISPLAY_PORT)
+		return 0;
+
+	get_audio_layout_config(
+			channel_count, link_encoding, &layout_config);
+
+	/* DP spec recommends between 1.05 to 1.1 safety margin to prevent sample under-run */
+	struct fixed31_32 audio_sdp_margin = dc_fixpt_from_fraction(110, 100);
+	struct fixed31_32 horizontal_line_freq_khz = dc_fixpt_from_fraction(
+			timing->pix_clk_100hz, (long long)timing->h_total * 10);
+	struct fixed31_32 samples_per_line;
+	struct fixed31_32 layouts_per_line;
+	struct fixed31_32 symbols_per_sdp_max_layout;
+	struct fixed31_32 remainder;
+	uint32_t num_sdp_with_max_layouts;
+	uint32_t required_symbols_per_hblank;
+	uint32_t required_bytes_per_hblank = 0;
+
+	samples_per_line = dc_fixpt_from_fraction(sample_rate_hz, 1000);
+	samples_per_line = dc_fixpt_div(samples_per_line, horizontal_line_freq_khz);
+	layouts_per_line = dc_fixpt_div_int(samples_per_line, layout_config.layouts_per_sample_denom);
+	// HBlank expansion usage assumes SDP split disabled to allow for worst case.
+	layouts_per_line = dc_fixpt_from_int(dc_fixpt_ceil(layouts_per_line));
+
+	num_sdp_with_max_layouts = dc_fixpt_floor(
+			dc_fixpt_div_int(layouts_per_line, layout_config.max_layouts_per_audio_sdp));
+	symbols_per_sdp_max_layout = dc_fixpt_from_int(
+			layout_config.max_layouts_per_audio_sdp * layout_config.symbols_per_layout);
+	symbols_per_sdp_max_layout = dc_fixpt_add_int(symbols_per_sdp_max_layout, audio_sdp_overhead);
+	symbols_per_sdp_max_layout = dc_fixpt_mul(symbols_per_sdp_max_layout, audio_sdp_margin);
+	required_symbols_per_hblank = num_sdp_with_max_layouts;
+	required_symbols_per_hblank *= ((dc_fixpt_ceil(symbols_per_sdp_max_layout) + av_stream_map_lane_count) /
+			av_stream_map_lane_count) *	av_stream_map_lane_count;
+
+	if (num_sdp_with_max_layouts !=	dc_fixpt_ceil(
+			dc_fixpt_div_int(layouts_per_line, layout_config.max_layouts_per_audio_sdp))) {
+		remainder = dc_fixpt_sub_int(layouts_per_line,
+				num_sdp_with_max_layouts * layout_config.max_layouts_per_audio_sdp);
+		remainder = dc_fixpt_mul_int(remainder, layout_config.symbols_per_layout);
+		remainder = dc_fixpt_add_int(remainder, audio_sdp_overhead);
+		remainder = dc_fixpt_mul(remainder, audio_sdp_margin);
+		required_symbols_per_hblank += ((dc_fixpt_ceil(remainder) + av_stream_map_lane_count) /
+				av_stream_map_lane_count) * av_stream_map_lane_count;
+	}
+
+	required_symbols_per_hblank += calculate_overhead_hblank_bw_in_symbols(max_slices_h);
+
+	if (link_encoding == DP_8b_10b_ENCODING)
+		required_bytes_per_hblank = required_symbols_per_hblank; // 8 bits per 8b/10b symbol
+	else if (link_encoding == DP_128b_132b_ENCODING)
+		required_bytes_per_hblank = required_symbols_per_hblank * 4; // 32 bits per 128b/132b symbol
+
+	return required_bytes_per_hblank;
+}
+

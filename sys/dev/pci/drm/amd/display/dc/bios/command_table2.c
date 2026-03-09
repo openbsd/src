@@ -209,6 +209,7 @@ static enum bp_result encoder_control_fallback(
  ******************************************************************************
  *****************************************************************************/
 
+
 static enum bp_result transmitter_control_v1_6(
 	struct bios_parser *bp,
 	struct bp_transmitter_control *cntl);
@@ -323,6 +324,21 @@ static void transmitter_control_dmcub_v1_7(
 	dc_wake_and_execute_dmub_cmd(dmcub->ctx, &cmd, DM_DMUB_WAIT_TYPE_WAIT);
 }
 
+static struct dc_link *get_link_by_phy_id(struct dc *p_dc, uint32_t phy_id)
+{
+	struct dc_link *link = NULL;
+
+	// Get Transition Bitmask from dc_link structure associated with PHY
+	for (uint8_t link_id = 0; link_id < MAX_LINKS; link_id++) {
+		if (phy_id == p_dc->links[link_id]->link_enc->transmitter) {
+			link = p_dc->links[link_id];
+			break;
+		}
+	}
+
+	return link;
+}
+
 static enum bp_result transmitter_control_v1_7(
 	struct bios_parser *bp,
 	struct bp_transmitter_control *cntl)
@@ -361,7 +377,38 @@ static enum bp_result transmitter_control_v1_7(
 
 	if (bp->base.ctx->dc->ctx->dmub_srv &&
 		bp->base.ctx->dc->debug.dmub_command_table) {
+		struct dm_process_phy_transition_init_params process_phy_transition_init_params = {0};
+		struct dc_link *link = get_link_by_phy_id(bp->base.ctx->dc, dig_v1_7.phyid);
+		bool is_phy_transition_interlock_allowed = false;
+		uint8_t action = dig_v1_7.action;
+
+		if (link) {
+			if (link->phy_transition_bitmask &&
+				(action == TRANSMITTER_CONTROL_ENABLE || action == TRANSMITTER_CONTROL_DISABLE)) {
+				is_phy_transition_interlock_allowed = true;
+
+				// Prepare input parameters for processing ACPI retimers
+				process_phy_transition_init_params.action                   = action;
+				process_phy_transition_init_params.display_port_lanes_count = cntl->lanes_number;
+				process_phy_transition_init_params.phy_id                   = dig_v1_7.phyid;
+				process_phy_transition_init_params.signal                   = cntl->signal;
+				process_phy_transition_init_params.sym_clock_10khz          = dig_v1_7.symclk_units.symclk_10khz;
+				process_phy_transition_init_params.display_port_link_rate   = link->cur_link_settings.link_rate;
+				process_phy_transition_init_params.transition_bitmask       = link->phy_transition_bitmask;
+			}
+			dig_v1_7.skip_phy_ssc_reduction = link->wa_flags.skip_phy_ssc_reduction;
+		}
+
+		// Handle PRE_OFF_TO_ON: Process ACPI PHY Transition Interlock
+		if (is_phy_transition_interlock_allowed && action == TRANSMITTER_CONTROL_ENABLE)
+			dm_acpi_process_phy_transition_interlock(bp->base.ctx, process_phy_transition_init_params);
+
 		transmitter_control_dmcub_v1_7(bp->base.ctx->dmub_srv, &dig_v1_7);
+
+		// Handle POST_ON_TO_OFF: Process ACPI PHY Transition Interlock
+		if (is_phy_transition_interlock_allowed && action == TRANSMITTER_CONTROL_DISABLE)
+			dm_acpi_process_phy_transition_interlock(bp->base.ctx, process_phy_transition_init_params);
+
 		return BP_RESULT_OK;
 	}
 
@@ -1037,3 +1084,4 @@ void dal_firmware_parser_init_cmd_tbl(struct bios_parser *bp)
 
 	init_enable_lvtma_control(bp);
 }
+

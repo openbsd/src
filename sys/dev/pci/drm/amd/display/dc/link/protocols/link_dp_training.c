@@ -272,7 +272,7 @@ void dp_wait_for_training_aux_rd_interval(
 	struct dc_link *link,
 	uint32_t wait_in_micro_secs)
 {
-	fsleep(wait_in_micro_secs);
+	usleep_range_state(wait_in_micro_secs, wait_in_micro_secs, TASK_UNINTERRUPTIBLE);
 
 	DC_LOG_HW_LINK_TRAINING("%s:\n wait = %d\n",
 		__func__,
@@ -736,10 +736,12 @@ void override_training_settings(
 		lt_settings->pre_emphasis = overrides->pre_emphasis;
 	if (overrides->post_cursor2 != NULL)
 		lt_settings->post_cursor2 = overrides->post_cursor2;
+	if (link->wa_flags.force_dp_ffe_preset && !dp_is_lttpr_present(link))
+		lt_settings->ffe_preset = &link->forced_dp_ffe_preset;
 	if (overrides->ffe_preset != NULL)
 		lt_settings->ffe_preset = overrides->ffe_preset;
 	/* Override HW lane settings with BIOS forced values if present */
-	if ((link->chip_caps & EXT_DISPLAY_PATH_CAPS__DP_FIXED_VS_EN) &&
+	if ((link->chip_caps & AMD_EXT_DISPLAY_PATH_CAPS__DP_FIXED_VS_EN) &&
 			lt_settings->lttpr_mode == LTTPR_MODE_TRANSPARENT) {
 		lt_settings->voltage_swing = &link->bios_forced_drive_settings.VOLTAGE_SWING;
 		lt_settings->pre_emphasis = &link->bios_forced_drive_settings.PRE_EMPHASIS;
@@ -783,7 +785,6 @@ void override_training_settings(
 		lt_settings->lttpr_mode = LTTPR_MODE_NON_LTTPR;
 
 	dp_get_lttpr_mode_override(link, &lt_settings->lttpr_mode);
-
 }
 
 enum dc_dp_training_pattern decide_cr_training_pattern(
@@ -799,19 +800,23 @@ enum dc_dp_training_pattern decide_cr_training_pattern(
 }
 
 enum dc_dp_training_pattern decide_eq_training_pattern(struct dc_link *link,
+		const struct link_resource *link_res,
 		const struct dc_link_settings *link_settings)
 {
-	struct link_encoder *link_enc;
+	struct link_encoder *link_enc = link_res->dio_link_enc;
 	struct encoder_feature_support *enc_caps;
 	struct dpcd_caps *rx_caps = &link->dpcd_caps;
 	enum dc_dp_training_pattern pattern = DP_TRAINING_PATTERN_SEQUENCE_2;
 
-	link_enc = link_enc_cfg_get_link_enc(link);
-	ASSERT(link_enc);
-	enc_caps = &link_enc->features;
-
 	switch (link_dp_get_encoding_format(link_settings)) {
 	case DP_8b_10b_ENCODING:
+		if (!link->dc->config.unify_link_enc_assignment)
+			link_enc = link_enc_cfg_get_link_enc(link);
+
+		if (!link_enc)
+			break;
+
+		enc_caps = &link_enc->features;
 		if (enc_caps->flags.bits.IS_TPS4_CAPABLE &&
 				rx_caps->max_down_spread.bits.TPS4_SUPPORTED)
 			pattern = DP_TRAINING_PATTERN_SEQUENCE_4;
@@ -884,13 +889,14 @@ void dp_decide_lane_settings(
 
 void dp_decide_training_settings(
 		struct dc_link *link,
+		const struct link_resource *link_res,
 		const struct dc_link_settings *link_settings,
 		struct link_training_settings *lt_settings)
 {
 	if (link_dp_get_encoding_format(link_settings) == DP_8b_10b_ENCODING)
-		decide_8b_10b_training_settings(link, link_settings, lt_settings);
+		decide_8b_10b_training_settings(link, link_res, link_settings, lt_settings);
 	else if (link_dp_get_encoding_format(link_settings) == DP_128b_132b_ENCODING)
-		decide_128b_132b_training_settings(link, link_settings, lt_settings);
+		decide_128b_132b_training_settings(link, link_res, link_settings, lt_settings);
 }
 
 
@@ -1112,9 +1118,13 @@ enum dc_status dpcd_set_link_settings(
 
 	status = core_link_write_dpcd(link, DP_DOWNSPREAD_CTRL,
 		&downspread.raw, sizeof(downspread));
+	if (status != DC_OK)
+		DC_LOG_ERROR("%s:%d: core_link_write_dpcd (DP_DOWNSPREAD_CTRL) failed\n", __func__, __LINE__);
 
 	status = core_link_write_dpcd(link, DP_LANE_COUNT_SET,
 		&lane_count_set.raw, 1);
+	if (status != DC_OK)
+		DC_LOG_ERROR("%s:%d: core_link_write_dpcd (DP_LANE_COUNT_SET) failed\n", __func__, __LINE__);
 
 	if (link->dpcd_caps.dpcd_rev.raw >= DPCD_REV_13 &&
 			lt_settings->link_settings.use_link_rate_set == true) {
@@ -1130,12 +1140,19 @@ enum dc_status dpcd_set_link_settings(
 					supported_link_rates, sizeof(supported_link_rates));
 		}
 		status = core_link_write_dpcd(link, DP_LINK_BW_SET, &rate, 1);
+		if (status != DC_OK)
+			DC_LOG_ERROR("%s:%d: core_link_write_dpcd (DP_LINK_BW_SET) failed\n", __func__, __LINE__);
+
 		status = core_link_write_dpcd(link, DP_LINK_RATE_SET,
 				&lt_settings->link_settings.link_rate_set, 1);
+		if (status != DC_OK)
+			DC_LOG_ERROR("%s:%d: core_link_write_dpcd (DP_LINK_RATE_SET) failed\n", __func__, __LINE__);
 	} else {
 		rate = get_dpcd_link_rate(&lt_settings->link_settings);
 
 		status = core_link_write_dpcd(link, DP_LINK_BW_SET, &rate, 1);
+		if (status != DC_OK)
+			DC_LOG_ERROR("%s:%d: core_link_write_dpcd (DP_LINK_BW_SET) failed\n", __func__, __LINE__);
 	}
 
 	if (rate) {
@@ -1548,6 +1565,7 @@ enum link_training_result dp_perform_link_training(
 	/* decide training settings */
 	dp_decide_training_settings(
 			link,
+			link_res,
 			link_settings,
 			&lt_settings);
 
@@ -1561,14 +1579,15 @@ enum link_training_result dp_perform_link_training(
 
 	/* configure link prior to entering training mode */
 	dpcd_configure_lttpr_mode(link, &lt_settings);
-	dp_set_fec_ready(link, link_res, lt_settings.should_set_fec_ready);
+	if (link_dp_get_encoding_format(link_settings) == DP_8b_10b_ENCODING)
+		dp_set_fec_ready(link, link_res, lt_settings.should_set_fec_ready);
 	dpcd_configure_channel_coding(link, &lt_settings);
 
 	/* enter training mode:
 	 * Per DP specs starting from here, DPTX device shall not issue
 	 * Non-LT AUX transactions inside training mode.
 	 */
-	if ((link->chip_caps & EXT_DISPLAY_PATH_CAPS__DP_FIXED_VS_EN) && encoding == DP_8b_10b_ENCODING)
+	if (((link->chip_caps & AMD_EXT_DISPLAY_PATH_CAPS__EXT_CHIP_MASK) == AMD_EXT_DISPLAY_PATH_CAPS__DP_FIXED_VS_EN) && encoding == DP_8b_10b_ENCODING)
 		status = dp_perform_fixed_vs_pe_training_sequence(link, link_res, &lt_settings);
 	else if (encoding == DP_8b_10b_ENCODING)
 		status = dp_perform_8b_10b_link_training(link, link_res, &lt_settings);
@@ -1708,6 +1727,15 @@ bool perform_link_training_with_retries(
 			 */
 			if (j == (attempts - 1) || (status == LINK_TRAINING_ABORT))
 				break;
+		}
+
+		if (link->ep_type == DISPLAY_ENDPOINT_USB4_DPIA &&
+				stream->signal == SIGNAL_TYPE_DISPLAY_PORT_MST &&
+				!link->dc->config.enable_dpia_pre_training) {
+			if (j == (attempts - 1))
+				do_fallback = true;
+			else
+				do_fallback = false;
 		}
 
 		if (j == (attempts - 1)) {

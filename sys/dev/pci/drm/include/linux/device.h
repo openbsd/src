@@ -31,6 +31,8 @@ struct device_attribute {
 	struct device_attribute dev_attr_##_name
 #define DEVICE_ATTR_RO(_name) \
 	struct device_attribute dev_attr_##_name
+#define DEVICE_ATTR_RW(_name) \
+	struct device_attribute dev_attr_##_name
 
 #define device_create_file(a, b)	0
 #define device_remove_file(a, b)
@@ -80,15 +82,29 @@ devm_device_add_group(struct device *dev, const struct attribute_group *g)
 	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 
-#define dev_warn_once(dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
-	    __func__ , ## arg)
+#define dev_warn_once(dev, fmt, arg...)					\
+({									\
+	static int _warned;						\
+	if (!_warned) {							\
+		printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
+		    __func__ , ## arg);					\
+		_warned = 1;						\
+	}								\
+})
+
 #define dev_WARN_ONCE(dev, cond, fmt, arg...)					\
 	WARN_ONCE(cond, "drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
-#define dev_err_once(dev, fmt, arg...)				\
-	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
-	    __func__ , ## arg)
+
+#define dev_err_once(dev, fmt, arg...)					\
+({									\
+	static int _warned;						\
+	if (!_warned) {							\
+		printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
+		    __func__ , ## arg);					\
+		_warned = 1;						\
+	}								\
+})
 	
 #define dev_err_probe(dev, err, fmt, arg...)				\
 	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
@@ -97,8 +113,16 @@ devm_device_add_group(struct device *dev, const struct attribute_group *g)
 #ifdef DRMDEBUG
 #define dev_info(dev, fmt, arg...)				\
 	printf("drm: " fmt, ## arg)
+
 #define dev_info_once(dev, fmt, arg...)				\
-	printf("drm: " fmt, ## arg)
+({								\
+	static int _warned;					\
+	if (!_warned) {						\
+		printf("drm: " fmt, ## arg);			\
+		_warned = 1;					\
+	}							\
+})
+
 #define dev_dbg(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *DEBUG* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)

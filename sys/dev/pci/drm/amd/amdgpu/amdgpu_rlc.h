@@ -237,7 +237,21 @@ struct amdgpu_rlc_funcs {
 	void (*unset_safe_mode)(struct amdgpu_device *adev, int xcc_id);
 	int  (*init)(struct amdgpu_device *adev);
 	u32  (*get_csb_size)(struct amdgpu_device *adev);
-	void (*get_csb_buffer)(struct amdgpu_device *adev, volatile u32 *buffer);
+
+	/**
+	 * @get_csb_buffer: Get the clear state to be put into the hardware.
+	 *
+	 * The parameter adev is used to get the CS data and other gfx info,
+	 * and buffer is the RLC CS pointer
+	 *
+	 * Sometimes, the user space puts a request to clear the state in the
+	 * command buffer; this function provides the clear state that gets put
+	 * into the hardware. Note that the driver programs Clear State
+	 * Indirect Buffer (CSB) explicitly when it sets up the kernel rings,
+	 * and it also provides a pointer to it which is used by the firmware
+	 * to load the clear state in some cases.
+	 */
+	void (*get_csb_buffer)(struct amdgpu_device *adev, u32 *buffer);
 	int  (*get_cp_table_num)(struct amdgpu_device *adev);
 	int  (*resume)(struct amdgpu_device *adev);
 	void (*stop)(struct amdgpu_device *adev);
@@ -261,19 +275,19 @@ struct amdgpu_rlc {
 	/* for power gating */
 	struct amdgpu_bo        *save_restore_obj;
 	uint64_t                save_restore_gpu_addr;
-	volatile uint32_t       *sr_ptr;
+	uint32_t		*sr_ptr;
 	const u32               *reg_list;
 	u32                     reg_list_size;
 	/* for clear state */
 	struct amdgpu_bo        *clear_state_obj;
 	uint64_t                clear_state_gpu_addr;
-	volatile uint32_t       *cs_ptr;
+	uint32_t		*cs_ptr;
 	const struct cs_section_def   *cs_data;
 	u32                     clear_state_size;
 	/* for cp tables */
 	struct amdgpu_bo        *cp_table_obj;
 	uint64_t                cp_table_gpu_addr;
-	volatile uint32_t       *cp_table_ptr;
+	uint32_t		*cp_table_ptr;
 	u32                     cp_table_size;
 
 	/* safe mode for updating CG/PG state */

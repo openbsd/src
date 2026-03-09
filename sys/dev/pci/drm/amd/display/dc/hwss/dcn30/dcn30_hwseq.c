@@ -50,7 +50,7 @@
 #include "dpcd_defs.h"
 #include "dcn20/dcn20_hwseq.h"
 #include "dcn30/dcn30_resource.h"
-#include "link.h"
+#include "link_service.h"
 #include "dc_state_priv.h"
 
 
@@ -74,6 +74,7 @@ void dcn30_log_color_state(struct dc *dc,
 {
 	struct dc_context *dc_ctx = dc->ctx;
 	struct resource_pool *pool = dc->res_pool;
+	bool is_gamut_remap_available = false;
 	int i;
 
 	DTN_INFO("DPP:  DGAM ROM  DGAM ROM type  DGAM LUT  SHAPER mode"
@@ -88,16 +89,16 @@ void dcn30_log_color_state(struct dc *dc,
 		struct dcn_dpp_state s = {0};
 
 		dpp->funcs->dpp_read_state(dpp, &s);
-		dpp->funcs->dpp_get_gamut_remap(dpp, &s.gamut_remap);
+
+		if (dpp->funcs->dpp_get_gamut_remap) {
+			dpp->funcs->dpp_get_gamut_remap(dpp, &s.gamut_remap);
+			is_gamut_remap_available = true;
+		}
 
 		if (!s.is_enabled)
 			continue;
 
-		DTN_INFO("[%2d]:  %7x  %13s  %8s  %11s  %10s  %15s  %10s  %9s"
-			 "  %12s  "
-			 "%010lld %010lld %010lld %010lld "
-			 "%010lld %010lld %010lld %010lld "
-			 "%010lld %010lld %010lld %010lld",
+		DTN_INFO("[%2d]:  %7x  %13s  %8s  %11s  %10s  %15s  %10s  %9s",
 			dpp->inst,
 			s.pre_dgam_mode,
 			(s.pre_dgam_select == 0) ? "sRGB" :
@@ -121,7 +122,14 @@ void dcn30_log_color_state(struct dc *dc,
 			(s.lut3d_size == 0) ? "17x17x17" : "9x9x9",
 			(s.rgam_lut_mode == 0) ? "Bypass" :
 			 ((s.rgam_lut_mode == 1) ? "RAM A" :
-						   "RAM B"),
+						   "RAM B"));
+
+		if (is_gamut_remap_available) {
+			DTN_INFO("  %12s  "
+				 "%010lld %010lld %010lld %010lld "
+				 "%010lld %010lld %010lld %010lld "
+				 "%010lld %010lld %010lld %010lld",
+
 			(s.gamut_remap.gamut_adjust_type == 0) ? "Bypass" :
 				((s.gamut_remap.gamut_adjust_type == 1) ? "HW" :
 									  "SW"),
@@ -137,6 +145,8 @@ void dcn30_log_color_state(struct dc *dc,
 			s.gamut_remap.temperature_matrix[9].value,
 			s.gamut_remap.temperature_matrix[10].value,
 			s.gamut_remap.temperature_matrix[11].value);
+		}
+
 		DTN_INFO("\n");
 	}
 	DTN_INFO("\n");
@@ -228,7 +238,7 @@ bool dcn30_set_blend_lut(
 	if (plane_state->blend_tf.type == TF_TYPE_HWPWL)
 		blend_lut = &plane_state->blend_tf.pwl;
 	else if (plane_state->blend_tf.type == TF_TYPE_DISTRIBUTED_POINTS) {
-		result = cm3_helper_translate_curve_to_hw_format(
+		result = cm3_helper_translate_curve_to_hw_format(plane_state->ctx,
 				&plane_state->blend_tf, &dpp_base->regamma_params, false);
 		if (!result)
 			return result;
@@ -245,6 +255,7 @@ static bool dcn30_set_mpc_shaper_3dlut(struct pipe_ctx *pipe_ctx,
 {
 	struct dpp *dpp_base = pipe_ctx->plane_res.dpp;
 	int mpcc_id = pipe_ctx->plane_res.hubp->inst;
+	struct dc *dc = pipe_ctx->stream->ctx->dc;
 	struct mpc *mpc = pipe_ctx->stream_res.opp->ctx->dc->res_pool->mpc;
 	bool result = false;
 	int acquired_rmu = 0;
@@ -283,8 +294,14 @@ static bool dcn30_set_mpc_shaper_3dlut(struct pipe_ctx *pipe_ctx,
 
 		result = mpc->funcs->program_3dlut(mpc, &stream->lut3d_func->lut_3d,
 						   stream->lut3d_func->state.bits.rmu_mux_num);
+		if (!result)
+			DC_LOG_ERROR("%s: program_3dlut failed\n", __func__);
+
 		result = mpc->funcs->program_shaper(mpc, shaper_lut,
 						    stream->lut3d_func->state.bits.rmu_mux_num);
+		if (!result)
+			DC_LOG_ERROR("%s: program_shaper failed\n", __func__);
+
 	} else {
 		// loop through the available mux and release the requested mpcc_id
 		mpc->funcs->release_rmu(mpc, mpcc_id);
@@ -316,8 +333,9 @@ bool dcn30_set_input_transfer_func(struct dc *dc,
 	if (plane_state->in_transfer_func.type == TF_TYPE_HWPWL)
 		params = &plane_state->in_transfer_func.pwl;
 	else if (plane_state->in_transfer_func.type == TF_TYPE_DISTRIBUTED_POINTS &&
-		cm3_helper_translate_curve_to_hw_format(&plane_state->in_transfer_func,
-				&dpp_base->degamma_params, false))
+		cm3_helper_translate_curve_to_hw_format(plane_state->ctx,
+							&plane_state->in_transfer_func,
+							&dpp_base->degamma_params, false))
 		params = &dpp_base->degamma_params;
 
 	result = dpp_base->funcs->dpp_program_gamcor_lut(dpp_base, params);
@@ -388,7 +406,7 @@ bool dcn30_set_output_transfer_func(struct dc *dc,
 				params = &stream->out_transfer_func.pwl;
 			else if (pipe_ctx->stream->out_transfer_func.type ==
 					TF_TYPE_DISTRIBUTED_POINTS &&
-					cm3_helper_translate_curve_to_hw_format(
+					cm3_helper_translate_curve_to_hw_format(stream->ctx,
 					&stream->out_transfer_func,
 					&mpc->blender_params, false))
 				params = &mpc->blender_params;
@@ -486,7 +504,6 @@ bool dcn30_mmhubbub_warmup(
 	}
 	/*following is the original: warmup each DWB's mcif buffer*/
 	for (i = 0; i < num_dwb; i++) {
-		dwb = dc->res_pool->dwbc[wb_info[i].dwb_pipe_inst];
 		mcif_wb = dc->res_pool->mcif_wb[wb_info[i].dwb_pipe_inst];
 		/*warmup is for VM mode only*/
 		if (wb_info[i].mcif_buf_params.p_vmid == 0)
@@ -1184,4 +1201,79 @@ void dcn30_prepare_bandwidth(struct dc *dc,
 
 	if (!dc->clk_mgr->clks.fw_based_mclk_switching)
 		dc_dmub_srv_p_state_delegate(dc, false, context);
+}
+
+void dcn30_wait_for_all_pending_updates(const struct pipe_ctx *pipe_ctx)
+{
+	struct timing_generator *tg = pipe_ctx->stream_res.tg;
+	bool pending_updates = false;
+	unsigned int i;
+
+	if (tg && tg->funcs->is_tg_enabled(tg)) {
+		// Poll for 100ms maximum
+		for (i = 0; i < 100000; i++) {
+			pending_updates = false;
+			if (tg->funcs->get_optc_double_buffer_pending)
+				pending_updates |= tg->funcs->get_optc_double_buffer_pending(tg);
+
+			if (tg->funcs->get_otg_double_buffer_pending)
+				pending_updates |= tg->funcs->get_otg_double_buffer_pending(tg);
+
+			if (tg->funcs->get_pipe_update_pending && pipe_ctx->plane_state)
+				pending_updates |= tg->funcs->get_pipe_update_pending(tg);
+
+			if (!pending_updates)
+				break;
+
+			udelay(1);
+		}
+	}
+}
+
+void dcn30_get_underflow_debug_data(const struct dc *dc,
+	struct timing_generator *tg,
+	struct dc_underflow_debug_data *out_data)
+{
+	struct hubbub *hubbub = dc->res_pool->hubbub;
+
+	if (tg) {
+		uint32_t v_blank_start = 0, v_blank_end = 0;
+
+		out_data->otg_inst = tg->inst;
+
+		tg->funcs->get_scanoutpos(tg,
+					  &v_blank_start,
+					  &v_blank_end,
+					  &out_data->h_position,
+					  &out_data->v_position);
+
+		out_data->otg_frame_count = tg->funcs->get_frame_count(tg);
+
+		out_data->otg_underflow = tg->funcs->is_optc_underflow_occurred(tg);
+	}
+
+	for (int i = 0; i < MAX_PIPES; i++) {
+		struct hubp *hubp = dc->res_pool->hubps[i];
+
+		if (hubp) {
+			if (hubp->funcs->hubp_get_underflow_status)
+				out_data->hubps[i].hubp_underflow = hubp->funcs->hubp_get_underflow_status(hubp);
+
+			if (hubp->funcs->hubp_in_blank)
+				out_data->hubps[i].hubp_in_blank = hubp->funcs->hubp_in_blank(hubp);
+
+			if (hubp->funcs->hubp_get_current_read_line)
+				out_data->hubps[i].hubp_readline = hubp->funcs->hubp_get_current_read_line(hubp);
+
+			if (hubp->funcs->hubp_get_det_config_error)
+				out_data->hubps[i].det_config_error = hubp->funcs->hubp_get_det_config_error(hubp);
+		}
+	}
+
+	if (hubbub->funcs->get_det_sizes)
+		hubbub->funcs->get_det_sizes(hubbub, out_data->curr_det_sizes, out_data->target_det_sizes);
+
+	if (hubbub->funcs->compbuf_config_error)
+		out_data->compbuf_config_error = hubbub->funcs->compbuf_config_error(hubbub);
+
 }

@@ -136,6 +136,7 @@ amdgpu_atombios_lookup_gpio(struct amdgpu_device *adev,
 struct amdgpu_i2c_bus_rec amdgpu_atombios_lookup_i2c_gpio(struct amdgpu_device *adev,
 							  uint8_t id);
 void amdgpu_atombios_i2c_init(struct amdgpu_device *adev);
+void amdgpu_atombios_oem_i2c_init(struct amdgpu_device *adev, u8 i2c_id);
 
 bool amdgpu_atombios_has_dce_engine_info(struct amdgpu_device *adev);
 
@@ -163,8 +164,8 @@ int amdgpu_atombios_get_memory_pll_dividers(struct amdgpu_device *adev,
 					    bool strobe_mode,
 					    struct atom_mpll_param *mpll_param);
 
-void amdgpu_atombios_set_engine_dram_timings(struct amdgpu_device *adev,
-					     u32 eng_clock, u32 mem_clock);
+int amdgpu_atombios_set_engine_dram_timings(struct amdgpu_device *adev,
+					    u32 eng_clock, u32 mem_clock);
 
 bool
 amdgpu_atombios_is_voltage_gpio(struct amdgpu_device *adev,

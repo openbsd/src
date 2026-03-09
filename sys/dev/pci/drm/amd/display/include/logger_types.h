@@ -32,6 +32,7 @@
 #define DC_LOG_WARNING(...) drm_warn((DC_LOGGER)->dev, __VA_ARGS__)
 #define DC_LOG_DEBUG(...) drm_dbg((DC_LOGGER)->dev, __VA_ARGS__)
 #define DC_LOG_DC(...) drm_dbg((DC_LOGGER)->dev, __VA_ARGS__)
+#define DC_LOG_INFO(...) drm_info((DC_LOGGER)->dev, __VA_ARGS__)
 #define DC_LOG_SURFACE(...) pr_debug("[SURFACE]:"__VA_ARGS__)
 #define DC_LOG_HW_HOTPLUG(...) drm_dbg((DC_LOGGER)->dev, __VA_ARGS__)
 #define DC_LOG_HW_LINK_TRAINING(...) pr_debug("[HW_LINK_TRAINING]:"__VA_ARGS__)
@@ -61,11 +62,13 @@
 #define DC_LOG_ALL_TF_CHANNELS(...) pr_debug("[GAMMA]:"__VA_ARGS__)
 #define DC_LOG_DSC(...) drm_dbg_dp((DC_LOGGER)->dev, __VA_ARGS__)
 #define DC_LOG_SMU(...) pr_debug("[SMU_MSG]:"__VA_ARGS__)
-#define DC_LOG_MALL(...) pr_debug("[MALL]:"__VA_ARGS__)
 #define DC_LOG_DWB(...) drm_dbg((DC_LOGGER)->dev, __VA_ARGS__)
 #define DC_LOG_DP2(...) drm_dbg_dp((DC_LOGGER)->dev, __VA_ARGS__)
 #define DC_LOG_AUTO_DPM_TEST(...) pr_debug("[AutoDPMTest]: "__VA_ARGS__)
 #define DC_LOG_IPS(...) pr_debug("[IPS]: "__VA_ARGS__)
+#define DC_LOG_MALL(...) pr_debug("[MALL]:"__VA_ARGS__)
+#define DC_LOG_REGISTER_READ(...) pr_debug("[REGISTER_READ]: "__VA_ARGS__)
+#define DC_LOG_REGISTER_WRITE(...) pr_debug("[REGISTER_WRITE]: "__VA_ARGS__)
 
 struct dc_log_buffer_ctx {
 	char *buf;

@@ -31,18 +31,19 @@
 #include <linux/llist.h>
 #include <linux/lockdep.h>
 
+#include <uapi/drm/i915_drm.h>
+
 #include "gem/i915_gem_context_types.h"
 #include "gt/intel_context_types.h"
 #include "gt/intel_engine_types.h"
 #include "gt/intel_timeline_types.h"
 
 #include "i915_gem.h"
+#include "i915_ptr_util.h"
 #include "i915_scheduler.h"
 #include "i915_selftest.h"
 #include "i915_sw_fence.h"
 #include "i915_vma_resource.h"
-
-#include <uapi/drm/i915_drm.h>
 
 struct drm_file;
 struct drm_i915_gem_object;
@@ -161,7 +162,7 @@ enum {
 	 * parent-child relationship (parallel submission, multi-lrc) that
 	 * hit an error while generating requests in the execbuf IOCTL.
 	 * Indicates this request should be skipped as another request in
-	 * submission / relationship encoutered an error.
+	 * submission / relationship encountered an error.
 	 */
 	I915_FENCE_FLAG_SKIP_PARALLEL,
 
@@ -187,7 +188,7 @@ enum {
  * RCU lookup of it that may race against reallocation of the struct
  * from the slab freelist. We intentionally do not zero the structure on
  * allocation so that the lookup can use the dangling pointers (and is
- * cogniscent that those pointers may be wrong). Instead, everything that
+ * cognisant that those pointers may be wrong). Instead, everything that
  * needs to be initialised must be done so explicitly.
  *
  * The requests are reference counted.

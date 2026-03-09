@@ -40,21 +40,11 @@
 #define FN(reg_name, field_name) \
 	mpc401->mpc_shift->field_name, mpc401->mpc_mask->field_name
 
-static void mpc401_update_3dlut_fast_load_select(struct mpc *mpc, int mpcc_id, int hubp_idx)
+void mpc401_update_3dlut_fast_load_select(struct mpc *mpc, int mpcc_id, int hubp_idx)
 {
 	struct dcn401_mpc *mpc401 = TO_DCN401_MPC(mpc);
 
 	REG_SET(MPCC_MCM_3DLUT_FAST_LOAD_SELECT[mpcc_id], 0, MPCC_MCM_3DLUT_FL_SEL, hubp_idx);
-}
-
-static void mpc401_get_3dlut_fast_load_status(struct mpc *mpc, int mpcc_id, uint32_t *done, uint32_t *soft_underflow, uint32_t *hard_underflow)
-{
-	struct dcn401_mpc *mpc401 = TO_DCN401_MPC(mpc);
-
-	REG_GET_3(MPCC_MCM_3DLUT_FAST_LOAD_STATUS[mpcc_id],
-			MPCC_MCM_3DLUT_FL_DONE, done,
-			MPCC_MCM_3DLUT_FL_SOFT_UNDERFLOW, soft_underflow,
-			MPCC_MCM_3DLUT_FL_HARD_UNDERFLOW, hard_underflow);
 }
 
 void mpc401_set_movable_cm_location(struct mpc *mpc, enum mpcc_movable_cm_location location, int mpcc_id)
@@ -297,14 +287,7 @@ void mpc401_program_lut_read_write_control(struct mpc *mpc, const enum MCM_LUT_I
 	}
 }
 
-void mpc401_program_3dlut_size(struct mpc *mpc, bool is_17x17x17, int mpcc_id)
-{
-	struct dcn401_mpc *mpc401 = TO_DCN401_MPC(mpc);
-
-	REG_UPDATE(MPCC_MCM_3DLUT_MODE[mpcc_id], MPCC_MCM_3DLUT_SIZE, is_17x17x17 ? 0 : 1);
-}
-
-static void program_gamut_remap(
+void mpc_program_gamut_remap(
 	struct mpc *mpc,
 	unsigned int mpcc_id,
 	const uint16_t *regval,
@@ -436,7 +419,7 @@ void mpc401_set_gamut_remap(
 
 	if (adjust->gamut_adjust_type != GRAPHICS_GAMUT_ADJUST_TYPE_SW) {
 		/* Bypass / Disable if type is bypass or hw */
-		program_gamut_remap(mpc, mpcc_id, NULL,
+		mpc_program_gamut_remap(mpc, mpcc_id, NULL,
 			adjust->mpcc_gamut_remap_block_id, MPCC_GAMUT_REMAP_MODE_SELECT_0);
 	} else {
 		struct fixed31_32 arr_matrix[12];
@@ -470,12 +453,12 @@ void mpc401_set_gamut_remap(
 		else
 			mode_select = MPCC_GAMUT_REMAP_MODE_SELECT_2;
 
-		program_gamut_remap(mpc, mpcc_id, arr_reg_val,
+		mpc_program_gamut_remap(mpc, mpcc_id, arr_reg_val,
 			adjust->mpcc_gamut_remap_block_id, mode_select);
 	}
 }
 
-static void read_gamut_remap(struct mpc *mpc,
+void mpc_read_gamut_remap(struct mpc *mpc,
 	int mpcc_id,
 	uint16_t *regval,
 	enum mpcc_gamut_remap_id gamut_remap_block_id,
@@ -573,7 +556,7 @@ void mpc401_get_gamut_remap(struct mpc *mpc,
 	uint16_t arr_reg_val[12] = {0};
 	uint32_t mode_select = MPCC_GAMUT_REMAP_MODE_SELECT_0;
 
-	read_gamut_remap(mpc, mpcc_id, arr_reg_val, adjust->mpcc_gamut_remap_block_id, &mode_select);
+	mpc_read_gamut_remap(mpc, mpcc_id, arr_reg_val, adjust->mpcc_gamut_remap_block_id, &mode_select);
 
 	if (mode_select == MPCC_GAMUT_REMAP_MODE_SELECT_0) {
 		adjust->gamut_adjust_type = GRAPHICS_GAMUT_ADJUST_TYPE_BYPASS;
@@ -618,11 +601,9 @@ static const struct mpc_funcs dcn401_mpc_funcs = {
 	.set_bg_color = mpc1_set_bg_color,
 	.set_movable_cm_location = mpc401_set_movable_cm_location,
 	.update_3dlut_fast_load_select = mpc401_update_3dlut_fast_load_select,
-	.get_3dlut_fast_load_status = mpc401_get_3dlut_fast_load_status,
 	.populate_lut = mpc401_populate_lut,
 	.program_lut_read_write_control = mpc401_program_lut_read_write_control,
 	.program_lut_mode = mpc401_program_lut_mode,
-	.program_3dlut_size = mpc401_program_3dlut_size,
 };
 
 

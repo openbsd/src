@@ -6,6 +6,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
+#include <linux/sched/task.h>
 
 #define signal_pending_state(s, x) \
     ((s) & TASK_INTERRUPTIBLE ? SIGPENDING(curproc) : 0)

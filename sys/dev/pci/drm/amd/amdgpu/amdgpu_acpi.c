@@ -396,6 +396,10 @@ static int amdgpu_atif_query_backlight_caps(struct amdgpu_atif *atif)
 			characteristics.max_input_signal;
 	atif->backlight_caps.ac_level = characteristics.ac_level;
 	atif->backlight_caps.dc_level = characteristics.dc_level;
+	atif->backlight_caps.data_points = characteristics.number_of_points;
+	memcpy(atif->backlight_caps.luminance_data,
+	       characteristics.data_points,
+	       sizeof(atif->backlight_caps.luminance_data));
 out:
 	kfree(info);
 	return err;
@@ -809,18 +813,18 @@ int amdgpu_acpi_power_shift_control(struct amdgpu_device *adev,
 /**
  * amdgpu_acpi_smart_shift_update - update dGPU device state to SBIOS
  *
- * @dev: drm_device pointer
+ * @adev: amdgpu device pointer
  * @ss_state: current smart shift event
  *
  * returns 0 on success,
  * otherwise return error number.
  */
-int amdgpu_acpi_smart_shift_update(struct drm_device *dev, enum amdgpu_ss ss_state)
+int amdgpu_acpi_smart_shift_update(struct amdgpu_device *adev,
+				   enum amdgpu_ss ss_state)
 {
-	struct amdgpu_device *adev = drm_to_adev(dev);
 	int r;
 
-	if (!amdgpu_device_supports_smart_shift(dev))
+	if (!amdgpu_device_supports_smart_shift(adev))
 		return 0;
 
 	switch (ss_state) {
@@ -1144,8 +1148,10 @@ static int amdgpu_acpi_enumerate_xcc(void)
 		if (!dev_info)
 			ret = amdgpu_acpi_dev_init(&dev_info, xcc_info, sbdf);
 
-		if (ret == -ENOMEM)
+		if (ret == -ENOMEM) {
+			kfree(xcc_info);
 			return ret;
+		}
 
 		if (!dev_info) {
 			kfree(xcc_info);
@@ -1290,11 +1296,7 @@ void amdgpu_acpi_get_backlight_caps(struct amdgpu_dm_backlight_caps *caps)
 {
 	struct amdgpu_atif *atif = &amdgpu_acpi_priv.atif;
 
-	caps->caps_valid = atif->backlight_caps.caps_valid;
-	caps->min_input_signal = atif->backlight_caps.min_input_signal;
-	caps->max_input_signal = atif->backlight_caps.max_input_signal;
-	caps->ac_level = atif->backlight_caps.ac_level;
-	caps->dc_level = atif->backlight_caps.dc_level;
+	memcpy(caps, &atif->backlight_caps, sizeof(*caps));
 }
 
 /**
@@ -1566,5 +1568,35 @@ bool amdgpu_acpi_is_s0ix_active(struct amdgpu_device *adev)
 	return true;
 #endif /* CONFIG_AMD_PMC */
 }
-
 #endif /* CONFIG_SUSPEND */
+
+#if IS_ENABLED(CONFIG_DRM_AMD_ISP)
+static const struct acpi_device_id isp_sensor_ids[] = {
+	{ "OMNI5C10" },
+	{ }
+};
+
+static int isp_match_acpi_device_ids(struct device *dev, const void *data)
+{
+	return acpi_match_device(data, dev) ? 1 : 0;
+}
+
+int amdgpu_acpi_get_isp4_dev(struct acpi_device **dev)
+{
+	struct device *pdev __free(put_device) = NULL;
+	struct acpi_device *acpi_pdev;
+
+	pdev = bus_find_device(&platform_bus_type, NULL, isp_sensor_ids,
+			       isp_match_acpi_device_ids);
+	if (!pdev)
+		return -EINVAL;
+
+	acpi_pdev = ACPI_COMPANION(pdev);
+	if (!acpi_pdev)
+		return -ENODEV;
+
+	*dev = acpi_pdev;
+
+	return 0;
+}
+#endif /* CONFIG_DRM_AMD_ISP */

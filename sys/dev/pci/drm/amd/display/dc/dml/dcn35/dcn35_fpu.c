@@ -31,7 +31,7 @@
 #include "dml/dcn31/dcn31_fpu.h"
 #include "dml/dml_inline_defs.h"
 
-#include "link.h"
+#include "link_service.h"
 
 #define DC_LOGGER_INIT(logger)
 
@@ -159,13 +159,13 @@ struct _vcs_dpi_soc_bounding_box_st dcn3_5_soc = {
 			.dppclk_mhz = 1200.0,
 			.phyclk_mhz = 810.0,
 			.phyclk_d18_mhz = 667.0,
-			.dscclk_mhz = 417.0,
+			.dscclk_mhz = 400.0,
 			.dtbclk_mhz = 600.0,
 		},
 	},
 	.num_states = 5,
-	.sr_exit_time_us = 28.0,
-	.sr_enter_plus_exit_time_us = 30.0,
+	.sr_exit_time_us = 31.0,
+	.sr_enter_plus_exit_time_us = 33.0,
 	.sr_exit_z8_time_us = 250.0,
 	.sr_enter_plus_exit_z8_time_us = 350.0,
 	.fclk_change_latency_us = 24.0,
@@ -195,9 +195,9 @@ struct _vcs_dpi_soc_bounding_box_st dcn3_5_soc = {
 	.dcn_downspread_percent = 0.5,
 	.gpuvm_min_page_size_bytes = 4096,
 	.hostvm_min_page_size_bytes = 4096,
-	.do_urgent_latency_adjustment = 1,
+	.do_urgent_latency_adjustment = 0,
 	.urgent_latency_adjustment_fabric_clock_component_us = 0,
-	.urgent_latency_adjustment_fabric_clock_reference_mhz = 3000,
+	.urgent_latency_adjustment_fabric_clock_reference_mhz = 0,
 };
 
 void dcn35_build_wm_range_table_fpu(struct clk_mgr *clk_mgr)
@@ -437,7 +437,7 @@ static unsigned int get_vertical_back_porch(struct dc_crtc_timing *timing)
 int dcn35_populate_dml_pipes_from_context_fpu(struct dc *dc,
 					      struct dc_state *context,
 					      display_e2e_pipe_params_st *pipes,
-					      bool fast_validate)
+					      enum dc_validate_mode validate_mode)
 {
 	int i, pipe_cnt;
 	struct resource_context *res_ctx = &context->res_ctx;
@@ -445,8 +445,10 @@ int dcn35_populate_dml_pipes_from_context_fpu(struct dc *dc,
 	bool upscaled = false;
 	const unsigned int max_allowed_vblank_nom = 1023;
 
+	dc_assert_fp_enabled();
+
 	dcn31_populate_dml_pipes_from_context(dc, context, pipes,
-					      fast_validate);
+					      validate_mode);
 
 	for (i = 0, pipe_cnt = 0; i < dc->res_pool->pipe_count; i++) {
 		struct dc_crtc_timing *timing;
@@ -498,9 +500,7 @@ int dcn35_populate_dml_pipes_from_context_fpu(struct dc *dc,
 
 		pipes[pipe_cnt].pipe.src.unbounded_req_mode = false;
 
-		DC_FP_START();
 		dcn31_zero_pipe_dcc_fraction(pipes, pipe_cnt);
-		DC_FP_END();
 
 		pipes[pipe_cnt].pipe.dest.vfront_porch = timing->v_front_porch;
 		pipes[pipe_cnt].pipe.src.dcc_rate = 3;
@@ -580,6 +580,8 @@ void dcn35_decide_zstate_support(struct dc *dc, struct dc_state *context)
 	enum dcn_zstate_support_state support = DCN_ZSTATE_SUPPORT_DISALLOW;
 	unsigned int i, plane_count = 0;
 	DC_LOGGER_INIT(dc->ctx->logger);
+
+	dc_assert_fp_enabled();
 
 	for (i = 0; i < dc->res_pool->pipe_count; i++) {
 		if (context->res_ctx.pipe_ctx[i].plane_state)

@@ -15,6 +15,26 @@
 #include <linux/sched/clock.h>
 
 /*
+ * normally seq_file.h is indirectly included via
+ *
+ * linux/memcontrol.h
+ * linux/cgroup.h
+ * linux/seq_file.h
+ */
+#include <linux/seq_file.h>
+
+/*
+ * normally highmem.h is indirectly included via
+ *
+ * linux/memcontrol.h
+ * linux/writeback.h
+ * linux/blk_types.h
+ * linux/bvec.h
+ * linux/highmem.h
+ */
+#include <linux/highmem.h>
+
+/*
  * normally module.h would be indirectly included via
  *
  * linux/memcontrol.h

@@ -54,6 +54,10 @@ extern "C" {
 #define DRM_AMDGPU_VM			0x13
 #define DRM_AMDGPU_FENCE_TO_HANDLE	0x14
 #define DRM_AMDGPU_SCHED		0x15
+#define DRM_AMDGPU_USERQ		0x16
+#define DRM_AMDGPU_USERQ_SIGNAL		0x17
+#define DRM_AMDGPU_USERQ_WAIT		0x18
+#define DRM_AMDGPU_GEM_LIST_HANDLES	0x19
 
 #define DRM_IOCTL_AMDGPU_GEM_CREATE	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_GEM_CREATE, union drm_amdgpu_gem_create)
 #define DRM_IOCTL_AMDGPU_GEM_MMAP	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_GEM_MMAP, union drm_amdgpu_gem_mmap)
@@ -71,6 +75,10 @@ extern "C" {
 #define DRM_IOCTL_AMDGPU_VM		DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_VM, union drm_amdgpu_vm)
 #define DRM_IOCTL_AMDGPU_FENCE_TO_HANDLE DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_FENCE_TO_HANDLE, union drm_amdgpu_fence_to_handle)
 #define DRM_IOCTL_AMDGPU_SCHED		DRM_IOW(DRM_COMMAND_BASE + DRM_AMDGPU_SCHED, union drm_amdgpu_sched)
+#define DRM_IOCTL_AMDGPU_USERQ		DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_USERQ, union drm_amdgpu_userq)
+#define DRM_IOCTL_AMDGPU_USERQ_SIGNAL	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_USERQ_SIGNAL, struct drm_amdgpu_userq_signal)
+#define DRM_IOCTL_AMDGPU_USERQ_WAIT	DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_USERQ_WAIT, struct drm_amdgpu_userq_wait)
+#define DRM_IOCTL_AMDGPU_GEM_LIST_HANDLES DRM_IOWR(DRM_COMMAND_BASE + DRM_AMDGPU_GEM_LIST_HANDLES, struct drm_amdgpu_gem_list_handles)
 
 /**
  * DOC: memory domains
@@ -97,6 +105,8 @@ extern "C" {
  *
  * %AMDGPU_GEM_DOMAIN_DOORBELL	Doorbell. It is an MMIO region for
  * signalling user mode queues.
+ *
+ * %AMDGPU_GEM_DOMAIN_MMIO_REMAP	MMIO remap page (special mapping for HDP flushing).
  */
 #define AMDGPU_GEM_DOMAIN_CPU		0x1
 #define AMDGPU_GEM_DOMAIN_GTT		0x2
@@ -105,13 +115,15 @@ extern "C" {
 #define AMDGPU_GEM_DOMAIN_GWS		0x10
 #define AMDGPU_GEM_DOMAIN_OA		0x20
 #define AMDGPU_GEM_DOMAIN_DOORBELL	0x40
+#define AMDGPU_GEM_DOMAIN_MMIO_REMAP	0x80
 #define AMDGPU_GEM_DOMAIN_MASK		(AMDGPU_GEM_DOMAIN_CPU | \
 					 AMDGPU_GEM_DOMAIN_GTT | \
 					 AMDGPU_GEM_DOMAIN_VRAM | \
 					 AMDGPU_GEM_DOMAIN_GDS | \
 					 AMDGPU_GEM_DOMAIN_GWS | \
-					 AMDGPU_GEM_DOMAIN_OA | \
-					 AMDGPU_GEM_DOMAIN_DOORBELL)
+					 AMDGPU_GEM_DOMAIN_OA |	\
+					 AMDGPU_GEM_DOMAIN_DOORBELL | \
+					 AMDGPU_GEM_DOMAIN_MMIO_REMAP)
 
 /* Flag that CPU access will be required for the case of VRAM domain */
 #define AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED	(1 << 0)
@@ -317,6 +329,260 @@ union drm_amdgpu_ctx_out {
 union drm_amdgpu_ctx {
 	struct drm_amdgpu_ctx_in in;
 	union drm_amdgpu_ctx_out out;
+};
+
+/* user queue IOCTL operations */
+#define AMDGPU_USERQ_OP_CREATE	1
+#define AMDGPU_USERQ_OP_FREE	2
+
+/* queue priority levels */
+/* low < normal low < normal high < high */
+#define AMDGPU_USERQ_CREATE_FLAGS_QUEUE_PRIORITY_MASK  0x3
+#define AMDGPU_USERQ_CREATE_FLAGS_QUEUE_PRIORITY_SHIFT 0
+#define AMDGPU_USERQ_CREATE_FLAGS_QUEUE_PRIORITY_NORMAL_LOW 0
+#define AMDGPU_USERQ_CREATE_FLAGS_QUEUE_PRIORITY_LOW 1
+#define AMDGPU_USERQ_CREATE_FLAGS_QUEUE_PRIORITY_NORMAL_HIGH 2
+#define AMDGPU_USERQ_CREATE_FLAGS_QUEUE_PRIORITY_HIGH 3 /* admin only */
+/* for queues that need access to protected content */
+#define AMDGPU_USERQ_CREATE_FLAGS_QUEUE_SECURE  (1 << 2)
+
+/*
+ * This structure is a container to pass input configuration
+ * info for all supported userqueue related operations.
+ * For operation AMDGPU_USERQ_OP_CREATE: user is expected
+ *  to set all fields, excep the parameter 'queue_id'.
+ * For operation AMDGPU_USERQ_OP_FREE: the only input parameter expected
+ *  to be set is 'queue_id', eveything else is ignored.
+ */
+struct drm_amdgpu_userq_in {
+	/** AMDGPU_USERQ_OP_* */
+	__u32	op;
+	/** Queue id passed for operation USERQ_OP_FREE */
+	__u32	queue_id;
+	/** the target GPU engine to execute workload (AMDGPU_HW_IP_*) */
+	__u32   ip_type;
+	/**
+	 * @doorbell_handle: the handle of doorbell GEM object
+	 * associated with this userqueue client.
+	 */
+	__u32   doorbell_handle;
+	/**
+	 * @doorbell_offset: 32-bit offset of the doorbell in the doorbell bo.
+	 * Kernel will generate absolute doorbell offset using doorbell_handle
+	 * and doorbell_offset in the doorbell bo.
+	 */
+	__u32   doorbell_offset;
+	/**
+	 * @flags: flags used for queue parameters
+	 */
+	__u32 flags;
+	/**
+	 * @queue_va: Virtual address of the GPU memory which holds the queue
+	 * object. The queue holds the workload packets.
+	 */
+	__u64   queue_va;
+	/**
+	 * @queue_size: Size of the queue in bytes, this needs to be 256-byte
+	 * aligned.
+	 */
+	__u64   queue_size;
+	/**
+	 * @rptr_va : Virtual address of the GPU memory which holds the ring RPTR.
+	 * This object must be at least 8 byte in size and aligned to 8-byte offset.
+	 */
+	__u64   rptr_va;
+	/**
+	 * @wptr_va : Virtual address of the GPU memory which holds the ring WPTR.
+	 * This object must be at least 8 byte in size and aligned to 8-byte offset.
+	 *
+	 * Queue, RPTR and WPTR can come from the same object, as long as the size
+	 * and alignment related requirements are met.
+	 */
+	__u64   wptr_va;
+	/**
+	 * @mqd: MQD (memory queue descriptor) is a set of parameters which allow
+	 * the GPU to uniquely define and identify a usermode queue.
+	 *
+	 * MQD data can be of different size for different GPU IP/engine and
+	 * their respective versions/revisions, so this points to a __u64 *
+	 * which holds IP specific MQD of this usermode queue.
+	 */
+	__u64 mqd;
+	/**
+	 * @size: size of MQD data in bytes, it must match the MQD structure
+	 * size of the respective engine/revision defined in UAPI for ex, for
+	 * gfx11 workloads, size = sizeof(drm_amdgpu_userq_mqd_gfx11).
+	 */
+	__u64 mqd_size;
+};
+
+/* The structure to carry output of userqueue ops */
+struct drm_amdgpu_userq_out {
+	/**
+	 * For operation AMDGPU_USERQ_OP_CREATE: This field contains a unique
+	 * queue ID to represent the newly created userqueue in the system, otherwise
+	 * it should be ignored.
+	 */
+	__u32	queue_id;
+	__u32 _pad;
+};
+
+union drm_amdgpu_userq {
+	struct drm_amdgpu_userq_in in;
+	struct drm_amdgpu_userq_out out;
+};
+
+/* GFX V11 IP specific MQD parameters */
+struct drm_amdgpu_userq_mqd_gfx11 {
+	/**
+	 * @shadow_va: Virtual address of the GPU memory to hold the shadow buffer.
+	 * Use AMDGPU_INFO_IOCTL to find the exact size of the object.
+	 */
+	__u64   shadow_va;
+	/**
+	 * @csa_va: Virtual address of the GPU memory to hold the CSA buffer.
+	 * Use AMDGPU_INFO_IOCTL to find the exact size of the object.
+	 */
+	__u64   csa_va;
+};
+
+/* GFX V11 SDMA IP specific MQD parameters */
+struct drm_amdgpu_userq_mqd_sdma_gfx11 {
+	/**
+	 * @csa_va: Virtual address of the GPU memory to hold the CSA buffer.
+	 * This must be a from a separate GPU object, and use AMDGPU_INFO IOCTL
+	 * to get the size.
+	 */
+	__u64   csa_va;
+};
+
+/* GFX V11 Compute IP specific MQD parameters */
+struct drm_amdgpu_userq_mqd_compute_gfx11 {
+	/**
+	 * @eop_va: Virtual address of the GPU memory to hold the EOP buffer.
+	 * This must be a from a separate GPU object, and use AMDGPU_INFO IOCTL
+	 * to get the size.
+	 */
+	__u64   eop_va;
+};
+
+/* userq signal/wait ioctl */
+struct drm_amdgpu_userq_signal {
+	/**
+	 * @queue_id: Queue handle used by the userq fence creation function
+	 * to retrieve the WPTR.
+	 */
+	__u32	queue_id;
+	__u32	pad;
+	/**
+	 * @syncobj_handles: The list of syncobj handles submitted by the user queue
+	 * job to be signaled.
+	 */
+	__u64	syncobj_handles;
+	/**
+	 * @num_syncobj_handles: A count that represents the number of syncobj handles in
+	 * @syncobj_handles.
+	 */
+	__u64	num_syncobj_handles;
+	/**
+	 * @bo_read_handles: The list of BO handles that the submitted user queue job
+	 * is using for read only. This will update BO fences in the kernel.
+	 */
+	__u64	bo_read_handles;
+	/**
+	 * @bo_write_handles: The list of BO handles that the submitted user queue job
+	 * is using for write only. This will update BO fences in the kernel.
+	 */
+	__u64	bo_write_handles;
+	/**
+	 * @num_bo_read_handles: A count that represents the number of read BO handles in
+	 * @bo_read_handles.
+	 */
+	__u32	num_bo_read_handles;
+	/**
+	 * @num_bo_write_handles: A count that represents the number of write BO handles in
+	 * @bo_write_handles.
+	 */
+	__u32	num_bo_write_handles;
+};
+
+struct drm_amdgpu_userq_fence_info {
+	/**
+	 * @va: A gpu address allocated for each queue which stores the
+	 * read pointer (RPTR) value.
+	 */
+	__u64	va;
+	/**
+	 * @value: A 64 bit value represents the write pointer (WPTR) of the
+	 * queue commands which compared with the RPTR value to signal the
+	 * fences.
+	 */
+	__u64	value;
+};
+
+struct drm_amdgpu_userq_wait {
+	/**
+	 * @waitq_id: Queue handle used by the userq wait IOCTL to retrieve the
+	 * wait queue and maintain the fence driver references in it.
+	 */
+	__u32	waitq_id;
+	__u32	pad;
+	/**
+	 * @syncobj_handles: The list of syncobj handles submitted by the user queue
+	 * job to get the va/value pairs.
+	 */
+	__u64	syncobj_handles;
+	/**
+	 * @syncobj_timeline_handles: The list of timeline syncobj handles submitted by
+	 * the user queue job to get the va/value pairs at given @syncobj_timeline_points.
+	 */
+	__u64	syncobj_timeline_handles;
+	/**
+	 * @syncobj_timeline_points: The list of timeline syncobj points submitted by the
+	 * user queue job for the corresponding @syncobj_timeline_handles.
+	 */
+	__u64	syncobj_timeline_points;
+	/**
+	 * @bo_read_handles: The list of read BO handles submitted by the user queue
+	 * job to get the va/value pairs.
+	 */
+	__u64	bo_read_handles;
+	/**
+	 * @bo_write_handles: The list of write BO handles submitted by the user queue
+	 * job to get the va/value pairs.
+	 */
+	__u64	bo_write_handles;
+	/**
+	 * @num_syncobj_timeline_handles: A count that represents the number of timeline
+	 * syncobj handles in @syncobj_timeline_handles.
+	 */
+	__u16	num_syncobj_timeline_handles;
+	/**
+	 * @num_fences: This field can be used both as input and output. As input it defines
+	 * the maximum number of fences that can be returned and as output it will specify
+	 * how many fences were actually returned from the ioctl.
+	 */
+	__u16	num_fences;
+	/**
+	 * @num_syncobj_handles: A count that represents the number of syncobj handles in
+	 * @syncobj_handles.
+	 */
+	__u32	num_syncobj_handles;
+	/**
+	 * @num_bo_read_handles: A count that represents the number of read BO handles in
+	 * @bo_read_handles.
+	 */
+	__u32	num_bo_read_handles;
+	/**
+	 * @num_bo_write_handles: A count that represents the number of write BO handles in
+	 * @bo_write_handles.
+	 */
+	__u32	num_bo_write_handles;
+	/**
+	 * @out_fences: The field is a return value from the ioctl containing the list of
+	 * address/value pairs to wait for.
+	 */
+	__u64	out_fences;
 };
 
 /* vm ioctl */
@@ -540,6 +806,21 @@ union drm_amdgpu_wait_fences {
 
 #define AMDGPU_GEM_OP_GET_GEM_CREATE_INFO	0
 #define AMDGPU_GEM_OP_SET_PLACEMENT		1
+#define AMDGPU_GEM_OP_GET_MAPPING_INFO		2
+
+struct drm_amdgpu_gem_vm_entry {
+	/* Start of mapping (in bytes) */
+	__u64 addr;
+
+	/* Size of mapping (in bytes) */
+	__u64 size;
+
+	/* Mapping offset */
+	__u64 offset;
+
+	/* flags needed to recreate mapping */
+	__u64 flags;
+};
 
 /* Sets or returns a value associated with a buffer. */
 struct drm_amdgpu_gem_op {
@@ -547,8 +828,44 @@ struct drm_amdgpu_gem_op {
 	__u32	handle;
 	/** AMDGPU_GEM_OP_* */
 	__u32	op;
-	/** Input or return value */
+	/** Input or return value. For MAPPING_INFO op: pointer to array of struct drm_amdgpu_gem_vm_entry */
 	__u64	value;
+	/** For MAPPING_INFO op: number of mappings (in/out) */
+	__u32	num_entries;
+
+	__u32	padding;
+};
+
+#define AMDGPU_GEM_LIST_HANDLES_FLAG_IS_IMPORT	(1 << 0)
+
+struct drm_amdgpu_gem_list_handles {
+	/* User pointer to array of drm_amdgpu_gem_bo_info_entry */
+	__u64   entries;
+
+	/* Size of entries buffer / Number of handles in process (if larger than size of buffer, must retry) */
+	__u32   num_entries;
+
+	__u32 padding;
+};
+
+struct drm_amdgpu_gem_list_handles_entry {
+	/* gem handle of buffer object */
+	__u32 gem_handle;
+
+	/* Currently just one flag: IS_IMPORT */
+	__u32 flags;
+
+	/* Size of bo */
+	__u64 size;
+
+	/* Preferred domains for GEM_CREATE */
+	__u64 preferred_domains;
+
+	/* GEM_CREATE flags for re-creation of buffer */
+	__u64 alloc_flags;
+
+	/* physical start_addr alignment in bytes for some HW requirements */
+	__u64 alignment;
 };
 
 #define AMDGPU_VA_OP_MAP			1
@@ -599,6 +916,19 @@ struct drm_amdgpu_gem_va {
 	__u64 offset_in_bo;
 	/** Specify mapping size. Must be correctly aligned. */
 	__u64 map_size;
+	/**
+	 * vm_timeline_point is a sequence number used to add new timeline point.
+	 */
+	__u64 vm_timeline_point;
+	/**
+	 * The vm page table update fence is installed in given vm_timeline_syncobj_out
+	 * at vm_timeline_point.
+	 */
+	__u32 vm_timeline_syncobj_out;
+	/** the number of syncobj handles in @input_fence_syncobj_handles */
+	__u32 num_syncobj_handles;
+	/** Array of sync object handle to wait for given input fences */
+	__u64 input_fence_syncobj_handles;
 };
 
 #define AMDGPU_HW_IP_GFX          0
@@ -758,10 +1088,21 @@ struct drm_amdgpu_cs_chunk_cp_gfx_shadow {
  *  Query h/w info: Flag that this is integrated (a.h.a. fusion) GPU
  *
  */
-#define AMDGPU_IDS_FLAGS_FUSION         0x1
-#define AMDGPU_IDS_FLAGS_PREEMPTION     0x2
-#define AMDGPU_IDS_FLAGS_TMZ            0x4
-#define AMDGPU_IDS_FLAGS_CONFORMANT_TRUNC_COORD 0x8
+#define AMDGPU_IDS_FLAGS_FUSION			0x01
+#define AMDGPU_IDS_FLAGS_PREEMPTION		0x02
+#define AMDGPU_IDS_FLAGS_TMZ			0x04
+#define AMDGPU_IDS_FLAGS_CONFORMANT_TRUNC_COORD	0x08
+#define AMDGPU_IDS_FLAGS_GANG_SUBMIT		0x10
+
+/*
+ *  Query h/w info: Flag identifying VF/PF/PT mode
+ *
+ */
+#define AMDGPU_IDS_FLAGS_MODE_MASK      0x300
+#define AMDGPU_IDS_FLAGS_MODE_SHIFT     0x8
+#define AMDGPU_IDS_FLAGS_MODE_PF        0x0
+#define AMDGPU_IDS_FLAGS_MODE_VF        0x1
+#define AMDGPU_IDS_FLAGS_MODE_PT        0x2
 
 /* indicate if acceleration can be working */
 #define AMDGPU_INFO_ACCEL_WORKING		0x00
@@ -930,6 +1271,8 @@ struct drm_amdgpu_cs_chunk_cp_gfx_shadow {
 #define AMDGPU_INFO_MAX_IBS			0x22
 /* query last page fault info */
 #define AMDGPU_INFO_GPUVM_FAULT			0x23
+/* query FW object size and alignment */
+#define AMDGPU_INFO_UQ_FW_AREAS			0x24
 
 #define AMDGPU_INFO_MMR_SE_INDEX_SHIFT	0
 #define AMDGPU_INFO_MMR_SE_INDEX_MASK	0xff
@@ -1083,6 +1426,7 @@ struct drm_amdgpu_info_vbios {
 #define AMDGPU_VRAM_TYPE_DDR5  10
 #define AMDGPU_VRAM_TYPE_LPDDR4 11
 #define AMDGPU_VRAM_TYPE_LPDDR5 12
+#define AMDGPU_VRAM_TYPE_HBM3E 13
 
 struct drm_amdgpu_info_device {
 	/** PCI Device ID */
@@ -1188,6 +1532,9 @@ struct drm_amdgpu_info_device {
 	__u32 csa_size;
 	/* context save area base virtual alignment for gfx11 */
 	__u32 csa_alignment;
+	/* Userq IP mask (1 << AMDGPU_HW_IP_*) */
+	__u32 userq_ip_mask;
+	__u32 pad;
 };
 
 struct drm_amdgpu_info_hw_ip {
@@ -1204,6 +1551,8 @@ struct drm_amdgpu_info_hw_ip {
 	__u32  available_rings;
 	/** version info: bits 23:16 major, 15:8 minor, 7:0 revision */
 	__u32  ip_discovery_version;
+	/* Userq available slots */
+	__u32  userq_num_slots;
 };
 
 struct drm_amdgpu_info_num_handles {
@@ -1267,6 +1616,23 @@ struct drm_amdgpu_info_gpuvm_fault {
 	__u64 addr;
 	__u32 status;
 	__u32 vmhub;
+};
+
+struct drm_amdgpu_info_uq_metadata_gfx {
+	/* shadow area size for gfx11 */
+	__u32 shadow_size;
+	/* shadow area base virtual alignment for gfx11 */
+	__u32 shadow_alignment;
+	/* context save area size for gfx11 */
+	__u32 csa_size;
+	/* context save area base virtual alignment for gfx11 */
+	__u32 csa_alignment;
+};
+
+struct drm_amdgpu_info_uq_metadata {
+	union {
+		struct drm_amdgpu_info_uq_metadata_gfx gfx;
+	};
 };
 
 /*

@@ -162,6 +162,8 @@ static bool optc35_disable_crtc(struct timing_generator *optc)
 	REG_WAIT(OTG_CLOCK_CONTROL,
 			OTG_BUSY, 0,
 			1, 100000);
+	REG_WAIT(OTG_CONTROL, OTG_CURRENT_MASTER_EN_STATE, 0, 1, 100000);
+
 	optc1_clear_optc_underflow(optc);
 
 	return true;
@@ -183,34 +185,87 @@ static bool optc35_configure_crc(struct timing_generator *optc,
 {
 	struct optc *optc1 = DCN10TG_FROM_TG(optc);
 
+	/* Cannot configure crc on a CRTC that is disabled */
 	if (!optc1_is_tg_enabled(optc))
 		return false;
-	REG_WRITE(OTG_CRC_CNTL, 0);
+
+	if (!params->enable || params->reset)
+		REG_WRITE(OTG_CRC_CNTL, 0);
+
 	if (!params->enable)
 		return true;
-	REG_UPDATE_2(OTG_CRC0_WINDOWA_X_CONTROL,
-			OTG_CRC0_WINDOWA_X_START, params->windowa_x_start,
-			OTG_CRC0_WINDOWA_X_END, params->windowa_x_end);
-	REG_UPDATE_2(OTG_CRC0_WINDOWA_Y_CONTROL,
-			OTG_CRC0_WINDOWA_Y_START, params->windowa_y_start,
-			OTG_CRC0_WINDOWA_Y_END, params->windowa_y_end);
-	REG_UPDATE_2(OTG_CRC0_WINDOWB_X_CONTROL,
-			OTG_CRC0_WINDOWB_X_START, params->windowb_x_start,
-			OTG_CRC0_WINDOWB_X_END, params->windowb_x_end);
-	REG_UPDATE_2(OTG_CRC0_WINDOWB_Y_CONTROL,
-			OTG_CRC0_WINDOWB_Y_START, params->windowb_y_start,
-			OTG_CRC0_WINDOWB_Y_END, params->windowb_y_end);
-	if (optc1->base.ctx->dc->debug.otg_crc_db && optc1->tg_mask->OTG_CRC_WINDOW_DB_EN != 0) {
-		REG_UPDATE_4(OTG_CRC_CNTL,
-				OTG_CRC_CONT_EN, params->continuous_mode ? 1 : 0,
-				OTG_CRC0_SELECT, params->selection,
-				OTG_CRC_EN, 1,
-				OTG_CRC_WINDOW_DB_EN, 1);
-	} else
-		REG_UPDATE_3(OTG_CRC_CNTL,
-				OTG_CRC_CONT_EN, params->continuous_mode ? 1 : 0,
-				OTG_CRC0_SELECT, params->selection,
-				OTG_CRC_EN, 1);
+
+	/* Program frame boundaries */
+	switch (params->crc_eng_inst) {
+	case 0:
+		/* Window A x axis start and end. */
+		REG_UPDATE_2(OTG_CRC0_WINDOWA_X_CONTROL,
+				OTG_CRC0_WINDOWA_X_START, params->windowa_x_start,
+				OTG_CRC0_WINDOWA_X_END, params->windowa_x_end);
+
+		/* Window A y axis start and end. */
+		REG_UPDATE_2(OTG_CRC0_WINDOWA_Y_CONTROL,
+				OTG_CRC0_WINDOWA_Y_START, params->windowa_y_start,
+				OTG_CRC0_WINDOWA_Y_END, params->windowa_y_end);
+
+		/* Window B x axis start and end. */
+		REG_UPDATE_2(OTG_CRC0_WINDOWB_X_CONTROL,
+				OTG_CRC0_WINDOWB_X_START, params->windowb_x_start,
+				OTG_CRC0_WINDOWB_X_END, params->windowb_x_end);
+
+		/* Window B y axis start and end. */
+		REG_UPDATE_2(OTG_CRC0_WINDOWB_Y_CONTROL,
+				OTG_CRC0_WINDOWB_Y_START, params->windowb_y_start,
+				OTG_CRC0_WINDOWB_Y_END, params->windowb_y_end);
+
+		if (optc1->base.ctx->dc->debug.otg_crc_db && optc1->tg_mask->OTG_CRC_WINDOW_DB_EN != 0)
+			REG_UPDATE_4(OTG_CRC_CNTL,
+					OTG_CRC_CONT_EN, params->continuous_mode ? 1 : 0,
+					OTG_CRC0_SELECT, params->selection,
+					OTG_CRC_EN, 1,
+					OTG_CRC_WINDOW_DB_EN, 1);
+		else
+			REG_UPDATE_3(OTG_CRC_CNTL,
+					OTG_CRC_CONT_EN, params->continuous_mode ? 1 : 0,
+					OTG_CRC0_SELECT, params->selection,
+					OTG_CRC_EN, 1);
+		break;
+	case 1:
+		/* Window A x axis start and end. */
+		REG_UPDATE_2(OTG_CRC1_WINDOWA_X_CONTROL,
+				OTG_CRC1_WINDOWA_X_START, params->windowa_x_start,
+				OTG_CRC1_WINDOWA_X_END, params->windowa_x_end);
+
+		/* Window A y axis start and end. */
+		REG_UPDATE_2(OTG_CRC1_WINDOWA_Y_CONTROL,
+				OTG_CRC1_WINDOWA_Y_START, params->windowa_y_start,
+				OTG_CRC1_WINDOWA_Y_END, params->windowa_y_end);
+
+		/* Window B x axis start and end. */
+		REG_UPDATE_2(OTG_CRC1_WINDOWB_X_CONTROL,
+				OTG_CRC1_WINDOWB_X_START, params->windowb_x_start,
+				OTG_CRC1_WINDOWB_X_END, params->windowb_x_end);
+
+		/* Window B y axis start and end. */
+		REG_UPDATE_2(OTG_CRC1_WINDOWB_Y_CONTROL,
+				OTG_CRC1_WINDOWB_Y_START, params->windowb_y_start,
+				OTG_CRC1_WINDOWB_Y_END, params->windowb_y_end);
+
+		if (optc1->base.ctx->dc->debug.otg_crc_db && optc1->tg_mask->OTG_CRC_WINDOW_DB_EN != 0)
+			REG_UPDATE_4(OTG_CRC_CNTL,
+					OTG_CRC_CONT_EN, params->continuous_mode ? 1 : 0,
+					OTG_CRC1_SELECT, params->selection,
+					OTG_CRC_EN, 1,
+					OTG_CRC_WINDOW_DB_EN, 1);
+		else
+			REG_UPDATE_3(OTG_CRC_CNTL,
+					OTG_CRC_CONT_EN, params->continuous_mode ? 1 : 0,
+					OTG_CRC1_SELECT, params->selection,
+					OTG_CRC_EN, 1);
+		break;
+	default:
+		return false;
+	}
 	return true;
 }
 
@@ -375,7 +430,22 @@ static void optc35_set_long_vtotal(
 	}
 }
 
-static struct timing_generator_funcs dcn35_tg_funcs = {
+static void optc35_wait_otg_disable(struct timing_generator *optc)
+{
+	struct optc *optc1;
+	uint32_t is_master_en;
+
+	if (!optc || !optc->ctx)
+		return;
+
+	optc1 = DCN10TG_FROM_TG(optc);
+
+	REG_GET(OTG_CONTROL, OTG_MASTER_EN, &is_master_en);
+	if (!is_master_en)
+		REG_WAIT(OTG_CLOCK_CONTROL, OTG_CURRENT_MASTER_EN_STATE, 0, 1, 100000);
+}
+
+static const struct timing_generator_funcs dcn35_tg_funcs = {
 		.validate_timing = optc1_validate_timing,
 		.program_timing = optc1_program_timing,
 		.setup_vertical_interrupt0 = optc1_setup_vertical_interrupt0,
@@ -426,6 +496,7 @@ static struct timing_generator_funcs dcn35_tg_funcs = {
 		.set_odm_bypass = optc32_set_odm_bypass,
 		.set_odm_combine = optc35_set_odm_combine,
 		.get_optc_source = optc2_get_optc_source,
+		.wait_otg_disable = optc35_wait_otg_disable,
 		.set_h_timing_div_manual_mode = optc32_set_h_timing_div_manual_mode,
 		.set_out_mux = optc3_set_out_mux,
 		.set_drr_trigger_window = optc3_set_drr_trigger_window,
@@ -439,6 +510,7 @@ static struct timing_generator_funcs dcn35_tg_funcs = {
 		.init_odm = optc3_init_odm,
 		.set_long_vtotal = optc35_set_long_vtotal,
 		.is_two_pixels_per_container = optc1_is_two_pixels_per_container,
+		.read_otg_state = optc31_read_otg_state,
 };
 
 void dcn35_timing_generator_init(struct optc *optc1)
@@ -453,6 +525,7 @@ void dcn35_timing_generator_init(struct optc *optc1)
 	optc1->min_v_blank_interlace = 5;
 	optc1->min_h_sync_width = 4;
 	optc1->min_v_sync_width = 1;
+	optc1->max_frame_count = 0xFFFFFF;
 
 	dcn35_timing_generator_set_fgcg(
 		optc1, CTX->dc->debug.enable_fine_grain_clock_gating.bits.optc);

@@ -23,17 +23,21 @@
  *
  */
 
+#include <linux/iopoll.h>
+
 #include <drm/display/drm_dp_dual_mode_helper.h>
 #include <drm/display/drm_hdmi_helper.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_edid.h>
+#include <drm/drm_print.h>
 
-#include "i915_reg.h"
+#include "i915_utils.h"
 #include "intel_de.h"
+#include "intel_display_regs.h"
 #include "intel_display_types.h"
 #include "intel_dp.h"
-#include "intel_lspcon.h"
 #include "intel_hdmi.h"
+#include "intel_lspcon.h"
 
 /* LSPCON OUI Vendor ID(signatures) */
 #define LSPCON_VENDOR_PARADE_OUI 0x001CF8
@@ -53,6 +57,11 @@
 #define LSPCON_PARADE_AVI_IF_CTRL 0x51E
 #define  LSPCON_PARADE_AVI_IF_KICKOFF (1 << 7)
 #define LSPCON_PARADE_AVI_IF_DATA_SIZE 32
+
+static struct intel_lspcon *enc_to_intel_lspcon(struct intel_encoder *encoder)
+{
+	return &enc_to_dig_port(encoder)->lspcon;
+}
 
 static struct intel_dp *lspcon_to_intel_dp(struct intel_lspcon *lspcon)
 {
@@ -120,8 +129,9 @@ static u32 get_hdr_status_reg(struct intel_lspcon *lspcon)
 		return DPCD_PARADE_LSPCON_HDR_STATUS;
 }
 
-void lspcon_detect_hdr_capability(struct intel_lspcon *lspcon)
+bool intel_lspcon_detect_hdr_capability(struct intel_digital_port *dig_port)
 {
+	struct intel_lspcon *lspcon = &dig_port->lspcon;
 	struct intel_dp *intel_dp = lspcon_to_intel_dp(lspcon);
 	struct intel_display *display = to_intel_display(intel_dp);
 	u8 hdr_caps;
@@ -137,6 +147,8 @@ void lspcon_detect_hdr_capability(struct intel_lspcon *lspcon)
 		drm_dbg_kms(display->drm, "LSPCON capable of HDR\n");
 		lspcon->hdr_supported = true;
 	}
+
+	return lspcon->hdr_supported;
 }
 
 static enum drm_lspcon_mode lspcon_get_current_mode(struct intel_lspcon *lspcon)
@@ -171,6 +183,8 @@ static enum drm_lspcon_mode lspcon_wait_mode(struct intel_lspcon *lspcon,
 	struct intel_dp *intel_dp = lspcon_to_intel_dp(lspcon);
 	struct intel_display *display = to_intel_display(intel_dp);
 	enum drm_lspcon_mode current_mode;
+	int timeout_us;
+	int ret;
 
 	current_mode = lspcon_get_current_mode(lspcon);
 	if (current_mode == mode)
@@ -179,9 +193,12 @@ static enum drm_lspcon_mode lspcon_wait_mode(struct intel_lspcon *lspcon,
 	drm_dbg_kms(display->drm, "Waiting for LSPCON mode %s to settle\n",
 		    lspcon_mode_name(mode));
 
-	wait_for((current_mode = lspcon_get_current_mode(lspcon)) == mode,
-		 lspcon_get_mode_settle_timeout(lspcon));
-	if (current_mode != mode)
+	timeout_us = lspcon_get_mode_settle_timeout(lspcon) * 1000;
+
+	ret = poll_timeout_us(current_mode = lspcon_get_current_mode(lspcon),
+			      current_mode == mode,
+			      5000, timeout_us, false);
+	if (ret)
 		drm_err(display->drm, "LSPCON mode hasn't settled\n");
 
 out:
@@ -211,7 +228,8 @@ static int lspcon_change_mode(struct intel_lspcon *lspcon,
 		return 0;
 	}
 
-	err = drm_lspcon_set_mode(intel_dp->aux.drm_dev, ddc, mode);
+	err = drm_lspcon_set_mode(intel_dp->aux.drm_dev, ddc, mode,
+				  lspcon_get_mode_settle_timeout(lspcon));
 	if (err < 0) {
 		drm_err(display->drm, "LSPCON mode change failed\n");
 		return err;
@@ -651,12 +669,14 @@ u32 lspcon_infoframes_enabled(struct intel_encoder *encoder,
 	return val;
 }
 
-void lspcon_wait_pcon_mode(struct intel_lspcon *lspcon)
+void intel_lspcon_wait_pcon_mode(struct intel_digital_port *dig_port)
 {
+	struct intel_lspcon *lspcon = &dig_port->lspcon;
+
 	lspcon_wait_mode(lspcon, DRM_LSPCON_MODE_PCON);
 }
 
-bool lspcon_init(struct intel_digital_port *dig_port)
+bool intel_lspcon_init(struct intel_digital_port *dig_port)
 {
 	struct intel_display *display = to_intel_display(dig_port);
 	struct intel_dp *intel_dp = &dig_port->dp;
@@ -687,6 +707,13 @@ bool lspcon_init(struct intel_digital_port *dig_port)
 	return true;
 }
 
+bool intel_lspcon_active(struct intel_digital_port *dig_port)
+{
+	struct intel_lspcon *lspcon = &dig_port->lspcon;
+
+	return lspcon->active;
+}
+
 u32 intel_lspcon_infoframes_enabled(struct intel_encoder *encoder,
 				    const struct intel_crtc_state *pipe_config)
 {
@@ -695,7 +722,7 @@ u32 intel_lspcon_infoframes_enabled(struct intel_encoder *encoder,
 	return dig_port->infoframes_enabled(encoder, pipe_config);
 }
 
-void lspcon_resume(struct intel_digital_port *dig_port)
+void intel_lspcon_resume(struct intel_digital_port *dig_port)
 {
 	struct intel_display *display = to_intel_display(dig_port);
 	struct intel_lspcon *lspcon = &dig_port->lspcon;
@@ -705,7 +732,7 @@ void lspcon_resume(struct intel_digital_port *dig_port)
 		return;
 
 	if (!lspcon->active) {
-		if (!lspcon_init(dig_port)) {
+		if (!intel_lspcon_init(dig_port)) {
 			drm_err(display->drm, "LSPCON init failed on port %c\n",
 				port_name(dig_port->base.port));
 			return;

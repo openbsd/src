@@ -1135,7 +1135,9 @@ static int navi10_set_default_dpm_table(struct smu_context *smu)
 	return 0;
 }
 
-static int navi10_dpm_set_vcn_enable(struct smu_context *smu, bool enable)
+static int navi10_dpm_set_vcn_enable(struct smu_context *smu,
+				      bool enable,
+				      int inst)
 {
 	int ret = 0;
 
@@ -1689,7 +1691,7 @@ static int navi10_force_clk_levels(struct smu_context *smu,
 		if (ret)
 			return 0;
 
-		ret = smu_v11_0_set_soft_freq_limited_range(smu, clk_type, min_freq, max_freq);
+		ret = smu_v11_0_set_soft_freq_limited_range(smu, clk_type, min_freq, max_freq, false);
 		if (ret)
 			return 0;
 		break;
@@ -2442,7 +2444,8 @@ static int navi10_update_pcie_parameters(struct smu_context *smu,
 	struct smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
 	uint32_t smu_pcie_arg;
-	int ret, i;
+	int ret = 0;
+	int i;
 
 	/* lclk dpm table setup */
 	for (i = 0; i < MAX_PCIE_CONF; i++) {
@@ -2451,25 +2454,24 @@ static int navi10_update_pcie_parameters(struct smu_context *smu,
 	}
 
 	for (i = 0; i < NUM_LINK_LEVELS; i++) {
-		smu_pcie_arg = (i << 16) |
-			((pptable->PcieGenSpeed[i] <= pcie_gen_cap) ? (pptable->PcieGenSpeed[i] << 8) :
-				(pcie_gen_cap << 8)) | ((pptable->PcieLaneCount[i] <= pcie_width_cap) ?
-					pptable->PcieLaneCount[i] : pcie_width_cap);
+		dpm_context->dpm_tables.pcie_table.pcie_gen[i] =
+			pptable->PcieGenSpeed[i] > pcie_gen_cap ?
+			pcie_gen_cap : pptable->PcieGenSpeed[i];
+		dpm_context->dpm_tables.pcie_table.pcie_lane[i] =
+			pptable->PcieLaneCount[i] > pcie_width_cap ?
+			pcie_width_cap : pptable->PcieLaneCount[i];
+		smu_pcie_arg = i << 16;
+		smu_pcie_arg |= dpm_context->dpm_tables.pcie_table.pcie_gen[i] << 8;
+		smu_pcie_arg |= dpm_context->dpm_tables.pcie_table.pcie_lane[i];
 		ret = smu_cmn_send_smc_msg_with_param(smu,
-					  SMU_MSG_OverridePcieParameters,
-					  smu_pcie_arg,
-					  NULL);
-
+						      SMU_MSG_OverridePcieParameters,
+						      smu_pcie_arg,
+						      NULL);
 		if (ret)
 			return ret;
-
-		if (pptable->PcieGenSpeed[i] > pcie_gen_cap)
-			dpm_context->dpm_tables.pcie_table.pcie_gen[i] = pcie_gen_cap;
-		if (pptable->PcieLaneCount[i] > pcie_width_cap)
-			dpm_context->dpm_tables.pcie_table.pcie_lane[i] = pcie_width_cap;
 	}
 
-	return 0;
+	return ret;
 }
 
 static inline void navi10_dump_od_table(struct smu_context *smu,
@@ -3142,10 +3144,10 @@ static int navi10_i2c_control_init(struct smu_context *smu)
 		control->quirks = &navi10_i2c_control_quirks;
 		i2c_set_adapdata(control, smu_i2c);
 
-		res = i2c_add_adapter(control);
+		res = devm_i2c_add_adapter(adev->dev, control);
 		if (res) {
 			DRM_ERROR("Failed to register hw i2c, err: %d\n", res);
-			goto Out_err;
+			return res;
 		}
 	}
 
@@ -3153,27 +3155,12 @@ static int navi10_i2c_control_init(struct smu_context *smu)
 	adev->pm.fru_eeprom_i2c_bus = &adev->pm.smu_i2c[1].adapter;
 
 	return 0;
-Out_err:
-	for ( ; i >= 0; i--) {
-		struct amdgpu_smu_i2c_bus *smu_i2c = &adev->pm.smu_i2c[i];
-		struct i2c_adapter *control = &smu_i2c->adapter;
-
-		i2c_del_adapter(control);
-	}
-	return res;
 }
 
 static void navi10_i2c_control_fini(struct smu_context *smu)
 {
 	struct amdgpu_device *adev = smu->adev;
-	int i;
 
-	for (i = 0; i < MAX_SMU_I2C_BUSES; i++) {
-		struct amdgpu_smu_i2c_bus *smu_i2c = &adev->pm.smu_i2c[i];
-		struct i2c_adapter *control = &smu_i2c->adapter;
-
-		i2c_del_adapter(control);
-	}
 	adev->pm.ras_eeprom_i2c_bus = NULL;
 	adev->pm.fru_eeprom_i2c_bus = NULL;
 }

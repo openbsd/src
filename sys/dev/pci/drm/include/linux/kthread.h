@@ -26,7 +26,7 @@ struct kthread_worker {
 };
 
 struct kthread_worker *
-	kthread_create_worker(unsigned int, const char *, ...);
+	kthread_run_worker(unsigned int, const char *, ...);
 void	kthread_destroy_worker(struct kthread_worker *);
 void	kthread_init_work(struct kthread_work *, void (*)(struct kthread_work *));
 bool	kthread_queue_work(struct kthread_worker *, struct kthread_work *);

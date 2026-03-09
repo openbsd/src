@@ -24,7 +24,6 @@
  *          Alex Deucher
  */
 
-#include <linux/export.h>
 #include <linux/pci.h>
 
 #include <drm/drm_edid.h>
@@ -282,7 +281,7 @@ struct amdgpu_i2c_chan *amdgpu_i2c_create(struct drm_device *dev,
 		snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
 			 "AMDGPU i2c hw bus %s", name);
 		i2c->adapter.algo = &amdgpu_atombios_i2c_algo;
-		ret = i2c_add_adapter(&i2c->adapter);
+		ret = devm_i2c_add_adapter(dev->dev, &i2c->adapter);
 		if (ret)
 			goto out_free;
 	} else {
@@ -324,22 +323,23 @@ out_free:
 
 }
 
-void amdgpu_i2c_destroy(struct amdgpu_i2c_chan *i2c)
-{
-	if (!i2c)
-		return;
-	WARN_ON(i2c->has_aux);
-	i2c_del_adapter(&i2c->adapter);
-	kfree(i2c);
-}
-
-/* Add the default buses */
 void amdgpu_i2c_init(struct amdgpu_device *adev)
 {
-	if (amdgpu_hw_i2c)
-		DRM_INFO("hw_i2c forced on, you may experience display detection problems!\n");
-
-	amdgpu_atombios_i2c_init(adev);
+	if (!adev->is_atom_fw) {
+		if (!amdgpu_device_has_dc_support(adev)) {
+			amdgpu_atombios_i2c_init(adev);
+		} else {
+			switch (adev->asic_type) {
+			case CHIP_POLARIS10:
+			case CHIP_POLARIS11:
+			case CHIP_POLARIS12:
+				amdgpu_atombios_oem_i2c_init(adev, 0x97);
+				break;
+			default:
+				break;
+			}
+		}
+	}
 }
 
 /* remove all the buses */
@@ -347,28 +347,9 @@ void amdgpu_i2c_fini(struct amdgpu_device *adev)
 {
 	int i;
 
-	for (i = 0; i < AMDGPU_MAX_I2C_BUS; i++) {
-		if (adev->i2c_bus[i]) {
-			amdgpu_i2c_destroy(adev->i2c_bus[i]);
+	for (i = 0; i < AMDGPU_MAX_I2C_BUS; i++)
+		if (adev->i2c_bus[i])
 			adev->i2c_bus[i] = NULL;
-		}
-	}
-}
-
-/* Add additional buses */
-void amdgpu_i2c_add(struct amdgpu_device *adev,
-		    const struct amdgpu_i2c_bus_rec *rec,
-		    const char *name)
-{
-	struct drm_device *dev = adev_to_drm(adev);
-	int i;
-
-	for (i = 0; i < AMDGPU_MAX_I2C_BUS; i++) {
-		if (!adev->i2c_bus[i]) {
-			adev->i2c_bus[i] = amdgpu_i2c_create(dev, rec, name);
-			return;
-		}
-	}
 }
 
 /* looks up bus based on id */

@@ -260,3 +260,21 @@ intel_gmch_gtt_clear_range(unsigned int first_entry, unsigned int num_entries)
 	}
 	membar_producer_wc();
 }
+
+dma_addr_t
+intel_gmch_gtt_read_entry(unsigned int pg, bool *is_present, bool *is_local)
+{
+	struct drm_i915_private *dev_priv = (void *)inteldrm_cd.cd_devs[0];
+	struct agp_softc *sc = dev_priv->drm.agp->agpdev;
+	bus_addr_t apaddr = sc->sc_apaddr + (pg * PAGE_SIZE);
+
+	*is_present = apaddr & 1;
+	*is_local = false;
+
+	if (INTEL_INFO(dev_priv)->dma_mask_size == 36)
+		apaddr = ((apaddr & 0xf0) << 28) | (apaddr & 0xfffff000);
+	else
+		apaddr = apaddr & 0xfffff000;
+
+	return apaddr;
+}

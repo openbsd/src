@@ -39,6 +39,8 @@
 
 #define AMDGPU_XCP_NO_PARTITION (~0)
 
+#define AMDGPU_XCP_OPS_KFD	(1 << 0)
+
 struct amdgpu_fpriv;
 
 enum AMDGPU_XCP_IP_BLOCK {
@@ -54,6 +56,30 @@ enum AMDGPU_XCP_STATE {
 	AMDGPU_XCP_SUSPEND,
 	AMDGPU_XCP_PREPARE_RESUME,
 	AMDGPU_XCP_RESUME,
+};
+
+enum amdgpu_xcp_res_id {
+	AMDGPU_XCP_RES_XCC,
+	AMDGPU_XCP_RES_DMA,
+	AMDGPU_XCP_RES_DEC,
+	AMDGPU_XCP_RES_JPEG,
+	AMDGPU_XCP_RES_MAX,
+};
+
+struct amdgpu_xcp_res_details {
+	enum amdgpu_xcp_res_id id;
+	u8 num_inst;
+	u8 num_shared;
+	struct kobject kobj;
+};
+
+struct amdgpu_xcp_cfg {
+	u8 mode;
+	struct amdgpu_xcp_res_details xcp_res[AMDGPU_XCP_RES_MAX];
+	u8 num_res;
+	struct amdgpu_xcp_mgr *xcp_mgr;
+	struct kobject kobj;
+	u16 compatible_nps_modes;
 };
 
 struct amdgpu_xcp_ip_funcs {
@@ -84,6 +110,9 @@ struct amdgpu_xcp {
 	struct drm_driver *driver;
 	struct drm_vma_offset_manager *vma_offset_manager;
 	struct amdgpu_sched	gpu_sched[AMDGPU_HW_IP_NUM][AMDGPU_RING_PRIO_MAX];
+	struct amdgpu_xcp_mgr *xcp_mgr;
+	struct kobject kobj;
+	uint64_t unique_id;
 };
 
 struct amdgpu_xcp_mgr {
@@ -97,6 +126,9 @@ struct amdgpu_xcp_mgr {
 
 	 /* Used to determine KFD memory size limits per XCP */
 	unsigned int num_xcp_per_mem_partition;
+	struct amdgpu_xcp_cfg *xcp_cfg;
+	uint32_t supp_xcp_modes;
+	uint32_t avail_xcp_modes;
 };
 
 struct amdgpu_xcp_mgr_funcs {
@@ -108,15 +140,13 @@ struct amdgpu_xcp_mgr_funcs {
 			      struct amdgpu_xcp_ip *ip);
 	int (*get_xcp_mem_id)(struct amdgpu_xcp_mgr *xcp_mgr,
 			      struct amdgpu_xcp *xcp, uint8_t *mem_id);
-
+	int (*get_xcp_res_info)(struct amdgpu_xcp_mgr *xcp_mgr,
+				int mode,
+				struct amdgpu_xcp_cfg *xcp_cfg);
 	int (*prepare_suspend)(struct amdgpu_xcp_mgr *xcp_mgr, int xcp_id);
 	int (*suspend)(struct amdgpu_xcp_mgr *xcp_mgr, int xcp_id);
 	int (*prepare_resume)(struct amdgpu_xcp_mgr *xcp_mgr, int xcp_id);
 	int (*resume)(struct amdgpu_xcp_mgr *xcp_mgr, int xcp_id);
-	int (*select_scheds)(struct amdgpu_device *adev,
-				  u32 hw_ip, u32 hw_prio, struct amdgpu_fpriv *fpriv,
-				  unsigned int *num_scheds, struct drm_gpu_scheduler ***scheds);
-	int (*update_partition_sched_list)(struct amdgpu_device *adev);
 };
 
 int amdgpu_xcp_prepare_suspend(struct amdgpu_xcp_mgr *xcp_mgr, int xcp_id);
@@ -145,15 +175,17 @@ int amdgpu_xcp_open_device(struct amdgpu_device *adev,
 			   struct drm_file *file_priv);
 void amdgpu_xcp_release_sched(struct amdgpu_device *adev,
 			      struct amdgpu_ctx_entity *entity);
-
-#define amdgpu_xcp_select_scheds(adev, e, c, d, x, y) \
-	((adev)->xcp_mgr && (adev)->xcp_mgr->funcs && \
-	(adev)->xcp_mgr->funcs->select_scheds ? \
-	(adev)->xcp_mgr->funcs->select_scheds((adev), (e), (c), (d), (x), (y)) : -ENOENT)
-#define amdgpu_xcp_update_partition_sched_list(adev) \
-	((adev)->xcp_mgr && (adev)->xcp_mgr->funcs && \
-	(adev)->xcp_mgr->funcs->update_partition_sched_list ? \
-	(adev)->xcp_mgr->funcs->update_partition_sched_list(adev) : 0)
+int amdgpu_xcp_select_scheds(struct amdgpu_device *adev,
+			     u32 hw_ip, u32 hw_prio,
+			     struct amdgpu_fpriv *fpriv,
+			     unsigned int *num_scheds,
+			     struct drm_gpu_scheduler ***scheds);
+void amdgpu_xcp_update_supported_modes(struct amdgpu_xcp_mgr *xcp_mgr);
+int amdgpu_xcp_update_partition_sched_list(struct amdgpu_device *adev);
+int amdgpu_xcp_pre_partition_switch(struct amdgpu_xcp_mgr *xcp_mgr, u32 flags);
+int amdgpu_xcp_post_partition_switch(struct amdgpu_xcp_mgr *xcp_mgr, u32 flags);
+void amdgpu_xcp_sysfs_init(struct amdgpu_device *adev);
+void amdgpu_xcp_sysfs_fini(struct amdgpu_device *adev);
 
 static inline int amdgpu_xcp_get_num_xcp(struct amdgpu_xcp_mgr *xcp_mgr)
 {

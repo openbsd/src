@@ -313,10 +313,11 @@ intel_wait_for_register_fw(struct intel_uncore *uncore,
 			   i915_reg_t reg,
 			   u32 mask,
 			   u32 value,
-			       unsigned int timeout_ms)
+			   unsigned int timeout_ms,
+			   u32 *out_value)
 {
 	return __intel_wait_for_register_fw(uncore, reg, mask, value,
-					    2, timeout_ms, NULL);
+					    2, timeout_ms, out_value);
 }
 
 #define IS_GSI_REG(reg) ((reg) < 0x40000)
@@ -500,6 +501,8 @@ static inline void __iomem *intel_uncore_regs(struct intel_uncore *uncore)
 {
 	return uncore->regs;
 }
+
+struct intel_uncore *to_intel_uncore(struct drm_device *drm);
 
 /*
  * The raw_reg_{read,write} macros are intended as a micro-optimization for

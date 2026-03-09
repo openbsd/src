@@ -847,8 +847,7 @@ void i915_gem_runtime_suspend(struct drm_i915_private *i915)
 	/*
 	 * Only called during RPM suspend. All users of the userfault_list
 	 * must be holding an RPM wakeref to ensure that this can not
-	 * run concurrently with themselves (and use the struct_mutex for
-	 * protection between themselves).
+	 * run concurrently with themselves.
 	 */
 
 	list_for_each_entry_safe(obj, on,
@@ -1146,11 +1145,11 @@ int i915_gem_init(struct drm_i915_private *dev_priv)
 	int ret;
 
 	/*
-	 * In the proccess of replacing cache_level with pat_index a tricky
+	 * In the process of replacing cache_level with pat_index a tricky
 	 * dependency is created on the definition of the enum i915_cache_level.
-	 * in case this enum is changed, PTE encode would be broken.
+	 * In case this enum is changed, PTE encode would be broken.
 	 * Add a WARNING here. And remove when we completely quit using this
-	 * enum
+	 * enum.
 	 */
 	BUILD_BUG_ON(I915_CACHE_NONE != 0 ||
 		     I915_CACHE_LLC != 1 ||

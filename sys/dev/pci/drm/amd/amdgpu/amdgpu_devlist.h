@@ -266,10 +266,8 @@ static const struct pci_matchid amdgpu_devices[] = {
 	/* GC 11.5.2, DCN 3.5.0, APU, Ryzen AI 350 "Krackan Point" */
 	{0x1002, 0x1114 },	/* Radeon 840M / 860M */
 
-#ifdef notyet
-	/* GC 11.5.3, DCN 3.6.0, APU, Ryzen AI 330 "Krackan Point" linux 6.15 */
+	/* GC 11.5.3, DCN 3.6.0, APU, Ryzen AI 330 "Krackan Point" */
 	{0x1002, 0x1902 },	/* Radeon 820M */
-#endif
 
 	/* GC 12.0.0, DCN 4.0.1, dGPU, "Navi 44" */
 	{0x1002, 0x7590 },	/* Radeon RX 9060, 9060 XT */

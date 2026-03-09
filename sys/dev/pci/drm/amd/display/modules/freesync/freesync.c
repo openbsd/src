@@ -48,6 +48,7 @@
 #define VSYNCS_BETWEEN_FLIP_THRESHOLD 2
 #define FREESYNC_CONSEC_FLIP_AFTER_VSYNC 5
 #define FREESYNC_VSYNC_TO_FLIP_DELTA_IN_US 500
+#define MICRO_HZ_TO_HZ(x) (x / 1000000)
 
 struct core_freesync {
 	struct mod_freesync public;
@@ -139,13 +140,34 @@ unsigned int mod_freesync_calc_v_total_from_refresh(
 	unsigned int v_total;
 	unsigned int frame_duration_in_ns;
 
+	if (refresh_in_uhz == 0)
+		return stream->timing.v_total;
+
 	frame_duration_in_ns =
 			((unsigned int)(div64_u64((1000000000ULL * 1000000),
 					refresh_in_uhz)));
 
-	v_total = div64_u64(div64_u64(((unsigned long long)(
-			frame_duration_in_ns) * (stream->timing.pix_clk_100hz / 10)),
-			stream->timing.h_total) + 500000, 1000000);
+	if (refresh_in_uhz <= stream->timing.min_refresh_in_uhz) {
+		/* When the target refresh rate is the minimum panel refresh rate,
+		 * round down the vtotal value to avoid stretching vblank over
+		 * panel's vtotal boundary.
+		 */
+		v_total = div64_u64(div64_u64(((unsigned long long)(
+				frame_duration_in_ns) * (stream->timing.pix_clk_100hz / 10)),
+				stream->timing.h_total), 1000000);
+	} else if (refresh_in_uhz >= stream->timing.max_refresh_in_uhz) {
+		/* When the target refresh rate is the maximum panel refresh rate
+		 * round up the vtotal value to prevent off-by-one error causing
+		 * v_total_min to be below the panel's lower bound
+		 */
+		v_total = div64_u64(div64_u64(((unsigned long long)(
+				frame_duration_in_ns) * (stream->timing.pix_clk_100hz / 10)),
+				stream->timing.h_total) + (1000000 - 1), 1000000);
+	} else {
+		v_total = div64_u64(div64_u64(((unsigned long long)(
+				frame_duration_in_ns) * (stream->timing.pix_clk_100hz / 10)),
+				stream->timing.h_total) + 500000, 1000000);
+	}
 
 	/* v_total cannot be less than nominal */
 	if (v_total < stream->timing.v_total) {
@@ -204,8 +226,8 @@ static void update_v_total_for_static_ramp(
 	unsigned int target_duration_in_us =
 			calc_duration_in_us_from_refresh_in_uhz(
 				in_out_vrr->fixed.target_refresh_in_uhz);
-	bool ramp_direction_is_up = (current_duration_in_us >
-				target_duration_in_us) ? true : false;
+	bool ramp_direction_is_up = current_duration_in_us >
+				target_duration_in_us;
 
 	/* Calculate ratio between new and current frame duration with 3 digit */
 	unsigned int frame_duration_ratio = div64_u64(1000000,
@@ -532,43 +554,6 @@ static bool vrr_settings_require_update(struct core_freesync *core_freesync,
 	} else if (in_vrr->min_refresh_in_uhz != min_refresh_in_uhz) {
 		return true;
 	} else if (in_vrr->max_refresh_in_uhz != max_refresh_in_uhz) {
-		return true;
-	}
-
-	return false;
-}
-
-bool mod_freesync_get_vmin_vmax(struct mod_freesync *mod_freesync,
-		const struct dc_stream_state *stream,
-		unsigned int *vmin,
-		unsigned int *vmax)
-{
-	*vmin = stream->adjust.v_total_min;
-	*vmax = stream->adjust.v_total_max;
-
-	return true;
-}
-
-bool mod_freesync_get_v_position(struct mod_freesync *mod_freesync,
-		struct dc_stream_state *stream,
-		unsigned int *nom_v_pos,
-		unsigned int *v_pos)
-{
-	struct core_freesync *core_freesync = NULL;
-	struct crtc_position position;
-
-	if (mod_freesync == NULL)
-		return false;
-
-	core_freesync = MOD_FREESYNC_TO_CORE(mod_freesync);
-
-	if (dc_stream_get_crtc_position(core_freesync->dc, &stream, 1,
-					&position.vertical_count,
-					&position.nominal_vcount)) {
-
-		*nom_v_pos = position.nominal_vcount;
-		*v_pos = position.vertical_count;
-
 		return true;
 	}
 
@@ -1275,27 +1260,16 @@ void mod_freesync_handle_v_update(struct mod_freesync *mod_freesync,
 		update_v_total_for_static_ramp(
 				core_freesync, stream, in_out_vrr);
 	}
-}
 
-void mod_freesync_get_settings(struct mod_freesync *mod_freesync,
-		const struct mod_vrr_params *vrr,
-		unsigned int *v_total_min, unsigned int *v_total_max,
-		unsigned int *event_triggers,
-		unsigned int *window_min, unsigned int *window_max,
-		unsigned int *lfc_mid_point_in_us,
-		unsigned int *inserted_frames,
-		unsigned int *inserted_duration_in_us)
-{
-	if (mod_freesync == NULL)
+	/*
+	 * If VRR is inactive, set vtotal min and max to nominal vtotal
+	 */
+	 if (in_out_vrr->state == VRR_STATE_INACTIVE) {
+		in_out_vrr->adjust.v_total_min =
+			mod_freesync_calc_v_total_from_refresh(stream,
+				in_out_vrr->max_refresh_in_uhz);
+		in_out_vrr->adjust.v_total_max = in_out_vrr->adjust.v_total_min;
 		return;
-
-	if (vrr->supported) {
-		*v_total_min = vrr->adjust.v_total_min;
-		*v_total_max = vrr->adjust.v_total_max;
-		*event_triggers = 0;
-		*lfc_mid_point_in_us = vrr->btr.mid_point_in_us;
-		*inserted_frames = vrr->btr.frames_to_insert;
-		*inserted_duration_in_us = vrr->btr.inserted_duration_in_us;
 	}
 }
 
@@ -1314,85 +1288,7 @@ unsigned long long mod_freesync_calc_nominal_field_rate(
 	return nominal_field_rate_in_uhz;
 }
 
-unsigned long long mod_freesync_calc_field_rate_from_timing(
-		unsigned int vtotal, unsigned int htotal, unsigned int pix_clk)
-{
-	unsigned long long field_rate_in_uhz = 0;
-	unsigned int total = htotal * vtotal;
-
-	/* Calculate nominal field rate for stream, rounded up to nearest integer */
-	field_rate_in_uhz = pix_clk;
-	field_rate_in_uhz *= 1000000ULL;
-
-	field_rate_in_uhz =	div_u64(field_rate_in_uhz, total);
-
-	return field_rate_in_uhz;
-}
-
 bool mod_freesync_get_freesync_enabled(struct mod_vrr_params *pVrr)
 {
 	return (pVrr->state != VRR_STATE_UNSUPPORTED) && (pVrr->state != VRR_STATE_DISABLED);
-}
-
-bool mod_freesync_is_valid_range(uint32_t min_refresh_cap_in_uhz,
-		uint32_t max_refresh_cap_in_uhz,
-		uint32_t nominal_field_rate_in_uhz)
-{
-
-	/* Typically nominal refresh calculated can have some fractional part.
-	 * Allow for some rounding error of actual video timing by taking floor
-	 * of caps and request. Round the nominal refresh rate.
-	 *
-	 * Dividing will convert everything to units in Hz although input
-	 * variable name is in uHz!
-	 *
-	 * Also note, this takes care of rounding error on the nominal refresh
-	 * so by rounding error we only expect it to be off by a small amount,
-	 * such as < 0.1 Hz. i.e. 143.9xxx or 144.1xxx.
-	 *
-	 * Example 1. Caps    Min = 40 Hz, Max = 144 Hz
-	 *            Request Min = 40 Hz, Max = 144 Hz
-	 *                    Nominal = 143.5x Hz rounded to 144 Hz
-	 *            This function should allow this as valid request
-	 *
-	 * Example 2. Caps    Min = 40 Hz, Max = 144 Hz
-	 *            Request Min = 40 Hz, Max = 144 Hz
-	 *                    Nominal = 144.4x Hz rounded to 144 Hz
-	 *            This function should allow this as valid request
-	 *
-	 * Example 3. Caps    Min = 40 Hz, Max = 144 Hz
-	 *            Request Min = 40 Hz, Max = 144 Hz
-	 *                    Nominal = 120.xx Hz rounded to 120 Hz
-	 *            This function should return NOT valid since the requested
-	 *            max is greater than current timing's nominal
-	 *
-	 * Example 4. Caps    Min = 40 Hz, Max = 120 Hz
-	 *            Request Min = 40 Hz, Max = 120 Hz
-	 *                    Nominal = 144.xx Hz rounded to 144 Hz
-	 *            This function should return NOT valid since the nominal
-	 *            is greater than the capability's max refresh
-	 */
-	nominal_field_rate_in_uhz =
-			div_u64(nominal_field_rate_in_uhz + 500000, 1000000);
-	min_refresh_cap_in_uhz /= 1000000;
-	max_refresh_cap_in_uhz /= 1000000;
-
-	/* Check nominal is within range */
-	if (nominal_field_rate_in_uhz > max_refresh_cap_in_uhz ||
-		nominal_field_rate_in_uhz < min_refresh_cap_in_uhz)
-		return false;
-
-	/* If nominal is less than max, limit the max allowed refresh rate */
-	if (nominal_field_rate_in_uhz < max_refresh_cap_in_uhz)
-		max_refresh_cap_in_uhz = nominal_field_rate_in_uhz;
-
-	/* Check min is within range */
-	if (min_refresh_cap_in_uhz > max_refresh_cap_in_uhz)
-		return false;
-
-	/* For variable range, check for at least 10 Hz range */
-	if (nominal_field_rate_in_uhz - min_refresh_cap_in_uhz < 10)
-		return false;
-
-	return true;
 }

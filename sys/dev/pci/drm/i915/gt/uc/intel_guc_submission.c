@@ -25,15 +25,15 @@
 #include "gt/intel_mocs.h"
 #include "gt/intel_ring.h"
 
+#include "i915_drv.h"
+#include "i915_irq.h"
+#include "i915_reg.h"
+#include "i915_trace.h"
+#include "i915_wait_util.h"
 #include "intel_guc_ads.h"
 #include "intel_guc_capture.h"
 #include "intel_guc_print.h"
 #include "intel_guc_submission.h"
-
-#include "i915_drv.h"
-#include "i915_reg.h"
-#include "i915_irq.h"
-#include "i915_trace.h"
 
 /**
  * DOC: GuC-based command submission
@@ -1223,7 +1223,7 @@ __extend_last_switch(struct intel_guc *guc, u64 *prev_start, u32 new_start)
  * determine validity of these values. Instead we read the values multiple times
  * until they are consistent. In test runs, 3 attempts results in consistent
  * values. The upper bound is set to 6 attempts and may need to be tuned as per
- * any new occurences.
+ * any new occurrences.
  */
 static void __get_engine_usage_record(struct intel_engine_cs *engine,
 				      u32 *last_in, u32 *id, u32 *total)
@@ -1285,15 +1285,12 @@ static void guc_update_engine_gt_clks(struct intel_engine_cs *engine)
 static u32 gpm_timestamp_shift(struct intel_gt *gt)
 {
 	intel_wakeref_t wakeref;
-	u32 reg, shift;
+	u32 reg;
 
 	with_intel_runtime_pm(gt->uncore->rpm, wakeref)
 		reg = intel_uncore_read(gt->uncore, RPM_CONFIG0);
 
-	shift = (reg & GEN10_RPM_CONFIG0_CTC_SHIFT_PARAMETER_MASK) >>
-		GEN10_RPM_CONFIG0_CTC_SHIFT_PARAMETER_SHIFT;
-
-	return 3 - shift;
+	return 3 - REG_FIELD_GET(GEN10_RPM_CONFIG0_CTC_SHIFT_PARAMETER_MASK, reg);
 }
 
 static void guc_update_pm_timestamp(struct intel_guc *guc, ktime_t *now)
@@ -1354,7 +1351,7 @@ static ktime_t guc_engine_busyness(struct intel_engine_cs *engine, ktime_t *now)
 	 * start_gt_clk is derived from GuC state. To get a consistent
 	 * view of activity, we query the GuC state only if gt is awake.
 	 */
-	wakeref = in_reset ? 0 : intel_gt_pm_get_if_awake(gt);
+	wakeref = in_reset ? NULL : intel_gt_pm_get_if_awake(gt);
 	if (wakeref) {
 		stats_saved = *stats;
 		gt_stamp_saved = guc->timestamp.gt_stamp;
@@ -1741,6 +1738,10 @@ void intel_guc_submission_reset_prepare(struct intel_guc *guc)
 	spin_lock_irq(guc_to_gt(guc)->irq_lock);
 	spin_unlock_irq(guc_to_gt(guc)->irq_lock);
 
+	/* Flush tasklet */
+	tasklet_disable(&guc->ct.receive_tasklet);
+	tasklet_enable(&guc->ct.receive_tasklet);
+
 	guc_flush_submissions(guc);
 	guc_flush_destroyed_contexts(guc);
 	flush_work(&guc->ct.requests.worker);
@@ -2058,6 +2059,8 @@ void intel_guc_submission_cancel_requests(struct intel_guc *guc)
 
 void intel_guc_submission_reset_finish(struct intel_guc *guc)
 {
+	int outstanding;
+
 	/* Reset called during driver load or during wedge? */
 	if (unlikely(!guc_submission_initialized(guc) ||
 		     !intel_guc_is_fw_running(guc) ||
@@ -2071,8 +2074,10 @@ void intel_guc_submission_reset_finish(struct intel_guc *guc)
 	 * see in CI if this happens frequently / a precursor to taking down the
 	 * machine.
 	 */
-	if (atomic_read(&guc->outstanding_submission_g2h))
-		guc_err(guc, "Unexpected outstanding GuC to Host in reset finish\n");
+	outstanding = atomic_read(&guc->outstanding_submission_g2h);
+	if (outstanding)
+		guc_err(guc, "Unexpected outstanding GuC to Host response(s) in reset finish: %d\n",
+			outstanding);
 	atomic_set(&guc->outstanding_submission_g2h, 0);
 
 	intel_guc_global_policies_update(guc);
@@ -3003,7 +3008,7 @@ static int __guc_context_pin(struct intel_context *ce,
 
 	/*
 	 * GuC context gets pinned in guc_request_alloc. See that function for
-	 * explaination of why.
+	 * explanation of why.
 	 */
 
 	return lrc_pin(ce, engine, vaddr);

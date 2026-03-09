@@ -99,7 +99,9 @@
 	SRI(OPTC_MEMORY_CONFIG, ODM, inst),\
 	SRI(OTG_CRC_CNTL2, OTG, inst),\
 	SR(DWB_SOURCE_SELECT),\
-	SRI(OTG_DRR_CONTROL, OTG, inst)
+	SRI(OTG_DRR_CONTROL, OTG, inst),\
+	SRI(OTG_PIPE_UPDATE_STATUS, OTG, inst),\
+	SRI(INTERRUPT_DEST, OTG, inst)
 
 #define OPTC_COMMON_MASK_SH_LIST_DCN3_1(mask_sh)\
 	SF(OTG0_OTG_VSTARTUP_PARAM, VSTARTUP_START, mask_sh),\
@@ -254,7 +256,12 @@
 	SF(OTG0_OTG_CRC_CNTL2, OTG_CRC_DATA_STREAM_COMBINE_MODE, mask_sh),\
 	SF(OTG0_OTG_CRC_CNTL2, OTG_CRC_DATA_STREAM_SPLIT_MODE, mask_sh),\
 	SF(OTG0_OTG_CRC_CNTL2, OTG_CRC_DATA_FORMAT, mask_sh),\
-	SF(OTG0_OTG_DRR_CONTROL, OTG_V_TOTAL_LAST_USED_BY_DRR, mask_sh)
+	SF(OTG0_OTG_DRR_CONTROL, OTG_V_TOTAL_LAST_USED_BY_DRR, mask_sh),\
+	SF(OTG0_OTG_PIPE_UPDATE_STATUS, OTG_FLIP_PENDING, mask_sh),\
+	SF(OTG0_OTG_PIPE_UPDATE_STATUS, OTG_DC_REG_UPDATE_PENDING, mask_sh),\
+	SF(OTG0_OTG_PIPE_UPDATE_STATUS, OTG_CURSOR_UPDATE_PENDING, mask_sh),\
+	SF(OTG0_OTG_PIPE_UPDATE_STATUS, OTG_VUPDATE_KEEPOUT_STATUS, mask_sh),\
+	SF(OTG0_INTERRUPT_DEST, OTG0_IHC_OTG_VERTICAL_INTERRUPT2_DEST, mask_sh)
 
 void dcn31_timing_generator_init(struct optc *optc1);
 
@@ -263,5 +270,8 @@ bool optc31_immediate_disable_crtc(struct timing_generator *optc);
 void optc31_set_drr(struct timing_generator *optc, const struct drr_params *params);
 
 void optc3_init_odm(struct timing_generator *optc);
+
+void optc31_read_otg_state(struct timing_generator *optc,
+		struct dcn_otg_state *s);
 
 #endif /* __DC_OPTC_DCN31_H__ */

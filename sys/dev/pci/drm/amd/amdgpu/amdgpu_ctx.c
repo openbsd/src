@@ -236,7 +236,7 @@ static int amdgpu_ctx_init_entity(struct amdgpu_ctx *ctx, u32 hw_ip,
 		r = amdgpu_xcp_select_scheds(adev, hw_ip, hw_prio, fpriv,
 						&num_scheds, &scheds);
 		if (r)
-			goto cleanup_entity;
+			goto error_free_entity;
 	}
 
 	/* disable load balance if the hw engine retains context among dependent jobs */
@@ -919,7 +919,7 @@ long amdgpu_ctx_mgr_entity_flush(struct amdgpu_ctx_mgr *mgr, long timeout)
 	return timeout;
 }
 
-void amdgpu_ctx_mgr_entity_fini(struct amdgpu_ctx_mgr *mgr)
+static void amdgpu_ctx_mgr_entity_fini(struct amdgpu_ctx_mgr *mgr)
 {
 	struct amdgpu_ctx *ctx;
 	struct idr *idp;
@@ -944,24 +944,13 @@ void amdgpu_ctx_mgr_entity_fini(struct amdgpu_ctx_mgr *mgr)
 				drm_sched_entity_fini(entity);
 			}
 		}
+		kref_put(&ctx->refcount, amdgpu_ctx_fini);
 	}
 }
 
 void amdgpu_ctx_mgr_fini(struct amdgpu_ctx_mgr *mgr)
 {
-	struct amdgpu_ctx *ctx;
-	struct idr *idp;
-	uint32_t id;
-
 	amdgpu_ctx_mgr_entity_fini(mgr);
-
-	idp = &mgr->ctx_handles;
-
-	idr_for_each_entry(idp, ctx, id) {
-		if (kref_put(&ctx->refcount, amdgpu_ctx_fini) != 1)
-			DRM_ERROR("ctx %p is still alive\n", ctx);
-	}
-
 	idr_destroy(&mgr->ctx_handles);
 	mutex_destroy(&mgr->lock);
 }

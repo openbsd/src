@@ -62,6 +62,6 @@ kobject_del(struct kobject *obj)
 {
 }
 
-#define kobject_uevent_env(obj, act, envp)
+#define kobject_uevent_env(obj, act, envp)	0
 
 #endif

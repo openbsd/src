@@ -5,6 +5,7 @@
 
 #include <linux/bits.h>
 #include <linux/types.h>
+#include <linux/swab.h>
 
 /*
  * Each pixel-format conversion helper takes a raw pixel in a
@@ -35,11 +36,33 @@
  * Conversions from XRGB8888
  */
 
+static inline u32 drm_pixel_xrgb8888_to_r8_bt601(u32 pix)
+{
+	u32 r = (pix & 0x00ff0000) >> 16;
+	u32 g = (pix & 0x0000ff00) >> 8;
+	u32 b =  pix & 0x000000ff;
+
+	/* ITU-R BT.601: Y = 0.299 R + 0.587 G + 0.114 B */
+	return (77 * r + 150 * g + 29 * b) / 256;
+}
+
+static inline u32 drm_pixel_xrgb8888_to_rgb332(u32 pix)
+{
+	return ((pix & 0x00e00000) >> 16) |
+	       ((pix & 0x0000e000) >> 11) |
+	       ((pix & 0x000000c0) >> 6);
+}
+
 static inline u32 drm_pixel_xrgb8888_to_rgb565(u32 pix)
 {
 	return ((pix & 0x00f80000) >> 8) |
 	       ((pix & 0x0000fc00) >> 5) |
 	       ((pix & 0x000000f8) >> 3);
+}
+
+static inline u32 drm_pixel_xrgb8888_to_rgb565be(u32 pix)
+{
+	return swab16(drm_pixel_xrgb8888_to_rgb565(pix));
 }
 
 static inline u32 drm_pixel_xrgb8888_to_rgbx5551(u32 pix)
@@ -66,6 +89,18 @@ static inline u32 drm_pixel_xrgb8888_to_argb1555(u32 pix)
 {
 	return BIT(15) | /* set alpha bit */
 	       drm_pixel_xrgb8888_to_xrgb1555(pix);
+}
+
+static inline u32 drm_pixel_xrgb8888_to_rgb888(u32 pix)
+{
+	return pix & GENMASK(23, 0);
+}
+
+static inline u32 drm_pixel_xrgb8888_to_bgr888(u32 pix)
+{
+	return ((pix & 0x00ff0000) >> 16) |
+	       ((pix & 0x0000ff00)) |
+	       ((pix & 0x000000ff) << 16);
 }
 
 static inline u32 drm_pixel_xrgb8888_to_argb8888(u32 pix)
@@ -122,6 +157,18 @@ static inline u32 drm_pixel_xrgb8888_to_abgr2101010(u32 pix)
 {
 	return GENMASK(31, 30) | /* set alpha bits */
 	       drm_pixel_xrgb8888_to_xbgr2101010(pix);
+}
+
+/*
+ * Conversion from ARGB8888
+ */
+
+static inline u32 drm_pixel_argb8888_to_argb4444(u32 pix)
+{
+	return ((pix & 0xf0000000) >> 16) |
+	       ((pix & 0x00f00000) >> 12) |
+	       ((pix & 0x0000f000) >> 8) |
+	       ((pix & 0x000000f0) >> 4);
 }
 
 #endif

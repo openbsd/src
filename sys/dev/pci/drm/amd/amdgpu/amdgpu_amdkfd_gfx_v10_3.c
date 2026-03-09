@@ -338,7 +338,7 @@ static int hqd_dump_v10_3(struct amdgpu_device *adev,
 		(*dump)[i++][1] = RREG32_SOC15_IP(GC, addr);		\
 	} while (0)
 
-	*dump = kmalloc(HQD_N_REGS*2*sizeof(uint32_t), GFP_KERNEL);
+	*dump = kmalloc_array(HQD_N_REGS, sizeof(**dump), GFP_KERNEL);
 	if (*dump == NULL)
 		return -ENOMEM;
 
@@ -435,7 +435,7 @@ static int hqd_sdma_dump_v10_3(struct amdgpu_device *adev,
 #undef HQD_N_REGS
 #define HQD_N_REGS (19+6+7+12)
 
-	*dump = kmalloc(HQD_N_REGS*2*sizeof(uint32_t), GFP_KERNEL);
+	*dump = kmalloc_array(HQD_N_REGS, sizeof(**dump), GFP_KERNEL);
 	if (*dump == NULL)
 		return -ENOMEM;
 
@@ -673,7 +673,7 @@ const struct kfd2kgd_calls gfx_v10_3_kfd2kgd = {
 	.set_vm_context_page_table_base = set_vm_context_page_table_base_v10_3,
 	.program_trap_handler_settings = program_trap_handler_settings_v10_3,
 	.get_iq_wait_times = kgd_gfx_v10_get_iq_wait_times,
-	.build_grace_period_packet_info = kgd_gfx_v10_build_grace_period_packet_info,
+	.build_dequeue_wait_counts_packet_info = kgd_gfx_v10_build_dequeue_wait_counts_packet_info,
 	.enable_debug_trap = kgd_gfx_v10_enable_debug_trap,
 	.disable_debug_trap = kgd_gfx_v10_disable_debug_trap,
 	.validate_trap_override_request = kgd_gfx_v10_validate_trap_override_request,
@@ -682,5 +682,6 @@ const struct kfd2kgd_calls gfx_v10_3_kfd2kgd = {
 	.set_address_watch = kgd_gfx_v10_set_address_watch,
 	.clear_address_watch = kgd_gfx_v10_clear_address_watch,
 	.hqd_get_pq_addr = kgd_gfx_v10_hqd_get_pq_addr,
-	.hqd_reset = kgd_gfx_v10_hqd_reset
+	.hqd_reset = kgd_gfx_v10_hqd_reset,
+	.hqd_sdma_get_doorbell = kgd_gfx_v10_hqd_sdma_get_doorbell
 };

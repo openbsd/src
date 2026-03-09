@@ -29,16 +29,11 @@ const struct drm_framebuffer_funcs drm_gem_fb_funcs = {
 
 struct drm_framebuffer *
 drm_gem_fb_create(struct drm_device *dev, struct drm_file *file,
-		  const struct drm_mode_fb_cmd2 *cmd)
+    const struct drm_format_info *info, const struct drm_mode_fb_cmd2 *cmd)
 {
 	struct drm_framebuffer *fb;
-	const struct drm_format_info *info;
 	struct drm_gem_object *gem_obj;
 	int error;
-
-	info = drm_get_format_info(dev, cmd);
-	if (!info)
-		return ERR_PTR(-EINVAL);
 
 	KASSERT(info->num_planes == 1);
 
@@ -48,7 +43,7 @@ drm_gem_fb_create(struct drm_device *dev, struct drm_file *file,
 
 	fb = malloc(sizeof(*fb), M_DRM, M_ZERO | M_WAITOK);
 
-	drm_helper_mode_fill_fb_struct(dev, fb, cmd);
+	drm_helper_mode_fill_fb_struct(dev, fb, info, cmd);
 	fb->obj[0] = gem_obj;
 
 	error = drm_framebuffer_init(dev, fb, &drm_gem_fb_funcs);

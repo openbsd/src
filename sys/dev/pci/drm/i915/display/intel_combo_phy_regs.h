@@ -6,7 +6,7 @@
 #ifndef __INTEL_COMBO_PHY_REGS__
 #define __INTEL_COMBO_PHY_REGS__
 
-#include "i915_reg_defs.h"
+#include "intel_display_reg_defs.h"
 
 #define _ICL_COMBOPHY_A				0x162000
 #define _ICL_COMBOPHY_B				0x6C000
@@ -133,6 +133,8 @@
 #define   TX_TRAINING_EN			REG_BIT(31)
 #define   TAP2_DISABLE				REG_BIT(30)
 #define   TAP3_DISABLE				REG_BIT(29)
+#define   CURSOR_PROGRAM			REG_BIT(26)
+#define   COEFF_POLARITY			REG_BIT(25)
 #define   SCALING_MODE_SEL_MASK			REG_GENMASK(20, 18)
 #define   SCALING_MODE_SEL(x)			REG_FIELD_PREP(SCALING_MODE_SEL_MASK, (x))
 #define   RTERM_SELECT_MASK			REG_GENMASK(5, 3)

@@ -88,8 +88,7 @@ void dce110_edp_wait_for_hpd_ready(
 		bool power_up);
 
 bool dce110_set_backlight_level(struct pipe_ctx *pipe_ctx,
-		uint32_t backlight_pwm_u16_16,
-		uint32_t frame_ramp);
+	struct set_backlight_level_params *params);
 void dce110_set_abm_immediate_disable(struct pipe_ctx *pipe_ctx);
 void dce110_set_pipe(struct pipe_ctx *pipe_ctx);
 void dce110_disable_link_output(struct dc_link *link,
@@ -111,5 +110,16 @@ void dce110_enable_dp_link_output(
 		enum amd_signal_type signal,
 		enum clock_source_id clock_source,
 		const struct dc_link_settings *link_settings);
+void build_audio_output(
+		struct dc_state *state,
+		const struct pipe_ctx *pipe_ctx,
+		struct audio_output *audio_output);
+enum audio_dto_source translate_to_dto_source(enum controller_id crtc_id);
+void populate_audio_dp_link_info(
+	const struct pipe_ctx *pipe_ctx,
+	struct audio_dp_link_info *dp_link_info);
+void enable_fbc(
+	struct dc *dc,
+	struct dc_state *context);
 #endif /* __DC_HWSS_DCE110_H__ */
 

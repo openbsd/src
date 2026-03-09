@@ -45,7 +45,11 @@
  */
 static inline u64 amdgpu_seq64_get_va_base(struct amdgpu_device *adev)
 {
-	return AMDGPU_VA_RESERVED_SEQ64_START(adev);
+	u64 addr = AMDGPU_VA_RESERVED_SEQ64_START(adev);
+
+	addr = amdgpu_gmc_sign_extend(addr);
+
+	return addr;
 }
 
 /**
@@ -88,9 +92,11 @@ int amdgpu_seq64_map(struct amdgpu_device *adev, struct amdgpu_vm *vm,
 		goto error;
 	}
 
-	seq64_addr = amdgpu_seq64_get_va_base(adev);
-	r = amdgpu_vm_bo_map(adev, *bo_va, seq64_addr, 0, AMDGPU_VA_RESERVED_SEQ64_SIZE,
-			     AMDGPU_PTE_READABLE);
+	seq64_addr = amdgpu_seq64_get_va_base(adev) & AMDGPU_GMC_HOLE_MASK;
+
+	r = amdgpu_vm_bo_map(adev, *bo_va, seq64_addr, 0,
+			     AMDGPU_VA_RESERVED_SEQ64_SIZE,
+			     AMDGPU_VM_PAGE_READABLE | AMDGPU_VM_MTYPE_UC);
 	if (r) {
 		DRM_ERROR("failed to do bo_map on userq sem, err=%d\n", r);
 		amdgpu_vm_bo_del(adev, *bo_va);
@@ -156,6 +162,7 @@ error:
  *
  * @adev: amdgpu_device pointer
  * @va: VA to access the seq in process address space
+ * @gpu_addr: GPU address to access the seq
  * @cpu_addr: CPU address to access the seq
  *
  * Alloc a 64 bit memory from seq64 pool.
@@ -163,7 +170,8 @@ error:
  * Returns:
  * 0 on success or a negative error code on failure
  */
-int amdgpu_seq64_alloc(struct amdgpu_device *adev, u64 *va, u64 **cpu_addr)
+int amdgpu_seq64_alloc(struct amdgpu_device *adev, u64 *va,
+		       u64 *gpu_addr, u64 **cpu_addr)
 {
 	unsigned long bit_pos;
 
@@ -172,7 +180,12 @@ int amdgpu_seq64_alloc(struct amdgpu_device *adev, u64 *va, u64 **cpu_addr)
 		return -ENOSPC;
 
 	__set_bit(bit_pos, adev->seq64.used);
+
 	*va = bit_pos * sizeof(u64) + amdgpu_seq64_get_va_base(adev);
+
+	if (gpu_addr)
+		*gpu_addr = bit_pos * sizeof(u64) + adev->seq64.gpu_addr;
+
 	*cpu_addr = bit_pos + adev->seq64.cpu_base_addr;
 
 	return 0;
@@ -233,7 +246,7 @@ int amdgpu_seq64_init(struct amdgpu_device *adev)
 	 */
 	r = amdgpu_bo_create_kernel(adev, AMDGPU_VA_RESERVED_SEQ64_SIZE,
 				    PAGE_SIZE, AMDGPU_GEM_DOMAIN_GTT,
-				    &adev->seq64.sbo, NULL,
+				    &adev->seq64.sbo, &adev->seq64.gpu_addr,
 				    (void **)&adev->seq64.cpu_base_addr);
 	if (r) {
 		dev_warn(adev->dev, "(%d) create seq64 failed\n", r);

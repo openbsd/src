@@ -6,6 +6,8 @@
 #include <linux/string_helpers.h>
 #include <linux/suspend.h>
 
+#include "display/intel_display_power.h"
+
 #include "i915_drv.h"
 #include "i915_irq.h"
 #include "i915_params.h"
@@ -86,6 +88,7 @@ static int __gt_unpark(struct intel_wakeref *wf)
 {
 	struct intel_gt *gt = container_of(wf, typeof(*gt), wakeref);
 	struct drm_i915_private *i915 = gt->i915;
+	struct intel_display *display = i915->display;
 
 	GT_TRACE(gt, "\n");
 
@@ -100,7 +103,7 @@ static int __gt_unpark(struct intel_wakeref *wf)
 	 * Work around it by grabbing a GT IRQ power domain whilst there is any
 	 * GT activity, preventing any DC state transitions.
 	 */
-	gt->awake = intel_display_power_get(i915, POWER_DOMAIN_GT_IRQ);
+	gt->awake = intel_display_power_get(display, POWER_DOMAIN_GT_IRQ);
 	GEM_BUG_ON(!gt->awake);
 
 	intel_rc6_unpark(&gt->rc6);
@@ -119,6 +122,7 @@ static int __gt_park(struct intel_wakeref *wf)
 	struct intel_gt *gt = container_of(wf, typeof(*gt), wakeref);
 	intel_wakeref_t wakeref = fetch_and_zero(&gt->awake);
 	struct drm_i915_private *i915 = gt->i915;
+	struct intel_display *display = i915->display;
 
 	GT_TRACE(gt, "\n");
 
@@ -136,7 +140,7 @@ static int __gt_park(struct intel_wakeref *wf)
 
 	/* Defer dropping the display power well for 100ms, it's slow! */
 	GEM_BUG_ON(!wakeref);
-	intel_display_power_put_async(i915, POWER_DOMAIN_GT_IRQ, wakeref);
+	intel_display_power_put_async(display, POWER_DOMAIN_GT_IRQ, wakeref);
 
 	return 0;
 }
@@ -172,7 +176,7 @@ void intel_gt_pm_init(struct intel_gt *gt)
 
 static bool reset_engines(struct intel_gt *gt)
 {
-	if (INTEL_INFO(gt->i915)->gpu_reset_clobbers_display)
+	if (intel_gt_gpu_reset_clobbers_display(gt))
 		return false;
 
 	return intel_gt_reset_all_engines(gt) == 0;

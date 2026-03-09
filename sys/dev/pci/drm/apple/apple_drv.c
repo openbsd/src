@@ -14,8 +14,8 @@
 #include <linux/module.h>
 #include <linux/of_address.h>
 #include <linux/of_device.h>
+#include <linux/aperture.h>
 
-#include <drm/drm_aperture.h>
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
@@ -34,6 +34,7 @@
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_vblank.h>
 #include <drm/drm_fixed.h>
+#include <drm/clients/drm_client_setup.h>
 
 #include "dcp.h"
 
@@ -64,9 +65,9 @@ static int apple_drm_gem_dumb_create(struct drm_file *file_priv,
 
 static const struct drm_driver apple_drm_driver = {
 	DRM_GEM_DMA_DRIVER_OPS_WITH_DUMB_CREATE(apple_drm_gem_dumb_create),
+	DRM_FBDEV_DMA_DRIVER_OPS,
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,
-	.date			= "20221106",
 	.major			= 1,
 	.minor			= 0,
 	.driver_features	= DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
@@ -482,8 +483,8 @@ static int apple_drm_init(struct device *dev)
 		return ret;
 
 	fb_size = fb_r.end - fb_r.start + 1;
-	ret = drm_aperture_remove_conflicting_framebuffers(fb_r.start, fb_size,
-						&apple_drm_driver);
+	ret = aperture_remove_conflicting_devices(fb_r.start, fb_size,
+						apple_drm_driver.name);
 	if (ret) {
 		dev_err(dev, "Failed remove fb: %d\n", ret);
 		goto err_unbind;
@@ -539,7 +540,7 @@ static int apple_drm_init(struct device *dev)
 	if (ret)
 		goto err_unbind;
 
-	drm_fbdev_dma_setup(&apple->drm, 32);
+	drm_client_setup_with_fourcc(&apple->drm, DRM_FORMAT_XRGB8888);
 
 	return 0;
 

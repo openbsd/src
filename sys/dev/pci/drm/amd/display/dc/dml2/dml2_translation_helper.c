@@ -107,6 +107,7 @@ void dml2_init_ip_params(struct dml2_context *dml2, const struct dc *in_dc, stru
 
 	case dml_project_dcn35:
 	case dml_project_dcn351:
+	case dml_project_dcn36:
 		out->rob_buffer_size_kbytes = 64;
 		out->config_return_buffer_size_in_kbytes = 1792;
 		out->compressed_buffer_segment_size_in_kbytes = 64;
@@ -292,6 +293,7 @@ void dml2_init_socbb_params(struct dml2_context *dml2, const struct dc *in_dc, s
 
 	case dml_project_dcn35:
 	case dml_project_dcn351:
+	case dml_project_dcn36:
 		out->num_chans = 4;
 		out->round_trip_ping_latency_dcfclk_cycles = 106;
 		out->smn_latency_us = 2;
@@ -506,6 +508,7 @@ void dml2_init_soc_states(struct dml2_context *dml2, const struct dc *in_dc,
 		p->dcfclk_stas_mhz[3] = 1324;
 		p->dcfclk_stas_mhz[4] = p->in_states->state_array[1].dcfclk_mhz;
 	} else if (dml2->v20.dml_core_ctx.project != dml_project_dcn35 &&
+			dml2->v20.dml_core_ctx.project != dml_project_dcn36 &&
 			dml2->v20.dml_core_ctx.project != dml_project_dcn351) {
 		p->dcfclk_stas_mhz[0] = 300;
 		p->dcfclk_stas_mhz[1] = 615;
@@ -553,13 +556,54 @@ void dml2_init_soc_states(struct dml2_context *dml2, const struct dc *in_dc,
 		}
 	}
 
-	dml2_policy_build_synthetic_soc_states(s, p);
-	if (dml2->v20.dml_core_ctx.project == dml_project_dcn35) {
-		// Override last out_state with data from last in_state
-		// This will ensure that out_state contains max fclk
-		memcpy(&p->out_states->state_array[p->out_states->num_states - 1],
-				&p->in_states->state_array[p->in_states->num_states - 1],
-				sizeof(struct soc_state_bounding_box_st));
+	if (dml2->v20.dml_core_ctx.project == dml_project_dcn35 ||
+	    dml2->v20.dml_core_ctx.project == dml_project_dcn36 ||
+	    dml2->v20.dml_core_ctx.project == dml_project_dcn351) {
+		int max_dcfclk_mhz = 0, max_dispclk_mhz = 0, max_dppclk_mhz = 0, max_phyclk_mhz = 0,
+			max_dtbclk_mhz = 0, max_fclk_mhz = 0, max_uclk_mhz = 0, max_socclk_mhz = 0;
+
+		for (i = 0; i < p->in_states->num_states; i++) {
+			if (p->in_states->state_array[i].dcfclk_mhz > max_dcfclk_mhz)
+				max_dcfclk_mhz = (int)p->in_states->state_array[i].dcfclk_mhz;
+			if (p->in_states->state_array[i].fabricclk_mhz > max_fclk_mhz)
+				max_fclk_mhz = (int)p->in_states->state_array[i].fabricclk_mhz;
+			if (p->in_states->state_array[i].socclk_mhz > max_socclk_mhz)
+				max_socclk_mhz = (int)p->in_states->state_array[i].socclk_mhz;
+			if (p->in_states->state_array[i].dram_speed_mts > max_uclk_mhz)
+				max_uclk_mhz = (int)p->in_states->state_array[i].dram_speed_mts;
+			if (p->in_states->state_array[i].dispclk_mhz > max_dispclk_mhz)
+				max_dispclk_mhz = (int)p->in_states->state_array[i].dispclk_mhz;
+			if (p->in_states->state_array[i].dppclk_mhz > max_dppclk_mhz)
+				max_dppclk_mhz = (int)p->in_states->state_array[i].dppclk_mhz;
+			if (p->in_states->state_array[i].phyclk_mhz > max_phyclk_mhz)
+				max_phyclk_mhz = (int)p->in_states->state_array[i].phyclk_mhz;
+			if (p->in_states->state_array[i].dtbclk_mhz > max_dtbclk_mhz)
+				max_dtbclk_mhz = (int)p->in_states->state_array[i].dtbclk_mhz;
+		}
+
+		for (i = 0; i < p->in_states->num_states; i++) {
+			/* Independent states - including base (unlisted) parameters from state 0. */
+			p->out_states->state_array[i] = p->in_states->state_array[0];
+
+			p->out_states->state_array[i].dispclk_mhz = max_dispclk_mhz;
+			p->out_states->state_array[i].dppclk_mhz = max_dppclk_mhz;
+			p->out_states->state_array[i].dtbclk_mhz = max_dtbclk_mhz;
+			p->out_states->state_array[i].phyclk_mhz = max_phyclk_mhz;
+
+			p->out_states->state_array[i].dscclk_mhz = max_dispclk_mhz / 3.0;
+			p->out_states->state_array[i].phyclk_mhz = max_phyclk_mhz;
+			p->out_states->state_array[i].dtbclk_mhz = max_dtbclk_mhz;
+
+			/* Dependent states. */
+			p->out_states->state_array[i].dram_speed_mts = p->in_states->state_array[i].dram_speed_mts;
+			p->out_states->state_array[i].fabricclk_mhz = p->in_states->state_array[i].fabricclk_mhz;
+			p->out_states->state_array[i].socclk_mhz = p->in_states->state_array[i].socclk_mhz;
+			p->out_states->state_array[i].dcfclk_mhz = p->in_states->state_array[i].dcfclk_mhz;
+		}
+
+		p->out_states->num_states = p->in_states->num_states;
+	} else {
+		dml2_policy_build_synthetic_soc_states(s, p);
 	}
 }
 
@@ -852,7 +896,7 @@ static void populate_dummy_dml_surface_cfg(struct dml_surface_cfg_st *out, unsig
 	out->SurfaceWidthC[location] = in->timing.h_addressable;
 	out->SurfaceHeightC[location] = in->timing.v_addressable;
 	out->PitchY[location] = ((out->SurfaceWidthY[location] + 127) / 128) * 128;
-	out->PitchC[location] = 0;
+	out->PitchC[location] = 1;
 	out->DCCEnable[location] = false;
 	out->DCCMetaPitchY[location] = 0;
 	out->DCCMetaPitchC[location] = 0;
@@ -1145,22 +1189,6 @@ static unsigned int map_plane_to_dml_display_cfg(const struct dml2_context *dml2
 	return location;
 }
 
-static void apply_legacy_svp_drr_settings(struct dml2_context *dml2, const struct dc_state *state, struct dml_display_cfg_st *dml_dispcfg)
-{
-	int i;
-
-	if (state->bw_ctx.bw.dcn.clk.fw_based_mclk_switching) {
-		ASSERT(state->stream_count == 1);
-		dml_dispcfg->timing.DRRDisplay[0] = true;
-	} else if (state->bw_ctx.bw.dcn.legacy_svp_drr_stream_index_valid) {
-
-		for (i = 0; i < dml_dispcfg->num_timings; i++) {
-			if (dml2->v20.scratch.dml_to_dc_pipe_mapping.disp_cfg_to_stream_id[i] == state->streams[state->bw_ctx.bw.dcn.legacy_svp_drr_stream_index]->stream_id)
-				dml_dispcfg->timing.DRRDisplay[i] = true;
-		}
-	}
-}
-
 static void dml2_populate_pipe_to_plane_index_mapping(struct dml2_context *dml2, struct dc_state *state)
 {
 	unsigned int i;
@@ -1393,9 +1421,6 @@ void map_dc_state_into_dml_display_cfg(struct dml2_context *dml2, struct dc_stat
 			}
 		}
 	}
-
-	if (!dml2->config.use_native_pstate_optimization)
-		apply_legacy_svp_drr_settings(dml2, context, dml_dispcfg);
 }
 
 void dml2_update_pipe_ctx_dchub_regs(struct _vcs_dpi_dml_display_rq_regs_st *rq_regs,

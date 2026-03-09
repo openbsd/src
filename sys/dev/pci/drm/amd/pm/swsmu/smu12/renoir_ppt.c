@@ -470,7 +470,7 @@ static int renoir_od_edit_dpm_table(struct smu_context *smu,
 static int renoir_set_fine_grain_gfx_freq_parameters(struct smu_context *smu)
 {
 	uint32_t min = 0, max = 0;
-	uint32_t ret = 0;
+	int ret = 0;
 
 	ret = smu_cmn_send_smc_msg_with_param(smu,
 								SMU_MSG_GetMinGfxclkFrequency,
@@ -497,7 +497,6 @@ static int renoir_print_clk_levels(struct smu_context *smu,
 	int i, idx, size = 0, ret = 0;
 	uint32_t cur_value = 0, value = 0, count = 0, min = 0, max = 0;
 	SmuMetrics_t metrics;
-	struct smu_dpm_context *smu_dpm_ctx = &(smu->smu_dpm);
 	bool cur_value_match_level = false;
 
 	memset(&metrics, 0, sizeof(metrics));
@@ -510,28 +509,24 @@ static int renoir_print_clk_levels(struct smu_context *smu,
 
 	switch (clk_type) {
 	case SMU_OD_RANGE:
-		if (smu_dpm_ctx->dpm_level == AMD_DPM_FORCED_LEVEL_MANUAL) {
-			ret = smu_cmn_send_smc_msg_with_param(smu,
-						SMU_MSG_GetMinGfxclkFrequency,
-						0, &min);
-			if (ret)
-				return ret;
-			ret = smu_cmn_send_smc_msg_with_param(smu,
-						SMU_MSG_GetMaxGfxclkFrequency,
-						0, &max);
-			if (ret)
-				return ret;
-			size += sysfs_emit_at(buf, size, "OD_RANGE\nSCLK: %10uMhz %10uMhz\n", min, max);
-		}
+		ret = smu_cmn_send_smc_msg_with_param(smu,
+					SMU_MSG_GetMinGfxclkFrequency,
+					0, &min);
+		if (ret)
+			return ret;
+		ret = smu_cmn_send_smc_msg_with_param(smu,
+					SMU_MSG_GetMaxGfxclkFrequency,
+					0, &max);
+		if (ret)
+			return ret;
+		size += sysfs_emit_at(buf, size, "OD_RANGE\nSCLK: %10uMhz %10uMhz\n", min, max);
 		break;
 	case SMU_OD_SCLK:
-		if (smu_dpm_ctx->dpm_level == AMD_DPM_FORCED_LEVEL_MANUAL) {
-			min = (smu->gfx_actual_hard_min_freq > 0) ? smu->gfx_actual_hard_min_freq : smu->gfx_default_hard_min_freq;
-			max = (smu->gfx_actual_soft_max_freq > 0) ? smu->gfx_actual_soft_max_freq : smu->gfx_default_soft_max_freq;
-			size += sysfs_emit_at(buf, size, "OD_SCLK\n");
-			size += sysfs_emit_at(buf, size, "0:%10uMhz\n", min);
-			size += sysfs_emit_at(buf, size, "1:%10uMhz\n", max);
-		}
+		min = (smu->gfx_actual_hard_min_freq > 0) ? smu->gfx_actual_hard_min_freq : smu->gfx_default_hard_min_freq;
+		max = (smu->gfx_actual_soft_max_freq > 0) ? smu->gfx_actual_soft_max_freq : smu->gfx_default_soft_max_freq;
+		size += sysfs_emit_at(buf, size, "OD_SCLK\n");
+		size += sysfs_emit_at(buf, size, "0:%10uMhz\n", min);
+		size += sysfs_emit_at(buf, size, "1:%10uMhz\n", max);
 		break;
 	case SMU_GFXCLK:
 	case SMU_SCLK:
@@ -645,7 +640,9 @@ static enum amd_pm_state_type renoir_get_current_power_state(struct smu_context 
 	return pm_type;
 }
 
-static int renoir_dpm_set_vcn_enable(struct smu_context *smu, bool enable)
+static int renoir_dpm_set_vcn_enable(struct smu_context *smu,
+				      bool enable,
+				      int inst)
 {
 	int ret = 0;
 
@@ -707,7 +704,7 @@ static int renoir_force_dpm_limit_value(struct smu_context *smu, bool highest)
 			return ret;
 
 		force_freq = highest ? max_freq : min_freq;
-		ret = smu_v12_0_set_soft_freq_limited_range(smu, clk_type, force_freq, force_freq);
+		ret = smu_v12_0_set_soft_freq_limited_range(smu, clk_type, force_freq, force_freq, false);
 		if (ret)
 			return ret;
 	}
@@ -740,7 +737,7 @@ static int renoir_unforce_dpm_levels(struct smu_context *smu) {
 		if (ret)
 			return ret;
 
-		ret = smu_v12_0_set_soft_freq_limited_range(smu, clk_type, min_freq, max_freq);
+		ret = smu_v12_0_set_soft_freq_limited_range(smu, clk_type, min_freq, max_freq, false);
 		if (ret)
 			return ret;
 	}
@@ -894,7 +891,7 @@ static int renoir_set_peak_clock_by_device(struct smu_context *smu)
 	if (ret)
 		return ret;
 
-	ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_SCLK, sclk_freq, sclk_freq);
+	ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_SCLK, sclk_freq, sclk_freq, false);
 	if (ret)
 		return ret;
 
@@ -902,7 +899,7 @@ static int renoir_set_peak_clock_by_device(struct smu_context *smu)
 	if (ret)
 		return ret;
 
-	ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_UCLK, uclk_freq, uclk_freq);
+	ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_UCLK, uclk_freq, uclk_freq, false);
 	if (ret)
 		return ret;
 
@@ -944,13 +941,13 @@ static int renior_set_dpm_profile_freq(struct smu_context *smu,
 	}
 
 	if (sclk)
-		ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_SCLK, sclk, sclk);
+		ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_SCLK, sclk, sclk, false);
 
 	if (socclk)
-		ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_SOCCLK, socclk, socclk);
+		ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_SOCCLK, socclk, socclk, false);
 
 	if (fclk)
-		ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_FCLK, fclk, fclk);
+		ret = smu_v12_0_set_soft_freq_limited_range(smu, SMU_FCLK, fclk, fclk, false);
 
 	return ret;
 }
@@ -1280,6 +1277,12 @@ static int renoir_read_sensor(struct smu_context *smu,
 	case AMDGPU_PP_SENSOR_GPU_LOAD:
 		ret = renoir_get_smu_metrics_data(smu,
 						  METRICS_AVERAGE_GFXACTIVITY,
+						  (uint32_t *)data);
+		*size = 4;
+		break;
+	case AMDGPU_PP_SENSOR_VCN_LOAD:
+		ret = renoir_get_smu_metrics_data(smu,
+						  METRICS_AVERAGE_VCNACTIVITY,
 						  (uint32_t *)data);
 		*size = 4;
 		break;

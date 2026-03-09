@@ -26,7 +26,7 @@
 #ifndef __DC_LINK_DP_PHY_H__
 #define __DC_LINK_DP_PHY_H__
 
-#include "link.h"
+#include "link_service.h"
 void dp_enable_link_phy(
 	struct dc_link *link,
 	const struct link_resource *link_res,
@@ -52,7 +52,8 @@ void dp_set_drive_settings(
 enum dc_status dp_set_fec_ready(struct dc_link *link,
 		const struct link_resource *link_res, bool ready);
 
-void dp_set_fec_enable(struct dc_link *link, bool enable);
+void dp_set_fec_enable(struct dc_link *link,
+		const struct link_resource *link_res, bool enable);
 
 void dpcd_write_rx_power_ctrl(struct dc_link *link, bool on);
 

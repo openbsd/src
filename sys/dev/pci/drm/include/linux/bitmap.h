@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.9 2025/09/09 10:11:41 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.10 2026/03/09 23:58:03 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -63,11 +63,11 @@ bitmap_fill(void *p, u_int n)
 }
 
 static inline void
-bitmap_or(void *d, void *s1, void *s2, u_int n)
+bitmap_or(void *d, const void *s1, const void *s2, u_int n)
 {
 	u_int *dst = d;
-	u_int *src1 = s1;
-	u_int *src2 = s2;
+	const u_int *src1 = s1;
+	const u_int *src2 = s2;
 	u_int b;
 
 	for (b = 0; b < n; b += 32)

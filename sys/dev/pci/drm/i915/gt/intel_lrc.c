@@ -751,7 +751,6 @@ static int lrc_ring_indirect_offset(const struct intel_engine_cs *engine)
 
 static int lrc_ring_cmd_buf_cctl(const struct intel_engine_cs *engine)
 {
-
 	if (GRAPHICS_VER_FULL(engine->i915) >= IP_VER(12, 55))
 		/*
 		 * Note that the CSFE context has a dummy slot for CMD_BUF_CCTL
@@ -820,8 +819,10 @@ static bool ctx_needs_runalone(const struct intel_context *ce)
 	bool ctx_is_protected = false;
 
 	/*
-	 * On MTL and newer platforms, protected contexts require setting
-	 * the LRC run-alone bit or else the encryption will not happen.
+	 * Wa_14019159160 - Case 2.
+	 * On some platforms, protected contexts require setting
+	 * the LRC run-alone bit or else the encryption/decryption will not happen.
+	 * NOTE: Case 2 only applies to PXP use-case of said workaround.
 	 */
 	if (GRAPHICS_VER_FULL(ce->engine->i915) >= IP_VER(12, 70) &&
 	    (ce->engine->class == COMPUTE_CLASS || ce->engine->class == RENDER_CLASS)) {
@@ -850,6 +851,7 @@ static void init_common_regs(u32 * const regs,
 	if (GRAPHICS_VER(engine->i915) < 11)
 		ctl |= _MASKED_BIT_DISABLE(CTX_CTRL_ENGINE_CTX_SAVE_INHIBIT |
 					   CTX_CTRL_RS_CTX_ENABLE);
+	/* Wa_14019159160 - Case 2.*/
 	if (ctx_needs_runalone(ce))
 		ctl |= _MASKED_BIT_ENABLE(GEN12_CTX_CTRL_RUNALONE_MODE);
 	regs[CTX_CONTEXT_CONTROL] = ctl;

@@ -22,14 +22,13 @@
  *
  */
 
-#include <linux/prime_numbers.h>
 #include <linux/pm_qos.h>
+#include <linux/prime_numbers.h>
 #include <linux/sort.h>
 
 #include "gem/i915_gem_internal.h"
 #include "gem/i915_gem_pm.h"
 #include "gem/selftests/mock_context.h"
-
 #include "gt/intel_engine_heartbeat.h"
 #include "gt/intel_engine_pm.h"
 #include "gt/intel_engine_user.h"
@@ -40,11 +39,11 @@
 
 #include "i915_random.h"
 #include "i915_selftest.h"
+#include "i915_wait_util.h"
 #include "igt_flush_test.h"
 #include "igt_live_test.h"
 #include "igt_spinner.h"
 #include "lib_sw_fence.h"
-
 #include "mock_drm.h"
 #include "mock_gem_device.h"
 
@@ -492,7 +491,7 @@ static int mock_breadcrumbs_smoketest(void *arg)
 	for (n = 0; n < ncpus; n++) {
 		struct kthread_worker *worker;
 
-		worker = kthread_create_worker(0, "igt/%d", n);
+		worker = kthread_run_worker(0, "igt/%d", n);
 		if (IS_ERR(worker)) {
 			ret = PTR_ERR(worker);
 			ncpus = n;
@@ -1645,7 +1644,7 @@ static int live_parallel_engines(void *arg)
 		for_each_uabi_engine(engine, i915) {
 			struct kthread_worker *worker;
 
-			worker = kthread_create_worker(0, "igt/parallel:%s",
+			worker = kthread_run_worker(0, "igt/parallel:%s",
 						       engine->name);
 			if (IS_ERR(worker)) {
 				err = PTR_ERR(worker);
@@ -1806,7 +1805,7 @@ static int live_breadcrumbs_smoketest(void *arg)
 			unsigned int i = idx * ncpus + n;
 			struct kthread_worker *worker;
 
-			worker = kthread_create_worker(0, "igt/%d.%d", idx, n);
+			worker = kthread_run_worker(0, "igt/%d.%d", idx, n);
 			if (IS_ERR(worker)) {
 				ret = PTR_ERR(worker);
 				goto out_flush;
@@ -3219,7 +3218,7 @@ static int perf_parallel_engines(void *arg)
 
 			memset(&engines[idx].p, 0, sizeof(engines[idx].p));
 
-			worker = kthread_create_worker(0, "igt:%s",
+			worker = kthread_run_worker(0, "igt:%s",
 						       engine->name);
 			if (IS_ERR(worker)) {
 				err = PTR_ERR(worker);

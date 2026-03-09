@@ -38,6 +38,10 @@
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
 
+struct drm_fb_helper;
+struct drm_fb_helper_surface_size;
+struct drm_format_info;
+
 struct edid;
 struct drm_edid;
 struct radeon_bo;
@@ -703,7 +707,7 @@ extern int radeon_get_monitor_bpc(struct drm_connector *connector);
 
 extern void radeon_connector_hotplug(struct drm_connector *connector);
 extern int radeon_dp_mode_valid_helper(struct drm_connector *connector,
-				       struct drm_display_mode *mode);
+				       const struct drm_display_mode *mode);
 extern void radeon_dp_set_link_config(struct drm_connector *connector,
 				      const struct drm_display_mode *mode);
 extern void radeon_dp_link_train(struct drm_encoder *encoder,
@@ -887,6 +891,7 @@ extern void
 radeon_combios_encoder_dpms_scratch_regs(struct drm_encoder *encoder, bool on);
 int radeon_framebuffer_init(struct drm_device *dev,
 			     struct drm_framebuffer *rfb,
+			     const struct drm_format_info *info,
 			     const struct drm_mode_fb_cmd2 *mode_cmd,
 			     struct drm_gem_object *obj);
 
@@ -935,14 +940,14 @@ void dce8_program_fmt(struct drm_encoder *encoder);
 
 /* fbdev layer */
 #if defined(CONFIG_DRM_FBDEV_EMULATION)
-void radeon_fbdev_setup(struct radeon_device *rdev);
-void radeon_fbdev_set_suspend(struct radeon_device *rdev, int state);
+int radeon_fbdev_driver_fbdev_probe(struct drm_fb_helper *fb_helper,
+				    struct drm_fb_helper_surface_size *sizes);
+#define RADEON_FBDEV_DRIVER_OPS \
+	.fbdev_probe = radeon_fbdev_driver_fbdev_probe
 bool radeon_fbdev_robj_is_fb(struct radeon_device *rdev, struct radeon_bo *robj);
 #else
-static inline void radeon_fbdev_setup(struct radeon_device *rdev)
-{ }
-static inline void radeon_fbdev_set_suspend(struct radeon_device *rdev, int state)
-{ }
+#define RADEON_FBDEV_DRIVER_OPS \
+	.fbdev_probe = NULL
 static inline bool radeon_fbdev_robj_is_fb(struct radeon_device *rdev, struct radeon_bo *robj)
 {
 	return false;

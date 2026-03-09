@@ -45,11 +45,13 @@
 #include "link_hwss.h"
 #include "dpcd_defs.h"
 #include "dce/dmub_outbox.h"
-#include "link.h"
+#include "link_service.h"
 #include "dcn10/dcn10_hwseq.h"
+#include "dcn21/dcn21_hwseq.h"
 #include "inc/link_enc_cfg.h"
 #include "dcn30/dcn30_vpg.h"
 #include "dce/dce_i2c_hw.h"
+#include "dce/dmub_abm_lcd.h"
 
 #define DC_LOGGER_INIT(logger)
 
@@ -394,6 +396,11 @@ void dcn31_update_info_frame(struct pipe_ctx *pipe_ctx)
 			pipe_ctx->stream_res.stream_enc,
 			&pipe_ctx->stream_res.encoder_info_frame);
 	else if (pipe_ctx->stream->ctx->dc->link_srv->dp_is_128b_132b_signal(pipe_ctx)) {
+		if (pipe_ctx->stream_res.hpo_dp_stream_enc->funcs->update_dp_info_packets_sdp_line_num)
+			pipe_ctx->stream_res.hpo_dp_stream_enc->funcs->update_dp_info_packets_sdp_line_num(
+				pipe_ctx->stream_res.hpo_dp_stream_enc,
+				&pipe_ctx->stream_res.encoder_info_frame);
+
 		pipe_ctx->stream_res.hpo_dp_stream_enc->funcs->update_dp_info_packets(
 				pipe_ctx->stream_res.hpo_dp_stream_enc,
 				&pipe_ctx->stream_res.encoder_info_frame);
@@ -517,20 +524,47 @@ static void dcn31_reset_back_end_for_pipe(
 
 	dc->hwss.set_abm_immediate_disable(pipe_ctx);
 
+	link = pipe_ctx->stream->link;
+
+	if (dc->hwseq)
+		dc->hwseq->wa_state.skip_blank_stream = false;
+
+	if ((!pipe_ctx->stream->dpms_off || link->link_status.link_active) &&
+		(link->connector_signal == SIGNAL_TYPE_EDP)) {
+		dc->hwss.blank_stream(pipe_ctx);
+		if (dc->hwseq)
+			dc->hwseq->wa_state.skip_blank_stream = true;
+	}
+
 	pipe_ctx->stream_res.tg->funcs->set_dsc_config(
 			pipe_ctx->stream_res.tg,
 			OPTC_DSC_DISABLED, 0, 0);
+
 	pipe_ctx->stream_res.tg->funcs->disable_crtc(pipe_ctx->stream_res.tg);
+
 	pipe_ctx->stream_res.tg->funcs->enable_optc_clock(pipe_ctx->stream_res.tg, false);
 	if (pipe_ctx->stream_res.tg->funcs->set_odm_bypass)
 		pipe_ctx->stream_res.tg->funcs->set_odm_bypass(
 				pipe_ctx->stream_res.tg, &pipe_ctx->stream->timing);
+	/*
+	 * TODO - convert symclk_ref_cnts for otg to a bit map to solve
+	 * the case where the same symclk is shared across multiple otg
+	 * instances
+	 */
 	if (dc_is_hdmi_tmds_signal(pipe_ctx->stream->signal))
-		pipe_ctx->stream->link->phy_state.symclk_ref_cnts.otg = 0;
+		link->phy_state.symclk_ref_cnts.otg = 0;
+
+	if (pipe_ctx->top_pipe == NULL) {
+		if (link->phy_state.symclk_state == SYMCLK_ON_TX_OFF) {
+			const struct link_hwss *link_hwss = get_link_hwss(link, &pipe_ctx->link_res);
+
+			link_hwss->disable_link_output(link, &pipe_ctx->link_res, pipe_ctx->stream->signal);
+			link->phy_state.symclk_state = SYMCLK_OFF_TX_OFF;
+		}
+	}
 
 	set_drr_and_clear_adjust_pending(pipe_ctx, pipe_ctx->stream, NULL);
 
-	link = pipe_ctx->stream->link;
 	/* DPMS may already disable or */
 	/* dpms_off status is incorrect due to fastboot
 	 * feature. When system resume from S4 with second
@@ -541,6 +575,19 @@ static void dcn31_reset_back_end_for_pipe(
 		dc->link_srv->set_dpms_off(pipe_ctx);
 	else if (pipe_ctx->stream_res.audio)
 		dc->hwss.disable_audio_stream(pipe_ctx);
+
+	/* Temporary workaround to perform DSC programming ahead of pipe reset
+	 * for smartmux/SPRS
+	 * TODO: Remove SmartMux/SPRS checks once movement of DSC programming is generalized
+	 */
+	if (pipe_ctx->stream->timing.flags.DSC) {
+		if ((pipe_ctx->stream->signal == SIGNAL_TYPE_EDP &&
+			((link->dc->config.smart_mux_version && link->dc->is_switch_in_progress_dest)
+			|| link->is_dds || link->skip_implict_edp_power_control)) &&
+			(dc_is_dp_signal(pipe_ctx->stream->signal) ||
+			dc_is_virtual_signal(pipe_ctx->stream->signal)))
+			dc->link_srv->set_dsc_enable(pipe_ctx, false);
+	}
 
 	/* free acquired resources */
 	if (pipe_ctx->stream_res.audio) {
@@ -556,7 +603,8 @@ static void dcn31_reset_back_end_for_pipe(
 			pipe_ctx->stream_res.audio = NULL;
 		}
 	}
-
+	if (dc->hwseq)
+		dc->hwseq->wa_state.skip_blank_stream = false;
 	pipe_ctx->stream = NULL;
 	DC_LOG_DEBUG("Reset back end for pipe %d, tg:%d\n",
 					pipe_ctx->pipe_idx, pipe_ctx->stream_res.tg->inst);
@@ -605,7 +653,8 @@ void dcn31_reset_hw_ctx_wrap(
 	}
 
 	/* New dc_state in the process of being applied to hardware. */
-	link_enc_cfg_set_transient_mode(dc, dc->current_state, context);
+	if (!dc->config.unify_link_enc_assignment)
+		link_enc_cfg_set_transient_mode(dc, dc->current_state, context);
 }
 
 void dcn31_setup_hpo_hw_control(const struct dce_hwseq *hws, bool enable)
@@ -630,4 +679,52 @@ void dcn31_set_static_screen_control(struct pipe_ctx **pipe_ctx,
 	for (i = 0; i < num_pipes; i++)
 		pipe_ctx[i]->stream_res.tg->funcs->set_static_screen_control(pipe_ctx[i]->stream_res.tg,
 					triggers, params->num_frames);
+}
+
+static void dmub_abm_set_backlight(struct dc_context *dc,
+	struct set_backlight_level_params *backlight_level_params, uint32_t panel_inst)
+{
+	union dmub_rb_cmd cmd;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.abm_set_backlight.header.type = DMUB_CMD__ABM;
+	cmd.abm_set_backlight.header.sub_type = DMUB_CMD__ABM_SET_BACKLIGHT;
+	cmd.abm_set_backlight.abm_set_backlight_data.frame_ramp = backlight_level_params->frame_ramp;
+	cmd.abm_set_backlight.abm_set_backlight_data.backlight_user_level = backlight_level_params->backlight_pwm_u16_16;
+	cmd.abm_set_backlight.abm_set_backlight_data.backlight_control_type =
+		(enum dmub_backlight_control_type) backlight_level_params->control_type;
+	cmd.abm_set_backlight.abm_set_backlight_data.min_luminance = backlight_level_params->min_luminance;
+	cmd.abm_set_backlight.abm_set_backlight_data.max_luminance = backlight_level_params->max_luminance;
+	cmd.abm_set_backlight.abm_set_backlight_data.min_backlight_pwm = backlight_level_params->min_backlight_pwm;
+	cmd.abm_set_backlight.abm_set_backlight_data.max_backlight_pwm = backlight_level_params->max_backlight_pwm;
+	cmd.abm_set_backlight.abm_set_backlight_data.version = DMUB_CMD_ABM_CONTROL_VERSION_1;
+	cmd.abm_set_backlight.abm_set_backlight_data.panel_mask = (0x01 << panel_inst);
+	cmd.abm_set_backlight.header.payload_bytes = sizeof(struct dmub_cmd_abm_set_backlight_data);
+
+	dc_wake_and_execute_dmub_cmd(dc, &cmd, DM_DMUB_WAIT_TYPE_WAIT);
+}
+
+bool dcn31_set_backlight_level(struct pipe_ctx *pipe_ctx,
+	struct set_backlight_level_params *backlight_level_params)
+{
+	struct dc_context *dc = pipe_ctx->stream->ctx;
+	struct abm *abm = pipe_ctx->stream_res.abm;
+	struct timing_generator *tg = pipe_ctx->stream_res.tg;
+	struct panel_cntl *panel_cntl = pipe_ctx->stream->link->panel_cntl;
+	uint32_t otg_inst;
+
+	if (!abm || !tg || !panel_cntl)
+		return false;
+
+	otg_inst = tg->inst;
+
+		dcn21_dmub_abm_set_pipe(abm,
+			otg_inst,
+			SET_ABM_PIPE_NORMAL,
+			panel_cntl->inst,
+			panel_cntl->pwrseq_inst);
+
+	dmub_abm_set_backlight(dc, backlight_level_params, panel_cntl->inst);
+
+	return true;
 }

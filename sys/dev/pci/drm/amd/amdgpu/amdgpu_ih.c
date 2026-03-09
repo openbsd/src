@@ -27,6 +27,7 @@
 
 #include "amdgpu.h"
 #include "amdgpu_ih.h"
+#include "amdgpu_reset.h"
 
 /**
  * amdgpu_ih_ring_init - initialize the IH state
@@ -79,7 +80,7 @@ int amdgpu_ih_ring_init(struct amdgpu_device *adev, struct amdgpu_ih_ring *ih,
 			return -ENOMEM;
 		ih->dmah = dmah;
 		dma_addr = dmah->map->dm_segs[0].ds_addr;
-		ih->ring = (volatile uint32_t *)dmah->kva;
+		ih->ring = (uint32_t *)dmah->kva;
 #endif
 
 		ih->gpu_addr = dma_addr;
@@ -237,7 +238,7 @@ int amdgpu_ih_process(struct amdgpu_device *adev, struct amdgpu_ih_ring *ih)
 
 restart_ih:
 	count  = AMDGPU_IH_MAX_NUM_IVS;
-	DRM_DEBUG("%s: rptr %d, wptr %d\n", __func__, ih->rptr, wptr);
+	dev_dbg(adev->dev, "%s: rptr %d, wptr %d\n", __func__, ih->rptr, wptr);
 
 	/* Order reading of wptr vs. reading of IH ring data */
 	rmb();
@@ -247,13 +248,23 @@ restart_ih:
 		ih->rptr &= ih->ptr_mask;
 	}
 
-	amdgpu_ih_set_rptr(adev, ih);
+	if (!ih->overflow)
+		amdgpu_ih_set_rptr(adev, ih);
+
 	wake_up_all(&ih->wait_process);
 
 	/* make sure wptr hasn't changed while processing */
 	wptr = amdgpu_ih_get_wptr(adev, ih);
 	if (wptr != ih->rptr)
-		goto restart_ih;
+		if (!ih->overflow)
+			goto restart_ih;
+
+	if (ih->overflow)
+		if (amdgpu_sriov_runtime(adev))
+			WARN_ONCE(!amdgpu_reset_domain_schedule(adev->reset_domain,
+				   &adev->virt.flr_work),
+				  "Failed to queue work! at %s",
+				  __func__);
 
 	return IRQ_HANDLED;
 }
@@ -317,4 +328,10 @@ uint64_t amdgpu_ih_decode_iv_ts_helper(struct amdgpu_ih_ring *ih, u32 rptr,
 	dw1 = le32_to_cpu(ih->ring[ring_index + 1]);
 	dw2 = le32_to_cpu(ih->ring[ring_index + 2]);
 	return dw1 | ((u64)(dw2 & 0xffff) << 32);
+}
+
+const char *amdgpu_ih_ring_name(struct amdgpu_device *adev, struct amdgpu_ih_ring *ih)
+{
+	return ih == &adev->irq.ih ? "ih" : ih == &adev->irq.ih_soft ? "sw ih" :
+	       ih == &adev->irq.ih1 ? "ih1" : ih == &adev->irq.ih2 ? "ih2" : "unknown";
 }

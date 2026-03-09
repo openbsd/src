@@ -56,7 +56,7 @@ void apple_crtc_vblank(struct apple_crtc *apple);
 void dcp_drm_crtc_vblank(struct apple_crtc *crtc);
 int dcp_get_modes(struct drm_connector *connector);
 int dcp_mode_valid(struct drm_connector *connector,
-		   struct drm_display_mode *mode);
+		   const struct drm_display_mode *mode);
 int dcp_crtc_atomic_modeset(struct drm_crtc *crtc,
 			    struct drm_atomic_state *state);
 bool dcp_crtc_mode_fixup(struct drm_crtc *crtc,

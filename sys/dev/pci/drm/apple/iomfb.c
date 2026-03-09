@@ -412,7 +412,7 @@ struct dcp_display_mode *lookup_mode(struct apple_dcp *dcp,
 }
 
 int dcp_mode_valid(struct drm_connector *connector,
-		   struct drm_display_mode *mode)
+		   const struct drm_display_mode *mode)
 {
 	struct apple_connector *apple_connector = to_apple_connector(connector);
 	struct platform_device *pdev = apple_connector->dcp;

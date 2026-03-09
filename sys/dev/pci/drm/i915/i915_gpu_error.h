@@ -14,8 +14,6 @@
 
 #include <drm/drm_mm.h>
 
-#include "display/intel_display_device.h"
-#include "display/intel_display_params.h"
 #include "gt/intel_engine.h"
 #include "gt/intel_engine_types.h"
 #include "gt/intel_gt_types.h"
@@ -31,7 +29,7 @@
 struct drm_i915_private;
 struct i915_vma_compress;
 struct intel_engine_capture_vma;
-struct intel_overlay_error_state;
+struct intel_display_snapshot;
 
 struct i915_vma_coredump {
 	struct i915_vma_coredump *next;
@@ -148,7 +146,6 @@ struct intel_gt_coredump {
 	/* Generic register state */
 	u32 eir;
 	u32 pgtbl_er;
-	u32 ier;
 	u32 gtier[6], ngtier;
 	u32 forcewake;
 	u32 error; /* gen6+ */
@@ -166,8 +163,6 @@ struct intel_gt_coredump {
 	u32 clock_frequency;
 	u32 clock_period_ns;
 
-	/* Display related */
-	u32 derrmr;
 	u32 sfc_done[I915_MAX_SFC]; /* gen12 */
 
 	u32 nfence;
@@ -182,6 +177,7 @@ struct intel_gt_coredump {
 			struct intel_ctb_coredump ctb[2];
 			struct i915_vma_coredump *vma_ctb;
 			struct i915_vma_coredump *vma_log;
+			u32 *hw_state;
 			u32 timestamp;
 			u16 last_fence;
 			bool is_guc_capture;
@@ -212,15 +208,12 @@ struct i915_gpu_coredump {
 
 	struct intel_device_info device_info;
 	struct intel_runtime_info runtime_info;
-	struct intel_display_device_info display_device_info;
-	struct intel_display_runtime_info display_runtime_info;
 	struct intel_driver_caps driver_caps;
 	struct i915_params params;
-	struct intel_display_params display_params;
-
-	struct intel_overlay_error_state *overlay;
 
 	struct scatterlist *sgl, *fit;
+
+	struct intel_display_snapshot *display_snapshot;
 };
 
 struct i915_gpu_error {
@@ -228,8 +221,6 @@ struct i915_gpu_error {
 	spinlock_t lock;
 	/* Protected by the above dev->gpu_error.lock. */
 	struct i915_gpu_coredump *first_error;
-
-	atomic_t pending_fb_pin;
 
 	/** Number of times the device has been reset (global) */
 	atomic_t reset_count;

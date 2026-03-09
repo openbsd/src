@@ -34,6 +34,7 @@
 #include "dc_state_priv.h"
 
 #define NUM_ELEMENTS(a) (sizeof(a) / sizeof((a)[0]))
+#define MAX_NUM_MCACHE 8
 
 /* used as index in array of black_color_format */
 enum black_color_format {
@@ -313,11 +314,11 @@ void get_mpctree_visual_confirm_color(
 {
 	const struct tg_color pipe_colors[6] = {
 			{MAX_TG_COLOR_VALUE, 0, 0}, /* red */
-			{MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE / 4, 0}, /* orange */
 			{MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE, 0}, /* yellow */
 			{0, MAX_TG_COLOR_VALUE, 0}, /* green */
+			{0, MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE}, /* cyan */
 			{0, 0, MAX_TG_COLOR_VALUE}, /* blue */
-			{MAX_TG_COLOR_VALUE / 2, 0, MAX_TG_COLOR_VALUE / 2}, /* purple */
+			{MAX_TG_COLOR_VALUE, 0, MAX_TG_COLOR_VALUE}, /* magenta */
 	};
 
 	struct pipe_ctx *top_pipe = pipe_ctx;
@@ -426,6 +427,70 @@ void get_hdr_visual_confirm_color(
 	}
 }
 
+/* Visual Confirm color definition for Smart Mux */
+void get_smartmux_visual_confirm_color(
+	struct dc *dc,
+	struct tg_color *color)
+{
+	uint32_t color_value = MAX_TG_COLOR_VALUE;
+
+	const struct tg_color sm_ver_colors[5] = {
+			{0, 0, 0},					/* SMUX_MUXCONTROL_UNSUPPORTED - Black */
+			{0, MAX_TG_COLOR_VALUE, 0},			/* SMUX_MUXCONTROL_v10 - Green */
+			{0, MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE},	/* SMUX_MUXCONTROL_v15 - Cyan */
+			{MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE, 0}, 	/* SMUX_MUXCONTROL_MDM - Yellow */
+			{MAX_TG_COLOR_VALUE, 0, MAX_TG_COLOR_VALUE}, 	/* SMUX_MUXCONTROL_vUNKNOWN - Magenta*/
+	};
+
+	if (dc->caps.is_apu) {
+		/* APU driving the eDP */
+		*color = sm_ver_colors[dc->config.smart_mux_version];
+	} else {
+		/* dGPU driving the eDP - red */
+		color->color_r_cr = color_value;
+		color->color_g_y = 0;
+		color->color_b_cb = 0;
+	}
+}
+
+/* Visual Confirm color definition for VABC */
+void get_vabc_visual_confirm_color(
+	struct pipe_ctx *pipe_ctx,
+	struct tg_color *color)
+{
+	uint32_t color_value = MAX_TG_COLOR_VALUE;
+	struct dc_link *edp_link = NULL;
+
+	if (pipe_ctx && pipe_ctx->stream && pipe_ctx->stream->link) {
+		if (pipe_ctx->stream->link->connector_signal == SIGNAL_TYPE_EDP)
+			edp_link = pipe_ctx->stream->link;
+	}
+
+	if (edp_link) {
+		switch (edp_link->backlight_control_type) {
+		case BACKLIGHT_CONTROL_PWM:
+			color->color_r_cr = color_value;
+			color->color_g_y = 0;
+			color->color_b_cb = 0;
+			break;
+		case BACKLIGHT_CONTROL_AMD_AUX:
+			color->color_r_cr = 0;
+			color->color_g_y = color_value;
+			color->color_b_cb = 0;
+			break;
+		case BACKLIGHT_CONTROL_VESA_AUX:
+			color->color_r_cr = 0;
+			color->color_g_y = 0;
+			color->color_b_cb = color_value;
+			break;
+		}
+	} else {
+		color->color_r_cr = 0;
+		color->color_g_y = 0;
+		color->color_b_cb = 0;
+	}
+}
+
 void get_subvp_visual_confirm_color(
 		struct pipe_ctx *pipe_ctx,
 		struct tg_color *color)
@@ -495,6 +560,70 @@ void get_mclk_switch_visual_confirm_color(
 		default:
 			break;
 		}
+	}
+}
+
+void get_cursor_visual_confirm_color(
+		struct pipe_ctx *pipe_ctx,
+		struct tg_color *color)
+{
+	uint32_t color_value = MAX_TG_COLOR_VALUE;
+
+	if (pipe_ctx->stream && pipe_ctx->stream->cursor_position.enable) {
+		color->color_r_cr = color_value;
+		color->color_g_y = 0;
+		color->color_b_cb = 0;
+	} else {
+		color->color_r_cr = 0;
+		color->color_g_y = 0;
+		color->color_b_cb = color_value;
+	}
+}
+
+void get_dcc_visual_confirm_color(
+	struct dc *dc,
+	struct pipe_ctx *pipe_ctx,
+	struct tg_color *color)
+{
+	const uint32_t MCACHE_ID_UNASSIGNED = 0xF;
+
+	if (!pipe_ctx->plane_state->dcc.enable) {
+		color->color_r_cr = 0; /* black - DCC disabled */
+		color->color_g_y = 0;
+		color->color_b_cb = 0;
+		return;
+	}
+
+	if (dc->ctx->dce_version < DCN_VERSION_4_01) {
+		color->color_r_cr = MAX_TG_COLOR_VALUE; /* red - DCC enabled */
+		color->color_g_y = 0;
+		color->color_b_cb = 0;
+		return;
+	}
+
+	uint32_t first_id = pipe_ctx->mcache_regs.main.p0.mcache_id_first;
+	uint32_t second_id = pipe_ctx->mcache_regs.main.p0.mcache_id_second;
+
+	if (first_id != MCACHE_ID_UNASSIGNED && second_id != MCACHE_ID_UNASSIGNED && first_id != second_id) {
+		color->color_r_cr = MAX_TG_COLOR_VALUE/2; /* grey - 2 mcache */
+		color->color_g_y = MAX_TG_COLOR_VALUE/2;
+		color->color_b_cb = MAX_TG_COLOR_VALUE/2;
+	}
+
+	else if (first_id != MCACHE_ID_UNASSIGNED || second_id != MCACHE_ID_UNASSIGNED) {
+		const struct tg_color id_colors[MAX_NUM_MCACHE] = {
+		{0, MAX_TG_COLOR_VALUE, 0}, /* green */
+		{0, 0, MAX_TG_COLOR_VALUE}, /* blue */
+		{MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE, 0}, /* yellow */
+		{MAX_TG_COLOR_VALUE, 0, MAX_TG_COLOR_VALUE}, /* magenta */
+		{0, MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE}, /* cyan */
+		{MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE, MAX_TG_COLOR_VALUE}, /* white */
+		{MAX_TG_COLOR_VALUE/2, 0, 0}, /* dark red */
+		{0, MAX_TG_COLOR_VALUE/2, 0}, /* dark green */
+		};
+
+		uint32_t assigned_id = (first_id != MCACHE_ID_UNASSIGNED) ? first_id : second_id;
+		*color = id_colors[assigned_id];
 	}
 }
 
@@ -594,7 +723,7 @@ void get_fams2_visual_confirm_color(
 void hwss_build_fast_sequence(struct dc *dc,
 		struct dc_dmub_cmd *dc_dmub_cmd,
 		unsigned int dmub_cmd_count,
-		struct block_sequence block_sequence[],
+		struct block_sequence block_sequence[MAX_HWSS_BLOCK_SEQUENCE_SIZE],
 		unsigned int *num_steps,
 		struct pipe_ctx *pipe_ctx,
 		struct dc_stream_status *stream_status,
@@ -714,7 +843,14 @@ void hwss_build_fast_sequence(struct dc *dc,
 				block_sequence[*num_steps].func = DPP_SET_OUTPUT_TRANSFER_FUNC;
 				(*num_steps)++;
 			}
-
+			if (dc->debug.visual_confirm != VISUAL_CONFIRM_DISABLE &&
+				dc->hwss.update_visual_confirm_color) {
+				block_sequence[*num_steps].params.update_visual_confirm_params.dc = dc;
+				block_sequence[*num_steps].params.update_visual_confirm_params.pipe_ctx = current_mpc_pipe;
+				block_sequence[*num_steps].params.update_visual_confirm_params.mpcc_id = current_mpc_pipe->plane_res.hubp->inst;
+				block_sequence[*num_steps].func = MPC_UPDATE_VISUAL_CONFIRM;
+				(*num_steps)++;
+			}
 			if (current_mpc_pipe->stream->update_flags.bits.out_csc) {
 				block_sequence[*num_steps].params.power_on_mpc_mem_pwr_params.mpc = dc->res_pool->mpc;
 				block_sequence[*num_steps].params.power_on_mpc_mem_pwr_params.mpcc_id = current_mpc_pipe->plane_res.hubp->inst;
@@ -786,7 +922,7 @@ void hwss_build_fast_sequence(struct dc *dc,
 }
 
 void hwss_execute_sequence(struct dc *dc,
-		struct block_sequence block_sequence[],
+		struct block_sequence block_sequence[MAX_HWSS_BLOCK_SEQUENCE_SIZE],
 		int num_steps)
 {
 	unsigned int i;
@@ -1041,6 +1177,8 @@ void hwss_wait_for_odm_update_pending_complete(struct dc *dc, struct dc_state *c
 		tg = otg_master->stream_res.tg;
 		if (tg->funcs->wait_odm_doublebuffer_pending_clear)
 			tg->funcs->wait_odm_doublebuffer_pending_clear(tg);
+		if (tg->funcs->wait_otg_disable)
+			tg->funcs->wait_otg_disable(tg);
 	}
 
 	/* ODM update may require to reprogram blank pattern for each OPP */
@@ -1091,8 +1229,13 @@ void hwss_wait_for_outstanding_hw_updates(struct dc *dc, struct dc_state *dc_con
 		if (!pipe_ctx->stream)
 			continue;
 
-		if (pipe_ctx->stream_res.tg->funcs->wait_drr_doublebuffer_pending_clear)
-			pipe_ctx->stream_res.tg->funcs->wait_drr_doublebuffer_pending_clear(pipe_ctx->stream_res.tg);
+		/* For full update we must wait for all double buffer updates, not just DRR updates. This
+		 * is particularly important for minimal transitions. Only check for OTG_MASTER pipes,
+		 * as non-OTG Master pipes share the same OTG as
+		 */
+		if (resource_is_pipe_type(pipe_ctx, OTG_MASTER) && dc->hwss.wait_for_all_pending_updates) {
+			dc->hwss.wait_for_all_pending_updates(pipe_ctx);
+		}
 
 		hubp = pipe_ctx->plane_res.hubp;
 		if (!hubp)

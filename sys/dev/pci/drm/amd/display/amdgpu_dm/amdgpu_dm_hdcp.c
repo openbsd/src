@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
@@ -26,6 +27,7 @@
 #include "amdgpu_dm_hdcp.h"
 #include "amdgpu.h"
 #include "amdgpu_dm.h"
+#include "dc_fused_io.h"
 #include "dm_helpers.h"
 #include <drm/display/drm_hdcp_helper.h>
 #include "hdcp_psp.h"
@@ -74,6 +76,34 @@ lp_read_dpcd(void *handle, uint32_t address, uint8_t *data, uint32_t size)
 	struct dc_link *link = handle;
 
 	return dm_helpers_dp_read_dpcd(link->ctx, link, address, data, size);
+}
+
+static bool lp_atomic_write_poll_read_i2c(
+		void *handle,
+		const struct mod_hdcp_atomic_op_i2c *write,
+		const struct mod_hdcp_atomic_op_i2c *poll,
+		struct mod_hdcp_atomic_op_i2c *read,
+		uint32_t poll_timeout_us,
+		uint8_t poll_mask_msb
+)
+{
+	struct dc_link *link = handle;
+
+	return dm_atomic_write_poll_read_i2c(link, write, poll, read, poll_timeout_us, poll_mask_msb);
+}
+
+static bool lp_atomic_write_poll_read_aux(
+		void *handle,
+		const struct mod_hdcp_atomic_op_aux *write,
+		const struct mod_hdcp_atomic_op_aux *poll,
+		struct mod_hdcp_atomic_op_aux *read,
+		uint32_t poll_timeout_us,
+		uint8_t poll_mask_msb
+)
+{
+	struct dc_link *link = handle;
+
+	return dm_atomic_write_poll_read_aux(link, write, poll, read, poll_timeout_us, poll_mask_msb);
 }
 
 static uint8_t *psp_get_srm(struct psp_context *psp, uint32_t *srm_version, uint32_t *srm_size)
@@ -193,6 +223,7 @@ void hdcp_update_display(struct hdcp_workqueue *hdcp_work,
 		display_adjust.disable = MOD_HDCP_DISPLAY_NOT_DISABLE;
 
 		link_adjust.auth_delay = 2;
+		link_adjust.retry_limit = MAX_NUM_OF_ATTEMPTS;
 
 		if (content_type == DRM_MODE_HDCP_CONTENT_TYPE0) {
 			link_adjust.hdcp2.force_type = MOD_HDCP_FORCE_TYPE_0;
@@ -466,7 +497,6 @@ static bool enable_assr(void *handle, struct dc_link *link)
 	struct mod_hdcp hdcp = hdcp_work->hdcp;
 	struct psp_context *psp = hdcp.config.psp.handle;
 	struct ta_dtm_shared_memory *dtm_cmd;
-	bool res = true;
 
 	if (!psp->dtm_context.context.initialized) {
 		DRM_INFO("Failed to enable ASSR, DTM TA is not initialized.");
@@ -487,10 +517,10 @@ static bool enable_assr(void *handle, struct dc_link *link)
 
 	if (dtm_cmd->dtm_status != TA_DTM_STATUS__SUCCESS) {
 		DRM_INFO("Failed to enable ASSR");
-		res = false;
+		return false;
 	}
 
-	return res;
+	return true;
 }
 
 static void update_config(void *handle, struct cp_psp_stream_config *config)
@@ -543,6 +573,7 @@ static void update_config(void *handle, struct cp_psp_stream_config *config)
 	link->dp.usb4_enabled = config->usb4_enabled;
 	display->adjust.disable = MOD_HDCP_DISPLAY_DISABLE_AUTHENTICATION;
 	link->adjust.auth_delay = 2;
+	link->adjust.retry_limit = MAX_NUM_OF_ATTEMPTS;
 	link->adjust.hdcp1.disable = 0;
 	hdcp_w->encryption_status[display->index] = MOD_HDCP_ENCRYPTION_STATUS_HDCP_OFF;
 
@@ -611,7 +642,7 @@ static void update_config(void *handle, struct cp_psp_stream_config *config)
  *	incorrect/corrupted and we should correct our SRM by getting it from PSP
  */
 static ssize_t srm_data_write(struct file *filp, struct kobject *kobj,
-			      struct bin_attribute *bin_attr, char *buffer,
+			      const struct bin_attribute *bin_attr, char *buffer,
 			      loff_t pos, size_t count)
 {
 	struct hdcp_workqueue *work;
@@ -635,7 +666,7 @@ static ssize_t srm_data_write(struct file *filp, struct kobject *kobj,
 }
 
 static ssize_t srm_data_read(struct file *filp, struct kobject *kobj,
-			     struct bin_attribute *bin_attr, char *buffer,
+			     const struct bin_attribute *bin_attr, char *buffer,
 			     loff_t pos, size_t count)
 {
 	struct hdcp_workqueue *work;
@@ -735,19 +766,37 @@ struct hdcp_workqueue *hdcp_create_workqueue(struct amdgpu_device *adev,
 		INIT_DELAYED_WORK(&hdcp_work[i].watchdog_timer_dwork, event_watchdog_timer);
 		INIT_DELAYED_WORK(&hdcp_work[i].property_validate_dwork, event_property_validate);
 
-		hdcp_work[i].hdcp.config.psp.handle = &adev->psp;
-		if (dc->ctx->dce_version == DCN_VERSION_3_1 ||
+		struct mod_hdcp_config *config = &hdcp_work[i].hdcp.config;
+		struct mod_hdcp_ddc_funcs *ddc_funcs = &config->ddc.funcs;
+
+		config->psp.handle = &adev->psp;
+		if (dc->ctx->dce_version == DCN_VERSION_3_1  ||
 		    dc->ctx->dce_version == DCN_VERSION_3_14 ||
 		    dc->ctx->dce_version == DCN_VERSION_3_15 ||
-		    dc->ctx->dce_version == DCN_VERSION_3_5 ||
+		    dc->ctx->dce_version == DCN_VERSION_3_16 ||
+		    dc->ctx->dce_version == DCN_VERSION_3_2  ||
+		    dc->ctx->dce_version == DCN_VERSION_3_21 ||
+		    dc->ctx->dce_version == DCN_VERSION_3_5  ||
 		    dc->ctx->dce_version == DCN_VERSION_3_51 ||
-		    dc->ctx->dce_version == DCN_VERSION_3_16)
-			hdcp_work[i].hdcp.config.psp.caps.dtm_v3_supported = 1;
-		hdcp_work[i].hdcp.config.ddc.handle = dc_get_link_at_index(dc, i);
-		hdcp_work[i].hdcp.config.ddc.funcs.write_i2c = lp_write_i2c;
-		hdcp_work[i].hdcp.config.ddc.funcs.read_i2c = lp_read_i2c;
-		hdcp_work[i].hdcp.config.ddc.funcs.write_dpcd = lp_write_dpcd;
-		hdcp_work[i].hdcp.config.ddc.funcs.read_dpcd = lp_read_dpcd;
+		    dc->ctx->dce_version == DCN_VERSION_3_6  ||
+		    dc->ctx->dce_version == DCN_VERSION_4_01)
+			config->psp.caps.dtm_v3_supported = 1;
+
+		config->ddc.handle = dc_get_link_at_index(dc, i);
+
+		ddc_funcs->write_i2c = lp_write_i2c;
+		ddc_funcs->read_i2c = lp_read_i2c;
+		ddc_funcs->write_dpcd = lp_write_dpcd;
+		ddc_funcs->read_dpcd = lp_read_dpcd;
+
+		config->debug.lc_enable_sw_fallback = dc->debug.hdcp_lc_enable_sw_fallback;
+		if (dc->caps.fused_io_supported || dc->debug.hdcp_lc_force_fw_enable) {
+			ddc_funcs->atomic_write_poll_read_i2c = lp_atomic_write_poll_read_i2c;
+			ddc_funcs->atomic_write_poll_read_aux = lp_atomic_write_poll_read_aux;
+		} else {
+			ddc_funcs->atomic_write_poll_read_i2c = NULL;
+			ddc_funcs->atomic_write_poll_read_aux = NULL;
+		}
 
 		memset(hdcp_work[i].aconnector, 0,
 		       sizeof(struct amdgpu_dm_connector *) *

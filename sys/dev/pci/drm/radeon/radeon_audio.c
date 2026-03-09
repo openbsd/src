@@ -841,8 +841,6 @@ void radeon_audio_component_init(struct radeon_device *rdev)
 #ifdef notyet
 	if (!component_add(rdev->dev, &radeon_audio_component_bind_ops))
 		rdev->audio.component_registered = true;
-#else
-	STUB();
 #endif
 }
 
@@ -852,8 +850,6 @@ void radeon_audio_component_fini(struct radeon_device *rdev)
 #ifdef notyet
 		component_del(rdev->dev, &radeon_audio_component_bind_ops);
 		rdev->audio.component_registered = false;
-#else
-		STUB();
 #endif
 	}
 }

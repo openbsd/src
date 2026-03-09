@@ -33,17 +33,16 @@
 #endif
 #include <linux/slab.h>
 #include <linux/string_helpers.h>
-
 #include <linux/unaligned.h>
 
 #include <drm/drm_crtc.h>
 #include <drm/drm_edid.h>
-
+#include <drm/drm_print.h>
 #include <video/mipi_display.h>
 
-#include "i915_drv.h"
-#include "i915_reg.h"
+#include "i915_utils.h"
 #include "intel_de.h"
+#include "intel_display_regs.h"
 #include "intel_display_types.h"
 #include "intel_dsi.h"
 #include "intel_dsi_vbt.h"
@@ -106,13 +105,13 @@ static enum port intel_dsi_seq_port_to_port(struct intel_dsi *intel_dsi,
 static const u8 *mipi_exec_send_packet(struct intel_dsi *intel_dsi,
 				       const u8 *data)
 {
-	struct drm_i915_private *dev_priv = to_i915(intel_dsi->base.base.dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 	struct mipi_dsi_device *dsi_device;
 	u8 type, flags, seq_port;
 	u16 len;
 	enum port port;
 
-	drm_dbg_kms(&dev_priv->drm, "\n");
+	drm_dbg_kms(display->drm, "\n");
 
 	flags = *data++;
 	type = *data++;
@@ -124,12 +123,12 @@ static const u8 *mipi_exec_send_packet(struct intel_dsi *intel_dsi,
 
 	port = intel_dsi_seq_port_to_port(intel_dsi, seq_port);
 
-	if (drm_WARN_ON(&dev_priv->drm, !intel_dsi->dsi_hosts[port]))
+	if (drm_WARN_ON(display->drm, !intel_dsi->dsi_hosts[port]))
 		goto out;
 
 	dsi_device = intel_dsi->dsi_hosts[port]->device;
 	if (!dsi_device) {
-		drm_dbg_kms(&dev_priv->drm, "no dsi device for port %c\n",
+		drm_dbg_kms(display->drm, "no dsi device for port %c\n",
 			    port_name(port));
 		goto out;
 	}
@@ -154,8 +153,7 @@ static const u8 *mipi_exec_send_packet(struct intel_dsi *intel_dsi,
 	case MIPI_DSI_GENERIC_READ_REQUEST_0_PARAM:
 	case MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM:
 	case MIPI_DSI_GENERIC_READ_REQUEST_2_PARAM:
-		drm_dbg(&dev_priv->drm,
-			"Generic Read not yet implemented or used\n");
+		drm_dbg_kms(display->drm, "Generic Read not yet implemented or used\n");
 		break;
 	case MIPI_DSI_GENERIC_LONG_WRITE:
 		mipi_dsi_generic_write(dsi_device, data, len);
@@ -167,15 +165,14 @@ static const u8 *mipi_exec_send_packet(struct intel_dsi *intel_dsi,
 		mipi_dsi_dcs_write_buffer(dsi_device, data, 2);
 		break;
 	case MIPI_DSI_DCS_READ:
-		drm_dbg(&dev_priv->drm,
-			"DCS Read not yet implemented or used\n");
+		drm_dbg_kms(display->drm, "DCS Read not yet implemented or used\n");
 		break;
 	case MIPI_DSI_DCS_LONG_WRITE:
 		mipi_dsi_dcs_write_buffer(dsi_device, data, len);
 		break;
 	}
 
-	if (DISPLAY_VER(dev_priv) < 11)
+	if (DISPLAY_VER(display) < 11)
 		vlv_dsi_wait_for_fifo_empty(intel_dsi, port);
 
 out:
@@ -186,10 +183,10 @@ out:
 
 static const u8 *mipi_exec_delay(struct intel_dsi *intel_dsi, const u8 *data)
 {
-	struct drm_i915_private *i915 = to_i915(intel_dsi->base.base.dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 	u32 delay = *((const u32 *) data);
 
-	drm_dbg_kms(&i915->drm, "%d usecs\n", delay);
+	drm_dbg_kms(display->drm, "%d usecs\n", delay);
 
 	usleep_range(delay, delay + 10);
 	data += 4;
@@ -202,7 +199,7 @@ static void soc_gpio_set_value(struct intel_connector *connector, u8 gpio_index,
 {
 	STUB();
 #ifdef notyet
-	struct drm_i915_private *dev_priv = to_i915(connector->base.dev);
+	struct intel_display *display = to_intel_display(connector);
 	/* XXX: this table is a quick ugly hack. */
 	static struct gpio_desc *soc_gpio_table[U8_MAX + 1];
 	struct gpio_desc *gpio_desc = soc_gpio_table[gpio_index];
@@ -210,10 +207,10 @@ static void soc_gpio_set_value(struct intel_connector *connector, u8 gpio_index,
 	if (gpio_desc) {
 		gpiod_set_value(gpio_desc, value);
 	} else {
-		gpio_desc = devm_gpiod_get_index(dev_priv->drm.dev, con_id, idx,
+		gpio_desc = devm_gpiod_get_index(display->drm->dev, con_id, idx,
 						 value ? GPIOD_OUT_HIGH : GPIOD_OUT_LOW);
 		if (IS_ERR(gpio_desc)) {
-			drm_err(&dev_priv->drm,
+			drm_err(display->drm,
 				"GPIO index %u request failed (%pe)\n",
 				gpio_index, gpio_desc);
 			return;
@@ -252,16 +249,16 @@ static void soc_opaque_gpio_set_value(struct intel_connector *connector,
 static void vlv_gpio_set_value(struct intel_connector *connector,
 			       u8 gpio_source, u8 gpio_index, bool value)
 {
-	struct drm_i915_private *dev_priv = to_i915(connector->base.dev);
+	struct intel_display *display = to_intel_display(connector);
 
 	/* XXX: this assumes vlv_gpio_table only has NC GPIOs. */
 	if (connector->panel.vbt.dsi.seq_version < 3) {
 		if (gpio_source == 1) {
-			drm_dbg_kms(&dev_priv->drm, "SC gpio not supported\n");
+			drm_dbg_kms(display->drm, "SC gpio not supported\n");
 			return;
 		}
 		if (gpio_source > 1) {
-			drm_dbg_kms(&dev_priv->drm,
+			drm_dbg_kms(display->drm,
 				    "unknown gpio source %u\n", gpio_source);
 			return;
 		}
@@ -275,8 +272,8 @@ static void chv_gpio_set_value(struct intel_connector *connector,
 			       u8 gpio_source, u8 gpio_index, bool value)
 {
 	STUB();
-#ifdef __linux__
-	struct drm_i915_private *dev_priv = to_i915(connector->base.dev);
+#ifdef notyet
+	struct intel_display *display = to_intel_display(connector);
 
 	if (connector->panel.vbt.dsi.seq_version >= 3) {
 		if (gpio_index >= CHV_GPIO_IDX_START_SE) {
@@ -296,13 +293,13 @@ static void chv_gpio_set_value(struct intel_connector *connector,
 	} else {
 		/* XXX: The spec is unclear about CHV GPIO on seq v2 */
 		if (gpio_source != 0) {
-			drm_dbg_kms(&dev_priv->drm,
+			drm_dbg_kms(display->drm,
 				    "unknown gpio source %u\n", gpio_source);
 			return;
 		}
 
 		if (gpio_index >= CHV_GPIO_IDX_START_E) {
-			drm_dbg_kms(&dev_priv->drm,
+			drm_dbg_kms(display->drm,
 				    "invalid gpio index %u for GPIO N\n",
 				    gpio_index);
 			return;
@@ -333,12 +330,12 @@ enum {
 	MIPI_VIO_EN_2,
 };
 
-static void icl_native_gpio_set_value(struct drm_i915_private *dev_priv,
+static void icl_native_gpio_set_value(struct intel_display *display,
 				      int gpio, bool value)
 {
 	int index;
 
-	if (drm_WARN_ON(&dev_priv->drm, DISPLAY_VER(dev_priv) == 11 && gpio >= MIPI_RESET_2))
+	if (drm_WARN_ON(display->drm, DISPLAY_VER(display) == 11 && gpio >= MIPI_RESET_2))
 		return;
 
 	switch (gpio) {
@@ -355,32 +352,32 @@ static void icl_native_gpio_set_value(struct drm_i915_private *dev_priv,
 		 * The locking protects against concurrent SHOTPLUG_CTL_DDI
 		 * modifications in irq setup and handling.
 		 */
-		spin_lock_irq(&dev_priv->irq_lock);
-		intel_de_rmw(dev_priv, SHOTPLUG_CTL_DDI,
+		spin_lock_irq(&display->irq.lock);
+		intel_de_rmw(display, SHOTPLUG_CTL_DDI,
 			     SHOTPLUG_CTL_DDI_HPD_ENABLE(index) |
 			     SHOTPLUG_CTL_DDI_HPD_OUTPUT_DATA(index),
 			     value ? SHOTPLUG_CTL_DDI_HPD_OUTPUT_DATA(index) : 0);
-		spin_unlock_irq(&dev_priv->irq_lock);
+		spin_unlock_irq(&display->irq.lock);
 		break;
 	case MIPI_AVDD_EN_1:
 	case MIPI_AVDD_EN_2:
 		index = gpio == MIPI_AVDD_EN_1 ? 0 : 1;
 
-		intel_de_rmw(dev_priv, PP_CONTROL(dev_priv, index), PANEL_POWER_ON,
+		intel_de_rmw(display, PP_CONTROL(display, index), PANEL_POWER_ON,
 			     value ? PANEL_POWER_ON : 0);
 		break;
 	case MIPI_BKLT_EN_1:
 	case MIPI_BKLT_EN_2:
 		index = gpio == MIPI_BKLT_EN_1 ? 0 : 1;
 
-		intel_de_rmw(dev_priv, PP_CONTROL(dev_priv, index), EDP_BLC_ENABLE,
+		intel_de_rmw(display, PP_CONTROL(display, index), EDP_BLC_ENABLE,
 			     value ? EDP_BLC_ENABLE : 0);
 		break;
 	case MIPI_AVEE_EN_1:
 	case MIPI_AVEE_EN_2:
 		index = gpio == MIPI_AVEE_EN_1 ? 1 : 2;
 
-		intel_de_rmw(dev_priv, GPIO(dev_priv, index),
+		intel_de_rmw(display, GPIO(display, index),
 			     GPIO_CLOCK_VAL_OUT,
 			     GPIO_CLOCK_DIR_MASK | GPIO_CLOCK_DIR_OUT |
 			     GPIO_CLOCK_VAL_MASK | (value ? GPIO_CLOCK_VAL_OUT : 0));
@@ -389,7 +386,7 @@ static void icl_native_gpio_set_value(struct drm_i915_private *dev_priv,
 	case MIPI_VIO_EN_2:
 		index = gpio == MIPI_VIO_EN_1 ? 1 : 2;
 
-		intel_de_rmw(dev_priv, GPIO(dev_priv, index),
+		intel_de_rmw(display, GPIO(display, index),
 			     GPIO_DATA_VAL_OUT,
 			     GPIO_DATA_DIR_MASK | GPIO_DATA_DIR_OUT |
 			     GPIO_DATA_VAL_MASK | (value ? GPIO_DATA_VAL_OUT : 0));
@@ -401,13 +398,12 @@ static void icl_native_gpio_set_value(struct drm_i915_private *dev_priv,
 
 static const u8 *mipi_exec_gpio(struct intel_dsi *intel_dsi, const u8 *data)
 {
-	struct drm_device *dev = intel_dsi->base.base.dev;
-	struct drm_i915_private *i915 = to_i915(dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 	struct intel_connector *connector = intel_dsi->attached_connector;
 	u8 gpio_source = 0, gpio_index = 0, gpio_number;
 	bool value;
 	int size;
-	bool native = DISPLAY_VER(i915) >= 11;
+	bool native = DISPLAY_VER(display) >= 11;
 
 	if (connector->panel.vbt.dsi.seq_version >= 3) {
 		size = 3;
@@ -428,16 +424,16 @@ static const u8 *mipi_exec_gpio(struct intel_dsi *intel_dsi, const u8 *data)
 			gpio_source = (data[1] >> 1) & 3;
 	}
 
-	drm_dbg_kms(&i915->drm, "GPIO index %u, number %u, source %u, native %s, set to %s\n",
+	drm_dbg_kms(display->drm, "GPIO index %u, number %u, source %u, native %s, set to %s\n",
 		    gpio_index, gpio_number, gpio_source, str_yes_no(native), str_on_off(value));
 
 	if (native)
-		icl_native_gpio_set_value(i915, gpio_number, value);
-	else if (DISPLAY_VER(i915) >= 9)
+		icl_native_gpio_set_value(display, gpio_number, value);
+	else if (DISPLAY_VER(display) >= 9)
 		bxt_gpio_set_value(connector, gpio_index, value);
-	else if (IS_VALLEYVIEW(i915))
+	else if (display->platform.valleyview)
 		vlv_gpio_set_value(connector, gpio_source, gpio_number, value);
-	else if (IS_CHERRYVIEW(i915))
+	else if (display->platform.cherryview)
 		chv_gpio_set_value(connector, gpio_source, gpio_number, value);
 
 	return data + size;
@@ -475,8 +471,8 @@ static int i2c_adapter_lookup(struct acpi_resource *ares, void *data)
 static void i2c_acpi_find_adapter(struct intel_dsi *intel_dsi,
 				  const u16 target_addr)
 {
-	struct drm_device *drm_dev = intel_dsi->base.base.dev;
-	struct acpi_device *adev = ACPI_COMPANION(drm_dev->dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
+	struct acpi_device *adev = ACPI_COMPANION(display->drm->dev);
 	struct i2c_adapter_lookup lookup = {
 		.target_addr = target_addr,
 		.intel_dsi = intel_dsi,
@@ -499,7 +495,7 @@ static const u8 *mipi_exec_i2c(struct intel_dsi *intel_dsi, const u8 *data)
 	STUB();
 	return NULL;
 #ifdef notyet
-	struct drm_i915_private *i915 = to_i915(intel_dsi->base.base.dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 	struct i2c_adapter *adapter;
 	struct i2c_msg msg;
 	int ret;
@@ -509,7 +505,7 @@ static const u8 *mipi_exec_i2c(struct intel_dsi *intel_dsi, const u8 *data)
 	u8 payload_size = *(data + 6);
 	u8 *payload_data;
 
-	drm_dbg_kms(&i915->drm, "bus %d target-addr 0x%02x reg 0x%02x data %*ph\n",
+	drm_dbg_kms(display->drm, "bus %d target-addr 0x%02x reg 0x%02x data %*ph\n",
 		    vbt_i2c_bus_num, target_addr, reg_offset, payload_size, data + 7);
 
 	if (intel_dsi->i2c_bus_num < 0) {
@@ -519,7 +515,7 @@ static const u8 *mipi_exec_i2c(struct intel_dsi *intel_dsi, const u8 *data)
 
 	adapter = i2c_get_adapter(intel_dsi->i2c_bus_num);
 	if (!adapter) {
-		drm_err(&i915->drm, "Cannot find a valid i2c bus for xfer\n");
+		drm_err(display->drm, "Cannot find a valid i2c bus for xfer\n");
 		goto err_bus;
 	}
 
@@ -537,7 +533,7 @@ static const u8 *mipi_exec_i2c(struct intel_dsi *intel_dsi, const u8 *data)
 
 	ret = i2c_transfer(adapter, &msg, 1);
 	if (ret < 0)
-		drm_err(&i915->drm,
+		drm_err(display->drm,
 			"Failed to xfer payload of size (%u) to reg (%u)\n",
 			payload_size, reg_offset);
 
@@ -551,16 +547,16 @@ err_bus:
 
 static const u8 *mipi_exec_spi(struct intel_dsi *intel_dsi, const u8 *data)
 {
-	struct drm_i915_private *i915 = to_i915(intel_dsi->base.base.dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 
-	drm_dbg_kms(&i915->drm, "Skipping SPI element execution\n");
+	drm_dbg_kms(display->drm, "Skipping SPI element execution\n");
 
 	return data + *(data + 5) + 6;
 }
 
 static const u8 *mipi_exec_pmic(struct intel_dsi *intel_dsi, const u8 *data)
 {
-	struct drm_i915_private *i915 = to_i915(intel_dsi->base.base.dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 #ifdef CONFIG_PMIC_OPREGION
 	u32 value, mask, reg_address;
 	u16 i2c_address;
@@ -576,9 +572,9 @@ static const u8 *mipi_exec_pmic(struct intel_dsi *intel_dsi, const u8 *data)
 							reg_address,
 							value, mask);
 	if (ret)
-		drm_err(&i915->drm, "%s failed, error: %d\n", __func__, ret);
+		drm_err(display->drm, "%s failed, error: %d\n", __func__, ret);
 #else
-	drm_err(&i915->drm,
+	drm_err(display->drm,
 		"Your hardware requires CONFIG_PMIC_OPREGION and it is not set\n");
 #endif
 
@@ -598,7 +594,7 @@ static const fn_mipi_elem_exec exec_elem[] = {
 
 /*
  * MIPI Sequence from VBT #53 parsing logic
- * We have already separated each seqence during bios parsing
+ * We have already separated each sequence during bios parsing
  * Following is generic execution function for any sequence
  */
 
@@ -628,12 +624,12 @@ static const char *sequence_name(enum mipi_seq seq_id)
 static void intel_dsi_vbt_exec(struct intel_dsi *intel_dsi,
 			       enum mipi_seq seq_id)
 {
-	struct drm_i915_private *dev_priv = to_i915(intel_dsi->base.base.dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 	struct intel_connector *connector = intel_dsi->attached_connector;
 	const u8 *data;
 	fn_mipi_elem_exec mipi_elem_exec;
 
-	if (drm_WARN_ON(&dev_priv->drm,
+	if (drm_WARN_ON(display->drm,
 			seq_id >= ARRAY_SIZE(connector->panel.vbt.dsi.sequence)))
 		return;
 
@@ -641,9 +637,9 @@ static void intel_dsi_vbt_exec(struct intel_dsi *intel_dsi,
 	if (!data)
 		return;
 
-	drm_WARN_ON(&dev_priv->drm, *data != seq_id);
+	drm_WARN_ON(display->drm, *data != seq_id);
 
-	drm_dbg_kms(&dev_priv->drm, "Starting MIPI sequence %d - %s\n",
+	drm_dbg_kms(display->drm, "Starting MIPI sequence %d - %s\n",
 		    seq_id, sequence_name(seq_id));
 
 	/* Skip Sequence Byte. */
@@ -673,19 +669,19 @@ static void intel_dsi_vbt_exec(struct intel_dsi *intel_dsi,
 
 			/* Consistency check if we have size. */
 			if (operation_size && data != next) {
-				drm_err(&dev_priv->drm,
+				drm_err(display->drm,
 					"Inconsistent operation size\n");
 				return;
 			}
 		} else if (operation_size) {
 			/* We have size, skip. */
-			drm_dbg_kms(&dev_priv->drm,
+			drm_dbg_kms(display->drm,
 				    "Unsupported MIPI operation byte %u\n",
 				    operation_byte);
 			data += operation_size;
 		} else {
 			/* No size, can't skip without parsing. */
-			drm_err(&dev_priv->drm,
+			drm_err(display->drm,
 				"Unsupported MIPI operation byte %u\n",
 				operation_byte);
 			return;
@@ -714,60 +710,66 @@ void intel_dsi_vbt_exec_sequence(struct intel_dsi *intel_dsi,
 
 void intel_dsi_log_params(struct intel_dsi *intel_dsi)
 {
-	struct drm_i915_private *i915 = to_i915(intel_dsi->base.base.dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
+	struct drm_printer p = drm_dbg_printer(display->drm, DRM_UT_KMS,
+					       "DSI parameters:");
 
-	drm_dbg_kms(&i915->drm, "Pclk %d\n", intel_dsi->pclk);
-	drm_dbg_kms(&i915->drm, "Pixel overlap %d\n",
-		    intel_dsi->pixel_overlap);
-	drm_dbg_kms(&i915->drm, "Lane count %d\n", intel_dsi->lane_count);
-	drm_dbg_kms(&i915->drm, "DPHY param reg 0x%x\n", intel_dsi->dphy_reg);
-	drm_dbg_kms(&i915->drm, "Video mode format %s\n",
-		    intel_dsi->video_mode == NON_BURST_SYNC_PULSE ?
-		    "non-burst with sync pulse" :
-		    intel_dsi->video_mode == NON_BURST_SYNC_EVENTS ?
-		    "non-burst with sync events" :
-		    intel_dsi->video_mode == BURST_MODE ?
-		    "burst" : "<unknown>");
-	drm_dbg_kms(&i915->drm, "Burst mode ratio %d\n",
-		    intel_dsi->burst_mode_ratio);
-	drm_dbg_kms(&i915->drm, "Reset timer %d\n", intel_dsi->rst_timer_val);
-	drm_dbg_kms(&i915->drm, "Eot %s\n",
-		    str_enabled_disabled(intel_dsi->eotp_pkt));
-	drm_dbg_kms(&i915->drm, "Clockstop %s\n",
-		    str_enabled_disabled(!intel_dsi->clock_stop));
-	drm_dbg_kms(&i915->drm, "Mode %s\n",
-		    intel_dsi->operation_mode ? "command" : "video");
+	drm_printf(&p, "Pclk %d\n", intel_dsi->pclk);
+	drm_printf(&p, "Pixel overlap %d\n", intel_dsi->pixel_overlap);
+	drm_printf(&p, "Lane count %d\n", intel_dsi->lane_count);
+	drm_printf(&p, "DPHY param reg 0x%x\n", intel_dsi->dphy_reg);
+	drm_printf(&p, "Video mode format %s\n",
+		   intel_dsi->video_mode == NON_BURST_SYNC_PULSE ?
+		   "non-burst with sync pulse" :
+		   intel_dsi->video_mode == NON_BURST_SYNC_EVENTS ?
+		   "non-burst with sync events" :
+		   intel_dsi->video_mode == BURST_MODE ?
+		   "burst" : "<unknown>");
+	drm_printf(&p, "Burst mode ratio %d\n", intel_dsi->burst_mode_ratio);
+	drm_printf(&p, "Reset timer %d\n", intel_dsi->rst_timer_val);
+	drm_printf(&p, "Eot %s\n", str_enabled_disabled(intel_dsi->eotp_pkt));
+	drm_printf(&p, "Clockstop %s\n", str_enabled_disabled(!intel_dsi->clock_stop));
+	drm_printf(&p, "Mode %s\n", intel_dsi->operation_mode ? "command" : "video");
 	if (intel_dsi->dual_link == DSI_DUAL_LINK_FRONT_BACK)
-		drm_dbg_kms(&i915->drm,
-			    "Dual link: DSI_DUAL_LINK_FRONT_BACK\n");
+		drm_printf(&p, "Dual link: DSI_DUAL_LINK_FRONT_BACK\n");
 	else if (intel_dsi->dual_link == DSI_DUAL_LINK_PIXEL_ALT)
-		drm_dbg_kms(&i915->drm,
-			    "Dual link: DSI_DUAL_LINK_PIXEL_ALT\n");
+		drm_printf(&p, "Dual link: DSI_DUAL_LINK_PIXEL_ALT\n");
 	else
-		drm_dbg_kms(&i915->drm, "Dual link: NONE\n");
-	drm_dbg_kms(&i915->drm, "Pixel Format %d\n", intel_dsi->pixel_format);
-	drm_dbg_kms(&i915->drm, "TLPX %d\n", intel_dsi->escape_clk_div);
-	drm_dbg_kms(&i915->drm, "LP RX Timeout 0x%x\n",
-		    intel_dsi->lp_rx_timeout);
-	drm_dbg_kms(&i915->drm, "Turnaround Timeout 0x%x\n",
-		    intel_dsi->turn_arnd_val);
-	drm_dbg_kms(&i915->drm, "Init Count 0x%x\n", intel_dsi->init_count);
-	drm_dbg_kms(&i915->drm, "HS to LP Count 0x%x\n",
-		    intel_dsi->hs_to_lp_count);
-	drm_dbg_kms(&i915->drm, "LP Byte Clock %d\n", intel_dsi->lp_byte_clk);
-	drm_dbg_kms(&i915->drm, "DBI BW Timer 0x%x\n", intel_dsi->bw_timer);
-	drm_dbg_kms(&i915->drm, "LP to HS Clock Count 0x%x\n",
-		    intel_dsi->clk_lp_to_hs_count);
-	drm_dbg_kms(&i915->drm, "HS to LP Clock Count 0x%x\n",
-		    intel_dsi->clk_hs_to_lp_count);
-	drm_dbg_kms(&i915->drm, "BTA %s\n",
-		    str_enabled_disabled(!(intel_dsi->video_frmt_cfg_bits & DISABLE_VIDEO_BTA)));
+		drm_printf(&p, "Dual link: NONE\n");
+	drm_printf(&p, "Pixel Format %d\n", intel_dsi->pixel_format);
+	drm_printf(&p, "TLPX %d\n", intel_dsi->escape_clk_div);
+	drm_printf(&p, "LP RX Timeout 0x%x\n", intel_dsi->lp_rx_timeout);
+	drm_printf(&p, "Turnaround Timeout 0x%x\n", intel_dsi->turn_arnd_val);
+	drm_printf(&p, "Init Count 0x%x\n", intel_dsi->init_count);
+	drm_printf(&p, "HS to LP Count 0x%x\n", intel_dsi->hs_to_lp_count);
+	drm_printf(&p, "LP Byte Clock %d\n", intel_dsi->lp_byte_clk);
+	drm_printf(&p, "DBI BW Timer 0x%x\n", intel_dsi->bw_timer);
+	drm_printf(&p, "LP to HS Clock Count 0x%x\n", intel_dsi->clk_lp_to_hs_count);
+	drm_printf(&p, "HS to LP Clock Count 0x%x\n", intel_dsi->clk_hs_to_lp_count);
+	drm_printf(&p, "BTA %s\n",
+		   str_enabled_disabled(!(intel_dsi->video_frmt_cfg_bits & DISABLE_VIDEO_BTA)));
+}
+
+static enum mipi_dsi_pixel_format vbt_to_dsi_pixel_format(unsigned int format)
+{
+	switch (format) {
+	case PIXEL_FORMAT_RGB888:
+		return MIPI_DSI_FMT_RGB888;
+	case PIXEL_FORMAT_RGB666_LOOSELY_PACKED:
+		return MIPI_DSI_FMT_RGB666;
+	case PIXEL_FORMAT_RGB666:
+		return MIPI_DSI_FMT_RGB666_PACKED;
+	case PIXEL_FORMAT_RGB565:
+		return MIPI_DSI_FMT_RGB565;
+	default:
+		MISSING_CASE(format);
+		return MIPI_DSI_FMT_RGB666;
+	}
 }
 
 bool intel_dsi_vbt_init(struct intel_dsi *intel_dsi, u16 panel_id)
 {
-	struct drm_device *dev = intel_dsi->base.base.dev;
-	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 	struct intel_connector *connector = intel_dsi->attached_connector;
 	struct mipi_config *mipi_config = connector->panel.vbt.dsi.config;
 	struct mipi_pps_data *pps = connector->panel.vbt.dsi.pps;
@@ -775,14 +777,13 @@ bool intel_dsi_vbt_init(struct intel_dsi *intel_dsi, u16 panel_id)
 	u16 burst_mode_ratio;
 	enum port port;
 
-	drm_dbg_kms(&dev_priv->drm, "\n");
+	drm_dbg_kms(display->drm, "\n");
 
 	intel_dsi->eotp_pkt = mipi_config->eot_pkt_disabled ? 0 : 1;
 	intel_dsi->clock_stop = mipi_config->enable_clk_stop ? 1 : 0;
 	intel_dsi->lane_count = mipi_config->lane_cnt + 1;
 	intel_dsi->pixel_format =
-			pixel_format_from_register_bits(
-				mipi_config->videomode_color_format << 7);
+		vbt_to_dsi_pixel_format(mipi_config->videomode_color_format);
 
 	intel_dsi->dual_link = mipi_config->dual_link;
 	intel_dsi->pixel_overlap = mipi_config->pixel_overlap;
@@ -796,7 +797,7 @@ bool intel_dsi_vbt_init(struct intel_dsi *intel_dsi, u16 panel_id)
 	intel_dsi->init_count = mipi_config->master_init_timer;
 	intel_dsi->bw_timer = mipi_config->dbi_bw_timer;
 	intel_dsi->video_frmt_cfg_bits =
-		mipi_config->bta_enabled ? DISABLE_VIDEO_BTA : 0;
+		mipi_config->bta_disable ? DISABLE_VIDEO_BTA : 0;
 	intel_dsi->bgr_enabled = mipi_config->rgb_flip;
 
 	/* Starting point, adjusted depending on dual link and burst mode */
@@ -822,7 +823,7 @@ bool intel_dsi_vbt_init(struct intel_dsi *intel_dsi, u16 panel_id)
 		u32 bitrate;
 
 		if (mipi_config->target_burst_mode_freq == 0) {
-			drm_err(&dev_priv->drm, "Burst mode target is not set\n");
+			drm_err(display->drm, "Burst mode target is not set\n");
 			return false;
 		}
 
@@ -839,7 +840,7 @@ bool intel_dsi_vbt_init(struct intel_dsi *intel_dsi, u16 panel_id)
 			mipi_config->target_burst_mode_freq = bitrate;
 
 		if (mipi_config->target_burst_mode_freq < bitrate) {
-			drm_err(&dev_priv->drm, "Burst mode freq is less than computed\n");
+			drm_err(display->drm, "Burst mode freq is less than computed\n");
 			return false;
 		}
 
@@ -909,8 +910,7 @@ void intel_dsi_vbt_gpio_init(struct intel_dsi *intel_dsi, bool panel_is_on)
 {
 	STUB();
 #ifdef notyet
-	struct drm_device *dev = intel_dsi->base.base.dev;
-	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct intel_display *display = to_intel_display(&intel_dsi->base);
 	struct intel_connector *connector = intel_dsi->attached_connector;
 	struct mipi_config *mipi_config = connector->panel.vbt.dsi.config;
 	enum gpiod_flags flags = panel_is_on ? GPIOD_OUT_HIGH : GPIOD_OUT_LOW;
@@ -920,13 +920,13 @@ void intel_dsi_vbt_gpio_init(struct intel_dsi *intel_dsi, bool panel_is_on)
 	struct pinctrl *pinctrl;
 	int ret;
 
-	if ((IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) &&
+	if ((display->platform.valleyview || display->platform.cherryview) &&
 	    mipi_config->pwm_blc == PPS_BLC_PMIC) {
 		gpiod_lookup_table = &pmic_panel_gpio_table;
 		want_panel_gpio = true;
 	}
 
-	if (IS_VALLEYVIEW(dev_priv) && mipi_config->pwm_blc == PPS_BLC_SOC) {
+	if (display->platform.valleyview && mipi_config->pwm_blc == PPS_BLC_SOC) {
 		gpiod_lookup_table = &soc_panel_gpio_table;
 		want_panel_gpio = true;
 		want_backlight_gpio = true;
@@ -935,12 +935,12 @@ void intel_dsi_vbt_gpio_init(struct intel_dsi *intel_dsi, bool panel_is_on)
 		ret = pinctrl_register_mappings(soc_pwm_pinctrl_map,
 					     ARRAY_SIZE(soc_pwm_pinctrl_map));
 		if (ret)
-			drm_err(&dev_priv->drm,
+			drm_err(display->drm,
 				"Failed to register pwm0 pinmux mapping\n");
 
-		pinctrl = devm_pinctrl_get_select(dev->dev, "soc_pwm0");
+		pinctrl = devm_pinctrl_get_select(display->drm->dev, "soc_pwm0");
 		if (IS_ERR(pinctrl))
-			drm_err(&dev_priv->drm,
+			drm_err(display->drm,
 				"Failed to set pinmux to PWM\n");
 	}
 
@@ -948,9 +948,9 @@ void intel_dsi_vbt_gpio_init(struct intel_dsi *intel_dsi, bool panel_is_on)
 		gpiod_add_lookup_table(gpiod_lookup_table);
 
 	if (want_panel_gpio) {
-		intel_dsi->gpio_panel = devm_gpiod_get(dev->dev, "panel", flags);
+		intel_dsi->gpio_panel = devm_gpiod_get(display->drm->dev, "panel", flags);
 		if (IS_ERR(intel_dsi->gpio_panel)) {
-			drm_err(&dev_priv->drm,
+			drm_err(display->drm,
 				"Failed to own gpio for panel control\n");
 			intel_dsi->gpio_panel = NULL;
 		}
@@ -958,9 +958,9 @@ void intel_dsi_vbt_gpio_init(struct intel_dsi *intel_dsi, bool panel_is_on)
 
 	if (want_backlight_gpio) {
 		intel_dsi->gpio_backlight =
-			devm_gpiod_get(dev->dev, "backlight", flags);
+			devm_gpiod_get(display->drm->dev, "backlight", flags);
 		if (IS_ERR(intel_dsi->gpio_backlight)) {
-			drm_err(&dev_priv->drm,
+			drm_err(display->drm,
 				"Failed to own gpio for backlight control\n");
 			intel_dsi->gpio_backlight = NULL;
 		}

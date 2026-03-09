@@ -30,6 +30,7 @@
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/console.h>
+#include <linux/export.h>
 #include <linux/sysrq.h>
 
 #include <drm/drm_atomic.h>
@@ -249,6 +250,9 @@ __drm_fb_helper_restore_fbdev_mode_unlocked(struct drm_fb_helper *fb_helper,
 	if (do_delayed)
 		drm_fb_helper_hotplug_event(fb_helper);
 
+	if (fb_helper->funcs->fb_restore)
+		fb_helper->funcs->fb_restore(fb_helper);
+
 	return ret;
 }
 
@@ -352,12 +356,14 @@ EXPORT_SYMBOL(drm_fb_helper_blank);
 
 static void drm_fb_helper_resume_worker(struct work_struct *work)
 {
+#ifdef __linux__
 	struct drm_fb_helper *helper = container_of(work, struct drm_fb_helper,
 						    resume_work);
 
 	console_lock();
 	fb_set_suspend(helper->info, 0);
 	console_unlock();
+#endif
 }
 
 static void drm_fb_helper_fb_dirty(struct drm_fb_helper *helper)
@@ -566,7 +572,7 @@ EXPORT_SYMBOL(drm_fb_helper_release_info);
 
 /**
  * drm_fb_helper_unregister_info - unregister fb_info framebuffer device
- * @fb_helper: driver-allocated fbdev helper, can be NULL
+ * @fb_helper: driver-allocated fbdev helper, must not be NULL
  *
  * A wrapper around unregister_framebuffer, to release the fb_info
  * framebuffer device. This must be called before releasing all resources for
@@ -574,8 +580,7 @@ EXPORT_SYMBOL(drm_fb_helper_release_info);
  */
 void drm_fb_helper_unregister_info(struct drm_fb_helper *fb_helper)
 {
-	if (fb_helper && fb_helper->info)
-		unregister_framebuffer(fb_helper->info);
+	unregister_framebuffer(fb_helper->info);
 }
 EXPORT_SYMBOL(drm_fb_helper_unregister_info);
 
@@ -707,6 +712,7 @@ void drm_fb_helper_damage_area(struct fb_info *info, u32 x, u32 y, u32 width, u3
 }
 EXPORT_SYMBOL(drm_fb_helper_damage_area);
 
+#ifdef CONFIG_FB_DEFERRED_IO
 /**
  * drm_fb_helper_deferred_io() - fbdev deferred_io callback function
  * @info: fb_info struct pointer
@@ -750,6 +756,7 @@ void drm_fb_helper_deferred_io(struct fb_info *info, struct list_head *pagerefli
 	}
 }
 EXPORT_SYMBOL(drm_fb_helper_deferred_io);
+#endif
 
 #endif /* __linux__ */
 
@@ -764,10 +771,13 @@ EXPORT_SYMBOL(drm_fb_helper_deferred_io);
  */
 void drm_fb_helper_set_suspend(struct drm_fb_helper *fb_helper, bool suspend)
 {
-#ifdef __linux__
-	if (fb_helper && fb_helper->info)
+	if (!fb_helper || !fb_helper->info)
+		return;
+
+	if (fb_helper->funcs->fb_set_suspend)
+		fb_helper->funcs->fb_set_suspend(fb_helper, suspend);
+	else
 		fb_set_suspend(fb_helper->info, suspend);
-#endif
 }
 EXPORT_SYMBOL(drm_fb_helper_set_suspend);
 
@@ -813,7 +823,7 @@ void drm_fb_helper_set_suspend_unlocked(struct drm_fb_helper *fb_helper,
 		}
 	}
 
-	fb_set_suspend(fb_helper->info, suspend);
+	drm_fb_helper_set_suspend(fb_helper, suspend);
 	console_unlock();
 #endif
 }
@@ -1669,6 +1679,9 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper)
 	struct drm_fb_helper_surface_size sizes;
 	int ret;
 
+	if (drm_WARN_ON(dev, !dev->driver->fbdev_probe))
+		return -EINVAL;
+
 	ret = drm_fb_helper_find_sizes(fb_helper, &sizes);
 	if (ret) {
 		/* First time: disable all crtc's.. */
@@ -1678,10 +1691,7 @@ static int drm_fb_helper_single_fb_probe(struct drm_fb_helper *fb_helper)
 	}
 
 	/* push down into drivers */
-	if (dev->driver->fbdev_probe)
-		ret = dev->driver->fbdev_probe(fb_helper, &sizes);
-	else if (fb_helper->funcs)
-		ret = fb_helper->funcs->fb_probe(fb_helper, &sizes);
+	ret = dev->driver->fbdev_probe(fb_helper, &sizes);
 	if (ret < 0)
 		return ret;
 

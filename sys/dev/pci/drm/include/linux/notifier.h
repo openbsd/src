@@ -3,6 +3,8 @@
 #ifndef _LINUX_NOTIFIER_H
 #define _LINUX_NOTIFIER_H
 
+#include <sys/queue.h>
+
 struct notifier_block {
 	int (*notifier_call)(struct notifier_block *, unsigned long, void *);
 	SLIST_ENTRY(notifier_block) link;

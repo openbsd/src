@@ -23,6 +23,12 @@ void dma_fence_chain_init(struct dma_fence_chain *, struct dma_fence *,
 
 extern const struct dma_fence_ops dma_fence_chain_ops;
 
+static inline bool
+dma_fence_is_chain(const struct dma_fence *fence)
+{
+	return fence->ops == &dma_fence_chain_ops;
+}
+
 static inline struct dma_fence_chain *
 to_dma_fence_chain(struct dma_fence *fence)
 {

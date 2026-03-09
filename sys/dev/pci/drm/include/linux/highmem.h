@@ -1,4 +1,4 @@
-/*	$OpenBSD: highmem.h,v 1.5 2025/02/07 03:03:31 jsg Exp $	*/
+/*	$OpenBSD: highmem.h,v 1.6 2026/03/09 23:58:03 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -39,6 +39,12 @@ kmap_atomic(struct vm_page *pg)
 
 static inline void *
 kmap_local_page(struct vm_page *pg)
+{
+	return kmap_atomic(pg);
+}
+
+static inline void *
+kmap_local_page_try_from_panic(struct vm_page *pg)
 {
 	return kmap_atomic(pg);
 }

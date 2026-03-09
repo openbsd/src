@@ -3,6 +3,8 @@
 #ifndef _LINUX_DEBUGFS_H
 #define _LINUX_DEBUGFS_H
 
+#include <linux/fs.h>
+
 struct debugfs_regset32 {
 };
 

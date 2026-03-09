@@ -72,7 +72,7 @@
 #include "dml/display_mode_vba.h"
 #include "dcn32/dcn32_dccg.h"
 #include "dcn10/dcn10_resource.h"
-#include "link.h"
+#include "link_service.h"
 #include "dcn31/dcn31_panel_cntl.h"
 
 #include "dcn30/dcn30_dwb.h"
@@ -686,7 +686,6 @@ static const struct dc_plane_cap plane_cap = {
 static const struct dc_debug_options debug_defaults_drv = {
 	.disable_dmcu = true,
 	.force_abm_enable = false,
-	.timing_trace = false,
 	.clock_trace = true,
 	.disable_pplib_clock_request = false,
 	.pipe_split_policy = MPC_SPLIT_AVOID,
@@ -1035,7 +1034,7 @@ static struct link_encoder *dcn321_link_encoder_create(
 	struct dcn20_link_encoder *enc20 =
 		kzalloc(sizeof(struct dcn20_link_encoder), GFP_KERNEL);
 
-	if (!enc20)
+	if (!enc20 || enc_init_data->hpd_source >= ARRAY_SIZE(link_enc_hpd_regs))
 		return NULL;
 
 #undef REG_STRUCT
@@ -1190,11 +1189,11 @@ static struct stream_encoder *dcn321_stream_encoder_create(
 	int afmt_inst;
 
 	/* Mapping of VPG, AFMT, DME register blocks to DIO block instance */
-	if (eng_id <= ENGINE_ID_DIGF) {
-		vpg_inst = eng_id;
-		afmt_inst = eng_id;
-	} else
+	if (eng_id < 0 || eng_id >= ARRAY_SIZE(stream_enc_regs))
 		return NULL;
+
+	vpg_inst = eng_id;
+	afmt_inst = eng_id;
 
 	enc1 = kzalloc(sizeof(struct dcn10_stream_encoder), GFP_KERNEL);
 	vpg = dcn321_vpg_create(ctx, vpg_inst);
@@ -1581,21 +1580,15 @@ static struct dc_cap_funcs cap_funcs = {
 
 static void dcn321_update_bw_bounding_box(struct dc *dc, struct clk_bw_params *bw_params)
 {
-	struct dml2_configuration_options *dml2_opt = &dc->dml2_tmp;
-
-	memcpy(dml2_opt, &dc->dml2_options, sizeof(dc->dml2_options));
-
 	DC_FP_START();
 
 	dcn321_update_bw_bounding_box_fpu(dc, bw_params);
 
-	dml2_opt->use_clock_dc_limits = false;
 	if (dc->debug.using_dml2 && dc->current_state && dc->current_state->bw_ctx.dml2)
-		dml2_reinit(dc, dml2_opt, &dc->current_state->bw_ctx.dml2);
+		dml2_reinit(dc, &dc->dml2_options, &dc->current_state->bw_ctx.dml2);
 
-	dml2_opt->use_clock_dc_limits = true;
 	if (dc->debug.using_dml2 && dc->current_state && dc->current_state->bw_ctx.dml2_dc_power_source)
-		dml2_reinit(dc, dml2_opt, &dc->current_state->bw_ctx.dml2_dc_power_source);
+		dml2_reinit(dc, &dc->dml2_dc_power_options, &dc->current_state->bw_ctx.dml2_dc_power_source);
 
 	DC_FP_END();
 }
@@ -1625,6 +1618,8 @@ static struct resource_funcs dcn321_res_pool_funcs = {
 	.add_phantom_pipes = dcn32_add_phantom_pipes,
 	.build_pipe_pix_clk_params = dcn20_build_pipe_pix_clk_params,
 	.calculate_mall_ways_from_bytes = dcn32_calculate_mall_ways_from_bytes,
+	.get_vstartup_for_pipe = dcn10_get_vstartup_for_pipe,
+	.get_max_hw_cursor_size = dcn32_get_max_hw_cursor_size,
 };
 
 static uint32_t read_pipe_fuses(struct dc_context *ctx)
@@ -1709,6 +1704,7 @@ static bool dcn321_resource_construct(
 	dc->caps.i2c_speed_in_khz_hdcp = 100; /*1.4 w/a applied by default*/
 	/* TODO: Bring max cursor size back to 256 after subvp cursor corruption is fixed*/
 	dc->caps.max_cursor_size = 64;
+	dc->caps.max_buffered_cursor_size = 64; // sqrt(16 * 1024 / 4)
 	dc->caps.min_horizontal_blanking_period = 80;
 	dc->caps.dmdata_alloc_size = 2048;
 	dc->caps.mall_size_per_mem_channel = 4;
@@ -1759,8 +1755,8 @@ static bool dcn321_resource_construct(
 	dc->caps.color.dpp.gamma_corr = 1;
 	dc->caps.color.dpp.dgam_rom_for_yuv = 0;
 
-	dc->caps.color.dpp.hw_3d_lut = 1;
-	dc->caps.color.dpp.ogam_ram = 1;
+	dc->caps.color.dpp.hw_3d_lut = 0;
+	dc->caps.color.dpp.ogam_ram = 0;
 	// no OGAM ROM on DCN2 and later ASICs
 	dc->caps.color.dpp.ogam_rom_caps.srgb = 0;
 	dc->caps.color.dpp.ogam_rom_caps.bt2020 = 0;
@@ -1778,6 +1774,7 @@ static bool dcn321_resource_construct(
 	dc->caps.color.mpc.ogam_rom_caps.pq = 0;
 	dc->caps.color.mpc.ogam_rom_caps.hlg = 0;
 	dc->caps.color.mpc.ocsc = 1;
+	dc->caps.color.mpc.preblend = true;
 
 	/* Use pipe context based otg sync logic */
 	dc->config.use_pipe_ctx_sync_logic = true;
@@ -2002,6 +1999,8 @@ static bool dcn321_resource_construct(
 	for (i = 0; i < dc->caps.max_planes; ++i)
 		dc->caps.planes[i] = plane_cap;
 
+	dc->caps.max_odm_combine_factor = 4;
+
 	dc->cap_funcs = cap_funcs;
 
 	if (dc->ctx->dc_bios->fw_info.oem_i2c_present) {
@@ -2016,7 +2015,6 @@ static bool dcn321_resource_construct(
 	}
 
 	dc->dml2_options.dcn_pipe_count = pool->base.pipe_count;
-	dc->dml2_options.use_native_pstate_optimization = false;
 	dc->dml2_options.use_native_soc_bb_construction = true;
 	dc->dml2_options.minimize_dispclk_using_odm = true;
 
@@ -2043,6 +2041,10 @@ static bool dcn321_resource_construct(
 
 	dc->dml2_options.max_segments_per_hubp = 18;
 	dc->dml2_options.det_segment_size = DCN3_2_DET_SEG_SIZE;
+
+	/* init DC limited DML2 options */
+	memcpy(&dc->dml2_dc_power_options, &dc->dml2_options, sizeof(struct dml2_configuration_options));
+	dc->dml2_dc_power_options.use_clock_dc_limits = true;
 
 	return true;
 

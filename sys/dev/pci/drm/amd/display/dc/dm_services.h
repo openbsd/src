@@ -143,7 +143,7 @@ void generic_reg_wait(const struct dc_context *ctx,
 	unsigned int delay_between_poll_us, unsigned int time_out_num_tries,
 	const char *func_name, int line);
 
-unsigned int snprintf_count(char *pBuf, unsigned int bufSize, char *fmt, ...);
+unsigned int snprintf_count(char *pBuf, unsigned int bufSize, const char *fmt, ...);
 
 /* These macros need to be used with soc15 registers in order to retrieve
  * the actual offset.
@@ -277,18 +277,26 @@ void dm_perf_trace_timestamp(const char *func_name, unsigned int line, struct dc
 /*
  * SMU message tracing
  */
-void dm_trace_smu_msg(uint32_t msg_id, uint32_t param_in, struct dc_context *ctx);
-void dm_trace_smu_delay(uint32_t delay, struct dc_context *ctx);
+void dm_trace_smu_enter(uint32_t msg_id, uint32_t param_in, unsigned int delay, struct dc_context *ctx);
+void dm_trace_smu_exit(bool success, uint32_t response, struct dc_context *ctx);
 
-#define TRACE_SMU_MSG(msg_id, param_in, ctx)	dm_trace_smu_msg(msg_id, param_in, ctx)
-#define TRACE_SMU_DELAY(response_delay, ctx)	dm_trace_smu_delay(response_delay, ctx)
-
+#define TRACE_SMU_MSG_DELAY(msg_id, param_in, delay, ctx)	dm_trace_smu_enter(msg_id, param_in, delay, ctx)
+#define TRACE_SMU_MSG(msg_id, param_in, ctx)	dm_trace_smu_enter(msg_id, param_in, 0, ctx)
+#define TRACE_SMU_MSG_ENTER(msg_id, param_in, ctx)	dm_trace_smu_enter(msg_id, param_in, 0, ctx)
+#define TRACE_SMU_MSG_EXIT(success, response, ctx)	dm_trace_smu_exit(success, response, ctx)
 
 /*
  * DMUB Interfaces
  */
 bool dm_execute_dmub_cmd(const struct dc_context *ctx, union dmub_rb_cmd *cmd, enum dm_dmub_wait_type wait_type);
 bool dm_execute_dmub_cmd_list(const struct dc_context *ctx, unsigned int count, union dmub_rb_cmd *cmd, enum dm_dmub_wait_type wait_type);
+
+/*
+ * ACPI Interfaces
+ */
+void dm_acpi_process_phy_transition_interlock(
+	const struct dc_context *ctx,
+	struct dm_process_phy_transition_init_params process_phy_transition_init_params);
 
 /*
  * Debug and verification hooks

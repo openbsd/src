@@ -37,6 +37,8 @@
 #define DC_LOGGER dc->ctx->logger
 #ifndef MIN
 #define MIN(X, Y) ((X) < (Y) ? (X) : (Y))
+#endif
+#ifndef MAX
 #define MAX(x, y) ((x > y) ? x : y)
 #endif
 
@@ -199,7 +201,8 @@ struct dc_stream_state *dc_copy_stream(const struct dc_stream_state *stream)
 	dc_stream_assign_stream_id(new_stream);
 
 	/* If using dynamic encoder assignment, wait till stream committed to assign encoder. */
-	if (new_stream->ctx->dc->res_pool->funcs->link_encs_assign)
+	if (new_stream->ctx->dc->res_pool->funcs->link_encs_assign &&
+			!new_stream->ctx->dc->config.unify_link_enc_assignment)
 		new_stream->link_enc = NULL;
 
 	kref_init(&new_stream->refcount);
@@ -262,13 +265,16 @@ void program_cursor_attributes(
 }
 
 /*
- * dc_stream_set_cursor_attributes() - Update cursor attributes and set cursor surface address
+ * dc_stream_check_cursor_attributes() - Check validitity of cursor attributes and surface address
  */
-bool dc_stream_set_cursor_attributes(
-	struct dc_stream_state *stream,
+bool dc_stream_check_cursor_attributes(
+	const struct dc_stream_state *stream,
+	struct dc_state *state,
 	const struct dc_cursor_attributes *attributes)
 {
-	struct dc  *dc;
+	const struct dc *dc;
+
+	unsigned int max_cursor_size;
 
 	if (NULL == stream) {
 		dm_error("DC: dc_stream is NULL!\n");
@@ -286,20 +292,39 @@ bool dc_stream_set_cursor_attributes(
 
 	dc = stream->ctx->dc;
 
-	/* SubVP is not compatible with HW cursor larger than 64 x 64 x 4.
-	 * Therefore, if cursor is greater than 64 x 64 x 4, fallback to SW cursor in the following case:
-	 * 1. If the config is a candidate for SubVP high refresh (both single an dual display configs)
-	 * 2. If not subvp high refresh, for single display cases, if resolution is >= 5K and refresh rate < 120hz
-	 * 3. If not subvp high refresh, for multi display cases, if resolution is >= 4K and refresh rate < 120hz
+	/* SubVP is not compatible with HW cursor larger than what can fit in cursor SRAM.
+	 * Therefore, if cursor is greater than this, fallback to SW cursor.
 	 */
-	if (dc->debug.allow_sw_cursor_fallback && attributes->height * attributes->width * 4 > 16384) {
-		if (check_subvp_sw_cursor_fallback_req(dc, stream))
+	if (dc->debug.allow_sw_cursor_fallback && dc->res_pool->funcs->get_max_hw_cursor_size) {
+		max_cursor_size = dc->res_pool->funcs->get_max_hw_cursor_size(dc, state, stream);
+		max_cursor_size = max_cursor_size * max_cursor_size * 4;
+
+		if (attributes->height * attributes->width * 4 > max_cursor_size) {
 			return false;
+		}
 	}
 
-	stream->cursor_attributes = *attributes;
-
 	return true;
+}
+
+/*
+ * dc_stream_set_cursor_attributes() - Update cursor attributes and set cursor surface address
+ */
+bool dc_stream_set_cursor_attributes(
+	struct dc_stream_state *stream,
+	const struct dc_cursor_attributes *attributes)
+{
+	bool result = false;
+
+	if (!stream)
+		return false;
+
+	if (dc_stream_check_cursor_attributes(stream, stream->ctx->dc->current_state, attributes)) {
+		stream->cursor_attributes = *attributes;
+		result = true;
+	}
+
+	return result;
 }
 
 bool dc_stream_program_cursor_attributes(
@@ -309,7 +334,10 @@ bool dc_stream_program_cursor_attributes(
 	struct dc  *dc;
 	bool reset_idle_optimizations = false;
 
-	dc = stream ? stream->ctx->dc : NULL;
+	if (!stream)
+		return false;
+
+	dc = stream->ctx->dc;
 
 	if (dc_stream_set_cursor_attributes(stream, attributes)) {
 		dc_z10_restore(dc);
@@ -421,7 +449,6 @@ bool dc_stream_program_cursor_position(
 		/* apply/update visual confirm */
 		if (dc->debug.visual_confirm == VISUAL_CONFIRM_HW_CURSOR) {
 			/* update software state */
-			uint32_t color_value = MAX_TG_COLOR_VALUE;
 			int i;
 
 			for (i = 0; i < dc->res_pool->pipe_count; i++) {
@@ -429,15 +456,7 @@ bool dc_stream_program_cursor_position(
 
 				/* adjust visual confirm color for all pipes with current stream */
 				if (stream == pipe_ctx->stream) {
-					if (stream->cursor_position.enable) {
-						pipe_ctx->visual_confirm_color.color_r_cr = color_value;
-						pipe_ctx->visual_confirm_color.color_g_y = 0;
-						pipe_ctx->visual_confirm_color.color_b_cb = 0;
-					} else {
-						pipe_ctx->visual_confirm_color.color_r_cr = 0;
-						pipe_ctx->visual_confirm_color.color_g_y = 0;
-						pipe_ctx->visual_confirm_color.color_b_cb = color_value;
-					}
+					get_cursor_visual_confirm_color(pipe_ctx, &(pipe_ctx->visual_confirm_color));
 
 					/* programming hardware */
 					if (pipe_ctx->plane_state)
@@ -556,6 +575,14 @@ bool dc_stream_fc_disable_writeback(struct dc *dc,
 	return true;
 }
 
+/**
+ * dc_stream_remove_writeback() - Disables writeback and removes writeback info.
+ * @dc: Display core control structure.
+ * @stream: Display core stream state.
+ * @dwb_pipe_inst: Display writeback pipe.
+ *
+ * Return: returns true on success, false otherwise.
+ */
 bool dc_stream_remove_writeback(struct dc *dc,
 		struct dc_stream_state *stream,
 		uint32_t dwb_pipe_inst)
@@ -612,17 +639,6 @@ bool dc_stream_remove_writeback(struct dc *dc,
 	return true;
 }
 
-bool dc_stream_warmup_writeback(struct dc *dc,
-		int num_dwb,
-		struct dc_writeback_info *wb_info)
-{
-	dc_exit_ips_for_hw_access(dc);
-
-	if (dc->hwss.mmhubbub_warmup)
-		return dc->hwss.mmhubbub_warmup(dc, num_dwb, wb_info);
-	else
-		return false;
-}
 uint32_t dc_stream_get_vblank_counter(const struct dc_stream_state *stream)
 {
 	uint8_t i;
@@ -848,6 +864,73 @@ void dc_stream_log(const struct dc *dc, const struct dc_stream_state *stream)
 					stream->sink->edid_caps.display_name,
 					stream->signal);
 		}
+	}
+}
+
+/*
+*	dc_stream_get_3dlut()
+*	Requirements:
+*	1. Is stream already owns an RMCM instance, return it.
+*	2. If it doesn't and we don't need to allocate, return NULL.
+*	3. If there's a free RMCM instance, assign to stream and return it.
+*	4. If no free RMCM instances, return NULL.
+*/
+
+struct dc_rmcm_3dlut *dc_stream_get_3dlut_for_stream(
+	const struct dc *dc,
+	const struct dc_stream_state *stream,
+	bool allocate_one)
+{
+	unsigned int num_rmcm = dc->caps.color.mpc.num_rmcm_3dluts;
+
+	// see if one is allocated for this stream
+	for (int i = 0; i < num_rmcm; i++) {
+		if (dc->res_pool->rmcm_3dlut[i].isInUse &&
+			dc->res_pool->rmcm_3dlut[i].stream == stream)
+			return &dc->res_pool->rmcm_3dlut[i];
+	}
+
+	//case: not found one, and dont need to allocate
+	if (!allocate_one)
+		return NULL;
+
+	//see if there is an unused 3dlut, allocate
+	for (int i = 0; i < num_rmcm; i++) {
+		if (!dc->res_pool->rmcm_3dlut[i].isInUse) {
+			dc->res_pool->rmcm_3dlut[i].isInUse = true;
+			dc->res_pool->rmcm_3dlut[i].stream = stream;
+			return &dc->res_pool->rmcm_3dlut[i];
+		}
+	}
+
+	//dont have a 3dlut
+	return NULL;
+}
+
+
+void dc_stream_release_3dlut_for_stream(
+	const struct dc *dc,
+	const struct dc_stream_state *stream)
+{
+	struct dc_rmcm_3dlut *rmcm_3dlut =
+		dc_stream_get_3dlut_for_stream(dc, stream, false);
+
+	if (rmcm_3dlut) {
+		rmcm_3dlut->isInUse = false;
+		rmcm_3dlut->stream  = NULL;
+		rmcm_3dlut->protection_bits = 0;
+	}
+}
+
+
+void dc_stream_init_rmcm_3dlut(struct dc *dc)
+{
+	unsigned int num_rmcm = dc->caps.color.mpc.num_rmcm_3dluts;
+
+	for (int i = 0; i < num_rmcm; i++) {
+		dc->res_pool->rmcm_3dlut[i].isInUse = false;
+		dc->res_pool->rmcm_3dlut[i].stream = NULL;
+		dc->res_pool->rmcm_3dlut[i].protection_bits = 0;
 	}
 }
 
@@ -1128,4 +1211,27 @@ unsigned int dc_stream_get_max_flickerless_instant_vtotal_increase(struct dc_str
 		return 0;
 
 	return dc_stream_get_max_flickerless_instant_vtotal_delta(stream, is_gaming, false);
+}
+
+bool dc_stream_is_cursor_limit_pending(struct dc *dc, struct dc_stream_state *stream)
+{
+	bool is_limit_pending = false;
+
+	if (dc->current_state)
+		is_limit_pending = dc_state_get_stream_cursor_subvp_limit(stream, dc->current_state);
+
+	return is_limit_pending;
+}
+
+bool dc_stream_can_clear_cursor_limit(struct dc *dc, struct dc_stream_state *stream)
+{
+	bool can_clear_limit = false;
+
+	if (dc->current_state)
+		can_clear_limit = dc_state_get_stream_cursor_subvp_limit(stream, dc->current_state) &&
+				(stream->hw_cursor_req ||
+				!stream->cursor_position.enable ||
+				dc_stream_check_cursor_attributes(stream, dc->current_state, &stream->cursor_attributes));
+
+	return can_clear_limit;
 }

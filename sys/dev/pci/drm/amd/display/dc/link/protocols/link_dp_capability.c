@@ -158,6 +158,14 @@ uint8_t dp_parse_lttpr_repeater_count(uint8_t lttpr_repeater_count)
 	return 0; // invalid value
 }
 
+uint32_t dp_get_closest_lttpr_offset(uint8_t lttpr_count)
+{
+	/* Calculate offset for LTTPR closest to DPTX which is highest in the chain
+	 * Offset is 0 for single LTTPR cases as base LTTPR DPCD addresses target LTTPR 1
+	 */
+	return DP_REPEATER_CONFIGURATION_AND_STATUS_SIZE * (lttpr_count - 1);
+}
+
 uint32_t link_bw_kbps_from_raw_frl_link_rate_data(uint8_t bw)
 {
 	switch (bw) {
@@ -265,6 +273,8 @@ static uint32_t intersect_frl_link_bw_support(
 		supported_bw_in_kbps = 18000000;
 	else if (hdmi_encoded_link_bw.bits.BW_9Gbps)
 		supported_bw_in_kbps = 9000000;
+	else if (hdmi_encoded_link_bw.bits.FRL_LINK_TRAINING_FINISHED)
+		supported_bw_in_kbps = 0; /* This case should only get hit in regulated autonomous mode. */
 
 	return supported_bw_in_kbps;
 }
@@ -330,9 +340,12 @@ bool dp_is_fec_supported(const struct dc_link *link)
 	/* TODO - use asic cap instead of link_enc->features
 	 * we no longer know which link enc to use for this link before commit
 	 */
-	struct link_encoder *link_enc = NULL;
+	struct resource_context *res_ctx = &link->dc->current_state->res_ctx;
+	struct resource_pool *res_pool = link->dc->res_pool;
+	struct link_encoder *link_enc = get_temp_dio_link_enc(res_ctx, res_pool, link);
 
-	link_enc = link_enc_cfg_get_link_enc(link);
+	if (!link->dc->config.unify_link_enc_assignment)
+		link_enc = link_enc_cfg_get_link_enc(link);
 	ASSERT(link_enc);
 
 	return (dc_is_dp_signal(link->connector_signal) && link_enc &&
@@ -372,9 +385,15 @@ bool dp_is_128b_132b_signal(struct pipe_ctx *pipe_ctx)
 bool dp_is_lttpr_present(struct dc_link *link)
 {
 	/* Some sink devices report invalid LTTPR revision, so don't validate against that cap */
-	return (dp_parse_lttpr_repeater_count(link->dpcd_caps.lttpr_caps.phy_repeater_cnt) != 0 &&
+	uint32_t lttpr_count = dp_parse_lttpr_repeater_count(link->dpcd_caps.lttpr_caps.phy_repeater_cnt);
+	bool is_lttpr_present = (lttpr_count > 0 &&
 			link->dpcd_caps.lttpr_caps.max_lane_count > 0 &&
 			link->dpcd_caps.lttpr_caps.max_lane_count <= 4);
+
+	if (lttpr_count > 0 && !is_lttpr_present)
+		DC_LOG_ERROR("LTTPR count is nonzero but invalid lane count reported. Assuming no LTTPR present.\n");
+
+	return is_lttpr_present;
 }
 
 /* in DP compliance test, DPR-120 may have
@@ -1072,6 +1091,48 @@ static enum dc_status wake_up_aux_channel(struct dc_link *link)
 	return DC_OK;
 }
 
+static void read_and_intersect_post_frl_lt_status(
+	struct dc_link *link)
+{
+	union autonomous_mode_and_frl_link_status autonomous_mode_caps = {0};
+	union hdmi_tx_link_status hdmi_tx_link_status = {0};
+	union hdmi_encoded_link_bw hdmi_encoded_link_bw = {0};
+
+	/* Check if dongle supports regulated autonomous mode. */
+	core_link_read_dpcd(link, DP_REGULATED_AUTONOMOUS_MODE_SUPPORTED_AND_HDMI_LINK_TRAINING_STATUS,
+		&autonomous_mode_caps.raw, sizeof(autonomous_mode_caps));
+
+	link->dpcd_caps.dongle_caps.dp_hdmi_regulated_autonomous_mode_support =
+			autonomous_mode_caps.bits.REGULATED_AUTONOMOUS_MODE_SUPPORTED;
+
+	if (link->dpcd_caps.dongle_caps.dp_hdmi_regulated_autonomous_mode_support) {
+		DC_LOG_DC("%s: PCON supports regulated autonomous mode.\n", __func__);
+
+		core_link_read_dpcd(link, DP_PCON_HDMI_TX_LINK_STATUS,
+				&hdmi_tx_link_status.raw, sizeof(hdmi_tx_link_status));
+	}
+
+	// Intersect reported max link bw support with the supported link rate post FRL link training
+	if (core_link_read_dpcd(link, DP_PCON_HDMI_POST_FRL_STATUS,
+			&hdmi_encoded_link_bw.raw, sizeof(hdmi_encoded_link_bw)) == DC_OK) {
+
+		if (link->dpcd_caps.dongle_caps.dp_hdmi_regulated_autonomous_mode_support &&
+				(!hdmi_tx_link_status.bits.HDMI_TX_READY_STATUS ||
+						!hdmi_encoded_link_bw.bits.FRL_LINK_TRAINING_FINISHED)) {
+			DC_LOG_WARNING("%s: PCON TX link training has not finished.\n", __func__);
+
+			/* Link training not finished, ignore values from this DPCD reg. */
+			return;
+		}
+
+		link->dpcd_caps.dongle_caps.dp_hdmi_frl_max_link_bw_in_kbps = intersect_frl_link_bw_support(
+				link->dpcd_caps.dongle_caps.dp_hdmi_frl_max_link_bw_in_kbps,
+				hdmi_encoded_link_bw);
+		DC_LOG_DC("%s: pcon frl link bw = %u\n", __func__,
+			link->dpcd_caps.dongle_caps.dp_hdmi_frl_max_link_bw_in_kbps);
+	}
+}
+
 static void get_active_converter_info(
 	uint8_t data, struct dc_link *link)
 {
@@ -1160,21 +1221,12 @@ static void get_active_converter_info(
 							hdmi_color_caps.bits.MAX_BITS_PER_COLOR_COMPONENT);
 
 					if (link->dc->caps.dp_hdmi21_pcon_support) {
-						union hdmi_encoded_link_bw hdmi_encoded_link_bw;
 
 						link->dpcd_caps.dongle_caps.dp_hdmi_frl_max_link_bw_in_kbps =
 								link_bw_kbps_from_raw_frl_link_rate_data(
 										hdmi_color_caps.bits.MAX_ENCODED_LINK_BW_SUPPORT);
 
-						// Intersect reported max link bw support with the supported link rate post FRL link training
-						if (core_link_read_dpcd(link, DP_PCON_HDMI_POST_FRL_STATUS,
-								&hdmi_encoded_link_bw.raw, sizeof(hdmi_encoded_link_bw)) == DC_OK) {
-							link->dpcd_caps.dongle_caps.dp_hdmi_frl_max_link_bw_in_kbps = intersect_frl_link_bw_support(
-									link->dpcd_caps.dongle_caps.dp_hdmi_frl_max_link_bw_in_kbps,
-									hdmi_encoded_link_bw);
-							DC_LOG_DC("%s: pcon frl link bw = %u\n", __func__,
-								link->dpcd_caps.dongle_caps.dp_hdmi_frl_max_link_bw_in_kbps);
-						}
+						read_and_intersect_post_frl_lt_status(link);
 
 						if (link->dpcd_caps.dongle_caps.dp_hdmi_frl_max_link_bw_in_kbps > 0)
 							link->dpcd_caps.dongle_caps.extendedCapValid = true;
@@ -1208,6 +1260,13 @@ static void get_active_converter_info(
 			dp_hw_fw_revision.ieee_fw_rev,
 			sizeof(dp_hw_fw_revision.ieee_fw_rev));
 	}
+
+	core_link_read_dpcd(
+		link,
+		DP_BRANCH_VENDOR_SPECIFIC_START,
+		(uint8_t *)link->dpcd_caps.branch_vendor_specific_data,
+		sizeof(link->dpcd_caps.branch_vendor_specific_data));
+
 	if (link->dpcd_caps.dpcd_rev.raw >= DPCD_REV_14 &&
 			link->dpcd_caps.dongle_type != DISPLAY_DONGLE_NONE) {
 		union dp_dfp_cap_ext dfp_cap_ext;
@@ -1328,6 +1387,21 @@ void dpcd_set_source_specific_data(struct dc_link *link)
 		enum dc_status __maybe_unused result_write_min_hblank = DC_NOT_SUPPORTED;
 		struct dpcd_amd_signature amd_signature = {0};
 		struct dpcd_amd_device_id amd_device_id = {0};
+
+		if (link->is_dds) {
+			uint8_t dpcd_dp_edp_backlight_mode = 0;
+
+			/*
+			 * Write 0 to bits 0:1 for dp_edp_backlight_mode_set register
+			 * if platform is DDS
+			 */
+			core_link_read_dpcd(link, DP_EDP_BACKLIGHT_MODE_SET_REGISTER,
+				&dpcd_dp_edp_backlight_mode, sizeof(uint8_t));
+			dpcd_dp_edp_backlight_mode &= ~0x3;
+
+			core_link_write_dpcd(link, DP_EDP_BACKLIGHT_MODE_SET_REGISTER,
+				&dpcd_dp_edp_backlight_mode, sizeof(uint8_t));
+		}
 
 		amd_device_id.device_id_byte1 =
 				(uint8_t)(link->ctx->asic_id.chip_id);
@@ -1451,8 +1525,8 @@ bool read_is_mst_supported(struct dc_link *link)
 		return false;
 	}
 
-	rev.raw  = 0;
-	cap.raw  = 0;
+	rev.raw = 0;
+	cap.raw = 0;
 
 	st = core_link_read_dpcd(link, DP_DPCD_REV, &rev.raw,
 			sizeof(rev));
@@ -1484,6 +1558,10 @@ static bool dpcd_read_sink_ext_caps(struct dc_link *link)
 		return false;
 
 	link->dpcd_sink_ext_caps.raw = dpcd_data;
+	if (link->is_dds && !link->dpcd_sink_ext_caps.bits.oled) {
+		link->dpcd_sink_ext_caps.raw = 0;
+		return false;
+	}
 
 	if (core_link_read_dpcd(link, DP_EDP_GENERAL_CAP_2, &edp_general_cap2, 1) != DC_OK)
 		return false;
@@ -1498,6 +1576,8 @@ enum dc_status dp_retrieve_lttpr_cap(struct dc_link *link)
 	uint8_t lttpr_dpcd_data[10] = {0};
 	enum dc_status status;
 	bool is_lttpr_present;
+	uint32_t lttpr_count;
+	uint32_t closest_lttpr_offset;
 
 	/* Logic to determine LTTPR support*/
 	bool vbios_lttpr_interop = link->dc->caps.vbios_lttpr_aware;
@@ -1549,26 +1629,50 @@ enum dc_status dp_retrieve_lttpr_cap(struct dc_link *link)
 			lttpr_dpcd_data[DP_LTTPR_ALPM_CAPABILITIES -
 							DP_LT_TUNABLE_PHY_REPEATER_FIELD_DATA_STRUCTURE_REV];
 
+	lttpr_count = dp_parse_lttpr_repeater_count(link->dpcd_caps.lttpr_caps.phy_repeater_cnt);
+
 	/* If this chip cap is set, at least one retimer must exist in the chain
 	 * Override count to 1 if we receive a known bad count (0 or an invalid value) */
-	if ((link->chip_caps & EXT_DISPLAY_PATH_CAPS__DP_FIXED_VS_EN) &&
-			(dp_parse_lttpr_repeater_count(link->dpcd_caps.lttpr_caps.phy_repeater_cnt) == 0)) {
+	if (((link->chip_caps & AMD_EXT_DISPLAY_PATH_CAPS__EXT_CHIP_MASK) == AMD_EXT_DISPLAY_PATH_CAPS__DP_FIXED_VS_EN) &&
+			lttpr_count == 0) {
 		/* If you see this message consistently, either the host platform has FIXED_VS flag
 		 * incorrectly configured or the sink device is returning an invalid count.
 		 */
 		DC_LOG_ERROR("lttpr_caps phy_repeater_cnt is 0x%x, forcing it to 0x80.",
 			     link->dpcd_caps.lttpr_caps.phy_repeater_cnt);
 		link->dpcd_caps.lttpr_caps.phy_repeater_cnt = 0x80;
+		lttpr_count = 1;
 		DC_LOG_DC("lttpr_caps forced phy_repeater_cnt = %d\n", link->dpcd_caps.lttpr_caps.phy_repeater_cnt);
 	}
 
-	/* Attempt to train in LTTPR transparent mode if repeater count exceeds 8. */
 	is_lttpr_present = dp_is_lttpr_present(link);
 
-	if (is_lttpr_present)
+	DC_LOG_DC("is_lttpr_present = %d\n", is_lttpr_present);
+
+	if (is_lttpr_present) {
 		CONN_DATA_DETECT(link, lttpr_dpcd_data, sizeof(lttpr_dpcd_data), "LTTPR Caps: ");
 
-	DC_LOG_DC("is_lttpr_present = %d\n", is_lttpr_present);
+		// Identify closest LTTPR to determine if workarounds required for known embedded LTTPR
+		closest_lttpr_offset = dp_get_closest_lttpr_offset(lttpr_count);
+
+		core_link_read_dpcd(link, (DP_LTTPR_IEEE_OUI + closest_lttpr_offset),
+				link->dpcd_caps.lttpr_caps.lttpr_ieee_oui, sizeof(link->dpcd_caps.lttpr_caps.lttpr_ieee_oui));
+		core_link_read_dpcd(link, (DP_LTTPR_DEVICE_ID + closest_lttpr_offset),
+				link->dpcd_caps.lttpr_caps.lttpr_device_id, sizeof(link->dpcd_caps.lttpr_caps.lttpr_device_id));
+
+		if (lttpr_count > 1) {
+			CONN_DATA_DETECT(link, link->dpcd_caps.lttpr_caps.lttpr_ieee_oui, sizeof(link->dpcd_caps.lttpr_caps.lttpr_ieee_oui),
+					"Closest LTTPR To Host's IEEE OUI: ");
+			CONN_DATA_DETECT(link, link->dpcd_caps.lttpr_caps.lttpr_device_id, sizeof(link->dpcd_caps.lttpr_caps.lttpr_device_id),
+					"Closest LTTPR To Host's LTTPR Device ID: ");
+		} else {
+			CONN_DATA_DETECT(link, link->dpcd_caps.lttpr_caps.lttpr_ieee_oui, sizeof(link->dpcd_caps.lttpr_caps.lttpr_ieee_oui),
+					"LTTPR IEEE OUI: ");
+			CONN_DATA_DETECT(link, link->dpcd_caps.lttpr_caps.lttpr_device_id, sizeof(link->dpcd_caps.lttpr_caps.lttpr_device_id),
+					"LTTPR Device ID: ");
+		}
+	}
+
 	return status;
 }
 
@@ -1628,9 +1732,6 @@ static bool retrieve_link_cap(struct dc_link *link)
 				&link->dpcd_caps.lttpr_caps.phy_repeater_cnt,
 				sizeof(link->dpcd_caps.lttpr_caps.phy_repeater_cnt));
 	}
-
-	/* Read DP tunneling information. */
-	status = dpcd_get_tunneling_device_data(link);
 
 	dpcd_set_source_specific_data(link);
 
@@ -1705,7 +1806,7 @@ static bool retrieve_link_cap(struct dc_link *link)
 		link->dpcd_caps.dprx_feature.raw = dpcd_dprx_data;
 
 		if (status != DC_OK)
-			dm_error("%s: Read DPRX caps data failed.\n", __func__);
+			dm_error("%s: Read DPRX feature list failed.\n", __func__);
 
 		/* AdaptiveSyncCapability  */
 		dpcd_dprx_data = 0;
@@ -1720,14 +1821,12 @@ static bool retrieve_link_cap(struct dc_link *link)
 		link->dpcd_caps.adaptive_sync_caps.dp_adap_sync_caps.raw = dpcd_dprx_data;
 
 		if (status != DC_OK)
-			dm_error("%s: Read DPRX caps data failed. Addr:%#x\n",
+			dm_error("%s: Read DPRX feature list_1 failed. Addr:%#x\n",
 					__func__, DP_DPRX_FEATURE_ENUMERATION_LIST_CONT_1);
 	}
-
 	else {
 		link->dpcd_caps.dprx_feature.raw = 0;
 	}
-
 
 	/* Error condition checking...
 	 * It is impossible for Sink to report Max Lane Count = 0.
@@ -1781,6 +1880,11 @@ static bool retrieve_link_cap(struct dc_link *link)
 			dpcd_data[DP_MAIN_LINK_CHANNEL_CODING - DP_DPCD_REV];
 	link->test_pattern_enabled = false;
 	link->compliance_test_state.raw = 0;
+
+	link->dpcd_caps.receive_port0_cap.raw[0] =
+			dpcd_data[DP_RECEIVE_PORT_0_CAP_0 - DP_DPCD_REV];
+	link->dpcd_caps.receive_port0_cap.raw[1] =
+			dpcd_data[DP_RECEIVE_PORT_0_BUFFER_SIZE - DP_DPCD_REV];
 
 	/* read sink count */
 	core_link_read_dpcd(link,
@@ -1848,6 +1952,9 @@ static bool retrieve_link_cap(struct dc_link *link)
 				DP_FEC_CAPABILITY,
 				&link->dpcd_caps.fec_cap.raw,
 				sizeof(link->dpcd_caps.fec_cap.raw));
+		if (status != DC_OK)
+			DC_LOG_ERROR("%s:%d: core_link_read_dpcd (DP_FEC_CAPABILITY) failed\n", __func__, __LINE__);
+
 		status = core_link_read_dpcd(
 				link,
 				DP_DSC_SUPPORT,
@@ -1870,6 +1977,9 @@ static bool retrieve_link_cap(struct dc_link *link)
 					DP_DSC_BRANCH_OVERALL_THROUGHPUT_0,
 					link->dpcd_caps.dsc_caps.dsc_branch_decoder_caps.raw,
 					sizeof(link->dpcd_caps.dsc_caps.dsc_branch_decoder_caps.raw));
+			if (status != DC_OK)
+				DC_LOG_ERROR("%s:%d: core_link_read_dpcd (DP_DSC_BRANCH_OVERALL_THROUGHPUT_0) failed\n", __func__, __LINE__);
+
 			DC_LOG_DSC("DSC branch decoder capability is read at link %d", link->link_index);
 			DC_LOG_DSC("\tBRANCH_OVERALL_THROUGHPUT_0 = 0x%02x",
 					link->dpcd_caps.dsc_caps.dsc_branch_decoder_caps.fields.BRANCH_OVERALL_THROUGHPUT_0);
@@ -1906,6 +2016,7 @@ static bool retrieve_link_cap(struct dc_link *link)
 	if (link->dpcd_caps.channel_coding_cap.bits.DP_128b_132b_SUPPORTED) {
 		DC_LOG_DP2("128b/132b encoding is supported at link %d", link->link_index);
 
+		/* Read 128b/132b suppoerted link rates */
 		core_link_read_dpcd(link,
 				DP_128B132B_SUPPORTED_LINK_RATES,
 				&link->dpcd_caps.dp_128b_132b_supported_link_rates.raw,
@@ -1952,6 +2063,11 @@ static bool retrieve_link_cap(struct dc_link *link)
 			DPCD_MAX_UNCOMPRESSED_PIXEL_RATE_CAP,
 			link->dpcd_caps.max_uncompressed_pixel_rate_cap.raw,
 			sizeof(link->dpcd_caps.max_uncompressed_pixel_rate_cap.raw));
+
+	/* Read DP tunneling information. */
+	status = dpcd_get_tunneling_device_data(link);
+	if (status != DC_OK)
+		DC_LOG_DP2("%s: Read DP tunneling device data failed.\n", __func__);
 
 	retrieve_cable_id(link);
 	dpcd_write_cable_id_to_dprx(link);
@@ -2010,13 +2126,13 @@ void detect_edp_sink_caps(struct dc_link *link)
 						&backlight_adj_cap, sizeof(backlight_adj_cap));
 
 	link->dpcd_caps.dynamic_backlight_capable_edp =
-				(backlight_adj_cap & DP_EDP_DYNAMIC_BACKLIGHT_CAP) ? true:false;
+				(backlight_adj_cap & DP_EDP_DYNAMIC_BACKLIGHT_CAP) ? true : false;
 
 	core_link_read_dpcd(link, DP_EDP_GENERAL_CAP_1,
 						&general_edp_cap, sizeof(general_edp_cap));
 
 	link->dpcd_caps.set_power_state_capable_edp =
-				(general_edp_cap & DP_EDP_SET_POWER_CAP) ? true:false;
+				(general_edp_cap & DP_EDP_SET_POWER_CAP) ? true : false;
 
 	set_default_brightness_aux(link);
 
@@ -2061,18 +2177,46 @@ void detect_edp_sink_caps(struct dc_link *link)
 	core_link_read_dpcd(link, DP_SINK_PR_MAX_NUMBER_OF_DEVIATION_LINE,
 			&link->dpcd_caps.pr_info.max_deviation_line,
 			sizeof(link->dpcd_caps.pr_info.max_deviation_line));
+
+	/*
+	 * OLED Emission Rate info
+	 */
+	if (link->dpcd_sink_ext_caps.bits.emission_output)
+		core_link_read_dpcd(link, DP_SINK_EMISSION_RATE,
+				(uint8_t *)&link->dpcd_caps.edp_oled_emission_rate,
+				sizeof(link->dpcd_caps.edp_oled_emission_rate));
+
+	/*
+	 * Read Multi-SST (Single Stream Transport) capability
+	 * for eDP version 1.4 or higher.
+	 */
+	if (link->dpcd_caps.dpcd_rev.raw >= DP_EDP_14)
+		core_link_read_dpcd(
+			link,
+			DP_EDP_MSO_LINK_CAPABILITIES,
+			(uint8_t *)&link->dpcd_caps.mso_cap_sst_links_supported,
+			sizeof(link->dpcd_caps.mso_cap_sst_links_supported));
+	/*
+	 * Read eDP general capability 2
+	 */
+	core_link_read_dpcd(link, DP_EDP_GENERAL_CAP_2,
+			(uint8_t *)&link->dpcd_caps.dp_edp_general_cap_2,
+			sizeof(link->dpcd_caps.dp_edp_general_cap_2));
 }
 
 bool dp_get_max_link_enc_cap(const struct dc_link *link, struct dc_link_settings *max_link_enc_cap)
 {
-	struct link_encoder *link_enc = NULL;
+	struct resource_context *res_ctx = &link->dc->current_state->res_ctx;
+	struct resource_pool *res_pool = link->dc->res_pool;
+	struct link_encoder *link_enc = get_temp_dio_link_enc(res_ctx, res_pool, link);
 
 	if (!max_link_enc_cap) {
 		DC_LOG_ERROR("%s: Could not return max link encoder caps", __func__);
 		return false;
 	}
 
-	link_enc = link_enc_cfg_get_link_enc(link);
+	if (!link->dc->config.unify_link_enc_assignment)
+		link_enc = link_enc_cfg_get_link_enc(link);
 	ASSERT(link_enc);
 
 	if (link_enc && link_enc->funcs->get_max_link_cap) {
@@ -2100,10 +2244,13 @@ struct dc_link_settings dp_get_max_link_cap(struct dc_link *link)
 	struct dc_link_settings max_link_cap = {0};
 	enum dc_link_rate lttpr_max_link_rate;
 	enum dc_link_rate cable_max_link_rate;
-	struct link_encoder *link_enc = NULL;
+	struct resource_context *res_ctx = &link->dc->current_state->res_ctx;
+	struct resource_pool *res_pool = link->dc->res_pool;
+	struct link_encoder *link_enc = get_temp_dio_link_enc(res_ctx, res_pool, link);
 	bool is_uhbr13_5_supported = true;
 
-	link_enc = link_enc_cfg_get_link_enc(link);
+	if (!link->dc->config.unify_link_enc_assignment)
+		link_enc = link_enc_cfg_get_link_enc(link);
 	ASSERT(link_enc);
 
 	/* get max link encoder capability */
@@ -2288,6 +2435,14 @@ bool dp_verify_link_cap_with_retries(
 		} else {
 			link->verified_link_cap = last_verified_link_cap;
 		}
+
+		/* For Dp tunneling link, a pending HPD means that we have a race condition between processing
+		 * current link and processing the pending HPD. Since the training is failed, we should just brak
+		 * the loop so that we have chance to process the pending HPD.
+		 */
+		if (link->ep_type == DISPLAY_ENDPOINT_USB4_DPIA && link->is_hpd_pending)
+			break;
+
 		fsleep(10 * 1000);
 	}
 
@@ -2357,4 +2512,41 @@ bool dp_is_sink_present(struct dc_link *link)
 	dal_ddc_close(ddc);
 
 	return present;
+}
+
+uint8_t dp_get_lttpr_count(struct dc_link *link)
+{
+	if (dp_is_lttpr_present(link))
+		return dp_parse_lttpr_repeater_count(link->dpcd_caps.lttpr_caps.phy_repeater_cnt);
+
+	return 0;
+}
+
+void edp_get_alpm_support(struct dc_link *link,
+	bool *auxless_support,
+	bool *auxwake_support)
+{
+	bool lttpr_present = dp_is_lttpr_present(link);
+
+	if (auxless_support == NULL || auxwake_support == NULL)
+		return;
+
+	*auxless_support = false;
+	*auxwake_support = false;
+
+	if (!dc_is_embedded_signal(link->connector_signal))
+		return;
+
+	if (link->dpcd_caps.alpm_caps.bits.AUX_LESS_ALPM_CAP) {
+		if (lttpr_present) {
+			if (link->dpcd_caps.lttpr_caps.alpm.bits.AUX_LESS_ALPM_SUPPORTED)
+				*auxless_support = true;
+		} else
+			*auxless_support = true;
+	}
+
+	if (link->dpcd_caps.alpm_caps.bits.AUX_WAKE_ALPM_CAP) {
+		if (!lttpr_present)
+			*auxwake_support = true;
+	}
 }

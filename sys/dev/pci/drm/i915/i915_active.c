@@ -216,7 +216,7 @@ active_fence_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
 	struct i915_active_fence *active =
 		container_of(cb, typeof(*active), cb);
 
-	return cmpxchg(__active_fence_slot(active), fence, NULL) == fence;
+	return try_cmpxchg(__active_fence_slot(active), &fence, NULL);
 }
 
 static void
@@ -261,10 +261,9 @@ static struct active_node *__active_lookup(struct i915_active *ref, u64 idx)
 		 * claimed the cache and we know that is does not match our
 		 * idx. If, and only if, the timeline is currently zero is it
 		 * worth competing to claim it atomically for ourselves (for
-		 * only the winner of that race will cmpxchg return the old
-		 * value of 0).
+		 * only the winner of that race will cmpxchg succeed).
 		 */
-		if (!cached && !cmpxchg64(&it->timeline, 0, idx))
+		if (!cached && try_cmpxchg64(&it->timeline, &cached, idx))
 			return it;
 	}
 
@@ -537,24 +536,6 @@ int i915_active_acquire(struct i915_active *ref)
 	mutex_unlock(&ref->mutex);
 
 	return err;
-}
-
-int i915_active_acquire_for_context(struct i915_active *ref, u64 idx)
-{
-	struct i915_active_fence *active;
-	int err;
-
-	err = i915_active_acquire(ref);
-	if (err)
-		return err;
-
-	active = active_instance(ref, idx);
-	if (!active) {
-		i915_active_release(ref);
-		return -ENOMEM;
-	}
-
-	return 0; /* return with active ref */
 }
 
 void i915_active_release(struct i915_active *ref)

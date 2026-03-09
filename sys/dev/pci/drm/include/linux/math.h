@@ -15,4 +15,25 @@
 #define DIV_ROUND_CLOSEST(x, y)	(((x) + ((y) / 2)) / (y))
 #define DIV_ROUND_CLOSEST_ULL(x, y)	DIV_ROUND_CLOSEST(x, y)
 
+/* integer square root, Heron's method */
+static inline unsigned long
+int_sqrt(unsigned long x)
+{
+	unsigned long r;
+
+	if (x <= 1)
+		return x;
+
+	r = x / 2;
+	/*
+	 * while next < current
+	 * (r + (x / r)) / 2 < r
+	 * r + (x / r) < 2r
+	 * (x / r) < r
+	 */
+	while ((x / r) < r)
+		r = (r + (x / r)) / 2;
+	return r;
+}
+
 #endif

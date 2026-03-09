@@ -13,6 +13,8 @@ struct device;
 
 #define DMA_MAPPING_ERROR (dma_addr_t)-1
 
+#define DMA_ATTR_SKIP_CPU_SYNC	(1 << 1)
+
 static inline int
 dma_set_coherent_mask(struct device *dev, uint64_t m)
 {
@@ -49,10 +51,22 @@ dma_map_page(void *dev, struct vm_page *page, size_t offset,
 {
 	return VM_PAGE_TO_PHYS(page);
 }
+static inline dma_addr_t
+dma_map_page_attrs(void *dev, struct vm_page *page, size_t offset,
+    size_t size, enum dma_data_direction dir, unsigned long attrs)
+{
+	return VM_PAGE_TO_PHYS(page);
+}
 
 static inline void
 dma_unmap_page(void *dev, dma_addr_t addr, size_t size,
     enum dma_data_direction dir)
+{
+}
+
+static inline void
+dma_unmap_page_attrs(void *dev, dma_addr_t addr, size_t size,
+    enum dma_data_direction dir, unsigned long attrs)
 {
 }
 

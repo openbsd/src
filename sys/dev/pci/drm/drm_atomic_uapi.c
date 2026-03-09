@@ -28,14 +28,16 @@
  */
 
 #include <linux/compiler.h>
-#include <drm/drm_atomic_uapi.h>
 #include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_atomic_uapi.h>
 #include <drm/drm_framebuffer.h>
 #include <drm/drm_print.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_writeback.h>
 #include <drm/drm_vblank.h>
 
+#include <linux/export.h>
 #include <linux/dma-fence.h>
 #include <linux/uaccess.h>
 #include <linux/sync_file.h>
@@ -1068,6 +1070,7 @@ int drm_atomic_set_property(struct drm_atomic_state *state,
 		struct drm_plane *plane = obj_to_plane(obj);
 		struct drm_plane_state *plane_state;
 		struct drm_mode_config *config = &plane->dev->mode_config;
+		const struct drm_plane_helper_funcs *plane_funcs = plane->helper_private;
 
 		plane_state = drm_atomic_get_plane_state(state, plane);
 		if (IS_ERR(plane_state)) {
@@ -1075,15 +1078,31 @@ int drm_atomic_set_property(struct drm_atomic_state *state,
 			break;
 		}
 
-		if (async_flip &&
-		    (plane_state->plane->type != DRM_PLANE_TYPE_PRIMARY ||
-		     (prop != config->prop_fb_id &&
-		      prop != config->prop_in_fence_fd &&
-		      prop != config->prop_fb_damage_clips))) {
+		if (async_flip) {
+			/* no-op changes are always allowed */
 			ret = drm_atomic_plane_get_property(plane, plane_state,
 							    prop, &old_val);
 			ret = drm_atomic_check_prop_changes(ret, old_val, prop_value, prop);
-			break;
+
+			/* fail everything that isn't no-op or a pure flip */
+			if (ret && prop != config->prop_fb_id &&
+			    prop != config->prop_in_fence_fd &&
+			    prop != config->prop_fb_damage_clips) {
+				break;
+			}
+
+			if (ret && plane->type != DRM_PLANE_TYPE_PRIMARY) {
+				/* ask the driver if this non-primary plane is supported */
+				if (plane_funcs && plane_funcs->atomic_async_check)
+					ret = plane_funcs->atomic_async_check(plane, state, true);
+
+				if (ret) {
+					drm_dbg_atomic(prop->dev,
+						       "[PLANE:%d:%s] does not support async flips\n",
+						       obj->id, plane->name);
+					break;
+				}
+			}
 		}
 
 		ret = drm_atomic_plane_set_property(plane,

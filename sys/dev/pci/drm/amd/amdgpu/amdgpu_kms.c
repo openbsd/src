@@ -45,6 +45,7 @@
 #include "amdgpu_ras.h"
 #include "amdgpu_reset.h"
 #include "amd_pcie.h"
+#include "amdgpu_userq.h"
 
 void amdgpu_unregister_gpu_instance(struct amdgpu_device *adev)
 {
@@ -90,7 +91,7 @@ void amdgpu_driver_unload_kms(struct drm_device *dev)
 	if (adev->rmmio == NULL)
 		return;
 
-	if (amdgpu_acpi_smart_shift_update(dev, AMDGPU_SS_DRV_UNLOAD))
+	if (amdgpu_acpi_smart_shift_update(adev, AMDGPU_SS_DRV_UNLOAD))
 		DRM_WARN("smart shift update failed\n");
 
 	amdgpu_acpi_fini(adev);
@@ -160,7 +161,7 @@ int amdgpu_driver_load_kms(struct amdgpu_device *adev, unsigned long flags)
 	if (acpi_status)
 		dev_dbg(dev->dev, "Error during ACPI methods call\n");
 
-	if (amdgpu_acpi_smart_shift_update(dev, AMDGPU_SS_DRV_LOAD))
+	if (amdgpu_acpi_smart_shift_update(adev, AMDGPU_SS_DRV_LOAD))
 		DRM_WARN("smart shift update failed\n");
 
 out:
@@ -373,6 +374,26 @@ static int amdgpu_firmware_info(struct drm_amdgpu_info_firmware *fw_info,
 	return 0;
 }
 
+static int amdgpu_userq_metadata_info_gfx(struct amdgpu_device *adev,
+					  struct drm_amdgpu_info *info,
+					  struct drm_amdgpu_info_uq_metadata_gfx *meta)
+{
+	int ret = -EOPNOTSUPP;
+
+	if (adev->gfx.funcs->get_gfx_shadow_info) {
+		struct amdgpu_gfx_shadow_info shadow = {};
+
+		adev->gfx.funcs->get_gfx_shadow_info(adev, &shadow, true);
+		meta->shadow_size = shadow.shadow_size;
+		meta->shadow_alignment = shadow.shadow_alignment;
+		meta->csa_size = shadow.csa_size;
+		meta->csa_alignment = shadow.csa_alignment;
+		ret = 0;
+	}
+
+	return ret;
+}
+
 static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 			     struct drm_amdgpu_info *info,
 			     struct drm_amdgpu_info_hw_ip *result)
@@ -381,6 +402,7 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 	uint32_t ib_size_alignment = 0;
 	enum amd_ip_block_type type;
 	unsigned int num_rings = 0;
+	uint32_t num_slots = 0;
 	unsigned int i, j;
 
 	if (info->query_hw_ip.ip_instance >= AMDGPU_HW_IP_INSTANCE_MAX_COUNT)
@@ -390,24 +412,45 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 	case AMDGPU_HW_IP_GFX:
 		type = AMD_IP_BLOCK_TYPE_GFX;
 		for (i = 0; i < adev->gfx.num_gfx_rings; i++)
-			if (adev->gfx.gfx_ring[i].sched.ready)
+			if (adev->gfx.gfx_ring[i].sched.ready &&
+			    !adev->gfx.gfx_ring[i].no_user_submission)
 				++num_rings;
+
+		if (!adev->gfx.disable_uq) {
+			for (i = 0; i < AMDGPU_MES_MAX_GFX_PIPES; i++)
+				num_slots += hweight32(adev->mes.gfx_hqd_mask[i]);
+		}
+
 		ib_start_alignment = 32;
 		ib_size_alignment = 32;
 		break;
 	case AMDGPU_HW_IP_COMPUTE:
 		type = AMD_IP_BLOCK_TYPE_GFX;
 		for (i = 0; i < adev->gfx.num_compute_rings; i++)
-			if (adev->gfx.compute_ring[i].sched.ready)
+			if (adev->gfx.compute_ring[i].sched.ready &&
+			    !adev->gfx.compute_ring[i].no_user_submission)
 				++num_rings;
+
+		if (!adev->sdma.disable_uq) {
+			for (i = 0; i < AMDGPU_MES_MAX_COMPUTE_PIPES; i++)
+				num_slots += hweight32(adev->mes.compute_hqd_mask[i]);
+		}
+
 		ib_start_alignment = 32;
 		ib_size_alignment = 32;
 		break;
 	case AMDGPU_HW_IP_DMA:
 		type = AMD_IP_BLOCK_TYPE_SDMA;
 		for (i = 0; i < adev->sdma.num_instances; i++)
-			if (adev->sdma.instance[i].ring.sched.ready)
+			if (adev->sdma.instance[i].ring.sched.ready &&
+			    !adev->sdma.instance[i].ring.no_user_submission)
 				++num_rings;
+
+		if (!adev->gfx.disable_uq) {
+			for (i = 0; i < AMDGPU_MES_MAX_SDMA_PIPES; i++)
+				num_slots += hweight32(adev->mes.sdma_hqd_mask[i]);
+		}
+
 		ib_start_alignment = 256;
 		ib_size_alignment = 4;
 		break;
@@ -417,7 +460,8 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 			if (adev->uvd.harvest_config & (1 << i))
 				continue;
 
-			if (adev->uvd.inst[i].ring.sched.ready)
+			if (adev->uvd.inst[i].ring.sched.ready &&
+			    !adev->uvd.inst[i].ring.no_user_submission)
 				++num_rings;
 		}
 		ib_start_alignment = 256;
@@ -426,7 +470,8 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 	case AMDGPU_HW_IP_VCE:
 		type = AMD_IP_BLOCK_TYPE_VCE;
 		for (i = 0; i < adev->vce.num_rings; i++)
-			if (adev->vce.ring[i].sched.ready)
+			if (adev->vce.ring[i].sched.ready &&
+			    !adev->vce.ring[i].no_user_submission)
 				++num_rings;
 		ib_start_alignment = 256;
 		ib_size_alignment = 4;
@@ -438,7 +483,8 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 				continue;
 
 			for (j = 0; j < adev->uvd.num_enc_rings; j++)
-				if (adev->uvd.inst[i].ring_enc[j].sched.ready)
+				if (adev->uvd.inst[i].ring_enc[j].sched.ready &&
+				    !adev->uvd.inst[i].ring_enc[j].no_user_submission)
 					++num_rings;
 		}
 		ib_start_alignment = 256;
@@ -450,7 +496,8 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 			if (adev->vcn.harvest_config & (1 << i))
 				continue;
 
-			if (adev->vcn.inst[i].ring_dec.sched.ready)
+			if (adev->vcn.inst[i].ring_dec.sched.ready &&
+			    !adev->vcn.inst[i].ring_dec.no_user_submission)
 				++num_rings;
 		}
 		ib_start_alignment = 256;
@@ -462,8 +509,9 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 			if (adev->vcn.harvest_config & (1 << i))
 				continue;
 
-			for (j = 0; j < adev->vcn.num_enc_rings; j++)
-				if (adev->vcn.inst[i].ring_enc[j].sched.ready)
+			for (j = 0; j < adev->vcn.inst[i].num_enc_rings; j++)
+				if (adev->vcn.inst[i].ring_enc[j].sched.ready &&
+				    !adev->vcn.inst[i].ring_enc[j].no_user_submission)
 					++num_rings;
 		}
 		ib_start_alignment = 256;
@@ -478,7 +526,8 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 				continue;
 
 			for (j = 0; j < adev->jpeg.num_jpeg_rings; j++)
-				if (adev->jpeg.inst[i].ring_dec[j].sched.ready)
+				if (adev->jpeg.inst[i].ring_dec[j].sched.ready &&
+				    !adev->jpeg.inst[i].ring_dec[j].no_user_submission)
 					++num_rings;
 		}
 		ib_start_alignment = 256;
@@ -486,7 +535,8 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 		break;
 	case AMDGPU_HW_IP_VPE:
 		type = AMD_IP_BLOCK_TYPE_VPE;
-		if (adev->vpe.ring.sched.ready)
+		if (adev->vpe.ring.sched.ready &&
+		    !adev->vpe.ring.no_user_submission)
 			++num_rings;
 		ib_start_alignment = 256;
 		ib_size_alignment = 4;
@@ -542,6 +592,7 @@ static int amdgpu_hw_ip_info(struct amdgpu_device *adev,
 	}
 	result->capabilities_flags = 0;
 	result->available_rings = (1 << num_rings) - 1;
+	result->userq_num_slots = num_slots;
 	result->ib_start_alignment = ib_start_alignment;
 	result->ib_size_alignment = ib_size_alignment;
 	return 0;
@@ -853,7 +904,7 @@ out:
 	case AMDGPU_INFO_DEV_INFO: {
 		struct drm_amdgpu_info_device *dev_info;
 		uint64_t vm_size;
-		uint32_t pcie_gen_mask;
+		uint32_t pcie_gen_mask, pcie_width_mask;
 
 		dev_info = kzalloc(sizeof(*dev_info), GFP_KERNEL);
 		if (!dev_info)
@@ -894,6 +945,19 @@ out:
 			dev_info->ids_flags |= AMDGPU_IDS_FLAGS_TMZ;
 		if (adev->gfx.config.ta_cntl2_truncate_coord_mode)
 			dev_info->ids_flags |= AMDGPU_IDS_FLAGS_CONFORMANT_TRUNC_COORD;
+
+		/* Gang submit is not supported under SRIOV currently */
+		if (!amdgpu_sriov_vf(adev))
+			dev_info->ids_flags |= AMDGPU_IDS_FLAGS_GANG_SUBMIT;
+
+		if (amdgpu_passthrough(adev))
+			dev_info->ids_flags |= (AMDGPU_IDS_FLAGS_MODE_PT <<
+						AMDGPU_IDS_FLAGS_MODE_SHIFT) &
+						AMDGPU_IDS_FLAGS_MODE_MASK;
+		else if (amdgpu_sriov_vf(adev))
+			dev_info->ids_flags |= (AMDGPU_IDS_FLAGS_MODE_VF <<
+						AMDGPU_IDS_FLAGS_MODE_SHIFT) &
+						AMDGPU_IDS_FLAGS_MODE_MASK;
 
 		vm_size = adev->vm_manager.max_pfn * AMDGPU_GPU_PAGE_SIZE;
 		vm_size -= AMDGPU_VA_RESERVED_TOP;
@@ -941,15 +1005,18 @@ out:
 		dev_info->tcc_disabled_mask = adev->gfx.config.tcc_disabled_mask;
 
 		/* Combine the chip gen mask with the platform (CPU/mobo) mask. */
-		pcie_gen_mask = adev->pm.pcie_gen_mask & (adev->pm.pcie_gen_mask >> 16);
+		pcie_gen_mask = adev->pm.pcie_gen_mask &
+			(adev->pm.pcie_gen_mask >> CAIL_PCIE_LINK_SPEED_SUPPORT_SHIFT);
+		pcie_width_mask = adev->pm.pcie_mlw_mask &
+			(adev->pm.pcie_mlw_mask >> CAIL_PCIE_LINK_WIDTH_SUPPORT_SHIFT);
 		dev_info->pcie_gen = fls(pcie_gen_mask);
 		dev_info->pcie_num_lanes =
-			adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X32 ? 32 :
-			adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X16 ? 16 :
-			adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X12 ? 12 :
-			adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X8 ? 8 :
-			adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X4 ? 4 :
-			adev->pm.pcie_mlw_mask & CAIL_PCIE_LINK_WIDTH_SUPPORT_X2 ? 2 : 1;
+			pcie_width_mask & CAIL_ASIC_PCIE_LINK_WIDTH_SUPPORT_X32 ? 32 :
+			pcie_width_mask & CAIL_ASIC_PCIE_LINK_WIDTH_SUPPORT_X16 ? 16 :
+			pcie_width_mask & CAIL_ASIC_PCIE_LINK_WIDTH_SUPPORT_X12 ? 12 :
+			pcie_width_mask & CAIL_ASIC_PCIE_LINK_WIDTH_SUPPORT_X8 ? 8 :
+			pcie_width_mask & CAIL_ASIC_PCIE_LINK_WIDTH_SUPPORT_X4 ? 4 :
+			pcie_width_mask & CAIL_ASIC_PCIE_LINK_WIDTH_SUPPORT_X2 ? 2 : 1;
 
 		dev_info->tcp_cache_size = adev->gfx.config.gc_tcp_l1_size;
 		dev_info->num_sqc_per_wgp = adev->gfx.config.gc_num_sqc_per_wgp;
@@ -972,6 +1039,8 @@ out:
 				dev_info->csa_alignment = shadow_info.csa_alignment;
 			}
 		}
+
+		dev_info->userq_ip_mask = amdgpu_userq_get_supported_ip_mask(adev);
 
 		ret = copy_to_user(out, dev_info,
 				   min((size_t)size, sizeof(*dev_info))) ? -EFAULT : 0;
@@ -1288,6 +1357,22 @@ out:
 		return copy_to_user(out, &gpuvm_fault,
 				    min((size_t)size, sizeof(gpuvm_fault))) ? -EFAULT : 0;
 	}
+	case AMDGPU_INFO_UQ_FW_AREAS: {
+		struct drm_amdgpu_info_uq_metadata meta_info = {};
+
+		switch (info->query_hw_ip.type) {
+		case AMDGPU_HW_IP_GFX:
+			ret = amdgpu_userq_metadata_info_gfx(adev, info, &meta_info.gfx);
+			if (ret)
+				return ret;
+
+			ret = copy_to_user(out, &meta_info,
+						min((size_t)size, sizeof(meta_info))) ? -EFAULT : 0;
+			return 0;
+		default:
+			return -EINVAL;
+		}
+	}
 	default:
 		DRM_DEBUG_KMS("Invalid request %d\n", info->query);
 		return -EINVAL;
@@ -1341,13 +1426,11 @@ int amdgpu_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 	if (r)
 		goto error_pasid;
 
-	r = amdgpu_vm_init(adev, &fpriv->vm, fpriv->xcp_id);
+	amdgpu_debugfs_vm_init(file_priv);
+
+	r = amdgpu_vm_init(adev, &fpriv->vm, fpriv->xcp_id, pasid);
 	if (r)
 		goto error_pasid;
-
-	r = amdgpu_vm_set_pasid(adev, &fpriv->vm, pasid);
-	if (r)
-		goto error_vm;
 
 	fpriv->prt_va = amdgpu_vm_bo_add(adev, &fpriv->vm, NULL);
 	if (!fpriv->prt_va) {
@@ -1371,6 +1454,14 @@ int amdgpu_driver_open_kms(struct drm_device *dev, struct drm_file *file_priv)
 	rw_init(&fpriv->bo_list_lock, "agbo");
 	idr_init_base(&fpriv->bo_list_handles, 1);
 
+	r = amdgpu_userq_mgr_init(&fpriv->userq_mgr, file_priv, adev);
+	if (r)
+		DRM_WARN("Can't setup usermode queues, use legacy workload submission only\n");
+
+	r = amdgpu_eviction_fence_init(&fpriv->evf_mgr);
+	if (r)
+		goto error_vm;
+
 	amdgpu_ctx_mgr_init(&fpriv->ctx_mgr, adev);
 
 	file_priv->driver_priv = fpriv;
@@ -1380,10 +1471,8 @@ error_vm:
 	amdgpu_vm_fini(adev, &fpriv->vm);
 
 error_pasid:
-	if (pasid) {
+	if (pasid)
 		amdgpu_pasid_free(pasid);
-		amdgpu_vm_set_pasid(adev, &fpriv->vm, 0);
-	}
 
 	kfree(fpriv);
 

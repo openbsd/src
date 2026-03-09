@@ -38,6 +38,13 @@
 #include <drm/drm_drv.h>
 #include <drm/ttm/ttm_tt.h>
 
+static const u64 four_gb = 0x100000000ULL;
+
+bool amdgpu_gmc_is_pdb0_enabled(struct amdgpu_device *adev)
+{
+	return adev->gmc.xgmi.connected_to_cpu || amdgpu_virt_xgmi_migrate_enabled(adev);
+}
+
 /**
  * amdgpu_gmc_pdb0_alloc - allocate vram for pdb0
  *
@@ -251,10 +258,20 @@ void amdgpu_gmc_sysvm_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc
 	u64 hive_vram_end = mc->xgmi.node_segment_size * mc->xgmi.num_physical_nodes - 1;
 	mc->vram_start = mc->xgmi.node_segment_size * mc->xgmi.physical_node_id;
 	mc->vram_end = mc->vram_start + mc->xgmi.node_segment_size - 1;
-	mc->gart_start = hive_vram_end + 1;
+	/* node_segment_size may not 4GB aligned on SRIOV, align up is needed. */
+	mc->gart_start = ALIGN(hive_vram_end + 1, four_gb);
 	mc->gart_end = mc->gart_start + mc->gart_size - 1;
-	mc->fb_start = hive_vram_start;
-	mc->fb_end = hive_vram_end;
+	if (amdgpu_virt_xgmi_migrate_enabled(adev)) {
+		/* set mc->vram_start to 0 to switch the returned GPU address of
+		 * amdgpu_bo_create_reserved() from FB aperture to GART aperture.
+		 */
+		mc->vram_start = 0;
+		mc->vram_end = mc->vram_start + mc->mc_vram_size - 1;
+		mc->visible_vram_size = min(mc->visible_vram_size, mc->real_vram_size);
+	} else {
+		mc->fb_start = hive_vram_start;
+		mc->fb_end = hive_vram_end;
+	}
 	dev_info(adev->dev, "VRAM: %lluM 0x%016llX - 0x%016llX (%lluM used)\n",
 			mc->mc_vram_size >> 20, mc->vram_start,
 			mc->vram_end, mc->real_vram_size >> 20);
@@ -269,14 +286,13 @@ void amdgpu_gmc_sysvm_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc
  * @mc: memory controller structure holding memory information
  * @gart_placement: GART placement policy with respect to VRAM
  *
- * Function will place try to place GART before or after VRAM.
+ * Function will try to place GART before or after VRAM.
  * If GART size is bigger than space left then we ajust GART size.
  * Thus function will never fails.
  */
 void amdgpu_gmc_gart_location(struct amdgpu_device *adev, struct amdgpu_gmc *mc,
 			      enum amdgpu_gart_placement gart_placement)
 {
-	const uint64_t four_gb = 0x100000000ULL;
 	u64 size_af, size_bf;
 	/*To avoid the hole, limit the max mc address to AMDGPU_GMC_HOLE_START*/
 	u64 max_mc_address = min(adev->gmc.mc_mask, AMDGPU_GMC_HOLE_START - 1);
@@ -482,8 +498,13 @@ void amdgpu_gmc_filter_faults_remove(struct amdgpu_device *adev, uint64_t addr,
 
 	if (adev->irq.retry_cam_enabled)
 		return;
+	else if (adev->irq.ih1.ring_size)
+		ih = &adev->irq.ih1;
+	else if (adev->irq.ih_soft.enabled)
+		ih = &adev->irq.ih_soft;
+	else
+		return;
 
-	ih = &adev->irq.ih1;
 	/* Get the WPTR of the last entry in IH ring */
 	last_wptr = amdgpu_ih_get_wptr(adev, ih);
 	/* Order wptr with ring data. */
@@ -573,6 +594,7 @@ int amdgpu_gmc_allocate_vm_inv_eng(struct amdgpu_device *adev)
 	unsigned vm_inv_engs[AMDGPU_MAX_VMHUBS] = {0};
 	unsigned i;
 	unsigned vmhub, inv_eng;
+	struct amdgpu_ring *shared_ring;
 
 	/* init the vm inv eng for all vmhubs */
 	for_each_set_bit(i, adev->vmhubs_mask, AMDGPU_MAX_VMHUBS) {
@@ -594,7 +616,12 @@ int amdgpu_gmc_allocate_vm_inv_eng(struct amdgpu_device *adev)
 
 		if (ring == &adev->mes.ring[0] ||
 		    ring == &adev->mes.ring[1] ||
-		    ring == &adev->umsch_mm.ring)
+		    ring == &adev->umsch_mm.ring ||
+		    ring == &adev->cper.ring_buf)
+			continue;
+
+		/* Skip if the ring is a shared ring */
+		if (amdgpu_sdma_is_shared_inv_eng(adev, ring))
 			continue;
 
 		inv_eng = ffs(vm_inv_engs[vmhub]);
@@ -609,6 +636,21 @@ int amdgpu_gmc_allocate_vm_inv_eng(struct amdgpu_device *adev)
 
 		dev_info(adev->dev, "ring %s uses VM inv eng %u on hub %u\n",
 			 ring->name, ring->vm_inv_eng, ring->vm_hub);
+		/* SDMA has a special packet which allows it to use the same
+		 * invalidation engine for all the rings in one instance.
+		 * Therefore, we do not allocate a separate VM invalidation engine
+		 * for SDMA page rings. Instead, they share the VM invalidation
+		 * engine with the SDMA gfx ring. This change ensures efficient
+		 * resource management and avoids the issue of insufficient VM
+		 * invalidation engines.
+		 */
+		shared_ring = amdgpu_sdma_get_shared_ring(adev, ring);
+		if (shared_ring) {
+			shared_ring->vm_inv_eng = ring->vm_inv_eng;
+			dev_info(adev->dev, "ring %s shares VM invalidation engine %u with ring %s on hub %u\n",
+					ring->name, ring->vm_inv_eng, shared_ring->name, ring->vm_hub);
+			continue;
+		}
 	}
 
 	return 0;
@@ -656,7 +698,7 @@ void amdgpu_gmc_flush_gpu_tlb(struct amdgpu_device *adev, uint32_t vmid,
 	r = amdgpu_job_alloc_with_ib(ring->adev, &adev->mman.high_pr,
 				     AMDGPU_FENCE_OWNER_UNDEFINED,
 				     16 * 4, AMDGPU_IB_POOL_IMMEDIATE,
-				     &job);
+				     &job, AMDGPU_KERNEL_JOB_ID_FLUSH_GPU_TLB);
 	if (r)
 		goto error_alloc;
 
@@ -863,6 +905,7 @@ void amdgpu_gmc_tmz_set(struct amdgpu_device *adev)
 	case IP_VERSION(11, 5, 0):
 	case IP_VERSION(11, 5, 1):
 	case IP_VERSION(11, 5, 2):
+	case IP_VERSION(11, 5, 3):
 		/* Don't enable it by default yet.
 		 */
 		if (amdgpu_tmz < 1) {
@@ -900,6 +943,7 @@ void amdgpu_gmc_noretry_set(struct amdgpu_device *adev)
 				gc_ver == IP_VERSION(9, 4, 2) ||
 				gc_ver == IP_VERSION(9, 4, 3) ||
 				gc_ver == IP_VERSION(9, 4, 4) ||
+				gc_ver == IP_VERSION(9, 5, 0) ||
 				gc_ver >= IP_VERSION(10, 3, 0));
 
 	if (!amdgpu_sriov_xnack_support(adev))
@@ -969,6 +1013,16 @@ void amdgpu_gmc_get_vbios_allocations(struct amdgpu_device *adev)
 	case CHIP_RENOIR:
 		adev->mman.keep_stolen_vga_memory = true;
 		break;
+	case CHIP_POLARIS10:
+	case CHIP_POLARIS11:
+	case CHIP_POLARIS12:
+		/* MacBookPros with switchable graphics put VRAM at 0 when
+		 * the iGPU is enabled which results in cursor issues if
+		 * the cursor ends up at 0.  Reserve vram at 0 in that case.
+		 */
+		if (adev->gmc.vram_start == 0)
+			adev->mman.keep_stolen_vga_memory = true;
+		break;
 	default:
 		adev->mman.keep_stolen_vga_memory = false;
 		break;
@@ -1030,9 +1084,7 @@ void amdgpu_gmc_init_pdb0(struct amdgpu_device *adev)
 	 */
 	u64 vram_size = adev->gmc.xgmi.node_segment_size * adev->gmc.xgmi.num_physical_nodes;
 	u64 pde0_page_size = (1ULL<<adev->gmc.vmid0_page_table_block_size)<<21;
-	u64 vram_addr = adev->vm_manager.vram_base_offset -
-		adev->gmc.xgmi.physical_node_id * adev->gmc.xgmi.node_segment_size;
-	u64 vram_end = vram_addr + vram_size;
+	u64 vram_addr, vram_end;
 	u64 gart_ptb_gpu_pa = amdgpu_gmc_vram_pa(adev, adev->gart.bo);
 	int idx;
 
@@ -1044,6 +1096,11 @@ void amdgpu_gmc_init_pdb0(struct amdgpu_device *adev)
 	flags |= AMDGPU_PTE_SNOOPED;
 	flags |= AMDGPU_PTE_FRAG((adev->gmc.vmid0_page_table_block_size + 9*1));
 	flags |= AMDGPU_PDE_PTE_FLAG(adev);
+
+	vram_addr = adev->vm_manager.vram_base_offset;
+	if (!amdgpu_virt_xgmi_migrate_enabled(adev))
+		vram_addr -= adev->gmc.xgmi.physical_node_id * adev->gmc.xgmi.node_segment_size;
+	vram_end = vram_addr + vram_size;
 
 	/* The first n PDE0 entries are used as PTE,
 	 * pointing to vram
@@ -1084,18 +1141,6 @@ uint64_t amdgpu_gmc_vram_mc2pa(struct amdgpu_device *adev, uint64_t mc_addr)
 uint64_t amdgpu_gmc_vram_pa(struct amdgpu_device *adev, struct amdgpu_bo *bo)
 {
 	return amdgpu_gmc_vram_mc2pa(adev, amdgpu_bo_gpu_offset(bo));
-}
-
-/**
- * amdgpu_gmc_vram_cpu_pa - calculate vram buffer object's physical address
- * from CPU's view
- *
- * @adev: amdgpu_device pointer
- * @bo: amdgpu buffer object
- */
-uint64_t amdgpu_gmc_vram_cpu_pa(struct amdgpu_device *adev, struct amdgpu_bo *bo)
-{
-	return amdgpu_bo_gpu_offset(bo) - adev->gmc.vram_start + adev->gmc.aper_base;
 }
 
 int amdgpu_gmc_vram_checking(struct amdgpu_device *adev)
@@ -1151,6 +1196,79 @@ release_buffer:
 	return ret;
 }
 
+static const char *nps_desc[] = {
+	[AMDGPU_NPS1_PARTITION_MODE] = "NPS1",
+	[AMDGPU_NPS2_PARTITION_MODE] = "NPS2",
+	[AMDGPU_NPS3_PARTITION_MODE] = "NPS3",
+	[AMDGPU_NPS4_PARTITION_MODE] = "NPS4",
+	[AMDGPU_NPS6_PARTITION_MODE] = "NPS6",
+	[AMDGPU_NPS8_PARTITION_MODE] = "NPS8",
+};
+
+static ssize_t available_memory_partition_show(struct device *dev,
+					       struct device_attribute *addr,
+					       char *buf)
+{
+	struct drm_device *ddev = dev_get_drvdata(dev);
+	struct amdgpu_device *adev = drm_to_adev(ddev);
+	int size = 0, mode;
+	char *sep = "";
+
+	for_each_inst(mode, adev->gmc.supported_nps_modes) {
+		size += sysfs_emit_at(buf, size, "%s%s", sep, nps_desc[mode]);
+		sep = ", ";
+	}
+	size += sysfs_emit_at(buf, size, "\n");
+
+	return size;
+}
+
+static ssize_t current_memory_partition_store(struct device *dev,
+					      struct device_attribute *attr,
+					      const char *buf, size_t count)
+{
+	struct drm_device *ddev = dev_get_drvdata(dev);
+	struct amdgpu_device *adev = drm_to_adev(ddev);
+	enum amdgpu_memory_partition mode;
+	struct amdgpu_hive_info *hive;
+	int i;
+
+	mode = UNKNOWN_MEMORY_PARTITION_MODE;
+	for_each_inst(i, adev->gmc.supported_nps_modes) {
+		if (!strncasecmp(nps_desc[i], buf, strlen(nps_desc[i]))) {
+			mode = i;
+			break;
+		}
+	}
+
+	if (mode == UNKNOWN_MEMORY_PARTITION_MODE)
+		return -EINVAL;
+
+	if (mode == adev->gmc.gmc_funcs->query_mem_partition_mode(adev)) {
+		dev_info(
+			adev->dev,
+			"requested NPS mode is same as current NPS mode, skipping\n");
+		return count;
+	}
+
+	/* If device is part of hive, all devices in the hive should request the
+	 * same mode. Hence store the requested mode in hive.
+	 */
+	hive = amdgpu_get_xgmi_hive(adev);
+	if (hive) {
+		atomic_set(&hive->requested_nps_mode, mode);
+		amdgpu_put_xgmi_hive(hive);
+	} else {
+		adev->gmc.requested_nps_mode = mode;
+	}
+
+	dev_info(
+		adev->dev,
+		"NPS mode change requested, please remove and reload the driver\n");
+
+	return count;
+}
+
 static ssize_t current_memory_partition_show(
 	struct device *dev, struct device_attribute *addr, char *buf)
 {
@@ -1158,31 +1276,40 @@ static ssize_t current_memory_partition_show(
 	struct amdgpu_device *adev = drm_to_adev(ddev);
 	enum amdgpu_memory_partition mode;
 
+	/* Only minimal precaution taken to reject requests while in reset */
+	if (amdgpu_in_reset(adev))
+		return -EPERM;
+
 	mode = adev->gmc.gmc_funcs->query_mem_partition_mode(adev);
-	switch (mode) {
-	case AMDGPU_NPS1_PARTITION_MODE:
-		return sysfs_emit(buf, "NPS1\n");
-	case AMDGPU_NPS2_PARTITION_MODE:
-		return sysfs_emit(buf, "NPS2\n");
-	case AMDGPU_NPS3_PARTITION_MODE:
-		return sysfs_emit(buf, "NPS3\n");
-	case AMDGPU_NPS4_PARTITION_MODE:
-		return sysfs_emit(buf, "NPS4\n");
-	case AMDGPU_NPS6_PARTITION_MODE:
-		return sysfs_emit(buf, "NPS6\n");
-	case AMDGPU_NPS8_PARTITION_MODE:
-		return sysfs_emit(buf, "NPS8\n");
-	default:
+	if ((mode >= ARRAY_SIZE(nps_desc)) ||
+	    (BIT(mode) & AMDGPU_ALL_NPS_MASK) != BIT(mode))
 		return sysfs_emit(buf, "UNKNOWN\n");
-	}
+
+	return sysfs_emit(buf, "%s\n", nps_desc[mode]);
 }
 
-static DEVICE_ATTR_RO(current_memory_partition);
+static DEVICE_ATTR_RW(current_memory_partition);
+static DEVICE_ATTR_RO(available_memory_partition);
 
 int amdgpu_gmc_sysfs_init(struct amdgpu_device *adev)
 {
+	bool nps_switch_support;
+	int r = 0;
+
 	if (!adev->gmc.gmc_funcs->query_mem_partition_mode)
 		return 0;
+
+	nps_switch_support = (hweight32(adev->gmc.supported_nps_modes &
+					AMDGPU_ALL_NPS_MASK) > 1);
+	if (!nps_switch_support)
+		dev_attr_current_memory_partition.attr.mode &=
+			~(S_IWUSR | S_IWGRP | S_IWOTH);
+	else
+		r = device_create_file(adev->dev,
+				       &dev_attr_available_memory_partition);
+
+	if (r)
+		return r;
 
 	return device_create_file(adev->dev,
 				  &dev_attr_current_memory_partition);
@@ -1190,22 +1317,29 @@ int amdgpu_gmc_sysfs_init(struct amdgpu_device *adev)
 
 void amdgpu_gmc_sysfs_fini(struct amdgpu_device *adev)
 {
+	if (!adev->gmc.gmc_funcs->query_mem_partition_mode)
+		return;
+
 	device_remove_file(adev->dev, &dev_attr_current_memory_partition);
+	device_remove_file(adev->dev, &dev_attr_available_memory_partition);
 }
 
 int amdgpu_gmc_get_nps_memranges(struct amdgpu_device *adev,
 				 struct amdgpu_mem_partition_info *mem_ranges,
-				 int exp_ranges)
+				 uint8_t *exp_ranges)
 {
 	struct amdgpu_gmc_memrange *ranges;
 	int range_cnt, ret, i, j;
 	uint32_t nps_type;
+	bool refresh;
 
-	if (!mem_ranges)
+	if (!mem_ranges || !exp_ranges)
 		return -EINVAL;
 
+	refresh = (adev->init_lvl->level != AMDGPU_INIT_LEVEL_MINIMAL_XGMI) &&
+		  (adev->gmc.reset_flags & AMDGPU_GMC_INIT_RESET_NPS);
 	ret = amdgpu_discovery_get_nps_info(adev, &nps_type, &ranges,
-					    &range_cnt);
+					    &range_cnt, refresh);
 
 	if (ret)
 		return ret;
@@ -1213,16 +1347,16 @@ int amdgpu_gmc_get_nps_memranges(struct amdgpu_device *adev,
 	/* TODO: For now, expect ranges and partition count to be the same.
 	 * Adjust if there are holes expected in any NPS domain.
 	 */
-	if (range_cnt != exp_ranges) {
+	if (*exp_ranges && (range_cnt != *exp_ranges)) {
 		dev_warn(
 			adev->dev,
 			"NPS config mismatch - expected ranges: %d discovery - nps mode: %d, nps ranges: %d",
-			exp_ranges, nps_type, range_cnt);
+			*exp_ranges, nps_type, range_cnt);
 		ret = -EINVAL;
 		goto err;
 	}
 
-	for (i = 0; i < exp_ranges; ++i) {
+	for (i = 0; i < range_cnt; ++i) {
 		if (ranges[i].base_address >= ranges[i].limit_address) {
 			dev_warn(
 				adev->dev,
@@ -1263,8 +1397,310 @@ int amdgpu_gmc_get_nps_memranges(struct amdgpu_device *adev,
 			ranges[i].limit_address - ranges[i].base_address + 1;
 	}
 
+	if (!*exp_ranges)
+		*exp_ranges = range_cnt;
 err:
-	kfree(ranges);
+	kvfree(ranges);
 
 	return ret;
+}
+
+int amdgpu_gmc_request_memory_partition(struct amdgpu_device *adev,
+					int nps_mode)
+{
+	/* Not supported on VF devices and APUs */
+	if (amdgpu_sriov_vf(adev) || (adev->flags & AMD_IS_APU))
+		return -EOPNOTSUPP;
+
+	if (!adev->psp.funcs) {
+		dev_err(adev->dev,
+			"PSP interface not available for nps mode change request");
+		return -EINVAL;
+	}
+
+	return psp_memory_partition(&adev->psp, nps_mode);
+}
+
+static inline bool amdgpu_gmc_need_nps_switch_req(struct amdgpu_device *adev,
+						  int req_nps_mode,
+						  int cur_nps_mode)
+{
+	return (((BIT(req_nps_mode) & adev->gmc.supported_nps_modes) ==
+			BIT(req_nps_mode)) &&
+		req_nps_mode != cur_nps_mode);
+}
+
+void amdgpu_gmc_prepare_nps_mode_change(struct amdgpu_device *adev)
+{
+	int req_nps_mode, cur_nps_mode, r;
+	struct amdgpu_hive_info *hive;
+
+	if (amdgpu_sriov_vf(adev) || !adev->gmc.supported_nps_modes ||
+	    !adev->gmc.gmc_funcs->request_mem_partition_mode)
+		return;
+
+	cur_nps_mode = adev->gmc.gmc_funcs->query_mem_partition_mode(adev);
+	hive = amdgpu_get_xgmi_hive(adev);
+	if (hive) {
+		req_nps_mode = atomic_read(&hive->requested_nps_mode);
+		if (!amdgpu_gmc_need_nps_switch_req(adev, req_nps_mode,
+						    cur_nps_mode)) {
+			amdgpu_put_xgmi_hive(hive);
+			return;
+		}
+		r = amdgpu_xgmi_request_nps_change(adev, hive, req_nps_mode);
+		amdgpu_put_xgmi_hive(hive);
+		goto out;
+	}
+
+	req_nps_mode = adev->gmc.requested_nps_mode;
+	if (!amdgpu_gmc_need_nps_switch_req(adev, req_nps_mode, cur_nps_mode))
+		return;
+
+	/* even if this fails, we should let driver unload w/o blocking */
+	r = adev->gmc.gmc_funcs->request_mem_partition_mode(adev, req_nps_mode);
+out:
+	if (r)
+		dev_err(adev->dev, "NPS mode change request failed\n");
+	else
+		dev_info(
+			adev->dev,
+			"NPS mode change request done, reload driver to complete the change\n");
+}
+
+bool amdgpu_gmc_need_reset_on_init(struct amdgpu_device *adev)
+{
+	if (adev->gmc.gmc_funcs->need_reset_on_init)
+		return adev->gmc.gmc_funcs->need_reset_on_init(adev);
+
+	return false;
+}
+
+enum amdgpu_memory_partition
+amdgpu_gmc_get_vf_memory_partition(struct amdgpu_device *adev)
+{
+	switch (adev->gmc.num_mem_partitions) {
+	case 0:
+		return UNKNOWN_MEMORY_PARTITION_MODE;
+	case 1:
+		return AMDGPU_NPS1_PARTITION_MODE;
+	case 2:
+		return AMDGPU_NPS2_PARTITION_MODE;
+	case 4:
+		return AMDGPU_NPS4_PARTITION_MODE;
+	case 8:
+		return AMDGPU_NPS8_PARTITION_MODE;
+	default:
+		return AMDGPU_NPS1_PARTITION_MODE;
+	}
+}
+
+enum amdgpu_memory_partition
+amdgpu_gmc_get_memory_partition(struct amdgpu_device *adev, u32 *supp_modes)
+{
+	enum amdgpu_memory_partition mode = UNKNOWN_MEMORY_PARTITION_MODE;
+
+	if (adev->nbio.funcs &&
+	    adev->nbio.funcs->get_memory_partition_mode)
+		mode = adev->nbio.funcs->get_memory_partition_mode(adev,
+								   supp_modes);
+	else
+		dev_warn(adev->dev, "memory partition mode query is not supported\n");
+
+	return mode;
+}
+
+enum amdgpu_memory_partition
+amdgpu_gmc_query_memory_partition(struct amdgpu_device *adev)
+{
+	if (amdgpu_sriov_vf(adev))
+		return amdgpu_gmc_get_vf_memory_partition(adev);
+	else
+		return amdgpu_gmc_get_memory_partition(adev, NULL);
+}
+
+static bool amdgpu_gmc_validate_partition_info(struct amdgpu_device *adev)
+{
+	enum amdgpu_memory_partition mode;
+	u32 supp_modes;
+	bool valid;
+
+	mode = amdgpu_gmc_get_memory_partition(adev, &supp_modes);
+
+	/* Mode detected by hardware not present in supported modes */
+	if ((mode != UNKNOWN_MEMORY_PARTITION_MODE) &&
+	    !(BIT(mode - 1) & supp_modes))
+		return false;
+
+	switch (mode) {
+	case UNKNOWN_MEMORY_PARTITION_MODE:
+	case AMDGPU_NPS1_PARTITION_MODE:
+		valid = (adev->gmc.num_mem_partitions == 1);
+		break;
+	case AMDGPU_NPS2_PARTITION_MODE:
+		valid = (adev->gmc.num_mem_partitions == 2);
+		break;
+	case AMDGPU_NPS4_PARTITION_MODE:
+		valid = (adev->gmc.num_mem_partitions == 3 ||
+			 adev->gmc.num_mem_partitions == 4);
+		break;
+	case AMDGPU_NPS8_PARTITION_MODE:
+		valid = (adev->gmc.num_mem_partitions == 8);
+		break;
+	default:
+		valid = false;
+	}
+
+	return valid;
+}
+
+static bool amdgpu_gmc_is_node_present(int *node_ids, int num_ids, int nid)
+{
+	int i;
+
+	/* Check if node with id 'nid' is present in 'node_ids' array */
+	for (i = 0; i < num_ids; ++i)
+		if (node_ids[i] == nid)
+			return true;
+
+	return false;
+}
+
+static void
+amdgpu_gmc_init_acpi_mem_ranges(struct amdgpu_device *adev,
+				struct amdgpu_mem_partition_info *mem_ranges)
+{
+	struct amdgpu_numa_info numa_info;
+	int node_ids[AMDGPU_MAX_MEM_RANGES];
+	int num_ranges = 0, ret;
+	int num_xcc, xcc_id;
+	uint32_t xcc_mask;
+
+	num_xcc = NUM_XCC(adev->gfx.xcc_mask);
+	xcc_mask = (1U << num_xcc) - 1;
+
+	for_each_inst(xcc_id, xcc_mask)	{
+		ret = amdgpu_acpi_get_mem_info(adev, xcc_id, &numa_info);
+		if (ret)
+			continue;
+
+		if (numa_info.nid == NUMA_NO_NODE) {
+			mem_ranges[0].size = numa_info.size;
+			mem_ranges[0].numa.node = numa_info.nid;
+			num_ranges = 1;
+			break;
+		}
+
+		if (amdgpu_gmc_is_node_present(node_ids, num_ranges,
+					     numa_info.nid))
+			continue;
+
+		node_ids[num_ranges] = numa_info.nid;
+		mem_ranges[num_ranges].numa.node = numa_info.nid;
+		mem_ranges[num_ranges].size = numa_info.size;
+		++num_ranges;
+	}
+
+	adev->gmc.num_mem_partitions = num_ranges;
+}
+
+void amdgpu_gmc_init_sw_mem_ranges(struct amdgpu_device *adev,
+				   struct amdgpu_mem_partition_info *mem_ranges)
+{
+	enum amdgpu_memory_partition mode;
+	u32 start_addr = 0, size;
+	int i, r, l;
+
+	mode = amdgpu_gmc_query_memory_partition(adev);
+
+	switch (mode) {
+	case UNKNOWN_MEMORY_PARTITION_MODE:
+		adev->gmc.num_mem_partitions = 0;
+		break;
+	case AMDGPU_NPS1_PARTITION_MODE:
+		adev->gmc.num_mem_partitions = 1;
+		break;
+	case AMDGPU_NPS2_PARTITION_MODE:
+		adev->gmc.num_mem_partitions = 2;
+		break;
+	case AMDGPU_NPS4_PARTITION_MODE:
+		if (adev->flags & AMD_IS_APU)
+			adev->gmc.num_mem_partitions = 3;
+		else
+			adev->gmc.num_mem_partitions = 4;
+		break;
+	case AMDGPU_NPS8_PARTITION_MODE:
+		adev->gmc.num_mem_partitions = 8;
+		break;
+	default:
+		adev->gmc.num_mem_partitions = 1;
+		break;
+	}
+
+	/* Use NPS range info, if populated */
+	r = amdgpu_gmc_get_nps_memranges(adev, mem_ranges,
+					 &adev->gmc.num_mem_partitions);
+	if (!r) {
+		l = 0;
+		for (i = 1; i < adev->gmc.num_mem_partitions; ++i) {
+			if (mem_ranges[i].range.lpfn >
+			    mem_ranges[i - 1].range.lpfn)
+				l = i;
+		}
+
+	} else {
+		if (!adev->gmc.num_mem_partitions) {
+			dev_warn(adev->dev,
+				 "Not able to detect NPS mode, fall back to NPS1\n");
+			adev->gmc.num_mem_partitions = 1;
+		}
+		/* Fallback to sw based calculation */
+		size = (adev->gmc.real_vram_size + SZ_16M) >> AMDGPU_GPU_PAGE_SHIFT;
+		size /= adev->gmc.num_mem_partitions;
+
+		for (i = 0; i < adev->gmc.num_mem_partitions; ++i) {
+			mem_ranges[i].range.fpfn = start_addr;
+			mem_ranges[i].size =
+				((u64)size << AMDGPU_GPU_PAGE_SHIFT);
+			mem_ranges[i].range.lpfn = start_addr + size - 1;
+			start_addr += size;
+		}
+
+		l = adev->gmc.num_mem_partitions - 1;
+	}
+
+	/* Adjust the last one */
+	mem_ranges[l].range.lpfn =
+		(adev->gmc.real_vram_size >> AMDGPU_GPU_PAGE_SHIFT) - 1;
+	mem_ranges[l].size =
+		adev->gmc.real_vram_size -
+		((u64)mem_ranges[l].range.fpfn << AMDGPU_GPU_PAGE_SHIFT);
+}
+
+int amdgpu_gmc_init_mem_ranges(struct amdgpu_device *adev)
+{
+	bool valid;
+
+	adev->gmc.mem_partitions = kcalloc(AMDGPU_MAX_MEM_RANGES,
+					   sizeof(struct amdgpu_mem_partition_info),
+					   GFP_KERNEL);
+	if (!adev->gmc.mem_partitions)
+		return -ENOMEM;
+
+	if (adev->gmc.is_app_apu)
+		amdgpu_gmc_init_acpi_mem_ranges(adev, adev->gmc.mem_partitions);
+	else
+		amdgpu_gmc_init_sw_mem_ranges(adev, adev->gmc.mem_partitions);
+
+	if (amdgpu_sriov_vf(adev))
+		valid = true;
+	else
+		valid = amdgpu_gmc_validate_partition_info(adev);
+	if (!valid) {
+		/* TODO: handle invalid case */
+		dev_warn(adev->dev,
+			 "Mem ranges not matching with hardware config\n");
+	}
+
+	return 0;
 }

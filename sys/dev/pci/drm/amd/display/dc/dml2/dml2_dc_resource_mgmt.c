@@ -473,7 +473,6 @@ static void sort_pipes_for_splitting(struct dc_plane_pipe_pool *pipes)
 {
 	bool sorted, swapped;
 	unsigned int cur_index;
-	unsigned int temp;
 	int odm_slice_index;
 
 	for (odm_slice_index = 0; odm_slice_index < pipes->num_pipes_assigned_to_plane_for_odm_combine; odm_slice_index++) {
@@ -489,9 +488,8 @@ static void sort_pipes_for_splitting(struct dc_plane_pipe_pool *pipes)
 		swapped = false;
 		while (!sorted) {
 			if (pipes->pipes_assigned_to_plane[odm_slice_index][cur_index] > pipes->pipes_assigned_to_plane[odm_slice_index][cur_index + 1]) {
-				temp = pipes->pipes_assigned_to_plane[odm_slice_index][cur_index];
-				pipes->pipes_assigned_to_plane[odm_slice_index][cur_index] = pipes->pipes_assigned_to_plane[odm_slice_index][cur_index + 1];
-				pipes->pipes_assigned_to_plane[odm_slice_index][cur_index + 1] = temp;
+				swap(pipes->pipes_assigned_to_plane[odm_slice_index][cur_index + 1],
+					 pipes->pipes_assigned_to_plane[odm_slice_index][cur_index]);
 
 				swapped = true;
 			}
@@ -1082,22 +1080,22 @@ bool dml2_map_dc_pipes(struct dml2_context *ctx, struct dc_state *state, const s
 		if (stream_disp_cfg_index >= disp_cfg_index_max)
 			continue;
 
-		if (ODMMode[stream_disp_cfg_index] == dml_odm_mode_bypass) {
-			scratch.odm_info.odm_factor = 1;
-		} else if (ODMMode[stream_disp_cfg_index] == dml_odm_mode_combine_2to1) {
-			scratch.odm_info.odm_factor = 2;
-		} else if (ODMMode[stream_disp_cfg_index] == dml_odm_mode_combine_4to1) {
-			scratch.odm_info.odm_factor = 4;
-		} else {
-			ASSERT(false);
-			scratch.odm_info.odm_factor = 1;
-		}
-
+		if (ctx->architecture == dml2_architecture_20) {
+			if (ODMMode[stream_disp_cfg_index] == dml_odm_mode_bypass) {
+				scratch.odm_info.odm_factor = 1;
+			} else if (ODMMode[stream_disp_cfg_index] == dml_odm_mode_combine_2to1) {
+				scratch.odm_info.odm_factor = 2;
+			} else if (ODMMode[stream_disp_cfg_index] == dml_odm_mode_combine_4to1) {
+				scratch.odm_info.odm_factor = 4;
+			} else {
+				ASSERT(false);
+				scratch.odm_info.odm_factor = 1;
+			}
+		} else if (ctx->architecture == dml2_architecture_21) {
 		/* After DML2.1 update, ODM interpretation needs to change and is no longer same as for DML2.0.
 		 * This is not an issue with new resource management logic. This block ensure backcompat
 		 * with legacy pipe management with updated DML.
 		 * */
-		if (ctx->architecture == dml2_architecture_21) {
 			if (ODMMode[stream_disp_cfg_index] == 1) {
 				scratch.odm_info.odm_factor = 1;
 			} else if (ODMMode[stream_disp_cfg_index] == 2) {

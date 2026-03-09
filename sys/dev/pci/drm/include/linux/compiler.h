@@ -46,10 +46,21 @@
 #pragma clang diagnostic ignored "-Wgnu-variable-sized-type-not-at-end"
 #else
 #pragma GCC diagnostic ignored "-Wformat-zero-length"
+#pragma GCC diagnostic ignored "-Wunused-variable"
 #endif
 
 #define __diag_push()
 #define __diag_ignore_all(x, y)
 #define __diag_pop()
+
+#define OPTIMIZER_HIDE_VAR(x)
+
+#ifndef __COUNTER__
+#define __COUNTER__	__LINE
+#endif
+
+#define ____UNIQUE_ID(prefix, num)	prefix##num
+#define ___UNIQUE_ID(prefix, num)	____UNIQUE_ID(prefix, num)
+#define __UNIQUE_ID(prefix)		___UNIQUE_ID(prefix, __COUNTER__)
 
 #endif

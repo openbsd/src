@@ -46,7 +46,7 @@
 #define DC_LOGGER \
 	clk_mgr->base.base.ctx->logger
 
-#include "link.h"
+#include "link_service.h"
 
 #define TO_CLK_MGR_DCN315(clk_mgr)\
 	container_of(clk_mgr, struct clk_mgr_dcn315, base)
@@ -138,7 +138,7 @@ static void dcn315_update_clocks(struct clk_mgr *clk_mgr_base,
 	if (dc->work_arounds.skip_clock_update)
 		return;
 
-	clk_mgr_base->clks.zstate_support = new_clocks->zstate_support;
+	display_count = dcn315_get_active_display_cnt_wa(dc, context);
 	/*
 	 * if it is safe to lower, but we are already in the lower state, we don't have to do anything
 	 * also if safe to lower is false, we just go in the higher state
@@ -151,7 +151,6 @@ static void dcn315_update_clocks(struct clk_mgr *clk_mgr_base,
 		}
 		/* check that we're not already in lower */
 		if (clk_mgr_base->clks.pwr_state != DCN_PWR_STATE_LOW_POWER) {
-			display_count = dcn315_get_active_display_cnt_wa(dc, context);
 			/* if we can go lower, go lower */
 			if (display_count == 0) {
 				union display_idle_optimization_u idle_info = { 0 };

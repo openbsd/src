@@ -70,33 +70,43 @@ int amdgpu_dpm_get_mclk(struct amdgpu_device *adev, bool low)
 	return ret;
 }
 
-int amdgpu_dpm_set_powergating_by_smu(struct amdgpu_device *adev, uint32_t block_type, bool gate)
+int amdgpu_dpm_set_powergating_by_smu(struct amdgpu_device *adev,
+				       uint32_t block_type,
+				       bool gate,
+				       int inst)
 {
 	int ret = 0;
 	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
 	enum ip_power_state pwr_state = gate ? POWER_STATE_OFF : POWER_STATE_ON;
-
-	if (atomic_read(&adev->pm.pwr_state[block_type]) == pwr_state) {
-		dev_dbg(adev->dev, "IP block%d already in the target %s state!",
-				block_type, gate ? "gate" : "ungate");
-		return 0;
-	}
+	bool is_vcn = block_type == AMD_IP_BLOCK_TYPE_VCN;
 
 	mutex_lock(&adev->pm.mutex);
+
+	if (atomic_read(&adev->pm.pwr_state[block_type]) == pwr_state &&
+			(!is_vcn || adev->vcn.num_vcn_inst == 1)) {
+		dev_dbg(adev->dev, "IP block%d already in the target %s state!",
+				block_type, gate ? "gate" : "ungate");
+		goto out_unlock;
+	}
 
 	switch (block_type) {
 	case AMD_IP_BLOCK_TYPE_UVD:
 	case AMD_IP_BLOCK_TYPE_VCE:
 	case AMD_IP_BLOCK_TYPE_GFX:
-	case AMD_IP_BLOCK_TYPE_VCN:
 	case AMD_IP_BLOCK_TYPE_SDMA:
 	case AMD_IP_BLOCK_TYPE_JPEG:
 	case AMD_IP_BLOCK_TYPE_GMC:
 	case AMD_IP_BLOCK_TYPE_ACP:
 	case AMD_IP_BLOCK_TYPE_VPE:
+	case AMD_IP_BLOCK_TYPE_ISP:
 		if (pp_funcs && pp_funcs->set_powergating_by_smu)
 			ret = (pp_funcs->set_powergating_by_smu(
-				(adev)->powerplay.pp_handle, block_type, gate));
+				(adev)->powerplay.pp_handle, block_type, gate, 0));
+		break;
+	case AMD_IP_BLOCK_TYPE_VCN:
+		if (pp_funcs && pp_funcs->set_powergating_by_smu)
+			ret = (pp_funcs->set_powergating_by_smu(
+				(adev)->powerplay.pp_handle, block_type, gate, inst));
 		break;
 	default:
 		break;
@@ -105,6 +115,7 @@ int amdgpu_dpm_set_powergating_by_smu(struct amdgpu_device *adev, uint32_t block
 	if (!ret)
 		atomic_set(&adev->pm.pwr_state[block_type], pwr_state);
 
+out_unlock:
 	mutex_unlock(&adev->pm.mutex);
 
 	return ret;
@@ -178,24 +189,6 @@ int amdgpu_dpm_set_mp1_state(struct amdgpu_device *adev,
 		ret = pp_funcs->set_mp1_state(
 				adev->powerplay.pp_handle,
 				mp1_state);
-
-		mutex_unlock(&adev->pm.mutex);
-	}
-
-	return ret;
-}
-
-int amdgpu_dpm_notify_rlc_state(struct amdgpu_device *adev, bool en)
-{
-	int ret = 0;
-	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
-
-	if (pp_funcs && pp_funcs->notify_rlc_state) {
-		mutex_lock(&adev->pm.mutex);
-
-		ret = pp_funcs->notify_rlc_state(
-				adev->powerplay.pp_handle,
-				en);
 
 		mutex_unlock(&adev->pm.mutex);
 	}
@@ -320,6 +313,34 @@ int amdgpu_dpm_mode1_reset(struct amdgpu_device *adev)
 	return ret;
 }
 
+bool amdgpu_dpm_is_link_reset_supported(struct amdgpu_device *adev)
+{
+	struct smu_context *smu = adev->powerplay.pp_handle;
+	bool support_link_reset = false;
+
+	if (is_support_sw_smu(adev)) {
+		mutex_lock(&adev->pm.mutex);
+		support_link_reset = smu_link_reset_is_support(smu);
+		mutex_unlock(&adev->pm.mutex);
+	}
+
+	return support_link_reset;
+}
+
+int amdgpu_dpm_link_reset(struct amdgpu_device *adev)
+{
+	struct smu_context *smu = adev->powerplay.pp_handle;
+	int ret = -EOPNOTSUPP;
+
+	if (is_support_sw_smu(adev)) {
+		mutex_lock(&adev->pm.mutex);
+		ret = smu_link_reset(smu);
+		mutex_unlock(&adev->pm.mutex);
+	}
+
+	return ret;
+}
+
 int amdgpu_dpm_switch_power_profile(struct amdgpu_device *adev,
 				    enum PP_SMC_POWER_PROFILE type,
 				    bool en)
@@ -334,6 +355,25 @@ int amdgpu_dpm_switch_power_profile(struct amdgpu_device *adev,
 		mutex_lock(&adev->pm.mutex);
 		ret = pp_funcs->switch_power_profile(
 			adev->powerplay.pp_handle, type, en);
+		mutex_unlock(&adev->pm.mutex);
+	}
+
+	return ret;
+}
+
+int amdgpu_dpm_pause_power_profile(struct amdgpu_device *adev,
+				   bool pause)
+{
+	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+	int ret = 0;
+
+	if (amdgpu_sriov_vf(adev))
+		return 0;
+
+	if (pp_funcs && pp_funcs->pause_power_profile) {
+		mutex_lock(&adev->pm.mutex);
+		ret = pp_funcs->pause_power_profile(
+			adev->powerplay.pp_handle, pause);
 		mutex_unlock(&adev->pm.mutex);
 	}
 
@@ -566,7 +606,17 @@ void amdgpu_dpm_enable_uvd(struct amdgpu_device *adev, bool enable)
 		return;
 	}
 
-	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_UVD, !enable);
+	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_UVD, !enable, 0);
+	if (ret)
+		DRM_ERROR("Dpm %s uvd failed, ret = %d. \n",
+			  enable ? "enable" : "disable", ret);
+}
+
+void amdgpu_dpm_enable_vcn(struct amdgpu_device *adev, bool enable, int inst)
+{
+	int ret = 0;
+
+	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_VCN, !enable, inst);
 	if (ret)
 		DRM_ERROR("Dpm %s uvd failed, ret = %d. \n",
 			  enable ? "enable" : "disable", ret);
@@ -591,7 +641,7 @@ void amdgpu_dpm_enable_vce(struct amdgpu_device *adev, bool enable)
 		return;
 	}
 
-	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_VCE, !enable);
+	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_VCE, !enable, 0);
 	if (ret)
 		DRM_ERROR("Dpm %s vce failed, ret = %d. \n",
 			  enable ? "enable" : "disable", ret);
@@ -601,7 +651,7 @@ void amdgpu_dpm_enable_jpeg(struct amdgpu_device *adev, bool enable)
 {
 	int ret = 0;
 
-	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_JPEG, !enable);
+	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_JPEG, !enable, 0);
 	if (ret)
 		DRM_ERROR("Dpm %s jpeg failed, ret = %d. \n",
 			  enable ? "enable" : "disable", ret);
@@ -611,7 +661,7 @@ void amdgpu_dpm_enable_vpe(struct amdgpu_device *adev, bool enable)
 {
 	int ret = 0;
 
-	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_VPE, !enable);
+	ret = amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_VPE, !enable, 0);
 	if (ret)
 		DRM_ERROR("Dpm %s vpe failed, ret = %d.\n",
 			  enable ? "enable" : "disable", ret);
@@ -700,6 +750,74 @@ int amdgpu_dpm_send_rma_reason(struct amdgpu_device *adev)
 	return ret;
 }
 
+/**
+ * amdgpu_dpm_reset_sdma_is_supported - Check if SDMA reset is supported
+ * @adev: amdgpu_device pointer
+ *
+ * This function checks if the SMU supports resetting the SDMA engine.
+ * It returns false if the hardware does not support software SMU or
+ * if the feature is not supported.
+ */
+bool amdgpu_dpm_reset_sdma_is_supported(struct amdgpu_device *adev)
+{
+	struct smu_context *smu = adev->powerplay.pp_handle;
+	bool ret;
+
+	if (!is_support_sw_smu(adev))
+		return false;
+
+	mutex_lock(&adev->pm.mutex);
+	ret = smu_reset_sdma_is_supported(smu);
+	mutex_unlock(&adev->pm.mutex);
+
+	return ret;
+}
+
+int amdgpu_dpm_reset_sdma(struct amdgpu_device *adev, uint32_t inst_mask)
+{
+	struct smu_context *smu = adev->powerplay.pp_handle;
+	int ret;
+
+	if (!is_support_sw_smu(adev))
+		return -EOPNOTSUPP;
+
+	mutex_lock(&adev->pm.mutex);
+	ret = smu_reset_sdma(smu, inst_mask);
+	mutex_unlock(&adev->pm.mutex);
+
+	return ret;
+}
+
+int amdgpu_dpm_reset_vcn(struct amdgpu_device *adev, uint32_t inst_mask)
+{
+	struct smu_context *smu = adev->powerplay.pp_handle;
+	int ret;
+
+	if (!is_support_sw_smu(adev))
+		return -EOPNOTSUPP;
+
+	mutex_lock(&adev->pm.mutex);
+	ret = smu_reset_vcn(smu, inst_mask);
+	mutex_unlock(&adev->pm.mutex);
+
+	return ret;
+}
+
+bool amdgpu_dpm_reset_vcn_is_supported(struct amdgpu_device *adev)
+{
+	struct smu_context *smu = adev->powerplay.pp_handle;
+	bool ret;
+
+	if (!is_support_sw_smu(adev))
+		return false;
+
+	mutex_lock(&adev->pm.mutex);
+	ret = smu_reset_vcn_is_supported(smu);
+	mutex_unlock(&adev->pm.mutex);
+
+	return ret;
+}
+
 int amdgpu_dpm_get_dpm_freq_range(struct amdgpu_device *adev,
 				  enum pp_clock_type type,
 				  uint32_t *min,
@@ -729,22 +847,16 @@ int amdgpu_dpm_set_soft_freq_range(struct amdgpu_device *adev,
 				   uint32_t max)
 {
 	struct smu_context *smu = adev->powerplay.pp_handle;
-	int ret = 0;
-
-	if (type != PP_SCLK)
-		return -EINVAL;
 
 	if (!is_support_sw_smu(adev))
 		return -EOPNOTSUPP;
 
-	mutex_lock(&adev->pm.mutex);
-	ret = smu_set_soft_freq_range(smu,
-				      SMU_SCLK,
+	guard(mutex)(&adev->pm.mutex);
+
+	return smu_set_soft_freq_range(smu,
+				      type,
 				      min,
 				      max);
-	mutex_unlock(&adev->pm.mutex);
-
-	return ret;
 }
 
 int amdgpu_dpm_write_watermarks_table(struct amdgpu_device *adev)
@@ -953,6 +1065,24 @@ enum amd_dpm_forced_level amdgpu_dpm_get_performance_level(struct amdgpu_device 
 	return level;
 }
 
+static void amdgpu_dpm_enter_umd_state(struct amdgpu_device *adev)
+{
+	/* enter UMD Pstate */
+	amdgpu_device_ip_set_powergating_state(adev, AMD_IP_BLOCK_TYPE_GFX,
+					       AMD_PG_STATE_UNGATE);
+	amdgpu_device_ip_set_clockgating_state(adev, AMD_IP_BLOCK_TYPE_GFX,
+					       AMD_CG_STATE_UNGATE);
+}
+
+static void amdgpu_dpm_exit_umd_state(struct amdgpu_device *adev)
+{
+	/* exit UMD Pstate */
+	amdgpu_device_ip_set_clockgating_state(adev, AMD_IP_BLOCK_TYPE_GFX,
+					       AMD_CG_STATE_GATE);
+	amdgpu_device_ip_set_powergating_state(adev, AMD_IP_BLOCK_TYPE_GFX,
+					       AMD_PG_STATE_GATE);
+}
+
 int amdgpu_dpm_force_performance_level(struct amdgpu_device *adev,
 				       enum amd_dpm_forced_level level)
 {
@@ -973,6 +1103,10 @@ int amdgpu_dpm_force_performance_level(struct amdgpu_device *adev,
 	if (current_level == level)
 		return 0;
 
+	if (!(current_level & profile_mode_mask) &&
+	    (level == AMD_DPM_FORCED_LEVEL_PROFILE_EXIT))
+		return -EINVAL;
+
 	if (adev->asic_type == CHIP_RAVEN) {
 		if (!(adev->apu_flags & AMD_APU_IS_RAVEN2)) {
 			if (current_level != AMD_DPM_FORCED_LEVEL_MANUAL &&
@@ -984,35 +1118,25 @@ int amdgpu_dpm_force_performance_level(struct amdgpu_device *adev,
 		}
 	}
 
-	if (!(current_level & profile_mode_mask) &&
-	    (level == AMD_DPM_FORCED_LEVEL_PROFILE_EXIT))
-		return -EINVAL;
-
-	if (!(current_level & profile_mode_mask) &&
-	      (level & profile_mode_mask)) {
-		/* enter UMD Pstate */
-		amdgpu_device_ip_set_powergating_state(adev,
-						       AMD_IP_BLOCK_TYPE_GFX,
-						       AMD_PG_STATE_UNGATE);
-		amdgpu_device_ip_set_clockgating_state(adev,
-						       AMD_IP_BLOCK_TYPE_GFX,
-						       AMD_CG_STATE_UNGATE);
-	} else if ((current_level & profile_mode_mask) &&
-		    !(level & profile_mode_mask)) {
-		/* exit UMD Pstate */
-		amdgpu_device_ip_set_clockgating_state(adev,
-						       AMD_IP_BLOCK_TYPE_GFX,
-						       AMD_CG_STATE_GATE);
-		amdgpu_device_ip_set_powergating_state(adev,
-						       AMD_IP_BLOCK_TYPE_GFX,
-						       AMD_PG_STATE_GATE);
-	}
+	if (!(current_level & profile_mode_mask) && (level & profile_mode_mask))
+		amdgpu_dpm_enter_umd_state(adev);
+	else if ((current_level & profile_mode_mask) &&
+		 !(level & profile_mode_mask))
+		amdgpu_dpm_exit_umd_state(adev);
 
 	mutex_lock(&adev->pm.mutex);
 
 	if (pp_funcs->force_performance_level(adev->powerplay.pp_handle,
 					      level)) {
 		mutex_unlock(&adev->pm.mutex);
+		/* If new level failed, retain the umd state as before */
+		if (!(current_level & profile_mode_mask) &&
+		    (level & profile_mode_mask))
+			amdgpu_dpm_exit_umd_state(adev);
+		else if ((current_level & profile_mode_mask) &&
+			 !(level & profile_mode_mask))
+			amdgpu_dpm_enter_umd_state(adev);
+
 		return -EINVAL;
 	}
 
@@ -1562,6 +1686,28 @@ int amdgpu_dpm_is_overdrive_supported(struct amdgpu_device *adev)
 	}
 }
 
+int amdgpu_dpm_is_overdrive_enabled(struct amdgpu_device *adev)
+{
+	if (is_support_sw_smu(adev)) {
+		struct smu_context *smu = adev->powerplay.pp_handle;
+
+		return smu->od_enabled;
+	} else {
+		struct pp_hwmgr *hwmgr;
+
+		/*
+		 * dpm on some legacy asics don't carry od_enabled member
+		 * as its pp_handle is casted directly from adev.
+		 */
+		if (amdgpu_dpm_is_legacy_dpm(adev))
+			return false;
+
+		hwmgr = (struct pp_hwmgr *)adev->powerplay.pp_handle;
+
+		return hwmgr->od_enabled;
+	}
+}
+
 int amdgpu_dpm_set_pp_table(struct amdgpu_device *adev,
 			    const char *buf,
 			    size_t size)
@@ -1880,6 +2026,98 @@ int amdgpu_dpm_get_dpm_clock_table(struct amdgpu_device *adev,
 	mutex_lock(&adev->pm.mutex);
 	ret = pp_funcs->get_dpm_clock_table(adev->powerplay.pp_handle,
 					    clock_table);
+	mutex_unlock(&adev->pm.mutex);
+
+	return ret;
+}
+
+/**
+ * amdgpu_dpm_get_temp_metrics - Retrieve metrics for a specific compute
+ * partition
+ * @adev: Pointer to the device.
+ * @type: Identifier for the temperature type metrics to be fetched.
+ * @table: Pointer to a buffer where the metrics will be stored. If NULL, the
+ * function returns the size of the metrics structure.
+ *
+ * This function retrieves metrics for a specific temperature type, If the
+ * table parameter is NULL, the function returns the size of the metrics
+ * structure without populating it.
+ *
+ * Return: Size of the metrics structure on success, or a negative error code on failure.
+ */
+ssize_t amdgpu_dpm_get_temp_metrics(struct amdgpu_device *adev,
+				    enum smu_temp_metric_type type, void *table)
+{
+	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+	int ret;
+
+	if (!pp_funcs->get_temp_metrics ||
+	    !amdgpu_dpm_is_temp_metrics_supported(adev, type))
+		return -EOPNOTSUPP;
+
+	mutex_lock(&adev->pm.mutex);
+	ret = pp_funcs->get_temp_metrics(adev->powerplay.pp_handle, type, table);
+	mutex_unlock(&adev->pm.mutex);
+
+	return ret;
+}
+
+/**
+ * amdgpu_dpm_is_temp_metrics_supported - Return if specific temperature metrics support
+ * is available
+ * @adev: Pointer to the device.
+ * @type: Identifier for the temperature type metrics to be fetched.
+ *
+ * This function returns metrics if specific temperature metrics type is supported or not.
+ *
+ * Return: True in case of metrics type supported else false.
+ */
+bool amdgpu_dpm_is_temp_metrics_supported(struct amdgpu_device *adev,
+					  enum smu_temp_metric_type type)
+{
+	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+	bool support_temp_metrics = false;
+
+	if (!pp_funcs->temp_metrics_is_supported)
+		return support_temp_metrics;
+
+	if (is_support_sw_smu(adev)) {
+		mutex_lock(&adev->pm.mutex);
+		support_temp_metrics =
+			pp_funcs->temp_metrics_is_supported(adev->powerplay.pp_handle, type);
+		mutex_unlock(&adev->pm.mutex);
+	}
+
+	return support_temp_metrics;
+}
+
+/**
+ * amdgpu_dpm_get_xcp_metrics - Retrieve metrics for a specific compute
+ * partition
+ * @adev: Pointer to the device.
+ * @xcp_id: Identifier of the XCP for which metrics are to be retrieved.
+ * @table: Pointer to a buffer where the metrics will be stored. If NULL, the
+ * function returns the size of the metrics structure.
+ *
+ * This function retrieves metrics for a specific XCP, including details such as
+ * VCN/JPEG activity, clock frequencies, and other performance metrics. If the
+ * table parameter is NULL, the function returns the size of the metrics
+ * structure without populating it.
+ *
+ * Return: Size of the metrics structure on success, or a negative error code on failure.
+ */
+ssize_t amdgpu_dpm_get_xcp_metrics(struct amdgpu_device *adev, int xcp_id,
+				   void *table)
+{
+	const struct amd_pm_funcs *pp_funcs = adev->powerplay.pp_funcs;
+	int ret = 0;
+
+	if (!pp_funcs->get_xcp_metrics)
+		return 0;
+
+	mutex_lock(&adev->pm.mutex);
+	ret = pp_funcs->get_xcp_metrics(adev->powerplay.pp_handle, xcp_id,
+					table);
 	mutex_unlock(&adev->pm.mutex);
 
 	return ret;

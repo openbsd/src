@@ -26,14 +26,12 @@
  *
  */
 
+#include <linux/debugfs.h>
 #include <linux/sched/mm.h>
 #include <linux/sort.h>
 #include <linux/string_helpers.h>
 
-#include <linux/debugfs.h>
 #include <drm/drm_debugfs.h>
-
-#include "display/intel_display_params.h"
 
 #include "gem/i915_gem_context.h"
 #include "gt/intel_gt.h"
@@ -56,6 +54,7 @@
 #include "i915_irq.h"
 #include "i915_reg.h"
 #include "i915_scheduler.h"
+#include "i915_wait_util.h"
 #include "intel_mchbar_regs.h"
 
 static inline struct drm_i915_private *node_to_i915(struct drm_info_node *node)
@@ -66,20 +65,14 @@ static inline struct drm_i915_private *node_to_i915(struct drm_info_node *node)
 static int i915_capabilities(struct seq_file *m, void *data)
 {
 	struct drm_i915_private *i915 = node_to_i915(m->private);
-	struct intel_display *display = &i915->display;
 	struct drm_printer p = drm_seq_file_printer(m);
-
-	seq_printf(m, "pch: %d\n", INTEL_PCH_TYPE(i915));
 
 	intel_device_info_print(INTEL_INFO(i915), RUNTIME_INFO(i915), &p);
 	i915_print_iommu_status(i915, &p);
 	intel_gt_info_print(&to_gt(i915)->info, &p);
 	intel_driver_caps_print(&i915->caps, &p);
 
-	kernel_param_lock(THIS_MODULE);
 	i915_params_dump(&i915->params, &p);
-	intel_display_params_dump(display, &p);
-	kernel_param_unlock(THIS_MODULE);
 
 	return 0;
 }
@@ -417,9 +410,6 @@ static int i915_runtime_pm_status(struct seq_file *m, void *unused)
 	if (!HAS_RUNTIME_PM(dev_priv))
 		seq_puts(m, "Runtime power management not supported\n");
 
-	seq_printf(m, "Runtime power status: %s\n",
-		   str_enabled_disabled(!dev_priv->display.power.domains.init_wakeref));
-
 	seq_printf(m, "GPU idle: %s\n", str_yes_no(!to_gt(dev_priv)->awake));
 	seq_printf(m, "IRQs disabled: %s\n",
 		   str_yes_no(!intel_irqs_enabled(dev_priv)));
@@ -731,26 +721,24 @@ static const struct i915_debugfs_files {
 	{"i915_gem_drop_caches", &i915_drop_caches_fops},
 };
 
-void i915_debugfs_register(struct drm_i915_private *dev_priv)
+void i915_debugfs_register(struct drm_i915_private *i915)
 {
-	struct drm_minor *minor = dev_priv->drm.primary;
+	struct dentry *debugfs_root = i915->drm.debugfs_root;
 	int i;
 
-	i915_debugfs_params(dev_priv);
+	i915_debugfs_params(i915);
 
-	debugfs_create_file("i915_forcewake_user", S_IRUSR, minor->debugfs_root,
-			    to_i915(minor->dev), &i915_forcewake_fops);
+	debugfs_create_file("i915_forcewake_user", S_IRUSR, debugfs_root,
+			    i915, &i915_forcewake_fops);
 	for (i = 0; i < ARRAY_SIZE(i915_debugfs_files); i++) {
-		debugfs_create_file(i915_debugfs_files[i].name,
-				    S_IRUGO | S_IWUSR,
-				    minor->debugfs_root,
-				    to_i915(minor->dev),
+		debugfs_create_file(i915_debugfs_files[i].name, S_IRUGO | S_IWUSR,
+				    debugfs_root, i915,
 				    i915_debugfs_files[i].fops);
 	}
 
 	drm_debugfs_create_files(i915_debugfs_list,
 				 ARRAY_SIZE(i915_debugfs_list),
-				 minor->debugfs_root, minor);
+				 debugfs_root, i915->drm.primary);
 
-	i915_gpu_error_debugfs_register(dev_priv);
+	i915_gpu_error_debugfs_register(i915);
 }

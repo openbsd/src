@@ -4,6 +4,7 @@
 #define _LINUX_SYSFS_H
 
 #include <linux/kernfs.h>
+#include <linux/stat.h>
 
 struct attribute {
 	const char *name;
@@ -33,6 +34,7 @@ struct attribute_group {
 #define sysfs_create_files(x, y)	0
 #define sysfs_remove_files(x, y)
 #define sysfs_bin_attr_init(x)
+#define sysfs_update_group(x, y)	0
 
 static inline int
 sysfs_emit(char *str, const char *format, ...)

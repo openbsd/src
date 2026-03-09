@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.32 2025/10/22 02:14:31 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.33 2026/03/09 23:58:03 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -72,6 +72,8 @@
 		*__op = __p;						\
 	(__p == __o);							\
 })
+
+#define try_cmpxchg64(p, op, n)	try_cmpxchg(p, op, n)
 
 static inline bool
 atomic_try_cmpxchg(volatile int *p, int *op, int n)

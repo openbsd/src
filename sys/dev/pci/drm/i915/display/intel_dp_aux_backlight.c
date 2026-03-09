@@ -34,9 +34,11 @@
  * for some reason.
  */
 
+#include <drm/drm_print.h>
+
 #include <linux/kconfig.h>
-#include "i915_drv.h"
 #include "intel_backlight.h"
+#include "intel_display_core.h"
 #include "intel_display_types.h"
 #include "intel_dp.h"
 #include "intel_dp_aux_backlight.h"
@@ -144,10 +146,10 @@ intel_dp_aux_supports_hdr_backlight(struct intel_connector *connector)
 	 * ranges for such panels.
 	 */
 	if (display->params.enable_dpcd_backlight != INTEL_DP_AUX_BACKLIGHT_FORCE_INTEL &&
-	    !(connector->base.hdr_sink_metadata.hdmi_type1.metadata_type &
+	    !(connector->base.display_info.hdr_sink_metadata.hdmi_type1.metadata_type &
 	      BIT(HDMI_STATIC_METADATA_TYPE1))) {
 		drm_info(display->drm,
-			 "[CONNECTOR:%d:%s] Panel is missing HDR static metadata. Possible support for Intel HDR backlight interface is not used. If your backlight controls don't work try booting with i915.enable_dpcd_backlight=%d. needs this, please file a _new_ bug report on drm/i915, see " FDO_BUG_URL " for details.\n",
+			 "[CONNECTOR:%d:%s] Panel is missing HDR static metadata. Possible support for Intel HDR backlight interface is not used. If your backlight controls don't work try booting with i915.enable_dpcd_backlight=%d.\n",
 			 connector->base.base.id, connector->base.name,
 			 INTEL_DP_AUX_BACKLIGHT_FORCE_INTEL);
 		return false;
@@ -222,19 +224,6 @@ intel_dp_aux_hdr_set_aux_backlight(const struct drm_connector_state *conn_state,
 			      sizeof(buf)) != sizeof(buf))
 		drm_err(dev, "[CONNECTOR:%d:%s] Failed to write brightness level to DPCD\n",
 			connector->base.base.id, connector->base.name);
-}
-
-static bool
-intel_dp_in_hdr_mode(const struct drm_connector_state *conn_state)
-{
-	struct hdr_output_metadata *hdr_metadata;
-
-	if (!conn_state->hdr_output_metadata)
-		return false;
-
-	hdr_metadata = conn_state->hdr_output_metadata->data;
-
-	return hdr_metadata->hdmi_metadata_type1.eotf == HDMI_EOTF_SMPTE_ST2084;
 }
 
 static void
@@ -451,6 +440,26 @@ intel_dp_aux_hdr_setup_backlight(struct intel_connector *connector, enum pipe pi
 /* VESA backlight callbacks */
 static u32 intel_dp_aux_vesa_get_backlight(struct intel_connector *connector, enum pipe unused)
 {
+	struct intel_dp *intel_dp = enc_to_intel_dp(connector->encoder);
+	struct intel_panel *panel = &connector->panel;
+	u8 buf[3];
+	u32 val = 0;
+	int ret;
+
+	if (panel->backlight.edp.vesa.luminance_control_support) {
+		ret = drm_dp_dpcd_read(&intel_dp->aux, DP_EDP_PANEL_TARGET_LUMINANCE_VALUE, buf,
+				       sizeof(buf));
+		if (ret < 0) {
+			drm_err(intel_dp->aux.drm_dev,
+				"[CONNECTOR:%d:%s] Failed to read Luminance from DPCD\n",
+				connector->base.base.id, connector->base.name);
+			return 0;
+		}
+
+		val |= buf[0] | buf[1] << 8 | buf[2] << 16;
+		return val / 1000;
+	}
+
 	return connector->panel.backlight.level;
 }
 
@@ -510,15 +519,19 @@ static void intel_dp_aux_vesa_disable_backlight(const struct drm_connector_state
 static int intel_dp_aux_vesa_setup_backlight(struct intel_connector *connector, enum pipe pipe)
 {
 	struct intel_display *display = to_intel_display(connector);
+	struct drm_luminance_range_info *luminance_range =
+		&connector->base.display_info.luminance_range;
 	struct intel_dp *intel_dp = intel_attached_dp(connector);
 	struct intel_panel *panel = &connector->panel;
-	u16 current_level;
+	u32 current_level;
 	u8 current_mode;
 	int ret;
 
 	ret = drm_edp_backlight_init(&intel_dp->aux, &panel->backlight.edp.vesa.info,
-				     panel->vbt.backlight.pwm_freq_hz, intel_dp->edp_dpcd,
-				     &current_level, &current_mode);
+				     luminance_range->max_luminance,
+				     panel->vbt.backlight.pwm_freq_hz,
+				     intel_dp->edp_dpcd, &current_level, &current_mode,
+				     panel->backlight.edp.vesa.luminance_control_support);
 	if (ret < 0)
 		return ret;
 
@@ -531,7 +544,8 @@ static int intel_dp_aux_vesa_setup_backlight(struct intel_connector *connector, 
 		    connector->base.base.id, connector->base.name,
 		    dpcd_vs_pwm_str(panel->backlight.edp.vesa.info.aux_set));
 
-	if (!panel->backlight.edp.vesa.info.aux_set || !panel->backlight.edp.vesa.info.aux_enable) {
+	if (!panel->backlight.edp.vesa.info.aux_set ||
+	    !panel->backlight.edp.vesa.info.aux_enable) {
 		ret = panel->backlight.pwm_funcs->setup(connector, pipe);
 		if (ret < 0) {
 			drm_err(display->drm,
@@ -541,7 +555,20 @@ static int intel_dp_aux_vesa_setup_backlight(struct intel_connector *connector, 
 		}
 	}
 
-	if (panel->backlight.edp.vesa.info.aux_set) {
+	if (panel->backlight.edp.vesa.info.luminance_set) {
+		if (luminance_range->max_luminance) {
+			panel->backlight.max = panel->backlight.edp.vesa.info.max;
+			panel->backlight.min = luminance_range->min_luminance;
+		} else {
+			panel->backlight.max = 512;
+			panel->backlight.min = 0;
+		}
+		panel->backlight.level = intel_dp_aux_vesa_get_backlight(connector, 0);
+		panel->backlight.enabled = panel->backlight.level != 0;
+		drm_dbg_kms(display->drm,
+			    "[CONNECTOR:%d:%s] AUX VESA Nits backlight level is controlled through DPCD\n",
+			    connector->base.base.id, connector->base.name);
+	} else if (panel->backlight.edp.vesa.info.aux_set) {
 		panel->backlight.max = panel->backlight.edp.vesa.info.max;
 		panel->backlight.min = 0;
 		if (current_mode == DP_EDP_BACKLIGHT_CONTROL_MODE_DPCD) {
@@ -555,7 +582,8 @@ static int intel_dp_aux_vesa_setup_backlight(struct intel_connector *connector, 
 		panel->backlight.max = panel->backlight.pwm_level_max;
 		panel->backlight.min = panel->backlight.pwm_level_min;
 		if (current_mode == DP_EDP_BACKLIGHT_CONTROL_MODE_PWM) {
-			panel->backlight.level = panel->backlight.pwm_funcs->get(connector, pipe);
+			panel->backlight.level =
+				panel->backlight.pwm_funcs->get(connector, pipe);
 			panel->backlight.enabled = panel->backlight.pwm_enabled;
 		} else {
 			panel->backlight.level = panel->backlight.max;
@@ -575,6 +603,16 @@ intel_dp_aux_supports_vesa_backlight(struct intel_connector *connector)
 {
 	struct intel_display *display = to_intel_display(connector);
 	struct intel_dp *intel_dp = intel_attached_dp(connector);
+	struct intel_panel *panel = &connector->panel;
+
+	if ((intel_dp->edp_dpcd[3] & DP_EDP_PANEL_LUMINANCE_CONTROL_CAPABLE) &&
+	    (intel_dp->edp_dpcd[3] & DP_EDP_SMOOTH_BRIGHTNESS_CAPABLE)) {
+		drm_dbg_kms(display->drm,
+			    "[CONNECTOR:%d:%s] AUX Luminance Based Backlight Control Supported!\n",
+			    connector->base.base.id, connector->base.name);
+		panel->backlight.edp.vesa.luminance_control_support = true;
+		return true;
+	}
 
 	if (drm_edp_backlight_supported(intel_dp->edp_dpcd)) {
 		drm_dbg_kms(display->drm,
@@ -604,6 +642,7 @@ static const struct intel_panel_bl_funcs intel_dp_vesa_bl_funcs = {
 int intel_dp_aux_init_backlight_funcs(struct intel_connector *connector)
 {
 	struct intel_display *display = to_intel_display(connector);
+	struct intel_dp *intel_dp = intel_attached_dp(connector);
 	struct drm_device *dev = connector->base.dev;
 	struct intel_panel *panel = &connector->panel;
 	bool try_intel_interface = false, try_vesa_interface = false;
@@ -640,6 +679,10 @@ int intel_dp_aux_init_backlight_funcs(struct intel_connector *connector)
 		break;
 	}
 
+	/* For eDP 1.5 and above we are supposed to use VESA interface for brightness control */
+	if (intel_dp->edp_dpcd[0] >= DP_EDP_15)
+		try_vesa_interface = true;
+
 	/*
 	 * Since Intel has their own backlight control interface, the majority of machines out there
 	 * using DPCD backlight controls with Intel GPUs will be using this interface as opposed to
@@ -653,7 +696,8 @@ int intel_dp_aux_init_backlight_funcs(struct intel_connector *connector)
 	 * backlight interface at all. This means that the only sensible way for us to detect both
 	 * interfaces is to probe for Intel's first, and VESA's second.
 	 */
-	if (try_intel_interface && intel_dp_aux_supports_hdr_backlight(connector)) {
+	if (try_intel_interface && intel_dp_aux_supports_hdr_backlight(connector) &&
+	    intel_dp->edp_dpcd[0] <= DP_EDP_14b) {
 		drm_dbg_kms(dev, "[CONNECTOR:%d:%s] Using Intel proprietary eDP backlight controls\n",
 			    connector->base.base.id, connector->base.name);
 		panel->backlight.funcs = &intel_dp_hdr_bl_funcs;

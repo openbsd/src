@@ -85,7 +85,7 @@
 #include "vm_helper.h"
 
 #include "link_enc_cfg.h"
-#include "link.h"
+#include "link_service.h"
 
 #define DC_LOGGER_INIT(logger)
 
@@ -706,7 +706,6 @@ static const struct resource_caps res_cap_nv14 = {
 static const struct dc_debug_options debug_defaults_drv = {
 		.disable_dmcu = false,
 		.force_abm_enable = false,
-		.timing_trace = false,
 		.clock_trace = true,
 		.disable_pplib_clock_request = true,
 		.pipe_split_policy = MPC_SPLIT_AVOID_MULT_DISP,
@@ -920,7 +919,7 @@ struct link_encoder *dcn20_link_encoder_create(
 		kzalloc(sizeof(struct dcn20_link_encoder), GFP_KERNEL);
 	int link_regs_id;
 
-	if (!enc20)
+	if (!enc20 || enc_init_data->hpd_source >= ARRAY_SIZE(link_enc_hpd_regs))
 		return NULL;
 
 	link_regs_id =
@@ -1221,7 +1220,7 @@ static void get_pixel_clock_parameters(
 	struct pipe_ctx *odm_pipe;
 	int opp_cnt = 1;
 	struct dc_link *link = stream->link;
-	struct link_encoder *link_enc = NULL;
+	struct link_encoder *link_enc = pipe_ctx->link_res.dio_link_enc;
 	struct dc *dc = pipe_ctx->stream->ctx->dc;
 	struct dce_hwseq *hws = dc->hwseq;
 
@@ -1230,7 +1229,8 @@ static void get_pixel_clock_parameters(
 
 	pixel_clk_params->requested_pix_clk_100hz = stream->timing.pix_clk_100hz;
 
-	link_enc = link_enc_cfg_get_link_enc(link);
+	if (!dc->config.unify_link_enc_assignment)
+		link_enc = link_enc_cfg_get_link_enc(link);
 	if (link_enc)
 		pixel_clk_params->encoder_object_id = link_enc->id;
 
@@ -1510,60 +1510,9 @@ bool dcn20_split_stream_for_odm(
 	next_odm_pipe->prev_odm_pipe = prev_odm_pipe;
 
 	if (prev_odm_pipe->plane_state) {
-		struct scaler_data *sd = &prev_odm_pipe->plane_res.scl_data;
-		struct output_pixel_processor *opp = next_odm_pipe->stream_res.opp;
-		int new_width;
-
-		/* HACTIVE halved for odm combine */
-		sd->h_active /= 2;
-		/* Calculate new vp and recout for left pipe */
-		/* Need at least 16 pixels width per side */
-		if (sd->recout.x + 16 >= sd->h_active)
-			return false;
-		new_width = sd->h_active - sd->recout.x;
-		sd->viewport.width -= dc_fixpt_floor(dc_fixpt_mul_int(
-				sd->ratios.horz, sd->recout.width - new_width));
-		sd->viewport_c.width -= dc_fixpt_floor(dc_fixpt_mul_int(
-				sd->ratios.horz_c, sd->recout.width - new_width));
-		sd->recout.width = new_width;
-
-		/* Calculate new vp and recout for right pipe */
-		sd = &next_odm_pipe->plane_res.scl_data;
-		/* HACTIVE halved for odm combine */
-		sd->h_active /= 2;
-		/* Need at least 16 pixels width per side */
-		if (new_width <= 16)
-			return false;
-		new_width = sd->recout.width + sd->recout.x - sd->h_active;
-		sd->viewport.width -= dc_fixpt_floor(dc_fixpt_mul_int(
-				sd->ratios.horz, sd->recout.width - new_width));
-		sd->viewport_c.width -= dc_fixpt_floor(dc_fixpt_mul_int(
-				sd->ratios.horz_c, sd->recout.width - new_width));
-		sd->recout.width = new_width;
-		sd->viewport.x += dc_fixpt_floor(dc_fixpt_mul_int(
-				sd->ratios.horz, sd->h_active - sd->recout.x));
-		sd->viewport_c.x += dc_fixpt_floor(dc_fixpt_mul_int(
-				sd->ratios.horz_c, sd->h_active - sd->recout.x));
-		sd->recout.x = 0;
-
-		/*
-		 * When odm is used in YcbCr422 or 420 colour space, a split screen
-		 * will be seen with the previous calculations since the extra left
-		 *  edge pixel is accounted for in fmt but not in viewport.
-		 *
-		 * Below are calculations which fix the split by fixing the calculations
-		 * if there is an extra left edge pixel.
-		 */
-		if (opp && opp->funcs->opp_get_left_edge_extra_pixel_count
-				&& opp->funcs->opp_get_left_edge_extra_pixel_count(
-					opp, next_odm_pipe->stream->timing.pixel_encoding,
-					resource_is_pipe_type(next_odm_pipe, OTG_MASTER)) == 1) {
-			sd->h_active += 1;
-			sd->recout.width += 1;
-			sd->viewport.x -= dc_fixpt_ceil(dc_fixpt_mul_int(sd->ratios.horz, 1));
-			sd->viewport_c.x -= dc_fixpt_ceil(dc_fixpt_mul_int(sd->ratios.horz, 1));
-			sd->viewport_c.width += dc_fixpt_ceil(dc_fixpt_mul_int(sd->ratios.horz, 1));
-			sd->viewport.width += dc_fixpt_ceil(dc_fixpt_mul_int(sd->ratios.horz, 1));
+		if (!resource_build_scaling_params(prev_odm_pipe) ||
+			!resource_build_scaling_params(next_odm_pipe)) {
+				return false;
 		}
 	}
 
@@ -2058,7 +2007,7 @@ bool dcn20_fast_validate_bw(
 		int *pipe_cnt_out,
 		int *pipe_split_from,
 		int *vlevel_out,
-		bool fast_validate)
+		enum dc_validate_mode validate_mode)
 {
 	bool out = false;
 	int split[MAX_PIPES] = { 0 };
@@ -2072,7 +2021,7 @@ bool dcn20_fast_validate_bw(
 	dcn20_merge_pipes_for_validate(dc, context);
 
 	DC_FP_START();
-	pipe_cnt = dc->res_pool->funcs->populate_dml_pipes(dc, context, pipes, fast_validate);
+	pipe_cnt = dc->res_pool->funcs->populate_dml_pipes(dc, context, pipes, validate_mode);
 	DC_FP_END();
 
 	*pipe_cnt_out = pipe_cnt;
@@ -2175,22 +2124,22 @@ validate_out:
 	return out;
 }
 
-bool dcn20_validate_bandwidth(struct dc *dc, struct dc_state *context,
-		bool fast_validate)
+enum dc_status dcn20_validate_bandwidth(struct dc *dc, struct dc_state *context,
+		enum dc_validate_mode validate_mode)
 {
 	bool voltage_supported;
 	display_e2e_pipe_params_st *pipes;
 
 	pipes = kcalloc(dc->res_pool->pipe_count, sizeof(display_e2e_pipe_params_st), GFP_KERNEL);
 	if (!pipes)
-		return false;
+		return DC_FAIL_BANDWIDTH_VALIDATE;
 
 	DC_FP_START();
-	voltage_supported = dcn20_validate_bandwidth_fp(dc, context, fast_validate, pipes);
+	voltage_supported = dcn20_validate_bandwidth_fp(dc, context, validate_mode, pipes);
 	DC_FP_END();
 
 	kfree(pipes);
-	return voltage_supported;
+	return voltage_supported ? DC_OK : DC_FAIL_BANDWIDTH_VALIDATE;
 }
 
 struct pipe_ctx *dcn20_acquire_free_pipe_for_layer(
@@ -2281,7 +2230,8 @@ static const struct resource_funcs dcn20_res_pool_funcs = {
 	.patch_unknown_plane_state = dcn20_patch_unknown_plane_state,
 	.set_mcif_arb_params = dcn20_set_mcif_arb_params,
 	.populate_dml_pipes = dcn20_populate_dml_pipes_from_context,
-	.find_first_free_match_stream_enc_for_link = dcn10_find_first_free_match_stream_enc_for_link
+	.find_first_free_match_stream_enc_for_link = dcn10_find_first_free_match_stream_enc_for_link,
+	.get_vstartup_for_pipe = dcn10_get_vstartup_for_pipe
 };
 
 bool dcn20_dwbc_create(struct dc_context *ctx, struct resource_pool *pool)
@@ -2785,6 +2735,8 @@ static bool dcn20_resource_construct(
 
 	for (i = 0; i < dc->caps.max_planes; ++i)
 		dc->caps.planes[i] = plane_cap;
+
+	dc->caps.max_odm_combine_factor = 2;
 
 	dc->cap_funcs = cap_funcs;
 

@@ -34,9 +34,6 @@
 #include "sdma0/sdma0_4_0_offset.h"
 #include "nbio/nbio_7_4_offset.h"
 
-#include "oss/osssys_4_0_offset.h"
-#include "oss/osssys_4_0_sh_mask.h"
-
 MODULE_FIRMWARE("amdgpu/renoir_asd.bin");
 MODULE_FIRMWARE("amdgpu/renoir_ta.bin");
 MODULE_FIRMWARE("amdgpu/green_sardine_asd.bin");
@@ -85,7 +82,7 @@ static int psp_v12_0_bootloader_load_sysdrv(struct psp_context *psp)
 
 	/* Wait for bootloader to signify that is ready having bit 31 of C2PMSG_35 set to 1 */
 	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_35),
-			   0x80000000, 0x80000000, false);
+			   0x80000000, 0x80000000, 0);
 	if (ret)
 		return ret;
 
@@ -99,11 +96,8 @@ static int psp_v12_0_bootloader_load_sysdrv(struct psp_context *psp)
 	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35,
 	       psp_gfxdrv_command_reg);
 
-	/* there might be handshake issue with hardware which needs delay */
-	mdelay(20);
-
 	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_35),
-			   0x80000000, 0x80000000, false);
+			   0x80000000, 0x80000000, 0);
 
 	return ret;
 }
@@ -124,7 +118,7 @@ static int psp_v12_0_bootloader_load_sos(struct psp_context *psp)
 
 	/* Wait for bootloader to signify that is ready having bit 31 of C2PMSG_35 set to 1 */
 	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_35),
-			   0x80000000, 0x80000000, false);
+			   0x80000000, 0x80000000, 0);
 	if (ret)
 		return ret;
 
@@ -138,44 +132,11 @@ static int psp_v12_0_bootloader_load_sos(struct psp_context *psp)
 	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_35,
 	       psp_gfxdrv_command_reg);
 
-	/* there might be handshake issue with hardware which needs delay */
-	mdelay(20);
 	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_81),
-			   RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_81),
-			   0, true);
+			   RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_81), 0,
+			   PSP_WAITREG_CHANGED);
 
 	return ret;
-}
-
-static void psp_v12_0_reroute_ih(struct psp_context *psp)
-{
-	struct amdgpu_device *adev = psp->adev;
-	uint32_t tmp;
-
-	/* Change IH ring for VMC */
-	tmp = REG_SET_FIELD(0, IH_CLIENT_CFG_DATA, CREDIT_RETURN_ADDR, 0x1244b);
-	tmp = REG_SET_FIELD(tmp, IH_CLIENT_CFG_DATA, CLIENT_TYPE, 1);
-	tmp = REG_SET_FIELD(tmp, IH_CLIENT_CFG_DATA, RING_ID, 1);
-
-	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_69, 3);
-	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_70, tmp);
-	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_64, GFX_CTRL_CMD_ID_GBR_IH_SET);
-
-	mdelay(20);
-	psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
-		     0x80000000, 0x8000FFFF, false);
-
-	/* Change IH ring for UMC */
-	tmp = REG_SET_FIELD(0, IH_CLIENT_CFG_DATA, CREDIT_RETURN_ADDR, 0x1216b);
-	tmp = REG_SET_FIELD(tmp, IH_CLIENT_CFG_DATA, RING_ID, 1);
-
-	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_69, 4);
-	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_70, tmp);
-	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_64, GFX_CTRL_CMD_ID_GBR_IH_SET);
-
-	mdelay(20);
-	psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
-		     0x80000000, 0x8000FFFF, false);
 }
 
 static int psp_v12_0_ring_create(struct psp_context *psp,
@@ -186,49 +147,23 @@ static int psp_v12_0_ring_create(struct psp_context *psp,
 	struct psp_ring *ring = &psp->km_ring;
 	struct amdgpu_device *adev = psp->adev;
 
-	psp_v12_0_reroute_ih(psp);
+	/* Write low address of the ring to C2PMSG_69 */
+	psp_ring_reg = lower_32_bits(ring->ring_mem_mc_addr);
+	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_69, psp_ring_reg);
+	/* Write high address of the ring to C2PMSG_70 */
+	psp_ring_reg = upper_32_bits(ring->ring_mem_mc_addr);
+	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_70, psp_ring_reg);
+	/* Write size of ring to C2PMSG_71 */
+	psp_ring_reg = ring->ring_size;
+	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_71, psp_ring_reg);
+	/* Write the ring initialization command to C2PMSG_64 */
+	psp_ring_reg = ring_type;
+	psp_ring_reg = psp_ring_reg << 16;
+	WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_64, psp_ring_reg);
 
-	if (amdgpu_sriov_vf(psp->adev)) {
-		/* Write low address of the ring to C2PMSG_102 */
-		psp_ring_reg = lower_32_bits(ring->ring_mem_mc_addr);
-		WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_102, psp_ring_reg);
-		/* Write high address of the ring to C2PMSG_103 */
-		psp_ring_reg = upper_32_bits(ring->ring_mem_mc_addr);
-		WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_103, psp_ring_reg);
-
-		/* Write the ring initialization command to C2PMSG_101 */
-		WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_101,
-					     GFX_CTRL_CMD_ID_INIT_GPCOM_RING);
-
-		/* there might be handshake issue with hardware which needs delay */
-		mdelay(20);
-
-		/* Wait for response flag (bit 31) in C2PMSG_101 */
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_101),
-				   0x80000000, 0x8000FFFF, false);
-
-	} else {
-		/* Write low address of the ring to C2PMSG_69 */
-		psp_ring_reg = lower_32_bits(ring->ring_mem_mc_addr);
-		WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_69, psp_ring_reg);
-		/* Write high address of the ring to C2PMSG_70 */
-		psp_ring_reg = upper_32_bits(ring->ring_mem_mc_addr);
-		WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_70, psp_ring_reg);
-		/* Write size of ring to C2PMSG_71 */
-		psp_ring_reg = ring->ring_size;
-		WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_71, psp_ring_reg);
-		/* Write the ring initialization command to C2PMSG_64 */
-		psp_ring_reg = ring_type;
-		psp_ring_reg = psp_ring_reg << 16;
-		WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_64, psp_ring_reg);
-
-		/* there might be handshake issue with hardware which needs delay */
-		mdelay(20);
-
-		/* Wait for response flag (bit 31) in C2PMSG_64 */
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
-				   0x80000000, 0x8000FFFF, false);
-	}
+	/* Wait for response flag (bit 31) in C2PMSG_64 */
+	ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
+			   MBOX_TOS_RESP_FLAG, MBOX_TOS_RESP_MASK, 0);
 
 	return ret;
 }
@@ -247,16 +182,15 @@ static int psp_v12_0_ring_stop(struct psp_context *psp,
 		WREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_64,
 				     GFX_CTRL_CMD_ID_DESTROY_RINGS);
 
-	/* there might be handshake issue with hardware which needs delay */
-	mdelay(20);
-
 	/* Wait for response flag (bit 31) */
 	if (amdgpu_sriov_vf(adev))
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_101),
-				   0x80000000, 0x80000000, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_101),
+			MBOX_TOS_RESP_FLAG, MBOX_TOS_RESP_MASK, 0);
 	else
-		ret = psp_wait_for(psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
-				   0x80000000, 0x80000000, false);
+		ret = psp_wait_for(
+			psp, SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64),
+			MBOX_TOS_RESP_FLAG, MBOX_TOS_RESP_MASK, 0);
 
 	return ret;
 }
@@ -287,7 +221,8 @@ static int psp_v12_0_mode1_reset(struct psp_context *psp)
 
 	offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_64);
 
-	ret = psp_wait_for(psp, offset, 0x80000000, 0x8000FFFF, false);
+	ret = psp_wait_for(psp, offset, MBOX_TOS_READY_FLAG,
+			   MBOX_TOS_READY_MASK, 0);
 
 	if (ret) {
 		DRM_INFO("psp is not working correctly before mode1 reset!\n");
@@ -301,7 +236,8 @@ static int psp_v12_0_mode1_reset(struct psp_context *psp)
 
 	offset = SOC15_REG_OFFSET(MP0, 0, mmMP0_SMN_C2PMSG_33);
 
-	ret = psp_wait_for(psp, offset, 0x80000000, 0x80000000, false);
+	ret = psp_wait_for(psp, offset, MBOX_TOS_RESP_FLAG, MBOX_TOS_RESP_MASK,
+			   0);
 
 	if (ret) {
 		DRM_INFO("psp mode 1 reset failed!\n");

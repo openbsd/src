@@ -21,7 +21,6 @@
  *
  */
 #include "amdgpu.h"
-#include "amdgpu_atombios.h"
 #include "nbio_v7_4.h"
 #include "amdgpu_ras.h"
 
@@ -152,9 +151,9 @@ static void nbio_v7_4_sdma_doorbell_range(struct amdgpu_device *adev, int instan
 		 *   BIF_SDMA0_DOORBELL_RANGE:  0x3bc0
 		 *   BIF_SDMA1_DOORBELL_RANGE:  0x3bc4
 		 *   BIF_SDMA2_DOORBELL_RANGE:  0x3bd8
-+		 *   BIF_SDMA4_DOORBELL_RANGE:
-+		 *     ARCTURUS:  0x3be0
-+		 *     ALDEBARAN: 0x3be4
+		 *   BIF_SDMA4_DOORBELL_RANGE:
+		 *     ARCTURUS:  0x3be0
+		 *     ALDEBARAN: 0x3be4
 		 */
 		if (adev->asic_type == CHIP_ALDEBARAN && instance == 4)
 			reg = instance + 0x4 + 0x1 +
@@ -414,8 +413,7 @@ static void nbio_v7_4_handle_ras_controller_intr_no_bifring(struct amdgpu_device
 		/* ras_controller_int is dedicated for nbif ras error,
 		 * not the global interrupt for sync flood
 		 */
-		amdgpu_ras_set_fed(adev, true);
-		amdgpu_ras_reset_gpu(adev);
+		amdgpu_ras_global_ras_isr(adev);
 	}
 
 	amdgpu_ras_error_data_fini(&err_data);

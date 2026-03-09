@@ -263,10 +263,6 @@ struct amdgpu_dpm {
 	u32                     voltage_response_time;
 	u32                     backbias_response_time;
 	void                    *priv;
-	u32			new_active_crtcs;
-	int			new_active_crtc_count;
-	u32			current_active_crtcs;
-	int			current_active_crtc_count;
 	struct amdgpu_dpm_dynamic_state dyn_state;
 	struct amdgpu_dpm_fan fan;
 	u32 tdp_limit;
@@ -295,7 +291,8 @@ enum ip_power_state {
 };
 
 /* Used to mask smu debug modes */
-#define SMU_DEBUG_HALT_ON_ERROR		0x1
+#define SMU_DEBUG_HALT_ON_ERROR		BIT(0)
+#define SMU_DEBUG_POOL_USE_VRAM		BIT(1)
 
 #define MAX_SMU_I2C_BUSES       2
 
@@ -328,6 +325,10 @@ struct config_table_setting
 #define OD_OPS_SUPPORT_FAN_TARGET_TEMPERATURE_SET		BIT(7)
 #define OD_OPS_SUPPORT_FAN_MINIMUM_PWM_RETRIEVE		BIT(8)
 #define OD_OPS_SUPPORT_FAN_MINIMUM_PWM_SET		BIT(9)
+#define OD_OPS_SUPPORT_FAN_ZERO_RPM_ENABLE_RETRIEVE	BIT(10)
+#define OD_OPS_SUPPORT_FAN_ZERO_RPM_ENABLE_SET		BIT(11)
+#define OD_OPS_SUPPORT_FAN_ZERO_RPM_STOP_TEMP_RETRIEVE	BIT(12)
+#define OD_OPS_SUPPORT_FAN_ZERO_RPM_STOP_TEMP_SET	BIT(13)
 
 struct amdgpu_pm {
 	struct rwlock		mutex;
@@ -393,7 +394,7 @@ int amdgpu_dpm_get_apu_thermal_limit(struct amdgpu_device *adev, uint32_t *limit
 int amdgpu_dpm_set_apu_thermal_limit(struct amdgpu_device *adev, uint32_t limit);
 
 int amdgpu_dpm_set_powergating_by_smu(struct amdgpu_device *adev,
-				      uint32_t block_type, bool gate);
+				      uint32_t block_type, bool gate, int inst);
 
 extern int amdgpu_dpm_get_sclk(struct amdgpu_device *adev, bool low);
 
@@ -405,21 +406,23 @@ int amdgpu_dpm_set_xgmi_pstate(struct amdgpu_device *adev,
 int amdgpu_dpm_switch_power_profile(struct amdgpu_device *adev,
 				    enum PP_SMC_POWER_PROFILE type,
 				    bool en);
+int amdgpu_dpm_pause_power_profile(struct amdgpu_device *adev,
+				   bool pause);
 
 int amdgpu_dpm_baco_reset(struct amdgpu_device *adev);
 
 int amdgpu_dpm_mode2_reset(struct amdgpu_device *adev);
+int amdgpu_dpm_link_reset(struct amdgpu_device *adev);
 int amdgpu_dpm_enable_gfx_features(struct amdgpu_device *adev);
 
 int amdgpu_dpm_is_baco_supported(struct amdgpu_device *adev);
 
 bool amdgpu_dpm_is_mode1_reset_supported(struct amdgpu_device *adev);
+bool amdgpu_dpm_is_link_reset_supported(struct amdgpu_device *adev);
 int amdgpu_dpm_mode1_reset(struct amdgpu_device *adev);
 
 int amdgpu_dpm_set_mp1_state(struct amdgpu_device *adev,
 			     enum pp_mp1_state mp1_state);
-
-int amdgpu_dpm_notify_rlc_state(struct amdgpu_device *adev, bool en);
 
 int amdgpu_dpm_set_gfx_power_up_by_imu(struct amdgpu_device *adev);
 
@@ -442,6 +445,7 @@ void amdgpu_pm_acpi_event_handler(struct amdgpu_device *adev);
 
 void amdgpu_dpm_compute_clocks(struct amdgpu_device *adev);
 void amdgpu_dpm_enable_uvd(struct amdgpu_device *adev, bool enable);
+void amdgpu_dpm_enable_vcn(struct amdgpu_device *adev, bool enable, int inst);
 void amdgpu_dpm_enable_vce(struct amdgpu_device *adev, bool enable);
 void amdgpu_dpm_enable_jpeg(struct amdgpu_device *adev, bool enable);
 void amdgpu_dpm_enable_vpe(struct amdgpu_device *adev, bool enable);
@@ -514,6 +518,10 @@ int amdgpu_dpm_get_power_profile_mode(struct amdgpu_device *adev,
 int amdgpu_dpm_set_power_profile_mode(struct amdgpu_device *adev,
 				      long *input, uint32_t size);
 int amdgpu_dpm_get_gpu_metrics(struct amdgpu_device *adev, void **table);
+ssize_t amdgpu_dpm_get_xcp_metrics(struct amdgpu_device *adev, int xcp_id,
+				   void *table);
+ssize_t amdgpu_dpm_get_temp_metrics(struct amdgpu_device *adev,
+				    enum smu_temp_metric_type type, void *table);
 
 /**
  * @get_pm_metrics: Get one snapshot of power management metrics from PMFW. The
@@ -551,6 +559,7 @@ int amdgpu_dpm_get_smu_prv_buf_details(struct amdgpu_device *adev,
 				       void **addr,
 				       size_t *size);
 int amdgpu_dpm_is_overdrive_supported(struct amdgpu_device *adev);
+int amdgpu_dpm_is_overdrive_enabled(struct amdgpu_device *adev);
 int amdgpu_dpm_set_pp_table(struct amdgpu_device *adev,
 			    const char *buf,
 			    size_t size);
@@ -597,5 +606,11 @@ int amdgpu_dpm_set_pm_policy(struct amdgpu_device *adev, int policy_type,
 			     int policy_level);
 ssize_t amdgpu_dpm_get_pm_policy_info(struct amdgpu_device *adev,
 				      enum pp_pm_policy p_type, char *buf);
+int amdgpu_dpm_reset_sdma(struct amdgpu_device *adev, uint32_t inst_mask);
+bool amdgpu_dpm_reset_sdma_is_supported(struct amdgpu_device *adev);
+int amdgpu_dpm_reset_vcn(struct amdgpu_device *adev, uint32_t inst_mask);
+bool amdgpu_dpm_reset_vcn_is_supported(struct amdgpu_device *adev);
+bool amdgpu_dpm_is_temp_metrics_supported(struct amdgpu_device *adev,
+					  enum smu_temp_metric_type type);
 
 #endif

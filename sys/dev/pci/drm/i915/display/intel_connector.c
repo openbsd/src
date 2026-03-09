@@ -28,16 +28,56 @@
 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_edid.h>
+#include <drm/drm_probe_helper.h>
 
 #include "i915_drv.h"
-#include "intel_backlight.h"
+#include "i915_utils.h"
 #include "intel_connector.h"
+#include "intel_display_core.h"
 #include "intel_display_debugfs.h"
 #include "intel_display_types.h"
 #include "intel_hdcp.h"
 #include "intel_panel.h"
 
-int intel_connector_init(struct intel_connector *connector)
+static void intel_connector_modeset_retry_work_fn(struct work_struct *work)
+{
+	struct intel_connector *connector = container_of(work, typeof(*connector),
+							 modeset_retry_work);
+	struct intel_display *display = to_intel_display(connector);
+
+	drm_dbg_kms(display->drm, "[CONNECTOR:%d:%s]\n", connector->base.base.id,
+		    connector->base.name);
+
+	/* Grab the locks before changing connector property*/
+	mutex_lock(&display->drm->mode_config.mutex);
+	/* Set connector link status to BAD and send a Uevent to notify
+	 * userspace to do a modeset.
+	 */
+	drm_connector_set_link_status_property(&connector->base,
+					       DRM_MODE_LINK_STATUS_BAD);
+	mutex_unlock(&display->drm->mode_config.mutex);
+	/* Send Hotplug uevent so userspace can reprobe */
+	drm_kms_helper_connector_hotplug_event(&connector->base);
+
+	drm_connector_put(&connector->base);
+}
+
+void intel_connector_queue_modeset_retry_work(struct intel_connector *connector)
+{
+	struct intel_display *display = to_intel_display(connector);
+
+	drm_connector_get(&connector->base);
+	if (!queue_work(display->wq.unordered, &connector->modeset_retry_work))
+		drm_connector_put(&connector->base);
+}
+
+void intel_connector_cancel_modeset_retry_work(struct intel_connector *connector)
+{
+	if (cancel_work_sync(&connector->modeset_retry_work))
+		drm_connector_put(&connector->base);
+}
+
+static int intel_connector_init(struct intel_connector *connector)
 {
 	struct intel_digital_connector_state *conn_state;
 
@@ -55,6 +95,9 @@ int intel_connector_init(struct intel_connector *connector)
 					    &conn_state->base);
 
 	intel_panel_init_alloc(connector);
+
+	INIT_WORK(&connector->modeset_retry_work,
+		  intel_connector_modeset_retry_work_fn);
 
 	return 0;
 }
@@ -103,41 +146,42 @@ void intel_connector_destroy(struct drm_connector *connector)
 
 	drm_connector_cleanup(connector);
 
-	if (intel_connector->port)
-		drm_dp_mst_put_port_malloc(intel_connector->port);
+	if (intel_connector->mst.port)
+		drm_dp_mst_put_port_malloc(intel_connector->mst.port);
 
 	kfree(connector);
 }
 
-int intel_connector_register(struct drm_connector *connector)
+int intel_connector_register(struct drm_connector *_connector)
 {
-	struct intel_connector *intel_connector = to_intel_connector(connector);
+	struct intel_connector *connector = to_intel_connector(_connector);
+	struct drm_i915_private *i915 = to_i915(_connector->dev);
 	int ret;
 
-	ret = intel_backlight_device_register(intel_connector);
+	ret = intel_panel_register(connector);
 	if (ret)
 		goto err;
 
-	if (i915_inject_probe_failure(to_i915(connector->dev))) {
+	if (i915_inject_probe_failure(i915)) {
 		ret = -EFAULT;
-		goto err_backlight;
+		goto err_panel;
 	}
 
-	intel_connector_debugfs_add(intel_connector);
+	intel_connector_debugfs_add(connector);
 
 	return 0;
 
-err_backlight:
-	intel_backlight_device_unregister(intel_connector);
+err_panel:
+	intel_panel_unregister(connector);
 err:
 	return ret;
 }
 
-void intel_connector_unregister(struct drm_connector *connector)
+void intel_connector_unregister(struct drm_connector *_connector)
 {
-	struct intel_connector *intel_connector = to_intel_connector(connector);
+	struct intel_connector *connector = to_intel_connector(_connector);
 
-	intel_backlight_device_unregister(intel_connector);
+	intel_panel_unregister(connector);
 }
 
 void intel_connector_attach_encoder(struct intel_connector *connector,
@@ -162,10 +206,9 @@ bool intel_connector_get_hw_state(struct intel_connector *connector)
 
 enum pipe intel_connector_get_pipe(struct intel_connector *connector)
 {
-	struct drm_device *dev = connector->base.dev;
+	struct intel_display *display = to_intel_display(connector);
 
-	drm_WARN_ON(dev,
-		    !drm_modeset_is_locked(&dev->mode_config.connection_mutex));
+	drm_modeset_lock_assert_held(&display->drm->mode_config.connection_mutex);
 
 	if (!connector->base.state->crtc)
 		return INVALID_PIPE;
@@ -222,20 +265,19 @@ static const struct drm_prop_enum_list force_audio_names[] = {
 void
 intel_attach_force_audio_property(struct drm_connector *connector)
 {
-	struct drm_device *dev = connector->dev;
-	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct intel_display *display = to_intel_display(connector->dev);
 	struct drm_property *prop;
 
-	prop = dev_priv->display.properties.force_audio;
+	prop = display->properties.force_audio;
 	if (prop == NULL) {
-		prop = drm_property_create_enum(dev, 0,
-					   "audio",
-					   force_audio_names,
-					   ARRAY_SIZE(force_audio_names));
+		prop = drm_property_create_enum(display->drm, 0,
+						"audio",
+						force_audio_names,
+						ARRAY_SIZE(force_audio_names));
 		if (prop == NULL)
 			return;
 
-		dev_priv->display.properties.force_audio = prop;
+		display->properties.force_audio = prop;
 	}
 	drm_object_attach_property(&connector->base, prop, 0);
 }
@@ -249,20 +291,19 @@ static const struct drm_prop_enum_list broadcast_rgb_names[] = {
 void
 intel_attach_broadcast_rgb_property(struct drm_connector *connector)
 {
-	struct drm_device *dev = connector->dev;
-	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct intel_display *display = to_intel_display(connector->dev);
 	struct drm_property *prop;
 
-	prop = dev_priv->display.properties.broadcast_rgb;
+	prop = display->properties.broadcast_rgb;
 	if (prop == NULL) {
-		prop = drm_property_create_enum(dev, DRM_MODE_PROP_ENUM,
-					   "Broadcast RGB",
-					   broadcast_rgb_names,
-					   ARRAY_SIZE(broadcast_rgb_names));
+		prop = drm_property_create_enum(display->drm, DRM_MODE_PROP_ENUM,
+						"Broadcast RGB",
+						broadcast_rgb_names,
+						ARRAY_SIZE(broadcast_rgb_names));
 		if (prop == NULL)
 			return;
 
-		dev_priv->display.properties.broadcast_rgb = prop;
+		display->properties.broadcast_rgb = prop;
 	}
 
 	drm_object_attach_property(&connector->base, prop, 0);
@@ -294,14 +335,14 @@ intel_attach_dp_colorspace_property(struct drm_connector *connector)
 void
 intel_attach_scaling_mode_property(struct drm_connector *connector)
 {
-	struct drm_i915_private *i915 = to_i915(connector->dev);
+	struct intel_display *display = to_intel_display(connector->dev);
 	u32 scaling_modes;
 
 	scaling_modes = BIT(DRM_MODE_SCALE_ASPECT) |
 		BIT(DRM_MODE_SCALE_FULLSCREEN);
 
 	/* On GMCH platforms borders are only possible on the LVDS port */
-	if (!HAS_GMCH(i915) || connector->connector_type == DRM_MODE_CONNECTOR_LVDS)
+	if (!HAS_GMCH(display) || connector->connector_type == DRM_MODE_CONNECTOR_LVDS)
 		scaling_modes |= BIT(DRM_MODE_SCALE_CENTER);
 
 	drm_connector_attach_scaling_mode_property(connector, scaling_modes);

@@ -54,6 +54,26 @@
 
 #define min_not_zero(a, b) (a == 0) ? b : ((b == 0) ? a : min(a, b))
 
+#define min_array(_array, _nitems)		\
+({						\
+	typeof(_array[0]) _r = _array[0];	\
+	for (int i = 1; i < _nitems; i++) {	\
+		if (_r > _array[i])		\
+			_r = _array[i];		\
+	}					\
+	_r;					\
+})
+
+#define max_array(_array, _nitems)		\
+({						\
+	typeof(_array[0]) _r = _array[0];	\
+	for (int i = 1; i < _nitems; i++) {	\
+		if (_r < _array[i])		\
+			_r = _array[i];		\
+	}					\
+	_r;					\
+})
+
 static inline char *
 kvasprintf(int flags, const char *fmt, va_list ap)
 {

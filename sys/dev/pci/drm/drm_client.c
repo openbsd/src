@@ -3,6 +3,7 @@
  * Copyright 2018 Noralf Trønnes
  */
 
+#include <linux/export.h>
 #include <linux/iosys-map.h>
 #include <linux/list.h>
 #include <linux/mutex.h>
@@ -10,7 +11,6 @@
 #include <linux/slab.h>
 
 #include <drm/drm_client.h>
-#include <drm/drm_debugfs.h>
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_file.h>
@@ -172,103 +172,10 @@ void drm_client_release(struct drm_client_dev *client)
 }
 EXPORT_SYMBOL(drm_client_release);
 
-/**
- * drm_client_dev_unregister - Unregister clients
- * @dev: DRM device
- *
- * This function releases all clients by calling each client's
- * &drm_client_funcs.unregister callback. The callback function
- * is responsibe for releaseing all resources including the client
- * itself.
- *
- * The helper drm_dev_unregister() calls this function. Drivers
- * that use it don't need to call this function themselves.
- */
-void drm_client_dev_unregister(struct drm_device *dev)
-{
-	struct drm_client_dev *client, *tmp;
-
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return;
-
-	mutex_lock(&dev->clientlist_mutex);
-	list_for_each_entry_safe(client, tmp, &dev->clientlist, list) {
-		list_del(&client->list);
-		if (client->funcs && client->funcs->unregister) {
-			client->funcs->unregister(client);
-		} else {
-			drm_client_release(client);
-			kfree(client);
-		}
-	}
-	mutex_unlock(&dev->clientlist_mutex);
-}
-EXPORT_SYMBOL(drm_client_dev_unregister);
-
-/**
- * drm_client_dev_hotplug - Send hotplug event to clients
- * @dev: DRM device
- *
- * This function calls the &drm_client_funcs.hotplug callback on the attached clients.
- *
- * drm_kms_helper_hotplug_event() calls this function, so drivers that use it
- * don't need to call this function themselves.
- */
-void drm_client_dev_hotplug(struct drm_device *dev)
-{
-	struct drm_client_dev *client;
-	int ret;
-
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return;
-
-	if (!dev->mode_config.num_connector) {
-		drm_dbg_kms(dev, "No connectors found, will not send hotplug events!\n");
-		return;
-	}
-
-	mutex_lock(&dev->clientlist_mutex);
-	list_for_each_entry(client, &dev->clientlist, list) {
-		if (!client->funcs || !client->funcs->hotplug)
-			continue;
-
-		if (client->hotplug_failed)
-			continue;
-
-		ret = client->funcs->hotplug(client);
-		drm_dbg_kms(dev, "%s: ret=%d\n", client->name, ret);
-		if (ret)
-			client->hotplug_failed = true;
-	}
-	mutex_unlock(&dev->clientlist_mutex);
-}
-EXPORT_SYMBOL(drm_client_dev_hotplug);
-
-void drm_client_dev_restore(struct drm_device *dev)
-{
-	struct drm_client_dev *client;
-	int ret;
-
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return;
-
-	mutex_lock(&dev->clientlist_mutex);
-	list_for_each_entry(client, &dev->clientlist, list) {
-		if (!client->funcs || !client->funcs->restore)
-			continue;
-
-		ret = client->funcs->restore(client);
-		drm_dbg_kms(dev, "%s: ret=%d\n", client->name, ret);
-		if (!ret) /* The first one to return zero gets the privilege to restore */
-			break;
-	}
-	mutex_unlock(&dev->clientlist_mutex);
-}
-
 static void drm_client_buffer_delete(struct drm_client_buffer *buffer)
 {
 	if (buffer->gem) {
-		drm_gem_vunmap_unlocked(buffer->gem, &buffer->map);
+		drm_gem_vunmap(buffer->gem, &buffer->map);
 		drm_gem_object_put(buffer->gem);
 	}
 
@@ -346,7 +253,7 @@ int drm_client_buffer_vmap_local(struct drm_client_buffer *buffer,
 
 	drm_gem_lock(gem);
 
-	ret = drm_gem_vmap(gem, map);
+	ret = drm_gem_vmap_locked(gem, map);
 	if (ret)
 		goto err_drm_gem_vmap_unlocked;
 	*map_copy = *map;
@@ -372,7 +279,7 @@ void drm_client_buffer_vunmap_local(struct drm_client_buffer *buffer)
 	struct drm_gem_object *gem = buffer->gem;
 	struct iosys_map *map = &buffer->map;
 
-	drm_gem_vunmap(gem, map);
+	drm_gem_vunmap_locked(gem, map);
 	drm_gem_unlock(gem);
 }
 EXPORT_SYMBOL(drm_client_buffer_vunmap_local);
@@ -397,34 +304,17 @@ EXPORT_SYMBOL(drm_client_buffer_vunmap_local);
  * Returns:
  *	0 on success, or a negative errno code otherwise.
  */
-int
-drm_client_buffer_vmap(struct drm_client_buffer *buffer,
-		       struct iosys_map *map_copy)
+int drm_client_buffer_vmap(struct drm_client_buffer *buffer,
+			   struct iosys_map *map_copy)
 {
-	struct drm_gem_object *gem = buffer->gem;
-	struct iosys_map *map = &buffer->map;
 	int ret;
 
-	drm_gem_lock(gem);
-
-	ret = drm_gem_pin_locked(gem);
+	ret = drm_gem_vmap(buffer->gem, &buffer->map);
 	if (ret)
-		goto err_drm_gem_pin_locked;
-	ret = drm_gem_vmap(gem, map);
-	if (ret)
-		goto err_drm_gem_vmap;
-
-	drm_gem_unlock(gem);
-
-	*map_copy = *map;
+		return ret;
+	*map_copy = buffer->map;
 
 	return 0;
-
-err_drm_gem_vmap:
-	drm_gem_unpin_locked(buffer->gem);
-err_drm_gem_pin_locked:
-	drm_gem_unlock(gem);
-	return ret;
 }
 EXPORT_SYMBOL(drm_client_buffer_vmap);
 
@@ -438,13 +328,7 @@ EXPORT_SYMBOL(drm_client_buffer_vmap);
  */
 void drm_client_buffer_vunmap(struct drm_client_buffer *buffer)
 {
-	struct drm_gem_object *gem = buffer->gem;
-	struct iosys_map *map = &buffer->map;
-
-	drm_gem_lock(gem);
-	drm_gem_vunmap(gem, map);
-	drm_gem_unpin_locked(gem);
-	drm_gem_unlock(gem);
+	drm_gem_vunmap(buffer->gem, &buffer->map);
 }
 EXPORT_SYMBOL(drm_client_buffer_vunmap);
 
@@ -584,30 +468,3 @@ int drm_client_framebuffer_flush(struct drm_client_buffer *buffer, struct drm_re
 					0, 0, NULL, 0);
 }
 EXPORT_SYMBOL(drm_client_framebuffer_flush);
-
-#ifdef CONFIG_DEBUG_FS
-static int drm_client_debugfs_internal_clients(struct seq_file *m, void *data)
-{
-	struct drm_debugfs_entry *entry = m->private;
-	struct drm_device *dev = entry->dev;
-	struct drm_printer p = drm_seq_file_printer(m);
-	struct drm_client_dev *client;
-
-	mutex_lock(&dev->clientlist_mutex);
-	list_for_each_entry(client, &dev->clientlist, list)
-		drm_printf(&p, "%s\n", client->name);
-	mutex_unlock(&dev->clientlist_mutex);
-
-	return 0;
-}
-
-static const struct drm_debugfs_info drm_client_debugfs_list[] = {
-	{ "internal_clients", drm_client_debugfs_internal_clients, 0 },
-};
-
-void drm_client_debugfs_init(struct drm_device *dev)
-{
-	drm_debugfs_add_files(dev, drm_client_debugfs_list,
-			      ARRAY_SIZE(drm_client_debugfs_list));
-}
-#endif

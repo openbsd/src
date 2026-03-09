@@ -109,7 +109,7 @@ void optc301_setup_manual_trigger(struct timing_generator *optc)
 			OTG_TRIGA_CLEAR, 1);
 }
 
-static struct timing_generator_funcs dcn30_tg_funcs = {
+static const struct timing_generator_funcs dcn30_tg_funcs = {
 		.validate_timing = optc1_validate_timing,
 		.program_timing = optc1_program_timing,
 		.setup_vertical_interrupt0 = optc1_setup_vertical_interrupt0,
@@ -169,6 +169,10 @@ static struct timing_generator_funcs dcn30_tg_funcs = {
 		.get_hw_timing = optc1_get_hw_timing,
 		.wait_drr_doublebuffer_pending_clear = optc3_wait_drr_doublebuffer_pending_clear,
 		.is_two_pixels_per_container = optc1_is_two_pixels_per_container,
+		.get_optc_double_buffer_pending = optc3_get_optc_double_buffer_pending,
+		.get_otg_double_buffer_pending = optc3_get_otg_update_pending,
+		.get_pipe_update_pending = optc3_get_pipe_update_pending,
+		.read_otg_state = optc1_read_otg_state,
 };
 
 void dcn301_timing_generator_init(struct optc *optc1)

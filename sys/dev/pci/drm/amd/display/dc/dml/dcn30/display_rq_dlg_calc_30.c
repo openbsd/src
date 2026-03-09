@@ -394,8 +394,6 @@ static void get_meta_and_pte_attr(struct display_mode_lib *mode_lib,
 	blk_bytes = surf_linear ?
 		256 : get_blk_size_bytes((enum source_macro_tile_size) macro_tile_size);
 	log2_blk_bytes = dml_log2((double)blk_bytes);
-	log2_blk_height = 0;
-	log2_blk_width = 0;
 
 	// remember log rule
 	// "+" in log is multiply
@@ -466,8 +464,6 @@ static void get_meta_and_pte_attr(struct display_mode_lib *mode_lib,
 		- log2_meta_req_height;
 	meta_req_width = 1 << log2_meta_req_width;
 	meta_req_height = 1 << log2_meta_req_height;
-	log2_meta_row_height = 0;
-	meta_row_width_ub = 0;
 
 	// the dimensions of a meta row are meta_row_width x meta_row_height in elements.
 	// calculate upper bound of the meta_row_width
@@ -626,7 +622,7 @@ static void get_meta_and_pte_attr(struct display_mode_lib *mode_lib,
 	if (hostvm_enable)
 		rq_sizing_param->dpte_group_bytes = 512;
 	else {
-		if (!surf_linear & (log2_dpte_req_height_ptes == 0) & surf_vert) //reduced, in this case, will have page fault within a group
+		if (!surf_linear && (log2_dpte_req_height_ptes == 0) && surf_vert) //reduced, in this case, will have page fault within a group
 			rq_sizing_param->dpte_group_bytes = 512;
 		else
 			rq_sizing_param->dpte_group_bytes = 2048;
@@ -1568,6 +1564,7 @@ static void dml_rq_dlg_get_dlg_params(struct display_mode_lib *mode_lib,
 	dml_print("DML_DLG: %s: disp_dlg_regs->dst_y_per_row_vblank = 0x%x\n", __func__, disp_dlg_regs->dst_y_per_row_vblank);
 	dml_print("DML_DLG: %s: disp_dlg_regs->dst_y_per_vm_flip    = 0x%x\n", __func__, disp_dlg_regs->dst_y_per_vm_flip);
 	dml_print("DML_DLG: %s: disp_dlg_regs->dst_y_per_row_flip   = 0x%x\n", __func__, disp_dlg_regs->dst_y_per_row_flip);
+
 	disp_dlg_regs->refcyc_per_pte_group_vblank_l =
 		(unsigned int)(dst_y_per_row_vblank * (double)htotal
 			* ref_freq_to_pix_freq / (double)dpte_groups_per_row_ub_l);

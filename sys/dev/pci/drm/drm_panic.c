@@ -6,7 +6,9 @@
  * Tux Ascii art taken from cowsay written by Tony Monroe
  */
 
+#include <linux/export.h>
 #include <linux/font.h>
+#include <linux/highmem.h>
 #include <linux/init.h>
 #include <linux/iosys-map.h>
 #include <linux/kdebug.h>
@@ -154,6 +156,124 @@ static void drm_panic_blit_pixel(struct drm_scanout_buffer *sb, struct drm_rect 
 				sb->set_pixel(sb, clip->x1 + x, clip->y1 + y, fg_color);
 }
 
+static void drm_panic_write_pixel16(void *vaddr, unsigned int offset, u16 color)
+{
+	u16 *p = vaddr + offset;
+
+	*p = color;
+}
+
+static void drm_panic_write_pixel24(void *vaddr, unsigned int offset, u32 color)
+{
+	u8 *p = vaddr + offset;
+
+	*p++ = color & 0xff;
+	color >>= 8;
+	*p++ = color & 0xff;
+	color >>= 8;
+	*p = color & 0xff;
+}
+
+/*
+ * Special case if the pixel crosses page boundaries
+ */
+static void drm_panic_write_pixel24_xpage(void *vaddr, struct page *next_page,
+					  unsigned int offset, u32 color)
+{
+	u8 *vaddr2;
+	u8 *p = vaddr + offset;
+
+	vaddr2 = kmap_local_page_try_from_panic(next_page);
+
+	*p++ = color & 0xff;
+	color >>= 8;
+
+	if (offset == PAGE_SIZE - 1)
+		p = vaddr2;
+
+	*p++ = color & 0xff;
+	color >>= 8;
+
+	if (offset == PAGE_SIZE - 2)
+		p = vaddr2;
+
+	*p = color & 0xff;
+	kunmap_local(vaddr2);
+}
+
+static void drm_panic_write_pixel32(void *vaddr, unsigned int offset, u32 color)
+{
+	u32 *p = vaddr + offset;
+
+	*p = color;
+}
+
+static void drm_panic_write_pixel(void *vaddr, unsigned int offset, u32 color, unsigned int cpp)
+{
+	switch (cpp) {
+	case 2:
+		drm_panic_write_pixel16(vaddr, offset, color);
+		break;
+	case 3:
+		drm_panic_write_pixel24(vaddr, offset, color);
+		break;
+	case 4:
+		drm_panic_write_pixel32(vaddr, offset, color);
+		break;
+	default:
+		pr_debug_once("Can't blit with pixel width %d\n", cpp);
+	}
+}
+
+/*
+ * The scanout buffer pages are not mapped, so for each pixel,
+ * use kmap_local_page_try_from_panic() to map the page, and write the pixel.
+ * Try to keep the map from the previous pixel, to avoid too much map/unmap.
+ */
+static void drm_panic_blit_page(struct page **pages, unsigned int dpitch,
+				unsigned int cpp, const u8 *sbuf8,
+				unsigned int spitch, struct drm_rect *clip,
+				unsigned int scale, u32 fg32)
+{
+	unsigned int y, x;
+	unsigned int page = ~0;
+	unsigned int height = drm_rect_height(clip);
+	unsigned int width = drm_rect_width(clip);
+	void *vaddr = NULL;
+
+	for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+			if (drm_draw_is_pixel_fg(sbuf8, spitch, x / scale, y / scale)) {
+				unsigned int new_page;
+				unsigned int offset;
+
+				offset = (y + clip->y1) * dpitch + (x + clip->x1) * cpp;
+				new_page = offset >> PAGE_SHIFT;
+				offset = offset % PAGE_SIZE;
+				if (new_page != page) {
+					if (!pages[new_page])
+						continue;
+					if (vaddr)
+						kunmap_local(vaddr);
+					page = new_page;
+					vaddr = kmap_local_page_try_from_panic(pages[page]);
+				}
+				if (!vaddr)
+					continue;
+
+				// Special case for 24bit, as a pixel might cross page boundaries
+				if (cpp == 3 && offset + 3 > PAGE_SIZE)
+					drm_panic_write_pixel24_xpage(vaddr, pages[page + 1],
+								      offset, fg32);
+				else
+					drm_panic_write_pixel(vaddr, offset, fg32, cpp);
+			}
+		}
+	}
+	if (vaddr)
+		kunmap_local(vaddr);
+}
+
 /*
  * drm_panic_blit - convert a monochrome image to a linear framebuffer
  * @sb: destination scanout buffer
@@ -176,6 +296,10 @@ static void drm_panic_blit(struct drm_scanout_buffer *sb, struct drm_rect *clip,
 
 	if (sb->set_pixel)
 		return drm_panic_blit_pixel(sb, clip, sbuf8, spitch, scale, fg_color);
+
+	if (sb->pages)
+		return drm_panic_blit_page(sb->pages, sb->pitch[0], sb->format->cpp[0],
+					   sbuf8, spitch, clip, scale, fg_color);
 
 	map = sb->map[0];
 	iosys_map_incr(&map, clip->y1 * sb->pitch[0] + clip->x1 * sb->format->cpp[0]);
@@ -209,6 +333,43 @@ static void drm_panic_fill_pixel(struct drm_scanout_buffer *sb,
 			sb->set_pixel(sb, clip->x1 + x, clip->y1 + y, color);
 }
 
+static void drm_panic_fill_page(struct page **pages, unsigned int dpitch,
+				unsigned int cpp, struct drm_rect *clip,
+				u32 color)
+{
+	unsigned int y, x;
+	unsigned int page = ~0;
+	void *vaddr = NULL;
+
+	for (y = clip->y1; y < clip->y2; y++) {
+		for (x = clip->x1; x < clip->x2; x++) {
+			unsigned int new_page;
+			unsigned int offset;
+
+			offset = y * dpitch + x * cpp;
+			new_page = offset >> PAGE_SHIFT;
+			offset = offset % PAGE_SIZE;
+			if (new_page != page) {
+				if (vaddr)
+					kunmap_local(vaddr);
+				page = new_page;
+				vaddr = kmap_local_page_try_from_panic(pages[page]);
+			}
+			if (!vaddr)
+				continue;
+
+			// Special case for 24bit, as a pixel might cross page boundaries
+			if (cpp == 3 && offset + 3 > PAGE_SIZE)
+				drm_panic_write_pixel24_xpage(vaddr, pages[page + 1],
+							      offset, color);
+			else
+				drm_panic_write_pixel(vaddr, offset, color, cpp);
+		}
+	}
+	if (vaddr)
+		kunmap_local(vaddr);
+}
+
 /*
  * drm_panic_fill - Fill a rectangle with a color
  * @sb: destination scanout buffer
@@ -224,6 +385,10 @@ static void drm_panic_fill(struct drm_scanout_buffer *sb, struct drm_rect *clip,
 
 	if (sb->set_pixel)
 		return drm_panic_fill_pixel(sb, clip, color);
+
+	if (sb->pages)
+		return drm_panic_fill_page(sb->pages, sb->pitch[0], sb->format->cpp[0],
+					   clip, color);
 
 	map = sb->map[0];
 	iosys_map_incr(&map, clip->y1 * sb->pitch[0] + clip->x1 * sb->format->cpp[0]);
@@ -357,7 +522,7 @@ static int draw_line_with_wrap(struct drm_scanout_buffer *sb, const struct font_
 			       struct drm_panic_line *line, int yoffset, u32 fg_color)
 {
 	int chars_per_row = sb->width / font->width;
-	struct drm_rect r_txt = DRM_RECT_INIT(0, yoffset, sb->width, sb->height);
+	struct drm_rect r_txt = DRM_RECT_INIT(0, yoffset, sb->width, font->height);
 	struct drm_panic_line line_wrap;
 
 	if (line->len > chars_per_row) {
@@ -400,7 +565,7 @@ static void draw_panic_static_kmsg(struct drm_scanout_buffer *sb)
 	struct drm_panic_line line;
 	int yoffset;
 
-	if (!font)
+	if (!font || font->width > sb->width)
 		return;
 
 	yoffset = sb->height - font->height - (sb->height % font->height) / 2;
@@ -489,11 +654,6 @@ static void drm_panic_qr_exit(void)
 	stream.workspace = NULL;
 }
 
-extern size_t drm_panic_qr_max_data_size(u8 version, size_t url_len);
-
-extern u8 drm_panic_qr_generate(const char *url, u8 *data, size_t data_len, size_t data_size,
-				u8 *tmp, size_t tmp_size);
-
 static int drm_panic_get_qr_code_url(u8 **qr_image)
 {
 	struct kmsg_dump_iter iter;
@@ -502,7 +662,7 @@ static int drm_panic_get_qr_code_url(u8 **qr_image)
 	char *kmsg;
 	int max_qr_data_size, url_len;
 
-	url_len = snprintf(url, sizeof(url), CONFIG_DRM_PANIC_SCREEN_QR_CODE_URL "?a=%s&v=%s&zl=",
+	url_len = snprintf(url, sizeof(url), CONFIG_DRM_PANIC_SCREEN_QR_CODE_URL "?a=%s&v=%s&z=",
 			   utsname()->machine, utsname()->release);
 
 	max_qr_data_size = drm_panic_qr_max_data_size(panic_qr_version, url_len);
@@ -634,7 +794,7 @@ static int _draw_panic_static_qr_code(struct drm_scanout_buffer *sb)
 	/* Fill with the background color, and draw text on top */
 	drm_panic_fill(sb, &r_screen, bg_color);
 
-	if (!drm_rect_overlap(&r_logo, &r_msg) && !drm_rect_overlap(&r_logo, &r_qr))
+	if (!drm_rect_overlap(&r_logo, &r_msg) && !drm_rect_overlap(&r_logo, &r_qr_canvas))
 		drm_panic_logo_draw(sb, &r_logo, font, fg_color);
 
 	draw_txt_rectangle(sb, font, panic_msg, panic_msg_lines, true, &r_msg, fg_color);
@@ -720,16 +880,24 @@ static void draw_panic_plane(struct drm_plane *plane, const char *description)
 	if (!drm_panic_trylock(plane->dev, flags))
 		return;
 
-	drm_panic_set_description(description);
-
 	ret = plane->helper_private->get_scanout_buffer(plane, &sb);
 
-	if (!ret && drm_panic_is_format_supported(sb.format)) {
-		draw_panic_dispatch(&sb);
-		if (plane->helper_private->panic_flush)
-			plane->helper_private->panic_flush(plane);
-	}
+	if (ret || !drm_panic_is_format_supported(sb.format))
+		goto unlock;
+
+	/* One of these should be set, or it can't draw pixels */
+	if (!sb.set_pixel && !sb.pages && iosys_map_is_null(&sb.map[0]))
+		goto unlock;
+
+	drm_panic_set_description(description);
+
+	draw_panic_dispatch(&sb);
+	if (plane->helper_private->panic_flush)
+		plane->helper_private->panic_flush(plane);
+
 	drm_panic_clear_description();
+
+unlock:
 	drm_panic_unlock(plane->dev, flags);
 }
 

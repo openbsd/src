@@ -253,18 +253,42 @@ void amdgpu_amdkfd_interrupt(struct amdgpu_device *adev,
 		kgd2kfd_interrupt(adev->kfd.dev, ih_ring_entry);
 }
 
-void amdgpu_amdkfd_suspend(struct amdgpu_device *adev, bool run_pm)
+void amdgpu_amdkfd_suspend(struct amdgpu_device *adev, bool suspend_proc)
 {
-	if (adev->kfd.dev)
-		kgd2kfd_suspend(adev->kfd.dev, run_pm);
+	if (adev->kfd.dev) {
+		if (adev->in_s0ix)
+			kgd2kfd_stop_sched_all_nodes(adev->kfd.dev);
+		else
+			kgd2kfd_suspend(adev->kfd.dev, suspend_proc);
+	}
 }
 
-int amdgpu_amdkfd_resume(struct amdgpu_device *adev, bool run_pm)
+int amdgpu_amdkfd_resume(struct amdgpu_device *adev, bool resume_proc)
+{
+	int r = 0;
+
+	if (adev->kfd.dev) {
+		if (adev->in_s0ix)
+			r = kgd2kfd_start_sched_all_nodes(adev->kfd.dev);
+		else
+			r = kgd2kfd_resume(adev->kfd.dev, resume_proc);
+	}
+
+	return r;
+}
+
+void amdgpu_amdkfd_suspend_process(struct amdgpu_device *adev)
+{
+	if (adev->kfd.dev)
+		kgd2kfd_suspend_process(adev->kfd.dev);
+}
+
+int amdgpu_amdkfd_resume_process(struct amdgpu_device *adev)
 {
 	int r = 0;
 
 	if (adev->kfd.dev)
-		r = kgd2kfd_resume(adev->kfd.dev, run_pm);
+		r = kgd2kfd_resume_process(adev->kfd.dev);
 
 	return r;
 }
@@ -373,7 +397,10 @@ void amdgpu_amdkfd_free_gtt_mem(struct amdgpu_device *adev, void **mem_obj)
 {
 	struct amdgpu_bo **bo = (struct amdgpu_bo **) mem_obj;
 
-	amdgpu_bo_reserve(*bo, true);
+	if (!bo || !*bo)
+		return;
+
+	(void)amdgpu_bo_reserve(*bo, true);
 	amdgpu_bo_kunmap(*bo);
 	amdgpu_bo_unpin(*bo);
 	amdgpu_bo_unreserve(*bo);
@@ -464,7 +491,7 @@ void amdgpu_amdkfd_get_local_mem_info(struct amdgpu_device *adev,
 		else
 			mem_info->local_mem_size_private =
 					KFD_XCP_MEMORY_SIZE(adev, xcp->id);
-	} else if (adev->flags & AMD_IS_APU) {
+	} else if (adev->apu_prefer_gtt) {
 		mem_info->local_mem_size_public = (ttm_tt_pages_limit() << PAGE_SHIFT);
 		mem_info->local_mem_size_private = 0;
 	} else {
@@ -560,48 +587,6 @@ out_put:
 	return r;
 }
 
-uint8_t amdgpu_amdkfd_get_xgmi_hops_count(struct amdgpu_device *dst,
-					  struct amdgpu_device *src)
-{
-	struct amdgpu_device *peer_adev = src;
-	struct amdgpu_device *adev = dst;
-	int ret = amdgpu_xgmi_get_hops_count(adev, peer_adev);
-
-	if (ret < 0) {
-		DRM_ERROR("amdgpu: failed to get  xgmi hops count between node %d and %d. ret = %d\n",
-			adev->gmc.xgmi.physical_node_id,
-			peer_adev->gmc.xgmi.physical_node_id, ret);
-		ret = 0;
-	}
-	return  (uint8_t)ret;
-}
-
-int amdgpu_amdkfd_get_xgmi_bandwidth_mbytes(struct amdgpu_device *dst,
-					    struct amdgpu_device *src,
-					    bool is_min)
-{
-	struct amdgpu_device *adev = dst, *peer_adev;
-	int num_links;
-
-	if (amdgpu_ip_version(adev, GC_HWIP, 0) < IP_VERSION(9, 4, 2))
-		return 0;
-
-	if (src)
-		peer_adev = src;
-
-	/* num links returns 0 for indirect peers since indirect route is unknown. */
-	num_links = is_min ? 1 : amdgpu_xgmi_get_num_links(adev, peer_adev);
-	if (num_links < 0) {
-		DRM_ERROR("amdgpu: failed to get xgmi num links between node %d and %d. ret = %d\n",
-			adev->gmc.xgmi.physical_node_id,
-			peer_adev->gmc.xgmi.physical_node_id, num_links);
-		num_links = 0;
-	}
-
-	/* Aldebaran xGMI DPM is defeatured so assume x16 x 25Gbps for bandwidth. */
-	return (num_links * 16 * 25000)/BITS_PER_BYTE;
-}
-
 int amdgpu_amdkfd_get_pcie_bandwidth_mbytes(struct amdgpu_device *adev, bool is_min)
 {
 	int num_lanes_shift = (is_min ? ffs(adev->pm.pcie_mlw_mask) :
@@ -686,7 +671,7 @@ int amdgpu_amdkfd_submit_ib(struct amdgpu_device *adev,
 		goto err;
 	}
 
-	ret = amdgpu_job_alloc(adev, NULL, NULL, NULL, 1, &job);
+	ret = amdgpu_job_alloc(adev, NULL, NULL, NULL, 1, &job, 0);
 	if (ret)
 		goto err;
 
@@ -730,7 +715,9 @@ void amdgpu_amdkfd_set_compute_idle(struct amdgpu_device *adev, bool idle)
 		/* Disable GFXOFF and PG. Temporary workaround
 		 * to fix some compute applications issue on GFX9.
 		 */
-		adev->ip_blocks[AMD_IP_BLOCK_TYPE_GFX].version->funcs->set_powergating_state((void *)adev, state);
+		struct amdgpu_ip_block *gfx_block = amdgpu_device_ip_get_ip_block(adev, AMD_IP_BLOCK_TYPE_GFX);
+		if (gfx_block != NULL)
+			gfx_block->version->funcs->set_powergating_state((void *)gfx_block, state);
 	}
 	amdgpu_dpm_switch_power_profile(adev,
 					PP_SMC_POWER_PROFILE_COMPUTE,
@@ -791,12 +778,12 @@ int amdgpu_amdkfd_send_close_event_drain_irq(struct amdgpu_device *adev,
 
 int amdgpu_amdkfd_check_and_lock_kfd(struct amdgpu_device *adev)
 {
-	return kgd2kfd_check_and_lock_kfd();
+	return kgd2kfd_check_and_lock_kfd(adev->kfd.dev);
 }
 
 void amdgpu_amdkfd_unlock_kfd(struct amdgpu_device *adev)
 {
-	kgd2kfd_unlock_kfd();
+	kgd2kfd_unlock_kfd(adev->kfd.dev);
 }
 
 
@@ -821,7 +808,7 @@ u64 amdgpu_amdkfd_xcp_memory_size(struct amdgpu_device *adev, int xcp_id)
 		}
 		do_div(tmp, adev->xcp_mgr->num_xcp_per_mem_partition);
 		return ALIGN_DOWN(tmp, PAGE_SIZE);
-	} else if (adev->flags & AMD_IS_APU) {
+	} else if (adev->apu_prefer_gtt) {
 		return (ttm_tt_pages_limit() << PAGE_SHIFT);
 	} else {
 		return adev->gmc.real_vram_size;
@@ -840,7 +827,7 @@ int amdgpu_amdkfd_unmap_hiq(struct amdgpu_device *adev, u32 doorbell_off,
 	if (!kiq->pmf || !kiq->pmf->kiq_unmap_queues)
 		return -EINVAL;
 
-	if (!kiq_ring->sched.ready || adev->job_hang)
+	if (!kiq_ring->sched.ready || amdgpu_in_reset(adev))
 		return 0;
 
 	ring_funcs = kzalloc(sizeof(*ring_funcs), GFP_KERNEL);
@@ -903,4 +890,28 @@ int amdgpu_amdkfd_start_sched(struct amdgpu_device *adev, uint32_t node_id)
 		return 0;
 
 	return kgd2kfd_start_sched(adev->kfd.dev, node_id);
+}
+
+/* check if there are KFD queues active */
+bool amdgpu_amdkfd_compute_active(struct amdgpu_device *adev, uint32_t node_id)
+{
+	if (!adev->kfd.init_complete)
+		return false;
+
+	return kgd2kfd_compute_active(adev->kfd.dev, node_id);
+}
+
+/* Config CGTT_SQ_CLK_CTRL */
+int amdgpu_amdkfd_config_sq_perfmon(struct amdgpu_device *adev, uint32_t xcp_id,
+	bool core_override_enable, bool reg_override_enable, bool perfmon_override_enable)
+{
+	int r;
+
+	if (!adev->kfd.init_complete)
+		return 0;
+
+	r = psp_config_sq_perfmon(&adev->psp, xcp_id, core_override_enable,
+					reg_override_enable, perfmon_override_enable);
+
+	return r;
 }

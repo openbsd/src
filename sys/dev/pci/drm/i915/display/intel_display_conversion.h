@@ -8,15 +8,9 @@
 #ifndef __INTEL_DISPLAY_CONVERSION__
 #define __INTEL_DISPLAY_CONVERSION__
 
-/*
- * Transitional macro to optionally convert struct drm_i915_private * to struct
- * intel_display *, also accepting the latter.
- */
-#define __to_intel_display(p)						\
-	_Generic(p,							\
-		 const struct drm_i915_private *: (&((const struct drm_i915_private *)(p))->display), \
-		 struct drm_i915_private *: (&((struct drm_i915_private *)(p))->display), \
-		 const struct intel_display *: (p),			\
-		 struct intel_display *: (p))
+struct drm_device;
+struct intel_display;
+
+struct intel_display *__drm_to_display(struct drm_device *drm);
 
 #endif /* __INTEL_DISPLAY_CONVERSION__ */

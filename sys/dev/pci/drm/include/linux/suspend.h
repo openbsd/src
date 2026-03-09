@@ -4,6 +4,7 @@
 #define _LINUX_SUSPEND_H
 
 #include <linux/notifier.h>
+#include <linux/swap.h>
 
 typedef int suspend_state_t;
 extern suspend_state_t pm_suspend_target_state;
@@ -29,6 +30,12 @@ static inline int
 unregister_pm_notifier(struct notifier_block *n)
 {
 	return 0;
+}
+
+static inline bool
+pm_resume_via_firmware(void)
+{
+	return true;
 }
 
 #endif

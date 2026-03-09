@@ -5,7 +5,9 @@
 
 #include <linux/dmi.h>
 
-#include "i915_drv.h"
+#include <drm/drm_print.h>
+
+#include "intel_display_core.h"
 #include "intel_display_types.h"
 #include "intel_quirks.h"
 
@@ -76,6 +78,12 @@ static void quirk_fw_sync_len(struct intel_dp *intel_dp)
 
 	intel_set_dpcd_quirk(intel_dp, QUIRK_FW_SYNC_LEN);
 	drm_info(display->drm, "Applying Fast Wake sync pulse count quirk\n");
+}
+
+static void quirk_edp_limit_rate_hbr2(struct intel_display *display)
+{
+	intel_set_quirk(display, QUIRK_EDP_LIMIT_RATE_HBR2);
+	drm_info(display->drm, "Applying eDP Limit rate to HBR2 quirk\n");
 }
 
 struct intel_quirk {
@@ -229,9 +237,12 @@ static struct intel_quirk intel_quirks[] = {
 	{ 0x3184, 0x1019, 0xa94d, quirk_increase_ddi_disabled_time },
 	/* HP Notebook - 14-r206nv */
 	{ 0x0f31, 0x103c, 0x220f, quirk_invert_brightness },
+
+	/* Dell XPS 13 7390 2-in-1 */
+	{ 0x8a52, 0x1028, 0x08b0, quirk_edp_limit_rate_hbr2 },
 };
 
-static struct intel_dpcd_quirk intel_dpcd_quirks[] = {
+static const struct intel_dpcd_quirk intel_dpcd_quirks[] = {
 	/* Dell Precision 5490 */
 	{
 		.device = 0x7d55,
@@ -272,7 +283,7 @@ void intel_init_dpcd_quirks(struct intel_dp *intel_dp,
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(intel_dpcd_quirks); i++) {
-		struct intel_dpcd_quirk *q = &intel_dpcd_quirks[i];
+		const struct intel_dpcd_quirk *q = &intel_dpcd_quirks[i];
 
 		if (d->device == q->device &&
 		    (d->subsystem_vendor == q->subsystem_vendor ||

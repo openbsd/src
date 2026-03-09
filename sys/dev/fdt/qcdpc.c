@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcdpc.c,v 1.1 2025/07/17 15:52:10 kettenis Exp $	*/
+/*	$OpenBSD: qcdpc.c,v 1.2 2026/03/09 23:57:53 jsg Exp $	*/
 /*
  * Copyright (c) 2025 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -243,11 +243,11 @@ qcdpc_attach_backlight(struct qcdpc_softc *sc)
 		return;
 
 	if (drm_edp_backlight_supported(edp_dpcd)) {
-		uint16_t current_level;
+		uint32_t current_level;
 		uint8_t current_mode;
 
-		ret = drm_edp_backlight_init(&sc->sc_aux, &sc->sc_bl, 0,
-		    edp_dpcd, &current_level, &current_mode);
+		ret = drm_edp_backlight_init(&sc->sc_aux, &sc->sc_bl, 0, 0,
+		    edp_dpcd, &current_level, &current_mode, false);
 		if (ret < 0 || !sc->sc_bl.aux_set)
 			return;
 		sc->sc_bl_level = current_level;

@@ -74,6 +74,8 @@ static void gfxhub_v1_2_setup_vm_pt_regs(struct amdgpu_device *adev,
 static void gfxhub_v1_2_xcc_init_gart_aperture_regs(struct amdgpu_device *adev,
 						    uint32_t xcc_mask)
 {
+	uint64_t gart_start = amdgpu_virt_xgmi_migrate_enabled(adev) ?
+			adev->gmc.vram_start : adev->gmc.fb_start;
 	uint64_t pt_base;
 	int i;
 
@@ -91,10 +93,10 @@ static void gfxhub_v1_2_xcc_init_gart_aperture_regs(struct amdgpu_device *adev,
 		if (adev->gmc.pdb0_bo) {
 			WREG32_SOC15(GC, GET_INST(GC, i),
 				     regVM_CONTEXT0_PAGE_TABLE_START_ADDR_LO32,
-				     (u32)(adev->gmc.fb_start >> 12));
+				     (u32)(gart_start >> 12));
 			WREG32_SOC15(GC, GET_INST(GC, i),
 				     regVM_CONTEXT0_PAGE_TABLE_START_ADDR_HI32,
-				     (u32)(adev->gmc.fb_start >> 44));
+				     (u32)(gart_start >> 44));
 
 			WREG32_SOC15(GC, GET_INST(GC, i),
 				     regVM_CONTEXT0_PAGE_TABLE_END_ADDR_LO32,
@@ -180,7 +182,7 @@ gfxhub_v1_2_xcc_init_system_aperture_regs(struct amdgpu_device *adev,
 		/* In the case squeezing vram into GART aperture, we don't use
 		 * FB aperture and AGP aperture. Disable them.
 		 */
-		if (adev->gmc.pdb0_bo) {
+		if (adev->gmc.pdb0_bo && adev->gmc.xgmi.connected_to_cpu) {
 			WREG32_SOC15(GC, GET_INST(GC, i), regMC_VM_FB_LOCATION_TOP, 0);
 			WREG32_SOC15(GC, GET_INST(GC, i), regMC_VM_FB_LOCATION_BASE, 0x00FFFFFF);
 			WREG32_SOC15(GC, GET_INST(GC, i), regMC_VM_AGP_TOP, 0);
@@ -313,6 +315,16 @@ gfxhub_v1_2_xcc_disable_identity_aperture(struct amdgpu_device *adev,
 	}
 }
 
+static inline bool
+gfxhub_v1_2_per_process_xnack_support(struct amdgpu_device *adev)
+{
+	/*
+	 * TODO: Check if this function is really needed, so far only 9.4.3
+	 * variants use GFXHUB 1.2
+	 */
+	return !!adev->aid_mask;
+}
+
 static void gfxhub_v1_2_xcc_setup_vmid_config(struct amdgpu_device *adev,
 					      uint32_t xcc_mask)
 {
@@ -355,7 +367,7 @@ static void gfxhub_v1_2_xcc_setup_vmid_config(struct amdgpu_device *adev,
 					    PAGE_TABLE_BLOCK_SIZE,
 					    block_size);
 			/* Send no-retry XNACK on fault to suppress VM fault storm.
-			 * On 9.4.2 and 9.4.3, XNACK can be enabled in
+			 * On 9.4.3 variants, XNACK can be enabled in
 			 * the SQ per-process.
 			 * Retry faults need to be enabled for that to work.
 			 */
@@ -363,12 +375,8 @@ static void gfxhub_v1_2_xcc_setup_vmid_config(struct amdgpu_device *adev,
 				tmp, VM_CONTEXT1_CNTL,
 				RETRY_PERMISSION_OR_INVALID_PAGE_FAULT,
 				!adev->gmc.noretry ||
-					amdgpu_ip_version(adev, GC_HWIP, 0) ==
-						IP_VERSION(9, 4, 2) ||
-					amdgpu_ip_version(adev, GC_HWIP, 0) ==
-						IP_VERSION(9, 4, 3) ||
-					amdgpu_ip_version(adev, GC_HWIP, 0) ==
-						IP_VERSION(9, 4, 4));
+					gfxhub_v1_2_per_process_xnack_support(
+						adev));
 			WREG32_SOC15_OFFSET(GC, GET_INST(GC, j), regVM_CONTEXT1_CNTL,
 					    i * hub->ctx_distance, tmp);
 			WREG32_SOC15_OFFSET(GC, GET_INST(GC, j),

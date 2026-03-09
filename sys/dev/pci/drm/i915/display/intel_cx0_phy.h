@@ -7,17 +7,15 @@
 #define __INTEL_CX0_PHY_H__
 
 #include <linux/types.h>
-#include <linux/bitfield.h>
-#include <linux/bits.h>
 
 enum icl_port_dpll_id;
-struct drm_i915_private;
 struct intel_atomic_state;
 struct intel_c10pll_state;
 struct intel_c20pll_state;
-struct intel_cx0pll_state;
 struct intel_crtc;
 struct intel_crtc_state;
+struct intel_cx0pll_state;
+struct intel_display;
 struct intel_encoder;
 struct intel_hdmi;
 
@@ -35,7 +33,7 @@ void intel_cx0pll_readout_hw_state(struct intel_encoder *encoder,
 int intel_cx0pll_calc_port_clock(struct intel_encoder *encoder,
 				 const struct intel_cx0pll_state *pll_state);
 
-void intel_cx0pll_dump_hw_state(struct drm_i915_private *dev_priv,
+void intel_cx0pll_dump_hw_state(struct intel_display *display,
 				const struct intel_cx0pll_state *hw_state);
 void intel_cx0pll_state_verify(struct intel_atomic_state *state,
 			       struct intel_crtc *crtc);
@@ -43,7 +41,9 @@ bool intel_cx0pll_compare_hw_state(const struct intel_cx0pll_state *a,
 				   const struct intel_cx0pll_state *b);
 void intel_cx0_phy_set_signal_levels(struct intel_encoder *encoder,
 				     const struct intel_crtc_state *crtc_state);
-int intel_cx0_phy_check_hdmi_link_rate(struct intel_hdmi *hdmi, int clock);
 int intel_mtl_tbt_calc_port_clock(struct intel_encoder *encoder);
+void intel_cx0_pll_power_save_wa(struct intel_display *display);
+void intel_lnl_mac_transmit_lfps(struct intel_encoder *encoder,
+				 const struct intel_crtc_state *crtc_state);
 
 #endif /* __INTEL_CX0_PHY_H__ */

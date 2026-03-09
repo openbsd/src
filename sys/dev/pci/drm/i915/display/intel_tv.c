@@ -33,14 +33,15 @@
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_edid.h>
+#include <drm/drm_print.h>
+#include <drm/drm_probe_helper.h>
 
-#include "i915_drv.h"
-#include "i915_reg.h"
 #include "intel_connector.h"
 #include "intel_crtc.h"
 #include "intel_de.h"
-#include "intel_display_irq.h"
 #include "intel_display_driver.h"
+#include "intel_display_irq.h"
+#include "intel_display_regs.h"
 #include "intel_display_types.h"
 #include "intel_dpll.h"
 #include "intel_hotplug.h"
@@ -956,15 +957,14 @@ static const struct tv_mode *intel_tv_mode_find(const struct drm_connector_state
 
 static enum drm_mode_status
 intel_tv_mode_valid(struct drm_connector *connector,
-		    struct drm_display_mode *mode)
+		    const struct drm_display_mode *mode)
 {
 	struct intel_display *display = to_intel_display(connector->dev);
-	struct drm_i915_private *i915 = to_i915(connector->dev);
 	const struct tv_mode *tv_mode = intel_tv_mode_find(connector->state);
 	int max_dotclk = display->cdclk.max_dotclk_freq;
 	enum drm_mode_status status;
 
-	status = intel_cpu_transcoder_mode_valid(i915, mode);
+	status = intel_cpu_transcoder_mode_valid(display, mode);
 	if (status != MODE_OK)
 		return status;
 
@@ -1092,7 +1092,6 @@ intel_tv_get_config(struct intel_encoder *encoder,
 		    struct intel_crtc_state *pipe_config)
 {
 	struct intel_display *display = to_intel_display(encoder);
-	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	struct drm_display_mode *adjusted_mode =
 		&pipe_config->hw.adjusted_mode;
 	struct drm_display_mode mode = {};
@@ -1166,7 +1165,7 @@ intel_tv_get_config(struct intel_encoder *encoder,
 		adjusted_mode->crtc_clock /= 2;
 
 	/* pixel counter doesn't work on i965gm TV output */
-	if (IS_I965GM(dev_priv))
+	if (display->platform.i965gm)
 		pipe_config->mode_flags |=
 			I915_MODE_FLAG_USE_SCANLINE_COUNTER;
 }
@@ -1196,7 +1195,6 @@ intel_tv_compute_config(struct intel_encoder *encoder,
 	struct intel_atomic_state *state =
 		to_intel_atomic_state(pipe_config->uapi.state);
 	struct intel_crtc *crtc = to_intel_crtc(pipe_config->uapi.crtc);
-	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	struct intel_tv_connector_state *tv_conn_state =
 		to_intel_tv_connector_state(conn_state);
 	const struct tv_mode *tv_mode = intel_tv_mode_find(conn_state);
@@ -1348,7 +1346,7 @@ intel_tv_compute_config(struct intel_encoder *encoder,
 	adjusted_mode->name[0] = '\0';
 
 	/* pixel counter doesn't work on i965gm TV output */
-	if (IS_I965GM(dev_priv))
+	if (display->platform.i965gm)
 		pipe_config->mode_flags |=
 			I915_MODE_FLAG_USE_SCANLINE_COUNTER;
 
@@ -1437,7 +1435,6 @@ static void intel_tv_pre_enable(struct intel_atomic_state *state,
 				const struct drm_connector_state *conn_state)
 {
 	struct intel_display *display = to_intel_display(encoder);
-	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	struct intel_crtc *crtc = to_intel_crtc(pipe_config->uapi.crtc);
 	struct intel_tv *intel_tv = enc_to_tv(encoder);
 	const struct intel_tv_connector_state *tv_conn_state =
@@ -1524,7 +1521,7 @@ static void intel_tv_pre_enable(struct intel_atomic_state *state,
 		tv_mode->dda3_inc << TV_SCDDA3_INC_SHIFT;
 
 	/* Enable two fixes for the chips that need them. */
-	if (IS_I915GM(dev_priv))
+	if (display->platform.i915gm)
 		tv_ctl |= TV_ENC_C0_FIX | TV_ENC_SDP_FIX;
 
 	set_tv_mode_timings(display, tv_mode, burst_ena);
@@ -1544,7 +1541,7 @@ static void intel_tv_pre_enable(struct intel_atomic_state *state,
 		intel_de_write(display, TV_CLR_LEVEL,
 			       ((video_levels->black << TV_BLACK_LEVEL_SHIFT) | (video_levels->blank << TV_BLANK_LEVEL_SHIFT)));
 
-	assert_transcoder_disabled(dev_priv, pipe_config->cpu_transcoder);
+	assert_transcoder_disabled(display, pipe_config->cpu_transcoder);
 
 	/* Filter ctl must be set before TV_WIN_SIZE */
 	tv_filter_ctl = TV_AUTO_SCALE;
@@ -1588,19 +1585,17 @@ intel_tv_detect_type(struct intel_tv *intel_tv,
 {
 	struct intel_display *display = to_intel_display(connector->dev);
 	struct intel_crtc *crtc = to_intel_crtc(connector->state->crtc);
-	struct drm_device *dev = connector->dev;
-	struct drm_i915_private *dev_priv = to_i915(dev);
 	u32 tv_ctl, save_tv_ctl;
 	u32 tv_dac, save_tv_dac;
 	int type;
 
 	/* Disable TV interrupts around load detect or we'll recurse */
 	if (connector->polled & DRM_CONNECTOR_POLL_HPD) {
-		spin_lock_irq(&dev_priv->irq_lock);
-		i915_disable_pipestat(dev_priv, 0,
+		spin_lock_irq(&display->irq.lock);
+		i915_disable_pipestat(display, 0,
 				      PIPE_HOTPLUG_INTERRUPT_STATUS |
 				      PIPE_HOTPLUG_TV_INTERRUPT_STATUS);
-		spin_unlock_irq(&dev_priv->irq_lock);
+		spin_unlock_irq(&display->irq.lock);
 	}
 
 	save_tv_dac = tv_dac = intel_de_read(display, TV_DAC);
@@ -1626,7 +1621,7 @@ intel_tv_detect_type(struct intel_tv *intel_tv,
 	 * The TV sense state should be cleared to zero on cantiga platform. Otherwise
 	 * the TV is misdetected. This is hardware requirement.
 	 */
-	if (IS_GM45(dev_priv))
+	if (display->platform.gm45)
 		tv_dac &= ~(TVDAC_STATE_CHG_EN | TVDAC_A_SENSE_CTL |
 			    TVDAC_B_SENSE_CTL | TVDAC_C_SENSE_CTL);
 
@@ -1671,11 +1666,11 @@ intel_tv_detect_type(struct intel_tv *intel_tv,
 
 	/* Restore interrupt config */
 	if (connector->polled & DRM_CONNECTOR_POLL_HPD) {
-		spin_lock_irq(&dev_priv->irq_lock);
-		i915_enable_pipestat(dev_priv, 0,
+		spin_lock_irq(&display->irq.lock);
+		i915_enable_pipestat(display, 0,
 				     PIPE_HOTPLUG_INTERRUPT_STATUS |
 				     PIPE_HOTPLUG_TV_INTERRUPT_STATUS);
-		spin_unlock_irq(&dev_priv->irq_lock);
+		spin_unlock_irq(&display->irq.lock);
 	}
 
 	return type;
@@ -1715,7 +1710,6 @@ intel_tv_detect(struct drm_connector *connector,
 		bool force)
 {
 	struct intel_display *display = to_intel_display(connector->dev);
-	struct drm_i915_private *i915 = to_i915(connector->dev);
 	struct intel_tv *intel_tv = intel_attached_tv(to_intel_connector(connector));
 	enum drm_connector_status status;
 	int type;
@@ -1723,10 +1717,10 @@ intel_tv_detect(struct drm_connector *connector,
 	drm_dbg_kms(display->drm, "[CONNECTOR:%d:%s] force=%d\n",
 		    connector->base.id, connector->name, force);
 
-	if (!intel_display_device_enabled(i915))
+	if (!intel_display_device_enabled(display))
 		return connector_status_disconnected;
 
-	if (!intel_display_driver_check_access(i915))
+	if (!intel_display_driver_check_access(display))
 		return connector->status;
 
 	if (force) {

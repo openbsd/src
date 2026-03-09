@@ -255,7 +255,7 @@ int smu_v11_0_get_dpm_ultimate_freq(struct smu_context *smu, enum smu_clk_type c
 						 uint32_t *min, uint32_t *max);
 
 int smu_v11_0_set_soft_freq_limited_range(struct smu_context *smu, enum smu_clk_type clk_type,
-			    uint32_t min, uint32_t max);
+					  uint32_t min, uint32_t max, bool automatic);
 
 int smu_v11_0_set_hard_freq_limited_range(struct smu_context *smu,
 					  enum smu_clk_type clk_type,
@@ -280,11 +280,6 @@ int smu_v11_0_get_dpm_level_count(struct smu_context *smu,
 int smu_v11_0_set_single_dpm_table(struct smu_context *smu,
 				   enum smu_clk_type clk_type,
 				   struct smu_11_0_dpm_table *single_dpm_table);
-
-int smu_v11_0_get_dpm_level_range(struct smu_context *smu,
-				  enum smu_clk_type clk_type,
-				  uint32_t *min_value,
-				  uint32_t *max_value);
 
 int smu_v11_0_get_current_pcie_link_width_level(struct smu_context *smu);
 

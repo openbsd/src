@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmalloc.h,v 1.7 2024/03/20 02:42:17 jsg Exp $	*/
+/*	$OpenBSD: vmalloc.h,v 1.8 2026/03/09 23:58:03 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -32,6 +32,22 @@ static inline void *
 vmalloc(unsigned long size)
 {
 	return malloc(size, M_DRM, M_WAITOK | M_CANFAIL);
+}
+
+static inline void *
+vmalloc_array(size_t n, size_t size)
+{
+	if (n != 0 && SIZE_MAX / n < size)
+		return NULL;
+	return malloc(n * size, M_DRM, M_WAITOK | M_CANFAIL);
+}
+
+static inline void *
+vcalloc(size_t n, size_t size)
+{
+	if (n != 0 && SIZE_MAX / n < size)
+		return NULL;
+	return malloc(n * size, M_DRM, M_WAITOK | M_CANFAIL | M_ZERO);
 }
 
 static inline void *

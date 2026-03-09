@@ -9,6 +9,7 @@
 #include <linux/types.h>
 #include <linux/workqueue.h>
 #include <linux/gfp.h>
+#include <linux/cleanup.h>
 
 #include <linux/processor.h>	/* for CACHELINESIZE */
 
@@ -50,5 +51,7 @@ kfree(const void *objp)
 {
 	free((void *)objp, M_DRM, 0);
 }
+
+DEFINE_FREE(kfree, void *, if (_T) kfree(_T))
 
 #endif

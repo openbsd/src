@@ -49,7 +49,7 @@
 #include "dcn20/dcn20_optc.h"
 #include "dce/dmub_hw_lock_mgr.h"
 #include "dcn32/dcn32_resource.h"
-#include "link.h"
+#include "link_service.h"
 #include "../dcn20/dcn20_hwseq.h"
 #include "dc_state_priv.h"
 
@@ -316,10 +316,12 @@ bool dcn32_apply_idle_power_optimizations(struct dc *dc, bool enable)
 			cmd.cab.cab_alloc_ways = (uint8_t)ways;
 
 			dc_wake_and_execute_dmub_cmd(dc->ctx, &cmd, DM_DMUB_WAIT_TYPE_NO_WAIT);
+			DC_LOG_MALL("enable scanout from MALL");
 
 			return true;
 		}
 
+		DC_LOG_MALL("surface cannot fit in CAB, disabling scanout from MALL\n");
 		return false;
 	}
 
@@ -439,6 +441,7 @@ bool dcn32_set_mpc_shaper_3dlut(
 {
 	struct dpp *dpp_base = pipe_ctx->plane_res.dpp;
 	int mpcc_id = pipe_ctx->plane_res.hubp->inst;
+	struct dc *dc = pipe_ctx->stream->ctx->dc;
 	struct mpc *mpc = pipe_ctx->stream_res.opp->ctx->dc->res_pool->mpc;
 	bool result = false;
 
@@ -458,13 +461,13 @@ bool dcn32_set_mpc_shaper_3dlut(
 	if (stream->lut3d_func &&
 		stream->lut3d_func->state.bits.initialized == 1) {
 
-		result = mpc->funcs->program_3dlut(mpc,
-								&stream->lut3d_func->lut_3d,
-								mpcc_id);
+		result = mpc->funcs->program_3dlut(mpc,	&stream->lut3d_func->lut_3d, mpcc_id);
+		if (!result)
+			DC_LOG_ERROR("%s: program_3dlut failed\n", __func__);
 
-		result = mpc->funcs->program_shaper(mpc,
-								shaper_lut,
-								mpcc_id);
+		result = mpc->funcs->program_shaper(mpc, shaper_lut, mpcc_id);
+		if (!result)
+			DC_LOG_ERROR("%s: program_shaper failed\n", __func__);
 	}
 
 	return result;
@@ -483,8 +486,9 @@ bool dcn32_set_mcm_luts(
 	if (plane_state->blend_tf.type == TF_TYPE_HWPWL)
 		lut_params = &plane_state->blend_tf.pwl;
 	else if (plane_state->blend_tf.type == TF_TYPE_DISTRIBUTED_POINTS) {
-		result = cm3_helper_translate_curve_to_hw_format(&plane_state->blend_tf,
-				&dpp_base->regamma_params, false);
+		result = cm3_helper_translate_curve_to_hw_format(plane_state->ctx,
+								 &plane_state->blend_tf,
+								 &dpp_base->regamma_params, false);
 		if (!result)
 			return result;
 
@@ -498,9 +502,9 @@ bool dcn32_set_mcm_luts(
 		lut_params = &plane_state->in_shaper_func.pwl;
 	else if (plane_state->in_shaper_func.type == TF_TYPE_DISTRIBUTED_POINTS) {
 		// TODO: dpp_base replace
-		ASSERT(false);
-		cm3_helper_translate_curve_to_hw_format(&plane_state->in_shaper_func,
-				&dpp_base->shaper_params, true);
+		cm3_helper_translate_curve_to_hw_format(plane_state->ctx,
+							&plane_state->in_shaper_func,
+							&dpp_base->shaper_params, true);
 		lut_params = &dpp_base->shaper_params;
 	}
 
@@ -540,8 +544,9 @@ bool dcn32_set_input_transfer_func(struct dc *dc,
 	if (plane_state->in_transfer_func.type == TF_TYPE_HWPWL)
 		params = &plane_state->in_transfer_func.pwl;
 	else if (plane_state->in_transfer_func.type == TF_TYPE_DISTRIBUTED_POINTS &&
-		cm3_helper_translate_curve_to_hw_format(&plane_state->in_transfer_func,
-				&dpp_base->degamma_params, false))
+		cm3_helper_translate_curve_to_hw_format(plane_state->ctx,
+							&plane_state->in_transfer_func,
+							&dpp_base->degamma_params, false))
 		params = &dpp_base->degamma_params;
 
 	dpp_base->funcs->dpp_program_gamcor_lut(dpp_base, params);
@@ -572,7 +577,7 @@ bool dcn32_set_output_transfer_func(struct dc *dc,
 				params = &stream->out_transfer_func.pwl;
 			else if (pipe_ctx->stream->out_transfer_func.type ==
 					TF_TYPE_DISTRIBUTED_POINTS &&
-					cm3_helper_translate_curve_to_hw_format(
+					cm3_helper_translate_curve_to_hw_format(stream->ctx,
 					&stream->out_transfer_func,
 					&mpc->blender_params, false))
 				params = &mpc->blender_params;
@@ -984,6 +989,7 @@ void dcn32_init_hw(struct dc *dc)
 		dc->caps.dmub_caps.subvp_psr = dc->ctx->dmub_srv->dmub->feature_caps.subvp_psr_support;
 		dc->caps.dmub_caps.gecc_enable = dc->ctx->dmub_srv->dmub->feature_caps.gecc_enable;
 		dc->caps.dmub_caps.mclk_sw = dc->ctx->dmub_srv->dmub->feature_caps.fw_assisted_mclk_switch_ver;
+		dc->caps.dmub_caps.aux_backlight_support = dc->ctx->dmub_srv->dmub->feature_caps.abm_aux_backlight_support;
 
 		/* for DCN401 testing only */
 		dc->caps.dmub_caps.fams_ver = dc->ctx->dmub_srv->dmub->feature_caps.fw_assisted_mclk_switch_ver;
@@ -1048,7 +1054,8 @@ void dcn32_update_dsc_on_stream(struct pipe_ctx *pipe_ctx, bool enable)
 		}
 
 		/* Enable DSC hw block */
-		dsc_cfg.pic_width = (stream->timing.h_addressable + stream->timing.h_border_left + stream->timing.h_border_right) / opp_cnt;
+		dsc_cfg.pic_width = (stream->timing.h_addressable + pipe_ctx->dsc_padding_params.dsc_hactive_padding +
+				stream->timing.h_border_left + stream->timing.h_border_right) / opp_cnt;
 		dsc_cfg.pic_height = stream->timing.v_addressable + stream->timing.v_border_top + stream->timing.v_border_bottom;
 		dsc_cfg.pixel_encoding = stream->timing.pixel_encoding;
 		dsc_cfg.color_depth = stream->timing.display_color_depth;
@@ -1058,15 +1065,17 @@ void dcn32_update_dsc_on_stream(struct pipe_ctx *pipe_ctx, bool enable)
 		dsc_cfg.dc_dsc_cfg.num_slices_h /= opp_cnt;
 
 		if (should_use_dto_dscclk)
-			dccg->funcs->set_dto_dscclk(dccg, dsc->inst);
+			dccg->funcs->set_dto_dscclk(dccg, dsc->inst, dsc_cfg.dc_dsc_cfg.num_slices_h);
 		dsc->funcs->dsc_set_config(dsc, &dsc_cfg, &dsc_optc_cfg);
 		dsc->funcs->dsc_enable(dsc, pipe_ctx->stream_res.opp->inst);
 		for (odm_pipe = pipe_ctx->next_odm_pipe; odm_pipe; odm_pipe = odm_pipe->next_odm_pipe) {
 			struct display_stream_compressor *odm_dsc = odm_pipe->stream_res.dsc;
 
 			ASSERT(odm_dsc);
+			if (!odm_dsc)
+				continue;
 			if (should_use_dto_dscclk)
-				dccg->funcs->set_dto_dscclk(dccg, odm_dsc->inst);
+				dccg->funcs->set_dto_dscclk(dccg, odm_dsc->inst, dsc_cfg.dc_dsc_cfg.num_slices_h);
 			odm_dsc->funcs->dsc_set_config(odm_dsc, &dsc_cfg, &dsc_optc_cfg);
 			odm_dsc->funcs->dsc_enable(odm_dsc, odm_pipe->stream_res.opp->inst);
 		}
@@ -1176,6 +1185,7 @@ unsigned int dcn32_calculate_dccg_k1_k2_values(struct pipe_ctx *pipe_ctx, unsign
 	struct dc_stream_state *stream = pipe_ctx->stream;
 	unsigned int odm_combine_factor = 0;
 	bool two_pix_per_container = false;
+	struct dce_hwseq *hws = stream->ctx->dc->hwseq;
 
 	two_pix_per_container = pipe_ctx->stream_res.tg->funcs->is_two_pixels_per_container(&stream->timing);
 	odm_combine_factor = get_odm_config(pipe_ctx, NULL);
@@ -1196,7 +1206,8 @@ unsigned int dcn32_calculate_dccg_k1_k2_values(struct pipe_ctx *pipe_ctx, unsign
 		} else {
 			*k1_div = PIXEL_RATE_DIV_BY_1;
 			*k2_div = PIXEL_RATE_DIV_BY_4;
-			if ((odm_combine_factor == 2) || dcn32_is_dp_dig_pixel_rate_div_policy(pipe_ctx))
+			if ((odm_combine_factor == 2) || (hws->funcs.is_dp_dig_pixel_rate_div_policy &&
+				hws->funcs.is_dp_dig_pixel_rate_div_policy(pipe_ctx)))
 				*k2_div = PIXEL_RATE_DIV_BY_2;
 		}
 	}
@@ -1319,7 +1330,8 @@ void dcn32_unblank_stream(struct pipe_ctx *pipe_ctx,
 			params.timing.pix_clk_100hz /= 2;
 			params.pix_per_cycle = 2;
 		}
-		pipe_ctx->stream_res.stream_enc->funcs->dp_set_odm_combine(
+		if (pipe_ctx->stream_res.stream_enc->funcs->dp_set_odm_combine)
+			pipe_ctx->stream_res.stream_enc->funcs->dp_set_odm_combine(
 				pipe_ctx->stream_res.stream_enc, params.pix_per_cycle > 1);
 		pipe_ctx->stream_res.stream_enc->funcs->dp_unblank(link, pipe_ctx->stream_res.stream_enc, &params);
 	}
@@ -1396,12 +1408,12 @@ void dcn32_disable_link_output(struct dc_link *link,
 
 	link_hwss->disable_link_output(link, link_res, signal);
 	link->phy_state.symclk_state = SYMCLK_OFF_TX_OFF;
-
-	if (signal == SIGNAL_TYPE_EDP &&
-			link->dc->hwss.edp_backlight_control &&
-			!link->skip_implict_edp_power_control)
-		link->dc->hwss.edp_power_control(link, false);
-	else if (dmcu != NULL && dmcu->funcs->lock_phy)
+	/*
+	 * Add the logic to extract BOTH power up and power down sequences
+	 * from enable/disable link output and only call edp panel control
+	 * in enable_link_dp and disable_link_dp once.
+	 */
+	if (dmcu != NULL && dmcu->funcs->unlock_phy)
 		dmcu->funcs->unlock_phy(dmcu);
 
 	dc->link_srv->dp_trace_source_sequence(link, DPCD_SOURCE_SEQ_AFTER_DISABLE_LINK_PHY);
@@ -1695,52 +1707,6 @@ void dcn32_init_blank(
 	}
 
 	if (opp)
-		hws->funcs.wait_for_blank_complete(opp);
-}
-
-void dcn32_blank_phantom(struct dc *dc,
-		struct timing_generator *tg,
-		int width,
-		int height)
-{
-	struct dce_hwseq *hws = dc->hwseq;
-	enum dc_color_space color_space;
-	struct tg_color black_color = {0};
-	struct output_pixel_processor *opp = NULL;
-	uint32_t num_opps, opp_id_src0, opp_id_src1;
-	uint32_t otg_active_width, otg_active_height;
-	uint32_t i;
-
-	/* program opp dpg blank color */
-	color_space = COLOR_SPACE_SRGB;
-	color_space_to_black_color(dc, color_space, &black_color);
-
-	otg_active_width = width;
-	otg_active_height = height;
-
-	/* get the OPTC source */
-	tg->funcs->get_optc_source(tg, &num_opps, &opp_id_src0, &opp_id_src1);
-	ASSERT(opp_id_src0 < dc->res_pool->res_cap->num_opp);
-
-	for (i = 0; i < dc->res_pool->res_cap->num_opp; i++) {
-		if (dc->res_pool->opps[i] != NULL && dc->res_pool->opps[i]->inst == opp_id_src0) {
-			opp = dc->res_pool->opps[i];
-			break;
-		}
-	}
-
-	if (opp && opp->funcs->opp_set_disp_pattern_generator)
-		opp->funcs->opp_set_disp_pattern_generator(
-				opp,
-				CONTROLLER_DP_TEST_PATTERN_SOLID_COLOR,
-				CONTROLLER_DP_COLOR_SPACE_UDEFINED,
-				COLOR_DEPTH_UNDEFINED,
-				&black_color,
-				otg_active_width,
-				otg_active_height,
-				0);
-
-	if (tg->funcs->is_tg_enabled(tg))
 		hws->funcs.wait_for_blank_complete(opp);
 }
 

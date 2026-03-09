@@ -360,10 +360,10 @@ void dpp3_cnv_setup (
 
 		tbl_entry.color_space = input_color_space;
 
-		if (color_space >= COLOR_SPACE_YCBCR601)
-			select = INPUT_CSC_SELECT_ICSC;
-		else
+		if (dpp3_should_bypass_post_csc_for_colorspace(color_space))
 			select = INPUT_CSC_SELECT_BYPASS;
+		else
+			select = INPUT_CSC_SELECT_ICSC;
 
 		dpp3_program_post_csc(dpp_base, color_space, select,
 				      &tbl_entry);
@@ -578,9 +578,6 @@ static void dpp3_power_on_blnd_lut(
 			dpp_base->ctx->dc->optimized_required = true;
 			dpp_base->deferred_reg_writes.bits.disable_blnd_lut = true;
 		}
-	} else {
-		REG_SET(CM_MEM_PWR_CTRL, 0,
-				BLNDGAM_MEM_PWR_FORCE, power_on == true ? 0 : 1);
 	}
 }
 
@@ -790,8 +787,7 @@ static bool dpp3_program_blnd_lut(struct dpp *dpp_base,
 
 	if (params == NULL) {
 		REG_SET(CM_BLNDGAM_CONTROL, 0, CM_BLNDGAM_MODE, 0);
-		if (dpp_base->ctx->dc->debug.enable_mem_low_power.bits.cm)
-			dpp3_power_on_blnd_lut(dpp_base, false);
+		dpp3_power_on_blnd_lut(dpp_base, false);
 		return false;
 	}
 
@@ -1204,8 +1200,7 @@ static bool dpp3_program_shaper(struct dpp *dpp_base,
 
 	if (params == NULL) {
 		REG_SET(CM_SHAPER_CONTROL, 0, CM_SHAPER_LUT_MODE, 0);
-		if (dpp_base->ctx->dc->debug.enable_mem_low_power.bits.cm)
-			dpp3_power_on_shaper(dpp_base, false);
+		dpp3_power_on_shaper(dpp_base, false);
 		return false;
 	}
 
@@ -1399,8 +1394,7 @@ static bool dpp3_program_3dlut(struct dpp *dpp_base,
 
 	if (params == NULL) {
 		dpp3_set_3dlut_mode(dpp_base, LUT_BYPASS, false, false);
-		if (dpp_base->ctx->dc->debug.enable_mem_low_power.bits.cm)
-			dpp3_power_on_hdr3dlut(dpp_base, false);
+		dpp3_power_on_hdr3dlut(dpp_base, false);
 		return false;
 	}
 
@@ -1527,3 +1521,18 @@ bool dpp3_construct(
 	return true;
 }
 
+bool dpp3_should_bypass_post_csc_for_colorspace(enum dc_color_space dc_color_space)
+{
+	switch (dc_color_space) {
+	case COLOR_SPACE_UNKNOWN:
+	case COLOR_SPACE_SRGB:
+	case COLOR_SPACE_XR_RGB:
+	case COLOR_SPACE_SRGB_LIMITED:
+	case COLOR_SPACE_MSREF_SCRGB:
+	case COLOR_SPACE_2020_RGB_FULLRANGE:
+	case COLOR_SPACE_2020_RGB_LIMITEDRANGE:
+		return true;
+	default:
+		return false;
+	}
+}

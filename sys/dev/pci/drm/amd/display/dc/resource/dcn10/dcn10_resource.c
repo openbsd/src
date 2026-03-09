@@ -23,6 +23,7 @@
  *
  */
 
+#include "core_status.h"
 #include "dm_services.h"
 #include "dc.h"
 
@@ -533,7 +534,6 @@ static const struct dc_debug_options debug_defaults_drv = {
 		.sanity_checks = true,
 		.disable_dmcu = false,
 		.force_abm_enable = false,
-		.timing_trace = false,
 		.clock_trace = true,
 
 		/* raven smu dones't allow 0 disp clk,
@@ -558,18 +558,6 @@ static const struct dc_debug_options debug_defaults_drv = {
 		.underflow_assert_delay_us = 0xFFFFFFFF,
 		.enable_legacy_fast_update = true,
 		.using_dml2 = false,
-};
-
-static const struct dc_debug_options debug_defaults_diags = {
-		.disable_dmcu = false,
-		.force_abm_enable = false,
-		.timing_trace = true,
-		.clock_trace = true,
-		.disable_stutter = true,
-		.disable_pplib_clock_request = true,
-		.disable_pplib_wm_range = true,
-		.underflow_assert_delay_us = 0xFFFFFFFF,
-		.enable_legacy_fast_update = true,
 };
 
 static void dcn10_dpp_destroy(struct dpp **dpp)
@@ -751,7 +739,7 @@ static struct link_encoder *dcn10_link_encoder_create(
 		kzalloc(sizeof(struct dcn10_link_encoder), GFP_KERNEL);
 	int link_regs_id;
 
-	if (!enc10)
+	if (!enc10 || enc_init_data->hpd_source >= ARRAY_SIZE(link_enc_hpd_regs))
 		return NULL;
 
 	link_regs_id =
@@ -1138,18 +1126,18 @@ static void dcn10_destroy_resource_pool(struct resource_pool **pool)
 	*pool = NULL;
 }
 
-static bool dcn10_validate_bandwidth(
+static enum dc_status dcn10_validate_bandwidth(
 		struct dc *dc,
 		struct dc_state *context,
-		bool fast_validate)
+		enum dc_validate_mode validate_mode)
 {
 	bool voltage_supported;
 
 	DC_FP_START();
-	voltage_supported = dcn_validate_bandwidth(dc, context, fast_validate);
+	voltage_supported = dcn_validate_bandwidth(dc, context, validate_mode);
 	DC_FP_END();
 
-	return voltage_supported;
+	return voltage_supported ? DC_OK : DC_FAIL_BANDWIDTH_VALIDATE;
 }
 
 static enum dc_status dcn10_validate_plane(const struct dc_plane_state *plane_state, struct dc_caps *caps)
@@ -1258,6 +1246,10 @@ struct stream_encoder *dcn10_find_first_free_match_stream_enc_for_link(
 			if (link->ep_type == DISPLAY_ENDPOINT_PHY && pool->stream_enc[i]->id ==
 					link->link_enc->preferred_engine)
 				return pool->stream_enc[i];
+
+			if (link->ep_type == DISPLAY_ENDPOINT_USB4_DPIA && pool->stream_enc[i]->id ==
+					link->dpia_preferred_eng_id)
+				return pool->stream_enc[i];
 		}
 	}
 
@@ -1269,6 +1261,11 @@ struct stream_encoder *dcn10_find_first_free_match_stream_enc_for_link(
 		return pool->stream_enc[j];
 
 	return NULL;
+}
+
+unsigned int dcn10_get_vstartup_for_pipe(struct pipe_ctx *pipe_ctx)
+{
+	return pipe_ctx->pipe_dlg_param.vstartup_start;
 }
 
 static const struct dc_cap_funcs cap_funcs = {
@@ -1285,7 +1282,8 @@ static const struct resource_funcs dcn10_res_pool_funcs = {
 	.validate_global = dcn10_validate_global,
 	.add_stream_to_ctx = dcn10_add_stream_to_ctx,
 	.patch_unknown_plane_state = dcn10_patch_unknown_plane_state,
-	.find_first_free_match_stream_enc_for_link = dcn10_find_first_free_match_stream_enc_for_link
+	.find_first_free_match_stream_enc_for_link = dcn10_find_first_free_match_stream_enc_for_link,
+	.get_vstartup_for_pipe = dcn10_get_vstartup_for_pipe
 };
 
 static uint32_t read_pipe_fuses(struct dc_context *ctx)
@@ -1400,8 +1398,6 @@ static bool dcn10_resource_construct(
 
 	if (dc->ctx->dce_environment == DCE_ENV_PRODUCTION_DRV)
 		dc->debug = debug_defaults_drv;
-	else
-		dc->debug = debug_defaults_diags;
 
 	/*************************************************
 	 *  Create resources                             *
