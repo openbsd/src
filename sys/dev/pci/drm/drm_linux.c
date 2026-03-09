@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.131 2026/03/08 23:53:57 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.132 2026/03/09 00:58:17 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -955,13 +955,13 @@ ida_alloc_range(struct ida *ida, unsigned int start, unsigned int end, gfp_t gfp
 int
 ida_alloc_min(struct ida *ida, unsigned int min, gfp_t gfp)
 {
-	return idr_alloc(&ida->idr, NULL, min, INT_MAX, gfp);
+	return ida_alloc_range(ida, min, INT_MAX, gfp);
 }
 
 int
 ida_alloc_max(struct ida *ida, unsigned int max, gfp_t gfp)
 {
-	return idr_alloc(&ida->idr, NULL, 0, max - 1, gfp);
+	return ida_alloc_range(ida, 0, max, gfp);
 }
 
 void
