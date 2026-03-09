@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.56 2025/12/11 04:17:17 bket Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.57 2026/03/09 14:31:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1604,7 +1604,9 @@ yylex_token_tilde(char **buf, size_t *len)
 
 	if (*name == '\0') {
 		envent = environ_find(global_environ, "HOME");
-		if (envent != NULL && *envent->value != '\0')
+		if (envent != NULL &&
+		    envent->value != NULL &&
+		    *envent->value != '\0')
 			home = envent->value;
 		else if ((pw = getpwuid(getuid())) != NULL)
 			home = pw->pw_dir;
