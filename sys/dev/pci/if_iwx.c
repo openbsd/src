@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.204 2026/03/03 17:46:54 kirill Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.205 2026/03/09 12:40:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1180,6 +1180,9 @@ iwx_fw_info_free(struct iwx_fw_info *fw)
 	free(fw->iml, M_DEVBUF, fw->iml_len);
 	fw->iml = NULL;
 	fw->iml_len = 0;
+	free(fw->pnvm, M_DEVBUF, fw->pnvm_len);
+	fw->pnvm = NULL;
+	fw->pnvm_len = 0;
 }
 
 #define IWX_FW_ADDR_CACHE_CONTROL 0xC0000000
@@ -1546,6 +1549,19 @@ iwx_read_firmware(struct iwx_softc *sc)
 			break;
 
 		case IWX_UCODE_TLV_FW_RECOVERY_INFO:
+			break;
+
+		case IWX_UCODE_TLV_PNVM_DATA:
+			if (fw->pnvm != NULL)
+				break;
+			fw->pnvm = malloc(tlv_len, M_DEVBUF,
+			    M_WAITOK | M_CANFAIL);
+			if (fw->pnvm == NULL) {
+				err = ENOMEM;
+				goto parse_out;
+			}
+			memcpy(fw->pnvm, tlv_data, tlv_len);
+			fw->pnvm_len = tlv_len;
 			break;
 
 		case IWX_UCODE_TLV_FW_FSEQ_VERSION:
@@ -4292,6 +4308,7 @@ iwx_load_pnvm(struct iwx_softc *sc)
 	int s, err = 0;
 	u_char *pnvm_data = NULL;
 	size_t pnvm_size = 0;
+	struct iwx_fw_info *fw = &sc->sc_fw;
 
 	if (sc->sc_sku_id[0] == 0 &&
 	    sc->sc_sku_id[1] == 0 &&
@@ -4300,18 +4317,28 @@ iwx_load_pnvm(struct iwx_softc *sc)
 
 	if (sc->sc_pnvm_name) {
 		if (sc->pnvm_dma.vaddr == NULL) {
-			err = loadfirmware(sc->sc_pnvm_name,
-			    &pnvm_data, &pnvm_size);
-			if (err) {
-				printf("%s: could not read %s (error %d)\n",
-				    DEVNAME(sc), sc->sc_pnvm_name, err);
-				return err;
-			}
+			/* Prefer PNVM data embedded in firmware image. */
+			if (fw->pnvm) {
+				err = iwx_pnvm_parse(sc, fw->pnvm,
+				    fw->pnvm_len);
+				if (err && err != ENOENT)
+					return err;
+			} else {
+				err = loadfirmware(sc->sc_pnvm_name,
+				    &pnvm_data, &pnvm_size);
+				if (err) {
+					printf("%s: could not read %s "
+					    "(error %d)\n",
+					    DEVNAME(sc), sc->sc_pnvm_name,
+					    err);
+					return err;
+				}
 
-			err = iwx_pnvm_parse(sc, pnvm_data, pnvm_size);
-			if (err && err != ENOENT) {
-				free(pnvm_data, M_DEVBUF, pnvm_size);
-				return err;
+				err = iwx_pnvm_parse(sc, pnvm_data, pnvm_size);
+				if (err && err != ENOENT) {
+					free(pnvm_data, M_DEVBUF, pnvm_size);
+					return err;
+				}
 			}
 		} else
 			iwx_ctxt_info_gen3_set_pnvm(sc);

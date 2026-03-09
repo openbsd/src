@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.44 2026/03/02 10:00:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.45 2026/03/09 12:40:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -173,6 +173,13 @@ struct iwx_fw_info {
 	/* Copy of firmware image loader found in file. */
 	uint8_t *iml;
 	size_t iml_len;
+
+	/*
+	 * Copy of PNVM image found in file.
+	 * Used in preference to external .pnvm file if present.
+	 */
+	uint8_t *pnvm;
+	size_t pnvm_len;
 };
 
 struct iwx_nvm_data {
