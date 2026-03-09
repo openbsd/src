@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.51 2026/02/16 08:42:57 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.52 2026/03/09 14:33:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1045,6 +1045,9 @@ control_check_subs_timer(__unused int fd, __unused short events, void *data)
 
 	log_debug("%s: timer fired", __func__);
 	evtimer_add(&cs->subs_timer, &tv);
+
+	if (s == NULL)
+		return;
 
 	/* Find which subscription types are present. */
 	RB_FOREACH(csub, control_subs, &cs->subs) {
