@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.72 2026/02/27 08:25:12 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.73 2026/03/09 14:37:26 tb Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -195,10 +195,6 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	sort_crit.reversed = args_has(args, 'r');
 
-	prefix = cmd_list_keys_get_prefix(args);
-	single = args_has(args, '1');
-	notes_only = args_has(args, 'N');
-
 	if ((tablename = args_get(args, 'T')) != NULL) {
 		table = key_bindings_get_table(tablename, 0);
 		if (table == NULL) {
@@ -206,6 +202,10 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			return (CMD_RETURN_ERROR);
 		}
 	}
+
+	prefix = cmd_list_keys_get_prefix(args);
+	single = args_has(args, '1');
+	notes_only = args_has(args, 'N');
 
 	if ((template = args_get(args, 'F')) == NULL)
 		template = LIST_KEYS_TEMPLATE;
