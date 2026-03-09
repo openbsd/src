@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.38 2026/03/08 21:34:27 tb Exp $ */
+/* $OpenBSD: intr.c,v 1.39 2026/03/09 06:38:02 tb Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,9 +17,9 @@
 
 #include "xcall.h"
 
-#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/timetc.h>
 #include <sys/malloc.h>
 
