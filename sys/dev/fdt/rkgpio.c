@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.11 2023/07/10 13:48:02 patrick Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.12 2026/03/09 19:12:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -64,6 +64,7 @@
 #define  GPIO_VER_ID_1_0	0x00000000
 #define  GPIO_VER_ID_2_0	0x01000c2b
 #define  GPIO_VER_ID_2_1	0x0101157c
+#define  GPIO_VER_ID_2_2	0x010219c8
 
 #define GPIO_NUM_PINS		32
 
@@ -163,6 +164,7 @@ rkgpio_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case GPIO_VER_ID_2_0:
 	case GPIO_VER_ID_2_1:
+	case GPIO_VER_ID_2_2:
 		sc->sc_version = 2;
 		break;
 	default:
