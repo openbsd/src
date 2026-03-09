@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_open.c,v 1.14 2020/12/01 16:19:38 millert Exp $	*/
+/*	$OpenBSD: rec_open.c,v 1.15 2026/03/09 12:22:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -47,7 +47,7 @@
 #include "recno.h"
 
 DB *
-__rec_open(const char *fname, int flags, int mode, const RECNOINFO *openinfo,
+__rec_open(const char *fname, int fd, int flags, int mode, const RECNOINFO *openinfo,
     int dflags)
 {
 	BTREE *t;
@@ -58,8 +58,12 @@ __rec_open(const char *fname, int flags, int mode, const RECNOINFO *openinfo,
 	int rfd, sverrno;
 
 	/* Open the user's file -- if this fails, we're done. */
-	if (fname != NULL && (rfd = open(fname, flags, mode)) < 0)
-		return (NULL);
+	if (fname != NULL) {
+		if ((rfd = open(fname, flags, mode)) < 0)
+			return (NULL);
+	} else if (fd != -1) {
+		rfd = fd;
+	}
 
 	/* Create a btree in memory (backed by disk). */
 	dbp = NULL;
@@ -74,10 +78,10 @@ __rec_open(const char *fname, int flags, int mode, const RECNOINFO *openinfo,
 		btopeninfo.compare = NULL;
 		btopeninfo.prefix = NULL;
 		btopeninfo.lorder = openinfo->lorder;
-		dbp = __bt_open(openinfo->bfname,
+		dbp = __bt_open(openinfo->bfname, -1,
 		    O_RDWR, S_IRUSR | S_IWUSR, &btopeninfo, dflags);
 	} else
-		dbp = __bt_open(NULL, O_RDWR, S_IRUSR | S_IWUSR, NULL, dflags);
+		dbp = __bt_open(NULL, -1, O_RDWR, S_IRUSR | S_IWUSR, NULL, dflags);
 	if (dbp == NULL)
 		goto err;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.h,v 1.4 2016/05/29 20:47:49 guenther Exp $	*/
+/*	$OpenBSD: db.h,v 1.5 2026/03/09 12:22:44 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -69,9 +69,9 @@
 }
 
 __BEGIN_HIDDEN_DECLS
-DB	*__bt_open(const char *, int, int, const BTREEINFO *, int);
-DB	*__hash_open(const char *, int, int, const HASHINFO *, int);
-DB	*__rec_open(const char *, int, int, const RECNOINFO *, int);
+DB	*__bt_open(const char *, int, int, int, const BTREEINFO *, int);
+DB	*__hash_open(const char *, int, int, int, const HASHINFO *, int);
+DB	*__rec_open(const char *, int, int, int, const RECNOINFO *, int);
 void	__dbpanic(DB *dbp);
 
 /* Default hash function, from db/hash/hash_func.c */

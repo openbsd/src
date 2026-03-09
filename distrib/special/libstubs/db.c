@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.4 2017/01/21 08:18:53 krw Exp $	*/
+/*	$OpenBSD: db.c,v 1.5 2026/03/09 12:22:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,7 +53,7 @@ dbopen(const char *fname, int flags, int mode, DBTYPE type,
 	if ((flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
 		switch (type) {
 		case DB_HASH:
-			return (__hash_open(fname, flags & USE_OPEN_FLAGS,
+			return (__hash_open(fname, -1, flags & USE_OPEN_FLAGS,
 			    mode, openinfo, flags & DB_FLAGS));
 		default:
 			break;

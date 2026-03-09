@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_open.c,v 1.19 2015/12/28 22:08:18 mmcc Exp $	*/
+/*	$OpenBSD: bt_open.c,v 1.20 2026/03/09 12:22:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -80,7 +80,7 @@ static int tmp(void);
  *
  */
 DB *
-__bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
+__bt_open(const char *fname, int fd, int flags, int mode, const BTREEINFO *openinfo,
     int dflags)
 {
 	struct stat sb;
@@ -193,6 +193,18 @@ __bt_open(const char *fname, int flags, int mode, const BTREEINFO *openinfo,
 		if ((t->bt_fd = open(fname, flags | O_CLOEXEC, mode)) < 0)
 			goto err;
 
+	} else if (fd != -1) {
+		switch (flags & O_ACCMODE) {
+		case O_RDONLY:
+			F_SET(t, B_RDONLY);
+			break;
+		case O_RDWR:
+			break;
+		case O_WRONLY:
+		default:
+			goto einval;
+		}
+		t->bt_fd = fd;
 	} else {
 		if ((flags & O_ACCMODE) != O_RDWR)
 			goto einval;

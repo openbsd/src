@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.32 2024/01/22 17:21:52 deraadt Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.33 2026/03/09 12:22:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -630,7 +630,7 @@ setnetgrent(const char *ng)
 		return;
 
 	if (_ng_db == NULL)
-		_ng_db = __hash_open(_PATH_NETGROUP_DB, O_RDONLY, 0, NULL, 0);
+		_ng_db = __hash_open(_PATH_NETGROUP_DB, -1, O_RDONLY, 0, NULL, 0);
 
 #ifdef YP
 	/*
@@ -682,7 +682,7 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 	struct stringlist *sl;
 
 	if (_ng_db == NULL)
-		_ng_db = __hash_open(_PATH_NETGROUP_DB, O_RDONLY, 0, NULL, 0);
+		_ng_db = __hash_open(_PATH_NETGROUP_DB, -1, O_RDONLY, 0, NULL, 0);
 
 #ifdef YP
 	/*

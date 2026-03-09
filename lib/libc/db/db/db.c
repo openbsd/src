@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.c,v 1.13 2015/09/05 11:28:35 guenther Exp $	*/
+/*	$OpenBSD: db.c,v 1.14 2026/03/09 12:22:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -54,13 +54,13 @@ dbopen(const char *fname, int flags, int mode, DBTYPE type,
 	    && (flags & ~(USE_OPEN_FLAGS | DB_FLAGS)) == 0)
 		switch (type) {
 		case DB_BTREE:
-			return (__bt_open(fname, flags & USE_OPEN_FLAGS,
+			return (__bt_open(fname, -1, flags & USE_OPEN_FLAGS,
 			    mode, openinfo, flags & DB_FLAGS));
 		case DB_HASH:
-			return (__hash_open(fname, flags & USE_OPEN_FLAGS,
+			return (__hash_open(fname, -1, flags & USE_OPEN_FLAGS,
 			    mode, openinfo, flags & DB_FLAGS));
 		case DB_RECNO:
-			return (__rec_open(fname, flags & USE_OPEN_FLAGS,
+			return (__rec_open(fname, -1, flags & USE_OPEN_FLAGS,
 			    mode, openinfo, flags & DB_FLAGS));
 		}
 	errno = EINVAL;

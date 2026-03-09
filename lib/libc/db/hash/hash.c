@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.29 2016/09/21 04:38:56 guenther Exp $	*/
+/*	$OpenBSD: hash.c,v 1.30 2026/03/09 12:22:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -88,7 +88,7 @@ int hash_accesses, hash_collisions, hash_expansions, hash_overflows;
 /* OPEN/CLOSE */
 
 DB *
-__hash_open(const char *file, int flags, int mode,
+__hash_open(const char *file, int fd, int flags, int mode,
     const HASHINFO *info,	/* Special directives for create */
     int dflags)
 {
@@ -117,6 +117,10 @@ __hash_open(const char *file, int flags, int mode,
 	if (file) {
 		if ((hashp->fp = open(file, flags | O_CLOEXEC, mode)) == -1)
 			RETURN_ERROR(errno, error0);
+		new_table = fstat(hashp->fp, &statbuf) == 0 &&
+		    statbuf.st_size == 0 && (flags & O_ACCMODE) != O_RDONLY;
+	} else if (fd != -1) {
+		hashp->fp = fd;
 		new_table = fstat(hashp->fp, &statbuf) == 0 &&
 		    statbuf.st_size == 0 && (flags & O_ACCMODE) != O_RDONLY;
 	} else

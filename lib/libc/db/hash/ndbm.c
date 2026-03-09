@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.28 2023/02/17 17:59:36 miod Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.29 2026/03/09 12:22:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@ _dbm_open(const char *file, const char *suff, int flags, mode_t mode)
 	info.cachesize = 0;
 	info.hash = NULL;
 	info.lorder = 0;
-	return ((DBM *)__hash_open(path, flags, mode, &info, 0));
+	return ((DBM *)__hash_open(path, -1, flags, mode, &info, 0));
 }
 
 /*
