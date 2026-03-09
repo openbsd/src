@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2026/03/07 18:20:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.44 2026/03/09 12:56:12 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCS=	local_passwd.c passwd.c getpwent.c \
 .PATH:  ${.CURDIR}/../chpass
 DPADD+= ${LIBRPCSVC} ${LIBUTIL}
 LDADD+= -lrpcsvc -lutil
-CFLAGS+= -I${.CURDIR} -DFORCE_DBOPEN
+CFLAGS+= -I${.CURDIR}
 
 BINMODE=4555
 BINOWN=root

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.69 2026/03/09 12:22:44 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.70 2026/03/09 12:56:12 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -960,20 +960,11 @@ __initdb(int shadow)
 	__ypmode = YPMODE_NONE;
 	__getpwent_has_yppw = -1;
 #endif
-	if (shadow) {
-#ifdef FORCE_DBOPEN
-		_pw_db = dbopen(_PATH_SMP_DB, O_RDONLY, 0, DB_HASH, NULL);
-#else
+	if (shadow)
 		_pw_db = __hash_open(_PATH_SMP_DB, -1, O_RDONLY, 0, NULL, 0);
-#endif
-	}
-	if (!_pw_db) {
-#ifdef FORCE_DBOPEN
-	    _pw_db = dbopen(_PATH_MP_DB, O_RDONLY, 0, DB_HASH, NULL);
-#else
-	    _pw_db = __hash_open(_PATH_MP_DB, -1, O_RDONLY, 0, NULL, 0);
-#endif
-	}
+	if (!_pw_db)
+		_pw_db = __hash_open(_PATH_MP_DB, -1, O_RDONLY, 0, NULL, 0);
+
 	if (_pw_db) {
 		errno = saved_errno;
 		return (1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.2 2026/03/07 18:15:49 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.3 2026/03/09 12:56:12 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -370,20 +370,10 @@ __initdb(int shadow)
 	static int warned;
 	int saved_errno = errno;
 
-	if (shadow) {
-#ifdef FORCE_DBOPEN
+	if (shadow)
 		_pw_db = dbopen(_PATH_SMP_DB, O_RDONLY, 0, DB_HASH, NULL);
-#else
-		_pw_db = __hash_open(_PATH_SMP_DB, O_RDONLY, 0, NULL, 0);
-#endif
-	}
-	if (!_pw_db) {
-#ifdef FORCE_DBOPEN
+	if (!_pw_db)
 		_pw_db = dbopen(_PATH_MP_DB, O_RDONLY, 0, DB_HASH, NULL);
-#else
-		_pw_db = __hash_open(_PATH_MP_DB, O_RDONLY, 0, NULL, 0);
-#endif
-	}
 
 	if (_pw_db) {
 		errno = saved_errno;
