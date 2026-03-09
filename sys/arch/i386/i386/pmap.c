@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.233 2026/01/14 20:43:56 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.234 2026/03/09 13:24:14 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2695,6 +2695,15 @@ pmap_tlb_shootwait(void)
 #endif
 	}
 }
+
+static inline void
+pmap_tlb_shootfail()
+{
+	u_int cpuid = curcpu()->ci_cpuid;
+
+	if (atomic_dec_int_nv(&tlb_shoot_counts[cpuid]) == 0)
+		tlb_shoot_lock.lock = 0;
+}
 #endif /* MULTIPROCESSOR */
 
 void
@@ -2723,7 +2732,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
 			if (i386_fast_ipi(ci, LAPIC_IPI_INVLPG) != 0)
-				panic("pmap_tlb_shootpage: ipi failed");
+				pmap_tlb_shootfail();
 		}
 		splx(s);
 	}
@@ -2761,7 +2770,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
 			if (i386_fast_ipi(ci, LAPIC_IPI_INVLRANGE) != 0)
-				panic("pmap_tlb_shootrange: ipi failed");
+				pmap_tlb_shootfail();
 		}
 		splx(s);
 	}
@@ -2796,7 +2805,7 @@ pmap_tlb_shoottlb(void)
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
 			if (i386_fast_ipi(ci, LAPIC_IPI_INVLTLB) != 0)
-				panic("pmap_tlb_shoottlb: ipi failed");
+				pmap_tlb_shootfail();
 		}
 		splx(s);
 	}
@@ -2831,7 +2840,7 @@ pmap_tlb_droppmap(struct pmap *pm)
 			if ((mask & (1ULL << ci->ci_cpuid)) == 0)
 				continue;
 			if (i386_fast_ipi(ci, LAPIC_IPI_RELOADCR3) != 0)
-				panic("pmap_tlb_droppmap: ipi failed");
+				pmap_tlb_shootfail();
 		}
 		splx(s);
 	}
