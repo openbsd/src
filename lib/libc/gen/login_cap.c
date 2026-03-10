@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.48 2025/12/01 00:12:12 jsg Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.49 2026/03/10 04:02:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -117,7 +117,7 @@ login_getclass(char *class)
 				lc->lc_class);
 			break;
 		case -1:
-			if ((res = open(_PATH_LOGIN_CONF, O_RDONLY)) >= 0)
+			if ((res = open(_PATH_LOGIN_CONF, O_RDONLY|O_CLOEXEC)) >= 0)
 				close(res);
 			if (strcmp(lc->lc_class, LOGIN_DEFCLASS) == 0 &&
 			    res < 0)
