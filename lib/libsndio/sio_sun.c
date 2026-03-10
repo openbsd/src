@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.33 2026/01/22 09:24:26 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.34 2026/03/10 06:23:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -617,17 +617,15 @@ sio_sun_xrun(struct sio_sun_hdl *hdl)
 			 */
 			cmove += hdl->sio.par.round;
 		}
-		hdl->idelta = -cmove;
 	}
 
-	if (hdl->sio.mode & SIO_PLAY) {
+	if (hdl->sio.mode & SIO_PLAY)
 		hdl->sio.wsil = hdl->sio.wused + cmove * hdl->obpf;
-		hdl->odelta = -cmove;
-	}
 
 	DPRINTFN(1, "%s: cmove = %d, wsil = %d, rdrop = %d\n", __func__,
 	    cmove, hdl->sio.wsil, hdl->sio.rdrop);
 
+	_sio_onmove_cb(&hdl->sio, -cmove);
 	return 1;
 }
 
@@ -690,12 +688,11 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		 */
 		delta = hdl->odelta > hdl->idelta ? hdl->odelta : hdl->idelta;
 	}
-	if (delta > 0) {
-		_sio_onmove_cb(&hdl->sio, delta);
-		if (hdl->sio.mode & SIO_PLAY)
-			hdl->odelta -= delta;
-		if (hdl->sio.mode & SIO_REC)
-			hdl->idelta -= delta;
-	}
+	_sio_onmove_cb(&hdl->sio, delta);
+	if (hdl->sio.mode & SIO_PLAY)
+		hdl->odelta -= delta;
+	if (hdl->sio.mode & SIO_REC)
+		hdl->idelta -= delta;
+
 	return revents;
 }

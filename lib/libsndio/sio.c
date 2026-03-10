@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.28 2026/01/22 09:24:26 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.29 2026/03/10 06:23:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -112,6 +112,7 @@ sio_start(struct sio_hdl *hdl)
 		return 0;
 	}
 	hdl->cpos = 0;
+	hdl->cpending = 0;
 	hdl->rused = hdl->wused = 0;
 	if (!sio_getpar(hdl, &hdl->par))
 		return 0;
@@ -494,20 +495,24 @@ _sio_printpos(struct sio_hdl *hdl)
 		wdiff = wdiff - wround;
 	}
 	DPRINTF("%011lld: "
-	    "clk %+5lld%+5lld, wr %+5lld%+5lld rd: %+5lld%+5lld\n",
+	    "clk %+5lld%+5lld, wr %+5lld%+5lld rd: %+5lld%+5lld (cpending: %d)\n",
 	    1000000000LL * ts.tv_sec + ts.tv_nsec - hdl->start_nsec,
-	    cpos, cdiff, wpos, wdiff, rpos, rdiff);
+	    cpos, cdiff, wpos, wdiff, rpos, rdiff, hdl->cpending);
 }
 #endif
 
 void
 _sio_onmove_cb(struct sio_hdl *hdl, int delta)
 {
-	hdl->cpos += delta;
+	hdl->cpending += delta;
+	if (hdl->cpending <= 0)
+		return;
+
+	hdl->cpos += hdl->cpending;
 	if (hdl->mode & SIO_REC)
-		hdl->rused += delta * (hdl->par.bps * hdl->par.rchan);
+		hdl->rused += hdl->cpending * (hdl->par.bps * hdl->par.rchan);
 	if (hdl->mode & SIO_PLAY)
-		hdl->wused -= delta * (hdl->par.bps * hdl->par.pchan);
+		hdl->wused -= hdl->cpending * (hdl->par.bps * hdl->par.pchan);
 #ifdef DEBUG
 	if (_sndio_debug >= 3)
 		_sio_printpos(hdl);
@@ -518,7 +523,8 @@ _sio_onmove_cb(struct sio_hdl *hdl, int delta)
 	}
 #endif
 	if (hdl->move_cb)
-		hdl->move_cb(hdl->move_addr, delta);
+		hdl->move_cb(hdl->move_addr, hdl->cpending);
+	hdl->cpending = 0;
 	hdl->xrun = 0;
 }
 

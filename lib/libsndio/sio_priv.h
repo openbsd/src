@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_priv.h,v 1.13 2026/01/22 09:24:26 ratchov Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.14 2026/03/10 06:23:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -41,6 +41,7 @@ struct sio_hdl {
 	int rused;			/* bytes used in read buffer */
 	int wused;			/* bytes used in write buffer */
 	int xrun;			/* xrun reported */
+	int cpending;			/* clock ticks not reported yet */
 	long long cpos;			/* clock since start */
 	struct sio_par par;
 #ifdef DEBUG
