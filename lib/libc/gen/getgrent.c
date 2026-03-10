@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.50 2022/08/02 17:00:15 deraadt Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.51 2026/03/10 00:06:39 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <errno.h>
 #ifdef YP
@@ -197,6 +198,8 @@ DEF_WEAK(getgrgid_r);
 static int
 start_gr(void)
 {
+	int fd;
+
 	if (_gr_fp) {
 		rewind(_gr_fp);
 #ifdef YP
@@ -210,7 +213,12 @@ start_gr(void)
 		return(1);
 	}
 
-	return((_gr_fp = fopen(_PATH_GROUP, "re")) ? 1 : 0);
+	fd = __pledge_open(_PATH_GROUP, O_RDONLY|O_CLOEXEC);
+	if (fd == -1)
+		return 0;
+	if ((_gr_fp = fdopen(fd, "r")) == NULL)
+		close(fd);
+	return (_gr_fp  ? 1 : 0);
 }
 
 void

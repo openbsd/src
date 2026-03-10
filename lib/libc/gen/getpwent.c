@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.70 2026/03/09 12:56:12 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.71 2026/03/10 00:06:39 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -954,16 +954,21 @@ static int
 __initdb(int shadow)
 {
 	static int warned;
-	int saved_errno = errno;
-
+	int saved_errno = errno, fd;
 #ifdef YP
 	__ypmode = YPMODE_NONE;
 	__getpwent_has_yppw = -1;
 #endif
+
 	if (shadow)
-		_pw_db = __hash_open(_PATH_SMP_DB, -1, O_RDONLY, 0, NULL, 0);
-	if (!_pw_db)
-		_pw_db = __hash_open(_PATH_MP_DB, -1, O_RDONLY, 0, NULL, 0);
+		fd = __pledge_open(_PATH_SMP_DB, O_RDONLY | O_CLOEXEC);
+	if (fd == -1)
+		fd = __pledge_open(_PATH_MP_DB, O_RDONLY | O_CLOEXEC);
+	if (fd != -1) {
+		_pw_db = __hash_open(NULL, fd, O_RDONLY, 0, NULL, 0);
+		if (_pw_db == NULL)
+			close(fd);
+	}
 
 	if (_pw_db) {
 		errno = saved_errno;

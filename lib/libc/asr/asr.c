@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.69 2025/06/18 13:50:02 deraadt Exp $	*/
+/*	$OpenBSD: asr.c,v 1.70 2026/03/10 00:06:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -445,7 +445,7 @@ asr_check_reload(struct asr *asr)
 	asr->a_rtime = ts.tv_sec;
 
 	DPRINT("asr: checking for update of \"%s\"\n", _PATH_RESCONF);
-	fd = open(_PATH_RESCONF, O_RDONLY|O_CLOEXEC);
+	fd = __pledge_open(_PATH_RESCONF, O_RDONLY|O_CLOEXEC);
 	if (fd == -1)
 		return;
 	if (fstat(fd, &st) == -1 ||

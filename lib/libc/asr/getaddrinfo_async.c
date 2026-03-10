@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.64 2025/09/17 10:47:30 florian Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.65 2026/03/10 00:06:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <limits.h>
 
 #include "asr_private.h"
@@ -115,8 +116,8 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 	char		 fqdn[MAXDNAME];
 	const char	*str;
 	struct addrinfo	*ai;
-	int		 i, family, r, is_localhost = 0;
-	FILE		*f;
+	int		 i, family, r, is_localhost = 0, fd;
+	FILE		*f = NULL;
 	union {
 		struct sockaddr		sa;
 		struct sockaddr_in	sain;
@@ -395,8 +396,11 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 			break;
 
 		case ASR_DB_FILE:
-			f = fopen(_PATH_HOSTS, "re");
+			fd = __pledge_open(_PATH_HOSTS, O_RDONLY|O_CLOEXEC);
+			if (fd != -1)
+				f = fdopen(fd, "r");
 			if (f == NULL) {
+				close(fd);
 				async_set_state(as, ASR_STATE_NEXT_DB);
 				break;
 			}

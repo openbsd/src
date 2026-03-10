@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.76 2026/03/09 11:51:25 deraadt Exp $ */
+/*	$OpenBSD: localtime.c,v 1.77 2026/03/10 00:06:39 deraadt Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -364,7 +364,7 @@ open_tzfile(const char *name)
 		name = fullname;
 	}
 
-	return open(name, O_RDONLY | O_CLOEXEC);
+	return __pledge_open(name, O_RDONLY|O_CLOEXEC);
 }
 
 static int

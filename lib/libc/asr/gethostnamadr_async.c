@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.50 2024/09/03 18:20:35 op Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.51 2026/03/10 00:06:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <limits.h>
 
 #include "asr_private.h"
@@ -147,7 +148,7 @@ static int
 gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 {
 	struct hostent_ext	*h;
-	int			 r, type, saved_errno;
+	int			 r, type, saved_errno, fd;
 	FILE			*f;
 	char			 name[MAXDNAME], *data, addr[16], *c;
 
@@ -286,8 +287,13 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 
 			/* Try to find a match in the host file */
 
-			if ((f = fopen(_PATH_HOSTS, "re")) == NULL)
+			fd = __pledge_open(_PATH_HOSTS, O_RDONLY|O_CLOEXEC);
+			if (fd == -1)
 				break;
+			if ((f = fdopen(fd, "r")) == NULL) {
+				close(fd);
+				break;
+			}
 
 			if (as->as_type == ASR_GETHOSTBYNAME)
 				data = as->as.hostnamadr.name;

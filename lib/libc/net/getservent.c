@@ -1,4 +1,4 @@
-/*	$OpenBSD: getservent.c,v 1.15 2015/09/14 07:38:38 guenther Exp $ */
+/*	$OpenBSD: getservent.c,v 1.16 2026/03/10 00:06:39 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,13 +37,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 void
 setservent_r(int f, struct servent_data *sd)
 {
-	if (sd->fp == NULL)
-		sd->fp = fopen(_PATH_SERVICES, "re" );
-	else
+	if (sd->fp == NULL) {
+		int fd = __pledge_open(_PATH_SERVICES, O_RDONLY|O_CLOEXEC);
+		if (fd != -1)
+			sd->fp = fdopen(fd, "r" );
+		if (sd->fp == NULL)
+			close(fd);
+	} else
 		rewind(sd->fp);
 	sd->stayopen |= f;
 }
@@ -73,8 +79,15 @@ getservent_r(struct servent *se, struct servent_data *sd)
 	long l;
 	int serrno;
 
-	if (sd->fp == NULL && (sd->fp = fopen(_PATH_SERVICES, "re" )) == NULL)
-		return (-1);
+	if (sd->fp == NULL) {
+		int fd = __pledge_open(_PATH_SERVICES, O_RDONLY|O_CLOEXEC);
+		if (fd == -1)
+			return (-1);
+		if ((sd->fp = fdopen(fd, "r" )) == NULL) {
+			close(fd);
+			return (-1);
+		}
+	}
 again:
 	if ((p = fgetln(sd->fp, &len)) == NULL)
 		return (-1);

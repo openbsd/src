@@ -1,4 +1,4 @@
-/*	$OpenBSD: getprotoent.c,v 1.13 2015/09/14 07:38:38 guenther Exp $ */
+/*	$OpenBSD: getprotoent.c,v 1.14 2026/03/10 00:06:39 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,13 +37,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 void
 setprotoent_r(int f, struct protoent_data *pd)
 {
-	if (pd->fp == NULL)
-		pd->fp = fopen(_PATH_PROTOCOLS, "re" );
-	else
+	if (pd->fp == NULL) {
+		int fd = __pledge_open(_PATH_PROTOCOLS, O_RDONLY|O_CLOEXEC);
+		if (fd != -1)
+			pd->fp = fdopen(fd, "r" );
+		if (pd->fp == NULL)
+			close(fd);
+	} else
 		rewind(pd->fp);
 	pd->stayopen |= f;
 }

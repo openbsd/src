@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.31 2024/11/04 21:49:26 jca Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.32 2026/03/10 00:06:39 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -36,6 +36,7 @@
 #include <sys/limits.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <grp.h>
@@ -113,11 +114,16 @@ _read_netid(const char *key, uid_t uid, gid_t *groups, int *ngroups,
 {
 	FILE *fp;
 	char line[MAXLINELENGTH], *p;
-	int found = 0;
+	int found = 0, fd;
 
-	fp = fopen(_PATH_NETID, "re");
-	if (!fp) 
+	fd = __pledge_open(_PATH_NETID, O_RDONLY|O_CLOEXEC);
+	if (fd == -1)
 		return (0);
+	fp = fdopen(fd, "r");
+	if (!fp) {
+		close(fd);
+		return (0);
+	}
 	while (!found && fgets(line, sizeof(line), fp)) {
 		p = strchr(line, '\n');
 		if (p)

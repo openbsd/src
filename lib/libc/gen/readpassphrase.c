@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.c,v 1.27 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.28 2026/03/10 00:06:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002, 2007, 2010
@@ -63,7 +63,7 @@ restart:
 	 * stdin and write to stderr unless a tty is required.
 	 */
 	if ((flags & RPP_STDIN) ||
-	    (input = output = open(_PATH_TTY, O_RDWR)) == -1) {
+	    (input = output = __pledge_open(_PATH_TTY, O_RDWR)) == -1) {
 		if (flags & RPP_REQUIRE_TTY) {
 			errno = ENOTTY;
 			return(NULL);
