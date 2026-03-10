@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.300 2026/03/10 17:30:23 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.301 2026/03/10 17:40:35 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2066,6 +2066,12 @@ limits_smtp	: opt_limit_smtp limits_smtp
 
 opt_limit_smtp : STRING NUMBER {
 			if (!strcmp($1, "max-rcpt")) {
+				if ($2 < 100) {
+					yyerror("RFC5321 requires "
+					    "max-rcpt >= 100");
+					free($1);
+					YYERROR;
+				}
 				conf->sc_session_max_rcpt = $2;
 			}
 			else if (!strcmp($1, "max-mails")) {
