@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_openssl.c,v 1.29 2025/03/09 15:25:53 tb Exp $ */
+/* $OpenBSD: ui_openssl.c,v 1.30 2026/03/10 05:28:31 deraadt Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) and others
  * for the OpenSSL project 2001.
  */
@@ -300,9 +300,9 @@ open_console(UI *ui)
 	is_a_tty = 1;
 
 #define DEV_TTY "/dev/tty"
-	if ((tty_in = fopen(DEV_TTY, "r")) == NULL)
+	if ((tty_in = fopen(DEV_TTY, "re")) == NULL)
 		tty_in = stdin;
-	if ((tty_out = fopen(DEV_TTY, "w")) == NULL)
+	if ((tty_out = fopen(DEV_TTY, "we")) == NULL)
 		tty_out = stderr;
 
 	if (tcgetattr(fileno(tty_in), &tty_orig) == -1) {
