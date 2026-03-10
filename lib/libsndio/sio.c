@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.29 2026/03/10 06:23:44 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.30 2026/03/10 06:47:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -500,6 +500,111 @@ _sio_printpos(struct sio_hdl *hdl)
 	    cpos, cdiff, wpos, wdiff, rpos, rdiff, hdl->cpending);
 }
 #endif
+
+/*
+ * Restart the device restoring its state (i.e. hdl->cpos, hdl->wused,
+ * hdl->rused), making the restart transparent to upper layers.
+ */
+int
+_sio_xrun(struct sio_hdl *hdl)
+{
+	int cmove;
+
+#ifdef DEBUG
+	if (_sndio_debug >= 1)
+		_sio_printpos(hdl);
+#endif
+	/*
+	 * The device restarts with empty buffers and block aligned.
+	 */
+	if (!hdl->ops->flush(hdl))
+		return 0;
+
+	_sio_onxrun_cb(hdl);
+
+	if (!hdl->ops->start(hdl))
+		return 0;
+
+	DPRINTFN(1, "%s: rused = %d, wused = %d\n", __func__,
+	    hdl->rused, hdl->wused);
+
+	/*
+	 * To restore the device state, we play silence, drop recorded data,
+	 * and advance the clock. We suppose that it takes N blocks to restore
+	 * the state (where N is any integer).
+	 *
+	 * After N blocks of operation cpos (the clock) must have advanced to
+	 * the next block boundary (the stream must remain block-aligned):
+	 *
+	 *	cpos' = cpos + round - cpos % round
+	 *
+	 * on the other hand, cpos advances by N * par->round frames plus
+	 * hdl->delta (the advance we report immediately):
+	 *
+	 *	cpos' = cpos + delta + N * round
+	 *
+	 * by combining above expressions, we obtain the advance to report:
+	 *
+	 *	delta = - cpos % round - (N - 1) * round
+	 *
+	 * For playback, after N blocks, the buffer usage has decreased by
+	 * the elapsed time:
+	 *
+	 *	wused' = wused - (cpos' - cpos)
+	 *
+	 * on the other hand it is equal to the amount of silence we have
+	 * inserted minus the N blocks that the device has consumed:
+	 *
+	 *	wused' = wsil - N * par->round
+	 *
+	 * by combining both expressions, we obtain the amount of silence
+	 * we've to insert:
+	 *
+	 *      wsil = wused + (N - 1) * par->round + cpos % round
+	 *
+	 * Similarly, for recording the buffer usage has increased by
+	 * the elapsed time:
+	 *
+	 *	rused' = rused + (cpos' - cpos)
+	 *
+	 * it is also equal to the N blocks the device has produced minus
+	 * the amount of frames we drop:
+	 *
+	 *	rused' = N * round - rdrop
+	 *
+	 * by combining both expressions, we obtain the amount of frames
+	 * to drop:
+	 *
+	 *	rdrop = cpos % round + (N - 1) * round - rused;
+	 *
+	 * We're free to choose N. The smaller N (ideally 1) the sooner
+	 * performance will resume. But wsil and rdrop may not be negative.
+	 *
+	 */
+
+	cmove = hdl->cpos % hdl->par.round;
+
+	if (hdl->mode & SIO_REC) {
+		while (1) {
+			hdl->rdrop = cmove * hdl->par.bps * hdl->par.rchan - hdl->rused;
+			if (hdl->rdrop >= 0)
+				break;
+			/*
+			 * rdrop can't be negative, try a larger 'N'
+			 */
+			cmove += hdl->par.round;
+		}
+	}
+
+	if (hdl->mode & SIO_PLAY)
+		hdl->wsil = hdl->wused + cmove * hdl->par.bps * hdl->par.pchan;
+
+	DPRINTFN(1, "%s: cmove = %d, wsil = %d, rdrop = %d\n", __func__,
+	    cmove, hdl->wsil, hdl->rdrop);
+
+	_sio_onmove_cb(hdl, -cmove);
+	return 1;
+}
 
 void
 _sio_onmove_cb(struct sio_hdl *hdl, int delta)
