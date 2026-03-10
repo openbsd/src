@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.45 2026/03/09 12:40:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.46 2026/03/10 08:00:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -365,11 +365,6 @@ struct iwx_self_init_dram {
  * @num_stored: number of mpdus stored in the buffer
  * @buf_size: the reorder buffer size as set by the last addba request
  * @queue: queue of this reorder buffer
- * @last_amsdu: track last ASMDU SN for duplication detection
- * @last_sub_index: track ASMDU sub frame index for duplication detection
- * @reorder_timer: timer for frames are in the reorder buffer. For AMSDU
- *	it is the time of last received sub-frame
- * @removed: prevent timer re-arming
  * @valid: reordering is valid for this queue
  * @consec_oldsn_drops: consecutive drops due to old SN
  * @consec_oldsn_ampdu_gp2: A-MPDU GP2 timestamp to track
@@ -382,25 +377,15 @@ struct iwx_reorder_buffer {
 	uint16_t head_sn;
 	uint16_t num_stored;
 	uint16_t buf_size;
-	uint16_t last_amsdu;
-	uint8_t last_sub_index;
-	struct timeout reorder_timer;
-	int removed;
 	int valid;
-	unsigned int consec_oldsn_drops;
-	uint32_t consec_oldsn_ampdu_gp2;
-	unsigned int consec_oldsn_prev_drop;
-#define IWX_AMPDU_CONSEC_DROPS_DELBA	10
 };
 
 /**
  * struct iwx_reorder_buf_entry - reorder buffer entry per frame sequence number
  * @frames: list of mbufs stored (A-MSDU subframes share a sequence number)
- * @reorder_time: time the packet was stored in the reorder buffer
  */
 struct iwx_reorder_buf_entry {
 	struct mbuf_list frames;
-	struct timeval reorder_time;
 	uint32_t rx_pkt_status;
 	int chanidx;
 	int is_shortpre;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.206 2026/03/10 07:58:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.207 2026/03/10 08:00:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -329,7 +329,6 @@ int	iwx_ampdu_tx_start(struct ieee80211com *, struct ieee80211_node *,
 void	iwx_rx_ba_session_expired(void *);
 void	iwx_rx_bar_frame_release(struct iwx_softc *, struct iwx_rx_packet *,
 	    struct mbuf_list *);
-void	iwx_reorder_timer_expired(void *);
 void	iwx_sta_rx_agg(struct iwx_softc *, struct ieee80211_node *, uint8_t,
 	    uint16_t, uint16_t, int, int);
 void	iwx_sta_tx_agg_start(struct iwx_softc *, struct ieee80211_node *,
@@ -494,12 +493,9 @@ void	iwx_dump_driver_status(struct iwx_softc *);
 void	iwx_nic_umac_error(struct iwx_softc *);
 int	iwx_detect_duplicate(struct iwx_softc *, struct mbuf *,
 	    struct iwx_rx_mpdu_desc *, struct ieee80211_rxinfo *);
-int	iwx_is_sn_less(uint16_t, uint16_t, uint16_t);
 void	iwx_release_frames(struct iwx_softc *, struct ieee80211_node *,
 	    struct iwx_rxba_data *, struct iwx_reorder_buffer *, uint16_t,
 	    struct mbuf_list *);
-int	iwx_oldsn_workaround(struct iwx_softc *, struct ieee80211_node *,
-	    int, struct iwx_reorder_buffer *, uint32_t, uint32_t);
 int	iwx_rx_reorder(struct iwx_softc *, struct mbuf *, int,
 	    struct iwx_rx_mpdu_desc *, int, int, uint32_t,
 	    struct ieee80211_rxinfo *, struct mbuf_list *);
@@ -3208,13 +3204,7 @@ iwx_init_reorder_buffer(struct iwx_reorder_buffer *reorder_buf,
 	reorder_buf->head_sn = ssn;
 	reorder_buf->num_stored = 0;
 	reorder_buf->buf_size = buf_size;
-	reorder_buf->last_amsdu = 0;
-	reorder_buf->last_sub_index = 0;
-	reorder_buf->removed = 0;
 	reorder_buf->valid = 0;
-	reorder_buf->consec_oldsn_drops = 0;
-	reorder_buf->consec_oldsn_ampdu_gp2 = 0;
-	reorder_buf->consec_oldsn_prev_drop = 0;
 }
 
 void
@@ -3227,11 +3217,8 @@ iwx_clear_reorder_buffer(struct iwx_softc *sc, struct iwx_rxba_data *rxba)
 	for (i = 0; i < reorder_buf->buf_size; i++) {
 		entry = &rxba->entries[i];
 		ml_purge(&entry->frames);
-		timerclear(&entry->reorder_time);
 	}
 
-	reorder_buf->removed = 1;
-	timeout_del(&reorder_buf->reorder_timer);
 	timerclear(&rxba->last_rx);
 	timeout_del(&rxba->session_timer);
 	rxba->baid = IWX_RX_REORDER_DATA_INVALID_BAID;
@@ -3300,68 +3287,6 @@ iwx_rx_bar_frame_release(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 	nssn = le32toh(release->ba_info) & IWX_BAR_FRAME_RELEASE_NSSN_MASK;
 	buf = &rxba->reorder_buf;
 	iwx_release_frames(sc, ni, rxba, buf, nssn, ml);
-}
-
-void
-iwx_reorder_timer_expired(void *arg)
-{
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	struct iwx_reorder_buffer *buf = arg;
-	struct iwx_rxba_data *rxba = iwx_rxba_data_from_reorder_buf(buf);
-	struct iwx_reorder_buf_entry *entries = &rxba->entries[0];
-	struct iwx_softc *sc = rxba->sc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni = ic->ic_bss;
-	int i, s;
-	uint16_t sn = 0, index = 0;
-	int expired = 0;
-	int cont = 0;
-	struct timeval now, timeout, expiry;
-
-	if (!buf->num_stored || buf->removed)
-		return;
-
-	s = splnet();
-	getmicrouptime(&now);
-	USEC_TO_TIMEVAL(RX_REORDER_BUF_TIMEOUT_MQ_USEC, &timeout);
-
-	for (i = 0; i < buf->buf_size ; i++) {
-		index = (buf->head_sn + i) % buf->buf_size;
-
-		if (ml_empty(&entries[index].frames)) {
-			/*
-			 * If there is a hole and the next frame didn't expire
-			 * we want to break and not advance SN.
-			 */
-			cont = 0;
-			continue;
-		}
-		timeradd(&entries[index].reorder_time, &timeout, &expiry);
-		if (!cont && timercmp(&now, &expiry, <))
-			break;
-
-		expired = 1;
-		/* continue until next hole after this expired frame */
-		cont = 1;
-		sn = (buf->head_sn + (i + 1)) & 0xfff;
-	}
-
-	if (expired) {
-		/* SN is set to the last expired frame + 1 */
-		iwx_release_frames(sc, ni, rxba, buf, sn, &ml);
-		if_input(&sc->sc_ic.ic_if, &ml);
-		ic->ic_stats.is_ht_rx_ba_window_gap_timeout++;
-	} else {
-		/*
-		 * If no frame expired and there are stored frames, index is now
-		 * pointing to the first unexpired frame - modify reorder timeout
-		 * accordingly.
-		 */
-		timeout_add_usec(&buf->reorder_timer,
-		    RX_REORDER_BUF_TIMEOUT_MQ_USEC);
-	}
-
-	splx(s);
 }
 
 #define IWX_MAX_RX_BA_SESSIONS 16
@@ -4922,18 +4847,6 @@ iwx_detect_duplicate(struct iwx_softc *sc, struct mbuf *m,
 	return 0;
 }
 
-/*
- * Returns true if sn2 - buffer_size < sn1 < sn2.
- * To be used only in order to compare reorder buffer head with NSSN.
- * We fully trust NSSN unless it is behind us due to reorder timeout.
- * Reorder timeout can only bring us up to buffer_size SNs ahead of NSSN.
- */
-int
-iwx_is_sn_less(uint16_t sn1, uint16_t sn2, uint16_t buffer_size)
-{
-	return SEQ_LT(sn1, sn2) && !SEQ_LT(sn1, sn2 - buffer_size);
-}
-
 void
 iwx_release_frames(struct iwx_softc *sc, struct ieee80211_node *ni,
     struct iwx_rxba_data *rxba, struct iwx_reorder_buffer *reorder_buf,
@@ -4942,11 +4855,7 @@ iwx_release_frames(struct iwx_softc *sc, struct ieee80211_node *ni,
 	struct iwx_reorder_buf_entry *entries = &rxba->entries[0];
 	uint16_t ssn = reorder_buf->head_sn;
 
-	/* ignore nssn smaller than head sn - this can happen due to timeout */
-	if (iwx_is_sn_less(nssn, ssn, reorder_buf->buf_size))
-		goto set_timer;
-
-	while (iwx_is_sn_less(ssn, nssn, reorder_buf->buf_size)) {
+	while (SEQ_LT(ssn, nssn)) {
 		int index = ssn % reorder_buf->buf_size;
 		struct mbuf *m;
 		int chanidx, is_shortpre;
@@ -4983,61 +4892,6 @@ iwx_release_frames(struct iwx_softc *sc, struct ieee80211_node *ni,
 		ssn = (ssn + 1) & 0xfff;
 	}
 	reorder_buf->head_sn = nssn;
-
-set_timer:
-	if (reorder_buf->num_stored && !reorder_buf->removed) {
-		timeout_add_usec(&reorder_buf->reorder_timer,
-		    RX_REORDER_BUF_TIMEOUT_MQ_USEC);
-	} else
-		timeout_del(&reorder_buf->reorder_timer);
-}
-
-int
-iwx_oldsn_workaround(struct iwx_softc *sc, struct ieee80211_node *ni, int tid,
-    struct iwx_reorder_buffer *buffer, uint32_t reorder_data, uint32_t gp2)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-
-	if (gp2 != buffer->consec_oldsn_ampdu_gp2) {
-		/* we have a new (A-)MPDU ... */
-
-		/*
-		 * reset counter to 0 if we didn't have any oldsn in
-		 * the last A-MPDU (as detected by GP2 being identical)
-		 */
-		if (!buffer->consec_oldsn_prev_drop)
-			buffer->consec_oldsn_drops = 0;
-
-		/* either way, update our tracking state */
-		buffer->consec_oldsn_ampdu_gp2 = gp2;
-	} else if (buffer->consec_oldsn_prev_drop) {
-		/*
-		 * tracking state didn't change, and we had an old SN
-		 * indication before - do nothing in this case, we
-		 * already noted this one down and are waiting for the
-		 * next A-MPDU (by GP2)
-		 */
-		return 0;
-	}
-
-	/* return unless this MPDU has old SN */
-	if (!(reorder_data & IWX_RX_MPDU_REORDER_BA_OLD_SN))
-		return 0;
-
-	/* update state */
-	buffer->consec_oldsn_prev_drop = 1;
-	buffer->consec_oldsn_drops++;
-
-	/* if limit is reached, send del BA and reset state */
-	if (buffer->consec_oldsn_drops == IWX_AMPDU_CONSEC_DROPS_DELBA) {
-		ieee80211_delba_request(ic, ni, IEEE80211_REASON_UNSPECIFIED,
-		    0, tid);
-		buffer->consec_oldsn_prev_drop = 0;
-		buffer->consec_oldsn_drops = 0;
-		return 1;
-	}
-
-	return 0;
 }
 
 /*
@@ -5061,8 +4915,6 @@ iwx_rx_reorder(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 	int last_subframe =
 		(desc->amsdu_info & IWX_RX_MPDU_AMSDU_LAST_SUBFRAME);
 	uint8_t tid;
-	uint8_t subframe_idx = (desc->amsdu_info &
-	    IWX_RX_MPDU_AMSDU_SUBFRAME_IDX_MASK);
 	struct iwx_reorder_buf_entry *entries;
 	int index;
 	uint16_t nssn, sn;
@@ -5127,39 +4979,19 @@ iwx_rx_reorder(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 		goto drop;
 	}
 
-	/*
-	 * If there was a significant jump in the nssn - adjust.
-	 * If the SN is smaller than the NSSN it might need to first go into
-	 * the reorder buffer, in which case we just release up to it and the
-	 * rest of the function will take care of storing it and releasing up to
-	 * the nssn.
-	 */
-	if (!iwx_is_sn_less(nssn, buffer->head_sn + buffer->buf_size,
-	    buffer->buf_size) ||
-	    !SEQ_LT(sn, buffer->head_sn + buffer->buf_size)) {
-		uint16_t min_sn = SEQ_LT(sn, nssn) ? sn : nssn;
-		ic->ic_stats.is_ht_rx_frame_above_ba_winend++;
-		iwx_release_frames(sc, ni, rxba, buffer, min_sn, ml);
-	}
-
-	if (iwx_oldsn_workaround(sc, ni, tid, buffer, reorder_data,
-	    device_timestamp)) {
-		 /* BA session will be torn down. */
-		ic->ic_stats.is_ht_rx_ba_window_jump++;
+	/* drop any duplicate packets */
+	if (desc->status & htole32(IWX_RX_MPDU_RES_STATUS_DUPLICATE))
 		goto drop;
 
-	}
-
 	/* drop any outdated packets */
-	if (SEQ_LT(sn, buffer->head_sn)) {
+	if (reorder_data & IWX_RX_MPDU_REORDER_BA_OLD_SN) {
 		ic->ic_stats.is_ht_rx_frame_below_ba_winstart++;
 		goto drop;
 	}
 
 	/* release immediately if allowed by nssn and no stored frames */
 	if (!buffer->num_stored && SEQ_LT(sn, nssn)) {
-		if (iwx_is_sn_less(buffer->head_sn, nssn, buffer->buf_size) &&
-		   (!is_amsdu || last_subframe))
+		if (!is_amsdu || last_subframe)
 			buffer->head_sn = nssn;
 		ieee80211_release_node(ic, ni);
 		return 0;
@@ -5182,24 +5014,7 @@ iwx_rx_reorder(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 
 	index = sn % buffer->buf_size;
 
-	/*
-	 * Check if we already stored this frame
-	 * As AMSDU is either received or not as whole, logic is simple:
-	 * If we have frames in that position in the buffer and the last frame
-	 * originated from AMSDU had a different SN then it is a retransmission.
-	 * If it is the same SN then if the subframe index is incrementing it
-	 * is the same AMSDU - otherwise it is a retransmission.
-	 */
-	if (!ml_empty(&entries[index].frames)) {
-		if (!is_amsdu) {
-			ic->ic_stats.is_ht_rx_ba_no_buf++;
-			goto drop;
-		} else if (sn != buffer->last_amsdu ||
-		    buffer->last_sub_index >= subframe_idx) {
-			ic->ic_stats.is_ht_rx_ba_no_buf++;
-			goto drop;
-		}
-	} else {
+	if (ml_empty(&entries[index].frames)) {
 		/* This data is the same for all A-MSDU subframes. */
 		entries[index].chanidx = chanidx;
 		entries[index].is_shortpre = is_shortpre;
@@ -5211,12 +5026,6 @@ iwx_rx_reorder(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 	/* put in reorder buffer */
 	ml_enqueue(&entries[index].frames, m);
 	buffer->num_stored++;
-	getmicrouptime(&entries[index].reorder_time);
-
-	if (is_amsdu) {
-		buffer->last_amsdu = sn;
-		buffer->last_sub_index = subframe_idx;
-	}
 
 	/*
 	 * We cannot trust NSSN for AMSDU sub-frames that are not the last.
@@ -12349,8 +12158,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		rxba->sc = sc;
 		timeout_set(&rxba->session_timer, iwx_rx_ba_session_expired,
 		    rxba);
-		timeout_set(&rxba->reorder_buf.reorder_timer,
-		    iwx_reorder_timer_expired, &rxba->reorder_buf);
 		for (j = 0; j < nitems(rxba->entries); j++)
 			ml_init(&rxba->entries[j].frames);
 	}

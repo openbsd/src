@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.63 2026/03/09 12:40:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.64 2026/03/10 08:00:57 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -3633,6 +3633,7 @@ struct iwx_rx_mpdu_res_start {
 #define IWX_RX_MPDU_RES_STATUS_ROBUST_MNG_FRAME		(1 << 15)
 #define IWX_RX_MPDU_RES_STATUS_HASH_INDEX_MSK		(0x3F0000)
 #define IWX_RX_MPDU_RES_STATUS_STA_ID_MSK		(0x1f000000)
+#define IWX_RX_MPDU_RES_STATUS_DUPLICATE		(1 << 22)
 #define IWX_RX_MPDU_RES_STATUS_RRF_KILL			(1 << 29)
 #define IWX_RX_MPDU_RES_STATUS_FILTERING_MSK		(0xc00000)
 #define IWX_RX_MPDU_RES_STATUS2_FILTERING_MSK		(0xc0000000)
