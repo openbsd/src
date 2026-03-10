@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.21 2026/03/10 17:30:23 martijn Exp $	*/
+/*	$OpenBSD: log.c,v 1.22 2026/03/10 17:35:05 martijn Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -71,6 +71,16 @@ logit(int pri, const char *fmt, ...)
 
 	va_start(ap, fmt);
 	vlog(pri, fmt, ap);
+	va_end(ap);
+}
+
+void
+logit_r(struct syslog_data *data, int pri, const char *fmt, ...)
+{
+	va_list	ap;
+
+	va_start(ap, fmt);
+	vlog_r(data, pri, fmt, ap);
 	va_end(ap);
 }
 
@@ -160,6 +170,16 @@ log_info(const char *emsg, ...)
 }
 
 void
+log_info_r(struct syslog_data *data, const char *emsg, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vlog_r(data, LOG_INFO, emsg, ap);
+	va_end(ap);
+}
+
+void
 log_debug(const char *emsg, ...)
 {
 	va_list	 ap;
@@ -167,6 +187,18 @@ log_debug(const char *emsg, ...)
 	if (verbose > 1) {
 		va_start(ap, emsg);
 		vlog(LOG_DEBUG, emsg, ap);
+		va_end(ap);
+	}
+}
+
+void
+log_debug_r(struct syslog_data *data, const char *emsg, ...)
+{
+	va_list	 ap;
+
+	if (verbose > 1) {
+		va_start(ap, emsg);
+		vlog_r(data, LOG_DEBUG, emsg, ap);
 		va_end(ap);
 	}
 }

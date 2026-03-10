@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.80 2026/03/10 17:30:23 martijn Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.81 2026/03/10 17:35:05 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -25,7 +25,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	PROTOCOL_VERSION	"0.7"
+#define	PROTOCOL_VERSION	"0.8"
 
 struct filter;
 struct filter_session;
@@ -323,7 +323,28 @@ processor_errfd(struct io *io, int evt, void *arg)
 	switch (evt) {
 	case IO_DATAIN:
 		while ((line = io_getline(io, &len)) != NULL) {
-			log_warnx_r(&processor->sd, "%s", line);
+			if (!strncasecmp(
+			    line, "DEBUG|", sizeof("DEBUG|") - 1))
+				log_debug_r(&processor->sd, "%s",
+				    line + sizeof("DEBUG|") - 1);
+			else if (!strncasecmp(
+			    line, "INFO|", sizeof("INFO|") - 1))
+				log_info_r(&processor->sd, "%s",
+				    line + sizeof("INFO|") - 1);
+			else if (!strncasecmp(
+			    line, "WARNING|", sizeof("WARNING|") - 1))
+				log_warnx_r(&processor->sd, "%s",
+				    line + sizeof("WARNING|") - 1);
+			else if (!strncasecmp(
+			    line, "WARN|", sizeof("WARN|") - 1))
+				log_warnx_r(&processor->sd, "%s",
+				    line + sizeof("WARN|") - 1);
+			else if (!strncasecmp(
+			    line, "FATAL|", sizeof("FATAL|") - 1))
+				logit_r(&processor->sd, LOG_CRIT, "%s",
+				    line + sizeof("FATAL|") - 1);
+			else
+				log_warnx_r(&processor->sd, "%s", line);
 		}
 	}
 }
