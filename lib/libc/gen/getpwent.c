@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.71 2026/03/10 00:06:39 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.72 2026/03/10 02:55:34 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -960,12 +960,17 @@ __initdb(int shadow)
 	__getpwent_has_yppw = -1;
 #endif
 
-	if (shadow)
+	if (shadow) {
 		fd = __pledge_open(_PATH_SMP_DB, O_RDONLY | O_CLOEXEC);
-	if (fd == -1)
+		if (fd != -1)
+			_pw_db = __hash_open(NULL, fd, O_RDONLY, 0, NULL, 0);
+		if (_pw_db == NULL)
+			close(fd);
+	}
+	if (!_pw_db) {
 		fd = __pledge_open(_PATH_MP_DB, O_RDONLY | O_CLOEXEC);
-	if (fd != -1) {
-		_pw_db = __hash_open(NULL, fd, O_RDONLY, 0, NULL, 0);
+		if (fd != -1)
+			_pw_db = __hash_open(NULL, fd, O_RDONLY, 0, NULL, 0);
 		if (_pw_db == NULL)
 			close(fd);
 	}
