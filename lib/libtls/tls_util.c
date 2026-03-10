@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.16 2023/05/14 07:26:25 op Exp $ */
+/* $OpenBSD: tls_util.c,v 1.17 2026/03/10 05:26:04 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -162,7 +162,7 @@ tls_load_file(const char *name, size_t *len, char *password)
 
 	*len = 0;
 
-	if ((fd = open(name, O_RDONLY)) == -1)
+	if ((fd = open(name, O_RDONLY|O_CLOEXEC)) == -1)
 		return (NULL);
 
 	/* Just load the file into memory without decryption */

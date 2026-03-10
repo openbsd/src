@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.71 2024/08/02 15:00:01 tb Exp $ */
+/* $OpenBSD: tls_config.c,v 1.72 2026/03/10 05:26:04 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -49,7 +49,7 @@ tls_config_load_file(struct tls_error *error, const char *filetype,
 	*buf = NULL;
 	*len = 0;
 
-	if ((fd = open(filename, O_RDONLY)) == -1) {
+	if ((fd = open(filename, O_RDONLY|O_CLOEXEC)) == -1) {
 		tls_error_set(error, TLS_ERROR_UNKNOWN,
 		    "failed to open %s file '%s'",
 		    filetype, filename);

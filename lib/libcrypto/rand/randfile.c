@@ -1,4 +1,4 @@
-/* $OpenBSD: randfile.c,v 1.45 2024/04/10 14:53:01 beck Exp $ */
+/* $OpenBSD: randfile.c,v 1.46 2026/03/10 05:26:04 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,7 +105,7 @@ RAND_write_file(const char *file)
 		return (1);
 	}
 
-	fd = open(file, O_WRONLY|O_CREAT, 0600);
+	fd = open(file, O_WRONLY|O_CREAT|O_CLOEXEC, 0600);
 	if (fd == -1)
 		return (1);
 	out = fdopen(fd, "wb");
