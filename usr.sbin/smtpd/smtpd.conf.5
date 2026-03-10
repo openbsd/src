@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.279 2026/01/18 16:38:02 schwarze Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.280 2026/03/10 17:30:23 martijn Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 18 2026 $
+.Dd $Mdocdate: March 10 2026 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -413,7 +413,7 @@ filter
 backed by the
 .Ar proc-name
 process.
-.It Ic filter Ar filter-name Ic proc-exec Ar command
+.It Ic filter Ar filter-name Ic proc-exec Ar command Op Ar options
 Register and execute
 .Qq proc
 filter
@@ -428,6 +428,10 @@ If
 starts with a slash it is executed with an absolute path,
 otherwise it will be run from
 .Dq /usr/local/libexec/smtpd/ .
+See
+.Ic proc
+for available
+.Ar options .
 .It Ic include Qq Ar pathname
 Replace this directive with the content of the additional configuration
 file at the absolute
@@ -861,7 +865,7 @@ the key length is determined automatically.
 The default is
 .Cm none ,
 which disables DHE cipher suites.
-.It Ic proc Ar proc-name Ar command
+.It Ic proc Ar proc-name Ar command Op Ar options
 Register an external process named
 .Ar proc-name
 from
@@ -875,6 +879,45 @@ If
 starts with a slash it is executed with an absolute path,
 otherwise it will be run from
 .Dq /usr/local/libexec/smtpd/ .
+.Pp
+The following options are supported:
+.Bl -tag -width Ds
+.It Xo
+.Ic user Ar username
+.Xc
+The
+.Ar username
+under which the process is to be executed.
+The default is _smtpd.
+.It Xo
+.Ic group Ar group
+.Xc
+The
+.Ar group
+under which the process is to be executed.
+The default is the primary group of
+.Ic user .
+.It Xo
+.Ic chroot Ar chroot
+.Xc
+The
+.Ar chroot
+under which the process is to be executed.
+Care must be taken that all dependencies of the
+.Ar command
+are installed inside the chroot.
+.It Xo
+.Ic tag Ar tag
+.Xc
+The
+.Ar tag
+with which all logmessages of this processor are written to syslog.
+.Ar tag
+is limited to 32 letters.
+The default is a best effort representation of the
+.Ar command
+name.
+.El
 .It Ic queue Cm compression
 Store queue files in a compressed format.
 This may be useful to save disk space.

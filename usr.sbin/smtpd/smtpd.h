@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.691 2026/01/07 07:54:57 martijn Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.692 2026/03/10 17:30:23 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1054,6 +1054,7 @@ struct filter_proc {
 	const char		       *user;
 	const char		       *group;
 	const char		       *chroot;
+	const char		       *tag;
 	int				errfd;
 	enum filter_subsystem		filter_subsystem;
 };
@@ -1353,7 +1354,7 @@ int lka(void);
 
 /* lka_proc.c */
 int lka_proc_ready(void);
-void lka_proc_forked(const char *, uint32_t, int);
+void lka_proc_forked(const char *, const char *, uint32_t, int);
 void lka_proc_errfd(const char *, int);
 struct io *lka_proc_get_io(const char *);
 
@@ -1711,6 +1712,7 @@ int xasprintf(char **, const char *, ...)
 void *xmalloc(size_t);
 void *xcalloc(size_t, size_t);
 char *xstrdup(const char *);
+char *xstrndup(const char *, size_t);
 void *xmemdup(const void *, size_t);
 char *strip(char *);
 int io_xprint(struct io *, const char *);

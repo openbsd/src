@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.9 2021/12/13 18:28:40 deraadt Exp $	*/
+/*	$OpenBSD: log.h,v 1.10 2026/03/10 17:30:23 martijn Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,8 @@
 
 #include <stdarg.h>
 
+struct syslog_data;
+
 void	log_init(int, int);
 void	log_procinit(const char *);
 void	log_setverbose(int);
@@ -29,6 +31,8 @@ void	log_warn(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	log_warnx(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
+void	log_warnx_r(struct syslog_data *, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
 void	log_info(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 void	log_debug(const char *, ...)
@@ -37,6 +41,8 @@ void	logit(int, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
 void	vlog(int, const char *, va_list)
 	    __attribute__((__format__ (printf, 2, 0)));
+void	vlog_r(struct syslog_data *, int, const char *, va_list)
+	    __attribute__((__format__ (printf, 3, 0)));
 __dead void fatal(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 __dead void fatalx(const char *, ...)

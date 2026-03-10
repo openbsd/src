@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.20 2017/03/21 12:06:56 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.21 2026/03/10 17:30:23 martijn Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,30 +24,11 @@
 #include <errno.h>
 #include <time.h>
 
+#include "log.h"
+
 static int	 debug;
 static int	 verbose;
 const char	*log_procname;
-
-void	log_init(int, int);
-void	log_procinit(const char *);
-void	log_setverbose(int);
-int	log_getverbose(void);
-void	log_warn(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_warnx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_info(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_debug(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	logit(int, const char *, ...)
-	    __attribute__((__format__ (printf, 2, 3)));
-void	vlog(int, const char *, va_list)
-	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-__dead void fatalx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
 
 void
 log_init(int n_debug, int facility)
@@ -96,21 +77,26 @@ logit(int pri, const char *fmt, ...)
 void
 vlog(int pri, const char *fmt, va_list ap)
 {
-	char	*nfmt;
+	vlog_r(NULL, pri, fmt, ap);
+}
+
+void
+vlog_r(struct syslog_data *data, int pri, const char *fmt, va_list ap)
+{
 	int	 saved_errno = errno;
 
 	if (debug) {
-		/* best effort in out of mem situations */
-		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
-			vfprintf(stderr, fmt, ap);
-			fprintf(stderr, "\n");
-		} else {
-			vfprintf(stderr, nfmt, ap);
-			free(nfmt);
-		}
+		if (data)
+			fprintf(stderr, "%s: ", data->log_tag);
+		vfprintf(stderr, fmt, ap);
+		fprintf(stderr, "\n");
 		fflush(stderr);
-	} else
-		vsyslog(pri, fmt, ap);
+	} else {
+		if (data)
+			vsyslog_r(pri, data, fmt, ap);
+		else
+			vsyslog(pri, fmt, ap);
+	}
 
 	errno = saved_errno;
 }
@@ -150,6 +136,16 @@ log_warnx(const char *emsg, ...)
 
 	va_start(ap, emsg);
 	vlog(LOG_ERR, emsg, ap);
+	va_end(ap);
+}
+
+void
+log_warnx_r(struct syslog_data *data, const char *emsg, ...)
+{
+	va_list ap;
+
+	va_start(ap, emsg);
+	vlog_r(data, LOG_ERR, emsg, ap);
 	va_end(ap);
 }
 
