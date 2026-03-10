@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.34 2026/03/10 06:23:44 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.35 2026/03/10 06:41:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -529,27 +529,27 @@ sio_sun_write(struct sio_hdl *sh, const void *buf, size_t len)
  * hdl->rused), making the restart transparent to upper layers.
  */
 static int
-sio_sun_xrun(struct sio_sun_hdl *hdl)
+_sio_xrun(struct sio_hdl *hdl)
 {
 	int cmove;
 
 #ifdef DEBUG
 	if (_sndio_debug >= 1)
-		_sio_printpos(&hdl->sio);
+		_sio_printpos(hdl);
 #endif
 	/*
 	 * The device restarts with empty buffers and block aligned.
 	 */
-	if (!sio_sun_flush(&hdl->sio))
+	if (!hdl->ops->flush(hdl))
 		return 0;
 
-	_sio_onxrun_cb(&hdl->sio);
+	_sio_onxrun_cb(hdl);
 
-	if (!sio_sun_start(&hdl->sio))
+	if (!hdl->ops->start(hdl))
 		return 0;
 
 	DPRINTFN(1, "%s: rused = %d, wused = %d\n", __func__,
-	    hdl->sio.rused, hdl->sio.wused);
+	    hdl->rused, hdl->wused);
 
 	/*
 	 * To restore the device state, we play silence, drop recorded data,
@@ -605,27 +605,27 @@ sio_sun_xrun(struct sio_sun_hdl *hdl)
 	 *
 	 */
 
-	cmove = hdl->sio.cpos % hdl->sio.par.round;
+	cmove = hdl->cpos % hdl->par.round;
 
-	if (hdl->sio.mode & SIO_REC) {
+	if (hdl->mode & SIO_REC) {
 		while (1) {
-			hdl->sio.rdrop = cmove * hdl->ibpf - hdl->sio.rused;
-			if (hdl->sio.rdrop >= 0)
+			hdl->rdrop = cmove * hdl->par.bps * hdl->par.rchan - hdl->rused;
+			if (hdl->rdrop >= 0)
 				break;
 			/*
 			 * rdrop can't be negative, try a larger 'N'
 			 */
-			cmove += hdl->sio.par.round;
+			cmove += hdl->par.round;
 		}
 	}
 
-	if (hdl->sio.mode & SIO_PLAY)
-		hdl->sio.wsil = hdl->sio.wused + cmove * hdl->obpf;
+	if (hdl->mode & SIO_PLAY)
+		hdl->wsil = hdl->wused + cmove * hdl->par.bps * hdl->par.pchan;
 
 	DPRINTFN(1, "%s: cmove = %d, wsil = %d, rdrop = %d\n", __func__,
-	    cmove, hdl->sio.wsil, hdl->sio.rdrop);
+	    cmove, hdl->wsil, hdl->rdrop);
 
-	_sio_onmove_cb(&hdl->sio, -cmove);
+	_sio_onmove_cb(hdl, -cmove);
 	return 1;
 }
 
@@ -662,7 +662,7 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		return POLLHUP;
 	}
 	if (ap.play_xrun > 0 || ap.rec_xrun > 0) {
-		if (!sio_sun_xrun(hdl))
+		if (!_sio_xrun(&hdl->sio))
 			return POLLHUP;
 	} else {
 		if (hdl->sio.mode & SIO_PLAY) {
