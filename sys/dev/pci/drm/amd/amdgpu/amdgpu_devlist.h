@@ -257,17 +257,26 @@ static const struct pci_matchid amdgpu_devices[] = {
 	/* GC 11.0.4, DCN 3.1.4, APU, Ryzen 8040 "Hawk Point" */
 	{0x1002, 0x1901 },	/* Radeon 740M */
 
-	/* GC 11.5.0, DCN 3.5.0, APU, Ryzen AI 300 "Strix Point" */
+	/*
+	 * GC 11.5.0, DCN 3.5.0, APU, Ryzen AI 300 "Strix Point"
+	 * GC 11.5.0, DCN 3.5.0, APU, Ryzen AI 9 465/470/475 "Gorgon Point"
+	 */
 	{0x1002, 0x150e },	/* Radeon 880M / 890M */
 
 	/* GC 11.5.1, DCN 3.5.1, APU, Ryzen AI Max 300 "Strix Halo" */
 	{0x1002, 0x1586 },	/* Radeon 8040S / 8050S / 8060S */
 
-	/* GC 11.5.2, DCN 3.5.0, APU, Ryzen AI 350 "Krackan Point" */
+	/*
+	 * GC 11.5.2, DCN 3.5.0, APU, Ryzen AI 350 "Krackan Point"
+	 * GC 11.5.2, DCN 3.5.0, APU, Ryzen AI 7 450 "Gorgon Point"
+	 */
 	{0x1002, 0x1114 },	/* Radeon 840M / 860M */
 
-	/* GC 11.5.3, DCN 3.6.0, APU, Ryzen AI 330 "Krackan Point" */
-	{0x1002, 0x1902 },	/* Radeon 820M */
+	/*
+	 * GC 11.5.3, DCN 3.6.0, APU, Ryzen AI 330 "Krackan Point"
+	 * GC 11.5.3, DCN 3.6.0, APU, Ryzen AI 5 435/440 "Gorgon Point"
+	 */
+	{0x1002, 0x1902 },	/* Radeon 820M / 840M */
 
 	/* GC 12.0.0, DCN 4.0.1, dGPU, "Navi 44" */
 	{0x1002, 0x7590 },	/* Radeon RX 9060, 9060 XT */
