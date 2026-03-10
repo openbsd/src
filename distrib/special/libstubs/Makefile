@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.24 2025/08/14 09:31:21 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.25 2026/03/10 06:34:50 deraadt Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
-SRCS=	db.c setlocale.c sha1.c sha2.c getgrent.c getpwent.c \
+SRCS=	db.c		# for pwd_mkdb
+SRCS+=	setlocale.c sha1.c sha2.c getgrent.c getpwent.c \
 	ethers.c \
 	malloc.c mbrtowc_sb.c sscanf.c vfprintf.c vfscanf.c
 SRCS+=	asr.c			\
