@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.205 2026/03/09 12:40:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.206 2026/03/10 07:58:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8510,18 +8510,25 @@ iwx_rs_init_v3(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_NON_HT;
 
 	cfg_cmd.sta_id = IWX_STATION_ID;
-	if (in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
+	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+	    in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_80MHZ;
-	else if (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
-	    in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCB)
+	else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
+	    in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCB))
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_40MHZ;
 	else
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_20MHZ;
-	cfg_cmd.chains = IWX_TLC_MNG_CHAIN_A_MSK | IWX_TLC_MNG_CHAIN_B_MSK;
+	if ((ni->ni_flags & IEEE80211_NODE_HT) && iwx_mimo_enabled(sc))
+		cfg_cmd.chains = IWX_TLC_MNG_CHAIN_A_MSK | IWX_TLC_MNG_CHAIN_B_MSK;
+	else
+		cfg_cmd.chains = IWX_TLC_MNG_CHAIN_A_MSK;
 	if (ni->ni_flags & IEEE80211_NODE_VHT)
 		cfg_cmd.max_mpdu_len = htole16(3895);
-	else
+	else if (ni->ni_flags & IEEE80211_NODE_HT)
 		cfg_cmd.max_mpdu_len = htole16(3839);
+	else
+		cfg_cmd.max_mpdu_len = IEEE80211_MAX_LEN;
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
 		if (ieee80211_node_supports_ht_sgi20(ni)) {
 			cfg_cmd.sgi_ch_width_supp |= (1 <<
@@ -8578,18 +8585,25 @@ iwx_rs_init_v4(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_NON_HT;
 
 	cfg_cmd.sta_id = IWX_STATION_ID;
-	if (in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
+	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+	    in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_80MHZ;
-	else if (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
-	    in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCB)
+	else if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
+	    in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCB))
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_40MHZ;
 	else
 		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_20MHZ;
-	cfg_cmd.chains = IWX_TLC_MNG_CHAIN_A_MSK | IWX_TLC_MNG_CHAIN_B_MSK;
+	if ((ni->ni_flags & IEEE80211_NODE_HT) && iwx_mimo_enabled(sc))
+		cfg_cmd.chains = IWX_TLC_MNG_CHAIN_A_MSK | IWX_TLC_MNG_CHAIN_B_MSK;
+	else
+		cfg_cmd.chains = IWX_TLC_MNG_CHAIN_A_MSK;
 	if (ni->ni_flags & IEEE80211_NODE_VHT)
 		cfg_cmd.max_mpdu_len = htole16(3895);
-	else
+	else if (ni->ni_flags & IEEE80211_NODE_HT)
 		cfg_cmd.max_mpdu_len = htole16(3839);
+	else
+		cfg_cmd.max_mpdu_len = IEEE80211_MAX_LEN;
 	if (ni->ni_flags & IEEE80211_NODE_HT) {
 		if (ieee80211_node_supports_ht_sgi20(ni)) {
 			cfg_cmd.sgi_ch_width_supp |= (1 <<
