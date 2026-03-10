@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.344 2026/03/10 05:01:35 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.345 2026/03/10 16:33:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -244,7 +244,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS___pledge_open] = PLEDGE_STDIO,
 	[SYS_stat] = PLEDGE_STDIO,
 	[SYS_access] = PLEDGE_STDIO,
-	[SYS_readlink] = PLEDGE_STDIO,
+	[SYS_readlink] = PLEDGE_RPATH,
 	[SYS___realpath] = PLEDGE_RPATH,
 
 	[SYS_adjtime] = PLEDGE_STDIO,   /* setting requires "settime" */
