@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.40 2025/08/19 02:34:31 jsg Exp $ */
+/*	$OpenBSD: gmon.c,v 1.41 2026/03/10 16:20:57 deraadt Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -175,7 +175,7 @@ _monstartup(u_long lowpc, u_long highpc)
 	if (issetugid() == 0)
 		profdir = getenv("PROFDIR");
 	if (profdir)
-		p->dirfd = open(profdir, O_DIRECTORY, 0);
+		p->dirfd = open(profdir, O_DIRECTORY|O_CLOEXEC, 0);
 	else
 		p->dirfd = -1;
 
@@ -372,7 +372,7 @@ _mcleanup(void)
 	moncontrol(0);
 
 #ifdef DEBUG
-	log = open("gmon.log", O_CREAT|O_TRUNC|O_WRONLY, 0664);
+	log = open("gmon.log", O_CREAT|O_TRUNC|O_WRONLY|O_CLOEXEC, 0664);
 	if (log == -1) {
 		perror("mcount: gmon.log");
 		close(fd);

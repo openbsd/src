@@ -1,4 +1,4 @@
-/*	$OpenBSD: helper.c,v 1.18 2019/06/28 13:32:41 deraadt Exp $ */
+/*	$OpenBSD: helper.c,v 1.19 2026/03/10 16:20:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -67,7 +67,7 @@ HASHFileChunk(const char *filename, char *buf, off_t off, off_t len)
 
 	HASHInit(&ctx);
 
-	if ((fd = open(filename, O_RDONLY)) == -1)
+	if ((fd = open(filename, O_RDONLY|O_CLOEXEC)) == -1)
 		return (NULL);
 	if (len == 0) {
 		if (fstat(fd, &sb) == -1) {

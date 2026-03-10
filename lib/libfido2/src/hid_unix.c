@@ -23,7 +23,7 @@ fido_hid_unix_open(const char *path)
 	int fd;
 	struct stat st;
 
-	if ((fd = open(path, O_RDWR)) == -1) {
+	if ((fd = open(path, O_RDWR|O_CLOEXEC)) == -1) {
 		if (errno != ENOENT && errno != ENXIO)
 			fido_log_error(errno, "%s: open %s", __func__, path);
 		return (-1);

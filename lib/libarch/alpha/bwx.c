@@ -1,4 +1,4 @@
-/* $OpenBSD: bwx.c,v 1.10 2021/09/17 15:19:52 deraadt Exp $ */
+/* $OpenBSD: bwx.c,v 1.11 2026/03/10 16:20:57 deraadt Exp $ */
 /*-
  * Copyright (c) 1998 Doug Rabson
  * All rights reserved.
@@ -61,9 +61,9 @@ bwx_open_mem(void)
 
 	if (mem_fd != -1) 
 		return;
-	mem_fd = open(_PATH_MEM, O_RDWR);
+	mem_fd = open(_PATH_MEM, O_RDWR|O_CLOEXEC);
 	if (mem_fd < 0) 
-		mem_fd = open(PATH_APERTURE, O_RDWR);
+		mem_fd = open(PATH_APERTURE, O_RDWR|O_CLOEXEC);
 	if (mem_fd < 0)
 		err(1, "Failed to open both %s and %s", _PATH_MEM, 
 		    PATH_APERTURE);

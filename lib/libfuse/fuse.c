@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.58 2026/01/29 06:04:27 helg Exp $ */
+/* $OpenBSD: fuse.c,v 1.59 2026/03/10 16:20:57 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -138,7 +138,7 @@ fuse_mount(const char *dir, struct fuse_args *args)
 	if (mnt_dir == NULL)
 		goto bad;
 
-	if ((fc->fd = open("/dev/fuse0", O_RDWR)) == -1) {
+	if ((fc->fd = open("/dev/fuse0", O_RDWR|O_CLOEXEC)) == -1) {
 		perror("/dev/fuse0");
 		goto bad;
 	}
