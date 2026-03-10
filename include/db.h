@@ -1,4 +1,4 @@
-/*	$OpenBSD: db.h,v 1.12 2015/10/17 21:48:42 guenther Exp $	*/
+/*	$OpenBSD: db.h,v 1.13 2026/03/10 04:29:08 deraadt Exp $	*/
 /*	$NetBSD: db.h,v 1.13 1994/10/26 00:55:48 cgd Exp $	*/
 
 /*-
@@ -84,15 +84,9 @@ typedef enum { DB_BTREE, DB_HASH, DB_RECNO } DBTYPE;
  * is so that the access methods can skip copying the key/data pair when
  * the DB_LOCK flag isn't set.
  */
-#if UINT_MAX > 65535
-#define	DB_LOCK		0x20000000	/* Do locking. */
-#define	DB_SHMEM	0x40000000	/* Use shared memory. */
-#define	DB_TXN		0x80000000	/* Do transactions. */
-#else
 #define	DB_LOCK		    0x2000	/* Do locking. */
 #define	DB_SHMEM	    0x4000	/* Use shared memory. */
 #define	DB_TXN		    0x8000	/* Do transactions. */
-#endif
 
 /* Access method description structure. */
 typedef struct __db {
