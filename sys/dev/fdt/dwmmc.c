@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.32 2025/10/13 19:15:49 kettenis Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.33 2026/03/11 16:22:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -278,6 +278,7 @@ dwmmc_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(faa->fa_node, "hisilicon,hi3660-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "hisilicon,hi3670-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-dw-mshc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3576-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "samsung,exynos5420-dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "snps,dw-mshc") ||
 	    OF_is_compatible(faa->fa_node, "starfive,jh7110-mmc"));
