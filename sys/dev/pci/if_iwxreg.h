@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.69 2026/03/11 09:37:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.70 2026/03/11 09:40:25 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1422,7 +1422,7 @@ enum msix_ivar_for_cause {
 #define IWX_UCODE_TLV_CAPA_RFIM_SUPPORT			102
 #define IWX_UCODE_TLV_CAPA_MLD_API_SUPPORT		110 
 
-#define IWX_NUM_UCODE_TLV_CAPA 128
+#define IWX_NUM_UCODE_TLV_CAPA 160
 
 /*
  * For 16.0 uCode and above, there is no differentiation between sections,
