@@ -22852,6 +22852,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core Ultra PCIE",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_18,
+	    "Wi-Fi 6e AX211",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARL_U_ISH,
 	    "Core Ultra ISH",
 	},

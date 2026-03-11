@@ -6382,6 +6382,7 @@
 #define	PCI_PRODUCT_INTEL_ARL_U_PCIE_6	0x773d		/* Core Ultra PCIE */
 #define	PCI_PRODUCT_INTEL_ARL_U_PCIE_7	0x773e		/* Core Ultra PCIE */
 #define	PCI_PRODUCT_INTEL_ARL_U_PCIE_8	0x773f		/* Core Ultra PCIE */
+#define	PCI_PRODUCT_INTEL_WL_22500_18	0x7740		/* Wi-Fi 6e AX211 */
 #define	PCI_PRODUCT_INTEL_ARL_U_ISH	0x7745		/* Core Ultra ISH */
 #define	PCI_PRODUCT_INTEL_ARL_U_GSPI_2	0x7746		/* Core Ultra GSPI */
 #define	PCI_PRODUCT_INTEL_ARL_U_THC_0_1	0x7748		/* Core Ultra THC */
