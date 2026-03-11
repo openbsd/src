@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.43 2021/09/01 15:54:40 deraadt Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.44 2026/03/11 14:54:55 millert Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ extern char *__progname;
 static char *
 getargv(struct kinfo_proc *kp)
 {
-	static char buf[_POSIX2_LINE_MAX];
+	static char buf[_POSIX_ARG_MAX];
 	char **pargv;
 	size_t j;
 
