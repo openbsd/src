@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.212 2026/03/11 09:29:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.213 2026/03/11 09:33:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10626,6 +10626,7 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			break;
 
 		case IWX_MISSED_BEACONS_NOTIFICATION:
+		case IWX_WIDE_ID(IWX_MAC_CONF_GROUP, IWX_MISSED_BEACONS_NOTIF):
 			iwx_rx_bmiss(sc, pkt, data);
 			break;
 
