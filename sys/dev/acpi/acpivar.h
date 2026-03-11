@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.140 2026/01/10 16:12:36 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.141 2026/03/11 16:18:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -295,6 +295,12 @@ struct acpi_softc {
 	void			(*sc_pmc_resume)(void *);
 	void			*sc_pmc_cookie;
 };
+
+#define WAKEGPE_NONE	-1
+#define WAKEGPE_PWRBTN	-2
+#define WAKEGPE_SLPBTN	-3
+#define WAKEGPE_RTC	-4
+#define WAKEGPE_GPIO	-5
 
 extern struct acpi_softc *acpi_softc;
 

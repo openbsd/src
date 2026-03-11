@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.21 2025/08/01 12:38:21 stsp Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.22 2026/03/11 16:18:42 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -216,7 +216,8 @@ fail_hiballoc:
 	sys_sync(curproc, NULL, NULL);
 	if (cpu_setperf != NULL)
 		cpu_setperf(perflevel);	/* Restore hw.setperf */
-	if (suspend_finish(v) == EAGAIN)
+	sleepmode = suspend_finish(v);
+	if (sleepmode != SLEEP_RESUME)
 		goto top;
 	resume_time = getuptime();
 	return (error);

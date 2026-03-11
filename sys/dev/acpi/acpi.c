@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.456 2025/12/06 13:18:07 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.457 2026/03/11 16:18:42 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -975,9 +975,10 @@ acpi_gpio_event(void *arg)
 			gpio->intr_disable(gpio->cookie, ev->pin);
 	}
 
-	if (cpu_suspended) {
+	if (cpu_suspended)
 		cpu_suspended = 0;
-		sc->sc_wakegpe = -3;
+	if (sc->sc_wakegpe == WAKEGPE_NONE) {
+		sc->sc_wakegpe = WAKEGPE_GPIO;
 		sc->sc_wakegpio = ev->pin;
 	}
 
@@ -2187,10 +2188,10 @@ acpi_interrupt(void *arg)
 				if (!(en & sts & (1L << jdx)))
 					continue;
 
-				if (cpu_suspended) {
+				if (cpu_suspended)
 					cpu_suspended = 0;
+				if (sc->sc_wakegpe == WAKEGPE_NONE)
 					sc->sc_wakegpe = idx + jdx;
-				}
 
 				/* Signal this GPE */
 				gpe = idx + jdx;
@@ -2226,10 +2227,10 @@ acpi_interrupt(void *arg)
 			    ACPI_PM1_PWRBTN_STS);
 			sts &= ~ACPI_PM1_PWRBTN_STS;
 
-			if (cpu_suspended) {
+			if (cpu_suspended)
 				cpu_suspended = 0;
-				sc->sc_wakegpe = -1;
-			}
+			if (sc->sc_wakegpe == WAKEGPE_NONE)
+				sc->sc_wakegpe = WAKEGPE_PWRBTN;
 
 			acpi_addtask(sc, acpi_pbtn_task, sc, 0);
 		}
@@ -2241,13 +2242,28 @@ acpi_interrupt(void *arg)
 			    ACPI_PM1_SLPBTN_STS);
 			sts &= ~ACPI_PM1_SLPBTN_STS;
 
-			if (cpu_suspended) {
+			if (cpu_suspended)
 				cpu_suspended = 0;
-				sc->sc_wakegpe = -2;
-			}
+			if (sc->sc_wakegpe == WAKEGPE_NONE)
+				sc->sc_wakegpe = WAKEGPE_SLPBTN;
 
 			acpi_addtask(sc, acpi_sbtn_task, sc, 0);
 		}
+		if (sts & ACPI_PM1_RTC_STS) {
+			/* Mask and acknowledge */
+			en &= ~ACPI_PM1_RTC_EN;
+			acpi_write_pmreg(sc, ACPIREG_PM1_EN, 0, en);
+			acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0,
+			    ACPI_PM1_RTC_STS);
+			sts &= ~ACPI_PM1_RTC_STS;
+
+			if (cpu_suspended)
+				cpu_suspended = 0;
+
+			if (sc->sc_wakegpe == WAKEGPE_NONE)
+				sc->sc_wakegpe = WAKEGPE_RTC;
+		}
+
 		if (sts) {
 			printf("%s: PM1 stuck (en 0x%x st 0x%x), clearing\n",
 			    sc->sc_dev.dv_xname, en, sts);

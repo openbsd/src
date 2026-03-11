@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.42 2023/09/17 14:50:50 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.43 2026/03/11 16:18:42 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -509,6 +509,67 @@ rtcinit(void)
 	rtc_todr.todr_settime = rtcsettime;
 	rtc_todr.todr_quality = 0;
 	todr_attach(&rtc_todr);
+}
+
+int
+rtcalarm_suspend(struct timeval *delta)
+{
+	mc_todregs rtclk;
+	struct clock_ymdhms dt;
+	struct timeval tv;
+	int s;
+
+	s = splclock();
+	if (rtcget(&rtclk)) {
+		splx(s);
+		return EINVAL;
+	}
+	splx(s);
+
+	dt.dt_sec = bcdtobin(rtclk[MC_SEC]);
+	dt.dt_min = bcdtobin(rtclk[MC_MIN]);
+	dt.dt_hour = bcdtobin(rtclk[MC_HOUR]);
+	dt.dt_day = bcdtobin(rtclk[MC_DOM]);
+	dt.dt_mon = bcdtobin(rtclk[MC_MONTH]);
+	dt.dt_year = clock_expandyear(bcdtobin(rtclk[MC_YEAR]));
+
+	tv.tv_sec = clock_ymdhms_to_secs(&dt);
+	tv.tv_usec = 0;
+
+	timeradd(&tv, delta, &tv);
+
+	clock_secs_to_ymdhms(tv.tv_sec, &dt);
+
+	s = splclock();
+	if (rtcget(&rtclk)) {
+		splx(s);
+		return EINVAL;
+	}
+	rtclk[MC_ASEC] = bintobcd(dt.dt_sec);
+	rtclk[MC_AMIN] = bintobcd(dt.dt_min);
+	rtclk[MC_AHOUR] = bintobcd(dt.dt_hour);
+	rtcput(&rtclk);
+	splx(s);
+
+	while (mc146818_read(NULL, MC_REGC) & MC_REGC_AF);
+	mc146818_write(NULL, MC_REGB, MC_REGB_24HR | MC_REGB_AIE);
+
+	return 0;
+}
+
+void
+rtcalarm_resume(void)
+{
+	mc146818_write(NULL, MC_REGB, MC_REGB_24HR);
+}
+
+int
+rtcalarm_fired(void)
+{
+	if ((mc146818_read(NULL, MC_REGB) & MC_REGB_AIE) == 0)
+		return 0;
+
+	return !!(mc146818_read(NULL, MC_REGC) & MC_REGC_AF);
 }
 
 void

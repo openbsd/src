@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.112 2024/10/14 11:49:34 jan Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.113 2026/03/11 16:18:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -377,10 +377,25 @@ acpi_attach_machdep(struct acpi_softc *sc)
 int
 acpi_sleep_cpu(struct acpi_softc *sc, int state)
 {
+	struct timeval delta;
+	uint16_t en;
+
+	if (initclock_func == i8254_initclocks)
+		rtcstop();		/* in i8254 mode, rtc is profclock */
+
+	if (hibernate_delay > 0 && state < ACPI_STATE_S4) {
+		en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
+		acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
+		    en | ACPI_PM1_RTC_EN);
+
+		delta.tv_sec = hibernate_delay;
+		delta.tv_usec = 0;
+		rtcalarm_suspend(&delta);
+	}
+
 	if (state == ACPI_STATE_S0)
 		return cpu_suspend_primary();
 
-	rtcstop();
 #if NLAPIC > 0
 	lapic_disable();
 #endif
@@ -461,6 +476,13 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 void
 acpi_resume_cpu(struct acpi_softc *sc, int state)
 {
+	if (sc->sc_fadt->flags & FADT_USE_PLATFORM_CLOCK) {
+		if (rtcalarm_fired())
+			sc->sc_wakegpe = WAKEGPE_RTC;
+	}
+
+	rtcalarm_resume();
+
 	if (state == ACPI_STATE_S0)
 		return;
 

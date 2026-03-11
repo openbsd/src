@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.35 2025/09/20 17:43:28 kettenis Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.36 2026/03/11 16:18:42 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -120,6 +120,7 @@ gosleep(void *v)
 	sc->sc_wakeup = 0;
 	sc->sc_wakeups = 0;
 	while (!sc->sc_wakeup) {
+		sc->sc_wakegpe = WAKEGPE_NONE;
 		ret = acpi_sleep_cpu(sc, sc->sc_state);
 		acpi_resume_cpu(sc, sc->sc_state);
 		sc->sc_wakeups++;
@@ -166,7 +167,7 @@ checklids(struct acpi_softc *sc)
 
 	lids = acpibtn_numopenlids();
 	if (lids == 0 && lid_action != 0)
-		return EAGAIN;
+		return 1;
 	return 0;
 }	
 
@@ -176,6 +177,7 @@ suspend_finish(void *v)
 {
 	extern int cpu_wakeups;
 	struct acpi_softc *sc = v;
+	int sleepmode = SLEEP_RESUME;
 
 	printf("wakeups: %d %d\n", cpu_wakeups, sc->sc_wakeups);
 	printf("wakeup event: ");
@@ -183,21 +185,23 @@ suspend_finish(void *v)
 	case 0:
 		printf("unknown\n");
 		break;
-	case -1:
+	case WAKEGPE_PWRBTN:
 		printf("PWRBTN\n");
 		break;
-	case -2:
-		printf("SLPTN\n");
+	case WAKEGPE_SLPBTN:
+		printf("SLPBTN\n");
 		break;
-	case -3:
+	case WAKEGPE_RTC:
+		printf("RTC\n");
+		sleepmode = SLEEP_HIBERNATE;
+		break;
+	case WAKEGPE_GPIO:
 		printf("GPIO 0x%x\n", sc->sc_wakegpio);
 		break;
 	default:
 		printf("GPE 0x%x\n", sc->sc_wakegpe);
 		break;
 	}
-	sc->sc_wakegpe = 0;
-	sc->sc_wakegpio = 0;
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 	acpi_indicator(sc, ACPI_SST_WORKING);
@@ -205,5 +209,8 @@ suspend_finish(void *v)
 	sc->sc_state = ACPI_STATE_S0;
 
 	/* If we woke up but all the lids are closed, go back to sleep */
-	return checklids(sc);
+	if (sleepmode == SLEEP_RESUME && checklids(sc))
+		sleepmode = SLEEP_SUSPEND;
+	
+	return sleepmode;
 }

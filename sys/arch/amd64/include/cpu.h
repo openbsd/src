@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.183 2026/01/14 21:31:03 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.184 2026/03/11 16:18:42 kettenis Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -433,6 +433,7 @@ extern void (*cpu_suspend_cycle_fcn)(void);
 #define	cpu_idle_leave()	do { /* nothing */ } while (0)
 extern void (*initclock_func)(void);
 extern void (*startclock_func)(void);
+extern int hibernate_delay;
 
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
@@ -446,6 +447,9 @@ void	startclocks(void);
 void	rtcinit(void);
 void	rtcstart(void);
 void	rtcstop(void);
+int	rtcalarm_suspend(struct timeval *tv);
+void	rtcalarm_resume(void);
+int	rtcalarm_fired(void);
 void	i8254_delay(int);
 void	i8254_initclocks(void);
 void	i8254_startclock(void);
@@ -498,6 +502,7 @@ void mp_setperf_init(void);
 #define CPU_CPUFEATURE		8	/* cpuid features */
 #define CPU_KBDRESET		10	/* keyboard reset under pcvt */
 #define CPU_XCRYPT		12	/* supports VIA xcrypt in userland */
+#define CPU_HIBERNATEDELAY	13	/* hibernate delay after suspend */
 #define CPU_LIDACTION		14	/* action caused by lid close */
 #define CPU_FORCEUKBD		15	/* Force ukbd(4) as console keyboard */
 #define CPU_TSCFREQ		16	/* TSC frequency */
@@ -521,7 +526,7 @@ void mp_setperf_init(void);
 	{ "kbdreset", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "xcrypt", CTLTYPE_INT }, \
-	{ 0, 0 }, \
+	{ "hibernatedelay", CTLTYPE_INT }, \
 	{ "lidaction", CTLTYPE_INT }, \
 	{ "forceukbd", CTLTYPE_INT }, \
 	{ "tscfreq", CTLTYPE_QUAD }, \
