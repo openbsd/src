@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.94 2025/12/27 14:55:18 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.95 2026/03/11 16:32:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -195,6 +195,19 @@
 #define RK3568_PMUCRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
 #define RK3568_PMUCRU_GATE_CON(i)	(0x0180 + (i) * 4)
 
+/* RK3576 registers */
+#define RK3576_CRU_AUPLL_CON(i)		(0x00180 + (i) * 4)
+#define RK3576_CRU_CPLL_CON(i)		(0x001a0 + (i) * 4)
+#define RK3576_CRU_GPLL_CON(i)		(0x001c0 + (i) * 4)
+#define RK3576_CRU_MODE_CON		0x00280
+#define RK3576_CRU_CLKSEL_CON(i)	(0x00300 + (i) * 4)
+#define RK3576_CRU_GATE_CON(i)		(0x00800 + (i) * 4)
+#define RK3576_CRU_SOFTRST_CON(i)	(0x00a00 + (i) * 4)
+#define RK3576_PHPTOPCRU_PPLL_CON(i)	(0x08200 + (i) * 4)
+#define RK3576_PHPTOPCRU_CLKSEL_CON(i)	(0x08300 + (i) * 4)
+#define RK3576_PHPTOPCRU_GATE_CON(i)	(0x08800 + (i) * 4)
+#define RK3576_PHPTOPCRU_SOFTRST_CON(i)	(0x08a00 + (i) * 4)
+
 /* RK3588 registers */
 #define RK3588_CRU_AUPLL_CON(i)		(0x00180 + (i) * 4)
 #define RK3588_CRU_CPLL_CON(i)		(0x001a0 + (i) * 4)
@@ -326,7 +339,16 @@ int	rk3568_pmu_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3568_pmu_enable(void *, uint32_t *, int);
 void	rk3568_pmu_reset(void *, uint32_t *, int);
 
+void	rk3576_init(struct rkclock_softc *);
+uint32_t rk3576_get_frequency(void *, uint32_t *);
+int	rk3576_set_frequency(void *, uint32_t *, uint32_t);
+int	rk3576_set_parent(void *, uint32_t *, uint32_t *);
+void	rk3576_enable(void *, uint32_t *, int);
+void	rk3576_reset(void *, uint32_t *, int);
+
 void	rk3588_init(struct rkclock_softc *);
+int	rk3588_set_pll(struct rkclock_softc *, bus_size_t, uint32_t);
+uint32_t rk3588_get_pll(struct rkclock_softc *, bus_size_t);
 uint32_t rk3588_get_frequency(void *, uint32_t *);
 int	rk3588_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3588_enable(void *, uint32_t *, int);
@@ -392,6 +414,12 @@ const struct rkclock_compat rkclock_compat[] = {
 		rk3568_pmu_enable, rk3568_pmu_get_frequency,
 		rk3568_pmu_set_frequency, NULL,
 		rk3568_pmu_reset
+	},
+	{
+		"rockchip,rk3576-cru", NULL, 1, rk3576_init,
+		rk3576_enable, rk3576_get_frequency,
+		rk3576_set_frequency, rk3576_set_parent,
+		rk3576_reset
 	},
 	{
 		"rockchip,rk3588-cru", NULL, 1, rk3588_init,
@@ -4117,6 +4145,299 @@ rk3568_pmu_reset(void *cookie, uint32_t *cells, int on)
 }
 
 /* 
+ * Rockchip RK3576
+ */
+
+const struct rkclock rk3576_clocks[] = {
+	{
+		RK3576_CLK_CPLL_DIV20, RK3576_CRU_CLKSEL_CON(0),
+		SEL(5, 5), DIV(4, 0), { RK3576_PLL_GPLL, RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_CLK_CPLL_DIV10, RK3576_CRU_CLKSEL_CON(0),
+		SEL(11, 11), DIV(10, 6), { RK3576_PLL_GPLL, RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_CLK_GPLL_DIV8, RK3576_CRU_CLKSEL_CON(1),
+		SEL(5, 5), DIV(4, 0), { RK3576_PLL_GPLL, RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_CLK_GPLL_DIV6, RK3576_CRU_CLKSEL_CON(1),
+		SEL(11, 11), DIV(10, 6), { RK3576_PLL_GPLL, RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_CLK_CPLL_DIV4, RK3576_CRU_CLKSEL_CON(2),
+		SEL(5, 5), DIV(4, 0), { RK3576_PLL_GPLL, RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_CLK_CPLL_DIV2, RK3576_CRU_CLKSEL_CON(4),
+		SEL(11, 11), DIV(10, 6), { RK3576_PLL_GPLL, RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_CLK_GMAC0_125M_SRC, RK3576_CRU_CLKSEL_CON(30),
+		0, DIV(14, 10),	{ RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_CLK_I2C1, RK3576_CRU_CLKSEL_CON(57),
+		SEL(1, 0), 0,
+		{ RK3576_CLK_GPLL_DIV6, RK3576_CLK_CPLL_DIV10,
+		  RK3576_CLK_CPLL_DIV20, RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_I2C2, RK3576_CRU_CLKSEL_CON(57),
+		SEL(3, 2), 0,
+		{ RK3576_CLK_GPLL_DIV6, RK3576_CLK_CPLL_DIV10,
+		  RK3576_CLK_CPLL_DIV20, RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_I2C5, RK3576_CRU_CLKSEL_CON(57),
+		SEL(9, 8), 0,
+		{ RK3576_CLK_GPLL_DIV6, RK3576_CLK_CPLL_DIV10,
+		  RK3576_CLK_CPLL_DIV20, RK3576_XIN24M },
+	},
+	{
+		RK3576_SCLK_UART0, RK3576_CRU_CLKSEL_CON(60),
+		SEL(10, 8), DIV(7, 0),
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL, RK3576_PLL_AUPLL,
+		  RK3576_XIN24M, RK3576_CLK_UART_FRAC_0, 
+		  RK3576_CLK_UART_FRAC_1, RK3576_CLK_UART_FRAC_2 },
+	},
+	{
+		RK3576_HCLK_DDR_ROOT, RK3576_CRU_CLKSEL_CON(77),
+		SEL(5, 5), DIV(4, 0),
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_FCLK_DDR_CM0_CORE, 0, 0, 0,
+		{ RK3576_HCLK_DDR_ROOT },
+	},
+	{
+		RK3576_ACLK_PHP_ROOT, RK3576_CRU_CLKSEL_CON(92),
+		SEL(9, 9), DIV(8, 4),
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL },
+	},
+	{
+		RK3576_CCLK_SRC_SDMMC0, RK3576_CRU_CLKSEL_CON(105),
+		SEL(14, 13), DIV(12, 7),
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL, RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_REF_PCIE0_PHY, RK3576_PHPTOPCRU_CLKSEL_CON(0),
+		SEL(13, 12), 0,
+		{ RK3576_CLK_PCIE_100M_SRC, RK3576_CLK_PCIE_100M_NDUTY_SRC,
+		  RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_PCIE_100M_SRC, RK3576_PHPTOPCRU_CLKSEL_CON(0),
+		0, DIV(6, 2),
+		{ RK3576_PLL_PPLL },
+	},
+	{
+		RK3576_CLK_PCIE_100M_NDUTY_SRC, RK3576_PHPTOPCRU_CLKSEL_CON(0),
+		0, DIV(11, 7),
+		{ RK3576_PLL_PPLL },
+	},
+	{
+		RK3576_CLK_REF_PCIE1_PHY, RK3576_PHPTOPCRU_CLKSEL_CON(0),
+		SEL(15, 14), 0,
+		{ RK3576_CLK_PCIE_100M_SRC, RK3576_CLK_PCIE_100M_NDUTY_SRC,
+		  RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_AUDIO_FRAC_0_SRC, RK3576_CRU_CLKSEL_CON(13),
+		SEL(1, 0), 0,
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL, RK3576_PLL_AUPLL,
+		  RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_AUDIO_FRAC_1_SRC, RK3576_CRU_CLKSEL_CON(15),
+		SEL(1, 0), 0,
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL, RK3576_PLL_AUPLL,
+		  RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_UART_FRAC_0_SRC, RK3576_CRU_CLKSEL_CON(22),
+		SEL(1, 0), 0,
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL, RK3576_PLL_AUPLL,
+		  RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_UART_FRAC_1_SRC, RK3576_CRU_CLKSEL_CON(24),
+		SEL(1, 0), 0,
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL, RK3576_PLL_AUPLL,
+		  RK3576_XIN24M },
+	},
+	{
+		RK3576_CLK_UART_FRAC_2_SRC, RK3576_CRU_CLKSEL_CON(26),
+		SEL(1, 0), 0,
+		{ RK3576_PLL_GPLL, RK3576_PLL_CPLL, RK3576_PLL_AUPLL,
+		  RK3576_XIN24M },
+	},
+	{
+		/* Sentinel */
+	}
+};
+
+/* Certain test clocks are disabled. */
+const uint32_t rk3576_gates[79] = {
+	[2] = 0x00000b00,
+};
+
+void
+rk3576_init(struct rkclock_softc *sc)
+{
+	int i;
+
+	/* The code below assumes all clocks are enabled.  Check this!. */
+	for (i = 0; i < nitems(rk3576_gates); i++) {
+		if (HREAD4(sc, RK3576_CRU_GATE_CON(i)) != rk3576_gates[i]) {
+			printf("CRU_GATE_CON%d: 0x%08x\n", i,
+			    HREAD4(sc, RK3576_CRU_GATE_CON(i)));
+		}
+	}
+
+	sc->sc_clocks = rk3576_clocks;
+}
+
+uint32_t
+rk3576_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3576_PLL_AUPLL:
+		return rk3588_get_pll(sc, RK3576_CRU_AUPLL_CON(0));
+	case RK3576_PLL_CPLL:
+		return rk3588_get_pll(sc, RK3576_CRU_CPLL_CON(0));
+	case RK3576_PLL_GPLL:
+		return rk3588_get_pll(sc, RK3576_CRU_GPLL_CON(0));
+	case RK3576_PLL_PPLL:
+		return 2 * rk3588_get_pll(sc, RK3576_PHPTOPCRU_PPLL_CON(0));
+	case RK3588_XIN24M:
+		return 24000000;
+	default:
+		break;
+	}
+
+	return rkclock_get_frequency(sc, idx);
+}
+
+int
+rk3576_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3576_PLL_AUPLL:
+		return rk3588_set_pll(sc, RK3576_CRU_AUPLL_CON(0), freq);
+	case RK3576_PLL_CPLL:
+		if (rk3588_get_pll(sc, RK3576_CRU_CPLL_CON(0)) == freq)
+			return 0;
+		return rk3588_set_pll(sc, RK3576_CRU_CPLL_CON(0), freq);
+	case RK3576_PLL_GPLL:
+		return rk3588_set_pll(sc, RK3576_CRU_GPLL_CON(0), freq);
+	case RK3576_CLK_AUDIO_FRAC_0:
+		return rk3399_set_frac(sc, RK3576_CLK_AUDIO_FRAC_0_SRC,
+		    RK3576_CRU_CLKSEL_CON(12), freq);
+	case RK3576_CLK_AUDIO_FRAC_1:
+		return rk3399_set_frac(sc, RK3576_CLK_AUDIO_FRAC_1_SRC,
+		    RK3576_CRU_CLKSEL_CON(14), freq);
+	case RK3576_CLK_UART_FRAC_0:
+		return rk3399_set_frac(sc, RK3576_CLK_UART_FRAC_0_SRC,
+		    RK3576_CRU_CLKSEL_CON(21), freq);
+	case RK3576_CLK_UART_FRAC_1:
+		return rk3399_set_frac(sc, RK3576_CLK_UART_FRAC_1_SRC,
+		    RK3576_CRU_CLKSEL_CON(23), freq);
+	case RK3576_CLK_UART_FRAC_2:
+		return rk3399_set_frac(sc, RK3576_CLK_UART_FRAC_2_SRC,
+		    RK3576_CRU_CLKSEL_CON(25), freq);
+	default:
+		break;
+	}
+
+	return rkclock_set_frequency(sc, idx, freq);
+}
+
+int
+rk3576_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
+{
+	struct rkclock_softc *sc = cookie;
+
+	return rkclock_set_parent(sc, cells[0], pcells[1]);
+}
+
+void
+rk3576_enable(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	/* All clocks are enabled upon hardware reset. */
+	if (!on) {
+		printf("%s: 0x%08x\n", __func__, idx);
+		return;
+	}
+}
+
+void
+rk3576_reset(void *cookie, uint32_t *cells, int on)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t bit, mask, reg;
+
+	switch (idx) {
+	case RK3576_SRST_P_PCIE0:
+		reg = RK3576_CRU_SOFTRST_CON(34);
+		bit = 13;
+		break;
+	case RK3576_SRST_PCIE0_POWER_UP:
+		reg = RK3576_CRU_SOFTRST_CON(34);
+		bit = 15;
+		break;
+	case RK3576_SRST_A_USB3OTG1:
+		reg = RK3576_CRU_SOFTRST_CON(35);
+		bit = 3;
+		break;
+	case RK3576_SRST_A_GMAC0:
+		reg = RK3576_CRU_SOFTRST_CON(42);
+		bit = 7;
+		break;
+	case RK3576_SRST_H_SDMMC0:
+		reg = RK3576_CRU_SOFTRST_CON(43);
+		bit = 2;
+		break;
+	case RK3576_SRST_A_USB3OTG0:
+		reg = RK3576_CRU_SOFTRST_CON(47);
+		bit = 5;
+		break;
+	case RK3576_SRST_P_PCIE2_COMBOPHY0:
+		reg = RK3576_PHPTOPCRU_SOFTRST_CON(0);
+		bit = 5;
+		break;
+	case RK3576_SRST_P_PCIE2_COMBOPHY1:
+		reg = RK3576_PHPTOPCRU_SOFTRST_CON(0);
+		bit = 6;
+		break;
+	case RK3576_SRST_PCIE0_PIPE_PHY:
+		reg = RK3576_PHPTOPCRU_SOFTRST_CON(1);
+		bit = 5;
+		break;
+	case RK3576_SRST_PCIE1_PIPE_PHY:
+		reg = RK3576_PHPTOPCRU_SOFTRST_CON(1);
+		bit = 8;
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		return;
+	}
+
+	mask = (1 << bit);
+	HWRITE4(sc, reg, mask << 16 | (on ? mask : 0));
+}
+
+/* 
  * Rockchip RK3588 
  */
 
@@ -4614,6 +4935,9 @@ rk3588_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 	case RK3588_CRU_AUPLL_CON(0):
 		mode_shift = 6;
 		break;
+	case RK3588_CRU_CPLL_CON(0):
+		mode_shift = 8;
+		break;
 	case RK3588_CRU_GPLL_CON(0):
 		mode_shift = 2;
 		break;
@@ -4657,7 +4981,7 @@ rk3588_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
 	 * adjusting the PLL.
 	 */
 	HWRITE4(sc, RK3588_CRU_MODE_CON,
-	    (RK3588_CRU_MODE_MASK << 16 |RK3588_CRU_MODE_SLOW) << mode_shift);
+	    (RK3588_CRU_MODE_MASK << 16 | RK3588_CRU_MODE_SLOW) << mode_shift);
 
 	/* Power down PLL. */
 	HWRITE4(sc, base + 0x0004,
