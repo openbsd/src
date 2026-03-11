@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.207 2026/03/10 08:00:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.208 2026/03/11 08:58:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8614,19 +8614,31 @@ iwx_auth(struct iwx_softc *sc)
 
 	splassert(IPL_NET);
 
-	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
-		err = iwx_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
-		    ic->ic_ibss_chan, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
-		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
-		if (err)
-			return err;
-	} else {
-		err = iwx_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
-		    in->in_ni.ni_chan, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
-		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
-		if (err)
-			return err;
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		sc->sc_phyctxt[0].channel = ic->ic_ibss_chan;
+	else
+		sc->sc_phyctxt[0].channel = in->in_ni.ni_chan;
+
+	err = iwx_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
+	    IWX_FW_CTXT_ACTION_ADD, 0, IEEE80211_HTOP0_SCO_SCN,
+	    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
+	if (err) {
+		printf("%s: could not add phy context (error %d)\n",
+		    DEVNAME(sc), err);
+		return err;
 	}
+	sc->sc_flags |= IWX_FLAG_PHY_ACTIVE;
+
+	if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_RLC_CONFIG_CMD) == 2) {
+		err = iwx_phy_send_rlc(sc, &sc->sc_phyctxt[0], 1, 1);
+		if (err) {
+			printf("%s: could not configure RLC for PHY "
+			    "(error %d)\n", DEVNAME(sc), err);
+			goto rm_phy_ctxt;
+		}
+	}
+
 	in->in_phyctxt = &sc->sc_phyctxt[0];
 	IEEE80211_ADDR_COPY(in->in_macaddr, in->in_ni.ni_macaddr);
 
@@ -8634,7 +8646,7 @@ iwx_auth(struct iwx_softc *sc)
 	if (err) {
 		printf("%s: could not add MAC context (error %d)\n",
 		    DEVNAME(sc), err);
-		return err;
+		goto rm_phy_ctxt;
  	}
 	sc->sc_flags |= IWX_FLAG_MAC_ACTIVE;
 
@@ -8698,6 +8710,13 @@ rm_mac_ctxt:
 		iwx_mac_ctxt_cmd(sc, in, IWX_FW_CTXT_ACTION_REMOVE, 0);
 		sc->sc_flags &= ~IWX_FLAG_MAC_ACTIVE;
 	}
+rm_phy_ctxt:
+	if (generation == sc->sc_generation) {
+		iwx_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
+		    IWX_FW_CTXT_ACTION_REMOVE, 0, IEEE80211_HTOP0_SCO_SCN,
+		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
+		sc->sc_flags &= ~IWX_FLAG_PHY_ACTIVE;
+	}
 	return err;
 }
 
@@ -8739,12 +8758,17 @@ iwx_deauth(struct iwx_softc *sc)
 		sc->sc_flags &= ~IWX_FLAG_MAC_ACTIVE;
 	}
 
-	/* Move unused PHY context to a default channel. */
-	err = iwx_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
-	    &ic->ic_channels[1], 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
-	    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
-	if (err)
-		return err;
+	if (sc->sc_flags & IWX_FLAG_PHY_ACTIVE) {
+		err = iwx_phy_ctxt_cmd(sc, &sc->sc_phyctxt[0], 1, 1,
+		    IWX_FW_CTXT_ACTION_REMOVE, 0, IEEE80211_HTOP0_SCO_SCN,
+		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
+		if (err) {
+			printf("%s: could not remove PHY context (error %d)\n",
+			    DEVNAME(sc), err);
+			return err;
+		}
+		sc->sc_flags &= ~IWX_FLAG_PHY_ACTIVE;
+	}
 
 	return 0;
 }
@@ -9751,23 +9775,6 @@ iwx_init_hw(struct iwx_softc *sc)
 		 */
 		sc->sc_phyctxt[i].id = i;
 		sc->sc_phyctxt[i].channel = &ic->ic_channels[1];
-		err = iwx_phy_ctxt_cmd(sc, &sc->sc_phyctxt[i], 1, 1,
-		    IWX_FW_CTXT_ACTION_ADD, 0, IEEE80211_HTOP0_SCO_SCN,
-		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
-		if (err) {
-			printf("%s: could not add phy context %d (error %d)\n",
-			    DEVNAME(sc), i, err);
-			goto err;
-		}
-		if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
-		    IWX_RLC_CONFIG_CMD) == 2) {
-			err = iwx_phy_send_rlc(sc, &sc->sc_phyctxt[i], 1, 1);
-			if (err) {
-				printf("%s: could not configure RLC for PHY "
-				    "%d (error %d)\n", DEVNAME(sc), i, err);
-				goto err;
-			}
-		}
 	}
 
 	err = iwx_config_ltr(sc);
@@ -10079,6 +10086,7 @@ iwx_stop(struct ifnet *ifp)
 	sc->sc_flags &= ~IWX_FLAG_HW_ERR;
 	sc->sc_flags &= ~IWX_FLAG_SHUTDOWN;
 	sc->sc_flags &= ~IWX_FLAG_TXFLUSH;
+	sc->sc_flags &= ~IWX_FLAG_PHY_ACTIVE;
 
 	sc->sc_rx_ba_sessions = 0;
 	sc->ba_rx.start_tidmask = 0;

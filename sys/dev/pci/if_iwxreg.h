@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.64 2026/03/10 08:00:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.65 2026/03/11 08:58:11 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -3395,7 +3395,7 @@ struct iwx_fw_channel_info {
 	(0x1 << IWX_PHY_RX_CHAIN_MIMO_FORCE_POS)
 
 /* TODO: fix the value, make it depend on firmware at runtime? */
-#define IWX_NUM_PHY_CTX	3
+#define IWX_NUM_PHY_CTX	1
 
 /**
  * struct iwl_phy_context_cmd - config of the PHY context

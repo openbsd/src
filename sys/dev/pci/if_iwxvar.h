@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.46 2026/03/10 08:00:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.47 2026/03/11 08:58:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -290,6 +290,7 @@ struct iwx_rx_ring {
 #define IWX_FLAG_SHUTDOWN	0x100	/* shutting down; new tasks forbidden */
 #define IWX_FLAG_BGSCAN		0x200	/* background scan in progress */
 #define IWX_FLAG_TXFLUSH	0x400	/* Tx queue flushing in progress */
+#define IWX_FLAG_PHY_ACTIVE	0x800	/* PHY context added to firmware */
 
 struct iwx_ucode_status {
 	uint32_t uc_lmac_error_event_table[2];
