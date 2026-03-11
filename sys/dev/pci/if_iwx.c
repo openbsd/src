@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.211 2026/03/11 09:27:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.212 2026/03/11 09:29:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10963,6 +10963,9 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			SYNC_RESP_STRUCT(notif, pkt);
 			break;
 		}
+
+		case IWX_WIDE_ID(IWX_BT_COEX_GROUP, IWX_PROFILE_NOTIF):
+			break;
 
 		default:
 			handled = 0;

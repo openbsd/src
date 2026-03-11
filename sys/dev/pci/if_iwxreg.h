@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.66 2026/03/11 09:23:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.67 2026/03/11 09:29:44 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1997,6 +1997,7 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_MAC_CONF_GROUP	0x3
 #define IWX_PHY_OPS_GROUP	0x4
 #define IWX_DATA_PATH_GROUP	0x5
+#define IWX_BT_COEX_GROUP	0x9
 #define IWX_PROT_OFFLOAD_GROUP	0xb
 #define IWX_REGULATORY_AND_NVM_GROUP	0xc
 #define IWX_XVT_GROUP		0xe
@@ -2030,6 +2031,9 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_RX_NO_DATA_NOTIF	0xf5
 #define IWX_THERMAL_DUAL_CHAIN_REQUEST 0xf6
 #define IWX_TLC_MNG_UPDATE_NOTIF 0xf7
+
+/* BT COEX group subcommand IDs */
+#define IWX_PROFILE_NOTIF	0xff
 
 /* REGULATORY_AND_NVM group subcommand IDs */
 #define IWX_NVM_ACCESS_COMPLETE	0x00
