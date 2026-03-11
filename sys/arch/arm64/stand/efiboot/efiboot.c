@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.69 2026/03/09 21:12:25 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.70 2026/03/11 16:21:20 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -604,6 +604,7 @@ efi_dma_constraint(void)
 	if (fdt_node_is_compatible(node, "rockchip,rk3528") ||
 	    fdt_node_is_compatible(node, "rockchip,rk3566") ||
 	    fdt_node_is_compatible(node, "rockchip,rk3568") ||
+	    fdt_node_is_compatible(node, "rockchip,rk3576") ||
 	    fdt_node_is_compatible(node, "rockchip,rk3588") ||
 	    fdt_node_is_compatible(node, "rockchip,rk3588s"))
 		dma_constraint[1] = htobe64(0xffffffff);
