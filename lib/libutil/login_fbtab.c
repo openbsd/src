@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.21 2025/11/24 12:44:25 jca Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.22 2026/03/11 14:59:10 deraadt Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -87,7 +87,7 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
 	mode_t	prot;
 	ssize_t	len;
 
-	if ((fp = fopen(_PATH_FBTAB, "r")) == NULL)
+	if ((fp = fopen(_PATH_FBTAB, "re")) == NULL)
 		return;
 
 	while ((len = getline(&buf, &bufsize, fp)) != -1) {

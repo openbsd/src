@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.56 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.57 2026/03/11 14:59:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -324,9 +324,9 @@ pw_copy(int ffd, int tfd, const struct passwd *pw, const struct passwd *opw)
 
 	if (!master)
 		pw_error(NULL, 0, 1);
-	if (!(from = fdopen(ffd, "r")))
+	if (!(from = fdopen(ffd, "re")))
 		pw_error(master, 1, 1);
-	if (!(to = fdopen(tfd, "w")))
+	if (!(to = fdopen(tfd, "we")))
 		pw_error(pw_lck ? pw_lck : NULL, pw_lck ? 1 : 0, 1);
 
 	for (done = 0; fgets(buf, (int)sizeof(buf), from);) {

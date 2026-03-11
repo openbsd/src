@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.14 2019/06/28 14:20:40 schwarze Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.15 2026/03/11 14:59:10 deraadt Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ pidfile(const char *basename)
 	if (asprintf(&pidfile_path, "%s%s.pid", _PATH_VARRUN, basename) == -1)
 		return (-1);
 
-	if ((f = fopen(pidfile_path, "w")) == NULL) {
+	if ((f = fopen(pidfile_path, "we")) == NULL) {
 		save_errno = errno;
 		free(pidfile_path);
 		pidfile_path = NULL;
