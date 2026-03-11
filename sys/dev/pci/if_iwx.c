@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.213 2026/03/11 09:33:45 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.214 2026/03/11 09:37:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10637,16 +10637,18 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			struct iwx_alive_resp_v4 *resp4;
 			struct iwx_alive_resp_v5 *resp5;
 			struct iwx_alive_resp_v6 *resp6;
+			int notif_ver;
 
-			DPRINTF(("%s: firmware alive\n", __func__));
+			notif_ver = iwx_lookup_notif_ver(sc,
+			    IWX_LEGACY_GROUP, IWX_ALIVE);
+			DPRINTF(("%s: firmware alive version %d\n", __func__, notif_ver));
 			sc->sc_uc.uc_ok = 0;
 
 			/*
 			 * For v5 and above, we can check the version, for older
 			 * versions we need to check the size.
 			 */
-			if (iwx_lookup_notif_ver(sc, IWX_LEGACY_GROUP,
-			    IWX_ALIVE) == 6) {
+			if (notif_ver == 6 || notif_ver == 7) {
 				SYNC_RESP_STRUCT(resp6, pkt);
 				if (iwx_rx_packet_payload_len(pkt) !=
 				    sizeof(*resp6)) {
@@ -10670,8 +10672,7 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 				    le32toh(resp6->sku_id.data[2]);
 				if (resp6->status == IWX_ALIVE_STATUS_OK)
 					sc->sc_uc.uc_ok = 1;
-			 } else if (iwx_lookup_notif_ver(sc, IWX_LEGACY_GROUP,
-			    IWX_ALIVE) == 5) {
+			 } else if (notif_ver == 5) {
 				SYNC_RESP_STRUCT(resp5, pkt);
 				if (iwx_rx_packet_payload_len(pkt) !=
 				    sizeof(*resp5)) {
