@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.48 2026/03/11 09:27:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.49 2026/03/11 10:12:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -123,7 +123,7 @@ struct iwx_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
-#define IWX_UCODE_SECT_MAX 68
+#define IWX_UCODE_SECT_MAX 69
 
 /*
  * fw_status is used to determine if we've already parsed the firmware file
@@ -487,6 +487,8 @@ struct iwx_device_cfg {
 #define IWX_MA_B_GF4_A_PNVM	"iwx-ma-b0-gf4-a0.pnvm"
 #define IWX_MA_A_FM_A_FW	"iwx-ma-a0-fm-a0-83"
 #define IWX_MA_A_FM_A_PNVM	"iwx-ma-a0-fm-a0.pnvm"
+#define IWX_BZ_B_GF_A_FW	"iwx-bz-b0-gf-a0-100"
+#define IWX_BZ_B_GF_A_PNVM	"iwx-bz-b0-gf-a0.pnvm"
 
 const struct iwx_device_cfg iwx_9560_quz_a0_jf_b0_cfg = {
 	.fw_name = IWX_QUZ_A_JF_B_FW,
@@ -606,6 +608,7 @@ const struct iwx_device_cfg iwx_cfg_ma_a0_fm_a0 = {
 #define IWX_CFG_MAC_TYPE_MA		0x44
 #define IWX_CFG_MAC_TYPE_BZ		0x46
 #define IWX_CFG_MAC_TYPE_GL		0x47
+#define IWX_CFG_MAC_TYPE_BZ_W		0x4B
 
 #define IWX_CFG_RF_TYPE_JF2		0x105
 #define IWX_CFG_RF_TYPE_JF1		0x108
@@ -703,10 +706,13 @@ struct iwx_softc {
 #define IWX_SILICON_C_STEP	2
 #define IWX_SILICON_Z_STEP	0xf
 	int sc_hw_id;
+	int sc_hw_crf_id;
+	int sc_hw_cnv_id;
 	int sc_hw_rf_id;
 	int sc_device_family;
 #define IWX_DEVICE_FAMILY_22000	1
 #define IWX_DEVICE_FAMILY_AX210	2
+#define IWX_DEVICE_FAMILY_BZ	3
 	uint32_t sc_sku_id[3];
 	uint32_t mac_addr_from_csr;
 

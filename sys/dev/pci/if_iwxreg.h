@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.71 2026/03/11 09:42:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.72 2026/03/11 10:12:49 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -517,6 +517,7 @@ struct iwx_context_info_gen3 {
 #define IWX_CSR_GPIO_IN             (0x018) /* read external chip pins */
 #define IWX_CSR_RESET               (0x020) /* busmaster enable, NMI, etc*/
 #define IWX_CSR_GP_CNTRL            (0x024)
+#define IWX_CSR_FUNC_SCRATCH        (0x02c) /* Scratch register - used for FW dbg */
 
 /* 2nd byte of IWX_CSR_INT_COALESCING, not accessible via iwl_write32()! */
 #define IWX_CSR_INT_PERIODIC_REG	(0x005)
@@ -576,8 +577,18 @@ struct iwx_context_info_gen3 {
 /* GIO Chicken Bits (PCI Express bus link power management) */
 #define IWX_CSR_GIO_CHICKEN_BITS    (0x100)
 
+/* Doorbell NMI since Bz. Connected to UREG_DOORBELL_TO_ISR6 (lower 16 bits only). */
+#define IWX_CSR_DOORBELL_VECTOR		(0x130)
+
 #define IWX_CSR_DBG_HPET_MEM_REG	(0x240)
 #define IWX_CSR_DBG_LINK_PWR_MGMT_REG	(0x250)
+
+/*
+ * Scratch register initial configuration - this is set on init, and read
+ * during a error FW error.
+ */
+#define IWX_CSR_FUNC_SCRATCH_INIT_VALUE		(0x01010101)
+#define IWX_CSR_FUNC_SCRATCH_POWER_OFF_MASK	0xFFFF
 
 /* Bits for IWX_CSR_HW_IF_CONFIG_REG */
 #define IWX_CSR_HW_IF_CONFIG_REG_MSK_MAC_DASH	(0x00000003)
@@ -674,6 +685,18 @@ struct iwx_rx_completion_desc {
 	uint8_t reserved2[25];
 };
 
+/**
+ * struct iwx_rx_completion_desc_bz - Bz completion descriptor
+ * @rbid: unique tag of the received buffer
+ * @flags: flags (0: fragmented, all others: reserved)
+ * @reserved: reserved
+ */
+struct iwx_rx_completion_desc_bz {
+	uint16_t rbid;
+	uint8_t flags;
+	uint8_t reserved[1];
+} __packed;
+
 /* RESET */
 #define IWX_CSR_RESET_REG_FLAG_NEVO_RESET                (0x00000001)
 #define IWX_CSR_RESET_REG_FLAG_FORCE_NMI                 (0x00000002)
@@ -731,6 +754,14 @@ struct iwx_rx_completion_desc {
 #define IWX_CSR_GP_CNTRL_REG_FLAG_RFKILL_WAKE_L1A_EN     (0x04000000)
 #define IWX_CSR_GP_CNTRL_REG_FLAG_HW_RF_KILL_SW          (0x08000000)
 
+/* From Bz we use these instead during init/reset flow */
+#define IWX_CSR_GP_CNTRL_REG_FLAG_MAC_INIT			(1 << 6)
+#define IWX_CSR_GP_CNTRL_REG_FLAG_ROM_START			(1 << 7)
+#define IWX_CSR_GP_CNTRL_REG_FLAG_MAC_STATUS			(1 << 20)
+#define IWX_CSR_GP_CNTRL_REG_FLAG_BZ_MAC_ACCESS_REQ		(1 << 21)
+#define IWX_CSR_GP_CNTRL_REG_FLAG_BUS_MASTER_DISABLE_STATUS	(1 << 28)
+#define IWX_CSR_GP_CNTRL_REG_FLAG_BUS_MASTER_DISABLE_REQ	(1 << 29)
+#define IWX_CSR_GP_CNTRL_REG_FLAG_SW_RESET			(1 << 31)
 
 /* HW REV */
 #define IWX_CSR_HW_REV_DASH(_val)          (((_val) & 0x0000003) >> 0)
@@ -1030,6 +1061,14 @@ struct iwx_rx_completion_desc {
 #define IWX_WFPM_AUX_CTL_AUX_IF_MAC_OWNER_MSK	0x08000000
 #define IWX_ENABLE_WFPM				0x80000000
 
+#define IWX_CNVI_AUX_MISC_CHIP			0xA200B0
+#define IWX_CNVI_AUX_MISC_CHIP_MAC_STEP(_val)	(((_val) & 0xf000000) >> 24)
+#define IWX_CNVI_AUX_MISC_CHIP_PROD_TYPE(_val)	((_val) & 0xfff)
+#define IWX_CNVI_AUX_MISC_CHIP_PROD_TYPE_GL	0x910
+#define IWX_CNVI_AUX_MISC_CHIP_PROD_TYPE_BZ_U	0x930
+#define IWX_CNVI_AUX_MISC_CHIP_PROD_TYPE_BZ_I	0x900
+#define IWX_CNVI_AUX_MISC_CHIP_PROD_TYPE_BZ_W	0x901
+
 #define IWX_AUX_MISC_MASTER1_EN			0xa20818
 #define IWX_AUX_MISC_MASTER1_EN_SBE_MSK		0x1
 #define IWX_AUX_MISC_MASTER1_SMPHR_STATUS	0xa20800
@@ -1047,6 +1086,9 @@ struct iwx_rx_completion_desc {
 #define IWX_UREG_CHICK				0xa05c00
 #define IWX_UREG_CHICK_MSI_ENABLE		(1 << 24)
 #define IWX_UREG_CHICK_MSIX_ENABLE		(1 << 25)
+
+#define IWX_SD_REG_VER		0x00a29600
+#define IWX_SD_REG_VER_GEN2	0x00a2b800
 
 #define IWX_HPM_DEBUG			0xa03440
 #define IWX_PERSISTENCE_BIT		(1 << 12)
@@ -1078,6 +1120,9 @@ struct iwx_rx_completion_desc {
  * 11-8:  queue selector
  */
 #define IWX_HBUS_TARG_WRPTR         (IWX_HBUS_BASE+0x060)
+/* Bz: This register is common for Tx and Rx, Rx queues start from 512 */
+#define IWX_HBUS_TARG_WRPTR_Q_SHIFT (16)
+#define IWX_HBUS_TARG_WRPTR_RX_Q(q) (((q) + 512) << IWX_HBUS_TARG_WRPTR_Q_SHIFT)
 
 /**********************************************************
  * CSR values
@@ -1129,6 +1174,7 @@ enum mix_hw_int_causes {
 	IWX_MSIX_HW_INT_CAUSES_REG_ALIVE	= (1 << 0),
 	IWX_MSIX_HW_INT_CAUSES_REG_WAKEUP	= (1 << 1),
 	IWX_MSIX_HW_INT_CAUSES_REG_RESET_DONE	= (1 << 2),
+	IWX_MSIX_HW_INT_CAUSES_REG_TOP_FATAL_ERR= (1 << 3),
 	IWX_MSIX_HW_INT_CAUSES_REG_SW_ERR_V2	= (1 << 5),
 	IWX_MSIX_HW_INT_CAUSES_REG_CT_KILL	= (1 << 6),
 	IWX_MSIX_HW_INT_CAUSES_REG_RF_KILL	= (1 << 7),
@@ -1151,6 +1197,7 @@ enum msix_ivar_for_cause {
 	IWX_MSIX_IVAR_CAUSE_REG_ALIVE		= 0x10,
 	IWX_MSIX_IVAR_CAUSE_REG_WAKEUP		= 0x11,
 	IWX_MSIX_IVAR_CAUSE_REG_RESET_DONE	= 0x12,
+	IWX_MSIX_IVAR_CAUSE_REG_SW_ERR_V2	= 0x15,
 	IWX_MSIX_IVAR_CAUSE_REG_CT_KILL		= 0x16,
 	IWX_MSIX_IVAR_CAUSE_REG_RF_KILL		= 0x17,
 	IWX_MSIX_IVAR_CAUSE_REG_PERIODIC	= 0x18,
@@ -1801,6 +1848,17 @@ enum iwx_gen2_tx_fifo {
 	IWX_GEN2_TRIG_TX_FIFO_BE,
 	IWX_GEN2_TRIG_TX_FIFO_VI,
 	IWX_GEN2_TRIG_TX_FIFO_VO,
+};
+
+enum iwx_bz_tx_fifo {
+	IWX_BZ_EDCA_TX_FIFO_BK,
+	IWX_BZ_EDCA_TX_FIFO_BE,
+	IWX_BZ_EDCA_TX_FIFO_VI,
+	IWX_BZ_EDCA_TX_FIFO_VO,
+	IWX_BZ_TRIG_TX_FIFO_BK,
+	IWX_BZ_TRIG_TX_FIFO_BE,
+	IWX_BZ_TRIG_TX_FIFO_VI,
+	IWX_BZ_TRIG_TX_FIFO_VO,
 };
 
 /**
