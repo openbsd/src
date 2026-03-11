@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.209 2026/03/11 09:01:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.210 2026/03/11 09:23:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9538,6 +9538,9 @@ iwx_sf_config(struct iwx_softc *sc, int new_state)
 		.state = htole32(new_state),
 	};
 	int err = 0;
+
+	if (isset(sc->sc_ucode_api, IWX_UCODE_TLV_API_SMART_FIFO_OFFLOAD))
+		return 0;
 
 	switch (new_state) {
 	case IWX_SF_UNINIT:
