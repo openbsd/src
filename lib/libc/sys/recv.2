@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.52 2025/08/11 05:36:18 guenther Exp $
+.\"	$OpenBSD: recv.2,v 1.53 2026/03/11 14:42:43 deraadt Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: August 11 2025 $
+.Dd $Mdocdate: March 11 2026 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -383,6 +383,8 @@ values in the
 .Fa msg_iov
 array overflowed an
 .Em ssize_t .
+.It Bq Er EPERM
+An unacceptable file descriptor type is received in ancillary data.
 .It Bq Er EMSGSIZE
 The
 .Fa msg_iovlen
