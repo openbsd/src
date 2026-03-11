@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.208 2026/03/11 08:58:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.209 2026/03/11 09:01:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6832,8 +6832,16 @@ iwx_mld_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 	sta_cmd.assoc_id = htole32(IEEE80211_AID(in->in_ni.ni_associd));
 
 	if (in->in_ni.ni_flags & IEEE80211_NODE_HT) {
-		if (iwx_mimo_enabled(sc))
-			sta_cmd.mimo = htole32(1);
+		if (iwx_mimo_enabled(sc)) {
+			if (in->in_ni.ni_flags & IEEE80211_NODE_VHT) {
+				uint16_t rx_mcs = (in->in_ni.ni_vht_rxmcs &
+				    IEEE80211_VHT_MCS_FOR_SS_MASK(2)) >>
+				    IEEE80211_VHT_MCS_FOR_SS_SHIFT(2);
+				if (rx_mcs != IEEE80211_VHT_MCS_SS_NOT_SUPP)
+					sta_cmd.mimo = htole32(1);
+			} else if (in->in_ni.ni_rxmcs[1] != 0)
+				sta_cmd.mimo = htole32(1);
+		}
 
 		mpdu_dens = (in->in_ni.ni_ampdu_param &
 		    IEEE80211_AMPDU_PARAM_SS) >> 2;
