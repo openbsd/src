@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.210 2026/03/11 09:23:47 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.211 2026/03/11 09:27:59 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1598,6 +1598,12 @@ iwx_read_firmware(struct iwx_softc *sc)
 
 		/* undocumented TLV found in iwx-ty-a0-gf-a0-77 image */
 		case 0x100000c:
+			break;
+	
+		/* undocumented TLVs found in iwx-bz-a0-gf-a0-92 image */
+		case 65:
+		case 69:
+		case 1092:
 			break;
 
 		default:
