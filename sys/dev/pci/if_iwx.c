@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.215 2026/03/11 09:42:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.216 2026/03/11 09:44:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5556,7 +5556,7 @@ iwx_phy_ctxt_cmd_uhb_v3_v4(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 		cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
 	}
 
-	if (cmdver < 4 && iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
 	    IWX_RLC_CONFIG_CMD) != 2) {
 		idle_cnt = chains_static;
 		active_cnt = chains_dynamic;
@@ -5616,7 +5616,7 @@ iwx_phy_ctxt_cmd_v3_v4(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 		cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
 	}
 
-	if (cmdver < 4 && iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
 	    IWX_RLC_CONFIG_CMD) != 2) {
 		idle_cnt = chains_static;
 		active_cnt = chains_dynamic;
