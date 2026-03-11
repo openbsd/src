@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.70 2026/03/11 09:40:25 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.71 2026/03/11 09:42:26 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -5155,6 +5155,77 @@ struct iwx_mvm_sta_cfg_cmd {
 	struct iwx_he_pkt_ext_v2 pkt_ext;
 	uint32_t htc_flags;
 } __packed; /* STA_CMD_API_S_VER_1 */
+
+/**
+ * struct iwx_sta_cfg_cmd_v2 - cmd structure to add a peer sta to the uCode's
+ *	station table
+ * ( STA_CONFIG_CMD = 0xA )
+ *
+ * @sta_id: index of station in uCode's station table
+ * @link_id: the id of the link that is used to communicate with this sta
+ * @peer_mld_address: the peers mld address
+ * @reserved_for_peer_mld_address: reserved
+ * @peer_link_address: the address of the link that is used to communicate
+ *	with this sta
+ * @reserved_for_peer_link_address: reserved
+ * @station_type: type of this station. See &enum iwl_fw_sta_type
+ * @assoc_id: for GO only
+ * @beamform_flags: beam forming controls
+ * @mfp: indicates whether the STA uses management frame protection or not.
+ * @mimo: indicates whether the sta uses mimo or not
+ * @mimo_protection: indicates whether the sta uses mimo protection or not
+ * @ack_enabled: indicates that the AP supports receiving ACK-
+ *	enabled AGG, i.e. both BACK and non-BACK frames in a single AGG
+ * @trig_rnd_alloc: indicates that trigger based random allocation
+ *	is enabled according to UORA element existence
+ * @tx_ampdu_spacing: minimum A-MPDU spacing:
+ *	4 - 2us density, 5 - 4us density, 6 - 8us density, 7 - 16us density
+ * @tx_ampdu_max_size: maximum A-MPDU length: 0 - 8K, 1 - 16K, 2 - 32K,
+ *	3 - 64K, 4 - 128K, 5 - 256K, 6 - 512K, 7 - 1024K.
+ * @sp_length: the size of the SP in actual number of frames
+ * @uapsd_acs:  4 LS bits are trigger enabled ACs, 4 MS bits are the deliver
+ *	enabled ACs.
+ * @pkt_ext: optional, exists according to PPE-present bit in the HE/EHT-PHY
+ *	capa
+ * @htc_flags: which features are supported in HTC
+ * @use_ldpc_x2_cw: Indicates whether to use LDPC with double CW
+ * @use_icf: Indicates whether to use ICF instead of RTS
+ * @dps_pad_time: DPS (Dynamic Power Save) padding delay resolution to ensure
+ *	proper timing alignment
+ * @dps_trans_delay: DPS minimal time that takes the peer to return to low power
+ * @mic_prep_pad_delay: MIC prep time padding
+ * @mic_compute_pad_delay: MIC compute time padding
+ * @reserved: Reserved for alignment
+ */
+struct iwx_sta_cfg_cmd_v2 {
+	uint32_t sta_id;
+	uint32_t link_id;
+	uint8_t peer_mld_address[ETHER_ADDR_LEN];
+	uint16_t reserved_for_peer_mld_address;
+	uint8_t peer_link_address[ETHER_ADDR_LEN];
+	uint16_t reserved_for_peer_link_address;
+	uint32_t station_type;
+	uint32_t assoc_id;
+	uint32_t beamform_flags;
+	uint32_t mfp;
+	uint32_t mimo;
+	uint32_t mimo_protection;
+	uint32_t ack_enabled;
+	uint32_t trig_rnd_alloc;
+	uint32_t tx_ampdu_spacing;
+	uint32_t tx_ampdu_max_size;
+	uint32_t sp_length;
+	uint32_t uapsd_acs;
+	struct iwx_he_pkt_ext_v2 pkt_ext;
+	uint32_t htc_flags;
+	uint8_t use_ldpc_x2_cw;
+	uint8_t use_icf;
+	uint8_t dps_pad_time;
+	uint8_t dps_trans_delay;
+	uint8_t mic_prep_pad_delay;
+	uint8_t mic_compute_pad_delay;
+	uint8_t reserved[2];
+} __packed; /* STA_CMD_API_S_VER_2 */
 
 /**
  * struct iwx_mvm_remove_sta_cmd - a cmd structure to remove a sta added by

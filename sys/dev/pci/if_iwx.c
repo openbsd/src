@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.214 2026/03/11 09:37:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.215 2026/03/11 09:42:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6782,12 +6782,30 @@ iwx_mld_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwx_link_config_cmd link_cmd;
-	struct iwx_mvm_sta_cfg_cmd sta_cmd;
+	struct iwx_sta_cfg_cmd_v2 sta_cmd;
+	int cmd_ver;
+	size_t cmd_size;
 	uint32_t aggsize, mpdu_dens;
 	const uint32_t max_aggsize = (IWX_STA_FLG_MAX_AGG_SIZE_4M >>
 		    IWX_STA_FLG_MAX_AGG_SIZE_SHIFT);
 	int err, changes;
 
+	cmd_ver = iwx_lookup_cmd_ver(sc, IWX_MAC_CONF_GROUP,
+	    IWX_STA_CONFIG_CMD);
+	switch (cmd_ver) {
+	case 2:
+		cmd_size = sizeof(sta_cmd);
+		break;
+	case 1:
+		/* v1 is a shorter variant of v2 */
+		cmd_size = sizeof(struct iwx_mvm_sta_cfg_cmd);
+		break;
+	default:
+		printf("%s: unsupported STA_CONFIG_CMD version %d\n",
+		    DEVNAME(sc), cmd_ver);
+		return ENOTSUP;
+	}
+		
 	if (!update) {
 		memset(&link_cmd, 0, sizeof(link_cmd));
 		link_cmd.link_id = htole32(0);
@@ -6872,7 +6890,7 @@ iwx_mld_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 
 	return iwx_send_cmd_pdu(sc,
 	    IWX_WIDE_ID(IWX_MAC_CONF_GROUP, IWX_STA_CONFIG_CMD),
-	    0, sizeof(sta_cmd), &sta_cmd);
+	    0, cmd_size, &sta_cmd);
 }
 
 int
