@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.95 2026/03/11 16:32:42 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.96 2026/03/12 20:44:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -3358,6 +3358,22 @@ rk3528_reset(void *cookie, uint32_t *cells, int on)
 	case RK3528_SRST_A_MAC:
 		reg = RK3528_CRU_SOFTRST_CON(28);
 		bit = 5;
+		break;
+	case RK3528_SRST_P_PCIE:
+		reg = RK3528_CRU_SOFTRST_CON(30);
+		bit = 1;
+		break;
+	case RK3528_SRST_PCIE_PIPE_PHY:
+		reg = RK3528_CRU_SOFTRST_CON(30);
+		bit = 2;
+		break;
+	case RK3528_SRST_PCIE_POWER_UP:
+		reg = RK3528_CRU_SOFTRST_CON(30);
+		bit = 3;
+		break;
+	case RK3528_SRST_P_PCIE_PHY:
+		reg = RK3528_CRU_SOFTRST_CON(30);
+		bit = 6;
 		break;
 	case RK3528_SRST_H_SDMMC0:
 		reg = RK3528_CRU_SOFTRST_CON(42);
