@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.80 2026/02/27 08:26:16 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.81 2026/03/12 15:35:24 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -228,7 +228,7 @@ aucat_mkcookie(unsigned char *cookie)
 	memcpy(path, home, home_len);
 	memcpy(path + home_len, COOKIE_SUFFIX, sizeof(COOKIE_SUFFIX));
 	path_len = home_len + sizeof(COOKIE_SUFFIX) - 1;
-	fd = open(path, O_RDONLY);
+	fd = open(path, O_RDONLY|O_CLOEXEC);
 	if (fd == -1) {
 		if (errno != ENOENT)
 			DPERROR(path);
