@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.17 2018/07/09 08:57:04 mpi Exp $	*/
+/*	$OpenBSD: usage.c,v 1.18 2026/03/12 15:33:12 deraadt Exp $	*/
 /*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ hid_start(const char *hidname)
 	if (hidname == NULL)
 		hidname = _PATH_HIDTABLE;
 
-	f = fopen(hidname, "r");
+	f = fopen(hidname, "re");
 	if (f == NULL)
 		return -1;
 	for (lineno = 1; ; lineno++) {
