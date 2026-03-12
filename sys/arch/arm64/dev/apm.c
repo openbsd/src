@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.26 2024/10/30 06:16:27 jsg Exp $	*/
+/*	$OpenBSD: apm.c,v 1.27 2026/03/12 20:51:51 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -454,7 +454,7 @@ int
 suspend_finish(void *v)
 {
 	apm_record_event(APM_NORMAL_RESUME);
-	return 0;
+	return SLEEP_RESUME;
 }
 
 #endif /* SUSPEND */
