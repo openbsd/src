@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.204 2026/03/09 15:46:01 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.205 2026/03/12 07:25:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -724,11 +724,22 @@ const struct options_table_entry options_table[] = {
 	{ .name = "message-command-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = "bg=black,fg=yellow",
+	  .default_str = "bg=black,fg=yellow,fill=black",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of the command prompt when in command mode, if "
 		  "'mode-keys' is set to 'vi'."
+	},
+
+	{ .name = "message-format",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_str = "#[#{?#{command_prompt},"
+		  "#{E:message-command-style},"
+		  "#{E:message-style}}]"
+		  "#{message}",
+	  .text = "Format string for the prompt and message area. "
+		  "The '#{message}' placeholder is replaced with the content."
 	},
 
 	{ .name = "message-line",
@@ -742,10 +753,13 @@ const struct options_table_entry options_table[] = {
 	{ .name = "message-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = "bg=yellow,fg=black",
+	  .default_str = "bg=yellow,fg=black,fill=yellow",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
-	  .text = "Style of messages and the command prompt."
+	  .text = "Style of messages and the command prompt. "
+		  "A 'fill' attribute controls background clearing and "
+		  "a 'width' attribute (fixed or percentage) constrains "
+		  "the prompt area width."
 	},
 
 	{ .name = "mouse",

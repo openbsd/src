@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1297 2026/03/05 09:22:08 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1298 2026/03/12 07:25:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -911,6 +911,7 @@ struct style {
 	char			range_string[16];
 
 	int			width;
+	int			width_percentage;
 	int			pad;
 
 	enum style_default_type	default_type;
