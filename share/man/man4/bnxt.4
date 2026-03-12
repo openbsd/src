@@ -1,4 +1,4 @@
-.\" $OpenBSD: bnxt.4,v 1.4 2024/07/10 07:56:21 jmatthew Exp $
+.\" $OpenBSD: bnxt.4,v 1.5 2026/03/12 23:15:47 jmatthew Exp $
 .\"
 .\" Copyright (c) 2018 Jonathan Matthew <jmatthew@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 10 2024 $
+.Dd $Mdocdate: March 12 2026 $
 .Dt BNXT 4
 .Os
 .Sh NAME
 .Nm bnxt
-.Nd Broadcom NetXtreme-C/E 10Gb/25Gb/40Gb/50Gb Ethernet device
+.Nd Broadcom NetXtreme-C/E 10Gb/25Gb/40Gb/50/100Gb Ethernet device
 .Sh SYNOPSIS
 .Cd "bnxt* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports the Broadcom NetXtreme-C/E PCI Express Ethernet
-adapters based on the Broadcom BCM573xx and BCM574xx chipsets,
+adapters based on the Broadcom BCM573xx, BCM574xx and BCM575xx chipsets,
 including the following:
 .Pp
 .Bl -bullet -offset indent -compact
@@ -44,6 +44,12 @@ Broadcom P210tp Adapter (10GBASE-T)
 Broadcom P225c Adapter (10/25Gb QSFP28)
 .It
 Broadcom P225p Adapter (10/25Gb SFP28)
+.It
+Broadcom P425p Adapter (10/25Gb SFP28)
+.It
+Broadcom P1200G Adapter (10/25/40/50/100Gb QSFP56)
+.It
+Broadcom P2100G Adapter (10/25/40/50/100Gb QSFP56)
 .El
 .Pp
 Adapters based on these chipsets are also available as LOM/Mezzanine
