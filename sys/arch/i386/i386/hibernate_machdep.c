@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.62 2024/06/19 13:27:26 jsg Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.63 2026/03/13 15:54:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -379,7 +379,7 @@ hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 	extern paddr_t retguard_start_phys, retguard_end_phys;
 
 	if (dest >= hib_info->piglet_pa &&
-	    dest <= (hib_info->piglet_pa + 4 * HIBERNATE_CHUNK_SIZE))
+	    dest < (hib_info->piglet_pa + 4 * HIBERNATE_CHUNK_SIZE))
 		return (HIB_SKIP);
 
 	if (dest >= retguard_start_phys && dest <= retguard_end_phys)

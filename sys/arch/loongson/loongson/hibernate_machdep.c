@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.8 2015/05/05 02:13:46 guenther Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.9 2026/03/13 15:54:47 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -154,7 +154,7 @@ int
 hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 {
 	if (dest >= hib_info->piglet_pa &&
-	    dest <= (hib_info->piglet_pa + 4 * HIBERNATE_CHUNK_SIZE))
+	    dest < (hib_info->piglet_pa + 4 * HIBERNATE_CHUNK_SIZE))
 		return (1);
 
 	return (0);
