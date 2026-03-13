@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.218 2026/03/11 10:12:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.219 2026/03/13 10:52:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -922,7 +922,8 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	memset(ctxt_info, 0, sizeof(*ctxt_info));
 
 	ctxt_info->version.version = 0;
-	ctxt_info->version.mac_id = htole16(sc->sc_hw_rev);
+	ctxt_info->version.mac_id =
+		htole16((uint16_t)IWX_READ(sc, IWX_CSR_HW_REV));
 
 	/* size is in DWs */
 	ctxt_info->version.size = htole16(sizeof(*ctxt_info) / 4);
@@ -1017,7 +1018,12 @@ iwx_ctxt_info_gen3_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	memset(prph_scratch, 0, sizeof(*prph_scratch));
 	prph_sc_ctrl = &prph_scratch->ctrl_cfg;
 	prph_sc_ctrl->version.version = 0;
-	prph_sc_ctrl->version.mac_id = htole16(sc->sc_hw_rev);
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_BZ)
+		prph_sc_ctrl->version.mac_id = htole16(sc->sc_hw_rev);
+	else {
+		prph_sc_ctrl->version.mac_id = htole16(IWX_READ(sc,
+		    IWX_CSR_HW_REV));
+	}
 	prph_sc_ctrl->version.size = htole16(sizeof(*prph_scratch) / 4);
 
 	control_flags = IWX_PRPH_SCRATCH_RB_SIZE_4K |
