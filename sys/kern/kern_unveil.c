@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.55 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.56 2026/03/13 00:42:53 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -263,7 +263,7 @@ unveil_find_cover(struct vnode *dp, struct proc *p)
 		 * still mounted somewhere, take the .. in the above
 		 * filesystem.
 		 */
-		if (vp != root && (vp->v_flag & VROOT)) {
+		while (vp != root && (vp->v_flag & VROOT)) {
 			if (vp->v_mount == NULL)
 				return -1;
 			vp = vp->v_mount->mnt_vnodecovered ?
