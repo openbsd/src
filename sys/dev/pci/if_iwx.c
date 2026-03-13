@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.220 2026/03/13 11:11:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.221 2026/03/13 11:47:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -11406,7 +11406,38 @@ int
 iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	return pci_matchbyid(pa, iwx_devices, nitems(iwx_devices));
+	pcireg_t memtype;
+	bus_space_tag_t st;
+	bus_space_handle_t sh;
+	bus_size_t sz;
+	uint32_t rf_id;
+	
+	if (!pci_matchbyid(pa, iwx_devices, nitems(iwx_devices)))
+		return 0;
+
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_WL_22500_18)
+		return 1;
+
+	/*
+	 * Only match on BZ devices with wifi 6e RF-type GF.
+	 * We do not support wifi 7 BZ devices.
+	 */
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,
+	    &st, &sh, NULL, &sz, 0)) {
+		printf("%s: can't map mem space\n", __func__);
+		return 0;
+	}
+
+	rf_id = bus_space_read_4(st, sh, IWX_CSR_HW_RF_ID);
+
+	bus_space_unmap(st, sh, sz);
+
+	if (IWX_CSR_HW_RFID_TYPE(rf_id) == IWX_CFG_RF_TYPE_GF)
+		return 1;
+
+	return 0;
 }
 
 /*
