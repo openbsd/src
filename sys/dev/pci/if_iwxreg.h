@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.72 2026/03/11 10:12:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.73 2026/03/13 11:11:02 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -3806,9 +3806,7 @@ struct iwx_rx_mpdu_desc {
 		uint16_t l3l4_flags;
 		uint16_t phy_data4;
 	};
-	uint16_t status;
-	uint8_t hash_filter;
-	uint8_t sta_id_flags;
+	uint32_t status;
 	uint32_t reorder_data;
 	union {
 		struct iwx_rx_mpdu_desc_v1 v1;

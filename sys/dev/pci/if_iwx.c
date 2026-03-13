@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.219 2026/03/13 10:52:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.220 2026/03/13 11:11:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5162,8 +5162,8 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 
 	desc = (struct iwx_rx_mpdu_desc *)pktdata;
 
-	if (!(desc->status & htole16(IWX_RX_MPDU_RES_STATUS_CRC_OK)) ||
-	    !(desc->status & htole16(IWX_RX_MPDU_RES_STATUS_OVERRUN_OK))) {
+	if (!(desc->status & htole32(IWX_RX_MPDU_RES_STATUS_CRC_OK)) ||
+	    !(desc->status & htole32(IWX_RX_MPDU_RES_STATUS_OVERRUN_OK))) {
 		m_freem(m);
 		return; /* drop */
 	}
@@ -5211,7 +5211,7 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 		} else
 			hdrlen = ieee80211_get_hdrlen(wh);
 
-		if ((le16toh(desc->status) &
+		if ((le32toh(desc->status) &
 		    IWX_RX_MPDU_RES_STATUS_SEC_ENC_MSK) ==
 		    IWX_RX_MPDU_RES_STATUS_SEC_CCM_ENC) {
 			/* Padding is inserted after the IV. */
@@ -5261,7 +5261,7 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 	 * the TID supplied in QoS frame headers and this TID is implicitly
 	 * verified as part of the CCMP nonce.
 	 */
-	if (iwx_rx_hwdecrypt(sc, m, le16toh(desc->status), &rxi)) {
+	if (iwx_rx_hwdecrypt(sc, m, le32toh(desc->status), &rxi)) {
 		m_freem(m);
 		return;
 	}
@@ -5296,7 +5296,7 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 	    rate_n_flags, device_timestamp, &rxi, ml))
 		return;
 
-	iwx_rx_frame(sc, m, chanidx, le16toh(desc->status),
+	iwx_rx_frame(sc, m, chanidx, le32toh(desc->status),
 	    (phy_info & IWX_RX_MPDU_PHY_SHORT_PREAMBLE),
 	    rate_n_flags, device_timestamp, &rxi, ml);
 }
