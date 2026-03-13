@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.400 2026/02/03 10:25:28 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.401 2026/03/13 11:13:38 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1987,8 +1987,8 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 			printf("\n");
 	}
 
-	if (pf->optimize)
-		pfctl_optimize_ruleset(pf, rs);
+	if (pf->optimize && (error = pfctl_optimize_ruleset(pf, rs)) != 0)
+		goto error;
 
 	while ((r = TAILQ_FIRST(rs->rules.active.ptr)) != NULL) {
 		TAILQ_REMOVE(rs->rules.active.ptr, r, entries);
