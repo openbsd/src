@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2124 2026/03/01 20:17:30 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2126 2026/03/13 11:52:29 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6382,7 +6382,7 @@
 #define	PCI_PRODUCT_INTEL_ARL_U_PCIE_6	0x773d		/* Core Ultra PCIE */
 #define	PCI_PRODUCT_INTEL_ARL_U_PCIE_7	0x773e		/* Core Ultra PCIE */
 #define	PCI_PRODUCT_INTEL_ARL_U_PCIE_8	0x773f		/* Core Ultra PCIE */
-#define	PCI_PRODUCT_INTEL_WL_22500_18	0x7740		/* Wi-Fi 6e AX211 */
+#define	PCI_PRODUCT_INTEL_WL_22500_18	0x7740		/* Wi-Fi AX211 */
 #define	PCI_PRODUCT_INTEL_ARL_U_ISH	0x7745		/* Core Ultra ISH */
 #define	PCI_PRODUCT_INTEL_ARL_U_GSPI_2	0x7746		/* Core Ultra GSPI */
 #define	PCI_PRODUCT_INTEL_ARL_U_THC_0_1	0x7748		/* Core Ultra THC */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2124 2026/03/01 20:17:30 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2126 2026/03/13 11:52:29 stsp Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -22853,7 +22853,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_18,
-	    "Wi-Fi 6e AX211",
+	    "Wi-Fi AX211",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ARL_U_ISH,
