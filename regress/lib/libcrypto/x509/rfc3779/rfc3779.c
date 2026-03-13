@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.11 2026/03/13 06:40:56 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.12 2026/03/13 06:47:34 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -216,6 +216,8 @@ const struct IPAddressOrRange_test IPAddressOrRange_test_data[] = {
 			0x0a, 0x40, 0x0f, 0xff,
 		},
 	},
+
+	/* Part of AfriNIC, first actual range in afrinic.constraints. */
 	{
 		.description = "range 196.1.7.0 - 196.1.63.255",
 		.der = {
@@ -778,6 +780,8 @@ const struct build_addr_block_test_data build_addr_block_tests[] = {
 		},
 		.afi_len = 1,
 	},
+
+	/* Part of AfriNIC, first actual range in afrinic.constraints. */
 	{
 		.description = "range 196.1.7.0 - 196.1.63.255",
 		.addrs = {
