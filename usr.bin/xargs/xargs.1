@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.29 2020/07/19 13:19:25 schwarze Exp $
+.\"	$OpenBSD: xargs.1,v 1.30 2026/03/13 08:51:14 daniel Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)xargs.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 19 2020 $
+.Dd $Mdocdate: March 13 2026 $
 .Dt XARGS 1
 .Os
 .Sh NAME
@@ -96,7 +96,8 @@ Change
 .Nm
 to expect NUL
 .Pq Ql \e0
-characters as separators, instead of spaces and newlines.
+characters as separators, instead of spaces and newlines,
+and ignore any specified end-of-file string.
 The quoting mechanisms described above are not performed.
 This option is expected to be used in concert with the
 .Fl print0
@@ -316,19 +317,19 @@ Some other error occurred.
 The
 .Nm
 utility is compliant with the
-.St -p1003.1-2008
+.St -p1003.1-2024
 specification.
 .Pp
 The flags
 .Op Fl IL
 are marked by
-.St -p1003.1-2008
+.St -p1003.1-2024
 as being an X/Open System Interfaces option.
 .Pp
 The flags
-.Op Fl 0JoPRr
+.Op Fl JoPR
 are extensions to
-.St -p1003.1-2008 .
+.St -p1003.1-2024 .
 .Pp
 The meanings of the 123, 124, and 125 exit values were taken from GNU
 .Nm xargs .
