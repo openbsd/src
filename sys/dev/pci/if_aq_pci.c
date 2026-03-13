@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.34 2026/01/15 06:41:21 dlg Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.35 2026/03/13 02:47:31 bcook Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -4043,7 +4043,7 @@ aq_dmamem_alloc(struct aq_softc *sc, struct aq_dmamem *aqm,
 		return (1);
 	if (bus_dmamem_alloc(sc->sc_dmat, aqm->aqm_size,
 	    align, 0, &aqm->aqm_seg, 1, &aqm->aqm_nsegs,
-	    BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
+	    BUS_DMA_WAITOK | BUS_DMA_ZERO | BUS_DMA_64BIT) != 0)
 		goto destroy;
 	if (bus_dmamem_map(sc->sc_dmat, &aqm->aqm_seg, aqm->aqm_nsegs,
 	    aqm->aqm_size, &aqm->aqm_kva,
