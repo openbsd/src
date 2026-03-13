@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.38 2023/12/23 15:58:58 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.39 2026/03/13 02:07:51 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -279,7 +279,7 @@ parse_input(int argc, char *argv[])
 			 * is needed so -0 works properly with -I and -L.
 			 */
 			count++;
-			goto arg2;
+			goto arg3;
 		}
 		goto addch;
 	case '\n':
@@ -295,6 +295,7 @@ arg1:		if (insingle || indouble)
 arg2:
 		foundeof = *eofstr != '\0' &&
 		    strcmp(argp, eofstr) == 0;
+arg3:
 
 		/*
 		 * Do not make empty args unless they are quoted or
