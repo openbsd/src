@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixv.c,v 1.2 2025/07/14 23:49:08 jsg Exp $	*/
+/*	$OpenBSD: if_ixv.c,v 1.3 2026/03/13 14:22:33 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -1313,8 +1313,8 @@ ixv_allocate_msix(struct ix_softc *sc)
 		pci_conf_write(pa->pa_pc, pa->pa_tag, off, reg | PCI_MSIX_MC_MSIXE);
 	}
 
-	printf(", %s, %d queue%s\n", pci_intr_string(pa->pa_pc, ih),
-	    i, (i > 1) ? "s" : "");
+	printf(", %s, %d queue%s, address %s\n", pci_intr_string(pa->pa_pc, ih),
+	    i, (i > 1) ? "s" : "", ether_sprintf(sc->hw.mac.addr));
 
 	return (0);
 
