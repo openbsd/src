@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.10 2023/12/13 07:19:37 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.11 2026/03/13 06:40:56 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -214,6 +214,24 @@ const struct IPAddressOrRange_test IPAddressOrRange_test_data[] = {
 		},
 		.max = {
 			0x0a, 0x40, 0x0f, 0xff,
+		},
+	},
+	{
+		.description = "range 196.1.7.0 - 196.1.63.255",
+		.der = {
+			0x30, 0x0c,
+			/* 192.1.7.0 */
+			0x03, 0x04, 0x00, 0xc4, 0x01, 0x07,
+			/* 192.1.63.255 */
+			0x03, 0x04, 0x06, 0xc4, 0x01, 0x00,
+		},
+		.der_len = 14,
+		    .afi = IANA_AFI_IPV4,
+		.min = {
+			0xc4, 0x01, 0x07, 0x00,
+		},
+		.max = {
+			0xc4, 0x01, 0x3f, 0xff,
 		},
 	},
 };
@@ -753,6 +771,39 @@ const struct build_addr_block_test_data build_addr_block_tests[] = {
 			0x30, 0x04, 0x03, 0x02, 0x00, 0x7f,
 		},
 		.der_len = 14,
+		.is_canonical = 1,
+		.inherits = 0,
+		.afis = {
+			IANA_AFI_IPV4,
+		},
+		.afi_len = 1,
+	},
+	{
+		.description = "range 196.1.7.0 - 196.1.63.255",
+		.addrs = {
+			{
+				.afi = IANA_AFI_IPV4,
+				.safi = safi_none,
+				.type = choice_range,
+				.addr.ipv4.range = {
+					.min = {
+						196, 1, 7, 0,
+					},
+					.max = {
+						196, 1, 63, 255,
+					},
+				},
+			},
+			{
+				.type = choice_last,
+			},
+		},
+		.der = {
+			0x30, 0x16, 0x30, 0x14, 0x04, 0x02, 0x00, 0x01,
+			0x30, 0x0e, 0x30, 0x0c, 0x03, 0x04, 0x00, 0xc4,
+			0x01, 0x07, 0x03, 0x04, 0x06, 0xc4, 0x01, 0x00,
+		},
+		.der_len = 24,
 		.is_canonical = 1,
 		.inherits = 0,
 		.afis = {
