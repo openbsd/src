@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2125 2026/03/11 09:46:10 stsp Exp $
+$OpenBSD: pcidevs,v 1.2126 2026/03/13 11:52:29 stsp Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6377,7 +6377,7 @@ product INTEL ARL_U_PCIE_5	0x773c	Core Ultra PCIE
 product INTEL ARL_U_PCIE_6	0x773d	Core Ultra PCIE
 product INTEL ARL_U_PCIE_7	0x773e	Core Ultra PCIE
 product INTEL ARL_U_PCIE_8	0x773f	Core Ultra PCIE
-product INTEL WL_22500_18	0x7740	Wi-Fi 6e AX211
+product INTEL WL_22500_18	0x7740	Wi-Fi AX211
 product INTEL ARL_U_ISH		0x7745	Core Ultra ISH
 product INTEL ARL_U_GSPI_2	0x7746	Core Ultra GSPI
 product INTEL ARL_U_THC_0_1	0x7748	Core Ultra THC
