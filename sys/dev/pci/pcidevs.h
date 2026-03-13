@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2126 2026/03/13 11:52:29 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.2127 2026/03/13 14:22:33 bluhm Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4096,7 +4096,7 @@
 #define	PCI_PRODUCT_INTEL_82577LM	0x10ea		/* 82577LM */
 #define	PCI_PRODUCT_INTEL_82577LC	0x10eb		/* 82577LC */
 #define	PCI_PRODUCT_INTEL_82598EB_CX4_DUAL	0x10ec		/* 82598EB */
-#define	PCI_PRODUCT_INTEL_82599VF	0x10ed		/* 82599 */
+#define	PCI_PRODUCT_INTEL_82599VF	0x10ed		/* 82599 VF */
 #define	PCI_PRODUCT_INTEL_82578DM	0x10ef		/* 82578DM */
 #define	PCI_PRODUCT_INTEL_82578DC	0x10f0		/* 82578DC */
 #define	PCI_PRODUCT_INTEL_82598_DA_DUAL	0x10f1		/* 82598 */
