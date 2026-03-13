@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.221 2026/03/13 11:47:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.222 2026/03/13 14:28:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6273,6 +6273,8 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	totlen = m->m_pkthdr.len;
 
+	offload_assist |= IWX_TX_CMD_OFFLD_MH_SIZE((hdrlen / 2) &
+	    IWX_TX_CMD_OFFLD_MH_MASK);
 	if (hdrlen & 3) {
 		/* First segment length must be a multiple of 4. */
 		pad = 4 - (hdrlen & 3);
