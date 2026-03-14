@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.165 2025/04/29 08:16:56 tb Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.166 2026/03/14 17:18:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -834,6 +834,7 @@ static const formatter scargs[][8] = {
     [SYS_kill]		= { Ppgid, Signame },
     [SYS_fchown]	= { Pfd, Uidname, Gidname },
     [SYS_fchmod]	= { Pfd, Modename },
+    [SYS___pledge_open]	= { Ppath, PASS_TWO, Flagsandmodename },
     [SYS_setreuid]	= { Uidname, Uidname },
     [SYS_setregid]	= { Gidname, Gidname },
     [SYS_rename]	= { Ppath, Ppath },
