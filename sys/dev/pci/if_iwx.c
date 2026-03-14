@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.222 2026/03/13 14:28:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.223 2026/03/14 15:37:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6885,6 +6885,7 @@ iwx_mld_add_sta_cmd(struct iwx_softc *sc, struct iwx_node *in, int update)
 		cmd_size = sizeof(sta_cmd);
 		break;
 	case 1:
+	case IWX_FW_CMD_VER_UNKNOWN:
 		/* v1 is a shorter variant of v2 */
 		cmd_size = sizeof(struct iwx_mvm_sta_cfg_cmd);
 		break;
