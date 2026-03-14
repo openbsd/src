@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.226 2025/08/10 07:50:58 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.227 2026/03/14 14:57:14 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1196,7 +1196,6 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	struct mbuf *m = NULL;
 	struct socket *so;
 	int error;
-
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
