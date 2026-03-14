@@ -364,9 +364,6 @@ EXPORT_SYMBOL(ttm_tt_restore);
 int ttm_tt_swapout(struct ttm_device *bdev, struct ttm_tt *ttm,
 		   gfp_t gfp_flags)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	loff_t size = (loff_t)ttm->num_pages << PAGE_SHIFT;
 	struct uvm_object *swap_storage;
 	struct vm_page *from_page;
@@ -374,18 +371,25 @@ int ttm_tt_swapout(struct ttm_device *bdev, struct ttm_tt *ttm,
 	int i, ret;
 
 	swap_storage = uao_create(size, 0);
-#ifdef notyet
-	if (IS_ERR(swap_storage)) {
+	if (swap_storage == NULL) {
 		pr_err("Failed allocating swap storage\n");
-		return PTR_ERR(swap_storage);
+		return -ENOMEM;
 	}
-#endif
 
+	struct pglist plist;
+	TAILQ_INIT(&plist);
+	if (uvm_obj_wire(swap_storage, 0, size, &plist)) {
+		ret = -ENOMEM;
+		goto out_err;
+	}
+
+	to_page = TAILQ_FIRST(&plist);
 	for (i = 0; i < ttm->num_pages; ++i) {
 		from_page = ttm->pages[i];
 		if (unlikely(from_page == NULL))
 			continue;
 
+#ifdef __linux__
 		to_page = shmem_read_mapping_page_gfp(swap_space, i, gfp_flags);
 		if (IS_ERR(to_page)) {
 			ret = PTR_ERR(to_page);
@@ -395,7 +399,13 @@ int ttm_tt_swapout(struct ttm_device *bdev, struct ttm_tt *ttm,
 		set_page_dirty(to_page);
 		mark_page_accessed(to_page);
 		put_page(to_page);
+#else
+		uvm_pagecopy(from_page, to_page);
+		to_page = TAILQ_NEXT(to_page, pageq);
+#endif
 	}
+
+	uvm_obj_unwire(swap_storage, 0, size);
 
 	ttm_tt_unpopulate(bdev, ttm);
 	ttm->swap_storage = swap_storage;
@@ -407,7 +417,6 @@ out_err:
 	uao_detach(swap_storage);
 
 	return ret;
-#endif
 }
 EXPORT_SYMBOL_FOR_TESTS_ONLY(ttm_tt_swapout);
 
