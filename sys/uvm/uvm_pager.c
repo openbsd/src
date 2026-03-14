@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.96 2025/12/18 16:05:18 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.97 2026/03/14 11:05:21 kettenis Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ const struct uvm_pagerops *uvmpagerops[] = {
  * At most UVM_PSEG_COUNT instances can exist.
  *
  * psegs[0/1] always exist (so that the pager can always map in pages).
- * psegs[0/1] element 0 are always reserved for the pagedaemon.
+ * psegs[0/1] element 0/1 are always reserved for the pagedaemon.
  *
  * Any other pseg is automatically created when no space is available
  * and automatically destroyed when it is no longer in use.
