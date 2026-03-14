@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.135 2026/01/14 03:09:05 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.136 2026/03/14 11:25:40 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -49,6 +49,7 @@ int	terminate_vm(struct vm_terminate_params *);
 int	get_info_vm(struct privsep *, struct imsg *, int);
 int	opentap(char *);
 
+int	dev_null = -1;
 extern struct vmd *env;
 
 static struct privsep_proc procs[] = {
@@ -66,6 +67,16 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
+
+	/*
+	 * Early-open /dev/null so we can dup2(2) std{in,out,err}
+	 * after forking to create child processes.
+	 */
+	if (!env->vmd_debug) {
+		dev_null = open("/dev/null", O_RDWR|O_CLOEXEC, 0);
+		if (dev_null == -1)
+			fatal("/dev/null");
+	}
 
 	/*
 	 * We aren't root, so we can't chroot(2). Use unveil(2) instead.
@@ -589,7 +600,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 {
 	struct vmd_vm		*vm;
 	char			*nargv[10], num[32], vmm_fd[32], psp_fd[32];
-	int			 fd, ret = EINVAL;
+	int			 ret = EINVAL;
 	int			 fds[2];
 	pid_t			 vm_pid;
 	size_t			 i, j, sz;
@@ -694,13 +705,12 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		close_fd(PROC_PARENT_SOCK_FILENO);
 
 		/* Detach from terminal. */
-		if (!env->vmd_debug && (fd =
-			open("/dev/null", O_RDWR, 0)) != -1) {
-			dup2(fd, STDIN_FILENO);
-			dup2(fd, STDOUT_FILENO);
-			dup2(fd, STDERR_FILENO);
-			if (fd > 2)
-				close(fd);
+		if (!env->vmd_debug) {
+			dup2(dev_null, STDIN_FILENO);
+			dup2(dev_null, STDOUT_FILENO);
+			dup2(dev_null, STDERR_FILENO);
+			if (dev_null > 2)
+				close(dev_null);
 		}
 
 		if (env->vmd_psp_fd > 0)
