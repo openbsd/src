@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.169 2026/02/01 08:45:31 martijn Exp $
+.\" $OpenBSD: openssl.1,v 1.170 2026/03/14 06:06:48 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: February 1 2026 $
+.Dd $Mdocdate: March 14 2026 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1922,13 +1922,6 @@ and
 .Cm hybrid .
 For more information regarding
 the point conversion forms see the X9.62 standard.
-Note:
-Due to patent issues the
-.Cm compressed
-option is disabled by default for binary curves
-and can be enabled by defining the preprocessor macro
-.Dv OPENSSL_EC_BIN_PT_COMP
-at compile time.
 .It Fl des | des3
 Encrypt the private key with DES, triple DES, or
 any other cipher supported by
@@ -2029,13 +2022,6 @@ and
 .Cm hybrid .
 For more information regarding
 the point conversion forms see the X9.62 standard.
-Note:
-Due to patent issues the
-.Cm compressed
-option is disabled by default for binary curves
-and can be enabled by defining the preprocessor macro
-.Dv OPENSSL_EC_BIN_PT_COMP
-at compile time.
 .It Fl genkey
 Generate an EC private key using the specified parameters.
 .It Fl in Ar file
