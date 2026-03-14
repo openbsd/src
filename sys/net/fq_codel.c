@@ -1,4 +1,4 @@
-/* $OpenBSD: fq_codel.c,v 1.19 2025/11/13 20:07:22 bket Exp $ */
+/* $OpenBSD: fq_codel.c,v 1.20 2026/03/14 00:10:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 Mike Belopuhov
@@ -908,5 +908,5 @@ fqcodel_alloc(unsigned int idx, void *arg)
 void
 fqcodel_free(unsigned int idx, void *arg)
 {
-	/* nothing to do here */
+	fqcodel_pf_free(arg);
 }
