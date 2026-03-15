@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.19 2025/11/26 08:40:16 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.20 2026/03/15 14:24:43 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2025 $
+.Dd $Mdocdate: March 15 2026 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -259,8 +259,7 @@ and
 corresponding to playback, recording and monitoring.
 A monitoring stream is a fake recording stream corresponding to
 the mix of all playback streams.
-Multiple modes can be specified, separated by commas,
-but the same sub-device cannot be used for both recording and monitoring.
+Multiple modes can be specified, separated by commas.
 The default is
 .Ar play , Ns Ar rec
 (i.e. full-duplex).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.131 2026/03/15 14:15:11 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.132 2026/03/15 14:24:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -144,9 +144,12 @@ chans_fmt(char *buf, size_t size, int mode, int pmin, int pmax, int rmin, int rm
 		p += snprintf(p, p < end ? end - p : 0, "play %d:%d", pmin, pmax);
 		sep = ", ";
 	}
-	if (mode & MODE_RECMASK) {
-		p += snprintf(p, p < end ? end - p : 0, "%s%s %d:%d", sep,
-		    (mode & MODE_MON) ? "mon" : "rec", rmin, rmax);
+	if (mode & MODE_REC) {
+		p += snprintf(p, p < end ? end - p : 0, "%srec %d:%d", sep, rmin, rmax);
+		sep = ", ";
+	}
+	if (mode & MODE_MON) {
+		p += snprintf(p, p < end ? end - p : 0, "%smon", sep);
 	}
 
 	return p - buf;
@@ -460,7 +463,7 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 {
 	adata_t *enc_out, *resamp_out, *cmap_out;
 	void *odata;
-	int ocount, moffs;
+	int ocount, moffs, mix;
 
 	odata = (adata_t *)abuf_wgetblk(&s->sub.buf, &ocount);
 #ifdef DEBUG
@@ -492,16 +495,18 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 	enc_out = odata;
 	resamp_out = s->sub.encbuf ? s->sub.encbuf : enc_out;
 	cmap_out = s->sub.resampbuf ? s->sub.resampbuf : resamp_out;
+	mix = 0;
 
 	if (s->opt->mode & MODE_MON) {
 		moffs = d->poffs + d->round;
 		if (moffs == d->psize)
 			moffs = 0;
-		cmap_do(&s->sub.cmap, d->pbuf + moffs * d->pchan, cmap_out,
-		    ADATA_UNIT, d->round, 0);
-	} else if (s->opt->mode & MODE_REC) {
-		cmap_do(&s->sub.cmap, d->rbuf, cmap_out,
-		    ADATA_UNIT, d->round, 0);
+		cmap_do(&s->sub.cmap_mon, d->pbuf + moffs * d->pchan, cmap_out,
+		    ADATA_UNIT, d->round, mix++);
+	}
+	if (s->opt->mode & MODE_REC) {
+		cmap_do(&s->sub.cmap_rec, d->rbuf, cmap_out,
+		    ADATA_UNIT, d->round, mix++);
 	}
 	if (s->sub.resampbuf) {
 		resamp_do(&s->sub.resamp,
@@ -1281,17 +1286,24 @@ slot_initconv(struct slot *s)
 	}
 
 	if (s->mode & MODE_RECMASK) {
-		unsigned int outchan = (s->opt->mode & MODE_MON) ?
-		    d->pchan : d->rchan;
 
 		s->sub.encbuf = NULL;
 		s->sub.resampbuf = NULL;
-		cmap_init(&s->sub.cmap,
-		    0, outchan - 1,
+
+		cmap_init(&s->sub.cmap_rec,
+		    0, d->rchan - 1,
 		    s->opt->rmin, s->opt->rmax,
 		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1,
 		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1,
 		    s->opt->dup);
+
+		cmap_init(&s->sub.cmap_mon,
+		    0, d->pchan - 1,
+		    s->opt->pmin, s->opt->pmax,
+		    s->opt->pmin, s->opt->pmin + s->sub.nch - 1,
+		    s->opt->pmin, s->opt->pmin + s->sub.nch - 1,
+		    s->opt->dup);
+
 		if (s->rate != d->rate) {
 			resamp_init(&s->sub.resamp, d->round, s->round,
 			    s->sub.nch);
