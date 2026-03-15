@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.21 2024/12/22 14:17:45 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.22 2026/03/15 14:09:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -862,7 +862,7 @@ dec_init(struct conv *p, struct aparams *par, int nch)
 /*
  * mix "todo" input frames on the output with the given volume
  */
-void
+static void
 cmap_add(struct cmap *p, void *in, void *out, int vol, int todo)
 {
 	adata_t *idata, *odata;
@@ -904,7 +904,7 @@ cmap_add(struct cmap *p, void *in, void *out, int vol, int todo)
 /*
  * overwrite output with "todo" input frames with the given volume
  */
-void
+static void
 cmap_copy(struct cmap *p, void *in, void *out, int vol, int todo)
 {
 	adata_t *idata, *odata;
@@ -939,13 +939,39 @@ cmap_copy(struct cmap *p, void *in, void *out, int vol, int todo)
 }
 
 /*
+ * Mix or overwrite "todo" input frames on the output with the given volume
+ */
+void
+cmap_do(struct cmap *p, adata_t *in, adata_t *out, int vol, int todo, int mix)
+{
+	void (*copy_func)(struct cmap *, void *, void *, int, int);
+	int offs, i;
+
+	vol /= p->join;
+	copy_func = mix ? cmap_add : cmap_copy;
+
+	copy_func(p, in, out, vol, todo);
+
+	offs = 0;
+	for (i = p->join - 1; i > 0; i--) {
+		offs += p->nch;
+		cmap_add(p, in + offs, out, vol, todo);
+	}
+	offs = 0;
+	for (i = p->expand - 1; i > 0; i--) {
+		offs += p->nch;
+		copy_func(p, in, out + offs, vol, todo);
+	}
+}
+
+/*
  * initialize channel mapper, to map a subset of input channel range
  * into a subset of the output channel range
  */
 void
 cmap_init(struct cmap *p,
     int imin, int imax, int isubmin, int isubmax,
-    int omin, int omax, int osubmin, int osubmax)
+    int omin, int omax, int osubmin, int osubmax, int dup)
 {
 	int inch, onch, nch;
 
@@ -976,8 +1002,22 @@ cmap_init(struct cmap *p,
 	p->istart = isubmin - imin;
 	p->inext = imax - isubmax;
 	p->nch = nch;
+
+	/*
+	 * how many times we can join or expand the channels?
+	 */
+	p->join = 1;
+	p->expand = 1;
+	if (dup && nch > 0) {
+		if (inch > nch)
+			p->join = inch / nch;
+		else if (onch > nch)
+			p->expand = onch / nch;
+	}
+
 #ifdef DEBUG
-	logx(3, "%s: nch = %d, ostart = %d, onext = %d, istart = %d, inext = %d",
-	    __func__, p->nch, p->ostart, p->onext, p->istart, p->inext);
+	logx(3, "%s: nch = %d, join = %d, expand = %d, "
+	    "ostart = %d, onext = %d, istart = %d, inext = %d",  __func__,
+	    p->nch, p->join, p->nch, p->ostart, p->onext, p->istart, p->inext);
 #endif
 }
