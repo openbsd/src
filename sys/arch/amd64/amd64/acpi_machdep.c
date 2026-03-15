@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.113 2026/03/11 16:18:42 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.114 2026/03/15 11:16:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -481,10 +481,10 @@ acpi_resume_cpu(struct acpi_softc *sc, int state)
 			sc->sc_wakegpe = WAKEGPE_RTC;
 	}
 
-	rtcalarm_resume();
-
-	if (state == ACPI_STATE_S0)
+	if (state == ACPI_STATE_S0) {
+		rtcalarm_resume();
 		return;
+	}
 
 	cpu_init_msrs(&cpu_info_primary);
 	cpu_fix_msrs(&cpu_info_primary);
@@ -504,6 +504,7 @@ acpi_resume_cpu(struct acpi_softc *sc, int state)
 #endif
 
 	i8254_startclock();
+	rtcalarm_resume();		/* i8254 must be running */
 	if (initclock_func == i8254_initclocks)
 		rtcstart();		/* in i8254 mode, rtc is profclock */
 
