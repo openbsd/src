@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.15 2024/12/20 07:35:56 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.16 2026/03/15 14:05:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -105,6 +105,8 @@ struct cmap {
 	int onext;
 	int ostart;
 	int nch;
+	int join;			/* channel join factor */
+	int expand;			/* channel expand factor */
 };
 
 #define MIDI_TO_ADATA(m)	(aparams_ctltovol[m])
@@ -123,8 +125,7 @@ void enc_sil_do(struct conv *, unsigned char *, int);
 void enc_init(struct conv *, struct aparams *, int);
 void dec_do(struct conv *, unsigned char *, unsigned char *, int);
 void dec_init(struct conv *, struct aparams *, int);
-void cmap_add(struct cmap *, void *, void *, int, int);
-void cmap_copy(struct cmap *, void *, void *, int, int);
-void cmap_init(struct cmap *, int, int, int, int, int, int, int, int);
+void cmap_do(struct cmap *, adata_t *, adata_t *, int, int, int);
+void cmap_init(struct cmap *, int, int, int, int, int, int, int, int, int);
 
 #endif /* !defined(DSP_H) */

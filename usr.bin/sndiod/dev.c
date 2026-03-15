@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.129 2026/03/15 10:19:52 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.130 2026/03/15 14:05:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -362,7 +362,7 @@ void
 dev_mix_badd(struct dev *d, struct slot *s)
 {
 	adata_t *idata, *odata, *in;
-	int icount, i, offs, vol, nch;
+	int icount;
 
 	odata = DEV_PBUF(d);
 	idata = (adata_t *)abuf_rgetblk(&s->mix.buf, &icount);
@@ -403,21 +403,9 @@ dev_mix_badd(struct dev *d, struct slot *s)
 		in = s->mix.resampbuf;
 	}
 
-	nch = s->mix.cmap.nch;
-	vol = ADATA_MUL(s->mix.weight, s->mix.vol) / s->mix.join;
-	cmap_add(&s->mix.cmap, in, odata, vol, d->round);
-
-	offs = 0;
-	for (i = s->mix.join - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->mix.cmap, in + offs, odata, vol, d->round);
-	}
-
-	offs = 0;
-	for (i = s->mix.expand - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->mix.cmap, in, odata + offs, vol, d->round);
-	}
+	cmap_do(&s->mix.cmap, in, odata,
+	    ADATA_MUL(s->mix.weight, s->mix.vol),
+	    d->round, 1);
 
 	abuf_rdiscard(&s->mix.buf, s->round * s->mix.bpf);
 }
@@ -473,7 +461,6 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 	adata_t *idata, *enc_out, *resamp_out, *cmap_out;
 	void *odata;
 	int ocount, moffs;
-	int i, vol, offs, nch;
 
 	odata = (adata_t *)abuf_wgetblk(&s->sub.buf, &ocount);
 #ifdef DEBUG
@@ -513,21 +500,7 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 	resamp_out = s->sub.encbuf ? s->sub.encbuf : enc_out;
 	cmap_out = s->sub.resampbuf ? s->sub.resampbuf : resamp_out;
 
-	nch = s->sub.cmap.nch;
-	vol = ADATA_UNIT / s->sub.join;
-	cmap_copy(&s->sub.cmap, idata, cmap_out, vol, d->round);
-
-	offs = 0;
-	for (i = s->sub.join - 1; i > 0; i--) {
-		offs += nch;
-		cmap_add(&s->sub.cmap, idata + offs, cmap_out, vol, d->round);
-	}
-
-	offs = 0;
-	for (i = s->sub.expand - 1; i > 0; i--) {
-		offs += nch;
-		cmap_copy(&s->sub.cmap, idata, cmap_out + offs, vol, d->round);
-	}
+	cmap_do(&s->sub.cmap, idata, cmap_out, ADATA_UNIT, d->round, 0);
 
 	if (s->sub.resampbuf) {
 		resamp_do(&s->sub.resamp,
@@ -1283,7 +1256,6 @@ mtc_setdev(struct mtc *mtc, struct dev *d)
 void
 slot_initconv(struct slot *s)
 {
-	unsigned int dev_nch;
 	struct dev *d = s->opt->dev;
 
 	if (s->mode & MODE_PLAY) {
@@ -1291,7 +1263,8 @@ slot_initconv(struct slot *s)
 		    s->opt->pmin, s->opt->pmin + s->mix.nch - 1,
 		    s->opt->pmin, s->opt->pmin + s->mix.nch - 1,
 		    0, d->pchan - 1,
-		    s->opt->pmin, s->opt->pmax);
+		    s->opt->pmin, s->opt->pmax,
+		    s->opt->dup);
 		s->mix.decbuf = NULL;
 		s->mix.resampbuf = NULL;
 		if (!aparams_native(&s->par)) {
@@ -1305,17 +1278,6 @@ slot_initconv(struct slot *s)
 			s->mix.resampbuf =
 			    xmalloc(d->round * s->mix.nch * sizeof(adata_t));
 		}
-		s->mix.join = 1;
-		s->mix.expand = 1;
-		if (s->opt->dup && s->mix.cmap.nch > 0) {
-			dev_nch = d->pchan < (s->opt->pmax + 1) ?
-			    d->pchan - s->opt->pmin :
-			    s->opt->pmax - s->opt->pmin + 1;
-			if (dev_nch > s->mix.nch)
-				s->mix.expand = dev_nch / s->mix.nch;
-			else if (s->mix.nch > dev_nch)
-				s->mix.join = s->mix.nch / dev_nch;
-		}
 	}
 
 	if (s->mode & MODE_RECMASK) {
@@ -1328,7 +1290,8 @@ slot_initconv(struct slot *s)
 		    0, outchan - 1,
 		    s->opt->rmin, s->opt->rmax,
 		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1,
-		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1);
+		    s->opt->rmin, s->opt->rmin + s->sub.nch - 1,
+		    s->opt->dup);
 		if (s->rate != d->rate) {
 			resamp_init(&s->sub.resamp, d->round, s->round,
 			    s->sub.nch);
@@ -1340,22 +1303,11 @@ slot_initconv(struct slot *s)
 			s->sub.encbuf =
 			    xmalloc(s->round * s->sub.nch * sizeof(adata_t));
 		}
-		s->sub.join = 1;
-		s->sub.expand = 1;
-		if (s->opt->dup && s->sub.cmap.nch > 0) {
-			dev_nch = outchan < (s->opt->rmax + 1) ?
-			    outchan - s->opt->rmin :
-			    s->opt->rmax - s->opt->rmin + 1;
-			if (dev_nch > s->sub.nch)
-				s->sub.join = dev_nch / s->sub.nch;
-			else if (s->sub.nch > dev_nch)
-				s->sub.expand = s->sub.nch / dev_nch;
-		}
 
 		/*
-		 * cmap_copy() doesn't write samples in all channels,
+		 * cmap_do() doesn't write samples in all channels,
 	         * for instance when mono->stereo conversion is
-	         * disabled. So we have to prefill cmap_copy() output
+	         * disabled. So we have to prefill cmap_do() output
 	         * with silence.
 	         */
 		if (s->sub.resampbuf) {
