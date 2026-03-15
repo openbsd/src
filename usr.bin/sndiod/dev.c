@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.128 2026/02/27 08:33:43 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.129 2026/03/15 10:19:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -493,7 +493,10 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 		/*
 		 * recording not allowed in opt structure, produce silence
 		 */
-		enc_sil_do(&s->sub.enc, odata, s->round);
+		if (s->sub.encbuf)
+			enc_sil_do(&s->sub.enc, odata, s->round);
+		else
+			memset(odata, 0, s->round * s->sub.bpf);
 		abuf_wcommit(&s->sub.buf, s->round * s->sub.bpf);
 		return;
 	}
