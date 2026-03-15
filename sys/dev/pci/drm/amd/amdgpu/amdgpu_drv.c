@@ -3986,18 +3986,13 @@ amdgpu_activate(struct device *self, int act)
 	case DVACT_QUIESCE:
 		rv = config_activate_children(self, act);
 
-		if (acpi_softc && acpi_softc->sc_state != ACPI_STATE_S4) {
-			if (amdgpu_acpi_is_s0ix_active(adev))
-				adev->in_s0ix = true;
-			else if (amdgpu_acpi_is_s3_active(adev))
-				 adev->in_s3 = true;
-		}
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4)
+			adev->in_s4 = true;
 
 		amdgpu_pmops_prepare(self);
-		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4) {
-			adev->in_s4 = true;
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4)
 			amdgpu_pmops_freeze(self);
-		} else
+		else
 			amdgpu_pmops_suspend(self);
 		break;
 	case DVACT_SUSPEND:
@@ -4007,11 +4002,15 @@ amdgpu_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		break;
 	case DVACT_WAKEUP:
-		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4) {
-			adev->in_s4 = false;
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4)
 			amdgpu_pmops_restore(self);
-		} else
+		else
 			amdgpu_pmops_resume(self);
+		amdgpu_pmops_complete(self);
+
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4)
+			adev->in_s4 = false;
+
 		rv = config_activate_children(self, act);
 		break;
 	}
