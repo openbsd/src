@@ -463,43 +463,36 @@ slot_getcnt(struct slot *s, int *icnt, int *ocnt)
 }
 
 static void
-play_filt_resamp(struct slot *s, void *res_in, void *out, int icnt, int ocnt)
+play_filt_resamp(struct slot *s, void *in, void *out, int icnt, int ocnt)
 {
-	void *in;
-
 	if (s->resampbuf) {
-		resamp_do(&s->resamp, res_in, s->resampbuf, icnt, ocnt);
+		resamp_do(&s->resamp, in, s->resampbuf, icnt, ocnt);
 		in = s->resampbuf;
-	} else
-		in = res_in;
-
+	}
 	cmap_do(&s->cmap, in, out, s->vol, ocnt, 1);
 }
 
 static void
 play_filt_dec(struct slot *s, void *in, void *out, int icnt, int ocnt)
 {
-	void *tmp;
-
-	tmp = s->convbuf;
-	if (tmp) {
+	if (s->convbuf) {
 		switch (s->afile.fmt) {
 		case AFILE_FMT_PCM:
-			dec_do(&s->conv, in, tmp, icnt);
+			dec_do(&s->conv, in, s->convbuf, icnt);
 			break;
 		case AFILE_FMT_ULAW:
-			dec_do_ulaw(&s->conv, in, tmp, icnt, 0);
+			dec_do_ulaw(&s->conv, in, s->convbuf, icnt, 0);
 			break;
 		case AFILE_FMT_ALAW:
-			dec_do_ulaw(&s->conv, in, tmp, icnt, 1);
+			dec_do_ulaw(&s->conv, in, s->convbuf, icnt, 1);
 			break;
 		case AFILE_FMT_FLOAT:
-			dec_do_float(&s->conv, in, tmp, icnt);
+			dec_do_float(&s->conv, in, s->convbuf, icnt);
 			break;
 		}
-	} else
-		tmp = in;
-	play_filt_resamp(s, tmp, out, icnt, ocnt);
+		in = s->convbuf;
+	}
+	play_filt_resamp(s, in, out, icnt, ocnt);
 }
 
 /*
@@ -543,28 +536,21 @@ slot_mix_badd(struct slot *s, adata_t *odata)
 }
 
 static void
-rec_filt_resamp(struct slot *s, void *in, void *res_out, int icnt, int ocnt)
+rec_filt_resamp(struct slot *s, void *in, void *out, int icnt, int ocnt)
 {
-	void *out = res_out;
-
-	out = (s->resampbuf) ? s->resampbuf : res_out;
-	cmap_do(&s->cmap, in, out, ADATA_UNIT, icnt, 0);
+	cmap_do(&s->cmap, in, s->resampbuf ? s->resampbuf : out, ADATA_UNIT, icnt, 0);
 
 	if (s->resampbuf)
-		resamp_do(&s->resamp, s->resampbuf, res_out, icnt, ocnt);
-	else
-		ocnt = icnt;
+		resamp_do(&s->resamp, s->resampbuf, out, icnt, ocnt);
 }
 
 static void
 rec_filt_enc(struct slot *s, void *in, void *out, int icnt, int ocnt)
 {
-	void *tmp;
+	rec_filt_resamp(s, in, s->convbuf ? s->convbuf : out, icnt, ocnt);
 
-	tmp = s->convbuf;
-	rec_filt_resamp(s, in, tmp ? tmp : out, icnt, ocnt);
-	if (tmp)
-		enc_do(&s->conv, tmp, out, ocnt);
+	if (s->convbuf)
+		enc_do(&s->conv, s->convbuf, out, ocnt);
 }
 
 /*
