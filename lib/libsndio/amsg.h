@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.17 2026/01/22 09:24:26 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.18 2026/03/15 10:05:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,22 +20,10 @@
 #include <stdint.h>
 
 /*
- * unix-domain socket name is:
- *
- * DIR [ '-' UID ] '/' FILE UNIT
- *
- * example: "/tmp/sndio-1000/sock0"
- *
+ * unix-domain socket (example: "/tmp/sndio-1000/sock0")
  */
 #define SOCKPATH_DIR	"/tmp/sndio"
 #define SOCKPATH_FILE	"sock"
-#define SOCKPATH_MAX	(1 +		\
-	sizeof(SOCKPATH_DIR) - 1 +	\
-	sizeof(char) +			\
-	sizeof(int) * 3 +		\
-	sizeof(char) +			\
-	sizeof(SOCKPATH_FILE) - 1 +	\
-	sizeof(int) * 3)
 
 /*
  * server TCP base port number

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.52 2025/11/26 08:40:16 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.53 2026/03/15 10:05:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -364,35 +364,6 @@ unsetsig(void)
 		err(1, "unsetsig(int): sigaction failed");
 }
 
-void
-getbasepath(char *base)
-{
-	uid_t uid;
-	struct stat sb;
-	mode_t mask, omask;
-
-	uid = geteuid();
-	if (uid == 0) {
-		mask = 022;
-		snprintf(base, SOCKPATH_MAX, SOCKPATH_DIR);
-	} else {
-		mask = 077;
-		snprintf(base, SOCKPATH_MAX, SOCKPATH_DIR "-%u", uid);
-	}
-	omask = umask(mask);
-	if (mkdir(base, 0777) == -1) {
-		if (errno != EEXIST)
-			err(1, "mkdir(\"%s\")", base);
-	}
-	umask(omask);
-	if (stat(base, &sb) == -1)
-		err(1, "stat(\"%s\")", base);
-	if (!S_ISDIR(sb.st_mode))
-		errx(1, "%s is not a directory", base);
-	if (sb.st_uid != uid || (sb.st_mode & mask) != 0)
-		errx(1, "%s has wrong permissions", base);
-}
-
 struct dev *
 mkdev(char *path, struct aparams *par,
     int mode, int bufsz, int round, int rate, int hold, int autovol)
@@ -536,7 +507,6 @@ main(int argc, char **argv)
 {
 	int c, i, background, unit;
 	int pmin, pmax, rmin, rmax;
-	char base[SOCKPATH_MAX], path[SOCKPATH_MAX];
 	unsigned int mode, dup, mmc, vol;
 	unsigned int hold, autovol, bufsz, round, rate;
 	const char *str;
@@ -750,9 +720,7 @@ main(int argc, char **argv)
 			errx(1, "unknown user %s", SNDIO_USER);
 	} else
 		pw = NULL;
-	getbasepath(base);
-	snprintf(path, SOCKPATH_MAX, "%s/" SOCKPATH_FILE "%u", base, unit);
-	if (!listen_new_un(path))
+	if (!listen_new_un(unit))
 		return 1;
 	for (ta = tcpaddr_list; ta != NULL; ta = ta->next) {
 		if (!listen_new_tcp(ta->host, AUCAT_PORT + unit))
