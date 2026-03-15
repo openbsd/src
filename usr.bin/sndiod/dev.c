@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.130 2026/03/15 14:05:25 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.131 2026/03/15 14:15:11 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -458,7 +458,7 @@ dev_mix_adjvol(struct dev *d)
 void
 dev_sub_bcopy(struct dev *d, struct slot *s)
 {
-	adata_t *idata, *enc_out, *resamp_out, *cmap_out;
+	adata_t *enc_out, *resamp_out, *cmap_out;
 	void *odata;
 	int ocount, moffs;
 
@@ -469,14 +469,7 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 		panic();
 	}
 #endif
-	if (s->opt->mode & MODE_MON) {
-		moffs = d->poffs + d->round;
-		if (moffs == d->psize)
-			moffs = 0;
-		idata = d->pbuf + moffs * d->pchan;
-	} else if (s->opt->mode & MODE_REC) {
-		idata = d->rbuf;
-	} else {
+	if ((s->opt->mode & MODE_RECMASK) == 0) {
 		/*
 		 * recording not allowed in opt structure, produce silence
 		 */
@@ -500,13 +493,20 @@ dev_sub_bcopy(struct dev *d, struct slot *s)
 	resamp_out = s->sub.encbuf ? s->sub.encbuf : enc_out;
 	cmap_out = s->sub.resampbuf ? s->sub.resampbuf : resamp_out;
 
-	cmap_do(&s->sub.cmap, idata, cmap_out, ADATA_UNIT, d->round, 0);
-
+	if (s->opt->mode & MODE_MON) {
+		moffs = d->poffs + d->round;
+		if (moffs == d->psize)
+			moffs = 0;
+		cmap_do(&s->sub.cmap, d->pbuf + moffs * d->pchan, cmap_out,
+		    ADATA_UNIT, d->round, 0);
+	} else if (s->opt->mode & MODE_REC) {
+		cmap_do(&s->sub.cmap, d->rbuf, cmap_out,
+		    ADATA_UNIT, d->round, 0);
+	}
 	if (s->sub.resampbuf) {
 		resamp_do(&s->sub.resamp,
 		    s->sub.resampbuf, resamp_out, d->round, s->round);
 	}
-
 	if (s->sub.encbuf)
 		enc_do(&s->sub.enc, s->sub.encbuf, (void *)enc_out, s->round);
 
