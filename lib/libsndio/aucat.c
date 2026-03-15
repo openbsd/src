@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.81 2026/03/12 15:35:24 deraadt Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.82 2026/03/15 10:15:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -204,16 +204,9 @@ _aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
 static int
 aucat_mkcookie(unsigned char *cookie)
 {
-#define COOKIE_DIR	"/.sndio"
-#define COOKIE_SUFFIX	"/.sndio/cookie"
-#define TEMPL_SUFFIX	".XXXXXXXX"
 	struct stat sb;
-	char *home, *path = NULL, *tmp = NULL;
-	size_t home_len, path_len;
+	char *home, *dir = NULL, *path = NULL, *tmp = NULL;
 	int fd, len;
-
-	/* please gcc */
-	path_len = 0xdeadbeef;
 
 	/*
 	 * try to load the cookie
@@ -221,13 +214,10 @@ aucat_mkcookie(unsigned char *cookie)
 	home = issetugid() ? NULL : getenv("HOME");
 	if (home == NULL)
 		goto bad_gen;
-	home_len = strlen(home);
-	path = malloc(home_len + sizeof(COOKIE_SUFFIX));
-	if (path == NULL)
+	if (asprintf(&dir, "%s/.sndio", home) == -1)
 		goto bad_gen;
-	memcpy(path, home, home_len);
-	memcpy(path + home_len, COOKIE_SUFFIX, sizeof(COOKIE_SUFFIX));
-	path_len = home_len + sizeof(COOKIE_SUFFIX) - 1;
+	if (asprintf(&path, "%s/cookie", dir) == -1)
+		goto bad_gen;
 	fd = open(path, O_RDONLY|O_CLOEXEC);
 	if (fd == -1) {
 		if (errno != ENOENT)
@@ -265,21 +255,12 @@ bad_gen:
 	 * try to save the cookie
 	 */
 
-	if (home == NULL)
+	if (path == NULL)
 		goto done;
-	tmp = malloc(path_len + sizeof(TEMPL_SUFFIX));
-	if (tmp == NULL)
+	if (mkdir(dir, 0755) == -1 && errno != EEXIST)
 		goto done;
-
-	/* create ~/.sndio directory */
-	memcpy(tmp, home, home_len);
-	memcpy(tmp + home_len, COOKIE_DIR, sizeof(COOKIE_DIR));
-	if (mkdir(tmp, 0755) == -1 && errno != EEXIST)
+	if (asprintf(&tmp, "%s.XXXXXXXX", path) == -1)
 		goto done;
-
-	/* create cookie file in it */
-	memcpy(tmp, path, path_len);
-	memcpy(tmp + path_len, TEMPL_SUFFIX, sizeof(TEMPL_SUFFIX));
 	fd = mkstemp(tmp);
 	if (fd == -1) {
 		DPERROR(tmp);
@@ -299,6 +280,7 @@ bad_gen:
 done:
 	free(tmp);
 	free(path);
+	free(dir);
 	return 1;
 }
 
