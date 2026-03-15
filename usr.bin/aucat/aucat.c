@@ -214,8 +214,8 @@ slot_fmt(char *buf, size_t size, struct slot *s)
 		if (s->afile.endpos >= 0) {
 			p += snprintf(p, p < end ? end - p : 0,
 			    ", bytes %lld..%lld",
-			    s->afile.startpos,
-			    s->afile.endpos);
+			    (long long)s->afile.startpos,
+			    (long long)s->afile.endpos);
 		}
 		p += snprintf(p, p < end ? end - p : 0, ", vol %d", s->vol);
 	}
