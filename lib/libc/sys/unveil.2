@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.22 2021/09/06 08:03:08 deraadt Exp $
+.\" $OpenBSD: unveil.2,v 1.23 2026/03/16 19:54:27 deraadt Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 6 2021 $
+.Dd $Mdocdate: March 16 2026 $
 .Dt UNVEIL 2
 .Os
 .Sh NAME
@@ -27,8 +27,6 @@
 .Sh DESCRIPTION
 The first call to
 .Fn unveil
-that specifies a
-.Fa path
 removes visibility of the entire filesystem from all other
 filesystem-related system calls (such as
 .Xr open 2 ,
@@ -44,8 +42,8 @@ The
 .Fn unveil
 system call remains capable of traversing to any
 .Fa path
-in the filesystem, so additional calls can set permissions at other
-points in the filesystem hierarchy.
+in the filesystem, so additional calls can set permissions at any
+other points in the filesystem hierarchy.
 .Pp
 After establishing a collection of
 .Fa path
@@ -55,12 +53,14 @@ rules, future calls to
 .Fn unveil
 can be disabled by passing two
 .Dv NULL
-arguments.
-Alternatively,
+arguments, or with a
 .Xr pledge 2
-may be used to remove the
+call which lacks the
 .Qq unveil
 promise.
+It is strongly recommended to lock
+.Fn unveil
+after configuration.
 .Pp
 The
 .Fa permissions
