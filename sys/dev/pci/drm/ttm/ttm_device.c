@@ -130,6 +130,8 @@ out:
  */
 int ttm_device_prepare_hibernation(struct ttm_device *bdev)
 {
+	return 0;
+#ifdef notyet
 	struct ttm_operation_ctx ctx = {
 		.interruptible = false,
 		.no_wait_gpu = false,
@@ -140,6 +142,7 @@ int ttm_device_prepare_hibernation(struct ttm_device *bdev)
 		ret = ttm_device_swapout(bdev, &ctx, GFP_KERNEL);
 	} while (ret > 0);
 	return ret;
+#endif
 }
 EXPORT_SYMBOL(ttm_device_prepare_hibernation);
 
