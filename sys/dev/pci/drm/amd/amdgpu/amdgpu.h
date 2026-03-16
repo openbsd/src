@@ -971,6 +971,8 @@ struct amdgpu_device {
 	void				*switchcbarg;
 	void				*switchcookie;
 	struct task			switchtask;
+	void				*fb_vaddr;
+	size_t				fb_size;
 	struct rasops_info		ro;
 	int				console;
 	int				primary;

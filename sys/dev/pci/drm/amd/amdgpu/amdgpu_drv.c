@@ -3839,8 +3839,10 @@ amdgpu_attachhook(struct device *self)
 		obj = fb->obj[0];
 		rbo = gem_to_amdgpu_bo(obj);
 		amdgpu_bo_pin(rbo, AMDGPU_GEM_DOMAIN_VRAM);
-		amdgpu_bo_kmap(rbo, (void **)(&ri->ri_bits));
+		amdgpu_bo_kmap(rbo, &adev->fb_vaddr);
+		adev->fb_size = fb_helper->info->fix.smem_len;
 
+		ri->ri_bits = adev->fb_vaddr;
 		ri->ri_depth = fb->format->cpp[0] * 8;
 		ri->ri_stride = fb->pitches[0];
 		ri->ri_width = fb_helper->info->var.xres;
@@ -3972,6 +3974,7 @@ amdgpu_activate(struct device *self, int act)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)self;
 	struct drm_device *dev = &adev->ddev;
+	struct rasops_info *ri = &adev->ro;
 	int rv = 0;
 
 	if (dev->dev == NULL || amdgpu_fatal_error || adev->shutdown)
@@ -4002,6 +4005,17 @@ amdgpu_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		break;
 	case DVACT_WAKEUP:
+		/*
+		 * If the framebuffer is in stolen memory, unhibernate
+		 * won't restore its contents and it is likely to be
+		 * filled with garbage.  So clear the framebuffer and
+		 * redraw the active screen.
+		 */
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4) {
+			memset(adev->fb_vaddr, 0, adev->fb_size);
+			rasops_show_screen(ri, ri->ri_active, 0, NULL, NULL);
+		}
+
 		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4)
 			amdgpu_pmops_restore(self);
 		else
