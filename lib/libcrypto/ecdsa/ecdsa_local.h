@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa_local.h,v 1.2 2023/07/28 15:50:33 tb Exp $ */
+/* $OpenBSD: ecdsa_local.h,v 1.3 2026/03/16 22:19:32 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -62,11 +62,6 @@
 #include <openssl/ec.h>
 
 __BEGIN_HIDDEN_DECLS
-
-struct ECDSA_SIG_st {
-	BIGNUM *r;
-	BIGNUM *s;
-};
 
 int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
     BIGNUM **out_r);
