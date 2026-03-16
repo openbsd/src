@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.282 2026/01/06 13:50:26 sthen Exp $
+.\"	$OpenBSD: port-modules.5,v 1.283 2026/03/16 15:41:19 stu Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 6 2026 $
+.Dd $Mdocdate: March 16 2026 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1105,9 +1105,7 @@ and
 .Ev MODTCL_WISH_ADJ
 shell fragments to patch the interpreter path in executable scripts.
 Also affects
-.Ev CATEGORIES
-and
-.Ev SUBST_VARS .
+.Ev CATEGORIES .
 .It perl
 This module is documented in the main
 .Xr bsd.port.mk 5
@@ -1341,9 +1339,7 @@ module, provides a default
 to match
 .Ev MODTK_VERSION ,
 and affects
-.Ev CATEGORIES
-and
-.Ev SUBST_VARS .
+.Ev CATEGORIES .
 Note the
 .Ev MODTCL_WISH_ADJ
 shell fragment in the
