@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.347 2026/03/13 05:46:32 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.348 2026/03/16 03:45:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -613,14 +613,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 
 	/* Whitelisted paths */
 	switch (p->p_pledge_syscall) {
-	case SYS_access:
-		/* tzset() needs this. */
-		if (ni->ni_pledge == PLEDGE_RPATH &&
-		    strcmp(path, "/etc/localtime") == 0) {
-			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-			return (0);
-		}
-		break;
 	case SYS___pledge_open:
 		if ((ni->ni_unveil & UNVEIL_PLEDGEOPEN) == 0) {
 			printf("SYS___pledge_open != UNVEIL_PLEDGEOPEN ??\n");
