@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.26 2026/03/05 09:54:43 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.27 2026/03/17 09:30:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -336,6 +336,8 @@ ometric_rib_mem(struct rde_memstats *stats)
 	    stats->attr_data, UINT64_MAX);
 	ometric_rib_mem_element("bitmap", stats->bitmap_cnt,
 	    stats->bitmap_size, UINT64_MAX);
+	ometric_rib_mem_element("hashtable", stats->hash_cnt,
+	    stats->hash_size, stats->hash_refs);
 
 	ometric_rib_mem_element("total", UINT64_MAX,
 	    pts + stats->prefix_cnt * sizeof(struct prefix) +
@@ -346,7 +348,8 @@ ometric_rib_mem(struct rde_memstats *stats)
 	    stats->rib_cnt * sizeof(struct rib_entry) +
 	    stats->path_cnt * sizeof(struct rde_aspath) +
 	    stats->aspath_size + stats->attr_cnt * sizeof(struct attr) +
-	    stats->attr_data + stats->bitmap_size, UINT64_MAX);
+	    stats->attr_data + stats->bitmap_size + stats->hash_size,
+	    UINT64_MAX);
 
 	ometric_rib_mem_element("filter", stats->filter_cnt,
 	    stats->filter_size, stats->filter_refs);
