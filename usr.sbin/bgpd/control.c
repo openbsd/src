@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.137 2026/03/02 12:08:30 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.138 2026/03/17 15:12:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -287,7 +287,6 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			case IMSG_CTL_SHOW_INTERFACE:
 			case IMSG_CTL_SHOW_RIB_MEM:
 			case IMSG_CTL_SHOW_TERSE:
-			case IMSG_CTL_SHOW_TIMER:
 			case IMSG_CTL_SHOW_NETWORK:
 			case IMSG_CTL_SHOW_FLOWSPEC:
 			case IMSG_CTL_SHOW_RIB:
