@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.26 2020/05/24 16:48:35 tb Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.27 2026/03/17 14:38:17 robert Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -141,7 +141,21 @@ ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 .else
 ${_BUILD_COOKIE}: ${_PATCH_COOKIE} ${_FAKE_COOKIE}
 	@echo '>> Building syspatch for ${ERRATA}'
-.if ${BUILD:L:Msrc}
+.if defined(SUBDIRS)
+. for _subdir in ${SUBDIRS}
+	@if [ -e ${SRCDIR}/${_subdir}/Makefile.bsd-wrapper ]; then \
+		_wrap="-f Makefile.bsd-wrapper"; \
+	fi; \
+	cd ${SRCDIR}/${_subdir} && make $${_wrap} obj; \
+	for _t in clean all; do \
+		su ${BUILDUSER} -c "cd ${SRCDIR}/${_subdir} && make $${_wrap} \
+			SYSPATCH_PATH=${EPREV_PATH} $${_t}"; \
+	done; \
+	cd ${SRCDIR}/${_subdir} && /usr/bin/make $${_wrap} SYSPATCH_PATH=${EPREV_PATH} install; \
+	su ${BUILDUSER} -c "cd ${SRCDIR}/${_subdir} && make $${_wrap} \
+		SYSPATCH_PATH=${EPREV_PATH} DESTDIR=${FAKE} install"
+. endfor
+.elif ${BUILD:L:Msrc}
 . for _t in clean obj build
 	@cd ${SRCDIR} && /usr/bin/make SYSPATCH_PATH=${EPREV_PATH} ${_t}
 . endfor
