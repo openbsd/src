@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.8 2026/03/17 09:29:29 claudio Exp $	*/
+/*	$OpenBSD: chash.c,v 1.9 2026/03/17 10:31:03 tb Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -41,7 +41,7 @@
  *
  * Unlike other unordered sets this hash table does not allow a key to
  * be inserted more than once.
- */ 
+ */
 
 #define CH_MAX_LOAD	875	/* in per-mille */
 
@@ -167,7 +167,7 @@ ch_meta_locate(struct ch_group *g, uint64_t mask)
  * On remove a data slot in the group is freed but depending on the
  * CH_EVER_FULL flag the slot is considered a tombstone (if set) or considered
  * free (not set).
- * 
+ *
  * Sub tables are automatically split in two when the maximum loadfactor is
  * reached. If the fill factor drops below a threashold then buddy tables
  * may be joined back together.
