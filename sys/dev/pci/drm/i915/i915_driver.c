@@ -1364,8 +1364,6 @@ int i915_driver_resume_switcheroo(struct drm_i915_private *i915)
 	return i915_drm_resume(&i915->drm);
 }
 
-#ifdef __linux__
-
 static int i915_pm_prepare(struct device *kdev)
 {
 	struct drm_i915_private *i915 = kdev_to_i915(kdev);
@@ -1513,6 +1511,8 @@ static int i915_pm_restore(struct device *kdev)
 {
 	return i915_pm_resume(kdev);
 }
+
+#ifdef __linux__
 
 static int intel_runtime_suspend(struct device *kdev)
 {
@@ -2525,7 +2525,7 @@ inteldrm_activate(struct device *self, int act)
 
 	/*
 	 * On hibernate resume activate is called before inteldrm_attachhook().
-	 * Do not try to call i915_drm_suspend() when
+	 * Do not try to call i915_pm_suspend() when
 	 * i915_load_modeset_init()/i915_gem_init() have not been called.
 	 */
 	if (dev_priv->display == NULL ||
@@ -2540,9 +2540,9 @@ inteldrm_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_QUIESCE:
 		rv = config_suspend(dev->dev, act);
-		i915_drm_prepare(dev);
-		i915_drm_suspend(dev);
-		i915_drm_suspend_late(dev, false);
+		i915_pm_prepare(self);
+		i915_pm_suspend(self);
+		i915_pm_suspend_late(self);
 		break;
 	case DVACT_SUSPEND:
 		if (dev->agp)
@@ -2553,8 +2553,8 @@ inteldrm_activate(struct device *self, int act)
 			config_suspend(dev->agp->agpdev->sc_chipc, act);
 		break;
 	case DVACT_WAKEUP:
-		i915_drm_resume_early(dev);
-		i915_drm_resume(dev);
+		i915_pm_resume_early(self);
+		i915_pm_resume(self);
 		drm_client_dev_restore(dev);
 		rv = config_suspend(dev->dev, act);
 		break;
