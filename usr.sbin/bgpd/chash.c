@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.c,v 1.7 2025/12/13 07:55:34 jsg Exp $	*/
+/*	$OpenBSD: chash.c,v 1.8 2026/03/17 09:29:29 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  *
@@ -493,7 +493,8 @@ ch_sub_merge(const struct ch_type *type, struct ch_group *to,
 }
 
 static int
-ch_sub_alloc(struct ch_group **table, struct ch_meta **meta)
+ch_sub_alloc(const struct ch_type *type, struct ch_table *t,
+    struct ch_group **table, struct ch_meta **meta)
 {
 	if ((*table = calloc(CH_H2_SIZE, sizeof(**table))) == NULL)
 		return -1;
@@ -502,12 +503,17 @@ ch_sub_alloc(struct ch_group **table, struct ch_meta **meta)
 		*table = NULL;
 		return -1;
 	}
+	t->ch_counts.cc_num_tables++;
+	type->t_counts->cc_num_tables++;
 	return 0;
 }
 
 static void
-ch_sub_free(struct ch_group *table, struct ch_meta *meta)
+ch_sub_free(const struct ch_type *type, struct ch_table *t,
+    struct ch_group *table, struct ch_meta *meta)
 {
+	t->ch_counts.cc_num_tables--;
+	type->t_counts->cc_num_tables--;
 	free(table);
 	free(meta);
 }
@@ -522,7 +528,7 @@ ch_table_resize(struct ch_table *t)
 	struct ch_group **tables;
 	struct ch_meta **metas;
 	uint64_t oldsize = 1ULL << t->ch_level;
-	uint64_t newsize = 1ULL << (t->ch_level + 1);
+	uint64_t newsize = oldsize * 2;
 	int64_t idx;
 
 	if (t->ch_level + 1 >= CH_H1_BITS) {
@@ -555,6 +561,9 @@ ch_table_resize(struct ch_table *t)
 		t->ch_level++;
 	t->ch_tables = tables;
 	t->ch_metas = metas;
+
+	t->ch_counts.cc_num_extendible += oldsize;
+
 	return 0;
 }
 
@@ -623,9 +632,9 @@ ch_table_grow(const struct ch_type *type, struct ch_table *t, uint64_t h,
 	}
 
 	/* allocate new sub tables */
-	if (ch_sub_alloc(&left, &leftmeta) == -1)
+	if (ch_sub_alloc(type, t, &left, &leftmeta) == -1)
 		goto fail;
-	if (ch_sub_alloc(&right, &rightmeta) == -1)
+	if (ch_sub_alloc(type, t, &right, &rightmeta) == -1)
 		goto fail;
 
 	/* split up the old table into the two new ones */
@@ -641,13 +650,13 @@ ch_table_grow(const struct ch_type *type, struct ch_table *t, uint64_t h,
 	idx = CH_H1(h, meta->cs_local_level) << 1;
 	ch_table_fill(t, idx, left, leftmeta);
 	ch_table_fill(t, idx | 1, right, rightmeta);
-	ch_sub_free(table, meta);
+	ch_sub_free(type, t, table, meta);
 
 	return 0;
 
  fail:
-	ch_sub_free(right, rightmeta);
-	ch_sub_free(left, leftmeta);
+	ch_sub_free(type, t, right, rightmeta);
+	ch_sub_free(type, t, left, leftmeta);
 	return -1;
 }
 
@@ -673,7 +682,7 @@ ch_table_compact(const struct ch_type *type, struct ch_table *t, uint64_t h,
 		return -1;
 
 	/* allocate new sub table */
-	if (ch_sub_alloc(&to, &tometa) == -1)
+	if (ch_sub_alloc(type, t, &to, &tometa) == -1)
 		goto fail;
 
 	/* merge the table and buddy into to. */
@@ -687,13 +696,13 @@ ch_table_compact(const struct ch_type *type, struct ch_table *t, uint64_t h,
 	 */
 	idx = CH_H1(h, tometa->cs_local_level);
 	ch_table_fill(t, idx, to, tometa);
-	ch_sub_free(buddy, buddymeta);
-	ch_sub_free(table, meta);
+	ch_sub_free(type, t, buddy, buddymeta);
+	ch_sub_free(type, t, table, meta);
 
 	return 0;
 
  fail:
-	ch_sub_free(to, tometa);
+	ch_sub_free(type, t, to, tometa);
 	return -1;
 }
 
@@ -707,8 +716,8 @@ _ch_init(const struct ch_type *type, struct ch_table *t)
 	struct ch_meta *meta = NULL;
 
 	t->ch_level = 0;
-	t->ch_num_elm = 0;
-	if (ch_sub_alloc(&table, &meta) == -1)
+	memset(&t->ch_counts, 0, sizeof(t->ch_counts));
+	if (ch_sub_alloc(type, t, &table, &meta) == -1)
 		goto fail;
 
 	if (ch_table_resize(t) == -1)
@@ -719,7 +728,7 @@ _ch_init(const struct ch_type *type, struct ch_table *t)
 	return 0;
 
  fail:
-	ch_sub_free(table, meta);
+	ch_sub_free(type, t, table, meta);
 	return -1;
 }
 
@@ -734,10 +743,11 @@ _ch_destroy(const struct ch_type *type, struct ch_table *t)
 			continue;
 
 		table = t->ch_tables[idx];
-		ch_sub_free(t->ch_tables[idx], t->ch_metas[idx]);
+		ch_sub_free(type, t, t->ch_tables[idx], t->ch_metas[idx]);
 	}
 	free(t->ch_tables);
 	free(t->ch_metas);
+	type->t_counts->cc_num_extendible -= max;
 	memset(t, 0, sizeof(*t));
 }
 
@@ -768,8 +778,10 @@ _ch_insert(const struct ch_type *type, struct ch_table *t, uint64_t h,
 	}
 
 	v = ch_sub_insert(type, table, meta, h, elm);
-	if (v == NULL)
-		t->ch_num_elm++;
+	if (v == NULL) {
+		t->ch_counts.cc_num_elm++;
+		type->t_counts->cc_num_elm++;
+	}
 	return v;
 }
 
@@ -791,7 +803,8 @@ _ch_remove(const struct ch_type *type, struct ch_table *t, uint64_t h,
 
 	v = ch_sub_remove(type, table, meta, h, needle);
 	if (v != NULL) {
-		t->ch_num_elm--;
+		t->ch_counts.cc_num_elm--;
+		type->t_counts->cc_num_elm--;
 
 		while (ch_sub_fillfactor(meta) <= CH_MAX_LOAD / 4) {
 			if (ch_table_compact(type, t, h, table, meta) == -1)
@@ -883,6 +896,19 @@ _ch_next(const struct ch_type *type, struct ch_table *t, struct ch_iter *it)
 	it->ci_ext_idx = idx;
 	table = t->ch_tables[idx];
 	return ch_sub_first(type, table, it);
+}
+
+void
+_ch_get_stats(struct ch_stats *stats, const struct ch_counts *counts)
+{
+	stats->cs_num_elm = counts->cc_num_elm;
+	stats->cs_num_tables = counts->cc_num_tables;
+	stats->cs_num_extendible = counts->cc_num_extendible;
+	stats->cs_max_elm = counts->cc_num_tables * CH_H2_SIZE * 7;
+	stats->cs_size_tables = counts->cc_num_tables *
+	    (CH_H2_SIZE * sizeof(struct ch_group) + sizeof(struct ch_meta));
+	stats->cs_size_extendible = stats->cs_num_extendible *
+	    (sizeof(struct ch_group *) + sizeof(struct ch_meta *));
 }
 
 /*

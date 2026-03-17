@@ -1,4 +1,4 @@
-/*	$OpenBSD: chash.h,v 1.5 2025/12/13 19:26:17 claudio Exp $	*/
+/*	$OpenBSD: chash.h,v 1.6 2026/03/17 09:29:29 claudio Exp $	*/
 /*
  * Copyright (c) 2025 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -27,9 +27,25 @@
 #define	__unused	__attribute__((__unused__))
 #endif
 
+struct ch_stats {
+	uint64_t		cs_num_elm;
+	uint64_t		cs_max_elm;
+	uint64_t		cs_num_tables;
+	uint64_t		cs_num_extendible;
+	size_t			cs_size_tables;
+	size_t			cs_size_extendible;
+};
+
+struct ch_counts {
+	uint64_t		cc_num_elm;
+	uint64_t		cc_num_tables;
+	uint64_t		cc_num_extendible;
+};
+
 struct ch_type {
 	int		(*t_equal)(const void *, const void *);
 	uint64_t	(*t_hash)(const void *);
+	struct ch_counts *t_counts;
 };
 
 struct ch_group;
@@ -39,7 +55,7 @@ struct ch_table {
 	struct ch_group		**ch_tables;
 	struct ch_meta		**ch_metas;
 	uint32_t		  ch_level;
-	uint32_t		  ch_num_elm;
+	struct ch_counts	  ch_counts;
 };
 
 
@@ -65,6 +81,7 @@ void *_ch_locate(const struct ch_type *, struct ch_table *, uint64_t,
 	    int (*)(const void *, void *), void *);
 void *_ch_first(const struct ch_type *, struct ch_table *, struct ch_iter *);
 void *_ch_next(const struct ch_type *, struct ch_table *, struct ch_iter *);
+void  _ch_get_stats(struct ch_stats *, const struct ch_counts *);
 
 #define CH_INS_FAILED	((void *)-1)
 
@@ -133,6 +150,18 @@ __unused static inline struct _type *					\
 _name##_CH_NEXT(struct _name *head, struct ch_iter *iter)		\
 {									\
 	return _ch_next(_name##_CH_TYPE, &head->ch_table, iter);	\
+}									\
+									\
+__unused static inline void						\
+_name##_CH_STATS(struct _name *head, struct ch_stats *stats)		\
+{									\
+	_ch_get_stats(stats, &head->ch_table.ch_counts);		\
+}									\
+									\
+__unused static inline void						\
+_name##_CH_GLOBAL_STATS(struct ch_stats *stats)			\
+{									\
+	_ch_get_stats(stats, _name##_CH_TYPE->t_counts);		\
 }
 
 
@@ -151,9 +180,12 @@ _name##_CH_HASH(const void *ptr)					\
 	return _hash(obj);						\
 }									\
 									\
+static struct ch_counts _name##_ch_counts;				\
+									\
 static const struct ch_type _name##_CH_INFO = {				\
 	.t_equal = _name##_CH_EQUAL,					\
 	.t_hash = _name##_CH_HASH,					\
+	.t_counts = &_name##_ch_counts,					\
 };									\
 const struct ch_type *const _name##_CH_TYPE = &_name##_CH_INFO
 
@@ -167,6 +199,8 @@ const struct ch_type *const _name##_CH_TYPE = &_name##_CH_INFO
 					_name##_CH_LOCATE(_head, _h, _cmp, _a)
 #define CH_FIRST(_name, _head, _iter)	_name##_CH_FIRST(_head, _iter)
 #define CH_NEXT(_name, _head, _iter)	_name##_CH_NEXT(_head, _iter)
+#define CH_STATS(_name, _head, _stats)	_name##_CH_STATS(_head, _stats)
+#define CH_GLOBAL_STATS(_name, _stats)	_name##_CH_GLOBAL_STATS(_stats)
 
 #define CH_FOREACH(_e, _name, _head, _iter)				\
 	for ((_e) = CH_FIRST(_name, (_head), (_iter));			\

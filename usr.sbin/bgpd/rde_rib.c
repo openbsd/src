@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.289 2026/02/04 13:49:23 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.290 2026/03/17 09:29:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -805,6 +805,12 @@ path_put(struct rde_aspath *asp)
 
 	rdemem.path_cnt--;
 	free(asp);
+}
+
+void
+path_stats(struct ch_stats *stats)
+{
+	CH_GLOBAL_STATS(path_tree, stats);
 }
 
 CH_GENERATE(path_tree, rde_aspath, path_equal, path_hash);

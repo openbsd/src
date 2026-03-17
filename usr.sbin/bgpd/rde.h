@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.343 2026/02/16 08:42:00 jsg Exp $ */
+/*	$OpenBSD: rde.h,v 1.344 2026/03/17 09:29:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -460,6 +460,8 @@ int		 attr_equal(const struct rde_aspath *,
 void		 attr_freeall(struct rde_aspath *);
 void		 attr_free(struct rde_aspath *, struct attr *);
 
+void		 attr_stats(struct ch_stats *);
+
 struct aspath	*aspath_get(void *, uint16_t);
 struct aspath	*aspath_copy(struct aspath *);
 void		 aspath_put(struct aspath *);
@@ -507,6 +509,7 @@ int	community_ext_add(struct rde_community *, int, int, struct ibuf *);
 int	community_writebuf(struct rde_community *, uint8_t, int, struct ibuf *);
 
 void			 communities_init(void);
+void			 communities_stats(struct ch_stats *);
 struct rde_community	*communities_lookup(struct rde_community *);
 struct rde_community	*communities_link(struct rde_community *);
 void			 communities_unlink(struct rde_community *);
@@ -571,6 +574,9 @@ enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
 enum filter_actions rde_filter_out(struct rde_filter *, struct rde_peer *,
 	    struct rde_peer *, struct bgpd_addr *, uint8_t,
 	    struct filterstate *);
+
+void	rde_filtertable_stats(struct ch_stats *);
+void	rde_filterset_stats(struct ch_stats *);
 
 /* rde_prefix.c */
 void	 pt_init(void);
@@ -657,6 +663,8 @@ struct rde_aspath *path_prep(struct rde_aspath *);
 struct rde_aspath *path_get(void);
 void		 path_clean(struct rde_aspath *);
 void		 path_put(struct rde_aspath *);
+
+void		 path_stats(struct ch_stats *);
 
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
 struct prefix	*prefix_get(struct rib *, struct rde_peer *, uint32_t,
@@ -792,6 +800,10 @@ void		 pend_prefix_add(struct rde_peer *, struct adjout_attr *,
 		    struct pt_entry *, uint32_t);
 void		 pend_prefix_free(struct pend_prefix *,
 		    struct pend_prefix_queue *, struct rde_peer *);
+
+void		 pend_attr_stats(struct ch_stats *);
+void		 pend_prefix_stats(struct ch_stats *);
+void		 adjout_attr_stats(struct ch_stats *);
 
 /* rde_update.c */
 void		 up_generate_updates(struct rde_peer *, struct rib_entry *);

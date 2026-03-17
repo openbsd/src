@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.23 2026/02/03 10:10:35 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.24 2026/03/17 09:29:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -667,6 +667,12 @@ communities_lookup(struct rde_community *comm)
 {
 	communities_calc_hash(comm);
 	return CH_FIND(comm_tree, &commtable, comm);
+}
+
+void
+communities_stats(struct ch_stats *stats)
+{
+	CH_GLOBAL_STATS(comm_tree, stats);
 }
 
 struct rde_community *

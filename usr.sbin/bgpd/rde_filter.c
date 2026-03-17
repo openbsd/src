@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.146 2026/02/16 14:23:56 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.147 2026/03/17 09:29:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -569,6 +569,12 @@ rde_filtertable_equal(const struct rde_filter *arf,
 	    arf->len * sizeof(arf->rules[0])) == 0;
 }
 
+void
+rde_filtertable_stats(struct ch_stats *stats)
+{
+	CH_GLOBAL_STATS(rde_filtertable, stats);
+}
+
 CH_GENERATE(rde_filtertable, rde_filter, rde_filtertable_equal,
     rde_filter_hash);
 
@@ -1004,6 +1010,12 @@ rde_filterset_imsg_recv(struct imsg *imsg)
 	log_warn("filter set receive");
 	rde_filterset_free(rfs);
 	return NULL;
+}
+
+void
+rde_filterset_stats(struct ch_stats *stats)
+{
+	CH_GLOBAL_STATS(rde_filterset, stats);
 }
 
 CH_GENERATE(rde_filterset, rde_filter_set, rde_filterset_equal,

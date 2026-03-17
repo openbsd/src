@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.140 2025/12/16 15:38:55 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.141 2026/03/17 09:29:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -315,6 +315,12 @@ attr_put(struct attr *a)
 	rdemem.attr_cnt--;
 	free(a->data);
 	free(a);
+}
+
+void
+attr_stats(struct ch_stats *stats)
+{
+	CH_GLOBAL_STATS(attr_tree, stats);
 }
 
 CH_GENERATE(attr_tree, attr, attr_eq, attr_hash);

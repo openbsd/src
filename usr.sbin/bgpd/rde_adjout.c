@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_adjout.c,v 1.15 2025/12/24 07:59:55 claudio Exp $ */
+/*	$OpenBSD: rde_adjout.c,v 1.16 2026/03/17 09:29:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2025 Claudio Jeker <claudio@openbsd.org>
@@ -126,6 +126,12 @@ pend_attr_eq(const struct pend_attr *a, const struct pend_attr *b)
 	return 1;
 }
 
+void
+pend_attr_stats(struct ch_stats *stats)
+{
+	CH_GLOBAL_STATS(pend_attr_hash, stats);
+}
+
 CH_GENERATE(pend_attr_hash, pend_attr, pend_attr_eq, pend_attr_hash);
 
 /*
@@ -250,6 +256,12 @@ pend_prefix_eq(const struct pend_prefix *a, const struct pend_prefix *b)
 	if (a->path_id_tx != b->path_id_tx)
 		return 0;
 	return 1;
+}
+
+void
+pend_prefix_stats(struct ch_stats *stats)
+{
+	CH_GLOBAL_STATS(pend_prefix_hash, stats);
 }
 
 CH_GENERATE(pend_prefix_hash, pend_prefix, pend_prefix_eq, pend_prefix_hash);
@@ -383,6 +395,12 @@ adjout_attr_get(struct filterstate *state)
 	}
 
 	return attr;
+}
+
+void
+adjout_attr_stats(struct ch_stats *stats)
+{
+	CH_GLOBAL_STATS(adjout_attr_tree, stats);
 }
 
 CH_GENERATE(adjout_attr_tree, adjout_attr, adjout_attr_eq, adjout_attr_hash);

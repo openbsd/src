@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.536 2026/03/06 13:10:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.537 2026/03/17 09:29:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1433,6 +1433,9 @@ struct rde_memstats {
 	long long	filter_set_cnt;
 	long long	filter_set_size;
 	long long	filter_set_refs;
+	long long	hash_cnt;
+	long long	hash_size;
+	long long	hash_refs;
 	long long	rde_rib_entry_count;
 	long long	rde_ibufq_msg_count;
 	long long	rde_ibufq_payload_size;
