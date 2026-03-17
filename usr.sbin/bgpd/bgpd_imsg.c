@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd_imsg.c,v 1.2 2026/02/04 13:49:23 claudio Exp $	*/
+/*	$OpenBSD: bgpd_imsg.c,v 1.3 2026/03/17 15:15:16 claudio Exp $	*/
 /*
  * Copyright (c) 2026 Claudio Jeker <claudio@openbsd.org>
  *
@@ -21,7 +21,6 @@
 
 #include "bgpd.h"
 #include "rde.h"
-#include "log.h"
 
 int
 imsg_send_filterset(struct imsgbuf *imsgbuf, struct filter_set_head *set)
