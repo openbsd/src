@@ -1,4 +1,4 @@
-.\" $OpenBSD: aggr.4,v 1.4 2020/09/02 05:53:55 jmc Exp $
+.\" $OpenBSD: aggr.4,v 1.5 2026/03/17 05:18:29 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2020 $
+.Dd $Mdocdate: March 17 2026 $
 .Dt AGGR 4
 .Os
 .Sh NAME
 .Nm aggr
-.Nd IEEE 802.1AX Link Aggregation network interface
+.Nd IEEE 802.1AX Link Aggregation (LACP) network interface
 .Sh SYNOPSIS
 .Cd "pseudo-device aggr"
 .Sh DESCRIPTION
@@ -28,13 +28,16 @@ The
 driver implements IEEE 802.1AX (formerly 802.3ad) Link Aggregation
 for combining one or more Ethernet interfaces into a single logical
 interface.
-The Link Aggregation Control Protocol (LACP) is used to negotiate the
+The Link Aggregation Control Protocol
+.Va ( LACP )
+is used to negotiate the
 aggregation of member interfaces with a partner device.
 .Pp
 .Nm
 interfaces must be configured to use one or more Ethernet interfaces
 as ports, and communicate with a partner device over those
-ports using LACP.
+ports using
+.Va LACP .
 Member interfaces that negotiate with a partner device are
 aggregated into a single logical link.
 Packets transmitted through an
