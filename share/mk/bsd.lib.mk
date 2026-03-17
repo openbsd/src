@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.105 2025/11/16 10:20:54 robert Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.106 2026/03/17 17:07:58 robert Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -206,22 +206,19 @@ lib${LIB}_p.a: ${POBJS}
 SOBJS+=	${OBJS:.o=.so}
 BUILDAFTER += ${SOBJS}
 
-# exclude from readelf(1) output for syspatch building
-EXCLUDE_REGEX:=	"(cmll-586|(comparetf|libgcc|unwind-dw)2|		\
-		mul(t|d|s|x)(c|f)3|crt(begin|end)S|			\
-		(div|umod|mod)(d|t)i3|emutls|(add|div|sub)tf3|		\
-		(fixtf|float|extend|trunctf)(d|s)(ftf2|i|itf|f2)|	\
-		outline_atomic_(ldadd|swp)(4|8)_4|aarch64|		\
-		floatunsitf|udivmodti4|AMDGPURegAsmNames|clear_cache)"
-
 ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
 .if defined(SYSPATCH_PATH)
+	@>${.TARGET}.rsp
+	@for _f in `readelf -Ws ${SYSPATCH_PATH}${LIBDIR}/${.TARGET} | \
+	    awk '/ FILE/{sub(".*/", "", $$NF); gsub(/\.[^.]+$$/, ".so", $$NF); \
+	    print $$NF}' | awk '!x[$$0]++'`; do \
+		[[ ! -f $${_f} ]] || echo $${_f} >>${.TARGET}.rsp; \
+	done
 	${CC} -shared -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} -o ${.TARGET} \
-	    `readelf -Ws ${SYSPATCH_PATH}${LIBDIR}/${.TARGET} | \
-	    awk '/ FILE/{sub(".*/", "", $$NF); gsub(/\..*/, ".so", $$NF); print $$NF}' | \
-	    egrep -v ${EXCLUDE_REGEX:C/[[:blank:]]//g} | awk '!x[$$0]++'` ${LDADD}
+	    @${.TARGET}.rsp ${LDADD}
+	@rm -f ${.TARGET}.rsp
 .else
 	${CC} -shared -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} -o ${.TARGET} \
 	    `echo ${SOBJS} | tr ' ' '\n' | sort -R` ${LDADD}
