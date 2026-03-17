@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.32 2026/01/12 04:38:15 dlg Exp $
+.\"	$OpenBSD: trunk.4,v 1.33 2026/03/17 05:20:55 deraadt Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2026 $
+.Dd $Mdocdate: March 17 2026 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -81,8 +81,9 @@ configuration file for
 .Pp
 .Nm
 does not implement
-IEEE 802.1AX (formerly 802.3ad) Link Aggregation,
-it is supported by
+IEEE 802.1AX (formerly 802.3ad) Link Aggregation
+.Va (LACP ) ,
+which is supported by
 .Xr aggr 4 .
 .Sh EXAMPLES
 Create a simple round robin trunk with two
