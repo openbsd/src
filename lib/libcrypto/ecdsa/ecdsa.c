@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.21 2026/03/16 22:19:32 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.22 2026/03/18 08:02:40 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -64,7 +64,6 @@
 
 #include "bn_local.h"
 #include "ec_local.h"
-#include "ecdsa_local.h"
 #include "err_local.h"
 
 struct ECDSA_SIG_st {
@@ -222,7 +221,7 @@ ecdsa_prepare_digest(const unsigned char *digest, int digest_len,
 }
 
 int
-ecdsa_sign(int type, const unsigned char *digest, int digest_len,
+ec_key_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
     unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
     const BIGNUM *r, EC_KEY *key)
 {
@@ -271,7 +270,8 @@ LCRYPTO_ALIAS(ECDSA_sign);
  */
 
 int
-ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
+ec_key_ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
+    BIGNUM **out_r)
 {
 	const EC_GROUP *group;
 	EC_POINT *point = NULL;
@@ -522,7 +522,7 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
  */
 
 ECDSA_SIG *
-ecdsa_sign_sig(const unsigned char *digest, int digest_len,
+ec_key_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *key)
 {
 	BN_CTX *ctx = NULL;
@@ -605,7 +605,7 @@ ECDSA_do_sign(const unsigned char *digest, int digest_len, EC_KEY *key)
 LCRYPTO_ALIAS(ECDSA_do_sign);
 
 int
-ecdsa_verify(int type, const unsigned char *digest, int digest_len,
+ec_key_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
     const unsigned char *sigbuf, int sig_len, EC_KEY *key)
 {
 	ECDSA_SIG *s;
@@ -654,7 +654,7 @@ LCRYPTO_ALIAS(ECDSA_verify);
  */
 
 int
-ecdsa_verify_sig(const unsigned char *digest, int digest_len,
+ec_key_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
     const ECDSA_SIG *sig, EC_KEY *key)
 {
 	const EC_GROUP *group;

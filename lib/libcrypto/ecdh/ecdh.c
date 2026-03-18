@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.12 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.13 2026/03/18 08:02:40 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -143,8 +143,8 @@ ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
  * Based on the ECKAS-DH1 and ECSVDP-DH primitives in the IEEE 1363 standard.
  */
 int
-ecdh_compute_key(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
-    const EC_KEY *ecdh)
+ec_key_ecdh_compute_key(unsigned char **out, size_t *out_len,
+    const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
 	BN_CTX *ctx;
 	BIGNUM *x;

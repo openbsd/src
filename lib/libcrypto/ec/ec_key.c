@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.52 2025/05/10 05:54:38 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.53 2026/03/18 08:02:40 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -69,7 +69,6 @@
 
 #include "bn_local.h"
 #include "ec_local.h"
-#include "ecdsa_local.h"
 #include "err_local.h"
 
 EC_KEY *
@@ -236,7 +235,7 @@ EC_KEY_generate_key(EC_KEY *eckey)
 LCRYPTO_ALIAS(EC_KEY_generate_key);
 
 static int
-ec_key_gen(EC_KEY *eckey)
+ec_key_generate_key(EC_KEY *eckey)
 {
 	BIGNUM *priv_key = NULL;
 	EC_POINT *pub_key = NULL;
@@ -771,15 +770,15 @@ static const EC_KEY_METHOD openssl_ec_key_method = {
 	.set_private = NULL,
 	.set_public = NULL,
 
-	.keygen = ec_key_gen,
-	.compute_key = ecdh_compute_key,
+	.keygen = ec_key_generate_key,
+	.compute_key = ec_key_ecdh_compute_key,
 
-	.sign = ecdsa_sign,
-	.sign_setup = ecdsa_sign_setup,
-	.sign_sig = ecdsa_sign_sig,
+	.sign = ec_key_ecdsa_sign,
+	.sign_setup = ec_key_ecdsa_sign_setup,
+	.sign_sig = ec_key_ecdsa_sign_sig,
 
-	.verify = ecdsa_verify,
-	.verify_sig = ecdsa_verify_sig,
+	.verify = ec_key_ecdsa_verify,
+	.verify_sig = ec_key_ecdsa_verify_sig,
 };
 
 const EC_KEY_METHOD *
