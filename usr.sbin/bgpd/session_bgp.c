@@ -1,4 +1,4 @@
-/*	$OpenBSD: session_bgp.c,v 1.6 2025/11/04 15:01:09 claudio Exp $ */
+/*	$OpenBSD: session_bgp.c,v 1.7 2026/03/18 15:16:29 sthen Exp $ */
 
 /*
  * Copyright (c) 2004 - 2025 Claudio Jeker <claudio@openbsd.org>
@@ -706,7 +706,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 			if (afi2aid(afi, safi, &aid) == -1) {
 				log_peer_warnx(&peer->conf,
 				    "Received multi protocol capability: "
-				    " unknown AFI %u, safi %u pair",
+				    "unknown AFI %u, safi %u pair",
 				    afi, safi);
 				peer->capa.peer.mp[AID_UNSPEC] = 1;
 				break;
@@ -734,7 +734,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 				    !(aid == AID_INET || aid == AID_VPN_IPv4)) {
 					log_peer_warnx(&peer->conf,
 					    "Received %s capability: "
-					    " unsupported AFI %u, safi %u pair",
+					    "unsupported AFI %u, safi %u pair",
 					    log_capability(CAPA_EXT_NEXTHOP),
 					    afi, safi);
 					continue;
@@ -742,7 +742,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 				if (nhafi != AFI_IPv6) {
 					log_peer_warnx(&peer->conf,
 					    "Received %s capability: "
-					    " unsupported nexthop AFI %u",
+					    "unsupported nexthop AFI %u",
 					    log_capability(CAPA_EXT_NEXTHOP),
 					    nhafi);
 					continue;
@@ -808,7 +808,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 				if (afi2aid(afi, safi, &aid) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "Received graceful restart capa: "
-					    " unknown AFI %u, safi %u pair",
+					    "unknown AFI %u, safi %u pair",
 					    afi, safi);
 					continue;
 				}
@@ -860,7 +860,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 				if (afi2aid(afi, safi, &aid) == -1) {
 					log_peer_warnx(&peer->conf,
 					    "Received ADD-PATH capa: "
-					    " unknown AFI %u, safi %u pair",
+					    "unknown AFI %u, safi %u pair",
 					    afi, safi);
 					memset(peer->capa.peer.add_path, 0,
 					    sizeof(peer->capa.peer.add_path));
@@ -869,7 +869,7 @@ parse_capabilities(struct peer *peer, struct ibuf *buf, uint32_t *as)
 				if (flags & ~CAPA_AP_BIDIR) {
 					log_peer_warnx(&peer->conf,
 					    "Received ADD-PATH capa: "
-					    " bad flags %x", flags);
+					    "bad flags %x", flags);
 					memset(peer->capa.peer.add_path, 0,
 					    sizeof(peer->capa.peer.add_path));
 					break;
