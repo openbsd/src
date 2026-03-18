@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.65 2026/03/12 12:40:40 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.66 2026/03/18 08:49:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -280,6 +280,10 @@ popup_draw_cb(struct client *c, void *data, struct screen_redraw_ctx *rctx)
 	popup_reapply_styles(pd);
 
 	screen_init(&s, pd->sx, pd->sy, 0);
+	if (pd->s.hyperlinks != NULL) {
+		hyperlinks_free(s.hyperlinks);
+		s.hyperlinks = hyperlinks_copy(pd->s.hyperlinks);
+	}
 	screen_write_start(&ctx, &s);
 	screen_write_clearscreen(&ctx, 8);
 
