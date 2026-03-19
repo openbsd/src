@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2128 2026/03/15 20:14:17 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2129 2026/03/19 22:31:02 kn Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2789,6 +2789,9 @@
 /* c't Magazin products */
 #define	PCI_PRODUCT_C4T_GPPCI	0x6773		/* GPPCI */
 
+/* Cadence products */
+#define	PCI_PRODUCT_CADENCE_CIX_PCIE	0x0100		/* PCIe */
+
 /* Cavium products */
 #define	PCI_PRODUCT_CAVIUM_NITROX	0x0001		/* NITROX XL */
 #define	PCI_PRODUCT_CAVIUM_NITROX_LITE	0x0003		/* NITROX Lite */
@@ -3000,6 +3003,7 @@
 
 /* Crucial products */
 #define	PCI_PRODUCT_CRUCIAL_P5PLUS	0x5407		/* P5 Plus */
+#define	PCI_PRODUCT_CRUCIAL_P310	0x5427		/* P310 */
 
 /* Cyclades products */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMY_1	0x0100		/* Cyclom-Y below 1M */

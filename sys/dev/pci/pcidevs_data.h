@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2128 2026/03/15 20:14:17 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2129 2026/03/19 22:31:02 kn Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9096,6 +9096,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GPPCI",
 	},
 	{
+	    PCI_VENDOR_CADENCE, PCI_PRODUCT_CADENCE_CIX_PCIE,
+	    "PCIe",
+	},
+	{
 	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX,
 	    "NITROX XL",
 	},
@@ -9782,6 +9786,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CRUCIAL, PCI_PRODUCT_CRUCIAL_P5PLUS,
 	    "P5 Plus",
+	},
+	{
+	    PCI_VENDOR_CRUCIAL, PCI_PRODUCT_CRUCIAL_P310,
+	    "P310",
 	},
 	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
