@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.33 2026/03/19 12:44:23 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.34 2026/03/19 13:36:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -316,7 +316,6 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 {
 	static struct aspa_set	*aspa;
 	struct imsg		 imsg;
-	struct bgpd_config	 tconf;
 	struct roa		 roa;
 	struct rtr_config_msg	 rtrconf;
 	struct rtr_session	*rs;
