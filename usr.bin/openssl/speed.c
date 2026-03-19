@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.51 2026/03/18 21:50:24 kenjiro Exp $ */
+/* $OpenBSD: speed.c,v 1.52 2026/03/19 20:28:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,8 +76,8 @@
 #define SECONDS		3
 #define RSA_SECONDS	10
 #define DSA_SECONDS	10
-#define ECDSA_SECONDS   10
-#define ECDH_SECONDS    10
+#define ECDSA_SECONDS	10
+#define ECDH_SECONDS	10
 #define MLKEM_SECONDS	10
 
 #define MAX_UNALIGN	16
