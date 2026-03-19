@@ -2541,8 +2541,13 @@ inteldrm_activate(struct device *self, int act)
 	case DVACT_QUIESCE:
 		rv = config_suspend(dev->dev, act);
 		i915_pm_prepare(self);
-		i915_pm_suspend(self);
-		i915_pm_suspend_late(self);
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4) {
+			i915_pm_freeze(self);
+			i915_pm_freeze_late(self);
+		} else {
+			i915_pm_suspend(self);
+			i915_pm_suspend_late(self);
+		}
 		break;
 	case DVACT_SUSPEND:
 		if (dev->agp)
@@ -2553,8 +2558,13 @@ inteldrm_activate(struct device *self, int act)
 			config_suspend(dev->agp->agpdev->sc_chipc, act);
 		break;
 	case DVACT_WAKEUP:
-		i915_pm_resume_early(self);
-		i915_pm_resume(self);
+		if (acpi_softc && acpi_softc->sc_state == ACPI_STATE_S4) {
+			i915_pm_restore_early(self);
+			i915_pm_restore(self);
+		} else {
+			i915_pm_resume_early(self);
+			i915_pm_resume(self);
+		}
 		drm_client_dev_restore(dev);
 		rv = config_suspend(dev->dev, act);
 		break;
