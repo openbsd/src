@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.33 2026/03/04 05:44:14 tb Exp $
+.\"	$OpenBSD: compress.3,v 1.34 2026/03/19 15:11:47 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -21,11 +21,12 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd $Mdocdate: March 4 2026 $
+.Dd $Mdocdate: March 19 2026 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
 .Nm compress ,
+.Nm compress_z ,
 .Nm zlibVersion ,
 .Nm deflateInit ,
 .Nm deflate ,
@@ -41,6 +42,7 @@
 .Nm deflateParams ,
 .Nm deflateTune ,
 .Nm deflateBound ,
+.Nm deflateBound_z ,
 .Nm deflatePending ,
 .Nm deflateUsed ,
 .Nm deflatePrime ,
@@ -60,9 +62,13 @@
 .Nm inflateBackEnd ,
 .Nm zlibCompileFlags ,
 .Nm compress2 ,
+.Nm compress2_z ,
 .Nm compressBound ,
+.Nm compressBound_z ,
 .Nm uncompress ,
+.Nm uncompress_z ,
 .Nm uncompress2 ,
+.Nm uncompress2_z ,
 .Nm gzopen ,
 .Nm gzdopen ,
 .Nm gzbuffer ,
@@ -137,6 +143,8 @@ Advanced functions
 .Fn deflateTune "z_streamp strm" "int good_length" "int max_lazy" "int nice_length" "int max_chain"
 .Ft uLong
 .Fn deflateBound "z_streamp strm" "uLong sourceLen"
+.Ft z_size_t
+.Fn deflateBound_z "z_streamp strm" "z_size_t sourceLen"
 .Ft int
 .Fn deflatePending "z_streamp strm" "unsigned *pending" "int *bits"
 .Ft int
@@ -181,13 +189,23 @@ Utility functions
 .Ft int
 .Fn compress "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen"
 .Ft int
+.Fn compress_z "Bytef *dest" "z_size_t *destLen" "const Bytef *source" "z_size_t sourceLen"
+.Ft int
 .Fn compress2 "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen" "int level"
+.Ft int
+.Fn compress2_z "Bytef *dest" "z_size_t *destLen" "const Bytef *source" "z_size_t sourceLen" "int level"
 .Ft uLong
 .Fn compressBound "uLong sourceLen"
+.Ft z_size_t
+.Fn compressBound_z "z_size_t sourceLen"
 .Ft int
 .Fn uncompress "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen"
 .Ft int
+.Fn uncompress_z "Bytef *dest" "z_size_t *destLen" "const Bytef *source" "z_size_t sourceLen"
+.Ft int
 .Fn uncompress2 "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong *sourceLen"
+.Ft int
+.Fn uncompress2_z "Bytef *dest" "z_size_t *destLen" "const Bytef *source" "z_size_t *sourceLen"
 .Ft gzFile
 .Fn gzopen "const char *path" "const char *mode"
 .Ft gzFile
@@ -844,7 +862,7 @@ option assists in appending to or combining deflate streams.
 To assist in this, on return
 .Fn inflate
 always sets strm->data_type to the number of unused bits
-in the last byte taken from strm->next_in, plus 64 if
+in the input taken from strm->next_in, plus 64 if
 .Fn inflate
 is currently decoding the last block in the deflate stream, plus 128 if
 .Fn inflate
@@ -1493,6 +1511,20 @@ or
 .Dv Z_NO_FLUSH
 are used.
 .It Xo
+.Fa z_size_t
+.Fn deflateBound_z "z_streamp strm" "z_size_t sourceLen" ;
+.Xc
+.Pp
+.Fn deflateBound_z
+is the same as
+.Fn deflateBound ,
+but takes and returns a
+.Vt z_size_t
+length.
+Note that a
+.Vt long
+is 32 bits on Windows.
+.It Xo
 .Fa int
 .Fn deflatePending "z_streamp strm" "unsigned *pending" "int *bits" ;
 .Xc
@@ -1934,21 +1966,31 @@ parameter is invalid.
 .Xc
 .Pp
 This function inserts bits in the inflate input stream.
-The intent is that this function is used
+The intent is to use
+.Fn inflatePrime
 to start inflating at a bit position in the middle of a byte.
 The provided bits will be used before any bytes are used from
 .Fa next_in .
-This function should only be used with raw inflate,
+This function should be used with raw inflate,
 and should be used before the first
 .Fn inflate
 call after
 .Fn inflateInit2
 or
 .Fn inflateReset .
+It can also be used after an
+.Fn inflate
+return indicates the end of a
+.Fa deflate
+block or header when using
+.Dv Z_BLOCK .
 .Fa bits
 must be less than or equal to 16,
 and that many of the least significant bits of value
 will be inserted in the input.
+The other bits in
+.Va value
+can be non-zero, and will be ignored.
 .Pp
 If
 .Fa bits
@@ -1965,7 +2007,24 @@ returns
 .Dv Z_OK
 if successful, or
 .Dv Z_STREAM_ERROR
-if the source stream state was inconsistent.
+if the source stream state was inconsistent,
+or if bits is out of range.
+If
+.Fn inflate
+was in the middle of processing a header, trailer, or stored block lengths, then
+it is possible for there to be only eight bits available in the bit buffer.
+In that case, bits > 8 is considered out of range.
+However, when used as outlined above, there will always be 16 bits available in
+the buffer for insertion.
+As noted in its documentation above,
+.Fn inflate
+records the number of bits in the bit buffer on return in
+.Fa data_type .
+32 minus that is the number of bits available for insertion.
+Fn inflatePrime
+does not update
+.Fa data_type
+with the new number of bits in buffer.
 .It Xo
 .Fa long
 .Fn inflateMark "z_streamp strm" ;
@@ -2046,7 +2105,17 @@ The text, time, xflags, and os fields are filled in with the gzip header
 contents.
 hcrc is set to true if there is a header CRC.
 (The header CRC was valid if done is set to one.)
-If extra is not
+The
+.Fa extra ,
+.Fa name ,
+and
+.Fa comment
+pointers much each be either
+.Dv NULL ,
+or point to space to store that information from the header.
+If
+.Fa extra
+is not
 .Dv NULL ,
 then
 .Fa extra_max
@@ -2060,7 +2129,9 @@ contains the extra field, or that field truncated if
 .Fa extra_max
 is less than
 .Fa extra_len .
-If name is not
+If
+.Fa name
+is not
 .Dv NULL ,
 then up to
 .Fa name_max
@@ -2465,13 +2536,13 @@ The
 function compresses the source buffer into the destination buffer.
 .Fa sourceLen
 is the byte length of the source buffer.
-Upon entry,
-.Fa destLen
+On entry,
+.Pf * Fa destLen
 is the total size of the destination buffer,
 which must be at least the value returned by
 .Fn compressBound sourcelen .
-Upon exit,
-.Fa destLen
+On exit,
+.Pf * Fa destLen
 is the actual size of the compressed data.
 .Fn compress
 is equivalent to
@@ -2489,6 +2560,20 @@ if there was not enough memory, or
 if there was not enough room in the output buffer.
 .It Xo
 .Fa int
+.Fn compress_z "Bytef *dest" "z_size_t *destLen" "const Bytef *source" "z_size_t sourceLen" ;
+.Xc
+.Pp
+.Fn compress_z
+is the same as
+.Fn compress ,
+but takes
+.Vt z_size_t
+lengths.
+Note that a
+.Vt long
+is 32 bits on Windows.
+.It Xo
+.Fa int
 .Fn compress2 "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen" "int level" ;
 .Xc
 .Pp
@@ -2501,13 +2586,13 @@ parameter has the same meaning as in
 .Fn deflateInit .
 .Fa sourceLen
 is the byte length of the source buffer.
-Upon entry,
-.Fa destLen
+On entry,
+.Pf * Fa destLen
 is the total size of the destination buffer,
 which must be at least the value returned by
 .Fn compressBound sourceLen .
-Upon exit,
-.Fa destLen
+On exit,
+.Pf * Fa destLen
 is the actual size of the compressed buffer.
 .Pp
 .Fn compress2
@@ -2520,6 +2605,20 @@ if there was not enough memory,
 if there was not enough room in the output buffer, or
 .Dv Z_STREAM_ERROR
 if the level parameter is invalid.
+.It Xo
+.Fa int
+.Fn compress2_z "Bytef *dest" "z_size_t *destLen" "const Bytef *source" "z_size_t sourceLen" "int level" ;
+.Xc
+.Pp
+.Fn compress2_z
+is the same as
+.Fn compress2
+but takes
+.Vt z_size_t
+lengths.
+Note that a
+.Vt long
+is 32 bits on Windows.
 .It Xo
 .Fa uLong
 .Fn compressBound "uLong sourceLen" ;
@@ -2539,6 +2638,20 @@ or
 .Fn compress2
 call to allocate the destination buffer.
 .It Xo
+.Fa z_size_t
+.Fn compressBound_z "z_size_t sourceLen" ;
+.Xc
+.Pp
+.Fn compressBound_z
+is the same as
+.Fn compressBound
+but takes and returns a
+.Vt z_size_t
+length.
+Note that a
+.Vt long
+is 32 bits on Windows.
+.It Xo
 .Fa int
 .Fn uncompress "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong sourceLen" ;
 .Xc
@@ -2548,15 +2661,15 @@ The
 function decompresses the source buffer into the destination buffer.
 .Fa sourceLen
 is the byte length of the source buffer.
-Upon entry,
-.Fa destLen
+On entry,
+.Pf * Fa destLen
 is the total size of the destination buffer,
 which must be large enough to hold the entire uncompressed data.
 (The size of the uncompressed data must have been saved previously
 by the compressor and transmitted to the decompressor
 by some mechanism outside the scope of this compression library.)
-Upon exit,
-.Fa destLen
+On exit,
+.Pf * Fa destLen
 is the actual size of the uncompressed data.
 This function can be used to decompress a whole file at once if the
 input file is mmap'ed.
@@ -2576,6 +2689,20 @@ In the case where there is not enough room,
 will fill the output buffer with the uncompressed data up to that point.
 .It Xo
 .Fa int
+.Fn uncompress_z "Bytef *dest" "z_size_t *destLen" "const Bytef *source" "z_size_t sourceLen" ;
+.Xc
+.Pp
+.Fn uncompress_z
+is the same as
+.Fn uncompress
+but takes
+.Vt z_size_t
+lengths.
+Note that a
+.Vt long
+is 32 bits on Windows.
+.It Xo
+.Fa int
 .Fn uncompress2 "Bytef *dest" "uLongf *destLen" "const Bytef *source" "uLong *sourceLen" ;
 .Xc
 .Pp
@@ -2588,6 +2715,20 @@ is a pointer, where the length of the source is
 On return,
 .Fa *sourceLen
 is the number of source bytes consumed.
+.It Xo
+.Fa int
+.Fn uncompress2_z "Bytef *dest" "z_size_t *destLen" "const Bytef *source" "z_size_t *sourceLen" ;
+.Xc
+.Pp
+.Fn uncompress2_z
+is the same as
+.Fn uncompress
+but takes
+.Vt z_size_t
+lengths.
+Note that a
+.Vt long
+is 32 bits on Windows.
 .It Xo
 .Fa gzFile
 .Fn gzopen "const char *path" "const char *mode" ;
@@ -2633,6 +2774,15 @@ for more information about the strategy parameter.)
 .Sq T
 will request transparent writing or appending with no compression and not using
 the gzip format.
+.Sq T
+cannot be used to force transparent reading.
+Transparent reading is automatically performed
+if there is no gzip reader at the start.
+Transparent reading can be disabled with the
+.Sq G
+option, which will instead return an error if there is no gzip header.
+.Sq N
+will open the file in non-blocking mode.
 .Pp
 .Sq a
 can be used instead of
@@ -2692,6 +2842,25 @@ was provided).
 can be checked to determine if the reason
 .Fn gzopen
 failed was that the file could not be opened.
+Note that if
+.Sq N
+is in mode for non-blocking, the
+.Xr open 2
+call itself can fail in order to not block.
+In that case
+.Fn gzopen
+return
+.Dv NULL
+and errno will be
+.Dv EAGAIN
+or
+.Dv ENONBLOCK .
+The call to
+.Fn gzopen
+with the resulting file descriptor and
+.Sq N
+in the mode,
+which will set it to non-blocking.
 .It Xo
 .Fa gzFile
 .Fn gzdopen "int fd" "const char *mode" ;
@@ -2715,6 +2884,22 @@ The
 parameter is as in
 .Fn gzopen .
 .Pp
+An
+.Sq e
+in
+.Fa mode
+will set
+.Fa fd Ns No 's
+flag to close the file on an
+.Xr execve 2
+call.
+An
+.Sq N
+in
+.Fa mode
+will set
+.Fa fd Ns No 's
+non-blocking flag.
 The next call to
 .Fn gzclose
 on the returned gzFile will also close the file descriptor fd,
@@ -2798,7 +2983,7 @@ if there is a memory allocation error.
 Reads the given number of uncompressed bytes from the compressed file.
 If the input file is not in gzip format,
 .Fn gzread
-copies the given number ofbytes into the buffer directly from the file.
+copies the given number of bytes into the buffer directly from the file.
 .Pp
 After reaching the end of a gzip stream in the input,
 .Fn gzread
@@ -2847,6 +3032,17 @@ can be used before
 to detect this case.
 .Pp
 .Fn gzread
+can be used to read a gzip file on a non-blocking device.
+If the input stalls and there is no uncompressed data to return, then
+.Fn gzread
+will return \-1, and errno will be
+.Dv EAGAIN
+or
+.Dv EWOULDBLOCK .
+.Fn gzread
+can then be called again.
+.Pp
+.Fn gzread
 returns the number of uncompressed bytes actually read,
 less than
 .Fa len
@@ -2856,6 +3052,9 @@ If
 is too large to fit in an int,
 then nothing is read, -1 is returned, and the error state is set to
 .Dv Z_STREAM_ERROR .
+If some data was read before an error,
+then that data is returned until exhausted,
+after which the next call will signal the error.
 .It Xo
 .Fa z_size_t
 .Fn gzfread "voidp buf" "z_size_t size" "z_size_t nitems" "gzFile file" ;
@@ -2896,19 +3095,21 @@ zero is returned, and the error state is set to
 .Pp
 In the event that the end of file is reached and only a partial item is
 available at the end, i.e. the remaining uncompressed data length is not a
-multiple of size, then the final partial item is nevetheless read into
+multiple of size, then the final partial item is nevertheless read into
 .Fa buf
 and the end-of-file flag is set.
 The length of the partial item read is not provided,
 but could be inferred from the result of
 .Fn gztell .
-This behavior is the same as the behavior of
+This behavior is the same as that of
 .Xr fread 3
-implementations in common libraries,
-but it prevents the direct use of
-.Fn gzfread
-to read a concurrently written file, resetting and retrying on end-of-file,
-when size is not 1.
+implementations in common libraries.
+This could result in data loss if used with size != 1
+when reading a concurrently written file or
+a non-blocking file.
+In that case, use size == 1 or
+.Fn gzread
+instead.
 .It Xo
 .Fa int
 .Fn gzwrite "gzFile file" "voidpc buf" "unsigned len" ;
@@ -2918,7 +3119,17 @@ The
 .Fn gzwrite
 function writes the given number of uncompressed bytes into the compressed file.
 .Fn gzwrite
-returns the number of uncompressed bytes written or 0 in case of error.
+returns the number of uncompressed bytes written or 0 in case of error or
+if
+.Fa len
+is 0.
+If the write destination is non-blocking, then
+.Fn gzwrite
+may return a number of bytes written that is not 0 and less than
+.Fa len .
+If
+.Fa len
+does not fit in an int, then 0 is returned and nothing is written.
 .It Xo
 .Fa z_size_t
 .Fn gzfwrite "voidpc buf" "z_size_t size" "z_size_t nitems" "gzFile file" ;
@@ -2951,6 +3162,13 @@ overflows,
 i.e. the product does not fit in a z_size_t, then nothing is written,
 zero is returned, and the error state is set to
 .Dv Z_STREAM_ERROR .
+.Pp
+If writing a concurrently read file or a non-blocking file with size != 1,
+a partial item could be written, with no way of knowing
+how much of it was not written, resulting in data loss.
+In that case, use size == 1 or
+.Fn gzwrite
+instead.
 .It Xo
 .Fa int
 .Fn gzprintf "gzFile file" "const char *format" "..." ;
@@ -3021,16 +3239,19 @@ returns
 which is a NUL-terminated string, or it returns
 .Dv NULL
 for end-of-file or in case of error.
-If there was an error, the contents at
-.Fa buf
-are indeterminate.
+If some data was read before an error,
+then that data is returned until exhausted, after which the next call
+will return
+.Dv NULL
+to signal the error.
 .Pp
 .Fn gzgets
-returns
-.Fa buf ,
-or
-.Dv NULL
-in case of error.
+can be used on a file being concurrently written,
+and on a non-blocking device, both as for
+.Fn gzread .
+However lines may be broken in the middle,
+leaving it up to the application
+to reassemble them as needed.
 .It Xo
 .Fa int
 .Fn gzputc "gzFile file" "int c" ;
@@ -3053,6 +3274,10 @@ The
 function reads one byte from the compressed file.
 .Fn gzgetc
 returns this byte or -1 in case of end of file or error.
+If some data was read before an error,
+then that data is returned until exhausted,
+after which the next call will return \-1 to signal the error.
+.Pp
 This is implemented as a macro for speed.
 As such, it does not do all of the checking the other functions do.
 That is, it does not check to see if file is
@@ -3060,6 +3285,17 @@ That is, it does not check to see if file is
 nor whether the structure
 .Fa file
 points to has been clobbered or not.
+.Pp
+.Fn gzgetc
+can be used to read a gzip file on a non-blocking device.
+If the input stalls and there is no uncompressed data to return, then
+.Fn gzgetc
+will return \-1, and errno will be
+.Dv EAGAIN
+or
+.Dv EWOULDBLOCK .
+.Fn gzread
+can then be called again.
 .It Xo
 .Fa int
 .Fn gzungetc "int c" "gzFile file" ;
@@ -3087,6 +3323,13 @@ The pushed character will be discarded if the stream is repositioned with
 .Fn gzseek
 or
 .Fn gzrewind .
+.Pp
+gzungetc(\-1, file) will force any pending seek to execute.
+Then
+.Fn gztell
+will report the position, even if the requested seek reached end of file.
+This can be used to determine the number of uncompressed bytes
+in a gzip file without having to read it into a buffer.
 .It Xo
 .Fa int
 .Fn gzflush "gzFile file" "int flush" ;
@@ -3142,6 +3385,8 @@ extremely slow.
 If the file is opened for writing, only forward seeks are supported;
 .Fn gzseek
 then compresses a sequence of zeroes up to the new starting position.
+For reading or writing, any actual seeking is deferred until
+the next read or write operation, or close operation when writing.
 .Pp
 .Fn gzseek
 returns the resulting offset location as measured in bytes from
@@ -3180,7 +3425,7 @@ even if appending or reading a gzip stream from the middle of a file using
 gztell(file) is equivalent to gzseek(file, 0L, SEEK_CUR).
 .It Xo
 .Fa int
-.Fn gzeoffset "gzFile file" ;
+.Fn gzoffset "gzFile file" ;
 .Xc
 .Pp
 Returns the current offset in the file being read or written.
@@ -3244,6 +3489,14 @@ Therefore if
 .Fn gzbuffer
 is used, it should be called before
 .Fn gzdirect .
+If the input is being written concurrently
+or the device is non-blocking, then
+.Fn gzdirect
+may give a different answer once four bytes of input have been accumulated,
+which is what is needed to confirm or deny a gzip reader.
+Before this,
+.Fa gzdirect
+will return true (1).
 .Pp
 When writing,
 .Fn gzdirect
@@ -3327,7 +3580,11 @@ The
 function returns the error message for the last error which occurred on the
 given compressed
 .Fa file .
+If
 .Fa errnum
+is not
+.Dv NULL ,
+.Pf * Fa errnum
 is set to the
 .Nm zlib
 error number.
