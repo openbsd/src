@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.77 2026/03/14 14:45:40 sthen Exp $
+.\" $OpenBSD: pledge.2,v 1.78 2026/03/19 06:40:19 dgl Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 14 2026 $
+.Dd $Mdocdate: March 19 2026 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -79,9 +79,6 @@ specifies to not change the current value.
 .Pp
 Some system calls, when allowed, have restrictions applied to them:
 .Bl -ohang -offset indent
-.It Xr access 2 :
-May check for existence of
-.Pa /etc/localtime .
 .It Xr adjtime 2 :
 Read-only, for
 .Xr ntpd 8 .
@@ -129,11 +126,6 @@ and
 .Xc
 .Dv PROT_EXEC
 isn't allowed.
-.It Xr open 2 :
-May open
-.Pa /etc/localtime
-and any files below
-.Pa /usr/share/zoneinfo .
 .It Xr profil 2 :
 Can only disable profiling.
 .It Fn pledge :
