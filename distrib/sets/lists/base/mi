@@ -758,7 +758,7 @@
 ./usr/lib/crtendS.o
 ./usr/lib/gcrt0.o
 ./usr/lib/libagentx.so.1.1
-./usr/lib/libc.so.102.2
+./usr/lib/libc.so.103.0
 ./usr/lib/libcbor.so.2.0
 ./usr/lib/libcrypto.so.57.2
 ./usr/lib/libcurses.so.16.0
@@ -795,7 +795,7 @@
 ./usr/lib/libtls.so.33.2
 ./usr/lib/libusbhid.so.7.1
 ./usr/lib/libutil.so.21.0
-./usr/lib/libz.so.7.1
+./usr/lib/libz.so.7.2
 ./usr/lib/locate
 ./usr/lib/locate/src.db
 ./usr/lib/pkgconfig
