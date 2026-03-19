@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.64 2025/08/04 11:39:50 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.65 2026/03/19 16:50:32 chris Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -454,9 +454,16 @@ enum {
 	IEEE80211_ELEMID_QUIET_CHNL		= 198,	/* 11ac */
 	IEEE80211_ELEMID_OPMODE_NOTIF		= 199,	/* 11ac */
 	/* 200-220 reserved */
-	IEEE80211_ELEMID_VENDOR			= 221	/* vendor private */
-	/* 222-255 reserved */
+	IEEE80211_ELEMID_VENDOR			= 221,	/* vendor private */
+	/* 222-254 reserved */
+	IEEE80211_ELEMID_EXTENSION		= 255	/* Extension */
 };
+/*
+ * Extension element IDs
+ * Used with IEEE80211_ELEMID_EXTENSION (255)
+ */
+#define IEEE80211_ELEMID_EXT_HECAPS		35	/* 11ax HE Capabilities */
+#define IEEE80211_ELEMID_EXT_HEOP		36	/* 11ax HE Operation */
 
 /*
  * Action field category values (see 802.11-2012 8.4.1.11 Table 8-38).
@@ -518,6 +525,7 @@ enum {
 
 #define	IEEE80211_HT_NUM_MCS			77
 #define	IEEE80211_VHT_NUM_MCS			10
+#define	IEEE80211_HE_NUM_MCS			12
 
 /*
  * BlockAck/BlockAckReq Control field (see 802.11-2012 8.3.1.9 Figure 8-25).
@@ -800,6 +808,66 @@ enum {
 #define IEEE80211_VHTOP0_CHAN_WIDTH_8080	3
 /* Byte 1 contains channel center frequency index 0 for 80, 80+80, 160 MHz. */
 /* Byte 2 contains channel center frequency index 1 for 80+80 MHz only. */
+
+
+/*
+ * 802.11ax (HE) definitions.
+ */
+
+/* HE Capabilities element fixed fields */
+#define IEEE80211_HE_MAC_CAPS_LEN		6
+#define IEEE80211_HE_PHY_CAPS_LEN		11
+#define IEEE80211_HE_CAPS_FIXED_LEN		(IEEE80211_HE_MAC_CAPS_LEN + \
+						    IEEE80211_HE_PHY_CAPS_LEN)
+
+/* HE Tx/Rx MCS NSS Support field size for 80 MHz */
+#define IEEE80211_HE_MCS_NSS_80_LEN		4
+
+/* Minimum length of the HE Capabilities element body (includes Ext ID) */
+#define IEEE80211_HE_CAPS_MINLEN		(1 + IEEE80211_HE_CAPS_FIXED_LEN + \
+						    IEEE80211_HE_MCS_NSS_80_LEN)
+
+/*
+ * Selected HE PHY capability bits (phy_cap_info[0])
+ * These are used to determine the presence of additional MCS/NSS maps.
+ */
+#define IEEE80211_HE_PHYCAP0_CHAN_WIDTH_40_IN_2G		0x02
+#define IEEE80211_HE_PHYCAP0_CHAN_WIDTH_40_80_IN_5G		0x04
+#define IEEE80211_HE_PHYCAP0_CHAN_WIDTH_160_IN_5G		0x08
+#define IEEE80211_HE_PHYCAP0_CHAN_WIDTH_8080_IN_5G		0x10
+
+/*
+ * Size of the HE Tx/Rx MCS NSS Support field, in bytes, for a given
+ * HE PHY capabilities byte 0.
+ */
+#define IEEE80211_HE_MCS_NSS_SIZE(_phycap0)	(IEEE80211_HE_MCS_NSS_80_LEN + \
+	((((_phycap0) & IEEE80211_HE_PHYCAP0_CHAN_WIDTH_160_IN_5G) ? 4 : 0)) + \
+	((((_phycap0) & IEEE80211_HE_PHYCAP0_CHAN_WIDTH_8080_IN_5G) ? 4 : 0)))
+
+/*
+ * HE MCS and NSS map (HE-MCS/NSS set)
+ *
+ * Set of HE MCS supported for a given number of spatial streams, `n'.
+ * Used by the HE capabilities IE and by the basic HE MCS set in
+ * the HE operation IE.
+ */
+#define IEEE80211_HE_MCS_FOR_SS_MASK(n)	(0x3 << (2 * ((n) - 1)))
+#define IEEE80211_HE_MCS_FOR_SS_SHIFT(n)	(2 * ((n) - 1))
+#define IEEE80211_HE_MCS_0_7			0
+#define IEEE80211_HE_MCS_0_9			1
+#define IEEE80211_HE_MCS_0_11			2
+#define IEEE80211_HE_MCS_SS_NOT_SUPP		3
+
+/* The highest number of spatial streams supported by HE */
+#define IEEE80211_HE_NUM_SS			8
+
+/*
+ * HE Operation element fixed fields (not including the Ext ID byte)
+ */
+#define IEEE80211_HEOP_PARAMS_LEN		4
+#define IEEE80211_HEOP_BASIC_MCS_LEN		2
+#define IEEE80211_HEOP_FIXED_LEN		(IEEE80211_HEOP_PARAMS_LEN + \
+					IEEE80211_HEOP_BASIC_MCS_LEN)
 
 /*
  * EDCA Access Categories.

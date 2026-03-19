@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.111 2025/12/01 16:05:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.112 2026/03/19 16:50:32 chris Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@ const char * const ieee80211_phymode_name[] = {
 	"11g",		/* IEEE80211_MODE_11G */
 	"11n",		/* IEEE80211_MODE_11N */
 	"11ac",		/* IEEE80211_MODE_11AC */
+	"11ax",		/* IEEE80211_MODE_11AX */
 };
 
 void ieee80211_set_beacon_miss_threshold(struct ieee80211com *);
@@ -581,7 +582,7 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 	}
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
-		/* We must support the AP's basic MCS set. */
+		/* We must support the AP's basic MCS set */
 		for (i = 0; i < IEEE80211_HT_NUM_MCS; i++) {
 			if (isset(ni->ni_basic_mcs, i) &&
 			    !isset(ic->ic_sup_mcs, i)) {
@@ -632,6 +633,11 @@ ieee80211_vht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if ((ic->ic_flags & IEEE80211_F_VHTON) == 0)
 		return;
 
+	/* VHT (802.11ac) applies to 5 GHz channels only. */
+	if (ni->ni_chan == NULL || !IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ||
+	    !IEEE80211_IS_CHAN_AC(ni->ni_chan))
+		return;
+
 	/*
 	 * Check if the peer supports VHT.
 	 * MCS 0-7 for a single spatial stream are mandatory.
@@ -666,6 +672,62 @@ ieee80211_vht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if ((ni->ni_vhtcaps & IEEE80211_VHTCAP_SGI160) &&
 	    (ic->ic_vhtcaps & IEEE80211_VHTCAP_SGI160))
 		ni->ni_flags |= IEEE80211_NODE_VHT_SGI160;
+}
+
+
+void
+ieee80211_he_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	int n;
+
+	ni->ni_flags &= ~IEEE80211_NODE_HE;
+
+	/* Check if we support HE. */
+	if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11AX)) == 0)
+		return;
+
+	/* Check if HE support has been explicitly disabled. */
+	if ((ic->ic_flags & IEEE80211_F_HEON) == 0)
+		return;
+
+	/* Check that the channel supports HE. */
+	if (ni->ni_chan == NULL || !IEEE80211_CHAN_HE(ni->ni_chan))
+		return;
+
+	/* HE builds upon HT; require HT to be enabled and negotiated. */
+	if ((ic->ic_flags & IEEE80211_F_HTON) == 0)
+		return;
+	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0)
+		return;
+
+	/* Check that we support HE MCS for a single spatial stream. */
+	if (((ic->ic_he_rxmcs_80 & IEEE80211_HE_MCS_FOR_SS_MASK(1)) >>
+	    IEEE80211_HE_MCS_FOR_SS_SHIFT(1)) == IEEE80211_HE_MCS_SS_NOT_SUPP)
+		return;
+
+	/*
+	 * Check if the peer supports HE.
+	 * MCS 0-7 for a single spatial stream are mandatory.
+	 */
+	if (!ieee80211_node_supports_he(ni))
+		return;
+
+	if (ic->ic_opmode == IEEE80211_M_STA) {
+		/* We must support the AP's basic MCS set. */
+		for (n = 1; n <= IEEE80211_HE_NUM_SS; n++) {
+			uint16_t basic_mcs = (ni->ni_he_basic_mcs &
+			    IEEE80211_HE_MCS_FOR_SS_MASK(n)) >>
+			    IEEE80211_HE_MCS_FOR_SS_SHIFT(n);
+			uint16_t rx_mcs = (ic->ic_he_rxmcs_80 &
+			    IEEE80211_HE_MCS_FOR_SS_MASK(n)) >>
+			    IEEE80211_HE_MCS_FOR_SS_SHIFT(n);
+			if (basic_mcs != IEEE80211_HE_MCS_SS_NOT_SUPP &&
+			    basic_mcs > rx_mcs)
+				return;
+		}
+	}
+
+	ni->ni_flags |= IEEE80211_NODE_HE;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.113 2026/01/05 12:04:45 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.114 2026/03/19 16:50:32 chris Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -92,8 +92,9 @@ enum ieee80211_phymode {
 	IEEE80211_MODE_11G	= 3,	/* 2GHz, OFDM */
 	IEEE80211_MODE_11N	= 4,	/* 2GHz/5GHz, OFDM/HT */
 	IEEE80211_MODE_11AC	= 5,	/* 5GHz, OFDM/VHT */
+	IEEE80211_MODE_11AX	= 6,	/* 2GHz/5GHz, OFDM/HE */
 };
-#define	IEEE80211_MODE_MAX	(IEEE80211_MODE_11AC+1)
+#define	IEEE80211_MODE_MAX	(IEEE80211_MODE_11AX+1)
 
 enum ieee80211_opmode {
 	IEEE80211_M_STA		= 1,	/* infrastructure station */
@@ -142,6 +143,7 @@ struct ieee80211_channel {
  */
 #define IEEE80211_CHANX_80MHZ	0x00000001 /* use of 80 MHz is allowed */
 #define IEEE80211_CHANX_160MHZ	0x00000002 /* use of 160 MHz is allowed */
+#define IEEE80211_CHANX_HE	0x00000004 /* 11ax/HE channel */
 
 /*
  * Useful combinations of channel characteristics.
@@ -185,6 +187,8 @@ struct ieee80211_channel {
 	(((_c)->ic_xflags & IEEE80211_CHANX_80MHZ) != 0)
 #define	IEEE80211_CHAN_160MHZ_ALLOWED(_c) \
 	(((_c)->ic_xflags & IEEE80211_CHANX_160MHZ) != 0)
+#define	IEEE80211_CHAN_HE(_c) \
+	(((_c)->ic_xflags & IEEE80211_CHANX_HE) != 0)
 
 /*
  * EDCA AC parameters.
@@ -385,6 +389,15 @@ struct ieee80211com {
 	uint16_t		ic_vht_txmcs;
 	uint16_t		ic_vht_tx_max_lgi_mbit_s;
 
+	u_int8_t		ic_he_mac_cap[IEEE80211_HE_MAC_CAPS_LEN];
+	u_int8_t		ic_he_phy_cap[IEEE80211_HE_PHY_CAPS_LEN];
+	uint16_t		ic_he_rxmcs_80;
+	uint16_t		ic_he_txmcs_80;
+	uint16_t		ic_he_rxmcs_160;
+	uint16_t		ic_he_txmcs_160;
+	uint16_t		ic_he_rxmcs_80p80;
+	uint16_t		ic_he_txmcs_80p80;
+
 	TAILQ_HEAD(, ieee80211_ess)	 ic_ess;
 };
 #define	ic_if		ic_ac.ac_if
@@ -442,6 +455,7 @@ struct ieee80211_ess {
 #define	IEEE80211_F_BGSCAN	0x08000000	/* STATUS: background scan */
 #define IEEE80211_F_AUTO_JOIN	0x10000000	/* CONF: auto-join active */
 #define	IEEE80211_F_VHTON	0x20000000	/* CONF: VHT enabled */
+#define	IEEE80211_F_HEON	0x40000000	/* CONF: HE enabled */
 
 /* ic_xflags */
 #define	IEEE80211_F_TX_MGMT_ONLY 0x00000001	/* leave data frames on ifq */

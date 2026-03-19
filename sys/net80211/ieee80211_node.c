@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.210 2026/03/03 14:05:20 claudio Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.211 2026/03/19 16:50:32 chris Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -91,6 +91,7 @@ void ieee80211_node_join_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_join_11g(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_ht(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_vht(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_node_leave_he(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_11g(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_pwrsave(struct ieee80211com *,
@@ -938,7 +939,10 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		printf("%s: creating ibss\n", ifp->if_xname);
 	ic->ic_flags |= IEEE80211_F_SIBSS;
 	ni->ni_chan = chan;
-	if ((ic->ic_flags & IEEE80211_F_VHTON) && IEEE80211_IS_CHAN_5GHZ(chan))
+	if ((ic->ic_flags & IEEE80211_F_HEON) && IEEE80211_CHAN_HE(chan))
+		mode = IEEE80211_MODE_11AX;
+	else if ((ic->ic_flags & IEEE80211_F_VHTON) &&
+	    IEEE80211_IS_CHAN_5GHZ(chan) && IEEE80211_IS_CHAN_AC(chan))
 		mode = IEEE80211_MODE_11AC;
 	else if (ic->ic_flags & IEEE80211_F_HTON)
 		mode = IEEE80211_MODE_11N;
@@ -967,7 +971,12 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 	}
 	ieee80211_setmode(ic, mode);
 	/* Pick an appropriate mode for supported legacy rates. */
-	if (ic->ic_curmode == IEEE80211_MODE_11AC) {
+	if (ic->ic_curmode == IEEE80211_MODE_11AX) {
+		if (IEEE80211_IS_CHAN_5GHZ(chan))
+			mode = IEEE80211_MODE_11A;
+		else
+			mode = IEEE80211_MODE_11G;
+	} else if (ic->ic_curmode == IEEE80211_MODE_11AC) {
 		mode = IEEE80211_MODE_11A;
 	} else if (ic->ic_curmode == IEEE80211_MODE_11N) {
 		if (IEEE80211_IS_CHAN_5GHZ(chan))
@@ -2628,6 +2637,81 @@ ieee80211_setup_vhtop(struct ieee80211_node *ni, const uint8_t *data,
 	return 1;
 }
 
+/*
+ * Install received HE caps information in the node's state block.
+ */
+void
+ieee80211_setup_hecaps(struct ieee80211_node *ni, const uint8_t *data,
+    uint8_t len)
+{
+	uint8_t phycap0;
+	const uint8_t *mcs;
+	int mcslen;
+
+	if (len < IEEE80211_HE_CAPS_FIXED_LEN + IEEE80211_HE_MCS_NSS_80_LEN)
+		return;
+
+	/*
+	 * HE Tx/Rx MCS NSS support fields are variable-length and depend
+	 * on the channel width bits in the HE PHY capabilities.
+	 */
+	phycap0 = data[IEEE80211_HE_MAC_CAPS_LEN];
+	mcslen = IEEE80211_HE_MCS_NSS_SIZE(phycap0);
+	if (len < IEEE80211_HE_CAPS_FIXED_LEN + mcslen)
+		return;
+
+	memcpy(ni->ni_he_mac_cap, data, IEEE80211_HE_MAC_CAPS_LEN);
+	memcpy(ni->ni_he_phy_cap, data + IEEE80211_HE_MAC_CAPS_LEN,
+	    IEEE80211_HE_PHY_CAPS_LEN);
+
+	mcs = data + IEEE80211_HE_CAPS_FIXED_LEN;
+	ni->ni_he_rxmcs_80 = (mcs[0] | (mcs[1] << 8));
+	ni->ni_he_txmcs_80 = (mcs[2] | (mcs[3] << 8));
+	mcs += 4;
+
+	if (phycap0 & IEEE80211_HE_PHYCAP0_CHAN_WIDTH_160_IN_5G) {
+		ni->ni_he_rxmcs_160 = (mcs[0] | (mcs[1] << 8));
+		ni->ni_he_txmcs_160 = (mcs[2] | (mcs[3] << 8));
+		mcs += 4;
+	} else {
+		ni->ni_he_rxmcs_160 = 0;
+		ni->ni_he_txmcs_160 = 0;
+	}
+
+	if (phycap0 &
+	    IEEE80211_HE_PHYCAP0_CHAN_WIDTH_8080_IN_5G) {
+		ni->ni_he_rxmcs_80p80 = (mcs[0] | (mcs[1] << 8));
+		ni->ni_he_txmcs_80p80 = (mcs[2] | (mcs[3] << 8));
+	} else {
+		ni->ni_he_rxmcs_80p80 = 0;
+		ni->ni_he_txmcs_80p80 = 0;
+	}
+
+	ni->ni_flags |= IEEE80211_NODE_HECAP;
+}
+
+/*
+ * Install received HE operation information in the node's state block.
+ */
+int
+ieee80211_setup_heop(struct ieee80211_node *ni, const uint8_t *data,
+    uint8_t len, int isprobe)
+{
+	if (len < IEEE80211_HEOP_FIXED_LEN)
+		return 0;
+
+	memcpy(ni->ni_he_oper_params, data, IEEE80211_HEOP_PARAMS_LEN);
+
+	/*
+	 * The Basic HE-MCS and NSS set is only expected in Beacons and
+	 * Probe Responses. In other frames the field may be reserved.
+	 */
+	if (isprobe)
+		ni->ni_he_basic_mcs = (data[4] | (data[5] << 8));
+
+	return 1;
+}
+
 #ifndef IEEE80211_STA_ONLY
 /* 
  * Handle nodes switching from 11ac into legacy modes.
@@ -2643,6 +2727,30 @@ ieee80211_clear_vhtcaps(struct ieee80211_node *ni)
 
 	ni->ni_flags &= ~(IEEE80211_NODE_VHT | IEEE80211_NODE_VHT_SGI80 |
 	    IEEE80211_NODE_VHT_SGI160 | IEEE80211_NODE_VHTCAP);
+
+}
+#endif
+
+#ifndef IEEE80211_STA_ONLY
+/* 
+ * Handle nodes switching from 11ax into legacy modes.
+ */
+void
+ieee80211_clear_hecaps(struct ieee80211_node *ni)
+{
+	memset(ni->ni_he_mac_cap, 0, sizeof(ni->ni_he_mac_cap));
+	memset(ni->ni_he_phy_cap, 0, sizeof(ni->ni_he_phy_cap));
+	ni->ni_he_rxmcs_80 = 0;
+	ni->ni_he_txmcs_80 = 0;
+	ni->ni_he_rxmcs_160 = 0;
+	ni->ni_he_txmcs_160 = 0;
+	ni->ni_he_rxmcs_80p80 = 0;
+	ni->ni_he_txmcs_80p80 = 0;
+	memset(ni->ni_he_oper_params, 0, sizeof(ni->ni_he_oper_params));
+	ni->ni_he_basic_mcs = 0;
+	ni->ni_he_ss = 0;
+
+	ni->ni_flags &= ~(IEEE80211_NODE_HE | IEEE80211_NODE_HECAP);
 
 }
 #endif
@@ -3012,7 +3120,8 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ni->ni_associd = aid | 0xc000;
 		IEEE80211_AID_SET(ni->ni_associd, ic->ic_aid_bitmap);
 		if (ic->ic_curmode == IEEE80211_MODE_11G ||
-		    (ic->ic_curmode == IEEE80211_MODE_11N &&
+		    ((ic->ic_curmode == IEEE80211_MODE_11N ||
+		      ic->ic_curmode == IEEE80211_MODE_11AX) &&
 		    IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan)))
 			ieee80211_node_join_11g(ic, ni);
 	}
@@ -3081,6 +3190,15 @@ void
 ieee80211_node_leave_vht(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	ieee80211_clear_vhtcaps(ni);
+}
+
+/*
+ * Handle an HE STA leaving an HE network.
+ */
+void
+ieee80211_node_leave_he(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	ieee80211_clear_hecaps(ni);
 }
 
 /*
@@ -3219,7 +3337,8 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ieee80211_node_leave_rsn(ic, ni);
 
 	if (ic->ic_curmode == IEEE80211_MODE_11G ||
-	    (ic->ic_curmode == IEEE80211_MODE_11N &&
+	    ((ic->ic_curmode == IEEE80211_MODE_11N ||
+	      ic->ic_curmode == IEEE80211_MODE_11AX) &&
 	    IEEE80211_IS_CHAN_2GHZ(ic->ic_bss->ni_chan)))
 		ieee80211_node_leave_11g(ic, ni);
 
@@ -3227,6 +3346,8 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ieee80211_node_leave_ht(ic, ni);
 	if (ni->ni_flags & IEEE80211_NODE_VHT)
 		ieee80211_node_leave_vht(ic, ni);
+	if (ni->ni_flags & IEEE80211_NODE_HE)
+		ieee80211_node_leave_he(ic, ni);
 
 	if (ic->ic_node_leave != NULL)
 		(*ic->ic_node_leave)(ic, ni);
