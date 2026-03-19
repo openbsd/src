@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.690 2026/03/17 09:29:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.691 2026/03/19 12:44:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -903,7 +903,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 	static struct flowspec	*curflow;
 	struct imsg		 imsg;
 	struct ibuf		 ibuf;
-	struct bgpd_config	 tconf;
 	struct filterstate	 state;
 	struct kroute_nexthop	 knext;
 	struct mrt		 xmrt;
@@ -1090,14 +1089,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			curflow = NULL;
 			break;
 		case IMSG_RECONF_CONF:
-			if (imsg_get_data(&imsg, &tconf, sizeof(tconf)) == -1)
-				fatalx("IMSG_RECONF_CONF bad len");
+			nconf = new_config();
+			if (imsg_recv_config(&imsg, nconf) == -1)
+				fatal("imsg_recv_config");
+
 			out_rules_tmp = calloc(1, sizeof(struct filter_head));
 			if (out_rules_tmp == NULL)
 				fatal(NULL);
 			TAILQ_INIT(out_rules_tmp);
-			nconf = new_config();
-			copy_config(nconf, &tconf);
 
 			for (rid = 0; rid < rib_size; rid++) {
 				if ((rib = rib_byid(rid)) == NULL)

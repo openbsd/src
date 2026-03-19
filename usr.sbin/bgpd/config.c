@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.116 2025/03/26 15:28:13 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.117 2026/03/19 12:44:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -74,7 +74,7 @@ new_config(void)
 }
 
 void
-copy_config(struct bgpd_config *to, struct bgpd_config *from)
+copy_config(struct bgpd_config *to, const struct bgpd_config *from)
 {
 	to->flags = from->flags;
 	to->log = from->log;
@@ -455,6 +455,27 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 
 	/* conf is merged so free it */
 	free_config(conf);
+}
+
+int
+imsg_send_config(struct imsgbuf *imsgbuf, const struct bgpd_config *conf)
+{
+	struct bgpd_config msg = { 0 };
+
+	copy_config(&msg, conf);
+	return imsg_compose(imsgbuf, IMSG_RECONF_CONF, 0, 0, -1, &msg,
+	    sizeof(msg));
+}
+
+int
+imsg_recv_config(struct imsg *imsg, struct bgpd_config *conf)
+{
+	struct bgpd_config msg;
+
+	if (imsg_get_data(imsg, &msg, sizeof(msg)) == -1)
+		return -1;
+	copy_config(conf, &msg);
+	return 0;
 }
 
 void

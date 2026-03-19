@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.528 2025/11/13 12:29:10 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.529 2026/03/19 12:44:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1189,7 +1189,6 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 	struct peer		*p;
 	struct listen_addr	*la, nla;
 	struct session_dependon	 sdon;
-	struct bgpd_config	 tconf;
 	uint32_t		 peerid;
 	int			 n, fd, depend_ok, restricted;
 	uint16_t		 t;
@@ -1239,11 +1238,11 @@ session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
-			if (imsg_get_data(&imsg, &tconf, sizeof(tconf)) == -1)
-				fatal("imsg_get_data");
 
 			nconf = new_config();
-			copy_config(nconf, &tconf);
+			if (imsg_recv_config(&imsg, nconf) == -1)
+				fatal("imsg_recv_config");
+
 			pending_reconf = 1;
 			break;
 		case IMSG_RECONF_PEER:

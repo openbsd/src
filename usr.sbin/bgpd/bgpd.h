@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.537 2026/03/17 09:29:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.538 2026/03/19 12:44:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1507,7 +1507,9 @@ int	control_imsg_relay(struct imsg *, struct peer *);
 
 /* config.c */
 struct bgpd_config	*new_config(void);
-void		copy_config(struct bgpd_config *, struct bgpd_config *);
+void		copy_config(struct bgpd_config *, const struct bgpd_config *);
+int		imsg_send_config(struct imsgbuf *, const struct bgpd_config *);
+int		imsg_recv_config(struct imsg *, struct bgpd_config *);
 void		network_free(struct network *);
 struct flowspec_config	*flowspec_alloc(uint8_t, int);
 void		flowspec_free(struct flowspec_config *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.32 2025/10/29 15:27:07 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.33 2026/03/19 12:44:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -365,11 +365,9 @@ rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 			rtr_open(rs, fd);
 			break;
 		case IMSG_RECONF_CONF:
-			if (imsg_get_data(&imsg, &tconf, sizeof(tconf)) == -1)
-				fatal("imsg_get_data");
-
 			nconf = new_config();
-			copy_config(nconf, &tconf);
+			if (imsg_recv_config(&imsg, nconf) == -1)
+				fatal("imsg_recv_config");
 			rtr_config_prep();
 			break;
 		case IMSG_RECONF_ROA_ITEM:

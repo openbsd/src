@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.287 2026/02/04 11:41:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.288 2026/03/19 12:44:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -612,14 +612,9 @@ send_config(struct bgpd_config *conf)
 	cflags = conf->flags;
 
 	/* start reconfiguration */
-	if (imsg_compose(ibuf_se, IMSG_RECONF_CONF, 0, 0, -1,
-	    conf, sizeof(*conf)) == -1)
-		return (-1);
-	if (imsg_compose(ibuf_rde, IMSG_RECONF_CONF, 0, 0, -1,
-	    conf, sizeof(*conf)) == -1)
-		return (-1);
-	if (imsg_compose(ibuf_rtr, IMSG_RECONF_CONF, 0, 0, -1,
-	    conf, sizeof(*conf)) == -1)
+	if (imsg_send_config(ibuf_se, conf) == -1 ||
+	    imsg_send_config(ibuf_rde, conf) == -1 ||
+	    imsg_send_config(ibuf_rtr, conf) == -1)
 		return (-1);
 
 	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
