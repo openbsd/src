@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd_imsg.c,v 1.3 2026/03/17 15:15:16 claudio Exp $	*/
+/*	$OpenBSD: bgpd_imsg.c,v 1.4 2026/03/19 15:36:44 claudio Exp $	*/
 /*
  * Copyright (c) 2026 Claudio Jeker <claudio@openbsd.org>
  *
@@ -59,7 +59,8 @@ imsg_send_filterset(struct imsgbuf *imsgbuf, struct filter_set_head *set)
 		case ACTION_SET_RELATIVE_LOCALPREF:
 		case ACTION_SET_RELATIVE_MED:
 		case ACTION_SET_RELATIVE_WEIGHT:
-			if (ibuf_add_n32(msg, s->action.relative) == -1)
+			if (ibuf_add(msg, &s->action.relative,
+			    sizeof(s->action.relative)) == -1)
 				goto fail;
 			break;
 		case ACTION_SET_NEXTHOP:
@@ -112,7 +113,7 @@ ibuf_recv_filterset_count(struct ibuf *ibuf, uint16_t *count)
 int
 ibuf_recv_one_filterset(struct ibuf *ibuf, struct filter_set *set)
 {
-	uint32_t type, num;
+	uint32_t type;
 
 	memset(set, 0, sizeof(*set));
 
@@ -137,9 +138,9 @@ ibuf_recv_one_filterset(struct ibuf *ibuf, struct filter_set *set)
 	case ACTION_SET_RELATIVE_LOCALPREF:
 	case ACTION_SET_RELATIVE_MED:
 	case ACTION_SET_RELATIVE_WEIGHT:
-		if (ibuf_get_n32(ibuf, &num) == -1)
+		if (ibuf_get(ibuf, &set->action.relative,
+		    sizeof(set->action.relative)) == -1)
 			return -1;
-		set->action.relative = num;
 		break;
 	case ACTION_SET_NEXTHOP:
 		if (ibuf_get(ibuf, &set->action.nexthop,
