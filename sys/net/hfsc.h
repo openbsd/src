@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.h,v 1.14 2025/07/07 00:55:15 jsg Exp $	*/
+/*	$OpenBSD: hfsc.h,v 1.15 2026/03/19 14:59:05 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -45,9 +45,9 @@ struct hfsc_pktcntr {
 	do { (cntr)->packets++; (cntr)->bytes += len; } while (0)
 
 struct hfsc_sc {
-	u_int	m1;	/* slope of the first segment in bits/sec */
-	u_int	d;	/* the x-projection of the first segment in msec */
-	u_int	m2;	/* slope of the second segment in bits/sec */
+	u_int64_t	m1;	/* slope of the first segment in bits/sec */
+	u_int64_t	m2;	/* slope of the second segment in bits/sec */
+	u_int		d;	/* the x-projection of the first segment in msec */
 };
 
 /* special class handles */

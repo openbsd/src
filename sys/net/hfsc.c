@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.52 2025/11/22 05:07:24 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.53 2026/03/19 14:59:05 sthen Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -229,10 +229,10 @@ struct hfsc_class	*hfsc_actlist_firstfit(struct hfsc_class *,
 
 static __inline u_int64_t	seg_x2y(u_int64_t, u_int64_t);
 static __inline u_int64_t	seg_y2x(u_int64_t, u_int64_t);
-static __inline u_int64_t	m2sm(u_int);
-static __inline u_int64_t	m2ism(u_int);
+static __inline u_int64_t	m2sm(u_int64_t);
+static __inline u_int64_t	m2ism(u_int64_t);
 static __inline u_int64_t	d2dx(u_int);
-static __inline u_int		sm2m(u_int64_t);
+static __inline u_int64_t	sm2m(u_int64_t);
 static __inline u_int		dx2d(u_int64_t);
 
 void		hfsc_sc2isc(struct hfsc_sc *, struct hfsc_internal_sc *);
@@ -1451,16 +1451,16 @@ seg_y2x(u_int64_t y, u_int64_t ism)
 }
 
 static __inline u_int64_t
-m2sm(u_int m)
+m2sm(u_int64_t m)
 {
 	u_int64_t sm;
 
-	sm = ((u_int64_t)m << SM_SHIFT) / 8 / HFSC_FREQ;
+	sm = (m << SM_SHIFT) / 8 / HFSC_FREQ;
 	return (sm);
 }
 
 static __inline u_int64_t
-m2ism(u_int m)
+m2ism(u_int64_t m)
 {
 	u_int64_t ism;
 
@@ -1480,13 +1480,13 @@ d2dx(u_int d)
 	return (dx);
 }
 
-static __inline u_int
+static __inline u_int64_t
 sm2m(u_int64_t sm)
 {
 	u_int64_t m;
 
 	m = (sm * 8 * HFSC_FREQ) >> SM_SHIFT;
-	return ((u_int)m);
+	return (m);
 }
 
 static __inline u_int
