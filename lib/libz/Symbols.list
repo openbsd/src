@@ -4,7 +4,10 @@ adler32_combine64
 adler32_z
 compress
 compress2
+compress2_z
 compressBound
+compressBound_z
+compress_z
 crc32
 crc32_combine
 crc32_combine64
@@ -14,6 +17,7 @@ crc32_combine_op
 crc32_z
 deflate
 deflateBound
+deflateBound_z
 deflateCopy
 deflateEnd
 deflateGetDictionary
@@ -84,6 +88,8 @@ inflateUndermine
 inflateValidate
 uncompress
 uncompress2
+uncompress2_z
+uncompress_z
 zError
 z_errmsg
 zlibCompileFlags

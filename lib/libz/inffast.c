@@ -1,5 +1,5 @@
 /* inffast.c -- fast decoding
- * Copyright (C) 1995-2017 Mark Adler
+ * Copyright (C) 1995-2026 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -155,7 +155,8 @@ void ZLIB_INTERNAL inflate_fast(z_streamp strm, unsigned start) {
                 dist += (unsigned)hold & ((1U << op) - 1);
 #ifdef INFLATE_STRICT
                 if (dist > dmax) {
-                    strm->msg = (z_const char *)"invalid distance too far back";
+                    strm->msg = (z_const char *)
+                        "invalid distance too far back";
                     state->mode = BAD;
                     break;
                 }
@@ -171,8 +172,8 @@ void ZLIB_INTERNAL inflate_fast(z_streamp strm, unsigned start) {
 #ifdef SMALL
                             strm->msg = (z_const char *)"error";
 #else
-                            strm->msg =
-                                (z_const char *)"invalid distance too far back";
+                            strm->msg = (z_const char *)
+                                "invalid distance too far back";
 #endif
                             state->mode = BAD;
                             break;

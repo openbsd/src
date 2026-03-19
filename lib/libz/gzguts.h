@@ -1,5 +1,5 @@
 /* gzguts.h -- zlib internal header definitions for gz* operations
- * Copyright (C) 2004-2024 Mark Adler
+ * Copyright (C) 2004-2026 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -183,7 +183,9 @@ typedef struct {
     unsigned char *out;     /* output buffer (double-sized when reading) */
     int direct;             /* 0 if processing gzip, 1 if transparent */
         /* just for reading */
+    int junk;               /* -1 = start, 1 = junk candidate, 0 = in gzip */
     int how;                /* 0: get header, 1: copy, 2: decompress */
+    int again;              /* true if EAGAIN or EWOULDBLOCK on last i/o */
     z_off64_t start;        /* where the gzip data started, for rewinding */
     int eof;                /* true if end of input file reached */
     int past;               /* true if read requested past end */
@@ -193,7 +195,6 @@ typedef struct {
     int reset;              /* true if a reset is pending after a Z_FINISH */
         /* seek request */
     z_off64_t skip;         /* amount to skip (already rewound if backwards) */
-    int seek;               /* true if seek request pending */
         /* error information */
     int err;                /* error code */
     char *msg;              /* error message */
