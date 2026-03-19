@@ -3239,7 +3239,7 @@
 ./usr/share/relink/usr/bin/ssh-agent
 ./usr/share/relink/usr/bin/ssh-agent/ssh-agent.tar
 ./usr/share/relink/usr/lib
-./usr/share/relink/usr/lib/libc.so.102.2.a
+./usr/share/relink/usr/lib/libc.so.103.0.a
 ./usr/share/relink/usr/lib/libcrypto.so.57.2.a
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a
