@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.49 2026/03/11 10:12:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.50 2026/03/20 08:38:21 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -479,13 +479,12 @@ struct iwx_device_cfg {
 #define IWX_SO_A_GF4_A_PNVM	"iwx-so-a0-gf4-a0.pnvm"
 #define IWX_SO_A_HR_B_FW	"iwx-so-a0-hr-b0-77"
 #define IWX_SO_A_JF_B_FW	"iwx-so-a0-jf-b0-77"
-#define IWX_MA_B_HR_B_FW	"iwx-ma-a0-hr-b0-83"
-#define IWX_MA_B_HR_B_PNVM	"iwx-ma-a0-hr-b0.pnvm"
-#define IWX_MA_B_GF_A_FW	"iwx-ma-b0-gf-a0-83"
+#define IWX_MA_B_HR_B_FW	"iwx-ma-b0-hr-b0-89"
+#define IWX_MA_B_GF_A_FW	"iwx-ma-b0-gf-a0-89"
 #define IWX_MA_B_GF_A_PNVM	"iwx-ma-b0-gf-a0.pnvm"
-#define IWX_MA_B_GF4_A_FW	"iwx-ma-b0-gf4-a0-83"
+#define IWX_MA_B_GF4_A_FW	"iwx-ma-b0-gf4-a0-89"
 #define IWX_MA_B_GF4_A_PNVM	"iwx-ma-b0-gf4-a0.pnvm"
-#define IWX_MA_A_FM_A_FW	"iwx-ma-a0-fm-a0-83"
+#define IWX_MA_A_FM_A_FW	"iwx-ma-a0-fm-a0-89"
 #define IWX_MA_A_FM_A_PNVM	"iwx-ma-a0-fm-a0.pnvm"
 #define IWX_BZ_B_GF_A_FW	"iwx-bz-b0-gf-a0-100"
 #define IWX_BZ_B_GF_A_PNVM	"iwx-bz-b0-gf-a0.pnvm"
@@ -579,7 +578,6 @@ const struct iwx_device_cfg iwx_2ax_cfg_so_jf_b0 = {
 
 const struct iwx_device_cfg iwx_cfg_ma_b0_hr_b0 = {
 	.fw_name = IWX_MA_B_HR_B_FW,
-	.pnvm_name = IWX_MA_B_HR_B_PNVM,
 };
 
 const struct iwx_device_cfg iwx_cfg_ma_b0_gf_a0 = {
