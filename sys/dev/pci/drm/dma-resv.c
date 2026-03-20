@@ -186,6 +186,13 @@ int dma_resv_reserve_fences(struct dma_resv *obj, unsigned int num_fences)
 
 	dma_resv_assert_held(obj);
 
+	/* Driver and component code should never call this function with
+	 * num_fences=0. If they do it usually points to bugs when calculating
+	 * the number of needed fences dynamically.
+	 */
+	if (WARN_ON(!num_fences))
+		return -EINVAL;
+
 	old = dma_resv_fences_list(obj);
 	if (old && old->max_fences) {
 		if ((old->num_fences + num_fences) <= old->max_fences)
@@ -406,7 +413,7 @@ static void dma_resv_iter_walk_unlocked(struct dma_resv_iter *cursor)
  *
  * Beware that the iterator can be restarted.  Code which accumulates statistics
  * or similar needs to check for this with dma_resv_iter_is_restarted(). For
- * this reason prefer the locked dma_resv_iter_first() whenver possible.
+ * this reason prefer the locked dma_resv_iter_first() whenever possible.
  *
  * Returns the first fence from an unlocked dma_resv obj.
  */
@@ -429,7 +436,7 @@ EXPORT_SYMBOL(dma_resv_iter_first_unlocked);
  *
  * Beware that the iterator can be restarted.  Code which accumulates statistics
  * or similar needs to check for this with dma_resv_iter_is_restarted(). For
- * this reason prefer the locked dma_resv_iter_next() whenver possible.
+ * this reason prefer the locked dma_resv_iter_next() whenever possible.
  *
  * Returns the next fence from an unlocked dma_resv obj.
  */
@@ -678,7 +685,7 @@ EXPORT_SYMBOL_GPL(dma_resv_get_singleton);
  * dma_resv_lock() already
  * RETURNS
  * Returns -ERESTARTSYS if interrupted, 0 if the wait timed out, or
- * greater than zer on success.
+ * greater than zero on success.
  */
 long dma_resv_wait_timeout(struct dma_resv *obj, enum dma_resv_usage usage,
 			   bool intr, unsigned long timeout)
@@ -690,11 +697,13 @@ long dma_resv_wait_timeout(struct dma_resv *obj, enum dma_resv_usage usage,
 	dma_resv_iter_begin(&cursor, obj, usage);
 	dma_resv_for_each_fence_unlocked(&cursor, fence) {
 
-		ret = dma_fence_wait_timeout(fence, intr, ret);
-		if (ret <= 0) {
-			dma_resv_iter_end(&cursor);
-			return ret;
-		}
+		ret = dma_fence_wait_timeout(fence, intr, timeout);
+		if (ret <= 0)
+			break;
+
+		/* Even for zero timeout the return value is 1 */
+		if (timeout)
+			timeout = ret;
 	}
 	dma_resv_iter_end(&cursor);
 
@@ -702,6 +711,28 @@ long dma_resv_wait_timeout(struct dma_resv *obj, enum dma_resv_usage usage,
 }
 EXPORT_SYMBOL_GPL(dma_resv_wait_timeout);
 
+/**
+ * dma_resv_set_deadline - Set a deadline on reservation's objects fences
+ * @obj: the reservation object
+ * @usage: controls which fences to include, see enum dma_resv_usage.
+ * @deadline: the requested deadline (MONOTONIC)
+ *
+ * May be called without holding the dma_resv lock.  Sets @deadline on
+ * all fences filtered by @usage.
+ */
+void dma_resv_set_deadline(struct dma_resv *obj, enum dma_resv_usage usage,
+			   ktime_t deadline)
+{
+	struct dma_resv_iter cursor;
+	struct dma_fence *fence;
+
+	dma_resv_iter_begin(&cursor, obj, usage);
+	dma_resv_for_each_fence_unlocked(&cursor, fence) {
+		dma_fence_set_deadline(fence, deadline);
+	}
+	dma_resv_iter_end(&cursor);
+}
+EXPORT_SYMBOL_GPL(dma_resv_set_deadline);
 
 /**
  * dma_resv_test_signaled - Test if a reservation object's fences have been
