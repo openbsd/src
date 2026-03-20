@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.464 2025/09/16 17:29:35 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.465 2026/03/20 19:44:48 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2458,6 +2458,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 		}
 		if (SEQ_GT(sack.end, tp->snd_max))
 			continue;
+		if (SEQ_LT(sack.start, tp->snd_una))
+			continue;
 		if (tp->snd_holes == NULL) { /* first hole */
 			tp->snd_holes = (struct sackhole *)
 			    pool_get(&sackhl_pool, PR_NOWAIT);
@@ -2564,7 +2566,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			}
 		}
 		/* At this point, p points to the last hole on the list */
-		if (SEQ_LT(tp->rcv_lastsack, sack.start)) {
+		if (p != NULL && SEQ_LT(tp->rcv_lastsack, sack.start)) {
 			/*
 			 * Need to append new hole at end.
 			 * Last hole is p (and it's not NULL).
