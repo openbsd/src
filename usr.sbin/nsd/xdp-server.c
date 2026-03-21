@@ -211,7 +211,7 @@ static uint64_t xsk_umem_free_frames(struct xsk_socket_info *xsk) {
 }
 
 static void xsk_free_umem_frame(struct xsk_socket_info *xsk, uint64_t frame) {
-	assert(xsk->umem_frame_free < XDP_NUM_FRAMES);
+	assert(xsk->umem->umem_frame_free < XDP_NUM_FRAMES);
 	xsk->umem->umem_frame_addr[xsk->umem->umem_frame_free++] = frame;
 }
 
@@ -343,19 +343,21 @@ xsk_configure_umem(struct xsk_umem_info *umem_info, uint64_t size) {
 static int
 xsk_configure_socket(struct xdp_server *xdp, struct xsk_socket_info *xsk_info,
                      struct xsk_umem_info *umem, uint32_t queue_index) {
+	struct xsk_socket_config xsk_cfg;
+	uint32_t idx, reserved;
+	int ret;
+
+	struct xdp_config cfg = {
+		.xdp_flags = 0,
+		.xsk_bind_flags = 0,
+		.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD,
+	};
+
 	uint16_t xsk_bind_flags = XDP_USE_NEED_WAKEUP;
 	if (xdp->force_copy) {
 		xsk_bind_flags |= XDP_COPY;
 	}
-	struct xdp_config cfg = {
-		.xdp_flags = 0,
-		.xsk_bind_flags = xsk_bind_flags,
-		.libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD,
-	};
-
-	struct xsk_socket_config xsk_cfg;
-	uint32_t idx, reserved;
-	int ret;
+	cfg.xsk_bind_flags = xsk_bind_flags;
 
 	xsk_info->umem = umem;
 	xsk_cfg.rx_size = XSK_RING_CONS__NUM_DESCS;
@@ -843,8 +845,8 @@ process_packet(struct xdp_server *xdp, uint8_t *pkt,
 	swap_udp(udp);
 
 	if (ipv4) {
-		swap_ipv4(ipv4);
 		__be16 ipv4_old_len = ipv4->tot_len;
+		swap_ipv4(ipv4);
 		ipv4->tot_len = htons(sizeof(*ipv4)) + udp->len;
 		csum16_replace(&ipv4->check, ipv4_old_len, ipv4->tot_len);
 		udp->check = calc_csum_udp4(udp, ipv4);
@@ -867,6 +869,7 @@ void xdp_handle_recv_and_send(struct xdp_server *xdp) {
 	struct xsk_socket_info *xsk = &xdp->xsks[xdp->queue_index];
 	unsigned int recvd, i, reserved, to_send = 0;
 	uint32_t idx_rx = 0;
+	uint32_t tx_idx = 0;
 	int ret;
 
 	recvd = xsk_ring_cons__peek(&xsk->rx, XDP_RX_BATCH_SIZE, &idx_rx);
@@ -906,8 +909,6 @@ void xdp_handle_recv_and_send(struct xdp_server *xdp) {
 	/* xsk->stats.rx_packets += rcvd; */
 
 	/* Process sending packets */
-
-	uint32_t tx_idx = 0;
 
 	/* TODO: at least send as many packets as slots are available */
 	reserved = xsk_ring_prod__reserve(&xsk->tx, to_send, &tx_idx);

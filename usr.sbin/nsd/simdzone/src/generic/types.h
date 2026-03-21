@@ -1385,8 +1385,8 @@ static int32_t check_ds_rr(
       32, // 2: SHA-256
       32, // 3: GOST R 34.11-94
       48, // 4: SHA-384
-      48, // 5: GOST R 34.10-2012
-      48, // 6: SM3
+      32, // 5: GOST R 34.10-2012
+      32, // 6: SM3
       0   // 7: Unassigned
     };
 
@@ -1435,8 +1435,8 @@ static int32_t parse_ds_rdata(
       32, // 2: SHA-256
       32, // 3: GOST R 34.11-94
       48, // 4: SHA-384
-      48, // 5: GOST R 34.10-2012
-      48, // 6: SM3
+      32, // 5: GOST R 34.10-2012
+      32, // 6: SM3
       0   // 7: Unassigned
     };
 
@@ -2752,29 +2752,33 @@ static int32_t parse_amtrelay_rdata(
   if ((code = parse_int8(parser, type, &fields[2], rdata, token)) < 0)
     return code;
 
-  if (octets[1]) {
-    if ((code = take_contiguous(parser, type, &fields[3], token)) < 0)
-      return code;
-    switch (octets[1]) {
-      case 1: /* IPv4 address */
-        type = (const type_info_t *)amtrelay_ipv4;
-        fields = type->rdata.fields;
-        if ((code = parse_ip4(parser, type, &fields[3], rdata, token)) < 0)
-          return code;
-        break;
-      case 2: /* IPv6 address */
-        type = (const type_info_t *)amtrelay_ipv6;
-        fields = type->rdata.fields;
-        if ((code = parse_ip6(parser, type, &fields[3], rdata, token)) < 0)
-          return code;
-        break;
-      case 3: /* domain name */
-        if ((code = parse_name(parser, type, &fields[3], rdata, token)) < 0)
-          return code;
-        break;
-      default:
-        SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(&fields[3]), NAME(type));
-    }
+  if ((code = take_contiguous(parser, type, &fields[3], token)) < 0)
+    return code;
+  switch (octets[1]) {
+    case 0:
+      /* no gateway requires a '.' as the relay in presentation format
+       * without parsing it into wireformat rdata */
+      if (!(token->length == 1 && *token->data == '.'))
+        SYNTAX_ERROR(parser, "Invalid %s in %s, the no gateway type (type 0) of AMTRELAY requires the relay field to have '.' in it", NAME(&fields[3]), NAME(type));
+      break;
+    case 1: /* IPv4 address */
+      type = (const type_info_t *)amtrelay_ipv4;
+      fields = type->rdata.fields;
+      if ((code = parse_ip4(parser, type, &fields[3], rdata, token)) < 0)
+        return code;
+      break;
+    case 2: /* IPv6 address */
+      type = (const type_info_t *)amtrelay_ipv6;
+      fields = type->rdata.fields;
+      if ((code = parse_ip6(parser, type, &fields[3], rdata, token)) < 0)
+        return code;
+      break;
+    case 3: /* domain name */
+      if ((code = parse_name(parser, type, &fields[3], rdata, token)) < 0)
+        return code;
+      break;
+    default:
+      SYNTAX_ERROR(parser, "Invalid %s in %s", NAME(&fields[3]), NAME(type));
   }
   octets[1] |= D;
   if ((code = take_delimiter(parser, type, token)) < 0)

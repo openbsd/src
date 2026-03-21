@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <event2/event.h>
 #include <event2/http.h>
+#include <ctype.h>
 
 #include "nsd.h"
 #include "xfrd.h"
@@ -95,6 +96,7 @@ void daemon_metrics_close(struct daemon_metrics* metrics)
 
 	if (metrics->http_server) {
 		evhttp_free(metrics->http_server);
+		metrics->http_server = NULL;
 	}
 }
 
@@ -291,6 +293,10 @@ daemon_metrics_attach(struct daemon_metrics* metrics, struct xfrd_state* xfrd)
 	metrics->xfrd = xfrd;
 
 	metrics->http_server = evhttp_new(xfrd->event_base);
+	if(!metrics->http_server) {
+		log_msg(LOG_ERR, "metrics: out of memory in evhttp_new");
+		return;
+	}
 	for(p = metrics->accept_list; p; p = p->next) {
 		fd = p->accept_fd;
 		if (evhttp_accept_socket(metrics->http_server, fd)) {
@@ -343,6 +349,22 @@ metrics_http_callback(struct evhttp_request *req, void *p)
 }
 
 #ifdef BIND8_STATS
+/** Change disallowed characters, '.' ':' to underscores '_'. */
+static void
+change_string_underscores(char* prefix)
+{
+	/* Prometheus does not want '.' in the metric names. But the zone
+	 * statistics could have then in their name.
+	 * Also ':' is not allowed. This routine enforeces that it
+	 * has letters,digits,underscores. */
+	char* s = prefix;
+	while(*s) {
+		if(!isalnum((unsigned char)*s) && *s != '_')
+			*s = '_';
+		s++;
+	}
+}
+
 /** print long number*/
 static int
 print_longnum(struct evbuffer *buf, char* desc, uint64_t x)
@@ -381,6 +403,7 @@ print_stat_block(struct evbuffer *buf, struct nsdst* st,
 	char prefix[512] = {0};
 	if (name) {
 		snprintf(prefix, sizeof(prefix), "nsd_zonestats_%s_", name);
+		change_string_underscores(prefix);
 	} else {
 		snprintf(prefix, sizeof(prefix), "nsd_");
 	}
@@ -504,10 +527,11 @@ metrics_zonestat_print_one(struct evbuffer *buf, char *name,
 {
 	char prefix[512] = {0};
 	snprintf(prefix, sizeof(prefix), "nsd_zonestats_%s_", name);
+	change_string_underscores(prefix);
 
 	print_metric_help_and_type(buf, prefix, "queries_total",
 		"Total number of queries received.", "counter");
-	evbuffer_add_printf(buf, "nsd_zonestats_%s_queries_total %lu\n", name,
+	evbuffer_add_printf(buf, "%squeries_total %lu\n", prefix,
 		(unsigned long)(zst->qudp + zst->qudp6 + zst->ctcp +
 			zst->ctcp6 + zst->ctls + zst->ctls6));
 	print_stat_block(buf, zst, name);
