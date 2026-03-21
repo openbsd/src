@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.29 2018/04/18 16:05:20 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.30 2026/03/21 01:56:51 daniel Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -80,8 +80,10 @@
 #define	SIGXFSZ	25	/* exceeded file size limit */
 #define	SIGVTALRM 26	/* virtual time alarm */
 #define	SIGPROF	27	/* profiling time alarm */
-#if __BSD_VISIBLE
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 202405
 #define SIGWINCH 28	/* window size changes */
+#endif
+#if __BSD_VISIBLE
 #define SIGINFO	29	/* information request */
 #endif
 #define SIGUSR1 30	/* user defined signal 1 */
