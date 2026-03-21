@@ -78,6 +78,8 @@ EOF
     ])
     AC_SEARCH_LIBS([fstrm_iothr_init], [fstrm], [],
       AC_MSG_ERROR([[The fstrm library was not found. It is needed for dnstap, use --disable-dnstap, or install fstrm-devel]]))
+    AC_CHECK_FUNCS([fstrm_tcp_writer_options_init], [],
+      AC_MSG_ERROR([[The fstrm library >= 0.4 was not found. It is needed for dnstap, use --disable-dnstap, or install fstrm-devel]]))
     AC_SEARCH_LIBS([protobuf_c_message_pack], [protobuf-c], [],
       AC_MSG_ERROR([[The protobuf-c library was not found. It is needed for dnstap, use --disable-dnstap, or install protobuf-c]]))
     $2

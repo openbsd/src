@@ -91,6 +91,7 @@ xfrd_read_state_soa(FILE* in, const char* id_acquired,
 	const char* id, xfrd_soa_type* soa, time_t* soatime)
 {
 	char *p;
+	uint16_t rdata_count = 0;
 
 	if(!xfrd_read_check_str(in, id_acquired) ||
 	   !xfrd_read_time_t(in, soatime)) {
@@ -104,7 +105,7 @@ xfrd_read_state_soa(FILE* in, const char* id_acquired,
 	   !xfrd_read_i16(in, &soa->type) ||
 	   !xfrd_read_i16(in, &soa->klass) ||
 	   !xfrd_read_i32(in, &soa->ttl) ||
-	   !xfrd_read_i16(in, &soa->rdata_count))
+	   !xfrd_read_i16(in, &rdata_count))
 	{
 		return 0;
 	}
@@ -112,7 +113,6 @@ xfrd_read_state_soa(FILE* in, const char* id_acquired,
 	soa->type = htons(soa->type);
 	soa->klass = htons(soa->klass);
 	soa->ttl = htonl(soa->ttl);
-	soa->rdata_count = htons(soa->rdata_count);
 
 	if(!(p=xfrd_read_token(in)) ||
 	   !(soa->prim_ns[0] = dname_parse_wire(soa->prim_ns+1, p)))
@@ -428,7 +428,11 @@ xfrd_write_state_soa(FILE* out, const char* id,
 
 	fprintf(out, "\t%s: %u %u %u %u", id,
 		(unsigned)ntohs(soa->type), (unsigned)ntohs(soa->klass),
-		(unsigned)ntohl(soa->ttl), (unsigned)ntohs(soa->rdata_count));
+		(unsigned)ntohl(soa->ttl),
+		/* This is the old rdata_count, and is printed for
+		 * compatibility. Otherwise, if it is not printed, change
+		 * the xfrd state file version number. */
+		(unsigned)7);
 	fprintf(out, " ");
 	xfrd_write_dname(out, soa->prim_ns);
 	fprintf(out, " ");

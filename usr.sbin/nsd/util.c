@@ -273,7 +273,7 @@ clear_bit(uint8_t bits[], size_t index)
 }
 
 int
-get_bit(uint8_t bits[], size_t index)
+get_bit(const uint8_t bits[], size_t index)
 {
 	/*
 	 * The bits are counted from left to right, so bit #0 is the
@@ -910,8 +910,8 @@ print_rr(FILE *out,
 	 region_type* rr_region,
 	 buffer_type* output)
 {
-        rrtype_descriptor_type *descriptor
-                = rrtype_descriptor_by_type(record->type);
+        const nsd_type_descriptor_type *descriptor =
+		nsd_type_descriptor(record->type);
         int result;
         const dname_type *owner = domain_dname(record->owner);
 	buffer_clear(output);
@@ -943,14 +943,18 @@ print_rr(FILE *out,
 		rrclass_to_string(record->klass),
 		rrtype_to_string(record->type));
 
-	result = print_rdata(output, descriptor, record);
+	if(record->type == TYPE_SOA) {
+		buffer_printf(output, "\t");
+		result = print_soa_rdata_twoline(output, record);
+	} else {
+		result = print_rdata(output, descriptor, record);
+	}
 	if (!result) {
 		/*
 		 * Some RDATA failed to print, so print the record's
 		 * RDATA in unknown format.
 		 */
-		result = rdata_atoms_to_unknown_string(output,
-			descriptor, record->rdata_count, record->rdatas);
+		result = print_unknown_rdata(output, descriptor, record);
 	}
 
 	if (result) {

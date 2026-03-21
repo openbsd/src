@@ -93,9 +93,13 @@ detect_nsec3_params(rr_type* nsec3_apex,
 {
 	assert(salt && salt_len && iter);
 	assert(nsec3_apex);
-	*salt_len = rdata_atom_data(nsec3_apex->rdatas[3])[0];
-	*salt = (unsigned char*)(rdata_atom_data(nsec3_apex->rdatas[3])+1);
-	*iter = read_uint16(rdata_atom_data(nsec3_apex->rdatas[2]));
+	if(nsec3_apex->rdlength < 5)
+		return;
+	if(nsec3_apex->rdlength < 5 + (uint16_t)(nsec3_apex->rdata[4]))
+		return;
+	*salt_len = nsec3_apex->rdata[4];
+	*salt = (unsigned char*)(nsec3_apex->rdata + 5);
+	*iter = read_uint16(nsec3_apex->rdata + 2);
 }
 
 const dname_type *
@@ -162,13 +166,25 @@ nsec3_lookup_hash_ds(region_type* region, zone_type* zone,
 static int
 nsec3_has_soa(rr_type* rr)
 {
-	if(rdata_atom_size(rr->rdatas[NSEC3_RDATA_BITMAP]) >= 3 && /* has types in bitmap */
-		rdata_atom_data(rr->rdatas[NSEC3_RDATA_BITMAP])[0] == 0 && /* first window = 0, */
-		/* [1]: bitmap length must be >= 1 */
-		/* [2]: bit[6] = SOA, thus mask first bitmap octet with 0x02 */
-		(rdata_atom_data(rr->rdatas[NSEC3_RDATA_BITMAP])[2]&0x02)) { /* SOA bit set */
+	size_t offset;
+	/* byte + byte + short + string + string + bitmap */
+	if(rr->rdlength < 6)
+		return 0;
+	offset = 4;
+	if(rr->rdlength < offset+1 ||
+		rr->rdlength < offset+1+rr->rdata[offset])
+		return 0;
+	offset += 1 + rr->rdata[offset];
+	if(rr->rdlength < offset+1 ||
+		rr->rdlength < offset+1+rr->rdata[offset])
+		return 0;
+	offset += 1 + rr->rdata[offset];
+	if (rr->rdlength >= offset + 3 && /* has types in bitmap */
+			rr->rdata[offset] == 0 && /* first window = 0, */
+	    /* [1]: bitmap length must be >= 1 */
+	    /* [2]: bit[6] = SOA, thus mask first bitmap octet with 0x02 */
+	    (rr->rdata[offset+2] & 0x02))
 		return 1;
-	}
 	return 0;
 }
 
@@ -208,9 +224,9 @@ check_apex_soa(namedb_type* namedb, zone_type *zone, int nolog)
 		return NULL;
 	}
 	for(j=0; j<nsec3_rrset->rr_count; j++) {
-		if(nsec3_has_soa(&nsec3_rrset->rrs[j])) {
+		if(nsec3_has_soa(nsec3_rrset->rrs[j])) {
 			region_destroy(tmpregion);
-			return &nsec3_rrset->rrs[j];
+			return nsec3_rrset->rrs[j];
 		}
 	}
 	if(!nolog) {
@@ -226,21 +242,26 @@ check_apex_soa(namedb_type* namedb, zone_type *zone, int nolog)
 static void
 nsec3param_to_str(struct rr* rr, char* str, size_t buflen)
 {
-	rdata_atom_type* rd = rr->rdatas;
 	size_t len;
+	if(rr->rdlength < 5 || rr->rdlength < 5 + (uint16_t)rr->rdata[4]) {
+		str[0]=0;
+		return;
+	}
 	len = snprintf(str, buflen, "%u %u %u ",
-		(unsigned)rdata_atom_data(rd[0])[0],
-		(unsigned)rdata_atom_data(rd[1])[0],
-		(unsigned)read_uint16(rdata_atom_data(rd[2])));
-	if(rdata_atom_data(rd[3])[0] == 0) {
+		(unsigned)rr->rdata[0], (unsigned)rr->rdata[1],
+		(unsigned)read_uint16(rr->rdata+2));
+	if(rr->rdata[4] == 0) {
 		if(buflen > len + 2)
 			str[len++] = '-';
 	} else {
-		len += hex_ntop(rdata_atom_data(rd[3])+1,
-			rdata_atom_data(rd[3])[0], str+len, buflen-len-1);
+		len += hex_ntop(rr->rdata+5, rr->rdata[4], str+len, buflen-len-1);
 	}
-	if(buflen > len + 1)
+	if(buflen > len + 1) {
 		str[len] = 0;
+	} else {
+		assert(buflen > 0);
+		str[buflen-1] = 0;
+	}
 }
 
 static struct rr*
@@ -253,14 +274,13 @@ db_find_nsec3param(struct namedb* db, struct zone* z, struct rr* avoid_rr,
 		return NULL;
 	/* find first nsec3param we can support (SHA1, no flags) */
 	for(i=0; i<rrset->rr_count; i++) {
-		rdata_atom_type* rd = rrset->rrs[i].rdatas;
 		/* do not use the RR that is going to be deleted (in IXFR) */
-		if(&rrset->rrs[i] == avoid_rr) continue;
-		if(rrset->rrs[i].rdata_count < 4) continue;
-		if(rdata_atom_data(rd[0])[0] == NSEC3_SHA1_HASH &&
-			rdata_atom_data(rd[1])[0] == 0) {
+		if(rrset->rrs[i] == avoid_rr) continue;
+		if(rrset->rrs[i]->rdlength < 5) continue; /* require salt field */
+		if(rrset->rrs[i]->rdata[0] == NSEC3_SHA1_HASH &&
+			rrset->rrs[i]->rdata[1] == 0) {
 			if(checkchain) {
-				z->nsec3_param = &rrset->rrs[i];
+				z->nsec3_param = rrset->rrs[i];
 				if(!check_apex_soa(db, z, 1)) {
 					char str[MAX_RDLENGTH*2+16];
 					nsec3param_to_str(z->nsec3_param,
@@ -271,12 +291,12 @@ db_find_nsec3param(struct namedb* db, struct zone* z, struct rr* avoid_rr,
 			}
 			if(2 <= verbosity) {
 				char str[MAX_RDLENGTH*2+16];
-				nsec3param_to_str(&rrset->rrs[i], str,
+				nsec3param_to_str(rrset->rrs[i], str,
 					sizeof(str));
 				VERBOSITY(2, (LOG_INFO, "rehash of zone %s with parameters %s",
 					domain_to_string(z->apex), str));
 			}
-			return &rrset->rrs[i];
+			return rrset->rrs[i];
 		}
 	}
 	return NULL;
@@ -292,27 +312,22 @@ nsec3_find_zone_param(struct namedb* db, struct zone* zone,
 
 /* check params ok for one RR */
 static int
-nsec3_rdata_params_ok(rdata_atom_type* prd, rdata_atom_type* rd)
+nsec3_rdata_params_ok(const rr_type *prr, const rr_type* rr)
 {
-	return (rdata_atom_data(rd[0])[0] ==
-		rdata_atom_data(prd[0])[0] && /* hash algo */
-	   rdata_atom_data(rd[2])[0] ==
-		rdata_atom_data(prd[2])[0] && /* iterations 0 */
-	   rdata_atom_data(rd[2])[1] ==
-		rdata_atom_data(prd[2])[1] && /* iterations 1 */
-	   rdata_atom_data(rd[3])[0] ==
-		rdata_atom_data(prd[3])[0] && /* salt length */
-	   memcmp(rdata_atom_data(rd[3])+1,
-		rdata_atom_data(prd[3])+1, rdata_atom_data(rd[3])[0])
-		== 0 );
+	if(prr->rdlength > rr->rdlength)
+		return 0; /* The salt has to fit */
+	if(prr->rdlength < 5)
+		return 0; /* Malformed */
+	return prr->rdata[0] == rr->rdata[0] &&
+		(memcmp(prr->rdata+2, rr->rdata+2, prr->rdlength-2) == 0);
 }
 
 int
 nsec3_rr_uses_params(rr_type* rr, zone_type* zone)
 {
-	if(!rr || rr->rdata_count < 4)
+	if(!rr || rr->rdlength < 6)
 		return 0;
-	return nsec3_rdata_params_ok(zone->nsec3_param->rdatas, rr->rdatas);
+	return nsec3_rdata_params_ok(zone->nsec3_param, rr);
 }
 
 int
@@ -324,7 +339,7 @@ nsec3_in_chain_count(domain_type* domain, zone_type* zone)
 	if(!rrset || !zone->nsec3_param)
 		return 0; /* no NSEC3s, none in the chain */
 	for(i=0; i<rrset->rr_count; i++) {
-		if(nsec3_rr_uses_params(&rrset->rrs[i], zone))
+		if(nsec3_rr_uses_params(rrset->rrs[i], zone))
 			count++;
 	}
 	return count;
@@ -1108,9 +1123,9 @@ domain_has_only_NSEC3(struct domain* domain, struct zone* zone)
 	{
 		if(!zone || rrset->zone == zone)
 		{
-			if(rrset->rrs[0].type == TYPE_NSEC3)
+			if(rrset->rrs[0]->type == TYPE_NSEC3)
 				nsec3_seen = 1;
-			else if(rrset->rrs[0].type != TYPE_RRSIG)
+			else if(rrset->rrs[0]->type != TYPE_RRSIG)
 				return 0;
 		}
 		rrset = rrset->next;

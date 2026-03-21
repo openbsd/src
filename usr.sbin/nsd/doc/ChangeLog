@@ -1,5 +1,117 @@
+11 March 2026: Wouter
+	- Fix in IXFR processing, to commit the collected RRs before
+	  deletions.
+
+6 March 2026: Wouter
+	- Merge #477: Improve ignored old serial log message.
+
+24 February 2026: Willem
+	- The master branch continues with version 4.14.2 in development
+
+23 February 2026: Wouter
+	- Fix systemd signalling so that it does not reload for too long.
+	  The reload is not signalled to systemd, so that long operations
+	  can complete, without systemd acting on a timer to stop them.
+
+20 February 2026: Wouter
+	- Fix man page for ip-address, add text about process numbers,
+	  bindtodevice and setfib.
+
+16 February 2026: Willem
+	- Merge #472: Reduce memory usage with zones with RRsets
+	  consisting of many RRs.
+
+13 February 2026: Wouter
+	- Fix to escape slashes when they appear in the zone name for a
+	  pattern zonefile that is created. Also for per zone statistics.
+
+2 February 2026: Wouter
+	- Fix metrics to clear server variable after close and log error
+	  on allocation failure.
+
+15 January 2026: Wouter
+	- Fix #475 info: axfr for domain from not-verified.
+
+7 January 2026: Wouter
+	- Fix that non normalized NSEC next owner names are preserved.
+	- Fix to preserve case in literal dnames in RR types RRSIG,
+	  IPSECKEY, TALINK, DSYNC and AMTRELAY.
+	- Fix for #474: Fix metrics name for zone statistics for
+	  the queries_total to have disallowed characters changed
+	  to underscores.
+	- Fix to silence restricted userns check in test script.
+
+6 January 2026: Wouter
+	- Fix #474: metrics output with zone statistics to change
+	  disallowed characters in metric names to underscores.
+
+21 December 2025: Willem
+	- Fix rr-test.tdir so AMTRELAY relay field is "." with type 0
+	- Fix checkconf.tdir test to anticipate default values for
+	  send-buffer-size and receive-buffer-size when configured with 0
+	- skip dns-cookies.tdir test with restricted unpriviledged userns
+
+1 December 2025: Jannik
+	- The master branch continues with version 4.14.1 in development
+	- Merge #469 from jschlyter: Add container build files
+	- Merge #470 from jschlyter: Update path to default container
+	  configuration and entrypoint
+
+1 December 2025: Wouter
+	- Fix to note DSYNC RFC9859 reference.
+	- Fix to note reference for NXNAME in comment.
+
+27 November 2025: Jannik
+	- Merge #444: Refactor RDATA storage to reduce memory footprint
+
+12 November 2025: Willem
+	- Merge #466: Do not delete nodes from non-existent zone's NSEC3 hash
+	  trees
+
+6 November 2025: Wouter
+	- Update acx_nlnetlabs.m4 to version 51, with nonstring unknown
+	  attribute warning fix.
+
+3 November 2025: Wouter
+	- For #137: Change default for the listen TCP backlog to -1 on
+	  BSDs and Linux.
+
+2 October 2025: Wouter
+	- Fix #137: Adds tcp-listen-queue: number config option to set
+	  the TCP backlog.
+
+29 September 2025: Wouter
+	- Update in acx_nlnetlabs.m4 to version 49.
+	- Update in acx_nlnetlabs.m4 to version 50, with cache value for
+	  malloc function check.
+
+17 September 2025: Wouter
+	- Fix to log more details when send-buffer-size or receive-buffer-size
+	  is not granted, on verbosity level 2.
+
+15 September 2025: Jannik
+	- Fix confusing report for default send and receive buffer-size by
+	  nsd-checkconf
+
+11 September 2025: Jannik
+	- Merge #460: Add XDP_OBJ fixing link errors for XDP.
+	- Fix XDP build error with --enable-checking
+	- Resolve warnings about mixed declaration and code and unused variable
+
+11 September 2025: Wouter
+	- Merge #459: Check for libfstrm version >= 0.4.
+	- For #459: Add configure check for fstrm_tcp_writer_options_init
+	  in addition to the check for fstrm_iothr_init.
+
+8 September 2025: Wouter
+	- Fix empty debug statement body in catalog consumer zone process.
+
 03 September 2025: Jannik
 	- Fix zonestatfd check
+	- The main branch continues with version 4.13.1 in development.
+
+3 September 2025: Wouter
+	- Set code repository configure for version 4.13.1 in development.
 
 18 August 2025: Willem
 	- Merge #455: --with-dbdir option for configure to set the base

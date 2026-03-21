@@ -81,6 +81,7 @@
 #include "difffile.h"
 #include "ipc.h"
 #include "remote.h"
+#include "rdata.h"
 
 #ifdef USE_METRICS
 #include "metrics.h"
@@ -1042,6 +1043,7 @@ print_zonestatus(RES* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
 			return 0;
 	}
 	if(zone_is_catalog_consumer(zo)) {
+		uint32_t serial = 0;
 		zone_type* zone = namedb_find_zone(xfrd->nsd->db,
 				(const dname_type*)zo->node.key);
 		struct xfrd_catalog_consumer_zone* consumer_zone =
@@ -1051,13 +1053,14 @@ print_zonestatus(RES* ssl, xfrd_state_type* xfrd, struct zone_options* zo)
 
 		if(!ssl_printf(ssl, "	catalog: consumer"))
 			return 0;
-		if(zone && zone->soa_rrset && zone->soa_rrset->rrs
-		&& zone->soa_rrset->rrs[0].rdata_count > 2
-		&& rdata_atom_size(zone->soa_rrset->rrs[0].rdatas[2]) ==
-							sizeof(uint32_t)) {
+		if(zone && zone->soa_rrset
+#ifndef PACKED_STRUCTS
+		&& zone->soa_rrset->rrs
+#endif
+		&& retrieve_soa_rdata_serial(zone->soa_rrset->rrs[0],
+			&serial)) {
 			if(!ssl_printf(ssl, " (serial: %u, # members: %zu)\n",
-					read_uint32(rdata_atom_data(
-					zone->soa_rrset->rrs[0].rdatas[2])),
+					serial,
 					  consumer_zone
 					? consumer_zone->member_ids.count : 0))
 				return 0;
@@ -3423,7 +3426,7 @@ create_local_accept_sock(const char *path, int* noproto)
 		goto err;
 	}
 
-	if (listen(s, TCP_BACKLOG) == -1) {
+	if (listen(s, nsd.options->tcp_listen_queue) == -1) {
 		log_msg(LOG_ERR, "can't listen: %s", strerror(errno));
 		goto err;
 	}

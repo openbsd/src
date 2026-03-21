@@ -30,6 +30,26 @@
 
 #define DEFAULT_TTL 3600
 
+/* Some zones, such as DNS-SD zones, have RRsets with many RRs in them.
+ * By minimizing the need to reallocate the list of RRs in an RRset,
+ * we reduce memory fragmentation significantly for such zones.
+ * To this end, `domain`, `type`, `rrset`, `rrset_prev`, `rr_count` and
+ * `rrs` are used to commit the RRs within an RRset, that are grouped
+ * together in a zone file, to the database in batches. 
+ */
+struct collect_rrs {
+	struct domain *domain;
+	int type;
+	struct rrset *rrset;
+#ifdef PACKED_STRUCTS
+	struct rrset *rrset_prev;
+#endif
+	int rr_count;
+	/* When the RRset is more than 256 RRs, the set will be committed in
+	 * batches of 256 RRs (and resized if needed) */
+	struct rr* rrs[256];
+};
+
 /* parse a zone into memory. name is origin. zonefile is file to read.
  * returns number of errors; failure may have read a partial zone */
 unsigned int zonec_read(

@@ -1,5 +1,75 @@
 NSD RELEASE NOTES
 
+4.14.2
+================
+FEATURES:
+BUG FIXES:
+	- Merge #477: Improve ignored old serial log message.
+	- Fix in IXFR processing, to commit the collected RRs before
+	  deletions.
+
+4.14.1
+================
+FEATURES:
+	- Merge #469 from jschlyter: Add container build files
+BUG FIXES:
+	- Fix to note DSYNC RFC9859 reference.
+	- Fix to note reference for NXNAME in comment.
+	- Merge #470 from jschlyter: Update path to default container
+	  configuration and entrypoint
+	- Fix rr-test.tdir so AMTRELAY relay field is "." with type 0
+	- Fix checkconf.tdir test to anticipate default values for
+	  send-buffer-size and receive-buffer-size when configured with 0
+	- skip dns-cookies.tdir test with restricted unpriviledged userns
+	- Fix #474: metrics output with zone statistics to change
+	  disallowed characters in metric names to underscores.
+	- Fix that non normalized NSEC next owner names are preserved.
+	- Fix to preserve case in literal dnames in RR types RRSIG,
+	  IPSECKEY, TALINK, DSYNC and AMTRELAY.
+	- Fix for #474: Fix metrics name for zone statistics for
+	  the queries_total to have disallowed characters changed
+	  to underscores.
+	- Fix to silence restricted userns check in test script.
+	- Fix #475 info: axfr for domain from not-verified.
+	- Fix metrics to clear server variable after close and log error
+	  on allocation failure.
+	- Fix to escape slashes when they appear in the zone name for a
+	  pattern zonefile that is created. Also for per zone statistics.
+	- Merge #472: Reduce memory usage with zones with RRsets
+	  consisting of many RRs.
+	- Fix man page for ip-address, add text about process numbers,
+	  bindtodevice and setfib.
+	- Fix systemd signalling so that it does not reload for too long.
+	  The reload is not signalled to systemd, so that long operations
+	  can complete, without systemd acting on a timer to stop them.
+
+4.14.0
+================
+FEATURES:
+	- Fix #137: Adds tcp-listen-queue: number config option to set
+	  the TCP backlog. And the default for the listen TCP backlog is
+	  set to -1 on BSDs and Linux.
+	- Merge #444: Refactor RDATA storage to reduce memory footprint
+BUG FIXES:
+	- Fix empty debug statement body in catalog consumer zone process.
+	- Merge #459: Check for libfstrm version >= 0.4.
+	- For #459: Add configure check for fstrm_tcp_writer_options_init
+	  in addition to the check for fstrm_iothr_init.
+	- Merge #460: Add XDP_OBJ fixing link errors for XDP.
+	- Fix XDP build error with --enable-checking
+	- Resolve warnings about mixed declaration and code and unused variable
+	- Fix confusing report for default send and receive buffer-size by
+	  nsd-checkconf
+	- Fix to log more details when send-buffer-size or receive-buffer-size
+	  is not granted, on verbosity level 2.
+	- Update in acx_nlnetlabs.m4 to version 49.
+	- Update in acx_nlnetlabs.m4 to version 50, with cache value for
+	  malloc function check.
+	- Update acx_nlnetlabs.m4 to version 51, with nonstring unknown
+	  attribute warning fix.
+	- Merge #466: Do not delete nodes from non-existent zone's NSEC3 hash   
+	  trees 
+
 4.13.0
 ================
 FEATURES:
@@ -68,6 +138,9 @@ BUG FIXES:
 	- Update simdzone with support for --enable-pie.
 	- Merge #454 from jaredmauch: handle rare case but seen in
 	  production where data->query is NULL.
+	- Fix zonestatfd check
+	- Fix code analyzer warning, and bail out of handle_tcp_writing
+	  and handle_tls_writing early when data->query is NULL.
 
 4.12.0
 ================

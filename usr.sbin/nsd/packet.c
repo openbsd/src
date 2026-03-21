@@ -14,6 +14,7 @@
 #include "packet.h"
 #include "query.h"
 #include "rdata.h"
+#include "dns.h"
 
 int round_robin = 0;
 int minimal_responses = 0;
@@ -52,7 +53,8 @@ packet_encode_rr(query_type *q, domain_type *owner, rr_type *rr, uint32_t ttl)
 	size_t truncation_mark;
 	uint16_t rdlength = 0;
 	size_t rdlength_pos;
-	uint16_t j;
+	const nsd_type_descriptor_type *descriptor =
+		nsd_type_descriptor(rr->type);
 
 	assert(q);
 	assert(owner);
@@ -73,26 +75,7 @@ packet_encode_rr(query_type *q, domain_type *owner, rr_type *rr, uint32_t ttl)
 	rdlength_pos = buffer_position(q->packet);
 	buffer_skip(q->packet, sizeof(rdlength));
 
-	for (j = 0; j < rr->rdata_count; ++j) {
-		switch (rdata_atom_wireformat_type(rr->type, j)) {
-		case RDATA_WF_COMPRESSED_DNAME:
-			encode_dname(q, rdata_atom_domain(rr->rdatas[j]));
-			break;
-		case RDATA_WF_UNCOMPRESSED_DNAME:
-		{
-			const dname_type *dname = domain_dname(
-				rdata_atom_domain(rr->rdatas[j]));
-			buffer_write(q->packet,
-				     dname_name(dname), dname->name_size);
-			break;
-		}
-		default:
-			buffer_write(q->packet,
-				     rdata_atom_data(rr->rdatas[j]),
-				     rdata_atom_size(rr->rdatas[j]));
-			break;
-		}
-	}
+	descriptor->write_rdata(q, rr);
 
 	if (!query_overflow(q)) {
 		rdlength = (buffer_position(q->packet) - rdlength_pos
@@ -147,8 +130,8 @@ packet_encode_rrset(query_type *query,
 		start = (uint16_t)(round_robin_off++ % rrset->rr_count);
 	else	start = 0;
 	for (i = start; i < rrset->rr_count; ++i) {
-		if (packet_encode_rr(query, owner, &rrset->rrs[i],
-			rrset->rrs[i].ttl)) {
+		if (packet_encode_rr(query, owner, rrset->rrs[i],
+			rrset->rrs[i]->ttl)) {
 			++added;
 		} else {
 			all_added = 0;
@@ -157,8 +140,8 @@ packet_encode_rrset(query_type *query,
 		}
 	}
 	for (i = 0; i < start; ++i) {
-		if (packet_encode_rr(query, owner, &rrset->rrs[i],
-			rrset->rrs[i].ttl)) {
+		if (packet_encode_rr(query, owner, rrset->rrs[i],
+			rrset->rrs[i]->ttl)) {
 			++added;
 		} else {
 			all_added = 0;
@@ -173,12 +156,12 @@ packet_encode_rrset(query_type *query,
 	    (rrsig = domain_find_rrset(owner, rrset->zone, TYPE_RRSIG)))
 	{
 		for (i = 0; i < rrsig->rr_count; ++i) {
-			if (rr_rrsig_type_covered(&rrsig->rrs[i])
+			if (rr_rrsig_type_covered(rrsig->rrs[i])
 			    == rrset_rrtype(rrset))
 			{
 				if (packet_encode_rr(query, owner,
-					&rrsig->rrs[i],
-					rrset_rrtype(rrset)==TYPE_SOA?rrset->rrs[0].ttl:rrsig->rrs[i].ttl))
+					rrsig->rrs[i],
+					rrset_rrtype(rrset)==TYPE_SOA?rrset->rrs[0]->ttl:rrsig->rrs[i]->ttl))
 				{
 					++added;
 				} else {
@@ -263,46 +246,54 @@ rr_type *
 packet_read_rr(region_type *region, domain_table_type *owners,
 	       buffer_type *packet, int question_section)
 {
+	const nsd_type_descriptor_type *descriptor;
 	const dname_type *owner;
-	uint16_t rdlength;
-	ssize_t rdata_count;
-	rdata_atom_type *rdatas;
-	rr_type *result = (rr_type *) region_alloc(region, sizeof(rr_type));
+	struct domain* domain;
+	uint16_t type, class, rdlength;
+	uint32_t ttl;
+	struct rr *rr;
+	int32_t code;
 
 	owner = dname_make_from_packet(region, packet, 1, 1);
 	if (!owner || !buffer_available(packet, 2*sizeof(uint16_t))) {
 		return NULL;
 	}
 
-	result->owner = domain_table_insert(owners, owner);
-	result->type = buffer_read_u16(packet);
-	result->klass = buffer_read_u16(packet);
+	domain = domain_table_insert(owners, owner);
+	type = buffer_read_u16(packet);
+	class = buffer_read_u16(packet);
 
 	if (question_section) {
+		rr_type *result = (rr_type *) region_alloc(region,
+			sizeof(rr_type));
+		result->owner = domain;
+		result->type = type;
+		result->klass = class;
 		result->ttl = 0;
-		result->rdata_count = 0;
-		result->rdatas = NULL;
+		result->rdlength = 0;
 		return result;
 	} else if (!buffer_available(packet, sizeof(uint32_t) + sizeof(uint16_t))) {
 		return NULL;
 	}
 
-	result->ttl = buffer_read_u32(packet);
+	ttl = buffer_read_u32(packet);
 	rdlength = buffer_read_u16(packet);
 
 	if (!buffer_available(packet, rdlength)) {
 		return NULL;
 	}
 
-	rdata_count = rdata_wireformat_to_rdata_atoms(
-		region, owners, result->type, rdlength, packet, &rdatas);
-	if (rdata_count == -1) {
+	descriptor = nsd_type_descriptor(type);
+	code = descriptor->read_rdata(owners, rdlength, packet, &rr);
+	if(code < 0) {
 		return NULL;
 	}
-	result->rdata_count = rdata_count;
-	result->rdatas = rdatas;
+	rr->owner = domain;
+	rr->type = type;
+	rr->klass = class;
+	rr->ttl = ttl;
 
-	return result;
+	return rr;
 }
 
 int packet_read_query_section(buffer_type *packet,

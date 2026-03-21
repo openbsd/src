@@ -82,8 +82,8 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 		assert(query->axfr_zone->soa_rrset->rr_count == 1);
 		added = packet_encode_rr(query,
 					 query->axfr_zone->apex,
-					 &query->axfr_zone->soa_rrset->rrs[0],
-					 query->axfr_zone->soa_rrset->rrs[0].ttl);
+					 query->axfr_zone->soa_rrset->rrs[0],
+					 query->axfr_zone->soa_rrset->rrs[0]->ttl);
 		if (!added) {
 			/* XXX: This should never happen... generate error code? */
 			abort();
@@ -123,8 +123,8 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 					added = packet_encode_rr(
 						query,
 						query->axfr_current_domain,
-						&query->axfr_current_rrset->rrs[query->axfr_current_rr],
-						query->axfr_current_rrset->rrs[query->axfr_current_rr].ttl);
+						query->axfr_current_rrset->rrs[query->axfr_current_rr],
+						query->axfr_current_rrset->rrs[query->axfr_current_rr]->ttl);
 					if(total_added == 0) {
 						query->maxlen = oldmaxlen;
 						if(query_overflow(query)) {
@@ -154,8 +154,8 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 	assert(query->axfr_zone->soa_rrset->rr_count == 1);
 	added = packet_encode_rr(query,
 				 query->axfr_zone->apex,
-				 &query->axfr_zone->soa_rrset->rrs[0],
-				 query->axfr_zone->soa_rrset->rrs[0].ttl);
+				 query->axfr_zone->soa_rrset->rrs[0],
+				 query->axfr_zone->soa_rrset->rrs[0]->ttl);
 	if (added) {
 		++total_added;
 		query->tsig_sign_it = 1; /* sign last packet */
@@ -256,10 +256,10 @@ static int axfr_ixfr_can_admit_query(struct nsd* nsd, struct query* q)
 		return 0;
 	}
 #ifdef HAVE_SSL
-	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "%s admitted acl %s %s %s",
+	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "%s admitted acl %s %s%s",
 		(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
 		acl->ip_address_spec, acl->key_name?acl->key_name:"NOKEY",
-		(q->tls||q->tls_auth)?(q->tls?"tls":"tls-auth"):""));
+		(q->tls||q->tls_auth)?(q->tls?" tls":" tls-auth"):""));
 #else
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "%s admitted acl %s %s",
 		(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
@@ -269,11 +269,12 @@ static int axfr_ixfr_can_admit_query(struct nsd* nsd, struct query* q)
 		char a[128];
 		addr2str(&q->client_addr, a, sizeof(a));
 #ifdef HAVE_SSL
-		VERBOSITY(1, (LOG_INFO, "%s for %s from %s %s %s",
+		VERBOSITY(1, (LOG_INFO, "%s for %s from %s%s%s%s",
 			(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
 			dname_to_string(q->qname, NULL), a,
-			(q->tls||q->tls_auth)?(q->tls?"tls":"tls-auth"):"",
-			q->cert_cn?q->cert_cn:"not-verified"));
+			(q->tls||q->tls_auth)?(q->tls?" tls":" tls-auth"):"",
+			(q->tls||q->tls_auth)?" ":"",
+			(q->tls||q->tls_auth)?(q->cert_cn?q->cert_cn:"not-verified"):""));
 #else
 		VERBOSITY(1, (LOG_INFO, "%s for %s from %s",
 			(q->qtype==TYPE_AXFR?"axfr":"ixfr"),

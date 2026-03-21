@@ -193,6 +193,9 @@
 /* Define to 1 if fseeko (and ftello) are declared in stdio.h. */
 #undef HAVE_FSEEKO
 
+/* Define to 1 if you have the 'fstrm_tcp_writer_options_init' function. */
+#undef HAVE_FSTRM_TCP_WRITER_OPTIONS_INIT
+
 /* Define to 1 if you have the 'gai_strerror' function. */
 #undef HAVE_GAI_STRERROR
 

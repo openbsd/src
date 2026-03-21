@@ -65,8 +65,8 @@ nsd_options_create(region_type* region)
 	opt->ip_addresses = NULL;
 	opt->ip_transparent = 0;
 	opt->ip_freebind = 0;
-	opt->send_buffer_size = 0;
-	opt->receive_buffer_size = 0;
+	opt->send_buffer_size = 4*1024*1024;
+	opt->receive_buffer_size = 1*1024*1024;
 	opt->debug_mode = 0;
 	opt->verbosity = 0;
 	opt->hide_version = 0;
@@ -94,6 +94,7 @@ nsd_options_create(region_type* region)
 	opt->tcp_timeout = TCP_TIMEOUT;
 	opt->tcp_mss = 0;
 	opt->outgoing_tcp_mss = 0;
+	opt->tcp_listen_queue = TCP_BACKLOG;
 	opt->ipv4_edns_size = EDNS_MAX_MESSAGE_LEN;
 	opt->ipv6_edns_size = EDNS_MAX_MESSAGE_LEN;
 	opt->pidfile = PIDFILE;
@@ -2526,6 +2527,20 @@ replace_str(char* str, size_t len, const char* one, const char* two)
 	}
 }
 
+/* replace occurences of '/' with "\047", as a way to escape the '/'.
+ * This is to escape the slash character when it is part of the domain
+ * name string. It can be used normally when it is in the config string. */
+const char*
+escape_slash_zonefile(const char* input)
+{
+	static char f[1024];
+	if(!strchr(input, '/'))
+		return input;
+	strlcpy(f, input, sizeof(f));
+	replace_str(f, sizeof(f), "/", "\\047");
+	return f;
+}
+
 const char*
 config_cook_string(struct zone_options* zone, const char* input)
 {
@@ -2548,7 +2563,8 @@ config_cook_string(struct zone_options* zone, const char* input)
 	if(strstr(f, "%x"))
 		replace_str(f, sizeof(f), "%x", get_end_label(zone, 3));
 	if(strstr(f, "%s"))
-		replace_str(f, sizeof(f), "%s", zone->name);
+		replace_str(f, sizeof(f), "%s", escape_slash_zonefile(
+		zone->name));
 	return f;
 }
 
@@ -2581,7 +2597,8 @@ config_make_zonefile(struct zone_options* zone, struct nsd* nsd)
 	if(strstr(f, "%x"))
 		replace_str(f, sizeof(f), "%x", get_end_label(zone, 3));
 	if(strstr(f, "%s"))
-		replace_str(f, sizeof(f), "%s", zone->name);
+		replace_str(f, sizeof(f), "%s", escape_slash_zonefile(
+		zone->name));
 	if (nsd->chrootdir && nsd->chrootdir[0] && f[0] == '/' &&
 		strncmp(f, nsd->chrootdir, strlen(nsd->chrootdir)) == 0)
 		/* -1 because chrootdir ends in trailing slash */

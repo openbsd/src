@@ -170,6 +170,10 @@ server:
 	# Default is 0, system default MSS.
 	# outgoing-tcp-mss: 0
 
+	# Set the TCP backlog for listening sockets.
+	# Default 256, or -1 on BSDs and Linux.
+	# tcp-listen-queue: 256
+
 	# reduce these settings to save memory for NSD, to about
 	# xfrd-tcp-max: 32 and xfrd-tcp-pipeline: 128, also rrl-size: 1000
 	# other memory is determined by server-count, tcp-count and zone data

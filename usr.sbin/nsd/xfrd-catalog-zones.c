@@ -9,6 +9,7 @@
 #include "difffile.h"
 #include "nsd.h"
 #include "packet.h"
+#include "rdata.h"
 #include "xfrd-catalog-zones.h"
 #include "xfrd-notify.h"
 
@@ -545,11 +546,9 @@ xfrd_process_catalog_consumer_zone(
 	}
 	version_2_found = 0;
 	for (i = 0; i < rrset->rr_count; i++) {
-		if (rrset->rrs[i].rdata_count != 1)
-			continue;
-		if (rrset->rrs[i].rdatas[0].data[0] == 2
-		&&  ((uint8_t*)(rrset->rrs[i].rdatas[0].data + 1))[0] == 1
-		&&  ((uint8_t*)(rrset->rrs[i].rdatas[0].data + 1))[1] == '2') {
+		if(rrset->rrs[i]->rdlength == 2 &&
+		   rrset->rrs[i]->rdata[0] == 1 /* TXT string length */ &&
+		   rrset->rrs[i]->rdata[1] == '2') {
 			version_2_found = 1;
 			break;
 		}
@@ -602,9 +601,9 @@ retry_adding:
 			return;
 		}
 		/* A PTR rr always has 1 rdata element which is a dname */
-		if (rrset->rrs[0].rdata_count != 1)
+		member_domain = rdata_domain_ref(rrset->rrs[0]);
+		if(!member_domain)
 			continue;
-		member_domain = rrset->rrs[0].rdatas[0].domain;
 		domain_to_string_buf(member_domain, member_domain_str);
 		/* remove trailing dot */
 		member_domain_str[strlen(member_domain_str) - 1] = 0;
@@ -622,22 +621,20 @@ retry_adding:
 			char group_value[256];
 
 			/* Looking for a single TXT rdata field */
-			if (rrset->rrs[i].rdata_count != 1
+			if(rrset->rrs[i]->rdlength < 1
+			|| rrset->rrs[i]->rdlength !=
+				((uint16_t)rrset->rrs[i]->rdata[0])+1
 
 			    /* rdata field should be at least 1 char */
-			||  rrset->rrs[i].rdatas[0].data[0] < 2
-
-			    /* single rdata atom with single TXT rdata field */
-			||  (uint16_t)(((uint8_t*)(rrset->rrs[i].rdatas[0].data + 1))[0])
-			  != (uint16_t) (rrset->rrs[i].rdatas[0].data[0]-1))
+			||  rrset->rrs[i]->rdata[0] < 1)
 				continue;
 
 			memcpy( group_value
-			      , (uint8_t*)(rrset->rrs[i].rdatas[0].data+1) + 1
-			      ,((uint8_t*)(rrset->rrs[i].rdatas[0].data+1))[0]
+			      , rrset->rrs[i]->rdata+1
+			      , rrset->rrs[i]->rdata[0]
 			      );
 			group_value[
-			       ((uint8_t*)(rrset->rrs[i].rdatas[0].data+1))[0]
+			       rrset->rrs[i]->rdata[0]
 			] = 0;
 			if ((pattern = pattern_options_find(
 					xfrd->nsd->options, group_value)))
@@ -715,13 +712,14 @@ retry_adding:
 					member_id_to_delete_str));
 				catalog_del_consumer_member_zone(
 						consumer_zone, to_delete);
-				if(cursor != RBTREE_NULL)
+				if(cursor != RBTREE_NULL) {
 					DEBUG(DEBUG_XFRD,1, (LOG_INFO,
 						"Comparing %s with %s",
 						member_id_str,
 						dname_to_string(
 							cursor_member_id(cursor),
 							NULL)));
+				}
 			}
 			if (cursor != RBTREE_NULL && cmp == 0) {
 				/* member_id is also in an current catalog

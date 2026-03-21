@@ -131,7 +131,7 @@ void clear_bit(uint8_t bits[], size_t index);
 /*
  * Return the value of the INDEXth bit of BITS.
  */
-int get_bit(uint8_t bits[], size_t index);
+int get_bit(const uint8_t bits[], size_t index);
 
 /* A general purpose lookup table */
 typedef struct lookup_table lookup_table_type;

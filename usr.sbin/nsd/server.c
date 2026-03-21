@@ -895,10 +895,14 @@ set_rcvbuf(struct nsd_socket *sock, int rcv)
 		return 1;
 	}
 	if(errno == EPERM || errno == ENOBUFS) {
+		if(errno == ENOBUFS) {
+			VERBOSITY(2, (LOG_INFO, "setsockopt(..., SO_RCVBUFFORCE, %d) was not granted: %s",
+				rcv, strerror(errno)));
+		}
 		return 0;
 	}
-	log_msg(LOG_ERR, "setsockopt(..., SO_RCVBUFFORCE, ...) failed: %s",
-		strerror(errno));
+	log_msg(LOG_ERR, "setsockopt(..., SO_RCVBUFFORCE, %d) failed: %s",
+		rcv, strerror(errno));
 	return -1;
 #else /* !SO_RCVBUFFORCE */
 	if (0 == setsockopt(
@@ -907,10 +911,14 @@ set_rcvbuf(struct nsd_socket *sock, int rcv)
 		return 1;
 	}
 	if(errno == ENOSYS || errno == ENOBUFS) {
+		if(errno == ENOBUFS) {
+			VERBOSITY(2, (LOG_INFO, "setsockopt(..., SO_RCVBUF, %d) was not granted: %s",
+				rcv, strerror(errno)));
+		}
 		return 0;
 	}
-	log_msg(LOG_ERR, "setsockopt(..., SO_RCVBUF, ...) failed: %s",
-		strerror(errno));
+	log_msg(LOG_ERR, "setsockopt(..., SO_RCVBUF, %d) failed: %s",
+		rcv, strerror(errno));
 	return -1;
 #endif /* SO_RCVBUFFORCE */
 #endif /* SO_RCVBUF */
@@ -929,10 +937,14 @@ set_sndbuf(struct nsd_socket *sock, int snd)
 		return 1;
 	}
 	if(errno == EPERM || errno == ENOBUFS) {
+		if(errno == ENOBUFS) {
+			VERBOSITY(2, (LOG_INFO, "setsockopt(..., SO_SNDBUFFORCE, %d) was not granted: %s",
+				snd, strerror(errno)));
+		}
 		return 0;
 	}
-	log_msg(LOG_ERR, "setsockopt(..., SO_SNDBUFFORCE, ...) failed: %s",
-		strerror(errno));
+	log_msg(LOG_ERR, "setsockopt(..., SO_SNDBUFFORCE, %d) failed: %s",
+		snd, strerror(errno));
 	return -1;
 #else /* !SO_SNDBUFFORCE */
 	if(0 == setsockopt(
@@ -941,10 +953,14 @@ set_sndbuf(struct nsd_socket *sock, int snd)
 		return 1;
 	}
 	if(errno == ENOSYS || errno == ENOBUFS) {
+		if(errno == ENOBUFS) {
+			VERBOSITY(2, (LOG_INFO, "setsockopt(..., SO_SNDBUF, %d) was not granted: %s",
+				snd, strerror(errno)));
+		}
 		return 0;
 	}
-	log_msg(LOG_ERR, "setsockopt(..., SO_SNDBUF, ...) failed: %s",
-		strerror(errno));
+	log_msg(LOG_ERR, "setsockopt(..., SO_SNDBUF, %d) failed: %s",
+		snd, strerror(errno));
 	return -1;
 #endif /* SO_SNDBUFFORCE */
 #endif /* SO_SNDBUF */
@@ -1277,7 +1293,8 @@ set_setfib(struct nsd_socket *sock)
 static int
 open_udp_socket(struct nsd *nsd, struct nsd_socket *sock, int *reuseport_works)
 {
-	int rcv = 1*1024*1024, snd = 4*1024*1024;
+	int rcv = nsd->options->receive_buffer_size;
+	int snd = nsd->options->send_buffer_size;
 
 	if(-1 == (sock->s = socket(
 		sock->addr.ai_family, sock->addr.ai_socktype, 0)))
@@ -1301,13 +1318,9 @@ open_udp_socket(struct nsd *nsd, struct nsd_socket *sock, int *reuseport_works)
 	if(nsd->reuseport && reuseport_works && *reuseport_works)
 		*reuseport_works = (set_reuseport(sock) == 1);
 
-	if(nsd->options->receive_buffer_size > 0)
-		rcv = nsd->options->receive_buffer_size;
 	if(set_rcvbuf(sock, rcv) == -1)
 		return -1;
 
-	if(nsd->options->send_buffer_size > 0)
-		snd = nsd->options->send_buffer_size;
 	if(set_sndbuf(sock, snd) == -1)
 		return -1;
 #ifdef INET6
@@ -1415,7 +1428,7 @@ open_tcp_socket(struct nsd *nsd, struct nsd_socket *sock, int *reuseport_works)
 	(void)set_tcp_fastopen(sock);
 #endif
 
-	if(listen(sock->s, TCP_BACKLOG) == -1) {
+	if(listen(sock->s, nsd->options->tcp_listen_queue) == -1) {
 		log_msg(LOG_ERR, "can't listen: %s", strerror(errno));
 		return -1;
 	}
@@ -3398,13 +3411,14 @@ add_xdp_handler(struct nsd *nsd,
 	            struct xdp_server *xdp,
 	            struct xdp_handler_data *data) {
 
+	int sock;
 	struct event *handler = &data->event;
 
 	data->nsd = nsd;
 	data->server = xdp;
 
 	memset(handler, 0, sizeof(*handler));
-	int sock = xsk_socket__fd(xdp->xsks[xdp->queue_index].xsk);
+	sock = xsk_socket__fd(xdp->xsks[xdp->queue_index].xsk);
 	if (sock < 0) {
 		log_msg(LOG_ERR, "xdp: xsk socket file descriptor is invalid: %s",
 		        strerror(errno));
@@ -3704,13 +3718,18 @@ server_child(struct nsd *nsd)
 #ifdef USE_XDP
 	if (nsd->options->xdp_interface) {
 		/* don't try to bind more sockets than there are queues available */
-		if (nsd->xdp.xdp_server.queue_count <= nsd->this_child->child_num) {
+		if ((int)nsd->xdp.xdp_server.queue_count <= nsd->this_child->child_num) {
 			log_msg(LOG_WARNING,
 			        "xdp: server-count exceeds available queues (%d) on "
 			        "interface %s, skipping xdp in this process",
 			        nsd->xdp.xdp_server.queue_count,
 			        nsd->xdp.xdp_server.interface_name);
 		} else {
+			struct xdp_handler_data *data;
+			const int scratch_data_len = 1;
+			void *scratch_data = region_alloc_zero(nsd->server_region,
+			                                       scratch_data_len);
+
 			nsd->xdp.xdp_server.queue_index = nsd->this_child->child_num;
 			nsd->xdp.xdp_server.queries = xdp_queries;
 
@@ -3719,13 +3738,9 @@ server_child(struct nsd *nsd)
 			        nsd->xdp.xdp_server.queue_index,
 			        nsd->xdp.xdp_server.interface_name);
 
-			struct xdp_handler_data *data;
 			data = region_alloc_zero(nsd->server_region, sizeof(*data));
 			add_xdp_handler(nsd, &nsd->xdp.xdp_server, data);
 
-			const int scratch_data_len = 1;
-			void *scratch_data = region_alloc_zero(nsd->server_region,
-			                                       scratch_data_len);
 			for (i = 0; i < XDP_RX_BATCH_SIZE; i++) {
 				/* Be aware that the buffer is initialized with scratch data
 				 * and will be filled by the xdp handle and receive function
@@ -5710,6 +5725,7 @@ static void handle_xdp(int fd, short event, void* arg) {
 
 	if ((event & EV_READ))
 		xdp_handle_recv_and_send(data->server);
+	(void)fd;
 }
 #endif
 

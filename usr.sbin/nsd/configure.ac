@@ -7,7 +7,7 @@ sinclude(dnstap/dnstap.m4)
 
 # autoconf-2.70 is needed for @runstatedir@
 AC_PREREQ([2.70])
-AC_INIT([NSD],[4.13.0],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
+AC_INIT([NSD],[4.14.2],[https://github.com/NLnetLabs/nsd/issues or nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
@@ -178,10 +178,7 @@ AC_ARG_WITH([user],
 AC_SUBST(user)
 AC_DEFINE_UNQUOTED(USER, ["$user"], [the user name to drop privileges to])
 
-m4_version_prereq([2.70], [AC_PROG_CC], [m4_warn([obsolete],
-[AC_PROG_CC_STDC is obsolete; use AC_PROG_CC
-])dnl
-AC_REQUIRE(AC_PROG_CC)])
+m4_version_prereq([2.70], [AC_PROG_CC], [AC_PROG_CC_STDC])
 AC_PROG_SED
 AC_PROG_AWK
 AC_PROG_GREP
@@ -950,7 +947,16 @@ dnl Some random defines's
 dnl
 AC_DEFINE_UNQUOTED([IDENTITY], ["unidentified server"], [Define to the default nsd identity.])
 AC_DEFINE_UNQUOTED([VERSION], [PACKAGE_STRING], [Define to the NSD version to answer version.server query.])
-AC_DEFINE_UNQUOTED([TCP_BACKLOG], [256], [Define to the backlog to be used with listen.])
+
+case "$host" in
+    *bsd*|*BSD*|*linux*|*Linux*)
+	AC_DEFINE_UNQUOTED([TCP_BACKLOG], [-1], [Define to the backlog to be used with listen.])
+	;;
+    *)
+	AC_DEFINE_UNQUOTED([TCP_BACKLOG], [256], [Define to the backlog to be used with listen.])
+	;;
+esac
+
 AC_DEFINE_UNQUOTED([TCP_PORT], ["53"], [Define to the default tcp port.])
 AC_DEFINE_UNQUOTED([TCP_MAX_MESSAGE_LEN], [65535], [Define to the default maximum message length.])
 AC_DEFINE_UNQUOTED([UDP_PORT], ["53"], [Define to the default udp port.])

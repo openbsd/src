@@ -10,6 +10,7 @@
 #include "config.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +46,8 @@ struct zone_mem {
 	size_t data;
 	/* unused space (in db.region) due to alignment */
 	size_t data_unused;
+	/* space in recycle_bin */
+	size_t recycle_bin;
 
 	/* count of number of domains */
 	size_t domaincount;
@@ -56,6 +59,8 @@ struct tot_mem {
 	size_t data;
 	/* unused space (in db.region) due to alignment */
 	size_t data_unused;
+	/* space in recycle_bin */
+	size_t recycle_bin;
 
 	/* count of number of domains */
 	size_t domaincount;
@@ -64,6 +69,8 @@ struct tot_mem {
 	size_t opt_data;
 	/* unused in options region */
 	size_t opt_unused;
+	/* space in recycle_bin */
+	size_t opt_recycle_bin;
 	/* dname compression table */
 	size_t compresstable;
 #ifdef RATELIMIT
@@ -80,29 +87,55 @@ account_zone(struct namedb* db, struct zone_mem* zmem)
 {
 	zmem->data = region_get_mem(db->region);
 	zmem->data_unused = region_get_mem_unused(db->region);
+	zmem->recycle_bin = region_get_recycle_size(db->region);
 	zmem->domaincount = domain_table_count(db->domains);
+}
+
+static char*
+pretty_num(size_t x)
+{
+	static char buf[32];
+	memset(buf, 0, sizeof(buf));
+	if(snprintf(buf, sizeof(buf), "%12lld", (long long)x) <= 12) {
+		snprintf(buf, sizeof(buf), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			buf[0], buf[1], buf[2], (buf[2]==' '?' ':'.'),
+			buf[3], buf[4], buf[5], (buf[5]==' '?' ':'.'),
+			buf[6], buf[7], buf[8], (buf[8]==' '?' ':'.'),
+			buf[9], buf[10], buf[11]);
+	}
+	return buf;
+}
+
+static const char*
+skip_ws(const char* str)
+{
+	while (isspace(*str))
+		str++;
+	return str;
 }
 
 static void
 pretty_mem(size_t x, const char* s)
 {
-	char buf[32];
-	memset(buf, 0, sizeof(buf));
-	if(snprintf(buf, sizeof(buf), "%12lld", (long long)x) > 12) {
-		printf("%12lld %s\n", (long long)x, s);
-		return;
-	}
-	printf("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c %s\n",
-		buf[0], buf[1], buf[2], (buf[2]==' '?' ':'.'),
-		buf[3], buf[4], buf[5], (buf[5]==' '?' ':'.'),
-		buf[6], buf[7], buf[8], (buf[8]==' '?' ':'.'),
-		buf[9], buf[10], buf[11], s);
+	printf("%s %s\n", pretty_num(x), s);
 }
+
+static void
+pretty_mem_recycle_bin(size_t x, const char* s, size_t recycle_bin_sz)
+{
+	printf("%s %s", pretty_num(x), s);
+	if (recycle_bin_sz) {
+		printf(" (of which %s in the recycle bin)",
+				skip_ws(pretty_num(recycle_bin_sz)));
+	}
+	printf("\n");
+}
+
 
 static void
 print_zone_mem(struct zone_mem* z)
 {
-	pretty_mem(z->data, "zone data");
+	pretty_mem_recycle_bin(z->data, "zone data", z->recycle_bin);
 	pretty_mem(z->data_unused, "zone unused space (due to alignment)");
 }
 
@@ -111,6 +144,7 @@ account_total(struct nsd_options* opt, struct tot_mem* t)
 {
 	t->opt_data = region_get_mem(opt->region);
 	t->opt_unused = region_get_mem_unused(opt->region);
+	t->opt_recycle_bin = region_get_recycle_size(opt->region);
 	t->compresstable = sizeof(uint16_t) *
 		(t->domaincount + 1 + EXTRA_DOMAIN_NUMBERS);
 	t->compresstable *= opt->server_count;
@@ -132,9 +166,9 @@ static void
 print_tot_mem(struct tot_mem* t)
 {
 	printf("\ntotal\n");
-	pretty_mem(t->data, "data");
+	pretty_mem_recycle_bin(t->data, "data", t->recycle_bin);
 	pretty_mem(t->data_unused, "unused space (due to alignment)");
-	pretty_mem(t->opt_data, "options");
+	pretty_mem_recycle_bin(t->opt_data, "options", t->opt_recycle_bin);
 	pretty_mem(t->opt_unused, "options unused space (due to alignment)");
 	pretty_mem(t->compresstable, "name table (depends on servercount)");
 #ifdef RATELIMIT
@@ -150,6 +184,7 @@ add_mem(struct tot_mem* t, struct zone_mem* z)
 {
 	t->data += z->data;
 	t->data_unused += z->data_unused;
+	t->recycle_bin += z->recycle_bin;
 	t->domaincount += z->domaincount;
 }
 

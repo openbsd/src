@@ -9,6 +9,11 @@
 
 #ifndef DNS_H
 #define DNS_H
+struct rr;
+struct buffer;
+struct domain;
+struct domain_table;
+struct query;
 
 enum rr_section {
 	QUESTION_SECTION,
@@ -138,7 +143,7 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_HIP	55	/* RFC 8005 */
 #define TYPE_NINFO	56	/* NINFO/ninfo-completed-template */
 #define TYPE_RKEY	57	/* RKEY/rkey-completed-template */
-#define TYPE_TALINK	58	/* draft-iet5f-dnsop-dnssec-trust-history */
+#define TYPE_TALINK	58	/* draft-ietf-dnsop-dnssec-trust-history */
 #define TYPE_CDS	59	/* RFC 7344 */
 #define TYPE_CDNSKEY	60	/* RFC 7344 */
 #define TYPE_OPENPGPKEY 61	/* RFC 7929 */
@@ -146,7 +151,7 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_ZONEMD	63	/* RFC 8976 */
 #define TYPE_SVCB	64	/* RFC 9460 */
 #define TYPE_HTTPS	65	/* RFC 9460 */
-#define TYPE_DSYNC	66	/* draft-ietf-dnsop-generalized-notify */
+#define TYPE_DSYNC	66	/* RFC 9859 */
 
 #define TYPE_SPF        99      /* RFC 4408 */
 
@@ -157,12 +162,14 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_EUI48      108     /* RFC 7043 */
 #define TYPE_EUI64      109     /* RFC 7043 */
 
-#define TYPE_TSIG	250
-#define TYPE_IXFR	251
-#define TYPE_AXFR	252
-#define TYPE_MAILB	253	/* A request for mailbox-related records (MB, MG or MR) */
-#define TYPE_MAILA	254	/* A request for mail agent RRs (Obsolete - see MX) */
-#define TYPE_ANY	255	/* any type (wildcard) */
+#define TYPE_NXNAME	128	/* RFC 9824 */
+
+#define TYPE_TSIG	250	/* RFC 2845 */
+#define TYPE_IXFR	251	/* RFC 1995 */
+#define TYPE_AXFR	252	/* RFC 1035, RFC 5936 */
+#define TYPE_MAILB	253	/* A request for mailbox-related records (MB, MG or MR) [RFC 1035] */
+#define TYPE_MAILA	254	/* A request for mail agent RRs (Obsolete - see MX) [RFC 1035] */
+#define TYPE_ANY	255	/* any type (wildcard) [RFC 1035, RFC 6895] */
 #define TYPE_URI	256	/* RFC 7553 */
 #define TYPE_CAA	257	/* RFC 6844 */
 #define TYPE_AVC	258	/* AVC/avc-completed-template */
@@ -171,12 +178,10 @@ typedef enum nsd_rc nsd_rc_type;
 #define TYPE_RESINFO	261	/* RFC 9606 */
 #define TYPE_WALLET	262	/* WALLET/wallet-completed-template */
 #define TYPE_CLA	263	/* CLA/cla-completed-template */
-#define TYPE_IPN	264	/* IPN/ipn-completed-template */
+#define TYPE_IPN	264	/* IPN/ipn-completed-template draft-johnson-dns-ipn-cla-07 */
 
 #define TYPE_TA		32768	/* http://www.watson.org/~weiler/INI1999-19.pdf */
 #define TYPE_DLV	32769	/* RFC 4431 */
-#define PSEUDO_TYPE_TA	RRTYPE_DESCRIPTORS_LENGTH
-#define PSEUDO_TYPE_DLV	(RRTYPE_DESCRIPTORS_LENGTH + 1)
 
 #define SVCB_KEY_MANDATORY		0
 #define SVCB_KEY_ALPN			1
@@ -188,12 +193,10 @@ typedef enum nsd_rc nsd_rc_type;
 #define SVCB_KEY_DOHPATH		7
 #define SVCB_KEY_OHTTP			8
 #define SVCB_KEY_TLS_SUPPORTED_GROUPS	9
-#define SVCPARAMKEY_COUNT 10
 
 #define MAXLABELLEN	63
 #define MAXDOMAINLEN	255
 
-#define MAXRDATALEN	64      /* This is more than enough, think multiple TXT. */
 #define MAX_RDLENGTH	65535
 
 /* Maximum size of a single RR.  */
@@ -208,102 +211,203 @@ typedef enum nsd_rc nsd_rc_type;
 #define NSEC3_HASH_LEN 20
 
 /*
- * The different types of RDATA wireformat data.
+ * The following RDATA values are used in nsd_rdata_descriptor.length to
+ * indicate a specialized value. They are negative, the normal lengths
+ * are 0..65535 and length is int32_t.
  */
-enum rdata_wireformat
-{
-	RDATA_WF_COMPRESSED_DNAME,   /* Possibly compressed domain name.  */
-	RDATA_WF_UNCOMPRESSED_DNAME, /* Uncompressed domain name.  */
-	RDATA_WF_LITERAL_DNAME,      /* Literal (not downcased) dname.  */
-	RDATA_WF_BYTE,               /* 8-bit integer.  */
-	RDATA_WF_SHORT,              /* 16-bit integer.  */
-	RDATA_WF_LONG,               /* 32-bit integer.  */
-	RDATA_WF_LONGLONG,           /* 64-bit integer.  */
-	RDATA_WF_TEXT,               /* Text string.  */
-	RDATA_WF_TEXTS,              /* Text string sequence.  */
-	RDATA_WF_A,                  /* 32-bit IPv4 address.  */
-	RDATA_WF_AAAA,               /* 128-bit IPv6 address.  */
-	RDATA_WF_BINARY,             /* Binary data (unknown length).  */
-	RDATA_WF_BINARYWITHLENGTH,   /* Binary data preceded by 1 byte length */
-	RDATA_WF_APL,                /* APL data.  */
-	RDATA_WF_IPSECGATEWAY,       /* IPSECKEY gateway ip4, ip6 or dname. */
-	RDATA_WF_ILNP64,             /* 64-bit uncompressed IPv6 address.  */
-	RDATA_WF_EUI48,              /* 48-bit address.  */
-	RDATA_WF_EUI64,              /* 64-bit address.  */
-	RDATA_WF_LONG_TEXT,          /* Long (>255) text string. */
-	RDATA_WF_SVCPARAM,           /* SvcParam <key>[=<value>] */
-	RDATA_WF_HIP,                /* HIP rdata up to the Rendezvous Servers */
-	RDATA_WF_AMTRELAY_RELAY      /* ip4, ip6, dname or nothing */
-};
-typedef enum rdata_wireformat rdata_wireformat_type;
+/* The rdata is a compressed domain name. In namedb it is a reference
+ * with a pointer to struct domain. On the wire, the name can be a
+ * compressed name. The pointer is stored in line and is likely unaligned. */
+#define RDATA_COMPRESSED_DNAME -1
+/* The rdata is an uncompressed domain name. In namedb it is a reference
+ * with a pointer to struct domain. The pointer is stored in line and is
+ * likely unaligned. */
+#define RDATA_UNCOMPRESSED_DNAME -2
+/* The rdata is a literal domain name. It is not a reference to struct
+ * domain, and stored as uncompressed wireformat octets. */
+#define RDATA_LITERAL_DNAME -3
+/* The rdata is a string. It starts with a uint8_t length byte. */
+#define RDATA_STRING -4
+/* The rdata is binary. It starts with a uint8_t length byte. */
+#define RDATA_BINARY -5
+/* The rdata is of type IPSECGATEWAY because of its encoding elsewhere in
+ * the RR. */
+#define RDATA_IPSECGATEWAY -6
+/* The rdata is the remainder of the record, to the end of the bytes, possibly
+ * zero bytes. The length of the field is determined by the rdata length. */
+#define RDATA_REMAINDER -7
+/* The rdata is of type AMTRELAYRELAY because of its encoding elsewhere in
+ * the RR. */
+#define RDATA_AMTRELAY_RELAY -8
 
 /*
- * The different types of RDATA that can appear in the zone file.
+ * Function signature to determine length of the rdata field.
+ * @param rdlength: length of the input rdata.
+ * @param rdata: input bytes with rdata of the RR.
+ * @param offset: current byte position in rdata.
+ * 	offset is required for the ipsecgateway where we need to read
+ * 	a couple bytes back
+ * @param domain: this value can be returned as NULL, in which case the
+ *	function return value is a length in bytes in wireformat.
+ *	If this value is returned nonNULL, it is the special reference
+ *	object that needs different treatment. The function return value
+ *	is the length that needs to be skipped in rdata to get past the
+ *	field, that is a reference when that is a pointer.
+ *	For other types of objects an additional function argument could be
+ *	added, and then handling in the caller.
+ * @return length in bytes. Or -1 on failure, like rdata length too short.
  */
-enum rdata_zoneformat
-{
-	RDATA_ZF_DNAME,		/* Domain name.  */
-	RDATA_ZF_LITERAL_DNAME,	/* DNS name (not lowercased domain name).  */
-	RDATA_ZF_TEXT,		/* Text string.  */
-	RDATA_ZF_TEXTS,		/* Text string sequence.  */
-	RDATA_ZF_BYTE,		/* 8-bit integer.  */
-	RDATA_ZF_SHORT,		/* 16-bit integer.  */
-	RDATA_ZF_LONG,		/* 32-bit integer.  */
-	RDATA_ZF_LONGLONG,	/* 64-bit integer.  */
-	RDATA_ZF_A,		/* 32-bit IPv4 address.  */
-	RDATA_ZF_AAAA,		/* 128-bit IPv6 address.  */
-	RDATA_ZF_RRTYPE,	/* RR type.  */
-	RDATA_ZF_ALGORITHM,	/* Cryptographic algorithm.  */
-	RDATA_ZF_CERTIFICATE_TYPE,
-	RDATA_ZF_PERIOD,	/* Time period.  */
-	RDATA_ZF_TIME,
-	RDATA_ZF_BASE64,	/* Base-64 binary data.  */
-	RDATA_ZF_BASE32,	/* Base-32 binary data.  */
-	RDATA_ZF_HEX,		/* Hexadecimal binary data.  */
-	RDATA_ZF_HEX_LEN,	/* Hexadecimal binary data. Skip initial length byte. */
-	RDATA_ZF_NSAP,		/* NSAP.  */
-	RDATA_ZF_APL,		/* APL.  */
-	RDATA_ZF_IPSECGATEWAY,	/* IPSECKEY gateway ip4, ip6 or dname. */
-	RDATA_ZF_SERVICES,	/* Protocol and port number bitmap.  */
-	RDATA_ZF_NXT,		/* NXT type bitmap.  */
-	RDATA_ZF_NSEC,		/* NSEC type bitmap.  */
-	RDATA_ZF_LOC,		/* Location data.  */
-	RDATA_ZF_ILNP64,	/* 64-bit uncompressed IPv6 address.  */
-	RDATA_ZF_EUI48,		/* EUI48 address.  */
-	RDATA_ZF_EUI64,		/* EUI64 address.  */
-	RDATA_ZF_LONG_TEXT,	/* Long (>255) text string. */
-	RDATA_ZF_UNQUOTED,	/* Unquoted text string. */
-	RDATA_ZF_UNQUOTEDS,	/* A sequence of unquoted text strings. */
-	RDATA_ZF_TAG,		/* A sequence of letters and numbers. */
-	RDATA_ZF_SVCPARAM,	/* SvcParam <key>[=<value>] */
-	RDATA_ZF_HIP,		/* HIP rdata up to the Rendezvous Servers */
-	RDATA_ZF_ATMA,		/* ATM Address */
-	RDATA_ZF_AMTRELAY_D_TYPE,/* Discovery Optional and Type */
-	RDATA_ZF_AMTRELAY_RELAY,/* ip4, ip6, dname or nothing */
-	RDATA_ZF_UNKNOWN	/* Unknown data.  */
-};
-typedef enum rdata_zoneformat rdata_zoneformat_type;
+typedef int32_t(*nsd_rdata_field_length_type)(
+	uint16_t rdlength,
+	const uint8_t *rdata,
+	uint16_t offset,
+	struct domain** domain);
 
-struct rrtype_descriptor
-{
-	uint16_t    type;	/* RR type */
-	const char *name;	/* Textual name.  */
-	uint32_t    minimum;	/* Minimum number of RDATAs.  */
-	uint32_t    maximum;	/* Maximum number of RDATAs.  */
-	uint8_t     wireformat[MAXRDATALEN]; /* rdata_wireformat_type */
-	uint8_t     zoneformat[MAXRDATALEN]; /* rdata_zoneformat_type  */
+typedef struct nsd_rdata_descriptor nsd_rdata_descriptor_type;
+
+/*
+ * Descriptor table. For DNS RRTypes has information on the resource record
+ * type. the descriptor table shouldn't be used for validation.
+ * the read function will take care of that. it's used for
+ * implementing copy functions that are very specific, but where
+ * the data has already been checked for validity.
+ */
+struct nsd_rdata_descriptor {
+	/* Field name of the rdata, like 'primary server'. */
+	const char *name;
+
+	/* If the field is optional. When the field is not present, eg. no
+	 * bytes of rdata, and it is optional, this is fine and the rdata
+	 * is shorter. Also no following rdatas after it. Non optional
+	 * rdatas must be present. */
+	int is_optional;
+
+	/* The length, in bytes, of the rdata field. Can be set to
+	 * a specialized value, like RDATA_COMPRESSED_DNAME,
+	 * RDATA_STRING, ..., if there is a length function, that is used.
+	 * That is for any type where the length depends on a value in
+	 * the rdata itself. */
+	int32_t length;
+
+	/* Determine size of rdata field. Returns the size of uncompressed
+	 * rdata on the wire, or -1 on failure, like when it is malformed.
+	 * So for references this is a different number. Used for ipseckey
+	 * gateway, because the type depends on earlier data. Also amtrelay
+	 * relay. This function takes the in-memory rdata representation.
+	 * If the field has a special object, return -1 on failure or the
+	 * length of the object in the rdata, with domain ptr returned to
+	 * the special object. */
+	nsd_rdata_field_length_type calculate_length;
+
+	/* Determine size of rdata field. Like calculate_length, but this
+	 * function takes uncompressed wireformat in the rdata that is passed.
+	 */
+	nsd_rdata_field_length_type calculate_length_uncompressed_wire;
 };
-typedef struct rrtype_descriptor rrtype_descriptor_type;
+
+typedef struct nsd_type_descriptor nsd_type_descriptor_type;
+struct nsd_type_descriptor;
+
+/* The rdata is malformed. The wireformat is not correct.
+ * NSD cannot store a wireformat with a malformed domain name, when that
+ * name needs to become a reference to struct domain. */
+#define MALFORMED -1
+/* The rdata is not read, it is truncated, some was copied, but then
+ * an error occurred, like memory allocation failure. */
+#define TRUNCATED -2
+
+/*
+ * Function signature to read rdata. From a packet into memory.
+ * @param domains: the domain table.
+ * @param rdlength: the length of the rdata in the packet.
+ * @param packet: the packet.
+ * @param rr: an RR is returned.
+ * @return the number of bytes that are read from the packet. Or negative
+ *	for an error, like MALFORMED, TRUNCATED.
+ */
+typedef int32_t(*nsd_read_rdata_type)(
+	struct domain_table *domains,
+	uint16_t rdlength,
+	struct buffer *packet,
+	struct rr **rr);
+
+/*
+ * Function signature to write rdata. From memory to an answer.
+ * @param query: the query that is answered.
+ * @param rr: rr to add to the output, in query.packet. It prints the rdata
+ *	wireformat to the packet, compressed if needed, not including the
+ *	rdlength before the rdata.
+ */
+typedef void(*nsd_write_rdata_type)(
+	struct query *query,
+	const struct rr *rr);
+
+/*
+ * Function signature to print rdata. The string is in the buffer.
+ * The printed string starts with the rdata text. It does not have a newline
+ * at end. No space is put before it.
+ * @param output: buffer with string on return. The position is moved.
+ * @param rr: the record to print the rdata for.
+ * @return false on failure. The wireformat can not be printed in the
+ *	nice output format.
+ */
+typedef int(*nsd_print_rdata_type)(
+	struct buffer *output,
+	const struct rr *rr);
+
+/*
+ * Descriptor for a DNS resource record type.
+ * There are conversion routines per type, for wire-to-internal,
+ * internal-to-wire, and internal-to-text. To stop an explosion in code,
+ * there is an rdata field descriptor array to convert between more formats.
+ * For internal to compressed wire format we implement a specialized routine so
+ * that answering of queries is as optimal as can be.
+ * Other formats are conversion from uncompressed wire format to compressed
+ * wire format. For conversion from uncompressed or compressed wire format
+ * to internal the same import routines can be used, by using a packet buffer
+ * and dname_make_from_packet.
+ */
+struct nsd_type_descriptor {
+	/* The RRType number */
+	uint16_t type;
+	/* Mnemonic. */
+	const char *name;
+	/* Whether internal RDATA contains direct pointers.
+	 * This means the namedb memory contains an in line pointer to
+	 * struct domain for domain names. */
+	int has_references;
+	/* Whether RDATA contains compressible names. The output can be
+	 * compressed on the packet. If true, also has_references is true,
+	 * for the packet encode routine, that uses the references. */
+	int is_compressible;
+	/* The type has domain names, like literal dnames in the format. */
+	int has_dnames;
+	/* Read function that copies rdata for this type to struct rr. */
+	nsd_read_rdata_type read_rdata;
+	/* Write function, that copies rdata from struct rr to packet. */
+	nsd_write_rdata_type write_rdata;
+	/* Print function, that writes the struct rr to string. */
+	nsd_print_rdata_type print_rdata;
+	/* Description of the rdata fields. Used by functions that need
+	 * to iterate over the fields. There are binary fields and
+	 * references, and wireformat domain names. */
+	struct {
+		/* Length of the fields array. */
+		size_t length;
+		/* The rdata field descriptors. */
+		const nsd_rdata_descriptor_type *fields;
+	} rdata;
+};
+
+/* The length of the RRTYPE descriptors arrary */
+#define RRTYPE_DESCRIPTORS_LENGTH  (TYPE_IPN + 2)
 
 /*
  * Indexed by type.  The special type "0" can be used to get a
  * descriptor for unknown types (with one binary rdata).
- *
- * CLA + 1
  */
-#define RRTYPE_DESCRIPTORS_LENGTH  (TYPE_IPN + 1)
-rrtype_descriptor_type *rrtype_descriptor_by_name(const char *name);
-rrtype_descriptor_type *rrtype_descriptor_by_type(uint16_t type);
+static inline const nsd_type_descriptor_type *nsd_type_descriptor(
+	uint16_t rrtype);
 
 const char *rrtype_to_string(uint16_t rrtype);
 
@@ -317,5 +421,20 @@ uint16_t rrtype_from_string(const char *name);
 
 const char *rrclass_to_string(uint16_t rrclass);
 uint16_t rrclass_from_string(const char *name);
+
+/* The type descriptors array of length RRTYPE_DESCRIPTORS_LENGTH. */
+extern const nsd_type_descriptor_type type_descriptors[];
+
+static inline const nsd_type_descriptor_type *
+nsd_type_descriptor(uint16_t rrtype)
+{
+	if (rrtype <= TYPE_IPN)
+		return &type_descriptors[rrtype];
+	if (rrtype == TYPE_TA)
+		return &type_descriptors[TYPE_IPN + 1];
+	if (rrtype == TYPE_DLV)
+		return &type_descriptors[TYPE_IPN + 2];
+	return &type_descriptors[0];
+}
 
 #endif /* DNS_H */

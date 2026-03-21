@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Sep  3, 2025" "NLnet Labs" "nsd 4.13.0"
+.TH "nsd.conf" "5" "Mar 19, 2026" "NLnet Labs" "nsd 4.14.2"
 .\" Copyright (c) 2001\-2024, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -104,16 +104,19 @@ clause. There may only be one
 .B server:
 clause.
 .TP
-.B ip\-address:\fR <ip4 or ip6>[@port] [servers] [bindtodevice] [setfib]
+.B ip\-address:\fR <ip4 or ip6 or interface\-name>[@port] [servers] [bindtodevice] [setfib]
 NSD will bind to the listed ip\-address. Can be given multiple times
 to bind multiple ip\-addresses. Optionally, a port number can be given.
 If none are given NSD listens to the wildcard interface. Same as command-line option
 .BR \-a.
 .sp
 To limit which NSD server(s) listen on the given interface, specify one or
-more servers separated by whitespace after <ip>[@port]. Ranges can be used as
+more servers separated by whitespace after <ip>[@port].
+The NSD server has number 1 to server\-count processes to serve queries.
+This specifies the server processes by number that handle the ip\-address.
+Ranges can be used as
 a shorthand to specify multiple consecutive servers. By default every server
-will listen.
+will listen and handle traffic for this.
 .sp
 If an interface name is used instead of ip4 or ip6, the list of IP addresses
 associated with that interface is picked up and used at server start.
@@ -125,8 +128,19 @@ address of 0.0.0.0 then the kernel picks an ip-address with which to
 send to the internet, and it picks the wrong one.  Typically needed for
 anycast instances.  Use ip-transparent to be able to list addresses that
 turn on later (typical for certain load-balancing).
+.sp
+The bindtodevice option looks for the device for the address, and then
+uses SO_BINDTODEVICE to bind the socket to the device. This is used as a
+performance optimisation. And it allows the network socket to connect
+directly to the network device. This speeds up the network stack processing.
+The socket only processes packets received from that interface.
+.sp
+The setfib option uses the SO_SETFIB socket option so that the fib from
+getaddrinfo for the address is set on the socket. This associates the FIB,
+the routing table, from the interface for the socket. That bypasses the
+routing selection for traffic. It is used as a performance optimisation.
 .TP
-.B interface:\fR <ip4 or ip6>[@port] [servers] [bindtodevice] [setfib]
+.B interface:\fR <ip4 or ip6 or interface\-name>[@port] [servers] [bindtodevice] [setfib]
 Same as ip\-address (for ease of compatibility with unbound.conf).
 .TP
 .B ip\-transparent:\fR <yes or no>
@@ -263,6 +277,14 @@ address path MTU problem.
 Note that not all platform supports socket option to set MSS (TCP_MAXSEG).
 Default is system default MSS determined by interface MTU and
 negotiation between NSD and other servers.
+.TP
+.B tcp\-listen\-queue:\fR <number>
+Set the TCP backlog for listening sockets. This allows more pending
+connections with their connection established waiting for TCP service.
+Higher is better for more connections coming in at the same time.
+High values also protect more against flooding and some side-channel issues.
+Default is -1 on BSDs and Linux, and 256 on other systems. The -1 selects
+the largest value allowed.
 .TP
 .B xfrd\-tcp\-max:\fR <number>
 Number of sockets for xfrd to use for outgoing zone transfers. Default 128.
@@ -894,6 +916,10 @@ The string is processed so that one string can be used (in a pattern)
 for a lot of different zones.  If the label or character does not exist the
 percent-character is replaced with a period for output (i.e. for the
 third character in a two letter domain name).
+The '/' slash character is escaped as "\\047" when it is inside the '%s'
+string.
+Directories are created as necessary, when the directory is specified
+as part of the zonefile string. Useful for "%1/%2/%s.zone" or so.
 .sp
 .B %s\fR is replaced with the zone name.
 .sp

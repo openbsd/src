@@ -137,7 +137,6 @@ struct xfrd_soa {
 	uint16_t type; /* = TYPE_SOA */
 	uint16_t klass; /* = CLASS_IN */
 	uint32_t ttl;
-	uint16_t rdata_count; /* = 7 */
 	/* format is 1 octet length, + wireformat dname.
 	   one more octet since parse_dname_wire_from_packet needs it.
 	   maximum size is allocated to avoid memory alloc/free. */

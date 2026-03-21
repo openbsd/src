@@ -26,44 +26,6 @@
 /* pathname directory separator character */
 #define PATHSEP '/'
 
-/** add an rdata (uncompressed) to the destination */
-static size_t
-add_rdata(rr_type* rr, unsigned i, uint8_t* buf, size_t buflen)
-{
-	switch(rdata_atom_wireformat_type(rr->type, i)) {
-		case RDATA_WF_COMPRESSED_DNAME:
-		case RDATA_WF_UNCOMPRESSED_DNAME:
-		{
-			const dname_type* dname = domain_dname(
-				rdata_atom_domain(rr->rdatas[i]));
-			if(dname->name_size > buflen)
-				return 0;
-			memmove(buf, dname_name(dname), dname->name_size);
-			return dname->name_size;
-		}
-		default:
-			break;
-	}
-	if(rdata_atom_size(rr->rdatas[i]) > buflen)
-		return 0;
-	memmove(buf, rdata_atom_data(rr->rdatas[i]),
-		rdata_atom_size(rr->rdatas[i]));
-	return rdata_atom_size(rr->rdatas[i]);
-}
-
-/* marshal rdata into buffer, must be MAX_RDLENGTH in size */
-size_t
-rr_marshal_rdata(rr_type* rr, uint8_t* rdata, size_t sz)
-{
-	size_t len = 0;
-	unsigned i;
-	assert(rr);
-	for(i=0; i<rr->rdata_count; i++) {
-		len += add_rdata(rr, i, rdata+len, sz-len);
-	}
-	return len;
-}
-
 int
 print_rrs(FILE* out, struct zone* zone)
 {
@@ -77,7 +39,7 @@ print_rrs(FILE* out, struct zone* zone)
 	if(zone->soa_rrset) {
 		size_t i;
 		for(i=0; i < zone->soa_rrset->rr_count; i++) {
-			if(!print_rr(out, state, &zone->soa_rrset->rrs[i],
+			if(!print_rr(out, state, zone->soa_rrset->rrs[i],
 				rr_region, rr_buffer)){
 				log_msg(LOG_ERR, "There was an error "
 				   "printing SOARR to zone %s",
@@ -97,7 +59,7 @@ print_rrs(FILE* out, struct zone* zone)
 			if(rrset->zone != zone || rrset == zone->soa_rrset)
 				continue;
 			for(i=0; i < rrset->rr_count; i++) {
-				if(!print_rr(out, state, &rrset->rrs[i],
+				if(!print_rr(out, state, rrset->rrs[i],
 					rr_region, rr_buffer)){
 					log_msg(LOG_ERR, "There was an error "
 					   "printing RR to zone %s",

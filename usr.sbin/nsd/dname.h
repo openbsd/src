@@ -403,4 +403,49 @@ int dname_equal_nocase(uint8_t* a, uint8_t* b, uint16_t len);
 int is_dname_subdomain_of_case(const uint8_t* d, unsigned int len,
 	const uint8_t* d2, unsigned int len2);
 
+/*
+ * Calculate length of dname in uncompressed wireformat in buffer.
+ * @param buf: The buffer with the uncompressed dname.
+ * @param len: length of the buffer.
+ * @return 0 on error, otherwise the uncompressed wireformat dname
+ *	length is returned.
+ */
+size_t buf_dname_length(const uint8_t* buf, size_t len);
+
+/* This structure is sufficient in size for a struct dname. It can
+ * be cast to a struct dname*, since it has the same data. */
+struct dname_buffer {
+	struct dname dname;
+	/* storage for labelcount, and for the wireformat name.
+	 * The labelcount can be 1 byte per label, maxlen/2 + 1(root label).
+	 * The wireformat name, MAXDOMAINLEN+1.
+	 * This allocates storage for it, due to alignment, the struct
+	 * dname may have padding. The content is stored after the
+	 * sizeof(struct dname), with label_offsets and name. */
+	uint8_t storage[MAXDOMAINLEN/2 + 1 + MAXDOMAINLEN+1 ];
+};
+
+/*
+ * Make the dname and label offsets.
+ * @param dname: the buffer with size. The result is in here, at the
+ *	start of the allocated size. The input is also buffered temporarily
+ *	in here.
+ * @param name: input name, points into the buffer space of dname.
+ * @param normalize: if the dname has to be normalized.
+ * @return 0 on failure.
+ */
+int dname_make_buffered(struct dname_buffer* dname, uint8_t *name,
+	int normalize);
+
+/*
+ * Parse a domain name from packet and store it in the buffer.
+ * @param dname: the buffer with sufficient size for the dname.
+ * @param packet: packet, at the position of the dname. The position is moved.
+ * @param allow_pointers: set to true if compression pointers are allowed.
+ * @param normalize: set to true if the domain name has to be normalized.
+ * @return 0 on failure, or name_length when done.
+ */
+int dname_make_from_packet_buffered(struct dname_buffer* dname,
+	buffer_type *packet, int allow_pointers, int normalize);
+
 #endif /* DNAME_H */

@@ -103,6 +103,7 @@ struct nsd_options {
 	int tcp_timeout;
 	int tcp_mss;
 	int outgoing_tcp_mss;
+	int tcp_listen_queue;
 	size_t ipv4_edns_size;
 	size_t ipv6_edns_size;
 	const char* pidfile;

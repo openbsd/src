@@ -4,7 +4,7 @@
 [![Coverity Scan Status](https://scan.coverity.com/projects/18867/badge.svg)](https://scan.coverity.com/projects/nlnetlabs-nsd)
 [![Packaging status](https://repology.org/badge/tiny-repos/nsd.svg)](https://repology.org/project/nsd/versions)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1462/badge)](https://bestpractices.coreinfrastructure.org/projects/1462)
-[![Mastodon Follow](https://img.shields.io/mastodon/follow/109262826617293067?domain=https%3A%2F%2Ffosstodon.org&style=social)](https://fosstodon.org/@nlnetlabs)
+[![Mastodon Follow](https://img.shields.io/mastodon/follow/114692612288811644?domain=social.nlnetlabs.nl&style=social)](https://social.nlnetlabs.nl/@nlnetlabs)
 
 The NLnet Labs Name Server Daemon (NSD) is an authoritative DNS name server.
 It has been developed for operations in environments where speed,

@@ -26,7 +26,7 @@ const dname_type *
 dname_make(region_type *region, const uint8_t *name, int normalize)
 {
 	size_t name_size = 0;
-	uint8_t label_offsets[MAXDOMAINLEN];
+	uint8_t label_offsets[MAXDOMAINLEN/2+1];
 	uint8_t label_count = 0;
 	const uint8_t *label = name;
 	dname_type *result;
@@ -42,16 +42,13 @@ dname_make(region_type *region, const uint8_t *name, int normalize)
 		++label_count;
 		name_size += label_length(label) + 1;
 
-		if (label_is_root(label))
-			break;
 		if (name_size > MAXDOMAINLEN)
 			return NULL;
+		if (label_is_root(label))
+			break;
 
 		label = label_next(label);
 	}
-
-	if (name_size > MAXDOMAINLEN)
-		return NULL;
 
 	assert(label_count <= MAXDOMAINLEN / 2 + 1);
 
@@ -619,4 +616,103 @@ is_dname_subdomain_of_case(const uint8_t* d, unsigned int len,
 
 	/* The trailing portion is not at a label point. */
 	return 0;
+}
+
+size_t
+buf_dname_length(const uint8_t* buf, size_t len)
+{
+	size_t l = 0;
+	if(!buf || len == 0)
+		return l;
+	while(len > 0 && buf[0] != 0) {
+		size_t lablen = (size_t)(buf[0]);
+		if( (lablen&0xc0) )
+			return 0; /* the name should be uncompressed */
+		if(lablen+1 > len)
+			return 0; /* should fit in the buffer */
+		l += lablen+1;
+		len -= lablen+1;
+		buf += lablen+1;
+		if(l > MAXDOMAINLEN)
+			return 0;
+	}
+	if(len == 0)
+		return 0; /* end label should fit in buffer */
+	if(buf[0] != 0)
+		return 0; /* must end in root label */
+	l += 1; /* for the end root label */
+	if(l > MAXDOMAINLEN)
+		return 0;
+	return l;
+}
+
+int
+dname_make_buffered(struct dname_buffer* dname, uint8_t *name, int normalize)
+{
+	size_t name_size = 0;
+	uint8_t label_offsets[MAXDOMAINLEN/2+1];
+	uint8_t label_count = 0;
+	const uint8_t *label = name;
+	ssize_t i;
+
+	assert(name);
+
+	while (1) {
+		if(!label_is_normal(label))
+			return 0;
+
+		label_offsets[label_count] = (uint8_t) (label - name);
+		++label_count;
+		name_size += label_length(label) + 1;
+
+		if (name_size > MAXDOMAINLEN)
+			return 0;
+		if (label_is_root(label))
+			break;
+
+		label = label_next(label);
+	}
+
+	assert(label_count <= MAXDOMAINLEN / 2 + 1);
+
+	/* Reverse label offsets.  */
+	for (i = 0; i < label_count / 2; ++i) {
+		uint8_t tmp = label_offsets[i];
+		label_offsets[i] = label_offsets[label_count - i - 1];
+		label_offsets[label_count - i - 1] = tmp;
+	}
+
+	/* Move the name to the correct part of the result */
+	memmove( ((char*)dname)+sizeof(struct dname)+
+		label_count*sizeof(uint8_t), name, name_size);
+	dname->dname.name_size = name_size;
+	dname->dname.label_count = label_count;
+	memcpy((uint8_t *) dname_label_offsets((void*)dname),
+		label_offsets, label_count * sizeof(uint8_t));
+	if (normalize) {
+		uint8_t *src = (uint8_t *) dname_name((void*)dname);
+		while (!label_is_root(src)) {
+			ssize_t len = label_length(src);
+			src++;
+			for (i = 0; i < len; ++i) {
+				*src = DNAME_NORMALIZE((unsigned char)*src);
+				src++;
+			}
+		}
+	}
+	return 1;
+}
+
+int
+dname_make_from_packet_buffered(struct dname_buffer* dname,
+	buffer_type *packet, int allow_pointers, int normalize)
+{
+	int wirelen = dname_make_wire_from_packet(dname->storage,
+		packet, allow_pointers);
+	if(wirelen == 0)
+		return 0;
+	if(!dname_make_buffered(dname, dname->storage, normalize))
+		return 0;
+	assert(wirelen == dname->dname.name_size);
+	return wirelen;
 }
