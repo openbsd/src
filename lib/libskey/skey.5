@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.5,v 1.9 2020/10/24 10:33:44 jmc Exp $
+.\" $OpenBSD: skey.5,v 1.10 2026/03/22 15:17:09 millert Exp $
 .\"
 .\" Copyright (c) 2002 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: October 24 2020 $
+.Dd $Mdocdate: March 22 2026 $
 .Dt SKEY 5
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ one of md5, sha1, or rmd160.
 The default is md5.
 .It
 The sequence number.
-This is a decimal number between one and one thousand.
+This is a decimal number between one and ten thousand.
 Each time the user authenticates via S/Key this number is decremented by one.
 .It
 A seed used along with the sequence number and the six S/Key words to
