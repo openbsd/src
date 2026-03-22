@@ -1,4 +1,4 @@
-.\"	$OpenBSD: python-module.5,v 1.23 2026/02/06 13:54:52 sthen Exp $
+.\"	$OpenBSD: python-module.5,v 1.24 2026/03/22 13:56:06 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 6 2026 $
+.Dd $Mdocdate: March 22 2026 $
 .Dt PYTHON-MODULE 5
 .Os
 .Sh NAME
@@ -104,6 +104,14 @@ to the name of the build backend.
 If the port provides a
 .Pa pyproject.toml
 file, check the "build-backend" line in the [build-system] section.
+If no
+.Pa pyproject.toml
+is provided then it most likely uses setuptools.
+Checks for some common
+.Ev MODPY_PYBUILD
+misconfigurations are performed during build and, if found, warnings are
+displayed after fake-install.
+.Pp
 .Nm
 currently supports
 flit,
@@ -131,13 +139,7 @@ can be set to
 .Sq other
 to use the PEP 517 build mechanism without adding a dependency
 for a backend.
-If no
-.Pa pyproject.toml
-is provided then it most likely uses setuptools.
-.Nm
-performs some checks and warns about some incorrect
-.Ev MODPY_PYBUILD
-settings after fake-install.
+.Pp
 Setting
 .Ev MODPY_PYBUILD
 adds the backend to
@@ -149,9 +151,12 @@ The build is run in
 defaulting to
 .Ev WRKSRC .
 .Pp
-Some checks are done to warn during "make fake" if
-.Ev MODPY_PYBUILD
-appears to be set incorrectly.
+If using the maturin backend, it is usually necessary to set
+.Ev MODCARGO_CARGOTOML
+to the file specified by
+.Ev manifest-path
+in
+.Pa pyproject.toml .
 .Pp
 Python 2 ports using setuptools set
 .Ev MODPY_SETUPTOOLS
