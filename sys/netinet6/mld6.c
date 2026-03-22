@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.73 2026/02/26 00:53:18 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.74 2026/03/22 23:14:00 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
 static struct ip6_pktopts ip6_opts;
 int	mld6_timers_are_running;	/* [a] shortcut for fast timer */
 
-int mld6_checktimer(struct ifnet *);
+int mld6_checktimer(struct ifnet *, struct mld6_pktlist *);
 
 void
 mld6_init(void)
@@ -118,6 +118,8 @@ mld6_start_listening(struct in6_multi *in6m, struct ifnet *ifp,
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 	int running = 0;
 
+	rw_assert_wrlock(&ifp->if_maddrlock);
+
 	/*
 	 * RFC2710 page 10:
 	 * The node never sends a Report or Done for the link-scope all-nodes
@@ -129,16 +131,16 @@ mld6_start_listening(struct in6_multi *in6m, struct ifnet *ifp,
 	if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &all_nodes) ||
 	    __IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
 	    __IPV6_ADDR_SCOPE_LINKLOCAL) {
-		in6m->in6m_timer = 0;
 		in6m->in6m_state = MLD_OTHERLISTENER;
+		in6m->in6m_timer = 0;
 	} else {
+		in6m->in6m_state = MLD_IREPORTEDLAST;
+		in6m->in6m_timer =
+		    MLD_RANDOM_DELAY(MLD_V1_MAX_RI * PR_FASTHZ);
 		pkt->mpi_addr = in6m->in6m_addr;
 		pkt->mpi_rdomain = ifp->if_rdomain;
 		pkt->mpi_ifidx = in6m->in6m_ifidx;
 		pkt->mpi_type = MLD_LISTENER_REPORT;
-		in6m->in6m_timer =
-		    MLD_RANDOM_DELAY(MLD_V1_MAX_RI * PR_FASTHZ);
-		in6m->in6m_state = MLD_IREPORTEDLAST;
 		running = 1;
 	}
 
@@ -155,6 +157,8 @@ mld6_stop_listening(struct in6_multi *in6m, struct ifnet *ifp,
 	/* XXX: These are necessary for KAME's link-local hack */
 	struct in6_addr all_nodes = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 	struct in6_addr all_routers = IN6ADDR_LINKLOCAL_ALLROUTERS_INIT;
+
+	rw_assert_anylock(&ifp->if_maddrlock);
 
 	all_nodes.s6_addr16[1] = htons(in6m->in6m_ifidx);
 	/* XXX: necessary when mrouting */
@@ -228,7 +232,9 @@ mld6_input(struct mbuf *m, int off)
 	 * if we sent the last report.
 	 */
 	switch(mldh->mld_type) {
-	case MLD_LISTENER_QUERY:
+	case MLD_LISTENER_QUERY: {
+		struct mld6_pktlist pktlist;
+
 		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
 
@@ -261,6 +267,8 @@ mld6_input(struct mbuf *m, int off)
 			timer = 1;
 		all_nodes.s6_addr16[1] = htons(ifp->if_index);
 
+		rw_enter_write(&ifp->if_maddrlock);
+		STAILQ_INIT(&pktlist);
 		TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 			if (ifma->ifma_addr->sa_family != AF_INET6)
 				continue;
@@ -276,15 +284,20 @@ mld6_input(struct mbuf *m, int off)
 			{
 				if (timer == 0) {
 					/* send a report immediately */
-					struct mld6_pktinfo pkt;
+					struct mld6_pktinfo *pkt;
 
-					pkt.mpi_addr = in6m->in6m_addr;
-					pkt.mpi_rdomain = ifp->if_rdomain;
-					pkt.mpi_ifidx = in6m->in6m_ifidx;
-					pkt.mpi_type = MLD_LISTENER_REPORT;
-					mld6_sendpkt(&pkt);
-					in6m->in6m_timer = 0; /* reset timer */
 					in6m->in6m_state = MLD_IREPORTEDLAST;
+					in6m->in6m_timer = 0; /* reset timer */
+					pkt = malloc(sizeof(*pkt), M_MRTABLE,
+					    M_NOWAIT);
+					if (pkt == NULL)
+						continue;
+					pkt->mpi_addr = in6m->in6m_addr;
+					pkt->mpi_rdomain = ifp->if_rdomain;
+					pkt->mpi_ifidx = in6m->in6m_ifidx;
+					pkt->mpi_type = MLD_LISTENER_REPORT;
+					STAILQ_INSERT_TAIL(&pktlist, pkt,
+					    mpi_list);
 				} else if (in6m->in6m_timer == 0 || /* idle */
 					in6m->in6m_timer > timer) {
 					in6m->in6m_timer =
@@ -293,10 +306,21 @@ mld6_input(struct mbuf *m, int off)
 				}
 			}
 		}
+		rw_exit_write(&ifp->if_maddrlock);
+
+		while (!STAILQ_EMPTY(&pktlist)) {
+			struct mld6_pktinfo *pkt;
+
+			pkt = STAILQ_FIRST(&pktlist);
+			STAILQ_REMOVE_HEAD(&pktlist, mpi_list);
+			mld6_sendpkt(pkt);
+			free(pkt, M_MRTABLE, sizeof(*pkt));
+		}
 
 		if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld_addr))
 			mldh->mld_addr.s6_addr16[1] = 0; /* XXX */
 		break;
+	}
 	case MLD_LISTENER_REPORT:
 		/*
 		 * For fast leave to work, we have to know that we are the
@@ -320,11 +344,13 @@ mld6_input(struct mbuf *m, int off)
 		 * If we belong to the group being reported, stop
 		 * our timer for that group.
 		 */
+		rw_enter_write(&ifp->if_maddrlock);
 		in6m = in6_lookupmulti(&mldh->mld_addr, ifp);
 		if (in6m) {
-			in6m->in6m_timer = 0; /* transit to idle state */
 			in6m->in6m_state = MLD_OTHERLISTENER; /* clear flag */
+			in6m->in6m_timer = 0; /* transit to idle state */
 		}
+		rw_exit_write(&ifp->if_maddrlock);
 
 		if (IN6_IS_ADDR_MC_LINKLOCAL(&mldh->mld_addr))
 			mldh->mld_addr.s6_addr16[1] = 0; /* XXX */
@@ -353,6 +379,7 @@ mld6_input(struct mbuf *m, int off)
 void
 mld6_fasttimo(void)
 {
+	struct mld6_pktlist pktlist;
 	struct ifnet *ifp;
 	int running = 0;
 
@@ -367,30 +394,37 @@ mld6_fasttimo(void)
 		return;
 	membar_consumer();
 
-	NET_LOCK();
+	NET_LOCK_SHARED();
 
+	STAILQ_INIT(&pktlist);
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
-		if (mld6_checktimer(ifp))
+		if (mld6_checktimer(ifp, &pktlist))
 			running = 1;
 	}
 
 	membar_producer();
 	atomic_store_int(&mld6_timers_are_running, running);
 
-	NET_UNLOCK();
+	while (!STAILQ_EMPTY(&pktlist)) {
+		struct mld6_pktinfo *pkt;
+
+		pkt = STAILQ_FIRST(&pktlist);
+		STAILQ_REMOVE_HEAD(&pktlist, mpi_list);
+		mld6_sendpkt(pkt);
+		free(pkt, M_MRTABLE, sizeof(*pkt));
+	}
+
+	NET_UNLOCK_SHARED();
 }
 
 int
-mld6_checktimer(struct ifnet *ifp)
+mld6_checktimer(struct ifnet *ifp, struct mld6_pktlist *pktlist)
 {
 	struct in6_multi *in6m;
 	struct ifmaddr *ifma;
-	struct mld6_pktlist pktlist;
 	int running = 0;
 
-	NET_ASSERT_LOCKED();
-
-	STAILQ_INIT(&pktlist);
+	rw_enter_write(&ifp->if_maddrlock);
 	TAILQ_FOREACH(ifma, &ifp->if_maddrlist, ifma_list) {
 		if (ifma->ifma_addr->sa_family != AF_INET6)
 			continue;
@@ -408,20 +442,12 @@ mld6_checktimer(struct ifnet *ifp)
 			pkt->mpi_rdomain = ifp->if_rdomain;
 			pkt->mpi_ifidx = in6m->in6m_ifidx;
 			pkt->mpi_type = MLD_LISTENER_REPORT;
-			STAILQ_INSERT_TAIL(&pktlist, pkt, mpi_list);
+			STAILQ_INSERT_TAIL(pktlist, pkt, mpi_list);
 		} else {
 			running = 1;
 		}
 	}
-
-	while (!STAILQ_EMPTY(&pktlist)) {
-		struct mld6_pktinfo *pkt;
- 
-		pkt = STAILQ_FIRST(&pktlist);
-		STAILQ_REMOVE_HEAD(&pktlist, mpi_list);
-		mld6_sendpkt(pkt);
-		free(pkt, M_MRTABLE, sizeof(*pkt));
-	}
+	rw_exit_write(&ifp->if_maddrlock);
 
 	return (running);
 }
