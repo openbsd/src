@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.73 2025/02/05 20:32:56 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.74 2026/03/22 05:07:06 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -160,12 +160,6 @@ int main(int argc, char *argv[])
 	awk_mb_cur_max = MB_CUR_MAX;
 	cmdname = __progname;
 
-	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1) {
-		fprintf(stderr, "%s: pledge: incorrect arguments\n",
-		    cmdname);
-		exit(1);
-	}
-
 	if (argc == 1) {
 		fprintf(stderr, "usage: %s [-safe] [-V] [-d[n]] "
 		    "[-f fs | --csv] [-v var=value]\n"
@@ -247,7 +241,23 @@ int main(int argc, char *argv[])
 	}
 
 	if (safe) {
-		if (pledge("stdio rpath", NULL) == -1) {
+		if (unveil("/", "r") == -1) {
+			fprintf(stderr, "%s: unveil: / r\n",
+			    cmdname);
+			exit(1);
+		}
+		if (unveil("/dev/null", "rw") == -1) {
+			fprintf(stderr, "%s: unveil: /dev/null rw\n",
+			    cmdname);
+			exit(1);
+		}
+		if (pledge("stdio rpath wpath", NULL) == -1) {
+			fprintf(stderr, "%s: pledge: incorrect arguments\n",
+			    cmdname);
+			exit(1);
+		}
+	} else {
+		if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1) {
 			fprintf(stderr, "%s: pledge: incorrect arguments\n",
 			    cmdname);
 			exit(1);
