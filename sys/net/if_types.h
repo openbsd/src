@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.24 2022/01/02 22:36:04 jsg Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.25 2026/03/23 08:42:22 jsg Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -175,7 +175,7 @@
 #define	IFT_A12MPPSWITCH	   0x82	/* Avalon Parallel Processor */
 #define	IFT_TUNNEL		   0x83	/* Encapsulation interface */
 #define	IFT_COFFEE		   0x84	/* coffee pot */
-#define	IFT_CES			   0x85	/* Circiut Emulation Service */
+#define	IFT_CES			   0x85	/* Circuit Emulation Service */
 #define	IFT_ATMSUBINTERFACE	   0x86	/* (x)  ATM Sub Interface */
 #define	IFT_L2VLAN		   0x87	/* Layer 2 Virtual LAN using 802.1Q */
 #define	IFT_L3IPVLAN		   0x88	/* Layer 3 Virtual LAN - IP Protocol */
