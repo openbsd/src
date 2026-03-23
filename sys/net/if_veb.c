@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.70 2026/02/05 03:26:00 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.71 2026/03/23 10:31:56 jsg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -234,7 +234,7 @@ struct veb_softc {
 	 * the time.
 	 *
 	 * primary vids are stored in their own sc_pvlans_vp tree.
-	 * there can only be one isolaved vid (Vi) per pvlan, which
+	 * there can only be one isolated vid (Vi) per pvlan, which
 	 * is managed using the v_isolated (v_secondary) id member
 	 * in the primary veb_vplan struct here.
 	 *
