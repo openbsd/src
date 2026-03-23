@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.277 2025/09/02 11:39:13 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.278 2026/03/23 13:12:39 jsg Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ struct llinfo_arp {
 	LIST_ENTRY(llinfo_arp)	 la_list;	/* [m] global arp_list */
 	struct rtentry		*la_rt;		/* [I] backpointer to rtentry */
 	/* keep fields above in sync with struct llinfo_arp_iterator */
-	struct refcnt		 la_refcnt;	/* entry refereced by list */
+	struct refcnt		 la_refcnt;	/* entry referenced by list */
 	struct mbuf_queue	 la_mq;		/* packet hold queue */
 	time_t			 la_refreshed;	/* when was refresh sent */
 	int			 la_asked;	/* number of queries sent */

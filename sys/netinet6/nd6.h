@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.105 2025/09/16 09:19:43 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.106 2026/03/23 13:12:39 jsg Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ struct llinfo_nd6 {
 	TAILQ_ENTRY(llinfo_nd6)	 ln_list;	/* [m] global nd6_list */
 	struct	rtentry		*ln_rt;		/* [I] backpointer to rtentry */
 	/* keep fields above in sync with struct llinfo_nd6_iterator */
-	struct	refcnt		 ln_refcnt;	/* entry refereced by list */
+	struct	refcnt		 ln_refcnt;	/* entry referenced by list */
 	struct	mbuf_queue ln_mq;	/* hold packets until resolved */
 	struct	in6_addr ln_saddr6;	/* source of prompting packet */
 	long	ln_asked;	/* number of queries already sent for addr */
