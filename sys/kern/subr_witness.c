@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.58 2025/12/11 23:34:44 dlg Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.59 2026/03/23 08:37:35 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -996,7 +996,7 @@ witness_checkorder(struct lock_object *lock, int flags,
 				goto reversal;
 
 			/*
-			 * Check the lock order hierarchy for a reveresal.
+			 * Check the lock order hierarchy for a reversal.
 			 */
 			if (!isitmydescendant(w, w1))
 				continue;
