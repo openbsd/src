@@ -1,4 +1,4 @@
-#	$OpenBSD: hostbased.sh,v 1.6 2026/03/23 09:09:36 dtucker Exp $
+#	$OpenBSD: hostbased.sh,v 1.7 2026/03/23 09:53:52 dtucker Exp $
 #	Placed in the Public Domain.
 
 # This test requires external setup and thus is skipped unless
@@ -12,8 +12,8 @@
 #
 # Setting TEST_SSH_HOSTBASED_AUTH to the special value "setupandrun" will,
 # if run with SUDO, perform this setup and run the test.  Note that this will
-# modify the global config to enable HostbasedAuthentication and leave it
-# enabled, so do not do this on a system that matters.
+# MODIFY THE SYSTEM'S GLOBAL CONFIG to enable HostbasedAuthentication and
+# leave it enabled, so do not do this on a system that matters.
 #
 tid="hostbased"
 
@@ -32,8 +32,10 @@ elif [ "${TEST_SSH_HOSTBASED_AUTH}" = "setupandrun" ]; then
 		    $SUDO tee -a $sshconf/ssh_config >/dev/null
 	fi
 	for pubkey in $sshconf/ssh_host*key*.pub; do
-		echo `hostname` `cat $pubkey` | \
-		    $SUDO tee -a $knownhosts >/dev/null
+		line="`hostname` `cat $pubkey`"
+		if ! grep "$line" "$knownhosts" >/dev/null; then
+			echo "$line" | $SUDO tee -a $knownhosts >/dev/null
+		fi
 	done
 fi
 
