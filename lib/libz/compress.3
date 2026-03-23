@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.34 2026/03/19 15:11:47 tb Exp $
+.\"	$OpenBSD: compress.3,v 1.35 2026/03/23 09:11:44 jsg Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -21,7 +21,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd $Mdocdate: March 19 2026 $
+.Dd $Mdocdate: March 23 2026 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -2854,7 +2854,7 @@ return
 and errno will be
 .Dv EAGAIN
 or
-.Dv ENONBLOCK .
+.Dv EWOULDBLOCK .
 The call to
 .Fn gzopen
 with the resulting file descriptor and
