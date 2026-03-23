@@ -1,8 +1,8 @@
-#	$OpenBSD: hostbased.sh,v 1.5 2025/05/06 06:05:48 djm Exp $
+#	$OpenBSD: hostbased.sh,v 1.6 2026/03/23 09:09:36 dtucker Exp $
 #	Placed in the Public Domain.
 
 # This test requires external setup and thus is skipped unless
-# TEST_SSH_HOSTBASED_AUTH and SUDO are set to "yes".
+# TEST_SSH_HOSTBASED_AUTH and SUDO are set.
 # Since ssh-keysign has key paths hard coded, unlike the other tests it
 # needs to use the real host keys. It requires:
 # - ssh-keysign must be installed and setuid.
@@ -10,12 +10,31 @@
 # - the system's own real FQDN the system-wide shosts.equiv.
 # - the system's real public key fingerprints must be in global ssh_known_hosts.
 #
+# Setting TEST_SSH_HOSTBASED_AUTH to the special value "setupandrun" will,
+# if run with SUDO, perform this setup and run the test.  Note that this will
+# modify the global config to enable HostbasedAuthentication and leave it
+# enabled, so do not do this on a system that matters.
+#
 tid="hostbased"
 
 if [ -z "${TEST_SSH_HOSTBASED_AUTH}" ]; then
 	skip "TEST_SSH_HOSTBASED_AUTH not set."
 elif [ -z "${SUDO}" ]; then
 	skip "SUDO not set"
+elif [ "${TEST_SSH_HOSTBASED_AUTH}" = "setupandrun" ]; then
+	verbose "setting up system for hostbased auth"
+	knownhosts=`$SSH -G localhost | \
+	    awk '$1=="globalknownhostsfile" {print $2}'`
+	sshconf=`dirname $knownhosts`
+	hostname | $SUDO tee $sshconf/shosts.equiv >/dev/null
+	if ! grep "^EnableSSHKeysign yes" $sshconf/ssh_config >/dev/null; then
+		echo "EnableSSHKeysign yes" | \
+		    $SUDO tee -a $sshconf/ssh_config >/dev/null
+	fi
+	for pubkey in $sshconf/ssh_host*key*.pub; do
+		echo `hostname` `cat $pubkey` | \
+		    $SUDO tee -a $knownhosts >/dev/null
+	done
 fi
 
 # Enable all supported hostkey algos (but no others)
