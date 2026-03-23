@@ -1,4 +1,4 @@
-/*	$OpenBSD: psignal.c,v 1.10 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: psignal.c,v 1.11 2026/03/23 21:33:43 daniel Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 #include <limits.h>
 
 void
-psignal(unsigned int sig, const char *s)
+psignal(int sig, const char *s)
 {
 	static char buf[NL_TEXTMAX];
 	const char *c;

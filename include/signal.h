@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.26 2018/05/30 13:20:38 bluhm Exp $	*/
+/*	$OpenBSD: signal.h,v 1.27 2026/03/23 21:33:43 daniel Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ int	thrkill(pid_t _tid, int _signum, void *_tcb);
 int	sigwait(const sigset_t *__restrict, int *__restrict);
 #endif
 #if __BSD_VISIBLE ||  __POSIX_VISIBLE >= 200809
-void	psignal(unsigned int, const char *);
+void	psignal(int, const char *);
 #endif
 #endif /* __BSD_VISIBLE || __POSIX_VISIBLE || __XPG_VISIBLE */
 __END_DECLS
