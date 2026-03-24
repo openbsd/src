@@ -1,4 +1,4 @@
-#	$OpenBSD: hostbased.sh,v 1.7 2026/03/23 09:53:52 dtucker Exp $
+#	$OpenBSD: hostbased.sh,v 1.8 2026/03/24 10:21:14 dtucker Exp $
 #	Placed in the Public Domain.
 
 # This test requires external setup and thus is skipped unless
@@ -31,6 +31,7 @@ elif [ "${TEST_SSH_HOSTBASED_AUTH}" = "setupandrun" ]; then
 		echo "EnableSSHKeysign yes" | \
 		    $SUDO tee -a $sshconf/ssh_config >/dev/null
 	fi
+	touch "$knownhosts"
 	for pubkey in $sshconf/ssh_host*key*.pub; do
 		line="`hostname` `cat $pubkey`"
 		if ! grep "$line" "$knownhosts" >/dev/null; then
