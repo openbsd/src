@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.350 2026/03/24 05:38:44 dgl Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.351 2026/03/24 05:48:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -366,6 +366,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_sysarch] = PLEDGE_PROTEXEC,
 };
 
+/* must be sorted by name because of bsearch */
 static const struct {
 	char *name;
 	uint64_t flags;
