@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.47 2025/12/10 09:38:41 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.48 2026/03/24 09:11:56 cludwig Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -606,6 +606,9 @@ dt_ioctl_probe_enable(struct dt_softc *sc, struct dtioc_req *dtrq)
 	struct dt_pcb *dp;
 	int error;
 
+	if (sc->ds_recording)
+		return EBUSY;
+
 	SIMPLEQ_FOREACH(dtp, &dt_probe_list, dtp_next) {
 		if (dtp->dtp_pbn == dtrq->dtrq_pbn)
 			break;
@@ -638,6 +641,9 @@ dt_ioctl_probe_disable(struct dt_softc *sc, struct dtioc_req *dtrq)
 {
 	struct dt_probe *dtp;
 	int error;
+
+	if (sc->ds_recording)
+		return EBUSY;
 
 	SIMPLEQ_FOREACH(dtp, &dt_probe_list, dtp_next) {
 		if (dtp->dtp_pbn == dtrq->dtrq_pbn)
