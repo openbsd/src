@@ -1,4 +1,4 @@
-#	$OpenBSD: hostbased.sh,v 1.8 2026/03/24 10:21:14 dtucker Exp $
+#	$OpenBSD: hostbased.sh,v 1.9 2026/03/24 12:31:35 dtucker Exp $
 #	Placed in the Public Domain.
 
 # This test requires external setup and thus is skipped unless
@@ -26,12 +26,12 @@ elif [ "${TEST_SSH_HOSTBASED_AUTH}" = "setupandrun" ]; then
 	knownhosts=`$SSH -G localhost | \
 	    awk '$1=="globalknownhostsfile" {print $2}'`
 	sshconf=`dirname $knownhosts`
-	hostname | $SUDO tee $sshconf/shosts.equiv >/dev/null
+	hostname >~/.shosts
 	if ! grep "^EnableSSHKeysign yes" $sshconf/ssh_config >/dev/null; then
 		echo "EnableSSHKeysign yes" | \
 		    $SUDO tee -a $sshconf/ssh_config >/dev/null
 	fi
-	touch "$knownhosts"
+	$SUDO touch "$knownhosts"
 	for pubkey in $sshconf/ssh_host*key*.pub; do
 		line="`hostname` `cat $pubkey`"
 		if ! grep "$line" "$knownhosts" >/dev/null; then
@@ -47,6 +47,7 @@ cat >>$OBJ/sshd_proxy <<EOD
 HostbasedAuthentication yes
 HostbasedAcceptedAlgorithms $hostkeyalgos
 HostbasedUsesNameFromPacketOnly yes
+IgnoreRhosts no
 HostKeyAlgorithms $hostkeyalgos
 EOD
 
