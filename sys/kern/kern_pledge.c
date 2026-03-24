@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.349 2026/03/24 01:03:11 dgl Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.350 2026/03/24 05:38:44 dgl Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -688,16 +688,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 			return (0);
 		}
 nozoneinfo:
-		break;
-	case SYS_stat:
-		/* XXX go library stats /etc/hosts, remove this soon */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    (pledge & PLEDGE_DNS)) {
-			if (strcmp(path, "/etc/hosts") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
-		}
 		break;
 	}
 
