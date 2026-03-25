@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.351 2026/03/24 05:48:09 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.352 2026/03/25 05:05:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -760,6 +760,7 @@ pledge_sendfd(struct proc *p, struct file *fp)
 	return pledge_fail(p, EINVAL, PLEDGE_SENDFD);
 }
 
+#ifndef SMALL_KERNEL
 int
 pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 {
@@ -951,6 +952,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 
 	return pledge_fail(p, EINVAL, 0);
 }
+#endif /* SMALL_KERNEL */
 
 int
 pledge_chown(struct proc *p, uid_t uid, gid_t gid)

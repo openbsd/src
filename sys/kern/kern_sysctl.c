@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.485 2026/02/11 22:34:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.486 2026/03/25 05:05:41 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -251,10 +251,12 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 	if (error)
 		return (error);
 
+#ifndef SMALL_KERNEL
 	error = pledge_sysctl(p, SCARG(uap, namelen),
 	    name, SCARG(uap, new));
 	if (error)
 		return (error);
+#endif /* SMALL_KERNEL */
 
 	switch (name[0]) {
 	case CTL_KERN:
