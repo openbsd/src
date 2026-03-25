@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1285 2026/03/25 21:07:46 kn Exp $
+#	$OpenBSD: install.sub,v 1.1286 2026/03/25 21:24:29 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2706,7 +2706,7 @@ start_cgiinfo() {
 #
 # If no /etc/fstab is created, do not proceed with install/upgrade.
 munge_fstab() {
-	local _dev _mp _fstype _opt _rest
+	local _dev _mp _fstype _opt _rest _mode
 
 	while read _dev _mp _fstype _opt _rest; do
 		[[ $_dev == @(/dev/vnd*|\#*) ||
@@ -2715,11 +2715,8 @@ munge_fstab() {
 			$_opt == *noauto* ||
 			$_opt == *xx* ]] && continue
 
-		if [[ $_fstype == ffs ]]; then
-			_opt=$(echo $_opt | sed 's/[[:<:]]ro[[:>:]]/rw/')
-		else
-			_opt=$(echo $_opt | sed 's/[[:<:]]rw[[:>:]]/ro/')
-		fi
+		[[ $_fstype == ffs ]] && _mode=rw || _mode=ro
+		_opt=$(echo $_opt | sed "s,[[:<:]]r[wo][[:>:]],${_mode},")
 
 		echo $_dev /mnt${_mp%/} $_fstype $_opt $_rest
 	done </tmp/i/fstab >/etc/fstab
