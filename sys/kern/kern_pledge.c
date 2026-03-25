@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.352 2026/03/25 05:05:41 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.353 2026/03/25 05:14:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -82,6 +82,7 @@
 uint64_t pledgereq_flags(const char *req);
 int	 parsepledges(struct proc *p, const char *kname,
 	    const char *promises, u_int64_t *fp);
+int	 checkpledgepaths(const char *path);
 void	 unveil_destroy(struct process *ps);
 
 /*
@@ -586,6 +587,60 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 	return (error);
 }
 
+#ifndef SMALL_KERNEL
+
+#define PLEDGEPATH_NULL		1
+#define PLEDGEPATH_TTY		2
+#define PLEDGEPATH_SPWD		3
+#define PLEDGEPATH_PWD		4
+#define PLEDGEPATH_GROUP	5
+#define PLEDGEPATH_NETID	6
+#define PLEDGEPATH_RESOLVCONF	7
+#define PLEDGEPATH_HOSTS	8
+#define PLEDGEPATH_SERVICES	9
+#define PLEDGEPATH_PROTOCOLS	10
+#define PLEDGEPATH_LOCALTIME	11
+#define PLEDGEPATH_ZONEINFO	12	/* manually parsed */
+
+/* must be sorted by name because of bsearch */
+static const struct {
+	char *name;
+	int item;
+} pledgepaths[] = {
+	{ "/dev/null", PLEDGEPATH_NULL },
+	{ "/dev/tty", PLEDGEPATH_TTY },
+	{ "/etc/group", PLEDGEPATH_GROUP },
+	{ "/etc/hosts", PLEDGEPATH_HOSTS },
+	{ "/etc/localtime", PLEDGEPATH_LOCALTIME },
+	{ "/etc/netid", PLEDGEPATH_NETID },
+	{ "/etc/protocols", PLEDGEPATH_PROTOCOLS },
+	{ "/etc/pwd.db", PLEDGEPATH_PWD },
+	{ "/etc/resolv.conf", PLEDGEPATH_RESOLVCONF },
+	{ "/etc/services", PLEDGEPATH_SERVICES },
+	{ "/etc/spwd.db", PLEDGEPATH_SPWD },
+};
+
+/* bsearch over pledgepaths. return item value if found, 0 else */
+int
+checkpledgepaths(const char *path)
+{
+	int base = 0, cmp, i, lim;
+
+	for (lim = nitems(pledgepaths); lim != 0; lim >>= 1) {
+		i = base + (lim >> 1);
+		cmp = strcmp(path, pledgepaths[i].name);
+		if (cmp == 0)
+			return (pledgepaths[i].item);
+		if (cmp > 0) { /* not found before, move right */
+			base = i + 1;
+			lim--;
+		} /* else move left */
+	}
+	return (0);
+}
+
+#endif /* SMALL_KERNEL */
+
 /*
  * Need to make it more obvious that one cannot get through here
  * without the right flags set
@@ -593,113 +648,118 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 int
 pledge_namei(struct proc *p, struct nameidata *ni, char *path)
 {
-	uint64_t pledge;
+	uint64_t ple, nip;
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0 ||
 	    (p->p_p->ps_flags & PS_COREDUMP))
 		return (0);
-	pledge = p->p_pledge;
-
-	if (ni->ni_pledge == 0)
+	ple = p->p_pledge;
+	nip = ni->ni_pledge;
+	if (nip == 0)
 		panic("pledge_namei: ni_pledge");
 
 	/* Doing a permitted execve() */
-	if ((ni->ni_pledge & PLEDGE_EXEC) && (pledge & PLEDGE_EXEC))
+	if ((nip & PLEDGE_EXEC) && (ple & PLEDGE_EXEC))
 		return (0);
 
-	/* Whitelisted paths */
-	switch (p->p_pledge_syscall) {
-	case SYS___pledge_open:
-		if ((ni->ni_unveil & UNVEIL_PLEDGEOPEN) == 0) {
-			printf("SYS___pledge_open != UNVEIL_PLEDGEOPEN ??\n");
-			break;
-		}
-		/* daemon(3) or other such functions */
-		if ((ni->ni_pledge & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
-		    strcmp(path, "/dev/null") == 0) {
-			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-			return (0);
-		}
+	/*
+	 * In specific promise situations, __pledge_open() can open
+	 * specific paths and ignores rpath, wpath, or unveil restrictions.
+	 */
+	if (ni->ni_unveil & UNVEIL_PLEDGEOPEN) {
+#ifdef SMALL_KERNEL
+		/* To save ramdisk space, we trust the libc provided paths */
+		ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+#else
+		int item;
 
-		/* readpassphrase(3), getpass(3) */
-		if ((pledge & PLEDGE_TTY) &&
-		    (ni->ni_pledge & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0 &&
-		    strcmp(path, "/dev/tty") == 0) {
-			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-			return (0);
-		}
-
-		/* getpw* and friends need a few files */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    (pledge & PLEDGE_GETPW)) {
-			if (strcmp(path, "/etc/spwd.db") == 0)
-				return (EPERM); /* don't call pledge_fail */
-			if (strcmp(path, "/etc/pwd.db") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
-			if (strcmp(path, "/etc/group") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
-			if (strcmp(path, "/etc/netid") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
-		}
-
-		/* DNS needs /etc/{resolv.conf,hosts,services,protocols}. */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    (pledge & PLEDGE_DNS)) {
-			if (strcmp(path, "/etc/resolv.conf") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
-			if (strcmp(path, "/etc/hosts") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
-			if (strcmp(path, "/etc/services") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
-			if (strcmp(path, "/etc/protocols") == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
-		}
-
-		/* tzset() needs these. */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
+		item = checkpledgepaths(path);
+		if (item == 0 &&
 		    strncmp(path, "/usr/share/zoneinfo/",
-		    sizeof("/usr/share/zoneinfo/") - 1) == 0)  {
+		    sizeof("/usr/share/zoneinfo/") - 1) == 0) {
 			const char *cp;
 
+			item = PLEDGEPATH_ZONEINFO;
 			for (cp = path + sizeof("/usr/share/zoneinfo/") - 2;
-			    *cp; cp++)
-				if (cp[0] == '/' && cp[1] == '.' && cp[2] == '.' &&
-				    (cp[3] == '/' || cp[3] == '\0'))
-					goto nozoneinfo;
-			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-			return (0);
+			    *cp; cp++) {
+				if (cp[0] == '/' &&
+				    cp[1] == '.' && cp[2] == '.' &&
+				    (cp[3] == '/' || cp[3] == '\0')) {
+					item = 0;	/* bad path */
+					break;
+				}
+			}
 		}
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    strcmp(path, "/etc/localtime") == 0) {
-			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-			return (0);
+
+		switch (item) {
+		case 0:
+			/* Invalid path provided to __pledge_open */
+			return (pledge_fail(p, EACCES, (nip & ~ple)));
+
+		/* "stdio" - for daemon(3) or other such functions */
+		case PLEDGEPATH_NULL:
+			if ((nip & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0)
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+			break;
+
+		/* "tty" - readpassphrase(3), getpass(3) */
+		case PLEDGEPATH_TTY:
+			if ((ple & PLEDGE_TTY) &&
+			    (nip & ~(PLEDGE_RPATH | PLEDGE_WPATH)) == 0)
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+			break;
+
+		/* "getpw" requirements */
+		case PLEDGEPATH_SPWD:
+			/* XXX should remove nip check! */
+			if ((ple & PLEDGE_GETPW) && (nip == PLEDGE_RPATH))
+				return (EPERM);
+			break;
+		case PLEDGEPATH_PWD:
+			/* FALLTHROUGH */
+		case PLEDGEPATH_GROUP:
+			/* FALLTHROUGH */
+		case PLEDGEPATH_NETID:
+			if ((ple & PLEDGE_GETPW) && (nip == PLEDGE_RPATH))
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+			break;
+
+		/* "dns" requirements */
+		case PLEDGEPATH_RESOLVCONF:
+			/* FALLTHROUGH */
+		case PLEDGEPATH_HOSTS:
+			/* FALLTHROUGH */
+		case PLEDGEPATH_SERVICES:
+			/* FALLTHROUGH */
+		case PLEDGEPATH_PROTOCOLS:
+			if ((ple & PLEDGE_DNS) && (nip == PLEDGE_RPATH))
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+			break;
+
+		/* tzset() often happen late in programs */
+		case PLEDGEPATH_LOCALTIME:
+			/* FALLTHROUGH */
+		case PLEDGEPATH_ZONEINFO:
+			if (nip == PLEDGE_RPATH)
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+			break;
+
+		default:
+			panic("pledgepaths table is broken");
 		}
-nozoneinfo:
-		break;
+#endif /* SMALL_KERNEL */
 	}
+	if (ni->ni_cnd.cn_flags & BYPASSUNVEIL)
+		return (0);
 
 	/*
 	 * Ensure each flag of ni_pledge has counterpart allowing it in
 	 * p_pledge.
 	 */
-	if (ni->ni_pledge & ~pledge)
-		return (pledge_fail(p, EPERM, (ni->ni_pledge & ~pledge)));
+	if (nip & ~ple)
+		return (pledge_fail(p, EPERM, (nip & ~ple)));
 
-	/* continue, and check unveil if present */
+	/* continue into namei() which will check unveils */
 	return (0);
 }
 
