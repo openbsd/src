@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.354 2026/03/26 00:55:20 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.355 2026/03/26 05:21:06 dgl Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -241,7 +241,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	 * Path access/creation calls encounter many extensive
 	 * checks done during pledge_namei()
 	 */
-	[SYS_open] = PLEDGE_RPATH | PLEDGE_WPATH | PLEDGE_CPATH,
+	[SYS_open] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS___pledge_open] = PLEDGE_STDIO,
 	[SYS_stat] = PLEDGE_STDIO,
 	[SYS_access] = PLEDGE_STDIO,
