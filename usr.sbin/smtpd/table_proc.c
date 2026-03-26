@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_proc.c,v 1.23 2024/05/28 07:10:30 op Exp $	*/
+/*	$OpenBSD: table_proc.c,v 1.24 2026/03/26 18:43:53 op Exp $	*/
 
 /*
  * Copyright (c) 2024 Omar Polo <op@openbsd.org>
@@ -226,6 +226,10 @@ table_proc_lookup(struct table *table, enum table_service s, const char *k, char
 		req = "check";
 		res = "check-result";
 	}
+
+	/* k cannot contain newlines */
+	if (k[strcspn(k, "\r\n")] != '\0')
+		return (-1);
 
 	table_proc_send(table, req, s, k);
 	r = table_proc_recv(table, res);
