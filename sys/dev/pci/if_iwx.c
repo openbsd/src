@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.224 2026/03/26 12:15:48 kirill Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.225 2026/03/26 15:39:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8431,16 +8431,20 @@ iwx_rs_init_v3(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_VHT;
 		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_vht_rates(sc, ni, 1));
-		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
-		    htole16(iwx_rs_vht_rates(sc, ni, 2));
+		if (iwx_mimo_enabled(sc)) {
+			cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
+			    htole16(iwx_rs_vht_rates(sc, ni, 2));
+		}
 	} else if (ni->ni_flags & IEEE80211_NODE_HT) {
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_HT;
 		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_ht_rates(sc, ni,
 		    IEEE80211_HT_RATESET_SISO));
-		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
-		    htole16(iwx_rs_ht_rates(sc, ni,
-		    IEEE80211_HT_RATESET_MIMO2));
+		if (iwx_mimo_enabled(sc)) {
+			cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
+			    htole16(iwx_rs_ht_rates(sc, ni,
+			    IEEE80211_HT_RATESET_MIMO2));
+		}
 	} else
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_NON_HT;
 
@@ -8506,16 +8510,20 @@ iwx_rs_init_v4(struct iwx_softc *sc, struct iwx_node *in)
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_VHT;
 		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_vht_rates(sc, ni, 1));
-		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
-		    htole16(iwx_rs_vht_rates(sc, ni, 2));
+		if (iwx_mimo_enabled(sc)) {
+			cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
+			    htole16(iwx_rs_vht_rates(sc, ni, 2));
+		}
 	} else if (ni->ni_flags & IEEE80211_NODE_HT) {
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_HT;
 		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_ht_rates(sc, ni,
 		    IEEE80211_HT_RATESET_SISO));
-		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
-		    htole16(iwx_rs_ht_rates(sc, ni,
-		    IEEE80211_HT_RATESET_MIMO2));
+		if (iwx_mimo_enabled(sc)) {
+			cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
+			    htole16(iwx_rs_ht_rates(sc, ni,
+			    IEEE80211_HT_RATESET_MIMO2));
+		}
 	} else
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_NON_HT;
 
