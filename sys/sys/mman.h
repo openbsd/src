@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.35 2022/10/07 14:59:39 deraadt Exp $	*/
+/*	$OpenBSD: mman.h,v 1.36 2026/03/26 21:46:24 daniel Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -142,6 +142,11 @@ typedef __size_t	size_t;
 typedef __off_t		off_t;
 #endif
 
+#ifndef _MODE_T_DEFINED_
+#define _MODE_T_DEFINED_
+typedef __mode_t	mode_t;
+#endif
+
 __BEGIN_DECLS
 void *	mmap(void *, size_t, int, int, int, off_t);
 int	mprotect(void *, size_t, int);
@@ -158,7 +163,7 @@ int	mimmutable(void *, size_t);
 void *	mquery(void *, size_t, int, int, int, off_t);
 #endif
 int	posix_madvise(void *, size_t, int);
-int	shm_open(const char *, int, __mode_t);
+int	shm_open(const char *, int, mode_t);
 int	shm_unlink(const char *);
 int	shm_mkstemp(char *);
 __END_DECLS

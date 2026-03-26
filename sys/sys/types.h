@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.49 2022/08/06 13:31:13 semarie Exp $	*/
+/*	$OpenBSD: types.h,v 1.50 2026/03/26 21:46:24 daniel Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -140,7 +140,6 @@ typedef	__gid_t		gid_t;		/* group id */
 typedef	__id_t		id_t;		/* may contain pid, uid or gid */
 typedef	__ino_t		ino_t;		/* inode number */
 typedef	__key_t		key_t;		/* IPC key (for Sys V IPC) */
-typedef	__mode_t	mode_t;		/* permissions */
 typedef	__nlink_t	nlink_t;	/* link count */
 typedef	__rlim_t	rlim_t;		/* resource limit */
 typedef	__segsz_t	segsz_t;	/* segment size */
@@ -191,6 +190,11 @@ typedef	__timer_t	timer_t;
 #ifndef	_OFF_T_DEFINED_
 #define	_OFF_T_DEFINED_
 typedef	__off_t		off_t;
+#endif
+
+#ifndef	_MODE_T_DEFINED_
+#define	_MODE_T_DEFINED_
+typedef	__mode_t	mode_t;		/* permissions */
 #endif
 
 /*
