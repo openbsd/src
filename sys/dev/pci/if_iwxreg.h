@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.73 2026/03/13 11:11:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.74 2026/03/26 12:15:48 kirill Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -2079,6 +2079,7 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_STA_REMOVE_CMD		0x0c
 #define IWX_SESSION_PROTECTION_NOTIF	0xfb
 #define IWX_MISSED_BEACONS_NOTIF	0xf6
+#define IWX_CHANNEL_SWITCH_START_NOTIF	0xff
 
 /* DATA_PATH group subcommand IDs */
 #define IWX_DQA_ENABLE_CMD	0x00

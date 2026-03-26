@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.223 2026/03/14 15:37:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.224 2026/03/26 12:15:48 kirill Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10991,6 +10991,22 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			if (status == 1 && start == 0 &&
 			    conf_id == IWX_SESSION_PROTECT_CONF_ASSOC)
 				sc->sc_flags &= ~IWX_FLAG_TE_ACTIVE;
+			break;
+		}
+
+		case IWX_WIDE_ID(IWX_MAC_CONF_GROUP,
+		    IWX_CHANNEL_SWITCH_START_NOTIF): {
+			if (sc->sc_ic.ic_opmode != IEEE80211_M_STA ||
+			    sc->sc_ic.ic_state != IEEE80211_S_RUN)
+				break;
+
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: firmware channel switch "
+				    "notification 0x%x\n",
+				    DEVNAME(sc), code);
+
+			if ((sc->sc_flags & IWX_FLAG_SHUTDOWN) == 0)
+				task_add(systq, &sc->init_task);
 			break;
 		}
 
