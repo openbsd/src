@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rkcomphy.4,v 1.2 2023/03/12 20:14:41 jmc Exp $
+.\"	$OpenBSD: rkcomphy.4,v 1.3 2026/03/26 06:12:38 jmatthew Exp $
 .\"
 .\" Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2023 $
+.Dd $Mdocdate: March 26 2026 $
 .Dt RKCOMPHY 4
 .Os
 .Sh NAME
@@ -26,13 +26,14 @@
 The
 .Nm
 driver controls the combo PIPE PHY integrated on Rockchip
-RK3566/RK3568 and RK3588 SoCs.
+RK3528, RK3566/RK3568 and RK3588 SoCs.
 The PHY supports the PCIe 2.0 (2.5 GT/s and 5 GT/s), USB 3.0 (5 Gbps),
 SATA (1.5 Gbit/s, 3 Gbit/s and 6 Gbit/s) and QSGMII (1.25 Gbit/s and 5
 Gbit/s) protocols.
 The
 .Nm
-driver does not implement support for QSGMII.
+driver does not implement support for QSGMII, and on the RK3528 SoC,
+only PCIe is supported.
 .Sh SEE ALSO
 .Xr intro 4
 .Sh HISTORY
