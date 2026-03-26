@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.353 2026/03/25 05:14:10 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.354 2026/03/26 00:55:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -293,10 +293,10 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_chdir] = PLEDGE_RPATH,
 	[SYS_openat] = PLEDGE_RPATH | PLEDGE_WPATH,
-	[SYS_fstatat] = PLEDGE_RPATH | PLEDGE_WPATH,
-	[SYS_faccessat] = PLEDGE_RPATH | PLEDGE_WPATH,
-	[SYS_readlinkat] = PLEDGE_RPATH | PLEDGE_WPATH,
-	[SYS_lstat] = PLEDGE_RPATH | PLEDGE_WPATH,
+	[SYS_fstatat] = PLEDGE_RPATH,
+	[SYS_faccessat] = PLEDGE_RPATH,
+	[SYS_readlinkat] = PLEDGE_RPATH,
+	[SYS_lstat] = PLEDGE_RPATH,
 	[SYS_truncate] = PLEDGE_WPATH,
 	[SYS_rename] = PLEDGE_RPATH | PLEDGE_CPATH,
 	[SYS_rmdir] = PLEDGE_CPATH,
@@ -317,11 +317,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_revoke] = PLEDGE_TTY,	/* also requires PLEDGE_RPATH */
 
-	/*
-	 * Classify as RPATH|WPATH, because of path information leakage.
-	 * WPATH due to unknown use of mk*temp(3) on non-/tmp paths..
-	 */
-	[SYS___getcwd] = PLEDGE_RPATH | PLEDGE_WPATH,
+	[SYS___getcwd] = PLEDGE_RPATH,
 
 	/* Classify as RPATH, because these leak path information */
 	[SYS_getdents] = PLEDGE_RPATH,
