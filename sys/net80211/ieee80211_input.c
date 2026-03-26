@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.260 2026/03/19 16:50:32 chris Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.261 2026/03/26 12:15:01 kirill Exp $	*/
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
 
 /*-
@@ -1623,7 +1623,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 {
 	struct ieee80211_node *ni;
 	const struct ieee80211_frame *wh;
-	const u_int8_t *frm, *efrm;
+	const u_int8_t *frm, *efrm, *csa, *xcsa;
 	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edcaie, *wmmie, *tim;
 	const u_int8_t *rsnie, *wpaie, *htcaps, *htop, *vhtcaps, *vhtop, *hecaps, *heop;
 	u_int16_t capinfo, bintval;
@@ -1666,7 +1666,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	capinfo = LE_READ_2(frm); frm += 2;
 
 	ssid = rates = xrates = edcaie = wmmie = rsnie = wpaie = tim = NULL;
-	htcaps = htop = vhtcaps = vhtop = hecaps = heop = NULL;
+	htcaps = htop = vhtcaps = vhtop = hecaps = heop = csa = xcsa = NULL;
 	if (rxi->rxi_chan)
 		bchan = rxi->rxi_chan;
 	else
@@ -1701,6 +1701,20 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 				break;
 			}
 			erp = frm[2];
+			break;
+		case IEEE80211_ELEMID_CSA:
+			if (frm[1] < 3) {
+				ic->ic_stats.is_rx_elem_toosmall++;
+				break;
+			}
+			csa = frm;
+			break;
+		case IEEE80211_ELEMID_XCSA:
+			if (frm[1] < 4) {
+				ic->ic_stats.is_rx_elem_toosmall++;
+				break;
+			}
+			xcsa = frm;
 			break;
 		case IEEE80211_ELEMID_RSN:
 			rsnie = frm;
@@ -1826,6 +1840,9 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 #endif
 
 	ni->ni_chan = &ic->ic_channels[chan];
+	ni->ni_flags &= ~IEEE80211_NODE_CSA;
+	if (csa != NULL || xcsa != NULL)
+		ni->ni_flags |= IEEE80211_NODE_CSA;
 
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);

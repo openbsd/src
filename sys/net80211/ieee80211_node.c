@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.211 2026/03/19 16:50:32 chris Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.212 2026/03/26 12:15:01 kirill Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1135,6 +1135,8 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if ((ic->ic_flags & IEEE80211_F_DESBSSID) &&
 	    !IEEE80211_ADDR_EQ(ic->ic_des_bssid, ni->ni_bssid))
 		fail |= IEEE80211_NODE_ASSOCFAIL_BSSID;
+	if (ni->ni_flags & IEEE80211_NODE_CSA)
+		fail |= IEEE80211_NODE_ASSOCFAIL_CSA;
 
 	if (ic->ic_flags & IEEE80211_F_RSNON) {
 		/*

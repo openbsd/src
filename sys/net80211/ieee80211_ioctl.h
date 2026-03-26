@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.44 2025/03/22 07:24:08 kevlo Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.45 2026/03/26 12:15:01 kirill Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -385,9 +385,10 @@ struct ieee80211_nodereq {
 #define IEEE80211_NODEREQ_ASSOCFAIL_BSSID	0x20
 #define IEEE80211_NODEREQ_ASSOCFAIL_WPA_PROTO	0x40
 #define IEEE80211_NODEREQ_ASSOCFAIL_WPA_KEY	0x80
+#define IEEE80211_NODEREQ_ASSOCFAIL_CSA		0x100
 #define IEEE80211_NODEREQ_ASSOCFAIL_BITS	\
 	"\20\1!CHAN\2!IBSS\3!PRIVACY\4!BASICRATE\5!ESSID\6!BSSID\7!WPAPROTO" \
-	"\10!WPAKEY"
+	"\10!WPAKEY\11!CSA"
 
 /* get the entire node cache */
 struct ieee80211_nodereq_all {

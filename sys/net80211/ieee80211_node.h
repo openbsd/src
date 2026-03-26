@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.99 2026/03/19 16:50:32 chris Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.100 2026/03/26 12:15:01 kirill Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -413,6 +413,7 @@ struct ieee80211_node {
 #define IEEE80211_NODE_ASSOCFAIL_BSSID		0x20
 #define IEEE80211_NODE_ASSOCFAIL_WPA_PROTO	0x40
 #define IEEE80211_NODE_ASSOCFAIL_WPA_KEY	0x80
+#define IEEE80211_NODE_ASSOCFAIL_CSA		0x100
 
 	int			ni_inact;	/* inactivity mark count */
 	int			ni_txrate;	/* index to ni_rates[] */
@@ -444,6 +445,7 @@ struct ieee80211_node {
 #define IEEE80211_NODE_VHT_SGI160	0x100000 /* SGI on 160 MHz negotiated */ 
 #define IEEE80211_NODE_HE		0x200000 /* HE negotiated */
 #define IEEE80211_NODE_HECAP		0x400000 /* claims to support HE */
+#define IEEE80211_NODE_CSA		0x800000 /* channel switch announced */
 
 	/* If not NULL, this function gets called when ni_refcnt hits zero. */
 	void			(*ni_unref_cb)(struct ieee80211com *,
