@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.96 2026/03/12 20:44:38 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.97 2026/03/26 05:59:38 jmatthew Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -176,6 +176,7 @@
 #define RK3528_CRU_GATE_CON(i)		(0x00800 + (i) * 4)
 #define RK3528_CRU_SOFTRST_CON(i)	(0x00a00 + (i) * 4)
 #define RK3528_PCIE_CRU_PLL_CON(i)	(0x20000 + (i) * 4)
+#define RK3528_PCIE_CLKSEL_CON(i)	(0x20300 + (i) * 4)
 
 /* RK3568 registers */
 #define RK3568_CRU_APLL_CON(i)		(0x0000 + (i) * 4)
@@ -3219,6 +3220,16 @@ const struct rkclock rk3528_clocks[] = {
 		SEL(9, 8), 0,
 		{ RK3528_CLK_MATRIX_100M_SRC, RK3528_CLK_MATRIX_50M_SRC,
 		  RK3528_XIN24M }
+	},
+	{
+		RK3528_CLK_PPLL_100M_MATRIX, RK3528_PCIE_CLKSEL_CON(1),
+		0, DIV(6, 2),
+		{ RK3528_PLL_PPLL }
+	},
+	{
+		RK3528_CLK_REF_PCIE_INNER_PHY, RK3528_PCIE_CLKSEL_CON(1),
+		SEL(13, 13), 0,
+		{ RK3528_CLK_PPLL_100M_MATRIX, RK3528_XIN24M }
 	},
 	{
 		RK3528_CLK_PPLL_125M_MATRIX, RK3528_CRU_CLKSEL_CON(60),
