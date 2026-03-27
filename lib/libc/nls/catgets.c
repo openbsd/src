@@ -1,4 +1,4 @@
-/*	$OpenBSD: catgets.c,v 1.9 2015/09/05 11:25:30 guenther Exp $ */
+/*	$OpenBSD: catgets.c,v 1.10 2026/03/27 20:05:58 daniel Exp $ */
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -82,6 +82,7 @@ catgets(nl_catd catd, int set_id, int msg_id, const char *s)
 			}
 
 			/* not found */
+			errno = ENOMSG;
 			return (char *) s;
 
 		} else if (r < 0) {
@@ -92,6 +93,7 @@ catgets(nl_catd catd, int set_id, int msg_id, const char *s)
 	}
 
 	/* not found */
+	errno = ENOMSG;
 	return (char *) s;
 }
 DEF_WEAK(catgets);
