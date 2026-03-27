@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.78 2026/03/19 06:40:19 dgl Exp $
+.\" $OpenBSD: pledge.2,v 1.79 2026/03/27 05:14:38 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 19 2026 $
+.Dd $Mdocdate: March 27 2026 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -27,47 +27,22 @@
 .Sh DESCRIPTION
 The
 .Fn pledge
-system call forces the current process into a restricted-service operating mode.
-A few subsets are available, roughly described as computation, memory
-management, read-write operations on file descriptors, opening of files,
-networking (and notably separate, DNS resolution).
-In general, these modes were selected by studying the operation
-of many programs using libc and other such interfaces, and setting
-.Fa promises
-or
-.Fa execpromises .
-.Pp
-Use of
+system call seperates the POSIX featureset into a group of approximately
+3 dozen subsystems.
+By calling
 .Fn pledge
-in an application will require at least some study and understanding
-of the interfaces called.
-Subsequent calls to
-.Fn pledge
-can reduce the abilities further, but abilities can never be regained.
-.Pp
-A process which attempts a restricted operation is killed with an uncatchable
+the program can declare which subsystems it will need in the
+future in a space-seperated string called
+.Ar promises .
+Subsystems not listed become unavailable, and most attempts to use operations
+in that subsystem result in the process being killed with an uncatchable
 .Dv SIGABRT ,
 delivering a core file if possible.
-A process currently running with pledge has state
-.Sq p
-in
-.Xr ps 1
-output; a process that was terminated due to a pledge violation
-is accounted by
-.Xr lastcomm 1
-with the
-.Sq P
-flag.
 .Pp
-A
-.Fa promises
-value of
-.Qq \&
-restricts the process to the
-.Xr _exit 2
-system call.
-This can be used for pure computation operating on memory shared
-with another process.
+Subsequent calls to
+.Fn pledge
+can reduce the subsystems which still work, but previously
+revoked subsystems cannot be re-activated.
 .Pp
 Passing
 .Dv NULL
@@ -77,11 +52,17 @@ or
 .Fa execpromises
 specifies to not change the current value.
 .Pp
-Some system calls, when allowed, have restrictions applied to them:
+A few changes to POSIX behaviour come into effect on the first call to
+.Fn pledge ,
+regardless of the
+.Va promise
+arguments:
 .Bl -ohang -offset indent
 .It Xr adjtime 2 :
-Read-only, for
-.Xr ntpd 8 .
+Time cannot be changed.
+Only the
+.Va olddelta
+argument works.
 .It Xo
 .Xr chmod 2 ,
 .Xr fchmod 2 ,
@@ -95,7 +76,11 @@ and
 .Xr mknod 2 :
 .Xc
 Setuid/setgid/sticky bits are ignored.
-The user or group cannot be changed on a file.
+User or group cannot be changed.
+The
+.Cm fattr
+promise
+relaxes this behaviour slightly.
 .It Xr ioctl 2 :
 Only the
 .Dv FIONREAD ,
@@ -104,8 +89,9 @@ Only the
 and
 .Dv FIONCLEX
 operations are allowed by default.
-Various ioctl requests are allowed against specific file descriptors
-based upon the requests
+All other ioctl operations are blocked, except for ones which are enabled
+by specfic
+.Va promises :
 .Cm audio ,
 .Cm bpf ,
 .Cm disklabel ,
@@ -125,9 +111,57 @@ and
 .Xr mprotect 2 :
 .Xc
 .Dv PROT_EXEC
-isn't allowed.
+is not allowed, unless the
+.Cm prot_exec
+.Va promise
+is requested.
+.It Xr __pledge_open 2 :
+A few system files can be opened directly by
+.Li libc
+internal code using this hidden symbol system call when
+specific
+.Fa promises
+are requested, but applications cannot open those files themselves.
+This works even when
+.Cm rpath
+or
+.Cm wpath
+are absent and
+.Xr unveil 2
+cannot block opening the files.
+These are the promises which can read special files:
+.Va promises .
+.Bl -tag -width "prot_exec" -offset indent
+.It Cm stdio
+.Pa /etc/localtime
+.br
+.Pa /usr/share/zoneinfo
+(and files below)
+.br
+.Pa /dev/null
+(for read and/or write)
+.It Cm tty
+.Pa /dev/tty
+(for read and/or write)
+.br
+.It Cm getpw
+.Pa /etc/spwd.db
+(refused with EPERM)
+.br
+.Pa /etc/pwd.db
+.Pa /etc/group
+.Pa /etc/netid
+.It Cm dns
+.Pa /etc/resolv.conf
+.Pa /etc/hosts
+.Pa /etc/services
+.Pa /etc/protocols
+.El
 .It Xr profil 2 :
 Can only disable profiling.
+XXX After the threaded profiling rewrite, is this still true??  I think
+the now you can only stop/restart on the existing buffer, because the buffer
+is setup at process start.
 .It Fn pledge :
 Can only reduce permissions for
 .Fa promises
@@ -141,18 +175,34 @@ support:
 .Xr getifaddrs 3 ,
 .Xr uname 3 ,
 and system sensor readings.
+Some
+.Va promises
+expose more read-only operations.
 .El
 .Pp
 The
 .Fa promises
-argument is specified as a string, with space separated keywords:
+argument is specified as a string, with space separated keywords.
+Using
+.Qq \&
+restricts the process to the
+.Xr _exit 2
+system call 
+(this can be used for pure computation operating on memory shared
+with another process).
 .Bl -tag -width "prot_exec" -offset indent
 .It Cm stdio
-The following system calls are permitted.
-.Xr sendto 2
-is only permitted if its destination socket address is
-.Dv NULL .
-As a result, all the expected functionalities of libc stdio work.
+This
+.Va promise
+provides access to basic memory management, actions upon already
+open file descriptors, inspection of various process attributes,
+timer resources, and other subsystems generally considered safe because
+they only occur inside the process..
+Many of these interfaces are then used inside higher-level libc
+functionality, which is why the name
+.Cm stdio
+was chosen. 
+The following system calls are permitted:
 .Pp
 .Xr clock_getres 2 ,
 .Xr clock_gettime 2 ,
@@ -225,6 +275,10 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr waitid 2 ,
 .Xr write 2 ,
 .Xr writev 2
+.Pp
+.Xr sendto 2
+is only permitted if the destination socket address is
+.Dv NULL .
 .It Cm rpath
 A number of system calls are allowed which allow path traversal,
 reading
@@ -237,7 +291,7 @@ but files can be opened for write.
 .It Cm cpath
 Similar to
 .Cm wpath ,
-but files can also be created.
+but files can also be created or removed.
 .It Cm dpath
 Similar to
 .Cm cpath ,
@@ -340,33 +394,45 @@ domain:
 .Xr getsockname 2 ,
 .Xr setsockopt 2 ,
 .Xr getsockopt 2
+.Pp
+The
+.Xr bind 2
+call can create AF_UNIX sockets at any path even without
+.Cm wpath,
+and
+.Xr connect 2
+can connect at any path
+even without
+.Cm rpath
+or
+.Cm wpath .
 .It Cm dns
-Some low-level behaviours required by the DNS resolver
+Some low-level behaviours required by the DNS resolver described in
 .Xr res_init 3
-are permitted, such as opening
-.Xr resolv.conf 5
-and a few networking system calls:
+are permitted.
+THis includes
+.Xr __pledge_open 2
+reading
+.Xr hosts 5 ,
+.Xr protocols 5 ,
+.Xr resolv.conf 5 ,
+and 
+.Xr services 5 ,
+and exposing a few networking system calls:
 .Xr socket 2 ,
 .Xr connect 2 ,
 .Xr sendto 2 ,
-.Xr recvfrom 2 .
-To distinguish the
-.Cm dns
-promise from
-.Cm inet ,
-the libc DNS code opens sockets with the
+.Xr recvfrom 2
+which can only operate on the specific socket type
+.Dv SOCK_DNS .
+The library resolver opens sockets with
 .Dv SOCK_DNS
-flag which
-.Ox
-requires to communicate with
-.Dv AF_INET
-and
-.Dv AF_INET6
-at port 53.
+only on port 53, so the kernel can differentiate these operations
+from regular sockets operations.
 .It Cm getpw
-This allows read-only opening of files in
-.Pa /etc
-for the
+This uses the special features of
+.Xr __pledge_open 2
+to read required system files to support the
 .Xr getpwnam 3 ,
 .Xr getgrnam 3 ,
 .Xr getgrouplist 3 ,
@@ -575,6 +641,17 @@ This is useful when a parent enforces
 .Fa execpromises
 but an execve'd child has a different idea.
 .El
+.Pp
+A process currently running with pledge has state
+.Sq p
+in
+.Xr ps 1
+output; a process that was terminated due to a pledge violation
+is accounted by
+.Xr lastcomm 1
+with the
+.Sq P
+flag.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
