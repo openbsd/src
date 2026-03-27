@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.100 2025/09/18 15:40:22 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.101 2026/03/27 08:10:46 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -925,7 +925,6 @@ http_done(struct http_connection *conn, enum http_result res)
 	if (!conn->was_gzipped && conn->totalsz > (1024 * 1024))
 		logx("%s: downloaded %zu bytes without HTTP "
 		    "compression", conn_info(conn), conn->totalsz);
-	conn->was_gzipped = 0;
 
 	conn->state = STATE_IDLE;
 	conn->idle_time = getmonotime() + HTTP_IDLE_TIMEOUT;
@@ -942,7 +941,9 @@ http_done(struct http_connection *conn, enum http_result res)
 	LIST_REMOVE(conn, entry);
 	LIST_INSERT_HEAD(&idle, conn, entry);
 
-	/* reset status and keep-alive for good measures */
+	/* reset totalsz, status and keep-alive for good measure */
+	conn->totalsz = 0;
+	conn->was_gzipped = 0;
 	conn->status = 0;
 	conn->keep_alive = 0;
 
@@ -1623,12 +1624,13 @@ again:
 				done = 1;
 		}
 
+		conn->totalsz = 0;
+
 		/* Check status header and decide what to do next */
 		if (http_isok(conn) || http_isredirect(conn)) {
 			if (http_isredirect(conn))
 				http_redirect(conn);
 
-			conn->totalsz = 0;
 			if (conn->chunked)
 				conn->state = STATE_RESPONSE_CHUNKED_HEADER;
 			else
