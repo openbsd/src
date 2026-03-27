@@ -1,6 +1,10 @@
-# $OpenBSD: Makefile,v 1.5 2026/03/27 19:54:10 tb Exp $
+# $OpenBSD: Makefile,v 1.6 2026/03/27 19:55:35 tb Exp $
 
 EOPENSSL =	eopenssl35
+
+.if ${EOPENSSL} != "eopenssl35"
+CFLAGS += -DHAVE_X509_CRL_GET0_SIGALG
+.endif
 
 regress: all
 
