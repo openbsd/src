@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sync.c,v 1.6 2024/01/10 04:28:43 cheloha Exp $ */
+/*	$OpenBSD: rthread_sync.c,v 1.7 2026/03/27 12:26:58 claudio Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -64,7 +64,9 @@ pthread_mutex_destroy(pthread_mutex_t *mutexp)
 {
 	struct pthread_mutex *mutex;
 
-	assert(mutexp);
+	if (mutexp == NULL)
+		return (EINVAL);
+
 	mutex = (struct pthread_mutex *)*mutexp;
 	if (mutex) {
 		if (mutex->count || mutex->owner != NULL ||

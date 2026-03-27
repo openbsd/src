@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_mutex.c,v 1.7 2025/08/03 06:42:31 dlg Exp $ */
+/*	$OpenBSD: rthread_mutex.c,v 1.8 2026/03/27 12:26:58 claudio Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -73,7 +73,7 @@ pthread_mutex_destroy(pthread_mutex_t *mutexp)
 {
 	pthread_mutex_t mutex;
 
-	if (mutexp == NULL || *mutexp == NULL)
+	if (mutexp == NULL)
 		return (EINVAL);
 
 	mutex = *mutexp;
