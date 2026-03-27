@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2025/11/14 05:11:09 tb Exp $
+# $OpenBSD: Makefile,v 1.8 2026/03/27 18:00:17 tb Exp $
 
 EOPENSSL =	eopenssl35
 
@@ -8,8 +8,8 @@ CFLAGS +=	-DOPENSSL_SUPPRESS_DEPRECATED
 
 .PATH:		${.CURDIR}/..
 
-.if exists(/usr/local/lib/eopenssl35/libcrypto.a) && \
-    exists(/usr/local/lib/eopenssl35/libtls.a)
+.if exists(/usr/local/lib/${EOPENSSL}/libcrypto.a) && \
+    exists(/usr/local/lib/${EOPENSSL}/libtls.a)
 
 build-check:
 	${MAKE} -C ${.CURDIR}/build
