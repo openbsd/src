@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.348 2026/03/09 15:46:01 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.349 2026/03/27 08:40:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1338,6 +1338,18 @@ format_cb_alternate_saved_y(struct format_tree *ft)
 {
 	if (ft->wp != NULL)
 		return (format_printf("%u", ft->wp->base.saved_cy));
+	return (NULL);
+}
+
+/* Callback for bracket_paste_flag. */
+static void *
+format_cb_bracket_paste_flag(struct format_tree *ft)
+{
+	if (ft->wp != NULL && ft->wp->screen != NULL) {
+		if (ft->wp->screen->mode & MODE_BRACKETPASTE)
+			return (xstrdup("1"));
+		return (xstrdup("0"));
+	}
 	return (NULL);
 }
 
@@ -3030,6 +3042,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "alternate_saved_y", FORMAT_TABLE_STRING,
 	  format_cb_alternate_saved_y
+	},
+	{ "bracket_paste_flag", FORMAT_TABLE_STRING,
+	  format_cb_bracket_paste_flag
 	},
 	{ "buffer_created", FORMAT_TABLE_TIME,
 	  format_cb_buffer_created
