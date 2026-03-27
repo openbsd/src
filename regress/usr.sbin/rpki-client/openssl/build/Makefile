@@ -1,7 +1,6 @@
-# $OpenBSD: Makefile,v 1.4 2026/03/27 19:52:38 tb Exp $
+# $OpenBSD: Makefile,v 1.5 2026/03/27 19:54:10 tb Exp $
 
 EOPENSSL =	eopenssl35
-EOPENSSL_PATH = /usr/local/lib/${EOPENSSL35}/
 
 regress: all
 
