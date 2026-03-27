@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.47 2025/11/30 23:07:17 jsg Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.48 2026/03/27 19:19:41 bluhm Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -113,15 +113,6 @@ main(int argc, char *argv[])
 	/* Start by writing to both console and log. */
 	openlog("nfsd", LOG_PID | LOG_PERROR, LOG_DAEMON);
 
-	if (unveil("/", "") == -1) {
-		syslog(LOG_ERR, "unveil /: %s", strerror(errno));
-		return (1);
-	}
-	if (unveil(NULL, NULL) == -1) {
-		syslog(LOG_ERR, "unveil: %s", strerror(errno));
-		return (1);
-	}
-
 	while ((ch = getopt(argc, argv, "n:rtu")) != -1)
 		switch (ch) {
 		case 'n':
@@ -171,6 +162,15 @@ main(int argc, char *argv[])
 		(void)signal(SIGSYS, nonfs);
 	}
 	(void)signal(SIGCHLD, reapchild);
+
+	if (unveil("/", "") == -1) {
+		syslog(LOG_ERR, "unveil /: %s", strerror(errno));
+		return (1);
+	}
+	if (unveil(NULL, NULL) == -1) {
+		syslog(LOG_ERR, "unveil: %s", strerror(errno));
+		return (1);
+	}
 
 	if (reregister) {
 		if (udpflag &&
