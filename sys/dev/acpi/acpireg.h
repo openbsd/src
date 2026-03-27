@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.64 2026/03/01 10:20:24 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.65 2026/03/27 03:56:15 hshoexer Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -604,6 +604,7 @@ struct acpi_dmar {
  */
 union acpi_ivhd_entry {
 	uint8_t		type;
+#define IVHD_RESVD			0
 #define IVHD_ALL			1
 #define IVHD_SEL			2
 #define IVHD_SOR			3
@@ -613,6 +614,10 @@ union acpi_ivhd_entry {
 #define IVHD_EXT_SEL			70
 #define IVHD_EXT_SOR			71
 #define IVHD_SPECIAL			72
+	struct {
+		uint8_t		type;
+		uint8_t		resvd[3];
+	} __packed resvd;
 	struct {
 		uint8_t		type;
 		uint16_t	resvd;

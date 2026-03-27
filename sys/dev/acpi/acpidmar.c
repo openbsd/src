@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidmar.c,v 1.14 2026/03/04 23:19:45 jsg Exp $ */
+/* $OpenBSD: acpidmar.c,v 1.15 2026/03/27 03:56:15 hshoexer Exp $ */
 /*
  * Copyright (c) 2015 Jordan Hargrave <jordan_hargrave@hotmail.com>
  *
@@ -3335,9 +3335,13 @@ acpiivrs_ivhd(struct acpidmar_softc *sc, struct acpi_ivhd *ivhd)
 	while (off < ivhd->length) {
 		ie = (void *)ivhd + off;
 		switch (ie->type) {
+		case IVHD_RESVD:
+			DPRINTF(0," RESVD\n");
+			off += sizeof(ie->resvd);
+			break;
 		case IVHD_ALL:
 			all_dte = ie->all.data;
-			DPRINTF(0," ALL %.4x\n", dte);
+			DPRINTF(0," ALL %.4x\n", all_dte);
 			off += sizeof(ie->all);
 			break;
 		case IVHD_SEL:
