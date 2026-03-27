@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype.c,v 1.9 2024/02/04 12:46:01 jca Exp $ */
+/*	$OpenBSD: iswctype.c,v 1.10 2026/03/27 20:35:08 daniel Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
 
 /*
@@ -167,6 +167,8 @@ DEF_STRONG(towlower);
 int
 wcwidth(wchar_t c)
 {
+	if (c == L'\0')
+		return 0;
 	if (__isctype_w((c), _RUNETYPE_R))
 		return (((unsigned)__runetype_w(c) & _RUNETYPE_SWM) >>
 		    _RUNETYPE_SWS);
