@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.355 2026/03/26 05:21:06 dgl Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.356 2026/03/27 05:15:25 dgl Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -243,8 +243,8 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	 */
 	[SYS_open] = PLEDGE_RPATH | PLEDGE_WPATH,
 	[SYS___pledge_open] = PLEDGE_STDIO,
-	[SYS_stat] = PLEDGE_STDIO,
-	[SYS_access] = PLEDGE_STDIO,
+	[SYS_stat] = PLEDGE_RPATH,
+	[SYS_access] = PLEDGE_RPATH,
 	[SYS_readlink] = PLEDGE_RPATH,
 	[SYS___realpath] = PLEDGE_RPATH,
 
