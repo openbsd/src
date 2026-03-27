@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2018/04/10 23:04:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2026/03/27 05:07:02 dgl Exp $
 
 SUBDIR +=	sigabrt
 SUBDIR +=	generic
@@ -7,5 +7,6 @@ SUBDIR +=	sendrecvfd
 SUBDIR +=	sockopt
 SUBDIR +=	execpromise
 SUBDIR +=	filedescriptor
+SUBDIR +=	open
 
 .include <bsd.subdir.mk>
