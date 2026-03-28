@@ -1,4 +1,4 @@
-/*	$OpenBSD: open.c,v 1.1 2026/03/27 05:06:33 dgl Exp $	*/
+/*	$OpenBSD: open.c,v 1.2 2026/03/28 07:23:57 dgl Exp $	*/
 /*
  * Copyright (c) 2026 David Leadbeater <dgl@openbsd.org>
  *
@@ -33,15 +33,23 @@ int _libc___pledge_open(char *path, int flags, ...);
 int
 main(int argc, char **argv)
 {
-	int fd;
+	int fd, i;
 	char *promise, *path;
 	struct stat sb;
 
-	if (argc != 3)
+	if (argc < 3)
 		errx(1, "argc: %d", argc);
 
 	promise = argv[1];
 	path = argv[2];
+
+        if (((argc - 3) % 2) != 0)
+		errx(1, "unveil(x, y) must be balanced");
+
+        for (i = 3; i < argc; i += 2) {
+		if (unveil(argv[i], argv[i+1]) == -1)
+			err(1, "unveil(%s, %s)", argv[i], argv[i+1]);
+        }
 
 	if (strcmp(promise, NO_PLEDGE) != 0 && pledge(promise, NULL) == -1)
 		err(1, "pledge %s", promise);

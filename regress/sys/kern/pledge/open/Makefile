@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2026/03/27 05:06:33 dgl Exp $
+#	$OpenBSD: Makefile,v 1.2 2026/03/28 07:23:57 dgl Exp $
 
 PROG=	open
 LDFLAGS=	-static
@@ -33,6 +33,10 @@ REGRESS_TARGETS+=	run-hosts-no-dns-but-rpath
 run-devnull: ${PROG}
 	./${PROG} "stdio" /dev/null
 REGRESS_TARGETS+=	run-devnull
+
+run-devnull-unveil: ${PROG}
+	./${PROG} "stdio" /dev/null / ""
+REGRESS_TARGETS+=	run-devnull-unveil
 
 run-empty-promises: ${PROG}
 	if ./${PROG} "" /dev/null; \
