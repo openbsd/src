@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5_amd64_generic.S,v 1.1 2025/01/24 13:35:04 jsing Exp $ */
+/*	$OpenBSD: md5_amd64_generic.S,v 1.2 2026/03/28 13:11:28 jsing Exp $ */
 /*
  * Copyright (c) 2025 Joel Sing <jsing@openbsd.org>
  *
@@ -15,11 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __CET__
-#include <cet.h>
-#else
-#define _CET_ENDBR
-#endif
+#include "crypto_assembly.h"
 
 #define	ctx		%rdi
 #define	in		%rsi

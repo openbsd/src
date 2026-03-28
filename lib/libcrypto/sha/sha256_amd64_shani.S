@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256_amd64_shani.S,v 1.3 2026/01/24 14:20:52 jsing Exp $ */
+/* $OpenBSD: sha256_amd64_shani.S,v 1.4 2026/03/28 13:11:28 jsing Exp $ */
 /*
  * Copyright (c) 2024 Joel Sing <jsing@openbsd.org>
  *
@@ -15,11 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __CET__
-#include <cet.h>
-#else
-#define _CET_ENDBR
-#endif
+#include "crypto_assembly.h"
 
 /*
  * SHA-256 implementation using the Intel SHA extensions:
