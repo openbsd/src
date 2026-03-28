@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ocsp.c,v 1.26 2024/03/26 06:24:52 joshua Exp $ */
+/*	$OpenBSD: tls_ocsp.c,v 1.27 2026/03/28 11:49:31 tb Exp $ */
 /*
  * Copyright (c) 2015 Marko Kreen <markokr@gmail.com>
  * Copyright (c) 2016 Bob Beck <beck@openbsd.org>
@@ -130,7 +130,7 @@ static OCSP_CERTID *
 tls_ocsp_get_certid(X509 *main_cert, STACK_OF(X509) *extra_certs,
     SSL_CTX *ssl_ctx)
 {
-	X509_NAME *issuer_name;
+	const X509_NAME *issuer_name;
 	X509 *issuer;
 	X509_STORE_CTX *storectx = NULL;
 	X509_OBJECT *obj = NULL;
@@ -141,7 +141,8 @@ tls_ocsp_get_certid(X509 *main_cert, STACK_OF(X509) *extra_certs,
 		goto out;
 
 	if (extra_certs != NULL) {
-		issuer = X509_find_by_subject(extra_certs, issuer_name);
+		issuer = X509_find_by_subject(extra_certs,
+		    (X509_NAME *)issuer_name);
 		if (issuer != NULL) {
 			cid = OCSP_cert_to_id(NULL, main_cert, issuer);
 			goto out;
@@ -155,7 +156,7 @@ tls_ocsp_get_certid(X509 *main_cert, STACK_OF(X509) *extra_certs,
 	if (X509_STORE_CTX_init(storectx, store, main_cert, extra_certs) != 1)
 		goto out;
 	if ((obj = X509_STORE_CTX_get_obj_by_subject(storectx, X509_LU_X509,
-	    issuer_name)) == NULL)
+	    (X509_NAME *)issuer_name)) == NULL)
 		goto out;
 
 	cid = OCSP_cert_to_id(NULL, main_cert, X509_OBJECT_get0_X509(obj));
