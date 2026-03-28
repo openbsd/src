@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.457 2026/03/05 05:40:35 djm Exp $ */
+/* $OpenBSD: channels.c,v 1.458 2026/03/28 05:16:18 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -3471,7 +3471,10 @@ channel_input_data(int type, uint32_t seq, struct ssh *ssh)
 	 * updates are sent back. Otherwise the connection might deadlock.
 	 */
 	if (c->ostate != CHAN_OUTPUT_OPEN) {
-		c->local_window -= win_len;
+		if (win_len > c->local_window)
+			c->local_window = 0;
+		else
+			c->local_window -= win_len;
 		c->local_consumed += win_len;
 		return 0;
 	}
