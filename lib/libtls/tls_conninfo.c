@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_conninfo.c,v 1.28 2024/12/10 08:40:30 tb Exp $ */
+/* $OpenBSD: tls_conninfo.c,v 1.29 2026/03/28 11:33:33 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
@@ -89,7 +89,7 @@ tls_get_peer_cert_hash(struct tls *ctx, char **hash)
 static int
 tls_get_peer_cert_issuer(struct tls *ctx,  char **issuer)
 {
-	X509_NAME *name = NULL;
+	const X509_NAME *name = NULL;
 
 	*issuer = NULL;
 	if (ctx->ssl_peer_cert == NULL)
@@ -105,7 +105,7 @@ tls_get_peer_cert_issuer(struct tls *ctx,  char **issuer)
 static int
 tls_get_peer_cert_subject(struct tls *ctx, char **subject)
 {
-	X509_NAME *name = NULL;
+	const X509_NAME *name = NULL;
 
 	*subject = NULL;
 	if (ctx->ssl_peer_cert == NULL)

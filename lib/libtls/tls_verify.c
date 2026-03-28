@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.32 2024/12/10 08:40:30 tb Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.33 2026/03/28 11:33:33 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -214,10 +214,10 @@ tls_get_common_name_internal(X509 *cert, char **out_common_name,
     unsigned int *out_tlserr, const char **out_errstr)
 {
 	unsigned char *utf8_bytes = NULL;
-	X509_NAME *subject_name;
+	const X509_NAME *subject_name;
 	char *common_name = NULL;
 	int common_name_len;
-	ASN1_STRING *data;
+	const ASN1_STRING *data;
 	int lastpos = -1;
 	int rv = -1;
 
