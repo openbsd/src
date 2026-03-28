@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.26 2025/12/02 02:31:10 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.27 2026/03/28 16:22:04 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -67,7 +67,6 @@ struct qcheader {
 } __packed;
 
 struct qcdisk {
-	pthread_rwlock_t lock;
 	struct qcdisk *base;
 	struct qcheader header;
 
@@ -214,7 +213,6 @@ qc2_open(struct qcdisk *disk, int *fds, size_t nfd)
 	off_t i;
 	int version, fd;
 
-	pthread_rwlock_init(&disk->lock, NULL);
 	fd = fds[0];
 	disk->fd = fd;
 	disk->base = NULL;
@@ -480,7 +478,6 @@ xlate(struct qcdisk *disk, off_t off, int *inplace)
 	 */
 	if (inplace)
 		*inplace = 0;
-	pthread_rwlock_rdlock(&disk->lock);
 	if (off < 0)
 		goto err;
 
@@ -491,10 +488,8 @@ xlate(struct qcdisk *disk, off_t off, int *inplace)
 
 	l2tab = disk->l1[l1off];
 	l2tab &= ~QCOW2_INPLACE;
-	if (l2tab == 0) {
-		pthread_rwlock_unlock(&disk->lock);
+	if (l2tab == 0)
 		return 0;
-	}
 	l2off = (off / disk->clustersz) % l2sz;
 	pread(disk->fd, &buf, sizeof(buf), l2tab + l2off * 8);
 	cluster = be64toh(buf);
@@ -506,14 +501,12 @@ xlate(struct qcdisk *disk, off_t off, int *inplace)
 		*inplace = !!(cluster & QCOW2_INPLACE);
 	if (cluster & QCOW2_COMPRESSED)
 		fatalx("%s: compressed clusters unsupported", __func__);
-	pthread_rwlock_unlock(&disk->lock);
 	clusteroff = 0;
 	cluster &= ~QCOW2_INPLACE;
 	if (cluster)
 		clusteroff = off % disk->clustersz;
 	return cluster + clusteroff;
 err:
-	pthread_rwlock_unlock(&disk->lock);
 	return -1;
 }
 
@@ -530,8 +523,6 @@ mkcluster(struct qcdisk *disk, struct qcdisk *base, off_t off, off_t src_phys)
 {
 	off_t l2sz, l1off, l2tab, l2off, cluster, clusteroff, orig;
 	uint64_t buf;
-
-	pthread_rwlock_wrlock(&disk->lock);
 
 	cluster = -1;
 	/* L1 entries always exist */
@@ -581,7 +572,6 @@ mkcluster(struct qcdisk *disk, struct qcdisk *base, off_t off, off_t src_phys)
 		fatalx("%s: could not write l1", __func__);
 	inc_refs(disk, cluster, 1);
 
-	pthread_rwlock_unlock(&disk->lock);
 	clusteroff = off % disk->clustersz;
 	if (cluster + clusteroff < disk->clustersz)
 		fatalx("write would clobber header");
