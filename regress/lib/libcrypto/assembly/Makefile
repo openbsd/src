@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2026/01/25 14:57:43 tb Exp $
+# $OpenBSD: Makefile,v 1.3 2026/03/29 06:19:12 anton Exp $
 
 EGCC = /usr/local/bin/egcc
 
@@ -24,7 +24,8 @@ ASSEMBLY += sha/sha512_amd64_generic.S
 .for assembly in ${ASSEMBLY}
 regress-${assembly}:
 	@echo "Checking ${assembly} compiles with gcc"
-	@${EGCC} -o /dev/null -c ${.CURDIR}/../../../../lib/libcrypto/${assembly}
+	@${EGCC} -I${.CURDIR}/../../../../lib/libcrypto -o /dev/null -c \
+		${.CURDIR}/../../../../lib/libcrypto/${assembly}
 
 REGRESS_TARGETS += regress-${assembly}
 
