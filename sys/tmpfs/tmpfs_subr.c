@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.27 2024/09/12 09:04:51 claudio Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.28 2026/03/29 09:37:33 kirill Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -1140,7 +1140,7 @@ tmpfs_update(tmpfs_node_t *node, int flags)
 {
 	struct timespec nowtm;
 
-	nanotime(&nowtm);
+	getnanotime(&nowtm);
 
 	if (flags & TMPFS_NODE_ACCESSED) {
 		node->tn_atime = nowtm;
