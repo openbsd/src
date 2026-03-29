@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.100 2026/03/26 12:15:01 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.101 2026/03/29 21:16:21 kirill Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -609,7 +609,11 @@ ieee80211_node_supports_vht_chan160(struct ieee80211_node *ni)
 
 	cap_chan_width = (ni->ni_vhtcaps & IEEE80211_VHTCAP_CHAN_WIDTH_MASK) >>
 	    IEEE80211_VHTCAP_CHAN_WIDTH_SHIFT;
-	if (cap_chan_width != IEEE80211_VHTCAP_CHAN_WIDTH_160)
+	if (cap_chan_width != IEEE80211_VHTCAP_CHAN_WIDTH_160 &&
+	    cap_chan_width != IEEE80211_VHTCAP_CHAN_WIDTH_160_8080 &&
+	    ((ni->ni_vhtcaps & IEEE80211_VHTCAP_EXT_NSS_BW_MASK) == 0 ||
+	    (ni->ni_vht_tx_max_lgi_mbit_s &
+	    IEEE80211_VHT_EXT_NSS_BW_CAPABLE) == 0))
 		return 0;
 
 	op_chan_width = (ni->ni_vht_chan_width &

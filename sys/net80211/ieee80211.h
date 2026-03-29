@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.65 2026/03/19 16:50:32 chris Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.66 2026/03/29 21:16:21 kirill Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -720,7 +720,8 @@ enum {
 #define IEEE80211_HTOP1_NONGF_STA	0x0004
 /* Bit 3 is reserved. */
 #define IEEE80211_HTOP1_OBSS_NONHT_STA	0x0010
-/* Bits 5-15 are reserved. */
+#define IEEE80211_HTOP1_CCFS2_SHIFT	5
+#define IEEE80211_HTOP1_CCFS2_MASK	0x1fe0
 /* Bytes 4-5. */
 /* Bits 0-5 are reserved. */
 #define IEEE80211_HTOP2_DUALBEACON	0x0040
@@ -776,6 +777,8 @@ enum {
 #define IEEE80211_VHTCAP_LINK_ADAPT_MRQ_MFB	3
 #define IEEE80211_VHTCAP_RX_ANT_PATTERN		0x10000000
 #define IEEE80211_VHTCAP_TX_ANT_PATTERN		0x20000000
+#define IEEE80211_VHTCAP_EXT_NSS_BW_SHIFT	30
+#define IEEE80211_VHTCAP_EXT_NSS_BW_MASK	0xc0000000
 
 /*
  * VHT-MCS and NSS map (see 802.11ac-2013 8.4.2.160.3, Figure 8-401bs).
@@ -792,6 +795,7 @@ enum {
 
 #define IEEE80211_VHT_MAX_LGI_MBIT_S_MASK	0x1fff
 #define IEEE80211_VHT_MAX_LGI_MBIT_S_SHIFT	0
+#define IEEE80211_VHT_EXT_NSS_BW_CAPABLE	(1 << 13)
 
 /* The highest number of spatial streams supported by VHT. */
 #define IEEE80211_VHT_NUM_SS	8
