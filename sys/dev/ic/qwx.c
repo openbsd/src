@@ -1,4 +1,4 @@
-/*	$OpenBSD: qwx.c,v 1.102 2026/02/22 21:38:03 kettenis Exp $	*/
+/*	$OpenBSD: qwx.c,v 1.103 2026/03/29 05:29:02 mglocker Exp $	*/
 
 /*
  * Copyright 2023 Stefan Sperling <stsp@openbsd.org>
@@ -9114,7 +9114,7 @@ qwx_qmi_load_file_target_mem(struct qwx_softc *sc, const u_char *data,
 
 	req = malloc(sizeof(*req), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!req) {
-		printf("%s: failed to allocate bfd download request\n",
+		printf("%s: failed to allocate bdf download request\n",
 		    sc->sc_dev.dv_xname);
 		return ENOMEM;
 	}
