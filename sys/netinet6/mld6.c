@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.74 2026/03/22 23:14:00 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.75 2026/03/29 18:08:07 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -144,10 +144,8 @@ mld6_start_listening(struct in6_multi *in6m, struct ifnet *ifp,
 		running = 1;
 	}
 
-	if (running) {
-		membar_producer();
-		atomic_store_int(&mld6_timers_are_running, running);
-	}
+	if (running)
+		atomic_store_int(&mld6_timers_are_running, 1);
 }
 
 void
@@ -367,10 +365,8 @@ mld6_input(struct mbuf *m, int off)
 		break;
 	}
 
-	if (running) {
-		membar_producer();
-		atomic_store_int(&mld6_timers_are_running, running);
-	}
+	if (running)
+		atomic_store_int(&mld6_timers_are_running, 1);
 
 	if_put(ifp);
 	m_freem(m);
@@ -392,7 +388,7 @@ mld6_fasttimo(void)
 	 */
 	if (!atomic_load_int(&mld6_timers_are_running))
 		return;
-	membar_consumer();
+	atomic_store_int(&mld6_timers_are_running, 0);
 
 	NET_LOCK_SHARED();
 
@@ -401,9 +397,6 @@ mld6_fasttimo(void)
 		if (mld6_checktimer(ifp, &pktlist))
 			running = 1;
 	}
-
-	membar_producer();
-	atomic_store_int(&mld6_timers_are_running, running);
 
 	while (!STAILQ_EMPTY(&pktlist)) {
 		struct mld6_pktinfo *pkt;
@@ -415,6 +408,9 @@ mld6_fasttimo(void)
 	}
 
 	NET_UNLOCK_SHARED();
+
+	if (running)
+		atomic_store_int(&mld6_timers_are_running, 1);
 }
 
 int

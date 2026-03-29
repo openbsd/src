@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.97 2026/03/22 23:14:00 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.98 2026/03/29 18:08:07 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -532,10 +532,8 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto,
 
 	}
 
-	if (running) {
-		membar_producer();
-		atomic_store_int(&igmp_timers_are_running, running);
-	}
+	if (running)
+		atomic_store_int(&igmp_timers_are_running, 1);
 
 	/*
 	 * Pass all valid IGMP packets up to any process(es) listening
@@ -567,10 +565,8 @@ igmp_joingroup(struct in_multi *inm, struct ifnet *ifp,
 	} else
 		inm->inm_timer = 0;
 
-	if (running) {
-		membar_producer();
-		atomic_store_int(&igmp_timers_are_running, running);
-	}
+	if (running)
+		atomic_store_int(&igmp_timers_are_running, 1);
 }
 
 void
@@ -614,7 +610,7 @@ igmp_fasttimo(void)
 	 */
 	if (!atomic_load_int(&igmp_timers_are_running))
 		return;
-	membar_consumer();
+	atomic_store_int(&igmp_timers_are_running, 0);
 
 	NET_LOCK_SHARED();
 
@@ -623,9 +619,6 @@ igmp_fasttimo(void)
 		if (igmp_checktimer(ifp, &pktlist))
 			running = 1;
 	}
-
-	membar_producer();
-	atomic_store_int(&igmp_timers_are_running, running);
 
 	while (!STAILQ_EMPTY(&pktlist)) {
 		struct igmp_pktinfo *pkt;
@@ -637,6 +630,9 @@ igmp_fasttimo(void)
 	}
 
 	NET_UNLOCK_SHARED();
+
+	if (running)
+		atomic_store_int(&igmp_timers_are_running, 1);
 }
 
 int
@@ -683,6 +679,9 @@ void
 igmp_slowtimo(void)
 {
 	struct router_info *rti;
+
+	if (LIST_EMPTY(&rti_head))
+		return;
 
 	mtx_enter(&igmp_mtx);
 	LIST_FOREACH(rti, &rti_head, rti_list) {
