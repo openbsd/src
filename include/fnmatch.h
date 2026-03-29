@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.h,v 1.8 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: fnmatch.h,v 1.9 2026/03/29 14:08:46 daniel Exp $	*/
 /*	$NetBSD: fnmatch.h,v 1.5 1994/10/26 00:55:53 cgd Exp $	*/
 
 /*-
@@ -43,11 +43,15 @@
 #define	FNM_NOESCAPE	0x01	/* Disable backslash escaping. */
 #define	FNM_PATHNAME	0x02	/* Slash must be matched by slash. */
 #define	FNM_PERIOD	0x04	/* Period must be matched by period. */
+
 #if __BSD_VISIBLE
 #define	FNM_LEADING_DIR	0x08	/* Ignore /<tail> after Imatch. */
+#define	FNM_FILE_NAME	FNM_PATHNAME
+#endif
+
+#if __BSD_VISIBLE || __POSIX_VISIBLE >= 202405
 #define	FNM_CASEFOLD	0x10	/* Case insensitive search. */
 #define	FNM_IGNORECASE	FNM_CASEFOLD
-#define	FNM_FILE_NAME	FNM_PATHNAME
 #endif
 
 __BEGIN_DECLS
