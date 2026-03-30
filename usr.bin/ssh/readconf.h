@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.h,v 1.162 2026/02/11 22:57:55 djm Exp $ */
+/* $OpenBSD: readconf.h,v 1.163 2026/03/30 07:18:24 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -247,7 +247,9 @@ int	 process_config_line(Options *, struct passwd *, const char *,
 int	 read_config_file(const char *, struct passwd *, const char *,
     const char *, const char *, Options *, int, int *);
 int	 parse_forward(struct Forward *, const char *, int, int);
-int	 parse_jump(const char *, Options *, int);
+int	 ssh_valid_hostname(const char *);
+int	 ssh_valid_ruser(const char *);
+int	 parse_jump(const char *, Options *, int, int);
 int	 parse_ssh_uri(const char *, char **, char **, int *);
 int	 default_ssh_port(void);
 int	 option_clear_or_none(const char *);

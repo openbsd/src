@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.410 2026/02/14 00:18:34 jsg Exp $ */
+/* $OpenBSD: readconf.c,v 1.411 2026/03/30 07:18:24 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1516,9 +1516,6 @@ parse_char_array:
 
 	case oProxyCommand:
 		charptr = &options->proxy_command;
-		/* Ignore ProxyCommand if ProxyJump already specified */
-		if (options->jump_host != NULL)
-			charptr = &options->jump_host; /* Skip below */
 parse_command:
 		if (str == NULL) {
 			error("%.200s line %d: Missing argument.",
@@ -1539,7 +1536,7 @@ parse_command:
 		}
 		len = strspn(str, WHITESPACE "=");
 		/* XXX use argv? */
-		if (parse_jump(str + len, options, *activep) == -1) {
+		if (parse_jump(str + len, options, cmdline, *activep) == -1) {
 			error("%.200s line %d: Invalid ProxyJump \"%s\"",
 			    filename, linenum, str + len);
 			goto out;
@@ -3409,65 +3406,116 @@ parse_forward(struct Forward *fwd, const char *fwdspec, int dynamicfwd, int remo
 }
 
 int
-parse_jump(const char *s, Options *o, int active)
+ssh_valid_hostname(const char *s)
 {
-	char *orig, *sdup, *cp;
-	char *host = NULL, *user = NULL;
-	int r, ret = -1, port = -1, first;
+	size_t i;
 
-	active &= o->proxy_command == NULL && o->jump_host == NULL;
+	if (*s == '-')
+		return 0;
+	for (i = 0; s[i] != 0; i++) {
+		if (strchr("'`\"$\\;&<>|(){},", s[i]) != NULL ||
+		    isspace((u_char)s[i]) || iscntrl((u_char)s[i]))
+			return 0;
+	}
+	return 1;
+}
 
-	orig = sdup = xstrdup(s);
+int
+ssh_valid_ruser(const char *s)
+{
+	size_t i;
 
-	/* Remove comment and trailing whitespace */
+	if (*s == '-')
+		return 0;
+	for (i = 0; s[i] != 0; i++) {
+		if (iscntrl((u_char)s[i]))
+			return 0;
+		if (strchr("'`\";&<>|(){}", s[i]) != NULL)
+			return 0;
+		/* Disallow '-' after whitespace */
+		if (isspace((u_char)s[i]) && s[i + 1] == '-')
+			return 0;
+		/* Disallow \ in last position */
+		if (s[i] == '\\' && s[i + 1] == '\0')
+			return 0;
+	}
+	return 1;
+}
+
+int
+parse_jump(const char *s, Options *o, int strict, int active)
+{
+	char *orig = NULL, *sdup = NULL, *cp;
+	char *tmp_user = NULL, *tmp_host = NULL, *host = NULL, *user = NULL;
+	int r, ret = -1, tmp_port = -1, port = -1, first = 1;
+
+	if (strcasecmp(s, "none") == 0) {
+		if (active && o->jump_host == NULL) {
+			o->jump_host = xstrdup("none");
+			o->jump_port = 0;
+		}
+		return 0;
+	}
+
+	orig = xstrdup(s);
 	if ((cp = strchr(orig, '#')) != NULL)
 		*cp = '\0';
 	rtrim(orig);
 
-	first = active;
+	active &= o->proxy_command == NULL && o->jump_host == NULL;
+	sdup = xstrdup(orig);
 	do {
-		if (strcasecmp(s, "none") == 0)
-			break;
+		/* Work backwards through string */
 		if ((cp = strrchr(sdup, ',')) == NULL)
 			cp = sdup; /* last */
 		else
 			*cp++ = '\0';
 
+		r = parse_ssh_uri(cp, &tmp_user, &tmp_host, &tmp_port);
+		if (r == -1 || (r == 1 && parse_user_host_port(cp,
+		    &tmp_user, &tmp_host, &tmp_port) != 0))
+			goto out; /* error already logged */
+		if (strict) {
+			if (!ssh_valid_hostname(tmp_host)) {
+				error_f("invalid hostname \"%s\"", tmp_host);
+				goto out;
+			}
+			if (tmp_user != NULL && !ssh_valid_ruser(tmp_user)) {
+				error_f("invalid username \"%s\"", tmp_user);
+				goto out;
+			}
+		}
 		if (first) {
-			/* First argument and configuration is active */
-			r = parse_ssh_uri(cp, &user, &host, &port);
-			if (r == -1 || (r == 1 &&
-			    parse_user_host_port(cp, &user, &host, &port) != 0))
-				goto out;
-		} else {
-			/* Subsequent argument or inactive configuration */
-			r = parse_ssh_uri(cp, NULL, NULL, NULL);
-			if (r == -1 || (r == 1 &&
-			    parse_user_host_port(cp, NULL, NULL, NULL) != 0))
-				goto out;
+			user = tmp_user;
+			host = tmp_host;
+			port = tmp_port;
+			tmp_user = tmp_host = NULL; /* transferred */
 		}
 		first = 0; /* only check syntax for subsequent hosts */
+		free(tmp_user);
+		free(tmp_host);
+		tmp_user = tmp_host = NULL;
+		tmp_port = -1;
 	} while (cp != sdup);
+
 	/* success */
 	if (active) {
-		if (strcasecmp(s, "none") == 0) {
-			o->jump_host = xstrdup("none");
-			o->jump_port = 0;
-		} else {
-			o->jump_user = user;
-			o->jump_host = host;
-			o->jump_port = port;
-			o->proxy_command = xstrdup("none");
-			user = host = NULL;
-			if ((cp = strrchr(s, ',')) != NULL && cp != s) {
-				o->jump_extra = xstrdup(s);
-				o->jump_extra[cp - s] = '\0';
-			}
+		o->jump_user = user;
+		o->jump_host = host;
+		o->jump_port = port;
+		o->proxy_command = xstrdup("none");
+		user = host = NULL; /* transferred */
+		if (orig != NULL && (cp = strrchr(orig, ',')) != NULL) {
+			o->jump_extra = xstrdup(orig);
+			o->jump_extra[cp - orig] = '\0';
 		}
 	}
 	ret = 0;
  out:
 	free(orig);
+	free(sdup);
+	free(tmp_user);
+	free(tmp_host);
 	free(user);
 	free(host);
 	return ret;
