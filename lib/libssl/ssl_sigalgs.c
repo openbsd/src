@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.51 2026/03/30 05:49:31 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.52 2026/03/30 06:02:21 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -90,21 +90,21 @@ const struct ssl_sigalg sigalgs[] = {
 	},
 	{
 		.value = SIGALG_RSA_PSS_PSS_SHA256,
-		.key_type = EVP_PKEY_RSA,
+		.key_type = EVP_PKEY_RSA_PSS,
 		.md = EVP_sha256,
 		.security_level = 3,
 		.flags = SIGALG_FLAG_RSA_PSS,
 	},
 	{
 		.value = SIGALG_RSA_PSS_PSS_SHA384,
-		.key_type = EVP_PKEY_RSA,
+		.key_type = EVP_PKEY_RSA_PSS,
 		.md = EVP_sha384,
 		.security_level = 4,
 		.flags = SIGALG_FLAG_RSA_PSS,
 	},
 	{
 		.value = SIGALG_RSA_PSS_PSS_SHA512,
-		.key_type = EVP_PKEY_RSA,
+		.key_type = EVP_PKEY_RSA_PSS,
 		.md = EVP_sha512,
 		.security_level = 5,
 		.flags = SIGALG_FLAG_RSA_PSS,
@@ -277,7 +277,8 @@ ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 
 	/* RSA PSS must have a sufficiently large RSA key. */
 	if ((sigalg->flags & SIGALG_FLAG_RSA_PSS)) {
-		if (EVP_PKEY_id(pkey) != EVP_PKEY_RSA ||
+		if ((EVP_PKEY_id(pkey) != EVP_PKEY_RSA &&
+		    EVP_PKEY_id(pkey) != EVP_PKEY_RSA_PSS) ||
 		    EVP_PKEY_size(pkey) < (2 * EVP_MD_size(sigalg->md()) + 2))
 			return 0;
 	}
