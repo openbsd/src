@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.52 2026/03/30 06:02:21 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.53 2026/03/30 06:20:08 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -147,12 +147,15 @@ const struct ssl_sigalg sigalgs[] = {
 /* Sigalgs for TLSv1.3, in preference order. */
 const uint16_t tls13_sigalgs[] = {
 	SIGALG_RSA_PSS_RSAE_SHA512,
+	SIGALG_RSA_PSS_PSS_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
 	SIGALG_ECDSA_SECP521R1_SHA512,
 	SIGALG_RSA_PSS_RSAE_SHA384,
+	SIGALG_RSA_PSS_PSS_SHA384,
 	SIGALG_RSA_PKCS1_SHA384,
 	SIGALG_ECDSA_SECP384R1_SHA384,
 	SIGALG_RSA_PSS_RSAE_SHA256,
+	SIGALG_RSA_PSS_PSS_SHA256,
 	SIGALG_RSA_PKCS1_SHA256,
 	SIGALG_ECDSA_SECP256R1_SHA256,
 };
@@ -161,12 +164,15 @@ const size_t tls13_sigalgs_len = (sizeof(tls13_sigalgs) / sizeof(tls13_sigalgs[0
 /* Sigalgs for TLSv1.2, in preference order. */
 const uint16_t tls12_sigalgs[] = {
 	SIGALG_RSA_PSS_RSAE_SHA512,
+	SIGALG_RSA_PSS_PSS_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
 	SIGALG_ECDSA_SECP521R1_SHA512,
 	SIGALG_RSA_PSS_RSAE_SHA384,
+	SIGALG_RSA_PSS_PSS_SHA384,
 	SIGALG_RSA_PKCS1_SHA384,
 	SIGALG_ECDSA_SECP384R1_SHA384,
 	SIGALG_RSA_PSS_RSAE_SHA256,
+	SIGALG_RSA_PSS_PSS_SHA256,
 	SIGALG_RSA_PKCS1_SHA256,
 	SIGALG_ECDSA_SECP256R1_SHA256,
 	SIGALG_RSA_PKCS1_SHA1, /* XXX */
