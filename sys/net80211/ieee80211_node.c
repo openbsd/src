@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.213 2026/03/29 21:16:21 kirill Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.214 2026/03/30 13:59:19 kirill Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2602,8 +2602,10 @@ int
 ieee80211_setup_vhtop(struct ieee80211_node *ni, const uint8_t *data,
     uint8_t len, int isprobe)
 {
+	struct ieee80211com *ic = ni->ni_ic;
 	uint8_t sco, ccfs0, ccfs1, ccfs2, supp_chwidth, ext_nss_bw_supp;
-	int have_40mhz, width, ccf1;
+	uint8_t local_chwidth, local_ext_nss_bw_supp;
+	int have_40mhz, local_supports_160, width, ccf1;
 
 	if (len != 5)
 		return 0;
@@ -2636,6 +2638,18 @@ ieee80211_setup_vhtop(struct ieee80211_node *ni, const uint8_t *data,
 		ext_nss_bw_supp =
 		    (ni->ni_vhtcaps & IEEE80211_VHTCAP_EXT_NSS_BW_MASK) >>
 		    IEEE80211_VHTCAP_EXT_NSS_BW_SHIFT;
+		local_chwidth = (ic->ic_vhtcaps &
+		    IEEE80211_VHTCAP_CHAN_WIDTH_MASK) >>
+		    IEEE80211_VHTCAP_CHAN_WIDTH_SHIFT;
+		local_ext_nss_bw_supp = (ic->ic_vhtcaps &
+		    IEEE80211_VHTCAP_EXT_NSS_BW_MASK) >>
+		    IEEE80211_VHTCAP_EXT_NSS_BW_SHIFT;
+		local_supports_160 = IEEE80211_CHAN_160MHZ_ALLOWED(ni->ni_chan) &&
+		    (local_chwidth == IEEE80211_VHTCAP_CHAN_WIDTH_160 ||
+		    local_chwidth == IEEE80211_VHTCAP_CHAN_WIDTH_160_8080 ||
+		    (local_ext_nss_bw_supp != 0 &&
+		    (ic->ic_vht_tx_max_lgi_mbit_s &
+		    IEEE80211_VHT_EXT_NSS_BW_CAPABLE) != 0));
 
 		/* See 802.11-2024 Table 9-314 */
 		switch ((supp_chwidth << 4) | ext_nss_bw_supp) {
@@ -2672,11 +2686,20 @@ ieee80211_setup_vhtop(struct ieee80211_node *ni, const uint8_t *data,
 
 			diff = abs(ccf1 - ccfs0);
 			if (diff == 8) {
-				ni->ni_vht_chan_center_freq_idx0 = ccf1;
+				if (local_supports_160) {
+					ni->ni_vht_chan_center_freq_idx0 = ccf1;
+					width = IEEE80211_VHTOP0_CHAN_WIDTH_160;
+				}
 				ni->ni_vht_chan_center_freq_idx1 = 0;
-				width = IEEE80211_VHTOP0_CHAN_WIDTH_160;
 			}
 		} else if (width == IEEE80211_VHTOP0_CHAN_WIDTH_160) {
+			if (!local_supports_160) {
+				if (ni->ni_primary_chan < ccfs0)
+					ni->ni_vht_chan_center_freq_idx0 = ccfs0 - 4;
+				else if (ni->ni_primary_chan > ccfs0)
+					ni->ni_vht_chan_center_freq_idx0 = ccfs0 + 4;
+				width = IEEE80211_VHTOP0_CHAN_WIDTH_80;
+			}
 			ni->ni_vht_chan_center_freq_idx1 = 0;
 		}
 
