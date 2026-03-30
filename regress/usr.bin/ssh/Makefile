@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.143 2026/02/15 22:29:30 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.144 2026/03/30 07:19:02 djm Exp $
 
 OPENSSL?=	yes
 
@@ -110,7 +110,8 @@ LTESTS= 	connect \
 		penalty-expire \
 		connect-bigconf \
 		ssh-pkcs11 \
-		ssh-tty
+		ssh-tty \
+		proxyjump
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 INTEROP_TESTS+=	dropbear-ciphers dropbear-kex dropbear-server
