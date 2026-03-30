@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.50 2024/07/09 13:43:57 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.51 2026/03/30 05:49:31 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -271,6 +271,7 @@ ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 {
 	if (sigalg == NULL || pkey == NULL)
 		return 0;
+
 	if (sigalg->key_type != EVP_PKEY_id(pkey))
 		return 0;
 
