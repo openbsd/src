@@ -51,6 +51,8 @@ func TestVerify(t *testing.T) {
 		{"11b", 1}, // Cross signed with expired intermediate.
 		{"12a", 1}, // Cross signed with expired intermediate.
 		{"13a", 1}, // Cross signed with expired root.
+		{"14a", 1}, // Deep chain (32 certificates including root and leaf).
+		{"14b", 1}, // Deep chain (33 certificates including root and leaf).
 	}
 
 	for _, test := range tests {
