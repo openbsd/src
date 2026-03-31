@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.269 2025/12/27 22:25:31 kn Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.270 2026/03/31 16:46:46 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -597,6 +597,10 @@ parse(char *string, int flags)
 			 * variants instead.
 			 */
 			return;
+		case HW_SMT:
+			if (newsize > 0)
+				warnx("hw.smt deprecated, use hw.blockcpu");
+			break;
 		}
 		break;
 
