@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.26 2026/01/25 10:28:16 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.27 2026/03/31 14:42:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -67,6 +67,7 @@ int	xhci_cdns_attach(struct xhci_fdt_softc *);
 int	xhci_snps_attach(struct xhci_fdt_softc *);
 int	xhci_snps_init(struct xhci_fdt_softc *);
 void	xhci_init_phys(struct xhci_fdt_softc *);
+void	xhci_init_hubs(struct xhci_fdt_softc *);
 
 int
 xhci_fdt_match(struct device *parent, void *match, void *aux)
@@ -78,7 +79,8 @@ xhci_fdt_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "cavium,octeon-7130-xhci") ||
 	    OF_is_compatible(faa->fa_node, "cdns,usb3") ||
 	    OF_is_compatible(faa->fa_node, "qcom,snps-dwc3") ||
-	    OF_is_compatible(faa->fa_node, "snps,dwc3");
+	    OF_is_compatible(faa->fa_node, "snps,dwc3") ||
+	    OF_is_compatible(faa->fa_node, "spacemit,k1-dwc3");
 }
 
 void
@@ -146,7 +148,8 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 		error = xhci_cdns_attach(sc);
 	if (OF_is_compatible(sc->sc_node, "apple,t8103-dwc3") ||
 	    OF_is_compatible(sc->sc_node, "qcom,snps-dwc3") ||
-	    OF_is_compatible(sc->sc_node, "snps,dwc3"))
+	    OF_is_compatible(sc->sc_node, "snps,dwc3") ||
+	    OF_is_compatible(sc->sc_node, "spacemit,k1-dwc3"))
 		error = xhci_snps_attach(sc);
 	if (error) {
 		printf(": can't initialize hardware\n");
@@ -154,6 +157,7 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	xhci_init_phys(sc);
+	xhci_init_hubs(sc);
 
 	strlcpy(sc->sc.sc_vendor, "Generic", sizeof(sc->sc.sc_vendor));
 	if ((error = xhci_init(&sc->sc)) != 0) {
@@ -450,6 +454,18 @@ xhci_init_phys(struct xhci_fdt_softc *sc)
 		rv = phy_enable(sc->sc_node, "usb3-phy");
 		if (rv != 0)
 			xhci_phy_enable(sc, "usb3-phy");
+	}
+}
+
+void
+xhci_init_hubs(struct xhci_fdt_softc *sc)
+{
+	int node, vdd_supply;
+
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) {
+		vdd_supply = OF_getpropint(node, "vdd-supply", 0);
+		if (vdd_supply)
+			regulator_enable(vdd_supply);
 	}
 }
 
