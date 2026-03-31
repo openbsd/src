@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.9 2026/03/27 19:55:35 tb Exp $
+# $OpenBSD: Makefile,v 1.10 2026/03/31 06:25:39 tb Exp $
 
 EOPENSSL =	eopenssl35
 
 .if ${EOPENSSL} != "eopenssl35"
-CFLAGS += -DHAVE_X509_CRL_GET0_SIGALG
+CFLAGS += -DHAVE_X509_CRL_GET0_TBS_SIGALG
 .endif
 
 LDADD +=	-Wl,-rpath,/usr/local/lib/${EOPENSSL} -L/usr/local/lib/${EOPENSSL}
