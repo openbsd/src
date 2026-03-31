@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.73 2025/02/08 10:12:00 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.74 2026/03/31 13:58:05 jsing Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -154,6 +154,11 @@ x509_verify_chain_append(struct x509_verify_chain *chain, X509 *cert,
 {
 	int verify_err = X509_V_ERR_UNSPECIFIED;
 	size_t idx;
+
+	if (sk_X509_num(chain->certs) >= X509_VERIFY_MAX_CHAIN_CERTS) {
+		*error = X509_V_ERR_CERT_CHAIN_TOO_LONG;
+		return 0;
+	}
 
 	if (!x509_constraints_extract_names(chain->names, cert,
 	    sk_X509_num(chain->certs) == 0, &verify_err)) {
@@ -661,13 +666,13 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		return;
 
 	depth = sk_X509_num(current_chain->certs);
+	if (depth >= ctx->max_depth) {
+		(void)x509_verify_cert_error(ctx, cert, depth,
+		    X509_V_ERR_CERT_CHAIN_TOO_LONG, 0);
+		return;
+	}
 	if (depth > 0)
 		depth--;
-
-	if (depth >= ctx->max_depth &&
-	    !x509_verify_cert_error(ctx, cert, depth,
-		X509_V_ERR_CERT_CHAIN_TOO_LONG, 0))
-		return;
 
 	count = ctx->chains_count;
 
