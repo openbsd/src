@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.152 2025/09/14 15:52:28 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.153 2026/03/31 16:46:22 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -831,6 +831,7 @@ cpu_topology(struct cpu_info *ci)
 	u_int32_t apicid, max_apicid = 0, max_coreid = 0;
 	u_int32_t smt_bits = 0, core_bits, pkg_bits = 0;
 	u_int32_t smt_mask = 0, core_mask, pkg_mask = 0;
+	char type[8], *typ = type;
 
 	/* We need at least apicid at CPUID 1 */
 	if (ci->ci_cpuid_level < 1)
@@ -865,7 +866,10 @@ cpu_topology(struct cpu_info *ci)
 
 		/* Cut logical thread_id into core id, and smt id in a core */
 		ci->ci_core_id = thread_id / nthreads;
-		ci->ci_smt_id = thread_id % nthreads;
+		if (ci->ci_smt_id) {
+			ci->ci_cputype |= CPUTYP_SMT;
+			*typ++ = 'S';
+		}
 	} else if (ci->ci_vendor == CPUV_INTEL) {
 		/* We only support leaf 1/4 detection */
 		if (ci->ci_cpuid_level < 4)
@@ -888,10 +892,36 @@ cpu_topology(struct cpu_info *ci)
 		pkg_mask = ~0U << core_bits;
 
 		ci->ci_smt_id = apicid & smt_mask;
+		if (ci->ci_smt_id) {
+			ci->ci_cputype |= CPUTYP_SMT;
+			*typ++ = 'S';
+		}
 		ci->ci_core_id = (apicid & core_mask) >> smt_bits;
 		ci->ci_pkg_id = (apicid & pkg_mask) >> pkg_bits;
+
+		if (ci->ci_cpuid_level >= 0x1a) {
+			CPUID_LEAF(0x1a, 0, eax, ebx, ecx, edx);
+			if ((eax >> 24) == 0x20) {
+				CPUID_LEAF(4, 3, eax, ebx, ecx, edx);
+				if (eax == 0) {
+					/* No L3 cache is classified as Lethargic */
+					ci->ci_cputype |= CPUTYP_L;
+					*typ++ = 'L';
+				} else {
+					ci->ci_cputype |= CPUTYP_E;
+					*typ++ = 'E';
+				}
+			}
+		}
+	
 	} else
 		goto no_topology;
+	if ((ci->ci_cputype & (CPUTYP_E | CPUTYP_L)) == 0) {
+		ci->ci_cputype |= CPUTYP_P;
+		*typ++ = 'P';
+	}
+	*typ ='\0';
+
 #ifdef DEBUG
 	printf("cpu%d: smt %u, core %u, pkg %u "
 		"(apicid 0x%x, max_apicid 0x%x, max_coreid 0x%x, smt_bits 0x%x, smt_mask 0x%x, "
@@ -900,14 +930,15 @@ cpu_topology(struct cpu_info *ci)
 		apicid, max_apicid, max_coreid, smt_bits, smt_mask, core_bits,
 		core_mask, pkg_bits, pkg_mask);
 #else
-	printf("cpu%d: smt %u, core %u, package %u\n", ci->ci_cpuid,
-		ci->ci_smt_id, ci->ci_core_id, ci->ci_pkg_id);
+	printf("cpu%d: smt %u, core %u, package %u, type %s\n", ci->ci_cpuid,
+		ci->ci_smt_id, ci->ci_core_id, ci->ci_pkg_id, type);
 
 #endif
 	return;
 	/* We can't map, so consider ci_core_id as ci_cpuid */
 no_topology:
 #endif
+	ci->ci_cputype = CPUTYP_P;
 	ci->ci_smt_id  = 0;
 	ci->ci_core_id = ci->ci_cpuid;
 	ci->ci_pkg_id  = 0;

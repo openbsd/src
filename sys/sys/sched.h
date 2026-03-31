@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.77 2025/06/09 10:57:46 claudio Exp $	*/
+/*	$OpenBSD: sched.h,v 1.78 2026/03/31 16:46:21 deraadt Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -179,7 +179,14 @@ void sched_barrier(struct cpu_info *ci);
 int sysctl_hwsetperf(void *, size_t *, void *, size_t);
 int sysctl_hwperfpolicy(void *, size_t *, void *, size_t);
 int sysctl_hwsmt(void *, size_t *, void *, size_t);
+int sysctl_hwblockcpu(void *, size_t *, void *, size_t);
 int sysctl_hwncpuonline(void);
+
+#define CPUTYP_SMT	0x01	/* SMT cpu */
+#define CPUTYP_P	0x02	/* Performance core */
+#define CPUTYP_E	0x04	/* Efficiency core */
+#define CPUTYP_L	0x08	/* Lethargic, Low Power Efficiency core */
+extern int sched_blockcpu;
 
 #ifdef MULTIPROCESSOR
 void sched_start_secondary_cpus(void);
