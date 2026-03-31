@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.73 2026/03/17 09:30:11 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.74 2026/03/31 09:32:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -246,14 +246,14 @@ show_neighbor_msgstats(struct peer *p)
 	    p->stats.refresh_sent_req, p->stats.refresh_rcvd_req);
 	printf("  %-15s %10llu %10llu\n", "Begin-of-RR",
 	    p->stats.refresh_sent_borr, p->stats.refresh_rcvd_borr);
-	printf("  %-15s %10llu %10llu\n", "End-of-RR",
+	printf("  %-15s %10llu %10llu\n\n", "End-of-RR",
 	    p->stats.refresh_sent_eorr, p->stats.refresh_rcvd_eorr);
 
 	printf("  Queue statistics:\n");
 	printf("  %-15s %-10s %-10s\n", "", "Count", "Size");
 	printf("  %-15s %10llu %10llu\n", "ibuf queue",
 	    p->stats.ibufq_msg_count, p->stats.ibufq_payload_size);
-	printf("  %-15s %10llu %-10s\n", "rib queue",
+	printf("  %-15s %10llu %10s\n", "rib queue",
 	    p->stats.rib_entry_count, "-");
 }
 
