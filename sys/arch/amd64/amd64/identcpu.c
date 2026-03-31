@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.153 2026/03/31 16:46:22 deraadt Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.154 2026/03/31 16:53:02 deraadt Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -866,6 +866,7 @@ cpu_topology(struct cpu_info *ci)
 
 		/* Cut logical thread_id into core id, and smt id in a core */
 		ci->ci_core_id = thread_id / nthreads;
+		ci->ci_smt_id = thread_id % nthreads;
 		if (ci->ci_smt_id) {
 			ci->ci_cputype |= CPUTYP_SMT;
 			*typ++ = 'S';
