@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.21 2024/11/10 06:51:59 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.22 2026/03/31 14:41:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -41,10 +41,15 @@
 /* CPU Identification */
 #define CPU_VENDOR_SIFIVE	0x489
 #define CPU_VENDOR_THEAD	0x5b7
+#define CPU_VENDOR_SPACEMIT	0x710
 
 /* SiFive */
 #define CPU_ARCH_U5		0x0000000000000001
 #define CPU_ARCH_U7		0x8000000000000007
+
+/* SpacemiT */
+#define CPU_ARCH_X60		0x8000000058000001
+#define CPU_ARCH_X100		0x8000000058000002
 
 /* Architectures */
 struct arch {
@@ -62,6 +67,12 @@ struct arch cpu_arch_sifive[] = {
 	{ 0, NULL }
 };
 
+struct arch cpu_arch_spacemit[] = {
+	{ CPU_ARCH_X60, "X60" },
+	{ CPU_ARCH_X100, "X100" },
+	{ 0, NULL }
+};
+
 /* Vendors */
 const struct vendor {
 	uint32_t	id;
@@ -69,6 +80,7 @@ const struct vendor {
 	struct arch	*archlist;
 } cpu_vendors[] = {
 	{ CPU_VENDOR_SIFIVE, "SiFive", cpu_arch_sifive },
+	{ CPU_VENDOR_SPACEMIT, "SpacemiT", cpu_arch_spacemit },
 	{ CPU_VENDOR_THEAD, "T-Head", cpu_arch_none },
 	{ 0, NULL }
 };
