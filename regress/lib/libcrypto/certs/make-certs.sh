@@ -381,3 +381,19 @@ create_intermediate "Intermediate CA 2" "ca-int-2" "ca-int-1"
 create_leaf "Server 1" "server-1" "ca-int-2"
 create_root_bundle "./13a/roots.pem" "ca-root-1" "ca-root-2"
 create_bundle "./13a/bundle.pem" "server-1" "ca-int-2" "ca-int-1"
+
+# Scenarios 14a and 14b.
+create_root "Root CA 1" "ca-root-1"
+deep_bundle=""
+root="ca-root-1"
+for i in $(seq 31); do
+	create_intermediate "Intermediate CA $i" "ca-int-$i" "${root}"
+	deep_bundle="ca-int-$i ${deep_bundle}"
+	root="ca-int-$i"
+done
+create_leaf "Client 1" "client-1" "ca-int-30"
+create_leaf "Client 2" "client-2" "ca-int-31"
+create_root_bundle "./14a/roots.pem" "ca-root-1"
+create_root_bundle "./14b/roots.pem" "ca-root-1"
+create_bundle "./14a/bundle.pem" "client-1" ${deep_bundle}
+create_bundle "./14b/bundle.pem" "client-2" ${deep_bundle}
