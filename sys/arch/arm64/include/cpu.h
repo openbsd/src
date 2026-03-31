@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.53 2025/12/15 12:59:24 dlg Exp $ */
+/* $OpenBSD: cpu.h,v 1.54 2026/03/31 16:37:48 deraadt Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -127,6 +127,7 @@ struct cpu_info {
 	struct cpu_info		*ci_self;
 
 #define __HAVE_CPU_TOPOLOGY
+	u_int32_t		ci_cputype;
 	u_int32_t		ci_smt_id;
 	u_int32_t		ci_core_id;
 	u_int32_t		ci_pkg_id;
