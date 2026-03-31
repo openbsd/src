@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.12 2024/08/23 12:56:26 anton Exp $ */
+/* $OpenBSD: verify.c,v 1.13 2026/03/31 13:39:48 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -460,6 +460,20 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_legacy_error_depth = 2,
 		.failing = 1,
 	},
+	{
+		.id = "14a",
+		.want_chains = 1,
+		.want_error_depth = 0,
+	},
+	{
+		.id = "14b",
+		.want_chains = 0,
+		.want_error = X509_V_ERR_CERT_CHAIN_TOO_LONG,
+		.want_error_depth = 32,
+		.want_legacy_error = 0,
+		.want_legacy_error_depth = 0,
+		.failing = 1,
+	},
 };
 
 #define N_VERIFY_CERT_TESTS \
@@ -557,10 +571,13 @@ main(int argc, char **argv)
 
 	fprintf(stderr, "\n\nTesting legacy x509_vfy\n");
 	failed |= verify_cert_test(argv[1], MODE_LEGACY_VFY);
+
 	fprintf(stderr, "\n\nTesting modern x509_vfy\n");
 	failed |= verify_cert_test(argv[1], MODE_MODERN_VFY);
+
 	fprintf(stderr, "\n\nTesting modern x509_vfy by_dir\n");
 	failed |= verify_cert_test(argv[1], MODE_MODERN_VFY_DIR);
+
 	fprintf(stderr, "\n\nTesting x509_verify\n");
 	failed |= verify_cert_test(argv[1], MODE_VERIFY);
 

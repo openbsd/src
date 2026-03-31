@@ -1,4 +1,4 @@
-/* $OpenBSD: callback.c,v 1.5 2024/08/23 12:56:26 anton Exp $ */
+/* $OpenBSD: callback.c,v 1.6 2026/03/31 13:39:48 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -338,6 +338,15 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "13a",
 		.want_chains = 1,
+		.failing = 1,
+	},
+	{
+		.id = "14a",
+		.want_chains = 1,
+	},
+	{
+		.id = "14b",
+		.want_chains = 0,
 		.failing = 1,
 	},
 };
