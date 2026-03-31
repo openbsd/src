@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.133 2026/03/09 23:57:53 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.134 2026/03/31 08:54:14 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -957,14 +957,22 @@ ida_init(struct ida *ida)
 void
 ida_destroy(struct ida *ida)
 {
+	int s = spltty();
 	idr_destroy(&ida->idr);
+	splx(s);
 }
 
 /* [start, end] */
 int
 ida_alloc_range(struct ida *ida, unsigned int start, unsigned int end, gfp_t gfp)
 {
-	return idr_alloc(&ida->idr, NULL, start, end + 1, gfp);
+	int r, s;
+
+	s = spltty();
+	r = idr_alloc(&ida->idr, NULL, start, end + 1, gfp);
+	splx(s);
+
+	return r;
 }
 
 int
@@ -982,7 +990,9 @@ ida_alloc_max(struct ida *ida, unsigned int max, gfp_t gfp)
 void
 ida_free(struct ida *ida, unsigned int id)
 {
+	int s = spltty();
 	idr_remove(&ida->idr, id);
+	splx(s);
 }
 
 int
