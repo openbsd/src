@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.50 2023/05/31 16:51:46 op Exp $	*/
+/*	$OpenBSD: to.c,v 1.51 2026/04/01 11:20:58 op Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -248,7 +248,7 @@ text_to_netaddr(struct netaddr *netaddr, const char *s)
 				s += 5;
 			if ((len = strlcpy(buf, s, sizeof buf)) >= sizeof buf)
 				return 0;
-			if (buf[len-1] != ']')
+			if (len == 0 || buf[len-1] != ']')
 				return 0;
 			buf[len-1] = 0;
 		}
