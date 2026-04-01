@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.81 2026/04/01 02:05:06 jsg Exp $
+.\" $OpenBSD: pledge.2,v 1.82 2026/04/01 02:08:38 jsg Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -182,7 +182,7 @@ Using
 .Qq \&
 restricts the process to the
 .Xr _exit 2
-system call 
+system call
 (this can be used for pure computation operating on memory shared
 with another process).
 .Bl -tag -width "prot_exec" -offset indent
@@ -196,7 +196,7 @@ they only occur inside the process..
 Many of these interfaces are then used inside higher-level libc
 functionality, which is why the name
 .Cm stdio
-was chosen. 
+was chosen.
 The following system calls are permitted:
 .Pp
 .Xr clock_getres 2 ,
@@ -411,7 +411,7 @@ reading
 .Xr hosts 5 ,
 .Xr protocols 5 ,
 .Xr resolv.conf 5 ,
-and 
+and
 .Xr services 5 ,
 and exposing a few networking system calls:
 .Xr socket 2 ,
